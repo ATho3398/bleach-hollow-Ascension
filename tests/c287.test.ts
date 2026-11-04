@@ -21,13 +21,14 @@ describe('흡수 S11', () => {
     expect(a).toContain("if (m === 'none') return `${faction.riskGaugeName} ${MINUS}${RX.releaseRelief}`;");
   });
   it('[○○하기] = 아래 줄 오른쪽 44×200 (너무 크지 않게), 아래 줄 왼쪽 = 고른 갈래', () => {
-    expect(v2css).toMatch(/\.bha-absorbv2 \.bha-absorb__go, \.bha-absorbv2 \.bha-absorb__run \{ width: 200px; height: var\(--bha-btn-h\);/);
+    expect(v2css).toMatch(/\.bha-absorbv2 \.bha-absorb__go, \.bha-absorbv2 \.bha-absorb__run \{ width: var\(--bha-dock-btn-w\); height: var\(--bha-btn-h\);/); // 200 = 공용 토큰 (C.296)
     expect(a).toContain("selLine.append('고른 갈래: ', picked_);");
     expect(a).toContain('dock: [selLine, go]');
   });
   it('설명 칸 = 고정 높이, 안에서 스크롤 + 바닥 더 있음 (문구는 그대로, 첫 ": " 에서 두 열로 나눠 보이기만)', () => {
     expect(v2css).toContain('.bha-absorbv2 .bha-absorb__desc { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto;');
-    expect(v2css).toContain('.bha-absorbv2 .bha-absorb__desc .bha-pop__more { position: sticky; bottom: 0;');
+    expect(a).toContain("'bha-more bha-more--sticky bha-absorb__more'"); // 공용 '더 있음' 띠 (C.296)
+    expect(read('src/ui/bha/components/v2-shared.css')).toMatch(/\.bha-more--sticky:where\(:not\(\.bha-root \*\)\) \{ position: sticky; [^}]*bottom: 0;/);
     expect(a).toContain("l.text.slice(0, at)), el('b', 'bha-absorb__v', l.text.slice(at + 2))");
   });
 });
@@ -36,7 +37,8 @@ describe('결과 S13 · 진화 연출', () => {
   it('승리/패배 톤 = 맨 위 4px 띠 + 제목 색만, [둥지로] 아래 줄 오른쪽 200', () => {
     expect(r).toContain("mountApp(root, { cls: `bha-v2 bha-resultv2 bha-resultv2--${win ? 'win' : 'lose'}` }, band, head, left, right, dock)");
     expect(v2css).toContain('.bha-result__band { position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--bha-sp); }');
-    expect(v2css).toContain('.bha-resultv2 .bha-result__home { width: 200px;');
+    expect(v2css).toContain('.bha-resultv2 .bha-result__home { width: var(--bha-dock-btn-w);');
+    expect(read('src/ui/bha/design-system/tokens.css')).toContain('--bha-dock-btn-w: 200px;');
     expect(r).toContain("info.className = 'bha-result__info';"); // v2 루트 안 .bha-info = ⓘ 버튼이라 이름을 바꿈
   });
   it('진화: [건너뛰기]·[둥지로] 같은 자리, 흐린 빛(burst) 끔, blur 없는 등장', () => {

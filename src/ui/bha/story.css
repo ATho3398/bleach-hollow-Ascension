@@ -56,10 +56,6 @@
 .bha-battle-ov--boss .bha-battle-ov__line { background: linear-gradient(90deg, transparent, var(--bha-danger), transparent); }
 .bha-battle__phase { gap: var(--bha-sp-1); }
 .bha-battle__phase.is-flash { animation: bha-fade-in .3s ease-in-out 4 alternate; }
-.bha-block__lock { position: absolute; inset: 0; z-index: 2; display: none; place-items: center; border-radius: inherit; background: rgb(0 0 0 / .55); color: var(--bha-seal); pointer-events: none; }
-.bha-block__lock > .bha-icon { width: 22px; height: 22px; }
-.bha-block.is-locked { outline: 2px solid var(--bha-seal); outline-offset: -2px; cursor: not-allowed; }
-.bha-block.is-locked > .bha-block__lock { display: grid; }
 
 /* 결과 화면 스토리 보상 줄 */
 .bha-result__story { display: flex; flex-direction: column; gap: var(--bha-sp-1); }

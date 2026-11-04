@@ -86,6 +86,6 @@ describe('C.170 원정 출발·걷기·일시정지·설정', () => {
     const s = read('src/ui/settingsView.ts');
     expect(s).toContain("b.setAttribute('role', 'switch');");
     expect(s).not.toContain('`제외 ${ex');
-    expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-switch.is-checked .bha-switch__track { background: var(--bha-tint-teal);' /* 183장 S16: 켬 = 청록 */);
+    expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-setswitch.is-checked .bha-setswitch__track { background: var(--bha-tint-teal);' /* 183장 S16: 켬 = 청록 */);
   });
 });

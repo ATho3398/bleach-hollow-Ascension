@@ -146,7 +146,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const info = iconInfo(rows);
   info.className = 'bha-result__info'; // 옛 dl 목록 이름(.bha-info)은 v2 에서 ⓘ 버튼 — 이 화면은 제 이름으로
   const scroller = el('div', 'bha-result__scroll');
-  const more = el('div', 'bha-result__more', '▼ 더 있음');
+  const more = el('div', 'bha-more bha-more--sticky bha-result__more', '▼ 더 있음'); // 공용 띠 (C.296)
   more.setAttribute('aria-hidden', 'true');
   scroller.append(info, more);
   const syncMore = (): void => { more.hidden = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2; };

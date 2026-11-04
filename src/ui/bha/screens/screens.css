@@ -101,35 +101,42 @@
 .bha-tut__hole {
   position: fixed; border-radius: var(--bha-r-md);
   box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.74);
-  outline: 2px solid var(--bha-chain2); outline-offset: 3px;
+  outline: 2px solid var(--bha-chain2); outline-offset: 1px;
   transition: left var(--bha-dur-3) var(--bha-ease-out), top var(--bha-dur-3) var(--bha-ease-out), width var(--bha-dur-3) var(--bha-ease-out), height var(--bha-dur-3) var(--bha-ease-out);
   pointer-events: none;
 }
 .bha-tut__hole::after { content: ""; position: absolute; inset: -9px; border-radius: inherit; border: 2px solid var(--bha-chain2); opacity: 0; animation: bha-tut-ping 1.6s ease-out infinite; }
+/* 카드 = v2 (GDD 183장 화면 G, C.296 공용화 — 옛 무늬 바탕·1px 선 규칙과 lcd.css 압축 규칙을 한 벌로): 한 칸 밝은 면(bg-2) + 2px 밝은 테두리 + 같은 색 꼬리.
+   단계 숫자 = 숫자 글꼴, 본문 text-1, 버튼 36. 자리(대상 바로 옆)·입력 막기(180장)·pressPasses(182장 2)·구멍 강조는 그대로 */
 .bha-tut__card {
   position: fixed; left: 50%; transform: translateX(-50%);
   width: min(448px, calc(100% - 24px));
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 14px 14px 12px;
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
-  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-1);
-  box-shadow: var(--bha-shadow-3);
+  display: flex; flex-direction: column; gap: var(--bha-sp-2);
+  padding: var(--bha-sp-4) var(--bha-sp-5);
+  border: 0; border-radius: var(--bha-r-md);
+  background: var(--bha-bg-2); color: var(--bha-text-1);
+  box-shadow: 0 0 0 2px var(--bha-text-2), var(--bha-shadow-3);
   transition: top var(--bha-dur-3) var(--bha-ease-out), bottom var(--bha-dur-3) var(--bha-ease-out);
 }
 .bha-tut__card::before { /* 대상 쪽을 가리키는 꼬리 */
-  content: ""; position: absolute; left: var(--tail, 50%); width: 14px; height: 14px; background: var(--bha-bg-1);
-  border: 1px solid var(--bha-line-2); transform: translateX(-50%) rotate(45deg);
+  content: ""; position: absolute; left: var(--tail, 50%); width: 14px; height: 14px; background: var(--bha-bg-2);
+  border: 2px solid var(--bha-text-2); transform: translateX(-50%) rotate(45deg);
 }
 .bha-tut__card.is-below::before { top: -8px; border-right: 0; border-bottom: 0; }
 .bha-tut__card.is-above::before { bottom: -8px; border-left: 0; border-top: 0; }
-.bha-tut__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.bha-tut__step { font-size: var(--bha-fs-xs); font-weight: 800; color: var(--bha-text-3); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-.bha-tut__title { display: flex; align-items: center; gap: 6px; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-xl); line-height: 1.25; }
-.bha-tut__title .bha-icon { width: 22px; height: 22px; color: var(--bha-chain2); }
-.bha-tut__body { font-size: var(--bha-fs-md); line-height: 1.6; color: var(--bha-text-2); }
-.bha-tut__body b { color: var(--bha-text-1); }
-.bha-tut__actions { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px; margin-top: 2px; }
-.bha-tut__actions .bha-btn { white-space: nowrap; padding: 0 10px; gap: 4px; }
+/* 대상 바로 옆에 놓인 카드 (JS 가 left/top 을 넣음) */
+.bha-tut__card.is-placed { left: auto; transform: none; width: auto; max-width: none; transition: none; }
+.bha-tut__card.is-placed:not(.is-below):not(.is-above)::before { display: none; }
+.bha-tut__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bha-sp-2) var(--bha-sp-4); }
+.bha-tut__steps { display: flex; align-items: center; gap: var(--bha-sp-4); min-width: 0; }
+.bha-tut__step { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-3); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.bha-tut__title { display: flex; align-items: center; gap: 6px; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-lg); line-height: 1.25; }
+.bha-tut__title .bha-icon { width: 18px; height: 18px; color: var(--bha-chain2); }
+.bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; color: var(--bha-text-1); }
+.bha-tut__body b { color: var(--bha-accent-hi); }
+.bha-tut__actions { display: flex; flex: none; gap: var(--bha-sp-3); margin: 0 0 0 auto; }
+.bha-tut__actions .bha-btn { white-space: nowrap; min-height: var(--bha-btn-h-sm); padding: 0 10px; gap: 4px; }
+.bha-tut__actions .bha-btn--small { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
 @keyframes bha-tut-ping { 0% { opacity: .8; transform: scale(.98); } 100% { opacity: 0; transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .bha-tut__hole::after { display: none; } }
 
@@ -202,13 +209,13 @@
 /* =========================================================
    한계 돌파  .bha-break
    ========================================================= */
-.bha-break { justify-content: center; align-items: center; text-align: center; gap: 18px; overflow: hidden; background: radial-gradient(circle at 50% 40%, rgb(255 79 216 / .22), transparent 60%), radial-gradient(circle at 50% 120%, rgb(229 72 77 / .25), transparent 55%), var(--bha-bg-0); animation: bha-shake 380ms linear 2; }
+.bha-break { justify-content: center; align-items: center; text-align: center; gap: 18px; overflow: hidden; background: var(--bha-bg-0); animation: bha-shake 380ms linear 2; }
 .bha-break__cracks { position: absolute; inset: 0; pointer-events: none; opacity: .9; }
-.bha-break__cracks path { fill: none; stroke: var(--bha-risk); stroke-width: 1.5; filter: drop-shadow(0 0 4px var(--bha-risk)); stroke-dasharray: 600; stroke-dashoffset: 600; animation: bha-crack 900ms var(--bha-ease-out) forwards; }
-.bha-break__cracks path:nth-child(2n) { stroke: #ff5a6a; animation-delay: 120ms; }
+.bha-break__cracks path { fill: none; stroke: var(--bha-risk); stroke-width: 1.5; stroke-dasharray: 600; stroke-dashoffset: 600; animation: bha-crack 900ms var(--bha-ease-out) forwards; }
+.bha-break__cracks path:nth-child(2n) { stroke: var(--bha-danger); animation-delay: 120ms; }
 .bha-break__cracks path:nth-child(3n) { animation-delay: 240ms; }
 .bha-break__gauge { width: min(300px, 80%); }
-.bha-break__title { position: relative; font-family: var(--bha-font-display); font-weight: 800; font-size: 34px; line-height: 1.2; color: var(--bha-risk); text-shadow: 0 0 18px rgb(255 79 216 / .7), 2px 0 0 rgb(229 72 77 / .7), -2px 0 0 rgb(79 184 224 / .35); text-wrap: balance; }
+.bha-break__title { position: relative; font-family: var(--bha-font-display); font-weight: 800; font-size: 34px; line-height: 1.2; color: var(--bha-risk); text-shadow: 0 3px 0 var(--bha-bg-0); text-wrap: balance; } /* v2: 글자 빛 대신 단단한 아랫그림자 (C.296) */
 .bha-break__sub { font-size: var(--bha-fs-md); color: var(--bha-text-2); }
 .bha-break__penalty { width: 100%; text-align: left; }
 @keyframes bha-crack { to { stroke-dashoffset: 0; } }
@@ -226,13 +233,6 @@
 /* 흡수 갈래 4개 (GDD 52): 2×2 같은 너비 */
 .bha-absorb__actions--modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .bha-absorb__actions .bha-btn small { font-size: var(--bha-fs-xs); font-weight: 500; opacity: .85; }
-.bha-steps { display: flex; align-items: center; gap: 6px; font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); }
-.bha-steps span { display: inline-flex; align-items: center; gap: 4px; }
-.bha-steps i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; border: 1px solid var(--bha-line-2); }
-.bha-steps .is-active { color: var(--bha-text-1); }
-.bha-steps .is-active i { background: var(--bha-primary-bg); color: var(--bha-primary-ink); border-color: var(--bha-primary-line); }
-.bha-steps .is-done i { background: var(--bha-bg-3); color: var(--bha-text-2); }
-.bha-steps b { flex: 0 0 12px; height: 1px; background: var(--bha-line-2); }
 
 .bha-practice__filters { display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; z-index: 5; padding: 8px 0; margin: -8px 0 0; background: var(--bha-bg-0); }
 .bha-foelist { display: flex; flex-direction: column; gap: 6px; }
@@ -257,13 +257,12 @@
 .bha-species { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .bha-species__card {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 230px; padding: 14px 12px 12px;
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); overflow: hidden; text-align: left; color: var(--bha-text-1);
-  background: var(--bha-vignette), var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-1);
-  transition: transform var(--bha-dur-1), border-color var(--bha-dur-2);
+  /* v2 (GDD 183장 화면 G, C.296 공용화): 볼록한 면(밝은 윗선·어두운 아랫면), 무늬·비네트·번지는 빛 없음. 고른 카드 = 한 칸 밝은 면 + 2px 테두리만 */
+  border: 0; border-radius: var(--bha-r-lg); overflow: hidden; text-align: left; color: var(--bha-text-1);
+  background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-lo);
 }
-.bha-species__card:active { transform: scale(.98); }
-.bha-species__card.is-selected { border: 2px solid var(--bha-primary-line); padding: 13px 11px 11px; box-shadow: 0 0 0 4px var(--bha-accent-soft), 0 0 30px var(--bha-accent-soft); }
-.bha-species__emblem { width: 56px; height: 56px; display: grid; place-items: center; border-radius: var(--bha-r-md); background: var(--bha-primary-bg); color: var(--bha-primary-ink); box-shadow: 0 6px 18px rgb(0 0 0 / .5); }
+.bha-species__card.is-selected { background: var(--bha-bg-2); box-shadow: 0 0 0 2px var(--bha-primary-line), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-lo); }
+.bha-species__emblem { width: 56px; height: 56px; display: grid; place-items: center; border-radius: var(--bha-r-md); background: var(--bha-primary-bg); color: var(--bha-primary-ink); box-shadow: var(--bha-shadow-2); }
 .bha-species__emblem .bha-icon { width: 34px; height: 34px; }
 .bha-species__name { font-family: var(--bha-font-display); font-weight: 800; font-size: 26px; line-height: 1.1; }
 .bha-species__desc { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.5; }

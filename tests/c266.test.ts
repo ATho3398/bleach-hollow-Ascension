@@ -34,7 +34,7 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
 describe('C.267 가진 타일 목록 스크롤', () => {
   it("배치판 손 목록 바닥에 '▼ 더 있음'(끝까지 내리면 숨김), 바퀴 끝 창(가로 한 줄)에선 숨김", () => {
     const road = read('src/ui/bha/road.ts');
-    expect(road).toContain("const handMore = el('div', 'bha-pop__more bha-road__more', '▼ 더 있음');");
+    expect(road).toContain("const handMore = el('div', 'bha-more bha-more--sticky bha-road__more', '▼ 더 있음');"); // C.296 공용 띠
     expect(road).toContain('handMore.hidden = hand.scrollTop + hand.clientHeight >= hand.scrollHeight - 2;');
     expect(read('src/ui/bha/walk-scene.css')).toContain('.bha-nestsheet__body .bha-road__more { display: none; }');
   });

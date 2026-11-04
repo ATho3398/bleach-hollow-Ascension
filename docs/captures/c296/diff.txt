@@ -1,0 +1,188 @@
+ 17.543%  c290/hollow-20-training-play.png  (121, 65, 545, 206)
+ 17.328%  c286/shinigami-05-help.png  (111, 74, 731, 371)
+ 17.045%  c286/hollow-05-help.png  (111, 74, 731, 371)
+ 13.686%  c289/hollow-5-walk.png  (100, 114, 743, 373)
+ 13.133%  c289/shinigami-5-walk.png  (100, 75, 743, 345)
+ 11.852%  c286/shinigami-18-breakthrough.png  (111, 16, 737, 373)
+ 10.710%  c291/hollow-20-walk-healbag.png  (115, 53, 728, 339)
+ 10.412%  c286/shinigami-10-pick.png  (221, 26, 622, 366)
+  9.844%  c286/hollow-10-pick.png  (221, 26, 622, 366)
+  9.037%  c289/shinigami-7-lapend-picked.png  (100, 89, 743, 343)
+  8.387%  c290/shinigami-23-story-locked-chapter.png  (364, 72, 735, 373)
+  8.146%  c290/hollow-23-story-locked-chapter.png  (364, 72, 735, 373)
+  7.445%  c290/hollow-23-story-locked.png  (364, 72, 735, 372)
+  7.376%  c290/shinigami-23-story-locked.png  (364, 72, 735, 372)
+  6.323%  c290/shinigami-23-story.png  (160, 72, 735, 373)
+  6.303%  c290/hollow-23-story.png  (160, 72, 735, 373)
+  5.578%  c291/shinigami-01b-bag-gear-detail.png  (202, 45, 641, 344)
+  5.375%  c291/hollow-01b-bag-gear-detail.png  (202, 45, 641, 344)
+  4.812%  c285/hollow-2-log.png  (110, 28, 615, 288)
+  4.049%  c291/shinigami-15-shop-gear-detail.png  (202, 45, 641, 344)
+  3.997%  c291/shinigami-19-wanderer-detail.png  (146, 45, 730, 344)
+  3.908%  c291/hollow-15-shop-gear-detail.png  (202, 45, 641, 344)
+  3.701%  c291/shinigami-12-shop-detail.png  (202, 17, 641, 344)
+  3.593%  c291/hollow-19-wanderer-detail.png  (202, 45, 730, 344)
+  3.566%  c291/hollow-12b-shop-cannot-buy-pressed.png  (202, 45, 641, 344)
+  3.561%  c285/shinigami-2-log.png  (110, 24, 671, 288)
+  3.544%  c291/shinigami-12b-shop-cannot-buy-pressed.png  (202, 45, 641, 344)
+  3.414%  c291/shinigami-03-bag-battle-detail.png  (202, 45, 641, 344)
+  3.392%  c291/hollow-03-bag-battle-detail.png  (202, 45, 641, 344)
+  3.379%  c289/hollow-7-lapend-picked.png  (100, 24, 743, 373)
+  3.236%  c291/hollow-12-shop-detail.png  (202, 45, 641, 344)
+  3.202%  c289/hollow-6-lapend.png  (100, 24, 743, 373)
+  2.953%  c285/shinigami-3-release.png  (110, 24, 648, 369)
+  2.922%  c291/hollow-10-bag-item-detail.png  (202, 45, 641, 344)
+  2.896%  c291/shinigami-10-bag-item-detail.png  (202, 45, 641, 344)
+  2.659%  c285/hollow-1-battle.png  (110, 28, 655, 288)
+  2.511%  c289/shinigami-6-lapend.png  (100, 114, 743, 343)
+  2.413%  c286/hollow-21-tut.png  (362, 151, 481, 256)
+  2.413%  c286/hollow-22-tut.png  (362, 151, 481, 256)
+  2.413%  c286/hollow-23-tut.png  (362, 151, 481, 256)
+  2.413%  c286/hollow-24-tut.png  (362, 151, 481, 256)
+  2.413%  c286/hollow-25-tut.png  (362, 151, 481, 256)
+  2.392%  c286/hollow-26-tut.png  (362, 151, 481, 255)
+  2.161%  c285/shinigami-1-battle.png  (110, 24, 607, 288)
+  2.152%  c286/hollow-17-warning.png  (100, 16, 743, 373)
+  2.152%  c286/shinigami-17-warning.png  (100, 16, 743, 373)
+  2.070%  c285/hollow-3-release.png  (110, 28, 659, 288)
+  1.887%  c290/hollow-24-dialogue.png  (390, 160, 560, 270)
+  1.706%  c284/shinigami-5-spa-full.png  (429, 92, 739, 262)
+  1.474%  c286/hollow-03-species.png  (103, 63, 422, 370)
+  1.474%  c286/shinigami-03-species.png  (103, 63, 422, 370)
+  1.372%  c287/hollow-2-absorb-pick.png  (146, 29, 719, 257)
+  1.368%  c291/shinigami-18-wanderer.png  (146, 101, 730, 224)
+  1.165%  c291/hollow-18-wanderer.png  (302, 101, 730, 224)
+  1.031%  c285/hollow-4-pause.png  (110, 29, 678, 368)
+  0.906%  c287/hollow-1-absorb.png  (150, 29, 447, 229)
+  0.856%  c284/hollow-1b-room-focus-book.png  (303, 16, 540, 42)
+  0.826%  c285/shinigami-4-pause.png  (110, 24, 678, 288)
+  0.643%  c287/hollow-3-absorb-status.png  (150, 29, 281, 193)
+  0.622%  c284/hollow-5-spa-full.png  (485, 92, 739, 260)
+  0.571%  c286/shinigami-26-tut.png  (357, 136, 446, 243)
+  0.569%  c286/hollow-18-breakthrough.png  (109, 141, 384, 155)
+  0.540%  c287/shinigami-4-result-win.png  (145, 281, 720, 350)
+  0.540%  c287/shinigami-5-result-lose.png  (145, 281, 720, 350)
+  0.485%  c287/hollow-4-result-win.png  (138, 281, 720, 350)
+  0.485%  c287/hollow-5-result-lose.png  (138, 281, 720, 350)
+  0.374%  c287/shinigami-2-absorb-pick.png  (308, 29, 401, 196)
+  0.358%  c284/shinigami-3-market.png  (165, 206, 253, 314)
+  0.338%  c284/shinigami-5b-spa-resting.png  (339, 157, 483, 312)
+  0.285%  c287/shinigami-1-absorb.png  (223, 29, 315, 46)
+  0.268%  c289/shinigami-3-place.png  (112, 292, 731, 307)
+  0.268%  c289/hollow-3-place.png  (112, 292, 731, 307)
+  0.227%  c286/shinigami-23-tut.png  (356, 138, 446, 242)
+  0.223%  c287/shinigami-3-absorb-status.png  (223, 29, 315, 46)
+  0.222%  c284/shinigami-1b-room-focus-book.png  (356, 85, 536, 244)
+  0.114%  c286/shinigami-25-tut.png  (355, 140, 445, 242)
+  0.099%  c284/shinigami-1d-room-shell-bone.png  (353, 141, 444, 243)
+  0.087%  c286/shinigami-16-toast.png  (353, 138, 445, 242)
+  0.050%  c286/shinigami-13-slot-load.png  (317, 145, 564, 215)
+  0.042%  c286/hollow-13-slot-load.png  (317, 145, 563, 215)
+  0.014%  c284/shinigami-1c-room-more.png  (394, 138, 442, 196)
+  0.003%  c286/shinigami-06-tamago.png  (104, 49, 482, 90)
+  0.001%  c284/shinigami-1f-room-dying.png  (409, 151, 437, 201)
+  0.001%  c286/shinigami-21-tut.png  (375, 197, 443, 236)
+  0.000%  c284/shinigami-3b-market-wanderer.png  (172, 311, 172, 311)
+  0.000%  c286/shinigami-22-tut.png  (400, 216, 400, 216)
+  0.000%  c284/hollow-1-room.png  None
+  0.000%  c284/hollow-1c-room-more.png  None
+  0.000%  c284/hollow-1d-room-shell-bone.png  None
+  0.000%  c284/hollow-1e-room-hp50.png  None
+  0.000%  c284/hollow-1f-room-dying.png  None
+  0.000%  c284/hollow-1g-room-dead.png  None
+  0.000%  c284/hollow-2-worldmap.png  None
+  0.000%  c284/hollow-2b-worldmap-wanderer.png  None
+  0.000%  c284/hollow-3-market.png  None
+  0.000%  c284/hollow-3b-market-wanderer.png  None
+  0.000%  c284/hollow-5b-spa-resting.png  None
+  0.000%  c284/shinigami-1-room.png  None
+  0.000%  c284/shinigami-1e-room-hp50.png  None
+  0.000%  c284/shinigami-1g-room-dead.png  None
+  0.000%  c284/shinigami-2-worldmap.png  None
+  0.000%  c284/shinigami-2b-worldmap-wanderer.png  None
+  0.000%  c286/hollow-01-start-empty.png  None
+  0.000%  c286/hollow-02-slot-new.png  None
+  0.000%  c286/hollow-04-confirm.png  None
+  0.000%  c286/hollow-06-tamago.png  None
+  0.000%  c286/hollow-07-photo.png  None
+  0.000%  c286/hollow-08-idle.png  None
+  0.000%  c286/hollow-09-rebirth.png  None
+  0.000%  c286/hollow-11-install.png  None
+  0.000%  c286/hollow-12-start.png  None
+  0.000%  c286/hollow-14-backup.png  None
+  0.000%  c286/hollow-15-tabblocked.png  None
+  0.000%  c286/hollow-16-toast.png  None
+  0.000%  c286/shinigami-01-start-empty.png  None
+  0.000%  c286/shinigami-02-slot-new.png  None
+  0.000%  c286/shinigami-04-confirm.png  None
+  0.000%  c286/shinigami-07-photo.png  None
+  0.000%  c286/shinigami-08-idle.png  None
+  0.000%  c286/shinigami-09-rebirth.png  None
+  0.000%  c286/shinigami-11-install.png  None
+  0.000%  c286/shinigami-12-start.png  None
+  0.000%  c286/shinigami-14-backup.png  None
+  0.000%  c286/shinigami-15-tabblocked.png  None
+  0.000%  c286/shinigami-24-tut.png  None
+  0.000%  c287/hollow-6-evolve-lines.png  None
+  0.000%  c287/hollow-7-evolve-result.png  None
+  0.000%  c287/shinigami-6-evolve-lines.png  None
+  0.000%  c287/shinigami-7-evolve-result.png  None
+  0.000%  c289/hollow-1-prep-locked.png  None
+  0.000%  c289/hollow-2-prep.png  None
+  0.000%  c289/hollow-4-prep-placed.png  None
+  0.000%  c289/shinigami-1-prep-locked.png  None
+  0.000%  c289/shinigami-2-prep.png  None
+  0.000%  c289/shinigami-4-prep-placed.png  None
+  0.000%  c290/hollow-15-status-info.png  None
+  0.000%  c290/hollow-15-status.png  None
+  0.000%  c290/hollow-16-settings-1.png  None
+  0.000%  c290/hollow-16-settings-2.png  None
+  0.000%  c290/hollow-16-settings-3.png  None
+  0.000%  c290/hollow-16-settings-4.png  None
+  0.000%  c290/hollow-17-dex.png  None
+  0.000%  c290/hollow-18-titles.png  None
+  0.000%  c290/hollow-19-rank.png  None
+  0.000%  c290/hollow-20-training.png  None
+  0.000%  c290/hollow-21-practice.png  None
+  0.000%  c290/hollow-22-tower.png  None
+  0.000%  c290/shinigami-15-status-info.png  None
+  0.000%  c290/shinigami-15-status.png  None
+  0.000%  c290/shinigami-16-settings-1.png  None
+  0.000%  c290/shinigami-16-settings-2.png  None
+  0.000%  c290/shinigami-16-settings-3.png  None
+  0.000%  c290/shinigami-16-settings-4.png  None
+  0.000%  c290/shinigami-17-dex.png  None
+  0.000%  c290/shinigami-18-titles.png  None
+  0.000%  c290/shinigami-19-rank.png  None
+  0.000%  c290/shinigami-20-training-play.png  None
+  0.000%  c290/shinigami-20-training.png  None
+  0.000%  c290/shinigami-21-practice.png  None
+  0.000%  c290/shinigami-22-tower.png  None
+  0.000%  c290/shinigami-24-dialogue.png  None
+  0.000%  c291/hollow-01-bag-gear.png  None
+  0.000%  c291/hollow-02-bag-gear-battle.png  None
+  0.000%  c291/hollow-04-bag-슬롯.png  None
+  0.000%  c291/hollow-05-bag-타일.png  None
+  0.000%  c291/hollow-06-bag-소모품.png  None
+  0.000%  c291/hollow-07-bag-스킨.png  None
+  0.000%  c291/hollow-08-bag-펫.png  None
+  0.000%  c291/hollow-09-bag-기타.png  None
+  0.000%  c291/hollow-11-shop.png  None
+  0.000%  c291/hollow-13-shop-battle.png  None
+  0.000%  c291/hollow-14-shop-gear.png  None
+  0.000%  c291/hollow-16-shop-skin.png  None
+  0.000%  c291/hollow-17-shop-trait.png  None
+  0.000%  c291/shinigami-01-bag-gear.png  None
+  0.000%  c291/shinigami-02-bag-gear-battle.png  None
+  0.000%  c291/shinigami-04-bag-슬롯.png  None
+  0.000%  c291/shinigami-05-bag-타일.png  None
+  0.000%  c291/shinigami-06-bag-소모품.png  None
+  0.000%  c291/shinigami-07-bag-스킨.png  None
+  0.000%  c291/shinigami-08-bag-펫.png  None
+  0.000%  c291/shinigami-09-bag-기타.png  None
+  0.000%  c291/shinigami-11-shop.png  None
+  0.000%  c291/shinigami-13-shop-battle.png  None
+  0.000%  c291/shinigami-14-shop-gear.png  None
+  0.000%  c291/shinigami-16-shop-skin.png  None
+  0.000%  c291/shinigami-17-shop-trait.png  None
+MISSING(-1) c291/shinigami-20-walk-healbag.png

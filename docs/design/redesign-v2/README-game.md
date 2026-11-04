@@ -21,6 +21,8 @@
 
 `.bha-row` `.bha-info` `.bha-pop` `.bha-legend` `.bha-dock` `.bha-tut` `.bha-art` `.bha-toast` `.bha-body` `.bha-switch`
 
+(C.296) 옛 게임 쪽 이름 둘은 바꿔서 겹침이 없어졌다: 정보 표 `dl.bha-info` → **`dl.bha-infotable`**(dom.ts `info()`·`iconInfo()`), 설정 켬/끔 줄 `button.bha-switch` → **`button.bha-setswitch`**. `.bha-art` 는 v2 규칙이 장면 물건·캐릭터 단추(`.bha-prop`·`.bha-char`)를 빼고 걸린다.
+
 - 화면을 옮길 때 루트에 `bha-v2` 를 달고, 그 화면에서 옛 구조(`.bha-row` = flex 줄, `.bha-info` = dl 목록, `.bha-tut` = 옛 튜토리얼 틀 등)를 쓰던 곳을 v2 구조로 바꾼다.
 - `.bha-dock`·`.bha-toast` 의 옛 규칙은 `.bha-v2` 안에서 꺼진다. 나머지 옛 규칙은 화면 CSS(room.css·screens-lcd.css 등, 화면 세션 몫)에 있으니 옮기며 지운다.
 - 그 밖의 v2 클래스(`.bha-head` `.bha-win*` `.bha-card*` `.bha-gen*` `.bha-hp*` `.bha-blk*` `.bha-tabs/.bha-tab` `.bha-badge` `.bha-plate` `.bha-scene/.bha-obj` `.bha-more` `.bha-kv` `.bha-statline` `.bha-toggle` `.bha-temp` `.bha-chip--status` `.bha-btn--tint/--ask/--sm` `.is-focus` …)는 어디서나 바로 쓴다.
@@ -52,3 +54,25 @@
 
 - 화면별 CSS(room·worldmap·market·spa·expedition·battle-scene·shop·story 등)의 옛 그라데이션·glow·hex — 각 화면 세션이 옮기며 정리.
 - components.css 의 옛 전투 블록·트레이(`.bha-block` `.bha-tray` `.bha-stored` `.bha-foe`)와 `.bha-root`(v2/bha.css)의 그라데이션 — 전투 세션(C).
+
+## 7. 공용 보충 `components/v2-shared.css` (C.296 — 화면 세션 덮어쓰기를 공용으로)
+
+화면 A~G 가 각자 덮어 쓰던 것을 한 곳에 모았다. 화면 CSS 에서 같은 것을 다시 만들지 말고 이걸 쓴다(모자라면 마스터에 보고).
+
+| 쓸 것 | 내용 |
+|---|---|
+| `--bha-plate-bg` / `--bha-plate-bg-soft` | 장면 위 반투명 판(bg-0 82% / 72%). 이름표·발밑 체력·돌아가기 버튼 / 넓은 띠(걷기 머리 줄). 테마가 붙는 자리마다 다시 계산(tokens.css) |
+| `--bha-scrim` | 창·시트 뒤 덮개(검정 42%, v2 `.bha-scrim` 값) |
+| `--bha-dock-btn-w` | 아래 줄 오른쪽 고정 행동 버튼 폭 200 (흡수·결과·진화) |
+| `--bha-battle-cut-bg/-line` | 해방 컷인 띠 — 테마 파일(theme-*.css)에 있음 |
+| `.bha-modal` (components.css) | 확인·고르기 창 = v2 창: 머리 48(왼쪽 제목) · 본문 · 맨 아래 같은 폭 버튼 줄 `.bha-modal__actions`. 머리 띠 없는 판이 필요하면 걷기 가방(shop.css `.bha-healbag`)처럼 그 창에서 끈다 |
+| `.bha-toast` (components.css) | 노란 알림 = 글 길이만큼 30px 띠, 34px 간격으로 쌓임, 누름 통과 |
+| `.bha-tut__card` (screens/screens.css) | 튜토리얼 카드 v2 한 벌(lcd.css 압축 규칙 합침) |
+| `button.bha-info` | ⓘ 보이는 원 18 그대로, 누르는 자리 36(`::before`) |
+| `.bha-more.bha-more--sticky` | 스크롤 칸 안 맨 아래 '▼ 더 있음' 띠(끝까지 내리면 JS 가 `hidden`). 절대 위치 띠는 v2 `.bha-more` 그대로 |
+| `.bha-chip--status.is-danger` / `.bha-chip--alert` | 상태 칩 위험 = 아이콘·막대 위험색 / + 빨간 테두리 |
+| `.bha-steps` | 단계 숫자(숫자 18 칸 + 이름, 사이 `·`, 지금 = 강조색 칸) |
+| `.bha-tilecard` | 타일 카드(그림 30 + 이름 + 한 줄 + ×개수, 색 = `--tile`) |
+| `.bha-mdrow` · `.bha-mddetail` | 목록 → 상세 v2 줄(볼록한 면, 고른 줄 = 밝은 면 + 왼쪽 강조 띠 3px, 미발견·숨김 = 움푹한 면). 책장·도움말·튜토리얼 목표·스토리 |
+| `.bha-setrow` · `.bha-settings__choices` | 설정 44 줄(이름 + 한 줄 설명 | 조작) · 붙은 고르기 칸 |
+| `.bha-toggle` | 제목 토글 `viewTitle()`(책장·수련장·스토리·모험 준비·테스트) 버튼이 v2 `.bha-toggle` + 펼침 목록 |

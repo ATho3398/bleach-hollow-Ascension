@@ -43,4 +43,7 @@
   --bha-scene-wall: #3a2c26;
   --bha-scene-floor: #4a3a30;
   --bha-ph: #7a665a;
+  /* 해방 컷인 띠 (PROMPT 6절 S10, C.285 → C.296 테마로): 호로 불꽃 사선 · 사신 먹 사선. 꾸미기 컷인을 끼면 꾸미기 우선 */
+  --bha-battle-cut-bg: var(--bha-cos-cut-flame-bg);
+  --bha-battle-cut-line: var(--bha-cos-cut-flame-line);
 }

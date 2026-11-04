@@ -2071,3 +2071,32 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 고친 것: ① `src/pwa.ts` `fetchLatestBuild` = `version.json?t=<시각>` + `cache: 'no-store'`(CDN·브라우저 캐시 모두 건너뜀) ② `scripts/sw-template.js` 게임 화면(navigate) = `fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: 'manual' })`(예전 `fetch(req)` = 기본 캐시 모드 → Pages `max-age=600` 때문에 HTTP 캐시의 옛 index). 주소 이동 응답(opaqueredirect)은 그대로 돌려줌. 오프라인·`NAV_TIMEOUT_MS` 3초 뒤 캐시 대체 그대로 ③ `restartUrl` = `bha-v=<빌드>.<시각>`(매번 다른 주소).
 - ④ 확인 시점 보강(`src/pwa.ts`): 켜 둔 동안 확인 간격 10분 → **1분**(`UPDATE_CHECK_MS`, 배포 4~5분이 끝나기 전에 켰으면 다음 확인이 10분 뒤였다 — 버전 파일 약 30바이트), 버전 파일 요청 5초 시간 초과(`VERSION_TIMEOUT_MS`, 폰 복귀 때 멈춘 요청이 `checking` 을 영영 붙잡던 것 방지), 실패면 3초 뒤 한 번 더(`RETRY_MS`), `pageshow`(persisted)·`focus`·`online` 때도 확인.
 - 테스트 `tests/c283.test.ts` 갱신·추가(꼬리·화면 요청 no-store·redirect·오프라인 캐시·시간 초과·확인 시점).
+
+## C.296 — 리디자인 v2 공용 정리: 화면 세션 덮어쓰기를 공용으로 (GDD 183장, v5.442, S-23, 코딩206 Opus)
+- 마스터AG 지시(사용자 규칙 "하나 지적하면 같은 종류 전부"): 화면 A~G 가 각자 화면 CSS 에서 덮어 둔 것을 공용으로 올리고 화면 쪽 중복을 지움. 목표 = 모양은 C.292 배포와 같게. 엔진·데이터·세이브·밸런스 변경 없음.
+- 새 공용 파일 `src/ui/bha/components/v2-shared.css`(bha-v2.css 바로 뒤, 손으로 씀) + 사용법 `docs/design/redesign-v2/README-game.md` 7절.
+- 옮긴 것(16항목):
+  1. 토큰 `--bha-plate-bg`(bg-0 82%)·`--bha-plate-bg-soft`(72%)·`--bha-scrim`(검정 42%) — 테마가 붙는 자리마다 다시 계산(tokens.css). room/spa 지역 `--bha-room-plate`·걷기 color-mix 6곳·`.bha-scrim`(생성 스크립트)·걷기 시트 덮개·수련장 카운트다운(옛 `--bha-lo` → `--bha-scrim`).
+  2. '▼ 더 있음' 띠 = `.bha-more` + `.bha-more--sticky`(스크롤 칸 바닥) — 흡수 설명·결과 요약·가진 타일 목록이 같이 씀(각자 규칙 3벌 삭제). `.bha-more[hidden]` 공용.
+  3. `.bha-modal` = v2 창(머리 48·왼쪽 제목·아래 같은 폭 버튼 줄)을 components.css 기본으로 — screens-lcd.css 화면 G 덮어쓰기·옛 `.bha-lcd .bha-confirm` 3줄 삭제. 걷기 가방은 머리 띠 없는 판 그대로(shop.css 에서 끔), 상세 창(`.bha-win`)·옛 전투 창(`.bha-root`)은 제외. `.bha-toast` = 30px 짧은 띠 규칙을 기본으로(옛 440px 띠 삭제). 튜토리얼 카드 v2 를 screens/screens.css 한 벌로(lcd.css 압축 규칙·화면 G 덮어쓰기 합침).
+  4. `button.bha-info` 누르는 자리 36(`::before`, 보이는 원 18 그대로, 이미 36 인 ⓘ 는 그대로).
+  5. 컷인 `--bha-battle-cut-bg/-line` → theme-hollow/shinigami.css.
+  6. `.bha-v2 .bha-art` v2 규칙이 장면 물건·캐릭터 단추(`.bha-prop`·`.bha-char`)를 빼고 걸림(생성 스크립트) — room.css 자리 가드 삭제.
+  7. `.bha-chip--status.is-danger`(위험색) · `.bha-chip--alert`(빨간 테두리, 걷기 머리 줄 칩) 공용.
+  8. 빛 애니: 안 쓰는 glow 키프레임 5개 삭제(pulse-can·void-breathe·ready-glow·run-fire3·burst), 쓰는 `bha-pulse-ring`(교체 대상 슬롯) = 테두리·밝기만. 같은 종류: 미터 위험 테두리 번짐·진행 점·타일 칩 선택 빛 제거, `#fff` → 토큰.
+  9. story.css 전역 `.bha-block.is-locked` outline·안 쓰는 `.bha-block__lock` → 전투 칸(`.bha-root`)에만.
+  10. 폭주 화면 원형 그라데이션·글자 빛·균열 빛·hex(screens.css·lcd.css) → 화면 G 값으로 기본 교체 후 덮어쓰기 삭제. 종족 카드 무늬·비네트·번지는 빛 → v2 볼록한 면 기본. 탄생 연출 사슬 불붙음 흐린 빛(drop-shadow) → 밝기.
+  11. `.bha-steps` v2(숫자 18 칸) 공용 — 옛 연결선 규칙 삭제.
+  12. 토큰 `--bha-dock-btn-w: 200px`(흡수·결과·진화 아래 줄 버튼).
+  13. `.bha-tilecard` → 공용.
+  14. `.bha-setrow`·`.bha-settings__choices`·`.bha-mdrow`/`.bha-mddetail`(v2 줄) 공용 — 책장 덮어쓰기 삭제, 도움말·튜토리얼 목표도 같은 줄.
+  15. 이름 겹침: 정보 표 `dl.bha-info` → `dl.bha-infotable`, 설정 켬/끔 줄 `button.bha-switch` → `button.bha-setswitch` (상태·설정 화면에 bha-v2 루트를 달 수 있게 됨 — 단 v2 ⓘ 36 칸 여백이 능력치 줄을 바꾸므로 루트는 아직 안 닮).
+  16. `viewTitle()` 버튼 = v2 `.bha-toggle` + 펼침 목록(제목 글자 모양 그대로).
+- 바꾸기 전/후 캡처 비교(C.284~C.291 proof 스크립트를 C.292 빌드와 이번 빌드에 같은 순서로, 두 종족 174장, 픽셀 비교 + 창 2종 계산값 비교): 결과는 아래 '달라진 것'.
+- **달라진 것(의도)**: 도움말·튜토리얼 목표 목록 줄이 책장과 같은 v2 줄(볼록한 면 + 고른 줄 왼쪽 강조 띠) · 흡수 단계 숫자 칸 18px(옛 연결선 규칙 `flex: 0 0 12px` 때문에 12px 로 눌려 있던 것) · '▼ 더 있음' 띠 = v2 모양(옛 `.bha-pop__more` 윗선·안쪽 여백 없음, 글 2px 위) · 수련장 카운트다운 덮개 검정 35~40% → 42% · 새 버전 알림 창도 머리 48 v2 창(큰 [다시 시작] + 작은 [나중에] 그대로) · 교체 대상 슬롯·미터 위험·진행 점·타일 칩 빛 번짐 없음 · 상세 창(`.bha-win`)은 옛 `.bha-modal` 1px 테두리가 빠짐(겹친 선 하나).
+- **같게 맞춘 것(비교에서 잡음)**: 화면 G 규칙(높은 우선순위)에 가려져 안 먹던 옛 규칙이 공용화 뒤 살아나던 것 — 흡수 [내 상태] 창 560px(→ 삭제, 지금 400 유지)·고르기 창 버튼 간격 4px(→ market.css 6px)·창 높이 상한(LCD −16px, screens-lcd.css)·걷기 가방 창 간격/여백/제목 크기(shop.css 에 명시)·타일 뽑기 카드 여백(죽은 규칙 삭제). 확인 창·고르기 창(4개)은 계산된 스타일·자리 비교에서 차이 0.
+- 나머지 픽셀 차이 = 무작위 내용(몬스터·캐릭터 모습·타일·시드)·애니메이션 시점(걷기·훈련 한 판·전투·컷인). 상태 화면(S15)·설정·방·월드맵·시장·확인 창·노란 알림·처음 화면 = 차이 0. 사용자 폰 문제(상태 화면 글자 잘림·버튼 판 밖·걷기 오른쪽 위 잘림)에 닿는 자리 변화 없음(ⓘ 36 은 보이지 않는 판 `::before`, 자리 안 차지).
+- 남긴 것(이유): 전투 이펙트 빛(battle-scene.css 공격 이름·광선·fxflash·edge-flash, `bha-hit`) = 이펙트라 전투 세션 몫 · 조우 띠(.bha-battle-ov) 글자 빛·선 그라데이션 = 전투 화면 · 옛 진화 연출 blur 키프레임(v2 evolvev2 가 대부분 덮음) · 안 쓰는 옛 컴포넌트 CSS(setbonus·linbar·result--win 등) · 겹치는 이름 row·pop·legend·dock·tut·toast·body 는 그대로(.bha-v2 루트 방식) · 상태·설정 화면 루트 `bha-v2` 는 이름 겹침만 풀고 안 닮(v2 ⓘ 36 칸 여백 −8 이 능력치 줄을 바꿈).
+- 테스트 갱신 c93·c170·c188·c266·c286·c287(옮긴 자리·새 이름). 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0(각 36번 누름).
+- 캡처 `docs/captures/c296/`(1배 844×390): before-/after- 짝 두 종족 × 방·전투·흡수 [내 상태]·결과·모험 준비·가방·상점 상세·설정·상태·스토리·튜토리얼 카드·확인 창·알림·고르기 창·걷기, 전체 174장 비교 표 `diff.txt`(고르기 창 after 는 높이 상한 고치기 전 캡처 — 고친 뒤 계산값 비교 차이 0).
+- 세이브 형식·밸런스 그대로.

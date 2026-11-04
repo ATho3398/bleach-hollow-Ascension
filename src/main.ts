@@ -3,6 +3,7 @@ import './ui/bha/design-system/themes'; // theme-*.css 자동 수집 (C.139)
 import './ui/bha/design-system/base.css';
 import './ui/bha/components/components.css';
 import './ui/bha/components/bha-v2.css'; // 디자인 v2 공용 컴포넌트 (C.282, GDD 183장 1 ①)
+import './ui/bha/components/v2-shared.css'; // v2 공용 보충 — 화면 세션 덮어쓰기를 공용으로 (C.296)
 import './ui/bha/icons/icons.css'; // 디자인 v2 도트 마스크 아이콘 .bha-i-* (C.282)
 import './ui/bha/screens/screens.css';
 import './ui/bha/app.css';
