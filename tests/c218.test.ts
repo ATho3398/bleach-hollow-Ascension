@@ -80,16 +80,17 @@ describe('C.218 드래프트 창·카드 고르는 창 (GDD 140장 2·3)', () =>
   const css = (p: string) => readFileSync(p, 'utf8');
   const view = readFileSync('src/ui/expeditionView.ts', 'utf8');
   it('카드는 같은 너비·같은 높이 격자(1fr 행), 이름·설명 줄바꿈, 말줄임·줄 수 제한·가로 밀기 없음 · 가로 화면 두 칸', () => {
-    const c = css('src/ui/bha/expedition.css');
-    expect(c).toMatch(/\.bha-draft__row \{ display: grid; grid-template-columns: minmax\(0, 1fr\); grid-auto-rows: 1fr;/);
-    expect(c).toMatch(/\.bha-nestsheet__body\.has-draft \{ display: grid; grid-template-columns: minmax\(0, 0\.8fr\) minmax\(0, 1\.2fr\);/);
-    const draft = c.slice(c.indexOf('.bha-draft {'), c.indexOf('/* 이벤트 타일 창'));
+    // 리디자인 v2 (GDD 183장 S12): 뽑기 카드 3장 한 줄(같은 너비·높이) · 오른쪽 손 · 아래 길 전체 폭
+    const c = css('src/ui/bha/walk-scene.css');
+    expect(c).toMatch(/\.bha-draft__row \{ grid-area: cards; display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); grid-auto-rows: 1fr;/);
+    expect(c).toMatch(/\.bha-nestsheet__body\.has-draft \{ grid-template-columns: minmax\(0, 1fr\) 196px;/);
+    const draft = c.slice(c.indexOf('.bha-draft__head {'), c.indexOf('/* 손 목록 끝 */'));
     expect(draft).not.toMatch(/line-clamp|text-overflow|overflow-x: auto|nowrap/);
   });
   it('버튼 줄 [귀환]·[한 바퀴 더] 같은 너비, 뒤 HUD 는 창이 떠 있으면 숨김', () => {
     const w = css('src/ui/bha/walk-scene.css');
-    expect(w).toMatch(/\.bha-sheet > \.bha-continue > \.bha-grid2 \{ flex: none; grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
-    expect(w).toMatch(/\.bha-exp\.has-sheet \.bha-exp__chips, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__corner \{ visibility: hidden; \}/);
+    expect(w).toMatch(/\.bha-sheet > \.bha-continue > \.bha-grid2 \{ display: grid; grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+    expect(w).toMatch(/\.bha-exp\.has-sheet \.bha-exp__chips, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__corner, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__hud \{ visibility: hidden; \}/);
   });
   it('임시 타일 설명은 한 번만, 머리 한 줄 "n바퀴 끝 — 타일 1장 고르기"', () => {
     const nest = view.slice(view.indexOf('function nestSheet'), view.indexOf('function eventSheet'));

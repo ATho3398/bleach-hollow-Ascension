@@ -111,10 +111,12 @@ describe('흡수 [내 상태] 진화 쏠림 (128장 7)', () => {
 describe('타일 칸 비율 (128장 9)', () => {
   it('바퀴 끝 창 길 칸 = 세로 카드꼴, 드래프트·손 카드 = 한 줄 가로 밀기', () => {
     const css = src('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-sheet \.bha-road__cell, \.bha-lcd \.bha-plan \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/);
+    // 리디자인 v2 (GDD 183장 S07·S12): 길 = 창·화면 폭 한 줄 12칸(가로 밀기 없음) — 바퀴 끝 창 40 높이, 출발 화면 48×52
+    const w = src('src/ui/bha/walk-scene.css');
     expect(css).not.toMatch(/flex: 0 0 72px; min-height: 48px/);
-    // 드래프트 카드는 C.218 (GDD 140장 2) 부터 같은 너비·높이 격자 (가로 밀기 대체) — tests/c218.test.ts
-    expect(css).toMatch(/\.bha-draft__row \{ display: grid; grid-template-columns: minmax\(0, 1fr\); grid-auto-rows: 1fr;/);
-    expect(css).toMatch(/\.bha-sheet \.bha-road__hand \{ flex-wrap: nowrap; overflow-x: auto/);
+    expect(w).toContain('.bha-nestsheet__body .bha-road__cell { height: 40px; }');
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road__cell { height: 52px; }');
+    // 드래프트 카드 = 같은 너비·높이 격자 (C.218, 140장 2) — tests/c218.test.ts
+    expect(w).toMatch(/\.bha-draft__row \{ grid-area: cards; display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); grid-auto-rows: 1fr;/);
   });
 });

@@ -8,7 +8,7 @@ const css = read('src/ui/bha/expedition.css');
 
 describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
   it('옛 손패/프리셋 토글 대신 [준비]/[타일 배치] 탭, 처음은 준비', () => {
-    expect(pv).toContain("label: k === 'prep' ? '준비' : '타일 배치'");
+    expect(pv).toContain("k === 'prep' ? '준비' : '타일 배치'");
     expect(pv).not.toContain("label: k === 'hand' ? '손패' : '프리셋'");
     expect(pv).toContain("setMode?.('prep');");
   });
@@ -21,9 +21,11 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
     expect(pv).toMatch(/querySelector\('\.bha-road'\)\?\.addEventListener\('click'[\s\S]*setMode\?\.\('place'\)/);
   });
   it('타일 배치 탭: 사냥터·난이도·설명 숨김, 길과 가진 타일은 두 열 전체 폭, [출발]은 그대로', () => {
-    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__difficulty');
-    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road { grid-column: 1 / -1; grid-row: 3; }');
-    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 9; }'); // C.267 [출발] 위 남은 높이만
+    // 리디자인 v2 (GDD 183장 S07): 사냥터·난이도 줄·설명 숨김, 길 = 전체 폭 한 줄, 가진 타일 = [출발] 띠 위 남은 높이(4열)
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,');
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc,');
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px;');
+    expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*bottom: 60px;[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/); // C.267 [출발] 위 남은 높이만
     expect(css).not.toMatch(/is-place[^{]*bha-plan__go[^{]*\{[^}]*display: none/);
   });
 });
@@ -34,6 +36,6 @@ describe('C.267 가진 타일 목록 스크롤', () => {
     const road = read('src/ui/bha/road.ts');
     expect(road).toContain("const handMore = el('div', 'bha-pop__more bha-road__more', '▼ 더 있음');");
     expect(road).toContain('handMore.hidden = hand.scrollTop + hand.clientHeight >= hand.scrollHeight - 2;');
-    expect(css).toContain('.bha-sheet .bha-road__more { display: none; }');
+    expect(read('src/ui/bha/walk-scene.css')).toContain('.bha-nestsheet__body .bha-road__more { display: none; }');
   });
 });

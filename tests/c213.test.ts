@@ -143,9 +143,9 @@ describe("136장 2: '한계 돌파' 표시 문구 → 폭주(호로)·호로화(
 
 describe('136장 3: 출발 화면 배치판 = 바퀴 끝 창과 같은 칸 비율 + 가로 밀기', () => {
   const css = readFileSync('src/ui/bha/expedition.css', 'utf8');
-  it('출발 화면 길은 한 줄 가로 스크롤, 칸 60×80 (바퀴 끝 창과 같은 규칙)', () => {
-    expect(css).toContain('.bha-sheet .bha-road, .bha-lcd .bha-plan .bha-road { display: flex; overflow-x: auto;');
-    expect(css).toContain('.bha-sheet .bha-road__cell, .bha-lcd .bha-plan .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px;');
+  it('출발 화면 길은 한 줄(리디자인 v2 S07: 전체 폭 12칸 48×52, 가로 밀기 없이 다 보임)', () => {
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px; top: 72px; height: 52px;');
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road__cell { height: 52px; }');
     expect(css).not.toContain('.bha-lcd .bha-plan .bha-road__cell { min-height: 40px; }');
   });
   it('길도 마우스 끌기로 넘긴다 (dragScroll)', () => {

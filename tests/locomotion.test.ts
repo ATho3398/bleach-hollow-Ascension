@@ -99,7 +99,8 @@ describe('체력 막대 = 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, 
   });
   it('방 발밑·걷기 체력 막대가 inside, 방 막대는 140px (온천은 C.201 128장 6 머리 위 상태 창으로 바뀜)', () => {
     expect(read('src/ui/roomView.ts')).toContain("const hp = el('div', 'bha-hp');"); // C.284 (GDD 183장 화면 A, v2 S01~S05): 방 = v2 .bha-hp
-    expect(read('src/ui/expeditionView.ts')).toMatch(/kind: 'player', label: '체력'[^\n]*inside: true/);
+    // 걷기 = 리디자인 v2 (GDD 183장 S08): 위 상태 줄의 길고 두꺼운 체력 막대(.bha-hp-bar 84×12) + 고정 폭 숫자
+    expect(read('src/ui/expeditionView.ts')).toContain("const hpTrack = el('div', 'bha-hp-bar');");
     expect(read('src/ui/spaView.ts')).toContain("gauge('hp', v2Icon('heart')");
     expect(read('src/ui/bha/room.css')).toContain('width: 156px;');
   });

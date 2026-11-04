@@ -128,7 +128,9 @@ describe('104장 3·9: 걷기 가운데 위 진행도 · 배치 칸 스크롤', 
   it('가운데 위 길 칸 줄 없음, 배치 화면 세로 스크롤 + [출발] 아래 고정', () => {
     expect(read('src/ui/expeditionView.ts')).not.toContain('bha-exp__strip');
     const css = read('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden auto;/);
-    expect(css).toMatch(/\.bha-plan__go \{[^}]*position: sticky; bottom: 0;/);
+    // 리디자인 v2 (GDD 183장 S06·S07): 넘치는 칸만 안에서 스크롤, [출발] 띠는 .bha-dock(아래 고정)
+    expect(css).toMatch(/\.bha-plan__descscroll \{[^}]*overflow-y: auto;/);
+    expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*overflow-y: auto;/);
+    expect(read('src/ui/planView.ts')).toContain("'bha-dock bha-plan__go'");
   });
 });

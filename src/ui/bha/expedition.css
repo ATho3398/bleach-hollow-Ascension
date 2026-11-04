@@ -11,23 +11,13 @@
 /* 흡수: 후보 없음 상태 */
 .bha-absorb__none { align-items: center; padding: var(--bha-sp-9) var(--bha-sp-6); }
 
-/* 둥지 칸 도착 시트: 뒤의 걷는 장면은 가리지 않고 살짝만 어둡게 */
-.bha-exp .bha-sheet__scrim { pointer-events: none; background: rgb(0 0 0 / .3); }
-.bha-exp .bha-sheet .bha-exp__hand { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-.bha-exp .bha-sheet .bha-tilechip, .bha-exp .bha-sheet .bha-tilecard { flex: none; }
-
 /* 시드·기록 저장 줄: 체크 아이콘을 글자 줄 안에 */
 .bha-seedline .bha-icon { display: inline-block; vertical-align: -3px; }
 
-/* 낮은 화면(360×740)에서 권장 바퀴 초과 경고 + 배치판이 있어도 시트가 넘치지 않도록 시트 안 여백을 줄인다 */
-@media (max-height: 780px), (orientation: portrait) {
-  .bha-exp .bha-sheet .bha-notice { padding: var(--bha-sp-3) var(--bha-sp-5); }
-  .bha-exp .bha-sheet { gap: var(--bha-sp-4); }
-}
-
-/* ═════ R-1 (GDD 17-1) 걷는 화면 ═════ 캐릭터는 항상 왼쪽을 향해 걷고(반측면), 배경이 오른쪽으로 흐른다. 아래는 임시 아트(기존 토큰만) */
-.bha-exp__scene { position: relative; min-height: 0; border-radius: var(--bha-r-lg); overflow: hidden; border: 1px solid var(--bha-line-2); background: var(--bha-bg-1); }
-.bha-walk { --walk-speed: 1; position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, var(--bha-bg-0) 0%, var(--bha-bg-2) 62%, var(--bha-bg-1) 62%); }
+/* ═════ R-1 (GDD 17-1) 걷는 화면 ═════ 캐릭터는 항상 왼쪽을 향해 걷고(반측면), 배경이 오른쪽으로 흐른다.
+   리디자인 v2 (GDD 183장, S08): 그림이 없는 사냥터의 임시 장면 — 평평한 면(벽·바닥 띠)과 무늬만, 빛·그라데이션 없음 */
+.bha-exp__scene { position: relative; min-height: 0; overflow: hidden; background: var(--bha-bg-1); }
+.bha-walk { --walk-speed: 1; position: absolute; inset: 0; overflow: hidden; background: linear-gradient(var(--bha-bg-1) 0 30%, var(--bha-scene-wall) 30% 62%, var(--bha-scene-floor) 62% 100%); }
 .bha-walk__layer { position: absolute; left: 0; right: 0; background-repeat: repeat-x; animation-iteration-count: infinite; animation-timing-function: linear; animation-play-state: paused; }
 .is-walking .bha-walk__layer, .is-walking .bha-walker__body, .is-walking .bha-walker__foot { animation-play-state: running; }
 /* 먼 배경: 느린 언덕 줄무늬 / 가까운 배경: 빠른 기둥 / 바닥: 가장 빠른 점선 — 모두 오른쪽으로 흐른다 */
@@ -38,14 +28,14 @@
 @keyframes bha-walk-scroll-near { to { background-position-x: 88px; } }
 @keyframes bha-walk-scroll-ground { from { background-position-x: 0; } to { background-position-x: 64px; } }
 
-/* 캐릭터: 둥근 몸 + 눈 하나(왼쪽 앞쪽) + 발 둘. 오른쪽에서 왼쪽을 보고 걷는 반측면 */
+/* 캐릭터(그림이 없을 때의 임시 몸): 둥근 몸 + 눈 하나(왼쪽 앞쪽) + 발 둘. 오른쪽에서 왼쪽을 보고 걷는 반측면 */
 .bha-walker { position: absolute; left: 38%; bottom: 20%; width: clamp(56px, 22%, 120px); aspect-ratio: 1; }
 .bha-walker__shadow { position: absolute; left: 10%; right: 10%; bottom: -6%; height: 10%; border-radius: 50%; background: rgb(0 0 0 / .45); }
-.bha-walker__body { position: absolute; inset: 0 0 12% 0; border-radius: 48% 52% 42% 42%; background: radial-gradient(circle at 36% 32%, #fff, var(--bha-primary-bg) 45%, color-mix(in srgb, var(--bha-accent) 70%, #000)); box-shadow: 0 0 0 2px var(--bha-bg-0), 0 0 14px var(--bha-accent-soft); animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-play-state: paused; animation-duration: calc(.7s / var(--walk-speed)); }
+.bha-walker__body { position: absolute; inset: 0 0 12% 0; border-radius: 48% 52% 42% 42%; background: var(--bha-primary-bg); box-shadow: 0 0 0 2px var(--bha-bg-0), inset 0 4px 0 var(--bha-hi), inset 0 -6px 0 var(--bha-lo); animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-play-state: paused; animation-duration: calc(.7s / var(--walk-speed)); }
 .bha-walker.has-art .bha-walker__body { background: none; box-shadow: none; border-radius: 0; inset: 0; }
 .bha-walker__img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)); pointer-events: none; } /* 왼쪽을 보는 그림 그대로 = 왼쪽으로 걷는다 */
-.bha-walker__eye { position: absolute; left: 16%; top: 30%; width: 14%; height: 18%; border-radius: 50%; background: var(--bha-bg-0); box-shadow: 0 0 0 2px rgb(255 255 255 / .6); }
-.bha-walker__foot { position: absolute; bottom: -8%; width: 22%; height: 14%; border-radius: 50% 50% 40% 40%; background: color-mix(in srgb, var(--bha-accent) 55%, #000); animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-play-state: paused; animation-duration: calc(.7s / var(--walk-speed)); }
+.bha-walker__eye { position: absolute; left: 16%; top: 30%; width: 14%; height: 18%; border-radius: 50%; background: var(--bha-bg-0); box-shadow: 0 0 0 2px var(--bha-text-2); }
+.bha-walker__foot { position: absolute; bottom: -8%; width: 22%; height: 14%; border-radius: 50% 50% 40% 40%; background: var(--bha-bg-3); animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-play-state: paused; animation-duration: calc(.7s / var(--walk-speed)); }
 .bha-walker__foot--front { left: 22%; animation-name: bha-step-a; }
 .bha-walker__foot--back { left: 52%; animation-name: bha-step-b; opacity: .8; }
 @keyframes bha-step-a { 0%, 100% { transform: translate(-10%, 0); } 50% { transform: translate(14%, -35%); } }
@@ -57,238 +47,25 @@
 @keyframes bha-bob-plain { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6%); } }
 @keyframes bha-bob-stomp { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10%) rotate(3deg); } }
 @keyframes bha-bob-stride { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4%) rotate(-1.5deg); } }
-
-/* 길 배치판 (카드 배치 단계·배치 팝업): 12칸을 6열 2줄로 보인다 */
-.bha-road__wrap { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
-.bha-road { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--bha-sp-2); }
-.bha-road__cell { position: relative; min-height: var(--bha-touch); padding: 0; display: grid; place-items: center; border-radius: var(--bha-r-sm); border: 1.5px dashed var(--bha-line-2); background: rgb(0 0 0 / .3); color: var(--bha-text-3); }
-.bha-road__cell .bha-icon { width: 18px; height: 18px; }
-.bha-road__cell--nest { border-style: solid; border-color: var(--bha-primary-line); color: var(--bha-text-1); background: var(--bha-bg-2); }
-.bha-road__num { position: absolute; bottom: 0; right: 3px; font-size: 12px; line-height: 1.1; color: var(--bha-text-2); font-variant-numeric: tabular-nums; }
-.bha-road__cell.is-has { --tile: var(--bha-bg-3); border-style: solid; border-color: rgb(255 255 255 / .35); background: linear-gradient(180deg, rgb(255 255 255 / .2), transparent 60%), var(--tile); color: #fff; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
-.bha-road__cell.is-has .bha-road__num { color: rgb(255 255 255 / .75); }
-.bha-road__cell--prey.is-has { --tile: var(--bha-tile-prey); }
-.bha-road__cell--elite.is-has { --tile: var(--bha-tile-elite); }
-.bha-road__cell--env.is-has { --tile: var(--bha-tile-env); }
-.bha-road__cell--rest.is-has { --tile: var(--bha-tile-rest); }
-.bha-road__cell.is-can { border: 2px solid var(--bha-insert); color: var(--bha-insert); background: rgb(108 196 255 / .12); animation: bha-pulse-can 1.1s ease-in-out infinite; }
-.bha-road__note { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); min-height: 1.3em; }
-.bha-road__noterow { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); min-width: 0; }
-.bha-road__noterow .bha-road__note { flex: 1 1 auto; min-width: 0; }
-.bha-road__cell.is-editable { border-color: var(--bha-insert); }
-.bha-road__cell.is-selected { outline: 2px solid var(--bha-insert); outline-offset: 1px; }
-.bha-road__hand { flex-wrap: wrap; }
-/* 인접 시너지 (GDD 25-5 ②, C.57): 두 칸 테두리 + 칸 사이 이름표 + 아래 한 줄 목록. 이벤트 타일 색은 봉인 보라 토큰 */
-.bha-road__cell.has-syn { box-shadow: 0 0 0 2px var(--bha-rare), 0 2px 6px rgb(0 0 0 / .5); }
-.bha-road__syn { position: absolute; top: 0; left: calc(-1 * var(--bha-sp-2) / 2); transform: translate(-50%, -55%); z-index: 1; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); border: 1px solid var(--bha-rare); background: var(--bha-bg-0); color: var(--bha-rare); font-size: var(--bha-fs-xs); line-height: 1.35; font-weight: 700; white-space: nowrap; pointer-events: none; }
-.bha-road__syn--wrap { left: 0; transform: translate(-10%, -55%); }
-.bha-road__synline { margin: 0; display: flex; flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-4); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-road__synline b { color: var(--bha-rare); }
-.bha-road__cell--event.is-has { --tile: var(--bha-seal); }
-/* 고정 칸 (GDD 121장 1, C.196): 처음부터 놓였거나 앞 바퀴에서 확정된 칸 — 흐린 테두리 + 왼쪽 위 작은 자물쇠. 누르면 "고정 칸 — 바꿀 수 없다" */
-.bha-road__cell.is-locked { border-style: dashed; border-color: var(--bha-line-2); box-shadow: none; }
-.bha-road__cell.is-has.is-locked { filter: saturate(.7) brightness(.85); }
-.bha-road__lock { position: absolute; top: var(--bha-sp-1); left: var(--bha-sp-1); display: grid; place-items: center; padding: var(--bha-sp-1); border-radius: var(--bha-r-pill); background: var(--bha-bg-0); color: var(--bha-text-2); line-height: 0; pointer-events: none; }
-.bha-road__cell .bha-road__lock .bha-icon { width: 10px; height: 10px; }
-/* 바퀴 끝 창(드래프트) 길 줄 (GDD 121장 3, C.196): 창 폭에 6칸씩 눌러 담지 않고 출발 화면과 같은 칸 크기로 한 줄, 넘치면 옆으로 민다.
-   창 안 스크롤 칸(.bha-sheet__scroll, 세로 flex)이 배치판 높이를 줄여 칸이 잘리던 것도 막는다 */
-.bha-sheet .bha-road__wrap { flex-shrink: 0; }
-/* C.213 (GDD 136장 3 · 128장 9 · 121장 3 "같은 패턴 다 같게"): 출발 화면 배치판도 같은 한 줄 60×80 칸 + 가로 밀기 (기기 ▲▼ 는 device.move 의 scrollIntoView 가 그 칸을 보이게 민다) */
-.bha-sheet .bha-road, .bha-lcd .bha-plan .bha-road { display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: var(--bha-sp-4) var(--bha-sp-1) var(--bha-sp-2); }
-/* 출발 화면은 아래 여백만 줄여 안내 줄까지 [출발] 띠 위에서 끝나게 (위 8px 은 칸 사이 시너지 이름표 자리) */
-.bha-lcd .bha-plan .bha-road { padding-bottom: 0; }
-.bha-sheet .bha-road__cell, .bha-lcd .bha-plan .bha-road__cell { flex: 0 0 60px; min-height: 0; height: 80px; scroll-snap-align: start; }
-/* C.202 (GDD 128장 9): 칸은 손패 카드처럼 세로로 넉넉한 비율(3:4) — 가로로 눌린 72×48 칸을 대체. 손 카드 줄도 한 줄 가로 밀기 */
-.bha-sheet .bha-road__cell .bha-icon, .bha-lcd .bha-plan .bha-road__cell .bha-icon { width: 24px; height: 24px; }
-.bha-sheet .bha-road__hand { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: var(--bha-sp-1); }
-.bha-sheet .bha-road__hand > * { flex: none; scroll-snap-align: start; }
-/* C.218 (GDD 140장 2): 바퀴 끝 창 손 카드는 가로꼴(아이콘 왼쪽 · 이름·설명 오른쪽) — 창이 가로 화면 한 장에 들어가게. 같은 너비, 줄 높이에 맞춰 같은 높이 */
-.bha-sheet .bha-road__hand > .bha-tilecard { display: grid; grid-template-columns: 32px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--bha-sp-2); row-gap: 0; align-items: start; width: 156px; min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-2); text-align: left; }
-.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__icon { grid-row: span 2; align-self: center; width: 32px; height: 32px; }
-.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__icon .bha-icon { width: 20px; height: 20px; }
-.bha-sheet .bha-road__hand > .bha-tilecard .bha-tilecard__count { top: auto; bottom: var(--bha-sp-1); left: var(--bha-sp-1); min-width: 0; line-height: 16px; }
-
-/* 드래프트 (GDD 25-5 ①, C.57): 바퀴 끝 팝업 안 3장 중 1장 */
-.bha-draft { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; }
-.bha-draft__head { margin: 0; }
-/* C.218 (GDD 140장 2): 카드 N장은 같은 너비·같은 높이(격자 1fr 행). 아이콘은 왼쪽 칸, 이름·설명은 오른쪽 칸에서 줄바꿈(말줄임·줄 수 제한 없음).
-   (C.202 의 가로 밀기 128px 카드는 글 길이에 따라 너비가 달라 보였다) */
-.bha-draft__row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; row-gap: var(--bha-sp-2); padding: var(--bha-sp-2) var(--bha-sp-1) 0; }
-.bha-draft__row > .bha-draft__card { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--bha-sp-3); row-gap: var(--bha-sp-1); align-items: start; width: auto; min-width: 0; min-height: 0; height: auto; padding: var(--bha-sp-2) var(--bha-sp-3); border-radius: var(--bha-r-md); text-align: left; white-space: normal; }
-.bha-draft__card .bha-tilechip__icon { grid-row: span 2; align-self: center; width: 32px; height: 32px; }
-.bha-draft__card .bha-tilechip__icon .bha-icon { width: 20px; height: 20px; }
-.bha-draft__name { min-width: 0; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
-.bha-draft__hint { min-width: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
-.bha-draft__tag { position: absolute; top: calc(-1 * var(--bha-sp-2)); right: var(--bha-sp-2); }
-.bha-draft__card:disabled:not(.is-selected) { opacity: .45; }
-/* 바퀴 끝 창 몸통: 드래프트가 있으면 두 칸(왼쪽 카드 · 오른쪽 배치판), 없으면 배치판만 */
-.bha-nestsheet__body { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; }
-.bha-nestsheet__body.has-draft { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); align-items: start; gap: var(--bha-sp-4); }
-.bha-nestsheet__body > * { min-width: 0; }
-.bha-lcd .bha-exp .bha-sheet.bha-sheet--wide { width: min(640px, calc(100% - 24px)); }
-/* 이벤트 타일 창 (GDD 25-5 ③) */
-.bha-event__choices { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
-.bha-event__choices > .bha-btn { flex: 1 1 40%; }
-.bha-event__foot { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-event__loot { font-size: var(--bha-fs-lg); font-weight: 700; color: var(--bha-rare); }
-/* 바퀴 변이 배너 (GDD 25-5 ④): 걷는 장면 위 가운데 */
-.bha-exp__banner { position: absolute; top: var(--bha-sp-8); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); max-width: 46%; padding: var(--bha-sp-2) var(--bha-sp-4); border-radius: var(--bha-r-md); border: 1px solid var(--bha-rare); background: rgb(0 0 0 / .62); text-align: center; pointer-events: none; }
-.bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
-.bha-exp__banner[hidden] { display: none; }
-/* 보스 기척 (GDD 37장): 자유 원정 보스가 나온 바퀴 */
-.bha-exp__banner--boss { border-color: var(--bha-danger); }
-
-/* 카드 배치 단계 화면 */
-.bha-plan { gap: var(--bha-sp-4); }
-.bha-plan__title { display: flex; align-items: center; gap: var(--bha-sp-3); margin: 0; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-xl); }
-.bha-plan__sub { margin: 0; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
-/* 사냥터 고르기 (GDD 24-2) */
-.bha-plan__grounds { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
-.bha-exp__head .bha-plan__grounds { flex: 1; justify-content: flex-end; }
-/* 원정 난이도 ★ 고르기 (GDD 32-1): 사냥터 줄과 같은 꼴, 머리 아래 한 줄 */
-.bha-plan__difficulty { justify-content: flex-start; }
-.bha-plan__label { color: var(--bha-text-2); font-size: var(--bha-fs-sm); margin-right: var(--bha-sp-1); }
-.bha-plan__difficulty .bha-tag { margin-left: var(--bha-sp-1); }
-/* C.170 (GDD 100장 #3·#22~#24): 페이지 스크롤 없음 — 왼쪽 = 사냥터 설명·난이도·안내·길, 오른쪽 = 손패(또는 프리셋, 이것만 스크롤), 아래 = [출발] 고정 띠.
-   배치판(.bha-road__wrap)은 display: contents 로 풀어 그 안의 길·손패가 이 격자의 칸이 된다 (끌어 놓기 범위는 DOM 그대로) */
-.bha-lcd .bha-app.bha-plan {
-  /* C.176 (GDD 104장 9): overflow hidden 이라 LCD 가 낮으면(폰 주소창·작은 화면) 아래 [출발] 이 잘리고 손가락·휠 스크롤이 안 됐다 →
-     세로 스크롤 + [출발] 띠는 아래에 붙어(sticky) 늘 보인다. 기기 ▲▼ 이동은 device.move 의 scrollIntoView 가 그 칸을 보이게 한다 */
-  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; overflow: hidden auto; overscroll-behavior: contain; padding: var(--bha-sp-3) var(--bha-sp-4) 0;
-  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: repeat(8, max-content) minmax(0, 1fr) max-content; /* C.176: auto 행은 칸이 모자라면 내용보다 줄어 겹쳤다 → max-content(넘치면 스크롤). 오른쪽 목록은 1fr 행에 걸쳐 크기 계산에서 빠진다 */
-  column-gap: var(--bha-sp-4); row-gap: var(--bha-sp-1); align-content: stretch; /* C.196: 안내 줄 2줄 자리를 위해 행 간격 4 → 2px */
-}
-.bha-lcd .bha-app.bha-plan.is-locked { grid-template-columns: minmax(0, 1fr); }
-.bha-lcd .bha-plan > * { grid-column: 1; min-width: 0; }
-.bha-lcd .bha-plan > .bha-exp__head { grid-column: 1 / -1; grid-row: 1; }
-/* C.196 (GDD 116장 3 · 121장 추가): 설명 줄은 말줄임 없이 줄바꿈으로 다 보인다. 고를 때마다 글 길이가 달라도 아래 버튼이 움직이지 않게 가장 긴 글의 줄 수만큼 높이를 잡아 둔다 */
-.bha-lcd .bha-plan > .bha-plan__sub { grid-row: auto; line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
-.bha-lcd .bha-plan > .bha-plan__sub:not(.bha-plan__line) { min-height: calc(2em * var(--bha-lh-tight)); }
-.bha-lcd .bha-plan .bha-road__wrap { display: contents; }
-.bha-lcd .bha-plan .bha-road { grid-column: 1; grid-row: 6; }
-.bha-lcd .bha-plan .bha-road__synline { grid-column: 1; grid-row: 7; }
-.bha-lcd .bha-plan .bha-road__noterow { grid-column: 1; grid-row: 8; }
-.bha-lcd .bha-plan .bha-road__hand { grid-column: 2; grid-row: 2 / 10; flex-wrap: wrap; overflow-x: hidden; overflow-y: auto; min-height: 0; align-content: flex-start; padding: var(--bha-sp-1); }
-.bha-lcd .bha-plan .bha-plan__sidetabs { grid-column: 2; grid-row: 2; display: flex; gap: var(--bha-sp-2); }
-.bha-lcd .bha-plan .bha-plan__side { grid-column: 2; grid-row: 3 / 10; }
-.bha-lcd .bha-plan .bha-road__hand:has(~ .bha-plan__sidetabs) { grid-row: 3 / 10; }
-.bha-lcd .bha-plan .bha-plan__side { overflow-y: auto; min-height: 0; }
-.bha-lcd .bha-plan .bha-road__hand[hidden], .bha-lcd .bha-plan .bha-plan__side[hidden] { display: none; }
-.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; position: sticky; bottom: 0; z-index: var(--bha-z-raised); padding: var(--bha-sp-2) 0 var(--bha-sp-3); background: var(--bha-bg-1); }
-.bha-plan__go .bha-btn { min-height: var(--bha-touch); }
-.bha-plan__presets { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
-
 @media (prefers-reduced-motion: reduce) {
   .bha-walk__layer, .bha-walker__body, .bha-walker__foot { animation: none; }
 }
 /* 이동 애니(has-anim-move, GDD 26장)가 있으면 그림이 직접 걸으므로 걸음 흔들림을 끈다(좌우 흐름만). 설정의 화면 흔들림 끔(html[data-calm])도 흔들림을 멈춘다 */
 .bha-walker.has-anim-move .bha-walker__body, .bha-walker.has-anim-move .bha-walker__foot, html[data-calm] .bha-walker__body { animation: none; }
 
-
-/* ═════ C.141 (GDD 85장 11번): 타일 카드·배치판 카드·끌어놓기·배치 프리셋 ═════ */
-/* 손 타일 카드: 큰 아이콘 · 이름 · 효과 한 줄 · 장수 */
-.bha-tilecard {
-  --tile: var(--bha-bg-3);
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--bha-sp-1);
-  width: 96px; min-height: 104px; padding: var(--bha-sp-3) var(--bha-sp-2);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--tile) 28%, var(--bha-bg-2)), var(--bha-bg-2) 70%);
-  color: var(--bha-text-1); text-align: center; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
-  transition: transform var(--bha-dur-1), border-color var(--bha-dur-2), box-shadow var(--bha-dur-2);
-}
-.bha-tilecard__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--tile); color: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / .45); }
-.bha-tilecard__icon .bha-icon { width: 24px; height: 24px; }
-.bha-tilecard__name { font-size: var(--bha-fs-sm); line-height: 1.15; word-break: keep-all; }
-/* C.218 (GDD 140장 3): 설명은 줄 수 제한 없이 줄바꿈 — 같은 줄 카드는 줄(flex) 높이에 맞춰 같은 높이 */
-.bha-tilecard__hint { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); word-break: keep-all; overflow-wrap: anywhere; }
-/* 수량은 왼쪽 위, 키 배지는 오른쪽 위 (GDD 100장 #26: '×4'+'1' 이 '×41' 로 읽히던 문제) */
-/* 이어하기 배율 줄 (GDD 121장 5, C.195): [한 바퀴 더] 아래 */
-.bha-continue { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
-.bha-continue-mult { margin: 0; text-align: right; font-size: var(--bha-fs-xs); color: var(--bha-warn); font-variant-numeric: tabular-nums; }
-/* C.218: [귀환]·[한 바퀴 더] 아래 작은 글 한 줄 — 왼쪽 = 지킨다, 오른쪽 = 다음 바퀴 배율 */
-.bha-continue__notes { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bha-sp-3); }
-.bha-continue__notes > .bha-continue-mult { flex: 1 1 auto; min-width: 0; }
-.bha-continue-keep { flex: none; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-/* 임시 타일 표시 (GDD 121장 4 ②, C.195): 칸·카드 오른쪽 위 구석에 작은 시계 */
-.bha-tempmark { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); color: var(--bha-warn); pointer-events: none; }
-.bha-tempmark .bha-icon, .bha-road__cell .bha-tempmark .bha-icon { width: 11px; height: 11px; }
-.bha-tilecard .bha-tempmark { top: var(--bha-sp-2); right: var(--bha-sp-2); width: 20px; height: 20px; }
-.bha-tilecard .bha-tempmark .bha-icon { width: 14px; height: 14px; }
-.bha-tilecard__count { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-2); min-width: 22px; padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .5); font-size: var(--bha-fs-xs); line-height: 20px; font-variant-numeric: tabular-nums; }
-.bha-tilecard--prey  { --tile: var(--bha-tile-prey); }
-.bha-tilecard--elite { --tile: var(--bha-tile-elite); }
-.bha-tilecard--env   { --tile: var(--bha-tile-env); }
-.bha-tilecard--rest  { --tile: var(--bha-tile-rest); }
-.bha-tilecard--event { --tile: var(--bha-seal); }
-.bha-tilecard:active { transform: scale(0.97); }
-.bha-tilecard.is-selected { border: 2px solid var(--tile); box-shadow: 0 0 12px color-mix(in srgb, var(--tile) 45%, transparent); }
-.bha-tilecard.is-dragging { opacity: .35; }
-.bha-road__hand { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
-/* 배치판 칸: 카드꼴 — 놓은 타일은 아이콘 + 이름 */
-.bha-road__cell { min-height: 64px; flex-direction: column; gap: var(--bha-sp-1); align-content: center; }
-.bha-road__cell.is-has { display: flex; align-items: center; justify-content: center; }
-.bha-road__cell.is-editable { cursor: grab; touch-action: pan-y; }
-.bha-road__cell.is-dragging { opacity: .35; }
-.bha-road__cell.is-drop, .bha-road__hand.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: rgb(108 196 255 / .2); }
-.bha-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--tile, var(--bha-bg-3)); color: #fff; box-shadow: 0 8px 20px rgb(0 0 0 / .6); }
-.bha-drag-ghost .bha-icon { width: 26px; height: 26px; }
-.bha-road.is-dragging-tile, .is-dragging-tile { user-select: none; -webkit-user-select: none; }
-/* 배치 프리셋 패널 */
-.bha-presets { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
-.bha-presets__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2) var(--bha-sp-3); }
-.bha-presets__title { font-size: var(--bha-fs-sm); }
-.bha-presets__note { flex: 1 1 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); min-height: 1.2em; }
-.bha-presets__input { flex: 1 1 120px; min-width: 0; min-height: 36px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-sm); }
-/* C.176 (GDD 104장 8): 프리셋 칸 가로 칩 · 미리보기 한 줄 · 버튼 4개 한 줄 */
-.bha-presets__chips { display: flex; gap: var(--bha-sp-2); overflow-x: auto; scrollbar-width: none; padding: var(--bha-sp-1); }
-.bha-presets__chip {
-  flex: 1 1 0; min-width: 56px; max-width: 120px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: var(--bha-sp-1);
-  padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-2);
-  color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-xs); cursor: pointer; touch-action: manipulation;
-}
-.bha-presets__chip.is-empty { border-style: dashed; color: var(--bha-text-2); background: transparent; }
-.bha-presets__chip .bha-icon { width: 14px; height: 14px; }
-.bha-presets__chip.is-on { border: 2px solid var(--bha-focus); background: var(--bha-bg-3); }
-.bha-presets__chipname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; height: 40px; justify-content: center; } /* GDD 173장 2: 높이 고정(줄무늬+요약 / 빈 칸 안내 / 이름 입력) — 아래 버튼 4개 자리 고정 */
-.bha-presets__view > .bha-faint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
-.bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
-.bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-1); gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
-.bha-presets__acts > .bha-btn .bha-icon { width: 14px; height: 14px; }
-/* C.183 UI 검수: 안내 줄은 비어도 자리 유지·한 줄 고정 — 비면 줄이 접혀 아래 버튼 4개가 22px 오르내렸고, 긴 이름이 든 안내는 두 줄이 됐다 */
-.bha-presets__note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; min-height: 1.5em; }
-.bha-presetcard { display: flex; flex-direction: column; gap: var(--bha-sp-2); padding: var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
-.bha-presetcard__top { display: flex; align-items: center; gap: var(--bha-sp-2); min-height: 36px; }
-.bha-presetcard__name { font-size: var(--bha-fs-sm); }
-.bha-presetcard__strip { display: flex; gap: 2px; }
-.bha-presetcard__cell { flex: 1 1 0; min-width: 0; height: 14px; border-radius: 2px; border: 1px dashed var(--bha-line-2); background: rgb(0 0 0 / .3); }
-.bha-presetcard__cell--prey { border: 0; background: var(--bha-tile-prey); }
-.bha-presetcard__cell--elite { border: 0; background: var(--bha-tile-elite); }
-.bha-presetcard__cell--env { border: 0; background: var(--bha-tile-env); }
-.bha-presetcard__cell--rest { border: 0; background: var(--bha-tile-rest); }
-.bha-presetcard__cell--event { border: 0; background: var(--bha-seal); }
-.bha-presetcard__meta { color: var(--bha-text-3); font-size: var(--bha-fs-xs); }
-.bha-presetcard__acts { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
-/* 원정 출발 화면: 길(왼쪽)과 손 카드(오른쪽)를 같이 보여 끌어놓기가 스크롤 없이 된다 (C.141) */
-.bha-road__wrap { user-select: none; -webkit-user-select: none; }
-/* 안내 줄 (C.196): 말줄임 없이 줄바꿈, 긴 타일 설명도 다 보인다 — 2줄 자리를 잡아 둬 [출발] 띠에 가리지 않는다 */
-.bha-lcd .bha-plan .bha-road__note { line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; min-height: calc(2em * var(--bha-lh-tight)); }
-.bha-lcd .bha-plan .bha-tilecard { width: calc(50% - var(--bha-sp-2)); min-height: 96px; }
-
-/* 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오르고, 끝나면 회복 숫자(.bha-float--heal)가 떠오른다. 종족 무관 */
+/* 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오르고, 끝나면 회복 숫자(.bha-float--heal)가 떠오른다. 종족 무관.
+   v2: 퍼지는 빛(그라데이션) 대신 반투명 면 한 겹 + 도트 '+' */
 .bha-walker__heal { position: absolute; inset: 0; pointer-events: none; }
 .bha-walker__heal[hidden] { display: none; }
 .bha-walker__heal::before {
-  content: ""; position: absolute; left: 8%; right: 8%; bottom: 4%; height: 90%; z-index: 1; pointer-events: none;
+  content: ""; position: absolute; left: 14%; right: 14%; bottom: 4%; height: 80%; z-index: 1; pointer-events: none;
   border-radius: 50% 50% 40% 40%;
-  background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--bha-good) 55%, transparent), transparent 70%);
+  background: color-mix(in srgb, var(--bha-good) 22%, transparent);
   animation: bha-heal-rise 1.1s var(--bha-ease-out) infinite;
 }
 .bha-walker__heal::after {
   content: "+ + +"; position: absolute; left: 50%; bottom: 60%; z-index: 2; transform: translateX(-50%); pointer-events: none;
-  color: var(--bha-good); font-weight: 800; font-size: var(--bha-fs-lg); letter-spacing: 0.4em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.8);
+  color: var(--bha-good); font-family: var(--bha-font-num); font-size: var(--bha-fs-lg); letter-spacing: 0.4em; text-shadow: 0 1px 0 var(--bha-bg-0);
   animation: bha-heal-plus 1.1s var(--bha-ease-out) infinite;
 }
 .bha-walker__healnum { transform: translateX(-50%); font-size: var(--bha-fs-md); z-index: 3; }
@@ -297,21 +74,202 @@
 @keyframes bha-heal-plus { 0% { opacity: 0; transform: translate(-50%, 30%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -90%); } }
 @media (prefers-reduced-motion: reduce) { .bha-walker.is-healing::before, .bha-walker__heal::after { animation: none; opacity: 0.8; } }
 
-/* ── 모험 준비 화면 탭 [준비] / [타일 배치] (GDD 179장, C.266) ──
-   준비 = 왼쪽 사냥터·난이도·길 미리보기, 오른쪽 탭 + 프리셋. 타일 배치(.is-place) = 사냥터·난이도·설명·프리셋을 숨기고 길(위 한 줄 전체)과 가진 타일(아래 넓게)만. 탭은 머리 줄 오른쪽(도움말 왼쪽), [출발] 띠는 그대로 */
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__sub:not(.bha-plan__line),
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__difficulty,
-.bha-lcd .bha-app.bha-plan.is-place > .bha-exp__head .bha-plan__grounds { display: none; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-plan__modetabs { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; margin-right: calc(var(--bha-touch) + var(--bha-sp-2)); z-index: 1; }
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { grid-column: 1 / -1; grid-row: 2; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road { grid-column: 1 / -1; grid-row: 3; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { grid-column: 1 / -1; grid-row: 4; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { grid-column: 1 / -1; grid-row: 5; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand { grid-column: 1 / -1; grid-row: 9; } /* C.267: 남은 높이(1fr 행)만 쓰고 그 안에서 스크롤 — [출발] 띠 밑에 깔리지 않게 */
-.bha-lcd .bha-app.bha-plan.is-place .bha-tilecard { width: calc(25% - var(--bha-sp-2)); min-height: 88px; }
-/* 준비 탭: 배치 요령 줄(타일을 고른 뒤 …)은 배치 탭에서만 */
-.bha-lcd .bha-app.bha-plan:not(.is-place):has(.bha-plan__modetabs) .bha-road__noterow { display: none; }
-/* 가진 타일 목록 '▼ 더 있음' (C.267): 목록 바닥에 붙는 한 줄 (목록 폭 전체) */
-.bha-road__more { flex: 0 0 100%; bottom: 0; margin: 0; padding: var(--bha-sp-1) 0; }
+/* ═════ 길 배치판 (카드 배치 단계·바퀴 끝 창 공통, GDD 17-1 · 121장 · 128장 9) ═════
+   리디자인 v2 (GDD 183장): 칸 = 정사각 도트 판(움푹한 면), 놓인 타일 = 타일 색 면 + 밝은 윗선·어두운 아랫면. 그라데이션·빛 없음 */
+.bha-road__wrap { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; user-select: none; -webkit-user-select: none; }
+.bha-road { display: flex; gap: 4px; min-width: 0; }
+.bha-road__cell {
+  --tile: var(--bha-bg-3);
+  position: relative; flex: 1 1 0; min-width: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-3); cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo);
+}
+.bha-road__cell .bha-icon { width: 20px; height: 20px; }
+.bha-road__cell--nest { color: var(--bha-text-2); background: var(--bha-bg-2); }
+.bha-road__num { position: absolute; bottom: 1px; right: 3px; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); line-height: 1.1; color: var(--bha-text-3); }
+.bha-road__cell.is-has { background: var(--tile); color: var(--bha-text-1); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-lo); }
+.bha-road__cell.is-has .bha-road__num { color: var(--bha-text-1); }
+.bha-road__cell--prey.is-has { --tile: var(--bha-tile-prey); }
+.bha-road__cell--elite.is-has { --tile: var(--bha-tile-elite); }
+.bha-road__cell--env.is-has { --tile: var(--bha-tile-env); }
+.bha-road__cell--rest.is-has { --tile: var(--bha-tile-rest); }
+.bha-road__cell--event.is-has { --tile: var(--bha-seal); }
+/* 놓을 수 있는 칸 = 청록 테두리 2px(빛 없음) */
+.bha-road__cell.is-can { color: var(--bha-insert); background: var(--bha-bg-1); box-shadow: inset 0 0 0 2px var(--bha-insert); }
+.bha-road__cell.is-editable { cursor: grab; touch-action: pan-y; }
+.bha-road__cell.is-selected { outline: 2px solid var(--bha-insert); outline-offset: 1px; }
+.bha-road__cell.is-dragging { opacity: .35; }
+.bha-road__cell.is-drop, .bha-road__hand.is-drop { outline: 2px solid var(--bha-insert); outline-offset: 1px; background-color: color-mix(in srgb, var(--bha-insert) 18%, var(--bha-bg-1)); }
+/* 고정 칸 (GDD 121장 1, C.196): 처음부터 놓였거나 앞 바퀴에서 확정된 칸 — 흐린 색 + 오른쪽 아래가 아닌 왼쪽 위 작은 자물쇠(번호와 안 겹치게). 누르면 "고정 칸 — 바꿀 수 없다" */
+.bha-road__cell.is-locked { box-shadow: inset 0 0 0 1px var(--bha-line-1); }
+.bha-road__cell.is-has.is-locked { opacity: .78; }
+.bha-road__lock { position: absolute; top: 1px; left: 1px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-2); box-shadow: 0 0 0 1px var(--bha-line-2); line-height: 0; pointer-events: none; }
+.bha-road__cell .bha-road__lock .bha-icon { width: 12px; height: 12px; }
+/* 인접 시너지 (GDD 25-5 ②, C.57): 두 칸 테두리(봉인 보라) + 칸 사이 이름표 + 아래 한 줄 목록 */
+.bha-road__cell.has-syn { box-shadow: 0 0 0 2px var(--bha-rare), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-lo); }
+.bha-road__syn { position: absolute; top: 0; left: -2px; transform: translate(-50%, -60%); z-index: 1; padding: 0 4px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-rare); box-shadow: 0 0 0 1px var(--bha-rare); font-size: var(--bha-fs-xs); line-height: 16px; font-weight: 800; white-space: nowrap; pointer-events: none; }
+.bha-road__syn--wrap { left: 0; transform: translate(-10%, -60%); }
+.bha-road__synline { margin: 0; display: flex; flex-wrap: wrap; gap: 2px var(--bha-sp-4); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-road__synline b { color: var(--bha-rare); }
+.bha-road__note { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); min-height: 1.3em; }
+.bha-road__noterow { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-3); min-width: 0; }
+.bha-road__noterow .bha-road__note { flex: 1 1 auto; min-width: 0; }
+/* 임시 타일 표시 (GDD 121장 4 ②, C.195): 칸·카드 구석에 작은 시계 */
+.bha-tempmark { position: absolute; top: 1px; right: 1px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-warn); pointer-events: none; }
+.bha-tempmark .bha-icon, .bha-road__cell .bha-tempmark .bha-icon { width: 12px; height: 12px; }
 
-.bha-sheet .bha-road__more { display: none; } /* 바퀴 끝 배치판 손은 가로 스크롤 한 줄 — 세로 '더 있음' 없음 (C.267) */
+/* ═════ 손 타일 카드 (C.141, GDD 85장 11번) — v2 .bha-card--tile 모양 ═════
+   그림 칸(30, 타일 색 아이콘) + 이름 / 한 줄 효과(줄바꿈, 말줄임 없음 — GDD 140장 3) / 오른쪽 위 ×장수 / 아랫면 타일 색 3px */
+.bha-road__hand { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
+.bha-tilecard {
+  --tile: var(--bha-bg-3);
+  position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); grid-template-rows: 30px auto; column-gap: 6px; row-gap: 2px; align-items: center;
+  width: 140px; min-height: 0; padding: 8px; box-sizing: border-box; border: 0; border-radius: var(--bha-r-md);
+  background: var(--bha-bg-1); color: var(--bha-text-1); text-align: left; font-family: var(--bha-font-body); cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 0 0 1px var(--bha-line-1), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--tile);
+}
+.bha-tilecard__icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); color: var(--tile); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
+.bha-tilecard__icon .bha-icon { width: 20px; height: 20px; }
+.bha-tilecard__name { min-width: 0; padding-right: 22px; font-size: var(--bha-fs-sm); font-weight: 800; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-tilecard__hint { grid-column: 1 / -1; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-text-2); word-break: keep-all; overflow-wrap: anywhere; }
+/* 수량 = 오른쪽 위 도트 숫자(v2 .bha-count), 임시 표시 = 오른쪽 아래 */
+.bha-tilecard__count { position: absolute; top: 4px; right: 6px; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-2); }
+.bha-tilecard .bha-tempmark { top: auto; bottom: 6px; right: 4px; }
+.bha-tilecard--prey  { --tile: var(--bha-tile-prey); }
+.bha-tilecard--elite { --tile: var(--bha-tile-elite); }
+.bha-tilecard--env   { --tile: var(--bha-tile-env); }
+.bha-tilecard--rest  { --tile: var(--bha-tile-rest); }
+.bha-tilecard--event { --tile: var(--bha-seal); }
+.bha-tilecard:active { transform: translateY(1px); }
+/* 고른 카드 = 한 단 밝은 면 + 타일 색 2px 테두리 (빛 없음) */
+.bha-tilecard.is-selected { background: var(--bha-bg-3); box-shadow: 0 0 0 2px var(--tile), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--tile); }
+.bha-tilecard.is-dragging { opacity: .35; }
+.bha-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--bha-r-sm); background: var(--tile, var(--bha-bg-3)); color: var(--bha-text-1); box-shadow: 0 0 0 1px var(--bha-line-2), var(--bha-shadow-3); }
+.bha-drag-ghost .bha-icon { width: 26px; height: 26px; }
+.bha-road.is-dragging-tile, .is-dragging-tile { user-select: none; -webkit-user-select: none; }
+/* 가진 타일 목록 '▼ 더 있음' (C.267, v2 .bha-more 모양): 목록 바닥에 붙는 한 줄 (목록 폭 전체), 끝까지 내리면 숨김 */
+.bha-road__more { grid-column: 1 / -1; flex: 0 0 100%; position: sticky; bottom: 0; margin: 0; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+
+/* ═════ 배치 프리셋 판 (GDD 85장 11번 · 104장 8) ═════ */
+.bha-presets { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+.bha-presets__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2) var(--bha-sp-3); }
+.bha-presets__title { font-size: var(--bha-fs-sm); }
+/* C.183: 안내 줄은 비어도 자리 유지·한 줄 고정 (아래 버튼이 오르내리지 않게) */
+.bha-presets__note { flex: 1 1 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; min-height: 1.5em; }
+.bha-presets__input { flex: 1 1 120px; min-width: 0; min-height: 36px; padding: 0 var(--bha-sp-3); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-sm); }
+.bha-presets__chips { display: flex; gap: var(--bha-sp-2); overflow-x: auto; scrollbar-width: none; padding: var(--bha-sp-1); }
+.bha-presets__chip {
+  flex: 1 1 0; min-width: 56px; max-width: 120px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: var(--bha-sp-1);
+  padding: 0 var(--bha-sp-3); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1), inset 0 1px 0 var(--bha-hi);
+  color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-xs); cursor: pointer; touch-action: manipulation;
+}
+.bha-presets__chip.is-empty { color: var(--bha-text-3); background: transparent; box-shadow: inset 0 0 0 1px var(--bha-line-1); }
+.bha-presets__chip .bha-icon { width: 14px; height: 14px; }
+.bha-presets__chip.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 3px 0 0 var(--bha-accent); }
+.bha-presets__chipname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-presets__view { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 36px; height: 40px; justify-content: center; } /* GDD 173장 2: 높이 고정(줄무늬+요약 / 빈 칸 안내 / 이름 입력) — 아래 버튼 자리 고정 */
+.bha-presets__view > .bha-faint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--bha-fs-xs); }
+.bha-presets__view:has(.bha-presets__input) { flex-direction: row; align-items: center; }
+.bha-presets__sum { font-size: var(--bha-fs-xs); color: var(--bha-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-presets__acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-presets__acts > .bha-btn { min-width: 0; padding-inline: var(--bha-sp-1); gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
+.bha-presets__acts > .bha-btn .bha-icon { width: 14px; height: 14px; }
+.bha-presetcard__strip { display: flex; gap: 2px; }
+.bha-presetcard__cell { flex: 1 1 0; min-width: 0; height: 12px; border-radius: 1px; background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
+.bha-presetcard__cell--prey { box-shadow: none; background: var(--bha-tile-prey); }
+.bha-presetcard__cell--elite { box-shadow: none; background: var(--bha-tile-elite); }
+.bha-presetcard__cell--env { box-shadow: none; background: var(--bha-tile-env); }
+.bha-presetcard__cell--rest { box-shadow: none; background: var(--bha-tile-rest); }
+.bha-presetcard__cell--event { box-shadow: none; background: var(--bha-seal); }
+
+/* ═════ 모험 준비 화면 (리디자인 v2, GDD 183장 S06·S07 · 179장 탭) ═════
+   LCD 646×360 안 고정 자리(px): 머리 0~44 / 왼쪽 열 10~408 · 오른쪽 프리셋 판 418~636 (위 50~292) / 아래 [출발] 띠 56(.bha-dock).
+   준비 = 사냥터 줄 36 · 난이도 줄 36 · 설명(고정 높이, 안에서 스크롤 + '▼ 더 있음') · 길 미리보기 줄 40.
+   타일 배치(.is-place) = 안내 줄 · 길 한 줄(전체 폭 12칸) · 고른 타일 안내 · 가진 타일 4열(남은 높이에서만 스크롤 + 더 있음).
+   배치판(.bha-road__wrap)은 display: contents 로 풀어 그 안의 길·손 목록·프리셋을 이 화면 자리에 둔다 (끌어 놓기 범위는 DOM 그대로).
+   글 길이·고른 것이 바뀌어도 모든 버튼은 같은 자리 (GDD 173장 2) */
+.bha-lcd .bha-app.bha-plan {
+  position: absolute; inset: 0; width: auto; height: auto; min-height: 0; max-width: none; padding: 0; display: block; overflow: hidden;
+  background: var(--bha-bg-0);
+}
+.bha-lcd .bha-plan .bha-road__wrap { display: contents; }
+.bha-lcd .bha-plan > .bha-head { background: var(--bha-bg-1); box-shadow: inset 0 -1px 0 var(--bha-line-1); }
+.bha-plan__title { display: flex; align-items: center; gap: var(--bha-sp-3); margin: 0; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-xl); }
+.bha-lcd .bha-plan > .bha-head .bha-plan__title { font-size: var(--bha-fs-lg); white-space: nowrap; }
+.bha-lcd .bha-plan .bha-tab .bha-icon { width: 16px; height: 16px; }
+.bha-plan__sub { margin: 0; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-plan__label { flex: none; width: 44px; color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+/* 사냥터 줄 · 난이도 줄 (GDD 24-2 · 32-1): 이름표 44 + 작은 버튼(36). 고른 것 = 한 단 밝은 면 + 아랫면 강조색 */
+.bha-lcd .bha-plan > .bha-plan__row { position: absolute; left: 10px; width: 398px; height: 36px; display: flex; align-items: center; gap: 6px; }
+.bha-lcd .bha-plan > .bha-plan__grounds:not(.bha-plan__difficulty) { top: 50px; }
+.bha-lcd .bha-plan > .bha-plan__difficulty { top: 92px; }
+.bha-lcd .bha-plan .bha-plan__row > .bha-btn { flex: 0 1 auto; min-width: 0; padding: 0 10px; gap: 4px; font-size: var(--bha-fs-sm); white-space: nowrap; }
+.bha-lcd .bha-plan .bha-plan__row > .bha-btn .bha-icon { width: 14px; height: 14px; }
+.bha-lcd .bha-plan .bha-plan__row > .bha-btn.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent); color: var(--bha-text-1); }
+.bha-plan__rec { height: 18px; background: var(--bha-tint-teal); color: var(--bha-bg-0); }
+/* 설명 칸: 고정 높이 움푹한 면, 안에서 스크롤 + 바닥 '▼ 더 있음' (PROMPT 5절 2) */
+.bha-lcd .bha-plan > .bha-plan__desc { position: absolute; left: 10px; width: 398px; top: 134px; height: 112px; box-sizing: border-box; overflow: hidden; }
+.bha-plan__descscroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 8px 10px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; }
+.bha-lcd .bha-plan .bha-plan__sub:not(.bha-plan__line) { min-height: calc(2em * var(--bha-lh-tight)); }
+.bha-plan__descscroll > .bha-plan__sub { font-size: var(--bha-fs-sm); line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-plan__descscroll > .bha-plan__sub:first-child { color: var(--bha-text-1); }
+.bha-plan__more { background: var(--bha-bg-0); }
+.bha-plan__more[hidden] { display: none; }
+/* 길 미리보기 줄 (준비 탭): '길' 이름표 + 12칸(24 정사각) + 놓은 수. 칸을 누르면 타일 배치 탭으로 (GDD 179장 2) */
+.bha-lcd .bha-plan > .bha-plan__roadlabel { position: absolute; left: 10px; top: 252px; width: 36px; line-height: 40px; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road { position: absolute; left: 48px; top: 260px; width: 321px; height: 24px; gap: 3px; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell { flex: 0 0 24px; height: 24px; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell .bha-icon { width: 14px; height: 14px; }
+/* 미리보기 칸은 24 정사각이지만 누르는 자리는 위아래 6px 더(36) — 어느 칸을 눌러도 타일 배치 탭으로 간다 */
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell::after { content: ""; position: absolute; inset: -6px -1px; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__num,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__lock,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__syn,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-tempmark,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__synline,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__noterow { display: none; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) > .bha-plan__line { position: absolute; left: 374px; top: 252px; width: 40px; line-height: 40px; text-align: left; white-space: nowrap; }
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-plan__how { display: none; }
+.bha-plan__line .bha-num { font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-1); }
+/* 오른쪽 배치 프리셋 판 */
+.bha-lcd .bha-plan .bha-plan__side { position: absolute; left: 418px; right: 10px; top: 50px; height: 242px; box-sizing: border-box; padding: 8px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.bha-lcd .bha-plan .bha-plan__side[hidden] { display: none; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__head { flex-wrap: nowrap; justify-content: space-between; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__title { flex: none; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__note { flex: 1 1 auto; min-width: 0; text-align: right; }
+/* 프리셋 = 세로 줄 목록(v2 .bha-row 모양), 넘치면 안에서 스크롤 */
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__chips { flex: 1 1 0; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 2px; gap: 4px; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__chip { flex: none; max-width: none; min-height: 36px; justify-content: flex-start; padding: 0 10px; font-size: var(--bha-fs-sm); font-weight: 800; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__view { flex: none; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts { flex: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn { font-size: var(--bha-fs-sm); }
+/* 첫 진화 전(타일 잠김, GDD 64장 1번): 탭·길·프리셋 없음 — 안내 한 줄이 길 줄 자리에 */
+.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__roadlabel { display: none; }
+.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line { left: 10px; width: 398px; top: 252px; line-height: 1.4; white-space: normal; }
+.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line .bha-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; }
+/* [출발] 띠 (GDD 100장 #3·#22): 아래 56 고정, 버튼 48 */
+.bha-lcd .bha-plan > .bha-plan__go { z-index: var(--bha-z-raised); }
+.bha-plan__go .bha-btn { min-height: var(--bha-btn-h-lg); }
+
+/* 타일 배치 탭 (.is-place, GDD 179장 3): 사냥터·난이도·설명·프리셋·길 이름표 숨김 */
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc,
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__roadlabel { display: none; }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { position: absolute; left: 10px; width: 58%; top: 48px; height: 20px; line-height: 20px; font-size: var(--bha-fs-sm); }
+/* 길 = 가로 한 줄 전체 폭(시작 + 11자리 = 12칸, 48×52) — 위 8px 은 칸 사이 시너지 이름표 자리 */
+.bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px; top: 72px; height: 52px; padding-top: 0; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__cell { height: 52px; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__cell .bha-icon { width: 22px; height: 22px; }
+/* 고른 타일 안내 = 길 아래 2줄 자리(말줄임 없이 줄바꿈, GDD 116장 3 · C.196) · 시너지 목록 = 위 안내 줄 오른쪽 */
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { position: absolute; left: 10px; right: 10px; top: 128px; height: 32px; align-items: flex-start; }
+.bha-lcd .bha-plan .bha-road__note { min-height: calc(2em * var(--bha-lh-tight)); font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { position: absolute; right: 10px; width: 40%; top: 48px; height: 20px; flex-wrap: nowrap; overflow: hidden; white-space: nowrap; line-height: 20px; justify-content: flex-end; }
+/* 가진 타일 = 4열 카드, [출발] 띠 위 남은 높이에서만 스크롤 (C.267) */
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand {
+  position: absolute; left: 10px; right: 10px; top: 164px; bottom: 60px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: max-content; align-content: start; gap: 8px;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 2px 2px 0;
+}
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand[hidden] { display: none; }
+.bha-lcd .bha-plan .bha-road__hand .bha-tilecard { width: auto; }
+.bha-lcd .bha-plan .bha-road__hand > .bha-empty { grid-column: 1 / -1; }
