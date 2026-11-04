@@ -1237,7 +1237,7 @@ data/
 - 운영 메모: 배포 대기는 scratchpad until 루프(run_in_background), pkill 금지(자기 명령까지 죽음). git 푸시가 가끔 몇 분 멈춤 → timeout 90. ntfy 자주 429(재시도 금지). 다음 코딩 193.
 **11-04 14:2x 사용자 지시(픽셀FX 담당) → 185장(v5.423)**: 원문 "ㅇㅋ 넣어" — 이펙트 배치 도구 [확정] 값(fx/fixed)을 게임에: 블록마다 도트 이펙트(113장 시트)·연타 타이밍·타격마다 값·투사체·연결 동작(성별마다). C.281 픽셀FX 담당.
 **11-04 15:5x C.281·C.282 배포 확인**: C.281(픽셀FX 68acec7, run 364 success) 블록 도트 이펙트 — 캡처 c281 사신 참 베기 확인 · C.282(코딩195 ed3d60b, run 365 success, 배포 JS 에 "C.282") 리디자인 ① 공용 부품(토큰·컴포넌트·Silkscreen·아이콘 150 매핑, 임시 매핑 24개) — 캡처 c282 호로 방·사신 전투 확인(화면 배치는 아직 옛 모양 = A~F 몫). 코딩195 → 상태 확인 후 처리.
-**11-04 16:0x 사용자 "디자인 나머지 묶음도 진행시켜"** → 183장 화면 세션 7개 A~G(코딩199~205) 바로 엶(렉 코딩197 과 병렬, 겹치면 pull --rebase). 다음 코딩 206.
+**11-04 16:0x 사용자 "디자인 나머지 묶음도 진행시켜"** → 183장 화면 세션 7개 바로 엶: A 코딩199 session_01YVaigLASMkx7RrPBsKV89g · B 코딩200 session_01YVaigHqbUJRe3yU95ge9KF · C 코딩201 session_01YVaigKqY4QEfLYcRsd1zPb · D 코딩202 session_01YVaigGAaBZdQV9Rs2oqbyG · E 코딩203 session_01YVaigFy3P7sFub61PevvMo · F 코딩204 session_01YVaigHuWcYX3L8ZckXPt9c · G 코딩205 session_01YVaigL73iQWjJLqjmKBMXc(렉 코딩197 과 병렬, 겹치면 pull --rebase). 다음 코딩 206.
 **11-04 15:5x 사용자 지시 → 186장(v5.425)**: 렉 원인·수정 → **코딩197**(session_01YVaigLTzYGhgNG3dtP4yib) · 노력치 흡수 안 됨 조사 → **코딩198**(session_01YVaigGLzzaJ2woiNZiGeo4, 보고만) · 184장 → **코딩196**(session_01YVaigK7L3v7UrEWHAmqe46). 리디자인 A~F 는 코딩197 뒤. 다음 코딩 199.
 **11-04 14:0x 사용자 지시 → 184장(v5.422)**: 새 버전 알림 앱 켜자마자(작은 버전 파일 즉시 확인 · 처음 화면 자동 다시 시작) → **코딩196**. + 사용자 질문 "fx세션에서 만든 이펙트 왜 게임에 적용 안돼있음?" → 픽셀FX 담당은 사용자 [확정]+"ㅇㅋ" 때만 게임 연결(00:5x 사용자 규칙), 지금 연결 0곳 — 답함. 다음 코딩 197.
 **11-04 14:0x 사용자 지시 → 183장(v5.421)**: UI 리디자인 v2 적용 — 디자인 원본 docs/design/redesign-v2/. ① 공용 부품 → **코딩195**(session_01YVaigKMVaxCRHZV1mwNFTt) 먼저, 배포 뒤 화면 6세션(A~F) 병렬. 다음 코딩 196.
