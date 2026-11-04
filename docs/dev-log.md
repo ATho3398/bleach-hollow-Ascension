@@ -2119,4 +2119,4 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 유지: 픽셀FX(familyFx pixel·pixelSheet·bodySlot)·종이인형 rigMotion·봉인('봉인'+초)·막기 경직 표시·튜토리얼 대상 선택자(`[data-sc="guard"]`·`[data-sc^="block."]`·data-help battle.tray/runrow/guard)·기기 순서(막기·소모품·장비·해방 → 블록 칸).
 - 점검(새 스크립트 `scripts/ui-audit/c297-battle.cjs` — 두 종족 × 평소·체인2·체인3·봉인·소모품·장비 낀 것·해방, 상태는 테스트 전역 `__bhaCombat` 을 그 순간만 바꿔 만듦): 폰 796×384 터치 전 0 → 후 0, 글자 1.15 전 2(적 이름 세로 잘림) → 후 0. 고치는 중 잡은 것: 소모품·장비 숨긴 이름의 말줄임 판정 → display:none, 체인 이름표가 박스 밖 판정 → 테를 ::before 로.
 - 테스트 갱신 c169·c171·c183(범례 줄 없음·둥근 막기·is-absent). 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0.
-- 캡처 `docs/captures/c297/`(1배): pc-(844×390) · phone-(796×384 터치) · phone115-(+글자 1.15) × hollow/shinigami × normal·chain2·chain3·seal·items·lib, `phone-checks.json`.
+- 캡처 `docs/captures/c297/`(1배): pc-(844×390) · phone-(796×384 터치) · phone115-(+글자 1.15) × hollow/shinigami × normal·chain2·chain3·seal·items·lib, `phone-checks.json`, 이펙트 장면 `fx-phone-{hollow,shinigami}-1.png`(체인2 사용 직후 — 픽셀FX 물어뜯기·파도 2 백뢰 광선 + 체인 박스 발동, 픽셀FX 연결 코드 안 건드림).
