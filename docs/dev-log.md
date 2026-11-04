@@ -1906,3 +1906,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 화면 세션 사용법 `docs/design/redesign-v2/README-game.md`.
 - 테스트 `tests/c282.test.ts`(9) + 갱신 c96(토스트 선택자)·c116(호로 bg-0)·c128(경고 띠 속성 토큰)·c151(.bha-root 토큰 = 전역 별칭).
 - 캡처 `docs/captures/c282/`(1배 844×390, `scripts/c282-proof.cjs`): 두 종족 방·월드맵·상점 상세·전투·흡수·가방·상태·설정 + 뼈 껍데기 꾸미기 방. 글자 넘침 검사: 가방 하위 탭 '전투 소모품'·'칼자루 장식' 3px(55>52, 원래 있던 좁은 칸 — 화면 세션 E 몫).
+
+## C.283 — 새 버전 알림 = 앱 켜자마자: 작은 버전 파일 즉시 확인 · 처음 화면 자동 다시 시작 (GDD 184장, v5.426, S-23, 코딩196 Opus)
+- 원인: 새 서비스 워커가 미리 받기(파일 417개·약 46MB)를 끝낸 뒤(installed)에야 띠 → 폰에서 수십 초~1~2분.
+- 빌드 id(`vite.config.ts` BUILD_ID = 커밋-빌드 시각)를 앱(`__BUILD_ID__`)과 `dist/version.json`·pwa-info.json `build` 에 같이 쓴다. version.json 은 미리 캐시 목록 밖, 워커 fetch 가 손대지 않는다(`sw-template.js`).
+- `src/pwa.ts`: 켜자마자(등록·load 안 기다림)·다시 꺼낼 때(visible, 최소 5초 간격)·10분마다·새 워커 installed/활성 알림 때 version.json 을 no-store 로 확인 → 다르면 즉시 띠. 처음 화면(`title`·`species`)이면 "새 버전으로 다시 시작한다…" 한 줄 뒤 0.9초에 자동 다시 시작. 오프라인·첫 설치(controller 없음)·dev·테스트 = 아무것도 안 함. 활성 알림만으로 띠를 띄우지 않으므로 새 빌드로 연 뒤 새 워커가 활성화돼도 띠가 또 안 뜬다.
+- [다시 시작](`restartToLatest`): 잠긴 흐름(전투·원정·연출) 밖이면 저장 → 주소에 `bha-v=<빌드>` 붙여 `location.replace`(HTTP 캐시 옛 index 회피, 화면 열기는 원래 네트워크 먼저, 새 해시 JS 는 캐시에 없어 네트워크) → 켜진 뒤 주소에서 `bha-v` 지움. 그림·소리는 새 워커가 뒤에서 받는다.
+- 고리 방지: 자동 다시 시작 대상을 sessionStorage `bha-update-restart` 에 적고, 같은 대상이면 두 번째는 띠만. 저장소를 못 쓰면 자동 대신 띠.
+- 문구: 처음 화면 옛 줄("앱을 닫았다 다시 열면 적용된다") → "새 버전으로 다시 시작한다…"(text-style).
+- 테스트 `tests/c283.test.ts`(10) + 갱신 c116(처음 화면 안내)·c130(확인 간격 줄).
+- 측정(`scripts/c283-proof.cjs`, 로컬 preview 빌드 두 벌): 방에서 띠 **0.05초**(옛 방식 새 워커 installed = 로컬 1.56초, 폰 망에선 46MB 라 수십 초~분), 처음 화면 안내 0.04초 → 새 빌드로 열림 1.04초, 다시 연 뒤 띠 재발 없음. 캡처 `docs/captures/c283/`(1배): 처음 화면 자동 다시 시작 직전 · 방 띠.
+- 세이브 형식·밸런스 그대로.

@@ -12,6 +12,9 @@ function gitCommit(): string {
   }
 }
 
+// 빌드 고유 id (GDD 184장, C.283): 앱에 넣고 dist/version.json 에도 같은 값을 쓴다 — 켤 때 둘이 다르면 새 버전
+const BUILD_ID = `${gitCommit()}-${Date.now().toString(36)}`;
+
 // 그림 파일 조회 (GDD 17-6, 26장): public/art/ 안의 png·webp 이름을 빌드 시 모아 앱에 넣는다(런타임에 없는 파일을 요청하지 않는다).
 // 한 단계 아래 폴더(프레임 애니, 예 char-hollow-1/idle-1.png)는 `폴더/파일` 이름으로 함께 모은다
 function artFiles(): string[] {
@@ -97,7 +100,9 @@ function pwaPlugin() {
         .replace('__VERSION__', version)
         .replace('__PRECACHE__', JSON.stringify(precache, null, 1));
       writeFileSync(`${dir}/sw.js`, src);
-      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, files: precache.length, bytes }) + '\n');
+      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, build: BUILD_ID, files: precache.length, bytes }) + '\n');
+      // C.283: 작은 버전 파일(미리 캐시 목록 밖 — 워커가 손대지 않는다). 앱이 켜자마자 no-store 로 본다
+      writeFileSync(`${dir}/version.json`, JSON.stringify({ build: BUILD_ID }) + '\n');
     },
   };
 }
@@ -108,6 +113,7 @@ export default defineConfig({
   plugins: [pwaPlugin()],
   define: {
     __BUILD_COMMIT__: JSON.stringify(gitCommit()),
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
     __ART_FILES__: JSON.stringify(artFiles()),
     __ART_ANIMS__: JSON.stringify(artAnims()),
     __BGM_FILES__: JSON.stringify(bgmFiles()),

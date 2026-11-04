@@ -1,12 +1,12 @@
 // 새 버전 알림 (C.130 → C.163, GDD 60장·99장 6): 서비스 워커가 새 배포를 받아 두면 어느 화면에서든 LCD 가운데 창 + 큰 가로 [다시 시작].
 // 뒤를 막(scrim)으로 덮어 뒤 버튼이 눌리지 않고, 아래 독·토스트와 겹치지 않는다(예전: 화면 아래 띠가 독·브라우저 안내와 겹쳤다). [나중에]는 작게.
-// 누르면 새로고침해 새 버전으로 연다(원정 중이면 마지막 중간 저장에서 이어하기). 나중에 = 이번 실행 동안 다시 안 띄운다
+// 누르면 새로고침해 새 버전으로 연다(원정 중이면 마지막 중간 저장에서 이어하기). C.283: 버전 파일로 바로 알고, 다 받기를 기다리지 않고 새 index·JS 를 네트워크에서(pwa.ts restartToLatest). 나중에 = 이번 실행 동안 다시 안 띄운다
 import { button, el } from './bha/dom';
 import { trapModalFocus } from './bha/modalFocus';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
-import { onUpdateReady } from '../pwa';
+import { onUpdateReady, restartToLatest } from '../pwa';
 
-export function mountUpdateBanner(reload: () => void = () => location.reload()): void {
+export function mountUpdateBanner(reload: () => void = () => restartToLatest()): void {
   onUpdateReady(() => {
     if (document.querySelector('.bha-update')) return;
     const layer = el('div', 'bha-overlay bha-overlay--in-app bha-update');

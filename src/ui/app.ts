@@ -54,6 +54,7 @@ import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { blockInput, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
+import { setUpdateHost } from '../pwa';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
@@ -225,6 +226,12 @@ export function startApp(host: HTMLElement): void {
     touchSlot(store, slot);
   };
   const storageWarned = new Set<string>();
+  // 새 버전 (GDD 184장 3, C.283): 처음 화면(게임 시작 전 — 슬롯·종족 고르기)이면 자동 다시 시작. 다시 시작 직전 저장은
+  // 잠긴 흐름(전투·원정·연출) 밖에서만 — 그 안은 마지막 중간 저장에서 이어한다(저장 꼬임 방지)
+  setUpdateHost({
+    isPreGame: () => nav.top?.id === 'title' || nav.top?.id === 'species',
+    saveNow: () => { if (nav.top && !nav.top.locked) persist(); },
+  });
   /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */

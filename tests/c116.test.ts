@@ -47,9 +47,9 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     expect(read('src/main.ts')).toContain('registerServiceWorker()');
   });
 
-  it('시작 화면이 새 버전 안내를 건다(다시 열면 적용)', () => {
+  it('시작 화면이 새 버전 안내를 건다 (C.283: 처음 화면은 자동 다시 시작 — GDD 184장 3)', () => {
     const v = read('src/ui/startView.ts');
-    expect(v).toContain('onUpdateReady');
-    expect(v).toContain('다시 열면 적용');
+    expect(v).toContain('onAutoRestart');
+    expect(v).toContain('새 버전으로 다시 시작한다');
   });
 });

@@ -80,6 +80,8 @@ self.addEventListener('fetch', (event) => {
   // C.196: 음악(긴 mp3)은 브라우저가 조각(Range)으로 나눠 받는다. 캐시의 통째 응답(200)을 중간 조각 요청에 돌려주면
   // 재생기가 오류로 멈춰 곡 중간에 끊겼다 — 조각 요청·플레이리스트 파일은 워커가 손대지 않고 브라우저가 직접 받는다
   if ((req.headers && req.headers.has('range')) || url.pathname.includes('/audio/playlist/')) return;
+  // C.283 (GDD 184장): 버전 파일은 늘 네트워크에서(캐시에 넣지도 꺼내지도 않는다) — 켜자마자 새 배포를 알아본다
+  if (url.pathname.endsWith('/version.json')) return;
   if (req.mode === 'navigate') {
     // C.130: 게임 화면(index.html)은 네트워크 먼저 — 캐시 먼저면 배포 뒤 첫 실행이 늘 옛 index·옛 스크립트로 떠서 새 규칙이 한 번 늦게 적용됐다.
     // 받은 화면은 캐시에 넣어 두고, 오프라인이거나 NAV_TIMEOUT_MS 안에 답이 없으면 캐시(주소 뒤 ?… 가 붙어도 같은 게임 화면)

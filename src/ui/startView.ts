@@ -3,7 +3,7 @@
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
 import { PATCH_LABEL } from '../version';
-import { onUpdateReady } from '../pwa';
+import { onAutoRestart } from '../pwa';
 import { button, el, mountApp, notice } from './bha/dom';
 import { logoMark } from './bha/logo';
 
@@ -119,9 +119,9 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   // 첫 화면엔 버전 이름만 (#2). 단계·밸런스·커밋까지 든 자세한 줄은 설정 > 정보
   const ver = el('p', 'bha-start__ver', `v ${PATCH_LABEL}`);
   nodes.push(ver);
-  // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
-  onUpdateReady(() => {
-    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았다. 앱을 닫았다 다시 열면 적용된다.'));
+  // 새 버전 (GDD 184장 3, C.283): 처음 화면이면 누르지 않아도 자동 다시 시작 — 직전에 한 줄 안내
+  onAutoRestart(() => {
+    if (ver.isConnected && !ver.parentElement?.querySelector('.bha-start__update')) ver.after(el('p', 'bha-start__ver bha-start__update', '새 버전으로 다시 시작한다…'));
   });
   // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
   mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);
