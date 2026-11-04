@@ -473,7 +473,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const gearBtn = actBtn('gear', 'equip', '장비');
   // 블록 생성 게이지 (GDD 178장 1·2): [막기] 왼쪽, 같은 알약 모양. 버튼이 아니라 표시(누르지 않는다·초점 대상 아님).
   // 엔진의 실제 생성 타이머·간격(spawnGaugeOf)을 읽어 차오른다. 블록 바 가득 = 가득·흐림, 봉인 = 자물쇠·회색·남은 초 (블록 칸은 덮지 않는다)
-  // C.285 (GDD 183장 화면 C, PROMPT 4절): v2 표시 칸 `.bha-gen` — 움푹한 면 + generate 아이콘 + '다음 블록' + 막대. 봉인 = 자물쇠 + '봉인' + 남은 초
+  // C.285 (GDD 183장 화면 C, PROMPT 4절): v2 표시 칸 `.bha-gen` — 움푹한 면 + generate 아이콘 + '블록'(GDD 187장, C.294 — 옛 '생성'·'다음 블록') + 막대. 봉인 = 자물쇠 + '봉인' + 남은 초
   const spawnPill = el('div', 'bha-gen bha-v2role--spawn');
   spawnPill.setAttribute('role', 'status');
   const spawnIcon = el('span', 'bha-v2role__ico');
@@ -484,8 +484,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const spawnFill = el('i');
   spawnBar.append(spawnFill);
   const spawnMeta = el('span', 'bha-num bha-v2role__meta bha-v2role__meta--spawn');
-  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2gen__name', '다음 블록'), el('span', 'bha-v2gen__name bha-v2gen__name--seal', '봉인'), spawnBar, spawnMeta);
-  const roles = el('div', 'bha-v2roles'); // 스킬창 둘째 줄: [다음 블록 표시 칸][막기][소모품][장비] (PROMPT 6절 S09)
+  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2gen__name', '블록'), el('span', 'bha-v2gen__name bha-v2gen__name--seal', '봉인'), spawnBar, spawnMeta);
+  const roles = el('div', 'bha-v2roles'); // 스킬창 둘째 줄: [블록 게이지 표시 칸][막기][소모품][장비] (PROMPT 6절 S09)
   roles.append(spawnPill, guardBtn.root, itemBtn.root, gearBtn.root);
 
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
@@ -1231,7 +1231,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const spawnLabel = sg.state === 'sealed' ? `봉인 — 새 ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)} (있는 블록은 쓸 수 있다)`
       : sg.state === 'full' ? `블록 바가 가득 차 생성 정지`
         : sg.state === 'paused' ? `${labels.role.guard}·경직 중 생성 정지`
-          : sg.state === 'off' ? `블록 생성 게이지`
+          : sg.state === 'off' ? `블록 게이지`
             : `다음 ${labels.skillBlock}까지 ${Math.round(sg.fill * 100)}% · ${sg.intervalSeconds.toFixed(1)}초마다 1개`;
     if (spawnPill.getAttribute('aria-label') !== spawnLabel) {
       spawnPill.setAttribute('aria-label', spawnLabel);
