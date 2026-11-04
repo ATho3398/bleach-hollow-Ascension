@@ -1,7 +1,7 @@
 // C.283 (GDD 184장): 새 버전 알림 = 앱 켜자마자. 작은 버전 파일(version.json)을 no-store 로 보고 지금 빌드와 다르면 즉시 띠,
 // 처음 화면(게임 시작 전)이면 자동 다시 시작, 같은 대상으로 두 번 연속 자동 다시 시작하지 않는다(무한 새로고침 방지).
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BUILD_ID, RESTART_KEY, decideUpdate, fetchLatestBuild, restartUrl, runUpdateCheck, type UpdateCheckDeps } from '../src/pwa';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -71,7 +71,9 @@ describe('C.283 새 버전 알림 = 켜자마자 (GDD 184장)', () => {
     const ok = async (u: string, i?: RequestInit) => (calls.push([u, i]), { ok: true, json: async () => ({ build: 'abc-1' }) });
     expect(await fetchLatestBuild(ok, 'https://x/app/index.html', 36)).toBe('abc-1');
     // C.295 (GDD 188장): 매번 다른 꼬리(?t=)로 CDN·브라우저 캐시를 모두 건너뛴다
-    expect(calls[0]).toEqual(['https://x/app/version.json?t=10', { cache: 'no-store' }]);
+    expect(calls[0]![0]).toBe('https://x/app/version.json?t=10');
+    expect(calls[0]![1]?.cache).toBe('no-store');
+    expect(calls[0]![1]?.signal).toBeInstanceOf(AbortSignal); // C.295: 멈춘 요청은 시간 초과로 끝낸다
     expect(await fetchLatestBuild(async () => { throw new Error('offline'); }, 'https://x/app/')).toBeNull();
     expect(await fetchLatestBuild(async () => ({ ok: false, json: async () => ({}) }), 'https://x/app/')).toBeNull();
     expect(await fetchLatestBuild(async () => ({ ok: true, json: async () => ({ build: 3 }) }), 'https://x/app/')).toBeNull();
@@ -139,5 +141,23 @@ describe('C.295 서비스 워커: 게임 화면은 HTTP 캐시를 건너뛴다',
   });
   it('버전 파일은 워커가 손대지 않는다(꼬리 ?t= 가 붙어도)', () => {
     expect(read('scripts/sw-template.js')).toContain("url.pathname.endsWith('/version.json')");
+  });
+});
+
+describe('C.295 확인 시점 보강', () => {
+  it('켜 둔 동안 1분마다 · 실패면 한 번 더 · 되살림(pageshow)·focus·online 때도 확인', () => {
+    const pwa = read('src/pwa.ts');
+    expect(pwa).toContain('export const UPDATE_CHECK_MS = 60 * 1000;');
+    expect(pwa).toContain('setTimeout(() => check(true), RETRY_MS)');
+    expect(pwa).toContain("window.addEventListener('pageshow'");
+    expect(pwa).toContain("window.addEventListener('online', () => check(true))");
+  });
+  it('버전 파일 요청이 멈추면 시간 초과로 null', async () => {
+    const hang = (_u: string, i?: RequestInit) => new Promise<never>((_, rej) => i?.signal?.addEventListener('abort', () => rej(new Error('abort'))));
+    vi.useFakeTimers();
+    const p = fetchLatestBuild(hang, 'https://x/app/');
+    vi.advanceTimersByTime(5000);
+    expect(await p).toBeNull();
+    vi.useRealTimers();
   });
 });

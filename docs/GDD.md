@@ -6321,7 +6321,7 @@ data/
 - 마스터 1차 확인: C.283(184장)은 켤 때 version.json 을 `cache: 'no-store'` 로 받지만, GitHub Pages 가 index.html·version.json·sw.js 를 모두 `cache-control: max-age=600` 으로 내보냄 — no-store 는 브라우저 캐시만 건너뛰고 중간 CDN(Fastly)은 최대 10분 옛 파일을 줄 수 있다. 또 서비스 워커의 게임 화면(navigate) 네트워크 요청은 기본 캐시 모드라 브라우저 HTTP 캐시에서 최대 10분 옛 index 를 받을 수 있다. 그래서 배포 직후 10분 안에 켜면 옛 화면 + 옛 version.json = '같은 빌드' 로 보여 띠가 안 뜬다(의심 1순위, 코딩 세션이 실측으로 확인).
 - 정한 것(마스터): ① version.json 요청에 매번 다른 주소 꼬리(?t=시각)를 붙여 CDN·브라우저 캐시를 모두 건너뜀 ② 서비스 워커의 게임 화면 요청도 `cache: 'no-store'`(필요하면 주소 꼬리) — 오프라인·3초 타임아웃 뒤 캐시 대체는 그대로 ③ 다시 시작(restartUrl)도 같은 규칙 ④ 실제 배포 주소에서 배포 직후 켜기 → 1초 안 띠/자동 다시 시작을 실측(두 번 배포해 확인). 그 밖의 원인(홈 화면 앱 standalone 에서 visibilitychange·첫 화면 자동 재시작 조건 등)도 같이 확인.
 - 세션: **코딩207**.
-- **구현 완료 C.295 (v5.441)**: `src/pwa.ts` version.json = `?t=시각` 꼬리 + no-store, 다시 시작 주소 `bha-v=<빌드>.<시각>`(매번 다름), `sw-template.js` 게임 화면(navigate) 요청 = 같은 주소 `cache: no-store`(주소 이동은 manual 로 브라우저에 그대로, 오프라인·3초 뒤 캐시 대체 그대로). 첫 설치(제어 워커 없음) 안내 없음은 184장 4 그대로. 실측은 dev-log C.295.
+- **구현 완료 C.295 (v5.441)**: `src/pwa.ts` version.json = `?t=시각` 꼬리 + no-store, 다시 시작 주소 `bha-v=<빌드>.<시각>`(매번 다름), `sw-template.js` 게임 화면(navigate) 요청 = 같은 주소 `cache: no-store`(주소 이동은 manual 로 브라우저에 그대로, 오프라인·3초 뒤 캐시 대체 그대로). 확인 시점 보강: 켜 둔 동안 1분마다(옛 10분), 버전 파일 5초 시간 초과·실패 3초 뒤 한 번 더, pageshow·focus·online 때도. 첫 설치(제어 워커 없음) 안내 없음은 184장 4 그대로. 실측은 dev-log C.295.
 
 ## 189. 리디자인 v2 뒤 UI 전체 검수 (v5.440, 사용자 2026-11-04 17:2x)
 - 사용자 원문(폰 캡처 2장 첨부: docs/drafts/user/1104-walk-cut.jpg 걷기 화면 오른쪽 위 잘림 · 1104-status-cut.jpg 상태 화면 '능력치' 세로로 꺾임·'치명타 …'·'노…' 말줄임·아래 버튼이 판 밖으로 튀어나옴):

@@ -2069,4 +2069,5 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 사용 모델: Opus 5.5. 세이브·밸런스·엔진 변경 없음.
 - 사용자 원문: "여전히 업데이트는 키자마자 바로 안뜨는데?"
 - 고친 것: ① `src/pwa.ts` `fetchLatestBuild` = `version.json?t=<시각>` + `cache: 'no-store'`(CDN·브라우저 캐시 모두 건너뜀) ② `scripts/sw-template.js` 게임 화면(navigate) = `fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: 'manual' })`(예전 `fetch(req)` = 기본 캐시 모드 → Pages `max-age=600` 때문에 HTTP 캐시의 옛 index). 주소 이동 응답(opaqueredirect)은 그대로 돌려줌. 오프라인·`NAV_TIMEOUT_MS` 3초 뒤 캐시 대체 그대로 ③ `restartUrl` = `bha-v=<빌드>.<시각>`(매번 다른 주소).
-- 테스트 `tests/c283.test.ts` 갱신·추가(꼬리·화면 요청 no-store·redirect·오프라인 캐시).
+- ④ 확인 시점 보강(`src/pwa.ts`): 켜 둔 동안 확인 간격 10분 → **1분**(`UPDATE_CHECK_MS`, 배포 4~5분이 끝나기 전에 켰으면 다음 확인이 10분 뒤였다 — 버전 파일 약 30바이트), 버전 파일 요청 5초 시간 초과(`VERSION_TIMEOUT_MS`, 폰 복귀 때 멈춘 요청이 `checking` 을 영영 붙잡던 것 방지), 실패면 3초 뒤 한 번 더(`RETRY_MS`), `pageshow`(persisted)·`focus`·`online` 때도 확인.
+- 테스트 `tests/c283.test.ts` 갱신·추가(꼬리·화면 요청 no-store·redirect·오프라인 캐시·시간 초과·확인 시점).

@@ -16,8 +16,12 @@ export const RESTART_PARAM = 'bha-v';
 export const RESTART_KEY = 'bha-update-restart';
 
 let updateReady = false;
-/** 켜 둔 채로 새 버전을 확인하는 간격 · 연달아 확인하지 않는 최소 간격 */
-export const UPDATE_CHECK_MS = 10 * 60 * 1000;
+/** 켜 둔 채로 새 버전을 확인하는 간격 · 연달아 확인하지 않는 최소 간격.
+ * C.295 (GDD 188장): 10분 → 1분 — 배포(빌드·올리기 약 4~5분)가 끝나기 전에 켜면 다음 확인이 10분 뒤였다. 버전 파일은 약 30바이트 */
+export const UPDATE_CHECK_MS = 60 * 1000;
+/** 버전 파일 요청 최대 대기 (폰이 백그라운드에서 돌아올 때 요청이 멈춰 확인이 영영 끝나지 않던 것 방지) · 실패 뒤 다시 확인 */
+export const VERSION_TIMEOUT_MS = 5000;
+export const RETRY_MS = 3000;
 const UPDATE_CHECK_MIN_GAP_MS = 5 * 1000;
 /** 처음 화면에서 자동 다시 시작 전 안내를 보여 주는 시간 */
 export const AUTO_RESTART_DELAY_MS = 900;
@@ -79,7 +83,11 @@ export function bustUrl(href: string, now: number = Date.now()): string {
 /** 배포된 최신 빌드 id. 매번 다른 주소 꼬리 + 캐시 없이(no-store) 받고, 실패(오프라인·없는 파일·깨진 내용)면 null */
 export async function fetchLatestBuild(fetchFn: FetchLike, base: string, now: number = Date.now()): Promise<string | null> {
   try {
-    const res = await fetchFn(bustUrl(new URL(VERSION_FILE, base).href, now), { cache: 'no-store' });
+    const ctl = typeof AbortController === 'undefined' ? null : new AbortController();
+    const timer = ctl ? setTimeout(() => ctl.abort(), VERSION_TIMEOUT_MS) : null;
+    const res = await fetchFn(bustUrl(new URL(VERSION_FILE, base).href, now), ctl ? { cache: 'no-store', signal: ctl.signal } : { cache: 'no-store' }).finally(() => {
+      if (timer) clearTimeout(timer);
+    });
     if (!res.ok) return null;
     const build = (await res.json()) as { build?: unknown } | null;
     return typeof build?.build === 'string' && build.build ? build.build : null;
@@ -166,6 +174,8 @@ export function registerServiceWorker(): void {
   const hadController = navigator.serviceWorker.controller !== null;
   let last = 0;
   let checking = false;
+  let retried = false;
+  let got = false;
   const check = (force = false) => {
     if (!hadController || updateReady || checking || document.visibilityState !== 'visible') return;
     if (navigator.onLine === false) return;
@@ -178,6 +188,7 @@ export function registerServiceWorker(): void {
         const b = await fetchLatestBuild(fetch, document.baseURI);
         // 처음 화면이 그려질 틈을 준다(켜자마자 답이 오면 아직 화면이 없을 수 있다)
         await new Promise((r) => setTimeout(r, 0));
+        got = b !== null;
         if (b) latestBuild = b;
         return b;
       },
@@ -188,7 +199,15 @@ export function registerServiceWorker(): void {
         for (const cb of autoListeners) cb();
         setTimeout(() => restartToLatest(target), AUTO_RESTART_DELAY_MS);
       },
-    }).finally(() => (checking = false));
+    })
+      .then(() => {
+        // C.295: 못 받았으면(돌아온 직후 망이 아직 안 붙음·시간 초과) 잠깐 뒤 한 번 더
+        if (!got && !retried) {
+          retried = true;
+          setTimeout(() => check(true), RETRY_MS);
+        }
+      })
+      .finally(() => (checking = false));
   };
   // C.130: 새 워커가 활성화되면 알려 온다(sw.js refreshIfOld) — 답하지 않으면 옛 화면으로 보고 워커가 다시 연다.
   // C.283: 받았다는 사실만으로 띠를 띄우지 않고 버전 파일로 확인한다(새 빌드로 다시 연 뒤 새 워커가 활성화돼도 띠가 또 뜨지 않게)
@@ -200,8 +219,17 @@ export function registerServiceWorker(): void {
   // 켜자마자 확인 (워커 등록·load 를 기다리지 않는다)
   check(true);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') check();
+    if (document.visibilityState === 'visible') {
+      retried = false;
+      check();
+    }
   });
+  // C.295: 폰(특히 홈 화면 앱)이 멈춰 둔 화면을 되살릴 때(pageshow persisted)·창에 돌아올 때(focus) 도 확인 — visibilitychange 가 안 오는 경우 대비
+  window.addEventListener('pageshow', (e) => {
+    if ((e as PageTransitionEvent).persisted) check(true);
+  });
+  window.addEventListener('focus', () => check());
+  window.addEventListener('online', () => check(true));
   setInterval(() => check(), UPDATE_CHECK_MS);
   const register = () => {
     navigator.serviceWorker
