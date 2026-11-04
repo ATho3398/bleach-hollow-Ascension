@@ -139,7 +139,7 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
   }
   actions.push({
     key: 'enhance', label: () => (cost === null ? '최대 강화' : `강화 +${it.plus + 1} · 골드 ${cost}`), variant: 'primary', disabled: cost === null || save.shared.tradeCoins < cost,
-    note: cost !== null && save.shared.tradeCoins < cost ? `골드 ${cost - save.shared.tradeCoins} 모자람` : undefined,
+    note: cost === null ? '더 강화할 수 없다' : save.shared.tradeCoins < cost ? `골드 ${cost - save.shared.tradeCoins} 모자람` : undefined,
     onClick: () => {
       const r = enhanceGearItem(save, uid);
       close();
@@ -311,7 +311,15 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     redraw('act:sort');
   } });
   sortBtn.dataset.act = 'sort';
-  const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', disabled: locked, onClick: () => {
+  const LOCKED = '모험 중에는 장비를 바꿀 수 없다';
+  /** 못 쓰는 아래 줄 버튼 = 흐리게 자리 유지, 누르면 이유 한 줄 (C.291, PROMPT 5절 4) */
+  const why = (b: HTMLButtonElement, reason: string | null): void => {
+    if (!reason) return;
+    b.classList.add('is-disabled');
+    b.setAttribute('aria-disabled', 'true');
+    b.onclick = () => showToast({ eyebrow: equipTitle(faction), title: b.textContent ?? '', meta: reason }, 0, 2000);
+  };
+  const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', onClick: () => {
     confirmDialog({
       title: '자동 착용', body: '빈 칸에는 가장 센 장비를, 낀 칸은 더 센 것이 있을 때만 바꾼다.', yes: '자동 착용', no: '아니오',
       onYes: () => {
@@ -322,8 +330,9 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     });
   } });
   autoBtn.dataset.act = 'auto';
+  why(autoBtn, locked ? LOCKED : null);
   const sellTargets = bulkSellTargets(save);
-  const sellBtn = button({ label: '일괄 판매', icon: 'i-rare', size: 'small', variant: 'danger', disabled: locked || sellTargets.length === 0, onClick: () => {
+  const sellBtn = button({ label: '일괄 판매', icon: 'i-rare', size: 'small', variant: 'danger', onClick: () => {
     const gold = sellTargets.reduce((a, it) => a + sellGold(it), 0);
     confirmDialog({
       title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 안 낀 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
@@ -335,6 +344,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     });
   } });
   sellBtn.dataset.act = 'bulk-sell';
+  why(sellBtn, locked ? LOCKED : sellTargets.length === 0 ? `팔 ${GEAR_GRADE_NAMES.normal} 등급 장비가 없다(낀 것은 안 판다)` : null);
   // 아래 고정 줄 (v2 .bha-dock, PROMPT 6절 S14): 가방 화면 맨 아래 두 열에 걸쳐 놓는다 (chestView)
   const foot = h('div', 'bha-eqfoot');
   const count = h('span', 'bha-chip bha-eqfoot__count');

@@ -211,7 +211,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       qty: { max },
       lock: row.owned ? '이미 가지고 있다' : row.lock,
       actions: [{
-        key: 'buy', label: (q) => (row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${price * q}`), // GDD 159장 34: 빈 '—' 대신 이유 disabled: !row.canBuy || row.owned,
+        // GDD 159장 34: 빈 '—' 대신 이유. 살 수 없거나 이미 가진 것 = 흐리게 자리 유지, 누르면 이유 한 줄 (C.291 — 이 조건이 주석 안에 들어가 꺼지지 않던 것)
+        key: 'buy', label: (q) => (row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${price * q}`),
+        disabled: !row.canBuy || Boolean(row.owned), note: row.owned ? '이미 가지고 있다' : row.lock ?? '살 수 없다',
         onClick: (q) => { close(); buy(row, q); },
       }],
     });

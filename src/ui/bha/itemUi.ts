@@ -190,7 +190,11 @@ export function itemDialog(s: ItemDialogSpec): () => void {
     row.append(qtyLabel, minus, plus, maxBtn);
     main.append(row);
   }
-  if (s.lock) main.append(el('p', 'bha-itemmodal__lock', s.lock));
+  // 막힌 이유 한 줄: 처음부터 있으면 보이고, 흐린 버튼을 누르면 그 버튼의 이유로 바뀐다 (자리 = 본문 안, 버튼은 안 움직임)
+  const lockLine = el('p', 'bha-itemmodal__lock', s.lock ?? '');
+  lockLine.setAttribute('role', 'status');
+  lockLine.hidden = !s.lock;
+  main.append(lockLine);
   if (big) {
     const left = el('div', 'bha-itemmodal__left');
     left.append(big);
@@ -204,9 +208,17 @@ export function itemDialog(s: ItemDialogSpec): () => void {
   closeBtn.dataset.act = 'close';
   acts.append(closeBtn);
   s.actions.forEach((a) => {
-    const b = button({ label: a.label(1), variant: a.variant ?? 'primary', disabled: a.disabled, onClick: () => a.onClick(qty) });
+    // 못 쓰는 행동 = 흐리게 자리 유지(is-disabled·aria-disabled — 기기 ▲▼ 로도 닿는다), 누르면 이유 한 줄 (PROMPT 5절 4)
+    const b = button({ label: a.label(1), variant: a.variant ?? 'primary', onClick: () => {
+      if (!a.disabled) return a.onClick(qty);
+      lockLine.textContent = a.note ?? s.lock ?? '지금은 할 수 없다';
+      lockLine.hidden = false;
+    } });
+    if (a.disabled) {
+      b.classList.add('is-disabled');
+      b.setAttribute('aria-disabled', 'true');
+    }
     if (a.key) b.dataset.act = a.key;
-    if (a.note) b.title = a.note;
     btns.push(b);
     acts.append(b);
   });
