@@ -69,15 +69,17 @@ describe('C.283 새 버전 알림 = 켜자마자 (GDD 184장)', () => {
   it('버전 파일은 no-store 로 문서 기준 주소에서 받고, 실패·깨진 내용은 null', async () => {
     const calls: Array<[string, RequestInit | undefined]> = [];
     const ok = async (u: string, i?: RequestInit) => (calls.push([u, i]), { ok: true, json: async () => ({ build: 'abc-1' }) });
-    expect(await fetchLatestBuild(ok, 'https://x/app/index.html')).toBe('abc-1');
-    expect(calls[0]).toEqual(['https://x/app/version.json', { cache: 'no-store' }]);
+    expect(await fetchLatestBuild(ok, 'https://x/app/index.html', 36)).toBe('abc-1');
+    // C.295 (GDD 188장): 매번 다른 꼬리(?t=)로 CDN·브라우저 캐시를 모두 건너뛴다
+    expect(calls[0]).toEqual(['https://x/app/version.json?t=10', { cache: 'no-store' }]);
     expect(await fetchLatestBuild(async () => { throw new Error('offline'); }, 'https://x/app/')).toBeNull();
     expect(await fetchLatestBuild(async () => ({ ok: false, json: async () => ({}) }), 'https://x/app/')).toBeNull();
     expect(await fetchLatestBuild(async () => ({ ok: true, json: async () => ({ build: 3 }) }), 'https://x/app/')).toBeNull();
   });
 
   it('다시 열 주소 = 지금 주소 + bha-v (HTTP 캐시의 옛 index 를 피한다, 다른 쿼리·해시 유지)', () => {
-    expect(restartUrl('https://x/app/?a=1#h', 'n1')).toBe('https://x/app/?a=1&bha-v=n1#h');
+    expect(restartUrl('https://x/app/?a=1#h', 'n1', 36)).toBe('https://x/app/?a=1&bha-v=n1.10#h');
+    expect(restartUrl('https://x/app/', 'n1', 1)).not.toBe(restartUrl('https://x/app/', 'n1', 2)); // 매번 다른 주소(C.295)
   });
 
   it('dev·테스트는 dev 빌드(등록은 배포 빌드에서만), 빌드 id·version.json 은 vite.config 가 같은 값으로', () => {
@@ -109,5 +111,33 @@ describe('C.283 새 버전 알림 = 켜자마자 (GDD 184장)', () => {
     expect(app).toContain("isPreGame: () => nav.top?.id === 'title' || nav.top?.id === 'species'");
     expect(app).toContain('saveNow: () => { if (nav.top && !nav.top.locked) persist(); }');
     expect(read('src/ui/updateBanner.ts')).toContain('restartToLatest()');
+  });
+});
+
+// C.295 (GDD 188장): GitHub Pages 는 index·version.json 을 max-age=600 으로 내보낸다 — 워커의 게임 화면 요청이 기본 캐시 모드면
+// 배포 뒤 최대 10분 브라우저 HTTP 캐시의 옛 index 가 떠서 '켜자마자 새 버전'이 안 됐다
+describe('C.295 서비스 워커: 게임 화면은 HTTP 캐시를 건너뛴다', () => {
+  function navFetch(reply: 'ok' | 'redirect' | 'offline') {
+    const handlers: Record<string, (e: unknown) => void> = {};
+    const self = { addEventListener: (k: string, h: (e: unknown) => void) => (handlers[k] = h), registration: { scope: 'https://x/app/' }, location: { origin: 'https://x' } };
+    const res = (body: string, type = 'basic'): unknown => ({ ok: type === 'basic', type, body, headers: undefined, clone: () => res(body, type), text: async () => body });
+    const calls: Array<[unknown, RequestInit | undefined]> = [];
+    const fetchFn = (u: unknown, i?: RequestInit) => (calls.push([u, i]), reply === 'offline' ? Promise.reject(new Error('offline')) : Promise.resolve(res('new', reply === 'redirect' ? 'opaqueredirect' : 'basic')));
+    const caches = { match: async () => res('cached'), open: async () => ({ match: async () => undefined, put: async () => undefined }) };
+    const src = read('scripts/sw-template.js').replace('__VERSION__', 't').replace('__PRECACHE__', '[]');
+    new Function('self', 'caches', 'fetch', 'setTimeout', src)(self, caches, fetchFn, () => undefined);
+    let p: Promise<{ body: string; type: string }> | null = null;
+    handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/?bha-v=b.1', mode: 'navigate' }, respondWith: (x: Promise<{ body: string; type: string }>) => (p = x), waitUntil: () => undefined });
+    return { reply: p!, calls };
+  }
+  it('화면 요청 = 같은 주소 · no-store · 주소 이동은 브라우저에 그대로 · 오프라인이면 캐시', async () => {
+    const a = navFetch('ok');
+    expect((await a.reply).body).toBe('new');
+    expect(a.calls[0]).toEqual(['https://x/app/?bha-v=b.1', { cache: 'no-store', credentials: 'same-origin', redirect: 'manual' }]);
+    expect((await navFetch('redirect').reply).type).toBe('opaqueredirect');
+    expect((await navFetch('offline').reply).body).toBe('cached');
+  });
+  it('버전 파일은 워커가 손대지 않는다(꼬리 ?t= 가 붙어도)', () => {
+    expect(read('scripts/sw-template.js')).toContain("url.pathname.endsWith('/version.json')");
   });
 });

@@ -2065,3 +2065,8 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 엔진·밸런스·세이브 그대로. 테스트 `tests/c294.test.ts`(2).
 - 캡처 `docs/captures/c294/`(1배 844×390, `scripts/c294-proof.cjs`): 두 종족 전투 평소('블록' + 막대)·봉인('봉인' + 남은 초), proof.json 에 보이는 이름표 글자 기록.
 
+## C.295 — 새 버전 알림 켜자마자: 버전 파일·게임 화면 요청 캐시 건너뛰기 (GDD 188장, v5.441, S-23, 코딩207 Opus)
+사용 모델: Opus 5.5. 세이브·밸런스·엔진 변경 없음.
+- 사용자 원문: "여전히 업데이트는 키자마자 바로 안뜨는데?"
+- 고친 것: ① `src/pwa.ts` `fetchLatestBuild` = `version.json?t=<시각>` + `cache: 'no-store'`(CDN·브라우저 캐시 모두 건너뜀) ② `scripts/sw-template.js` 게임 화면(navigate) = `fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: 'manual' })`(예전 `fetch(req)` = 기본 캐시 모드 → Pages `max-age=600` 때문에 HTTP 캐시의 옛 index). 주소 이동 응답(opaqueredirect)은 그대로 돌려줌. 오프라인·`NAV_TIMEOUT_MS` 3초 뒤 캐시 대체 그대로 ③ `restartUrl` = `bha-v=<빌드>.<시각>`(매번 다른 주소).
+- 테스트 `tests/c283.test.ts` 갱신·추가(꼬리·화면 요청 no-store·redirect·오프라인 캐시).

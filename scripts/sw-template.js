@@ -145,7 +145,10 @@ self.addEventListener('fetch', (event) => {
     // 받은 화면은 캐시에 넣어 두고, 오프라인이거나 NAV_TIMEOUT_MS 안에 답이 없으면 캐시(주소 뒤 ?… 가 붙어도 같은 게임 화면)
     const shell = new URL('./', self.registration.scope).href;
     const cached = () => caches.match(shell, LOOKUP).then((hit) => hit || fetch(req));
-    const network = fetch(req).then((res) => {
+    // C.295 (GDD 188장): 화면은 브라우저 HTTP 캐시를 건너뛰고(no-store) 받는다 — 기본 캐시 모드면 GitHub Pages max-age=600 때문에
+    // 배포 뒤 최대 10분 옛 index(옛 빌드)가 떠서 '켜자마자 새 버전'이 안 됐다. 주소 이동(redirect)은 브라우저에 그대로 넘긴다(manual)
+    const network = fetch(req.url, { cache: 'no-store', credentials: 'same-origin', redirect: 'manual' }).then((res) => {
+      if (res.type === 'opaqueredirect') return res;
       if (!res.ok) throw new Error('nav ' + res.status);
       // C.139: 받은 화면은 그 화면이 부르는 자산이 이 캐시에 다 있을 때만 셸로 승격한다(새 배포 HTML 이 옛 캐시 셸을 먼저 덮어써
       // 오프라인에서 없는 스크립트를 부르던 문제, GDD 88장 2). 새 버전 셸은 새 워커 설치(addAll)가 자산과 한 벌로 넣는다

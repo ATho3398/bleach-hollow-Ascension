@@ -67,10 +67,19 @@ export function decideUpdate(o: { current: string; latest: string | null; preGam
 
 type FetchLike = (url: string, init?: RequestInit) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
 
-/** 배포된 최신 빌드 id. 캐시 없이(no-store) 받고, 실패(오프라인·없는 파일·깨진 내용)면 null */
-export async function fetchLatestBuild(fetchFn: FetchLike, base: string): Promise<string | null> {
+/** 캐시 건너뛰기 꼬리 (C.295, GDD 188장): GitHub Pages 는 index·version.json·sw.js 를 max-age=600 으로 내보내 no-store 만으로는
+ * 중간 CDN 이 옛 파일을 줄 수 있다 — 주소에 매번 다른 꼬리를 붙여 CDN·브라우저 캐시를 모두 건너뛴다 */
+export const BUST_PARAM = 't';
+export function bustUrl(href: string, now: number = Date.now()): string {
+  const u = new URL(href);
+  u.searchParams.set(BUST_PARAM, now.toString(36));
+  return u.href;
+}
+
+/** 배포된 최신 빌드 id. 매번 다른 주소 꼬리 + 캐시 없이(no-store) 받고, 실패(오프라인·없는 파일·깨진 내용)면 null */
+export async function fetchLatestBuild(fetchFn: FetchLike, base: string, now: number = Date.now()): Promise<string | null> {
   try {
-    const res = await fetchFn(new URL(VERSION_FILE, base).href, { cache: 'no-store' });
+    const res = await fetchFn(bustUrl(new URL(VERSION_FILE, base).href, now), { cache: 'no-store' });
     if (!res.ok) return null;
     const build = (await res.json()) as { build?: unknown } | null;
     return typeof build?.build === 'string' && build.build ? build.build : null;
@@ -79,10 +88,10 @@ export async function fetchLatestBuild(fetchFn: FetchLike, base: string): Promis
   }
 }
 
-/** 다시 열 주소: 지금 주소에 RESTART_PARAM=대상 빌드 (HTTP 캐시에 남은 옛 index 를 피한다) */
-export function restartUrl(href: string, target: string): string {
+/** 다시 열 주소: 지금 주소에 RESTART_PARAM=대상 빌드.매번 다른 꼬리값 (CDN·HTTP 캐시에 남은 옛 index 를 피한다, C.295) */
+export function restartUrl(href: string, target: string, now: number = Date.now()): string {
   const u = new URL(href);
-  u.searchParams.set(RESTART_PARAM, target);
+  u.searchParams.set(RESTART_PARAM, `${target}.${now.toString(36)}`);
   return u.href;
 }
 
@@ -153,7 +162,7 @@ export function registerServiceWorker(): void {
   } catch {
     /* 주소 정리는 부가 */
   }
-  // 처음 설치(원래 제어하던 워커 없음)는 안내 없음 — 방금 네트워크에서 연 화면이 최신이다
+  // 처음 설치(원래 제어하던 워커 없음)는 안내 없음 — 방금 네트워크에서 연 화면이 최신이다 (GDD 184장 4)
   const hadController = navigator.serviceWorker.controller !== null;
   let last = 0;
   let checking = false;
