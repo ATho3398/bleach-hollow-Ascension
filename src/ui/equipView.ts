@@ -1,6 +1,6 @@
 // 가방 '장비' 탭 (GDD 108장 C.179 장비 화면 → 109장 4번 C.180 가방 첫 탭으로 옮김).
-// 왼쪽 = 캐릭터 외형 + 착용 칸(왼쪽 세로 무기·방어구·신발 / 오른쪽 세로 장신구 1·2·소모품 칸) + 이름·단계 + 능력치 줄(미리 보기 ▲▼),
-// 오른쪽 = 탭(전체·무기·방어구·신발·장신구·소모품) + 바둑판 + 아래 줄(보관 개수·[정렬]·[자동 착용]·[일괄 판매]).
+// 왼쪽 = 캐릭터 외형 + 착용 칸 60×66(왼쪽 세로 무기·방어구·신발 / 오른쪽 세로 장신구 1·2·소모품 칸) + 이름·단계 (리디자인 v2 S14 — 능력치 줄은 상세 창으로),
+// 오른쪽 = 탭(전체·무기·방어구·신발·장신구·소모품) + 바둑판 4열, 아래 고정 줄(보관 개수·[정렬]·[자동 착용]·[일괄 판매]).
 // 조작: ▲▼ = 차례로 고르기, 좌우 키 = 왼쪽 칸 ↔ 오른쪽 바둑판(탭 위에서는 탭 바꾸기), ✓ = 상세 창(착용·해제·강화·판매), 뒤로 = 가방 닫기 → 방. 끌어다 칸에 놓기(C.149 슬롯 화면과 같은 enableDrag).
 // 종족 무관 — 칸·화면 이름은 종족 설정 gearSlotNames·gearScreen, 판정·기록은 inventory.ts·engine/gear.ts.
 import { BALANCE } from '../config/balance';
@@ -22,7 +22,6 @@ import { categoryTabs, iconArt, itemCard, itemDialog, itemGrid } from './bha/ite
 import { showToast } from './bha/nest';
 import { roomCharArt } from './bha/room';
 import { enableDrag } from './bha/dragdrop';
-import { critPercentText } from './lcdScreens';
 import type { Device } from './bha/device';
 
 type EquipTab = 'all' | GearKind | 'battle';
@@ -196,8 +195,8 @@ export interface EquipTabHost {
   signal: AbortSignal;
 }
 
-/** 가방 장비 탭 (GDD 109장 4번): 왼쪽(착용 칸·외형·능력치) · 오른쪽(탭·바둑판·아래 줄). restore = 붙인 뒤 부르면 하이라이트를 방금 누른 칸·카드로 돌려준다 */
-export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd: EquipTabHost): { left: HTMLElement; right: HTMLElement; restore: () => void } {
+/** 가방 장비 탭 (GDD 109장 4번 → 183장 v2): 왼쪽(착용 칸 6개·외형·이름·단계) · 오른쪽(탭·바둑판) · 아래 고정 줄(foot — 화면이 맨 아래에 붙인다). restore = 붙인 뒤 부르면 하이라이트를 방금 누른 칸·카드로 돌려준다 */
+export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd: EquipTabHost): { left: HTMLElement; right: HTMLElement; foot: HTMLElement; restore: () => void } {
   const g = save.shared.gear;
   const GX = BALANCE.provisional.gear;
   const slotName = battleSlotName(faction);
@@ -268,24 +267,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const doll = h('div', 'bha-eqdoll');
   doll.append(colL, figure, colR);
 
-  // 능력치 줄 (GDD 108장 2번): 장비 합산 반영. 바둑판 카드를 고르면(하이라이트·마우스) 그 장비로 바꿨을 때를 ▲▼ 로 미리 보인다
-  const statsRow = h('div', 'bha-eqstats');
-  statsRow.setAttribute('aria-label', '능력치');
-  const now = equipStats(save);
-  const paintStats = (swap?: { slot: GearSlot; uid: string | null }) => {
-    const next = swap ? equipStats(save, swap) : now;
-    statsRow.replaceChildren(...[...STAT_IDS, 'crit' as const].map((k) => {
-      const cell = h('span', 'bha-eqstat');
-      cell.dataset.stat = k;
-      // 치명은 상태 화면과 같은 '치명타 확률'(진화·흡수 몫 포함, 최대치 자름) — ▲▼ 는 장비 몫 차이
-      const v = k === 'crit' ? critPercentText(save.build, save.evolution, now.crit) : String(now[k]);
-      cell.append(h('small', '', k === 'crit' ? '치명' : statName(k, faction.id)), h('b', 'bha-num', v));
-      const d = next[k] - now[k];
-      if (Math.abs(d) > 1e-9) cell.append(h('em', d > 0 ? 'bha-eqstat__up' : 'bha-eqstat__down', `${d > 0 ? '▲' : '▼'}${k === 'crit' ? `${Math.round(Math.abs(d) * 1000) / 10}%` : Math.abs(Math.round(d))}`));
-      return cell;
-    }));
-  };
-  paintStats();
+  // 능력치 줄은 리디자인 v2(PROMPT 6절 S14)에서 뺐다 — 캐릭터 아래는 이름·단계만, 수치·비교 ▲▼ 는 칸·카드를 누른 상세 창(openGear 비교 줄)에서 본다
 
   // ── 오른쪽: 탭 · 바둑판 · 아래 줄 ──
   const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'battle'];
@@ -304,11 +286,6 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       onClick: () => openGear(faction, save, it.uid, changedAt(`item:${it.uid}`)),
     });
     card.dataset.drag = 'gear';
-    const target = targetSlotOf(save, it);
-    const preview = () => paintStats(target ? { slot: target, uid: it.uid } : undefined);
-    card.addEventListener('bha-select', preview);
-    card.addEventListener('pointerenter', preview);
-    card.addEventListener('pointerleave', () => paintStats());
     return card;
   });
   const battleCards = (ui.tab === 'battle' || ui.tab === 'all' ? battleOwned : []).map((id) => {
@@ -358,14 +335,20 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     });
   } });
   sellBtn.dataset.act = 'bulk-sell';
+  // 아래 고정 줄 (v2 .bha-dock, PROMPT 6절 S14): 가방 화면 맨 아래 두 열에 걸쳐 놓는다 (chestView)
   const foot = h('div', 'bha-eqfoot');
-  foot.append(h('span', 'bha-chip bha-eqfoot__count', `${g.items.length}/${GX.cap}`), sortBtn, autoBtn, sellBtn);
+  const count = h('span', 'bha-chip bha-eqfoot__count');
+  const countNum = h('span', 'bha-num');
+  countNum.append(h('span', 'bha-num bha-num--w2', String(g.items.length)), `/${GX.cap}`);
+  count.append(countNum);
+  count.setAttribute('aria-label', `장비 ${g.items.length}/${GX.cap}`);
+  foot.append(count, sortBtn, autoBtn, sellBtn);
 
   const right = h('div', 'bha-eqright');
-  right.append(tabs, grid, foot);
+  right.append(tabs, grid);
   const left = h('div', 'bha-eqleft');
-  left.append(doll, statsRow);
-  if (locked) left.append(h('p', 'bha-faint', '모험 중에는 장비를 바꿀 수 없다.'));
+  left.append(doll);
+  if (locked) left.append(h('p', 'bha-eqnote', '모험 중에는 장비를 바꿀 수 없다.'));
 
 
   // 끌어다 놓기 (C.149 슬롯 화면과 같은 방식): 카드 → 같은 종류 칸(착용) · 소모품 카드 → 소모품 칸, 칸 → 오른쪽 바둑판(해제)
@@ -455,5 +438,5 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     // 기기 선택은 새 화면에서 키보드 초점이 있는 항목을 고른다 (device.ts refresh)
     at?.focus({ preventScroll: true });
   };
-  return { left, right, restore };
+  return { left, right, foot, restore };
 }

@@ -315,14 +315,16 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
     const body = page.left.parentElement!;
     const oneCol = chestUi.tab === 'items' || chestUi.tab === 'skin' || chestUi.tab === 'pet' || chestUi.tab === 'material';
-    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? 'minmax(0, 5fr) minmax(0, 6fr)' : '1fr 1fr';
+    body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? '252px minmax(0, 1fr)' : '1fr 1fr';
     page.right.hidden = oneCol;
     page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
+    page.app.querySelector(':scope > .bha-eqfoot')?.remove();
     if (chestUi.tab === 'gear') {
-      // 장비 탭 (GDD 109장 4번): C.179 장비 화면 그대로
+      // 장비 탭 (GDD 109장 4번): C.179 장비 화면 → 리디자인 v2 S14 (아래 고정 줄은 화면 맨 아래 두 열에 걸쳐)
       const t = equipTab(dev, faction, save, { persist, rerender: fill, scope: () => page.app, signal: tabCtl.signal });
       page.left.replaceChildren(t.left);
       page.right.replaceChildren(t.right);
+      page.app.append(t.foot);
       t.restore();
       return;
     }
