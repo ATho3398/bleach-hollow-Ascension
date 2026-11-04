@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>결과</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.gr{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:center;min-height:30px;font-size:13px}
+.gr > span:first-child{color:var(--bha-text-3);font-weight:700;font-size:12px}
+.ev{display:inline-flex;align-items:center;gap:3px;height:24px;padding:0 6px;border-radius:var(--bha-r-xs);background:var(--bha-bg-2);font-size:13px;font-weight:800;color:var(--bha-text-1);box-shadow:inset 0 1px 0 var(--bha-hi)}
+.ev em{font-style:normal;color:var(--bha-good)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 결과 (귀환 · 승리 톤)</b> — 초점: [진화 보기]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div style="position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--bha-sp)"></div>
+            <div class="bha-head" style="top: 4px; height: 52px">
+              <span class="bha-title" style="font-size: 28px; color: var(--bha-sp-hi)">귀환</span>
+              <span class="bha-sub" style="font-size: 13px">{{t.field}} ★3 · 3바퀴 · 쓰러뜨린 적 12</span>
+            </div>
+            <div style="position: absolute; left: 10px; top: 62px; width: 170px; height: 228px; display: flex; flex-direction: column; align-items: center; gap: 6px" class="bha-panel">
+              <span class="bha-art" style="width: 120px; height: 150px; margin-top: 10px"><i class="bha-i bha-i-figure"></i></span>
+              <span class="bha-card-name">{{t.form}}</span>
+              <span class="bha-badge bha-badge--brass">진화할 수 있다</span>
+            </div>
+            <div class="bha-panel" style="position: absolute; left: 190px; right: 10px; top: 62px; height: 228px; padding: 8px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px">
+              <div class="gr"><span>노력치</span><span style="display: flex; gap: 4px; flex-wrap: wrap"><span class="ev">힘 <em>+6</em></span><span class="ev">지능 <em>+4</em></span><span class="ev">속도 <em>+2</em></span><span class="ev">정신력 <em>+1</em></span></span></div>
+              <div class="gr"><span>얻은 것</span><span style="display: flex; gap: 10px; align-items: center"><span class="bha-card-price" style="font-size: 14px"><i class="bha-i bha-i-coin"></i>+840</span><span class="bha-card-price" style="font-size: 14px; color: var(--bha-text-1)"><i class="bha-i bha-i-gem" style="color: var(--bha-tint-violet)"></i>+12</span><span style="display: inline-flex; align-items: center; gap: 4px"><i class="bha-i bha-i-tile" style="width: 16px; height: 16px; color: var(--bha-text-2)"></i>타일 +3</span></span></div>
+              <div class="gr"><span>새 블록</span><span style="display: flex; gap: 4px"><span class="bha-blk bha-blk--sm" style="--el: var(--bha-el-earth)"><i class="bha-i bha-i-lin-d"></i><b>참</b></span><span class="bha-blk bha-blk--sm" style="--el: var(--bha-el-water)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span></span></div>
+              <div class="gr"><span>{{t.risk}}</span><span style="display: flex; align-items: center; gap: 8px"><span class="bha-gauge" style="width: 140px"><i style="width: 22%; --c: var(--bha-risk)"></i></span><span class="bha-num">22</span><span class="bha-sub">쉬면 내려간다</span></span></div>
+              <div class="bha-sep" style="margin: 4px 0"></div>
+              <div class="gr"><span>진화</span><span style="display: flex; align-items: center; gap: 8px"><span class="bha-gauge" style="width: 200px; height: 10px"><i style="width: 100%; --c: var(--bha-sp)"></i></span><span style="font-weight: 800; color: var(--bha-sp-hi)">조건을 채웠다</span></span></div>
+            </div>
+            <div class="bha-dock" style="justify-content: flex-end">
+              <button class="bha-btn" style="width: 140px">{{t.room}}로</button>
+              <button class="bha-btn bha-btn--primary is-focus" style="width: 180px"><i class="bha-i bha-i-spark"></i>진화 보기</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>승리/패배 톤은 맨 위 4px 띠와 제목 색으로만 (귀환 = 황동, 패배 = 크림슨/은청). 화면 전체를 칠하지 않는다</li>
+      <li>성장 요약을 '이름: 값' 줄로 정리하고 노력치 +n은 굵은 초록 숫자 칩으로 크게 보여 준다</li>
+      <li>진화 조건을 채우면 캐릭터 아래 배지 + [진화 보기]가 주 버튼. 버튼 두 개는 오른쪽 아래 고정 자리</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', field: '웨코문도 외곽', form: '바스트로레 노멀 조', risk: '광기', room: '둥지' },
+      { k: 'shinigami', race: '사신', field: '루콘가 외곽', form: '수석 대원 노멀 권', risk: '호로화', room: '대원실' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

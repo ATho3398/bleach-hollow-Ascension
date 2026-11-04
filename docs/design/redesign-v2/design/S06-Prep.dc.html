@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>모험 준비</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.pv{width:26px;height:26px;border-radius:var(--bha-r-xs);box-shadow:inset 0 0 0 1px var(--bha-line-1);background:var(--bha-bg-0);display:flex;align-items:center;justify-content:center;flex:none}
+.pv i.bha-i{width:16px;height:16px}
+.rl{display:flex;align-items:center;gap:6px;height:36px}
+.rl > .bha-label{width:44px;flex:none}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 모험 준비 [준비]</b> — 초점: [출발]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <div class="bha-tabs"><button class="bha-tab is-on"><i class="bha-i bha-i-forest"></i>자유 모험</button><button class="bha-tab"><i class="bha-i bha-i-book"></i>스토리</button></div>
+              <span class="bha-grow"></span>
+              <div class="bha-tabs"><button class="bha-tab is-on"><i class="bha-i bha-i-check"></i>준비</button><button class="bha-tab"><i class="bha-i bha-i-tile"></i>타일 배치</button></div>
+              <button class="bha-btn bha-btn--icon bha-btn--sm bha-btn--ghost" aria-label="도움말"><i class="bha-i bha-i-help"></i></button>
+            </div>
+            <div style="position: absolute; left: 10px; top: 50px; width: 398px; height: 244px; display: flex; flex-direction: column; gap: 6px">
+              <div class="rl"><span class="bha-label">사냥터</span>
+                <button class="bha-btn bha-btn--sm" style="background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent)">{{t.f1}}</button>
+                <button class="bha-btn bha-btn--sm">{{t.f2}}</button>
+                <sc-if value="{{t.f3lock}}" hint-placeholder-val="{{true}}"><button class="bha-btn bha-btn--sm" style="color: var(--bha-text-3)"><i class="bha-i bha-i-lock" style="width: 14px; height: 14px"></i>{{t.f3}}</button></sc-if><sc-if value="{{t.f3open}}" hint-placeholder-val="{{false}}"><button class="bha-btn bha-btn--sm">{{t.f3}}</button></sc-if>
+              </div>
+              <div class="rl"><span class="bha-label">난이도</span>
+                <button class="bha-btn bha-btn--sm"><i class="bha-i bha-i-star" style="width: 14px; height: 14px; color: var(--bha-sp)"></i>1</button>
+                <button class="bha-btn bha-btn--sm"><i class="bha-i bha-i-star" style="width: 14px; height: 14px; color: var(--bha-sp)"></i>2</button>
+                <button class="bha-btn bha-btn--sm" style="background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent)"><i class="bha-i bha-i-star" style="width: 14px; height: 14px; color: var(--bha-sp)"></i>3 <span class="bha-badge" style="height: 18px; background: var(--bha-tint-teal); color: #0d1413">권장</span></button>
+                <button class="bha-btn bha-btn--sm" style="color: var(--bha-text-3)"><i class="bha-i bha-i-lock" style="width: 14px; height: 14px"></i>4</button>
+              </div>
+              <div class="bha-well" style="position: relative; height: 82px; padding: 8px 10px; box-sizing: border-box; overflow: hidden; font-size: 13px; line-height: 1.5; color: var(--bha-text-2)">
+                <div style="color: var(--bha-text-1); font-weight: 700">{{t.f1}} · ★3</div>
+                <div>{{t.fdesc}}</div>
+                <div class="bha-statline" style="font-size: 13px"><span>적 강함: 3단계 기준</span><span>노력치 +50%</span><span>골드 +20%</span></div>
+                <div class="bha-more" style="background: var(--bha-bg-0)"><i class="bha-i bha-i-down"></i>더 있음</div>
+              </div>
+              <div class="rl" style="height: 40px"><span class="bha-label">길</span>
+                <div style="display: flex; gap: 3px">
+                  <span class="pv" style="color: var(--bha-text-2)"><i class="bha-i bha-i-home"></i></span>
+                  <span class="pv" style="background: var(--bha-tile-prey)"><i class="bha-i bha-i-tile"></i></span>
+                  <span class="pv" style="background: var(--bha-tile-prey)"><i class="bha-i bha-i-tile"></i></span>
+                  <span class="pv" style="background: var(--bha-tile-elite)"><i class="bha-i bha-i-tile"></i></span>
+                  <span class="pv" style="background: var(--bha-tile-rest)"><i class="bha-i bha-i-tile"></i></span>
+                  <span class="pv"></span><span class="pv"></span><span class="pv"></span><span class="pv"></span><span class="pv"></span><span class="pv"></span>
+                </div>
+                <span class="bha-num" style="font-size: 12px; color: var(--bha-text-2)">4/10</span>
+              </div>
+            </div>
+            <div class="bha-panel" style="position: absolute; left: 418px; right: 10px; top: 50px; height: 244px; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; align-items: center"><span class="bha-label">배치 프리셋</span><span class="bha-num" style="font-size: 12px; color: var(--bha-text-3)">1/5</span></div>
+              <button class="bha-row is-sel" style="grid-template-columns: 1fr auto; min-height: 40px; padding: 4px 10px"><span class="bha-row-txt"><b style="font-size: 13px">사냥 위주</b><span>타일 4개 · 먹잇감 2 · 강적 1</span></span></button>
+              <button class="bha-row" style="grid-template-columns: 1fr auto; min-height: 40px; padding: 4px 10px; color: var(--bha-text-3)"><span class="bha-row-txt"><b style="font-size: 13px; color: var(--bha-text-2)">+ 새 프리셋</b><span>지금 배치를 저장</span></span></button>
+              <span class="bha-grow"></span>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+                <button class="bha-btn bha-btn--sm">불러오기</button><button class="bha-btn bha-btn--sm">저장</button>
+                <button class="bha-btn bha-btn--sm">이름</button><button class="bha-btn bha-btn--sm bha-btn--ghost">삭제</button>
+              </div>
+            </div>
+            <div class="bha-dock">
+              <button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block is-focus" style="margin-left: 14px"><i class="bha-i bha-i-play"></i>출발</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>머리 줄을 [자유 모험 | 스토리] 와 [준비 | 타일 배치] 두 탭 묶음으로 나눠 위계를 분명히 했다</li>
+      <li>사냥터·난이도는 한 줄에 하나씩, 설명은 고정 높이 칸 + '▼ 더 있음'이라 길이가 바뀌어도 아래 칸이 밀리지 않는다</li>
+      <li>프리셋은 오른쪽 판에 목록 + 2×2 버튼(36px)으로 묶고, [출발]은 48px 띠로 아래 고정 자리에 둔다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', f1: '웨코문도 외곽', f2: '모래 협곡', f3: '허무의 숲', f3lock: true, f3open: false, fdesc: '흰 모래 언덕이 끝없이 이어진다. 자주 나오는 속성은 노멀·흙·물이다.' },
+      { k: 'shinigami', race: '사신', f1: '루콘가 외곽', f2: '카라쿠라 마을', f3: '웨코문도', f3lock: false, f3open: true, fdesc: '소울 소사이어티 바깥의 마을이다. 자주 나오는 속성은 노멀·흙·물이다.' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>온천</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 온천</b> — 초점: [방으로 돌아가기]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-scene">
+              <div class="bha-scene-bg" data-label="온천 장면 그림 자리" style="background: linear-gradient(var(--bha-scene-wall) 0 44%, #3a3a34 44% 52%, #2f4a48 52% 100%)"></div>
+              <div class="bha-art" style="position: absolute; left: 44%; top: 38%; width: 16%; height: 46%; z-index: 2"><i class="bha-i bha-i-figure"></i></div>
+              <div style="position: absolute; left: 0; right: 0; top: 66%; bottom: 0; background: rgb(60 110 108 / 0.55); box-shadow: inset 0 2px 0 rgb(200 230 220 / 0.25); z-index: 3"></div>
+              <div style="position: absolute; left: 50%; top: 22%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px; align-items: center; z-index: 4">
+                <div style="display: flex; gap: 4px">
+                  <span class="bha-chip bha-chip--status" style="--c: var(--bha-player-hp)"><i class="bha-i bha-i-heart"></i><b>64</b><span style="font-size: 12px; color: var(--bha-text-3); font-weight: 400">/108</span></span>
+                  <span class="bha-chip bha-chip--status" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food"></i><b>79</b></span>
+                </div>
+              </div>
+              <div style="position: absolute; right: 10px; bottom: 8px; z-index: 4" class="bha-sub">물 높이 아래 몸은 비쳐 보인다</div>
+            </div>
+            <div class="bha-head bha-head--over" style="padding-top: 4px; gap: 10px">
+              <button class="bha-btn bha-btn--sm is-focus" style="background: rgb(12 10 9 / 0.82); margin-left: 14px"><i class="bha-i bha-i-back"></i>방으로 돌아가기</button>
+              <button class="bha-info" style="margin: 0; background: rgb(12 10 9 / 0.82); border-radius: 50%" aria-label="온천 설명"><i class="bha-i bha-i-info"></i></button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>'온천' 제목 글자를 지우고 왼쪽 위에는 작은 돌아가기 버튼과 ⓘ만 남겨 장면을 가리지 않는다</li>
+      <li>떠 있던 막대 두 줄을 머리 위 칩 두 개(체력 · 배부름)로 줄였다. 숫자는 도트 숫자로 크게</li>
+      <li>물 높이 위로 반투명 물 면을 한 겹 덮어 몸이 물 아래에서 비친다 (그림은 그대로, 물 면만 UI 층)</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', room: '둥지' },
+      { k: 'shinigami', race: '사신', room: '대원실' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>
