@@ -1,0 +1,968 @@
+{
+ "pc844/hollow/1room": [],
+ "pc844/hollow/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "pc844/hollow/3room-info": [],
+ "pc844/hollow/5status-top": [],
+ "pc844/hollow/6status-cellinfo": [],
+ "pc844/hollow/7status-end": [],
+ "pc844/hollow/4room-low": [],
+ "pc844/hollow/4room-dying": [],
+ "pc844/hollow/9status-ev": [],
+ "pc844/hollow/8status-evo": [],
+ "pc844/shinigami/1room": [],
+ "pc844/shinigami/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "pc844/shinigami/3room-info": [],
+ "pc844/shinigami/5status-top": [],
+ "pc844/shinigami/6status-cellinfo": [],
+ "pc844/shinigami/7status-end": [],
+ "pc844/shinigami/4room-low": [],
+ "pc844/shinigami/4room-dying": [],
+ "pc844/shinigami/9status-ev": [],
+ "pc844/shinigami/8status-evo": [],
+ "ph796/hollow/1room": [],
+ "ph796/hollow/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "ph796/hollow/3room-info": [],
+ "ph796/hollow/5status-top": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/hollow/6status-cellinfo": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/hollow/7status-end": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/hollow/4room-low": [],
+ "ph796/hollow/4room-dying": [],
+ "ph796/hollow/9status-ev": [
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 22px 에 글자 31px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/hollow/8status-evo": [
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 22px 에 글자 31px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/shinigami/1room": [],
+ "ph796/shinigami/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "ph796/shinigami/3room-info": [],
+ "ph796/shinigami/5status-top": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/shinigami/6status-cellinfo": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/shinigami/7status-end": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/shinigami/4room-low": [],
+ "ph796/shinigami/4room-dying": [],
+ "ph796/shinigami/9status-ev": [
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 22px 에 글자 31px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796/shinigami/8status-evo": [
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 22px 에 글자 31px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 46px 에 글자 55px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 44px 에 글자 53px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 13px (글자 14px)"
+  }
+ ],
+ "ph796x115/hollow/1room": [],
+ "ph796x115/hollow/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "ph796x115/hollow/3room-info": [],
+ "ph796x115/hollow/5status-top": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/hollow/6status-cellinfo": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/hollow/7status-end": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  }
+ ],
+ "ph796x115/hollow/4room-low": [],
+ "ph796x115/hollow/4room-dying": [],
+ "ph796x115/hollow/9status-ev": [
+  {
+   "kind": "말줄임",
+   "key": "체력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "지능",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "방어",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 36px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "속도",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/hollow/8status-evo": [
+  {
+   "kind": "말줄임",
+   "key": "체력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "지능",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "방어",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 36px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "속도",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  }
+ ],
+ "ph796x115/shinigami/1room": [],
+ "ph796x115/shinigami/2room-food": [
+  {
+   "kind": "판 밖으로 나감",
+   "key": "임시",
+   "detail": "span.bha-tag 가 div.bha-homedock__tray 밖으로 9px"
+  }
+ ],
+ "ph796x115/shinigami/3room-info": [],
+ "ph796x115/shinigami/5status-top": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/shinigami/6status-cellinfo": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/shinigami/7status-end": [
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  }
+ ],
+ "ph796x115/shinigami/4room-low": [],
+ "ph796x115/shinigami/4room-dying": [],
+ "ph796x115/shinigami/9status-ev": [
+  {
+   "kind": "말줄임",
+   "key": "체력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "지능",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "방어",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 36px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "속도",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  },
+  {
+   "kind": "판 밖으로 나감",
+   "key": "초록 +n = 노력치(와 환생 계승)",
+   "detail": "span.bha-care__evhint 가 section.bha-panel 밖으로 14px"
+  }
+ ],
+ "ph796x115/shinigami/8status-evo": [
+  {
+   "kind": "말줄임",
+   "key": "체력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "지능",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "방어",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "정신력",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 36px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "속도",
+   "detail": "span.bha-statrow__name 폭 13px 에 글자 24px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "치명타 피해",
+   "detail": "span.bha-statrow__name 폭 41px 에 글자 63px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "노 노멀 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 70px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "물 물 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "불 불 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "흙 흙 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "말줄임",
+   "key": "뇌 뇌 피해",
+   "detail": "span.bha-statrow__name 폭 39px 에 글자 58px"
+  },
+  {
+   "kind": "세로로 꺾인 글자",
+   "key": "능력치",
+   "detail": "h2.bha-panel__title 3줄 · 줄 폭 최대 15px (글자 16px)"
+  }
+ ]
+}

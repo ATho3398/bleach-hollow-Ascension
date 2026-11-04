@@ -135,8 +135,11 @@ export function createDock(o: DockOpts): Dock {
         if (f.condition !== 0) eff.push(`컨디션 ${f.condition > 0 ? '+' : '−'}${Math.abs(f.condition)}`);
         const name = el('span', 'bha-homedock__foodname', faction.foodNames[id]);
         name.append(' ', el('b', 'bha-num', `×${have}`));
-        b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개`);
-        b.append(name, el('small', '', eff.join(' · ')));
+        // 카드 설명은 수치 한 개만 (GDD 189장 17): 큰 쪽 효과 하나(배부름·컨디션 중 절댓값이 큰 것). 전부는 aria·title
+        const main = f.condition !== 0 && Math.abs(f.condition) > f.hunger ? eff[1]! : eff[0]!;
+        b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개, ${eff.join(', ')}`);
+        b.title = eff.join(' · ');
+        b.append(name, el('small', '', main));
         b.onclick = () => {
           if (o.foodCount(id) <= 0) return;
           setPanel(CLOSED, careBtns.get('feed')!); // 먹인 뒤 초점 = [먹이] 버튼 (GDD 176장 4)
@@ -145,7 +148,11 @@ export function createDock(o: DockOpts): Dock {
         trayBtns.push(b);
         tray.append(b);
       }
-      tray.append(provisionalTag());
+      // 임시 배지 = 카드 아래 줄 (GDD 189장 17: 카드 위에 얹혀 ×n 과 겹치던 것)
+      const note = el('div', 'bha-homedock__traynote');
+      note.append(provisionalTag());
+      note.hidden = note.firstElementChild!.hasAttribute('hidden');
+      tray.append(note);
     } else if (panel === 'more') {
       tray.setAttribute('aria-label', '더보기');
       tray.dataset.scList = '';

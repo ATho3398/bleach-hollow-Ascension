@@ -74,13 +74,14 @@
 .bha-evolve__resside .bha-infotable dd { font-size: var(--bha-fs-sm); }
 
 /* ═════ 상태 (리디자인 v2 S15, GDD 183장): 왼쪽 상태이상 → 상태 막대 5 → 장비·가진 것·스킨 / 오른쪽 능력치 2열 → 진화 정보 + 아래 고정 [도감][도움말][환생] ═════ */
-.bha-care-page .bha-lcdpage__body { grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: var(--bha-sp-4); }
+/* 왼쪽(상태 막대)은 줄어도 읽히고 오른쪽 능력치 표는 이름·값이 한 줄이어야 해서 오른쪽을 넓게 (GDD 189장 6: 폰 LCD 596 · 글자 1.15 에서도 안 잘리게) */
+.bha-care-page .bha-lcdpage__body { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); gap: var(--bha-sp-4); }
 .bha-care-page .bha-lcdpage__col--right { overflow: hidden; }
 .bha-care__scroll { flex: 1 1 0 !important; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); padding: var(--bha-sp-4); margin: calc(-1 * var(--bha-sp-4)); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .bha-care__scroll > * { flex: none; }
-.bha-care__actions { flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-care__actions { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-3); }
 .bha-care__actions > .bha-btn { min-width: 0; min-height: var(--bha-btn-h); padding: 0 var(--bha-sp-2); white-space: nowrap; }
-.bha-care__evhint { margin-left: auto; font-size: var(--bha-fs-xs); color: var(--bha-text-3); white-space: nowrap; }
+.bha-care__evhint { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
 .bha-care-page .bha-panel__head { display: flex; align-items: center; gap: var(--bha-sp-2); }
 /* 상태이상: 이름 줄 + 칩 */
 .bha-care__ailments { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
@@ -97,13 +98,24 @@
 .bha-care-page .bha-nest__status .bha-meter__value { grid-column: 3; grid-row: 1; text-align: right; font-size: var(--bha-fs-sm); white-space: nowrap; }
 .bha-care-page .bha-nest__status .bha-meter__value small { font-size: var(--bha-fs-xs); }
 .bha-care-page .bha-nest__status .bha-meter > :not(.bha-meter__head):not(.bha-meter__track) { grid-column: 1 / -1; }
-/* 능력치 2열: 이름 | 16px 굵은 값 | 14px 굵은 초록 +n(노력치) | ⓘ (GDD 160장 6 · 183장 S15) */
+/* 능력치 2열: 이름 | 16px 굵은 값 + 14px 굵은 초록 +n(노력치) (GDD 160장 6 · 183장 S15). 칸마다 ⓘ 없음 — 칸 전체가 설명 단추 (189장 6) */
 .bha-care-page .bha-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-1) var(--bha-sp-2); }
-.bha-care-page .bha-stats > .bha-statrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 24px; align-items: center; column-gap: var(--bha-sp-1); min-height: 32px; padding: 0 var(--bha-sp-1) 0 var(--bha-sp-3); box-sizing: border-box; border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1); }
-.bha-care-page .bha-stats .bha-statrow__name { grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
-.bha-care-page .bha-stats .bha-statrow__value { grid-column: 2; grid-row: 1; text-align: right; font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); }
-.bha-care-page .bha-stats .bha-ev { grid-column: 3; grid-row: 1; font-size: var(--bha-fs-sm); color: var(--bha-good); }
-.bha-care-page .bha-stats .bha-statrow > .bha-info { grid-column: 4; grid-row: 1; justify-self: end; }
+.bha-care-page .bha-stats > .bha-statrow { position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: space-between; align-items: center; column-gap: var(--bha-sp-2); min-height: 32px; padding: 2px var(--bha-sp-3); box-sizing: border-box; border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1); }
+.bha-care-page .bha-stats .bha-statrow__name { white-space: nowrap; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
+.bha-care-page .bha-stats .bha-statrow__value { text-align: right; font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); }
+.bha-care-page .bha-stats .bha-ev { font-size: var(--bha-fs-sm); color: var(--bha-good); }
+/* 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 아이콘은 안 보이고, 고르면(.bha-sel)·누르면 칸 테두리만 밝아진다 */
+.bha-care-page .bha-statrow > .bha-care__celltip { position: absolute; inset: 0; width: auto; height: auto; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: inherit; background: none; box-shadow: none; opacity: 1; }
+.bha-care-page .bha-statrow > .bha-care__celltip > .bha-icon, .bha-care-page .bha-statrow > .bha-care__celltip::before { display: none; }
+.bha-care-page .bha-statrow > .bha-care__celltip.is-open, .bha-care-page .bha-statrow > .bha-care__celltip:active { box-shadow: 0 0 0 1px var(--bha-text-3); }
+/* 이름 | 값+노력치 (.bha-care__val). 한 줄에 안 들어가면 값 덩어리가 아래 줄 오른쪽으로 */
+.bha-care-page .bha-care__val { margin-left: auto; display: flex; align-items: baseline; gap: var(--bha-sp-1); white-space: nowrap; }
+/* 진화 정보 (GDD 189장 16): 이름 줄 전체 폭, 임시 칩·단계 글은 아래 줄 */
+.bha-care-page .bha-evo__form { flex-direction: column; align-items: flex-start; gap: var(--bha-sp-1); }
+.bha-care-page .bha-evo__formname { font-size: var(--bha-fs-lg); }
+/* 능력치 6칸 아래 노력치 줄(첫 화면에 보이게) · 그 아래 치명·속성 피해 칸 */
+.bha-care-page .bha-care__stats2 { margin-top: var(--bha-sp-1); }
+.bha-care-page .bha-panel__title { white-space: nowrap; }
 .bha-sggrid .bha-itemcard__art { position: relative; }
 .bha-sgart { position: relative; color: var(--bha-lin-color, var(--bha-text-2)); }
 .bha-sgart .bha-icon { width: 30px; height: 30px; }

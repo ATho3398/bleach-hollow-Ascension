@@ -2,7 +2,7 @@
 // 취소(뒤로)는 기기 버튼이 맡아 화면에는 돌아가기 버튼을 두지 않는다. 탭·돌보기·덱 조작은 화면을 다시 만들지 않고 그 자리에서 고쳐 선택 위치가 유지된다.
 import { detachedOf, detachEffectText, detachTotals, getDetachTrait } from '../engine/traitShop';
 import { pickDialog } from './pickDialog';
-import { infoTip } from './bha/infoTip';
+import { infoTip, type InfoBody } from './bha/infoTip';
 import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
@@ -136,10 +136,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry);
-  // 능력치 줄마다 ⓘ (183장 S15): 그 능력치가 하는 일 한 줄. 전체 설명은 제목 옆 ⓘ 그대로
+  // 능력치 칸 = 이름·값만 (GDD 189장 6): 칸마다 있던 ⓘ 를 빼고 칸 전체가 설명 단추 — 누르면(기기 버튼으로 골라도) 예전 ⓘ 와 같은 창.
+  // 단추는 칸을 덮는 투명 ⓘ(cellTip) 라 글자 폭을 먹지 않는다. 전체 설명은 제목 옆 ⓘ 그대로
   [...statBox.children].forEach((row, i) => {
     const id = STAT_IDS[i];
-    if (id) row.append(infoTip(statName(id, faction.id), () => STAT_USE[id]));
+    if (id) cellTip(row as HTMLElement, statName(id, faction.id), () => STAT_USE[id]);
   });
   stats.append(statBox);
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
@@ -157,9 +158,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.querySelector('.bha-panel__title')?.append(infoTip('능력치', () => statInfoLines(faction, { basic: pctText(cc.basicMax), block: pctText(cc.blockMax) })));
   // 속성 피해 5종 (C.101, GDD 48장 4번 · C.137 85장 8): 치명타 밑에 속성마다 한 줄씩, 0 이어도 보인다
   const rows = [critRows, blockCritRow, critDmg, ...elementDamageRows(elementDamageOf(evo), ELEMENT_DAMAGE_IDS, faction.id)];
-  const speedRow = stats.querySelector('.bha-stats')?.lastElementChild;
-  if (speedRow) speedRow.after(...rows);
-  else stats.append(...rows);
+  // 치명·속성 피해 칸도 칸 전체를 누르면 설명 (능력치 전체 설명 창 — 칸마다 따로 쓴 설명이 없다)
+  for (const r of rows) cellTip(r, (r.querySelector('.bha-statrow__name')?.textContent ?? '').trim(), () => statInfoLines(faction, { basic: pctText(cc.basicMax), block: pctText(cc.blockMax) }));
+  // 노력치 합계 줄은 능력치 6칸 바로 아래 (GDD 189장: 첫 화면에 보이게). 치명·속성 피해 칸은 그 아래 따로 두 열
+  const extraBox = h('div', 'bha-stack bha-stats bha-care__stats2');
+  extraBox.append(...rows);
   // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
@@ -173,7 +176,10 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evLineP = h('p', 'bha-faint');
   evLineP.dataset.evTotal = String(evTotal(evo.ev));
   evLineP.append('노력치 ', evText(`${Math.round(evTotal(evo.ev) * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
-  stats.append(evLineP);
+  // '초록 +n' 뜻 = 표 아래 작은 줄 (GDD 189장 5: 제목 줄에서 내림)
+  evLineP.append(h('br'), h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
+  statBox.after(evLineP);
+  evLineP.after(extraBox);
   const mark = rebirthMark(save.rebirth.count);
   if (mark) {
     const line = h('p', 'bha-faint');
@@ -192,6 +198,10 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const cols = evolutionColumns(faction, evo);
   const evoMark = rebirthMark(save.rebirth.count);
   if (evoMark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', evoMark);
+  // 이름 줄 전체 폭 (GDD 189장 16): 임시 칩은 이름 줄에서 빼 아래 '단계 · 속성' 줄 앞으로
+  const formEl = cols.left[0];
+  const formTag = formEl?.querySelector('.bha-evo__formname > .bha-tag');
+  if (formTag) formEl?.querySelector('.bha-evo__formname + .bha-dim')?.prepend(formTag, ' ');
   evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
   const rebirthOk = canRebirth(evo);
   if (rebirthOk) evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`));
@@ -205,9 +215,25 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 오른쪽 = 스크롤 칸(능력치 → 진화 정보) + 아래 고정 버튼 줄. 개발 정보·버전 문단은 뺐다 (183장 S15)
   const rightScroll = h('div', 'bha-care__scroll');
   rightScroll.append(stats, evoPanel);
-  stats.querySelector('.bha-panel__head')?.append(h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [rightScroll, evoBtns]);
+  // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
+  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [rightScroll]);
+}
+
+/** 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 눌렀을 때·기기로 골랐을 때 예전 ⓘ 와 같은 창. 칸 글자는 그대로 읽힌다 */
+function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
+  const tip = infoTip(label, body);
+  tip.classList.add('bha-care__celltip');
+  tip.setAttribute('aria-label', `${row.getAttribute('aria-label') ?? (row.textContent ?? '').replace(/\s+/g, ' ').trim()} — 설명`);
+  row.classList.add('has-celltip');
+  // 값 + 노력치(+n·계승)를 한 덩어리로: 칸이 좁으면(폰·글자 확대) 이름 아래 줄 오른쪽으로 통째 내려간다 — 자르거나 칸 밖으로 안 나간다
+  const parts = [...row.querySelectorAll(':scope > .bha-statrow__value, :scope > .bha-ev')];
+  if (parts.length) {
+    const val = h('span', 'bha-care__val');
+    parts[0]!.before(val);
+    val.append(...parts);
+  }
+  row.append(tip);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.

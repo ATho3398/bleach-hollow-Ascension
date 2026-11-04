@@ -2136,3 +2136,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 검수 도구: `scripts/ui-audit/screens.cjs` 흡수·결과 흐름이 걷기 [귀환하기]를 일시정지 창에서 누르게.
 - 테스트 갱신 c218(창 뜨면 숨길 HUD 이름)·c266(준비 탭 길 = 작은 네모)·locomotion(걷기 체력 = 발밑 .bha-hp 156px). 엔진·데이터·세이브·밸런스 변경 없음(BALANCE·SAVE 그대로).
 - 캡처 `docs/captures/c298/`: `<종족>-<pc|ph|ph115>-<prep-0|prep-some|prep-full|place-0|place-some|place-full|walk|pause|encounter|walk-warn>.png` + `phone-checks.json`, 전 = `before/`(폰 4장 + 점검 json).
+- 캡처 `docs/captures/c297/`(1배): pc-(844×390) · phone-(796×384 터치) · phone115-(+글자 1.15) × hollow/shinigami × normal·chain2·chain3·seal·items·lib, `phone-checks.json`.
+## C.299 — 189장 수리 방·상태: 방 상태 게이지 목록형 되돌림 · 먹이 줄 · 상태 능력치 표·아래 띠·진화 정보 (GDD 189장 4·5·6·7·16·17, v5.446, S-23, 코딩211 Opus)
+- 사용자 원문: "홈에서 원래처럼 상태 게이지 바 리스트처럼 뜨는게 좋았는데 왜 갑자기 직렬로 바꿨어" · "글씨 다잘리고, 박스 밖으로 튀어나오고 난리임" → 검수 추천안 "ㅇㅇ". 엔진·데이터·세이브·밸런스 변경 없음. 방 물건 배치·LCD 크기·튜토리얼 대상 선택자(`.bha-room__status`·`.bha-room__statusinfo`·먹이 카드 `[data-food]`) 그대로.
+- **방 상태 게이지(④)** `roomView.ts`·`room.css`: v2 칩 한 줄(막대 26px·숫자 없음) → 머리 위 가운데 어두운 판(`--bha-over-strong`) 하나에 4줄 `[아이콘 | 막대 64 | 숫자]`(C.281 이전 목록형, v2 토큰). 상태이상(쇠약·피곤·빈사)은 맨 앞 줄 = 막대 가득 + 숫자 자리에 이름(위험 색). ⓘ 는 판 오른쪽 위 하나. 빈사·쇠약 자세 옆자리(.is-side)·말풍선 때 숨김 그대로. 온천(spa)이 쓰는 칩 규칙은 안 건드림(새 규칙은 `.bha-room__status--list` 아래만).
+- **먹이 줄(⑰)** `bha/dock.ts`·`room.css`: 카드 설명 = 수치 한 개(배부름·컨디션 중 절댓값 큰 쪽, 전부는 aria-label·title). 임시 배지 = 카드 위 절대 위치(×n 과 겹치고 9px 튀어나옴) → 카드 아래 줄 오른쪽(`.bha-homedock__traynote`). 이름·설명 한 줄.
+- **상태 능력치(⑤⑥)** `lcdScreens.ts`·`screens-lcd.css`: 칸마다 ⓘ 없앰 → 칸 전체를 덮는 투명 설명 단추(`.bha-care__celltip` = infoTip, 누르면·기기 ▲▼로 골라 확정하면 예전 ⓘ 와 같은 창. 치명·속성 피해 칸 = 능력치 전체 설명). 칸 = 이름 | 값+초록 +n(`.bha-care__val`, 좁으면 통째 아래 줄 오른쪽) — 말줄임 없음. 두 열 폭 `300px | 1fr` → `44fr | 56fr`. '능력치' 제목 줄바꿈 금지, '초록 +n = 노력치(와 환생 계승)' = 제목 줄 → '노력치 n / 상한' 줄 아래 작은 줄. 노력치 줄 = 능력치 6칸 바로 아래(첫 화면에 보임), 그 아래 치명·속성 피해 칸(`.bha-care__stats2`).
+- **아래 띠(⑦)**: [진화체 도감][도움말][환생] = 오른쪽 열 바닥 → `lcdPage` foot(두 열 아래 전체 폭). 두 열은 그 위에서 각자 스크롤. 환생 못 할 때 흐리게 자리 유지 그대로.
+- **진화 정보(⑯)**: 이름 줄 전체 폭(이름 lg), 임시 칩은 아래 'n단계 · 이름 · 속성' 줄 앞으로.
+- 폰 점검 (`scripts/ui-audit/c299-room-status.cjs` = phone-checks.cjs, 두 종족 × 방 평소·먹이 줄·방 ⓘ·게이지 낮을 때·빈사·상태 맨 위·칸 설명 창·스크롤 끝·노력치 있을 때·진화 정보): **전 176건 → 후 0건** (PC 844: 판 밖 2 → 0 · 폰 796 터치: 말줄임 64·세로 꺾임 10·판 밖 2 → 0 · 폰 + 글자 1.15: 말줄임 80·세로 꺾임 10·판 밖 8 → 0. 같은 화면 여러 장에서 겹쳐 센 수). 결과 `docs/captures/c299/checks-before.json`·`checks-after.json`.
+- 캡처 `docs/captures/c299/`(1배): `pc844-*`·`ph796-*`(두 종족 × 9장) · `ph796x115-*`(방·상태 맨 위·노력치) · `before-ph796-*`(C.296 방·상태·진화 정보).
+- 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0. typecheck·test(2677)·balance:check 통과.

@@ -78,7 +78,11 @@
 .bha-homedock__food:active { background: var(--bha-bg-3); }
 .bha-homedock__food:disabled { opacity: 0.42; box-shadow: 0 0 0 1px var(--bha-line-2); cursor: default; } /* 0개 = 비활성 (GDD 23-1) */
 .bha-homedock__food .bha-num { color: var(--bha-hunger); font-weight: 400; }
-.bha-homedock__tray > .bha-tag { position: absolute; top: -9px; right: var(--bha-sp-3); background: var(--bha-bg-1); }
+/* 먹이 줄 (GDD 189장 17): 카드 한 줄 + 아래 줄 임시 배지(오른쪽 끝) — 카드 위로 튀어나오지 않는다. 이름·설명 한 줄(말줄임 없이 들어가게 설명은 수치 하나) */
+.bha-homedock__tray--food { flex-wrap: wrap; }
+.bha-homedock__traynote { flex: 1 0 100%; display: flex; justify-content: flex-end; line-height: 1; }
+.bha-homedock__traynote[hidden] { display: none; }
+.bha-homedock__foodname, .bha-homedock__food small { white-space: nowrap; }
 
 /* ── 방 장면 ── */
 .bha-room__scene {
@@ -191,6 +195,23 @@
 .bha-room__chip--stab { --c: var(--bha-stab); }
 .bha-room__chip--hp { --c: var(--bha-player-hp); }
 .bha-room__chip--weak, .bha-room__chip--tired, .bha-room__chip--collapsed { --c: var(--bha-danger); }
+/* 목록형 상태 게이지 (GDD 189장 4, C.281 이전 모양 되돌림 · v2 토큰): 어두운 판 하나에 4줄 = [아이콘 | 긴 막대 | 숫자 n].
+   폭 고정(막대 64 + 숫자 3자리) — 값이 바뀌어도 판이 안 흔들린다. 상태이상 줄은 숫자 자리에 이름(줄바꿈 없이) */
+.bha-room__status--list {
+  flex-direction: column; align-items: stretch; gap: 3px; min-height: 0;
+  padding: var(--bha-sp-2) var(--bha-sp-3); border-radius: var(--bha-r-sm);
+  background: var(--bha-over-strong); box-shadow: 0 0 0 1px var(--bha-line-2);
+}
+.bha-room__gauge { display: flex; align-items: center; gap: var(--bha-sp-2); line-height: 1; }
+.bha-room__gauge .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c, var(--bha-text-2)); }
+.bha-room__gaugetrack { position: relative; flex: none; width: 64px; height: 6px; background: var(--bha-bg-3); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.5); }
+.bha-room__gaugetrack > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c, var(--bha-text-2)); }
+.bha-room__gaugenum { flex: none; min-width: 3ch; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); color: var(--bha-text-1); text-align: right; white-space: nowrap; }
+.bha-room__gauge.is-danger { --c: var(--bha-danger); }
+.bha-room__gauge.is-danger .bha-room__gaugenum, .bha-room__gauge.is-state .bha-room__gaugenum { color: var(--bha-danger); }
+.bha-room__gauge.is-state .bha-room__gaugenum { font-family: inherit; font-weight: var(--bha-fw-bold); }
+/* 목록 판 옆 ⓘ: 판 위 끝에 맞춘다 */
+.bha-room__chips:has(> .bha-room__status--list) { align-items: flex-start; }
 /* 상태이상 칩(쇠약·피곤·빈사·사망): 막대·숫자 대신 이름 (GDD 102-7) */
 .bha-room__chipname { color: var(--bha-danger); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 .bha-room__chipmax { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-3); }

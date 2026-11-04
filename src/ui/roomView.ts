@@ -233,9 +233,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
   const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
   char.onclick = () => react(askLine() ?? undefined);
-  // 머리 위 상태 칩 한 줄 (v2 S01, GDD 183장): [상태이상 이름 칩][배부름·컨디션·영압 안정도 막대 칩][광기/호로화 숫자 칩] + ⓘ. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
+  // 머리 위 상태 게이지 목록 (GDD 189장 4 — v2 S01 칩 한 줄에서 예전 목록형으로): 줄마다 아이콘·막대·숫자 + 오른쪽 위 ⓘ 하나. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
   const chipRow = el('div', 'bha-room__chips');
-  const statusBtn = el('button', 'bha-room__status');
+  const statusBtn = el('button', 'bha-room__status bha-room__status--list');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
   scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
@@ -246,22 +246,18 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
     // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
     statusBtn.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
-    // v2 칩 (.bha-chip--status): 상태이상은 이름(맨 앞), 0~100 게이지는 아이콘 + 짧은 막대, 광기/호로화는 숫자(고정 폭). 위험 구간 칩만 danger 색. 자세한 값·뜻은 ⓘ·상태 화면
+    // 목록형 상태 게이지 (GDD 189장 4, C.281 이전 모양으로 되돌림): 한 줄씩 [아이콘 | 긴 막대 | 숫자 n]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름.
+    // 위험 구간 줄만 위험 색. 자세한 뜻은 ⓘ(줄 하나) · 누르면 상태 화면
     const ordered = [...chips.filter((c) => c.value === null), ...chips.filter((c) => c.value !== null)];
     statusBtn.replaceChildren(...ordered.map((c) => {
-      const chip = el('span', `bha-chip bha-chip--status bha-room__chip--${c.kind}${c.danger ? ' is-danger' : ''}`);
-      chip.append(icon(c.icon));
-      if (c.value === null) chip.append(el('span', 'bha-room__chipname', c.label));
-      else if (c.kind === 'risk') chip.append(el('b', '', String(Math.round(c.value))));
-      else {
-        const m = el('span', 'bha-chip-meter');
-        const fill = el('i');
-        fill.style.width = `${Math.max(0, Math.min(100, c.value))}%`;
-        m.append(fill);
-        chip.append(m);
-      }
-      if (c.hint) chip.title = c.hint;
-      return chip;
+      const row = el('span', `bha-room__gauge bha-room__chip--${c.kind}${c.danger ? ' is-danger' : ''}${c.value === null ? ' is-state' : ''}`);
+      const track = el('span', 'bha-room__gaugetrack');
+      const fill = el('i');
+      fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
+      track.append(fill);
+      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum', c.value === null ? c.label : String(Math.round(c.value))));
+      if (c.hint) row.title = c.hint;
+      return row;
     }));
     if (nameTag) statusBtn.prepend(nameTag);
   };
