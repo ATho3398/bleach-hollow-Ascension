@@ -32,6 +32,9 @@ def fix_selector(sel):
         return None
     if sel in SKIP_BASE:
         return None
+    # v2 그림 칸(.bha-art = 제자리 흐름)이 게임 장면 물건·캐릭터 단추(.bha-art.bha-prop/.bha-char, room.ts = 장면 안 absolute)의 자리를 덮지 않게 (C.293)
+    if sel == '.bha-art':
+        return '.bha-v2 .bha-art:where(:not(.bha-prop, .bha-char))'
     if cl & GAME_CLASH and not sel.startswith('.bha-num--'):
         return '.bha-v2 ' + sel
     if cl & ROOT_CLASH:
@@ -55,7 +58,7 @@ for line in block:
 txt = '\n'.join(out) + '\n'
 txt = txt.replace('.bha-num--w2 { width: 2ch; }', '.bha-num--w2, .bha-num--w3, .bha-num--w4, .bha-num--w5, .bha-num--w6 { display: inline-block; text-align: right; white-space: nowrap; }\n.bha-num--w2 { width: 2ch; }')
 # 디자인 파일의 hex 몇 개 → 토큰 (화면 CSS hex 금지 규칙)
-for a, b in [('color: #f6ece6', 'color: var(--bha-text-1)'), ('background: #0c0909', 'background: var(--bha-backdrop)'),
+for a, b in [('inset: 0; background: rgb(0 0 0 / 0.42); z-index: calc(var(--bha-z-modal) - 1)', 'inset: 0; background: var(--bha-scrim); z-index: calc(var(--bha-z-modal) - 1)'), ('color: #f6ece6', 'color: var(--bha-text-1)'), ('background: #0c0909', 'background: var(--bha-backdrop)'),
              ('background: #e6d6a8', 'background: var(--bha-cos-win-light)'), ('var(--el) 46%, #0d0a09', 'var(--el) 46%, var(--bha-backdrop)')]:
     txt = txt.replace(a, b)
 import sys

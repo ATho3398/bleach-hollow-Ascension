@@ -3,19 +3,8 @@
 
 /* ═════ 전투: battle-scene.css (GDD 18-6) ═════ */
 
-/* ═════ 튜토리얼 오버레이 (.bha-tut): 낮은 LCD 에서는 카드를 컴팩트하게 하고 단계 표시와 버튼을 한 줄에 ═════ */
-.bha-lcd .bha-tut__card { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
-.bha-lcd .bha-tut__card.is-placed { left: auto; transform: none; width: auto; max-width: none; transition: none; }
-.bha-lcd .bha-tut__card.is-placed:not(.is-below):not(.is-above)::before { display: none; }
-.bha-lcd .bha-tut__top { flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-4); }
-.bha-lcd .bha-tut__steps { display: flex; align-items: center; gap: var(--bha-sp-4); min-width: 0; }
-.bha-lcd .bha-tut__actions { display: flex; flex: none; gap: var(--bha-sp-3); margin: 0 0 0 auto; }
-.bha-lcd .bha-tut .bha-battle__pausetag { display: none; }  /* 카드가 같은 자리를 쓰므로 "전투 멈춤" 칩은 숨긴다 (멈춘 화면 표시는 그대로) */
-.bha-lcd .bha-tut__hole { outline-offset: 1px; }
-.bha-lcd .bha-tut__actions .bha-btn--small { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-tut__title { font-size: var(--bha-fs-lg); }
-.bha-lcd .bha-tut__title .bha-icon { width: 18px; height: 18px; }
-.bha-lcd .bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; }
+/* 튜토리얼 카드 모양은 screens/screens.css 한 벌 (C.293). 카드가 같은 자리를 쓰므로 "전투 멈춤" 칩은 숨긴다 (멈춘 화면 표시는 그대로) */
+.bha-lcd .bha-tut .bha-battle__pausetag { display: none; }
 
 /* ═════ 원정(걷기) 화면: walk-scene.css (GDD 18-7) ═════ */
 
@@ -37,11 +26,11 @@
 .bha-split .bha-result__reason { font-size: var(--bha-fs-sm); max-width: none; }
 .bha-split .bha-panel { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
 .bha-split .bha-info__row { padding: var(--bha-sp-2) 0; }
-.bha-split .bha-info dd { font-size: var(--bha-fs-sm); }
+.bha-split .bha-infotable dd { font-size: var(--bha-fs-sm); }
 
 
 /* 한계 돌파: 균열 배경 위에 두 열 */
-.bha-lcd .bha-app.bha-break--split { text-align: left; background: radial-gradient(circle at 25% 40%, rgb(255 79 216 / .22), transparent 60%), radial-gradient(circle at 25% 120%, rgb(229 72 77 / .25), transparent 55%), var(--bha-bg-0); }
+.bha-lcd .bha-app.bha-break--split { text-align: left; background: var(--bha-bg-0); }
 .bha-break--split .bha-split__main { align-items: center; text-align: center; }
 .bha-break--split .bha-break__title { font-size: var(--bha-fs-2xl); }
 .bha-break--split .bha-break__gauge { width: 100%; }

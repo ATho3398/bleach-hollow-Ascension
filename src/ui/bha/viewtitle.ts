@@ -1,6 +1,6 @@
 // 화면 머리의 제목 토글 (GDD 58, C.114): "<지금 보기 이름> ▾" — 누르면 같은 화면 안의 보기 목록이 아래로 열리고, 골라서 바꾼다.
 // 예전 머리의 보기 전환 탭 줄(도감·상점·보관함·원정 출발·수련장·테스트)을 이 제목이 대신해 머리 폭이 넓어진다. 목록 바깥을 누르면 닫힌다.
-// 대상은 1차 "어느 화면/보기" 전환만 — 2차 필터(도감 단계 탭 등)·켜기/끄기 토글·전투 조작은 아니다. 모양은 screens-lcd.css 의 .bha-viewtitle.
+// 대상은 1차 "어느 화면/보기" 전환만 — 2차 필터(도감 단계 탭 등)·켜기/끄기 토글·전투 조작은 아니다. 모양 = v2 .bha-toggle(bha-v2.css) + 펼침 목록 .bha-viewtitle(screens-lcd.css).
 import { el, icon } from './dom';
 import { getOverlayHost, isDeviceButtonPress, registerLayer } from './overlayHost';
 import { elementLocalRect } from './viewport';
@@ -15,11 +15,11 @@ export interface ViewTitleOption {
 export function viewTitle(options: readonly ViewTitleOption[], current: string, onPick: (id: string) => void, opts: { prefix?: string } = {}): HTMLElement {
   const root = el('div', 'bha-viewtitle');
   const now = options.find((o) => o.id === current) ?? options[0]!;
-  const btn = el('button', 'bha-viewtitle__btn') as HTMLButtonElement;
+  const btn = el('button', 'bha-toggle bha-viewtitle__btn') as HTMLButtonElement; // v2 제목 토글 .bha-toggle (C.293) + 펼침 목록
   btn.type = 'button';
   btn.setAttribute('aria-haspopup', 'listbox');
   btn.setAttribute('aria-expanded', 'false');
-  btn.append(el('span', 'bha-viewtitle__name', opts.prefix ? `${opts.prefix} · ${now.label}` : now.label), icon('i-chevron-down', undefined, 'bha-viewtitle__caret'));
+  btn.append(el('span', 'bha-toggle-on bha-viewtitle__name', opts.prefix ? `${opts.prefix} · ${now.label}` : now.label), icon('i-chevron-down', undefined, 'bha-viewtitle__caret'));
   const list = el('div', 'bha-viewtitle__list');
   list.setAttribute('role', 'listbox');
   list.setAttribute('aria-label', '도감');

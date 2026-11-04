@@ -21,6 +21,6 @@
 /* 이름표 안 황동 배지 (v2 S02 월드맵 시장 '상인' · S03 떠돌이 상인 '왔다', GDD 130장 2) = .bha-plate .bha-badge */
 .bha-prop__tag .bha-badge { height: 16px; padding: 0 4px; font-size: var(--bha-fs-xs); }
 /* 상점 고르기 창 (GDD 150장 2, C.227): 상점 4곳 + [닫기] 를 한 줄에 하나씩 (기기 ▲▼ 순서 = 위 → 아래) */
-.bha-shoppick__list { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-2); }
+.bha-shoppick__list { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-3); } /* = 공용 창 버튼 줄 간격 (C.293 전에는 화면 G 규칙이 sp-2 를 덮었다) */
 /* 사용자 2026-11-03 캡처 점검: 캐릭터는 물건 그림 앞 (시안 S03 의 '지도 뒤'보다 사용자 말이 먼저) */
 .bha-market__char { z-index: 2; }

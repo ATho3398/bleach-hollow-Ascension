@@ -44,7 +44,7 @@ async function more(h, label) {
 
 /** 켜고 끄는 칸(스위치·눌림 버튼·체크)을 하나씩 눌러 다른 버튼이 안 움직이는지 보고 다시 눌러 되돌린다 */
 async function toggles(h, n, scope = '.bha-lcd', max = 10) {
-  const togg = h.page.locator(`${scope} .bha-switch, ${scope} [aria-pressed], ${scope} [role="switch"], ${scope} input[type="checkbox"]`).filter({ visible: true });
+  const togg = h.page.locator(`${scope} .bha-setswitch, ${scope} [aria-pressed], ${scope} [role="switch"], ${scope} input[type="checkbox"]`).filter({ visible: true });
   const tn = Math.min(await togg.count(), max);
   for (let j = 0; j < tn; j++) {
     const t = togg.nth(j);

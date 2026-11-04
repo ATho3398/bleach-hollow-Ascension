@@ -107,7 +107,7 @@
 .bha-row-txt span { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ============================== 그림 자리 (그림은 따로 그려짐) ============================== */
-.bha-v2 .bha-art { position: relative; display: flex; align-items: center; justify-content: center; flex: none; color: var(--bha-ph); }
+.bha-v2 .bha-art:where(:not(.bha-prop, .bha-char)) { position: relative; display: flex; align-items: center; justify-content: center; flex: none; color: var(--bha-ph); }
 .bha-v2 .bha-art .bha-i { width: 100%; height: 100%; }
 .bha-art--frame { background: var(--bha-bg-0); border-radius: var(--bha-r-sm); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
 .bha-art--frame .bha-i { width: 62%; height: 62%; }
@@ -137,7 +137,7 @@
 .bha-win-body p { margin: 0 0 6px; }
 .bha-win-foot { flex: none; display: flex; gap: 8px; padding: 8px 10px 10px; box-sizing: border-box; }
 .bha-win-foot > .bha-btn:where(:not(.bha-root *)) { flex: 1 1 0; }
-.bha-scrim:where(:not(.bha-root *)) { position: absolute; inset: 0; background: rgb(0 0 0 / 0.42); z-index: calc(var(--bha-z-modal) - 1); }
+.bha-scrim:where(:not(.bha-root *)) { position: absolute; inset: 0; background: var(--bha-scrim); z-index: calc(var(--bha-z-modal) - 1); }
 .bha-more:where(:not(.bha-root *)) { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; display: flex; align-items: center; justify-content: center; gap: 4px; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
 .bha-more .bha-i:where(:not(.bha-root *)) { width: 12px; height: 12px; }
 .bha-statline { display: flex; flex-wrap: wrap; gap: 2px 0; font-size: var(--bha-fs-sm); color: var(--bha-text-1); }

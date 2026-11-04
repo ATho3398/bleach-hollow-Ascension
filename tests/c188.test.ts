@@ -102,7 +102,7 @@ describe('설정 화면 · 테스트 패널', () => {
     expect(v).toContain("genderRow.dataset.set = 'gender';");
     expect(v).toContain("panel('이 캐릭터 · 성별'");
     expect(v).toContain('b.replaceChildren(icon(\'i-check\'), label(v));');
-    expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; }');
+    expect(read('src/ui/bha/components/v2-shared.css')).toContain('.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; }'); // C.293 공용
     expect(read('src/ui/app.ts')).toContain('setActiveGender(save?.gender);');
   });
   it('테스트 패널 진화체 이름은 shownName (밑줄 없음)', () => {

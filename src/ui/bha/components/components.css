@@ -169,7 +169,7 @@
 .bha-meter--compact.bha-meter--inside .bha-meter__track > .bha-meter__value { grid-column: auto; min-width: 0; text-align: center; } /* 줄 배치(compact)의 셋째 칸 규칙을 막대 안 숫자에는 안 쓴다 */
 
 .bha-meter.is-danger .bha-meter__value { color: var(--bha-danger); }
-.bha-meter.is-danger .bha-meter__track { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent), 0 0 10px color-mix(in srgb, var(--c) 40%, transparent); }
+.bha-meter.is-danger .bha-meter__track { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent); } /* v2: 번지는 빛 없이 테두리만 (C.293) */
 .bha-meter--risk.is-danger .bha-meter__fill { animation: bha-breathe 1.4s ease-in-out infinite; }
 .bha-meter--sp.is-full .bha-meter__track { box-shadow: inset 0 0 0 1px var(--bha-sp-hi), var(--bha-glow-sp); }
 .bha-meter--sp.is-full .bha-meter__fill::after { display: none; } /* v2: 빛 훑기 없음 */
@@ -258,23 +258,24 @@
    3개까지 위에서 아래로 쌓임(--toast-i), 나머지는 차례로. 상태: .is-in(등장) .is-out(퇴장)
    ========================================================= */
 .bha-toast:where(:not(.bha-v2 *)) { /* .bha-v2 화면은 .bha-toasts 안 v2 .bha-toast */
+  /* v2 노란 알림 (GDD 183장 · PROMPT 5절 8, C.293 공용화): 글 길이만큼 짧은 띠(높이 30, 최대 LCD −96px) · 34px 간격으로 위에서 아래로 · 누름 통과 */
   position: fixed; z-index: var(--bha-z-toast);
   top: calc(env(safe-area-inset-top, 0px) + var(--bha-sp-1)); left: 50%;
-  width: min(440px, calc(100% - 16px));
-  margin-top: calc(var(--toast-i, 0) * 32px);
-  display: flex; align-items: center; gap: var(--bha-sp-3);
-  padding: var(--bha-sp-1) var(--bha-sp-4);
-  border: 1px solid var(--bha-toast-line); border-radius: var(--bha-r-sm);
+  width: max-content; max-width: calc(100% - 96px); height: 30px; box-sizing: border-box;
+  margin-top: calc(var(--toast-i, 0) * 34px);
+  display: flex; align-items: center; gap: var(--bha-sp-2);
+  padding: 0 var(--bha-sp-5) 0 var(--bha-sp-3);
+  border: 0; border-radius: var(--bha-r-sm);
   background: var(--bha-toast-bg); color: var(--bha-toast-ink);
-  box-shadow: inset 0 1px 0 var(--bha-hi), 0 2px 0 rgb(0 0 0 / 0.5);
+  box-shadow: 0 0 0 1px var(--bha-toast-line), inset 0 1px 0 var(--bha-hi), 0 2px 0 var(--bha-lo);
   transform: translate(-50%, 0);
   pointer-events: none;
 }
 .bha-toast.is-in { animation: bha-toast-in var(--bha-dur-4) var(--bha-ease-snap) both; }
 .bha-toast.is-out { animation: bha-toast-out var(--bha-dur-3) var(--bha-ease-in) both; }
-.bha-toast__icon { display: grid; place-items: center; width: 20px; height: 20px; color: var(--bha-rare); flex: none; }
+.bha-toast__icon { display: grid; place-items: center; width: 16px; height: 16px; color: var(--bha-rare); flex: none; }
 .bha-toast__icon .bha-icon { width: 16px; height: 16px; }
-.bha-toast__text { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; }
+.bha-toast__text { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 30px; }
 .bha-toast__eyebrow { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-rare); }
 .bha-toast__title { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-sm); color: var(--bha-toast-ink); }
 
@@ -289,31 +290,36 @@
   animation: bha-fade-in var(--bha-dur-3) var(--bha-ease-out) both;
 }
 .bha-overlay--clear { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* 창 = v2 창 모양 (GDD 183장, C.293 공용화 — 화면 G 가 screens-lcd.css 에서 덮던 것): 머리 48(왼쪽 제목, 한 칸 밝은 면) · 본문(왼쪽 정렬) ·
+   맨 아래 같은 폭 버튼 줄(본문 길이와 상관없이 늘 맨 아래, 173장 2). 무늬 바탕·가운데 큰 제목 없음. 옛 전투 UI(.bha-root) 창은 v2/bha.css 몫 */
 .bha-modal {
-  width: min(420px, 100%);
-  max-height: calc(100dvh - 32px); overflow: auto;
-  display: flex; flex-direction: column; gap: var(--bha-sp-5);
-  padding: var(--bha-sp-7) var(--bha-sp-6) var(--bha-sp-6);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg);
-  background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-bg-1);
-  box-shadow: var(--bha-shadow-3);
+  width: min(400px, 100%);
+  max-height: calc(100dvh - 32px); overflow: hidden;
+  display: flex; flex-direction: column; gap: 0; padding: 0;
+  border: 0; border-radius: var(--bha-r-lg); background: var(--bha-bg-1);
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-3);
   animation: bha-rise var(--bha-dur-4) var(--bha-ease-out) both;
 }
-.bha-modal__title { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-2xl); line-height: 1.2; text-align: center; text-wrap: balance; }
-.bha-modal__body { font-size: var(--bha-fs-md); color: var(--bha-text-2); text-align: center; line-height: 1.55; }
-.bha-modal__actions { display: grid; gap: var(--bha-sp-4); grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.bha-modal__actions--three { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* 세 버튼 확인 창 (C.178 설정 저장) — 한 줄 */
+.bha-modal__title:where(:not(.bha-root *)) {
+  flex: none; display: flex; align-items: center; min-height: 48px; margin: 0; padding: 0 var(--bha-sp-5);
+  background: var(--bha-bg-2); box-shadow: inset 0 -1px 0 var(--bha-line-1), inset 0 1px 0 var(--bha-hi);
+  font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-lg); line-height: 1.2; text-align: left; text-wrap: pretty;
+}
+.bha-modal:where(:not(.bha-root *, .bha-win)) > :not(.bha-modal__title):not(.bha-modal__actions) { flex: none; margin: var(--bha-sp-4) var(--bha-sp-5) 0; }
+.bha-modal__body:where(:not(.bha-root *)) { font-size: var(--bha-fs-sm); color: var(--bha-text-2); text-align: left; line-height: 1.5; }
+.bha-modal__actions:where(:not(.bha-root *)) { flex: none; display: flex; gap: var(--bha-sp-3); margin-top: auto; padding: var(--bha-sp-4); }
+.bha-modal__actions:where(:not(.bha-root *)) > .bha-btn { flex: 1 1 0; min-width: 0; }
 
 /* =========================================================
-   9. 정보 표  .bha-info (dl)   (현재 table / td)
+   9. 정보 표  .bha-infotable (dl — 옛 이름 .bha-info 는 v2 ⓘ 버튼과 겹쳐 C.293 에 바꿈)   (현재 table / td)
    ========================================================= */
-.bha-info { display: flex; flex-direction: column; }
+.bha-infotable { display: flex; flex-direction: column; }
 .bha-info__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--bha-sp-5); padding: 9px 0; border-bottom: 1px solid var(--bha-line-1); }
 .bha-info__row:last-child { border-bottom: 0; }
-.bha-info dt { font-size: var(--bha-fs-sm); color: var(--bha-text-2); display: flex; align-items: center; gap: 6px; }
-.bha-info dt .bha-icon { width: 16px; height: 16px; }
-.bha-info dd { font-size: var(--bha-fs-md); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); text-align: right; font-variant-numeric: tabular-nums; }
-.bha-info dd small { font-weight: var(--bha-fw-regular); color: var(--bha-text-2); font-size: var(--bha-fs-xs); }
+.bha-infotable dt { font-size: var(--bha-fs-sm); color: var(--bha-text-2); display: flex; align-items: center; gap: 6px; }
+.bha-infotable dt .bha-icon { width: 16px; height: 16px; }
+.bha-infotable dd { font-size: var(--bha-fs-md); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); text-align: right; font-variant-numeric: tabular-nums; }
+.bha-infotable dd small { font-weight: var(--bha-fw-regular); color: var(--bha-text-2); font-size: var(--bha-fs-xs); }
 .bha-info__row--em dd { color: var(--bha-warn); }
 .bha-info__row--good dd { color: var(--bha-good); }
 .bha-info__row--bad dd { color: var(--bha-danger); }
@@ -361,8 +367,8 @@
 .bha-slot--empty .bha-slot__num { position: absolute; top: 6px; left: 8px; }
 .bha-slot--empty .bha-icon { width: 20px; height: 20px; }
 .bha-slot--locked { opacity: 0.5; }
-.bha-slot.is-target { border: 2px solid var(--bha-accent-hi); box-shadow: 0 0 0 3px var(--bha-accent-soft), 0 0 16px var(--bha-accent-soft); animation: bha-pulse-ring 1.4s ease-in-out infinite; }
-.bha-slot.is-target::after { content: "교체"; position: absolute; top: -9px; right: 8px; padding: 0 6px; border-radius: var(--bha-r-xs); background: var(--bha-accent); color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; }
+.bha-slot.is-target { border: 2px solid var(--bha-accent-hi); box-shadow: 0 0 0 3px var(--bha-accent-soft); animation: bha-pulse-ring 1.4s ease-in-out infinite; }
+.bha-slot.is-target::after { content: "교체"; position: absolute; top: -9px; right: 8px; padding: 0 6px; border-radius: var(--bha-r-xs); background: var(--bha-accent); color: var(--bha-text-1); font-size: 12px; font-weight: 700; line-height: 18px; }
 .bha-slot.is-selected { border: 2px solid var(--bha-text-1); }
 .bha-slot.is-new { animation: bha-popin var(--bha-dur-3) var(--bha-ease-snap) both; }
 button.bha-slot { font: inherit; cursor: pointer; }
@@ -426,7 +432,7 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-dots { display: flex; align-items: center; gap: 6px; }
 .bha-dots__dot { width: 8px; height: 8px; border-radius: 4px; background: var(--bha-bg-3); box-shadow: inset 0 0 0 1px var(--bha-line-2); transition: width var(--bha-dur-2) var(--bha-ease-out), background-color var(--bha-dur-2); }
 .bha-dots__dot.is-done { background: var(--bha-text-3); }
-.bha-dots__dot.is-active { width: 22px; background: var(--bha-accent-hi); box-shadow: 0 0 8px var(--bha-accent); }
+.bha-dots__dot.is-active { width: 22px; background: var(--bha-accent-hi); box-shadow: inset 0 0 0 1px var(--bha-accent); } /* v2: 빛 대신 테두리 (C.293) */
 
 /* =========================================================
    16. 범례  .bha-legend   (현재 .legend / .lg)
@@ -477,8 +483,8 @@ button.bha-slot:active { transform: scale(0.98); }
 .bha-tilechip--rest  { --tile: var(--bha-tile-rest); }
 .bha-tilechip--event { --tile: var(--bha-seal); }
 .bha-tilechip:active { transform: scale(0.96); }
-.bha-tilechip.is-selected { border: 2px solid var(--tile); padding-left: 5px; background: color-mix(in srgb, var(--tile) 22%, var(--bha-bg-2)); box-shadow: 0 0 12px color-mix(in srgb, var(--tile) 45%, transparent); }
-.bha-tilechip.is-selected::after { content: "선택"; position: absolute; top: -8px; right: 6px; padding: 0 5px; border-radius: var(--bha-r-xs); background: var(--tile); color: #fff; font-size: 12px; font-weight: 800; line-height: 15px; }
+.bha-tilechip.is-selected { border: 2px solid var(--tile); padding-left: 5px; background: color-mix(in srgb, var(--tile) 22%, var(--bha-bg-2)); }
+.bha-tilechip.is-selected::after { content: "선택"; position: absolute; top: -8px; right: 6px; padding: 0 5px; border-radius: var(--bha-r-xs); background: var(--tile); color: var(--bha-text-1); font-size: 12px; font-weight: 800; line-height: 15px; }
 .bha-tilechip:disabled { opacity: 0.4; }
 
 /* =========================================================
@@ -597,15 +603,10 @@ button.bha-slot:active { transform: scale(0.98); }
 @keyframes bha-sheen { from { background-position: 130% 0; } to { background-position: -130% 0; } }
 @keyframes bha-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
 @keyframes bha-blink { 50% { opacity: 0.15; } }
-@keyframes bha-void-breathe { 0%, 100% { box-shadow: inset 0 0 0 2px var(--bha-risk), 0 0 2px rgb(255 79 216 / 0.3); } 50% { box-shadow: inset 0 0 0 2px var(--bha-risk), inset 0 0 12px rgb(255 79 216 / 0.45), 0 0 10px rgb(255 79 216 / 0.55); } }
-@keyframes bha-ready-glow { from { box-shadow: 0 0 0 0 rgb(255 212 122 / 0); } to { box-shadow: 0 0 18px 1px rgb(255 212 122 / 0.45); } }
 @keyframes bha-cast-pulse { from { transform: scale(1); } to { transform: scale(1.012); } }
-@keyframes bha-pulse-ring { 0%, 100% { box-shadow: 0 0 0 3px var(--bha-accent-soft); } 50% { box-shadow: 0 0 0 6px var(--bha-accent-soft), 0 0 18px var(--bha-accent-soft); } }
-@keyframes bha-pulse-can { 0%, 100% { box-shadow: 0 0 0 0 rgb(108 196 255 / 0.5); } 50% { box-shadow: 0 0 0 5px rgb(108 196 255 / 0); } }
+@keyframes bha-pulse-ring { 0%, 100% { border-color: var(--bha-accent-hi); filter: none; } 50% { border-color: var(--bha-accent); filter: brightness(1.15); } } /* v2: 빛 번짐 없이 테두리·밝기만 (C.293) */
 @keyframes bha-ping { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
 @keyframes bha-run-fire { 0% { transform: scale(1); } 40% { transform: scale(1.06); box-shadow: 0 0 22px var(--bha-chain2); } 100% { transform: scale(1); } }
-@keyframes bha-run-fire3 { 0% { transform: scale(1); } 30% { transform: scale(1.1); box-shadow: 0 0 34px 6px var(--bha-chain3); } 60% { transform: scale(0.98); } 100% { transform: scale(1); } }
-@keyframes bha-burst { 0% { box-shadow: 0 0 0 0 rgb(255 212 122 / 0.9); } 100% { box-shadow: 0 0 0 14px rgb(255 212 122 / 0); } }
 @keyframes bha-float-up { 0% { opacity: 0; translate: 0 6px; scale: 0.6; } 15% { opacity: 1; translate: 0 -6px; scale: 1.15; } 30% { scale: 1; } 100% { opacity: 0; translate: 0 -46px; } }
 @keyframes bha-fx-flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes bha-log-in { from { opacity: 0; transform: translateY(100%); } }
@@ -748,8 +749,10 @@ button.bha-slot:active { transform: scale(0.98); }
 button.bha-info { /* C.182: button 으로 좁힘 — 정보 표(dl.bha-info, 9번)까지 18px 상자로 찌그러뜨렸다 */
   display: inline-flex; align-items: center; justify-content: center; flex: none; vertical-align: middle;
   width: 18px; height: 18px; margin: 0 0 0 var(--bha-sp-2); padding: 0; border: 0; border-radius: var(--bha-r-pill);
-  background: transparent; color: var(--bha-text-2); cursor: help; touch-action: manipulation;
+  position: relative; background: transparent; color: var(--bha-text-2); cursor: help; touch-action: manipulation;
 }
+/* 누르는 자리 = 36 (작은 버튼 기준, PROMPT 7절 · C.293): 보이는 원(18px)은 그대로, 보이지 않는 판을 사방으로 넓힌다. 이미 36 이상인 ⓘ 는 그대로 */
+button.bha-info::before { content: ""; position: absolute; inset: min(0px, calc((100% - var(--bha-btn-h-sm)) / 2)); }
 button.bha-info .bha-icon { width: 16px; height: 16px; }
 button.bha-info:hover, button.bha-info.is-open, button.bha-info:focus-visible { color: var(--bha-text-1); background: var(--bha-bg-3); outline: 0; }
 .bha-info-wrap { display: inline-flex; align-items: center; }

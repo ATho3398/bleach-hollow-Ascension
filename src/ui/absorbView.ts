@@ -385,6 +385,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     first = picker.first;
     // GDD 183장 S11: 왼쪽 판 = 상대 카드 + 지금 리스크 게이지 + 슬롯 / 오른쪽 = 갈래 4개 → 설명 칸(고정 높이) / 아래 줄 = 고른 갈래 · [○○하기] (DOM 순서 = 기기 ▲▼: 갈래 → 버튼)
     const [modes, desc, go] = [picker.actions, picker.desc, picker.go];
+    // 설명 칸 바닥 '▼ 더 있음' = 공용 띠 (.bha-more--sticky, C.293). 첫 흡수 연습(옛 틀 .bha-absorbpage)은 .bha-pop__more 그대로
+    desc.querySelector('.bha-pop__more')?.setAttribute('class', 'bha-more bha-more--sticky bha-absorb__more');
     const nodes: HTMLElement[] = [
       foeCard(),
       el('p', 'bha-dim bha-absorb__lead', `${foeName}을(를) 쓰러뜨렸다.`),

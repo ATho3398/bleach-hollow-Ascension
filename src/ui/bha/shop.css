@@ -44,7 +44,6 @@
 /* 넘치는 격자 바닥 '▼ 더 있음' (moreHint): 격자의 부모 칸 아래에 겹친다 */
 .bha-shop .bha-lcdpage__col, .bha-chest-page .bha-lcdpage__col, .bha-healbag .bha-modal, .bha-itembox { position: relative; }
 .bha-lcdpage__col > .bha-itemmore { bottom: var(--bha-sp-4); left: var(--bha-sp-4); right: var(--bha-sp-4); }
-.bha-itemmore[hidden] { display: none; }
 
 /* ═════ 상점 머리: 제목 + 골드·영옥 칩(고정 폭 숫자) ═════ */
 .bha-shop .bha-lcdpage__col { gap: var(--bha-sp-4); }
@@ -139,7 +138,11 @@
 .bha-gearshortcut { align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
 
 /* ═════ 걷기 가방 — 회복 물건 (GDD 144장 3): v2 창 모양 ═════ */
-.bha-healbag .bha-modal { width: min(560px, 96%); gap: var(--bha-sp-4); padding: var(--bha-sp-5); background: var(--bha-bg-1); border: 0; box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-3); }
-.bha-healbag .bha-modal__title { font-family: var(--bha-font-body); font-size: var(--bha-fs-lg); text-align: left; }
+.bha-healbag .bha-modal { width: min(560px, 96%); gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); background: var(--bha-bg-1); border: 0; box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-3); }
+.bha-healbag .bha-modal__title { font-family: var(--bha-font-body); font-size: var(--bha-fs-xl); text-align: left; }
 .bha-healbag .bha-itemgrid { flex: none; grid-auto-rows: 118px; overflow: visible; }
-.bha-healbag .bha-modal__actions { grid-template-columns: 88px; justify-content: end; }
+.bha-healbag .bha-modal__actions { display: grid; gap: var(--bha-sp-4); margin: 0; padding: 0; grid-template-columns: 88px; justify-content: end; }
+/* 걷기 가방은 머리 띠 없는 판 모양 — 공용 v2 창(.bha-modal, C.293)의 머리 띠·본문 여백을 끈다 (모양 그대로) */
+.bha-healbag .bha-modal { overflow: auto; }
+.bha-healbag .bha-modal > * { margin: 0; }
+.bha-healbag .bha-modal__title { display: block; min-height: 0; padding: 0; background: none; box-shadow: none; text-wrap: balance; }

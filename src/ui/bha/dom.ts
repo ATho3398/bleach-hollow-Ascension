@@ -9,7 +9,7 @@
 //   chip(text, mod?) / tag(text, mod?) / provisionalTag()
 //   notice(kind, text, opts?)           → .bha-notice (아이콘 + 본문)
 //   panel({ title?, aside?, mod? }, ...nodes)
-//   info(rows)                          → dl.bha-info (행: label, value, mod?)
+//   info(rows)                          → dl.bha-infotable (행: label, value, mod?)
 //   seg(items, onSelect) / dots(n, active) / slider({...})
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
 //   emptyState(text, { icon?, action? }) → .bha-empty 빈 상태 (가운데 아이콘 + 한 줄 + 할 일 버튼, GDD 100장 #87)
@@ -213,9 +213,9 @@ export interface InfoRow {
   mod?: 'em' | 'good' | 'bad' | 'stack';
 }
 
-/** 정보 표 (옛 table/td 대체): dl.bha-info > div.bha-info__row > dt + dd */
+/** 정보 표 (옛 table/td 대체): dl.bha-infotable > div.bha-info__row > dt + dd */
 export function info(rows: InfoRow[]): HTMLElement {
-  const dl = el('dl', 'bha-info');
+  const dl = el('dl', 'bha-infotable'); // 옛 이름 .bha-info = v2 ⓘ 버튼과 겹쳐 바꿈 (C.293)
   for (const r of rows) {
     const row = el('div', r.mod ? `bha-info__row bha-info__row--${r.mod}` : 'bha-info__row');
     const dd = el('dd');

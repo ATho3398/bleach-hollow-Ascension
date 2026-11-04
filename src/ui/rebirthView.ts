@@ -169,7 +169,7 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
   main.append(h('span', 'bha-evolve__eyebrow', `${faction.rebirth.name} ${record.count}회`), title, h('p', 'bha-evolve__path', faction.rebirth.rebornText), home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '가지고 온 것', aside: provisionalTag('임시 수치') });
-  const dl = h('dl', 'bha-info');
+  const dl = h('dl', 'bha-infotable');
   const row = (label: string, value: string | HTMLElement) => {
     const r = h('div', 'bha-info__row bha-info__row--stack');
     const dd = h('dd');

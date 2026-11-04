@@ -120,9 +120,6 @@
 .bha-afx-name.is-big { font-size: var(--bha-fs-4xl); text-shadow: 0 0 16px var(--bha-chain3), 0 2px 4px var(--bha-bg-0); }
 .bha-afx-name.is-ult { font-size: var(--bha-fs-4xl); color: var(--bha-sp-hi); text-shadow: var(--bha-glow-sp), 0 2px 4px var(--bha-bg-0); }
 
-/* 해방 컷인 띠 테마 토큰 (PROMPT 6절 S10: 호로 불꽃 사선 · 사신 먹 사선) — theme-*.css 와 같은 테마 선택자(종족 설정 theme 값). 공용 theme 파일로 옮길 후보(C.285 보고) */
-:root, .bha-theme-hollow, [data-bha-theme="hollow"] { --bha-battle-cut-bg: var(--bha-cos-cut-flame-bg); --bha-battle-cut-line: var(--bha-cos-cut-flame-line); }
-.bha-theme-shinigami, [data-bha-theme="shinigami"] { --bha-battle-cut-bg: var(--bha-cos-cut-ink-bg); --bha-battle-cut-line: var(--bha-cos-cut-ink-line); }
 /* ── 해방 중 (PROMPT 6절 S10, C.285): 장면을 어둡게 낮추고 내 캐릭터만 그림 윤곽 강조 + '레스렉시온/만해 중 n초' 칩(v2/bha.css). glow·흐림 없음 ──
    윤곽 색 = 내 속성 색(--bha-aura, GDD 83장 4번). 레스렉시온/만해(.is-unique)는 윤곽 3px, 영력 해방은 2px. 그림 모양대로만(GDD 178장 3) */
 .bha-battle.is-liberated .bha-scenebg__dim { background: color-mix(in srgb, var(--bha-backdrop) 55%, transparent); }

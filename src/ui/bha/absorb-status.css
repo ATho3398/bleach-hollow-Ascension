@@ -12,7 +12,6 @@
 .bha-absorbstat__rank { color: var(--bha-text-2); font-variant-numeric: tabular-nums; }
 .bha-absorbstat__bar { display: block; height: 6px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
 .bha-absorbstat__bar i { display: block; height: 100%; border-radius: inherit; background: var(--bha-lin-color, var(--bha-accent)); }
-.bha-confirm .bha-modal:has(.bha-absorbstat) { width: min(560px, calc(100% - 24px)); max-width: none; }
 /* GDD 176장 11: 노력치가 가득 찬 능력치 갈래 = 흐리게 (고를 수는 있다, 자리 그대로) */
 .bha-absorb__actions--modes .bha-btn[aria-disabled="true"] { opacity: 0.45; }
 
@@ -25,11 +24,6 @@
 .bha-absorb__grow { flex: 1 1 auto; }
 .bha-absorbv2 > .bha-head .bha-btn { flex: none; }
 /* 단계 1 갈래 · 2 특성: 작은 네모 숫자, 지금 단계만 강조색 */
-.bha-absorbv2 .bha-steps { flex: none; gap: var(--bha-sp-2); font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
-.bha-absorbv2 .bha-steps em { font-style: normal; color: var(--bha-text-3); }
-.bha-absorbv2 .bha-steps b { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: var(--bha-r-xs); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-xs); line-height: 1; }
-.bha-absorbv2 .bha-steps .is-active { color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }
-.bha-absorbv2 .bha-steps .is-active b { background: var(--bha-accent); color: var(--bha-text-1); }
 /* 왼쪽 판 */
 .bha-absorbv2 .bha-absorb__left { position: absolute; left: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); width: 190px; box-sizing: border-box; padding: var(--bha-sp-4); gap: var(--bha-sp-3); overflow-y: auto; overscroll-behavior: contain; }
 .bha-absorbv2 .bha-foecard { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2); padding: 0; border: 0; background: none; text-align: center; }
@@ -72,8 +66,7 @@
 .bha-absorbv2 .bha-absorb__enh .bha-chip { height: 20px; vertical-align: middle; }
 .bha-absorbv2 .bha-absorb__enh small { font-size: var(--bha-fs-xs); }
 /* '▼ 더 있음' = 칸 바닥에 붙는 띠 (끝까지 내리면 숨김, GDD 168장 3) */
-.bha-absorbv2 .bha-absorb__desc .bha-pop__more { position: sticky; bottom: 0; flex: none; margin: auto calc(-1 * var(--bha-sp-5)) 0; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
-.bha-absorbv2 .bha-absorb__desc .bha-pop__more[hidden] { display: none; }
+.bha-absorbv2 .bha-absorb__more { margin-inline: calc(-1 * var(--bha-sp-5)); } /* 공용 띠 .bha-more--sticky (C.293) — 칸 안쪽 여백만큼 양옆으로 */
 /* 특성 고르기: 후보 목록이 남은 높이(안에서 스크롤) → [다시 뽑기] 줄 자리 고정 (GDD 173장 2) */
 .bha-absorbv2 .bha-absorb__cands { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; gap: var(--bha-sp-3); padding: var(--bha-sp-1); margin: calc(-1 * var(--bha-sp-1)); }
 .bha-absorbv2 .bha-cand { grid-template-columns: 32px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-4) var(--bha-sp-5); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); border: 1px solid var(--bha-line-1); box-shadow: inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
@@ -97,7 +90,7 @@
 .bha-absorb__sel { margin-right: auto; font-size: var(--bha-fs-sm); }
 .bha-absorb__sel b { color: var(--bha-text-1); }
 .bha-absorbv2 .bha-absorb__back { margin-right: auto; }
-.bha-absorbv2 .bha-absorb__go, .bha-absorbv2 .bha-absorb__run { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; padding: 0 var(--bha-sp-5); font-size: var(--bha-fs-lg); }
+.bha-absorbv2 .bha-absorb__go, .bha-absorbv2 .bha-absorb__run { width: var(--bha-dock-btn-w); height: var(--bha-btn-h); min-height: 0; flex: none; padding: 0 var(--bha-sp-5); font-size: var(--bha-fs-lg); }
 .bha-absorbv2 .bha-absorb__run .bha-btn__label { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
 .bha-absorbv2 .bha-absorb__run .bha-btn__sub { font-size: var(--bha-fs-xs); }
 
@@ -137,11 +130,9 @@
 .bha-result__info .bha-info__row--good dd { color: var(--bha-good); }
 .bha-result__info .bha-info__row--bad dd { color: var(--bha-danger); }
 .bha-result__info .bha-info__row--em dd { color: var(--bha-warn); }
-.bha-result__more { position: sticky; bottom: 0; flex: none; margin-top: auto; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
-.bha-result__more[hidden] { display: none; }
 .bha-resultv2 .bha-result__dock { justify-content: flex-end; }
 .bha-resultv2 .bha-seedline { margin: 0 auto 0 0; text-align: left; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
-.bha-resultv2 .bha-result__home { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
+.bha-resultv2 .bha-result__home { width: var(--bha-dock-btn-w); height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
 
 /* ═════ 진화 연출·결과 리디자인 v2 (화면 D): 흐린 빛·그라데이션·blur 없음, [건너뛰기]·[둥지로] = 아래 줄 오른쪽 같은 자리 ═════ */
 .bha-lcd .bha-app.bha-evolvev2 { position: absolute; inset: 0; display: block; padding: 0; overflow: hidden; background: var(--bha-bg-0); }
@@ -153,7 +144,7 @@
 .bha-lcd .bha-evolvev2 .bha-evolve__lines { min-height: 0; gap: var(--bha-sp-4); align-items: flex-start; text-align: left; }
 .bha-lcd .bha-evolvev2 .bha-evolve__line { font-size: var(--bha-fs-lg); animation-name: bha-evo2-line; }
 .bha-evolvev2 .bha-evolve__dock { justify-content: flex-end; }
-.bha-evolvev2 .bha-evolve__go { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
+.bha-evolvev2 .bha-evolve__go { width: var(--bha-dock-btn-w); height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
 .bha-lcd .bha-evolvev2 .bha-evolve__result { position: absolute; inset: 0; display: block; }
 .bha-lcd .bha-evolvev2 .bha-evolve__result[hidden] { display: none; }
 .bha-evolvev2 .bha-evolve__head { background: var(--bha-bg-1); box-shadow: inset 0 -1px 0 var(--bha-line-1); gap: var(--bha-sp-5); }

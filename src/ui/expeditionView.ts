@@ -750,6 +750,7 @@ function statChip(iconId: string, color: string, label: string, nw: number, suff
       after.textContent = extra;
       after.hidden = extra === '';
       c.classList.toggle('is-danger', danger);
+      c.classList.toggle('bha-chip--alert', danger); // 공용 상태 칩 위험 = 빨간 테두리 (C.293)
       const say = full ?? `${label} ${text}${extra ? ` · ${extra}` : ''}`;
       c.setAttribute('aria-label', say);
       c.title = say;

@@ -121,34 +121,12 @@
 /* ═════ 손 타일 카드 (C.141, GDD 85장 11번) — v2 .bha-card--tile 모양 ═════
    그림 칸(30, 타일 색 아이콘) + 이름 / 한 줄 효과(줄바꿈, 말줄임 없음 — GDD 140장 3) / 오른쪽 위 ×장수 / 아랫면 타일 색 3px */
 .bha-road__hand { display: flex; flex-wrap: wrap; gap: var(--bha-sp-3); }
-.bha-tilecard {
-  --tile: var(--bha-bg-3);
-  position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); grid-template-rows: 30px auto; column-gap: 6px; row-gap: 2px; align-items: center;
-  width: 140px; min-height: 0; padding: 8px; box-sizing: border-box; border: 0; border-radius: var(--bha-r-md);
-  background: var(--bha-bg-1); color: var(--bha-text-1); text-align: left; font-family: var(--bha-font-body); cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
-  box-shadow: 0 0 0 1px var(--bha-line-1), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--tile);
-}
-.bha-tilecard__icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); color: var(--tile); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
-.bha-tilecard__icon .bha-icon { width: 20px; height: 20px; }
-.bha-tilecard__name { min-width: 0; padding-right: 22px; font-size: var(--bha-fs-sm); font-weight: 800; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
-.bha-tilecard__hint { grid-column: 1 / -1; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-text-2); word-break: keep-all; overflow-wrap: anywhere; }
-/* 수량 = 오른쪽 위 도트 숫자(v2 .bha-count), 임시 표시 = 오른쪽 아래 */
-.bha-tilecard__count { position: absolute; top: 4px; right: 6px; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-2); }
-.bha-tilecard .bha-tempmark { top: auto; bottom: 6px; right: 4px; }
-.bha-tilecard--prey  { --tile: var(--bha-tile-prey); }
-.bha-tilecard--elite { --tile: var(--bha-tile-elite); }
-.bha-tilecard--env   { --tile: var(--bha-tile-env); }
-.bha-tilecard--rest  { --tile: var(--bha-tile-rest); }
-.bha-tilecard--event { --tile: var(--bha-seal); }
-.bha-tilecard:active { transform: translateY(1px); }
-/* 고른 카드 = 한 단 밝은 면 + 타일 색 2px 테두리 (빛 없음) */
-.bha-tilecard.is-selected { background: var(--bha-bg-3); box-shadow: 0 0 0 2px var(--tile), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--tile); }
-.bha-tilecard.is-dragging { opacity: .35; }
+/* 타일 카드 .bha-tilecard 는 공용 (components/v2-shared.css, C.293) — 여기는 모험 준비 배치만 */
 .bha-drag-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%); display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--bha-r-sm); background: var(--tile, var(--bha-bg-3)); color: var(--bha-text-1); box-shadow: 0 0 0 1px var(--bha-line-2), var(--bha-shadow-3); }
 .bha-drag-ghost .bha-icon { width: 26px; height: 26px; }
 .bha-road.is-dragging-tile, .is-dragging-tile { user-select: none; -webkit-user-select: none; }
 /* 가진 타일 목록 '▼ 더 있음' (C.267, v2 .bha-more 모양): 목록 바닥에 붙는 한 줄 (목록 폭 전체), 끝까지 내리면 숨김 */
-.bha-road__more { grid-column: 1 / -1; flex: 0 0 100%; position: sticky; bottom: 0; margin: 0; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+.bha-road__more { grid-column: 1 / -1; flex: 0 0 100%; margin: 0; } /* 공용 띠 .bha-more--sticky (C.293) — 격자·줄 폭 전체 */
 
 /* ═════ 배치 프리셋 판 (GDD 85장 11번 · 104장 8) ═════ */
 .bha-presets { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
@@ -214,7 +192,6 @@
 .bha-plan__descscroll > .bha-plan__sub { font-size: var(--bha-fs-sm); line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
 .bha-plan__descscroll > .bha-plan__sub:first-child { color: var(--bha-text-1); }
 .bha-plan__more { background: var(--bha-bg-0); }
-.bha-plan__more[hidden] { display: none; }
 /* 길 미리보기 줄 (준비 탭): '길' 이름표 + 12칸(24 정사각) + 놓은 수. 칸을 누르면 타일 배치 탭으로 (GDD 179장 2) */
 .bha-lcd .bha-plan > .bha-plan__roadlabel { position: absolute; left: 10px; top: 252px; width: 36px; line-height: 40px; }
 .bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road { position: absolute; left: 48px; top: 260px; width: 321px; height: 24px; gap: 3px; }

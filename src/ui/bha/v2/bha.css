@@ -135,6 +135,11 @@
 .bha-root .bha-modal{position:absolute;z-index:31;border-radius:var(--bha-r-lg);padding:10px 12px;
   background:var(--bha-bg-1);border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-hi), var(--bha-shadow-2, 0 0 0 1px var(--bha-line-2))}
 .bha-root .bha-modal__close{position:absolute;top:8px;right:8px}
+/* C.293: 공용 .bha-modal 이 v2 창(머리 48·아래 버튼 줄)으로 바뀌며 옛 전투 창이 쓰던 기본값을 여기로 (모양 그대로) */
+.bha-root .bha-modal{overflow:auto}
+.bha-root .bha-modal__title{font-family:var(--bha-font-display);font-weight:800;font-size:var(--bha-fs-2xl);line-height:1.2;text-align:center;text-wrap:balance}
+.bha-root .bha-modal__body{font-size:var(--bha-fs-md);color:var(--bha-text-2);text-align:center;line-height:1.55}
+.bha-root .bha-modal__actions{display:grid;gap:var(--bha-sp-4);grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
 .bha-root .bha-stepper{display:flex;gap:6px;align-items:center}
 .bha-root .bha-scroll{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--bha-line-2) transparent}
 .bha-root .bha-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -294,7 +299,7 @@
 .bha-root .bha-block--release .bha-block__icon{color:var(--bha-primary-ink);opacity:.35}
 /* 약점 = 오른쪽 아래 황동 삼각 */
 .bha-root .bha-block.is-weak::after{content:"";position:absolute;bottom:0;right:0;z-index:3;width:0;height:0;border-style:solid;border-width:0 0 14px 14px;border-color:transparent transparent var(--bha-weak) transparent;border-bottom-right-radius:var(--bha-r-sm)}
-.bha-root .bha-block.is-locked{filter:var(--bha-sprite-dim);cursor:not-allowed}
+.bha-root .bha-block.is-locked{filter:var(--bha-sprite-dim);cursor:not-allowed;outline:2px solid var(--bha-seal);outline-offset:-2px} /* 봉인 칸 윤곽 — 옛 story.css 전역 규칙(C.293 범위 좁힘)을 전투 칸에만 */
 .bha-root .bha-block.is-selected{outline:2px solid var(--bha-focus);outline-offset:2px}
 .bha-root .bha-block.is-pressed{transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--blk), inset 0 3px 0 var(--bha-lo)}
 .bha-root .bha-block.is-popin{animation:bha-popin var(--bha-t-spawn) var(--bha-ease) both}

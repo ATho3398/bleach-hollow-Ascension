@@ -124,15 +124,15 @@ function writeCommon(storage: SettingsStorage | null, before: CommonValues, afte
 
 /** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + (슬롯 표시) + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 */
 function switchRow(label: string): { b: HTMLButtonElement; tag: HTMLElement; paint: (on: boolean) => void } {
-  const b = el('button', 'bha-switch');
+  const b = el('button', 'bha-setswitch');
   b.type = 'button';
   b.setAttribute('role', 'switch');
   b.classList.add('bha-setrow');
-  const track = el('span', 'bha-switch__track');
-  track.append(el('i', 'bha-switch__knob'));
+  const track = el('span', 'bha-setswitch__track');
+  track.append(el('i', 'bha-setswitch__knob'));
   const tag = scopeTag();
   const text = el('span', 'bha-setrow__text');
-  text.append(el('span', 'bha-switch__label', label));
+  text.append(el('span', 'bha-setswitch__label', label));
   b.append(text, tag, track);
   return {
     b,
@@ -194,7 +194,7 @@ const panel = (title: string, ...n: Node[]): HTMLElement => {
         cur.append(text);
       }
       text.append(node);
-    } else if (node instanceof HTMLElement && node.matches('button.bha-switch')) {
+    } else if (node instanceof HTMLElement && node.matches('button.bha-setswitch')) {
       cur = node;
       hasCtl = true;
       p.append(node);
@@ -203,10 +203,10 @@ const panel = (title: string, ...n: Node[]): HTMLElement => {
       cur.append(node);
       hasCtl = true;
       p.append(cur);
-    } else if (cur && !hasCtl && !cur.matches('.bha-switch')) {
+    } else if (cur && !hasCtl && !cur.matches('.bha-setswitch')) {
       addCtl(cur, node);
       hasCtl = true;
-    } else if (cur && hasCtl && cur.matches('.bha-setrow:not(.bha-switch):not(.bha-setrow--slider)')) {
+    } else if (cur && hasCtl && cur.matches('.bha-setrow:not(.bha-setswitch):not(.bha-setrow--slider)')) {
       // 같은 묶음의 조작이 더 있으면 같은 줄 오른쪽에 (묶음 이름 줄이 두 번 생기지 않게)
       cur.querySelector(':scope > .bha-setrow__ctl')!.append(node);
     } else {

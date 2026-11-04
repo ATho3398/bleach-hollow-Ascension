@@ -43,7 +43,7 @@
 .bha-train__btn--down .bha-icon { transform: rotate(90deg); }
 .bha-train__countdown, .bha-train__end {
   position: absolute; inset: 0; z-index: var(--bha-z-raised); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-5);
-  background: var(--bha-lo); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); color: var(--bha-text-1);
+  background: var(--bha-scrim); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); color: var(--bha-text-1);
 }
 .bha-train__endtitle { margin: 0; font-size: var(--bha-fs-3xl); }
 .bha-train__end.is-win .bha-train__endtitle { color: var(--bha-good); }

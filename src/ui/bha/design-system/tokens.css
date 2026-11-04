@@ -266,6 +266,7 @@
   --bha-btn-h-lg: 48px;
   --bha-head-h: 44px;
   --bha-dock-h: 56px;
+  --bha-dock-btn-w: 200px; /* 아래 줄 오른쪽 고정 행동 버튼 폭 (흡수·결과·진화 [○○하기]/[둥지로], 173장 2 자리 고정 — PROMPT S11·S13 의 44×200, C.293) */
   --bha-skill-h: 130px;
   --bha-icon-sm: 16px;
   --bha-icon-md: 24px;
@@ -315,4 +316,12 @@
 
   /* ---------- 기기 꾸미기 LCD 색 덮개 (꾸미기가 채움, 기본 투명) ---------- */
   --bha-shell-lcd: transparent;
+}
+
+/* ---------- 장면 위 반투명 판 · 덮개 (C.293 공용화 — 화면 A·B·C 가 각자 color-mix 로 쓰던 것). 테마 바탕(bg-0)을 따라가야 해서
+   테마가 붙는 자리(:root · [data-bha-theme] · .bha-theme-*)마다 다시 계산한다. 새 색 없음 — bg-0 / 검정의 투명도만 ---------- */
+:root, [data-bha-theme], [class*="bha-theme-"] {
+  --bha-plate-bg: color-mix(in srgb, var(--bha-bg-0) 82%, transparent);      /* 장면 위 이름표·발밑 체력·돌아가기 버튼·걷기 이름/목표 칩 (v2 .bha-plate 값) */
+  --bha-plate-bg-soft: color-mix(in srgb, var(--bha-bg-0) 72%, transparent); /* 장면 위 넓은 띠(걷기 머리 줄 등) — 장면이 더 비쳐 보인다 */
+  --bha-scrim: rgb(0 0 0 / 0.42);                                            /* 창·시트 뒤 덮개 (v2 .bha-scrim 값) */
 }

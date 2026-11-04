@@ -132,7 +132,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   noteRow.append(noteEl);
   const hand = el('div', 'bha-exp__hand bha-road__hand');
   // 목록이 자리보다 길면 바닥에 '▼ 더 있음' (ⓘ 창·흡수 설명과 같은 방식, GDD 168장 3 · 173장 1) — 끝까지 내리면 숨김 (C.267)
-  const handMore = el('div', 'bha-pop__more bha-road__more', '▼ 더 있음');
+  const handMore = el('div', 'bha-more bha-more--sticky bha-road__more', '▼ 더 있음'); // 공용 띠 (C.293)
   handMore.setAttribute('aria-hidden', 'true');
   const syncMore = (): void => { handMore.hidden = hand.scrollTop + hand.clientHeight >= hand.scrollHeight - 2; };
   hand.addEventListener('scroll', syncMore, { passive: true });

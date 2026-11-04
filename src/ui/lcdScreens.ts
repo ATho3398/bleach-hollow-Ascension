@@ -206,7 +206,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const rightScroll = h('div', 'bha-care__scroll');
   rightScroll.append(stats, evoPanel);
   stats.querySelector('.bha-panel__head')?.append(h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
-  // 루트에 bha-v2 를 달지 않는다: 진화 정보의 옛 dl.bha-info(evolutionPanel)가 v2 .bha-info(ⓘ 버튼) 모양으로 바뀌기 때문 — 마스터 보고
+  // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.293) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [rightScroll, evoBtns]);
 }
 

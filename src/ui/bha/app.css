@@ -22,7 +22,9 @@
 
 /* 새 버전 알림 (C.163, updateBanner.ts, GDD 99장 6): LCD 안 가운데 창(.bha-overlay 막이 뒤 버튼을 막는다). 큰 가로 [다시 시작] + 작은 [나중에]. bha 토큰만 */
 .bha-update { z-index: var(--bha-z-tutorial); }
-.bha-update__card { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-3); text-align: center; }
-.bha-update__card .bha-btn--lg { justify-content: center; }
 
 .bha-riskchip { display: inline-flex; align-items: center; gap: var(--bha-sp-1); border-color: var(--bha-risk); color: var(--bha-risk); }
+/* 새 버전 창 = 공용 v2 창(머리 48 · 본문, C.293) 안에 큰 가로 [다시 시작] + 작은 [나중에] (C.163) */
+.bha-update__card { padding-bottom: var(--bha-sp-4); }
+.bha-update__card .bha-btn--lg { justify-content: center; }
+.bha-update__card > .bha-btn--small { align-self: center; }
