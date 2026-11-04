@@ -206,6 +206,9 @@ const panel = (title: string, ...n: Node[]): HTMLElement => {
     } else if (cur && !hasCtl && !cur.matches('.bha-switch')) {
       addCtl(cur, node);
       hasCtl = true;
+    } else if (cur && hasCtl && cur.matches('.bha-setrow:not(.bha-switch):not(.bha-setrow--slider)')) {
+      // 같은 묶음의 조작이 더 있으면 같은 줄 오른쪽에 (묶음 이름 줄이 두 번 생기지 않게)
+      cur.querySelector(':scope > .bha-setrow__ctl')!.append(node);
     } else {
       cur = setRow(title, node);
       hasCtl = true;
@@ -515,7 +518,18 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     listBox.append(...listRows.map((r) => r.row));
     const ctl = el('div', 'bha-bgmlist__ctl');
     ctl.append(boolRow('repeat', '현재 곡만 반복'), button({ label: '다음 곡', size: 'small', onClick: () => { bgm().next(); paintMusic(); } }));
-    musicNodes.push(panel('음악 목록', nowLine, ctl, listBox, hintLine('한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 바로 재생).')));
+    // 음악 목록 = 한 판 (두 열 전체): 머리 '음악 목록' 하나 → '지금 곡 · 반복 · 다음 곡' 줄 → 곡 목록 → 설명
+    const music = el('section', 'bha-setgroup');
+    music.setAttribute('aria-label', '음악 목록');
+    const box = el('div', 'bha-setrow bha-setrow--music');
+    const bar = el('div', 'bha-music__bar');
+    nowLine.classList.add('bha-music__now');
+    bar.append(nowLine, ctl);
+    const hint = hintLine('한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 바로 재생).');
+    hint.classList.add('bha-setrow__hint');
+    box.append(el('b', 'bha-setrow__label', '음악 목록'), bar, listBox, hint);
+    music.append(box);
+    musicNodes.push(music);
   }
 
   // ── 전투 탭 (전투 연출 — 소리와 분리, GDD 103장 2) ──
@@ -523,7 +537,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     ...(prefersReducedMotion() ? [hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.')] : []),
     boolRow('damageNumbers', '피해 숫자'), hintLine('적과 내가 받은 피해가 짧게 떠오른다.'),
     boolRow('vibration', '진동', (on) => { if (on) emitFeedback('chain2', { vibration: true, sound: false }); }), hintLine('블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.'),
-    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때와 저장 필살기 때만 짧게 흔들린다.'),
+    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때, 해방할 때, 체인 3 블록을 쓸 때만 짧게 흔들린다.'),
   );
   const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
 

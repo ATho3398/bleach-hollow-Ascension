@@ -152,7 +152,7 @@
 .bha-settings-page .bha-lcdpage__aside { margin-left: auto; flex: none; }
 .bha-settings__tabs { flex: none; }
 .bha-settings__tabs .bha-tab { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
-.bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3) var(--bha-sp-4); align-items: start; align-content: start; min-height: 0; overflow-y: auto; }
+.bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3) var(--bha-sp-4); align-items: stretch; align-content: start; min-height: 0; overflow-y: auto; }
 .bha-setgroup { display: contents; }
 .bha-setgroup[hidden] { display: none; }
 /* 한 줄: 볼록한 면(bg-1 + 밝은 윗선). 초점은 줄 전체 테두리(.bha-sel) */
@@ -163,7 +163,7 @@
 }
 .bha-setrow__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .bha-setrow__label, .bha-switch__label { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); line-height: 1.25; }
-.bha-setrow__ctl { flex: 0 1 auto; max-width: 60%; min-width: 0; display: flex; align-items: center; gap: var(--bha-sp-2); }
+.bha-setrow__ctl { flex: 0 1 auto; max-width: 60%; min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--bha-sp-2); }
 .bha-setgroup--wide > .bha-setrow { grid-column: 1 / -1; }
 .bha-setrow__ctl:has(> .bha-settings__choices) { flex: none; max-width: none; } /* 고르기 칸은 줄이지 않는다 — 설명이 줄바꿈 */
 .bha-setrow--slider { display: block; }
@@ -195,9 +195,12 @@
 .bha-slider__row { display: grid; grid-template-columns: var(--bha-touch) minmax(0, 1fr) var(--bha-touch); align-items: center; gap: var(--bha-sp-3); }
 .bha-slider__row .bha-btn--icon { padding: 0; }
 .bha-settings-page .bha-slider__scale { display: none; }
-/* 음악 목록 줄은 두 열을 다 쓴다 */
-.bha-setrow:has(.bha-bgmlist) { grid-column: 1 / -1; flex-direction: column; align-items: stretch; }
-.bha-setrow:has(.bha-bgmlist) .bha-setrow__ctl { display: flex; flex-direction: column; align-items: stretch; }
+/* 음악 목록 = 한 판, 두 열 전체: 머리 하나 → 지금 곡·반복·다음 곡 줄 → 곡 목록 → 설명 */
+.bha-setrow--music { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4); }
+.bha-music__bar { display: flex; align-items: center; gap: var(--bha-sp-3); min-height: var(--bha-btn-h-sm); }
+.bha-music__now { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-music__bar .bha-bgmlist__ctl { flex: none; align-items: center; }
+.bha-music__bar .bha-switch { width: auto; min-height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-2) 0 var(--bha-sp-3); background: var(--bha-bg-2); }
 /* 음악 칸 (GDD 97장): 곡 하나 = 한 줄 [이름(말줄임)] [▶] [제외] · 조작 [반복][다음 곡] 한 줄 */
 .bha-bgmlist { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
 .bha-bgmlist__ctl { display: flex; gap: var(--bha-sp-2); }
