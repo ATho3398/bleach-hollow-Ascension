@@ -37,6 +37,7 @@ import { floatEl } from './bha/battle';
 import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
+import { registerLayer } from './bha/overlayHost';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -127,6 +128,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   });
   function dispose(): void {
     dead = true;
+    closePause();
     clock.cancel();
     clearInterval(watch);
     unhold();
@@ -258,33 +260,44 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // 지금 고른 사냥터 이름 (GDD 24-2). 종족 전체 지역 이름(huntingGroundName)이 아니라 사냥터별 이름
   const groundLabel = groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
   where.append(el('b', '', groundLabel));
-  // 폭주 상태 칩 (GDD 23-2): 폭주(호로화)한 원정의 남은 동안 보인다. 문구는 종족 설정 frenzyName
-  const frenzyChip = chip(faction.frenzyName, 'danger');
-  frenzyChip.classList.add('bha-frenzychip');
-  frenzyChip.prepend(icon('i-risk', 'sm'));
-  where.append(frenzyChip);
-  // 다음 칸이 강적 칸이면 작은 ⚠ (GDD 76장 3번): 걷는 화면에는 길이 안 보여 칸 위가 아니라 이 칩으로 미리 알린다
-  const aheadChip = chip('다음 칸 강적', 'danger');
-  aheadChip.classList.add('bha-exp__ahead');
-  aheadChip.prepend(icon('i-warn', 'sm'));
-  aheadChip.hidden = true;
-  where.append(aheadChip);
+  // 폭주(GDD 23-2)·다음 칸 강적(GDD 76장 3번)은 C.298 부터 경고 칩 한 자리(warnChip)에서 보인다
+  const nextElite = (): boolean => exp.phase === 'moving' && nextCellIsElite(exp);
 
-  // 리디자인 v2 (GDD 183장 S08): 위 상태 줄 하나(.bha-head) = 바퀴 · 체력 · 컨디션 | [가방][귀환하기][일시정지][도움말] 36.
-  // 그 아래 왼쪽 = 사냥터 이름표 · 배부름 · 광기/호로화(종족 이름) · 폭주·강적 칩, 스토리 목표, 특성 슬롯 한 줄. 숫자는 고정 폭 칸(흔들림 없음)
-  const lapChip = statChip('i-loop', '--bha-sp', '바퀴', 2, '바퀴');
+  // GDD 189장 (C.298, 목업 걷기 A): 왼쪽 위 = 사냥터·바퀴 진행 한 판 / 체력 = 캐릭터 발밑 긴 막대(방·전투와 같은 자리·모양) /
+  // 오른쪽 위 = [가방][일시정지] 아이콘 2개 / [귀환하기]·[도움말]·컨디션 수치는 일시정지 창 안 / 배부름·광기·컨디션은 위험할 때만 경고 칩 1개.
+  const lapFill = el('i');
+  const lapNum = el('b', 'bha-num');
+  const plate = el('div', 'bha-exp__plate');
+  plate.setAttribute('role', 'img');
+  {
+    const top = el('div', 'bha-exp__platetop');
+    top.append(where, el('span', 'bha-exp__lap'));
+    top.lastElementChild!.append(lapNum, '바퀴');
+    const track = el('span', 'bha-chip-meter bha-exp__lapbar');
+    track.append(lapFill);
+    plate.append(top, track);
+  }
+  // 경고 칩 한 자리 (위험할 때만, 하나씩 — 위험한 순서: 폭주 > 광기 > 배부름 > 컨디션 > 다음 칸 강적)
+  const warnChip = el('span', 'bha-chip bha-chip--status bha-chip--alert is-danger bha-exp__warn');
+  warnChip.setAttribute('role', 'status');
+  warnChip.hidden = true;
   const condChip = statChip('i-cond', '--bha-cond', '컨디션', 3);
   const fullChip = statChip('i-hunger', '--bha-hunger', faction.fullnessName, 3);
   const riskChip = statChip('i-risk', '--bha-risk', faction.riskGaugeName, 3);
+  // 발밑 체력 (방 .bha-room__hp 와 같은 .bha-hp: 10칸 눈금 막대 + 아래 '체력 n%')
   const hpBar = el('i');
-  const hpNum = el('b', 'bha-num bha-num--w4');
+  const hpNum = el('b');
   const hpBox = el('div', 'bha-exp__hp');
   hpBox.setAttribute('role', 'img');
-  const hpTrack = el('div', 'bha-hp-bar');
-  hpTrack.append(hpBar);
-  hpBox.append(icon('i-heal', 'sm'), hpTrack, hpNum);
-  const meters = el('div', 'bha-exp__stats');
-  meters.append(fullChip.el, riskChip.el);
+  {
+    const track = el('div', 'bha-hp-bar');
+    track.append(hpBar);
+    const txt = el('div', 'bha-hp-txt');
+    txt.append(el('span', '', '체력'), hpNum, el('span', 'bha-exp__hpunit', '%'));
+    const hp = el('div', 'bha-hp');
+    hp.append(track, txt);
+    hpBox.append(hp);
+  }
 
   const slotsLine = el('div', 'bha-exp__slots');
   slotsLine.append(icon('i-slot', 'sm'), el('span', '', faction.slotName));
@@ -301,12 +314,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   if (empty > 0) slotsLine.append(el('span', 'bha-faint', `빈칸 ${empty}`));
 
   const chips = el('section', 'bha-exp__chips');
-  // 스토리 화 목표 (GDD 25-7): 진행도와 함께 칩 묶음 맨 위
+  // 스토리 화 목표 (GDD 25-7): 사냥터 판 밑 한 줄. 그 밑 경고 칩 한 자리
   const goal = el('span', 'bha-exp__goal');
   goal.setAttribute('role', 'status');
-  const whereRow = el('div', 'bha-exp__whererow');
-  whereRow.append(where, meters);
-  chips.append(whereRow, goal, slotsLine);
+  chips.append(plate, goal, warnChip);
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
   const walk = walkScene(faction.walkAnim, groundLabel, walkArt, groundSceneBg(faction, exp.groundId));
@@ -342,22 +353,31 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let eventBack: (() => void) | null = null;
 
   // 배속 묶음(1x·2x·4x)은 C.118 에 삭제 (GDD 62장: 1배 고정)
-  const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small');
+  // [일시정지] (GDD 189장, C.298): 누르면 시간이 멈추고 일시정지 창(.bha-win) — [계속][도움말][귀환하기] + 컨디션·배부름·광기·슬롯 수치.
+  // 기기 레이어로 등록해 ▲▼✓ 로 창 버튼에 닿고(버튼 자리 고정 173장 2), 뒤로 = 계속. 화면 밖 이유(확인 창·앱 이탈)로 멈춘 것은 창 없이 멈추기만 한다
+  const pauseBtn = el('button', 'bha-btn bha-btn--icon bha-btn--small bha-exp__pausebtn');
   pauseBtn.type = 'button';
-  pauseBtn.onclick = () => {
-    paused = !paused;
+  let pauseOv: HTMLElement | null = null;
+  let unregPause = (): void => undefined;
+  const pauseStats = el('div', 'bha-exp__pstats');
+  pauseStats.append(condChip.el, fullChip.el, riskChip.el);
+  const closePause = (): void => {
+    unregPause();
+    unregPause = () => undefined;
+    pauseOv?.remove();
+    pauseOv = null;
+  };
+  const resumeFromPause = (): void => {
+    closePause();
+    paused = false;
     resumeClock();
     render();
   };
-  // 원정 도중 [귀환하기] (GDD 81장, C.132): 걷기·휴식 중만, 첫 원정 튜토리얼은 숨김. 확인창이 열린 동안 시간은 멈춘다
-  const abortBtn = button({ label: '귀환하기', icon: 'i-return', variant: 'ghost', size: 'small' });
+  // 원정 도중 [귀환하기] (GDD 81장, C.132): 걷기·휴식 중만, 첫 원정 튜토리얼은 숨김. C.298 부터 일시정지 창 안. 확인 창이 열린 동안 시간은 멈춘다
+  const abortBtn = button({ label: '귀환하기', icon: 'i-return', variant: 'ghost' });
   abortBtn.classList.add('bha-exp__abort');
   abortBtn.onclick = () => {
     if (!canAbort(exp)) return;
-    const wasPaused = paused;
-    paused = true;
-    resumeClock();
-    render();
     confirmDialog({
       title: '지금 귀환',
       body: '이번 바퀴 완주 보상은 없다',
@@ -365,19 +385,45 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       no: '계속 가기',
       onYes: () => {
         if (dead || !canAbort(exp)) return;
+        closePause();
         abortExpedition(exp);
         dispose();
         h.onEnded();
       },
-      onNo: () => {
-        paused = wasPaused;
-        resumeClock();
-        render();
-      },
     });
   };
-  // [가방] (GDD 144장 3): 걷기·휴식 중 회복 물건 — 일시정지하고 창, 닫으면 이어 간다
-  const bagBtn = button({ label: '가방', icon: 'i-heal', variant: 'ghost', size: 'small' });
+  const openPause = (): void => {
+    if (pauseOv || dead) return;
+    paused = true;
+    resumeClock();
+    render();
+    const win = el('div', 'bha-win bha-exp__pause');
+    const head = el('div', 'bha-win-head');
+    head.append(icon('i-pause'), el('h2', 'bha-title', '일시정지'));
+    const body = el('div', 'bha-win-body');
+    body.append(pauseStats, slotsLine);
+    const foot = el('div', 'bha-win-foot');
+    const goOn = button({ label: '계속', icon: 'i-play', variant: 'primary', onClick: resumeFromPause });
+    goOn.dataset.devStart = '';
+    const pauseHelp = button({ label: '도움말', icon: 'i-help', variant: 'ghost', onClick: () => helpBtn.click() });
+    foot.append(goOn, pauseHelp);
+    if (canAbort(exp)) foot.append(abortBtn);
+    win.append(head, body, foot);
+    const ov = el('div', 'bha-overlay bha-overlay--in-app bha-exp__pauseov');
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-modal', 'true');
+    ov.setAttribute('aria-label', '일시정지');
+    ov.append(win);
+    main.append(ov);
+    pauseOv = ov;
+    unregPause = registerLayer(ov, resumeFromPause);
+  };
+  pauseBtn.onclick = () => {
+    if (pauseOv) resumeFromPause();
+    else openPause();
+  };
+  // [가방] (GDD 144장 3): 걷기·휴식 중 회복 물건 — 일시정지하고 창, 닫으면 이어 간다. C.298: 아이콘 버튼
+  const bagBtn = button({ label: '가방', icon: 'i-heal', iconOnly: true, variant: 'ghost', size: 'small' });
   bagBtn.classList.add('bha-exp__bag');
   bagBtn.onclick = () => {
     if (!h.openBag || dead || !(exp.phase === 'moving' || exp.phase === 'rest')) return;
@@ -392,19 +438,16 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     });
   };
   const handCount = el('span', 'bha-exp__hand-count');
-  // 오른쪽 위 모서리: 귀환하기·일시정지·도움말을 작게 (+ 손에 든 타일 수)
+  // 오른쪽 위: [가방][일시정지] 아이콘 2개 (+ 그 밑 손에 든 타일 수)
   const corner = el('div', 'bha-exp__corner');
   const cornerRow = el('div', 'bha-exp__cornerrow');
   if (h.openBag) cornerRow.append(bagBtn);
-  cornerRow.append(abortBtn, pauseBtn);
+  cornerRow.append(pauseBtn);
   corner.append(handCount);
-  // 위 상태 줄 (v2 .bha-head, 장면 위에 겹침)
-  const hud = el('div', 'bha-head bha-exp__hud');
-  hud.append(lapChip.el, hpBox, condChip.el, el('span', 'bha-grow'), cornerRow);
 
   // 둥지 칸 도착 선택은 장면 위 말풍선 오버레이 (타일 배치판은 안에 있다)
   const sheetBox = el('div', 'bha-exp__sheetbox');
-  sceneWrap.append(hud, chips, corner, banner, sheetBox);
+  sceneWrap.append(chips, cornerRow, corner, hpBox, banner, sheetBox);
   const main = mountApp(root, { fixed: true, cls: 'bha-exp bha-v2' }, sceneWrap);
 
   helpBtn.onclick = () => {
@@ -427,11 +470,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const bonus = riskBonus(exp);
 
     // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션(+ 공허 보너스) · 광기/호로화
-    lapChip.set(exp.pos / EX.loopTiles, String(exp.lap), false, '', `${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`);
+    lapNum.textContent = String(exp.lap);
+    lapFill.style.width = `${Math.round((exp.pos / EX.loopTiles) * 100)}%`;
+    plate.setAttribute('aria-label', `${groundLabel} · ${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`);
+    plate.title = `${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`;
     const hpPct = Math.round(hpFractionOf(exp) * 100);
-    hpBar.style.width = `calc(${hpPct}% - 4px)`;
-    hpNum.textContent = `${hpPct}%`;
-    hpBox.classList.toggle('is-danger', hpFractionOf(exp) < 0.3);
+    hpBar.style.width = `calc((100% - 4px) * ${hpPct / 100})`;
+    hpNum.textContent = String(hpPct);
+    hpBox.style.setProperty('--c', hpFractionOf(exp) < 0.3 ? 'var(--bha-danger)' : 'var(--bha-player-hp)');
     hpBox.setAttribute('aria-label', `체력 ${hpPct}%`);
     hpBox.title = `체력 ${hpPct}%`;
     const full = Math.round(fullnessOf(exp.hunger, PX.hungerMax));
@@ -440,8 +486,16 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     riskChip.set(exp.risk / RX.limit, exp.breakthrough ? `${Math.round(exp.risk)}` : String(Math.round(exp.risk)), Boolean(exp.breakthrough) || exp.risk >= 60,
       exp.breakthrough ? `${faction.frenzyName}!` : bonus > 0 ? `공허 +${Math.round(bonus * 100)}%` : '',
       exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`);
-    frenzyChip.hidden = !inFrenzy(exp);
-    aheadChip.hidden = !(exp.phase === 'moving' && nextCellIsElite(exp));
+    // 경고 칩 한 자리 (GDD 189장): 위험한 것 하나만. 배부름·광기 위험 기준은 칩 위험 표시와 같다, 컨디션은 30 아래
+    const condLow = exp.condition < PX.conditionMax * 0.3;
+    const riskHot = Boolean(exp.breakthrough) || exp.risk >= 60;
+    const warn: [string, string] | null = inFrenzy(exp) ? ['i-risk', faction.frenzyName]
+      : riskHot ? ['i-risk', `${faction.riskGaugeName} ${Math.round(exp.risk)}`]
+      : hungerDanger ? ['i-hunger', `${faction.fullnessName} ${full}`]
+      : condLow ? ['i-cond', `컨디션 ${Math.round(exp.condition)}`]
+      : nextElite() ? ['i-warn', '다음 칸 강적'] : null;
+    warnChip.hidden = warn === null;
+    if (warn) warnChip.replaceChildren(icon(warn[0], 'sm'), el('span', '', warn[1]));
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;
     if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
@@ -489,7 +543,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     else if (exp.phase === 'event') sheetBox.replaceChildren(...eventSheet());
     else {
       sheetBox.replaceChildren();
-      if (helpBtn.parentElement !== cornerRow) cornerRow.append(helpBtn);
     }
   }
 

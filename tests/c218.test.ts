@@ -90,7 +90,8 @@ describe('C.218 드래프트 창·카드 고르는 창 (GDD 140장 2·3)', () =>
   it('버튼 줄 [귀환]·[한 바퀴 더] 같은 너비, 뒤 HUD 는 창이 떠 있으면 숨김', () => {
     const w = css('src/ui/bha/walk-scene.css');
     expect(w).toMatch(/\.bha-sheet > \.bha-continue > \.bha-grid2 \{ display: grid; grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
-    expect(w).toMatch(/\.bha-exp\.has-sheet \.bha-exp__chips, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__corner, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__hud \{ visibility: hidden; \}/);
+    // C.298 (GDD 189장): 위 상태 줄 대신 왼쪽 위 판·오른쪽 위 아이콘·발밑 체력 — 창이 뜨면 모두 숨김
+    expect(w).toMatch(/\.bha-exp\.has-sheet \.bha-exp__chips, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__corner, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__cornerrow, \.bha-lcd \.bha-exp\.has-sheet \.bha-exp__hp \{ visibility: hidden; \}/);
   });
   it('임시 타일 설명은 한 번만, 머리 한 줄 "n바퀴 끝 — 타일 1장 고르기"', () => {
     const nest = view.slice(view.indexOf('function nestSheet'), view.indexOf('function eventSheet'));

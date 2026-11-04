@@ -1,6 +1,5 @@
 /* 걷기 화면 (GDD 18-7, C.39) — 리디자인 v2 (GDD 183장 S08). 디자인 토큰·bha- 클래스만 쓴다 (새 색·간격 없음).
-   장면 = LCD 전체. 위 상태 줄 하나(.bha-head, 장면 위에 겹침) = 바퀴 · 체력 · 컨디션 | [가방][귀환하기][일시정지][도움말] 36.
-   그 아래 왼쪽 = 사냥터 이름표 · 배부름 · 광기/호로화 칩 · 목표 · 슬롯 한 줄. 캐릭터는 왼쪽을 보고 오른쪽 가운데, 적·휴식 장소는 왼쪽에서 다가온다.
+   장면 = LCD 전체. GDD 189장(C.298): 왼쪽 위 사냥터·바퀴 판 + 경고 칩 1개 / 오른쪽 위 [가방][일시정지] / 발밑 체력. 컨디션·슬롯·귀환·도움말 = 일시정지 창. 캐릭터는 왼쪽을 보고 오른쪽 가운데, 적·휴식 장소는 왼쪽에서 다가온다.
    (걷기 화면 아래 왼쪽 작은 길 줄은 넣지 않는다 — GDD 104장 3: 걷기 화면에는 길 칸 줄을 보이지 않는다) */
 [hidden] { display: none !important; }
 .bha-lcd .bha-app.bha-exp {
@@ -18,48 +17,59 @@
 .bha-lcd .bha-exp .bha-ahead--boss { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 30cqh); }
 .bha-lcd .bha-exp .bha-ahead--rest { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 26cqh); }
 
-/* 위 상태 줄 (v2 .bha-head 44, 장면 위 반투명 띠) */
-.bha-lcd .bha-exp__hud { z-index: 3; gap: 6px; background: var(--bha-plate-bg-soft); box-shadow: inset 0 -1px 0 var(--bha-line-1); }
-.bha-exp__stat { flex: none; }
+/* GDD 189장 (C.298, 목업 걷기 A): 장면 위 정보 상자를 줄인다.
+   왼쪽 위 = 사냥터·바퀴 진행 한 판 · (스토리 목표) · 경고 칩 한 자리 / 오른쪽 위 = [가방][일시정지] 아이콘 36 / 캐릭터 발밑 = 체력 긴 막대 */
+.bha-exp__chips {
+  position: absolute; z-index: 3; top: 10px; left: 10px; max-width: calc(100% - 120px);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none;
+}
+.bha-exp__plate { box-sizing: border-box; width: 200px; max-width: 100%; padding: 5px 10px 7px; display: flex; flex-direction: column; gap: 5px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi); }
+.bha-exp__platetop { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; min-width: 0; }
+.bha-lcd .bha-exp__where { display: block; min-width: 0; overflow: hidden; }
+.bha-lcd .bha-exp__where b { display: block; font-family: inherit; line-height: 1.3; font-size: var(--bha-fs-sm); font-weight: 800; color: var(--bha-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-exp__lap { flex: none; font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-2); white-space: nowrap; }
+.bha-exp__lap .bha-num { font-size: var(--bha-fs-sm); color: var(--bha-text-1); margin-right: 1px; }
+.bha-exp__plate .bha-exp__lapbar { --c: var(--bha-sp); display: block; width: 100%; }
+.bha-exp__warn { flex: none; padding: 0 8px 0 6px; font-size: var(--bha-fs-xs); font-weight: 800; color: var(--bha-text-1); white-space: nowrap; }
+.bha-exp__warn .bha-icon { width: 16px; height: 16px; color: var(--bha-danger); }
+.bha-exp__goal { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-height: 22px; padding: 0 7px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+.bha-exp__goal[hidden] { display: none; }
+.bha-exp__goal .bha-icon { width: 14px; height: 14px; flex: none; }
+/* 오른쪽 위 아이콘 버튼 2개 */
+.bha-lcd .bha-exp__cornerrow { position: absolute; z-index: 3; top: 10px; right: 10px; display: flex; align-items: center; gap: 6px; }
+.bha-exp__cornerrow .bha-btn { width: var(--bha-btn-h-sm); min-height: var(--bha-btn-h-sm); padding: 0; }
+.bha-exp__cornerrow .bha-btn .bha-icon { width: 18px; height: 18px; }
+.bha-exp__cornerrow .bha-btn--ghost { background: var(--bha-bg-2); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi); color: var(--bha-text-1); }
+/* 발밑 체력 (방 .bha-room__hp 와 같은 모양): 캐릭터 가운데 아래, 판 바닥 안 */
+.bha-lcd .bha-exp__hp { position: absolute; z-index: 2; left: clamp(84px, calc(var(--walker-x) * 1%), calc(100% - 84px)); bottom: max(4px, calc(10% - 34px)); transform: translateX(-50%); width: 156px; pointer-events: none; box-sizing: border-box; padding: 3px var(--bha-sp-3) 4px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); }
+.bha-exp__hp .bha-hp-txt { justify-content: center; gap: var(--bha-sp-1); color: var(--bha-text-1); }
+.bha-exp__hp .bha-hp-txt b { --nw: 3ch; }
+.bha-exp__hpunit { color: var(--bha-text-2); }
+/* 특성 슬롯 한 줄 — 일시정지 창 안 */
+.bha-exp__slots { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; max-width: 100%; padding: 2px 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-exp__slots > * { flex: none; }
+.bha-exp__slots .bha-icon { width: 14px; height: 14px; }
+/* 일시정지 창 (v2 .bha-win): 머리 48 · 수치(컨디션·배부름·광기 칩 + 슬롯) · 아래 [계속][도움말][귀환하기] 같은 폭 */
+.bha-lcd .bha-exp__pauseov { z-index: var(--bha-z-modal); background: var(--bha-scrim); }
+.bha-exp__pause.bha-win { position: relative; inset: auto; width: 420px; max-width: 100%; }
+.bha-exp__pause .bha-win-head .bha-icon { width: 18px; height: 18px; flex: none; }
+.bha-exp__pause .bha-win-body { display: flex; flex-direction: column; gap: 8px; }
+.bha-exp__pstats { display: flex; flex-wrap: wrap; gap: 6px; }
+.bha-exp__pstats .bha-exp__stat { flex: none; }
 .bha-exp__statsuf { font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-2); }
 .bha-exp__statx { font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-2); white-space: nowrap; }
 .bha-exp__stat.is-danger .bha-exp__statx { color: var(--bha-danger); }
-.bha-exp__hp { --c: var(--bha-player-hp); flex: none; display: flex; align-items: center; gap: 4px; }
-.bha-exp__hp > .bha-icon { width: 16px; height: 16px; color: var(--c); }
-.bha-exp__hp .bha-hp-bar { width: 84px; height: 12px; }
-.bha-exp__hp .bha-num { font-size: var(--bha-fs-sm); color: var(--bha-text-1); }
-.bha-exp__hp.is-danger { --c: var(--bha-danger); }
-.bha-exp__cornerrow { flex: none; display: flex; align-items: center; gap: 6px; }
-.bha-exp__cornerrow .bha-btn { min-height: var(--bha-btn-h-sm); padding: 0 10px; gap: 4px; font-size: var(--bha-fs-sm); }
-.bha-exp__cornerrow .bha-btn--icon { width: var(--bha-btn-h-sm); padding: 0; }
-.bha-exp__cornerrow .bha-btn .bha-icon { width: 18px; height: 18px; }
-.bha-exp__cornerrow .bha-btn--ghost { background: var(--bha-bg-2); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi); color: var(--bha-text-1); }
+.bha-exp__pause .bha-win-foot > .bha-btn { flex: 1 1 0; min-width: 0; min-height: var(--bha-btn-h); white-space: nowrap; }
+.bha-exp__pause .bha-win-foot > .bha-btn--icon { flex: 1 1 0; width: auto; }
 
-/* 아래 왼쪽 정보 (상태 줄 밑): 사냥터 이름표 · 배부름 · 광기/호로화 · 폭주/강적 칩 / 스토리 목표 / 특성 슬롯 */
-.bha-exp__chips {
-  position: absolute; z-index: 3; top: 50px; left: 10px; right: 160px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none;
-}
-.bha-exp__whererow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.bha-exp__where { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.bha-exp__where b { display: inline-flex; align-items: center; height: 28px; padding: 0 8px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi); font-size: var(--bha-fs-sm); font-weight: 800; color: var(--bha-text-1); white-space: nowrap; }
-.bha-exp__where .bha-chip { height: 28px; }
-.bha-exp__stats { display: flex; align-items: center; gap: 6px; }
-.bha-exp__goal { display: inline-flex; align-items: center; gap: 4px; min-height: 22px; padding: 0 7px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); font-size: var(--bha-fs-xs); font-weight: 700; }
-.bha-exp__goal[hidden] { display: none; }
-.bha-exp__goal .bha-icon { width: 14px; height: 14px; }
-.bha-exp__slots { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; max-width: 100%; padding: 2px 7px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg-soft); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-exp__slots > * { flex: none; }
-.bha-exp__slots .bha-icon { width: 14px; height: 14px; }
-
-/* 오른쪽 위(상태 줄 밑): 손에 든 타일 수 */
-.bha-exp__corner { position: absolute; z-index: 3; top: 50px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+/* 오른쪽 위(아이콘 밑): 손에 든 타일 수 */
+.bha-exp__corner { position: absolute; z-index: 3; top: 54px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
 .bha-exp__hand-count { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); font-size: var(--bha-fs-xs); font-weight: 800; color: var(--bha-text-2); }
-/* C.218 (GDD 140장 2): 창이 떠 있으면 뒤 HUD(상태 줄·정보)는 창 옆으로 비치지 않게 숨긴다 — 창이 결정만 받는다 (덮개는 그대로) */
-.bha-lcd .bha-exp.has-sheet .bha-exp__chips, .bha-lcd .bha-exp.has-sheet .bha-exp__corner, .bha-lcd .bha-exp.has-sheet .bha-exp__hud { visibility: hidden; }
+/* C.218 (GDD 140장 2): 창이 떠 있으면 뒤 HUD(정보·버튼·발밑 체력)는 창 옆으로 비치지 않게 숨긴다 — 창이 결정만 받는다 (덮개는 그대로) */
+.bha-lcd .bha-exp.has-sheet .bha-exp__chips, .bha-lcd .bha-exp.has-sheet .bha-exp__corner, .bha-lcd .bha-exp.has-sheet .bha-exp__cornerrow, .bha-lcd .bha-exp.has-sheet .bha-exp__hp { visibility: hidden; }
 
-/* 바퀴 변이 · 보스 기척 띠 (GDD 25-5 ④ · 37장): 상태 줄 밑 오른쪽(손 타일 수 아래) */
-.bha-exp__banner { position: absolute; top: 78px; right: 10px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; max-width: 42%; padding: 6px 8px; border-radius: var(--bha-r-sm); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-rare); text-align: right; pointer-events: none; }
+/* 보스 기척·바퀴 변이 띠: 오른쪽 위 아이콘 밑 */
+.bha-exp__banner { position: absolute; top: 84px; right: 10px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; max-width: 42%; padding: 6px 8px; border-radius: var(--bha-r-sm); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-rare); text-align: right; pointer-events: none; }
 .bha-exp__bannersub { font-size: var(--bha-fs-xs); color: var(--bha-text-1); }
 .bha-exp__banner[hidden] { display: none; }
 .bha-exp__banner--boss { box-shadow: 0 0 0 1px var(--bha-danger); }
@@ -144,7 +154,7 @@
 .bha-nestsheet__body .bha-road__hand .bha-tilecard__icon .bha-icon { width: 16px; height: 16px; }
 .bha-nestsheet__body .bha-road__more { display: none; } /* 바퀴 끝 손은 짧은 목록 — 세로 '더 있음' 없음 (C.267) */
 /* 배치판 길: 창 폭 한 줄 12칸(정사각에 가깝게 40) */
-.bha-nestsheet__body .bha-road { grid-area: road; gap: 4px; padding-top: 8px; }
+.bha-nestsheet__body .bha-road { grid-area: road; gap: 4px; padding-top: 8px; --syn-top: 8px; }
 .bha-nestsheet__body .bha-road__cell { height: 40px; }
 .bha-nestsheet__body .bha-road__cell .bha-icon { width: 18px; height: 18px; }
 .bha-nestsheet__body .bha-road__noterow { grid-area: note; }

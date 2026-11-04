@@ -268,17 +268,34 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     const pairs = roadSynergies(exp, Boolean(o.synergyName));
     synLine.hidden = pairs.length === 0;
     synLine.replaceChildren();
+    road.querySelectorAll(':scope > .bha-road__syn').forEach((x) => x.remove());
+    const byName = new Map<string, { n: number; b: HTMLElement }>();
+    const details: string[] = [];
     for (const p of pairs) {
       const name = o.synergyName!(p.id);
       for (const c of [p.left, p.right]) cells[c]!.classList.add('has-syn');
-      const badge = el('span', `bha-road__syn${p.right % 6 === 0 ? ' bha-road__syn--wrap' : ''}`, name);
+      // C.298 (GDD 189장 폰 점검 '판 밖 0'): 이름표는 칸 안이 아니라 길 줄에 붙여 두 칸 경계 위 가운데에 놓는다 (칸 테두리 밖으로 안 나감)
+      const badge = el('span', 'bha-road__syn', name);
       badge.setAttribute('aria-hidden', 'true');
-      cells[p.right]!.append(badge);
+      badge.style.setProperty('--at', String(p.right));
+      badge.style.setProperty('--n', String(cells.length));
+      road.append(badge);
       cells[p.right]!.setAttribute('aria-label', `${cells[p.right]!.getAttribute('aria-label')} · 시너지 ${name}`);
+      details.push(`${name}(${p.left}·${p.right}) ${variantModsText(synergyMods(p.id)).join(' · ')}`);
+      const seen = byName.get(name);
+      if (seen) {
+        seen.n++;
+        seen.b.textContent = `${name} ×${seen.n}`;
+        continue;
+      }
+      // C.298 (GDD 189장 폰 점검): 한 줄 = 시너지 이름(같은 것은 ×n) + 첫 효과. 칸 번호·전체 효과는 title
       const item = el('span', 'bha-road__synitem');
-      item.append(el('b', '', `${name}(${p.left}·${p.right})`), ` ${variantModsText(synergyMods(p.id)).join(' · ')}`);
+      const nameEl = el('b', '', name);
+      byName.set(name, { n: 1, b: nameEl });
+      item.append(nameEl, el('span', 'bha-road__synmods', ` ${variantModsText(synergyMods(p.id)).join(' · ')}`));
       synLine.append(item);
     }
+    synLine.title = details.join('\n');
     // 조사는 타일 이름 받침에 맞게 ('영혼을(를)' → '영혼을', C.196)
     noteEl.textContent = fixParticles(note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다'));
     noteEl.title = noteEl.textContent; // 한 줄로 잘려도 전체 안내는 올리면 보인다 (C.182)

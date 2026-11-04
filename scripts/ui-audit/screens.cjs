@@ -587,9 +587,12 @@ const SCREENS = [
           await h.stable(`${n}/둥지 도착`, '드래프트 타일 고르기', () => h.click(h.page.locator('.bha-lcd .bha-draft__card, .bha-lcd [data-draft]').first()).catch(() => {}));
           await nestHome.first().click({ timeout: 3000 }).catch(() => {});
         } else if (await home.count()) {
+          await home.first().click({ timeout: 3000 }).catch(() => {});
+        } else if (await h.page.locator('.bha-lcd .bha-exp__pausebtn').filter({ visible: true }).count()) {
+          // C.298 (GDD 189장): [귀환하기]는 일시정지 창 안 — [일시정지]를 눌러 창을 연다
           if (!checkedWalk) await h.check(`${n}/걷기 다시`, { keys: false });
           checkedWalk = true;
-          await home.first().click({ timeout: 3000 }).catch(() => {});
+          await h.page.locator('.bha-lcd .bha-exp__pausebtn').first().click({ timeout: 3000 }).catch(() => {});
         } else if (await eat.count()) {
           await eat.first().click({ timeout: 3000 }).catch(() => {});
           await h.wait(800);

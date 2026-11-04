@@ -5,7 +5,8 @@ import { difficultyLabels, difficultyText, groundName, type FactionConfig } from
 import { clampStreak, difficultyGoldMultiplier, difficultyRewardMultiplier, MAX_DIFFICULTY, recommendedDifficulty, streakEnemyFactor } from '../engine/difficulty';
 import { GROUNDS, type GroundDef } from '../data/grounds';
 import { elementName } from '../data/elements';
-import { synergyName, tileName } from '../data/tiles';
+import { getTile, synergyName, tileName } from '../data/tiles';
+import { tileCss } from './bha/expedition';
 import { button, el, icon, mountApp } from './bha/dom';
 import { applyTilePreset, cellsOfPlan, type PresetResult, type TilePreset } from '../tilePresets';
 import { roadPlanner } from './bha/road';
@@ -159,9 +160,26 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   // 준비 탭은 길 미리보기 오른쪽에 'n/최대' 만, 타일 배치 탭은 한 줄 전부
   const sub = el('p', 'bha-plan__sub bha-plan__line');
   const countEl = el('b', 'bha-num');
+  // 준비 탭 길 요약 (GDD 189장, 사용자 11-05 "엄청 작은 네모 12개 2줄로, 색깔로만"): 출발 포함 12칸을 6개씩 2줄 작은 네모로,
+  // 타일 종류 색만(글자·아이콘·+ 없음, 누를 수 없음 — 놓기는 [타일 배치] 탭) + 옆에 '놓은 타일 n/최대'
+  const miniRow = el('div', 'bha-plan__minirow');
+  const mini = el('div', 'bha-plan__mini');
+  mini.setAttribute('role', 'img');
+  const miniCells = exp.slots.map(() => el('i', 'bha-plan__minicell'));
+  mini.append(...miniCells);
+  const miniCount = el('b', 'bha-num');
+  const miniText = el('span', 'bha-plan__minitext');
+  miniText.append('놓은 타일 ', miniCount);
+  miniRow.append(mini, miniText);
   const paintCount = () => {
     const placed = exp.slots.slice(1).filter((x) => x !== null).length;
-    countEl.textContent = `${placed}/${h.placeLimit ?? '∞'}`;
+    const cap = `${placed}/${h.placeLimit ?? '∞'}`;
+    countEl.textContent = cap;
+    miniCount.textContent = cap;
+    exp.slots.forEach((id, i) => {
+      miniCells[i]!.className = `bha-plan__minicell${i === 0 ? ' is-nest' : id ? ` is-${tileCss(getTile(id).kind)}` : ''}`;
+    });
+    mini.setAttribute('aria-label', `길 ${exp.slots.length}칸 · 놓은 타일 ${cap}`);
   };
   if (h.tilesLocked) {
     sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후에 열린다. 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적).');
@@ -171,8 +189,6 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     sub.title = `가진 타일을 길 위 칸에 놓는다(최대 ${h.placeLimit ?? '∞'}칸, 놓은 타일이 보상으로 뽑힌다). 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.`;
     paintCount();
   }
-  // 길 미리보기 줄 이름표 (준비 탭) — 길(.bha-road)은 배치판 안에 그대로 두고 자리만 이 줄 옆으로
-  const roadLabel = el('span', 'bha-plan__label bha-plan__roadlabel', '길');
   // 배치 프리셋 (GDD 85장 11번, C.141): 이름 붙여 저장·불러오기·덮어쓰기·이름 바꾸기·삭제 (카드형)
   const presetEl = h.presets && !h.tilesLocked
     ? presetPanel({
@@ -184,7 +200,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
         const r = applyTilePreset(exp, preset);
         planner?.adopt();
         paintCount();
-        return `${preset.name} 불러옴: ${r.placed}칸${r.missing.length > 0 ? ` · 없는 타일 ${r.missing.length}장은 건너뜀` : ''}`;
+        return `불러옴 ${r.placed}칸${r.missing.length > 0 ? ` · 없음 ${r.missing.length}` : ''}`; // 짧게 (GDD 189장 12번)
       },
     }, (id) => tileName(id, faction.id), `최대 ${h.placeLimit ?? '∞'}칸`)
     : null;
@@ -207,6 +223,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
       return b;
     });
     setMode = (k) => {
+      paintCount();
       hand.hidden = k !== 'place';
       presetEl.hidden = k !== 'prep';
       toggle.closest('.bha-app')?.classList.toggle('is-place', k === 'place');
@@ -217,18 +234,11 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
       });
     };
     toggle.append(...tabs);
-    // 준비 탭에서 길 칸을 누르면 타일 배치 탭으로 (길은 미리보기 — 배치는 배치 탭에서만)
-    planner.el.querySelector('.bha-road')?.addEventListener('click', (e) => {
-      if (toggle.closest('.bha-app')?.classList.contains('is-place')) return;
-      e.stopPropagation();
-      e.preventDefault();
-      setMode?.('place');
-    }, true);
     head.insertBefore(toggle, help);
     // 프리셋 칸은 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
     planner.el.append(presetEl);
   }
-  const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, grounds, diff, desc, roadLabel, sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
+  const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, grounds, diff, desc, ...(planner ? [miniRow] : []), sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
   main.dataset.screen = 'expedition-plan';
   setMode?.('prep');
   requestAnimationFrame(syncDescMore);

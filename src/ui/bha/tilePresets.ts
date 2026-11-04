@@ -87,7 +87,7 @@ export function presetPanel(h: PresetHandlers, tileName: (id: string) => string,
       input.setAttribute('aria-label', '새 이름');
       input.dataset.presetRenameInput = '';
       const done = (ok: boolean) => {
-        if (ok) note.textContent = h.rename(cur.index, input.value) ? '이름을 바꿨다' : '이름이 비어 있다';
+        if (ok) note.textContent = h.rename(cur.index, input.value) ? '이름 바꿈' : '이름 없음';
         renaming = false;
         draw();
       };
@@ -114,17 +114,24 @@ export function presetPanel(h: PresetHandlers, tileName: (id: string) => string,
         strip.append(dot);
       }
       view.append(strip, el('small', 'bha-presets__sum', `${ids.length}칸 · ${presetSummary(cur.preset.cells, tileName)}`));
-    } else view.append(el('small', 'bha-faint', list.length >= PX.max ? `프리셋은 ${PX.max}개까지` : `빈 칸 — [저장]을 누르면 지금 배치(${limitText})를 새 프리셋으로 저장한다`));
+    } else {
+      // GDD 189장 (C.298): 안내는 짧게 — 긴 설명은 title(마우스 올림)로
+      const hint = el('small', 'bha-faint', list.length >= PX.max ? `최대 ${PX.max}개` : '빈 칸');
+      hint.title = list.length >= PX.max ? `프리셋은 ${PX.max}개까지` : `[저장]을 누르면 지금 배치(${limitText})를 새 프리셋으로 저장한다`;
+      view.append(hint);
+    }
 
-    // 버튼 4개 한 줄: 아이콘 + 짧은 글
+    // 버튼 4개: 아이콘 + 두 글자 (GDD 189장 12번 — [불러오기] → [적용], 전체 이름은 aria-label·title)
     const acts = el('div', 'bha-presets__acts');
-    const load = button({ label: '불러오기', icon: 'i-return', size: 'small', variant: 'primary', disabled: !cur, onClick: () => {
+    const load = button({ label: '적용', icon: 'i-return', size: 'small', variant: 'primary', disabled: !cur, onClick: () => {
       if (cur) note.textContent = h.load(cur.preset);
     } });
     load.dataset.presetLoad = String(sel);
+    load.setAttribute('aria-label', '불러오기');
+    load.title = '불러오기: 이 프리셋대로 길에 놓는다';
     const save = button({ label: '저장', icon: 'i-plus', size: 'small', disabled: !cur && list.length >= PX.max, onClick: () => {
       const r = cur ? h.save(cur.preset.name, cur.index) : h.save('');
-      note.textContent = r.ok ? (cur ? `${cur.preset.name}에 지금 배치를 덮어썼다` : '지금 배치를 새 프리셋으로 저장했다') : r.reason;
+      note.textContent = r.ok ? (cur ? '덮어씀' : '저장함') : r.reason;
       if (r.ok && !cur) sel = h.list().length - 1;
       draw();
     } });
@@ -138,7 +145,7 @@ export function presetPanel(h: PresetHandlers, tileName: (id: string) => string,
     const del = button({ label: '삭제', icon: 'i-close', size: 'small', variant: 'ghost', disabled: !cur, onClick: () => {
       if (!cur) return;
       confirmDialog({ title: `${cur.preset.name} 삭제`, body: '이 프리셋을 지운다. 되돌릴 수 없다.', yes: '삭제', no: '아니오', danger: true, onYes: () => {
-        if (h.remove(cur.index)) note.textContent = '프리셋을 지웠다';
+        if (h.remove(cur.index)) note.textContent = '지움';
         renaming = false;
         draw();
       } });

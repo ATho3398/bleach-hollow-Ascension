@@ -107,8 +107,8 @@
 .bha-road__cell .bha-road__lock .bha-icon { width: 12px; height: 12px; }
 /* 인접 시너지 (GDD 25-5 ②, C.57): 두 칸 테두리(봉인 보라) + 칸 사이 이름표 + 아래 한 줄 목록 */
 .bha-road__cell.has-syn { box-shadow: 0 0 0 2px var(--bha-rare), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-lo); }
-.bha-road__syn { position: absolute; top: 0; left: -2px; transform: translate(-50%, -60%); z-index: 1; padding: 0 4px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-rare); box-shadow: 0 0 0 1px var(--bha-rare); font-size: var(--bha-fs-xs); line-height: 16px; font-weight: 800; white-space: nowrap; pointer-events: none; }
-.bha-road__syn--wrap { left: 0; transform: translate(-10%, -60%); }
+.bha-road { position: relative; }
+.bha-road__syn { position: absolute; top: var(--syn-top, 0px); left: clamp(0px, calc(var(--at) * (100% + 4px) / var(--n) - 2px), 100%); transform: translate(-50%, -60%); z-index: 1; padding: 0 4px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-rare); box-shadow: 0 0 0 1px var(--bha-rare); font-size: var(--bha-fs-xs); line-height: 16px; font-weight: 800; white-space: nowrap; pointer-events: none; }
 .bha-road__synline { margin: 0; display: flex; flex-wrap: wrap; gap: 2px var(--bha-sp-4); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-road__synline b { color: var(--bha-rare); }
 .bha-road__note { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); min-height: 1.3em; }
@@ -186,25 +186,13 @@
 .bha-lcd .bha-plan .bha-plan__row > .bha-btn.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent); color: var(--bha-text-1); }
 .bha-plan__rec { height: 18px; background: var(--bha-tint-teal); color: var(--bha-bg-0); }
 /* 설명 칸: 고정 높이 움푹한 면, 안에서 스크롤 + 바닥 '▼ 더 있음' (PROMPT 5절 2) */
-.bha-lcd .bha-plan > .bha-plan__desc { position: absolute; left: 10px; width: 398px; top: 134px; height: 112px; box-sizing: border-box; overflow: hidden; }
+.bha-lcd .bha-plan > .bha-plan__desc { position: absolute; left: 10px; width: 398px; top: 134px; height: 122px; box-sizing: border-box; overflow: hidden; }
 .bha-plan__descscroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 8px 10px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; }
 .bha-lcd .bha-plan .bha-plan__sub:not(.bha-plan__line) { min-height: calc(2em * var(--bha-lh-tight)); }
 .bha-plan__descscroll > .bha-plan__sub { font-size: var(--bha-fs-sm); line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
 .bha-plan__descscroll > .bha-plan__sub:first-child { color: var(--bha-text-1); }
 .bha-plan__more { background: var(--bha-bg-0); }
-/* 길 미리보기 줄 (준비 탭): '길' 이름표 + 12칸(24 정사각) + 놓은 수. 칸을 누르면 타일 배치 탭으로 (GDD 179장 2) */
-.bha-lcd .bha-plan > .bha-plan__roadlabel { position: absolute; left: 10px; top: 252px; width: 36px; line-height: 40px; }
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road { position: absolute; left: 48px; top: 260px; width: 321px; height: 24px; gap: 3px; }
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell { flex: 0 0 24px; height: 24px; }
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell .bha-icon { width: 14px; height: 14px; }
-/* 미리보기 칸은 24 정사각이지만 누르는 자리는 위아래 6px 더(36) — 어느 칸을 눌러도 타일 배치 탭으로 간다 */
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__cell::after { content: ""; position: absolute; inset: -6px -1px; }
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__num,
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__lock,
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__syn,
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-tempmark,
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__synline,
-.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road__noterow { display: none; }
+/* 준비 탭 한 줄 안내(.bha-plan__line)는 첫 진화 전(.is-locked) 잠김 안내만 — 길 요약은 아래 .bha-plan__minirow (C.298) */
 .bha-lcd .bha-app.bha-plan:not(.is-place) > .bha-plan__line { position: absolute; left: 374px; top: 252px; width: 40px; line-height: 40px; text-align: left; white-space: nowrap; }
 .bha-lcd .bha-app.bha-plan:not(.is-place) .bha-plan__how { display: none; }
 .bha-plan__line .bha-num { font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-1); }
@@ -221,18 +209,32 @@
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__acts { flex: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn { font-size: var(--bha-fs-sm); }
 /* 첫 진화 전(타일 잠김, GDD 64장 1번): 탭·길·프리셋 없음 — 안내 한 줄이 길 줄 자리에 */
-.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__roadlabel { display: none; }
-.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line { left: 10px; width: 398px; top: 252px; line-height: 1.4; white-space: normal; }
+.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line { left: 10px; width: 398px; top: 262px; line-height: 1.4; white-space: normal; }
 .bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line .bha-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; }
 /* [출발] 띠 (GDD 100장 #3·#22): 아래 56 고정, 버튼 48 */
+/* 준비 탭 길 요약 (GDD 189장, C.298): 출발 포함 12칸 = 작은 네모 6개씩 2줄, 타일 종류 색만(글자·아이콘 없음, 누를 수 없음) + '놓은 타일 n/최대'.
+   길 줄(.bha-road)·'길' 이름표·한 줄 안내는 준비 탭에서 숨긴다 — 칸 전부는 [타일 배치] 탭에서만 */
+.bha-lcd .bha-plan > .bha-plan__minirow { position: absolute; left: 10px; width: 398px; top: 262px; height: 28px; display: flex; align-items: center; gap: 10px; }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__minirow { display: none; }
+.bha-plan__mini { flex: none; display: grid; grid-template-columns: repeat(6, 10px); grid-auto-rows: 10px; gap: 3px; pointer-events: none; }
+.bha-plan__minicell { display: block; border-radius: 2px; background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
+.bha-plan__minicell.is-nest { background: var(--bha-text-3); box-shadow: none; }
+.bha-plan__minicell.is-prey { background: var(--bha-tile-prey); box-shadow: none; }
+.bha-plan__minicell.is-elite { background: var(--bha-tile-elite); box-shadow: none; }
+.bha-plan__minicell.is-env { background: var(--bha-tile-env); box-shadow: none; }
+.bha-plan__minicell.is-rest { background: var(--bha-tile-rest); box-shadow: none; }
+.bha-plan__minicell.is-event { background: var(--bha-seal); box-shadow: none; }
+.bha-plan__minitext { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; }
+.bha-plan__minitext .bha-num { font-size: var(--bha-fs-sm); font-weight: 400; color: var(--bha-text-1); }
+.bha-lcd .bha-app.bha-plan:not(.is-place):not(.is-locked) > .bha-plan__line,
+.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road { display: none; }
 .bha-lcd .bha-plan > .bha-plan__go { z-index: var(--bha-z-raised); }
 .bha-plan__go .bha-btn { min-height: var(--bha-btn-h-lg); }
 
 /* 타일 배치 탭 (.is-place, GDD 179장 3): 사냥터·난이도·설명·프리셋·길 이름표 숨김 */
 .bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc,
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__roadlabel { display: none; }
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { position: absolute; left: 10px; width: 58%; top: 48px; height: 20px; line-height: 20px; font-size: var(--bha-fs-sm); }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc { display: none; }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { position: absolute; left: 10px; width: 58%; top: 44px; height: 18px; line-height: 18px; font-size: var(--bha-fs-sm); } /* C.298: 길 위 시너지 이름표(칸 위 10px)와 안 겹치게 4px 위로 */
 /* 길 = 가로 한 줄 전체 폭(시작 + 11자리 = 12칸, 48×52) — 위 8px 은 칸 사이 시너지 이름표 자리 */
 .bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px; top: 72px; height: 52px; padding-top: 0; }
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__cell { height: 52px; }
@@ -240,7 +242,9 @@
 /* 고른 타일 안내 = 길 아래 2줄 자리(말줄임 없이 줄바꿈, GDD 116장 3 · C.196) · 시너지 목록 = 위 안내 줄 오른쪽 */
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__noterow { position: absolute; left: 10px; right: 10px; top: 128px; height: 32px; align-items: flex-start; }
 .bha-lcd .bha-plan .bha-road__note { min-height: calc(2em * var(--bha-lh-tight)); font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { position: absolute; right: 10px; width: 40%; top: 48px; height: 20px; flex-wrap: nowrap; overflow: hidden; white-space: nowrap; line-height: 20px; justify-content: flex-end; }
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__synline { position: absolute; right: 10px; width: 40%; top: 44px; height: 18px; flex-wrap: wrap; overflow: hidden; white-space: nowrap; line-height: 18px; justify-content: flex-end; }
+/* 시너지가 둘 이상이면 이름만 (효과는 title, C.298) */
+.bha-road__synline:has(.bha-road__synitem + .bha-road__synitem) .bha-road__synmods { display: none; }
 /* 가진 타일 = 4열 카드, [출발] 띠 위 남은 높이에서만 스크롤 (C.267) */
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__hand {
   position: absolute; left: 10px; right: 10px; top: 164px; bottom: 60px;

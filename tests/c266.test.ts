@@ -17,13 +17,17 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
     expect(pv).toContain("presetEl.hidden = k !== 'prep';");
     expect(pv).toContain("classList.toggle('is-place', k === 'place')");
   });
-  it('준비 탭에서 길 칸을 누르면 타일 배치 탭으로', () => {
-    expect(pv).toMatch(/querySelector\('\.bha-road'\)\?\.addEventListener\('click'[\s\S]*setMode\?\.\('place'\)/);
+  it('준비 탭 길 = 작은 네모 12개(6개씩 2줄, 타일 색만·누를 수 없음) + 놓은 타일 n/최대 — C.298 (GDD 189장)', () => {
+    expect(pv).toContain("const mini = el('div', 'bha-plan__mini');");
+    expect(pv).toContain("miniText.append('놓은 타일 ', miniCount);");
+    const css = read('src/ui/bha/expedition.css');
+    expect(css).toMatch(/\.bha-plan__mini \{[^}]*grid-template-columns: repeat\(6, 10px\);[^}]*pointer-events: none;/);
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan:not(.is-place) .bha-road { display: none; }');
   });
   it('타일 배치 탭: 사냥터·난이도·설명 숨김, 길과 가진 타일은 두 열 전체 폭, [출발]은 그대로', () => {
     // 리디자인 v2 (GDD 183장 S07): 사냥터·난이도 줄·설명 숨김, 길 = 전체 폭 한 줄, 가진 타일 = [출발] 띠 위 남은 높이(4열)
     expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,');
-    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc,');
+    expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc { display: none; }');
     expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px;');
     expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*bottom: 60px;[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/); // C.267 [출발] 위 남은 높이만
     expect(css).not.toMatch(/is-place[^{]*bha-plan__go[^{]*\{[^}]*display: none/);
