@@ -90,16 +90,18 @@ describe('C.283 새 버전 알림 = 켜자마자 (GDD 184장)', () => {
     expect(pwa).toContain('if (!hadController'); // 첫 설치는 안 함
   });
 
-  it('서비스 워커는 version.json 을 캐시에서 꺼내지도 넣지도 않는다', () => {
+  it('서비스 워커는 version.json 을 캐시에서 꺼내지도 넣지도 않는다', async () => {
     const handlers: Record<string, (e: unknown) => void> = {};
     const self = { addEventListener: (k: string, h: (e: unknown) => void) => (handlers[k] = h), registration: { scope: 'https://x/app/' }, location: { origin: 'https://x' } };
     const src = read('scripts/sw-template.js').replace('__VERSION__', 't').replace('__PRECACHE__', '[]');
-    new Function('self', 'caches', 'fetch', src)(self, { match: async () => undefined }, () => Promise.reject(new Error('x')));
+    new Function('self', 'caches', 'fetch', src)(self, { match: async () => undefined, open: async () => ({ put: async () => undefined }) }, async () => ({ ok: true, clone: () => ({}) }));
     let responded = false;
     handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/version.json', mode: 'cors', headers: new Headers() }, respondWith: () => (responded = true) });
     expect(responded).toBe(false);
-    handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/assets/a.js', mode: 'cors', headers: new Headers() }, respondWith: () => (responded = true), waitUntil: () => undefined });
+    let answer: Promise<unknown> | null = null;
+    handlers.fetch!({ request: { method: 'GET', url: 'https://x/app/assets/a.js', mode: 'cors', headers: new Headers() }, respondWith: (p: Promise<unknown>) => { responded = true; answer = p; }, waitUntil: (p: Promise<unknown>) => p.catch(() => undefined) });
     expect(responded).toBe(true);
+    await answer; // 처리 안 된 거부가 남지 않게 끝까지 기다린다
   });
 
   it('처음 화면 = 슬롯·종족 고르기, 다시 시작 직전 저장은 잠긴 흐름 밖에서만 · 띠 [다시 시작] = restartToLatest', () => {
