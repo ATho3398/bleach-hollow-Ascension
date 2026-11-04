@@ -92,6 +92,7 @@ async function bundle(entry, file, ssr) {
   await build({
     configFile: false,
     root: ROOT,
+    publicDir: false, // 게임 public 폴더를 출력 폴더로 복사하지 않는다
     logLevel: 'error',
     define,
     build: { outDir: OUT, emptyOutDir: false, minify: !ssr, ssr: ssr ? entry : undefined, lib: ssr ? undefined : { entry, formats: ['iife'], name: 'FxTool', fileName: () => file }, rollupOptions: ssr ? { output: { entryFileNames: file, format: 'cjs' } } : undefined },

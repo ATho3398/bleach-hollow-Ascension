@@ -12,6 +12,7 @@ import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
 import { MOTIONS } from '../../../src/data/art/rig/pose';
+import { FAMILY_RIG_MOTIONS } from '../../../src/ui/bha/rigAnim';
 
 interface FxLayer {
   fx: string;
@@ -638,19 +639,34 @@ function syncBodySel(): void {
     list.append(row);
   });
   const add = $('bodyadd') as HTMLButtonElement;
-  add.disabled = !s.chain.length || s.chain.length >= MAX_CHAIN || !opts.length;
+  // 게임 기본일 때도 누를 수 있다: 게임 기본 동작을 첫 동작으로 꺼내 놓고 이어 붙인다 (04 14:0x "3블록 동작 뭐 클릭이나 이런거 안됨")
+  add.disabled = s.chain.length >= MAX_CHAIN || !opts.length;
   add.textContent = `+ 연결 동작 (${s.chain.length}/${MAX_CHAIN})`;
   const custom = !!bodyOf(s);
   bodyHit.checked = s.bodyFromHit;
   bodyHit.disabled = !custom;
   ($('bodyalign') as HTMLButtonElement).disabled = !custom;
   for (const i of $('bodybox').querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button')) i.disabled = !custom;
-  $('bodyinfo').textContent = custom ? `연결 ${chainOf(s).length}개 · 전체 ${Math.round(chainMs(s))}ms (첫 동작만 시작 시각·타격 프레임부터 적용)` : '게임 기본: 첫 타격 순간 계열 몸동작을 타격 프레임부터';
+  $('bodyinfo').textContent = custom
+    ? `연결 ${chainOf(s).length}개 · 전체 ${Math.round(chainMs(s))}ms (첫 동작만 시작 시각·타격 프레임부터 적용)`
+    : '게임 기본: 첫 타격 순간 계열 몸동작을 타격 프레임부터 튼다. 동작을 고르거나 [+ 연결 동작] 을 누르면 동작 시작·빠르기·타격 프레임부터를 바꿀 수 있다';
+}
+/** 게임 기본일 때 첫 동작: 그 계열 몸동작 묶음의 첫 동작(종이인형) / 특수·공격(프레임 그림) */
+function defaultFirst(): string {
+  const opts = bodyOptions();
+  const want = hero?.c.rig ? [...(entry.motion ? FAMILY_RIG_MOTIONS[entry.motion] : []), 'skill', 'attack'] : ['skill', 'attack'];
+  return want.find((id) => opts.some((o) => o.id === id)) ?? opts[0]?.id ?? '';
 }
 $('bodyadd').onclick = () => {
   const s = st();
-  if (!s.chain.length || s.chain.length >= MAX_CHAIN) return;
-  s.chain.push({ id: s.chain[s.chain.length - 1]!.id, rate: 1 });
+  if (s.chain.length >= MAX_CHAIN) return;
+  if (!s.chain.length) {
+    const first = defaultFirst();
+    if (!first) return;
+    s.chain = [{ id: first, rate: 1 }];
+    s.bodyFromHit = true; // 게임 기본과 같게 시작(첫 타격에 타격 프레임부터)
+    status(`게임 기본 동작(${first})을 첫 동작으로 꺼냈다 — 한 번 더 누르면 다음 동작이 붙는다`);
+  } else s.chain.push({ id: s.chain[s.chain.length - 1]!.id, rate: 1 });
   changed();
 };
 /** 타격 사이 간격: 타격 수만큼 줄이 바뀐다 */
