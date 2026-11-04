@@ -31,7 +31,6 @@ import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, 
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
 import { charArt } from '../data/art/manifest';
-import { versionLabel } from '../version';
 import { traitsTab, type TraitsTabState } from './buildPanel';
 import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
@@ -44,7 +43,7 @@ import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, ele
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
-import { statInfoLines } from '../data/help/statText';
+import { STAT_USE, statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
@@ -99,7 +98,10 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
 
   const status = panel({ title: '상태' });
   status.setAttribute('aria-label', '상태');
-  const weakSlot = h('div', 'bha-stack');
+  // 상태이상 칸 (183장 S15): 맨 위 '상태이상' 이름 + 칩 줄. 걸린 게 없으면 칸째 숨김 (GDD 160장 5)
+  const weakSlot = h('section', 'bha-care__ailments');
+  weakSlot.setAttribute('aria-label', '상태이상');
+  const weakList = h('div', 'bha-care__ailmentlist');
   const paint = () => {
     status.querySelector('.bha-nest__status')?.remove();
     status.append(statusBlock(faction, {
@@ -123,7 +125,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak')] : []),
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired')] : []),
     ];
-    weakSlot.replaceChildren(...states);
+    weakList.replaceChildren(...states);
+    weakSlot.replaceChildren(h('p', 'bha-care__label', '상태이상'), weakList);
     weakSlot.hidden = states.length === 0; // 걸린 상태이상이 없으면 칸째 안 보이고 능력치가 위로 (GDD 160장 5)
   };
   paint();
@@ -132,7 +135,13 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
-  stats.append(statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry));
+  const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry);
+  // 능력치 줄마다 ⓘ (183장 S15): 그 능력치가 하는 일 한 줄. 전체 설명은 제목 옆 ⓘ 그대로
+  [...statBox.children].forEach((row, i) => {
+    const id = STAT_IDS[i];
+    if (id) row.append(infoTip(statName(id, faction.id), () => STAT_USE[id]));
+  });
+  stats.append(statBox);
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
   const CXM = BALANCE.provisional.combat;
   const gc = gearCarry(save.shared.gear);
@@ -184,17 +193,21 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const evoMark = rebirthMark(save.rebirth.count);
   if (evoMark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', evoMark);
   evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
-  if (canRebirth(evo)) {
-    const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', block: true, onClick: hd.onRebirth });
-    rb.dataset.sc = 'rebirth';
-    evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`), rb);
-  }
-  evoPanel.append(h('div', 'bha-row', ''));
-  const evoBtns = evoPanel.lastElementChild!;
-  evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '진화 도움말', icon: 'i-help', iconOnly: true, onClick: hd.onHelp }));
+  const rebirthOk = canRebirth(evo);
+  if (rebirthOk) evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`));
+  // 아래 고정 버튼 줄 (183장 S15): [진화체 도감][도움말][환생] — 환생을 못 할 때도 흐리게 자리 유지 (PROMPT 5절 1)
+  const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', disabled: !rebirthOk, onClick: hd.onRebirth });
+  rb.dataset.sc = 'rebirth';
+  const evoBtns = h('div', 'bha-care__actions');
+  evoBtns.append(button({ label: '진화체 도감', icon: 'i-dex', onClick: hd.onDex }), button({ label: '도움말', icon: 'i-help', onClick: hd.onHelp }), rb);
   // GDD 108장 1번 (C.179): 장착 5칸 대신 바로가기 한 줄 + 장비 합산 숫자만. 바로가기 = 가방 장비 탭 (109장 4번)
   const gear = gearShortcut(faction, save, hd.onGear);
-  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [weakSlot, stats, evoPanel, h('p', 'bha-faint', `값 옆 굵은 +숫자는 노력치(와 ${faction.rebirth.name} 계승). 돌보기는 홈 아래 독에서 한다. ${versionLabel()}`)]);
+  // 오른쪽 = 스크롤 칸(능력치 → 진화 정보) + 아래 고정 버튼 줄. 개발 정보·버전 문단은 뺐다 (183장 S15)
+  const rightScroll = h('div', 'bha-care__scroll');
+  rightScroll.append(stats, evoPanel);
+  stats.querySelector('.bha-panel__head')?.append(h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
+  // 루트에 bha-v2 를 달지 않는다: 진화 정보의 옛 dl.bha-info(evolutionPanel)가 v2 .bha-info(ⓘ 버튼) 모양으로 바뀌기 때문 — 마스터 보고
+  lcdPage(dev.view, { cls: 'bha-care-page' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [rightScroll, evoBtns]);
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.

@@ -1,0 +1,177 @@
+{
+  "shots": [
+    "hollow-15-status.png",
+    "hollow-15-status-info.png",
+    "hollow-16-settings-1.png",
+    "hollow-16-settings-2.png",
+    "hollow-16-settings-3.png",
+    "hollow-16-settings-4.png",
+    "hollow-17-dex.png",
+    "hollow-18-titles.png",
+    "hollow-19-rank.png",
+    "hollow-20-training.png",
+    "hollow-20-training-play.png",
+    "hollow-21-practice.png",
+    "hollow-22-tower.png",
+    "hollow-23-story.png",
+    "hollow-23-story-locked.png",
+    "hollow-23-story-locked-chapter.png",
+    "hollow-24-dialogue.png",
+    "shinigami-15-status.png",
+    "shinigami-15-status-info.png",
+    "shinigami-16-settings-1.png",
+    "shinigami-16-settings-2.png",
+    "shinigami-16-settings-3.png",
+    "shinigami-16-settings-4.png",
+    "shinigami-17-dex.png",
+    "shinigami-18-titles.png",
+    "shinigami-19-rank.png",
+    "shinigami-20-training.png",
+    "shinigami-20-training-play.png",
+    "shinigami-21-practice.png",
+    "shinigami-22-tower.png",
+    "shinigami-23-story.png",
+    "shinigami-23-story-locked.png",
+    "shinigami-23-story-locked-chapter.png",
+    "shinigami-24-dialogue.png"
+  ],
+  "check": {
+    "hollow-15-status.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-15-status-info.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-1.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-2.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-3.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-4.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-17-dex.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-18-titles.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-19-rank.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-20-training.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-20-training-play.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-21-practice.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-22-tower.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-23-story.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-23-story-locked.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-23-story-locked-chapter.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-24-dialogue.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-15-status.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-15-status-info.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-1.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-2.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-3.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-4.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-17-dex.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-18-titles.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-19-rank.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-20-training.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-20-training-play.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-21-practice.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-22-tower.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-23-story.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-23-story-locked.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-23-story-locked-chapter.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-24-dialogue.png": {
+      "over": [],
+      "small": []
+    }
+  },
+  "errors": []
+}

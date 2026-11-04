@@ -60,7 +60,8 @@ describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 �
 describe('160장 5~7 상태 화면', () => {
   const lcd = read('src/ui/lcdScreens.ts');
   it('상태이상 칸이 능력치 칸 위, 없으면 숨김', () => {
-    expect(lcd).toContain('[weakSlot, stats, evoPanel,');
+    expect(lcd).toContain('[weakSlot, status, gear,'); // C.28x (183장 S15): 상태이상이 왼쪽 맨 위
+    expect(lcd).toContain('rightScroll.append(stats, evoPanel);');
     expect(lcd).toContain('weakSlot.hidden = states.length === 0;');
   });
   it('노력치 = .bha-ev (굵게·한 단계 크게, 기존 토큰만)', () => {
