@@ -30,6 +30,7 @@
   --bha-accent-glow:var(--bha-accent-soft);
   /* 장면 위에 겹치는 판(머리 줄·로그·칩 바탕): 바탕색을 반쯤 비친다 */
   --bha-over:color-mix(in srgb,var(--bha-backdrop) 62%,transparent);
+  --bha-ink-outline:0 1px 0 var(--bha-backdrop),0 -1px 0 var(--bha-backdrop),1px 0 0 var(--bha-backdrop),-1px 0 0 var(--bha-backdrop); /* 색 막대 위 글자 테두리 (흐림 없음) */
   --bha-over-strong:color-mix(in srgb,var(--bha-backdrop) 84%,transparent);
 }
 
@@ -189,10 +190,10 @@
 .bha-root .bha-v2hp>.bha-gauge{height:calc(var(--bha-bar-h-lg) + var(--bha-sp-2));background:var(--bha-backdrop);box-shadow:0 0 0 1px var(--bha-lo), inset 0 0 0 1px var(--bha-line-2)}
 .bha-root .bha-v2hp>.bha-gauge .bha-gauge__fill{left:2px;top:2px;bottom:2px}
 .bha-root .bha-v2hp>.bha-gauge::after{content:"";position:absolute;inset:2px;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),var(--bha-lo) calc(10% - 1px) 10%);pointer-events:none} /* 10칸 눈금 (그라데이션 아님 — 줄무늬) */
-.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--bha-fs-xs);line-height:1;white-space:pre;color:var(--bha-text-1);text-shadow:0 1px 0 var(--bha-backdrop);pointer-events:none;z-index:1}
+.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--bha-fs-xs);line-height:1;white-space:pre;color:var(--bha-text-1);text-shadow:var(--bha-ink-outline);pointer-events:none;z-index:1}
 .bha-root .bha-v2hp>.bha-num>span:first-child{display:inline-block;min-width:3ch;text-align:right;font-size:var(--bha-fs-sm)}
 .bha-root .bha-unit--foe .bha-v2hp>.bha-num>span:first-child{min-width:5ch}
-.bha-root .bha-v2hp>.bha-num .bha-t2{color:var(--bha-text-2)}
+.bha-root .bha-v2hp>.bha-num .bha-t2{color:var(--bha-text-1)} /* C.285 보충: 막대 위 글자는 회색 대신 밝은 글자 + 어두운 1px 테두리(4방향, 흐림 0) — 대비 4.5:1 이상 */
 .bha-root .bha-v2hp.is-danger .bha-gauge__fill{background:var(--bha-danger)}
 
 /* 내 상태 칩(공허 n회·체인3 n회, ⓘ): 장면 아래 가운데 — 나·적 체력 줄 사이 고정 자리 */
@@ -210,7 +211,7 @@
 .bha-root .bha-battle__floats{top:40px;overflow:hidden}
 /* 로그 창: 강공격 예고 띠 아래에서 시작해 적 체력 줄 위에서 끝난다 */
 .bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}
-.bha-root .bha-v2units .bha-unit__hp .bha-num{text-shadow:0 1px 0 var(--bha-backdrop)}
+.bha-root .bha-v2units .bha-unit__hp .bha-num{text-shadow:var(--bha-ink-outline)}
 
 /* ── 스킬창 1줄: 범례 16 ── */
 .bha-root .bha-v2legendrow{flex:none;height:16px;display:flex;align-items:center;gap:12px;min-width:0;overflow:hidden}
