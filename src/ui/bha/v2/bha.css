@@ -8,58 +8,33 @@
    ═════════════════════════════════════════════════════════════════ */
 /* 블리치 할로우 어센션 — LCD 인게임 UI 공용 스타일 (bha-) */
 
-/* ───────── 공통 토큰 (테마 무관) ───────── */
+/* ───────── 공통 토큰 (테마 무관) ─────────
+   C.282 (GDD 183장 1 ①): 공용 토큰 한 벌로 합침 — 이 블록은 이제 전역 토큰(tokens.css·theme-*.css, 디자인 v2 값)을 가리키는 별칭만 둔다.
+   역할·의미 색(guard·heal·weak·rare·danger·insert·seal)·모서리·글자 크기·글꼴·바탕/선/글자/포인트는 전역 값을 그대로 물려받는다 */
 .bha-root{
-  /* 역할 색 — 같은 명도·채도대로 눌러 한 팔레트 */
-  --bha-atk:#d9726a;      /* 공격  (현재 #e5484d) */
-  --bha-guard:#6fb487;    /* 막기  (현재 #2fb36b) */
-  --bha-heal:#6f9fd8;     /* 회복  (현재 #3e8bff) */
-  --bha-void:#b483c9;     /* 공허 */
-  --bha-mad:#cf78bf;      /* 광기  (현재 #ff4fd8) */
-  --bha-weak:#d8b866;     /* 약점  (현재 #e8c15a) */
-  --bha-chain:#dd9a5e;    /* 체인3 (현재 #ff8a3d) */
-  --bha-rare:#e0c46e;     /* 희귀·콤보 (현재 #ffd24d) */
-  --bha-danger:#e07a70;   /* 위험  (현재 #ff6b6b) */
-  --bha-insert:#74b3d8;   /* 삽입·놓을 수 있음 (현재 #6cc4ff) */
-  --bha-seal:#9f8ad6;     /* 봉인  (현재 #a371f7) */
-  /* 속성 색 — 블록 면 */
-  --bha-attr-normal:#b3a793;
-  --bha-attr-fire:#dc8a5c;
-  --bha-attr-thunder:#d9c063;
-  --bha-attr-water:#62adc0;
-  --bha-attr-earth:#b48d62;
-  --bha-attr-poison:#9db45e;
-  --bha-attr-blood:#d4747f;
-  --bha-ink-on-color:#1f1916; /* 색 면 위 글자 */
-  /* 간격 */
-  --bha-s-1:2px; --bha-s-2:4px; --bha-s-3:6px; --bha-s-4:8px; --bha-s-5:12px; --bha-s-6:16px; --bha-s-7:20px;
-  /* 모서리 */
-  --bha-r-sm:6px; --bha-r-lg:10px; --bha-r-pill:999px;
-  /* 글자 */
-  --bha-fs-xs:12px; --bha-fs-sm:13px; --bha-fs-md:14px; --bha-fs-lg:16px; --bha-fs-xl:18px;
-  --bha-font-display:"BHA Display","Hahmlet","Noto Serif KR","Apple SD Gothic Neo",serif; /* 핸드오프 값 'Noto Serif KR' → 프로젝트에 들어 있는 글꼴(오프라인, tokens.css 와 같은 목록)을 앞에 둔다 */
-  --bha-font-body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  --bha-atk:var(--bha-attack);
+  --bha-void:var(--bha-risk);     /* 공허 블록 테 (전역 --bha-void 는 블록 바탕용 짙은 색) */
+  --bha-mad:var(--bha-risk);
+  --bha-chain:var(--bha-chain3);
+  /* 속성 색 = 디자인 v2 속성 8색 (src/data/elements/elements.json 의 color 와 같은 토큰) */
+  --bha-attr-normal:var(--bha-el-normal);
+  --bha-attr-fire:var(--bha-el-fire);
+  --bha-attr-thunder:var(--bha-el-thunder);
+  --bha-attr-water:var(--bha-el-water);
+  --bha-attr-earth:var(--bha-el-earth);
+  --bha-attr-poison:var(--bha-el-poison);
+  --bha-attr-blood:var(--bha-el-blood);
+  --bha-ink-on-color:var(--bha-primary-ink); /* 색 면 위 글자 */
+  /* 간격 (옛 이름 → 전역 --bha-sp-*) */
+  --bha-s-1:var(--bha-sp-1); --bha-s-2:var(--bha-sp-2); --bha-s-3:var(--bha-sp-3); --bha-s-4:var(--bha-sp-4); --bha-s-5:var(--bha-sp-5); --bha-s-6:var(--bha-sp-6); --bha-s-7:var(--bha-sp-7);
   /* 모션 */
-  --bha-t-fast:120ms; --bha-t-base:180ms; --bha-t-slow:280ms; --bha-t-gauge:600ms; --bha-t-spawn:240ms; --bha-t-pulse:1200ms;
-  --bha-ease:cubic-bezier(.2,.7,.2,1);
-}
-
-/* ───────── 테마: 호로 (뼈·모래·붉은 영압) ───────── */
-.bha-root.bha-hollow{
-  --bha-bg-0:#120e0d; --bha-bg-1:#1a1513; --bha-bg-2:#231d1a; --bha-bg-3:#2e2622; --bha-bg-4:#3a312c;
-  --bha-line-1:#3f3530; --bha-line-2:#5a4c44; --bha-edge:rgba(255,236,214,.10);
-  --bha-text-1:#f1e9dc; --bha-text-2:#c6baa9; --bha-text-3:#a09382;
-  --bha-accent:#a63d45; --bha-accent-hi:#e2858a; --bha-accent-glow:rgba(226,133,138,.35);
-  --bha-world-sky:#5a5048; --bha-world-sky2:#3b332e; --bha-world-ground:#8a7a62; --bha-world-ground2:#6b5d4a;
-}
-/* ───────── 테마: 사신 (먹물·흰 하오리·푸른 영압) ───────── */
-.bha-root.bha-soul,
-.bha-root.bha-shinigami{ /* 종족 설정 theme 값(shinigami)을 그대로 쓰도록 별칭 — 종족 id 분기 없이 `bha-${faction.theme}` */
-  --bha-bg-0:#0f1013; --bha-bg-1:#15171b; --bha-bg-2:#1d2025; --bha-bg-3:#262a30; --bha-bg-4:#31363d;
-  --bha-line-1:#363b43; --bha-line-2:#4e5560; --bha-edge:rgba(230,238,255,.10);
-  --bha-text-1:#eeede8; --bha-text-2:#c0beb6; --bha-text-3:#9a9a96;
-  --bha-accent:#43689f; --bha-accent-hi:#8eb0e2; --bha-accent-glow:rgba(142,176,226,.35);
-  --bha-world-sky:#4a5566; --bha-world-sky2:#2c333d; --bha-world-ground:#6f6a60; --bha-world-ground2:#545049;
+  --bha-t-fast:var(--bha-dur-2); --bha-t-base:180ms; --bha-t-slow:var(--bha-dur-4); --bha-t-gauge:600ms; --bha-t-spawn:240ms; --bha-t-pulse:1200ms;
+  --bha-ease:var(--bha-ease-out);
+  /* 옛 테마 토큰 별칭 (테마 값은 전역 theme-*.css) */
+  --bha-bg-4:var(--bha-line-1);
+  --bha-edge:var(--bha-hi);
+  --bha-accent-glow:var(--bha-accent-soft);
+  --bha-world-sky:var(--bha-scene-wall); --bha-world-sky2:var(--bha-bg-2); --bha-world-ground:var(--bha-scene-floor); --bha-world-ground2:var(--bha-bg-3);
 }
 
 /* ───────── LCD 화면 ───────── */

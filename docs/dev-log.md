@@ -1894,3 +1894,15 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **도구** 같은 날 손질: 목록을 페이지 안 고르기로(앱에서 select 가 안 열림), 성별마다 몸동작·[1·2·3블록 모두에]·[이성에도 적용], 게임 기본에서도 [+ 연결 동작], 대기 동작(끝나면 굳던 버그), 모바일 검수 19가지. 도구는 다음부터 게임 값(종족 json)에서 시작.
 - 테스트 `tests/pixel-attack.test.ts` 9개(계획 계산·확정 데이터·시트 파일·이름 규칙). 전체 통과.
 - 캡처 `docs/captures/c281/`(1배 844×390, `scripts/c281-proof.cjs`): 사신 참(불) 베기·crit-hit + 휘두름 · 사신 권(물) 주먹질·주먹 펑 · 호로 교(혈) 물어뜯기 · 호로 탄(뇌) 투사체 나는 중(맞음 반응은 도착 때) · 호로 조(불) 할퀴기.
+
+## C.282 — 리디자인 v2 ① 공용 부품: 토큰·공용 컴포넌트·Silkscreen·아이콘 매핑·속성 색 (GDD 183장 1 ①·2·3, v5.424, S-23, 코딩195 Opus)
+- 사용자 원문: "묶음대로가 뭐야.  그냥 다중세션으로 전부 적용하면 되지 않아?" → "ㅇㅇ 추천하는대로 ㄱㄱ" (마스터 추천: ① 공용 부품 먼저, 그 뒤 화면 6세션 병렬)
+- 토큰: `tokens.css`·`theme-hollow.css`·`theme-shinigami.css` 값을 `docs/design/redesign-v2/bha.css` 와 같게(이름 그대로). 새 토큰 `--bha-hi/-lo` `--bha-primary-lo` `--bha-shell-body/-line/-btn/-lcd` `--bha-lcd-bezel` `--bha-scene-wall/-floor` `--bha-ph` `--bha-el-*`(8) `--bha-tint-*`(5) `--bha-btn-h(-sm/-lg)` `--bha-head-h` `--bha-dock-h` `--bha-skill-h` `--bha-icon-sm~xl` `--bha-sprite-sm~lg` `--bha-caret` `--bha-sprite-outline/-dim` `--bha-toast-bg/-line/-ink`. 테마 선택자에 `.bha-theme-<id>` 추가. `--bha-app-w` 480 · 프로젝트 토큰 `--bha-art-*`(182장 4) 그대로.
+- 글꼴: Silkscreen 400 latin woff2(OFL, `src/ui/bha/fonts/`) + `@font-face`, `--bha-font-num` = Silkscreen. 빌드 산출물이라 오프라인 PWA 캐시에 자동 포함.
+- 공용 컴포넌트: `components/bha-v2.css`(자동 생성 `scripts/gen-v2-components.py`) — bha.css 레이아웃 조각~스킬 블록. 기기·LCD(`.bha-device/.bha-lcd/.bha-screen/.bha-dbtn`)는 옮기지 않음(게임 값). 게임의 다른 구조 클래스와 이름이 겹치는 10개(row·info·pop·legend·dock·tut·art·toast·body·switch)는 화면 루트 `.bha-v2` 안에서만, 옛 전투 UI `.bha-root` 와 겹치는 새 이름은 `.bha-root` 안에서 꺼 둠. `components.css` 의 btn·chip·panel·meter·notice·toast·modal·dock 은 v2 모양(그라데이션·glow·흐림 제거, 윗선/아랫면 입체). 옛 전투 v2(`v2/bha.css`) 토큰 블록은 전역 토큰 별칭만 남김(한 벌).
+- 아이콘: v2 도트 아이콘 150개 `icons/icons.css`(마스크 `.bha-i-*`) + `icons-v2.svg`(심볼 `v2-*`), 자동 생성 `scripts/gen-v2-icons.py`. 매핑 한 곳 `src/ui/bha/iconMap.ts` — `icon()`·`v2Svg()` 가 `i-*` → v2 심볼. `i-fx-*`·`foe-*` 제외. 임시 매핑 24개 `V2_ICON_PROVISIONAL`.
+- 속성 색(183장 2 예외): `elements.json` color 8개 → `--bha-el-<id>`.
+- 기기: `.bha-dev` 몸체·버튼·LCD 테 = `--bha-shell-*`/`--bha-lcd-bezel`, `:root[data-cos-shell]` 이 `--bha-shell-*` 를 꾸미기 값으로 덮음(꾸미기 우선), frame-v2(`.is-skin`)는 몸체 끔.
+- 화면 세션 사용법 `docs/design/redesign-v2/README-game.md`.
+- 테스트 `tests/c282.test.ts`(9) + 갱신 c96(토스트 선택자)·c116(호로 bg-0)·c128(경고 띠 속성 토큰)·c151(.bha-root 토큰 = 전역 별칭).
+- 캡처 `docs/captures/c282/`(1배 844×390, `scripts/c282-proof.cjs`): 두 종족 방·월드맵·상점 상세·전투·흡수·가방·상태·설정 + 뼈 껍데기 꾸미기 방. 글자 넘침 검사: 가방 하위 탭 '전투 소모품'·'칼자루 장식' 3px(55>52, 원래 있던 좁은 칸 — 화면 세션 E 몫).

@@ -17,7 +17,7 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     const sizes = m.icons.map((i: { sizes: string }) => i.sizes);
     expect(sizes).toEqual(expect.arrayContaining(['192x192', '512x512']));
     for (const i of m.icons) expect(existsSync(`public/${i.src}`)).toBe(true);
-    expect(read('src/ui/bha/design-system/theme-hollow.css')).toContain('--bha-bg-0: #0b0909');
+    expect(read('src/ui/bha/design-system/theme-hollow.css')).toContain('--bha-bg-0: #1a1412'); // C.282 디자인 v2 값 (GDD 183장)
   });
 
   it('서비스 워커 템플릿: 자리표시자 2개, 캐시 조회는 쿼리·Vary 무시, 설치 끝나면 바로 적용(C.116b)', () => {

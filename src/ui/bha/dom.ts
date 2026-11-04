@@ -14,6 +14,7 @@
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
 //   emptyState(text, { icon?, action? }) → .bha-empty 빈 상태 (가운데 아이콘 + 한 줄 + 할 일 버튼, GDD 100장 #87)
 import { fixParticles } from '../../engine/josa';
+import { spriteSymbol } from './iconMap';
 import { el } from '../dom';
 import { devText } from '../displayName';
 import { endScreen } from './screenScope';
@@ -43,7 +44,7 @@ export function icon(id: string, size?: IconSize, extraCls = ''): SVGSVGElement 
   svg.setAttribute('class', ['bha-icon', size ? `bha-icon--${size}` : '', extraCls].filter(Boolean).join(' '));
   svg.setAttribute('aria-hidden', 'true');
   const use = document.createElementNS(SVG_NS, 'use');
-  use.setAttribute('href', `#${id}`);
+  use.setAttribute('href', `#${spriteSymbol(id)}`); // v2 도트 아이콘 매핑 (C.282, iconMap.ts)
   svg.append(use);
   return svg;
 }

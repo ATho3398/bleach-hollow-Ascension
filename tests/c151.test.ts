@@ -25,26 +25,19 @@ describe('C.151 핸드오프 CSS (src/ui/bha/v2/bha.css)', () => {
     // 어댑터는 .bha-v2host(우리 틀)와 그 안 .bha-root 만 건드린다
     expect(selectors(adapter).filter((s) => !s.startsWith('.bha-v2host') && !s.startsWith('.bha-root'))).toEqual([]);
   });
-  it('핸드오프의 클래스·토큰 이름이 그대로 들어 있다 (시트용 5개 + 블록 안 체인 원(GDD 137장 4, C.215)만 뺌)', () => {
+  it('핸드오프의 클래스 이름이 그대로 들어 있다 (시트용 5개 + 블록 안 체인 원(GDD 137장 4, C.215)만 뺌)', () => {
     const want = [...classesOf(orig)].filter((c) => !SHEET_ONLY.has(c) && c !== 'bha-block__pips');
     const have = classesOf(css);
     expect(want.filter((c) => !have.has(c))).toEqual([]);
-    const tok = (t: string) => new Set([...t.matchAll(/--(bha-[a-z0-9-]+)\s*:/g)].map((m) => m[1]!));
-    const miss = [...tok(orig)].filter((t) => !tok(css).has(t));
-    expect(miss).toEqual([]);
   });
-  it('테마는 루트 클래스 하나 — hollow·soul(+종족 설정 theme 값 shinigami 별칭), 종족 id 분기 없음', () => {
-    expect(css).toContain('.bha-root.bha-hollow');
-    expect(css).toContain('.bha-root.bha-soul');
-    expect(css).toContain('.bha-root.bha-shinigami');
+  it('C.282 (GDD 183장 1 ①): 토큰은 전역 한 벌 — .bha-root 는 옛 이름 별칭만, 테마 블록·색 값 없음', () => {
+    expect(css).not.toMatch(/\.bha-root\.bha-(hollow|soul|shinigami)\s*\{/);
     expect(cssAll).not.toMatch(/data-faction|\[data-bha-theme/);
     expect(v2RootClass({ theme: 'hollow' })).toBe('bha-root bha-hollow');
     expect(v2RootClass({ theme: 'shinigami' })).toBe('bha-root bha-shinigami');
-  });
-  it('색 값은 핸드오프 그대로(역할 색·속성 색·테마 바탕), 글꼴 토큰만 프로젝트 글꼴 목록', () => {
-    for (const v of ['--bha-atk:#d9726a', '--bha-guard:#6fb487', '--bha-attr-fire:#dc8a5c', '--bha-bg-0:#120e0d', '--bha-accent:#43689f']) expect(css).toContain(v);
-    expect(css).toContain('"BHA Display"');
-    expect(css).not.toContain("'Noto Serif KR','Nanum Myeongjo'");
+    for (const v of ['--bha-atk:var(--bha-attack)', '--bha-attr-fire:var(--bha-el-fire)', '--bha-attr-blood:var(--bha-el-blood)', '--bha-edge:var(--bha-hi)']) expect(css).toContain(v);
+    const tokBlock = css.slice(css.indexOf('.bha-root{'), css.indexOf('}', css.indexOf('.bha-root{')));
+    expect(tokBlock).not.toMatch(/#[0-9a-f]{3,6}\b/i);
   });
   it('main.ts 가 v2 CSS 를 싣고, 갤러리는 개발 전용 분기 안에서만 불린다', () => {
     const main = read('src/main.ts');

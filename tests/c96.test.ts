@@ -24,7 +24,7 @@ describe('결과 화면 무대 이름 (GDD 43장 3번)', () => {
 
 describe('알림 띠 (GDD 43장 1·2번)', () => {
   const css = read('src/ui/bha/components/components.css');
-  const toast = rule(css, '.bha-toast');
+  const toast = rule(css, '.bha-toast:where(:not(.bha-v2 *))'); // C.282: .bha-v2 화면은 v2 토스트
   it('위 가장자리 한 줄 띠: 칸마다 쌓고, 글은 한 줄로 자르며, 누름을 막지 않는다', () => {
     expect(toast).toContain('top: calc(env(safe-area-inset-top, 0px)');
     expect(toast).toContain('--toast-i');
