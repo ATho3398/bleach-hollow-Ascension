@@ -5,8 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.C249_OUT ?? path.join(ROOT, 'docs/captures/c268');
+const ROOT = path.resolve(__dirname, '../../..');
+const OUT = process.env.C249_OUT ?? path.join(ROOT, 'docs/captures/fx-tool');
 const PART = process.env.C249_PART ?? 'all';
 const PORT = 5368;
 

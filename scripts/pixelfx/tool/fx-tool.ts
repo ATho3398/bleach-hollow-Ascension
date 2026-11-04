@@ -54,12 +54,40 @@ const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0,
 /** 한 블록 공격: 타격 수 · 타격 사이 간격(타격마다 따로) · 시전 속도(공격 전체 빠르기, 이펙트 재생도 같이) · 이펙트
  *  body = 치는 쪽 몸동작 (사용자 2026-11-04 "각 블록당 종이인형 모션도 설정할 수 있게 … 원하는 모션 원하는 타이밍에 발현할 수 잇게"):
  *  '' = 게임 기본(계열 몸동작, 첫 타격에 타격 프레임부터), 아니면 종이인형 동작 id(motions.json) / 프레임 그림 동작 이름. bodyAt = 시작 시각(첫 타격 = 0ms 기준), bodyFromHit = 타격 프레임부터 */
-interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[]; body: string; bodyAt: number; bodyFromHit: boolean; chain: BodyStep[] }
+interface StageFx { hits: number; gaps: number[]; speed: number; layers: FxLayer[]; body: string; bodyAt: number; bodyFromHit: boolean; chain: BodyStep[]; bodies?: Record<BodySlot, BodyCfg> }
 /** 연결 동작 한 칸 (사용자 2026-11-04 "연결동작 추가 만들어서, 그거 누르면 최대 4개까지 다음 모션까지 이어서 할 수 있게 하고, 동작 속도도 각각 조절할 수 있게"):
  *  id = 동작, rate = 그 동작 빠르기(배). chain[0] 이 첫 동작(시작 시각·타격 프레임부터는 첫 동작에만), 끝나면 다음 동작이 바로 이어진다. body = chain[0].id (옛 값 호환) */
 interface BodyStep { id: string; rate: number }
 const MAX_CHAIN = 4;
 const STAGE_BODY_DEFAULTS = { body: '', bodyAt: 0, bodyFromHit: true };
+/** 몸동작은 성별마다 따로 (사용자 2026-11-04 "한쪽 성별에다가 모션 적용시키고 그 버튼 누르면 나머지 성별에서도 그 모션 똑같이"):
+ *  male = 남(아란칼 남·사신 남), female = 여, frames = 프레임 그림 캐릭터(호로). 게임은 플레이어 성별(종이인형) / 프레임 그림에 맞는 칸을 튼다 */
+type BodySlot = 'male' | 'female' | 'frames';
+interface BodyCfg { chain: BodyStep[]; bodyAt: number; bodyFromHit: boolean }
+const BODY_SLOTS: readonly BodySlot[] = ['male', 'female', 'frames'];
+const emptyBody = (): BodyCfg => ({ chain: [], bodyAt: 0, bodyFromHit: true });
+/** 옛 값(chain·body·bodyAt·bodyFromHit 한 벌) → bodies(남·여는 같은 값, 프레임 그림은 비움). 지금 캐릭터 칸을 chain·bodyAt·bodyFromHit 로 읽고 쓰게 한다(저장에는 안 들어감) */
+function ensureBodies(s: StageFx): void {
+  if (!s.bodies) {
+    const own = Object.getOwnPropertyDescriptor(s, 'chain');
+    const legacyChain = own && 'value' in own && Array.isArray(own.value) ? (own.value as BodyStep[]) : s.body ? [{ id: s.body, rate: 1 }] : [];
+    const legacy: BodyCfg = { chain: legacyChain, bodyAt: (Object.getOwnPropertyDescriptor(s, 'bodyAt')?.value as number) ?? 0, bodyFromHit: (Object.getOwnPropertyDescriptor(s, 'bodyFromHit')?.value as boolean) ?? true };
+    s.bodies = { male: clone(legacy), female: clone(legacy), frames: emptyBody() };
+  }
+  for (const k of BODY_SLOTS) s.bodies[k] ??= emptyBody();
+  if (Object.getOwnPropertyDescriptor(s, 'chain')?.get) return;
+  delete (s as Partial<StageFx>).body;
+  for (const k of ['chain', 'bodyAt', 'bodyFromHit'] as const) {
+    delete (s as Partial<StageFx>)[k];
+    Object.defineProperty(s, k, {
+      configurable: true,
+      enumerable: false,
+      get: () => s.bodies![slotNow()][k],
+      set: (v) => ((s.bodies![slotNow()] as unknown as Record<string, unknown>)[k] = v),
+    });
+  }
+  Object.defineProperty(s, 'body', { configurable: true, enumerable: false, get: () => s.bodies![slotNow()].chain[0]?.id ?? '', set: () => {} });
+}
 type FamilyFx = StageFx[];
 interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind }
 interface ToolData {
@@ -119,11 +147,15 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): 
   return n;
 };
 const st = (): StageFx => {
-  const s = Object.assign(data[entry.key]![stageIx]!, { ...STAGE_BODY_DEFAULTS, ...data[entry.key]![stageIx]! });
-  if (!Array.isArray(s.chain)) s.chain = s.body ? [{ id: s.body, rate: 1 }] : [];
-  s.body = s.chain[0]?.id ?? '';
+  const s = data[entry.key]![stageIx]!;
+  ensureBodies(s);
   return s;
 };
+/** 지금 캐릭터의 몸동작 칸 */
+function slotNow(): BodySlot {
+  const c = CHARACTERS.find((x) => x.id === charId);
+  return !c?.rig ? 'frames' : c.id.endsWith('-f') ? 'female' : 'male';
+}
 const layer = (): FxLayer | null => st().layers[layerIx] ?? null;
 /** 편집할 타격: -1 = 전체(기본 값), 0부터 = 그 타격만 */
 let editHit = -1;
@@ -285,7 +317,7 @@ function swing(): void {
     const { b, rate } = steps[i]!;
     p.setRate(rate * s.speed);
     const o = { fromHit: i === 0 && s.bodyFromHit, onEnd: () => playAt(i + 1) };
-    if (hero?.c.rig) p.play('skill', { ...o, motionId: b.id });
+    if (hero?.c.rig) p.play('skill', { ...o, rigMotion: b.id });
     else p.play(b.id as never, o);
   };
   playAt(0);
@@ -598,17 +630,21 @@ function syncBodySel(): void {
   const rows = s.chain.length ? s.chain : [{ id: '', rate: 1 }];
   rows.forEach((c, i) => {
     const row = h('div', 'chainrow');
-    const sel = h('select');
+    const sel = h('button', 'btn pickbtn');
+    sel.type = 'button';
     sel.id = `chain-${i}`;
     sel.setAttribute('aria-label', `${i + 1}번째 동작`);
-    if (i === 0) sel.append(new Option('게임 기본 (계열 몸동작)', ''));
-    sel.append(...opts.map((b) => new Option(`${i + 1}. ${optLabel(b)}`, b.id)));
-    sel.value = opts.some((b) => b.id === c.id) ? c.id : i === 0 ? '' : opts[0]?.id ?? '';
-    sel.onchange = () => {
-      if (!sel.value) s.chain = [];
-      else if (s.chain[i]) s.chain[i]!.id = sel.value;
-      else s.chain[i] = { id: sel.value, rate: 1 };
-      changed();
+    const cur = opts.find((b) => b.id === c.id);
+    sel.textContent = `${i + 1}. ${cur ? optLabel(cur) : i === 0 ? '게임 기본 (계열 몸동작)' : '동작 고르기'} ▾`;
+    sel.onclick = () => {
+      const items = [...(i === 0 ? [{ value: '', label: '게임 기본 (계열 몸동작)' }] : []), ...opts.map((b) => ({ value: b.id, label: optLabel(b) }))];
+      openPicker(`${i + 1}번째 동작`, [{ items }], c.id, (v) => {
+        const s2 = st();
+        if (!v) s2.chain = [];
+        else if (s2.chain[i]) s2.chain[i]!.id = v;
+        else s2.chain[i] = { id: v, rate: 1 };
+        changed();
+      });
     };
     row.append(sel);
     if (s.chain[i]) {
@@ -643,6 +679,8 @@ function syncBodySel(): void {
   add.disabled = s.chain.length >= MAX_CHAIN || !opts.length;
   add.textContent = `+ 연결 동작 (${s.chain.length}/${MAX_CHAIN})`;
   const custom = !!bodyOf(s);
+  $('bodyslot').textContent = `지금 고치는 칸: ${slotName(slotNow())} (치는 쪽 캐릭터를 바꾸면 그 성별 칸)`;
+  ($('bodyother') as HTMLButtonElement).disabled = slotNow() === 'frames';
   bodyHit.checked = s.bodyFromHit;
   bodyHit.disabled = !custom;
   ($('bodyalign') as HTMLButtonElement).disabled = !custom;
@@ -651,6 +689,28 @@ function syncBodySel(): void {
     ? `연결 ${chainOf(s).length}개 · 전체 ${Math.round(chainMs(s))}ms (첫 동작만 시작 시각·타격 프레임부터 적용)`
     : '게임 기본: 첫 타격 순간 계열 몸동작을 타격 프레임부터 튼다. 동작을 고르거나 [+ 연결 동작] 을 누르면 동작 시작·빠르기·타격 프레임부터를 바꿀 수 있다';
 }
+// 몸동작 복사: 같은 계열 다른 블록에 / 이성에 (04 14:1x "이 모션 2,3블록에도 적용이랑, 이성에도 적용 버튼 추가")
+const slotName = (k: BodySlot) => (k === 'male' ? '남' : k === 'female' ? '여' : '호로');
+$('bodystages').onclick = () => {
+  const slot = slotNow();
+  const src = clone(st().bodies![slot]);
+  data[entry.key]!.forEach((sx, j) => {
+    if (j === stageIx) return;
+    ensureBodies(sx);
+    sx.bodies![slot] = clone(src);
+  });
+  changed();
+  status(`${slotName(slot)} 몸동작을 ${entry.label} 1·2·3블록 모두에 넣었다`);
+};
+$('bodyother').onclick = () => {
+  const slot = slotNow();
+  if (slot === 'frames') return status('호로(프레임 그림)는 성별이 없다');
+  const other: BodySlot = slot === 'male' ? 'female' : 'male';
+  st().bodies![other] = clone(st().bodies![slot]);
+  changed();
+  status(`${stageIx + 1}블록 ${slotName(slot)} 몸동작을 ${slotName(other)}에도 똑같이 넣었다`);
+};
+
 /** 게임 기본일 때 첫 동작: 그 계열 몸동작 묶음의 첫 동작(종이인형) / 특수·공격(프레임 그림) */
 function defaultFirst(): string {
   const opts = bodyOptions();
@@ -763,15 +823,66 @@ $('hitreset').onclick = () => {
   changed();
 };
 
+// ── 고르기: 안드로이드 앱 화면에서 <select> 목록이 안 열리는 경우가 있어(04 14:0x "왜 자꾸 몸동작 리스트 누르면 안켜지냐고") 페이지 안 목록으로 ──
+interface PickItem { value: string; label: string }
+interface PickGroup { label?: string; items: PickItem[] }
+/** 버튼을 누르면 화면 위에 목록이 뜬다. 찾기 칸(search)·묶음 이름. 고르면 onPick, 바깥·[닫기] 를 누르면 닫힘 */
+function openPicker(title: string, groups: PickGroup[], current: string, onPick: (v: string) => void, search = false): void {
+  const ov = h('div', 'pick-ov');
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-label', title);
+  const panel = h('div', 'pick-panel');
+  const head = h('div', 'pick-head');
+  const close = h('button', 'btn', '닫기');
+  close.type = 'button';
+  head.append(h('b', '', title), close);
+  const q = h('input');
+  q.type = 'search';
+  q.placeholder = '찾기';
+  q.setAttribute('aria-label', '찾기');
+  const list = h('div', 'pick-list');
+  const fill = () => {
+    list.replaceChildren();
+    const ql = q.value.trim().toLowerCase();
+    for (const g of groups) {
+      const items = g.items.filter((it) => !ql || `${it.value} ${it.label} ${g.label ?? ''}`.toLowerCase().includes(ql));
+      if (!items.length) continue;
+      if (g.label) list.append(h('div', 'pick-group', g.label));
+      for (const it of items) {
+        const b = h('button', 'pick-item', it.label);
+        b.type = 'button';
+        b.dataset.value = it.value;
+        b.setAttribute('aria-pressed', String(it.value === current));
+        b.onclick = () => {
+          ov.remove();
+          onPick(it.value);
+        };
+        list.append(b);
+      }
+    }
+  };
+  q.oninput = fill;
+  close.onclick = () => ov.remove();
+  ov.onclick = (e) => {
+    if (e.target === ov) ov.remove();
+  };
+  panel.append(head, ...(search ? [q] : []), list);
+  ov.append(panel);
+  document.body.append(ov);
+  fill();
+  list.querySelector<HTMLElement>('[aria-pressed="true"]')?.scrollIntoView({ block: 'center' });
+}
+
 // ── 고르기 ──
-const famSel = $<HTMLSelectElement>('entry');
-for (const e of D.entries) famSel.append(new Option(e.label, e.key));
-famSel.onchange = () => {
-  entry = D.entries.find((e) => e.key === famSel.value) ?? entry;
-  layerIx = 0;
-  t = 0;
-  refresh();
-};
+const famBtn = $<HTMLButtonElement>('entry');
+famBtn.onclick = () =>
+  openPicker('공격 계열', [{ items: D.entries.map((e) => ({ value: e.key, label: e.label })) }], entry.key, (v) => {
+    entry = D.entries.find((e) => e.key === v) ?? entry;
+    layerIx = 0;
+    editHit = -1;
+    t = 0;
+    refresh();
+  });
 for (const c of CHARACTERS) {
   const b = h('button', 'chip', c.label);
   b.type = 'button';
@@ -809,40 +920,35 @@ for (const el of D.elements) {
   $('elements').append(b);
 }
 // 이펙트 목록 (분류 · 이름), 검색
-const fxSel = $<HTMLSelectElement>('fx');
-const fxSearch = $<HTMLInputElement>('fxsearch');
+const fxBtn = $<HTMLButtonElement>('fx');
 // 직접 만든 이펙트(custom/…) 맨 위 (사용자 2026-11-04 "커스텀은 맨위로 올리고")
 const isCustom = (id: string) => id.startsWith('custom/');
 const ids = Object.keys(EFFECTS).sort((a, b) => Number(isCustom(b)) - Number(isCustom(a)) || a.localeCompare(b));
 /** 옮긴 이펙트 id (옛 저장 값을 새 id 로) */
 const RENAMED: Record<string, string> = { 'arcane/cero-oscuras': 'custom/cero-oscuras', 'custom/thrust': 'custom/fist' };
-function fillFx(q: string): void {
-  const cur = layer()?.fx;
-  fxSel.replaceChildren();
-  const ql = q.trim().toLowerCase();
-  const cats = new Map<string, HTMLOptGroupElement>();
+const fxLabel = (id: string) => `${EFFECTS[id]?.meta.name ?? id} (${id})`;
+function fxGroups(): PickGroup[] {
+  const cats = new Map<string, PickItem[]>();
   for (const id of ids) {
-    const name = EFFECTS[id]!.meta.name ?? id;
     const cat = id.split('/')[0]!;
-    const catName = D.catNames[cat] ?? cat;
-    if (ql && !`${id} ${name} ${catName}`.toLowerCase().includes(ql) && id !== cur) continue;
-    let g = cats.get(cat);
-    if (!g) {
-      g = document.createElement('optgroup');
-      g.label = catName;
-      cats.set(cat, g);
-      fxSel.append(g);
-    }
-    g.append(new Option(`${name} (${id})`, id));
+    if (!cats.has(cat)) cats.set(cat, []);
+    cats.get(cat)!.push({ value: id, label: fxLabel(id) });
   }
-  if (cur) fxSel.value = cur;
+  return [...cats].map(([cat, items]) => ({ label: D.catNames[cat] ?? cat, items }));
 }
-fxSearch.oninput = () => fillFx(fxSearch.value);
-fxSel.onchange = () => {
+function fillFx(): void {
+  const L = layer();
+  fxBtn.textContent = L ? `${fxLabel(L.fx)} ▾` : '이펙트 없음';
+}
+fxBtn.onclick = () => {
   const L = layer();
   if (!L) return;
-  L.fx = fxSel.value;
-  changed();
+  openPicker('이펙트 고르기', fxGroups(), L.fx, (v) => {
+    const cur = layer();
+    if (!cur) return;
+    cur.fx = v;
+    changed();
+  }, true);
 };
 function seg(host: string, items: [string, string][], key: 'color' | 'anchor' | 'move' | 'sync'): () => void {
   const bs = items.map(([v, label]) => {
@@ -899,6 +1005,7 @@ $('copystage').onclick = () => {
   data[entry.key] = fam.map((s, i) => {
     if (i === stageIx) return src;
     const out = { ...s, layers: clone(src.layers) };
+    ensureBodies(out);
     fitStage(out);
     return out;
   });
@@ -942,9 +1049,9 @@ function refresh(): void {
   ($('addlayer') as HTMLButtonElement).disabled = st().layers.length >= MAX_LAYERS;
   const L = layer();
   ($('dellayer') as HTMLButtonElement).disabled = !L;
-  fxSel.disabled = !L;
-  fxSearch.disabled = !L;
-  fillFx(fxSearch.value);
+  fxBtn.disabled = !L;
+  fillFx();
+  famBtn.textContent = `${entry.label} ▾`;
   flip.checked = !!L?.altFlip;
   flip.disabled = !L;
   if (editHit >= 0 && !(layer()?.on.includes(editHit) && editHit < st().hits)) editHit = -1;
@@ -1036,7 +1143,7 @@ function load(saved: unknown): boolean {
         if (!Array.isArray(s.gaps)) s.gaps = Array.from({ length: Math.max(0, s.hits - 1) }, () => s.gapMs ?? 100);
         delete s.gapMs;
         if (typeof s.speed !== 'number') s.speed = 1;
-        Object.assign(s, { ...STAGE_BODY_DEFAULTS, ...s });
+        ensureBodies(s);
         for (const L of s.layers as (FxLayer & { when?: string })[]) {
           if (!Array.isArray(L.on)) L.on = L.when === 'first' ? [0] : L.when === 'last' ? [s.hits - 1] : Array.from({ length: s.hits }, (_, i) => i);
           delete L.when;
