@@ -9,8 +9,7 @@ import { summarize } from '../engine/expedition';
 import { groundName, type FactionConfig, type FoodId } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { countFoods } from '../engine/food';
-import { button, el, icon, panel } from './bha/dom';
-import { splitApp } from './bha/split';
+import { button, el, icon, mountApp, panel } from './bha/dom';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { endTone, iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { endReasonText } from './labels';
@@ -115,10 +114,13 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return { label: TRADE_CURRENCY_NAME, icon: 'i-rare', value: v, mod: s.keptGold > 0 ? 'good' : s.lostGold > 0 ? 'bad' : undefined };
   }
 
-  const head = el('header', `bha-result bha-result--${win ? 'win' : 'lose'}`);
+  // 리디자인 v2 (GDD 183장 S13): 승리/패배 톤은 맨 위 4px 띠 + 제목 색만. 머리 = 제목 · 무대 이름 · 끝난 이유
+  const head = el('header', `bha-head bha-result bha-result--${win ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(win ? 'i-return' : 'i-broken'));
-  head.append(mark, el('span', 'bha-label', stageTitle(exp, faction)), el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction)));
+  // 끝난 이유(한두 줄)는 왼쪽 판 결과 표시 아래 — 머리는 제목 + 무대 이름 한 줄
+  const reasonP = el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction));
+  head.append(mark, el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('span', 'bha-label', stageTitle(exp, faction)));
 
   const home = expeditionEndVitals(exp);
   const rows: IconInfoRow[] = [
@@ -140,15 +142,27 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
     { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `모험 끝 ${Math.round(exp.condition)}` : undefined) },
   ];
-  const sum = panel({ title: '모험 요약' }, iconInfo(rows));
+  // 모험 요약 = '이름: 값' 줄 두 열, 고정 높이 칸 안에서 스크롤 + 바닥 '▼ 더 있음' (GDD 183장 S13 · 168장 3)
+  const info = iconInfo(rows);
+  info.className = 'bha-result__info'; // 옛 dl 목록 이름(.bha-info)은 v2 에서 ⓘ 버튼 — 이 화면은 제 이름으로
+  const scroller = el('div', 'bha-result__scroll');
+  const more = el('div', 'bha-result__more', '▼ 더 있음');
+  more.setAttribute('aria-hidden', 'true');
+  scroller.append(info, more);
+  const syncMore = (): void => { more.hidden = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2; };
+  scroller.addEventListener('scroll', syncMore, { passive: true });
+  const sum = panel({ title: '모험 요약' }, scroller);
+  sum.classList.add('bha-result__sum');
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
   // 플레이어에겐 '기록을 남겼다'만, 시드·런 로그는 테스트 모드에서만 (GDD 176장 20·21 개발자 말 정리). 줄은 늘 있어 [둥지로] 자리가 같다
   if (devText()) seed.append(`시드 ${exp.seed} · `, icon('i-check', 'sm'), ' 기록이 런 로그에 저장됐다');
   else seed.append(icon('i-check', 'sm'), ' 모험 기록을 남겼다');
 
-  const dock = el('div', 'bha-dock');
-  dock.append(asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: onHome })));
+  const dock = el('footer', 'bha-dock bha-result__dock');
+  const homeBtn = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', onClick: onHome }));
+  homeBtn.classList.add('bha-result__home');
+  dock.append(seed, homeBtn);
   // 가로 LCD: 왼쪽 = 결과 제목·시드·[둥지로], 오른쪽 = 성장 요약 한두 줄 + 원정 요약 표 (왼쪽 열이 길어지면 스크롤이 생겨 오른쪽 맨 위에 둔다)
   const growthBox = growth ? el('div', 'bha-growth') : null;
   growthBox?.setAttribute('role', 'status');
@@ -162,7 +176,16 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const evolveNote = growth?.evolvedTo ? el('div', 'bha-growth bha-result__evolve') : null;
   evolveNote?.setAttribute('role', 'status');
   evolveNote?.append(el('p', 'bha-growth__line', EVOLVE_HINT));
-  const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock, ...(evolveNote ? [evolveNote] : [])], [...(storyBox ? [storyBox] : []), ...(growthBox ? [growthBox] : []), sum]);
+  // 왼쪽 판 = 결과 표시 · 성장 요약 · 진화 안내(배지) / 오른쪽 판 = 스토리 결과 + 모험 요약 / 아래 줄 = 기록 한 줄 · [둥지로] 오른쪽 고정 자리
+  const band = el('span', 'bha-result__band');
+  const left = el('section', 'bha-panel bha-result__left');
+  const big = el('span', 'bha-result__big');
+  big.append(icon(win ? 'i-return' : 'i-broken'));
+  left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evolveNote ? [evolveNote] : []));
+  const right = el('section', 'bha-result__right');
+  right.append(...(storyBox ? [storyBox] : []), sum);
+  const app = mountApp(root, { cls: `bha-v2 bha-resultv2 bha-resultv2--${win ? 'win' : 'lose'}` }, band, head, left, right, dock);
+  requestAnimationFrame(syncMore);
   if (win) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11)
 }
 

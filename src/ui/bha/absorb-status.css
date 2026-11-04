@@ -15,3 +15,162 @@
 .bha-confirm .bha-modal:has(.bha-absorbstat) { width: min(560px, calc(100% - 24px)); max-width: none; }
 /* GDD 176장 11: 노력치가 가득 찬 능력치 갈래 = 흐리게 (고를 수는 있다, 자리 그대로) */
 .bha-absorb__actions--modes .bha-btn[aria-disabled="true"] { opacity: 0.45; }
+
+/* ═════ 흡수 화면 리디자인 v2 (GDD 183장 S11, C.287 화면 D) ═════
+   LCD 646×360: 머리 44(제목·단계·[내 상태]) / 왼쪽 판 = 상대 카드·지금 리스크·슬롯 / 오른쪽 = 갈래 4개 → 설명 칸(고정 높이, 안에서 스크롤 + 더 있음) / 아래 줄 56 = 버튼 고정 자리.
+   토큰만 (hex·glow·그라데이션 없음). 첫 흡수 연습(guideView, .bha-absorbpage)은 옛 틀 그대로 */
+.bha-lcd .bha-app.bha-absorbv2 { position: absolute; inset: 0; display: block; width: auto; height: auto; min-height: 0; padding: 0; overflow: hidden; background: var(--bha-bg-0); }
+.bha-absorbv2 > .bha-head { background: var(--bha-bg-1); box-shadow: inset 0 -1px 0 var(--bha-line-1); }
+.bha-absorbv2 > .bha-head .bha-title { font-size: var(--bha-fs-lg); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bha-absorb__grow { flex: 1 1 auto; }
+.bha-absorbv2 > .bha-head .bha-btn { flex: none; }
+/* 단계 1 갈래 · 2 특성: 작은 네모 숫자, 지금 단계만 강조색 */
+.bha-absorbv2 .bha-steps { flex: none; gap: var(--bha-sp-2); font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-absorbv2 .bha-steps em { font-style: normal; color: var(--bha-text-3); }
+.bha-absorbv2 .bha-steps b { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: var(--bha-r-xs); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-xs); line-height: 1; }
+.bha-absorbv2 .bha-steps .is-active { color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }
+.bha-absorbv2 .bha-steps .is-active b { background: var(--bha-accent); color: var(--bha-text-1); }
+/* 왼쪽 판 */
+.bha-absorbv2 .bha-absorb__left { position: absolute; left: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); width: 190px; box-sizing: border-box; padding: var(--bha-sp-4); gap: var(--bha-sp-3); overflow-y: auto; overscroll-behavior: contain; }
+.bha-absorbv2 .bha-foecard { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2); padding: 0; border: 0; background: none; text-align: center; }
+.bha-absorbv2 .bha-foecard .bha-foe { width: 60px; height: 60px; flex: none; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo); }
+/* 상대 실루엣: 흐린 빛 대신 속성 색 면 (glow 없음, 필터 없음 — 코딩197 렉 수정과 같은 방향) */
+.bha-absorbv2 .bha-foe__body { height: 52px; max-height: 52px; color: var(--aura, var(--bha-text-2)); filter: none; }
+.bha-absorbv2 .bha-foecard__name { font-family: var(--bha-font-body, inherit); font-size: var(--bha-fs-lg); font-weight: 800; color: var(--bha-text-1); line-height: 1.25; }
+.bha-absorbv2 .bha-foecard__tags { justify-content: center; margin-top: var(--bha-sp-1); }
+.bha-absorbv2 .bha-absorb__lead { display: block; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.35; text-align: center; }
+.bha-absorbv2 .bha-absorb__left > p { margin: 0; font-size: var(--bha-fs-xs); line-height: 1.35; }
+.bha-absorbv2 .bha-absorb__left .bha-meter { gap: var(--bha-sp-1); }
+.bha-absorbv2 .bha-absorb__left .bha-meter__label { font-size: var(--bha-fs-xs); }
+.bha-absorbv2 .bha-absorb__left .bha-meter__value { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); }
+.bha-absorb__slotbox { gap: var(--bha-sp-2); }
+.bha-absorb__slothead { display: flex; align-items: baseline; justify-content: space-between; font-size: var(--bha-fs-xs); }
+.bha-absorb__slothead .bha-num { font-family: var(--bha-font-num); }
+.bha-absorbv2 .bha-absorb__left .bha-slots { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-1); }
+.bha-absorbv2 .bha-absorb__left .bha-slot { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); flex-direction: row; align-items: center; justify-content: space-between; gap: var(--bha-sp-2); border-radius: var(--bha-r-xs); font-size: var(--bha-fs-xs); }
+.bha-absorbv2 .bha-absorb__left .bha-slot--empty { min-height: 0; height: 24px; flex-wrap: nowrap; background: var(--bha-bg-0); justify-content: flex-start; color: var(--bha-text-3); }
+.bha-absorbv2 .bha-absorb__left .bha-slot--empty .bha-slot__num { position: static; }
+.bha-absorbv2 .bha-absorb__left .bha-slot--empty .bha-icon { width: 12px; height: 12px; }
+.bha-absorbv2 .bha-absorb__left .bha-slot__name { font-size: var(--bha-fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.bha-absorbv2 .bha-slot__enh { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); color: var(--bha-text-2); flex: none; }
+/* 오른쪽: 갈래 줄 52 → 설명 칸이 남은 높이(고정) */
+.bha-absorbv2 .bha-absorb__right { position: absolute; left: calc(var(--bha-gutter) + 190px + var(--bha-sp-5)); right: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
+.bha-absorbv2 .bha-absorb__right > * { flex: none; }
+.bha-absorbv2 .bha-absorb__actions--modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-absorbv2 .bha-absorb__actions--modes .bha-btn { height: var(--bha-block-h); min-height: 0; flex-direction: column; gap: var(--bha-sp-1); padding: 0 var(--bha-sp-2); font-size: var(--bha-fs-md); line-height: 1.15; white-space: nowrap; }
+.bha-absorbv2 .bha-absorb__actions--modes .bha-btn.is-on { background: var(--bha-bg-3); border-color: var(--bha-line-2); box-shadow: inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-accent); }
+.bha-absorb__risk { display: inline-flex; align-items: center; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); }
+.bha-absorb__risk .bha-i { width: 12px; height: 12px; color: var(--bha-risk); }
+.bha-absorbv2 .bha-btn--danger .bha-absorb__risk { color: inherit; }
+.bha-absorbv2 .bha-absorb__desc { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: var(--bha-sp-1); padding: var(--bha-sp-4) var(--bha-sp-5) 0; border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo); }
+.bha-absorbv2 .bha-absorb__desc p { margin: 0; font-size: var(--bha-fs-sm); line-height: 1.5; color: var(--bha-text-1); }
+.bha-absorbv2 .bha-absorb__desc p[data-line] { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--bha-sp-3); }
+.bha-absorbv2 .bha-absorb__desc p[data-line="what"], .bha-absorbv2 .bha-absorb__desc p[data-line="warn"] { display: block; }
+.bha-absorbv2 .bha-absorb__what { font-size: var(--bha-fs-md); font-weight: 700; margin-bottom: var(--bha-sp-2); }
+.bha-absorb__k { color: var(--bha-text-3); }
+.bha-absorb__v { color: var(--bha-text-1); font-weight: 700; }
+.bha-absorbv2 .bha-absorb__enh .bha-chip { height: 20px; vertical-align: middle; }
+.bha-absorbv2 .bha-absorb__enh small { font-size: var(--bha-fs-xs); }
+/* '▼ 더 있음' = 칸 바닥에 붙는 띠 (끝까지 내리면 숨김, GDD 168장 3) */
+.bha-absorbv2 .bha-absorb__desc .bha-pop__more { position: sticky; bottom: 0; flex: none; margin: auto calc(-1 * var(--bha-sp-5)) 0; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+.bha-absorbv2 .bha-absorb__desc .bha-pop__more[hidden] { display: none; }
+/* 특성 고르기: 후보 목록이 남은 높이(안에서 스크롤) → [다시 뽑기] 줄 자리 고정 (GDD 173장 2) */
+.bha-absorbv2 .bha-absorb__cands { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; gap: var(--bha-sp-3); padding: var(--bha-sp-1); margin: calc(-1 * var(--bha-sp-1)); }
+.bha-absorbv2 .bha-cand { grid-template-columns: 32px minmax(0, 1fr); gap: var(--bha-sp-4); padding: var(--bha-sp-4) var(--bha-sp-5); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); border: 1px solid var(--bha-line-1); box-shadow: inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
+.bha-absorbv2 .bha-cand__mark { width: 32px; height: 32px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); }
+.bha-absorbv2 .bha-cand__mark .bha-icon { width: 20px; height: 20px; }
+.bha-absorbv2 .bha-cand__name { font-size: var(--bha-fs-md); font-weight: 800; }
+.bha-absorbv2 .bha-cand__desc { font-size: var(--bha-fs-xs); line-height: 1.4; }
+.bha-absorbv2 .bha-cand__foot .bha-num { font-family: var(--bha-font-num); }
+.bha-absorbv2 .bha-absorb__reroll { display: flex; align-items: center; gap: var(--bha-sp-4); min-height: var(--bha-btn-h-sm); }
+.bha-absorbv2 .bha-absorb__reroll small { font-size: var(--bha-fs-xs); }
+.bha-absorbv2 .bha-absorb__none { flex: 1 1 0; min-height: 0; justify-content: center; gap: var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-bg-0); }
+.bha-absorbv2 .bha-absorb__none p { margin: 0; }
+/* 교체: 슬롯 줄 = '이것과 바꾸기' 버튼 */
+.bha-absorbv2 .bha-absorb__slotlist { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; gap: var(--bha-sp-3); padding: var(--bha-sp-1); margin: calc(-1 * var(--bha-sp-1)); }
+.bha-absorbv2 .bha-absorb__slotlist .bha-slot { min-height: var(--bha-btn-h); padding: var(--bha-sp-3) var(--bha-sp-5); gap: 0; border-radius: var(--bha-r-sm); }
+.bha-absorbv2 .bha-absorb__slotlist .bha-slot__name { font-size: var(--bha-fs-md); }
+.bha-absorbv2 .bha-absorb__note { margin: 0; font-size: var(--bha-fs-xs); line-height: 1.35; }
+.bha-absorbv2 .bha-absorb__left .bha-cand { text-align: left; }
+/* 아래 줄: 왼쪽 = 고른 갈래·돌아가기, 오른쪽 = 실행 [○○하기] 44 × 200 ('너무 크지 않게', 오른쪽 아래 고정 자리) */
+.bha-absorbv2 .bha-absorb__dock { justify-content: flex-end; }
+.bha-absorb__sel { margin-right: auto; font-size: var(--bha-fs-sm); }
+.bha-absorb__sel b { color: var(--bha-text-1); }
+.bha-absorbv2 .bha-absorb__back { margin-right: auto; }
+.bha-absorbv2 .bha-absorb__go, .bha-absorbv2 .bha-absorb__run { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; padding: 0 var(--bha-sp-5); font-size: var(--bha-fs-lg); }
+.bha-absorbv2 .bha-absorb__run .bha-btn__label { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.bha-absorbv2 .bha-absorb__run .bha-btn__sub { font-size: var(--bha-fs-xs); }
+
+/* ═════ 결과 화면 리디자인 v2 (GDD 183장 S13, 화면 D) ═════
+   승리/패배 톤 = 맨 위 4px 띠 + 제목 색만 (귀환 = 황동 --bha-sp, 패배 = 종족 강조색). 머리 52 / 왼쪽 판 170 = 결과 표시·성장 요약·진화 배지 / 오른쪽 판 = 모험 요약 '이름: 값' 두 열(고정 높이 + 더 있음) / 아래 줄 = 기록 한 줄 · [둥지로] */
+.bha-lcd .bha-app.bha-resultv2 { position: absolute; inset: 0; display: block; width: auto; height: auto; min-height: 0; padding: 0; overflow: hidden; background: var(--bha-bg-0); }
+.bha-result__band { position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--bha-sp); }
+.bha-resultv2--lose .bha-result__band { background: var(--bha-accent); }
+.bha-resultv2 > .bha-result.bha-head { top: 4px; height: 52px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--bha-sp-5); padding: 0 var(--bha-gutter); text-align: left; }
+.bha-resultv2 .bha-result__mark { display: none; }
+.bha-resultv2 .bha-result__title { margin: 0; font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-3xl); line-height: 1; color: var(--bha-sp-hi); white-space: nowrap; }
+.bha-resultv2--lose .bha-result__title { color: var(--bha-accent-hi); }
+.bha-resultv2 > .bha-result .bha-label { min-width: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-resultv2 .bha-result__reason { margin: 0; max-width: none; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.4; text-align: center; }
+.bha-resultv2 .bha-result__left { position: absolute; left: var(--bha-gutter); top: 62px; bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); width: 170px; box-sizing: border-box; padding: var(--bha-sp-5) var(--bha-sp-4); gap: var(--bha-sp-4); align-items: stretch; overflow-y: auto; overscroll-behavior: contain; }
+.bha-result__big { display: flex; justify-content: center; color: var(--bha-sp-hi); }
+.bha-resultv2--lose .bha-result__big { color: var(--bha-accent-hi); }
+.bha-result__big .bha-icon { width: 48px; height: 48px; }
+.bha-resultv2 .bha-growth { padding: 0; border: 0; background: none; display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+.bha-resultv2 .bha-growth__line { font-size: var(--bha-fs-sm); color: var(--bha-text-1); font-weight: 700; text-align: center; }
+/* 진화했으면 배지 (황동) — 이름은 둥지 진화 연출에서 처음 보인다 (GDD 176장 6) */
+.bha-resultv2 .bha-result__evolve { padding: var(--bha-sp-3) var(--bha-sp-4); border-radius: var(--bha-r-xs); background: var(--bha-toast-bg); box-shadow: 0 0 0 1px var(--bha-toast-line); }
+.bha-resultv2 .bha-result__evolve .bha-growth__line { color: var(--bha-toast-ink); font-size: var(--bha-fs-xs); font-weight: 800; }
+.bha-resultv2 .bha-result__right { position: absolute; left: calc(var(--bha-gutter) + 170px + var(--bha-gutter)); right: var(--bha-gutter); top: 62px; bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
+.bha-resultv2 .bha-result__story { flex: none; padding: var(--bha-sp-3) var(--bha-sp-5); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1); }
+.bha-resultv2 .bha-result__story .bha-growth__line { text-align: left; font-size: var(--bha-fs-xs); }
+.bha-resultv2 .bha-result__sum { flex: 1 1 0; min-height: 0; padding: var(--bha-sp-3) var(--bha-sp-5) 0; gap: var(--bha-sp-2); }
+.bha-resultv2 .bha-result__sum .bha-panel__head, .bha-resultv2 .bha-result__sum > header { margin: 0; }
+.bha-result__scroll { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
+.bha-result__info { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); grid-auto-flow: row dense; }
+.bha-result__info .bha-info__row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: var(--bha-sp-4); min-width: 0; min-height: 28px; padding: var(--bha-sp-2) 0; border-bottom: 1px solid var(--bha-line-1); }
+.bha-result__info .bha-info__row:has(small) { grid-column: 1 / -1; }
+.bha-result__info dt { display: flex; align-items: center; gap: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); white-space: nowrap; }
+.bha-result__info dt .bha-icon { width: 16px; height: 16px; }
+.bha-result__info dd { margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: right; font-size: var(--bha-fs-sm); font-weight: 800; color: var(--bha-text-1); }
+.bha-result__info dd small { font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-2); }
+.bha-result__info .bha-info__row--good dd { color: var(--bha-good); }
+.bha-result__info .bha-info__row--bad dd { color: var(--bha-danger); }
+.bha-result__info .bha-info__row--em dd { color: var(--bha-warn); }
+.bha-result__more { position: sticky; bottom: 0; flex: none; margin-top: auto; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--bha-bg-1); box-shadow: 0 -1px 0 var(--bha-line-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
+.bha-result__more[hidden] { display: none; }
+.bha-resultv2 .bha-result__dock { justify-content: flex-end; }
+.bha-resultv2 .bha-seedline { margin: 0 auto 0 0; text-align: left; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-resultv2 .bha-result__home { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
+
+/* ═════ 진화 연출·결과 리디자인 v2 (화면 D): 흐린 빛·그라데이션·blur 없음, [건너뛰기]·[둥지로] = 아래 줄 오른쪽 같은 자리 ═════ */
+.bha-lcd .bha-app.bha-evolvev2 { position: absolute; inset: 0; display: block; padding: 0; overflow: hidden; background: var(--bha-bg-0); }
+.bha-evolvev2 .bha-evolve__burst { display: none; }
+.bha-lcd .bha-evolvev2 > section:not(.bha-evolve__result) { position: absolute; inset: 0; box-sizing: border-box; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: var(--bha-sp-9); padding: 0 var(--bha-sp-8) var(--bha-dock-h); }
+.bha-lcd .bha-evolvev2 > section[hidden] { display: none; }
+.bha-lcd .bha-evolvev2 .bha-evolve__crack { flex: none; width: 96px; height: 96px; margin: 0; color: var(--bha-sp-hi); }
+.bha-lcd .bha-evolvev2 .bha-evolve__crack .bha-i { width: 96px; height: 96px; }
+.bha-lcd .bha-evolvev2 .bha-evolve__lines { min-height: 0; gap: var(--bha-sp-4); align-items: flex-start; text-align: left; }
+.bha-lcd .bha-evolvev2 .bha-evolve__line { font-size: var(--bha-fs-lg); animation-name: bha-evo2-line; }
+.bha-evolvev2 .bha-evolve__dock { justify-content: flex-end; }
+.bha-evolvev2 .bha-evolve__go { width: 200px; height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }
+.bha-lcd .bha-evolvev2 .bha-evolve__result { position: absolute; inset: 0; display: block; }
+.bha-lcd .bha-evolvev2 .bha-evolve__result[hidden] { display: none; }
+.bha-evolvev2 .bha-evolve__head { background: var(--bha-bg-1); box-shadow: inset 0 -1px 0 var(--bha-line-1); gap: var(--bha-sp-5); }
+.bha-evolvev2 .bha-evolve__eyebrow { letter-spacing: 0; }
+.bha-lcd .bha-evolvev2 .bha-evolve__title { margin: 0; font-size: var(--bha-fs-2xl); line-height: 1; color: var(--bha-sp-hi); animation-name: bha-evo2-title; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-lcd .bha-evolvev2 .bha-evolve__resmain { position: absolute; left: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); width: 220px; box-sizing: border-box; padding: var(--bha-sp-5); gap: var(--bha-sp-4); align-items: stretch; justify-content: center; text-align: center; overflow-y: auto; }
+.bha-lcd .bha-evolvev2 .bha-evolve__path { font-size: var(--bha-fs-sm); }
+.bha-lcd .bha-evolvev2 .bha-evolve__path .bha-icon { color: var(--bha-sp-hi); }
+.bha-lcd .bha-evolvev2 .bha-evolve__new { margin: 0; padding: var(--bha-sp-4); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo); font-size: var(--bha-fs-lg); flex-wrap: wrap; justify-content: center; }
+.bha-lcd .bha-evolvev2 .bha-evolve__resside { position: absolute; left: calc(var(--bha-gutter) + 220px + var(--bha-gutter)); right: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); display: flex; flex-direction: column; min-width: 0; }
+.bha-lcd .bha-evolvev2 .bha-evolve__effects { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
+.bha-evolve__info { margin: 0; display: flex; flex-direction: column; }
+.bha-evolve__info .bha-info__row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: var(--bha-sp-5); padding: var(--bha-sp-3) 0; border-bottom: 1px solid var(--bha-line-1); }
+.bha-evolve__info .bha-info__row:last-child { border-bottom: 0; }
+.bha-evolve__info dt { display: flex; align-items: center; gap: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); white-space: nowrap; }
+.bha-evolve__info dt .bha-icon { width: 16px; height: 16px; }
+.bha-evolve__info dd { margin: 0; min-width: 0; text-align: right; font-size: var(--bha-fs-sm); font-weight: 700; color: var(--bha-text-1); overflow-wrap: anywhere; }
+.bha-evolve__info .bha-info__row--good dd { color: var(--bha-good); }
+@keyframes bha-evo2-line { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes bha-evo2-title { from { opacity: 0; transform: scale(1.3); } to { opacity: 1; transform: none; } }

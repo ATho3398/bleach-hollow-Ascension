@@ -102,14 +102,16 @@ describe('포식 (#44~53)', () => {
   const a = read('src/ui/absorbView.ts');
   it('설명 표 삭제, 갈래 버튼은 왼쪽, 오른쪽은 슬롯 목록 (#44·45)', () => {
     expect(a).not.toContain('info([');
-    expect(a).toContain('foeCard(), picker.actions, picker.desc, picker.go]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
+    // GDD 163장 → 183장 S11(리디자인 v2): 왼쪽 판 = 상대, 오른쪽 = 갈래 버튼 + 설명 칸, 아래 줄 = [○○하기] (DOM 순서 갈래 → 버튼 그대로)
+    expect(a).toContain('const [modes, desc, go] = [picker.actions, picker.desc, picker.go];');
+    expect(a).toContain("const side: HTMLElement[] = [modes, desc];");
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
     expect(a).toContain("'새 특성 없음 — 강화만'");
     expect(a).toContain('(first as HTMLElement | null)?.focus');
     expect(a).toContain('다시 뽑기 · ${n}장');
     expect(a).toContain("candCard(picked!, 'article')");
-    expect(a).toContain("variant: 'ghost', size: 'lg', onClick");
+    expect(a).toContain("lab.append('포기', el('span', 'bha-btn__sub', `특성 없이 ${act}`));"); // 교체 단계 [포기] = 아래 줄 오른쪽 고정 자리 (183장 S11)
     expect(a).toContain('STEP_LABELS.slice(0, need)');
   });
 });

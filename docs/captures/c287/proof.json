@@ -1,0 +1,111 @@
+{
+  "shots": [
+    "hollow-6-evolve-lines.png",
+    "hollow-7-evolve-result.png",
+    "hollow-1-absorb.png",
+    "hollow-3-absorb-status.png",
+    "hollow-2-absorb-pick.png",
+    "hollow-4-result-win.png",
+    "hollow-5-result-lose.png",
+    "shinigami-6-evolve-lines.png",
+    "shinigami-7-evolve-result.png",
+    "shinigami-1-absorb.png",
+    "shinigami-3-absorb-status.png",
+    "shinigami-2-absorb-pick.png",
+    "shinigami-4-result-win.png",
+    "shinigami-5-result-lose.png"
+  ],
+  "overflow": {
+    "hollow-6-evolve-lines.png": [],
+    "hollow-7-evolve-result.png": [],
+    "hollow-1-absorb.png": [],
+    "hollow-3-absorb-status.png": [],
+    "hollow-2-absorb-pick.png": [],
+    "hollow-4-result-win.png": [],
+    "hollow-5-result-lose.png": [],
+    "shinigami-6-evolve-lines.png": [],
+    "shinigami-7-evolve-result.png": [],
+    "shinigami-1-absorb.png": [],
+    "shinigami-3-absorb-status.png": [],
+    "shinigami-2-absorb-pick.png": [],
+    "shinigami-4-result-win.png": [],
+    "shinigami-5-result-lose.png": []
+  },
+  "size": {
+    "hollow-6-evolve-lines.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-7-evolve-result.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-1-absorb.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-3-absorb-status.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-2-absorb-pick.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-4-result-win.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "hollow-5-result-lose.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-6-evolve-lines.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-7-evolve-result.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-1-absorb.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-3-absorb-status.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-2-absorb-pick.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-4-result-win.png": {
+      "small": [],
+      "lowBtn": []
+    },
+    "shinigami-5-result-lose.png": {
+      "small": [],
+      "lowBtn": []
+    }
+  },
+  "goY": {
+    "hollow": [
+      "534,324,200,44",
+      "534,324,200,44",
+      "534,324,200,44",
+      "534,324,200,44"
+    ],
+    "shinigami": [
+      "534,324,200,44",
+      "534,324,200,44",
+      "534,324,200,44",
+      "534,324,200,44"
+    ]
+  },
+  "errors": [],
+  "hollow-result-win": "ok",
+  "hollow-result-lose": "ok",
+  "shinigami-result-win": "ok",
+  "shinigami-result-lose": "ok"
+}
