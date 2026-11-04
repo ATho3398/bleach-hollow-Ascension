@@ -259,7 +259,9 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
   const sh = scene.clientHeight;
   const size = sw > 0 && sh > 0 ? { w: sw, h: sh } : REF_SCENE;
   // C.182 UI 검수: 위에 알림 띠(빈사·쇠약 등)가 붙어 장면이 기준보다 낮아지면 물건 그림도 같은 비율로 줄인다 — 발 높이만 줄고 그림 크기는 그대로라 책장·상점이 겹쳤다
-  scene.style.setProperty('--room-fit', String(Math.min(1, Math.max(0.6, size.h / REF_SCENE.h))));
+  // 같은 값이면 다시 쓰지 않는다 (GDD 186장 1: 장면 전체 스타일 다시 계산을 막음 — 걷기 중 매 프레임 불린다)
+  const setVar = (k: string, v: string) => { if (scene.style.getPropertyValue(k) !== v) scene.style.setProperty(k, v); };
+  setVar('--room-fit', String(Math.min(1, Math.max(0.6, size.h / REF_SCENE.h))));
   // 배경 보기 (C.275, UI 배치 도구): 확대·위치가 있으면 배경 크기·자리를 바닥 계산과 같은 상자로 건다. 한 변만 정해 그림 비율은 그대로(찌그러지지 않게)
   if (floor.view) {
     const b = bgBox(size, floor.aspect, floor.view);
@@ -284,9 +286,9 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
       const top = (p.y / 100) * size.h - fromCenter;
       e.el.style.left = `${p.x}%`;
       e.el.style.top = `${top}px`;
-      scene.style.setProperty('--char-y', `${top}px`);
-      scene.style.setProperty('--foot-y', `${top + fromCenter}px`); // 발 = 그림자 가운데 (발밑 체력 막대, GDD 123장 3)
-      scene.style.setProperty('--char-x', `${p.x}%`);
+      setVar('--char-y', `${top}px`);
+      setVar('--foot-y', `${top + fromCenter}px`); // 발 = 그림자 가운데 (발밑 체력 막대, GDD 123장 3)
+      setVar('--char-x', `${p.x}%`);
     }
   }
 }

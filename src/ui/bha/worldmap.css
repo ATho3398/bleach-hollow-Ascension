@@ -25,6 +25,10 @@
 .bha-prop--outside .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
 /* 장소 그림 윤곽 (GDD 182장 4): 배경과 구분되게 그림 모양을 따라가는 어두운 외곽선 + 아래 그림자 — 그림(img) 자신에 걸어, 초점·선택의 밝은 윤곽(room.css .bha-art.bha-sel, 그림 칸에 걸림)은 그 바깥에 그대로 겹친다 */
 .bha-worldmap .bha-prop__shape.has-art > .bha-prop__img { filter: var(--bha-art-outline); }
+/* 렉 (GDD 186장 1, C.283): 윤곽 9겹을 캔버스에 한 번 구워(artOutline.ts) 그림 위에 얹고 원본은 숨긴다 — 걷기·페이드 때 다시 계산하지 않는다. 모양은 같다 */
+.bha-worldmap .bha-prop__shape.has-art { position: relative; }
+.bha-worldmap .bha-prop__shape.has-art > .bha-prop__img.is-baked { visibility: hidden; filter: none; }
+.bha-art-baked { position: absolute; pointer-events: none; }
 /* 첫 모험 강제 등으로 잠긴 장소 (GDD 131장 2): 흐리게 */
 .bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
 /* 캐릭터: 지도 위라 방보다 작게, 보기만 */

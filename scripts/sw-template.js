@@ -5,14 +5,72 @@
 const VERSION = '__VERSION__';
 const CACHE = 'bha-' + VERSION;
 const PRECACHE = __PRECACHE__;
+// C.284 렉 (GDD 186장 1): 그림·이펙트(art·fx·icons)는 버전마다 새로 받지 않는다 — 버전과 상관없는 그림 캐시(MEDIA_CACHE)에
+// 파일 내용 해시와 함께 두고, 해시가 바뀐 파일만 다시 받는다. 예전엔 배포마다 약 19MB 를 통째로 다시 받아 새 캐시에 써서 켤 때 폰이 버벅였다.
+// 값 = [내용 해시, 나중 여부]. 나중(1) = 이펙트 시트(fx, 약 11MB): 설치 때 받지 않고 게임이 켜져 한가할 때(화면이 'bha-warm' 을 보냄) 몇 개씩 천천히
+const MEDIA = /*__MEDIA__*/ {};
+const MEDIA_CACHE = 'bha-media';
+const HASH_HEADER = 'x-bha-hash';
+/** 한 번에 받는 그림 수 (한꺼번에 수백 개를 받아 폰 네트워크·저장을 막지 않게) */
+const MEDIA_PARALLEL = 3;
+
+const abs = (p) => new URL(p, self.registration.scope).href;
+
+/** 그림 캐시 채우기: 해시가 같은 파일은 건너뛰고, 없거나 바뀐 파일만 MEDIA_PARALLEL 개씩 받는다. strict = 하나라도 실패하면 실패(설치용) */
+function ensureMedia(later, strict) {
+  const list = Object.keys(MEDIA).filter((p) => !!MEDIA[p][1] === later);
+  return caches.open(MEDIA_CACHE).then((cache) => {
+    let i = 0;
+    const one = () => {
+      if (i >= list.length) return Promise.resolve();
+      const p = list[i++];
+      const url = abs(p);
+      const hash = MEDIA[p][0];
+      return cache
+        .match(url)
+        .then((hit) => {
+          if (hit && hit.headers.get(HASH_HEADER) === hash) return;
+          return fetch(url).then((res) => {
+            if (!res.ok) throw new Error('media ' + res.status + ' ' + p);
+            return res.blob().then((body) => {
+              const headers = new Headers(res.headers);
+              headers.set(HASH_HEADER, hash);
+              return cache.put(url, new Response(body, { status: 200, headers }));
+            });
+          });
+        })
+        .catch((e) => {
+          if (strict) throw e;
+        })
+        .then(one);
+    };
+    const runners = [];
+    for (let k = 0; k < MEDIA_PARALLEL; k++) runners.push(one());
+    return Promise.all(runners);
+  });
+}
+
+/** 목록에 없는 옛 그림은 그림 캐시에서 지운다 */
+function pruneMedia() {
+  const keep = new Set(Object.keys(MEDIA).map(abs));
+  return caches.open(MEDIA_CACHE).then((cache) =>
+    cache.keys().then((reqs) => Promise.all(reqs.filter((r) => !keep.has(r.url.split('?')[0])).map((r) => cache.delete(r)))),
+  );
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE.map((p) => new URL(p, self.registration.scope).href)))
+      .then((cache) => cache.addAll(PRECACHE.map(abs)))
+      .then(() => ensureMedia(false, true))
       .then(() => self.skipWaiting()),
   );
+});
+
+// 화면이 켜지고 한가해지면 보내는 신호 (src/swWarm.ts): 나중 그림(이펙트)을 천천히 받는다. 같은 해시면 아무것도 안 받는다
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'bha-warm') event.waitUntil(ensureMedia(true, false).then(pruneMedia).catch(() => undefined));
 });
 
 // 캐시 조회: 주소 뒤 ?… 와 Vary 헤더는 무시한다(그림·스크립트가 쿼리나 다른 요청 머리로 불려도 오프라인에서 찾는다)
@@ -24,7 +82,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('bha-') && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('bha-') && k !== CACHE && k !== MEDIA_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({ type: 'window' }))
       .then((list) => Promise.all(list.map(refreshIfOld))),

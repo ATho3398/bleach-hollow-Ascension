@@ -5,6 +5,7 @@
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
 // 옛 방 모험 문·장터 물건 경로와 기능 스위치는 폐기했다 (GDD 137장 3, C.215).
 import { artUrls } from '../data/art/manifest';
+import { bakeArtOutline } from './bha/artOutline';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
 import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
@@ -127,6 +128,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       lockProp(b);
     }
     if (wm.layout[p].hidden) b.hidden = true; // UI 배치 도구로 숨긴 장소 (GDD 175장) — 걷기·초점 계산이 단추를 찾으므로 만들고 감춘다
+    const img = b.querySelector<HTMLImageElement>('.bha-prop__img');
+    if (img) bakeArtOutline(img); // 윤곽 미리 굽기 (GDD 186장 1)
     scene.append(b);
     btns.set(p, b);
     floor.push({ el: b, foot: wm.layout[p], kind: 'prop' });
@@ -227,7 +230,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       const t = now - t0;
       const k = Math.min(1, t / WORLD_DEPART_MS);
       charEntry.foot = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
-      place();
+      layoutOnFloor(scene, wm.floor, [charEntry]); // 걷는 동안 움직이는 건 캐릭터뿐 — 장소 단추는 다시 재지 않는다 (GDD 186장 1)
       if (!fadeStarted && t >= WORLD_FADE_DELAY_MS) startFade();
       if (t >= WORLD_MOVE_MS) return arrive(p);
       raf = requestAnimationFrame(frame);

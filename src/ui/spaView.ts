@@ -136,12 +136,20 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   });
   char.append(...ripples);
   // 계단식 입수 (GDD 132장 4·137장 2): 매 프레임 경로 위 자리(left·bottom)를 옮기고, 물 잠김 높이(--bha-spa-wl)·물결 띠도 그 자리에 맞춘다
+  // 렉 (GDD 186장 1, C.283): 몸 자리(offsetTop·Height)는 걷는 동안 안 바뀐다 — 매 프레임 쓰고 나서 읽으면 레이아웃을 강제로 다시 해 한 번만 재 둔다(크기가 바뀌면 다시)
+  let bodyBox: { top: number; h: number } | null = null;
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => (bodyBox = null)).observe(char);
+  let lastWl = '';
   const setWl = (wl: number | null) => {
     actor.classList.toggle('is-wading', wl !== null && wl < 1);
     if (wl === null || wl >= 1) return;
-    actor.style.setProperty('--bha-spa-wl', `${Math.round(wl * 100)}%`);
-    const body = char.querySelector<HTMLElement>('.bha-char__body');
-    if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * wl}px`;
+    const pct = `${Math.round(wl * 100)}%`;
+    if (pct !== lastWl) actor.style.setProperty('--bha-spa-wl', (lastWl = pct));
+    if (!bodyBox || !bodyBox.h) {
+      const body = char.querySelector<HTMLElement>('.bha-char__body');
+      bodyBox = body ? { top: body.offsetTop, h: body.offsetHeight } : null;
+    }
+    if (bodyBox) for (const r of ripples) r.style.top = `${bodyBox.top + bodyBox.h * wl}px`;
   };
   /** 머리 위 칩 줄이 LCD 끝에서 잘리지 않게 좌우로 민다 (캐릭터가 화면 안에 있을 때만 — 밖에서 걸어 들어오는 중엔 같이 움직인다) */
   const clampStatus = () => {

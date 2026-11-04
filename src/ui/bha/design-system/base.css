@@ -24,6 +24,8 @@ ul, ol { padding: 0; list-style: none; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 img, svg { display: block; max-width: 100%; }
+/* 종이인형 캐릭터 캔버스 (rigAnim.ts, GDD 186장 1): img 자리를 대신하므로 img 와 같은 기본값(같은 낮은 우선순위) */
+canvas:where(.bha-rigcanvas) { display: block; max-width: 100%; }
 [hidden] { display: none !important; }
 table { border-collapse: collapse; width: 100%; }
 

@@ -37,6 +37,7 @@ import { tabBlockedView } from './ui/tabBlockedView';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';
 import { registerServiceWorker } from './pwa';
+import { scheduleSwWarm } from './swWarm';
 import { captureInstallPrompt } from './pwaInstall';
 import { maybeShowInstall } from './ui/installView';
 import { mountUpdateBanner } from './ui/updateBanner';
@@ -72,6 +73,7 @@ if (app && import.meta.env.DEV && new URLSearchParams(location.search).has('v2ga
   void import('./ui/bha/layoutTool').then((m) => m.mountLayoutTool(app));
 } else if (app) void acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
 registerServiceWorker();
+scheduleSwWarm(); // 이펙트 그림은 켜고 한가할 때 천천히 (GDD 186장 1)
 if (!new URLSearchParams(location.search).has('layout')) {
   mountUpdateBanner();
   maybeShowInstall();

@@ -1,0 +1,364 @@
+{
+ "when": "2026-11-04T08:03:39.251Z",
+ "cpuThrottle": 4,
+ "viewport": "844x390",
+ "dpr": 2,
+ "runs": [
+  {
+   "name": "hollow/켜기(새로고침)",
+   "fps": 56.3,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 200,
+   "jank": 3,
+   "longTasks": 4,
+   "longTaskMs": 434,
+   "maxLongMs": 195,
+   "mainMs": {
+    "script": 550,
+    "paint": 267,
+    "style": 117,
+    "layout": 39,
+    "decode": 7
+   },
+   "otherMs": {
+    "paint": 0,
+    "script": 5,
+    "raster": 32,
+    "decode": 71
+   }
+  },
+  {
+   "name": "hollow/방 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.7,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 148,
+    "paint": 105,
+    "style": 2,
+    "layout": 3
+   },
+   "otherMs": {
+    "decode": 0,
+    "raster": 0
+   }
+  },
+  {
+   "name": "hollow/방→월드맵",
+   "fps": 56.3,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 100,
+   "jank": 3,
+   "longTasks": 3,
+   "longTaskMs": 193,
+   "maxLongMs": 88,
+   "mainMs": {
+    "script": 309,
+    "paint": 171,
+    "style": 38,
+    "layout": 16,
+    "decode": 40
+   },
+   "otherMs": {
+    "script": 472,
+    "decode": 106,
+    "raster": 801
+   }
+  },
+  {
+   "name": "hollow/월드맵 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 117,
+    "paint": 131
+   },
+   "otherMs": {
+    "script": 22
+   }
+  },
+  {
+   "name": "hollow/월드맵→시장(걷기·페이드)",
+   "fps": 58.5,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 50.1,
+   "jank": 1,
+   "longTasks": 1,
+   "longTaskMs": 54,
+   "maxLongMs": 54,
+   "mainMs": {
+    "paint": 244,
+    "script": 328,
+    "style": 193,
+    "layout": 23
+   },
+   "otherMs": {
+    "raster": 50,
+    "decode": 10,
+    "script": 0
+   }
+  },
+  {
+   "name": "hollow/시장 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.7,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 139,
+    "paint": 102
+   },
+   "otherMs": {}
+  },
+  {
+   "name": "hollow/월드맵→온천",
+   "fps": 57,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 100,
+   "jank": 3,
+   "longTasks": 1,
+   "longTaskMs": 60,
+   "maxLongMs": 60,
+   "mainMs": {
+    "script": 1300,
+    "paint": 1094,
+    "style": 660,
+    "layout": 184
+   },
+   "otherMs": {
+    "raster": 156,
+    "decode": 93,
+    "script": 0
+   }
+  },
+  {
+   "name": "hollow/온천 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.7,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 120,
+    "paint": 93,
+    "style": 2,
+    "layout": 0
+   },
+   "otherMs": {
+    "decode": 0,
+    "raster": 1
+   }
+  },
+  {
+   "name": "hollow/전투",
+   "fps": 59.5,
+   "p95FrameMs": 16.7,
+   "maxFrameMs": 49.9,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "paint": 1028,
+    "script": 1035,
+    "style": 242,
+    "layout": 267
+   },
+   "otherMs": {
+    "decode": 11,
+    "raster": 268
+   }
+  },
+  {
+   "name": "shinigami/켜기(새로고침)",
+   "fps": 55.5,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 233.3,
+   "jank": 7,
+   "longTasks": 6,
+   "longTaskMs": 549,
+   "maxLongMs": 233,
+   "mainMs": {
+    "script": 1015,
+    "paint": 1348,
+    "style": 110,
+    "layout": 36,
+    "decode": 22
+   },
+   "otherMs": {
+    "script": 14,
+    "paint": 0,
+    "raster": 40,
+    "decode": 53
+   }
+  },
+  {
+   "name": "shinigami/방 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.7,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 372,
+    "paint": 726,
+    "style": 1,
+    "layout": 1
+   },
+   "otherMs": {
+    "raster": 0
+   }
+  },
+  {
+   "name": "shinigami/방→월드맵",
+   "fps": 49.9,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 233.3,
+   "jank": 5,
+   "longTasks": 5,
+   "longTaskMs": 502,
+   "maxLongMs": 215,
+   "mainMs": {
+    "script": 431,
+    "paint": 575,
+    "style": 48,
+    "layout": 18,
+    "decode": 36
+   },
+   "otherMs": {
+    "script": 639,
+    "decode": 137,
+    "raster": 727
+   }
+  },
+  {
+   "name": "shinigami/월드맵 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 383,
+    "paint": 1066
+   },
+   "otherMs": {
+    "script": 27
+   }
+  },
+  {
+   "name": "shinigami/월드맵→시장(걷기·페이드)",
+   "fps": 58.6,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 66.7,
+   "jank": 1,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 592,
+    "paint": 938,
+    "style": 152,
+    "layout": 21
+   },
+   "otherMs": {
+    "raster": 52,
+    "decode": 12,
+    "script": 1
+   }
+  },
+  {
+   "name": "shinigami/시장 가만히",
+   "fps": 59.6,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 50,
+   "jank": 0,
+   "longTasks": 1,
+   "longTaskMs": 53,
+   "maxLongMs": 53,
+   "mainMs": {
+    "script": 436,
+    "paint": 852
+   },
+   "otherMs": {}
+  },
+  {
+   "name": "shinigami/월드맵→온천",
+   "fps": 56.5,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 83.3,
+   "jank": 2,
+   "longTasks": 1,
+   "longTaskMs": 56,
+   "maxLongMs": 56,
+   "mainMs": {
+    "script": 1470,
+    "paint": 1961,
+    "style": 569,
+    "layout": 162
+   },
+   "otherMs": {
+    "raster": 99,
+    "decode": 77,
+    "script": 0
+   }
+  },
+  {
+   "name": "shinigami/온천 가만히",
+   "fps": 60,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 16.8,
+   "jank": 0,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "script": 413,
+    "paint": 807,
+    "style": 1,
+    "layout": 1
+   },
+   "otherMs": {
+    "raster": 0
+   }
+  },
+  {
+   "name": "shinigami/전투",
+   "fps": 58.2,
+   "p95FrameMs": 16.8,
+   "maxFrameMs": 50.1,
+   "jank": 1,
+   "longTasks": 0,
+   "longTaskMs": 0,
+   "maxLongMs": 0,
+   "mainMs": {
+    "paint": 2433,
+    "script": 1733,
+    "style": 273,
+    "layout": 278
+   },
+   "otherMs": {
+    "decode": 11,
+    "raster": 257
+   }
+  }
+ ]
+}

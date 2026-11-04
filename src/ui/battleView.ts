@@ -1157,6 +1157,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
 
   const meterCache = { enemy: '', player: '', sp: '' };
+  /** 같은 값이면 다시 쓰지 않는다 (매 프레임 불리는 drawHud — 속성을 쓰면 스타일 다시 계산) */
+  const setAttr = (e: Element, k: string, v: string) => { if (e.getAttribute(k) !== v) e.setAttribute(k, v); };
+  const setTitle = (e: HTMLElement, v: string) => { if (e.title !== v) e.title = v; };
   const drawHud = () => {
     const now = performance.now();
     // 체력·SP
@@ -1239,7 +1242,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const setAct = (btn: { root: HTMLElement }, ready: boolean, label: string) => {
       btn.root.classList.toggle('is-ready', ready);
       btn.root.classList.toggle('is-disabled', !ready);
-      btn.root.setAttribute('aria-disabled', String(!ready));
+      setAttr(btn.root, 'aria-disabled', String(!ready));
       if (btn.root.getAttribute('aria-label') !== label) {
         btn.root.setAttribute('aria-label', label);
         btn.root.title = label;
@@ -1275,12 +1278,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       app.classList.toggle('is-lib-ready', ready);
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
-      libBtn.setAttribute('aria-disabled', String(!ready));
+      setAttr(libBtn, 'aria-disabled', String(!ready));
       const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
       setText(libTime, libActive ? String(Math.ceil(lb.ticksLeft * p.tickSeconds)) : '');
       setHidden(libTimeChip, !libActive);
-      libBtn.title = libText;
-      libBtn.setAttribute('aria-label', `${labels.liberation.name}, ${libText}`);
+      setTitle(libBtn, libText);
+      setAttr(libBtn, 'aria-label', `${labels.liberation.name}, ${libText}`);
     }
   };
 

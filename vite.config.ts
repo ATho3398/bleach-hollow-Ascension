@@ -94,13 +94,18 @@ function pwaPlugin() {
         hash.update(f).update(buf);
       }
       // 플레이리스트 음원(GDD 97장)은 약 27MB 라 미리 받지 않는다 — 재생할 곡만 그때 불러온다
-      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/'))];
+      // C.284 렉 (GDD 186장 1): 그림(art·icons)·이펙트(fx)는 버전과 상관없는 그림 캐시에 내용 해시로 — 바뀐 파일만 다시 받는다. fx 는 나중(1)에 천천히
+      const isMedia = (f: string) => /^(art|fx|icons)\//.test(f);
+      const media: Record<string, [string, number]> = {};
+      for (const f of files) if (isMedia(f)) media[f] = [createHash('sha1').update(readFileSync(`${dir}/${f}`)).digest('hex').slice(0, 12), f.startsWith('fx/') ? 1 : 0];
+      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/') && !isMedia(f))];
       const version = hash.digest('hex').slice(0, 12);
       const src = readFileSync('scripts/sw-template.js', 'utf8')
         .replace('__VERSION__', version)
-        .replace('__PRECACHE__', JSON.stringify(precache, null, 1));
+        .replace('__PRECACHE__', JSON.stringify(precache, null, 1))
+        .replace('/*__MEDIA__*/ {}', JSON.stringify(media));
       writeFileSync(`${dir}/sw.js`, src);
-      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, build: BUILD_ID, files: precache.length, bytes }) + '\n');
+      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, build: BUILD_ID, files: precache.length + Object.keys(media).length, bytes }) + '\n');
       // C.283: 작은 버전 파일(미리 캐시 목록 밖 — 워커가 손대지 않는다). 앱이 켜자마자 no-store 로 본다
       writeFileSync(`${dir}/version.json`, JSON.stringify({ build: BUILD_ID }) + '\n');
     },

@@ -1,5 +1,5 @@
 // 종이인형을 게임 캐릭터 그림으로 (GDD 96장 30): 프레임 애니 재생기(animPlayer)와 같은 모양(AnimPlayer)으로 동작을 받아
-// 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그려 그 <img> 의 src 로 넣는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다.
+// 뼈대 동작(motions.json)을 돌리고, 매 순간 캔버스에 그린다. 캔버스는 <img> 자리에 들어가 그 클래스·스타일을 받는다 — 좌우 반전·크기·윤곽 같은 기존 CSS 가 그대로 따라온다 (GDD 186장 1).
 // 게임 동작 → 종이인형 동작: 대기 idle, 이동 move, 공격 attack·attack2 무작위, 특수 skill·skill2 무작위(같은 것 두 번 연속까지, GDD 117장 4), 맞음 hit,
 // 홈 대기 homeIdle, 빈사 자세 dying, 온천 bath, 패배 = 쓰러짐 down(끝 자세 유지) (GDD 171장). 그 밖(승리·먹기·잠·해방)은 없음 = 기존 연출.
 // 계열 블록은 계열 몸동작(PlayOptions.motion, 종족 설정 families[].motion) 묶음에서 고른다(GDD 118장 2).
@@ -196,12 +196,31 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     // 이펙트(GDD 115-A 48): 그림 층 위(바닥 밑은 같이 잘림)
     drawFxCanvas(ctx, fxAt(motion, t, mats), (p) => [(p[0] - vx) * K, (p[1] - vy) * K], K);
     ctx.restore();
-    img.src = canvas.toDataURL();
+    showCanvas();
     return true;
   };
+  // 렉 (GDD 186장 1, C.288): 예전엔 매 프레임(초당 30번) 캔버스를 PNG 글자(data URL)로 PNG 를 만들어 img.src 에 넣었다 — 인코딩·디코딩이 메인 스레드를
+  // 크게 먹어(사신 방 가만히 4초에 약 2.7초) 사신 쪽 모든 화면이 버벅였다. 이제 처음 그릴 때 img 자리를 캔버스로 바꿔 끼우고 캔버스에 바로 그린다.
+  // 캔버스는 img 의 클래스·인라인 스타일(--art-scale 등)을 그대로 받아 좌우 반전·크기·윤곽 CSS 가 같게 걸린다(이후 바뀌어도 따라감)
+  canvas.className = `${img.className} bha-rigcanvas`;
+  canvas.setAttribute('aria-hidden', 'true');
+  const mirror = () => {
+    const cls = `${img.className} bha-rigcanvas`;
+    if (canvas.className !== cls) canvas.className = cls;
+    const st = img.getAttribute('style');
+    if (st === null) canvas.removeAttribute('style');
+    else if (canvas.getAttribute('style') !== st) canvas.setAttribute('style', st);
+  };
+  if (typeof MutationObserver !== 'undefined') new MutationObserver(mirror).observe(img, { attributes: true, attributeFilter: ['class', 'style'] });
+  const showCanvas = () => {
+    if (canvas.isConnected || !img.parentNode) return;
+    mirror();
+    img.replaceWith(canvas);
+  };
+  const live = () => img.isConnected || canvas.isConnected;
   const tick = (now: number) => {
     raf = 0;
-    if (!img.isConnected) return; // 화면에서 빠졌으면 멈춘다
+    if (!live()) return; // 화면에서 빠졌으면 멈춘다
     const dt = last ? Math.min(100, now - last) : 0;
     last = now;
     player.advance(dt);
