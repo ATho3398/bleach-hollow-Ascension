@@ -59,12 +59,17 @@ const WALK = {
     <div class="ib" style="right:50px;top:8px">✚</div><div class="ib" style="right:8px;top:8px">❚❚</div>`,
 };
 const BATTLE = {
-  // A (추천): 블록 바만 크게 — 칸 8개 전체 폭, 막기 = 오른쪽 끝 둥근 버튼, 블록 게이지 = 칸 위 얇은 줄, 소모품·장비 = 있을 때만 작은 아이콘, 색 범례 = 도움말로
-  A: (p) => `
-    <div style="position:absolute;left:12px;right:12px;top:${p.top + 8}px;height:4px;background:var(--bha-bg-1)"><i style="display:block;width:70%;height:100%;background:var(--bha-sp)"></i></div>
-    <div style="position:absolute;left:12px;right:84px;top:${p.top + 22}px;display:grid;grid-template-columns:repeat(8,1fr);gap:6px">${Array.from({ length: 8 }, (_, i) => `<div style="height:64px;border:1px solid var(--bha-line-1);border-radius:6px;background:var(--bha-bg-1);display:grid;place-items:center;font-weight:800">${['허', '교', '탄', '탄', '탄', '교', '탄', '탄'][i]}</div>`).join('')}</div>
-    <div style="position:absolute;right:12px;top:${p.top + 22}px;width:64px;height:64px;border-radius:50%;border:2px solid var(--bha-guard);display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--bha-bg-0)">막기</div>
-    <div class="lbl" style="left:12px;top:${p.top + 92}px">소모품·장비 버튼 = 끼웠을 때만 막기 위에 작은 아이콘</div>`,
+  // A (추천): 블록 바만 크게 — 칸 8개 전체 폭, 체인 = 예전 박스+이름표(GDD 189장 7번), 막기 = 오른쪽 끝 둥근 버튼, 블록 게이지 = 칸 위 얇은 줄, 소모품·장비 = 있을 때만 작은 아이콘, 색 범례 = 도움말로
+  A: (p) => {
+    const T = ['허', '교', '탄', '탄', '탄', '교', '조', '조'];
+    // 체인 = 예전(C.281)처럼 이어진 블록을 감싸는 박스 + 위 이름표 (체인2 금색, 체인3 주황 + 빛)
+    const box = (from, len, lv) => `<div style="grid-column:${from + 1} / span ${len};grid-row:1;margin:-4px;border:2px solid var(--bha-chain${lv});border-radius:8px;${lv === 3 ? 'box-shadow:var(--bha-glow-chain3);' : ''}position:relative"><span style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--bha-chain${lv});color:var(--bha-bg-0);font-size:11px;font-weight:800;padding:0 6px;border-radius:8px;white-space:nowrap">체인${lv}</span></div>`;
+    return `
+    <div style="position:absolute;left:12px;right:12px;top:${p.top + 6}px;height:4px;background:var(--bha-bg-1)"><i style="display:block;width:70%;height:100%;background:var(--bha-sp)"></i></div>
+    <div style="position:absolute;left:12px;right:84px;top:${p.top + 26}px;display:grid;grid-template-columns:repeat(8,1fr);gap:6px">${T.map((t, i) => `<div style="grid-column:${i + 1};grid-row:1;height:60px;border:1px solid var(--bha-line-1);border-radius:6px;background:var(--bha-bg-1);display:grid;place-items:center;font-weight:800">${t}</div>`).join('')}${box(2, 3, 3)}${box(6, 2, 2)}</div>
+    <div style="position:absolute;right:12px;top:${p.top + 24}px;width:64px;height:64px;border-radius:50%;border:2px solid var(--bha-guard);display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--bha-bg-0)">막기</div>
+    <div class="lbl" style="left:12px;top:${p.top + 94}px">체인 = 예전 박스+이름표 · 소모품·장비 = 끼웠을 때만 막기 위 작은 아이콘</div>`;
+  },
   // B: 예전(C.281) 아래 판 — 범례 + 작은 칩(생성·막기·아이콘) 한 줄 + 칸 8개
   B: (p) => `
     <div class="row" style="position:absolute;left:12px;right:12px;top:${p.top + 8}px;font-size:11px"><span style="color:var(--bha-attack)">● 공격</span><span style="color:var(--bha-void)">● 공허</span><span style="color:var(--bha-warn)">● 콤보</span>
