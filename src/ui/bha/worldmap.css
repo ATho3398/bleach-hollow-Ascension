@@ -10,7 +10,7 @@
 .bha-worldmap__hud > * { pointer-events: auto; }
 .bha-worldmap [data-space-back][aria-disabled="true"] { opacity: 0.45; }
 /* v2 S02: 지도 위에 겹친 돌아가기 = 어두운 판 버튼 (지도 이름 글자 없음) */
-.bha-worldmap__hud [data-space-back], .bha-market__hud [data-space-back] { background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); }
+.bha-worldmap__hud [data-space-back], .bha-market__hud [data-space-back] { background: var(--bha-room-plate); }
 /* 땅이 화면 전체 (GDD 155장 1 — 옛 위쪽 하늘 띠 삭제): 격자 = 위에서 내려다보는 느낌 */
 .bha-room--worldmap .bha-room__wall { display: none; }
 .bha-room--worldmap .bha-room__floor {

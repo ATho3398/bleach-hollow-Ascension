@@ -76,8 +76,8 @@
 
 /* 왼쪽 위: [방으로 돌아가기] · ⓘ 만 (v2 S05 — 어두운 판 버튼 + 어두운 원 ⓘ, 이름 글자 없음) */
 .bha-spa__hud { position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); z-index: 3; display: flex; align-items: center; gap: var(--bha-sp-4); }
-.bha-spa__hud [data-space-back] { background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); }
-.bha-spa__hud > .bha-info { margin: 0; width: var(--bha-btn-h-sm); height: var(--bha-btn-h-sm); border-radius: 50%; background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); color: var(--bha-text-1); }
+.bha-spa__hud [data-space-back] { background: var(--bha-room-plate); }
+.bha-spa__hud > .bha-info { margin: 0; width: var(--bha-btn-h-sm); height: var(--bha-btn-h-sm); border-radius: 50%; background: var(--bha-room-plate); color: var(--bha-text-1); }
 
 @keyframes bha-spa-step { 0% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes bha-spa-bob { from { transform: translateY(0); } to { transform: translateY(3px); } }

@@ -143,10 +143,21 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     const body = char.querySelector<HTMLElement>('.bha-char__body');
     if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * wl}px`;
   };
+  /** 머리 위 칩 줄이 LCD 끝에서 잘리지 않게 좌우로 민다 (캐릭터가 화면 안에 있을 때만 — 밖에서 걸어 들어오는 중엔 같이 움직인다) */
+  const clampStatus = () => {
+    const sw = scene.clientWidth;
+    if (!sw) return;
+    const cx = ((parseFloat(actor.style.left) || 0) / 100) * sw;
+    const half = status.offsetWidth / 2;
+    const pad = 6;
+    const dx = cx < 0 || cx > sw ? 0 : Math.min(0, sw - pad - (cx + half)) + Math.max(0, pad - (cx - half));
+    status.style.translate = dx ? `${Math.round(dx)}px 0` : '';
+  };
   const put = (left: number, bottom: number, wl: number | null) => {
     actor.style.left = `${left}%`;
     actor.style.bottom = `${bottom}%`;
     setWl(wl);
+    clampStatus();
   };
   const goTo = (i: number) => {
     const p = SPA_PATH[i]!;
@@ -228,6 +239,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
       gauge('cond', icon('i-cond'), condition, Math.round(condition), condition <= 30),
       gauge('hunger', icon('i-hunger'), fullness, Math.round(fullness), fullness <= 20),
     );
+    clampStatus();
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 
