@@ -86,7 +86,7 @@ export function guideVars(f: FactionConfig): Record<string, string> {
 }
 
 /** 튜토리얼 장면 targets 가 가리킬 수 있는 전투 화면 요소 id (battleView 가 data-help 로 단다) */
-export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.legend', 'battle.liberation', 'battle.guard', 'battle.hp'] as const; // battle.guard·battle.hp = 각본 전투 카드(C.199) // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
+export const BATTLE_HELP_TARGETS = ['battle.stage', 'battle.tray', 'battle.runrow', 'battle.cast', 'battle.liberation', 'battle.guard', 'battle.hp'] as const; // battle.guard·battle.hp = 각본 전투 카드(C.199) // battle.legend(색 범례)는 C.297 에 화면에서 빼 도움말로 // battle.sp(영력 바)는 C.118, battle.stored(저장 필살기)는 C.134 에 삭제 → battle.liberation
 
 const COMBAT = BALANCE.provisional.combat;
 const LIB = BALANCE.provisional.liberation;

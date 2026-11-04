@@ -14,10 +14,12 @@ describe('C.169 해방 버튼 자리 · 블록 정사각형', () => {
     expect(parts).not.toContain('minmax(0, 1fr)');
     expect(parts).toContain("setProperty('--cap'");
   });
-  it('블록 줄엔 블록만: 스킬창 = 범례 16 → 버튼 줄 36 → 블록 바(가운데) (C.285, PROMPT 6절 S09). 해방 카드 없음(캐릭터 누르기)', () => {
+  it('블록 줄엔 블록만: 스킬창 = 블록 게이지 얇은 줄 + 블록 칸 8개 크게 + 둥근 막기 한 줄 (C.297, GDD 189장 8 목업 전투 A). 범례 줄 없음. 해방 카드 없음(캐릭터 누르기)', () => {
     expect(sec).toMatch(/\.bha-root \.bha-blockbar\.bha-v2tray\{position:relative;flex:none;align-self:center;/);
-    expect(sec).toMatch(/\.bha-root \.bha-v2legendrow\{flex:none;height:16px;/);
-    expect(sec).toMatch(/\.bha-root \.bha-v2roles\{flex:none;height:var\(--bha-btn-h-sm\)/);
+    expect(sec).not.toContain('.bha-v2legendrow');
+    expect(sec).toMatch(/\.bha-root \.bha-v2roles\{flex:none;display:flex;align-items:flex-end;/);
+    expect(sec).toMatch(/\.bha-root \.bha-v2panel \.bha-v2role--guard\{[^}]*border-radius:50%/);
+    expect(sec).toMatch(/\.bha-root \.bha-v2panel \.bha-v2role\.is-absent\{visibility:hidden\}/);
     expect(sec).not.toContain('.bha-v2rel');
   });
   it('계열 모양은 블록 칸 안 가운데(절대 위치) — 옛 CSS(flex:1)에 늘어나지 않는다', () => {

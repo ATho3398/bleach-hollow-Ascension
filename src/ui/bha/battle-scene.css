@@ -142,3 +142,6 @@
 /* 각본 전투 처치 (GDD 129장 3, C.199): 슬로우 동안 적이 밝아지며 천천히 사라진다. 시간 = --bha-tutkill */
 .bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
+
+/* C.297 (GDD 189장 9): 체인 박스 발동 = 살짝 커지며 박스 안이 체인 색으로 밝아짐 (빛 번짐 없음) */
+@keyframes bha-v2chain-fire { 0% { transform: scale(1); } 40% { transform: scale(1.05); background: color-mix(in srgb, var(--ch) 24%, transparent); } 100% { transform: scale(1); } }

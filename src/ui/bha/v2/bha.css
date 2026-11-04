@@ -169,7 +169,7 @@
 .bha-root .bha-v2toprow{position:absolute;left:0;right:0;top:0;height:40px;padding:0 6px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;z-index:6;background:var(--bha-over)}
 .bha-root .bha-v2foehead{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow:hidden}
 .bha-root .bha-v2foename{display:flex;align-items:center;gap:6px;min-width:0}
-.bha-root .bha-v2foename__text{margin:0;flex:0 1 auto;min-width:4em;font-size:var(--bha-fs-lg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bha-root .bha-v2foename__text{margin:0;flex:0 1 auto;min-width:4em;font-size:var(--bha-fs-lg);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bha-root .bha-v2bar{display:flex;align-items:center;gap:4px;flex:none}
 .bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}
 .bha-root .bha-v2bar .bha-btn{background:var(--bha-bg-2)}
@@ -218,14 +218,7 @@
 .bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}
 .bha-root .bha-v2units .bha-unit__hp .bha-num{text-shadow:var(--bha-ink-outline)}
 
-/* ── 스킬창 1줄: 범례 16 ── */
-.bha-root .bha-v2legendrow{flex:none;height:16px;display:flex;align-items:center;gap:12px;min-width:0;overflow:hidden}
-.bha-root .bha-legend{display:flex;gap:12px;align-items:center;font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-2)}
-.bha-root .bha-legend span{display:inline-flex;align-items:center;gap:4px;color:var(--bha-text-2)!important}
-.bha-root .bha-legend i{display:inline-block;width:10px;height:10px;border-radius:0;background:var(--c);box-shadow:inset 0 0 0 1px var(--bha-lo)}
-
 /* ── 스킬창 2줄 36: [다음 블록 표시 칸][막기][소모품][장비] — 자리 고정(못 쓸 땐 흐리게, GDD 173장 2) ── */
-.bha-root .bha-v2roles{flex:none;height:var(--bha-btn-h-sm);display:flex;gap:6px}
 .bha-root .bha-v2role{position:relative;display:inline-flex;flex:1 1 0;min-width:0;align-items:center;justify-content:center;gap:6px;height:var(--bha-btn-h-sm);padding:0 10px;
   border-radius:var(--bha-r-sm);border:1px solid var(--bha-line-2);background:var(--bha-bg-2);box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo);
   font:700 var(--bha-fs-sm)/1 var(--bha-font-body);color:var(--bha-text-1);cursor:default;white-space:nowrap;transition:transform var(--bha-t-fast) var(--bha-ease)}
@@ -246,7 +239,6 @@
 .bha-root .bha-v2role.is-ready:active,.bha-root .bha-v2role.is-ready.is-pressed{transform:translateY(1px);background:var(--bha-bg-3)}
 .bha-root .bha-v2role.is-disabled{opacity:.42}
 .bha-root .bha-v2role .bha-keycap{top:-7px;right:-4px}
-.bha-root .bha-v2roles.is-compact .bha-v2role{padding:0 6px}
 
 /* 블록 생성 = 표시 칸 `.bha-gen` (GDD 178장, PROMPT 4절): 움푹한 면 · 볼록하지 않음 · 누르지 않음 · 초점 안 받음. 버튼보다 조금 넓게(1.3) */
 .bha-root .bha-v2role--spawn{flex:1.3 1 0;min-width:0;height:var(--bha-btn-h-sm);pointer-events:none;
@@ -267,6 +259,32 @@
 .bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico--seal .bha-i{color:var(--bha-seal)}
 .bha-root .bha-v2role--spawn[data-state=sealed] .bha-gen-bar>i{background:var(--bha-text-3)}
 .bha-root .bha-v2role__meta--spawn{flex:none;min-width:4ch;text-align:right;color:var(--bha-text-2)}
+
+/* ── C.297 아래 판 = 목업 전투 A (GDD 189장 8): [블록 게이지 얇은 줄 / 체인 이름표 자리 / 블록 칸 8개 크게][소모품·장비 작은 아이콘][둥근 막기] ──
+   판 높이 130 은 그대로(장면·캐릭터 좌표 안 바뀜). 칸 58 · 사이 5 → 8칸 499 + 아이콘 30 + 막기 62 + 사이 8×2 = 607 ≤ 620 */
+.bha-root .bha-skillpanel.bha-v2panel{justify-content:center;padding:4px 10px;--bha-block-h:58px}
+.bha-root .bha-v2roles{flex:none;display:flex;align-items:flex-end;justify-content:center;gap:8px;min-width:0}
+.bha-root .bha-v2traycol{flex:none;display:flex;flex-direction:column;align-items:stretch;gap:2px;min-width:0}
+.bha-root .bha-v2panel .bha-blockbar.bha-v2tray{align-self:stretch;padding:20px 0 0}
+.bha-root .bha-v2panel .bha-v2tray__grid{column-gap:5px}
+.bha-root .bha-v2panel .bha-v2cut{z-index:5}
+.bha-root .bha-v2panel .bha-v2cut::before{right:-3.5px}
+/* 블록 게이지 = 칸 위 얇은 줄(표시만, 누르지 않음): 아이콘 · '블록' · 막대 · (봉인 때) 남은 초 */
+.bha-root .bha-v2panel .bha-v2role--spawn{flex:none;height:16px;padding:0 2px;gap:6px;background:none;box-shadow:none;border-radius:0;font-size:var(--bha-fs-xs);line-height:16px}
+.bha-root .bha-v2panel .bha-v2role--spawn .bha-v2role__ico .bha-i{width:14px;height:14px}
+.bha-root .bha-v2panel .bha-v2role--spawn .bha-gen-bar{height:6px}
+/* 둥근 [막기]: 아이콘 · 이름 · 게이지 막대를 세로로 */
+.bha-root .bha-v2panel .bha-v2role--guard{flex:none;flex-direction:column;gap:2px;width:62px;height:62px;padding:0;border-radius:50%;font-size:var(--bha-fs-xs);margin-bottom:-2px}
+.bha-root .bha-v2panel .bha-v2role--guard>.bha-i{width:20px;height:20px}
+.bha-root .bha-v2panel .bha-v2role--guard .bha-v2role__bar{width:34px;height:5px}
+.bha-root .bha-v2panel .bha-v2role--guard .bha-keycap{top:-4px;right:-2px}
+/* 소모품·장비 = 작은 아이콘 2개 세로(끼웠을 때만 — 없으면 자리는 지키고 숨김) */
+.bha-root .bha-v2aux{flex:none;display:flex;flex-direction:column;gap:2px;width:30px}
+.bha-root .bha-v2panel .bha-v2aux .bha-v2role{flex:none;width:30px;height:28px;padding:0;gap:0}
+.bha-root .bha-v2panel .bha-v2aux .bha-v2role>.bha-i{width:18px;height:18px}
+.bha-root .bha-v2panel .bha-v2aux .bha-v2role__name{display:none} /* 이름은 aria-label·툴팁으로 */
+.bha-root .bha-v2panel .bha-v2aux .bha-v2role__meta{position:absolute;right:-3px;bottom:-3px;min-width:0;padding:0 2px;border-radius:var(--bha-r-xs);background:var(--bha-bg-0);font-size:var(--bha-fs-xs);line-height:1.1;color:var(--bha-text-1)}
+.bha-root .bha-v2panel .bha-v2role.is-absent{visibility:hidden}
 
 /* ── 스킬창 3줄: 블록 바 = 정사각 52 × 8칸, 가운데 (PROMPT 6절 S09, GDD 138장) ── */
 .bha-root .bha-blockbar.bha-v2tray{position:relative;flex:none;align-self:center;display:block;padding:3px 6px 0;background:none;border:0;box-shadow:none;border-radius:0}
@@ -304,14 +322,17 @@
 .bha-root .bha-block.is-pressed{transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--blk), inset 0 3px 0 var(--bha-lo)}
 .bha-root .bha-block.is-popin{animation:bha-popin var(--bha-t-spawn) var(--bha-ease) both}
 
-/* 체인 = 블록 아래 받침 띠 (v2 .bha-chain: 2 황동 · 3 구리). 위 탭 글자는 화면에서 빼고 낭독용으로만 남긴다 (PROMPT 5절 10 "체인 원·글자 없음") */
-.bha-root .bha-chain{position:relative;display:block;padding:0;margin:0;border:0;box-shadow:none}
-.bha-root .bha-v2chain{pointer-events:none;z-index:4;--ch:var(--bha-chain2)}
+/* 체인 = 이어진 블록을 감싸는 박스 + 위 이름표 (C.297, GDD 189장 9 — 예전 C.281 모양으로 되돌림): 체인2 금색 · 체인3 주황(더 두꺼운 테 + 안쪽 밝은 줄).
+   칸 묶음 테두리라 그림 강조 규칙(GDD 178장 3)과 겹치지 않는다 — 빛 번짐(blur) 없이 테두리·밝기만. 테는 ::before(이름표는 박스 위로 나가는 탭) */
+.bha-root .bha-chain{position:relative;display:block;padding:0;margin:0}
+.bha-root .bha-v2chain{pointer-events:none;z-index:4;--ch:var(--bha-chain2);--chw:2px;margin:-3px}
 .bha-root .bha-v2chain.bha-chain--3{--ch:var(--bha-chain3)}
-.bha-root .bha-v2chain::after{content:"";position:absolute;left:2px;right:2px;bottom:-6px;height:4px;background:var(--ch);box-shadow:0 1px 0 var(--bha-lo)}
-.bha-root .bha-v2chain::before{content:"";position:absolute;left:2px;right:2px;bottom:-6px;height:9px;border-left:3px solid var(--ch);border-right:3px solid var(--ch)}
-.bha-root .bha-chain__tab{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.bha-root .bha-v2chain.is-fire{animation:bha-run-fire 520ms var(--bha-ease)}
+.bha-root .bha-v2chain.bha-chain--3{--chw:3px}
+.bha-root .bha-v2chain::before{content:"";position:absolute;inset:0;border:var(--chw) solid var(--ch);border-radius:var(--bha-r-md);box-shadow:0 0 0 1px var(--bha-lo), inset 0 0 0 1px var(--bha-lo)}
+.bha-root .bha-v2chain.bha-chain--3::before{box-shadow:0 0 0 1px var(--bha-lo), inset 0 0 0 1px color-mix(in srgb,var(--ch) 55%,var(--bha-text-1))}
+.bha-root .bha-v2chain .bha-chain__tab{position:absolute;bottom:calc(100% - 1px);left:50%;transform:translateX(-50%);height:16px;padding:0 6px;border-radius:var(--bha-r-xs) var(--bha-r-xs) 0 0;
+  background:var(--ch);color:var(--bha-ink-on-color);font:800 var(--bha-fs-xs)/16px var(--bha-font-body);white-space:nowrap;box-shadow:0 0 0 1px var(--bha-lo)}
+.bha-root .bha-v2chain.is-fire{animation:bha-v2chain-fire 520ms var(--bha-ease)}
 /* 묶음 경계(같은 계열 5개 = 3+2): 칸 사이 가는 황동 선 */
 .bha-root .bha-v2cut{position:relative;z-index:4;width:0;justify-self:start;pointer-events:none}
 .bha-root .bha-v2cut::before{content:"";position:absolute;top:2px;bottom:2px;right:-4px;width:2px;background:var(--bha-chain2)}

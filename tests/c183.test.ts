@@ -20,7 +20,7 @@ describe('C.183 전투 상태 칩 자리 · 세로 회전 좌표', () => {
   const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
   it('상태 칩(공허·체인3)은 범례 줄이 아니라 필드 안 고정 자리 — 생기고 없어져도 버튼 줄과 무관', () => {
     const b = read('src/ui/battleView.ts');
-    expect(b).toContain('legendRow.append(libChip, legend);');
+    expect(b).not.toContain('legendRow'); // C.297: 범례 줄 없음
     expect(b).toContain('arena.append(units, fieldTags, meStatus, topRow');
     expect(read('src/ui/bha/v2/bha.css')).toMatch(/\.bha-v2status\{position:absolute;left:50%;bottom:/);
   });

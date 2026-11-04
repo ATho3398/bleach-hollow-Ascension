@@ -2109,3 +2109,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 갱신 c93·c170·c188·c266·c286·c287(옮긴 자리·새 이름). 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0(각 36번 누름).
 - 캡처 `docs/captures/c296/`(1배 844×390): before-/after- 짝 두 종족 × 방·전투·흡수 [내 상태]·결과·모험 준비·가방·상점 상세·설정·상태·스토리·튜토리얼 카드·확인 창·알림·고르기 창·걷기, 전체 174장 비교 표 `diff.txt`(고르기 창 after 는 높이 상한 고치기 전 캡처 — 고친 뒤 계산값 비교 차이 0).
 - 세이브 형식·밸런스 그대로.
+
+## C.297 — 전투 아래 판 = 목업 전투 A · 체인 박스 + 이름표 되돌림 (GDD 189장 8·9, v5.444, S-23, 코딩210 Opus)
+- 사용자: "전투에서 체인 알려주는것도 원래처럼 박스로 알려주는게 훨 나음." · "글씨 다잘리고, 박스 밖으로 튀어나오고" · 검수 추천안 "ㅇㅇ". 엔진·데이터·세이브·밸런스 그대로.
+- 체인(9): `.bha-v2chain` = 이어진 블록 박스(테는 `::before`, 2px 금색 `--bha-chain2` / 체인3 3px 주황 `--bha-chain3` + 안쪽 밝은 줄) + 위 이름표 `.bha-chain__tab`('체인2'·'체인3', 3 넘으면 '+' — 이름은 종족 설정 labels.chain). 예전 C.281 모양에서 빛 번짐(box-shadow blur)만 뺌. 3 넘게 이어지면 박스 두 개 + 칸 사이 금색 선(`.bha-v2cut`, 예전대로). 발동 = `bha-v2chain-fire`(살짝 커짐 + 박스 안 체인 색, battle-scene.css).
+- 아래 판(8, 목업 전투 A): 판 높이 130 그대로. [블록 게이지 얇은 줄 16 / 체인 이름표 자리 20 / 블록 칸 58×8(사이 5)] + 소모품·장비 아이콘 30×28 세로 2개 + 둥근 [막기] 62(아이콘·이름·게이지 막대). 소모품·장비는 끼웠을 때만(`is-absent` = visibility:hidden — 자리 고정, 기기 ▲▼ 도 건너뜀). 이름은 aria-label·툴팁, 남은 개수·쿨다운 초는 모서리 배지. 옛 '폰 폭이면 아이콘만(is-compact)' 분기 삭제. 색 범례 줄(`.bha-v2legendrow`·`.bha-legend`) 삭제 → 도움말 battle-buttons 에 블록 색 한 줄, chain 에 박스·이름표 한 줄. `BATTLE_HELP_TARGETS` 에서 battle.legend 뺌(쓰는 장면 없음).
+- 장면 넓히기: 판 높이를 줄이면 장면·캐릭터 자리(유닛 칸 top 44 ~ bottom 4)가 같이 바뀌어 '전투 좌표 안 건드림'과 충돌 → 보류(판 안 줄 수만 범례·버튼·칸 3줄 → 게이지·칸 2줄). 
+- 폰(3): 적 이름 h1 줄 높이 1.1 → 글자 1.15 에서 아래 3px 세로 잘림 → 1.35.
+- 유지: 픽셀FX(familyFx pixel·pixelSheet·bodySlot)·종이인형 rigMotion·봉인('봉인'+초)·막기 경직 표시·튜토리얼 대상 선택자(`[data-sc="guard"]`·`[data-sc^="block."]`·data-help battle.tray/runrow/guard)·기기 순서(막기·소모품·장비·해방 → 블록 칸).
+- 점검(새 스크립트 `scripts/ui-audit/c297-battle.cjs` — 두 종족 × 평소·체인2·체인3·봉인·소모품·장비 낀 것·해방, 상태는 테스트 전역 `__bhaCombat` 을 그 순간만 바꿔 만듦): 폰 796×384 터치 전 0 → 후 0, 글자 1.15 전 2(적 이름 세로 잘림) → 후 0. 고치는 중 잡은 것: 소모품·장비 숨긴 이름의 말줄임 판정 → display:none, 체인 이름표가 박스 밖 판정 → 테를 ::before 로.
+- 테스트 갱신 c169·c171·c183(범례 줄 없음·둥근 막기·is-absent). 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0.
+- 캡처 `docs/captures/c297/`(1배): pc-(844×390) · phone-(796×384 터치) · phone115-(+글자 1.15) × hollow/shinigami × normal·chain2·chain3·seal·items·lib, `phone-checks.json`.
