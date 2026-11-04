@@ -41,12 +41,20 @@
 .bha-absorb__slothead { display: flex; align-items: baseline; justify-content: space-between; font-size: var(--bha-fs-xs); }
 .bha-absorb__slothead .bha-num { font-family: var(--bha-font-num); }
 .bha-absorbv2 .bha-absorb__left .bha-slots { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-1); }
-.bha-absorbv2 .bha-absorb__left .bha-slot { min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); flex-direction: row; align-items: center; justify-content: space-between; gap: var(--bha-sp-2); border-radius: var(--bha-r-xs); font-size: var(--bha-fs-xs); }
+.bha-absorbv2 .bha-absorb__left .bha-slot { display: flex; /* 공용 v2 .bha-slot(grid)이 덮어 '비어 있음'이 칸 아래로 밀려 숨었다 (C.300) */ min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-4); flex-direction: row; align-items: center; justify-content: space-between; gap: var(--bha-sp-2); border-radius: var(--bha-r-xs); font-size: var(--bha-fs-xs); }
 .bha-absorbv2 .bha-absorb__left .bha-slot--empty { min-height: 0; height: 24px; flex-wrap: nowrap; background: var(--bha-bg-0); justify-content: flex-start; color: var(--bha-text-3); }
 .bha-absorbv2 .bha-absorb__left .bha-slot--empty .bha-slot__num { position: static; }
 .bha-absorbv2 .bha-absorb__left .bha-slot--empty .bha-icon { width: 12px; height: 12px; }
 .bha-absorbv2 .bha-absorb__left .bha-slot__name { font-size: var(--bha-fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .bha-absorbv2 .bha-slot__enh { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); color: var(--bha-text-2); flex: none; }
+/* 폰 LCD 높이 약 354 (GDD 189장 엑셀 19): 슬롯 3칸이 판 아래로 넘쳤다 → 상대 카드를 가로(그림 44 | 이름·태그)로 눕혀 높이를 줄인다. 그래도 넘치면 판 안 스크롤(위 overflow-y) */
+.bha-absorbv2 .bha-absorb__left .bha-foecard { flex-direction: row; align-items: center; text-align: left; gap: var(--bha-sp-4); }
+.bha-absorbv2 .bha-absorb__left .bha-foecard .bha-foe { width: 44px; height: 44px; }
+.bha-absorbv2 .bha-absorb__left .bha-foe__body { height: 38px; max-height: 38px; }
+.bha-absorbv2 .bha-absorb__left .bha-foecard__text { min-width: 0; }
+.bha-absorbv2 .bha-absorb__left .bha-foecard__name { font-size: var(--bha-fs-md); word-break: keep-all; overflow-wrap: anywhere; }
+.bha-absorbv2 .bha-absorb__left .bha-foecard__tags { justify-content: flex-start; }
+.bha-absorbv2 .bha-absorb__left .bha-absorb__lead { text-align: left; }
 /* 오른쪽: 갈래 줄 52 → 설명 칸이 남은 높이(고정) */
 .bha-absorbv2 .bha-absorb__right { position: absolute; left: calc(var(--bha-gutter) + 190px + var(--bha-sp-5)); right: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
 .bha-absorbv2 .bha-absorb__right > * { flex: none; }
@@ -149,7 +157,7 @@
 .bha-lcd .bha-evolvev2 .bha-evolve__result[hidden] { display: none; }
 .bha-evolvev2 .bha-evolve__head { background: var(--bha-bg-1); box-shadow: inset 0 -1px 0 var(--bha-line-1); gap: var(--bha-sp-5); }
 .bha-evolvev2 .bha-evolve__eyebrow { letter-spacing: 0; }
-.bha-lcd .bha-evolvev2 .bha-evolve__title { margin: 0; font-size: var(--bha-fs-2xl); line-height: 1; color: var(--bha-sp-hi); animation-name: bha-evo2-title; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-lcd .bha-evolvev2 .bha-evolve__title { margin: 0; font-size: var(--bha-fs-2xl); line-height: 1.2; color: var(--bha-sp-hi); animation-name: bha-evo2-title; word-break: keep-all; overflow-wrap: anywhere; } /* 말줄임 대신 줄바꿈 (GDD 189장 폰 점검: 줄 높이 1 에서 글자 위아래가 잘려 말줄임으로 잡혔다) */
 .bha-lcd .bha-evolvev2 .bha-evolve__resmain { position: absolute; left: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-1)); bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); width: 220px; box-sizing: border-box; padding: var(--bha-sp-5); gap: var(--bha-sp-4); align-items: stretch; justify-content: center; text-align: center; overflow-y: auto; }
 .bha-lcd .bha-evolvev2 .bha-evolve__path { font-size: var(--bha-fs-sm); }
 .bha-lcd .bha-evolvev2 .bha-evolve__path .bha-icon { color: var(--bha-sp-hi); }

@@ -134,7 +134,7 @@
 .bha-tut__title .bha-icon { width: 18px; height: 18px; color: var(--bha-chain2); }
 .bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; color: var(--bha-text-1); }
 .bha-tut__body b { color: var(--bha-accent-hi); }
-.bha-tut__actions { display: flex; flex: none; gap: var(--bha-sp-3); margin: 0 0 0 auto; }
+.bha-tut__actions { display: flex; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; gap: var(--bha-sp-3); margin: 0 0 0 auto; } /* 좁은 카드(240)·글자 1.15 에서 버튼이 카드 밖으로 15px 나갔다 → 버튼 줄도 줄바꿈 (GDD 189장 폰 점검) */
 .bha-tut__actions .bha-btn { white-space: nowrap; min-height: var(--bha-btn-h-sm); padding: 0 10px; gap: 4px; }
 .bha-tut__actions .bha-btn--small { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
 @keyframes bha-tut-ping { 0% { opacity: .8; transform: scale(.98); } 100% { opacity: 0; transform: scale(1.06); } }

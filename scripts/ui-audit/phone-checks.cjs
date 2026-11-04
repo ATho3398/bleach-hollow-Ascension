@@ -65,16 +65,16 @@ function phoneInPage() {
   for (const e of targets) {
     const r = e.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
-    // 스크롤 상자 안에서 스크롤로 밖에 있는 것은 정상
-    let scroller = null;
-    for (let x = e.parentElement; x && x !== lcd; x = x.parentElement) {
+    // 스크롤 상자(또는 잘라 내는 상자) 안에서 그 상자 밖에 있는 것은 정상 — 안 보이는 줄이다.
+    // C.300: 첫 auto 조상만 보면 overflow-x:hidden 인 중간 칸(overflow-y 가 auto 로 계산됨, 실제로는 안 스크롤)을 스크롤 칸으로 잡아 탑 목록 75줄 등을 'LCD 밖'으로 잘못 셌다 → 잘라 내는 조상 전부를 본다
+    let clipped = false;
+    for (let x = e.parentElement; x && x !== lcd && !clipped; x = x.parentElement) {
       const c = getComputedStyle(x);
-      if (/(auto|scroll)/.test(c.overflowX + c.overflowY)) { scroller = x; break; }
+      if (!/(auto|scroll|hidden|clip)/.test(c.overflowX + c.overflowY)) continue;
+      const s = x.getBoundingClientRect();
+      if (r.bottom <= s.top + 1 || r.top >= s.bottom - 1 || r.right <= s.left + 1 || r.left >= s.right - 1) clipped = true;
     }
-    if (scroller) {
-      const s = scroller.getBoundingClientRect();
-      if (r.bottom <= s.top || r.top >= s.bottom || r.right <= s.left || r.left >= s.right) continue;
-    }
+    if (clipped) continue;
     const pos = getComputedStyle(e).position;
     if (pos === 'fixed') continue;
     if (r.right > L.right + 2 || r.left < L.left - 2 || r.bottom > L.bottom + 2) {

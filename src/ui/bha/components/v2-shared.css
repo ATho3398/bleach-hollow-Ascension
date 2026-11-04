@@ -89,6 +89,7 @@
 .bha-setrow__label, .bha-setswitch__label { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); line-height: 1.25; }
 .bha-setrow__ctl { flex: 0 1 auto; max-width: 60%; min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--bha-sp-2); }
 .bha-setrow__ctl:has(> .bha-settings__choices) { flex: none; max-width: none; } /* 고르기 칸은 줄이지 않는다 — 설명이 줄바꿈 */
+.bha-setrow__ctl > .bha-btn { flex: none; white-space: nowrap; } /* 버튼 글자는 한 줄 — 폰 LCD 596 폭에서 '앱/설/치' 세로로 꺾였다 (GDD 189장). 줄어드는 쪽은 설명 글 */
 .bha-setrow--slider { display: block; }
 .bha-setrow--slider .bha-setrow__text { margin-top: var(--bha-sp-1); }
 .bha-setrow__hint { margin: 0; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-regular); line-height: 1.3; color: var(--bha-text-3); }

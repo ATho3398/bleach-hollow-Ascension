@@ -105,11 +105,24 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
     row.dataset.episode = ep.id;
     const mark = chapterArt(done ? 'check' : 'scroll', !open);
     mark.classList.add('bha-story-ep__mark');
-    const txt = el('div', 'bha-story-ep__text');
+    // 글자 칸 = 펼침 버튼 (권장 단계·난이도·보스 한 줄을 연다 — 기기 ▲▼·키보드로도 고른다)
+    const txt = el('button', 'bha-story-ep__text') as HTMLButtonElement;
+    txt.type = 'button';
+    txt.setAttribute('aria-expanded', 'false');
     const name = el('b', 'bha-story-ep__name', `${i + 1}화 ${ep.title}`);
-    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective, faction)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
-    goal.title = goal.textContent ?? '';
-    txt.append(name, goal);
+    // 목록 줄은 목표만 (GDD 189장 엑셀 13 — 폰에서 '목표 · … · 권…' 말줄임). 권장 단계·난이도·보스는 그 화를 눌러 고르면 아래 한 줄로 펼친다
+    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective, faction)}`);
+    const meta = el('small', 'bha-story-ep__meta', `권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
+    txt.append(name, goal, meta);
+    txt.onclick = () => {
+      const on = !row.classList.contains('is-open');
+      row.parentElement?.querySelectorAll('.bha-story-ep.is-open').forEach((r) => {
+        r.classList.remove('is-open');
+        r.querySelector('.bha-story-ep__text')?.setAttribute('aria-expanded', 'false');
+      });
+      row.classList.toggle('is-open', on);
+      txt.setAttribute('aria-expanded', String(on));
+    };
     if (!open) txt.append(el('small', 'bha-story-ep__cond', `열리는 조건: ${why}`));
     const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : '');
     row.append(mark, txt, state);

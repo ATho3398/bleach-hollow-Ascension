@@ -263,6 +263,11 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });
     if (row.grade) c.dataset.grade = row.grade;
+    // 떠돌이 상인 (GDD 189장 엑셀 20): 카드가 4장뿐이라 아래가 비었다 — 큰 카드에 무엇인지 한 줄을 더 보인다
+    if (shopUi.tab === 'wanderer') {
+      const blurb = shopBlurb(row, faction);
+      if (blurb) c.querySelector('.bha-itemcard__name')?.after(h('small', 'bha-card-line bha-itemcard__blurb', blurb));
+    }
     if (getGoldItem(row.id)?.kind === 'gear') c.classList.add('is-grade-normal');
     else if (getWandererItem(row.id)?.kind === 'gear') c.classList.add(`is-grade-${row.grade}`);
     return c;

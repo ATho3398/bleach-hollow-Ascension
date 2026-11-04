@@ -569,7 +569,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   if (mode === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
-    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: `보유 ${id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length}` })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
   box.append(itemGrid(cards, empty));
   return [box, h('div')];

@@ -240,7 +240,8 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   battleBtn.type = 'button';
   battleBtn.dataset.slot = 'battle';
   battleBtn.dataset.drag = 'slot';
-  battleBtn.append(icon('i-heal'), h('span', 'bha-eqslot__name', bid ? shownName(consumableName(bid)) : slotName));
+  // 칸 글자는 짧게 '소모품'(GDD 189장 엑셀 15 — 60 폭 칸에서 '전투 소…' 말줄임). 창 머리·aria·안내는 종족 설정 이름 그대로
+  battleBtn.append(icon('i-heal'), h('span', 'bha-eqslot__name', bid ? shownName(consumableName(bid)) : '소모품'));
   if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
   battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
   battleBtn.onclick = () => {

@@ -18,7 +18,7 @@
 .bha-itemtabs--sub .bha-itemtab.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent); }
 
 /* ═════ 카드 격자 4열 (PROMPT 6절 S04·S14) ═════ */
-.bha-itemgrid { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 118px; gap: var(--bha-sp-4); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding: var(--bha-sp-1) var(--bha-sp-1) var(--bha-sp-8); }
+.bha-itemgrid { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(118px, auto); gap: var(--bha-sp-4); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding: var(--bha-sp-1) var(--bha-sp-1) var(--bha-sp-8); }
 .bha-itemgrid__empty { grid-column: 1 / -1; }
 /* 카드 = 그림 · 이름 · 한 줄 · 가격(아래 고정). 수치는 상세 창에서 (PROMPT 5절 6) */
 .bha-itemcard { align-items: center; justify-content: flex-start; gap: var(--bha-sp-1); padding: var(--bha-sp-5) var(--bha-sp-3) var(--bha-sp-3); text-align: center; min-width: 0; overflow: hidden; }
@@ -26,8 +26,9 @@
 .bha-itemcard.is-locked .bha-itemcard__name, .bha-itemcard.is-locked .bha-itemcard__foot { color: var(--bha-text-3); }
 .bha-itemcard.is-worn, .bha-itemcard.is-owned { box-shadow: 0 0 0 1px var(--bha-rare), inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
 .bha-itemcard__art { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); color: var(--bha-text-2); }
-.bha-itemcard__name { max-width: 100%; font-size: var(--bha-fs-sm); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bha-itemcard__detail { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 이름·한 줄은 말줄임 대신 2줄까지 (GDD 189장 폰 점검: 폰 LCD 596 폭·글자 1.15 에서 '…'·글자 위아래 잘림). 줄 높이 1.35 = 한글 글자 높이가 칸 안에. 칸 높이는 줄 수만큼(grid-auto-rows minmax) */
+.bha-itemcard__name { max-width: 100%; font-size: var(--bha-fs-sm); line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-itemcard__detail { max-width: 100%; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
 .bha-itemcard__badge { max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bha-itemcard__foot { margin-top: auto; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); white-space: nowrap; }
 .bha-itemcard__price { color: var(--bha-sp-hi); }
@@ -52,7 +53,13 @@
 .bha-shop__wallet .bha-chip--gold .bha-icon { color: var(--bha-sp); }
 .bha-shop__wallet .bha-chip--jade .bha-icon { color: var(--bha-tint-violet); }
 .bha-shop__wallet .bha-num { color: var(--bha-text-1); }
-.bha-shop .bha-itemgrid { grid-auto-rows: 122px; }
+.bha-shop .bha-itemgrid { grid-auto-rows: minmax(122px, auto); }
+/* 떠돌이 상인 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
+.bha-shop[data-shop="wanderer"] .bha-itemgrid { grid-auto-rows: minmax(186px, auto); }
+.bha-shop[data-shop="wanderer"] .bha-itemcard { gap: var(--bha-sp-2); }
+.bha-shop[data-shop="wanderer"] .bha-itemcard__art { width: 64px; height: 64px; }
+.bha-shop[data-shop="wanderer"] .bha-itemcard__art .bha-icon { width: 36px; height: 36px; }
+.bha-itemcard__blurb { max-width: 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
 .bha-shop__note { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 
 /* ═════ 상세 창 (v2 창 틀: 머리 48 · 본문 고정 높이 · 아래 고정 줄) ═════ */
@@ -108,8 +115,8 @@
 .bha-eqslot.is-empty { background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2), inset 0 2px 0 var(--bha-lo); color: var(--bha-text-3); }
 .bha-eqslot.is-empty .bha-icon { color: var(--bha-ph); }
 .bha-eqslot.is-dim { opacity: .5; }
-.bha-eqslot .bha-icon { width: 28px; height: 28px; }
-.bha-eqslot__name { font-size: var(--bha-fs-xs); color: inherit; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-eqslot .bha-icon { width: 24px; height: 24px; flex: none; }
+.bha-eqslot__name { font-size: var(--bha-fs-xs); color: inherit; max-width: 100%; line-height: 1.15; text-align: center; word-break: keep-all; overflow-wrap: anywhere; } /* 2줄까지 ('칼자루 장식' 등 — GDD 189장 폰 점검). 아이콘 28→24 로 66 칸 안에 */
 .bha-eqslot__plus { position: absolute; top: 2px; right: 3px; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-regular); color: var(--bha-text-1); }
 .bha-eqslot.is-grade-rare { --g: var(--bha-heal); }
 .bha-eqslot.is-grade-epic { --g: var(--bha-seal); }
@@ -119,7 +126,7 @@
 .bha-eqfigure__img { flex: 1 1 0; min-height: 0; width: 100%; max-height: 140px; object-fit: contain; image-rendering: pixelated; }
 .bha-eqfigure > .bha-icon { width: 64px; height: 64px; margin: auto; color: var(--bha-ph); }
 .bha-eqfigure__who { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.2; max-width: 100%; }
-.bha-eqfigure__who b { font-size: var(--bha-fs-sm); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-eqfigure__who b { font-size: var(--bha-fs-sm); max-width: 100%; word-break: keep-all; overflow-wrap: anywhere; } /* 이름 2줄 허용 (GDD 189장 엑셀 15) */
 .bha-eqfigure__who small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-eqright { display: flex; flex-direction: column; gap: var(--bha-sp-4); min-height: 0; flex: 1 1 auto; }
 /* 장비 분류 탭: 이름 위 · 개수 아래 (GDD 108장 4번), 글자 폭만큼 (코딩195 지적: '전투 소모품'·'칼자루 장식' 3px 넘침) */
@@ -140,7 +147,7 @@
 /* ═════ 걷기 가방 — 회복 물건 (GDD 144장 3): v2 창 모양 ═════ */
 .bha-healbag .bha-modal { width: min(560px, 96%); gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); background: var(--bha-bg-1); border: 0; box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-3); }
 .bha-healbag .bha-modal__title { font-family: var(--bha-font-body); font-size: var(--bha-fs-xl); text-align: left; }
-.bha-healbag .bha-itemgrid { flex: none; grid-auto-rows: 118px; overflow: visible; }
+.bha-healbag .bha-itemgrid { flex: none; grid-auto-rows: minmax(118px, auto); overflow: visible; }
 .bha-healbag .bha-modal__actions { display: grid; gap: var(--bha-sp-4); margin: 0; padding: 0; grid-template-columns: 88px; justify-content: end; }
 /* 걷기 가방은 머리 띠 없는 판 모양 — 공용 v2 창(.bha-modal, C.296)의 머리 띠·본문 여백을 끈다 (모양 그대로) */
 .bha-healbag .bha-modal { overflow: auto; }

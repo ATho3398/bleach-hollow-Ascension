@@ -79,7 +79,7 @@ describe('C.141', () => {
     for (const k of ['categoryTabs(', 'itemGrid(', 'itemDialog(', "heading: '상품 구매'", 'maxQty']) expect(src).toContain(k);
     expect(src).toContain("tag: cos?.category === 'skin' ? '미리보기'");
     const css = read('src/ui/bha/shop.css');
-    expect(css).toMatch(/\.bha-itemgrid \{[^}]*grid-auto-rows: 118px/);
+    expect(css).toMatch(/\.bha-itemgrid \{[^}]*grid-auto-rows: minmax\(118px, auto\)/); // C.300: 2줄 이름이면 칸이 늘어난다(최소 118)
     expect(css).toContain('.bha-itemmodal');
   });
   it('86장: 보관함 물건 탭 = 카테고리 탭(음식·소모품·장비·스킨·타일·기타) + 카드 + 상세 창([사용]/[장착]/[해제])', () => {

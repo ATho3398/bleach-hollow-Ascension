@@ -185,7 +185,7 @@ async function runToResult(h) {
   await h.btn('★1', { exact: true });
   await h.btn('출발', { exact: true, ms: 1200 });
   const vis = (l) => l.filter({ visible: true });
-  for (let t = 0; t < 200 && !(await h.has('.bha-resultpage')); t++) {
+  for (let t = 0; t < 200 && !(await h.has('.bha-resultpage, .bha-resultv2')); t++) {
     const eat = vis(h.page.getByRole('button', { name: /하러 가기$/ }));
     const nest = vis(h.page.getByRole('button', { name: '귀환', exact: true }));
     const res = vis(h.page.getByRole('button', { name: '결과 보기' }));
@@ -196,11 +196,20 @@ async function runToResult(h) {
     else if (await eat.count()) {
       await eat.first().click({ timeout: 3000 }).catch(() => {});
       await h.wait(800);
-      await h.click(h.page.locator('.bha-lcd .bha-absorbpage button.bha-btn--lg').last()).catch(() => {}); // 마지막 = '… 안 함'
+      if (await h.has('.bha-lcd .bha-absorbpage')) await h.click(h.page.locator('.bha-lcd .bha-absorbpage button.bha-btn--lg').last()).catch(() => {}); // 마지막 = '… 안 함'
+      else {
+        // C.300: v2 흡수 화면(.bha-absorbv2) = 갈래 4개 중 마지막(놓아주기) → 아래 줄 [○○하기]
+        await h.page.locator('.bha-lcd .bha-absorb__actions--modes > button').last().click({ timeout: 3000 }).catch(() => {});
+        await h.wait(300);
+        await h.page.locator('.bha-lcd .bha-absorb__go').click({ timeout: 3000 }).catch(() => {});
+      }
     }
     await h.wait(1000);
   }
-  if (!(await h.has('.bha-resultpage'))) throw new Error('원정 결과 화면에 못 닿음');
+  if (!(await h.has('.bha-resultpage, .bha-resultv2'))) {
+    if (process.env.UI_AUDIT_DEBUG) await h.page.screenshot({ path: `ui-audit-result-fail-${Date.now()}.png` }).catch(() => {});
+    throw new Error('원정 결과 화면에 못 닿음');
+  }
   await h.wait(4500); // 칭호·튜토리얼 알림 띠가 걷히고 나서
 }
 
@@ -428,13 +437,14 @@ const SCREENS = [
       await h.btn('적용');
       await h.closeLayers();
       await h.back();
-      await toMarket(h); // C.201 (GDD 127장 2): 온천은 장터 안 · C.204: 밖으로 → 시장
-      await h.click('.bha-market [data-spot="spa"]', { ms: 4000 }); // C.208 (132장 4): 평지 1.2초 + 계단 3단 + 앉기(약 3.3초)까지 기다린 뒤 잰다
+      // C.300: 온천은 월드맵 장소 (GDD 153장 1 — 장터에서 옮김). 예전 스크립트가 장터 [data-spot="spa"] 를 찾다가 늘 실패했다
+      await h.click('.bha-prop--outside', { ms: 700 });
+      await h.click('.bha-worldmap [data-place="spa"]', { ms: 4000 }); // C.208 (132장 4): 평지 1.2초 + 계단 3단 + 앉기(약 3.3초)까지 기다린 뒤 잰다
       await h.explore(n, { tabs: false });
       await h.back();
-      // 나가기 연출(계단을 거꾸로 올라와 걸어 나감, 약 2.8초) 뒤에 장터로
-      for (let i = 0; i < 20 && !(await h.has('.bha-market')); i++) await h.wait(250);
-      if (!(await h.has('.bha-market'))) throw new Error('온천 뒤로 → 장터에 못 닿음');
+      // 나가기 연출(계단을 거꾸로 올라와 걸어 나감, 약 2.8초) 뒤에 월드맵으로
+      for (let i = 0; i < 20 && !(await h.has('.bha-worldmap')); i++) await h.wait(250);
+      if (!(await h.has('.bha-worldmap'))) throw new Error('온천 뒤로 → 월드맵에 못 닿음');
       await marketBackToRoom(h);
     },
   },
@@ -573,7 +583,7 @@ const SCREENS = [
       }
       // 걷기로 돌아오면 귀환. 그 사이 전투·포식이 또 오면 기다리거나 '포식 안 함'
       let checkedWalk = false;
-      for (let t = 0; t < 150 && !(await h.has('.bha-resultpage')) && !((await h.has('.bha-lcd .bha-room')) && !(await h.has('.bha-lcd [data-dev-layer]'))); t++) {
+      for (let t = 0; t < 150 && !(await h.has('.bha-resultpage, .bha-resultv2')) && !((await h.has('.bha-lcd .bha-room')) && !(await h.has('.bha-lcd [data-dev-layer]'))); t++) {
         const home = h.page.getByRole('button', { name: '귀환하기' }).filter({ visible: true });
         const eat = h.page.getByRole('button', { name: /하러 가기$/ }).filter({ visible: true });
         const layerGo = h.page.locator('.bha-lcd [data-dev-layer] button.bha-btn--primary, .bha-lcd [data-dev-layer] button.bha-btn--danger').filter({ visible: true });
@@ -601,7 +611,7 @@ const SCREENS = [
         await h.wait(1000);
       }
       // 결과: 원정 결과 화면(.bha-resultpage)이 있으면 그것, 아니면 방 위 귀환 결과 창까지 위에서 점검했다
-      if (await h.has('.bha-resultpage')) {
+      if (await h.has('.bha-resultpage, .bha-resultv2')) {
         await h.explore(`${n}/결과`, { tabs: true });
         await h.backReacts(`${n}/결과`); // 결과 뒤로 = [둥지로] (C.202)
       }
@@ -677,7 +687,7 @@ const SCREENS = [
       await testBody(h, 'max');
       await runToResult(h);
       await h.explore(n, { tabs: false });
-      await h.stable(n, '[둥지로]', () => h.btn(/로$/, { within: '.bha-resultpage .bha-dock', ms: 1200 }));
+      await h.stable(n, '[둥지로]', () => h.btn(/로$/, { within: '.bha-resultpage .bha-dock, .bha-resultv2 .bha-dock', ms: 1200 }));
       await h.check(`${n}/둥지`, { keys: false });
     },
   },
