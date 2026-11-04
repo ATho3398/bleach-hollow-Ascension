@@ -159,7 +159,7 @@ async function armItems(h) {
 async function toBattle(h) {
   await toAdventure(h);
   await h.btn('★1', { exact: true });
-  await h.btn('출발', { ms: 600 });
+  await h.btn('출발', { exact: true, ms: 600 });
   await h.page.locator('.bha-battle').waitFor({ timeout: 60_000 });
   await h.wait(2600);
 }
@@ -183,7 +183,7 @@ async function testBody(h, stat) {
 async function runToResult(h) {
   await toAdventure(h);
   await h.btn('★1', { exact: true });
-  await h.btn('출발', { ms: 1200 });
+  await h.btn('출발', { exact: true, ms: 1200 });
   const vis = (l) => l.filter({ visible: true });
   for (let t = 0; t < 200 && !(await h.has('.bha-resultpage')); t++) {
     const eat = vis(h.page.getByRole('button', { name: /하러 가기$/ }));
@@ -337,7 +337,7 @@ const SCREENS = [
     async run(h, n) {
       await toAdventure(h);
       await h.btn('★1', { exact: true });
-      await h.btn('출발', { ms: 1500 });
+      await h.btn('출발', { exact: true, ms: 1500 });
       await h.check(n, { keys: false });
       await h.explore(`${n}/2`, { tabs: false });
       // C.202 (GDD 128장 4): 걷기 뒤로 = 일시정지 → 한 번 더 = 재개
@@ -537,7 +537,7 @@ const SCREENS = [
       await h.back();
       await toAdventure(h);
       await h.btn('★1', { exact: true });
-      await h.btn('출발', { ms: 1200 });
+      await h.btn('출발', { exact: true, ms: 1200 });
       // 버튼 이름은 종족 설정(absorbActionName)을 따른다 — '포식하러 가기' 등
       await h.page.getByRole('button', { name: /하러 가기$/ }).waitFor({ timeout: 120_000 });
       await h.click(h.page.getByRole('button', { name: /하러 가기$/ }), { ms: 900 });
