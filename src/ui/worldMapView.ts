@@ -81,12 +81,12 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const wm = worldMapOf(faction);
   const here = save.shared.wanderer.visit !== null;
 
-  // ── 위 한 줄: 왼쪽 위 [둥지로]/[대원실로](다른 공간 화면과 같은 모양·자리 — GDD 129-1 2) · 지도 이름 ──
+  // ── 위 한 줄: 왼쪽 위 [둥지로]/[대원실로]만 지도 위에 겹친다 (다른 공간 화면과 같은 모양·자리 — GDD 129-1 2, v2 S02: 지도 이름 글자는 없앰 → 화면 이름은 aria-label) ──
   const hud = el('header', 'bha-room__hud bha-worldmap__hud');
   const homeLocked = hd.locked?.includes('home') ?? false;
   const backBtn = spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`));
   if (homeLocked) backBtn.setAttribute('aria-disabled', 'true'); // 첫 모험 강제 중 (GDD 131장 2)
-  hud.append(backBtn, el('h1', 'bha-worldmap__title', wm.name));
+  hud.append(backBtn);
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
@@ -119,7 +119,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     // 떠돌이 상인이 와 있으면 시장에 배지 (GDD 130장 2 — 옛 방 장터 물건 배지 자리를 옮김)
     if (p === 'market' && here) {
       b.classList.add('has-visitor');
-      b.querySelector('.bha-prop__shape')?.append(el('span', 'bha-room__idlebadge bha-prop__badge', '상인'));
+      b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass bha-prop__badge', '상인')); // v2 S02: 이름표 안 황동 배지
     }
     // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
     if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
@@ -150,8 +150,9 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
-  const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap' }, hud, body);
+  const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap bha-v2' }, hud, body);
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
+  main.setAttribute('aria-label', wm.name);
   if (here) main.dataset.wanderer = '';
   // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 수련장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
   const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))].filter((it) => !it.el.hidden); // 숨긴 장소 빼고 (GDD 175장)

@@ -101,7 +101,7 @@ describe('155장 1 보충 — 장터도 화면 전체 (C.234)', () => {
     expect(css).toContain('.bha-lcd .bha-app.bha-room.bha-market { padding: 0; gap: 0; position: relative; }');
     expect(css).toContain('.bha-market__scene { border: 0; border-radius: 0; }');
     expect(css).toMatch(/\.bha-market__hud \{\n\s+position: absolute;/);
-    expect(css).toMatch(/\.bha-room--market \.bha-room__wall \{\n\s+height: 30%;/);
+    expect(css).toContain('.bha-room--market .bha-room__wall { height: 50%; background: var(--bha-scene-wall); }'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 그림 없을 때 자리 = 벽·바닥 두 면, 줄무늬 차양 없음
     expect(DEFAULT_MARKET.floor.poly[0]![1]).toBe(0.3);
     // C.236 (GDD 158장 3): 한 줄 대신 방처럼 앞뒤 깊이 — 뒤 줄(상점 3곳)은 위, 앞 줄(특성 상점·대장장이)은 아래로 화면 전체
     // C.263: 사용자가 UI 배치 도구로 다시 잡음 — 소모품 상점은 앞 줄(y 79)로 내려옴. 뒤 줄 = 장비·스킨 상점

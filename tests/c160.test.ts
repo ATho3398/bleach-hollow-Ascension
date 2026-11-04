@@ -42,7 +42,7 @@ describe('C.160 덤: 방 말풍선', () => {
     expect(room).toContain("scene.classList.add('is-saying')");
     const rc = read('src/ui/bha/room.css');
     expect(rc).toContain('left: clamp(25%, var(--char-x, 50%), 75%);');
-    expect(rc).toContain('.is-saying > .bha-room__status, .is-saying > .bha-room__statusinfo { visibility: hidden; }');
+    expect(rc).toContain('.is-saying > .bha-room__chips { visibility: hidden; }'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 칩 줄(상태 칩 + ⓘ) 한 묶음
     expect(rc).not.toContain('left: 50%; top: 14%;');
   });
 });

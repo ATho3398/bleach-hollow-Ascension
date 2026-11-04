@@ -83,7 +83,7 @@ describe('128장 6 온천 화면 개편', () => {
   const v = readFileSync('src/ui/spaView.ts', 'utf8');
   const css = readFileSync('src/ui/bha/spa.css', 'utf8');
   it('화면 전체 장면 + 걸어 들어와 앉는 연출 + 왼쪽 위 [방으로 돌아가기]·ⓘ + 머리 위 상태 창', () => {
-    expect(v).toContain("mountApp(root, { cls: 'bha-spa' }, scene)");
+    expect(v).toContain("mountApp(root, { cls: 'bha-spa bha-v2' }, scene)"); // C.284 (GDD 183장 화면 A, v2 S01~S05)
     expect(v).toContain("el('div', 'bha-spa__actor is-entering')");
     expect(v).toContain("actor.classList.add('is-seated')"); // C.208 (GDD 132장 4): 계단식 입수 끝에 앉는다
     expect(v).toContain("el('div', 'bha-room__status bha-spa__status')");

@@ -35,11 +35,12 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   const room = roomOf(faction);
   const here = save.shared.wanderer.visit !== null;
 
-  // ── 위 한 줄: 이름 · 떠돌이 상인 소식 (나가기는 장면 안 월드맵 물건 — GDD 158장 3) ──
+  // ── 위: 왼쪽 위 작은 이름 판만 (v2 S03 — 제목·설명 문단 띠 없음, 장면이 화면 전체). 떠돌이 상인 소식은 와 있으면 그 이름표 안 '왔다' 배지, 문장은 판 툴팁
+  //    (나가기는 장면 안 월드맵 물건 — GDD 158장 3) ──
   const hud = el('header', 'bha-room__hud bha-market__hud');
-  const titles = el('div', 'bha-market__titles');
-  titles.append(el('h1', 'bha-market__title', mk.name), el('p', 'bha-small bha-market__sub', fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 모험에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 모험을 돌다 보면 가끔 들른다.`)));
-  hud.append(titles);
+  const title = el('h1', 'bha-plate bha-market__title', mk.name);
+  title.title = fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 모험에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 모험을 돌다 보면 가끔 들른다.`);
+  hud.append(title);
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(mk);
@@ -63,6 +64,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
     if (mk.layout[p].hidden) continue; // UI 배치 도구로 숨긴 자리 (GDD 175장)
     const b = propButton({ prop: p, name: mk.props[p], ...mk.layout[p], art: !!artUrls(`prop.${p}`).src });
     b.dataset.spot = p;
+    if (p === 'wanderer') b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass', '왔다')); // 와 있을 때만 서 있다 (v2 S03)
     b.onclick = act[p as Exclude<MarketSpot, 'spa'>];
     scene.append(b);
     btns.push(b);
@@ -85,7 +87,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
-  const main = mountApp(dev.view, { cls: 'bha-room bha-market' }, hud, body);
+  const main = mountApp(dev.view, { cls: 'bha-room bha-market bha-v2' }, hud, body);
   main.dataset.devLayout = 'visual';
   // 기기 버튼 (GDD 122장): ▲▼ = 월드맵 물건·자리들(화면 위치 순서), ✓ = 누름, 뒤로 = 월드맵
   const items: SelectItem[] = [{ el: exit }, ...btns.map((b) => ({ el: b }))];

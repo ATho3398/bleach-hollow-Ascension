@@ -13,7 +13,7 @@ import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf 
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
-import { button, el, icon, meter, mountApp } from './bha/dom';
+import { button, el, icon, mountApp } from './bha/dom';
 import { hpNumbers } from './bha/battle';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
@@ -233,7 +233,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
   const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
   char.onclick = () => react(askLine() ?? undefined);
-  // 머리 위 상태 칩 (허기·컨디션·리스크 게이지, 쇠약이면 그 이름). 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
+  // 머리 위 상태 칩 한 줄 (v2 S01, GDD 183장): [상태이상 이름 칩][배부름·컨디션·영압 안정도 막대 칩][광기/호로화 숫자 칩] + ⓘ. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
+  const chipRow = el('div', 'bha-room__chips');
   const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
@@ -245,23 +246,32 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
     // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
     statusBtn.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
-    // 글자·숫자 없이 아이콘 + 가는 게이지 바 한 줄씩 (GDD 18-10 v3.1). 위험 구간 줄만 danger 색
-    statusBtn.replaceChildren(...chips.map((c) => {
-      const row = el('span', `bha-room__gauge bha-room__gauge--${c.kind}${c.danger ? ' is-danger' : ''}`);
-      const fill = el('span', 'bha-room__gaugefill');
-      fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
-      const track = el('span', 'bha-room__gaugetrack');
-      track.append(fill);
-      // 숫자 한 칸 (GDD 100장 #12): 아이콘 · 막대 · 값
-      // 상태 칩은 숫자 대신 이름 (막대는 가득)
-      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
-      if (c.hint) row.title = c.hint;
-      return row;
+    // v2 칩 (.bha-chip--status): 상태이상은 이름(맨 앞), 0~100 게이지는 아이콘 + 짧은 막대, 광기/호로화는 숫자(고정 폭). 위험 구간 칩만 danger 색. 자세한 값·뜻은 ⓘ·상태 화면
+    const ordered = [...chips.filter((c) => c.value === null), ...chips.filter((c) => c.value !== null)];
+    statusBtn.replaceChildren(...ordered.map((c) => {
+      const chip = el('span', `bha-chip bha-chip--status bha-room__chip--${c.kind}${c.danger ? ' is-danger' : ''}`);
+      chip.append(icon(c.icon));
+      if (c.value === null) chip.append(el('span', 'bha-room__chipname', c.label));
+      else if (c.kind === 'risk') chip.append(el('b', '', String(Math.round(c.value))));
+      else {
+        const m = el('span', 'bha-chip-meter');
+        const fill = el('i');
+        fill.style.width = `${Math.max(0, Math.min(100, c.value))}%`;
+        m.append(fill);
+        chip.append(m);
+      }
+      if (c.hint) chip.title = c.hint;
+      return chip;
     }));
     if (nameTag) statusBtn.prepend(nameTag);
   };
   paintGauges();
-  requestAnimationFrame(() => scene.style.setProperty('--chip-h', `${statusBtn.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`)); // 칩이 방 위 끝에 붙지 않게 (room.css)
+  /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
+  const measureChips = () => {
+    scene.style.setProperty('--chip-h', `${chipRow.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`);
+    scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2) + 4}px`);
+  };
+  requestAnimationFrame(measureChips);
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
   const statusInfoBtn = infoTip('상태', () => withDyingLeft(roomStatusInfo(statusChips(n, faction), faction)));
   /** 빈사 줄에 남은 시간·푸는 법 (GDD 177장 2: 방 위 띠에 있던 정보) — 열 때마다 지금 시각으로 */
@@ -273,31 +283,51 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     };
   }
   statusInfoBtn.classList.add('bha-room__statusinfo');
+  chipRow.append(statusBtn, statusInfoBtn);
   // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
   const hpBox = el('div', 'bha-room__hp');
   const maxHp = homeMaxHp(save);
   /** 행동 연출 중이면 1분 시계가 막대를 덮어 그리지 않는다 */
   let fxOn = false;
+  // v2 .bha-hp (10칸 눈금 막대 + 아래 "체력 n / max", 숫자는 최대값 자릿수만큼 고정 폭 — 숫자가 바뀌어도 칸이 안 흔들린다). 30% 아래면 위험 색
+  const hpFill = el('i');
+  const hpNow = el('b');
+  const hpMax = el('span', 'bha-room__chipmax');
+  {
+    const bar = el('div', 'bha-hp-bar');
+    bar.append(hpFill);
+    const txt = el('div', 'bha-hp-txt');
+    txt.append(el('span', '', '체력'), hpNow, hpMax);
+    const hp = el('div', 'bha-hp');
+    hp.append(bar, txt);
+    hpBox.append(hp);
+  }
   const paintHp = (fraction?: number) => {
     const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
     const { now, max } = hpNumbers(f * maxHp, maxHp);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: f < 0.3, valueText: `${now} / ${max}` }));
+    hpBox.style.setProperty('--c', f < 0.3 ? 'var(--bha-danger)' : 'var(--bha-player-hp)');
+    hpBox.style.setProperty('--nw', `${String(max).length}ch`);
+    hpFill.style.width = `calc((100% - 4px) * ${Math.max(0, Math.min(1, now / Math.max(1, max)))})`;
+    hpNow.textContent = String(now);
+    hpMax.textContent = `/ ${max}`;
+    hpBox.setAttribute('aria-label', `체력 ${now} / ${max}`);
   };
   paintHp();
-  scene.append(char, hpBox, statusBtn, statusInfoBtn, bubble);
+  scene.append(char, hpBox, chipRow, bubble);
   // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
   // 빈사·쓰러짐 자세 (GDD 176장): 머리 위에 칩 자리가 없어 칩이 머리로 내려오면(띠로 방이 낮아짐) 칩·ⓘ 를 캐릭터 옆 위로
   const lowPose = n.collapsed || n.dead || !!n.weakened || !!n.tired;
   const placeStatus = () => {
-    for (const b of [statusBtn, statusInfoBtn]) b.classList.remove('is-side', 'is-right');
+    chipRow.classList.remove('is-side', 'is-right');
+    if (scene.isConnected) measureChips();
     if (!lowPose || !scene.isConnected || scene.clientWidth === 0) return;
     const cs = getComputedStyle(scene);
     const natural = parseFloat(cs.getPropertyValue('--char-y')) + charTopOffset(charArtUrls) - (parseFloat(cs.getPropertyValue('--bha-sp-4')) || 0);
-    if (!(statusBtn.offsetTop > natural + 1)) return; // 머리 위에 들어간다
+    if (!(chipRow.offsetTop > natural + 1)) return; // 머리 위에 들어간다
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
     const right = char.offsetLeft < scene.clientWidth * 0.35; // 캐릭터가 왼쪽에 있으면 오른쪽 옆
-    for (const b of [statusBtn, statusInfoBtn]) b.classList.add('is-side', ...(right ? ['is-right'] : []));
+    chipRow.classList.add('is-side', ...(right ? ['is-right'] : []));
   };
   const place = () => {
     layoutOnFloor(scene, room.floor, floorEntries);
@@ -388,7 +418,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   body.append(scene);
   if (reviveBtn) body.append(reviveBtn); // 장면 밖(어두운 사망 장면 필터를 안 받게), 장면 왼쪽 위에 겹쳐 둔다 (GDD 177장 3)
   const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
-  const main = mountApp(dev.view, { cls: 'bha-room' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
+  const main = mountApp(dev.view, { cls: 'bha-room bha-room--home bha-v2' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 월드맵 물건 말고는 흐린 잠김 (room.css)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;

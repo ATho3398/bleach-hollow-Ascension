@@ -13,6 +13,7 @@ import { beginAction, beginSceneMove } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
+import { v2Icon } from './bha/iconMap';
 import { showToast } from './bha/nest';
 import { applyCarePose, characterButton, roomCharArt, spaceBackButton } from './bha/room';
 import { animOf } from './bha/animPlayer';
@@ -205,24 +206,27 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   }));
   let exiting = false;
 
-  // 머리 위 상태 창 (방 상태 칩과 같은 모양): 체력 '현재 / 최대' · 배부름
-  const gauge = (kind: string, ic: string, pct: number, text: string, danger: boolean) => {
-    const row = el('span', `bha-room__gauge bha-room__gauge--${kind}${danger ? ' is-danger' : ''}`);
-    const fill = el('span', 'bha-room__gaugefill');
+  // 머리 위 칩 한 줄 (v2 S05 — 방 상태 칩과 같은 .bha-chip--status): 아이콘 · 짧은 막대 · 도트 숫자(고정 폭). 체력은 '/ 최대' 를 작게
+  const gauge = (kind: string, ic: Element, pct: number, value: number, danger: boolean, max?: number) => {
+    const chip = el('span', `bha-chip bha-chip--status bha-room__chip--${kind}${danger ? ' is-danger' : ''}`);
+    const m = el('span', 'bha-chip-meter');
+    const fill = el('i');
     fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-    const track = el('span', 'bha-room__gaugetrack');
-    track.append(fill);
-    row.append(icon(ic), track, el('span', 'bha-room__gaugenum bha-num', text));
-    return row;
+    m.append(fill);
+    const num = el('b', '', String(value));
+    if (max !== undefined) num.style.setProperty('--nw', `${String(max).length}ch`);
+    chip.append(ic, m, num);
+    if (max !== undefined) chip.append(el('span', 'bha-room__chipmax', `/${max}`));
+    return chip;
   };
   // 컨디션도 온천에서 오른다 (GDD 135장 2)
   const paint = (fraction: number, fullness: number, condition: number) => {
     const { now, max } = hpNumbers(fraction * maxHp, maxHp);
     status.setAttribute('aria-label', `체력 ${now} / ${max}, 컨디션 ${Math.round(condition)}, ${faction.fullnessName} ${Math.round(fullness)}`);
     status.replaceChildren(
-      gauge('hp', 'i-heal', fraction * 100, `${now} / ${max}`, fraction < 0.3),
-      gauge('cond', 'i-cond', condition, String(Math.round(condition)), condition <= 30),
-      gauge('hunger', 'i-hunger', fullness, String(Math.round(fullness)), fullness <= 20),
+      gauge('hp', v2Icon('heart'), fraction * 100, now, fraction < 0.3, max),
+      gauge('cond', icon('i-cond'), condition, Math.round(condition), condition <= 30),
+      gauge('hunger', icon('i-hunger'), fullness, Math.round(fullness), fullness <= 20),
     );
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
@@ -256,10 +260,11 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     ],
   }));
   const hud = el('div', 'bha-spa__hud');
-  hud.append(backBtn, infoBtn, el('span', 'bha-spa__name', name));
+  hud.append(backBtn, infoBtn); // v2 S05: 왼쪽 위 [돌아가기] + ⓘ 만 (장소 이름 글자 없음 → 화면 이름은 aria-label)
   scene.append(hud);
 
-  const app = mountApp(root, { cls: 'bha-spa' }, scene);
+  const app = mountApp(root, { cls: 'bha-spa bha-v2' }, scene);
+  app.setAttribute('aria-label', name);
   backBtn.focus({ preventScroll: true });
 
   // 나가기 (GDD 132장 4): 앉은 자리에서 계단을 거꾸로 한 단씩 올라와 평지를 걸어 나간 뒤 done. 이미 나가는 중이면 아무것도 안 함

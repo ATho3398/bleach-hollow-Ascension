@@ -1,69 +1,84 @@
 /* 메인 방 화면 (GDD 16장, T-1). 디자인 토큰만 쓴다. 그림은 매니페스트 키로 참조 — 파일이 없으면 아래 자리표시 도형이 나온다 */
 
 .bha-lcd .bha-app.bha-room { gap: var(--bha-sp-3); padding: var(--bha-sp-3) var(--bha-sp-4); background: none; }
+/* v2 (C.284, GDD 183장 화면 A): 방 = 장면(LCD 위 끝~독 위) + 아래 돌보기 줄 56 고정. 바깥 여백·장면 테두리 없음 */
+.bha-lcd .bha-app.bha-room.bha-room--home { gap: 0; padding: 0; position: relative; }
+/* 화면 루트 .bha-v2 의 .bha-art(v2 그림 칸 = 제자리 흐름)가 물건·캐릭터 단추의 장면 안 자리를 덮지 않게 */
+.bha-room .bha-art.bha-prop, .bha-room .bha-art.bha-char { position: absolute; }
+.bha-v2 .bha-art.bha-prop, .bha-v2 .bha-art.bha-char { color: var(--bha-text-1); }
 
-/* 위 한 줄: 원정 이어하기가 있을 때만 (상태는 캐릭터 머리 위 칩) */
+/* 위 자리: [모험 이어하기] — 사망 [부활]과 같은 자리(장면 왼쪽 위에 겹침, PROMPT S01). 장면 크기는 늘 같다 */
 .bha-room__hud { display: flex; align-items: center; justify-content: flex-end; gap: var(--bha-sp-5); min-height: var(--bha-touch); flex: none; }
 .bha-room__hud:empty { display: none; }
-.bha-room__resumeinfo { margin-left: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 500; opacity: 0.85; }
+.bha-room--home > .bha-room__hud { position: absolute; left: var(--bha-sp-4); top: var(--bha-sp-4); z-index: var(--bha-z-sticky); min-height: 0; }
+.bha-room__resumeinfo { margin-left: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 500; color: inherit; }
 .bha-room__name { margin-right: auto; display: inline-flex; align-items: center; gap: var(--bha-sp-2); font-weight: var(--bha-fw-bold); }
 .bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
+.bha-room--home > .bha-room__note { position: absolute; left: var(--bha-sp-4); top: calc(var(--bha-sp-4) + var(--bha-btn-h-sm) + var(--bha-sp-2)); z-index: var(--bha-z-sticky); margin: 0; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-xs); background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); line-height: 1.6; }
 
 .bha-room__body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
 
-/* ── 하단 독 (GDD 18-2): 돌보기(색 테두리 버튼) | 메뉴(아이콘). 먹이·더보기는 독 위로 줄이 펼쳐진다(장면에 겹침) ── */
+/* ── 하단 독 (GDD 18-2, v2 S01): 56 고정 줄 — 돌보기 3개(속성색 아랫면 --tint, 청한 것만 --ask) | 대기 보상 · ⋯. 먹이·더보기는 독 위로 줄이 펼쳐진다(장면에 겹침) ── */
 .bha-homedock { position: relative; flex: none; }
-.bha-homedock__bar { display: flex; align-items: center; gap: var(--bha-sp-3); min-height: var(--bha-touch); }
-.bha-homedock__care { display: flex; gap: var(--bha-sp-2); flex: 1 1 auto; min-width: 0; }
-.bha-homedock__carebtn {
-  flex: 1 1 0; min-width: 0; min-height: var(--bha-touch); display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-1);
-  padding: 0 var(--bha-sp-2); border: 1px solid var(--c); border-radius: var(--bha-r-lg);
-  background: linear-gradient(180deg, rgb(255 255 255 / .06), transparent 70%), var(--bha-bg-2);
-  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); white-space: nowrap; touch-action: manipulation;
+.bha-room--home .bha-homedock {
+  display: flex; align-items: center; height: var(--bha-dock-h); padding: 0 var(--bha-gutter); box-sizing: border-box;
+  background: var(--bha-bg-1); box-shadow: inset 0 1px 0 var(--bha-line-1), inset 0 2px 0 var(--bha-hi);
 }
-.bha-homedock__carebtn .bha-icon { width: 18px; height: 18px; color: var(--c); flex: none; }
-.bha-homedock__carebtn:active, .bha-homedock__carebtn.is-active { background: var(--bha-bg-3); }
-.bha-homedock__carebtn { position: relative; }
-/* 돌봄 요청 느낌표 배지 (GDD 100장 #15): 대기 보상 배지와 같은 모양, 버튼 오른쪽 위 */
-.bha-homedock__carebtn .bha-homedock__askbadge { position: absolute; top: calc(-1 * var(--bha-sp-2)); right: var(--bha-sp-2); margin: 0; padding: 0 var(--bha-sp-2); line-height: 1.3; }
+.bha-homedock__bar { display: flex; align-items: center; gap: var(--bha-sp-4); min-height: var(--bha-touch); flex: 1 1 auto; min-width: 0; }
+.bha-homedock__care { display: flex; gap: var(--bha-sp-4); flex: 1 1 auto; min-width: 0; }
+.bha-homedock__carebtn {
+  position: relative; flex: 1 1 0; min-width: 0; height: var(--bha-btn-h); display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-3);
+  padding: 0 var(--bha-sp-3); border: 0; border-radius: var(--bha-r-md);
+  background: var(--bha-bg-2); color: var(--bha-text-1); font-size: var(--bha-fs-md); font-weight: var(--bha-fw-bold); white-space: nowrap; touch-action: manipulation;
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--c); /* = .bha-btn--tint */
+}
+.bha-homedock__carebtn .bha-icon { width: 20px; height: 20px; color: var(--c); flex: none; }
+.bha-homedock__carebtn:active, .bha-homedock__carebtn.is-active { background: var(--bha-bg-3); transform: translateY(1px); }
+/* 돌봄 요청 느낌표 배지 (GDD 100장 #15): 버튼 오른쪽 위 */
+.bha-homedock__carebtn .bha-homedock__askbadge { position: absolute; top: calc(-1 * var(--bha-sp-3)); right: var(--bha-sp-2); margin: 0; padding: 0 var(--bha-sp-2); line-height: 1.3; }
 .bha-homedock__carebtn--feed { --c: var(--bha-hunger); }
-/* 먹이 남은 개수 (GDD 109장 6): 버튼 글 옆 작게, 다 먹였으면 흐리게 */
-.bha-homedock__feedleft { color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-regular); }
+/* 먹이 남은 개수 (GDD 109장 6): 버튼 글 옆 도트 숫자(= .bha-btn-count), 다 먹였으면 흐리게 */
+.bha-homedock__feedleft { font-family: var(--bha-font-num); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 400; }
 .bha-homedock__feedleft.is-empty { color: var(--bha-text-3); }
 .bha-homedock__carebtn--sleep { --c: var(--bha-cond); }
-.bha-homedock__carebtn--pet { --c: var(--bha-stab); }
-/* 돌봄 요청 (GDD 82장): 캐릭터가 청한 버튼만 그 색으로 채우고 테두리가 숨쉬듯 빛난다 */
-.bha-homedock__carebtn.is-requested { background: color-mix(in srgb, var(--c) 24%, var(--bha-bg-2)); box-shadow: 0 0 0 2px var(--c); animation: bha-care-ask 1.2s ease-in-out infinite; }
-@keyframes bha-care-ask { 50% { box-shadow: 0 0 0 2px var(--c), 0 0 12px var(--c); } }
-.bha-homedock__sep { flex: none; width: 1px; align-self: stretch; margin: var(--bha-sp-2) 0; background: var(--bha-line-2); }
-.bha-homedock__menu { flex: none; display: flex; gap: var(--bha-sp-1); }
+.bha-homedock__carebtn--pet { --c: var(--bha-tint-sage); }
+/* 돌봄 요청 (GDD 82장): 캐릭터가 청한 버튼만 굵은 테두리(= .bha-btn--ask). 빛·깜빡임 없음 */
+.bha-homedock__carebtn.is-requested { background: var(--bha-bg-3); box-shadow: 0 0 0 2px var(--c), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--c); }
+.bha-homedock__sep { flex: none; width: 1px; height: 28px; background: var(--bha-line-2); }
+.bha-homedock__menu { flex: none; display: flex; gap: var(--bha-sp-4); }
 .bha-homedock__menu .bha-btn { min-width: var(--bha-touch); min-height: var(--bha-touch); }
+.bha-homedock__menu .bha-btn--ghost { background: var(--bha-bg-2); border-color: var(--bha-line-2); color: var(--bha-text-1); box-shadow: var(--bha-shadow-1); }
+/* 대기 보상 (GDD 92장·98장 A3, v2 S01): 선물 + 쌓인 시간. 폭 고정 — 시간이 생기거나 바뀌어도 옆 버튼이 안 움직인다 */
 .bha-homedock__idle { position: relative; }
-.bha-homedock__idle .bha-room__idlebadge { position: absolute; top: 2px; right: 2px; margin: 0; padding: 0 var(--bha-sp-1); line-height: 1.3; }
+.bha-homedock__menu .bha-btn.bha-homedock__idle { width: 84px; padding: 0 var(--bha-sp-3); gap: var(--bha-sp-2); }
+.bha-homedock__idle .bha-room__idlebadge { position: static; margin: 0; padding: 0; background: none; color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); min-width: 4ch; text-align: left; }
 .bha-homedock__menu .bha-btn.is-active { background: var(--bha-bg-3); }
 .bha-homedock__tray {
-  position: absolute; left: 0; right: 0; bottom: calc(100% + var(--bha-sp-2)); z-index: 3;
+  position: absolute; left: var(--bha-gutter); right: var(--bha-gutter); bottom: calc(100% + var(--bha-sp-2)); z-index: 3;
   display: flex; align-items: stretch; gap: var(--bha-sp-2); padding: var(--bha-sp-2);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-lg); background: var(--bha-bg-1); box-sizing: border-box;
+  border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-sizing: border-box;
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-2);
 }
 .bha-homedock__tray[hidden] { display: none; }
-.bha-homedock__tray--more { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); } /* 4열 (GDD 100장 #17): 마지막 칸 = 닫기 */
+.bha-homedock__tray--more { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-2); } /* 4열 (GDD 100장 #17) */
 .bha-homedock__moreitem {
   min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1);
-  padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
+  padding: var(--bha-sp-2) var(--bha-sp-1); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-2);
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi);
   color: var(--bha-text-1); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; text-align: center; touch-action: manipulation;
 }
-.bha-homedock__moreitem .bha-icon { width: 22px; height: 22px; color: var(--bha-text-2); }
+.bha-homedock__moreitem .bha-icon { width: 24px; height: 24px; color: var(--bha-text-2); }
 .bha-homedock__moreitem:active { background: var(--bha-bg-3); }
 .bha-homedock__food {
   flex: 1 1 0; min-width: 0; min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-hunger); border-radius: var(--bha-r-md); background: var(--bha-bg-2);
+  padding: var(--bha-sp-2) var(--bha-sp-1); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-2);
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-hunger);
   color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); touch-action: manipulation;
 }
 .bha-homedock__food small { font-size: var(--bha-fs-xs); font-weight: 500; color: var(--bha-text-2); text-align: center; line-height: 1.2; }
 .bha-homedock__food:active { background: var(--bha-bg-3); }
-.bha-homedock__food:disabled { opacity: 0.42; border-color: var(--bha-line-2); cursor: default; } /* 0개 = 비활성 (GDD 23-1) */
-.bha-homedock__food .bha-num { color: var(--bha-hunger); }
+.bha-homedock__food:disabled { opacity: 0.42; box-shadow: 0 0 0 1px var(--bha-line-2); cursor: default; } /* 0개 = 비활성 (GDD 23-1) */
+.bha-homedock__food .bha-num { color: var(--bha-hunger); font-weight: 400; }
 .bha-homedock__tray > .bha-tag { position: absolute; top: -9px; right: var(--bha-sp-3); background: var(--bha-bg-1); }
 
 /* ── 방 장면 ── */
@@ -73,13 +88,13 @@
   background: var(--bha-bg-1);
 }
 .bha-room__wall, .bha-room__floor { position: absolute; left: 0; right: 0; }
-.bha-room__wall { top: 0; height: 62%; background: var(--bha-bg-1); }
-.bha-room__floor { bottom: 0; height: 38%; background: var(--bha-bg-2); border-top: 2px solid var(--bha-line-2); }
-/* 방 모양 (종족 설정 room.shape): cave = 둥글게 패인 굴, room = 반듯한 방 */
-.bha-room--cave .bha-room__wall { background: radial-gradient(90% 100% at 50% 110%, var(--bha-bg-2), var(--bha-bg-1) 70%); border-radius: 0 0 60% 60% / 0 0 24% 24%; }
-.bha-room--cave .bha-room__floor { border-top: 0; border-radius: 50% 50% 0 0 / 14% 14% 0 0; background: var(--bha-bg-2); }
-.bha-room--room .bha-room__wall { background: repeating-linear-gradient(90deg, var(--bha-bg-1) 0 28px, var(--bha-bg-2) 28px 29px); }
+.bha-room__wall { top: 0; height: 62%; background: var(--bha-scene-wall); }
+.bha-room__floor { bottom: 0; height: 38%; background: var(--bha-scene-floor); border-top: 2px solid var(--bha-line-2); }
+/* 그림 없을 때 자리 (종족 설정 room.shape): cave = 둥글게 패인 굴, room = 반듯한 방 — v2: 그라데이션·줄무늬 없이 장면 자리 색 두 면 */
+.bha-room--cave .bha-room__wall { border-radius: 0 0 60% 60% / 0 0 24% 24%; }
+.bha-room--cave .bha-room__floor { border-top: 0; border-radius: 50% 50% 0 0 / 14% 14% 0 0; }
 .bha-room__scene.has-art { background: var(--room-art) center / cover no-repeat; }
+.bha-room--home .bha-room__scene { border: 0; border-radius: 0; } /* v2: 장면 = LCD 위 끝~독 위, 테두리 없음 */
 .bha-room__scene.has-art > .bha-room__wall, .bha-room__scene.has-art > .bha-room__floor { display: none; }
 
 /* ── 방 안 물건 (= 선택 항목) ── */
@@ -92,31 +107,32 @@
   touch-action: manipulation;
 }
 .bha-prop__shape {
-  display: grid; place-items: center; width: 44px; height: 40px;
-  color: var(--bha-text-1); background: var(--bha-bg-3);
-  border: 2px solid var(--bha-line-2); border-radius: var(--bha-r-sm);
+  display: grid; place-items: center; width: 52px; height: 48px;
+  color: var(--bha-ph); background: none; /* v2: 그림이 없으면 그림 자리 표시(회색 아이콘)만 — 상자·테두리 없음 (S03 '소모품 상점') */
+  border: 0; border-radius: var(--bha-r-sm);
 }
-.bha-prop__shape .bha-icon { width: 20px; height: 20px; }
+.bha-prop__shape .bha-icon { width: 40px; height: 40px; }
 .bha-prop__img { max-width: none; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; } /* 160×160(16×16 도트 ×10) 그림도 흐림 없이, 비율 유지로 칸 안에 (GDD 34-2) */
 /* 그림이 들어온 물건: 자리표시 틀(배경·테두리)을 걷고 그림 자체를 보인다. 상자 크기는 모두 같고 그림은 비율을 지켜 그 안에 맞춘다 */
 .bha-prop .bha-prop__shape.has-art { width: calc(86px * var(--ps)); height: calc(76px * var(--ps)); background: none; border: 0; border-radius: var(--bha-r-sm); }
 /* 그림이 상자(가로가 긴 86×76)를 넘쳐 아래 이름표를 덮지 않게: 격자 칸 최소 크기를 풀어 그림을 상자 안에 가둔다 (사용자 2026-11-03 캡처 점검) */
 .bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; object-position: 50% 100%; } /* 그림은 칸 바닥(이름표 바로 위)에 붙인다 — 가로로 긴 그림(지도)이 이름표에서 떠 보이지 않게 (C.255) */
 .bha-prop__tag { position: relative; z-index: 1; }
+/* 이름표 = v2 .bha-plate (어두운 판, 그림 아래) */
 .bha-prop__tag {
-  font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; white-space: nowrap;
-  padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill);
-  background: rgb(0 0 0 / 0.55); color: var(--bha-text-1);
+  display: inline-flex; align-items: center; gap: var(--bha-sp-2); height: 22px; box-sizing: border-box;
+  font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); line-height: 1; white-space: nowrap;
+  padding: 0 7px; border-radius: var(--bha-r-xs);
+  background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); color: var(--bha-text-1);
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi);
 }
-.bha-prop--altar .bha-prop__shape { width: 60px; height: 34px; border-radius: var(--bha-r-xs); }
-.bha-prop--book .bha-prop__shape { width: 40px; height: 34px; border-left-width: 6px; }
-.bha-prop--chest .bha-prop__shape { width: 52px; height: 36px; border-radius: var(--bha-r-sm) var(--bha-r-sm) var(--bha-r-xs) var(--bha-r-xs); }
-.bha-prop.is-alert .bha-prop__shape { border-color: var(--bha-danger); }
+.bha-prop.is-alert .bha-prop__shape { color: var(--bha-danger); }
 /* 쓰러짐·사망 (GDD 102-7, C.175): 모험 문 잠김 = 흐리게 + 자물쇠, 캐릭터는 눕히고 흐리게, 사망 = 어두운 방, 위 줄 = 큰 안내 + 버튼 */
 /* 잠김: 그림만 흐리게, 자물쇠는 그 물건 그림 칸 안 오른쪽 아래 귀퉁이 — 흐림 없이 (C.265: 칸 밖 위 귀퉁이에 붙어 옆 물건 이름표 것처럼 보였다) */
-.bha-prop.is-locked .bha-prop__shape { position: relative; border-color: var(--bha-danger); }
+/* v2 (PROMPT 5절 4): 그림만 흐리게 + 자물쇠 = .bha-lock 모양(어두운 작은 판) */
+.bha-prop.is-locked .bha-prop__shape { position: relative; }
 .bha-prop.is-locked .bha-prop__shape > :not(.bha-prop__lock) { opacity: 0.45; }
-.bha-prop__lock { position: absolute; right: 2px; bottom: 2px; width: 16px; height: 16px; color: var(--bha-danger); filter: drop-shadow(0 0 2px var(--bha-bg-0)); }
+.bha-prop__lock { position: absolute; right: 2px; bottom: 2px; z-index: 2; box-sizing: border-box; width: 20px; height: 20px; padding: 3px; border-radius: var(--bha-r-xs); background: var(--bha-bg-0); color: var(--bha-text-1); box-shadow: 0 0 0 1px var(--bha-line-2); }
 .bha-char.is-collapsed .bha-char__body { rotate: 90deg; opacity: 0.55; }
 /* 그림 캐릭터는 발(몸 상자 92.6%)을 축으로 눕혀 그림자 위 바닥에 눕힌다: 몸 가운데 = 그림자, 몸 아래 끝 = 바닥(발 높이) — 그림 불투명 범위로 잰다 — 발밑 체력 막대와 안 겹친다 (C.200, room.ts --lie-*) */
 .bha-char.is-collapsed .bha-char__body.has-art { transform-origin: 50% 92.6%; translate: var(--lie-dx, 0px) calc(var(--lie-up, 0px) * -1); }
@@ -145,7 +161,7 @@
 .bha-char__frame--1 { animation: bha-frame-a 1.6s step-end infinite; }
 .bha-char__frame--2 { animation: bha-frame-b 1.6s step-end infinite; }
 .bha-char__lift { display: block; position: relative; z-index: 1; } /* 발밑 그림자(뒤 형제)보다 위 층 — 그림자가 캐릭터를 덮지 않게 (C.190, GDD 117장 5). 이동 방식은 걷기 하나라 몸은 늘 땅에 (GDD 125장) */
-.bha-char__shadow { width: 52px; height: 7px; margin-top: var(--bha-sp-1); border-radius: 50%; background: rgb(0 0 0 / 0.4); }
+.bha-char__shadow { width: 52px; height: 7px; margin-top: var(--bha-sp-1); border-radius: 50%; background: var(--bha-lo); }
 .bha-char.is-react .bha-char__body { animation: bha-char-hop 0.4s ease-out; }
 /* 뱉음 (GDD 109장 6): 고개를 젓듯 좌우로 흔들고 살짝 움츠린다 */
 .bha-char.is-spit .bha-char__body { animation: bha-char-spit 0.6s ease-out; }
@@ -155,32 +171,34 @@
 @keyframes bha-frame-b { 0% { visibility: hidden; } 50% { visibility: visible; } }
 @keyframes bha-char-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
 
-/* ── 머리 위 상태 칩 (GDD 18-8): 캐릭터 몸 위, 한 줄. 누르면 상태 화면 ── */
-.bha-room__status {
-  /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px). 나는 진화체(머리가 높다)는 칩 윗변이 방 위 끝에 붙어 틀에 가려지므로 방 안으로 내린다(--chip-h = 칩 높이, roomView 가 잰다, C.93) */
-  /* C.170 (GDD 100장 #12): 머리 위 8px(--bha-sp-4) 띄우고, 막대 옆 숫자 칸만큼 넓힌다 */
-  position: absolute; left: var(--char-x, 50%); top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6))); transform: translate(-50%, -100%); z-index: 1;
-  display: flex; flex-direction: column; gap: var(--bha-sp-1); width: 72px; box-sizing: content-box; /* 총 폭 94px < 그림 130px */
-  padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3); /* 오른쪽은 키 글자 배지 자리 */
-  background: rgb(0 0 0 / 0.55); border: 0; border-radius: var(--bha-r-md); touch-action: manipulation;
+/* ── 머리 위 상태 칩 (GDD 18-8, v2 S01): 캐릭터 몸 위 한 줄 = [칩들(누르면 상태 화면)] [ⓘ]. 상태이상 칩이 맨 앞 ── */
+.bha-room__chips {
+  /* 아래 끝 = 그림 윗변(--head-y, 캐릭터 중심 기준 px) 위 8px. 나는 진화체(머리가 높다)는 칩이 방 위 끝에 붙지 않게 방 안으로 내린다(--chip-h = 칩 줄+이름표 높이, roomView 가 잰다, C.93).
+     가로는 캐릭터 가운데, 장면 끝에서 잘리지 않게 칩 줄 반폭(--chips-half, roomView 가 잰다) 안쪽으로 묶는다 */
+  position: absolute; z-index: 1;
+  left: clamp(var(--chips-half, 0px), var(--char-x, 50%), calc(100% - var(--chips-half, 0px)));
+  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-4)));
+  transform: translate(-50%, -100%);
+  display: flex; align-items: center; gap: var(--bha-sp-1);
 }
-.bha-room__gauge { --c: var(--bha-text-2); display: flex; align-items: center; gap: var(--bha-sp-2); }
-.bha-room__gauge .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c); }
-.bha-room__gaugetrack { flex: 1 1 auto; height: 5px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
-.bha-room__gaugefill { display: block; height: 100%; border-radius: inherit; background: var(--c); }
-.bha-room__gaugenum { flex: none; min-width: 2ch; font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-1); text-align: right; }
-/* 이름표 (GDD 100장 #8): 칩 위 가운데 작게 (방 위 줄 대신) */
-.bha-room__status > .bha-room__name { position: absolute; left: 50%; bottom: calc(100% + var(--bha-sp-1)); transform: translateX(-50%); margin: 0; white-space: nowrap; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / 0.55); color: var(--bha-text-1); font-size: var(--bha-fs-xs); line-height: 1.5; }
-.bha-room__gauge--hunger { --c: var(--bha-hunger); }
-.bha-room__gauge--cond { --c: var(--bha-cond); }
-.bha-room__gauge--risk { --c: var(--bha-risk, var(--bha-danger)); }
-.bha-room__gauge--stab { --c: var(--bha-stab); }
-.bha-room__gauge--bond { --c: var(--bha-good); }
-.bha-room__gauge--weak, .bha-room__gauge--tired, .bha-room__gauge--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
-/* 상태 칩(쇠약·피곤·쓰러짐): 숫자 칸 대신 이름 (GDD 102-7) */
-.bha-room__gauge--weak .bha-room__gaugenum, .bha-room__gauge--tired .bha-room__gaugenum, .bha-room__gauge--collapsed .bha-room__gaugenum { color: var(--bha-danger); white-space: nowrap; }
-.bha-room__status:active { filter: brightness(1.2); }
-.bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
+.bha-room__status {
+  position: relative; display: flex; align-items: center; gap: var(--bha-sp-2); min-height: var(--bha-btn-h-sm);
+  margin: 0; padding: 0 var(--bha-sp-1); border: 0; border-radius: var(--bha-r-xs); background: none; touch-action: manipulation;
+}
+.bha-room__status .bha-chip--status .bha-icon { width: 16px; height: 16px; color: var(--c, var(--bha-text-2)); flex: none; }
+.bha-room__chip--hunger { --c: var(--bha-hunger); }
+.bha-room__chip--cond { --c: var(--bha-cond); }
+.bha-room__chip--risk { --c: var(--bha-risk, var(--bha-danger)); }
+.bha-room__chip--stab { --c: var(--bha-stab); }
+.bha-room__chip--hp { --c: var(--bha-player-hp); }
+.bha-room__chip--weak, .bha-room__chip--tired, .bha-room__chip--collapsed, .bha-chip--status.is-danger { --c: var(--bha-danger); }
+/* 상태이상 칩(쇠약·피곤·빈사·사망): 막대·숫자 대신 이름 (GDD 102-7) */
+.bha-room__chipname { color: var(--bha-danger); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-room__chipmax { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-3); }
+/* 이름표 (GDD 100장 #8): 칩 위 가운데 작게 */
+.bha-room__status > .bha-room__name { position: absolute; left: 50%; bottom: calc(100% + var(--bha-sp-1)); transform: translateX(-50%); margin: 0; white-space: nowrap; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-xs); background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); box-shadow: 0 0 0 1px var(--bha-line-2); color: var(--bha-text-1); font-size: var(--bha-fs-xs); line-height: 1.5; }
+.bha-room__status:active { transform: translateY(1px); }
+.bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: none; }
 
 /* ── 말풍선 (C.176, GDD 104장 1): 캐릭터 머리 위 가운데, 대사 동안 칩은 숨긴다(.is-saying).
    가로는 캐릭터 중심, 방 끝에서 잘리지 않게 25~75% 로 묶는다.
@@ -201,21 +219,13 @@
 .bha-room__bubble.is-side { top: var(--bha-sp-2); left: calc(var(--char-x, 50%) + var(--char-half, 0px)); transform: none; max-width: calc(100% - var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
 .bha-room__bubble.is-side.is-pop { animation-name: bha-bubble-pop-side; }
 .bha-room__bubble.is-side.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + var(--char-half, 0px)); max-width: calc(var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
-.is-saying > .bha-room__status, .is-saying > .bha-room__statusinfo { visibility: hidden; }
-/* 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위 바깥 (칩 총 폭 94px 의 절반 = 47px), 칩과 같은 top 식 */
-.bha-room__statusinfo {
-  position: absolute; z-index: 1; margin: 0;
-  left: calc(var(--char-x, 50%) + 47px + var(--bha-sp-1));
-  top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
-  transform: translateY(-100%);
-  width: 22px; height: 22px; background: rgb(0 0 0 / 0.55);
-}
-/* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 띠로 방이 낮아져 머리 위에 칩 자리가 없으면 칩·ⓘ 를 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).
+.is-saying > .bha-room__chips { visibility: hidden; }
+/* 상태 ⓘ (C.176, GDD 104장 2 · v2 S01): 칩 줄 오른쪽 끝, 어두운 원(터치 칸 36) */
+.bha-room__chips > .bha-info.bha-room__statusinfo { margin: 0; width: var(--bha-btn-h-sm); height: var(--bha-btn-h-sm); padding: 4px; box-sizing: border-box; border-radius: 50%; background: color-mix(in srgb, var(--bha-bg-0) 60%, transparent); background-clip: content-box; color: var(--bha-text-1); }
+/* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 머리 위에 칩 자리가 없으면 칩 줄을 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).
    위 끝은 방 안(이름표 포함), 옆은 캐릭터 상자 바깥(--char-half). 캐릭터가 왼쪽에 있으면 오른쪽(.is-right) */
-.bha-room__status.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2)); transform: translate(-100%, -100%); }
-.bha-room__status.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2)); transform: translate(0, -100%); }
-.bha-room__statusinfo.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2) - 94px - var(--bha-sp-3)); transform: translate(-100%, -100%); }
-.bha-room__statusinfo.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2) + 94px + var(--bha-sp-3)); transform: translate(0, -100%); }
+.bha-room__chips.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2)); transform: translate(-100%, -100%); }
+.bha-room__chips.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2)); transform: translate(0, -100%); }
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
 @keyframes bha-bubble-pop-side { from { opacity: 0; transform: scale(0.9); } }
 
@@ -224,16 +234,18 @@
 .bha-art { -webkit-tap-highlight-color: transparent; outline: 0; box-shadow: none; }
 .bha-art:focus, .bha-art:focus-visible, .bha-art.bha-sel { outline: 0; box-shadow: none; }
 .bha-art:active .bha-art-img { filter: brightness(1.2); }
-.bha-art:focus-visible .bha-art-img, .bha-art.bha-sel .bha-art-img {
-  filter: brightness(1.12)
-    drop-shadow(1px 0 0 var(--bha-focus)) drop-shadow(-1px 0 0 var(--bha-focus)) drop-shadow(0 1px 0 var(--bha-focus)) drop-shadow(0 -1px 0 var(--bha-focus))
-    drop-shadow(0 0 6px var(--bha-focus));
+/* v2 (PROMPT 2절·178장 3): 초점 = 그림 윤곽 2px 4방향(--bha-sprite-outline, 흐림·빛 없음) + 밝은 이름표(.bha-plate.is-on) + 이름표 아래 ▲ 커서 */
+.bha-art:focus-visible .bha-art-img, .bha-art.bha-sel .bha-art-img { filter: var(--bha-sprite-outline); }
+.bha-art.bha-sel .bha-prop__tag { background: var(--bha-bg-3); color: var(--bha-text-1); box-shadow: 0 0 0 2px var(--bha-focus); }
+.bha-prop.bha-sel::after {
+  content: ""; position: absolute; left: 50%; bottom: -12px; width: var(--bha-caret); height: var(--bha-caret); margin-left: calc(var(--bha-caret) / -2); background: var(--bha-focus); pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h1v1H2zM1 1h3v1H1zM0 2h5v1H0z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h1v1H2zM1 1h3v1H1zM0 2h5v1H0z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.bha-art.bha-sel .bha-prop__tag { background: var(--bha-focus); color: var(--bha-bg-0); }
 
 /* 모션 줄이기: 숨쉬기·폴짝·말풍선 팝을 끈다. 두 프레임 그림은 첫 프레임만 보인다 (전역 규칙은 반복 횟수만 1 로 줄여 두 프레임이 겹쳐 보인다) */
 @media (prefers-reduced-motion: reduce) {
-  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop, .bha-homedock__carebtn.is-requested { animation: none; }
+  .bha-char__body, .bha-char.is-react .bha-char__body, .bha-room__bubble.is-pop { animation: none; }
   .bha-char__frame--1 { animation: none; visibility: visible; }
   .bha-char__frame--2 { display: none; }
 }
@@ -259,14 +271,9 @@
 .bha-doll { position: relative; flex: none; }
 .bha-doll__part { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; image-rendering: pixelated; pointer-events: none; }
 
-/* ── 발밑 체력 막대 (GDD 123장 3, C.198): 그림자 바로 아래 가운데, 기존 체력 막대(meter player, 숫자 안 — 127장 1) ── */
-.bha-room__hp {
-  position: absolute; left: var(--char-x, 50%); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%);
-  width: 140px; z-index: 1; pointer-events: none; /* 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, C.200) */
-  padding: var(--bha-sp-1) var(--bha-sp-2); background: rgb(0 0 0 / 0.55); border-radius: var(--bha-r-sm);
-}
-.bha-room__hp .bha-meter { gap: 0; }
-.bha-room__hp .bha-meter__head { display: none; }
+/* ── 발밑 체력 막대 (GDD 123장 3, C.198 · v2 S01): 그림자 바로 아래 가운데 = .bha-hp(10칸 눈금 막대 + 아래 "체력 n / max", 숫자 고정 폭) ── */
+.bha-room__hp { position: absolute; left: var(--char-x, 50%); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%); width: 156px; z-index: 1; pointer-events: none; }
+.bha-room__hp .bha-hp-txt { justify-content: center; gap: var(--bha-sp-1); text-shadow: 0 1px 0 var(--bha-bg-0); }
 /* 먹는 모션 (GDD 132장 3, C.208): 먹기 애니가 없으면 막대가 차는 동안(ACTION_FILL_MS) 우물우물 — 짧게 눌렸다 펴지기를 되풀이 */
 .bha-char.is-eating .bha-char__body { animation: bha-char-chew 0.25s ease-in-out 4; }
 @keyframes bha-char-chew { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.92) translateY(2px); } }

@@ -16,7 +16,8 @@ describe('C.253 장소 그림 점검', () => {
     expect(read('src/ui/bha/market.css')).toContain('.bha-market__char { z-index: 2; }');
   });
   it("'상인' 배지는 그림 칸 위쪽 여백만큼 내려 지붕 바로 위", () => {
-    expect(read('src/ui/bha/market.css')).toContain('.bha-prop.has-visitor .bha-prop__shape.has-art .bha-prop__badge { top: 14%; right: 10%; }');
+    // C.284 (GDD 183장 화면 A, v2 S02): 배지는 이름표 안 황동 배지로 옮겼다 — 그림 위에 뜨지 않는다
+    expect(read('src/ui/worldMapView.ts')).toContain("b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass bha-prop__badge', '상인'));");
   });
   it('떠돌이 상인 기본 자리 = 사용자가 배치 도구로 잡은 왼쪽 위 (C.263, 옛 C.253·254 왼쪽 앞 대체)', () => {
     expect(marketOf({}).layout.wanderer).toEqual({ x: 19.8, y: 45.5, scale: 1.05 });

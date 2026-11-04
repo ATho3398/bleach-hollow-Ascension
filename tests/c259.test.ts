@@ -103,7 +103,7 @@ describe('176장 빈사 칩 · 177장 방 위 띠 삭제', () => {
     expect(room).toContain('lines: [`남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, CARE_STATUS_HINTS.collapsed]');
   });
   it('빈사·쓰러짐 자세에서 머리 위 자리가 없으면 칩을 옆 위로', () => {
-    expect(room).toContain("for (const b of [statusBtn, statusInfoBtn]) b.classList.add('is-side'");
-    expect(read('src/ui/bha/room.css')).toContain('.bha-room__status.is-side {');
+    expect(room).toContain("chipRow.classList.add('is-side'"); // C.284 (GDD 183장 화면 A, v2 S01~S05): 칩 줄 한 묶음
+    expect(read('src/ui/bha/room.css')).toContain('.bha-room__chips.is-side {');
   });
 });

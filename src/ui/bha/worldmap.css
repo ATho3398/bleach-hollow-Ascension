@@ -9,16 +9,14 @@
 }   /* [둥지로] 왼쪽 위 = 시장·온천과 같은 자리 (GDD 129-1 2) */
 .bha-worldmap__hud > * { pointer-events: auto; }
 .bha-worldmap [data-space-back][aria-disabled="true"] { opacity: 0.45; }
-.bha-worldmap__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
+/* v2 S02: 지도 위에 겹친 돌아가기 = 어두운 판 버튼 (지도 이름 글자 없음) */
+.bha-worldmap__hud [data-space-back], .bha-market__hud [data-space-back] { background: color-mix(in srgb, var(--bha-bg-0) 82%, transparent); }
 /* 땅이 화면 전체 (GDD 155장 1 — 옛 위쪽 하늘 띠 삭제): 격자 = 위에서 내려다보는 느낌 */
 .bha-room--worldmap .bha-room__wall { display: none; }
 .bha-room--worldmap .bha-room__floor {
   height: 100%;
   border-top: 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 39px, var(--bha-line-1) 39px 40px),
-    repeating-linear-gradient(180deg, transparent 0 23px, var(--bha-line-1) 23px 24px),
-    radial-gradient(60% 50% at 50% 60%, var(--bha-bg-3), var(--bha-bg-2));
+  background: var(--bha-scene-floor); /* 그림 없을 때 자리 — v2: 줄무늬·그라데이션 없이 한 면 */
 }
 /* 장소 모양 (그림 없을 때): 홈 = 둥근 지붕, 시장 = 천막, 모험 = 길 끝 문 */
 .bha-prop--home .bha-prop__shape { width: 46px; height: 40px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
