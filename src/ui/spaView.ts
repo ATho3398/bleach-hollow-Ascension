@@ -13,6 +13,7 @@ import { beginAction, beginSceneMove } from './bha/actionFx';
 import { hpNumbers } from './bha/battle';
 import { button, el, icon, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
+import { showToast } from './bha/nest';
 import { applyCarePose, characterButton, roomCharArt, spaceBackButton } from './bha/room';
 import { animOf } from './bha/animPlayer';
 import { roomOf, worldMapOf } from '../engine/faction';
@@ -38,7 +39,11 @@ export const SPA_PATH: readonly { left: number; bottom: number; wl: number | nul
 const SPA_WALK_MS = 1200;
 export const SPA_STEP_MS = 300;
 /** 지금 떠 있는 온천 화면 (튜토리얼 체력 차오름·나가기 연출을 바깥에서 부른다) */
-let live: { on: () => boolean; exit: (done: () => void) => boolean } | null = null;
+let live: { on: () => boolean; exit: (done: () => void) => boolean; holdFull: (eyebrow: string, go: () => void) => boolean } | null = null;
+/** 가득 찬 뒤 온천 안에서 기다리는 시간 (GDD 180장 2, C.272): 노란 알림을 보여 주고 이만큼 뒤 방으로 — 화면 연출값이라 balance 밖 */
+export const SPA_FULL_HOLD_MS = 2000;
+/** 가득 찼을 때 온천 안 알림 문구 (GDD 180장 2, text-style 3: 한 줄 토스트 제목 — 마침표 없음) */
+export const SPA_FULL_TEXT = '체력이 가득 찼다';
 let spaTimer = 0;
 
 export interface SpaHandlers {
@@ -73,6 +78,14 @@ export function spaRateLines(r: { hpPerSecond: number; conditionPerSecond: numbe
 /** 온천에서 나가는 연출 (GDD 132장 4): 화면이 떠 있으면 계단을 거꾸로 올라와 걸어 나간 뒤 done 을 부르고 true. 없으면 false(바로 나가면 된다) */
 export function spaExitFx(done: () => void): boolean {
   return live?.on() ? live.exit(done) : false;
+}
+
+/**
+ * 가득 찬 순간 (GDD 180장 2, C.272): 바로 방으로 보내지 않고 온천 화면 안에서 노란 알림(eyebrow = 종족 설정 온천 이름) + 캐릭터는 탕 안 그대로 →
+ * SPA_FULL_HOLD_MS 뒤 go(방으로). [돌아가기]·✓ 를 누르면 바로 go. 방에 간 뒤에는 알림을 지운다(한 번만). 온천 화면이 없으면 false(바로 가면 된다)
+ */
+export function spaHoldFull(eyebrow: string, go: () => void): boolean {
+  return live?.on() ? live.holdFull(eyebrow, go) : false;
 }
 
 export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveData, hd: SpaHandlers): void {
@@ -215,7 +228,24 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 
   // ── 왼쪽 위: [방으로 돌아가기] 작게 + ⓘ 쉬는 중 설명 ──
-  const backBtn = spaceBackButton(hd.onBack, hd.backLabel);
+  /** 가득 찬 뒤 방으로 가기를 기다리는 중 (GDD 180장 2) — [돌아가기]·✓ = 바로 방으로 */
+  let fullHold: { timer: number; go: () => void; toast: HTMLElement } | null = null;
+  const clearFullHold = (): (() => void) | null => {
+    if (!fullHold) return null;
+    const h = fullHold;
+    fullHold = null;
+    window.clearTimeout(h.timer);
+    // 방 위에 다시 보이지 않게 바로 감춘다 (퇴장 애니메이션은 그대로 돌아 칸이 비워진다)
+    h.toast.style.visibility = 'hidden';
+    h.toast.classList.remove('is-in');
+    h.toast.classList.add('is-out');
+    return h.go;
+  };
+  const backBtn = spaceBackButton(() => {
+    const go = clearFullHold();
+    if (go) go();
+    else hd.onBack();
+  }, hd.backLabel);
   const dyingPct = Math.round(BALANCE.provisional.nest.care.dying.hpFraction * 100);
   const infoBtn = infoTip('쉬는 중', () => ({
     lead: `${name}에서 쉬는 중이다.`,
@@ -237,6 +267,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     if (!actor.isConnected) return false;
     if (exiting) return true;
     exiting = true;
+    clearFullHold(); // 가득 알림을 기다리던 중이면 나가기 연출이 맡는다
     cancelAnimationFrame(pathRaf);
     endMove(); // 들어오던 중이면 그 연출은 여기서 끝
     endMove = beginSceneMove();
@@ -258,7 +289,19 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     walkPath(from, 0, finish, finish);
     return true;
   };
-  live = { on: () => app.isConnected, exit };
+  const holdFull = (eyebrow: string, go: () => void): boolean => {
+    if (!actor.isConnected || exiting) return false;
+    if (fullHold) return true;
+    const toast = showToast({ eyebrow, title: SPA_FULL_TEXT, meta: '' }, 0, SPA_FULL_HOLD_MS);
+    const timer = window.setTimeout(() => {
+      const g = clearFullHold();
+      if (g && app.isConnected) g();
+    }, SPA_FULL_HOLD_MS);
+    fullHold = { timer, go, toast };
+    backBtn.focus({ preventScroll: true }); // ✓ = 바로 방으로
+    return true;
+  };
+  live = { on: () => app.isConnected, exit, holdFull };
 
   // 시간이 흐르는 동안 상태 창을 다시 그리고, 저절로 나올 때가 되면 부르는 쪽에 알린다 (한 번만)
   window.clearInterval(spaTimer);

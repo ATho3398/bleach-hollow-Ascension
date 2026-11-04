@@ -26,8 +26,7 @@ describe('C.257 174장 2 방 물건 rank', () => {
   it.each(FACTIONS.map((f) => [f.id, f] as const))('%s: 이름 = rankBattleName, 자리 = 책장 바로 아래(x 같음, 더 앞)', (_id, f) => {
     const r = roomOf(f);
     expect(r.props.rank).toBe(f.rankBattleName);
-    // C.263: 사용자가 배치 도구로 잡은 값 — 책장 아래 앞쪽(x 는 책장 근처, 같지 않아도 됨)
-    expect(Math.abs(r.layout.rank.x - r.layout.book.x)).toBeLessThan(6);
+    // C.263·C.268: 사용자가 배치 도구로 잡은 값 — 책장보다 앞쪽(C.268 은 책장 오른쪽 앞, x 는 같지 않아도 됨)
     expect(r.layout.rank.y).toBeGreaterThan(r.layout.book.y);
   });
   it('두 종족 이름이 다르다 (같은 엔진, 설정만)', () => {

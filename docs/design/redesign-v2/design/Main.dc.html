@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>토큰 표</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>
+body{margin:0;background:#0d0a09}
+a{color:#cbbca6}a:hover{color:#efe5d3}
+.tk{width:100%;border-collapse:collapse;font-size:13px}
+.tk th{position:sticky;top:0;text-align:left;font-weight:700;color:#ab9b8b;font-size:12px;padding:6px 8px;border-bottom:1px solid #5e4b43;background:#1a1412}
+.tk td{padding:4px 8px;border-bottom:1px solid #2f2521;vertical-align:middle;color:#cbbca6}
+.tk td.n{font-family:ui-monospace,Menlo,monospace;color:#efe5d3;white-space:nowrap;font-size:12px}
+.tk td.v{font-family:ui-monospace,Menlo,monospace;font-size:12px;max-width:190px;word-break:break-all}
+.tk td.note{font-size:12px;color:#ab9b8b}
+.tk tr.g td{background:#241c19;color:#efe5d3;font-weight:800;font-size:13px;padding:8px}
+.sw{display:inline-block;width:14px;height:14px;vertical-align:-3px;margin-right:6px;box-shadow:0 0 0 1px rgb(255 255 255 / .18)}
+.pal{display:flex;gap:6px;flex-wrap:wrap}
+.pal span{display:flex;flex-direction:column;gap:4px;width:84px;font:12px/1.2 ui-monospace,Menlo,monospace;color:#cbbca6}
+.pal span i{display:block;height:44px;box-shadow:0 0 0 1px rgb(255 255 255 / .12)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1600px; min-height: 4400px; box-sizing: border-box; padding: 48px 56px; display: flex; flex-direction: column; gap: 36px">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px; max-width: 860px">
+      <div class="bha-label">산출물 1 · 토큰 표</div>
+      <h2 style="font-size: 40px">블리치 할로우 어센션 — 디자인 토큰</h2>
+      <p class="cap" style="margin: 0; font-size: 15px; line-height: 1.6">지금 <code>--bha-*</code> 토큰 이름은 그대로 두고 값만 새로 정했다. 공통 토큰은 「공통」 열, 종족마다 다른 테마 토큰은 「호로」「사신」 열에 값이 있다. 테마는 루트에 <code>.bha-theme-hollow</code> / <code>.bha-theme-shinigami</code>(또는 지금처럼 <code>data-bha-theme</code>)를 붙이면 바뀌고, 3번째 종족은 테마 블록 하나를 복사해 값만 바꾸면 된다. 실제 값은 같은 폴더의 <code>bha.css</code>에 들어 있다.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div class="bha-label">호로 바탕 → 글자 · 포인트 · 주 버튼 · 초점</div>
+      <div class="pal">
+        <span><i style="background: #1a1412"></i>bg-0</span><span><i style="background: #241c19"></i>bg-1</span><span><i style="background: #2f2521"></i>bg-2</span><span><i style="background: #3b2f2a"></i>bg-3</span><span><i style="background: #efe5d3"></i>text-1</span><span><i style="background: #a03c3d"></i>accent</span><span><i style="background: #d8c9ae"></i>primary</span><span><i style="background: #f3e3c3"></i>focus</span>
+      </div>
+      <div class="bha-label">사신</div>
+      <div class="pal">
+        <span><i style="background: #12161d"></i>bg-0</span><span><i style="background: #192029"></i>bg-1</span><span><i style="background: #212a35"></i>bg-2</span><span><i style="background: #2b3542"></i>bg-3</span><span><i style="background: #e6ebf1"></i>text-1</span><span><i style="background: #6f8db0"></i>accent</span><span><i style="background: #b7c4d2"></i>primary</span><span><i style="background: #e3edf8"></i>focus</span>
+      </div>
+      <div class="bha-label">공통 강조 (같은 명도대, 가라앉은 색)</div>
+      <div class="pal">
+        <span><i style="background: #4f8f8a"></i>청록</span><span><i style="background: #b0704a"></i>구리</span><span><i style="background: #a8904f"></i>황동</span><span><i style="background: #7f6c9e"></i>보라</span><span><i style="background: #c45a4f"></i>attack</span><span><i style="background: #6f9a63"></i>guard</span><span><i style="background: #5f88b0"></i>heal</span><span><i style="background: #c7883f"></i>hunger</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; align-items: start">
+    <sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+      <table class="tk">
+        <thead><tr><th>토큰</th><th>공통</th><th>호로</th><th>사신</th><th>메모</th></tr></thead>
+        <tbody>
+          <sc-for list="{{col.rows}}" as="r" hint-placeholder-count="40">
+            <sc-if value="{{r.g}}" hint-placeholder-val="{{false}}">
+              <tr class="g"><td colspan="5">{{r.n}}</td></tr>
+            </sc-if>
+            <sc-if value="{{r.t}}" hint-placeholder-val="{{true}}">
+              <tr>
+                <td class="n">{{r.n}}</td>
+                <td class="v"><sc-if value="{{r.cs}}" hint-placeholder-val="{{false}}"><span class="sw" style="background: {{r.c}}"></span></sc-if>{{r.c}}</td>
+                <td class="v"><sc-if value="{{r.hs}}" hint-placeholder-val="{{false}}"><span class="sw" style="background: {{r.h}}"></span></sc-if>{{r.h}}</td>
+                <td class="v"><sc-if value="{{r.ss}}" hint-placeholder-val="{{false}}"><span class="sw" style="background: {{r.s}}"></span></sc-if>{{r.s}}</td>
+                <td class="note">{{r.m}}</td>
+              </tr>
+            </sc-if>
+          </sc-for>
+        </tbody>
+      </table>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":4400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const L = `#타이포
+--bha-font-body|Pretendard Variable (시안은 Noto Sans KR)|||본문
+--bha-font-display|Hahmlet 800|||제목·창 이름
+--bha-font-num|Silkscreen → 본문 대체|||확정: 영문·숫자만 도트, 한글은 Pretendard. 고정 폭 칸(.bha-num--w2~w6)
+--bha-fs-xs|12px|||최소 글자
+--bha-fs-sm|13px|||설명·탭
+--bha-fs-md|14px|||본문·버튼
+--bha-fs-lg|16px|||큰 버튼
+--bha-fs-xl|18px|||머리 제목·블록 글자
+--bha-fs-2xl|22px|||큰 제목
+--bha-fs-3xl|28px|||결과 제목
+--bha-fs-4xl|36px|||연출 제목
+--bha-fs-5xl|48px|||게임 이름
+--bha-lh-tight|1.2|||
+--bha-lh-body|1.45|||LCD가 낮아 1.5→1.45
+--bha-fw-regular|400|||
+--bha-fw-medium|500|||
+--bha-fw-bold|700|||버튼·라벨
+--bha-fw-heavy|800|||이름·노력치 +n
+--bha-tracking-label|0.02em|||
+#간격 (4px 격자, 값 유지)
+--bha-sp-1|2px|||
+--bha-sp-2|4px|||
+--bha-sp-3|6px|||
+--bha-sp-4|8px|||
+--bha-sp-5|12px|||
+--bha-sp-6|16px|||
+--bha-sp-7|20px|||
+--bha-sp-8|24px|||
+--bha-sp-9|32px|||
+--bha-sp-10|48px|||
+#크기 기준
+--bha-touch|44px|||터치 최소
+--bha-app-w|480px|||값 유지. LCD 크기는 게임 코드 값(646×360)을 따른다
+--bha-gutter|10px|||LCD 안 좌우 여백
+--bha-block-h|52px|||정사각 블록 한 변 (68 → 52, 8칸이 한 줄)
+--bha-bar-h|8px|||상태 게이지
+--bha-bar-h-lg|14px|||체력 막대
+#의미 색
+--bha-attack|#c45a4f|||공격·적 체력 (녹슨 적색)
+--bha-attack-ink|#1a0f0d|||공격색 위 글자
+--bha-guard|#6f9a63|||막기·내 체력 (이끼)
+--bha-guard-ink|#10170e|||
+--bha-heal|#5f88b0|||회복 (슬레이트 청)
+--bha-heal-ink|#0d141c|||
+--bha-sp|#c29a52|||SP·가격 (황동)
+--bha-sp-hi|#dcbd7e|||가격 숫자
+--bha-special-a|#d0ad68|||해방 블록 윗면 (그라데이션 대신 2단)
+--bha-special-b|#8f6a34|||해방 블록 아랫면
+--bha-risk|#a65c8e|||광기/호로화
+--bha-void|#1a1320|||공허 블록
+--bha-void-2|#2c2236|||
+--bha-hunger|#c7883f|||배부름 (구리)
+--bha-cond|#5b98a8|||컨디션 (청록)
+--bha-stab|#6fa58a|||영압 안정도 (세이지)
+--bha-weak|#c9a85a|||약점 칩
+--bha-cast|#c97a45|||강공격 예고
+--bha-chain2|#c9a24a|||묶음 2 받침
+--bha-chain3|#c47440|||묶음 3 받침
+--bha-insert|#6e9cc4|||끌어 놓기 삽입 막대
+--bha-seal|#8a74b0|||봉인
+--bha-fx-cero-oscuras-core|#07050c|||마스터 승인 값 유지
+--bha-fx-cero-oscuras-edge|#39e27a|||마스터 승인 값 유지
+--bha-good|#79b08a|||좋음 글자
+--bha-warn|#d79a5a|||경고 글자
+--bha-danger|#d96a5e|||위험 글자
+--bha-rare|#d4b25e|||희귀·알림 아이콘
+--bha-enemy-hp|var(--bha-attack)|||
+--bha-player-hp|var(--bha-guard)|||
+#계열 A~E (모양 원·삼각·사각·마름모·육각)
+--bha-lin-a|#c9775a|||원
+--bha-lin-b|#a3ad5c|||삼각
+--bha-lin-c|#4f9e98|||사각
+--bha-lin-d|#8a82c0|||마름모
+--bha-lin-e|#b9708f|||육각
+#타일 4종
+--bha-tile-prey|#a8613f|||먹잇감 둥지
+--bha-tile-elite|#95517a|||강적 소굴
+--bha-tile-env|#4f7aa3|||환경
+--bha-tile-rest|#4f8a68|||휴식
+#모서리
+--bha-r-xs|(테마)|2px|0px|
+--bha-r-sm|(테마)|4px|2px|
+--bha-r-md|(테마)|6px|3px|
+--bha-r-lg|(테마)|8px|4px|도트 느낌으로 모두 작게
+--bha-r-pill|999px|||
+#그림자 (흐림 없음)
+--bha-shadow-1|inset 0 1px 0 hi, inset 0 -2px 0 lo|||완만한 입체: 밝은 윗선 + 어두운 아랫면
+--bha-shadow-2|0 2px 0 rgb(0 0 0/.45)|||
+--bha-shadow-3|0 0 0 1px rgb(0 0 0/.6), 0 4px 0 rgb(0 0 0/.45)|||창
+--bha-glow-sp|0 0 0 2px sp|||glow → 2px 테두리
+--bha-glow-risk|0 0 0 2px risk|||
+--bha-glow-chain2|0 0 0 2px chain2|||
+--bha-glow-chain3|0 0 0 2px chain3|||
+--bha-glow-cast|0 0 0 2px cast|||
+#모션 (짧고 1배)
+--bha-dur-1|80ms|||눌림
+--bha-dur-2|120ms|||초점 이동
+--bha-dur-3|200ms|||막대 변화
+--bha-dur-4|280ms|||창·알림
+--bha-dur-5|700ms|||연출
+--bha-ease-out|cubic-bezier(.2,.8,.2,1)|||
+--bha-ease-in|cubic-bezier(.5,0,.9,.3)|||
+--bha-ease-snap|steps(3, end)|||반동 대신 계단 (도트 느낌)
+--bha-ease-linear|linear|||
+#z-index (값 유지)
+--bha-z-base|0|||
+--bha-z-raised|10|||
+--bha-z-sticky|20|||
+--bha-z-float|60|||
+--bha-z-flash|70|||
+--bha-z-toast|80|||
+--bha-z-overlay|90|||
+--bha-z-modal|95|||
+--bha-z-tutorial|100|||
+#테마 토큰
+--bha-theme-name|(테마)|"hollow"|"shinigami"|
+--bha-backdrop|(테마)|#0d0a09|#090b0f|기기 바깥
+--bha-bg-0|(테마)|#1a1412|#12161d|LCD 바탕
+--bha-bg-1|(테마)|#241c19|#192029|패널·카드
+--bha-bg-2|(테마)|#2f2521|#212a35|버튼·창 머리
+--bha-bg-3|(테마)|#3b2f2a|#2b3542|선택·눌림
+--bha-line-1|(테마)|#3f322d|#2f3a48|면 구분
+--bha-line-2|(테마)|#5e4b43|#4a5869|버튼 테두리
+--bha-text-1|(테마)|#efe5d3|#e6ebf1|뼈백색 / 차가운 백색
+--bha-text-2|(테마)|#cbbca6|#b8c3cf|
+--bha-text-3|(테마)|#ab9b8b|#95a2b2|bg-3 위 4.7:1
+--bha-accent|(테마)|#a03c3d|#6f8db0|크림슨 / 은청 — 위험·선택·해방만
+--bha-accent-hi|(테마)|#d6766e|#a3bad3|bg-0·1 위 글자
+--bha-accent-soft|(테마)|rgb(160 60 61/.24)|rgb(111 141 176/.22)|
+--bha-primary-bg|(테마)|#d8c9ae|#b7c4d2|뼈 판 / 은빛 칼날 판
+--bha-primary-ink|(테마)|#1f1613|#111720|10:1 이상
+--bha-primary-line|(테마)|#efe3cb|#e1e9f2|윗면 빛
+--bha-focus|(테마)|#f3e3c3|#e3edf8|초점 테두리·커서 (가장 밝음)
+--bha-icon-stroke|(테마)|2|1|도트 아이콘 외곽 굵기
+--bha-pattern|(테마)|가로 1px 결 (1.8%)|세로 1px 결 (1.8%)|LCD 결
+--bha-pattern-size|(테마)|auto|auto|
+--bha-vignette|(테마)|none|none|빛 번짐 없앰`;
+
+    const R = `#꾸밈 cos — 같은 톤으로 낮춤 (이름 유지)
+--bha-cos-aura-smoke|rgb(150 146 140/.7)|||오라 = 윤곽선 색
+--bha-cos-aura-blue|rgb(95 136 176/.8)|||
+--bha-cos-aura-bolt|rgb(196 90 79/.8)|||
+--bha-cos-aura-gold|rgb(194 154 82/.8)|||
+--bha-cos-tint-mono|grayscale(1) contrast(1.1)|||
+--bha-cos-tint-blood|sepia(.8) saturate(3) hue-rotate(-40deg) brightness(.9)|||
+--bha-cos-tint-pale|saturate(.35) brightness(1.18) contrast(.92)|||
+--bha-cos-tint-gold|sepia(.7) saturate(1.8) hue-rotate(2deg) brightness(1.02)|||
+--bha-cos-trail-sand|#c4a878|||
+--bha-cos-trail-blood|#8e3a3a|||
+--bha-cos-trail-ember|#c47440|||
+--bha-cos-fx-black|#241a2c|||
+--bha-cos-fx-black-edge|#a894c4|||
+--bha-cos-fx-blue|#5f88b0|||
+--bha-cos-fx-blue-edge|#c6d6e6|||
+--bha-cos-fx-crimson|#b0443e|||
+--bha-cos-fx-crimson-edge|#e6c2b8|||
+--bha-cos-bar-bone-bg|#4a4034|||그라데이션 → 단색
+--bha-cos-bar-bone-line|#cbbca0|||
+--bha-cos-bar-ink-bg|#14141c|||
+--bha-cos-bar-ink-line|#3c3c52|||
+--bha-cos-bar-gold-bg|#3e321a|||
+--bha-cos-bar-gold-line|#b89a58|||
+--bha-cos-shell-bone-body|#b8ab92|||
+--bha-cos-shell-bone-line|#dcd0b6|||
+--bha-cos-shell-bone-lcd|rgb(240 226 196/.05)|||
+--bha-cos-shell-ink-body|#121218|||
+--bha-cos-shell-ink-line|#34344a|||
+--bha-cos-shell-ink-lcd|rgb(90 100 160/.06)|||
+--bha-cos-shell-gold-body|#5e4a20|||
+--bha-cos-shell-gold-line|#b89a58|||
+--bha-cos-shell-gold-lcd|rgb(220 180 100/.05)|||
+--bha-cos-plate-bone|#cbbca0|||
+--bha-cos-plate-ink|#4c4c68|||
+--bha-cos-plate-gold|#b89a58|||
+--bha-cos-enter-rift|#a894c4|||
+--bha-cos-enter-burst|#d8c08a|||
+--bha-cos-enter-shadow|#1a1320|||
+--bha-cos-evo-cocoon|#140e1a|||
+--bha-cos-evo-pillar|#e6d6a8|||
+--bha-cos-evo-petal|#c99aa6|||
+--bha-cos-absorb-shadow|#1a1320|||
+--bha-cos-absorb-light|#e2d29a|||
+--bha-cos-cut-ink-bg|사선 #0c0c14 / #1e1e2c|||
+--bha-cos-cut-ink-line|#7a7aa0|||
+--bha-cos-cut-flame-bg|사선 #3a120c / #6a2416|||불꽃 그라데이션 → 사선 띠
+--bha-cos-cut-flame-line|#c47440|||
+--bha-cos-cut-gold-bg|줄무늬 #3e321a / #5e4a24|||
+--bha-cos-cut-gold-line|#c9a24a|||
+--bha-cos-win-roar|#b0443e|||
+--bha-cos-win-light|#e6d6a8|||
+--bha-cos-win-calm|#0a0a10|||
+--bha-cos-talk-a|12px 12px 12px 2px|||
+--bha-cos-talk-b|2px|||
+--bha-cos-room-dusk-bg|줄 #3e2a1e / #342318|||
+--bha-cos-room-dusk-wall|#3e2a1e|||
+--bha-cos-room-dusk-floor|#5a4130|||
+--bha-cos-room-dusk-line|#a87a52|||
+--bha-cos-room-bloom-bg|줄 #4a3442 / #402c3a|||
+--bha-cos-room-bloom-wall|#4a3442|||
+--bha-cos-room-bloom-floor|#44583e|||
+--bha-cos-room-bloom-line|#b98a9c|||
+--bha-cos-room-night-bg|줄 #161c34 / #121830|||
+--bha-cos-room-night-wall|#161c34|||
+--bha-cos-room-night-floor|#1e2436|||
+--bha-cos-room-night-line|#6a7aa8|||
+--bha-cos-frame-bone|#cbbca0|||
+--bha-cos-frame-ink|#24243a|||
+--bha-cos-frame-gold|#b89a58|||
+--bha-cos-keyring-chain|#a49e92|||
+--bha-cos-keyring-charm-body|#b0996c|||
+--bha-cos-keyring-charm-line|#4e4028|||
+--bha-cos-keyring-mask-body|#d8cfc0|||
+--bha-cos-keyring-mask-line|#5e5446|||
+--bha-cos-keyring-butterfly-body|#1a1320|||
+--bha-cos-keyring-butterfly-line|#a894c4|||
+--bha-cos-keyring-bell-body|#b8944a|||
+--bha-cos-keyring-bell-line|#5e4416|||
+--bha-cos-keyring-bonebell-body|#d0c6b2|||
+--bha-cos-keyring-bonebell-line|#6a5e4c|||
+--bha-cos-keyring-orb-body|#4f8f78|||
+--bha-cos-keyring-orb-line|#1e4a3a|||
+--bha-cos-keyring-shine|rgb(255 255 255/.55)|||
+#새 토큰 제안 — 이름 · 값 · 용도
+--bha-hi|(테마)|rgb(255 236 214/.10)|rgb(220 235 255/.10)|면 윗선 빛 (입체)
+--bha-lo|(테마)|rgb(0 0 0/.35)|rgb(0 0 0/.4)|면 아랫면 그늘
+--bha-primary-lo|(테마)|#9d8b70|#7a899b|주 버튼 아랫면
+--bha-shell-body|(테마)|#2a211e|#1c222b|기기 몸체 — 꾸미기 없을 때 기본값 (꾸미기 끼면 cos-shell·frame-v2 우선)
+--bha-shell-line|(테마)|#4a3c36|#36424f|기기 테두리 — 기본값
+--bha-shell-btn|(테마)|#3a2f2a|#28313c|기기 ▲▼◀ 버튼 — 기본값
+--bha-lcd-bezel|(테마)|#0f0b0a|#090c10|LCD 테 — 기본값
+--bha-shell-lcd|transparent|||LCD 색 덮개 (꾸미기가 cos-shell-*-lcd 로 채움)
+--bha-scene-wall|(테마)|#3a2c26|#26303a|그림 없을 때 장면 자리 색
+--bha-scene-floor|(테마)|#4a3a30|#3a3a30|
+--bha-ph|(테마)|#7a665a|#66788c|그림 자리 표시 색
+--bha-el-normal|#8c8478|||속성: 노멀 (normal)
+--bha-el-water|#4c7ea8|||속성: 물 (water)
+--bha-el-fire|#c0643a|||속성: 불 (fire) — 밝은 주황빛 적
+--bha-el-earth|#9a7c48|||속성: 흙 (earth)
+--bha-el-thunder|#a8963e|||속성: 뇌 (thunder)
+--bha-el-blood|#84343a|||속성: 혈 (blood) — 짙은 적갈, 불보다 어둡고 붉음
+--bha-el-poison|#74803e|||속성: 독 (poison) — 가라앉은 올리브
+--bha-el-kyo|#7a6496|||속성: 교 (kyo) — 가라앉은 보라
+--bha-tint-teal|#4f8f8a|||강조 청록 (켜짐 스위치·재우기)
+--bha-tint-copper|#b0704a|||강조 구리
+--bha-tint-brass|#a8904f|||강조 황동
+--bha-tint-violet|#7f6c9e|||강조 보라
+--bha-tint-sage|#7f9c7a|||강조 세이지 (교감/손질)
+--bha-btn-h|44px|||기본 버튼 높이
+--bha-btn-h-sm|36px|||작은 버튼
+--bha-btn-h-lg|48px|||출발·도전 띠
+--bha-head-h|44px|||머리 줄
+--bha-dock-h|56px|||아래 고정 줄
+--bha-skill-h|130px|||전투 스킬창
+--bha-icon-sm|16px|||아이콘 (16 격자 ×1)
+--bha-icon-md|24px|||×1.5
+--bha-icon-lg|32px|||×2
+--bha-icon-xl|48px|||×3
+--bha-sprite-sm|32px|||목록 그림
+--bha-sprite-md|48px|||카드 그림
+--bha-sprite-lg|64px|||상세 그림
+--bha-caret|10px|||초점 커서 ▶ 크기
+--bha-sprite-outline|drop-shadow ×4 (2px focus)|||그림 모양대로 윤곽 강조
+--bha-sprite-dim|grayscale(1) brightness(.55)|||잠김 그림
+--bha-toast-bg|#2e2717|||노란 알림 바탕 (어두운 황동)
+--bha-toast-line|#a88c4c|||
+--bha-toast-ink|#f0e2bd|||11.5:1`;
+
+    const isCol = (v) => /^(#|rgb)/.test(v || '');
+    const parse = (txt) => txt.split('\n').map((ln) => {
+      if (ln.startsWith('#')) return { g: true, t: false, n: ln.slice(1) };
+      const [n, c, h, s, m] = ln.split('|');
+      return { g: false, t: true, n, c, h: h || '—', s: s || '—', m: m || '', cs: isCol(c), hs: isCol(h), ss: isCol(s) };
+    });
+    return { cols: [{ rows: parse(L) }, { rows: parse(R) }] };
+  }
+}
+</script>
+</body>
+</html>

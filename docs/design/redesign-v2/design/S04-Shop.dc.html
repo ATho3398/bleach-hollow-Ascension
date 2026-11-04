@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>상점</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 소모품 상점</b> — 카드를 고른 뒤 상세 창, 초점: [사기]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <span class="bha-title">소모품 상점</span>
+              <span class="bha-grow"></span>
+              <span class="bha-chip" style="--c: var(--bha-sp)"><i class="bha-i bha-i-coin"></i><span class="bha-num" style="font-weight: 400">99999</span></span>
+              <span class="bha-chip" style="--c: var(--bha-tint-violet)"><i class="bha-i bha-i-gem"></i><span class="bha-num" style="font-weight: 400">100015</span></span>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 44px; display: flex">
+              <div class="bha-tabs"><button class="bha-tab is-on"><i class="bha-i bha-i-food"></i>음식</button><button class="bha-tab"><i class="bha-i bha-i-potion"></i>약</button><button class="bha-tab"><i class="bha-i bha-i-sword"></i>전투 소모품</button><button class="bha-tab"><i class="bha-i bha-i-tile"></i>타일</button><button class="bha-tab"><i class="bha-i bha-i-box"></i>기타</button></div>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 94px; bottom: 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-content: start">
+              <sc-for list="{{t.items}}" as="it" hint-placeholder-count="5">
+                <button class="bha-card bha-card--shop {{it.sel}}" style="width: auto; height: 122px"><span class="bha-count">{{it.own}}</span><span class="bha-art bha-art--frame" style="width: 44px; height: 44px"><i class="bha-i bha-i-food"></i></span><span class="bha-card-name">{{it.n}}</span><span class="bha-card-line">{{it.l}}</span><span class="bha-card-price"><i class="bha-i bha-i-coin"></i>{{it.p}}</span></button>
+              </sc-for>
+            </div>
+            <div class="bha-scrim"></div>
+            <div class="bha-win" style="left: 160px; top: 30px; width: 312px; height: 296px">
+              <div class="bha-win-head"><span class="bha-art bha-art--frame" style="width: 36px; height: 36px"><i class="bha-i bha-i-food"></i></span><span class="bha-title bha-grow">{{t.pick}}</span><button class="bha-btn bha-btn--icon bha-btn--ghost" aria-label="닫기"><i class="bha-i bha-i-close"></i></button></div>
+              <div class="bha-win-body" style="display: flex; flex-direction: column; gap: 8px">
+                <p style="margin: 0; color: var(--bha-text-1); font-size: 14px">{{t.desc}}</p>
+                <div class="bha-statline"><span>배부름 +20</span><span>컨디션 +10</span></div>
+                <dl class="bha-kv" style="margin: 0"><dt>가진 수</dt><dd class="bha-num" style="font-weight: 400">3 / 9</dd><dt>값</dt><dd><span class="bha-card-price"><i class="bha-i bha-i-coin"></i>240</span></dd></dl>
+              </div>
+              <div class="bha-win-foot"><button class="bha-btn" style="flex: 0 0 88px">닫기</button><button class="bha-btn bha-btn--primary is-focus"><i class="bha-i bha-i-coin"></i>사기</button></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>카드 = 그림 · 이름 · 한 줄 · 가격만. '보유 9/9'는 오른쪽 위 작은 숫자, 수치는 상세 창으로 뺐다</li>
+      <li>상세 창 머리(48px)를 따로 두고 ×는 머리 안 오른쪽 칸에 넣어 첫 줄이 닫기 밑에 깔리지 않는다</li>
+      <li>[사기]는 창 맨 아래 고정 자리, 설명 길이가 바뀌어도 움직이지 않는다. 탭에 그림 아이콘을 붙여 크기를 키웠다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mk = (names) => names.map((n, i) => ({
+      n, own: ['9/9', '2/9', '0/9', '3/9', '9/9'][i], p: [60, 120, 180, 240, 400][i], sel: i === 3 ? 'is-sel' : '',
+      l: ['배부름이 조금 찬다', '배부름이 찬다', '배부름이 많이 찬다', '컨디션이 오른다', '배부름이 가득 찬다'][i]
+    }));
+    return { themes: [
+      { k: 'hollow', race: '호로', items: mk(['영혼 조각', '짐승 고기', '큰 사냥감', '영압 응축물', '영혼 덩어리']), pick: '영압 응축물', desc: '짙게 뭉친 영압 덩어리다. 먹으면 몸이 가벼워진다.' },
+      { k: 'shinigami', race: '사신', items: mk(['주먹밥', '도시락', '고기 요리', '영력 차', '잔칫상']), pick: '영력 차', desc: '영력을 고르는 따뜻한 차다. 마시면 몸이 가벼워진다.' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

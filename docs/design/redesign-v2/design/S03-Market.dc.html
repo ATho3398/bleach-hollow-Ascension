@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시장</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 시장</b> — 초점: 장비 상점 (떠돌이 상인이 와 있는 날)</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-scene">
+              <div class="bha-scene-bg" data-label="시장 거리 그림 자리 (앞뒤 깊이)" style="background: linear-gradient(var(--bha-bg-1) 0 26%, var(--bha-scene-wall) 26% 50%, var(--bha-scene-floor) 50% 100%)"></div>
+              <div class="bha-obj" style="left: 11%; top: 16%; width: 14%; height: 34%"><span class="bha-art"><i class="bha-i bha-i-cart"></i></span><span class="bha-plate">떠돌이 상인 <span class="bha-badge bha-badge--brass">왔다</span></span></div>
+              <div class="bha-obj is-focus" style="left: 46%; top: 16%; width: 15%; height: 34%"><span class="bha-art is-hl"><i class="bha-i bha-i-sword"></i></span><span class="bha-plate is-on">장비 상점</span></div>
+              <div class="bha-obj" style="left: 73%; top: 16%; width: 15%; height: 34%"><span class="bha-art"><i class="bha-i bha-i-shirt"></i></span><span class="bha-plate">스킨 상점</span></div>
+              <div class="bha-obj" style="left: 33%; top: 64%; width: 11%; height: 32%"><span class="bha-art"><i class="bha-i bha-i-potion"></i></span><span class="bha-plate">소모품 상점</span></div>
+              <div class="bha-obj" style="left: 56%; top: 54%; width: 16%; height: 42%"><span class="bha-art"><i class="bha-i bha-i-anvil"></i></span><span class="bha-plate">대장장이</span></div>
+              <div class="bha-obj" style="left: 80%; top: 56%; width: 16%; height: 40%"><span class="bha-art"><i class="bha-i bha-i-spark"></i></span><span class="bha-plate">특성 상점</span></div>
+              <div class="bha-art" style="position: absolute; left: 14%; top: 48%; width: 13%; height: 42%; z-index: 4"><i class="bha-i bha-i-figure"></i></div>
+              <div class="bha-obj" style="left: 1%; top: 62%; width: 12%; height: 34%; z-index: 5"><span class="bha-art"><i class="bha-i bha-i-map"></i></span><span class="bha-plate">월드맵</span></div>
+            </div>
+            <div class="bha-head bha-head--over" style="align-items: flex-start; padding-top: 6px">
+              <span class="bha-plate" style="height: 28px; font-size: 16px; font-family: var(--bha-font-display)">시장</span>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>제목과 설명 문단 띠를 없애 장면이 화면 전체를 쓴다. 제목은 왼쪽 위 작은 판, 상인 소식은 이름표 안 '왔다' 배지로 옮겼다</li>
+      <li>앞뒤 깊이(뒷줄 작게, 앞줄 크게)와 사용자가 잡은 물건 좌표는 그대로, 캐릭터는 가게 그림 앞·지도 뒤에 선다</li>
+      <li>소모품 상점의 빈 + 버튼 모양을 다른 가게와 같은 그림 자리 + 이름표로 맞췄다. 왼쪽 앞 월드맵이 나가기</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로' },
+      { k: 'shinigami', race: '사신' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

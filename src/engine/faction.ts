@@ -31,6 +31,8 @@ export interface FamilySkillConfig {
   fx?: AttackFxKind;
   /** 이 단계 고유 모양·색 (C.63): CSS 클래스 bha-afx--look-<id>, 색은 전용 토큰. 공격 이펙트 색 꾸밈을 입어도 유지 */
   fxLook?: string;
+  /** 이 단계 종이인형 동작 고정 (GDD 181장, 사용자 2026-11-04 03:1x): 있으면 그 동작 하나만(계열 몸동작 묶음·무작위 대신). 없으면 계열 motion 묶음, 그것도 없으면 게임 동작 그대로. 종이인형이 아닌 그림은 무시 */
+  rigMotion?: string;
   multiplier: number;
   bonus?: { kind: 'stagger'; value: number };
 }
@@ -163,10 +165,24 @@ export interface ExtraProp extends PropSpot {
   art?: string;
 }
 
-/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다) */
+/** 배경 보기 (UI 배치 도구 GDD 175장, C.275): cover 크기에 zoom 배(1 이상)를 곱하고, 남는 만큼을 x·y %(CSS background-position 과 같은 뜻, 50 = 가운데)로 민다 */
+export interface SceneView { zoom: number; x: number; y: number }
+
+/** 바닥 다각형: 좌표는 배경 그림 크기 대비 0~1(왼쪽 위 = 0,0), aspect = 그림 가로÷세로 (장면은 cover 로 깔려 그림 일부가 잘린다).
+ *  view = 배경 확대·위치(없으면 cover·가운데) — 바닥은 그림 위의 영역이라 같이 움직인다 */
 export interface RoomFloorConfig {
   aspect: number;
   poly: [number, number][];
+  view?: SceneView;
+}
+
+/** 배경 보기 값 검사 (zoom 1~4, x·y 0~100) */
+export const SCENE_VIEW_ZOOM = { min: 1, max: 4 } as const;
+export function sceneViewOk(v: unknown): boolean {
+  if (v === undefined) return true;
+  const o = (v ?? {}) as Record<string, unknown>;
+  return typeof o.zoom === 'number' && o.zoom >= SCENE_VIEW_ZOOM.min && o.zoom <= SCENE_VIEW_ZOOM.max
+    && typeof o.x === 'number' && o.x >= 0 && o.x <= 100 && typeof o.y === 'number' && o.y >= 0 && o.y <= 100;
 }
 
 /** 메인 방 화면 설정 (GDD 16장). 모두 선택 항목이라 비워도 기본값(DEFAULT_ROOM)이 쓰인다 */
@@ -308,9 +324,9 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
   layout: {
     // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
-    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
-    home: { x: 45.1, y: 64, scale: 1.08 }, market: { x: 60.2, y: 38, scale: 0.98 }, training: { x: 58.3, y: 93.2, scale: 0.9 },
-    adventure: { x: 22.9, y: 85.9, scale: 0.9 }, tower: { x: 11.7, y: 50.1, scale: 1.28 }, spa: { x: 88.7, y: 52.2, scale: 1.29 },
+    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈 → C.278 배경과 함께 전부, 2026-11-04 03:31). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
+    home: { x: 47.2, y: 65.4, scale: 1.61 }, market: { x: 65, y: 39.6, scale: 0.98 }, training: { x: 67.6, y: 86.4, scale: 0.86 },
+    adventure: { x: 19.1, y: 89.7, scale: 0.9 }, tower: { x: 22.1, y: 44.3, scale: 1.28 }, spa: { x: 85.6, y: 58.9, scale: 1.41 },
   },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
@@ -597,6 +613,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
           if (!(typeof y.multiplier === 'number' && y.multiplier > 0)) errors.push(`families[${i}].tiers[${k}].multiplier: 양수`);
           if (y.fx !== undefined && !(ATTACK_FX_KINDS as readonly unknown[]).includes(y.fx)) errors.push(`families[${i}].tiers[${k}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
           if (y.fxLook !== undefined && !(typeof y.fxLook === 'string' && /^[a-z0-9-]+$/.test(y.fxLook))) errors.push(`families[${i}].tiers[${k}].fxLook: 소문자·숫자·하이픈 id`);
+          if (y.rigMotion !== undefined && !(typeof y.rigMotion === 'string' && /^[A-Za-z0-9]+$/.test(y.rigMotion))) errors.push(`families[${i}].tiers[${k}].rigMotion: 종이인형 동작 id(영문·숫자)`);
           if (y.bonus !== undefined) {
             const b = y.bonus as Record<string, unknown>;
             if (b.kind !== 'stagger' || !(typeof b.value === 'number' && b.value > 0)) errors.push(`families[${i}].tiers[${k}].bonus: { kind: stagger, value: 양수 }`);
@@ -656,6 +673,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       const fl = rm.floor as Record<string, unknown>;
       const okPt = (p: unknown) => Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'number' && n >= 0 && n <= 1);
       if (!isRec(fl) || typeof fl.aspect !== 'number' || !(fl.aspect > 0) || !Array.isArray(fl.poly) || fl.poly.length < 3 || !fl.poly.every(okPt)) errors.push('room.floor: { aspect: 가로÷세로, poly: [[x, y] ×3 이상, 0~1] } 이어야 한다');
+      else if (!sceneViewOk(fl.view)) errors.push('room.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
     const okPct = (p: unknown) => isRec(p) && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100;
     if (rm.characterFoot !== undefined && !okPct(rm.characterFoot)) errors.push('room.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
@@ -673,6 +691,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
         if (!(MARKET_SPOTS as readonly string[]).includes(k) || !ok) errors.push(`market.layout.${k}: 알 수 없는 자리이거나 { x, y } 장면 % 가 아니다`);
       }
       errors.push(...extrasErrors('market', mk.extras));
+      if (isRec(mk.floor) && !sceneViewOk((mk.floor as Record<string, unknown>).view)) errors.push('market.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
       const ex = mk.exit as Record<string, unknown> | undefined;
       if (ex !== undefined && !(isRec(ex) && typeof ex.x === 'number' && typeof ex.y === 'number' && ex.x >= 0 && ex.x <= 100 && ex.y >= 0 && ex.y <= 100)) errors.push('market.exit: { x, y } 장면 % (0~100) 이어야 한다');
     }
@@ -686,6 +705,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       for (const [k, v] of Object.entries((wm.layout ?? {}) as Record<string, unknown>)) if (!(WORLD_PLACES as readonly string[]).includes(k) || !okPct(v)) errors.push(`worldmap.layout.${k}: 알 수 없는 장소이거나 { x, y } 장면 % 가 아니다`);
       if (wm.characterFoot !== undefined && !okPct(wm.characterFoot)) errors.push('worldmap.characterFoot: { x, y } 장면 % (0~100) 이어야 한다');
       errors.push(...extrasErrors('worldmap', wm.extras));
+      if (isRec(wm.floor) && !sceneViewOk((wm.floor as Record<string, unknown>).view)) errors.push('worldmap.floor.view: { zoom: 1~4, x: 0~100, y: 0~100 } 이어야 한다');
     }
   }
   if (r.cosmetics !== undefined) {

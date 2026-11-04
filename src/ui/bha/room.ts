@@ -4,7 +4,7 @@ import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { ExtraProp, MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
 import { animOf, bindAnim } from './animPlayer';
 import { button, el, icon } from './dom';
-import { footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
+import { bgBox, footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 import { showToast } from './nest';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -260,6 +260,15 @@ export function layoutOnFloor(scene: HTMLElement, floor: RoomFloorConfig, entrie
   const size = sw > 0 && sh > 0 ? { w: sw, h: sh } : REF_SCENE;
   // C.182 UI 검수: 위에 알림 띠(빈사·쇠약 등)가 붙어 장면이 기준보다 낮아지면 물건 그림도 같은 비율로 줄인다 — 발 높이만 줄고 그림 크기는 그대로라 책장·상점이 겹쳤다
   scene.style.setProperty('--room-fit', String(Math.min(1, Math.max(0.6, size.h / REF_SCENE.h))));
+  // 배경 보기 (C.275, UI 배치 도구): 확대·위치가 있으면 배경 크기·자리를 바닥 계산과 같은 상자로 건다. 한 변만 정해 그림 비율은 그대로(찌그러지지 않게)
+  if (floor.view) {
+    const b = bgBox(size, floor.aspect, floor.view);
+    scene.style.backgroundSize = b.wide ? `${b.w}px auto` : `auto ${b.h}px`;
+    scene.style.backgroundPosition = `${floor.view.x}% ${floor.view.y}%`;
+  } else {
+    scene.style.removeProperty('background-size');
+    scene.style.removeProperty('background-position');
+  }
   for (const e of entries) {
     const measured = e.el.offsetHeight > 0;
     if (e.kind === 'prop') {

@@ -232,10 +232,12 @@
         },
         {
           "name": "세로",
+          "rigMotion": "skill",
           "multiplier": 2.2
         },
         {
           "name": "세로 오스큐라스",
+          "rigMotion": "skill2",
           "fx": "beam",
           "fxLook": "cero-oscuras",
           "multiplier": 3.6,
@@ -290,7 +292,11 @@
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
   "market": { "name": "시장" },
-  "worldmap": { "name": "웨코문도", "adventureName": "모험", "spaName": "온천" },
+  "worldmap": {
+    "name": "웨코문도", "adventureName": "모험", "spaName": "온천",
+    "sceneArt": "scene.worldmap.hollow",
+    "floor": { "aspect": 2, "poly": [[0, 0.16], [1, 0.16], [1, 1], [0, 1]], "view": { "zoom": 1.48, "x": 53.1, "y": 12.2 } }
+  },
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",
@@ -306,11 +312,11 @@
       "poly": [[0, 0.58], [0.25, 0.55], [0.5, 0.53], [0.75, 0.55], [1, 0.58], [1, 1], [0, 1]]
     },
     "layout": {
-      "book": { "x": 74.6, "y": 66.1, "scale": 1.04 },
+      "book": { "x": 71.4, "y": 68.8, "scale": 0.91 },
       "altar": { "x": 90, "y": 70, "scale": 0.68 },
-      "chest": { "x": 28.9, "y": 91.2, "scale": 0.8 },
+      "chest": { "x": 28.9, "y": 91.2, "scale": 0.86 },
       "outside": { "x": 9, "y": 78, "scale": 1 },
-      "rank": { "x": 71.2, "y": 91.2, "scale": 0.68 }
+      "rank": { "x": 83.7, "y": 87.1, "scale": 1.03 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {

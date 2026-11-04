@@ -1,0 +1,4607 @@
+{
+  "factions": {
+    "hollow": {
+      "probes": [
+        {
+          "label": "bha-room|home-intro|홈 안내 1 / 10|null|둥지|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "둥지",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "둥지",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "둥지",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "둥지",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 2 / 10|null|월드맵|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 3 / 10|null|책장|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 4 / 10|null|가방|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 5 / 10|null|상태|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 6 / 10|null|체력|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 7 / 10|null|돌보기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 8 / 10|null|대기 보상|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 9 / 10|null|더보기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 10 / 10|0|첫 모험|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "월드맵"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "월드맵",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room.bha-worldmap|home-intro|홈 안내 10 / 10|1|첫 모험|true",
+          "before": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-place=\"market\"]",
+            "lab": "시장",
+            "x": 487.6875,
+            "y": 113.2890625
+          },
+          "nudged": [
+            "모험"
+          ],
+          "afterTouch": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "모험",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-exp|first-run|1 / 1|null|첫 모험|false",
+          "before": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "가방",
+            "x": 613.8984375,
+            "y": 44
+          },
+          "nudged": [
+            "걷기 시작"
+          ],
+          "retried": true,
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "걷기 시작",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 2 / 5|null|막기 성공|false",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 3 / 5|null|위기|true",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 3 / 5",
+            "stage": null,
+            "title": "위기",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "조조"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 3 / 5",
+            "stage": null,
+            "title": "위기",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 3 / 5",
+            "stage": null,
+            "title": "위기",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "조조",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 3 / 5",
+            "stage": null,
+            "title": "위기",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 4 / 5|null|좋아!|false",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 4 / 5",
+            "stage": null,
+            "title": "좋아!",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 4 / 5",
+            "stage": null,
+            "title": "좋아!",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 4 / 5",
+            "stage": null,
+            "title": "좋아!",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 4 / 5",
+            "stage": null,
+            "title": "좋아!",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 5 / 5|null|체인|true",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "조조",
+            "조조",
+            "조조"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "조조",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|포식|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "포식",
+            "x": 152.5703125,
+            "y": 88.4921875
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 포식|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "포식",
+            "x": 152.5703125,
+            "y": 88.4921875
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 포식",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": null,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|둥지로|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "둥지로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": null,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "둥지로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "둥지로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 1 / 7|null|빈사|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 2 / 7|null|치료|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "가방"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "가방",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 7|null|치료|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "구급상자 ×4"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "구급상자 ×4",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|true",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "other": {
+            "sel": ".bha-itemmodal__close",
+            "lab": "닫기",
+            "x": 684.75,
+            "y": 75.53125
+          },
+          "nudged": [
+            "사용"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "사용",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 1,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 4 / 7|0|온천|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "월드맵"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "월드맵",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room.bha-worldmap|recover|회복 안내 4 / 7|1|온천|true",
+          "before": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-place=\"market\"]",
+            "lab": "시장",
+            "x": 487.6875,
+            "y": 113.2890625
+          },
+          "nudged": [
+            "온천"
+          ],
+          "afterTouch": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "온천",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-spa|recover|회복 안내 4 / 7|1|온천|true",
+          "before": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "캐릭터",
+            "x": 778.984375,
+            "y": 195.7578125
+          },
+          "nudged": [
+            "17 / 1158277"
+          ],
+          "afterTouch": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 5 / 7|null|쉬기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 6 / 7|0|먹이|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "먹이 주기"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "먹이 주기",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 6 / 7|1|먹이|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "짐승 고기 8개"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "짐승 고기 8개",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "먹이",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 7 / 7|null|회복 끝|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|first-run-room|1 / 1|null|다음 할 일|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        }
+      ],
+      "trace": [
+        "bha-room|home-intro|홈 안내 1 / 10|null|둥지|false",
+        "bha-room|home-intro|홈 안내 2 / 10|null|월드맵|false",
+        "bha-room|home-intro|홈 안내 3 / 10|null|책장|false",
+        "bha-room|home-intro|홈 안내 4 / 10|null|가방|false",
+        "bha-room|home-intro|홈 안내 5 / 10|null|상태|false",
+        "bha-room|home-intro|홈 안내 6 / 10|null|체력|false",
+        "bha-room|home-intro|홈 안내 7 / 10|null|돌보기|false",
+        "bha-room|home-intro|홈 안내 8 / 10|null|대기 보상|false",
+        "bha-room|home-intro|홈 안내 9 / 10|null|더보기|false",
+        "bha-room|home-intro|홈 안내 10 / 10|0|첫 모험|true",
+        "bha-room.bha-worldmap|home-intro|홈 안내 10 / 10|1|첫 모험|true",
+        "bha-app--fixed.bha-exp|first-run|1 / 1|null|첫 모험|false",
+        "none|script|튜토리얼 2 / 5|null|막기 성공|false",
+        "none|script|튜토리얼 3 / 5|null|위기|true",
+        "none|script|튜토리얼 4 / 5|null|좋아!|false",
+        "none|script|튜토리얼 5 / 5|null|체인|true",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|포식|false",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 포식|false",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다|false",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|둥지로|false",
+        "bha-room|recover|회복 안내 1 / 7|null|빈사|false",
+        "bha-room|recover|회복 안내 2 / 7|null|치료|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 7|null|치료|false",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|false",
+        "bha-room|recover|회복 안내 4 / 7|0|온천|true",
+        "bha-room.bha-worldmap|recover|회복 안내 4 / 7|1|온천|true",
+        "bha-spa|recover|회복 안내 4 / 7|1|온천|true",
+        "bha-room|recover|회복 안내 5 / 7|null|쉬기|false",
+        "bha-room|recover|회복 안내 6 / 7|0|먹이|true",
+        "bha-room|recover|회복 안내 6 / 7|1|먹이|true",
+        "bha-room|recover|회복 안내 6 / 7|0|먹이|true",
+        "bha-room|recover|회복 안내 7 / 7|null|회복 끝|false",
+        "bha-room|first-run-room|1 / 1|null|다음 할 일|false"
+      ],
+      "final": {
+        "screen": "bha-room",
+        "tut": null,
+        "step": null,
+        "stage": null,
+        "title": null,
+        "acting": false,
+        "allow": null,
+        "toasts": 0,
+        "dialogs": 0
+      }
+    },
+    "shinigami": {
+      "probes": [
+        {
+          "label": "bha-room|home-intro|홈 안내 1 / 10|null|대원실|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "대원실",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "대원실",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "대원실",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 1 / 10",
+            "stage": null,
+            "title": "대원실",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 2 / 10|null|월드맵|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 2 / 10",
+            "stage": null,
+            "title": "월드맵",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 3 / 10|null|책장|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 3 / 10",
+            "stage": null,
+            "title": "책장",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 4 / 10|null|가방|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 4 / 10",
+            "stage": null,
+            "title": "가방",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 5 / 10|null|상태|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 5 / 10",
+            "stage": null,
+            "title": "상태",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 6 / 10|null|체력|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 6 / 10",
+            "stage": null,
+            "title": "체력",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 7 / 10|null|돌보기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 7 / 10",
+            "stage": null,
+            "title": "돌보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 8 / 10|null|대기 보상|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 8 / 10",
+            "stage": null,
+            "title": "대기 보상",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 9 / 10|null|더보기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 9 / 10",
+            "stage": null,
+            "title": "더보기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|home-intro|홈 안내 10 / 10|0|첫 모험|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "월드맵"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "월드맵",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "0",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room.bha-worldmap|home-intro|홈 안내 10 / 10|1|첫 모험|true",
+          "before": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-place=\"market\"]",
+            "lab": "시장",
+            "x": 497.984375,
+            "y": 92.1640625
+          },
+          "nudged": [
+            "모험"
+          ],
+          "afterTouch": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "모험",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "home-intro",
+            "step": "홈 안내 10 / 10",
+            "stage": "1",
+            "title": "첫 모험",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"adventure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-exp|first-run|1 / 1|null|첫 모험|false",
+          "before": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "가방",
+            "x": 613.8984375,
+            "y": 44
+          },
+          "nudged": [
+            "걷기 시작"
+          ],
+          "retried": true,
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "걷기 시작",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-exp",
+            "tut": "first-run",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "첫 모험",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 2 / 5|null|막기 성공|false",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 2 / 5",
+            "stage": null,
+            "title": "막기 성공",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "none|script|튜토리얼 5 / 5|null|체인|true",
+          "before": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-sc=\"pause\"]",
+            "lab": "일시정지",
+            "x": 666,
+            "y": 41
+          },
+          "nudged": [
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "bha-v2cell bha-block",
+            "참참",
+            "참참",
+            "참참"
+          ],
+          "afterTouch": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "참참",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "none",
+            "tut": "script",
+            "step": "튜토리얼 5 / 5",
+            "stage": null,
+            "title": "체인",
+            "acting": true,
+            "allow": "[data-sc^=\"block.\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|정화 흡수|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "정화 흡수",
+            "x": 152.5703125,
+            "y": 88.4921875
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 정화 흡수|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "정화 흡수",
+            "x": 152.5703125,
+            "y": 88.4921875
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-tutabsorb",
+            "tut": "first-absorb",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "첫 정화 흡수",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": null,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 1 / 2",
+            "stage": "0",
+            "title": "겨우 쓰러뜨렸다",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|대원실로|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "대원실로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": null,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "대원실로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-absorbpage.bha-wound",
+            "tut": "wound",
+            "step": "튜토리얼 2 / 2",
+            "stage": "0",
+            "title": "대원실로",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 1 / 7|null|빈사|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 1 / 7",
+            "stage": null,
+            "title": "빈사",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 2 / 7|null|치료|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "가방"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "가방",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": true,
+            "allow": ".bha-prop--chest",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 7|null|치료|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 2 / 7",
+            "stage": null,
+            "title": "치료",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "구급상자 ×4"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "구급상자 ×4",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "0",
+            "title": "구급상자",
+            "acting": true,
+            "allow": "[data-item=\"med-cure\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|true",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "other": {
+            "sel": ".bha-itemmodal__close",
+            "lab": "닫기",
+            "x": 684.75,
+            "y": 75.53125
+          },
+          "nudged": [
+            "사용"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "사용",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": true,
+            "allow": ".bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]",
+            "toasts": 0,
+            "dialogs": 1
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|false",
+          "before": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 1,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "장비3",
+            "x": 375.34375,
+            "y": 46
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-chest-page",
+            "tut": "recover",
+            "step": "회복 안내 3 / 7",
+            "stage": "1",
+            "title": "구급상자",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 4 / 7|0|온천|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "월드맵"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "월드맵",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "0",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-prop--outside",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room.bha-worldmap|recover|회복 안내 4 / 7|1|온천|true",
+          "before": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[data-place=\"market\"]",
+            "lab": "시장",
+            "x": 497.984375,
+            "y": 92.1640625
+          },
+          "nudged": [
+            "온천"
+          ],
+          "afterTouch": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "온천",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room.bha-worldmap",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-spa|recover|회복 안내 4 / 7|1|온천|true",
+          "before": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "button",
+            "lab": "캐릭터",
+            "x": 776.5625,
+            "y": 195.7578125
+          },
+          "nudged": [
+            "17 / 1158277"
+          ],
+          "afterTouch": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-spa",
+            "tut": "recover",
+            "step": "회복 안내 4 / 7",
+            "stage": "1",
+            "title": "온천",
+            "acting": true,
+            "allow": ".bha-worldmap [data-place=\"spa\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 5 / 7|null|쉬기|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 5 / 7",
+            "stage": null,
+            "title": "쉬기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 6 / 7|0|식사|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "식사 / 영력 보급"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "식사 / 영력 보급",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "0",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__carebtn--feed",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 6 / 7|1|식사|true",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "도시락 8개"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "도시락 8개",
+              "inCard": false,
+              "isTarget": true
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 6 / 7",
+            "stage": "1",
+            "title": "식사",
+            "acting": true,
+            "allow": ".bha-homedock__tray--food .bha-homedock__food[data-food=\"basic\"]",
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|recover|회복 안내 7 / 7|null|회복 끝|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "recover",
+            "step": "회복 안내 7 / 7",
+            "stage": null,
+            "title": "회복 끝",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-room|first-run-room|1 / 1|null|다음 할 일|false",
+          "before": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "first-run-room",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "다음 할 일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        }
+      ],
+      "trace": [
+        "bha-room|home-intro|홈 안내 1 / 10|null|대원실|false",
+        "bha-room|home-intro|홈 안내 2 / 10|null|월드맵|false",
+        "bha-room|home-intro|홈 안내 3 / 10|null|책장|false",
+        "bha-room|home-intro|홈 안내 4 / 10|null|가방|false",
+        "bha-room|home-intro|홈 안내 5 / 10|null|상태|false",
+        "bha-room|home-intro|홈 안내 6 / 10|null|체력|false",
+        "bha-room|home-intro|홈 안내 7 / 10|null|돌보기|false",
+        "bha-room|home-intro|홈 안내 8 / 10|null|대기 보상|false",
+        "bha-room|home-intro|홈 안내 9 / 10|null|더보기|false",
+        "bha-room|home-intro|홈 안내 10 / 10|0|첫 모험|true",
+        "bha-room.bha-worldmap|home-intro|홈 안내 10 / 10|1|첫 모험|true",
+        "bha-app--fixed.bha-exp|first-run|1 / 1|null|첫 모험|false",
+        "none|script|튜토리얼 2 / 5|null|막기 성공|false",
+        "none|script|튜토리얼 5 / 5|null|체인|true",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|정화 흡수|false",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 정화 흡수|false",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다|false",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|대원실로|false",
+        "bha-room|recover|회복 안내 1 / 7|null|빈사|false",
+        "bha-room|recover|회복 안내 2 / 7|null|치료|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 7|null|치료|false",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|0|구급상자|true",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 3 / 7|1|구급상자|false",
+        "bha-room|recover|회복 안내 4 / 7|0|온천|true",
+        "bha-room.bha-worldmap|recover|회복 안내 4 / 7|1|온천|true",
+        "bha-spa|recover|회복 안내 4 / 7|1|온천|true",
+        "bha-room|recover|회복 안내 5 / 7|null|쉬기|false",
+        "bha-room|recover|회복 안내 6 / 7|0|식사|true",
+        "bha-room|recover|회복 안내 6 / 7|1|식사|true",
+        "bha-room|recover|회복 안내 6 / 7|0|식사|true",
+        "bha-room|recover|회복 안내 7 / 7|null|회복 끝|false",
+        "bha-room|first-run-room|1 / 1|null|다음 할 일|false"
+      ],
+      "final": {
+        "screen": "bha-room",
+        "tut": null,
+        "step": null,
+        "stage": null,
+        "title": null,
+        "acting": false,
+        "allow": null,
+        "toasts": 0,
+        "dialogs": 0
+      }
+    }
+  },
+  "errors": [],
+  "shots": [
+    "hollow-1-home-intro-touch-other.png",
+    "hollow-2-worldmap-adventure.png",
+    "hollow-3-first-run-guide.png",
+    "hollow-4-first-battle.png",
+    "hollow-5-spa-way.png",
+    "shinigami-1-home-intro-touch-other.png",
+    "shinigami-2-worldmap-adventure.png",
+    "shinigami-3-first-run-guide.png",
+    "shinigami-4-first-battle.png",
+    "shinigami-5-spa-way.png"
+  ],
+  "summary": {
+    "probes": 66,
+    "ok": 66,
+    "failed": []
+  }
+}

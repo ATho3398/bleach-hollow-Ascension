@@ -38,7 +38,7 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
     for (const f of FACTIONS) {
       const w = worldMapOf(f);
       expect(w.places).toEqual({ home: f.nestName, market: '시장', training: '수련장', adventure: '모험', tower: '도전의 탑', spa: '온천' }); // 온천 = C.228, 수련장 = C.236
-      expect(w.sceneArt).toBe('scene.worldmap');
+      expect(w.sceneArt).toBe(`scene.worldmap.${f.id}`); // C.278: 종족별 월드맵 배경 (배치 도구로 올린 그림)
     }
     expect(worldMapOf(getFaction('hollow')).places.home).toBe('둥지');
     expect(worldMapOf(getFaction('shinigami')).places.home).toBe('대원실');

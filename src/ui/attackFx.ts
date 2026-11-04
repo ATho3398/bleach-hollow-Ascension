@@ -2,11 +2,9 @@
 // 위쪽은 DOM 이 없는 순수 함수(사건 → 강도 단계, 연출 큐, 애니메이션 계획)라 단위 테스트한다 (tests/attackfx.test.ts).
 // 아래쪽 attackFx() 가 Web Animations 로 그림 한 장을 움직인다. 엔진 틱·결과는 건드리지 않고, 사건이 났을 때 연출만 얹는다.
 import type { CombatEvent } from '../engine/combat';
-import type { AttackFxKind, FamilyMotionKind, FamilyPixelFx } from '../engine/faction';
+import type { AttackFxKind, FamilyMotionKind } from '../engine/faction';
 import type { AnimAction } from '../data/art/anim';
 import type { AnimPlayer } from './bha/animPlayer';
-import { NORMAL_ELEMENT } from '../data/elements';
-import { mountPixelFx, pixelFxKeyframes, sheetDurationMs, type PixelFxSheet } from './bha/pixelFx';
 import {
   ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY, HIT_FLASH_MIN_MS,
   GUARDED_HIT_RATIO, REACH_RATIO, SKILL_NAME_MS, type AttackFxLevel, type AttackTier, type FamilyMotion,
@@ -33,8 +31,8 @@ export interface AttackCue {
   look?: string;
   /** 계열 몸동작 (GDD 118장 2, 종족 설정 families[].motion): 종이인형은 이 동작 묶음에서 고른다. 없으면 특수 동작 그대로 */
   motion?: FamilyMotionKind;
-  /** 맞는 자국 도트 시트 (GDD 180장): 이름 = 종족 설정 families[].pixelFx.sheet + '-' + 블록 속성 id, 자리·크기·각도. 시트가 준비 안 됐으면 SVG 자국 */
-  pixel?: { name: string; place: FamilyPixelFx };
+  /** 이 단계 종이인형 동작 고정 (GDD 181장, 종족 설정 tiers[].rigMotion): 있으면 그 동작 하나만 */
+  rigMotion?: string;
   /** 즉발 (GDD 117장 3, 블록 공격): 타격(맞음 반응·자국)을 맨 앞에 보이고 몸 움직임은 뒤따른다. 재생 중인 기본 공격 연출을 기다리지 않는다 */
   instant?: boolean;
   /** 각본 마무리 체인 (GDD 146장): 즉발처럼 기다리지 않고 바로 시작하되, 동작을 처음부터(휘두르기 → 스킬 → 타격) 보인다 */
@@ -44,7 +42,7 @@ export interface AttackCue {
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
-export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null; motion?: FamilyMotionKind | null; pixel?: FamilyPixelFx | null };
+export type FamilyFxSpec = AttackFxKind | { fx: AttackFxKind; look?: string | null; motion?: FamilyMotionKind | null; rigMotion?: string | null };
 
 /** 단계의 세기 순위 (클수록 세다) */
 export const tierRank = (t: AttackTier): number => ATTACK_TIER_ORDER.indexOf(t);
@@ -76,7 +74,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
         cue.fam = e.family!;
         if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
         if (typeof spec === 'object' && spec?.motion) cue.motion = spec.motion;
-        if (typeof spec === 'object' && spec?.pixel) cue.pixel = { name: `${spec.pixel.sheet}-${e.element ?? NORMAL_ELEMENT}`, place: spec.pixel };
+        if (typeof spec === 'object' && spec?.rigMotion) cue.rigMotion = spec.rigMotion;
       }
       return cue;
     }
@@ -371,8 +369,6 @@ export interface AttackFxOptions {
   familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined;
   /** 사건 → 크게 띄울 기술 이름 (없으면 null) */
   nameOf?: (e: CombatEvent) => { name: string; ult?: boolean } | null;
-  /** 이름 → 이미 받아 둔 도트 시트 (GDD 180장, pixelFx.ts readyPixelFx). 없으면 늘 SVG 자국 */
-  pixelSheet?: (name: string) => PixelFxSheet | null;
   /** 3단계 계열 공격의 화면 흔들림 (설정에서 흔들림을 끄면 호출하는 쪽이 무시한다) */
   shake?: () => void;
 }
@@ -506,9 +502,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   };
 
   /** 계열 타격 자국 하나 (종류별 모양·움직임). dir = 공격 방향 */
-  const mark = (layer: HTMLElement, kind: AttackFxKind, fam: string | undefined, at: { x: number; y: number; h: number }, scale: number, delay: number, dir: 1 | -1, ms: number, i: number, pixel?: AttackCue['pixel'], big = false): void => {
-    const sheet = pixel ? opts.pixelSheet?.(pixel.name) ?? null : null;
-    if (sheet && pixel) return pixelMark(layer, sheet, pixel.place, at, delay, dir, i, big);
+  const mark = (layer: HTMLElement, kind: AttackFxKind, fam: string | undefined, at: { x: number; y: number; h: number }, scale: number, delay: number, dir: 1 | -1, ms: number, i: number): void => {
     const size = at.h * 0.62 * scale;
     const flip = dir < 0 ? -1 : 1;
     if (kind === 'bite') {
@@ -548,20 +542,6 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         { offset: 1, opacity: 0, transform: 'scale(1.35)' },
       ];
     spawn(layer, `bha-afx--${kind}`, MARK_SVG[kind], at.x, at.y, size, size, frames, ms, delay, fam);
-  };
-
-  /** 도트 시트 자국 (GDD 180장): 맞는 몸 가운데 + 도구에서 맞춘 자리(dx·dy)·크기·각도, 공격 방향으로, 3단계 마지막은 bigScale, 연타 짝수 번째는 위아래 뒤집기(altFlip).
-   *  track() 한 키프레임이라 배속·일시정지·지우기를 다른 연출과 같이 따른다 */
-  const pixelMark = (layer: HTMLElement, s: PixelFxSheet, p: FamilyPixelFx, at: { x: number; y: number; h: number }, delay: number, dir: 1 | -1, i: number, big: boolean): void => {
-    const px = big ? p.bigScale : p.scale;
-    const n = mountPixelFx(layer, s, { cx: at.x + p.dx, cy: at.y + p.dy, scale: px, flipX: dir < 0, flipY: p.altFlip && i % 2 === 1, angle: p.angle });
-    n.dataset.side = spawnSide;
-    const ms = sheetDurationMs(s);
-    const a = track(n.animate(pixelFxKeyframes(s, px), { duration: ms, delay, fill: 'forwards' }));
-    const rm = () => n.remove();
-    a.addEventListener('finish', rm);
-    a.addEventListener('cancel', rm);
-    window.setTimeout(rm, (ms + delay) / rate + FX_SAFETY_MS * 2);
   };
 
   /** 투사체(탄)·광선(귀): 쏘는 쪽에서 맞는 쪽까지 */
@@ -659,7 +639,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
     const quick = !!cue.instant && !cue.windup; // 즉발: 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
-    const clipPlay = act ? from.anim!.play(act, { fromHit: quick, motion: cue.motion }) : null;
+    const clipPlay = act ? from.anim!.play(act, { fromHit: quick, motion: cue.motion, rigMotion: cue.rigMotion }) : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
       const at = clipPlay?.hitAtMs ?? 0;
@@ -712,7 +692,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
           const castScale = hits[hits.length - 1]!.scale;
           for (const [i, h] of hits.entries()) missile(layer, cue.fx, famId, src, tgt, Math.max(0, h.atMs - motion.travelMs), motion.travelMs, i === hits.length - 1 ? castScale : 1);
         }
-        for (const [i, h] of hits.entries()) mark(layer, cue.fx, famId, tgt, h.scale, h.atMs, from.dir, motion.markMs, i, cue.pixel, stage >= 3 && i === hits.length - 1);
+        for (const [i, h] of hits.entries()) mark(layer, cue.fx, famId, tgt, h.scale, h.atMs, from.dir, motion.markMs, i);
       }
       spawnLook = null;
       for (const h of hits) hit(to, level, cue.guarded, h.atMs);

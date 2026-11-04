@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>걷기</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.pt{width:18px;height:18px;border-radius:var(--bha-r-xs);background:var(--c, var(--bha-bg-2));box-shadow:inset 0 0 0 1px rgb(0 0 0 / .4)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 걷기</b> — 초점: [가방]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-scene">
+              <div class="bha-scene-bg" data-label="층별로 흐르는 배경 그림 자리 (먼 층 → 가까운 층)" style="background: linear-gradient(var(--bha-bg-1) 0 30%, var(--bha-scene-wall) 30% 56%, var(--bha-scene-floor) 56% 82%, var(--bha-bg-3) 82% 100%)"></div>
+              <div style="position: absolute; left: 0; right: 0; top: 30%; height: 2px; background: rgb(0 0 0 / 0.25)"></div>
+              <div class="bha-art" style="position: absolute; left: 8%; top: 46%; width: 12%; height: 36%; z-index: 2; opacity: 0.85"><i class="bha-i bha-i-blob"></i></div>
+              <span class="bha-plate" style="position: absolute; left: 7%; top: 40%; z-index: 3"><i class="bha-i bha-i-skull" style="width: 14px; height: 14px; color: var(--bha-attack)"></i>다가온다</span>
+              <div class="bha-art" style="position: absolute; left: 56%; top: 40%; width: 16%; height: 46%; z-index: 2; transform: scaleX(-1)"><i class="bha-i bha-i-figure"></i></div>
+              <div style="position: absolute; left: 10px; bottom: 8px; display: flex; align-items: center; gap: 8px; z-index: 4">
+                <span class="bha-label">길</span>
+                <div style="display: flex; gap: 3px">
+                  <span class="pt" style="--c: var(--bha-text-3)"></span><span class="pt" style="--c: var(--bha-tile-prey)"></span><span class="pt" style="--c: var(--bha-tile-elite); box-shadow: 0 0 0 2px var(--bha-focus)"></span><span class="pt" style="--c: var(--bha-tile-rest)"></span><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="pt"></span><span class="pt"></span>
+                </div>
+              </div>
+            </div>
+            <div class="bha-head" style="background: rgb(10 8 7 / 0.72); box-shadow: inset 0 -1px 0 var(--bha-line-1)">
+              <span class="bha-chip" style="--c: var(--bha-sp)"><i class="bha-i bha-i-swap"></i>바퀴 <span class="bha-num" style="font-weight: 400">2</span></span>
+              <div class="bha-hp" style="width: 150px; --c: var(--bha-player-hp)"><div class="bha-hp-bar" style="height: 12px"><i style="width: 70%"></i></div></div>
+              <span class="bha-num" style="font-size: 14px">148<span style="color: var(--bha-text-3); font-size: 12px">/212</span></span>
+              <span class="bha-chip" style="--c: var(--bha-cond)"><i class="bha-i bha-i-bolt"></i><span class="bha-chip-meter"><i style="width: 60%"></i></span></span>
+              <span class="bha-grow"></span>
+              <button class="bha-btn bha-btn--sm is-focus"><i class="bha-i bha-i-bag"></i>가방</button>
+              <button class="bha-btn bha-btn--sm"><i class="bha-i bha-i-door"></i>귀환하기</button>
+              <button class="bha-btn bha-btn--icon bha-btn--sm bha-btn--ghost" aria-label="도움말"><i class="bha-i bha-i-help"></i></button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>위 상태 줄 한 줄(바퀴 · 체력 · 컨디션 | 가방 · 귀환하기 · 도움말)로 묶고, 버튼은 36px로 키워 늘 같은 자리에 둔다</li>
+      <li>캐릭터는 왼쪽을 보고 오른쪽 가운데에, 적·휴식 장소는 왼쪽 앞에서 다가오며 '다가온다' 이름표가 먼저 뜬다</li>
+      <li>아래 왼쪽에 작은 길 줄을 두어 지금 몇 번째 타일인지(밝은 테두리) 한눈에 본다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [{ k: 'hollow', race: '호로' }, { k: 'shinigami', race: '사신' }] };
+  }
+}
+</script>
+</body>
+</html>

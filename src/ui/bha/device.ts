@@ -314,6 +314,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   let pending: { mark: FocusMark; until: number } | null = null;
   let extra: HTMLElement[] = [];
   const RESTORE_MS = 800;
+  /** 떠 있는 튜토리얼 안내 레이어 (data-tut-guard, GDD 180장 1) — 위에 다른 창이 있어도 찾는다 */
+  const tutLayer = () => [...layers].reverse().find((l) => l.el.isConnected && l.el.hasAttribute('data-tut-guard'));
   /** 전투 커서 중: ▲▼ 가 못 쓰는 대상을 건너뛴다 (GDD 122장 3) */
   let battle = false;
 
@@ -363,12 +365,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     let next: SelectItem[];
     // 각본 전투 카드 (GDD 123장 5, C.199): data-dev-only 가 있으면 그 선택자에 맞는 전투 대상(막기 버튼·블록 칸)만
     const only = passAny ? layer!.el.dataset.devOnly : undefined;
-    if (pass && only) next = scanItems(battleEl!, lcd).filter((i) => i.el.matches(only));
+    if (pass && only) next = [...scanItems(battleEl!, lcd).filter((i) => !!i.el.closest(only)), ...scanItems(layer!.el, lcd)];
     else if (pass) next = [...scanItems(battleEl!, lcd), ...scanItems(layer!.el, lcd)];
     else if (passAny) {
       // 전투 밖 튜토리얼 실제 조작 카드 (GDD 129-2 2, C.206): 카드를 연 채 뒤 화면 대상(data-dev-only 에 맞는 것)을 고르고, 카드 버튼([다음])도 같이
       const base = explicit?.scope.isConnected ? explicit.items.filter((i) => i.el.isConnected && visible(i.el)) : scanItems(view, lcd);
-      next = [...base.filter((i) => !layer!.el.contains(i.el) && (!only || i.el.matches(only))), ...scanItems(layer!.el, lcd)];
+      next = [...base.filter((i) => !layer!.el.contains(i.el) && (!only || !!i.el.closest(only))), ...scanItems(layer!.el, lcd)];
     }
     else if (layer) next = scanItems(layer.el, lcd);
     else if (ov) next = scanItems(ov, lcd);
@@ -380,6 +382,12 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
     }
     else next = scanItems(view, lcd);
     if (!layer && !ov && !battle && extra.length > 0) next = [...next, ...extra.filter(visible).map((e) => ({ el: e }))];
+    // 튜토리얼 입력 막기 (GDD 180장 1): 안내가 떠 있으면 위에 다른 창(물건 상세 창 등)이 떠도 초점은 안내 창 버튼과 지금 누를 대상(data-dev-only)만
+    const tut = tutLayer();
+    if (tut) {
+      const allow = tut.el.hasAttribute('data-dev-pass') ? tut.el.dataset.devOnly : undefined;
+      next = next.filter((i) => tut.el.contains(i.el) || (!!allow && !!i.el.closest(allow)));
+    }
     items = next;
     if (next.length > 0 && !prev.some((i) => i.el.isConnected && next.some((n) => n.el === i.el))) {
       // 새 화면(이전 항목이 하나도 안 남음): 키보드 초점이 이미 있는 항목이 있으면 그것, 없으면 첫 항목
@@ -451,7 +459,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   };
   const mo = new MutationObserver(schedule);
   // hidden·disabled 가 바뀌어도(진화 연출 줄 → 결과 전환, 비활성 버튼) 항목을 다시 센다 (class 는 보지 않는다: 하이라이트 자신의 변화로 되돌아오지 않게)
-  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled', 'data-dev-pass', 'data-dev-off', 'data-dev-only'] });
+  mo.observe(lcd, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'disabled', 'data-dev-pass', 'data-dev-off', 'data-dev-only', 'data-tut-guard'] });
   // 창 크기·방향이 바뀌면 화면 속 선택 항목을 다시 센다 (T-2, 세로 회전 출력은 T-3)
   window.addEventListener('resize', schedule);
   // C.139 (GDD 88장 9): 키보드 Tab 으로 초점이 옮겨 가면(모달 초점 순환) 선택도 따라간다 — 하이라이트가 둘로 갈라지지 않게.
@@ -517,7 +525,8 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   }
 
   function cancel(): void {
-    const layer = layers[layers.length - 1];
+    // 튜토리얼 중 뒤로 = 안내가 받는다(대상 깜빡임만) — 위에 뜬 물건 창도 닫지 않는다 (GDD 180장 1)
+    const layer = tutLayer() ?? layers[layers.length - 1];
     if (layer) layer.onCancel();
     else if (!runCancelHooks(null, true)) opts.onCancel(); // 펼침 목록 같은 것이 열려 있으면 그것만 닫는다 (C.153)
     schedule();
@@ -525,7 +534,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
 
   /** 키보드 취소: 화면이 고른 것(배치판의 선택)을 먼저 풀어야 하면 그것만 하고 뒤로 가지 않는다 */
   function keyCancel(): void {
-    if (runCancelHooks(layers[layers.length - 1]?.el ?? null)) return;
+    if (!tutLayer() && runCancelHooks(layers[layers.length - 1]?.el ?? null)) return;
     cancel();
   }
 
@@ -569,7 +578,7 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
           else if (action === 'next') move(1);
           else if (action === 'confirm') confirm();
           else if (action === 'cancel') keyCancel();
-          else if (!isNavAction(action)) runAction(layers[layers.length - 1]?.el ?? view, action);
+          else if (!isNavAction(action) && !tutLayer()) runAction(layers[layers.length - 1]?.el ?? view, action); // 튜토리얼 중엔 단축키로 다른 버튼을 누르지 않는다 (GDD 180장 1)
           schedule();
         }
         heldKeys.add(e.code);

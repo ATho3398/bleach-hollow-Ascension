@@ -27,7 +27,8 @@
 .bha-ltool__frame > .bha-dev { position: absolute; inset: 0; width: 100%; height: 100%; }
 .bha-ltool__frame .bha-dev__btn { pointer-events: none; }
 
-/* 장면 안: 끌기(스크롤 막음) · 고른 물건 · 바닥 윤곽 */
+/* 장면 안: 끌기(스크롤 막음) · 고른 물건 · 바닥 윤곽. 배경 맞추기(is-bg)면 장면 빈 곳 끌기 = 배경 이동 */
+.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }
 .bha-ltool .bha-room__scene .bha-prop { touch-action: none; cursor: grab; }
 .bha-ltool .bha-room__scene .bha-prop.is-dragging { cursor: grabbing; }
 .bha-ltool .bha-prop.is-picked > .bha-prop__shape { outline: 2px dashed var(--bha-focus); outline-offset: 2px; border-radius: var(--bha-r-sm); }

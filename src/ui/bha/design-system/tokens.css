@@ -236,6 +236,11 @@
   --bha-shadow-1: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px rgb(0 0 0 / 0.5);
   --bha-shadow-2: 0 6px 18px rgb(0 0 0 / 0.55);
   --bha-shadow-3: 0 14px 40px rgb(0 0 0 / 0.7);
+  /* 그림 윤곽 (GDD 182장 4): 배경 위 그림(월드맵 장소)을 그림 모양대로 — 어두운 외곽선(4방향 1px 고리 두 번 = 2px) + 아래 그림자. 흐린 빛·네모 상자 아님 (178장 3) */
+  --bha-art-edge: rgb(0 0 0 / 0.9);
+  --bha-art-drop: rgb(0 0 0 / 0.6);
+  --bha-art-ring: drop-shadow(1px 0 0 var(--bha-art-edge)) drop-shadow(-1px 0 0 var(--bha-art-edge)) drop-shadow(0 1px 0 var(--bha-art-edge)) drop-shadow(0 -1px 0 var(--bha-art-edge));
+  --bha-art-outline: var(--bha-art-ring) var(--bha-art-ring) drop-shadow(0 4px 1px var(--bha-art-drop)); /* 1px 고리를 두 번 = 모서리까지 2px 외곽선 */
   --bha-glow-sp: 0 0 14px rgb(217 164 65 / 0.55);
   --bha-glow-risk: 0 0 16px rgb(255 79 216 / 0.55);
   --bha-glow-chain2: 0 0 10px rgb(255 210 77 / 0.45);

@@ -13,17 +13,19 @@ import { worldMapView } from '../worldMapView';
 import type { Device } from './device';
 import { button, el, icon } from './dom';
 import {
-  addExtra, applyLooks, applySceneEdit, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft,
+  addExtra, applyLooks, applySceneEdit, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, pruneLooks, removeExtra, resolveScene, saveDraft,
   type LayoutDraft, type LayoutItem, type LayoutSceneDef, type ResolvedScene,
 } from './layoutDraft';
 import { layoutOnFloor, PROP_ICON } from './room';
-import { floorPolyPx } from './roomFloor';
+import { bgBox, floorPolyPx } from './roomFloor';
+import { SCENE_VIEW_ZOOM, type RoomFloorConfig, type SceneView } from '../../engine/faction';
 import { applyTheme } from './theme';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 const FRAME_W = 844;
 const FRAME_H = 390;
 const noop = () => {};
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /** 장면 종류 → 실제 게임 화면 그리기 (보기용 세이브·빈 처리기). 새 장면 종류는 여기에 한 줄 */
 const RENDER: Record<string, (dev: Device, f: FactionConfig, save: SaveData) => void> = {
@@ -94,6 +96,40 @@ function readFile(file: File): Promise<string> {
   });
 }
 
+/** 이 크기(바이트)까지는 올린 파일 그대로. 넘으면 webp 로 다시 담는다 (C.272) */
+export const UPLOAD_KEEP_BYTES = 600 * 1024;
+/** 다시 담을 때 긴 변 최대 (배경 = 기기 LCD 의 약 2배, 물건 = 그림 칸 넉넉히) */
+export const UPLOAD_MAX_SIDE = { bg: 2048, prop: 1024 } as const;
+
+/**
+ * 올린 그림 → 저장할 data URL (C.272): 큰 파일(폰 사진·큰 png)은 그대로 담으면 이 브라우저 저장 공간(약 5MB)이 차고,
+ * 화면에도 안 걸린다(배경이 까맣게). 그래서 일정 크기를 넘으면 긴 변을 줄이고 webp(품질 0.92)로 다시 담는다 — 더 커지면 원본 그대로
+ */
+async function prepareImage(file: File, kind: keyof typeof UPLOAD_MAX_SIDE): Promise<{ url: string; note: string }> {
+  const kb = (n: number) => `${Math.round(n / 1024)}KB`;
+  const orig = await readFile(file);
+  if (file.size <= UPLOAD_KEEP_BYTES) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+  try {
+    const img = new Image();
+    img.src = orig;
+    await img.decode();
+    const max = UPLOAD_MAX_SIDE[kind];
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = el('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const g = c.getContext('2d');
+    if (!g) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const webp = c.toDataURL('image/webp', 0.92);
+    if (!webp.startsWith('data:image/webp') || webp.length >= orig.length) return { url: orig, note: `${file.name} (${kb(file.size)})` };
+    const bytes = Math.round((webp.length - webp.indexOf(',') - 1) * 0.75);
+    return { url: webp, note: `${file.name} — 커서 줄여 담음 ${kb(file.size)} → ${kb(bytes)} (${c.width}×${c.height} webp)` };
+  } catch {
+    return { url: orig, note: `${file.name} (${kb(file.size)})` };
+  }
+}
+
 /** 파일 고르기 (accept 예: image/png,image/webp) */
 function pickFile(accept: string): Promise<File | null> {
   return new Promise((ok) => {
@@ -109,10 +145,15 @@ export function mountLayoutTool(host: HTMLElement): void {
   document.title = 'UI 배치 도구 · 블리치 할로우 어센션';
   const scenes = layoutScenes(FACTIONS);
   let draft: LayoutDraft = loadDraft();
+  // 옛 도구가 남긴, 지금 어느 물건도 안 쓰는 그림(예: 둥지·대원실이 함께 덮던 공통 키 prop.home) 정리 (C.272)
+  const pruned = pruneLooks(draft, FACTIONS);
+  if (pruned.length) saveDraft(draft);
   let undo: string | null = null;
   let sceneId = scenes[0]!.id;
   let picked: string | null = null;
   let showIcons = false;
+  /** 배경 맞추기 칸 (C.275): 켜면 편집 칸 = 배경 확대·위치, 장면 빈 곳을 끌면 배경이 움직인다 */
+  let bgMode = false;
   let resolved: ResolvedScene | null = null;
 
   const root = el('div', 'bha-ltool');
@@ -198,6 +239,108 @@ export function mountLayoutTool(host: HTMLElement): void {
       b.classList.toggle('is-picked', key === picked);
       bindDrag(scene, b, key);
     }
+    bindPan(scene);
+  }
+
+  /** 지금 배경 보기 (편집 > 게임 데이터 > 기본) */
+  const viewNow = (): SceneView => ({ zoom: 1, x: 50, y: 50, ...resolved?.floor.view });
+
+  /** 배경 보기를 장면에 바로 건다 (끄는 동안 — 저장·다시 그리기 없이): 배경 크기·자리 + 바닥 윤곽 */
+  function liveView(scene: HTMLElement, view: SceneView): void {
+    if (!resolved) return;
+    const floor: RoomFloorConfig = { ...resolved.floor, view };
+    const size = { w: scene.clientWidth, h: scene.clientHeight };
+    const b = bgBox(size, floor.aspect, view);
+    scene.style.backgroundSize = b.wide ? `${b.w}px auto` : `auto ${b.h}px`;
+    scene.style.backgroundPosition = `${view.x}% ${view.y}%`;
+    scene.querySelector('.bha-ltool__floor polygon')?.setAttribute('points', floorPolyPx(floor, size).map((p) => p.join(',')).join(' '));
+  }
+
+  /** 배경 끌기 (배경 맞추기 켰을 때, 장면 빈 곳): 손가락이 움직인 만큼 그림이 따라온다. 놓으면 저장 */
+  function bindPan(scene: HTMLElement): void {
+    scene.addEventListener('pointerdown', (e) => {
+      if (!bgMode || !resolved || (e.target as HTMLElement).closest('.bha-prop')) return;
+      e.preventDefault();
+      const r = scene.getBoundingClientRect();
+      const k = scene.clientWidth / r.width; // 화면 px → 장면 px (기기 틀 축소)
+      const size = { w: scene.clientWidth, h: scene.clientHeight };
+      const from = viewNow();
+      const box = bgBox(size, resolved.floor.aspect, from);
+      const start = { x: e.clientX, y: e.clientY };
+      let view = from;
+      scene.setPointerCapture(e.pointerId);
+      const move = (ev: PointerEvent) => {
+        // left = (장면 − 그림) × x% → 그림을 dx 만큼 옮기려면 x% 를 dx / (장면 − 그림) 만큼
+        const spanX = size.w - box.w;
+        const spanY = size.h - box.h;
+        const dx = (ev.clientX - start.x) * k;
+        const dy = (ev.clientY - start.y) * k;
+        view = {
+          zoom: from.zoom,
+          x: Math.abs(spanX) < 0.5 ? from.x : clamp(from.x + (dx / spanX) * 100, 0, 100),
+          y: Math.abs(spanY) < 0.5 ? from.y : clamp(from.y + (dy / spanY) * 100, 0, 100),
+        };
+        liveView(scene, view);
+        say(`배경 위치 x ${view.x.toFixed(1)} · y ${view.y.toFixed(1)}`);
+      };
+      const up = () => {
+        scene.removeEventListener('pointermove', move);
+        scene.removeEventListener('pointerup', up);
+        scene.removeEventListener('pointercancel', up);
+        if (view !== from) setView(view, `배경 위치 x ${view.x.toFixed(1)} · y ${view.y.toFixed(1)}`);
+      };
+      scene.addEventListener('pointermove', move);
+      scene.addEventListener('pointerup', up);
+      scene.addEventListener('pointercancel', up);
+    });
+  }
+
+  /** 배경 보기 저장 (소수 1자리·확대 2자리) */
+  function setView(v: SceneView, msg: string): void {
+    const view = { zoom: Math.round(clamp(v.zoom, SCENE_VIEW_ZOOM.min, SCENE_VIEW_ZOOM.max) * 100) / 100, x: Math.round(clamp(v.x, 0, 100) * 10) / 10, y: Math.round(clamp(v.y, 0, 100) * 10) / 10 };
+    commit(() => ((draft.scenes[sceneId] ??= emptyScene()).bgView = view), msg);
+  }
+
+  /** 배경 맞추기 칸: 확대 · 가로 위치 · 세로 위치 슬라이더 + 처음으로 */
+  function drawBgPanel(): void {
+    const scene = () => dev.view.querySelector<HTMLElement>('.bha-room__scene');
+    const v = viewNow();
+    const rows: HTMLElement[] = [];
+    const row = (...n: (Node | string)[]) => {
+      const r = el('div', 'bha-ltool__row');
+      r.append(...n);
+      rows.push(r);
+    };
+    const range = (label: string, key: keyof SceneView, min: number, max: number, step: number, fmt: (n: number) => string) => {
+      const out = el('output', 'bha-ltool__value', fmt(v[key]));
+      const input = el('input', 'bha-ltool__range');
+      input.type = 'range';
+      input.min = String(min);
+      input.max = String(max);
+      input.step = String(step);
+      input.value = String(v[key]);
+      input.setAttribute('aria-label', label);
+      input.dataset.bgView = key;
+      const val = (): SceneView => ({ ...viewNow(), [key]: Number(input.value) });
+      input.oninput = () => {
+        out.textContent = fmt(Number(input.value));
+        const s = scene();
+        if (s) liveView(s, val());
+      };
+      input.onchange = () => setView(val(), `배경 ${label} ${fmt(Number(input.value))}`);
+      row(el('span', 'bha-ltool__label', label), input, out);
+    };
+    row(el('strong', 'bha-ltool__label', '배경 맞추기'), el('span', 'bha-ltool__note', '장면 빈 곳을 손가락으로 끌면 배경이 움직인다. 바닥(점선)도 그림을 따라간다'));
+    range('확대', 'zoom', SCENE_VIEW_ZOOM.min, SCENE_VIEW_ZOOM.max, 0.01, (n) => `×${n.toFixed(2)}`);
+    range('가로', 'x', 0, 100, 0.1, (n) => n.toFixed(1));
+    range('세로', 'y', 0, 100, 0.1, (n) => n.toFixed(1));
+    const ed = draft.scenes[sceneId];
+    row(
+      button({ label: '배경 보기 처음으로', icon: 'i-return', size: 'small', disabled: !ed?.bgView, onClick: () => commit(() => delete draft.scenes[sceneId]!.bgView, '배경 보기를 처음 값으로') }),
+      button({ label: '닫기', icon: 'i-close', size: 'small', onClick: () => { bgMode = false; render(); } }),
+    );
+    row(el('span', 'bha-ltool__note', '확대 1 = 장면을 꽉 채우는 크기(원래), 가로·세로 50 = 가운데. 바뀐 값은 게임 데이터 floor.view 로 반영된다'));
+    panel.replaceChildren(...rows);
   }
 
   /** 자리표시 아이콘 표(room.ts PROP_ICON): 그릴 때마다 원래 값으로 되돌린 뒤 편집본을 건다 — 안 그러면 '원래 그림'을 눌러도 고른 아이콘이 남는다 */
@@ -215,6 +358,7 @@ export function mountLayoutTool(host: HTMLElement): void {
       e.preventDefault();
       if (picked !== key) {
         picked = key;
+        bgMode = false;
         for (const o of scene.querySelectorAll('.bha-prop.is-picked')) o.classList.remove('is-picked');
         b.classList.add('is-picked');
         drawPanel();
@@ -264,7 +408,7 @@ export function mountLayoutTool(host: HTMLElement): void {
   function drawItems(): void {
     items.replaceChildren(
       ...(resolved?.items ?? []).map((i) => {
-        const b = button({ label: i.name, icon: i.icon, size: 'small', on: i.key === picked, onClick: () => { picked = i.key; render(); } });
+        const b = button({ label: i.name, icon: i.icon, size: 'small', on: i.key === picked, onClick: () => { picked = i.key; bgMode = false; render(); } });
         if (i.spot.hidden) b.classList.add('is-off');
         if (i.extra) b.dataset.extra = '';
         return b;
@@ -274,6 +418,7 @@ export function mountLayoutTool(host: HTMLElement): void {
 
   // ── 고른 물건 편집 칸 ──
   function drawPanel(): void {
+    if (bgMode) return drawBgPanel();
     const i = resolved?.items.find((x) => x.key === picked);
     if (!i) {
       panel.replaceChildren(el('p', 'bha-ltool__note', '물건을 손가락으로 누르면 고르고, 끌면 옮긴다. 위 물건 목록에서도 고를 수 있다(숨긴 물건 포함).'));
@@ -333,7 +478,8 @@ export function mountLayoutTool(host: HTMLElement): void {
       button({ label: i.spot.hidden ? '보이기' : '숨기기', icon: i.spot.hidden ? 'i-check' : 'i-broken', size: 'small', onClick: () => commit(() => editItem(draft, sceneId, i.key, { hidden: !i.spot.hidden }), i.spot.hidden ? `${i.name} 보임` : `${i.name} 숨김`) }),
       ...(ex ? [button({ label: '지우기', icon: 'i-broken', size: 'small', variant: 'danger', onClick: () => commit(() => { removeExtra(draft, sceneId, i.key); picked = null; }, `${i.name} 지움`) })] : []),
     );
-    if (!i.extra) row(el('span', 'bha-ltool__note', `그림·아이콘은 두 종족 공통 (${i.artKey})`));
+    // 그림 키: prop.<물건> = 두 종족 공통, place.<장소>.<종족> = 이 종족만 (월드맵 홈 등, C.272)
+    if (!i.extra) row(el('span', 'bha-ltool__note', i.artKey.startsWith('place.') ? `그림은 이 종족만 (${i.artKey})` : `그림·아이콘은 두 종족 공통 (${i.artKey})`));
     if (showIcons) {
       const grid = el('div', 'bha-ltool__icons');
       for (const id of spriteIcons()) {
@@ -361,12 +507,12 @@ export function mountLayoutTool(host: HTMLElement): void {
   async function uploadArt(i: LayoutItem): Promise<void> {
     const file = await pickFile('image/png,image/webp,image/gif,image/jpeg');
     if (!file) return;
-    const url = await readFile(file);
+    const { url, note } = await prepareImage(file, 'prop');
     commit(() => {
       const ex = draft.scenes[sceneId]?.extras.find((x) => x.id === i.key);
       if (ex) ex.art = url;
       else draft.looks[i.artKey] = { ...draft.looks[i.artKey], art: url };
-    }, `그림 → ${file.name} (${Math.round(file.size / 1024)}KB)`);
+    }, `그림 → ${note}`);
   }
 
   function resetLook(i: LayoutItem): void {
@@ -397,11 +543,12 @@ export function mountLayoutTool(host: HTMLElement): void {
           picked = x.id;
         }, '새 물건을 장면 왼쪽 앞에 놓았다 — 끌어서 옮긴다');
       } }),
+      button({ label: '배경 맞추기', icon: 'i-frame', size: 'small', on: bgMode, onClick: () => { bgMode = !bgMode; if (bgMode) picked = null; render(); } }),
       button({ label: '배경 바꾸기', icon: 'i-plus', size: 'small', onClick: async () => {
         const file = await pickFile('image/png,image/webp,image/jpeg');
         if (!file) return;
-        const url = await readFile(file);
-        commit(() => ((draft.scenes[sceneId] ??= emptyScene()).bg = url), `배경 → ${file.name} (${Math.round(file.size / 1024)}KB)`);
+        const { url, note } = await prepareImage(file, 'bg');
+        commit(() => ((draft.scenes[sceneId] ??= emptyScene()).bg = url), `배경 → ${note}`);
       } }),
       ...(ed?.bg ? [button({ label: '원래 배경', icon: 'i-return', size: 'small', onClick: () => commit(() => delete draft.scenes[sceneId]!.bg, '원래 배경으로') })] : []),
       button({ label: '이 장면 처음으로', icon: 'i-broken', size: 'small', variant: 'danger', disabled: !ed, onClick: () => {
@@ -450,6 +597,7 @@ export function mountLayoutTool(host: HTMLElement): void {
   }
 
   function render(): void {
+    root.classList.toggle('is-bg', bgMode); // 배경 맞추기: 장면 끌기 = 배경 이동 (폰 스크롤 막음)
     sel.value = sceneId;
     const d = def();
     resolved = resolveScene(d, pristine(), draft);
@@ -465,6 +613,6 @@ export function mountLayoutTool(host: HTMLElement): void {
   dev.view.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, true);
   render();
   fit();
-  say(draftHasEdits(draft) ? `저장된 편집본을 열었다${draft.preview ? ' · 미리보기 켜짐' : ''}` : '물건을 끌어 옮겨 보자. 바뀐 것은 이 브라우저에 바로 저장된다');
+  say(pruned.length ? `옛 공통 그림 정리: ${pruned.join(', ')} — 홈 그림은 이제 종족마다 따로 올린다` : draftHasEdits(draft) ? `저장된 편집본을 열었다${draft.preview ? ' · 미리보기 켜짐' : ''}` : '물건을 끌어 옮겨 보자. 바뀐 것은 이 브라우저에 바로 저장된다');
 }
 

@@ -12,7 +12,7 @@ import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaView } from './spaView';
+import { spaEndText, spaExitFx, spaHoldFull, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -291,7 +291,8 @@ export function startApp(host: HTMLElement): void {
       dying: {},
       'to-bag': {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
-        act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
+        // 가방이 열리면 [다음] 없이 바로 다음 카드(가방 안 구급상자 옆 안내)로 — 가방 화면에 '열어 보자' 카드가 남아 목록을 덮지 않게 (GDD 182장 1)
+        act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' },
       },
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
@@ -310,6 +311,11 @@ export function startApp(host: HTMLElement): void {
           inSpa = true;
           return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
+        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, 4/7 '온천' 카드 [다음] 에서 걸어 나가 방으로 — 5/7 '쉬기'('…로 돌아왔다') 카드는 방 위에 뜬다
+        next: (go) => {
+          const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
+          if (!spaExitFx(leave)) leave();
+        },
       },
       // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
       'spa-rest': { next: (go) => {
@@ -360,8 +366,6 @@ export function startApp(host: HTMLElement): void {
       tutorialOverlay(faction, {
         scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}`, act: st.act },
-        // 기기 뒤로: 건너뛰기 없는 안내라 짧은 안내만 (GDD 131장 2 와 같은 결)
-        onBack: () => showToast({ eyebrow: '튜토리얼', title: st.act ? '강조된 버튼을 눌러 진행한다' : '[다음]을 눌러 진행한다', meta: '' }, 0, 1800),
         onFinish: (status) => {
           if (status !== 'completed') {
             recoverOpen = false;
@@ -427,12 +431,11 @@ export function startApp(host: HTMLElement): void {
     homeIntroOpen = true;
     const { scenes, vars } = homeIntroScenes(faction);
     const total = scenes.length + 1;
-    const hint = () => showToast({ eyebrow: '튜토리얼', title: '[다음]을 눌러 진행한다', meta: '' }, 0, 1800);
     const show = (i: number): void => {
       const scene = scenes[i];
       if (scene) {
         tutorialOverlay(faction, {
-          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: hint,
+          scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
           script: { step: `홈 안내 ${i + 1} / ${total}` },
           onFinish: (st) => (st === 'completed' ? show(i + 1) : void (homeIntroOpen = false)),
         });
@@ -445,7 +448,7 @@ export function startApp(host: HTMLElement): void {
       // 월드맵 물건 → 모험, 누를 때마다 카드·강조가 따라간다 (GDD 132장 1)
       const last = { ...HOME_INTRO.last, targets: go.split(', ').map((x) => `@${x}`) };
       window.setTimeout(() => tutorialOverlay(faction, {
-        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars, onBack: () => showToast(FORCE_HINT, 0, 1800),
+        scenes: [last], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
         script: { step: `홈 안내 ${total} / ${total}`, act: { selector: go, autoFinish: true, done: () => nav.top !== undefined && nav.top.id !== 'room' && nav.top.id !== 'worldmap' } },
         onFinish: () => {
           forceAdventure = false;
@@ -900,10 +903,15 @@ export function startApp(host: HTMLElement): void {
           backLabel,
           onBack: () => nav.back(),
           onAutoLeave: (e) => {
-            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다
+            tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다 — 이 뒤로는 회복·배부름 감소 없음 (GDD 180장 2: 알림 2초 동안 멈춤)
             persist();
             // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
-            if (nav.top?.id === 'spa') nestScreen();
+            const toRoom = () => { if (nav.top?.id === 'spa') nestScreen(); };
+            // 튜토리얼 회복 안내 중 (GDD 180장 2 보충, C.274): 알림·자동 방 이동 없이 온천에 그대로 — 안내 카드('체력이 가득 찼다!')와 [다음] 흐름이 방 이동을 정한다
+            if (recoverOpen && nav.top?.id === 'spa') return;
+            // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
+            if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
+            toRoom();
             showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
           },
         });

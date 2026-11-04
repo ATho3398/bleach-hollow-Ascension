@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { artUrls, clearRuntimeArt } from '../src/data/art/manifest';
 import { FACTIONS } from '../src/data/factions';
-import { extrasErrors, marketOf, parseFactionConfig, roomOf, worldMapOf, type FactionConfig } from '../src/engine/faction';
+import { extrasErrors, marketOf, parseFactionConfig, roomOf, sceneViewOk, worldMapOf, type FactionConfig } from '../src/engine/faction';
 import {
-  addExtra, applyDraft, applyLooks, draftHasEdits, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
+  addExtra, applyDraft, applyLooks, draftHasEdits, hasFileArt, pruneLooks, runtimeUrl, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
 } from '../src/ui/bha/layoutDraft';
 
 const clone = (): FactionConfig[] => FACTIONS.map((f) => structuredClone(f) as FactionConfig);
@@ -83,7 +83,7 @@ describe('편집 → 미리보기 적용 (게임 데이터 구조 그대로)', (
     applyDraft(d, fs);
     applyLooks(d, icons);
     expect(roomOf(f).sceneArt).toBe(`scene.layout.room.${f.id}`);
-    expect(artUrls(`scene.layout.room.${f.id}`).src).toBe('data:image/png;base64,AAAA');
+    expect(artUrls(`scene.layout.room.${f.id}`).src).toBe(runtimeUrl('data:image/png;base64,AAAA')); // C.272: 화면엔 짧은 blob: 주소로
     expect(artUrls('prop.book').src).toBeNull();
     expect(icons.book).toBe('i-dex');
     clearRuntimeArt();
@@ -177,10 +177,11 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
   it('방: 두 종족 room.layout 이 같고 사용자가 잡은 값', () => {
     const [a, b] = FACTIONS.map((f) => roomOf(f).layout);
     for (const k of ['book', 'chest', 'outside', 'rank'] as const) expect(spot(a![k])).toEqual(spot(b![k]));
-    expect(spot(a!.book)).toEqual({ x: 74.6, y: 66.1, scale: 1.04 });
+    // C.268 (사용자 2026-11-04 00:58 "호로 기준으로 홈 진급시험 사이즈랑 위치 맞춰놨으니까, 사신도 똑같이 맞춰"): 책장·진급 시험 다시 잡음
+    expect(spot(a!.book)).toEqual({ x: 71.4, y: 68.8, scale: 0.91 });
     // y 91.7 → 91.2: 기준 장면 바닥 아래 끝(이름표 자리)에서 게임이 91.2 로 끌어 놓던 값을 그대로 적음 (보이는 자리 같음)
-    expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.8 });
-    expect(spot(a!.rank)).toEqual({ x: 71.2, y: 91.2, scale: 0.68 });
+    expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.86 }); // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
+    expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
   });
   it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
     for (const f of FACTIONS) expect(f.market?.layout).toBeUndefined();
@@ -199,18 +200,123 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
   it('호로 = DEFAULT_WORLDMAP (모험·탑 옮김), json 에 layout 없음', () => {
     expect(FACTIONS.find((f) => f.id === 'hollow')!.worldmap?.layout).toBeUndefined();
     const w = W('hollow');
-    expect(spot(w.home)).toEqual({ x: 45.1, y: 64, scale: 1.08 });
-    expect(spot(w.adventure)).toEqual({ x: 22.9, y: 85.9, scale: 0.9 });
-    expect(spot(w.tower)).toEqual({ x: 11.7, y: 50.1, scale: 1.28 });
-    expect(spot(w.spa)).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 65.4, scale: 1.61 }); // C.278 (2026-11-04 03:31 배경과 함께 전부) // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
+    expect(spot(w.adventure)).toEqual({ x: 19.1, y: 89.7, scale: 0.9 });
+    expect(spot(w.tower)).toEqual({ x: 22.1, y: 44.3, scale: 1.28 });
+    expect(spot(w.spa)).toEqual({ x: 85.6, y: 58.9, scale: 1.41 });
   });
   it('사신 = shinigami.json worldmap.layout 6곳', () => {
     const w = W('shinigami');
-    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.7 });
-    expect(spot(w.market)).toEqual({ x: 61.8, y: 32.1, scale: 0.98 });
-    expect(spot(w.training)).toEqual({ x: 62.3, y: 89.6, scale: 0.85 });
-    expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
-    expect(spot(w.tower)).toEqual({ x: 10.9, y: 44.5, scale: 1.15 });
-    expect(spot(w.spa)).toEqual({ x: 88.5, y: 55, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
+    expect(spot(w.market)).toEqual({ x: 66.8, y: 42.7, scale: 0.98 });
+    expect(spot(w.training)).toEqual({ x: 71, y: 90.5, scale: 0.85 });
+    expect(spot(w.adventure)).toEqual({ x: 14.6, y: 90.6, scale: 0.96 });
+    expect(spot(w.tower)).toEqual({ x: 19.6, y: 45.4, scale: 1.15 });
+    expect(spot(w.spa)).toEqual({ x: 88.6, y: 63.1, scale: 1.33 });
+  });
+});
+
+// C.270: 호로 월드맵 둥지 그림 = 사용자 업로드(79×32 도트) — 호로만(종족별 장소 그림 place.home.hollow). 공통 키 prop.home 은 비워 둬 사신 대원실 그림은 그대로
+describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
+  it('place.home.hollow 그림이 있고, prop.home(두 종족 공통 키)은 비어 사신 대원실 그림이 그대로 쓰인다', () => {
+    expect(artUrls('place.home.hollow').src).toMatch(/place-home-hollow\.png$/);
+    expect(artUrls('place.home.shinigami').src).toMatch(/place-home-shinigami\.png$/);
+    expect(artUrls('prop.home').src).toBeNull();
+  });
+  it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
+    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 → C.278
+  });
+});
+
+// C.272 (사용자 2026-11-04 01:5x "배경 바꾸기로 배경 넣었는데 까맣게 나오는 이유 찾아서 수정 / 호로랑 사신 각각 둥지랑 대원실 따로 넣었는데 통일된 이유 찾아서 수정")
+describe('C.272 배경 까맣게 · 둥지/대원실 통일 수리', () => {
+  it('올린 그림은 짧은 blob: 주소로 건다 (크롬은 2MB 넘는 data: 주소를 그림으로 안 읽음) — 같은 그림은 같은 주소', () => {
+    const big = `data:image/png;base64,${'A'.repeat(3_000_000)}`;
+    const u = runtimeUrl(big)!;
+    expect(u.startsWith('blob:')).toBe(true);
+    expect(u.length).toBeLessThan(200);
+    expect(runtimeUrl(big)).toBe(u);
+    expect(runtimeUrl('art/x.png')).toBe('art/x.png');
+    expect(runtimeUrl(null)).toBeNull();
+  });
+  it('월드맵 홈 그림 키 = 종족별(place.home.<종족>) — 공통 그림 파일이 있는 장소만 prop.<장소>', () => {
+    for (const f of FACTIONS) {
+      const items = LAYOUT_KINDS.find((k) => k.kind === 'worldmap')!.read(f).items;
+      const key = (p: string) => items.find((i) => i.key === p)!.artKey;
+      expect(key('home')).toBe(`place.home.${f.id}`);
+      for (const p of ['market', 'adventure', 'tower']) expect(key(p)).toBe(hasFileArt(`prop.${p}`) ? `prop.${p}` : `place.${p}.${f.id}`);
+    }
+    expect(hasFileArt('prop.home')).toBe(false);
+  });
+  it('둥지·대원실 그림을 따로 올리면 서로 안 덮는다', () => {
+    const d = emptyDraft();
+    d.looks['place.home.hollow'] = { art: 'data:image/png;base64,QUFB' };
+    d.looks['place.home.shinigami'] = { art: 'data:image/png;base64,QkJC' };
+    applyLooks(d, {});
+    expect(artUrls('place.home.hollow').src).not.toBe(artUrls('place.home.shinigami').src);
+    clearRuntimeArt();
+  });
+  it('어느 물건도 안 쓰는 옛 공통 키(prop.home)는 정리 — 게임 미리보기(applyDraft)도 같은 정리', () => {
+    const d = emptyDraft();
+    d.looks['prop.home'] = { art: 'data:image/png;base64,AAAA' };
+    d.looks['prop.book'] = { icon: 'i-dex' };
+    expect(pruneLooks(d, FACTIONS)).toEqual(['prop.home']);
+    expect(Object.keys(d.looks)).toEqual(['prop.book']);
+    d.looks['prop.home'] = { art: 'data:image/png;base64,AAAA' };
+    applyDraft(d, clone());
+    expect(artUrls('prop.home').src).toBeNull();
+    clearRuntimeArt();
+  });
+  it('큰 그림은 올릴 때 webp 로 줄여 담는다(저장 공간·화면) — 기준값', () => {
+    const tool = read('src/ui/bha/layoutTool.ts');
+    expect(tool).toContain('export const UPLOAD_KEEP_BYTES = 600 * 1024;');
+    expect(tool).toContain("c.toDataURL('image/webp', 0.92)");
+    expect(tool).toContain("prepareImage(file, 'bg')");
+    expect(tool).toContain("prepareImage(file, 'prop')");
+  });
+});
+
+// C.275 (사용자 2026-11-04 02:3x "배경 확대 축소 위치이동 가능하게 수정"): 배경 보기 = <장면>.floor.view { zoom, x, y } — 배경 크기·자리와 바닥이 같은 상자를 쓴다
+describe('C.275 배경 확대·위치', () => {
+  it('bgBox: view 없으면 cover·가운데 (옛 계산과 같음), zoom·x·y 는 CSS background-position % 와 같은 뜻', async () => {
+    const { bgBox, imageToScenePx } = await import('../src/ui/bha/roomFloor');
+    const S = { w: 628, h: 296 };
+    const base = bgBox(S, 2);
+    expect([base.w, base.h, base.left + 0, base.top, base.wide]).toEqual([628, 314, 0, -9, true]);
+    expect(bgBox(S, 2, { zoom: 1, x: 50, y: 50 })).toEqual(base);
+    const z = bgBox(S, 2, { zoom: 2, x: 0, y: 100 });
+    expect([z.w, z.h, z.left + 0, z.top]).toEqual([1256, 628, 0, 296 - 628]); // left = (628 − 1256) × 0 (−0 → 0)
+    // 그림 위 점은 같은 상자로: 바닥이 배경을 따라간다
+    expect(imageToScenePx([0.5, 0.5], S, 2, { zoom: 2, x: 0, y: 100 })).toEqual([628, 296 - 628 + 314]);
+  });
+  it('값 검사: zoom 1~4, x·y 0~100', () => {
+    expect(sceneViewOk(undefined)).toBe(true);
+    expect(sceneViewOk({ zoom: 1.5, x: 0, y: 100 })).toBe(true);
+    expect(sceneViewOk({ zoom: 0.5, x: 50, y: 50 })).toBe(false);
+    expect(sceneViewOk({ zoom: 2, x: 120, y: 50 })).toBe(false);
+    const raw = structuredClone(FACTIONS[0]!) as unknown as Record<string, Record<string, unknown>>;
+    raw.room = { ...raw.room, floor: { ...(raw.room!.floor as object), view: { zoom: 9, x: 50, y: 50 } } };
+    expect(() => parseFactionConfig(raw)).toThrow(/room\.floor\.view/);
+  });
+  it('편집 → 미리보기: 방·월드맵·시장 floor.view 로 들어가고 바닥 다각형은 그대로', () => {
+    const fs = clone();
+    const d = emptyDraft();
+    for (const k of ['room', 'worldmap', 'market']) (d.scenes[`${k}.${fs[1]!.id}`] ??= { items: {}, extras: [] }).bgView = { zoom: 1.8, x: 30.1, y: 38.9 };
+    expect(draftHasEdits(d)).toBe(true);
+    applyDraft(d, fs);
+    const f = fs[1]!;
+    for (const fl of [roomOf(f).floor, worldMapOf(f).floor, marketOf(f).floor]) expect(fl.view).toEqual({ zoom: 1.8, x: 30.1, y: 38.9 });
+    expect(roomOf(f).floor.poly).toEqual(roomOf(FACTIONS[1]!).floor.poly);
+    expect(roomOf(fs[0]!).floor.view).toBeUndefined();
+    const j = JSON.parse(exportFile(d, FACTIONS, 'C.275'));
+    expect(j.resolved[`room.${f.id}`].bgView).toEqual({ zoom: 1.8, x: 30.1, y: 38.9 });
+    expect(normalizeDraft(j)).toEqual(d);
+  });
+  it('게임 화면: layoutOnFloor 가 배경 크기·자리를 같은 상자로 건다 · 도구 배경 맞추기 칸', () => {
+    expect(read('src/ui/bha/room.ts')).toContain("scene.style.backgroundPosition = `${floor.view.x}% ${floor.view.y}%`;");
+    const tool = read('src/ui/bha/layoutTool.ts');
+    expect(tool).toContain("label: '배경 맞추기'");
+    expect(tool).toContain("range('확대', 'zoom'");
+    expect(read('src/ui/bha/layout-tool.css')).toContain('.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }');
   });
 });

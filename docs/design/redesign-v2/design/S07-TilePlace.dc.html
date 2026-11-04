@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>타일 배치</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.ps{position:relative;width:52px;height:52px;flex:none;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-2);display:flex;align-items:center;justify-content:center;color:var(--bha-text-3);box-sizing:border-box;border:0;padding:0}
+.ps .n{position:absolute;right:3px;bottom:2px;font:12px/1 Silkscreen,monospace;color:var(--bha-text-3)}
+.ps.f{background:var(--c);box-shadow:inset 0 0 0 2px rgb(0 0 0 / .35),inset 0 2px 0 rgb(255 255 255 / .15);color:var(--bha-text-1)}
+.ps.f .n{color:var(--bha-text-1)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 모험 준비 [타일 배치]</b> — '떠도는 영혼'을 고른 뒤, 초점: 길 3번 자리</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <div class="bha-tabs"><button class="bha-tab is-on"><i class="bha-i bha-i-forest"></i>자유 모험</button><button class="bha-tab"><i class="bha-i bha-i-book"></i>스토리</button></div>
+              <span class="bha-grow"></span>
+              <div class="bha-tabs"><button class="bha-tab"><i class="bha-i bha-i-check"></i>준비</button><button class="bha-tab is-on"><i class="bha-i bha-i-tile"></i>타일 배치</button></div>
+              <button class="bha-btn bha-btn--icon bha-btn--sm bha-btn--ghost" aria-label="도움말"><i class="bha-i bha-i-help"></i></button>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 48px; display: flex; justify-content: space-between; align-items: center; height: 20px">
+              <span class="bha-sub" style="font-size: 13px; color: var(--bha-text-2)">타일을 고른 뒤 길 자리를 누르면 놓인다</span>
+              <span class="bha-sub" style="font-size: 13px">놓은 타일 <b class="bha-num" style="font-weight: 400; color: var(--bha-text-1)">2</b> / 10</span>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 72px; display: flex; gap: 4px">
+              <span class="ps" style="color: var(--bha-text-2)"><i class="bha-i bha-i-home"></i><span class="bha-lock" style="right: -2px; bottom: -2px; width: 16px; height: 16px"><i class="bha-i bha-i-lock" style="width: 12px; height: 12px"></i></span></span>
+              <button class="ps f" style="--c: var(--bha-tile-prey)"><i class="bha-i bha-i-tile"></i><span class="n">1</span></button>
+              <button class="ps f" style="--c: var(--bha-tile-elite)"><i class="bha-i bha-i-tile"></i><span class="n">2</span></button>
+              <button class="ps is-focus is-focus--top"><i class="bha-i bha-i-plus"></i><span class="n">3</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">4</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">5</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">6</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">7</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">8</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">9</span></button>
+              <button class="ps"><i class="bha-i bha-i-plus"></i><span class="n">10</span></button>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 134px; display: flex; justify-content: space-between; align-items: center; height: 20px">
+              <span class="bha-label">가진 타일</span><span class="bha-sub">13장</span>
+            </div>
+            <div style="position: absolute; left: 10px; right: 10px; top: 158px; height: 132px; overflow: hidden">
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+                <sc-for list="{{tiles}}" as="c" hint-placeholder-count="8">
+                  <button class="bha-card bha-card--tile {{c.sel}}" style="width: auto; --c: {{c.c}}"><span class="bha-count">×{{c.n}}</span><span style="display: flex; gap: 6px; align-items: center"><span class="bha-art bha-art--frame" style="width: 30px; height: 30px; color: {{c.c}}"><i class="bha-i bha-i-tile"></i></span><span class="bha-card-name" style="font-size: 13px">{{c.name}}</span></span><span class="bha-card-line">{{c.l}}</span></button>
+                </sc-for>
+              </div>
+              <div class="bha-more" style="background: var(--bha-bg-0)"><i class="bha-i bha-i-down"></i>더 있음</div>
+            </div>
+            <div class="bha-dock">
+              <button class="bha-btn bha-btn--primary bha-btn--lg bha-btn--block" style="margin-left: 14px"><i class="bha-i bha-i-play"></i>출발</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>길을 가로 한 줄 전체 폭(시작 + 10자리, 52px 정사각)으로 펴서 옆으로 잘리던 마지막 자리가 다 보인다</li>
+      <li>놓인 자리는 타일 종류 색으로 채우고 번호는 오른쪽 아래 도트 숫자로. 시작 자리는 자물쇠가 그림 칸 안 귀퉁이에 붙는다</li>
+      <li>가진 타일은 한 줄 4장, [출발] 위 영역만 스크롤 + '▼ 더 있음'. 카드는 그림 · 이름 · 한 줄 · 개수만</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      themes: [{ k: 'hollow', race: '호로' }, { k: 'shinigami', race: '사신' }],
+      tiles: [
+        { name: '떠도는 영혼', l: '약한 적이 나온다', n: 4, c: 'var(--bha-tile-prey)', sel: 'is-sel' },
+        { name: '하급 호로', l: '약한 적이 나온다', n: 3, c: 'var(--bha-tile-prey)', sel: '' },
+        { name: '상급 호로', l: '강적 · 좋은 보상', n: 2, c: 'var(--bha-tile-elite)', sel: '' },
+        { name: '맑은 샘', l: '쉬면 체력이 찬다', n: 1, c: 'var(--bha-tile-rest)', sel: '' },
+        { name: '다른 메노스', l: '강적 · 좋은 보상', n: 2, c: 'var(--bha-tile-elite)', sel: '' },
+        { name: '안개', l: '블록 순서가 섞인다', n: 2, c: 'var(--bha-tile-env)', sel: '' },
+        { name: '모래 바람', l: '적이 느려진다', n: 1, c: 'var(--bha-tile-env)', sel: '' },
+        { name: '쉼터', l: '쉬면 컨디션이 오른다', n: 1, c: 'var(--bha-tile-rest)', sel: '' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

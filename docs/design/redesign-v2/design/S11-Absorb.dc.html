@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>흡수</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.br{flex:1 1 0;height:52px;flex-direction:column;gap:3px;padding:0 4px}
+.br small{font-size:12px;font-weight:700;color:var(--bha-text-3);display:flex;align-items:center;gap:3px}
+.br small .bha-i{width:12px;height:12px;color:var(--bha-risk)}
+.br.on{background:var(--bha-bg-3);box-shadow:0 0 0 1px var(--bha-line-2),inset 0 1px 0 var(--bha-hi),inset 0 -3px 0 var(--bha-accent)}
+.ln{display:grid;grid-template-columns:76px 1fr;gap:6px;font-size:13px;line-height:1.55}
+.ln dt{color:var(--bha-text-3)}
+.ln dd{margin:0;color:var(--bha-text-1);font-weight:700}
+.step{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--bha-text-3)}
+.step b{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:var(--bha-r-xs);background:var(--bha-bg-2);font:12px/1 Silkscreen,monospace;color:var(--bha-text-2)}
+.step.on{color:var(--bha-text-1);font-weight:700}
+.step.on b{background:var(--bha-accent);color:#f6ece6}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · {{t.title}}</b> — 첫 갈래를 고른 뒤, 초점: [{{t.b1}}하기]</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <span class="bha-title">{{t.title}}</span>
+              <span class="step on"><b>1</b>갈래</span><span style="color: var(--bha-text-3)">·</span><span class="step"><b>2</b>특성</span>
+              <span class="bha-grow"></span>
+              <button class="bha-btn bha-btn--sm"><i class="bha-i bha-i-figure"></i>내 상태</button>
+            </div>
+            <div class="bha-panel" style="position: absolute; left: 10px; top: 46px; width: 168px; height: 244px; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 6px">
+              <span class="bha-art bha-art--frame" style="width: 96px; height: 96px"><i class="bha-i bha-i-blob"></i></span>
+              <span class="bha-card-name" style="font-size: 16px">흙 일반 1</span>
+              <div style="display: flex; gap: 4px"><span class="bha-badge">일반</span><span class="bha-chip" style="--c: var(--bha-el-earth); height: 20px"><i class="bha-i bha-i-tile"></i>흙</span></div>
+              <span class="bha-card-line" style="text-align: center">쓰러뜨린 상대 · 갈래를 하나 고른다</span>
+            </div>
+            <div style="position: absolute; left: 188px; right: 10px; top: 46px; display: flex; gap: 6px">
+              <button class="bha-btn br on">{{t.b1}}<small><i class="bha-i bha-i-flame"></i>위험 +3</small></button>
+              <button class="bha-btn br">{{t.b2}}<small><i class="bha-i bha-i-flame"></i>위험 +2</small></button>
+              <button class="bha-btn br">{{t.b3}}<small><i class="bha-i bha-i-flame"></i>위험 +1</small></button>
+              <button class="bha-btn br">놓아주기<small><i class="bha-i bha-i-flame"></i>위험 −1</small></button>
+            </div>
+            <div class="bha-well" style="position: absolute; left: 188px; right: 10px; top: 106px; height: 184px; padding: 10px 12px; box-sizing: border-box; overflow: hidden">
+              <div style="font-size: 14px; font-weight: 700; color: var(--bha-text-1); margin-bottom: 6px">블록과 능력치를 함께 얻는다</div>
+              <dl class="ln" style="margin: 0">
+                <dt>능력치</dt><dd>힘 +2</dd>
+                <dt>{{t.risk}}</dt><dd>+3</dd>
+                <dt>받는 것</dt><dd>타일 +1</dd>
+                <dt>새 블록</dt><dd><span class="bha-blk bha-blk--sm" style="--el: var(--bha-el-earth); display: inline-flex; vertical-align: middle; margin-right: 6px"><i class="bha-i bha-i-lin-d"></i><b>참</b></span>흙 강화 1단계</dd>
+                <dt>남는 것</dt><dd>상대의 속성 기억</dd>
+              </dl>
+              <div class="bha-more" style="background: var(--bha-bg-0)"><i class="bha-i bha-i-down"></i>더 있음</div>
+            </div>
+            <div class="bha-dock" style="justify-content: flex-end">
+              <span class="bha-sub" style="margin-right: auto">고른 갈래: <b style="color: var(--bha-text-1)">{{t.b1}}</b></span>
+              <button class="bha-btn bha-btn--primary is-focus" style="width: 200px"><i class="bha-i bha-i-check"></i>{{t.b1}}하기</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>왼쪽 상대 카드 → 오른쪽 위 갈래 4개(각 아래 작은 '위험 +n') → 고정 높이 설명 칸 → 맨 아래 버튼 순서로 흐름을 한 방향으로 정리했다</li>
+      <li>설명은 '이름: 값' 두 열로, 길면 칸 안에서만 스크롤 + '▼ 더 있음'. 계산식(0 → 1/100) 대신 쉬운 말과 대표 값</li>
+      <li>[○○하기]는 너무 크지 않게 44px · 200px 폭으로 줄여 오른쪽 아래 고정 자리. 갈래를 바꿔도 위치가 같다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', title: '포식', b1: '포식', b2: '속성 포식', b3: '능력치 포식', risk: '광기' },
+      { k: 'shinigami', race: '사신', title: '정화 흡수', b1: '정화 흡수', b2: '속성 흡수', b3: '능력치 흡수', risk: '호로화' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

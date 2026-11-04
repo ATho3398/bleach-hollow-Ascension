@@ -1,17 +1,16 @@
-// C.268 proof (GDD 180장): 사신 참 블록 맞는 자국 = 속성별 도트 시트(pixelfx sword-slash), 호로는 그대로(SVG 자국).
-// 실행: node scripts/c268-proof.cjs (C249_URL=<주소>, C249_OUT=<폴더>) — 캡처 docs/captures/c268/ (1배 844×390)
+// C.268 proof: 사용자가 배치 도구로 잡은 방 책장·진급 시험(bha-layout-20261104-0058.json, 호로 기준) 두 종족 반영 — 방 기기 화면 캡처 (1배)
+// 편집 없는 ?layout 도구 = 실제 게임 화면 코드 + 게임 데이터 그대로 → 방 두 종족 기기 화면만 캡처 (1배, 기기 844×390)
+// 실행: node scripts/c268-proof.cjs (C268_URL=<주소> 로 이미 뜬 서버 사용)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = process.env.C249_OUT ?? path.join(ROOT, 'docs/captures/c268');
-const PART = process.env.C249_PART ?? 'all';
+const OUT = path.join(ROOT, 'docs/captures/c268');
 const PORT = 5368;
-
 async function startServer() {
-  if (process.env.C249_URL) return { url: process.env.C249_URL, stop: () => {} };
+  if (process.env.C268_URL) return { url: process.env.C268_URL, stop: () => {} };
   const p = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { cwd: ROOT, stdio: 'pipe', detached: true });
   const url = `http://localhost:${PORT}/`;
   for (let i = 0; i < 60; i++) {
@@ -22,192 +21,46 @@ async function startServer() {
   throw new Error('vite 서버가 뜨지 않았다');
 }
 
-async function skipTut(page) {
-  for (let t = 0; t < 40 && (await page.locator('.bha-tut').count()); t++) {
-    const go = page.locator('.bha-tut button.bha-btn--primary:not([disabled])').filter({ visible: true });
-    if (await go.count()) await go.first().click({ timeout: 2000 }).catch(() => {});
-    else await page.locator('.bha-lcd').first().click({ timeout: 2000 }).catch(() => {});
-    await page.waitForTimeout(400);
-  }
-}
-
-/** 저장의 지금 트랙을 고친다 */
-async function patchSave(page, fn) {
-  await page.evaluate((src) => {
-    const f = new Function('t', 'shared', src);
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      const raw = localStorage.getItem(k);
-      if (!raw || !raw.includes('"runLog"')) continue;
-      const data = JSON.parse(raw);
-      const walk = (o) => {
-        if (!o || typeof o !== 'object') return;
-        if (o.nest && o.help && o.runLog) f(o, o.shared);
-        for (const v of Object.values(o)) walk(v);
-      };
-      walk(data);
-      localStorage.setItem(k, JSON.stringify(data));
-    }
-  }, fn);
-}
-
-async function reopen(page) {
-  await page.reload();
-  await page.waitForTimeout(1500);
-  const cont = page.getByRole('button', { name: '이어하기' });
-  if (await cont.count()) { await cont.first().click().catch(() => {}); await page.waitForTimeout(500); }
-  const load = page.getByRole('button', { name: '불러오기' });
-  if (!(await page.locator('.bha-slot').count()) && (await load.count())) { await load.first().click().catch(() => {}); await page.waitForTimeout(600); }
-  const slot = page.locator('.bha-slot').first();
-  if (await slot.count()) { await slot.click().catch(() => {}); await page.getByRole('button', { name: '확인' }).click().catch(() => {}); await page.waitForTimeout(1500); }
-  await skipTut(page);
-}
-
-const screens = (page) => page.evaluate(() => [...document.querySelectorAll('.bha-lcd .bha-app')].map((e) => e.className.replace('bha-app ', '')).join('|'));
-
-// 한 종족: 새로 시작 → 튜토리얼 넘김 → 테스트 '바로 전투' → 공격 블록을 눌러 도트 자국(.bha-pxfx)이 뜨면 한가운데 프레임을 찍는다
-async function runFaction(browser, fi, tag, proof, traits) {
-  const page0 = { p: null };
-  try { return await runFactionInner(browser, fi, tag, proof, traits, page0); } catch (e) { if (page0.p) await page0.p.screenshot({ path: path.join(OUT, `${tag}-fail.png`) }); throw new Error(`${String(e.message).split('\n')[0]} @ ${(e.stack.match(/c268-proof\.cjs:(\d+)/) || [])[1]}`); }
-}
-async function runFactionInner(browser, fi, tag, proof, traits, page0) {
-  const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
-  page0.p = page;
-  page.on('pageerror', (e) => proof.errors.push(`${tag}: ${e.message}`));
-  const fxReq = [];
-  page.on('response', (r) => { if (/\/fx\/sword-slash-/.test(r.url())) fxReq.push(`${r.status()} ${r.url().split('/fx/')[1]}`); });
-  const shot = async (name) => { await page.screenshot({ path: path.join(OUT, `${name}.png`) }); proof.shots.push(`${name}.png`); };
-  const base = proof.url;
-  await page.goto(`${base}?test=1`);
-  await page.evaluate(() => localStorage.clear());
-  await page.goto(`${base}?test=1`);
-  await page.waitForTimeout(1200);
-  await page.getByRole('button', { name: '새로 시작' }).click();
-  await page.waitForTimeout(300);
-  await page.locator('.bha-slot').first().click();
-  await page.getByRole('button', { name: '확인' }).click();
-  await page.waitForTimeout(300);
-  await page.locator('.bha-species__card').nth(fi).click();
-  await page.waitForTimeout(300);
-  await page.getByRole('button', { name: '시작', exact: true }).click();
-  await page.waitForTimeout(2000);
-  await skipTut(page);
-  await patchSave(page, `
-    t.help.guides = { ...t.help.guides, 'first-run': 'done', 'home-intro': 'done', 'first-run-room': 'done', 'birth': 'done', 'recover': 'done' };
-    t.nest.hunger = 20; t.nest.condition = 80; t.nest.hpFraction = 1; t.nest.spa = null;
-    t.nest.collapsed = false; t.nest.collapsedAt = 0; t.nest.weakened = false; t.nest.tired = false; t.nest.dead = false;
-  `);
-  await reopen(page);
-  await page.getByRole('button', { name: '더보기' }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(400);
-  await page.getByRole('button', { name: '테스트' }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(600);
-  // 테스트 패널 '특성' 탭: 특성 칸 1 = 고른 계열 공격 특성 → 적용
-  await page.locator('.bha-viewtitle button').first().click({ timeout: 4000 });
-  await page.waitForTimeout(400);
-  await page.getByText('특성', { exact: true }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(500);
-  await page.getByRole('button', { name: '특성 칸 1' }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(300);
-  // 목록 글자는 계열 이름만('참'·'조') — 같은 이름 중 traits.json 순서(물·불·흙·뇌·혈·독·허)의 n번째
-  const [fam, nth] = traits;
-  const opt = page.locator('[role="option"]').filter({ hasText: new RegExp(`^\\s*${fam}\\s*$`) }).nth(nth);
-  await opt.scrollIntoViewIfNeeded();
-  await opt.click({ timeout: 4000 });
-  await page.waitForTimeout(300);
-  await page.getByRole('button', { name: '적용' }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(500);
-  await page.locator('.bha-viewtitle button').first().click({ timeout: 4000 });
-  await page.waitForTimeout(400);
-  await page.getByText('바로 전투', { exact: true }).first().click({ timeout: 4000 });
-  await page.waitForTimeout(500);
-  await page.getByRole('button', { name: '전투 시작' }).click({ timeout: 4000 });
-  await page.waitForTimeout(1500);
-  if (process.env.C268_BG) {
-    // 이펙트 배치 도구 배경: 효과 없는 전투 장면 몇 장 + 맞는 몸 가운데(페이지 px). C268_NOHERO = 내 캐릭터를 숨기고 그 그림 자리·변형을 남긴다(도구가 움직이는 캐릭터를 얹음)
-    if (process.env.C268_NOHERO) {
-      proof.trace.push({ tag, hero: await page.evaluate(() => {
-        const img = document.querySelector('.bha-hero__img');
-        const r = img.getBoundingClientRect();
-        const chain = [];
-        for (let n = img; n && !n.classList?.contains('bha-arena'); n = n.parentElement) chain.push(`${n.className}: ${getComputedStyle(n).transform}`);
-        return { x: r.left, y: r.top, w: r.width, h: r.height, nat: [img.naturalWidth, img.naturalHeight], chain: chain.slice(0, 4) };
-      }) });
-      await page.addStyleTag({ content: '.bha-hero{visibility:hidden!important}' });
-    }
-    for (let k = 0; k < 6; k++) {
-      await page.waitForTimeout(170);
-      const geo = await page.evaluate(() => {
-        const b = document.querySelector('.bha-foe__body').getBoundingClientRect();
-        const l = document.querySelector('.bha-afx-layer').getBoundingClientRect();
-        const m = document.querySelector('.bha-hero__body').getBoundingClientRect();
-        return { foe: { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }, hero: { x: m.left + m.width / 2, y: m.top + m.height / 2, w: m.width, h: m.height }, layer: { x: l.left, y: l.top, w: l.width, h: l.height }, afx: document.querySelectorAll('.bha-afx, .bha-pxfx').length };
-      });
-      await page.screenshot({ path: path.join(OUT, `bg-${tag}-${k}.png`) });
-      proof.trace.push({ tag, bg: k, geo });
-    }
-    return;
-  }
-  const seen = [];
-  let pixelCount = 0;
-  let tries = 0;
-  for (let i = 0; i < 200 && pixelCount < 1 && tries < 6; i++) {
-    const cells = await page.evaluate(() => [...document.querySelectorAll('.bha-v2cell .bha-block')].map((c, k) => ({ k, kind: c.dataset.kind || '', label: c.getAttribute('aria-label') || '' })));
-    const want = cells.find((c) => c.kind && c.kind !== 'normal'); // 장착한 계열 공격 블록 (data-kind = 속성)
-    if (!want) { await page.waitForTimeout(300); continue; }
-    tries++;
-    await page.locator('.bha-v2cell .bha-block').nth(want.k).click({ timeout: 2000 }).catch(() => {});
-    let got = null;
-    for (let w = 0; w < 40 && !got; w++) {
-      await page.waitForTimeout(25);
-      got = await page.evaluate(() => {
-        const n = [...document.querySelectorAll('.bha-pxfx')].find((e) => Number(getComputedStyle(e).opacity) > 0);
-        return n ? { name: n.dataset.fx, w: n.offsetWidth, h: n.offsetHeight } : null;
-      });
-    }
-    if (got) {
-      pixelCount++;
-      await page.waitForTimeout(90); // 한가운데 프레임
-      await shot(`${tag}-${pixelCount}-${got.name}`);
-    }
-    seen.push({ block: want.label, kind: want.kind, pixel: got });
-    await page.waitForTimeout(900);
-  }
-  proof.trace.push({ tag, seen, pixelCount, fxReq: [...new Set(fxReq)] });
-  if (!pixelCount) {
-    // 도트 자국이 없으면(호로) 계열 공격 순간의 옛 자국을 찍는다
-    const cells = await page.evaluate(() => [...document.querySelectorAll('.bha-v2cell .bha-block')].map((c, k) => ({ k, kind: c.dataset.kind || '' })));
-    const want = cells.find((c) => c.kind && c.kind !== 'normal');
-    if (want) {
-      await page.locator('.bha-v2cell .bha-block').nth(want.k).click({ timeout: 2000 }).catch(() => {});
-      for (let w = 0; w < 40; w++) { await page.waitForTimeout(25); if (await page.locator('.bha-afx').count()) break; }
-      await page.waitForTimeout(60);
-    }
-    await shot(`${tag}-no-pixel`);
-    proof.trace.push({ tag, afx: await page.locator('.bha-afx').count(), pxfx: await page.locator('.bha-pxfx').count() });
-  }
-  await page.close();
-}
-
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = await startServer();
   const browser = await chromium.launch();
-  const proof = { url: srv.url, shots: [], errors: [], trace: [] };
+  const page = await browser.newPage({ viewport: { width: 900, height: 700 }, deviceScaleFactor: 1 });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const proof = { shots: [], errors, overlaps: {} };
   try {
-    // 사신 참: 속성 3가지(불·물·허), 호로 조(같은 family-a)는 그대로 SVG 자국인지
-    // 이름 = 테스트 패널 특성 목록 글자
-    const order = ['water', 'fire', 'earth', 'thunder', 'blood', 'poison', 'kyo'];
-    const runs = [...(process.env.C268_ELS || 'fire,water,kyo').split(',').map((el) => [1, `s-${el}`, ['참', order.indexOf(el)]]), ...(process.env.C268_ELS ? [] : [[0, 'h-fire', ['조', order.indexOf('fire')]]])];
-    if (process.env.C268_BG) runs.splice(0, runs.length, [1, 's', ['참', 1]], [0, 'h', ['조', 1]]);
-    for (const [fi, tag, traits] of runs) {
-      try { await runFaction(browser, fi, tag, proof, traits); } catch (e) { proof.errors.push(`${tag}: ${e.message}`); }
+    await page.goto(srv.url);
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(`${srv.url}?layout`);
+    await page.waitForTimeout(1200);
+    const ids = ['room.hollow', 'room.shinigami'];
+    for (const [n, id] of ids.entries()) {
+      await page.locator('.bha-ltool__select').selectOption(id);
+      await page.waitForTimeout(1500);
+      const name = `${n + 1}-${id.replace('.', '-')}.png`;
+      await page.locator('.bha-ltool__frame').screenshot({ path: path.join(OUT, name) });
+      proof.shots.push(name);
+      // 물건 그림·이름표 상자끼리 겹침 (px)
+      proof.overlaps[id] = await page.evaluate(() => {
+        const boxes = [...document.querySelectorAll('.bha-room__scene .bha-prop')].filter((e) => !e.hidden).map((e) => [e.dataset.prop, e.querySelector('.bha-prop__shape').getBoundingClientRect(), e.querySelector('.bha-prop__tag').getBoundingClientRect()]);
+        const out = [];
+        const ov = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+          const [ka, sa, ta] = boxes[i];
+          const [kb, sb, tb] = boxes[j];
+          const area = Math.round(ov(sa, sb) + ov(sa, tb) + ov(ta, sb) + ov(ta, tb));
+          if (area > 0) out.push(`${ka}×${kb} ${area}px²`);
+        }
+        return out;
+      });
     }
+  } catch (e) {
+    proof.errors.push(e.message);
   } finally {
     fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
+    console.log(JSON.stringify(proof, null, 2));
     await browser.close();
     srv.stop();
   }
-  console.log(JSON.stringify(proof, null, 1));
-  process.exit(0);
 })();

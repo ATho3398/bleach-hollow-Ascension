@@ -25,6 +25,8 @@
 .bha-prop--adventure .bha-prop__shape { width: 40px; height: 52px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); } /* 늘 강조색 테두리라 초점처럼 보였다 (GDD 159장 39) */
 .bha-prop--outside .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--outside .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
+/* 장소 그림 윤곽 (GDD 182장 4): 배경과 구분되게 그림 모양을 따라가는 어두운 외곽선 + 아래 그림자 — 그림(img) 자신에 걸어, 초점·선택의 밝은 윤곽(room.css .bha-art.bha-sel, 그림 칸에 걸림)은 그 바깥에 그대로 겹친다 */
+.bha-worldmap .bha-prop__shape.has-art > .bha-prop__img { filter: var(--bha-art-outline); }
 /* 첫 모험 강제 등으로 잠긴 장소 (GDD 131장 2): 흐리게 */
 .bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
 /* 캐릭터: 지도 위라 방보다 작게, 보기만 */

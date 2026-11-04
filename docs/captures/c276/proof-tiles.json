@@ -1,0 +1,1008 @@
+{
+  "factions": {
+    "hollow": {
+      "probes": [
+        {
+          "label": "bha-room|tile-intro|1 / 1|모험 타일",
+          "before": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "배치하기"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "배치하기",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+          "before": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "음식",
+            "x": 132.2421875,
+            "y": 90
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일",
+          "before": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "음식",
+            "x": 132.2421875,
+            "y": 90
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        }
+      ],
+      "seen": [
+        "bha-room|tile-intro|1 / 1|모험 타일",
+        "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+        "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+        "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+        "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+        "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일"
+      ],
+      "path": [
+        "room: tile-intro",
+        "depart: bha-app--fixed.bha-plan tile-plan",
+        "back: bha-room.bha-worldmap",
+        "market: bha-room.bha-market",
+        "shop: bha-lcdpage.bha-shop.bha-shop--cards tile-draw"
+      ],
+      "tabs": [
+        {
+          "name": "타일 배치",
+          "found": true,
+          "unchanged": true,
+          "state": "bha-app bha-app--fixed bha-plan|자유 모험,웨코문도 외곽,★1 권장,준비,"
+        },
+        {
+          "name": "준비",
+          "found": true,
+          "unchanged": true,
+          "state": "bha-app bha-app--fixed bha-plan|자유 모험,웨코문도 외곽,★1 권장,준비,"
+        }
+      ]
+    },
+    "shinigami": {
+      "probes": [
+        {
+          "label": "bha-room|tile-intro|1 / 1|모험 타일",
+          "before": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-prop--book",
+            "lab": "책장",
+            "x": 555.953125,
+            "y": 190.140625
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-room",
+            "tut": "tile-intro",
+            "step": "1 / 1",
+            "stage": null,
+            "title": "모험 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "1 / 3",
+            "stage": null,
+            "title": "가진 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "2 / 3",
+            "stage": null,
+            "title": "길에 놓기",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+          "before": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": ".bha-viewtitle__btn",
+            "lab": "자유 모험",
+            "x": 156,
+            "y": 44
+          },
+          "nudged": [
+            "배치하기"
+          ],
+          "afterTouch": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "배치하기",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-app--fixed.bha-plan",
+            "tut": "tile-plan",
+            "step": "3 / 3",
+            "stage": null,
+            "title": "조합",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+          "before": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "음식",
+            "x": 132.2421875,
+            "y": 90
+          },
+          "nudged": [
+            "다음"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "다음",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "1 / 2",
+            "stage": null,
+            "title": "새 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        },
+        {
+          "label": "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일",
+          "before": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "other": {
+            "sel": "[role=\"tab\"]",
+            "lab": "음식",
+            "x": 132.2421875,
+            "y": 90
+          },
+          "nudged": [
+            "알겠어요"
+          ],
+          "afterTouch": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "touchIgnored": true,
+          "afterBack": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "backIgnored": true,
+          "foci": [
+            {
+              "lab": "건너뛰기",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "이전",
+              "inCard": true,
+              "isTarget": false
+            },
+            {
+              "lab": "알겠어요",
+              "inCard": true,
+              "isTarget": false
+            }
+          ],
+          "focusOnlyTarget": true,
+          "afterNav": {
+            "screen": "bha-lcdpage.bha-shop.bha-shop--cards",
+            "tut": "tile-draw",
+            "step": "2 / 2",
+            "stage": null,
+            "title": "뽑기 타일",
+            "acting": false,
+            "allow": null,
+            "toasts": 0,
+            "dialogs": 0
+          },
+          "spaAutoLeave": false,
+          "ok": true
+        }
+      ],
+      "seen": [
+        "bha-room|tile-intro|1 / 1|모험 타일",
+        "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+        "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+        "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+        "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+        "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일"
+      ],
+      "path": [
+        "room: tile-intro",
+        "depart: bha-app--fixed.bha-plan tile-plan",
+        "back: bha-room.bha-worldmap",
+        "market: bha-room.bha-market",
+        "shop: bha-lcdpage.bha-shop.bha-shop--cards tile-draw"
+      ],
+      "tabs": [
+        {
+          "name": "타일 배치",
+          "found": true,
+          "unchanged": true,
+          "state": "bha-app bha-app--fixed bha-plan|자유 모험,루콘가 외곽,★1 권장,준비,"
+        },
+        {
+          "name": "준비",
+          "found": true,
+          "unchanged": true,
+          "state": "bha-app bha-app--fixed bha-plan|자유 모험,루콘가 외곽,★1 권장,준비,"
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "shots": [
+    "hollow-6-tile-plan.png",
+    "_dialog-hollow.png",
+    "_card-hollow.png",
+    "hollow-7-tile-draw.png",
+    "shinigami-6-tile-plan.png",
+    "_dialog-shinigami.png",
+    "_card-shinigami.png",
+    "shinigami-7-tile-draw.png"
+  ],
+  "summary": {
+    "tabTouches": 4,
+    "tabTouchesIgnored": 4,
+    "probes": 12,
+    "ok": 12,
+    "failed": [],
+    "labels": [
+      "bha-room|tile-intro|1 / 1|모험 타일",
+      "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+      "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+      "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+      "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+      "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일",
+      "bha-room|tile-intro|1 / 1|모험 타일",
+      "bha-app--fixed.bha-plan|tile-plan|1 / 3|가진 타일",
+      "bha-app--fixed.bha-plan|tile-plan|2 / 3|길에 놓기",
+      "bha-app--fixed.bha-plan|tile-plan|3 / 3|조합",
+      "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|1 / 2|새 타일",
+      "bha-lcdpage.bha-shop.bha-shop--cards|tile-draw|2 / 2|뽑기 타일"
+    ]
+  }
+}

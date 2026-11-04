@@ -1,0 +1,15 @@
+{
+  "shots": [
+    "1-worldmap-hollow.png",
+    "2-worldmap-shinigami.png"
+  ],
+  "errors": [],
+  "overlaps": {
+    "worldmap.hollow": [
+      "home×market 3367px²"
+    ],
+    "worldmap.shinigami": [
+      "home×training 35px²"
+    ]
+  }
+}

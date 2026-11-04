@@ -42,7 +42,9 @@ describe("129-1 2 공간 화면 '방으로 돌아가기' 자리", () => {
     expect(room).toContain("button({ label, icon: 'i-return', size: 'small'");
     expect(room).toContain('b.dataset.spaceBack');
     expect(market).not.toContain('spaceBackButton'); // C.236 (GDD 158장 3): 시장은 위 버튼 대신 월드맵 물건
-    expect(spa).toContain('spaceBackButton(hd.onBack, hd.backLabel)');
+    expect(spa).toContain('spaceBackButton('); // C.272 (GDD 180장 2): 가득 알림 중이면 바로 방으로 — 같은 버튼
+    expect(spa).toContain('else hd.onBack();');
+    expect(spa).toContain('}, hd.backLabel);');
     expect(market).not.toContain("label: '방으로',");
   });
   it('장터: 버튼이 위 줄 맨 왼쪽, 기기 ▲▼ 순서도 화면 위치 순서(버튼 먼저)', () => {

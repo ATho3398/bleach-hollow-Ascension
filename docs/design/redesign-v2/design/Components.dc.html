@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>컴포넌트 시트</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>
+body{margin:0;background:#0d0a09}
+a{color:#cbbca6}a:hover{color:#efe5d3}
+.sec{display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:8px;background:var(--bha-bg-0);box-shadow:0 0 0 1px var(--bha-line-1)}
+.rowx{display:flex;flex-wrap:wrap;gap:16px 18px;align-items:flex-end}
+.it{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ic{display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;font-size:12px;color:var(--bha-text-3)}
+</style>
+</helmet>
+<div class="sheet" style="width: 1840px; min-height: 2600px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; align-items: start">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+<div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 20px; padding: 28px; border-radius: 12px; background: var(--bha-backdrop); box-shadow: 0 0 0 1px var(--bha-line-1); color: var(--bha-text-1); font-family: var(--bha-font-body)">
+  <div style="display: flex; align-items: baseline; gap: 12px">
+    <h2 style="margin: 0; font: 800 30px/1.2 var(--bha-font-display); color: var(--bha-text-1)">{{t.race}} 컴포넌트</h2>
+    <span class="cls">.bha-theme-{{t.k}}</span>
+  </div>
+
+  <!-- 버튼 -->
+  <div class="sec">
+    <h3>버튼 <span class="cls">.bha-btn</span></h3>
+    <div class="rowx">
+      <div class="it"><button class="bha-btn bha-btn--primary bha-btn--lg"><i class="bha-i bha-i-play"></i>출발</button><span class="cls">--primary --lg</span></div>
+      <div class="it"><button class="bha-btn bha-btn--primary">사기</button><span class="cls">--primary</span></div>
+      <div class="it"><button class="bha-btn"><i class="bha-i bha-i-bag"></i>가방</button><span class="cls">(보조)</span></div>
+      <div class="it"><button class="bha-btn bha-btn--danger"><i class="bha-i bha-i-flame"></i>환생</button><span class="cls">--danger</span></div>
+      <div class="it"><button class="bha-btn bha-btn--sm">저장</button><span class="cls">--sm (36)</span></div>
+      <div class="it"><button class="bha-btn bha-btn--icon" aria-label="일시정지"><i class="bha-i bha-i-pause"></i></button><span class="cls">--icon</span></div>
+      <div class="it"><button class="bha-btn bha-btn--ghost bha-btn--sm">건너뛰기</button><span class="cls">--ghost</span></div>
+    </div>
+    <div class="rowx" style="padding-left: 18px">
+      <div class="it"><button class="bha-btn bha-btn--primary is-focus">초점</button><span class="cls">.is-focus (▶ 커서 + 테두리)</span></div>
+      <div class="it"><button class="bha-btn is-focus">초점</button><span class="cls">보조 .is-focus</span></div>
+      <div class="it"><button class="bha-btn is-press">눌림</button><span class="cls">.is-press</span></div>
+      <div class="it"><button class="bha-btn bha-btn--primary is-press">눌림</button><span class="cls">주 .is-press</span></div>
+      <div class="it"><button class="bha-btn is-disabled" disabled><i class="bha-i bha-i-potion"></i>소모품</button><span class="cls">:disabled (자리 유지)</span></div>
+    </div>
+    <div class="rowx">
+      <div class="it"><button class="bha-btn bha-btn--tint" style="--c: var(--bha-hunger); width: 150px"><i class="bha-i bha-i-food" style="color: var(--bha-hunger)"></i>{{t.food}} <span class="bha-btn-count">3/3</span></button><span class="cls">--tint (돌보기 줄)</span></div>
+      <div class="it"><button class="bha-btn bha-btn--ask" style="--c: var(--bha-cond); width: 150px"><i class="bha-i bha-i-sleep" style="color: var(--bha-cond)"></i>재우기</button><span class="cls">--ask (캐릭터가 청함)</span></div>
+      <div class="it"><button class="bha-btn bha-btn--tint" style="--c: var(--bha-tint-sage); width: 150px"><i class="bha-i bha-i-care" style="color: var(--bha-tint-sage)"></i>{{t.care}}</button><span class="cls">--tint · --bha-tint-sage</span></div>
+    </div>
+  </div>
+
+  <!-- 칩 -->
+  <div class="sec">
+    <h3>칩 · 상태 칩 · 배지 <span class="cls">.bha-chip · .bha-badge · .bha-temp</span></h3>
+    <div class="rowx">
+      <span class="bha-chip" style="--c: var(--bha-el-fire)"><i class="bha-i bha-i-flame"></i>불 · 약점</span>
+      <span class="bha-chip bha-chip--warn" style="--c: var(--bha-warn)"><i class="bha-i bha-i-bolt"></i>컨디션 낮음</span>
+      <span class="bha-chip bha-chip--danger" style="--c: var(--bha-accent-hi)"><i class="bha-i bha-i-skull"></i>빈사</span>
+      <span class="bha-badge">★4</span>
+      <span class="bha-badge bha-badge--accent">보스</span>
+      <span class="bha-badge bha-badge--brass">상인</span>
+      <span class="bha-temp">임시</span>
+    </div>
+    <div class="cap">상태 칩 <span class="cls">.bha-chip--status</span> — 캐릭터 머리 위, 상태이상이 맨 앞</div>
+    <div class="rowx" style="gap: 6px">
+      <span class="bha-chip bha-chip--status bha-chip--danger" style="--c: var(--bha-accent-hi)"><i class="bha-i bha-i-skull"></i>중독</span>
+      <span class="bha-chip bha-chip--status" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food"></i><span class="bha-chip-meter"><i style="width: 80%"></i></span></span>
+      <span class="bha-chip bha-chip--status" style="--c: var(--bha-cond)"><i class="bha-i bha-i-bolt"></i><span class="bha-chip-meter"><i style="width: 80%"></i></span></span>
+      <span class="bha-chip bha-chip--status" style="--c: var(--bha-stab)"><i class="bha-i bha-i-spirit"></i><span class="bha-chip-meter"><i style="width: 50%"></i></span></span>
+      <span class="bha-chip bha-chip--status" style="--c: var(--bha-risk)"><i class="bha-i bha-i-flame"></i><b>0</b></span>
+      <button class="bha-info" aria-label="상태 설명"><i class="bha-i bha-i-info"></i></button>
+    </div>
+  </div>
+
+  <!-- 탭 / 토글 -->
+  <div class="sec">
+    <h3>탭 · 제목 토글 · 스위치 <span class="cls">.bha-tabs .bha-tab · .bha-toggle · .bha-switch</span></h3>
+    <div class="rowx">
+      <div class="bha-tabs"><button class="bha-tab is-on">장비 <span class="bha-tab-n">3</span></button><button class="bha-tab">슬롯</button><button class="bha-tab">타일 <span class="bha-tab-n">17</span></button><button class="bha-tab is-focus">소모품</button><button class="bha-tab">스킨</button></div>
+    </div>
+    <div class="rowx" style="align-items: center">
+      <button class="bha-toggle"><span class="bha-toggle-on">진화체 도감</span><span class="bha-toggle-sep"></span><span class="bha-toggle-off">칭호 도감</span></button>
+      <span class="cls">제목 토글: 켜진 쪽 큰 글자, 다른 쪽 작게 — ✓로 바꿈</span>
+      <span class="bha-switch is-on"><i></i></span><span class="bha-switch"><i></i></span>
+    </div>
+  </div>
+
+  <!-- 게이지 -->
+  <div class="sec">
+    <h3>게이지 · 체력 막대 <span class="cls">.bha-gauge · .bha-gauge-row · .bha-hp</span></h3>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+      <div style="display: flex; flex-direction: column">
+        <div class="bha-gauge-row" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food"></i><div class="bha-gauge"><i style="width: 80%"></i></div><span class="bha-num" style="font-size: 14px">80</span><button class="bha-info" aria-label="배부름 설명"><i class="bha-i bha-i-info"></i></button></div>
+        <div class="bha-gauge-row" style="--c: var(--bha-cond)"><i class="bha-i bha-i-bolt"></i><div class="bha-gauge"><i style="width: 80%"></i></div><span class="bha-num" style="font-size: 14px">80</span><button class="bha-info" aria-label="컨디션 설명"><i class="bha-i bha-i-info"></i></button></div>
+        <div class="bha-gauge-row" style="--c: var(--bha-risk)"><i class="bha-i bha-i-flame"></i><div class="bha-gauge bha-gauge--danger"><i style="width: 12%"></i><b style="width: 25%"></b></div><span class="bha-num" style="font-size: 14px">12</span><button class="bha-info" aria-label="{{t.risk}} 설명"><i class="bha-i bha-i-info"></i></button></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div class="bha-hp" style="--c: var(--bha-player-hp)"><div class="bha-hp-txt"><span>체력</span><span><b>212</b> / 212</span></div><div class="bha-hp-bar"><i style="width: calc(100% - 4px)"></i></div></div>
+        <div class="bha-hp" style="--c: var(--bha-enemy-hp)"><div class="bha-hp-txt"><span>적 체력</span><span><b>24180</b> / 37258</span></div><div class="bha-hp-bar"><i style="width: 62%"></i><s style="left: 62%; width: 8%"></s></div></div>
+        <span class="cls">흰 조각 = 방금 깎인 양 · 10칸 눈금</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 -->
+  <div class="sec">
+    <h3>카드 · 목록 줄 <span class="cls">.bha-card--tile · --shop · --item · .bha-row</span></h3>
+    <div class="rowx" style="align-items: flex-start">
+      <button class="bha-card bha-card--tile" style="--c: var(--bha-tile-prey)"><span class="bha-count">×4</span><span style="display: flex; gap: 8px; align-items: center"><span class="bha-art bha-art--frame" style="width: 32px; height: 32px; color: var(--bha-tile-prey)"><i class="bha-i bha-i-tile"></i></span><span class="bha-card-name">떠도는 영혼</span></span><span class="bha-card-line">약한 적이 나온다</span></button>
+      <button class="bha-card bha-card--shop is-sel"><span class="bha-art bha-art--frame" style="width: 48px; height: 48px"><i class="bha-i bha-i-food"></i></span><span class="bha-card-name">영혼 조각</span><span class="bha-card-line">배부름이 조금 찬다</span><span class="bha-card-price"><i class="bha-i bha-i-coin"></i>120</span></button>
+      <button class="bha-card bha-card--item"><span class="bha-count">×3</span><span class="bha-art" style="width: 36px; height: 36px"><i class="bha-i bha-i-potion"></i></span><span class="bha-card-name">회복약</span></button>
+      <button class="bha-card bha-card--item"><span class="bha-art is-locked" style="width: 36px; height: 36px"><i class="bha-i bha-i-sword"></i><span class="bha-lock"><i class="bha-i bha-i-lock"></i></span></span><span class="bha-card-name">잠김</span></button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; width: 380px">
+      <button class="bha-row is-sel"><span class="bha-art bha-art--frame" style="width: 40px; height: 40px"><i class="bha-i bha-i-sword"></i></span><span class="bha-row-txt"><b>반창고</b><span>전투 중 체력을 조금 채운다</span></span><span class="bha-card-price"><i class="bha-i bha-i-coin"></i>80</span></button>
+      <button class="bha-row"><span class="bha-art bha-art--frame" style="width: 40px; height: 40px"><i class="bha-i bha-i-shield"></i></span><span class="bha-row-txt"><b>붕대</b><span>받는 피해가 잠시 준다</span></span><span class="bha-card-price"><i class="bha-i bha-i-coin"></i>140</span></button>
+    </div>
+    <span class="cls">목록 = 그림 · 이름 · 한 줄 (+가격). 수치는 상세 창에서만</span>
+  </div>
+
+  <!-- 창 -->
+  <div class="sec">
+    <h3>창 <span class="cls">.bha-win · -head · -body · -foot · .bha-more · .bha-pop</span></h3>
+    <div class="rowx" style="align-items: flex-start">
+      <div class="it">
+        <div class="bha-win" style="position: relative; width: 300px; height: 250px">
+          <div class="bha-win-head"><span class="bha-art bha-art--frame" style="width: 32px; height: 32px"><i class="bha-i bha-i-food"></i></span><span class="bha-title bha-grow">영혼 조각</span><button class="bha-btn bha-btn--icon bha-btn--ghost" aria-label="닫기"><i class="bha-i bha-i-close"></i></button></div>
+          <div class="bha-win-body"><p>떠도는 영혼의 부스러기다. 먹으면 배가 조금 찬다.</p><div class="bha-statline"><span>배부름 +10</span><span>컨디션 +4</span></div><div class="bha-more"><i class="bha-i bha-i-down"></i>더 있음</div></div>
+          <div class="bha-win-foot"><button class="bha-btn bha-btn--primary is-focus">사기 · 120</button></div>
+        </div>
+        <span class="cls">상세 — 머리 48px 따로, ×는 머리 안 오른쪽 칸</span>
+      </div>
+      <div class="it">
+        <div class="bha-win" style="position: relative; width: 250px; height: 160px">
+          <div class="bha-win-head"><span class="bha-title">환생할까?</span></div>
+          <div class="bha-win-body"><p>1단계로 돌아간다. 도감·칭호와 노력치 일부는 남는다.</p></div>
+          <div class="bha-win-foot"><button class="bha-btn">아니오</button><button class="bha-btn bha-btn--danger is-focus">예</button></div>
+        </div>
+        <span class="cls">확인 (예/아니오)</span>
+      </div>
+      <div class="it">
+        <div class="bha-win" style="position: relative; width: 220px; height: 200px">
+          <div class="bha-win-head"><span class="bha-title">난이도</span></div>
+          <div class="bha-win-body" style="display: flex; flex-direction: column; gap: 6px; padding: 8px 10px">
+            <button class="bha-btn bha-btn--block bha-btn--sm" style="justify-content: flex-start">★1</button>
+            <button class="bha-btn bha-btn--block bha-btn--sm is-focus" style="justify-content: flex-start">★2</button>
+            <button class="bha-btn bha-btn--block bha-btn--sm" style="justify-content: flex-start">★3 권장</button>
+          </div>
+        </div>
+        <span class="cls">고르기 (한 줄에 하나)</span>
+      </div>
+      <div class="it" style="position: relative; height: 140px; width: 240px">
+        <span class="bha-label" style="display: flex; align-items: center; gap: 10px">영압 안정도 <button class="bha-info is-focus" aria-label="설명"><i class="bha-i bha-i-info"></i></button></span>
+        <div class="bha-pop" style="top: 36px; left: 0; --tip: 86px"><b>영압 안정도</b>낮으면 전투 중 {{t.risk}}가 빨리 찬다. 쉬거나 온천에 가면 오른다.<div class="bha-pop-val">50 이하: {{t.risk}} 오름 +20%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 / 튜토리얼 -->
+  <div class="sec">
+    <h3>노란 알림 · 튜토리얼 카드 <span class="cls">.bha-toasts .bha-toast · .bha-tut</span></h3>
+    <div class="rowx" style="align-items: flex-start">
+      <div style="position: relative; width: 340px; height: 80px; background: var(--bha-bg-1); border-radius: 6px">
+        <div class="bha-toasts"><span class="bha-toast"><i class="bha-i bha-i-star"></i>도감 목표 4개 달성 · 영옥 +11</span><span class="bha-toast"><i class="bha-i bha-i-cart"></i>떠돌이 상인이 왔다</span></div>
+      </div>
+      <div style="position: relative; width: 300px; height: 150px">
+        <span class="bha-btn bha-btn--tint" style="position: absolute; left: 0; top: 50px; --c: var(--bha-hunger)"><i class="bha-i bha-i-food" style="color: var(--bha-hunger)"></i>{{t.food}}</span>
+        <div class="bha-tut" style="left: 110px; top: 20px; width: 190px"><span class="bha-tut-arrow bha-tut-arrow--left"></span><span class="bha-tut-step">1 / 3</span><div>배가 고프면 여기서 먹인다</div><div class="bha-tut-foot"><button class="bha-btn bha-btn--ghost bha-btn--sm">건너뛰기</button><button class="bha-btn bha-btn--sm bha-btn--primary is-focus">다음</button></div></div>
+      </div>
+    </div>
+    <span class="cls">알림: 맨 위 가운데, 위→아래로 쌓임 · 튜토리얼: 대상 바로 옆, 덮개 없음</span>
+  </div>
+
+  <!-- 잠김 / 이름표 -->
+  <div class="sec">
+    <h3>잠김 표시 · 이름표 · 그림 강조 <span class="cls">.bha-art.is-locked .bha-lock · .bha-plate · .bha-art.is-hl</span></h3>
+    <div class="rowx" style="align-items: flex-end">
+      <div class="bha-obj" style="position: relative; width: 72px; height: 96px"><span class="bha-art is-locked"><i class="bha-i bha-i-tower"></i><span class="bha-lock"><i class="bha-i bha-i-lock"></i></span></span><span class="bha-plate">{{t.exam}}</span></div>
+      <div class="bha-obj" style="position: relative; width: 72px; height: 96px"><span class="bha-art is-hl"><i class="bha-i bha-i-book"></i></span><span class="bha-plate is-on">책장</span></div>
+      <div class="bha-obj" style="position: relative; width: 72px; height: 96px"><span class="bha-art"><i class="bha-i bha-i-shop"></i></span><span class="bha-plate">시장 <span class="bha-badge bha-badge--brass">상인</span></span></div>
+      <div class="bha-pop" style="position: relative; width: 200px"><b>잠겨 있다</b>4단계가 되면 열린다</div>
+    </div>
+    <span class="cls">그림 강조는 사각 테두리 없이 그림 윤곽만 (drop-shadow 4방향, 흐림 없음) · 자물쇠는 그림 칸 오른쪽 아래</span>
+  </div>
+
+  <div class="sec">
+    <h3>스토리 장 목록 — 잠긴 장 <span class="cls">.bha-row.is-locked</span></h3>
+    <div style="display: flex; flex-direction: column; gap: 6px; width: 420px">
+      <button class="bha-row"><span class="bha-art bha-art--frame" style="width: 40px; height: 40px"><i class="bha-i bha-i-book"></i></span><span class="bha-row-txt"><b>1장 · 첫 사냥</b><span>3 / 3화 완료</span></span><i class="bha-i bha-i-check" style="color: var(--bha-good)"></i></button>
+      <button class="bha-row is-sel"><span class="bha-art bha-art--frame" style="width: 40px; height: 40px"><i class="bha-i bha-i-book"></i></span><span class="bha-row-txt"><b>2장 · 모래 아래</b><span>1 / 4화</span></span><span class="bha-btn bha-btn--sm bha-btn--primary"><i class="bha-i bha-i-play"></i>도전</span></button>
+      <button class="bha-row is-focus"><span class="bha-art bha-art--frame is-locked" style="width: 40px; height: 40px"><i class="bha-i bha-i-book"></i><span class="bha-lock" style="width: 16px; height: 16px"><i class="bha-i bha-i-lock" style="width: 12px; height: 12px"></i></span></span><span class="bha-row-txt"><b style="color: var(--bha-text-2)">3장 · [장 이름]</b><span style="color: var(--bha-warn)">열리는 조건: 2장을 끝내면 열린다</span></span><span class="bha-btn bha-btn--sm is-disabled" aria-disabled="true"><i class="bha-i bha-i-play"></i>도전</span></button>
+      <div class="bha-pop" style="position: relative; width: 260px; margin-left: 160px; --tip: 214px">2장을 끝내면 열린다</div>
+    </div>
+    <span class="cls">잠긴 장 = 그림 흐리게 + 그림 칸 안 자물쇠, 둘째 줄에 열리는 이유 한 줄, 오른쪽 [도전]은 흐린 상태로 자리만 유지(누르면 이유 한 줄). 열린 장만 [도전]이 선명하다</span>
+  </div>
+
+  <!-- 스킬 블록 -->
+  <div class="sec">
+    <h3>스킬 블록 (정사각) <span class="cls">.bha-blk · .bha-chain · .bha-blockbar</span></h3>
+    <div class="rowx" style="gap: 8px">
+      <span class="bha-blk" style="--el: var(--bha-el-normal)"><i class="bha-i bha-i-lin-a"></i><b>콤</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-fire)"><i class="bha-i bha-i-lin-b"></i><b>허</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-water)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-earth)"><i class="bha-i bha-i-lin-d"></i><b>참</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-thunder)"><i class="bha-i bha-i-lin-e"></i><b>섬</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-blood)"><i class="bha-i bha-i-lin-a"></i><b>콤</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-poison)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span>
+      <span class="bha-blk" style="--el: var(--bha-el-kyo)"><i class="bha-i bha-i-lin-e"></i><b>섬</b></span>
+      <span class="bha-blk bha-blk--empty"></span>
+    </div>
+    <div class="bha-legend"><span><i style="--c: var(--bha-el-normal)"></i>노멀</span><span><i style="--c: var(--bha-el-water)"></i>물</span><span><i style="--c: var(--bha-el-fire)"></i>불</span><span><i style="--c: var(--bha-el-earth)"></i>흙</span><span><i style="--c: var(--bha-el-thunder)"></i>뇌</span><span><i style="--c: var(--bha-el-blood)"></i>혈</span><span><i style="--c: var(--bha-el-poison)"></i>독</span><span><i style="--c: var(--bha-el-kyo)"></i>교</span></div>
+    <div class="rowx" style="gap: 10px; align-items: center">
+      <div class="bha-gen" style="width: 170px"><i class="bha-i bha-i-generate"></i>다음 블록<span class="bha-gen-bar"><i style="width: 70%"></i></span></div>
+      <div class="bha-gen is-sealed" style="width: 170px"><i class="bha-i bha-i-lock"></i>봉인<span class="bha-gen-bar"><i style="width: 70%"></i></span><span class="bha-num bha-num--w2">4</span>초</div>
+      <span class="cls">.bha-gen — 블록 생성 게이지는 버튼이 아닌 표시 칸 (움푸한 면, 초점 없음) · .is-sealed = 봉인</span>
+    </div>
+    <div class="cap">색 = 속성 · 안쪽 모양 = 계열 (원 · 삼각 · 사각 · 마름모 · 육각) · 글자 1자 = 계열 이름</div>
+    <div class="rowx" style="gap: 10px">
+      <div class="bha-chain" style="--ch: var(--bha-chain2)"><span class="bha-blk" style="--el: var(--bha-el-fire)"><i class="bha-i bha-i-lin-b"></i><b>허</b></span><span class="bha-blk" style="--el: var(--bha-el-fire)"><i class="bha-i bha-i-lin-b"></i><b>허</b></span></div>
+      <div class="bha-chain" style="--ch: var(--bha-chain3)"><span class="bha-blk" style="--el: var(--bha-el-water)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span><span class="bha-blk" style="--el: var(--bha-el-water)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span><span class="bha-blk" style="--el: var(--bha-el-water)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span></div>
+      <span class="cls">묶음 = 아래 받침 (2 황동 · 3 구리). 원·숫자 없음</span>
+    </div>
+  </div>
+
+  <!-- 아이콘 -->
+  <div class="sec">
+    <h3>도트 아이콘 세트 (16 격자, 마스크) <span class="cls">.bha-i .bha-i-*</span></h3>
+    <div class="rowx" style="gap: 10px 4px">
+      <sc-for list="{{icons}}" as="ic" hint-placeholder-count="40">
+        <span class="ic"><i class="bha-i bha-i--lg bha-i-{{ic}}"></i>{{ic}}</span>
+      </sc-for>
+    </div>
+    <span class="cls">16 · 24 · 32 · 48px (×1 · ×1.5 · ×2 · ×3). 한 색, currentColor. 그림(캐릭터·물건) 자리에는 따로 그린 도트 그림이 들어간다</span>
+  </div>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1840,"height":2600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      themes: [
+        { k: 'hollow', race: '호로', food: '먹이', care: '교감', risk: '광기', exam: '번호 쟁탈전' },
+        { k: 'shinigami', race: '사신', food: '식사', care: '손질', risk: '호로화', exam: '진급 시험' }
+      ],
+      icons: ['up','down','left','right','check','close','info','help','lock','star','food','sleep','care','heart','bolt','spirit','flame','clock','more','bag','map','book','gear','sword','shield','boot','ring','potion','tile','slot','shirt','paw','box','spark','play','pause','flag','log','coin','gem','home','door','tower','shop','anvil','cart','steam','dummy','forest','camera','egg','swap','orb','save','plus','skull','figure','blob','generate','back','dice','groom','madness','mask','dying','revive','heal','bandage','nest','dojo','badge','bookshelf','equip','armor','talisman','fang','bone','tag','stack','sell','gift','attack','release','return','loop','warning','hourglass','target','battle','boss','branch','reroll','refresh','rebirth','sound','mute','music','vibrate','codex','medal','crown','trophy','scroll','talk','skip','tap','new','sort','filter','auto','trash','pencil','folder','download','upload','fullscreen','monitor','keyring','arrow-up','arrow-down','minus','eye','eye-off','list','grid','search','key','bell','moon','sun','cloud','campfire','butterfly','fist','brain','wing','lotus','el-normal','el-water','el-fire','el-earth','el-thunder','el-blood','el-poison','el-kyo','lin-a','lin-b','lin-c','lin-d','lin-e']
+    };
+  }
+}
+</script>
+</body>
+</html>

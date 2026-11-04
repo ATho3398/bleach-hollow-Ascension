@@ -1,0 +1,24 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-04T10:00:00Z"},"title":"블리치 할로우 어센션 — UI 리디자인","launch":{"view":"canvas"},"pages":[],"boards":{
+"Main.dc.html":{"x":0,"y":0,"w":1600,"h":4400,"title":"1 · 토큰 표 (공통 / 호로 / 사신)"},
+"Components.dc.html":{"x":1680,"y":0,"w":1840,"h":3600,"title":"2 · 컴포넌트 시트 (호로 · 사신)"},
+"S01-Room.dc.html":{"x":3600,"y":0,"w":1768,"h":600,"title":"3-01 방 (둥지 / 대원실)"},
+"S02-WorldMap.dc.html":{"x":5448,"y":0,"w":1768,"h":600,"title":"3-02 월드맵"},
+"S03-Market.dc.html":{"x":3600,"y":720,"w":1768,"h":600,"title":"3-03 시장"},
+"S04-Shop.dc.html":{"x":5448,"y":720,"w":1768,"h":600,"title":"3-04 상점 (상세 창)"},
+"S05-Spa.dc.html":{"x":3600,"y":1440,"w":1768,"h":600,"title":"3-05 온천"},
+"S06-Prep.dc.html":{"x":5448,"y":1440,"w":1768,"h":600,"title":"3-06 모험 준비 [준비]"},
+"S07-TilePlace.dc.html":{"x":3600,"y":2160,"w":1768,"h":600,"title":"3-07 모험 준비 [타일 배치]"},
+"S08-Walk.dc.html":{"x":5448,"y":2160,"w":1768,"h":600,"title":"3-08 걷기"},
+"S09-Battle.dc.html":{"x":3600,"y":2880,"w":1768,"h":600,"title":"3-09 전투 (평소)"},
+"S10-BattleRelease.dc.html":{"x":5448,"y":2880,"w":1768,"h":600,"title":"3-10 전투 (해방 중)"},
+"S11-Absorb.dc.html":{"x":3600,"y":3600,"w":1768,"h":600,"title":"3-11 흡수 (포식 / 정화 흡수)"},
+"S12-LapEnd.dc.html":{"x":5448,"y":3600,"w":1768,"h":600,"title":"3-12 바퀴 끝 창"},
+"S13-Result.dc.html":{"x":3600,"y":4320,"w":1768,"h":600,"title":"3-13 결과"},
+"S14-Bag.dc.html":{"x":5448,"y":4320,"w":1768,"h":600,"title":"3-14 가방"},
+"S15-Status.dc.html":{"x":3600,"y":5040,"w":1768,"h":600,"title":"3-15 상태 화면"},
+"S16-Settings.dc.html":{"x":5448,"y":5040,"w":1768,"h":600,"title":"3-16 설정"}
+},"order":["Main.dc.html","Components.dc.html","S01-Room.dc.html","S02-WorldMap.dc.html","S03-Market.dc.html","S04-Shop.dc.html","S05-Spa.dc.html","S06-Prep.dc.html","S07-TilePlace.dc.html","S08-Walk.dc.html","S09-Battle.dc.html","S10-BattleRelease.dc.html","S11-Absorb.dc.html","S12-LapEnd.dc.html","S13-Result.dc.html","S14-Bag.dc.html","S15-Status.dc.html","S16-Settings.dc.html"],
+"notes":{
+"t1":{"x":0,"y":-300,"text":"토큰 · 컴포넌트","kind":"title1","maxW":3520},
+"t3":{"x":3600,"y":-300,"text":"화면 장면 — 왼쪽 호로 · 오른쪽 사신 · 아래 바뀐 점","kind":"title1","maxW":3616}
+},"designSystems":[]}
