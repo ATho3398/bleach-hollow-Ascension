@@ -17,13 +17,12 @@ describe('C.162 레터박스 없음 (v2Size)', () => {
     expect(small.h).toBeCloseTo(384 / (540 / 640));
     expect(v2Size(0, 0)).toEqual({ scale: 1, w: V2_W, h: V2_H });
   });
-  it('루트 크기는 변수로, 필드 = 스킬창(110) 위 전부, 해방 카드 96·블록 58', () => {
+  it('루트 크기는 변수로, 필드 = 스킬창 위 전부 (C.285: 스킬창 130 · 블록 52 정사각, GDD 183장 화면 C)', () => {
     const css = read('src/ui/bha/v2/bha.css');
-    expect(css).toContain('.bha-v2host>.bha-root{width:calc(var(--v2-w,640) * 1px);height:calc(var(--v2-h,330) * 1px)}');
-    expect(css).toContain('.bha-root.bha-battle .bha-field{height:auto;bottom:110px}');
-    expect(css).toContain('.bha-root.bha-battle .bha-skillpanel{top:auto;height:110px}');
-    expect(css).toContain('width:96px');
-    expect(css).toContain('.bha-root .bha-v2tray__grid,.bha-root .bha-v2cell,.bha-root .bha-v2cell>.bha-block{height:58px}');
+    expect(css).toContain('width:calc(var(--v2-w,640) * 1px);height:calc(var(--v2-h,330) * 1px)');
+    expect(css).toMatch(/\.bha-root \.bha-field\{position:absolute;left:0;right:0;top:0;bottom:130px/);
+    expect(css).toMatch(/\.bha-root \.bha-skillpanel\{position:absolute;left:0;right:0;bottom:0;height:130px/);
+    expect(css).toContain('grid-template-columns:repeat(var(--cap,8),var(--bha-block-h))');
   });
 });
 

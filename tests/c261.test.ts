@@ -69,7 +69,8 @@ describe('강조는 그림 모양대로 (178장 3)', () => {
     const all = css('battle-scene.css') + css('v2/bha.css');
     expect(all).not.toMatch(/is-(liberated|unique|lib-ready) \.bha-unit--me \.bha-unit__fig(::before|::after)?\s*\{/);
     expect(all).toMatch(/is-liberated \.bha-unit--me \.bha-hero__body \{ filter: drop-shadow/);
-    expect(all).toMatch(/is-lib-ready \.bha-unit--me \.bha-hero__body\{animation:bha-lib-shape/);
+    // C.285 (GDD 183장 화면 C): 해방 준비 = 몸 그림 4방향 윤곽(흐림·깜빡임 없음)
+    expect(all).toMatch(/is-lib-ready \.bha-unit--me \.bha-hero__body\{filter:drop-shadow\(2px 0 0 /);
     // 투명 해방 버튼(그림 칸 네모)은 눌림·초점 상자를 그리지 않는다
     expect(css('v2/bha.css')).toMatch(/\.bha-v2herolib\.bha-sel[^{]*\{outline:0;box-shadow:none;background:none\}/);
   });

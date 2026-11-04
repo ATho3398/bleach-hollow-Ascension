@@ -34,18 +34,16 @@
 .bha-ahead__place.has-art .bha-ahead__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .bha-ahead__pool {
   position: absolute; left: 4%; right: 4%; bottom: 0; height: 30%; border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bha-heal) 70%, var(--bha-bg-0)), color-mix(in srgb, var(--bha-heal) 25%, var(--bha-bg-0)) 70%);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bha-heal) 50%, transparent), 0 0 18px color-mix(in srgb, var(--bha-heal) 45%, transparent);
+  background: color-mix(in srgb, var(--bha-heal) 45%, var(--bha-bg-0)); /* C.285 v2: 단색 + 2px 테 (그라데이션·흐린 빛 삭제) */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bha-heal) 70%, var(--bha-bg-0)), inset 0 2px 0 var(--bha-hi);
 }
-.bha-ahead.is-spring .bha-ahead__pool { background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bha-accent) 70%, var(--bha-bg-0)), color-mix(in srgb, var(--bha-accent) 25%, var(--bha-bg-0)) 70%); }
+.bha-ahead.is-spring .bha-ahead__pool { background: color-mix(in srgb, var(--bha-accent) 45%, var(--bha-bg-0)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bha-accent) 70%, var(--bha-bg-0)), inset 0 2px 0 var(--bha-hi); }
 .bha-ahead__glow {
   position: absolute; left: 18%; right: 18%; bottom: 14%; height: 70%; border-radius: 50% 50% 0 0;
-  background: linear-gradient(0deg, color-mix(in srgb, var(--bha-heal) 40%, transparent), transparent);
-  animation: bha-breathe 2.4s ease-in-out infinite;
+  display: none; /* C.285 v2: 피어오르는 빛(그라데이션·맥동) 삭제 */
 }
 .bha-ahead__mark { position: absolute; left: 50%; bottom: 34%; transform: translateX(-50%); color: var(--bha-heal); }
 .bha-ahead__mark .bha-icon { width: 28px; height: 28px; }
-.bha-ahead--rest.is-arrived .bha-ahead__glow { animation-duration: 1s; }
 
 @media (prefers-reduced-motion: reduce) {
   .bha-ahead, .bha-ahead.is-leaving { animation: none; }

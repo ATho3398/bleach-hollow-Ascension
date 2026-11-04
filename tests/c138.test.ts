@@ -22,8 +22,9 @@ describe('C.138', () => {
     expect(src).not.toContain("'bha-block__fam'");
   });
   it('5번: 아이콘이 카드 중심에서 크고 이름은 아래 작게', () => {
-    const css = read('src/ui/bha/components/components.css');
-    expect(css).toMatch(/\.bha-block__icon \.bha-icon \{ width: 34px; height: 34px/);
-    expect(css).toMatch(/\.bha-block__icon \{[^}]*flex: 1 1 auto/);
+    // C.285 (GDD 183장 화면 C): 블록 = v2 모양 — 계열 모양은 칸 가운데 크게(40px, 흐리게), 이름은 화면에 안 쓰고 계열 글자 1자
+    const css = read('src/ui/bha/v2/bha.css');
+    expect(css).toMatch(/\.bha-root \.bha-block__icon \.bha-svg\{width:40px;height:40px/);
+    expect(css).toMatch(/\.bha-root \.bha-block__name\{position:absolute;width:1px;height:1px/);
   });
 });

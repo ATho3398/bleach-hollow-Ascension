@@ -71,7 +71,7 @@ describe('남은 점검 항목', () => {
     expect(read('src/ui/towerView.ts')).not.toContain('흡수 없음');
   });
   it('피해 숫자는 위 막대 아래 필드 안에서만 (잘라 냄) · 맞은 쪽 머리 위', () => {
-    expect(read('src/ui/bha/v2/bha.css')).toContain('.bha-root .bha-battle__floats{top:46px;overflow:hidden}');
+    expect(read('src/ui/bha/v2/bha.css')).toContain('.bha-root .bha-battle__floats{top:40px;overflow:hidden}');
     for (const s of [...FLOAT_SPOTS, ...HURT_SPOTS]) expect(s.top).toBeGreaterThanOrEqual(28);
   });
 });

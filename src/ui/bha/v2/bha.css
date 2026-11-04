@@ -1,22 +1,19 @@
 /* ═════════════════════════════════════════════════════════════════
-   LCD 인게임 UI v2 (C.151) — docs/bha-ui-handoff/design/bha.css 를 그대로 옮기되,
-   ① 모든 선택자 앞에 `.bha-root` 를 붙였다(클래스·토큰 이름은 그대로, 옛 화면의 같은 이름 클래스 30개·토큰 29개와 섞이지 않게 `.bha-root` 안에서만 적용)
-   ② 테마 클래스는 루트와 같은 요소: `.bha-root.bha-hollow` / `.bha-root.bha-soul`
-   ③ 시트용(.bha-sheet·.bha-table·.bha-sw·.bha-cap·.bha-code) 규칙은 게임에 필요 없어 뺐다
-   ④ 글꼴 토큰만 프로젝트에 들어 있는 글꼴 목록으로 바꿨다(오프라인)
-   아래 "프로젝트 어댑터"만 핸드오프에 없는 우리 쪽 추가분이다.
+   전투 화면 루트 `.bha-root` (C.151 → C.285 리디자인 v2, GDD 183장 화면 C)
+   `.bha-root` = 640×330 고정 좌표계(전투 장면). v2/root.ts 가 LCD 창(646×360)에 맞게 --v2-scale·--v2-w·--v2-h 를 정한다 — 좌표계는 그대로.
+   C.285: 옛 핸드오프(C.151) 그라데이션·glow·hex 를 걷어 내고 디자인 v2(docs/design/redesign-v2, S09·S10) 모양으로 다시 그렸다.
+     - 면·버튼·칩·게이지 = 단색 면 + 밝은 윗선(--bha-hi)·어두운 아랫면(--bha-lo). 그라데이션·glow 없음(해방 컷인 사선 띠만)
+     - 머리 줄 40(장면 위에 겹침) · 스킬창 130(범례 16 + [다음 블록 표시 칸][막기][소모품][장비] 36 + 블록 바 52 정사각 8칸)
+     - 블록 = v2 `.bha-blk` 모양(속성 색 면 + 계열 모양 + 가운데 계열 글자 1자), 체인 = 아래 받침 띠(2 황동 · 3 구리)
+   클래스 이름·DOM 은 그대로(입력·튜토리얼 구멍·점검 스크립트가 본다). 화면 밖(전투 아닌 곳)에는 쓰지 않는다.
    ═════════════════════════════════════════════════════════════════ */
-/* 블리치 할로우 어센션 — LCD 인게임 UI 공용 스타일 (bha-) */
 
-/* ───────── 공통 토큰 (테마 무관) ─────────
-   C.282 (GDD 183장 1 ①): 공용 토큰 한 벌로 합침 — 이 블록은 이제 전역 토큰(tokens.css·theme-*.css, 디자인 v2 값)을 가리키는 별칭만 둔다.
-   역할·의미 색(guard·heal·weak·rare·danger·insert·seal)·모서리·글자 크기·글꼴·바탕/선/글자/포인트는 전역 값을 그대로 물려받는다 */
+/* ───────── 토큰 별칭 (전역 tokens.css·theme-*.css 를 가리킨다, 새 색 없음) ───────── */
 .bha-root{
   --bha-atk:var(--bha-attack);
-  --bha-void:var(--bha-risk);     /* 공허 블록 테 (전역 --bha-void 는 블록 바탕용 짙은 색) */
+  --bha-void:var(--bha-risk);     /* 공허 블록 (전역 --bha-void 는 블록 바탕용 짙은 색) */
   --bha-mad:var(--bha-risk);
   --bha-chain:var(--bha-chain3);
-  /* 속성 색 = 디자인 v2 속성 8색 (src/data/elements/elements.json 의 color 와 같은 토큰) */
   --bha-attr-normal:var(--bha-el-normal);
   --bha-attr-fire:var(--bha-el-fire);
   --bha-attr-thunder:var(--bha-el-thunder);
@@ -24,20 +21,19 @@
   --bha-attr-earth:var(--bha-el-earth);
   --bha-attr-poison:var(--bha-el-poison);
   --bha-attr-blood:var(--bha-el-blood);
-  --bha-ink-on-color:var(--bha-primary-ink); /* 색 면 위 글자 */
-  /* 간격 (옛 이름 → 전역 --bha-sp-*) */
+  --bha-ink-on-color:var(--bha-primary-ink);
   --bha-s-1:var(--bha-sp-1); --bha-s-2:var(--bha-sp-2); --bha-s-3:var(--bha-sp-3); --bha-s-4:var(--bha-sp-4); --bha-s-5:var(--bha-sp-5); --bha-s-6:var(--bha-sp-6); --bha-s-7:var(--bha-sp-7);
-  /* 모션 */
   --bha-t-fast:var(--bha-dur-2); --bha-t-base:180ms; --bha-t-slow:var(--bha-dur-4); --bha-t-gauge:600ms; --bha-t-spawn:240ms; --bha-t-pulse:1200ms;
   --bha-ease:var(--bha-ease-out);
-  /* 옛 테마 토큰 별칭 (테마 값은 전역 theme-*.css) */
   --bha-bg-4:var(--bha-line-1);
   --bha-edge:var(--bha-hi);
   --bha-accent-glow:var(--bha-accent-soft);
-  --bha-world-sky:var(--bha-scene-wall); --bha-world-sky2:var(--bha-bg-2); --bha-world-ground:var(--bha-scene-floor); --bha-world-ground2:var(--bha-bg-3);
+  /* 장면 위에 겹치는 판(머리 줄·로그·칩 바탕): 바탕색을 반쯤 비친다 */
+  --bha-over:color-mix(in srgb,var(--bha-backdrop) 62%,transparent);
+  --bha-over-strong:color-mix(in srgb,var(--bha-backdrop) 84%,transparent);
 }
 
-/* ───────── LCD 화면 ───────── */
+/* ───────── 루트 ───────── */
 .bha-root{
   position:relative; width:640px; height:330px; overflow:hidden; box-sizing:border-box;
   background:var(--bha-bg-1); color:var(--bha-text-1);
@@ -45,442 +41,305 @@
   -webkit-font-smoothing:antialiased;
 }
 .bha-root *{box-sizing:border-box}
-.bha-root::after{ /* 도트 LCD 결 */
-  content:""; position:absolute; inset:0; pointer-events:none; z-index:50;
-  background:
-    repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 3px);
-}
-.bha-root .bha-display{font-family:var(--bha-font-display); font-weight:700; letter-spacing:-.01em}
+.bha-root .bha-display{font-family:var(--bha-font-display); font-weight:800; letter-spacing:-.01em}
 .bha-root .bha-t2{color:var(--bha-text-2)} .bha-root .bha-t3{color:var(--bha-text-3)}
 .bha-root .bha-xs{font-size:var(--bha-fs-xs)} .bha-root .bha-sm{font-size:var(--bha-fs-sm)} .bha-root .bha-md{font-size:var(--bha-fs-md)} .bha-root .bha-lg{font-size:var(--bha-fs-lg)} .bha-root .bha-xl{font-size:var(--bha-fs-xl)}
 .bha-root .bha-b{font-weight:700}
-.bha-root .bha-num{font-variant-numeric:tabular-nums}
+.bha-root .bha-num{font-family:var(--bha-font-num); font-weight:400; font-variant-numeric:tabular-nums}
 .bha-root .bha-svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bha-root .bha-i{flex:none}
 
-/* ───────── 면(패널) ───────── */
-.bha-root .bha-panel{
-  background:linear-gradient(180deg,var(--bha-bg-3),var(--bha-bg-2));
-  border:1px solid var(--bha-line-2); border-radius:var(--bha-r-lg);
-  box-shadow:inset 0 1px 0 var(--bha-edge), inset 0 -2px 0 rgba(0,0,0,.22);
-}
-.bha-root .bha-panel--sunk{background:var(--bha-bg-1); border-color:var(--bha-line-1); box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
-.bha-root .bha-panel--flat{background:var(--bha-bg-2); border-color:var(--bha-line-1); box-shadow:inset 0 1px 0 var(--bha-edge)}
+/* ───────── 면 ───────── */
+.bha-root .bha-panel{background:var(--bha-bg-2); border:1px solid var(--bha-line-2); border-radius:var(--bha-r-md); box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo)}
+.bha-root .bha-panel--sunk{background:var(--bha-bg-0); border-color:var(--bha-line-1); box-shadow:inset 0 2px 0 var(--bha-lo)}
+.bha-root .bha-panel--flat{background:var(--bha-bg-2); border-color:var(--bha-line-1); box-shadow:inset 0 1px 0 var(--bha-hi)}
 .bha-root .bha-divider{height:1px;background:var(--bha-line-1)}
 
-/* ───────── 버튼 4종 ───────── */
+/* ───────── 버튼 (v2: 단색 면 + 윗선·아랫면) ───────── */
 .bha-root .bha-btn{
   display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  min-height:44px; padding:0 14px; border-radius:var(--bha-r-lg);
-  font:600 var(--bha-fs-md)/1 var(--bha-font-body); color:var(--bha-text-1);
-  background:linear-gradient(180deg,var(--bha-bg-4),var(--bha-bg-3));
-  border:1px solid var(--bha-line-2); box-shadow:inset 0 1px 0 var(--bha-edge), 0 2px 0 rgba(0,0,0,.35);
-  cursor:pointer; transition:transform var(--bha-t-fast) var(--bha-ease), filter var(--bha-t-fast);
+  min-height:var(--bha-btn-h); padding:0 14px; border-radius:var(--bha-r-md);
+  font:700 var(--bha-fs-md)/1 var(--bha-font-body); color:var(--bha-text-1);
+  background:var(--bha-bg-2); border:1px solid var(--bha-line-2); box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo);
+  cursor:pointer; transition:transform var(--bha-t-fast) var(--bha-ease);
 }
-.bha-root .bha-btn:active{transform:translateY(1px)}
-.bha-root .bha-btn--sm{min-height:36px; padding:0 10px; font-size:var(--bha-fs-sm); border-radius:var(--bha-r-sm)}
-.bha-root .bha-btn--accent{background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 85%,#fff 15%),var(--bha-accent)); border-color:var(--bha-accent-hi); color:#fff8f0}
-.bha-root .bha-btn--light{background:linear-gradient(180deg,#f3ece0,#ddd3c3); border-color:#fffaf1; color:var(--bha-ink-on-color)}
-.bha-root .bha-btn--danger{background:linear-gradient(180deg,#3a2422,#2c1b1a); border-color:var(--bha-danger); color:var(--bha-danger)}
-.bha-root .bha-btn--ghost{background:transparent; border-color:var(--bha-line-2); box-shadow:none; color:var(--bha-text-2)}
-.bha-root .bha-btn.is-disabled{opacity:.45; cursor:default}
-.bha-root .bha-btn.is-focus{outline:2px solid var(--bha-accent-hi); outline-offset:1px}
-.bha-root .bha-iconbtn{width:36px;height:36px;padding:0;min-height:36px;border-radius:var(--bha-r-sm)}
-.bha-root .bha-iconbtn--44{width:44px;height:44px}
+.bha-root .bha-btn:active,.bha-root .bha-btn.is-pressed{transform:translateY(1px); background:var(--bha-bg-3); box-shadow:inset 0 2px 0 var(--bha-lo)}
+.bha-root .bha-btn--sm{min-height:var(--bha-btn-h-sm); padding:0 10px; font-size:var(--bha-fs-sm); border-radius:var(--bha-r-sm)}
+.bha-root .bha-btn--accent{background:var(--bha-primary-bg); border-color:var(--bha-primary-lo); color:var(--bha-primary-ink)}
+.bha-root .bha-btn--light{background:var(--bha-primary-bg); border-color:var(--bha-primary-lo); color:var(--bha-primary-ink)}
+.bha-root .bha-btn--danger{background:var(--bha-accent); border-color:var(--bha-lo); color:var(--bha-text-1)}
+.bha-root .bha-btn--ghost{background:transparent; border-color:transparent; box-shadow:none; color:var(--bha-text-2)}
+.bha-root .bha-btn.is-disabled,.bha-root .bha-btn:disabled{opacity:.42; cursor:default; box-shadow:none}
+.bha-root .bha-btn.is-focus{outline:2px solid var(--bha-focus); outline-offset:2px}
+.bha-root .bha-btn .bha-svg{width:20px;height:20px}
+.bha-root .bha-iconbtn{width:var(--bha-btn-h-sm);height:var(--bha-btn-h-sm);padding:0;min-height:var(--bha-btn-h-sm);border-radius:var(--bha-r-sm)}
+.bha-root .bha-iconbtn--44{width:var(--bha-btn-h);height:var(--bha-btn-h)}
 
 /* ───────── 칩·배지 ───────── */
-.bha-root .bha-chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:var(--bha-r-pill);
-  font-size:var(--bha-fs-xs);font-weight:600;color:var(--bha-text-2);background:var(--bha-bg-2);border:1px solid var(--bha-line-2);white-space:nowrap}
-.bha-root .bha-chip--temp{border-style:dashed;color:var(--bha-text-3);background:transparent;border-radius:var(--bha-r-sm)}
-.bha-root .bha-chip--attr{color:var(--bha-text-1);border-color:var(--bha-rare)}
-.bha-root .bha-chip--danger{color:var(--bha-danger);border-color:var(--bha-danger);border-radius:var(--bha-r-sm)}
-.bha-root .bha-chip--seal{color:var(--bha-seal);border-color:var(--bha-seal)}
-.bha-root .bha-chip--rare{color:var(--bha-rare);border-color:var(--bha-rare)}
-.bha-root .bha-dot{width:14px;height:14px;border-radius:50%;display:inline-grid;place-items:center;font-size:9px;font-weight:800;color:var(--bha-ink-on-color);background:var(--bha-attr-normal);flex:none}
-.bha-root .bha-badge{position:absolute;top:5px;right:5px;height:20px;padding:0 6px;border-radius:var(--bha-r-sm);font-size:var(--bha-fs-xs);font-weight:700;
-  background:rgba(0,0,0,.45);color:var(--bha-text-1);display:inline-flex;align-items:center}
+.bha-root .bha-chip{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px 0 6px;border-radius:var(--bha-r-xs);
+  font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-1);background:var(--bha-bg-1);border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-hi);white-space:nowrap}
+.bha-root .bha-chip .bha-svg,.bha-root .bha-chip .bha-i{width:16px;height:16px}
+.bha-root .bha-chip--temp{border-style:dashed;color:var(--bha-text-3);background:transparent;box-shadow:none}
+.bha-root .bha-chip--attr{border-color:var(--bha-line-2)}
+.bha-root .bha-chip--danger{border-color:var(--bha-accent);background:var(--bha-accent-soft)}
+.bha-root .bha-chip--seal{border-color:var(--bha-seal);background:color-mix(in srgb,var(--bha-seal) 14%,var(--bha-bg-1))}
+.bha-root .bha-chip--rare{border-color:var(--bha-rare);color:var(--bha-rare)}
+/* 상태 칩 (v2 .bha-chip--status): 장면 위 어두운 판 + 고정 폭 숫자 */
+.bha-root .bha-chip--status{height:28px;padding:0 6px 0 4px;background:var(--bha-over-strong);border-color:var(--bha-line-2);box-shadow:none}
+.bha-root .bha-chip--status b{font-family:var(--bha-font-num);font-weight:400;font-size:var(--bha-fs-sm);display:inline-block;min-width:var(--nw,3ch);text-align:right}
+.bha-root .bha-dot{width:14px;height:14px;border-radius:var(--bha-r-xs);display:inline-grid;place-items:center;font-size:12px;font-weight:800;color:var(--bha-ink-on-color);background:var(--bha-attr-normal);flex:none}
+.bha-root .bha-badge{position:absolute;top:5px;right:5px;height:20px;padding:0 6px;border-radius:var(--bha-r-xs);font-size:var(--bha-fs-xs);font-weight:800;
+  background:var(--bha-bg-3);color:var(--bha-text-1);display:inline-flex;align-items:center}
 
 /* ───────── 알림 띠·토스트 ───────── */
 .bha-root .bha-notice{position:absolute;left:50%;transform:translateX(-50%);top:6px;z-index:30;max-width:440px;
-  display:flex;align-items:flex-start;gap:6px;padding:4px 12px;border-radius:var(--bha-r-lg);
-  background:color-mix(in srgb,var(--bha-bg-1) 88%,transparent);border:1px solid var(--bha-rare);
-  font-size:var(--bha-fs-xs);font-weight:600;color:var(--bha-text-1);line-height:1.35}
+  display:flex;align-items:flex-start;gap:6px;padding:4px 12px;border-radius:var(--bha-r-sm);
+  background:var(--bha-over-strong);border:1px solid var(--bha-rare);
+  font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-1);line-height:1.35}
 .bha-root .bha-notice b{color:var(--bha-rare)}
 .bha-root .bha-notice .bha-svg{width:14px;height:14px;color:var(--bha-rare);margin-top:1px}
 .bha-root .bha-toast{position:absolute;left:50%;transform:translateX(-50%);top:6px;z-index:40;min-width:220px;text-align:center;
-  padding:4px 14px;border-radius:var(--bha-r-pill);font-size:var(--bha-fs-xs);font-weight:700;
-  background:var(--bha-bg-4);border:1px solid var(--bha-line-2);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+  padding:4px 14px;border-radius:var(--bha-r-sm);font-size:var(--bha-fs-sm);font-weight:700;
+  background:var(--bha-toast-bg);color:var(--bha-toast-ink);border:0}
 
-/* ───────── 게이지 3종 ───────── */
-.bha-root .bha-gauge{position:relative;height:8px;border-radius:var(--bha-r-pill);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);overflow:hidden}
-.bha-root .bha-gauge__fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:var(--g,var(--bha-text-2));transition:width var(--bha-t-gauge) var(--bha-ease)}
-.bha-root .bha-gauge__ghost{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(135deg,var(--g) 0 3px,transparent 3px 6px);opacity:.55}
-.bha-root .bha-gauge--hp{--g:var(--bha-guard);height:10px}
-.bha-root .bha-gauge--foe{--g:var(--bha-atk);height:10px}
-.bha-root .bha-gauge--hunger{--g:var(--bha-chain)}
-.bha-root .bha-gauge--cond{--g:var(--bha-heal)}
+/* ───────── 게이지 (v2: 움푹한 판 + 단색 채움) ───────── */
+.bha-root .bha-gauge{position:relative;height:var(--bha-bar-h);border-radius:1px;background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1);overflow:hidden}
+.bha-root .bha-gauge__fill{position:absolute;left:1px;top:1px;bottom:1px;background:var(--g,var(--bha-text-2));box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo);transition:width var(--bha-t-gauge) var(--bha-ease)}
+.bha-root .bha-gauge__ghost{position:absolute;left:1px;top:1px;bottom:1px;background:var(--g);opacity:.35}
+.bha-root .bha-gauge--hp{--g:var(--bha-player-hp)}
+.bha-root .bha-gauge--foe{--g:var(--bha-enemy-hp)}
+.bha-root .bha-gauge--hunger{--g:var(--bha-hunger)}
+.bha-root .bha-gauge--cond{--g:var(--bha-cond)}
 .bha-root .bha-gauge--mad{--g:var(--bha-mad)}
-.bha-root .bha-gauge--release{--g:var(--bha-accent-hi);height:6px}
+.bha-root .bha-gauge--release{--g:var(--bha-special-a);height:6px}
 .bha-root .bha-gauge--thin{height:5px}
 
-/* ───────── 탭 ───────── */
-.bha-root .bha-tabs{display:flex;gap:4px}
-.bha-root .bha-tab{height:36px;min-width:44px;padding:0 10px;border-radius:var(--bha-r-sm);font:600 var(--bha-fs-sm)/1 var(--bha-font-body);
-  color:var(--bha-text-2);background:var(--bha-bg-2);border:1px solid var(--bha-line-1);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
-.bha-root .bha-tab.is-active{color:var(--bha-text-1);background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 55%,var(--bha-bg-3)),var(--bha-bg-3));border-color:var(--bha-accent-hi);box-shadow:inset 0 1px 0 var(--bha-edge)}
+/* ───────── 탭·제목 토글 (갤러리·창용) ───────── */
+.bha-root .bha-tabs{display:flex;gap:4px;padding:3px;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1)}
+.bha-root .bha-tab{height:36px;min-width:44px;padding:0 10px;border:0;border-radius:var(--bha-r-xs);font:700 var(--bha-fs-sm)/1 var(--bha-font-body);
+  color:var(--bha-text-3);background:transparent;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.bha-root .bha-tab.is-active{color:var(--bha-text-1);background:var(--bha-bg-3);box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-accent)}
 .bha-root .bha-tab .bha-count{font-size:var(--bha-fs-xs);color:var(--bha-text-3)}
 .bha-root .bha-titletoggle{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;min-height:36px;color:var(--bha-text-1);cursor:pointer}
 .bha-root .bha-titletoggle .bha-svg{width:14px;height:14px;color:var(--bha-text-2)}
 
-/* ───────── 그림 자리(도트 그림이 들어옴) ───────── */
-.bha-root .bha-art{position:absolute;display:grid;place-items:center;border:1px dashed color-mix(in srgb,var(--bha-text-3) 55%,transparent);border-radius:var(--bha-r-sm);
-  background:repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 6px,transparent 6px 12px);color:var(--bha-text-3);font-size:var(--bha-fs-xs);text-align:center;line-height:1.3}
-.bha-root .bha-art--char::before{content:"◀ 시선";position:absolute;top:4px;left:6px;font-size:12px;color:var(--bha-text-3)}
+/* ───────── 그림 자리 ───────── */
 .bha-root .bha-foe{position:absolute;display:grid;place-items:center}
-.bha-root .bha-foe svg{width:100%;height:100%;filter:drop-shadow(0 0 10px rgba(0,0,0,.6))}
-.bha-root .bha-nametag{position:absolute;left:50%;transform:translateX(-50%);bottom:-11px;padding:2px 8px;border-radius:var(--bha-r-sm);
-  background:rgba(18,14,13,.82);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-1);white-space:nowrap}
-.bha-root .bha-scene{position:absolute;inset:0;background:
-  radial-gradient(120% 70% at 50% 0%,var(--bha-world-sky) 0%,var(--bha-world-sky2) 55%,var(--bha-bg-1) 100%)}
-.bha-root .bha-scene::before{content:"방 배경 그림 자리";position:absolute;right:10px;bottom:8px;font-size:12px;color:var(--bha-text-3);opacity:.8}
+.bha-root .bha-foe svg{width:100%;height:100%}
+.bha-root .bha-nametag{position:absolute;left:50%;transform:translateX(-50%);bottom:-11px;padding:2px 8px;border-radius:var(--bha-r-xs);
+  background:var(--bha-over-strong);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-1);white-space:nowrap}
 
-/* ───────── 독(아래 버튼 줄) ───────── */
-.bha-root .bha-dock{position:absolute;left:0;right:0;bottom:0;height:56px;padding:6px 8px;display:flex;gap:6px;align-items:center;
-  background:linear-gradient(180deg,var(--bha-bg-2),var(--bha-bg-1));border-top:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-edge);z-index:20}
-.bha-root .bha-dock .bha-btn{flex:1;min-height:44px}
-.bha-root .bha-dock .bha-btn--feed{border-color:var(--bha-chain);color:var(--bha-text-1)} .bha-root .bha-dock .bha-btn--feed .bha-svg{color:var(--bha-chain)}
-.bha-root .bha-dock .bha-btn--sleep{border-color:var(--bha-heal)} .bha-root .bha-dock .bha-btn--sleep .bha-svg{color:var(--bha-heal)}
-.bha-root .bha-dock .bha-btn--bond{border-color:var(--bha-guard)} .bha-root .bha-dock .bha-btn--bond .bha-svg{color:var(--bha-guard)}
-.bha-root .bha-dock .bha-more{flex:none;width:44px}
-
-/* ───────── 상태 칩 ───────── */
-.bha-root .bha-statchip{position:absolute;width:96px;padding:5px 7px;border-radius:var(--bha-r-sm);background:rgba(18,14,13,.86);border:1px solid var(--bha-accent-hi);
-  display:grid;grid-template-columns:auto 1fr;gap:3px 5px;align-items:center;font-size:12px;cursor:pointer;z-index:12}
-.bha-root .bha-statchip .bha-gauge{height:6px}
-.bha-root .bha-bubble{position:absolute;padding:4px 10px;border-radius:var(--bha-r-lg);background:var(--bha-bg-0);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-xs);white-space:nowrap;z-index:12}
-
-/* ───────── 블록 카드 ───────── */
-.bha-root .bha-blockbar{position:absolute;left:6px;right:6px;bottom:6px;height:72px;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;padding:4px;
-  border-radius:var(--bha-r-lg);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);box-shadow:inset 0 2px 4px rgba(0,0,0,.4)}
-/* 확정: A 각인 컷 — 어두운 칸 + 속성 색 이중 테두리, 안쪽 판 오른쪽 위 22px 사선 컷에 계열 글자.
-   배치(56×64 기준): 체인 점 = 판 왼쪽 위(10,10) / 계열 글자 = 컷 자리(오른쪽 위) / 아이콘 30px = 판 아래쪽 가운데,
-   사선(x−y=24)보다 항상 아래 / 약점 = 오른쪽 아래 금색 삼각형. 이름은 화면에 안 쓰고 aria-label로만. */
-.bha-root .bha-block{position:relative;height:64px;border-radius:var(--bha-r-sm);display:flex;align-items:center;justify-content:center;padding:0;
-  background:var(--bha-bg-0);border:1.5px solid color-mix(in srgb,var(--blk) 80%,#fff 20%);color:var(--blk);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),0 2px 0 rgba(0,0,0,.4);cursor:pointer;transition:transform var(--bha-t-fast) var(--bha-ease)}
-.bha-root .bha-block__face{position:absolute;inset:5px;background:color-mix(in srgb,var(--blk) 85%,#fff 15%);clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,0 100%)}
-.bha-root .bha-block__face::before{content:"";position:absolute;inset:1.5px;background:color-mix(in srgb,var(--blk) 20%,var(--bha-bg-1));clip-path:polygon(0 0,calc(100% - 21px) 0,100% 21px,100% 100%,0 100%)}
-.bha-root .bha-block__icon{position:relative;z-index:1;width:30px;height:30px;margin:10px 6px 0 0;color:color-mix(in srgb,var(--blk) 70%,#fff 30%)}
-.bha-root .bha-block__icon .bha-svg{width:30px;height:30px;stroke-width:2.2}
-.bha-root .bha-block__glyph{position:absolute;top:3px;right:4px;z-index:2;font:800 13px/1 var(--bha-font-display);color:var(--bha-text-1)}
-.bha-root .bha-block__name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.bha-root .bha-block--empty{background:transparent;border:1.5px dashed var(--bha-line-2);box-shadow:none;cursor:default}
-.bha-root .bha-block--normal{--blk:var(--bha-attr-normal)} .bha-root .bha-block--fire{--blk:var(--bha-attr-fire)} .bha-root .bha-block--thunder{--blk:var(--bha-attr-thunder)}
-.bha-root .bha-block--water{--blk:var(--bha-attr-water)} .bha-root .bha-block--earth{--blk:var(--bha-attr-earth)} .bha-root .bha-block--poison{--blk:var(--bha-attr-poison)} .bha-root .bha-block--blood{--blk:var(--bha-attr-blood)}
-.bha-root .bha-block--guard{--blk:var(--bha-guard)} .bha-root .bha-block--heal{--blk:var(--bha-heal)} .bha-root .bha-block--void{--blk:var(--bha-void)}
-.bha-root .bha-block--combo{--blk:var(--bha-rare)}
-.bha-root .bha-block--combo .bha-block__face::before{background:linear-gradient(115deg,color-mix(in srgb,var(--bha-rare) 18%,var(--bha-bg-1)) 0%,color-mix(in srgb,var(--bha-rare) 42%,var(--bha-bg-1)) 45%,color-mix(in srgb,var(--bha-rare) 18%,var(--bha-bg-1)) 62%)}
-.bha-root .bha-block--release{--blk:var(--bha-accent-hi);box-shadow:0 0 0 2px var(--bha-accent-glow),0 0 10px var(--bha-accent-glow)}
-.bha-root .bha-block.is-weak::after{content:"";position:absolute;bottom:-1px;right:-1px;z-index:3;width:0;height:0;border-style:solid;border-width:0 0 14px 14px;border-color:transparent transparent var(--bha-weak) transparent;
-  border-bottom-right-radius:var(--bha-r-sm)}
-.bha-root .bha-block.is-locked{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
-.bha-root .bha-block.is-selected{outline:2px solid var(--bha-text-1);outline-offset:2px}
-.bha-root .bha-block.is-pressed{transform:translateY(2px) scale(.96);box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
-.bha-root .bha-chain{position:relative;display:grid;gap:5px;padding:2px;margin:-3px;border:2px solid var(--bha-rare);border-radius:8px;box-shadow:0 0 8px rgba(224,196,110,.35)}
-.bha-root .bha-chain__tab{position:absolute;top:-17px;left:50%;transform:translateX(-50%);height:16px;padding:0 6px;border-radius:5px 5px 0 0;background:var(--bha-rare);color:var(--bha-ink-on-color);
-  font-size:12px;font-weight:800;line-height:16px;white-space:nowrap}
-.bha-root .bha-chain--3{border-color:var(--bha-chain);box-shadow:0 0 8px rgba(221,154,94,.4)} .bha-root .bha-chain--3 .bha-chain__tab{background:var(--bha-chain)}
-.bha-root .bha-legend{display:flex;gap:10px;font-size:12px;font-weight:600}
-.bha-root .bha-legend span{display:inline-flex;align-items:center;gap:4px}
-.bha-root .bha-legend i{width:8px;height:8px;border-radius:50%;background:var(--c)}
-
-/* ───────── 전투: 필드 / 스킬창 분리 ───────── */
-.bha-root .bha-field{position:absolute;left:0;right:0;top:0;height:200px;overflow:hidden;background:
-  linear-gradient(180deg,transparent 0 78%,color-mix(in srgb,var(--bha-world-ground2) 40%,var(--bha-bg-1)) 78% 100%),
-  radial-gradient(90% 90% at 50% 30%,var(--bha-bg-3),var(--bha-bg-1) 75%)}
-.bha-root .bha-field::after{content:"필드 배경 그림 자리";position:absolute;right:10px;bottom:4px;font-size:12px;color:var(--bha-text-3)}
-.bha-root .bha-skillpanel{position:absolute;left:0;right:0;top:200px;bottom:0;background:linear-gradient(180deg,var(--bha-bg-2),var(--bha-bg-0));
-  border-top:2px solid var(--bha-line-2);box-shadow:0 -8px 14px rgba(0,0,0,.5),inset 0 1px 0 var(--bha-edge)}
-
-/* ───────── 해방 카드 ───────── */
-.bha-root .bha-release{position:absolute;width:176px;padding:6px 8px;border-radius:var(--bha-r-lg);display:grid;grid-template-columns:30px 1fr;gap:2px 8px;align-items:center}
-.bha-root .bha-release__seal{grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--bha-line-2);background:var(--bha-bg-1);color:var(--bha-text-2)}
-.bha-root .bha-release.is-ready{border-color:var(--bha-accent-hi);background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 70%,var(--bha-bg-3)),var(--bha-accent));
-  box-shadow:0 0 0 2px var(--bha-accent-glow),0 0 18px var(--bha-accent-glow),inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer}
-.bha-root .bha-release.is-on{border-color:var(--bha-accent-hi);box-shadow:0 0 0 1px var(--bha-accent-glow),0 0 14px var(--bha-accent-glow)}
-
-/* ───────── 타일 카드·칸 ───────── */
-.bha-root .bha-slot{position:relative;border-radius:var(--bha-r-sm);border:1.5px dashed var(--bha-line-2);display:grid;place-items:center;color:var(--bha-text-3);min-height:44px;background:rgba(0,0,0,.18)}
-.bha-root .bha-slot__no{position:absolute;right:4px;bottom:2px;font-size:12px;color:var(--bha-text-3)}
-.bha-root .bha-slot--nest{border:1.5px solid var(--bha-text-2);background:var(--bha-bg-3)}
-.bha-root .bha-slot--filled{border:1px solid color-mix(in srgb,var(--tile) 70%,#fff 30%);background:linear-gradient(180deg,color-mix(in srgb,var(--tile) 55%,var(--bha-bg-2)),color-mix(in srgb,var(--tile) 30%,var(--bha-bg-1)));color:var(--bha-text-1)}
-.bha-root .bha-slot--filled .bha-slot__no{color:var(--bha-text-1)}
-.bha-root .bha-slot.is-droppable{border:1.5px solid var(--bha-insert);box-shadow:0 0 0 2px rgba(116,179,216,.25),inset 0 0 10px rgba(116,179,216,.25);color:var(--bha-insert)}
-.bha-root .bha-slot.is-selected{outline:2px solid var(--bha-insert);outline-offset:1px}
-.bha-root .bha-tileico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--tile) 85%,#fff 15%);color:var(--bha-ink-on-color);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
-.bha-root .bha-tileico .bha-svg{width:15px;height:15px}
-.bha-root .bha-tilecard{position:relative;border-radius:var(--bha-r-lg);padding:6px 6px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;
-  background:linear-gradient(160deg,color-mix(in srgb,var(--tile) 42%,var(--bha-bg-3)),color-mix(in srgb,var(--tile) 18%,var(--bha-bg-2)));
-  border:1px solid color-mix(in srgb,var(--tile) 55%,var(--bha-line-2));box-shadow:inset 0 1px 0 var(--bha-edge);cursor:pointer}
-.bha-root .bha-tilecard .bha-tileico{width:32px;height:32px}
-.bha-root .bha-tilecard .bha-tileico .bha-svg{width:18px;height:18px}
-.bha-root .bha-tilecard.is-selected{outline:2px solid var(--bha-insert);outline-offset:1px}
-.bha-root .bha-tilecard.is-dragging{opacity:.4}
-.bha-root .bha-tilecard.is-empty{opacity:.45}
-.bha-root .bha-drag{position:absolute;z-index:25;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--tile) 85%,#fff 15%);color:var(--bha-ink-on-color);
-  box-shadow:0 6px 14px rgba(0,0,0,.5),0 0 0 2px var(--bha-insert)}
-.bha-root .bha-synergy{position:absolute;z-index:3;height:18px;padding:0 6px;border-radius:var(--bha-r-sm);background:var(--bha-rare);color:var(--bha-ink-on-color);font-size:12px;font-weight:800;line-height:18px;white-space:nowrap}
-.bha-root .bha-tile--wander{--tile:#b48d62} .bha-root .bha-tile--hollow{--tile:#dc8a5c} .bha-root .bha-tile--elite{--tile:#cf78bf} .bha-root .bha-tile--merchant{--tile:#d8b866} .bha-root .bha-tile--altar{--tile:#9f8ad6}
-.bha-root .bha-tile--spring{--tile:#62adc0} .bha-root .bha-tile--trap{--tile:#d4747f} .bha-root .bha-tile--grass{--tile:#9db45e}
-
-/* ───────── 아이템 카드 ───────── */
-.bha-root .bha-item{position:relative;height:118px;border-radius:var(--bha-r-lg);padding:6px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;cursor:pointer}
-.bha-root .bha-item__pic{width:40px;height:34px;display:grid;place-items:center;color:var(--bha-text-1)}
-.bha-root .bha-item__pic .bha-svg{width:30px;height:30px}
-.bha-root .bha-item__name{font-size:var(--bha-fs-sm);font-weight:700}
-.bha-root .bha-item__desc{font-size:12px;color:var(--bha-text-2);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
-.bha-root .bha-price{margin-top:auto;height:20px;padding:0 8px;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);border:1px solid var(--bha-line-1);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
-.bha-root .bha-price em{font-style:normal;color:var(--bha-text-3);font-weight:600}
-.bha-root .bha-item.is-locked{opacity:.5}
-.bha-root .bha-item.is-owned .bha-price{color:var(--bha-text-3)}
-.bha-root .bha-item.is-equipped{border-color:var(--bha-guard);box-shadow:inset 0 0 0 1px var(--bha-guard)}
-.bha-root .bha-item.is-selected{outline:2px solid var(--bha-text-1);outline-offset:1px}
-.bha-root .bha-swatch{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.4)}
-.bha-root .bha-grade{position:absolute;top:5px;left:5px;height:20px;padding:0 6px;border-radius:var(--bha-r-sm);font-size:12px;font-weight:700;display:inline-flex;align-items:center;border:1px solid var(--bha-line-2);color:var(--bha-text-2);background:var(--bha-bg-1)}
-.bha-root .bha-grade--rare{color:var(--bha-rare);border-color:var(--bha-rare)}
-
-/* ───────── 모달 ───────── */
-.bha-root .bha-scrim{position:absolute;inset:0;z-index:30;background:rgba(8,6,5,.68);backdrop-filter:blur(2px)}
+/* ───────── 창 (갤러리·전투 안 v2 모달) ───────── */
+.bha-root .bha-scrim{position:absolute;inset:0;z-index:30;background:color-mix(in srgb,var(--bha-backdrop) 45%,transparent)}
 .bha-root .bha-modal{position:absolute;z-index:31;border-radius:var(--bha-r-lg);padding:10px 12px;
-  background:linear-gradient(180deg,var(--bha-bg-3),var(--bha-bg-2));border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-edge),0 12px 30px rgba(0,0,0,.55)}
+  background:var(--bha-bg-1);border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-hi), var(--bha-shadow-2, 0 0 0 1px var(--bha-line-2))}
 .bha-root .bha-modal__close{position:absolute;top:8px;right:8px}
 .bha-root .bha-stepper{display:flex;gap:6px;align-items:center}
-
-/* ───────── 목록·표 ───────── */
 .bha-root .bha-scroll{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--bha-line-2) transparent}
 .bha-root .bha-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .bha-root .bha-kv{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
 .bha-root .bha-head{position:absolute;left:12px;right:12px;top:8px;height:40px;display:flex;align-items:center;gap:8px}
 .bha-root .bha-sec{font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-2);letter-spacing:.02em}
 
-/* ───────── 원정 걷기 장면 ───────── */
-.bha-root .bha-walk-sky{position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,var(--bha-world-sky2),var(--bha-world-sky))}
-.bha-root .bha-walk-sky::after{content:"하늘 층 (먼 시차)";position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--bha-text-2);opacity:.8}
-.bha-root .bha-walk-ground{position:absolute;inset:50% 0 0 0;background:
-  repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 18px,transparent 18px 36px),linear-gradient(180deg,var(--bha-world-ground),var(--bha-world-ground2))}
-.bha-root .bha-walk-ground::after{content:"땅 층 (가까운 시차)";position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--bha-bg-0);font-weight:700}
-.bha-root .bha-statusbar{position:absolute;left:8px;right:8px;top:6px;height:40px;padding:0 6px 0 10px;display:flex;align-items:center;gap:12px;border-radius:var(--bha-r-lg);
-  background:rgba(18,14,13,.82);border:1px solid var(--bha-line-2);z-index:15}
-.bha-root .bha-mini{display:grid;grid-template-columns:auto 56px;gap:5px;align-items:center;font-size:12px;font-weight:600}
-
-
-/* ───────── 프로젝트 어댑터 (핸드오프에 없음) ─────────
-   .bha-root 는 640×330 고정 좌표계다. 실제 LCD(약 646×360)에 맞춰 v2/root.ts 가 --v2-scale 을 정해 가운데로 놓는다.
-   LCD 창(.bha-lcd__view) 안에서 화면 틀(.bha-v2host)이 창을 가득 채우고 .bha-root 가 그 안에서 크기에 맞게 줄어든다. */
-.bha-v2host{position:absolute;inset:0;overflow:hidden;background:#000;display:grid;place-items:center}
+/* ───────── 루트 틀 (v2/root.ts) ───────── */
+.bha-v2host{position:absolute;inset:0;overflow:hidden;background:var(--bha-backdrop);display:grid;place-items:center}
 .bha-v2host>.bha-root{position:absolute;left:50%;top:50%;flex:none;transform-origin:0 0;
+  width:calc(var(--v2-w,640) * 1px);height:calc(var(--v2-h,330) * 1px);
   transform:translate(calc(var(--v2-w,640) * -0.5px * var(--v2-scale,1)),calc(var(--v2-h,330) * -0.5px * var(--v2-scale,1))) scale(var(--v2-scale,1))}
 .bha-root button{font-family:inherit}
-.bha-root :focus-visible{outline:2px solid var(--bha-text-1);outline-offset:2px}
-
-/* ───────── 전투 어댑터 (C.152, 핸드오프 Battle.dc.html 좌표) ─────────
-   필드(위 200px)·스킬창(아래 130px)의 안쪽 배치. 핸드오프가 인라인 style 로 준 좌표를 클래스로 옮겼다. */
+.bha-root :focus-visible{outline:2px solid var(--bha-focus);outline-offset:2px}
 .bha-root [hidden]{display:none !important}
+
+/* ═════════ 전투 (PROMPT 6절 S09·S10) ═════════
+   장면(.bha-field) = 스킬창 위 전부(루트 360 이면 0~230 — 캐릭터·체력 막대·강공격 예고 띠 = y 40~230).
+   머리 줄 40 은 장면 위에 겹친다. 스킬창 130 은 아래 고정. */
+.bha-root .bha-field{position:absolute;left:0;right:0;top:0;bottom:130px;overflow:hidden;background:var(--bha-scene-wall)}
 .bha-root .bha-field.bha-battle__arena{display:block;flex:none;min-height:0}
-.bha-root .bha-v2toprow{position:absolute;left:10px;right:8px;top:6px;height:38px;display:flex;align-items:center;justify-content:space-between;gap:6px;z-index:6}
+.bha-root .bha-skillpanel{position:absolute;left:0;right:0;bottom:0;height:130px;z-index:6;
+  display:flex;flex-direction:column;gap:4px;padding:4px 10px;
+  background:var(--bha-bg-1);box-shadow:inset 0 1px 0 var(--bha-line-2), inset 0 2px 0 var(--bha-hi)}
+
+/* ── 머리 줄 40: 적 이름·★/강적·속성/약점 칩 | 광기·남은 시간·그만두기·로그·일시정지·도움말 ── */
+.bha-root .bha-v2toprow{position:absolute;left:0;right:0;top:0;height:40px;padding:0 6px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;z-index:6;background:var(--bha-over)}
 .bha-root .bha-v2foehead{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow:hidden}
 .bha-root .bha-v2foename{display:flex;align-items:center;gap:6px;min-width:0}
-.bha-root .bha-v2foename__text{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bha-root .bha-v2foename__text{margin:0;flex:0 1 auto;min-width:4em;font-size:var(--bha-fs-lg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bha-root .bha-v2bar{display:flex;align-items:center;gap:4px;flex:none}
-.bha-root .bha-v2time{display:inline-flex;align-items:center;gap:3px;margin-right:4px;font-size:16px;font-weight:800}
-.bha-root .bha-v2time .bha-svg{width:15px;height:15px;color:var(--bha-text-2)}
-.bha-root .bha-v2time.is-urgent{color:var(--bha-danger)}
-/* C.182 UI 검수: 남은 초 자리 고정(148 → 99 → 9) — 줄어들면 왼쪽 공허 칩·ⓘ·가운데 약점 칩이 움직였다 */
-.bha-root .bha-v2time b{min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
+.bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}
+.bha-root .bha-v2bar .bha-btn{background:var(--bha-bg-2)}
+.bha-root .bha-v2time{display:inline-flex;align-items:center;gap:3px;height:30px;margin-right:2px;padding:0 8px 0 6px;border-radius:var(--bha-r-xs);
+  background:var(--bha-bg-1);border:1px solid var(--bha-line-2);font-size:var(--bha-fs-sm);color:var(--bha-text-2)}
+.bha-root .bha-v2time .bha-svg{width:16px;height:16px;color:var(--bha-text-2)}
+.bha-root .bha-v2time b{min-width:3ch;text-align:right;font-family:var(--bha-font-num);font-weight:400;font-size:var(--bha-fs-md);color:var(--bha-text-1)} /* 남은 초 자리 고정 (148 → 99 → 9) */
+.bha-root .bha-v2time.is-urgent,.bha-root .bha-v2time.is-urgent b{color:var(--bha-danger)}
+.bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}
+
+/* ── 유닛 (나 = 오른쪽, 적 = 왼쪽, GDD 138장) ── */
 .bha-root .bha-v2units{position:absolute;inset:0;pointer-events:none}
-.bha-root .bha-v2units>.bha-unit{position:absolute;top:46px;width:170px;height:150px;display:flex;flex-direction:column;align-items:center}
-.bha-root .bha-v2units>.bha-unit--me{left:392px}
-.bha-root .bha-v2units>.bha-unit--foe{left:70px}
+.bha-root .bha-v2units>.bha-unit{position:absolute;top:44px;bottom:4px;width:180px;display:flex;flex-direction:column;align-items:center}
+.bha-root .bha-v2units>.bha-unit--me{left:calc(50% + 75px)}
+.bha-root .bha-v2units>.bha-unit--foe{left:calc(50% - 255px)}
 .bha-root .bha-v2units .bha-unit__heads{width:100%;max-width:none}
 .bha-root .bha-v2units .bha-unit--foe .bha-unit__heads{width:184px;margin-left:-14px}
 .bha-root .bha-v2units .bha-unit__hp{width:auto;padding-top:4px;white-space:nowrap}
-.bha-root .bha-v2hp{position:relative;display:flex;align-items:center;gap:8px}
-/* 숫자는 막대 안 (GDD 127장 1, C.200): 길고 두꺼운 막대 가운데 '현재 / 최대' */
-.bha-root .bha-v2hp>.bha-gauge{height:calc(var(--bha-bar-h-lg) + var(--bha-sp-2))}
-.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--bha-fs-xs);line-height:1;white-space:pre;color:var(--bha-text-1);text-shadow:0 1px 2px rgb(0 0 0 / .9);pointer-events:none}
-.bha-root .bha-v2hp>.bha-num .bha-t2{color:var(--bha-text-1)}
-.bha-root .bha-v2hp.is-danger .bha-gauge__fill{background:var(--bha-danger)}
 .bha-root .bha-v2units .bha-foe{position:relative;inset:auto;display:flex;align-items:flex-end;justify-content:center}
-.bha-root .bha-v2legendrow{position:absolute;left:10px;right:144px;top:7px;height:22px;display:flex;align-items:center;gap:10px}
-/* 내 상태 칩(공허 n회·체인3 n회, ⓘ): 필드 아래 가운데 — 나·적 체력 줄 사이 고정 자리, 아래에서 위로 쌓는다.
-   C.183 UI 검수: 스킬창 범례 줄 오른쪽에 있을 때는 칩이 생기면 폰 폭(루트 644)에서 [막기]·[소모품] 위로 넘쳐 겹쳤다 — 버튼 줄과 분리 */
-.bha-root .bha-v2status{position:absolute;left:50%;bottom:var(--bha-s-2);transform:translateX(-50%);z-index:3;display:flex;flex-direction:column-reverse;align-items:center;gap:var(--bha-s-2)}
-.bha-root .bha-v2status>.bha-chip{flex:none;white-space:nowrap}
-.bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2status{visibility:hidden}
-.bha-root .bha-v2libchip{color:var(--bha-accent-hi);border-color:var(--bha-accent-hi);background:color-mix(in srgb,var(--bha-accent) 30%,var(--bha-bg-1))}
-/* 블록 바 */
-.bha-root .bha-blockbar.bha-v2tray{position:absolute;left:8px;right:144px;top:46px;bottom:auto;height:72px;display:block;padding:4px}
-.bha-root .bha-v2tray__grid{position:relative;display:grid;gap:5px;height:64px}
-.bha-root .bha-v2cell{position:relative;min-width:0;height:64px;border-radius:var(--bha-r-sm)}
-.bha-root .bha-v2cell:empty{border:1.5px dashed var(--bha-line-2)}
-.bha-root .bha-v2cell>.bha-block{width:100%;overflow:visible;touch-action:none}
-/* 블록 생성 봉인 덮개는 삭제 (GDD 178장 2): 칸은 그대로 보이고 쓸 수 있다. 봉인 표시는 [막기] 옆 생성 게이지(.bha-v2role--spawn[data-state=sealed]) */
-.bha-root .bha-v2tray.is-paused .bha-v2tray__grid>*{opacity:.45;filter:saturate(.5)}
-.bha-root .bha-v2chain{pointer-events:none;z-index:4}
-.bha-root .bha-v2chain.is-fire{animation:bha-run-fire 520ms var(--bha-ease)}
-.bha-root .bha-v2cut{position:relative;z-index:4;width:0;justify-self:start;pointer-events:none}
-.bha-root .bha-v2cut::before{content:"";position:absolute;top:2px;bottom:2px;left:-3px;width:2px;border-radius:2px;background:var(--bha-rare)}
-.bha-root .bha-block--kyo{--blk:var(--bha-seal)} /* 핸드오프에 없는 속성(허) — 임시로 봉인 보라. 디자인 확정 대기 */
-/* 옛 .bha-block 규칙이 새는 부분 정리 (같은 이름 클래스) */
-.bha-root .bha-block__icon{display:block;background:none;border-radius:0}
-.bha-root .bha-block.is-popin{animation:bha-popin var(--bha-t-spawn) var(--bha-ease) both}
-/* 해방 카드 (스킬창 오른쪽 128px 세로): 기본 = 패널, 준비됨 = 강조 면(.is-ready), 해방 중 = 강조 테두리(.is-on) */
-.bha-root .bha-v2rel{position:absolute;right:8px;top:8px;bottom:8px;width:128px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-family:inherit;color:var(--bha-text-1);cursor:default}
-.bha-root .bha-v2rel .bha-release__seal{grid-row:auto}
-.bha-root .bha-v2rel__meta{margin-top:auto}
-.bha-root .bha-v2rel.is-on{border-color:var(--bha-accent-hi);box-shadow:0 0 0 1px var(--bha-accent-glow),0 0 14px var(--bha-accent-glow)}
-.bha-root .bha-v2rel.is-on .bha-release__seal{color:var(--bha-accent-hi);border-color:var(--bha-accent-hi)}
-.bha-root .bha-v2rel.is-ready{justify-content:center;gap:6px;color:#fff8f0;border-color:var(--bha-accent-hi);cursor:pointer;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--bha-accent) 70%,var(--bha-bg-3)),var(--bha-accent));
-  box-shadow:0 0 0 2px var(--bha-accent-glow),0 0 18px var(--bha-accent-glow),inset 0 1px 0 rgba(255,255,255,.2)}
-.bha-root .bha-v2rel.is-ready .bha-release__seal{width:36px;height:36px;background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.5);color:#fff8f0}
-.bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-xl);line-height:1}
-.bha-root .bha-v2rel.is-ready .bha-v2rel__meta{margin-top:0;color:#fff8f0;font-weight:700;line-height:1.3}
-.bha-root .bha-v2rel.is-ready .bha-chip,.bha-root .bha-v2rel.is-ready .bha-gauge{display:none}
-.bha-root .bha-v2rel.is-pressed{transform:translateY(1px)}
-/* 디자인 도구용 그림 자리 글자는 게임 화면에 쓰지 않는다 (진짜 그림이 들어온다) */
-.bha-root .bha-field::after,.bha-root .bha-scene::before,.bha-root .bha-walk-sky::after,.bha-root .bha-walk-ground::after,.bha-root .bha-art--char::before{content:none}
-/* PC 키 글자 배지는 계열 글자가 있는 오른쪽 위 대신 오른쪽 아래로 */
-.bha-root .bha-v2cell>.bha-keycap{top:auto;bottom:2px;right:2px;z-index:5}
 
-/* ───────── 전투 화면 점검 (C.160, GDD 98장 A5) ─────────
-   ① 위 한 줄: 칩·버튼은 줄지 않고(flex:none — 줄면 글자가 칩 밖으로 넘쳐 옆 칩과 겹쳤다) 적 이름만 줄어 말줄임. 이름은 최소 4글자 폭은 지킨다
-   ② 필드 가운데 칩 줄: 나와 적 머리 게이지 사이 세로 칸(필드 가운데 기준). 알림(.bha-notice)·임시·패턴·페이즈·졸개 칩을 쌓는다 (핸드오프 '강공격·봉인' 칩 자리)
-   ③ PC 키 글자 배지(Spc·H)가 아이콘을 덮지 않게 버튼 위 끝으로 올린다
-   ④ 로그 창은 강공격 예고 띠(top 46~66) 아래에서 시작해 적 체력 줄 위에서 끝난다 — 열어도 예고·체력 숫자가 보인다. 열려 있는 동안 가운데 칩 줄은 숨긴다(겹쳐 비침)
-   ⑤ 원정 배경 그림(밝은 모래·하늘) 위에서도 체력 숫자·남은 초가 읽히게 핸드오프 피해 숫자와 같은 글자 그림자 */
-.bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}
-.bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}
+/* 체력 막대 (v2 .bha-hp-bar 모양 + 10칸 눈금). 숫자는 막대 안 가운데(GDD 127장 1), 지금 값은 고정 폭(나 3ch · 적 5ch) */
+.bha-root .bha-v2hp{position:relative;display:flex;align-items:center;gap:8px}
+.bha-root .bha-v2hp>.bha-gauge{height:calc(var(--bha-bar-h-lg) + var(--bha-sp-2));background:var(--bha-backdrop);box-shadow:0 0 0 1px var(--bha-lo), inset 0 0 0 1px var(--bha-line-2)}
+.bha-root .bha-v2hp>.bha-gauge .bha-gauge__fill{left:2px;top:2px;bottom:2px}
+.bha-root .bha-v2hp>.bha-gauge::after{content:"";position:absolute;inset:2px;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),var(--bha-lo) calc(10% - 1px) 10%);pointer-events:none} /* 10칸 눈금 (그라데이션 아님 — 줄무늬) */
+.bha-root .bha-v2hp>.bha-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--bha-fs-xs);line-height:1;white-space:pre;color:var(--bha-text-1);text-shadow:0 1px 0 var(--bha-backdrop);pointer-events:none;z-index:1}
+.bha-root .bha-v2hp>.bha-num>span:first-child{display:inline-block;min-width:3ch;text-align:right;font-size:var(--bha-fs-sm)}
+.bha-root .bha-unit--foe .bha-v2hp>.bha-num>span:first-child{min-width:5ch}
+.bha-root .bha-v2hp>.bha-num .bha-t2{color:var(--bha-text-2)}
+.bha-root .bha-v2hp.is-danger .bha-gauge__fill{background:var(--bha-danger)}
+
+/* 내 상태 칩(공허 n회·체인3 n회, ⓘ): 장면 아래 가운데 — 나·적 체력 줄 사이 고정 자리 */
+.bha-root .bha-v2status{position:absolute;left:50%;bottom:var(--bha-s-2);transform:translateX(-50%);z-index:3;display:flex;flex-direction:column-reverse;align-items:center;gap:var(--bha-s-2)}
+.bha-root .bha-v2status>.bha-chip{flex:none;white-space:nowrap;background:var(--bha-over-strong)}
+.bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2status{visibility:hidden}
+/* 장면 가운데 칩 줄: 알림·임시·패턴·페이즈·졸개 칩 (나·적 그림 사이 세로) */
 .bha-root .bha-v2fieldtags{position:absolute;left:calc(50% - 72px);width:132px;top:48px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:var(--bha-s-2);pointer-events:none}
 .bha-root .bha-v2fieldtags:empty{display:none}
-/* C.172 (GDD 100장): 피해 숫자는 위 막대(시간·로그·일시정지) 아래 필드 안에서만 떠오른다 — 막대 위로 겹치지 않게 잘라 낸다 */
-.bha-root .bha-battle__floats{top:46px;overflow:hidden}
-.bha-root .bha-v2fieldtags>.bha-chip{max-width:100%;flex:none}
+.bha-root .bha-v2fieldtags>.bha-chip{max-width:100%;flex:none;background:var(--bha-over-strong)}
 .bha-root .bha-v2fieldtags>.bha-notice{position:static;transform:none;max-width:100%;padding:4px 8px}
-.bha-root .bha-v2bar .bha-keycap{top:-7px;right:-4px}
-.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}
 .bha-root .bha-field:has(>.bha-battle__logpanel:not([hidden])) .bha-v2fieldtags{visibility:hidden}
-.bha-root .bha-v2units .bha-unit__hp .bha-num,.bha-root .bha-field.has-bg .bha-v2time{text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8)}
-
-/* ───────── 전투 화면 비율 (C.162, GDD 99장 5 — 사용자 지시가 핸드오프 200/130 보다 우선) ─────────
-   ① 레터박스 없음: 루트 논리 크기 = 창 크기 / 배율(v2/root.ts v2Size). 640×330 은 최소 크기
-   ② 필드 = 스킬창 위 전부(330 이면 220, LCD 360 이면 250 — C.152 이전처럼 크게), 스킬창 = 아래 110px 고정
-   ③ 블록 칸 높이 58, 영력 해방 카드 폭 96(옛 128) — 블록 바가 차지하는 범위를 줄인다
-   ④ 나·적 자리는 필드 가운데 기준(폭이 늘어도 가운데로), 세로는 필드 높이를 따라 그림이 커진다 */
-.bha-v2host>.bha-root{width:calc(var(--v2-w,640) * 1px);height:calc(var(--v2-h,330) * 1px)}
-.bha-root.bha-battle .bha-field{height:auto;bottom:110px}
-.bha-root.bha-battle .bha-skillpanel{top:auto;height:110px}
-.bha-root .bha-v2units>.bha-unit{top:46px;bottom:4px;height:auto;width:180px}
-.bha-root .bha-v2units>.bha-unit--me{left:calc(50% + 75px)}
-.bha-root .bha-v2units>.bha-unit--foe{left:calc(50% - 255px)}
-.bha-root .bha-v2legendrow{top:5px;right:112px}
-.bha-root .bha-blockbar.bha-v2tray{top:30px;right:112px;height:66px}
-.bha-root .bha-v2tray__grid,.bha-root .bha-v2cell,.bha-root .bha-v2cell>.bha-block{height:58px}
-.bha-root .bha-v2cell>.bha-block .bha-block__icon{margin-top:8px}
-.bha-root .bha-v2rel{top:6px;bottom:8px;width:96px;padding:4px;gap:2px}
-.bha-root .bha-v2rel .bha-release__seal{width:24px;height:24px}
-.bha-root .bha-v2rel .bha-release__seal .bha-svg{width:14px;height:14px}
-.bha-root .bha-v2rel__name{line-height:1.1}
-.bha-root .bha-v2rel.is-ready .bha-release__seal{width:28px;height:28px}
-.bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-lg)}
-
-/* ───────── 해방 버튼 → 범례 줄 · 블록 정사각형 (C.169, 사용자 2026-10-27 "1번으로 가고, 블록 무조건 정사각형으로") ─────────
-   ① 블록 줄에는 블록만: 영력 해방은 범례 줄 오른쪽 끝 알약 버튼(높이 28)으로. 기본 = 표식+이름+게이지, 준비됨 = 강조 면+"준비됨 — 눌러 해방", 해방 중 = 남은 초+줄어드는 게이지
-      해방 중 범례 칩(.bha-v2libchip)은 버튼이 같은 줄에서 남은 초를 보여 주므로 숨긴다. 해방 설명 한 줄은 남는 폭만(말줄임, 전체는 title)
-   ② 블록 칸은 언제나 정사각형: 한 칸 = min(66px, 바 폭 ÷ 칸 수). 칸은 바 폭에 고르게 벌린다(space-between) — 루트 폭이 늘어도 블록은 안 늘어난다
-   ③ 체인 탭이 범례 글자를 덮지 않게 스킬창 110 → 120(필드는 그만큼 10px 낮아짐), 블록 바 top 38. 아이콘은 컷·체인 점 아래로(margin-top 14) */
-.bha-root.bha-battle .bha-field{bottom:120px}
-.bha-root.bha-battle .bha-skillpanel{height:120px}
-.bha-root .bha-v2legendrow{right:200px}
 .bha-root .bha-v2libchip{display:none!important}
-.bha-root .bha-blockbar.bha-v2tray{left:8px;right:8px;top:38px;height:auto;padding:4px}
-.bha-root .bha-v2tray__grid{height:auto;column-gap:4px;justify-content:space-between;
-  grid-template-columns:repeat(var(--cap,8),min(66px,calc((100% - (var(--cap,8) - 1) * 4px) / var(--cap,8))))}
-.bha-root .bha-v2cell>.bha-block .bha-block__icon{flex:none;height:30px;margin-top:14px}
-.bha-root .bha-v2cell{height:auto;aspect-ratio:1/1}
-.bha-root .bha-v2tray__grid>.bha-v2cell>.bha-block{height:100%}
-.bha-root .bha-v2rel{top:3px;bottom:auto;right:8px;width:184px;height:28px;padding:0 10px 0 4px;flex-direction:row;align-items:center;gap:6px;border-radius:14px;text-align:left}
-.bha-root .bha-v2rel .bha-release__seal,.bha-root .bha-v2rel.is-ready .bha-release__seal{width:20px;height:20px;flex:none}
-.bha-root .bha-v2rel .bha-release__seal .bha-svg{width:12px;height:12px}
-.bha-root .bha-v2rel .bha-v2rel__name,.bha-root .bha-v2rel.is-ready .bha-v2rel__name{font-size:var(--bha-fs-sm);line-height:1;white-space:nowrap;flex:none}
-.bha-root .bha-v2rel .bha-chip,.bha-root .bha-v2rel .bha-v2rel__meta{display:none}
-.bha-root .bha-v2rel .bha-gauge{flex:1 1 auto;width:auto!important;min-width:0}
-.bha-root .bha-v2rel .bha-keycap{top:-7px;right:-4px}
-.bha-root .bha-v2rel.is-ready .bha-v2rel__meta,.bha-root .bha-v2rel.is-on .bha-v2rel__meta{display:block;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:var(--bha-fs-xs)}
-.bha-root .bha-v2rel.is-ready .bha-v2rel__name{display:none}
-.bha-root .bha-v2rel.is-on .bha-v2rel__name{display:none}
-.bha-root .bha-v2rel.is-on .bha-v2rel__meta{flex:none;color:var(--bha-accent-hi);font-weight:700}
-.bha-root .bha-v2rel.is-ready .bha-gauge{display:none!important}
+/* 피해 숫자는 머리 줄 아래 장면 안에서만 */
+.bha-root .bha-battle__floats{top:40px;overflow:hidden}
+/* 로그 창: 강공격 예고 띠 아래에서 시작해 적 체력 줄 위에서 끝난다 */
+.bha-root .bha-field .bha-battle__logpanel{top:70px;max-height:calc(100% - 112px)}
+.bha-root .bha-v2units .bha-unit__hp .bha-num{text-shadow:0 1px 0 var(--bha-backdrop)}
 
-/* ───────── 막기 게이지·[소모품]·[장비] (C.177, GDD 105장 수정 v5.233 6번 — 옛 C.174 막기·회복 칸 버튼 대체): 해방 알약 버튼(C.169) 모양, 범례 줄 오른쪽 해방 버튼 왼쪽 ─────────
-   막기 = 아이콘·이름·0→100% 막대(다 차면 역할 색으로 채워지고 강조), 소모품 = 남은 개수, 장비 = 쿨다운 초. 못 쓸 때도 자리는 그대로(흐리게).
-   범례 줄 오른쪽 끝 = 버튼 줄 왼쪽 끝(전투 화면이 버튼 폭을 재서 맞춘다, 옛 C.174 고정 right:392 대체). 루트 논리 폭이 좁으면(760 아래, 전투 화면이 .is-compact 를 붙인다) 소모품·장비는 이름을 숨기고 아이콘만 */
-.bha-root .bha-v2roles{position:absolute;top:3px;right:200px;height:28px;display:flex;gap:6px;z-index:2}
-.bha-root .bha-v2roles.is-alone{right:8px}
-.bha-root .bha-v2role{position:relative;display:flex;flex-direction:row;flex:none;width:auto;align-items:center;gap:5px;height:28px;padding:0 10px 0 6px;border-radius:14px;
-  font-family:inherit;font-size:var(--bha-fs-sm);color:var(--bha-text-2);cursor:default;white-space:nowrap}
-.bha-root .bha-v2role .bha-icon{width:16px;height:16px;flex:none;color:var(--role)}
+/* ── 스킬창 1줄: 범례 16 ── */
+.bha-root .bha-v2legendrow{flex:none;height:16px;display:flex;align-items:center;gap:12px;min-width:0;overflow:hidden}
+.bha-root .bha-legend{display:flex;gap:12px;align-items:center;font-size:var(--bha-fs-xs);font-weight:700;color:var(--bha-text-2)}
+.bha-root .bha-legend span{display:inline-flex;align-items:center;gap:4px;color:var(--bha-text-2)!important}
+.bha-root .bha-legend i{display:inline-block;width:10px;height:10px;border-radius:0;background:var(--c);box-shadow:inset 0 0 0 1px var(--bha-lo)}
+
+/* ── 스킬창 2줄 36: [다음 블록 표시 칸][막기][소모품][장비] — 자리 고정(못 쓸 땐 흐리게, GDD 173장 2) ── */
+.bha-root .bha-v2roles{flex:none;height:var(--bha-btn-h-sm);display:flex;gap:6px}
+.bha-root .bha-v2role{position:relative;display:inline-flex;flex:1 1 0;min-width:0;align-items:center;justify-content:center;gap:6px;height:var(--bha-btn-h-sm);padding:0 10px;
+  border-radius:var(--bha-r-sm);border:1px solid var(--bha-line-2);background:var(--bha-bg-2);box-shadow:inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo);
+  font:700 var(--bha-fs-sm)/1 var(--bha-font-body);color:var(--bha-text-1);cursor:default;white-space:nowrap;transition:transform var(--bha-t-fast) var(--bha-ease)}
+.bha-root .bha-v2role>.bha-i{width:20px;height:20px;color:var(--role)}
 .bha-root .bha-v2role--guard{--role:var(--bha-guard)}
 .bha-root .bha-v2role--item{--role:var(--bha-heal)}
-.bha-root .bha-v2role--gear{--role:var(--bha-accent-hi)}
-.bha-root .bha-v2role__meta{font-size:var(--bha-fs-xs);color:var(--bha-text-3);min-width:0}
+.bha-root .bha-v2role--gear{--role:var(--bha-text-2)}
+.bha-root .bha-v2role__name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bha-root .bha-v2role__meta{font-size:var(--bha-fs-xs);color:var(--bha-text-2);min-width:0}
 .bha-root .bha-v2role__meta:empty{display:none}
-/* C.182 UI 검수: 소모품 남은 개수(×n → 씀)·장비 쿨다운 초(숫자 → 없음)가 바뀌어도 버튼 폭이 그대로 — 오른쪽 고정 줄이라 폭이 바뀌면 왼쪽 [막기]가 움직였다 */
-.bha-root .bha-v2role--item .bha-v2role__meta,.bha-root .bha-v2role--gear .bha-v2role__meta{min-width:3ch;text-align:center;font-variant-numeric:tabular-nums}
-.bha-root .bha-v2role__bar{position:relative;width:34px;height:6px;border-radius:var(--bha-r-pill);border:1px solid var(--role);overflow:hidden;flex:none}
-.bha-root .bha-v2role__bar i{position:absolute;left:0;top:0;bottom:0;background:var(--role);opacity:.55}
+/* 소모품 남은 개수(×n → 씀)·장비 쿨다운 초가 바뀌어도 버튼 폭이 그대로 */
+.bha-root .bha-v2role--item .bha-v2role__meta,.bha-root .bha-v2role--gear .bha-v2role__meta{min-width:3ch;text-align:center}
+/* 막기 게이지 막대 (v2 시안 46×6) */
+.bha-root .bha-v2role__bar{position:relative;flex:none;width:46px;height:6px;background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1)}
+.bha-root .bha-v2role__bar i{position:absolute;left:1px;top:1px;bottom:1px;max-width:calc(100% - 2px);background:var(--role);opacity:.55}
 .bha-root .bha-v2role.is-full .bha-v2role__bar i{opacity:1}
-.bha-root .bha-v2role.is-ready{color:var(--bha-text-1);border-color:var(--role);cursor:pointer;box-shadow:0 0 0 1px var(--role)}
-.bha-root .bha-v2role.is-ready .bha-v2role__meta{color:var(--bha-text-1)}
-.bha-root .bha-v2role.is-disabled{opacity:.6}
-/* 블록 생성 게이지 (GDD 178장 1·2): 누르는 버튼이 아니라 표시. 차는 중 = 블록 색, 가득(블록 바 꽉 참)·멈춤 = 흐림, 봉인 = 자물쇠·회색·남은 초 */
-.bha-root .bha-v2role--spawn{--role:var(--bha-atk);cursor:default}
-.bha-root .bha-v2role__ico{display:flex;flex:none}
-.bha-root .bha-v2role__ico--seal{display:none}
-.bha-root .bha-v2role--spawn[data-state=full] .bha-v2role__bar i{opacity:1}
-.bha-root .bha-v2role--spawn[data-state=full],.bha-root .bha-v2role--spawn[data-state=paused],.bha-root .bha-v2role--spawn[data-state=off]{opacity:.6}
-.bha-root .bha-v2role--spawn[data-state=sealed]{--role:var(--bha-seal);color:var(--bha-text-3)}
-.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico{display:none}
-.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico--seal{display:flex}
-.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__bar i{background:var(--bha-text-3)}
-.bha-root .bha-v2role__meta--spawn{color:var(--bha-seal);font-variant-numeric:tabular-nums}
+.bha-root .bha-v2role.is-ready{cursor:pointer;box-shadow:0 0 0 1px var(--role), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--role)}
+.bha-root .bha-v2role.is-ready:active,.bha-root .bha-v2role.is-ready.is-pressed{transform:translateY(1px);background:var(--bha-bg-3)}
+.bha-root .bha-v2role.is-disabled{opacity:.42}
 .bha-root .bha-v2role .bha-keycap{top:-7px;right:-4px}
-.bha-root .bha-v2roles.is-compact .bha-v2role--item .bha-v2role__name,.bha-root .bha-v2roles.is-compact .bha-v2role--gear .bha-v2role__name{display:none}
-.bha-root .bha-v2roles.is-compact .bha-v2role--item,.bha-root .bha-v2roles.is-compact .bha-v2role--gear{padding:0 8px 0 6px}
+.bha-root .bha-v2roles.is-compact .bha-v2role{padding:0 6px}
 
-/* ───────── 전투 좌우 반전 (C.216, GDD 138장) ─────────
-   ① 내 캐릭터 = 오른쪽(왼쪽을 봄), 적 = 왼쪽(오른쪽을 봄). 그림 파일은 그대로 — 그림은 모두 왼쪽을 보는 한 장이라 내 쪽은 그대로, 적 쪽을 뒤집는다.
-      적은 몸 상자(.bha-foe__body)가 아니라 안쪽 그림을 뒤집는다 — 몸 상자에는 맞음 흔들림(composite add)이 얹혀 뒤집으면 넉백 방향도 뒤집힌다
-   ② 블록 바 = 왼쪽에서 생겨 오른쪽으로: 칸 1(가장 먼저 생긴 블록)이 맨 오른쪽, 새 블록은 그 왼쪽에 붙는다. 데이터 순서는 그대로, 칸 배치만 rtl.
-      칸 안 글자·체인 탭은 ltr 그대로. 묶음 경계 선은 칸의 오른쪽 끝(rtl 의 시작) 바깥 틈에 */
+/* 블록 생성 = 표시 칸 `.bha-gen` (GDD 178장, PROMPT 4절): 움푹한 면 · 볼록하지 않음 · 누르지 않음 · 초점 안 받음. 버튼보다 조금 넓게(1.3) */
+.bha-root .bha-v2role--spawn{flex:1.3 1 0;min-width:0;height:var(--bha-btn-h-sm);pointer-events:none;
+  display:flex;align-items:center;gap:6px;padding:0 10px;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo);
+  font-size:var(--bha-fs-sm);font-weight:700;color:var(--bha-text-2);white-space:nowrap}
+.bha-root .bha-v2role__ico{display:flex;flex:none}
+.bha-root .bha-v2role__ico .bha-i{width:16px;height:16px;color:var(--bha-sp)}
+.bha-root .bha-v2role__ico--seal,.bha-root .bha-v2gen__name--seal{display:none}
+.bha-root .bha-v2role--spawn .bha-gen-bar{position:relative;flex:1 1 auto;width:auto;min-width:40px;height:8px;background:var(--bha-bg-2);box-shadow:inset 0 0 0 1px var(--bha-lo)}
+.bha-root .bha-v2role--spawn .bha-gen-bar>i{position:absolute;left:1px;top:1px;bottom:1px;max-width:calc(100% - 2px);background:var(--bha-sp);opacity:1}
+.bha-root .bha-v2role--spawn[data-state=full],.bha-root .bha-v2role--spawn[data-state=paused],.bha-root .bha-v2role--spawn[data-state=off]{color:var(--bha-text-3)}
+.bha-root .bha-v2role--spawn[data-state=full] .bha-gen-bar>i,.bha-root .bha-v2role--spawn[data-state=paused] .bha-gen-bar>i{opacity:.5}
+/* 봉인: 이 칸만 자물쇠·회색·남은 초 (블록 칸은 덮지 않는다, GDD 178장 2) */
+.bha-root .bha-v2role--spawn[data-state=sealed]{color:var(--bha-text-3)}
+.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico:not(.bha-v2role__ico--seal),.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2gen__name:not(.bha-v2gen__name--seal){display:none}
+.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico--seal{display:flex}
+.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2gen__name--seal{display:inline}
+.bha-root .bha-v2role--spawn[data-state=sealed] .bha-v2role__ico--seal .bha-i{color:var(--bha-seal)}
+.bha-root .bha-v2role--spawn[data-state=sealed] .bha-gen-bar>i{background:var(--bha-text-3)}
+.bha-root .bha-v2role__meta--spawn{flex:none;min-width:4ch;text-align:right;color:var(--bha-text-2)}
+
+/* ── 스킬창 3줄: 블록 바 = 정사각 52 × 8칸, 가운데 (PROMPT 6절 S09, GDD 138장) ── */
+.bha-root .bha-blockbar.bha-v2tray{position:relative;flex:none;align-self:center;display:block;padding:3px 6px 0;background:none;border:0;box-shadow:none;border-radius:0}
+.bha-root .bha-v2tray__grid{position:relative;display:grid;column-gap:6px;grid-template-columns:repeat(var(--cap,8),var(--bha-block-h));grid-auto-rows:var(--bha-block-h);direction:rtl} /* 칸 1 = 맨 오른쪽 (GDD 138장 2) */
+.bha-root .bha-v2tray__grid>*{direction:ltr}
+.bha-root .bha-v2cell{position:relative;min-width:0;width:var(--bha-block-h);height:var(--bha-block-h);border-radius:var(--bha-r-sm)}
+.bha-root .bha-v2cell:empty{background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo)} /* v2 .bha-blk--empty */
+.bha-root .bha-v2cell>.bha-block{width:100%;height:100%;overflow:visible;touch-action:none}
+.bha-root .bha-v2tray.is-paused .bha-v2tray__grid>*{opacity:.45}
+.bha-root .bha-v2cell>.bha-keycap{top:auto;bottom:2px;right:2px;z-index:5}
+
+/* 블록 = v2 `.bha-blk`: 속성 색 면(어둡게 섞음) + 속성 색 테 + 계열 모양(흐리게) + 가운데 계열 글자 1자. 이름은 aria-label 만 */
+.bha-root .bha-block{position:relative;display:flex;align-items:center;justify-content:center;padding:0;border-radius:var(--bha-r-sm);cursor:pointer;
+  background:color-mix(in srgb,var(--blk) 34%,var(--bha-bg-1));color:var(--bha-text-1);
+  box-shadow:inset 0 0 0 2px var(--blk), inset 0 3px 0 var(--bha-hi), inset 0 -4px 0 var(--bha-lo);transition:transform var(--bha-t-fast) var(--bha-ease)}
+.bha-root .bha-block__face{display:none}
+.bha-root .bha-block__icon{position:absolute;inset:6px;display:flex;align-items:center;justify-content:center;margin:0;color:var(--blk);opacity:.55;background:none;border-radius:0}
+.bha-root .bha-block__icon .bha-svg{width:40px;height:40px;stroke-width:2.2}
+.bha-root .bha-block__glyph{position:relative;z-index:2;font:800 var(--bha-fs-xl)/1 var(--bha-font-display);color:var(--bha-text-1);text-shadow:0 2px 0 var(--bha-lo)}
+.bha-root .bha-block__name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bha-root .bha-block--empty{background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo);cursor:default}
+.bha-root .bha-block--normal{--blk:var(--bha-attr-normal)} .bha-root .bha-block--fire{--blk:var(--bha-attr-fire)} .bha-root .bha-block--thunder{--blk:var(--bha-attr-thunder)}
+.bha-root .bha-block--water{--blk:var(--bha-attr-water)} .bha-root .bha-block--earth{--blk:var(--bha-attr-earth)} .bha-root .bha-block--poison{--blk:var(--bha-attr-poison)} .bha-root .bha-block--blood{--blk:var(--bha-attr-blood)}
+.bha-root .bha-block--kyo{--blk:var(--bha-el-kyo)}
+.bha-root .bha-block--guard{--blk:var(--bha-guard)} .bha-root .bha-block--heal{--blk:var(--bha-heal)} .bha-root .bha-block--void{--blk:var(--bha-void)}
+.bha-root .bha-block--combo{--blk:var(--bha-rare)}
+/* 해방 블록 = 황동 위아래 2색 (PROMPT 6절 S10) */
+.bha-root .bha-block--release{--blk:var(--bha-special-b);background:linear-gradient(var(--bha-special-a) 0 50%,var(--bha-special-b) 50% 100%);box-shadow:inset 0 0 0 2px var(--bha-special-b), inset 0 -4px 0 var(--bha-lo)} /* 두 색 반반 칠 (부드러운 그라데이션 아님) */
+.bha-root .bha-block--release .bha-block__glyph{color:var(--bha-primary-ink);text-shadow:none}
+.bha-root .bha-block--release .bha-block__icon{color:var(--bha-primary-ink);opacity:.35}
+/* 약점 = 오른쪽 아래 황동 삼각 */
+.bha-root .bha-block.is-weak::after{content:"";position:absolute;bottom:0;right:0;z-index:3;width:0;height:0;border-style:solid;border-width:0 0 14px 14px;border-color:transparent transparent var(--bha-weak) transparent;border-bottom-right-radius:var(--bha-r-sm)}
+.bha-root .bha-block.is-locked{filter:var(--bha-sprite-dim);cursor:not-allowed}
+.bha-root .bha-block.is-selected{outline:2px solid var(--bha-focus);outline-offset:2px}
+.bha-root .bha-block.is-pressed{transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--blk), inset 0 3px 0 var(--bha-lo)}
+.bha-root .bha-block.is-popin{animation:bha-popin var(--bha-t-spawn) var(--bha-ease) both}
+
+/* 체인 = 블록 아래 받침 띠 (v2 .bha-chain: 2 황동 · 3 구리). 위 탭 글자는 화면에서 빼고 낭독용으로만 남긴다 (PROMPT 5절 10 "체인 원·글자 없음") */
+.bha-root .bha-chain{position:relative;display:block;padding:0;margin:0;border:0;box-shadow:none}
+.bha-root .bha-v2chain{pointer-events:none;z-index:4;--ch:var(--bha-chain2)}
+.bha-root .bha-v2chain.bha-chain--3{--ch:var(--bha-chain3)}
+.bha-root .bha-v2chain::after{content:"";position:absolute;left:2px;right:2px;bottom:-6px;height:4px;background:var(--ch);box-shadow:0 1px 0 var(--bha-lo)}
+.bha-root .bha-v2chain::before{content:"";position:absolute;left:2px;right:2px;bottom:-6px;height:9px;border-left:3px solid var(--ch);border-right:3px solid var(--ch)}
+.bha-root .bha-chain__tab{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bha-root .bha-v2chain.is-fire{animation:bha-run-fire 520ms var(--bha-ease)}
+/* 묶음 경계(같은 계열 5개 = 3+2): 칸 사이 가는 황동 선 */
+.bha-root .bha-v2cut{position:relative;z-index:4;width:0;justify-self:start;pointer-events:none}
+.bha-root .bha-v2cut::before{content:"";position:absolute;top:2px;bottom:2px;right:-4px;width:2px;background:var(--bha-chain2)}
+
+/* ── 그림 좌우 (GDD 138장): 그림은 왼쪽을 보는 한 장 — 내 쪽은 그대로, 적 쪽을 뒤집는다(안쪽 그림만) ── */
 .bha-root .bha-v2units .bha-hero__img{transform:translateY(var(--art-dy,0%)) scale(var(--art-scale,1))}
 .bha-root .bha-v2units .bha-hero__eye{right:auto;left:20%}
 .bha-root .bha-v2units .bha-hero__eye:nth-of-type(1){right:auto;left:40%}
 .bha-root .bha-v2units .bha-foe__img{transform:translateY(var(--art-dy,0%)) scale(var(--art-scale,1)) scaleX(-1)}
 .bha-root .bha-v2units .bha-foe__body>svg{transform:scaleX(-1)}
-.bha-root .bha-v2tray__grid{direction:rtl}
-.bha-root .bha-v2tray__grid>*{direction:ltr}
-.bha-root .bha-v2cut::before{left:auto;right:-3px}
-/* ③ 해방 = 캐릭터 누르기 (C.216, GDD 139장 3): 해방 카드·게이지 막대 대신 내 캐릭터 그림 칸 전체가 투명 버튼.
-      가득 차면(.is-lib-ready) 캐릭터 주변에 해방 색(강조색 토큰) 아우라가 뿜어 나오고, 해방 중에는 기존 오오라 + 머리 위 남은 초 */
+
+/* ── 해방 = 캐릭터 누르기 (GDD 139장 3): 내 그림 칸 전체가 투명 버튼. 상자·배경·초점 상자 없음 — 강조는 몸 그림 윤곽(GDD 178장 3) ── */
 .bha-root .bha-v2units .bha-unit--me .bha-unit__fig{position:relative}
-.bha-root .bha-v2herolib{position:absolute;inset:0;z-index:3;margin:0;padding:0;border:0;border-radius:var(--bha-r-md);background:none;color:var(--bha-text-1);font-family:inherit;pointer-events:auto;cursor:default;-webkit-tap-highlight-color:transparent}
+.bha-root .bha-v2herolib{position:absolute;inset:0;z-index:3;margin:0;padding:0;border:0;border-radius:0;background:none;color:var(--bha-text-1);font-family:inherit;pointer-events:auto;cursor:default;-webkit-tap-highlight-color:transparent}
 .bha-root .bha-v2herolib.is-ready{cursor:pointer}
-/* GDD 178장 3 (C.261): 투명 버튼(그림 칸 네모)에는 배경·테두리·초점 상자를 그리지 않는다 — 누름·초점은 몸 그림 모양대로 */
 .bha-root .bha-v2herolib,.bha-root .bha-v2herolib.bha-sel,.bha-root .bha-v2herolib:focus,.bha-root .bha-v2herolib:focus-visible{outline:0;box-shadow:none;background:none}
-.bha-root .bha-unit__fig:has(.bha-v2herolib.is-pressed) .bha-hero__body{filter:brightness(1.25) drop-shadow(0 0 1px var(--bha-accent-hi))}
-.bha-root .bha-unit__fig:has(.bha-v2herolib.bha-sel) .bha-hero__body{filter:drop-shadow(1px 0 0 var(--bha-focus)) drop-shadow(-1px 0 0 var(--bha-focus)) drop-shadow(0 1px 0 var(--bha-focus)) drop-shadow(0 -1px 0 var(--bha-focus)) drop-shadow(0 0 6px var(--bha-focus))}
-.bha-root .bha-v2herolib__time{position:absolute;left:50%;top:0;transform:translateX(-50%);padding:0 var(--bha-sp-2);border-radius:var(--bha-r-pill);background:rgb(0 0 0 / .6);box-shadow:inset 0 0 0 1px var(--bha-accent-hi);font-size:var(--bha-fs-xs);font-weight:800;line-height:16px;white-space:nowrap;color:var(--bha-text-1)}
-.bha-root .bha-v2herolib__time:empty{display:none}
-/* 해방 준비 아우라 = 몸 그림 모양대로 뿜어 나오는 빛 (GDD 178장 3, C.261: 옛 타원 빛·고리 ::before/::after 와 그림 칸 필터 삭제) */
-.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-hero__body{animation:bha-lib-shape 1.1s ease-in-out infinite alternate}
+/* 초점 = 몸 그림 4방향 윤곽(흐림 없음, --bha-sprite-outline) */
+.bha-root .bha-unit__fig:has(.bha-v2herolib.bha-sel) .bha-hero__body{filter:var(--bha-sprite-outline)}
+.bha-root .bha-unit__fig:has(.bha-v2herolib.is-pressed) .bha-hero__body{filter:brightness(1.2) var(--bha-sprite-outline)}
+/* 해방 준비 = 해방 색(황동) 윤곽 2px — 흐림·깜빡임 없음 (v2 glow 금지) */
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-hero__body{filter:drop-shadow(2px 0 0 var(--bha-special-a)) drop-shadow(-2px 0 0 var(--bha-special-a)) drop-shadow(0 2px 0 var(--bha-special-a)) drop-shadow(0 -2px 0 var(--bha-special-a))}
+.bha-root.bha-battle.is-lib-ready .bha-unit__fig:has(.bha-v2herolib.bha-sel) .bha-hero__body{filter:var(--bha-sprite-outline)}
+/* 해방 중 칩: release 아이콘 + '레스렉시온/만해 중 n초' (머리 위, 고정 폭 숫자 2ch) */
+.bha-root .bha-v2herolib__time{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:2;--nw:2ch;box-shadow:0 0 0 1px var(--bha-accent);color:var(--bha-text-1);pointer-events:none}
+.bha-root .bha-v2herolib__time .bha-i{width:16px;height:16px;color:var(--bha-special-a)}
+
+/* ── 일시정지 창 (PROMPT 6절 S10 · 4절 창): v2 `.bha-win` — 머리 48 / 본문 / 아래 고정 [계속][설정][그만두기]([귀환]) ── */
+.bha-root .bha-btn--primary{background:var(--bha-primary-bg);border-color:var(--bha-lo);color:var(--bha-primary-ink);box-shadow:inset 0 2px 0 var(--bha-primary-line), inset 0 -3px 0 var(--bha-primary-lo)}
+.bha-root .bha-btn--primary:active,.bha-root .bha-btn--primary.is-pressed{background:var(--bha-primary-lo)}
+.bha-root .bha-btn--danger:active,.bha-root .bha-btn--danger.is-pressed{background:var(--bha-accent-soft)}
+.bha-root .bha-btn .bha-icon{width:20px;height:20px}
+.bha-root .bha-battle-ov--pause.bha-win{position:relative;inset:auto;width:420px;max-width:100%;gap:0;text-align:left;align-items:stretch}
+.bha-root .bha-battle-ov--pause .bha-win-head>.bha-i{width:24px;height:24px;color:var(--bha-text-2)}
+.bha-root .bha-battle-ov--pause .bha-win-head .bha-battle-ov__title{margin:0;font-size:var(--bha-fs-lg);line-height:1}
+.bha-root .bha-battle-ov--pause .bha-win-body{min-height:52px}
+.bha-root .bha-battle-ov--pause .bha-battle-ov__sub{margin:0;font-size:var(--bha-fs-sm);color:var(--bha-text-2)}
+.bha-root .bha-battle-ov--pause .bha-win-foot>.bha-btn{flex:1 1 0;min-width:0;min-height:var(--bha-btn-h);white-space:nowrap}

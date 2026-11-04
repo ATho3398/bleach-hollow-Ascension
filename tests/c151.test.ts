@@ -6,12 +6,8 @@ import { clampPct, v2ButtonClass } from '../src/ui/bha/v2/components';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const cssAll = read('src/ui/bha/v2/bha.css');
-/** 핸드오프에서 옮긴 부분 / 우리 쪽 어댑터 (마지막 "프로젝트 어댑터" 구역) */
-const ADAPTER_AT = cssAll.indexOf('/* ───────── 프로젝트 어댑터');
-const css = cssAll.slice(0, ADAPTER_AT);
-const adapter = cssAll.slice(ADAPTER_AT);
-const orig = read('docs/bha-ui-handoff/design/bha.css');
-const SHEET_ONLY = new Set(['bha-sheet', 'bha-table', 'bha-sw', 'bha-cap', 'bha-code']);
+/** C.285 (GDD 183장 화면 C): 옛 핸드오프 사본·어댑터 구역을 나누지 않고 한 벌(전투 화면 v2 모양)로 다시 썼다 */
+const css = cssAll;
 const classesOf = (t: string): Set<string> => new Set([...t.matchAll(/\.(bha-[a-z0-9_-]+)/g)].map((m) => m[1]!));
 /** 최상위 규칙의 선택자 목록 (주석 제외, 중첩 없음) */
 function selectors(t: string): string[] {
@@ -21,14 +17,19 @@ function selectors(t: string): string[] {
 
 describe('C.151 핸드오프 CSS (src/ui/bha/v2/bha.css)', () => {
   it('모든 선택자가 .bha-root 로 시작한다 — 옛 화면의 같은 이름 클래스와 섞이지 않는다', () => {
-    expect(selectors(css).filter((s) => !s.startsWith('.bha-root'))).toEqual([]);
-    // 어댑터는 .bha-v2host(우리 틀)와 그 안 .bha-root 만 건드린다
-    expect(selectors(adapter).filter((s) => !s.startsWith('.bha-v2host') && !s.startsWith('.bha-root'))).toEqual([]);
+    // .bha-v2host(우리 틀)와 그 안 .bha-root 만 건드린다
+    expect(selectors(css).filter((s) => !s.startsWith('.bha-v2host') && !s.startsWith('.bha-root'))).toEqual([]);
   });
-  it('핸드오프의 클래스 이름이 그대로 들어 있다 (시트용 5개 + 블록 안 체인 원(GDD 137장 4, C.215)만 뺌)', () => {
-    const want = [...classesOf(orig)].filter((c) => !SHEET_ONLY.has(c) && c !== 'bha-block__pips');
+  it('C.285 (GDD 183장 화면 C): 전투가 쓰는 클래스는 그대로 있고, 그라데이션·흐린 빛(glow)·hex 가 없다', () => {
     const have = classesOf(css);
+    const want = ['bha-field', 'bha-skillpanel', 'bha-v2toprow', 'bha-v2roles', 'bha-v2role--spawn', 'bha-gen-bar', 'bha-v2tray__grid', 'bha-v2cell', 'bha-block', 'bha-block__glyph', 'bha-v2chain', 'bha-v2hp', 'bha-v2herolib', 'bha-v2herolib__time', 'bha-battle-ov--pause', 'bha-win-foot'];
     expect(want.filter((c) => !have.has(c))).toEqual([]);
+    const body = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(body).not.toMatch(/#[0-9a-f]{3,6}\b/i);
+    expect(body).not.toMatch(/radial-gradient|rgba?\(/);
+    expect(body.replace(/border-width:[^;}]*/g, "")).not.toMatch(/(?<!\b0 )\b0 0 [1-9]\d*px/); // 흐린 빛 그림자 (0 0 0 1px 테두리는 허용)
+    // 그라데이션은 해방 블록 위아래 2색 반반(딱 끊김) 하나와 체력 막대 눈금 줄무늬만
+    expect(body.match(/linear-gradient\(/g)?.length).toBe(2);
   });
   it('C.282 (GDD 183장 1 ①): 토큰은 전역 한 벌 — .bha-root 는 옛 이름 별칭만, 테마 블록·색 값 없음', () => {
     expect(css).not.toMatch(/\.bha-root\.bha-(hollow|soul|shinigami)\s*\{/);

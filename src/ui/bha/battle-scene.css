@@ -10,10 +10,6 @@
 
 /* ── 장면 ── */
 .bha-lcd .bha-battle__arena { position: relative; flex: 1 1 0; min-height: 0; display: block; }
-.bha-battle__units {
-  position: absolute; inset: 0; padding: 40px var(--bha-sp-5) 0;
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--bha-sp-9);
-}
 .bha-unit { display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0; }
 .bha-unit__fig { flex: 1 1 0; min-height: 0; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
 .bha-unit__fig > .bha-hero, .bha-unit__fig > .bha-foe { height: 100%; aspect-ratio: 1; max-width: 100%; }
@@ -21,7 +17,7 @@
 /* 내 그림 한 장 (몸통박치기 연출 대상, 임시 도형). 적과 마주 본다 */
 .bha-hero { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 .bha-hero__lift { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 100%; } /* 몸 상자(꾸미기 기운 자리). 걷기 하나라 떠오르지 않는다 (GDD 125장) */
-.bha-hero__shadow { position: absolute; left: 22%; right: 22%; bottom: 5%; height: 6%; border-radius: 50%; background: #000; opacity: 0.3; } /* 발밑 그림자: 중심 = 그림 아래 8%(발바닥, 확대 기준점 92%) */
+.bha-hero__shadow { position: absolute; left: 22%; right: 22%; bottom: 5%; height: 6%; border-radius: 50%; background: var(--bha-backdrop); opacity: 0.3; } /* 발밑 그림자: 중심 = 그림 아래 8%(발바닥, 확대 기준점 92%) */
 .bha-hero__body { position: relative; display: block; width: 62%; aspect-ratio: 52 / 56; background: var(--bha-text-2); border: 2px solid var(--bha-line-2); border-radius: 50% 50% 42% 42%; margin-bottom: 4%; }
 .bha-hero__body.has-art { width: 100%; height: 100%; aspect-ratio: auto; background: none; border: 0; border-radius: 0; margin-bottom: 0; }
 .bha-hero__img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 92%; transform: translateY(var(--art-dy, 0%)) scale(var(--art-scale, 1)) scaleX(-1); pointer-events: none; } /* 그림은 왼쪽을 보는 한 장, 내 쪽은 오른쪽을 본다 */
@@ -38,22 +34,22 @@
   position: absolute; left: 0; right: 0; top: calc(var(--slot, 0) * 19px); height: 16px; z-index: 2;
   display: flex; align-items: center; gap: var(--bha-sp-2); padding: 0 var(--bha-sp-3);
   border-radius: var(--bha-r-pill); overflow: hidden;
-  background: rgb(0 0 0 / 0.6); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent);
+  background: color-mix(in srgb, var(--bha-backdrop) 70%, transparent); box-shadow: inset 0 0 0 1px var(--c);
   font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); line-height: 1; color: var(--bha-text-1); white-space: nowrap;
 }
 .bha-hgauge[hidden] { display: none; }
 .bha-hgauge .bha-icon { position: relative; flex: none; width: 12px; height: 12px; color: var(--c); stroke-width: 2.4; }
-.bha-hgauge__label { position: relative; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgb(0 0 0 / 0.9); }
+.bha-hgauge__label { position: relative; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 var(--bha-backdrop); }
 .bha-hgauge__fill {
   position: absolute; inset: 0; transform-origin: left center; transform: scaleX(var(--fill, 0));
-  background: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.22) 0 3px, transparent 3px 7px), color-mix(in srgb, var(--c) 78%, transparent);
+  background: color-mix(in srgb, var(--c) 72%, transparent); /* C.285: 단색 (빗금 무늬 삭제) */
 }
-.bha-hgauge--cast { --c: color-mix(in srgb, var(--bha-cast), var(--bha-attack) calc(var(--fill, 0) * 100%)); animation: bha-cast-pulse 500ms ease-in-out infinite alternate; }
+.bha-hgauge--cast { --c: color-mix(in srgb, var(--bha-cast), var(--bha-attack) calc(var(--fill, 0) * 100%)); } /* C.285: 맥동 삭제 — 색이 차오르며 바뀐다 */
 .bha-hgauge--seal { --c: var(--bha-seal); }
 .bha-hgauge--guard, .bha-hgauge--stance { --c: var(--bha-guard); }
 .bha-hgauge--weaken { --c: var(--bha-attack); }
-.bha-hgauge.is-idle { visibility: hidden; animation: none; } /* 예고가 없을 때는 자리만 지키고 안 보임 (GDD 100장 #36) */
-.bha-hgauge.is-done { animation: none; --c: var(--bha-guard); }
+.bha-hgauge.is-idle { visibility: hidden; } /* 예고가 없을 때는 자리만 지키고 안 보임 (GDD 100장 #36) */
+.bha-hgauge.is-done { --c: var(--bha-guard); }
 
 /* 작은 체력바: 유닛 그림 아래. 글자는 바 위에 숫자만 */
 .bha-unit__hp { flex: none; width: min(100%, 150px); padding-top: var(--bha-sp-2); }
@@ -63,71 +59,25 @@
 .bha-unit__hp .bha-meter__value { font-size: var(--bha-fs-xs); line-height: 1.1; }
 .bha-unit__hp .bha-meter__track { height: 7px; }
 
-/* ── 장면 위에 얹힌 것 ── */
-.bha-battle__toprow { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-3); right: var(--bha-sp-3); z-index: 4; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--bha-sp-4); pointer-events: none; }
-.bha-battle__foehead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-1) var(--bha-sp-3); flex: 1 1 0; min-width: 0; }
-.bha-battle__foename { display: flex; align-items: center; gap: var(--bha-sp-3); min-width: 0; }
-.bha-battle__name { font-family: var(--bha-font-display); font-weight: 800; font-size: var(--bha-fs-md); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgb(0 0 0 / 0.9); }
-.bha-battle__foehead .bha-chip, .bha-battle__foehead .bha-tag { background: rgb(0 0 0 / 0.5); }
-.bha-battle__bar { flex: none; display: flex; align-items: center; gap: var(--bha-sp-3); pointer-events: auto; }
-.bha-battle__bar .bha-btn--small { min-height: 34px; min-width: 34px; padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); background: rgb(0 0 0 / 0.5); }
-.bha-battle__bar .bha-btn--icon.bha-btn--small { width: 34px; }
-.bha-battle__bar .bha-btn { white-space: nowrap; }
-.bha-battle__time { display: inline-flex; align-items: center; gap: var(--bha-sp-2); margin-right: var(--bha-sp-2); font-size: var(--bha-fs-sm); font-weight: 700; color: var(--bha-text-2); font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 3px rgb(0 0 0 / 0.9); }
-.bha-battle__time .bha-icon { width: 14px; height: 14px; }
-.bha-battle__time b { font-size: var(--bha-fs-lg); color: var(--bha-text-1); }
-.bha-battle__timelabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.bha-battle__time.is-urgent, .bha-battle__time.is-urgent b { color: var(--bha-danger); }
+
 
 /* 사건 로그 (C.63, GDD 28장 3번): 가운데 실시간 안내를 없애고 위 오른쪽 [로그] 버튼으로 여는 목록. 열려 있어도 전투는 계속(겹쳐 보기) */
 .bha-lcd .bha-battle__arena .bha-battle__logpanel {
   position: absolute; z-index: var(--bha-z-float); right: var(--bha-sp-3); top: 46px;
   width: min(62%, 340px); height: auto; max-height: calc(100% - 56px); overflow-y: auto; overscroll-behavior: contain;
   justify-content: flex-start; gap: var(--bha-sp-1); padding: var(--bha-sp-3);
-  border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: rgb(0 0 0 / 0.78);
+  border: 0; border-radius: var(--bha-r-sm); background: color-mix(in srgb, var(--bha-backdrop) 84%, transparent); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi);
   -webkit-mask-image: none; mask-image: none; pointer-events: auto;
 }
 .bha-lcd .bha-battle__arena .bha-battle__logpanel[hidden] { display: none; }
 .bha-lcd .bha-battle__arena .bha-battle__logpanel .bha-log__line { justify-content: flex-start; flex: none; min-height: 0; white-space: normal; font-size: var(--bha-fs-xs); font-weight: 400; line-height: 1.35; text-align: left; color: var(--bha-text-2); }
 .bha-lcd .bha-battle__arena .bha-battle__logpanel .bha-log__line:last-child { color: var(--bha-text-1); font-size: var(--bha-fs-xs); }
-.bha-battle__bar .bha-battle__logbtn.is-on { color: var(--bha-accent); border-color: var(--bha-accent); }
 .bha-battle__floats { position: absolute; inset: 0; pointer-events: none; z-index: var(--bha-z-float); }
 
 /* ── 블록 바 위 줄: 왼쪽 영력·상태·범례 / 오른쪽 저장 필살기 ── */
-.bha-lcd .bha-battle__controls { --bha-block-h: 64px; position: relative; flex: none; display: flex; flex-direction: column; gap: var(--bha-sp-2); }
-.bha-battle__mid { display: flex; align-items: stretch; gap: var(--bha-sp-4); padding: 0 var(--bha-sp-3); }
-.bha-battle__midinfo { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--bha-sp-2); }
-.bha-battle__sprow { display: flex; align-items: center; gap: var(--bha-sp-3); min-width: 0; }
-.bha-battle__sp { position: relative; flex: 1 1 0; min-width: 0; }
-.bha-battle__mestatus { display: flex; align-items: center; gap: var(--bha-sp-2); flex: none; }
-.bha-battle__spnote { position: absolute; right: 0; top: -22px; z-index: 3; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--bha-r-pill); background: linear-gradient(135deg, var(--bha-special-a), var(--bha-special-b)); color: #2a1702; font-size: var(--bha-fs-xs); font-weight: 800; box-shadow: var(--bha-glow-sp); animation: bha-popin var(--bha-dur-3) var(--bha-ease-snap) both; }
-.bha-battle__spnote .bha-icon { width: 14px; height: 14px; }
-.bha-battle__sp .bha-meter--compact { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--bha-sp-3); }
-.bha-battle__sp .bha-meter--compact .bha-meter__head { display: contents; }
-.bha-battle__sp .bha-meter--compact .bha-meter__track { height: 8px; }
-.bha-battle .bha-legend { display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 0 var(--bha-sp-4); overflow: hidden; }
-.bha-battle .bha-legend__item { flex: none; }
-.bha-battle .bha-legend__item .bha-icon { width: 12px; height: 12px; }
 
-.bha-lcd .bha-battle__controls .bha-stored {
-  flex: 0 0 auto; width: clamp(190px, 34%, 250px); margin-top: 0; min-height: var(--bha-touch);
-  padding: var(--bha-sp-2) var(--bha-sp-4) var(--bha-sp-2) var(--bha-sp-3);
-  grid-template-columns: 28px minmax(0, 1fr) auto; gap: var(--bha-sp-3);
-}
-.bha-lcd .bha-battle__controls .bha-stored__icon { width: 28px; height: 28px; }
-.bha-lcd .bha-battle__controls .bha-stored__icon .bha-icon { width: 18px; height: 18px; }
-.bha-lcd .bha-battle__controls .bha-stored__name { font-size: var(--bha-fs-md); }
-.bha-lcd .bha-battle__controls .bha-stored__meta { display: none; }  /* 충전 수는 오른쪽 마름모 칸이 보여 준다 */
-.bha-lcd .bha-battle__controls .bha-stored__pips { flex-direction: column; gap: var(--bha-sp-2); padding-right: 0; }
-.bha-lcd .bha-battle__controls .bha-stored__pips i { width: 10px; height: 10px; border-width: 1.5px; }
-.bha-lcd .bha-battle__controls .bha-stored.is-ready::after { top: -8px; right: 8px; }
-.bha-battle__controls .bha-stored.is-alert { animation: bha-cast-pulse 400ms ease-in-out infinite alternate; }
 
 /* ── 블록 바: 화면 좌우 폭 전부, 8칸 균등 (터치 44px 이상, 칸 높이는 토큰 그대로) ── */
-.bha-lcd .bha-battle__controls .bha-tray { margin-inline: 0; padding-top: 16px; }
-.bha-lcd .bha-battle__controls .bha-tray__runlabel { height: 16px; line-height: 16px; }
-.bha-lcd .bha-battle .bha-tray__note { display: none; }  /* 봉인 안내는 머리 위 게이지와 가림막이 대신한다 */
-.bha-battle.is-paused .bha-battle__controls { filter: saturate(0.5) brightness(0.75); }
 
 /* ── 블록 바 묶음 경계 (GDD 19-2): 같은 계열이 최대 체인보다 길게 붙으면 앞에서부터 묶고, 묶음 사이에 끊김 표시 ── */
 .bha-tray__cut { grid-row: 1; grid-column: var(--at); position: relative; z-index: 4; width: 0; justify-self: start; pointer-events: none; }
@@ -170,33 +120,24 @@
 .bha-afx-name.is-big { font-size: var(--bha-fs-4xl); text-shadow: 0 0 16px var(--bha-chain3), 0 2px 4px var(--bha-bg-0); }
 .bha-afx-name.is-ult { font-size: var(--bha-fs-4xl); color: var(--bha-sp-hi); text-shadow: var(--bha-glow-sp), 0 2px 4px var(--bha-bg-0); }
 
-/* ── 해방 (GDD 22-5): 저장 필살기 옆 버튼 · 해방 중 몸 색 변화 · 짧은 컷인. 색은 테마 강조색(종족 테마가 정함)·리스크 토큰. 11-5 변주(외형)는 미정이라 공통 연출 하나 ── */
-.bha-stored--liberation .bha-stored__gauge i { background: var(--bha-accent-hi); }
-.bha-stored--liberation.is-locked .bha-stored__icon { color: var(--bha-text-3); }
-.bha-stored--liberation.is-locked .bha-stored__name { color: var(--bha-text-3); }
-.bha-stored--liberation.is-ready { border-color: var(--bha-accent-hi); background: linear-gradient(100deg, var(--bha-accent-soft), transparent 70%), var(--bha-bg-1); animation: bha-ready-glow 1.2s ease-in-out infinite alternate; }
-.bha-stored--liberation.is-ready .bha-stored__icon { color: var(--bha-text-1); background: radial-gradient(circle at 40% 35%, var(--bha-accent-hi), var(--bha-accent)); box-shadow: var(--bha-glow-risk); }
-.bha-stored--liberation.is-ready::after { background: var(--bha-accent-hi); color: var(--bha-bg-0); }
-.bha-stored--liberation.is-active { border-color: var(--bha-risk); box-shadow: var(--bha-glow-risk); }
-.bha-lcd .bha-battle__controls .bha-stored--liberation { width: clamp(170px, 27%, 220px); grid-template-columns: 28px minmax(0, 1fr); }
-.bha-stored--liberation .bha-stored__name { white-space: nowrap; }
-.bha-lcd .bha-battle__controls .bha-stored--liberation .bha-stored__meta { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; line-height: 1.2; }
-.bha-chip--liberation { border-color: var(--bha-risk); color: var(--bha-risk); }
-.bha-chip--liberation[hidden] { display: none; }
-/* 해방 오오라 (GDD 83장 5번): 몸 주변 빛 = 내 속성 색(--bha-aura, battleView 가 속성 토큰으로 칠함). 영력 해방 = 옅게, 레스렉시온/만해(.is-unique) = 진하게·빠르게 */
-/* GDD 178장 3 (C.261): 오오라는 그림의 불투명한 부분 모양대로만 — 그림 칸(.bha-unit__fig: 해방 버튼·남은 초 포함) 이 아니라 몸(.bha-hero__body)에 drop-shadow 를 겹친다.
-   옛 타원 빛 덩어리(::before)·그림 칸 필터는 삭제 (그림 칸 전체가 네모로 빛났다) */
-.bha-battle.is-liberated .bha-unit--me .bha-hero__body { filter: drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))); animation: bha-aura-shape 1.6s ease-in-out infinite alternate; }
-.bha-battle.is-unique .bha-unit--me .bha-hero__body { filter: saturate(1.5) drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 18px var(--bha-aura, var(--bha-accent-hi))); animation-duration: 0.8s; }
-@keyframes bha-aura-shape { from { opacity: 0.88; } to { opacity: 1; } }
-.bha-battle.is-liberated { box-shadow: inset 0 0 0 2px var(--bha-aura, var(--bha-accent-hi)); }
-@keyframes bha-aura { from { opacity: 0.55; transform: scale(0.96); } to { opacity: 1; transform: scale(1.06); } }
-@media (prefers-reduced-motion: reduce) { .bha-battle.is-liberated .bha-unit--me .bha-hero__body { animation: none; } }
-.bha-libcut { position: absolute; inset: 0; z-index: var(--bha-z-float); display: grid; place-items: center; pointer-events: none; opacity: 0; }
+/* 해방 컷인 띠 테마 토큰 (PROMPT 6절 S10: 호로 불꽃 사선 · 사신 먹 사선) — theme-*.css 와 같은 테마 선택자(종족 설정 theme 값). 공용 theme 파일로 옮길 후보(C.285 보고) */
+:root, .bha-theme-hollow, [data-bha-theme="hollow"] { --bha-battle-cut-bg: var(--bha-cos-cut-flame-bg); --bha-battle-cut-line: var(--bha-cos-cut-flame-line); }
+.bha-theme-shinigami, [data-bha-theme="shinigami"] { --bha-battle-cut-bg: var(--bha-cos-cut-ink-bg); --bha-battle-cut-line: var(--bha-cos-cut-ink-line); }
+/* ── 해방 중 (PROMPT 6절 S10, C.285): 장면을 어둡게 낮추고 내 캐릭터만 그림 윤곽 강조 + '레스렉시온/만해 중 n초' 칩(v2/bha.css). glow·흐림 없음 ──
+   윤곽 색 = 내 속성 색(--bha-aura, GDD 83장 4번). 레스렉시온/만해(.is-unique)는 윤곽 3px, 영력 해방은 2px. 그림 모양대로만(GDD 178장 3) */
+.bha-battle.is-liberated .bha-scenebg__dim { background: color-mix(in srgb, var(--bha-backdrop) 55%, transparent); }
+.bha-battle.is-liberated .bha-unit--foe { opacity: 0.75; }
+.bha-battle.is-liberated .bha-unit--me .bha-hero__body { filter: drop-shadow(2px 0 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(-2px 0 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 2px 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 -2px 0 var(--bha-aura, var(--bha-accent-hi))); }
+.bha-battle.is-unique .bha-unit--me .bha-hero__body { filter: drop-shadow(3px 0 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(-3px 0 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 3px 0 var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 -3px 0 var(--bha-aura, var(--bha-accent-hi))); }
+/* 기기 초점이 내 캐릭터에 있으면 초점 윤곽이 우선 (v2/bha.css) */
+.bha-root.bha-battle.is-liberated .bha-unit__fig:has(.bha-v2herolib.bha-sel) .bha-hero__body { filter: var(--bha-sprite-outline); }
+/* 컷인 = 체력 막대를 가리지 않는 44px 가로 띠 하나 (장면 y 98~142), 글자는 해방 이름만. 띠 = 종족 테마 컷인 사선(--bha-battle-cut-*, v2/bha.css) — 꾸미기를 끼면 꾸미기 컷인(cosmetics.css)이 우선 */
+.bha-libcut { position: absolute; left: 0; right: 0; top: 98px; height: 44px; z-index: var(--bha-z-float); display: flex; align-items: stretch; pointer-events: none; opacity: 0; }
 .bha-libcut.is-on { animation: bha-libcut 1400ms var(--bha-ease-out) both; }
 .bha-libcut__text {
-  padding: var(--bha-sp-2) var(--bha-sp-6); border-block: 2px solid var(--bha-accent-hi); background: linear-gradient(90deg, transparent, var(--bha-accent-soft) 20%, var(--bha-accent-soft) 80%, transparent);
-  font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); color: var(--bha-text-1); white-space: nowrap; text-shadow: var(--bha-glow-risk), 0 2px 4px var(--bha-bg-0);
+  flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 0 var(--bha-sp-6);
+  background: var(--bha-battle-cut-bg, var(--bha-bg-0)); border-block: 2px solid var(--bha-battle-cut-line, var(--bha-line-2));
+  font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-2xl); line-height: 1; color: var(--bha-text-1); white-space: nowrap; text-shadow: 0 2px 0 var(--bha-backdrop);
 }
 @keyframes bha-libcut { 0% { opacity: 0; transform: scaleX(0.6); } 15% { opacity: 1; transform: scaleX(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .bha-libcut.is-on { animation-duration: 1ms; opacity: 1; } }
@@ -204,8 +145,3 @@
 /* 각본 전투 처치 (GDD 129장 3, C.199): 슬로우 동안 적이 밝아지며 천천히 사라진다. 시간 = --bha-tutkill */
 .bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
-
-/* 해방 준비 아우라 (C.216, GDD 139장 3): 규칙은 v2/bha.css 의 .is-lib-ready. 뿜어 나오는 고리 */
-@keyframes bha-lib-burst{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
-@keyframes bha-lib-shape{from{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 3px var(--bha-accent-hi))}to{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 6px var(--bha-accent-hi)) drop-shadow(0 0 12px var(--bha-accent-hi))}} /* 해방 준비 = 몸 그림 모양대로 뿜어 나오는 빛 (GDD 178장 3, 규칙은 v2/bha.css .is-lib-ready) */
-@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-hero__body{animation:none}}
