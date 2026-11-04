@@ -213,3 +213,8 @@ const ready = new Map<string, PixelFxSheet>();
 export function readyPixelFx(name: string): PixelFxSheet | null {
   return ready.get(name) ?? null;
 }
+
+/** 게임 시트 이름 (scripts/pixelfx/tool/palettes.mjs sheetName 과 같은 규칙): pixelfx id 의 / → -, 속성 색이면 -<속성 id> */
+export function fxSheetName(id: string, element: string | null): string {
+  return `${id.replace('/', '-')}${element ? `-${element}` : ''}`;
+}

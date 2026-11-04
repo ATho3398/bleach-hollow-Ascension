@@ -21,7 +21,6 @@ const elements = json('src/data/elements/elements.json').map((e) => ({ id: e.id,
 const ORDER = [['shinigami', '참'], ['shinigami', '권'], ['shinigami', '귀'], ['hollow', '교'], ['hollow', '조'], ['hollow', '탄']];
 // 연타 처음 값 = 지금 게임(src/ui/attackFxConfig.ts FAMILY_STAGE_FX): 1블록 1번 · 2블록 3번 110ms · 3블록 3번 90ms
 const TIMING = [[1, 0], [3, 110], [3, 90]];
-const slash = { fx: 'melee/sword-slash', color: 'element', anchor: 'target', delay: 0, dx: 0, dy: 0, scale: 1, angle: 0, rate: 1, altFlip: true, move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3 };
 const entries = [];
 const defaults = {};
 for (const [fid, abbr] of ORDER) {
@@ -31,9 +30,11 @@ for (const [fid, abbr] of ORDER) {
   const key = `${fid}/${fam.id}`;
   // motion = 계열 몸동작(종이인형이 고르는 동작 묶음, 게임 attackFx 와 같다)
   entries.push({ key, label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1, ...(fam.motion ? { motion: fam.motion } : {}) });
-  // 처음 값: 사신 참 = 지금 붙여 둔 sword-slash(GDD 180장 1), 나머지는 비어 있음
   const all = (n) => Array.from({ length: n }, (_, i) => i);
-  defaults[key] = TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: fid === 'shinigami' && abbr === '참' ? [{ ...slash, on: all(hits) }] : [] }));
+  // 처음 값 = 게임 값(종족 설정 families[].pixelFx, C.281 부터). 없는 계열은 빈 값(지금 게임 연타 시각)
+  defaults[key] = fam.pixelFx?.stages
+    ? fam.pixelFx.stages.map((st) => ({ ...st, bodies: { male: st.bodies.male ?? { chain: [], bodyAt: 0, bodyFromHit: true }, female: st.bodies.female ?? { chain: [], bodyAt: 0, bodyFromHit: true }, frames: st.bodies.frames ?? { chain: [], bodyAt: 0, bodyFromHit: true } } }))
+    : TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: [] }));
 }
 
 const CAT = { custom: '★ 커스텀 (직접 만든 것)', arcane: '비전', critters: '생물', explosions: '폭발', fire: '불', holy: '신성', ice: '얼음', impacts: '타격', lightning: '번개', melee: '근접', moves: '연속기', nature: '자연', pickups: '아이템', projectiles: '투사체', scifi: 'SF', shadow: '어둠', spawn: '등장·소멸', status: '상태', transitions: '화면 전환', ui: 'UI', water: '물', weather: '날씨' };

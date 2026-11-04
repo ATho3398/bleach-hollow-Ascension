@@ -37,17 +37,57 @@ export interface FamilySkillConfig {
   bonus?: { kind: 'stagger'; value: number };
 }
 
-/** 계열 공격의 도트 자국 (GDD 180장): 시트 + 이펙트 배치 도구(scripts/pixelfx/tool)에서 사용자가 맞춘 자리·크기·각도.
- *  실제 시트 = `<sheet>-<블록 속성 id>`(public/fx). dx·dy = 맞는 몸 가운데에서 화면 px, scale = 시트 1픽셀당 화면 px,
- *  angle = 도, bigScale = 3단계 마지막 타격 크기, altFlip = 연타 짝수 번째 위아래 뒤집기 */
-export interface FamilyPixelFx {
-  sheet: string;
+/** 계열 블록의 도트 이펙트 (이펙트 배치 도구에서 사용자가 확정한 값, scripts/pixelfx/tool). 표시만 — 피해·규칙은 엔진 그대로.
+ *  시트 = public/fx/<fx 의 / → -><-속성 id (color element 일 때)> */
+export interface PixelFxLayer {
+  /** pixelfx 이펙트 id (분류/이름, 직접 만든 것은 custom/…) */
+  fx: string;
+  /** element = 블록 속성 8색, original = 원래 색 */
+  color: 'element' | 'original';
+  /** target = 맞는 몸 가운데, attacker = 치는 몸 가운데 */
+  anchor: 'target' | 'attacker';
+  /** 나오는 타격 (0부터) */
+  on: number[];
+  delay: number;
   dx: number;
   dy: number;
   scale: number;
   angle: number;
-  bigScale: number;
+  rate: number;
   altFlip: boolean;
+  /** fly = 치는 쪽에서 맞는 쪽까지 날아감(travel ms, arc 곡선, 도착 tx·ty, 사라지는 곳 = 도착 + ex·ey, face = 방향 돌림) */
+  move: 'stay' | 'fly';
+  travel: number;
+  arc: number;
+  tx: number;
+  ty: number;
+  ex: number;
+  ey: number;
+  face: boolean;
+  /** arrive = 이 블록 첫 투사체가 (같은 타격에) 도착할 때 시작 */
+  sync: 'hit' | 'arrive';
+  /** 겹침 순서 1~5 (클수록 앞) */
+  z: number;
+  /** 타격마다 따로 바꾼 값 (타격 번호 → 바꾼 칸) */
+  perHit?: Record<string, Partial<Pick<PixelFxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate' | 'z' | 'travel' | 'arc' | 'tx' | 'ty' | 'ex' | 'ey'>>>;
+}
+/** 치는 쪽 연결 동작: chain 차례로(동작 id = 종이인형 motions.json / 프레임 그림 동작, rate = 빠르기), 첫 동작은 첫 타격 기준 bodyAt ms 에 시작, bodyFromHit = 타격 프레임부터 */
+export interface PixelFxBody {
+  chain: { id: string; rate: number }[];
+  bodyAt: number;
+  bodyFromHit: boolean;
+}
+/** 한 블록(체인 단계) 공격: 타격 수·사이 간격·시전 속도, 이펙트들, 몸동작(성별마다: male·female = 종이인형, frames = 프레임 그림 캐릭터. 빈 chain = 옛 계열 몸동작) */
+export interface PixelFxStage {
+  hits: number;
+  gaps: number[];
+  speed: number;
+  layers: PixelFxLayer[];
+  bodies: { male?: PixelFxBody; female?: PixelFxBody; frames?: PixelFxBody };
+}
+export interface FamilyPixelFx {
+  /** 1·2·3블록 */
+  stages: PixelFxStage[];
 }
 
 /** 공격 계열 (GDD 17-3): 호로 조·교·탄 / 사신 참·권·귀. 특성의 family 가 이 id 를 가리킨다 */
@@ -61,7 +101,7 @@ export interface FamilyConfig {
   fx: AttackFxKind;
   /** 캐릭터 몸동작 (GDD 118장 2): 사신 권=strike·참=slash·귀=cast. 없으면 특수 동작 그대로(호로) */
   motion?: FamilyMotionKind;
-  /** 맞는 자국을 도트 시트로 (GDD 180장, pixelfx). 없으면 SVG 자국 */
+  /** 블록 도트 이펙트·연결 동작 (이펙트 배치 도구 확정 값). 없으면 옛 연출(SVG 자국·계열 몸동작) */
   pixelFx?: FamilyPixelFx;
   /** 공격 분류 (GDD 20-1·118장 2): 물리(조·권) / 특수(탄·귀) / 혼합(교·참). 피해 계산에 쓰는 능력치를 정한다 */
   category: AttackCategory;
@@ -598,10 +638,13 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
       if (x.motion !== undefined && !(FAMILY_MOTION_KINDS as readonly unknown[]).includes(x.motion)) errors.push(`families[${i}].motion: ${FAMILY_MOTION_KINDS.join(' | ')}`);
       if (x.pixelFx !== undefined) {
-        const p = (x.pixelFx ?? {}) as Record<string, unknown>;
-        const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
-        if (!(typeof p.sheet === 'string' && /^[a-z0-9-]+$/.test(p.sheet)) || !num(p.dx) || !num(p.dy) || !num(p.angle) || !(num(p.scale) && (p.scale as number) > 0) || !(num(p.bigScale) && (p.bigScale as number) > 0) || typeof p.altFlip !== 'boolean')
-          errors.push(`families[${i}].pixelFx: { sheet: 소문자·숫자·하이픈, dx, dy, scale>0, angle, bigScale>0, altFlip }`);
+        const st = ((x.pixelFx ?? {}) as Record<string, unknown>).stages;
+        const ok = Array.isArray(st) && st.length === FAMILY_TIERS && st.every((g) => {
+          const y = (g ?? {}) as Record<string, unknown>;
+          return typeof y.hits === 'number' && y.hits >= 1 && Array.isArray(y.gaps) && typeof y.speed === 'number' && y.speed > 0 && Array.isArray(y.layers) && typeof y.bodies === 'object' && y.bodies !== null
+            && (y.layers as Record<string, unknown>[]).every((l) => typeof l.fx === 'string' && /^[a-z0-9-]+\/[a-z0-9-]+$/.test(l.fx) && Array.isArray(l.on) && typeof l.scale === 'number' && l.scale > 0);
+        });
+        if (!ok) errors.push(`families[${i}].pixelFx: { stages: [블록 ${FAMILY_TIERS}개 { hits, gaps, speed>0, layers[{ fx: 분류/이름, on, scale>0, … }], bodies } ] }`);
       }
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;

@@ -1,4 +1,19 @@
 // 이펙트 배치 도구 확정 값 → 게임 (사용자 2026-11-04 "ㅇㅋ 넣어"): node scripts/pixelfx/tool/apply.mjs <fx/fixed 문서 JSON 파일>
+/** 종족 json 을 통째로 다시 쓰지 않고(다른 세션과 충돌 줄이기) 계열마다 "pixelFx" 한 줄만 넣거나 바꾸거나 지운다 — "fx" 줄 바로 아래 */
+function patchText(text, fac) {
+  let out = text.replace(/\n[ \t]*"pixelFx": .*,?(?=\n)/g, '');
+  const start = out.indexOf('"families"');
+  for (const fam of fac.families) {
+    if (!fam.pixelFx) continue;
+    const at = out.indexOf(`"id": "${fam.id}"`, start);
+    const fxLine = out.indexOf('"fx": ', at);
+    const eol = out.indexOf('\n', fxLine);
+    const indent = out.slice(out.lastIndexOf('\n', fxLine) + 1, fxLine);
+    out = `${out.slice(0, eol)}\n${indent}"pixelFx": ${JSON.stringify(fam.pixelFx)},${out.slice(eol)}`;
+  }
+  return out;
+}
+
 // 1) 종족 설정 src/data/factions/<종족>.json 의 families[].pixelFx = { stages: [1·2·3블록] } (이펙트가 하나도 없고 몸동작도 게임 기본인 계열은 지운다 = 옛 연출 그대로)
 // 2) 쓰는 이펙트만 시트로: 속성 색이면 속성 8색(palettes.mjs), 원래 색이면 한 장 → public/fx/<시트 이름>.png+.json (npm run fx -- add)
 // 3) 안 쓰는 옛 시트는 지운다 (hit-spark 는 C.249 시험용으로 남긴다). 먼저 npm run fx:fetch.
@@ -30,9 +45,15 @@ function stageOf(s) {
     }
     return out;
   });
-  return { hits: s.hits, gaps: (s.gaps ?? []).slice(0, Math.max(0, s.hits - 1)), speed: s.speed ?? 1, layers, chain: chain.map((c) => ({ id: c.id, rate: c.rate ?? 1 })), bodyAt: s.bodyAt ?? 0, bodyFromHit: s.bodyFromHit ?? true };
+  // 몸동작: 성별마다(male·female·frames). 옛 값(chain 한 벌)은 남·여에 같이 (도구 ensureBodies 와 같은 규칙)
+  const body = (b) => ({ chain: (b?.chain ?? []).map((c) => ({ id: c.id, rate: c.rate ?? 1 })), bodyAt: b?.bodyAt ?? 0, bodyFromHit: b?.bodyFromHit ?? true });
+  const legacy = { chain, bodyAt: s.bodyAt, bodyFromHit: s.bodyFromHit };
+  const src = s.bodies ?? { male: legacy, female: legacy, frames: null };
+  const bodies = {};
+  for (const k of ['male', 'female', 'frames']) if (src[k]?.chain?.length) bodies[k] = body(src[k]);
+  return { hits: s.hits, gaps: (s.gaps ?? []).slice(0, Math.max(0, s.hits - 1)), speed: s.speed ?? 1, layers, bodies };
 }
-const used = (stages) => stages.some((s) => s.layers.length || s.chain.length);
+const used = (stages) => stages.some((s) => s.layers.length || Object.keys(s.bodies).length);
 
 // 1) 종족 설정
 const sheets = new Map(); // 시트 이름 → { id, palette?, edge? }
@@ -54,7 +75,7 @@ for (const fid of ['shinigami', 'hollow']) {
         else sheets.set(sheetName(L.fx, null), { id: L.fx });
       }
   }
-  writeFileSync(p, `${JSON.stringify(fac, null, 2)}\n`);
+  writeFileSync(p, patchText(text, fac));
   console.log(`${fid}: ${fac.families.filter((f) => f.pixelFx).map((f) => f.name).join(', ') || '없음'}`);
 }
 

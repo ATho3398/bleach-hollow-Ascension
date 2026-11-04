@@ -39,7 +39,9 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
+import { RIG_FEMALE_SUFFIX } from '../data/art/manifest';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -853,6 +855,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (fx.shake) replayOnce(arena, 'is-shake', 320);
   };
   const cues: FxCue[] = [];
+  // 블록 도트 이펙트 시트 미리 받기 (이펙트 배치 도구 확정 값, 종족 설정 families[].pixelFx): 속성 색이면 속성 8색, 원래 색이면 한 장. 못 받은 시트는 그 이펙트만 빠진다
+  for (const f of faction.families)
+    for (const st of f.pixelFx?.stages ?? [])
+      for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -869,8 +875,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const f = familyOf(faction, id);
       if (!f) return null;
       const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null };
+      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
     },
+    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트, 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+    pixelSheet: readyPixelFx,
+    bodySlot: () => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames'),
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
