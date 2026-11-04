@@ -31,7 +31,7 @@ export function pickDialog(o: { title: string; body: string; options: readonly P
   };
   const list = el('div', 'bha-modal__actions bha-shoppick__list');
   const btns = o.options.map((op) => {
-    const b = button({ label: op.label, variant: 'primary', onClick: () => { close(); op.onPick(); } });
+    const b = button({ label: op.label, onClick: () => { close(); op.onPick(); } });
     b.dataset.pick = op.key;
     return b;
   });

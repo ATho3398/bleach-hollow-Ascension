@@ -7,7 +7,7 @@ export function tabBlockedView(host: HTMLElement, retry: () => void): void {
   applyTheme(FACTIONS[0]!);
   mountApp(
     host,
-    {},
+    { cls: 'bha-tabblocked' },
     panel(
       { title: '다른 창에서 실행 중' },
       notice('warn', '이 게임이 다른 창(탭)에서 이미 열려 있다. 세이브가 깨지지 않도록 한 번에 한 창에서만 플레이할 수 있다.'),

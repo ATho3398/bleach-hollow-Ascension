@@ -5,10 +5,10 @@
   background: color-mix(in srgb, var(--bha-bg-0) 80%, transparent);
   --warn-color: var(--bha-attack);
 }
-/* 가장자리 붉은 펄스 */
+/* 가장자리 붉은 펄스 — v2 (GDD 183장): 번지는 빛 대신 4px 테두리가 밝아졌다 어두워졌다 */
 .bha-warn::before {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  box-shadow: inset 0 0 70px 6px var(--warn-color); opacity: 0.2; animation: bha-warn-pulse 500ms ease-in-out infinite alternate;
+  box-shadow: inset 0 0 0 4px var(--warn-color); opacity: 0.2; animation: bha-warn-pulse 500ms ease-in-out infinite alternate;
 }
 .bha-warn__band {
   position: absolute; left: 0; right: 0; height: 16%; min-height: 28px;
@@ -19,8 +19,8 @@
 .bha-warn__band--bottom { bottom: 0; border-top: 2px solid var(--warn-color); animation: bha-warn-flow-r 500ms linear infinite; }
 .bha-warn__center { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-4); padding: 0 var(--bha-sp-6); text-align: center; }
 .bha-warn__word {
-  margin: 0; font-size: var(--bha-fs-3xl); letter-spacing: 0.28em; padding-left: 0.28em; font-weight: 800; color: var(--warn-color);
-  text-shadow: 0 0 14px var(--warn-color); animation: bha-warn-blink 1500ms steps(1, end) both;
+  margin: 0; font-family: var(--bha-font-num); font-size: var(--bha-fs-3xl); letter-spacing: 0.28em; padding-left: 0.28em; font-weight: 400; color: var(--warn-color);
+  text-shadow: 0 3px 0 var(--bha-bg-0); animation: bha-warn-blink 1500ms steps(1, end) both;
 }
 .bha-warn__line, .bha-warn__hidden { margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--bha-sp-3); font-size: var(--bha-fs-lg); color: var(--bha-text-1); }
 .bha-warn__hidden { font-size: var(--bha-fs-md); color: var(--warn-color); font-weight: 700; }

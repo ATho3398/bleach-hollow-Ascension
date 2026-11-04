@@ -16,7 +16,7 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
   background: var(--cos-shell-body, var(--bha-bg-2));
   border: 2px solid var(--cos-shell-line, var(--bha-line-2));
   border-radius: calc(var(--bha-r-lg) * 3);
-  box-shadow: inset 0 0 0 4px var(--bha-line-1), inset 0 -10px 24px rgb(0 0 0 / 0.35), var(--bha-shadow-3);
+  box-shadow: inset 0 0 0 4px var(--bha-line-1), inset 0 -4px 0 var(--bha-lo), var(--bha-shadow-3); /* v2 (GDD 183장): 번지는 그림자 대신 어두운 아랫면 */
 }
 .bha-tama__art { position: absolute; z-index: -1; max-width: none; max-height: none; pointer-events: none; user-select: none; -webkit-user-select: none; }
 .bha-tama__art[hidden] { display: none; }
@@ -38,12 +38,12 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 .bha-tama__edge { position: absolute; z-index: -1; visibility: hidden; transform-style: preserve-3d; }
 .bha-tama__edge::before {
   content: ""; position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden;
-  background: var(--edge-shade), var(--cos-shell-line, var(--bha-line-2));
+  background: var(--cos-shell-line, var(--bha-line-2));
   border-radius: var(--bha-r-sm);
-  box-shadow: inset 0 0 0 1px var(--bha-line-1);
+  box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 0 0 100vmax var(--edge-shade); /* v2 (GDD 183장): 그라데이션 대신 한 겹 어둡게 */
 }
-.bha-tama__edge--l { --edge-shade: linear-gradient(90deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.6)); transform-origin: left center; transform: rotateY(90deg); }
-.bha-tama__edge--r { --edge-shade: linear-gradient(270deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.6)); transform-origin: right center; transform: rotateY(-90deg); }
+.bha-tama__edge--l { --edge-shade: rgb(0 0 0 / 0.38); transform-origin: left center; transform: rotateY(90deg); }
+.bha-tama__edge--r { --edge-shade: rgb(0 0 0 / 0.38); transform-origin: right center; transform: rotateY(-90deg); }
 .bha-dev.is-tama-flipping, .bha-dev.is-tama-flipping .bha-tama { transform-style: preserve-3d; }
 .bha-dev.is-tama-flipping .bha-tama__edge { visibility: visible; }
 /* 3D 로 돌리는 동안은 겹침이 깊이 순이라, 같은 깊이의 몸체가 LCD·버튼을 덮지 않게 몸체만 살짝 뒤로 */
@@ -111,7 +111,7 @@ html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-patter
 .bha-key__seg2 { position: absolute; left: 0; top: var(--chain-l); width: 0; height: 0; transform-origin: 0 0; }
 /* 손가락으로 잡기 쉽게 장식 둘레를 넓게 받는다 */
 .bha-key__seg2::before { content: ""; position: absolute; left: -30px; top: -8px; width: 60px; height: 70px; }
-.bha-key__charm-svg { position: absolute; left: -25px; top: -4px; width: 50px; height: 58px; max-width: none; overflow: visible; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.5)); }
+.bha-key__charm-svg { position: absolute; left: -25px; top: -4px; width: 50px; height: 58px; max-width: none; overflow: visible; filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.5)); } /* v2: 흐림 없는 아랫그림자 */
 .bha-key__art { position: absolute; left: 0; top: 0; width: 52px; max-width: none; height: auto; pointer-events: none; }
 .bha-key__fill { fill: var(--key-body); stroke: var(--key-line); stroke-width: 1.4; }
 .bha-key__hole { fill: var(--key-line); }
@@ -146,10 +146,10 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 .bha-tama__band { position: absolute; z-index: -1; visibility: hidden; transform-style: preserve-3d; pointer-events: none; }
 .bha-tama__band::before {
   content: ""; position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden;
-  background: var(--edge-shade), rgb(var(--band-rgb, 0 0 0));
+  background: rgb(var(--band-rgb, 0 0 0)); box-shadow: inset 0 0 0 100vmax var(--edge-shade);
 }
-.bha-tama__band--l { --edge-shade: linear-gradient(90deg, rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.6)); transform-origin: left center; transform: rotateY(90deg); }
-.bha-tama__band--r { --edge-shade: linear-gradient(270deg, rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.6)); transform-origin: right center; transform: rotateY(-90deg); }
+.bha-tama__band--l { --edge-shade: rgb(0 0 0 / 0.4); transform-origin: left center; transform: rotateY(90deg); }
+.bha-tama__band--r { --edge-shade: rgb(0 0 0 / 0.4); transform-origin: right center; transform: rotateY(-90deg); }
 .bha-dev.is-tama-flipping .bha-tama__cap, .bha-dev.is-tama-flipping .bha-tama__band { visibility: visible; }
 .bha-dev.has-side-art .bha-tama__cap, .bha-dev.has-side-art .bha-tama__band { display: none; }
 .bha-dev.has-tama-art:not(.has-side-art) .bha-tama__edge { display: none; }
