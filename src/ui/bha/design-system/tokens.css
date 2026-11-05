@@ -324,4 +324,5 @@
   --bha-plate-bg: color-mix(in srgb, var(--bha-bg-0) 82%, transparent);      /* 장면 위 이름표·발밑 체력·돌아가기 버튼·걷기 이름/목표 칩 (v2 .bha-plate 값) */
   --bha-plate-bg-soft: color-mix(in srgb, var(--bha-bg-0) 72%, transparent); /* 장면 위 넓은 띠(걷기 머리 줄 등) — 장면이 더 비쳐 보인다 */
   --bha-scrim: rgb(0 0 0 / 0.42);                                            /* 창·시트 뒤 덮개 (v2 .bha-scrim 값) */
+  --bha-scene-box: rgb(0 0 0 / 0.55);                                        /* 장면 위 작은 상자(방 머리 위 상태 박스·이름표·ⓘ) — C.281 값 되돌림 (GDD 190장 3). 검정 투명도만 */
 }

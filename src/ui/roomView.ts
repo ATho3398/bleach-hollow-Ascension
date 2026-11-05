@@ -233,9 +233,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
   const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
   char.onclick = () => react(askLine() ?? undefined);
-  // 머리 위 상태 게이지 목록 (GDD 189장 4 — v2 S01 칩 한 줄에서 예전 목록형으로): 줄마다 아이콘·막대·숫자 + 오른쪽 위 ⓘ 하나. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
+  // 머리 위 상태 박스 (GDD 189장 4 · 190장 3 — C.281 모양 그대로): 어두운 박스 안 줄마다 아이콘·막대·숫자 + 박스 오른쪽 바깥 ⓘ 하나. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
   const chipRow = el('div', 'bha-room__chips');
-  const statusBtn = el('button', 'bha-room__status bha-room__status--list');
+  const statusBtn = el('button', 'bha-room__status');
   statusBtn.type = 'button';
   statusBtn.dataset.sc = 'status';
   scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
@@ -255,7 +255,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const fill = el('i');
       fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
       track.append(fill);
-      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum', c.value === null ? c.label : String(Math.round(c.value))));
+      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
       if (c.hint) row.title = c.hint;
       return row;
     }));
@@ -265,7 +265,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
   const measureChips = () => {
     scene.style.setProperty('--chip-h', `${chipRow.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`);
-    scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2) + 4}px`);
+    scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2 + statusInfoBtn.offsetWidth) + 6}px`); // 박스 반폭 + 바깥 ⓘ
   };
   requestAnimationFrame(measureChips);
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다

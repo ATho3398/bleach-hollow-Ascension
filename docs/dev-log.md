@@ -2178,3 +2178,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 
 - 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0. typecheck·test·balance:check 통과(tests/c141 카드 격자 높이 기대값 = minmax(118px, auto)).
 - 캡처 `docs/captures/c300/`(1배, 20장): `phone796-<화면>.png`·`pc844-<화면>.png` = 한 장에 왼쪽 전(C.299)/오른쪽 후 × 위 호로/아래 사신. 화면 = 스토리목록·대화창·가방장비·가방스킨·가방기타·설정알림(알림 띠 하나 넣어 자리 확인)·설정기타·떠돌이상인·진화·흡수. 다시 찍기 `scripts/ui-audit/c300-shots.cjs`.
+
+## C.301 — 190장 3 방 상태창 박스: C.281 모양 그대로 (GDD 190장 3, v5.449, S-23, 코딩215 Opus)
+- 사용자 원문: "홈 상태창도 원래것처럼 박스가 있어야지". 엔진·세이브·밸런스·방 물건 배치·LCD 크기 변경 없음. 튜토리얼 선택자(`.bha-room__status`) 그대로.
+- **기준** = git 68acec7(C.281) `room.css` 상태 칩 블록·`roomView.ts` paintGauges + `docs/captures/c282/*-1-room.png`.
+- **바꾼 것** `room.css`·`roomView.ts`·`tokens.css`: 박스 배경 = 검정 55%(C.281 값을 `--bha-scene-box` 토큰으로) · 테두리 선 없음 · 모서리 r-md · 폭 72 + 여백(4·16·4·6) · 줄 간격 2 · 막대 = 둥근 5px 남은 폭 전부(C.299 의 각진 64px 6px 막대 대신) · 숫자 칸 2ch `bha-num` · 상태이상 이름 = 위험 색(굵게 아님) · 이름표 = 같은 검정 판 r-sm(선 없음) · ⓘ = 22 원 같은 판, 박스 오른쪽 바깥 아래 끝(옆 자리면 캐릭터 반대쪽) · 누름 밝게 · 고름 강조 고리 · 위 끝 하한 +16.
+- 기획서 값 / 실제 값 / 이유: '테두리·배경 있는 박스' / 배경 판만(선 없음) / 기준 C.281 박스에 선이 없었다(지시 = 예전 그대로).
+- 온천 머리 위 칩 줄은 `.bha-room__status` 공용 바탕을 써서 방 박스 규칙은 `.bha-room__chips > .bha-room__status` 로만 — 온천 모양 그대로.
+- 검증: typecheck · test 227 파일 2677 통과 · balance:check 회귀 가드 통과. `scripts/ui-audit/c301-room-box.cjs`(PC 844 · 폰 796 터치 · 글자 1.15 × 두 종족 × 7 장면) 폰 점검 42장 모두 0. c279 튜토리얼 진짜 마우스 끝까지 두 종족 막힘 0·오류 0.
+- 캡처 `docs/captures/c301/`: `compare-{pc844,ph796}-{hollow,shinigami}.png`(왼 C.282 옛 방 · 오른 C.301) · `{pc844,ph796,ph796x115}-{종족}-{0room-tutorial,1room,2room-food,3room-info,4room-low,4room-dying,5room-t4name}.png` · `checks.json`.
+
