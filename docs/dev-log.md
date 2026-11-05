@@ -2188,3 +2188,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 검증: typecheck · test 227 파일 2677 통과 · balance:check 회귀 가드 통과. `scripts/ui-audit/c301-room-box.cjs`(PC 844 · 폰 796 터치 · 글자 1.15 × 두 종족 × 7 장면) 폰 점검 42장 모두 0. c279 튜토리얼 진짜 마우스 끝까지 두 종족 막힘 0·오류 0.
 - 캡처 `docs/captures/c301/`: `compare-{pc844,ph796}-{hollow,shinigami}.png`(왼 C.282 옛 방 · 오른 C.301) · `{pc844,ph796,ph796x115}-{종족}-{0room-tutorial,1room,2room-food,3room-info,4room-low,4room-dying,5room-t4name}.png` · `checks.json`.
 
+
+## C.302 — 190장 2 전투 UI 원복: 리디자인 v2 전(C.281) 모양으로 (GDD 190장 2, v5.450, S-23, 코딩214 Opus)
+- 사용자 원문: "그리고 전투 ui 아예 ui패치 전으로 원복시켜. 존나이상하네 ㅡㅡ". 엔진·데이터·세이브·밸런스 그대로(BALANCE·SAVE 형식 변경 없음).
+- **되살린 것** (기준 git 68acec7 = C.281): `src/ui/battleView.ts` 를 C.281 파일로 되돌리고 그 뒤 고친 것 중 지킬 것만 다시 넣음 · `src/ui/bha/v2/bha.css`·`battle-scene.css` = C.281 파일 그대로 + 맨 아래 C.302 덧붙임 몇 줄. 도움말 `battle.legend` 대상·'battle-buttons'·'chain' 글 = C.297 전(C.294 '블록' 이름) 으로.
+- **공용 값은 전투 안에서만 옛 값** (`src/ui/bha/battle-c281.css`, 생성기 `scripts/c302-gen-battle-c281.py`): C.282 가 바꾼 공용 토큰(색·글꼴 — 도트 숫자 Silkscreen 대신 본문 글꼴 등)·테마 토큰·속성 색 토큰 이름(--bha-el-* → 옛 토큰), C.285/C.296 이 공용 components.css·story.css 에서 지운/바꾼 블록·블록 바·체인·막대·버튼·칩 규칙을 `.bha-root`(전투 전용 루트) 안에만 `:where(.bha-root)` 로(특이도 그대로). v2/bha.css 보다 먼저 읽어 C.281 과 같은 순서. 튜토리얼 카드·알림·창·ⓘ 등 다른 화면 공용 부품은 뺌. 다른 화면은 그대로.
+- **아이콘**: 전투 루트 안에서만 옛 스프라이트 그림(`iconMap.keepOldIcons` — `icon()`/`v2Svg()` 가 `<use data-i="원래 이름">` 을 남기고, 전투 루트 관찰자가 옛 심볼로 바꿈).
+- **지킨 것**: 픽셀FX(185장 — attackFx·pixelAttack·종족 json 그대로, 캡처로 확인) · 종이인형 동작 · C.293 렉 수정(drawHud 같은 값 다시 안 씀 + 범례 줄 오른쪽 끝 자리를 매 프레임이 아니라 ResizeObserver 로 크기 바뀔 때만 잼 — C.281 은 매 프레임 offsetLeft 를 읽었다) · 게이지 이름 '블록'(187장, 봉인 = '봉인' + 남은 초) · 버튼 자리 고정 · 튜토리얼 data-sc/data-help · 기기 순서.
+- **폰에서 넘치는 곳만 최소로**: C.281 그대로면 폰(796×384 터치) 점검 2건(체인 이름표 '체인2/3' 가 체인 박스 판 밖 14px) → 체인 박스·블록 판의 테두리·면을 `::before` 로 옮김(모양·자리 같음, 이름표는 C.281 처럼 판 윗선에 얹힘) → 0.
+- 폰 점검(`scripts/ui-audit/c302-battle.cjs`, 두 종족 × 평소·체인2·체인3·봉인·소모품·해방·일시정지): 796×384 터치 글자 1.0 = **0**, 1.15 = **0** (C.281 원본 빌드 1.0 = 2건).
+- 테스트 갱신: C.285/C.297 이 바꾼 전투 배치 테스트 c63·c138·c151·c152·c162·c169·c171·c172·c183·c261 을 C.281 기대값으로 되돌림, c294 = 알약 이름표 '블록'/'봉인'. 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 결과는 아래.
+- 캡처 `docs/captures/c302/`(1배): `cmp-pc-<상태>.png`(844×390)·`cmp-phone-<상태>.png`(796×384 터치) = 왼쪽 C.281 원본 빌드 / 오른쪽 C.302, 위 호로·아래 사신 · `phone115-all-states.png`(글자 1.15, 7상태 × 두 종족, 반 크기) · `fx-phone-<종족>.png`(이펙트 나오는 장면) · `phone-checks.json`. 비교 스크립트 `scripts/ui-audit/c302-compare.py`, 이펙트 `c302-fx.cjs`.

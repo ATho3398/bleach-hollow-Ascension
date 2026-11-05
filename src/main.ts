@@ -31,6 +31,7 @@ import './ui/bha/warning.css';
 import './ui/bha/guide.css';
 import './ui/bha/pixel-fx.css'; // pixelfx 시트 재생 (C.249)
 import './ui/bha/layout-tool.css'; // UI 배치 도구 · 미리보기 표시 (GDD 175장)
+import './ui/bha/battle-c281.css'; // 전투 = C.281 모양: 옛 공용 토큰·부품을 전투 루트 안에만 (C.302, GDD 190장 2 — scripts/c302-gen-battle-c281.py 생성)
 import './ui/bha/v2/bha.css'; // LCD 인게임 UI v2 (C.151): .bha-root 안에서만 적용
 import { startApp } from './ui/app';
 import { acquirePlayLock } from './tabLock';

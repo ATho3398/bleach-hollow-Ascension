@@ -28,7 +28,7 @@ import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/fa
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
-import { v2Icon } from './bha/iconMap';
+import { keepOldIcons } from './bha/iconMap';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
 import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
 import { animOf } from './bha/animPlayer';
@@ -402,8 +402,23 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   tray.root.dataset.help = 'battle.tray';
   tray.grid.dataset.help = 'battle.runrow';
   const trayNote = el('p', 'bha-tray__note');
-  // 색 범례(공격·공허·콤보)는 C.297(GDD 189장 8)에 화면에서 빼고 도움말 'battle-buttons' 로 옮겼다
-
+  // 범례 (핸드오프 `.bha-legend`): 역할 = 색 점 + 글자
+  const legend = el('div', 'bha-legend');
+  legend.dataset.help = 'battle.legend';
+  legend.setAttribute('aria-label', '범례');
+  const legendItem = (color: string, text: string) => {
+    const it = el('span');
+    it.style.setProperty('--c', color);
+    it.style.color = color;
+    it.append(el('i'), text);
+    return it;
+  };
+  // 막기·회복은 블록이 아니라 버튼 (GDD 105장): 범례는 블록 바에 나오는 것만
+  legend.append(
+    legendItem('var(--bha-atk)', labels.role.attack),
+    legendItem('var(--bha-void)', labels.voidBlock),
+    ...(p.combos.length > 0 ? [legendItem('var(--bha-rare)', '콤보 블록')] : []),
+  );
 
   // 해방 카드 (GDD 83장, 핸드오프 영력 해방 카드: 스킬창 오른쪽 128px 세로): 블록과 같은 클릭 판정. 게이지가 차면 눌러 해방(한 전투 여러 번), 해방 중에는 남은 시간
   const libOn = p.liberationEnabled;
@@ -414,12 +429,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libBtn = el('button', `bha-v2herolib is-disabled${labels.liberation.unique ? ' is-unique' : ''}`);
   libBtn.type = 'button';
   libBtn.dataset.help = 'battle.liberation';
-  // 해방 중 칩 (PROMPT 6절 S10): release 아이콘 + '레스렉시온/만해 중 n초' — 이름은 종족 설정(labels.liberation.name)
-  const libTimeChip = el('span', 'bha-chip bha-chip--status bha-v2herolib__time');
-  const libTime = el('b', 'bha-num');
-  libTimeChip.append(v2Icon('release'), `${labels.liberation.name} 중 `, libTime, '초');
-  libTimeChip.hidden = true;
-  libBtn.append(libTimeChip);
+  const libTime = el('span', 'bha-num bha-v2herolib__time');
+  libBtn.append(libTime);
   // 무엇으로 차는지·해방 중 나오는 블록 한 줄 (GDD 95장 B2 ③, C.154): C.171(GDD 100장 #37) 범례 줄에서 빼고 해방 버튼 툴팁으로 (자세한 것은 도움말 battle.liberation)
   const hintFull = liberationHint();
   const hintDuring = hintFull.slice(hintFull.lastIndexOf(' · ') + 3); // 해방 중에는 나오는 블록만 ('해방 중 장착 탄·조')
@@ -437,50 +448,47 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
 
   // 막기 게이지·[소모품]·[장비] (GDD 105장 수정 v5.233 6번): 해방 알약 버튼 모양, 범례 줄 오른쪽 해방 옆. 못 쓸 때도 자리 그대로(흐리게)
-  // C.285 (GDD 183장 화면 C): v2 작은 버튼(36) 모양 + v2 도트 아이콘 (막기 shield · 소모품 potion · 장비 equip)
   const actBtn = (kind: 'guard' | 'item' | 'gear', iconId: string, name: string) => {
-    const b = el('button', `bha-v2role bha-v2role--${kind} is-disabled`);
+    const b = el('button', `bha-panel bha-v2role bha-v2role--${kind} is-disabled`);
     b.type = 'button';
     const nameEl = el('span', 'bha-v2role__name', name);
-    const meta = el('span', 'bha-num bha-v2role__meta');
-    b.append(v2Icon(iconId), nameEl, meta);
+    const meta = el('span', 'bha-v2role__meta');
+    b.append(icon(iconId), nameEl, meta);
     b.dataset.sc = kind;
     return { root: b, meta };
   };
-  const guardBtn = actBtn('guard', 'shield', labels.role.guard);
+  const guardBtn = actBtn('guard', 'i-guard', labels.role.guard);
   guardBtn.root.dataset.help = 'battle.guard'; // 각본 전투 카드 대상 (C.199)
   // 막기 게이지 (0 → 100%): 다 차야 누를 수 있다
   const guardBar = el('span', 'bha-v2role__bar');
   const guardFill = el('i');
   guardBar.append(guardFill);
   guardBtn.meta.replaceWith(guardBar);
-  const itemBtn = actBtn('item', 'potion', '소모품');
-  const gearBtn = actBtn('gear', 'equip', '장비');
+  const itemBtn = actBtn('item', 'i-heal', '소모품');
+  const gearBtn = actBtn('gear', 'i-attack', '장비');
   // 블록 생성 게이지 (GDD 178장 1·2): [막기] 왼쪽, 같은 알약 모양. 버튼이 아니라 표시(누르지 않는다·초점 대상 아님).
   // 엔진의 실제 생성 타이머·간격(spawnGaugeOf)을 읽어 차오른다. 블록 바 가득 = 가득·흐림, 봉인 = 자물쇠·회색·남은 초 (블록 칸은 덮지 않는다)
-  // C.285 (GDD 183장 화면 C, PROMPT 4절): v2 표시 칸 `.bha-gen` — 움푹한 면 + generate 아이콘 + '블록'(GDD 187장, C.294 — 옛 '생성'·'다음 블록') + 막대. 봉인 = 자물쇠 + '봉인' + 남은 초
-  const spawnPill = el('div', 'bha-gen bha-v2role--spawn');
-  spawnPill.setAttribute('role', 'status');
+  const spawnPill = el('div', 'bha-panel bha-v2role bha-v2role--spawn');
   const spawnIcon = el('span', 'bha-v2role__ico');
-  spawnIcon.append(v2Icon('generate'));
+  spawnIcon.append(icon('i-deck'));
   const spawnSealIcon = el('span', 'bha-v2role__ico bha-v2role__ico--seal');
-  spawnSealIcon.append(v2Icon('lock'));
-  const spawnBar = el('span', 'bha-gen-bar bha-v2role__bar');
+  spawnSealIcon.append(icon('i-seal'));
+  const spawnBar = el('span', 'bha-v2role__bar');
   const spawnFill = el('i');
   spawnBar.append(spawnFill);
-  const spawnMeta = el('span', 'bha-num bha-v2role__meta bha-v2role__meta--spawn');
-  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2gen__name', '블록'), el('span', 'bha-v2gen__name bha-v2gen__name--seal', '봉인'), spawnBar, spawnMeta);
-  // C.297 (GDD 189장 8·9, 목업 전투 A): 아래 판 = [블록 게이지 얇은 줄(칸 위)] + [블록 칸 8개 크게][소모품·장비 작은 아이콘][둥근 막기] 한 줄.
-  // 색 범례는 화면에서 빼고 도움말(battle-buttons)로. 소모품·장비는 끼웠을 때만 보이고, 없으면 자리는 지킨 채 숨김(visibility) — 다른 버튼 자리가 안 움직인다
-  const aux = el('div', 'bha-v2aux');
-  aux.append(itemBtn.root, gearBtn.root);
-  const trayCol = el('div', 'bha-v2traycol');
-  trayCol.append(spawnPill, tray.root);
-  const roles = el('div', 'bha-v2roles');
-  roles.append(trayCol, aux, guardBtn.root);
-  const controls = el('section', 'bha-skillpanel bha-v2panel');
+  const spawnMeta = el('span', 'bha-v2role__meta bha-v2role__meta--spawn');
+  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2role__name bha-v2role__name--block', '블록'), el('span', 'bha-v2role__name bha-v2role__name--seal', '봉인'), spawnBar, spawnMeta);
+  const roles = el('div', 'bha-v2roles is-alone'); // 해방 카드가 캐릭터로 옮겨 가 버튼 줄은 오른쪽 끝 (C.216)
+  roles.append(spawnPill, guardBtn.root, itemBtn.root, gearBtn.root);
+
+  // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
+  const legendRow = el('div', 'bha-v2legendrow');
+  legendRow.append(libChip, legend);
+  // 범례·칩은 줄어들지 않게
+  for (const n of [libChip, legend]) n.style.flexShrink = '0';
+  const controls = el('section', 'bha-skillpanel');
   controls.setAttribute('aria-label', '스킬창');
-  controls.append(roles);
+  controls.append(legendRow, roles, tray.root);
   if (libOn) units.querySelector('.bha-unit--me .bha-unit__fig')?.append(libBtn);
 
   // ── 7. 하단 컨트롤 ──
@@ -514,7 +522,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     quitBtn.onclick = () => quit();
     bar.append(quitBtn);
   }
-  const logBtn = v2IconButton({ label: '로그', icon: 'v2-log' });
+  const logBtn = v2Button({ label: '로그', small: true });
+  logBtn.style.minWidth = '44px';
   logBtn.setAttribute('aria-expanded', 'false');
   logBtn.dataset.help = 'battle.stage';
   logBtn.onclick = () => {
@@ -556,6 +565,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
+  keepOldIcons(app); // C.302 (GDD 190장 2): 전투 화면 아이콘 = 옛(C.281) 그림. 화면이 바뀌면 루트째 떨어져 관찰도 끝난다
   if (auraEl) app.style.setProperty('--bha-aura', elementColor(auraEl));
   app.classList.toggle('is-frenzy', !!opts.frenzy);
   if (opts.boss || opts.enter) window.setTimeout(() => playCosmeticFx('enter', hero.root), 0); // 등장 연출 (GDD 25-11): 보스·등급전 입장
@@ -740,9 +750,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     unregPause();
     if (!on) return hideOverlay();
     // C.170 (GDD 100장 #7·#41): 버튼 한 줄 [계속][설정][그만두기] — 도움말은 머리 ? 아이콘. 뒤로(◀)·Esc = 계속 (기기 레이어로 등록)
-    // C.285 (GDD 183장 화면 C): v2 창 `.bha-win` — 머리 48(일시정지 아이콘·제목) / 본문 한 줄 / 아래 고정 버튼 줄
-    const inner = el('div', 'bha-battle-ov bha-battle-ov--pause bha-win');
-    const actions = el('div', 'bha-battle-ov__actions bha-battle-ov__actions--row bha-win-foot');
+    const inner = el('div', 'bha-battle-ov');
+    const actions = el('div', 'bha-battle-ov__actions bha-battle-ov__actions--row');
     actions.append(button({ label: '계속', variant: 'primary', icon: 'i-play', onClick: () => setPaused(false) }));
     actions.append(button({ label: '설정', icon: 'i-settings', onClick: () => {
       if (overlayOpen) return;
@@ -768,11 +777,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         onNo: () => (overlayOpen = false),
       });
     } }));
-    const winHead = el('div', 'bha-win-head');
-    winHead.append(v2Icon('pause'), el('h2', 'bha-title bha-battle-ov__title', '일시정지'));
-    const winBody = el('div', 'bha-win-body');
-    winBody.append(el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'));
-    inner.append(winHead, winBody, actions);
+    inner.append(ovMark('i-pause'), el('h2', 'bha-battle-ov__title', '일시정지'), el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'), actions);
     const ov = showOverlay(inner);
     const off = registerLayer(ov, () => setPaused(false));
     unregPause = () => {
@@ -1143,6 +1148,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   const meterCache = { enemy: '', player: '', sp: '' };
   /** 같은 값이면 다시 쓰지 않는다 (매 프레임 불리는 drawHud — 속성을 쓰면 스타일 다시 계산) */
+  // 범례 줄은 버튼 줄 왼쪽 끝까지만 (버튼 폭이 이름·남은 개수·쿨다운 글자로 바뀌어도 겹치지 않게).
+  // C.302: 매 프레임 폭을 읽지 않고(C.293 렉 수정 유지) 버튼 줄·스킬창 크기가 바뀔 때만 잰다
+  const placeLegend = (): void => {
+    if (!(roles.offsetWidth > 0)) return;
+    const legendRight = `${Math.max(0, controls.clientWidth - roles.offsetLeft + 6)}px`;
+    if (legendRow.style.right !== legendRight) legendRow.style.right = legendRight;
+  };
+  if (typeof ResizeObserver !== 'undefined') {
+    const legendRo = new ResizeObserver(placeLegend);
+    legendRo.observe(roles);
+    legendRo.observe(controls);
+  }
   const setAttr = (e: Element, k: string, v: string) => { if (e.getAttribute(k) !== v) e.setAttribute(k, v); };
   const setTitle = (e: HTMLElement, v: string) => { if (e.title !== v) e.title = v; };
   const drawHud = () => {
@@ -1233,19 +1250,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         btn.root.title = label;
       }
     };
+    // 폰 폭(루트 논리 폭 760 아래)이면 소모품·장비는 아이콘만 (GDD 105장 수정 6)
+    const compact = Number(app.style.getPropertyValue('--v2-w') || 640) < 760;
+    if (roles.classList.contains('is-compact') !== compact) roles.classList.toggle('is-compact', compact);
     const gPct = Math.round(Math.min(1, s.guardGauge) * 100);
     guardFill.style.width = `${gPct}%`;
     guardBtn.root.classList.toggle('is-full', s.guardGauge >= 1);
     setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
     const it = p.battleItem;
-    // 끼웠을 때만 보인다 (자리는 그대로 — GDD 189장 8)
-    itemBtn.root.classList.toggle('is-absent', !it);
-    gearBtn.root.classList.toggle('is-absent', !p.activeGear);
     const itemLeft = opts.battleItem && it ? opts.battleItem.count - (s.itemUsed ? 1 : 0) : 0;
     setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
     setAct(itemBtn, canUseItem(s), !it ? '소모품 칸이 비었다(장비 화면에서 넣는다)' : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
     const cdSec = s.gearCooldown * p.tickSeconds;
-    setText(gearBtn.meta, p.activeGear && cdSec > 0 ? `${Math.ceil(cdSec)}` : ''); // C.297: 남은 초는 아이콘 모서리 배지 (끝나면 배지 숨김)
+    setText(gearBtn.meta, p.activeGear ? (cdSec > 0 ? `${Math.ceil(cdSec)}` : '\u00a0') : ''); // 발동 장비가 있으면 쿨다운이 끝나도 글자 칸 자리 유지 (C.182)
     setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비가 없다(발동 효과가 있는 장비를 끼면 쓸 수 있다)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);
 
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
@@ -1265,8 +1282,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       libBtn.classList.toggle('is-on', libActive);
       setAttr(libBtn, 'aria-disabled', String(!ready));
       const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
-      setText(libTime, libActive ? String(Math.ceil(lb.ticksLeft * p.tickSeconds)) : '');
-      setHidden(libTimeChip, !libActive);
+      setText(libTime, libActive ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
       setTitle(libBtn, libText);
       setAttr(libBtn, 'aria-label', `${labels.liberation.name}, ${libText}`);
     }

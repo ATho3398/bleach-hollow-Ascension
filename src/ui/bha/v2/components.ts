@@ -1,7 +1,7 @@
 // LCD 인게임 UI v2 공통 컴포넌트 (C.151, docs/bha-ui-handoff README 7-2): 버튼 4종·칩·탭·게이지·패널·모달·토스트·알림 띠.
 // 마크업·클래스 이름은 핸드오프(bha.css)와 같다. 색·간격은 전부 `.bha-root` 안의 토큰이 정한다 — 이 파일은 DOM 만 만든다. 종족 분기 없음.
 import { registerLayer } from '../overlayHost';
-import { spriteSymbol } from '../iconMap';
+import { setSpriteHref } from '../iconMap';
 import { devText } from '../../displayName';
 import { trapModalFocus } from '../modalFocus';
 
@@ -21,7 +21,7 @@ export function v2Svg(symbolId: string, cls = ''): SVGSVGElement {
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
   const use = document.createElementNS(SVG_NS, 'use');
-  use.setAttribute('href', `#${spriteSymbol(symbolId)}`); // v2 도트 아이콘 매핑 (C.282)
+  setSpriteHref(use, symbolId); // v2 도트 아이콘 매핑 (C.282)
   svg.append(use);
   return svg;
 }

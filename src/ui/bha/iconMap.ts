@@ -103,6 +103,37 @@ export function spriteSymbol(id: string): string {
   return v2 ? `v2-${v2}` : id;
 }
 
+/** `<use>` 에 v2 심볼을 걸 때 원래 게임 이름을 data-i 로 남긴다 (C.302: 전투 화면은 옛 그림으로 되돌린다) */
+export function setSpriteHref(use: Element, id: string): void {
+  const sym = spriteSymbol(id);
+  use.setAttribute('href', `#${sym}`);
+  if (sym !== id) use.setAttribute('data-i', id);
+}
+
+/** C.302 (GDD 190장 2): 이 요소 안의 아이콘을 옛 스프라이트(C.281 그림)로 — 지금 있는 것 + 나중에 붙는 것. 전투 화면 전용. 해제 함수를 돌려준다 */
+export function keepOldIcons(scope: HTMLElement): () => void {
+  const fix = (n: ParentNode): void => {
+    for (const u of n.querySelectorAll('use[data-i]')) {
+      const id = u.getAttribute('data-i')!;
+      if (u.getAttribute('href') !== `#${id}`) u.setAttribute('href', `#${id}`);
+    }
+  };
+  fix(scope);
+  if (typeof MutationObserver === 'undefined') return () => {};
+  const mo = new MutationObserver((list) => {
+    for (const m of list) {
+      for (const a of m.addedNodes) {
+        if (a.nodeType !== 1) continue;
+        const e = a as Element;
+        if (e.matches('use[data-i]')) fix(e.parentNode ?? e);
+        else if (e.firstElementChild) fix(e);
+      }
+    }
+  });
+  mo.observe(scope, { childList: true, subtree: true });
+  return () => mo.disconnect();
+}
+
 /** 새 화면용 마스크 아이콘 `<i class="bha-i bha-i-<이름>">` — 이름은 v2 이름 또는 게임 i-* 이름 */
 export function v2Icon(name: string, size?: 'sm' | 'lg' | 'xl', cls = ''): HTMLElement {
   const n = V2_ICON[name] ?? name;

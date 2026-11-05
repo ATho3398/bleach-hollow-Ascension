@@ -41,8 +41,7 @@ describe('C.152 전투 v2', () => {
     expect(view).not.toContain('bha-sp-');
   });
   it('체인 색: 2 금색 / 3 주황, 봉 칸 색 폴백 정의', () => {
-    // C.285 (GDD 183장 화면 C): 체인 = 블록 아래 받침 띠 — 2 황동(--bha-chain2) · 3 구리(--bha-chain3)
-    expect(css).toMatch(/\.bha-root \.bha-v2chain\.bha-chain--3\{--ch:var\(--bha-chain3\)\}/);
+    expect(css).toMatch(/\.bha-root \.bha-chain--3/);
     expect(css).toMatch(/\.bha-block--kyo\s*\{/);
   });
 });
