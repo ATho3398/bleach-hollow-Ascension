@@ -5,7 +5,7 @@ import { getTile } from '../../data/tiles';
 import { isTempCell, moveTile, placedCount, placeTile, swapTiles, tempHandCount, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
 import { fixParticles } from '../../engine/josa';
 import { tileHint, variantModsText } from '../labels';
-import { el, emptyState, icon } from './dom';
+import { el, emptyState, fitOneLine, icon } from './dom';
 import { canPlaceAt, tileCss, tileIconId } from './expedition';
 import { registerCancelHook } from './shortcuts';
 
@@ -314,7 +314,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       chip.setAttribute('aria-pressed', String(selected === id));
       const ic = el('span', 'bha-tilecard__icon');
       ic.append(icon(tileIconId(css)));
-      chip.append(ic, el('b', 'bha-tilecard__name', o.tileName(id)), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
+      chip.append(ic, fitOneLine(el('b', 'bha-tilecard__name', o.tileName(id))), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
       const temp = tempHandCount(exp, id);
       if (temp > 0) {
         chip.append(tempMark());
