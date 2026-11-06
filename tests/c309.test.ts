@@ -21,9 +21,11 @@ describe('C.309 뽑기 카드 이름·표시', () => {
     expect(rule(css, '.bha-draft__name')).not.toMatch(/overflow-wrap|word-break/);
     expect(rule(shared, '.bha-tilecard__name')).not.toMatch(/overflow-wrap|word-break/);
   });
-  it('이름은 카드 폭 전부(옆 아이콘 칸 없음)', () => {
-    expect(rule(css, '.bha-lcd .bha-exp .bha-draft__row > .bha-draft__card')).toMatch(/grid-template-columns: minmax\(0, 1fr\);/);
-    expect(view).not.toMatch(/bha-tilechip__icon/);
+  it('이름은 카드 폭 전부, 아이콘은 설명 두 줄 왼쪽 (C.310)', () => {
+    expect(rule(css, '.bha-lcd .bha-exp .bha-draft__row > .bha-draft__card')).toMatch(/grid-template-columns: 24px minmax\(0, 1fr\);/);
+    expect(rule(css, '.bha-draft__name')).toMatch(/grid-column: 1 \/ -1/);
+    expect(rule(css, '.bha-draft__hint')).toMatch(/grid-column: 2/);
+    expect(view).toMatch(/fitOneLine\(el\('b', 'bha-draft__name', tn\(id\)\)\), ic, el\('small', 'bha-draft__hint'/);
   });
   it("'새 타일' 표시는 아래 끝을 카드 위쪽 여백 안에 고정 (글자가 커지면 위로 자란다)", () => {
     const tag = rule(css, '.bha-lcd .bha-exp .bha-draft__card > .bha-draft__tag');

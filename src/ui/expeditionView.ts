@@ -14,7 +14,7 @@ import {
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
-import { tileCss } from './bha/expedition';
+import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
 import { button, chip, el, fitOneLine, icon, meter, mountApp, notice } from './bha/dom';
@@ -618,8 +618,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         card.type = 'button';
         card.disabled = d.picked !== null;
         card.setAttribute('aria-pressed', String(d.picked === i));
-        // 이름 = 맨 위 한 줄(카드 폭 전부, 넘치면 글자 줄임), 아래 = 설명 두 줄(카드 폭 전부). 종류는 카드 아래 색 띠 (C.309 — 아이콘 칸이 이름을 꺾던 것)
-        card.append(fitOneLine(el('b', 'bha-draft__name', tn(id))), el('small', 'bha-draft__hint', tileHint(t)));
+        // 이름 = 맨 위 한 줄(카드 폭 전부, 넘치면 글자 줄임 — C.309), 아래 = 아이콘(24) + 설명 두 줄 (C.310 아이콘 되살림 — 190장, 옆 손 카드와 같은 모양)
+        const ic = el('span', 'bha-tilechip__icon');
+        ic.append(icon(tileIconId(css)));
+        card.append(fitOneLine(el('b', 'bha-draft__name', tn(id))), ic, el('small', 'bha-draft__hint', tileHint(t)));
         card.title = `${tn(id)} — ${tileHint(t)}`; // 설명은 카드에서 두 줄까지 (C.308)
         if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {

@@ -2298,3 +2298,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 남은 것: 폰 점검 '말줄임' = 뽑기 카드 설명 두 줄 말줄임(C.308 에서 정한 것, 전체 글은 카드 title) — 긴 설명 타일(묻힌 보물·정화의 샘)을 강제로 넣었을 때만. 이름·표시 관련 0.
 - 테스트: 새 `tests/c309.test.ts`(3). 캡처 `docs/captures/c309/{hollow,shinigami}-{pc,ph,ph115}-6-lapend.png` + `shinigami-ph115-3-place-0.png`(1배) + proof.json(draft 줄: 글자 크기·oneLine·cut·tagOverName). 스크립트 `scripts/c309-proof.cjs`.
 
+## C.310 — 193장 3 보충 3: 뽑기 카드 아이콘 되살림 (GDD 193장 3, v5.462, S-23, 코딩223 Opus)
+- 근거: 마스터AI C.309 캡처 확인 "뽑기 카드 아이콘은 되살려라(사용자는 리디자인 때 있던 걸 빼는 걸 싫어함 — 190장, 옆 4번째 카드(가진 타일)는 아이콘이 있어 들쭉날쭉) … 이름 줄은 카드 폭 전부 그대로 두고, 아이콘(24)은 설명 두 줄 왼쪽 … 설명 두 줄 말줄임은 그대로 둔다(결정)". 엔진·세이브·밸런스 변경 없음.
+- 바꾼 것 `expeditionView.ts`·`walk-scene.css`: 카드 격자 24 | 나머지, 이름 = 두 칸 전부(한 줄, fitOneLine), 둘째 줄 = 아이콘 24(C.309 전 모양·색) + 설명 두 줄(말줄임 + 카드 title).
+- 결과(잰 값, C.309 와 같은 강제 뽑기 — 긴 이름·이벤트·새 타일): 창 배치(lapLayout) 6 조건 모두 C.308/309 와 같은 값([귀환]/[한 바퀴 더] 안 움직임), 아이콘 24 로 들어가 20 으로 줄일 일 없음. 이름 한 줄·잘림 0·표시 겹침 0. 폰 점검 = 설명 두 줄 말줄임(결정대로 유지)만.
+- 테스트: `tests/c309.test.ts` 아이콘 검사로 바꿈(3). 캡처 `docs/captures/c310/{hollow,shinigami}-{pc,ph,ph115}-6-lapend.png` + proof.json(`node scripts/c309-proof.cjs docs/captures/c310`).
+
