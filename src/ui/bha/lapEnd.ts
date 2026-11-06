@@ -25,13 +25,13 @@ function countLap(list: { lap: number }[], lap: number): number {
   return list.filter((x) => x.lap === lap).length;
 }
 
-/** 다음 바퀴(nx) 배율을 말로: "다음 바퀴: 적이 세지고 보상이 는다 · 이기면 조금 회복" */
+/** 다음 바퀴(nx) 배율을 말로: "다음 바퀴: 적이 세지고 보상이 는다 · 이기면 회복" */
 export function continueWords(nx: number): string {
   const s = lapScale(nx);
   const harder = s.hp > 1 || s.attack > 1;
   const richer = lapRewardMult(nx) > 1;
   const head = harder && richer ? '적이 세지고 보상이 는다' : harder ? '적이 세진다' : richer ? '보상이 는다' : '적과 보상이 그대로다';
-  return `다음 바퀴: ${head}${winHealOf(nx) > 0 ? ' · 이기면 조금 회복' : ''}`;
+  return `다음 바퀴: ${head}${winHealOf(nx) > 0 ? ' · 이기면 회복' : ''}`;
 }
 
 /** 다음 바퀴 ⓘ: 배율 숫자 (text-style 3절 수치 줄) */

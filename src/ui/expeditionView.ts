@@ -584,7 +584,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const notes = el('div', 'bha-continue__notes');
     const gain = el('p', 'bha-continue-keep bha-lapend__gain', lapGainLine(exp, faction.foodGroupName, TRADE_CURRENCY_NAME));
     gain.dataset.lapGain = '';
-    gain.title = '돌아가면 얻은 것을 지킨다';
+    gain.title = `${gain.textContent} — 돌아가면 얻은 것을 지킨다`;
+    multLine.title = multLine.textContent ?? '';
     ret.title = '돌아가면 얻은 것을 지킨다';
     notes.append(gain, multLine, multInfo);
     const actions = el('div', 'bha-continue');
@@ -621,6 +622,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         ic.append(icon(tileIconId(css)));
         // 아이콘·이름·설명은 카드마다 같은 자리 (C.218) — 설명은 줄바꿈, 말줄임 없음
         card.append(ic, el('b', 'bha-draft__name', tn(id)), el('small', 'bha-draft__hint', tileHint(t)));
+        card.title = `${tn(id)} — ${tileHint(t)}`; // 설명은 카드에서 두 줄까지 (C.308)
         if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {
           const r = chooseDraft(exp, i);

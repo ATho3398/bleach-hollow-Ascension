@@ -55,7 +55,7 @@ describe('193장 3 바퀴 끝 창', () => {
       const d = continueDetail(nx).lines.join(' ');
       expect(d).toContain(`×${Math.round(lapRewardMult(nx) * 100) / 100}`);
       expect(d).toContain(`×${Math.round(lapScale(nx).attack * 100) / 100}`);
-      if (winHealOf(nx) > 0) expect(continueWords(nx)).toContain('이기면 조금 회복');
+      if (winHealOf(nx) > 0) expect(continueWords(nx)).toContain('이기면 회복');
     }
     const ev = src('src/ui/expeditionView.ts');
     expect(ev).toContain("'bha-lapend__hp'");

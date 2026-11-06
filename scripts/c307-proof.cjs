@@ -115,7 +115,7 @@ async function fresh(page, url, fi) {
       if (await yes.count()) { await yes.first().click(); await page.waitForTimeout(1200); }
       // 바퀴 끝 창: 저장된 원정을 길 끝 칸으로 옮기고 이번 바퀴 얻은 것을 넣은 뒤 이어하기 (호로 = 뽑기 있는 창, 사신 = 뽑기 없는 창: tilesLocked)
       await page.waitForTimeout(800);
-      await patch(page, `const e = t.activeExpedition && (t.activeExpedition.exp ?? t.activeExpedition); if (e) { e.pos = e.slots.length - 1; e.phase = 'moving'; e.pending = null; e.queuedBattle = null; e.hpFraction = 0.27; e.victoriesThisLap = 3; e.foodLoot = [...(e.foodLoot ?? []), { food: 'snack', lap: e.lap }, { food: 'snack', lap: e.lap }]; e.goldLoot = [...(e.goldLoot ?? []), { amount: 45, lap: e.lap }]; ${fi === 1 ? 'e.tilesLocked = true;' : ''} }`);
+      await patch(page, `const e = t.activeExpedition && (t.activeExpedition.exp ?? t.activeExpedition); if (e) { e.pos = e.slots.length - 1; e.phase = 'moving'; e.pending = null; e.queuedBattle = null; e.hpFraction = 0.27; e.victoriesThisLap = 3; e.foodLoot = [...(e.foodLoot ?? []), { food: 'snack', lap: e.lap }, { food: 'snack', lap: e.lap }]; e.goldLoot = [...(e.goldLoot ?? []), { amount: 45, lap: e.lap }]; ${fi === 1 && !process.env.C307_DRAFT_BOTH ? 'e.tilesLocked = true;' : ''} }`);
       await page.reload(); await page.waitForTimeout(1500);
       await page.getByRole('button', { name: '이어하기' }).click().catch(() => {}); await page.waitForTimeout(1500);
       for (let t = 0; t < 80; t++) {
@@ -125,6 +125,11 @@ async function fresh(page, url, fi) {
         await page.waitForTimeout(400);
       }
       facts.lap = await page.evaluate(() => ({ hp: document.querySelector('.bha-lcd [data-lap-hp]')?.getAttribute('data-lap-hp') ?? null, gain: document.querySelector('.bha-lcd [data-lap-gain]')?.textContent ?? null, mult: document.querySelector('.bha-lcd [data-continue-mult]')?.textContent ?? null }));
+      facts.lapLayout = await page.evaluate(() => {
+        const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return [Math.round(b.top), Math.round(b.bottom)]; };
+        const body = document.querySelector('.bha-lcd .bha-lapend > .bha-win-body');
+        return { sheet: r('.bha-lcd .bha-lapend'), body: r('.bha-lcd .bha-lapend > .bha-win-body'), bodyScroll: body ? [body.scrollHeight, body.clientHeight] : null, cards: r('.bha-lcd .bha-draft__row'), road: r('.bha-lcd .bha-nestsheet__body .bha-road'), note: r('.bha-lcd .bha-nestsheet__body .bha-road__noterow'), syn: r('.bha-lcd .bha-nestsheet__body .bha-road__synline'), foot: r('.bha-lcd .bha-lapend > .bha-continue'), btn: r('.bha-lcd .bha-lapend .bha-grid2'), notes: r('.bha-lcd .bha-lapend .bha-continue__notes') };
+      });
       await shot('6-lapend');
       if (await page.locator('.bha-lcd .bha-continue__info').count()) { await page.locator('.bha-lcd .bha-continue__info').click(); await page.waitForTimeout(300); await shot('7-lapend-info'); }
       await page.close();

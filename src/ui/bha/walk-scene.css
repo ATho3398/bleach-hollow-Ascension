@@ -187,9 +187,19 @@
 }
 /* 바퀴 끝 창 지금 체력 (GDD 193장 3): 머리 줄 제목 오른쪽 = 걷기 화면과 같은 C.281 체력 막대(compact·숫자 안), 이번 바퀴 얻은 것 = [귀환] 아래 작은 글 */
 .bha-lcd .bha-exp .bha-win-head > .bha-lapend__hp { flex: none; width: 150px; margin-right: 4px; }
-/* 작은 글 두 칸 = 버튼 두 칸과 같은 폭(왼 = 이번 바퀴 얻은 것, 오른 = 다음 바퀴 말 + ⓘ). 넘치면 말줄임 대신 두 줄 (글자 크게 해도 안 잘림, C.307) */
-.bha-lapend .bha-continue__notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: start; gap: 8px; }
-.bha-lapend .bha-continue__notes > p { white-space: normal; overflow: visible; text-overflow: clip; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
 .bha-continue__notes > .bha-lapend__gain { color: var(--bha-text-1); }
-.bha-lapend .bha-continue__notes > .bha-continue-mult { text-align: left; }
-.bha-continue__notes > .bha-continue__info { flex: none; align-self: start; margin: 0; }
+.bha-lapend .bha-continue__notes > .bha-continue-mult { text-align: right; }
+.bha-continue__notes > .bha-continue__info { flex: none; align-self: start; margin: 0; width: 20px; height: 20px; } /* 줄 높이를 늘리지 않게 작게 (누르는 자리는 bha-info::before 36) */
+/* 뽑기 카드가 있는 바퀴 끝 창(높이 고정 330): 뽑기·길·안내 줄이 [귀환]/[한 바퀴 더] 위에 다 들어가게 본문 여백·길 칸 높이를 줄인다 (C.308, 버튼 자리 그대로 — GDD 173장 2) */
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed > .bha-win-body { padding: 6px 14px 4px; }
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed .bha-nestsheet__body { row-gap: 4px; }
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed .bha-draft__row { padding-top: 4px; }
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed .bha-nestsheet__body .bha-road__cell { height: 34px; }
+/* 작은 글 칸 = 한 줄 고정(C.308): 얻은 것 글 길이·글자 크기로 줄 수가 바뀌어 [귀환]/[한 바퀴 더]가 움직이거나 창 바닥에 붙지 않게(GDD 173장 2).
+   넘치면 말줄임 — 전체 글은 title, 다음 바퀴 숫자는 ⓘ */
+.bha-lapend .bha-continue__notes { display: grid; gap: 8px; grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto; height: calc(1.3 * var(--bha-fs-xs) + 2px); align-items: center; }
+.bha-lapend .bha-continue__notes > p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-lapend .bha-continue__notes > .bha-lapend__gain { max-width: 100%; }
+.bha-lapend .bha-continue__notes > .bha-continue__info { align-self: center; }
+/* 뽑기 카드 설명은 두 줄까지(전체는 카드 설명 title) — 긴 설명 하나가 카드 줄을 키워 길·안내 줄을 버튼 아래로 밀지 않게 (C.308) */
+.bha-lcd .bha-exp .bha-lapend .bha-draft__hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
