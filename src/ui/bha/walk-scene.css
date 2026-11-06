@@ -40,11 +40,8 @@
 .bha-exp__cornerrow .bha-btn { width: var(--bha-btn-h-sm); min-height: var(--bha-btn-h-sm); padding: 0; }
 .bha-exp__cornerrow .bha-btn .bha-icon { width: 18px; height: 18px; }
 .bha-exp__cornerrow .bha-btn--ghost { background: var(--bha-bg-2); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi); color: var(--bha-text-1); }
-/* 발밑 체력 (방 .bha-room__hp 와 같은 모양): 캐릭터 가운데 아래, 판 바닥 안 */
-.bha-lcd .bha-exp__hp { position: absolute; z-index: 2; left: clamp(84px, calc(var(--walker-x) * 1%), calc(100% - 84px)); bottom: max(4px, calc(10% - 34px)); transform: translateX(-50%); width: 156px; pointer-events: none; box-sizing: border-box; padding: 3px var(--bha-sp-3) 4px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); }
-.bha-exp__hp .bha-hp-txt { justify-content: center; gap: var(--bha-sp-1); color: var(--bha-text-1); }
-.bha-exp__hp .bha-hp-txt b { --nw: 3ch; }
-.bha-exp__hpunit { color: var(--bha-text-2); }
+/* 발밑 체력 (방 .bha-room__hp 와 같은 C.281 막대, GDD 192장 2): 캐릭터 가운데 아래, 판 바닥 안. 막대 안 모양은 room.css 공용 줄 */
+.bha-lcd .bha-exp__hp { position: absolute; z-index: 2; left: clamp(74px, calc(var(--walker-x) * 1%), calc(100% - 74px)); bottom: max(4px, calc(10% - 34px)); transform: translateX(-50%); width: 140px; pointer-events: none; padding: var(--bha-sp-1) var(--bha-sp-2); background: var(--bha-scene-box); border-radius: var(--bha-r-sm); }
 /* 특성 슬롯 한 줄 — 일시정지 창 안 */
 .bha-exp__slots { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; max-width: 100%; padding: 2px 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-exp__slots > * { flex: none; }

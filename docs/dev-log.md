@@ -2200,3 +2200,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 갱신: C.285/C.297 이 바꾼 전투 배치 테스트 c63·c138·c151·c152·c162·c169·c171·c172·c183·c261 을 C.281 기대값으로 되돌림, c294 = 알약 이름표 '블록'/'봉인'. 튜토리얼 자동 점검 `scripts/c279-proof.cjs` 두 종족 막힘 0. typecheck·test(2678)·balance:check 통과. 이펙트 장면: 호로 melee-claw-swipe · 사신 melee-sword-slash 조각이 그대로 나옴.
 - 캡처 `docs/captures/c302/`(1배): `cmp-pc-<상태>.png`(844×390)·`cmp-phone-<상태>.png`(796×384 터치) = 왼쪽 C.281 원본 빌드 / 오른쪽 C.302, 위 호로·아래 사신 · `phone115-all-states.png`(글자 1.15, 7상태 × 두 종족, 반 크기) · `fx-phone-<종족>.png`(이펙트 나오는 장면) · `phone-checks.json`. 비교 스크립트 `scripts/ui-audit/c302-compare.py`, 이펙트 `c302-fx.cjs`.
 - **C.302 보충 (마스터AH 지적, 11-05 15:26)**: 체인 이름표 '체인2/3' 가 가려짐 — ① 소모품 낀 상태에서 이름표가 위 알약 줄 밑에 깔림(블록 판 `isolation:isolate` 가 쌓임 맥락을 만들어 이름표 z 4 가 판 안에 갇힘) ② 이름표가 2px 위로 올라가 알약 줄 반투명 판에 덮여 흐림(테두리를 ::before 로 옮기며 기준선 계산을 반대로 함). → 판 isolation 삭제·면 z 0, 이름표 top −15px(C.281 과 같은 자리). 폰 점검 0 유지. 캡처 `docs/captures/c302/cmp-*` 다시 찍음.
+
+## C.303 — 192장 2 방·걷기 발밑 체력 막대: C.281 모양 그대로 (GDD 192장 2, v5.454, S-23, 코딩215 Opus)
+- 근거: 사용자 원문 "대답오면 나한테 묻지 말고 자동화패치로 진행하고 …" → 마스터 추천안 확정('방 발밑 체력 막대도 예전 모양으로'). 엔진·세이브·밸런스·자리 변경 없음.
+- **기준** = 68acec7 `room.css` `.bha-room__hp`·`roomView.ts` paintHp(meter player inside) + `docs/captures/c282/*-1-room.png`.
+- **바꾼 것** `roomView.ts`·`expeditionView.ts`: v2 `.bha-hp`(눈금 막대 + 아래 '체력 n / max') → `meter({ kind: 'player', compact, inside, zoneLow: 0.3, danger })` (방 '현재 / 최대', 걷기 'n%'). `room.css`·`walk-scene.css`: 판 = `--bha-scene-box`(C.281 검정 55%)·폭 140·여백 2·4·모서리 sm·선 없음, 머리 줄 숨김(방·걷기 공용 줄). 자리(방 발밑·걷기 발밑 C.298) 그대로, 장면 끝 묶음 84 → 74(반폭 70+4).
+- 기획서 값 / 실제 값 / 이유: '낮음(색 바뀜)' / 30% 아래 = 위험 구간 음영 + 위험 테두리, 채움 색은 체력 색 그대로 / C.281 meter 의 위험 표시가 그랬다(예전 그대로).
+- 테스트: c198·locomotion 의 소스 문자열 검사를 C.281 막대로 되돌림(지운 검사 없음). typecheck · test 228 파일 2680 통과 · balance:check 회귀 가드 통과.
+- 캡처 `docs/captures/c303/`: `compare-{pc844,ph796}-{hollow,shinigami}.png`(왼 C.282 옛 방 · 오른 C.303) · 방 `{pc844,ph796,ph796x115}-{종족}-{0room-tutorial,1room,2room-food,3room-info,4room-low,4room-dying,5room-t4name(체력 20%)}.png` · 걷기 `{종족}-{pc,ph,ph115}-{walk,walk-lowhp(체력 20%)}.png` · checks.json·phone-checks.json 전부 0. c279 튜토리얼 두 종족 막힘 0. 스크립트 `scripts/ui-audit/c301-room-box.cjs`(5장면 체력 20%로)·새 `scripts/c303-walk-hp.cjs`.
+

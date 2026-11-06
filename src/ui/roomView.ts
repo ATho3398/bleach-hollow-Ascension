@@ -13,7 +13,7 @@ import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf 
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
-import { button, el, icon, mountApp } from './bha/dom';
+import { button, el, icon, meter, mountApp } from './bha/dom';
 import { hpNumbers } from './bha/battle';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
@@ -285,28 +285,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const maxHp = homeMaxHp(save);
   /** 행동 연출 중이면 1분 시계가 막대를 덮어 그리지 않는다 */
   let fxOn = false;
-  // v2 .bha-hp (10칸 눈금 막대 + 아래 "체력 n / max", 숫자는 최대값 자릿수만큼 고정 폭 — 숫자가 바뀌어도 칸이 안 흔들린다). 30% 아래면 위험 색
-  const hpFill = el('i');
-  const hpNow = el('b');
-  const hpMax = el('span', 'bha-room__chipmax');
-  {
-    const bar = el('div', 'bha-hp-bar');
-    bar.append(hpFill);
-    const txt = el('div', 'bha-hp-txt');
-    txt.append(el('span', '', '체력'), hpNow, hpMax);
-    const hp = el('div', 'bha-hp');
-    hp.append(bar, txt);
-    hpBox.append(hp);
-  }
+  // C.281 모양 그대로 (GDD 192장 2): 기존 체력 막대(meter player) 하나, 숫자 '현재 / 최대' 는 막대 안 가운데, 30% 아래 위험 구간·위험 색
   const paintHp = (fraction?: number) => {
     const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
     const { now, max } = hpNumbers(f * maxHp, maxHp);
-    hpBox.style.setProperty('--c', f < 0.3 ? 'var(--bha-danger)' : 'var(--bha-player-hp)');
-    hpBox.style.setProperty('--nw', `${String(max).length}ch`);
-    hpFill.style.width = `calc((100% - 4px) * ${Math.max(0, Math.min(1, now / Math.max(1, max)))})`;
-    hpNow.textContent = String(now);
-    hpMax.textContent = `/ ${max}`;
-    hpBox.setAttribute('aria-label', `체력 ${now} / ${max}`);
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: f < 0.3, valueText: `${now} / ${max}` }));
   };
   paintHp();
   scene.append(char, hpBox, chipRow, bubble);

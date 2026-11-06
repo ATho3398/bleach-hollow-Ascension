@@ -117,10 +117,8 @@ describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {
 describe('123장 3 방 발밑 체력 막대', () => {
   it('기존 체력 막대(meter player)·현재 / 최대 숫자·발 기준(--foot-y)', () => {
     const v = readFileSync('src/ui/roomView.ts', 'utf8');
-    // C.284 (GDD 183장 화면 A, v2 S01): 기존 meter → v2 .bha-hp(10칸 눈금 막대 + "체력 n / max", 숫자 고정 폭)
-    expect(v).toContain("const hp = el('div', 'bha-hp');");
-    expect(v).toContain("txt.append(el('span', '', '체력'), hpNow, hpMax);");
-    expect(v).toContain('hpMax.textContent = `/ ${max}`;');
+    // C.303 (GDD 192장 2): v2 .bha-hp(C.284) → C.281 모양 그대로 = 기존 meter player, '현재 / 최대' 막대 안
+    expect(v).toContain("hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: f < 0.3, valueText: `${now} / ${max}` }));");
     expect(readFileSync('src/ui/bha/room.ts', 'utf8')).toContain("'--foot-y'");
     expect(readFileSync('src/ui/bha/room.css', 'utf8')).toContain('var(--foot-y');
   });

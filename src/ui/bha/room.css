@@ -290,11 +290,15 @@
 .bha-doll { position: relative; flex: none; }
 .bha-doll__part { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; image-rendering: pixelated; pointer-events: none; }
 
-/* ── 발밑 체력 막대 (GDD 123장 3, C.198 · v2 S01): 그림자 바로 아래 가운데 = .bha-hp(10칸 눈금 막대 + 아래 "체력 n / max", 숫자 고정 폭) ── */
-/* 밝은 바닥 위에서도 읽히게 어두운 판 위에 올린다 (대비 4.5:1 이상, 마스터AF 16:21) */
-.bha-room__hp { position: absolute; left: clamp(84px, var(--char-x, 50%), calc(100% - 84px)); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%); width: 156px; z-index: 1; pointer-events: none; box-sizing: border-box; padding: 3px var(--bha-sp-3) 4px; border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); box-shadow: 0 0 0 1px var(--bha-line-2); }
-.bha-room__hp .bha-hp-txt { justify-content: center; gap: var(--bha-sp-1); color: var(--bha-text-1); }
-.bha-room__hp .bha-room__chipmax { color: var(--bha-text-2); }
+/* ── 발밑 체력 막대 (GDD 123장 3, C.198 · 192장 2 = C.281 모양 그대로): 그림자 바로 아래 가운데, 기존 체력 막대(meter player, 숫자 막대 안 — 127장 1).
+   검정 판 폭 140 · 모서리 sm. 장면 끝에서 잘리지 않게 반폭(70)+4 안쪽으로만 묶는다(189장 폰 점검) ── */
+.bha-room__hp {
+  position: absolute; left: clamp(74px, var(--char-x, 50%), calc(100% - 74px)); top: calc(var(--foot-y, 80%) + var(--bha-sp-3)); transform: translateX(-50%);
+  width: 140px; z-index: 1; pointer-events: none;
+  padding: var(--bha-sp-1) var(--bha-sp-2); background: var(--bha-scene-box); border-radius: var(--bha-r-sm);
+}
+.bha-room__hp .bha-meter, .bha-exp__hp .bha-meter { gap: 0; }
+.bha-room__hp .bha-meter__head, .bha-exp__hp .bha-meter__head { display: none; }
 /* 먹는 모션 (GDD 132장 3, C.208): 먹기 애니가 없으면 막대가 차는 동안(ACTION_FILL_MS) 우물우물 — 짧게 눌렸다 펴지기를 되풀이 */
 .bha-char.is-eating .bha-char__body { animation: bha-char-chew 0.25s ease-in-out 4; }
 @keyframes bha-char-chew { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.92) translateY(2px); } }

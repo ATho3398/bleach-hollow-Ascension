@@ -17,7 +17,7 @@ import { eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
-import { button, chip, el, icon, mountApp, notice } from './bha/dom';
+import { button, chip, el, icon, meter, mountApp, notice } from './bha/dom';
 import { fixParticles } from '../engine/josa';
 import { confirmDialog } from './confirmDialog';
 import { onHold } from './bha/hold';
@@ -284,20 +284,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   const condChip = statChip('i-cond', '--bha-cond', '컨디션', 3);
   const fullChip = statChip('i-hunger', '--bha-hunger', faction.fullnessName, 3);
   const riskChip = statChip('i-risk', '--bha-risk', faction.riskGaugeName, 3);
-  // 발밑 체력 (방 .bha-room__hp 와 같은 .bha-hp: 10칸 눈금 막대 + 아래 '체력 n%')
-  const hpBar = el('i');
-  const hpNum = el('b');
+  // 발밑 체력 (방 .bha-room__hp 와 같은 C.281 막대, GDD 192장 2): meter player 하나, 숫자 'n%' 는 막대 안 가운데
   const hpBox = el('div', 'bha-exp__hp');
-  hpBox.setAttribute('role', 'img');
-  {
-    const track = el('div', 'bha-hp-bar');
-    track.append(hpBar);
-    const txt = el('div', 'bha-hp-txt');
-    txt.append(el('span', '', '체력'), hpNum, el('span', 'bha-exp__hpunit', '%'));
-    const hp = el('div', 'bha-hp');
-    hp.append(track, txt);
-    hpBox.append(hp);
-  }
 
   const slotsLine = el('div', 'bha-exp__slots');
   slotsLine.append(icon('i-slot', 'sm'), el('span', '', faction.slotName));
@@ -475,10 +463,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     plate.setAttribute('aria-label', `${groundLabel} · ${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`);
     plate.title = `${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`;
     const hpPct = Math.round(hpFractionOf(exp) * 100);
-    hpBar.style.width = `calc((100% - 4px) * ${hpPct / 100})`;
-    hpNum.textContent = String(hpPct);
-    hpBox.style.setProperty('--c', hpFractionOf(exp) < 0.3 ? 'var(--bha-danger)' : 'var(--bha-player-hp)');
-    hpBox.setAttribute('aria-label', `체력 ${hpPct}%`);
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${hpPct}%` }));
     hpBox.title = `체력 ${hpPct}%`;
     const full = Math.round(fullnessOf(exp.hunger, PX.hungerMax));
     fullChip.set(full / PX.hungerMax, String(full), hungerDanger);

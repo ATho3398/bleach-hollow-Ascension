@@ -1,4 +1,4 @@
-// C.301 증명 캡처 (GDD 190장 3, 코딩215): 방 머리 위 상태 박스(C.281 모양) — c299-room-status.cjs 에서 방 장면만 + 튜토리얼 첫 방.
+// C.301·C.303 증명 캡처 (GDD 190장 3·192장 2, 코딩215): 방 머리 위 상태 박스·발밑 체력 막대(C.281 모양) — c299-room-status.cjs 에서 방 장면만 + 튜토리얼 첫 방.
 // 쓰기: node scripts/ui-audit/c301-room-box.cjs <주소> <저장 폴더>
 // 조건 세 벌: PC 고정 844×390 · 폰 796×384 터치 · 폰 796×384 터치 + 글자 1.15. 두 종족.
 // 배부름 = 100 − nest.hunger(배고픔). 화면: 방 평소 · 먹이 줄 · 방 게이지 낮을 때(쇠약·피곤) · 방 빈사 · 상태 맨 위 · 상태 오른쪽 열 끝 · 능력치 칸 설명 창 · 진화 정보(4단계 진화체, 긴 이름).
@@ -115,7 +115,7 @@ async function newGame(page, fi) {
         await reopen(page);
         await closeTut();
         await shot('4room-dying');
-        await patchSave(page, `t.nest.collapsed = false; t.nest.hpFraction = 1; t.nest.hunger = 20; t.nest.condition = 80; t.nest.stability = 50; t.evolution.formId = 't4:normal:mixed'; t.evolution.tierIndex = 3;`);
+        await patchSave(page, `t.nest.collapsed = false; t.nest.hpFraction = 0.2; t.nest.hunger = 20; t.nest.condition = 80; t.nest.stability = 50; t.evolution.formId = 't4:normal:mixed'; t.evolution.tierIndex = 3;`);
         await reopen(page);
         await closeTut();
         await shot('5room-t4name');
