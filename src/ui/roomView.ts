@@ -256,6 +256,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
       track.append(fill);
       row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
+      // 상태이상 줄 아래 푸는 법 짧게 (GDD 193장 15: '모험 1번' 류) — 자세한 것은 툴팁·ⓘ
+      if (c.short) row.append(el('span', 'bha-room__gaugehint', c.short));
       if (c.hint) row.title = c.hint;
       return row;
     }));
@@ -320,6 +322,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const dock = createDock({
     faction,
     foodCount: (food) => save.shared.food[food],
+    gaugeFull: () => ({ fullness: fullnessOf(n.hunger) >= 100, condition: n.condition >= BALANCE.provisional.expedition.conditionMax }),
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };

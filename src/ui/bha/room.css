@@ -211,6 +211,9 @@
 .bha-room__chip--weak, .bha-room__chip--tired, .bha-room__chip--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
 /* 상태이상 줄(쇠약·피곤·빈사·사망): 숫자 칸 대신 이름 (GDD 102-7) */
 .bha-room__gauge.is-state .bha-room__gaugenum { color: var(--bha-danger); white-space: nowrap; }
+/* 상태이상 푸는 법 짧게 (GDD 193장 15): 그 줄 아래 한 줄, 흐린 작은 글 */
+.bha-room__gauge.is-state { flex-wrap: wrap; row-gap: 0; }
+.bha-room__gaugehint { flex: 1 0 100%; font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-3); text-align: right; white-space: nowrap; }
 .bha-room__chipmax { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-3); }
 /* 이름표 (GDD 100장 #8): 박스 위 가운데 작게 */
 .bha-room__status > .bha-room__name { position: absolute; left: 50%; bottom: calc(100% + var(--bha-sp-1)); transform: translateX(-50%); margin: 0; white-space: nowrap; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-scene-box); color: var(--bha-text-1); font-size: var(--bha-fs-xs); line-height: 1.5; }

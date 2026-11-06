@@ -12,7 +12,7 @@ export interface PickOption {
 }
 
 /** 고르기 창을 연다. 돌려주는 함수는 고르지 않고 닫는다 */
-export function pickDialog(o: { title: string; body: string; options: readonly PickOption[]; cls?: string }): () => void {
+export function pickDialog(o: { title: string; body: string; options: readonly PickOption[]; cls?: string; onClose?: () => void }): () => void {
   const layer = el('div', `bha-overlay bha-overlay--in-app bha-confirm bha-shoppick${o.cls ? ` ${o.cls}` : ''}`);
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -28,6 +28,7 @@ export function pickDialog(o: { title: string; body: string; options: readonly P
     unregister();
     layer.remove();
     untrap();
+    o.onClose?.(); // 고르든 닫든 한 번 (전투 화면이 멈춤을 푸는 데 쓴다, GDD 193장 6)
   };
   const list = el('div', 'bha-modal__actions bha-shoppick__list');
   const btns = o.options.map((op) => {

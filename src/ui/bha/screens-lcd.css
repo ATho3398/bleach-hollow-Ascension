@@ -334,6 +334,9 @@ button.bha-slot { cursor: pointer; }
 .bha-lcd .bha-confirm:not(.bha-healbag) .bha-modal { max-height: calc(100% - 16px); } /* LCD 안 창 높이 상한 = 위아래 8px 여백 (device.css 100% 보다 우선, 화면 G 값) */
 .bha-lcd .bha-confirm.bha-shoppick .bha-shoppick__list { flex-direction: column; } /* 고르기 창: 고를 것 한 줄에 하나 (위 → 아래) + 맨 아래 [닫기] */
 .bha-lcd .bha-confirm.bha-shoppick .bha-shoppick__list > .bha-btn { flex: none; }
+/* 고를 것이 넷 이상이면 두 칸씩 (GDD 193장 6 소모품 고르기 — 폰 높이에서 [닫기]가 창 밖으로 나갔다). [닫기]는 두 칸 다 */
+.bha-confirm.bha-shoppick--two .bha-shoppick__list, .bha-lcd .bha-confirm.bha-shoppick.bha-shoppick--two .bha-shoppick__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bha-confirm.bha-shoppick--two .bha-shoppick__list > .bha-btn:last-child { grid-column: 1 / -1; }
 .bha-lcd .bha-confirm.bha-draw .bha-modal__body { text-align: center; }
 .bha-lcd .bha-overlay.bha-confirm { z-index: calc(var(--bha-z-tutorial) + 1); } /* 튜토리얼·도움말 위에서도 보인다 */
 .bha-lcd .bha-confirm.bha-healbag .bha-modal { width: min(640px, 100%); } /* 원정 걷기 중 가방 — 회복 물건 4종 카드 한 줄 (GDD 144장 3) */

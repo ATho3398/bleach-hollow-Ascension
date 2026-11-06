@@ -86,7 +86,7 @@ describe('159장 24·25·36·37: 소모품 갈래 · 한 줄 효과', () => {
     const l = read('src/ui/lcdScreens.ts');
     expect(l).not.toContain("label: '물건'");
     expect(l).toContain("BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME]]");
-    expect(l).toContain('save.shared.gear.items.length + BATTLE_ITEM_IDS.filter(');
+    expect(l).toContain("count: save.shared.gear.items.length }"); // 193장 9: 전투 소모품은 소모품 탭 한 곳 — 장비 탭 숫자 = 장비만
   });
 });
 
@@ -124,7 +124,8 @@ describe('159장 그 밖', () => {
   });
   it('17: 배경음 곡 알림 없음, 설정이 열려 있으면 알림을 미룬다', () => {
     expect(read('src/ui/bgm.ts')).not.toContain("eyebrow: '배경음'");
-    expect(read('src/ui/bha/nest.ts')).toContain('if (settingsOpen()) deferUntilSettingsClosed(start);');
+    expect(read('src/ui/bha/nest.ts')).toContain('if (toastBlocked()) deferUntilSettingsClosed(start);'); // 193장 18: 진화 연출 중에도 미룬다
+    expect(read('src/ui/bha/nest.ts')).toMatch(/toastBlocked = \(\): boolean => settingsOpen\(\) \|\|/);
   });
   it('23: 영압 안정도 구간 값은 정수, 겹치지 않는다', () => {
     const z = stabilityZones(H).map((x) => x.text);

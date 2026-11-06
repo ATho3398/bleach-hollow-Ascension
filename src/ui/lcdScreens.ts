@@ -14,10 +14,10 @@ import { fullnessOf } from './bha/fullness';
 import { hpNumbers } from './bha/battle';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { BATTLE_ITEM_IDS, choosePet, HEAL_ROOM_LOCK, equipInventoryItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { choosePet, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
-import { equipTab, equipTitle, gearArt, openGear } from './equipView';
+import { battleSlotName, equipTab, equipTitle, gearArt, openGear } from './equipView';
 import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
@@ -53,7 +53,7 @@ import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
 import { bondStage, CARE_STATUS_NAMES, dyingLeftMs } from '../engine/nest';
-import { BOND_STAGE_NAMES, dyingClock } from './bha/roomLogic';
+import { BOND_STAGE_NAMES, careStatusShort, dyingClock } from './bha/roomLogic';
 import { statusInfo, type StatusInfoKind } from './bha/statusInfo';
 import type { VariantMods } from '../engine/expedition';
 
@@ -113,17 +113,19 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       },
     }));
     /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
-    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind) => {
+    const fix = careStatusShort(n, faction);
+    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string) => {
       const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
-      row.append(icon(iconId), ' ', h('b', '', title), infoTip(title.split(' · ')[0]!, () => statusInfo(info, faction)));
+      // 푸는 법 짧게 (GDD 193장 15) — 이름 뒤 흐린 글. 자세한 것은 ⓘ
+      row.append(icon(iconId), ' ', h('b', '', title), ' ', h('span', 'bha-faint', `· ${short}`), infoTip(title.split(' · ')[0]!, () => statusInfo(info, faction)));
       return row;
     };
     // C.185 (GDD 111장 4): 설명은 상태 ⓘ 창과 같은 문구 (손해 → 풀리는 법)
     const states = [
-      ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, 'dead')] : []),
-      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, 'collapsed')] : []),
-      ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak')] : []),
-      ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired')] : []),
+      ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, 'dead', fix.dead)] : []),
+      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, 'collapsed', fix.collapsed)] : []),
+      ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak', fix.weak)] : []),
+      ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired', fix.tired)] : []),
     ];
     weakList.replaceChildren(...states);
     weakSlot.replaceChildren(h('p', 'bha-care__label', '상태이상'), weakList);
@@ -323,8 +325,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
   // 장비·타일·펫·기타에는 가진 수를 같이 보인다 (기타 = 재료 + 다시 뽑기권·수련권)
   const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
-    // 장비 탭 숫자 = 안의 '전체' 칸 수(장비 + 전투용 소모품) (GDD 159장 27)
-    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length + BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0 || save.shared.battleItem === id).length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
+    // 장비 탭 숫자 = 장비 수 (GDD 159장 27 → 193장 9: 전투 소모품은 소모품 탭 한 곳)
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
@@ -504,8 +506,10 @@ export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'co
   return e.detail.replace(/^데리고 다니는 중 · /, '');
 }
 /** 카드 아래 동작 칩: 사용 · 착용/해제 · 데리고 가기/두고 가기 · 장착/강화 (없으면 undefined) */
-export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'> & { lock?: string | null }): string | undefined {
+export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'> & { lock?: string | null; battleSlot?: InventoryEntry['battleSlot'] }): string | undefined {
   if (e.gear) return e.gear.slot ? '해제·강화' : '장착·강화';
+  // 전투에만 쓰는 소모품 (GDD 193장 9): 가방에서 [사용]은 없고 전투 소모품 칸에 넣는다
+  if (e.action === null && e.battleSlot) return e.battleSlot.inSlot ? '칸에 넣음' : '칸에 넣기';
   switch (e.action) {
     // 지금 못 쓰면 '사용' 대신 쓰는 곳·이유 (GDD 176장 16: 방에서 회복 물건 카드가 '사용'인데 열면 꺼져 있었다)
     case 'use': return !e.lock ? '사용' : e.lock === HEAL_ROOM_LOCK ? '모험 중' : '못 씀';
@@ -558,8 +562,9 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   const cards = devices ?? rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: cardDetailOf(e), art: artOf(e),
     grade: e.gear?.grade,
-    badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
-    state: e.action === 'unequip' || e.action === 'leave' ? 'worn' : e.lock ? 'locked' : undefined,
+    badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.battleSlot?.inSlot ? `넣음 ×${e.count}` : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
+    // 전투 소모품 칸에 든 것 = 장비 칸에 낀 것과 같은 표시 (GDD 193장 9 — 장비 탭에 있던 '넣음' 카드가 이리로)
+    state: e.action === 'unequip' || e.action === 'leave' || e.battleSlot?.inSlot ? 'worn' : e.lock ? 'locked' : undefined,
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => openItem(faction, save, e, artOf(e), changed),
   }));
@@ -663,6 +668,23 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       onClick: () => {
         close();
         if (on ? equipInventoryItem(save, e.id) : unequipInventoryItem(save, e.id)) changed();
+      },
+    });
+  }
+  // 전투 소모품 칸 넣기·빼기 (GDD 193장 9 — 장비 탭 '전투 소모품' 분류를 없애고 여기 한 곳에서): 원정 중에는 못 바꾼다(장비와 같이)
+  if (e.battleSlot) {
+    const slot = battleSlotName(faction);
+    const inSlot = e.battleSlot.inSlot;
+    const lock = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
+    actions.push({
+      key: inSlot ? 'battle-out' : 'battle-in', label: () => (inSlot ? `${slot} 칸에서 빼기` : `${slot} 칸에 넣기`), variant: inSlot ? 'ghost' : actions.length > 0 ? undefined : 'primary', disabled: lock !== null,
+      note: lock ?? undefined,
+      onClick: () => {
+        close();
+        if (setBattleItem(save, inSlot ? null : e.id)) {
+          showToast({ eyebrow: slot, title: fixParticles(inSlot ? `${e.name}을(를) 뺐다` : `${e.name}을(를) 넣었다`), meta: inSlot ? undefined : '전투 중 [소모품]으로 한 번 쓴다' }, 0, 2000);
+          changed();
+        }
       },
     });
   }

@@ -47,6 +47,8 @@ export interface StatusChip {
   danger: boolean;
   /** 상태 칩: 풀리는 법 한 줄 (툴팁) */
   hint?: string;
+  /** 상태 칩: 풀리는 법 아주 짧게 — 방 상태 박스 줄에 보인다 (GDD 193장 15: 컨디션 100 인데 피곤이 남아 버그처럼 보였다) */
+  short?: string;
 }
 
 /** 상태 칩 풀리는 법 한 줄 (GDD 102-2·102-3, C.185 '~다' 체 · 문턱은 BALANCE). 자세한 설명은 상태 ⓘ 창(statusInfo) */
@@ -55,6 +57,16 @@ export const CARE_STATUS_HINTS = {
   tired: `컨디션을 ${CP.tiredCondition} 넘게 올리고 모험을 한 번 다녀오거나 에너지 드링크를 먹이면 풀린다`,
   collapsed: '상점 약 칸의 구급상자를 쓰면 풀린다. 남은 시간이 다 되거나 모험에서 지면 사망한다.',
 } as const;
+
+/** 상태이상 푸는 법 아주 짧게 (GDD 193장 15, 102-2·102-3): 수치를 문턱 넘게 채웠으면 '모험 1번', 아직이면 채울 수치 이름. 빈사 = 구급상자, 사망 = 부활 */
+export function careStatusShort(s: { hunger: number; condition: number }, names: { fullnessName?: string }): { weak: string; tired: string; collapsed: string; dead: string } {
+  return {
+    weak: fullnessOf(s.hunger) > CP.weakFullness ? '모험 1번' : `${names.fullnessName ?? '배부름'} 채우기`,
+    tired: s.condition > CP.tiredCondition ? '모험 1번' : '컨디션 채우기',
+    collapsed: '구급상자',
+    dead: '부활',
+  };
+}
 
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
  *  위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
@@ -71,10 +83,11 @@ export function statusChips(
     ...(s.stability !== undefined ? [{ kind: 'stab' as const, label: names.stabilityName ?? '안정', icon: 'i-stab', value: Math.round(s.stability), danger: false }] : []),
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];
-  if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방의 [부활]로 다시 시작한다' });
-  else if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed });
-  if (s.weakened) chips.push({ kind: 'weak', label: CARE_STATUS_NAMES.weak, icon: 'i-hunger', value: null, danger: true, hint: CARE_STATUS_HINTS.weak });
-  if (s.tired) chips.push({ kind: 'tired', label: CARE_STATUS_NAMES.tired, icon: 'i-cond', value: null, danger: true, hint: CARE_STATUS_HINTS.tired });
+  const short = careStatusShort(s, names);
+  if (s.dead) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.dead, icon: 'i-broken', value: null, danger: true, hint: '방의 [부활]로 다시 시작한다', short: short.dead });
+  else if (s.collapsed) chips.push({ kind: 'collapsed', label: CARE_STATUS_NAMES.collapsed, icon: 'i-broken', value: null, danger: true, hint: CARE_STATUS_HINTS.collapsed, short: short.collapsed });
+  if (s.weakened) chips.push({ kind: 'weak', label: CARE_STATUS_NAMES.weak, icon: 'i-hunger', value: null, danger: true, hint: CARE_STATUS_HINTS.weak, short: short.weak });
+  if (s.tired) chips.push({ kind: 'tired', label: CARE_STATUS_NAMES.tired, icon: 'i-cond', value: null, danger: true, hint: CARE_STATUS_HINTS.tired, short: short.tired });
   return chips;
 }
 

@@ -159,7 +159,10 @@ describe('119장 5 대기 보상 장비', () => {
     const k = 5 * IX.share * IX.fullHour.gear;
     expect(y.gear).toBe(Math.floor(k));
     expect(y.gearChance).toBeCloseTo(k - Math.floor(k), 6);
-    expect(idleYieldLines(y, getFaction('hollow')).some((l) => l.startsWith('장비 '))).toBe(true);
+    // GDD 193장 17: 미리 보기는 확정 개수만 — 범위('0~1개')는 안 보인다
+    const lines = idleYieldLines(y, getFaction('hollow'));
+    expect(lines.some((l) => l.startsWith('장비 '))).toBe(y.gear > 0);
+    expect(lines.some((l) => l.includes('~'))).toBe(false);
   });
 
   it('받으면 장비가 보관함에 들어오고(일반 전투 드롭표·지금 단계 권장 ★) 런 로그에 남는다', () => {

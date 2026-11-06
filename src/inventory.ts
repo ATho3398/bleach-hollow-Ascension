@@ -10,7 +10,7 @@ import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nes
 import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { guidePending } from './engine/tutorial';
-import { battleItemBrief, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
+import { battleItemBrief, battleItemText, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
 import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
@@ -99,6 +99,8 @@ export interface InventoryEntry {
   lock: string | null;
   /** 꾸밈: 분류 id (스킨·오라 …) */
   cosmeticCategory?: string;
+  /** 전투 소모품 칸에 넣을 수 있는 물건 (GDD 108장 3번·193장 9): inSlot = 지금 칸에 든 것 */
+  battleSlot?: { inSlot: boolean };
   /** 장비 (GDD 91장): 등급 · 종류 · 낀 칸 (안 꼈으면 null) */
   gear?: { grade: GearGrade; kind: GearKind; slot: GearSlot | null };
 }
@@ -131,7 +133,13 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
     const n = save.shared.items[id] ?? 0;
-    if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: consumableBrief(id, faction) || undefined, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction) });
+    if (n > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: consumableBrief(id, faction) || undefined, detail: consumableText(id, faction), action: 'use', lock: consumableLock(save, id, faction), ...battleSlotOf(save, id) });
+  }
+  // 전투에만 쓰는 소모품(전투 각성제 등, GDD 193장 9): 가방 '소모품' 탭 '전투 소모품' 칸 — 전투 소모품 칸에 넣어 전투 중에 쓴다(가방에서 [사용]은 없음)
+  for (const id of BATTLE_ITEM_IDS) {
+    if (CONSUMABLE_IDS.includes(id)) continue;
+    const n = save.shared.items[id] ?? 0;
+    if (n > 0 || save.shared.battleItem === id) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: battleItemBrief(id) || undefined, detail: `${battleItemText(id)} · 전투 소모품 칸에 넣으면 전투 중 한 번 쓴다`, action: null, lock: null, ...battleSlotOf(save, id) });
   }
   if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, brief: '특성 다시 뽑기', detail: `${faction.absorbActionName} 화면에서 특성 후보를 한 번 다시 뽑는다`, action: null, lock: null });
   // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창
@@ -425,6 +433,11 @@ export function gearDropText(roll: GearRoll, faction: Pick<FactionConfig, 'gearS
 /** 전투용 소모품 품목 id (GDD 108장 3번): 상점 품목 데이터 battle 표시가 있는 것 */
 export const BATTLE_ITEM_IDS: readonly string[] = GOLD_ITEMS.filter((g) => g.battle).map((g) => g.id);
 
+/** 가방 카드의 전투 소모품 칸 표시 (GDD 193장 9): 전투 소모품이면 { battleSlot }, 아니면 빈 객체 */
+function battleSlotOf(save: Pick<SaveData, 'shared'>, id: string): Pick<InventoryEntry, 'battleSlot'> {
+  return BATTLE_ITEM_IDS.includes(id) ? { battleSlot: { inSlot: save.shared.battleItem === id } } : {};
+}
+
 /** 전투에 싣는 소모품 칸 효과 (GDD 108장 3번·105장 수정 3): 칸에 든 것이 있고 1개 이상이면 그 효과, 아니면 null (버튼 비활성) */
 export function battleItemEffectOf(save: Pick<SaveData, 'shared'>): BattleItemEffect | null {
   const id = save.shared.battleItem;
@@ -449,11 +462,38 @@ export function setBattleItem(save: SaveData, id: string | null): boolean {
   return true;
 }
 
-/** 자동 착용 (GDD 108장 4번): 빈 칸과 더 센 것만 바꾼다. 바꾼 칸 수 (원정 중이면 0) */
+/** 가진(1개 이상) 전투 소모품 id — 데이터 순서 */
+export function ownedBattleItems(save: Pick<SaveData, 'shared'>): string[] {
+  return BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0);
+}
+
+/** 소모품 칸이 빈 셈인가 (GDD 193장 6): 아무것도 안 넣었거나, 넣은 것이 0개 */
+export function battleSlotEmpty(save: Pick<SaveData, 'shared'>): boolean {
+  const id = save.shared.battleItem;
+  return !id || (save.shared.items[id] ?? 0) <= 0;
+}
+
+/** 빈 소모품 칸에 넣을 것 (GDD 193장 6 — [자동 착용]·첫 획득): 가진 회복 물건 중 회복량이 가장 큰 것, 없으면 가진 다른 전투 소모품 첫째. 없으면 null */
+export function bestBattleItem(save: Pick<SaveData, 'shared'>): string | null {
+  const owned = ownedBattleItems(save);
+  const heal = owned.filter((id) => healItemFraction(id) !== null).sort((a, b) => healItemFraction(b)! - healItemFraction(a)!);
+  return heal[0] ?? owned[0] ?? null;
+}
+
+/** 빈 소모품 칸 채우기 (GDD 193장 6): 칸이 빈 셈일 때만 넣는다 — 전투 중 빈 칸 고르기·첫 획득 자동 장착은 원정 중에도 된다(비어 있던 칸이라 바뀌는 것이 없다). 넣었으면 true */
+export function fillBattleSlot(save: Pick<SaveData, 'shared'>, id: string): boolean {
+  if (!BATTLE_ITEM_IDS.includes(id) || (save.shared.items[id] ?? 0) <= 0 || !battleSlotEmpty(save)) return false;
+  save.shared.battleItem = id;
+  return true;
+}
+
+/** 자동 착용 (GDD 108장 4번 · 193장 6): 빈 칸과 더 센 것만 바꾼다 + 소모품 칸이 비었으면(0개 포함) 가진 전투 소모품을 넣는다. 바꾼 칸 수 (원정 중이면 0) */
 export function autoEquipGear(save: SaveData, nowMs: number = Date.now()): number {
   if (save.activeExpedition != null) return 0;
   let n = 0;
   for (const [slot, uid] of autoEquipPlan(save.shared.gear)) if (equipGearItem(save, uid, slot, nowMs)) n++;
+  const best = battleSlotEmpty(save) ? bestBattleItem(save) : null;
+  if (best && fillBattleSlot(save, best)) n++;
   return n;
 }
 

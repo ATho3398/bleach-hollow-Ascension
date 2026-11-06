@@ -29,10 +29,14 @@ export function canStoreConsumable(save: Pick<SaveData, 'shared'>, id: string): 
   return (save.shared.items[id] ?? 0) < CONSUMABLE_CAP;
 }
 
-/** 보관함 소모품 넣기 (상한까지). 넣은 개수 */
+/** 보관함 소모품 넣기 (상한까지). 넣은 개수.
+ *  전투 소모품을 처음 얻었는데(그 물건 0개 → 1개 이상) 소모품 칸이 비었으면(0개 포함) 그 칸에 바로 넣는다 (GDD 193장 6 — 회복 물건이 있는데 칸이 비어 전투에서 못 썼다) */
 export function storeConsumable(save: Pick<SaveData, 'shared'>, id: string, n = 1): number {
-  const add = Math.max(0, Math.min(n, CONSUMABLE_CAP - (save.shared.items[id] ?? 0)));
-  if (add > 0) save.shared.items[id] = (save.shared.items[id] ?? 0) + add;
+  const had = save.shared.items[id] ?? 0;
+  const add = Math.max(0, Math.min(n, CONSUMABLE_CAP - had));
+  if (add > 0) save.shared.items[id] = had + add;
+  const slot = save.shared.battleItem;
+  if (add > 0 && had === 0 && getGoldItem(id)?.battle && (!slot || (save.shared.items[slot] ?? 0) <= 0)) save.shared.battleItem = id;
   return add;
 }
 

@@ -17,6 +17,7 @@ function give(s: SaveData, o: Partial<GearRoll> & Pick<GearRoll, 'kind' | 'grade
 describe('자동 착용 (108장 4번): 빈 칸과 더 센 것만', () => {
   it('빈 칸은 가장 센 것, 찬 칸은 더 셀 때만 바꾼다 · 장신구 두 칸에 같은 장비를 안 쓴다', () => {
     const s = newSaveData('hollow', 0);
+    s.shared.items = {}; // 소모품 칸 채우기(193장 6)는 c222 에서 따로
     const weak = give(s, { kind: 'weapon', grade: 'normal', stats: { atk: 5 } });
     const strong = give(s, { kind: 'weapon', grade: 'rare', stats: { atk: 9 } });
     const a1 = give(s, { kind: 'accessory', grade: 'normal', stats: { spr: 3 } });

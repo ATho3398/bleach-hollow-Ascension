@@ -12,9 +12,11 @@ import { currentStats, formDisplayName } from '../engine/evolution';
 import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearStatsOf, sellGold, type GearItem } from '../engine/gear';
 import { artSkinOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
 import {
-  autoEquipGear, BATTLE_ITEM_IDS, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
-  sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
+  autoEquipGear, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
+  ownedBattleItems, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
 } from '../inventory';
+import { battleItemBrief } from '../shop';
+import { pickDialog } from './pickDialog';
 import { shownName } from './displayName';
 import { confirmDialog } from './confirmDialog';
 import { button, h, icon } from './bha/dom';
@@ -24,7 +26,7 @@ import { roomCharArt } from './bha/room';
 import { enableDrag } from './bha/dragdrop';
 import type { Device } from './bha/device';
 
-type EquipTab = 'all' | GearKind | 'battle';
+type EquipTab = 'all' | GearKind;
 type SortMode = 'grade' | 'kind' | 'plus';
 const SORT_NAMES: Record<SortMode, string> = { grade: '등급순', kind: '종류순', plus: '강화순' };
 /** 화면 사이에 남는 UI 상태 (탭·정렬). focus = 다시 그린 뒤 하이라이트를 돌려줄 칸·카드 (GDD 109장 1번: 안 그러면 첫 칸 무기로 돌아갔다) */
@@ -179,9 +181,34 @@ function openBattleItem(faction: FactionConfig, save: SaveData, id: string, chan
     // 남은 개수는 본문 한 곳만 (GDD 159장 28: '보관' → '남은 개수', 아이콘 밑 줄 삭제, 버튼 이름 대괄호·괄호 부가 설명 정리)
     desc: [`남은 개수 ${n}${inSlot ? ` · ${slotName} 칸에 넣음` : ''}`, `${slotName} 칸에 넣으면 전투 중 한 번 쓴다.`, ...(n === 0 ? ['다 쓰면 칸은 흐리게 남고 버튼은 꺼진다.'] : [])].join('\n'),
     art: iconArt('i-heal'), lock: locked,
-    actions: [inSlot
-      ? { key: 'unequip', label: () => '빼기', variant: 'ghost', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, null)) changed(); } }
-      : { key: 'equip', label: () => `${slotName} 칸에 넣기`, variant: 'primary', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, id)) changed(); } }],
+    actions: [
+      ...(inSlot && ownedBattleItems(save).some((o) => o !== id)
+        ? [{ key: 'swap', label: () => '바꾸기', variant: 'primary' as const, disabled: locked !== null, onClick: () => { close(); pickBattleItem(faction, save, changed); } }]
+        : []),
+      inSlot
+        ? { key: 'unequip', label: () => '빼기', variant: 'ghost', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, null)) changed(); } }
+        : { key: 'equip', label: () => `${slotName} 칸에 넣기`, variant: 'primary', disabled: locked !== null, onClick: () => { close(); if (setBattleItem(save, id)) changed(); } },
+    ],
+  });
+}
+
+/** 소모품 칸 고르기 창 (GDD 193장 6): 가진 전투 소모품(회복 물건·전투 각성제) 목록 — 고르면 칸에 넣는다. 없으면 어디서 얻는지 한 줄 */
+export function pickBattleItem(faction: Pick<FactionConfig, 'gearScreen'>, save: SaveData, changed: () => void): void {
+  const slotName = battleSlotName(faction);
+  if (save.activeExpedition != null) {
+    showToast({ eyebrow: slotName, title: '모험 중에는 바꿀 수 없다', meta: '빈 칸은 전투 화면 [소모품]을 눌러 고른다' }, 0, 2400);
+    return;
+  }
+  const owned = ownedBattleItems(save).filter((id) => id !== save.shared.battleItem);
+  if (owned.length === 0) {
+    showToast({ eyebrow: slotName, title: '넣을 전투 소모품이 없다', meta: '상점 약·전투 소모품 탭에서 산다' }, 0, 2400);
+    return;
+  }
+  pickDialog({
+    title: `${slotName} 고르기`,
+    body: `${slotName} 칸에 넣으면 전투 중 한 번 쓴다.`,
+    options: owned.map((id) => ({ key: id, label: `${consumableName(id)} ×${save.shared.items[id] ?? 0} · ${battleItemBrief(id)}`, onPick: () => { if (setBattleItem(save, id)) changed(); } })),
+    cls: owned.length > 3 ? 'bha-shoppick--two' : undefined,
   });
 }
 
@@ -214,7 +241,6 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     changed();
   };
   const isWorn = (uid: string) => equippedSlotOf(g, uid) !== null;
-  const battleOwned = BATTLE_ITEM_IDS.filter((id) => (save.shared.items[id] ?? 0) > 0 || save.shared.battleItem === id);
 
   // ── 왼쪽: 착용 칸 · 외형 · 이름 · 능력치 ──
   const slotBtn = (s: GearSlot): HTMLButtonElement => {
@@ -244,10 +270,10 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   battleBtn.append(icon('i-heal'), h('span', 'bha-eqslot__name', bid ? shownName(consumableName(bid)) : '소모품'));
   if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
   battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
+  // 빈 칸을 누르면 고르기 창 (GDD 193장 6). 전투 소모품 카드는 가방 '소모품' 탭 한 곳에만 있다 (193장 9 — 이 탭의 '전투 소모품' 분류는 뺐다)
   battleBtn.onclick = () => {
     if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
-    ui.tab = 'battle';
-    redraw('slot:battle');
+    pickBattleItem(faction, save, changedAt('slot:battle'));
   };
   const colL = h('div', 'bha-eqcol');
   colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn));
@@ -271,14 +297,15 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 능력치 줄은 리디자인 v2(PROMPT 6절 S14)에서 뺐다 — 캐릭터 아래는 이름·단계만, 수치·비교 ▲▼ 는 칸·카드를 누른 상세 창(openGear 비교 줄)에서 본다
 
   // ── 오른쪽: 탭 · 바둑판 · 아래 줄 ──
-  const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'battle'];
-  const tabName = (t: EquipTab) => (t === 'all' ? '전체' : t === 'battle' ? slotName : gearKindName(t, faction));
-  const countOf = (t: EquipTab) => (t === 'all' ? g.items.length + battleOwned.length : t === 'battle' ? battleOwned.length : g.items.filter((i) => i.kind === t).length);
+  const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS];
+  if (!kindTabs.includes(ui.tab)) ui.tab = 'all';
+  const tabName = (t: EquipTab) => (t === 'all' ? '전체' : gearKindName(t, faction));
+  const countOf = (t: EquipTab) => (t === 'all' ? g.items.length : g.items.filter((i) => i.kind === t).length);
   const tabs = categoryTabs(kindTabs.map((t) => ({ id: t, label: tabName(t), count: countOf(t) })), ui.tab, (id) => {
     ui.tab = id as EquipTab;
     redraw(null);
   }, '장비 분류');
-  const gearCards = (ui.tab === 'battle' ? [] : sortGear(ui.tab === 'all' ? g.items : g.items.filter((i) => i.kind === ui.tab), ui.sort, isWorn)).map((it) => {
+  const gearCards = sortGear(ui.tab === 'all' ? g.items : g.items.filter((i) => i.kind === ui.tab), ui.sort, isWorn).map((it) => {
     const worn = equippedSlotOf(g, it.uid);
     const card = itemCard({
       id: it.uid, name: gearName(it, faction), art: gearArt(it.kind, it.grade), grade: it.grade,
@@ -289,20 +316,8 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     card.dataset.drag = 'gear';
     return card;
   });
-  const battleCards = (ui.tab === 'battle' || ui.tab === 'all' ? battleOwned : []).map((id) => {
-    const n = save.shared.items[id] ?? 0;
-    const card = itemCard({
-      id, name: consumableName(id), art: iconArt('i-heal'), badge: save.shared.battleItem === id ? `넣음 ×${n}` : `×${n}`,
-      state: save.shared.battleItem === id ? 'worn' : undefined,
-      onClick: () => openBattleItem(faction, save, id, changedAt(`item:${id}`)),
-    });
-    card.dataset.drag = 'battle';
-    return card;
-  });
-  const empty = ui.tab === 'battle'
-    ? `전투용 소모품이 없다. 상점에서 사면 여기에 들어온다. ${slotName} 칸에 넣은 것을 전투 중에 쓴다.`
-    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
-  const grid = itemGrid([...gearCards, ...battleCards], empty);
+  const empty = '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
+  const grid = itemGrid(gearCards, empty);
   grid.classList.add('bha-itemgrid--equip');
 
   const locked = save.activeExpedition != null;
@@ -322,10 +337,10 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', onClick: () => {
     confirmDialog({
-      title: '자동 착용', body: '빈 칸에는 가장 센 장비를, 낀 칸은 더 센 것이 있을 때만 바꾼다.', yes: '자동 착용', no: '아니오',
+      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 낀 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
       onYes: () => {
         const n = autoEquipGear(save);
-        showToast({ eyebrow: equipTitle(faction), title: n > 0 ? `${n}칸 바꿨다` : '바꿀 장비가 없다', meta: n > 0 ? '능력치 줄에 반영' : '빈 칸이 없고 더 센 장비도 없다' }, 0, 2400);
+        showToast({ eyebrow: equipTitle(faction), title: n > 0 ? `${n}칸 바꿨다` : '바꿀 것이 없다', meta: n > 0 ? '능력치 줄에 반영' : '빈 칸이 없고 더 센 장비도 없다' }, 0, 2400);
         if (n > 0) changedAt('act:auto')();
       },
     });

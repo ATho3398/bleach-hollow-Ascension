@@ -48,6 +48,8 @@ import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationB
 import { helpOverlay } from './helpView';
 import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
+import { pickDialog } from './pickDialog';
+import { showToast } from './bha/nest';
 import { registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -91,6 +93,9 @@ export interface BattleViewOptions {
   bg?: SceneBg | null;
   /** 전투 [소모품] (GDD 108장 3번): 소모품 칸에 든 것의 보관 개수와, 썼을 때 한 번 불리는 함수(보관 개수 −1). 없으면 칸이 빈 것 — 버튼은 자리 그대로 비활성 */
   battleItem?: { count: number; onUse: () => void };
+  /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 가진 전투 소모품 고르기 창 — options 가 비면 창 없이 안내만.
+   *  pick = 고른 것을 칸에 넣고 이 전투에 싣는다(돌려준 값이 battleItem 대신) */
+  pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -496,6 +501,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let paused = false;
   /** 튜토리얼·도움말·조우 연출이 열려 있는 동안 true: 엔진 시간이 흐르지 않고 입력도 받지 않는다 (결정성에 영향 없음, engine/tutorial frameTicks) */
   let overlayOpen = false;
+  /** 이 전투에 실은 소모품 (빈 칸 고르기로 바뀔 수 있다, GDD 193장 6) */
+  let armedItem = opts.battleItem;
   let tutorialOpen = false;
   let stopped = false;
   /** C.139 (GDD 88장 4): 전투가 끝나거나(승패·포기·떠남) 화면을 떠날 때 hold 구독을 바로 푼다 */
@@ -1258,9 +1265,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     guardBtn.root.classList.toggle('is-full', s.guardGauge >= 1);
     setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
     const it = p.battleItem;
-    const itemLeft = opts.battleItem && it ? opts.battleItem.count - (s.itemUsed ? 1 : 0) : 0;
+    const itemLeft = armedItem && it ? armedItem.count - (s.itemUsed ? 1 : 0) : 0;
     setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
-    setAct(itemBtn, canUseItem(s), !it ? '소모품 칸이 비었다(장비 화면에서 넣는다)' : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    setAct(itemBtn, canUseItem(s), !it ? (opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    // 빈 칸이면 눌러서 고를 수 있다 (GDD 193장 6) — 모양은 흐린 그대로(C.302 C.281), 누를 수 있다는 것만 알린다
+    if (!it && opts.pickBattleItem && !s.script) setAttr(itemBtn.root, 'aria-disabled', 'false');
     const cdSec = s.gearCooldown * p.tickSeconds;
     setText(gearBtn.meta, p.activeGear ? (cdSec > 0 ? `${Math.ceil(cdSec)}` : '\u00a0') : ''); // 발동 장비가 있으면 쿨다운이 끝나도 글자 칸 자리 유지 (C.182)
     setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비가 없다(발동 효과가 있는 장비를 끼면 쓸 수 있다)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);
@@ -1328,7 +1337,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     queue.push({ type: kind });
     return true;
   };
-  for (const [kind, btn] of [['guard', guardBtn], ['item', itemBtn], ['gear', gearBtn]] as const) btn.root.addEventListener('click', () => void pressAct(kind));
+  for (const [kind, btn] of [['guard', guardBtn], ['item', itemBtn], ['gear', gearBtn]] as const) btn.root.addEventListener('click', () => void (pressAct(kind) || (kind === 'item' && pickItem())));
+  /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 고르기 창 — 열려 있는 동안 전투가 멈춘다(도움말과 같이). 버튼 모양은 그대로(C.302 C.281) */
+  function pickItem(): boolean {
+    const pk = opts.pickBattleItem;
+    if (!pk || s.params.battleItem || s.script || !app.isConnected || stopped || s.status !== 'playing' || halted()) return false;
+    const options = pk.options();
+    if (options.length === 0) {
+      showToast({ eyebrow: '소모품', title: '넣을 전투 소모품이 없다', meta: '상점 약·전투 소모품 탭에서 산다' }, 0, 2000);
+      return true;
+    }
+    overlayOpen = true;
+    pickDialog({
+      title: '소모품 고르기', body: '소모품 칸에 넣고 이 전투에서 바로 쓸 수 있다(전투당 1번).',
+      options: options.map((o) => ({ key: o.id, label: o.label, onPick: () => { armedItem = pk.pick(o.id); } })),
+      onClose: () => { overlayOpen = false; },
+      cls: options.length > 3 ? 'bha-shoppick--two' : undefined,
+    });
+    return true;
+  }
   const endPress = () => {
     down = null;
     drawTray();
@@ -1370,7 +1397,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       return true;
     },
     guard: () => pressAct('guard'),
-    item: () => pressAct('item'),
+    item: () => pressAct('item') || pickItem(),
     gear: () => pressAct('gear'),
   });
   void offKeys;
@@ -1452,7 +1479,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         if (s.script) scriptStep(s, queue.splice(0, queue.length));
         else step(s, queue.splice(0, queue.length));
         // 소모품을 썼으면 보관 개수 −1 (GDD 108장 3번, 부르는 쪽이 세이브에 반영)
-        if (!usedBefore && s.itemUsed) opts.battleItem?.onUse();
+        if (!usedBefore && s.itemUsed) armedItem?.onUse();
       }
     }
     if (halted()) queue.length = 0;

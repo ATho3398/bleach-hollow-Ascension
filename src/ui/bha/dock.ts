@@ -14,12 +14,24 @@ export interface DockMenuItem {
   onClick: () => void;
 }
 
+/** 먹이 카드 수치 한 줄 (GDD 189장 17 · 193장 16): 큰 쪽 효과 하나(배부름·컨디션). 가득 찬 수치의 '+n' 은 빼고 고른다(컨디션 100 인데 '컨디션 +4'가 보였다).
+ *  줄이는 효과(−)는 가득이어도 보인다. 다 가득이면 '가득'. eff = [배부름 글, 컨디션 글?] */
+export function foodCardLine(f: { hunger: number; condition: number }, eff: readonly string[], full: { fullness: boolean; condition: boolean }): string {
+  const cands = [
+    ...(full.fullness ? [] : [{ text: eff[0]!, size: f.hunger }]),
+    ...(f.condition !== 0 && (f.condition < 0 || !full.condition) ? [{ text: eff[1]!, size: Math.abs(f.condition) }] : []),
+  ];
+  return cands.length === 0 ? '가득' : cands.reduce((a, b) => (b.size > a.size ? b : a)).text;
+}
+
 export interface DockOpts {
   faction: FactionConfig;
   /** 돌보기 실행 (먹이는 고른 종류와 함께) */
   onCare: (action: NestAction, food?: FoodId) => void;
   /** 먹이 종류별 보유 개수 (GDD 23-1): 먹이 칸에 개수를 보이고 0개는 비활성 */
   foodCount: (food: FoodId) => number;
+  /** 지금 가득 찬 수치 (GDD 193장 16): 가득인 수치의 '+n' 은 먹이 카드에 안 보인다. 없으면 둘 다 가득 아님 */
+  gaugeFull?: () => { fullness: boolean; condition: boolean };
   /** 먹이 한도 (GDD 109장 6): 지금 더 먹일 수 있는 개수와 한도. 먹이 버튼 옆에 작게 '2/3' */
   feedsLeft?: () => { left: number; max: number };
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
@@ -133,10 +145,11 @@ export function createDock(o: DockOpts): Dock {
         b.disabled = have <= 0;
         const eff = [`${faction.fullnessName} +${f.hunger}`];
         if (f.condition !== 0) eff.push(`컨디션 ${f.condition > 0 ? '+' : '−'}${Math.abs(f.condition)}`);
+        const full = o.gaugeFull?.() ?? { fullness: false, condition: false };
         const name = el('span', 'bha-homedock__foodname', faction.foodNames[id]);
         name.append(' ', el('b', 'bha-num', `×${have}`));
         // 카드 설명은 수치 한 개만 (GDD 189장 17): 큰 쪽 효과 하나(배부름·컨디션 중 절댓값이 큰 것). 전부는 aria·title
-        const main = f.condition !== 0 && Math.abs(f.condition) > f.hunger ? eff[1]! : eff[0]!;
+        const main = foodCardLine(f, eff, full);
         b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개, ${eff.join(', ')}`);
         b.title = eff.join(' · ');
         b.append(name, el('small', '', main));
