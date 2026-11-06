@@ -185,3 +185,7 @@
 @media (prefers-reduced-motion: reduce) {
   .bha-scenebg.is-moving .bha-scenebg__layer { animation: none; transform: none; }
 }
+/* 바퀴 끝 창 지금 체력 (GDD 193장 3): 머리 줄 제목 오른쪽 = 걷기 화면과 같은 C.281 체력 막대(compact·숫자 안), 이번 바퀴 얻은 것 = [귀환] 아래 작은 글 */
+.bha-lcd .bha-exp .bha-win-head > .bha-lapend__hp { flex: none; width: 150px; margin-right: 4px; }
+.bha-continue__notes > .bha-lapend__gain { flex: 0 1 auto; min-width: 0; color: var(--bha-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-continue__notes > .bha-continue__info { flex: none; align-self: center; margin: 0; }

@@ -69,7 +69,7 @@ import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { abortSummaryLine, resultView } from './resultView';
 import { expeditionView, setSpeed } from './expeditionView';
-import { planView } from './planView';
+import { lowDepartHp, planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
@@ -1246,6 +1246,17 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
+  /** 출발 체력이 문턱 아래면 확인 창 (GDD 193장 2, 자유 모험 [출발]과 같은 창 — planView). 빈사는 askDying 이 먼저 물었다 */
+  function askLowHp(s: SaveData, go: () => void): void {
+    const hp = departHpOf(s);
+    if (s.nest.collapsed || !lowDepartHp(hp)) return go();
+    confirmDialog({
+      title: '체력이 낮다',
+      body: `체력이 ${Math.round(hp * 100)}%다. 지면 이번에 얻은 것을 잃는다. 그래도 나간다.`,
+      yes: '출발', no: '그만', danger: true, onYes: go,
+    });
+  }
+
   /** 사망이면 원정·훈련·탑·쟁탈전을 막고 안내 띠 (GDD 102-3). 막았으면 true */
   function careBlocked(s: SaveData): boolean {
     const b = careBlock(s);
@@ -1307,6 +1318,9 @@ export function startApp(host: HTMLElement): void {
           tilesLocked: !tilesUnlocked(save!),
           // 덱 없음 (GDD 85장 11번): 가진 타일 전부에서 최대 n칸 + 배치 프리셋
           placeLimit: placementLimitOf(save!),
+          // 출발 체력 (GDD 193장 2): [출발] 띠 '체력 n%', 문턱 아래면 확인 창
+          hpFraction: departHpOf(save!),
+          hpNoWarn: save!.nest.collapsed, // 빈사는 askDying 이 이미 물었다
           presets: {
             list: () => tilePresetsFor(save!.tiles, faction.id),
             save: (cells, name, index) => {
@@ -1354,7 +1368,8 @@ export function startApp(host: HTMLElement): void {
         setBgm('expedition');
         storyView(root, faction, save!, {
           onTab: (id) => departTab(faction, id),
-          onPick: (chapterId, episodeId) => startStory(faction, chapterId, episodeId),
+          // 스토리도 자유 모험 [출발]과 같은 출발 체력 확인 창 (GDD 193장 2)
+          onPick: (chapterId, episodeId) => askLowHp(save!, () => startStory(faction, chapterId, episodeId)),
           onHelp: () => openHelp('expedition', false),
         });
         root.scrollTop = 0;

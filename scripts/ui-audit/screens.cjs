@@ -335,9 +335,9 @@ const SCREENS = [
       await h.stable(n, '타일 카드 고르기', () => h.click('.bha-lcd .bha-tilecard >> nth=0'), null, h.page.locator('.bha-lcd .bha-tilecard').first());
       await h.stable(n, '칸에 놓기', () => h.click('.bha-lcd .bha-road__cell >> nth=2'));
       await h.check(`${n}/놓은 뒤`);
-      await h.stable(n, '프리셋 열기', () => h.btn('프리셋', { within: '.bha-plan__sidetabs' }));
+      await h.stable(n, '타일 배치 탭(프리셋)', () => h.btn('타일 배치', { within: '.bha-plan__sidetabs' }));
       await h.check(`${n}/프리셋`);
-      await h.stable(n, '손패로 돌아가기', () => h.btn('손패', { within: '.bha-plan__sidetabs' }));
+      await h.stable(n, '준비 탭으로', () => h.btn('준비', { within: '.bha-plan__sidetabs' }));
       await h.check(`${n}/손패`);
     },
   },
@@ -709,7 +709,7 @@ const SCREENS = [
       await h.btn('★1', { exact: true });
       await h.click('.bha-lcd .bha-tilecard >> nth=0');
       await h.click('.bha-lcd .bha-road__cell >> nth=2');
-      await h.btn('프리셋', { within: '.bha-plan__sidetabs' });
+      await h.btn('타일 배치', { within: '.bha-plan__sidetabs' });
       const LONG = ['가나다라마바사아자차카타', 'WWWWWWWWWWWW', '웨코문도외곽최강배치세트', 'ＭＭＭＭＭＭＭＭＭＭＭＭ', '레스렉시온연습용긴이름이'];
       for (let i = 0; i < LONG.length; i++) {
         const empty = h.page.locator('.bha-lcd .bha-presets__chip.is-empty');
