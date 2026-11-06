@@ -18,6 +18,7 @@ import { elementColor, elementDot, elementMark, paintElement } from './bha/eleme
 import { devText, plainText, shownName } from './displayName';
 import { confirmDialog } from './confirmDialog';
 import { openAbsorbStatus } from './absorbStatus';
+import { traitDiffLine } from './traitDiff';
 import { onScreenBack } from './bha/screenBack';
 
 const AX = BALANCE.provisional.absorb;
@@ -45,7 +46,7 @@ interface StepParts {
   dock: HTMLElement[];
 }
 
-const STEP_LABELS = ['갈래', '특성', '교체'] as const; // GDD 183장 S11: 1 갈래 · 2 특성 (· 3 교체)
+const STEP_LABELS = ['갈래', '블록'] as const; // GDD 183장 S11: 1 갈래 · 2 블록(193장 14 이름 통일: 흡수로 얻는 전투 블록 = '블록'. 3 교체는 193장 13 C.312 에 2단계 한 화면으로 합침)
 
 /** 포식 갈래 이름·이 흡수가 뭔지 한 줄 (GDD 52·100장 #47 → 163장 2): 갈래 버튼 이름과 설명 칸 첫 줄이 이 한 곳에서 읽는다. 이름은 종족 설정 absorbModeNames (GDD 158장 6) */
 export function absorbModeText(faction: Pick<FactionConfig, 'absorbModeNames' | 'riskGaugeName' | 'stabilityName'>): Record<AbsorbMode | 'none', { label: string; sub: string }> {
@@ -241,7 +242,8 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const enemy = findEnemyDef(offer.enemyId) // 보스(GDD 25-3)도 흡수 화면에 온다;
   const act = faction.absorbActionName;
   const foeName = shownName(pickFaction(enemy.name, faction.id));
-  let step: 'choose' | 'pick' | 'replace' = 'choose';
+  let step: 'choose' | 'pick' = 'choose';
+  /** 슬롯 가득 한 화면(193장 13)에서 지금 고른 후보 */
   let picked: string | null = null;
   /** 흡수 갈래 (GDD 52): 첫 단계에서 고른다. 특성 고르기·교체 단계는 이 갈래로 chooseAbsorb 를 부른다 */
   let mode: AbsorbMode = 'both';
@@ -272,9 +274,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const steps = (n: number): HTMLElement => {
     const nav = el('nav', 'bha-steps');
     nav.setAttribute('aria-label', `${act} 단계`);
-    // 필요한 단계만 (GDD 100장 #53): 슬롯이 가득 차 교체할 수 있을 때만 ③
-    const need = isFull(exp.build) && offer!.candidates.length > 0 ? 3 : 2;
-    STEP_LABELS.slice(0, need).forEach((l, i) => {
+    STEP_LABELS.forEach((l, i) => {
       if (i) nav.append(el('em', '', '·'));
       const sp = el('span', i + 1 === n ? 'is-active' : i + 1 < n ? 'is-done' : '');
       sp.append(el('b', 'bha-num', String(i + 1)), l);
@@ -321,7 +321,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
       // GDD 158장 4: 첫 줄 "1번 물 권", 아래 줄 속성 강화 "n/100" — 위력 등 수치는 가방 블록 상세에서
       const t = getTrait(id);
       const s = paintElement(el('div', 'bha-slot bha-slot--filled'), t.element);
-      s.append(el('span', 'bha-slot__name', `${i + 1}번 ${absorbBlockName(faction, id)}`), el('span', 'bha-slot__enh bha-num', enhanceFraction(b, t.element)));
+      s.append(el('span', 'bha-slot__name', `${i + 1}번 ${absorbBlockName(faction, id)}`), el('span', 'bha-slot__enh bha-num', `강화 ${enhanceFraction(b, t.element)}`));
       grid.append(s);
     });
     box.append(grid);
@@ -333,7 +333,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return box;
   };
 
-  const backBtn = (to: 'choose' | 'pick'): HTMLButtonElement => {
+  const backBtn = (to: 'choose'): HTMLButtonElement => {
     const b = button({ label: '돌아가기', icon: 'i-chevron-left', variant: 'ghost' });
     b.classList.add('bha-absorb__back');
     b.onclick = () => {
@@ -398,11 +398,11 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return { title: `${act} 가능`, main: nodes, side, dock: [selLine, go] };
   }
 
-  /** 특성 후보 카드 (2단계 고르기 = 버튼, 3단계 교체 = 넣을 특성 보기 article) */
-  function candCard(id: string, tagName: 'button' | 'article'): HTMLElement {
+  /** 특성 후보 카드 (2단계 고르기 = 버튼. 옛 3단계 교체의 article 은 C.312 에 삭제) */
+  function candCard(id: string): HTMLButtonElement {
     const t = getTrait(id);
-    const c = paintElement(el(tagName, 'bha-cand'), t.element);
-    if (c instanceof HTMLButtonElement) c.type = 'button';
+    const c = paintElement(el('button', 'bha-cand'), t.element);
+    c.type = 'button';
     const mark = el('span', 'bha-cand__mark');
     mark.append(elementDot(t.element, faction.id));
     const top = el('span', 'bha-cand__top');
@@ -413,12 +413,13 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     badge.dataset.candStep = have ? 'owned' : 'new';
     top.append(el('span', 'bha-cand__name', absorbBlockName(faction, id)), badge, ...traitTags(id));
     const foot = el('span', 'bha-cand__foot');
-    foot.append(el('span', 'bha-num', enhanceFraction(exp.build, t.element)));
+    foot.append(el('span', 'bha-num', `강화 ${enhanceFraction(exp.build, t.element)}`));
     // 카드 자체가 고르기 버튼이라는 표시 (GDD 100장 #50)
-    if (tagName === 'button') foot.append(el('b', 'bha-cand__pick', '✓ 고르기'));
+    foot.append(el('b', 'bha-cand__pick', '✓ 고르기'));
     const body = el('span', 'bha-cand__body');
     const desc = absorbDesc(plainText(traitDescription(id, faction.id)));
-    body.append(top, ...(desc ? [el('span', 'bha-cand__desc', desc)] : []), foot);
+    // GDD 193장 5 (C.312): 같은 속성 블록 설명이 글자까지 같아 고를 근거가 없었다 → 블록마다 실제 데이터 차이 한 줄 (계열·단계 기술·추가 효과)
+    body.append(top, el('span', 'bha-cand__diff', traitDiffLine(faction, id)), ...(desc ? [el('span', 'bha-cand__desc', desc)] : []), foot);
     c.append(mark, body);
     return c;
   }
@@ -429,84 +430,129 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   function pickStep(): StepParts {
     // 흡수 연출 꾸밈(GDD 25-11)이 사라지게 할 적이 확정 순간에도 보이도록 적 카드를 같이 둔다
     // 노멀 후보는 칸에 안 들어가고 노멀 강화만 오른다 (GDD 111장 · 176장 12: 왼쪽 '빈 슬롯에 들어간다'와 카드 '칸에 들어가지 않는다'가 어긋났다)
-    let dockGo: HTMLElement | null = null;
-    const where = offer!.element === NORMAL_ELEMENT ? `고르면 ${elementName(NORMAL_ELEMENT, faction.id)} 강화가 오른다.` : '고르면 빈 슬롯에 들어간다.';
-    const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', `${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 특성을 고른다. ${where}`)];
+    const dockGo: HTMLElement[] = [];
+    const cands = offer!.candidates;
+    const fresh = cands.filter((id) => !ownsTraitBlock(exp.build, id));
+    // GDD 193장 13 (C.312): 슬롯이 가득이고 새 블록 후보가 있으면 한 화면 — 후보 버튼 줄 → 넣을 곳(칸마다 [이것과 바꾸기] + [보유에만 넣기]) · 아래 줄 [포기]. 옛 3단계 교체 화면은 없다
+    const full = isFull(exp.build) && fresh.length > 0;
+    const where = offer!.element === NORMAL_ELEMENT ? `고르면 ${elementName(NORMAL_ELEMENT, faction.id)} 강화가 오른다.`
+      : full ? `${faction.slotName}이(가) 가득 찼다. 블록을 고른 뒤 넣을 곳을 고른다.` : '고르면 빈 슬롯에 들어간다.';
+    const nodes: HTMLElement[] = [foeCard(), el('p', 'bha-dim', fixParticles(`${MODE_LABELS[mode].label}: ${foeName}에게서 얻을 블록을 고른다. ${where}`))];
     const side: HTMLElement[] = [];
-    if (offer!.candidates.length === 0) {
+    if (cands.length === 0) {
       // 후보가 없을 때(그 속성 특성이 없는 적 등): 가진 속성이면 강화만
       const none = el('div', 'bha-panel bha-panel--inset bha-center bha-absorb__none');
       if (owned()) none.append(icon('i-evolve', 'lg'), el('b', '', '이미 가진 속성 — 강화만'), el('p', '', enhanceText()), el('p', 'bha-dim', '이번에는 고를 블록 후보가 없다.'));
-      else none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 특성이 없다'), el('p', 'bha-dim', '새로 얻을 특성이 없다. 효과만 얻는다.'));
-      const go = button({ label: owned() ? `강화하고 ${act}` : `특성 없이 ${act}`, variant: 'primary', onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) });
+      else none.append(icon('i-unknown', 'lg'), el('b', '', '나올 수 있는 블록이 없다'), el('p', 'bha-dim', '새로 얻을 블록이 없다. 효과만 얻는다.'));
+      const go = button({ label: owned() ? `강화하고 ${act}` : `블록 없이 ${act}`, variant: 'primary', onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) });
       go.classList.add('bha-absorb__run');
       first = go;
       side.push(none);
-      dockGo = go;
+      dockGo.push(go);
+    } else if (full) {
+      if (!picked || !fresh.includes(picked)) picked = fresh[0]!;
+      // 후보 버튼 줄 = 갈래 버튼과 같은 모양(고르기만, 다시 눌러도 실행 안 함). 가진 블록 후보는 가득이어도 교체 없이 강화만(106장 1) — 누르면 바로
+      const row = el('div', 'bha-absorb__actions bha-absorb__candbtns');
+      // 고른 후보의 차이 한 줄 + 설명 = 왼쪽 판 (후보 버튼이 바뀌면 글만 바뀐다 — 버튼·넣을 곳 자리 고정, 173장 2)
+      const pickDesc = el('div', 'bha-panel bha-panel--inset bha-absorb__pickdesc');
+      pickDesc.setAttribute('aria-live', 'polite');
+      const paintPickDesc = (id: string): void => {
+        const desc = absorbDesc(plainText(traitDescription(id, faction.id)));
+        pickDesc.replaceChildren(el('b', 'bha-absorb__diff', traitDiffLine(faction, id)), ...(desc ? [el('p', 'bha-small bha-dim', desc)] : []));
+      };
+      const dests = el('div', 'bha-stack bha-absorb__slotlist');
+      const btns = cands.map((id) => {
+        const t = getTrait(id);
+        const have = ownsTraitBlock(exp.build, id);
+        const b = paintElement(button({ size: 'small' }), t.element);
+        b.dataset.candStep = have ? 'owned' : 'new';
+        b.dataset.cand = id;
+        const name = el('span', 'bha-absorb__candname');
+        name.append(elementDot(t.element, faction.id), absorbBlockName(faction, id));
+        b.append(name, el('small', 'bha-absorb__candsub', have ? '가진 블록 · 강화만' : `새 블록 · ${faction.traitKindNames[t.kind]}`));
+        if (have) b.onclick = () => finish(chooseAbsorb(exp, id, undefined, mode), true);
+        else {
+          // ▲▼ 하이라이트가 옮겨 오면 고르기, 손가락 = 고르기, 기기 ✓·키보드(detail 0) = 고른 뒤 첫 넣을 곳으로 (갈래 버튼과 같은 길)
+          b.addEventListener('bha-select', () => select(id));
+          b.onclick = (e) => {
+            select(id);
+            if (e.detail === 0) dests.querySelector('button')?.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));
+          };
+        }
+        return b;
+      });
+      const select = (id: string): void => {
+        picked = id;
+        btns.forEach((b) => {
+          const on = b.dataset.cand === id;
+          b.classList.toggle('is-on', on);
+          b.setAttribute('aria-pressed', String(on));
+        });
+        paintPickDesc(id);
+      };
+      row.append(...btns);
+      // 넣을 곳: 칸마다 지금 블록 + 그 블록의 차이 한 줄(193장 5 — 바꾸는 쪽도 비교) → [이것과 바꾸기]
+      exp.build.slots.forEach((id, i) => {
+        const t = getTrait(id!);
+        const b = paintElement(el('button', 'bha-slot bha-slot--filled'), t.element);
+        b.type = 'button';
+        b.append(el('span', 'bha-slot__name', `${i + 1}번 ${absorbBlockName(faction, id!)}`), el('span', 'bha-slot__enh bha-num', `강화 ${enhanceFraction(exp.build, t.element)} · 이것과 바꾸기`), el('span', 'bha-slot__diff', traitDiffLine(faction, id!, { short: true })));
+        b.onclick = () => finish(chooseAbsorb(exp, picked, i, mode), true);
+        dests.append(b);
+      });
+      // 보유에만 넣기 (193장 13): 칸은 그대로, 보유 목록에 넣어 둔다 — 둥지(대원실)에서 장착. 흡수 규칙·수치·런 로그는 교체와 같다
+      const bag = el('button', 'bha-slot bha-slot--empty bha-absorb__bag');
+      bag.type = 'button';
+      bag.dataset.absorbBag = '';
+      bag.append(icon('i-plus'), el('span', 'bha-slot__name', '보유에만 넣기'), el('span', 'bha-slot__enh', `${faction.nestName}에서 장착`));
+      bag.onclick = () => finish(chooseAbsorb(exp, picked, 'owned', mode), true);
+      dests.append(bag);
+      select(picked);
+      first = btns.find((b) => b.dataset.cand === picked) ?? btns[0]!;
+      nodes.push(pickDesc, el('p', 'bha-faint bha-absorb__note', `바뀐 블록은 보유 목록에 남아 ${faction.nestName}에서 다시 장착할 수 있다. 포기하면 블록 없이 ${act} 효과만 얻는다.`));
+      side.push(row, dests);
+      const giveUp = button({ onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) });
+      giveUp.classList.add('bha-absorb__run');
+      const lab = el('span', 'bha-btn__label');
+      lab.append('포기', el('span', 'bha-btn__sub', `블록 없이 ${act}`));
+      giveUp.append(lab);
+      dockGo.push(giveUp);
     } else {
       // 후보 목록 = 남은 높이 고정(넘치면 그 안 스크롤) → 아래 [다시 뽑기] 줄 자리 고정 (GDD 173장 2)
       const list = el('div', 'bha-stack bha-absorb__cands');
-      for (const id of offer!.candidates) {
-        const c = candCard(id, 'button');
+      for (const id of cands) {
+        const c = candCard(id);
         first ??= c;
-        c.onclick = () => {
-          // 가진 블록은 슬롯이 가득이어도 교체 없이 강화만 (106장 1)
-          if (isFull(exp.build) && !ownsTraitBlock(exp.build, id)) {
-            picked = id;
-            step = 'replace';
-            render();
-          } else finish(chooseAbsorb(exp, id, undefined, mode), true);
-        };
+        // 빈 슬롯이 있거나 가진 블록(강화만)이면 바로 (가득 + 새 블록은 위 full 한 화면)
+        c.onclick = () => finish(chooseAbsorb(exp, id, undefined, mode), true);
         list.append(c);
       }
       side.push(list);
     }
-    // 다시 뽑기 (GDD 25-9): 흡수 1번에 1장. 다 쓰거나 이미 다시 뽑았으면 잠김
+    // 다시 뽑기 (GDD 25-9): 흡수 1번에 1장. 다 쓰거나 이미 다시 뽑았으면 잠김. 자리 = 아래 줄 [돌아가기] 옆 (C.312: 가득 한 화면에서 오른쪽 열을 넣을 곳 목록이 다 쓰므로, 두 경우 같은 자리)
     const n = reroll?.tickets() ?? 0;
-    if (reroll && offer!.candidates.length > 0 && (n > 0 || offer!.rerolled)) {
+    const dockMid: HTMLElement[] = [];
+    if (reroll && cands.length > 0 && (n > 0 || offer!.rerolled)) {
       const line = el('div', 'bha-absorb__reroll');
       // 숫자는 가진 장 수 하나만 (GDD 100장 #51)
       const rb = button({ label: `다시 뽑기 · ${n}장`, icon: 'i-swap', size: 'small', disabled: offer!.rerolled === true || n <= 0, onClick: () => {
         if (reroll.use()) render();
       } });
       rb.dataset.sc = 'reroll';
-      line.append(rb, el('small', 'bha-faint', offer!.rerolled ? `이번 ${act}에서는 이미 다시 뽑았다` : '후보를 한 번 다시 뽑는다 · 1장 씀'));
-      side.push(line);
+      // 설명 한 줄은 아래 줄이 좁아(폰 글자 1.15 에서 [돌아가기]가 꺾였다) 버튼 툴팁으로
+      rb.title = offer!.rerolled ? `이번 ${act}에서는 이미 다시 뽑았다` : '후보를 한 번 다시 뽑는다 · 1장 씀';
+      line.append(rb);
+      dockMid.push(line);
     }
-    // 후보 0개면 '0개 중 1개 고르기' 대신 (GDD 100장 #49). 아래 줄 = [돌아가기] (+ 후보 없을 때 실행 버튼, 오른쪽 고정 자리)
-    return { title: offer!.candidates.length === 0 ? '새 특성 없음 — 강화만' : `특성 후보 ${offer!.candidates.length}개 (1개 고르기)`, main: nodes, side, dock: [backBtn('choose'), ...(dockGo ? [dockGo] : [])] };
-  }
-
-  function replaceStep(): StepParts {
-    // 왼쪽 = 넣을 새 특성 카드(2단계와 같은 카드), 오른쪽 = 슬롯 줄 '이것과 바꾸기' (GDD 100장 #52)
-    const nodes: HTMLElement[] = [
-      foeCard(),
-      el('p', 'bha-small', '넣을 특성'),
-      candCard(picked!, 'article'),
-    ];
-    const list = el('div', 'bha-stack bha-absorb__slotlist');
-    exp.build.slots.forEach((id, i) => {
-      const t = getTrait(id!);
-      const b = paintElement(el('button', 'bha-slot bha-slot--filled'), t.element);
-      b.type = 'button';
-      b.append(el('span', 'bha-slot__name', `${i + 1}번 ${absorbBlockName(faction, id!)}`), el('span', 'bha-slot__enh bha-num', `${enhanceFraction(exp.build, t.element)} · 이것과 바꾸기`));
-      b.onclick = () => finish(chooseAbsorb(exp, picked, i, mode), true);
-      first ??= b;
-      list.append(b);
-    });
-    const giveUp = button({ onClick: () => finish(chooseAbsorb(exp, null, undefined, mode), true) });
-    giveUp.classList.add('bha-absorb__run');
-    const lab = el('span', 'bha-btn__label');
-    lab.append('포기', el('span', 'bha-btn__sub', `특성 없이 ${act}`));
-    giveUp.append(lab);
-    const note = el('p', 'bha-faint bha-absorb__note', `바뀐 특성은 보유 목록에 남아 ${faction.nestName}에서 다시 장착할 수 있다. 포기하면 특성 없이 ${act} 효과만 얻는다.`);
-    return { title: `${faction.slotName}: 가득 참`, main: nodes, side: [list, note], dock: [backBtn('pick'), giveUp] };
+    // 후보 0개면 '0개 중 1개 고르기' 대신 (GDD 100장 #49). 아래 줄 = [돌아가기] · 다시 뽑기 (+ 실행·[포기] 버튼, 오른쪽 고정 자리)
+    const title = cands.length === 0 ? '새 블록 없음 — 강화만' : full ? `블록 후보 ${cands.length}개 · 넣을 곳 고르기` : `블록 후보 ${cands.length}개 (1개 고르기)`;
+    return { title, main: nodes, side, dock: [backBtn('choose'), ...dockMid, ...dockGo] };
   }
 
   function render(): void {
     first = null;
-    const stepNo = step === 'choose' ? 1 : step === 'pick' ? 2 : 3;
-    const parts = step === 'choose' ? chooseStep() : step === 'pick' ? pickStep() : replaceStep();
+    const stepNo = step === 'choose' ? 1 : 2;
+    const parts = step === 'choose' ? chooseStep() : pickStep();
     const side = [...parts.side];
     if (error && step !== 'choose') side.push(notice('danger', error, { title: `${act}을(를) 처리하지 못했다` }));
     // 임시 데이터 개발 메모 줄은 삭제 (GDD 168장 4 — 테스트 모드에서도 안 보인다. 이름의 '임시' 표시는 그대로)
@@ -528,14 +574,13 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     app.dataset.owner = owner;
     (first as HTMLElement | null)?.focus({ preventScroll: true }); // 기본 선택 = 첫 갈래(163장 1)·첫 후보·첫 슬롯 ([돌아가기] 가 아니라, GDD 100장 #50)
   }
-  // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2·3단계는 한 단계 앞으로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니오)
+  // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2단계는 1단계로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니오)
   onScreenBack({
     // 다른 흡수 화면이 열렸으면 이 처리기는 끝난 것
     alive: () => !done && (root.querySelector<HTMLElement>('.bha-absorbv2')?.dataset.owner ?? owner) === owner,
     mine: () => root.querySelector<HTMLElement>('.bha-absorbv2')?.dataset.owner === owner,
     run: () => {
-      if (step === 'replace') step = 'pick';
-      else if (step === 'pick') step = 'choose';
+      if (step === 'pick') step = 'choose';
       else {
         confirmDialog({
           title: `${act} 안 하고 넘어가기`,

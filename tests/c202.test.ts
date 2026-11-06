@@ -75,10 +75,10 @@ describe('잠긴 화면 뒤로 (128장 4)', () => {
     expect(app).toMatch(/canCancel: \(\) => true/);
     expect(app).toMatch(/\[data-back\]/);
   });
-  it('흡수 화면: 2·3단계는 한 단계 앞으로, 첫 단계는 넘어가기 확인(기본 아니오)', () => {
+  it('흡수 화면: 2단계는 1단계로(3단계 교체는 C.312 에 2단계로 합침), 첫 단계는 넘어가기 확인(기본 아니오)', () => {
     const v = src('src/ui/absorbView.ts');
     expect(v).toMatch(/onScreenBack\(/);
-    expect(v).toMatch(/if \(step === 'replace'\) step = 'pick';\s*else if \(step === 'pick'\) step = 'choose';/);
+    expect(v).toMatch(/if \(step === 'pick'\) step = 'choose';\s*else \{/);
     expect(v).toMatch(/안 하고 넘어가기`[\s\S]{0,200}focusNo: true/);
   });
   it('원정 걷기: 바퀴 끝 창 = 귀환 확인(기본 아니오) · 이벤트 = 지나가기 · 걷기 = 일시정지', () => {

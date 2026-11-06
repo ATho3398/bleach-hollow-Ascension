@@ -101,7 +101,9 @@ describe('106장 1: 같은 속성 포식 후보 · n강', () => {
   it("화면: 안 가진 블록 = '새 블록', 가진 블록 = 'n강 → n+1강', 가진 블록은 가득이어도 교체 단계 없이", () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
-    expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
+    // C.312 (GDD 193장 13): 가득 + 새 블록 후보 = 2단계 한 화면(후보 버튼 줄 → 넣을 곳), 가진 블록 후보는 누르면 바로 강화만
+    expect(src).toContain('const full = isFull(exp.build) && fresh.length > 0;');
+    expect(src).toContain("if (have) b.onclick = () => finish(chooseAbsorb(exp, id, undefined, mode), true);");
     expect(read('src/engine/absorb/offer.ts')).not.toContain('freshElements');
   });
 });

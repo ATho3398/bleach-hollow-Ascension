@@ -12,7 +12,7 @@ const v2css = css.slice(css.indexOf('흡수 화면 리디자인 v2'));
 describe('흡수 S11', () => {
   it('화면 루트 bha-v2 + 머리·왼쪽 판·오른쪽·아래 줄, 단계 1 갈래 · 2 특성', () => {
     expect(a).toContain("mountApp(root, { cls: `bha-v2 bha-absorbv2 bha-absorbv2--${step}` }, head, left, right, dock)");
-    expect(a).toContain("const STEP_LABELS = ['갈래', '특성', '교체'] as const;");
+    expect(a).toContain("const STEP_LABELS = ['갈래', '블록'] as const;"); // 3 교체는 C.312(193장 13)에 2단계 한 화면으로
     expect(a).toContain("el('header', 'bha-head bha-absorb__head')");
     expect(a).not.toContain("'bha-row'"); // .bha-row 는 v2 루트 안에서 목록 줄 — 슬롯 머리는 제 이름
   });

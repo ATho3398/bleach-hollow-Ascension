@@ -107,12 +107,12 @@ describe('포식 (#44~53)', () => {
     expect(a).toContain("const side: HTMLElement[] = [modes, desc];");
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
-    expect(a).toContain("'새 특성 없음 — 강화만'");
+    expect(a).toContain("'새 블록 없음 — 강화만'"); // 193장 14 (C.312): 흡수로 얻는 전투 블록 = '블록'
     expect(a).toContain('(first as HTMLElement | null)?.focus');
     expect(a).toContain('다시 뽑기 · ${n}장');
-    expect(a).toContain("candCard(picked!, 'article')");
-    expect(a).toContain("lab.append('포기', el('span', 'bha-btn__sub', `특성 없이 ${act}`));"); // 교체 단계 [포기] = 아래 줄 오른쪽 고정 자리 (183장 S11)
-    expect(a).toContain('STEP_LABELS.slice(0, need)');
+    // C.312 (GDD 193장 13): 옛 3단계 교체 화면(candCard article·STEP_LABELS 3개)은 2단계 한 화면으로 합쳐졌다 — [포기]는 그대로 아래 줄 오른쪽 고정 자리
+    expect(a).toContain("lab.append('포기', el('span', 'bha-btn__sub', `블록 없이 ${act}`));");
+    expect(a).toContain("const STEP_LABELS = ['갈래', '블록'] as const;");
   });
 });
 

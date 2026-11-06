@@ -65,7 +65,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain('const have = ownsTraitBlock(exp.build, id);');
     expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
-    expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
+    expect(src).toContain("const fresh = cands.filter((id) => !ownsTraitBlock(exp.build, id));"); // C.312 (193장 13): 가득 + 새 블록 후보만 한 화면 교체, 가진 블록은 강화만
     expect(src).not.toContain('exp.build.owned.includes(id)');
     expect(read('src/engine/expedition/expedition.ts')).toContain('if (!ownsTraitBlock(exp.build, traitId)) {');
   });

@@ -13,7 +13,7 @@ import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
   absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
-  newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
+  newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
   addEv, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
@@ -1095,10 +1095,10 @@ export function absorbEvOf(offer: Pick<AbsorbOffer, 'ev'>, mode: AbsorbMode, dif
   return scaleEv(ev, difficulty, streak);
 }
 
-/** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
+/** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체 또는 'owned' = 보유 목록에만(193장 13), traitId null 이면 특성을 포기하고 효과만).
  *  mode = 'both'(특성·속성 카운트 + 노력치 ×1) / 'trait'(특성·속성 카운트만, 리스크 ×0.7) / 'stat'(노력치 ×2, 리스크 ×0.5, 특성·속성 카운트 없음 — traitId 는 null 이어야 한다).
  *  공통 효과: 리스크 상승(강할수록 많이), 보상 타일 +1 (배부름은 그대로 — GDD 163장 5). 실패하면 아무것도 바뀌지 않는다 */
-export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null, mode: AbsorbMode = 'both'): AbsorbResult {
+export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: GainPlace, mode: AbsorbMode = 'both'): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' };
