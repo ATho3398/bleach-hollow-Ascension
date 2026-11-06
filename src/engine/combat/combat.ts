@@ -116,6 +116,8 @@ export interface CombatParams {
   hpScale: number;
   /** 내 최대 체력 배율 (C.118): 적 0.5 보다 덜 줄인다(0.7) — 강공격 한 방의 체력 대비 변동이 커지는 것을 눌러 강적·원정 패배율을 C.115 수준으로 유지 */
   playerHpScale: number;
+  /** 적 기본 공격 피해 배율 (C.306, GDD 193장 1): 적 등급(class)별로 기본 공격 한 대에 곱한다 — 체력 배율로 짧아진 전투의 피해 총량 보정. 강공격·반격·졸개는 그대로(105장 수정 5 '강공격 = 최대 체력 약 20%'). 표에 없는 등급은 1 */
+  attackScale: Record<string, number>;
   basicBlockPowerInAttacks: number;
   basicBlockChainBonus: ChainBonus;
   /** 상성 (GDD 20-2): 강 / 약 배율, 자기 속성 보정 (진화체 stab 이 있으면 그 값) */
@@ -2074,7 +2076,8 @@ function advanceTick(s: CombatState): void {
       e.attackTimer = attackTicks;
       if (!evaded(s)) {
         const crit = rollCrit(s, 'enemy');
-        const raw = enemyDamage(s, e.def.attackInAttacks) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
+        // 기본 공격 피해 배율 (C.306, GDD 193장 1): 적 등급별 — 강공격·반격·졸개(105장 '최대 체력 약 20%')는 그대로
+        const raw = enemyDamage(s, e.def.attackInAttacks) * (p.attackScale[e.def.class] ?? 1) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
         const guarded = s.guard.ticks > 0;
         const damage = raw * (1 - guardReductionOf(s));
         emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit });

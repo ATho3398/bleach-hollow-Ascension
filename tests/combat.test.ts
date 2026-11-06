@@ -482,7 +482,8 @@ describe('약점·공허·시간 제한', () => {
       return before - s.player.hp;
     };
     const one = taken({});
-    expect(one).toBeCloseTo(normal.attackInAttacks * CX.playerAttackDamage);
+    // C.306 (GDD 193장 1): 기본 공격 한 대에 적 등급별 attackScale 이 곱해진다 (test-a 는 normal)
+    expect(one).toBeCloseTo(normal.attackInAttacks * CX.playerAttackDamage * (CX.attackScale[normal.class] ?? 1));
     const r = 50;
     expect(taken({ refStat: r, playerStats: { hp: r, atk: r, int: r, def: r * 2, spr: r * 2, spd: r } })).toBeCloseTo(one / 2);
     // test-a 는 불: 불이 흙을 이긴다 → 흙 캐릭터는 ×1.2, 물 캐릭터(물이 불을 이김)는 ×0.85
