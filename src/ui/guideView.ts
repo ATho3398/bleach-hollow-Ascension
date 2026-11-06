@@ -83,7 +83,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
       el('p', 'bha-dim bha-absorb__lead', `첫 ${act} — 모든 능력치 노력치 +${BALANCE.provisional.tutorialRun.statEv}`),
       grid,
     ], [
-      el('p', 'bha-small', `다음부터는 진짜 ${act}이다: 고른 갈래대로 특성·속성·노력치가 쌓이고 ${faction.riskGaugeName}이(가) 오른다.`),
+      el('p', 'bha-small', `다음부터는 진짜 ${act}이다: 고른 갈래대로 블록·속성·노력치가 쌓이고 ${faction.riskGaugeName}이(가) 오른다.`),
       next,
     ]);
     next.focus();

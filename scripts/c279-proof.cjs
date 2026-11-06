@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
 const { startServer, press, newGame, snap } = require('./c276-proof.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'docs/captures/c279');
+const OUT = process.env.C279_OUT ? path.resolve(ROOT, process.env.C279_OUT) : path.join(ROOT, 'docs/captures/c279'); // C.304: 다른 캡처 폴더로 (C279_OUT=docs/captures/c304/tut)
 const FACTIONS = (process.env.C279_FACTIONS ?? '0,1').split(',').map(Number);
 if (process.env.C279_URL) process.env.C276_URL = process.env.C279_URL;
 
@@ -108,7 +108,7 @@ const progress = (page) => page.evaluate(() => {
             if (res.battleUse.length === 1) { await page.waitForTimeout(700); await shot(page, `3-${fname}-battle-block-used`); }
           }
           // 가방: 가방 단계에서 가방 물건을 누른 뒤 — 가방 화면에 '열어 보자' 카드가 남았나
-          if (s.tut === 'recover' && pt.kind === 'target' && /chest|가방|상자|bha-prop/.test(pt.lab + s.title) && s.step?.includes('2 /')) {
+          if (s.tut === 'recover' && pt.kind === 'target' && /chest|가방|상자|bha-prop/.test(pt.lab + s.title) && /회복 안내 [12] \//.test(s.step ?? '')) { // C.304(193장 8): 가방 카드 = 1번(빈사와 합침), 옛 = 2번
             await page.waitForTimeout(1500);
             const now = await snap(page);
             const body = await page.evaluate(() => [...document.querySelectorAll('.bha-tut[data-tut-guard]')].pop()?.querySelector('.bha-tut__body')?.textContent ?? null);
@@ -153,7 +153,15 @@ const progress = (page) => page.evaluate(() => {
     await browser.close();
     srv.stop();
   }
-  proof.summary = Object.fromEntries(Object.entries(proof.factions).map(([k, f]) => [k, { presses: f.presses, stuck: f.stuck.length, bag: f.bag, battleUse: f.battleUse }]));
+  // 카드 수 (C.304, GDD 193장 8): 안내 종류·단계 번호·제목이 다른 카드 = 1장 (단계 stage 변화는 같은 카드)
+  const cardsOf = (f) => {
+    const seen = new Map();
+    for (const k of f.trace) { const [, tut, step, , title] = k.split('|'); const key = `${tut}|${step}|${title}`; if (!seen.has(key)) seen.set(key, tut); }
+    const by = {};
+    for (const tut of seen.values()) by[tut] = (by[tut] ?? 0) + 1;
+    return { total: seen.size, by };
+  };
+  proof.summary = Object.fromEntries(Object.entries(proof.factions).map(([k, f]) => [k, { presses: f.presses, stuck: f.stuck.length, cards: cardsOf(f), bag: f.bag, battleUse: f.battleUse }]));
   fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
   console.log(JSON.stringify(proof.summary, null, 2), proof.errors.slice(0, 5));
 })();

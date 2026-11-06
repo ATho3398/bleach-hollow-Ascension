@@ -8,7 +8,7 @@ import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
-import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
+import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
@@ -255,9 +255,9 @@ export function startApp(host: HTMLElement): void {
   let recoverFedHook: (() => void) | null = null;
 
   /**
-   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 4장(GDD 193장 8, C.304 — 옛 7장)을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (월드맵 물건 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명·가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (월드맵 물건 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 방 → 먹이 주기 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -274,8 +274,8 @@ export function startApp(host: HTMLElement): void {
     const vars = {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
-      idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // 5/7·7/7 '방' = 종족 이름 (GDD 176장 9)
+      idleHpPct: pct(HH.idlePerMinute), // 옛 7/7 '회복 끝' 문구용(193장 8 에서 카드 삭제) — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // '방' = 종족 이름 (GDD 176장 9)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -295,8 +295,8 @@ export function startApp(host: HTMLElement): void {
     let soaked = false;
     let inSpa = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
-      dying: {},
-      'to-bag': {
+      // 빈사 설명 + 가방 열기를 한 카드로 (GDD 193장 8, C.304 — 옛 '빈사'·'치료' 2장)
+      dying: {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
         // 가방이 열리면 [다음] 없이 바로 다음 카드(가방 안 구급상자 옆 안내)로 — 가방 화면에 '열어 보자' 카드가 남아 목록을 덮지 않게 (GDD 182장 1)
         act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' },
@@ -318,21 +318,17 @@ export function startApp(host: HTMLElement): void {
           inSpa = true;
           return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
-        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, 4/7 '온천' 카드 [다음] 에서 걸어 나가 방으로 — 5/7 '쉬기'('…로 돌아왔다') 카드는 방 위에 뜬다
+        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, '온천' 카드 [다음] 에서 걸어 나가 방으로 (옛 '쉬기' 카드는 193장 8 에서 삭제)
         next: (go) => {
           const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
           if (!spaExitFx(leave)) leave();
         },
       },
-      // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
-      'spa-rest': { next: (go) => {
-        const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
-        if (!spaExitFx(leave)) leave();
-      } },
       feed: {
         // 먹인 순간(방 onFed) 각본 값을 넣어, 방 막대가 약 1초에 걸쳐 그 값까지 차는 걸 보여 준다 (GDD 132장 3)
         show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; recoverFedHook = () => recoverFeedDone(s); persist(); onRoomRender(); },
-        // 먹는 연출(막대 차오름)이 끝나면 [다음] 없이 바로 결과 카드('회복 끝')로 — 먹은 뒤 '먹어 보자' 카드에 [다음]을 한 번 더 누르게 하지 않는다 (GDD 162장 2)
+        // 먹는 연출(막대 차오름)이 끝나면 [다음] 없이 바로 다음 안내('다음 할 일')로 — 먹은 뒤 '먹어 보자' 카드에 [다음]을 한 번 더 누르게 하지 않는다 (GDD 162장 2).
+        // 옛 결과 카드 '회복 끝'은 193장 8(C.304)에서 삭제 — '방에서 쉬어도 체력이 찬다'는 도움말 방 화면 요약으로
         act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, autoFinish: true, done: () => {
           if (s.nest.lastFedAt === fedAt) return false;
           if (recoverFedHook) recoverFeedDone(s); // 훅을 못 탔으면(다른 길로 먹임) 여기서
@@ -340,9 +336,9 @@ export function startApp(host: HTMLElement): void {
           persist();
           return true;
         } },
+        // 끝나면: 펼친 먹이 줄이 남아 있으면 닫는다 — 옛 '회복 끝' 카드가 하던 일 (GDD 162장 2)
+        next: (go) => { document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click(); go(); },
       },
-      // 결과 카드: 펼친 먹이 줄이 남아 있으면 닫는다 — 상태 칩(대상)을 가리고 같은 행동을 또 하게 두지 않게 (GDD 162장 2)
-      done: { show: () => document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click() },
     };
     /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
     const holdInput = (ms: number, then: () => void): void => {
@@ -422,7 +418,7 @@ export function startApp(host: HTMLElement): void {
       outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
-    const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
+    const scenes: TutorialScene[] = [{ id: 'intro', ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)]; // 3장 (GDD 193장 8): 방·상태·체력 → 돌보기 → 첫 모험
     return { scenes, vars };
   }
 
@@ -746,6 +742,7 @@ export function startApp(host: HTMLElement): void {
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
         title: `${f.name} — 이 종족으로 시작`,
+        body: f.pickNote ? renderHelpText(f.pickNote, helpVars(f)) : undefined, // 종족 소개 2문장 (GDD 193장 10, 종족 설정 pickNote)
         yes: '시작', no: '아니오',
         onYes, onNo,
       }),

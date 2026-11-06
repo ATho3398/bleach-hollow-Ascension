@@ -93,7 +93,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   text.append(
     h('b', '', '진화할 때는 비밀이다.'), h('br'),
     `모험을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
-    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
+    h('span', 'bha-faint', `그 순간 장착한 블록의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
   );
   how.append(text);
   return { left, right: [how] };

@@ -50,7 +50,7 @@ describe('C.149 블록 이름·아이콘·문구', () => {
     const src = read('src/ui/buildPanel.ts');
     expect(src).not.toContain('공격 분류');
     expect(src).not.toContain('bha-owned__row');
-    expect(src).toContain('남는 특성이 없다');
+    expect(src).toContain('남는 블록이 없다');
     expect(src).not.toContain('PROVISIONAL_NOTE'); // C.247 (GDD 168장 4): 개발 메모 줄은 테스트 모드에서도 삭제
     expect(src).toMatch(/if \(devText\(\)\) left\.querySelector/);
   });

@@ -33,7 +33,8 @@ describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', (
       }
     }
     for (const it of HOME_INTRO.items) expect(it.targets.length).toBeGreaterThan(0);
-    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3), C.238 되살림 → C.241: 수련장 카드 다시 삭제(165장 1)
+    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['care']); // 193장 8 (C.304): 홈 안내 3장 = 첫 카드(방·상태·체력) + 돌보기 + 첫 모험. 옛 outside·book·chest·status·hp·idle·more 는 합치거나 도움말로
+    expect(HOME_INTRO.intro.targets).toEqual(['@.bha-room__status', '@.bha-room__hp']);
   });
 });
 

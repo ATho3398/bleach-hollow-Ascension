@@ -671,7 +671,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     } else if (ev.event === 'altar') {
       info.append(el('p', 'bha-sheet__body', `${faction.riskGaugeName} ${Math.round(exp.risk)} → ${Math.min(BALANCE.provisional.risk.limit, Math.round(exp.risk + E.altar.risk))}`));
       const traits = ev.traits ?? [];
-      if (traits.length === 0) info.append(el('p', 'bha-faint', '장착한 특성이 없다'));
+      if (traits.length === 0) info.append(el('p', 'bha-faint', '장착한 블록이 없다'));
       traits.forEach((id, i) => {
         const b = button({ label: `${traitName(id, faction.id)} 위력 +${Math.round(E.altar.traitPower * 100)}%`, icon: 'i-slot', onClick: () => act(i) });
         b.prepend(elementDot(getTrait(id).element, faction.id));

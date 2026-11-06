@@ -121,7 +121,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       `노력치 전부 −${loss}% (교감 ${Math.round(n.bond)} 기준)`,
       `진화 초기화 — 1단계 ${faction.tierNames[0]}(으)로 다시 시작`,
       fixParticles(`${faction.fullnessName}·컨디션·${faction.stabilityName}은(는) 시작값`),
-      '가진 물건·골드·타일·흡수 특성·도감·칭호·스킨은 그대로',
+      '가진 물건·골드·타일·흡수 블록·도감·칭호·스킨은 그대로',
       fixParticles(`${faction.rebirth.name}과(와) 다르다 — 보상·횟수 없음`),
     ]) list.append(el('li', '', t));
     confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니오', danger: true, onYes: () => hd.onRevive?.() });

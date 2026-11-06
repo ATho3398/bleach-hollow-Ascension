@@ -193,11 +193,11 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   const heldId = state.held?.id ?? null;
   const spare = build.owned.filter((id) => !build.slots.includes(id));
   // 머리 숫자 = 남는(장착 안 한) 특성 수 — 내용과 같은 기준 (GDD 100장 #55)
-  const right = panel({ title: '가진 특성', aside: `남는 ${spare.length}개` });
+  const right = panel({ title: '가진 블록', aside: `남는 ${spare.length}개` });
   right.classList.add('bha-sgown');
   right.querySelector('.bha-panel__title')?.prepend(icon('i-absorb'));
   const grid = h('div', 'bha-itemgrid bha-sggrid');
-  const emptyLine = spare.length === 0 ? h('p', 'bha-faint', build.owned.length === 0 ? `남는 특성이 없다. 모험에서 ${faction.absorbActionName}하면 얻는다.` : '남는 특성이 없다. 모두 장착 중이다.') : null;
+  const emptyLine = spare.length === 0 ? h('p', 'bha-faint', build.owned.length === 0 ? `남는 블록이 없다. 모험에서 ${faction.absorbActionName}하면 얻는다.` : '남는 블록이 없다. 모두 장착 중이다.') : null;
   for (const id of spare) {
     const t = getTrait(id);
     const card = itemCard({

@@ -180,7 +180,8 @@
     }
   ],
   "nestName": "대원실",
-  "tagline": "수련해 오르는 무사",
+  "tagline": "호로를 정화하며 오르는 무사",
+  "pickNote": "호로를 {absorbActionName}해 블록과 능력치를 얻고, {ascension.name}을(를) 깨면 {liberation.name}을(를) 쓴다. {nestName}에서 {foodGroupName}(으)로 돌보며 {riskGaugeName}을(를) 막는다.",
   "nestActionsShort": {"feed": "식사", "pet": "손질"},
   "foodGroupName": "식량",
   "nestActions": {

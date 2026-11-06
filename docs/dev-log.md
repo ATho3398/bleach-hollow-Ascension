@@ -2209,3 +2209,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: c198·locomotion 의 소스 문자열 검사를 C.281 막대로 되돌림(지운 검사 없음). typecheck · test 228 파일 2680 통과 · balance:check 회귀 가드 통과.
 - 캡처 `docs/captures/c303/`: `compare-{pc844,ph796}-{hollow,shinigami}.png`(왼 C.282 옛 방 · 오른 C.303) · 방 `{pc844,ph796,ph796x115}-{종족}-{0room-tutorial,1room,2room-food,3room-info,4room-low,4room-dying,5room-t4name(체력 20%)}.png` · 걷기 `{종족}-{pc,ph,ph115}-{walk,walk-lowhp(체력 20%)}.png` · checks.json·phone-checks.json 전부 0. c279 튜토리얼 두 종족 막힘 0. 스크립트 `scripts/ui-audit/c301-room-box.cjs`(5장면 체력 20%로)·새 `scripts/c303-walk-hp.cjs`.
 
+
+## C.304 — 193장 8·10·14·20 안내 카드 줄이기 · 종족 소개 · 블록 이름 통일 (GDD 193장, v5.456, S-23, 코딩221 Opus)
+
+- **8 안내 카드** (`src/data/help/guides.json` homeIntro · `tutorial.json` recover · `src/ui/app.ts` runHomeIntro·runRecover): 홈 안내 10 → 3장 = 첫 카드(방 이름 + 상태 칩·체력 막대 강조, `intro.targets`) · 돌보기 · 첫 모험. 책장·가방·대기 보상·더보기·월드맵 설명은 도움말 방 화면 요약(`screens.json` nest)에 옮김. 회복 안내 7 → 4장 = 빈사(옛 '빈사'+'치료', 가방 열기 행동) · 구급상자 · 온천(옛 '쉬기' 삭제 — [다음]에서 걸어 나와 방) · 먹이(옛 '회복 끝' 삭제 — 먹으면 바로 '다음 할 일', 펼친 먹이 줄은 next 에서 닫음). 세이브·엔진(recoverTutorial) 그대로.
+- **카드 수 전/후** (c279 자동 점검, 두 종족 같음, '다음 할 일' 1장 별도): 홈 10 → 3 · 첫 모험 1 → 1 · 전투 각본 5 → 5 · 첫 흡수 2 → 2 · 치명상 2 → 2 · 회복 7 → 4 = **27 → 17**. 막힘 0 → 0, 누름 37·36 → 26·26.
+- **10 종족 고르기** (`src/data/factions/*.json` `tagline`·새 `pickNote`, `engine/faction.ts` 타입, `startView.ts` 카드, `app.ts` 확인 창 본문): 카드 아래 한 줄 소개를 다시 보이고(129장 2 되돌림), 확인 창에 2문장(helpVars 자리표시자). 종족 분기 없음.
+- **14 이름 통일**: 흡수로 얻어 슬롯에 끼우는 전투 블록을 '특성'이라 부르던 문구 → '블록' (첫 흡수 안내·도움말 4곳·연습 글·결과·성장 줄·빌드·걷기·진화 패널·제단·부활 확인). 진화 특성(특성 칸·탈착·진화체 특성)은 그대로. 흡수 화면 안 문구는 코딩220 에 맡김(조율 메시지).
+- **20 적 이름**: GDD 40장 '임시 번호 이름 그대로, 정식 이름은 나중' — 정해진 이름이 없어 손대지 않음.
+- 테스트: 카드 구성·문구를 고정하던 c149·c189·c201·c207·c217·c223·c233·c245·save-backup 을 새 구성으로 고침(지운 검사 없음, 바뀐 결정 주석). `scripts/c279-proof.cjs` 에 `C279_OUT`·카드 수 집계 추가, 새 `scripts/c304-proof.cjs`.
+- 캡처 `docs/captures/c304/`(1배): `{pc,ph}-{hollow,shinigami}-{1-species,2-species-confirm,3-home-1~3,4-recover-1}.png`(pc 844×390 · ph 796×384 터치) · `checks.json`(폰 점검 0) · `tut/`(c279 새 구성 두 종족 proof.json·캡처).

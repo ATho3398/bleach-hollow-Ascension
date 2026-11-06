@@ -15,11 +15,13 @@
         "id": "absorb",
         "targets": [],
         "title": "{absorbActionName}",
-        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 특성과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 특성만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 놓아주면 {riskGaugeName} {releaseRelief}, {stabilityName}이(가) 오른다"
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 블록과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 블록만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 놓아주면 {riskGaugeName} {releaseRelief}, {stabilityName}이(가) 오른다"
       },
       {
         "id": "practice",
-        "targets": ["@.bha-absorb__pick"],
+        "targets": [
+          "@.bha-absorb__pick"
+        ],
         "title": "첫 {absorbActionName}",
         "body": "갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자."
       }
@@ -82,52 +84,16 @@
     ]
   },
   "homeIntro": {
-    "note": "C.207 (GDD 131장) 처음 켰을 때 홈 안내: 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
+    "note": "C.207 (GDD 131장) → C.304 (GDD 193장 8): 처음 켰을 때 홈 안내 3장 = 첫 카드(방·상태·체력) · 돌보기 · 첫 모험. 책장·가방·대기 보상·더보기 카드는 빼고 도움말 '{nestName}' 화면 요약으로. 카드는 방에 실제로 있는 것만(대상이 화면에 없으면 건너뜀). 자리표시자는 종족 설정 + 앱이 넣는 이름(homeIntro vars) · last.stages = 월드맵 켬일 때 누를 때마다 따라가는 단계(GDD 132장 1, 끔이면 앱이 뺀다)",
     "intro": {
+      "targets": [
+        "@.bha-room__status",
+        "@.bha-room__hp"
+      ],
       "title": "{nestName}",
-      "body": "여기가 {nestName}(이)다.\n버튼이 하는 일을 하나씩 살펴보자."
+      "body": "여기가 {nestName}(이)다.\n위는 배부름·컨디션·{riskGaugeName}이고, 체력은 그대로 모험에 가져간다."
     },
     "items": [
-      {
-        "id": "outside",
-        "targets": [
-          "@.bha-prop--outside"
-        ],
-        "title": "{outsideName}",
-        "body": "{worldName} 지도로 나간다."
-      },
-      {
-        "id": "book",
-        "targets": [
-          "@.bha-prop--book"
-        ],
-        "title": "{bookName}",
-        "body": "만난 진화체와 칭호를 모아 본다."
-      },
-      {
-        "id": "chest",
-        "targets": [
-          "@.bha-prop--chest"
-        ],
-        "title": "{chestName}",
-        "body": "장비와 물건을 꺼내 쓴다."
-      },
-      {
-        "id": "status",
-        "targets": [
-          "@.bha-room__status"
-        ],
-        "title": "상태",
-        "body": "배부름·컨디션·{riskGaugeName}(이)다."
-      },
-      {
-        "id": "hp",
-        "targets": [
-          "@.bha-room__hp"
-        ],
-        "title": "체력",
-        "body": "모험에는 이 체력 그대로 나간다."
-      },
       {
         "id": "care",
         "targets": [
@@ -135,22 +101,6 @@
         ],
         "title": "돌보기",
         "body": "{careNames}(으)로 돌본다."
-      },
-      {
-        "id": "idle",
-        "targets": [
-          "@[data-sc=\"idle-reward\"]"
-        ],
-        "title": "대기 보상",
-        "body": "쉬는 동안 쌓인 보상을 받는다."
-      },
-      {
-        "id": "more",
-        "targets": [
-          "@[data-dock=\"more\"]"
-        ],
-        "title": "더보기",
-        "body": "설정과 도움말이 있다."
       }
     ],
     "last": {

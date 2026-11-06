@@ -10,7 +10,7 @@ const by = Object.fromEntries(RECOVER_SCENES.map((s) => [s.id, s]));
 
 describe('162장 1 안내 창 자리', () => {
   it('온천 쉬기 카드는 온천 체력 막대를 가리키고(가운데에 떠 온천 캐릭터를 덮지 않게), 주인공(방·온천 캐릭터)은 늘 피한다', () => {
-    expect(by['spa-rest']!.targets).toEqual(['@.bha-spa__status']);
+    expect(by['spa-rest']).toBeUndefined(); // 193장 8 (C.304): 쉬기 카드 삭제
     const o = read('src/ui/tutorialOverlay.ts');
     expect(o).toContain("const SUBJECTS = ['@.bha-char', '@.bha-spa__actor'];");
     expect(o).toContain('...rs(SUBJECTS)'); // C.248(169장 2): 주인공은 '되도록 피함'(soft)
@@ -45,12 +45,12 @@ describe('162장 2 먹이 단계', () => {
     }
     expect(JSON.stringify(RECOVER_SCENES)).not.toContain('먹이를 줘');
   });
-  it('먹으면 연출이 끝난 뒤 [다음] 없이 결과 카드로 · 연출 중에는 창을 숨김 · 결과 카드는 펼친 먹이 줄을 닫고 말풍선을 피함', () => {
+  it('먹으면 연출이 끝난 뒤 [다음] 없이 다음 안내로 · 연출 중에는 창을 숨김 · 펼친 먹이 줄을 닫음 (193장 8 C.304: 결과 카드 \'회복 끝\' 삭제)', () => {
     const app = read('src/ui/app.ts');
     expect(app).toMatch(/bha-homedock__food\[data-food="\$\{TR\.food\}"\]`, autoFinish: true/);
-    expect(app).toContain(`done: { show: () => document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click() }`);
+    expect(app).toContain(`next: (go) => { document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click(); go(); },`);
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);');
-    expect(by.done!.avoid).toEqual(['@.bha-room__bubble']);
-    expect(by.done!.body).toBe('배가 든든해졌다.\n{nestName}에서 쉬어도 체력이 조금씩 찬다.');
+    expect(by.done).toBeUndefined();
+    expect(by.feed!.avoid).toContain('@.bha-room__bubble');
   });
 });

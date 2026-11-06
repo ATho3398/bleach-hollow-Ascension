@@ -504,8 +504,10 @@ export interface FactionConfig {
   nestActionsShort?: Partial<Record<NestAction, string>>;
   /** 먹이 묶음 이름 (GDD 176장 3): 결과 '얻은 …'·가진 것 '…:' 등 화면 글자 — 호로 '먹이' / 사신 '식량' */
   foodGroupName: string;
-  /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6). 없으면 생략 */
+  /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6 → 129장 2 에서 뺐다가 193장 10 C.304 에서 다시 보임). 없으면 생략 */
   tagline?: string;
+  /** 종족 고르기 확인 창 본문 (GDD 193장 10, C.304): 이 종족이 무엇을 하는지 2문장. 자리표시자 = 도움말 helpVars. 없으면 본문 없음 */
+  pickNote?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
   /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */

@@ -155,7 +155,8 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('aria-label', f.name);
     const mark = logoMark(f, 'bha-logo--xl');
     card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
-    // 종족 한 줄 소개는 화면에서 뺐다 (GDD 129장 2, C.201 — 아이콘·이름만)
+    // 종족 한 줄 소개 (GDD 193장 10, C.304 — 129장 2 에서 뺐던 것을 다시): 문구는 종족 설정 tagline
+    if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;

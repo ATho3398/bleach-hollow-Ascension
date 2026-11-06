@@ -131,7 +131,7 @@ export function eventHint(ev: TileEvent): string {
   const E = TV.events;
   return {
     merchant: '골드로 음식·타일 1개를 산다 · 한 번 밟으면 사라진다',
-    altar: `리스크 +${E.altar.risk} 대신 장착 특성 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
+    altar: `리스크 +${E.altar.risk} 대신 장착 블록 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
     treasure: `희귀 음식 1개 또는 골드 ${E.treasure.gold[0]}~${E.treasure.gold[1]} · 한 번`,
     trap: `다음 전투 시작 체력 −${Math.round((1 - E.trap.startHpFraction) * 100)}%, 이기면 보상 ×${E.trap.rewardMult} · 한 번`,
     crossroads: `둘 중 하나: 다음 전투 보호막 ${Math.round(E.crossroads.shield * 100)}% / 골드 ${E.crossroads.gold} · 한 번`,

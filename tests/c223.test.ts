@@ -67,7 +67,8 @@ describe('144장 2·3: 쓰는 곳 = 원정 걷기·전투만', () => {
 
 describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () => {
   it('방 포션 단계·상인 안내 삭제 → 구급상자 → 온천', () => {
-    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'to-bag', 'cure', 'to-spa', 'spa-rest', 'feed', 'done']);
+    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'feed']); // 193장 8 (C.304): 빈사+가방 · 온천(쉬기 합침) · 먹이(회복 끝 합침) — 옛 7장
+    expect(RECOVER_SCENES.length).toBeLessThanOrEqual(4);
   });
   it('새 세이브 가방 = 구급상자 3 + 반창고 3·붕대 2·회복약 1', () => {
     expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 });
@@ -102,7 +103,7 @@ describe('145장 1 → 164장 1: 온천 = 약 20초(옛 5분), 튜토리얼 온�
     expect(n.hpFraction).toBeCloseTo(1, 6);
   });
   it('쉬기 카드: 수치 없이 상황만 (GDD 157장 4 — "튜토리얼 온천은 10초…·평소 n분" 삭제), 평소 약 20초 (GDD 164장 1)', () => {
-    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')!.body).toBe('{spaName}에서 체력을 가득 채웠다.\n{nestName}(으)로 돌아왔다.');
+    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')).toBeUndefined(); // 193장 8: 쉬기 카드 삭제(온천 카드 결과 글로)
     expect(Math.round(1 / BALANCE.provisional.nest.homeHp.spa.hpPerSecond)).toBe(20);
   });
 });

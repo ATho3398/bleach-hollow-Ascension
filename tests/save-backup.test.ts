@@ -105,9 +105,9 @@ describe('진화 신호·성장 요약 (C.47: 걸음 수는 숨기고 임박 알
   });
 
   it('성장 요약은 사실만 적고 새 칭호는 있을 때만 둘째 줄', () => {
-    expect(growthLines({ newTraits: 2, evolvedTo: null, newTitles: [] })).toEqual(['새 특성 2개']);
-    expect(growthLines({ newTraits: 0, evolvedTo: '불 바스트로데', newTitles: ['가', '나'] })).toEqual(['새 특성 없음', '새 칭호 「가」 「나」']); // 진화 이름은 결과에 안 보인다 (GDD 176장 6)
-    expect(growthLines({ newTraits: 1, evolvedTo: null, newTitles: [] })).toEqual(['새 특성 1개']);
+    expect(growthLines({ newTraits: 2, evolvedTo: null, newTitles: [] })).toEqual(['새 블록 2개']);
+    expect(growthLines({ newTraits: 0, evolvedTo: '불 바스트로데', newTitles: ['가', '나'] })).toEqual(['새 블록 없음', '새 칭호 「가」 「나」']); // 진화 이름은 결과에 안 보인다 (GDD 176장 6)
+    expect(growthLines({ newTraits: 1, evolvedTo: null, newTitles: [] })).toEqual(['새 블록 1개']);
     expect(EVOLVE_HINT).not.toMatch(/진화!/);
   });
 });

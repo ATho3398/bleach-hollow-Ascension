@@ -129,8 +129,8 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
     ...permTileRows(),
-    countRow('얻은 특성', 'i-slot', s.keptTraits, (id) => traitNameWithElement(id, faction.id), '개', 'good'), // 속성까지 '흙 탄 · 물 조' (GDD 176장 17)
-    countRow('잃은 특성', 'i-slot', s.lostTraits, (id) => traitNameWithElement(id, faction.id), '개', 'bad'),
+    countRow('얻은 블록', 'i-slot', s.keptTraits, (id) => traitNameWithElement(id, faction.id), '개', 'good'), // 속성까지 '흙 탄 · 물 조' (GDD 176장 17)
+    countRow('잃은 블록', 'i-slot', s.lostTraits, (id) => traitNameWithElement(id, faction.id), '개', 'bad'),
     foodRow(),
     goldRow(),
     {

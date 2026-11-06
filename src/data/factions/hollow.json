@@ -254,7 +254,8 @@
     }
   ],
   "nestName": "둥지",
-  "tagline": "먹고 진화하는 괴물",
+  "tagline": "적을 포식해 자라는 괴물",
+  "pickNote": "적을 {absorbActionName}해 블록과 능력치를 얻고, 진화할수록 모습이 바뀐다. {nestName}에서 {foodGroupName}(으)로 돌보며 {riskGaugeName}을(를) 다스린다.",
   "nestActionsShort": {"feed": "먹이"},
   "foodGroupName": "먹이",
   "nestActions": {
