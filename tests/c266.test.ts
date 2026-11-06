@@ -12,9 +12,10 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
     expect(pv).not.toContain("label: k === 'hand' ? '손패' : '프리셋'");
     expect(pv).toContain("setMode?.('prep');");
   });
-  it('준비 = 프리셋만 보이고 가진 타일은 숨김, 타일 배치 = 가진 타일만 (프리셋 숨김) + 화면 클래스 is-place', () => {
+  // GDD 193장 12 (C.307): 프리셋 판은 [타일 배치] 탭으로 옮김 — 준비 탭은 프리셋·가진 타일 모두 숨김
+  it('준비 = 프리셋·가진 타일 숨김, 타일 배치 = 가진 타일 + 프리셋 판 + 화면 클래스 is-place', () => {
     expect(pv).toContain("hand.hidden = k !== 'place';");
-    expect(pv).toContain("presetEl.hidden = k !== 'prep';");
+    expect(pv).toContain("presetEl.hidden = k !== 'place';");
     expect(pv).toContain("classList.toggle('is-place', k === 'place')");
   });
   it('준비 탭 길 = 작은 네모 12개(6개씩 2줄, 타일 색만·누를 수 없음) + 놓은 타일 n/최대 — C.298 (GDD 189장)', () => {
@@ -29,7 +30,7 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
     expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,');
     expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc { display: none; }');
     expect(css).toContain('.bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px;');
-    expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*bottom: 60px;[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/); // C.267 [출발] 위 남은 높이만
+    expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*right: 220px;[^}]*bottom: 60px;[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/); // C.267 [출발] 위 남은 높이만 · C.307 오른쪽 프리셋 판 자리(3열)
     expect(css).not.toMatch(/is-place[^{]*bha-plan__go[^{]*\{[^}]*display: none/);
   });
 });

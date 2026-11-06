@@ -12,6 +12,10 @@ import { applyTilePreset, cellsOfPlan, type PresetResult, type TilePreset } from
 import { roadPlanner } from './bha/road';
 import { presetPanel } from './bha/tilePresets';
 import { departTabs, type DepartTab } from './storyView';
+import { infoTip, type InfoGroup } from './bha/infoTip';
+import { confirmDialog } from './confirmDialog';
+import { multPct, numLine } from '../data/help/textFormat';
+import { BALANCE } from '../config/balance';
 
 export interface PlanViewHandlers {
   /** [출발]: 배치가 끝났다 (손은 이미 비웠다). 원정 시작 */
@@ -27,6 +31,10 @@ export interface PlanViewHandlers {
   tilesLocked?: boolean;
   /** 길에 놓을 수 있는 최대 칸 수 (GDD 85장 11번 8칸 + 상점 배치 칸). 없으면 제한 없음 */
   placeLimit?: number;
+  /** 출발 체력 (GDD 193장 2, 0~1 — departHpOf): [출발] 띠 왼쪽 '체력 n%', 문턱 아래면 [출발] 때 확인 창. 없으면 숨김 */
+  hpFraction?: number;
+  /** true 면 체력 확인 창을 띄우지 않는다 (빈사 — 홈에서 빈사 확인 창을 이미 거쳤다) */
+  hpNoWarn?: boolean;
   /** 배치 프리셋 (GDD 85장 11번): 이 종족 프리셋 목록·저장. 없으면 프리셋 줄을 숨긴다 */
   presets?: {
     list: () => { index: number; preset: TilePreset }[];
@@ -37,27 +45,60 @@ export interface PlanViewHandlers {
   };
 }
 
-/** 난이도 한 줄 설명: "★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +38%" (데이터에서 조합, GDD 32-1 5·10·11번) */
+/** 난이도 한 줄 설명 (GDD 193장 11): 숫자 대신 말 — "★3 · 연속 4번째 · 권장 — 적이 3단계(아쥬커스)보다 조금 세고 보상이 늘어난다".
+ *  가산 % 는 설명 칸 ⓘ(difficultyDetail)로 (ui-review 관점 1, GDD 32-1 5·10·11번 값은 데이터에서) */
 export function difficultyInfo(faction: FactionConfig, star: number, tierIndex: number, streak = 0): string {
   const L = difficultyLabels(faction);
   const n = clampStreak(streak);
-  const pct = (m: number) => `${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`;
+  const more = difficultyRewardMultiplier(star, n) > 1 || difficultyGoldMultiplier(star, n) > 1;
+  const enemy = streakEnemyFactor(n);
+  const rec = star === recommendedDifficulty(tierIndex) ? ` · ${L.recommended}` : '';
+  const head = `${difficultyText(faction, star)}${n > 0 ? ` · 연속 ${n}번째` : ''}${rec}`;
+  const foe = `적이 ${star}단계(${faction.tierNames[star - 1] ?? ''})${enemy > 1 ? '보다 조금 세' : '만큼 세'}`;
+  return `${head} — ${foe}${more ? '고 보상이 늘어난다' : '다'}`;
+}
+
+/** 난이도 ⓘ (GDD 193장 11): 한 줄 설명이 말로 줄인 가산 수치 (text-style 3절 수치 줄) */
+export function difficultyDetail(faction: FactionConfig, star: number, streak = 0): InfoGroup {
+  const n = clampStreak(streak);
   const food = difficultyRewardMultiplier(star, n);
   const gold = difficultyGoldMultiplier(star, n);
   const enemy = streakEnemyFactor(n);
-  const rec = star === recommendedDifficulty(tierIndex) ? ` · ${L.recommended}` : '';
-  const head = `${difficultyText(faction, star)}${n > 0 ? ` · 연속 ${n}` : ''}${rec}`;
-  const bonus = [food > 1 ? `${faction.foodGroupName}·노력치 ${pct(food)}` : '', gold > 1 ? `골드 ${pct(gold)}` : ''].filter(Boolean).join(' · ');
-  return `${head}: 적은 ${star}단계(${faction.tierNames[star - 1] ?? ''}) 기준${enemy > 1 ? ` ${pct(enemy)}` : ''}${bonus ? ` · ${bonus}` : ''}`;
+  const lines = [numLine('적 기준', `${star}단계(${faction.tierNames[star - 1] ?? ''})`, enemy > 1 ? multPct(enemy) : '')];
+  lines.push(numLine(`${faction.foodGroupName}·노력치`, food > 1 ? multPct(food) : '그대로'));
+  lines.push(numLine('골드', gold > 1 ? multPct(gold) : '그대로'));
+  if (n > 0) lines.push(numLine('연속', `${n}번째`));
+  lines.push('같은 ★을 연속으로 깨면 적과 보상이 조금씩 는다');
+  return { title: difficultyText(faction, star), lines };
 }
 
-/** 사냥터 한 줄 설명: 종족 설정 설명 + 자주 나오는 속성 + 적 강도 (데이터에서 조합, GDD 24-2) */
+/** 사냥터 적 강도를 말로 (GDD 193장 11): 체력·공격 배율 평균 */
+function groundStrengthWords(g: GroundDef): string {
+  const avg = (g.strength.hp + g.strength.attack) / 2;
+  if (avg >= 1.2) return '적이 꽤 세다';
+  if (avg > 1.02) return '적이 조금 세다';
+  if (avg < 0.98) return '적이 조금 약하다';
+  return '';
+}
+
+/** 사냥터 한 줄 설명: 종족 설정 설명 + 자주 나오는 속성 + 적 강도(말로, 숫자는 ⓘ) (데이터에서 조합, GDD 24-2 · 193장 11) */
 export function groundInfo(faction: FactionConfig, g: GroundDef): string {
   const els = g.elements.map((id) => elementName(id, faction.id)).join('·');
+  const desc = faction.huntingGrounds?.[g.id]?.desc;
+  const st = groundStrengthWords(g);
+  return `${desc ? `${desc} ` : ''}자주 나오는 속성 ${els}${st ? ` · ${st}` : ''}`;
+}
+
+/** 사냥터 ⓘ (GDD 193장 11): 적 체력·공격 % */
+export function groundDetail(faction: FactionConfig, g: GroundDef): InfoGroup {
   const hp = Math.round(g.strength.hp * 100);
   const atk = Math.round(g.strength.attack * 100);
-  const desc = faction.huntingGrounds?.[g.id]?.desc;
-  return `${desc ? `${desc} ` : ''}자주 나오는 속성 ${els}${hp !== 100 || atk !== 100 ? ` · 적 체력 ${hp}%·공격 ${atk}%` : ''}`;
+  return { title: groundName(faction, g.id, GROUNDS.indexOf(g)), lines: [numLine('적', `체력 ${hp}%`, `공격 ${atk}%`)] };
+}
+
+/** 출발 체력 경고 문턱 (GDD 193장 2): 이 비율 아래로 [출발]을 누르면 확인 창 */
+export function lowDepartHp(hpFraction: number | undefined): boolean {
+  return hpFraction !== undefined && hpFraction < BALANCE.provisional.nest.care.departWarnHp;
 }
 
 export function planView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, tierIndex: number, h: PlanViewHandlers): void {
@@ -82,7 +123,10 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     b.dataset.ground = g.id;
     return b;
   });
+  let curGround: GroundDef = GROUNDS[0]!;
+  let curStar = 1;
   const pick = (g: GroundDef) => {
+    curGround = g;
     chooseGround(exp, g.id);
     gBtns.forEach((b, i) => {
       const on = GROUNDS[i]!.id === g.id;
@@ -114,6 +158,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   });
   const pickStar = (star: number) => {
     chooseDifficulty(exp, star, unlocked);
+    curStar = exp.difficulty;
     dBtns.forEach((b, i) => {
       const on = i + 1 === star;
       b.classList.toggle('is-on', on);
@@ -137,7 +182,13 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   descScroll.addEventListener('scroll', syncDescMore, { passive: true });
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncDescMore).observe(descScroll);
   descScroll.append(gInfo, dInfo);
-  desc.append(descScroll, descMore);
+  // 숫자(적 체력·공격 %, 난이도 가산 %)는 설명 칸 오른쪽 위 ⓘ 하나로 (GDD 193장 11) — 고른 사냥터·★ 를 열 때마다 읽는다
+  const descInfo = infoTip('사냥터·난이도', () => ({
+    lead: '고른 사냥터와 난이도의 수치다',
+    groups: [groundDetail(faction, curGround), difficultyDetail(faction, curStar, h.streak?.star === curStar ? h.streak.count : 0)],
+  }));
+  descInfo.classList.add('bha-plan__descinfo');
+  desc.append(descScroll, descMore, descInfo);
 
   pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!);
   pickStar(Math.min(unlocked, exp.difficulty));
@@ -148,15 +199,31 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   const grow = el('span', 'bha-grow');
   head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grow, help);
 
+  // 체력이 문턱 아래면 [출발] 전에 확인 창 (GDD 193장 2) — 기본 선택 = 그만
+  const depart = () => h.onStart(finishPlanning(exp));
   const start = button({
     label: '출발', icon: 'i-play', variant: 'primary', size: 'lg', block: true,
-    onClick: () => h.onStart(finishPlanning(exp)),
+    onClick: () => {
+      if (h.hpNoWarn || !lowDepartHp(h.hpFraction)) return depart();
+      confirmDialog({
+        title: '체력이 낮다',
+        body: `체력이 ${Math.round((h.hpFraction ?? 1) * 100)}%다. 지면 이번에 얻은 것을 잃는다. 그래도 나간다.`,
+        yes: '출발', no: '그만', danger: true, onYes: depart,
+      });
+    },
   });
   start.dataset.sc = 'go';
-  // [출발] = 화면 아래 고정 띠 (GDD 100장 #3·#22, v2 .bha-dock 56): 스크롤하지 않아도 늘 보인다
+  // [출발] = 화면 아래 고정 띠 (GDD 100장 #3·#22, v2 .bha-dock 56): 스크롤하지 않아도 늘 보인다. 왼쪽 = 출발 체력 n% (GDD 193장 2)
   const go = el('div', 'bha-dock bha-plan__go');
+  if (h.hpFraction !== undefined) {
+    const hpPct = Math.round(h.hpFraction * 100);
+    const hpEl = el('span', `bha-plan__hp${h.hpNoWarn || lowDepartHp(h.hpFraction) ? ' is-low' : ''}`);
+    hpEl.append(icon('i-heal'), '체력 ', el('b', 'bha-num', `${hpPct}%`));
+    hpEl.dataset.departHp = String(hpPct);
+    go.append(hpEl);
+  }
   go.append(start);
-  // 한 줄 안내 (GDD 100장 #25): 배치 요령 긴 문단은 ? 도움말(툴팁)로, 화면엔 "타일 고르기 → 빈 칸 누르기 · 놓은 칸 n/최대"
+  // 한 줄 안내 (GDD 100장 #25): 배치 요령 긴 문단은 ? 도움말(툴팁)로, 화면엔 "타일 고르기 → 빈 칸 누르기 · 놓은 타일 n/최대"
   // 준비 탭은 길 미리보기 오른쪽에 'n/최대' 만, 타일 배치 탭은 한 줄 전부
   const sub = el('p', 'bha-plan__sub bha-plan__line');
   const countEl = el('b', 'bha-num');
@@ -185,8 +252,9 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후에 열린다. 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적).');
     sub.dataset.tilesLocked = '';
   } else {
-    sub.append(el('span', 'bha-plan__how', '타일 고르기 → 빈 칸 누르기 · 놓은 칸 '), countEl);
-    sub.title = `가진 타일을 길 위 칸에 놓는다(최대 ${h.placeLimit ?? '∞'}칸, 놓은 타일이 보상으로 뽑힌다). 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.`;
+    // 두 탭 같은 말 '놓은 타일 n/최대' (GDD 193장 19) — 최대를 다 놓으면 남은 빈 칸은 흐려진다(road.ts is-full)
+    sub.append(el('span', 'bha-plan__how', '타일 고르기 → 빈 칸 누르기 · 놓은 타일 '), countEl);
+    sub.title = `가진 타일을 길 위 칸에 놓는다(최대 ${h.placeLimit ?? '∞'}칸, 놓은 타일이 보상으로 뽑힌다). 다 놓으면 남은 빈 칸은 흐려진다. 상점 배치 칸으로 최대가 는다. 안 놓은 칸에는 떠돌이 적이 나온다. 붙여 놓으면 시너지가 생긴다. 놓은 타일을 누른 뒤 빈 칸 = 이동, 다른 타일 = 교체, 같은 칸 = 손으로.`;
     paintCount();
   }
   // 배치 프리셋 (GDD 85장 11번, C.141): 이름 붙여 저장·불러오기·덮어쓰기·이름 바꾸기·삭제 (카드형)
@@ -205,7 +273,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     }, (id) => tileName(id, faction.id), `최대 ${h.placeLimit ?? '∞'}칸`)
     : null;
   // 화면 탭 [준비] / [타일 배치] (GDD 179장, 사용자 2026-11-04 "b로 가자" — 옛 오른쪽 손패/프리셋 토글을 대신함):
-  // 준비 = 사냥터·난이도·길 미리보기·프리셋·[출발], 타일 배치 = 길과 가진 타일만 넓게(사냥터·난이도·프리셋은 숨김, [출발]은 그대로). 탭은 머리 줄 오른쪽(도움말 왼쪽, v2 .bha-tabs)
+  // 준비 = 사냥터·난이도·설명·길 요약·[출발]을 전체 폭으로, 타일 배치 = 길 · 가진 타일 · 배치 프리셋 판(오른쪽, GDD 193장 12 — 옛 준비 탭 오른쪽 1/3 에서 옮김). [출발]은 그대로. 탭은 머리 줄 오른쪽(도움말 왼쪽, v2 .bha-tabs)
   let setMode: ((k: 'prep' | 'place') => void) | null = null;
   if (planner && presetEl) {
     const hand = planner.el.querySelector<HTMLElement>('.bha-road__hand')!;
@@ -225,7 +293,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     setMode = (k) => {
       paintCount();
       hand.hidden = k !== 'place';
-      presetEl.hidden = k !== 'prep';
+      presetEl.hidden = k !== 'place';
       toggle.closest('.bha-app')?.classList.toggle('is-place', k === 'place');
       tabs.forEach((b) => {
         const on = b.dataset.planSide === k;

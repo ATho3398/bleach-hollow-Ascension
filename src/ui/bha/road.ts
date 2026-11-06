@@ -2,7 +2,7 @@
 // 원정 중 걷는 화면에는 길 구조를 보이지 않는다 — 칸 순서가 보이는 곳은 여기뿐이다.
 import { BALANCE } from '../../config/balance';
 import { getTile } from '../../data/tiles';
-import { isTempCell, moveTile, placeTile, swapTiles, tempHandCount, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
+import { isTempCell, moveTile, placedCount, placeTile, swapTiles, tempHandCount, swapWithHand, synergyMods, synergyPairs, unplaceTile, type ExpeditionState, type SynergyPair } from '../../engine/expedition';
 import { fixParticles } from '../../engine/josa';
 import { tileHint, variantModsText } from '../labels';
 import { el, emptyState, icon } from './dom';
@@ -247,22 +247,25 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   function refresh(): void {
     if (selected && !exp.hand.includes(selected)) selected = null;
     if (selectedCell !== null && (!placedHere.has(selectedCell) || !exp.slots[selectedCell])) selectedCell = null;
+    // 놓을 수 있는 수를 다 놓았으면(배치 단계 planLimit, GDD 193장 19) 남은 빈 칸은 흐리게 — 놓을 수 없다는 것이 칸에서 보인다
+    const full = exp.planLimit !== undefined && placedCount(exp) >= exp.planLimit;
     for (let i = 1; i < L; i++) {
       const id = exp.slots[i];
-      const mode = roadCellMode({ slot: id ?? null, index: i, pos: exp.pos, hasSelected: selected !== null });
+      const mode = roadCellMode({ slot: id ?? null, index: i, pos: exp.pos, hasSelected: selected !== null && !(full && !id) });
+      const dim = full && !id;
       const css = id ? tileCss(getTile(id).kind) : null;
       const b = cells[i]!;
       const canMove = mode === 'empty' && selectedCell !== null && canPlaceAt({ slot: null, index: i, pos: exp.pos, phase: 'moving', hasSelected: true });
       const locked = Boolean(id) && !placedHere.has(i);
-      b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}${locked ? ' is-locked' : ''}`;
+      b.className = `bha-road__cell${css ? ` is-has bha-road__cell--${css}` : ''}${mode === 'can' || canMove ? ' is-can' : ''}${selectedCell === i ? ' is-selected' : ''}${id && placedHere.has(i) ? ' is-editable' : ''}${locked ? ' is-locked' : ''}${dim ? ' is-full' : ''}`;
       // 놓인 타일 = 아이콘 + 칸 번호만 (GDD 121장 2 — 칸이 좁아 이름이 잘렸다). 이름은 안내 줄·title·aria 에서
       b.replaceChildren(icon(css ? tileIconId(css) : 'i-plus'), ...(locked ? [lockBadge()] : []), el('span', 'bha-road__num', String(i)));
       // 임시 타일 (GDD 121장 4 ②): 이번 원정만 — 구석에 작은 시계 아이콘
       if (id && isTempCell(exp, i)) b.append(tempMark());
       if (id && placedHere.has(i)) b.dataset.drag = 'cell';
       else delete b.dataset.drag;
-      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 모험만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : '빈 칸';
-      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : ' (비어 있음)'}`);
+      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 모험만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : dim ? `빈 칸 — 놓을 수 있는 ${exp.planLimit}칸을 다 놓았다` : '빈 칸';
+      b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : dim ? ' (더 놓을 수 없음)' : ' (비어 있음)'}`);
     }
     // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
     const pairs = roadSynergies(exp, Boolean(o.synergyName));
@@ -297,7 +300,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     }
     synLine.title = details.join('\n');
     // 조사는 타일 이름 받침에 맞게 ('영혼을(를)' → '영혼을', C.196)
-    noteEl.textContent = fixParticles(note || (exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다'));
+    noteEl.textContent = fixParticles(note || (full && exp.hand.length > 0 ? `놓을 수 있는 ${exp.planLimit}칸을 다 놓았다 · 놓은 타일은 옮기거나 바꿀 수 있다` : exp.hand.length > 0 ? '타일을 고른 뒤 빈 칸을 누르면 놓인다' : placedHere.size > 0 ? '놓은 타일을 눌러 옮기거나 교체하거나 손으로 되돌릴 수 있다' : '놓을 타일이 없다'));
     noteEl.title = noteEl.textContent; // 한 줄로 잘려도 전체 안내는 올리면 보인다 (C.182)
     hand.replaceChildren();
     if (exp.hand.length === 0) hand.append(emptyState('손에 든 타일 없음', { icon: 'i-deck' })); // 빈 상태 (GDD 100장 #87)
@@ -320,7 +323,9 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       chip.onclick = () => {
         selected = selected === id ? null : id;
         selectedCell = null;
-        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. 빈 칸(＋)을 누르거나 끌어서 놓는다` : '';
+        // 다 놓았으면(GDD 193장 19) 빈 칸 대신 놓은 타일과 바꾸는 법을 말한다
+        const isFull = exp.planLimit !== undefined && placedCount(exp) >= exp.planLimit;
+        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. ${isFull ? `${exp.planLimit}칸을 다 놓았다 — 놓은 타일을 누르면 바꾼다` : '빈 칸(＋)을 누르거나 끌어서 놓는다'}` : '';
         refresh();
         // 카드를 고르면 기기 초점 = 놓을 수 있는 첫 빈 칸 (GDD 176장 14 — 기기 버튼 약 25번 → 몇 번)
         if (selected) gotoEl(cells.find((c) => c.classList.contains('is-can')) ?? null);

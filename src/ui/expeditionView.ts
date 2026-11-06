@@ -10,7 +10,7 @@ import { getTile, mutationName, synergyName, tileName } from '../data/tiles';
 import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
-  abortExpedition, advance, canAbort, lapRewardMult, lapScale, winHealOf, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
+  abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
 import { eventHint, tileHint, variantModsText } from './labels';
@@ -26,6 +26,8 @@ import { bossOmenSub, bubbleText, ENCOUNTER_DELAY_MS, MSG_ICON, msgKind, WATCHDO
 import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
+import { continueDetail, continueWords, lapGainLine } from './bha/lapEnd';
+import { infoTip } from './bha/infoTip';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
 import { groundSceneBg } from './bha/sceneBg';
@@ -537,8 +539,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const title = el('h2', 'bha-sheet__title bha-title bha-grow');
     // 머리 한 줄 (C.218, GDD 140장 2): "1바퀴 끝 — 타일 1장 고르기". v2 창 머리 48(.bha-win-head) — [?] 는 머리 오른쪽 칸 (T-2: 시트가 머리 줄을 대신)
     title.append(icon('i-nest'), d && d.picked === null ? `${exp.lap}바퀴 끝 — 타일 1장 고르기` : `${exp.lap}바퀴 끝 — ${faction.nestName}에 도착`);
+    // 지금 체력 (GDD 193장 3): 머리 줄 오른쪽 = 걷기 화면과 같은 C.281 체력 막대(숫자 막대 안) — 더 갈지 말지의 근거. 본문(뽑기·배치판)을 밀지 않는다
+    const hpFrac = hpFractionOf(exp);
+    const hpPct = Math.round(hpFrac * 100);
+    const hpBar = meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` });
+    hpBar.classList.add('bha-lapend__hp');
+    hpBar.dataset.lapHp = String(hpPct);
     const winHead = el('div', 'bha-win-head');
-    winHead.append(title, helpBtn);
+    winHead.append(title, hpBar, helpBtn);
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -562,17 +570,23 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const label = el('span', 'bha-btn__label');
     label.append('한 바퀴 더', el('span', 'bha-btn__sub', `(${exp.lap + 1}바퀴)`));
     more.append(label);
-    // 이어하기 배율 (GDD 121장 5): [한 바퀴 더] 아래에 다음 바퀴 보상·적 배율과 사냥 힐
+    // 이어하기 배율 (GDD 121장 5 · 193장 3): [한 바퀴 더] 아래에 다음 바퀴를 말로('적이 더 세지고 보상이 늘어난다'), 배율 숫자는 옆 ⓘ
     const nx = exp.lap + 1;
-    const multLine = el('p', 'bha-continue-mult', `다음 바퀴 보상 ×${fmtMult(lapRewardMult(nx))} · 적 체력 ×${fmtMult(lapScale(nx).hp)} · 공격 ×${fmtMult(lapScale(nx).attack)} · 힐 ${Math.round(winHealOf(nx) * 100)}%`);
+    const multLine = el('p', 'bha-continue-mult', continueWords(nx));
     multLine.dataset.continueMult = '';
+    const multInfo = infoTip('다음 바퀴', () => ({ lead: '한 바퀴 더 돌면 적과 보상이 이만큼 커진다', groups: [continueDetail(nx)] }));
+    multInfo.classList.add('bha-continue__info');
     // 창이 뜨면 기기 초점 = [귀환] (GDD 176장 2) — 창 뒤 모서리 버튼은 visibility 로 숨어 초점 순서에서 빠진다
     ret.dataset.devStart = 'nest-choice';
     const grid = el('div', 'bha-grid2');
     grid.append(ret, more);
-    // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 지킨다, [한 바퀴 더] 아래 = 다음 바퀴 배율 (C.218)
+    // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 이번 바퀴 얻은 것(GDD 193장 3 — 돌아가면 지킨다는 [귀환] 설명으로), [한 바퀴 더] 아래 = 다음 바퀴(말로) + ⓘ (C.218)
     const notes = el('div', 'bha-continue__notes');
-    notes.append(el('p', 'bha-continue-keep', '돌아가면 얻은 것을 지킨다'), multLine);
+    const gain = el('p', 'bha-continue-keep bha-lapend__gain', lapGainLine(exp, faction.foodGroupName, TRADE_CURRENCY_NAME));
+    gain.dataset.lapGain = '';
+    gain.title = '돌아가면 얻은 것을 지킨다';
+    ret.title = '돌아가면 얻은 것을 지킨다';
+    notes.append(gain, multLine, multInfo);
     const actions = el('div', 'bha-continue');
     actions.append(grid, notes);
     // v2 창 (GDD 183장 S12): 머리 48 · 본문(뽑기 · 손 · 배치판, 안에서 스크롤) · 아래 [귀환]/[한 바퀴 더] 같은 크기 48
@@ -584,6 +598,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 노란 알림은 맨 위 (GDD 140장 2)
     // 권장 바퀴 딱 = '다 돌았다', 넘기면 '넘겼다' (GDD 176장 18: 2바퀴 막 끝냈는데 '넘겼다'였다)
     if (over) info.append(notice('warn', exp.lap === EX.defaultLaps ? '권장 바퀴를 다 돌았다. 더 돌수록 보상도 위험도 커진다.' : `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+
     // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
     const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);
     if (d) sheet.classList.add('bha-sheet--wide');
@@ -757,10 +772,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   });
 }
 
-/** 배율 표시: ×1.25 · ×1.5 · ×2 (끝 0 없앰) */
-function fmtMult(k: number): string {
-  return String(Math.round(k * 100) / 100);
-}
 
 /** 걷기 상태 칩 (리디자인 v2 .bha-chip--status, GDD 183장 S08): 아이콘 + 작은 막대 + 고정 폭 숫자(nw 자리) [+ 뒤 글].
  *  color = 디자인 토큰 이름(막대·아이콘 색). 위험이면 위험 색 테두리. 이름·값 전체는 aria-label·title 로 */

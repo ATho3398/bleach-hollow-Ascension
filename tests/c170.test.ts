@@ -70,7 +70,7 @@ describe('C.170 원정 출발·걷기·일시정지·설정', () => {
     expect(read('src/ui/planView.ts')).toContain("const go = el('div', 'bha-dock bha-plan__go');");
     const pv = read('src/ui/planView.ts');
     expect(pv).toContain('const planner = h.tilesLocked ? null : roadPlanner(');
-    expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 칸 '");
+    expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 타일 '"); // GDD 193장 19 (C.307): 두 탭 같은 말
   });
   it('걷기 화면 위 가운데 길 칸 줄은 C.176 에 삭제 (GDD 104장 3)', () => {
     expect(read('src/ui/expeditionView.ts')).not.toContain('bha-exp__strip');
