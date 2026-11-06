@@ -176,5 +176,7 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
     'tutorial-clear': `첫 모험을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
     abort: `모험 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,
+    // C.311 (GDD 192장 1): 나간 뒤 시한 초과·새 패치 — 패배와 같은 정산 (결과 화면 없이 방 안내 한 줄로 끝나지만 기록 표시용)
+    abandoned: `모험을 이어 가지 못해 실패로 끝났다. 빈사 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
   }[reason];
 }

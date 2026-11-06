@@ -17,7 +17,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -28,7 +28,7 @@ import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
 } from '../game';
@@ -201,6 +201,22 @@ export function startApp(host: HTMLElement): void {
     setSfxSuspended(away);
     try { bgm().setSuspended(away); } catch { /* 소리는 부가 */ }
   });
+  // 원정 중 앱 이탈 (GDD 192장 1, C.311): 떠난 시각을 중간 저장에 적어 둔다(이어 하기 시한의 기준). 시한(30분)을 넘겨 돌아오면 이어 하지 않고 다시 열어
+  // readActiveExpedition 이 모험 실패로 정산하게 한다(전투 일시정지·걷기 시계가 멈춰 있던 상태를 억지로 걷지 않는다). 시한 안에 돌아오면 떠난 시각을 지운다
+  let awayAt = 0;
+  onAppAway((away) => {
+    if (!save || slot === 0 || !activeExp || activeExp.phase === 'ended') { awayAt = 0; return; }
+    const snap = save.activeExpedition;
+    if (away) {
+      awayAt = Date.now();
+      if (snap) { markExpeditionLeft(snap, awayAt); persist(); }
+      return;
+    }
+    const expired = awayAt > 0 && Date.now() - awayAt > resumeWindowMs();
+    awayAt = 0;
+    if (expired) { window.location.reload(); return; }
+    if (snap?.leftAtMs !== undefined) { markExpeditionBack(snap); persist(); }
+  });
   installAppAway();
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
@@ -232,7 +248,20 @@ export function startApp(host: HTMLElement): void {
     isPreGame: () => nav.top?.id === 'title' || nav.top?.id === 'species',
     saveNow: () => { if (nav.top && !nav.top.locked) persist(); },
   });
-  /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
+  /** 이어 하지 못한 모험 안내 한 줄 (GDD 192장 1, C.311 — text-style: 한 줄·'~다'): 시한 초과·새 버전이면 실패로 정산했다, 첫 모험 튜토리얼은 처음부터, 손상은 기록만 */
+  const abandonNote = (r: { reason: AbandonReason; settled: boolean }): string => {
+    if (r.reason === 'corrupt') return r.settled ? '저장된 모험이 손상돼 실패로 끝났다.' : '저장된 모험이 손상돼 이어 가지 못했다.';
+    const why = r.reason === 'stale' ? `${BALANCE.provisional.expedition.resumeWindowMinutes}분 넘게 비워` : '새 버전이 나와';
+    return r.settled ? `${why} 모험이 실패로 끝났다.` : `${why} 첫 모험을 처음부터 다시 한다.`;
+  };
+  /** 이어 하지 못한 모험 알림 창 (GDD 193장 4, 코딩216 개선점 4: 옛 '지웠다' 글은 방 구석 한 줄뿐이라 눈에 안 띄었다) — 방 위에 [확인] 하나짜리 창(귀환 카드 C.170 과 같은 틀).
+   *  본문 = 안내 한 줄 + 정산했으면 전투·흡수·골드·타일 요약. 방 구석 한 줄(resumeNote)은 창을 닫은 뒤에도 남는다 */
+  const showAbandonCard = (r: { reason: AbandonReason; settled: boolean; exp: ExpeditionState | null }, faction: FactionConfig): void => {
+    const title = r.settled ? '모험 실패' : r.reason === 'corrupt' ? '모험 손상' : '첫 모험 다시';
+    const tail = r.settled && r.exp ? ` ${abortSummaryLine(r.exp, faction)}${summarize(r.exp).lost.length > 0 ? ` · 잃은 타일 ${summarize(r.exp).lost.length}장` : ''}` : '';
+    confirmDialog({ title, body: `${abandonNote(r)}${tail}`, yes: '확인', single: true, onYes: () => {} });
+  };
+  /** 이어 하지 못한 모험 안내 한 줄. 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
@@ -786,9 +815,11 @@ export function startApp(host: HTMLElement): void {
       nav.reset({ id: 'expedition', locked: true, render: () => { resumeExpedition(active.exp); root.scrollTop = 0; } });
       return;
     }
-    // 손상·구버전 원정이면 readActiveExpedition 이 비웠다 → 방에서 안내 한 줄 (renderRoom 이 다시 확인)
+    // 이어 하지 못한 원정(시한 초과·새 버전·손상)은 readActiveExpedition 이 실패로 정산하고 비웠다 → 방에서 안내 한 줄 (GDD 192장 1, C.311)
+    if (active && active.reason !== 'none') resumeNote = abandonNote(active);
     persist();
     nestScreen();
+    if (active && active.reason !== 'none') showAbandonCard(active, getFaction(loaded.factionId));
   }
 
   // ── 세로 전환 멈춤·가로 복귀 카운트다운 (Q-3): 전투·원정 중에 세로로 돌리면 멈추고, 가로로 돌아오면 3초 뒤 이어한다 ──
@@ -998,8 +1029,9 @@ export function startApp(host: HTMLElement): void {
     showTitleToasts(s, faction, persist);
     const active = readActiveExpedition(s);
     if (!active.ok && active.reason !== 'none') {
-      persist(); // 손상·구버전 영역을 비운 것을 저장
-      resumeNote = active.reason === 'version' ? '저장된 모험이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 모험이 손상되어 이어할 수 없어 지웠다.';
+      persist(); // 실패 정산·비운 것을 저장 (GDD 192장 1, C.311)
+      resumeNote = abandonNote(active);
+      showAbandonCard(active, faction);
     }
     const props = roomOf(faction).props;
     setBgm('nest');

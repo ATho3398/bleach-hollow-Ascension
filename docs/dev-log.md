@@ -2304,3 +2304,18 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 결과(잰 값, C.309 와 같은 강제 뽑기 — 긴 이름·이벤트·새 타일): 창 배치(lapLayout) 6 조건 모두 C.308/309 와 같은 값([귀환]/[한 바퀴 더] 안 움직임), 아이콘 24 로 들어가 20 으로 줄일 일 없음. 이름 한 줄·잘림 0·표시 겹침 0. 폰 점검 = 설명 두 줄 말줄임(결정대로 유지)만.
 - 테스트: `tests/c309.test.ts` 아이콘 검사로 바꿈(3). 캡처 `docs/captures/c310/{hollow,shinigami}-{pc,ph,ph115}-6-lapend.png` + proof.json(`node scripts/c309-proof.cjs docs/captures/c310`).
 
+## C.311 — 192장 1 이어 하지 못한 원정 = 모험 실패 정산 (나간 뒤 30분 · 새 패치 · 손상) + 193장 4 알림 창 (GDD 192장 1·193장 4, v5.463, S-23, 코딩217 Fable)
+- 사용자 원문: "ㄴㄴ 모험하다 나가고 일정시간 지나거나, 새패치나오면 그냥 모험 실패로 처리 ㄱㄱ" (마스터AH 정정 지시 11-06 13:08). 모델 Fable = 세이브·엔진(automation 1장 11-06 규칙).
+- **원인(코딩213 발견)**: `restoreExpedition` 이 밸런스 버전이 다르면 'version' 으로 돌려 `readActiveExpedition` 이 원정 중간 저장을 통째로 지움 → 배포 뒤 이어하기 때 흡수·노력치·블록·특성·전리품·골드·전투 기록이 다 사라지고 런 로그에도 안 남았다.
+- **바꾼 것**:
+  - `src/config/balance.ts`: `provisional.expedition.resumeWindowMinutes = 30`(신설), BALANCE_VERSION 108 → 109.
+  - `src/engine/expedition/snapshot.ts`: 밸런스 버전을 거르지 않고 돌려줌(`balanceVersion`·`leftAtMs`), `leftAtMs`(나간 시각, 없어도 되는 칸 — 형식 8 그대로), `markExpeditionLeft/Back`·`expeditionLeftAt`.
+  - `src/engine/expedition/expedition.ts`: `EndReason 'abandoned'`·`AbandonReason`·`ExpeditionState.abandoned`·`failExpedition(exp, 'stale'|'version')`(패배로 끝냄, 어느 단계든), `buildRunRecord` 에 `abandoned`.
+  - `src/game.ts`: `readActiveExpedition(save, nowMs)` — 시한 초과(stale)·버전 다름(version)이면 `failExpedition` + `recordExpedition`(패배 경로 그대로: 쓰러짐·마지막 바퀴 골드·획득물 상실, 그 전 바퀴 획득·노력치·블록·전투 기록은 남음), 손상(corrupt)은 읽히는 값이 있으면 런 로그 실패 한 줄, 첫 모험 튜토리얼은 정산 없이 비움. `resumeWindowMs()`. SAVE_FORMAT_VERSION 61 → 62(`SAVE_MIGRATIONS[61]` 구조 보정 없음, MIN 54 고정).
+  - `src/engine/runLog.ts`: `RunRecord.endReason 'abandoned'`·`abandoned?: 'stale'|'version'|'corrupt'`(9장 — 히든 조건이 읽을 수 있게).
+  - `src/ui/app.ts`: 로드·방 그리기에서 정산 결과를 **방 위 [확인] 창 '모험 실패'**(`showAbandonCard`, 귀환 카드 C.170 틀 — 본문 = 안내 한 줄 + `abortSummaryLine` 요약 + 잃은 타일 수, 193장 4: 옛 '지웠다' 글은 방 구석 한 줄뿐이라 안 보였음 r216) + 닫은 뒤에도 남는 오른쪽 위 한 줄(`abandonNote`)로. 앱 이탈(C.193 onAppAway) 때 `leftAtMs` 저장·시한 안 복귀면 지움·시한 넘긴 복귀(같은 탭)는 다시 열어 같은 정산. `src/ui/roomView.ts` 안내 줄 접두사('이어하기를 숨겼다:') 삭제. `src/ui/bha/room.css` 안내 줄 = 오른쪽 위(왼쪽 위에 두면 C.301 머리 위 상태 판과 겹침 — 캡처로 확인 뒤 옮김). `src/ui/labels.ts` endReasonText 'abandoned'.
+  - 같은 종류 전수 확인: BALANCE_VERSION 비교는 원정 중간 저장 하나뿐 — 수련장·탑·스토리는 중간 저장 자체가 없고 세이브 meta.balanceVersion 은 기록용(진행을 버리는 곳 없음).
+- 기획서 값 / 실제 값 / 이유: 시한 30분 = 마스터 지시 그대로(provisional). 튜토리얼 원정은 "정산 없이 비움" = 기획서에 없던 판단(튜토리얼을 패배로 정산하면 `firstRunPending` 이 runs 수를 봐 튜토리얼·+3 보상이 영영 건너뛰어짐). 손상은 상태를 못 살려 '기록만'(둥지 쓰러짐 없음).
+- 테스트: `tests/c311.test.ts` 10개(29분 이어 하기 / 31분 실패 정산 내용 / 옛 BALANCE_VERSION 실패 / leftAtMs 우선 / 손상 기록 / 튜토리얼 비움 / failExpedition 단계별 / 형식 62 마이그레이션). 형식 61 → 62 로 옛 테스트 14개 기대값 갱신(c120·c134·c136·c140·c144·c177·c178·c179·c184·c188·c198·c213·c223·c227), expedition-save·save-robust 는 저장 시각 5 → `nowMs 6` 으로 시한 안. 전체 229 파일 2691 통과. `npm run balance:check` 회귀 가드 통과(병렬 94초).
+- 캡처 `docs/captures/c311/`(1배, `scripts/c311-proof.cjs` + 중간 저장 JSON): `pc-<종족>-<stale|version>.png`(844×390)·`ph-<종족>-<stale|version>.png`(796×384 터치)·`pc-hollow-corrupt.png` = 방 위 [확인] 창(pc 창 400×136 · ph 400×155, 맨 위 레이어 확인), `pc-hollow-stale-after-card.png` = 창 닫은 뒤 오른쪽 위 한 줄(x 546~553·y 24 pc / 498~502·24 ph). proof.json = 창 제목·본문 + 정산 전후(runs 0 → 1 · battles 0 → 3 · 골드 +34(지킨 18 + 넘친 먹이) · 쓰러짐 true · 마지막 기록 endReason abandoned + 이유).
+- 명령 시각 11-06 13:05 KST / 답변 시각 아래 보고 참조.

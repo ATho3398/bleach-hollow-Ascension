@@ -23,21 +23,39 @@ import { MAX_DIFFICULTY } from '../difficulty';
 /** C.58: 6 (스토리 화 진행 story, 보스전 pending.boss) */
 /** C.75: 7 (원정 난이도 difficulty, GDD 32-1) */
 /** C.86: 8 (자유 원정 보스 등장 freeBoss, GDD 37장 — 7 은 freeBoss 없음(null)으로 이어한다) */
+/** C.311: 형식 그대로 8 — leftAtMs(나간 시각) 는 없어도 되는 칸, 밸런스 버전 차이는 여기서 거르지 않고 readActiveExpedition 이 실패 정산한다 (GDD 192장 1) */
 export const EXPEDITION_SNAPSHOT_VERSION = 8;
 
 export interface ExpeditionSnapshot {
   version: number;
-  /** 밸런스가 다르면 같은 시드가 같은 결과를 내지 않으므로 이어하지 않는다 */
+  /** 저장 때 밸런스 버전. 다르면(새 패치) 같은 시드가 같은 결과를 내지 않으므로 이어하지 않고 모험 실패로 정산한다 (readActiveExpedition, GDD 192장 1) */
   balanceVersion: number;
   savedAtMs: number;
+  /** C.311 (GDD 192장 1): 원정 중 앱을 떠난(백그라운드·닫음) 시각. 없으면 savedAtMs 가 나간 시각. 이어 하기 시한(resumeWindowMinutes)의 기준 */
+  leftAtMs?: number;
   /** 원정 화면 배속 (1/2/4) */
   speed: number;
   exp: ExpeditionState;
 }
 
 export type RestoreResult =
-  | { ok: true; exp: ExpeditionState; speed: number; savedAtMs: number }
+  | { ok: true; exp: ExpeditionState; speed: number; savedAtMs: number; balanceVersion: number; leftAtMs: number | null }
   | { ok: false; reason: 'corrupt' | 'version' };
+
+/** 원정 중 앱을 떠난 시각을 중간 저장에 적는다 (C.311, GDD 192장 1). 돌아와 이어 하면 지운다(markExpeditionBack) */
+export function markExpeditionLeft(snap: ExpeditionSnapshot, nowMs: number): void {
+  snap.leftAtMs = nowMs;
+}
+
+/** 돌아와 이어 하면 떠난 시각을 지운다 (C.311) */
+export function markExpeditionBack(snap: ExpeditionSnapshot): void {
+  delete snap.leftAtMs;
+}
+
+/** 나간 시각 (C.311): 떠난 시각이 있으면 그것, 없으면 마지막 중간 저장 시각 */
+export function expeditionLeftAt(r: { savedAtMs: number; leftAtMs: number | null }): number {
+  return r.leftAtMs ?? r.savedAtMs;
+}
 
 /** 지금 원정 상태를 저장용으로 복제한다 (원본과 분리된 사본). 끝난 원정은 저장하지 않는다(null) */
 export function serializeExpedition(exp: ExpeditionState, speed: number, nowMs: number = Date.now()): ExpeditionSnapshot | null {
@@ -164,11 +182,13 @@ function validShape(e: unknown): e is ExpeditionState {
   return validVariants(e);
 }
 
-/** 저장된 값을 원정 상태로 되살린다. 손상되거나 형식·밸런스 버전이 다르면 ok:false (앱이 죽지 않게 예외는 던지지 않는다) */
+/** 저장된 값을 원정 상태로 되살린다. 손상되거나 형식 버전이 달라 읽을 수 없으면 ok:false (앱이 죽지 않게 예외는 던지지 않는다).
+ *  밸런스 버전은 거르지 않고 돌려준다(balanceVersion) — 다르면 readActiveExpedition 이 모험 실패로 정산한다 (C.311, GDD 192장 1) */
 export function restoreExpedition(raw: unknown): RestoreResult {
   try {
     if (!isObj(raw)) return { ok: false, reason: 'corrupt' };
-    if ((raw.version !== EXPEDITION_SNAPSHOT_VERSION && raw.version !== 7) || raw.balanceVersion !== BALANCE_VERSION) return { ok: false, reason: 'version' };
+    if (raw.version !== EXPEDITION_SNAPSHOT_VERSION && raw.version !== 7) return { ok: false, reason: 'version' };
+    if (!isNum(raw.balanceVersion)) return { ok: false, reason: 'corrupt' };
     // 형식 7 → 8: 자유 원정 보스 영역이 없으면 null (그 원정에는 보스가 나오지 않는다)
     if (raw.version === 7 && isObj(raw.exp) && raw.exp.freeBoss === undefined) raw.exp.freeBoss = null;
     if (!validShape(raw.exp)) return { ok: false, reason: 'corrupt' };
@@ -176,7 +196,7 @@ export function restoreExpedition(raw: unknown): RestoreResult {
     // 휴식 중에는 저장하지 않지만, 혹시 그 상태가 들어오면 휴식을 마친 상태로 되살린다
     if (exp.phase === 'rest') finishRest(exp);
     const speed = raw.speed === 2 || raw.speed === 4 ? raw.speed : 1;
-    return { ok: true, exp, speed, savedAtMs: isNum(raw.savedAtMs) ? raw.savedAtMs : 0 };
+    return { ok: true, exp, speed, savedAtMs: isNum(raw.savedAtMs) ? raw.savedAtMs : 0, balanceVersion: raw.balanceVersion, leftAtMs: isNum(raw.leftAtMs) ? raw.leftAtMs : null };
   } catch {
     return { ok: false, reason: 'corrupt' };
   }

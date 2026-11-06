@@ -13,7 +13,8 @@
 .bha-room__resumeinfo { margin-left: var(--bha-sp-2); font-size: var(--bha-fs-xs); font-weight: 500; color: inherit; }
 .bha-room__name { margin-right: auto; display: inline-flex; align-items: center; gap: var(--bha-sp-2); font-weight: var(--bha-fw-bold); }
 .bha-room__note { font-size: var(--bha-fs-xs); color: var(--bha-warn); flex: none; }
-.bha-room--home > .bha-room__note { position: absolute; left: var(--bha-sp-4); top: calc(var(--bha-sp-4) + var(--bha-btn-h-sm) + var(--bha-sp-2)); z-index: var(--bha-z-sticky); margin: 0; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); line-height: 1.6; }
+/* C.311 (GDD 192장 1): 이어 하지 못한 모험 안내 한 줄 — 오른쪽 위(머리 위 상태 판·왼쪽 위 HUD 와 안 겹침), 길면 줄임 */
+.bha-room--home > .bha-room__note { position: absolute; left: auto; right: var(--bha-sp-4); top: var(--bha-sp-4); max-width: 42%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: var(--bha-z-sticky); margin: 0; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-xs); background: var(--bha-plate-bg); line-height: 1.6; }
 
 .bha-room__body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; gap: var(--bha-sp-3); }
 

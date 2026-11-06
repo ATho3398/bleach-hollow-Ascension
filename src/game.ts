@@ -5,7 +5,7 @@ import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
 import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
-import { buildRunRecord, restoreExpedition, summarize, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
+import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
@@ -56,7 +56,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 61; // C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 62; // C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -1250,13 +1250,54 @@ export function canSynthesize(tileId: string): boolean {
 }
 
 
-/** 이어할 원정이 있는가. 저장된 값이 손상·구버전이면 영역을 비우고 이유를 알려 준다 (이어하기를 숨긴다) */
-export function readActiveExpedition(save: SaveData): (RestoreResult & { ok: true }) | { ok: false; reason: 'none' | 'corrupt' | 'version' } {
+export type ActiveExpeditionRead =
+  | (RestoreResult & { ok: true })
+  | { ok: false; reason: 'none' }
+  /** 이어 하지 못한 원정 (C.311, GDD 192장 1): settled = 모험 실패(패배)로 정산해 런 로그·둥지에 반영했다(exp 는 끝난 상태), false = 기록만 남기거나(손상) 첫 모험 튜토리얼이라 그냥 비웠다 */
+  | { ok: false; reason: AbandonReason; settled: boolean; exp: ExpeditionState | null };
+
+/** 이어 하기 시한(ms) (GDD 192장 1, provisional) */
+export function resumeWindowMs(): number {
+  return BALANCE.provisional.expedition.resumeWindowMinutes * 60_000;
+}
+
+/** 이어할 원정이 있는가 (GDD 192장 1, C.311). 원정 중간 저장이 ① 나간 뒤(leftAtMs, 없으면 savedAtMs) 시한(resumeWindowMinutes)을 넘겼거나 ② 밸런스 버전이 다르면(새 패치) 이어 하지 않고
+ *  **모험 실패(패배)로 정산**한다(recordExpedition 의 패배 경로 그대로: 쓰러짐·마지막 바퀴 획득물·골드 상실, 런 로그 runs endReason 'abandoned' + 이유). ③ 손상이면 상태가 없어 기록만(읽히는 만큼) 남기고 비운다.
+ *  첫 모험 튜토리얼은 정산하지 않고 비운다(처음부터 다시 — 튜토리얼 보상·안내가 runs 기록 수를 본다). 시한 안 + 같은 버전이면 그대로 이어 한다(밸런스 수치는 지금 값).
+ *  옛 동작(C.302 까지): 버전이 다르면 통째로 지워 흡수·노력치·블록·전리품·기록이 다 사라졌다 */
+export function readActiveExpedition(save: SaveData, nowMs: number = Date.now()): ActiveExpeditionRead {
   if (save.activeExpedition == null) return { ok: false, reason: 'none' };
-  const r = restoreExpedition(save.activeExpedition);
-  if (r.ok) return r;
-  save.activeExpedition = null;
-  return r;
+  const raw = save.activeExpedition;
+  const r = restoreExpedition(raw);
+  if (!r.ok) {
+    save.activeExpedition = null;
+    return { ok: false, reason: 'corrupt', settled: logCorruptExpedition(save, raw), exp: null };
+  }
+  const why: Exclude<AbandonReason, 'corrupt'> | null = r.balanceVersion !== BALANCE_VERSION ? 'version' : nowMs - expeditionLeftAt(r) > resumeWindowMs() ? 'stale' : null;
+  if (why === null) return r;
+  if (r.exp.tutorial) {
+    save.activeExpedition = null;
+    return { ok: false, reason: why, settled: false, exp: null };
+  }
+  failExpedition(r.exp, why);
+  recordExpedition(save, r.exp, nowMs); // activeExpedition 을 비우고 lastScreen 을 방으로
+  return { ok: false, reason: why, settled: true, exp: r.exp };
+}
+
+/** 손상된 원정 중간 저장 (C.311): 상태를 되살릴 수 없어 정산은 못 하고, 읽히는 값(runId·seed·종족)이 있으면 런 로그 runs 에 실패 기록 한 줄만 남긴다(9장). 남겼으면 true */
+function logCorruptExpedition(save: SaveData, raw: unknown): boolean {
+  const snap = isRec(raw) && isRec(raw.exp) ? raw.exp : null;
+  if (!snap || !Number.isInteger(snap.runId) || !Number.isInteger(snap.seed) || typeof snap.factionId !== 'string') return false;
+  if (snap.tutorial === true) return false;
+  const lap = Number.isInteger(snap.lap) && (snap.lap as number) >= 1 ? (snap.lap as number) : 1;
+  save.runLog.runs.push({
+    runId: snap.runId as number, laps: lap, outcome: 'defeated', gained: [], lost: [], endReason: 'abandoned', seed: snap.seed as number, factionId: snap.factionId,
+    gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false,
+    ...(typeof snap.groundId === 'string' ? { groundId: snap.groundId } : {}),
+    ...(Number.isInteger(snap.difficulty) ? { difficulty: snap.difficulty as number } : {}),
+    gold: 0, abandoned: 'corrupt', gender: save.gender,
+  });
+  return true;
 }
 
 /** 이어하기가 열 화면 (GDD 19-3): 마지막 화면이 원정이고 원정 중간 저장이 남아 있으면 원정, 아니면 방. 저장 내용의 손상 검사는 readActiveExpedition 이 한다 */
@@ -1697,6 +1738,9 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
       if (isRec(t.evolution) && isRec(t.evolution.abilities)) delete t.evolution.abilities.detached;
     }
   },
+  // 형식 61 → 62 (C.311, GDD 192장 1): 런 로그 runs 에 endReason 'abandoned'·abandoned 이유, 원정 중간 저장에 leftAtMs 가 더해졌을 뿐(없어도 되는 칸) — 옛 세이브는 그대로.
+  // 옛 원정 중간 저장은 readActiveExpedition 이 나간 시각(savedAtMs)·밸런스 버전으로 이어 할지 실패로 정산할지 정한다
+  61: () => undefined,
 };
 
 /** 형식 54 이상 세이브를 지금 형식까지 한 단계씩 올린다. 빠진 단계가 있으면 false (못 연다) */

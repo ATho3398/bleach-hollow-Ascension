@@ -399,7 +399,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const body = el('div', 'bha-room__body');
   body.append(scene);
   if (reviveBtn) body.append(reviveBtn); // 장면 밖(어두운 사망 장면 필터를 안 받게), 장면 왼쪽 위에 겹쳐 둔다 (GDD 177장 3)
-  const warn = hd.resumeNote ? el('p', 'bha-room__note', `이어하기를 숨겼다: ${hd.resumeNote}`) : null;
+  const warn = hd.resumeNote ? el('p', 'bha-room__note', hd.resumeNote) : null; // C.311: 이어 하지 못한 모험 안내 한 줄 (GDD 192장 1)
   const main = mountApp(dev.view, { cls: 'bha-room bha-room--home bha-v2' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 월드맵 물건 말고는 흐린 잠김 (room.css)

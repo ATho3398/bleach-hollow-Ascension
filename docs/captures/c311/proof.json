@@ -1,0 +1,392 @@
+{
+  "shots": {
+    "pc-hollow-stale": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "30분 넘게 비워 모험이 실패로 끝났다. 전투 3 · 포식 3 · 골드 +18 · 먹이 2",
+        "box": [
+          222,
+          127,
+          400,
+          136
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "30분 넘게 비워 모험이 실패로 끝났다.",
+        "noteBox": [
+          546,
+          24,
+          190,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "stale",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "pc-hollow-version": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "새 버전이 나와 모험이 실패로 끝났다. 전투 3 · 포식 3 · 골드 +18 · 먹이 2",
+        "box": [
+          222,
+          127,
+          400,
+          136
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "새 버전이 나와 모험이 실패로 끝났다.",
+        "noteBox": [
+          550,
+          24,
+          186,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "version",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "ph-hollow-stale": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "30분 넘게 비워 모험이 실패로 끝났다. 전투 3 · 포식 3 · 골드 +18 · 먹이 2",
+        "box": [
+          198,
+          124,
+          400,
+          136
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "30분 넘게 비워 모험이 실패로 끝났다.",
+        "noteBox": [
+          498,
+          24,
+          190,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "stale",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "ph-hollow-version": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "새 버전이 나와 모험이 실패로 끝났다. 전투 3 · 포식 3 · 골드 +18 · 먹이 2",
+        "box": [
+          198,
+          124,
+          400,
+          136
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "새 버전이 나와 모험이 실패로 끝났다.",
+        "noteBox": [
+          502,
+          24,
+          186,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "version",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "pc-shinigami-stale": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "30분 넘게 비워 모험이 실패로 끝났다. 전투 3 · 정화 흡수 3 · 골드 +18 · 식량 2",
+        "box": [
+          222,
+          118,
+          400,
+          155
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "30분 넘게 비워 모험이 실패로 끝났다.",
+        "noteBox": [
+          546,
+          24,
+          190,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "stale",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "pc-shinigami-version": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "새 버전이 나와 모험이 실패로 끝났다. 전투 3 · 정화 흡수 3 · 골드 +18 · 식량 2",
+        "box": [
+          222,
+          118,
+          400,
+          155
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "새 버전이 나와 모험이 실패로 끝났다.",
+        "noteBox": [
+          550,
+          24,
+          186,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "version",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "ph-shinigami-stale": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "30분 넘게 비워 모험이 실패로 끝났다. 전투 3 · 정화 흡수 3 · 골드 +18 · 식량 2",
+        "box": [
+          198,
+          115,
+          400,
+          155
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "30분 넘게 비워 모험이 실패로 끝났다.",
+        "noteBox": [
+          498,
+          24,
+          190,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "stale",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "ph-shinigami-version": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "새 버전이 나와 모험이 실패로 끝났다. 전투 3 · 정화 흡수 3 · 골드 +18 · 식량 2",
+        "box": [
+          198,
+          115,
+          400,
+          155
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "새 버전이 나와 모험이 실패로 끝났다.",
+        "noteBox": [
+          502,
+          24,
+          186,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 3,
+        "gold": 100033,
+        "collapsed": true,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "version",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    },
+    "pc-hollow-corrupt": {
+      "before": {
+        "runs": 0,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false
+      },
+      "card": {
+        "title": "모험 실패",
+        "body": "저장된 모험이 손상돼 실패로 끝났다.",
+        "box": [
+          222,
+          127,
+          400,
+          136
+        ],
+        "top": true
+      },
+      "after": {
+        "screen": "room",
+        "note": "저장된 모험이 손상돼 실패로 끝났다.",
+        "noteBox": [
+          553,
+          24,
+          183,
+          19
+        ],
+        "active": null,
+        "lastScreen": "room",
+        "runs": 1,
+        "battles": 0,
+        "gold": 99999,
+        "collapsed": false,
+        "lastRun": {
+          "endReason": "abandoned",
+          "abandoned": "corrupt",
+          "outcome": "defeated",
+          "laps": 2,
+          "gained": 0,
+          "lost": 0
+        }
+      }
+    }
+  },
+  "errors": []
+}

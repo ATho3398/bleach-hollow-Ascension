@@ -168,15 +168,15 @@ describe('150장 4 전투에 실림', () => {
 });
 
 describe('150장 6 세이브 형식 61', () => {
-  it('형식 61 · 문턱 54 고정 · 60 → 61 마이그레이션', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(61);
+  it('형식 62(C.311) · 문턱 54 고정 · 60 → 61 마이그레이션', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(62);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[60]).toBe('function');
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 1000))) as Record<string, any>;
     old.meta.format = 60;
     delete old.shared.traits;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(61);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // 60 → 61 → 62 (C.311 61 → 62 는 구조 보정 없음)
     expect(m.shared.traits).toEqual([]);
     expect(m.evolution.abilities!.detached).toBeUndefined();
   });
