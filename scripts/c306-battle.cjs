@@ -45,7 +45,7 @@ async function fresh(page, url, fi) {
 const hud = (page) => page.evaluate(() => {
   const t = document.querySelector('.bha-battle .bha-v2time b')?.textContent ?? '';
   const hp = [...document.querySelectorAll('.bha-battle .bha-v2hp .bha-num')].map((e) => e.textContent.replace(/\s+/g, ''));
-  return { timeLeft: Number(t), foe: hp[0] ?? '', me: hp[1] ?? '' };
+  return { timeLeft: Number(t), me: hp[0] ?? '', foe: hp[1] ?? '' }; // DOM 순서: 내 체력 막대 → 적 체력 막대
 });
 
 (async () => {
