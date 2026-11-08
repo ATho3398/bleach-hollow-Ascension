@@ -35,3 +35,16 @@ describe('C.319 걷기 왼쪽 위 = C.281 능력치 상태창 (GDD 197장 3)', (
     expect(css).toContain('.bha-exp__chips .bha-meter--compact .bha-meter__track { height: 6px; }');
   });
 });
+
+describe('C.321 판 안 색 = C.281 밝기 (GDD 197장 3 보충)', () => {
+  const css = read('src/ui/bha/walk-scene.css');
+  const old = read('src/ui/bha/battle-c281.css');
+  it('진행·배부름·컨디션·리스크 색을 판 안에서만 C.281 값(battle-c281.css 와 같은 값)으로', () => {
+    for (const k of ['--bha-sp', '--bha-hunger', '--bha-cond', '--bha-risk']) {
+      const v = old.match(new RegExp(`${k}:(#[0-9a-f]{6})`))![1];
+      expect(css).toContain(`${k}: ${v};`);
+    }
+    expect(css).toMatch(/:root\[data-bha-theme="shinigami"\] \.bha-exp__chips \{ --bha-text-1: #e6ebf3;/);
+    expect(css).toContain('.bha-exp__chips .bha-meter__track { border-radius: var(--bha-r-pill);');
+  });
+});

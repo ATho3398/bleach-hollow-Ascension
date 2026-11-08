@@ -2418,3 +2418,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **검증** `scripts/c317-proof.cjs`(pc 844×390 · ph 796×384 터치 × 두 종족): 튜토리얼 막힘 0 · 연습 리스크 줄 0 · 리스크 0 평소 흡수 = 정화/속성/능력치 +3/+2/+1, 놓아주기 줄 없음(설명 칸 '받는 것 ○○ +6' 만) · 리스크 한계 판 능력치 흡수 뒤 토스트 '포식/정화 흡수 능력치 힘 +4'(리스크 없음) · 버튼 높이·[흡수] 자리 C.317 과 같음 · 페이지 오류 0.
 - 테스트: `tests/c247` 표시 기대값 갱신(0 놓아주기 줄 없음 · first-absorb 리스크 이름 없음), `tests/c317` +1(연습 글) · 결과 한 줄 검사. typecheck · test(2754) · balance:check 통과(수치·세이브 형식 변경 없음).
 - 캡처 `docs/captures/c320/`(1배 10장): `{pc,ph}-{hollow,shinigami}-2-absorb-risk0-release` · `-3-after-absorb-toast` · `pc-*-1b-tutorial-absorb-noguide`.
+
+## C.321 — 197장 3 보충: 걷기 왼쪽 위 판 색·막대 = C.281 밝기 (GDD 197장 3, v5.477, S-23, 코딩229 Opus)
+- 마스터 지적: c281-hollow-ph-walk 와 after-hollow-ph-walk 를 나란히 보면 판 안 아이콘·막대 색이 C.281 보다 흐리다(채도·밝기 낮음, 글자도 약간 어두움).
+- **원인**: 흐림 필터·opacity·dim 클래스는 없음. 리디자인(C.282)이 색 토큰 값을 낮춤 — 배부름 #f0a43a → #c7883f · 컨디션 #4fb8e0 → #5b98a8 · 리스크 #ff4fd8 → #a65c8e · 진행 #d9a441 → #c29a52 · 글자2(호로) #bdb1a2 → #cbbca6 등. 막대도 C.281 = 둥근 끝 + 위 밝은 줄(그라데이션), 지금 = 각진 끝 + 단색.
+- **바꾼 것** (`src/ui/bha/walk-scene.css` 만): 판(.bha-exp__chips) 안에서만 진행·배부름·컨디션·리스크·위험·글자·선 토큰을 C.281 값으로(값 출처 = battle-c281.css, C.302 가 git 68acec7 에서 만든 값 — 새 색 아님), 사신 글자색은 `:root[data-bha-theme="shinigami"]`(종족 설정 theme 값). 막대 트랙·채움 = C.281 규칙 그대로. 다른 화면 영향 없음.
+- 테스트: `tests/c319.test.ts` +1(값이 battle-c281.css 와 같은지). typecheck · test · balance:check 통과(수치·세이브 변경 없음).
+- 캡처 `docs/captures/c321/`(1배): `compare-{hollow,shinigami}-{pc,ph}`(왼쪽 C.281 빌드 · 오른쪽 지금, 판 부분) · `after-…-walk`. 만드는 법 `scripts/c321-compare.cjs`.
