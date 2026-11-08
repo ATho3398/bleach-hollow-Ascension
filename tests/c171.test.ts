@@ -30,7 +30,7 @@ describe('이름 표시 함수 하나 (#5·10·28·82)', () => {
     expect(shownName('그랜드피셔(가칭)')).toBe('그랜드피셔(가칭)');
   });
   it('방 이름표·사진·도감·전투·탑·카드가 모두 같은 함수를 거친다', () => {
-    for (const f of ['src/ui/roomView.ts', 'src/ui/photoView.ts', 'src/ui/dexView.ts', 'src/ui/battleView.ts', 'src/ui/towerView.ts', 'src/ui/bha/itemUi.ts', 'src/ui/rankView.ts', 'src/ui/practiceView.ts']) expect(read(f), f).toContain('shownName(');
+    for (const f of ['src/ui/bha/statusBox.ts', 'src/ui/photoView.ts', 'src/ui/dexView.ts', 'src/ui/battleView.ts', 'src/ui/towerView.ts', 'src/ui/bha/itemUi.ts', 'src/ui/rankView.ts', 'src/ui/practiceView.ts']) expect(read(f), f).toContain('shownName(');
   });
 });
 

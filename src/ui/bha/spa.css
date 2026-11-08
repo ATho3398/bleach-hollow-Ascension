@@ -70,9 +70,11 @@
 .bha-spa__actor .bha-char.bha-spa__char { position: relative; left: auto; top: auto; transform: none; cursor: default; }
 .bha-spa__char.is-collapsed .bha-char__body { rotate: 0deg; translate: none; }
 .bha-spa__char:disabled { opacity: 1; }
-/* 머리 위 칩 한 줄 (v2 S05): 체력 · 컨디션 · 배부름 — 숫자는 도트 숫자 고정 폭 */
-.bha-spa__status.bha-room__status { position: static; transform: none; gap: var(--bha-sp-2); min-height: 0; padding: 0; }
-.bha-spa__status .bha-chip-meter { width: 22px; }
+/* 머리 위 상태 박스 (GDD 197장 4 = 방과 같은 부품 statusBox · 모양은 room.css .bha-room__chips/__status/__gauge 그대로): 액터 묶음 안 캐릭터 위 가운데.
+   방은 장면 기준 절대 자리라 여기서만 묶음 안 자리로 되돌린다(박스·ⓘ·이름표 모양은 손대지 않음). 좌우 잘림은 spaView clampStatus 가 translate 로 민다 */
+.bha-room__chips.bha-spa__chips { position: relative; z-index: 3; left: auto; top: auto; transform: none; margin-bottom: calc(var(--bha-sp-4) - var(--bha-sp-2) - var(--bha-spa-head, 0px)); }
+/* 발밑 체력 막대 (방 .bha-room__hp 와 같은 C.281 막대): 장면 바로 아래 자식 — 앞 물(z 2)보다 위. 자리(left·bottom)는 spaView 가 캐릭터 발 자리와 같이 옮기고, 막대 윗변 = 발 높이 + 4 */
+.bha-room__hp.bha-spa__hp { top: auto; z-index: 3; transform: translate(-50%, calc(100% + var(--bha-sp-2))); }
 
 /* 왼쪽 위: [방으로 돌아가기] · ⓘ 만 (v2 S05 — 어두운 판 버튼 + 어두운 원 ⓘ, 이름 글자 없음) */
 .bha-spa__hud { position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); z-index: 3; display: flex; align-items: center; gap: var(--bha-sp-4); }

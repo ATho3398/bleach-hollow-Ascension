@@ -1,10 +1,7 @@
 // 메인 방 화면 (GDD 16장, T-1): LCD 창 안의 방 장면. 방 안 물건이 곧 선택 항목이다.
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 장터=장터 화면(상점·온천·떠돌이 상인, C.201 GDD 127장) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
 // 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
-import { infoTip } from './bha/infoTip';
 import { fixParticles } from '../engine/josa';
-import { roomStatusInfo } from './bha/statusInfo';
-import type { InfoBody } from './bha/infoTip';
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
@@ -13,22 +10,20 @@ import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf 
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
-import { button, el, icon, meter, mountApp } from './bha/dom';
-import { hpNumbers } from './bha/battle';
+import { button, el, mountApp } from './bha/dom';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
 import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
-import { careTalkKey, dyingClock, idleTalkKey, moodOf, pickLine, statusChips, CARE_STATUS_HINTS, type Mood } from './bha/roomLogic';
-import { CARE_STATUS_NAMES, dyingLeftMs, feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
+import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
+import { homeHpMeter, paintStatusBox, statusInfoButton, statusNameTag } from './bha/statusBox';
+import { feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
-import { rebirthMark } from './rebirthView';
 import { getFaction } from '../data/factions';
-import { formDisplayName, playerElementsOf } from '../engine/evolution';
-import { shownName } from './displayName';
+import { playerElementsOf } from '../engine/evolution';
 
 export interface RoomHandlers {
   onBook: () => void;
@@ -97,14 +92,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let resumeBtn: HTMLButtonElement | null = null;
   // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★.
   // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 한 칸('호로 트랙'/'사신 트랙', #9)
-  const stars = rebirthMark(save.rebirth.count);
   const others = hd.onSwitchTrack ? save.otherTracks : [];
-  // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다
-  let nameTag: HTMLElement | null = null;
-  if (stars || others.length > 0 || save.wear.plate) {
-    nameTag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
-    if (stars) nameTag.append(' ', stars);
-  }
+  // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다 (공용 statusBox — 온천도 같은 것)
+  const nameTag = statusNameTag(save, faction, !!hd.onSwitchTrack);
   // 빈사·사망 (GDD 177장 — 102-3·102-7 의 방 위 큰 안내 띠는 삭제): 상태는 머리 위 칩으로만, 남은 시간·푸는 법은 칩 ⓘ. 방 장면은 늘 같은 크기.
   // 사망이면 할 수 있는 일([부활], 확인 창 기본 = 아니오)이 장면 왼쪽 위에 따로 — 아무 안내 없이 막히지 않게 (177장 3)
   let reviveBtn: HTMLButtonElement | null = null;
@@ -243,25 +233,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3: 돌보기 뒤 막대가 천천히 참) */
   const paintGauges = (over?: Partial<Record<string, number>>) => {
     const chips = statusChips(n, faction).map((c) => (over?.[c.kind] !== undefined && c.value !== null ? { ...c, value: over[c.kind]! } : c));
-    statusBtn.setAttribute('aria-label', `상태 보기: ${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
-    // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
-    statusBtn.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
-    // 목록형 상태 게이지 (GDD 189장 4, C.281 이전 모양으로 되돌림): 한 줄씩 [아이콘 | 긴 막대 | 숫자 n]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름.
-    // 위험 구간 줄만 위험 색. 자세한 뜻은 ⓘ(줄 하나) · 누르면 상태 화면
-    const ordered = [...chips.filter((c) => c.value === null), ...chips.filter((c) => c.value !== null)];
-    statusBtn.replaceChildren(...ordered.map((c) => {
-      const row = el('span', `bha-room__gauge bha-room__chip--${c.kind}${c.danger ? ' is-danger' : ''}${c.value === null ? ' is-state' : ''}`);
-      const track = el('span', 'bha-room__gaugetrack');
-      const fill = el('i');
-      fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
-      track.append(fill);
-      row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
-      // 상태이상 줄 아래 푸는 법 짧게 (GDD 193장 15: '모험 1번' 류) — 자세한 것은 툴팁·ⓘ
-      if (c.short) row.append(el('span', 'bha-room__gaugehint', c.short));
-      if (c.hint) row.title = c.hint;
-      return row;
-    }));
-    if (nameTag) statusBtn.prepend(nameTag);
+    // 목록형 상태 게이지 (GDD 189장 4 · 190장 3, C.281 모양) — 공용 부품(statusBox, 온천도 같은 것). 자세한 뜻은 ⓘ · 누르면 상태 화면
+    paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ');
   };
   paintGauges();
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
@@ -271,16 +244,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   requestAnimationFrame(measureChips);
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
-  const statusInfoBtn = infoTip('상태', () => withDyingLeft(roomStatusInfo(statusChips(n, faction), faction)));
-  /** 빈사 줄에 남은 시간·푸는 법 (GDD 177장 2: 방 위 띠에 있던 정보) — 열 때마다 지금 시각으로 */
-  function withDyingLeft(body: InfoBody): InfoBody {
-    if (!n.collapsed || n.dead || typeof body === 'string' || Array.isArray(body)) return body;
-    return {
-      ...body,
-      groups: body.groups.map((g) => (g.title === CARE_STATUS_NAMES.collapsed ? { ...g, mark: undefined, lines: [`남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, CARE_STATUS_HINTS.collapsed] } : g)),
-    };
-  }
-  statusInfoBtn.classList.add('bha-room__statusinfo');
+  const statusInfoBtn = statusInfoButton(() => statusChips(n, faction), faction, n);
   chipRow.append(statusBtn, statusInfoBtn);
   // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
   const hpBox = el('div', 'bha-room__hp');
@@ -290,8 +254,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // C.281 모양 그대로 (GDD 192장 2): 기존 체력 막대(meter player) 하나, 숫자 '현재 / 최대' 는 막대 안 가운데, 30% 아래 위험 구간·위험 색
   const paintHp = (fraction?: number) => {
     const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
-    const { now, max } = hpNumbers(f * maxHp, maxHp);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: f < 0.3, valueText: `${now} / ${max}` }));
+    hpBox.replaceChildren(homeHpMeter(f, maxHp));
   };
   paintHp();
   scene.append(char, hpBox, chipRow, bubble);

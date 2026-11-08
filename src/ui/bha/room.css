@@ -185,7 +185,7 @@
   top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
   transform: translate(-50%, -100%);
 }
-/* 공용 바탕(온천 머리 위 칩 줄 .bha-spa__status 도 쓴다 — 그쪽은 v2 칩 한 줄 그대로) */
+/* 공용 바탕 — 방·온천(.bha-spa__status, GDD 197장 4) 모두 아래 박스 모양 (부품 = statusBox.ts) */
 .bha-room__status {
   position: relative; display: flex; align-items: center; gap: var(--bha-sp-2); min-height: var(--bha-btn-h-sm);
   margin: 0; padding: 0 var(--bha-sp-1); border: 0; border-radius: var(--bha-r-xs); background: none; touch-action: manipulation;

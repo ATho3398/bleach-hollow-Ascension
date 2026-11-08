@@ -10,12 +10,11 @@ import { fullnessOfNest, previewHomeHp, spaRateOf, type SpaEnd } from '../engine
 import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
-import { hpNumbers } from './bha/battle';
-import { button, el, icon, mountApp } from './bha/dom';
+import { el, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
-import { v2Icon } from './bha/iconMap';
+import { homeHpMeter, liveStatusChips, paintStatusBox, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
-import { applyCarePose, characterButton, roomCharArt, spaceBackButton } from './bha/room';
+import { applyCarePose, characterButton, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
 import { animOf } from './bha/animPlayer';
 import { roomOf, worldMapOf } from '../engine/faction';
 
@@ -115,10 +114,25 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const charAnim = animOf(char);
   /** 걷는 동안 = 걷기, 다 걸으면 = 자리면 온천 자세, 아니면 돌봄 상태 자세 그대로 (종이인형만 — 동작이 없으면 아무 것도 안 함) */
   const restLoop = charAnim?.has('dying') && (n.collapsed || n.weakened || n.tired) ? 'dying' : 'idle';
+  // 머리 위 상태 박스 + 바깥 ⓘ · 발밑 체력 막대 = 방과 같은 부품·모양 (GDD 197장 4, statusBox — C.301 박스 · C.303 막대)
+  const chipRow = el('div', 'bha-room__chips bha-spa__chips');
   const status = el('div', 'bha-room__status bha-spa__status');
   status.setAttribute('role', 'status');
+  /** 지금 보이는 배부름·컨디션 (paint 가 갱신) — ⓘ 창도 이 값으로 */
+  let shown = { fullness: fullnessOfNest(n), condition: n.condition };
+  const statusInfoBtn = statusInfoButton(() => liveStatusChips(n, faction, shown), faction, n);
+  chipRow.append(status, statusInfoBtn);
+  const nameTag = statusNameTag(save, faction);
   const actor = el('div', 'bha-spa__actor is-entering');
-  actor.append(status, char);
+  actor.append(chipRow, char);
+  // 박스 아래 끝 = 그림 윗변 위 8px (방 room.css .bha-room__chips 와 같은 간격): 캐릭터 상자 윗변에서 그림 윗변까지(charTopOffset 은 상자 중심 기준)만큼 내린다
+  requestAnimationFrame(() => {
+    const dy = Math.max(0, charTopOffset(art) + char.offsetHeight / 2);
+    if (char.offsetHeight) actor.style.setProperty('--bha-spa-head', `${Math.round(dy)}px`);
+    clampStatus();
+  });
+  // 체력 막대는 장면 바로 아래(앞 물보다 위)에 두고 캐릭터 자리를 따라 옮긴다 — 액터 안에 두면 앞 물(z 2)에 가린다
+  const hpBox = el('div', 'bha-room__hp bha-spa__hp');
   // 돌계단 (임시 도형): 계단 칸(물에 잠기는 칸, 자리 앞까지) 발 아래
   const stairs = SPA_PATH.slice(0, -1).filter((p) => p.wl !== null).map((p) => {
     const st = el('span', 'bha-spa__stair');
@@ -126,7 +140,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     st.style.bottom = `${p.bottom - 3}%`;
     return st;
   });
-  scene.append(el('div', 'bha-spa__water'), ...stairs, actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'));
+  scene.append(el('div', 'bha-spa__water'), ...stairs, actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'), hpBox);
   // 물에 잠김 (사용자 2026-10-30 "몸에다가 물 들어가는 식으로 색 … 몸이랑 물 표면 나뉘는 느낌"): 앉으면 물 높이 아래 몸이 비쳐 보이고(CSS 마스크) 그 높이에 물결 띠
   // 물결 띠는 앞 반(몸 앞)·뒤 반(몸 뒤에 가려짐) 두 장 — 몸을 뚫고 뒤쪽 테두리가 보이지 않게
   const ripples = (['back', 'front'] as const).map((side) => {
@@ -151,19 +165,28 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     }
     if (bodyBox) for (const r of ripples) r.style.top = `${bodyBox.top + bodyBox.h * wl}px`;
   };
-  /** 머리 위 칩 줄이 LCD 끝에서 잘리지 않게 좌우로 민다 (캐릭터가 화면 안에 있을 때만 — 밖에서 걸어 들어오는 중엔 같이 움직인다) */
+  /** 머리 위 상태 박스(+ 오른쪽 바깥 ⓘ)·발밑 체력 막대가 LCD 끝에서 잘리지 않게 좌우로 민다 (캐릭터가 화면 안에 있을 때만 — 밖에서 걸어 들어오는 중엔 같이 움직인다) */
   const clampStatus = () => {
     const sw = scene.clientWidth;
     if (!sw) return;
     const cx = ((parseFloat(actor.style.left) || 0) / 100) * sw;
-    const half = status.offsetWidth / 2;
     const pad = 6;
-    const dx = cx < 0 || cx > sw ? 0 : Math.min(0, sw - pad - (cx + half)) + Math.max(0, pad - (cx - half));
-    status.style.translate = dx ? `${Math.round(dx)}px 0` : '';
+    const shift = (left: number, right: number) => (cx < 0 || cx > sw ? 0 : Math.min(0, sw - pad - (cx + right)) + Math.max(0, pad - (cx - left)));
+    const half = status.offsetWidth / 2;
+    const dx = shift(half, half + statusInfoBtn.offsetWidth + 2);
+    // 위 끝 하한 (방 C.281 과 같은 뜻): 박스+이름표가 장면 위로 나가면(상태이상 줄이 늘어 박스가 높을 때) 그만큼 아래로 — 머리와 겹쳐도 잘리지 않게
+    const top = actor.offsetTop + chipRow.offsetTop - (nameTag ? nameTag.offsetHeight + 4 : 0);
+    const dy = Math.max(0, pad - top);
+    chipRow.style.translate = dx || dy ? `${Math.round(dx)}px ${Math.round(dy)}px` : '';
+    const hh = hpBox.offsetWidth / 2;
+    const hx = shift(hh, hh);
+    hpBox.style.translate = hx ? `${Math.round(hx)}px 0` : '';
   };
   const put = (left: number, bottom: number, wl: number | null) => {
     actor.style.left = `${left}%`;
     actor.style.bottom = `${bottom}%`;
+    hpBox.style.left = `${left}%`;
+    hpBox.style.bottom = `${bottom}%`;
     setWl(wl);
     clampStatus();
   };
@@ -225,28 +248,11 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   }));
   let exiting = false;
 
-  // 머리 위 칩 한 줄 (v2 S05 — 방 상태 칩과 같은 .bha-chip--status): 아이콘 · 짧은 막대 · 도트 숫자(고정 폭). 체력은 '/ 최대' 를 작게
-  const gauge = (kind: string, ic: Element, pct: number, value: number, danger: boolean, max?: number) => {
-    const chip = el('span', `bha-chip bha-chip--status bha-room__chip--${kind}${danger ? ' is-danger' : ''}`);
-    const m = el('span', 'bha-chip-meter');
-    const fill = el('i');
-    fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-    m.append(fill);
-    const num = el('b', '', String(value));
-    if (max !== undefined) num.style.setProperty('--nw', `${String(max).length}ch`);
-    chip.append(ic, m, num);
-    if (max !== undefined) chip.append(el('span', 'bha-room__chipmax', `/${max}`));
-    return chip;
-  };
-  // 컨디션도 온천에서 오른다 (GDD 135장 2)
+  // 방과 같은 상태 박스(배부름·컨디션·영압 안정도·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
   const paint = (fraction: number, fullness: number, condition: number) => {
-    const { now, max } = hpNumbers(fraction * maxHp, maxHp);
-    status.setAttribute('aria-label', `체력 ${now} / ${max}, 컨디션 ${Math.round(condition)}, ${faction.fullnessName} ${Math.round(fullness)}`);
-    status.replaceChildren(
-      gauge('hp', v2Icon('heart'), fraction * 100, now, fraction < 0.3, max),
-      gauge('cond', icon('i-cond'), condition, Math.round(condition), condition <= 30),
-      gauge('hunger', icon('i-hunger'), fullness, Math.round(fullness), fullness <= 20),
-    );
+    shown = { fullness, condition };
+    paintStatusBox(status, liveStatusChips(n, faction, shown), nameTag);
+    hpBox.replaceChildren(homeHpMeter(fraction, maxHp));
     clampStatus();
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }

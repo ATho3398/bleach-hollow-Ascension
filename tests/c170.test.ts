@@ -33,7 +33,8 @@ describe('C.170 방·독', () => {
   it('방 위 이름+트랙 줄 삭제 → 트랙 전환은 더보기 칸 "○○ 트랙", 이름은 상태 칩 위', () => {
     expect(room).not.toContain("sw.dataset.sc = 'track-switch'");
     expect(room).toContain('label: `${getFaction(t.factionId).name} 트랙`');
-    expect(room).toContain('statusBtn.prepend(nameTag)');
+    expect(room).toContain("paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ')"); // C.318: 공용 부품 statusBox
+    expect(read('src/ui/bha/statusBox.ts')).toContain('if (nameTag) box.prepend(nameTag);');
   });
   it('방 첫 선택 = 모험(돌봄 요청 중이면 그 버튼)', () => {
     expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('outside');"); // C.215: 밖으로 고정 · C.204: 월드맵 켬이면 밖으로

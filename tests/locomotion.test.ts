@@ -99,10 +99,12 @@ describe('체력 막대 = 길고 두껍게, 숫자는 막대 안 (GDD 127장 1, 
   });
   it('방 발밑·걷기 체력 막대가 inside, 방 막대는 140px (온천은 C.201 128장 6 머리 위 상태 창으로 바뀜)', () => {
     // C.303 (GDD 192장 2): 방·걷기 발밑 = C.281 모양 그대로(meter player inside, 검정 판 140px). 걷기 자리는 189장(C.298) 발밑 그대로
-    expect(read('src/ui/roomView.ts')).toMatch(/meter\(\{ kind: 'player'[^)]*inside: true/);
+    // C.318 (GDD 197장 4): 방·온천 발밑 막대 = 공용 statusBox.homeHpMeter
+    expect(read('src/ui/bha/statusBox.ts')).toMatch(/meter\(\{ kind: 'player'[^)]*inside: true/);
+    expect(read('src/ui/roomView.ts')).toContain('homeHpMeter(');
     expect(read('src/ui/expeditionView.ts')).toMatch(/meter\(\{ kind: 'player'[^)]*inside: true/);
     expect(read('src/ui/bha/walk-scene.css')).toMatch(/\.bha-lcd \.bha-exp__hp \{[^}]*width: 140px;/);
-    expect(read('src/ui/spaView.ts')).toContain("gauge('hp', v2Icon('heart')");
+    expect(read('src/ui/spaView.ts')).toContain('hpBox.replaceChildren(homeHpMeter(fraction, maxHp));');
     expect(read('src/ui/bha/room.css')).toMatch(/\.bha-room__hp \{[^}]*width: 140px;/);
   });
   it('전투 체력 막대도 숫자를 막대 안에', () => {
