@@ -41,12 +41,26 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('역관절 걷기: 늘 한 발은 디뎌 있고(발목이 쉬는 자세 높이 그대로) 바닥에 묻히지 않는다 — 역관절 기본 = 사용자 도트(GDD 115-A 69)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
     const piv = (rig.bodyJoints!.dg as { pivots: Record<string, [number, number]> }).pivots;
-    const tol = 0.6 * ((rig as { cut?: { scale?: number } }).cut?.scale ?? 1); // 도트 배율만큼(2배 = 1.2칸, 115-A 71)
+    const tol = 0.6 * ((rig as { cuts?: Record<string, { scale?: number }> }).cuts?.dg?.scale ?? 1); // 도트 배율만큼(2배 = 1.2칸, 115-A 71)
     for (let t = 0; t <= dg.move!.duration; t += 40) {
       const m = boneMatrices(rig, samplePose(rig, dg.move!, t), 'dg');
       const lift = (['foot_L', 'foot_R'] as const).map((f) => piv[f]![1] - apply(m[f]!, piv[f]!)[1]); // + = 뜸, - = 묻힘
       expect(Math.min(...lift), `t=${t} 디딘 발`).toBeLessThan(tol);
       expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-tol);
+    }
+  });
+  it('덩치(사용자 도트, 115-A 72): 부위 12개, 전용 묶음 = 대기·걷기·공격(모든 뼈), 걷기에서 늘 한 발은 디딤', () => {
+    expect(Object.keys(rig.bodies.hb!).sort()).toEqual(['arm_L', 'arm_R', 'foot_L', 'foot_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
+    expect(rig.looks['brute-base']!.body).toBe('hb');
+    expect(Object.keys(sets.brute!).filter((k) => k !== 'note').sort()).toEqual(['attack', 'idle', 'move']);
+    const hb = resolveMotions(rig, motions, sets, 'hb');
+    for (const id of ['idle', 'move', 'attack']) for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']) expect(sets.brute![id]!.tracks[b], `${id}.${b}`).toBeDefined();
+    const piv = (rig.bodyJoints!.hb as { pivots: Record<string, [number, number]> }).pivots;
+    for (let t = 0; t <= hb.move!.duration; t += 40) {
+      const m = boneMatrices(rig, samplePose(rig, hb.move!, t), 'hb');
+      const lift = (['foot_L', 'foot_R'] as const).map((f) => piv[f]![1] - apply(m[f]!, piv[f]!)[1]);
+      expect(Math.min(...lift), `t=${t}`).toBeLessThan(1.2);
+      expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-1.2);
     }
   });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
