@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """사용자 도트를 종이인형 부위로 자르기 (GDD 115-A 45·47): 뼈대 데이터 skeletons.<몸>(슬롯 → 뼈대 선, 1배 그림 좌표)에서
 칸마다 가장 가까운 선의 슬롯이 그 칸을 가진다. 슬롯마다 꼭 맞게 잘라 <뼈대>/<몸>/<슬롯>.png 로 저장하고 at·size 를 적는다.
-그림 좌표 = 캔버스 좌표(도트를 캔버스 왼쪽 위에 그대로 둔 것).
-사용: python3 scripts/rig/cut_ref.py serpent
+그림 좌표 = 캔버스 좌표(도트를 캔버스 왼쪽 위에 그대로 둔 것). cut.at = [x, y] 가 있으면 도트 왼쪽 위를 캔버스 그 자리에 둔다
+(사람형 역관절 기본 dg — 바닥에 발을 맞춤, GDD 115-A 69). 사람형(humanoid)은 작업본 저장 형식(feet_weapon.dump)으로 쓴다.
+사용: python3 scripts/rig/cut_ref.py serpent | beast | humanoid
 """
 import json
 import os
@@ -13,6 +14,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import DRAFT_DIR, ROOT  # noqa: E402
+from feet_weapon import dump  # noqa: E402
 
 
 def dseg(px, py, a, b):
@@ -29,12 +31,15 @@ def main(rig_id):
     cut = rig['cut']
     src = np.array(Image.open(os.path.join(ROOT, cut['image'])).convert('RGBA'))
     lines = {k: [p for st in v for p in st['pts']] for k, v in rig['skeletons'][cut['body']].items()}
+    strokes = {k: [st['pts'] for st in v] for k, v in rig['skeletons'][cut['body']].items()}
+    ox, oy = cut.get('at', [0, 0])
     h, w = src.shape[:2]
     owner = np.full((h, w), '', dtype=object)
     for y in range(h):
         for x in range(w):
             if src[y, x, 3]:
-                owner[y, x] = min(lines, key=lambda k: min(dseg(x + .5, y + .5, a, b) for a, b in zip(lines[k], lines[k][1:])))
+                # 획마다 따로(한 슬롯에 떨어진 획이 여럿이어도 획 사이를 잇지 않음)
+                owner[y, x] = min(strokes, key=lambda k: min(dseg(x + ox + .5, y + oy + .5, a, b) for st in strokes[k] for a, b in zip(st, st[1:])))
     body = {}
     out_dir = os.path.join(DRAFT_DIR, rig_id, cut['body'])
     os.makedirs(out_dir, exist_ok=True)
@@ -47,9 +52,12 @@ def main(rig_id):
         part = src[y0:y1, x0:x1].copy()
         part[~m[y0:y1, x0:x1]] = 0
         Image.fromarray(part).save(os.path.join(out_dir, f'{slot}.png'))
-        body[slot] = {'art': f"{cut['body']}/{slot}", 'at': [int(x0), int(y0)], 'size': [int(x1 - x0), int(y1 - y0)]}
+        body[slot] = {'art': f"{cut['body']}/{slot}", 'at': [int(x0 + ox), int(y0 + oy)], 'size': [int(x1 - x0), int(y1 - y0)]}
     rig['bodies'][cut['body']] = body
-    open(path, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
+    if rig_id == 'humanoid':
+        dump(rig)
+    else:
+        open(path, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
     print(rig_id, '부위', len(body), '→', out_dir)
 
 
