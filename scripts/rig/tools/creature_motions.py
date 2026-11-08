@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""사용자 도트를 잘라 쓴 몸의 전용 동작 만들기 — 역관절 기본(몸 dg, 동작 11개, GDD 115-A 70·71)·덩치(몸 hb, 공격·걷기, 115-A 72).
+"""사용자 도트를 잘라 쓴 몸의 전용 동작 만들기 — 역관절 기본(몸 dg, 동작 11개, GDD 115-A 70·71)·덩치(몸 hb, 공격·걷기, 115-A 72)·짐승(몸 bst, 대기·걷기·공격, 115-A 73).
 (옛 이름 dg_motions.py — 덩치를 같이 다루며 이름 바꿈)
 사용자 2026-11-09 "역관절 일단 2배 키우고, 필살기 저런거 말고 그냥 입 벌리는거로 해. 나루토에 미수옥 쏠 때 입 벌리는거마냥" → 2배(도트 배율 cut.scale)·아래턱(jaw)·특수1 입 벌리기 (115-A 71).
 사용자 2026-11-09 원문: "지금 역관절 기본이 너무 움직임이 이상해. 내가 준 이미지 토대로 다시 자르고 움직임 싹 다시 만들어도 되니까,
@@ -8,7 +8,7 @@ SPEC(아래) = 동작마다 키 시각과 뼈 각도(쉬는 자세 = 도트 그�
 가장 낮은 칸이 바닥 줄(y 80)에 닿게 계산해서 넣는다(걷기는 40ms 마다). 결과 = 작업본 motions.json 의 sets.digitigrade (통째로 바꿈).
 편집기에서 고친 값이 있으면 이 스크립트를 다시 돌릴 때 덮이니 주의.
 결과 = 몸의 묶음(bodyMotions: dg → digitigrade, hb → brute)을 통째로 바꿈.
-사용: python3 scripts/rig/tools/creature_motions.py [dg|hb]  (없으면 둘 다)
+사용: python3 scripts/rig/tools/creature_motions.py [dg|hb|bst]  (없으면 둘 다)
 """
 import json, math, sys
 import numpy as np
@@ -72,7 +72,9 @@ def build(spec):
     rx = [v * SC for v in spec.get('rootX', [0]*n)]  # 도트 배율(115-A 71) — 몸 옮기기 칸 수도 같이
     rr = spec.get('rootRot', [0]*n); rr = spec.get('rootRot', [0]*n)
     tr['root'] = [[t, a, x, 0] for t, a, x in zip(T, rr, rx)]
-    slots = list(PTS) if spec.get('ground') == 'all' else FEET
+    # 바닥에 닿는 부위: 발(없으면 종아리 — 짐승은 종아리에 발이 붙어 있음)
+    feet = [s for s in FEET if s in PTS] or [s for s in ('shin_L', 'shin_R') if s in PTS]
+    slots = list(PTS) if spec.get('ground') == 'all' else feet
     ts = list(range(0, spec['duration']+1, spec['sample'])) if spec.get('sample') else T
     if spec['sample'] if spec.get('sample') else False:
         base = tr['root']; tr['root'] = [[t, *samp(base, t)[:2], 0] for t in ts]
@@ -193,11 +195,34 @@ SPEC_HB['attack'] = dict(times=[0, 200, 320, 450, 650], duration=650, hit=320, r
     'leg_R': [0, -6, 10, 8, 0], 'shin_R': [0, 6, -8, -6, 0], 'foot_R': [0, 0, -2, -2, 0],
     'leg_L': [0, -4, -8, -6, 0], 'shin_L': [0, 4, 6, 4, 0], 'foot_L': [0, 0, 2, 2, 0]})
 
-SPECS = {'dg': SPEC, 'hb': SPEC_HB}
+# 짐승(몸 bst, 사용자 부위 시트 2026-11-09 — 조립 assemble_parts.py) — 사용자 "넣고 걷기나 공격같은거 내가 준거에 맞춰보삼": 대기·걷기·공격
+# 해골 머리·긴 발톱 팔(앞팔은 바닥을 짚음)·짧은 다리의 고릴라형. 다리는 종아리에 발이 붙어 있음(발 뼈 없음)
+SPEC_BST = {}
+SPEC_BST['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, bones={
+    'torso': [0, 3, 0], 'head': [0, -3, 0], 'arm_R': [0, -2, 0], 'forearm_R': [0, 2, 0], 'arm_L': [0, -3, 0], 'forearm_L': [0, 3, 0],
+    'leg_R': [0, 2, 0], 'shin_R': [0, -2, 0], 'leg_L': [0, 1, 0], 'shin_L': [0, -1, 0]})
+# 걷기: 너클 보행 — 앞팔과 뒷다리, 뒤팔과 앞다리가 짝. 몸을 낮게 흔들며 머리는 앞을 봄
+SPEC_BST['move'] = dict(times=[0, 200, 400, 600, 800], duration=800, loop=True, sample=40, bones={
+    'torso': [0, -5, 0, -5, 0], 'head': [0, 3, 0, 3, 0],
+    'arm_R': [-9, 0, 9, 0, -9], 'forearm_R': [5, -8, -5, 0, 5],
+    'arm_L': [9, 0, -9, 0, 9], 'forearm_L': [-5, 0, 5, -8, -5],
+    'leg_R': [8, 0, -10, 4, 8], 'shin_R': [-8, 0, 10, -12, -8],
+    'leg_L': [-10, 4, 8, 0, -10], 'shin_L': [10, -12, -8, 0, 10]})
+# 공격: 몸을 뒤로 젖히며 앞팔을 머리 위로 치켜들었다가 앞으로 내리찍음(발톱이 바닥을 긁음)
+SPEC_BST['attack'] = dict(times=[0, 200, 320, 450, 650], duration=650, hit=320, rootX=[0, 2, -4, -3, 0], bones={
+    'torso': [0, 10, -12, -8, 0], 'head': [0, 2, -6, -4, 0],
+    'arm_R': [0, 140, 10, 5, 0], 'forearm_R': [0, -30, 15, 10, 0],
+    'arm_L': [0, -20, 20, 12, 0], 'forearm_L': [0, 10, -10, -5, 0],
+    'leg_R': [0, -6, 10, 8, 0], 'shin_R': [0, 6, -8, -6, 0],
+    'leg_L': [0, -4, -8, -6, 0], 'shin_L': [0, 4, 6, 4, 0]})
+
+SPECS = {'dg': SPEC, 'hb': SPEC_HB, 'bst': SPEC_BST}
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
          'hb': ('덩치(몸 hb, 사용자 도트 2026-11-09) 전용 동작 — 공격·걷기(+ 숨쉬기만 하는 대기) (GDD 115-A 72, 사용자 "얘 추가하고, 얘로 한번 공격, 이동만 구현해볼래?"). '
-                '모든 뼈를 이 묶음에서 정함. 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발이 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로')}
+                '모든 뼈를 이 묶음에서 정함. 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발이 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로'),
+         'bst': ('짐승(몸 bst, 사용자 부위 시트 2026-11-09) 전용 동작 — 대기·걷기·공격 (GDD 115-A 73, 사용자 "짐승을 얘로 넣어봐 … 넣고 걷기나 공격같은거 내가 준거에 맞춰보삼"). '
+                 '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로')}
 
 
 def main(bodies):

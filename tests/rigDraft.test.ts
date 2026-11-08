@@ -63,6 +63,20 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-1.2);
     }
   });
+  it('짐승(사용자 부위 시트 조립, 115-A 73): 부위 10개(발 없음 — 종아리에 붙음), 전용 묶음 = 대기·걷기·공격, 걷기에서 늘 한 발은 디딤', () => {
+    expect(Object.keys(rig.bodies.bst!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
+    expect(rig.looks['beast-base']!.body).toBe('bst');
+    expect(Object.keys(sets.beast!).filter((k) => k !== 'note').sort()).toEqual(['attack', 'idle', 'move']);
+    const bs = resolveMotions(rig, motions, sets, 'bst');
+    const piv = (rig.bodyJoints!.bst as { pivots: Record<string, [number, number]> }).pivots;
+    for (let t = 0; t <= bs.move!.duration; t += 40) {
+      const m = boneMatrices(rig, samplePose(rig, bs.move!, t), 'bst');
+      // 종아리 끝(무릎 관절에서 아래로 그림 높이만큼) 대신 무릎 관절 높이로: 디딘 다리의 무릎은 쉬는 자세 높이 근처
+      const lift = (['shin_L', 'shin_R'] as const).map((s) => piv[s]![1] - apply(m[s]!, piv[s]!)[1]);
+      expect(Math.min(...lift), `t=${t}`).toBeLessThan(2.5);
+      expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-2.5);
+    }
+  });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
     const mv = b.motions.move!;

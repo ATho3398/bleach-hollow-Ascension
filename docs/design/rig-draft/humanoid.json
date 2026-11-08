@@ -180,6 +180,18 @@
       "leg_L": { "art": "hb/leg_L", "at": [16, 48], "size": [16, 20] },
       "shin_L": { "art": "hb/shin_L", "at": [20, 60], "size": [14, 16] },
       "foot_L": { "art": "hb/foot_L", "at": [26, 70], "size": [14, 10] }
+    },
+    "bst": {
+      "torso": { "art": "bst/torso", "at": [2, 20], "size": [28, 42] },
+      "head": { "art": "bst/head", "at": [-8, 14], "size": [24, 30] },
+      "arm_R": { "art": "bst/arm_R", "at": [-4, 30], "size": [18, 28] },
+      "forearm_R": { "art": "bst/forearm_R", "at": [-18, 48], "size": [24, 32] },
+      "arm_L": { "art": "bst/arm_L", "at": [22, 22], "size": [16, 24] },
+      "forearm_L": { "art": "bst/forearm_L", "at": [30, 40], "size": [20, 36] },
+      "leg_R": { "art": "bst/leg_R", "at": [6, 56], "size": [18, 14] },
+      "shin_R": { "art": "bst/shin_R", "at": [4, 70], "size": [18, 10] },
+      "leg_L": { "art": "bst/leg_L", "at": [24, 54], "size": [14, 18] },
+      "shin_L": { "art": "bst/shin_L", "at": [24, 70], "size": [14, 10] }
     }
   },
   "looks": {
@@ -260,6 +272,9 @@
     },
     "brute-base": {
       "body": "hb"
+    },
+    "beast-base": {
+      "body": "bst"
     }
   },
   "hairFrame": {
@@ -434,6 +449,21 @@
         "shin_L": [26, 64],
         "foot_L": [30, 72]
       }
+    },
+    "bst": {
+      "pivots": {
+        "root": [18, 56],
+        "torso": [18, 56],
+        "head": [12, 28],
+        "arm_R": [12, 32],
+        "forearm_R": [4, 52],
+        "arm_L": [30, 24],
+        "forearm_L": [38, 42],
+        "leg_R": [16, 58],
+        "shin_R": [16, 70],
+        "leg_L": [34, 56],
+        "shin_L": [34, 70]
+      }
     }
   },
   "bodyMotions": {
@@ -446,7 +476,8 @@
     "arrancar": "arrancar",
     "bare": "bare",
     "shinigami": "shinigami",
-    "hb": "brute"
+    "hb": "brute",
+    "bst": "beast"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {

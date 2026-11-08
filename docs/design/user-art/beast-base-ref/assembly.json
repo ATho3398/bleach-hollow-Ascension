@@ -1,0 +1,21 @@
+{
+ "note": "짐승 기본(몸 bst) 조립 — 사용자 부위 시트(2026-11-09, 80×44, 조각 10개)를 조립(GDD 115-A 73). parts.<슬롯>.sheet = 시트에서 그 조각의 왼쪽 위(그 칸을 포함한 덩어리), at = 1배 조립 자리(왼쪽 위), pivots = 1배 관절. 캔버스 = scale 배 + offset (발 = 바닥 줄 위, 엉덩이 x 18). 다시 만들기: python3 scripts/rig/assemble_parts.py docs/design/user-art/beast-base-ref/assembly.json",
+ "sheet": "docs/design/user-art/beast-base-ref/parts-2026-11-09.png",
+ "body": "bst",
+ "scale": 2,
+ "offset": [-26, 12],
+ "parts": {
+  "torso": {"sheet": [31, 4], "at": [14, 4]},
+  "head": {"sheet": [7, 0], "at": [9, 1]},
+  "arm_R": {"sheet": [14, 14], "at": [11, 9]},
+  "forearm_R": {"sheet": [0, 18], "at": [4, 18]},
+  "arm_L": {"sheet": [63, 6], "at": [24, 5]},
+  "forearm_L": {"sheet": [70, 22], "at": [28, 14]},
+  "leg_R": {"sheet": [25, 28], "at": [16, 22]},
+  "shin_R": {"sheet": [23, 39], "at": [15, 29]},
+  "leg_L": {"sheet": [46, 28], "at": [25, 21]},
+  "shin_L": {"sheet": [48, 39], "at": [25, 29]}
+ },
+ "pivots": {"root": [22, 22], "torso": [22, 22], "head": [19, 8], "arm_R": [19, 10], "forearm_R": [15, 20], "arm_L": [28, 6], "forearm_L": [32, 15],
+            "leg_R": [21, 23], "shin_R": [21, 29], "leg_L": [30, 22], "shin_L": [30, 29]}
+}
