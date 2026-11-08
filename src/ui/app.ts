@@ -55,8 +55,8 @@ import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rota
 import { blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { BUILD_ID, setUpdateHost } from '../pwa';
-import { CloudSync, type CloudConflict } from '../cloudSave';
-import { showCloudConflict, type CloudUi } from './cloudView';
+import { CloudSync, deviceLabel, markLoginGateDone, needsLoginGate, type ActiveDevice, type CloudConflict } from '../cloudSave';
+import { GATE_TEXT, loginGateDialog, otherDeviceDialog, showCloudConflict, type CloudUi } from './cloudView';
 import { isStandalone } from '../pwaInstall';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
@@ -227,10 +227,11 @@ export function startApp(host: HTMLElement): void {
 
   // 클라우드 세이브 (GDD 196장, C.323): 로그인은 선택. Firebase 층(cloudFirebase.ts + SDK)은 로그인 버튼을 누르거나 이미 로그인된 기기에서만 동적 import.
   // 테스트 모드(가짜 저장소)에서는 아예 없다. 저장할 때마다 schedule(묶어서 올림), 연결되면 onOnline, 앱이 숨겨지면 flush
+  const cloudFake = import.meta.env.DEV && new URLSearchParams(location.search).has('cloudfake');
   const cloud: CloudSync | null = testOn ? null : new CloudSync({
     storage: store,
     // 점검용 가짜(`?cloudfake`, dev 서버만 — 배포 빌드에서는 이 분기가 빠진다): 실제 Google 로그인 없이 설정 줄·고르기 창을 찍는다 (scripts/c323-proof.cjs)
-    loadBackend: () => (import.meta.env.DEV && new URLSearchParams(location.search).has('cloudfake')
+    loadBackend: () => (cloudFake
       ? import('../cloudFake').then((m) => m.loadFakeBackend())
       : import('../cloudFirebase').then((m) => m.loadFirebaseBackend())),
     build: BUILD_ID,
@@ -241,17 +242,24 @@ export function startApp(host: HTMLElement): void {
       else if (slot === 0 && nav.top?.id === 'title') nav.top.render(); // 처음 화면의 슬롯 줄 갱신
     },
     notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
-    standalone: () => isStandalone(),
+    deviceName: deviceLabel(navigator.userAgent, isStandalone()),
+    onBlocked: (by) => onCloudBlocked(by),
+    onUnblocked: () => onCloudUnblocked(),
     online: () => navigator.onLine !== false,
   });
   const cloudUi: CloudUi | undefined = cloud ? {
     state: () => cloud.state(),
-    signIn: () => void cloud.signIn(),
+    signIn: (o) => cloud.signIn(o),
+    signInGuest: (o) => cloud.signInGuest(o),
     signOut: () => void cloud.signOut(),
     email: (kind, email, password) => cloud.emailAction(kind, email, password),
+    link: (kind, email, password) => cloud.linkAccount(kind, email, password),
+    reclaim: () => cloud.reclaim(),
+    warm: () => cloud.warm(),
+    notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
     onChange: (cb) => cloud.onChange(cb),
   } : undefined;
-  /** 기기·클라우드 세이브가 다를 때 고르는 창 (GDD 196장 4): 잠긴 흐름(전투·원정·연출)·안내 중이면 방·처음 화면으로 돌아올 때 띄운다 */
+  /** 기기·클라우드 세이브가 다를 때 고르는 창 (GDD 196장 4): 잠긴 흐름(전투·원정·연출)·안내 중·처음 로그인 창·막기 창이면 방·처음 화면으로 돌아올 때 띄운다 */
   let pendingCloudConflict: CloudConflict | null = null;
   function queueCloudConflict(c: CloudConflict): void {
     pendingCloudConflict = c;
@@ -259,16 +267,77 @@ export function startApp(host: HTMLElement): void {
   }
   function showCloudConflictIfIdle(): void {
     const c = pendingCloudConflict;
-    if (!c || !nav.top || nav.top.locked || guideOpen || recoverOpen) return;
+    if (!c || !nav.top || nav.top.locked || guideOpen || recoverOpen || closeGate || closeBlocked) return;
     if (nav.top.id !== 'title' && nav.top.id !== 'room' && nav.top.id !== 'settings') return;
     pendingCloudConflict = null;
     showCloudConflict(c);
   }
+  // 한 기기만 (GDD 199장 4, C.325): 잠긴 화면(전투·원정·연출)에서 막히면 원정 떠남 시각을 적고 저장한 뒤 표시를 남기고 다시 켠다 — 켜지면 처음 화면 + 막기 창(차지하지 않음).
+  // 안 잠긴 화면이면 저장하고 처음 화면으로 돌아가 막기 창. 표시는 sessionStorage(같은 탭의 다시 켜기까지만 — 앱을 껐다 켜는 것은 '켜짐'이라 다시 차지한다)
+  const CLOUD_BLOCKED_SESSION_KEY = 'bha-cloud-blocked';
+  function readBlockedFlag(): ActiveDevice | null {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(CLOUD_BLOCKED_SESSION_KEY) ?? 'null') as ActiveDevice | null;
+      return raw && typeof raw.device === 'string' && typeof raw.at === 'number' ? raw : null;
+    } catch {
+      return null;
+    }
+  }
+  function writeBlockedFlag(by: ActiveDevice | null): void {
+    try {
+      if (by) sessionStorage.setItem(CLOUD_BLOCKED_SESSION_KEY, JSON.stringify(by));
+      else sessionStorage.removeItem(CLOUD_BLOCKED_SESSION_KEY);
+    } catch {
+      /* 저장소가 막혀 있으면 이번 실행만 */
+    }
+  }
+  let closeBlocked: (() => void) | null = null;
+  let closeGate: (() => void) | null = null;
+  function onCloudBlocked(by: ActiveDevice): void {
+    if (!cloudUi) return;
+    pendingCloudConflict = null;
+    writeBlockedFlag(by);
+    if (closeBlocked) return; // 이미 막기 창이 떠 있다(저쪽이 다시 차지했다) — 그대로
+    if (nav.top?.locked) {
+      // 전투·원정·연출: 앱 이탈과 같은 처리(GDD 192장 1) — 떠난 시각을 적고 저장한 뒤 다시 켠다(이어 하기 시한 안이면 그 지점부터)
+      if (save && slot !== 0) {
+        if (activeExp && activeExp.phase !== 'ended' && save.activeExpedition) markExpeditionLeft(save.activeExpedition, Date.now());
+        persist();
+      }
+      window.location.reload();
+      return;
+    }
+    if (save && slot !== 0) persist();
+    closeGate?.();
+    titleScreen();
+    closeBlocked = otherDeviceDialog(cloudUi, by);
+  }
+  function onCloudUnblocked(): void {
+    writeBlockedFlag(null);
+    const was = closeBlocked;
+    closeBlocked = null;
+    was?.();
+    if (!was || !cloud) return;
+    if (cloud.state().user) showToast({ eyebrow: '클라우드', title: '이 기기에서 이어 한다' }, 0, 3200);
+    else showLoginGate(); // 막기 창에서 로그아웃했다 → 다시 고른다
+    showCloudConflictIfIdle();
+  }
+  /** 처음 로그인 창 (GDD 199장 2): 처음 화면 위에. 로그인하면 기억해 다음부터 안 띄운다. 뒤로(로그인 없이)는 기억하지 않는다 — 다음에 다시 묻는다 */
+  function showLoginGate(): void {
+    if (!cloudUi || !cloud || closeGate || closeBlocked) return;
+    closeGate = loginGateDialog(cloudUi, (how) => {
+      closeGate = null;
+      if (how === 'signed-in') markLoginGateDone(store);
+      else showToast({ eyebrow: '클라우드', title: '로그인 없이 시작한다', meta: GATE_TEXT.skipped }, 0, 4600);
+      showCloudConflictIfIdle();
+    });
+  }
   if (cloud) {
-    cloud.start();
+    cloud.start({ blocked: readBlockedFlag() });
     window.addEventListener('online', () => cloud.onOnline());
     window.addEventListener('pagehide', () => void cloud.flush());
-    document.addEventListener('visibilitychange', () => { if (document.hidden) void cloud.flush(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) void cloud.flush(); else cloud.onVisible(); });
+    window.addEventListener('pageshow', () => { if (!document.hidden) cloud.onVisible(); });
   }
 
   const persist = () => {
@@ -2075,4 +2144,11 @@ export function startApp(host: HTMLElement): void {
   }
 
   titleScreen();
+  // 켠 직후 (GDD 199장 2·4, C.325): 막힌 채 다시 켰으면 막기 창, 로그인 안 된 채(한 번도 고르지 않음·온라인)면 처음 로그인 창
+  if (cloudUi) {
+    const blocked = readBlockedFlag();
+    if (blocked) closeBlocked = otherDeviceDialog(cloudUi, blocked);
+    // dev 서버(점검 스크립트 84개가 저장소를 비우고 처음 화면 버튼을 누른다)에서는 가짜 클라우드(`?cloudfake`)일 때만 — 배포 빌드에서는 늘
+    else if (needsLoginGate(store, navigator.onLine !== false) && (!import.meta.env.DEV || cloudFake)) showLoginGate();
+  }
 }

@@ -31,7 +31,7 @@ function fakeBackend(init: { user?: CloudUser | null; doc?: CloudDoc | null; off
   const authSubs = new Set<(u: CloudUser | null) => void>();
   const docSubs = new Set<(d: CloudDoc | null) => void>();
   const writes: CloudDoc[] = [];
-  const state = { offline: init.offline ?? false, loads: 0, signIns: [] as boolean[], resets: [] as string[] };
+  const state = { offline: init.offline ?? false, loads: 0, signIns: 0, resets: [] as string[] };
   const setUser = (u: CloudUser | null): void => {
     user = u;
     for (const cb of authSubs) cb(u);
@@ -42,18 +42,23 @@ function fakeBackend(init: { user?: CloudUser | null; doc?: CloudDoc | null; off
       cb(user);
       return () => authSubs.delete(cb);
     },
-    signIn: async (redirect) => {
-      state.signIns.push(redirect);
-      setUser({ uid: 'u1', name: '테스터', email: 't@example.com' });
+    signIn: async () => {
+      state.signIns++;
+      setUser({ uid: 'u1', name: '테스터', email: 't@example.com', anonymous: false });
     },
+    signInGuest: async () => setUser({ uid: 'g1', name: null, email: null, anonymous: true }),
     signInEmail: async (email, password) => {
       if (password === 'wrongpw') throw Object.assign(new Error('x'), { code: 'auth/invalid-credential' });
-      setUser({ uid: `e-${email}`, name: null, email });
+      setUser({ uid: `e-${email}`, name: null, email, anonymous: false });
     },
     signUpEmail: async (email) => {
       if (email.startsWith('taken@')) throw Object.assign(new Error('x'), { code: 'auth/email-already-in-use' });
-      setUser({ uid: `e-${email}`, name: null, email });
+      setUser({ uid: `e-${email}`, name: null, email, anonymous: false });
     },
+    link: async () => { throw Object.assign(new Error('x'), { code: 'auth/provider-already-linked' }); },
+    readActive: async () => null,
+    writeActive: async () => {},
+    watchActive: () => () => {},
     resetPassword: async (email) => {
       state.resets.push(email);
     },
@@ -91,7 +96,7 @@ function fakeBackend(init: { user?: CloudUser | null; doc?: CloudDoc | null; off
   };
 }
 
-function harness(store: Store, fb: ReturnType<typeof fakeBackend>, o: { slot?: number; save?: SaveData | null; online?: () => boolean; standalone?: boolean } = {}) {
+function harness(store: Store, fb: ReturnType<typeof fakeBackend>, o: { slot?: number; save?: SaveData | null; online?: () => boolean } = {}) {
   const conflicts: CloudConflict[] = [];
   const applied: number[] = [];
   const toasts: string[] = [];
@@ -107,7 +112,9 @@ function harness(store: Store, fb: ReturnType<typeof fakeBackend>, o: { slot?: n
     onConflict: (c) => conflicts.push(c),
     onApplied: (n) => applied.push(n),
     notify: (t) => toasts.push(t),
-    standalone: () => o.standalone ?? false,
+    deviceName: 'test-device',
+    onBlocked: () => {},
+    onUnblocked: () => {},
     online: o.online ?? (() => !fb.offline),
     now: () => Date.now(),
   });
@@ -118,7 +125,7 @@ const flushAsync = async (n = 6) => {
   for (let i = 0; i < n; i++) await Promise.resolve();
 };
 
-const U1: CloudUser = { uid: 'u1', name: '테스터', email: 't@example.com' };
+const U1: CloudUser = { uid: 'u1', name: '테스터', email: 't@example.com', anonymous: false };
 
 function docFrom(save: SaveData, o: Partial<CloudDoc> = {}): CloudDoc {
   return { ...makeCloudDoc(save, { slot: o.slot ?? 1, device: o.device ?? 'other-device', build: 'b', base: o.base ?? null, nowMs: o.savedAt ?? 5000 }), ...o };
@@ -204,7 +211,7 @@ describe('C.323 CloudSync (가짜 Firebase)', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('로그인 기억이 없으면 SDK 를 받지 않는다 · 로그인 버튼이 SDK 를 받는다 (홈 화면 앱이면 리다이렉트)', async () => {
+  it('로그인 기억이 없으면 SDK 를 받지 않는다 · 로그인 버튼이 SDK 를 받는다 (팝업만 — 리다이렉트 없음, C.325)', async () => {
     const store = memStore();
     const fb = fakeBackend();
     const h = harness(store, fb);
@@ -215,12 +222,9 @@ describe('C.323 CloudSync (가짜 Firebase)', () => {
     await h.sync.signIn();
     await flushAsync();
     expect(fb.loads).toBe(1);
-    expect(fb.signIns).toEqual([false]);
+    expect(fb.signIns).toBe(1);
     expect(h.sync.state().user?.uid).toBe('u1');
     expect(JSON.parse(store.getItem(CLOUD_PREF_KEY)!).uid).toBe('u1');
-    const h2 = harness(memStore(), fakeBackend(), { standalone: true });
-    await h2.sync.signIn();
-    expect(fakeBackend().signIns).toEqual([]);
   });
 
   it('로그인 기억이 있으면 켤 때 SDK 를 받아 자동 로그인하고, 클라우드가 비었으면 기기 세이브를 올린다', async () => {
@@ -462,14 +466,14 @@ describe('C.323 구조·문구·배포', () => {
   });
   it('설정 기타 탭에 로그인 줄 하나 — 버튼 하나(로그인 전 Google 로그인 / 뒤 로그아웃) + 설명은 ~다 체', () => {
     const view = src('src/ui/cloudView.ts');
-    expect(view).toContain("s.user ? '로그아웃' : 'Google 로그인'");
+    expect(view).toContain("s.user.anonymous ? '계정 연동' : '로그아웃') : 'Google 로그인'"); // C.325: 게스트는 [계정 연동]
     const texts = [...view.matchAll(/'([^']*다\.)'/g)].map((m) => m[1]!);
     expect(texts.length).toBeGreaterThan(5);
     for (const t of texts) expect(t).not.toMatch(/요\.|습니다|하세요/);
     const settings = src('src/ui/settingsView.ts');
     expect(settings).toContain("panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint)");
-    expect(view).toContain("label: '이메일 로그인'");
-    expect(view).toContain("button({ label: '취소', variant: 'ghost', onClick: close })");
+    expect(view).toContain("'이메일 로그인'"); // C.325: 둘째 버튼 이름은 cloudSecondLabel (게스트면 [로그아웃])
+    expect(view).toContain("button({ label: '취소', variant: 'ghost', onClick: m.close })");
     expect(view).toContain("label: '가입'");
     expect(view).toContain("label: '비밀번호 잊음'");
     expect(src('src/ui/app.ts')).toContain('cloud: cloudUi');

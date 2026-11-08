@@ -13,3 +13,6 @@ export const FIREBASE_CONFIG = {
 
 /** 세이브 문서 모음 이름: `users/{uid}` 문서 하나 = 그 계정의 세이브 (GDD 196장 1) */
 export const CLOUD_COLLECTION = 'users';
+
+/** 활성 기기 문서 모음 이름: `devices/{uid}` = 그 계정을 마지막으로 켠 기기 (GDD 199장 4, C.325) — 한 기기만 플레이 */
+export const DEVICE_COLLECTION = 'devices';

@@ -1,0 +1,391 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "gate": {
+    "title": "로그인",
+    "body": "로그인하면 세이브가 클라우드에 저장되고 다른 기기에서 이어 할 수 있다. 게스트로 시작해도 나중에 설정에서 계정을 연동할 수 있다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "Google 로그인",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "이메일 로그인",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "게스트로 시작",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "Google 로그인",
+    "inside": true
+   },
+   "gateBehindTitle": true,
+   "afterGuest": {
+    "gateOpen": false,
+    "gateDone": true,
+    "pref": {
+     "uid": "fake-guest",
+     "name": null,
+     "email": null,
+     "anonymous": true
+    },
+    "fake": {
+     "user": {
+      "uid": "fake-guest",
+      "name": null,
+      "email": null,
+      "anonymous": true
+     },
+     "doc": {
+      "format": 62,
+      "savedAt": 1794147648252,
+      "slot": 1,
+      "device": "mw7x6l1f-ag8tewya",
+      "build": "da4bd69-mw7x6jpu",
+      "base": null,
+      "summary": {
+       "factionId": "hollow",
+       "tierIndex": 0,
+       "expeditions": 0
+      },
+      "text": "(3146자)"
+     },
+     "active": {
+      "device": "mw7x6l1f-ag8tewya",
+      "at": 1794147648009,
+      "name": "Linux Chrome",
+      "build": "da4bd69-mw7x6jpu"
+     },
+     "googleTaken": false
+    }
+   },
+   "guestRow": {
+    "label": "계정 연동",
+    "second": "로그아웃",
+    "secondHidden": false,
+    "x": 580,
+    "y": 278,
+    "w": 144,
+    "h": 36,
+    "hint": "게스트로 로그인했다. 계정을 연동하면 다른 기기에서도 이어 할 수 있다. 로그아웃하면 게스트 계정에는 다시 들어올 수 없다. 클라우드 저장 11/8 14:20.",
+    "inside": true
+   },
+   "linkPicker": {
+    "title": "계정 연동",
+    "body": "연동하면 이 세이브를 그 계정으로 이어 간다. 세이브가 이미 있는 계정에는 연동하지 못한다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "이메일",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "Google",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "Google",
+    "inside": true
+   },
+   "linkEmailDialog": {
+    "title": "이메일 연동",
+    "body": "",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "연동",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "",
+    "inside": true
+   },
+   "refused": {
+    "title": "이 계정에는 이미 세이브가 있다",
+    "body": "게스트 세이브는 그 계정으로 옮기지 못한다. 그 계정으로 로그인하면 이 기기 세이브와 클라우드 세이브 중 하나를 고른다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "그 계정으로 로그인",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "취소",
+    "inside": true
+   },
+   "stillGuest": true,
+   "blocked": {
+    "title": "다른 기기에서 로그인했다",
+    "body": "이 계정을 다른 기기에서 켰다. 이 기기의 진행은 저장했다. 여기서 이어 하면 그 기기가 막힌다.",
+    "rows": [
+     "그 기기: Android Chrome · 앱",
+     "켠 시각: 11/8 14:20"
+    ],
+    "buttons": [
+     {
+      "label": "로그아웃",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "다시 이 기기에서 하기",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "다시 이 기기에서 하기",
+    "inside": true
+   },
+   "blockedBehind": {
+    "title": true,
+    "flag": true
+   },
+   "blockedAfterBack": true,
+   "afterRetake": {
+    "open": false,
+    "active": {
+     "device": "mw7x6l1f-ag8tewya",
+     "at": 1794147655365,
+     "name": "Linux Chrome",
+     "build": "da4bd69-mw7x6jpu"
+    },
+    "mine": "mw7x6l1f-ag8tewya",
+    "flag": null,
+    "toast": "클라우드 이 기기에서 이어 한다"
+   },
+   "ok": true,
+   "checks": {
+    "gateOk": true,
+    "guestOk": true,
+    "linkOk": true,
+    "blockOk": true
+   }
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "gate": {
+    "title": "로그인",
+    "body": "로그인하면 세이브가 클라우드에 저장되고 다른 기기에서 이어 할 수 있다. 게스트로 시작해도 나중에 설정에서 계정을 연동할 수 있다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "Google 로그인",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "이메일 로그인",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "게스트로 시작",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "Google 로그인",
+    "inside": true
+   },
+   "gateBehindTitle": true,
+   "afterGuest": {
+    "gateOpen": false,
+    "gateDone": true,
+    "pref": {
+     "uid": "fake-guest",
+     "name": null,
+     "email": null,
+     "anonymous": true
+    },
+    "fake": {
+     "user": {
+      "uid": "fake-guest",
+      "name": null,
+      "email": null,
+      "anonymous": true
+     },
+     "doc": {
+      "format": 62,
+      "savedAt": 1794147662986,
+      "slot": 1,
+      "device": "mw7x6wdj-6p63yjt7",
+      "build": "da4bd69-mw7x6jpu",
+      "base": null,
+      "summary": {
+       "factionId": "shinigami",
+       "tierIndex": 0,
+       "expeditions": 0
+      },
+      "text": "(3128자)"
+     },
+     "active": {
+      "device": "mw7x6wdj-6p63yjt7",
+      "at": 1794147662744,
+      "name": "Linux Chrome",
+      "build": "da4bd69-mw7x6jpu"
+     },
+     "googleTaken": false
+    }
+   },
+   "guestRow": {
+    "label": "계정 연동",
+    "second": "로그아웃",
+    "secondHidden": false,
+    "x": 532,
+    "y": 272,
+    "w": 144,
+    "h": 36,
+    "hint": "게스트로 로그인했다. 계정을 연동하면 다른 기기에서도 이어 할 수 있다. 로그아웃하면 게스트 계정에는 다시 들어올 수 없다. 클라우드 저장 11/8 14:21.",
+    "inside": true
+   },
+   "linkPicker": {
+    "title": "계정 연동",
+    "body": "연동하면 이 세이브를 그 계정으로 이어 간다. 세이브가 이미 있는 계정에는 연동하지 못한다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "이메일",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "Google",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "Google",
+    "inside": true
+   },
+   "linkEmailDialog": {
+    "title": "이메일 연동",
+    "body": "",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "연동",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "",
+    "inside": true
+   },
+   "refused": {
+    "title": "이 계정에는 이미 세이브가 있다",
+    "body": "게스트 세이브는 그 계정으로 옮기지 못한다. 그 계정으로 로그인하면 이 기기 세이브와 클라우드 세이브 중 하나를 고른다.",
+    "rows": [],
+    "buttons": [
+     {
+      "label": "취소",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "그 계정으로 로그인",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "취소",
+    "inside": true
+   },
+   "stillGuest": true,
+   "blocked": {
+    "title": "다른 기기에서 로그인했다",
+    "body": "이 계정을 다른 기기에서 켰다. 이 기기의 진행은 저장했다. 여기서 이어 하면 그 기기가 막힌다.",
+    "rows": [
+     "그 기기: Android Chrome · 앱",
+     "켠 시각: 11/8 14:21"
+    ],
+    "buttons": [
+     {
+      "label": "로그아웃",
+      "inside": true,
+      "lines": 44
+     },
+     {
+      "label": "다시 이 기기에서 하기",
+      "inside": true,
+      "lines": 44
+     }
+    ],
+    "status": "",
+    "focused": "다시 이 기기에서 하기",
+    "inside": true
+   },
+   "blockedBehind": {
+    "title": true,
+    "flag": true
+   },
+   "blockedAfterBack": true,
+   "afterRetake": {
+    "open": false,
+    "active": {
+     "device": "mw7x6wdj-6p63yjt7",
+     "at": 1794147670048,
+     "name": "Linux Chrome",
+     "build": "da4bd69-mw7x6jpu"
+    },
+    "mine": "mw7x6wdj-6p63yjt7",
+    "flag": null,
+    "toast": "클라우드 이 기기에서 이어 한다"
+   },
+   "ok": true,
+   "checks": {
+    "gateOk": true,
+    "guestOk": true,
+    "linkOk": true,
+    "blockOk": true
+   }
+  }
+ ],
+ "errors": []
+}

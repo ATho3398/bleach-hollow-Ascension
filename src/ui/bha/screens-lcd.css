@@ -484,3 +484,6 @@ button.bha-slot { cursor: pointer; }
 .bha-nest__bond { display: flex; align-items: center; gap: var(--bha-sp-1); }
 /* 튜토리얼 실제 조작 카드가 떠 있으면 (GDD 132장 1, C.208): 아이템 상세 창은 아래로 붙는다 — 위에 카드 자리가 생겨 카드가 창·[사용]을 가리지 않는다 */
 :where(*):has(> .bha-tut.is-script.is-practice) > .bha-itemdialog { place-items: end center; }
+/* 처음 로그인 창·막기 창 (GDD 199장 2·4, C.325): 창 폭은 고르기 창과 같고, 폰 384 높이에서도 창(LCD) 밖으로 나가지 않는다 */
+.bha-cloud-gate .bha-modal, .bha-cloud-blocked .bha-modal { width: min(560px, 96%); }
+.bha-cloud-gate .bha-modal__actions--three .bha-btn { min-width: 0; padding-inline: var(--bha-sp-3); } /* 세 버튼 한 줄 — 폰 폭에서 글자가 밀려 두 줄이 되지 않게 */
