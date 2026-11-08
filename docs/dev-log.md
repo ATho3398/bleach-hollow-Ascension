@@ -2378,3 +2378,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **검증** `scripts/c316-proof.cjs` (pc 844×390 호로 · ph 796×384 터치 사신 · ph115 796×384 터치 + 글자 1.15 호로) × 평소 · 자동 다시 시작 안내 · 경고 줄 + 안내 · 열 수 없는 세이브 + 안내: 판 밖·잘림 **0**, 메뉴 버튼 y 안내 전후 같음(평소 123/173/223/273 · 1.15 132/182/232/282 · 한 줄 메뉴 117/126), 페이지 오류 0. `docs/captures/c316/proof.json`.
 - 테스트: 새 `tests/c316.test.ts`(3). typecheck · test · balance:check 통과(수치·세이브 형식 변경 없음).
 - 캡처 `docs/captures/c316/`(1배 9장): `{pc,ph,ph115}-1-auto-restart` · `-2-note-auto-restart` · `-3-stale-auto-restart`.
+
+## C.317 — 197장 1·2 흡수 리스크 줄 = 바뀔 때만 · 첫 흡수 연습 = 전부 숨김 (GDD 197장 1·2, v5.473, S-23, 코딩228 Opus)
+- 사용자 원문: "이거 호로화 그대로는 굳이 안보여줘도 될 듯. 호로화 변화 있을때만 얘기;하고, 어차피 튜토인데, 맨 오른쪽도 호로화 -1 있을 필요 없잖아. 다 지워." (캡처 `docs/drafts/absorb-risk-1108.png`)
+- **바꾼 것** (`src/ui/absorbView.ts` · `src/ui/bha/absorb-status.css`, 종족 분기·새 색 없음, 게이지 이름 = 종족 설정 riskGaugeName):
+  - `showRiskLine(exp, m)`: 첫 흡수 연습(exp.tutorial) = false(놓아주기 포함), 놓아주기 = true(168장 2 그대로), 그 밖 = 반올림한 게이지가 바뀔 때만.
+  - 갈래 버튼 아래 줄(`modeRiskText`) · 설명 칸 리스크 줄(`absorbDescLines`) 둘 다 이 판정. '○○ 그대로' 글은 이제 안 나온다.
+  - 줄이 빠진 버튼은 같은 높이 빈 줄(`.bha-absorb__risk--none` = visibility hidden, aria-hidden) → 버튼 높이·[흡수] 버튼 자리 그대로(173장 2).
+- **검증** `scripts/c317-proof.cjs` (pc 844×390 · ph 796×384 터치) × 두 종족 × 튜토리얼 첫 흡수(안내를 진짜 마우스·터치로 따라감, 막힘 0) · 평소 흡수(★1, 리스크 0 = 모두 바뀜 / 리스크 한계 100 = 정화·속성·능력치 줄 숨김, 놓아주기 −1 만): 갈래 4개 고를 때마다 버튼 높이(연습 41 · 평소 52)·[흡수] 버튼 y(PC 318·324 / 폰 312·318) 같음, 페이지 오류 0. `docs/captures/c317/proof.json`.
+- 테스트: 새 `tests/c317.test.ts`(7). typecheck · test(2753) · balance:check 통과(수치·세이브 형식 변경 없음).
+- 캡처 `docs/captures/c317/`(1배 10장): `{pc,ph}-{hollow,shinigami}-1-tutorial-absorb`(안내 카드 위) · `pc-*-1b-tutorial-absorb-noguide` · `{pc,ph}-*-3-absorb-mixed`(리스크 한계 판).
