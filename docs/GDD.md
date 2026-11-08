@@ -6592,6 +6592,9 @@ data/
   5. 보안 규칙: 자기 uid 문서만 읽기·쓰기. 세이브 구조는 지금 SAVE 형식 그대로(마이그레이션 규칙 동일).
   6. 11-1 기술 스택 '오프라인' → '오프라인 그대로 + 로그인 시 클라우드 저장'(게임 중 AI API 호출 없음은 그대로).
 - 진행: ① 사용자 Firebase 콘솔 설정(마스터가 순서 안내) → 설정값 받기 ② 코딩 세션(번호는 그때) 구현.
+- 11-08 21:5x 사용자 설정 완료: 프로젝트 `bleach-74864`(공개 이름 '블리치 할로우 어센션'), Firestore (default) 서울, Google 로그인 사용·승인된 도메인 atho3398.github.io, 요금제 Blaze(무료 한도 안). 웹 앱 설정값(공개 값, 코드에 넣음):
+  `apiKey "AIzaSyA5pLD9944s-mZF--LXBRbEWKJotB9Bsu4" · authDomain "bleach-74864.firebaseapp.com" · projectId "bleach-74864" · storageBucket "bleach-74864.firebasestorage.app" · messagingSenderId "1032292783962" · appId "1:1032292783962:web:6aa17cf12dac238378c563"`
+- 구현 세션: 코딩231(Fable). Firestore 보안 규칙은 세션이 파일(`firestore.rules`)로 쓰고, 사용자가 콘솔 '규칙' 탭에 붙여 넣는다(마스터 안내).
 
 ## 197. 흡수 리스크 표시 줄이기 · 모험 왼쪽 위 상태창 되살리기 (v5.472, 사용자 2026-11-08 21:3x)
 
