@@ -54,12 +54,14 @@ export function nameScreen(root: HTMLElement, f: FactionConfig, o: NameScreenOpt
   next.classList.add('bha-ident__main');
   next.dataset.ident = 'next';
   const msg = el('p', 'bha-ident__msg');
+  const field = el('div', 'bha-ident__field');
   msg.setAttribute('role', 'status');
   msg.setAttribute('aria-live', 'polite');
   let composing = false;
   const check = (): NameCheck => {
     const c = checkName(input.value);
     paintMsg(msg, count, c, composing);
+    field.classList.toggle('is-bad', msg.classList.contains('is-bad')); // 오류면 바깥 박스 하나만 빨강 (C.327)
     next.disabled = !c.ok;
     return c;
   };
@@ -83,7 +85,6 @@ export function nameScreen(root: HTMLElement, f: FactionConfig, o: NameScreenOpt
       input.blur();
     }
   });
-  const field = el('div', 'bha-ident__field');
   field.append(input, count);
   const row = el('div', 'bha-ident__row');
   row.append(field, next);

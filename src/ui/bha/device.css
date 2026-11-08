@@ -111,4 +111,7 @@ html.bha-pc, html.bha-pc body { background: var(--bha-bg-0); }
 /* 기기 화면 안의 초점 표시는 선택 하이라이트(.bha-sel) 하나만 (GDD 159장 14·39): 브라우저 초점(:focus-visible)이 남은 버튼·그림이
    같은 붉은 테두리·빛으로 함께 강조돼 초점이 두 곳처럼 보였다(설정 [전체 화면], 월드맵 둥지 + 고른 장소) */
 .bha-lcd :focus-visible:not(.bha-sel) { outline: none; }
+/* 글 입력 칸·고르기 칸은 제 테두리가 있어 바깥 고리(offset 2px + 빛)를 두르면 테두리가 두 겹으로 보인다 (C.327)
+   → 선택·초점 표시를 칸 테두리 자리에 겹쳐 그린다(한 겹). 감싼 박스가 테두리를 그리는 칸은 그 화면 CSS 가 따로 끈다(.bha-ident__field) */
+.bha-sel:is(input:not([type="range"]), select), :is(input:not([type="range"]), select):focus-visible { outline: 2px solid var(--bha-focus); outline-offset: -2px; box-shadow: none; }
 .bha-lcd .bha-art:focus-visible:not(.bha-sel) .bha-art-img { filter: none; }

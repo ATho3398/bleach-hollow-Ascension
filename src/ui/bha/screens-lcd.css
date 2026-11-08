@@ -167,7 +167,7 @@
 .bha-cloud-email__form > .bha-btn { align-self: flex-start; }
 .bha-cloud-email__input { min-width: 0; width: 100%; min-height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-1); font: var(--bha-fw-medium) var(--bha-fs-md) var(--bha-font-body); }
 .bha-cloud-email__input::placeholder { color: var(--bha-text-3); }
-.bha-cloud-email__input:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
+.bha-cloud-email__input:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: -2px; } /* 테두리 위에 겹쳐 한 겹 (C.327) */
 .bha-cloud-email__status:empty { display: none; }
 .bha-music__bar { display: flex; align-items: center; gap: var(--bha-sp-3); min-height: var(--bha-btn-h-sm); }
 .bha-music__now { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -495,8 +495,11 @@ button.bha-slot { cursor: pointer; }
 .bha-ident__row { flex: none; display: flex; align-items: stretch; gap: var(--bha-sp-4); min-height: calc(var(--bha-touch) + var(--bha-sp-3)); }
 .bha-ident__main { flex: none; width: 128px; min-height: calc(var(--bha-touch) + var(--bha-sp-3)); }
 .bha-ident__field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--bha-sp-3); padding: 0 var(--bha-sp-4); border-radius: var(--bha-r-md); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2); }
-.bha-ident__field:focus-within { box-shadow: inset 0 0 0 2px var(--bha-accent); }
-.bha-ident__input { flex: 1 1 0; min-width: 0; height: 100%; border: 0; outline: 0; padding: 0; background: none; color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-xl); font-weight: var(--bha-fw-bold); }
+/* 테두리는 바깥 박스 하나만 (C.327): 초점·커서 선택(.bha-sel)은 박스에, 오류면 박스만 빨강. 입력 요소는 테두리·배경·outline 없이 박스를 채운다 */
+.bha-ident__field:focus-within, .bha-ident__field:has(.bha-sel) { box-shadow: inset 0 0 0 2px var(--bha-accent); }
+.bha-ident__field.is-bad { box-shadow: inset 0 0 0 2px var(--bha-danger); }
+.bha-ident__input { flex: 1 1 0; min-width: 0; align-self: stretch; border: 0; outline: 0; padding: 0; background: none; color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-xl); font-weight: var(--bha-fw-bold); }
+.bha-ident__field .bha-ident__input:focus, .bha-ident__field .bha-ident__input:focus-visible, .bha-ident__field .bha-ident__input.bha-sel { outline: 0; box-shadow: none; background: none; }
 .bha-ident__input::placeholder { color: var(--bha-text-3); font-weight: normal; }
 .bha-ident__count { flex: none; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
 .bha-ident__count.is-over { color: var(--bha-danger); }

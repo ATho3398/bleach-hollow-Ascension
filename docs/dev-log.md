@@ -2480,3 +2480,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **검증** `scripts/c326-proof.cjs`: pc 844×390 · ph 796×384 터치 · ph115 글자 1.15 × 두 종족 = 6 흐름 — 규칙 7가지 안내·[다음] 흐림, 판 밖·잘림 0, 주 버튼 같은 자리, 위 45% 안, ◀ 로 이름 단계(이름 유지), 기기 버튼만으로 여성 → [시작], 방 이름표 이름, 설정 바꾸기 → 기타 탭 값, 옛 세이브 → 한 번 창(◀ 로 안 빠짐) → 방 이름표 → 문제 0, 페이지 오류 0. c279 튜토리얼 자동 점검(새 화면 거쳐 시작, `newGame` 이 이름·성별 통과) 두 종족 막힘 0(누름 27). `docs/captures/c326/proof.json` · `tut/proof.json`.
 - 테스트: 새 `tests/c326.test.ts`(13), c188·c120·c227·c311 형식 숫자 갱신.
 - 캡처 `docs/captures/c326/`(1배 10장): `pc-0-{name-error,gender,room}` · `pc-1-{settings-etc,edit-name}` · `ph-1-{name-error,gender,room}` · `ph115-0-{name-long,room}`.
+
+## C.327 — 이름 입력 칸 테두리 한 겹 + 글 입력 칸 선택 표시 한 겹 (GDD 199장 6 보충, v5.490, S-23, 코딩235 Opus)
+- 마스터 캡처 확인(c326 `pc-0-name-error`·`ph-1-name-error`): 이름 칸이 테두리 두 겹 — 바깥 박스 안에 입력 요소 사각이 따로 그려져 위·왼쪽으로 삐져나오고 오른쪽은 칸 수 앞에서 끊김.
+- 원인: 기기 버튼 커서 선택 하이라이트 `.bha-sel`(device.css, outline 2px + offset 2px + 5px 빛)이 입력 요소 자체에 붙음. 입력 요소의 `outline: 0` 보다 `.bha-sel` 이 늦게 와 이김.
+- 수리 (`screens-lcd.css`·`identityView.ts`): 테두리는 바깥 박스 하나 — 초점(`:focus-within`)·커서 선택(`:has(.bha-sel)`) = 박스 inset 2px accent, 오류면 박스에 `is-bad` = 박스만 danger. 입력 요소는 초점·선택에도 outline·box-shadow·배경 없음, 박스 높이를 채움(`align-self: stretch`).
+- 같은 종류 (`device.css` 공통): 글 입력·고르기 칸(`input`(range 제외)·`select`)의 선택·초점 표시는 바깥 고리 대신 제 테두리 자리에 겹쳐 그림(outline-offset -2px, 빛 없음) — 로그인 이메일 칸·프리셋 이름 칸·테스트 모드·배치 도구. `bha-cloud-email__input`·`bha-test__*` 의 offset 1px 도 -2px.
+- 새 색·간격 없음(기존 토큰만). 버튼 자리 그대로.
+- **검증** `scripts/c327-proof.cjs`: pc 844×390 · ph 796×384 × 두 종족 × (오류 · 초점) — 입력 요소 outline·빛·border·배경 0, 박스 안, 오류 때만 박스 is-bad → 문제 0, 페이지 오류 0.
+- 캡처 `docs/captures/c327/`(1배 8장): `{pc,ph}-{0,1}-name-{error,focus}`.

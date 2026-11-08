@@ -1,0 +1,135 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "error": {
+    "sel": true,
+    "focused": true,
+    "bad": true,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(217, 106, 94) 0px 0px 0px 2px inset",
+    "inside": true
+   },
+   "focus": {
+    "sel": true,
+    "focused": true,
+    "bad": false,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(160, 60, 61) 0px 0px 0px 2px inset",
+    "inside": true
+   }
+  },
+  {
+   "mode": "pc",
+   "faction": "shinigami",
+   "error": {
+    "sel": true,
+    "focused": true,
+    "bad": true,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(217, 106, 94) 0px 0px 0px 2px inset",
+    "inside": true
+   },
+   "focus": {
+    "sel": true,
+    "focused": true,
+    "bad": false,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(160, 60, 61) 0px 0px 0px 2px inset",
+    "inside": true
+   }
+  },
+  {
+   "mode": "ph",
+   "faction": "hollow",
+   "error": {
+    "sel": true,
+    "focused": true,
+    "bad": true,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(217, 106, 94) 0px 0px 0px 2px inset",
+    "inside": true
+   },
+   "focus": {
+    "sel": true,
+    "focused": true,
+    "bad": false,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(160, 60, 61) 0px 0px 0px 2px inset",
+    "inside": true
+   }
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "error": {
+    "sel": true,
+    "focused": true,
+    "bad": true,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(217, 106, 94) 0px 0px 0px 2px inset",
+    "inside": true
+   },
+   "focus": {
+    "sel": true,
+    "focused": true,
+    "bad": false,
+    "input": {
+     "outline": "none",
+     "shadow": "none",
+     "border": "0px",
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    "field": "rgb(160, 60, 61) 0px 0px 0px 2px inset",
+    "inside": true
+   }
+  }
+ ],
+ "errors": [],
+ "shots": [
+  "pc-0-name-error.png",
+  "pc-0-name-focus.png",
+  "pc-1-name-error.png",
+  "pc-1-name-focus.png",
+  "ph-0-name-error.png",
+  "ph-0-name-focus.png",
+  "ph-1-name-error.png",
+  "ph-1-name-focus.png"
+ ]
+}
