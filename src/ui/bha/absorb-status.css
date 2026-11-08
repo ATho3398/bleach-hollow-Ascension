@@ -63,6 +63,7 @@
 .bha-absorbv2 .bha-absorb__actions--modes .bha-btn.is-on { background: var(--bha-bg-3); border-color: var(--bha-line-2); box-shadow: inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-accent); }
 .bha-absorb__risk { display: inline-flex; align-items: center; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-3); }
 .bha-absorb__risk .bha-i { width: 12px; height: 12px; color: var(--bha-risk); }
+.bha-absorb__risk--none { visibility: hidden; } /* GDD 197장: 리스크가 안 바뀌는 갈래 = 줄 자리만 (버튼 높이 그대로, 173장 2) */
 .bha-absorbv2 .bha-btn--danger .bha-absorb__risk { color: inherit; }
 .bha-absorbv2 .bha-absorb__desc { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: var(--bha-sp-1); padding: var(--bha-sp-4) var(--bha-sp-5) 0; border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1), inset 0 2px 0 var(--bha-lo); }
 .bha-absorbv2 .bha-absorb__desc p { margin: 0; font-size: var(--bha-fs-sm); line-height: 1.5; color: var(--bha-text-1); }

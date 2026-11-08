@@ -94,7 +94,8 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
   else if (evCapped(exp, m)) out.push({ kind: 'warn', text: EV_FULL_TEXT }); // GDD 176장 11: 노력치 상한이면 능력치 0 을 말로
   // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 게이지가 0 이라 더 못 내려가도 설명은 같은 값 (확인 창·도움말과 같게)
-  out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}` });
+  // 리스크 줄은 바뀔 때만 ('그대로' 줄 없음), 첫 흡수 연습에서는 전부 숨김 (GDD 197장 1·2)
+  if (showRiskLine(exp, m)) out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}` });
   if (p.frenzy) out.push({ kind: 'warn', text: `한계(${RX.limit})에 닿아 ${faction.frenzyName} 상태가 된다.` });
   const gain: string[] = [];
   if (p.tiles > 0) gain.push(`타일 +${p.tiles}`);
@@ -198,17 +199,33 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   return { actions, desc, go, first: btns[0]! };
 }
 
-/** 갈래 버튼 아래 리스크 게이지 변화 한 줄 "광기 +3" / "광기 −1" / "광기 그대로" (GDD 183장 S11). 이름은 종족 설정 riskGaugeName */
-export function modeRiskText(faction: Pick<FactionConfig, 'riskGaugeName'>, exp: ExpeditionState, m: AbsorbChoice): string {
-  if (m === 'none') return `${faction.riskGaugeName} ${MINUS}${RX.releaseRelief}`; // 놓아주기 = 늘 −n (설명 칸 releaseDelta 와 같게)
+/** 리스크 줄을 보이나 (GDD 197장 1·2): 첫 흡수 연습(exp.tutorial) = 전부 숨김(놓아주기 포함).
+ *  그 밖엔 게이지가 바뀌는 갈래만. 놓아주기는 168장 2 그대로 늘 −n 을 보인다(0 이라 못 내려가도 — 설명 칸 releaseDelta 와 같게) */
+export function showRiskLine(exp: ExpeditionState, m: AbsorbChoice): boolean {
+  if (exp.tutorial) return false;
+  if (m === 'none') return true;
   const p = previewAbsorb(exp, m);
-  const d = Math.round(p.riskTo) - Math.round(p.riskFrom);
-  return d === 0 ? `${faction.riskGaugeName} 그대로` : `${faction.riskGaugeName} ${signed(d)}`;
+  return Math.round(p.riskTo) !== Math.round(p.riskFrom);
 }
 
+/** 갈래 버튼 아래 리스크 게이지 변화 한 줄 "광기 +3" / "광기 −1" (GDD 183장 S11). 안 바뀌면·첫 흡수 연습이면 '' (197장 1·2). 이름은 종족 설정 riskGaugeName */
+export function modeRiskText(faction: Pick<FactionConfig, 'riskGaugeName'>, exp: ExpeditionState, m: AbsorbChoice): string {
+  if (!showRiskLine(exp, m)) return '';
+  if (m === 'none') return `${faction.riskGaugeName} ${MINUS}${RX.releaseRelief}`; // 놓아주기 = 늘 −n (설명 칸 releaseDelta 와 같게)
+  const p = previewAbsorb(exp, m);
+  return `${faction.riskGaugeName} ${signed(Math.round(p.riskTo) - Math.round(p.riskFrom))}`;
+}
+
+/** 리스크 줄이 없을 때도 같은 높이의 빈 줄을 둔다 (GDD 173장 2: 줄이 빠져도 갈래 버튼 높이·[흡수] 버튼 자리 그대로) */
 function modeRiskLine(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): HTMLElement {
   const sm = el('small', 'bha-absorb__risk');
-  sm.append(v2Icon('warning', 'sm'), modeRiskText(faction, exp, m));
+  const t = modeRiskText(faction, exp, m);
+  if (t) sm.append(v2Icon('warning', 'sm'), t);
+  else {
+    sm.classList.add('bha-absorb__risk--none');
+    sm.setAttribute('aria-hidden', 'true');
+    sm.append(v2Icon('warning', 'sm'), '\u00a0');
+  }
   return sm;
 }
 
