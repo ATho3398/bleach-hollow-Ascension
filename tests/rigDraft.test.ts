@@ -41,11 +41,12 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('역관절 걷기: 늘 한 발은 디뎌 있고(발목이 쉬는 자세 높이 그대로) 바닥에 묻히지 않는다 — 역관절 기본 = 사용자 도트(GDD 115-A 69)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
     const piv = (rig.bodyJoints!.dg as { pivots: Record<string, [number, number]> }).pivots;
-    for (let t = 0; t <= 640; t += 40) {
+    const tol = 0.6 * ((rig as { cut?: { scale?: number } }).cut?.scale ?? 1); // 도트 배율만큼(2배 = 1.2칸, 115-A 71)
+    for (let t = 0; t <= dg.move!.duration; t += 40) {
       const m = boneMatrices(rig, samplePose(rig, dg.move!, t), 'dg');
       const lift = (['foot_L', 'foot_R'] as const).map((f) => piv[f]![1] - apply(m[f]!, piv[f]!)[1]); // + = 뜸, - = 묻힘
-      expect(Math.min(...lift), `t=${t} 디딘 발`).toBeLessThan(0.6);
-      expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-0.6);
+      expect(Math.min(...lift), `t=${t} 디딘 발`).toBeLessThan(tol);
+      expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-tol);
     }
   });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {

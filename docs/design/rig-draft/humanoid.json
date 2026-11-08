@@ -7,6 +7,7 @@
     { "id": "root", "parent": null, "pivot": [16, 52] },
     { "id": "torso", "parent": "root", "pivot": [16, 51] },
     { "id": "head", "parent": "torso", "pivot": [15, 17] },
+    { "id": "jaw", "parent": "head", "pivot": [15, 24] },
     { "id": "hair_back", "parent": "head", "pivot": [26, 11] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "forearm_L", "parent": "arm_L", "pivot": [11, 44] },
@@ -39,6 +40,7 @@
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
+    { "id": "jaw", "bone": "jaw" },
     { "id": "head", "bone": "head" },
     { "id": "hair", "bone": "head" },
     { "id": "arm_R", "bone": "arm_R" },
@@ -151,18 +153,19 @@
       "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42], "size": [12, 16] }
     },
     "dg": {
-      "head": { "art": "dg/head", "at": [0, 51], "size": [15, 16] },
-      "torso": { "art": "dg/torso", "at": [13, 55], "size": [11, 8] },
-      "arm_R": { "art": "dg/arm_R", "at": [10, 60], "size": [6, 7] },
-      "forearm_R": { "art": "dg/forearm_R", "at": [3, 63], "size": [12, 10] },
-      "arm_L": { "art": "dg/arm_L", "at": [21, 59], "size": [6, 4] },
-      "forearm_L": { "art": "dg/forearm_L", "at": [25, 62], "size": [9, 11] },
-      "leg_R": { "art": "dg/leg_R", "at": [11, 67], "size": [9, 5] },
-      "shin_R": { "art": "dg/shin_R", "at": [11, 71], "size": [8, 5] },
-      "foot_R": { "art": "dg/foot_R", "at": [11, 75], "size": [8, 5] },
-      "leg_L": { "art": "dg/leg_L", "at": [16, 62], "size": [7, 7] },
-      "shin_L": { "art": "dg/shin_L", "at": [19, 67], "size": [9, 8] },
-      "foot_L": { "art": "dg/foot_L", "at": [26, 74], "size": [8, 6] }
+      "head": { "art": "dg/head", "at": [-14, 22], "size": [26, 22] },
+      "jaw": { "art": "dg/jaw", "at": [-18, 42], "size": [22, 12] },
+      "torso": { "art": "dg/torso", "at": [8, 30], "size": [22, 16] },
+      "arm_R": { "art": "dg/arm_R", "at": [4, 40], "size": [10, 14] },
+      "forearm_R": { "art": "dg/forearm_R", "at": [-12, 50], "size": [24, 16] },
+      "arm_L": { "art": "dg/arm_L", "at": [24, 38], "size": [12, 8] },
+      "forearm_L": { "art": "dg/forearm_L", "at": [32, 44], "size": [18, 22] },
+      "leg_R": { "art": "dg/leg_R", "at": [4, 54], "size": [18, 10] },
+      "shin_R": { "art": "dg/shin_R", "at": [4, 62], "size": [16, 10] },
+      "foot_R": { "art": "dg/foot_R", "at": [4, 70], "size": [16, 10] },
+      "leg_L": { "art": "dg/leg_L", "at": [14, 44], "size": [14, 14] },
+      "shin_L": { "art": "dg/shin_L", "at": [20, 54], "size": [18, 16] },
+      "foot_L": { "art": "dg/foot_L", "at": [34, 68], "size": [16, 12] }
     }
   },
   "looks": {
@@ -371,19 +374,20 @@
     },
     "dg": {
       "pivots": {
-        "root": [18, 63],
-        "torso": [18, 62],
-        "head": [12, 58],
-        "arm_R": [14, 61],
-        "forearm_R": [14, 65],
-        "arm_L": [22, 59],
-        "forearm_L": [26, 63],
-        "leg_R": [18, 68],
-        "shin_R": [12, 71],
-        "foot_R": [17, 75],
-        "leg_L": [18, 63],
-        "shin_L": [21, 68],
-        "foot_L": [27, 74]
+        "root": [18, 46],
+        "torso": [18, 44],
+        "head": [6, 36],
+        "jaw": [2, 44],
+        "arm_R": [10, 42],
+        "forearm_R": [10, 50],
+        "arm_L": [26, 38],
+        "forearm_L": [34, 46],
+        "leg_R": [18, 56],
+        "shin_R": [6, 62],
+        "foot_R": [16, 70],
+        "leg_L": [18, 46],
+        "shin_L": [24, 56],
+        "foot_L": [36, 68]
       }
     },
     "shinigami": {
@@ -537,157 +541,174 @@
       "head": [
         {
           "pts": [
-            [13, 57],
-            [9, 54],
-            [12, 52]
+            [8, 34],
+            [0, 28],
+            [6, 24]
           ],
-          "w": 3
+          "w": 6
         },
         {
           "pts": [
-            [11, 58],
-            [5, 60],
-            [1, 64]
+            [4, 38],
+            [-4, 40],
+            [-12, 42],
+            [-16, 43.0]
           ],
-          "w": 3
+          "w": 6
+        }
+      ],
+      "jaw": [
+        {
+          "pts": [
+            [-16, 46],
+            [0, 46]
+          ],
+          "w": 4
         },
         {
           "pts": [
-            [6, 62],
-            [6, 66]
+            [-14, 48],
+            [-14, 50]
           ],
-          "w": 3
+          "w": 4
+        },
+        {
+          "pts": [
+            [-6, 48],
+            [-6, 52]
+          ],
+          "w": 4
         }
       ],
       "torso": [
         {
           "pts": [
-            [18, 62],
-            [18, 57]
+            [18, 44],
+            [18, 34]
           ],
-          "w": 6
+          "w": 12
         },
         {
           "pts": [
-            [14, 58],
-            [23, 59]
+            [10, 36],
+            [28, 38]
           ],
-          "w": 6
+          "w": 12
         }
       ],
       "arm_R": [
         {
           "pts": [
-            [14, 61],
-            [14, 65]
+            [10, 42],
+            [10, 50]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "forearm_R": [
         {
           "pts": [
-            [14, 65],
-            [10, 67],
-            [7, 69]
+            [10, 50],
+            [2, 54],
+            [-4, 58]
           ],
-          "w": 2
+          "w": 4
         },
         {
           "pts": [
-            [5, 69],
-            [4, 71]
+            [-8, 58],
+            [-10, 62]
           ],
-          "w": 2
+          "w": 4
         },
         {
           "pts": [
-            [7, 69],
-            [7, 71]
+            [-4, 58],
+            [-4, 62]
           ],
-          "w": 2
+          "w": 4
         }
       ],
       "arm_L": [
         {
           "pts": [
-            [22, 59],
-            [26, 63]
+            [26, 38],
+            [34, 46]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "forearm_L": [
         {
           "pts": [
-            [26, 63],
-            [29, 67],
-            [30, 71]
+            [34, 46],
+            [40, 54],
+            [42, 62]
           ],
-          "w": 2
+          "w": 4
         },
         {
           "pts": [
-            [32, 69],
-            [32, 71]
+            [46, 58],
+            [46, 62]
           ],
-          "w": 2
+          "w": 4
         }
       ],
       "leg_R": [
         {
           "pts": [
-            [18, 68],
-            [12, 71]
+            [18, 56],
+            [6, 62]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "shin_R": [
         {
           "pts": [
-            [12, 71],
-            [17, 75]
+            [6, 62],
+            [16, 70]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "foot_R": [
         {
           "pts": [
-            [17, 75],
-            [15, 78],
-            [12, 79]
+            [16, 70],
+            [12, 76],
+            [6, 78]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "leg_L": [
         {
           "pts": [
-            [18, 63],
-            [21, 68]
+            [18, 46],
+            [24, 56]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "shin_L": [
         {
           "pts": [
-            [21, 68],
-            [27, 74]
+            [24, 56],
+            [36, 68]
           ],
-          "w": 3
+          "w": 6
         }
       ],
       "foot_L": [
         {
           "pts": [
-            [27, 74],
-            [30, 77],
-            [32, 79]
+            [36, 68],
+            [42, 74],
+            [46, 78]
           ],
-          "w": 3
+          "w": 6
         }
       ]
     }
@@ -695,9 +716,10 @@
   "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
   "releaseNote": "해방 1안(GDD 115-A 49): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-f-release-test → arrancar-f-released-test(임시: 아란칼(여) + 임시 망토)",
   "cut": {
-    "note": "사람형 역관절 기본(몸 dg) = 사용자 도트(2026-11-08, 34×29, 1배)를 뼈대 선 skeletons.dg 로 잘라 씀(scripts/rig/cut_ref.py humanoid). at = 도트 왼쪽 위를 둘 캔버스 자리(발 = 바닥 줄 위 y 79) (GDD 115-A 69)",
+    "note": "사람형 역관절 기본(몸 dg) = 사용자 도트(2026-11-08, 34×29)를 뼈대 선 skeletons.dg 로 잘라 씀(scripts/rig/cut_ref.py humanoid). scale 2 = 사용자 \"역관절 일단 2배 키우고\"(2026-11-09) — 도트 칸을 2배로(키 58칸), at = 2배 도트 왼쪽 위를 둘 캔버스 자리(발 = 바닥 줄 위 y 79, 몸 가운데 x 18 근처) (GDD 115-A 69·71)",
     "image": "docs/design/user-art/digitigrade-ref/digitigrade-base-2026-11-08.png",
     "body": "dg",
-    "at": [0, 51]
+    "at": [-18, 22],
+    "scale": 2
   }
 }
