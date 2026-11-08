@@ -5,6 +5,126 @@
  },
  "effects": [
   {
+   "name": "arcane-arcane-missiles-blood",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-earth",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-fire",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-kyo",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-normal",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-poison",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-thunder",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-water",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
    "name": "custom-bite-blood",
    "id": "custom/bite",
    "options": {
@@ -127,6 +247,10 @@
   {
    "name": "custom-bleed-burst",
    "id": "custom/bleed-burst"
+  },
+  {
+   "name": "custom-byakurai",
+   "id": "custom/byakurai"
   },
   {
    "name": "custom-cero-blood",
