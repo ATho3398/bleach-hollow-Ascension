@@ -576,6 +576,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - (2026-11-09, 작업본) 짐승형 꼬리 두 마디 바로잡기(뿌리 = 엉덩이 [46,18] 짙은 마디, 끝 = [49,9] 뼈 끝, 다시 자름)·공격2 가까운 앞발. 여자 몸 필살기 오른 위팔 관절 옮김(1,4) 없애고 각 다시 풂(여성 알몸 → 같은 성별 몸). 사신(여) 가이드 시트 다시 만듦(1배). 시험 rigDraft 2개 (GDD 115-A 83·84).
 - (2026-11-09, 작업본) 사신(여) 새 그림 가져옴(몸통·왼팔·머리카락) + 영술원 학생(여) 머리카락 같게 (GDD 115-A 86).
 - (2026-11-09, 작업본) 덩치 색 외형 10개: 엔진 외형 artFolder·color(pose.ts lookArt), `recolor.py`·뼈대 데이터 recolors, 편집기 색 단추 줄·시험 페이지 색 고르기, rr·still·promote 가 색 그림 경로를 따름. 시험 rigDraft 1개 (GDD 115-A 85).
+- (2026-11-09) 덩치 대기: 허벅지 위아래만(회전 없음), 몸통 앞 1.5°·고개 반대 1.5°·팔 앞뒤 살짝(위팔 −1.5↔+2.5°, 아래팔 −1↔+2°) — 게임에도(C.340). 시험 rigDraft 대기 검사 덩치 팔 흔들림 (GDD 115-A 87).
 - (C.189 merge 메모) 이 소절은 종이인형 브랜치에서 같은 번호 C.151 로 쓰였다 — main C.151(인게임 UI v2 1단계)과 겹쳐 'C.151 종이인형'으로 따로 살림. 여기의 'GDD 96장' = 지금 기획서 115-A.
 
 ### C.152 인게임 UI v2 2단계 — 전투 화면 필드/스킬창 + 각인 컷 블록 (STAGE S-23, UI담당자C, GDD 96장, v5.201)
@@ -2640,9 +2641,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `node scripts/pixelfx/tool/apply.mjs` → `src/data/factions/shinigami.json`(권 2블록 straight×1.75→punch×1.75, 3블록 punch×2.25→straight×2.35→uppercut×1.95, 남·여 / 귀 2블록 skill×1.3 여성에도) · `hollow.json`(조 punch, 3블록 punch×3→straight×3 남성에도 / 탄 3블록 값). 이펙트·시트 추가 없음(122장). 표시만.
 - 검증 `scripts/c339-proof.cjs`(c336-proof 기반) 실제 전투 1배: 사신 권 불 체인2 주먹질·체인3 파산권(주먹 펑) · 호로 조 물 1블록(호로 단계 = 프레임 그림, 옛 몸동작) · 호로 탄 허 체인3 기모으기. 오류 0. 캡처 `docs/captures/c339/` 4장.
 - 테스트 2872 통과(248 파일), typecheck·balance:check 회귀 가드 통과.
-## C.340 — 적 덩치 종이인형 · 덩치 색 외형 + 종이인형 작업본 게임 넣기 (GDD 205장 · 115-A 65~86, v5.506, S-23, 종이인형 세션 Opus)
+## C.340 — 적 덩치 종이인형 · 덩치 색 외형 + 종이인형 작업본 게임 넣기 (GDD 205장 · 115-A 65~87, v5.506, S-23, 종이인형 세션 Opus)
 - 사용자 원문: "그리고 내가 준 덩치 시트에 맞춰서, 이 맨 밑에 친구들도 싹 구현시켜서 게임에 넣어. … 그냥 덩치 누른다음, 상세편집에서 색깔변경만 … 모든 덩치들끼리는 모션 통일. 적으로 나오는 덩치도 이 모션 넣으면 된다잉".
 - 엔진 `src/data/art/rig/pose.ts`: 외형 `artFolder`·`color`, `lookArt`(lookLayers 가 몸 부위 그림을 색 폴더에서), 검사. 도구 `scripts/rig/recolor.py`·`paths.look_art`(rr·still·promote 도 따름). 작업본 `recolors` + 덩치 색 외형 9개(brute-red·gray·tan·teal·brown·orange·green·yellow·blue), 덩치 관절·부위 8칸 내림(쉬는 자세가 바닥에).
 - 편집기 덩치 탭 색 단추 줄(`#colors`, 같은 몸 color 외형이 둘 이상일 때), 시험 페이지 덩치 칸 색 고르기.
 - 게임: `manifest.ts` `enemy.<속성>-basic` → 종이인형 외형(속성 색)·배율 1.78, `enemyArt` 가 rig 를 돌려줌(`rigArt` 를 캐릭터와 같이 씀). 도감 정지 그림에 `--art-scale`. `promote.py` 로 작업본 → 게임본(정지 그림 brute 10·digitigrade 1 새로, 사신(여)·영술원 학생(여) 다시).
 - 테스트 `tests/c340.test.ts` 4개, `rigAnim` 그림 칸 검사를 몸별 동작·관절로, `paperdoll` 칼 없는 몸 건너뜀. 캡처 `scripts/c340-proof.cjs` → `docs/captures/c340/`(★1 전투 earth 덩치 캔버스, 오류 0).
+- 덩치 대기(115-A 87, 사용자 02:5x "덩치 팔도 약간 앞뒤로 … 허벅지만 위아래로 움직이고, 몸이랑 고개, 팔은 각도 맞춰서 살짝씩 … 게임에 반영ㄱㄱ"): 허벅지 위아래만·몸통·고개·팔 살짝 각도 → promote 로 게임본에도.

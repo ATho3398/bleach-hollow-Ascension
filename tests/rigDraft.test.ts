@@ -112,7 +112,16 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
         }
       }
       // 대기 = 몸 전체만 위아래(115-A 81): 관절 회전 없음, 몸이 1칸 내려갔다 올라옴(허벅지·몸통·팔·머리 같이), 정강이는 거꾸로 옮겨 제자리
-      for (const [b, keys] of Object.entries(ms.idle!.tracks)) expect(keys.every((k) => k[1] === 0), `${body} 대기 ${b} 회전 없음`).toBe(true);
+      // 덩치(115-A 87): 허벅지·정강이·발은 회전 없음(허벅지는 위아래만), 몸통·고개·팔은 3° 안에서 살짝 — 팔은 앞뒤로 흔들림. 역관절은 회전 없음 그대로
+      const swing = body === 'hb' ? ['torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R'] : [];
+      for (const [b, keys] of Object.entries(ms.idle!.tracks)) {
+        if (swing.includes(b)) expect(keys.every((k) => Math.abs(k[1]) <= 3), `${body} 대기 ${b} 살짝`).toBe(true);
+        else expect(keys.every((k) => k[1] === 0), `${body} 대기 ${b} 회전 없음`).toBe(true);
+      }
+      if (body === 'hb') for (const b of ['arm_L', 'arm_R']) {
+        const r = ms.idle!.tracks[b]!.map((k) => k[1]);
+        expect(Math.min(...r) < 0 && Math.max(...r) > 0, `덩치 대기 ${b} 앞뒤로`).toBe(true);
+      }
       const ys = ms.idle!.tracks.root!.map((k) => k[3]);
       expect(Math.max(...ys) - Math.min(...ys), `${body} 대기 몸 오르내림`).toBe(1);
       const ty = ms.idle!.tracks.torso!.map((k) => k[3]);
