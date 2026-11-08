@@ -242,8 +242,10 @@ describe('자세·행렬', () => {
     const sc = HUMANOID.bones.find((b) => b.id === 'scabbard')!;
     expect(sc.parent).toBe('torso');
     for (const look of Object.keys(HUMANOID.looks)) {
+      const w = lookLayers(HUMANOID, look).find((x) => x.slot === 'weapon');
+      if (!w) continue; // 칼 없는 몸(역관절·덩치 — 사용자 도트, GDD 115-A 72)
       const l = lookLayers(HUMANOID, look).find((x) => x.slot === 'scabbard')!;
-      expect(l.art).not.toBe(lookLayers(HUMANOID, look).find((x) => x.slot === 'weapon')!.art);
+      expect(l.art).not.toBe(w.art);
     }
   });
   it('특수1: 타격 순간 뒷팔이 수평(약 90°), 특수2: 팔은 수평보다 낮고 칼날은 수평, 쏜 뒤 몸이 뒤로 밀린다(반동)', () => {

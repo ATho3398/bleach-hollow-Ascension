@@ -7,6 +7,7 @@
     { "id": "root", "parent": null, "pivot": [16, 52] },
     { "id": "torso", "parent": "root", "pivot": [16, 51] },
     { "id": "head", "parent": "torso", "pivot": [15, 17] },
+    { "id": "jaw", "parent": "head", "pivot": [15, 24] },
     { "id": "hair_back", "parent": "head", "pivot": [26, 11] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "forearm_L", "parent": "arm_L", "pivot": [11, 44] },
@@ -39,6 +40,7 @@
     { "id": "torso", "bone": "torso" },
     { "id": "outer_torso", "bone": "torso" },
     { "id": "scabbard", "bone": "scabbard" },
+    { "id": "jaw", "bone": "jaw" },
     { "id": "head", "bone": "head" },
     { "id": "hair", "bone": "head" },
     { "id": "arm_R", "bone": "arm_R" },
@@ -126,7 +128,7 @@
     },
     "shinigami_f": {
       "torso": { "art": "shinigami_f/torso", "at": [9, 25], "size": [18, 31] },
-      "arm_L": { "art": "shinigami_f/arm_L", "at": [2, 29], "size": [15, 15] },
+      "arm_L": { "art": "shinigami_f/arm_L", "at": [4, 29], "size": [13, 15] },
       "arm_R": { "art": "shinigami_f/arm_R", "at": [21, 29], "size": [13, 15] },
       "leg_L": { "art": "shinigami_f/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "shinigami_f/leg_R", "at": [15, 49], "size": [16, 27] },
@@ -135,7 +137,7 @@
       "foot_R": { "art": "shinigami/foot_R", "at": [20, 72], "size": [9, 9] },
       "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
       "forearm_R": { "art": "shinigami_f/forearm_R", "at": [20, 37], "size": [14, 18] },
-      "forearm_L": { "art": "shinigami_f/forearm_L", "at": [2, 42], "size": [15, 16] }
+      "forearm_L": { "art": "shinigami_f/forearm_L", "at": [2, 42], "size": [11, 16] }
     },
     "arrancar_f": {
       "torso": { "art": "arrancar_f/torso", "at": [7, 25], "size": [16, 28] },
@@ -149,6 +151,33 @@
       "thumb_L": { "art": "bare/thumb_L", "at": [6, 51], "size": [3, 6] },
       "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38], "size": [13, 16] },
       "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42], "size": [12, 16] }
+    },
+    "dg": {
+      "head": { "art": "dg/head", "at": [-14, 22], "size": [26, 22] },
+      "jaw": { "art": "dg/jaw", "at": [-18, 42], "size": [22, 12] },
+      "torso": { "art": "dg/torso", "at": [8, 30], "size": [22, 16] },
+      "arm_R": { "art": "dg/arm_R", "at": [4, 40], "size": [10, 14] },
+      "forearm_R": { "art": "dg/forearm_R", "at": [-12, 50], "size": [24, 16] },
+      "arm_L": { "art": "dg/arm_L", "at": [24, 38], "size": [12, 8] },
+      "forearm_L": { "art": "dg/forearm_L", "at": [32, 44], "size": [18, 22] },
+      "leg_R": { "art": "dg/leg_R", "at": [4, 54], "size": [18, 10] },
+      "shin_R": { "art": "dg/shin_R", "at": [4, 62], "size": [16, 10] },
+      "foot_R": { "art": "dg/foot_R", "at": [4, 70], "size": [16, 10] },
+      "leg_L": { "art": "dg/leg_L", "at": [14, 44], "size": [14, 14] },
+      "shin_L": { "art": "dg/shin_L", "at": [20, 54], "size": [18, 16] },
+      "foot_L": { "art": "dg/foot_L", "at": [34, 68], "size": [16, 12] }
+    },
+    "hb": {
+      "torso": { "art": "hb/torso", "at": [2, 28], "size": [28, 42] },
+      "head": { "art": "hb/head", "at": [-8, 22], "size": [24, 30] },
+      "arm_R": { "art": "hb/arm_R", "at": [-5, 31], "size": [18, 28] },
+      "forearm_R": { "art": "hb/forearm_R", "at": [-18, 47], "size": [24, 32] },
+      "arm_L": { "art": "hb/arm_L", "at": [22, 30], "size": [16, 24] },
+      "forearm_L": { "art": "hb/forearm_L", "at": [33, 42], "size": [20, 36] },
+      "leg_R": { "art": "hb/leg_R", "at": [2, 58], "size": [20, 14] },
+      "shin_R": { "art": "hb/shin_R", "at": [-1, 66], "size": [18, 14] },
+      "leg_L": { "art": "hb/leg_L", "at": [19, 56], "size": [14, 18] },
+      "shin_L": { "art": "hb/shin_L", "at": [21, 66], "size": [14, 14] }
     }
   },
   "looks": {
@@ -182,17 +211,17 @@
     },
     "shinigami-student-f": {
       "body": "student_f",
-      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "student_f/hair_back", "at": [21, 2], "size": [18, 30] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
     },
     "shinigami-base-f": {
       "body": "shinigami_f",
-      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "student_f/hair_back", "at": [21, 2], "size": [18, 30] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
     },
     "arrancar-base-f": {
       "body": "arrancar_f",
@@ -200,6 +229,58 @@
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
       "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
+    },
+    "digitigrade-base": {
+      "body": "dg"
+    },
+    "brute-base": {
+      "body": "hb",
+      "color": "보라"
+    },
+    "brute-red": {
+      "body": "hb",
+      "artFolder": "hb-red",
+      "color": "빨강"
+    },
+    "brute-gray": {
+      "body": "hb",
+      "artFolder": "hb-gray",
+      "color": "회색"
+    },
+    "brute-tan": {
+      "body": "hb",
+      "artFolder": "hb-tan",
+      "color": "연갈색"
+    },
+    "brute-teal": {
+      "body": "hb",
+      "artFolder": "hb-teal",
+      "color": "청록"
+    },
+    "brute-brown": {
+      "body": "hb",
+      "artFolder": "hb-brown",
+      "color": "갈색"
+    },
+    "brute-orange": {
+      "body": "hb",
+      "artFolder": "hb-orange",
+      "color": "주황"
+    },
+    "brute-green": {
+      "body": "hb",
+      "artFolder": "hb-green",
+      "color": "초록"
+    },
+    "brute-yellow": {
+      "body": "hb",
+      "artFolder": "hb-yellow",
+      "color": "황토"
+    },
+    "brute-blue": {
+      "body": "hb",
+      "artFolder": "hb-blue",
+      "color": "파랑"
     }
   },
   "hairFrame": {
@@ -329,6 +410,24 @@
         "arm_R": [-0.54, 0.43]
       }
     },
+    "dg": {
+      "pivots": {
+        "root": [18, 46],
+        "torso": [18, 44],
+        "head": [6, 36],
+        "jaw": [2, 44],
+        "arm_R": [10, 42],
+        "forearm_R": [10, 50],
+        "arm_L": [26, 38],
+        "forearm_L": [34, 46],
+        "leg_R": [18, 56],
+        "shin_R": [6, 62],
+        "foot_R": [16, 70],
+        "leg_L": [18, 46],
+        "shin_L": [24, 56],
+        "foot_L": [36, 68]
+      }
+    },
     "shinigami": {
       "pivots": {
         "forearm_L": [9, 44],
@@ -339,9 +438,25 @@
         "arm_R": 19,
         "forearm_R": -35
       }
+    },
+    "hb": {
+      "pivots": {
+        "root": [18, 64],
+        "torso": [18, 64],
+        "head": [12, 34],
+        "arm_R": [7, 38],
+        "forearm_R": [3, 53],
+        "arm_L": [26, 38],
+        "forearm_L": [38, 46],
+        "leg_R": [16, 66],
+        "shin_R": [12, 72],
+        "leg_L": [34, 64],
+        "shin_L": [29, 72]
+      }
     }
   },
   "bodyMotions": {
+    "dg": "digitigrade",
     "arrancar_f": "arrancarRelease",
     "female": "female",
     "student": "student",
@@ -349,7 +464,8 @@
     "shinigami_f": "shinigami_f",
     "arrancar": "arrancar",
     "bare": "bare",
-    "shinigami": "shinigami"
+    "shinigami": "shinigami",
+    "hb": "brute"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -376,7 +492,8 @@
       "scabbard": "칼집",
       "thumb_L": "엄지",
       "cape": "망토",
-      "forearm_L": "왼 아래팔"
+      "forearm_L": "왼 아래팔",
+      "jaw": "턱"
     },
     "groups": [
       [
@@ -389,6 +506,7 @@
         "머리",
         [
           "head",
+          "jaw",
           "hair",
           "hair_back"
         ]
@@ -439,6 +557,7 @@
     ],
     "follow": {
       "head": [
+        "jaw",
         "hair",
         "hair_back"
       ],
@@ -479,86 +598,116 @@
       "head": [
         {
           "pts": [
-            [15, 56],
-            [15, 46]
+            [8, 34],
+            [0, 28],
+            [6, 24]
           ],
-          "w": 11
+          "w": 6
         },
         {
           "pts": [
-            [12, 47],
-            [10, 39]
+            [4, 38],
+            [-4, 40],
+            [-12, 42],
+            [-16, 43.0]
           ],
-          "w": 3
+          "w": 6
+        }
+      ],
+      "jaw": [
+        {
+          "pts": [
+            [-16, 46],
+            [0, 46]
+          ],
+          "w": 4
         },
         {
           "pts": [
-            [19, 47],
-            [21, 39]
+            [-14, 48],
+            [-14, 50]
           ],
-          "w": 3
+          "w": 4
+        },
+        {
+          "pts": [
+            [-6, 48],
+            [-6, 52]
+          ],
+          "w": 4
         }
       ],
       "torso": [
         {
           "pts": [
-            [16, 56],
-            [16, 68]
+            [18, 44],
+            [18, 34]
           ],
-          "w": 10
-        }
-      ],
-      "arm_L": [
+          "w": 12
+        },
         {
           "pts": [
-            [13, 59],
-            [11, 69],
-            [8, 77]
+            [10, 36],
+            [28, 38]
           ],
-          "w": 4
+          "w": 12
         }
       ],
       "arm_R": [
         {
           "pts": [
-            [19, 59],
-            [18, 67]
+            [10, 42],
+            [10, 50]
           ],
-          "w": 5
+          "w": 6
         }
       ],
       "forearm_R": [
         {
           "pts": [
-            [18, 67],
-            [14, 76]
+            [10, 50],
+            [2, 54],
+            [-4, 58]
+          ],
+          "w": 4
+        },
+        {
+          "pts": [
+            [-8, 58],
+            [-10, 62]
+          ],
+          "w": 4
+        },
+        {
+          "pts": [
+            [-4, 58],
+            [-4, 62]
           ],
           "w": 4
         }
       ],
-      "leg_L": [
+      "arm_L": [
         {
           "pts": [
-            [14, 68],
-            [18, 73]
+            [26, 38],
+            [34, 46]
           ],
           "w": 6
         }
       ],
-      "shin_L": [
+      "forearm_L": [
         {
           "pts": [
-            [18, 73],
-            [14, 78]
+            [34, 46],
+            [40, 54],
+            [42, 62]
           ],
-          "w": 5
-        }
-      ],
-      "foot_L": [
+          "w": 4
+        },
         {
           "pts": [
-            [14, 78],
-            [9, 79]
+            [46, 58],
+            [46, 62]
           ],
           "w": 4
         }
@@ -566,8 +715,8 @@
       "leg_R": [
         {
           "pts": [
-            [18, 68],
-            [22, 73]
+            [18, 56],
+            [6, 62]
           ],
           "w": 6
         }
@@ -575,23 +724,167 @@
       "shin_R": [
         {
           "pts": [
-            [22, 73],
-            [18, 78]
+            [6, 62],
+            [16, 70]
           ],
-          "w": 5
+          "w": 6
         }
       ],
       "foot_R": [
         {
           "pts": [
-            [18, 78],
-            [13, 79]
+            [16, 70],
+            [12, 76],
+            [6, 78]
           ],
-          "w": 4
+          "w": 6
+        }
+      ],
+      "leg_L": [
+        {
+          "pts": [
+            [18, 46],
+            [24, 56]
+          ],
+          "w": 6
+        }
+      ],
+      "shin_L": [
+        {
+          "pts": [
+            [24, 56],
+            [36, 68]
+          ],
+          "w": 6
+        }
+      ],
+      "foot_L": [
+        {
+          "pts": [
+            [36, 68],
+            [42, 74],
+            [46, 78]
+          ],
+          "w": 6
         }
       ]
     }
   },
   "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
-  "releaseNote": "해방 1안(GDD 115-A 49): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-f-release-test → arrancar-f-released-test(임시: 아란칼(여) + 임시 망토)"
+  "releaseNote": "해방 1안(GDD 115-A 49): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-f-release-test → arrancar-f-released-test(임시: 아란칼(여) + 임시 망토)",
+  "cuts": {
+    "note": "사용자 도트를 뼈대 선으로 잘라 쓰는 몸 (scripts/rig/cut_ref.py humanoid [몸]). image = 원본 1배 도트, at = 배율 도트 왼쪽 위의 캔버스 자리, scale = 도트 배율 (GDD 115-A 69·71·72)",
+    "dg": {
+      "note": "사람형 역관절 기본(몸 dg) = 사용자 도트(2026-11-08, 34×29)를 뼈대 선 skeletons.dg 로 잘라 씀(scripts/rig/cut_ref.py humanoid). scale 2 = 사용자 \"역관절 일단 2배 키우고\"(2026-11-09) — 도트 칸을 2배로(키 58칸), at = 2배 도트 왼쪽 위를 둘 캔버스 자리(발 = 바닥 줄 위 y 79, 몸 가운데 x 18 근처) (GDD 115-A 69·71)",
+      "image": "docs/design/user-art/digitigrade-ref/digitigrade-base-2026-11-08.png",
+      "body": "dg",
+      "at": [-18, 22],
+      "scale": 2
+    }
+  },
+  "bodySlots": {
+    "hb": [
+      "arm_R",
+      "cape",
+      "outer_arm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "shin_R",
+      "shin_L",
+      "leg_R",
+      "forearm_R",
+      "torso",
+      "outer_torso",
+      "arm_L",
+      "scabbard",
+      "leg_L",
+      "forearm_L",
+      "jaw",
+      "head",
+      "hair",
+      "outer_arm_R"
+    ]
+  },
+  "assembled": {
+    "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
+    "hb": "docs/design/user-art/beast-base-ref/assembly.json"
+  },
+  "recolors": {
+    "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",
+    "hb-red": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#964e50",
+        "#3a2c48": "#4e262e"
+      },
+      "source": "시트 3번째 = 적 blood"
+    },
+    "hb-gray": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#7a787c",
+        "#3a2c48": "#3c3a42"
+      },
+      "source": "시트 5번째 = 적 normal"
+    },
+    "hb-tan": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#b1866c",
+        "#3a2c48": "#573b2f"
+      },
+      "source": "시트 1번째"
+    },
+    "hb-teal": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#52807c",
+        "#3a2c48": "#264042"
+      },
+      "source": "시트 2번째"
+    },
+    "hb-brown": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#967654",
+        "#3a2c48": "#4e3a2a"
+      },
+      "source": "적 earth"
+    },
+    "hb-orange": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#a86848",
+        "#3a2c48": "#5a3226"
+      },
+      "source": "적 fire"
+    },
+    "hb-green": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#70845c",
+        "#3a2c48": "#384434"
+      },
+      "source": "적 poison"
+    },
+    "hb-yellow": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#a68e5e",
+        "#3a2c48": "#58462e"
+      },
+      "source": "적 thunder"
+    },
+    "hb-blue": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#58688c",
+        "#3a2c48": "#2a324c"
+      },
+      "source": "적 water"
+    }
+  }
 }

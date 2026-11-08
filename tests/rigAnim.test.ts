@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HUMANOID, MOTIONS, apply, boneMatrices, layerMatrix, lookLayers, samplePose } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, apply, boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose } from '../src/data/art/rig/pose';
 import { createRigPlayer, FAMILY_RIG_MOTIONS, RIG_ACTIONS } from '../src/ui/bha/rigAnim';
 import { charArt, ART_MANIFEST } from '../src/data/art/manifest';
 
@@ -75,9 +75,11 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
       const layers = lookLayers(HUMANOID, look);
       // 게임이 실제로 트는 동작만(연결표 RIG_ACTIONS·FAMILY_RIG_MOTIONS) — 필살기·박치기처럼 아직 게임 연결이 없는 동작은 빼고
       const used = new Set([...Object.values(RIG_ACTIONS).flat(), ...Object.values(FAMILY_RIG_MOTIONS).flat()]);
-      for (const [mid, m] of Object.entries(MOTIONS).filter(([id]) => used.has(id))) {
+      // 몸별 동작 묶음·관절 그대로(게임 재생기 bindRigAnim 과 같게 — 역관절·덩치는 전용 동작, GDD 115-A 70·85)
+      const body = HUMANOID.looks[look]!.body;
+      for (const [mid, m] of Object.entries(resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, body)).filter(([id]) => used.has(id))) {
         for (let t = 0; t <= m.duration; t += 20) {
-          const mats = boneMatrices(HUMANOID, samplePose(HUMANOID, m, t));
+          const mats = boneMatrices(HUMANOID, samplePose(HUMANOID, m, t), body);
           for (const l of layers) {
             const mm = layerMatrix(HUMANOID, mats, l, m);
             const pts = l.slot === 'weapon' ? [HUMANOID.swordAxis!.tip, [1, 0]] : [[0, 0], [l.size[0], 0], [0, l.size[1]], [l.size[0], l.size[1]]];

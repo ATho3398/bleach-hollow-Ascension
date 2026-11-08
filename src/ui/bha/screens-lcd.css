@@ -44,7 +44,7 @@
 .bha-edex__art { overflow: hidden; }
 .bha-edex__art--row { width: 32px; height: 32px; }
 .bha-edex__art--hero { width: 72px; height: 72px; }
-.bha-edex__img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.bha-edex__img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; transform-origin: 50% 92%; transform: scale(var(--art-scale, 1)); } /* 종이인형 적 정지 그림은 --art-scale (GDD 115-A 85) */
 .bha-edex__art.is-silhouette .bha-edex__img { filter: brightness(0); opacity: 0.55; }
 .bha-edex__art.is-silhouette .bha-icon { color: var(--bha-text-3); }
 .bha-edex__new { flex: none; width: 8px; height: 8px; border-radius: var(--bha-r-pill); background: var(--bha-accent); box-shadow: 0 0 0 1px var(--bha-bg-0); } /* '새' 점 하나 (알림 없음, 200장 7) */

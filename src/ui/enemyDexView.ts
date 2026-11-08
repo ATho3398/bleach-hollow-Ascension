@@ -59,6 +59,7 @@ function enemyArtBox(enemyId: string, known: boolean, cls: string): HTMLElement 
     img.src = art.src;
     img.alt = '';
     img.draggable = false;
+    if (art.scale !== 1) img.style.setProperty('--art-scale', String(art.scale)); // 종이인형 정지 그림(칸이 넓음)은 배율로 지금 적 그림 크기에 맞춤 (GDD 115-A 85)
     box.append(img);
   } else box.append(icon(known ? 'i-tile-elite' : 'i-unknown'));
   return box;

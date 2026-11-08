@@ -69,6 +69,16 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  // 적 덩치 (<속성>-basic, GDD 115-A 85 · 사용자 2026-11-09 "적으로 나오는 덩치도 이 모션 넣으면 된다잉"): 종이인형 덩치(몸 hb, 동작 묶음 brute 하나)를 지금 그림 색 그대로.
+  // 배율 1.78 = 정지 그림 키(칸의 0.38)를 지금 적 그림 키(0.68)에 맞춤. 발 줄은 둘 다 칸 아래 8%
+  'enemy.kyo-basic': { rig: 'brute-base', scale: 1.78 },
+  'enemy.blood-basic': { rig: 'brute-red', scale: 1.78 },
+  'enemy.normal-basic': { rig: 'brute-gray', scale: 1.78 },
+  'enemy.earth-basic': { rig: 'brute-brown', scale: 1.78 },
+  'enemy.fire-basic': { rig: 'brute-orange', scale: 1.78 },
+  'enemy.poison-basic': { rig: 'brute-green', scale: 1.78 },
+  'enemy.thunder-basic': { rig: 'brute-yellow', scale: 1.78 },
+  'enemy.water-basic': { rig: 'brute-blue', scale: 1.78 },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
@@ -143,11 +153,19 @@ const withAnims = (a: ArtUrls, anims: AnimSet): ArtUrls => (hasAnims(anims) ? { 
 /** 적 그림: `enemy-<적id>` 한 장짜리 파일이나 `idle` 애니가 있을 때만 값을 돌려준다(없으면 null = 기존 실루엣). 목록에 scale·offsetY 만 적어도 된다 */
 export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES, overrides: Readonly<Record<string, AnimOverrides>> = ART_ANIMS as Record<string, AnimOverrides>): ArtUrls | null {
   const key = `enemy.${enemyId}`;
+  // 종이인형 적 (GDD 115-A 85): 목록에 rig 가 있으면 그 외형이 움직인다(정지 그림 = 쉬는 자세 한 장)
+  const rig = manifest[key]?.rig;
+  if (rig && HUMANOID.looks[rig]) return rigArt(rig, manifest[key]!, base);
   const a = artUrls(key, base, manifest, files);
   const anims = resolveAnims([key], base, files, overrides);
   // 한 장짜리 파일이 없고 idle 애니만 있으면 idle-1 을 정지 그림으로도 쓴다 (GDD 26-2)
   const src = a.src ?? anims.idle?.frames[0] ?? null;
   return src ? withAnims({ ...a, src }, anims) : null;
+}
+
+/** 종이인형 그림 (GDD 96장 30): 정지 그림 = still/<외형>.png, 부위 그림 폴더, 목록의 배율·위치 */
+function rigArt(look: string, e: ArtEntry, base: string): ArtUrls {
+  return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
 }
 
 /** 종이인형 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율 */
@@ -194,8 +212,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     }
     // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
     const look = female && HUMANOID.looks[rigLook + RIG_FEMALE_SUFFIX] ? rigLook + RIG_FEMALE_SUFFIX : rigLook;
-    const e = manifest[rigKey]!;
-    return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
+    return rigArt(look, manifest[rigKey]!, base);
   }
   return tryKeys(keys) ?? artUrls(fallbackKey, base, manifest, files);
 }

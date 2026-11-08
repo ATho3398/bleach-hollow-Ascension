@@ -1,0 +1,23 @@
+{
+  "tries": [
+    {
+      "enemy": null,
+      "rigCanvas": true,
+      "img": null
+    }
+  ],
+  "shots": [
+    "hollow-battle-0.png",
+    "hollow-battle-1.png",
+    "hollow-battle-2.png",
+    "hollow-battle-3.png",
+    "hollow-battle-4.png",
+    "hollow-battle-5.png"
+  ],
+  "foe": {
+    "enemy": null,
+    "rigCanvas": true,
+    "img": null
+  },
+  "errors": []
+}
