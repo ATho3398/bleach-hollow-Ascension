@@ -61,6 +61,10 @@ function markReady(): void {
 }
 /** 점검 스크립트용 (C.314, GDD 194장 5): 새 버전을 받은 것처럼 알림 창을 띄운다 — 서비스 워커 없이 */
 export const markUpdateReadyForTest = (): void => markReady();
+/** 점검 스크립트용 (C.316): 처음 화면 자동 다시 시작 안내 줄만 띄운다 — 실제로 다시 시작하지는 않는다 */
+export const showAutoRestartNoticeForTest = (): void => {
+  for (const cb of autoListeners) cb();
+};
 
 /** [나중에] (C.315, GDD 195장): 창을 닫되 확인은 계속한다. 같은 빌드는 다시 꺼낼 때(resumed) 다시 알리고, 켜 둔 동안은 더 새 빌드가 나오면 알린다 */
 export function dismissUpdate(): void {

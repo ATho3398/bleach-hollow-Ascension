@@ -120,11 +120,13 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   const ver = el('p', 'bha-start__ver', `v ${PATCH_LABEL}`);
   nodes.push(ver);
   // 새 버전 (GDD 184장 3, C.283): 처음 화면이면 누르지 않아도 자동 다시 시작 — 직전에 한 줄 안내
+  // C.316: 안내는 버전 줄 오른쪽에 같은 줄로 붙인다 — 아래 새 줄로 달면 폰(796 터치·글자 1.15)에서 판 아래 끝에 걸려 잘렸다. 줄 수가 그대로라 메뉴 자리도 안 움직인다
   onAutoRestart(() => {
-    if (ver.isConnected && !ver.parentElement?.querySelector('.bha-start__update')) ver.after(el('p', 'bha-start__ver bha-start__update', '새 버전으로 다시 시작한다…'));
+    if (ver.isConnected && !ver.querySelector('.bha-start__update')) ver.append(el('span', 'bha-start__update', '새 버전으로 다시 시작한다…'));
   });
   // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
-  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);
+  // C.316: 경고 줄(note)이 있을 때도 같은 한 줄 메뉴 — 세로 4개 + 경고 줄이면 폰에서 버전 줄까지 판 아래로 밀렸다
+  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}${note ? ' bha-start--note' : ''}` }, ...nodes);
 }
 
 export interface SpeciesHandlers {
