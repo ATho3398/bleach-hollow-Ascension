@@ -183,10 +183,8 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
     expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.86 }); // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
     expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
   });
-  it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
-    // C.335: 사신 시장은 따로(shinigami.json market) — 공통 기본값은 호로가 쓴다
-    expect(FACTIONS.find((f) => f.id === 'hollow')!.market?.layout).toBeUndefined();
-    const m = marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
+  it('시장 공통 기본값(DEFAULT_MARKET) = C.263 값 — 두 종족은 C.335·C.336 부터 json 으로 따로', () => {
+    const m = marketOf({});
     expect(m.exit).toEqual({ x: 7.5, y: 83.1, scale: 0.64 });
     expect(m.layout.shop).toEqual({ x: 40.3, y: 79, scale: 0.9 });
     expect(m.layout.gearShop).toEqual({ x: 54.7, y: 39.5, scale: 0.88 });
@@ -331,7 +329,7 @@ describe('C.335 사신 시장 반영', () => {
     expect(S().floor.view).toEqual({ zoom: 1.14, x: 50, y: 50 });
     expect(S().floor.poly).toEqual(marketOf({}).floor.poly);
   });
-  it('자리 7곳 = 내보낸 값, 호로 시장은 공통 기본값 그대로', () => {
+  it('자리 7곳 = 내보낸 값', () => {
     const m = S();
     expect(m.exit).toEqual({ x: 10.9, y: 71.8, scale: 0.64 });
     expect(m.layout.shop).toEqual({ x: 38.4, y: 88.8, scale: 0.9 });
@@ -340,8 +338,27 @@ describe('C.335 사신 시장 반영', () => {
     expect(m.layout.traitShop).toEqual({ x: 70.4, y: 40.9, scale: 0.97 });
     expect(m.layout.smith).toEqual({ x: 41.7, y: 35, scale: 1.01 });
     expect(m.layout.wanderer).toEqual({ x: 50.3, y: 66.6, scale: 1.11 });
-    const h = marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
-    expect(h.sceneArt).toBe('scene.market');
-    expect(h.layout.shop).toEqual(marketOf({}).layout.shop);
+    // 호로 시장은 C.336 에서 따로 반영 (아래 묶음)
+  });
+});
+
+// C.337 (사용자 2026-11-09 02:02 "요거 호로상점도 적용", bha-layout-20261109-0202.json): 호로 시장 배경·배경 보기·자리 — 호로만. 나머지 장면은 C.335·C.278·C.269 와 같음
+describe('C.337 호로 시장 반영', () => {
+  const H = () => marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
+  it('배경 = 호로 전용 키 scene.market.hollow (파일 있음) · 배경 보기 ×1.16', () => {
+    expect(H().sceneArt).toBe('scene.market.hollow');
+    expect(artUrls('scene.market.hollow').src).toMatch(/scene-market-hollow\.webp$/);
+    expect(H().floor.view).toEqual({ zoom: 1.16, x: 50, y: 50 });
+  });
+  it('자리 7곳 = 내보낸 값, 사신 시장은 C.335 그대로', () => {
+    const m = H();
+    expect(m.exit).toEqual({ x: 10.6, y: 72.3, scale: 0.64 });
+    expect(m.layout.shop).toEqual({ x: 33.2, y: 89, scale: 0.9 });
+    expect(m.layout.gearShop).toEqual({ x: 66.4, y: 90, scale: 0.89 });
+    expect(m.layout.skinShop).toEqual({ x: 69, y: 42.7, scale: 0.92 });
+    expect(m.layout.traitShop).toEqual({ x: 87.2, y: 72.4, scale: 1.09 });
+    expect(m.layout.smith).toEqual({ x: 33.6, y: 40.4, scale: 0.96 });
+    expect(m.layout.wanderer).toEqual({ x: 49.1, y: 68.3, scale: 1.03 });
+    expect(marketOf(FACTIONS.find((f) => f.id === 'shinigami')!).sceneArt).toBe('scene.market.shinigami');
   });
 });

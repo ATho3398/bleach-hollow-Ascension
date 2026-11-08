@@ -295,7 +295,12 @@
   },
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
-  "market": { "name": "시장" },
+  "market": {
+    "name": "시장", "sceneArt": "scene.market.hollow",
+    "floor": { "aspect": 2, "poly": [[0, 0.3], [1, 0.3], [1, 1], [0, 1]], "view": { "zoom": 1.16, "x": 50, "y": 50 } },
+    "layout": { "shop": { "x": 33.2, "y": 89, "scale": 0.9 }, "gearShop": { "x": 66.4, "y": 90, "scale": 0.89 }, "skinShop": { "x": 69, "y": 42.7, "scale": 0.92 }, "traitShop": { "x": 87.2, "y": 72.4, "scale": 1.09 }, "smith": { "x": 33.6, "y": 40.4, "scale": 0.96 }, "wanderer": { "x": 49.1, "y": 68.3, "scale": 1.03 } },
+    "exit": { "x": 10.6, "y": 72.3, "scale": 0.64 }
+  },
   "worldmap": {
     "name": "웨코문도", "adventureName": "모험", "spaName": "온천",
     "sceneArt": "scene.worldmap.hollow",
