@@ -2614,3 +2614,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `python3 scripts/rig/promote.py`: `src/data/art/rig/humanoid.json`·`motions.json` ← 작업본(11-04 03:19 고정분) — 새 동작 `rpunch`(오른손 치기)·`uppercut`(어퍼컷), 아란칼(남) 오른 팔꿈치·오른손 치기 아래팔. `public/art/rig/humanoid/still/arrancar-base.png`·`arrancar-base.lock.json` 다시 만듦. 그림 추가·삭제 없음. 두 동작은 지금 게임이 저절로 쓰는 곳 없음.
 - 이펙트 배치 도구(`scripts/pixelfx/tool/fx-tool.ts` MOTION_NAMES): '오른손 치기'·'어퍼컷' 이름. 도구 다시 만들어 올림 — Pixel 7: 사신·아란칼 남녀 연결 동작 목록에 두 동작, 어퍼컷 재생 오류 0.
 - 테스트 `tests/paperdoll.test.ts` 동작 목록 갱신. 전체 2872 통과(248 파일)·typecheck·balance:check 회귀 가드 통과.
+
+## C.339 — 블록 도트 이펙트 3차: 사신 권 연결 동작(어퍼컷 포함)·귀·조 이성에도·탄 3블록 (GDD 203장 5, v5.505, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" ×3 (이펙트 배치 도구 [확정] 11-09 02:16:33 · 02:17:36 · 02:18:09). 마지막 확정 값(앞 두 번 포함)을 넣음.
+- `node scripts/pixelfx/tool/apply.mjs` → `src/data/factions/shinigami.json`(권 2블록 straight×1.75→punch×1.75, 3블록 punch×2.25→straight×2.35→uppercut×1.95, 남·여 / 귀 2블록 skill×1.3 여성에도) · `hollow.json`(조 punch, 3블록 punch×3→straight×3 남성에도 / 탄 3블록 값). 이펙트·시트 추가 없음(122장). 표시만.
+- 검증 `scripts/c339-proof.cjs`(c336-proof 기반) 실제 전투 1배: 사신 권 불 체인2 주먹질·체인3 파산권(주먹 펑) · 호로 조 물 1블록(호로 단계 = 프레임 그림, 옛 몸동작) · 호로 탄 허 체인3 기모으기. 오류 0. 캡처 `docs/captures/c339/` 4장.
+- 테스트 2872 통과(248 파일), typecheck·balance:check 회귀 가드 통과.
