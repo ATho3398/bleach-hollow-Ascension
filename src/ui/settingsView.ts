@@ -23,7 +23,7 @@ import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_
 import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
 import { versionLabel } from '../version';
-import { DEFAULT_GENDER, GENDER_LABEL, GENDERS, type Gender } from '../engine/gender';
+import { GENDER_LABEL } from '../engine/gender';
 import { cloudPanelNodes, type CloudUi } from './cloudView';
 
 /** 설정 탭 (GDD 103장 2) */
@@ -230,6 +230,8 @@ export interface SettingsViewOpts {
   commonOnly?: boolean;
   /** 처음 열 탭 */
   tab?: SettingsTab;
+  /** 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7): 게임 안에서 연 설정 화면만 (시작 화면·전투 일시정지 설정은 없음) */
+  onIdentity?: () => void;
   /** 클라우드 세이브 로그인 (GDD 196장, C.323): 없으면(테스트 모드) 줄이 없다 */
   cloud?: CloudUi;
 }
@@ -272,10 +274,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   let common: CommonValues = structuredClone(commonSaved);
   let slotSaved: SlotSettings = host?.read() ?? {};
   let slot: SlotSettings = { ...slotSaved };
-  // 성별 (GDD 114장): 슬롯에만 있는 값 — [이 슬롯]에서만 바꾼다. 저장 전까지는 임시
-  const genderHost = host?.gender ?? null;
-  let genderSaved: Gender = genderHost?.read() ?? DEFAULT_GENDER;
-  let gender: Gender = genderSaved;
+  // 이름·성별 (GDD 199장 7, C.326): 슬롯에만 있는 값 — 설정 > 기타 [이름·성별 바꾸기] 화면에서 바로 바꾼다 (설정 [저장]과 따로)
+  const identityHost = host?.identity ?? null;
   // 공통/이 슬롯 나누기는 화면에서 뺐다 (GDD 159장 13): 늘 공통 값을 고친다. 옛 세이브에 남은 슬롯 값은 그 줄을 고치면 지워져 공통을 따른다
   const scope = 'common' as 'common' | 'slot';
   let tab: SettingsTab = o.tab ?? 'screen';
@@ -296,8 +296,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   };
   const commonDirty = () => !sameValue(common, commonSaved);
   const slotDirty = () => !sameValue(parseSlotSettings(slot), parseSlotSettings(slotSaved));
-  const genderDirty = () => genderHost !== null && gender !== genderSaved;
-  const isDirty = () => commonDirty() || (host !== null && slotDirty()) || genderDirty();
+  const isDirty = () => commonDirty() || (host !== null && slotDirty());
 
   const paints: (() => void)[] = [];
   const tagPaint = (tag: HTMLElement, k: keyof CommonValues) => {
@@ -423,19 +422,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     pickRow(options, label, () => val(k), (v) => setVal(k, v), () => editable(k), (tag) => tagPaint(tag, k));
 
   // ── 화면 탭 ──
-  // 성별 (GDD 114장): 남성/여성. 캐릭터(슬롯)마다 다른 항목이라 '이 캐릭터' 칸에 따로 묶는다 (GDD 159장 13)
-  const charPanels: HTMLElement[] = [];
-  if (genderHost) {
-    const genderRow = pickRow(GENDERS, (g) => GENDER_LABEL[g], () => gender, (g) => { gender = g; }, () => true, (tag) => {
-      tag.hidden = true;
-    });
-    genderRow.dataset.set = 'gender';
-    genderRow.setAttribute('role', 'group');
-    genderRow.setAttribute('aria-label', '성별');
-    const p = panel('이 캐릭터 · 성별', genderRow, hintLine('캐릭터마다 따로 정한다.'), hintLine(genderHost.note));
-    p.dataset.panel = 'gender';
-    charPanels.push(p);
-  }
+  // 성별 (GDD 114장)은 화면 탭에서 기타 탭 [이름·성별 바꾸기]로 옮겼다 (GDD 199장 7, C.326)
   const tamaPanel = panel('다마고치 모드',
     boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대된다. 컴퓨터는 B 키로 바꾼다.'),
     boolRow('tilt', '기울기로 흔들기'), hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 저장할 때 움직임 허용을 묻는다.'),
@@ -582,6 +569,14 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const etcPanel = panel('기본값 복원', reset, hintLine('전투 효과·소리·음악 목록(공통)을 되돌린다.'));
   if (o.onHelp) etcPanel.append(...panel('도움말', button({ label: '도움말', icon: 'i-help', size: 'small', onClick: o.onHelp }), hintLine('안내를 다시 볼 수 있다.')).childNodes);
   if (o.onBackup) etcPanel.append(...panel('세이브 백업', button({ label: '세이브 백업', icon: 'i-check', size: 'small', onClick: o.onBackup })).childNodes);
+  // 이름·성별 (GDD 199장 7, C.326): 버튼 하나 + 지금 값 한 줄. 바꾼 설정이 저장 안 됐으면 먼저 저장 확인 창
+  if (identityHost && o.onIdentity) {
+    const onIdentity = o.onIdentity;
+    const now = identityHost.read();
+    const idBtn = button({ label: '이름·성별 바꾸기', icon: 'i-swap', size: 'small', onClick: () => requestClose(onIdentity) });
+    idBtn.dataset.set = 'identity';
+    etcPanel.append(...panel('이름·성별', idBtn, hintLine(`${now.name ?? '이름 없음'} · ${GENDER_LABEL[now.gender]}`)).childNodes);
+  }
   // 로그인·클라우드 세이브 (GDD 196장, C.323): 한 줄 — 버튼 하나(로그인 전 [Google 로그인] · 뒤 [로그아웃], 같은 자리) + 상태 설명. 상태가 바뀌면 글만 바뀐다
   const cloudNodes = o.cloud ? cloudPanelNodes(o.cloud) : null;
   if (cloudNodes) {
@@ -604,7 +599,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   }
 
   const TAB_BODY: Record<SettingsTab, HTMLElement[]> = {
-    screen: [...charPanels, ...fsPanels, tamaPanel, sizePanel, keyPanel],
+    screen: [...fsPanels, tamaPanel, sizePanel, keyPanel],
     sound: [soundPanel, ...musicNodes],
     battle: [fxPanel, ctlPanel],
     etc: [info, installPanel, etcPanel, ...slotPanels],
@@ -705,8 +700,6 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       host.write(s);
       setActiveSlotSettings(s);
     }
-    if (genderHost && genderDirty()) genderHost.write(gender);
-    genderSaved = gender;
     commonSaved = structuredClone(common);
     slotSaved = { ...slot };
     applySettingsNow(storage);
@@ -725,7 +718,6 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   function discard(): void {
     common = structuredClone(commonSaved);
     slot = { ...slotSaved };
-    gender = genderSaved;
     applySettingsNow(storage);
     paintAll();
   }

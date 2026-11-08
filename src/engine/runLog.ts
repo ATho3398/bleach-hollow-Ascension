@@ -287,6 +287,8 @@ export interface RunRecord {
   tutorial?: boolean;
   /** C.188 (세이브 형식 52, GDD 114장 4): 떠날 때 슬롯 성별. 형식 52 이전 기록에는 없다 */
   gender?: Gender;
+  /** C.326 (세이브 형식 63, GDD 199장 8): 떠날 때 캐릭터 이름. 정하지 않았거나 형식 63 이전 기록에는 없다 */
+  name?: string;
   /** C.195 (세이브 형식 53, GDD 121장 4·5): 이어하기 한 칸 — 바퀴 n 배율 = 1 + 단계 × (n − 1) 의 단계(r 보상·e 적), 받은 임시 타일 수(got)·길에 놓인 채 끝난 임시 타일 id(placed),
    *  원정 끝 영구 타일(perm: 타일 id, 꽝 null, 굴림 없음이면 없음). 세이브 크기 때문에 짧은 키. 형식 53 이전 기록에는 없다 */
   continueRun?: { r: number; e: number; got: number; placed: string[]; perm?: string | null };
@@ -592,14 +594,27 @@ export interface TrackOpenRecord {
   byFactionId: string;
 }
 
+/** 이름·성별을 정하거나 바꾼 기록 (GDD 199장 6~8·9장, C.326, 형식 63): source = new 새 게임 · old 옛 세이브에서 처음 정함 · settings 설정에서 바꿈.
+ *  그때 트랙 종족·단계도 남긴다 (나중 조건용) */
+export interface IdentityRecord {
+  at: number;
+  name: string;
+  gender: Gender;
+  source: 'new' | 'old' | 'settings';
+  factionId: string;
+  tierIndex: number;
+}
+
 /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 캐릭터 트랙마다의 RunLog 와 따로, 슬롯 하나에 하나 */
 export interface SlotLog {
   fusions: FusionRecord[];
   trackOpens: TrackOpenRecord[];
+  /** C.326 (형식 63): 이름·성별 기록. 형식 63 이전 세이브는 빈 목록 */
+  identities: IdentityRecord[];
 }
 
 export function emptySlotLog(): SlotLog {
-  return { fusions: [], trackOpens: [] };
+  return { fusions: [], trackOpens: [], identities: [] };
 }
 
 export function emptyRunLog(): RunLog {

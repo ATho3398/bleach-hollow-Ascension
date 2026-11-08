@@ -15,7 +15,7 @@ import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOld
 import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord } from './engine/runLog';
+import { emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -37,6 +37,7 @@ import { newlyAchieved } from './engine/tutorialGoals';
 import { DEX_MILESTONES, newlyReachedMilestones, type DexMilestoneDef } from './data/dexRewards';
 import { DEFAULT_GROUND_ID } from './data/grounds';
 import { DEFAULT_GENDER, parseGender, type Gender } from './engine/gender';
+import { checkName, parseName } from './engine/playerName';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
 import { canWear, getSkin } from './data/skins';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
@@ -56,7 +57,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 62; // C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 63; // C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -117,6 +118,8 @@ export interface SaveData {
   settings: SlotSettingsData | null;
   /** 성별 (GDD 114장, C.188, 형식 52): 슬롯(캐릭터)마다 하나, 기본 남성. 설정 [이 슬롯]에서 바꾼다. 외형이 갈리는 단계는 종족 설정 genderLookFromTier */
   gender: Gender;
+  /** 캐릭터 이름 (GDD 199장 6~8, C.326, 형식 63): 슬롯(캐릭터)마다 하나, 두 트랙 공용. 규칙 = engine/playerName.ts. null = 아직 안 정함(옛 세이브) — 이어할 때 한 번 이름·성별 창 */
+  name: string | null;
   /** 마지막으로 보던 화면 키 (GDD 19-3, 형식 13). 화면 키만 저장하고 화면 상태는 저장하지 않는다(원정 지점은 activeExpedition 이 갖고 있다) */
   lastScreen: ScreenKey;
   /** 등급전 상태 (GDD 21장, 형식 15): 번호 사다리·재도전 대기·전적 + 등급 이력(history, 환생해도 유지할 자리 — 22-2 해방 자격) */
@@ -641,7 +644,7 @@ export function newSaveData(factionId: string, nowMs: number = Date.now()): Save
     meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1)
     lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {},
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
-    settings: null, gender: DEFAULT_GENDER,
+    settings: null, gender: DEFAULT_GENDER, name: null,
   };
 }
 
@@ -905,7 +908,7 @@ export function performFusion(save: SaveData, nowMs: number = Date.now()): Fusio
 export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): EvolveResult | null {
   const log = save.runLog;
   log.battles.push(...exp.battles);
-  log.runs.push({ ...buildRunRecord(exp), gender: save.gender });
+  log.runs.push({ ...buildRunRecord(exp), gender: save.gender, ...(save.name ? { name: save.name } : {}) });
   log.absorbs.push(...exp.absorbRecords);
   // 첫 원정 튜토리얼 (GDD 67장 3·4번): 흡수 기록 대신 '튜토리얼 보상'으로 따로, 방에서 다음 할 일 안내를 띄울 차례로
   if (exp.tutorial) {
@@ -1295,7 +1298,7 @@ function logCorruptExpedition(save: SaveData, raw: unknown): boolean {
     gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false,
     ...(typeof snap.groundId === 'string' ? { groundId: snap.groundId } : {}),
     ...(Number.isInteger(snap.difficulty) ? { difficulty: snap.difficulty as number } : {}),
-    gold: 0, abandoned: 'corrupt', gender: save.gender,
+    gold: 0, abandoned: 'corrupt', gender: save.gender, ...(save.name ? { name: save.name } : {}),
   });
   return true;
 }
@@ -1741,6 +1744,11 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 형식 61 → 62 (C.311, GDD 192장 1): 런 로그 runs 에 endReason 'abandoned'·abandoned 이유, 원정 중간 저장에 leftAtMs 가 더해졌을 뿐(없어도 되는 칸) — 옛 세이브는 그대로.
   // 옛 원정 중간 저장은 readActiveExpedition 이 나간 시각(savedAtMs)·밸런스 버전으로 이어 할지 실패로 정산할지 정한다
   61: () => undefined,
+  // 형식 62 → 63 (C.326, GDD 199장 8): 캐릭터 이름 칸 — 옛 세이브는 이름이 없다(null → 다음에 이어할 때 한 번 이름·성별 창). 슬롯 기록에 이름·성별 기록 빈 목록
+  62: (save) => {
+    save.name = null;
+    if (isRec(save.slotLog)) (save.slotLog as unknown as Record<string, unknown>).identities = [];
+  },
 };
 
 /** 형식 54 이상 세이브를 지금 형식까지 한 단계씩 올린다. 빠진 단계가 있으면 false (못 연다) */
@@ -2049,7 +2057,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   save.trackNotice = typeof save.trackNotice === 'string' && save.otherTracks.some((t) => t.factionId === save.trackNotice) ? save.trackNotice : null;
   save.hogyoku = sanitizeHogyoku(save.hogyoku);
   save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
-  save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [] };
+  save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [], identities: sanitizeIdentities(save.slotLog?.identities) };
   save.shared = sanitizeShared(save.shared);
   // 처음 시작한 날이 멀쩡하면 런 로그 전체를 훑는 earliestStamp 를 건너뛴다 (C.72: 1000판 세이브 로드가 CPU 4배 감속에서 수백 ms 걸렸다)
   const mc = (isRec(save.machine) ? save.machine.createdAt : undefined) as unknown;
@@ -2072,7 +2080,32 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   save.help = sanitizeHelpState(save.help);
   save.settings = sanitizeSlotSettings(save.settings);
   save.gender = parseGender(save.gender);
+  save.name = parseName(save.name);
   return save;
+}
+
+/** 이름·성별 기록 보정 (C.326): 모양이 맞는 것만 */
+function sanitizeIdentities(raw: unknown): IdentityRecord[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((r): r is IdentityRecord => isRec(r) && typeof r.at === 'number' && typeof r.name === 'string' && typeof r.factionId === 'string'
+    && (r.source === 'new' || r.source === 'old' || r.source === 'settings')).map((r) => ({ ...r, gender: parseGender(r.gender), tierIndex: Number.isInteger(r.tierIndex) ? r.tierIndex : 0 }));
+}
+
+/** 이름·성별을 정한다 (GDD 199장 6~8, C.326): 이름은 규칙(checkName)에 맞을 때만. 바뀌었으면 슬롯 기록에 남긴다. 받아들였으면 true */
+export function setIdentity(save: SaveData, name: string, gender: Gender, source: IdentityRecord['source'], nowMs: number = Date.now()): boolean {
+  const c = checkName(name);
+  if (!c.ok) return false;
+  const g = parseGender(gender);
+  if (save.name === c.name && save.gender === g && source === 'settings') return true;
+  save.name = c.name;
+  save.gender = g;
+  (save.slotLog.identities ??= []).push({ at: nowMs, name: c.name, gender: g, source, factionId: save.factionId, tierIndex: save.evolution.tierIndex });
+  return true;
+}
+
+/** 이어할 때 이름·성별 창을 띄워야 하는가 (옛 세이브 — GDD 199장 8) */
+export function needsIdentity(save: Pick<SaveData, 'name'>): boolean {
+  return save.name === null;
 }
 
 /** 슬롯 설정 보정 (GDD 103장 5): 참/거짓·숫자 값만 남긴다(항목 해석은 화면 쪽 settingsScope.parseSlotSettings). 비면 null */

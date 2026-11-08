@@ -53,13 +53,22 @@ export function statusInfoButton(chipsNow: () => StatusChip[], faction: FactionC
 }
 
 /**
- * 박스 위 이름표 (GDD 100장 #8 · 25-9 · 22-7): 이름표 테 꾸밈을 입었거나 환생(★)·투트랙이면 진화체 이름. 아니면 null(이름표 없음).
+ * 박스 위 이름표 (GDD 100장 #8 · 25-9 · 22-7 · 199장 7): 캐릭터 이름이 있으면 늘 '이름(굵게) + 작게 진화체 이름'(C.326).
+ * 이름이 없으면(옛 세이브 — 이어할 때 정함) 예전처럼 이름표 테 꾸밈을 입었거나 환생(★)·투트랙일 때만 진화체 이름, 아니면 null(이름표 없음).
  * tracks = 트랙 전환을 쓸 수 있는 화면인지 (방 = 전환 손잡이가 있을 때만)
  */
-export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'>, faction: FactionConfig, tracks = true): HTMLElement | null {
+export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
   const stars = rebirthMark(save.rebirth.count);
+  const form = shownName(formDisplayName(save.evolution, faction.id));
+  if (save.name) {
+    const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
+    tag.append(el('b', 'bha-room__nameown', save.name), el('span', 'bha-room__nameform', form));
+    if (stars) tag.append(stars);
+    tag.title = `${save.name} · ${form}`;
+    return tag;
+  }
   if (!stars && !(tracks && save.otherTracks.length > 0) && !save.wear.plate) return null;
-  const tag = el('span', 'bha-small bha-room__name', shownName(formDisplayName(save.evolution, faction.id)));
+  const tag = el('span', 'bha-small bha-room__name', form);
   if (stars) tag.append(' ', stars);
   return tag;
 }

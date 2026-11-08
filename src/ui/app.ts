@@ -2,7 +2,7 @@
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
-import { DEFAULT_GENDER, genderLookNote, setActiveGender } from '../engine/gender';
+import { DEFAULT_GENDER, GENDER_LABEL, genderLookNote, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
@@ -30,8 +30,10 @@ import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
-  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
+  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
+import { genderScreen, nameScreen, type IdentityMode } from './identityView';
+import { registerCancelHook } from './bha/shortcuts';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
@@ -739,14 +741,20 @@ export function startApp(host: HTMLElement): void {
 
   // ── 시작 화면·슬롯 (Q-3) ──
   // C.178 (GDD 103장): 시작 화면·종족 고르기에서 연 설정은 공통만, 게임 안(방)에서 연 설정은 [공통]/[이 슬롯]. 저장 안 하고 뒤로면 설정 화면이 먼저 묻고 onBack
-  const settingsOpener = (inGame: boolean) => () =>
+  /** [이름·성별 바꾸기]에서 돌아올 때 설정을 기타 탭으로 다시 연다 (C.326) — 한 번 쓰고 비운다 */
+  let settingsReturnTab: 'etc' | null = null;
+  const settingsOpener = (inGame: boolean) => () => {
+    settingsReturnTab = null;
     open('settings', () => void settingsView(root, {
+      tab: settingsReturnTab ?? undefined,
       onHelp: () => openHelp(undefined, true),
       onBackup: inGame && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined,
+      onIdentity: inGame && save ? editIdentity : undefined, // 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7)
       onBack: () => nav.pop(),
       commonOnly: !inGame,
       cloud: cloudUi, // 로그인·클라우드 세이브 줄 (GDD 196장) — 처음 화면 설정에서도 (새 기기에서 가져오기)
     }));
+  };
 
   /** 슬롯 설정 (GDD 103장 5): 이 슬롯 세이브의 settings 를 설정 화면·실제 값에 건다. 슬롯을 열 때마다, 시작 화면이면 푼다 */
   function bindSlotSettings(): void {
@@ -759,16 +767,7 @@ export function startApp(host: HTMLElement): void {
         save.settings = s as Record<string, boolean | number> | null;
         persist();
       },
-      gender: {
-        read: () => save?.gender ?? DEFAULT_GENDER,
-        write: (g) => {
-          if (!save) return;
-          save.gender = g;
-          setActiveGender(g);
-          persist();
-        },
-        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier, getFaction(save.factionId).ascension),
-      },
+      identity: { read: () => ({ name: save?.name ?? null, gender: save?.gender ?? DEFAULT_GENDER }) },
     } : null);
     setActiveGender(save?.gender);
     applySettingsNow();
@@ -876,10 +875,12 @@ export function startApp(host: HTMLElement): void {
   function renderSpecies(newSlot: number): void {
     applyTheme(helpFaction());
     speciesView(root, FACTIONS, {
-      onPick: (f) => {
+      // 종족 → 이름 → 성별 → 시작 (GDD 199장 6, C.326): 세이브는 성별까지 고른 뒤에 만든다 (도중에 뒤로 가면 슬롯은 그대로)
+      onPick: (f) => open('identity', identityFlow(f, 'new', { name: '', gender: null }, (name, gender) => {
         stashSlot(store, newSlot);
         slot = newSlot;
         save = testOn ? newTestSave(f.id) : newSaveData(f.id);
+        setIdentity(save, name, gender, 'new');
         if (!testOn) {
           applyStartLook(save, f, Math.random());
           queueGuide(save.help, 'birth'); // 새 세이브의 첫 방에서 탄생 연출 한 번 (GDD 74장)
@@ -887,7 +888,7 @@ export function startApp(host: HTMLElement): void {
         persist();
         bindSlotSettings();
         nestScreen();
-      },
+      }, () => nav.pop())),
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
@@ -897,6 +898,52 @@ export function startApp(host: HTMLElement): void {
         onYes, onNo,
       }),
     });
+  }
+
+  /**
+   * 이름 정하기 → 성별 정하기 한 흐름 (GDD 199장 6~8, C.326): 화면 스택 한 칸 안에서 두 단계를 바꿔 그린다. 성별 단계의 뒤로(◀·Esc·[이전]) = 이름 단계.
+   * 이름 단계의 뒤로 = onCancel (없으면 뒤로 없음 — 옛 세이브). 돌려주는 함수 = 그 칸의 render
+   */
+  function identityFlow(f: FactionConfig, mode: IdentityMode, init: { name: string; gender: Gender | null }, onDone: (name: string, gender: Gender) => void, onCancel?: () => void): () => void {
+    let name = init.name;
+    let gender = init.gender;
+    let step: 'name' | 'gender' = 'name';
+    let unhook = () => {};
+    const draw = (): void => {
+      unhook();
+      if (step === 'name') {
+        nameScreen(root, f, { mode, initial: name, onNext: (n) => { name = n; step = 'gender'; draw(); }, onBack: onCancel });
+      } else {
+        genderScreen(root, f, {
+          mode, name, initial: gender, note: genderLookNote(f.tierNames, f.genderLookFromTier, f.ascension),
+          onDone: (g) => { gender = g; unhook(); onDone(name, g); },
+          onBack: () => { step = 'name'; draw(); },
+        });
+      }
+      const here = root.querySelector('.bha-ident');
+      unhook = registerCancelHook(() => {
+        if (!here?.isConnected) return 'gone';
+        if (step !== 'gender') return false;
+        step = 'name';
+        draw();
+        return true;
+      }, { button: true });
+    };
+    return draw;
+  }
+
+  /** 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7): 같은 두 화면, 끝나면 설정으로 */
+  function editIdentity(): void {
+    const s = save;
+    if (!s) return;
+    settingsReturnTab = 'etc';
+    open('identity', identityFlow(getFaction(s.factionId), 'edit', { name: s.name ?? '', gender: s.gender }, (name, gender) => {
+      setIdentity(s, name, gender, 'settings');
+      setActiveGender(s.gender);
+      persist();
+      nav.pop();
+      showToast({ eyebrow: '설정', title: '이름·성별을 바꿨다', meta: `${s.name} · ${GENDER_LABEL[s.gender]}` }, 0, 2400);
+    }, () => nav.pop()));
   }
 
   /** 슬롯을 열어 마지막으로 보던 화면으로 (GDD 19-3): 원정 중이었으면 원정 그 지점(전투 중이었으면 전투 직전), 아니면 방. 읽을 수 없으면 시작 화면에 알린다 */
@@ -939,8 +986,21 @@ export function startApp(host: HTMLElement): void {
     // 이어 하지 못한 원정(시한 초과·새 버전·손상)은 readActiveExpedition 이 실패로 정산하고 비웠다 → 방에서 안내 한 줄 (GDD 192장 1, C.311)
     if (active && active.reason !== 'none') resumeNote = abandonNote(active);
     persist();
-    nestScreen();
-    if (active && active.reason !== 'none') showAbandonCard(active, getFaction(loaded.factionId));
+    const toRoom = () => {
+      nestScreen();
+      if (active && active.reason !== 'none') showAbandonCard(active, getFaction(loaded.factionId));
+    };
+    // 옛 세이브(이름 없음): 방에 들어가기 전에 한 번 이름·성별 창 (GDD 199장 8) — 뒤로 없음. 원정을 이어 하는 중이면 다음에 방으로 들어올 때
+    if (needsIdentity(loaded)) {
+      nav.reset({ id: 'identity', locked: true, render: identityFlow(getFaction(loaded.factionId), 'old', { name: '', gender: loaded.gender }, (name, gender) => {
+        setIdentity(loaded, name, gender, 'old');
+        setActiveGender(loaded.gender);
+        persist();
+        toRoom();
+      }) });
+      return;
+    }
+    toRoom();
   }
 
   // ── 세로 전환 멈춤·가로 복귀 카운트다운 (Q-3): 전투·원정 중에 세로로 돌리면 멈추고, 가로로 돌아오면 3초 뒤 이어한다 ──

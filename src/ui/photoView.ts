@@ -29,8 +29,9 @@ export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: st
     charOffsetY: art.offsetY,
     sceneSrc: artUrls(room.sceneArt, BASE).src,
     look: { aura: look(save.wear.aura), tint: look(save.wear.tint), room: look(save.wear.room), plate: look(save.wear.plate) },
-    name: shownName(formDisplayName(save.evolution, faction.id)),
-    stage: `${save.evolution.tierIndex + 1}단계`,
+    // 캐릭터 이름이 있으면 이름표 = 이름, 아래 글에 진화체 이름 (GDD 199장 7, C.326)
+    name: save.name ?? shownName(formDisplayName(save.evolution, faction.id)),
+    stage: save.name ? `${shownName(formDisplayName(save.evolution, faction.id))} · ${save.evolution.tierIndex + 1}단계` : `${save.evolution.tierIndex + 1}단계`,
     date,
     frame,
   };

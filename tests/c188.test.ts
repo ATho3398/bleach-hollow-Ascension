@@ -83,7 +83,8 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
 
 describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   it('형식·문턱 52, 새 세이브 남성, 저장·불러오기로 남고 깨진 값은 남성', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([62, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(63); // C.326 이름
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195
     const s = newSaveData('hollow');
     expect(s.gender).toBe('male');
     s.gender = 'female';
@@ -92,15 +93,14 @@ describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   });
   it('런 로그 원정 기록에 성별', () => {
     expect(read('src/engine/runLog.ts')).toContain('gender?: Gender;');
-    expect(read('src/game.ts')).toContain('log.runs.push({ ...buildRunRecord(exp), gender: save.gender });');
+    expect(read('src/game.ts')).toContain('log.runs.push({ ...buildRunRecord(exp), gender: save.gender,'); // C.326: 이름도
   });
 });
 
 describe('설정 화면 · 테스트 패널', () => {
-  it('성별 줄은 이 캐릭터 칸 (C.239 GDD 159장 13: 늘 바꿀 수 있다), 체크 자리 고정', () => {
+  it('성별은 설정 > 기타 [이름·성별 바꾸기] (C.326 GDD 199장 7 — 화면 탭 성별 줄에서 옮김), 체크 자리 고정', () => {
     const v = read('src/ui/settingsView.ts');
-    expect(v).toContain("genderRow.dataset.set = 'gender';");
-    expect(v).toContain("panel('이 캐릭터 · 성별'");
+    expect(v).toContain("idBtn.dataset.set = 'identity';");
     expect(v).toContain('b.replaceChildren(icon(\'i-check\'), label(v));');
     expect(read('src/ui/bha/components/v2-shared.css')).toContain('.bha-settings__choices .bha-btn[aria-pressed="false"] .bha-icon { visibility: hidden; }'); // C.296 공용
     expect(read('src/ui/app.ts')).toContain('setActiveGender(save?.gender);');

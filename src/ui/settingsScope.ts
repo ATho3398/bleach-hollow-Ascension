@@ -56,13 +56,9 @@ export interface SlotSettingsHost {
   read(): SlotSettings | null;
   /** null = 슬롯 설정 지우기. 세이브에 쓰고 저장까지 한다 */
   write(s: SlotSettings | null): void;
-  /** 이 슬롯 캐릭터의 성별 (GDD 114장): 공통 설정이 아니라 슬롯에만 있다. 없으면 설정에 성별 줄이 없다 */
-  gender?: {
-    read(): Gender;
-    /** 세이브에 쓰고 저장, 외형에 바로 건다 */
-    write(g: Gender): void;
-    /** 외형이 갈리는 단계 안내 (종족 설정에서 만든 문구, 예 '아란칼부터 모습이 달라진다') */
-    note: string;
+  /** 이 슬롯 캐릭터의 이름·성별 (GDD 114장·199장 7): 공통 설정이 아니라 슬롯에만 있다. 없으면 설정에 이름·성별 줄이 없다. 바꾸기는 app 의 [이름·성별 바꾸기] 화면 */
+  identity?: {
+    read(): { name: string | null; gender: Gender };
   };
 }
 

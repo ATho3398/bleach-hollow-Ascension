@@ -105,7 +105,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     expect(m.otherTracks).toEqual([]);
     expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 });
     expect(m.transcendentDex).toEqual([]);
-    expect(m.slotLog).toEqual({ fusions: [], trackOpens: [] });
+    expect(m.slotLog).toEqual({ fusions: [], trackOpens: [], identities: [] }); // C.326 이름·성별 기록
   });
 
   it('이미 5단계인 옛 세이브는 열 때 다른 종족 트랙이 열리고(종족 데이터에서), 알림이 한 번 걸린다. 원래 트랙은 그대로', () => {

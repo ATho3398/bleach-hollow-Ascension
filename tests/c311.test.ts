@@ -177,12 +177,12 @@ describe('192장 1: 이어 하기 시한·새 패치 → 모험 실패 정산 (C
   });
 
   it('세이브 형식 62 · 61 → 62 마이그레이션(구조 보정 없음) · 옛 형식 세이브의 원정은 시한·버전으로 판단한다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(62);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(62); // C.326 에서 63
     expect(typeof SAVE_MIGRATIONS[61]).toBe('function');
     const old = clone(midSave()) as unknown as Record<string, any>;
     old.meta.format = 61;
     const m = migrateSave(clone(old))!;
-    expect(m.meta.format).toBe(62);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION); // C.326 에서 63
     expect(m.activeExpedition).toEqual(old.activeExpedition);
     expect(readActiveExpedition(m, T0 + 5 * MIN).ok).toBe(true);
     const m2 = migrateSave(clone(old))!;

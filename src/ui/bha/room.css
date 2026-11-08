@@ -218,6 +218,10 @@
 .bha-room__chipmax { font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-3); }
 /* 이름표 (GDD 100장 #8): 박스 위 가운데 작게 */
 .bha-room__status > .bha-room__name { position: absolute; left: 50%; bottom: calc(100% + var(--bha-sp-1)); transform: translateX(-50%); margin: 0; white-space: nowrap; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-scene-box); color: var(--bha-text-1); font-size: var(--bha-fs-xs); line-height: 1.5; }
+/* 캐릭터 이름 (GDD 199장 7, C.326): 이름표 = 이름(굵게, 한 단계 큰 글자) + 작게 진화체 이름(흐린 색). 진화체 이름이 길면 그 쪽만 줄임(…), 이름은 늘 다 보인다 */
+.bha-room__name--own { gap: var(--bha-sp-2); align-items: baseline; }
+.bha-room__nameown { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
+.bha-room__nameform { max-width: 112px; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--bha-text-2); }
 .bha-room__chips > .bha-room__status:active { filter: brightness(1.2); }
 .bha-room__status.bha-sel { outline: 2px solid var(--bha-focus); outline-offset: 2px; box-shadow: 0 0 0 6px var(--bha-accent-soft); }
 
