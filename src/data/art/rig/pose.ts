@@ -125,7 +125,8 @@ export interface BonePose {
 export type Pose = Record<string, BonePose>;
 
 /** 동작 묶음: 묶음 이름 → 동작 id → 바꿔 끼울 뼈 키(그 밖 뼈와 길이·타격 시각은 기본 동작 그대로) */
-export type MotionOverride = Partial<Omit<Motion, 'tracks'>> & { tracks: Record<string, Key[]> };
+/** 몸별 동작 덮기. off = 이 몸에는 이 동작이 없다(게임·편집기에서 빠짐 — 덩치 특수2·필살기, GDD 115-A 75) */
+export type MotionOverride = Partial<Omit<Motion, 'tracks'>> & { tracks?: Record<string, Key[]>; off?: boolean };
 export type MotionSets = Record<string, Record<string, MotionOverride>>;
 
 /** motions.json 모양(note·sets 를 뺀 나머지가 동작) → 기본 동작 + 동작 묶음 */
@@ -145,8 +146,13 @@ export function resolveMotions(rig: Rig, motions: Record<string, Motion>, sets: 
   if (!set) return motions;
   const out: Record<string, Motion> = { ...motions };
   for (const [id, ov] of Object.entries(set)) {
+    if (ov.off) {
+      delete out[id];
+      continue;
+    }
     const base = motions[id];
-    out[id] = base ? { ...base, ...ov, tracks: { ...base.tracks, ...ov.tracks } } : ({ duration: 1000, loop: false, ...ov } as Motion);
+    const { off: _off, ...rest } = ov;
+    out[id] = base ? { ...base, ...rest, tracks: { ...base.tracks, ...(ov.tracks ?? {}) } } : ({ duration: 1000, loop: false, ...rest, tracks: ov.tracks ?? {} } as Motion);
   }
   return out;
 }
@@ -379,7 +385,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   // 동작 묶음은 덮은 결과를 같은 기준으로 본다
   const all: [string, Motion][] = [
     ...Object.entries(motions),
-    ...Object.entries(sets).flatMap(([name, set]) => Object.keys(set).map((id) => [`${name}:${id}`, resolveMotions({ ...rig, bodyMotions: { _: name } }, motions, sets, '_')[id]!] as [string, Motion])),
+    ...Object.entries(sets).flatMap(([name, set]) => Object.keys(set).filter((id) => !set[id]!.off).map((id) => [`${name}:${id}`, resolveMotions({ ...rig, bodyMotions: { _: name } }, motions, sets, '_')[id]!] as [string, Motion])),
   ];
   for (const [mid, m] of all) {
     if (!(m.duration > 0)) errs.push(`${mid}: 길이 0`);

@@ -3,7 +3,8 @@ import { createPaperdoll } from '../../../src/ui/bha/paperdoll';
 declare const ART_MAP: Record<string, string>;
 const stage = document.getElementById('stage')!;
 const LOOKS: [string, string][] = [
-  ...['shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f', 'arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'digitigrade-base', 'brute-base', 'beast-base', 'cape-test', 'arrancar-f-release-test'].map((l) => ['humanoid', l] as [string, string]),
+  ...['shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f', 'arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'digitigrade-base', 'brute-base', 'cape-test', 'arrancar-f-release-test'].map((l) => ['humanoid', l] as [string, string]),
+  ['beast', 'beast-test'],
   ['serpent', 'serpent-test'],
 ];
 // 주소 뒤 #look=<외형> 이면 그 외형 하나만 크게(캡처·확인용)

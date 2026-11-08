@@ -72,7 +72,7 @@ def main():
     boxes = []
     for p in PARTS:
         art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
-        if p in ('hair', 'hair_back') and look['body'] in (RIG.get('cuts') or {}) and not isinstance(look.get(p), dict):
+        if p in ('hair', 'hair_back') and (look['body'] in (RIG.get('cuts') or {}) or look['body'] in (RIG.get('assembled') or {})) and not isinstance(look.get(p), dict):
             continue  # 사용자 도트를 잘라 쓴 몸(역관절·덩치)은 머리카락 층이 없음 — 칸 안 만듦 (115-A 72)
         if p in ('hair', 'hair_back'):
             # 머리카락은 머리카락 틀 전체가 칸. 자리 맞추기용 머리를 그대로(불투명) 깔고 그 위에 머리카락
@@ -156,8 +156,11 @@ def main():
     for b in boxes:
         sx, sy = b['sheet']
         d.rectangle([sx * K, (sy - ROWGAP) * K + 2, sx * K + b['size'][0] * K, sy * K - 10], fill=(40, 44, 48, 255))
-        creature = look['body'] in (RIG.get('cuts') or {})
-        d.text((sx * K + 4, (sy - ROWGAP) * K + 4), (CREATURE_NAMES.get(b['slot']) if creature else None) or NAMES[b['slot']], fill=(255, 255, 255, 255), font=f)
+        creature = (look['body'] in (RIG.get('cuts') or {}) or look['body'] in (RIG.get('assembled') or {}))
+        label = (CREATURE_NAMES.get(b['slot']) if creature else None) or NAMES[b['slot']]
+        if creature and b['slot'] in ('shin_L', 'shin_R') and 'foot_L' not in body and 'foot_R' not in body:
+            label = label.replace('정강이', '종아리(발 포함)')  # 발 그림이 종아리에 붙은 몸(덩치)
+        d.text((sx * K + 4, (sy - ROWGAP) * K + 4), label, fill=(255, 255, 255, 255), font=f)
         for pid in b['pivots']:
             bb = bones[pid]
             px, py = bb['pivot'][0] - b['canvas'][0] + sx, bb['pivot'][1] - b['canvas'][1] + sy

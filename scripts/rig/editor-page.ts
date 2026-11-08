@@ -141,7 +141,31 @@ function sizeStage() {
   [W, H] = rig.canvas;
   stage.style.width = `${W * K}px`;
   stage.style.height = `${H * K}px`;
+  fitWrap();
   fitSide();
+}
+/** 미리보기 칸 넓이: 지금 외형의 부위가 캔버스 밖으로 나간 만큼 + 동작 여유(사용자 2026-11-09 "편집창 미리보기 넓이 늘려. 짤려서 잘 안보인다", GDD 115-A 75) */
+function fitWrap() {
+  const wrap = stage.parentElement;
+  if (!wrap || !rig.looks[look]) return;
+  let x0 = 0;
+  let x1 = W;
+  for (const l of lookLayers(rig, look)) {
+    x0 = Math.min(x0, l.at[0]);
+    x1 = Math.max(x1, l.at[0] + l.size[0]);
+  }
+  const m = 16; // 팔 휘두르는 여유(캔버스 칸)
+  wrap.style.paddingLeft = `${Math.max(140, (m - x0) * K)}px`;
+  wrap.style.paddingRight = `${Math.max(60, (x1 - W + m) * K)}px`;
+}
+/** 동작 단추: 지금 몸에 없는 동작(묶음에서 off — 덩치 특수2·필살기)은 숨김 */
+function syncMotionButtons() {
+  const ms = motionsNow();
+  if (motion && !ms[motion]) motion = null;
+  document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => {
+    const m = b.dataset.m!;
+    b.hidden = m !== 'stop' && !ms[m];
+  });
 }
 /** 동작 단추 칸: 미리보기 높이를 넘으면 오른쪽에 새 줄로 (사용자 2026-10-31 "미리보기칸 넘어가는 모션버튼은 오른쪽 옆에 새 줄") */
 function fitSide() {
@@ -153,6 +177,7 @@ function fitSide() {
   side.style.gridTemplateRows = `repeat(${Math.max(4, Math.floor((wrap.offsetHeight + 6) / row))}, auto)`;
 }
 sizeStage();
+syncMotionButtons();
 window.addEventListener('resize', fitSide);
 
 let dbTimer = 0;
@@ -392,9 +417,10 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   look = b.dataset.look!;
   const c = ctxOfLook(look);
   if (c !== C) {
-    C = c; rig = c.rig; motion = null; sizeStage();
+    C = c; rig = c.rig; motion = null;
     if (!rig.slots.some((s) => s.id === sel)) sel = rig.slots[0]!.id;
   }
+  sizeStage(); syncMotionButtons();
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
   buildChips(); save(false); draw();
 });

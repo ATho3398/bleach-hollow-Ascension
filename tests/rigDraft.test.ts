@@ -29,7 +29,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Object.keys(sets.digitigrade!).filter((k) => k !== 'note').sort()).toEqual([...own].sort());
     for (const id of own) {
       for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']) {
-        expect(sets.digitigrade![id]!.tracks[b], `${id}.${b}`).toBeDefined();
+        expect(sets.digitigrade![id]!.tracks?.[b], `${id}.${b}`).toBeDefined();
       }
       expect(dg[id]!.flip ?? [], id).toEqual([]);
       expect(dg[id]!.fx ?? [], id).toEqual([]);
@@ -49,29 +49,21 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-tol);
     }
   });
-  it('덩치(사용자 도트, 115-A 72): 부위 12개, 전용 묶음 = 대기·걷기·공격(모든 뼈), 걷기에서 늘 한 발은 디딤', () => {
-    expect(Object.keys(rig.bodies.hb!).sort()).toEqual(['arm_L', 'arm_R', 'foot_L', 'foot_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
+  it('덩치 = 사용자 부위 시트 조립(115-A 73·75): 부위 10개(발 없음 — 종아리에 붙음), 대기·걷기·공격·해방, 특수2·필살기 없음, 걷기에서 늘 한 발은 디딤', () => {
+    expect(Object.keys(rig.bodies.hb!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
     expect(rig.looks['brute-base']!.body).toBe('hb');
-    expect(Object.keys(sets.brute!).filter((k) => k !== 'note').sort()).toEqual(['attack', 'idle', 'move']);
+    expect(rig.looks['beast-base']).toBeUndefined(); // 짐승은 원래(네 발 짐승 뼈대 beast-test)대로
     const hb = resolveMotions(rig, motions, sets, 'hb');
-    for (const id of ['idle', 'move', 'attack']) for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']) expect(sets.brute![id]!.tracks[b], `${id}.${b}`).toBeDefined();
+    for (const id of ['idle', 'move', 'attack', 'release1']) {
+      expect(hb[id], id).toBeDefined();
+      for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'leg_R', 'shin_R']) expect(sets.brute![id]!.tracks?.[b], `${id}.${b}`).toBeDefined();
+    }
+    expect(hb.skill2).toBeUndefined();
+    expect(hb.ultimate).toBeUndefined();
+    expect(resolveMotions(rig, motions, sets, 'bare').skill2).toBeDefined(); // 다른 몸은 그대로
     const piv = (rig.bodyJoints!.hb as { pivots: Record<string, [number, number]> }).pivots;
     for (let t = 0; t <= hb.move!.duration; t += 40) {
       const m = boneMatrices(rig, samplePose(rig, hb.move!, t), 'hb');
-      const lift = (['foot_L', 'foot_R'] as const).map((f) => piv[f]![1] - apply(m[f]!, piv[f]!)[1]);
-      expect(Math.min(...lift), `t=${t}`).toBeLessThan(1.2);
-      expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-1.2);
-    }
-  });
-  it('짐승(사용자 부위 시트 조립, 115-A 73): 부위 10개(발 없음 — 종아리에 붙음), 전용 묶음 = 대기·걷기·공격, 걷기에서 늘 한 발은 디딤', () => {
-    expect(Object.keys(rig.bodies.bst!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
-    expect(rig.looks['beast-base']!.body).toBe('bst');
-    for (const id of ['attack', 'idle', 'move']) expect(sets.beast![id], id).toBeDefined(); // 편집기에서 고친 동작(특수1 등)이 더 있을 수 있음
-    const bs = resolveMotions(rig, motions, sets, 'bst');
-    const piv = (rig.bodyJoints!.bst as { pivots: Record<string, [number, number]> }).pivots;
-    for (let t = 0; t <= bs.move!.duration; t += 40) {
-      const m = boneMatrices(rig, samplePose(rig, bs.move!, t), 'bst');
-      // 종아리 끝(무릎 관절에서 아래로 그림 높이만큼) 대신 무릎 관절 높이로: 디딘 다리의 무릎은 쉬는 자세 높이 근처
       const lift = (['shin_L', 'shin_R'] as const).map((s) => piv[s]![1] - apply(m[s]!, piv[s]!)[1]);
       expect(Math.min(...lift), `t=${t}`).toBeLessThan(2.5);
       expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-2.5);

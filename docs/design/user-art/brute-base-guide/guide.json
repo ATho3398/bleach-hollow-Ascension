@@ -6,12 +6,12 @@
   {
    "slot": "head",
    "canvas": [
-    -17,
-    19
+    -11,
+    11
    ],
    "size": [
-    32,
-    34
+    30,
+    36
    ],
    "sheet": [
     2,
@@ -24,15 +24,15 @@
   {
    "slot": "torso",
    "canvas": [
-    1,
-    19
+    -1,
+    17
    ],
    "size": [
     34,
-    38
+    48
    ],
    "sheet": [
-    36,
+    34,
     4
    ],
    "pivots": [
@@ -45,15 +45,15 @@
   {
    "slot": "arm_L",
    "canvas": [
-    21,
-    29
+    19,
+    19
    ],
    "size": [
-    26,
+    22,
     30
    ],
    "sheet": [
-    72,
+    70,
     4
    ],
    "pivots": [
@@ -64,15 +64,15 @@
   {
    "slot": "forearm_L",
    "canvas": [
-    29,
-    47
+    30,
+    31
    ],
    "size": [
-    22,
-    32
+    26,
+    42
    ],
    "sheet": [
-    100,
+    94,
     4
    ],
    "pivots": [
@@ -82,16 +82,16 @@
   {
    "slot": "arm_R",
    "canvas": [
-    -13,
-    37
+    -8,
+    20
    ],
    "size": [
-    28,
-    26
+    24,
+    34
    ],
    "sheet": [
     2,
-    46
+    56
    ],
    "pivots": [
     "arm_R",
@@ -102,15 +102,15 @@
    "slot": "forearm_R",
    "canvas": [
     -21,
-    49
+    36
    ],
    "size": [
-    26,
-    32
+    30,
+    38
    ],
    "sheet": [
-    32,
-    46
+    28,
+    56
    ],
    "pivots": [
     "forearm_R"
@@ -119,16 +119,16 @@
   {
    "slot": "leg_L",
    "canvas": [
-    13,
-    45
+    18,
+    51
    ],
    "size": [
-    22,
-    26
+    20,
+    24
    ],
    "sheet": [
     60,
-    46
+    56
    ],
    "pivots": [
     "leg_L",
@@ -138,16 +138,16 @@
   {
    "slot": "leg_R",
    "canvas": [
-    -1,
-    45
+    3,
+    53
    ],
    "size": [
-    26,
-    24
+    24,
+    20
    ],
    "sheet": [
-    84,
-    46
+    82,
+    56
    ],
    "pivots": [
     "leg_R",
@@ -157,75 +157,37 @@
   {
    "slot": "shin_L",
    "canvas": [
-    17,
-    57
-   ],
-   "size": [
     20,
-    22
-   ],
-   "sheet": [
-    2,
-    82
-   ],
-   "pivots": [
-    "shin_L",
-    "foot_L"
-   ]
-  },
-  {
-   "slot": "shin_R",
-   "canvas": [
-    -1,
-    57
-   ],
-   "size": [
-    22,
-    22
-   ],
-   "sheet": [
-    24,
-    82
-   ],
-   "pivots": [
-    "shin_R",
-    "foot_R"
-   ]
-  },
-  {
-   "slot": "foot_L",
-   "canvas": [
-    23,
-    67
+    65
    ],
    "size": [
     20,
     16
    ],
    "sheet": [
-    48,
-    82
+    2,
+    98
    ],
    "pivots": [
-    "foot_L"
+    "shin_L"
    ]
   },
   {
-   "slot": "foot_R",
+   "slot": "shin_R",
    "canvas": [
-    -5,
-    63
+    0,
+    65
    ],
    "size": [
     24,
-    20
+    16
    ],
    "sheet": [
-    70,
-    82
+    24,
+    98
    ],
    "pivots": [
-    "foot_R"
+    "shin_R"
    ]
   }
  ]

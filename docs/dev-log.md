@@ -564,6 +564,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - (2026-11-09, 작업본) 덩치 가이드 시트 `docs/design/user-art/brute-base-guide/`(guide.png 1배 = 게임 칸 크기, guide-x8.png 확인용) — `guide.py`: 사용자 도트 몸은 머리카락 칸 없음·앞/뒤 이름(앞 위팔·뒷다리 허벅지 …)·그림 없는 부위 관절점(칼·칼집 등) 안 찍음, 턱 칸. 그려 오면 `import_cut.py <시트> --body hb --guide …/guide.json` (GDD 115-A 72).
 - (2026-11-09, 작업본) 짐승 = 사용자 부위 시트(조각 10개) 조립: 몸 bst·외형 beast-base(2배), `assemble_parts.py` + `assembly.json`, 동작 묶음 beast = 대기·걷기·공격(`creature_motions.py` — 발 없으면 종아리로 바닥 맞춤). 시험 페이지·편집기 "짐승" 바꿈(옛 beast-test 는 목록에서만 뺌), 시험 rigDraft 짐승 1개 (GDD 115-A 73).
 - (2026-11-09, 작업본) 편집기 고정(01:16): 짐승 부위 자리·관절·특수1 오른팔. 앞뒤 순서는 몸별 `bodySlots`(pose.ts slotsOf, 편집기·apply_editor·still.py·rr.py) 로 짐승에만 — 공통 순서를 바꾸던 편집기 고침. `creature_motions.py` 는 SPEC 밖 동작(편집기 고정분)을 남김. 시험 paperdoll +2 (GDD 115-A 74).
+- (2026-11-09, 작업본) 부위 시트 그림 = 덩치(hb, 01:16 고정분 포함 — 옛 고릴라 도트 대체), 짐승은 beast-test 로 되돌림(bst·beast-base 지움), 묶음 항목 `off`(pose.ts resolveMotions·편집기 단추 숨김) 로 덩치 특수2·필살기 없앰, 덩치 해방 포효(`creature_motions.py hb`), 편집기 미리보기 칸 넓이 = 외형 부위 범위 + 여유, 덩치 시트 다시(`guide.py` 조립 몸 `assembled` 도 사용자 도트 몸 취급). 시험 rigDraft 덩치 바꿈 (GDD 115-A 75).
 - (C.189 merge 메모) 이 소절은 종이인형 브랜치에서 같은 번호 C.151 로 쓰였다 — main C.151(인게임 UI v2 1단계)과 겹쳐 'C.151 종이인형'으로 따로 살림. 여기의 'GDD 96장' = 지금 기획서 115-A.
 
 ### C.152 인게임 UI v2 2단계 — 전투 화면 필드/스킬창 + 각인 컷 블록 (STAGE S-23, UI담당자C, GDD 96장, v5.201)
