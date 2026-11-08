@@ -537,22 +537,28 @@ function arrowRow(row: HTMLElement, lab: HTMLElement, r: HTMLInputElement, out: 
     const b = h('button', 'nudge', dir < 0 ? '◀' : '▶');
     b.type = 'button';
     b.setAttribute('aria-label', `${lab.textContent} ${dir < 0 ? '줄이기' : '늘리기'}`);
-    const step = () => {
-      if (r.disabled) return;
-      if (dir < 0) r.stepDown();
-      else r.stepUp();
-      r.dispatchEvent(new Event('input'));
-    };
     let hold = 0;
     let rep = 0;
     const stop = () => {
       window.clearTimeout(hold);
       window.clearInterval(rep);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+    };
+    // 누르고 있는 사이 버튼이 화면에서 빠지면(목록을 다시 그림) 손을 떼도 알림이 안 와 끝까지 달려간다 → 그때도 멈춘다 (11-09 "모션 속도 조절 버그 … 지혼자 최고속도로 늘어나서")
+    const step = () => {
+      if (r.disabled || !b.isConnected) return stop();
+      if (dir < 0) r.stepDown();
+      else r.stepUp();
+      r.dispatchEvent(new Event('input'));
     };
     b.addEventListener('pointerdown', (ev) => {
       ev.preventDefault();
+      stop();
       step();
       hold = window.setTimeout(() => (rep = window.setInterval(step, 60)), 350);
+      window.addEventListener('pointerup', stop);
+      window.addEventListener('pointercancel', stop);
     });
     for (const e of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(e, stop);
     b.addEventListener('keydown', (ev) => {
@@ -621,10 +627,25 @@ $('bodyalign').onclick = () => {
   status(`${b.label}: 타격 프레임(${b.hitMs}ms)이 첫 타격에 오도록 ${-b.hitMs}ms 에 시작`);
 };
 /** 연결 동작 줄들: 동작 고르기 · 빠르기 게이지 · 빼기. [+ 연결 동작] 으로 최대 MAX_CHAIN 개 */
+let bodySig = '';
 function syncBodySel(): void {
   const s = st();
   const opts = bodyOptions();
   const list = $('bodylist');
+  // 줄 모양(블록·칸·동작들)이 그대로면 다시 그리지 않고 빠르기 값만 맞춘다 — 게이지를 끌거나 ◀ ▶ 를 누르는 중에 줄이 바뀌면 손이 떨어진 것처럼 된다
+  const sig = JSON.stringify([entry.key, stageIx, slotNow(), s.chain.map((c) => c.id), opts.length]);
+  if (sig === bodySig && list.childElementCount) {
+    s.chain.forEach((c, i) => {
+      const r = document.getElementById(`chainrate-${i}`) as HTMLInputElement | null;
+      if (!r) return;
+      if (Number(r.value) !== c.rate) r.value = String(c.rate);
+      const out = r.parentElement?.querySelector('output');
+      if (out) out.textContent = `${c.rate}배`;
+    });
+    syncBodyMisc(s);
+    return;
+  }
+  bodySig = sig;
   list.replaceChildren();
   const optLabel = (b: BodyOpt) => `${b.label} · ${(b.durationMs / 1000).toFixed(2)}초${b.hitMs !== null ? ` · 타격 ${b.hitMs}ms` : ''}`;
   const rows = s.chain.length ? s.chain : [{ id: '', rate: 1 }];
@@ -674,6 +695,11 @@ function syncBodySel(): void {
     }
     list.append(row);
   });
+  syncBodyMisc(s);
+}
+/** 몸동작 칸의 나머지(버튼·설명) */
+function syncBodyMisc(s: StageFx): void {
+  const opts = bodyOptions();
   const add = $('bodyadd') as HTMLButtonElement;
   // 게임 기본일 때도 누를 수 있다: 게임 기본 동작을 첫 동작으로 꺼내 놓고 이어 붙인다 (04 14:0x "3블록 동작 뭐 클릭이나 이런거 안됨")
   add.disabled = s.chain.length >= MAX_CHAIN || !opts.length;
