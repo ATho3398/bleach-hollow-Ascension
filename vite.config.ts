@@ -73,6 +73,8 @@ function walkDist(dir: string, base = ''): string[] {
   }
   return out.sort();
 }
+/** Firebase SDK 를 한 덩어리로 (C.323): 미리 캐시 목록에서 빼고(아래), 로그인할 때만 받는다 */
+const isFirebaseChunk = (f: string) => /^assets\/firebase-[^/]*\.js$/.test(f);
 function pwaPlugin() {
   let outDir = 'dist';
   return {
@@ -98,7 +100,8 @@ function pwaPlugin() {
       const isMedia = (f: string) => /^(art|fx|icons)\//.test(f);
       const media: Record<string, [string, number]> = {};
       for (const f of files) if (isMedia(f)) media[f] = [createHash('sha1').update(readFileSync(`${dir}/${f}`)).digest('hex').slice(0, 12), f.startsWith('fx/') ? 1 : 0];
-      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/') && !isMedia(f))];
+      // C.323 (GDD 196장): Firebase SDK 덩어리(assets/firebase-*.js)는 미리 받지 않는다 — 로그인 버튼을 누르거나 이미 로그인된 기기에서 동적 import 로 받고, 그 뒤엔 워커가 평소대로 캐시한다
+      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/') && !isMedia(f) && !isFirebaseChunk(f))];
       const version = hash.digest('hex').slice(0, 12);
       const src = readFileSync('scripts/sw-template.js', 'utf8')
         .replace('__VERSION__', version)
@@ -116,6 +119,14 @@ function pwaPlugin() {
 export default defineConfig({
   base: './',
   plugins: [pwaPlugin()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Firebase 패키지 전부를 assets/firebase-*.js 하나로 (C.323, GDD 196장) — 게임 본 덩어리·미리 캐시에 섞이지 않는다
+        manualChunks: (id: string) => (/node_modules\/(@firebase|firebase)\//.test(id) ? 'firebase' : undefined),
+      },
+    },
+  },
   define: {
     __BUILD_COMMIT__: JSON.stringify(gitCommit()),
     __BUILD_ID__: JSON.stringify(BUILD_ID),

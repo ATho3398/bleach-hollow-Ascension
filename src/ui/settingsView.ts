@@ -24,6 +24,7 @@ import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
 import { versionLabel } from '../version';
 import { DEFAULT_GENDER, GENDER_LABEL, GENDERS, type Gender } from '../engine/gender';
+import { cloudPanelNodes, type CloudUi } from './cloudView';
 
 /** 설정 탭 (GDD 103장 2) */
 export const SETTINGS_TABS = [
@@ -229,6 +230,8 @@ export interface SettingsViewOpts {
   commonOnly?: boolean;
   /** 처음 열 탭 */
   tab?: SettingsTab;
+  /** 클라우드 세이브 로그인 (GDD 196장, C.323): 없으면(테스트 모드) 줄이 없다 */
+  cloud?: CloudUi;
 }
 
 /** 설정을 화면 위 레이어로 연다 (C.170, GDD 100장 #41: 전투 일시정지의 [설정] — 전투 화면을 지우지 않는다). 뒤로·Esc·X 로 닫는다(바꾼 게 있으면 저장 확인). 돌려주는 함수로 바로 닫는다 */
@@ -577,6 +580,13 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const etcPanel = panel('기본값 복원', reset, hintLine('전투 효과·소리·음악 목록(공통)을 되돌린다.'));
   if (o.onHelp) etcPanel.append(...panel('도움말', button({ label: '도움말', icon: 'i-help', size: 'small', onClick: o.onHelp }), hintLine('안내를 다시 볼 수 있다.')).childNodes);
   if (o.onBackup) etcPanel.append(...panel('세이브 백업', button({ label: '세이브 백업', icon: 'i-check', size: 'small', onClick: o.onBackup })).childNodes);
+  // 로그인·클라우드 세이브 (GDD 196장, C.323): 한 줄 — 버튼 하나(로그인 전 [Google 로그인] · 뒤 [로그아웃], 같은 자리) + 상태 설명. 상태가 바뀌면 글만 바뀐다
+  const cloudNodes = o.cloud ? cloudPanelNodes(o.cloud) : null;
+  if (cloudNodes) {
+    etcPanel.append(...panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint).childNodes);
+    cloudNodes.button.closest('.bha-setrow')?.classList.add('bha-setrow--cloud'); // 설명 줄 수가 바뀌어도 버튼은 줄 위쪽 같은 자리
+    paints.push(cloudNodes.paint);
+  }
   const slotPanels: HTMLElement[] = [];
   if (host) {
     // 옛 세이브에 이 캐릭터만 쓰던 값이 남아 있을 때만 보인다 (GDD 159장 13: 공통/이 슬롯 나누기는 뺐다)
@@ -758,6 +768,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   listen(VIEW_SCALE_EVENT, syncOutside);
   listen(TAMAGO_EVENT, syncOutside);
   if (fsPanels.length > 0) listen(FULLSCREEN_EVENT, paintFs);
+  if (cloudNodes && o.cloud) signal.addEventListener('abort', o.cloud.onChange(cloudNodes.paint)); // 로그인·올리기 상태가 바뀌면 글이 따라간다
   if (listRows.length > 0 && typeof setInterval === 'function') {
     // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 끝나면 멈춘다)
     const poll = setInterval(() => { if (nowLine.isConnected) paintMusic(); }, 1000);

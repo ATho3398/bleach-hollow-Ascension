@@ -54,7 +54,10 @@ import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
 import { blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
-import { setUpdateHost } from '../pwa';
+import { BUILD_ID, setUpdateHost } from '../pwa';
+import { CloudSync, type CloudConflict } from '../cloudSave';
+import { showCloudConflict, type CloudUi } from './cloudView';
+import { isStandalone } from '../pwaInstall';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
@@ -222,6 +225,52 @@ export function startApp(host: HTMLElement): void {
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
     nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });
 
+  // 클라우드 세이브 (GDD 196장, C.323): 로그인은 선택. Firebase 층(cloudFirebase.ts + SDK)은 로그인 버튼을 누르거나 이미 로그인된 기기에서만 동적 import.
+  // 테스트 모드(가짜 저장소)에서는 아예 없다. 저장할 때마다 schedule(묶어서 올림), 연결되면 onOnline, 앱이 숨겨지면 flush
+  const cloud: CloudSync | null = testOn ? null : new CloudSync({
+    storage: store,
+    // 점검용 가짜(`?cloudfake`, dev 서버만 — 배포 빌드에서는 이 분기가 빠진다): 실제 Google 로그인 없이 설정 줄·고르기 창을 찍는다 (scripts/c323-proof.cjs)
+    loadBackend: () => (import.meta.env.DEV && new URLSearchParams(location.search).has('cloudfake')
+      ? import('../cloudFake').then((m) => m.loadFakeBackend())
+      : import('../cloudFirebase').then((m) => m.loadFirebaseBackend())),
+    build: BUILD_ID,
+    current: () => ({ slot, save }),
+    onConflict: (c) => queueCloudConflict(c),
+    onApplied: (n) => {
+      if (slot !== 0 && n === slot) reloadSlot(); // 플레이 중인 슬롯이 바뀌었다 → 다시 연다
+      else if (slot === 0 && nav.top?.id === 'title') nav.top.render(); // 처음 화면의 슬롯 줄 갱신
+    },
+    notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
+    standalone: () => isStandalone(),
+    online: () => navigator.onLine !== false,
+  });
+  const cloudUi: CloudUi | undefined = cloud ? {
+    state: () => cloud.state(),
+    signIn: () => void cloud.signIn(),
+    signOut: () => void cloud.signOut(),
+    email: (kind, email, password) => cloud.emailAction(kind, email, password),
+    onChange: (cb) => cloud.onChange(cb),
+  } : undefined;
+  /** 기기·클라우드 세이브가 다를 때 고르는 창 (GDD 196장 4): 잠긴 흐름(전투·원정·연출)·안내 중이면 방·처음 화면으로 돌아올 때 띄운다 */
+  let pendingCloudConflict: CloudConflict | null = null;
+  function queueCloudConflict(c: CloudConflict): void {
+    pendingCloudConflict = c;
+    showCloudConflictIfIdle();
+  }
+  function showCloudConflictIfIdle(): void {
+    const c = pendingCloudConflict;
+    if (!c || !nav.top || nav.top.locked || guideOpen || recoverOpen) return;
+    if (nav.top.id !== 'title' && nav.top.id !== 'room' && nav.top.id !== 'settings') return;
+    pendingCloudConflict = null;
+    showCloudConflict(c);
+  }
+  if (cloud) {
+    cloud.start();
+    window.addEventListener('online', () => cloud.onOnline());
+    window.addEventListener('pagehide', () => void cloud.flush());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) void cloud.flush(); });
+  }
+
   const persist = () => {
     if (!save || slot === 0) return;
     // 튜토리얼 보상 (GDD 23-3): 저장할 때마다 새로 이룬 목표를 판정해 바로 지급하고 토스트. 기존 세이브는 처음 저장 때 한꺼번에
@@ -240,6 +289,7 @@ export function startApp(host: HTMLElement): void {
         : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우면 된다.' }, 0, 5200);
     }
     touchSlot(store, slot);
+    cloud?.schedule(); // 로그인 중이면 클라우드에도 (묶어서, GDD 196장 3)
   };
   const storageWarned = new Set<string>();
   // 새 버전 (GDD 184장 3, C.283): 처음 화면(게임 시작 전 — 슬롯·종족 고르기)이면 자동 다시 시작. 다시 시작 직전 저장은
@@ -626,6 +676,7 @@ export function startApp(host: HTMLElement): void {
       onBackup: inGame && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined,
       onBack: () => nav.pop(),
       commonOnly: !inGame,
+      cloud: cloudUi, // 로그인·클라우드 세이브 줄 (GDD 196장) — 처음 화면 설정에서도 (새 기기에서 가져오기)
     }));
 
   /** 슬롯 설정 (GDD 103장 5): 이 슬롯 세이브의 settings 를 설정 화면·실제 값에 건다. 슬롯을 열 때마다, 시작 화면이면 푼다 */
@@ -671,6 +722,7 @@ export function startApp(host: HTMLElement): void {
     renderRotateCard();
     armBackTrap();
     nav.reset({ id: 'title', render: () => { renderTitle(note); root.scrollTop = 0; } });
+    showCloudConflictIfIdle();
   }
 
   function renderTitle(note = ''): void {
@@ -922,6 +974,7 @@ export function startApp(host: HTMLElement): void {
     nav.reset({ id: 'room', home: true, render: () => { renderRoom(); root.scrollTop = 0; } });
     // 온천에 있던 채로 껐다 켰으면 온천 화면으로 (GDD 123장 4: 앱을 꺼도 온천 유지)
     if (save.nest.spa && !save.nest.dead) openSpa(getFaction(save.factionId), save, false);
+    showCloudConflictIfIdle();
   }
 
   /** 온천 (GDD 123장 4): enter = 방 물건을 눌러 들어감(못 들어가면 이유 알림), false = 이미 온천에 있는 세이브를 다시 염. 뒤로 = 나와서 방 */

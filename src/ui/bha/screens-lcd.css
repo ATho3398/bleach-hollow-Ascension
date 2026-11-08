@@ -156,6 +156,19 @@
 .bha-settings-page .bha-slider__scale { display: none; }
 /* 음악 목록 = 한 판, 두 열 전체: 머리 하나 → 지금 곡·반복·다음 곡 줄 → 곡 목록 → 설명 */
 .bha-setrow--music { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: var(--bha-sp-2); padding: var(--bha-sp-3) var(--bha-sp-4); }
+/* 로그인 줄 (GDD 196장, C.323): 로그인 전·후 설명 길이가 달라도 버튼 자리 고정(173장 2) — 버튼은 줄 위쪽에, 폭은 긴 쪽(Google 로그인)에 맞춘 고정 폭 */
+.bha-setrow--cloud { grid-column: 1 / -1; align-items: flex-start; } /* 두 열을 다 써 설명이 버튼 밑으로 숨지 않는다 */
+.bha-setrow--cloud .bha-setrow__ctl { align-self: flex-start; flex: none; flex-direction: column; align-items: flex-end; flex-wrap: nowrap; }
+.bha-setrow--cloud .bha-settings__cloud-btn { width: calc(var(--bha-sp-10) * 3); justify-content: center; }
+.bha-settings__cloud-btn--hidden { visibility: hidden; } /* 로그인 뒤 이메일 버튼은 자리만 남긴다 */
+/* 이메일 로그인 창 (GDD 196장 결정 7): 칸은 맨 위, 본문 스크롤 — 폰 키보드가 올라와 틀이 줄어도 초점 칸이 보인다 */
+.bha-cloud-email .bha-modal { max-height: 100%; } /* 창(LCD) 밖으로 나가지 않는다 — 폰 384 높이 */
+.bha-cloud-email__form { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-height: 0; overflow: auto; }
+.bha-cloud-email__form > .bha-btn { align-self: flex-start; }
+.bha-cloud-email__input { min-width: 0; width: 100%; min-height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-1); font: var(--bha-fw-medium) var(--bha-fs-md) var(--bha-font-body); }
+.bha-cloud-email__input::placeholder { color: var(--bha-text-3); }
+.bha-cloud-email__input:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
+.bha-cloud-email__status:empty { display: none; }
 .bha-music__bar { display: flex; align-items: center; gap: var(--bha-sp-3); min-height: var(--bha-btn-h-sm); }
 .bha-music__now { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bha-music__bar .bha-bgmlist__ctl { flex: none; align-items: center; }

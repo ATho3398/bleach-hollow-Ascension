@@ -61,6 +61,8 @@ export const V2_ICON: Readonly<Record<string, string>> = {
   'i-tile-prey': 'fang',
   'i-tile-elite': 'crown',
   'i-tile-env': 'cloud',
+  'i-cloud': 'cloud', // 클라우드 세이브 로그인 버튼 (C.323)
+  'i-key': 'key', // 이메일 로그인 버튼 (C.323)
   'i-tile-rest': 'campfire',
   'i-tile-combo': 'branch', // 임시
   // 계열

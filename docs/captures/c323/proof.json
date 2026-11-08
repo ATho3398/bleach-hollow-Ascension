@@ -1,0 +1,233 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "before": {
+    "label": "Google 로그인",
+    "disabled": false,
+    "x": 580,
+    "y": 306,
+    "w": 144,
+    "h": 36,
+    "rx": 468,
+    "ry": 4,
+    "hint": "로그인하면 세이브가 클라우드에도 저장된다. 다른 기기에서 같은 계정으로 로그인하면 이어 할 수 있다. 로그인하지 않아도 이 기기에는 그대로 저장된다.",
+    "inside": true
+   },
+   "after": {
+    "label": "로그아웃",
+    "disabled": false,
+    "x": 580,
+    "y": 306,
+    "w": 144,
+    "h": 36,
+    "rx": 468,
+    "ry": 4,
+    "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장 11/8 13:23.",
+    "inside": true
+   },
+   "fake": {
+    "user": {
+     "uid": "fake-uid",
+     "name": "테스트 사용자",
+     "email": "tester@example.com"
+    },
+    "doc": {
+     "format": 62,
+     "savedAt": 1794144182407,
+     "slot": 1,
+     "device": "mw7v4a1r-9ttegmmz",
+     "build": "7492a5f-mw7v4843",
+     "base": null,
+     "summary": {
+      "factionId": "hollow",
+      "tierIndex": 0,
+      "expeditions": 0
+     },
+     "text": "{\"meta\":{\"format\":62,\"balanceVersion\":109,\"startPatch\":\"C.320\"},\"factionId\":\"hollow\",\"nest\":{\"hunger\":20.000005555555557,\"condition\":80,\"weakened\":false,\"tired\":false,\"collapsed\":false,\"collapsedAt\":0,\"dead\":false,\"cureOnReturn\":{\"weak\":false,\"tired\":false},\"bond\":0,\"bondDay\":\"\",\"bondToday\":0,\"risk\":0,\"stability\":50,\"lastTickMs\":1794144178153,\"careRequest\":null,\"nextCareAt\":1794144358149,\"feedCount\":0,\"lastFedAt\":0,\"hpFraction\":1,\"spa\":null},\"build\":{\"owned\":[],\"slots\":[null,null,null],\"equipOrder\":[],\"enhance\":{}},\"evolution\":{\"tierIndex\":0,\"formId\":null,\"formHistory\":[],\"steps\":0,\"alerts\":0,\"stageSeed\":4206715640,\"absorbs\":0,\"releases\":0,\"elementAbsorbs\":{},\"breakthroughs\":0,\"elitesDefeated\":0,\"ev\":{\"hp\":0,\"atk\":0,\"int\":0,\"def\":0,\"spr\":0,\"spd\":0},\"ability\":null,\"abilities\":{\"owned\":{},\"equipped\":[],\"slots\":1,\"tier4Ever\":false}},\"runLog\":{\"absorbs\":[],\"lineages\":[],\"risk\":{\"peak\":0,\"breakthroughs\":0,\"survivedBreakthroughs\":0},\"battles\":[],\"tiers\":{\"skipped\":false,\"evolutions\":[],\"defeatedWhileAtTier\":{}},\"rankChanges\":[],\"rankBattles\":[],\"runs\":[],\"trainings\":[],\"rebirths\":[],\"bossBattles\":[],\"shopPurchases\":[],\"storyRuns\":[],\"towerBattles\":[],\"tutorialRewards\":[],\"care\":{\"answered\":{\"pet\":0,\"sleep\":0},\"refused\":{\"pet\":0,\"sleep\":0},\"missed\":0},\"vitals\":[],\"wanderer\":[],\"idle\":[],\"pets\":[],\"gear\":[],\"homeHeals\":[]},\"activeExpedition\":null,\"lastScreen\":\"room\",\"rank\":{\"ladder\":[\"rank-holder-a\",\"rank-holder-b\",\"rank-holder-c\",\"rank-holder-d\",\"rank-holder-e\",\"rank-holder-f\",\"rank-holder-g\",\"rank-holder-h\",\"rank-holder-i\",\"rank-holder-j\",\"player\"],\"lostTo\":{},\"wins\":0,\"losses\":0,\"history\":{\"everRanked\":false,\"best\":null,\"firstRankedAt\":null}},\"training\":{\"points\":0,\"tickets\":0,\"wins\":{\"duel\":0,\"dodge\":0,\"clash\":0,\"chain\":0},\"completed\":false,\"completedAt\":null},\"skin\":null,\"rebirth\":{\"count\":0,\"carry\":{\"hp\":0,\"atk\":0,\"int\":0,\"def\":0,\"spr\":0,\"spd\":0}},\"wear\":{\"keyring\":\"keyring-orb\"},\"difficulty\":{\"unlocked\":1,\"last\":1,\"streak\":{\"star\":1,\"count\":0}},\"tower\":{\"best\":0},\"formDex\":[],\"tiles\":{\"collection\":{},\"presets\":[],\"unlocked\":false,\"draws\":0},\"titles\":[],\"help\":{\"tutorialSeen\":false,\"guides\":{\"first-run\":\"pending\",\"home-intro\":\"pending\",\"birth\":\"pending\"}},\"shared\":{\"soulCrystals\":0,\"food\":{\"snack\":5,\"basic\":3,\"hearty\":0,\"tonic\":0,\"feast\":0},\"tradeCoins\":0,\"jade\":0,\"tutorials\":{\"hollow\":[]},\"dexRewards\":[],\"rerollTickets\":0,\"deckSlots\":0,\"cosmetics\":[\"keyring-orb\",\"device-badge\",\"device-zaraki\"],\"items\":{\"heal-patch\":3,\"battle-potion\":2,\"heal-salve\":1,\"med-cure\":3},\"wanderer\":{\"lapsSince\":0,\"visit\":null},\"pets\":{\"owned\":{},\"active\":null,\"gifted\":false},\"gear\":{\"items\":[],\"equipped\":{\"weapon\":null,\"armor\":null,\"shoes\":null,\"acc1\":null,\"acc2\":null},\"nextId\":1},\"battleItem\":null,\"shopDaily\":{\"day\":\"\",\"bought\":{}},\"traits\":[]},\"lastSeenAt\":1794144178153,\"idlePending\":null,\"story\":{},\"bossDex\":{},\"otherTracks\":[],\"trackNotice\":null,\"hogyoku\":{\"tabOpen\":false,\"tabNotice\":false,\"fed\":0,\"liberated\":false,\"liberatedAt\":null,\"fusionFed\":0},\"transcendentDex\":[],\"slotLog\":{\"fusions\":[],\"trackOpens\":[]},\"machine\":{\"createdAt\":1794144178149,\"playMs\":0},\"settings\":null,\"gender\":\"male\"}"
+    }
+   },
+   "afterLogout": {
+    "label": "Google 로그인",
+    "disabled": false,
+    "x": 580,
+    "y": 306,
+    "w": 144,
+    "h": 36,
+    "rx": 468,
+    "ry": 4,
+    "hint": "로그인하면 세이브가 클라우드에도 저장된다. 다른 기기에서 같은 계정으로 로그인하면 이어 할 수 있다. 로그인하지 않아도 이 기기에는 그대로 저장된다.",
+    "inside": true
+   },
+   "emailDialog": {
+    "inputs": [
+     {
+      "name": "email",
+      "inside": true
+     },
+     {
+      "name": "password",
+      "inside": true
+     }
+    ],
+    "buttons": [
+     "비밀번호 잊음",
+     "취소",
+     "가입",
+     "로그인"
+    ],
+    "status": "이메일이나 비밀번호가 맞지 않다.",
+    "inside": true
+   },
+   "afterEmail": {
+    "label": "로그아웃",
+    "disabled": false,
+    "x": 580,
+    "y": 290,
+    "w": 144,
+    "h": 36,
+    "rx": 468,
+    "ry": 4,
+    "hint": "tester@example.com 계정으로 로그인했다. 클라우드 저장 11/8 13:23.",
+    "inside": true
+   },
+   "conflict": {
+    "title": "슬롯 1 세이브 고르기",
+    "body": "이 기기와 클라우드의 세이브가 다르다. 고르지 않은 쪽은 슬롯 백업에 한 벌 남는다.",
+    "rows": [
+     "이 기기: 호로 1단계 · 모험 0회 · 11/8 13:23",
+     "클라우드: 사신 1단계 · 모험 0회 · 11/8 13:24"
+    ],
+    "buttons": [
+     "이 기기",
+     "클라우드"
+    ],
+    "focused": "클라우드",
+    "inside": true
+   },
+   "afterPick": {
+    "slot1": "shinigami",
+    "backup": "hollow",
+    "reason": "cloud",
+    "toast": "클라우드 고른 세이브로 바꿨다"
+   },
+   "ok": true
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "before": {
+    "label": "Google 로그인",
+    "disabled": false,
+    "x": 532,
+    "y": 321,
+    "w": 144,
+    "h": 36,
+    "rx": 420,
+    "ry": 4,
+    "hint": "로그인하면 세이브가 클라우드에도 저장된다. 다른 기기에서 같은 계정으로 로그인하면 이어 할 수 있다. 로그인하지 않아도 이 기기에는 그대로 저장된다.",
+    "inside": true
+   },
+   "after": {
+    "label": "로그아웃",
+    "disabled": false,
+    "x": 532,
+    "y": 321,
+    "w": 144,
+    "h": 36,
+    "rx": 420,
+    "ry": 4,
+    "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장 11/8 13:23.",
+    "inside": true
+   },
+   "fake": {
+    "user": {
+     "uid": "fake-uid",
+     "name": "테스트 사용자",
+     "email": "tester@example.com"
+    },
+    "doc": {
+     "format": 62,
+     "savedAt": 1794144197520,
+     "slot": 1,
+     "device": "mw7v4loz-98y2qzj1",
+     "build": "7492a5f-mw7v4843",
+     "base": null,
+     "summary": {
+      "factionId": "shinigami",
+      "tierIndex": 0,
+      "expeditions": 0
+     },
+     "text": "{\"meta\":{\"format\":62,\"balanceVersion\":109,\"startPatch\":\"C.320\"},\"factionId\":\"shinigami\",\"nest\":{\"hunger\":20.000008333333334,\"condition\":80,\"weakened\":false,\"tired\":false,\"collapsed\":false,\"collapsedAt\":0,\"dead\":false,\"cureOnReturn\":{\"weak\":false,\"tired\":false},\"bond\":0,\"bondDay\":\"\",\"bondToday\":0,\"risk\":0,\"stability\":50,\"lastTickMs\":1794144193222,\"careRequest\":null,\"nextCareAt\":1794144373216,\"feedCount\":0,\"lastFedAt\":0,\"hpFraction\":1,\"spa\":null},\"build\":{\"owned\":[],\"slots\":[null,null,null],\"equipOrder\":[],\"enhance\":{}},\"evolution\":{\"tierIndex\":0,\"formId\":null,\"formHistory\":[],\"steps\":0,\"alerts\":0,\"stageSeed\":1764330704,\"absorbs\":0,\"releases\":0,\"elementAbsorbs\":{},\"breakthroughs\":0,\"elitesDefeated\":0,\"ev\":{\"hp\":0,\"atk\":0,\"int\":0,\"def\":0,\"spr\":0,\"spd\":0},\"ability\":null,\"abilities\":{\"owned\":{},\"equipped\":[],\"slots\":1,\"tier4Ever\":false}},\"runLog\":{\"absorbs\":[],\"lineages\":[],\"risk\":{\"peak\":0,\"breakthroughs\":0,\"survivedBreakthroughs\":0},\"battles\":[],\"tiers\":{\"skipped\":false,\"evolutions\":[],\"defeatedWhileAtTier\":{}},\"rankChanges\":[],\"rankBattles\":[],\"runs\":[],\"trainings\":[],\"rebirths\":[],\"bossBattles\":[],\"shopPurchases\":[],\"storyRuns\":[],\"towerBattles\":[],\"tutorialRewards\":[],\"care\":{\"answered\":{\"pet\":0,\"sleep\":0},\"refused\":{\"pet\":0,\"sleep\":0},\"missed\":0},\"vitals\":[],\"wanderer\":[],\"idle\":[],\"pets\":[],\"gear\":[],\"homeHeals\":[]},\"activeExpedition\":null,\"lastScreen\":\"room\",\"rank\":{\"ladder\":[\"rank-holder-a\",\"rank-holder-b\",\"rank-holder-c\",\"rank-holder-d\",\"rank-holder-e\",\"rank-holder-f\",\"rank-holder-g\",\"rank-holder-h\",\"rank-holder-i\",\"rank-holder-j\",\"player\"],\"lostTo\":{},\"wins\":0,\"losses\":0,\"history\":{\"everRanked\":false,\"best\":null,\"firstRankedAt\":null}},\"training\":{\"points\":0,\"tickets\":0,\"wins\":{\"duel\":0,\"dodge\":0,\"clash\":0,\"chain\":0},\"completed\":false,\"completedAt\":null},\"skin\":null,\"rebirth\":{\"count\":0,\"carry\":{\"hp\":0,\"atk\":0,\"int\":0,\"def\":0,\"spr\":0,\"spd\":0}},\"wear\":{\"keyring\":\"keyring-orb\"},\"difficulty\":{\"unlocked\":1,\"last\":1,\"streak\":{\"star\":1,\"count\":0}},\"tower\":{\"best\":0},\"formDex\":[],\"tiles\":{\"collection\":{},\"presets\":[],\"unlocked\":false,\"draws\":0},\"titles\":[],\"help\":{\"tutorialSeen\":false,\"guides\":{\"first-run\":\"pending\",\"home-intro\":\"pending\",\"birth\":\"pending\"}},\"shared\":{\"soulCrystals\":0,\"food\":{\"snack\":5,\"basic\":3,\"hearty\":0,\"tonic\":0,\"feast\":0},\"tradeCoins\":0,\"jade\":0,\"tutorials\":{\"shinigami\":[]},\"dexRewards\":[],\"rerollTickets\":0,\"deckSlots\":0,\"cosmetics\":[\"keyring-orb\",\"device-badge\",\"device-zaraki\"],\"items\":{\"heal-patch\":3,\"battle-potion\":2,\"heal-salve\":1,\"med-cure\":3},\"wanderer\":{\"lapsSince\":0,\"visit\":null},\"pets\":{\"owned\":{},\"active\":null,\"gifted\":false},\"gear\":{\"items\":[],\"equipped\":{\"weapon\":null,\"armor\":null,\"shoes\":null,\"acc1\":null,\"acc2\":null},\"nextId\":1},\"battleItem\":null,\"shopDaily\":{\"day\":\"\",\"bought\":{}},\"traits\":[]},\"lastSeenAt\":1794144193222,\"idlePending\":null,\"story\":{},\"bossDex\":{},\"otherTracks\":[],\"trackNotice\":null,\"hogyoku\":{\"tabOpen\":false,\"tabNotice\":false,\"fed\":0,\"liberated\":false,\"liberatedAt\":null,\"fusionFed\":0},\"transcendentDex\":[],\"slotLog\":{\"fusions\":[],\"trackOpens\":[]},\"machine\":{\"createdAt\":1794144193216,\"playMs\":0},\"settings\":null,\"gender\":\"male\"}"
+    }
+   },
+   "afterLogout": {
+    "label": "Google 로그인",
+    "disabled": false,
+    "x": 532,
+    "y": 321,
+    "w": 144,
+    "h": 36,
+    "rx": 420,
+    "ry": 4,
+    "hint": "로그인하면 세이브가 클라우드에도 저장된다. 다른 기기에서 같은 계정으로 로그인하면 이어 할 수 있다. 로그인하지 않아도 이 기기에는 그대로 저장된다.",
+    "inside": true
+   },
+   "emailDialog": {
+    "inputs": [
+     {
+      "name": "email",
+      "inside": true
+     },
+     {
+      "name": "password",
+      "inside": true
+     }
+    ],
+    "buttons": [
+     "비밀번호 잊음",
+     "취소",
+     "가입",
+     "로그인"
+    ],
+    "status": "이메일이나 비밀번호가 맞지 않다.",
+    "inside": true
+   },
+   "afterEmail": {
+    "label": "로그아웃",
+    "disabled": false,
+    "x": 532,
+    "y": 272,
+    "w": 144,
+    "h": 36,
+    "rx": 420,
+    "ry": 4,
+    "hint": "tester@example.com 계정으로 로그인했다. 클라우드 저장 11/8 13:23.",
+    "inside": true
+   },
+   "conflict": {
+    "title": "슬롯 1 세이브 고르기",
+    "body": "이 기기와 클라우드의 세이브가 다르다. 고르지 않은 쪽은 슬롯 백업에 한 벌 남는다.",
+    "rows": [
+     "이 기기: 사신 1단계 · 모험 0회 · 11/8 13:23",
+     "클라우드: 호로 1단계 · 모험 0회 · 11/8 13:24"
+    ],
+    "buttons": [
+     "이 기기",
+     "클라우드"
+    ],
+    "focused": "클라우드",
+    "inside": true
+   },
+   "afterPick": {
+    "slot1": "hollow",
+    "backup": "shinigami",
+    "reason": "cloud",
+    "toast": "클라우드 고른 세이브로 바꿨다"
+   },
+   "ok": true
+  }
+ ],
+ "errors": []
+}
