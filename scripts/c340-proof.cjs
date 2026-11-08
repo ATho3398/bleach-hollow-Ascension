@@ -1,16 +1,16 @@
-// C.339 proof (GDD 205장 · 115-A 85): 적 덩치(<속성>-basic) = 종이인형 덩치(속성 색) — 전투에서 캔버스로 움직이는지, 대기·공격·맞음 캡처.
-// 실행: node scripts/c339-proof.cjs (C339_URL=<주소>). 캡처 1배 844×390 docs/captures/c339/. 덩치가 나올 때까지 새로 시작(최대 8번)
+// C.340 proof (GDD 205장 · 115-A 85): 적 덩치(<속성>-basic) = 종이인형 덩치(속성 색) — 전투에서 캔버스로 움직이는지, 대기·공격·맞음 캡처.
+// 실행: node scripts/c340-proof.cjs (C340_URL=<주소>). 캡처 1배 844×390 docs/captures/c340/. 덩치가 나올 때까지 새로 시작(최대 8번)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'docs/captures/c339');
+const OUT = path.join(ROOT, 'docs/captures/c340');
 const PORT = 5391;
 
 async function startServer() {
-  if (process.env.C339_URL) return { url: process.env.C339_URL, stop: () => {} };
+  if (process.env.C340_URL) return { url: process.env.C340_URL, stop: () => {} };
   const p = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { cwd: ROOT, stdio: 'pipe', detached: true });
   const url = `http://localhost:${PORT}/`;
   for (let i = 0; i < 60; i++) {

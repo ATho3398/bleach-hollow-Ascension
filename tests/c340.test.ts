@@ -1,4 +1,4 @@
-// C.339 (GDD 205장 · 115-A 85): 적 덩치(<속성>-basic) = 종이인형 덩치(지금 그림 색), 덩치 색 외형은 모두 몸 hb·동작 하나
+// C.340 (GDD 205장 · 115-A 85): 적 덩치(<속성>-basic) = 종이인형 덩치(지금 그림 색), 덩치 색 외형은 모두 몸 hb·동작 하나
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { enemyArt, ART_MANIFEST } from '../src/data/art/manifest';

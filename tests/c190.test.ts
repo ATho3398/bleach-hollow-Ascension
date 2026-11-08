@@ -31,7 +31,7 @@ describe('C.190 종이인형 위치 (116장 1)', () => {
 
 describe('C.190 크기 ×0.75 (116장 4)', () => {
   it('종이인형 자리 전부 같은 배율, 걷기·전투 필드 = C.189 의 키(1.32 × 152/113)의 0.75배, 방 = C.189 키 (C.192, 118장 1), 위치 보정 없음', () => {
-    const rigs = Object.entries(ART_MANIFEST).filter(([k, e]) => e.rig && k.startsWith('char.')).map(([, e]) => e); // 캐릭터 자리만 — 적 종이인형(C.339 덩치)은 지금 적 그림 크기에 맞춤(205장 3)
+    const rigs = Object.entries(ART_MANIFEST).filter(([k, e]) => e.rig && k.startsWith('char.')).map(([, e]) => e); // 캐릭터 자리만 — 적 종이인형(C.340 덩치)은 지금 적 그림 크기에 맞춤(205장 3)
     expect(rigs.length).toBeGreaterThanOrEqual(4);
     const before = 1.32 * HUMANOID.view!.rect[2] / 113;
     for (const e of rigs) {
