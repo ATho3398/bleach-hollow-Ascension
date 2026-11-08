@@ -113,7 +113,7 @@ describe('106장 2·3: 웅덩이 · 메노스 크기', () => {
     expect(BALANCE.provisional.expedition.restTimeTiles * BALANCE.expedition.restSecondsPerTile).toBeCloseTo(10 / 3);
     const ev = read('src/ui/expeditionView.ts');
     expect(ev).toContain("const healFx = el('span', 'bha-walker__heal');");
-    expect(ev).toContain("floatEl('heal', gain");
+    expect(ev).toContain("floatEl('heal', `${faction.riskGaugeName} −"); // GDD 201장: 오른 값 숫자는 없앰, 리스크 내림(온천)만 숫자
   });
   it('메노스 그란데: 걷기·전투 필드 배율은 데이터(fieldScale), 방은 scale 그대로', () => {
     expect(ART_MANIFEST['char.hollow.2']!.fieldScale).toBe(1.5);

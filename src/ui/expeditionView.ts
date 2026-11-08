@@ -36,6 +36,7 @@ import { storyGoalLine } from './storyView';
 import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
 import { floatEl } from './bha/battle';
+import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
@@ -148,20 +149,28 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   function endRest(): void {
     if (exp.phase !== 'rest') return;
     const spring = exp.restSpring === true;
-    const before = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk };
+    const before = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk, hp: hpFractionOf(exp) };
     finishRest(exp);
     restArrived = false;
     ahead.leave(); // 쉬던 장소가 뒤로 흘러간다 (GDD 128장 3)
     h.onSave();
-    // 회복 숫자 떠오름 (C.176, GDD 106장 2): 전투 회복 숫자(.bha-float--heal)와 같은 모양, 캐릭터 머리 위
-    const gain = spring
-      ? `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`
-      : [`${faction.fullnessName} ${Math.round(fullnessOf(exp.hunger, PX.hungerMax) - before.full)}`, `컨디션 ${Math.round(exp.condition - before.cond)}`].join(' · ');
-    const fx = floatEl('heal', gain, { left: 50, top: 8 });
-    fx.classList.add('bha-walker__healnum');
-    if (spring) fx.classList.add('is-spring');
-    fx.addEventListener('animationend', () => fx.remove());
-    walk.walker.append(fx);
+    if (spring) {
+      // 줄어드는 값(리스크)은 예전처럼 떠오르는 숫자 (C.176, GDD 106장 2 · 201장 5)
+      const fx = floatEl('heal', `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`, { left: 50, top: 8 });
+      fx.classList.add('bha-walker__healnum', 'is-spring');
+      fx.addEventListener('animationend', () => fx.remove());
+      walk.walker.append(fx);
+    } else {
+      // 오른 값은 숫자 대신 왼쪽 위 판·발밑 체력 막대가 이전 값 → 새 값으로 차오른다 (GDD 201장 3, 줄어든 값은 바로 새 값)
+      const to = { full: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, hp: hpFractionOf(exp) };
+      const from = { full: Math.min(before.full, to.full), cond: Math.min(before.cond, to.cond), hp: Math.min(before.hp, to.hp) };
+      if (from.full < to.full || from.cond < to.cond || from.hp < to.hp) {
+        tween(ACTION_FILL_MS, (t) => {
+          fillOver = t >= 1 ? null : { full: from.full + (to.full - from.full) * t, cond: from.cond + (to.cond - from.cond) * t, hp: from.hp + (to.hp - from.hp) * t };
+          if (!dead) paintMeters();
+        }, undefined, false);
+      }
+    }
     msg = spring ? `${faction.riskGaugeName}이(가) 가라앉았다` : `${faction.fullnessName}·컨디션이 회복됐다`;
     render();
     nextStep();
@@ -452,6 +461,35 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     });
   };
 
+  /** 휴식 회복 차오름 중 보여 줄 값 (GDD 201장 3: 배부름·컨디션·체력이 이전 값 → 새 값으로 0.8초) — null = 지금 값 */
+  let fillOver: { full: number; cond: number; hp: number } | null = null;
+  /** 왼쪽 위 판 막대 줄 + 발밑 체력 막대 (render 와 휴식 차오름이 같이 부른다) */
+  function paintMeters(): void {
+    const spike = exp.lap >= PX.hungerSpikeLap;
+    const hungerDanger = spike || exp.hunger >= PX.hungerMax * 0.8;
+    const bonus = riskBonus(exp);
+    const fullNow = Math.round(fillOver?.full ?? fullnessOf(exp.hunger, PX.hungerMax));
+    const condNow = Math.round(fillOver?.cond ?? exp.condition);
+    const hpFrac = fillOver?.hp ?? hpFractionOf(exp);
+    // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션(+ 공허 보너스) · 광기/호로화
+    // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
+    meters.replaceChildren(
+      meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
+      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
+      meter({
+        kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true,
+        valueText: `${condNow}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
+      }),
+      meter({
+        kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
+        valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
+      }),
+    );
+    const hpPct = Math.round(hpFrac * 100);
+    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` }));
+    hpBox.title = `체력 ${hpPct}%`;
+  }
+
   // ── 상태에 맞춰 제자리 갱신 ──
   function render(): void {
     // 휴식 칸 회복 모션 (C.176, GDD 106장 2): 머무는 동안 캐릭터 위로 초록 빛이 오른다
@@ -460,23 +498,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const hungerDanger = spike || exp.hunger >= PX.hungerMax * 0.8;
     const bonus = riskBonus(exp);
 
-    // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션(+ 공허 보너스) · 광기/호로화
-    // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
-    meters.replaceChildren(
-      meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
-      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(exp.hunger, PX.hungerMax)), max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
-      meter({
-        kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,
-        valueText: `${Math.round(exp.condition)}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
-      }),
-      meter({
-        kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
-        valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
-      }),
-    );
-    const hpPct = Math.round(hpFractionOf(exp) * 100);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${hpPct}%` }));
-    hpBox.title = `체력 ${hpPct}%`;
+    paintMeters();
     const full = Math.round(fullnessOf(exp.hunger, PX.hungerMax));
     fullChip.set(full / PX.hungerMax, String(full), hungerDanger);
     condChip.set(exp.condition / PX.conditionMax, String(Math.round(exp.condition)), false);

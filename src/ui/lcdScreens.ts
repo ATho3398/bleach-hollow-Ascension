@@ -9,9 +9,7 @@ import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp } from '../home';
-import { itemUseFx, type ActionBar } from './bha/actionFx';
-import { fullnessOf } from './bha/fullness';
-import { hpNumbers } from './bha/battle';
+import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
@@ -53,7 +51,7 @@ import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
 import { bondStage, CARE_STATUS_NAMES, dyingLeftMs } from '../engine/nest';
-import { BOND_STAGE_NAMES, careStatusShort, dyingClock } from './bha/roomLogic';
+import { BOND_STAGE_NAMES, careStatusShort, dyingClock, statusChips } from './bha/roomLogic';
 import { statusInfo, type StatusInfoKind } from './bha/statusInfo';
 import type { VariantMods } from '../engine/expedition';
 
@@ -616,19 +614,16 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
 }
 
 /**
- * 아이템 쓰기 연출 (GDD 132장 3, C.208): 캐릭터가 쓰는 모션 + 체력(또는 배부름) 막대가 약 1초에 걸쳐 차오른다. 값은 이미 저장됐다.
- * 막대가 바뀌지 않는 물건(구급상자 등)은 체력 막대를 그대로 보여 준다
+ * 아이템 쓰기 연출 (GDD 132장 3 · 201장): 상태창이 가려진 가방 화면이라 머리 위 상태창(같은 박스 + 발밑 체력 막대)을 잠깐 띄워
+ * 오른 값이 0.8초 동안 차오르게 한다(회복 수치 글자 없음). 오른 값이 없으면(구급상자 등) false — 부르는 쪽이 예전처럼 알림 띠
  */
-function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, hpBefore: number, fullBefore: number): void {
-  const maxHp = homeMaxHp(save);
-  const hpNow = homeHp(save).fraction;
-  const fullNow = fullnessOf(save.nest.hunger);
-  const hp = (f: number) => hpNumbers(f * maxHp, maxHp).now;
-  const bars: ActionBar[] = [];
-  if (Math.abs(fullNow - fullBefore) > 1e-6 && Math.abs(hpNow - hpBefore) <= 1e-6) bars.push({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', from: Math.round(fullBefore), to: Math.round(fullNow), max: 100 });
-  else bars.push({ kind: 'player', label: '체력', icon: 'i-heal', from: hp(hpBefore), to: hp(hpNow), max: hpNumbers(maxHp, maxHp).max });
+function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, before: GaugeShown): boolean {
+  const to = nestShown(save.nest, homeHp(save).fraction);
+  const from = riseFrom(before, to);
+  if (!from) return false;
   const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
-  itemUseFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), bars });
+  statusFillFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), chips: () => statusChips(save.nest, faction), from, to, maxHp: homeMaxHp(save), owner: save.nest });
+  return true;
 }
 
 /** 보관함 카드 상세 창: 쓰기·장착·해제 (GDD 86장 5번) */
@@ -641,11 +636,10 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: 'use', label: () => '사용', disabled: e.lock !== null,
       onClick: () => {
         close();
-        const hpBefore = homeHp(save).fraction;
-        const fullBefore = fullnessOf(save.nest.hunger);
+        const before = nestShown(save.nest, homeHp(save).fraction);
         const r = useInventoryItem(save, faction, e.id);
-        if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);
-        showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
+        // 오른 값이 있으면 상태창 차오름만 (GDD 201장 2: 회복 수치 알림 없음), 아니면(뱉음·구급상자·못 씀) 예전 알림 띠
+        if (!(r.ok && !r.spat && useFx(faction, save, e, art, before))) showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },
     });

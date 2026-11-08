@@ -65,8 +65,8 @@ describe('132장 2 월드맵 캐릭터·초점 = 있던 곳', () => {
 });
 
 describe('132장 3 행동 진행 연출', () => {
-  it('연출 시간 = 화면 상수 (아이템·먹이 약 1초 — 튜토리얼 온천은 C.214 부터 실제 시간)', () => {
-    expect(ACTION_FILL_MS).toBe(1000);
+  it('연출 시간 = 화면 상수 (아이템·먹이 0.8초 — GDD 201장 3, 튜토리얼 온천은 C.214 부터 실제 시간)', () => {
+    expect(ACTION_FILL_MS).toBe(800);
     expect(read('src/config/balance.ts')).not.toContain('ACTION_FILL');
   });
   it('연출 중 actionBusy, 끝나면 풀림 (화면 연출이 없는 환경은 바로 끝)', () => {
@@ -84,7 +84,7 @@ describe('132장 3 행동 진행 연출', () => {
   });
   it('카드는 연출이 끝나야 [다음]이 풀린다 · 아이템 쓰기·먹이·온천이 연출을 부른다', () => {
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);'); // C.245: 연출 중에는 창을 숨긴다
-    expect(read('src/ui/lcdScreens.ts')).toContain('if (r.ok && !r.spat) useFx(faction, save, e, art, hpBefore, fullBefore);');
+    expect(read('src/ui/lcdScreens.ts')).toContain('if (!(r.ok && !r.spat && useFx(faction, save, e, art, before))) showToast(');
     expect(read('src/ui/roomView.ts')).toContain('tween(ACTION_FILL_MS, (t) => {');
     expect(read('src/ui/app.ts')).toContain('return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);'); // C.214: 실제 시간으로 spaTo 까지
   });

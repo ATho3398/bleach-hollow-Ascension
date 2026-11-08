@@ -1,0 +1,93 @@
+{
+ "shots": {
+  "pc-before": {
+   "rows": [
+    "hunger:25:25%",
+    "cond:40:40%",
+    "stab:50:50%",
+    "risk:0:0%"
+   ],
+   "hp": "체력64 / 212",
+   "bubble": "",
+   "plusText": []
+  },
+  "pc-feed-mid": {
+   "rows": [
+    "hunger:26:26.425%",
+    "cond:43:42.8598%",
+    "stab:51:51.4283%",
+    "risk:0:0%"
+   ],
+   "hp": "체력67 / 212",
+   "bubble": "영혼 조각",
+   "plusText": []
+  },
+  "pc-feed-end": {
+   "rows": [
+    "hunger:27:27%",
+    "cond:44:44%",
+    "stab:52:52%",
+    "risk:0:0%"
+   ],
+   "hp": "체력69 / 212",
+   "bubble": "영혼 조각",
+   "plusText": []
+  },
+  "pc-spa-filling": {
+   "rows": [
+    "hunger:25:25%",
+    "cond:65:65%",
+    "stab:52:52%",
+    "risk:0:0%"
+   ],
+   "hp": "체력112 / 212",
+   "bubble": null,
+   "plusText": []
+  },
+  "ph-before": {
+   "rows": [
+    "hunger:25:25%",
+    "cond:40:40%",
+    "stab:50:50%",
+    "risk:0:0%"
+   ],
+   "hp": "체력64 / 212",
+   "bubble": "",
+   "plusText": []
+  },
+  "ph-feed-mid": {
+   "rows": [
+    "hunger:26:26.4291%",
+    "cond:43:42.8681%",
+    "stab:51:51.4325%",
+    "risk:0:0%"
+   ],
+   "hp": "체력67 / 212",
+   "bubble": "주먹밥",
+   "plusText": []
+  },
+  "ph-feed-end": {
+   "rows": [
+    "hunger:27:27%",
+    "cond:44:44%",
+    "stab:52:52%",
+    "risk:0:0%"
+   ],
+   "hp": "체력69 / 212",
+   "bubble": "주먹밥",
+   "plusText": []
+  },
+  "ph-spa-filling": {
+   "rows": [
+    "hunger:25:25%",
+    "cond:64:64%",
+    "stab:52:52%",
+    "risk:0:0%"
+   ],
+   "hp": "체력111 / 212",
+   "bubble": null,
+   "plusText": []
+  }
+ },
+ "errors": []
+}

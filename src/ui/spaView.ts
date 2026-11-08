@@ -12,7 +12,7 @@ import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
 import { el, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
-import { homeHpMeter, liveStatusChips, paintStatusBox, statusInfoButton, statusNameTag } from './bha/statusBox';
+import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
 import { applyCarePose, characterButton, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
 import { animOf } from './bha/animPlayer';
@@ -57,7 +57,7 @@ export interface SpaHandlers {
 
 /** 온천에서 나온 까닭 한 줄 (알림 띠·튜토리얼이 같이 쓴다) */
 export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: string): string {
-  if (e.reason === 'full') return `체력과 컨디션이 다 찼다 (체력 ${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
+  if (e.reason === 'full') return '체력과 컨디션이 다 찼다. 방으로 돌아왔다.'; // 회복 수치는 쓰지 않는다 (GDD 201장 2)
   if (e.reason === 'hungry') return fixParticles(`${fullnessName}이(가) 바닥나 방으로 돌아왔다.`);
   return '방으로 돌아왔다.';
 }
@@ -254,6 +254,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     paintStatusBox(status, liveStatusChips(n, faction, shown), nameTag);
     hpBox.replaceChildren(homeHpMeter(fraction, maxHp));
     clampStatus();
+    rememberShown(n, { hunger: fullness, cond: condition, stab: n.stability, risk: n.risk, hp: fraction }); // 방으로 돌아가도 쉬며 찬 만큼 다시 차오르지 않게 (GDD 201장)
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 

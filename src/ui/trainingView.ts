@@ -2,6 +2,9 @@
 // 규칙·시간은 engine/training 이 정하고, 화면은 상태를 그리기만 한다. 문구·종목 이름은 종족 설정 training 에서 읽는다 (종족 id 분기 없음).
 // 조작은 한 손가락: 화면 버튼 / 칸 누르기, PC 는 방향키·스페이스(숫자 1~9 = 먹이사슬 칸).
 import { fullnessDeltaText } from './bha/fullness';
+import { nestShown, statusFillFx } from './bha/statusBox';
+import { statusChips } from './bha/roomLogic';
+import { homeHp, homeMaxHp } from '../home';
 import { fixParticles } from '../engine/josa';
 import { BALANCE } from '../config/balance';
 import type { FactionConfig } from '../engine/faction';
@@ -378,7 +381,12 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   rows.append(
     el('p', '', `수련치 +${out.points} (지금 ${Math.min(t.points, TX.pointsToComplete)} / ${TX.pointsToComplete})`),
     ...(evStr ? [labeled('노력치 ', evText(evStr))] : out.won ? [el('p', 'bha-faint', '노력치는 이미 이 단계 상한이다')] : []),
-    el('p', 'bha-faint', [out.condition ? signedText('컨디션', out.condition) : '', out.hunger ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ') || `${faction.nestName} 수치 변화 없음`),
+    // 줄어든 수치·리스크 비용만 글로 (GDD 201장 2·5). 회복(먹이사슬 배부름 등)은 아래 상태창 차오름으로 보여 준다
+    ...(() => {
+      const down = [out.condition < 0 ? signedText('컨디션', out.condition) : '', out.hunger > 0 ? fullnessDeltaText(faction.fullnessName, out.hunger) : '', out.risk ? `${faction.riskGaugeName} +${Math.round(out.risk)}` : ''].filter(Boolean).join(' · ');
+      const rose = out.condition > 0 || out.hunger < 0;
+      return down ? [el('p', 'bha-faint', down)] : rose ? [] : [el('p', 'bha-faint', `${faction.nestName} 수치 변화 없음`)];
+    })(),
     el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
   );
   const left = [panel({ title: `${cfg.name} · ${out.level}단계 ${out.won ? '승리' : '패배'}`, aside: out.won ? tag('승리', 'kind') : undefined }, rows)];
@@ -394,4 +402,10 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   actions.append(asBack(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack })));
   right.push(actions);
   lcdPage(dev.view, { cls: 'bha-train-page bha-train-result' }, lcdHead({ title: faction.training.title }), left, right);
+  // 오른 값이 있으면 (GDD 201장 3·4): 가려진 머리 위 상태창을 잠깐 띄워 이전 값 → 새 값으로 차오르게 (줄어든 값은 바로 새 값)
+  if (out.condition > 0 || out.hunger < 0) {
+    const to = nestShown(save.nest, homeHp(save).fraction);
+    const from = { ...to, cond: to.cond - Math.max(0, out.condition), hunger: to.hunger - Math.max(0, -out.hunger) };
+    statusFillFx({ title: cfg.name, chips: () => statusChips(save.nest, faction), from, to, maxHp: homeMaxHp(save), owner: save.nest });
+  }
 }

@@ -193,7 +193,7 @@
 .bha-room__status .bha-chip--status .bha-icon { width: 16px; height: 16px; color: var(--c, var(--bha-text-2)); flex: none; }
 .bha-room__chipname { color: var(--bha-danger); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 /* 방 상태 박스 (C.281 값): 폭 72 + 안쪽 여백(왼 6 · 오른 16 = 키 글자 배지 자리) = 총 94px < 그림 130px */
-.bha-room__chips > .bha-room__status {
+.bha-room__chips > .bha-room__status, .bha-actfx__status {
   flex-direction: column; align-items: stretch; gap: var(--bha-sp-1); width: 72px; min-height: 0; box-sizing: content-box;
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3);
   background: var(--bha-scene-box); border-radius: var(--bha-r-md);
@@ -245,6 +245,9 @@
 .bha-room__bubble.is-side.is-pop { animation-name: bha-bubble-pop-side; }
 .bha-room__bubble.is-side.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + var(--char-half, 0px)); max-width: calc(var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
 .is-saying > .bha-room__chips { visibility: hidden; }
+/* 회복 차오름 동안 (GDD 201장 4): 말풍선에 가려진 상태창을 보이게, 말풍선은 차오름이 끝난 뒤 — 끝나면 원래대로(.is-filling 을 뗀다) */
+.is-saying.is-filling > .bha-room__chips { visibility: visible; }
+.is-filling > .bha-room__bubble { visibility: hidden; }
 /* 상태 ⓘ (C.176, GDD 104장 2 · 190장 3 = C.281): 박스 오른쪽 바깥 2px, 아래 끝 = 박스 아래 끝. 보이는 원 22px(누르는 자리는 button.bha-info::before 로 36) */
 .bha-room__chips > .bha-info.bha-room__statusinfo { position: absolute; left: calc(100% + var(--bha-sp-1)); bottom: 0; margin: 0; width: 22px; height: 22px; background: var(--bha-scene-box); }
 /* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 머리 위에 박스 자리가 없으면 박스를 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).
@@ -322,6 +325,8 @@
 .bha-actfx__who { display: grid; place-items: center; width: 40px; height: 40px; overflow: hidden; animation: bha-actfx-use 0.5s ease-in-out 2; }
 .bha-actfx__who > * { max-width: 100%; max-height: 100%; }
 .bha-actfx__title { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
-.bha-actfx__bars { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
+/* 가려진 화면에서 회복 (GDD 201장 4): 머리 위 상태창과 같은 박스(위 .bha-actfx__status) + 발밑 체력 막대(.bha-room__hp)를 창 안 가운데에 그대로 */
+.bha-actfx__status { align-self: center; }
+.bha-room__hp.bha-actfx__hp { position: static; transform: none; align-self: center; }
 @keyframes bha-actfx-use { 0%, 100% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-4px) rotate(-8deg); } }
 @media (prefers-reduced-motion: reduce) { .bha-char.is-eating .bha-char__body, .bha-actfx__who { animation: none; } }

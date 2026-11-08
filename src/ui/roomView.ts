@@ -17,7 +17,7 @@ import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
 import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
-import { homeHpMeter, paintStatusBox, statusInfoButton, statusNameTag } from './bha/statusBox';
+import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
 import { feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
@@ -230,13 +230,18 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   statusBtn.dataset.sc = 'status';
   scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
-  /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3: 돌보기 뒤 막대가 천천히 참) */
-  const paintGauges = (over?: Partial<Record<string, number>>) => {
-    const chips = statusChips(n, faction).map((c) => (over?.[c.kind] !== undefined && c.value !== null ? { ...c, value: over[c.kind]! } : c));
+  /** 지금 상태창 값 한 벌 (GDD 201장: 방을 다시 열 때 오른 값을 차오르게 비교) */
+  const shownNow = (): GaugeShown => nestShown(n, previewHomeHp(n, Date.now()).fraction);
+  /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3 · 201장: 돌보기·회복 뒤 막대가 0.8초 동안 차오르고 숫자도 따라 오름). 덮어쓰기가 없으면 보여 준 값을 기억 */
+  const paintGauges = (over?: GaugeShown) => {
+    const chips = over ? chipsAt(statusChips(n, faction), over) : statusChips(n, faction);
     // 목록형 상태 게이지 (GDD 189장 4 · 190장 3, C.281 모양) — 공용 부품(statusBox, 온천도 같은 것). 자세한 뜻은 ⓘ · 누르면 상태 화면
     paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ');
+    if (!over) rememberShown(n, shownNow());
   };
-  paintGauges();
+  // 방에 들어올 때 (GDD 201장 1·3): 지난번 방·온천·가방에서 보여 준 값보다 오른 값(진화로 가득·부활·쉬는 동안 회복 등)은 이전 값에서 차오른다
+  const enterFrom = riseFrom(shownBefore(n), shownNow());
+  paintGauges(enterFrom ?? undefined);
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
   const measureChips = () => {
     scene.style.setProperty('--chip-h', `${chipRow.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`);
@@ -256,7 +261,23 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
     hpBox.replaceChildren(homeHpMeter(f, maxHp));
   };
-  paintHp();
+  paintHp(enterFrom?.hp);
+  if (enterFrom) {
+    const to = shownNow();
+    fxOn = true;
+    scene.classList.add('is-filling');
+    tween(ACTION_FILL_MS, (t) => {
+      if (!hpBox.isConnected && t < 1) return;
+      const v = lerpShown(enterFrom, to, t);
+      paintGauges(v);
+      paintHp(v.hp);
+    }, () => {
+      fxOn = false;
+      scene.classList.remove('is-filling');
+      paintGauges();
+      paintHp();
+    }, false);
+  }
   scene.append(char, hpBox, chipRow, bubble);
   // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
@@ -316,17 +337,18 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       dock.setRequest(n.careRequest?.action ?? null);
       hd.persist();
       // 행동 진행 연출 (GDD 132장 3): 값은 이미 저장 — 막대가 ACTION_FILL_MS 동안 전 값에서 새 값으로 차오르고 숫자도 따라 오른다
-      const from = { hunger: fullnessOf(before.hunger), cond: before.condition, stab: before.stability, risk: before.risk };
-      const to = { hunger: fullnessOf(n.hunger), cond: n.condition, stab: n.stability, risk: n.risk };
-      const hpAfter = previewHomeHp(n, Date.now()).fraction;
-      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const from = nestShown(before, hpBefore);
+      const to = shownNow();
       fxOn = true;
+      scene.classList.add('is-filling'); // 말풍선이 가리던 상태창을 차오르는 동안 보이게 (GDD 201장 4)
       tween(ACTION_FILL_MS, (t) => {
         if (!main.isConnected) return;
-        paintGauges({ hunger: lerp(from.hunger, to.hunger, t), cond: lerp(from.cond, to.cond, t), stab: lerp(from.stab, to.stab, t), risk: lerp(from.risk, to.risk, t) });
-        paintHp(lerp(hpBefore, hpAfter, t)); // 먹이 체력 회복 (GDD 123장 4)
+        const v = lerpShown(from, to, t);
+        paintGauges(v);
+        paintHp(v.hp); // 먹이 체력 회복 (GDD 123장 4)
       }, () => {
         fxOn = false;
+        scene.classList.remove('is-filling');
         if (main.isConnected) {
           paintGauges();
           paintHp();
