@@ -30,6 +30,6 @@ describe('C.210 기기 버튼 위치 — 맞춤마다 다시 놓기', () => {
     expect(dev).toContain("document.removeEventListener('fullscreenchange', refit)");
   });
   it('버전', () => {
-    expect(PATCH_LABEL).toMatch(/^C\.2(1\d|[1-9]\d)$/);
+    expect(PATCH_LABEL).toMatch(/^C\.(2(1\d|[1-9]\d)|[3-9]\d\d)$/); // C.300: 세 자리 앞자리 3 이상도
   });
 });

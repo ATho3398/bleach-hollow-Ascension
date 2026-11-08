@@ -6,7 +6,7 @@
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
 import { BALANCE } from '../config/balance';
 import { enemyPatternKind } from '../data/enemies';
-import { comboName, physBlockName } from '../data/evolution';
+import { comboName, formReleaseCutin, physBlockName, tryGetForm } from '../data/evolution';
 import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
@@ -28,6 +28,7 @@ import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/fa
 import { frameTicks } from '../engine/tutorial';
 import { button, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
+import { keepOldIcons } from './bha/iconMap';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
 import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
 import { animOf } from './bha/animPlayer';
@@ -39,13 +40,17 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
+import { RIG_FEMALE_SUFFIX } from '../data/art/manifest';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
 import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
-import { registerLayer } from './bha/overlayHost';
+import { pickDialog } from './pickDialog';
+import { showToast } from './bha/nest';
+import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
@@ -78,6 +83,8 @@ export interface BattleViewOptions {
   tutorial?: { onDone: () => void };
   /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
   tierIndex?: number;
+  /** 지금 진화체 id (GDD 198장): 고유 해방 컷인을 진화체 레스렉시온·만해 이름으로 채운다. 없으면 종족 기본 컷인 */
+  formId?: string | null;
   /** 입고 있는 스킨 id (GDD 26-5) */
   skinId?: string | null;
   /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
@@ -88,6 +95,9 @@ export interface BattleViewOptions {
   bg?: SceneBg | null;
   /** 전투 [소모품] (GDD 108장 3번): 소모품 칸에 든 것의 보관 개수와, 썼을 때 한 번 불리는 함수(보관 개수 −1). 없으면 칸이 빈 것 — 버튼은 자리 그대로 비활성 */
   battleItem?: { count: number; onUse: () => void };
+  /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 가진 전투 소모품 고르기 창 — options 가 비면 창 없이 안내만.
+   *  pick = 고른 것을 칸에 넣고 이 전투에 싣는다(돌려준 값이 battleItem 대신) */
+  pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -248,7 +258,7 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique);
+  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique, s.params.liberationUnique ? formReleaseCutin(opts.formId ? tryGetForm(opts.formId) : undefined, faction.id) : null);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
@@ -474,7 +484,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const spawnFill = el('i');
   spawnBar.append(spawnFill);
   const spawnMeta = el('span', 'bha-v2role__meta bha-v2role__meta--spawn');
-  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2role__name', '생성'), spawnBar, spawnMeta);
+  spawnPill.append(spawnIcon, spawnSealIcon, el('span', 'bha-v2role__name bha-v2role__name--block', '블록'), el('span', 'bha-v2role__name bha-v2role__name--seal', '봉인'), spawnBar, spawnMeta);
   const roles = el('div', 'bha-v2roles is-alone'); // 해방 카드가 캐릭터로 옮겨 가 버튼 줄은 오른쪽 끝 (C.216)
   roles.append(spawnPill, guardBtn.root, itemBtn.root, gearBtn.root);
 
@@ -493,6 +503,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let paused = false;
   /** 튜토리얼·도움말·조우 연출이 열려 있는 동안 true: 엔진 시간이 흐르지 않고 입력도 받지 않는다 (결정성에 영향 없음, engine/tutorial frameTicks) */
   let overlayOpen = false;
+  /** 이 전투에 실은 소모품 (빈 칸 고르기로 바뀔 수 있다, GDD 193장 6) */
+  let armedItem = opts.battleItem;
   let tutorialOpen = false;
   let stopped = false;
   /** C.139 (GDD 88장 4): 전투가 끝나거나(승패·포기·떠남) 화면을 떠날 때 hold 구독을 바로 푼다 */
@@ -562,6 +574,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
+  keepOldIcons(app); // C.302 (GDD 190장 2): 전투 화면 아이콘 = 옛(C.281) 그림. 화면이 바뀌면 루트째 떨어져 관찰도 끝난다
   if (auraEl) app.style.setProperty('--bha-aura', elementColor(auraEl));
   app.classList.toggle('is-frenzy', !!opts.frenzy);
   if (opts.boss || opts.enter) window.setTimeout(() => playCosmeticFx('enter', hero.root), 0); // 등장 연출 (GDD 25-11): 보스·등급전 입장
@@ -774,11 +787,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       });
     } }));
     inner.append(ovMark('i-pause'), el('h2', 'bha-battle-ov__title', '일시정지'), el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'), actions);
+    // 튜토리얼 카드·강조 틀은 일시정지 창이 열려 있는 동안 숨는다 — [계속]/[설정]이 가리지 않게, [계속]이면 같은 단계 카드가 다시 뜬다 (GDD 194장 1·2)
     const ov = showOverlay(inner);
+    const uncover = coverTutorials(ov);
     const off = registerLayer(ov, () => setPaused(false));
     unregPause = () => {
       unregPause = () => undefined;
       off();
+      uncover();
     };
   };
   pauseBtn.onclick = () => setPaused(!paused);
@@ -853,6 +869,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (fx.shake) replayOnce(arena, 'is-shake', 320);
   };
   const cues: FxCue[] = [];
+  // 블록 도트 이펙트 시트 미리 받기 (이펙트 배치 도구 확정 값, 종족 설정 families[].pixelFx): 속성 색이면 속성 8색, 원래 색이면 한 장. 못 받은 시트는 그 이펙트만 빠진다
+  for (const f of faction.families)
+    for (const st of f.pixelFx?.stages ?? [])
+      for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -869,8 +889,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const f = familyOf(faction, id);
       if (!f) return null;
       const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null };
+      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
     },
+    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트, 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+    pixelSheet: readyPixelFx,
+    bodySlot: () => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames'),
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
@@ -1136,6 +1159,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
 
   const meterCache = { enemy: '', player: '', sp: '' };
+  /** 같은 값이면 다시 쓰지 않는다 (매 프레임 불리는 drawHud — 속성을 쓰면 스타일 다시 계산) */
+  // 범례 줄은 버튼 줄 왼쪽 끝까지만 (버튼 폭이 이름·남은 개수·쿨다운 글자로 바뀌어도 겹치지 않게).
+  // C.302: 매 프레임 폭을 읽지 않고(C.293 렉 수정 유지) 버튼 줄·스킬창 크기가 바뀔 때만 잰다
+  const placeLegend = (): void => {
+    if (!(roles.offsetWidth > 0)) return;
+    const legendRight = `${Math.max(0, controls.clientWidth - roles.offsetLeft + 6)}px`;
+    if (legendRow.style.right !== legendRight) legendRow.style.right = legendRight;
+  };
+  if (typeof ResizeObserver !== 'undefined') {
+    const legendRo = new ResizeObserver(placeLegend);
+    legendRo.observe(roles);
+    legendRo.observe(controls);
+  }
+  const setAttr = (e: Element, k: string, v: string) => { if (e.getAttribute(k) !== v) e.setAttribute(k, v); };
+  const setTitle = (e: HTMLElement, v: string) => { if (e.title !== v) e.title = v; };
   const drawHud = () => {
     const now = performance.now();
     // 체력·SP
@@ -1207,7 +1245,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const spawnLabel = sg.state === 'sealed' ? `봉인 — 새 ${labels.skillBlock} 생성 정지 ${secondsText(s.sealTicks * p.tickSeconds)} (있는 블록은 쓸 수 있다)`
       : sg.state === 'full' ? `블록 바가 가득 차 생성 정지`
         : sg.state === 'paused' ? `${labels.role.guard}·경직 중 생성 정지`
-          : sg.state === 'off' ? `블록 생성 게이지`
+          : sg.state === 'off' ? `블록 게이지`
             : `다음 ${labels.skillBlock}까지 ${Math.round(sg.fill * 100)}% · ${sg.intervalSeconds.toFixed(1)}초마다 1개`;
     if (spawnPill.getAttribute('aria-label') !== spawnLabel) {
       spawnPill.setAttribute('aria-label', spawnLabel);
@@ -1218,7 +1256,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const setAct = (btn: { root: HTMLElement }, ready: boolean, label: string) => {
       btn.root.classList.toggle('is-ready', ready);
       btn.root.classList.toggle('is-disabled', !ready);
-      btn.root.setAttribute('aria-disabled', String(!ready));
+      setAttr(btn.root, 'aria-disabled', String(!ready));
       if (btn.root.getAttribute('aria-label') !== label) {
         btn.root.setAttribute('aria-label', label);
         btn.root.title = label;
@@ -1227,17 +1265,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     // 폰 폭(루트 논리 폭 760 아래)이면 소모품·장비는 아이콘만 (GDD 105장 수정 6)
     const compact = Number(app.style.getPropertyValue('--v2-w') || 640) < 760;
     if (roles.classList.contains('is-compact') !== compact) roles.classList.toggle('is-compact', compact);
-    // 범례 줄은 버튼 줄 왼쪽 끝까지만 (버튼 폭이 이름·남은 개수·쿨다운 글자로 바뀌어도 겹치지 않게)
-    const legendRight = `${Math.max(0, controls.clientWidth - roles.offsetLeft + 6)}px`;
-    if (roles.offsetWidth > 0 && legendRow.style.right !== legendRight) legendRow.style.right = legendRight;
     const gPct = Math.round(Math.min(1, s.guardGauge) * 100);
     guardFill.style.width = `${gPct}%`;
     guardBtn.root.classList.toggle('is-full', s.guardGauge >= 1);
     setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
     const it = p.battleItem;
-    const itemLeft = opts.battleItem && it ? opts.battleItem.count - (s.itemUsed ? 1 : 0) : 0;
+    const itemLeft = armedItem && it ? armedItem.count - (s.itemUsed ? 1 : 0) : 0;
     setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
-    setAct(itemBtn, canUseItem(s), !it ? '소모품 칸이 비었다(장비 화면에서 넣는다)' : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    setAct(itemBtn, canUseItem(s), !it ? (opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    // 빈 칸이면 눌러서 고를 수 있다 (GDD 193장 6) — 모양은 흐린 그대로(C.302 C.281), 누를 수 있다는 것만 알린다
+    if (!it && opts.pickBattleItem && !s.script) setAttr(itemBtn.root, 'aria-disabled', 'false');
     const cdSec = s.gearCooldown * p.tickSeconds;
     setText(gearBtn.meta, p.activeGear ? (cdSec > 0 ? `${Math.ceil(cdSec)}` : '\u00a0') : ''); // 발동 장비가 있으면 쿨다운이 끝나도 글자 칸 자리 유지 (C.182)
     setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비가 없다(발동 효과가 있는 장비를 끼면 쓸 수 있다)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);
@@ -1257,11 +1294,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       app.classList.toggle('is-lib-ready', ready);
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
-      libBtn.setAttribute('aria-disabled', String(!ready));
+      setAttr(libBtn, 'aria-disabled', String(!ready));
       const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
       setText(libTime, libActive ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
-      libBtn.title = libText;
-      libBtn.setAttribute('aria-label', `${labels.liberation.name}, ${libText}`);
+      setTitle(libBtn, libText);
+      setAttr(libBtn, 'aria-label', `${labels.liberation.name}, ${libText}`);
     }
   };
 
@@ -1305,7 +1342,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     queue.push({ type: kind });
     return true;
   };
-  for (const [kind, btn] of [['guard', guardBtn], ['item', itemBtn], ['gear', gearBtn]] as const) btn.root.addEventListener('click', () => void pressAct(kind));
+  for (const [kind, btn] of [['guard', guardBtn], ['item', itemBtn], ['gear', gearBtn]] as const) btn.root.addEventListener('click', () => void (pressAct(kind) || (kind === 'item' && pickItem())));
+  /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 고르기 창 — 열려 있는 동안 전투가 멈춘다(도움말과 같이). 버튼 모양은 그대로(C.302 C.281) */
+  function pickItem(): boolean {
+    const pk = opts.pickBattleItem;
+    if (!pk || s.params.battleItem || s.script || !app.isConnected || stopped || s.status !== 'playing' || halted()) return false;
+    const options = pk.options();
+    if (options.length === 0) {
+      showToast({ eyebrow: '소모품', title: '넣을 전투 소모품이 없다', meta: '상점 약·전투 소모품 탭에서 산다' }, 0, 2000);
+      return true;
+    }
+    overlayOpen = true;
+    pickDialog({
+      title: '소모품 고르기', body: '소모품 칸에 넣고 이 전투에서 바로 쓸 수 있다(전투당 1번).',
+      options: options.map((o) => ({ key: o.id, label: o.label, onPick: () => { armedItem = pk.pick(o.id); } })),
+      onClose: () => { overlayOpen = false; },
+      cls: options.length > 3 ? 'bha-shoppick--two' : undefined,
+    });
+    return true;
+  }
   const endPress = () => {
     down = null;
     drawTray();
@@ -1347,7 +1402,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       return true;
     },
     guard: () => pressAct('guard'),
-    item: () => pressAct('item'),
+    item: () => pressAct('item') || pickItem(),
     gear: () => pressAct('gear'),
   });
   void offKeys;
@@ -1429,7 +1484,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         if (s.script) scriptStep(s, queue.splice(0, queue.length));
         else step(s, queue.splice(0, queue.length));
         // 소모품을 썼으면 보관 개수 −1 (GDD 108장 3번, 부르는 쪽이 세이브에 반영)
-        if (!usedBefore && s.itemUsed) opts.battleItem?.onUse();
+        if (!usedBefore && s.itemUsed) armedItem?.onUse();
       }
     }
     if (halted()) queue.length = 0;

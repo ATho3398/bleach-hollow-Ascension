@@ -38,3 +38,47 @@ export function blockInput(maxMs = 4000): () => void {
   const timer = window.setTimeout(release, maxMs);
   return release;
 }
+
+/**
+ * 튜토리얼 덮기 (GDD 194장 1·3, C.314): 일시정지·설정·새 버전 알림·화면 돌림 멈춤·처음 화면 확인처럼 화면 전체를 멈추는 창이 열려 있는 동안
+ * 튜토리얼 안내 카드·강조 틀을 숨기고 안내 입력 막기도 쉰다 — 창 버튼([계속]·[설정])이 카드에 가리거나 막히지 않게.
+ * 창이 모두 닫히면 같은 단계 카드를 다시 띄운다. 돌려주는 함수로 덮기를 푼다(여러 번 불러도 한 번만 푼다). 창이 겹치면 마지막 창이 닫힐 때 풀린다
+ */
+/** 열린 덮개들 (창 요소를 주면 그 창이 문서에서 빠졌을 때 — 닫기 함수를 못 불렀어도 — 덮개도 없는 것으로 친다) */
+const covers = new Set<{ el: Element | null }>();
+const coverListeners = new Set<(covered: boolean) => void>();
+/** 지금 튜토리얼을 덮는 창이 열려 있는가 (빠진 창은 여기서 치운다) */
+export const tutorialsCovered = (): boolean => {
+  for (const c of [...covers]) if (c.el && !c.el.isConnected) covers.delete(c);
+  return covers.size > 0;
+};
+/** 덮임이 바뀔 때 듣는다. 돌려주는 함수로 푼다 */
+export function onTutorialCover(fn: (covered: boolean) => void): () => void {
+  coverListeners.add(fn);
+  return () => void coverListeners.delete(fn);
+}
+const notifyCover = (on: boolean): void => {
+  for (const fn of [...coverListeners]) {
+    try {
+      fn(on);
+    } catch {
+      /* 한 구독자가 실패해도 나머지는 받는다 */
+    }
+  }
+};
+/** 튜토리얼을 덮는다 (창이 열릴 때, el = 그 창). 돌려주는 함수 = 창이 닫힐 때 */
+export function coverTutorials(el: Element | null = null): () => void {
+  const was = tutorialsCovered();
+  const entry = { el };
+  covers.add(entry);
+  if (!was) notifyCover(true);
+  return () => {
+    if (!covers.delete(entry)) return;
+    if (!tutorialsCovered()) notifyCover(false);
+  };
+}
+/** 테스트용: 덮개·구독을 처음으로 */
+export function resetTutorialCoverForTest(): void {
+  covers.clear();
+  coverListeners.clear();
+}

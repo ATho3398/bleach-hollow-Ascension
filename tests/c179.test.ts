@@ -17,6 +17,7 @@ function give(s: SaveData, o: Partial<GearRoll> & Pick<GearRoll, 'kind' | 'grade
 describe('자동 착용 (108장 4번): 빈 칸과 더 센 것만', () => {
   it('빈 칸은 가장 센 것, 찬 칸은 더 셀 때만 바꾼다 · 장신구 두 칸에 같은 장비를 안 쓴다', () => {
     const s = newSaveData('hollow', 0);
+    s.shared.items = {}; // 소모품 칸 채우기(193장 6)는 c222 에서 따로
     const weak = give(s, { kind: 'weapon', grade: 'normal', stats: { atk: 5 } });
     const strong = give(s, { kind: 'weapon', grade: 'rare', stats: { atk: 9 } });
     const a1 = give(s, { kind: 'accessory', grade: 'normal', stats: { spr: 3 } });
@@ -93,7 +94,7 @@ describe('정렬·비교·미리 보기 (108장 2·4번)', () => {
 
 describe('소모품 칸 세이브 (108장 3·6번)', () => {
   it('형식·문턱 48, 새 세이브 battleItem = null, 전투용이 아닌 품목은 못 넣고 깨진 값은 버린다', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([64, 54]); // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
     const s = newSaveData('hollow', 0);
     expect(s.shared.battleItem).toBeNull();
     expect(setBattleItem(s, 'calm')).toBe(false); // 정화제 = 둥지용

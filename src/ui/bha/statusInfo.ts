@@ -158,6 +158,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
         [
           numLine('모험', `최대 체력 ${pct(CP.dying.hpFraction)}`, `공격·블록 속도 ×${CP.dying.speedMult}`, `보상 ×${CP.dying.rewardMult}`),
           numLine('버티는 시간', `${CP.dyingBaseHours}시간 + 교감 × ${CP.dyingHoursPerBond}시간`),
+          '대기 보상(자동 모험)이 쌓이지 않는다', // GDD 193장 17
           '버티는 시간이 다 되거나 모험에서 지면 사망한다',
         ],
         [`상점 약 칸의 ${medicineName('collapsed')}을(를) 쓰면 풀린다`],

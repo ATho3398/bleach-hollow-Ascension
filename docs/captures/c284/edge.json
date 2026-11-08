@@ -1,0 +1,18 @@
+{
+  "hollow-room-left": [],
+  "hollow-room-left-bubble": [],
+  "hollow-room-right": [],
+  "hollow-room-right-bubble": [
+    "bha-prop__tag 99~144 (LCD 100~744)"
+  ],
+  "hollow-spa-entering": [],
+  "hollow-spa-seated": [],
+  "shinigami-room-left": [],
+  "shinigami-room-left-bubble": [],
+  "shinigami-room-right": [],
+  "shinigami-room-right-bubble": [
+    "bha-prop__tag 99~144 (LCD 100~744)"
+  ],
+  "shinigami-spa-entering": [],
+  "shinigami-spa-seated": []
+}

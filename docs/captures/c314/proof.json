@@ -1,0 +1,217 @@
+{
+  "runs": [
+    {
+      "device": "pc",
+      "faction": "hollow",
+      "card": {
+        "step": "튜토리얼 3 / 5",
+        "title": "위기"
+      },
+      "away": {
+        "paused": {
+          "pause": true,
+          "cardShown": 0,
+          "holeShown": 0,
+          "contTop": true,
+          "settTop": true,
+          "x": 330,
+          "y": 245.78125
+        },
+        "pauseClosed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "update": {
+        "look": {
+          "open": true,
+          "cardShown": 0,
+          "inLcd": true,
+          "btns": [
+            {
+              "label": "다시 시작",
+              "top": true,
+              "inCard": true,
+              "x": 422,
+              "y": 210.75
+            },
+            {
+              "label": "나중에",
+              "top": true,
+              "inCard": true,
+              "x": 422,
+              "y": 260.75
+            }
+          ]
+        },
+        "closed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "ok": true
+    },
+    {
+      "device": "pc",
+      "faction": "shinigami",
+      "card": {
+        "step": "튜토리얼 3 / 5",
+        "title": "위기"
+      },
+      "away": {
+        "paused": {
+          "pause": true,
+          "cardShown": 0,
+          "holeShown": 0,
+          "contTop": true,
+          "settTop": true,
+          "x": 330,
+          "y": 245.78125
+        },
+        "pauseClosed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "update": {
+        "look": {
+          "open": true,
+          "cardShown": 0,
+          "inLcd": true,
+          "btns": [
+            {
+              "label": "다시 시작",
+              "top": true,
+              "inCard": true,
+              "x": 422,
+              "y": 210.75
+            },
+            {
+              "label": "나중에",
+              "top": true,
+              "inCard": true,
+              "x": 422,
+              "y": 260.75
+            }
+          ]
+        },
+        "closed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "ok": true
+    },
+    {
+      "device": "phone",
+      "faction": "hollow",
+      "card": {
+        "step": "튜토리얼 3 / 5",
+        "title": "위기"
+      },
+      "away": {
+        "paused": {
+          "pause": true,
+          "cardShown": 0,
+          "holeShown": 0,
+          "contTop": true,
+          "settTop": true,
+          "x": 312.3249969482422,
+          "y": 239.29627990722656
+        },
+        "pauseClosed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "update": {
+        "look": {
+          "open": true,
+          "cardShown": 0,
+          "inLcd": true,
+          "btns": [
+            {
+              "label": "다시 시작",
+              "top": true,
+              "inCard": true,
+              "x": 398,
+              "y": 207.75
+            },
+            {
+              "label": "나중에",
+              "top": true,
+              "inCard": true,
+              "x": 398,
+              "y": 257.75
+            }
+          ]
+        },
+        "closed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "ok": true
+    },
+    {
+      "device": "phone",
+      "faction": "shinigami",
+      "card": {
+        "step": "튜토리얼 3 / 5",
+        "title": "위기"
+      },
+      "away": {
+        "paused": {
+          "pause": true,
+          "cardShown": 0,
+          "holeShown": 0,
+          "contTop": true,
+          "settTop": true,
+          "x": 312.3249969482422,
+          "y": 239.29627990722656
+        },
+        "pauseClosed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "update": {
+        "look": {
+          "open": true,
+          "cardShown": 0,
+          "inLcd": true,
+          "btns": [
+            {
+              "label": "다시 시작",
+              "top": true,
+              "inCard": true,
+              "x": 398,
+              "y": 207.75
+            },
+            {
+              "label": "나중에",
+              "top": true,
+              "inCard": true,
+              "x": 398,
+              "y": 257.75
+            }
+          ]
+        },
+        "closed": true,
+        "sameCard": true,
+        "ok": true
+      },
+      "ok": true
+    }
+  ],
+  "errors": [],
+  "shots": [
+    "pc-hollow-1-away-paused.png",
+    "pc-hollow-2-resumed-card.png",
+    "pc-shinigami-1-away-paused.png",
+    "pc-shinigami-2-resumed-card.png",
+    "phone-hollow-1-away-paused.png",
+    "phone-hollow-2-resumed-card.png",
+    "phone-hollow-3-update.png",
+    "phone-shinigami-1-away-paused.png",
+    "phone-shinigami-2-resumed-card.png",
+    "phone-shinigami-3-update.png"
+  ],
+  "summary": {
+    "runs": 4,
+    "ok": 4
+  }
+}

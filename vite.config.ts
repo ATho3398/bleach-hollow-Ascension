@@ -12,6 +12,9 @@ function gitCommit(): string {
   }
 }
 
+// 빌드 고유 id (GDD 184장, C.283): 앱에 넣고 dist/version.json 에도 같은 값을 쓴다 — 켤 때 둘이 다르면 새 버전
+const BUILD_ID = `${gitCommit()}-${Date.now().toString(36)}`;
+
 // 그림 파일 조회 (GDD 17-6, 26장): public/art/ 안의 png·webp 이름을 빌드 시 모아 앱에 넣는다(런타임에 없는 파일을 요청하지 않는다).
 // 한 단계 아래 폴더(프레임 애니, 예 char-hollow-1/idle-1.png)는 `폴더/파일` 이름으로 함께 모은다
 function artFiles(): string[] {
@@ -70,6 +73,8 @@ function walkDist(dir: string, base = ''): string[] {
   }
   return out.sort();
 }
+/** Firebase SDK 를 한 덩어리로 (C.323): 미리 캐시 목록에서 빼고(아래), 로그인할 때만 받는다 */
+const isFirebaseChunk = (f: string) => /^assets\/firebase-[^/]*\.js$/.test(f);
 function pwaPlugin() {
   let outDir = 'dist';
   return {
@@ -91,13 +96,21 @@ function pwaPlugin() {
         hash.update(f).update(buf);
       }
       // 플레이리스트 음원(GDD 97장)은 약 27MB 라 미리 받지 않는다 — 재생할 곡만 그때 불러온다
-      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/'))];
+      // C.284 렉 (GDD 186장 1): 그림(art·icons)·이펙트(fx)는 버전과 상관없는 그림 캐시에 내용 해시로 — 바뀐 파일만 다시 받는다. fx 는 나중(1)에 천천히
+      const isMedia = (f: string) => /^(art|fx|icons)\//.test(f);
+      const media: Record<string, [string, number]> = {};
+      for (const f of files) if (isMedia(f)) media[f] = [createHash('sha1').update(readFileSync(`${dir}/${f}`)).digest('hex').slice(0, 12), f.startsWith('fx/') ? 1 : 0];
+      // C.323 (GDD 196장): Firebase SDK 덩어리(assets/firebase-*.js)는 미리 받지 않는다 — 로그인 버튼을 누르거나 이미 로그인된 기기에서 동적 import 로 받고, 그 뒤엔 워커가 평소대로 캐시한다
+      const precache = ['./', ...files.filter((f) => f !== 'index.html' && !f.startsWith('audio/playlist/') && !isMedia(f) && !isFirebaseChunk(f))];
       const version = hash.digest('hex').slice(0, 12);
       const src = readFileSync('scripts/sw-template.js', 'utf8')
         .replace('__VERSION__', version)
-        .replace('__PRECACHE__', JSON.stringify(precache, null, 1));
+        .replace('__PRECACHE__', JSON.stringify(precache, null, 1))
+        .replace('/*__MEDIA__*/ {}', JSON.stringify(media));
       writeFileSync(`${dir}/sw.js`, src);
-      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, files: precache.length, bytes }) + '\n');
+      writeFileSync(`${dir}/pwa-info.json`, JSON.stringify({ version, build: BUILD_ID, files: precache.length + Object.keys(media).length, bytes }) + '\n');
+      // C.283: 작은 버전 파일(미리 캐시 목록 밖 — 워커가 손대지 않는다). 앱이 켜자마자 no-store 로 본다
+      writeFileSync(`${dir}/version.json`, JSON.stringify({ build: BUILD_ID }) + '\n');
     },
   };
 }
@@ -106,8 +119,17 @@ function pwaPlugin() {
 export default defineConfig({
   base: './',
   plugins: [pwaPlugin()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Firebase 패키지 전부를 assets/firebase-*.js 하나로 (C.323, GDD 196장) — 게임 본 덩어리·미리 캐시에 섞이지 않는다
+        manualChunks: (id: string) => (/node_modules\/(@firebase|firebase)\//.test(id) ? 'firebase' : undefined),
+      },
+    },
+  },
   define: {
     __BUILD_COMMIT__: JSON.stringify(gitCommit()),
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
     __ART_FILES__: JSON.stringify(artFiles()),
     __ART_ANIMS__: JSON.stringify(artAnims()),
     __BGM_FILES__: JSON.stringify(bgmFiles()),

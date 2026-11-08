@@ -6,7 +6,7 @@ const read = (p: string): string => readFileSync(p, 'utf8');
 
 describe('C.114 책장 머리 제목 토글 (GDD 58)', () => {
   it('도감 목록은 진화체 도감 · 칭호 도감 둘 (제목에 지금 도감 이름 + ▾)', () => {
-    expect(BOOK_TABS).toEqual([{ id: 'dex', label: '진화체 도감' }, { id: 'titles', label: '칭호 도감' }]);
+    expect(BOOK_TABS).toEqual([{ id: 'dex', label: '진화체 도감' }, { id: 'titles', label: '칭호 도감' }, { id: 'enemies', label: '적 도감' }]); // C.330 적 도감 (GDD 200장 1)
   });
   it('책장은 제목 토글(viewTitle)로 바꾸고, 머리의 탭 2개 줄(seg)은 더 쓰지 않는다 — 두 도감이 같은 제목 요소를 받는다', () => {
     const book = read('src/ui/bookView.ts');

@@ -43,7 +43,7 @@ describe('139장 1 탑 → 월드맵', () => {
     expect(read('src/ui/worldMapView.ts')).toContain("b.setAttribute('aria-description', reason);");
   });
   it('홈 안내 [밖으로] 카드에 탑도 (이름은 종족 설정에서)', () => {
-    expect(read('src/data/help/guides.json')).toContain('"body": "{worldName} 지도로 나간다."'); // C.235 (GDD 157장 5): 하는 일 한 줄만 — 장소 나열 삭제
+    expect(read('src/data/help/guides.json')).toContain('"body": "{worldName} 지도다.\\n{adventureName}(으)로 떠나 보자."'); // 193장 8 (C.304): [밖으로] 카드는 첫 모험 카드 단계로 합침 — 하는 일 한 줄만(157장 5)
     expect(read('src/ui/app.ts')).toContain('towerName: wm.places.tower');
   });
   it('ui-audit: 탑 = 월드맵에서 들어가는 화면', () => {

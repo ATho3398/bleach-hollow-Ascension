@@ -62,7 +62,7 @@ describe('C.93 #2 기기 틀·LCD 는 밀리지 않는다', () => {
 describe('C.93 #3 결과 요약 표: 짧은 줄끼리 짝지어 빈 반쪽이 없다', () => {
   it('2칸 격자는 dense 로 채운다', () => {
     const css = readFileSync(new URL('../src/ui/bha/screens-lcd.css', import.meta.url), 'utf8');
-    expect(css).toMatch(/\.bha-resultpage \.bha-info \{[^}]*grid-auto-flow: row dense/);
+    expect(css).toMatch(/\.bha-resultpage \.bha-infotable \{[^}]*grid-auto-flow: row dense/);
   });
 });
 
@@ -70,7 +70,7 @@ describe('C.93 #4 결과 표 반쪽 칸: 이름표는 한 줄, 긴 값이 줄을
   it('줄 격자 = 이름표 제 너비 + 값 남은 폭, 이름표 nowrap', () => {
     const css = readFileSync(new URL('../src/ui/bha/screens-lcd.css', import.meta.url), 'utf8');
     expect(css).toMatch(/\.bha-resultpage \.bha-info__row \{[^}]*grid-template-columns: auto minmax\(0, 1fr\)/);
-    expect(css).toMatch(/\.bha-resultpage \.bha-info dt \{ white-space: nowrap; \}/);
+    expect(css).toMatch(/\.bha-resultpage \.bha-infotable dt \{ white-space: nowrap; \}/);
   });
 });
 

@@ -30,7 +30,7 @@ describe('이름 표시 함수 하나 (#5·10·28·82)', () => {
     expect(shownName('그랜드피셔(가칭)')).toBe('그랜드피셔(가칭)');
   });
   it('방 이름표·사진·도감·전투·탑·카드가 모두 같은 함수를 거친다', () => {
-    for (const f of ['src/ui/roomView.ts', 'src/ui/photoView.ts', 'src/ui/dexView.ts', 'src/ui/battleView.ts', 'src/ui/towerView.ts', 'src/ui/bha/itemUi.ts', 'src/ui/rankView.ts', 'src/ui/practiceView.ts']) expect(read(f), f).toContain('shownName(');
+    for (const f of ['src/ui/bha/statusBox.ts', 'src/ui/photoView.ts', 'src/ui/dexView.ts', 'src/ui/battleView.ts', 'src/ui/towerView.ts', 'src/ui/bha/itemUi.ts', 'src/ui/rankView.ts', 'src/ui/practiceView.ts']) expect(read(f), f).toContain('shownName(');
   });
 });
 
@@ -102,15 +102,17 @@ describe('포식 (#44~53)', () => {
   const a = read('src/ui/absorbView.ts');
   it('설명 표 삭제, 갈래 버튼은 왼쪽, 오른쪽은 슬롯 목록 (#44·45)', () => {
     expect(a).not.toContain('info([');
-    expect(a).toContain('foeCard(), picker.actions, picker.desc, picker.go]'); // GDD 163장: 왼쪽 = 상대 + 갈래 버튼 + 설명 칸
+    // GDD 163장 → 183장 S11(리디자인 v2): 왼쪽 판 = 상대, 오른쪽 = 갈래 버튼 + 설명 칸, 아래 줄 = [○○하기] (DOM 순서 갈래 → 버튼 그대로)
+    expect(a).toContain('const [modes, desc, go] = [picker.actions, picker.desc, picker.go];');
+    expect(a).toContain("const side: HTMLElement[] = [modes, desc];");
   });
   it('후보 0개 머리 · 기본 선택 = 첫 후보 · 다시 뽑기 숫자 하나 · 교체 단계 새 특성 카드 · 필요한 단계만 (#49~53)', () => {
-    expect(a).toContain("'새 특성 없음 — 강화만'");
+    expect(a).toContain("'새 블록 없음 — 강화만'"); // 193장 14 (C.312): 흡수로 얻는 전투 블록 = '블록'
     expect(a).toContain('(first as HTMLElement | null)?.focus');
     expect(a).toContain('다시 뽑기 · ${n}장');
-    expect(a).toContain("candCard(picked!, 'article')");
-    expect(a).toContain("variant: 'ghost', size: 'lg', onClick");
-    expect(a).toContain('STEP_LABELS.slice(0, need)');
+    // C.312 (GDD 193장 13): 옛 3단계 교체 화면(candCard article·STEP_LABELS 3개)은 2단계 한 화면으로 합쳐졌다 — [포기]는 그대로 아래 줄 오른쪽 고정 자리
+    expect(a).toContain("lab.append('포기', el('span', 'bha-btn__sub', `블록 없이 ${act}`));");
+    expect(a).toContain("const STEP_LABELS = ['갈래', '블록'] as const;");
   });
 });
 
@@ -155,7 +157,7 @@ describe('훈련장·책장·상태 (#67~75·83·84)', () => {
     expect(read('src/ui/titleDexView.ts')).toContain("logo: logoMark(faction, 'bha-logo--md')");
   });
   it('상태: 장비 칸이 왼쪽 상태 아래, 능력치 2열 (#83·84)', () => {
-    expect(read('src/ui/lcdScreens.ts')).toContain('[status, gear, holdingsPanel'); // C.176: 광기·자아 설명 패널 → ⓘ 창
+    expect(read('src/ui/lcdScreens.ts')).toContain('[weakSlot, status, gear, holdingsPanel'); // C.176: 광기·자아 설명 패널 → ⓘ 창
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-care-page .bha-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));');
   });
 });

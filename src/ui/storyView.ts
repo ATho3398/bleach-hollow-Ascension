@@ -8,9 +8,37 @@ import { getFaction } from '../data/factions';
 import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../game';
 import type { ExpeditionState } from '../engine/expedition';
 import { storyEpisodeOf } from '../engine/expedition';
-import { button, el, icon } from './bha/dom';
+import { button, el } from './bha/dom';
 import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
+import { v2Icon } from './bha/iconMap';
+
+/** 그림 칸 (183장, PROMPT 4절 스토리): 잠기면 그림만 흐리게 + 그 칸 안 오른쪽 아래 자물쇠 */
+function chapterArt(iconName: string, locked: boolean): HTMLElement {
+  const art = el('span', `bha-art bha-art--frame bha-story-art${locked ? ' is-locked' : ''}`);
+  art.append(v2Icon(iconName));
+  if (locked) {
+    const lock = el('span', 'bha-lock');
+    lock.append(v2Icon('lock'));
+    art.append(lock);
+  }
+  return art;
+}
+
+/** 잠긴 것의 [도전]: 흐리게 자리 유지, 누르면 이유 한 줄 (PROMPT 5절 4) */
+function lockedGo(reason: string): HTMLButtonElement {
+  const b = button({ label: '도전', icon: 'i-play', size: 'small', onClick: () => {
+    const row = b.parentElement;
+    if (!row || row.querySelector('.bha-pop')) return;
+    const pop = el('p', 'bha-pop bha-story-why', reason);
+    row.append(pop);
+    window.setTimeout(() => pop.remove(), 2000);
+  } });
+  b.classList.add('is-disabled');
+  b.setAttribute('aria-disabled', 'true');
+  b.dataset.locked = '';
+  return b;
+}
 
 export interface StoryViewHandlers {
   /** [자유 원정] 탭 */
@@ -59,29 +87,50 @@ export function chapterLabel(factionId: string, chapterId: string): string {
   return content ? `${c.number}장 「${content.title}」` : `${c.number}장 (준비 중)`;
 }
 
+function chapterText(name: string, line: string): HTMLElement {
+  const t = el('span', 'bha-story-row__txt');
+  t.append(el('span', 'bha-mdrow__name', name), el('small', 'bha-mdrow__state', line));
+  return t;
+}
+
 export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: StoryViewHandlers): void {
   const prog = storyProgressOf(save);
   const tier = save.evolution.tierIndex;
 
-  const episodeRow = (chId: string, ep: StoryEpisode, i: number): HTMLElement => {
+  const episodeRow = (chId: string, ep: StoryEpisode, i: number, chLock: string | null): HTMLElement => {
+    const why = chLock ?? '앞 화를 깨면 열린다'; // 장이 잠겼으면 장이 열리는 조건
     const open = episodeOpen(save, chId, ep.id);
     const done = prog.cleared[episodeKey(chId, ep.id)];
     const row = el('div', `bha-story-ep${open ? '' : ' is-locked'}${done ? ' is-cleared' : ''}`);
     row.dataset.episode = ep.id;
-    const mark = el('span', 'bha-story-ep__mark');
-    mark.append(icon(done ? 'i-check' : open ? 'i-flag-win' : 'i-lock'));
-    const txt = el('div', 'bha-story-ep__text');
+    const mark = chapterArt(done ? 'check' : 'scroll', !open);
+    mark.classList.add('bha-story-ep__mark');
+    // 글자 칸 = 펼침 버튼 (권장 단계·난이도·보스 한 줄을 연다 — 기기 ▲▼·키보드로도 고른다)
+    const txt = el('button', 'bha-story-ep__text') as HTMLButtonElement;
+    txt.type = 'button';
+    txt.setAttribute('aria-expanded', 'false');
     const name = el('b', 'bha-story-ep__name', `${i + 1}화 ${ep.title}`);
-    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective, faction)} · 권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
-    goal.title = goal.textContent ?? '';
-    txt.append(name, goal);
-    const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : open ? '' : '앞 화를 깨면 열린다');
+    // 목록 줄은 목표만 (GDD 189장 엑셀 13 — 폰에서 '목표 · … · 권…' 말줄임). 권장 단계·난이도·보스는 그 화를 눌러 고르면 아래 한 줄로 펼친다
+    const goal = el('small', 'bha-story-ep__goal', `목표 · ${objectiveText(ep.objective, faction)}`);
+    const meta = el('small', 'bha-story-ep__meta', `권장 ${ep.recommendedTier}단계 · ${difficultyText(faction, ep.difficulty)}${ep.boss ? ` · 보스 ${bossName(ep.boss.id, faction.id)}` : ''}`);
+    txt.append(name, goal, meta);
+    txt.onclick = () => {
+      const on = !row.classList.contains('is-open');
+      row.parentElement?.querySelectorAll('.bha-story-ep.is-open').forEach((r) => {
+        r.classList.remove('is-open');
+        r.querySelector('.bha-story-ep__text')?.setAttribute('aria-expanded', 'false');
+      });
+      row.classList.toggle('is-open', on);
+      txt.setAttribute('aria-expanded', String(on));
+    };
+    if (!open) txt.append(el('small', 'bha-story-ep__cond', `열리는 조건: ${why}`));
+    const state = el('span', 'bha-story-ep__state', done ? `클리어${done.clears > 1 ? ` ×${done.clears}` : ''}` : '');
     row.append(mark, txt, state);
     if (open) {
       const go = button({ label: done ? '다시' : '도전', icon: 'i-play', variant: done ? undefined : 'primary', size: 'small', onClick: () => h.onPick(chId, ep.id) });
       go.dataset.go = ep.id;
       row.append(go);
-    }
+    } else row.append(lockedGo(why));
     return row;
   };
 
@@ -95,13 +144,14 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
     return {
       label: chapterLabel(faction.id, c.id),
       cls: open ? (cleared ? 'bha-mdrow--unlocked' : undefined) : 'is-unknown',
-      content: [icon(open ? (cleared ? 'i-check' : 'i-flag-win') : 'i-lock'), el('span', 'bha-mdrow__name', chapterLabel(faction.id, c.id)), el('span', 'bha-mdrow__state', open ? (cleared ? '완료' : `${content!.episodes.filter((e) => prog.cleared[episodeKey(c.id, e.id)]).length}/${content!.episodes.length}화`) : lockShort)],
+      // 장 줄 (183장, PROMPT 4절): 그림 칸(잠기면 흐림 + 자물쇠) · 이름 / 둘째 줄 진행 또는 '열리는 조건: …'
+      content: [chapterArt(cleared ? 'check' : 'scroll', !open), chapterText(chapterLabel(faction.id, c.id), open ? (cleared ? '완료' : `${content!.episodes.filter((e) => prog.cleared[episodeKey(c.id, e.id)]).length}/${content!.episodes.length}화`) : `열리는 조건: ${lockShort}`)],
       detail: () => {
         const head = el('div', 'bha-story-ch');
         head.append(el('h2', 'bha-story-ch__title', chapterLabel(faction.id, c.id)), el('p', 'bha-faint', `무대 · ${groundName(faction, c.groundId, Math.max(0, gIdx))}${open ? '' : ` · ${lockText}`}`));
         if (!content) return [head, el('p', 'bha-faint', '이 장은 아직 준비 중이다.')];
         const list = el('div', 'bha-story-eps');
-        list.append(...content.episodes.map((ep, i) => episodeRow(c.id, ep, i)));
+        list.append(...content.episodes.map((ep, i) => episodeRow(c.id, ep, i, open ? null : lockText)));
         return [head, list];
       },
     };
@@ -114,4 +164,5 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   head.append(departTabs('story', h.onTab), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
   const { app } = lcdPage(root, { cls: 'bha-story', cols: '2fr 3fr' }, head, [md.list], [md.detail]);
   app.dataset.screen = 'story';
+  app.classList.add('bha-v2'); // v2 그림 칸·자물쇠·이유 한 줄(.bha-art · .bha-lock · .bha-pop)
 }

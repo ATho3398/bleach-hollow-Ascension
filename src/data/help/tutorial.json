@@ -95,18 +95,10 @@
     {
       "id": "dying",
       "targets": [
-        "@.bha-room__hp"
-      ],
-      "title": "빈사",
-      "body": "치명상을 입어 빈사 상태가 됐다.\n이대로 두면 죽는다."
-    },
-    {
-      "id": "to-bag",
-      "targets": [
         "@.bha-prop--chest"
       ],
-      "title": "치료",
-      "body": "구급상자 1개가 들어왔다.\n{chestName}을(를) 열어 보자."
+      "title": "빈사",
+      "body": "치명상을 입어 빈사가 됐고, 이대로 두면 죽는다.\n구급상자가 들어왔으니 {chestName}을(를) 열어 보자."
     },
     {
       "id": "cure",
@@ -163,14 +155,6 @@
       "done": "체력이 가득 찼다!"
     },
     {
-      "id": "spa-rest",
-      "targets": [
-        "@.bha-spa__status"
-      ],
-      "title": "쉬기",
-      "body": "{spaName}에서 체력을 가득 채웠다.\n{nestName}(으)로 돌아왔다."
-    },
-    {
       "id": "feed",
       "targets": [
         "@.bha-homedock__carebtn--feed"
@@ -198,17 +182,7 @@
       ],
       "avoid": [
         "@.bha-room__status",
-        "@.bha-room__hp"
-      ]
-    },
-    {
-      "id": "done",
-      "targets": [
-        "@.bha-room__hp"
-      ],
-      "title": "회복 끝",
-      "body": "배가 든든해졌다.\n{nestName}에서 쉬어도 체력이 조금씩 찬다.",
-      "avoid": [
+        "@.bha-room__hp",
         "@.bha-room__bubble"
       ]
     }

@@ -2,6 +2,9 @@ import './ui/bha/design-system/tokens.css';
 import './ui/bha/design-system/themes'; // theme-*.css 자동 수집 (C.139)
 import './ui/bha/design-system/base.css';
 import './ui/bha/components/components.css';
+import './ui/bha/components/bha-v2.css'; // 디자인 v2 공용 컴포넌트 (C.282, GDD 183장 1 ①)
+import './ui/bha/components/v2-shared.css'; // v2 공용 보충 — 화면 세션 덮어쓰기를 공용으로 (C.296)
+import './ui/bha/icons/icons.css'; // 디자인 v2 도트 마스크 아이콘 .bha-i-* (C.282)
 import './ui/bha/screens/screens.css';
 import './ui/bha/app.css';
 import './ui/bha/expedition.css';
@@ -28,6 +31,7 @@ import './ui/bha/warning.css';
 import './ui/bha/guide.css';
 import './ui/bha/pixel-fx.css'; // pixelfx 시트 재생 (C.249)
 import './ui/bha/layout-tool.css'; // UI 배치 도구 · 미리보기 표시 (GDD 175장)
+import './ui/bha/battle-c281.css'; // 전투 = C.281 모양: 옛 공용 토큰·부품을 전투 루트 안에만 (C.302, GDD 190장 2 — scripts/c302-gen-battle-c281.py 생성)
 import './ui/bha/v2/bha.css'; // LCD 인게임 UI v2 (C.151): .bha-root 안에서만 적용
 import { startApp } from './ui/app';
 import { acquirePlayLock } from './tabLock';
@@ -35,6 +39,7 @@ import { tabBlockedView } from './ui/tabBlockedView';
 import { applyCalmMode } from './ui/fxSettings';
 import { mountSprite } from './ui/bha/sprite';
 import { registerServiceWorker } from './pwa';
+import { scheduleSwWarm } from './swWarm';
 import { captureInstallPrompt } from './pwaInstall';
 import { maybeShowInstall } from './ui/installView';
 import { mountUpdateBanner } from './ui/updateBanner';
@@ -70,6 +75,7 @@ if (app && import.meta.env.DEV && new URLSearchParams(location.search).has('v2ga
   void import('./ui/bha/layoutTool').then((m) => m.mountLayoutTool(app));
 } else if (app) void acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
 registerServiceWorker();
+scheduleSwWarm(); // 이펙트 그림은 켜고 한가할 때 천천히 (GDD 186장 1)
 if (!new URLSearchParams(location.search).has('layout')) {
   mountUpdateBanner();
   maybeShowInstall();

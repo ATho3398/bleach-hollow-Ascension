@@ -33,7 +33,8 @@ describe('C.170 방·독', () => {
   it('방 위 이름+트랙 줄 삭제 → 트랙 전환은 더보기 칸 "○○ 트랙", 이름은 상태 칩 위', () => {
     expect(room).not.toContain("sw.dataset.sc = 'track-switch'");
     expect(room).toContain('label: `${getFaction(t.factionId).name} 트랙`');
-    expect(room).toContain('statusBtn.prepend(nameTag)');
+    expect(room).toContain("paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ')"); // C.318: 공용 부품 statusBox
+    expect(read('src/ui/bha/statusBox.ts')).toContain('if (nameTag) box.prepend(nameTag);');
   });
   it('방 첫 선택 = 모험(돌봄 요청 중이면 그 버튼)', () => {
     expect(room).toContain("const firstPick = n.careRequest ? dock.items().find((b) => b.dataset.care === n.careRequest!.action) : props.get('outside');"); // C.215: 밖으로 고정 · C.204: 월드맵 켬이면 밖으로
@@ -65,11 +66,12 @@ describe('C.170 대기 보상 진행 막대', () => {
 describe('C.170 원정 출발·걷기·일시정지·설정', () => {
   it('출발 화면: 페이지 스크롤 없음, [출발] 아래 고정 띠, 잠김이면 바둑판 없이 한 줄', () => {
     const css = read('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden auto;/); // C.176: 세로 스크롤 (GDD 104장 9)
-    expect(css).toContain('.bha-lcd .bha-plan > .bha-plan__go { grid-column: 1 / -1; grid-row: 10; position: sticky; bottom: 0;');
+    // 리디자인 v2 (GDD 183장 S06): 화면 스크롤 없음 — 고정 자리 + 넘치는 칸(설명·가진 타일)만 안에서 스크롤, [출발] = 아래 고정 띠(.bha-dock 56)
+    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden;/);
+    expect(read('src/ui/planView.ts')).toContain("const go = el('div', 'bha-dock bha-plan__go');");
     const pv = read('src/ui/planView.ts');
     expect(pv).toContain('const planner = h.tilesLocked ? null : roadPlanner(');
-    expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 칸 '");
+    expect(pv).toContain("'타일 고르기 → 빈 칸 누르기 · 놓은 타일 '"); // GDD 193장 19 (C.307): 두 탭 같은 말
   });
   it('걷기 화면 위 가운데 길 칸 줄은 C.176 에 삭제 (GDD 104장 3)', () => {
     expect(read('src/ui/expeditionView.ts')).not.toContain('bha-exp__strip');
@@ -85,6 +87,6 @@ describe('C.170 원정 출발·걷기·일시정지·설정', () => {
     const s = read('src/ui/settingsView.ts');
     expect(s).toContain("b.setAttribute('role', 'switch');");
     expect(s).not.toContain('`제외 ${ex');
-    expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-switch.is-checked .bha-switch__track { background: var(--bha-good);');
+    expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-setswitch.is-checked .bha-setswitch__track { background: var(--bha-tint-teal);' /* 183장 S16: 켬 = 청록 */);
   });
 });

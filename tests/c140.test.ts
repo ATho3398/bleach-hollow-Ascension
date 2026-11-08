@@ -186,13 +186,13 @@ describe('85장 6번 대기 모드', () => {
     const fresh = newSaveData('hollow', 1);
     expect(settleIdle(fresh, fresh.lastSeenAt + 5 * HOUR)).toBeNull();
   });
-  it('82장 허기: 허기가 100 에 닿으면 그때 멈추고(C.175 상한 삭제로 늘), 쇠약·빈사면 효율 절반, 사망이면 0', () => {
+  it('82장 허기: 허기가 100 에 닿으면 그때 멈추고(C.175 상한 삭제로 늘), 쇠약이면 효율 절반, 빈사·사망이면 0(193장 17)', () => {
     const NX = BALANCE.provisional.nest;
     expect(idleActiveHours(10, { hunger: 0, weakened: false })).toBe(10);
     expect(idleActiveHours(24, { hunger: 0, weakened: false })).toBeCloseTo(100 / NX.idleHungerPerHour);
     const h = 60;
     expect(idleActiveHours(24, { hunger: h, weakened: false })).toBeCloseTo((100 - h) / NX.idleHungerPerHour);
-    expect(idleActiveHours(4, { hunger: 0, weakened: false, collapsed: true })).toBe(4 * NX.care.dying.rewardMult);
+    expect(idleActiveHours(4, { hunger: 0, weakened: false, collapsed: true })).toBe(0); // GDD 193장 17: 빈사 중엔 자동 모험 안 함 (옛 102장 절반)
     expect(idleActiveHours(4, { hunger: 0, weakened: false, dead: true })).toBe(0);
     expect(idleActiveHours(4, { hunger: 0, weakened: true })).toBe(4 * IX.weakenedRate);
   });
@@ -303,7 +303,7 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([64, 54]); // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);

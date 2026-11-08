@@ -10,11 +10,11 @@ import { fullnessOfNest, previewHomeHp, spaRateOf, type SpaEnd } from '../engine
 import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
-import { hpNumbers } from './bha/battle';
-import { button, el, icon, mountApp } from './bha/dom';
+import { el, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
+import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
-import { applyCarePose, characterButton, roomCharArt, spaceBackButton } from './bha/room';
+import { applyCarePose, characterButton, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
 import { animOf } from './bha/animPlayer';
 import { roomOf, worldMapOf } from '../engine/faction';
 
@@ -57,7 +57,7 @@ export interface SpaHandlers {
 
 /** 온천에서 나온 까닭 한 줄 (알림 띠·튜토리얼이 같이 쓴다) */
 export function spaEndText(e: Pick<SpaEnd, 'reason' | 'hpTo'>, fullnessName: string): string {
-  if (e.reason === 'full') return `체력과 컨디션이 다 찼다 (체력 ${Math.round(e.hpTo * 100)}%). 방으로 돌아왔다.`;
+  if (e.reason === 'full') return '체력과 컨디션이 다 찼다. 방으로 돌아왔다.'; // 회복 수치는 쓰지 않는다 (GDD 201장 2)
   if (e.reason === 'hungry') return fixParticles(`${fullnessName}이(가) 바닥나 방으로 돌아왔다.`);
   return '방으로 돌아왔다.';
 }
@@ -114,10 +114,25 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const charAnim = animOf(char);
   /** 걷는 동안 = 걷기, 다 걸으면 = 자리면 온천 자세, 아니면 돌봄 상태 자세 그대로 (종이인형만 — 동작이 없으면 아무 것도 안 함) */
   const restLoop = charAnim?.has('dying') && (n.collapsed || n.weakened || n.tired) ? 'dying' : 'idle';
+  // 머리 위 상태 박스 + 바깥 ⓘ · 발밑 체력 막대 = 방과 같은 부품·모양 (GDD 197장 4, statusBox — C.301 박스 · C.303 막대)
+  const chipRow = el('div', 'bha-room__chips bha-spa__chips');
   const status = el('div', 'bha-room__status bha-spa__status');
   status.setAttribute('role', 'status');
+  /** 지금 보이는 배부름·컨디션 (paint 가 갱신) — ⓘ 창도 이 값으로 */
+  let shown = { fullness: fullnessOfNest(n), condition: n.condition };
+  const statusInfoBtn = statusInfoButton(() => liveStatusChips(n, faction, shown), faction, n);
+  chipRow.append(status, statusInfoBtn);
+  const nameTag = statusNameTag(save, faction);
   const actor = el('div', 'bha-spa__actor is-entering');
-  actor.append(status, char);
+  actor.append(chipRow, char);
+  // 박스 아래 끝 = 그림 윗변 위 8px (방 room.css .bha-room__chips 와 같은 간격): 캐릭터 상자 윗변에서 그림 윗변까지(charTopOffset 은 상자 중심 기준)만큼 내린다
+  requestAnimationFrame(() => {
+    const dy = Math.max(0, charTopOffset(art) + char.offsetHeight / 2);
+    if (char.offsetHeight) actor.style.setProperty('--bha-spa-head', `${Math.round(dy)}px`);
+    clampStatus();
+  });
+  // 체력 막대는 장면 바로 아래(앞 물보다 위)에 두고 캐릭터 자리를 따라 옮긴다 — 액터 안에 두면 앞 물(z 2)에 가린다
+  const hpBox = el('div', 'bha-room__hp bha-spa__hp');
   // 돌계단 (임시 도형): 계단 칸(물에 잠기는 칸, 자리 앞까지) 발 아래
   const stairs = SPA_PATH.slice(0, -1).filter((p) => p.wl !== null).map((p) => {
     const st = el('span', 'bha-spa__stair');
@@ -125,7 +140,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     st.style.bottom = `${p.bottom - 3}%`;
     return st;
   });
-  scene.append(el('div', 'bha-spa__water'), ...stairs, actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'));
+  scene.append(el('div', 'bha-spa__water'), ...stairs, actor, el('div', 'bha-spa__front'), el('div', 'bha-spa__steam'), hpBox);
   // 물에 잠김 (사용자 2026-10-30 "몸에다가 물 들어가는 식으로 색 … 몸이랑 물 표면 나뉘는 느낌"): 앉으면 물 높이 아래 몸이 비쳐 보이고(CSS 마스크) 그 높이에 물결 띠
   // 물결 띠는 앞 반(몸 앞)·뒤 반(몸 뒤에 가려짐) 두 장 — 몸을 뚫고 뒤쪽 테두리가 보이지 않게
   const ripples = (['back', 'front'] as const).map((side) => {
@@ -135,17 +150,45 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   });
   char.append(...ripples);
   // 계단식 입수 (GDD 132장 4·137장 2): 매 프레임 경로 위 자리(left·bottom)를 옮기고, 물 잠김 높이(--bha-spa-wl)·물결 띠도 그 자리에 맞춘다
+  // 렉 (GDD 186장 1, C.283): 몸 자리(offsetTop·Height)는 걷는 동안 안 바뀐다 — 매 프레임 쓰고 나서 읽으면 레이아웃을 강제로 다시 해 한 번만 재 둔다(크기가 바뀌면 다시)
+  let bodyBox: { top: number; h: number } | null = null;
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => (bodyBox = null)).observe(char);
+  let lastWl = '';
   const setWl = (wl: number | null) => {
     actor.classList.toggle('is-wading', wl !== null && wl < 1);
     if (wl === null || wl >= 1) return;
-    actor.style.setProperty('--bha-spa-wl', `${Math.round(wl * 100)}%`);
-    const body = char.querySelector<HTMLElement>('.bha-char__body');
-    if (body) for (const r of ripples) r.style.top = `${body.offsetTop + body.offsetHeight * wl}px`;
+    const pct = `${Math.round(wl * 100)}%`;
+    if (pct !== lastWl) actor.style.setProperty('--bha-spa-wl', (lastWl = pct));
+    if (!bodyBox || !bodyBox.h) {
+      const body = char.querySelector<HTMLElement>('.bha-char__body');
+      bodyBox = body ? { top: body.offsetTop, h: body.offsetHeight } : null;
+    }
+    if (bodyBox) for (const r of ripples) r.style.top = `${bodyBox.top + bodyBox.h * wl}px`;
+  };
+  /** 머리 위 상태 박스(+ 오른쪽 바깥 ⓘ)·발밑 체력 막대가 LCD 끝에서 잘리지 않게 좌우로 민다 (캐릭터가 화면 안에 있을 때만 — 밖에서 걸어 들어오는 중엔 같이 움직인다) */
+  const clampStatus = () => {
+    const sw = scene.clientWidth;
+    if (!sw) return;
+    const cx = ((parseFloat(actor.style.left) || 0) / 100) * sw;
+    const pad = 6;
+    const shift = (left: number, right: number) => (cx < 0 || cx > sw ? 0 : Math.min(0, sw - pad - (cx + right)) + Math.max(0, pad - (cx - left)));
+    const half = status.offsetWidth / 2;
+    const dx = shift(half, half + statusInfoBtn.offsetWidth + 2);
+    // 위 끝 하한 (방 C.281 과 같은 뜻): 박스+이름표가 장면 위로 나가면(상태이상 줄이 늘어 박스가 높을 때) 그만큼 아래로 — 머리와 겹쳐도 잘리지 않게
+    const top = actor.offsetTop + chipRow.offsetTop - (nameTag ? nameTag.offsetHeight + 4 : 0);
+    const dy = Math.max(0, pad - top);
+    chipRow.style.translate = dx || dy ? `${Math.round(dx)}px ${Math.round(dy)}px` : '';
+    const hh = hpBox.offsetWidth / 2;
+    const hx = shift(hh, hh);
+    hpBox.style.translate = hx ? `${Math.round(hx)}px 0` : '';
   };
   const put = (left: number, bottom: number, wl: number | null) => {
     actor.style.left = `${left}%`;
     actor.style.bottom = `${bottom}%`;
+    hpBox.style.left = `${left}%`;
+    hpBox.style.bottom = `${bottom}%`;
     setWl(wl);
+    clampStatus();
   };
   const goTo = (i: number) => {
     const p = SPA_PATH[i]!;
@@ -205,25 +248,13 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   }));
   let exiting = false;
 
-  // 머리 위 상태 창 (방 상태 칩과 같은 모양): 체력 '현재 / 최대' · 배부름
-  const gauge = (kind: string, ic: string, pct: number, text: string, danger: boolean) => {
-    const row = el('span', `bha-room__gauge bha-room__gauge--${kind}${danger ? ' is-danger' : ''}`);
-    const fill = el('span', 'bha-room__gaugefill');
-    fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-    const track = el('span', 'bha-room__gaugetrack');
-    track.append(fill);
-    row.append(icon(ic), track, el('span', 'bha-room__gaugenum bha-num', text));
-    return row;
-  };
-  // 컨디션도 온천에서 오른다 (GDD 135장 2)
+  // 방과 같은 상태 박스(배부름·컨디션·영압 안정도·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
   const paint = (fraction: number, fullness: number, condition: number) => {
-    const { now, max } = hpNumbers(fraction * maxHp, maxHp);
-    status.setAttribute('aria-label', `체력 ${now} / ${max}, 컨디션 ${Math.round(condition)}, ${faction.fullnessName} ${Math.round(fullness)}`);
-    status.replaceChildren(
-      gauge('hp', 'i-heal', fraction * 100, `${now} / ${max}`, fraction < 0.3),
-      gauge('cond', 'i-cond', condition, String(Math.round(condition)), condition <= 30),
-      gauge('hunger', 'i-hunger', fullness, String(Math.round(fullness)), fullness <= 20),
-    );
+    shown = { fullness, condition };
+    paintStatusBox(status, liveStatusChips(n, faction, shown), nameTag);
+    hpBox.replaceChildren(homeHpMeter(fraction, maxHp));
+    clampStatus();
+    rememberShown(n, { hunger: fullness, cond: condition, stab: n.stability, risk: n.risk, hp: fraction }); // 방으로 돌아가도 쉬며 찬 만큼 다시 차오르지 않게 (GDD 201장)
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 
@@ -256,10 +287,11 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     ],
   }));
   const hud = el('div', 'bha-spa__hud');
-  hud.append(backBtn, infoBtn, el('span', 'bha-spa__name', name));
+  hud.append(backBtn, infoBtn); // v2 S05: 왼쪽 위 [돌아가기] + ⓘ 만 (장소 이름 글자 없음 → 화면 이름은 aria-label)
   scene.append(hud);
 
-  const app = mountApp(root, { cls: 'bha-spa' }, scene);
+  const app = mountApp(root, { cls: 'bha-spa bha-v2' }, scene);
+  app.setAttribute('aria-label', name);
   backBtn.focus({ preventScroll: true });
 
   // 나가기 (GDD 132장 4): 앉은 자리에서 계단을 거꾸로 한 단씩 올라와 평지를 걸어 나간 뒤 done. 이미 나가는 중이면 아무것도 안 함

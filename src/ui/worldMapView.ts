@@ -5,13 +5,13 @@
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
 // 옛 방 모험 문·장터 물건 경로와 기능 스위치는 폐기했다 (GDD 137장 3, C.215).
 import { artUrls } from '../data/art/manifest';
+import { bakeArtOutline } from './bha/artOutline';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
 import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, spaceBackButton, type FloorEntry } from './bha/room';
-import { fixParticles } from '../engine/josa';
+import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 
 /** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
 const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { training: 'prop.altar' };
@@ -81,12 +81,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   const wm = worldMapOf(faction);
   const here = save.shared.wanderer.visit !== null;
 
-  // ── 위 한 줄: 왼쪽 위 [둥지로]/[대원실로](다른 공간 화면과 같은 모양·자리 — GDD 129-1 2) · 지도 이름 ──
-  const hud = el('header', 'bha-room__hud bha-worldmap__hud');
-  const homeLocked = hd.locked?.includes('home') ?? false;
-  const backBtn = spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`));
-  if (homeLocked) backBtn.setAttribute('aria-disabled', 'true'); // 첫 모험 강제 중 (GDD 131장 2)
-  hud.append(backBtn, el('h1', 'bha-worldmap__title', wm.name));
+  // 왼쪽 위 [둥지로]/[대원실로] 버튼은 없앴다 (GDD 197장 5): 지도 위 둥지/대원실 장소를 누르면 돌아간다. 기기 ◀ 뒤로 = 걷기 취소 또는 방(app.ts interceptBack) 그대로
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
@@ -119,7 +114,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     // 떠돌이 상인이 와 있으면 시장에 배지 (GDD 130장 2 — 옛 방 장터 물건 배지 자리를 옮김)
     if (p === 'market' && here) {
       b.classList.add('has-visitor');
-      b.querySelector('.bha-prop__shape')?.append(el('span', 'bha-room__idlebadge bha-prop__badge', '상인'));
+      b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass bha-prop__badge', '상인')); // v2 S02: 이름표 안 황동 배지
     }
     // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
     if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
@@ -127,6 +122,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       lockProp(b);
     }
     if (wm.layout[p].hidden) b.hidden = true; // UI 배치 도구로 숨긴 장소 (GDD 175장) — 걷기·초점 계산이 단추를 찾으므로 만들고 감춘다
+    const img = b.querySelector<HTMLImageElement>('.bha-prop__img');
+    if (img) bakeArtOutline(img); // 윤곽 미리 굽기 (GDD 186장 1)
     scene.append(b);
     btns.set(p, b);
     floor.push({ el: b, foot: wm.layout[p], kind: 'prop' });
@@ -150,12 +147,13 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
 
   const body = el('div', 'bha-room__body');
   body.append(scene);
-  const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap' }, hud, body);
+  const main = mountApp(dev.view, { cls: 'bha-room bha-worldmap bha-v2' }, body);
   // 선택 순서 = DOM 순서(홈 → 시장 → 모험, 지도 왼쪽 → 오른쪽). 'visual'(위 → 아래)을 쓰면 가운데 위 시장이 먼저 와서 쓰지 않는다
+  main.setAttribute('aria-label', wm.name);
   if (here) main.dataset.wanderer = '';
   // 기기 버튼 (GDD 122장): ▲▼ = 장소(홈 → 시장 → 수련장 → 모험 → 탑 → 온천), ✓ = 이동, 뒤로 = 홈. 첫 선택 = 지금 있던 장소 (GDD 132장 2 — 옛 130장 '모험' 대체), 첫 모험 강제 중 = 모험
-  const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))].filter((it) => !it.el.hidden); // 숨긴 장소 빼고 (GDD 175장)
-  items.push(...extras.map((b) => ({ el: b }))); // 새 물건은 장소 뒤 // 화면 위치 순서: 왼쪽 위 돌아가기 먼저
+  const items: SelectItem[] = WORLD_PLACES.map((p) => ({ el: btns.get(p)! })).filter((it) => !it.el.hidden); // 숨긴 장소 빼고 (GDD 175장)
+  items.push(...extras.map((b) => ({ el: b }))); // 새 물건은 장소 뒤
   btns.get(hd.focus ?? at)?.focus({ preventScroll: true });
   dev.setItems(items, main);
 
@@ -226,7 +224,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       const t = now - t0;
       const k = Math.min(1, t / WORLD_DEPART_MS);
       charEntry.foot = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
-      place();
+      layoutOnFloor(scene, wm.floor, [charEntry]); // 걷는 동안 움직이는 건 캐릭터뿐 — 장소 단추는 다시 재지 않는다 (GDD 186장 1)
       if (!fadeStarted && t >= WORLD_FADE_DELAY_MS) startFade();
       if (t >= WORLD_MOVE_MS) return arrive(p);
       raf = requestAnimationFrame(frame);

@@ -5,6 +5,7 @@ import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { tileName } from '../data/tiles';
 import type { FactionConfig, FoodId } from '../engine/faction';
 import type { IdleYield } from '../engine/idle';
+import { CARE_STATUS_NAMES } from '../engine/nest';
 import type { IdleRecord } from '../engine/runLog';
 import { idleClaimable, idlePendingYield, type IdleAccrual, type SaveData } from '../game';
 import { el, meter } from './bha/dom';
@@ -33,9 +34,17 @@ export function idleYieldLines(y: IdleYield, faction: Pick<FactionConfig, 'foodN
     y.ev > 0 ? `노력치 +${y.ev}` : '',
     y.food > 0 ? `${faction.foodNames[IX.foodId as FoodId]} +${y.food}` : '',
     y.tiles > 0 ? `타일 ${y.tiles}장` : '',
-    y.gear > 0 || y.gearChance > 0 ? `장비 ${y.gearChance > 0 ? `${y.gear}~${y.gear + 1}` : y.gear}개` : '', // GDD 119장 5: 남은 확률이 있으면 하나 더 나올 수 있다
+    // 장비는 확정 개수만 (GDD 193장 17: '장비 0~1개' 범위가 헷갈렸다 — 남은 확률로 하나 더 나오면 받은 뒤 요약에 실제 개수)
+    y.gear > 0 ? `장비 ${y.gear}개` : '',
     y.laps > 0 ? `자동 모험 ${y.laps}바퀴` : '',
   ].filter(Boolean);
+}
+
+/** 덜 돈 까닭 한 줄 (GDD 193장 17): 빈사면 '빈사라 자동 모험을 하지 못했다', 배고픔·쇠약으로 덜 돌았으면 그 말. 다 돌았으면 null */
+export function idleShortfall(p: { hours: number; activeHours: number }, nest: { collapsed?: boolean }): string | null {
+  if (p.activeHours + 1e-6 >= p.hours) return null;
+  if (nest.collapsed && p.activeHours <= 1e-6) return `${CARE_STATUS_NAMES.collapsed}라 자동 모험을 하지 못했다`;
+  return '배고프거나 지쳐서 덜 돌았다';
 }
 
 /** 받은 뒤 요약 (런 로그 IdleRecord): 제목 + 본문 한 단락 */
@@ -48,10 +57,11 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
     r.tiles.length > 0 ? `타일 ${r.tiles.map((id) => tileName(id, faction.id)).join('·')}` : '',
     (r.gear ?? 0) > 0 ? `장비 ${r.gear}개` : '',
   ].filter(Boolean);
-  const stopped = r.activeHours < r.hours ? ` (배고파서·지쳐서 ${hm(r.activeHours)}만 돌았다)` : '';
+  // 시간은 적지 않는다 (GDD 193장 17: 비운 시간·쌓인 시간·돈 시간 셋이 섞였다) — 받은 것만
+  const stopped = r.activeHours + 1e-6 < r.hours ? ` (${r.activeHours <= 0 ? '모험하지 못했다' : '배고프거나 지쳐서 덜 돌았다'})` : '';
   return {
-    title: `대기 보상을 받았다 — ${hm(r.hours)}`,
-    body: `${r.laps}바퀴${stopped}. 직접 돌았을 때의 ${Math.round(r.share * 100)}%: ${got.join(' · ') || '받은 것 없음'}.`,
+    title: '대기 보상을 받았다',
+    body: `자동 모험 ${r.laps}바퀴${stopped}. 받은 것: ${got.join(' · ') || '없음'}.`,
   };
 }
 
@@ -92,9 +102,10 @@ function listOf(save: SaveData, faction: FactionConfig): HTMLElement {
     ul.append(el('li', 'bha-small', '쌓인 보상이 없다.'));
     return ul;
   }
-  for (const line of idleYieldLines(y, faction)) ul.append(el('li', '', line));
-  const stopped = p.activeHours + 1e-6 < p.hours ? ` · 배고파서·지쳐서 ${hm(p.activeHours)}만 돌았다` : '';
-  ul.append(el('li', 'bha-small', `쌓인 시간 ${hm(p.hours)} / 최대 ${IX.maxHours}시간${stopped}`));
+  if (p.activeHours > 1e-6) for (const line of idleYieldLines(y, faction)) ul.append(el('li', '', line)); // 하나도 안 돌았으면 '골드 +0' 대신 까닭 한 줄만
+  // 시간 줄은 뺐다 (GDD 193장 17: 창 제목·진행 막대 시간 하나만). 덜 돈 까닭만 한 줄, 시간 없이
+  const why = idleShortfall(p, save.nest);
+  if (why) ul.append(el('li', 'bha-small', why));
   return ul;
 }
 

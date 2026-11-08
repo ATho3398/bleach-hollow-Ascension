@@ -7,6 +7,7 @@
    - 이 파일 = 테마와 무관한 공통 토큰(의미 색, 타이포, 간격, 모션, 층).
    - 테마 파일 = "테마 토큰"(바탕/선/글자/포인트/질감 패턴/모서리/아이콘 선 굵기)만 덮어쓴다.
    - 3번째 종족 추가 = theme-xxx.css 하나 복사해서 값만 바꾸면 끝.
+   - C.282 (GDD 183장): 값은 docs/design/redesign-v2/bha.css 기준. 이름은 그대로, 새 토큰만 추가.
    ========================================================================== */
 
 /* ---------- 글꼴 ---------- */
@@ -19,6 +20,8 @@
   font-weight: 400 800;
   font-display: swap;
 }
+/* 숫자(도트): Silkscreen 400 (OFL, fonts/Silkscreen-OFL.txt) — 영문·숫자만. 한글은 본문 글꼴로 넘어간다 (GDD 183장, PROMPT v2 2절) */
+@font-face { font-family: "Silkscreen"; src: url("../fonts/silkscreen-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; unicode-range: U+0000-00FF, U+2000-206F; }
 /* CDN 대안: @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"); */
 
 /* 제목(디스플레이): Hahmlet 600/800 — 날 선 세리프. 한글 2,600자 서브셋 + 라틴 */
@@ -31,30 +34,27 @@
   color-scheme: dark;
 
   /* ---------- 타이포 ---------- */
-  --bha-font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
-  --bha-font-display: "BHA Display", "Hahmlet", "Noto Serif KR", "Apple SD Gothic Neo", serif;
-  --bha-font-num: var(--bha-font-body);          /* 숫자는 본문 글꼴 + tabular-nums */
-
-  /* 크기 스케일 (최소 12px, 핵심 수치 14px 이상) */
-  --bha-fs-xs: 12px;    /* 보조 라벨, 태그, 범례 */
-  --bha-fs-sm: 13px;    /* 설명, 힌트 */
-  --bha-fs-md: 14px;    /* 본문, 핵심 수치 최소 */
-  --bha-fs-lg: 16px;    /* 버튼, 강조 본문 */
-  --bha-fs-xl: 18px;    /* 패널 제목 */
-  --bha-fs-2xl: 22px;   /* 화면 제목 */
-  --bha-fs-3xl: 28px;   /* 결과 제목 */
-  --bha-fs-4xl: 36px;   /* 연출 제목 */
-  --bha-fs-5xl: 48px;   /* 게임 이름 */
-
+  --bha-font-body: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --bha-font-display: "BHA Display", "Hahmlet", "Noto Serif KR", serif;
+  --bha-font-num: "Silkscreen", var(--bha-font-body);   /* 새 값: 막대 숫자·타이머·개수는 도트 숫자 */
+  --bha-fs-xs: 12px;
+  --bha-fs-sm: 13px;
+  --bha-fs-md: 14px;
+  --bha-fs-lg: 16px;
+  --bha-fs-xl: 18px;
+  --bha-fs-2xl: 22px;
+  --bha-fs-3xl: 28px;
+  --bha-fs-4xl: 36px;
+  --bha-fs-5xl: 48px;
   --bha-lh-tight: 1.2;
-  --bha-lh-body: 1.5;
+  --bha-lh-body: 1.45;
   --bha-fw-regular: 400;
   --bha-fw-medium: 500;
   --bha-fw-bold: 700;
   --bha-fw-heavy: 800;
-  --bha-tracking-label: 0.04em;
+  --bha-tracking-label: 0.02em;
 
-  /* ---------- 간격 (4px 격자) ---------- */
+  /* ---------- 간격 ---------- */
   --bha-sp-1: 2px;
   --bha-sp-2: 4px;
   --bha-sp-3: 6px;
@@ -67,222 +67,262 @@
   --bha-sp-10: 48px;
 
   /* ---------- 크기 기준 ---------- */
-  --bha-touch: 44px;          /* 터치 영역 최소 */
-  --bha-app-w: 480px;         /* 최대 콘텐츠 폭 */
-  --bha-gutter: 16px;         /* 화면 좌우 여백 */
-  --bha-block-h: 68px;        /* 블록 칸 높이 (64 이상) */
-  --bha-bar-h: 10px;          /* 상태 바 트랙 높이 */
-  --bha-bar-h-lg: 14px;       /* 체력 바 */
+  --bha-touch: 44px;
+  --bha-app-w: 480px;        /* 값 유지. 기기·LCD 크기는 디자인이 정하지 않는다 → 게임 코드 값(LCD 646×360) */
+  --bha-gutter: 10px;        /* 새 값: LCD 안 좌우 여백 */
+  --bha-block-h: 52px;       /* 새 값: 정사각 블록 한 변 */
+  --bha-bar-h: 8px;
+  --bha-bar-h-lg: 14px;
 
-  /* ---------- 의미 색 (역할 = 색 + 아이콘 + 모양) ---------- */
-  --bha-attack: #e5484d;      /* 공격 / 파괴 */
-  --bha-attack-ink: #fff4f2;
-  --bha-guard: #2fb36b;       /* 막기 / 가면 */
-  --bha-guard-ink: #f0fff6;
-  --bha-heal: #3e8bff;        /* 회복 / 재생 */
-  --bha-heal-ink: #f2f7ff;
-  --bha-sp: #d9a441;          /* SP / 필살 */
-  --bha-sp-hi: #ffd47a;
-  --bha-special-a: #f2c25b;   /* 필살 블록 광택 그라데이션 */
-  --bha-special-b: #b8741f;
-  --bha-risk: #ff4fd8;        /* 리스크 게이지 (광기/호로화) */
-  --bha-void: #170d1f;        /* 공허 블록: 보라빛 검정 */
-  --bha-void-2: #2a1638;
-  --bha-hunger: #f0a43a;      /* 허기 (호박) */
-  --bha-cond: #4fb8e0;        /* 컨디션 (하늘) */
-  --bha-stab: #6fe0b4;        /* 안정 수치 (민트) */
-  --bha-weak: #e8c15a;        /* 약점 칩 금색 테두리 */
-  --bha-cast: #ff9440;        /* 강공격 예고 시전 바 */
-  --bha-chain2: #ffd24d;      /* 묶음(체인2) 노랑 */
-  --bha-chain3: #ff8a3d;      /* 체인3 주황 */
-  --bha-insert: #6cc4ff;      /* 드래그 삽입 막대 파랑 */
-  --bha-seal: #a371f7;        /* 봉인 보라 */
-  --bha-fx-cero-oscuras-core: #07050c;  /* 세로 오스큐라스 빔 몸통: 검정 (C.63, 마스터 승인) */
-  --bha-fx-cero-oscuras-edge: #39e27a;  /* 세로 오스큐라스 빔 테두리: 녹색 (C.63, 마스터 승인) */
-  --bha-good: #5fd39a;        /* 좋음 알림 */
-  --bha-warn: #ffad5c;        /* 경고 알림 (텍스트용, AA) */
-  --bha-danger: #ff6b6b;      /* 위험 텍스트 */
-  --bha-rare: #ffd24d;        /* 희귀 */
+  /* ---------- 의미 색 (가라앉은 같은 명도대) ---------- */
+  --bha-attack: #c45a4f;
+  --bha-attack-ink: #1a0f0d;
+  --bha-guard: #6f9a63;
+  --bha-guard-ink: #10170e;
+  --bha-heal: #5f88b0;
+  --bha-heal-ink: #0d141c;
+  --bha-sp: #c29a52;
+  --bha-sp-hi: #dcbd7e;
+  --bha-special-a: #d0ad68;
+  --bha-special-b: #8f6a34;
+  --bha-risk: #a65c8e;
+  --bha-void: #1a1320;
+  --bha-void-2: #2c2236;
+  --bha-hunger: #c7883f;
+  --bha-cond: #5b98a8;
+  --bha-stab: #6fa58a;
+  --bha-weak: #c9a85a;
+  --bha-cast: #c97a45;
+  --bha-chain2: #c9a24a;
+  --bha-chain3: #c47440;
+  --bha-insert: #6e9cc4;
+  --bha-seal: #8a74b0;
+  --bha-fx-cero-oscuras-core: #07050c;
+  --bha-fx-cero-oscuras-edge: #39e27a;
+  --bha-good: #79b08a;
+  --bha-warn: #d79a5a;
+  --bha-danger: #d96a5e;
+  --bha-rare: #d4b25e;
   --bha-enemy-hp: var(--bha-attack);
   --bha-player-hp: var(--bha-guard);
 
-  /* 계통 A~E: 색 + 모양(원·삼각·사각·마름모·육각) — 임시 마크 */
-  --bha-lin-a: #ff8a5c;  /* 원 */
-  --bha-lin-b: #b9d65a;  /* 삼각 */
-  --bha-lin-c: #3fcfcf;  /* 사각 */
-  --bha-lin-d: #9a95ff;  /* 마름모 */
-  --bha-lin-e: #ff7fb0;  /* 육각 */
+  /* 계열 A~E: 모양(원·삼각·사각·마름모·육각) + 색 */
+  --bha-lin-a: #c9775a;
+  --bha-lin-b: #a3ad5c;
+  --bha-lin-c: #4f9e98;
+  --bha-lin-d: #8a82c0;
+  --bha-lin-e: #b9708f;
 
-  /* 타일 4종: 색 + 아이콘 */
-  --bha-tile-prey: #c9603f;   /* 먹잇감 둥지 */
-  --bha-tile-elite: #b83f8f;  /* 강적 소굴 */
-  --bha-tile-env: #3f84c4;    /* 환경 */
-  --bha-tile-rest: #3f9e6c;   /* 휴식 */
+  /* 타일 4종 */
+  --bha-tile-prey: #a8613f;
+  --bha-tile-elite: #95517a;
+  --bha-tile-env: #4f7aa3;
+  --bha-tile-rest: #4f8a68;
 
-  /* ---------- 꾸밈 (GDD 25-9 상점 영옥 탭, C.60 — 마스터 승인 토큰 묶음) ----------
-     이름 = --bha-cos-<분류>-<모양 키>[-<부분>]. 품목 데이터(src/data/shop)의 look 이 모양 키. 화면 코드는 이 토큰만 참조한다(색 직접 금지).
-     블록 계열 글자·속성 색은 바꾸지 않는다 (가독성) */
-  /* 오라: 캐릭터 뒤 빛 색 */
-  --bha-cos-aura-smoke: rgb(176 180 190 / 0.75);
-  --bha-cos-aura-blue: rgb(79 163 255 / 0.85);
-  --bha-cos-aura-bolt: rgb(255 59 72 / 0.85);
-  --bha-cos-aura-gold: rgb(255 204 77 / 0.85);
-  /* 색조: 내 캐릭터 그림 필터 */
-  --bha-cos-tint-mono: grayscale(1) contrast(1.15);
-  --bha-cos-tint-blood: sepia(1) saturate(6) hue-rotate(-42deg) brightness(0.95);
-  --bha-cos-tint-pale: saturate(0.3) brightness(1.28) contrast(0.9);
-  --bha-cos-tint-gold: sepia(0.85) saturate(2.4) hue-rotate(2deg) brightness(1.08);
-  /* 발밑·잔상: 걷기 발자국 색 */
-  --bha-cos-trail-sand: #d8b878;
-  --bha-cos-trail-blood: #b0182c;
-  --bha-cos-trail-ember: #ff8a2b;
-  /* 공격 이펙트 색 (내 기술·필살 연출) */
-  --bha-cos-fx-black: #24132f;
-  --bha-cos-fx-black-edge: #c9a7ff;
-  --bha-cos-fx-blue: #5cb8ff;
-  --bha-cos-fx-blue-edge: #e4f4ff;
-  --bha-cos-fx-crimson: #ff2e4a;
-  --bha-cos-fx-crimson-edge: #ffd0d6;
-  /* 블록 바: 바 바탕(bg)·블록 테두리(line) */
-  --bha-cos-bar-bone-bg: linear-gradient(180deg, rgb(233 223 201 / 0.34), rgb(120 104 80 / 0.4));
-  --bha-cos-bar-bone-line: #efe3c8;
-  --bha-cos-bar-ink-bg: linear-gradient(180deg, rgb(4 4 10 / 0.92), rgb(28 28 44 / 0.85));
-  --bha-cos-bar-ink-line: #3c3c5c;
-  --bha-cos-bar-gold-bg: linear-gradient(180deg, rgb(120 86 20 / 0.7), rgb(56 38 6 / 0.85));
-  --bha-cos-bar-gold-line: #ffd36b;
-  /* 기기 껍데기: 몸체(body)·테두리(line)·LCD 색 덮개(lcd, 옅게) */
-  --bha-cos-shell-bone-body: #cfc3a8;
-  --bha-cos-shell-bone-line: #f4ead4;
-  --bha-cos-shell-bone-lcd: rgb(240 226 196 / 0.07);
-  --bha-cos-shell-ink-body: #0e0e16;
-  --bha-cos-shell-ink-line: #34344e;
-  --bha-cos-shell-ink-lcd: rgb(90 100 190 / 0.08);
-  --bha-cos-shell-gold-body: #7a5a16;
-  --bha-cos-shell-gold-line: #ecbf52;
-  --bha-cos-shell-gold-lcd: rgb(255 206 96 / 0.07);
-  /* 이름표 테 */
-  --bha-cos-plate-bone: #e9dfc9;
-  --bha-cos-plate-ink: #5a5a82;
-  --bha-cos-plate-gold: #ffd24d;
+  /* ---------- 새 토큰: 속성 색 8개 (게임 데이터: normal·water·fire·earth·thunder·blood·poison·kyo) ---------- */
+  --bha-el-normal: #8c8478;   /* 회갈 */
+  --bha-el-water: #4c7ea8;    /* 슬레이트 청 */
+  --bha-el-fire: #c0643a;     /* 주황빛 적 (밝은 쪽) */
+  --bha-el-earth: #9a7c48;    /* 황토 */
+  --bha-el-thunder: #a8963e;  /* 겨자 */
+  --bha-el-blood: #84343a;    /* 짙은 적갈 (어두운 쪽 → 불과 명도·색상 모두 다름) */
+  --bha-el-poison: #74803e;   /* 가라앉은 올리브 */
+  --bha-el-kyo: #7a6496;      /* 가라앉은 보라 */
 
-  /* ---- 2차 (GDD 25-11, C.61): 연출·컷인·방·말풍선·액자 ---- */
-  /* 등장 연출 색 */
-  --bha-cos-enter-rift: #c9a7ff;
-  --bha-cos-enter-burst: #ffe08a;
-  --bha-cos-enter-shadow: #1a0f26;
-  /* 진화 연출 색 */
-  --bha-cos-evo-cocoon: #12081c;
-  --bha-cos-evo-pillar: #fff3b0;
-  --bha-cos-evo-petal: #ffb3c7;
-  /* 흡수 연출 색 */
-  --bha-cos-absorb-shadow: #1a0f26;
-  --bha-cos-absorb-light: #fff1a8;
-  /* 컷인 띠: 바탕 무늬·테두리 */
-  --bha-cos-cut-ink-bg: repeating-linear-gradient(115deg, rgb(6 6 14 / 0.92) 0 10px, rgb(30 30 52 / 0.92) 10px 12px);
-  --bha-cos-cut-ink-line: #8c8cc0;
-  --bha-cos-cut-flame-bg: linear-gradient(90deg, rgb(70 8 4 / 0.92), rgb(214 72 18 / 0.9) 50%, rgb(70 8 4 / 0.92));
-  --bha-cos-cut-flame-line: #ffb04d;
-  --bha-cos-cut-gold-bg: repeating-linear-gradient(90deg, rgb(88 62 12 / 0.92) 0 14px, rgb(150 110 28 / 0.92) 14px 16px);
-  --bha-cos-cut-gold-line: #ffd86b;
-  /* 승리 연출 색 */
-  --bha-cos-win-roar: #ff3b48;
-  --bha-cos-win-light: #fff3b0;
-  --bha-cos-win-calm: #05050c;
-  /* 말풍선 팩: 말풍선 모서리 (A = 뾰족한 꼬리, B = 각진) */
-  --bha-cos-talk-a: 18px 18px 18px 2px;
+  /* ---------- 새 토큰: 가라앉은 강조 5색 ---------- */
+  --bha-tint-teal: #4f8f8a;
+  --bha-tint-copper: #b0704a;
+  --bha-tint-brass: #a8904f;
+  --bha-tint-violet: #7f6c9e;
+  --bha-tint-sage: #7f9c7a;   /* 교감/손질 버튼 */
+
+  /* ---------- 꾸밈 (cos) — 형광·glow 빼고 같은 톤으로 ---------- */
+  --bha-cos-aura-smoke: rgb(150 146 140 / 0.7);
+  --bha-cos-aura-blue: rgb(95 136 176 / 0.8);
+  --bha-cos-aura-bolt: rgb(196 90 79 / 0.8);
+  --bha-cos-aura-gold: rgb(194 154 82 / 0.8);
+  --bha-cos-tint-mono: grayscale(1) contrast(1.1);
+  --bha-cos-tint-blood: sepia(0.8) saturate(3) hue-rotate(-40deg) brightness(0.9);
+  --bha-cos-tint-pale: saturate(0.35) brightness(1.18) contrast(0.92);
+  --bha-cos-tint-gold: sepia(0.7) saturate(1.8) hue-rotate(2deg) brightness(1.02);
+  --bha-cos-trail-sand: #c4a878;
+  --bha-cos-trail-blood: #8e3a3a;
+  --bha-cos-trail-ember: #c47440;
+  --bha-cos-fx-black: #241a2c;
+  --bha-cos-fx-black-edge: #a894c4;
+  --bha-cos-fx-blue: #5f88b0;
+  --bha-cos-fx-blue-edge: #c6d6e6;
+  --bha-cos-fx-crimson: #b0443e;
+  --bha-cos-fx-crimson-edge: #e6c2b8;
+  --bha-cos-bar-bone-bg: #4a4034;
+  --bha-cos-bar-bone-line: #cbbca0;
+  --bha-cos-bar-ink-bg: #14141c;
+  --bha-cos-bar-ink-line: #3c3c52;
+  --bha-cos-bar-gold-bg: #3e321a;
+  --bha-cos-bar-gold-line: #b89a58;
+  --bha-cos-shell-bone-body: #b8ab92;
+  --bha-cos-shell-bone-line: #dcd0b6;
+  --bha-cos-shell-bone-lcd: rgb(240 226 196 / 0.05);
+  --bha-cos-shell-ink-body: #121218;
+  --bha-cos-shell-ink-line: #34344a;
+  --bha-cos-shell-ink-lcd: rgb(90 100 160 / 0.06);
+  --bha-cos-shell-gold-body: #5e4a20;
+  --bha-cos-shell-gold-line: #b89a58;
+  --bha-cos-shell-gold-lcd: rgb(220 180 100 / 0.05);
+  --bha-cos-plate-bone: #cbbca0;
+  --bha-cos-plate-ink: #4c4c68;
+  --bha-cos-plate-gold: #b89a58;
+  --bha-cos-enter-rift: #a894c4;
+  --bha-cos-enter-burst: #d8c08a;
+  --bha-cos-enter-shadow: #1a1320;
+  --bha-cos-evo-cocoon: #140e1a;
+  --bha-cos-evo-pillar: #e6d6a8;
+  --bha-cos-evo-petal: #c99aa6;
+  --bha-cos-absorb-shadow: #1a1320;
+  --bha-cos-absorb-light: #e2d29a;
+  --bha-cos-cut-ink-bg: repeating-linear-gradient(115deg, #0c0c14 0 10px, #1e1e2c 10px 12px);
+  --bha-cos-cut-ink-line: #7a7aa0;
+  --bha-cos-cut-flame-bg: repeating-linear-gradient(115deg, #3a120c 0 10px, #6a2416 10px 12px);
+  --bha-cos-cut-flame-line: #c47440;
+  --bha-cos-cut-gold-bg: repeating-linear-gradient(90deg, #3e321a 0 14px, #5e4a24 14px 16px);
+  --bha-cos-cut-gold-line: #c9a24a;
+  --bha-cos-win-roar: #b0443e;
+  --bha-cos-win-light: #e6d6a8;
+  --bha-cos-win-calm: #0a0a10;
+  --bha-cos-talk-a: 12px 12px 12px 2px;
   --bha-cos-talk-b: 2px;
-  /* 방 꾸미기: 바탕(벽)·바닥·틀 색 */
-  --bha-cos-room-dusk-bg: repeating-linear-gradient(0deg, #4a2d1c 0 22px, #3c2416 22px 23px);
-  --bha-cos-room-dusk-wall: #4a2d1c;
-  --bha-cos-room-dusk-floor: #6b4a2c;
-  --bha-cos-room-dusk-line: #c98a4a;
-  --bha-cos-room-bloom-bg: radial-gradient(circle at 20% 30%, #f4c6d4 0 3px, transparent 4px) 0 0 / 34px 34px, linear-gradient(180deg, #5a3a4e, #3e2a3c);
-  --bha-cos-room-bloom-wall: #4e3446;
-  --bha-cos-room-bloom-floor: #4e6a44;
-  --bha-cos-room-bloom-line: #f4a6c0;
-  --bha-cos-room-night-bg: radial-gradient(circle at 78% 22%, #f4ead4 0 14px, transparent 15px), linear-gradient(180deg, #0c1230, #1a2250);
-  --bha-cos-room-night-wall: #121a3e;
-  --bha-cos-room-night-floor: #1c2438;
-  --bha-cos-room-night-line: #6f86d8;
-  /* 사진 액자 색 */
-  --bha-cos-frame-bone: #efe3c8;
-  --bha-cos-frame-ink: #20203a;
-  --bha-cos-frame-gold: #ffd36b;
-
-  /* ---- 3차 (GDD 27장, C.62): 다마고치 모드 키링 — 모양(look·종족 설정 keyringShapes)마다 몸(body)·테(line), 줄은 공용 ---- */
-  --bha-cos-keyring-chain: #b9b3a6;
-  --bha-cos-keyring-charm-body: #c9b07a;
-  --bha-cos-keyring-charm-line: #5a4a2a;
-  --bha-cos-keyring-mask-body: #efe7da;
-  --bha-cos-keyring-mask-line: #6a5f50;
-  --bha-cos-keyring-butterfly-body: #1a0f26;
-  --bha-cos-keyring-butterfly-line: #c9a7ff;
-  --bha-cos-keyring-bell-body: #e0b04a;
-  --bha-cos-keyring-bell-line: #6e4f12;
-  --bha-cos-keyring-bonebell-body: #e9dfc9;
-  --bha-cos-keyring-bonebell-line: #7a6c55;
-  --bha-cos-keyring-orb-body: #3fbf8f;
-  --bha-cos-keyring-orb-line: #145c44;
-  --bha-cos-keyring-shine: rgb(255 255 255 / 0.75);
+  --bha-cos-room-dusk-bg: repeating-linear-gradient(0deg, #3e2a1e 0 22px, #342318 22px 23px);
+  --bha-cos-room-dusk-wall: #3e2a1e;
+  --bha-cos-room-dusk-floor: #5a4130;
+  --bha-cos-room-dusk-line: #a87a52;
+  --bha-cos-room-bloom-bg: repeating-linear-gradient(0deg, #4a3442 0 22px, #402c3a 22px 23px);
+  --bha-cos-room-bloom-wall: #4a3442;
+  --bha-cos-room-bloom-floor: #44583e;
+  --bha-cos-room-bloom-line: #b98a9c;
+  --bha-cos-room-night-bg: repeating-linear-gradient(0deg, #161c34 0 22px, #121830 22px 23px);
+  --bha-cos-room-night-wall: #161c34;
+  --bha-cos-room-night-floor: #1e2436;
+  --bha-cos-room-night-line: #6a7aa8;
+  --bha-cos-frame-bone: #cbbca0;
+  --bha-cos-frame-ink: #24243a;
+  --bha-cos-frame-gold: #b89a58;
+  --bha-cos-keyring-chain: #a49e92;
+  --bha-cos-keyring-charm-body: #b0996c;
+  --bha-cos-keyring-charm-line: #4e4028;
+  --bha-cos-keyring-mask-body: #d8cfc0;
+  --bha-cos-keyring-mask-line: #5e5446;
+  --bha-cos-keyring-butterfly-body: #1a1320;
+  --bha-cos-keyring-butterfly-line: #a894c4;
+  --bha-cos-keyring-bell-body: #b8944a;
+  --bha-cos-keyring-bell-line: #5e4416;
+  --bha-cos-keyring-bonebell-body: #d0c6b2;
+  --bha-cos-keyring-bonebell-line: #6a5e4c;
+  --bha-cos-keyring-orb-body: #4f8f78;
+  --bha-cos-keyring-orb-line: #1e4a3a;
+  --bha-cos-keyring-shine: rgb(255 255 255 / 0.55);
 
   /* ---------- 모서리 (테마가 덮어씀) ---------- */
-  --bha-r-xs: 3px;
-  --bha-r-sm: 6px;
-  --bha-r-md: 10px;
-  --bha-r-lg: 14px;
+  --bha-r-xs: 2px;
+  --bha-r-sm: 4px;
+  --bha-r-md: 6px;
+  --bha-r-lg: 8px;
   --bha-r-pill: 999px;
 
-  /* ---------- 그림자 / 글로우 ---------- */
-  --bha-shadow-1: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px rgb(0 0 0 / 0.5);
-  --bha-shadow-2: 0 6px 18px rgb(0 0 0 / 0.55);
-  --bha-shadow-3: 0 14px 40px rgb(0 0 0 / 0.7);
-  --bha-glow-sp: 0 0 14px rgb(217 164 65 / 0.55);
-  --bha-glow-risk: 0 0 16px rgb(255 79 216 / 0.55);
-  --bha-glow-chain2: 0 0 10px rgb(255 210 77 / 0.45);
-  --bha-glow-chain3: 0 0 16px rgb(255 138 61 / 0.7);
-  --bha-glow-cast: 0 0 18px rgb(255 148 64 / 0.6);
+  /* ---------- 그림자: 흐림 없는 딱딱한 그림자. glow 토큰은 테두리로 대체 ---------- */
+  --bha-shadow-1: inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo);
+  --bha-shadow-2: 0 2px 0 rgb(0 0 0 / 0.45);
+  --bha-shadow-3: 0 0 0 1px rgb(0 0 0 / 0.6), 0 4px 0 rgb(0 0 0 / 0.45);
+  --bha-glow-sp: 0 0 0 2px var(--bha-sp);
+  --bha-glow-risk: 0 0 0 2px var(--bha-risk);
+  --bha-glow-chain2: 0 0 0 2px var(--bha-chain2);
+  --bha-glow-chain3: 0 0 0 2px var(--bha-chain3);
+  --bha-glow-cast: 0 0 0 2px var(--bha-cast);
 
-  /* ---------- 모션 ---------- */
-  --bha-dur-1: 90ms;     /* 눌림 */
-  --bha-dur-2: 160ms;    /* 상태 전환 */
-  --bha-dur-3: 260ms;    /* 바 변화, 팝인 */
-  --bha-dur-4: 420ms;    /* 오버레이, 토스트 */
-  --bha-dur-5: 900ms;    /* 연출 */
+  /* ---------- 모션: 짧고 1배 ---------- */
+  --bha-dur-1: 80ms;
+  --bha-dur-2: 120ms;
+  --bha-dur-3: 200ms;
+  --bha-dur-4: 280ms;
+  --bha-dur-5: 700ms;
   --bha-ease-out: cubic-bezier(.2, .8, .2, 1);
   --bha-ease-in: cubic-bezier(.5, 0, .9, .3);
-  --bha-ease-snap: cubic-bezier(.3, 1.5, .5, 1);   /* 팝인 반동 */
+  --bha-ease-snap: steps(3, end);
   --bha-ease-linear: linear;
 
   /* ---------- z-index 층 ---------- */
   --bha-z-base: 0;
   --bha-z-raised: 10;
   --bha-z-sticky: 20;
-  --bha-z-float: 60;      /* 플로팅 숫자 */
-  --bha-z-flash: 70;      /* 화면 가장자리 번쩍임 */
+  --bha-z-float: 60;
+  --bha-z-flash: 70;
   --bha-z-toast: 80;
-  --bha-z-overlay: 90;    /* 일시정지/승패/도움말 */
+  --bha-z-overlay: 90;
   --bha-z-modal: 95;
   --bha-z-tutorial: 100;
 
-  /* ---------- 테마 토큰 기본값 (= 호로) : 테마 파일이 덮어쓴다 ---------- */
-  --bha-bg-0: #0b0909;
-  --bha-bg-1: #141010;
-  --bha-bg-2: #1c1716;
-  --bha-bg-3: #26201e;
-  --bha-line-1: #2f2725;
-  --bha-line-2: #4a3d39;
-  --bha-text-1: #efe7da;
-  --bha-text-2: #bdb1a2;
-  --bha-text-3: #978a7c;
-  --bha-accent: #c8303f;
-  --bha-accent-hi: #ff5a6a;
-  --bha-accent-soft: rgb(200 48 63 / 0.18);
-  --bha-primary-bg: #ece2d1;
-  --bha-primary-ink: #1a1110;
-  --bha-primary-line: #fff6e6;
-  --bha-focus: #ff8c96;
-  --bha-icon-stroke: 1.9;
+  /* ---------- 새 토큰: 크기 ---------- */
+  --bha-btn-h: 44px;
+  --bha-btn-h-sm: 36px;
+  --bha-btn-h-lg: 48px;
+  --bha-head-h: 44px;
+  --bha-dock-h: 56px;
+  --bha-dock-btn-w: 200px; /* 아래 줄 오른쪽 고정 행동 버튼 폭 (흡수·결과·진화 [○○하기]/[둥지로], 173장 2 자리 고정 — PROMPT S11·S13 의 44×200, C.296) */
+  --bha-skill-h: 130px;
+  --bha-icon-sm: 16px;
+  --bha-icon-md: 24px;
+  --bha-icon-lg: 32px;
+  --bha-icon-xl: 48px;
+  --bha-sprite-sm: 32px;
+  --bha-sprite-md: 48px;
+  --bha-sprite-lg: 64px;
+  --bha-caret: 10px;
+
+  /* ---------- 새 토큰: 그림 윤곽 강조 (그림 모양대로, 흐림 없음) ---------- */
+  --bha-sprite-outline: drop-shadow(2px 0 0 var(--bha-focus)) drop-shadow(-2px 0 0 var(--bha-focus)) drop-shadow(0 2px 0 var(--bha-focus)) drop-shadow(0 -2px 0 var(--bha-focus));
+  --bha-sprite-dim: grayscale(1) brightness(0.55);
+
+  /* ---------- 새 토큰: 알림(노란 토스트) ---------- */
+  --bha-toast-bg: #2e2717;
+  --bha-toast-line: #a88c4c;
+  --bha-toast-ink: #f0e2bd;
+
+  /* ---------- 테마 토큰 기본값 (= 호로) ---------- */
+  --bha-bg-0: #1a1412;
+  --bha-bg-1: #241c19;
+  --bha-bg-2: #2f2521;
+  --bha-bg-3: #3b2f2a;
+  --bha-line-1: #3f322d;
+  --bha-line-2: #5e4b43;
+  --bha-text-1: #efe5d3;
+  --bha-text-2: #cbbca6;
+  --bha-text-3: #ab9b8b;
+  --bha-accent: #a03c3d;
+  --bha-accent-hi: #d6766e;
+  --bha-accent-soft: rgb(160 60 61 / 0.24);
+  --bha-primary-bg: #d8c9ae;
+  --bha-primary-ink: #1f1613;
+  --bha-primary-line: #efe3cb;
+  --bha-focus: #f3e3c3;
+  --bha-icon-stroke: 2;
   --bha-pattern: none;
-  --bha-pattern-size: 220px;
-  --bha-backdrop: #050404;
+  --bha-pattern-size: 16px;
+  --bha-backdrop: #0d0a09;
+
+  /* ---------- 그림 윤곽 (GDD 182장 4, 프로젝트 토큰 — 디자인 v2 에 없음, 그대로 둔다) ---------- */
+  --bha-art-edge: rgb(0 0 0 / 0.9);
+  --bha-art-drop: rgb(0 0 0 / 0.6);
+  --bha-art-ring: drop-shadow(1px 0 0 var(--bha-art-edge)) drop-shadow(-1px 0 0 var(--bha-art-edge)) drop-shadow(0 1px 0 var(--bha-art-edge)) drop-shadow(0 -1px 0 var(--bha-art-edge));
+  --bha-art-outline: var(--bha-art-ring) var(--bha-art-ring) drop-shadow(0 4px 1px var(--bha-art-drop));
+
+  /* ---------- 기기 꾸미기 LCD 색 덮개 (꾸미기가 채움, 기본 투명) ---------- */
+  --bha-shell-lcd: transparent;
+}
+
+/* ---------- 장면 위 반투명 판 · 덮개 (C.296 공용화 — 화면 A·B·C 가 각자 color-mix 로 쓰던 것). 테마 바탕(bg-0)을 따라가야 해서
+   테마가 붙는 자리(:root · [data-bha-theme] · .bha-theme-*)마다 다시 계산한다. 새 색 없음 — bg-0 / 검정의 투명도만 ---------- */
+:root, [data-bha-theme], [class*="bha-theme-"] {
+  --bha-plate-bg: color-mix(in srgb, var(--bha-bg-0) 82%, transparent);      /* 장면 위 이름표·발밑 체력·돌아가기 버튼·걷기 이름/목표 칩 (v2 .bha-plate 값) */
+  --bha-plate-bg-soft: color-mix(in srgb, var(--bha-bg-0) 72%, transparent); /* 장면 위 넓은 띠(걷기 머리 줄 등) — 장면이 더 비쳐 보인다 */
+  --bha-scrim: rgb(0 0 0 / 0.42);                                            /* 창·시트 뒤 덮개 (v2 .bha-scrim 값) */
+  --bha-scene-box: rgb(0 0 0 / 0.55);                                        /* 장면 위 작은 상자(방 머리 위 상태 박스·이름표·ⓘ) — C.281 값 되돌림 (GDD 190장 3). 검정 투명도만 */
 }

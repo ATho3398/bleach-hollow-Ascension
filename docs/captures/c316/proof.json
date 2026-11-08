@@ -1,0 +1,1184 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "plain": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     123,
+     173,
+     223,
+     273
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 123,
+      "bottom": 167,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 173,
+      "bottom": 217,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 223,
+      "bottom": 267,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 273,
+      "bottom": 317,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "restart": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     123,
+     173,
+     223,
+     273
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 123,
+      "bottom": 167,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 173,
+      "bottom": 217,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 223,
+      "bottom": 267,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 273,
+      "bottom": 317,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "notePlain": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "note": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stalePlain": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stale": {
+    "title": true,
+    "appBottom": 374,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 351,
+      "bottom": 368,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "ok": true
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "plain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     123,
+     173,
+     223,
+     273
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 123,
+      "bottom": 167,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 173,
+      "bottom": 217,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 223,
+      "bottom": 267,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 273,
+      "bottom": 317,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "restart": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     123,
+     173,
+     223,
+     273
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 123,
+      "bottom": 167,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 173,
+      "bottom": 217,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 223,
+      "bottom": 267,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 273,
+      "bottom": 317,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "notePlain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "note": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stalePlain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stale": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     117,
+     117,
+     117,
+     117
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 117,
+      "bottom": 161,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 167,
+      "bottom": 209,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 213,
+      "bottom": 249,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 345,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "ok": true
+  },
+  {
+   "mode": "ph115",
+   "faction": "hollow",
+   "plain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     132,
+     182,
+     232,
+     282
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 132,
+      "bottom": 176,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 182,
+      "bottom": 226,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 232,
+      "bottom": 276,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 282,
+      "bottom": 326,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "restart": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     132,
+     182,
+     232,
+     282
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 132,
+      "bottom": 176,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 182,
+      "bottom": 226,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 232,
+      "bottom": 276,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 282,
+      "bottom": 326,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "notePlain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     126,
+     126,
+     126,
+     126
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 176,
+      "bottom": 221,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "note": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     126,
+     126,
+     126,
+     126
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "슬롯 2의 세이브를 읽을 수 없다.",
+      "top": 176,
+      "bottom": 221,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stalePlain": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     126,
+     126,
+     126,
+     126
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 176,
+      "bottom": 221,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 225,
+      "bottom": 261,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 225,
+      "bottom": 261,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "stale": {
+    "title": true,
+    "appBottom": 368,
+    "scroll": false,
+    "menuY": [
+     126,
+     126,
+     126,
+     126
+    ],
+    "out": [],
+    "items": [
+     {
+      "cls": "bha-btn.bha-sel",
+      "text": "이어하기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "새로 시작",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "불러오기",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn",
+      "text": "설정",
+      "top": 126,
+      "bottom": 170,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-notice.bha-notice--warn",
+      "text": "이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다",
+      "top": 176,
+      "bottom": 221,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--ghost",
+      "text": "슬롯 2 옛 세이브 내보내기",
+      "top": 225,
+      "bottom": 261,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-btn.bha-btn--small",
+      "text": "새로 시작",
+      "top": 225,
+      "bottom": 261,
+      "inside": true,
+      "clipped": false
+     },
+     {
+      "cls": "bha-start__ver",
+      "text": "v C.316새 버전으로 다시 시작한다…",
+      "top": 342,
+      "bottom": 362,
+      "inside": true,
+      "clipped": false
+     }
+    ]
+   },
+   "ok": true
+  }
+ ],
+ "errors": []
+}

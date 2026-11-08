@@ -1,0 +1,226 @@
+{
+ "tag": "before",
+ "shots": {
+  "before-pc-hollow-room": {
+   "status": {
+    "x": 375,
+    "y": 51,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 471,
+    "y": 99,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 372,
+    "y": 31,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 352,
+    "y": 264,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "before-pc-hollow-spa": {
+   "status": {
+    "x": 269,
+    "y": 143,
+    "w": 307,
+    "h": 28,
+    "inside": true
+   },
+   "info": null,
+   "name": null,
+   "hp": null,
+   "hpText": null,
+   "rows": [],
+   "clipped": 0,
+   "oldChips": 3
+  },
+  "before-ph-hollow-room": {
+   "status": {
+    "x": 351,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 447,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 348,
+    "y": 30,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 328,
+    "y": 259,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "before-ph-hollow-spa": {
+   "status": {
+    "x": 245,
+    "y": 138,
+    "w": 307,
+    "h": 28,
+    "inside": true
+   },
+   "info": null,
+   "name": null,
+   "hp": null,
+   "hpText": null,
+   "rows": [],
+   "clipped": 0,
+   "oldChips": 3
+  },
+  "before-pc-shinigami-room": {
+   "status": {
+    "x": 375,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 471,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 376,
+    "y": 30,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 352,
+    "y": 264,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "before-pc-shinigami-spa": {
+   "status": {
+    "x": 269,
+    "y": 143,
+    "w": 307,
+    "h": 28,
+    "inside": true
+   },
+   "info": null,
+   "name": null,
+   "hp": null,
+   "hpText": null,
+   "rows": [],
+   "clipped": 0,
+   "oldChips": 3
+  },
+  "before-ph-shinigami-room": {
+   "status": {
+    "x": 351,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 447,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 352,
+    "y": 30,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 328,
+    "y": 259,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "before-ph-shinigami-spa": {
+   "status": {
+    "x": 245,
+    "y": 138,
+    "w": 307,
+    "h": 28,
+    "inside": true
+   },
+   "info": null,
+   "name": null,
+   "hp": null,
+   "hpText": null,
+   "rows": [],
+   "clipped": 0,
+   "oldChips": 3
+  }
+ },
+ "errors": []
+}

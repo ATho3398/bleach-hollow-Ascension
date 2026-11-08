@@ -1,0 +1,49 @@
+import { it } from 'vitest';
+import { BALANCE } from '../src/config/balance';
+import { STAT_IDS } from '../src/data/schema';
+import { addEv, evCaps, evTotal, type EvolutionState } from '../src/engine/evolution';
+import { advance, createExpedition, finishBattle, startBattle, chooseAbsorb, type ExpeditionState } from '../src/engine/expedition';
+import { evCapped, absorbDescLines } from '../src/ui/absorbView';
+import { newSaveData, performRevive } from '../src/game';
+import { getFaction } from '../src/data/factions';
+const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
+function toAbsorb(factionId: string, evolution: EvolutionState, seed: number): ExpeditionState {
+  const exp = createExpedition({ factionId, seed, hunger: 40, condition: 100, deck: DECK, evolution } as any);
+  exp.wildCells = [exp.pos + 1]; advance(exp);
+  const b = startBattle(exp); b.enemy.hp = 0; b.status = 'won';
+  b.finisher = { kind: 'basic-attack', traitId: null, element: null } as any; b.riskGained = 0;
+  finishBattle(exp, b); return exp;
+}
+const fmt = (ev: any) => STAT_IDS.map((k) => `${k}${ev[k]}`).join(' ');
+for (const mode of ['stat', 'both'] as const) for (const f of ['hollow', 'shinigami']) it(`${f} ${mode}`, () => {
+  const s = newSaveData(f, 1);
+  addEv(s.evolution, Object.fromEntries(STAT_IDS.map((k) => [k, 3])));
+  let evo = s.evolution; const fac = getFaction(f);
+  for (let i = 0; i < 12; i++) {
+    const exp = toAbsorb(f, evo, 11 + i);
+    const o = exp.absorbOffer!;
+    const lines = absorbDescLines(fac, exp, mode).filter((l) => l.kind === 'stat' || l.kind === 'warn').map((l) => l.text).join('/');
+    console.log(`${f} ${mode} #${i + 1} 적=${o.enemyId} ev=${JSON.stringify(o.ev)} 합계=${evTotal(exp.evolution.ev)}/${evCaps(0).total} [${fmt(exp.evolution.ev)}] capped=${evCapped(exp, mode)} 화면="${lines}"`);
+    chooseAbsorb(exp, null, undefined, mode); evo = exp.evolution;
+  }
+});
+it('revive', () => {
+  const s = newSaveData('hollow', 1);
+  s.evolution.tierIndex = 2; for (const k of STAT_IDS) s.evolution.ev[k] = 11;
+  s.nest.dead = true as any; const r = performRevive(s);
+  console.log('revive', r, evTotal(s.evolution.ev), evCaps(s.evolution.tierIndex), fmt(s.evolution.ev));
+  const exp = toAbsorb('hollow', s.evolution, 3);
+  console.log('revive absorb', JSON.stringify(exp.absorbOffer!.ev), absorbDescLines(getFaction('hollow'), exp, 'both').map((l) => l.text).join(' / '));
+});
+it('perstat', () => {
+  const s = newSaveData('hollow', 1);
+  addEv(s.evolution, Object.fromEntries(STAT_IDS.map((k) => [k, 3])));
+  let evo = s.evolution; const fac = getFaction('hollow');
+  for (let i = 0; i < 6; i++) {
+    const exp = toAbsorb('hollow', evo, 11 + i);
+    exp.absorbOffer!.ev = { atk: 2 } as any;
+    const lines = absorbDescLines(fac, exp, 'stat').filter((l) => l.kind === 'stat' || l.kind === 'warn').map((l) => l.text).join('/');
+    console.log(`perstat #${i + 1} 합계=${evTotal(exp.evolution.ev)}/36 atk=${exp.evolution.ev.atk}/18 capped=${evCapped(exp, 'stat')} 화면="${lines}"`);
+    chooseAbsorb(exp, null, undefined, 'stat'); evo = exp.evolution;
+  }
+});

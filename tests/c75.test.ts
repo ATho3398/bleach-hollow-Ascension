@@ -20,7 +20,7 @@ import {
 import { difficultyLabels, difficultyText } from '../src/engine/faction';
 import { getFaction } from '../src/data/factions';
 import { defaultDifficulty, maxTierReached, migrateSave, newSaveData, performEvolution, performRebirth, recordExpedition, sanitizeDifficulty, SAVE_FORMAT_VERSION, settleStreak, streakFor, TRACK_KEYS, unlockDifficultyFor, type SaveData } from '../src/game';
-import { difficultyInfo } from '../src/ui/planView';
+import { difficultyDetail, difficultyInfo } from '../src/ui/planView';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 import { useLegacyMigrations } from './helpers/legacyGate';
 
@@ -178,7 +178,7 @@ describe('32-1 6·7번: 사냥터 강도 일원화, 스토리 화·보스·등�
   it('사냥터 강도는 모두 ×1 (무대·속성·먹이만 담당)', () => {
     for (const g of GROUNDS) expect(g.strength, g.id).toEqual({ hp: 1, attack: 1 });
   });
-  it('스토리 화마다 ★ 가 있고(1장 = ★1~★2), 원정은 화의 ★ 를 쓰며 보스 화의 ★ = 보스 데이터의 ★ (모래 아귀 ★2)', () => {
+  it('스토리 화마다 ★ 가 있고(1장 = ★1~★2), 원정은 화의 ★ 를 쓰며 보스 화의 ★ = 보스 데이터의 ★ (아레나 보라스 ★2)', () => {
     for (const ch of STORY_CHAPTERS) {
       for (const fid of ['hollow', 'shinigami']) {
         const c = chapterContent(fid, ch.id);
@@ -386,10 +386,12 @@ describe('32-1 10번: 연속 클리어 (같은 ★ 클리어마다 다음 원정
     bad.exp.streak = 11;
     expect(restoreExpedition(bad).ok).toBe(false);
   });
-  it('출발 화면 한 줄: "★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +28%"', () => {
+  // GDD 193장 11 (C.307): 한 줄은 말로, 가산 % 는 ⓘ(difficultyDetail)
+  it('출발 화면 한 줄: "★3 · 연속 4번째 · 권장 — 적이 3단계(아쥬커스)보다 조금 세고 보상이 늘어난다" + ⓘ 수치', () => {
     const f = getFaction('hollow');
-    expect(difficultyInfo(f, 3, 2, 4)).toBe('★3 · 연속 4 · 권장: 적은 3단계(아쥬커스) 기준 +20% · 먹이·노력치 +70% · 골드 +28%');
-    expect(difficultyInfo(f, 1, 0, 0)).toBe('★1 · 권장: 적은 1단계(호로) 기준');
+    expect(difficultyInfo(f, 3, 2, 4)).toBe('★3 · 연속 4번째 · 권장 — 적이 3단계(아쥬커스)보다 조금 세고 보상이 늘어난다');
+    expect(difficultyInfo(f, 1, 0, 0)).toBe('★1 · 권장 — 적이 1단계(호로)만큼 세다');
+    expect(difficultyDetail(f, 3, 4).lines.slice(0, 3)).toEqual(['적 기준: 3단계(아쥬커스) · +20%', '먹이·노력치: +70%', '골드: +28%']);
     expect(src('src/ui/planView.ts')).toContain('h.streak');
   });
 });

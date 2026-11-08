@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>월드맵</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · {{t.map}}</b> — 초점: 모험 (캐릭터가 걸어가는 중)</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-scene">
+              <div class="bha-scene-bg" data-label="{{t.map}} 지도 그림 자리 (하이앵글 한 장)" style="background: var(--bha-scene-wall); background-image: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.12) 0 1px, transparent 1px 24px), repeating-linear-gradient(90deg, rgb(0 0 0 / 0.12) 0 1px, transparent 1px 24px)"></div>
+              <div class="bha-obj" style="left: 3.5%; top: 17%; width: 14%; height: 35%"><span class="bha-art"><i class="bha-i bha-i-tower"></i></span><span class="bha-plate">도전의 탑</span></div>
+              <div class="bha-obj" style="left: 53%; top: 11%; width: 14%; height: 31%"><span class="bha-art"><i class="bha-i bha-i-shop"></i></span><span class="bha-plate">시장 <span class="bha-badge bha-badge--brass">상인</span></span></div>
+              <div class="bha-obj" style="left: 82%; top: 24%; width: 15%; height: 32%"><span class="bha-art"><i class="bha-i bha-i-steam"></i></span><span class="bha-plate">온천</span></div>
+              <div class="bha-obj" style="left: 42%; top: 42%; width: 13%; height: 29%"><span class="bha-art"><i class="bha-i bha-i-home"></i></span><span class="bha-plate">{{t.room}}</span></div>
+              <div class="bha-obj is-focus" style="left: 15.5%; top: 60%; width: 13%; height: 33%"><span class="bha-art is-hl"><i class="bha-i bha-i-forest"></i></span><span class="bha-plate is-on">모험</span></div>
+              <div class="bha-obj" style="left: 54%; top: 67%; width: 10%; height: 30%"><span class="bha-art"><i class="bha-i bha-i-dummy"></i></span><span class="bha-plate">수련장</span></div>
+              <div class="bha-art" style="position: absolute; left: 33%; top: 52%; width: 7%; height: 16%; z-index: 3"><i class="bha-i bha-i-figure"></i></div>
+              <div style="position: absolute; left: 26%; top: 63%; width: 7%; height: 2px; background: repeating-linear-gradient(90deg, var(--bha-text-3) 0 4px, transparent 4px 8px); transform: rotate(28deg); transform-origin: right"></div>
+            </div>
+            <div class="bha-head bha-head--over" style="padding-top: 4px">
+              <button class="bha-btn bha-btn--sm" style="background: rgb(12 10 9 / 0.82)"><i class="bha-i bha-i-back"></i>{{t.room}}로</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>위 여백 없이 지도가 LCD 전체를 채우고, 돌아가기 버튼만 장면 위 왼쪽에 겹친다 (토스트와 안 겹치게 왼쪽 끝)</li>
+      <li>장소 6곳 위치는 그대로, 이름표를 같은 판 모양으로 통일하고 '상인' 배지는 시장 이름표 안 황동 배지로 붙였다</li>
+      <li>초점 장소는 그림 윤곽 + 밝은 이름표 + 아래 ▲ 커서. 캐릭터는 지금 고른 장소로 점선 길을 따라 걷는다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', room: '둥지', map: '웨코문도' },
+      { k: 'shinigami', race: '사신', room: '대원실', map: '소울 소사이어티' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

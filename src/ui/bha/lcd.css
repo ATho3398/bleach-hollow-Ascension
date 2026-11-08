@@ -3,19 +3,8 @@
 
 /* ═════ 전투: battle-scene.css (GDD 18-6) ═════ */
 
-/* ═════ 튜토리얼 오버레이 (.bha-tut): 낮은 LCD 에서는 카드를 컴팩트하게 하고 단계 표시와 버튼을 한 줄에 ═════ */
-.bha-lcd .bha-tut__card { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
-.bha-lcd .bha-tut__card.is-placed { left: auto; transform: none; width: auto; max-width: none; transition: none; }
-.bha-lcd .bha-tut__card.is-placed:not(.is-below):not(.is-above)::before { display: none; }
-.bha-lcd .bha-tut__top { flex-wrap: wrap; gap: var(--bha-sp-2) var(--bha-sp-4); }
-.bha-lcd .bha-tut__steps { display: flex; align-items: center; gap: var(--bha-sp-4); min-width: 0; }
-.bha-lcd .bha-tut__actions { display: flex; flex: none; gap: var(--bha-sp-3); margin: 0 0 0 auto; }
-.bha-lcd .bha-tut .bha-battle__pausetag { display: none; }  /* 카드가 같은 자리를 쓰므로 "전투 멈춤" 칩은 숨긴다 (멈춘 화면 표시는 그대로) */
-.bha-lcd .bha-tut__hole { outline-offset: 1px; }
-.bha-lcd .bha-tut__actions .bha-btn--small { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
-.bha-lcd .bha-tut__title { font-size: var(--bha-fs-lg); }
-.bha-lcd .bha-tut__title .bha-icon { width: 18px; height: 18px; }
-.bha-lcd .bha-tut__body { font-size: var(--bha-fs-sm); line-height: 1.45; }
+/* 튜토리얼 카드 모양은 screens/screens.css 한 벌 (C.296). 카드가 같은 자리를 쓰므로 "전투 멈춤" 칩은 숨긴다 (멈춘 화면 표시는 그대로) */
+.bha-lcd .bha-tut .bha-battle__pausetag { display: none; }
 
 /* ═════ 원정(걷기) 화면: walk-scene.css (GDD 18-7) ═════ */
 
@@ -37,11 +26,11 @@
 .bha-split .bha-result__reason { font-size: var(--bha-fs-sm); max-width: none; }
 .bha-split .bha-panel { padding: var(--bha-sp-4) var(--bha-sp-5); gap: var(--bha-sp-2); }
 .bha-split .bha-info__row { padding: var(--bha-sp-2) 0; }
-.bha-split .bha-info dd { font-size: var(--bha-fs-sm); }
+.bha-split .bha-infotable dd { font-size: var(--bha-fs-sm); }
 
 
 /* 한계 돌파: 균열 배경 위에 두 열 */
-.bha-lcd .bha-app.bha-break--split { text-align: left; background: radial-gradient(circle at 25% 40%, rgb(255 79 216 / .22), transparent 60%), radial-gradient(circle at 25% 120%, rgb(229 72 77 / .25), transparent 55%), var(--bha-bg-0); }
+.bha-lcd .bha-app.bha-break--split { text-align: left; background: var(--bha-bg-0); }
 .bha-break--split .bha-split__main { align-items: center; text-align: center; }
 .bha-break--split .bha-break__title { font-size: var(--bha-fs-2xl); }
 .bha-break--split .bha-break__gauge { width: 100%; }
@@ -50,6 +39,12 @@
 /* ═════ 토스트(알림 띠) (C.193, GDD 119장 6 — C.170 의 아래쪽에서 바꿈): LCD 맨 위 가운데 고정, 여러 개면 위에서 아래로 쌓인다(--toast-i).
    아래쪽 버튼·조작 줄을 가리지 않는다. 누름은 통과(pointer-events: none, 기본 규칙). 위에서 내려왔다 위로 사라진다(기본 애니메이션) ═════ */
 .bha-lcd .bha-toast { top: var(--bha-sp-1); bottom: auto; }
+/* 설정 화면이 열려 있으면 아래 가운데 (GDD 189장 엑셀 22 — 설정 제목·탭을 덮지 않게). 아래에서 올라왔다 아래로 사라진다 */
+.bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center) { top: auto; bottom: calc(var(--bha-sp-1) + var(--toast-i, 0) * 34px); margin-top: 0; }
+.bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center).is-in { animation-name: bha-toast-in-up; }
+.bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center).is-out { animation-name: bha-toast-out-down; }
+@keyframes bha-toast-in-up { from { opacity: 0; transform: translate(-50%, 130%); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes bha-toast-out-down { to { opacity: 0; transform: translate(-50%, 130%); } }
 /* 튜토리얼 달성 (GDD 109장 5번, C.180 → C.196 GDD 119장 6 "전부 상단 고정"): 가운데에서 맨 위 가운데로 — 다른 알림과 같이 쌓인다.
    전투·대사 창 위(z-index)와 누르면 바로 닫히는 것은 그대로 */
 .bha-toast--center, .bha-lcd .bha-toast--center { z-index: var(--bha-z-tutorial); pointer-events: auto; cursor: pointer; }

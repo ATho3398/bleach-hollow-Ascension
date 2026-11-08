@@ -1,0 +1,165 @@
+{
+  "shots": [
+    "hollow-1-room.png",
+    "hollow-1b-room-focus-book.png",
+    "hollow-1c-room-more.png",
+    "hollow-1d-room-shell-bone.png",
+    "hollow-2-worldmap.png",
+    "hollow-3-market.png",
+    "hollow-5-spa-full.png",
+    "hollow-1e-room-hp50.png",
+    "hollow-2b-worldmap-wanderer.png",
+    "hollow-3b-market-wanderer.png",
+    "hollow-5b-spa-resting.png",
+    "hollow-1f-room-dying.png",
+    "hollow-1g-room-dead.png",
+    "shinigami-1-room.png",
+    "shinigami-1b-room-focus-book.png",
+    "shinigami-1c-room-more.png",
+    "shinigami-1d-room-shell-bone.png",
+    "shinigami-2-worldmap.png",
+    "shinigami-3-market.png",
+    "shinigami-5-spa-full.png",
+    "shinigami-1e-room-hp50.png",
+    "shinigami-2b-worldmap-wanderer.png",
+    "shinigami-3b-market-wanderer.png",
+    "shinigami-5b-spa-resting.png",
+    "shinigami-1f-room-dying.png",
+    "shinigami-1g-room-dead.png"
+  ],
+  "overflow": {
+    "hollow-1-room.png": [],
+    "hollow-1b-room-focus-book.png": [],
+    "hollow-1c-room-more.png": [],
+    "hollow-1d-room-shell-bone.png": [],
+    "hollow-2-worldmap.png": [],
+    "hollow-3-market.png": [],
+    "hollow-5-spa-full.png": [],
+    "hollow-1e-room-hp50.png": [],
+    "hollow-2b-worldmap-wanderer.png": [],
+    "hollow-3b-market-wanderer.png": [],
+    "hollow-5b-spa-resting.png": [],
+    "hollow-1f-room-dying.png": [],
+    "hollow-1g-room-dead.png": [],
+    "shinigami-1-room.png": [],
+    "shinigami-1b-room-focus-book.png": [],
+    "shinigami-1c-room-more.png": [],
+    "shinigami-1d-room-shell-bone.png": [],
+    "shinigami-2-worldmap.png": [],
+    "shinigami-3-market.png": [],
+    "shinigami-5-spa-full.png": [],
+    "shinigami-1e-room-hp50.png": [],
+    "shinigami-2b-worldmap-wanderer.png": [],
+    "shinigami-3b-market-wanderer.png": [],
+    "shinigami-5b-spa-resting.png": [],
+    "shinigami-1f-room-dying.png": [],
+    "shinigami-1g-room-dead.png": []
+  },
+  "sizes": {
+    "hollow-1-room.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1b-room-focus-book.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1c-room-more.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1d-room-shell-bone.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-2-worldmap.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-3-market.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-5-spa-full.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1e-room-hp50.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-2b-worldmap-wanderer.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-3b-market-wanderer.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-5b-spa-resting.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1f-room-dying.png": {
+      "small": [],
+      "tiny": []
+    },
+    "hollow-1g-room-dead.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1-room.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1b-room-focus-book.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1c-room-more.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1d-room-shell-bone.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-2-worldmap.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-3-market.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-5-spa-full.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1e-room-hp50.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-2b-worldmap-wanderer.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-3b-market-wanderer.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-5b-spa-resting.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1f-room-dying.png": {
+      "small": [],
+      "tiny": []
+    },
+    "shinigami-1g-room-dead.png": {
+      "small": [],
+      "tiny": []
+    }
+  },
+  "errors": []
+}

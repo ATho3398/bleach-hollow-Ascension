@@ -82,7 +82,7 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
   it('스탯만: 특성·속성 카운트 X, 노력치 ×2, 리스크 ×0.5, 배부름 그대로, 흡수 수는 센다, 특성을 고르면 거절', () => {
     const { e, own, enemy } = atAbsorb({ atk: 2 });
     const hunger0 = e.hunger;
-    expect(chooseAbsorb(e, own[0]!, undefined, 'stat')).toEqual({ ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' });
+    expect(chooseAbsorb(e, own[0]!, undefined, 'stat')).toEqual({ ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' });
     expect(e.phase).toBe('absorb');
     expect(chooseAbsorb(e, null, undefined, 'stat').ok).toBe(true);
     expect(e.build.slots.filter(Boolean)).toEqual([]);
@@ -117,19 +117,15 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
 });
 
 describe('C.108 노력치 상한·수련 보상', () => {
-  it('상한 = 3~5단계 합계의 약 15% (70·88·110), 능력치 1개 50% — 1·2단계는 C.115(GDD 59)에서 약 8%(24·32)로 내림', () => {
-    expect(SX.evCapTotal).toEqual([24, 32, 70, 88]); // C.220: 4단계 (마지막 110 삭제)
+  it('상한 = [56, 108, 168, 240]·능력치 1개 60% (GDD 202장) — 옛 15%/8% 규칙은 202장에서 흡수 횟수 기준으로 바뀜', () => {
+    expect(SX.evCapTotal).toEqual([56, 108, 168, 240]); // GDD 202장 (C.334): 흡수 횟수 기준('둘 다' 약 15번). 옛 [36, 44, 70, 88] = C.280
     SX.evCapTotal.forEach((cap, i) => {
-      if (i >= 2) {
-        expect(cap / SX.tierTotals[i]!).toBeGreaterThan(0.14);
-        expect(cap / SX.tierTotals[i]!).toBeLessThan(0.16);
-      }
-      expect(evCaps(i)).toEqual({ total: cap, perStat: Math.floor(cap * 0.5) });
+      expect(evCaps(i)).toEqual({ total: cap, perStat: Math.floor(cap * 0.6) }); // 202장 2: 능력치 하나 60%
     });
     const e = newEvolution();
-    expect(addEv(e, { atk: 99 })).toEqual({ atk: 12 });
-    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 12 });
-    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(24);
+    expect(addEv(e, { atk: 99 })).toEqual({ atk: 33 });
+    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 23 });
+    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(56);
   });
   it('수련 4종 노력치 +4~5', () => {
     const G = BALANCE.provisional.training.games;

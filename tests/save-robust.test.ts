@@ -53,6 +53,7 @@ function legacyOf(f: number): Record<string, any> {
   const s = JSON.parse(PLAYED);
   const log = s.runLog;
   s.meta.format = f;
+  if (f < 64) { delete s.enemyDex; for (const r of log.runs) delete r.kills; } // C.330 적 도감
   if (f < 25) delete s.machine;
   if (f < 24) { delete s.wear; delete log.shopPurchases; s.shared = { ...s.shared }; delete s.shared.rerollTickets; delete s.shared.deckSlots; delete s.shared.cosmetics; }
   if (f < 23) { delete s.otherTracks; delete s.trackNotice; delete s.hogyoku; delete s.transcendentDex; delete s.slotLog; }
@@ -164,7 +165,7 @@ describe('원정 중간 저장 복구', () => {
   it('정상 중간 저장은 저장·로드 뒤 그대로 이어한다', () => {
     const st = memStore();
     writeSave(st, midSave());
-    const r = readActiveExpedition(loadSave(st)!);
+    const r = readActiveExpedition(loadSave(st)!, 6); // C.311: 저장 시각 5 → 시한 안(지금 6)
     expect(r.ok).toBe(true);
   });
 
@@ -177,10 +178,14 @@ describe('원정 중간 저장 복구', () => {
       s.activeExpedition = b;
       const r = load(s);
       expect(r, JSON.stringify(b).slice(0, 40)).not.toBeNull();
-      expect(() => readActiveExpedition(r!)).not.toThrow();
-      const a = readActiveExpedition(r!);
+      expect(() => readActiveExpedition(JSON.parse(JSON.stringify(r!)), 6)).not.toThrow();
+      const a = readActiveExpedition(r!, 6);
       if (!a.ok) expect(r!.activeExpedition).toBeNull();
-      expect(r!.runLog.runs.length).toBe(3);
+      // C.311 (GDD 192장 1): 손상이라도 runId·seed·종족이 읽히면 실패 기록 한 줄(abandoned 'corrupt')을 남긴다 — 옛 기록 3개는 그대로
+      const extra = r!.runLog.runs.slice(3);
+      expect(extra.length).toBeLessThanOrEqual(1);
+      for (const x of extra) expect([x.endReason, x.abandoned, x.outcome]).toEqual(['abandoned', 'corrupt', 'defeated']);
+      expect(r!.runLog.runs.slice(0, 3)).toEqual(JSON.parse(JSON.stringify(midSave().runLog.runs)));
     }
   });
 });

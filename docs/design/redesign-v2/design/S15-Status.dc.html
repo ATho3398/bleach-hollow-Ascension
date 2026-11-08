@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>상태 화면</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.st{display:grid;grid-template-columns:52px 1fr auto 24px;align-items:center;gap:4px;height:32px;padding:0 4px 0 8px;border-radius:var(--bha-r-sm);background:var(--bha-bg-1);box-shadow:0 0 0 1px var(--bha-line-1)}
+.st > span:first-child{font-size:13px;color:var(--bha-text-2);font-weight:700}
+.st b{font-size:16px;font-weight:800;color:var(--bha-text-1);text-align:right}
+.st em{font-style:normal;font-size:14px;font-weight:800;color:var(--bha-good);min-width:34px;text-align:right}
+.st .bha-info{width:32px;height:32px;margin:0 -6px 0 -4px}
+.gr2{display:grid;grid-template-columns:20px 64px 1fr 30px 24px;gap:6px;align-items:center;height:30px}
+.gr2 .bha-i{width:18px;height:18px;color:var(--c)}
+.gr2 > span:nth-child(2){font-size:13px;color:var(--bha-text-2);font-weight:700}
+.gr2 .bha-info{width:32px;height:32px;margin:0 -6px 0 -4px}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 상태</b> — 초점: 힘 ⓘ (설명 창 열림)</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <i class="bha-i bha-i-{{t.icon}}" style="color: var(--bha-text-2)"></i>
+              <span class="bha-title">상태</span>
+              <span class="bha-sub" style="font-size: 13px">{{t.form}} · 사냥터 {{t.map}} · 모험 12회</span>
+            </div>
+            <div style="position: absolute; left: 10px; top: 46px; width: 300px; height: 298px; display: flex; flex-direction: column; gap: 4px">
+              <div class="bha-label">상태이상</div>
+              <div style="display: flex; gap: 6px; align-items: center; height: 30px">
+                <span class="bha-chip bha-chip--danger" style="--c: var(--bha-accent-hi)"><i class="bha-i bha-i-skull"></i>중독 · 2바퀴 남음</span>
+                <button class="bha-info" style="margin: 0" aria-label="중독 설명"><i class="bha-i bha-i-info"></i></button>
+              </div>
+              <div class="bha-sep" style="margin: 2px 0"></div>
+              <div class="gr2" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food"></i><span>배부름</span><span class="bha-gauge"><i style="width: 80%"></i></span><span class="bha-num" style="font-size: 13px">80</span><button class="bha-info" aria-label="배부름 설명"><i class="bha-i bha-i-info"></i></button></div>
+              <div class="gr2" style="--c: var(--bha-cond)"><i class="bha-i bha-i-bolt"></i><span>컨디션</span><span class="bha-gauge"><i style="width: 80%"></i></span><span class="bha-num" style="font-size: 13px">80</span><button class="bha-info" aria-label="컨디션 설명"><i class="bha-i bha-i-info"></i></button></div>
+              <div class="gr2" style="--c: var(--bha-stab)"><i class="bha-i bha-i-spirit"></i><span style="font-size: 12px">영압 안정도</span><span class="bha-gauge"><i style="width: 50%"></i></span><span class="bha-num" style="font-size: 13px">50</span><button class="bha-info" aria-label="영압 안정도 설명"><i class="bha-i bha-i-info"></i></button></div>
+              <div class="gr2" style="--c: var(--bha-risk)"><i class="bha-i bha-i-flame"></i><span>{{t.risk}}</span><span class="bha-gauge bha-gauge--danger"><i style="width: 2%"></i><b style="width: 25%"></b></span><span class="bha-num" style="font-size: 13px">0</span><button class="bha-info" aria-label="{{t.risk}} 설명"><i class="bha-i bha-i-info"></i></button></div>
+              <div class="gr2" style="--c: var(--bha-guard)"><i class="bha-i bha-i-care"></i><span>{{t.care}}</span><span class="bha-gauge"><i style="width: 0%"></i></span><span class="bha-num" style="font-size: 13px">0</span><button class="bha-info" aria-label="{{t.care}} 설명"><i class="bha-i bha-i-info"></i></button></div>
+            </div>
+            <div style="position: absolute; left: 320px; right: 10px; top: 46px; height: 298px; display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><span class="bha-label">능력치</span><span class="bha-sub">초록 +n = 노력치</span></div>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px">
+                <div class="st"><span>체력</span><b>98</b><em>+8</em><button class="bha-info" aria-label="체력 설명"><i class="bha-i bha-i-info"></i></button></div>
+                <div class="st"><span>힘</span><b>117</b><em>+17</em><button class="bha-info is-focus" aria-label="힘 설명" style="outline-offset: -2px"><i class="bha-i bha-i-info"></i></button></div>
+                <div class="st"><span>지능</span><b>97</b><em>+7</em><button class="bha-info" aria-label="지능 설명"><i class="bha-i bha-i-info"></i></button></div>
+                <div class="st"><span>방어</span><b>88</b><em>+0</em><button class="bha-info" aria-label="방어 설명"><i class="bha-i bha-i-info"></i></button></div>
+                <div class="st"><span>정신력</span><b>88</b><em>+0</em><button class="bha-info" aria-label="정신력 설명"><i class="bha-i bha-i-info"></i></button></div>
+                <div class="st"><span>속도</span><b>97</b><em>+7</em><button class="bha-info" aria-label="속도 설명"><i class="bha-i bha-i-info"></i></button></div>
+              </div>
+              <div class="bha-panel" style="padding: 6px 10px; display: flex; align-items: center; gap: 8px; font-size: 13px">
+                <i class="bha-i bha-i-spark" style="width: 18px; height: 18px; color: var(--bha-sp)"></i><span style="color: var(--bha-text-1); font-weight: 700">{{t.evo}}</span>
+              </div>
+              <span class="bha-grow"></span>
+              <div style="display: flex; gap: 6px">
+                <button class="bha-btn bha-grow"><i class="bha-i bha-i-book"></i>도감</button>
+                <button class="bha-btn bha-grow"><i class="bha-i bha-i-help"></i>도움말</button>
+                <button class="bha-btn bha-btn--danger bha-grow"><i class="bha-i bha-i-swap"></i>환생</button>
+              </div>
+            </div>
+            <div class="bha-pop" style="left: 420px; top: 108px; width: 196px; --tip: 172px"><b>힘</b>일반 공격이 주는 피해가 커진다.<div class="bha-pop-val">노력치 +17 · 수련·포식으로 오른다</div></div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>순서를 상태이상 → 상태 막대 → 능력치 → 진화 정보 → [도감][도움말][환생]으로 고정, 상태이상이 늘 맨 위</li>
+      <li>노력치는 16px 굵은 기본값 옆에 14px 굵은 초록 +n으로 따로 세워 한눈에 읽힌다. 각 줄 끝에 ⓘ</li>
+      <li>설명은 줄을 펼치지 않고 ⓘ 창(쉬운 말 한 줄 + 대표 값)으로만. 개발 정보·버전 문단을 화면에서 뺐다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', icon: 'skull', form: '바스트로레 노멀 조', map: '웨코문도', risk: '광기', care: '교감', evo: '마지막 단계에 도달했다 · 포식 기록은 칭호에 쌓인다' },
+      { k: 'shinigami', race: '사신', icon: 'figure', form: '수석 대원 노멀 권', map: '소울 소사이어티', risk: '호로화', care: '손질', evo: '마지막 단계에 도달했다 · 정화 기록은 칭호에 쌓인다' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

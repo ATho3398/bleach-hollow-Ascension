@@ -32,13 +32,13 @@ const quiet = (s: CombatState) => {
 };
 
 describe('62장 ② 전투 시간 절반 — hpScale', () => {
-  it('hpScale 0.5 가 적 최대 체력에, playerHpScale 0.7 이 내 최대 체력에 곱해진다 (회복·보호막은 최대 체력 비율이라 같이 준다)', () => {
-    expect(CX.hpScale).toBe(0.5);
+  it('hpScale 0.35 가 적 최대 체력에, playerHpScale 0.7 이 내 최대 체력에 곱해진다 (회복·보호막은 최대 체력 비율이라 같이 준다) — C.306 (GDD 193장 1): 0.5 → 0.35', () => {
+    expect(CX.hpScale).toBe(0.35);
     expect(CX.playerHpScale).toBe(0.7);
     const half = createCombat(1, { enemy: normal });
     const full = createCombat(1, { enemy: normal, params: { hpScale: 1, playerHpScale: 1 } });
-    expect(half.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage * 0.5);
-    expect(full.enemy.maxHp).toBeCloseTo(half.enemy.maxHp * 2);
+    expect(half.enemy.maxHp).toBeCloseTo(normal.hpInAttacks * CX.hpAttackScale * CX.playerAttackDamage * 0.35);
+    expect(full.enemy.maxHp).toBeCloseTo(half.enemy.maxHp / 0.35);
     expect(full.player.maxHp).toBeCloseTo(half.player.maxHp / 0.7);
     expect(half.player.maxHp).toBeCloseTo(CX.playerMaxHp * 0.7);
     // 회복(전투 소모품 회복약, C.177)은 최대 체력 비율이라 같이 준다
@@ -48,7 +48,7 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
     expect(s.player.hp - 1).toBeCloseTo(s.player.maxHp * 0.25, 6);
   });
 
-  it('사람형 봇 일반 적 처치 시간이 hpScale 1 의 약 절반(0.4~0.65배)이고, 블록 생성 타이머·틱은 그대로', () => {
+  it('사람형 봇 일반 적 처치 시간이 hpScale 1 의 약 1/3(0.25~0.5배 — C.306 hpScale 0.35)이고, 블록 생성 타이머·틱은 그대로', () => {
     let half = 0;
     let full = 0;
     for (let seed = 1; seed <= 12; seed++) {
@@ -56,8 +56,8 @@ describe('62장 ② 전투 시간 절반 — hpScale', () => {
       full += elapsedSeconds(playCombatHuman(createCombat(seed, { enemy: normal, params: { ...build('t-thunder-c'), hpScale: 1, playerHpScale: 1, blockSpawnMultiplier: 1 / 1.7 } })));
     }
     const ratio = half / full;
-    expect(ratio).toBeGreaterThan(0.4);
-    expect(ratio).toBeLessThan(0.65);
+    expect(ratio).toBeGreaterThan(0.25);
+    expect(ratio).toBeLessThan(0.5);
     expect(CX.tickSeconds).toBe(0.1);
     // 블록 타이머는 ÷1.7 (6.5 → 3.8 · 3.2 → 1.9 · 물공 6 → 3.5 · 혈 3 → 1.8): 체력만 반으로 줄이면 블록·체인이 적어 강적 승률이 무너져서
     expect(CX.blockSpawnSeconds).toBe(4.6); // C.132: 3.8 → 5.4 → C.133: 4.0 (GDD 80장 v5.166 기본 몫 45·25·15% 와 함께 칸별 블록 총량 맞춤) → C.134: 4.6 (GDD 83장 해방)

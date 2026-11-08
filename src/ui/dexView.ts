@@ -1,6 +1,6 @@
 // 진화체 도감 화면 (GDD 20-5, T-3 가로 배치): 머리에 발견 수 · 왼쪽 진화체 목록 · 오른쪽 고른 진화체의 상세.
 // C.171: 단계 탭 대신 한 목록 + 단계 머리줄. 해금된 진화체는 이름·속성 마크·종족값, 미해금은 "?" 잠금 행(히든은 "히든 ?"). 히든은 목록 맨 뒤, 지금 진화체는 "지금" 표시. 이름은 자리 표시(임시).
-import { FORM_TABLE, formHint, formName, formsOfTier } from '../data/evolution';
+import { FORM_TABLE, formHasUniqueRelease, formHint, formName, formReleaseCutin, formsOfTier } from '../data/evolution';
 import type { FormDef } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
 import type { SaveData } from '../game';
@@ -19,6 +19,22 @@ function marksOf(f: FormDef, factionId: string): HTMLElement {
   if (els.length === 0) marks.append(h('span', 'bha-faint', '속성 잇기'));
   for (const e of els) marks.append(elementDot(e, factionId));
   return marks;
+}
+
+/** 고유 해방 한 줄 (GDD 198장, 4단계): '레스렉시온: 내리찍어라, 마르티요!' / '만해: 만해 — 천단백련!'. 만해가 없는 진화체는 기본 해방 그대로라고 적는다 */
+function releaseLine(faction: FactionConfig, f: FormDef): string | null {
+  if (!f.release) return null;
+  const lb = faction.liberation;
+  const cutin = formReleaseCutin(f, faction.id);
+  if (cutin && formHasUniqueRelease(f, faction.id)) return `${lb.name}: ${cutin}`;
+  return formHasUniqueRelease(f, faction.id) ? null : `${lb.name}: 없음 (${lb.baseName} 그대로)`;
+}
+
+/** '여러 값 한 줄'(예 '종족값 체력 69 · 힘 66 · …')은 ' · ' 사이 한 칸씩 줄바꿈 없는 덩어리로 — 줄이 접혀도 '정신력 / 59' 처럼 칸이 쪼개지지 않는다 (C.332) */
+export function pairsOf(line: string): (Node | string)[] {
+  const parts = line.split(' · ');
+  if (parts.length < 2) return [line];
+  return parts.flatMap((p, i) => [...(i > 0 ? [' · '] : []), h('span', 'bha-mddetail__pair', p)]);
 }
 
 function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<string>, currentFormId: string | null, caption?: string): ListRow {
@@ -48,7 +64,9 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
       if (m.current) head.append(h('span', 'bha-chip bha-chip--good', '지금'));
       const body = h('p', 'bha-mddetail__body');
       body.append(formHint(f, faction.id));
-      for (const line of lines.slice(1)) body.append(h('br'), line);
+      for (const line of lines.slice(1)) body.append(h('br'), ...pairsOf(line));
+      const rel = releaseLine(faction, f);
+      if (rel) body.append(h('br'), rel);
       return [head, body, abilityParagraph(dexAbilityLines(f, faction.id))];
     },
   };

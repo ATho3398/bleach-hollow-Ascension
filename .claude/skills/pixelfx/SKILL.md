@@ -15,11 +15,14 @@ compatibility: Node 18 or newer. ffmpeg is optional (GIF and MP4 previews).
   - 게임 코드는 `src/ui/bha/pixelFx.ts` 의 `loadPixelFx(이름)` → `playPixelFx(host, 시트, { x, y, scale, flip })` 로 재생한다(기준점 pivot 이 (x, y) 에 온다).
   - 확인: `npm run dev` → `/?fxlab` (개발 전용 실험실, 게임 배경·캐릭터 위에 재생). 캡처로 눈으로 본다.
   - 고정 버전을 올렸으면 `npm run fx -- rebuild`.
-- **새 이펙트 만들기**(원문 3절 이후)도 `vendor/pixelfx/src/fx/...` 에서 한다. 마음에 들면 그 파일을 `scripts/pixelfx/custom/<분류>/<이름>.js` 로 옮겨 커밋한다(vendor 는 지워질 수 있다). `npm run fx` 가 실행될 때마다 custom 을 vendor 에 겹쳐 넣는다.
+- **새 이펙트 만들기**(원문 3절 이후)도 `vendor/pixelfx/src/fx/...` 에서 한다. 마음에 들면 그 파일을 **`scripts/pixelfx/custom/custom/<이름>.js`(id `custom/<이름>`)** 로 옮겨 커밋한다(vendor 는 지워질 수 있다). 사용자 2026-11-04 "앞으로 새로 만드는 이펙트 다 커스텀에 넣어. 커스텀은 맨위로 올리고" — 원본을 고친 것도 원본 분류가 아니라 custom 에(예 `custom/cero-oscuras` 세로 오스큐라스). `npm run fx` 와 이펙트 배치 도구(`scripts/pixelfx/tool/build.mjs`)가 custom 을 vendor 에 겹쳐 넣는다.
+- **이펙트 배치 도구**(아티팩트 https://claude.ai/artifact/8zYJY6nUzygqcDZGRG32to, `scripts/pixelfx/tool/README.md`): 사용자가 게임에 붙일 이펙트의 자리·크기·각도·타이밍을 여기서 맞추고 [확정] 뒤 "ㅇㅋ" 하면 그 값(db `fx/fixed`)으로 게임에 넣는다.
+- **게임에 넣기**(C.281, GDD 185장): ArtifactData list `fx` → `fixed.json` → `node scripts/pixelfx/tool/apply.mjs <fixed.json>`(종족 json `families[].pixelFx` 한 줄 + 시트) → 테스트·캡처(`scripts/c281-proof.cjs` 처럼) → main. 게임 재생 = `src/ui/pixelAttack.ts` 계획 + `attackFx.ts`. 도구를 다시 올리면 처음 값 = 게임 값.
 - **색**: `--palette` 에 pixelfx `PAL` 이름(`npm run fx -- palettes`)이나 직접 고른 색을 준다. 종족별 색을 코드에 박지 않는다(CLAUDE.md 2) — 종족마다 다른 시트가 필요하면 이름을 나눠 가져오고, 어느 종족이 무엇을 쓰는지는 `src/data/factions/*.json` 에 둔다.
 - **전투·흡수·진화 연출에 붙이는 것은 기획서 13장 로드맵에서 사용자가 시작하라고 했을 때만**. 그 전에는 가져오기·실험실 확인까지.
 - **라이선스**: pixelfx 는 MIT(`THIRD_PARTY_NOTICES.md`, 배포본 `public/fx/LICENSE-pixelfx.txt`). `gallery/fonts` 의 **Patch Pixel 글꼴은 MIT 가 아니라 쓰지 않는다**(`fx:fetch` 가 받은 뒤 지운다).
-- 보고는 한국어로(CLAUDE.md).
+- **후보 보여 주기**(사용자 2026-11-04 01:0x 원문 "후보를 뽑아오라 하면, 그냥 이펙트만 불러와. 내가 볼 수 있게 gif로. 괜히 게임에 입히면서 토큰낭비하지 말고."): 후보 요청이면 `vendor/pixelfx` 에서 `node tools/render.mjs <id> --gif` 로 이펙트만 gif 로 뽑아 보여 준다. `public/fx` 가져오기·실험실 캡처는 사용자가 고른 뒤에.
+- 보고는 한국어로(CLAUDE.md). 픽셀FX 세션 보고에는 UI 배치 도구 주소를 붙이지 않는다(그 규칙은 UI 배치 도구 세션 것).
 
 # pixelfx
 

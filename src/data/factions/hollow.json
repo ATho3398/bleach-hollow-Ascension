@@ -126,7 +126,7 @@
   "appearanceChange": true,
   "defeatStateName": "가면이 깨져 쓰러짐",
   "basicSkillName": "본체 능력",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
   "arenaBg": "seireitei",
@@ -172,6 +172,7 @@
       "name": "조(爪)",
       "abbr": "조",
       "fx": "claw",
+      "pixelFx": {"stages":[{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"melee/claw-swipe","color":"element","anchor":"target","on":[0],"delay":0,"dx":47,"dy":-44,"scale":2,"angle":14,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"female":{"chain":[{"id":"punch","rate":1}],"bodyAt":0,"bodyFromHit":true}}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"melee/claw-swipe","color":"element","anchor":"target","on":[0],"delay":0,"dx":37,"dy":-54,"scale":2.75,"angle":35,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"female":{"chain":[{"id":"punch","rate":1}],"bodyAt":0,"bodyFromHit":true}}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"melee/claw-swipe","color":"element","anchor":"target","on":[0],"delay":0,"dx":37,"dy":-54,"scale":2.25,"angle":22,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"melee/claw-swipe","color":"element","anchor":"target","on":[0],"delay":150,"dx":86,"dy":-11,"scale":3.25,"angle":-57,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"female":{"chain":[{"id":"punch","rate":3},{"id":"straight","rate":3}],"bodyAt":0,"bodyFromHit":true}}}]},
       "category": "physical",
       "tiers": [
         {
@@ -198,6 +199,7 @@
       "name": "교(咬)",
       "abbr": "교",
       "fx": "bite",
+      "pixelFx": {"stages":[{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"custom/bite","color":"element","anchor":"target","on":[0],"delay":0,"dx":0,"dy":0,"scale":1.5,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"custom/bite","color":"element","anchor":"target","on":[0],"delay":0,"dx":0,"dy":0,"scale":2.25,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":2,"gaps":[230],"speed":1,"layers":[{"fx":"custom/bite","color":"element","anchor":"target","on":[0],"delay":0,"dx":0,"dy":0,"scale":2.25,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/bleed-burst","color":"original","anchor":"target","on":[1],"delay":0,"dx":-80,"dy":43,"scale":1.5,"angle":0,"rate":0.85,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"headbutt","rate":1}],"bodyAt":0,"bodyFromHit":true},"female":{"chain":[{"id":"headbutt","rate":1}],"bodyAt":0,"bodyFromHit":true}}}]},
       "category": "mixed",
       "tiers": [
         {
@@ -224,6 +226,7 @@
       "name": "탄(彈)",
       "abbr": "탄",
       "fx": "shot",
+      "pixelFx": {"stages":[{"hits":2,"gaps":[190],"speed":1,"layers":[{"fx":"projectiles/bullet-tracer","color":"element","anchor":"attacker","on":[0],"delay":0,"dx":0,"dy":0,"scale":1.75,"angle":0,"rate":1,"altFlip":false,"move":"fly","travel":170,"arc":0,"tx":133,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"impacts/hit-spark","color":"element","anchor":"target","on":[1],"delay":0,"dx":-12,"dy":-15,"scale":2,"angle":-6,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"custom/cero","color":"element","anchor":"attacker","on":[0],"delay":0,"dx":-304,"dy":2,"scale":2.25,"angle":0,"rate":0.85,"altFlip":false,"move":"stay","travel":170,"arc":-2,"tx":0,"ty":-2,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":2,"gaps":[170],"speed":1,"layers":[{"fx":"custom/cero-oscuras","color":"element","anchor":"attacker","on":[1],"delay":0,"dx":-303,"dy":3,"scale":2,"angle":0,"rate":0.85,"altFlip":false,"move":"stay","travel":170,"arc":-2,"tx":0,"ty":-2,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/ki-gather","color":"element","anchor":"attacker","on":[0],"delay":0,"dx":-60,"dy":-40,"scale":1.5,"angle":0,"rate":1.9,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}}]},
       "category": "special",
       "tiers": [
         {
@@ -251,7 +254,8 @@
     }
   ],
   "nestName": "둥지",
-  "tagline": "먹고 진화하는 괴물",
+  "tagline": "적을 포식해 자라는 괴물",
+  "pickNote": "적을 {absorbActionName}해 블록과 능력치를 얻고, 진화할수록 모습이 바뀐다. {nestName}에서 {foodGroupName}(으)로 돌보며 {riskGaugeName}을(를) 다스린다.",
   "nestActionsShort": {"feed": "먹이"},
   "foodGroupName": "먹이",
   "nestActions": {
@@ -291,8 +295,17 @@
   },
   "breakthroughText": "광기가 한계를 넘었다. 영압이 흔들리고 공허가 몰려든다…",
   "frenzyName": "폭주",
-  "market": { "name": "시장" },
-  "worldmap": { "name": "웨코문도", "adventureName": "모험", "spaName": "온천" },
+  "market": {
+    "name": "시장", "sceneArt": "scene.market.hollow",
+    "floor": { "aspect": 2, "poly": [[0, 0.3], [1, 0.3], [1, 1], [0, 1]], "view": { "zoom": 1.16, "x": 50, "y": 50 } },
+    "layout": { "shop": { "x": 33.2, "y": 89, "scale": 0.9 }, "gearShop": { "x": 66.4, "y": 90, "scale": 0.89 }, "skinShop": { "x": 69, "y": 42.7, "scale": 0.92 }, "traitShop": { "x": 87.2, "y": 72.4, "scale": 1.09 }, "smith": { "x": 33.6, "y": 40.4, "scale": 0.96 }, "wanderer": { "x": 49.1, "y": 68.3, "scale": 1.03 } },
+    "exit": { "x": 10.6, "y": 72.3, "scale": 0.64 }
+  },
+  "worldmap": {
+    "name": "웨코문도", "adventureName": "모험", "spaName": "온천",
+    "sceneArt": "scene.worldmap.hollow",
+    "floor": { "aspect": 2, "poly": [[0, 0.16], [1, 0.16], [1, 1], [0, 1]], "view": { "zoom": 1.48, "x": 53.1, "y": 12.2 } }
+  },
   "room": {
     "shape": "cave",
     "sceneArt": "scene.cave",
@@ -432,14 +445,16 @@
       "keyring-bell": "bonebell"
     }
   },
-  "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 깨면 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5 },
+  "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 깨면 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5, "formNameKey": "name" },
   "liberation": {
     "baseName": "영력 해방",
     "baseCutin": "영력을 끌어올린다 — 영력 해방!",
     "baseEndText": "해방이 풀렸다. 광기가 스며든다…",
     "name": "레스렉시온",
     "cutin": "본능을 해방한다 — 레스렉시온!",
-    "endText": "해방이 풀렸다. 광기가 스며든다…"
+    "endText": "해방이 풀렸다. 광기가 스며든다…",
+    "formKey": "name",
+    "formCutin": "{command}, {name}!"
   },
   "rebirth": {
     "name": "환생",

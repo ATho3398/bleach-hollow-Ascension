@@ -3,7 +3,7 @@
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
 import { PATCH_LABEL } from '../version';
-import { onUpdateReady } from '../pwa';
+import { onAutoRestart } from '../pwa';
 import { button, el, mountApp, notice } from './bha/dom';
 import { logoMark } from './bha/logo';
 
@@ -119,12 +119,14 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   // 첫 화면엔 버전 이름만 (#2). 단계·밸런스·커밋까지 든 자세한 줄은 설정 > 정보
   const ver = el('p', 'bha-start__ver', `v ${PATCH_LABEL}`);
   nodes.push(ver);
-  // 오프라인 플레이(GDD 60장): 새 버전을 받아 뒀으면 한 줄 안내 (적용은 앱을 다시 열 때)
-  onUpdateReady(() => {
-    if (ver.isConnected) ver.after(el('p', 'bha-start__ver', '새 버전을 받았다. 앱을 닫았다 다시 열면 적용된다.'));
+  // 새 버전 (GDD 184장 3, C.283): 처음 화면이면 누르지 않아도 자동 다시 시작 — 직전에 한 줄 안내
+  // C.316: 안내는 버전 줄 오른쪽에 같은 줄로 붙인다 — 아래 새 줄로 달면 폰(796 터치·글자 1.15)에서 판 아래 끝에 걸려 잘렸다. 줄 수가 그대로라 메뉴 자리도 안 움직인다
+  onAutoRestart(() => {
+    if (ver.isConnected && !ver.querySelector('.bha-start__update')) ver.append(el('span', 'bha-start__update', '새 버전으로 다시 시작한다…'));
   });
   // 열 수 없는 세이브 알림이 있으면 낮은 화면(가로 390)에서도 버전 줄까지 들어가게 메뉴 3개를 한 줄로 (C.119)
-  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}` }, ...nodes);
+  // C.316: 경고 줄(note)이 있을 때도 같은 한 줄 메뉴 — 세로 4개 + 경고 줄이면 폰에서 버전 줄까지 판 아래로 밀렸다
+  mountApp(root, { cls: `bha-start bha-start--title${hasStale ? ' bha-start--stale' : ''}${note ? ' bha-start--note' : ''}` }, ...nodes);
 }
 
 export interface SpeciesHandlers {
@@ -155,7 +157,8 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('aria-label', f.name);
     const mark = logoMark(f, 'bha-logo--xl');
     card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
-    // 종족 한 줄 소개는 화면에서 뺐다 (GDD 129장 2, C.201 — 아이콘·이름만)
+    // 종족 한 줄 소개 (GDD 193장 10, C.304 — 129장 2 에서 뺐던 것을 다시): 문구는 종족 설정 tagline
+    if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;

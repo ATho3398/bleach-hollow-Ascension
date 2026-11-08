@@ -22,8 +22,9 @@ describe('C.138', () => {
     expect(src).not.toContain("'bha-block__fam'");
   });
   it('5번: 아이콘이 카드 중심에서 크고 이름은 아래 작게', () => {
-    const css = read('src/ui/bha/components/components.css');
-    expect(css).toMatch(/\.bha-block__icon \.bha-icon \{ width: 34px; height: 34px/);
-    expect(css).toMatch(/\.bha-block__icon \{[^}]*flex: 1 1 auto/);
+    // C.302 (GDD 190장 2): 전투 블록 옛 모양은 전투 루트 전용 battle-c281.css 로 (생성기가 공백을 줄인다)
+    const css = read('src/ui/bha/battle-c281.css');
+    expect(css).toMatch(/\.bha-block__icon \.bha-icon\{width: 34px; height: 34px/);
+    expect(css).toMatch(/\.bha-block__icon\{[^}]*flex: 1 1 auto/);
   });
 });

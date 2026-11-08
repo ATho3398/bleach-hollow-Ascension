@@ -13,7 +13,7 @@ import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { getTrait } from '../../data/traits';
 import {
   absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
-  newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type RiskState,
+  newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
   addEv, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
@@ -26,6 +26,7 @@ import {
 } from './variants';
 import type { FoodId } from '../faction';
 import { getBoss, isBossId } from '../../data/bosses';
+import { killsByEnemy } from '../enemyDex';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
 import { petBonus, rollAnyPet, type PetCarry } from '../pet';
@@ -58,8 +59,11 @@ const TT = BALANCE.provisional.tiles;
 
 export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-choice' | 'event' | 'ended';
 /** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
-/** abort = 원정 도중 [귀환하기] (GDD 81장, C.132): 모은 것은 지키고 이번 바퀴 완주 보상·연속 클리어는 없다 */
-export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
+/** abort = 원정 도중 [귀환하기] (GDD 81장, C.132): 모은 것은 지키고 이번 바퀴 완주 보상·연속 클리어는 없다.
+ *  abandoned = 이어 하지 못한 원정 (GDD 192장 1, C.311): 나간 뒤 시한을 넘겼거나(stale) 새 패치(version)면 패배 규칙 그대로 정산 — 이유는 ExpeditionState.abandoned·RunRecord.abandoned */
+export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned';
+/** 이어 하지 못한 이유 (C.311): stale = 나간 뒤 시한 초과, version = 밸런스 버전 다름(새 패치), corrupt = 중간 저장 손상(상태 없이 기록만) */
+export type AbandonReason = 'stale' | 'version' | 'corrupt';
 
 /** 지금 치를 전투 (전투 엔진에 넘길 재료) */
 export interface PendingBattle {
@@ -259,6 +263,8 @@ export interface ExpeditionState extends RiskState {
   lapsCompleted: number;
   outcome: 'returned' | 'defeated' | null;
   endReason: EndReason | null;
+  /** C.311 (GDD 192장 1): endReason 'abandoned' 일 때 그 이유. 끝난 원정에만 있다 */
+  abandoned?: Exclude<AbandonReason, 'corrupt'>;
   /** 귀환 처리 때(game.ts recordExpedition) 먹이를 보유에 넣은 결과. 결과 화면 표시용, 원정 중에는 없다 */
   foodSettled?: FoodSettlement;
   /** 귀환 처리 때 스토리 화·보스 보상 정산 결과 (game.ts settleStory). 결과 화면 표시용 */
@@ -1090,16 +1096,16 @@ export function absorbEvOf(offer: Pick<AbsorbOffer, 'ev'>, mode: AbsorbMode, dif
   return scaleEv(ev, difficulty, streak);
 }
 
-/** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체, traitId null 이면 특성을 포기하고 효과만).
+/** 흡수 (GDD 4장, 4-1 → 52장 갈래): 후보 중 traitId 를 슬롯에 장착(가득 차면 replaceSlot 과 교체 또는 'owned' = 보유 목록에만(193장 13), traitId null 이면 특성을 포기하고 효과만).
  *  mode = 'both'(특성·속성 카운트 + 노력치 ×1) / 'trait'(특성·속성 카운트만, 리스크 ×0.7) / 'stat'(노력치 ×2, 리스크 ×0.5, 특성·속성 카운트 없음 — traitId 는 null 이어야 한다).
  *  공통 효과: 리스크 상승(강할수록 많이), 보상 타일 +1 (배부름은 그대로 — GDD 163장 5). 실패하면 아무것도 바뀌지 않는다 */
-export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: number | null, mode: AbsorbMode = 'both'): AbsorbResult {
+export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: GainPlace, mode: AbsorbMode = 'both'): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
-  if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' };
+  if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' };
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
-    if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
+    if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 블록이다' };
     // 106장 1·111장 1: 이미 가진 특성(블록, 노멀 skill 특성 = 기본 블록)이면 중복 블록 없이 아래 속성 강화 +1 만
     if (!ownsTraitBlock(exp.build, traitId)) {
       const r = gainTrait(exp.build, traitId, replaceSlot);
@@ -1225,6 +1231,16 @@ export function abortExpedition(exp: ExpeditionState): void {
   endExpedition(exp, 'returned', 'abort');
 }
 
+/** 이어 하지 못한 원정을 실패로 끝낸다 (GDD 192장 1, C.311): 나간 뒤 시한 초과(stale)·새 패치(version). 패배 규칙 그대로(마지막 바퀴 획득물·특성 상실, 쓰러짐은 recordExpedition 의 패배 처리).
+ *  전투·흡수·둥지 칸 등 어느 단계에서든 끝낼 수 있다(저장된 상태는 전투 직전·흡수 대기 등) */
+export function failExpedition(exp: ExpeditionState, why: Exclude<AbandonReason, 'corrupt'>): void {
+  if (exp.phase === 'ended') throw new Error('이미 끝난 모험이다');
+  exp.abandoned = why;
+  exp.restMult = 1;
+  exp.restSpring = false;
+  endExpedition(exp, 'defeated', 'abandoned');
+}
+
 /** 둥지 칸에서: 한 바퀴 더 */
 export function chooseContinue(exp: ExpeditionState): void {
   if (exp.phase !== 'nest-choice') throw new Error('계속을 고를 수 없는 때');
@@ -1292,7 +1308,7 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
       text = '제단을 지나쳤다';
     } else {
       const id = ev.traits?.[choice];
-      if (!id) return { ok: false, reason: '없는 특성이다' };
+      if (!id) return { ok: false, reason: '없는 블록이다' };
       changeRisk(exp, E.altar.risk, 'altar');
       exp.traitBoosts[id] = (exp.traitBoosts[id] ?? 0) + E.altar.traitPower;
       log = `trait:${id}`;
@@ -1690,6 +1706,8 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     ...(exp.story ? { story: { chapterId: exp.story.chapterId, episodeId: exp.story.episodeId, cleared: exp.story.cleared } } : {}),
     ...(exp.tutorial ? { tutorial: true } : {}),
     continueRun: continueRunOf(exp),
+    ...(exp.abandoned ? { abandoned: exp.abandoned } : {}),
+    kills: killsByEnemy(exp.battles), // 잡은 적 id·수 (GDD 200장 6, C.330)
   };
 }
 

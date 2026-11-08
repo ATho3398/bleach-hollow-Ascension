@@ -33,7 +33,8 @@ describe('131장 1 카드 문구 (종족 설정 이름, 하드코딩 없음)', (
       }
     }
     for (const it of HOME_INTRO.items) expect(it.targets.length).toBeGreaterThan(0);
-    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['outside', 'book', 'chest', 'status', 'hp', 'care', 'idle', 'more']); // C.215: 모험 문·장터 카드 폐기 (137장 3), C.238 되살림 → C.241: 수련장 카드 다시 삭제(165장 1)
+    expect(HOME_INTRO.items.map((x) => x.id)).toEqual(['care']); // 193장 8 (C.304): 홈 안내 3장 = 첫 카드(방·상태·체력) + 돌보기 + 첫 모험. 옛 outside·book·chest·status·hp·idle·more 는 합치거나 도움말로
+    expect(HOME_INTRO.intro.targets).toEqual(['@.bha-room__status', '@.bha-room__hp']);
   });
 });
 
@@ -61,9 +62,12 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
 
 describe('129-1 2 같은 종류: 월드맵 왼쪽 위 [둥지로]/[대원실로] (마스터W 04:33)', () => {
   const wm = readFileSync('src/ui/worldMapView.ts', 'utf8');
-  it('공용 spaceBackButton, 이름 = nestName, ▲▼ 맨 앞, 첫 모험 강제 중 잠김, 걷는 중 = 취소 (137장 3)', () => {
-    expect(wm).toContain("spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`))");
-    expect(wm).toContain('const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map(');
+  // C.322 (GDD 197장 5): 왼쪽 위 버튼 삭제 — 지도 위 둥지/대원실 장소로 돌아간다, 기기 ◀ = 걷기 취소·방 (app.ts interceptBack)
+  it('왼쪽 위 돌아가기 버튼 없음 · ▲▼ = 장소만 · 첫 모험 강제 중 focus = 모험', () => {
+    expect(wm).not.toContain('spaceBackButton');
+    expect(wm).not.toContain('bha-worldmap__hud');
+    expect(wm).toContain('const items: SelectItem[] = WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
+    expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("nav.push({ id: 'worldmap', interceptBack: worldMapCancelWalk,");
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208: 첫 모험 강제 중 focus = 모험
   });
 });

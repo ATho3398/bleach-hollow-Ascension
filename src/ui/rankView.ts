@@ -17,7 +17,7 @@ import { toward } from './bha/nestLogic';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { splitApp } from './bha/split';
 import { PATTERN_LABEL } from './practiceView';
-import { battleLabels } from './labels';
+import { ascensionUnlockText, battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
@@ -142,7 +142,7 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
 }
 
 /** 아란칼화 / 참백도 구상화 결과 (GDD 126장 3, C.220 — 지금은 보스전 임시): 머리글 + 결과 줄 + [수련장으로] */
-export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers): void {
+export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers, formId: string | null = null): void {
   const labels = battleLabels(faction);
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
@@ -150,7 +150,7 @@ export function ascensionResultView(root: HTMLElement, faction: FactionConfig, w
   head.append(mark, el('span', 'bha-label', `${faction.ascension.name} · ${faction.ascension.foe}`), el('h1', 'bha-result__title', won ? '승리' : labels.defeatState));
   const body = panel({});
   for (const line of lines) body.append(el('p', 'bha-result__reason', line));
-  if (won) body.append(el('p', 'bha-small', `이제 전투에서 ${faction.liberation.name}을(를) 쓸 수 있다.`));
+  if (won) body.append(el('p', 'bha-small', `이제 전투에서 ${ascensionUnlockText(faction, formId)}`)); // GDD 198장: 진화체 레스렉시온·만해 이름
   const dock = el('div', 'bha-dock');
   dock.append(asBack(button({ label: toward(faction.ascension.name), icon: 'i-return', variant: 'primary', size: 'lg', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [body]);

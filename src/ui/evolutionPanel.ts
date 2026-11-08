@@ -16,6 +16,7 @@ import { toward } from './bha/nestLogic';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { devText, shownName } from './displayName';
 import { asBack } from './bha/screenBack';
+import { v2Icon } from './bha/iconMap';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -92,7 +93,7 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
   text.append(
     h('b', '', '진화할 때는 비밀이다.'), h('br'),
     `모험을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
-    h('span', 'bha-faint', `그 순간 장착한 특성의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
+    h('span', 'bha-faint', `그 순간 장착한 블록의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
   );
   how.append(text);
   return { left, right: [how] };
@@ -187,7 +188,7 @@ export function evolutionView(
 
   const linesSection = h('section');
   const crack = h('div', 'bha-evolve__crack');
-  crack.append(icon('i-broken'));
+  crack.append(v2Icon('spark', 'xl')); // 리디자인 v2: 깨진 가면(해골) 대신 두 종족 공통 '변화' 도트 아이콘 (GDD 183장 화면 D)
   const lines = h('div', 'bha-evolve__lines');
   lines.setAttribute('aria-live', 'polite');
   // 진화 이유 (GDD 134장 3, C.211): 그 단계가 된 이유 1~2줄(종족 설정)이 있으면 연출 마지막 줄을 대신하고 결과 화면에도 남는다. 실패 진화는 공통 줄 그대로
@@ -209,7 +210,11 @@ export function evolutionView(
     resultSection.hidden = false;
   };
   const skip = asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: showResult }));
-  linesSection.append(crack, lines, skip);
+  skip.classList.add('bha-evolve__go');
+  // 리디자인 v2 (GDD 183장 화면 D): [건너뛰기] 와 결과의 [둥지로] 는 같은 아래 줄 오른쪽 자리 (173장 2 버튼 자리 고정)
+  const skipDock = h('footer', 'bha-dock bha-evolve__dock');
+  skipDock.append(skip);
+  linesSection.append(crack, lines, skipDock);
   if (CUTSCENE_PROVISIONAL && devText()) linesSection.append(h('p', 'bha-faint', ''));
   if (CUTSCENE_PROVISIONAL && devText()) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
 
@@ -227,7 +232,7 @@ export function evolutionView(
 
   const effects = panel({ title: '달라진 점', aside: provisionalTag('임시 수치'), mod: undefined });
   effects.classList.add('bha-evolve__effects');
-  const dl = h('dl', 'bha-info');
+  const dl = h('dl', 'bha-evolve__info'); // 옛 dl 목록 이름(.bha-info)은 v2 에서 ⓘ 버튼 — 이 화면은 제 이름으로
   for (const r of evolutionEffectRows(faction, form, slotsAfter, extra)) {
     const row = h('div', `bha-info__row${r.mod ? ` bha-info__row--${r.mod}` : ''}`);
     const dt = h('dt');
@@ -240,16 +245,23 @@ export function evolutionView(
   }
   effects.append(dl);
 
-  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
+  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
   } }));
+  home.classList.add('bha-evolve__go');
   const title = h('h1', 'bha-evolve__title', `${shownTo}!`);
-  resultMain.append(h('span', 'bha-evolve__eyebrow', '진화'), title, path, ...(reason ? [reason] : []), created, home);
+  // 결과 = 머리(진화 · 단계 이름!) / 왼쪽 판 = 단계 경로 · 이유 · 새 진화체 / 오른쪽 판 = 달라진 점 / 아래 줄 = [둥지로]
+  const resHead = h('header', 'bha-head bha-evolve__head');
+  resHead.append(h('span', 'bha-badge bha-badge--brass bha-evolve__eyebrow', '진화'), title);
+  resultMain.classList.add('bha-panel');
+  resultMain.append(path, ...(reason ? [reason] : []), created);
   resultSide.append(effects); // 개발 메모 줄(진화 트리 임시·기획 20-5)은 GDD 168장 4 에서 삭제
-  resultSection.append(resultMain, resultSide);
+  const resDock = h('footer', 'bha-dock bha-evolve__dock');
+  resDock.append(home);
+  resultSection.append(resHead, resultMain, resultSide, resDock);
 
-  const app = mountApp(root, { cls: 'bha-evolve' }, burst, linesSection, resultSection);
+  const app = mountApp(root, { cls: 'bha-evolve bha-v2 bha-evolvev2' }, burst, linesSection, resultSection);
   playCosmeticFx('evo', app); // 진화 연출 꾸밈 (GDD 25-11): 변하는 순간(연출 줄 동안). 결과·문구는 그대로
   timer = setTimeout(showResult, 3600);
 }

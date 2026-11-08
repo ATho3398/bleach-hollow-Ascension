@@ -45,7 +45,7 @@
     },
     {
       "id": "ep4",
-      "title": "들개 대허",
+      "title": "아레나 보라스",
       "objective": { "type": "boss" },
       "recommendedTier": 2,
       "difficulty": 2,
@@ -55,7 +55,7 @@
       "dialogue": {
         "start": [
           { "speaker": "분대장", "text": "주민을 지켜라!" },
-          { "speaker": "들개 대허", "text": "…사신 냄새. 맛있겠군." }
+          { "speaker": "아레나 보라스", "text": "…사신 냄새. 맛있겠군." }
         ],
         "end": [{ "speaker": "분대장", "text": "오늘부터 너도 진짜 사신이다." }]
       }

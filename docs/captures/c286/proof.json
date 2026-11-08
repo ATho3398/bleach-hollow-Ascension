@@ -1,0 +1,176 @@
+{
+  "shots": [
+    "hollow-01-start-empty.png",
+    "hollow-02-slot-new.png",
+    "hollow-03-species.png",
+    "hollow-04-confirm.png",
+    "hollow-05-help.png",
+    "hollow-07-photo.png",
+    "hollow-08-idle.png",
+    "hollow-09-rebirth.png",
+    "hollow-10-pick.png",
+    "hollow-16-toast.png",
+    "hollow-17-warning.png",
+    "hollow-18-breakthrough.png",
+    "hollow-11-install.png",
+    "hollow-12-start.png",
+    "hollow-13-slot-load.png",
+    "hollow-14-backup.png",
+    "hollow-06-tamago.png",
+    "hollow-15-tabblocked.png",
+    "hollow-21-tut.png",
+    "hollow-22-tut.png",
+    "hollow-23-tut.png",
+    "hollow-24-tut.png",
+    "hollow-25-tut.png",
+    "hollow-26-tut.png",
+    "shinigami-01-start-empty.png",
+    "shinigami-02-slot-new.png",
+    "shinigami-03-species.png",
+    "shinigami-04-confirm.png",
+    "shinigami-05-help.png",
+    "shinigami-07-photo.png",
+    "shinigami-08-idle.png",
+    "shinigami-09-rebirth.png",
+    "shinigami-10-pick.png",
+    "shinigami-16-toast.png",
+    "shinigami-17-warning.png",
+    "shinigami-18-breakthrough.png",
+    "shinigami-11-install.png",
+    "shinigami-12-start.png",
+    "shinigami-13-slot-load.png",
+    "shinigami-14-backup.png",
+    "shinigami-06-tamago.png",
+    "shinigami-15-tabblocked.png",
+    "shinigami-21-tut.png",
+    "shinigami-22-tut.png",
+    "shinigami-23-tut.png",
+    "shinigami-24-tut.png",
+    "shinigami-25-tut.png",
+    "shinigami-26-tut.png"
+  ],
+  "overflow": {
+    "hollow-01-start-empty.png": [],
+    "hollow-02-slot-new.png": [],
+    "hollow-03-species.png": [],
+    "hollow-04-confirm.png": [],
+    "hollow-05-help.png": [],
+    "hollow-07-photo.png": [],
+    "hollow-08-idle.png": [],
+    "hollow-09-rebirth.png": [],
+    "hollow-10-pick.png": [],
+    "hollow-16-toast.png": [],
+    "hollow-17-warning.png": [],
+    "hollow-18-breakthrough.png": [],
+    "hollow-11-install.png": [],
+    "hollow-12-start.png": [],
+    "hollow-13-slot-load.png": [],
+    "hollow-14-backup.png": [],
+    "hollow-06-tamago.png": [],
+    "shinigami-01-start-empty.png": [],
+    "shinigami-02-slot-new.png": [],
+    "shinigami-03-species.png": [],
+    "shinigami-04-confirm.png": [],
+    "shinigami-05-help.png": [],
+    "shinigami-07-photo.png": [],
+    "shinigami-08-idle.png": [],
+    "shinigami-09-rebirth.png": [],
+    "shinigami-10-pick.png": [],
+    "shinigami-16-toast.png": [],
+    "shinigami-17-warning.png": [],
+    "shinigami-18-breakthrough.png": [],
+    "shinigami-11-install.png": [],
+    "shinigami-12-start.png": [],
+    "shinigami-13-slot-load.png": [],
+    "shinigami-14-backup.png": [],
+    "shinigami-06-tamago.png": []
+  },
+  "size": {
+    "hollow-01-start-empty.png": [],
+    "hollow-02-slot-new.png": [],
+    "hollow-03-species.png": [],
+    "hollow-04-confirm.png": [],
+    "hollow-05-help.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-07-photo.png": [],
+    "hollow-08-idle.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-09-rebirth.png": [
+      "btn 18x18 '배부름 설명'",
+      "btn 18x18 '컨디션 설명'",
+      "btn 18x18 '영압 안정도 설명'",
+      "btn 18x18 '광기 설명'",
+      "btn 18x18 '교감 설명'",
+      "btn 18x18 '능력치 설명'"
+    ],
+    "hollow-10-pick.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-16-toast.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-17-warning.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-18-breakthrough.png": [],
+    "hollow-11-install.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "hollow-12-start.png": [],
+    "hollow-13-slot-load.png": [],
+    "hollow-14-backup.png": [],
+    "hollow-06-tamago.png": [
+      "btn 34x34 '위'",
+      "btn 34x34 '아래'",
+      "btn 12x12 '상태 설명'",
+      "btn 114x29 '먹이 주기'",
+      "btn 114x29 '재우기'",
+      "btn 114x29 '교감'",
+      "btn 29x29 '대기 보상'",
+      "btn 29x29 '더보기'",
+      "btn 29x29 '취소'"
+    ],
+    "shinigami-01-start-empty.png": [],
+    "shinigami-02-slot-new.png": [],
+    "shinigami-03-species.png": [],
+    "shinigami-04-confirm.png": [],
+    "shinigami-05-help.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-07-photo.png": [],
+    "shinigami-08-idle.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-09-rebirth.png": [],
+    "shinigami-10-pick.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-16-toast.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-17-warning.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-18-breakthrough.png": [],
+    "shinigami-11-install.png": [
+      "btn 18x18 '상태 설명'"
+    ],
+    "shinigami-12-start.png": [],
+    "shinigami-13-slot-load.png": [],
+    "shinigami-14-backup.png": [],
+    "shinigami-06-tamago.png": [
+      "btn 34x34 '위'",
+      "btn 34x34 '아래'",
+      "btn 12x12 '상태 설명'",
+      "btn 114x29 '식사 / 영력 보급'",
+      "btn 114x29 '재우기'",
+      "btn 114x29 '참백도 손질'",
+      "btn 29x29 '대기 보상'",
+      "btn 29x29 '더보기'",
+      "btn 29x29 '취소'"
+    ]
+  },
+  "errors": []
+}

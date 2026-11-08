@@ -111,7 +111,7 @@
     },
     {
       "id": "ep4",
-      "title": "숲의 군주",
+      "title": "썬더우드",
       "objective": {
         "type": "boss"
       },
@@ -130,7 +130,7 @@
       "dialogue": {
         "start": [
           {
-            "speaker": "숲의 군주",
+            "speaker": "썬더우드",
             "text": "가면을 깨려는 자인가. 그 끝에는 아무것도 없다."
           },
           {

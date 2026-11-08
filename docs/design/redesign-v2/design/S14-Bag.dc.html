@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>가방</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.eq{position:relative;width:60px;height:66px;border:0;padding:4px 2px;box-sizing:border-box;border-radius:var(--bha-r-sm);background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-2),inset 0 2px 0 var(--bha-lo);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--bha-text-3);font:700 12px/1.1 var(--bha-font-body);text-align:center}
+.eq .bha-i{width:28px;height:28px;color:var(--bha-ph)}
+.eq.has{background:var(--bha-bg-2);box-shadow:inset 0 0 0 1px var(--bha-line-2),inset 0 1px 0 var(--bha-hi);color:var(--bha-text-1)}
+.eq.has .bha-i{color:var(--bha-text-2)}
+.ft{display:flex;gap:4px;overflow:hidden}
+.ft .bha-tab{height:32px;padding:0 8px;background:var(--bha-bg-1);box-shadow:0 0 0 1px var(--bha-line-1)}
+.ft .bha-tab.is-on{background:var(--bha-bg-3);box-shadow:0 0 0 1px var(--bha-line-2),inset 0 -2px 0 var(--bha-accent)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 가방 [장비]</b> — 초점: 부적 2 칸</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-head">
+              <span class="bha-title">가방</span>
+              <span class="bha-grow"></span>
+              <div class="bha-tabs" style="gap: 2px; padding: 2px">
+                <button class="bha-tab is-on" style="padding: 0 7px">장비 <span class="bha-tab-n">3</span></button><button class="bha-tab" style="padding: 0 7px">슬롯</button><button class="bha-tab" style="padding: 0 7px">타일 <span class="bha-tab-n">17</span></button><button class="bha-tab" style="padding: 0 7px">소모품</button><button class="bha-tab" style="padding: 0 7px">스킨</button><button class="bha-tab" style="padding: 0 7px">펫 <span class="bha-tab-n">0</span></button><button class="bha-tab" style="padding: 0 7px">기타 <span class="bha-tab-n">2</span></button>
+              </div>
+            </div>
+            <div class="bha-panel" style="position: absolute; left: 10px; top: 48px; width: 252px; height: 244px; padding: 8px; box-sizing: border-box; display: grid; grid-template-columns: 60px 1fr 60px; gap: 6px">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <button class="eq"><i class="bha-i bha-i-sword"></i>{{t.s1}}</button>
+                <button class="eq"><i class="bha-i bha-i-shield"></i>{{t.s2}}</button>
+                <button class="eq"><i class="bha-i bha-i-boot"></i>{{t.s3}}</button>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding-bottom: 4px">
+                <span class="bha-art" style="width: 100px; height: 140px"><i class="bha-i bha-i-figure"></i></span>
+                <span class="bha-card-name" style="text-align: center; font-size: 13px">{{t.form}}</span>
+                <span class="bha-sub">{{t.stage}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <button class="eq has"><i class="bha-i bha-i-ring"></i>부적 1</button>
+                <button class="eq is-focus"><i class="bha-i bha-i-ring"></i>부적 2</button>
+                <button class="eq has"><i class="bha-i bha-i-potion"></i>전투 소모품</button>
+              </div>
+            </div>
+            <div style="position: absolute; left: 272px; right: 10px; top: 48px; height: 244px; display: flex; flex-direction: column; gap: 8px">
+              <div class="ft"><button class="bha-tab is-on">전체 <span class="bha-tab-n">3</span></button><button class="bha-tab">{{t.s1}} <span class="bha-tab-n">0</span></button><button class="bha-tab">{{t.s2}} <span class="bha-tab-n">0</span></button><button class="bha-tab">부적 <span class="bha-tab-n">0</span></button><button class="bha-tab">소모품 <span class="bha-tab-n">3</span></button></div>
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+                <button class="bha-card bha-card--item" style="width: auto"><span class="bha-count">×3</span><span class="bha-art" style="width: 36px; height: 36px"><i class="bha-i bha-i-plus"></i></span><span class="bha-card-name">반창고</span></button>
+                <button class="bha-card bha-card--item" style="width: auto"><span class="bha-count">×2</span><span class="bha-art" style="width: 36px; height: 36px"><i class="bha-i bha-i-box"></i></span><span class="bha-card-name">붕대</span></button>
+                <button class="bha-card bha-card--item" style="width: auto"><span class="bha-count">×1</span><span class="bha-art" style="width: 36px; height: 36px"><i class="bha-i bha-i-potion"></i></span><span class="bha-card-name">회복약</span></button>
+              </div>
+              <span class="bha-grow"></span>
+              <span class="bha-sub" style="text-align: center">자리를 고르면 넣을 수 있는 것만 밝게 보인다</span>
+            </div>
+            <div class="bha-dock">
+              <span class="bha-chip"><span class="bha-num" style="font-weight: 400">3</span>/40</span>
+              <span class="bha-grow"></span>
+              <button class="bha-btn bha-btn--sm"><i class="bha-i bha-i-swap"></i>등급순</button>
+              <button class="bha-btn bha-btn--sm bha-btn--primary"><i class="bha-i bha-i-check"></i>자동 착용</button>
+              <button class="bha-btn bha-btn--sm is-disabled" disabled><i class="bha-i bha-i-coin"></i>일괄 판매</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>장비 칸 6개를 캐릭터 양옆 세로 두 줄(60×66)로 키우고, 빈 칸은 움푹 들어간 면 · 찬 칸은 튀어나온 면으로 구분했다</li>
+      <li>캐릭터 아래 능력치 표를 빼고 이름 · 단계만. 수치는 칸이나 아이템을 눌렀을 때 상세 창에서 본다</li>
+      <li>아래 고정 줄: 개수 · 등급순 · 자동 착용 · 일괄 판매(못 쓸 때 흐리게, 자리 유지)</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', s1: '송곳니', s2: '껍질', s3: '발톱 싸개', form: '바스트로레 노멀 조', stage: '4단계 바스트로레' },
+      { k: 'shinigami', race: '사신', s1: '칼자루 장식', s2: '사패장', s3: '짚신', form: '수석 대원 노멀 권', stage: '4단계 수석 대원' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

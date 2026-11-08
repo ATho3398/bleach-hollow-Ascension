@@ -260,7 +260,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 폭주(호로화) 여부 */
@@ -287,9 +287,16 @@ export interface RunRecord {
   tutorial?: boolean;
   /** C.188 (세이브 형식 52, GDD 114장 4): 떠날 때 슬롯 성별. 형식 52 이전 기록에는 없다 */
   gender?: Gender;
+  /** C.326 (세이브 형식 63, GDD 199장 8): 떠날 때 캐릭터 이름. 정하지 않았거나 형식 63 이전 기록에는 없다 */
+  name?: string;
   /** C.195 (세이브 형식 53, GDD 121장 4·5): 이어하기 한 칸 — 바퀴 n 배율 = 1 + 단계 × (n − 1) 의 단계(r 보상·e 적), 받은 임시 타일 수(got)·길에 놓인 채 끝난 임시 타일 id(placed),
    *  원정 끝 영구 타일(perm: 타일 id, 꽝 null, 굴림 없음이면 없음). 세이브 크기 때문에 짧은 키. 형식 53 이전 기록에는 없다 */
   continueRun?: { r: number; e: number; got: number; placed: string[]; perm?: string | null };
+  /** C.311 (세이브 형식 62, GDD 192장 1·9장): endReason 'abandoned'(이어 하지 못해 실패로 정산)의 이유 — stale = 나간 뒤 시한 초과, version = 새 패치(밸런스 버전 다름), corrupt = 중간 저장 손상(상태 없이 기록만: laps·gained 비어 있음).
+   *  형식 62 이전 기록에는 없다 */
+  abandoned?: 'stale' | 'version' | 'corrupt';
+  /** C.330 (세이브 형식 64, GDD 200장 6·9장): 이 원정에서 잡은(이긴 전투) 적 id → 수. 형식 64 이전 기록에는 없다(전투 기록 battles 로 알 수 있다) */
+  kills?: Record<string, number>;
 }
 
 /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */
@@ -589,14 +596,27 @@ export interface TrackOpenRecord {
   byFactionId: string;
 }
 
+/** 이름·성별을 정하거나 바꾼 기록 (GDD 199장 6~8·9장, C.326, 형식 63): source = new 새 게임 · old 옛 세이브에서 처음 정함 · settings 설정에서 바꿈.
+ *  그때 트랙 종족·단계도 남긴다 (나중 조건용) */
+export interface IdentityRecord {
+  at: number;
+  name: string;
+  gender: Gender;
+  source: 'new' | 'old' | 'settings';
+  factionId: string;
+  tierIndex: number;
+}
+
 /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 캐릭터 트랙마다의 RunLog 와 따로, 슬롯 하나에 하나 */
 export interface SlotLog {
   fusions: FusionRecord[];
   trackOpens: TrackOpenRecord[];
+  /** C.326 (형식 63): 이름·성별 기록. 형식 63 이전 세이브는 빈 목록 */
+  identities: IdentityRecord[];
 }
 
 export function emptySlotLog(): SlotLog {
-  return { fusions: [], trackOpens: [] };
+  return { fusions: [], trackOpens: [], identities: [] };
 }
 
 export function emptyRunLog(): RunLog {

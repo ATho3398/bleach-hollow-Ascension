@@ -19,8 +19,8 @@ describe('76장 강적 조우 WARNING', () => {
     for (const id of ['blood', 'poison', 'kyo']) expect(isHiddenElement(id), id).toBe(true);
     for (const id of ['normal', 'water', 'fire', 'earth', 'thunder']) expect(isHiddenElement(id), id).toBe(false);
     expect(warningBandToken('fire')).toBe('--bha-attack');
-    expect(warningBandToken('poison')).toBe('--bha-lin-b');
-    expect(warningBandToken('kyo')).toBe('--bha-lin-d');
+    expect(warningBandToken('poison')).toBe('--bha-el-poison'); // C.282: 속성 색 = 디자인 v2 --bha-el-* (GDD 183장 2)
+    expect(warningBandToken('kyo')).toBe('--bha-el-kyo');
   });
 
   it('시간 약 1.5초, 동작 줄이기 0.4초 · 문구', () => {

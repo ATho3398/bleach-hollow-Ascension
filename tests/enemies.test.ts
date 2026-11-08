@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
-import { ENEMIES, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
+import { ENEMIES, enemyGradeName, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
 import { ELEMENTS } from '../src/data/elements';
 const LINEAGES = ELEMENTS; // C.47: 계통 A~E → 속성 8종
 import { ENEMY_PATTERN_KINDS, type EnemyDef, type EnemyPatternKind } from '../src/data/schema';
@@ -58,8 +58,27 @@ describe('적 데이터 (속성 8종 × 일반 3종 · 강적 3종, C.47)', () =
     expect(new Set(ENEMIES.map((e) => e.id)).size).toBe(ENEMIES.length);
   });
 
-  it('이름은 자리 표시("불 일반 1")이고 모든 종족에서 읽힌다', () => {
-    for (const e of pool) expect(e.name['*'], e.id).toMatch(/^\S+ (일반|강적) \d$/);
+  it('이름 (GDD 198장): 일반 = 패턴마다 하나(속성 무관 — 짐승형·부유형·갑각형 호로), 강적 = 24종 모두 고유 + 고정 등급, 모든 종족에서 읽힌다', () => {
+    const NORMAL: Record<string, string> = { basic: '짐승형 호로', swift: '부유형 호로', sturdy: '갑각형 호로' };
+    for (const e of pool) expect(typeof e.name['*'], e.id).toBe('string');
+    for (const e of pool.filter((x) => x.class === 'normal')) {
+      expect(e.name['*'], e.id).toBe(NORMAL[e.pattern?.kind ?? 'basic']);
+      expect(e.grade, e.id).toBeUndefined();
+    }
+    const elites = pool.filter((x) => x.class === 'elite');
+    expect(elites).toHaveLength(24);
+    expect(new Set(elites.map((e) => e.name['*'])).size).toBe(24);
+    for (const e of elites) expect(enemyGradeName(e), e.id).toMatch(/^(호로|길리안|아쥬커스|바스트로데)$/);
+    // 일반 속성 = 아쥬커스(노멀 강적 1 만 길리안), 히든 속성 = 호로 2 · 바스트로데 4 · 아쥬커스 3
+    const grades = (els: string[]) => elites.filter((e) => els.includes(e.element)).map((e) => e.grade);
+    const count = (gs: (string | undefined)[], g: string) => gs.filter((x) => x === g).length;
+    const basic = grades(['normal', 'water', 'fire', 'earth', 'thunder']);
+    expect([count(basic, 'adjuchas'), count(basic, 'gillian')]).toEqual([14, 1]);
+    expect(getEnemy('normal-heavy-seal').grade).toBe('gillian');
+    const hid = grades(['blood', 'poison', 'kyo']);
+    expect([count(hid, 'hollow'), count(hid, 'vasto-lorde'), count(hid, 'adjuchas')]).toEqual([2, 4, 3]);
+    expect(getEnemy('blood-heavy-seal').name['*']).toBe('만 명을 먹은 자');
+    expect(() => parseEnemy({ ...getEnemy('fire-stance'), grade: 'menos' })).toThrow(/grade/);
   });
 
   it('방어·정신력 성향은 분류 선택이 의미 있게 갈리지만 평균은 1 근처 (C.47)', () => {

@@ -20,7 +20,7 @@ describe('155장 1 월드맵 = 화면 전체', () => {
   it('바깥 여백·장면 테두리 없음, 위 한 줄은 지도 위에 겹침, 하늘 띠 없음', () => {
     expect(css).toContain('.bha-lcd .bha-app.bha-room.bha-worldmap { padding: 0; gap: 0; position: relative; }');
     expect(css).toContain('.bha-worldmap__scene { border: 0; border-radius: 0; }');
-    expect(css).toMatch(/\.bha-worldmap__hud \{\n\s+position: absolute;/);
+    expect(css).not.toContain('.bha-worldmap__hud'); // C.322 (GDD 197장 5): 위 겹침 버튼 삭제
     expect(css).toContain('.bha-room--worldmap .bha-room__wall { display: none; }');
     expect(css).toMatch(/\.bha-room--worldmap \.bha-room__floor \{\n\s+height: 100%;/);
   });
@@ -44,8 +44,8 @@ describe('155장 2 회복 안내 6/7 멈춤', () => {
     expect(v).toContain('if (finished) return;');
     expect(v).toContain('    if (exiting) return;\n    if (p.spaEnded || !n.spa) {');
   });
-  it('회복 안내 카드 = 7장 (빈사 → 가방 → 구급상자 → 온천 → 쉬기 → 먹이 → 끝)', () => {
-    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'to-bag', 'cure', 'to-spa', 'spa-rest', 'feed', 'done']);
+  it('회복 안내 카드 = 4장 (빈사·가방 → 구급상자 → 온천 → 먹이, GDD 193장 8 — 옛 7장)', () => {
+    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'feed']);
   });
   for (const fid of ['hollow', 'shinigami']) {
     it(`${fid}: 1~7 끝까지 — 온천에서 저절로 가득 차 나온 뒤 [다음](나가기 다시 부름)이어도 먹이 단계로 이어진다`, () => {
@@ -101,7 +101,7 @@ describe('155장 1 보충 — 장터도 화면 전체 (C.234)', () => {
     expect(css).toContain('.bha-lcd .bha-app.bha-room.bha-market { padding: 0; gap: 0; position: relative; }');
     expect(css).toContain('.bha-market__scene { border: 0; border-radius: 0; }');
     expect(css).toMatch(/\.bha-market__hud \{\n\s+position: absolute;/);
-    expect(css).toMatch(/\.bha-room--market \.bha-room__wall \{\n\s+height: 30%;/);
+    expect(css).toContain('.bha-room--market .bha-room__wall { height: 50%; background: var(--bha-scene-wall); }'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 그림 없을 때 자리 = 벽·바닥 두 면, 줄무늬 차양 없음
     expect(DEFAULT_MARKET.floor.poly[0]![1]).toBe(0.3);
     // C.236 (GDD 158장 3): 한 줄 대신 방처럼 앞뒤 깊이 — 뒤 줄(상점 3곳)은 위, 앞 줄(특성 상점·대장장이)은 아래로 화면 전체
     // C.263: 사용자가 UI 배치 도구로 다시 잡음 — 소모품 상점은 앞 줄(y 79)로 내려옴. 뒤 줄 = 장비·스킨 상점

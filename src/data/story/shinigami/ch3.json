@@ -111,7 +111,7 @@
     },
     {
       "id": "ep4",
-      "title": "웨코문도의 문지기",
+      "title": "썬더우드",
       "objective": {
         "type": "boss"
       },
@@ -130,7 +130,7 @@
       "dialogue": {
         "start": [
           {
-            "speaker": "웨코문도의 문지기",
+            "speaker": "썬더우드",
             "text": "이 문을 지나려는 사신은 모두 길에 묻혔다."
           },
           {

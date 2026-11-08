@@ -183,9 +183,8 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
     expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.86 }); // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
     expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
   });
-  it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
-    for (const f of FACTIONS) expect(f.market?.layout).toBeUndefined();
-    const m = marketOf(FACTIONS[0]!);
+  it('시장 공통 기본값(DEFAULT_MARKET) = C.263 값 — 두 종족은 C.335·C.336 부터 json 으로 따로', () => {
+    const m = marketOf({});
     expect(m.exit).toEqual({ x: 7.5, y: 83.1, scale: 0.64 });
     expect(m.layout.shop).toEqual({ x: 40.3, y: 79, scale: 0.9 });
     expect(m.layout.gearShop).toEqual({ x: 54.7, y: 39.5, scale: 0.88 });
@@ -200,19 +199,19 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
   it('호로 = DEFAULT_WORLDMAP (모험·탑 옮김), json 에 layout 없음', () => {
     expect(FACTIONS.find((f) => f.id === 'hollow')!.worldmap?.layout).toBeUndefined();
     const w = W('hollow');
-    expect(spot(w.home)).toEqual({ x: 47.4, y: 65.6, scale: 1.61 }); // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
-    expect(spot(w.adventure)).toEqual({ x: 22.9, y: 85.9, scale: 0.9 });
-    expect(spot(w.tower)).toEqual({ x: 11.7, y: 50.1, scale: 1.28 });
-    expect(spot(w.spa)).toEqual({ x: 88.7, y: 52.2, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 65.4, scale: 1.61 }); // C.278 (2026-11-04 03:31 배경과 함께 전부) // C.270 (사용자 2026-11-04 01:29 "호로 월드맵 적용 ㄱㄱ. 이건 사신쪽에 적용말고 호로만 적용임")
+    expect(spot(w.adventure)).toEqual({ x: 19.1, y: 89.7, scale: 0.9 });
+    expect(spot(w.tower)).toEqual({ x: 22.1, y: 44.3, scale: 1.28 });
+    expect(spot(w.spa)).toEqual({ x: 85.6, y: 58.9, scale: 1.41 });
   });
   it('사신 = shinigami.json worldmap.layout 6곳', () => {
     const w = W('shinigami');
-    expect(spot(w.home)).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
-    expect(spot(w.market)).toEqual({ x: 61.8, y: 32.1, scale: 0.98 });
-    expect(spot(w.training)).toEqual({ x: 62.3, y: 89.6, scale: 0.85 });
-    expect(spot(w.adventure)).toEqual({ x: 17.7, y: 85.6, scale: 1.05 });
-    expect(spot(w.tower)).toEqual({ x: 10.9, y: 44.5, scale: 1.15 });
-    expect(spot(w.spa)).toEqual({ x: 88.5, y: 55, scale: 1.29 });
+    expect(spot(w.home)).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
+    expect(spot(w.market)).toEqual({ x: 66.8, y: 42.7, scale: 0.98 });
+    expect(spot(w.training)).toEqual({ x: 71, y: 90.5, scale: 0.85 });
+    expect(spot(w.adventure)).toEqual({ x: 14.6, y: 90.6, scale: 0.96 });
+    expect(spot(w.tower)).toEqual({ x: 19.6, y: 45.4, scale: 1.15 });
+    expect(spot(w.spa)).toEqual({ x: 88.6, y: 63.1, scale: 1.33 });
   });
 });
 
@@ -224,7 +223,7 @@ describe('C.270 호로 둥지 월드맵 그림 (호로만)', () => {
     expect(artUrls('prop.home').src).toBeNull();
   });
   it('사신 월드맵 홈 자리는 json 값 그대로 (호로 변경 영향 없음)', () => {
-    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 45.3, y: 69, scale: 1.28 }); // C.271
+    expect(worldMapOf(FACTIONS.find((f) => f.id === 'shinigami')!).layout.home).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 → C.278
   });
 });
 
@@ -318,5 +317,48 @@ describe('C.275 배경 확대·위치', () => {
     expect(tool).toContain("label: '배경 맞추기'");
     expect(tool).toContain("range('확대', 'zoom'");
     expect(read('src/ui/bha/layout-tool.css')).toContain('.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }');
+  });
+});
+
+// C.335 (사용자 2026-11-09 01:45 "적용 ㄱㄱ", bha-layout-20261109-0145.json): 사신 시장 배경·배경 보기·자리 — 사신만. 같은 파일의 월드맵·방·가방 그림은 C.278·C.269 로 이미 같음
+describe('C.335 사신 시장 반영', () => {
+  const S = () => marketOf(FACTIONS.find((f) => f.id === 'shinigami')!);
+  it('배경 = 사신 전용 키 scene.market.shinigami (파일 있음) · 배경 보기 ×1.14', () => {
+    expect(S().sceneArt).toBe('scene.market.shinigami');
+    expect(artUrls('scene.market.shinigami').src).toMatch(/scene-market-shinigami\.webp$/);
+    expect(S().floor.view).toEqual({ zoom: 1.14, x: 50, y: 50 });
+    expect(S().floor.poly).toEqual(marketOf({}).floor.poly);
+  });
+  it('자리 7곳 = 내보낸 값', () => {
+    const m = S();
+    expect(m.exit).toEqual({ x: 10.9, y: 71.8, scale: 0.64 });
+    expect(m.layout.shop).toEqual({ x: 38.4, y: 88.8, scale: 0.9 });
+    expect(m.layout.gearShop).toEqual({ x: 76.3, y: 84.9, scale: 0.92 });
+    expect(m.layout.skinShop).toEqual({ x: 88.8, y: 57, scale: 0.91 });
+    expect(m.layout.traitShop).toEqual({ x: 70.4, y: 40.9, scale: 0.97 });
+    expect(m.layout.smith).toEqual({ x: 41.7, y: 35, scale: 1.01 });
+    expect(m.layout.wanderer).toEqual({ x: 50.3, y: 66.6, scale: 1.11 });
+    // 호로 시장은 C.336 에서 따로 반영 (아래 묶음)
+  });
+});
+
+// C.337 (사용자 2026-11-09 02:02 "요거 호로상점도 적용", bha-layout-20261109-0202.json): 호로 시장 배경·배경 보기·자리 — 호로만. 나머지 장면은 C.335·C.278·C.269 와 같음
+describe('C.337 호로 시장 반영', () => {
+  const H = () => marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
+  it('배경 = 호로 전용 키 scene.market.hollow (파일 있음) · 배경 보기 ×1.16', () => {
+    expect(H().sceneArt).toBe('scene.market.hollow');
+    expect(artUrls('scene.market.hollow').src).toMatch(/scene-market-hollow\.webp$/);
+    expect(H().floor.view).toEqual({ zoom: 1.16, x: 50, y: 50 });
+  });
+  it('자리 7곳 = 내보낸 값, 사신 시장은 C.335 그대로', () => {
+    const m = H();
+    expect(m.exit).toEqual({ x: 10.6, y: 72.3, scale: 0.64 });
+    expect(m.layout.shop).toEqual({ x: 33.2, y: 89, scale: 0.9 });
+    expect(m.layout.gearShop).toEqual({ x: 66.4, y: 90, scale: 0.89 });
+    expect(m.layout.skinShop).toEqual({ x: 69, y: 42.7, scale: 0.92 });
+    expect(m.layout.traitShop).toEqual({ x: 87.2, y: 72.4, scale: 1.09 });
+    expect(m.layout.smith).toEqual({ x: 33.6, y: 40.4, scale: 0.96 });
+    expect(m.layout.wanderer).toEqual({ x: 49.1, y: 68.3, scale: 1.03 });
+    expect(marketOf(FACTIONS.find((f) => f.id === 'shinigami')!).sceneArt).toBe('scene.market.shinigami');
   });
 });

@@ -48,7 +48,7 @@
   "appearanceChange": false,
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "카라쿠라 마을 / 루콘가 외곽",
   "arenaBg": "seireitei",
@@ -94,20 +94,21 @@
       "name": "참(斬)",
       "abbr": "참",
       "fx": "slash",
+      "pixelFx": {"stages":[{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"melee/sword-slash","color":"element","anchor":"target","on":[0],"delay":0,"dx":281,"dy":5,"scale":2,"angle":38,"rate":1,"altFlip":true,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"impacts/crit-hit","color":"element","anchor":"target","on":[0],"delay":0,"dx":-6,"dy":-1,"scale":1,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"attack","rate":1}],"bodyAt":0,"bodyFromHit":true},"female":{"chain":[{"id":"attack","rate":1}],"bodyAt":0,"bodyFromHit":true}}},{"hits":2,"gaps":[170],"speed":1,"layers":[{"fx":"melee/sword-slash","color":"element","anchor":"target","on":[0,1],"delay":0,"dx":281,"dy":5,"scale":2,"angle":38,"rate":1,"altFlip":true,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"impacts/crit-hit","color":"element","anchor":"target","on":[0,1],"delay":0,"dx":-6,"dy":-1,"scale":1,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"attack","rate":3},{"id":"attack2","rate":1.55}],"bodyAt":0,"bodyFromHit":true},"female":{"chain":[{"id":"attack","rate":3},{"id":"attack2","rate":1.55}],"bodyAt":0,"bodyFromHit":true}}},{"hits":3,"gaps":[100,460],"speed":1,"layers":[{"fx":"melee/sword-slash","color":"element","anchor":"target","on":[0,1],"delay":0,"dx":281,"dy":5,"scale":2,"angle":38,"rate":1,"altFlip":true,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"melee/spear-sweep","color":"element","anchor":"attacker","on":[2],"delay":0,"dx":-30,"dy":-13,"scale":2,"angle":14,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"impacts/crit-hit","color":"element","anchor":"target","on":[0,1,2],"delay":0,"dx":-6,"dy":-1,"scale":1,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"attack","rate":2.45},{"id":"attack2","rate":2.6},{"id":"ultimate","rate":2.65}],"bodyAt":0,"bodyFromHit":true},"female":{"chain":[{"id":"attack","rate":2.45},{"id":"attack2","rate":2.6},{"id":"ultimate","rate":2.65}],"bodyAt":0,"bodyFromHit":true}}}]},
       "motion": "slash",
       "category": "mixed",
       "tiers": [
         {
-          "name": "베기",
+          "name": "발도",
           "rigMotion": "attack",
           "multiplier": 1
         },
         {
-          "name": "연참",
+          "name": "쌍섬",
           "multiplier": 2.2
         },
         {
-          "name": "대참",
+          "name": "질풍참",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",
@@ -122,19 +123,20 @@
       "name": "권(拳)",
       "abbr": "권",
       "fx": "impact",
+      "pixelFx": {"stages":[{"hits":2,"gaps":[120],"speed":1,"layers":[{"fx":"custom/fist","color":"element","anchor":"attacker","on":[0],"delay":0,"dx":-54,"dy":0,"scale":2,"angle":0,"rate":1.2,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/punch","color":"element","anchor":"target","on":[1],"delay":0,"dx":8,"dy":-4,"scale":1.75,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":3,"gaps":[110,110],"speed":1,"layers":[{"fx":"custom/fist","color":"element","anchor":"target","on":[0],"delay":0,"dx":274,"dy":6,"scale":2,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/punch","color":"element","anchor":"target","on":[1],"delay":0,"dx":0,"dy":0,"scale":2.25,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":3,"gaps":[190,180],"speed":1,"layers":[{"fx":"melee/thrust","color":"element","anchor":"target","on":[0,1],"delay":0,"dx":274,"dy":6,"scale":2,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/punch","color":"element","anchor":"target","on":[0,1,2],"delay":0,"dx":3,"dy":5,"scale":2,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"custom/uppercut","color":"element","anchor":"attacker","on":[2],"delay":0,"dx":-70,"dy":-17,"scale":2.75,"angle":61,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}}]},
       "motion": "strike",
       "category": "physical",
       "tiers": [
         {
-          "name": "타격",
+          "name": "정권 지르기",
           "multiplier": 1
         },
         {
-          "name": "연권",
+          "name": "연속 지르기",
           "multiplier": 2.2
         },
         {
-          "name": "강권",
+          "name": "파산권",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",
@@ -149,6 +151,7 @@
       "name": "귀(鬼)",
       "abbr": "귀",
       "fx": "beam",
+      "pixelFx": {"stages":[{"hits":2,"gaps":[100],"speed":1,"layers":[{"fx":"projectiles/bullet-tracer","color":"element","anchor":"target","on":[0],"delay":0,"dx":-34,"dy":4,"scale":1.5,"angle":0,"rate":1,"altFlip":false,"move":"fly","travel":160,"arc":0,"tx":130,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3},{"fx":"impacts/crit-hit","color":"element","anchor":"target","on":[1],"delay":60,"dx":-2,"dy":-16,"scale":1,"angle":0,"rate":1,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"custom/byakurai","color":"original","anchor":"attacker","on":[0],"delay":0,"dx":-180,"dy":5,"scale":2.5,"angle":0,"rate":1.25,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"skill","rate":1.3}],"bodyAt":0,"bodyFromHit":true}}},{"hits":1,"gaps":[],"speed":1,"layers":[{"fx":"arcane/arcane-missiles","color":"element","anchor":"target","on":[0],"delay":0,"dx":133,"dy":-8,"scale":2,"angle":-1,"rate":1.4,"altFlip":false,"move":"stay","travel":300,"arc":0,"tx":0,"ty":0,"ex":0,"ey":0,"face":true,"sync":"hit","z":3}],"bodies":{"male":{"chain":[{"id":"skill","rate":1}],"bodyAt":0,"bodyFromHit":true},"female":{"chain":[{"id":"skill","rate":1}],"bodyAt":0,"bodyFromHit":true}}}]},
       "motion": "cast",
       "category": "special",
       "tiers": [
@@ -178,7 +181,8 @@
     }
   ],
   "nestName": "대원실",
-  "tagline": "수련해 오르는 무사",
+  "tagline": "호로를 정화하며 오르는 무사",
+  "pickNote": "호로를 {absorbActionName}해 블록과 능력치를 얻고, {ascension.name}을(를) 깨면 {liberation.name}을(를) 쓴다. {nestName}에서 {foodGroupName}(으)로 돌보며 {riskGaugeName}을(를) 막는다.",
   "nestActionsShort": {"feed": "식사", "pet": "손질"},
   "foodGroupName": "식량",
   "nestActions": {
@@ -218,10 +222,17 @@
   },
   "breakthroughText": "호로화가 한계를 넘었다. 영압이 일그러지고 공허가 몰려든다…",
   "frenzyName": "호로화",
-  "market": { "name": "시장" },
+  "market": {
+    "name": "시장", "sceneArt": "scene.market.shinigami",
+    "floor": { "aspect": 2, "poly": [[0, 0.3], [1, 0.3], [1, 1], [0, 1]], "view": { "zoom": 1.14, "x": 50, "y": 50 } },
+    "layout": { "shop": { "x": 38.4, "y": 88.8, "scale": 0.9 }, "gearShop": { "x": 76.3, "y": 84.9, "scale": 0.92 }, "skinShop": { "x": 88.8, "y": 57, "scale": 0.91 }, "traitShop": { "x": 70.4, "y": 40.9, "scale": 0.97 }, "smith": { "x": 41.7, "y": 35, "scale": 1.01 }, "wanderer": { "x": 50.3, "y": 66.6, "scale": 1.11 } },
+    "exit": { "x": 10.9, "y": 71.8, "scale": 0.64 }
+  },
   "worldmap": {
     "name": "소울 소사이어티", "adventureName": "모험", "spaName": "온천",
-    "layout": { "home": { "x": 45.3, "y": 69, "scale": 1.28 }, "market": { "x": 61.8, "y": 32.1, "scale": 0.98 }, "training": { "x": 62.3, "y": 89.6, "scale": 0.85 }, "adventure": { "x": 17.7, "y": 85.6, "scale": 1.05 }, "tower": { "x": 10.9, "y": 44.5, "scale": 1.15 }, "spa": { "x": 88.5, "y": 55, "scale": 1.29 } }
+    "sceneArt": "scene.worldmap.shinigami",
+    "floor": { "aspect": 2, "poly": [[0, 0.16], [1, 0.16], [1, 1], [0, 1]], "view": { "zoom": 1.37, "x": 46.4, "y": 0 } },
+    "layout": { "home": { "x": 47.2, "y": 70.7, "scale": 1.28 }, "market": { "x": 66.8, "y": 42.7, "scale": 0.98 }, "training": { "x": 71, "y": 90.5, "scale": 0.85 }, "adventure": { "x": 14.6, "y": 90.6, "scale": 0.96 }, "tower": { "x": 19.6, "y": 45.4, "scale": 1.15 }, "spa": { "x": 88.6, "y": 63.1, "scale": 1.33 } }
   },
   "room": {
     "shape": "room",
@@ -364,12 +375,14 @@
   },
   "ascension": { "name": "참백도 구상화", "desc": "참백도의 정령을 눈앞에 불러내 굴복시킨다. 깨면 만해를 쓸 수 있다.", "foe": "참백도의 정령", "cutin": "정령을 불러낸다 — 참백도 구상화!", "completeText": ["참백도의 정령을 눈앞에 불러내 굴복시켰다.", "진명을 알아내 만해에 닿았다."], "lookChange": false },
   "liberation": {
-    "baseName": "영력 해방",
-    "baseCutin": "영압을 끌어올린다 — 영력 해방!",
-    "baseEndText": "해방이 풀렸다. 내면의 호로가 꿈틀거린다…",
+    "baseName": "한정 해제",
+    "baseCutin": "영압을 묶은 봉인을 푼다 — 한정 해제!",
+    "baseEndText": "봉인이 다시 걸렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
     "cutin": "참백도의 진명을 부른다 — 만해!",
-    "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…"
+    "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…",
+    "formKey": "final",
+    "formCutin": "만해 — {final}!"
   },
   "rebirth": {
     "name": "환생",

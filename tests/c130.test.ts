@@ -120,7 +120,7 @@ describe('C.130 서비스 워커: 새 배포가 바로 열린다', () => {
     const pwa = read('src/pwa.ts');
     expect(pwa).toContain("'visibilitychange'");
     expect(pwa).toContain('reg.update()');
-    expect(pwa).toContain('setInterval(check, UPDATE_CHECK_MS)');
+    expect(pwa).toContain('setInterval(() => check(), UPDATE_CHECK_MS)'); // C.283: 버전 파일 확인
     expect(read('src/main.ts')).toContain('mountUpdateBanner();');
     const banner = read('src/ui/updateBanner.ts');
     expect(banner).toContain("label: '다시 시작'");

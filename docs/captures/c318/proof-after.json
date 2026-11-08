@@ -1,0 +1,564 @@
+{
+ "tag": "after",
+ "shots": {
+  "after-pc-hollow-room": {
+   "status": {
+    "x": 375,
+    "y": 51,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 471,
+    "y": 99,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 372,
+    "y": 31,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 352,
+    "y": 264,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-pc-hollow-spa": {
+   "status": {
+    "x": 429,
+    "y": 92,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 525,
+    "y": 140,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 425,
+    "y": 72,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 406,
+    "y": 310,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력97 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:56",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-pc-hollow-spa-leaving": {
+   "status": {
+    "x": 520,
+    "y": 70,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 616,
+    "y": 118,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 517,
+    "y": 50,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 497,
+    "y": 288,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력103 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:58",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-hollow-room": {
+   "status": {
+    "x": 351,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 447,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 348,
+    "y": 30,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 328,
+    "y": 259,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-hollow-spa": {
+   "status": {
+    "x": 397,
+    "y": 88,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 493,
+    "y": 136,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 394,
+    "y": 68,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 374,
+    "y": 305,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력97 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:56",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-hollow-spa-leaving": {
+   "status": {
+    "x": 487,
+    "y": 65,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 583,
+    "y": 113,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 484,
+    "y": 45,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 464,
+    "y": 282,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력103 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:58",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-hollow-spa-weak": {
+   "status": {
+    "x": 398,
+    "y": 44,
+    "w": 94,
+    "h": 131,
+    "inside": true
+   },
+   "info": {
+    "x": 494,
+    "y": 153,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 395,
+    "y": 24,
+    "w": 101,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 375,
+    "y": 305,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력97 / 212",
+   "rows": [
+    "weak:쇠약",
+    "tired:피곤",
+    "hunger:13",
+    "cond:36",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-pc-shinigami-room": {
+   "status": {
+    "x": 375,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 471,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 376,
+    "y": 30,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 352,
+    "y": 264,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-pc-shinigami-spa": {
+   "status": {
+    "x": 426,
+    "y": 86,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 522,
+    "y": 134,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 426,
+    "y": 66,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 403,
+    "y": 310,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력97 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:56",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-pc-shinigami-spa-leaving": {
+   "status": {
+    "x": 520,
+    "y": 64,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 616,
+    "y": 112,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 521,
+    "y": 44,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 497,
+    "y": 287,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력103 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:58",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-shinigami-room": {
+   "status": {
+    "x": 351,
+    "y": 50,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 447,
+    "y": 98,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 352,
+    "y": 30,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 328,
+    "y": 259,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력64 / 212",
+   "rows": [
+    "hunger:70",
+    "cond:40",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-shinigami-spa": {
+   "status": {
+    "x": 398,
+    "y": 82,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 494,
+    "y": 130,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 399,
+    "y": 62,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 375,
+    "y": 305,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력96 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:55",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-shinigami-spa-leaving": {
+   "status": {
+    "x": 483,
+    "y": 60,
+    "w": 94,
+    "h": 70,
+    "inside": true
+   },
+   "info": {
+    "x": 579,
+    "y": 108,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 484,
+    "y": 40,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 460,
+    "y": 284,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력103 / 212",
+   "rows": [
+    "hunger:68",
+    "cond:58",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  },
+  "after-ph-shinigami-spa-weak": {
+   "status": {
+    "x": 398,
+    "y": 44,
+    "w": 94,
+    "h": 131,
+    "inside": true
+   },
+   "info": {
+    "x": 494,
+    "y": 153,
+    "w": 22,
+    "h": 22,
+    "inside": true
+   },
+   "name": {
+    "x": 399,
+    "y": 24,
+    "w": 93,
+    "h": 18,
+    "inside": true
+   },
+   "hp": {
+    "x": 375,
+    "y": 305,
+    "w": 140,
+    "h": 22,
+    "inside": true
+   },
+   "hpText": "체력97 / 212",
+   "rows": [
+    "weak:쇠약",
+    "tired:피곤",
+    "hunger:13",
+    "cond:36",
+    "stab:50",
+    "risk:0"
+   ],
+   "clipped": 0,
+   "oldChips": 0
+  }
+ },
+ "errors": [],
+ "infoOpen": {
+  "hollow-pc-normal": 0,
+  "hollow-ph-normal": 0,
+  "hollow-ph-weak": 0,
+  "shinigami-pc-normal": 0,
+  "shinigami-ph-normal": 0,
+  "shinigami-ph-weak": 0
+ }
+}

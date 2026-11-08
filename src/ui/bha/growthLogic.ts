@@ -15,7 +15,7 @@ export const EVOLVE_HINT = '몸에 변화가 일어난다…';
 /** 원정 결과 맨 위 성장 요약: 사실만 짧게. 귀환·패배 구분 없이 같은 항목.
  *  진화는 여기 넣지 않는다 (GDD 176장 6: 맨 위 줄은 노란 알림 띠에 가려지고 이름이 연출 전에 먼저 보였다) — 결과 왼쪽 열 EVOLVE_HINT */
 export function growthLines(g: GrowthInput): string[] {
-  const lines = [g.newTraits > 0 ? `새 특성 ${g.newTraits}개` : '새 특성 없음'];
+  const lines = [g.newTraits > 0 ? `새 블록 ${g.newTraits}개` : '새 블록 없음'];
   if (g.newTitles.length > 0) lines.push(`새 칭호 ${g.newTitles.map((n) => `「${n}」`).join(' ')}`);
   return lines;
 }

@@ -1,0 +1,205 @@
+{
+  "shots": [
+    "hollow-1-prep-locked.png",
+    "hollow-2-prep.png",
+    "hollow-3-place.png",
+    "hollow-4-prep-placed.png",
+    "hollow-5-walk.png",
+    "hollow-6-lapend.png",
+    "hollow-7-lapend-picked.png",
+    "shinigami-1-prep-locked.png",
+    "shinigami-2-prep.png",
+    "shinigami-3-place.png",
+    "shinigami-4-prep-placed.png",
+    "shinigami-5-walk.png",
+    "shinigami-6-lapend.png",
+    "shinigami-7-lapend-picked.png"
+  ],
+  "audit": {
+    "hollow-1-prep-locked.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "hollow-2-prep.png": {
+      "small": [],
+      "tiny": [
+        "bha-road__cell '0번 칸 (출발, ' 24x24",
+        "bha-road__cell '1번 칸 (비어 있' 24x24",
+        "bha-road__cell '2번 칸 (비어 있' 24x24",
+        "bha-road__cell '3번 칸 (비어 있' 24x24",
+        "bha-road__cell '4번 칸 (비어 있' 24x24",
+        "bha-road__cell '5번 칸 (비어 있' 24x24",
+        "bha-road__cell '6번 칸 (비어 있' 24x24",
+        "bha-road__cell '7번 칸 (비어 있' 24x24",
+        "bha-road__cell '8번 칸 (비어 있' 24x24",
+        "bha-road__cell '9번 칸 (비어 있' 24x24",
+        "bha-road__cell '10번 칸 (비어 ' 24x24",
+        "bha-road__cell '11번 칸 (비어 ' 24x24"
+      ],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "hollow-3-place.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "hollow-4-prep-placed.png": {
+      "small": [],
+      "tiny": [
+        "bha-road__cell '0번 칸 (출발, ' 24x24",
+        "bha-road__cell '1번 칸 (떠도는 ' 24x24",
+        "bha-road__cell '2번 칸 (상급 호' 24x24",
+        "bha-road__cell '3번 칸 (하급 호' 24x24",
+        "bha-road__cell '4번 칸 (놓을 수' 24x24",
+        "bha-road__cell '5번 칸 (놓을 수' 24x24",
+        "bha-road__cell '6번 칸 (놓을 수' 24x24",
+        "bha-road__cell '7번 칸 (놓을 수' 24x24",
+        "bha-road__cell '8번 칸 (놓을 수' 24x24",
+        "bha-road__cell '9번 칸 (놓을 수' 24x24",
+        "bha-road__cell '10번 칸 (놓을 ' 24x24",
+        "bha-road__cell '11번 칸 (놓을 ' 24x24"
+      ],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "hollow-5-walk.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    },
+    "hollow-6-lapend.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    },
+    "hollow-7-lapend-picked.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    },
+    "shinigami-1-prep-locked.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "shinigami-2-prep.png": {
+      "small": [],
+      "tiny": [
+        "bha-road__cell '0번 칸 (출발, ' 24x24",
+        "bha-road__cell '1번 칸 (비어 있' 24x24",
+        "bha-road__cell '2번 칸 (비어 있' 24x24",
+        "bha-road__cell '3번 칸 (비어 있' 24x24",
+        "bha-road__cell '4번 칸 (비어 있' 24x24",
+        "bha-road__cell '5번 칸 (비어 있' 24x24",
+        "bha-road__cell '6번 칸 (비어 있' 24x24",
+        "bha-road__cell '7번 칸 (비어 있' 24x24",
+        "bha-road__cell '8번 칸 (비어 있' 24x24",
+        "bha-road__cell '9번 칸 (비어 있' 24x24",
+        "bha-road__cell '10번 칸 (비어 ' 24x24",
+        "bha-road__cell '11번 칸 (비어 ' 24x24"
+      ],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "shinigami-3-place.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "shinigami-4-prep-placed.png": {
+      "small": [],
+      "tiny": [
+        "bha-road__cell '0번 칸 (출발, ' 24x24",
+        "bha-road__cell '1번 칸 (하급 호' 24x24",
+        "bha-road__cell '2번 칸 (폐가, ' 24x24",
+        "bha-road__cell '3번 칸 (메노스 ' 24x24",
+        "bha-road__cell '4번 칸 (놓을 수' 24x24",
+        "bha-road__cell '5번 칸 (놓을 수' 24x24",
+        "bha-road__cell '6번 칸 (놓을 수' 24x24",
+        "bha-road__cell '7번 칸 (놓을 수' 24x24",
+        "bha-road__cell '8번 칸 (놓을 수' 24x24",
+        "bha-road__cell '9번 칸 (놓을 수' 24x24",
+        "bha-road__cell '10번 칸 (놓을 ' 24x24",
+        "bha-road__cell '11번 칸 (놓을 ' 24x24"
+      ],
+      "cut": [],
+      "go": [
+        110,
+        322,
+        624,
+        48
+      ]
+    },
+    "shinigami-5-walk.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    },
+    "shinigami-6-lapend.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    },
+    "shinigami-7-lapend-picked.png": {
+      "small": [],
+      "tiny": [],
+      "cut": [],
+      "go": null
+    }
+  },
+  "checks": {
+    "hollow-focus-after-card": "bha-road__cell is-can bha-sel",
+    "hollow-focus-after-place": "bha-tilecard bha-tilecard--prey is-selected bha-sel",
+    "hollow-hadExp": true,
+    "shinigami-focus-after-card": "bha-road__cell is-can bha-sel",
+    "shinigami-focus-after-place": "bha-tilecard bha-tilecard--elite is-selected bha-sel",
+    "shinigami-hadExp": true
+  },
+  "errors": []
+}

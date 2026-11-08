@@ -162,14 +162,14 @@ describe('세이브 구조', () => {
     const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
     writeSave(storage, save);
     const loaded = loadSave(storage)!;
-    const a = readActiveExpedition(loaded);
+    const a = readActiveExpedition(loaded, 6); // C.311: 저장 시각 5 → 시한 안(지금 6)
     expect(a.ok && a.exp.phase).toBe('battle');
     expect(a.ok && a.speed).toBe(2);
   });
 
   it('원정이 정상 종료(귀환·패배)하면 중간 저장 영역을 비우고 런 로그에는 한 번만 들어간다', () => {
     const save = withActive();
-    const a = readActiveExpedition(save);
+    const a = readActiveExpedition(save, 6);
     if (!a.ok) throw new Error();
     const done = drive(a.exp, (e) => e);
     recordExpedition(save, done, 0);
@@ -198,7 +198,7 @@ describe('세이브 구조', () => {
     expect(readActiveExpedition(m)).toEqual({ ok: false, reason: 'none' });
   });
 
-  it('손상·버전 불일치: 이어하기를 숨기고(영역을 비움) 예외 없이 무시한다', () => {
+  it('손상·형식 불일치: 이어하기를 숨기고(영역을 비움) 예외 없이 무시한다 (C.311: 밸런스 버전 불일치는 실패 정산 — tests/c311.test.ts)', () => {
     const good = JSON.parse(JSON.stringify(withActive().activeExpedition));
     const bad: unknown[] = [
       'garbage', 42, [], { version: EXPEDITION_SNAPSHOT_VERSION },
@@ -256,7 +256,7 @@ describe('이어하기: 마지막 화면 키 (GDD 19-3, 형식 13)', () => {
     writeSave(store, atBattle());
     const loaded = loadSave(store)!;
     expect(resumeTarget(loaded)).toBe('expedition');
-    const a = readActiveExpedition(loaded);
+    const a = readActiveExpedition(loaded, 6); // C.311: 저장 시각 5 → 시한 안
     expect(a.ok && a.exp.phase).toBe('battle');
   });
 

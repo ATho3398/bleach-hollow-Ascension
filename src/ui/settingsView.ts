@@ -4,9 +4,8 @@
 import { button, el, enableRangeDrag, icon } from './bha/dom';
 import { fixParticles } from '../engine/josa';
 import { endScreen, screenSignal } from './bha/screenScope';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { registerCancelHook } from './bha/shortcuts';
-import { categoryTabs } from './bha/itemUi';
 import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
 import { testInfoNodes } from './testMode';
@@ -24,7 +23,8 @@ import { currentViewState, loadViewScale, saveViewScale, shrunkNote, VIEW_SCALE_
 import { confirmDialog } from './confirmDialog';
 import { parseSlotSettings, setActiveSlotSettings, slotSettingsHost, SLOT_SETTING_KEYS, type SlotSettings } from './settingsScope';
 import { versionLabel } from '../version';
-import { DEFAULT_GENDER, GENDER_LABEL, GENDERS, type Gender } from '../engine/gender';
+import { GENDER_LABEL } from '../engine/gender';
+import { cloudPanelNodes, type CloudUi } from './cloudView';
 
 /** 설정 탭 (GDD 103장 2) */
 export const SETTINGS_TABS = [
@@ -125,13 +125,16 @@ function writeCommon(storage: SettingsStorage | null, before: CommonValues, afte
 
 /** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + (슬롯 표시) + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 */
 function switchRow(label: string): { b: HTMLButtonElement; tag: HTMLElement; paint: (on: boolean) => void } {
-  const b = el('button', 'bha-switch');
+  const b = el('button', 'bha-setswitch');
   b.type = 'button';
   b.setAttribute('role', 'switch');
-  const track = el('span', 'bha-switch__track');
-  track.append(el('i', 'bha-switch__knob'));
+  b.classList.add('bha-setrow');
+  const track = el('span', 'bha-setswitch__track');
+  track.append(el('i', 'bha-setswitch__knob'));
   const tag = scopeTag();
-  b.append(el('span', 'bha-switch__label', label), tag, track);
+  const text = el('span', 'bha-setrow__text');
+  text.append(el('span', 'bha-setswitch__label', label));
+  b.append(text, tag, track);
   return {
     b,
     tag,
@@ -155,9 +158,64 @@ const closeX = (onClose: () => void): HTMLButtonElement => button({ label: '닫�
 /** 설명 줄 (#77): 넘치면 줄바꿈으로 다 보인다 — 말줄임 없음 (C.190, GDD 116장 3 사용자 "설명짤리는걸 왜 ...으로 대체해") */
 const hintLine = (text: string): HTMLElement => el('p', 'bha-faint bha-settings__hint', text);
 
+/** 설정 한 줄 (리디자인 v2 S16, GDD 183장): 왼쪽 이름 + 한 줄 설명 | 오른쪽 조작. 44px 이상, 두 열 격자의 한 칸 */
+function setRow(label: string, control?: Node): HTMLElement {
+  const row = el('div', 'bha-setrow');
+  const text = el('span', 'bha-setrow__text');
+  text.append(el('b', 'bha-setrow__label', label));
+  row.append(text);
+  if (control) addCtl(row, control);
+  return row;
+}
+function addCtl(row: HTMLElement, control: Node): void {
+  const ctl = el('span', 'bha-setrow__ctl');
+  ctl.append(control);
+  row.append(ctl);
+}
+const isHint = (n: Node): n is HTMLElement => n instanceof HTMLElement && n.matches('p.bha-faint, p.bha-settings__hint');
+
+/** 묶음 = 줄 여러 개 (183장 S16: 패널 테두리·제목 없이 같은 44px 줄 두 열). 묶음 이름은 읽기 도구에만 남는다.
+ *  켬/끔 줄(스위치)은 그대로 한 줄, 그 밖의 조작(버튼·고르기·막대)은 '묶음 이름 | 조작' 줄로 감싸고, 뒤따르는 설명은 바로 앞 줄 안 둘째 줄로 들어간다 */
 const panel = (title: string, ...n: Node[]): HTMLElement => {
-  const p = el('section', 'bha-panel');
-  p.append(el('h2', 'bha-panel__title', title), ...n);
+  const p = el('section', 'bha-setgroup');
+  p.setAttribute('aria-label', title);
+  let cur: HTMLElement | null = null;
+  let hasCtl = false;
+  for (const node of n) {
+    if (isHint(node)) {
+      if (!cur) {
+        cur = setRow(title);
+        hasCtl = false;
+        p.append(cur);
+      }
+      node.classList.add('bha-setrow__hint');
+      let text = cur.querySelector(':scope > .bha-setrow__text');
+      if (!text) {
+        text = el('span', 'bha-setrow__text');
+        cur.append(text);
+      }
+      text.append(node);
+    } else if (node instanceof HTMLElement && node.matches('button.bha-setswitch')) {
+      cur = node;
+      hasCtl = true;
+      p.append(node);
+    } else if (node instanceof HTMLElement && node.matches('.bha-slider')) {
+      cur = el('div', 'bha-setrow bha-setrow--slider');
+      cur.append(node);
+      hasCtl = true;
+      p.append(cur);
+    } else if (cur && !hasCtl && !cur.matches('.bha-setswitch')) {
+      addCtl(cur, node);
+      hasCtl = true;
+    } else if (cur && hasCtl && cur.matches('.bha-setrow:not(.bha-setswitch):not(.bha-setrow--slider)')) {
+      // 같은 묶음의 조작이 더 있으면 같은 줄 오른쪽에 (묶음 이름 줄이 두 번 생기지 않게)
+      cur.querySelector(':scope > .bha-setrow__ctl')!.append(node);
+    } else {
+      cur = setRow(title, node);
+      hasCtl = true;
+      p.append(cur);
+    }
+  }
   return p;
 };
 
@@ -172,6 +230,10 @@ export interface SettingsViewOpts {
   commonOnly?: boolean;
   /** 처음 열 탭 */
   tab?: SettingsTab;
+  /** 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7): 게임 안에서 연 설정 화면만 (시작 화면·전투 일시정지 설정은 없음) */
+  onIdentity?: () => void;
+  /** 클라우드 세이브 로그인 (GDD 196장, C.323): 없으면(테스트 모드) 줄이 없다 */
+  cloud?: CloudUi;
 }
 
 /** 설정을 화면 위 레이어로 연다 (C.170, GDD 100장 #41: 전투 일시정지의 [설정] — 전투 화면을 지우지 않는다). 뒤로·Esc·X 로 닫는다(바꾼 게 있으면 저장 확인). 돌려주는 함수로 바로 닫는다 */
@@ -182,16 +244,19 @@ export function settingsOverlay(onClose: () => void): () => void {
   layer.setAttribute('aria-label', '설정');
   let closed = false;
   let unregister = () => {};
+  let uncover = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
+    uncover();
     endScreen(layer); // 이 레이어 설정 화면이 건 window 리스너를 푼다
     layer.remove();
     onClose();
   };
   const ctl = settingsView(layer, { onClose: () => ctl.requestClose(close) });
   getOverlayHost().append(layer);
+  uncover = coverTutorials(layer); // 튜토리얼 카드·강조 틀은 설정 창이 열린 동안 숨는다 (GDD 194장 1·3)
   unregister = registerLayer(layer, () => ctl.requestClose(close));
   return close;
 }
@@ -209,10 +274,8 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   let common: CommonValues = structuredClone(commonSaved);
   let slotSaved: SlotSettings = host?.read() ?? {};
   let slot: SlotSettings = { ...slotSaved };
-  // 성별 (GDD 114장): 슬롯에만 있는 값 — [이 슬롯]에서만 바꾼다. 저장 전까지는 임시
-  const genderHost = host?.gender ?? null;
-  let genderSaved: Gender = genderHost?.read() ?? DEFAULT_GENDER;
-  let gender: Gender = genderSaved;
+  // 이름·성별 (GDD 199장 7, C.326): 슬롯에만 있는 값 — 설정 > 기타 [이름·성별 바꾸기] 화면에서 바로 바꾼다 (설정 [저장]과 따로)
+  const identityHost = host?.identity ?? null;
   // 공통/이 슬롯 나누기는 화면에서 뺐다 (GDD 159장 13): 늘 공통 값을 고친다. 옛 세이브에 남은 슬롯 값은 그 줄을 고치면 지워져 공통을 따른다
   const scope = 'common' as 'common' | 'slot';
   let tab: SettingsTab = o.tab ?? 'screen';
@@ -233,8 +296,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   };
   const commonDirty = () => !sameValue(common, commonSaved);
   const slotDirty = () => !sameValue(parseSlotSettings(slot), parseSlotSettings(slotSaved));
-  const genderDirty = () => genderHost !== null && gender !== genderSaved;
-  const isDirty = () => commonDirty() || (host !== null && slotDirty()) || genderDirty();
+  const isDirty = () => commonDirty() || (host !== null && slotDirty());
 
   const paints: (() => void)[] = [];
   const tagPaint = (tag: HTMLElement, k: keyof CommonValues) => {
@@ -360,26 +422,14 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     pickRow(options, label, () => val(k), (v) => setVal(k, v), () => editable(k), (tag) => tagPaint(tag, k));
 
   // ── 화면 탭 ──
-  // 성별 (GDD 114장): 남성/여성. 캐릭터(슬롯)마다 다른 항목이라 '이 캐릭터' 칸에 따로 묶는다 (GDD 159장 13)
-  const charPanels: HTMLElement[] = [];
-  if (genderHost) {
-    const genderRow = pickRow(GENDERS, (g) => GENDER_LABEL[g], () => gender, (g) => { gender = g; }, () => true, (tag) => {
-      tag.hidden = true;
-    });
-    genderRow.dataset.set = 'gender';
-    genderRow.setAttribute('role', 'group');
-    genderRow.setAttribute('aria-label', '성별');
-    const p = panel('이 캐릭터 · 성별', genderRow, hintLine('캐릭터마다 따로 정한다.'), hintLine(genderHost.note));
-    p.dataset.panel = 'gender';
-    charPanels.push(p);
-  }
+  // 성별 (GDD 114장)은 화면 탭에서 기타 탭 [이름·성별 바꾸기]로 옮겼다 (GDD 199장 7, C.326)
   const tamaPanel = panel('다마고치 모드',
     boolRow('tamago', '다마고치 모드'), hintLine('기기 전체(몸체·고리·키링)가 보이게 물러난다. 기기 버튼도 눌린다. 화면을 누르면 다시 확대된다. 컴퓨터는 B 키로 바꾼다.'),
     boolRow('tilt', '기울기로 흔들기'), hintLine('키링이 폰 기울기를 따라 흔들린다(다마고치 모드에서만). 아이폰은 저장할 때 움직임 허용을 묻는다.'),
   );
   tamaPanel.dataset.panel = 'tamago';
   // 전체 화면 (GDD 46장): 지원하지 않는 브라우저(아이폰 사파리 등)에서는 패널 자체를 만들지 않는다. [전체 화면]은 설정이 아니라 바로 하는 동작
-  const fsBtn = button({ label: '전체 화면', icon: 'i-frame', onClick: () => void toggleFullscreen().then(paintFs) });
+  const fsBtn = button({ label: '전체 화면', icon: 'i-frame', size: 'small', onClick: () => void toggleFullscreen().then(paintFs) });
   fsBtn.dataset.set = 'fullscreen';
   const paintFs = () => {
     fsBtn.classList.toggle('is-on', isFullscreen());
@@ -461,7 +511,18 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     listBox.append(...listRows.map((r) => r.row));
     const ctl = el('div', 'bha-bgmlist__ctl');
     ctl.append(boolRow('repeat', '현재 곡만 반복'), button({ label: '다음 곡', size: 'small', onClick: () => { bgm().next(); paintMusic(); } }));
-    musicNodes.push(panel('음악 목록', nowLine, ctl, listBox, hintLine('한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 바로 재생).')));
+    // 음악 목록 = 한 판 (두 열 전체): 머리 '음악 목록' 하나 → '지금 곡 · 반복 · 다음 곡' 줄 → 곡 목록 → 설명
+    const music = el('section', 'bha-setgroup');
+    music.setAttribute('aria-label', '음악 목록');
+    const box = el('div', 'bha-setrow bha-setrow--music');
+    const bar = el('div', 'bha-music__bar');
+    nowLine.classList.add('bha-music__now');
+    bar.append(nowLine, ctl);
+    const hint = hintLine('한 곡이 끝나면 다음 곡으로, 목록에서 뺀 곡은 건너뛴다(▶ 로 직접 고르면 바로 재생).');
+    hint.classList.add('bha-setrow__hint');
+    box.append(el('b', 'bha-setrow__label', '음악 목록'), bar, listBox, hint);
+    music.append(box);
+    musicNodes.push(music);
   }
 
   // ── 전투 탭 (전투 연출 — 소리와 분리, GDD 103장 2) ──
@@ -469,24 +530,28 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     ...(prefersReducedMotion() ? [hintLine('기기의 "동작 줄이기" 설정을 따라 화면 흔들림이 기본으로 꺼져 있다.')] : []),
     boolRow('damageNumbers', '피해 숫자'), hintLine('적과 내가 받은 피해가 짧게 떠오른다.'),
     boolRow('vibration', '진동', (on) => { if (on) emitFeedback('chain2', { vibration: true, sound: false }); }), hintLine('블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.'),
-    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때와 저장 필살기 때만 짧게 흔들린다.'),
+    boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때, 해방할 때, 체인 3 블록을 쓸 때만 짧게 흔들린다.'),
   );
   const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
 
   // ── 기타 탭 ──
-  const info = panel('정보', el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치가 있다. 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
+  // 버전 줄은 한 번만 (C.324): 이 글 줄 자체가 7번 누르면 테스트 모드 — 같은 글을 단추로 또 그리지 않는다
+  const verLine = el('p', 'bha-faint', versionLabel());
+  const info = panel('정보', verLine, el('p', 'bha-faint', '임시 수치가 있다. 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes(verLine));
+  info.classList.add('bha-setgroup--wide'); // 버전·출처 글이 길어 두 열을 다 쓴다
   // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
-  const installPanel = panel('앱 설치');
+  const installNodes: Node[] = [];
   const standalone = isStandalone();
-  if (standalone || loadInstallPrefs(storage).installed) installPanel.append(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
+  if (standalone || loadInstallPrefs(storage).installed) installNodes.push(el('p', 'bha-faint', standalone ? '지금 홈 화면 앱으로 실행 중이다. 인터넷 없이도 열린다.' : '이미 설치했다. 홈 화면의 아이콘으로 열면 인터넷 없이도 플레이할 수 있다.'));
   if (!standalone) {
     const canInstall = installMode(detectPlatform(navigator.userAgent), installPrompt() !== null) !== 'none';
-    const b = button({ label: '앱 설치', icon: 'i-play', onClick: () => openInstall({ auto: false }) });
+    const b = button({ label: '앱 설치', icon: 'i-play', size: 'small', onClick: () => openInstall({ auto: false }) });
     b.disabled = !canInstall;
-    installPanel.append(b, el('p', 'bha-faint', canInstall ? '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다.' : '이 브라우저에서는 설치 창을 열 수 없다. 주소창의 설치 아이콘이나 브라우저 메뉴를 확인한다.'));
+    installNodes.push(b, el('p', 'bha-faint', canInstall ? '홈 화면에 설치하면 인터넷 없이도 플레이할 수 있다.' : '이 브라우저에서는 설치 창을 열 수 없다. 주소창의 설치 아이콘이나 브라우저 메뉴를 확인한다.'));
   }
+  const installPanel = panel('앱 설치', ...installNodes);
   const reset = button({
-    label: '기본값 복원', icon: 'i-loop',
+    label: '기본값 복원', icon: 'i-loop', size: 'small',
     onClick: () => {
       try {
         storage?.removeItem?.(LEGACY_POINTER_SETTINGS_KEY);
@@ -500,16 +565,29 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     },
   });
   paints.push(() => { reset.disabled = scope !== 'common'; }); // 늘 켜짐 (공통만 고친다)
-  const etc: Node[] = [reset];
-  if (o.onHelp) etc.push(button({ label: '도움말', icon: 'i-help', onClick: o.onHelp }));
-  if (o.onBackup) etc.push(button({ label: '세이브 백업', icon: 'i-check', onClick: o.onBackup }));
-  const etcRow = el('div', 'bha-settings__etc');
-  etcRow.append(...etc);
-  const etcPanel = panel('기타', etcRow, hintLine('기본값 복원 = 전투 효과·소리·음악 목록(공통). 도움말에서 안내를 다시 볼 수 있다.'));
+  // 기타 = 줄마다 버튼 하나 (183장 S16)
+  const etcPanel = panel('기본값 복원', reset, hintLine('전투 효과·소리·음악 목록(공통)을 되돌린다.'));
+  if (o.onHelp) etcPanel.append(...panel('도움말', button({ label: '도움말', icon: 'i-help', size: 'small', onClick: o.onHelp }), hintLine('안내를 다시 볼 수 있다.')).childNodes);
+  if (o.onBackup) etcPanel.append(...panel('세이브 백업', button({ label: '세이브 백업', icon: 'i-check', size: 'small', onClick: o.onBackup })).childNodes);
+  // 이름·성별 (GDD 199장 7, C.326): 버튼 하나 + 지금 값 한 줄. 바꾼 설정이 저장 안 됐으면 먼저 저장 확인 창
+  if (identityHost && o.onIdentity) {
+    const onIdentity = o.onIdentity;
+    const now = identityHost.read();
+    const idBtn = button({ label: '이름·성별 바꾸기', icon: 'i-swap', size: 'small', onClick: () => requestClose(onIdentity) });
+    idBtn.dataset.set = 'identity';
+    etcPanel.append(...panel('이름·성별', idBtn, hintLine(`${now.name ?? '이름 없음'} · ${GENDER_LABEL[now.gender]}`)).childNodes);
+  }
+  // 로그인·클라우드 세이브 (GDD 196장, C.323): 한 줄 — 버튼 하나(로그인 전 [Google 로그인] · 뒤 [로그아웃], 같은 자리) + 상태 설명. 상태가 바뀌면 글만 바뀐다
+  const cloudNodes = o.cloud ? cloudPanelNodes(o.cloud) : null;
+  if (cloudNodes) {
+    etcPanel.append(...panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint).childNodes);
+    cloudNodes.button.closest('.bha-setrow')?.classList.add('bha-setrow--cloud'); // 설명 줄 수가 바뀌어도 버튼은 줄 위쪽 같은 자리
+    paints.push(cloudNodes.paint);
+  }
   const slotPanels: HTMLElement[] = [];
   if (host) {
     // 옛 세이브에 이 캐릭터만 쓰던 값이 남아 있을 때만 보인다 (GDD 159장 13: 공통/이 슬롯 나누기는 뺐다)
-    const clearBtn = button({ label: '지우기', icon: 'i-close', variant: 'danger', onClick: () => askClearSlot() });
+    const clearBtn = button({ label: '지우기', icon: 'i-close', variant: 'danger', size: 'small', onClick: () => askClearSlot() });
     clearBtn.dataset.set = 'slot-clear';
     const slotPanel = panel('이 캐릭터만 쓰던 설정', clearBtn, hintLine('지우면 다른 캐릭터와 같은 설정을 쓴다.'));
     paints.push(() => {
@@ -521,7 +599,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   }
 
   const TAB_BODY: Record<SettingsTab, HTMLElement[]> = {
-    screen: [...charPanels, ...fsPanels, tamaPanel, sizePanel, keyPanel],
+    screen: [...fsPanels, tamaPanel, sizePanel, keyPanel],
     sound: [soundPanel, ...musicNodes],
     battle: [fxPanel, ctlPanel],
     etc: [info, installPanel, etcPanel, ...slotPanels],
@@ -554,19 +632,44 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   aside.push(saveBtn);
   if (o.onClose) aside.push(closeX(o.onClose));
   const sub = el('span', '');
+  const tabsBox = el('div', 'bha-tabs bha-settings__tabs');
+  tabsBox.setAttribute('role', 'tablist');
+  tabsBox.setAttribute('aria-label', '설정 분류');
   const head = lcdHead({ title: '설정', sub, aside });
+  // 탭은 머리 줄 제목 바로 오른쪽, [저장]은 머리 오른쪽 고정 (183장 S16)
+  head.insertBefore(tabsBox, head.querySelector('.bha-lcdpage__aside'));
 
-  const tabsBox = el('div', 'bha-settings__tabs');
   const grid = el('div', 'bha-settings__grid');
+  // 본문이 판보다 길면 바닥에 '▼ 더 있음' (C.324, 공용 띠 .bha-more--sticky · GDD 168장 3): 폰은 스크롤 막대가 안 보여 맨 아래 줄(로그인 등)이 잘린 채 끝난 것처럼 보였다.
+  // 띠는 grid 를 감싼 스크롤 칸(.bha-lcdpage__col) 바닥에 붙고, 끝까지 내리면 숨는다
+  const more = el('div', 'bha-more bha-more--sticky bha-settings__more', '▼ 더 있음');
+  more.setAttribute('aria-hidden', 'true');
+  more.hidden = true;
+  const syncMore = (): void => {
+    const sc = grid.parentElement;
+    if (sc) more.hidden = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+  };
   const pickTab = (id: SettingsTab) => {
     tab = id;
     renderTab();
   };
   const renderTab = () => {
-    tabsBox.replaceChildren(categoryTabs(SETTINGS_TABS.map((t) => ({ ...t })), tab, (id) => pickTab(id as SettingsTab), '설정 분류'));
+    // 탭 4개 = v2 .bha-tabs (183장 S16): 머리 줄 제목 오른쪽. 고른 탭은 is-on
+    tabsBox.replaceChildren(...SETTINGS_TABS.map((t) => {
+      const b = el('button', t.id === tab ? 'bha-tab is-on' : 'bha-tab', t.label);
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(t.id === tab));
+      b.dataset.tab = t.id;
+      b.onclick = () => pickTab(t.id);
+      return b;
+    }));
     grid.replaceChildren(...TAB_BODY[tab]);
     grid.dataset.tab = tab;
     grid.scrollTop = 0;
+    if (grid.parentElement) grid.parentElement.scrollTop = 0; // 실제로 스크롤되는 칸은 바깥 열
+    more.hidden = true; // 탭을 바꾸면 다시 잰다
+    requestAnimationFrame(syncMore);
   };
 
   function paintMeta(): void {
@@ -597,8 +700,6 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
       host.write(s);
       setActiveSlotSettings(s);
     }
-    if (genderHost && genderDirty()) genderHost.write(gender);
-    genderSaved = gender;
     commonSaved = structuredClone(common);
     slotSaved = { ...slot };
     applySettingsNow(storage);
@@ -617,7 +718,6 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   function discard(): void {
     common = structuredClone(commonSaved);
     slot = { ...slotSaved };
-    gender = genderSaved;
     applySettingsNow(storage);
     paintAll();
   }
@@ -653,8 +753,14 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     });
   }
 
-  const page = lcdPage(root, { cls: 'bha-settings-page', cols: 'minmax(0, 1fr)' }, head, [tabsBox, grid], []);
+  const page = lcdPage(root, { cls: 'bha-settings-page', cols: 'minmax(0, 1fr)' }, head, [grid], []);
   page.app.dataset.screen = 'settings';
+  const scroller = grid.parentElement;
+  if (scroller) {
+    scroller.append(more);
+    scroller.addEventListener('scroll', syncMore, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncMore).observe(grid);
+  }
   renderTab();
   paintAll();
 
@@ -674,6 +780,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   listen(VIEW_SCALE_EVENT, syncOutside);
   listen(TAMAGO_EVENT, syncOutside);
   if (fsPanels.length > 0) listen(FULLSCREEN_EVENT, paintFs);
+  if (cloudNodes && o.cloud) signal.addEventListener('abort', o.cloud.onChange(cloudNodes.paint)); // 로그인·올리기 상태가 바뀌면 글이 따라간다
   if (listRows.length > 0 && typeof setInterval === 'function') {
     // 곡이 저절로 넘어가면 이름·표시를 따라간다 (화면이 끝나면 멈춘다)
     const poll = setInterval(() => { if (nowLine.isConnected) paintMusic(); }, 1000);

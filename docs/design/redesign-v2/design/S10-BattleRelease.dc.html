@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>전투 해방 중</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}
+.stage{position:absolute;left:3px;top:0;width:640px;height:330px;overflow:hidden;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .12)}
+.sk{position:absolute;left:0;right:0;bottom:0;height:130px;background:var(--bha-bg-1);box-shadow:inset 0 1px 0 var(--bha-line-2),inset 0 2px 0 var(--bha-hi);display:flex;flex-direction:column;gap:4px;padding:4px 10px 4px;box-sizing:border-box;z-index:6}
+.gb{display:inline-block;width:46px;height:6px;background:var(--bha-bg-0);box-shadow:inset 0 0 0 1px var(--bha-line-1);position:relative}
+.gb i{position:absolute;left:1px;top:1px;bottom:1px;background:var(--c)}
+.sp{--el: var(--bha-special-b);background:linear-gradient(var(--bha-special-a) 0 50%, var(--bha-special-b) 50% 100%);color:#1f1613}
+.sp > b{text-shadow:none}
+.sp > .bha-i{color:#1f1613;opacity:.35}
+.cut-hollow{background:var(--bha-cos-cut-flame-bg);box-shadow:inset 0 2px 0 var(--bha-cos-cut-flame-line),inset 0 -2px 0 var(--bha-cos-cut-flame-line)}
+.cut-shinigami{background:var(--bha-cos-cut-ink-bg);box-shadow:inset 0 2px 0 var(--bha-cos-cut-ink-line),inset 0 -2px 0 var(--bha-cos-cut-ink-line)}
+</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · 전투 (해방 중 · {{t.rel}} 컷인 · 봉인 상태이상)</b> — 초점: 내 캐릭터</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="stage">
+              <div class="bha-scene-bg" data-label="" style="background: linear-gradient(var(--bha-scene-wall) 0 62%, var(--bha-scene-floor) 62% 100%); filter: brightness(0.6)"></div>
+              <div class="bha-art" style="position: absolute; left: 62px; top: 74px; width: 130px; height: 108px; z-index: 2; opacity: 0.7"><i class="bha-i bha-i-blob"></i></div>
+              <div class="bha-hp" style="position: absolute; left: 32px; top: 186px; width: 190px; --c: var(--bha-enemy-hp); --nw: 5ch; z-index: 3"><div class="bha-hp-bar"><i style="width: 41%"></i><s style="left: 41%; width: 12%"></s></div><div class="bha-hp-txt" style="justify-content: center"><span><b>15320</b> / 37258</span></div></div>
+              <div class="cut-{{t.k}}" style="position: absolute; left: 0; right: 0; top: 98px; height: 44px; z-index: 4; display: flex; align-items: center; justify-content: center">
+                <span style="font: 800 22px/1 var(--bha-font-display); color: var(--bha-text-1); text-shadow: 0 2px 0 #000">{{t.cut}}</span>
+              </div>
+              <span class="bha-chip bha-chip--status" style="position: absolute; left: 460px; top: 50px; --c: var(--bha-accent-hi); z-index: 5; box-shadow: 0 0 0 1px var(--bha-accent)"><i class="bha-i bha-i-release"></i>{{t.rel}} 중 <b style="--nw: 2ch">12</b>초</span>
+              <div class="bha-art is-hl is-focus is-focus--top" style="position: absolute; left: 440px; top: 78px; width: 96px; height: 104px; z-index: 6; color: var(--bha-text-2); outline: none"><i class="bha-i bha-i-figure"></i></div>
+              <div class="bha-hp" style="position: absolute; left: 400px; top: 186px; width: 190px; --c: var(--bha-player-hp); z-index: 6"><div class="bha-hp-bar"><i style="width: 62%"></i></div><div class="bha-hp-txt" style="justify-content: center"><span><b>135</b> / 212</span></div></div>
+            </div>
+            <div class="bha-head" style="height: 40px; background: rgb(10 8 7 / 0.55)">
+              <span class="bha-title" style="font-size: 16px">테스트 적 A</span>
+              <span class="bha-badge">★4</span>
+              <span class="bha-chip" style="--c: var(--bha-el-fire); height: 24px"><i class="bha-i bha-i-el-fire"></i>불</span>
+              <span class="bha-chip bha-chip--danger" style="--c: var(--bha-seal); height: 24px"><i class="bha-i bha-i-lock"></i>봉인</span>
+              <span class="bha-grow"></span>
+              <span class="bha-chip" style="height: 30px; --c: var(--bha-text-2)"><i class="bha-i bha-i-hourglass"></i><span class="bha-num bha-num--w3" style="font-size: 16px">98</span>초</span>
+              <button class="bha-btn bha-btn--icon bha-btn--sm" aria-label="그만두기"><i class="bha-i bha-i-flag"></i></button>
+              <button class="bha-btn bha-btn--icon bha-btn--sm" aria-label="로그"><i class="bha-i bha-i-log"></i></button>
+              <button class="bha-btn bha-btn--icon bha-btn--sm" aria-label="일시정지"><i class="bha-i bha-i-pause"></i></button>
+              <button class="bha-btn bha-btn--icon bha-btn--sm bha-btn--ghost" aria-label="도움말"><i class="bha-i bha-i-help"></i></button>
+            </div>
+            <div class="sk">
+              <div class="bha-legend" style="height: 16px"><span><i style="--c: var(--bha-special-a)"></i>해방 블록</span><span><i style="--c: var(--bha-el-poison)"></i>독</span><span><i style="--c: var(--bha-el-kyo)"></i>교</span><span><i style="--c: var(--bha-el-thunder)"></i>뇌</span><span style="margin-left: auto; color: var(--bha-text-3)">모양 = 계열</span></div>
+              <div style="display: flex; gap: 6px; height: 36px">
+                <div class="bha-gen is-sealed" style="flex: 1.3 1 0"><i class="bha-i bha-i-lock"></i>봉인<span class="bha-gen-bar"><i style="width: 30%"></i></span><span class="bha-num bha-num--w2">4</span>초</div>
+                <button class="bha-btn bha-btn--sm bha-grow"><i class="bha-i bha-i-shield"></i>막기 <span class="gb" style="--c: var(--bha-guard)"><i style="width: 100%"></i></span></button>
+                <button class="bha-btn bha-btn--sm bha-grow"><i class="bha-i bha-i-potion"></i>소모품 <span class="bha-btn-count bha-num bha-num--w2">2</span></button>
+                <button class="bha-btn bha-btn--sm bha-grow"><i class="bha-i bha-i-equip"></i>장비</button>
+              </div>
+              <div class="bha-blockbar" style="align-self: center; padding: 3px 6px 0; gap: 6px">
+                <span class="bha-blk sp"><i class="bha-i bha-i-lin-e"></i><b>해</b></span>
+                <span class="bha-blk sp"><i class="bha-i bha-i-lin-e"></i><b>해</b></span>
+                <span class="bha-blk" style="--el: var(--bha-el-poison)"><i class="bha-i bha-i-lin-c"></i><b>귀</b></span>
+                <span class="bha-blk" style="--el: var(--bha-el-kyo)"><i class="bha-i bha-i-lin-b"></i><b>허</b></span>
+                <span class="bha-blk" style="--el: var(--bha-el-thunder)"><i class="bha-i bha-i-lin-a"></i><b>콤</b></span>
+                <span class="bha-blk bha-blk--empty"></span><span class="bha-blk bha-blk--empty"></span><span class="bha-blk bha-blk--empty"></span>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>640×330 장면 안에서 컷인은 체력 막대를 가리지 않는 44px 가로 띠 하나(호로 불꽃 사선 · 사신 먹 사선), 글자는 해방 이름만</li>
+      <li>해방 중에는 장면을 어둡게 낮추고 내 캐릭터만 그림 윤곽 강조 + '레스렉시온/만해 중 n초' 칩. glow 없음</li>
+      <li>봉인 상태이상 예: 생성 게이지 표시 칸만 자물쇠·회색·남은 초로 바뀌고 다른 버튼 자리는 그대로</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', rel: '레스렉시온', cut: '레스렉시온' },
+      { k: 'shinigami', race: '사신', rel: '만해', cut: '만해' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

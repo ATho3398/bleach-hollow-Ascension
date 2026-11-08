@@ -125,8 +125,8 @@ export function playBirth(faction: Pick<FactionConfig, 'birthFx'>, o: BirthOptio
       links.forEach((l, i) => {
         run(l, [
           { opacity: 1, filter: 'none', transform: 'scale(1)' },
-          { opacity: 1, filter: 'drop-shadow(0 0 6px var(--birth-ember, currentColor))', borderColor: 'var(--birth-ember, currentColor)', offset: 0.4 },
-          { opacity: 0, filter: 'drop-shadow(0 0 10px var(--birth-ember, currentColor))', transform: 'scale(1.25)' },
+          { opacity: 1, filter: 'brightness(1.6)', borderColor: 'var(--birth-ember, currentColor)', offset: 0.4 },
+          { opacity: 0, filter: 'brightness(2)', transform: 'scale(1.25)' },
         ], Math.max(160, ms * 0.35), { delay: delays[i] });
         for (let k = 0; k < 2; k++) {
           const e = el('i', 'bha-birth__ember');

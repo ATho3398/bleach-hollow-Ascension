@@ -4,9 +4,9 @@
     {
       "id": "sand-maw",
       "name": {
-        "hollow": "모래 아귀",
-        "shinigami": "들개 대허"
+        "*": "아레나 보라스"
       },
+      "grade": "vasto-lorde",
       "hpInAttacks": 150,
       "attackInAttacks": 0.38,
       "element": "earth",
@@ -42,9 +42,9 @@
     {
       "id": "canyon-king",
       "name": {
-        "hollow": "협곡의 왕",
-        "shinigami": "현세의 대허"
+        "*": "엠버 스론"
       },
+      "grade": "vasto-lorde",
       "hpInAttacks": 150,
       "attackInAttacks": 0.56,
       "element": "fire",
@@ -80,9 +80,9 @@
     {
       "id": "forest-lord",
       "name": {
-        "hollow": "숲의 군주",
-        "shinigami": "웨코문도의 문지기"
+        "*": "썬더우드"
       },
+      "grade": "vasto-lorde",
       "hpInAttacks": 150,
       "attackInAttacks": 0.66,
       "element": "thunder",

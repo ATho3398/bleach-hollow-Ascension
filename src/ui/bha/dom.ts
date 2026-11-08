@@ -9,11 +9,12 @@
 //   chip(text, mod?) / tag(text, mod?) / provisionalTag()
 //   notice(kind, text, opts?)           → .bha-notice (아이콘 + 본문)
 //   panel({ title?, aside?, mod? }, ...nodes)
-//   info(rows)                          → dl.bha-info (행: label, value, mod?)
+//   info(rows)                          → dl.bha-infotable (행: label, value, mod?)
 //   seg(items, onSelect) / dots(n, active) / slider({...})
 //   h(tag, cls, text)                   → 옛 el 과 같은 헬퍼 (el 도 다시 내보냄)
 //   emptyState(text, { icon?, action? }) → .bha-empty 빈 상태 (가운데 아이콘 + 한 줄 + 할 일 버튼, GDD 100장 #87)
 import { fixParticles } from '../../engine/josa';
+import { setSpriteHref } from './iconMap';
 import { el } from '../dom';
 import { devText } from '../displayName';
 import { endScreen } from './screenScope';
@@ -43,7 +44,7 @@ export function icon(id: string, size?: IconSize, extraCls = ''): SVGSVGElement 
   svg.setAttribute('class', ['bha-icon', size ? `bha-icon--${size}` : '', extraCls].filter(Boolean).join(' '));
   svg.setAttribute('aria-hidden', 'true');
   const use = document.createElementNS(SVG_NS, 'use');
-  use.setAttribute('href', `#${id}`);
+  setSpriteHref(use, id); // v2 도트 아이콘 매핑 (C.282, iconMap.ts)
   svg.append(use);
   return svg;
 }
@@ -212,9 +213,9 @@ export interface InfoRow {
   mod?: 'em' | 'good' | 'bad' | 'stack';
 }
 
-/** 정보 표 (옛 table/td 대체): dl.bha-info > div.bha-info__row > dt + dd */
+/** 정보 표 (옛 table/td 대체): dl.bha-infotable > div.bha-info__row > dt + dd */
 export function info(rows: InfoRow[]): HTMLElement {
-  const dl = el('dl', 'bha-info');
+  const dl = el('dl', 'bha-infotable'); // 옛 이름 .bha-info = v2 ⓘ 버튼과 겹쳐 바꿈 (C.296)
   for (const r of rows) {
     const row = el('div', r.mod ? `bha-info__row bha-info__row--${r.mod}` : 'bha-info__row');
     const dd = el('dd');
@@ -369,4 +370,50 @@ export function emptyState(text: string, o: { icon?: string; action?: ButtonOpts
   box.append(icon(o.icon ?? 'i-info', 'lg'), el('p', 'bha-empty__text', text));
   if (o.action) box.append(button({ size: 'small', ...o.action }));
   return box;
+}
+
+/** 카드 이름 한 줄 (C.309, GDD 193장 3 보충): 꺾지 않는다. 칸보다 길면 글자를 줄이고(지금 크기의 70%까지),
+ *  그래도 넘치면 말줄임 — 그때는 이름 전체를 title 로. 화면에 붙어 폭이 생길 때(숨은 탭이 열릴 때 포함)·글꼴을 새로 받은 뒤에 다시 잰다. */
+const fitNodes = new Set<{ node: HTMLElement; run: (force: boolean) => void }>();
+let fitFontHook = false;
+export function fitOneLine(node: HTMLElement, minScale = 0.7): HTMLElement {
+  node.classList.add('bha-fit1');
+  const full = node.textContent ?? '';
+  let lastW = -1;
+  const run = (force: boolean): void => {
+    if (!node.isConnected) return;
+    const w0 = node.clientWidth;
+    if (w0 <= 0 || (!force && w0 === lastW)) return; // 글자 크기를 바꿔 생긴 높이 변화로는 다시 재지 않는다
+    lastW = w0;
+    node.style.fontSize = '';
+    if (node.title === full) node.removeAttribute('title');
+    // 글자 폭은 Range 로 소수까지 잰다(scrollWidth 는 칸보다 작아지지 않고 정수라 작은 넘침을 놓친다)
+    const cs = getComputedStyle(node);
+    const room = node.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    // 창이 열리며 커지는 동안(transform scale)에도 맞게: 화면 폭 ÷ 배율 = 레이아웃 폭
+    const textW = (): number => {
+      const r = document.createRange(); r.selectNodeContents(node);
+      const k = node.getBoundingClientRect().width / (node.offsetWidth || 1);
+      return r.getBoundingClientRect().width / (k > 0 ? k : 1);
+    };
+    const tw = textW();
+    if (tw <= room) return;
+    const base = parseFloat(cs.fontSize) || 13;
+    node.style.fontSize = `${Math.max(base * minScale, Math.floor(base * (room / tw) * 0.98 * 10) / 10)}px`;
+    if (textW() > room && !node.title) node.title = full;
+  };
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => run(false)).observe(node);
+  else if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => run(false));
+  const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
+  if (fonts) {
+    if (fitNodes.size > 200) for (const f of fitNodes) if (!f.node.isConnected) fitNodes.delete(f); // 지난 화면 이름은 버린다
+    fitNodes.add({ node, run });
+    if (!fitFontHook) {
+      fitFontHook = true;
+      // 한글 글꼴은 글자 묶음(unicode-range)마다 따로 받는다 — 새로 받을 때마다 붙어 있는 이름을 다시 잰다
+      fonts.addEventListener?.('loadingdone', () => { for (const f of fitNodes) if (f.node.isConnected) f.run(true); });
+    }
+    fonts.ready.then(() => run(true)).catch(() => undefined);
+  }
+  return node;
 }

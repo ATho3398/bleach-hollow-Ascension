@@ -27,7 +27,7 @@ describe('같은 종류 (173장 3)', () => {
   });
   it('바퀴 끝 창: 안 글이 바뀌는 창은 높이 고정 → [귀환]·[한 바퀴 더] 자리 고정', () => {
     expect(read('src/ui/expeditionView.ts')).toContain("if (body.childElementCount > 0) sheet.classList.add('bha-sheet--fixed');");
-    expect(read('src/ui/bha/walk-scene.css')).toContain('.bha-lcd .bha-exp .bha-sheet.bha-sheet--fixed { height: calc(100% - 16px); }');
+    expect(read('src/ui/bha/walk-scene.css')).toContain('.bha-lcd .bha-exp .bha-sheet.bha-sheet--fixed { height: 330px; }'); // 리디자인 v2 S12 창 552×330
   });
   it('이벤트 창: 실패 이유 줄은 늘 자리(한 줄) → 선택 버튼이 안 내려간다', () => {
     const e = read('src/ui/expeditionView.ts');
@@ -36,7 +36,7 @@ describe('같은 종류 (173장 3)', () => {
   });
   it('상세 창(상점·수련장·장비): 높이 고정, 설명은 안에서 스크롤, 행동 버튼은 창 아래', () => {
     const s = read('src/ui/bha/shop.css');
-    expect(s).toContain('.bha-itemmodal { height: 94%; }');
+    expect(s).toContain('.bha-itemmodal { height: 300px; max-height: 100%; }'); // 리디자인 v2 창 높이 고정 (C.288)
     expect(s).toContain('.bha-itemmodal__desc { flex: 1 1 0; min-height: 0; overflow-y: auto;');
   });
   it('저장 칸 고르기 설명 두 줄은 한 줄씩(줄바꿈 없음), 프리셋 보기 칸 높이 고정', () => {

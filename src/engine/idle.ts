@@ -4,7 +4,7 @@
 // 시계 방어: 지금이 마지막 접속보다 앞(되돌림)이면 0, 경과는 maxHours 로 자른다. 마지막 접속 시각은 앞으로만 움직이므로(markSeen)
 // 시계를 앞으로 돌려 받은 뒤 되돌리면 그 미래 시각이 지날 때까지 다시 쌓이지 않는다.
 // 82장 돌봄·허기: 꺼 둔 동안 허기는 그대로 오르고(applyAbsenceTime), 자동 모험은 허기가 100 에 닿는 순간 멈춘다. 쇠약이면 효율 weakenedRate.
-// 102장 (C.175): 쓰러짐·사망이면 돌지 않는다, 교감 보너스 +교감÷5 %(최대 +20%).
+// 102장 (C.175): 쓰러짐·사망이면 돌지 않는다, 교감 보너스 +교감÷5 %(최대 +20%). 193장 17: 빈사 중에도 자동 모험은 돌지 않는다(옛 '빈사 절반' 대체).
 import { BALANCE } from '../config/balance';
 import { bondIdleBonus, type NestState } from './nest';
 
@@ -19,11 +19,12 @@ export function offlineHours(lastSeenAt: number, nowMs: number): number {
 }
 
 /** 자동 모험이 실제로 돈 시간: 허기가 100 에 닿으면 멈춤(시간 흐름 허기 규칙 그대로, C.175 상한 삭제로 늘 멈출 수 있다), 쇠약이면 효율 배율.
- *  빈사면 보상 절반(GDD 102장 수정 — 빈사 모험), 사망이면 0. 교감 보너스는 지급 때(idleYield bonus) */
+ *  빈사·사망이면 0 — 누워 있는 동안 모험을 돌았다는 말이 어색했다(GDD 193장 17, 마스터 결정: 기획서에 빈사 제외 규칙이 없어 '빈사 중엔 자동 모험 안 함'으로 정함 — 옛 102장 '빈사면 절반' 대체).
+ *  교감 보너스는 지급 때(idleYield bonus) */
 export function idleActiveHours(hours: number, nest: Pick<NestState, 'hunger' | 'weakened'> & Partial<Pick<NestState, 'collapsed' | 'dead'>>): number {
-  if (nest.dead) return 0;
+  if (nest.dead || nest.collapsed) return 0;
   const stop = Math.max(0, 100 - nest.hunger) / NX.idleHungerPerHour;
-  return Math.max(0, Math.min(hours, stop)) * (nest.weakened ? IX.weakenedRate : 1) * (nest.collapsed ? NX.care.dying.rewardMult : 1);
+  return Math.max(0, Math.min(hours, stop)) * (nest.weakened ? IX.weakenedRate : 1);
 }
 
 /** 대기 보상 교감 배율 (GDD 102-6 ③): 1 + 교감 보너스 */

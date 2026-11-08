@@ -1,0 +1,37 @@
+rules_version = '2';
+// 블리치 할로우 어센션 — Cloud Firestore 보안 규칙 (GDD 196장 5 · 199장 4·5, C.323 · C.325)
+// users/{uid} 문서 하나 = 그 계정의 세이브. devices/{uid} 문서 하나 = 그 계정을 마지막으로 켠 기기(한 기기만 플레이).
+// 로그인한 본인(uid 일치 — 게스트(익명)도 로그인이다)만 읽고 쓴다. 다른 경로는 전부 막는다.
+// 쓰기는 정해진 칸만, 세이브 원문(text)은 900,000자 아래(Firestore 문서 1MiB 한도 — 코드 CLOUD_TEXT_MAX_BYTES 와 같은 뜻).
+// 사용자가 Firebase 콘솔 > Firestore Database > 규칙 탭에 이 파일 전체를 붙여 넣고 [게시]한다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['format', 'savedAt', 'slot', 'device', 'build', 'base', 'summary', 'text'])
+        && request.resource.data.format is number
+        && request.resource.data.savedAt is number
+        && request.resource.data.slot is number
+        && request.resource.data.device is string
+        && request.resource.data.build is string
+        && request.resource.data.summary is map
+        && request.resource.data.text is string
+        && request.resource.data.text.size() < 900000;
+    }
+    match /devices/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['device', 'at', 'name', 'build'])
+        && request.resource.data.device is string
+        && request.resource.data.device.size() > 0
+        && request.resource.data.at is number
+        && request.resource.data.name is string
+        && request.resource.data.name.size() < 200
+        && request.resource.data.build is string;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -49,10 +49,10 @@ describe('180장 3 먹이 배부름 약 ×1.6', () => {
     expect([F.snack.condition, F.basic.condition, F.hearty.condition, F.tonic.condition, F.feast.condition]).toEqual([4, 0, 0, 10, -5]);
     expect(BALANCE.provisional.nest.feedLimit).toEqual({ max: 3, windowMinutes: 10 });
   });
-  it('고기 1개를 먹이면 방 말풍선에 배부름 +5', () => {
+  it('고기 1개를 먹이면 방 말풍선에 회복 수치가 없다 (GDD 201장 — 상태창 막대가 차오른다)', () => {
     for (const id of ['hollow', 'shinigami'] as const) {
       const f = getFaction(id);
-      expect(careFeedback(f, 'feed', 'basic', { hunger: -F.basic.hunger, condition: 0, stability: 0, risk: 0 })).toContain(`${f.fullnessName} +5`);
+      expect(careFeedback(f, 'feed', 'basic', { hunger: -F.basic.hunger, condition: 0, stability: 0, risk: 0 })).toBe(f.foodNames.basic);
     }
   });
 });

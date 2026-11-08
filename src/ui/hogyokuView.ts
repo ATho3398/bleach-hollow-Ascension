@@ -246,7 +246,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   main.append(home);
   const side = h('div', 'bha-evolve__resside');
   const got = panel({ title: '합체 결과', aside: provisionalTag('임시 수치') });
-  const dl = h('dl', 'bha-info');
+  const dl = h('dl', 'bha-infotable');
   const row = (label: string, value: string) => {
     const r = h('div', 'bha-info__row bha-info__row--stack');
     r.append(h('dt', '', label), h('dd', '', value));

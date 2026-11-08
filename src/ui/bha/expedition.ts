@@ -103,9 +103,9 @@ export interface IconInfoRow extends Omit<InfoRow, 'label'> {
   icon?: string;
 }
 
-/** 아이콘이 붙은 정보 표 (결과·연습 결과): dl.bha-info > div.bha-info__row > dt(아이콘+글자) + dd */
+/** 아이콘이 붙은 정보 표 (결과·연습 결과): dl.bha-infotable > div.bha-info__row > dt(아이콘+글자) + dd */
 export function iconInfo(rows: IconInfoRow[]): HTMLElement {
-  const dl = el('dl', 'bha-info');
+  const dl = el('dl', 'bha-infotable');
   for (const r of rows) {
     const row = el('div', r.mod ? `bha-info__row bha-info__row--${r.mod}` : 'bha-info__row');
     const dt = el('dt');

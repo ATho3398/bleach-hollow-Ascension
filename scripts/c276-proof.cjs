@@ -43,6 +43,19 @@ async function newGame(page, url, fi) {
   await page.locator('.bha-species__card').nth(fi).click();
   await page.waitForTimeout(300);
   await page.getByRole('button', { name: '시작', exact: true }).click();
+  await passIdentity(page);
+}
+
+/** 이름 정하기 → 성별 정하기 (GDD 199장 6, C.326): 화면이 뜨면 이름을 넣고 [다음] → 첫 성별 → [시작]. 안 뜨면(옛 빌드) 그냥 지나간다 */
+async function passIdentity(page, name = '시험', gender = 0) {
+  await page.waitForTimeout(300);
+  const input = page.locator('[data-ident="name"]');
+  if (!(await input.count())) return;
+  await input.fill(name);
+  await page.locator('[data-ident="next"]').click();
+  await page.waitForTimeout(200);
+  await page.locator('.bha-ident__gender').nth(gender).click();
+  await page.locator('[data-ident="done"]').click();
 }
 
 /** 지금 상태: 화면 이름 + 맨 위 안내(이름·단계 글자·stage) */
@@ -146,7 +159,7 @@ async function probe(page, label, shotName, shot) {
   return r;
 }
 
-module.exports = { startServer, press, newGame, snap, sel, findOther, probe };
+module.exports = { passIdentity, startServer, press, newGame, snap, sel, findOther, probe };
 
 if (require.main === module) (async () => {
   fs.mkdirSync(OUT, { recursive: true });

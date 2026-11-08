@@ -52,8 +52,9 @@ describe('먹이 5종', () => {
 
 describe('돌보기 결과 문구', () => {
   const f = FACTIONS[0]!;
-  it('먹이는 먹이 이름과 변한 수치만 보여 준다', () => {
-    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: 4, stability: 0, risk: 0 })).toBe(`${f.foodNames.snack}: ${f.fullnessName} +15 · 컨디션 +4`); // C.63: 허기 −15 = 배부름 +15
+  it('먹이는 먹이 이름만 — 오른 수치는 글로 쓰지 않고 상태창이 차오른다 (GDD 201장), 줄어든 수치는 그대로', () => {
+    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: 4, stability: 0, risk: 0 })).toBe(f.foodNames.snack); // C.63: 허기 −15 = 배부름 +15 → 글 없음
+    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: -3, stability: 0, risk: 0 })).toBe(`${f.foodNames.snack}: 컨디션 −3`);
   });
   it('변화가 없으면 그렇게 말한다', () => {
     expect(careFeedback(f, 'sleep', null, { hunger: 0, condition: 0, stability: 0, risk: 0 })).toBe(`${f.nestActions.sleep}: 변화 없음`);

@@ -65,7 +65,7 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain('const have = ownsTraitBlock(exp.build, id);');
     expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
-    expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
+    expect(src).toContain("const fresh = cands.filter((id) => !ownsTraitBlock(exp.build, id));"); // C.312 (193장 13): 가득 + 새 블록 후보만 한 화면 교체, 가진 블록은 강화만
     expect(src).not.toContain('exp.build.owned.includes(id)');
     expect(read('src/engine/expedition/expedition.ts')).toContain('if (!ownsTraitBlock(exp.build, traitId)) {');
   });
@@ -132,7 +132,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([61, 54]); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([64, 54]); // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');

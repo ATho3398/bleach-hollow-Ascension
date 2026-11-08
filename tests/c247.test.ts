@@ -44,23 +44,21 @@ describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −release
     expect(z.risk).toBe(0);
   });
   for (const f of FACTIONS) {
-    it(`${f.id}: 설명 칸은 0 이어도 "−1", 0 아래로는 안 내려간다 — 실제 놓아주기 결과와 같다`, () => {
+    it(`${f.id}: 게이지 0 이면 놓아주기 리스크 줄 없음(실제로 안 바뀜, GDD 197장 C.320), 0 아래로는 안 내려간다 — 실제 놓아주기 결과와 같다`, () => {
       const exp = toAbsorb(f.id, 0);
-      const risk = absorbDescLines(f, exp, 'none').find((l) => l.kind === 'risk')!.text;
-      expect(risk).toBe(`${f.riskGaugeName}: −${RX.releaseRelief} (0, 0 아래로는 안 내려간다)`);
-      expect(risk).not.toContain('그대로');
+      expect(absorbDescLines(f, exp, 'none').some((l) => l.kind === 'risk')).toBe(false);
       const real = structuredClone(exp);
       chooseRelease(real);
       expect(real.risk).toBe(0);
       const mid = toAbsorb(f.id, 5);
       expect(absorbDescLines(f, mid, 'none').find((l) => l.kind === 'risk')!.text).toBe(`${f.riskGaugeName}: −${RX.releaseRelief} (5 → ${5 - RX.releaseRelief})`);
     });
-    it(`${f.id}: 첫 흡수 안내·도움말 오르내림도 같은 −1`, () => {
+    it(`${f.id}: 도움말 오르내림은 같은 −1, 첫 흡수 안내는 리스크 말 없음`, () => {
       const vars = { ...helpVars(f), ...guideVars(f) };
       expect(vars.releaseRelief).toBe(`−${RX.releaseRelief}`);
       const cards = (guidesJson as unknown as { guides: Record<string, { body: string }[]> }).guides['first-absorb']!;
       const body = renderHelpText(cards[0]!.body, vars);
-      expect(body).toContain(`${f.riskGaugeName} −${RX.releaseRelief}`);
+      expect(body).not.toContain(f.riskGaugeName); // 첫 흡수 안내 = 리스크 문장 없음 (GDD 197장 2, C.320)
       expect(riskText(f).riskDown[0]).toBe(`적 놓아주기: −${RX.releaseRelief}`);
     });
   }

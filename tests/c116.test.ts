@@ -17,7 +17,7 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     const sizes = m.icons.map((i: { sizes: string }) => i.sizes);
     expect(sizes).toEqual(expect.arrayContaining(['192x192', '512x512']));
     for (const i of m.icons) expect(existsSync(`public/${i.src}`)).toBe(true);
-    expect(read('src/ui/bha/design-system/theme-hollow.css')).toContain('--bha-bg-0: #0b0909');
+    expect(read('src/ui/bha/design-system/theme-hollow.css')).toContain('--bha-bg-0: #1a1412'); // C.282 디자인 v2 값 (GDD 183장)
   });
 
   it('서비스 워커 템플릿: 자리표시자 2개, 캐시 조회는 쿼리·Vary 무시, 설치 끝나면 바로 적용(C.116b)', () => {
@@ -47,9 +47,9 @@ describe('C.116 오프라인 플레이(PWA)', () => {
     expect(read('src/main.ts')).toContain('registerServiceWorker()');
   });
 
-  it('시작 화면이 새 버전 안내를 건다(다시 열면 적용)', () => {
+  it('시작 화면이 새 버전 안내를 건다 (C.283: 처음 화면은 자동 다시 시작 — GDD 184장 3)', () => {
     const v = read('src/ui/startView.ts');
-    expect(v).toContain('onUpdateReady');
-    expect(v).toContain('다시 열면 적용');
+    expect(v).toContain('onAutoRestart');
+    expect(v).toContain('새 버전으로 다시 시작한다');
   });
 });

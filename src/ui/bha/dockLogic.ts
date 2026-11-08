@@ -20,17 +20,24 @@ export interface CareDelta {
   risk: number;
 }
 
-/** 돌보기 결과 한 줄(방 말풍선): "짐승 고기를 먹었다. 허기 −35 · 컨디션 +0" 대신 변한 수치만 보여 준다 */
+/**
+ * 돌보기 결과 한 줄(방 말풍선): 줄어든 수치(와 리스크가 오른 비용)만 "짐승 고기: 컨디션 −3" (GDD 201장 2·5).
+ * 회복(배부름·컨디션·영압 안정도가 오름)은 글자로 쓰지 않는다 — 머리 위 상태창 막대가 차오르고 숫자가 따라 오른다. 줄어든 것이 없으면 행동 이름만, 아무것도 안 바뀌면 '변화 없음'
+ */
 export function careFeedback(faction: FactionConfig, action: NestAction, food: FoodId | null, d: CareDelta): string {
-  const lead = action === 'feed' && food ? `${faction.foodNames[food]}: ` : `${faction.nestActions[action]}: `;
+  const name = action === 'feed' && food ? faction.foodNames[food] : faction.nestActions[action];
   const parts: string[] = [];
-  const add = (name: string, v: number) => {
+  let rose = false;
+  /** good = 오르면 회복인 값 (배부름·컨디션·영압 안정도). 리스크는 오르는 쪽이 비용이라 글로 남긴다 */
+  const add = (label: string, v: number, good = true) => {
     const r = Math.round(v);
-    if (r !== 0) parts.push(`${name} ${r > 0 ? '+' : '−'}${Math.abs(r)}`);
+    if (r > 0 && good) rose = true;
+    else if (r !== 0) parts.push(`${label} ${r > 0 ? '+' : '−'}${Math.abs(r)}`);
   };
   add(faction.fullnessName, -d.hunger); // 배부름 = 허기를 뒤집어 표시 (C.63)
   add('컨디션', d.condition);
   add(faction.stabilityName, d.stability);
-  add(faction.riskGaugeName, d.risk);
-  return lead + (parts.length > 0 ? parts.join(' · ') : '변화 없음');
+  add(faction.riskGaugeName, d.risk, false);
+  if (parts.length > 0) return `${name}: ${parts.join(' · ')}`;
+  return rose ? name : `${name}: 변화 없음`;
 }

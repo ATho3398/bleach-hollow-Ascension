@@ -7,6 +7,7 @@ import { elementName } from '../data/elements';
 import type { SkillRole } from '../data/schema';
 import type { CombatParams } from '../engine/combat';
 import { fixParticles } from '../engine/josa';
+import { formHasUniqueRelease, formRelease, tryGetForm } from '../data/evolution';
 
 export { BLOCK_WORDS };
 
@@ -40,18 +41,29 @@ export interface LiberationLabels {
 }
 
 /** 해방 이름·문구 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화 전은 영력 해방, 깬 뒤(unique)는 종족 이름(레스렉시온/만해) */
-export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, unique: boolean): LiberationLabels {
+export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, unique: boolean, formCutin: string | null = null): LiberationLabels {
   const lb = f.liberation;
+  // GDD 198장: 고유 해방 컷인 = 진화체 이름으로 채운 틀(호로 '언령, 레스렉시온 이름!' / 사신 '만해 — 만해 이름!'), 없으면 종족 기본 cutin
   return unique
-    ? { name: lb.name, cutin: lb.cutin, endText: lb.endText, unique: true }
+    ? { name: lb.name, cutin: formCutin ?? lb.cutin, endText: lb.endText, unique: true }
     : { name: lb.baseName, cutin: lb.baseCutin, endText: lb.baseEndText, unique: false };
 }
 
-export function battleLabels(f: FactionConfig, _tierIndex = 0, liberationUnique = false): BattleLabels {
+/** 아란칼화 / 참백도 구상화를 깬 뒤 한 줄 (GDD 198장): "레스렉시온 '마르티요'을(를) 쓸 수 있다." — 진화체 이름이 없으면 종족 이름만,
+ *  그 진화체에 고유 해방이 없으면(사신 둔도) 기본 해방 그대로라고 말한다 */
+export function ascensionUnlockText(f: FactionConfig, formId: string | null | undefined): string {
+  const lb = f.liberation;
+  const form = formId ? tryGetForm(formId) : undefined;
+  if (!formHasUniqueRelease(form, f.id)) return fixParticles(`${lb.name}은(는) 없다. 해방은 ${lb.baseName} 그대로다.`);
+  const named = lb.formKey ? formRelease(form, f.id)?.[lb.formKey] : undefined;
+  return fixParticles(named ? `${lb.name} '${named}'을(를) 쓸 수 있다.` : `${lb.name}을(를) 쓸 수 있다.`);
+}
+
+export function battleLabels(f: FactionConfig, _tierIndex = 0, liberationUnique = false, formCutin: string | null = null): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    liberation: liberationLabels(f, liberationUnique),
+    liberation: liberationLabels(f, liberationUnique, formCutin),
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,
@@ -131,7 +143,7 @@ export function eventHint(ev: TileEvent): string {
   const E = TV.events;
   return {
     merchant: '골드로 음식·타일 1개를 산다 · 한 번 밟으면 사라진다',
-    altar: `리스크 +${E.altar.risk} 대신 장착 특성 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
+    altar: `리스크 +${E.altar.risk} 대신 장착 블록 하나 위력 +${Math.round(E.altar.traitPower * 100)}% (이번 모험) · 한 번`,
     treasure: `희귀 음식 1개 또는 골드 ${E.treasure.gold[0]}~${E.treasure.gold[1]} · 한 번`,
     trap: `다음 전투 시작 체력 −${Math.round((1 - E.trap.startHpFraction) * 100)}%, 이기면 보상 ×${E.trap.rewardMult} · 한 번`,
     crossroads: `둘 중 하나: 다음 전투 보호막 ${Math.round(E.crossroads.shield * 100)}% / 골드 ${E.crossroads.gold} · 한 번`,
@@ -176,5 +188,7 @@ export function endReasonText(reason: EndReason, f: FactionConfig): string {
     'story-clear': '목표를 이뤄 귀환했다. 얻은 것은 모두 지킨다.',
     'tutorial-clear': `첫 모험을 마치고 ${f.nestName}에 돌아왔다. 얻은 것은 모두 지킨다.`,
     abort: `모험 도중 ${f.nestName}에 귀환했다. 얻은 것은 지키지만 이번 바퀴 완주 보상은 없다.`,
+    // C.311 (GDD 192장 1): 나간 뒤 시한 초과·새 패치 — 패배와 같은 정산 (결과 화면 없이 방 안내 한 줄로 끝나지만 기록 표시용)
+    abandoned: `모험을 이어 가지 못해 실패로 끝났다. 빈사 상태로 ${f.nestName}에 돌아왔다. 마지막 바퀴에서 얻은 것을 잃었다.`,
   }[reason];
 }

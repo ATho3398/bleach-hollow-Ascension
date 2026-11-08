@@ -1,0 +1,343 @@
+{
+ "shots": [
+  "hollow-11-shop.png",
+  "hollow-12-shop-detail.png",
+  "hollow-13-shop-battle.png",
+  "hollow-14-shop-gear.png",
+  "hollow-15-shop-gear-detail.png",
+  "hollow-16-shop-skin.png",
+  "hollow-17-shop-trait.png",
+  "hollow-18-wanderer.png",
+  "hollow-19-wanderer-detail.png",
+  "hollow-01-bag-gear.png",
+  "hollow-01b-bag-gear-detail.png",
+  "hollow-02-bag-gear-battle.png",
+  "hollow-03-bag-battle-detail.png",
+  "hollow-04-bag-슬롯.png",
+  "hollow-05-bag-타일.png",
+  "hollow-06-bag-소모품.png",
+  "hollow-07-bag-스킨.png",
+  "hollow-08-bag-펫.png",
+  "hollow-09-bag-기타.png",
+  "hollow-10-bag-item-detail.png",
+  "hollow-20-walk-healbag.png",
+  "shinigami-11-shop.png",
+  "shinigami-12-shop-detail.png",
+  "shinigami-13-shop-battle.png",
+  "shinigami-14-shop-gear.png",
+  "shinigami-15-shop-gear-detail.png",
+  "shinigami-16-shop-skin.png",
+  "shinigami-17-shop-trait.png",
+  "shinigami-18-wanderer.png",
+  "shinigami-19-wanderer-detail.png",
+  "shinigami-01-bag-gear.png",
+  "shinigami-01b-bag-gear-detail.png",
+  "shinigami-02-bag-gear-battle.png",
+  "shinigami-03-bag-battle-detail.png",
+  "shinigami-04-bag-슬롯.png",
+  "shinigami-05-bag-타일.png",
+  "shinigami-06-bag-소모품.png",
+  "shinigami-07-bag-스킨.png",
+  "shinigami-08-bag-펫.png",
+  "shinigami-09-bag-기타.png",
+  "shinigami-10-bag-item-detail.png",
+  "shinigami-20-walk-healbag.png"
+ ],
+ "measure": {
+  "hollow-11-shop.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-12-shop-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-13-shop-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 1,
+   "slot": null
+  },
+  "hollow-14-shop-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-15-shop-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-16-shop-skin.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-17-shop-trait.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-18-wanderer.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-19-wanderer-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-01-bag-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": "60×66"
+  },
+  "hollow-01b-bag-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": "60×66"
+  },
+  "hollow-02-bag-gear-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 3,
+   "slot": "60×66"
+  },
+  "hollow-03-bag-battle-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 3,
+   "slot": "60×66"
+  },
+  "hollow-04-bag-슬롯.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "hollow-05-bag-타일.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "hollow-06-bag-소모품.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-07-bag-스킨.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-08-bag-펫.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "hollow-09-bag-기타.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 2,
+   "slot": null
+  },
+  "hollow-10-bag-item-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-20-walk-healbag.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-11-shop.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-12-shop-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-13-shop-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 1,
+   "slot": null
+  },
+  "shinigami-14-shop-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-15-shop-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-16-shop-skin.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-17-shop-trait.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-18-wanderer.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-19-wanderer-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-01-bag-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": "60×66"
+  },
+  "shinigami-01b-bag-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": "60×66"
+  },
+  "shinigami-02-bag-gear-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 3,
+   "slot": "60×66"
+  },
+  "shinigami-03-bag-battle-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 3,
+   "slot": "60×66"
+  },
+  "shinigami-04-bag-슬롯.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "shinigami-05-bag-타일.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "shinigami-06-bag-소모품.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-07-bag-스킨.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-08-bag-펫.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 0,
+   "slot": null
+  },
+  "shinigami-09-bag-기타.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 2,
+   "slot": null
+  },
+  "shinigami-10-bag-item-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-20-walk-healbag.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  }
+ },
+ "errors": []
+}

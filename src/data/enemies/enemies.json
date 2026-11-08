@@ -96,7 +96,7 @@
   {
     "id": "normal-basic",
     "name": {
-      "*": "노멀 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -115,7 +115,7 @@
   {
     "id": "normal-swift",
     "name": {
-      "*": "노멀 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -139,7 +139,7 @@
   {
     "id": "normal-sturdy",
     "name": {
-      "*": "노멀 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -163,8 +163,9 @@
   {
     "id": "normal-heavy-seal",
     "name": {
-      "*": "노멀 강적 1"
+      "*": "스티치마우스"
     },
+    "grade": "gillian",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -195,8 +196,9 @@
   {
     "id": "normal-heavy-chain",
     "name": {
-      "*": "노멀 강적 2"
+      "*": "본크러셔"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -224,8 +226,9 @@
   {
     "id": "normal-stance",
     "name": {
-      "*": "노멀 강적 3"
+      "*": "카파라손"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -253,7 +256,7 @@
   {
     "id": "water-basic",
     "name": {
-      "*": "물 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -272,7 +275,7 @@
   {
     "id": "water-swift",
     "name": {
-      "*": "물 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -296,7 +299,7 @@
   {
     "id": "water-sturdy",
     "name": {
-      "*": "물 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -320,8 +323,9 @@
   {
     "id": "water-heavy-seal",
     "name": {
-      "*": "물 강적 1"
+      "*": "잉크베일"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -352,8 +356,9 @@
   {
     "id": "water-heavy-chain",
     "name": {
-      "*": "물 강적 2"
+      "*": "마레하다"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -382,8 +387,9 @@
   {
     "id": "water-stance",
     "name": {
-      "*": "물 강적 3"
+      "*": "셸그레이브"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -411,7 +417,7 @@
   {
     "id": "fire-basic",
     "name": {
-      "*": "불 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -431,7 +437,7 @@
   {
     "id": "fire-swift",
     "name": {
-      "*": "불 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -455,7 +461,7 @@
   {
     "id": "fire-sturdy",
     "name": {
-      "*": "불 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -479,8 +485,9 @@
   {
     "id": "fire-heavy-seal",
     "name": {
-      "*": "불 강적 1"
+      "*": "스모크 위도우"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -511,8 +518,9 @@
   {
     "id": "fire-heavy-chain",
     "name": {
-      "*": "불 강적 2"
+      "*": "브라세로"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -540,8 +548,9 @@
   {
     "id": "fire-stance",
     "name": {
-      "*": "불 강적 3"
+      "*": "옵시디아나"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -569,7 +578,7 @@
   {
     "id": "earth-basic",
     "name": {
-      "*": "흙 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -588,7 +597,7 @@
   {
     "id": "earth-swift",
     "name": {
-      "*": "흙 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -612,7 +621,7 @@
   {
     "id": "earth-sturdy",
     "name": {
-      "*": "흙 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -636,8 +645,9 @@
   {
     "id": "earth-heavy-seal",
     "name": {
-      "*": "흙 강적 1"
+      "*": "샌드트랩"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -668,8 +678,9 @@
   {
     "id": "earth-heavy-chain",
     "name": {
-      "*": "흙 강적 2"
+      "*": "록폴"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -697,8 +708,9 @@
   {
     "id": "earth-stance",
     "name": {
-      "*": "흙 강적 3"
+      "*": "듄워든"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -726,7 +738,7 @@
   {
     "id": "thunder-basic",
     "name": {
-      "*": "뇌 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -745,7 +757,7 @@
   {
     "id": "thunder-swift",
     "name": {
-      "*": "뇌 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -769,7 +781,7 @@
   {
     "id": "thunder-sturdy",
     "name": {
-      "*": "뇌 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -793,8 +805,9 @@
   {
     "id": "thunder-heavy-seal",
     "name": {
-      "*": "뇌 강적 1"
+      "*": "숨비도"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -825,8 +838,9 @@
   {
     "id": "thunder-heavy-chain",
     "name": {
-      "*": "뇌 강적 2"
+      "*": "스톰후프"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -855,8 +869,9 @@
   {
     "id": "thunder-stance",
     "name": {
-      "*": "뇌 강적 3"
+      "*": "파라라요스"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -884,7 +899,7 @@
   {
     "id": "blood-basic",
     "name": {
-      "*": "혈 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -904,7 +919,7 @@
   {
     "id": "blood-swift",
     "name": {
-      "*": "혈 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -928,7 +943,7 @@
   {
     "id": "blood-sturdy",
     "name": {
-      "*": "혈 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -952,8 +967,9 @@
   {
     "id": "blood-heavy-seal",
     "name": {
-      "*": "혈 강적 1"
+      "*": "만 명을 먹은 자"
     },
+    "grade": "hollow",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -984,8 +1000,9 @@
   {
     "id": "blood-heavy-chain",
     "name": {
-      "*": "혈 강적 2"
+      "*": "카르메시"
     },
+    "grade": "vasto-lorde",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -1013,8 +1030,9 @@
   {
     "id": "blood-stance",
     "name": {
-      "*": "혈 강적 3"
+      "*": "손하이드"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -1042,7 +1060,7 @@
   {
     "id": "poison-basic",
     "name": {
-      "*": "독 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -1061,7 +1079,7 @@
   {
     "id": "poison-swift",
     "name": {
-      "*": "독 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -1085,7 +1103,7 @@
   {
     "id": "poison-sturdy",
     "name": {
-      "*": "독 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -1109,8 +1127,9 @@
   {
     "id": "poison-heavy-seal",
     "name": {
-      "*": "독 강적 1"
+      "*": "비우다"
     },
+    "grade": "vasto-lorde",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -1141,8 +1160,9 @@
   {
     "id": "poison-heavy-chain",
     "name": {
-      "*": "독 강적 2"
+      "*": "롯팽"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -1170,8 +1190,9 @@
   {
     "id": "poison-stance",
     "name": {
-      "*": "독 강적 3"
+      "*": "블로트스파인"
     },
+    "grade": "hollow",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,
@@ -1199,7 +1220,7 @@
   {
     "id": "kyo-basic",
     "name": {
-      "*": "허 일반 1"
+      "*": "짐승형 호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -1218,7 +1239,7 @@
   {
     "id": "kyo-swift",
     "name": {
-      "*": "허 일반 2"
+      "*": "부유형 호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -1242,7 +1263,7 @@
   {
     "id": "kyo-sturdy",
     "name": {
-      "*": "허 일반 3"
+      "*": "갑각형 호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -1266,8 +1287,9 @@
   {
     "id": "kyo-heavy-seal",
     "name": {
-      "*": "허 강적 1"
+      "*": "오호 우에코"
     },
+    "grade": "vasto-lorde",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -1298,8 +1320,9 @@
   {
     "id": "kyo-heavy-chain",
     "name": {
-      "*": "허 강적 2"
+      "*": "나이트램"
     },
+    "grade": "adjuchas",
     "class": "elite",
     "hpInAttacks": 80,
     "attackInAttacks": 0.227,
@@ -1328,8 +1351,9 @@
   {
     "id": "kyo-stance",
     "name": {
-      "*": "허 강적 3"
+      "*": "마스커레이드"
     },
+    "grade": "vasto-lorde",
     "class": "elite",
     "hpInAttacks": 70,
     "attackInAttacks": 0.412,

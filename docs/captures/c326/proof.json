@@ -1,0 +1,953 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "호로 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 604,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 390,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "권영 · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 604,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 390,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "권영"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 59
+    },
+    "saved": {
+     "name": "권영",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 59
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별권영 · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "권영",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별Kwon · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고호로",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 70
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  },
+  {
+   "mode": "pc",
+   "faction": "shinigami",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "사신 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 604,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 390,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "Rukia · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 604,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 390,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "Rukia"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 71
+    },
+    "saved": {
+     "name": "Rukia",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 71
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별Rukia · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "Rukia",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별루키아 · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고혼백",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 70
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  },
+  {
+   "mode": "ph",
+   "faction": "hollow",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "호로 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "권영 · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "권영"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 59
+    },
+    "saved": {
+     "name": "권영",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 59
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별권영 · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "권영",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별Kwon · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고호로",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 70
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "사신 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "Rukia · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "Rukia"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 71
+    },
+    "saved": {
+     "name": "Rukia",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 71
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별Rukia · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "Rukia",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별루키아 · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고혼백",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 70
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  },
+  {
+   "mode": "ph115",
+   "faction": "hollow",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "호로 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "권영 · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "권영"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 66
+    },
+    "saved": {
+     "name": "권영",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "권영호로",
+     "own": "권영",
+     "inside": true,
+     "formCut": false,
+     "w": 66
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별권영 · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "권영",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별Kwon · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고호로",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 79
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  },
+  {
+   "mode": "ph115",
+   "faction": "shinigami",
+   "name": {
+    "open": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "sub": "사신 · 1/2",
+     "msg": "이름을 정한다",
+     "msgBad": false,
+     "count": "0/12",
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    },
+    "space": {
+     "msg": "띄어쓰기는 쓸 수 없다",
+     "bad": true,
+     "count": "5/14",
+     "nextDisabled": true
+    },
+    "digit": {
+     "msg": "숫자는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "symbol": {
+     "msg": "기호는 쓸 수 없다",
+     "bad": true,
+     "count": "3/14",
+     "nextDisabled": true
+    },
+    "hanLong": {
+     "msg": "한글은 7자까지다",
+     "bad": true,
+     "count": "16/14",
+     "nextDisabled": true
+    },
+    "latLong": {
+     "msg": "영어는 12자까지다",
+     "bad": true,
+     "count": "13/12",
+     "nextDisabled": true
+    },
+    "mixLong": {
+     "msg": "섞어 쓰면 14칸까지다 (한글 1자 = 2칸)",
+     "bad": true,
+     "count": "15/14",
+     "nextDisabled": true
+    },
+    "ok": {
+     "msg": "쓸 수 있는 이름이다",
+     "bad": false,
+     "count": "6/14",
+     "nextDisabled": false
+    }
+   },
+   "gender": {
+    "open": {
+     "screen": "gender",
+     "title": "성별 정하기",
+     "sub": "Rukia · 2/2",
+     "msg": "남성·여성 중 하나를 고른다",
+     "msgBad": false,
+     "count": null,
+     "mainDisabled": true,
+     "main": {
+      "x": 556,
+      "y": 74,
+      "w": 128,
+      "h": 50
+     },
+     "topSafe": true,
+     "bottomPx": 124,
+     "viewH": 384,
+     "back": false,
+     "issues": []
+    }
+   },
+   "flow": {
+    "mainSameSpot": true,
+    "backToName": {
+     "screen": true,
+     "value": "Rukia"
+    },
+    "deviceFemale": true,
+    "deviceStartSel": "시작",
+    "roomTag": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 79
+    },
+    "saved": {
+     "name": "Rukia",
+     "gender": "female",
+     "ids": [
+      "new"
+     ]
+    },
+    "roomTagAgain": {
+     "text": "Rukia혼백",
+     "own": "Rukia",
+     "inside": true,
+     "formCut": false,
+     "w": 79
+    },
+    "settingsRow": {
+     "label": "이름·성별 바꾸기",
+     "hint": "이름·성별Rukia · 여성"
+    },
+    "edit": {
+     "title": "이름 바꾸기",
+     "value": "Rukia",
+     "back": false
+    },
+    "afterEdit": {
+     "settings": true,
+     "hint": "이름·성별루키아 · 남성이름·성별 바꾸기"
+    },
+    "old": {
+     "screen": "name",
+     "title": "이름 정하기",
+     "backDisabled": true,
+     "stillAfterBack": true,
+     "genderPre": "male",
+     "roomTag": {
+      "text": "이치고혼백",
+      "own": "이치고",
+      "inside": true,
+      "formCut": false,
+      "w": 79
+     },
+     "saved": {
+      "name": "이치고",
+      "ids": [
+       "new",
+       "settings",
+       "old"
+      ]
+     }
+    }
+   },
+   "issues": []
+  }
+ ],
+ "errors": [],
+ "shots": [
+  "pc-0-name-error.png",
+  "pc-0-gender.png",
+  "pc-0-room.png",
+  "pc-1-settings-etc.png",
+  "pc-1-edit-name.png",
+  "ph-1-name-error.png",
+  "ph-1-gender.png",
+  "ph-1-room.png",
+  "ph115-0-name-long.png",
+  "ph115-0-room.png"
+ ]
+}

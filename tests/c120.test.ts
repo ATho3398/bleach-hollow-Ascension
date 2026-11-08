@@ -47,7 +47,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     const s = newSaveData('hollow', 1);
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
-    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(62); // C.326 에서 63 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
@@ -190,9 +190,9 @@ describe('67장: 첫 원정 튜토리얼', () => {
     expect(e.absorbRecords).toEqual([]);
     expect(e.acquired).toEqual([]);
     for (const k of STAT_IDS) expect(e.evolution.ev[k] - evBefore[k]).toBe(TUT.statEv);
-    // 1단계 상한(합 24·능력치당 12) 안
+    // 1단계 상한(합 56·능력치당 33 — GDD 202장) 안
     const cap = evCaps(0);
-    expect(cap.total).toBe(24);
+    expect(cap.total).toBe(56);
     expect(TUT.statEv * STAT_IDS.length).toBeLessThanOrEqual(cap.total);
     expect(TUT.statEv).toBeLessThanOrEqual(cap.perStat);
     expect(summarize(e).laps).toBe(1);

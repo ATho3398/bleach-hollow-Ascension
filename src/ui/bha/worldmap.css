@@ -1,30 +1,29 @@
 /* 월드맵 (GDD 130장 2, C.204): 방과 같은 장면 틀 + 임시 하이앵글 지도 배경(위에서 비스듬히 본 땅·길). 그림(scene.worldmap)이 오면 배경이 덮는다. 색·간격은 토큰만 */
-/* 지도 = LCD 화면 전체 (GDD 155장 1): 바깥 여백·장면 테두리 없음, 위 한 줄([둥지로]·지도 이름)은 지도 위에 겹친다 */
+/* 지도 = LCD 화면 전체 (GDD 155장 1): 바깥 여백·장면 테두리 없음, 위 겹침 줄 없음(197장 5) */
 .bha-lcd .bha-app.bha-room.bha-worldmap { padding: 0; gap: 0; position: relative; }
 .bha-worldmap .bha-room__body { gap: 0; }
 .bha-worldmap__scene { border: 0; border-radius: 0; }
-.bha-worldmap__hud {
-  position: absolute; top: var(--bha-sp-3); left: var(--bha-sp-3); right: var(--bha-sp-3); z-index: var(--bha-z-sticky);
-  justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); pointer-events: none;
-}   /* [둥지로] 왼쪽 위 = 시장·온천과 같은 자리 (GDD 129-1 2) */
-.bha-worldmap__hud > * { pointer-events: auto; }
-.bha-worldmap [data-space-back][aria-disabled="true"] { opacity: 0.45; }
-.bha-worldmap__title { margin: 0; font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); line-height: 1.15; white-space: nowrap; }
+/* 왼쪽 위 [둥지로]/[대원실로] 버튼 삭제 (GDD 197장 5) — 지도 위 둥지/대원실 장소로 돌아간다 */
+/* 시장 위에 겹친 돌아가기 = 어두운 판 버튼 */
+.bha-market__hud [data-space-back] { background: var(--bha-plate-bg); }
 /* 땅이 화면 전체 (GDD 155장 1 — 옛 위쪽 하늘 띠 삭제): 격자 = 위에서 내려다보는 느낌 */
 .bha-room--worldmap .bha-room__wall { display: none; }
 .bha-room--worldmap .bha-room__floor {
   height: 100%;
   border-top: 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 39px, var(--bha-line-1) 39px 40px),
-    repeating-linear-gradient(180deg, transparent 0 23px, var(--bha-line-1) 23px 24px),
-    radial-gradient(60% 50% at 50% 60%, var(--bha-bg-3), var(--bha-bg-2));
+  background: var(--bha-scene-floor); /* 그림 없을 때 자리 — v2: 줄무늬·그라데이션 없이 한 면 */
 }
 /* 장소 모양 (그림 없을 때): 홈 = 둥근 지붕, 시장 = 천막, 모험 = 길 끝 문 */
 .bha-prop--home .bha-prop__shape { width: 46px; height: 40px; border-radius: var(--bha-r-pill) var(--bha-r-pill) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--adventure .bha-prop__shape { width: 40px; height: 52px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); } /* 늘 강조색 테두리라 초점처럼 보였다 (GDD 159장 39) */
 .bha-prop--outside .bha-prop__shape { width: 40px; height: 58px; border-radius: var(--bha-r-lg) var(--bha-r-lg) var(--bha-r-xs) var(--bha-r-xs); }
 .bha-prop--outside .bha-prop__shape.has-art { width: calc(74px * var(--ps)); height: calc(100px * var(--ps)); }
+/* 장소 그림 윤곽 (GDD 182장 4): 배경과 구분되게 그림 모양을 따라가는 어두운 외곽선 + 아래 그림자 — 그림(img) 자신에 걸어, 초점·선택의 밝은 윤곽(room.css .bha-art.bha-sel, 그림 칸에 걸림)은 그 바깥에 그대로 겹친다 */
+.bha-worldmap .bha-prop__shape.has-art > .bha-prop__img { filter: var(--bha-art-outline); }
+/* 렉 (GDD 186장 1, C.283): 윤곽 9겹을 캔버스에 한 번 구워(artOutline.ts) 그림 위에 얹고 원본은 숨긴다 — 걷기·페이드 때 다시 계산하지 않는다. 모양은 같다 */
+.bha-worldmap .bha-prop__shape.has-art { position: relative; }
+.bha-worldmap .bha-prop__shape.has-art > .bha-prop__img.is-baked { visibility: hidden; filter: none; }
+.bha-art-baked { position: absolute; pointer-events: none; }
 /* 첫 모험 강제 등으로 잠긴 장소 (GDD 131장 2): 흐리게 */
 .bha-worldmap .bha-prop[aria-disabled="true"] .bha-prop__tag { opacity: 0.45; }
 /* 캐릭터: 지도 위라 방보다 작게, 보기만 */

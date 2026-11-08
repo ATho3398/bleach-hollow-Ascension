@@ -1,0 +1,170 @@
+{
+  "cases": {
+    "pc-hollow": {
+      "status": "노력치 56 / 56 (이 단계 상한 · 능력치 하나 33)초록 +n = 노력치(와 환생 계승)",
+      "shots": {
+        "stat": {
+          "btns": [
+            {
+              "mode": "both",
+              "label": "포식광기 +3",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "trait",
+              "label": "속성 포식광기 +2",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "stat",
+              "label": "능력치 포식광기 +1",
+              "disabled": true,
+              "on": true,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "none",
+              "label": "놓아주기",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            }
+          ],
+          "desc": [
+            "능력치만 2배로 얻는다. 블록은 얻지 않는다.",
+            "노력치가 가득 찼다. 능력치는 오르지 않는다. 지금 이 갈래로는 얻는 것이 없다.",
+            "광기+1 (0 → 1)",
+            "받는 것타일 +1"
+          ],
+          "go": {
+            "label": "능력치 포식하기",
+            "mode": "stat",
+            "y": 324,
+            "disabled": false
+          }
+        },
+        "both": {
+          "btns": [
+            {
+              "mode": "both",
+              "label": "포식광기 +3",
+              "disabled": false,
+              "on": true,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "trait",
+              "label": "속성 포식광기 +2",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "stat",
+              "label": "능력치 포식광기 +1",
+              "disabled": true,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "none",
+              "label": "놓아주기",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            }
+          ],
+          "desc": [
+            "블록과 능력치를 함께 얻는다.",
+            "노력치가 가득 찼다. 능력치는 오르지 않는다. 블록과 속성 강화는 그대로 얻는다.",
+            "광기+3 (0 → 3)",
+            "받는 것타일 +1",
+            "새 블록 흙 강화 0/100 → 1/100"
+          ],
+          "go": {
+            "label": "포식하기",
+            "mode": "both",
+            "y": 324,
+            "disabled": false
+          }
+        }
+      },
+      "afterGo": {
+        "modesLeft": 0,
+        "cands": 2,
+        "text": true
+      }
+    },
+    "ph-shinigami": {
+      "status": "노력치 56 / 56 (이 단계 상한 · 능력치 하나 33)초록 +n = 노력치(와 환생 계승)",
+      "shots": {
+        "stat": {
+          "btns": [
+            {
+              "mode": "both",
+              "label": "정화 흡수호로화 +3",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "trait",
+              "label": "속성 흡수호로화 +2",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "stat",
+              "label": "능력치 흡수호로화 +1",
+              "disabled": true,
+              "on": true,
+              "y": 62,
+              "h": 52
+            },
+            {
+              "mode": "none",
+              "label": "놓아주기",
+              "disabled": false,
+              "on": false,
+              "y": 62,
+              "h": 52
+            }
+          ],
+          "desc": [
+            "능력치만 2배로 얻는다. 블록은 얻지 않는다.",
+            "노력치가 가득 찼다. 능력치는 오르지 않는다. 지금 이 갈래로는 얻는 것이 없다.",
+            "호로화+1 (0 → 1)",
+            "받는 것타일 +1"
+          ],
+          "go": {
+            "label": "능력치 흡수하기",
+            "mode": "stat",
+            "y": 318,
+            "disabled": false
+          }
+        }
+      },
+      "afterGo": {
+        "modesLeft": 0,
+        "cands": 2,
+        "text": true
+      }
+    }
+  },
+  "errors": []
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>방</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./bha.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;800&amp;family=Noto+Sans+KR:wght@400;500;700;800&amp;family=Silkscreen&amp;display=swap">
+<style>body{margin:0;background:#0d0a09}a{color:#cbbca6}a:hover{color:#efe5d3}</style>
+</helmet>
+<div class="sheet bha-theme-hollow" style="width: 1768px; height: 600px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+  <div style="display: flex; gap: 32px">
+    <sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+      <div class="bha-theme-{{t.k}}" style="display: flex; flex-direction: column; gap: 8px">
+        <div class="cap"><b style="color: var(--bha-text-1)">{{t.race}} · {{t.room}}</b> — 초점: 책장 (그림 윤곽 + 이름표)</div>
+        <div class="bha-device">
+          <button class="bha-dbtn bha-dbtn--up" aria-label="위"><i class="bha-i bha-i-up"></i></button>
+          <button class="bha-dbtn bha-dbtn--down" aria-label="아래"><i class="bha-i bha-i-down"></i></button>
+          <button class="bha-dbtn bha-dbtn--ok" aria-label="확인"><i class="bha-i bha-i-check" style="width: 28px; height: 28px"></i></button>
+          <button class="bha-dbtn bha-dbtn--back" aria-label="뒤로"><i class="bha-i bha-i-left" style="width: 18px; height: 18px"></i></button>
+          <div class="bha-lcd"><div class="bha-screen">
+            <div class="bha-scene" style="bottom: 56px">
+              <div class="bha-scene-bg" data-label="방 배경 그림 자리"></div>
+              <div class="bha-obj" style="left: 3.5%; top: 46%; width: 15%; height: 38%"><span class="bha-art"><i class="bha-i bha-i-door"></i></span><span class="bha-plate">월드맵</span></div>
+              <div class="bha-obj" style="left: 23%; top: 64%; width: 11%; height: 33%"><span class="bha-art"><i class="bha-i bha-i-bag"></i></span><span class="bha-plate">가방</span></div>
+              <div class="bha-obj is-focus" style="left: 68%; top: 30%; width: 13%; height: 40%"><span class="bha-art is-hl"><i class="bha-i bha-i-book"></i></span><span class="bha-plate is-on">책장</span></div>
+              <div class="bha-obj" style="left: 66%; top: 71%; width: 11%; height: 27%"><span class="bha-art"><i class="bha-i bha-i-tower"></i></span><span class="bha-plate">{{t.exam}}</span></div>
+              <div style="position: absolute; left: 50%; top: 13%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; z-index: 4">
+                <span class="bha-chip bha-chip--status" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food"></i><span class="bha-chip-meter"><i style="width: 80%"></i></span></span>
+                <span class="bha-chip bha-chip--status" style="--c: var(--bha-cond)"><i class="bha-i bha-i-bolt"></i><span class="bha-chip-meter"><i style="width: 80%"></i></span></span>
+                <span class="bha-chip bha-chip--status" style="--c: var(--bha-stab)"><i class="bha-i bha-i-spirit"></i><span class="bha-chip-meter"><i style="width: 50%"></i></span></span>
+                <span class="bha-chip bha-chip--status" style="--c: var(--bha-risk)"><i class="bha-i bha-i-flame"></i><b>0</b></span>
+                <button class="bha-info" style="margin: 0 -4px; background: rgb(0 0 0 / 0.5); width: 28px; height: 28px; border-radius: 50%" aria-label="상태 설명"><i class="bha-i bha-i-info"></i></button>
+              </div>
+              <div class="bha-art" style="position: absolute; left: 42%; top: 27%; width: 20%; height: 52%; z-index: 1"><i class="bha-i bha-i-figure"></i></div>
+              <div class="bha-hp" style="position: absolute; left: 39%; top: 82%; width: 26%; --c: var(--bha-player-hp); z-index: 3"><div class="bha-hp-bar"><i style="width: calc(100% - 4px)"></i></div><div class="bha-hp-txt" style="justify-content: center; text-shadow: 0 1px 0 #000"><span>체력 <b>212</b> / 212</span></div></div>
+            </div>
+            <div class="bha-toasts"><span class="bha-toast"><i class="bha-i bha-i-star"></i>도감 목표 4개 달성 · 영옥 +11</span></div>
+            <div class="bha-dock">
+              <button class="bha-btn bha-btn--tint bha-grow" style="--c: var(--bha-hunger)"><i class="bha-i bha-i-food" style="color: var(--bha-hunger)"></i>{{t.food}}<span class="bha-btn-count">3/3</span></button>
+              <button class="bha-btn bha-btn--ask bha-grow" style="--c: var(--bha-cond)"><i class="bha-i bha-i-sleep" style="color: var(--bha-cond)"></i>재우기</button>
+              <button class="bha-btn bha-btn--tint bha-grow" style="--c: var(--bha-tint-sage)"><i class="bha-i bha-i-care" style="color: var(--bha-tint-sage)"></i>{{t.care}}</button>
+              <span style="width: 1px; height: 28px; background: var(--bha-line-2)"></span>
+              <button class="bha-btn" style="padding: 0 10px" aria-label="대기 보상"><i class="bha-i bha-i-gift"></i><span class="bha-num bha-num--w4" style="font-size: 12px; color: var(--bha-text-2)">2:14</span></button>
+              <button class="bha-btn bha-btn--icon" aria-label="더보기"><i class="bha-i bha-i-more"></i></button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div class="bha-panel" style="padding: 14px 18px; display: flex; gap: 24px; align-items: flex-start">
+    <div class="bha-label" style="white-space: nowrap; padding-top: 2px">바뀐 점</div>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--bha-text-2)">
+      <li>장면 위에 떠 있던 수치 상자를 없애고 머리 위 상태 칩 한 줄(아이콘 + 짧은 막대)로 바꿨다. 자세한 뜻은 ⓘ 창에서만 본다</li>
+      <li>물건 위치·크기는 그대로, 이름표는 그림 아래 어두운 판으로 통일하고 초점은 그림 윤곽 + 밝은 이름표로 보인다</li>
+      <li>돌보기 줄을 44px 버튼으로 키우고 속성색 아랫면으로 구분, 캐릭터가 청한 것만 굵은 테두리(재우기)로 강조했다</li>
+    </ol>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1768,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { themes: [
+      { k: 'hollow', race: '호로', room: '둥지', food: '먹이', care: '교감', exam: '번호 쟁탈전' },
+      { k: 'shinigami', race: '사신', room: '대원실', food: '식사', care: '손질', exam: '진급 시험' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

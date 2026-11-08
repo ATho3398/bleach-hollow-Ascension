@@ -4,12 +4,15 @@
 // 테스트 모드(?test=1, 따로 된 테스트 세이브 칸)로 돈다. 뷰포트 = 게임 기준 가로 844×390, 1배.
 // 옵션: UI_AUDIT_URL=<이미 떠 있는 주소> (없으면 vite 를 띄운다), UI_AUDIT_ONLY=<화면 이름 일부>, UI_AUDIT_SHOTS=<폴더> (화면마다 캡처 + 화면 글자 .txt),
 //       UI_AUDIT_PORTRAIT=1 (세로 폰 390×844 터치 — 기기 화면 90° 회전 출력, C.183)
+//       폰 조건 (GDD 189장, 코딩208): UI_AUDIT_VIEWPORT=<W>x<H> (터치 폰 가로 — PC 고정 모드가 아니라 실제 폰처럼 LCD 가 뷰포트에 맞춰 줄어든다),
+//       UI_AUDIT_TEXT_SCALE=<배> (안드로이드 글자 크기 확대 흉내: --bha-fs-* 토큰을 배로), UI_AUDIT_PHONE_CHECKS=1 (말줄임·세로로 꺾인 글자·판 밖으로 나감 점검 추가, phone-checks.cjs)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { snapshotInPage, staticInPage, cardsInPage, boxGlowInPage } = require('./checks.cjs');
 const { SCREENS } = require('./screens.cjs');
+const { phoneInPage } = require('./phone-checks.cjs');
 
 const ROOT = path.resolve(__dirname, '../..');
 const PORT = 5199;
@@ -223,6 +226,7 @@ function makeHelper(page, faction, report) {
         if (opts.ignore && opts.ignore.test(`${i.kind}|${i.key}`)) continue;
         report.push({ faction, screen, ...i });
       }
+      if (process.env.UI_AUDIT_PHONE_CHECKS) for (const i of await page.evaluate(phoneInPage)) report.push({ faction, screen, ...i });
       if (process.env.UI_AUDIT_SHOTS) {
         const dir = process.env.UI_AUDIT_SHOTS;
         fs.mkdirSync(dir, { recursive: true });
@@ -452,7 +456,19 @@ async function newGame(page, url, factionIndex) {
       for (const sc of SCREENS) {
         if (only && !only.split(',').some((o) => sc.name.includes(o))) continue; // 쉼표로 여럿
         // 세로 회전 출력 (C.183): 세로 폰(390×844, 터치) — 기기 화면이 90° 돌아간 채로 같은 점검
-        const page = await browser.newPage(PORTRAIT ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true } : { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
+        const vpEnv = /^(\d+)x(\d+)$/.exec(process.env.UI_AUDIT_VIEWPORT || '');
+        const page = await browser.newPage(PORTRAIT ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }
+          : vpEnv ? { viewport: { width: +vpEnv[1], height: +vpEnv[2] }, deviceScaleFactor: 1, isMobile: true, hasTouch: true }
+          : { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
+        const textScale = Number(process.env.UI_AUDIT_TEXT_SCALE || 1);
+        if (textScale !== 1) await page.addInitScript((k) => {
+          const put = () => {
+            const st = document.createElement('style');
+            st.textContent = `:root{${[['xs', 12], ['sm', 13], ['md', 14], ['lg', 16], ['xl', 18], ['2xl', 22], ['3xl', 28], ['4xl', 36], ['5xl', 48]].map(([n, v]) => `--bha-fs-${n}:${(v * k).toFixed(2)}px !important;`).join('')}}`;
+            document.head.append(st);
+          };
+          if (document.head) put(); else document.addEventListener('DOMContentLoaded', put);
+        }, textScale);
         page.on('pageerror', (e) => report.push({ faction, screen: sc.name, kind: '스크립트 오류', key: '', detail: e.message.slice(0, 120) }));
         const h = makeHelper(page, faction, report);
         try {

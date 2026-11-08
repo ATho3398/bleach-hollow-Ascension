@@ -49,7 +49,7 @@ describe("129-1 2 공간 화면 '방으로 돌아가기' 자리", () => {
   });
   it('장터: 버튼이 위 줄 맨 왼쪽, 기기 ▲▼ 순서도 화면 위치 순서(버튼 먼저)', () => {
     // C.236 (GDD 158장 3): 위 [월드맵으로] 버튼 삭제 — 장면 안 월드맵 물건이 먼저
-    expect(market).toContain('hud.append(titles);');
+    expect(market).toContain('hud.append(title);'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 왼쪽 위 작은 이름 판
     expect(market).toContain('const items: SelectItem[] = [{ el: exit }, ...btns.map((b) => ({ el: b }))];');
     expect(mcss).toContain('justify-content: flex-start; align-items: flex-start; gap: var(--bha-sp-3); pointer-events: none;'); // C.234: 장면 위에 겹친 머리 줄 (GDD 155장 1)
   });

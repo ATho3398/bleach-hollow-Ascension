@@ -1,0 +1,47 @@
+{
+  "shots": [
+    "hollow-16-settings-1.png",
+    "hollow-16-settings-2.png",
+    "hollow-16-settings-3.png",
+    "hollow-16-settings-4.png",
+    "shinigami-16-settings-1.png",
+    "shinigami-16-settings-2.png",
+    "shinigami-16-settings-3.png",
+    "shinigami-16-settings-4.png"
+  ],
+  "check": {
+    "hollow-16-settings-1.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-2.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-3.png": {
+      "over": [],
+      "small": []
+    },
+    "hollow-16-settings-4.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-1.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-2.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-3.png": {
+      "over": [],
+      "small": []
+    },
+    "shinigami-16-settings-4.png": {
+      "over": [],
+      "small": []
+    }
+  },
+  "errors": []
+}

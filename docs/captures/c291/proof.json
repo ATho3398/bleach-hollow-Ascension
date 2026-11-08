@@ -1,0 +1,158 @@
+{
+ "shots": [
+  "hollow-11-shop.png",
+  "hollow-12-shop-detail.png",
+  "hollow-12b-shop-cannot-buy-pressed.png",
+  "hollow-13-shop-battle.png",
+  "hollow-14-shop-gear.png",
+  "hollow-15-shop-gear-detail.png",
+  "hollow-16-shop-skin.png",
+  "hollow-17-shop-trait.png",
+  "shinigami-11-shop.png",
+  "shinigami-12-shop-detail.png",
+  "shinigami-12b-shop-cannot-buy-pressed.png",
+  "shinigami-13-shop-battle.png",
+  "shinigami-14-shop-gear.png",
+  "shinigami-15-shop-gear-detail.png",
+  "shinigami-16-shop-skin.png",
+  "shinigami-17-shop-trait.png"
+ ],
+ "measure": {
+  "hollow-11-shop.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-12-shop-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-12b-shop-cannot-buy-pressed.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-13-shop-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 1,
+   "slot": null
+  },
+  "hollow-14-shop-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-15-shop-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-16-shop-skin.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "hollow-17-shop-trait.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-11-shop.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-12-shop-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-12b-shop-cannot-buy-pressed.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-13-shop-battle.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 1,
+   "slot": null
+  },
+  "shinigami-14-shop-gear.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-15-shop-gear-detail.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-16-shop-skin.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  },
+  "shinigami-17-shop-trait.png": {
+   "over": [],
+   "small": [],
+   "tiny": [],
+   "cols": 4,
+   "slot": null
+  }
+ },
+ "errors": [],
+ "cannotBuy": {
+  "hollow": {
+   "ariaDisabled": "true",
+   "cls": "bha-btn bha-btn--primary is-disabled",
+   "opacity": "0.42",
+   "after": {
+    "open": true,
+    "reason": "보관 가득 (9/9)",
+    "reasonShown": true
+   }
+  },
+  "shinigami": {
+   "ariaDisabled": "true",
+   "cls": "bha-btn bha-btn--primary is-disabled",
+   "opacity": "0.42",
+   "after": {
+    "open": true,
+    "reason": "보관 가득 (9/9)",
+    "reasonShown": true
+   }
+  }
+ },
+ "note": "C291_ONLY=상점 — 떠돌이 상인은 부르기 단계를 건너뛰어 없음(C.288 캡처에 있음)"
+}

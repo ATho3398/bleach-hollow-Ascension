@@ -37,7 +37,7 @@ describe('9 회복 안내 5/7', () => {
     const t = JSON.stringify(RECOVER_SCENES);
     expect(t).not.toContain('방으로 돌아가자');
     expect(t).not.toContain('"방에서');
-    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')!.body).toContain('{nestName}(으)로 돌아왔다');
+    expect(RECOVER_SCENES.find((s) => s.id === 'spa-rest')).toBeUndefined(); // 193장 8 (C.304): 쉬기 카드 삭제 — 온천 카드 [다음]에서 바로 방으로
   });
 });
 

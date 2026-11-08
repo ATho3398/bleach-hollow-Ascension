@@ -2,13 +2,13 @@
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
-import { DEFAULT_GENDER, genderLookNote, setActiveGender } from '../engine/gender';
+import { DEFAULT_GENDER, GENDER_LABEL, genderLookNote, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
-import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
+import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
@@ -17,7 +17,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { abortExpedition, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -28,10 +28,12 @@ import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
-  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten,
+  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
+import { genderScreen, nameScreen, type IdentityMode } from './identityView';
+import { registerCancelHook } from './bha/shortcuts';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
@@ -52,8 +54,12 @@ import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
-import { blockInput, getOverlayHost, registerLayer } from './bha/overlayHost';
+import { blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
+import { BUILD_ID, setUpdateHost } from '../pwa';
+import { CloudSync, deviceLabel, markLoginGateDone, needsLoginGate, type ActiveDevice, type CloudConflict } from '../cloudSave';
+import { GATE_TEXT, loginGateDialog, otherDeviceDialog, showCloudConflict, type CloudUi } from './cloudView';
+import { isStandalone } from '../pwaInstall';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
@@ -68,7 +74,7 @@ import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { abortSummaryLine, resultView } from './resultView';
 import { expeditionView, setSpeed } from './expeditionView';
-import { planView } from './planView';
+import { lowDepartHp, planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
@@ -98,7 +104,7 @@ import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
-import { battleItemEffectOf, consumableName, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
+import { battleItemEffectOf, consumableName, fillBattleSlot, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, ownedBattleItems, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
 import { shopPicker, shopView } from './shopView';
@@ -108,7 +114,7 @@ import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
-import { battleItemText, useRerollTicket } from '../shop';
+import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
@@ -200,10 +206,141 @@ export function startApp(host: HTMLElement): void {
     setSfxSuspended(away);
     try { bgm().setSuspended(away); } catch { /* 소리는 부가 */ }
   });
+  // 원정 중 앱 이탈 (GDD 192장 1, C.311): 떠난 시각을 중간 저장에 적어 둔다(이어 하기 시한의 기준). 시한(30분)을 넘겨 돌아오면 이어 하지 않고 다시 열어
+  // readActiveExpedition 이 모험 실패로 정산하게 한다(전투 일시정지·걷기 시계가 멈춰 있던 상태를 억지로 걷지 않는다). 시한 안에 돌아오면 떠난 시각을 지운다
+  let awayAt = 0;
+  onAppAway((away) => {
+    if (!save || slot === 0 || !activeExp || activeExp.phase === 'ended') { awayAt = 0; return; }
+    const snap = save.activeExpedition;
+    if (away) {
+      awayAt = Date.now();
+      if (snap) { markExpeditionLeft(snap, awayAt); persist(); }
+      return;
+    }
+    const expired = awayAt > 0 && Date.now() - awayAt > resumeWindowMs();
+    awayAt = 0;
+    if (expired) { window.location.reload(); return; }
+    if (snap?.leftAtMs !== undefined) { markExpeditionBack(snap); persist(); }
+  });
   installAppAway();
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
     nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });
+
+  // 클라우드 세이브 (GDD 196장, C.323): 로그인은 선택. Firebase 층(cloudFirebase.ts + SDK)은 로그인 버튼을 누르거나 이미 로그인된 기기에서만 동적 import.
+  // 테스트 모드(가짜 저장소)에서는 아예 없다. 저장할 때마다 schedule(묶어서 올림), 연결되면 onOnline, 앱이 숨겨지면 flush
+  const cloudFake = import.meta.env.DEV && new URLSearchParams(location.search).has('cloudfake');
+  const cloud: CloudSync | null = testOn ? null : new CloudSync({
+    storage: store,
+    // 점검용 가짜(`?cloudfake`, dev 서버만 — 배포 빌드에서는 이 분기가 빠진다): 실제 Google 로그인 없이 설정 줄·고르기 창을 찍는다 (scripts/c323-proof.cjs)
+    loadBackend: () => (cloudFake
+      ? import('../cloudFake').then((m) => m.loadFakeBackend())
+      : import('../cloudFirebase').then((m) => m.loadFirebaseBackend())),
+    build: BUILD_ID,
+    current: () => ({ slot, save }),
+    onConflict: (c) => queueCloudConflict(c),
+    onApplied: (n) => {
+      if (slot !== 0 && n === slot) reloadSlot(); // 플레이 중인 슬롯이 바뀌었다 → 다시 연다
+      else if (slot === 0 && nav.top?.id === 'title') nav.top.render(); // 처음 화면의 슬롯 줄 갱신
+    },
+    notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
+    deviceName: deviceLabel(navigator.userAgent, isStandalone()),
+    onBlocked: (by) => onCloudBlocked(by),
+    onUnblocked: () => onCloudUnblocked(),
+    online: () => navigator.onLine !== false,
+  });
+  const cloudUi: CloudUi | undefined = cloud ? {
+    state: () => cloud.state(),
+    signIn: (o) => cloud.signIn(o),
+    signInGuest: (o) => cloud.signInGuest(o),
+    signOut: () => void cloud.signOut(),
+    email: (kind, email, password) => cloud.emailAction(kind, email, password),
+    link: (kind, email, password) => cloud.linkAccount(kind, email, password),
+    reclaim: () => cloud.reclaim(),
+    warm: () => cloud.warm(),
+    notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
+    onChange: (cb) => cloud.onChange(cb),
+  } : undefined;
+  /** 기기·클라우드 세이브가 다를 때 고르는 창 (GDD 196장 4): 잠긴 흐름(전투·원정·연출)·안내 중·처음 로그인 창·막기 창이면 방·처음 화면으로 돌아올 때 띄운다 */
+  let pendingCloudConflict: CloudConflict | null = null;
+  function queueCloudConflict(c: CloudConflict): void {
+    pendingCloudConflict = c;
+    showCloudConflictIfIdle();
+  }
+  function showCloudConflictIfIdle(): void {
+    const c = pendingCloudConflict;
+    if (!c || !nav.top || nav.top.locked || guideOpen || recoverOpen || closeGate || closeBlocked) return;
+    if (nav.top.id !== 'title' && nav.top.id !== 'room' && nav.top.id !== 'settings') return;
+    pendingCloudConflict = null;
+    showCloudConflict(c);
+  }
+  // 한 기기만 (GDD 199장 4, C.325): 잠긴 화면(전투·원정·연출)에서 막히면 원정 떠남 시각을 적고 저장한 뒤 표시를 남기고 다시 켠다 — 켜지면 처음 화면 + 막기 창(차지하지 않음).
+  // 안 잠긴 화면이면 저장하고 처음 화면으로 돌아가 막기 창. 표시는 sessionStorage(같은 탭의 다시 켜기까지만 — 앱을 껐다 켜는 것은 '켜짐'이라 다시 차지한다)
+  const CLOUD_BLOCKED_SESSION_KEY = 'bha-cloud-blocked';
+  function readBlockedFlag(): ActiveDevice | null {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(CLOUD_BLOCKED_SESSION_KEY) ?? 'null') as ActiveDevice | null;
+      return raw && typeof raw.device === 'string' && typeof raw.at === 'number' ? raw : null;
+    } catch {
+      return null;
+    }
+  }
+  function writeBlockedFlag(by: ActiveDevice | null): void {
+    try {
+      if (by) sessionStorage.setItem(CLOUD_BLOCKED_SESSION_KEY, JSON.stringify(by));
+      else sessionStorage.removeItem(CLOUD_BLOCKED_SESSION_KEY);
+    } catch {
+      /* 저장소가 막혀 있으면 이번 실행만 */
+    }
+  }
+  let closeBlocked: (() => void) | null = null;
+  let closeGate: (() => void) | null = null;
+  function onCloudBlocked(by: ActiveDevice): void {
+    if (!cloudUi) return;
+    pendingCloudConflict = null;
+    writeBlockedFlag(by);
+    if (closeBlocked) return; // 이미 막기 창이 떠 있다(저쪽이 다시 차지했다) — 그대로
+    if (nav.top?.locked) {
+      // 전투·원정·연출: 앱 이탈과 같은 처리(GDD 192장 1) — 떠난 시각을 적고 저장한 뒤 다시 켠다(이어 하기 시한 안이면 그 지점부터)
+      if (save && slot !== 0) {
+        if (activeExp && activeExp.phase !== 'ended' && save.activeExpedition) markExpeditionLeft(save.activeExpedition, Date.now());
+        persist();
+      }
+      window.location.reload();
+      return;
+    }
+    if (save && slot !== 0) persist();
+    closeGate?.();
+    titleScreen();
+    closeBlocked = otherDeviceDialog(cloudUi, by);
+  }
+  function onCloudUnblocked(): void {
+    writeBlockedFlag(null);
+    const was = closeBlocked;
+    closeBlocked = null;
+    was?.();
+    if (!was || !cloud) return;
+    if (cloud.state().user) showToast({ eyebrow: '클라우드', title: '이 기기에서 이어 한다' }, 0, 3200);
+    else showLoginGate(); // 막기 창에서 로그아웃했다 → 다시 고른다
+    showCloudConflictIfIdle();
+  }
+  /** 처음 로그인 창 (GDD 199장 2): 처음 화면 위에. 로그인하면 기억해 다음부터 안 띄운다. 뒤로(로그인 없이)는 기억하지 않는다 — 다음에 다시 묻는다 */
+  function showLoginGate(): void {
+    if (!cloudUi || !cloud || closeGate || closeBlocked) return;
+    closeGate = loginGateDialog(cloudUi, (how) => {
+      closeGate = null;
+      if (how === 'signed-in') markLoginGateDone(store);
+      else showToast({ eyebrow: '클라우드', title: '로그인 없이 시작한다', meta: GATE_TEXT.skipped }, 0, 4600);
+      showCloudConflictIfIdle();
+    });
+  }
+  if (cloud) {
+    cloud.start({ blocked: readBlockedFlag() });
+    window.addEventListener('online', () => cloud.onOnline());
+    window.addEventListener('pagehide', () => void cloud.flush());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) void cloud.flush(); else cloud.onVisible(); });
+    window.addEventListener('pageshow', () => { if (!document.hidden) cloud.onVisible(); });
+  }
 
   const persist = () => {
     if (!save || slot === 0) return;
@@ -223,9 +360,29 @@ export function startApp(host: HTMLElement): void {
         : { eyebrow: '저장 공간', title: '저장 공간이 가득 차 저장하지 못했다', meta: '설정 > 백업에서 내보내기를 하고 쓰지 않는 슬롯을 비우면 된다.' }, 0, 5200);
     }
     touchSlot(store, slot);
+    cloud?.schedule(); // 로그인 중이면 클라우드에도 (묶어서, GDD 196장 3)
   };
   const storageWarned = new Set<string>();
-  /** 이어하기를 숨긴 이유 안내 한 줄 (손상·버전 불일치). 다음 원정을 시작하면 지운다 */
+  // 새 버전 (GDD 184장 3, C.283): 처음 화면(게임 시작 전 — 슬롯·종족 고르기)이면 자동 다시 시작. 다시 시작 직전 저장은
+  // 잠긴 흐름(전투·원정·연출) 밖에서만 — 그 안은 마지막 중간 저장에서 이어한다(저장 꼬임 방지)
+  setUpdateHost({
+    isPreGame: () => nav.top?.id === 'title' || nav.top?.id === 'species',
+    saveNow: () => { if (nav.top && !nav.top.locked) persist(); },
+  });
+  /** 이어 하지 못한 모험 안내 한 줄 (GDD 192장 1, C.311 — text-style: 한 줄·'~다'): 시한 초과·새 버전이면 실패로 정산했다, 첫 모험 튜토리얼은 처음부터, 손상은 기록만 */
+  const abandonNote = (r: { reason: AbandonReason; settled: boolean }): string => {
+    if (r.reason === 'corrupt') return r.settled ? '저장된 모험이 손상돼 실패로 끝났다.' : '저장된 모험이 손상돼 이어 가지 못했다.';
+    const why = r.reason === 'stale' ? `${BALANCE.provisional.expedition.resumeWindowMinutes}분 넘게 비워` : '새 버전이 나와';
+    return r.settled ? `${why} 모험이 실패로 끝났다.` : `${why} 첫 모험을 처음부터 다시 한다.`;
+  };
+  /** 이어 하지 못한 모험 알림 창 (GDD 193장 4, 코딩216 개선점 4: 옛 '지웠다' 글은 방 구석 한 줄뿐이라 눈에 안 띄었다) — 방 위에 [확인] 하나짜리 창(귀환 카드 C.170 과 같은 틀).
+   *  본문 = 안내 한 줄 + 정산했으면 전투·흡수·골드·타일 요약. 방 구석 한 줄(resumeNote)은 창을 닫은 뒤에도 남는다 */
+  const showAbandonCard = (r: { reason: AbandonReason; settled: boolean; exp: ExpeditionState | null }, faction: FactionConfig): void => {
+    const title = r.settled ? '모험 실패' : r.reason === 'corrupt' ? '모험 손상' : '첫 모험 다시';
+    const tail = r.settled && r.exp ? ` ${abortSummaryLine(r.exp, faction)}${summarize(r.exp).lost.length > 0 ? ` · 잃은 타일 ${summarize(r.exp).lost.length}장` : ''}` : '';
+    confirmDialog({ title, body: `${abandonNote(r)}${tail}`, yes: '확인', single: true, onYes: () => {} });
+  };
+  /** 이어 하지 못한 모험 안내 한 줄. 다음 원정을 시작하면 지운다 */
   let resumeNote = '';
   /** 꺼 둔 동안 배고파졌으면 방에 처음 들어갈 때 한 번 말한다 (GDD 24-1) */
   let hungryGreet = false;
@@ -248,9 +405,9 @@ export function startApp(host: HTMLElement): void {
   let recoverFedHook: (() => void) | null = null;
 
   /**
-   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 7장을 순서대로. 건너뛰기 없음.
+   * 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199 · 129-2 2, C.206 · 144장 4, C.223): 카드 4장(GDD 193장 8, C.304 — 옛 7장)을 순서대로. 건너뛰기 없음.
    * 카드는 눌러야 할 버튼을 가리키기만 하고, 사용자가 원래 조작으로 해야 [다음]이 켜진다(행동을 대신 해 주는 버튼 없음).
-   * 빈사 설명 → 가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (월드맵 물건 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 쉬기 설명 → 방 → 먹이 주기 → 끝 → '다음 할 일'.
+   * 빈사 설명·가방 열기(구급상자 지급) → 구급상자 [사용] → 방 → (월드맵 물건 → 월드맵 →) 온천 들어가기(80%, 튜토리얼 온천 10초 — GDD 145장 1) → 방 → 먹이 주기 → '다음 할 일'.
    * 껐다 켜면 세이브 값에서 이어 간다(recoverStep). 띄웠으면 true
    */
   function runRecover(faction: FactionConfig): boolean {
@@ -267,8 +424,8 @@ export function startApp(host: HTMLElement): void {
     const vars = {
       chestName: props.chest, spaName: wm.places.spa, worldMapName: wm.name, dyingPct: pct(BALANCE.provisional.nest.care.dying.hpFraction), spaToPct: pct(TR.spaTo),
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
-      idleHpPct: pct(HH.idlePerMinute), // 7/7 '회복 끝' 문구 — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
-      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // 5/7·7/7 '방' = 종족 이름 (GDD 176장 9)
+      idleHpPct: pct(HH.idlePerMinute), // 옛 7/7 '회복 끝' 문구용(193장 8 에서 카드 삭제) — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
+      foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // '방' = 종족 이름 (GDD 176장 9)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -288,10 +445,11 @@ export function startApp(host: HTMLElement): void {
     let soaked = false;
     let inSpa = false;
     const steps: Record<string, { act?: TutorialAct; show?: () => void; next?: (go: () => void) => void; skip?: () => boolean }> = {
-      dying: {},
-      'to-bag': {
+      // 빈사 설명 + 가방 열기를 한 카드로 (GDD 193장 8, C.304 — 옛 '빈사'·'치료' 2장)
+      dying: {
         show: () => { recoverGrantBag(s); persist(); openChestAtConsumables(); }, // 가방을 열면 소모품 칸부터
-        act: { selector: '.bha-prop--chest', done: () => nav.top?.id === 'chest' },
+        // 가방이 열리면 [다음] 없이 바로 다음 카드(가방 안 구급상자 옆 안내)로 — 가방 화면에 '열어 보자' 카드가 남아 목록을 덮지 않게 (GDD 182장 1)
+        act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' },
       },
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
@@ -310,21 +468,17 @@ export function startApp(host: HTMLElement): void {
           inSpa = true;
           return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);
         } },
-        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, 4/7 '온천' 카드 [다음] 에서 걸어 나가 방으로 — 5/7 '쉬기'('…로 돌아왔다') 카드는 방 위에 뜬다
+        // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, '온천' 카드 [다음] 에서 걸어 나가 방으로 (옛 '쉬기' 카드는 193장 8 에서 삭제)
         next: (go) => {
           const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
           if (!spaExitFx(leave)) leave();
         },
       },
-      // 나갈 때는 계단을 거꾸로 올라와 걸어 나간다 (GDD 132장 4) — 연출이 끝나고 방으로
-      'spa-rest': { next: (go) => {
-        const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
-        if (!spaExitFx(leave)) leave();
-      } },
       feed: {
         // 먹인 순간(방 onFed) 각본 값을 넣어, 방 막대가 약 1초에 걸쳐 그 값까지 차는 걸 보여 준다 (GDD 132장 3)
         show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; recoverFedHook = () => recoverFeedDone(s); persist(); onRoomRender(); },
-        // 먹는 연출(막대 차오름)이 끝나면 [다음] 없이 바로 결과 카드('회복 끝')로 — 먹은 뒤 '먹어 보자' 카드에 [다음]을 한 번 더 누르게 하지 않는다 (GDD 162장 2)
+        // 먹는 연출(막대 차오름)이 끝나면 [다음] 없이 바로 다음 안내('다음 할 일')로 — 먹은 뒤 '먹어 보자' 카드에 [다음]을 한 번 더 누르게 하지 않는다 (GDD 162장 2).
+        // 옛 결과 카드 '회복 끝'은 193장 8(C.304)에서 삭제 — '방에서 쉬어도 체력이 찬다'는 도움말 방 화면 요약으로
         act: { selector: `.bha-homedock__carebtn--feed, .bha-homedock__food[data-food="${TR.food}"]`, autoFinish: true, done: () => {
           if (s.nest.lastFedAt === fedAt) return false;
           if (recoverFedHook) recoverFeedDone(s); // 훅을 못 탔으면(다른 길로 먹임) 여기서
@@ -332,9 +486,9 @@ export function startApp(host: HTMLElement): void {
           persist();
           return true;
         } },
+        // 끝나면: 펼친 먹이 줄이 남아 있으면 닫는다 — 옛 '회복 끝' 카드가 하던 일 (GDD 162장 2)
+        next: (go) => { document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click(); go(); },
       },
-      // 결과 카드: 펼친 먹이 줄이 남아 있으면 닫는다 — 상태 칩(대상)을 가리고 같은 행동을 또 하게 두지 않게 (GDD 162장 2)
-      done: { show: () => document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click() },
     };
     /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
     const holdInput = (ms: number, then: () => void): void => {
@@ -414,7 +568,7 @@ export function startApp(host: HTMLElement): void {
       outsideName: props.outside, adventureName: wm.places.adventure, towerName: wm.places.tower, altarName: props.altar, bookName: props.book, chestName: props.chest, marketName: mk.name, worldName: wm.name, careNames: care,
     };
     const shown = (sc: TutorialScene) => sc.targets.some((t) => document.querySelector(t.slice(1)) !== null);
-    const scenes: TutorialScene[] = [{ id: 'intro', targets: [], ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)];
+    const scenes: TutorialScene[] = [{ id: 'intro', ...HOME_INTRO.intro }, ...HOME_INTRO.items.filter(shown)]; // 3장 (GDD 193장 8): 방·상태·체력 → 돌보기 → 첫 모험
     return { scenes, vars };
   }
 
@@ -577,6 +731,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -587,13 +742,20 @@ export function startApp(host: HTMLElement): void {
 
   // ── 시작 화면·슬롯 (Q-3) ──
   // C.178 (GDD 103장): 시작 화면·종족 고르기에서 연 설정은 공통만, 게임 안(방)에서 연 설정은 [공통]/[이 슬롯]. 저장 안 하고 뒤로면 설정 화면이 먼저 묻고 onBack
-  const settingsOpener = (inGame: boolean) => () =>
+  /** [이름·성별 바꾸기]에서 돌아올 때 설정을 기타 탭으로 다시 연다 (C.326) — 한 번 쓰고 비운다 */
+  let settingsReturnTab: 'etc' | null = null;
+  const settingsOpener = (inGame: boolean) => () => {
+    settingsReturnTab = null;
     open('settings', () => void settingsView(root, {
+      tab: settingsReturnTab ?? undefined,
       onHelp: () => openHelp(undefined, true),
       onBackup: inGame && !testOn ? () => open('backup', () => backupView(root, save, persist, { slot, onApplied: reloadSlot })) : undefined,
+      onIdentity: inGame && save ? editIdentity : undefined, // 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7)
       onBack: () => nav.pop(),
       commonOnly: !inGame,
+      cloud: cloudUi, // 로그인·클라우드 세이브 줄 (GDD 196장) — 처음 화면 설정에서도 (새 기기에서 가져오기)
     }));
+  };
 
   /** 슬롯 설정 (GDD 103장 5): 이 슬롯 세이브의 settings 를 설정 화면·실제 값에 건다. 슬롯을 열 때마다, 시작 화면이면 푼다 */
   function bindSlotSettings(): void {
@@ -606,16 +768,7 @@ export function startApp(host: HTMLElement): void {
         save.settings = s as Record<string, boolean | number> | null;
         persist();
       },
-      gender: {
-        read: () => save?.gender ?? DEFAULT_GENDER,
-        write: (g) => {
-          if (!save) return;
-          save.gender = g;
-          setActiveGender(g);
-          persist();
-        },
-        note: genderLookNote(getFaction(save.factionId).tierNames, getFaction(save.factionId).genderLookFromTier, getFaction(save.factionId).ascension),
-      },
+      identity: { read: () => ({ name: save?.name ?? null, gender: save?.gender ?? DEFAULT_GENDER }) },
     } : null);
     setActiveGender(save?.gender);
     applySettingsNow();
@@ -638,6 +791,7 @@ export function startApp(host: HTMLElement): void {
     renderRotateCard();
     armBackTrap();
     nav.reset({ id: 'title', render: () => { renderTitle(note); root.scrollTop = 0; } });
+    showCloudConflictIfIdle();
   }
 
   function renderTitle(note = ''): void {
@@ -722,10 +876,12 @@ export function startApp(host: HTMLElement): void {
   function renderSpecies(newSlot: number): void {
     applyTheme(helpFaction());
     speciesView(root, FACTIONS, {
-      onPick: (f) => {
+      // 종족 → 이름 → 성별 → 시작 (GDD 199장 6, C.326): 세이브는 성별까지 고른 뒤에 만든다 (도중에 뒤로 가면 슬롯은 그대로)
+      onPick: (f) => open('identity', identityFlow(f, 'new', { name: '', gender: null }, (name, gender) => {
         stashSlot(store, newSlot);
         slot = newSlot;
         save = testOn ? newTestSave(f.id) : newSaveData(f.id);
+        setIdentity(save, name, gender, 'new');
         if (!testOn) {
           applyStartLook(save, f, Math.random());
           queueGuide(save.help, 'birth'); // 새 세이브의 첫 방에서 탄생 연출 한 번 (GDD 74장)
@@ -733,15 +889,62 @@ export function startApp(host: HTMLElement): void {
         persist();
         bindSlotSettings();
         nestScreen();
-      },
+      }, () => nav.pop())),
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
         title: `${f.name} — 이 종족으로 시작`,
+        body: f.pickNote ? renderHelpText(f.pickNote, helpVars(f)) : undefined, // 종족 소개 2문장 (GDD 193장 10, 종족 설정 pickNote)
         yes: '시작', no: '아니오',
         onYes, onNo,
       }),
     });
+  }
+
+  /**
+   * 이름 정하기 → 성별 정하기 한 흐름 (GDD 199장 6~8, C.326): 화면 스택 한 칸 안에서 두 단계를 바꿔 그린다. 성별 단계의 뒤로(◀·Esc·[이전]) = 이름 단계.
+   * 이름 단계의 뒤로 = onCancel (없으면 뒤로 없음 — 옛 세이브). 돌려주는 함수 = 그 칸의 render
+   */
+  function identityFlow(f: FactionConfig, mode: IdentityMode, init: { name: string; gender: Gender | null }, onDone: (name: string, gender: Gender) => void, onCancel?: () => void): () => void {
+    let name = init.name;
+    let gender = init.gender;
+    let step: 'name' | 'gender' = 'name';
+    let unhook = () => {};
+    const draw = (): void => {
+      unhook();
+      if (step === 'name') {
+        nameScreen(root, f, { mode, initial: name, onNext: (n) => { name = n; step = 'gender'; draw(); }, onBack: onCancel });
+      } else {
+        genderScreen(root, f, {
+          mode, name, initial: gender, note: genderLookNote(f.tierNames, f.genderLookFromTier, f.ascension),
+          onDone: (g) => { gender = g; unhook(); onDone(name, g); },
+          onBack: () => { step = 'name'; draw(); },
+        });
+      }
+      const here = root.querySelector('.bha-ident');
+      unhook = registerCancelHook(() => {
+        if (!here?.isConnected) return 'gone';
+        if (step !== 'gender') return false;
+        step = 'name';
+        draw();
+        return true;
+      }, { button: true });
+    };
+    return draw;
+  }
+
+  /** 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7): 같은 두 화면, 끝나면 설정으로 */
+  function editIdentity(): void {
+    const s = save;
+    if (!s) return;
+    settingsReturnTab = 'etc';
+    open('identity', identityFlow(getFaction(s.factionId), 'edit', { name: s.name ?? '', gender: s.gender }, (name, gender) => {
+      setIdentity(s, name, gender, 'settings');
+      setActiveGender(s.gender);
+      persist();
+      nav.pop();
+      showToast({ eyebrow: '설정', title: '이름·성별을 바꿨다', meta: `${s.name} · ${GENDER_LABEL[s.gender]}` }, 0, 2400);
+    }, () => nav.pop()));
   }
 
   /** 슬롯을 열어 마지막으로 보던 화면으로 (GDD 19-3): 원정 중이었으면 원정 그 지점(전투 중이었으면 전투 직전), 아니면 방. 읽을 수 없으면 시작 화면에 알린다 */
@@ -781,9 +984,24 @@ export function startApp(host: HTMLElement): void {
       nav.reset({ id: 'expedition', locked: true, render: () => { resumeExpedition(active.exp); root.scrollTop = 0; } });
       return;
     }
-    // 손상·구버전 원정이면 readActiveExpedition 이 비웠다 → 방에서 안내 한 줄 (renderRoom 이 다시 확인)
+    // 이어 하지 못한 원정(시한 초과·새 버전·손상)은 readActiveExpedition 이 실패로 정산하고 비웠다 → 방에서 안내 한 줄 (GDD 192장 1, C.311)
+    if (active && active.reason !== 'none') resumeNote = abandonNote(active);
     persist();
-    nestScreen();
+    const toRoom = () => {
+      nestScreen();
+      if (active && active.reason !== 'none') showAbandonCard(active, getFaction(loaded.factionId));
+    };
+    // 옛 세이브(이름 없음): 방에 들어가기 전에 한 번 이름·성별 창 (GDD 199장 8) — 뒤로 없음. 원정을 이어 하는 중이면 다음에 방으로 들어올 때
+    if (needsIdentity(loaded)) {
+      nav.reset({ id: 'identity', locked: true, render: identityFlow(getFaction(loaded.factionId), 'old', { name: '', gender: loaded.gender }, (name, gender) => {
+        setIdentity(loaded, name, gender, 'old');
+        setActiveGender(loaded.gender);
+        persist();
+        toRoom();
+      }) });
+      return;
+    }
+    toRoom();
   }
 
   // ── 세로 전환 멈춤·가로 복귀 카운트다운 (Q-3): 전투·원정 중에 세로로 돌리면 멈추고, 가로로 돌아오면 3초 뒤 이어한다 ──
@@ -820,7 +1038,9 @@ export function startApp(host: HTMLElement): void {
       modal.append(el('h2', 'bha-modal__title', '일시정지'), text, actions);
       layer.append(modal);
       getOverlayHost().append(layer);
-      rotateCard = { layer, off: registerLayer(layer, () => rotateEvent('cancel')), text, actions };
+      const offLayer = registerLayer(layer, () => rotateEvent('cancel'));
+      const uncover = coverTutorials(layer); // 튜토리얼 카드·강조 틀은 이 멈춤 창 동안 숨는다 (GDD 194장 3)
+      rotateCard = { layer, off: () => { offLayer(); uncover(); }, text, actions };
     }
     const c = rotateCard;
     const resume = button({ label: rotate.phase === 'counting' ? '지금 계속' : '계속', variant: 'primary', onClick: () => rotateEvent('resume') });
@@ -840,12 +1060,14 @@ export function startApp(host: HTMLElement): void {
     confirmingTitle = true;
     signalHold('hold'); // 전투·원정은 확인창이 떠 있는 동안 멈춘다
     const inExpedition = activeExp !== null && activeExp.phase !== 'ended';
+    let uncover = (): void => undefined;
     confirmDialog({
       title: '처음 화면으로',
       body: inExpedition ? '모험은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
       yes: '예', no: '아니오', focusNo: true, // 기본 선택 = 아니오 (GDD 124장 1)
       onYes: () => {
         confirmingTitle = false;
+        uncover();
         signalHold('leave');
         if (activeExp && activeExp.phase !== 'ended' && activeExp.phase !== 'battle') saveProgress(activeExp); // 전투 직전 상태는 이미 저장돼 있다
         else persist();
@@ -853,9 +1075,12 @@ export function startApp(host: HTMLElement): void {
       },
       onNo: () => {
         confirmingTitle = false;
+        uncover();
         signalHold('release');
       },
     });
+    // 튜토리얼 카드·강조 틀은 이 확인 창 동안 숨고 입력 막기도 쉰다 — 창 버튼이 눌리게 (GDD 194장 3)
+    uncover = coverTutorials([...getOverlayHost().querySelectorAll('.bha-confirm')].pop() ?? null);
   }
 
   /** 브라우저 뒤로가기도 같은 취소로 받는다: 기록 한 칸을 더 쌓아 두고, 되돌아오면 취소 처리 후 다시 쌓는다. 시작 화면에서는 그대로 앱 밖으로 나가게 둔다 */
@@ -879,6 +1104,7 @@ export function startApp(host: HTMLElement): void {
     nav.reset({ id: 'room', home: true, render: () => { renderRoom(); root.scrollTop = 0; } });
     // 온천에 있던 채로 껐다 켰으면 온천 화면으로 (GDD 123장 4: 앱을 꺼도 온천 유지)
     if (save.nest.spa && !save.nest.dead) openSpa(getFaction(save.factionId), save, false);
+    showCloudConflictIfIdle();
   }
 
   /** 온천 (GDD 123장 4): enter = 방 물건을 눌러 들어감(못 들어가면 이유 알림), false = 이미 온천에 있는 세이브를 다시 염. 뒤로 = 나와서 방 */
@@ -993,8 +1219,9 @@ export function startApp(host: HTMLElement): void {
     showTitleToasts(s, faction, persist);
     const active = readActiveExpedition(s);
     if (!active.ok && active.reason !== 'none') {
-      persist(); // 손상·구버전 영역을 비운 것을 저장
-      resumeNote = active.reason === 'version' ? '저장된 모험이 이전 버전이라 이어할 수 없어 지웠다.' : '저장된 모험이 손상되어 이어할 수 없어 지웠다.';
+      persist(); // 실패 정산·비운 것을 저장 (GDD 192장 1, C.311)
+      resumeNote = abandonNote(active);
+      showAbandonCard(active, faction);
     }
     const props = roomOf(faction).props;
     setBgm('nest');
@@ -1083,13 +1310,13 @@ export function startApp(host: HTMLElement): void {
         nestScreen();
         showToast({ eyebrow: '부활', title: `${faction.tierNames[0]}(으)로 다시 시작한다`, meta: `노력치 −${Math.round(r.evLoss * 100)}% · 진화 초기화` }, 0, 4200);
       },
-      onBook: () => open('dex', () => bookView(root, faction, s)),
+      onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
       // 진급 시험 물건 (GDD 174장 2·3, C.257): 책장 아래. 해금 전이면 자물쇠·흐림 + 탑과 같은 토스트 안내
       onRank: () => open('rank', () => rankScreen(faction)),
       rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),
       onRankLocked: () => showToast({ eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' }, 0, 1800),
-      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
+      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
@@ -1238,6 +1465,17 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
+  /** 출발 체력이 문턱 아래면 확인 창 (GDD 193장 2, 자유 모험 [출발]과 같은 창 — planView). 빈사는 askDying 이 먼저 물었다 */
+  function askLowHp(s: SaveData, go: () => void): void {
+    const hp = departHpOf(s);
+    if (s.nest.collapsed || !lowDepartHp(hp)) return go();
+    confirmDialog({
+      title: '체력이 낮다',
+      body: `체력이 ${Math.round(hp * 100)}%다. 지면 이번에 얻은 것을 잃는다. 그래도 나간다.`,
+      yes: '출발', no: '그만', danger: true, onYes: go,
+    });
+  }
+
   /** 사망이면 원정·훈련·탑·쟁탈전을 막고 안내 띠 (GDD 102-3). 막았으면 true */
   function careBlocked(s: SaveData): boolean {
     const b = careBlock(s);
@@ -1299,6 +1537,9 @@ export function startApp(host: HTMLElement): void {
           tilesLocked: !tilesUnlocked(save!),
           // 덱 없음 (GDD 85장 11번): 가진 타일 전부에서 최대 n칸 + 배치 프리셋
           placeLimit: placementLimitOf(save!),
+          // 출발 체력 (GDD 193장 2): [출발] 띠 '체력 n%', 문턱 아래면 확인 창
+          hpFraction: departHpOf(save!),
+          hpNoWarn: save!.nest.collapsed, // 빈사는 askDying 이 이미 물었다
           presets: {
             list: () => tilePresetsFor(save!.tiles, faction.id),
             save: (cells, name, index) => {
@@ -1346,7 +1587,8 @@ export function startApp(host: HTMLElement): void {
         setBgm('expedition');
         storyView(root, faction, save!, {
           onTab: (id) => departTab(faction, id),
-          onPick: (chapterId, episodeId) => startStory(faction, chapterId, episodeId),
+          // 스토리도 자유 모험 [출발]과 같은 출발 체력 확인 창 (GDD 193장 2)
+          onPick: (chapterId, episodeId) => askLowHp(save!, () => startStory(faction, chapterId, episodeId)),
           onHelp: () => openHelp('expedition', false),
         });
         root.scrollTop = 0;
@@ -1384,6 +1626,21 @@ export function startApp(host: HTMLElement): void {
     return { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendBattleItem(sv, it.id); persist(); } };
   }
 
+  /** 전투 화면 소모품 옵션 (GDD 108장 3번 · 193장 6): 실은 소모품 + 칸이 비었을 때 [소모품]으로 고르기(고르면 칸에 넣고 저장, 이 전투에 싣는다) */
+  function battleItemOpts(sv: SaveData, st: CombatState): Pick<BattleViewOptions, 'battleItem' | 'pickBattleItem'> {
+    return {
+      battleItem: armBattleItem(sv, st),
+      pickBattleItem: {
+        options: () => ownedBattleItems(sv).map((id) => ({ id, label: `${consumableName(id)} ×${sv.shared.items[id] ?? 0} · ${battleItemBrief(id)}` })),
+        pick: (id) => {
+          if (!fillBattleSlot(sv, id)) return undefined;
+          persist();
+          return armBattleItem(sv, st);
+        },
+      },
+    };
+  }
+
   /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
   function towerBattle(faction: FactionConfig, f: TowerFloor, again = false): void {
     if (save && careBlocked(save)) return;
@@ -1406,8 +1663,9 @@ export function startApp(host: HTMLElement): void {
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));
     setBgm(f.bossId ? 'boss' : f.kind === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
-      battleItem: armBattleItem(s0, s),
+      ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -1580,8 +1838,9 @@ export function startApp(host: HTMLElement): void {
     // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
-      battleItem: save ? armBattleItem(save, s) : undefined,
+      ...(save ? battleItemOpts(save, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 모험' } } : {}),
@@ -1693,6 +1952,8 @@ export function startApp(host: HTMLElement): void {
     activeExp = null;
     let growth: GrowthInput | undefined;
     let afterResult: (() => void) | null = null;
+    /** 진화 연출이 끝난 뒤 띄울 알림 (GDD 193장 18: 칭호·펫·장비 알림이 연출 위에 겹쳤다) */
+    let afterEvolve: (() => void) | null = null;
     if (save) {
       const had = new Set(save.titles.map((t) => t.titleId));
       const fromTier = save.evolution.tierIndex;
@@ -1718,6 +1979,9 @@ export function startApp(host: HTMLElement): void {
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
+          const later = afterEvolve;
+          afterEvolve = null;
+          later?.();
         }, s.build.slots.length, extra), true);
       }
     }
@@ -1730,17 +1994,24 @@ export function startApp(host: HTMLElement): void {
         afterResult = null;
         next?.();
       }, growth);
-      if (save) showTitleToasts(save, faction, persist);
-      showPetNotes();
+      notices();
+    };
+    /** 칭호·펫·장비 알림: 진화가 걸렸으면 연출이 끝난 뒤 (GDD 193장 18), 아니면 바로 */
+    const notices = () => {
+      const show = () => {
+        if (save) showTitleToasts(save, faction, persist);
+        showPetNotes();
+      };
+      if (afterResult) afterEvolve = show;
+      else show();
     };
     // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 대신 방 위에 짧은 결과 카드 1장 [확인] (C.170, GDD 100장 #32). 진화가 걸렸으면 그 연출은 그대로
     if (exp.endReason === 'abort') {
       if (afterResult) holdRoomGuides = true;
       nestScreen();
       if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), yes: '확인', single: true, onYes: () => {} });
+      notices();
       afterResult?.();
-      if (save) showTitleToasts(save, faction, persist);
-      showPetNotes();
       return;
     }
     // 스토리 화를 깼으면 끝 대사 다음에 결과 (GDD 25-7)
@@ -1834,8 +2105,9 @@ export function startApp(host: HTMLElement): void {
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
-      battleItem: save ? armBattleItem(save, s) : undefined,
+      ...(save ? battleItemOpts(save, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       notice,
       tutorial: tutorialFor(),
@@ -1883,8 +2155,9 @@ export function startApp(host: HTMLElement): void {
     applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
-      battleItem: armBattleItem(s0, s),
+      ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
@@ -1918,8 +2191,9 @@ export function startApp(host: HTMLElement): void {
     applyCareToParams(params, battleCareOf(s0));
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });
     battleView(root, faction, s, {
-      battleItem: armBattleItem(s0, s),
+      ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${faction.ascension.name} · ${faction.ascension.foe}`,
       enter: true,
@@ -1929,11 +2203,18 @@ export function startApp(host: HTMLElement): void {
         settleLiberationRisk(s0, done);
         persist();
         const lines = res.won ? [...faction.ascension.completeText] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
-        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
+        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }, s0.evolution.formId); root.scrollTop = 0; } });
         showTitleToasts(s0, faction, persist);
       },
     });
   }
 
   titleScreen();
+  // 켠 직후 (GDD 199장 2·4, C.325): 막힌 채 다시 켰으면 막기 창, 로그인 안 된 채(한 번도 고르지 않음·온라인)면 처음 로그인 창
+  if (cloudUi) {
+    const blocked = readBlockedFlag();
+    if (blocked) closeBlocked = otherDeviceDialog(cloudUi, blocked);
+    // dev 서버(점검 스크립트 84개가 저장소를 비우고 처음 화면 버튼을 누른다)에서는 가짜 클라우드(`?cloudfake`)일 때만 — 배포 빌드에서는 늘
+    else if (needsLoginGate(store, navigator.onLine !== false) && (!import.meta.env.DEV || cloudFake)) showLoginGate();
+  }
 }

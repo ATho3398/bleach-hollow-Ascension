@@ -117,8 +117,10 @@ describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {
 describe('123장 3 방 발밑 체력 막대', () => {
   it('기존 체력 막대(meter player)·현재 / 최대 숫자·발 기준(--foot-y)', () => {
     const v = readFileSync('src/ui/roomView.ts', 'utf8');
-    expect(v).toContain("meter({ kind: 'player', label: '체력'");
-    expect(v).toContain('valueText: `${now} / ${max}`');
+    // C.303 (GDD 192장 2): v2 .bha-hp(C.284) → C.281 모양 그대로 = 기존 meter player, '현재 / 최대' 막대 안
+    // C.318 (GDD 197장 4): 막대는 공용 부품 statusBox.homeHpMeter (방·온천 같은 것)
+    expect(v).toContain('hpBox.replaceChildren(homeHpMeter(f, maxHp));');
+    expect(readFileSync('src/ui/bha/statusBox.ts', 'utf8')).toContain("return meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` });");
     expect(readFileSync('src/ui/bha/room.ts', 'utf8')).toContain("'--foot-y'");
     expect(readFileSync('src/ui/bha/room.css', 'utf8')).toContain('var(--foot-y');
   });
@@ -327,7 +329,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

@@ -1,151 +1,155 @@
-/* 상점 (GDD 25-9, C.60). 기존 토큰만 (꾸밈 견본 색은 --bha-cos-* 를 shopView 가 --sw 로 넘긴다) */
-.bha-shop .bha-lcdpage__col { gap: var(--bha-sp-2); }
-.bha-shop__wallet .bha-num { color: var(--bha-text-1); }
-.bha-shoprow {
-  display: flex; align-items: center; gap: var(--bha-sp-3);
-  padding: var(--bha-sp-2) var(--bha-sp-3);
-  background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md);
-}
-.bha-shoprow.is-locked { opacity: 0.78; }
-.bha-shoprow.is-worn { border-color: var(--bha-rare); box-shadow: inset 0 0 0 1px var(--bha-rare); }
-.bha-shoprow__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.bha-shoprow__name { display: flex; align-items: center; gap: var(--bha-sp-2); font-size: var(--bha-fs-sm); line-height: var(--bha-lh-tight); }
-.bha-shoprow__effect { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1.3; }
-.bha-shoprow__have { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
-.bha-shoprow.is-worn .bha-shoprow__have { color: var(--bha-rare); }
-.bha-shoprow__act { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: var(--bha-sp-1); text-align: right; }
-.bha-shoprow__price { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bha-shoprow__lock { font-size: var(--bha-fs-xs); color: var(--bha-warn); white-space: nowrap; }
-.bha-shoprow__swatch { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 1px var(--bha-line-2); }
-.bha-shoprow__swatch--aura { background: radial-gradient(closest-side, var(--sw), transparent); box-shadow: none; }
-.bha-shoprow__swatch--tint { background: linear-gradient(135deg, var(--bha-accent-hi), var(--bha-heal), var(--bha-guard)); filter: var(--sw-filter); }
-.bha-shoprow__swatch--trail { border-radius: var(--bha-r-xs); height: 8px; background: radial-gradient(closest-side, var(--sw) 70%, transparent) 0 50% / 6px 100% repeat-x; box-shadow: none; }
-.bha-shoprow__swatch--bar, .bha-shoprow__swatch--shell, .bha-shoprow__swatch--plate, .bha-shoprow__swatch--frame, .bha-shoprow__swatch--cut, .bha-shoprow__swatch--room { border-radius: var(--bha-r-xs); background: transparent; box-shadow: inset 0 0 0 3px var(--sw); }
-.bha-shoprow__swatch--shell { background: var(--sw); }
-.bha-shoprow__swatch--cut { height: 8px; width: 22px; }
-.bha-shoprow__swatch--talk { border-radius: var(--sw); background: var(--bha-text-3); box-shadow: none; }
-.bha-shopgroup { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
-.bha-shopgroup__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--bha-sp-2); }
-.bha-shopgroup__title { margin: 0; font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); }
+/* 상점·가방(보관함)·상세 창·걷기 가방 (GDD 25-9 C.60 → 86장 C.141 → 183장 리디자인 v2 화면 E, C.288).
+   v2 공용 클래스(.bha-tabs/.bha-tab · .bha-card · .bha-count · .bha-card-price · .bha-win-* · .bha-more)를 같이 달고, 여기서는 그 화면 배치만 정한다.
+   토큰만 (hex·glow·그라데이션 없음). 꾸밈 견본 색은 --bha-cos-* 를 shopView 가 --sw 로 넘긴다 */
 
-/* 흡수 화면 [다시 뽑기 (n)] */
+/* 흡수 화면 [다시 뽑기 (n)] (흡수 화면 몫, 자리만 여기) */
 .bha-absorb__reroll { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-2); }
 
-/* ═════ C.141 (GDD 86장): 상점·보관함 카드 UI — 카테고리 탭 · 큰 카드 격자(2줄) · 상세 창 ═════ */
+/* ═════ 탭 (v2 .bha-tabs 위) ═════ */
 .bha-shop--cards .bha-lcdpage__col--right, .bha-chest-page .bha-lcdpage__col--right[hidden] { display: none; }
 .bha-itembox { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-height: 0; flex: 1 1 auto; }
-.bha-itemtabs { flex: none; display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); } /* flex: none — 하위 탭 줄(overflow-x)이 카드 격자에 눌려 높이 0 이 되던 것 (GDD 100장 #54) */
-.bha-itemtab { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 32px; padding: 0 var(--bha-sp-4); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); color: var(--bha-text-2); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
-.bha-itemtab.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 22%, var(--bha-bg-2)); color: var(--bha-text-1); }
-/* 스킨 하위 탭 (C.153): 위 탭 아래 한 줄, 한 단 작게 */
-.bha-itemtabs--sub { flex-wrap: nowrap; overflow-x: auto; }
-.bha-itemtabs--sub .bha-itemtab { flex: none; min-height: 28px; padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); font-size: var(--bha-fs-xs); white-space: nowrap; }
-.bha-itemtabs--sub .bha-itemtab.is-on { background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); }
-.bha-itemtab__count { padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .4); font-size: var(--bha-fs-xs); font-variant-numeric: tabular-nums; }
-.bha-itemgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); grid-auto-rows: 118px; gap: var(--bha-sp-3); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding-bottom: var(--bha-sp-3); }
+.bha-itemtabs { flex: none; align-self: flex-start; max-width: 100%; overflow-x: auto; scrollbar-width: none; } /* flex: none — 하위 탭 줄이 카드 격자에 눌려 높이 0 이 되던 것 (GDD 100장 #54) */
+.bha-itemtab { flex: none; }
+.bha-itemtab .bha-icon { width: 16px; height: 16px; flex: none; }
+.bha-itemtab__count { margin-left: var(--bha-sp-1); }
+/* 하위 탭 줄 (스킨 종류 · 소모품 칸): 한 단 낮은 면 (S14 .ft) */
+.bha-itemtabs--sub { gap: var(--bha-sp-2); padding: 0; background: transparent; box-shadow: none; }
+.bha-itemtabs--sub .bha-itemtab { height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-4); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1); }
+.bha-itemtabs--sub .bha-itemtab.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent); }
+
+/* ═════ 카드 격자 4열 (PROMPT 6절 S04·S14) ═════ */
+.bha-itemgrid { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(118px, auto); gap: var(--bha-sp-4); overflow-y: auto; min-height: 0; flex: 1 1 auto; align-content: start; padding: var(--bha-sp-1) var(--bha-sp-1) var(--bha-sp-8); }
 .bha-itemgrid__empty { grid-column: 1 / -1; }
-.bha-itemcard { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); padding: var(--bha-sp-2) var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: linear-gradient(180deg, var(--bha-bg-3), var(--bha-bg-2)); color: var(--bha-text-1); text-align: center; min-width: 0; overflow: hidden; }
-.bha-itemcard.is-locked { opacity: .7; }
-.bha-itemcard.is-worn, .bha-itemcard.is-owned { border-color: var(--bha-rare); }
-.bha-itemcard__art { flex: 1 1 auto; display: grid; place-items: center; width: 100%; min-height: 0; }
-.bha-itemcard__name { font-size: var(--bha-fs-sm); line-height: 1.15; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bha-itemcard__detail { font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; max-width: 100%; }
-.bha-itemcard__badge { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: rgb(0 0 0 / .55); font-size: var(--bha-fs-xs); line-height: 20px; }
-.bha-itemcard__foot { margin-top: auto; padding: var(--bha-sp-1) var(--bha-sp-3); border-radius: var(--bha-r-sm); background: rgb(0 0 0 / .4); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); font-variant-numeric: tabular-nums; }
+/* 카드 = 그림 · 이름 · 한 줄 · 가격(아래 고정). 수치는 상세 창에서 (PROMPT 5절 6) */
+.bha-itemcard { align-items: center; justify-content: flex-start; gap: var(--bha-sp-1); padding: var(--bha-sp-5) var(--bha-sp-3) var(--bha-sp-3); text-align: center; min-width: 0; overflow: hidden; }
+.bha-itemcard.is-locked .bha-itemcard__art { opacity: .55; }
+.bha-itemcard.is-locked .bha-itemcard__name, .bha-itemcard.is-locked .bha-itemcard__foot { color: var(--bha-text-3); }
+.bha-itemcard.is-worn, .bha-itemcard.is-owned { box-shadow: 0 0 0 1px var(--bha-rare), inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
+.bha-itemcard__art { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); color: var(--bha-text-2); }
+/* 이름·한 줄은 말줄임 대신 2줄까지 (GDD 189장 폰 점검: 폰 LCD 596 폭·글자 1.15 에서 '…'·글자 위아래 잘림). 줄 높이 1.35 = 한글 글자 높이가 칸 안에. 칸 높이는 줄 수만큼(grid-auto-rows minmax) */
+.bha-itemcard__name { max-width: 100%; font-size: var(--bha-fs-sm); line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-itemcard__detail { max-width: 100%; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; }
+.bha-itemcard__badge { max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-itemcard__foot { margin-top: auto; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); white-space: nowrap; }
+.bha-itemcard__price { color: var(--bha-sp-hi); }
+.bha-itemcard__price .bha-icon { width: 16px; height: 16px; color: var(--bha-sp); }
 /* 카드 그림: 아이콘 · 스킨 그림 · 색 견본 */
 .bha-itemart { display: grid; place-items: center; }
-.bha-itemart .bha-icon { width: 36px; height: 36px; }
-.bha-itemart--img { max-width: 100%; max-height: 52px; width: auto; height: auto; image-rendering: pixelated; object-fit: contain; }
-.bha-itemart--swatch { width: 36px; height: 36px; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 2px var(--bha-line-2); }
-.bha-itemart--aura { background: radial-gradient(closest-side, var(--sw), transparent); box-shadow: none; }
-.bha-itemart--tint { background: linear-gradient(135deg, var(--bha-accent-hi), var(--bha-heal), var(--bha-guard)); filter: var(--sw-filter); }
-.bha-itemart--trail { height: 18px; border-radius: var(--bha-r-xs); background: radial-gradient(closest-side, var(--sw) 70%, transparent) 0 50% / 12px 100% repeat-x; box-shadow: none; }
+.bha-itemart .bha-icon { width: 30px; height: 30px; }
+.bha-itemart--img { max-width: 100%; max-height: 44px; width: auto; height: auto; image-rendering: pixelated; object-fit: contain; }
+.bha-itemart--swatch { width: 28px; height: 28px; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 2px var(--bha-line-2); }
+.bha-itemart--aura { opacity: .8; box-shadow: 0 0 0 3px var(--bha-bg-0), 0 0 0 5px var(--sw); }
+.bha-itemart--tint { background: var(--bha-accent-hi); filter: var(--sw-filter); }
+.bha-itemart--trail { height: 10px; border-radius: var(--bha-r-xs); background: transparent; border-top: 4px dotted var(--sw); border-bottom: 4px dotted var(--sw); box-shadow: none; }
 .bha-itemart--bar, .bha-itemart--shell, .bha-itemart--plate, .bha-itemart--frame, .bha-itemart--cut, .bha-itemart--room { border-radius: var(--bha-r-sm); }
-/* 상세 창: 왼쪽 그림·보유 수 / 오른쪽 이름·설명·수량·행동 */
-.bha-itemmodal { display: grid; grid-template-columns: minmax(150px, 38%) minmax(0, 1fr); gap: var(--bha-sp-5); width: min(640px, 96%); max-height: 94%; padding: var(--bha-sp-5); text-align: left; }
-.bha-itemmodal__left { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-3); }
-.bha-itemmodal__heading { margin: 0; align-self: stretch; font-size: var(--bha-fs-md); border-bottom: 1px solid var(--bha-line-1); padding-bottom: var(--bha-sp-2); }
-.bha-itemmodal__art { position: relative; display: grid; place-items: center; width: 100%; min-height: 110px; border-radius: var(--bha-r-md); background: var(--bha-bg-1); border: 1px solid var(--bha-line-1); padding: var(--bha-sp-3); }
-.bha-itemmodal__art .bha-icon { width: 64px; height: 64px; }
-.bha-itemmodal__art .bha-itemart--img { max-height: 120px; }
-.bha-itemmodal__art .bha-itemart--swatch { width: 64px; height: 64px; }
-.bha-itemmodal__tag { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-2); padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); line-height: 20px; }
-.bha-itemmodal__have { font-size: var(--bha-fs-sm); }
-.bha-itemmodal__right { position: relative; display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
-.bha-itemmodal__close { position: absolute; top: 0; right: 0; }
-.bha-itemmodal__name { margin: 0; padding-right: 40px; font-size: var(--bha-fs-lg); }
-.bha-itemmodal__desc { margin: 0; font-size: var(--bha-fs-sm); color: var(--bha-text-2); line-height: 1.4; }
-.bha-itemmodal__lock { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-warn); }
-.bha-itemmodal__qtyrow { display: flex; align-items: center; gap: var(--bha-sp-2); }
-.bha-itemmodal__qty { margin-right: auto; font-size: var(--bha-fs-sm); }
-.bha-itemmodal__acts { display: flex; flex-direction: column; gap: var(--bha-sp-2); margin-top: auto; }
+/* 넘치는 격자 바닥 '▼ 더 있음' (moreHint): 격자의 부모 칸 아래에 겹친다 */
+.bha-shop .bha-lcdpage__col, .bha-chest-page .bha-lcdpage__col, .bha-healbag .bha-modal, .bha-itembox { position: relative; }
+.bha-lcdpage__col > .bha-itemmore { bottom: var(--bha-sp-4); left: var(--bha-sp-4); right: var(--bha-sp-4); }
+
+/* ═════ 상점 머리: 제목 + 골드·영옥 칩(고정 폭 숫자) ═════ */
+.bha-shop .bha-lcdpage__col { gap: var(--bha-sp-4); }
+.bha-shop__wallet { display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-shop__wallet .bha-chip .bha-icon { width: 16px; height: 16px; }
+.bha-shop__wallet .bha-chip--gold .bha-icon { color: var(--bha-sp); }
+.bha-shop__wallet .bha-chip--jade .bha-icon { color: var(--bha-tint-violet); }
+.bha-shop__wallet .bha-num { color: var(--bha-text-1); }
+.bha-shop .bha-itemgrid { grid-auto-rows: minmax(122px, auto); }
+/* 떠돌이 상인 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
+.bha-shop[data-shop="wanderer"] .bha-itemgrid { grid-auto-rows: minmax(186px, auto); }
+.bha-shop[data-shop="wanderer"] .bha-itemcard { gap: var(--bha-sp-2); }
+.bha-shop[data-shop="wanderer"] .bha-itemcard__art { width: 64px; height: 64px; }
+.bha-shop[data-shop="wanderer"] .bha-itemcard__art .bha-icon { width: 36px; height: 36px; }
+.bha-itemcard__blurb { max-width: 100%; font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: var(--bha-lh-tight); word-break: keep-all; overflow-wrap: anywhere; }
+.bha-shop__note { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+
+/* ═════ 상세 창 (v2 창 틀: 머리 48 · 본문 고정 높이 · 아래 고정 줄) ═════ */
+.bha-itemmodal { position: relative; display: flex; flex-direction: column; gap: 0; width: min(440px, 96%); padding: 0; text-align: left; overflow: hidden; }
 /* GDD 173장 2: 상세 창 높이 고정 — 설명 길이·강화 뒤 다시 열림에도 행동 버튼은 늘 창 아래 같은 자리, 긴 설명은 그 안에서 스크롤 */
-.bha-itemmodal { height: 94%; }
-.bha-itemmodal__right { min-height: 0; }
-.bha-itemmodal__desc { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.bha-itemmodal { height: 300px; max-height: 100%; }
+.bha-itemmodal__headrow { padding-right: var(--bha-sp-2); }
+.bha-itemmodal__icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); color: var(--bha-text-2); overflow: hidden; }
+.bha-itemmodal__icon .bha-icon { width: 24px; height: 24px; }
+.bha-itemmodal__icon .bha-itemart--img { max-height: 34px; }
+.bha-itemmodal__icon .bha-itemart--swatch { width: 22px; height: 22px; }
+.bha-itemmodal__titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.bha-itemmodal__heading { font-size: var(--bha-fs-xs); color: var(--bha-text-3); line-height: 1.2; }
+.bha-itemmodal__name { margin: 0; font-size: var(--bha-fs-lg); line-height: 1.25; color: var(--bha-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-itemmodal__close { flex: none; }
+.bha-itemmodal__body { display: flex; gap: var(--bha-sp-5); }
+.bha-itemmodal__left { flex: none; width: 120px; display: flex; flex-direction: column; }
+.bha-itemmodal__art { position: relative; flex: 1 1 auto; display: grid; place-items: center; border-radius: var(--bha-r-sm); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); padding: var(--bha-sp-4); }
+.bha-itemmodal__art .bha-itemart--img { max-height: 120px; }
+.bha-itemmodal__tag { position: absolute; top: var(--bha-sp-2); left: var(--bha-sp-2); padding: 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-bg-3); color: var(--bha-text-1); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 20px; }
+.bha-itemmodal__right { position: relative; flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; min-height: 0; }
+.bha-itemmodal__descbox { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.bha-itemmodal__desc { margin: 0; font-size: var(--bha-fs-md); color: var(--bha-text-1); line-height: 1.45; white-space: pre-line; word-break: keep-all; }
+.bha-itemmodal__desc { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.bha-itemmodal__have { flex: none; font-size: var(--bha-fs-sm); color: var(--bha-text-2); }
+.bha-itemmodal__lock { flex: none; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-warn); }
+.bha-itemmodal__qtyrow { flex: none; display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-itemmodal__qty { margin-right: auto; font-size: var(--bha-fs-sm); }
+.bha-itemmodal__acts { flex-wrap: wrap; box-shadow: inset 0 1px 0 var(--bha-line-1); }
+.bha-itemmodal__acts > .bha-btn { flex: 1 1 120px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-itemmodal__acts > .bha-itemmodal__closebtn { flex: 0 0 88px; }
 
-/* C.146 (사용자 "i4"): 보관함 '스킨' 탭 안 꾸밈 종류 칩 */
-.bha-itemchips { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
-.bha-itemchip { display: inline-flex; align-items: center; gap: var(--bha-sp-2); min-height: 30px; padding: 0 var(--bha-sp-3); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-1); color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
-.bha-itemchip.is-on { border-color: var(--bha-accent); background: color-mix(in srgb, var(--bha-accent) 18%, var(--bha-bg-1)); color: var(--bha-text-1); }
-.bha-itemchip.is-zero { opacity: .55; }
-.bha-itemchip__count { font-variant-numeric: tabular-nums; color: var(--bha-text-3); }
-
-/* C.150 장비 등급 (GDD 91장 3번): 노말·레어·영웅·전설 — 이미 있는 토큰만 (노말 = 선, 레어 = 회복 파랑, 영웅 = 봉인 보라, 전설 = 희귀 금색) */
-.bha-itemcard.is-grade-rare, .bha-gearslot.is-grade-rare { border-color: var(--bha-heal); }
-.bha-itemcard.is-grade-epic, .bha-gearslot.is-grade-epic { border-color: var(--bha-seal); }
-.bha-itemcard.is-grade-legendary, .bha-gearslot.is-grade-legendary { border-color: var(--bha-rare); }
-.bha-itemcard.is-grade-rare.is-worn, .bha-itemcard.is-grade-epic.is-worn, .bha-itemcard.is-grade-legendary.is-worn { box-shadow: inset 0 0 0 1px var(--bha-rare); }
+/* ═════ C.150 장비 등급 (GDD 91장 3번): 노말·레어·영웅·전설 (노말 = 선, 레어 = 회복 파랑, 영웅 = 봉인 보라, 전설 = 희귀 금색) ═════ */
+.bha-itemcard.is-grade-rare { box-shadow: 0 0 0 1px var(--bha-heal), inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
+.bha-itemcard.is-grade-epic { box-shadow: 0 0 0 1px var(--bha-seal), inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
+.bha-itemcard.is-grade-legendary { box-shadow: 0 0 0 1px var(--bha-rare), inset 0 1px 0 var(--bha-hi), inset 0 -2px 0 var(--bha-lo); }
+.bha-itemcard.is-grade-rare.is-worn, .bha-itemcard.is-grade-epic.is-worn, .bha-itemcard.is-grade-legendary.is-worn { box-shadow: 0 0 0 2px var(--bha-rare), inset 0 1px 0 var(--bha-hi); }
 .is-grade-normal .bha-icon { color: var(--bha-text-2); }
 .is-grade-rare .bha-icon { color: var(--bha-heal); }
 .is-grade-epic .bha-icon { color: var(--bha-seal); }
 .is-grade-legendary .bha-icon { color: var(--bha-rare); }
-/* 상태 화면 장착 5칸 */
-.bha-gearslots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--bha-sp-2); }
-.bha-gearslot { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; padding: var(--bha-sp-2) var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); text-align: center; }
-.bha-gearslot.is-empty { border-style: dashed; color: var(--bha-text-3); }
-.bha-gearslot .bha-icon { width: 24px; height: 24px; }
-.bha-gearslot__slot { font-size: var(--bha-fs-xs); color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.bha-gearslot__name { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.15; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* 장비 화면 (GDD 108장, C.179): 왼쪽 착용 칸·외형·능력치 / 오른쪽 탭·바둑판·아래 줄 */
+/* ═════ 가방 (S14): 머리 탭 7개 · 장비 자리 6개 60×66 · 오른쪽 필터 + 4열 · 아래 고정 줄 ═════ */
+.bha-chest-page .bha-lcdpage__head .bha-itemtabs { gap: var(--bha-sp-1); padding: var(--bha-sp-1); }
+.bha-chest-page .bha-lcdpage__head .bha-itemtab { padding: 0 var(--bha-sp-3); }
+.bha-lcd .bha-app.bha-lcdpage.bha-equip-page { padding-bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); }
 .bha-equip-page .bha-lcdpage__col { display: flex; flex-direction: column; min-height: 0; }
-.bha-eqleft { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 0; }
-.bha-eqdoll { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; gap: var(--bha-sp-2); align-items: stretch; }
-.bha-eqcol { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
-.bha-eqslot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 62px; padding: var(--bha-sp-1); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); min-width: 0; }
-.bha-eqslot.is-empty { border-style: dashed; color: var(--bha-text-3); }
-.bha-eqslot.is-empty .bha-icon { opacity: .45; }
+.bha-eqleft { display: flex; flex-direction: column; gap: var(--bha-sp-3); min-height: 0; }
+.bha-eqdoll { display: grid; grid-template-columns: 60px minmax(0, 1fr) 60px; gap: var(--bha-sp-3); align-items: stretch; padding: var(--bha-sp-4); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1), inset 0 1px 0 var(--bha-hi); }
+.bha-eqcol { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
+/* 빈 칸 = 움푹한 면, 찬 칸 = 튀어나온 면 (S14). 등급 = 테두리 색 */
+.bha-eqslot { --g: var(--bha-line-2); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1); width: 60px; height: 66px; padding: var(--bha-sp-2) var(--bha-sp-1); box-sizing: border-box; border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--g), inset 0 1px 0 var(--bha-hi); color: var(--bha-text-1); min-width: 0; font: var(--bha-fw-bold) var(--bha-fs-xs)/1.1 var(--bha-font-body); }
+.bha-eqslot.is-empty { background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2), inset 0 2px 0 var(--bha-lo); color: var(--bha-text-3); }
+.bha-eqslot.is-empty .bha-icon { color: var(--bha-ph); }
 .bha-eqslot.is-dim { opacity: .5; }
-.bha-eqslot .bha-icon { width: 26px; height: 26px; }
-.bha-eqslot__name { font-size: var(--bha-fs-xs); color: var(--bha-text-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bha-eqslot__plus { position: absolute; top: 2px; right: 4px; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); }
-.bha-eqslot.is-grade-rare { border-color: var(--bha-heal); }
-.bha-eqslot.is-grade-epic { border-color: var(--bha-seal); }
-.bha-eqslot.is-grade-legendary { border-color: var(--bha-rare); }
-.bha-eqslot--battle:not(.is-empty) { border-color: var(--bha-heal); }
-.bha-eqfigure { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 0; border-radius: var(--bha-r-md); background: radial-gradient(ellipse at 50% 70%, var(--bha-bg-3), transparent 70%); }
-.bha-eqfigure__img { flex: 1 1 0; min-height: 0; width: 100%; max-height: 150px; object-fit: contain; image-rendering: pixelated; }
-.bha-eqfigure > .bha-icon { width: 64px; height: 64px; margin: auto; color: var(--bha-text-3); }
-.bha-eqfigure__who { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.2; }
+.bha-eqslot .bha-icon { width: 24px; height: 24px; flex: none; }
+.bha-eqslot__name { font-size: var(--bha-fs-xs); color: inherit; max-width: 100%; line-height: 1.15; text-align: center; word-break: keep-all; overflow-wrap: anywhere; } /* 2줄까지 ('칼자루 장식' 등 — GDD 189장 폰 점검). 아이콘 28→24 로 66 칸 안에 */
+.bha-eqslot__plus { position: absolute; top: 2px; right: 3px; font-family: var(--bha-font-num); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-regular); color: var(--bha-text-1); }
+.bha-eqslot.is-grade-rare { --g: var(--bha-heal); }
+.bha-eqslot.is-grade-epic { --g: var(--bha-seal); }
+.bha-eqslot.is-grade-legendary { --g: var(--bha-rare); }
+.bha-eqslot--battle:not(.is-empty) { --g: var(--bha-heal); }
+.bha-eqfigure { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: var(--bha-sp-1); min-width: 0; padding-bottom: var(--bha-sp-2); }
+.bha-eqfigure__img { flex: 1 1 0; min-height: 0; width: 100%; max-height: 140px; object-fit: contain; image-rendering: pixelated; }
+.bha-eqfigure > .bha-icon { width: 64px; height: 64px; margin: auto; color: var(--bha-ph); }
+.bha-eqfigure__who { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.2; max-width: 100%; }
+.bha-eqfigure__who b { font-size: var(--bha-fs-sm); max-width: 100%; word-break: keep-all; overflow-wrap: anywhere; } /* 이름 2줄 허용 (GDD 189장 엑셀 15) */
 .bha-eqfigure__who small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-eqstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--bha-sp-1) var(--bha-sp-2); padding: var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); }
-.bha-eqstat { display: flex; align-items: baseline; gap: var(--bha-sp-1); min-width: 0; white-space: nowrap; }
-.bha-eqstat small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-eqstat b { font-size: var(--bha-fs-sm); }
-.bha-eqstat em { font-style: normal; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
-.bha-eqstat__up { color: var(--bha-good); }
-.bha-eqstat__down { color: var(--bha-danger); }
-.bha-eqright { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 0; flex: 1 1 auto; }
-.bha-itemgrid--equip { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); grid-auto-rows: 84px; gap: var(--bha-sp-2); }
-.bha-itemgrid--equip .bha-itemcard { padding: var(--bha-sp-1); gap: 2px; }
-.bha-itemgrid--equip .bha-itemcard__name { font-size: var(--bha-fs-xs); line-height: 1.15; }
-.bha-itemgrid--equip .bha-itemcard__badge { font-size: var(--bha-fs-xs); }
-.bha-eqfoot { display: flex; align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
+.bha-eqright { display: flex; flex-direction: column; gap: var(--bha-sp-4); min-height: 0; flex: 1 1 auto; }
+/* 장비 분류 탭: 이름 위 · 개수 아래 (GDD 108장 4번), 글자 폭만큼 (코딩195 지적: '전투 소모품'·'칼자루 장식' 3px 넘침) */
+.bha-equip-page .bha-eqright .bha-itemtabs { align-self: stretch; flex-wrap: nowrap; gap: var(--bha-sp-1); }
+.bha-equip-page .bha-eqright .bha-itemtab { flex: 1 0 auto; flex-direction: column; justify-content: center; gap: 0; min-width: 36px; height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-2); font-size: var(--bha-fs-xs); line-height: 1.1; }
+.bha-equip-page .bha-eqright .bha-itemtab__count { margin-left: 0; }
+.bha-itemgrid--equip { grid-auto-rows: 84px; gap: var(--bha-sp-3); }
+.bha-itemgrid--equip .bha-itemcard { justify-content: center; padding: var(--bha-sp-3) var(--bha-sp-1) var(--bha-sp-2); gap: var(--bha-sp-1); }
+.bha-itemgrid--equip .bha-itemcard__art { width: 36px; height: 36px; background: transparent; box-shadow: none; }
+.bha-itemgrid--equip .bha-itemcard__name { font-size: var(--bha-fs-xs); }
+/* 아래 고정 줄 (v2 .bha-dock): 개수 · 등급순 · 자동 착용 · 일괄 판매(못 쓸 때 흐리게, 자리 유지) */
+.bha-eqfoot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--bha-dock-h); display: flex; align-items: center; gap: var(--bha-sp-4); padding: 0 var(--bha-gutter); box-sizing: border-box; background: var(--bha-bg-1); box-shadow: inset 0 1px 0 var(--bha-line-1), inset 0 2px 0 var(--bha-hi); z-index: 2; }
 .bha-eqfoot__count { margin-right: auto; }
+.bha-eqfoot .bha-btn { white-space: nowrap; }
+.bha-eqnote { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); text-align: center; }
 .bha-gearshortcut { align-items: center; gap: var(--bha-sp-2); flex-wrap: wrap; }
-/* 장비 화면 탭: 이름 위 · 개수 아래, 한 줄에 6개 (GDD 108장 4번 '탭 이름 아래 개수') */
-.bha-equip-page .bha-eqright .bha-itemtabs { flex-wrap: nowrap; gap: var(--bha-sp-1); }
-.bha-equip-page .bha-eqright .bha-itemtab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 0; min-height: 36px; padding: 2px var(--bha-sp-1); font-size: var(--bha-fs-xs); line-height: 1.15; white-space: nowrap; overflow: hidden; }
-.bha-equip-page .bha-eqfoot { flex-wrap: nowrap; }
-.bha-equip-page .bha-eqfoot .bha-btn { white-space: nowrap; }
+
+/* ═════ 걷기 가방 — 회복 물건 (GDD 144장 3): v2 창 모양 ═════ */
+.bha-healbag .bha-modal { width: min(560px, 96%); gap: var(--bha-sp-3); padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); background: var(--bha-bg-1); border: 0; box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), var(--bha-shadow-3); }
+.bha-healbag .bha-modal__title { font-family: var(--bha-font-body); font-size: var(--bha-fs-xl); text-align: left; }
+.bha-healbag .bha-itemgrid { flex: none; grid-auto-rows: minmax(118px, auto); overflow: visible; }
+.bha-healbag .bha-modal__actions { display: grid; gap: var(--bha-sp-4); margin: 0; padding: 0; grid-template-columns: 88px; justify-content: end; }
+/* 걷기 가방은 머리 띠 없는 판 모양 — 공용 v2 창(.bha-modal, C.296)의 머리 띠·본문 여백을 끈다 (모양 그대로) */
+.bha-healbag .bha-modal { overflow: auto; }
+.bha-healbag .bha-modal > * { margin: 0; }
+.bha-healbag .bha-modal__title { display: block; min-height: 0; padding: 0; background: none; box-shadow: none; text-wrap: balance; }

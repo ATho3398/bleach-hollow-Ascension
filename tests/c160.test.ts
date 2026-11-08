@@ -18,7 +18,7 @@ describe('C.160 위 한 줄은 적 이름·등급 칩·약점·시간·버튼만
   });
   it('칩·버튼은 줄지 않고 이름만 말줄임(최소 4글자, 전체 이름은 title)', () => {
     expect(css).toContain('.bha-root .bha-v2toprow .bha-chip,.bha-root .bha-v2toprow .bha-btn,.bha-root .bha-v2toprow .bha-v2time{flex:none}');
-    expect(css).toContain('.bha-root .bha-v2foename__text{flex:0 1 auto;min-width:4em}');
+    expect(css).toMatch(/\.bha-root \.bha-v2foename__text\{[^}]*flex:0 1 auto;min-width:4em/);
     expect(battle).toContain('foeTitle.title = enemyName');
   });
   it('가운데 칩 줄은 나와 적 머리 게이지 사이(필드 가운데 기준), 로그 창이 열리면 숨김', () => {
@@ -42,7 +42,7 @@ describe('C.160 덤: 방 말풍선', () => {
     expect(room).toContain("scene.classList.add('is-saying')");
     const rc = read('src/ui/bha/room.css');
     expect(rc).toContain('left: clamp(25%, var(--char-x, 50%), 75%);');
-    expect(rc).toContain('.is-saying > .bha-room__status, .is-saying > .bha-room__statusinfo { visibility: hidden; }');
+    expect(rc).toContain('.is-saying > .bha-room__chips { visibility: hidden; }'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 칩 줄(상태 칩 + ⓘ) 한 묶음
     expect(rc).not.toContain('left: 50%; top: 14%;');
   });
 });

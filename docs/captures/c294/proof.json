@@ -1,0 +1,36 @@
+{
+  "shots": [
+    "hollow-1-battle.png",
+    "hollow-2-sealed.png",
+    "shinigami-1-battle.png",
+    "shinigami-2-sealed.png"
+  ],
+  "label": {
+    "hollow-normal": {
+      "names": [
+        "블록"
+      ],
+      "aria": null
+    },
+    "hollow-sealed": {
+      "names": [
+        "봉인"
+      ],
+      "aria": null
+    },
+    "shinigami-normal": {
+      "names": [
+        "블록"
+      ],
+      "aria": null
+    },
+    "shinigami-sealed": {
+      "names": [
+        "봉인"
+      ],
+      "aria": null
+    }
+  },
+  "layout": {},
+  "errors": []
+}

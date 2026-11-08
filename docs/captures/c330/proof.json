@@ -1,0 +1,127 @@
+{
+  "shots": [
+    "pc-1-list.png",
+    "pc-2-elite.png",
+    "pc-3-boss.png",
+    "ph-1-list.png",
+    "ph-2-elite.png",
+    "ph-3-boss.png"
+  ],
+  "checks": {
+    "pc-list": {
+      "format": 64,
+      "rows": 51,
+      "unknown": 47,
+      "names": [
+        "짐승형 호로",
+        "???",
+        "???",
+        "???",
+        "부유형 호로",
+        "???"
+      ],
+      "caps": [
+        "일반 2/24",
+        "강적 1/24",
+        "보스 1/3"
+      ],
+      "sub": "발견 4 / 51",
+      "newDots": 1,
+      "active": "짐승형 호로",
+      "silhouetteImgs": 45,
+      "overflowX": false,
+      "head": 620
+    },
+    "pc-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "lines": [
+        "속성불불",
+        "잡은 수2마리",
+        "흡수포식 1 · 속성 포식 0 · 능력치 포식 1 · 놓아주기 0",
+        "처음 만난 곳모래 협곡"
+      ],
+      "newDotsAfter": 0,
+      "detailInside": true
+    },
+    "pc-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "lines": [
+        "속성흙흙",
+        "잡은 수1마리",
+        "흡수포식 1 · 속성 포식 0 · 능력치 포식 0 · 놓아주기 0",
+        "처음 만난 곳도전의 탑"
+      ]
+    },
+    "pc-device-up": "미발견",
+    "pc-saved": {
+      "fresh": null,
+      "kills": 2
+    },
+    "ph-list": {
+      "format": 64,
+      "rows": 51,
+      "unknown": 47,
+      "names": [
+        "짐승형 호로",
+        "???",
+        "???",
+        "???",
+        "부유형 호로",
+        "???"
+      ],
+      "caps": [
+        "일반 2/24",
+        "강적 1/24",
+        "보스 1/3"
+      ],
+      "sub": "발견 4 / 51",
+      "newDots": 1,
+      "active": "짐승형 호로",
+      "silhouetteImgs": 45,
+      "overflowX": false,
+      "head": 572
+    },
+    "ph-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "lines": [
+        "속성불불",
+        "잡은 수2마리",
+        "흡수정화 흡수 1 · 속성 흡수 0 · 능력치 흡수 1 · 놓아주기 0",
+        "처음 만난 곳카라쿠라 마을"
+      ],
+      "newDotsAfter": 0,
+      "detailInside": true
+    },
+    "ph-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "lines": [
+        "속성흙흙",
+        "잡은 수1마리",
+        "흡수정화 흡수 1 · 속성 흡수 0 · 능력치 흡수 0 · 놓아주기 0",
+        "처음 만난 곳도전의 탑"
+      ]
+    },
+    "ph-device-up": "미발견",
+    "ph-saved": {
+      "fresh": null,
+      "kills": 2
+    }
+  },
+  "errors": []
+}

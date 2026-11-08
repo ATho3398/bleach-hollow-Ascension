@@ -1,0 +1,185 @@
+[
+ {
+  "tag": "hollow-pc",
+  "kinds": {},
+  "facts": {
+   "prepGo": [
+    110,
+    322
+   ],
+   "descText": "웨코문도 외곽: 흰 모래 언덕이 끝없이 이어진다. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(호로) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    322
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": []
+ },
+ {
+  "tag": "hollow-ph",
+  "kinds": {},
+  "facts": {
+   "prepGo": [
+    110,
+    316
+   ],
+   "descText": "웨코문도 외곽: 흰 모래 언덕이 끝없이 이어진다. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(호로) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    316
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": []
+ },
+ {
+  "tag": "hollow-ph115",
+  "kinds": {
+   "세로로 꺾인 글자": 1
+  },
+  "facts": {
+   "prepGo": [
+    110,
+    316
+   ],
+   "descText": "웨코문도 외곽: 흰 모래 언덕이 끝없이 이어진다. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(호로) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    316
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": [
+   {
+    "shot": "6-lapend",
+    "kind": "세로로 꺾인 글자",
+    "key": "상급호로",
+    "detail": "b.bha-draft__name 2줄 · 줄 폭 최대 26px (글자 15px)"
+   }
+  ]
+ },
+ {
+  "tag": "shinigami-pc",
+  "kinds": {},
+  "facts": {
+   "prepGo": [
+    110,
+    322
+   ],
+   "descText": "루콘가 외곽: 소울 소사이어티 바깥의 마을. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(혼백) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    322
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": []
+ },
+ {
+  "tag": "shinigami-ph",
+  "kinds": {},
+  "facts": {
+   "prepGo": [
+    110,
+    316
+   ],
+   "descText": "루콘가 외곽: 소울 소사이어티 바깥의 마을. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(혼백) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    316
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": []
+ },
+ {
+  "tag": "shinigami-ph115",
+  "kinds": {},
+  "facts": {
+   "prepGo": [
+    110,
+    316
+   ],
+   "descText": "루콘가 외곽: 소울 소사이어티 바깥의 마을. 자주 나오는 속성 노멀·흙·물★1: 적은 1단계(혼백) 기준",
+   "hp": null,
+   "placeGo": [
+    110,
+    316
+   ],
+   "full": {
+    "dim": 0,
+    "can": 0,
+    "count": "10/10",
+    "note": "타일을 고른 뒤 빈 칸을 누르면 놓인다"
+   },
+   "confirm": null,
+   "lap": {
+    "hp": null,
+    "gain": null,
+    "mult": "다음 바퀴 보상 ×1.25 · 적 체력 ×1.12 · 공격 ×1.3 · 힐 6%"
+   }
+  },
+  "issues": []
+ }
+]

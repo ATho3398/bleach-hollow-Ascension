@@ -117,9 +117,9 @@ describe('121장 1·2·3 배치판', () => {
 
   it('바퀴 끝 창 길 줄 = 한 줄 가로 밀기, 칸 크기 고정', () => {
     const css = read('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-sheet \.bha-road, \.bha-lcd \.bha-plan \.bha-road \{ display: flex; overflow-x: auto;/);
-    expect(css).toMatch(/\.bha-sheet \.bha-road__cell, \.bha-lcd \.bha-plan \.bha-road__cell \{ flex: 0 0 60px; min-height: 0; height: 80px;/); // C.202 (GDD 128장 9): 72×48 → 세로 카드꼴 60×80
-    expect(css).toMatch(/\.bha-sheet \.bha-road__wrap \{ flex-shrink: 0; \}/);
+    // 리디자인 v2 (GDD 183장 S12): 바퀴 끝 창 길 = 창 폭 한 줄 12칸, 칸 높이 고정 40 (가로 밀기 없이 다 보임)
+    expect(css).toMatch(/\.bha-road \{ display: flex; gap: 4px;/);
+    expect(read('src/ui/bha/walk-scene.css')).toContain('.bha-nestsheet__body .bha-road__cell { height: 40px; }');
   });
 });
 

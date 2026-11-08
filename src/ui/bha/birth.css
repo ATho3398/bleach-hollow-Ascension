@@ -8,8 +8,9 @@
 .bha-birth__stage { position: absolute; left: 50%; top: 42%; width: 0; height: 0; }
 .bha-birth__orb {
   position: absolute; left: -28px; top: -28px; width: 56px; height: 56px; border-radius: var(--bha-r-pill); opacity: 0;
-  background: radial-gradient(circle, var(--birth-orb) 0%, var(--birth-orb) 28%, var(--birth-glow) 58%, transparent 74%);
-  box-shadow: 0 0 22px 6px var(--birth-glow), 0 0 60px 14px var(--birth-glow);
+  /* v2 (GDD 183장): 번지는 빛·그라데이션 대신 단색 구슬 + 2겹 테두리 */
+  background: var(--birth-orb);
+  box-shadow: 0 0 0 4px var(--birth-glow), 0 0 0 8px color-mix(in srgb, var(--birth-glow) 45%, transparent);
 }
 .bha-birth__chain { position: absolute; left: 0; top: 28px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); }
 .bha-birth__link {
@@ -18,21 +19,21 @@
 }
 .bha-birth__link.is-turn { width: 8px; }
 .bha-birth__embers { position: absolute; left: 0; top: 28px; width: 0; height: 0; }
-.bha-birth__ember { position: absolute; width: 5px; height: 5px; border-radius: var(--bha-r-pill); background: var(--birth-ember); box-shadow: 0 0 8px 2px var(--birth-ember); opacity: 0; }
+.bha-birth__ember { position: absolute; width: 5px; height: 5px; border-radius: var(--bha-r-pill); background: var(--birth-ember); opacity: 0; }
 .bha-birth__flash { position: absolute; inset: 0; background: var(--birth-flash); opacity: 0; pointer-events: none; }
 /* 검은 불꽃: 영혼 자리에서 번지는 어둠 + 아래에서 솟는 불꽃 */
 .bha-birth__burst {
-  position: absolute; left: 50%; top: 42%; width: 340%; aspect-ratio: 1; margin: 0; opacity: 0; border-radius: var(--bha-r-pill);
-  transform-origin: center; translate: -50% -50%;
-  background: radial-gradient(circle, var(--birth-flame) 0%, var(--birth-flame) 62%, var(--birth-flameEdge) 70%, transparent 74%);
+  position: absolute; left: 50%; top: 42%; width: 252%; aspect-ratio: 1; margin: 0; opacity: 0; border-radius: var(--bha-r-pill);
+  transform-origin: center; translate: -50% -50%; box-sizing: border-box;
+  background: var(--birth-flame); border: 48px solid var(--birth-flameEdge); /* v2: 그라데이션 대신 단색 + 가장자리 띠 */
 }
 .bha-birth__flames { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; pointer-events: none; }
 /* 검은 불꽃이 어두운 바탕에 묻히지 않게, 아래에서 올라오는 붉은 열기를 뒤에 깐다 */
-.bha-birth__flames::before { content: ""; position: absolute; inset: 0; opacity: var(--flames-glow, 0); background: linear-gradient(to top, color-mix(in srgb, var(--birth-flameEdge) 60%, transparent), transparent 75%); transition: opacity 500ms ease-out; }
+.bha-birth__flames::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 45%; opacity: var(--flames-glow, 0); background: color-mix(in srgb, var(--birth-flameEdge) 40%, transparent); transition: opacity 500ms ease-out; } /* v2: 단색 한 겹 */
 .bha-birth__flame {
   position: absolute; bottom: 0; width: 22%; height: var(--flame-h, 50%); margin-left: -11%; opacity: 0; transform-origin: 50% 100%;
   clip-path: polygon(50% 0%, 63% 20%, 80% 42%, 93% 70%, 100% 100%, 0% 100%, 7% 70%, 20% 42%, 37% 20%);
-  background: linear-gradient(to top, var(--birth-flame) 0%, var(--birth-flame) 72%, var(--birth-flameEdge) 100%);
+  background: var(--birth-flame); box-shadow: inset 0 14px 0 var(--birth-flameEdge); /* v2: 그라데이션 대신 끝만 다른 색 */
 }
 .bha-birth__hint {
   position: absolute; left: 0; right: 0; bottom: var(--bha-sp-5); text-align: center;

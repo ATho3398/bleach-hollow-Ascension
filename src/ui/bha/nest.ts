@@ -195,19 +195,22 @@ export function showToast(o: { eyebrow: string; title: string; meta?: string; ce
     else st.queue.push(show);
   };
   // 설정 화면이 열려 있는 동안은 알림을 미뤘다가 닫히면 띄운다 (GDD 159장 17: 보상·도감 알림이 설정 머리줄을 덮었다)
-  if (settingsOpen()) deferUntilSettingsClosed(start);
+  // 진화 연출 중에도 미룬다 (GDD 193장 18: '새 펫' 알림이 연출을 가렸다) — 끝나면 부른 순서대로
+  if (toastBlocked()) deferUntilSettingsClosed(start);
   else start();
   return toast;
 }
 
 const settingsOpen = (): boolean => typeof document !== 'undefined' && document.querySelector('[data-screen="settings"]') !== null;
+/** 알림을 미루는 화면: 설정 · 진화 연출(.bha-evolve, 결과 칸까지) */
+const toastBlocked = (): boolean => settingsOpen() || (typeof document !== 'undefined' && document.querySelector('.bha-evolve') !== null);
 const deferred: (() => void)[] = [];
 let deferTimer: ReturnType<typeof setInterval> | null = null;
 function deferUntilSettingsClosed(run: () => void): void {
   deferred.push(run);
   if (deferTimer !== null) return;
   deferTimer = setInterval(() => {
-    if (settingsOpen()) return;
+    if (toastBlocked()) return;
     clearInterval(deferTimer!);
     deferTimer = null;
     for (const r of deferred.splice(0)) r();

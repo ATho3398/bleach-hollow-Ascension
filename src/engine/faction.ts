@@ -37,6 +37,59 @@ export interface FamilySkillConfig {
   bonus?: { kind: 'stagger'; value: number };
 }
 
+/** 계열 블록의 도트 이펙트 (이펙트 배치 도구에서 사용자가 확정한 값, scripts/pixelfx/tool). 표시만 — 피해·규칙은 엔진 그대로.
+ *  시트 = public/fx/<fx 의 / → -><-속성 id (color element 일 때)> */
+export interface PixelFxLayer {
+  /** pixelfx 이펙트 id (분류/이름, 직접 만든 것은 custom/…) */
+  fx: string;
+  /** element = 블록 속성 8색, original = 원래 색 */
+  color: 'element' | 'original';
+  /** target = 맞는 몸 가운데, attacker = 치는 몸 가운데 */
+  anchor: 'target' | 'attacker';
+  /** 나오는 타격 (0부터) */
+  on: number[];
+  delay: number;
+  dx: number;
+  dy: number;
+  scale: number;
+  angle: number;
+  rate: number;
+  altFlip: boolean;
+  /** fly = 치는 쪽에서 맞는 쪽까지 날아감(travel ms, arc 곡선, 도착 tx·ty, 사라지는 곳 = 도착 + ex·ey, face = 방향 돌림) */
+  move: 'stay' | 'fly';
+  travel: number;
+  arc: number;
+  tx: number;
+  ty: number;
+  ex: number;
+  ey: number;
+  face: boolean;
+  /** arrive = 이 블록 첫 투사체가 (같은 타격에) 도착할 때 시작 */
+  sync: 'hit' | 'arrive';
+  /** 겹침 순서 1~5 (클수록 앞) */
+  z: number;
+  /** 타격마다 따로 바꾼 값 (타격 번호 → 바꾼 칸) */
+  perHit?: Record<string, Partial<Pick<PixelFxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate' | 'z' | 'travel' | 'arc' | 'tx' | 'ty' | 'ex' | 'ey'>>>;
+}
+/** 치는 쪽 연결 동작: chain 차례로(동작 id = 종이인형 motions.json / 프레임 그림 동작, rate = 빠르기), 첫 동작은 첫 타격 기준 bodyAt ms 에 시작, bodyFromHit = 타격 프레임부터 */
+export interface PixelFxBody {
+  chain: { id: string; rate: number }[];
+  bodyAt: number;
+  bodyFromHit: boolean;
+}
+/** 한 블록(체인 단계) 공격: 타격 수·사이 간격·시전 속도, 이펙트들, 몸동작(성별마다: male·female = 종이인형, frames = 프레임 그림 캐릭터. 빈 chain = 옛 계열 몸동작) */
+export interface PixelFxStage {
+  hits: number;
+  gaps: number[];
+  speed: number;
+  layers: PixelFxLayer[];
+  bodies: { male?: PixelFxBody; female?: PixelFxBody; frames?: PixelFxBody };
+}
+export interface FamilyPixelFx {
+  /** 1·2·3블록 */
+  stages: PixelFxStage[];
+}
+
 /** 공격 계열 (GDD 17-3): 호로 조·교·탄 / 사신 참·권·귀. 특성의 family 가 이 id 를 가리킨다 */
 export interface FamilyConfig {
   id: string;
@@ -48,6 +101,8 @@ export interface FamilyConfig {
   fx: AttackFxKind;
   /** 캐릭터 몸동작 (GDD 118장 2): 사신 권=strike·참=slash·귀=cast. 없으면 특수 동작 그대로(호로) */
   motion?: FamilyMotionKind;
+  /** 블록 도트 이펙트·연결 동작 (이펙트 배치 도구 확정 값). 없으면 옛 연출(SVG 자국·계열 몸동작) */
+  pixelFx?: FamilyPixelFx;
   /** 공격 분류 (GDD 20-1·118장 2): 물리(조·권) / 특수(탄·귀) / 혼합(교·참). 피해 계산에 쓰는 능력치를 정한다 */
   category: AttackCategory;
   /** 1·2·3단계 기술 */
@@ -101,6 +156,11 @@ export interface LiberationConfig {
   cutin: string;
   /** 풀릴 때 로그 한 줄 (리스크 상승) */
   endText: string;
+  /** 진화체 해방 이름 칸 (GDD 198장): 고유 해방(깬 뒤)에 쓰는 진화체 release 의 칸('name' = 레스렉시온 이름, 'final' = 만해 이름).
+   *  지금 진화체에 이 칸이 없으면 깨도 고유 해방이 없다(사신 둔도 — base 그대로). 없으면 진화체와 상관없이 고유 해방 */
+  formKey?: 'name' | 'final';
+  /** 고유 해방 컷인 틀 (GDD 198장): {name}·{command}·{final} 을 진화체 release 값으로 채운다. 채울 값이 없으면 cutin */
+  formCutin?: string;
 }
 
 /** 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 4단계부터 수련장에서 도전(지금은 보스전 임시). 깨면 레스렉시온/만해 해금.
@@ -115,6 +175,8 @@ export interface AscensionConfig {
   completeText: [string, string];
   lookChange: boolean;
   artTier?: number;
+  /** 깬 뒤 진화체 표시 이름을 진화체 release 의 이 칸으로 (GDD 198장: 호로 = 'name' 레스렉시온 이름). 없으면 표시 이름 그대로 */
+  formNameKey?: 'name' | 'final';
 }
 
 /** 환생 (GDD 22-1·22-7): 버튼·확인·연출 문구 */
@@ -309,9 +371,9 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   floor: { aspect: 2, poly: [[0, 0.16], [1, 0.16], [1, 1], [0, 1]] },
   layout: {
     // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
-    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
-    home: { x: 47.4, y: 65.6, scale: 1.61 }, market: { x: 60.2, y: 38, scale: 0.98 }, training: { x: 58.3, y: 93.2, scale: 0.9 },
-    adventure: { x: 22.9, y: 85.9, scale: 0.9 }, tower: { x: 11.7, y: 50.1, scale: 1.28 }, spa: { x: 88.7, y: 52.2, scale: 1.29 },
+    // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈 → C.278 배경과 함께 전부, 2026-11-04 03:31). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
+    home: { x: 47.2, y: 65.4, scale: 1.61 }, market: { x: 65, y: 39.6, scale: 0.98 }, training: { x: 67.6, y: 86.4, scale: 0.86 },
+    adventure: { x: 19.1, y: 89.7, scale: 0.9 }, tower: { x: 22.1, y: 44.3, scale: 1.28 }, spa: { x: 85.6, y: 58.9, scale: 1.41 },
   },
   characterFoot: { x: 32, y: 90 },
   adventureName: '모험',
@@ -449,8 +511,10 @@ export interface FactionConfig {
   nestActionsShort?: Partial<Record<NestAction, string>>;
   /** 먹이 묶음 이름 (GDD 176장 3): 결과 '얻은 …'·가진 것 '…:' 등 화면 글자 — 호로 '먹이' / 사신 '식량' */
   foodGroupName: string;
-  /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6). 없으면 생략 */
+  /** 종족 선택 카드 아래 한 줄 소개 (GDD 100장 #6 → 129장 2 에서 뺐다가 193장 10 C.304 에서 다시 보임). 없으면 생략 */
   tagline?: string;
+  /** 종족 고르기 확인 창 본문 (GDD 193장 10, C.304): 이 종족이 무엇을 하는지 2문장. 자리표시자 = 도움말 helpVars. 없으면 본문 없음 */
+  pickNote?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
   /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */
@@ -582,6 +646,15 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isString(x.abbr) || Array.from(x.abbr).length !== 1) errors.push(`families[${i}].abbr: 한 글자`);
       if (!(ATTACK_FX_KINDS as readonly unknown[]).includes(x.fx)) errors.push(`families[${i}].fx: ${ATTACK_FX_KINDS.join(' | ')}`);
       if (x.motion !== undefined && !(FAMILY_MOTION_KINDS as readonly unknown[]).includes(x.motion)) errors.push(`families[${i}].motion: ${FAMILY_MOTION_KINDS.join(' | ')}`);
+      if (x.pixelFx !== undefined) {
+        const st = ((x.pixelFx ?? {}) as Record<string, unknown>).stages;
+        const ok = Array.isArray(st) && st.length === FAMILY_TIERS && st.every((g) => {
+          const y = (g ?? {}) as Record<string, unknown>;
+          return typeof y.hits === 'number' && y.hits >= 1 && Array.isArray(y.gaps) && typeof y.speed === 'number' && y.speed > 0 && Array.isArray(y.layers) && typeof y.bodies === 'object' && y.bodies !== null
+            && (y.layers as Record<string, unknown>[]).every((l) => typeof l.fx === 'string' && /^[a-z0-9-]+\/[a-z0-9-]+$/.test(l.fx) && Array.isArray(l.on) && typeof l.scale === 'number' && l.scale > 0);
+        });
+        if (!ok) errors.push(`families[${i}].pixelFx: { stages: [블록 ${FAMILY_TIERS}개 { hits, gaps, speed>0, layers[{ fx: 분류/이름, on, scale>0, … }], bodies } ] }`);
+      }
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
       if (!Array.isArray(tiers) || tiers.length !== FAMILY_TIERS) errors.push(`families[${i}].tiers: 기술 ${FAMILY_TIERS}개`);
@@ -702,6 +775,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (asc.artTier !== undefined && !(Number.isInteger(asc.artTier) && (asc.artTier as number) >= 1)) errors.push('ascension.artTier: 1 이상 정수');
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  const RELEASE_KEYS = ['name', 'final'];
+  if (lb.formKey !== undefined && !RELEASE_KEYS.includes(lb.formKey as string)) errors.push('liberation.formKey: name | final');
+  if (lb.formCutin !== undefined && !isString(lb.formCutin)) errors.push('liberation.formCutin: 비어 있지 않은 문자열이어야 한다');
+  if (asc.formNameKey !== undefined && !RELEASE_KEYS.includes(asc.formNameKey as string)) errors.push('ascension.formNameKey: name | final');
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tr = (r.training ?? {}) as Record<string, unknown>;

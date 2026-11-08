@@ -5,8 +5,1818 @@
  },
  "effects": [
   {
+   "name": "arcane-arcane-missiles-blood",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-earth",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-fire",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-kyo",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-normal",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-poison",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-thunder",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "arcane-arcane-missiles-water",
+   "id": "arcane/arcane-missiles",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-blood",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-earth",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-fire",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-kyo",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-normal",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-poison",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-thunder",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-bite-water",
+   "id": "custom/bite",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-bleed-burst",
+   "id": "custom/bleed-burst"
+  },
+  {
+   "name": "custom-byakurai",
+   "id": "custom/byakurai"
+  },
+  {
+   "name": "custom-cero-blood",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-earth",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-fire",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-kyo",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-normal",
+   "id": "custom/cero",
+   "options": {
+    "edge": "#0c0c10",
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-blood",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-earth",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-fire",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-kyo",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-normal",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "edge": "#0c0c10",
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-poison",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-thunder",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-oscuras-water",
+   "id": "custom/cero-oscuras",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-poison",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-thunder",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-cero-water",
+   "id": "custom/cero",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-blood",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-earth",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-fire",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-kyo",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-normal",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-poison",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-thunder",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-fist-water",
+   "id": "custom/fist",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-blood",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-earth",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-fire",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-kyo",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-normal",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-poison",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-thunder",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-ki-gather-water",
+   "id": "custom/ki-gather",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-blood",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-earth",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-fire",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-kyo",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-normal",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-poison",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-thunder",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-punch-water",
+   "id": "custom/punch",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-blood",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-earth",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-fire",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-kyo",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-normal",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-poison",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-thunder",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "custom-uppercut-water",
+   "id": "custom/uppercut",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
    "name": "hit-spark",
    "id": "impacts/hit-spark"
+  },
+  {
+   "name": "impacts-crit-hit-blood",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-earth",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-fire",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-kyo",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-normal",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-poison",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-thunder",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-crit-hit-water",
+   "id": "impacts/crit-hit",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-blood",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-earth",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-fire",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-kyo",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-normal",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-poison",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-thunder",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "impacts-hit-spark-water",
+   "id": "impacts/hit-spark",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-blood",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-earth",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-fire",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-kyo",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-normal",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-poison",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-thunder",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-claw-swipe-water",
+   "id": "melee/claw-swipe",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-blood",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-earth",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-fire",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-kyo",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-normal",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-poison",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-thunder",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-spear-sweep-water",
+   "id": "melee/spear-sweep",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-blood",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-earth",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-fire",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-kyo",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-normal",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-poison",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-thunder",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-sword-slash-water",
+   "id": "melee/sword-slash",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-blood",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-earth",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-fire",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-kyo",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-normal",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-poison",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-thunder",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "melee-thrust-water",
+   "id": "melee/thrust",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-blood",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#3a0a14",
+     "#6a101c",
+     "#a01824",
+     "#d42a30",
+     "#ff5a50",
+     "#ff9a8a",
+     "#ffe0da"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-earth",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#2a1e14",
+     "#47321e",
+     "#69492a",
+     "#8e6638",
+     "#b88a52",
+     "#dcb47c",
+     "#f6e6c4"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-fire",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#4a1118",
+     "#8c1d1c",
+     "#cc3a1a",
+     "#f2701f",
+     "#ffae35",
+     "#ffe27a",
+     "#fff8d6"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-kyo",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#2b1252",
+     "#481c88",
+     "#6b2cc0",
+     "#9a48ec",
+     "#c684ff",
+     "#ecc8ff",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-normal",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#3a3e48",
+     "#6a707e",
+     "#9aa0ae",
+     "#c4c8d2",
+     "#e2e6ee",
+     "#f4f6fa",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-poison",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#173a14",
+     "#265e18",
+     "#3f8a1e",
+     "#6cb82a",
+     "#a8e04a",
+     "#e0ff8a",
+     "#f6ffd8"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-thunder",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#5e3a0c",
+     "#a8680f",
+     "#e8a218",
+     "#ffd23c",
+     "#fff08a",
+     "#fffbd0",
+     "#ffffff"
+    ]
+   }
+  },
+  {
+   "name": "projectiles-bullet-tracer-water",
+   "id": "projectiles/bullet-tracer",
+   "options": {
+    "palette": [
+     "#0e2e5a",
+     "#14508c",
+     "#1c76bc",
+     "#36a2e0",
+     "#78ccf4",
+     "#c4ecff",
+     "#ffffff"
+    ]
+   }
   }
  ]
 }

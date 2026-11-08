@@ -1,0 +1,493 @@
+{
+  "shots": [
+    "pc-h-1-elite.png",
+    "pc-h-2-boss.png",
+    "ph-s-1-elite.png",
+    "ph-s-2-boss.png",
+    "ph115-1-elite.png",
+    "ph115-2-boss.png"
+  ],
+  "checks": {
+    "pc-h-toast": {
+      "trackNoticeInSave": null,
+      "toasts": [
+        "새 트랙 사신 트랙이 열렸다"
+      ],
+      "overlapsTitleBtn": false,
+      "pointerEvents": [
+        "none"
+      ]
+    },
+    "pc-h-dex": {
+      "title": "길리안 임시",
+      "chip": null,
+      "chipBesideTitle": null,
+      "bodyText": "정해진 걸음을 걸으면 진화종족값 체력 69 · 힘 66 · 지능 63 · 방어 62 · 정신력 59 · 속도 56본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)",
+      "dotLines": 5,
+      "pairs": 6,
+      "pairsSplit": 0,
+      "bodyLines": 4,
+      "inside": true
+    },
+    "pc-h-titles": {
+      "title": "에스파다 No.10",
+      "chip": "미해금",
+      "chipBesideTitle": true,
+      "bodyText": "조건은 임시다 임시 조건",
+      "dotLines": 0,
+      "pairs": 0,
+      "pairsSplit": 0,
+      "bodyLines": 1,
+      "inside": true
+    },
+    "pc-h-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "absorbs": [
+        "포식10",
+        "속성 포식0",
+        "능력치 포식1",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "12마리",
+          "lines": 1
+        },
+        {
+          "text": "모래 협곡",
+          "lines": 1
+        }
+      ]
+    },
+    "pc-h-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "absorbs": [
+        "포식1",
+        "속성 포식0",
+        "능력치 포식0",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "1마리",
+          "lines": 1
+        },
+        {
+          "text": "도전의 탑",
+          "lines": 1
+        }
+      ]
+    },
+    "pc-s-toast": {
+      "trackNoticeInSave": null,
+      "toasts": [
+        "새 트랙 호로 트랙이 열렸다"
+      ],
+      "overlapsTitleBtn": false,
+      "pointerEvents": [
+        "none"
+      ]
+    },
+    "pc-s-dex": {
+      "title": "영술원 학생 임시",
+      "chip": null,
+      "chipBesideTitle": null,
+      "bodyText": "정해진 걸음을 걸으면 진화종족값 체력 69 · 힘 66 · 지능 63 · 방어 62 · 정신력 59 · 속도 56본체는 그대로, 참백도 슬롯의 외형이 변한다",
+      "dotLines": 5,
+      "pairs": 6,
+      "pairsSplit": 0,
+      "bodyLines": 4,
+      "inside": true
+    },
+    "pc-s-titles": {
+      "title": "10석",
+      "chip": "미해금",
+      "chipBesideTitle": true,
+      "bodyText": "조건은 임시다 임시 조건",
+      "dotLines": 0,
+      "pairs": 0,
+      "pairsSplit": 0,
+      "bodyLines": 1,
+      "inside": true
+    },
+    "pc-s-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "absorbs": [
+        "정화 흡수10",
+        "속성 흡수0",
+        "능력치 흡수1",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "12마리",
+          "lines": 1
+        },
+        {
+          "text": "카라쿠라 마을",
+          "lines": 1
+        }
+      ]
+    },
+    "pc-s-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "absorbs": [
+        "정화 흡수1",
+        "속성 흡수0",
+        "능력치 흡수0",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "1마리",
+          "lines": 1
+        },
+        {
+          "text": "도전의 탑",
+          "lines": 1
+        }
+      ]
+    },
+    "ph-h-toast": {
+      "trackNoticeInSave": null,
+      "toasts": [
+        "새 트랙 사신 트랙이 열렸다"
+      ],
+      "overlapsTitleBtn": false,
+      "pointerEvents": [
+        "none"
+      ]
+    },
+    "ph-h-dex": {
+      "title": "길리안 임시",
+      "chip": null,
+      "chipBesideTitle": null,
+      "bodyText": "정해진 걸음을 걸으면 진화종족값 체력 69 · 힘 66 · 지능 63 · 방어 62 · 정신력 59 · 속도 56본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)",
+      "dotLines": 5,
+      "pairs": 6,
+      "pairsSplit": 0,
+      "bodyLines": 4,
+      "inside": true
+    },
+    "ph-h-titles": {
+      "title": "에스파다 No.10",
+      "chip": "미해금",
+      "chipBesideTitle": true,
+      "bodyText": "조건은 임시다 임시 조건",
+      "dotLines": 0,
+      "pairs": 0,
+      "pairsSplit": 0,
+      "bodyLines": 1,
+      "inside": true
+    },
+    "ph-h-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "absorbs": [
+        "포식10",
+        "속성 포식0",
+        "능력치 포식1",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "12마리",
+          "lines": 1
+        },
+        {
+          "text": "모래 협곡",
+          "lines": 1
+        }
+      ]
+    },
+    "ph-h-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "absorbs": [
+        "포식1",
+        "속성 포식0",
+        "능력치 포식0",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": false,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "1마리",
+          "lines": 1
+        },
+        {
+          "text": "도전의 탑",
+          "lines": 1
+        }
+      ]
+    },
+    "ph-s-toast": {
+      "trackNoticeInSave": null,
+      "toasts": [
+        "새 트랙 호로 트랙이 열렸다"
+      ],
+      "overlapsTitleBtn": false,
+      "pointerEvents": [
+        "none"
+      ]
+    },
+    "ph-s-dex": {
+      "title": "영술원 학생 임시",
+      "chip": null,
+      "chipBesideTitle": null,
+      "bodyText": "정해진 걸음을 걸으면 진화종족값 체력 69 · 힘 66 · 지능 63 · 방어 62 · 정신력 59 · 속도 56본체는 그대로, 참백도 슬롯의 외형이 변한다",
+      "dotLines": 5,
+      "pairs": 6,
+      "pairsSplit": 0,
+      "bodyLines": 4,
+      "inside": true
+    },
+    "ph-s-titles": {
+      "title": "10석",
+      "chip": "미해금",
+      "chipBesideTitle": true,
+      "bodyText": "조건은 임시다 임시 조건",
+      "dotLines": 0,
+      "pairs": 0,
+      "pairsSplit": 0,
+      "bodyLines": 1,
+      "inside": true
+    },
+    "ph-s-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "absorbs": [
+        "정화 흡수10",
+        "속성 흡수0",
+        "능력치 흡수1",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": true,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "12마리",
+          "lines": 1
+        },
+        {
+          "text": "카라쿠라 마을",
+          "lines": 1
+        }
+      ]
+    },
+    "ph-s-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "absorbs": [
+        "정화 흡수1",
+        "속성 흡수0",
+        "능력치 흡수0",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": false,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "1마리",
+          "lines": 1
+        },
+        {
+          "text": "도전의 탑",
+          "lines": 1
+        }
+      ]
+    },
+    "ph115-toast": {
+      "trackNoticeInSave": null,
+      "toasts": [
+        "새 트랙 호로 트랙이 열렸다"
+      ],
+      "overlapsTitleBtn": false,
+      "pointerEvents": [
+        "none"
+      ]
+    },
+    "ph115-dex": {
+      "title": "영술원 학생 임시",
+      "chip": null,
+      "chipBesideTitle": null,
+      "bodyText": "정해진 걸음을 걸으면 진화종족값 체력 69 · 힘 66 · 지능 63 · 방어 62 · 정신력 59 · 속도 56본체는 그대로, 참백도 슬롯의 외형이 변한다",
+      "dotLines": 5,
+      "pairs": 6,
+      "pairsSplit": 0,
+      "bodyLines": 4,
+      "inside": true
+    },
+    "ph115-titles": {
+      "title": "10석",
+      "chip": "미해금",
+      "chipBesideTitle": true,
+      "bodyText": "조건은 임시다 임시 조건",
+      "dotLines": 0,
+      "pairs": 0,
+      "pairsSplit": 0,
+      "bodyLines": 1,
+      "inside": true
+    },
+    "ph115-elite": {
+      "title": "스모크 위도우",
+      "chips": [
+        "강적",
+        "아쥬커스"
+      ],
+      "absorbs": [
+        "정화 흡수10",
+        "속성 흡수0",
+        "능력치 흡수1",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": false,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "12마리",
+          "lines": 1
+        },
+        {
+          "text": "카라쿠라 마을",
+          "lines": 1
+        }
+      ]
+    },
+    "ph115-boss": {
+      "title": "아레나 보라스",
+      "chips": [
+        "보스",
+        "바스트로데"
+      ],
+      "absorbs": [
+        "정화 흡수1",
+        "속성 흡수0",
+        "능력치 흡수0",
+        "놓아주기0"
+      ],
+      "gridCols": 2,
+      "gridRows": 2,
+      "cellOneLine": true,
+      "numsRightAligned": true,
+      "cellsInside": true,
+      "chipsRightOfArt": true,
+      "chipsOneLine": true,
+      "chipsBesideTitle": false,
+      "chipsInside": true,
+      "values": [
+        {
+          "text": "1마리",
+          "lines": 1
+        },
+        {
+          "text": "도전의 탑",
+          "lines": 1
+        }
+      ]
+    }
+  },
+  "errors": []
+}

@@ -71,7 +71,7 @@ describe('스토리 2장·3장 데이터 (GDD 35-1~35-4)', () => {
       { speaker: '나', text: '협곡에 들어서자, 수많은 굶주림이 한꺼번에 울린다.' },
       { speaker: '늙은 호로', text: '여기선 무리가 곧 몸이다. 무리에 먹히지 마라.' },
     ]);
-    expect(h2[3]!.dialogue.start[1]).toEqual({ speaker: '협곡의 왕', text: '하나의 목소리로 무엇을 할 수 있지? 내 무리가 되어라.' });
+    expect(h2[3]!.dialogue.start[1]).toEqual({ speaker: '엠버 스론', text: '하나의 목소리로 무엇을 할 수 있지? 내 무리가 되어라.' });
     expect(chapterContent('hollow', 'ch3')!.episodes[3]!.dialogue.end[0]).toEqual({ speaker: '???', text: '재미있는 놈이군. 번호를 원하나? 그렇다면 올라와라.' });
     expect(chapterContent('shinigami', 'ch2')!.episodes[2]!.dialogue.mid!.lines).toEqual([{ speaker: '나', text: '이름이… 들린다.' }]);
     expect(chapterContent('shinigami', 'ch3')!.episodes[3]!.dialogue.end).toEqual([
@@ -141,10 +141,10 @@ describe('새 보스 2종 (GDD 35장)', () => {
   it('데이터: 두 종족 공유·이름과 보스 특성 이름은 종족별, 체력 150회분, 기믹·페이즈', () => {
     const ck = getBoss('canyon-king');
     const fl = getBoss('forest-lord');
-    expect([bossName('canyon-king', 'hollow'), bossName('canyon-king', 'shinigami')]).toEqual(['협곡의 왕', '현세의 대허']);
-    expect([bossName('forest-lord', 'hollow'), bossName('forest-lord', 'shinigami')]).toEqual(['숲의 군주', '웨코문도의 문지기']);
-    expect([traitName(ck.trait, 'hollow'), traitName(ck.trait, 'shinigami')]).toEqual(['협곡의 왕의 뿔', '대허의 갑각']);
-    expect([traitName(fl.trait, 'hollow'), traitName(fl.trait, 'shinigami')]).toEqual(['숲의 군주의 가면', '문지기의 사슬']);
+    expect([bossName('canyon-king', 'hollow'), bossName('canyon-king', 'shinigami')]).toEqual(['엠버 스론', '엠버 스론']);
+    expect([bossName('forest-lord', 'hollow'), bossName('forest-lord', 'shinigami')]).toEqual(['썬더우드', '썬더우드']);
+    expect([traitName(ck.trait, 'hollow'), traitName(ck.trait, 'shinigami')]).toEqual(['엠버 스론의 뿔', '대허의 갑각']);
+    expect([traitName(fl.trait, 'hollow'), traitName(fl.trait, 'shinigami')]).toEqual(['썬더우드의 가면', '문지기의 사슬']);
     for (const b of [ck, fl]) {
       expect(b.enemy.hpInAttacks).toBe(150);
       expect(getTrait(b.trait).boss).toBe(true);

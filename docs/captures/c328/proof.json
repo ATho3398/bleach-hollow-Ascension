@@ -1,0 +1,47 @@
+{
+  "shots": [
+    "pc-hollow-0-dex.png",
+    "pc-hollow-1-release.png",
+    "pc-shinigami-0-dex.png",
+    "pc-shinigami-1-release.png",
+    "pc-dundo-0-dex.png",
+    "pc-dundo-1-release.png",
+    "ph-hollow-1-release.png",
+    "ph-shinigami-1-release.png"
+  ],
+  "checks": {
+    "pc-hollow-dex": "불 3단계에서 탄 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 97 · 힘 93 · 지능 117 · 방어 88 · 정신력 83 · 속도 107본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)레스렉시온: 꼬리를 끌어라, 루시에르나가!",
+    "pc-hollow": {
+      "factionId": "hollow",
+      "cutin": "꼬리를 끌어라, 루시에르나가!",
+      "enemyNameSeen": " ",
+      "enemyIsNewName": true
+    },
+    "pc-shinigami-dex": "물 3단계에서 참 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 107 · 힘 88 · 지능 98 · 방어 97 · 정신력 112 · 속도 83본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 만해 — 백랑파천!",
+    "pc-shinigami": {
+      "factionId": "shinigami",
+      "cutin": "만해 — 백랑파천!",
+      "enemyNameSeen": " ",
+      "enemyIsNewName": true
+    },
+    "pc-dundo-dex": "블록 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화종족값 체력 85 · 힘 84 · 지능 84 · 방어 84 · 정신력 84 · 속도 84본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 없음 (한정 해제 그대로)",
+    "pc-dundo": {
+      "factionId": "shinigami",
+      "cutin": "영압을 묶은 봉인을 푼다 — 한정 해제!",
+      "enemyNameSeen": " ",
+      "enemyIsNewName": true
+    },
+    "ph-hollow": {
+      "factionId": "hollow",
+      "cutin": "꼬리를 끌어라, 루시에르나가!",
+      "enemyNameSeen": " ",
+      "enemyIsNewName": true
+    },
+    "ph-shinigami": {
+      "factionId": "shinigami",
+      "cutin": "만해 — 백랑파천!",
+      "enemyNameSeen": " ",
+      "enemyIsNewName": true
+    }
+  }
+}

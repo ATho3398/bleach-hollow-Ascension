@@ -1,8 +1,8 @@
 // 원정 걷기 중 [가방] (GDD 144장 3, C.223): 체력 회복 물건 4종 중 골라 쓴다. 기기 ▲▼ = 고르기 · ✓ = 쓰기 · 뒤로 = 닫기 (122장).
-// 쓰면 체력 막대가 차는 연출(itemUseFx)과 남은 개수. 판정·차감은 src/inventory.ts useHealItemOnWalk, 이 파일은 그리기만 한다. 종족 무관.
+// 쓰면 창 위 체력 막대가 0.8초 동안 차오르고 숫자도 따라 오른다(GDD 201장 — 회복 수치 글자·따로 뜨는 창 없음)와 남은 개수. 판정·차감은 src/inventory.ts useHealItemOnWalk, 이 파일은 그리기만 한다. 종족 무관.
 import { button, el, meter } from './dom';
 import { iconArt, itemCard, itemGrid } from './itemUi';
-import { itemUseFx } from './actionFx';
+import { ACTION_FILL_MS, tween } from './actionFx';
 import { trapModalFocus } from './modalFocus';
 import { getOverlayHost, registerLayer } from './overlayHost';
 
@@ -35,9 +35,18 @@ export function healBag(o: HealBagSpec): () => void {
   let untrap: () => void = () => {};
   let unregister: () => void = () => {};
   let note = '';
+  /** 차오르는 중 보여 줄 체력 비율 (null = 지금 값) */
+  let fillHp: number | null = null;
+  let stopFill: () => void = () => {};
+  const hpSlot = el('div', 'bha-healbag__hp');
+  const paintHp = () => {
+    const pct = Math.round((fillHp ?? o.hp()) * 100);
+    hpSlot.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: pct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: pct < 30, valueText: `${pct}%` }));
+  };
   const close = () => {
     if (closed) return;
     closed = true;
+    stopFill();
     unregister();
     layer.remove();
     untrap();
@@ -45,6 +54,7 @@ export function healBag(o: HealBagSpec): () => void {
   };
   const render = (focusId?: string) => {
     const pct = Math.round(o.hp() * 100);
+    paintHp();
     const cards = o.items().map((it) => {
       const c = itemCard({
         id: it.id, name: it.name, detail: it.detail, art: iconArt('i-heal'), badge: `×${it.count}`,
@@ -56,15 +66,19 @@ export function healBag(o: HealBagSpec): () => void {
             return render(it.id);
           }
           note = '';
-          itemUseFx({ title: `${it.name} 사용`, bars: [{ kind: 'player', label: '체력', icon: 'i-heal', from: Math.round(r.from * 100), to: Math.round(r.to * 100), max: 100 }] });
+          stopFill();
           render(it.id);
+          stopFill = tween(ACTION_FILL_MS, (t) => {
+            fillHp = t >= 1 ? null : r.from + (r.to - r.from) * t;
+            paintHp();
+          }, undefined, false);
         },
       });
       return c;
     });
     modal.replaceChildren(
       el('h2', 'bha-modal__title', '가방 — 회복 물건'),
-      meter({ kind: 'player', label: '체력', icon: 'i-heal', value: pct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: pct < 30, valueText: `${pct}%` }),
+      hpSlot,
       itemGrid(cards, '회복 물건이 없다. 상점 약 칸에서 산다.', 'i-heal'),
       ...(note ? [el('p', 'bha-modal__body', note)] : []),
       (() => {

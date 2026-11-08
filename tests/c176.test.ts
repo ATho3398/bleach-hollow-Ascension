@@ -52,7 +52,7 @@ describe('104장 5·6: 포식 설명·이름', () => {
     expect(traitName('t-kyo-b', 'hollow')).toBe('교'); // 속성 이름 '허(虛)' 이 아니라 약어 '허' 로 시작
     expect(traitAbbr('t-water-a', 'hollow')).toBe('조');
     expect(getTrait('t-water-a').name).toEqual({ hollow: '물 조', shinigami: '물 참' });
-    expect(traitName('boss-sand-maw', 'hollow')).toBe('모래 아귀의 턱'); // 속성 글자로 시작하지 않으면 그대로
+    expect(traitName('boss-sand-maw', 'hollow')).toBe('아레나 보라스의 턱'); // GDD 198장 보스 이름 // 속성 글자로 시작하지 않으면 그대로
   });
 });
 
@@ -101,7 +101,9 @@ describe('106장 1: 같은 속성 포식 후보 · n강', () => {
   it("화면: 안 가진 블록 = '새 블록', 가진 블록 = 'n강 → n+1강', 가진 블록은 가득이어도 교체 단계 없이", () => {
     const src = read('src/ui/absorbView.ts');
     expect(src).toContain("chip(have ? '가진 블록' : '새 블록')"); // C.236 (GDD 158장 4): 강화 단계는 n/100 줄
-    expect(src).toContain('if (isFull(exp.build) && !ownsTraitBlock(exp.build, id))');
+    // C.312 (GDD 193장 13): 가득 + 새 블록 후보 = 2단계 한 화면(후보 버튼 줄 → 넣을 곳), 가진 블록 후보는 누르면 바로 강화만
+    expect(src).toContain('const full = isFull(exp.build) && fresh.length > 0;');
+    expect(src).toContain("if (have) b.onclick = () => finish(chooseAbsorb(exp, id, undefined, mode), true);");
     expect(read('src/engine/absorb/offer.ts')).not.toContain('freshElements');
   });
 });
@@ -111,7 +113,7 @@ describe('106장 2·3: 웅덩이 · 메노스 크기', () => {
     expect(BALANCE.provisional.expedition.restTimeTiles * BALANCE.expedition.restSecondsPerTile).toBeCloseTo(10 / 3);
     const ev = read('src/ui/expeditionView.ts');
     expect(ev).toContain("const healFx = el('span', 'bha-walker__heal');");
-    expect(ev).toContain("floatEl('heal', gain");
+    expect(ev).toContain("floatEl('heal', `${faction.riskGaugeName} −"); // GDD 201장: 오른 값 숫자는 없앰, 리스크 내림(온천)만 숫자
   });
   it('메노스 그란데: 걷기·전투 필드 배율은 데이터(fieldScale), 방은 scale 그대로', () => {
     expect(ART_MANIFEST['char.hollow.2']!.fieldScale).toBe(1.5);
@@ -128,7 +130,9 @@ describe('104장 3·9: 걷기 가운데 위 진행도 · 배치 칸 스크롤', 
   it('가운데 위 길 칸 줄 없음, 배치 화면 세로 스크롤 + [출발] 아래 고정', () => {
     expect(read('src/ui/expeditionView.ts')).not.toContain('bha-exp__strip');
     const css = read('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-lcd \.bha-app\.bha-plan \{[^}]*overflow: hidden auto;/);
-    expect(css).toMatch(/\.bha-plan__go \{[^}]*position: sticky; bottom: 0;/);
+    // 리디자인 v2 (GDD 183장 S06·S07): 넘치는 칸만 안에서 스크롤, [출발] 띠는 .bha-dock(아래 고정)
+    expect(css).toMatch(/\.bha-plan__descscroll \{[^}]*overflow-y: auto;/);
+    expect(css).toMatch(/\.bha-app\.bha-plan\.is-place \.bha-road__hand \{[^}]*overflow-y: auto;/);
+    expect(read('src/ui/planView.ts')).toContain("'bha-dock bha-plan__go'");
   });
 });

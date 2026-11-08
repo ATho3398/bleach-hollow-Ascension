@@ -123,11 +123,18 @@ export function dropBasicBlockTraits(b: BuildState): void {
   b.equipOrder = (b.equipOrder ?? []).filter(keep);
 }
 
+/** 얻은 특성을 어디에 넣나: 빈 슬롯/교체할 슬롯 번호, 'owned' = 보유 목록에만(슬롯 그대로 — 둥지에서 장착, GDD 193장 13), 없으면 포기 */
+export type GainPlace = number | null | 'owned';
+
 /** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음).
- *  (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
-export function gainTrait(b: BuildState, traitId: string, replaceSlot?: number | null): BuildResult {
+ *  replaceSlot = 'owned' 면 슬롯은 건드리지 않고 보유 목록에만 넣는다 (GDD 193장 13 [보유에만 넣기] — 흡수 규칙·수치는 교체와 같다). (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
+export function gainTrait(b: BuildState, traitId: string, replaceSlot?: GainPlace): BuildResult {
   getTrait(traitId);
-  if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 특성이다' };
+  if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 블록이다' };
+  if (replaceSlot === 'owned') {
+    b.owned.push(traitId);
+    return { ok: true };
+  }
   const free = emptySlot(b);
   if (free >= 0) {
     b.owned.push(traitId);
@@ -150,7 +157,7 @@ export function setSlot(b: BuildState, slot: number, traitId: string | null): Bu
     b.slots[slot] = null;
     return { ok: true };
   }
-  if (!b.owned.includes(traitId)) return { ok: false, reason: '가지고 있지 않은 특성이다' };
+  if (!b.owned.includes(traitId)) return { ok: false, reason: '가지고 있지 않은 블록이다' };
   const at = b.slots.indexOf(traitId);
   if (at >= 0) b.slots[at] = null;
   b.slots[slot] = traitId;

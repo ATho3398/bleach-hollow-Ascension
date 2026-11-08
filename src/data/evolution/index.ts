@@ -3,10 +3,11 @@
 import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
 import { normalSlotNote } from '../help/textFormat';
 import { getFaction } from '../factions';
-import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind } from '../schema';
+import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind, type FormRelease } from '../schema';
 import { generateFormTable } from './build';
 import { generateForms } from './generate';
 import raw from './forms.json';
+import { FORM_RELEASES, withReleases } from './releases';
 
 export { generateFormTable, generateForms };
 
@@ -28,6 +29,11 @@ export function validateFormTable(table: readonly FormDef[]): string[] {
     if (f.tier < FORM_MAX_TIER && f.elements === undefined) errors.push(`${f.id}: 속성을 잇는 진화체(elements 없음)는 마지막 단계만`);
     for (const k of STAT_IDS) if (!(typeof f.stats?.[k] === 'number' && f.stats[k] > 0)) errors.push(`${f.id}: stats.${k} 양수`);
     if (f.stab !== undefined && !(f.stab >= 1)) errors.push(`${f.id}: stab 은 1 이상`);
+    for (const [fac, r] of Object.entries(f.release ?? {})) {
+      if (f.tier !== FORM_MAX_TIER) errors.push(`${f.id}: release 는 ${FORM_MAX_TIER}단계만`);
+      if (typeof r?.name !== 'string' || !r.name) errors.push(`${f.id}: release.${fac}.name 문자열`);
+      for (const k of ['command', 'final'] as const) if (r?.[k] !== undefined && (typeof r[k] !== 'string' || !r[k])) errors.push(`${f.id}: release.${fac}.${k} 비어 있지 않은 문자열`);
+    }
     if (f.maxChain !== undefined && !(Number.isInteger(f.maxChain) && f.maxChain >= 1)) errors.push(`${f.id}: maxChain 은 1 이상 정수`);
   }
   for (let tier = FORM_MIN_TIER; tier <= FORM_MAX_TIER; tier++) {
@@ -38,7 +44,8 @@ export function validateFormTable(table: readonly FormDef[]): string[] {
 
 function parseTable(r: unknown): FormDef[] {
   if (!Array.isArray(r)) throw new Error('진화체 데이터 오류: forms.json 은 배열이어야 한다');
-  const table = r as FormDef[];
+  const table = withReleases(r as FormDef[]); // GDD 198장: 해방 이름은 releases.json
+  for (const id of Object.keys(FORM_RELEASES)) if (!table.some((f) => f.id === id)) throw new Error(`진화체 데이터 오류: releases.json 의 ${id} 진화체가 없다`);
   const errors = validateFormTable(table);
   if (errors.length > 0) throw new Error(`진화체 데이터 오류:\n- ${errors.join('\n- ')}`);
   return table;
@@ -91,9 +98,41 @@ export function placeholderName(form: FormDef, factionId: string, inherited: rea
   return [tierName, ...parts[form.label.kind]].filter(Boolean).join('_');
 }
 
-/** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시. inherited = 지금 캐릭터 속성(아란칼 히든의 `_속성`) */
-export function formName(form: FormDef, factionId: string, inherited: readonly string[] = []): string {
+/** 진화체 해방 이름 한 종족 몫 (GDD 198장, 4단계만). 없으면 null */
+export function formRelease(form: Pick<FormDef, 'release'> | null | undefined, factionId: string): FormRelease | null {
+  const r = form?.release;
+  return r ? (r[factionId] ?? r['*'] ?? null) : null;
+}
+
+/** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시. inherited = 지금 캐릭터 속성(아란칼 히든의 `_속성`).
+ *  ascended = 아란칼화 / 참백도 구상화를 깼다 — 종족 설정 ascension.formNameKey 가 있으면 진화체 release 의 그 칸(호로 = 레스렉시온 이름, GDD 198장) */
+export function formName(form: FormDef, factionId: string, inherited: readonly string[] = [], ascended = false): string {
+  const key = getFaction(factionId).ascension.formNameKey;
+  const released = ascended && key ? formRelease(form, factionId)?.[key] : undefined;
+  if (released) return released;
   return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId, inherited);
+}
+
+/** 고유 해방(레스렉시온 / 만해)이 이 진화체에 있는가 (GDD 198장): 종족 설정 liberation.formKey 가 있고 진화체 release 가 있는데 그 칸이 비면 없다(사신 둔도 = 만해 없음).
+ *  release 가 없는 진화체(이름 데이터 없음)는 종족 규칙 그대로 있다 */
+export function formHasUniqueRelease(form: FormDef | null | undefined, factionId: string): boolean {
+  const key = getFaction(factionId).liberation.formKey;
+  const r = formRelease(form, factionId);
+  return !key || !r || !!r[key];
+}
+
+/** 고유 해방 컷인 (GDD 198장): 종족 설정 liberation.formCutin 의 {name}·{command}·{final} 을 진화체 release 로 채운다. 틀이 없거나 채울 값이 없으면 null(기본 cutin) */
+export function formReleaseCutin(form: FormDef | null | undefined, factionId: string): string | null {
+  const tpl = getFaction(factionId).liberation.formCutin;
+  const r = formRelease(form, factionId);
+  if (!tpl || !r) return null;
+  let ok = true;
+  const out = tpl.replace(/\{(name|command|final)\}/g, (_m, k: keyof FormRelease) => {
+    const v = r[k];
+    if (!v) ok = false;
+    return v ?? '';
+  });
+  return ok ? out : null;
 }
 
 /** 공격 분류에 드는 종족 블록 계열 표시명 ('조·권 계열'). 분류가 없거나 계열 표가 없으면 빈 문자열 앞뒤 공백 없이 '' */
@@ -108,12 +147,12 @@ export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
   const byKind: Record<FormKind, string> = {
     base: '정해진 걸음을 걸으면 진화',
-    element: `${els[0]} 특성을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
+    element: `${els[0]} 블록을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
     // 공격 분류(물리·특수·혼합)는 화면에 안 보인다 (GDD 137장 1): 그 분류에 드는 블록 계열 이름으로 말한다
-    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 특성을 가장 많이 장착하고 진화`,
+    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 블록을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
-    fail: '특성 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
+    fail: '블록 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
     passage: '숨은 진화의 조건을 어느 정도 채운 채 진화',
     awakened: '한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화',
     frenzy: `${getFaction(factionId).frenzyName} 상태를 여러 번 겪고, 흔들린 채 진화`,

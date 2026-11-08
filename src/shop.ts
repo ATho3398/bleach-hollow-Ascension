@@ -29,10 +29,14 @@ export function canStoreConsumable(save: Pick<SaveData, 'shared'>, id: string): 
   return (save.shared.items[id] ?? 0) < CONSUMABLE_CAP;
 }
 
-/** 보관함 소모품 넣기 (상한까지). 넣은 개수 */
+/** 보관함 소모품 넣기 (상한까지). 넣은 개수.
+ *  전투 소모품을 처음 얻었는데(그 물건 0개 → 1개 이상) 소모품 칸이 비었으면(0개 포함) 그 칸에 바로 넣는다 (GDD 193장 6 — 회복 물건이 있는데 칸이 비어 전투에서 못 썼다) */
 export function storeConsumable(save: Pick<SaveData, 'shared'>, id: string, n = 1): number {
-  const add = Math.max(0, Math.min(n, CONSUMABLE_CAP - (save.shared.items[id] ?? 0)));
-  if (add > 0) save.shared.items[id] = (save.shared.items[id] ?? 0) + add;
+  const had = save.shared.items[id] ?? 0;
+  const add = Math.max(0, Math.min(n, CONSUMABLE_CAP - had));
+  if (add > 0) save.shared.items[id] = had + add;
+  const slot = save.shared.battleItem;
+  if (add > 0 && had === 0 && getGoldItem(id)?.battle && (!slot || (save.shared.items[slot] ?? 0) <= 0)) save.shared.battleItem = id;
   return add;
 }
 
@@ -190,7 +194,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'trainingTicket': return `지금 트랙 수련권 +1 (최대 ${BALANCE.provisional.training.ticketsMax})`;
     case 'tileDraw': return `모험 타일 1장 → 가방 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 가방 (이벤트 타일 제외)';
-    case 'reroll': return `${faction.absorbActionName} 화면 특성 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
+    case 'reroll': return `${faction.absorbActionName} 화면 블록 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `모험 길에 놓을 수 있는 타일 칸 +1 (영구, 최대 +${SX.deckSlotPrices.length})`; // GDD 159장 32: '트랙' 말 삭제
     case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노멀 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
   }

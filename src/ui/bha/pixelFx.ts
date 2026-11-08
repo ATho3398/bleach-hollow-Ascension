@@ -58,6 +58,22 @@ export function pivotBox(s: Pick<PixelFxSheet, 'frame' | 'pivot'>, x: number, y:
   return { left: x - px * scale, top: y - s.pivot[1] * scale, width: s.frame[0] * scale, height: s.frame[1] * scale };
 }
 
+/** 시트를 Web Animations 키프레임으로 (C.268, GDD 180장): 프레임마다 배경 위치를 계단식으로 옮긴다.
+ *  전투 연출(attackFx)이 이걸 track() 해서 배속·일시정지·지우기를 다른 연출과 같이 따른다. 길이 = sheetDurationMs */
+export function pixelFxKeyframes(s: Pick<PixelFxSheet, 'frame' | 'columns' | 'durations'>, scale: number): Keyframe[] {
+  const total = sheetDurationMs(s);
+  const out: Keyframe[] = [];
+  let t = 0;
+  s.durations.forEach((d, i) => {
+    const [fx, fy] = framePos(s, i);
+    out.push({ offset: total > 0 ? t / total : 0, opacity: 1, backgroundPosition: `${-fx * scale}px ${-fy * scale}px`, easing: 'steps(1, end)' });
+    t += d;
+  });
+  const last = out[out.length - 1];
+  if (last) out.push({ ...last, offset: 1, easing: 'linear' });
+  return out;
+}
+
 // ── DOM ──
 
 const BASE = 'fx/'; // vite base './' → public/fx 가 빌드 뒤에도 같은 상대 경로
@@ -88,6 +104,7 @@ export function loadPixelFx(name: string): Promise<PixelFxSheet | null> {
           img.onload = img.onerror = () => res();
           img.src = `${BASE}${s.image}`;
         });
+        ready.set(name, s);
         return s;
       } catch {
         return null;
@@ -167,4 +184,37 @@ export function playPixelFx(host: HTMLElement, s: PixelFxSheet, o: PixelFxOption
       return done;
     },
   };
+}
+
+/** 상자 가운데를 축으로 뒤집기·돌리기 (게임과 이펙트 배치 도구가 같은 식을 쓴다 — 도구에서 본 그대로 게임에 나온다) */
+export function pixelFxTransform(flipX: boolean, flipY: boolean, angle: number): string {
+  return `scale(${flipX ? -1 : 1}, ${flipY ? -1 : 1}) rotate(${angle}deg)`;
+}
+
+/** 시트 한 장 크기의 상자를 (cx, cy) 를 가운데로 놓는다 (재생은 부르는 쪽이 pixelFxKeyframes 로). 처음엔 투명 — 키프레임이 시작되면 보인다.
+ *  flipX = 좌우(시트는 오른쪽을 본다), flipY = 위아래(연타 올려 베기) */
+export function mountPixelFx(host: HTMLElement, s: PixelFxSheet, o: { cx: number; cy: number; scale: number; flipX?: boolean; flipY?: boolean; angle?: number }): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'bha-pxfx';
+  el.setAttribute('aria-hidden', 'true');
+  el.dataset.fx = s.name;
+  const w = s.frame[0] * o.scale;
+  const h = s.frame[1] * o.scale;
+  const rows = Math.ceil(s.frames / s.columns);
+  el.style.cssText = `left:${(o.cx - w / 2).toFixed(1)}px;top:${(o.cy - h / 2).toFixed(1)}px;width:${w}px;height:${h}px;opacity:0;` +
+    `background-image:url("${BASE}${s.image}");background-size:${s.columns * s.frame[0] * o.scale}px ${rows * s.frame[1] * o.scale}px;` +
+    `transform:${pixelFxTransform(!!o.flipX, !!o.flipY, o.angle ?? 0)}`;
+  host.append(el);
+  return el;
+}
+
+/** 이미 받아 둔 시트 (loadPixelFx 가 끝난 것만). 전투 연출은 기다리지 않으므로 없으면 null */
+const ready = new Map<string, PixelFxSheet>();
+export function readyPixelFx(name: string): PixelFxSheet | null {
+  return ready.get(name) ?? null;
+}
+
+/** 게임 시트 이름 (scripts/pixelfx/tool/palettes.mjs sheetName 과 같은 규칙): pixelfx id 의 / → -, 속성 색이면 -<속성 id> */
+export function fxSheetName(id: string, element: string | null): string {
+  return `${id.replace('/', '-')}${element ? `-${element}` : ''}`;
 }

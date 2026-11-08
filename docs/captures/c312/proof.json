@@ -1,0 +1,66 @@
+{
+ "patch": "C.306",
+ "shots": [
+  "hollow-pc-battle-03s.png",
+  "hollow-pc-battle-14s.png",
+  "hollow-pc-result.png",
+  "shinigami-ph-battle-03s.png",
+  "shinigami-ph-battle-14s.png",
+  "shinigami-ph-result.png"
+ ],
+ "battles": [
+  {
+   "tag": "hollow-pc",
+   "start": {
+    "timeLeft": 150,
+    "me": "108/108",
+    "foe": "366/366"
+   },
+   "at3": {
+    "timeLeft": 147,
+    "me": "108/108",
+    "foe": "339/366"
+   },
+   "at14": {
+    "timeLeft": 136,
+    "me": "88/108",
+    "foe": "234/366"
+   },
+   "end": {
+    "timeLeft": 111,
+    "me": "44/108",
+    "foe": "0/366"
+   },
+   "result": "won",
+   "idleSeconds": 39
+  },
+  {
+   "tag": "shinigami-ph",
+   "start": {
+    "timeLeft": 150,
+    "foe": "366/366",
+    "me": "108/108"
+   },
+   "at3": {
+    "timeLeft": 147,
+    "foe": "339/366",
+    "me": "108/108"
+   },
+   "at14": {
+    "timeLeft": 136,
+    "foe": "239/366",
+    "me": "78/108"
+   },
+   "end": {
+    "timeLeft": 110,
+    "foe": "0/366",
+    "me": "33/108"
+   },
+   "result": "won",
+   "endAt": null,
+   "idleSeconds": 40
+  }
+ ],
+ "errors": [],
+ "note": "손 안 대는 판(입력 없음), ★1 권장, 새 세이브(첫 원정 튜토리얼 건너뜀). me = 내 체력, foe = 적 체력, timeLeft 150 − 값 = 흐른 초"
+}

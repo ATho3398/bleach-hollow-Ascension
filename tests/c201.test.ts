@@ -17,7 +17,8 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
       expect(marketOf(f).name).toBe('시장');
       expect(marketOf(f).props.shop).toBe('소모품 상점'); // GDD 150장 1
       expect(marketOf(f).props.spa.startsWith('온천')).toBe(true);
-      expect(marketOf(f).sceneArt).toBe('scene.market');
+      // 배경 키 = 공통 scene.market 또는 종족 전용 scene.market.<종족> (C.335: 사신 시장 배경을 배치 도구로 따로 넣음)
+      expect(['scene.market', `scene.market.${f.id}`]).toContain(marketOf(f).sceneArt);
     }
   });
   it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {
@@ -74,8 +75,8 @@ describe('129장 1·2 슬롯 제목 · 종족 소개', () => {
     expect(slotTitle(ok({ rebirths: 2 }), S)).toBe('영술원 학생 +환생 2회');
     expect(slotTitle(ok({ rebirths: 0 }), S)).toBe('영술원 학생');
   });
-  it('종족 선택 카드에 한 줄 소개(tagline)를 그리지 않는다', () => {
-    expect(readFileSync('src/ui/startView.ts', 'utf8')).not.toContain('bha-species__tagline');
+  it('종족 선택 카드에 한 줄 소개(tagline)를 다시 그린다 (GDD 193장 10, C.304 — 129장 2 를 되돌림)', () => {
+    expect(readFileSync('src/ui/startView.ts', 'utf8')).toContain("if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));");
   });
 });
 
@@ -83,7 +84,7 @@ describe('128장 6 온천 화면 개편', () => {
   const v = readFileSync('src/ui/spaView.ts', 'utf8');
   const css = readFileSync('src/ui/bha/spa.css', 'utf8');
   it('화면 전체 장면 + 걸어 들어와 앉는 연출 + 왼쪽 위 [방으로 돌아가기]·ⓘ + 머리 위 상태 창', () => {
-    expect(v).toContain("mountApp(root, { cls: 'bha-spa' }, scene)");
+    expect(v).toContain("mountApp(root, { cls: 'bha-spa bha-v2' }, scene)"); // C.284 (GDD 183장 화면 A, v2 S01~S05)
     expect(v).toContain("el('div', 'bha-spa__actor is-entering')");
     expect(v).toContain("actor.classList.add('is-seated')"); // C.208 (GDD 132장 4): 계단식 입수 끝에 앉는다
     expect(v).toContain("el('div', 'bha-room__status bha-spa__status')");

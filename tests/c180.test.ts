@@ -13,7 +13,7 @@ describe('1 장비 칸: 누른 칸이 골라진 채로 다시 그린다', () => 
   it('빈 칸·상세 창 뒤 다시 그릴 때 그 칸·카드에 초점을 돌려준다 (기기 선택이 첫 칸 무기로 돌아가던 문제)', () => {
     const v = read('src/ui/equipView.ts');
     expect(v).toMatch(/redraw\(`slot:\$\{s\}`\)/);
-    expect(v).toMatch(/redraw\('slot:battle'\)/);
+    expect(v).toMatch(/pickBattleItem\(faction, save, changedAt\('slot:battle'\)\)/); // 193장 6: 빈 소모품 칸 = 고르기 창, 고른 뒤 초점 그 칸
     expect(v).toMatch(/openGear\(faction, save, it\.uid, changedAt\(`slot:\$\{s\}`\)\)/);
     expect(v).toMatch(/at\?\.focus\(\{ preventScroll: true \}\)/);
     // 기기는 새 화면에서 초점 있는 항목을 고른다

@@ -1,0 +1,217 @@
+{
+ "builds": {
+  "A": "043fd15-mw7punz8",
+  "B": "043fd15-mw7pv9mf",
+  "C": "fake-newer-c"
+ },
+ "js": {
+  "A": "index-B95vlrC7.js",
+  "B": "index-Q6kLJAta.js",
+  "C": "index-Q6kLJAta.js"
+ },
+ "devices": {
+  "pc": {
+   "errors": [],
+   "prime": {
+    "run": "A",
+    "ctrl": true
+   },
+   "s3_resume": {
+    "first": "A",
+    "sig": "dialog",
+    "at": 0.012,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 421.99998474121094,
+      "y": 222.43499755859375,
+      "top": true
+     },
+     "later": {
+      "x": 422,
+      "y": 271.4350128173828,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s4_later_resume": {
+    "closed": true,
+    "first": "A",
+    "sig": "dialog",
+    "at": 0.111,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 421.99998474121094,
+      "y": 212.19354248046875,
+      "top": true
+     },
+     "later": {
+      "x": 422,
+      "y": 262.0699920654297,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s1_cold": {
+    "first": "B",
+    "sig": null,
+    "at": null,
+    "run": "B",
+    "newBuildAt": 15.089,
+    "final": "B"
+   },
+   "s6_slow_net": {
+    "first": "A",
+    "sig": "auto",
+    "at": 13.149,
+    "run": "A",
+    "newBuildAt": 18.102,
+    "final": "B",
+    "versionHits": [
+     "3.1d",
+     "8.1d",
+     "13.1",
+     "16.1",
+     "18.1"
+    ]
+   },
+   "s7_slow_nav": {
+    "first": "A",
+    "sig": "auto",
+    "at": 3.156,
+    "run": "A",
+    "newBuildAt": 9.655,
+    "final": "B",
+    "dialog": false,
+    "navHits": [
+     "0.0",
+     "5.5?bha-v=043fd15-mw7pv9mf.mw7q1uaj"
+    ]
+   }
+  },
+  "phone": {
+   "errors": [],
+   "prime": {
+    "run": "A",
+    "ctrl": true
+   },
+   "s3_resume": {
+    "first": "A",
+    "sig": "dialog",
+    "at": 0.112,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 398,
+      "y": 209.19396209716797,
+      "top": true
+     },
+     "later": {
+      "x": 398.00001525878906,
+      "y": 259.0703887939453,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s4_later_resume": {
+    "closed": true,
+    "first": "A",
+    "sig": "dialog",
+    "at": 0.114,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 397.99998474121094,
+      "y": 209.19402313232422,
+      "top": true
+     },
+     "later": {
+      "x": 397.99998474121094,
+      "y": 259.0704345703125,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s5_later_newer": {
+    "first": "A",
+    "sig": "dialog",
+    "at": 52.007,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 397.99998474121094,
+      "y": 209.7916259765625,
+      "top": true
+     },
+     "later": {
+      "x": 398,
+      "y": 259.6168975830078,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s1_cold": {
+    "first": "B",
+    "sig": null,
+    "at": null,
+    "run": "B",
+    "newBuildAt": 15.082,
+    "final": "B"
+   },
+   "s6_slow_net": {
+    "first": "A",
+    "sig": "auto",
+    "at": 13.121,
+    "run": "A",
+    "newBuildAt": 18.194,
+    "final": "B",
+    "versionHits": [
+     "3.1d",
+     "8.1d",
+     "13.1",
+     "16.1",
+     "18.2"
+    ]
+   },
+   "s7_slow_nav": {
+    "first": "A",
+    "sig": "auto",
+    "at": 3.223,
+    "run": "A",
+    "newBuildAt": 9.666,
+    "final": "B",
+    "dialog": false,
+    "navHits": [
+     "0.0",
+     "5.5?bha-v=043fd15-mw7pv9mf.mw7q4drr"
+    ]
+   }
+  }
+ }
+}

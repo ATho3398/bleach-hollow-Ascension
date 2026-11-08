@@ -14,7 +14,7 @@ import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buy
 import { BATTLE_ITEMS_NAME, MEDICINE_NAME, foodBlurb, getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
 import blurbsJson from '../data/shop/blurbs.json';
-import { h, provisionalTag } from './bha/dom';
+import { h, icon, provisionalTag } from './bha/dom';
 import { charArt } from '../data/art/manifest';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
@@ -36,6 +36,10 @@ export const shopName = (faction: Pick<FactionConfig, 'market'>, kind: ShopKind)
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
 /** 상점마다 마지막으로 본 탭 (다시 열면 그 탭) */
 const shopUi: { tab: ShopTab; last: Partial<Record<ShopKind, ShopTabId>>; skinSub: SkinSubTab } = { tab: 'food', last: {}, skinSub: 'character' };
+/** 화폐 아이콘 (PROMPT 4절: 골드 coin · 영옥 gem) */
+const CUR_ICON: Record<ShopRow['currency'], string> = { gold: 'v2-coin', jade: 'v2-gem' };
+/** 상점 탭 아이콘 (PROMPT 4절·S04 시안: 음식 food · 약 potion · 전투 소모품 sword · 타일 tile · 기타 box …) */
+const TAB_ICON: Partial<Record<ShopTabId, string>> = { food: 'v2-food', medicine: 'v2-potion', consumable: 'v2-sword', tile: 'v2-tile', etc: 'v2-box', equipment: 'v2-equip', skin: 'v2-shirt', trait: 'v2-spark' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
 const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
@@ -207,7 +211,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       qty: { max },
       lock: row.owned ? '이미 가지고 있다' : row.lock,
       actions: [{
-        key: 'buy', label: (q) => (row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${price * q}`), // GDD 159장 34: 빈 '—' 대신 이유 disabled: !row.canBuy || row.owned,
+        // GDD 159장 34: 빈 '—' 대신 이유. 살 수 없거나 이미 가진 것 = 흐리게 자리 유지, 누르면 이유 한 줄 (C.291 — 이 조건이 주석 안에 들어가 꺼지지 않던 것)
+        key: 'buy', label: (q) => (row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${price * q}`),
+        disabled: !row.canBuy || Boolean(row.owned), note: row.owned ? '이미 가지고 있다' : row.lock ?? '살 수 없다',
         onClick: (q) => { close(); buy(row, q); },
       }],
     });
@@ -252,10 +258,16 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       id: row.id, name: row.name, detail: left ?? (shopBlurb(row, faction) || undefined),
       art: artOf(row), badge: owned ? (row.worn ? (isTrait(row.id) ? '끼움' : '착용 중') : '보유') : row.have ?? undefined,
       foot: owned ? (isTrait(row.id) ? (row.worn ? '빼기' : '끼우기') : row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${row.price}`,
+      price: !owned && !soldOut && !full && row.price !== null ? { icon: CUR_ICON[row.currency], value: row.price } : undefined,
       state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',
       onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });
     if (row.grade) c.dataset.grade = row.grade;
+    // 떠돌이 상인 (GDD 189장 엑셀 20): 카드가 4장뿐이라 아래가 비었다 — 큰 카드에 무엇인지 한 줄을 더 보인다
+    if (shopUi.tab === 'wanderer') {
+      const blurb = shopBlurb(row, faction);
+      if (blurb) c.querySelector('.bha-itemcard__name')?.after(h('small', 'bha-card-line bha-itemcard__blurb', blurb));
+    }
     if (getGoldItem(row.id)?.kind === 'gear') c.classList.add('is-grade-normal');
     else if (getWandererItem(row.id)?.kind === 'gear') c.classList.add(`is-grade-${row.grade}`);
     return c;
@@ -265,7 +277,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const traitNote = (): HTMLElement => {
     const l = save.evolution.abilities;
     const used = l ? Object.keys(l.owned).length + (l.detached?.length ?? 0) : 0;
-    const p = h('p', 'bha-small', `한 번 사면 계속 가진다. 빈 특성 칸에 끼우고 방에서 뺀다. 특성 칸 ${used}/${l?.slots ?? 0}`);
+    const p = h('p', 'bha-shop__note', `한 번 사면 계속 가진다. 빈 특성 칸에 끼우고 방에서 뺀다. 특성 칸 ${used}/${l?.slots ?? 0}`);
     p.append(' ', provisionalTag('임시 품목'));
     return p;
   };
@@ -273,18 +285,26 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   function render(): void {
     const prev = root.querySelector<HTMLElement>('.bha-shop .bha-itemgrid');
     if (prev) lastScroll = prev.scrollTop;
-    const sub = h('span', 'bha-shop__wallet');
-    sub.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ` · ${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)));
-    sub.dataset.gold = String(save.shared.tradeCoins);
-    sub.dataset.jade = String(save.shared.jade);
-    if (SHOP_PROVISIONAL) sub.append(' ', provisionalTag('임시 가격'));
+    // 머리 오른쪽 = 골드·영옥 칩 (고정 폭 숫자, PROMPT 6절 S04)
+    const wallet = h('div', 'bha-shop__wallet');
+    const coinChip = (cls: string, ic: string, name: string, v: number): HTMLElement => {
+      const c = h('span', `bha-chip ${cls}`);
+      c.setAttribute('aria-label', `${name} ${v}`);
+      c.title = name;
+      c.append(icon(ic), h('b', 'bha-num', String(v)));
+      return c;
+    };
+    if (SHOP_PROVISIONAL) wallet.append(provisionalTag('임시 가격'));
+    wallet.append(coinChip('bha-chip--gold', CUR_ICON.gold, TRADE_CURRENCY_NAME, save.shared.tradeCoins), coinChip('bha-chip--jade', CUR_ICON.jade, JADE_NAME, save.shared.jade));
+    wallet.dataset.gold = String(save.shared.tradeCoins);
+    wallet.dataset.jade = String(save.shared.jade);
     const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
       : shopUi.tab === 'trait'
         ? traitRows(save)
         : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => shopTabOf(r.id) === shopUi.tab);
     // 이 상점의 탭만 (GDD 150장 1): 탭이 하나뿐인 상점(장비·스킨·특성)은 탭 줄 없음
-    const cats = kindTabs.map((id) => ({ id, label: id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id] }));
+    const cats = kindTabs.map((id) => ({ id, icon: TAB_ICON[id], label: id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id] }));
     const tabs = categoryTabs(cats, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
       shopUi.last[kind] = id as ShopTabId;
@@ -307,11 +327,15 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
     const grid = itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
-      ? [h('p', 'bha-small', '특별한 물건은 떠돌이 상인만 판다. 다음 모험에서 돌아오면 떠난다.'), ...(WANDERER_PROVISIONAL ? [provisionalTag('임시 품목')] : [])]
+      ? [(() => {
+        const p = h('p', 'bha-shop__note', '특별한 물건은 떠돌이 상인만 판다. 다음 모험에서 돌아오면 떠난다.');
+        if (WANDERER_PROVISIONAL) p.append(' ', provisionalTag('임시 품목'));
+        return p;
+      })()]
       : shopUi.tab === 'trait'
         ? [traitNote()]
         : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), sub }), [...(only || kindTabs.length < 2 ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), aside: [wallet] }), [...(only || kindTabs.length < 2 ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
     page.app.dataset.shop = only ? 'wanderer' : kind;
     grid.scrollTop = lastScroll;

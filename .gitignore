@@ -7,3 +7,4 @@ __pycache__/
 scripts/rig/tools/tmp.png
 scripts/rig/tools/tmp_m.json
 vendor/
+.fx-pages/

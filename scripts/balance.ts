@@ -150,8 +150,9 @@ const builds: BuildDef[] = [
 //  - 사람형: 입력 간격과 막기 반응 지연 0.5~1.2초 무작위, 막기 성공 70%, 붙이기(체인 정리) 입력당 50%. 승률·길이 목표는 이 봇 기준
 const TARGET = {
   // C.118 (GDD 62장): 한 전투 시간 = 옛 목표(일반 45초·강적 90초)의 약 절반
-  normal: { seconds: 22, win: 0.9 },
-  elite: { seconds: 45 },
+  // C.306 (GDD 193장 1·62장 다시 측정): 적 체력 hpScale 0.5 → 0.35 — 일반 약 16초·강적 약 33초(옛 22·45 의 약 0.73배)
+  normal: { seconds: 16, win: 0.9 },
+  elite: { seconds: 33 },
   /** 사람형 봇 강적 승률 목표 (C.34: 빈 슬롯은 참고만, skill 1~2개 60~85%, skill 3개 이상은 목표 미달 유지 가능 — 빌드별 elite 필드) */
   eliteWin: { 'skill 1·2개': [0.6, 0.85] } as Record<string, [number, number]>,
 };
@@ -234,7 +235,7 @@ if (want('combat')) for (const bot of BOTS) {
         // 빈 슬롯은 참고 값. skill 3개 이상은 강적 남은 체력이 95% 이상일 만큼 압도적이라 강적 패턴·체력·공격만으로는 못 맞춘다 (dev-log C.16 목표 미달 유지)
         console.log(`      → 강적 승률 ${Math.round(pe.win * 100)}% (참고, 목표 없음)`);
       }
-      if (build.elite && build.name.startsWith('skill 1') && (pe.winSecs < 37 || pe.winSecs > 53)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 45초, 37~53 밖 — C.118 GDD 62장)`);
+      if (build.elite && build.name.startsWith('skill 1') && (pe.winSecs < 27 || pe.winSecs > 39)) failures.push(`사람형 봇/${build.name}: 강적 승리 평균 ${pe.winSecs.toFixed(1)}초 (목표 약 33초, 27~39 밖 — C.118 GDD 62장)`);
     }
   }
 }

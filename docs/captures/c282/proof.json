@@ -1,0 +1,48 @@
+{
+  "shots": [
+    "hollow-1-room.png",
+    "hollow-9-room-shell-bone.png",
+    "hollow-2-worldmap.png",
+    "hollow-3-shop-detail.png",
+    "hollow-6-bag.png",
+    "hollow-7-status.png",
+    "hollow-8-settings.png",
+    "hollow-4-battle.png",
+    "hollow-5-absorb.png",
+    "shinigami-1-room.png",
+    "shinigami-9-room-shell-bone.png",
+    "shinigami-2-worldmap.png",
+    "shinigami-3-shop-detail.png",
+    "shinigami-6-bag.png",
+    "shinigami-7-status.png",
+    "shinigami-8-settings.png",
+    "shinigami-4-battle.png",
+    "shinigami-5-absorb.png"
+  ],
+  "overflow": {
+    "hollow-1-room.png": [],
+    "hollow-9-room-shell-bone.png": [],
+    "hollow-2-worldmap.png": [],
+    "hollow-3-shop-detail.png": [],
+    "hollow-6-bag.png": [
+      "bha-itemtab '전투 소모품3' 55>52"
+    ],
+    "hollow-7-status.png": [],
+    "hollow-8-settings.png": [],
+    "hollow-4-battle.png": [],
+    "hollow-5-absorb.png": [],
+    "shinigami-1-room.png": [],
+    "shinigami-9-room-shell-bone.png": [],
+    "shinigami-2-worldmap.png": [],
+    "shinigami-3-shop-detail.png": [],
+    "shinigami-6-bag.png": [
+      "bha-itemtab '칼자루 장식0' 55>52",
+      "bha-itemtab '전투 소모품3' 55>52"
+    ],
+    "shinigami-7-status.png": [],
+    "shinigami-8-settings.png": [],
+    "shinigami-4-battle.png": [],
+    "shinigami-5-absorb.png": []
+  },
+  "errors": []
+}

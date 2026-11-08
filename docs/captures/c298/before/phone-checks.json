@@ -1,0 +1,276 @@
+[
+ {
+  "tag": "hollow-ph",
+  "kinds": {
+   "말줄임": 3,
+   "판 밖으로 나감": 5,
+   "LCD 밖으로 나감": 3
+  },
+  "issues": [
+   {
+    "shot": "prep-0",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "place-some",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 28px"
+   },
+   {
+    "shot": "prep-some",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 28px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "포식자의 길",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 33px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리(1·2) 일반 적 2연전",
+    "detail": "span.bha-road__synitem 가 main.bha-app 밖으로 3px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리(1·2)",
+    "detail": "b.- 가 main.bha-app 밖으로 3px"
+   },
+   {
+    "shot": "prep-full",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "walk",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "pause",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "walk-warn",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   }
+  ]
+ },
+ {
+  "tag": "hollow-ph115",
+  "kinds": {
+   "말줄임": 3,
+   "판 밖으로 나감": 4,
+   "LCD 밖으로 나감": 3
+  },
+  "issues": [
+   {
+    "shot": "prep-0",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "place-some",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 31px"
+   },
+   {
+    "shot": "prep-some",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "사냥 무리",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 31px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "포식자의 길",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 37px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "LCD 밖으로 나감",
+    "key": "사냥 무리(1·2) 일반 적 2연전",
+    "detail": "span.bha-road__synitem 오른쪽 -526px · 아래 -285px 넘침"
+   },
+   {
+    "shot": "prep-full",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "walk",
+    "kind": "LCD 밖으로 나감",
+    "key": "일시정지",
+    "detail": "button.bha-btn 오른쪽 7px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "pause",
+    "kind": "판 밖으로 나감",
+    "key": "재개",
+    "detail": "button.bha-btn 가 div.bha-head 밖으로 8px"
+   },
+   {
+    "shot": "walk-warn",
+    "kind": "LCD 밖으로 나감",
+    "key": "일시정지",
+    "detail": "button.bha-btn 오른쪽 7px · 아래 -313px 넘침"
+   }
+  ]
+ },
+ {
+  "tag": "shinigami-ph",
+  "kinds": {
+   "말줄임": 3,
+   "판 밖으로 나감": 3,
+   "LCD 밖으로 나감": 3
+  },
+  "issues": [
+   {
+    "shot": "prep-0",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "place-some",
+    "kind": "판 밖으로 나감",
+    "key": "집단 출몰",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 28px"
+   },
+   {
+    "shot": "prep-some",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "집단 출몰",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 28px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "메노스의 길",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 12px"
+   },
+   {
+    "shot": "prep-full",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 340px"
+   },
+   {
+    "shot": "walk",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "pause",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "walk-warn",
+    "kind": "LCD 밖으로 나감",
+    "key": "도움말",
+    "detail": "button.bha-btn 오른쪽 23px · 아래 -313px 넘침"
+   }
+  ]
+ },
+ {
+  "tag": "shinigami-ph115",
+  "kinds": {
+   "말줄임": 3,
+   "판 밖으로 나감": 4,
+   "LCD 밖으로 나감": 2
+  },
+  "issues": [
+   {
+    "shot": "prep-0",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "place-some",
+    "kind": "판 밖으로 나감",
+    "key": "집단 출몰",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 31px"
+   },
+   {
+    "shot": "prep-some",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "집단 출몰",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 31px"
+   },
+   {
+    "shot": "place-full",
+    "kind": "판 밖으로 나감",
+    "key": "메노스의 길",
+    "detail": "span.bha-road__syn 가 button.bha-road__cell 밖으로 19px"
+   },
+   {
+    "shot": "prep-full",
+    "kind": "말줄임",
+    "key": "빈 칸 — [저장]을 누르면 지금 배치(최대",
+    "detail": "small.bha-faint 폭 150px 에 글자 391px"
+   },
+   {
+    "shot": "walk",
+    "kind": "LCD 밖으로 나감",
+    "key": "일시정지",
+    "detail": "button.bha-btn 오른쪽 7px · 아래 -313px 넘침"
+   },
+   {
+    "shot": "pause",
+    "kind": "판 밖으로 나감",
+    "key": "재개",
+    "detail": "button.bha-btn 가 div.bha-head 밖으로 8px"
+   },
+   {
+    "shot": "walk-warn",
+    "kind": "LCD 밖으로 나감",
+    "key": "일시정지",
+    "detail": "button.bha-btn 오른쪽 7px · 아래 -313px 넘침"
+   }
+  ]
+ }
+]

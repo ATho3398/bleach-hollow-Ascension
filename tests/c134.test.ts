@@ -165,7 +165,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(61); // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);
@@ -177,7 +177,10 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
 
 describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
   it('이름은 종족 설정: 아란칼화/참백도 구상화 전 = 영력 해방(양 종족), 깬 뒤 = 호로 레스렉시온 / 사신 만해 (C.220)', () => {
-    for (const f of FACTIONS) expect(liberationLabels(f, false)).toMatchObject({ name: '영력 해방', unique: false });
+    // GDD 198장 (v5.487): 사신 기본 해방 = 한정 해제
+    expect(liberationLabels(getFaction('hollow'), false)).toMatchObject({ name: '영력 해방', unique: false });
+    expect(liberationLabels(getFaction('shinigami'), false)).toMatchObject({ name: '한정 해제', unique: false });
+    for (const f of FACTIONS) expect(liberationLabels(f, false).unique).toBe(false);
     expect(liberationLabels(getFaction('hollow'), true)).toMatchObject({ name: '레스렉시온', unique: true });
     expect(liberationLabels(getFaction('shinigami'), true)).toMatchObject({ name: '만해', unique: true });
     const h = getFaction('hollow');

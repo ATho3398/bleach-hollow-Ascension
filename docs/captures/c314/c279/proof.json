@@ -1,0 +1,605 @@
+{
+  "factions": {
+    "hollow": {
+      "presses": 27,
+      "stuck": [],
+      "trace": [
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 1 / 3|null|둥지",
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 2 / 3|null|돌보기",
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 3 / 3|0|첫 모험",
+        "bha-room.bha-worldmap.bha-v2|home-intro|홈 안내 3 / 3|1|첫 모험",
+        "bha-app--fixed.bha-exp.bha-v2|first-run|1 / 1|null|첫 모험",
+        "none|script|튜토리얼 1 / 5|null|강공격",
+        "none|script|튜토리얼 2 / 5|null|막기 성공",
+        "none|script|튜토리얼 3 / 5|null|위기",
+        "none|script|튜토리얼 4 / 5|null|좋아!",
+        "none|script|튜토리얼 5 / 5|null|체인",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|포식",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 포식",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|둥지로",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 1 / 4|null|빈사",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|1|구급상자",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 3 / 4|0|온천",
+        "bha-room.bha-worldmap.bha-v2|recover|회복 안내 3 / 4|1|온천",
+        "bha-spa.bha-v2|recover|회복 안내 3 / 4|1|온천",
+        "bha-spa.bha-v2|recover|회복 안내 3 / 4|2|온천",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|0|먹이",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|1|먹이",
+        "bha-room.bha-room--home.bha-v2|first-run-room|1 / 1|null|다음 할 일"
+      ],
+      "bag": {
+        "screen": "bha-lcdpage.bha-chest-page",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "body": "빈사가 풀렸다!",
+        "stalePrompt": false
+      },
+      "battleUse": [
+        {
+          "step": "튜토리얼 3 / 5",
+          "title": "위기",
+          "blocksBefore": 1,
+          "blocksAfter": 1,
+          "used": true
+        },
+        {
+          "step": "튜토리얼 5 / 5",
+          "title": "체인",
+          "blocksBefore": 3,
+          "blocksAfter": 3,
+          "used": true
+        }
+      ],
+      "away": [
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 1 / 3|null|둥지",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 2 / 3|null|돌보기",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 3 / 3|0|첫 모험",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-app--fixed.bha-exp.bha-v2|first-run|1 / 1|null|첫 모험",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 1 / 5|null|강공격",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 2 / 5|null|막기 성공",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 3 / 5|null|위기",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 4 / 5|null|좋아!",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 5 / 5|null|체인",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|포식",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 포식",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|둥지로",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 1 / 4|null|빈사",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 3 / 4|0|온천",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|0|먹이",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|first-run-room|1 / 1|null|다음 할 일",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        }
+      ],
+      "final": {
+        "screen": "bha-room.bha-room--home.bha-v2",
+        "tut": null,
+        "step": null,
+        "stage": null,
+        "title": null,
+        "acting": false,
+        "allow": null,
+        "toasts": 0,
+        "dialogs": 0
+      }
+    },
+    "shinigami": {
+      "presses": 27,
+      "stuck": [],
+      "trace": [
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 1 / 3|null|대원실",
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 2 / 3|null|돌보기",
+        "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 3 / 3|0|첫 모험",
+        "bha-room.bha-worldmap.bha-v2|home-intro|홈 안내 3 / 3|1|첫 모험",
+        "bha-app--fixed.bha-exp.bha-v2|first-run|1 / 1|null|첫 모험",
+        "none|script|튜토리얼 1 / 5|null|강공격",
+        "none|script|튜토리얼 2 / 5|null|막기 성공",
+        "none|script|튜토리얼 3 / 5|null|위기",
+        "none|script|튜토리얼 4 / 5|null|좋아!",
+        "none|script|튜토리얼 5 / 5|null|체인",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|정화 흡수",
+        "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 정화 흡수",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다",
+        "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|대원실로",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 1 / 4|null|빈사",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|1|구급상자",
+        "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 3 / 4|0|온천",
+        "bha-room.bha-worldmap.bha-v2|recover|회복 안내 3 / 4|1|온천",
+        "bha-spa.bha-v2|recover|회복 안내 3 / 4|1|온천",
+        "bha-spa.bha-v2|recover|회복 안내 3 / 4|2|온천",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|0|식사",
+        "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|1|식사",
+        "bha-room.bha-room--home.bha-v2|first-run-room|1 / 1|null|다음 할 일"
+      ],
+      "bag": {
+        "screen": "bha-lcdpage.bha-chest-page",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "body": "빈사가 풀렸다!",
+        "stalePrompt": false
+      },
+      "battleUse": [
+        {
+          "step": "튜토리얼 3 / 5",
+          "title": "위기",
+          "blocksBefore": 1,
+          "blocksAfter": 1,
+          "used": true
+        },
+        {
+          "step": "튜토리얼 5 / 5",
+          "title": "체인",
+          "blocksBefore": 3,
+          "blocksAfter": 3,
+          "used": true
+        }
+      ],
+      "away": [
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 1 / 3|null|대원실",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 2 / 3|null|돌보기",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|home-intro|홈 안내 3 / 3|0|첫 모험",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-app--fixed.bha-exp.bha-v2|first-run|1 / 1|null|첫 모험",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 1 / 5|null|강공격",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 2 / 5|null|막기 성공",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 3 / 5|null|위기",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 4 / 5|null|좋아!",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "none|script|튜토리얼 5 / 5|null|체인",
+          "pause": true,
+          "cardHidden": true,
+          "contTop": true,
+          "settTop": true,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|1 / 2|null|정화 흡수",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-tutabsorb|first-absorb|2 / 2|null|첫 정화 흡수",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 1 / 2|0|겨우 쓰러뜨렸다",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-absorbpage.bha-wound|wound|튜토리얼 2 / 2|0|대원실로",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 1 / 4|null|빈사",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-lcdpage.bha-chest-page|recover|회복 안내 2 / 4|0|구급상자",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 3 / 4|0|온천",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|recover|회복 안내 4 / 4|0|식사",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        },
+        {
+          "key": "bha-room.bha-room--home.bha-v2|first-run-room|1 / 1|null|다음 할 일",
+          "pause": false,
+          "cardHidden": null,
+          "contTop": null,
+          "settTop": null,
+          "resumed": true,
+          "sameCard": true,
+          "ok": true
+        }
+      ],
+      "final": {
+        "screen": "bha-room.bha-room--home.bha-v2",
+        "tut": null,
+        "step": null,
+        "stage": null,
+        "title": null,
+        "acting": false,
+        "allow": null,
+        "toasts": 0,
+        "dialogs": 0
+      }
+    }
+  },
+  "errors": [],
+  "shots": [
+    "4-hollow-worldmap.png",
+    "6-hollow-away-a-paused.png",
+    "6-hollow-away-b-resumed.png",
+    "3-hollow-battle-block-used.png",
+    "1-hollow-bag-opened.png",
+    "1-hollow-bag-opened.png",
+    "1-hollow-bag-opened.png",
+    "5-shinigami-worldmap.png",
+    "6-shinigami-away-a-paused.png",
+    "6-shinigami-away-b-resumed.png",
+    "3-shinigami-battle-block-used.png",
+    "2-shinigami-bag-opened.png",
+    "2-shinigami-bag-opened.png",
+    "2-shinigami-bag-opened.png"
+  ],
+  "summary": {
+    "hollow": {
+      "presses": 27,
+      "stuck": 0,
+      "cards": {
+        "total": 18,
+        "by": {
+          "home-intro": 3,
+          "first-run": 1,
+          "script": 5,
+          "first-absorb": 2,
+          "wound": 2,
+          "recover": 4,
+          "first-run-room": 1
+        }
+      },
+      "away": {
+        "scenes": 18,
+        "paused": 3,
+        "bad": 0
+      },
+      "bag": {
+        "screen": "bha-lcdpage.bha-chest-page",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "body": "빈사가 풀렸다!",
+        "stalePrompt": false
+      },
+      "battleUse": [
+        {
+          "step": "튜토리얼 3 / 5",
+          "title": "위기",
+          "blocksBefore": 1,
+          "blocksAfter": 1,
+          "used": true
+        },
+        {
+          "step": "튜토리얼 5 / 5",
+          "title": "체인",
+          "blocksBefore": 3,
+          "blocksAfter": 3,
+          "used": true
+        }
+      ]
+    },
+    "shinigami": {
+      "presses": 27,
+      "stuck": 0,
+      "cards": {
+        "total": 18,
+        "by": {
+          "home-intro": 3,
+          "first-run": 1,
+          "script": 5,
+          "first-absorb": 2,
+          "wound": 2,
+          "recover": 4,
+          "first-run-room": 1
+        }
+      },
+      "away": {
+        "scenes": 18,
+        "paused": 3,
+        "bad": 0
+      },
+      "bag": {
+        "screen": "bha-lcdpage.bha-chest-page",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "body": "빈사가 풀렸다!",
+        "stalePrompt": false
+      },
+      "battleUse": [
+        {
+          "step": "튜토리얼 3 / 5",
+          "title": "위기",
+          "blocksBefore": 1,
+          "blocksAfter": 1,
+          "used": true
+        },
+        {
+          "step": "튜토리얼 5 / 5",
+          "title": "체인",
+          "blocksBefore": 3,
+          "blocksAfter": 3,
+          "used": true
+        }
+      ]
+    }
+  }
+}
