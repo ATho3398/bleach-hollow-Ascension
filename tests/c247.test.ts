@@ -44,7 +44,7 @@ describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −release
     expect(z.risk).toBe(0);
   });
   for (const f of FACTIONS) {
-    it(`${f.id}: 게이지 0 이면 놓아주기 리스크 줄 없음(실제로 안 바뀜, GDD 197장 C.318), 0 아래로는 안 내려간다 — 실제 놓아주기 결과와 같다`, () => {
+    it(`${f.id}: 게이지 0 이면 놓아주기 리스크 줄 없음(실제로 안 바뀜, GDD 197장 C.320), 0 아래로는 안 내려간다 — 실제 놓아주기 결과와 같다`, () => {
       const exp = toAbsorb(f.id, 0);
       expect(absorbDescLines(f, exp, 'none').some((l) => l.kind === 'risk')).toBe(false);
       const real = structuredClone(exp);
@@ -58,7 +58,7 @@ describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −release
       expect(vars.releaseRelief).toBe(`−${RX.releaseRelief}`);
       const cards = (guidesJson as unknown as { guides: Record<string, { body: string }[]> }).guides['first-absorb']!;
       const body = renderHelpText(cards[0]!.body, vars);
-      expect(body).not.toContain(f.riskGaugeName); // 첫 흡수 안내 = 리스크 문장 없음 (GDD 197장 2, C.318)
+      expect(body).not.toContain(f.riskGaugeName); // 첫 흡수 안내 = 리스크 문장 없음 (GDD 197장 2, C.320)
       expect(riskText(f).riskDown[0]).toBe(`적 놓아주기: −${RX.releaseRelief}`);
     });
   }

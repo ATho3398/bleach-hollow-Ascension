@@ -117,7 +117,7 @@ export function absorbResultLine(faction: FactionConfig, exp: ExpeditionState, m
   const p = previewAbsorb(exp, m);
   const ev = evLine(p.ev, faction.id);
   const parts = [ev ? `능력치 ${ev}` : evCapped(exp, m) ? '노력치가 가득 찼다' : ''];
-  // 리스크가 안 바뀌면 리스크 부분은 뺀다 (GDD 197장, C.318)
+  // 리스크가 안 바뀌면 리스크 부분은 뺀다 (GDD 197장, C.320)
   if (showRiskLine(exp, m)) parts.push(`${faction.riskGaugeName} ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}`);
   return parts.filter(Boolean).join(' · ');
 }
@@ -201,7 +201,7 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
 }
 
 /** 리스크 줄을 보이나 (GDD 197장 1·2): 첫 흡수 연습(exp.tutorial) = 전부 숨김(놓아주기 포함).
- *  그 밖엔 게이지가 실제로 바뀌는 갈래만 — 놓아주기도 게이지가 0 이라 못 내려가면 숨김(197장 C.318 마스터 결정, 168장 2 규칙(−n·0 아래 없음)은 그대로) */
+ *  그 밖엔 게이지가 실제로 바뀌는 갈래만 — 놓아주기도 게이지가 0 이라 못 내려가면 숨김(197장 C.320 마스터 결정, 168장 2 규칙(−n·0 아래 없음)은 그대로) */
 export function showRiskLine(exp: ExpeditionState, m: AbsorbChoice): boolean {
   if (exp.tutorial) return false;
   const p = previewAbsorb(exp, m);

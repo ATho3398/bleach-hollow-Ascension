@@ -2411,3 +2411,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **검증** `scripts/c319-proof.cjs` (pc 844×390 · ph 796×384 터치 · ph115 + 글자 1.15, 두 종족, 걷기 평소 · 체력 20%·컨디션 20): 폰 점검(말줄임·판 밖·세로 꺾임) 0, 판 180×134(1.15 = 149) — C.281 은 체력 줄 포함 149/165. 페이지 오류 0. `docs/captures/c319/{c281,before,after}-proof.json`.
 - 테스트: 새 `tests/c319.test.ts`(3). typecheck · test · balance:check 통과(수치·세이브 형식 변경 없음).
 - 캡처 `docs/captures/c319/`(1배): `c281-{hollow,shinigami}-{pc,ph,ph115}-walk`(C.281 빌드) · `before-…-walk`(C.316) · `after-…-walk` · `after-…-walk-lowhp`.
+
+## C.320 — 197장 1·2 보충: 리스크 0 놓아주기 · 흡수 뒤 한 줄 · 첫 흡수 연습 글도 바뀔 때만 (GDD 197장, v5.476, S-23, 코딩228 Opus)
+- 마스터 결정(C.317 보고 답, 사용자 원칙 '바뀔 때만 얘기'): ① 리스크 0 일 때 놓아주기 −1 도 숨김(168장 2 규칙은 그대로, 표시만) ② absorbResultLine '○○ 그대로 (n)' 도 안 바뀌면 뺌 ③ 첫 흡수 연습 글 리스크 문장 삭제 ④ practiceView '(+0)'·resultView 0/0·planView 배율은 그대로.
+- **바꾼 것**: `showRiskLine` 놓아주기 예외 삭제(반올림 게이지가 바뀔 때만) · `absorbResultLine` 리스크 부분은 `showRiskLine` 일 때만 · `guideView.ts` 연습 오른쪽 글 '…모든 능력치가 똑같이 오른다.' · `guides.json` first-absorb 첫 장 놓아주기 줄 '놓아주면 {stabilityName}이(가) 오른다'. 종족 분기 없음.
+- **검증** `scripts/c317-proof.cjs`(pc 844×390 · ph 796×384 터치 × 두 종족): 튜토리얼 막힘 0 · 연습 리스크 줄 0 · 리스크 0 평소 흡수 = 정화/속성/능력치 +3/+2/+1, 놓아주기 줄 없음(설명 칸 '받는 것 ○○ +6' 만) · 리스크 한계 판 능력치 흡수 뒤 토스트 '포식/정화 흡수 능력치 힘 +4'(리스크 없음) · 버튼 높이·[흡수] 자리 C.317 과 같음 · 페이지 오류 0.
+- 테스트: `tests/c247` 표시 기대값 갱신(0 놓아주기 줄 없음 · first-absorb 리스크 이름 없음), `tests/c317` +1(연습 글) · 결과 한 줄 검사. typecheck · test(2754) · balance:check 통과(수치·세이브 형식 변경 없음).
+- 캡처 `docs/captures/c320/`(1배 10장): `{pc,ph}-{hollow,shinigami}-2-absorb-risk0-release` · `-3-after-absorb-toast` · `pc-*-1b-tutorial-absorb-noguide`.
