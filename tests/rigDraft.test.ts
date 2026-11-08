@@ -115,6 +115,14 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(Math.max(...thigh.map(Math.abs)), `${body} 대기 허벅지`).toBeGreaterThan(5);
     }
   });
+  it('짐승형 앞다리: 아래로 곧게 디딘 다리 = 가까운 앞다리(fleg_R, 몸 앞에 그림), 앞으로 뻗은 다리 = 먼 앞다리(fleg_L, 몸 뒤) — GDD 115-A 79', () => {
+    const b = DRAFT_RIGS.beast!;
+    const ref = b.rig.bodies.ref!;
+    expect(ref.fleg_L2!.at[0]).toBeLessThan(ref.fleg_R2!.at[0]); // 먼 앞발이 더 앞(왼쪽)
+    const order = b.rig.slots.map((s) => s.id);
+    expect(order.indexOf('fleg_R')).toBeGreaterThan(order.indexOf('body'));
+    expect(order.indexOf('fleg_L')).toBeLessThan(order.indexOf('body'));
+  });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
     const mv = b.motions.move!;

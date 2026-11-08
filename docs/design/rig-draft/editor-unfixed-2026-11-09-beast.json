@@ -1,0 +1,36 @@
+{
+ "note": "편집기에 남아 있던 짐승(beast) 고정 안 한 값(2026-11-09 01:34:06 KST 저장, 편집기 rig/editor-beast). 짐승 앞다리·먼 앞다리 바로잡으며(115-A 79) 편집기를 새로 올려 편집기에서는 사라짐 — 여기 따로 둠. 꼬리 자리라 앞다리 바꿈과 무관. 넣으려면 사용자에게 확인 후 작업본에 직접 넣기",
+ "savedAt": "2026-11-09 01:34:06 KST",
+ "bodies.ref.tail.at": [
+  37,
+  1
+ ],
+ "bodies.ref.tail2.at": [
+  43,
+  5
+ ],
+ "page": {
+  "bodies.ref.tail.at": [
+   39,
+   1
+  ],
+  "bodies.ref.tail2.at": [
+   45,
+   5
+  ],
+  "bodyJoints.ref": "없음(뼈 기본 자리 tail [40,11]·tail2 [47,5])"
+ },
+ "bodyJoints.ref": {
+  "pivots": {
+   "tail": [
+    45,
+    18
+   ],
+   "tail2": [
+    44,
+    5
+   ]
+  },
+  "rot": {}
+ }
+}
