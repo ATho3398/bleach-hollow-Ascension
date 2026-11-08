@@ -174,10 +174,10 @@
       "forearm_R": { "art": "hb/forearm_R", "at": [-18, 39], "size": [24, 32] },
       "arm_L": { "art": "hb/arm_L", "at": [22, 22], "size": [16, 24] },
       "forearm_L": { "art": "hb/forearm_L", "at": [33, 34], "size": [20, 36] },
-      "leg_R": { "art": "hb/leg_R", "at": [6, 56], "size": [20, 14] },
-      "shin_R": { "art": "hb/shin_R", "at": [3, 64], "size": [18, 14] },
-      "leg_L": { "art": "hb/leg_L", "at": [21, 54], "size": [14, 18] },
-      "shin_L": { "art": "hb/shin_L", "at": [23, 64], "size": [14, 14] }
+      "leg_R": { "art": "hb/leg_R", "at": [2, 50], "size": [20, 14] },
+      "shin_R": { "art": "hb/shin_R", "at": [-1, 58], "size": [18, 14] },
+      "leg_L": { "art": "hb/leg_L", "at": [19, 48], "size": [14, 18] },
+      "shin_L": { "art": "hb/shin_L", "at": [21, 58], "size": [14, 14] }
     }
   },
   "looks": {
@@ -426,9 +426,9 @@
         "arm_L": [26, 30],
         "forearm_L": [38, 42],
         "leg_R": [16, 58],
-        "shin_R": [16, 70],
+        "shin_R": [12, 64],
         "leg_L": [34, 56],
-        "shin_L": [31, 70]
+        "shin_L": [29, 64]
       }
     }
   },
@@ -769,11 +769,11 @@
       "hair_back",
       "foot_L",
       "foot_R",
+      "shin_R",
       "shin_L",
+      "leg_R",
       "forearm_R",
       "torso",
-      "leg_R",
-      "shin_R",
       "outer_torso",
       "arm_L",
       "scabbard",
