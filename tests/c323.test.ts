@@ -481,6 +481,6 @@ describe('C.323 구조·문구·배포', () => {
   });
   it('종족 분기 하드코딩 없음 · 세이브 형식 그대로', () => {
     for (const f of ['src/cloudSave.ts', 'src/cloudFirebase.ts', 'src/ui/cloudView.ts']) expect(src(f)).not.toMatch(/=== 'hollow'|=== 'shinigami'/);
-    expect(SAVE_FORMAT_VERSION).toBe(63); // C.326
+    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326
   });
 });

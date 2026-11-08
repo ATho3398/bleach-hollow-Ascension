@@ -53,6 +53,7 @@ function legacyOf(f: number): Record<string, any> {
   const s = JSON.parse(PLAYED);
   const log = s.runLog;
   s.meta.format = f;
+  if (f < 64) { delete s.enemyDex; for (const r of log.runs) delete r.kills; } // C.330 적 도감
   if (f < 25) delete s.machine;
   if (f < 24) { delete s.wear; delete log.shopPurchases; s.shared = { ...s.shared }; delete s.shared.rerollTickets; delete s.shared.deckSlots; delete s.shared.cosmetics; }
   if (f < 23) { delete s.otherTracks; delete s.trackNotice; delete s.hogyoku; delete s.transcendentDex; delete s.slotLog; }

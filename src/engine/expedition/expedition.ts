@@ -26,6 +26,7 @@ import {
 } from './variants';
 import type { FoodId } from '../faction';
 import { getBoss, isBossId } from '../../data/bosses';
+import { killsByEnemy } from '../enemyDex';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
 import { petBonus, rollAnyPet, type PetCarry } from '../pet';
@@ -1706,6 +1707,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     ...(exp.tutorial ? { tutorial: true } : {}),
     continueRun: continueRunOf(exp),
     ...(exp.abandoned ? { abandoned: exp.abandoned } : {}),
+    kills: killsByEnemy(exp.battles), // 잡은 적 id·수 (GDD 200장 6, C.330)
   };
 }
 

@@ -1310,13 +1310,13 @@ export function startApp(host: HTMLElement): void {
         nestScreen();
         showToast({ eyebrow: '부활', title: `${faction.tierNames[0]}(으)로 다시 시작한다`, meta: `노력치 −${Math.round(r.evLoss * 100)}% · 진화 초기화` }, 0, 4200);
       },
-      onBook: () => open('dex', () => bookView(root, faction, s)),
+      onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
       // 진급 시험 물건 (GDD 174장 2·3, C.257): 책장 아래. 해금 전이면 자물쇠·흐림 + 탑과 같은 토스트 안내
       onRank: () => open('rank', () => rankScreen(faction)),
       rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),
       onRankLocked: () => showToast({ eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' }, 0, 1800),
-      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
+      onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();

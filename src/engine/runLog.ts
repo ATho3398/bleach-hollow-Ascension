@@ -295,6 +295,8 @@ export interface RunRecord {
   /** C.311 (세이브 형식 62, GDD 192장 1·9장): endReason 'abandoned'(이어 하지 못해 실패로 정산)의 이유 — stale = 나간 뒤 시한 초과, version = 새 패치(밸런스 버전 다름), corrupt = 중간 저장 손상(상태 없이 기록만: laps·gained 비어 있음).
    *  형식 62 이전 기록에는 없다 */
   abandoned?: 'stale' | 'version' | 'corrupt';
+  /** C.330 (세이브 형식 64, GDD 200장 6·9장): 이 원정에서 잡은(이긴 전투) 적 id → 수. 형식 64 이전 기록에는 없다(전투 기록 battles 로 알 수 있다) */
+  kills?: Record<string, number>;
 }
 
 /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */
