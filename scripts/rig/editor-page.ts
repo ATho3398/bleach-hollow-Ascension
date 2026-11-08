@@ -177,7 +177,6 @@ function fitSide() {
   side.style.gridTemplateRows = `repeat(${Math.max(4, Math.floor((wrap.offsetHeight + 6) / row))}, auto)`;
 }
 sizeStage();
-syncMotionButtons();
 window.addEventListener('resize', fitSide);
 
 let dbTimer = 0;
@@ -557,7 +556,7 @@ $('fix').onclick = async () => {
   btn.disabled = false;
 };
 function setSync(t: string) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
-buildChips(); save(false); draw(); requestAnimationFrame(tick);
+syncMotionButtons(); buildChips(); save(false); draw(); requestAnimationFrame(tick);
 // 서버 값이 있으면 그걸 쓴다(어느 기기에서 열어도 같은 값). 없으면 이 기기 값을 한 번 올린다
 void (async () => {
   if (typeof claude === 'undefined') return setSync('이 기기에만 저장');
