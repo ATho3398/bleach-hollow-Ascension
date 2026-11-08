@@ -68,7 +68,13 @@ export interface PartArt {
   at: Vec2;
   size: Vec2;
 }
-export type Look = { body: string; [slot: string]: PartArt | string };
+/** 외형: 몸 + 외형 층(머리카락 등). artFolder = 몸 부위 그림을 이 폴더의 같은 이름 그림으로(색만 바꾼 그림 — 몸·관절·동작은 그 몸 그대로, GDD 115-A 85).
+ *  color = 같은 몸 색 외형 고르기에 보이는 색 이름(편집기·시험 페이지) */
+export type Look = { body: string; artFolder?: string; color?: string; [slot: string]: PartArt | string | undefined };
+/** 외형의 몸 부위 그림 경로 (artFolder 가 있으면 그 폴더의 같은 이름 그림) */
+export function lookArt(look: Look, art: string): string {
+  return typeof look.artFolder === 'string' ? `${look.artFolder}/${art.slice(art.lastIndexOf('/') + 1)}` : art;
+}
 export interface Layer extends PartArt {
   slot: string;
   bone: string;
@@ -276,7 +282,8 @@ export function lookLayers(rig: Rig, lookId: string): Layer[] {
   const layers: Layer[] = [];
   for (const s of slotsOf(rig, look.body)) {
     const extra = look[s.id];
-    const part = body[s.id] ?? (typeof extra === 'object' ? extra : undefined);
+    const own = body[s.id];
+    const part = own ? { ...own, art: lookArt(look, own.art) } : typeof extra === 'object' ? extra : undefined;
     if (part) layers.push({ slot: s.id, bone: s.bone, ...part });
   }
   return layers;
@@ -370,6 +377,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   for (const [lid, look] of Object.entries(rig.looks)) {
     if (!rig.bodies[look.body]) errs.push(`외형 ${lid}: 몸 ${look.body} 없음`);
     if (typeof look.release === 'string' && !rig.looks[look.release]) errs.push(`외형 ${lid}: 해방 외형 ${look.release} 없음`);
+    for (const k of ['artFolder', 'color'] as const) if (look[k] !== undefined && (typeof look[k] !== 'string' || !look[k])) errs.push(`외형 ${lid}: ${k} 는 글자`);
     for (const k of HAIR_SLOTS) {
       const hair = look[k];
       if (typeof hair === 'object' && !insideFrame(rig, hair, k)) errs.push(`외형 ${lid}: ${k} 가 머리카락 틀 밖`);

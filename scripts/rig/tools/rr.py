@@ -1,6 +1,8 @@
 # 작업본 사람형 자세 그리기(시험용): python3 rr.py <동작 json 파일> <외형> <out.png> t1 t2 ...
 import json, math, sys, os
 from PIL import Image, ImageDraw
+sys.path.insert(0,'/home/user/bleach-hollow-Ascension/scripts/rig')
+from paths import look_art
 R='/home/user/bleach-hollow-Ascension/docs/design/rig-draft/'
 rig=json.load(open(R+'humanoid.json'))
 mot=json.load(open(sys.argv[1]))
@@ -31,7 +33,7 @@ for t in ts:
     slots=[x for x in base_slots if x['id'] not in mot.get('hide',[])]
     fr=mot.get('front',[]); slots=[x for x in slots if x['id'] not in fr]+[x for f in fr for x in slots if False]+[x for f in fr for x in rig['slots'] if x['id']==f and x['id'] not in mot.get('hide',[])]
     for s in slots:
-        part=rig['bodies'][body].get(s['id']) or (L.get(s['id']) if isinstance(L.get(s['id']),dict) else None)
+        part=rig['bodies'][body].get(s['id']); part=dict(part,art=look_art(L,part['art'])) if part else (L.get(s['id']) if isinstance(L.get(s['id']),dict) else None)
         if not part: continue
         m=mul(get(s['bone']),[1,0,0,1,part['at'][0],part['at'][1]])
         if s['id'] in mot.get('flip',[]):

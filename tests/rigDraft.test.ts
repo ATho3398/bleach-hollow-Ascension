@@ -133,6 +133,18 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(u.tracks.arm_R!.every((k) => k[2] === 0 && k[3] === 0), body).toBe(true);
     }
   });
+  it('덩치 색 외형(GDD 115-A 85): 모두 몸 hb·같은 동작, 그림만 색 폴더(artFolder), 색 이름이 있다', () => {
+    const brutes = Object.entries(rig.looks).filter(([, l]) => l.body === 'hb');
+    expect(brutes.length).toBeGreaterThanOrEqual(5);
+    for (const [id, l] of brutes) {
+      expect(typeof l.color, id).toBe('string');
+      expect(resolveMotions(rig, motions, sets, l.body)).toEqual(resolveMotions(rig, motions, sets, 'hb'));
+      const arts = lookLayers(rig, id).map((x) => x.art);
+      if (l.artFolder) expect(arts.every((a) => a.startsWith(`${l.artFolder}/`)), id).toBe(true);
+      else expect(arts.every((a) => a.startsWith('hb/')), id).toBe(true);
+    }
+    for (const c of ['보라', '빨강', '회색', '연갈색', '청록']) expect(brutes.some(([, l]) => l.color === c), c).toBe(true);
+  });
   it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
     const b = DRAFT_RIGS.beast!;
     const ref = b.rig.bodies.ref!;

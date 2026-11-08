@@ -412,6 +412,23 @@ function nudge(dx: number, dy: number) {
   save(); draw();
 }
 
+/** 색 외형 (GDD 115-A 85, 사용자 "덩치 누른다음, 상세편집에서 색깔변경만"): 지금 몸을 쓰는 외형 중 color 이름이 있는 것 — 둘 이상이면 색 단추 줄을 보인다.
+ *  색은 그림만 바뀌고 몸·관절·동작은 같다(관절을 고치면 모든 색에 같이). 탭(외형 단추)은 그대로 둔다 */
+function buildColors() {
+  const row = document.getElementById('colors');
+  if (!row) return;
+  const body = rig.looks[look]?.body;
+  const list = Object.entries(rig.looks).filter(([, l]) => l.body === body && typeof l.color === 'string');
+  row.hidden = list.length < 2;
+  row.replaceChildren(...(list.length < 2 ? [] : [Object.assign(document.createElement('span'), { className: 'lbl', textContent: '색' }), ...list.map(([id, l]) => {
+    const b = document.createElement('button');
+    b.textContent = l.color as string;
+    b.dataset.color = id;
+    b.classList.toggle('on', id === look);
+    b.onclick = () => { look = id; buildColors(); buildChips(); save(false); draw(); };
+    return b;
+  })]));
+}
 document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onclick = () => {
   look = b.dataset.look!;
   const c = ctxOfLook(look);
@@ -421,7 +438,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   }
   sizeStage(); syncMotionButtons();
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
-  buildChips(); save(false); draw();
+  buildColors(); buildChips(); save(false); draw();
 });
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onclick = () => {
   mode = b.dataset.mode as 'pivot' | 'part';
@@ -556,7 +573,7 @@ $('fix').onclick = async () => {
   btn.disabled = false;
 };
 function setSync(t: string) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
-syncMotionButtons(); buildChips(); save(false); draw(); requestAnimationFrame(tick);
+syncMotionButtons(); buildColors(); buildChips(); save(false); draw(); requestAnimationFrame(tick);
 // 서버 값이 있으면 그걸 쓴다(어느 기기에서 열어도 같은 값). 없으면 이 기기 값을 한 번 올린다
 void (async () => {
   if (typeof claude === 'undefined') return setSync('이 기기에만 저장');

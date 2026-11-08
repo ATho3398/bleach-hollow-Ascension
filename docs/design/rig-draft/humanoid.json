@@ -128,7 +128,7 @@
     },
     "shinigami_f": {
       "torso": { "art": "shinigami_f/torso", "at": [9, 25], "size": [18, 31] },
-      "arm_L": { "art": "shinigami_f/arm_L", "at": [2, 29], "size": [15, 15] },
+      "arm_L": { "art": "shinigami_f/arm_L", "at": [4, 29], "size": [13, 15] },
       "arm_R": { "art": "shinigami_f/arm_R", "at": [21, 29], "size": [13, 15] },
       "leg_L": { "art": "shinigami_f/leg_L", "at": [6, 51], "size": [17, 25] },
       "leg_R": { "art": "shinigami_f/leg_R", "at": [15, 49], "size": [16, 27] },
@@ -137,7 +137,7 @@
       "foot_R": { "art": "shinigami/foot_R", "at": [20, 72], "size": [9, 9] },
       "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
       "forearm_R": { "art": "shinigami_f/forearm_R", "at": [20, 37], "size": [14, 18] },
-      "forearm_L": { "art": "shinigami_f/forearm_L", "at": [2, 42], "size": [15, 16] }
+      "forearm_L": { "art": "shinigami_f/forearm_L", "at": [2, 42], "size": [11, 16] }
     },
     "arrancar_f": {
       "torso": { "art": "arrancar_f/torso", "at": [7, 25], "size": [16, 28] },
@@ -211,17 +211,17 @@
     },
     "shinigami-student-f": {
       "body": "student_f",
-      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "student_f/hair_back", "at": [21, 2], "size": [18, 30] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
     },
     "shinigami-base-f": {
       "body": "shinigami_f",
-      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "student_f/hair_back", "at": [21, 2], "size": [18, 30] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
     },
     "arrancar-base-f": {
       "body": "arrancar_f",
@@ -257,7 +257,53 @@
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     },
     "brute-base": {
-      "body": "hb"
+      "body": "hb",
+      "color": "보라"
+    },
+    "brute-red": {
+      "body": "hb",
+      "artFolder": "hb-red",
+      "color": "빨강"
+    },
+    "brute-gray": {
+      "body": "hb",
+      "artFolder": "hb-gray",
+      "color": "회색"
+    },
+    "brute-tan": {
+      "body": "hb",
+      "artFolder": "hb-tan",
+      "color": "연갈색"
+    },
+    "brute-teal": {
+      "body": "hb",
+      "artFolder": "hb-teal",
+      "color": "청록"
+    },
+    "brute-brown": {
+      "body": "hb",
+      "artFolder": "hb-brown",
+      "color": "갈색"
+    },
+    "brute-orange": {
+      "body": "hb",
+      "artFolder": "hb-orange",
+      "color": "주황"
+    },
+    "brute-green": {
+      "body": "hb",
+      "artFolder": "hb-green",
+      "color": "초록"
+    },
+    "brute-yellow": {
+      "body": "hb",
+      "artFolder": "hb-yellow",
+      "color": "황토"
+    },
+    "brute-blue": {
+      "body": "hb",
+      "artFolder": "hb-blue",
+      "color": "파랑"
     }
   },
   "hairFrame": {
@@ -788,5 +834,80 @@
   "assembled": {
     "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
     "hb": "docs/design/user-art/beast-base-ref/assembly.json"
+  },
+  "recolors": {
+    "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",
+    "hb-red": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#964e50",
+        "#3a2c48": "#4e262e"
+      },
+      "source": "시트 3번째 = 적 blood"
+    },
+    "hb-gray": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#7a787c",
+        "#3a2c48": "#3c3a42"
+      },
+      "source": "시트 5번째 = 적 normal"
+    },
+    "hb-tan": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#b1866c",
+        "#3a2c48": "#573b2f"
+      },
+      "source": "시트 1번째"
+    },
+    "hb-teal": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#52807c",
+        "#3a2c48": "#264042"
+      },
+      "source": "시트 2번째"
+    },
+    "hb-brown": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#967654",
+        "#3a2c48": "#4e3a2a"
+      },
+      "source": "적 earth"
+    },
+    "hb-orange": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#a86848",
+        "#3a2c48": "#5a3226"
+      },
+      "source": "적 fire"
+    },
+    "hb-green": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#70845c",
+        "#3a2c48": "#384434"
+      },
+      "source": "적 poison"
+    },
+    "hb-yellow": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#a68e5e",
+        "#3a2c48": "#58462e"
+      },
+      "source": "적 thunder"
+    },
+    "hb-blue": {
+      "from": "hb",
+      "map": {
+        "#78608a": "#58688c",
+        "#3a2c48": "#2a324c"
+      },
+      "source": "적 water"
+    }
   }
 }

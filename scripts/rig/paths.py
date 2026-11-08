@@ -15,3 +15,9 @@ DRAFT_ART = os.path.join(DRAFT_DIR, 'humanoid')
 GAME_RIG_JSON = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json')
 GAME_MOTIONS = os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'motions.json')
 GAME_ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
+
+
+def look_art(look, art):
+    """외형의 몸 부위 그림 경로 — artFolder(색 외형, GDD 115-A 85)가 있으면 그 폴더의 같은 이름 그림 (pose.ts lookArt 와 같음)"""
+    f = look.get('artFolder')
+    return f'{f}/{art.rsplit("/", 1)[-1]}' if isinstance(f, str) else art

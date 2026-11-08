@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paths import DRAFT_ART, DRAFT_MOTIONS, DRAFT_RIG_JSON, GAME_ART, GAME_MOTIONS, GAME_RIG_JSON  # noqa: E402
+from paths import DRAFT_ART, DRAFT_MOTIONS, DRAFT_RIG_JSON, GAME_ART, GAME_MOTIONS, GAME_RIG_JSON, look_art  # noqa: E402
 
 
 def files(root):
@@ -40,6 +40,7 @@ def game_rig():
             rig[key] = {k: v for k, v in rig[key].items() if k == 'note' or k in used}
     arts = {p['art'] for b in rig['bodies'].values() for p in b.values()}
     arts |= {v['art'] for lk in rig['looks'].values() for v in lk.values() if isinstance(v, dict)}
+    arts |= {look_art(lk, p['art']) for lk in rig['looks'].values() for p in rig['bodies'][lk['body']].values()}  # 색 외형 그림(115-A 85)
     return rig, {os.path.normpath(a + '.png') for a in arts}
 
 

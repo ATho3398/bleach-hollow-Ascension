@@ -15,6 +15,9 @@ import sys
 import numpy as np
 from PIL import Image
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import look_art  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
 RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json'), encoding='utf-8'))
@@ -57,7 +60,8 @@ def layers(look_id):
     body = RIG['bodies'][look['body']]
     bo = (RIG.get('bodySlots') or {}).get(look['body']) or []  # 몸별 앞뒤 순서 (GDD 115-A 74)
     for s in sorted(RIG['slots'], key=lambda x: bo.index(x['id']) if x['id'] in bo else len(bo) + RIG['slots'].index(x)):
-        part = body.get(s['id']) or (look.get(s['id']) if isinstance(look.get(s['id']), dict) else None)
+        part = body.get(s['id'])
+        part = dict(part, art=look_art(look, part['art'])) if part else (look.get(s['id']) if isinstance(look.get(s['id']), dict) else None)
         if part:
             yield s, part
 

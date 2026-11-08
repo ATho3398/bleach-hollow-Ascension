@@ -10,11 +10,36 @@ const LOOKS: [string, string][] = [
 // 주소 뒤 #look=<외형> 이면 그 외형 하나만 크게(캡처·확인용)
 const hp = new URLSearchParams(location.hash.slice(1));
 const only = hp.get('look');
-const dolls = LOOKS.filter(([, l]) => !only || l === only).map(([rid, look]) => {
+/** 같은 몸의 색 외형(GDD 115-A 85) — 둘 이상이면 그 칸 아래에 색 고르기 */
+const colorsOf = (rid: string, look: string) => {
+  const r = DRAFT_RIGS[rid]!.rig;
+  const body = r.looks[look]?.body;
+  const list = Object.entries(r.looks).filter(([, l]) => l.body === body && typeof l.color === 'string');
+  return list.length > 1 ? list : [];
+};
+const mk = (rid: string, look: string) => {
   const d0 = DRAFT_RIGS[rid]!;
   const d = createPaperdoll({ rig: d0.rig, motions: d0.motions, motionSets: d0.sets, look, scale: only ? 4 : 3, base: '', autoplay: !hp.get('manual') });
   d.el.querySelectorAll('img').forEach((im) => { const k = im.getAttribute('src')!; if (ART_MAP[k]) im.src = ART_MAP[k]; });
+  return d;
+};
+const dolls = LOOKS.filter(([rid, l]) => !only || l === only || colorsOf(rid, l).some(([id]) => id === only)).map(([rid, look0], i) => {
+  const cs = colorsOf(rid, look0);
+  let d = mk(rid, only && cs.some(([id]) => id === only) ? only : look0);
   const cell = document.createElement('div'); cell.className = 'cell'; cell.append(d.el); stage.append(cell);
+  if (cs.length) {
+    const sel = document.createElement('select');
+    sel.setAttribute('aria-label', '색');
+    for (const [id, l] of cs) sel.append(new Option(`색: ${l.color as string}`, id, false, id === (only || look0)));
+    sel.onchange = () => {
+      const nd = mk(rid, sel.value);
+      d.el.replaceWith(nd.el);
+      d = nd;
+      dolls[i] = nd;
+      nd.setLoop(loop);
+    };
+    cell.append(sel);
+  }
   return d;
 });
 (window as unknown as { __dolls: typeof dolls }).__dolls = dolls; // 캡처용(시각을 정확히 맞춰 찍기)
