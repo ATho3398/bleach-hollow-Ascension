@@ -59,12 +59,39 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     const hb = resolveMotions(rig, motions, sets, 'hb');
     expect(hb.skill2).toBeUndefined();
     expect(resolveMotions(rig, motions, sets, 'bare').skill2).toBeDefined(); // 다른 몸은 그대로
-    const piv = (rig.bodyJoints!.hb as { pivots: Record<string, [number, number]> }).pivots;
+    // 종아리 그림 아래 가운데(어림): 디딘 다리는 바닥 줄(80) 근처 — 다리를 위로 올린 고정(01:35) 뒤로 몸을 내려 맞춤
     for (let t = 0; t <= hb.move!.duration; t += 40) {
       const m = boneMatrices(rig, samplePose(rig, hb.move!, t), 'hb');
-      const lift = (['shin_L', 'shin_R'] as const).map((s) => piv[s]![1] - apply(m[s]!, piv[s]!)[1]);
-      expect(Math.min(...lift), `t=${t}`).toBeLessThan(2.5);
-      expect(Math.min(...lift), `t=${t}`).toBeGreaterThan(-2.5);
+      const gap = (['shin_L', 'shin_R'] as const).map((s) => { const p = rig.bodies.hb![s]!; return 80 - apply(m[s]!, [p.at[0] + p.size[0] / 2, p.at[1] + p.size[1]])[1]; });
+      expect(Math.min(...gap.map(Math.abs)), `t=${t}`).toBeLessThan(3);
+    }
+  });
+  it('제자리 동작은 두 발바닥이 위아래로 안 움직인다(GDD 115-A 77) — 사람형 몸 전부·역관절·덩치', () => {
+    const standing = ['idle', 'homeIdle', 'dying', 'skill', 'skill2', 'release1', 'hit', 'attack', 'attack2'];
+    for (const body of ['bare', 'female', 'shinigami', 'shinigami_f', 'student', 'student_f', 'arrancar', 'arrancar_f', 'dg', 'hb']) {
+      const ms = resolveMotions(rig, motions, sets, body);
+      const piv = ((rig.bodyJoints?.[body] ?? {}) as { pivots?: Record<string, [number, number]> }).pivots ?? {};
+      const calf = !rig.bodies[body]!.foot_L; // 덩치: 종아리에 발
+      const pt = (s: string): [number, number] => {
+        if (!calf) return (piv[s] ?? rig.bones.find((b) => b.id === s)!.pivot) as [number, number];
+        const p = rig.bodies[body]![s]!;
+        return [p.at[0] + p.size[0] / 2, p.at[1] + p.size[1]];
+      };
+      const ends = calf ? ['shin_L', 'shin_R'] : ['foot_L', 'foot_R'];
+      for (const id of standing) {
+        const m = ms[id];
+        if (!m) continue;
+        for (const s of ends) {
+          let lo = 1e9;
+          let hi = -1e9;
+          for (let t = 0; t <= m.duration; t += 10) {
+            const y = apply(boneMatrices(rig, samplePose(rig, m, t), body)[s]!, pt(s))[1];
+            lo = Math.min(lo, y);
+            hi = Math.max(hi, y);
+          }
+          expect(hi - lo, `${body}.${id}.${s}`).toBeLessThan(calf ? 3 : 0.3); // 덩치는 종아리가 기울어 그림 상자 아래 가운데로 어림(실제 발바닥 칸은 0.2칸 안 — plant.py 계산)
+        }
+      }
     }
   });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {

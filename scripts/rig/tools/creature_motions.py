@@ -62,6 +62,15 @@ def lowest(tracks, t, slots):
         out = max(out, float((m[1]*P[:, 0] + m[3]*P[:, 1] + m[5]).max()))
     return out
 FEET = ['foot_L', 'foot_R']
+def ground_dy(motion, t):
+    """t 순간 가장 낮은 발(없으면 종아리)이 바닥 줄에 닿게 몸을 내릴 칸 수"""
+    feet = [s for s in FEET if s in PTS] or [s for s in ('shin_L', 'shin_R') if s in PTS]
+    tr = dict(motion['tracks'])
+    r = tr.get('root') or [[0, 0, 0, 0]]
+    tr['root'] = [[t, *samp(r, t)[:2], 0]]
+    return round(GROUND - lowest(tr, t, feet), 2)
+
+
 def build(spec):
     """spec: times, duration, loop, hit?, hold?, bones {뼈: [각도…]}, rootX?, rootRot?, ground 'feet'|'all', sample? → 동작 dict"""
     T = spec['times']; n = len(T)
@@ -93,6 +102,12 @@ def build(spec):
     # 이 몸에 그림이 없는 뼈(뒷머리·망토·칼·칼집)는 사람형 동작 키가 길이 밖으로 남지 않게 멈춤으로 덮음
     for b in rig['bones']:
         m['tracks'].setdefault(b['id'], [[0, 0, 0, 0]])
+    # 제자리 동작은 두 발바닥 고정(GDD 115-A 77): 가장 낮은 발로 몸 높이를 맞춘 뒤 다른 발도 정강이(종아리) 각을 풀어 바닥 줄에
+    if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all'):
+        import plant as pl
+        pl.cm = sys.modules[__name__]
+        mode = 'sole' if 'foot_L' in PTS else 'calf'
+        m['tracks'].update(pl.plant(m, mode, target=GROUND, flat_foot=(mode == 'sole')))
     return m
 
 
@@ -252,10 +267,28 @@ def main(bodies):
         out = {'note': NOTES[body]}
         for mid, s in SPECS[body].items():
             out[mid] = {'off': True} if s == 'off' else build(s)
-        # 이 스크립트가 만들지 않는 동작(편집기에서 고정한 것 등)은 그대로 둔다
+        # 이 스크립트가 만들지 않는 동작(편집기에서 고정한 것 등)은 그대로 두되, 제자리 동작이면 두 발바닥만 고정(115-A 77)
+        import plant as pl
+        pl.cm = sys.modules[__name__]
         for mid, v in (mo['sets'].get(rig['bodyMotions'][body]) or {}).items():
             if mid != 'note' and mid not in out:
                 out[mid] = v
+                if mid in pl.STANDING and not v.get('off'):
+                    # 앞서 이 스크립트가 넣은 발 고정 트랙은 빼고 다시 풂(다시 돌려도 같은 결과)
+                    v = json.loads(json.dumps(v))
+                    for b in v.pop('planted', []):
+                        v.get('tracks', {}).pop(b, None)
+                    base = mo.get(mid) or {}
+                    full = {**base, **{k: x for k, x in v.items() if k != 'tracks'}, 'tracks': {**base.get('tracks', {}), **v.get('tracks', {})}}
+                    sc0 = full['tracks'].get('root') or [[0, 0, 0, 0]]
+                    ts = sorted({k[0] for x in full['tracks'].values() for k in x} | {0, full['duration']} | set(range(0, full['duration'], 50)))  # 편집기에서 고친 동작은 키가 띄엄띄엄이라 50ms 마다
+                    full['tracks']['root'] = [[tt, *[round(q, 2) for q in samp(sc0, tt)[:2]], ground_dy(full, tt)] for tt in ts]  # 몸 높이 = 가장 낮은 발이 바닥에 닿는 높이(다시 돌려도 겹쳐 더하지 않음)
+                    out[mid] = json.loads(json.dumps(v))
+                    out[mid]['tracks'] = {**v.get('tracks', {}), 'root': full['tracks']['root']}
+                    mode = 'sole' if 'foot_L' in PTS else 'calf'
+                    new = pl.plant(full, mode, target=GROUND, flat_foot=(mode == 'sole'), step=50)
+                    out[mid]['tracks'].update(new)
+                    out[mid]['planted'] = sorted({'root', *new})
         mo['sets'][rig['bodyMotions'][body]] = out
         print(body, '→', rig['bodyMotions'][body], list(out)[1:])
     write_motions(mo)
