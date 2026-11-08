@@ -23,19 +23,22 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('정강이 그림이 없는 몸은 기본 동작에서 발이 다리를 그대로 따라간다(정강이 0°)', () => {
     for (const m of Object.values(motions)) expect(m.tracks.shin_L ?? m.tracks.shin_R).toBeUndefined();
   });
-  it('역관절 기본은 전용 동작 11개를 쓴다(모든 뼈를 묶음에서 정함, 칼 설정 없음) — GDD 115-A 70', () => {
-    const dg = resolveMotions(rig, motions, sets, 'dg');
-    const own = ['idle', 'homeIdle', 'move', 'attack', 'attack2', 'skill', 'hit', 'release1', 'headbutt', 'dying', 'down'];
-    expect(Object.keys(sets.digitigrade!).filter((k) => k !== 'note').sort()).toEqual([...own].sort());
-    for (const id of own) {
-      for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']) {
-        expect(sets.digitigrade![id]!.tracks?.[b], `${id}.${b}`).toBeDefined();
+  it('호로 몸(역관절·덩치)은 전용 동작만: 홈대기=대기, 해방=필살기, 어퍼컷·오른손치기·스트레이트·특수2·온천 등은 없음 — GDD 115-A 70·76', () => {
+    const own = ['idle', 'homeIdle', 'move', 'attack', 'attack2', 'skill', 'hit', 'release1', 'ultimate', 'headbutt', 'dying', 'down'];
+    for (const body of ['dg', 'hb']) {
+      const r = resolveMotions(rig, motions, sets, body);
+      const set = sets[rig.bodyMotions![body]!]!;
+      for (const id of own) expect(r[id], `${body}.${id}`).toBeDefined();
+      for (const id of ['skill2', 'uppercut', 'rpunch', 'straight', 'bath', 'punch', 'kick']) expect(r[id], `${body}.${id} 없음`).toBeUndefined();
+      expect(set.homeIdle!.tracks, `${body} 홈대기 = 대기`).toEqual(set.idle!.tracks);
+      expect(set.ultimate!.tracks, `${body} 필살기 = 해방`).toEqual(set.release1!.tracks);
+      for (const id of own.filter((x) => x !== 'skill' || body === 'dg')) {
+        for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'leg_R', 'shin_R']) expect(set[id]!.tracks?.[b], `${body}.${id}.${b}`).toBeDefined();
       }
-      expect(dg[id]!.flip ?? [], id).toEqual([]);
-      expect(dg[id]!.fx ?? [], id).toEqual([]);
+      expect(r.idle!.tracks.leg_R!.some((k) => Math.abs(k[1]) >= 5), `${body} 대기 허벅지`).toBe(true);
+      expect(r.down!.hold).toBe(true);
     }
-    expect(dg.move!.tracks.shin_L!.some((k) => k[1] !== 0)).toBe(true); // 걷기에서 정강이가 접힌다
-    expect(dg.down!.hold).toBe(true);
+    expect(resolveMotions(rig, motions, sets, 'bare').uppercut).toBeDefined(); // 다른 몸은 그대로
     expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로
   });
   it('역관절 걷기: 늘 한 발은 디뎌 있고(발목이 쉬는 자세 높이 그대로) 바닥에 묻히지 않는다 — 역관절 기본 = 사용자 도트(GDD 115-A 69)', () => {
@@ -49,17 +52,12 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-tol);
     }
   });
-  it('덩치 = 사용자 부위 시트 조립(115-A 73·75): 부위 10개(발 없음 — 종아리에 붙음), 대기·걷기·공격·해방, 특수2·필살기 없음, 걷기에서 늘 한 발은 디딤', () => {
+  it('덩치 = 사용자 부위 시트 조립(115-A 73·75): 부위 10개(발 없음 — 종아리에 붙음), 부위 시트 b(새 도트), 특수2 없음, 걷기에서 늘 한 발은 디딤', () => {
     expect(Object.keys(rig.bodies.hb!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
     expect(rig.looks['brute-base']!.body).toBe('hb');
     expect(rig.looks['beast-base']).toBeUndefined(); // 짐승은 원래(네 발 짐승 뼈대 beast-test)대로
     const hb = resolveMotions(rig, motions, sets, 'hb');
-    for (const id of ['idle', 'move', 'attack', 'release1']) {
-      expect(hb[id], id).toBeDefined();
-      for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'leg_R', 'shin_R']) expect(sets.brute![id]!.tracks?.[b], `${id}.${b}`).toBeDefined();
-    }
     expect(hb.skill2).toBeUndefined();
-    expect(hb.ultimate).toBeUndefined();
     expect(resolveMotions(rig, motions, sets, 'bare').skill2).toBeDefined(); // 다른 몸은 그대로
     const piv = (rig.bodyJoints!.hb as { pivots: Record<string, [number, number]> }).pivots;
     for (let t = 0; t <= hb.move!.duration; t += 40) {

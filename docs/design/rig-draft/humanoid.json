@@ -174,10 +174,10 @@
       "forearm_R": { "art": "hb/forearm_R", "at": [-18, 39], "size": [24, 32] },
       "arm_L": { "art": "hb/arm_L", "at": [22, 22], "size": [16, 24] },
       "forearm_L": { "art": "hb/forearm_L", "at": [33, 34], "size": [20, 36] },
-      "leg_R": { "art": "hb/leg_R", "at": [6, 56], "size": [18, 14] },
-      "shin_R": { "art": "hb/shin_R", "at": [3, 68], "size": [18, 10] },
+      "leg_R": { "art": "hb/leg_R", "at": [6, 56], "size": [20, 14] },
+      "shin_R": { "art": "hb/shin_R", "at": [3, 64], "size": [18, 14] },
       "leg_L": { "art": "hb/leg_L", "at": [21, 54], "size": [14, 18] },
-      "shin_L": { "art": "hb/shin_L", "at": [23, 68], "size": [14, 10] }
+      "shin_L": { "art": "hb/shin_L", "at": [23, 64], "size": [14, 14] }
     }
   },
   "looks": {
