@@ -99,16 +99,16 @@
       "category": "mixed",
       "tiers": [
         {
-          "name": "베기",
+          "name": "발도",
           "rigMotion": "attack",
           "multiplier": 1
         },
         {
-          "name": "연참",
+          "name": "쌍섬",
           "multiplier": 2.2
         },
         {
-          "name": "대참",
+          "name": "질풍참",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",
@@ -128,15 +128,15 @@
       "category": "physical",
       "tiers": [
         {
-          "name": "타격",
+          "name": "정권 지르기",
           "multiplier": 1
         },
         {
-          "name": "연권",
+          "name": "연속 지르기",
           "multiplier": 2.2
         },
         {
-          "name": "강권",
+          "name": "파산권",
           "multiplier": 3.6,
           "bonus": {
             "kind": "stagger",
