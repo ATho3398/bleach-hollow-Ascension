@@ -62,9 +62,12 @@ describe('131장 2·4 첫 모험 강제 (app·room·worldmap)', () => {
 
 describe('129-1 2 같은 종류: 월드맵 왼쪽 위 [둥지로]/[대원실로] (마스터W 04:33)', () => {
   const wm = readFileSync('src/ui/worldMapView.ts', 'utf8');
-  it('공용 spaceBackButton, 이름 = nestName, ▲▼ 맨 앞, 첫 모험 강제 중 잠김, 걷는 중 = 취소 (137장 3)', () => {
-    expect(wm).toContain("spaceBackButton(() => (walking ? cancelWalk() : homeLocked ? hd.onLocked?.('home') : hd.onHome()), fixParticles(`${wm.places.home}(으)로`))");
-    expect(wm).toContain('const items: SelectItem[] = [{ el: backBtn }, ...WORLD_PLACES.map(');
+  // C.322 (GDD 197장 5): 왼쪽 위 버튼 삭제 — 지도 위 둥지/대원실 장소로 돌아간다, 기기 ◀ = 걷기 취소·방 (app.ts interceptBack)
+  it('왼쪽 위 돌아가기 버튼 없음 · ▲▼ = 장소만 · 첫 모험 강제 중 focus = 모험', () => {
+    expect(wm).not.toContain('spaceBackButton');
+    expect(wm).not.toContain('bha-worldmap__hud');
+    expect(wm).toContain('const items: SelectItem[] = WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
+    expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("nav.push({ id: 'worldmap', interceptBack: worldMapCancelWalk,");
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208: 첫 모험 강제 중 focus = 모험
   });
 });

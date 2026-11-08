@@ -20,7 +20,7 @@ describe('155장 1 월드맵 = 화면 전체', () => {
   it('바깥 여백·장면 테두리 없음, 위 한 줄은 지도 위에 겹침, 하늘 띠 없음', () => {
     expect(css).toContain('.bha-lcd .bha-app.bha-room.bha-worldmap { padding: 0; gap: 0; position: relative; }');
     expect(css).toContain('.bha-worldmap__scene { border: 0; border-radius: 0; }');
-    expect(css).toMatch(/\.bha-worldmap__hud \{\n\s+position: absolute;/);
+    expect(css).not.toContain('.bha-worldmap__hud'); // C.322 (GDD 197장 5): 위 겹침 버튼 삭제
     expect(css).toContain('.bha-room--worldmap .bha-room__wall { display: none; }');
     expect(css).toMatch(/\.bha-room--worldmap \.bha-room__floor \{\n\s+height: 100%;/);
   });

@@ -1,0 +1,66 @@
+{
+ "tag": "before",
+ "cases": {
+  "hollow-pc": {
+   "backBtn": 1,
+   "hud": 1,
+   "home": {
+    "name": "둥지",
+    "box": [
+     315,
+     95,
+     177,
+     181
+    ]
+   },
+   "afterHomeIcon": "room",
+   "afterDeviceBack": "room"
+  },
+  "hollow-ph": {
+   "backBtn": 1,
+   "hud": 1,
+   "home": {
+    "name": "둥지",
+    "box": [
+     293,
+     91,
+     177,
+     181
+    ]
+   },
+   "afterHomeIcon": "room",
+   "afterDeviceBack": "room"
+  },
+  "shinigami-pc": {
+   "backBtn": 1,
+   "hud": 1,
+   "home": {
+    "name": "대원실",
+    "box": [
+     333,
+     146,
+     142,
+     150
+    ]
+   },
+   "afterHomeIcon": "room",
+   "afterDeviceBack": "room"
+  },
+  "shinigami-ph": {
+   "backBtn": 1,
+   "hud": 1,
+   "home": {
+    "name": "대원실",
+    "box": [
+     311,
+     141,
+     142,
+     150
+    ]
+   },
+   "afterHomeIcon": "room",
+   "afterDeviceBack": "room"
+  }
+ },
+ "errors": []
+}

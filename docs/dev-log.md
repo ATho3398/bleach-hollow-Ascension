@@ -2425,3 +2425,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **바꾼 것** (`src/ui/bha/walk-scene.css` 만): 판(.bha-exp__chips) 안에서만 진행·배부름·컨디션·리스크·위험·글자·선 토큰을 C.281 값으로(값 출처 = battle-c281.css, C.302 가 git 68acec7 에서 만든 값 — 새 색 아님), 사신 글자색은 `:root[data-bha-theme="shinigami"]`(종족 설정 theme 값). 막대 트랙·채움 = C.281 규칙 그대로. 다른 화면 영향 없음.
 - 테스트: `tests/c319.test.ts` +1(값이 battle-c281.css 와 같은지). typecheck · test · balance:check 통과(수치·세이브 변경 없음).
 - 캡처 `docs/captures/c321/`(1배): `compare-{hollow,shinigami}-{pc,ph}`(왼쪽 C.281 빌드 · 오른쪽 지금, 판 부분) · `after-…-walk`. 만드는 법 `scripts/c321-compare.cjs`.
+
+## C.322 — 월드맵 왼쪽 위 [둥지로]/[대원실로] 버튼 삭제 (GDD 197장 5, v5.478, S-23, 코딩230 Opus)
+- 사용자 원문: "지금 월드맵에 왼쪽위 대원실로 있거든? 이거 필요없잖아. 그냥 대원실 아이콘 누르면 되는데. 확인하고 지워"
+- **바꾼 것** (종족 분기·새 토큰 없음): `src/ui/worldMapView.ts` 위 겹침 줄·돌아가기 버튼 삭제, 기기 ▲▼ 선택 = 장소(+새 물건)만. `worldmap.css` `.bha-worldmap__hud`·월드맵 돌아가기 규칙 삭제(시장 버튼 규칙은 남김). 장소 배치 그대로.
+- 돌아가는 길: 지도 위 둥지/대원실 장소(첫 모험 강제 중엔 기존대로 잠김 안내) · 기기 ◀ = 걷는 중이면 취소, 아니면 방(app.ts `interceptBack` 그대로).
+- 튜토리얼·안내 카드·도움말 중 그 버튼을 가리키는 곳: 없음(grep — 회복 안내 온천 길·홈 안내 첫 모험은 장소 단추를 가리킴).
+- 검증 `scripts/c322-proof.cjs`(PC 844×390 · 폰 796×384 터치 × 두 종족): 버튼·겹침 줄 0, 둥지/대원실 장소 누름 → 방, 기기 ◀ → 방, 페이지 오류 0(전: 버튼 1). c279 튜토리얼 두 종족 막힘 0·자리 비움 문제 0. 테스트 c207·c233 을 '버튼 없음' 검사로. typecheck · test 239 파일 2760 · balance:check 통과(수치·세이브 형식 변경 없음).
+- 캡처 `docs/captures/c322/`(1배 4장): `compare-{pc,ph}-{hollow,shinigami}`(왼쪽 전 · 오른쪽 후).
