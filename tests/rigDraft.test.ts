@@ -115,6 +115,8 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       for (const [b, keys] of Object.entries(ms.idle!.tracks)) expect(keys.every((k) => k[1] === 0), `${body} 대기 ${b} 회전 없음`).toBe(true);
       const ys = ms.idle!.tracks.root!.map((k) => k[3]);
       expect(Math.max(...ys) - Math.min(...ys), `${body} 대기 몸 오르내림`).toBe(1);
+      const ty = ms.idle!.tracks.torso!.map((k) => k[3]);
+      expect(Math.max(...ty) - Math.min(...ty), `${body} 대기 몸통·팔 더 오르내림(115-A 82)`).toBe(1);
     }
   });
   it('짐승형 앞다리: 아래로 곧게 디딘 다리 = 가까운 앞다리(fleg_R, 몸 앞에 그림), 앞으로 뻗은 다리 = 먼 앞다리(fleg_L, 몸 뒤) — GDD 115-A 79', () => {
