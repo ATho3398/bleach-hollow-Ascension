@@ -26,7 +26,8 @@ export function followMove(rig: Rig, lookId: string, slot: string): FollowMove |
     const p = partOf(f);
     if (p && !parts.some((x) => x.part === p)) parts.push({ slot: f, part: p });
     const b = boneOf(f);
-    if (b && b !== leadBone && !bones.includes(b)) bones.push(b);
+    // 그림이 있는 딸린 부위의 관절만(턱 jaw 처럼 이 외형에 그림이 없는 부위의 관절은 안 건드림 — 115-A 71)
+    if (p && b && b !== leadBone && !bones.includes(b)) bones.push(b);
   }
   return { parts, bones };
 }
