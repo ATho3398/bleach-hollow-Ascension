@@ -112,12 +112,13 @@ export function evCapped(exp: ExpeditionState, m: AbsorbChoice): boolean {
   return m !== 'none' && absorbModeRule(m).ev > 0 && evLine(previewAbsorb(exp, m).ev, '') === '';
 }
 
-/** 흡수가 끝난 뒤 한 줄 (GDD 176장 11): "능력치 힘 +2 · 광기 +1 (7 → 8)" / 상한이면 "노력치가 가득 찼다 · …". 값은 previewAbsorb 그대로(실행 전에 부른다) */
+/** 흡수가 끝난 뒤 한 줄 (GDD 176장 11): "능력치 힘 +2 · 광기 +1 (7 → 8)" (리스크가 안 바뀌면 리스크 부분 없음, 197장) / 상한이면 "노력치가 가득 찼다 · …". 값은 previewAbsorb 그대로(실행 전에 부른다) */
 export function absorbResultLine(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): string {
   const p = previewAbsorb(exp, m);
   const ev = evLine(p.ev, faction.id);
   const parts = [ev ? `능력치 ${ev}` : evCapped(exp, m) ? '노력치가 가득 찼다' : ''];
-  parts.push(`${faction.riskGaugeName} ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}`);
+  // 리스크가 안 바뀌면 리스크 부분은 뺀다 (GDD 197장, C.318)
+  if (showRiskLine(exp, m)) parts.push(`${faction.riskGaugeName} ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}`);
   return parts.filter(Boolean).join(' · ');
 }
 
@@ -200,10 +201,9 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
 }
 
 /** 리스크 줄을 보이나 (GDD 197장 1·2): 첫 흡수 연습(exp.tutorial) = 전부 숨김(놓아주기 포함).
- *  그 밖엔 게이지가 바뀌는 갈래만. 놓아주기는 168장 2 그대로 늘 −n 을 보인다(0 이라 못 내려가도 — 설명 칸 releaseDelta 와 같게) */
+ *  그 밖엔 게이지가 실제로 바뀌는 갈래만 — 놓아주기도 게이지가 0 이라 못 내려가면 숨김(197장 C.318 마스터 결정, 168장 2 규칙(−n·0 아래 없음)은 그대로) */
 export function showRiskLine(exp: ExpeditionState, m: AbsorbChoice): boolean {
   if (exp.tutorial) return false;
-  if (m === 'none') return true;
   const p = previewAbsorb(exp, m);
   return Math.round(p.riskTo) !== Math.round(p.riskFrom);
 }

@@ -64,7 +64,7 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     el('p', 'bha-dim bha-absorb__lead', `${foe}을(를) 쓰러뜨렸다.`),
     pick,
   ], [
-    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 어느 갈래를 골라도 모든 능력치가 똑같이 오르고 ${faction.riskGaugeName}은(는) 그대로다.`),
+    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 어느 갈래를 골라도 모든 능력치가 똑같이 오른다.`),
   ]);
   picker.first.focus({ preventScroll: true });
   showGuide(faction, 'first-absorb', { finishLabel: '알겠어요', pauseLabel: '안내 중' });

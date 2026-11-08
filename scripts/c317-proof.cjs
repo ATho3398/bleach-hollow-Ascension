@@ -1,4 +1,4 @@
-// C.317 proof (GDD 197장 1·2, 코딩228): 흡수 리스크 줄 — 바뀔 때만 / 첫 흡수 연습 = 전부 숨김. 갈래 버튼 높이·[흡수] 버튼 자리 그대로(173장 2).
+// C.317·C.318 proof (GDD 197장 1·2, 코딩228; C.318 = 리스크 0 놓아주기·흡수 뒤 한 줄·연습 글도 숨김): 흡수 리스크 줄 — 바뀔 때만 / 첫 흡수 연습 = 전부 숨김. 갈래 버튼 높이·[흡수] 버튼 자리 그대로(173장 2).
 // 조건: pc = 844×390 마우스, ph = 796×384 터치. 두 종족.
 // ① 튜토리얼 첫 흡수: c279 처럼 안내를 진짜 마우스로 따라가 첫 흡수 연습 화면까지 → 캡처·실측 (튜토리얼 막힘도 센다)
 // ② 평소 흡수: 테스트 모드 새 게임 → 모험 ★1 → 전투(적 체력 1) → 흡수 화면. 저장된 원정 리스크를 한계(100, 폭주 이미 함)로 고쳐 다시 열어 '안 바뀌는 갈래'가 섞인 판도 본다(정화·속성·능력치 = 그대로, 놓아주기 −1)
@@ -11,7 +11,7 @@ const { startServer, newGame, snap } = require('./c276-proof.cjs');
 const { pressPoint } = require('./c279-proof.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'docs/captures/c317');
+const OUT = path.join(ROOT, process.env.C317_OUT ?? 'docs/captures/c318');
 const CONDS = [
   { id: 'pc', ctx: { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 } },
   { id: 'ph', ctx: { viewport: { width: 796, height: 384 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true } },
@@ -72,7 +72,6 @@ async function walkModes(page) {
         }
         await page.waitForTimeout(800);
         res.tutorial = { first: await measure(page) };
-        await shot(page, `${key}-1-tutorial-absorb`);
         // 안내 카드를 끝까지 넘긴 뒤 화면 그대로 (pc 만 — 캡처 10장 이내)
         for (let i = 0; i < 6 && (await page.locator('.bha-tut[data-tut-guard]').count()); i++) {
           const pt = await pressPoint(page);
@@ -104,7 +103,8 @@ async function walkModes(page) {
         }
         await page.waitForTimeout(800);
         res.normal = { first: await measure(page) };
-        res.normal.walk = await walkModes(page);
+        res.normal.walk = await walkModes(page); // 마지막 = 놓아주기 골라진 상태 (리스크 0 → 놓아주기 줄 없음, C.318)
+        await shot(page, `${key}-2-absorb-risk0-release`);
         // 리스크를 소수로 고친 판 (나가는 순간 저장되므로, 처음 화면에 나간 뒤 고쳐 다시 연다)
         await page.goto(url);
         await page.waitForTimeout(1200);
@@ -130,11 +130,18 @@ async function walkModes(page) {
           await page.waitForTimeout(800);
           await page.locator('.bha-absorb__actions [data-mode="stat"]').first().click({ force: true }).catch(() => {});
           res.normalMixed = { first: await measure(page) };
-          await shot(page, `${key}-3-absorb-mixed`);
           res.normalMixed.walk = await walkModes(page);
+          // 능력치 흡수 실행 → 흡수 뒤 한 줄(토스트)에 리스크 부분 없음 (C.318)
+          await page.locator('.bha-absorb__actions [data-mode="stat"]').first().click({ force: true }).catch(() => {});
+          await page.waitForTimeout(250);
+          await page.locator('.bha-absorb__go').first().click({ force: true });
+          await page.waitForTimeout(500);
+          res.normalMixed.toast = await page.evaluate(() => [...document.querySelectorAll('.bha-toast')].map((t) => t.textContent.trim()));
+          await page.screenshot({ path: path.join(OUT, `${key}-3-after-absorb-toast.png`) });
+          proof.shots.push(`${key}-3-after-absorb-toast.png`);
         }
       } catch (e) { proof.errors.push(`${key} normal: ${String(e.message).split('\n')[0]}`); }
-      console.log(key, JSON.stringify({ stuck: res.stuck, t: res.tutorial?.first, n: res.normal?.first, m: res.normalMixed?.first }));
+      console.log(key, JSON.stringify({ stuck: res.stuck, t: res.tutorial?.afterGuide, n: res.normal?.walk?.at(-1), toast: res.normalMixed?.toast }));
       await ctx.close();
     }
   } finally {
