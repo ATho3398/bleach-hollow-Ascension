@@ -271,7 +271,7 @@ function mountHero(): void {
 const MOTION_NAMES: Record<string, string> = {
   idle: '대기', homeIdle: '홈 대기', move: '걷기', attack: '공격1', attack2: '공격2', skill: '특수1', skill2: '특수2', hit: '맞음',
   punch: '주먹', kick: '발차기', ultimate: '필살기', straight: '스트레이트', down: '쓰러짐', dying: '빈사', bath: '온천', headbutt: '박치기',
-  lose: '패배', win: '승리',
+  rpunch: '오른손 치기', uppercut: '어퍼컷', lose: '패배', win: '승리',
 };
 interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number | null }
 function bodyOptions(): BodyOpt[] {

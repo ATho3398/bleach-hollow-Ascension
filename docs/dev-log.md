@@ -2608,3 +2608,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 확인: 월드맵 두 종족·사신 시장 배경 md5 = 지금 파일과 같음, 자리·배경 보기 값도 같음(C.278·C.335). 방·가방 그림 C.269 그대로 → 새로 반영은 호로 시장뿐.
 - 호로 시장(`hollow.json market`): `sceneArt` = scene.market.hollow(업로드 1672×941 webp → `public/art/scene-market-hollow.webp`), `floor` = 공통 시장 바닥 + `view {1.16, 50, 50}`, `layout` 6곳(소모품 33.2,89 · 장비 66.4,90 ×0.89 · 스킨 69,42.7 ×0.92 · 특성 87.2,72.4 ×1.09 · 대장장이 33.6,40.4 ×0.96 · 떠돌이 상인 49.1,68.3 ×1.03)·`exit` 10.6,72.3. 이제 두 종족 시장 모두 json 으로 따로 — 공통 DEFAULT_MARKET 은 새 종족 기본값으로만.
 - 테스트: c258-layout-tool(공통 기본값 묶음을 marketOf({}) 로, C.335 묶음에서 '호로 그대로' 뺌) + C.337 묶음 +2. 캡처 `docs/captures/c337/`(기기 844×390 1배, `scripts/c337-proof.cjs`): 1 호로 시장(새 배경) · 2 사신 시장(그대로). 그림 상자 겹침 호로 장비×떠돌이 상인 32px² — 투명 여백, 눈으로 가림 없음.
+
+## C.338 — 종이인형 작업본 게임 넣기: 오른손 치기·어퍼컷 + 아란칼(남) 팔 (GDD 204장, v5.504, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "지금 종이인형 모션 최신화된거 그대로 들고있는거 맞아?" → (작업본에만 새 동작 2개·아란칼 팔 고정이 있음을 알림, 1 = 게임 넣고 도구 갱신) → "ㅇㅇ 1번 ㄱㄱ".
+- `python3 scripts/rig/promote.py`: `src/data/art/rig/humanoid.json`·`motions.json` ← 작업본(11-04 03:19 고정분) — 새 동작 `rpunch`(오른손 치기)·`uppercut`(어퍼컷), 아란칼(남) 오른 팔꿈치·오른손 치기 아래팔. `public/art/rig/humanoid/still/arrancar-base.png`·`arrancar-base.lock.json` 다시 만듦. 그림 추가·삭제 없음. 두 동작은 지금 게임이 저절로 쓰는 곳 없음.
+- 이펙트 배치 도구(`scripts/pixelfx/tool/fx-tool.ts` MOTION_NAMES): '오른손 치기'·'어퍼컷' 이름. 도구 다시 만들어 올림 — Pixel 7: 사신·아란칼 남녀 연결 동작 목록에 두 동작, 어퍼컷 재생 오류 0.
+- 테스트 `tests/paperdoll.test.ts` 동작 목록 갱신. 전체 2872 통과(248 파일)·typecheck·balance:check 회귀 가드 통과.

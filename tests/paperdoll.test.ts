@@ -8,8 +8,8 @@ describe('종이인형 데이터', () => {
   it('뼈·슬롯·외형·동작에 문제가 없다', () => {
     expect(validateRig(HUMANOID, MOTIONS, MOTION_SETS)).toEqual([]);
   });
-  it('동작: 대기·걷기·공격·공격2·특수1·특수2·맞음 + 홈 대기·필살기·스트레이트·쓰러짐·빈사·온천·박치기(GDD 115-A, C.250 게임 넣기)·주먹·발차기(118장 2)', () => {
-    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'bath', 'down', 'dying', 'headbutt', 'hit', 'homeIdle', 'idle', 'kick', 'move', 'punch', 'skill', 'skill2', 'straight', 'ultimate']);
+  it('동작: 대기·걷기·공격·공격2·특수1·특수2·맞음 + 홈 대기·필살기·스트레이트·쓰러짐·빈사·온천·박치기(GDD 115-A, C.250 게임 넣기)·주먹·발차기(118장 2)·오른손 치기·어퍼컷(GDD 204장 게임 넣기)', () => {
+    expect(Object.keys(MOTIONS).sort()).toEqual(['attack', 'attack2', 'bath', 'down', 'dying', 'headbutt', 'hit', 'homeIdle', 'idle', 'kick', 'move', 'punch', 'rpunch', 'skill', 'skill2', 'straight', 'ultimate', 'uppercut']);
     expect(MOTIONS.idle!.loop && MOTIONS.move!.loop).toBe(true);
     expect(MOTIONS.attack!.hit).toBeGreaterThan(0);
   });

@@ -113,11 +113,17 @@
    "pivots": {
     "arm_R": [25, 35],
     "forearm_L": [9, 44],
-    "forearm_R": [32, 42]
+    "forearm_R": [31, 40]
    },
    "rot": {
     "arm_R": 19,
     "forearm_R": -35
+   },
+   "shift": {
+    "forearm_R": [
+     -0.96,
+     0.93
+    ]
    }
   },
   "student_f": {
