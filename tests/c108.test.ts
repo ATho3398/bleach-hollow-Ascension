@@ -82,7 +82,7 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
   it('스탯만: 특성·속성 카운트 X, 노력치 ×2, 리스크 ×0.5, 배부름 그대로, 흡수 수는 센다, 특성을 고르면 거절', () => {
     const { e, own, enemy } = atAbsorb({ atk: 2 });
     const hunger0 = e.hunger;
-    expect(chooseAbsorb(e, own[0]!, undefined, 'stat')).toEqual({ ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' });
+    expect(chooseAbsorb(e, own[0]!, undefined, 'stat')).toEqual({ ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' });
     expect(e.phase).toBe('absorb');
     expect(chooseAbsorb(e, null, undefined, 'stat').ok).toBe(true);
     expect(e.build.slots.filter(Boolean)).toEqual([]);

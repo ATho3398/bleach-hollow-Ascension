@@ -130,7 +130,7 @@ export type GainPlace = number | null | 'owned';
  *  replaceSlot = 'owned' 면 슬롯은 건드리지 않고 보유 목록에만 넣는다 (GDD 193장 13 [보유에만 넣기] — 흡수 규칙·수치는 교체와 같다). (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
 export function gainTrait(b: BuildState, traitId: string, replaceSlot?: GainPlace): BuildResult {
   getTrait(traitId);
-  if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 특성이다' };
+  if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 블록이다' };
   if (replaceSlot === 'owned') {
     b.owned.push(traitId);
     return { ok: true };
@@ -157,7 +157,7 @@ export function setSlot(b: BuildState, slot: number, traitId: string | null): Bu
     b.slots[slot] = null;
     return { ok: true };
   }
-  if (!b.owned.includes(traitId)) return { ok: false, reason: '가지고 있지 않은 특성이다' };
+  if (!b.owned.includes(traitId)) return { ok: false, reason: '가지고 있지 않은 블록이다' };
   const at = b.slots.indexOf(traitId);
   if (at >= 0) b.slots[at] = null;
   b.slots[slot] = traitId;

@@ -1101,10 +1101,10 @@ export function absorbEvOf(offer: Pick<AbsorbOffer, 'ev'>, mode: AbsorbMode, dif
 export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, replaceSlot?: GainPlace, mode: AbsorbMode = 'both'): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
-  if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 특성을 고를 수 없다' };
+  if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' };
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
-    if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 특성이다' };
+    if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 블록이다' };
     // 106장 1·111장 1: 이미 가진 특성(블록, 노멀 skill 특성 = 기본 블록)이면 중복 블록 없이 아래 속성 강화 +1 만
     if (!ownsTraitBlock(exp.build, traitId)) {
       const r = gainTrait(exp.build, traitId, replaceSlot);
@@ -1307,7 +1307,7 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
       text = '제단을 지나쳤다';
     } else {
       const id = ev.traits?.[choice];
-      if (!id) return { ok: false, reason: '없는 특성이다' };
+      if (!id) return { ok: false, reason: '없는 블록이다' };
       changeRisk(exp, E.altar.risk, 'altar');
       exp.traitBoosts[id] = (exp.traitBoosts[id] ?? 0) + E.altar.traitPower;
       log = `trait:${id}`;

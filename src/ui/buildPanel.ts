@@ -128,7 +128,7 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
   // 블록 상세 (GDD 158장 5): 설명 + 수치 줄(위력 기본 공격 n회분·체인·속성 강화). 데이터 설명의 위력 줄은 수치 줄과 겹쳐 뺀다
   const text = plainDesc(traitDescription(id, faction.id)).split('\n').filter((l) => !/회분/.test(l)).join('\n');
   close = itemDialog({
-    heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : t.kind === 'skill' ? '블록 상세' : '특성',
+    heading: from ? `${faction.slotName} ${from.index + 1}번 칸` : '블록 상세',
     name, desc: [`${kind} · ${elementName(t.element, faction.id)} 속성`, text, ...traitNumberLines(faction, build, id)].filter(Boolean).join('\n'),
     art: traitArt(faction, id), have: `속성 강화 ${lv}/${BALANCE.provisional.absorb.enhance.max}`, actions,
   });

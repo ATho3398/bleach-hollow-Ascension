@@ -27,7 +27,7 @@ describe('137장 1 블록 타입(물리·혼합·특수, 물공) = 데이터 전
     }
     const ar = FORM_TABLE.find((x) => x.label.kind === 'arrancar' && x.label.category === 'physical')!;
     const fams = getFaction('hollow').families.filter((x) => x.category === 'physical').map((x) => x.abbr).join('·');
-    expect(formHint(ar, 'hollow')).toContain(`${fams} 계열 공격 특성`);
+    expect(formHint(ar, 'hollow')).toContain(`${fams} 계열 공격 블록`);
   });
   it("특성 칸 '물공' 은 화면에서 '기본 공격' · 붕옥 합체 카드에 분류 없음 · 데이터 키는 그대로", () => {
     expect(ABILITY_SLOT_LABEL['물공']).toBe('기본 공격');

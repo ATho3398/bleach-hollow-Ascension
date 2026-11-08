@@ -108,12 +108,12 @@ export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
   const byKind: Record<FormKind, string> = {
     base: '정해진 걸음을 걸으면 진화',
-    element: `${els[0]} 특성을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
+    element: `${els[0]} 블록을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
     // 공격 분류(물리·특수·혼합)는 화면에 안 보인다 (GDD 137장 1): 그 분류에 드는 블록 계열 이름으로 말한다
-    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 특성을 가장 많이 장착하고 진화`,
+    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 블록을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
-    fail: '특성 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
+    fail: '블록 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
     passage: '숨은 진화의 조건을 어느 정도 채운 채 진화',
     awakened: '한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화',
     frenzy: `${getFaction(factionId).frenzyName} 상태를 여러 번 겪고, 흔들린 채 진화`,

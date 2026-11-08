@@ -47,7 +47,7 @@ const TABS: { id: TestTab; label: string }[] = [
   { id: 'form', label: '진화체' },
   { id: 'evolve', label: '진화' },
   { id: 'stats', label: '능력치' },
-  { id: 'traits', label: '특성' },
+  { id: 'traits', label: '블록' },
   { id: 'items', label: '아이템 생성' },
   { id: 'skins', label: '스킨' },
   { id: 'battle', label: '바로 전투' },
@@ -152,7 +152,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '진화체', value: form ? `${form.tier}단계 · ${shownName(formName(form, fid))}` : '1단계 (진화 전)' },
     ...STAT_IDS.map((s) => ({ label: statName(s, fid), value: String(stats[s]) })),
     { label: '속성 피해', value: ELEMENT_DAMAGE_IDS.map((id) => `${elementDamageAbbr(id, fid)} ${elementDamagePct(elemDmg[id] ?? 0)}`).join(' · ') },
-    { label: '특성', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
+    { label: '블록', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
     { label: '고유 특성', value: save.evolution.ability ? abilityName(save.evolution.ability, fid) : '없음' },
     { label: '리스크·허기·컨디션', value: [save.nest.risk, save.nest.hunger, save.nest.condition].map((v) => Math.round(v)).join(' · ') }, // 소수 꼬리(20.00001…) 대신 정수 (C.182 UI 검수)
     { label: '속도', value: `×${testSpeed()}` },
@@ -231,17 +231,17 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
 
   function traitsTab(): Node[] {
     const opts = [{ value: '', label: '— 빈칸 —' }, ...TRAITS.filter((t) => !isBasicBlockTrait(t.id)).map((t) => ({ value: t.id, label: traitName(t.id, fid), group: t.boss ? '보스' : t.kind }))];
-    const sels = save.build.slots.map((id, i) => select(opts, id ?? '', `특성 칸 ${i + 1}`));
+    const sels = save.build.slots.map((id, i) => select(opts, id ?? '', `블록 칸 ${i + 1}`));
     const abil = select([{ value: '', label: '없음' }, ...STAT_IDS.map((s) => ({ value: s, label: abilityName(s, fid) }))], save.evolution.ability ?? '', '고유 특성');
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {
       setTraitSlots(save, sels.map((s) => s.value || null));
       setAbility(save, (abil.value || null) as StatId | null);
-      saved('특성을 넣었다');
+      saved('블록을 넣었다');
       redraw();
     } });
-    return [panel({ title: '특성 고르기', aside: `${TRAITS.length}종` },
+    return [panel({ title: '블록 고르기', aside: `${TRAITS.length}종` },
       grid([...sels.map((s, i) => [`칸 ${i + 1}`, s.el] as [string, Node]), ['고유 특성', abil.el]]), row(apply),
-      note('같은 특성은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
+      note('같은 블록은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
   }
 
   function battleTab(): Node[] {

@@ -76,7 +76,7 @@ export function riskText(f: Names): RiskText {
       numLine('공허 블록 1개 사용', signed(RX.perVoidBlock)),
       // 계산식 대신 쉬운 말 + 대표 값 (GDD 168장 3): 뜻은 absorbRisk·lateLapRisk 그대로
       numLine(`적 ${f.absorbActionName}`, '강한 적일수록 많이 오른다', `일반 적 약 ${signed(absorbAt(CX.enemyHpInAttacks.normal))}`, `강적 약 ${signed(absorbAt(CX.enemyHpInAttacks.elite))}`),
-      numLine(`일부만 ${f.absorbActionName}`, `특성·속성만 그 ${pct(m.trait.risk)}`, `능력치만 그 ${pct(m.stat.risk)}`),
+      numLine(`일부만 ${f.absorbActionName}`, `블록만 그${pct(m.trait.risk)}`, `능력치만 그 ${pct(m.stat.risk)}`),
       numLine(`${LAP}바퀴째부터 칸을 지날 때`, '바퀴가 늘수록 더 오른다', `${LAP}바퀴 ${signed(lapAt(LAP))}`, `${LAP + 1}바퀴 ${signed(lapAt(LAP + 1))}`),
       numLine('해방이 끝날 때', signed(LIB.riskOnEnd)),
       numLine('제단 타일', signed(BALANCE.provisional.tileVariants.events.altar.risk)),

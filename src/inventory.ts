@@ -141,7 +141,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     const n = save.shared.items[id] ?? 0;
     if (n > 0 || save.shared.battleItem === id) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: battleItemBrief(id) || undefined, detail: `${battleItemText(id)} · 전투 소모품 칸에 넣으면 전투 중 한 번 쓴다`, action: null, lock: null, ...battleSlotOf(save, id) });
   }
-  if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, brief: '특성 다시 뽑기', detail: `${faction.absorbActionName} 화면에서 특성 후보를 한 번 다시 뽑는다`, action: null, lock: null });
+  if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, brief: '블록 다시 뽑기', detail: `${faction.absorbActionName} 화면에서 블록 후보를 한 번 다시 뽑는다`, action: null, lock: null });
   // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창
   for (const it of sortedGear(save)) {
     const slot = equippedSlotOf(save.shared.gear, it.uid);
