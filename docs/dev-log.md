@@ -2535,3 +2535,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **그대로 둔 것**: 전투 안 숫자·픽셀FX(battleView·attackFx 손대지 않음), 상점·가방·먹이 카드 효과 설명(쓰기 전 정보), 온천 ⓘ 속도, 진화 결과 '체력 가득 회복'(수치 없음), 흡수 리스크 줄(197장), 복귀 '비웠다' 감소 띠. 대기 보상은 상태창 값을 안 올림. 세이브·밸런스 수치 변경 없음, 새 색·간격 없음, 버튼 자리 그대로.
 - 테스트: 새 `tests/recover-fill.test.ts`(10), c63·c176·c208·c273·dock 기대값 갱신. typecheck · test 246 파일 2855 · balance:check 통과.
 - 캡처 `docs/captures/c331/`(1배 7장, `scripts/c331-proof.cjs`): `{pc(호로),ph(사신 796 터치)}-feed-mid`(먹이 0.28초 — 상태창 차는 중) · `-feed-end`(말풍선 = 먹이 이름만) · `-spa-filling`(온천 체력 차오름) · `pc-bag-fill-mid`(가방 사용 상태창, 부품 직접 호출). proof.json: 말풍선·알림·떠오르는 숫자에 '+n' 0, 페이지 오류 0.
+
+## C.332 — 적 도감 상세: 흡수 줄 격자·머리 줄 칩 묶음 (GDD 200장 보충, v5.498, S-23, 코딩239 Opus)
+- 지시(마스터 캡처 확인 c330): ① 흡수 줄이 줄바꿈되며 마지막 칸 흩어짐(pc-2-elite '0' 만 다음 줄, ph-2/3 '· 놓아주기 0' 다음 줄) ② 보스 상세 등급 칩 '바스트로데' 가 그림 아래로 ③ 진화체·칭호 도감 같은 문제 ④ '새 트랙' 알림이 도감 제목을 가림 — 확인.
+- **① 흡수 줄** `src/ui/enemyDexView.ts` `absorbsGrid`: 네 갈래 = 2칸 × 2줄 격자(`.bha-edex__absorbs` grid `repeat(2, max-content)`), 칸 `.bha-edex__ab` = 이름 왼쪽·숫자 오른쪽(`space-between`, `nowrap`), 0 칸 자리 고정. aria-label = 예전 한 줄 글자(`absorbsText` 그대로).
+- **② 머리 줄**: 그림 | `.bha-edex__id`(이름 + `.bha-edex__chips`). 머리 줄 `nowrap` → 칩이 그림 아래로 안 감, 칩 묶음은 이름 옆 한 줄, 넘치면 이름 아래 한 줄.
+- **③** 진화체 도감 종족값 줄 → `pairsOf`(dexView) ' · ' 칸마다 `.bha-mddetail__pair`(`nowrap`). 칭호 도감은 해당 줄 없음.
+- **④ 확인**: 알림 띠는 `checkTrackOpen` 의 `trackNotice` → 방 진입 2.6초 뒤 `showToast` — 실제 게임에서도 트랙이 열리면 한 번 뜸. 캡처에 섞인 건 테스트 모드 새 게임(트랙이 이미 열린 상태). 위치 = 위 가장자리 규칙 자리(GDD 알림 띠), `pointer-events: none`, 실측 제목 토글 버튼과 겹침 0(5개 모드) → 고치지 않음. 캡처는 띠가 사라진 뒤 찍음.
+- CSS `screens-lcd.css` 토큰만(sp-1·2·3·6, fw-bold), 새 색·간격 없음. 세이브·엔진·밸런스 변경 없음.
+- 테스트 `tests/c332.test.ts`(4, 소스·CSS 구조). typecheck · test 247 파일 2859 · balance:check 회귀 가드 통과(수치 변화 없음).
+- 검증 `scripts/c332-proof.cjs`: pc-h·pc-s(844×390) · ph-h·ph-s(796×384 터치) · ph115(사신 글자 1.15). 전 모드 격자 2열 2행·칸 한 줄·숫자 오른쪽 맞춤·판 안 · 칩 그림 오른쪽·한 줄(폰 보스·글자 1.15 = 이름 아래) · 종족값 칸 6개 쪼개짐 0 · 페이지 오류 0. 캡처 `docs/captures/c332/`(1배 6장: pc-h·ph-s·ph115 × 1-elite·2-boss).
+

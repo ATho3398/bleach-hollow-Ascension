@@ -30,6 +30,13 @@ function releaseLine(faction: FactionConfig, f: FormDef): string | null {
   return formHasUniqueRelease(f, faction.id) ? null : `${lb.name}: 없음 (${lb.baseName} 그대로)`;
 }
 
+/** '여러 값 한 줄'(예 '종족값 체력 69 · 힘 66 · …')은 ' · ' 사이 한 칸씩 줄바꿈 없는 덩어리로 — 줄이 접혀도 '정신력 / 59' 처럼 칸이 쪼개지지 않는다 (C.332) */
+export function pairsOf(line: string): (Node | string)[] {
+  const parts = line.split(' · ');
+  if (parts.length < 2) return [line];
+  return parts.flatMap((p, i) => [...(i > 0 ? [' · '] : []), h('span', 'bha-mddetail__pair', p)]);
+}
+
 function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<string>, currentFormId: string | null, caption?: string): ListRow {
   const m = formCardModel(f, unlocked, currentFormId);
   if (m.state === 'unknown') {
@@ -57,7 +64,7 @@ function formRow(faction: FactionConfig, f: FormDef, unlocked: ReadonlySet<strin
       if (m.current) head.append(h('span', 'bha-chip bha-chip--good', '지금'));
       const body = h('p', 'bha-mddetail__body');
       body.append(formHint(f, faction.id));
-      for (const line of lines.slice(1)) body.append(h('br'), line);
+      for (const line of lines.slice(1)) body.append(h('br'), ...pairsOf(line));
       const rel = releaseLine(faction, f);
       if (rel) body.append(h('br'), rel);
       return [head, body, abilityParagraph(dexAbilityLines(f, faction.id))];

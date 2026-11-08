@@ -27,6 +27,21 @@ export function absorbsText(faction: Pick<FactionConfig, 'absorbModeNames'>, ent
   return ABSORB_KINDS.map((k) => `${faction.absorbModeNames[k]} ${ab[k] ?? 0}`).join(' · ');
 }
 
+/** 흡수 줄 칸 (C.332): 네 갈래를 2칸 × 2줄 격자로 고정 — 칸마다 이름 왼쪽·숫자 오른쪽, 한 칸은 쪼개지지 않는다(0 칸도 자리 고정, 200장 9).
+ *  글자 내용은 absorbsText 와 같다(칸 사이에 ' · ' 대신 격자 간격) */
+function absorbsGrid(faction: Pick<FactionConfig, 'absorbModeNames'>, entry: Pick<EnemyDexEntry, 'absorbs'>): HTMLElement {
+  const ab = entry.absorbs ?? emptyAbsorbs();
+  const grid = h('span', 'bha-edex__absorbs');
+  grid.setAttribute('aria-label', absorbsText(faction, entry));
+  for (const k of ABSORB_KINDS) {
+    const cell = h('span', 'bha-edex__ab');
+    cell.dataset.kind = k;
+    cell.append(h('span', 'bha-edex__ab-name', faction.absorbModeNames[k]), h('b', 'bha-edex__ab-num', String(ab[k] ?? 0)));
+    grid.append(cell);
+  }
+  return grid;
+}
+
 /** 처음 만난 곳 한 줄: 사냥터 이름·탑 이름은 종족 설정. 모르면 '기록 없음'(런 로그에서 채운 옛 기록) */
 export function whereText(faction: FactionConfig, where: string | null | undefined): string {
   const w = parseWhere(where);
@@ -86,14 +101,19 @@ function cardRow(faction: FactionConfig, card: EnemyCard, dex: EnemyDex, persist
       }
       const head = h('div', 'bha-mddetail__head bha-edex__head');
       const title = h('h2', 'bha-mddetail__title', name);
-      head.append(enemyArtBox(card.id, true, 'bha-edex__art--hero'), title, ...cardChips(card));
+      // 머리 줄(C.332): 그림 | [이름 + 칩 묶음]. 칩 묶음은 한 덩어리 — 이름 오른쪽에 한 줄, 넘치면 이름 아래 한 줄로(그림 아래로 떨어지지 않는다)
+      const chips = h('span', 'bha-edex__chips');
+      chips.append(...cardChips(card));
+      const id = h('div', 'bha-edex__id');
+      id.append(title, chips);
+      head.append(enemyArtBox(card.id, true, 'bha-edex__art--hero'), id);
       const body = h('p', 'bha-mddetail__body bha-edex__body');
       const line = (label: string, value: Node | string) => {
         const row = h('span', 'bha-edex__line');
         row.append(h('span', 'bha-edex__label', label), typeof value === 'string' ? h('b', 'bha-edex__value', value) : value);
         return row;
       };
-      body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line('흡수', absorbsText(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
+      body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line('흡수', absorbsGrid(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
       return [head, body];
     },
   };

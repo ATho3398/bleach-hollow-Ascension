@@ -48,12 +48,22 @@
 .bha-edex__art.is-silhouette .bha-edex__img { filter: brightness(0); opacity: 0.55; }
 .bha-edex__art.is-silhouette .bha-icon { color: var(--bha-text-3); }
 .bha-edex__new { flex: none; width: 8px; height: 8px; border-radius: var(--bha-r-pill); background: var(--bha-accent); box-shadow: 0 0 0 1px var(--bha-bg-0); } /* '새' 점 하나 (알림 없음, 200장 7) */
-.bha-edex__head { align-items: center; }
-.bha-edex__head .bha-mddetail__title { flex: 1 1 auto; min-width: 0; }
+.bha-edex__head { flex-wrap: nowrap; align-items: center; } /* C.332: 그림 | 이름·칩 — 칩이 그림 아래로 떨어지지 않게 */
+.bha-edex__art--hero { flex: none; }
+.bha-edex__id { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2) var(--bha-sp-3); }
+.bha-edex__id .bha-mddetail__title { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.bha-edex__chips { flex: none; display: flex; flex-wrap: nowrap; gap: var(--bha-sp-2); } /* 종류·등급 칩 한 덩어리: 이름 옆 한 줄, 넘치면 이름 아래 한 줄 */
+.bha-edex__chips .bha-chip { white-space: nowrap; }
 .bha-edex__body { display: flex; flex-direction: column; gap: var(--bha-sp-2); }
 .bha-edex__line { display: flex; align-items: baseline; gap: var(--bha-sp-3); min-height: 24px; }
 .bha-edex__label { flex: none; min-width: 5.5em; color: var(--bha-text-3); font-size: var(--bha-fs-xs); }
-.bha-edex__value { min-width: 0; color: var(--bha-text-1); font-variant-numeric: tabular-nums; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; } /* 흡수 줄(갈래 4개)은 폰에서 두 줄로 접힌다 */
+.bha-edex__value { min-width: 0; color: var(--bha-text-1); font-variant-numeric: tabular-nums; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+/* 흡수 줄(C.332, 200장 9): 네 갈래 = 2칸 × 2줄 격자 고정. 칸 = 이름 왼쪽·숫자 오른쪽, 한 칸은 줄바꿈하지 않는다 */
+.bha-edex__absorbs { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, max-content); gap: var(--bha-sp-1) var(--bha-sp-6); color: var(--bha-text-1); line-height: 1.4; }
+.bha-edex__ab { display: flex; justify-content: space-between; align-items: baseline; gap: var(--bha-sp-3); white-space: nowrap; }
+.bha-edex__ab-name { font-weight: var(--bha-fw-bold); }
+.bha-edex__ab-num { min-width: 1.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.bha-mddetail__pair { white-space: nowrap; } /* C.332: 진화체 도감 종족값 줄 등 '여러 값 한 줄' — 한 칸(이름 + 수)이 쪼개지지 않게 */
 
 
 /* ═════ 진화 제단 ═════ */
