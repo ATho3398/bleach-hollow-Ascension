@@ -1,0 +1,17 @@
+{
+  "checks": {
+    "hollow": [
+      {
+        "src": "/art/enemy-normal-basic.png",
+        "loaded": true
+      }
+    ],
+    "shinigami": [
+      {
+        "src": "/art/enemy-water-basic.png",
+        "loaded": true
+      }
+    ]
+  },
+  "errors": []
+}
