@@ -59,5 +59,77 @@
     70
    ]
   }
+ },
+ "later2": {
+  "savedAt": "2026-11-09 01:32:20 KST",
+  "note": "덩치(hb) 예전 도트에서 고친 다리 — 01:3x 새 도트(시트 b)로 바꾸며 편집기를 다시 올려서 사라짐. 넣으려면 사용자 확인",
+  "bodies.hb": {
+   "leg_L": [
+    20,
+    51
+   ],
+   "leg_R": [
+    2,
+    52
+   ],
+   "shin_L": [
+    22,
+    65
+   ],
+   "shin_R": [
+    -1,
+    64
+   ]
+  },
+  "bodyJoints.hb.pivots": {
+   "leg_L": [
+    26,
+    56
+   ],
+   "leg_R": [
+    13,
+    56
+   ],
+   "shin_L": [
+    30,
+    67
+   ],
+   "shin_R": [
+    12,
+    66
+   ],
+   "torso": [
+    18,
+    51
+   ]
+  },
+  "bodyJoints.hb.rot": {
+   "leg_L": -11,
+   "leg_R": 8
+  },
+  "bodySlots.hb": [
+   "arm_R",
+   "cape",
+   "outer_arm_L",
+   "weapon",
+   "thumb_L",
+   "hair_back",
+   "shin_R",
+   "foot_L",
+   "foot_R",
+   "shin_L",
+   "forearm_R",
+   "torso",
+   "leg_R",
+   "outer_torso",
+   "arm_L",
+   "scabbard",
+   "leg_L",
+   "forearm_L",
+   "jaw",
+   "head",
+   "hair",
+   "outer_arm_R"
+  ]
  }
 }
