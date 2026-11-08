@@ -127,6 +127,23 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(order.indexOf('fleg_R')).toBeGreaterThan(order.indexOf('body'));
     expect(order.indexOf('fleg_L')).toBeLessThan(order.indexOf('body'));
   });
+  it('여자 몸 필살기: 오른 위팔 관절을 옮기지 않는다(어깨가 몸통에 붙어 있음) — GDD 115-A 84', () => {
+    for (const body of ['female', 'shinigami_f', 'student_f', 'arrancar_f']) {
+      const u = resolveMotions(rig, motions, sets, body).ultimate!;
+      expect(u.tracks.arm_R!.every((k) => k[2] === 0 && k[3] === 0), body).toBe(true);
+    }
+  });
+  it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
+    const b = DRAFT_RIGS.beast!;
+    const ref = b.rig.bodies.ref!;
+    const piv = (id: string) => b.rig.bones.find((x) => x.id === id)!.pivot;
+    const inBox = (p: number[], s: string) => p[0]! >= ref[s]!.at[0] - 1 && p[0]! <= ref[s]!.at[0] + ref[s]!.size[0] && p[1]! >= ref[s]!.at[1] - 1 && p[1]! <= ref[s]!.at[1] + ref[s]!.size[1];
+    expect(inBox(piv('tail'), 'tail')).toBe(true);
+    expect(inBox(piv('tail2'), 'tail') && inBox(piv('tail2'), 'tail2')).toBe(true);
+    expect(piv('tail')[1]).toBeGreaterThan(piv('tail2')[1]); // 엉덩이(아래)에서 나와 위로 솟음
+    expect(Object.keys(b.motions.attack2!.tracks)).toContain('fleg_R');
+    expect(Object.keys(b.motions.attack2!.tracks)).not.toContain('fleg_L');
+  });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
     const mv = b.motions.move!;

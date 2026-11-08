@@ -109,8 +109,7 @@
     "torso",
     "arm_L",
     "arm_R",
-    "scabbard",
-    "cape"
+    "scabbard"
    ]
   },
   {
@@ -221,8 +220,7 @@
     78
    ],
    "pivots": [
-    "leg_L",
-    "shin_L"
+    "leg_L"
    ]
   },
   {
@@ -240,8 +238,7 @@
     119
    ],
    "pivots": [
-    "leg_R",
-    "shin_R"
+    "leg_R"
    ]
   },
   {
