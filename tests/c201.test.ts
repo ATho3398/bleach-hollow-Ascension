@@ -17,7 +17,8 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
       expect(marketOf(f).name).toBe('시장');
       expect(marketOf(f).props.shop).toBe('소모품 상점'); // GDD 150장 1
       expect(marketOf(f).props.spa.startsWith('온천')).toBe(true);
-      expect(marketOf(f).sceneArt).toBe('scene.market');
+      // 배경 키 = 공통 scene.market 또는 종족 전용 scene.market.<종족> (C.335: 사신 시장 배경을 배치 도구로 따로 넣음)
+      expect(['scene.market', `scene.market.${f.id}`]).toContain(marketOf(f).sceneArt);
     }
   });
   it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {

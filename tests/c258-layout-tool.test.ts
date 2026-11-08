@@ -184,8 +184,9 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
     expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
   });
   it('시장: 종족 json 에 layout 없음 → 공통 기본값 하나', () => {
-    for (const f of FACTIONS) expect(f.market?.layout).toBeUndefined();
-    const m = marketOf(FACTIONS[0]!);
+    // C.335: 사신 시장은 따로(shinigami.json market) — 공통 기본값은 호로가 쓴다
+    expect(FACTIONS.find((f) => f.id === 'hollow')!.market?.layout).toBeUndefined();
+    const m = marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
     expect(m.exit).toEqual({ x: 7.5, y: 83.1, scale: 0.64 });
     expect(m.layout.shop).toEqual({ x: 40.3, y: 79, scale: 0.9 });
     expect(m.layout.gearShop).toEqual({ x: 54.7, y: 39.5, scale: 0.88 });
@@ -318,5 +319,29 @@ describe('C.275 배경 확대·위치', () => {
     expect(tool).toContain("label: '배경 맞추기'");
     expect(tool).toContain("range('확대', 'zoom'");
     expect(read('src/ui/bha/layout-tool.css')).toContain('.bha-ltool.is-bg .bha-room__scene { touch-action: none; cursor: move; }');
+  });
+});
+
+// C.335 (사용자 2026-11-09 01:45 "적용 ㄱㄱ", bha-layout-20261109-0145.json): 사신 시장 배경·배경 보기·자리 — 사신만. 같은 파일의 월드맵·방·가방 그림은 C.278·C.269 로 이미 같음
+describe('C.335 사신 시장 반영', () => {
+  const S = () => marketOf(FACTIONS.find((f) => f.id === 'shinigami')!);
+  it('배경 = 사신 전용 키 scene.market.shinigami (파일 있음) · 배경 보기 ×1.14', () => {
+    expect(S().sceneArt).toBe('scene.market.shinigami');
+    expect(artUrls('scene.market.shinigami').src).toMatch(/scene-market-shinigami\.webp$/);
+    expect(S().floor.view).toEqual({ zoom: 1.14, x: 50, y: 50 });
+    expect(S().floor.poly).toEqual(marketOf({}).floor.poly);
+  });
+  it('자리 7곳 = 내보낸 값, 호로 시장은 공통 기본값 그대로', () => {
+    const m = S();
+    expect(m.exit).toEqual({ x: 10.9, y: 71.8, scale: 0.64 });
+    expect(m.layout.shop).toEqual({ x: 38.4, y: 88.8, scale: 0.9 });
+    expect(m.layout.gearShop).toEqual({ x: 76.3, y: 84.9, scale: 0.92 });
+    expect(m.layout.skinShop).toEqual({ x: 88.8, y: 57, scale: 0.91 });
+    expect(m.layout.traitShop).toEqual({ x: 70.4, y: 40.9, scale: 0.97 });
+    expect(m.layout.smith).toEqual({ x: 41.7, y: 35, scale: 1.01 });
+    expect(m.layout.wanderer).toEqual({ x: 50.3, y: 66.6, scale: 1.11 });
+    const h = marketOf(FACTIONS.find((f) => f.id === 'hollow')!);
+    expect(h.sceneArt).toBe('scene.market');
+    expect(h.layout.shop).toEqual(marketOf({}).layout.shop);
   });
 });
