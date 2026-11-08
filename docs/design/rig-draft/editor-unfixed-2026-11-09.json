@@ -1,6 +1,63 @@
 {
  "note": "편집기에 남아 있던 고정 안 한 값(2026-11-09 00:46:23 저장, 편집기 rig/editor). 짐승 넣으며 편집기를 새로 올려 편집기에서는 사라짐 — 여기 따로 둠. 넣으려면 사용자에게 확인 후 작업본에 직접 넣기",
  "savedAt": "2026-11-09 00:46:23 KST",
- "bodyJoints.hb.pivots.torso": [25, 38],
- "page": "[18, 52] (그때 작업본 값)"
+ "bodyJoints.hb.pivots.torso": [
+  25,
+  38
+ ],
+ "page": "[18, 52] (그때 작업본 값)",
+ "later": {
+  "savedAt": "2026-11-09 01:20:33 KST",
+  "note": "01:16 고정 뒤 짐승(bst)에서 고친 다리 — 이 그림은 01:2x 에 덩치(hb)로 옮겨서 hb 기준으로 적음(넣으려면 사용자 확인)",
+  "bodies.hb.leg_L.at": [
+   19,
+   49
+  ],
+  "bodies.hb.leg_R.at": [
+   1,
+   51
+  ],
+  "bodies.hb.shin_L.at": [
+   21,
+   63
+  ],
+  "bodies.hb.shin_R.at": [
+   -2,
+   63
+  ],
+  "bodyJoints.hb.pivots.shin_L": [
+   29,
+   65
+  ],
+  "bodyJoints.hb.pivots.shin_R": [
+   11,
+   65
+  ],
+  "page(그때 작업본)": {
+   "leg_L": [
+    21,
+    54
+   ],
+   "leg_R": [
+    6,
+    56
+   ],
+   "shin_L": [
+    23,
+    68
+   ],
+   "shin_R": [
+    3,
+    68
+   ],
+   "piv.shin_L": [
+    31,
+    70
+   ],
+   "piv.shin_R": [
+    16,
+    70
+   ]
+  }
+ }
 }
