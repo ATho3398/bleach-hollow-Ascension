@@ -1,0 +1,222 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 477,
+     "clientH": 300,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": true,
+     "scrollH": 340,
+     "clientH": 300,
+     "cutAtOpen": true,
+     "cue": true,
+     "issues": []
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": true,
+     "scrollH": 356,
+     "clientH": 300,
+     "cutAtOpen": true,
+     "cue": true,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 477,
+     "clientH": 300,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    }
+   }
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 477,
+     "clientH": 294,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": true,
+     "scrollH": 340,
+     "clientH": 294,
+     "cutAtOpen": true,
+     "cue": true,
+     "issues": []
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": true,
+     "scrollH": 325,
+     "clientH": 294,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 477,
+     "clientH": 294,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    }
+   }
+  },
+  {
+   "mode": "ph115",
+   "faction": "shinigami",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 490,
+     "clientH": 294,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": true,
+     "scrollH": 379,
+     "clientH": 294,
+     "cutAtOpen": true,
+     "cue": true,
+     "issues": []
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": true,
+     "scrollH": 430,
+     "clientH": 294,
+     "cutAtOpen": true,
+     "cue": true,
+     "issues": []
+    },
+    "sound": {
+     "scrolls": true,
+     "scrollH": 490,
+     "clientH": 294,
+     "cutAtOpen": false,
+     "cue": true,
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 0,
+     "clientH": 0,
+     "cutAtOpen": false,
+     "cue": false,
+     "issues": []
+    }
+   }
+  }
+ ],
+ "errors": [],
+ "total": 0
+}

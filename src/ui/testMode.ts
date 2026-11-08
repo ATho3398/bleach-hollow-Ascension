@@ -75,10 +75,10 @@ export function keyringTestTap(nowMs: number = Date.now()): void {
   enableTestMode();
 }
 
-/** 설정 > [정보] 줄: 버전 줄(7번 연속 누르면 테스트 모드), 테스트 모드면 [테스트 모드 끄기] */
-export function testInfoNodes(): Node[] {
+/** 설정 > [정보] 줄: 버전 줄(7번 연속 누르면 테스트 모드)을 받아 누름을 붙이고, 테스트 모드면 [테스트 모드 끄기]를 돌려준다.
+ *  버전 줄은 설명 글 한 줄 그대로 — 예전엔 같은 버전 글을 단추로 한 번 더 그려 오른쪽 조작 칸에서 글 위로 겹쳤다 (C.324) */
+export function testInfoNodes(ver: HTMLElement = el('p', 'bha-faint', versionLabel())): Node[] {
   let taps = { count: 0, at: 0 };
-  const ver = button({ label: versionLabel(), variant: 'ghost', size: 'small' });
   ver.classList.add('bha-testver');
   ver.onclick = () => {
     if (active) return;
@@ -87,7 +87,7 @@ export function testInfoNodes(): Node[] {
     if (left <= 0) return enableTestMode();
     if (left <= 3) showToast({ eyebrow: '테스트 모드', title: `${left}번 더 누르면 켜진다`, meta: '따로 된 테스트 세이브를 쓴다. 진짜 세이브는 그대로 남는다.' }, 0, 1200);
   };
-  const nodes: Node[] = [ver];
+  const nodes: Node[] = [];
   if (active) nodes.push(button({ label: '테스트 모드 끄기', icon: 'i-quit', variant: 'danger', size: 'small', onClick: disableTestMode }));
   return nodes;
 }

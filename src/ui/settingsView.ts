@@ -548,7 +548,9 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
 
   // ── 기타 탭 ──
-  const info = panel('정보', el('p', 'bha-faint', versionLabel()), el('p', 'bha-faint', '임시 수치가 있다. 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes());
+  // 버전 줄은 한 번만 (C.324): 이 글 줄 자체가 7번 누르면 테스트 모드 — 같은 글을 단추로 또 그리지 않는다
+  const verLine = el('p', 'bha-faint', versionLabel());
+  const info = panel('정보', verLine, el('p', 'bha-faint', '임시 수치가 있다. 밸런스·이름은 바뀔 수 있다.'), el('p', 'bha-faint bha-settings__credit', BG_CREDIT), ...testInfoNodes(verLine));
   info.classList.add('bha-setgroup--wide'); // 버전·출처 글이 길어 두 열을 다 쓴다
   // 앱 설치 (GDD 68장): 큰 안내창을 다시 연다. 이미 앱으로 열렸거나 설치했으면 알려 준다
   const installNodes: Node[] = [];
@@ -643,6 +645,15 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   head.insertBefore(tabsBox, head.querySelector('.bha-lcdpage__aside'));
 
   const grid = el('div', 'bha-settings__grid');
+  // 본문이 판보다 길면 바닥에 '▼ 더 있음' (C.324, 공용 띠 .bha-more--sticky · GDD 168장 3): 폰은 스크롤 막대가 안 보여 맨 아래 줄(로그인 등)이 잘린 채 끝난 것처럼 보였다.
+  // 띠는 grid 를 감싼 스크롤 칸(.bha-lcdpage__col) 바닥에 붙고, 끝까지 내리면 숨는다
+  const more = el('div', 'bha-more bha-more--sticky bha-settings__more', '▼ 더 있음');
+  more.setAttribute('aria-hidden', 'true');
+  more.hidden = true;
+  const syncMore = (): void => {
+    const sc = grid.parentElement;
+    if (sc) more.hidden = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+  };
   const pickTab = (id: SettingsTab) => {
     tab = id;
     renderTab();
@@ -661,6 +672,9 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     grid.replaceChildren(...TAB_BODY[tab]);
     grid.dataset.tab = tab;
     grid.scrollTop = 0;
+    if (grid.parentElement) grid.parentElement.scrollTop = 0; // 실제로 스크롤되는 칸은 바깥 열
+    more.hidden = true; // 탭을 바꾸면 다시 잰다
+    requestAnimationFrame(syncMore);
   };
 
   function paintMeta(): void {
@@ -749,6 +763,12 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
 
   const page = lcdPage(root, { cls: 'bha-settings-page', cols: 'minmax(0, 1fr)' }, head, [grid], []);
   page.app.dataset.screen = 'settings';
+  const scroller = grid.parentElement;
+  if (scroller) {
+    scroller.append(more);
+    scroller.addEventListener('scroll', syncMore, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncMore).observe(grid);
+  }
   renderTab();
   paintAll();
 

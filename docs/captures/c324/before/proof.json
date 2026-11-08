@@ -1,0 +1,402 @@
+{
+ "runs": [
+  {
+   "mode": "pc",
+   "faction": "hollow",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 202,
+     "clientH": 202,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 433,
+     "clientH": 433,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 121,
+     "clientH": 121,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 312,
+     "clientH": 312,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "임시 수치가 있다. 밸런스·이름은 바뀔 수 ",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "앱 설치이 브라우저에서는 설치 창을 열 수 ",
+       "a": "앱 설치",
+       "b": "앱 설치"
+      },
+      {
+       "kind": "겹침",
+       "row": "앱 설치이 브라우저에서는 설치 창을 열 수 ",
+       "a": "이 브라우저에서는 설치 창을 열 수 없다. ",
+       "b": "앱 설치"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 312,
+     "clientH": 312,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 433,
+     "clientH": 433,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 121,
+     "clientH": 121,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 222,
+     "clientH": 222,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "정보",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "mode": "ph",
+   "faction": "shinigami",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 202,
+     "clientH": 202,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 433,
+     "clientH": 433,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 121,
+     "clientH": 121,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 327,
+     "clientH": 327,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "임시 수치가 있다. 밸런스·이름은 바뀔 수 ",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "앱 설치이 브라우저에서는 설치 창을 열 수 ",
+       "a": "앱 설치",
+       "b": "앱 설치"
+      },
+      {
+       "kind": "겹침",
+       "row": "앱 설치이 브라우저에서는 설치 창을 열 수 ",
+       "a": "이 브라우저에서는 설치 창을 열 수 없다. ",
+       "b": "앱 설치"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 281,
+     "clientH": 281,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 433,
+     "clientH": 433,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 121,
+     "clientH": 121,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 222,
+     "clientH": 222,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "정보",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "mode": "ph115",
+   "faction": "shinigami",
+   "title": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 259,
+     "clientH": 259,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 446,
+     "clientH": 446,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 153,
+     "clientH": 153,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 353,
+     "clientH": 353,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "임시 수치가 있다. 밸런스·이름은 바뀔 수 ",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "앱 설치이 브라우저에서는 설치 창을 열 수 ",
+       "a": "이 브라우저에서는 설치 창을 열 수 없다. ",
+       "b": "앱 설치"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   },
+   "nest": {
+    "screen": {
+     "scrolls": false,
+     "scrollH": 386,
+     "clientH": 386,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "sound": {
+     "scrolls": false,
+     "scrollH": 446,
+     "clientH": 446,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "battle": {
+     "scrolls": false,
+     "scrollH": 153,
+     "clientH": 153,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": []
+    },
+    "etc": {
+     "scrolls": false,
+     "scrollH": 281,
+     "clientH": 281,
+     "bar": 0,
+     "scrollbarWidth": "auto",
+     "issues": [
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "S-23 · 버전 C.323 · 밸런스 10",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "정보S-23 · 버전 C.323 · 밸런스 ",
+       "a": "임시 수치가 있다. 밸런스·이름은 바뀔 수 ",
+       "b": "S-23 · 버전 C.323 · 밸런스 10"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "기본값 복원",
+       "b": "기본값 복원"
+      },
+      {
+       "kind": "겹침",
+       "row": "기본값 복원전투 효과·소리·음악 목록(공통)",
+       "a": "전투 효과·소리·음악 목록(공통)을 되돌린다",
+       "b": "기본값 복원"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "errors": [],
+ "total": 29
+}

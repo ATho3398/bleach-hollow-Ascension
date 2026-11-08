@@ -7,7 +7,7 @@
   font: var(--bha-fw-heavy) var(--bha-fs-xs) / var(--bha-lh-tight) var(--bha-font-body); letter-spacing: var(--bha-tracking-label);
   box-shadow: var(--bha-shadow-1);
 }
-.bha-testver { white-space: normal; text-align: left; }
+.bha-testver { white-space: normal; text-align: left; touch-action: manipulation; user-select: none; } /* 설정 [정보]의 버전 글 줄 (C.324: 단추 아님, 7번 누름만 받는다) */
 
 .bha-test__grid { display: grid; grid-template-columns: auto 1fr; gap: var(--bha-sp-1) var(--bha-sp-2); align-items: center; }
 .bha-test__label { color: var(--bha-text-2); font-size: var(--bha-fs-sm); }

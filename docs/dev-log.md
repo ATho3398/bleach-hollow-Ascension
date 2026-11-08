@@ -2444,3 +2444,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - **검증** `scripts/c323-proof.cjs`(dev 서버 가짜 클라우드 `?cloudfake`, `src/cloudFake.ts` — 배포 빌드에는 없음; pc 844×390 호로 · ph 796×384 터치 사신): 로그인 전/후 줄 · 이메일 창(틀린 비번 문구·칸·버튼 전부 창 안) · 이메일 로그인 뒤 줄 · 다른 기기 세이브 고르기 창 → [클라우드] 고르면 슬롯 1 바뀜·기기 것 백업 'cloud'. 페이지 오류 0. `docs/captures/c323/proof.json`. 실제 Google·이메일 연결은 클라우드 세션에서 못 함 → 사용자 확인(보고).
 - 테스트: 새 `tests/c323.test.ts`(23: 맞추기 규칙 표·문서 꼴·슬롯 적용/백업/옛 형식/새 형식·가짜 Firebase 로 자동 로그인/묶음 올리기/오프라인→연결/새 기기 가져오기/충돌 두 갈래/blocked/원격 변경/너무 큼/로그아웃/이메일 세 동작·오류 문구·정적 import 없음·규칙 파일·vite 덩어리). typecheck · test · balance:check · build 통과(수치·세이브 형식 변경 없음, firebase 13.2.0 추가).
 - 캡처 `docs/captures/c323/`(1배 8장): `{pc,ph}-1-settings-logged-out` · `-2-settings-logged-in` · `-2b-email-login-dialog` · `-3-conflict-pick`.
+
+
+## C.324 — 설정 글·버튼 겹침 수리: 버전 줄 한 번 · 조작 칸 안 줄임 · '▼ 더 있음' (GDD 196장 아래 줄, v5.482, S-23, 코딩232 Opus)
+- 계기: 마스터가 C.323 캡처(`docs/captures/c323/{pc,ph}-1-settings-logged-out`)에서 찾음 — 설정 > 기타 탭이 PC 844·폰 796 둘 다 글이 겹친다.
+- **원인**: ① [정보] = 버전 글 줄(`p`) + 테스트 모드 7번 누름용 같은 버전 글 단추(`testInfoNodes`)가 오른쪽 조작 칸에 또 들어가, 줄바꿈 없는 굵은 단추가 왼쪽 글('임시 수치가…') 위로 넘침. ② 설정 줄 오른쪽 조작 칸 `.bha-setrow__ctl` 이 `flex: 0 1 auto; min-width: 0` 이라 단추 폭보다 좁게 줄고, 단추(`flex: none; nowrap`)는 오른쪽 맞춤이라 왼쪽 설명 글 위로 넘침(앱 설치·기본값 복원). ③ 로그인 줄이 생겨 기타 탭 본문이 판보다 12~85px 길어짐 — 스크롤은 되지만 폰은 스크롤 막대가 안 보여 [이메일 로그인]이 잘린 채 끝난 것처럼 보임.
+- **바꾼 것**: ① 버전은 글 한 줄만, 그 글 줄이 7번 누름을 받는다(`testInfoNodes(verLine)` — 단추 없음, `.bha-testver` touch-action). 테스트 모드면 [테스트 모드 끄기]만 오른쪽. ② `.bha-setrow__ctl { flex: 0 0 auto }`(최대 60% 그대로) — 줄어드는 쪽은 설명 글. ③ 설정 본문 스크롤 칸 바닥에 공용 띠 '▼ 더 있음'(`.bha-more--sticky`, 넘칠 때만, 끝까지 내리면 숨김, 탭 바꾸면 맨 위로). 버튼 자리 고정(173장 2) 그대로, 새 색·간격 없음.
+- **검증** `scripts/c324-proof.cjs`: 처음 화면 설정(가짜 클라우드 로그인 줄 있음) + 둥지 설정(테스트 모드) × 4탭 × pc 844×390 호로 / ph 796×384 터치 사신 / ph115 글자 1.15 = 24 화면. 줄마다 글·단추·스위치·고르기 겹침, 줄 밖, 판 밖, 잘렸는데 '더 있음' 없음, 끝까지 내려도 잘림 → 전 29건(기타 탭) → 후 0. 페이지 오류 0. `docs/captures/c324/proof.json`.
+- 같은 종류 전수: 화면·소리·전투 탭은 겹침 0(전후 같음). 화면 탭(둥지, 단축키 표시 줄)·소리 탭(음악 목록)도 판보다 길어 '더 있음'이 같이 붙음.
+- 테스트: 새 `tests/c324.test.ts`(3). typecheck · test · balance:check 통과(수치·세이브 형식 변경 없음).
+- 캡처 `docs/captures/c324/`(1배): 후 = `{pc,ph}-title-{screen,sound,battle,etc}` · `pc-nest-etc` · `ph115-title-etc` / 전 = `before/` 같은 이름(+ `ph115-title-etc`, `pc-nest-etc`).
