@@ -35,7 +35,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       for (const id of own.filter((x) => x !== 'skill' || body === 'dg')) {
         for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'leg_R', 'shin_R']) expect(set[id]!.tracks?.[b], `${body}.${id}.${b}`).toBeDefined();
       }
-      expect(r.idle!.tracks.leg_R!.some((k) => Math.abs(k[1]) >= 1), `${body} 대기 허벅지`).toBe(true);
+      expect(r.idle!.tracks.root!.some((k) => k[3] !== r.idle!.tracks.root![0]![3]), `${body} 대기 = 몸이 위아래로`).toBe(true);
       expect(r.down!.hold).toBe(true);
     }
     expect(resolveMotions(rig, motions, sets, 'bare').uppercut).toBeDefined(); // 다른 몸은 그대로
@@ -111,10 +111,10 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
           expect(hi - lo, `${body}.${id}.${s} 정강이 기울기`).toBeLessThan(1);
         }
       }
-      const thigh = ms.idle!.tracks.leg_L!.map((k) => k[1]).concat(ms.idle!.tracks.leg_R!.map((k) => k[1]));
-      expect(Math.max(...thigh.map(Math.abs)), `${body} 대기 허벅지`).toBeGreaterThan(1);
-      expect(Math.max(...thigh.map(Math.abs)), `${body} 대기는 숨쉬기만(115-A 80)`).toBeLessThan(8);
-      for (const b of ['torso', 'arm_L', 'arm_R']) expect(Math.max(...ms.idle!.tracks[b]!.map((k) => Math.abs(k[1]))), `${body} 대기 ${b}`).toBeLessThanOrEqual(2);
+      // 대기 = 몸 전체만 위아래(115-A 81): 관절 회전 없음, 몸이 1칸 내려갔다 올라옴(허벅지·몸통·팔·머리 같이), 정강이는 거꾸로 옮겨 제자리
+      for (const [b, keys] of Object.entries(ms.idle!.tracks)) expect(keys.every((k) => k[1] === 0), `${body} 대기 ${b} 회전 없음`).toBe(true);
+      const ys = ms.idle!.tracks.root!.map((k) => k[3]);
+      expect(Math.max(...ys) - Math.min(...ys), `${body} 대기 몸 오르내림`).toBe(1);
     }
   });
   it('짐승형 앞다리: 아래로 곧게 디딘 다리 = 가까운 앞다리(fleg_R, 몸 앞에 그림), 앞으로 뻗은 다리 = 먼 앞다리(fleg_L, 몸 뒤) — GDD 115-A 79', () => {

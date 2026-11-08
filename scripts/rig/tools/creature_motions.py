@@ -99,6 +99,10 @@ def build(spec):
     for k, d in zip(keys, spec.get('dip', [0] * len(keys))):
         k[3] = round(k[3] + d * SC / 2, 2)
     tr['root'] = keys
+    if spec.get('bob'):
+        # 몸 전체만 위아래(관절 회전 없음, 115-A 81): 정강이(종아리)를 몸이 내려간 만큼 거꾸로 옮겨 정강이·발은 제자리
+        for b in ('shin_L', 'shin_R'):
+            tr[b] = [[t, 0, 0, -round(d * SC / 2, 2) or 0] for t, d in zip(T, spec['dip'])]
     m = {'duration': spec['duration'], 'loop': spec.get('loop', False)}
     for k in ('hit', 'hold'):
         if k in spec: m[k] = spec[k]
@@ -109,7 +113,7 @@ def build(spec):
     for b in rig['bones']:
         m['tracks'].setdefault(b['id'], [[0, 0, 0, 0]])
     # 제자리 동작은 두 발바닥 고정(GDD 115-A 77·78): 몸 높이는 설계대로(가장 낮은 발 기준), 정강이(종아리)는 고정하고 허벅지 각을 풀어 두 발을 바닥 줄에
-    if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all'):
+    if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all' and not spec.get('bob')):
         import plant as pl
         pl.cm = sys.modules[__name__]
         mode = 'sole' if 'foot_L' in PTS else 'calf'
@@ -119,11 +123,9 @@ def build(spec):
 
 # 역관절 기본 동작 11개 (각도 = 쉬는 자세(사용자 도트) 기준, + = 시계 방향: 몸통+ 뒤로 젖힘, 머리+ 얼굴 위로, 팔·다리+ 앞으로)
 SPEC = {}
-# 대기 = 숨쉬기만(사용자 2026-11-09 02:0x "너무 과해. 그냥 허벅지, 몸통, 팔이 위아래로 살짝씩 숨쉬듯") — 몸 0.5칸 내렸다 올림(허벅지는 발 고정 풀이로 따라 굽음), 몸통·팔 1~2°
-SPEC['idle'] = dict(times=[0, 900, 1800], duration=1800, loop=True, dip=[0, 0.5, 0], bones={
-    'torso': [0, 1.5, 0], 'head': [0, -1, 0],
-    'arm_R': [0, 1.5, 0], 'forearm_R': [0, -1.5, 0],
-    'arm_L': [0, -1.5, 0], 'forearm_L': [0, 1.5, 0]})
+# 대기 = 몸 전체만 위아래로(사용자 2026-11-09 02:1x "관절을 기준으로 회전을 하지 말고, 그냥 몸 전체가 위아래로 들렸나 내려갔다만") — 관절 회전 없음,
+# 몸(허벅지·몸통·팔·머리)이 1칸 내려갔다 올라옴, 정강이·발은 그 자리(bob, 115-A 81)
+SPEC['idle'] = dict(times=[0, 900, 1800], duration=1800, loop=True, dip=[0, 1, 0], bob=True, bones={})
 # 홈 대기 = 대기 (hollow() 에서 — 사용자 "홈대기=대기")
 SPEC['move'] = dict(times=[0, 180, 360, 540, 720], duration=720, loop=True, sample=40, bones={
     'torso': [0, -3, 0, -3, 0], 'head': [0, 3, 0, 3, 0],
@@ -190,8 +192,7 @@ SPEC['down'] = dict(times=[0, 200, 500, 700, 900], duration=900, hold=True, grou
 # 덩치(몸 hb) = 사용자 부위 시트 조립(2026-11-09 — 처음 짐승 bst 로 넣었다가 사용자 "짐승이 아니라 덩치고" 로 옮김): 대기·걷기·공격·해방(포효), 특수2·필살기 없음
 # 해골 머리·긴 발톱 팔(앞팔은 바닥을 짚음)·짧은 다리의 고릴라형. 다리는 종아리에 발이 붙어 있음(발 뼈 없음)
 SPEC_HB = {}
-SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[0, 0.5, 0], bones={  # 숨쉬기만(115-A 80)
-    'torso': [0, 1.5, 0], 'head': [0, -1, 0], 'arm_R': [0, -1.5, 0], 'forearm_R': [0, 1.5, 0], 'arm_L': [0, -1.5, 0], 'forearm_L': [0, 1.5, 0]})
+SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[0, 1, 0], bob=True, bones={})  # 몸 전체만 위아래(115-A 81)
 # 걷기: 너클 보행 — 앞팔과 뒷다리, 뒤팔과 앞다리가 짝. 몸을 낮게 흔들며 머리는 앞을 봄
 SPEC_HB['move'] = dict(times=[0, 200, 400, 600, 800], duration=800, loop=True, sample=40, bones={
     'torso': [0, -5, 0, -5, 0], 'head': [0, 3, 0, 3, 0],
