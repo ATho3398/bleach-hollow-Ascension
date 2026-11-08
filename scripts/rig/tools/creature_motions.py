@@ -119,12 +119,11 @@ def build(spec):
 
 # 역관절 기본 동작 11개 (각도 = 쉬는 자세(사용자 도트) 기준, + = 시계 방향: 몸통+ 뒤로 젖힘, 머리+ 얼굴 위로, 팔·다리+ 앞으로)
 SPEC = {}
-SPEC['idle'] = dict(times=[0, 500, 900, 1300, 1800], duration=1800, loop=True, dip=[0, 1.2, 1.8, 0.8, 0], bones={
-    'torso': [0, 2, 3, 1, 0], 'head': [0, -3, -2, 2, 0],
-    'arm_R': [0, 3, 4, 2, 0], 'forearm_R': [0, -5, -7, -3, 0],
-    'arm_L': [0, -3, -4, -1, 0], 'forearm_L': [0, 6, 8, 3, 0],
-    'leg_R': [0, 6, 8, 4, 0], 'shin_R': [0, -9, -12, -6, 0], 'foot_R': [0, 3, 4, 2, 0],
-    'leg_L': [0, 5, 6, 3, 0], 'shin_L': [0, -6, -8, -4, 0], 'foot_L': [0, 1, 2, 1, 0]})
+# 대기 = 숨쉬기만(사용자 2026-11-09 02:0x "너무 과해. 그냥 허벅지, 몸통, 팔이 위아래로 살짝씩 숨쉬듯") — 몸 0.5칸 내렸다 올림(허벅지는 발 고정 풀이로 따라 굽음), 몸통·팔 1~2°
+SPEC['idle'] = dict(times=[0, 900, 1800], duration=1800, loop=True, dip=[0, 0.5, 0], bones={
+    'torso': [0, 1.5, 0], 'head': [0, -1, 0],
+    'arm_R': [0, 1.5, 0], 'forearm_R': [0, -1.5, 0],
+    'arm_L': [0, -1.5, 0], 'forearm_L': [0, 1.5, 0]})
 # 홈 대기 = 대기 (hollow() 에서 — 사용자 "홈대기=대기")
 SPEC['move'] = dict(times=[0, 180, 360, 540, 720], duration=720, loop=True, sample=40, bones={
     'torso': [0, -3, 0, -3, 0], 'head': [0, 3, 0, 3, 0],
@@ -191,9 +190,8 @@ SPEC['down'] = dict(times=[0, 200, 500, 700, 900], duration=900, hold=True, grou
 # 덩치(몸 hb) = 사용자 부위 시트 조립(2026-11-09 — 처음 짐승 bst 로 넣었다가 사용자 "짐승이 아니라 덩치고" 로 옮김): 대기·걷기·공격·해방(포효), 특수2·필살기 없음
 # 해골 머리·긴 발톱 팔(앞팔은 바닥을 짚음)·짧은 다리의 고릴라형. 다리는 종아리에 발이 붙어 있음(발 뼈 없음)
 SPEC_HB = {}
-SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[0, 1.8, 0], bones={
-    'torso': [0, 3, 0], 'head': [0, -3, 0], 'arm_R': [0, -2, 0], 'forearm_R': [0, 2, 0], 'arm_L': [0, -3, 0], 'forearm_L': [0, 3, 0],
-    'leg_R': [0, 6, 0], 'shin_R': [0, -9, 0], 'leg_L': [0, 5, 0], 'shin_L': [0, -7, 0]})
+SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[0, 0.5, 0], bones={  # 숨쉬기만(115-A 80)
+    'torso': [0, 1.5, 0], 'head': [0, -1, 0], 'arm_R': [0, -1.5, 0], 'forearm_R': [0, 1.5, 0], 'arm_L': [0, -1.5, 0], 'forearm_L': [0, 1.5, 0]})
 # 걷기: 너클 보행 — 앞팔과 뒷다리, 뒤팔과 앞다리가 짝. 몸을 낮게 흔들며 머리는 앞을 봄
 SPEC_HB['move'] = dict(times=[0, 200, 400, 600, 800], duration=800, loop=True, sample=40, bones={
     'torso': [0, -5, 0, -5, 0], 'head': [0, 3, 0, 3, 0],
@@ -271,8 +269,14 @@ def main(bodies):
     for body in bodies:
         setup(body)
         out = {'note': NOTES[body]}
+        prev = mo['sets'].get(rig['bodyMotions'][body]) or {}
         for mid, s in SPECS[body].items():
             out[mid] = {'off': True} if s == 'off' else build(s)
+            # 편집기에서 고정한 뼈 트랙(apply_editor.py 가 'edited' 로 표시)은 다시 만들어도 그대로(115-A 80)
+            ed = (prev.get(mid) or {}).get('edited') or []
+            if ed and s != 'off':
+                out[mid]['tracks'].update({b: prev[mid]['tracks'][b] for b in ed if b in prev[mid].get('tracks', {})})
+                out[mid]['edited'] = list(ed)
         # 이 스크립트가 만들지 않는 동작(편집기에서 고정한 것 등)은 그대로 두되, 제자리 동작이면 두 발바닥만 고정(115-A 77)
         import plant as pl
         pl.cm = sys.modules[__name__]

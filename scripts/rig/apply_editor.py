@@ -176,6 +176,8 @@ if 'bodies' in data:
                 print('동작 없음(건너뜀):', key)
                 continue
             target.setdefault('tracks', {}).update(edits)
+            if key.split('/', 1)[0]:  # 묶음 동작: 고정한 뼈 표시 — creature_motions.py 가 다시 만들어도 이 트랙은 그대로 둠(115-A 80)
+                target['edited'] = sorted(set(target.get('edited') or []) | set(edits))
             n += len(edits)
             done['motions'] |= {(key, bone) for bone in edits}
         for key, bone in undo:
@@ -187,6 +189,10 @@ if 'bodies' in data:
                 (target.get('tracks') or {}).pop(bone, None)
             else:
                 target.setdefault('tracks', {})[bone] = src
+            if bone in (target.get('edited') or []):
+                target['edited'] = [b for b in target['edited'] if b != bone] or None
+                if target['edited'] is None:
+                    del target['edited']
             done['motions'].add((key, bone))
         for key, order in morder.items():
             target = target_of(mo, key, True)
