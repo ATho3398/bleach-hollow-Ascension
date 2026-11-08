@@ -7,7 +7,7 @@
 SPEC(아래) = 동작마다 키 시각과 뼈 각도(쉬는 자세 = 도트 그대로 기준, + = 시계 방향). 몸 높이(root y)는 키마다 발(쓰러짐은 몸 전체)의
 가장 낮은 칸이 바닥 줄(y 80)에 닿게 계산해서 넣는다(걷기는 40ms 마다). 결과 = 작업본 motions.json 의 sets.digitigrade (통째로 바꿈).
 편집기에서 고친 값이 있으면 이 스크립트를 다시 돌릴 때 덮이니 주의.
-결과 = 몸의 묶음(bodyMotions: dg → digitigrade, hb → brute)을 통째로 바꿈.
+결과 = 몸의 묶음(bodyMotions: dg → digitigrade, hb → brute, bst → beast)에서 SPEC 에 있는 동작을 바꿈(그 밖 동작 — 편집기에서 고정한 것 등 — 은 그대로).
 사용: python3 scripts/rig/tools/creature_motions.py [dg|hb|bst]  (없으면 둘 다)
 """
 import json, math, sys
@@ -233,6 +233,10 @@ def main(bodies):
         out = {'note': NOTES[body]}
         for mid, s in SPECS[body].items():
             out[mid] = build(s)
+        # 이 스크립트가 만들지 않는 동작(편집기에서 고정한 것 등)은 그대로 둔다
+        for mid, v in (mo['sets'].get(rig['bodyMotions'][body]) or {}).items():
+            if mid != 'note' and mid not in out:
+                out[mid] = v
         mo['sets'][rig['bodyMotions'][body]] = out
         print(body, '→', rig['bodyMotions'][body], list(out)[1:])
     write_motions(mo)

@@ -184,14 +184,14 @@
     "bst": {
       "torso": { "art": "bst/torso", "at": [2, 20], "size": [28, 42] },
       "head": { "art": "bst/head", "at": [-8, 14], "size": [24, 30] },
-      "arm_R": { "art": "bst/arm_R", "at": [-4, 30], "size": [18, 28] },
-      "forearm_R": { "art": "bst/forearm_R", "at": [-18, 48], "size": [24, 32] },
+      "arm_R": { "art": "bst/arm_R", "at": [-5, 23], "size": [18, 28] },
+      "forearm_R": { "art": "bst/forearm_R", "at": [-18, 39], "size": [24, 32] },
       "arm_L": { "art": "bst/arm_L", "at": [22, 22], "size": [16, 24] },
-      "forearm_L": { "art": "bst/forearm_L", "at": [30, 40], "size": [20, 36] },
+      "forearm_L": { "art": "bst/forearm_L", "at": [33, 34], "size": [20, 36] },
       "leg_R": { "art": "bst/leg_R", "at": [6, 56], "size": [18, 14] },
-      "shin_R": { "art": "bst/shin_R", "at": [4, 70], "size": [18, 10] },
-      "leg_L": { "art": "bst/leg_L", "at": [24, 54], "size": [14, 18] },
-      "shin_L": { "art": "bst/shin_L", "at": [24, 70], "size": [14, 10] }
+      "shin_R": { "art": "bst/shin_R", "at": [3, 68], "size": [18, 10] },
+      "leg_L": { "art": "bst/leg_L", "at": [21, 54], "size": [14, 18] },
+      "shin_L": { "art": "bst/shin_L", "at": [23, 68], "size": [14, 10] }
     }
   },
   "looks": {
@@ -454,15 +454,15 @@
       "pivots": {
         "root": [18, 56],
         "torso": [18, 56],
-        "head": [12, 28],
-        "arm_R": [12, 32],
-        "forearm_R": [4, 52],
-        "arm_L": [30, 24],
+        "head": [12, 26],
+        "arm_R": [7, 30],
+        "forearm_R": [3, 45],
+        "arm_L": [26, 30],
         "forearm_L": [38, 42],
         "leg_R": [16, 58],
         "shin_R": [16, 70],
         "leg_L": [34, 56],
-        "shin_L": [34, 70]
+        "shin_L": [31, 70]
       }
     }
   },
@@ -990,5 +990,31 @@
       "scale": 2,
       "bleed": 1
     }
+  },
+  "bodySlots": {
+    "bst": [
+      "arm_R",
+      "cape",
+      "outer_arm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "shin_L",
+      "forearm_R",
+      "torso",
+      "leg_R",
+      "shin_R",
+      "outer_torso",
+      "arm_L",
+      "scabbard",
+      "leg_L",
+      "forearm_L",
+      "jaw",
+      "head",
+      "hair",
+      "outer_arm_R"
+    ]
   }
 }

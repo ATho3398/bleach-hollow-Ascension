@@ -1,7 +1,7 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, slotsOf, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { createDollClock } from '../src/ui/bha/paperdoll';
 
 describe('종이인형 데이터', () => {
@@ -306,5 +306,22 @@ describe('동작 전환', () => {
     c.play('attack');
     c.advance(MOTIONS.attack!.duration + 1);
     expect(c.current!.id).toBe('move');
+  });
+});
+
+describe('몸별 그림 앞뒤 순서 bodySlots (GDD 115-A 74)', () => {
+  it('몸별 순서가 있으면 그 몸만 그 순서, 다른 몸은 공통 slots 그대로', () => {
+    const rig = { ...HUMANOID, bodySlots: { bare: ['arm_R', ...HUMANOID.slots.map((s) => s.id).filter((id) => id !== 'arm_R')] } };
+    expect(slotsOf(rig, 'bare')[0]!.id).toBe('arm_R');
+    expect(slotsOf(rig, 'shinigami')).toBe(rig.slots);
+    expect(lookLayers(rig, 'bare-base')[0]!.slot).toBe('arm_R');
+    expect(lookLayers(rig, 'shinigami-base').map((l) => l.slot)).toEqual(lookLayers(HUMANOID, 'shinigami-base').map((l) => l.slot));
+  });
+  it('목록에 없는 슬롯은 원래 자리 순으로 뒤에, 없는 몸·슬롯은 데이터 점검에서 잡는다', () => {
+    const rig = { ...HUMANOID, bodySlots: { bare: ['head', 'torso'] } };
+    expect(slotsOf(rig, 'bare').slice(0, 2).map((s) => s.id)).toEqual(['head', 'torso']);
+    expect(slotsOf(rig, 'bare').length).toBe(HUMANOID.slots.length);
+    const bad = { ...HUMANOID, bodySlots: { nobody: ['head'], bare: ['zz'] } };
+    expect(validateRig(bad, MOTIONS, MOTION_SETS).join()).toMatch(/nobody: 몸 없음.*zz 없음|zz 없음.*nobody: 몸 없음/);
   });
 });

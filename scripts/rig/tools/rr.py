@@ -26,7 +26,8 @@ for t in ts:
         sx,sy=b['shift'];m=[c,s,-s,c,px-c*px+s*py+x+sx,py-s*px-c*py+y+sy]
         w=mul(get(b['parent']),m) if b['parent'] else m; mats[i]=w; return w
     im=Image.new('RGBA',(vw*K,vh*K),(160,180,155,255))
-    od=mot.get('order') or []; base_slots=sorted(rig['slots'],key=lambda x:(od.index(x['id']) if x['id'] in od else len(od)+rig['slots'].index(x)))
+    bo=(rig.get('bodySlots') or {}).get(body) or []; RS=sorted(rig['slots'],key=lambda x:(bo.index(x['id']) if x['id'] in bo else len(bo)+rig['slots'].index(x)))
+    od=mot.get('order') or []; base_slots=sorted(RS,key=lambda x:(od.index(x['id']) if x['id'] in od else len(od)+RS.index(x)))
     slots=[x for x in base_slots if x['id'] not in mot.get('hide',[])]
     fr=mot.get('front',[]); slots=[x for x in slots if x['id'] not in fr]+[x for f in fr for x in slots if False]+[x for f in fr for x in rig['slots'] if x['id']==f and x['id'] not in mot.get('hide',[])]
     for s in slots:

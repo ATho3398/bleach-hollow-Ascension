@@ -69,7 +69,8 @@ if 'bodies' in data:
     prev_m = {tuple(x) for x in prev.get('motions', [])}
     prev_b = set(prev.get('bones', []))
     prev_o = set(prev.get('orders', []))
-    done = {'joints': set(), 'at': set(), 'looks': set(), 'motions': set(), 'bones': set(), 'orders': set(), 'slots': set()}
+    prev_bs = set(prev.get('bodySlots', []))
+    done = {'joints': set(), 'at': set(), 'looks': set(), 'motions': set(), 'bones': set(), 'orders': set(), 'slots': set(), 'bodySlots': set()}
     bpiv = {b['id']: b['pivot'] for b in base['bones']}
     piv = {b['id']: b['pivot'] for b in data['bones']}
     for b in rig['bones']:
@@ -89,6 +90,18 @@ if 'bodies' in data:
                 so = slots.pop(ids.index(o))
                 slots.insert([s['id'] for s in slots].index(part) + 1, so)
         rig['slots'] = slots
+    # 몸별 앞뒤 순서(GDD 115-A 74 — 편집기 '기본 자세(이 몸)'의 앞·뒤로 보내기): 페이지 값과 다르거나 앞 고정에서 넣은 몸만, 그 몸에만
+    eb, b0s = data.get('bodySlots') or {}, base.get('bodySlots') or {}
+    for b in sorted(set(eb) | set(b0s) | prev_bs):
+        if eb.get(b) == b0s.get(b) and b not in prev_bs:
+            continue
+        done['bodySlots'].add(b)
+        if eb.get(b):
+            rig.setdefault('bodySlots', {})[b] = list(eb[b])
+        else:
+            (rig.get('bodySlots') or {}).pop(b, None)
+    if 'bodySlots' in rig and not rig['bodySlots']:
+        rig.pop('bodySlots')
     # 몸별 관절(자리·기본 각도·보정 이동): 몸·종류·뼈마다 편집기에서 고친 것(+ 앞 고정에서 넣은 것)만(빈 값 = 지움)
     def norm(j):
         j = j if isinstance(j, dict) else {}

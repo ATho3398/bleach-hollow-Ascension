@@ -55,7 +55,8 @@ def bone_mats(body=None):
 def layers(look_id):
     look = RIG['looks'][look_id]
     body = RIG['bodies'][look['body']]
-    for s in RIG['slots']:
+    bo = (RIG.get('bodySlots') or {}).get(look['body']) or []  # 몸별 앞뒤 순서 (GDD 115-A 74)
+    for s in sorted(RIG['slots'], key=lambda x: bo.index(x['id']) if x['id'] in bo else len(bo) + RIG['slots'].index(x)):
         part = body.get(s['id']) or (look.get(s['id']) if isinstance(look.get(s['id']), dict) else None)
         if part:
             yield s, part

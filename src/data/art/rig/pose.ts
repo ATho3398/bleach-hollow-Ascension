@@ -42,6 +42,8 @@ export interface Rig {
   view?: { rect: [number, number, number, number]; clipY?: number };
   /** 몸 id → 동작 묶음 이름(motions.json 의 sets). 역관절 다리처럼 몸에 따라 일부 뼈 동작만 바꿔 끼운다(GDD 96장 40) */
   bodyMotions?: Record<string, string>;
+  /** 몸 id → 그 몸만의 그림 앞뒤 순서(슬롯 id, 뒤 → 앞). 없으면 slots 순서. 편집기 '기본 자세(이 몸)'의 앞·뒤로 보내기 (GDD 115-A 74) */
+  bodySlots?: Record<string, string[]>;
   /** 관절 편집기 전용(게임은 안 씀): 부위 이름, 부위 버튼 묶음, 부위를 옮기면 같이 옮겨 갈 부위(GDD 96장 42) */
   edit?: RigEdit;
 }
@@ -249,6 +251,16 @@ export function boneMatrices(rig: Rig, pose: Pose, body?: string): Record<string
   return out;
 }
 
+/** 몸의 그림 앞뒤 순서: bodySlots 가 있으면 그 순서(목록 밖 슬롯은 원래 자리 순으로 뒤에), 없으면 slots (GDD 115-A 74) */
+export function slotsOf(rig: Rig, body: string): Slot[] {
+  const order = rig.bodySlots?.[body];
+  if (!order?.length) return rig.slots;
+  return rig.slots
+    .map((s, i) => ({ s, k: order.indexOf(s.id) < 0 ? order.length + i : order.indexOf(s.id) }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.s);
+}
+
 /** 외형 → 슬롯별 부위 그림(앞뒤 순서대로). 그림 없는 슬롯은 빠진다 */
 export function lookLayers(rig: Rig, lookId: string): Layer[] {
   const look = rig.looks[lookId];
@@ -256,7 +268,7 @@ export function lookLayers(rig: Rig, lookId: string): Layer[] {
   const body = rig.bodies[look.body];
   if (!body) throw new Error(`몸 없음: ${look.body}`);
   const layers: Layer[] = [];
-  for (const s of rig.slots) {
+  for (const s of slotsOf(rig, look.body)) {
     const extra = look[s.id];
     const part = body[s.id] ?? (typeof extra === 'object' ? extra : undefined);
     if (part) layers.push({ slot: s.id, bone: s.bone, ...part });
@@ -340,6 +352,10 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   const ids = new Set(rig.bones.map((b) => b.id));
   for (const b of rig.bones) if (b.parent && !ids.has(b.parent)) errs.push(`${b.id}: 부모 ${b.parent} 없음`);
   for (const s of rig.slots) if (!ids.has(s.bone)) errs.push(`슬롯 ${s.id}: 뼈 ${s.bone} 없음`);
+  for (const [b, order] of Object.entries(rig.bodySlots ?? {})) {
+    if (!rig.bodies[b]) errs.push(`몸별 앞뒤 순서 ${b}: 몸 없음`);
+    for (const id of order) if (!rig.slots.some((s) => s.id === id)) errs.push(`몸별 앞뒤 순서 ${b}: 슬롯 ${id} 없음`);
+  }
   for (const [bid, j] of Object.entries(rig.bodyJoints ?? {})) {
     if (typeof j !== 'object') continue;
     if (!rig.bodies[bid]) errs.push(`몸별 관절 ${bid}: 몸 없음`);

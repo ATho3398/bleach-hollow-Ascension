@@ -1,6 +1,6 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
 import { DRAFT_RIGS, type DraftRig } from './draft';
-import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
@@ -22,7 +22,7 @@ const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
  * 게임 데이터가 바뀌었으면(Claude 가 사용자 값을 넣었거나 새 시트) 이 기기에 남은 옛 저장은 버리고 데이터 값을 쓴다 —
  * 서버 저장은 Claude 가 데이터를 바꿀 때마다 같이 맞춘다 */
-type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits; motionOrder?: MotionOrder };
+type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits; motionOrder?: MotionOrder; bodySlots?: Record<string, string[]> };
 /** 동작에만 쓰는 그림 앞뒤 순서(GDD 115-A 62, 사용자 2026-11-01 "부위별 레이어도, 동작에서만이 작동 되야지"): '<동작 묶음>/<동작 id>' → 슬롯 id 목록(뒤 → 앞) */
 type MotionOrder = Record<string, string[]>;
 /** 동작 키 고친 것(사용자 2026-10-31 "이 모션에만 값 저장하기"): '<동작 묶음>/<동작 id>' → 뼈 → 키 목록(그 뼈 트랙 통째). 묶음이 없으면 '/<동작 id>' */
@@ -66,6 +66,9 @@ function merge(c: Ctx, s: Saved): boolean {
       shift: Object.fromEntries(Object.entries(j.shift ?? {}).filter(([k]) => ok(k))),
     };
   }
+  if (s.bodySlots) {
+    rig.bodySlots = Object.fromEntries(Object.entries(s.bodySlots).filter(([b]) => rig.bodies[b]).map(([b, o]) => [b, o.filter((id) => rig.slots.some((y) => y.id === id))]));
+  }
   if (s.slots && s.slotsEdited) {
     c.slotsEdited = true;
     const order = s.slots.map((x) => x.id).filter((id) => rig.slots.some((y) => y.id === id));
@@ -86,7 +89,7 @@ function merge(c: Ctx, s: Saved): boolean {
 function resetRig(c: Ctx) {
   const fresh: Rig = JSON.parse(JSON.stringify(c.src.rig));
   const r = c.rig;
-  r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; c.slotsEdited = false; c.medits = {}; c.morder = {};
+  r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; r.bodySlots = fresh.bodySlots; c.slotsEdited = false; c.medits = {}; c.morder = {};
 }
 for (const c of Object.values(CTX)) {
   try {
@@ -153,7 +156,7 @@ sizeStage();
 window.addEventListener('resize', fitSide);
 
 let dbTimer = 0;
-const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
+const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, bodySlots: c.rig.bodySlots ?? {}, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
 function save(user = true) {
   const st = state();
   try { localStorage.setItem(C.store, st); } catch { /* 무시 */ }
@@ -311,8 +314,8 @@ function draw() {
 /** 고른 부위의 앞뒤 자리: '이 동작에만'이면 그 동작 순서로 */
 function layerPos(): string {
   const m = scope === 'motion' && motion ? motionsNow()[motion] : undefined;
-  const ids = m?.order ?? rig.slots.map((s) => s.id);
-  return `${ids.indexOf(sel) + 1}/${ids.length}` + (m?.order ? ' (이 동작)' : '');
+  const ids = m?.order ?? bodyOrder();
+  return `${ids.indexOf(sel) + 1}/${ids.length}` + (m?.order ? ' (이 동작)' : ' (이 몸)');
 }
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
 const CHIP_GROUPS = (): [string, string[]][] => rig.edit?.groups ?? [];
@@ -423,27 +426,32 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
   document.querySelectorAll('[data-m]').forEach((x) => x.classList.toggle('on', x === b && m !== 'stop'));
   draw();
 });
-/** 앞·뒤로 보내기: '이 동작에만'이면 지금 동작의 앞뒤 순서만(GDD 115-A 62), 아니면 모든 동작의 기본 순서 */
+/** 지금 몸의 기본 앞뒤 순서(몸별 순서가 없으면 공통 slots) */
+function bodyOrder(): string[] { return slotsOf(rig, curBody()).map((s) => s.id); }
+/** 앞·뒤로 보내기: '이 동작에만'이면 지금 동작의 앞뒤 순서만(GDD 115-A 62), 아니면 지금 몸의 기본 순서만(몸별 bodySlots, 115-A 74 — 다른 몸은 그대로) */
 function moveLayer(step: 1 | -1) {
+  const base = bodyOrder();
   if (scope === 'motion' && motion) {
     const key = motionKeyOf(motion);
-    const cur = [...(motionsNow()[motion]?.order ?? rig.slots.map((s) => s.id))];
-    for (const s of rig.slots) if (!cur.includes(s.id)) cur.push(s.id);
+    const cur = [...(motionsNow()[motion]?.order ?? base)];
+    for (const id of base) if (!cur.includes(id)) cur.push(id);
     const i = cur.indexOf(sel);
     const j = i + step;
     if (i < 0 || j < 0 || j >= cur.length) return;
     [cur[i], cur[j]] = [cur[j]!, cur[i]!];
-    if (cur.join() === rig.slots.map((s) => s.id).join() && !motionOrderInData(motion)) delete C.morder[key];
+    if (cur.join() === base.join() && !motionOrderInData(motion)) delete C.morder[key];
     else C.morder[key] = cur;
     save(); draw();
     return;
   }
-  C.slotsEdited = true;
-  const i = rig.slots.findIndex((s) => s.id === sel);
+  const cur = [...base];
+  const i = cur.indexOf(sel);
   const j = i + step;
-  if (i < 0 || j < 0 || j >= rig.slots.length) return;
-  const [s] = rig.slots.splice(i, 1);
-  rig.slots.splice(j, 0, s!);
+  if (i < 0 || j < 0 || j >= cur.length) return;
+  [cur[i], cur[j]] = [cur[j]!, cur[i]!];
+  rig.bodySlots ??= {};
+  if (cur.join() === rig.slots.map((s) => s.id).join()) delete rig.bodySlots[curBody()];
+  else rig.bodySlots[curBody()] = cur;
   save(); draw();
 }
 /** 데이터(작업본)에 이 동작만의 앞뒤 순서가 이미 있는지 — 있으면 기본 순서와 같아져도 지우지 않고 그 순서로 남긴다 */

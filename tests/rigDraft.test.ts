@@ -66,7 +66,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('짐승(사용자 부위 시트 조립, 115-A 73): 부위 10개(발 없음 — 종아리에 붙음), 전용 묶음 = 대기·걷기·공격, 걷기에서 늘 한 발은 디딤', () => {
     expect(Object.keys(rig.bodies.bst!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
     expect(rig.looks['beast-base']!.body).toBe('bst');
-    expect(Object.keys(sets.beast!).filter((k) => k !== 'note').sort()).toEqual(['attack', 'idle', 'move']);
+    for (const id of ['attack', 'idle', 'move']) expect(sets.beast![id], id).toBeDefined(); // 편집기에서 고친 동작(특수1 등)이 더 있을 수 있음
     const bs = resolveMotions(rig, motions, sets, 'bst');
     const piv = (rig.bodyJoints!.bst as { pivots: Record<string, [number, number]> }).pivots;
     for (let t = 0; t <= bs.move!.duration; t += 40) {
