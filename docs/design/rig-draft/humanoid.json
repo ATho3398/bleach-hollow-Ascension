@@ -151,12 +151,13 @@
       "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42], "size": [12, 16] }
     },
     "dg": {
-      "head": { "art": "dg/head", "at": [0, 51], "size": [15, 15] },
+      "head": { "art": "dg/head", "at": [0, 51], "size": [15, 16] },
       "torso": { "art": "dg/torso", "at": [13, 55], "size": [11, 8] },
       "arm_R": { "art": "dg/arm_R", "at": [10, 60], "size": [6, 7] },
-      "forearm_R": { "art": "dg/forearm_R", "at": [3, 63], "size": [11, 10] },
-      "arm_L": { "art": "dg/arm_L", "at": [21, 59], "size": [13, 14] },
-      "leg_R": { "art": "dg/leg_R", "at": [11, 66], "size": [9, 6] },
+      "forearm_R": { "art": "dg/forearm_R", "at": [3, 63], "size": [12, 10] },
+      "arm_L": { "art": "dg/arm_L", "at": [21, 59], "size": [6, 4] },
+      "forearm_L": { "art": "dg/forearm_L", "at": [25, 62], "size": [9, 11] },
+      "leg_R": { "art": "dg/leg_R", "at": [11, 67], "size": [9, 5] },
       "shin_R": { "art": "dg/shin_R", "at": [11, 71], "size": [8, 5] },
       "foot_R": { "art": "dg/foot_R", "at": [11, 75], "size": [8, 5] },
       "leg_L": { "art": "dg/leg_L", "at": [16, 62], "size": [7, 7] },
@@ -374,8 +375,9 @@
         "torso": [18, 62],
         "head": [12, 58],
         "arm_R": [14, 61],
-        "forearm_R": [13, 66],
+        "forearm_R": [14, 65],
         "arm_L": [22, 59],
+        "forearm_L": [26, 63],
         "leg_R": [18, 68],
         "shin_R": [12, 71],
         "foot_R": [17, 75],
@@ -548,6 +550,13 @@
             [1, 64]
           ],
           "w": 3
+        },
+        {
+          "pts": [
+            [6, 62],
+            [6, 66]
+          ],
+          "w": 3
         }
       ],
       "torso": [
@@ -570,7 +579,7 @@
         {
           "pts": [
             [14, 61],
-            [13, 66]
+            [14, 65]
           ],
           "w": 3
         }
@@ -578,9 +587,9 @@
       "forearm_R": [
         {
           "pts": [
-            [13, 66],
-            [9, 68],
-            [5, 70]
+            [14, 65],
+            [10, 67],
+            [7, 69]
           ],
           "w": 2
         },
@@ -603,7 +612,15 @@
         {
           "pts": [
             [22, 59],
-            [26, 62],
+            [26, 63]
+          ],
+          "w": 3
+        }
+      ],
+      "forearm_L": [
+        {
+          "pts": [
+            [26, 63],
             [29, 67],
             [30, 71]
           ],

@@ -23,11 +23,20 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
   it('정강이 그림이 없는 몸은 기본 동작에서 발이 다리를 그대로 따라간다(정강이 0°)', () => {
     for (const m of Object.values(motions)) expect(m.tracks.shin_L ?? m.tracks.shin_R).toBeUndefined();
   });
-  it('역관절 몸은 다리 동작 묶음을 쓴다: 걷기에서 정강이가 접힌다', () => {
+  it('역관절 기본은 전용 동작 11개를 쓴다(모든 뼈를 묶음에서 정함, 칼 설정 없음) — GDD 115-A 70', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
-    expect(dg.move!.tracks.shin_L).toBeDefined();
-    expect(dg.move!.tracks.arm_L).toEqual(motions.move!.tracks.arm_L); // 다리 밖은 기본 그대로
-    expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로;
+    const own = ['idle', 'homeIdle', 'move', 'attack', 'attack2', 'skill', 'hit', 'release1', 'headbutt', 'dying', 'down'];
+    expect(Object.keys(sets.digitigrade!).filter((k) => k !== 'note').sort()).toEqual([...own].sort());
+    for (const id of own) {
+      for (const b of ['root', 'torso', 'head', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']) {
+        expect(sets.digitigrade![id]!.tracks[b], `${id}.${b}`).toBeDefined();
+      }
+      expect(dg[id]!.flip ?? [], id).toEqual([]);
+      expect(dg[id]!.fx ?? [], id).toEqual([]);
+    }
+    expect(dg.move!.tracks.shin_L!.some((k) => k[1] !== 0)).toBe(true); // 걷기에서 정강이가 접힌다
+    expect(dg.down!.hold).toBe(true);
+    expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로
   });
   it('역관절 걷기: 늘 한 발은 디뎌 있고(발목이 쉬는 자세 높이 그대로) 바닥에 묻히지 않는다 — 역관절 기본 = 사용자 도트(GDD 115-A 69)', () => {
     const dg = resolveMotions(rig, motions, sets, 'dg');
