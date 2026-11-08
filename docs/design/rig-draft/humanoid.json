@@ -473,7 +473,8 @@
       "scabbard": "칼집",
       "thumb_L": "엄지",
       "cape": "망토",
-      "forearm_L": "왼 아래팔"
+      "forearm_L": "왼 아래팔",
+      "jaw": "턱"
     },
     "groups": [
       [
@@ -486,6 +487,7 @@
         "머리",
         [
           "head",
+          "jaw",
           "hair",
           "hair_back"
         ]
@@ -536,6 +538,7 @@
     ],
     "follow": {
       "head": [
+        "jaw",
         "hair",
         "hair_back"
       ],
