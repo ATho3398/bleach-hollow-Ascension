@@ -43,7 +43,7 @@ describe('180-1 기기 버튼: ▲▼ 대상만 · ◀ 아무 일 없음 · 깜�
     expect(dev).toContain('const layer = tutLayer() ?? layers[layers.length - 1];');
     expect(dev).toContain('if (!tutLayer() && runCancelHooks(layers[layers.length - 1]?.el ?? null)) return;');
     expect(dev).toContain('!isNavAction(action) && !tutLayer()');
-    expect(tut).toContain('const unregister = registerLayer(layer, () => nudge());');
+    expect(tut).toContain('const off = registerLayer(layer, () => nudge());'); // C.313: 덮는 창 동안은 등록을 풀었다가 다시 건다
   });
   it('뒤로 눌렀을 때 새 알림·문구 없음 (홈 안내·회복 안내의 토스트 삭제)', () => {
     expect(tut).not.toContain('onBack?:');

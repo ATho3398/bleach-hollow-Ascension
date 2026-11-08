@@ -7,7 +7,7 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { linesBody } from './bha/lines';
-import { DEVICE_BUTTON_SELECTOR, getOverlayHost, registerLayer } from './bha/overlayHost';
+import { DEVICE_BUTTON_SELECTOR, getOverlayHost, onTutorialCover, registerLayer, tutorialsCovered } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardFit, unionRect, type BoxSide, type Rect } from './helpLayout';
 
@@ -193,6 +193,7 @@ const onGuardedEvent = (e: Event): void => {
   for (const dead of guards.filter((x) => !x.layer.isConnected)) dead.release();
   const g = guards[guards.length - 1];
   if (!g || !e.isTrusted) return;
+  if (tutorialsCovered()) return; // 일시정지·설정 같은 창이 안내를 덮고 있으면 그 창 버튼이 눌려야 한다 (GDD 194장 2)
   if (pressPasses(press, e.type, performance.now(), tutorialAllows(g, e.target))) return;
   if (e.cancelable) e.preventDefault();
   e.stopImmediatePropagation();
@@ -251,7 +252,16 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const host = getOverlayHost();
   host.append(layer);
   // 뒤로(◀·Esc) = 대상 깜빡임만 (GDD 180장 1 — 새 알림·문구 없음). 튜토리얼은 [다음]·[건너뛰기]로만 닫는다 (C.176, GDD 104장 7)
-  const unregister = registerLayer(layer, () => nudge());
+  // 덮는 창(일시정지 등)이 열려 있는 동안은 기기에서도 빠진다 — 기기 ▲▼✓◀ 가 그 창 버튼을 고르게 (GDD 194장 1)
+  let unregister = (): void => undefined;
+  const enroll = (): void => {
+    unregister();
+    const off = registerLayer(layer, () => nudge());
+    unregister = () => {
+      unregister = () => undefined;
+      off();
+    };
+  };
 
   /** 지금 단계 (stages 가 있는 장면만) */
   let stageIdx = 0;
@@ -281,6 +291,27 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     nudgeTargets(els);
   };
   const unguard = pushGuard({ layer, card, allow: allowSel, nudge });
+  /**
+   * 덮임 (GDD 194장 1~3, C.314): 일시정지·설정·새 버전 알림 같은 창이 열려 있으면 카드·강조 틀·띠를 통째로 숨기고, 입력 막기·기기 등록도 쉰다.
+   * 창이 닫히면 같은 단계(state·stageIdx·직접 해 보기 상태 그대로) 카드를 다시 그린다. 앱 이탈(C.193 자리 비움) 때 전투 일시정지가 이 길로 온다
+   */
+  let covered = false;
+  const applyCover = (on: boolean): void => {
+    if (on === covered || !layer.isConnected) return;
+    covered = on;
+    layer.style.display = on ? 'none' : '';
+    if (on) {
+      delete layer.dataset.tutGuard; // 기기 쪽(device.ts)이 이 안내로 초점을 좁히지 않게
+      unregister();
+      return;
+    }
+    layer.dataset.tutGuard = '';
+    enroll();
+    render();
+  };
+  const offCover = onTutorialCover(applyCover);
+  if (tutorialsCovered()) applyCover(true);
+  else enroll();
   /** 장면 이동 연출(온천 들고 나기·월드맵 걷기 → 페이드) 중에는 창을 숨기고, 끝나면 그 자리에 한 번 놓고 고정한다 (GDD 143장 1) */
   let moveTimer = 0;
   /** 카드가 대상을 덮게 됐는지 보는 타이머 (모든 장면) */
@@ -333,6 +364,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     window.clearInterval(coverTimer);
     setPractice(false);
     window.removeEventListener('resize', layout);
+    offCover();
     unregister();
     unguard();
     layer.remove();
@@ -364,6 +396,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   const MIN_SIDE_W = 200;
 
   function layout(): void {
+    if (covered) return; // 숨은 동안은 잴 수 없다 — 다시 보일 때 render 가 놓는다
     const scene = SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
     const rect = targetRect(stageOf(scene)?.targets ?? scene.targets, host);
@@ -431,6 +464,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   }
 
   function render(): void {
+    if (covered) return; // 덮는 창이 닫히면 applyCover 가 다시 그린다 (GDD 194장 1)
     const scene = SCENES[state.index]!;
     const last = state.index === state.count - 1;
     const skip = button({ label: '건너뛰기', variant: 'ghost', size: 'small', onClick: () => {
@@ -507,6 +541,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   // 그 밖에는 뜬 창을 제자리에 둔다(제자리에서 흔들리는 대상을 따라 움직이지 않게 — GDD 143장 1)
   coverTimer = window.setInterval(() => {
     if (!layer.isConnected) return window.clearInterval(coverTimer);
+    // 덮던 창이 닫기 알림 없이 문서에서 빠졌으면(화면 이동 등) 여기서 다시 띄운다
+    if (covered) return void (tutorialsCovered() || applyCover(false));
     if (hiddenForMove || card.style.visibility === 'hidden') return;
     const sc = SCENES[state.index]!;
     const r = targetRect(stageOf(sc)?.targets ?? sc.targets, host);
@@ -522,6 +558,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   if (act) {
     const poll = () => {
       if (!layer.isConnected) return window.clearInterval(actTimer);
+      if (covered) return; // 일시정지 등 덮는 창 아래: 단계·완료를 보지 않는다 (닫히면 다시 그림, GDD 194장 1)
       if (hiddenForMove || holdWhileMoving()) return; // 장면 이동 연출 중: 창 없음 (GDD 143장 1)
       const scene = SCENES[state.index]!;
       if (scene.stages && !actDone) {

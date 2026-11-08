@@ -27,4 +27,6 @@
 /* 새 버전 창 = 공용 v2 창(머리 48 · 본문, C.296) 안에 큰 가로 [다시 시작] + 작은 [나중에] (C.163) */
 .bha-update__card { padding-bottom: var(--bha-sp-4); }
 .bha-update__card .bha-btn--lg { justify-content: center; }
+/* 큰 버튼 = 창 좌우 여백 안에서 꽉 (GDD 194장 5, C.314): 공용 창 자식 여백 + block 의 width 100% 가 겹쳐 창 오른쪽 밖으로 나가던 것 */
+.bha-update__card > .bha-btn--block { width: auto; align-self: stretch; }
 .bha-update__card > .bha-btn--small { align-self: center; }

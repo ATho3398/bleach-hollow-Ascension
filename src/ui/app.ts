@@ -52,7 +52,7 @@ import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
-import { blockInput, getOverlayHost, registerLayer } from './bha/overlayHost';
+import { blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { setUpdateHost } from '../pwa';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
@@ -856,7 +856,9 @@ export function startApp(host: HTMLElement): void {
       modal.append(el('h2', 'bha-modal__title', '일시정지'), text, actions);
       layer.append(modal);
       getOverlayHost().append(layer);
-      rotateCard = { layer, off: registerLayer(layer, () => rotateEvent('cancel')), text, actions };
+      const offLayer = registerLayer(layer, () => rotateEvent('cancel'));
+      const uncover = coverTutorials(layer); // 튜토리얼 카드·강조 틀은 이 멈춤 창 동안 숨는다 (GDD 194장 3)
+      rotateCard = { layer, off: () => { offLayer(); uncover(); }, text, actions };
     }
     const c = rotateCard;
     const resume = button({ label: rotate.phase === 'counting' ? '지금 계속' : '계속', variant: 'primary', onClick: () => rotateEvent('resume') });
@@ -876,12 +878,14 @@ export function startApp(host: HTMLElement): void {
     confirmingTitle = true;
     signalHold('hold'); // 전투·원정은 확인창이 떠 있는 동안 멈춘다
     const inExpedition = activeExp !== null && activeExp.phase !== 'ended';
+    let uncover = (): void => undefined;
     confirmDialog({
       title: '처음 화면으로',
       body: inExpedition ? '모험은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
       yes: '예', no: '아니오', focusNo: true, // 기본 선택 = 아니오 (GDD 124장 1)
       onYes: () => {
         confirmingTitle = false;
+        uncover();
         signalHold('leave');
         if (activeExp && activeExp.phase !== 'ended' && activeExp.phase !== 'battle') saveProgress(activeExp); // 전투 직전 상태는 이미 저장돼 있다
         else persist();
@@ -889,9 +893,12 @@ export function startApp(host: HTMLElement): void {
       },
       onNo: () => {
         confirmingTitle = false;
+        uncover();
         signalHold('release');
       },
     });
+    // 튜토리얼 카드·강조 틀은 이 확인 창 동안 숨고 입력 막기도 쉰다 — 창 버튼이 눌리게 (GDD 194장 3)
+    uncover = coverTutorials([...getOverlayHost().querySelectorAll('.bha-confirm')].pop() ?? null);
   }
 
   /** 브라우저 뒤로가기도 같은 취소로 받는다: 기록 한 칸을 더 쌓아 두고, 되돌아오면 취소 처리 후 다시 쌓는다. 시작 화면에서는 그대로 앱 밖으로 나가게 둔다 */

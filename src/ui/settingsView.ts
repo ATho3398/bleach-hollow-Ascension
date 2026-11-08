@@ -4,7 +4,7 @@
 import { button, el, enableRangeDrag, icon } from './bha/dom';
 import { fixParticles } from '../engine/josa';
 import { endScreen, screenSignal } from './bha/screenScope';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { registerCancelHook } from './bha/shortcuts';
 import { BG_CREDIT } from '../data/art/backgrounds';
 import { lcdHead, lcdPage } from './bha/lcdpage';
@@ -239,16 +239,19 @@ export function settingsOverlay(onClose: () => void): () => void {
   layer.setAttribute('aria-label', '설정');
   let closed = false;
   let unregister = () => {};
+  let uncover = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
+    uncover();
     endScreen(layer); // 이 레이어 설정 화면이 건 window 리스너를 푼다
     layer.remove();
     onClose();
   };
   const ctl = settingsView(layer, { onClose: () => ctl.requestClose(close) });
   getOverlayHost().append(layer);
+  uncover = coverTutorials(layer); // 튜토리얼 카드·강조 틀은 설정 창이 열린 동안 숨는다 (GDD 194장 1·3)
   unregister = registerLayer(layer, () => ctl.requestClose(close));
   return close;
 }

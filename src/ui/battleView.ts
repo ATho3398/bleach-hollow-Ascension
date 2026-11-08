@@ -50,7 +50,7 @@ import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
 import { pickDialog } from './pickDialog';
 import { showToast } from './bha/nest';
-import { registerLayer } from './bha/overlayHost';
+import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
@@ -785,11 +785,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       });
     } }));
     inner.append(ovMark('i-pause'), el('h2', 'bha-battle-ov__title', '일시정지'), el('p', 'bha-battle-ov__sub', '전투가 멈춰 있다. 블록 바와 시간도 멈춘다.'), actions);
+    // 튜토리얼 카드·강조 틀은 일시정지 창이 열려 있는 동안 숨는다 — [계속]/[설정]이 가리지 않게, [계속]이면 같은 단계 카드가 다시 뜬다 (GDD 194장 1·2)
     const ov = showOverlay(inner);
+    const uncover = coverTutorials(ov);
     const off = registerLayer(ov, () => setPaused(false));
     unregPause = () => {
       unregPause = () => undefined;
       off();
+      uncover();
     };
   };
   pauseBtn.onclick = () => setPaused(!paused);

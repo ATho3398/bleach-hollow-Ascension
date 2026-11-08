@@ -3,7 +3,7 @@
 // 누르면 새로고침해 새 버전으로 연다(원정 중이면 마지막 중간 저장에서 이어하기). C.283: 버전 파일로 바로 알고, 다 받기를 기다리지 않고 새 index·JS 를 네트워크에서(pwa.ts restartToLatest). 나중에 = 이번 실행 동안 다시 안 띄운다
 import { button, el } from './bha/dom';
 import { trapModalFocus } from './bha/modalFocus';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { onUpdateReady, restartToLatest } from '../pwa';
 
 export function mountUpdateBanner(reload: () => void = () => restartToLatest()): void {
@@ -16,9 +16,11 @@ export function mountUpdateBanner(reload: () => void = () => restartToLatest()):
     const modal = el('div', 'bha-modal bha-update__card');
     let unregister: () => void = () => {};
     let untrap: () => void = () => {};
+    let uncover: () => void = () => {};
     const later = () => {
       unregister();
       untrap();
+      uncover();
       layer.remove();
     };
     const go = button({ label: '다시 시작', icon: 'i-loop', variant: 'primary', size: 'lg', block: true, onClick: reload });
@@ -26,6 +28,7 @@ export function mountUpdateBanner(reload: () => void = () => restartToLatest()):
     modal.append(el('h2', 'bha-modal__title', '새 버전이 나왔다'), el('p', 'bha-modal__body', '다시 시작하면 바로 적용된다.'), go, skip);
     layer.append(modal);
     getOverlayHost().append(layer);
+    uncover = coverTutorials(layer); // 튜토리얼 카드가 이 창을 가리거나 버튼을 막지 않게 (GDD 194장 1·3)
     untrap = trapModalFocus(layer);
     unregister = registerLayer(layer, later);
   });

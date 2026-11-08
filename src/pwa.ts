@@ -49,6 +49,8 @@ function markReady(): void {
   updateReady = true;
   while (listeners.length) listeners.shift()?.();
 }
+/** 점검 스크립트용 (C.314, GDD 194장 5): 새 버전을 받은 것처럼 알림 창을 띄운다 — 서비스 워커 없이 */
+export const markUpdateReadyForTest = (): void => markReady();
 
 /** 게임 쪽이 알려 주는 것: 지금 처음 화면(게임 시작 전)인가 · 다시 시작 직전 저장 */
 export interface UpdateHost {

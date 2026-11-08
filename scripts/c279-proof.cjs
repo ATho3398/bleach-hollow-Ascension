@@ -12,6 +12,8 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = process.env.C279_OUT ? path.resolve(ROOT, process.env.C279_OUT) : path.join(ROOT, 'docs/captures/c279'); // C.304: 다른 캡처 폴더로 (C279_OUT=docs/captures/c304/tut)
 const FACTIONS = (process.env.C279_FACTIONS ?? '0,1').split(',').map(Number);
 if (process.env.C279_URL) process.env.C276_URL = process.env.C279_URL;
+/** 카드마다 자리 비움 → 복귀 장면 (C.314, GDD 194장 4). C279_AWAY=0 이면 끈다 */
+const AWAY = process.env.C279_AWAY !== '0';
 
 /** 지금 눌러야 할 곳의 화면 좌표: 대상(블록 칸은 블록이 든 칸) 또는 창 [다음] */
 const pressPoint = (page) => page.evaluate(() => {
@@ -53,6 +55,58 @@ const progress = (page) => page.evaluate(() => {
   });
 }).catch(() => '');
 
+/** 자리 비움 흉내 (C.314, GDD 194장 4): document.hidden 을 바꾸고 visibilitychange (+ blur/focus) — 홈키·앱 전환과 같은 길(appAway.ts) */
+const setAway = (page, on) => page.evaluate((on) => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => on });
+  document.dispatchEvent(new Event('visibilitychange'));
+  window.dispatchEvent(new Event(on ? 'blur' : 'focus'));
+}, on);
+
+/** 안내 카드가 지금 보이나 + 일시정지 창 [계속]이 맨 위에서 눌리나 */
+const awayLook = (page) => page.evaluate(() => {
+  const vis = (e) => { if (!e) return false; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 2 && r.height > 2 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+  const cards = [...document.querySelectorAll('.bha-tut .bha-tut__card')].filter(vis);
+  const holes = [...document.querySelectorAll('.bha-tut .bha-tut__hole:not(.is-none)')].filter(vis);
+  const cont = [...document.querySelectorAll('.bha-battle-ov button')].find((b) => b.textContent.includes('계속'));
+  const sett = [...document.querySelectorAll('.bha-battle-ov button')].find((b) => b.textContent.includes('설정'));
+  const topOk = (b) => { if (!b) return null; const r = b.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && b.contains(t); };
+  const r = cont?.getBoundingClientRect();
+  return { pause: !!cont, cardShown: cards.length, holeShown: holes.length, contTop: topOk(cont), settTop: topOk(sett), x: r ? r.left + r.width / 2 : 0, y: r ? r.top + r.height / 2 : 0 };
+}).catch(() => null);
+
+/**
+ * '자리 비움 → 복귀' 장면 (C.314, GDD 194장 4): 나갔다 들어온 뒤 ① 일시정지 창이 떴으면 카드·강조 틀이 숨고 [계속]/[설정]이 맨 위에서 눌리는가
+ * ② [계속](진짜 마우스) 뒤 같은 단계 카드가 다시 뜨는가 ③ 일시정지가 안 뜨는 화면(방·원정 걷기·흡수)은 카드가 그대로인가. 문제는 막힘으로 센다
+ */
+async function awayScene(page, key, shotName, shot) {
+  await setAway(page, true);
+  await page.waitForTimeout(500);
+  await setAway(page, false);
+  await page.waitForTimeout(700);
+  const look = await awayLook(page);
+  const r = { key, pause: !!look?.pause, cardHidden: null, contTop: null, settTop: null, resumed: null, sameCard: null, ok: false };
+  if (look?.pause) {
+    r.cardHidden = look.cardShown === 0 && look.holeShown === 0;
+    r.contTop = look.contTop;
+    r.settTop = look.settTop;
+    if (shotName) await shot(page, `${shotName}-a-paused`);
+    await page.mouse.click(look.x, look.y);
+    await page.waitForTimeout(900);
+    const after = await awayLook(page);
+    r.resumed = !!after && !after.pause;
+  } else r.resumed = true;
+  const s = await snap(page);
+  const k2 = s?.tut ? `${s.screen}|${s.tut}|${s.step}|${s.stage}|${s.title}` : null;
+  const back = await awayLook(page);
+  r.sameCard = k2 === key && !!back && back.cardShown > 0;
+  if (shotName && r.pause) await shot(page, `${shotName}-b-resumed`);
+  r.ok = r.resumed && r.sameCard && (!r.pause || (r.cardHidden && r.contTop && r.settTop !== false));
+  return r;
+}
+
+module.exports = { setAway, awayLook, awayScene, pressPoint };
+if (require.main !== module) return;
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = await startServer();
@@ -64,7 +118,8 @@ const progress = (page) => page.evaluate(() => {
       const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 });
       page.on('pageerror', (e) => proof.errors.push(`${fi}: ${e.message}`));
       const fname = fi === 0 ? 'hollow' : 'shinigami';
-      const res = { presses: 0, stuck: [], trace: [], bag: null, battleUse: [] };
+      const res = { presses: 0, stuck: [], trace: [], bag: null, battleUse: [], away: [] };
+      const awaySeen = new Set();
       proof.factions[fname] = res;
       await newGame(page, srv.url, fi);
       for (let t = 0; t < 80 && !(await snap(page))?.tut; t++) await page.waitForTimeout(250);
@@ -86,6 +141,19 @@ const progress = (page) => page.evaluate(() => {
           roomIdle = 0;
           const key = `${s.screen}|${s.tut}|${s.step}|${s.stage}|${s.title}`;
           if (key !== lastKey) { res.trace.push(key); console.log(fname, key); lastKey = key; fails = 0; }
+          // 카드마다 한 번: 자리 비움 → 복귀 (C.314). 캡처는 각본 전투 3번째 카드에서만
+          const cardKey = `${s.tut}|${s.step}|${s.title}`;
+          if (AWAY && !awaySeen.has(cardKey)) {
+            awaySeen.add(cardKey);
+            await page.waitForTimeout(400);
+            const s2 = await snap(page);
+            const key2 = s2?.tut ? `${s2.screen}|${s2.tut}|${s2.step}|${s2.stage}|${s2.title}` : key;
+            const a = await awayScene(page, key2, s.tut === 'script' && /3 \//.test(s.step ?? '') ? `6-${fname}-away` : null, shot);
+            res.away.push(a);
+            console.log('  away', JSON.stringify(a));
+            if (!a.ok) res.stuck.push({ key: key2, away: a });
+            if (a.pause && !a.resumed) break; // 일시정지에서 못 나옴 = 더 진행 불가 (옛 증상)
+          }
           await page.waitForTimeout(300);
           const pt = await pressPoint(page);
           if (!pt || pt.kind === 'wait') { await page.waitForTimeout(300); continue; }
@@ -161,7 +229,7 @@ const progress = (page) => page.evaluate(() => {
     for (const tut of seen.values()) by[tut] = (by[tut] ?? 0) + 1;
     return { total: seen.size, by };
   };
-  proof.summary = Object.fromEntries(Object.entries(proof.factions).map(([k, f]) => [k, { presses: f.presses, stuck: f.stuck.length, cards: cardsOf(f), bag: f.bag, battleUse: f.battleUse }]));
+  proof.summary = Object.fromEntries(Object.entries(proof.factions).map(([k, f]) => [k, { presses: f.presses, stuck: f.stuck.length, cards: cardsOf(f), away: { scenes: f.away.length, paused: f.away.filter((a) => a.pause).length, bad: f.away.filter((a) => !a.ok).length }, bag: f.bag, battleUse: f.battleUse }]));
   fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify(proof, null, 2));
   console.log(JSON.stringify(proof.summary, null, 2), proof.errors.slice(0, 5));
 })();
