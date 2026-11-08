@@ -48,7 +48,7 @@
   "appearanceChange": false,
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "탑의 주인", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "카라쿠라 마을 / 루콘가 외곽",
   "arenaBg": "seireitei",
@@ -369,12 +369,14 @@
   },
   "ascension": { "name": "참백도 구상화", "desc": "참백도의 정령을 눈앞에 불러내 굴복시킨다. 깨면 만해를 쓸 수 있다.", "foe": "참백도의 정령", "cutin": "정령을 불러낸다 — 참백도 구상화!", "completeText": ["참백도의 정령을 눈앞에 불러내 굴복시켰다.", "진명을 알아내 만해에 닿았다."], "lookChange": false },
   "liberation": {
-    "baseName": "영력 해방",
-    "baseCutin": "영압을 끌어올린다 — 영력 해방!",
-    "baseEndText": "해방이 풀렸다. 내면의 호로가 꿈틀거린다…",
+    "baseName": "한정 해제",
+    "baseCutin": "영압을 묶은 봉인을 푼다 — 한정 해제!",
+    "baseEndText": "봉인이 다시 걸렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
     "cutin": "참백도의 진명을 부른다 — 만해!",
-    "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…"
+    "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…",
+    "formKey": "final",
+    "formCutin": "만해 — {final}!"
   },
   "rebirth": {
     "name": "환생",

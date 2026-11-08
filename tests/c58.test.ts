@@ -57,8 +57,8 @@ describe('보스 데이터 (GDD 25-3·25-7)', () => {
   it('sand-maw: 두 종족 공유, 이름은 종족별, 체력 150회분, 페이즈 2 (50% 이하 공격 간격 −25%), 기믹 seal, 보스 특성', () => {
     expect(BOSSES.map((b) => b.id)).toEqual(['sand-maw', 'canyon-king', 'forest-lord']); // C.84: 2·3장 보스 추가
     const b = getBoss('sand-maw');
-    expect(bossName('sand-maw', 'hollow')).toBe('모래 아귀');
-    expect(bossName('sand-maw', 'shinigami')).toBe('들개 대허');
+    expect(bossName('sand-maw', 'hollow')).toBe('아레나 보라스');
+    expect(bossName('sand-maw', 'shinigami')).toBe('아레나 보라스');
     expect(b.enemy.hpInAttacks).toBe(150);
     expect(b.enemy.class).toBe('elite');
     expect(b.phases).toEqual([{ belowHpFraction: 0.5, attackSecondsMult: 0.75 }]);
@@ -178,23 +178,23 @@ describe('스토리 데이터 (GDD 25-4·25-7)', () => {
   it('대사는 25-7 초안 그대로 (글자 그대로)', () => {
     const h = chapterContent('hollow', 'ch1')!;
     expect(h.title).toBe('굶주린 영혼');
-    expect(h.episodes.map((e) => e.title)).toEqual(['첫 사냥', '모래 위의 무리', '큰 놈의 힘', '모래 아귀']);
+    expect(h.episodes.map((e) => e.title)).toEqual(['첫 사냥', '모래 위의 무리', '큰 놈의 힘', '아레나 보라스']);
     expect(h.episodes[0]!.dialogue.start).toEqual([{ speaker: '나', text: '…배고프다. 무엇이든 먹어야 한다.' }]);
     expect(h.episodes[0]!.dialogue.mid!.lines).toEqual([{ speaker: '나', text: '작은 영혼들이 흩어진다. 쫓아라.' }]);
     expect(h.episodes[0]!.dialogue.end).toEqual([{ speaker: '나', text: '처음으로, 배가 조금 찼다.' }]);
     expect(h.episodes[3]!.dialogue.start).toEqual([
-      { speaker: '늙은 호로', text: '모래 아귀다. 외곽의 영혼을 다 먹어 치운 놈.' },
-      { speaker: '모래 아귀', text: '…작은 것. 너도 먹이다.' },
+      { speaker: '늙은 호로', text: '아레나 보라스다. 외곽의 영혼을 다 먹어 치운 놈.' },
+      { speaker: '아레나 보라스', text: '…작은 것. 너도 먹이다.' },
     ]);
     expect(h.episodes[3]!.dialogue.end).toEqual([{ speaker: '나', text: '굶주림 너머에, 무언가가 있다.' }]);
     const s = chapterContent('shinigami', 'ch1')!;
     expect(s.title).toBe('입대');
-    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가 외곽', '큰 기척', '들개 대허']);
+    expect(s.episodes.map((e) => e.title)).toEqual(['첫 순찰', '밤의 루콘가 외곽', '큰 기척', '아레나 보라스']);
     expect(s.episodes[1]!.dialogue.end).toEqual([{ speaker: '분대장', text: '…버텼군. 제법이다.' }]);
     expect(s.episodes[2]!.dialogue.end).toEqual([{ speaker: '나', text: '내 참백도가… 대답했다.' }]);
     expect(s.episodes[3]!.dialogue.start).toEqual([
       { speaker: '분대장', text: '주민을 지켜라!' },
-      { speaker: '들개 대허', text: '…사신 냄새. 맛있겠군.' },
+      { speaker: '아레나 보라스', text: '…사신 냄새. 맛있겠군.' },
     ]);
     expect(s.episodes[3]!.dialogue.end).toEqual([{ speaker: '분대장', text: '오늘부터 너도 진짜 사신이다.' }]);
   });
@@ -406,7 +406,7 @@ describe('세이브·보상·칭호 (형식 22)', () => {
     expect(s.runLog.bossBattles).toHaveLength(1);
     expect(s.runLog.bossBattles[0]).toMatchObject({ bossId: 'sand-maw', won: true, firstKill: true, episode: 'ch1/ep4' });
     const titleNames = ['boss-sand-maw', 'story-ch1'].map((id) => titleName(TITLES.find((t) => t.id === id)!, 'hollow'));
-    expect(titleNames).toEqual(['모래 아귀 사냥꾼', '굶주림을 넘은 자']);
+    expect(titleNames).toEqual(['아레나 보라스 사냥꾼', '굶주림을 넘은 자']);
     const jade1 = s.shared.jade;
     const e2 = bossWin(s, 8);
     recordExpedition(s, e2, 6000);

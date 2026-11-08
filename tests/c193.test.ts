@@ -138,7 +138,7 @@ describe('119장 3 사신 지역 이름', () => {
     const f = getFaction('shinigami');
     expect(Object.values(f.huntingGrounds!).map((g) => g.name)).toEqual(['루콘가 외곽', '카라쿠라 마을', '웨코문도']);
     expect(f.huntingGroundName).toBe('카라쿠라 마을 / 루콘가 외곽');
-    expect(bossName('forest-lord', 'shinigami')).toBe('웨코문도의 문지기');
+    expect(bossName('forest-lord', 'shinigami')).toBe('썬더우드'); // GDD 198장: 보스 이름 두 종족 같음
   });
   it('데이터 어디에도 옛 이름이 남지 않는다', () => {
     const files = ['src/data/factions/shinigami.json', 'src/data/story/shinigami/ch1.json', 'src/data/story/shinigami/ch3.json', 'src/data/bosses/bosses.json', 'src/data/traits/traits.json'];

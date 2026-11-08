@@ -60,7 +60,7 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
     expect([...elementsOf(o.candidates)]).toEqual(['poison']);
   });
 
-  it('속성이 바뀌는 보스(숲의 군주)는 그 속성들 안에서, 보스 특성은 확정 후보', () => {
+  it('속성이 바뀌는 보스(썬더우드)는 그 속성들 안에서, 보스 특성은 확정 후보', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
     expect(els.sort()).toEqual(['kyo', 'thunder', 'water']);
     for (let seed = 1; seed <= 20; seed++) {

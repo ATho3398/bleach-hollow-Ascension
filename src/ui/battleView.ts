@@ -6,7 +6,7 @@
 // 바뀐 곳만 갱신한다(블록은 uid 로 같은 요소를 계속 쓰고, 묶음·삽입 막대는 달라졌을 때만 바꾼다).
 import { BALANCE } from '../config/balance';
 import { enemyPatternKind } from '../data/enemies';
-import { comboName, physBlockName } from '../data/evolution';
+import { comboName, formReleaseCutin, physBlockName, tryGetForm } from '../data/evolution';
 import { pickFaction } from '../data/schema';
 import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
@@ -83,6 +83,8 @@ export interface BattleViewOptions {
   tutorial?: { onDone: () => void };
   /** 육성 단계(0부터): 단계별 캐릭터 그림 파일(char-<종족>-<번호>)을 고른다. 없으면 1단계 취급 */
   tierIndex?: number;
+  /** 지금 진화체 id (GDD 198장): 고유 해방 컷인을 진화체 레스렉시온·만해 이름으로 채운다. 없으면 종족 기본 컷인 */
+  formId?: string | null;
   /** 입고 있는 스킨 id (GDD 26-5) */
   skinId?: string | null;
   /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
@@ -256,7 +258,7 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique);
+  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique, s.params.liberationUnique ? formReleaseCutin(opts.formId ? tryGetForm(opts.formId) : undefined, faction.id) : null);
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));

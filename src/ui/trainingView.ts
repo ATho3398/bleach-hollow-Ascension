@@ -19,6 +19,7 @@ import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import { viewTitle } from './bha/viewtitle';
 import { asBack } from './bha/screenBack';
 import { evText } from './bha/nest';
+import { ascensionUnlockText } from './labels';
 
 /** 앞말 + 강조 조각 한 줄 (노력치 글자, GDD 160장 6) */
 const labeled = (lead: string, strong: HTMLElement): HTMLElement => {
@@ -157,7 +158,7 @@ function ascensionPanel(faction: FactionConfig, save: SaveData, hd: TrainingHand
   const p = panel({ title: A.name, aside: save.evolution.ascended ? tag('완료', 'kind') : provisionalTag() });
   p.dataset.training = 'ascension';
   p.append(el('p', 'bha-small', A.desc));
-  if (save.evolution.ascended) p.append(notice('good', `${faction.liberation.name}을(를) 쓸 수 있다.`, { title: `${A.name} 완료` }));
+  if (save.evolution.ascended) p.append(notice('good', ascensionUnlockText(faction, save.evolution.formId), { title: `${A.name} 완료` })); // GDD 198장
   else if (!access.ok && access.reason === 'tier') p.append(notice('info', trainingLockedText(faction, A.name), { icon: 'i-lock' }));
   else {
     // 칸이 틀 안에 들어가게 설명 한 줄 + 버튼만 (GDD 159장 45) — 상대·재도전 안내는 버튼 설명(title)

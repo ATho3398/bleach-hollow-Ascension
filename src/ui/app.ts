@@ -731,6 +731,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -1664,6 +1665,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -1838,6 +1840,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...(save ? battleItemOpts(save, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 모험' } } : {}),
@@ -2104,6 +2107,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...(save ? battleItemOpts(save, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
+      formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
       notice,
       tutorial: tutorialFor(),
@@ -2153,6 +2157,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
@@ -2188,6 +2193,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
+      formId: s0.evolution.formId,
       skinId: artSkinOf(s0),
       banner: `${faction.ascension.name} · ${faction.ascension.foe}`,
       enter: true,
@@ -2197,7 +2203,7 @@ export function startApp(host: HTMLElement): void {
         settleLiberationRisk(s0, done);
         persist();
         const lines = res.won ? [...faction.ascension.completeText] : [`${faction.ascension.foe}에게 졌다. 잃은 것은 없다 — 다시 도전할 수 있다.`];
-        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }); root.scrollTop = 0; } });
+        nav.replace({ id: 'ascension-result', locked: true, render: () => { ascensionResultView(root, faction, res.won, lines, { onBack: () => nav.pop() }, s0.evolution.formId); root.scrollTop = 0; } });
         showTitleToasts(s0, faction, persist);
       },
     });

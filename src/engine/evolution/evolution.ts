@@ -4,7 +4,7 @@
 
 import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
-import { combosAtTier, FORM_TABLE, formName, getForm, tryGetForm } from '../../data/evolution';
+import { combosAtTier, FORM_TABLE, formHasUniqueRelease, formName, formRelease, getForm, tryGetForm } from '../../data/evolution';
 import { distribute, failLineTotal } from '../../data/evolution/generate';
 import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
@@ -224,8 +224,14 @@ export function baseStatsOf(e: EvolutionState, factionId: string): Stats {
 /** 표시 이름 (GDD 49-8 2번): 실패형 줄기는 4·5단계가 되어도 종족 설정 1단계 이름, 그 밖에는 진화체 이름(1단계는 1단계 이름) */
 export function formDisplayName(e: EvolutionState, factionId: string): string {
   const fac = getFaction(factionId);
-  if (isFailLine(e)) return fac.tierNames[0]!;
   const form = e.formId ? tryGetForm(e.formId) : undefined;
+  // GDD 198장: 아란칼화를 깨면(종족 설정 ascension.formNameKey) 레스렉시온 이름 — 실패형 줄기도 아란칼이 되면 그 이름
+  if (form && e.ascended === true) {
+    const key = fac.ascension.formNameKey;
+    const released = key ? formRelease(form, factionId)?.[key] : undefined;
+    if (released) return released;
+  }
+  if (isFailLine(e)) return fac.tierNames[0]!;
   return form ? formName(form, factionId, playerElementsOf(e)) : fac.tierNames[e.tierIndex]!;
 }
 
@@ -370,7 +376,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.stabMultiplier = stabOf(e);
   // 해방 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화를 깨면 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
   const LB = BALANCE.provisional.liberation;
-  const unique = hasUniqueLiberation(e);
+  const unique = hasUniqueLiberation(e, factionId);
   params.liberationUnique = unique;
   params.liberationAttackSpeed = unique ? LB.uniqueAttackSpeed : 1;
   params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
@@ -420,8 +426,11 @@ export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly
 }
 
 /** 레스렉시온/만해(고유 해방)를 쓸 수 있는가 (GDD 126장 3): 아란칼화 / 참백도 구상화를 깬 생 */
-export function hasUniqueLiberation(e: Pick<EvolutionState, 'ascended'>): boolean {
-  return e.ascended === true;
+export function hasUniqueLiberation(e: Pick<EvolutionState, 'ascended' | 'formId'>, factionId?: string): boolean {
+  if (e.ascended !== true) return false;
+  // GDD 198장: 종족 설정 liberation.formKey 칸이 없는 진화체는 깨도 고유 해방 없음(사신 둔도 — 한정 해제 그대로)
+  if (!factionId) return true;
+  return formHasUniqueRelease(e.formId ? tryGetForm(e.formId) : undefined, factionId);
 }
 
 /** 속성 피해 % (C.101, GDD 48장): 출처를 모두 더한 값, 칸 = 노멀 + 기본 원소(ELEMENT_DAMAGE_IDS). 지금 출처는 테스트 모드 입력뿐이라 보통 모두 0 */

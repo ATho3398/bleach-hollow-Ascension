@@ -7,6 +7,7 @@ import { elementName } from '../data/elements';
 import type { SkillRole } from '../data/schema';
 import type { CombatParams } from '../engine/combat';
 import { fixParticles } from '../engine/josa';
+import { formHasUniqueRelease, formRelease, tryGetForm } from '../data/evolution';
 
 export { BLOCK_WORDS };
 
@@ -40,18 +41,29 @@ export interface LiberationLabels {
 }
 
 /** 해방 이름·문구 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화 전은 영력 해방, 깬 뒤(unique)는 종족 이름(레스렉시온/만해) */
-export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, unique: boolean): LiberationLabels {
+export function liberationLabels(f: Pick<FactionConfig, 'liberation'>, unique: boolean, formCutin: string | null = null): LiberationLabels {
   const lb = f.liberation;
+  // GDD 198장: 고유 해방 컷인 = 진화체 이름으로 채운 틀(호로 '언령, 레스렉시온 이름!' / 사신 '만해 — 만해 이름!'), 없으면 종족 기본 cutin
   return unique
-    ? { name: lb.name, cutin: lb.cutin, endText: lb.endText, unique: true }
+    ? { name: lb.name, cutin: formCutin ?? lb.cutin, endText: lb.endText, unique: true }
     : { name: lb.baseName, cutin: lb.baseCutin, endText: lb.baseEndText, unique: false };
 }
 
-export function battleLabels(f: FactionConfig, _tierIndex = 0, liberationUnique = false): BattleLabels {
+/** 아란칼화 / 참백도 구상화를 깬 뒤 한 줄 (GDD 198장): "레스렉시온 '마르티요'을(를) 쓸 수 있다." — 진화체 이름이 없으면 종족 이름만,
+ *  그 진화체에 고유 해방이 없으면(사신 둔도) 기본 해방 그대로라고 말한다 */
+export function ascensionUnlockText(f: FactionConfig, formId: string | null | undefined): string {
+  const lb = f.liberation;
+  const form = formId ? tryGetForm(formId) : undefined;
+  if (!formHasUniqueRelease(form, f.id)) return fixParticles(`${lb.name}은(는) 없다. 해방은 ${lb.baseName} 그대로다.`);
+  const named = lb.formKey ? formRelease(form, f.id)?.[lb.formKey] : undefined;
+  return fixParticles(named ? `${lb.name} '${named}'을(를) 쓸 수 있다.` : `${lb.name}을(를) 쓸 수 있다.`);
+}
+
+export function battleLabels(f: FactionConfig, _tierIndex = 0, liberationUnique = false, formCutin: string | null = null): BattleLabels {
   return {
     role: { ...f.roleNames },
     skillBlock: f.skillBlockName,
-    liberation: liberationLabels(f, liberationUnique),
+    liberation: liberationLabels(f, liberationUnique, formCutin),
     voidBlock: BLOCK_WORDS.void,
     chain: f.chainName,
     families: f.families,

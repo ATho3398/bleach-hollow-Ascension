@@ -178,7 +178,7 @@ describe('32-1 6·7번: 사냥터 강도 일원화, 스토리 화·보스·등�
   it('사냥터 강도는 모두 ×1 (무대·속성·먹이만 담당)', () => {
     for (const g of GROUNDS) expect(g.strength, g.id).toEqual({ hp: 1, attack: 1 });
   });
-  it('스토리 화마다 ★ 가 있고(1장 = ★1~★2), 원정은 화의 ★ 를 쓰며 보스 화의 ★ = 보스 데이터의 ★ (모래 아귀 ★2)', () => {
+  it('스토리 화마다 ★ 가 있고(1장 = ★1~★2), 원정은 화의 ★ 를 쓰며 보스 화의 ★ = 보스 데이터의 ★ (아레나 보라스 ★2)', () => {
     for (const ch of STORY_CHAPTERS) {
       for (const fid of ['hollow', 'shinigami']) {
         const c = chapterContent(fid, ch.id);

@@ -3,6 +3,7 @@ import { BALANCE } from '../../config/balance';
 import { ELEMENTAL_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS, beats } from '../elements';
 import { ATTACK_CATEGORIES, type FormDef } from '../schema';
 import { generateForms, type FormTemplate } from './generate';
+import { withReleases } from './releases';
 
 /** 원소 순환에서 마주 보는 쌍 = 서로 상성 관계가 아닌 쌍 (GDD 20-5 v3.9: 물+흙, 불+뇌) */
 export function fusionPairs(elemental: readonly string[] = ELEMENTAL_IDS): [string, string][] {
@@ -13,8 +14,9 @@ export function fusionPairs(elemental: readonly string[] = ELEMENTAL_IDS): [stri
   return out;
 }
 
+/** 생성기 결과 + 해방 이름(releases.json, GDD 198장) — 로더(FORM_TABLE)와 같은 모양 */
 export function generateFormTable(): FormDef[] {
-  return generateForms({
+  return withReleases(generateForms({
     tierTotals: BALANCE.provisional.stats.tierTotals,
     normal: NORMAL_ELEMENT,
     elemental: ELEMENTAL_IDS,
@@ -23,5 +25,5 @@ export function generateFormTable(): FormDef[] {
     fusionPairs: fusionPairs(),
     template: BALANCE.provisional.evolution.template as unknown as FormTemplate,
     failGainRatio: BALANCE.provisional.evolution.failLine.gainRatio,
-  });
+  }));
 }

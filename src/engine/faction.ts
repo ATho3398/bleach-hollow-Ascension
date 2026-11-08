@@ -156,6 +156,11 @@ export interface LiberationConfig {
   cutin: string;
   /** 풀릴 때 로그 한 줄 (리스크 상승) */
   endText: string;
+  /** 진화체 해방 이름 칸 (GDD 198장): 고유 해방(깬 뒤)에 쓰는 진화체 release 의 칸('name' = 레스렉시온 이름, 'final' = 만해 이름).
+   *  지금 진화체에 이 칸이 없으면 깨도 고유 해방이 없다(사신 둔도 — base 그대로). 없으면 진화체와 상관없이 고유 해방 */
+  formKey?: 'name' | 'final';
+  /** 고유 해방 컷인 틀 (GDD 198장): {name}·{command}·{final} 을 진화체 release 값으로 채운다. 채울 값이 없으면 cutin */
+  formCutin?: string;
 }
 
 /** 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 4단계부터 수련장에서 도전(지금은 보스전 임시). 깨면 레스렉시온/만해 해금.
@@ -170,6 +175,8 @@ export interface AscensionConfig {
   completeText: [string, string];
   lookChange: boolean;
   artTier?: number;
+  /** 깬 뒤 진화체 표시 이름을 진화체 release 의 이 칸으로 (GDD 198장: 호로 = 'name' 레스렉시온 이름). 없으면 표시 이름 그대로 */
+  formNameKey?: 'name' | 'final';
 }
 
 /** 환생 (GDD 22-1·22-7): 버튼·확인·연출 문구 */
@@ -768,6 +775,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (asc.artTier !== undefined && !(Number.isInteger(asc.artTier) && (asc.artTier as number) >= 1)) errors.push('ascension.artTier: 1 이상 정수');
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
+  const RELEASE_KEYS = ['name', 'final'];
+  if (lb.formKey !== undefined && !RELEASE_KEYS.includes(lb.formKey as string)) errors.push('liberation.formKey: name | final');
+  if (lb.formCutin !== undefined && !isString(lb.formCutin)) errors.push('liberation.formCutin: 비어 있지 않은 문자열이어야 한다');
+  if (asc.formNameKey !== undefined && !RELEASE_KEYS.includes(asc.formNameKey as string)) errors.push('ascension.formNameKey: name | final');
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);
   const tr = (r.training ?? {}) as Record<string, unknown>;

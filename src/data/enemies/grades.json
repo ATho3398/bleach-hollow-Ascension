@@ -1,0 +1,7 @@
+{
+  "about": "적 등급 (GDD 198장 적 이름): 강적·보스마다 고정. 두 종족 공유(적 테이블처럼). 도감에서만 보인다. menos = 메노스 그랑데에 드는 등급",
+  "order": ["hollow", "gillian", "adjuchas", "vasto-lorde"],
+  "names": { "hollow": "호로", "gillian": "길리안", "adjuchas": "아쥬커스", "vasto-lorde": "바스트로데" },
+  "menos": ["gillian", "adjuchas", "vasto-lorde"],
+  "menosName": "메노스 그랑데"
+}

@@ -177,7 +177,10 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
 
 describe('83장 2·4번 이름과 레스렉시온/만해 고유 효과', () => {
   it('이름은 종족 설정: 아란칼화/참백도 구상화 전 = 영력 해방(양 종족), 깬 뒤 = 호로 레스렉시온 / 사신 만해 (C.220)', () => {
-    for (const f of FACTIONS) expect(liberationLabels(f, false)).toMatchObject({ name: '영력 해방', unique: false });
+    // GDD 198장 (v5.487): 사신 기본 해방 = 한정 해제
+    expect(liberationLabels(getFaction('hollow'), false)).toMatchObject({ name: '영력 해방', unique: false });
+    expect(liberationLabels(getFaction('shinigami'), false)).toMatchObject({ name: '한정 해제', unique: false });
+    for (const f of FACTIONS) expect(liberationLabels(f, false).unique).toBe(false);
     expect(liberationLabels(getFaction('hollow'), true)).toMatchObject({ name: '레스렉시온', unique: true });
     expect(liberationLabels(getFaction('shinigami'), true)).toMatchObject({ name: '만해', unique: true });
     const h = getFaction('hollow');

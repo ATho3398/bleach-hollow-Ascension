@@ -171,11 +171,11 @@ describe('36장 2·3번: 열림·화면 문구', () => {
       expect(towerOpen(emptyRunLog(), f.id, 3)).toBe(true);
     }
   });
-  it('종족 설정 tower: 이름 "도전의 탑", 50층 보스 "탑의 주인", 층 표시 "n층"', () => {
+  it('종족 설정 tower: 이름 "도전의 탑", 50층 보스 "코로나도", 층 표시 "n층"', () => {
     for (const f of FACTIONS) {
       const L = towerLabels(f);
       expect(L.name).toBe('도전의 탑');
-      expect(L.finalBossName).toBe('탑의 주인');
+      expect(L.finalBossName).toBe('코로나도');
       expect(L.locked).toContain('스토리 1장');
       expect(towerFloorText(f, 12)).toBe('12층');
       expect(towerRewardText(f, towerReward(10))).toContain('칭호 「탑 10층 돌파」');

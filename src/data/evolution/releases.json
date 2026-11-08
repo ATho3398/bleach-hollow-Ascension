@@ -1,0 +1,311 @@
+{
+  "about": "GDD 198장: 4단계 진화체 해방 이름(종족별 name 레스렉시온·참백도 이름 / command 언령 / final 만해 이름). 로더·생성기가 진화체에 release 로 붙인다",
+  "forms": {
+    "t4:normal:physical": {
+      "hollow": {
+        "name": "마르티요",
+        "command": "내리찍어라"
+      },
+      "shinigami": {
+        "name": "백련",
+        "command": "담금질하라",
+        "final": "천단백련"
+      }
+    },
+    "t4:normal:special": {
+      "hollow": {
+        "name": "부오",
+        "command": "지켜보라"
+      },
+      "shinigami": {
+        "name": "현음",
+        "command": "읊조려라",
+        "final": "현음칠성창"
+      }
+    },
+    "t4:normal:mixed": {
+      "hollow": {
+        "name": "에스칼레라",
+        "command": "올라가라"
+      },
+      "shinigami": {
+        "name": "천평환",
+        "command": "치우치지 마라",
+        "final": "백옥천평환"
+      }
+    },
+    "t4:water:physical": {
+      "hollow": {
+        "name": "라나",
+        "command": "헤엄쳐라"
+      },
+      "shinigami": {
+        "name": "노도",
+        "command": "밀려들어라",
+        "final": "노도만첩"
+      }
+    },
+    "t4:water:special": {
+      "hollow": {
+        "name": "니에블라",
+        "command": "떠돌아라"
+      },
+      "shinigami": {
+        "name": "연우",
+        "command": "젖어들어라",
+        "final": "청람연우"
+      }
+    },
+    "t4:water:mixed": {
+      "hollow": {
+        "name": "바라쿠다",
+        "command": "가라앉혀라"
+      },
+      "shinigami": {
+        "name": "백랑파",
+        "command": "갈라져라",
+        "final": "백랑파천"
+      }
+    },
+    "t4:fire:physical": {
+      "hollow": {
+        "name": "소로",
+        "command": "발자국마다 연기를 남겨라"
+      },
+      "shinigami": {
+        "name": "봉수대",
+        "command": "흔적을 남겨라",
+        "final": "천리봉수대연"
+      }
+    },
+    "t4:fire:special": {
+      "hollow": {
+        "name": "루시에르나가",
+        "command": "꼬리를 끌어라"
+      },
+      "shinigami": {
+        "name": "석양홍",
+        "command": "해를 떨어뜨려라",
+        "final": "석양홍운"
+      }
+    },
+    "t4:fire:mixed": {
+      "hollow": {
+        "name": "브라사",
+        "command": "식어빠져라"
+      },
+      "shinigami": {
+        "name": "천일야장도",
+        "command": "자, 식기 전에 받아라",
+        "final": "대야로"
+      }
+    },
+    "t4:earth:physical": {
+      "hollow": {
+        "name": "에스카라바호",
+        "command": "웅크려라"
+      },
+      "shinigami": {
+        "name": "금강저",
+        "command": "뿌리내려라",
+        "final": "부동금강저"
+      }
+    },
+    "t4:earth:special": {
+      "hollow": {
+        "name": "무랄라",
+        "command": "막아서라"
+      },
+      "shinigami": {
+        "name": "만리장",
+        "command": "아무도 넘지 못하리",
+        "final": "만리장철옹"
+      }
+    },
+    "t4:earth:mixed": {
+      "hollow": {
+        "name": "토르투가",
+        "command": "짓눌러라"
+      },
+      "shinigami": {
+        "name": "태산압정",
+        "command": "무너져 내려라",
+        "final": "천근압"
+      }
+    },
+    "t4:thunder:physical": {
+      "hollow": {
+        "name": "콜리브리",
+        "command": "그어라"
+      },
+      "shinigami": {
+        "name": "섬뢰각",
+        "command": "내리꽂혀라",
+        "final": "천벌섬뢰각"
+      }
+    },
+    "t4:thunder:special": {
+      "hollow": {
+        "name": "토르멘타",
+        "command": "으르렁거려라"
+      },
+      "shinigami": {
+        "name": "운중뢰",
+        "command": "뇌동만리",
+        "final": "구천운중뢰전"
+      }
+    },
+    "t4:thunder:mixed": {
+      "hollow": {
+        "name": "게파르도",
+        "command": "질주하라"
+      },
+      "shinigami": {
+        "name": "비전",
+        "command": "그림자보다 먼저 닿으리",
+        "final": "비전유성"
+      }
+    },
+    "t4:blood:physical": {
+      "hollow": {
+        "name": "추파카브라",
+        "command": "적셔라"
+      },
+      "shinigami": {
+        "name": "주홍장",
+        "command": "물들여라",
+        "final": "혈해주홍장"
+      }
+    },
+    "t4:poison:special": {
+      "hollow": {
+        "name": "비보라",
+        "command": "스며들어라"
+      },
+      "shinigami": {
+        "name": "칠보단혼사",
+        "command": "숨결을 흐려라",
+        "final": "칠보단혼사골"
+      }
+    },
+    "t4:kyo:mixed": {
+      "hollow": {
+        "name": "바시오",
+        "command": "비워라"
+      },
+      "shinigami": {
+        "name": "허곡",
+        "command": "메아리마저 끌어들여라",
+        "final": "만뢰허곡"
+      }
+    },
+    "h4:fusion:water+earth": {
+      "hollow": {
+        "name": "판타노",
+        "command": "끌어내려라"
+      },
+      "shinigami": {
+        "name": "이소",
+        "command": "발목을 붙잡아라",
+        "final": "천인침몰이소"
+      }
+    },
+    "h4:fusion:fire+thunder": {
+      "hollow": {
+        "name": "센테야",
+        "command": "밤을 찢어라"
+      },
+      "shinigami": {
+        "name": "벽력화륜",
+        "command": "벼락이 지나간 자리에 재만 남겨라",
+        "final": "벽력화륜천"
+      }
+    },
+    "h4:complete": {
+      "hollow": {
+        "name": "아르코이리스",
+        "command": "군림하라"
+      },
+      "shinigami": {
+        "name": "만화경",
+        "command": "자, 어느 바람부터 맞겠느냐",
+        "final": "천변만화경"
+      }
+    },
+    "h4:fail": {
+      "hollow": {
+        "name": "아라포",
+        "command": "뒤엉켜라"
+      },
+      "shinigami": {
+        "name": "둔도",
+        "command": "그래도 휘둘러라"
+      }
+    },
+    "h4:awakened": {
+      "hollow": {
+        "name": "아르바",
+        "command": "되살아나라"
+      },
+      "shinigami": {
+        "name": "환혼",
+        "command": "다시 일어서라",
+        "final": "구사환혼"
+      }
+    },
+    "h4:frenzy": {
+      "hollow": {
+        "name": "프레네시",
+        "command": "날뛰어라"
+      },
+      "shinigami": {
+        "name": "흑귀",
+        "final": "대흑귀나찰"
+      }
+    },
+    "h4:restraint": {
+      "hollow": {
+        "name": "아유노",
+        "command": "빈 그릇에 달을 담고, 채우지 않은 채 날을 세워라"
+      },
+      "shinigami": {
+        "name": "한매",
+        "command": "마른 가지에 꽃을 바라지 말고, 굶주림으로 칼날을 갈아라",
+        "final": "설중매향"
+      }
+    },
+    "h4:stable": {
+      "hollow": {
+        "name": "칼마",
+        "command": "물결을 재워라"
+      },
+      "shinigami": {
+        "name": "정심",
+        "command": "잔잔히",
+        "final": "명경정심"
+      }
+    },
+    "h4:hunter": {
+      "hollow": {
+        "name": "카사도르",
+        "command": "달이 차오르면 목을 거두고, 남은 울음은 바람에 실어 보내라"
+      },
+      "shinigami": {
+        "name": "추성",
+        "command": "별이 지는 쪽으로",
+        "final": "추성낙월"
+      }
+    },
+    "h4:void": {
+      "hollow": {
+        "name": "나다",
+        "command": "적멸위락"
+      },
+      "shinigami": {
+        "name": "공화",
+        "command": "제행무상",
+        "final": "적화"
+      }
+    }
+  }
+}

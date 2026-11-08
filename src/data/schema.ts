@@ -31,6 +31,8 @@ export interface EnemyDef {
   pattern?: EnemyPattern;
   /** true 면 원정 출현 풀에 들어가지 않는다 (테스트·연습용 고정 적) */
   testOnly?: boolean;
+  /** 등급 (GDD 198장): 강적·보스만, src/data/enemies/grades.json 의 id. 도감에서만 보인다 */
+  grade?: string;
   provisional?: boolean;
 }
 
@@ -314,5 +316,15 @@ export interface FormDef {
   stab?: number;
   /** 체인 묶음 상한 (GDD 19-2). 없으면 종족 설정 maxChain → 3 */
   maxChain?: number;
+  /** 해방 이름 (GDD 198장, 4단계만): 종족별 { name: 레스렉시온·참백도 이름, command: 언령, final: 만해 이름 }.
+   *  어느 칸을 쓰는지는 종족 설정(ascension.formNameKey · liberation.formKey · liberation.formCutin)이 정한다 */
+  release?: PerFaction<FormRelease>;
   provisional?: boolean;
+}
+
+/** 진화체 해방 이름 한 종족 몫 (GDD 198장). final 이 없으면 그 종족 설정이 final 을 쓰는 경우 고유 해방이 없다(사신 둔도) */
+export interface FormRelease {
+  name: string;
+  command?: string;
+  final?: string;
 }

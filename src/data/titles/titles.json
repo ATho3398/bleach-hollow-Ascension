@@ -280,8 +280,8 @@
     "kind": "story",
     "hidden": false,
     "name": {
-      "hollow": "모래 아귀 사냥꾼",
-      "shinigami": "들개 대허 퇴치"
+      "hollow": "아레나 보라스 사냥꾼",
+      "shinigami": "아레나 보라스 퇴치"
     },
     "condition": {
       "type": "bossDefeated",
@@ -322,8 +322,8 @@
     "kind": "story",
     "hidden": false,
     "name": {
-      "hollow": "협곡의 왕 사냥꾼",
-      "shinigami": "현세의 대허 퇴치"
+      "hollow": "엠버 스론 사냥꾼",
+      "shinigami": "엠버 스론 퇴치"
     },
     "condition": {
       "type": "bossDefeated",
@@ -336,8 +336,8 @@
     "kind": "story",
     "hidden": false,
     "name": {
-      "hollow": "숲의 군주 사냥꾼",
-      "shinigami": "문지기 돌파"
+      "hollow": "썬더우드 사냥꾼",
+      "shinigami": "썬더우드 돌파"
     },
     "condition": {
       "type": "bossDefeated",

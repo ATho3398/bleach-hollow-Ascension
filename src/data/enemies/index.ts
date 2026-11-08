@@ -3,6 +3,19 @@ import { ATTACK_CATEGORIES, ENEMY_PATTERN_KINDS, STAT_IDS, type EnemyDef, type E
 import { isElement } from '../elements';
 import raw from './enemies.json';
 import poolRaw from './pools.json';
+import gradesRaw from './grades.json';
+
+/** 적 등급 표 (GDD 198장): 강적·보스 고정 등급, 도감 전용 표시 */
+export const ENEMY_GRADES = gradesRaw as { order: string[]; names: Record<string, string>; menos: string[]; menosName: string };
+
+export function isEnemyGrade(v: unknown): v is string {
+  return typeof v === 'string' && ENEMY_GRADES.order.includes(v);
+}
+
+/** 등급 표시 이름 (예 '아쥬커스'). 등급이 없으면 null */
+export function enemyGradeName(def: Pick<EnemyDef, 'grade'>): string | null {
+  return def.grade && isEnemyGrade(def.grade) ? ENEMY_GRADES.names[def.grade] ?? null : null;
+}
 
 const num = (o: Record<string, unknown>, k: string) => typeof o[k] === 'number' && (o[k] as number) > 0;
 
@@ -50,6 +63,7 @@ export function parseEnemy(r: unknown): EnemyDef {
   if (e.statBias !== undefined && !statMap(e.statBias, 0.01)) errors.push('statBias: { 능력치: 양수 배율 }');
   if (!statMap(e.ev, 0)) errors.push('ev: { 능력치: 0 이상 }');
   if (e.pattern !== undefined) errors.push(...patternErrors((e.pattern ?? {}) as Record<string, unknown>));
+  if (e.grade !== undefined && !isEnemyGrade(e.grade)) errors.push(`grade: ${ENEMY_GRADES.order.join(' | ')}`);
   if (errors.length > 0) throw new Error(`적 데이터 오류 (${String(e.id ?? '?')}): ${errors.join(', ')}`);
   return r as EnemyDef;
 }
