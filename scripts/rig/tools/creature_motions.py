@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from paths import DRAFT_DIR  # noqa: E402
+from paths import DRAFT_DIR, ROOT  # noqa: E402
 from body_sync import write_motions  # noqa: E402
 R = DRAFT_DIR + '/'
 rig = json.load(open(R + 'humanoid.json'))
@@ -35,6 +35,9 @@ def setup(body):
         ys, xs = np.nonzero(a)
         PTS[slot] = np.stack([xs + p['at'][0] + .5, ys + p['at'][1] + 1.0], 1)  # 칸 아래 가운데
     SC = ((rig.get('cuts') or {}).get(body) or {}).get('scale', 1)
+    asm = (rig.get('assembled') or {}).get(body)  # 부위 시트 조립 몸(덩치) — 조립 파일의 배율
+    if isinstance(asm, str) and os.path.exists(os.path.join(ROOT, asm)):
+        SC = json.load(open(os.path.join(ROOT, asm), encoding='utf-8')).get('scale', SC)
 
 
 def mul(a, n): return [a[0]*n[0]+a[2]*n[1], a[1]*n[0]+a[3]*n[1], a[0]*n[2]+a[2]*n[3], a[1]*n[2]+a[3]*n[3], a[0]*n[4]+a[2]*n[5]+a[4], a[1]*n[4]+a[3]*n[5]+a[5]]
@@ -92,6 +95,9 @@ def build(spec):
         t = k[0]; k[3] = 0
         tmp = dict(tr); tmp['root'] = [[t, k[1], k[2], 0]]
         keys.append([t, round(k[1], 2), round(k[2], 2), round(GROUND - lowest(tmp, t, slots), 2)])
+    # 숨쉬기 등으로 몸을 내리는 칸 수(dip, 키마다) — 제자리 동작은 정강이 고정·허벅지 풀이로 이만큼 허벅지가 굽혀짐 (115-A 78)
+    for k, d in zip(keys, spec.get('dip', [0] * len(keys))):
+        k[3] = round(k[3] + d * SC / 2, 2)
     tr['root'] = keys
     m = {'duration': spec['duration'], 'loop': spec.get('loop', False)}
     for k in ('hit', 'hold'):
@@ -102,18 +108,18 @@ def build(spec):
     # 이 몸에 그림이 없는 뼈(뒷머리·망토·칼·칼집)는 사람형 동작 키가 길이 밖으로 남지 않게 멈춤으로 덮음
     for b in rig['bones']:
         m['tracks'].setdefault(b['id'], [[0, 0, 0, 0]])
-    # 제자리 동작은 두 발바닥 고정(GDD 115-A 77): 가장 낮은 발로 몸 높이를 맞춘 뒤 다른 발도 정강이(종아리) 각을 풀어 바닥 줄에
+    # 제자리 동작은 두 발바닥 고정(GDD 115-A 77·78): 몸 높이는 설계대로(가장 낮은 발 기준), 정강이(종아리)는 고정하고 허벅지 각을 풀어 두 발을 바닥 줄에
     if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all'):
         import plant as pl
         pl.cm = sys.modules[__name__]
         mode = 'sole' if 'foot_L' in PTS else 'calf'
-        m['tracks'].update(pl.plant(m, mode, target=GROUND, flat_foot=(mode == 'sole')))
+        m['tracks'].update(pl.plant(m, mode, target=GROUND, flat_foot=(mode == 'sole'), step=50, fix_shin=True))
     return m
 
 
 # 역관절 기본 동작 11개 (각도 = 쉬는 자세(사용자 도트) 기준, + = 시계 방향: 몸통+ 뒤로 젖힘, 머리+ 얼굴 위로, 팔·다리+ 앞으로)
 SPEC = {}
-SPEC['idle'] = dict(times=[0, 500, 900, 1300, 1800], duration=1800, loop=True, bones={
+SPEC['idle'] = dict(times=[0, 500, 900, 1300, 1800], duration=1800, loop=True, dip=[0, 1.2, 1.8, 0.8, 0], bones={
     'torso': [0, 2, 3, 1, 0], 'head': [0, -3, -2, 2, 0],
     'arm_R': [0, 3, 4, 2, 0], 'forearm_R': [0, -5, -7, -3, 0],
     'arm_L': [0, -3, -4, -1, 0], 'forearm_L': [0, 6, 8, 3, 0],
@@ -167,7 +173,7 @@ SPEC['headbutt'] = dict(times=[0, 180, 300, 420, 600], duration=600, hit=300, ro
     'leg_R': [0, -4, 14, 10, 0], 'shin_R': [0, 6, -8, -6, 0], 'foot_R': [0, 0, -4, -3, 0],
     'leg_L': [0, -2, -12, -8, 0], 'shin_L': [0, 3, 8, 6, 0], 'foot_L': [0, 0, 2, 1, 0]})
 # 빈사: 몸을 앞으로 푹 숙이고 머리를 떨군 채 긴 팔을 바닥에 늘어뜨림, 거친 숨
-SPEC['dying'] = dict(times=[0, 700, 1200, 1900, 2400], duration=2400, loop=True, bones={
+SPEC['dying'] = dict(times=[0, 700, 1200, 1900, 2400], duration=2400, loop=True, dip=[1, 0.2, 0.4, 1.2, 1], bones={
     'torso': [-20, -15, -16, -21, -20], 'head': [-18, -12, -14, -19, -18], 'jaw': [-10, -14, -13, -9, -10],
     'arm_R': [20, 16, 17, 21, 20], 'forearm_R': [10, 8, 9, 11, 10],
     'arm_L': [30, 26, 27, 31, 30], 'forearm_L': [-10, -8, -9, -11, -10],
@@ -185,7 +191,7 @@ SPEC['down'] = dict(times=[0, 200, 500, 700, 900], duration=900, hold=True, grou
 # 덩치(몸 hb) = 사용자 부위 시트 조립(2026-11-09 — 처음 짐승 bst 로 넣었다가 사용자 "짐승이 아니라 덩치고" 로 옮김): 대기·걷기·공격·해방(포효), 특수2·필살기 없음
 # 해골 머리·긴 발톱 팔(앞팔은 바닥을 짚음)·짧은 다리의 고릴라형. 다리는 종아리에 발이 붙어 있음(발 뼈 없음)
 SPEC_HB = {}
-SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, bones={
+SPEC_HB['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[0, 1.8, 0], bones={
     'torso': [0, 3, 0], 'head': [0, -3, 0], 'arm_R': [0, -2, 0], 'forearm_R': [0, 2, 0], 'arm_L': [0, -3, 0], 'forearm_L': [0, 3, 0],
     'leg_R': [0, 6, 0], 'shin_R': [0, -9, 0], 'leg_L': [0, 5, 0], 'shin_L': [0, -7, 0]})
 # 걷기: 너클 보행 — 앞팔과 뒷다리, 뒤팔과 앞다리가 짝. 몸을 낮게 흔들며 머리는 앞을 봄
@@ -226,7 +232,7 @@ SPEC_HB['headbutt'] = dict(times=[0, 180, 300, 420, 600], duration=600, hit=300,
     'arm_R': [0, -15, 15, 10, 0], 'forearm_R': [0, -8, 8, 5, 0], 'arm_L': [0, -15, 12, 8, 0], 'forearm_L': [0, 8, -6, -4, 0],
     'leg_R': [0, -4, 10, 8, 0], 'shin_R': [0, 5, -7, -5, 0], 'leg_L': [0, -2, -8, -6, 0], 'shin_L': [0, 3, 6, 4, 0]})
 # 빈사: 앞으로 푹 숙여 머리를 떨구고 팔을 늘어뜨린 채 거친 숨
-SPEC_HB['dying'] = dict(times=[0, 700, 1200, 1900, 2400], duration=2400, loop=True, bones={
+SPEC_HB['dying'] = dict(times=[0, 700, 1200, 1900, 2400], duration=2400, loop=True, dip=[1, 0.2, 0.4, 1.2, 1], bones={
     'torso': [-16, -12, -13, -17, -16], 'head': [-14, -9, -10, -15, -14],
     'arm_R': [14, 11, 12, 15, 14], 'forearm_R': [6, 4, 5, 7, 6], 'arm_L': [16, 13, 14, 17, 16], 'forearm_L': [-6, -4, -5, -7, -6],
     'leg_R': [10, 9, 9, 10, 10], 'shin_R': [-14, -12, -12, -14, -14], 'leg_L': [8, 7, 7, 8, 8], 'shin_L': [-10, -9, -9, -10, -10]})
@@ -286,7 +292,7 @@ def main(bodies):
                     out[mid] = json.loads(json.dumps(v))
                     out[mid]['tracks'] = {**v.get('tracks', {}), 'root': full['tracks']['root']}
                     mode = 'sole' if 'foot_L' in PTS else 'calf'
-                    new = pl.plant(full, mode, target=GROUND, flat_foot=(mode == 'sole'), step=50)
+                    new = pl.plant(full, mode, target=GROUND, flat_foot=(mode == 'sole'), step=50, fix_shin=True)
                     out[mid]['tracks'].update(new)
                     out[mid]['planted'] = sorted({'root', *new})
         mo['sets'][rig['bodyMotions'][body]] = out

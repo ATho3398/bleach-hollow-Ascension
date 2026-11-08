@@ -94,6 +94,27 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       }
     }
   });
+  it('호로 몸(역관절·덩치) 제자리 동작: 허벅지가 움직이고 정강이는 화면 기울기 고정(GDD 115-A 78)', () => {
+    for (const body of ['dg', 'hb']) {
+      const ms = resolveMotions(rig, motions, sets, body);
+      for (const id of ['idle', 'homeIdle', 'dying', 'skill', 'release1', 'hit', 'attack', 'attack2', 'headbutt']) {
+        const m = ms[id]!;
+        for (const s of ['shin_L', 'shin_R']) {
+          let lo = 1e9;
+          let hi = -1e9;
+          for (let t = 0; t <= m.duration; t += 50) {
+            const w = boneMatrices(rig, samplePose(rig, m, t), body)[s]!;
+            const a = (Math.atan2(w[1], w[0]) * 180) / Math.PI;
+            lo = Math.min(lo, a);
+            hi = Math.max(hi, a);
+          }
+          expect(hi - lo, `${body}.${id}.${s} 정강이 기울기`).toBeLessThan(1);
+        }
+      }
+      const thigh = ms.idle!.tracks.leg_L!.map((k) => k[1]).concat(ms.idle!.tracks.leg_R!.map((k) => k[1]));
+      expect(Math.max(...thigh.map(Math.abs)), `${body} 대기 허벅지`).toBeGreaterThan(5);
+    }
+  });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
     const mv = b.motions.move!;

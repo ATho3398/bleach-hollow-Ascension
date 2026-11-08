@@ -34,7 +34,12 @@ def end_y(tracks, t, leg, mode):
     return float((m[1] * P[:, 0] + m[3] * P[:, 1] + m[5]).max())
 
 
-def solve(tracks, t, leg, bone, mode, target, flat_foot, prefer=None):
+def keep_shin(tr, t, leg):
+    """정강이 기울기를 쉬는 자세 그대로: 정강이 동작 각 = −(허벅지까지 동작 각 합)"""
+    tr[leg[1]] = [[t, -chain_rot(tr, t, leg[0]), 0, 0]]
+
+
+def solve(tracks, t, leg, bone, mode, target, flat_foot, prefer=None, shin_world=False):
     """bone 의 t 순간 각을 바꿔 다리 끝 높이 = target. 고친 각(없으면 None). 답이 둘이면 prefer(앞 순간 답)에 가까운 쪽 — 무릎이 앞뒤로 뒤집히지 않게"""
     keys = tracks.setdefault(bone, [[0, 0, 0, 0]])
     a0, x0, y0 = cm.samp(keys, t)
@@ -42,6 +47,8 @@ def solve(tracks, t, leg, bone, mode, target, flat_foot, prefer=None):
     def at(a):
         tr = dict(tracks)
         tr[bone] = [[t, a, x0, y0]]
+        if shin_world:
+            keep_shin(tr, t, leg)
         if flat_foot:
             tr[leg[2]] = [[t, foot_flat(tr, t, leg), 0, 0]]
         return end_y(tr, t, leg, mode) - target
@@ -81,7 +88,7 @@ def foot_flat(tracks, t, leg):
     return -chain_rot(tracks, t, cm.B[leg[2]]['parent'])
 
 
-def reach(tracks, t, leg, bone, mode, flat_foot):
+def reach(tracks, t, leg, bone, mode, flat_foot, shin_world=False):
     """다리 끝이 내려갈 수 있는 가장 낮은 높이(각을 ±60° 안에서 바꿔서)"""
     keys = tracks.get(bone, [[0, 0, 0, 0]])
     a0, x0, y0 = cm.samp(keys, t)
@@ -89,22 +96,28 @@ def reach(tracks, t, leg, bone, mode, flat_foot):
     for d in [i * 2.0 for i in range(-30, 31)]:
         tr = dict(tracks)
         tr[bone] = [[t, a0 + d, x0, y0]]
+        if shin_world:
+            keep_shin(tr, t, leg)
         if flat_foot:
             tr[leg[2]] = [[t, foot_flat(tr, t, leg), 0, 0]]
         best = max(best, end_y(tr, t, leg, mode))
     return best
 
 
-def plant(motion, mode, target=None, flat_foot=True, step=None):
+def plant(motion, mode, target=None, flat_foot=True, step=None, fix_shin=False):
     """motion(tracks) 의 모든 키 시각(step 이 있으면 그 간격마다도)에서 두 발 끝을 고정. mode: ankle(사람형)·sole(역관절)·calf(덩치).
-    target None = 쉬는 자세 높이. 한 발이 다리를 다 펴도 못 닿으면 그만큼 몸(root)을 낮추고 다시 풂 — 그때는 root 키도 돌려줌"""
+    target None = 쉬는 자세 높이. 한 발이 다리를 다 펴도 못 닿으면 그만큼 몸(root)을 낮추고 다시 풂 — 그때는 root 키도 돌려줌.
+    fix_shin = 정강이(종아리)는 화면에서 쉬는 자세 기울기 그대로(허벅지가 돈 만큼 되돌림)·발은 나란히, 허벅지 각으로 풂 — 무릎만 앞뒤로 움직임 (사용자 2026-11-09 "대기든 뭐든, 허벅지를 움직여야지. 정강이는 고정으로 놔두고")"""
     tr = {b: [list(k) for k in v] for b, v in motion['tracks'].items()}
+    if fix_shin:
+        for leg in LEGS:
+            tr[leg[1]] = [[0, 0, 0, 0]]  # 설계한 정강이 굽힘은 버리고, 아래에서 허벅지에 맞춰 기울기만 되돌림
     times = sorted({k[0] for v in tr.values() for k in v} | {0, motion['duration']} | (set(range(0, motion['duration'], step)) if step else set()))
     legs = [leg for leg in LEGS if mode != 'calf' or leg[1] in cm.PTS]
     rest = {leg: (end_y({}, 0, leg, mode) if target is None else target) for leg in legs}
-    bone_of = {'ankle': 0, 'sole': 1, 'calf': 1}[mode]
+    bone_of = 0 if fix_shin else {'ankle': 0, 'sole': 1, 'calf': 1}[mode]
     root0 = tr.get('root') or [[0, 0, 0, 0]]
-    root_keys, out_keys, foot_keys = [], {leg: [] for leg in legs}, {leg: [] for leg in legs}
+    root_keys, out_keys, foot_keys, shin_keys = [], {leg: [] for leg in legs}, {leg: [] for leg in legs}, {leg: [] for leg in legs}
     lowered = False
     prev = {}
     for t in times:
@@ -114,26 +127,31 @@ def plant(motion, mode, target=None, flat_foot=True, step=None):
         # 못 닿는 발이 있으면 몸을 낮춤(가장 모자란 만큼)
         need = 0.0
         for leg in legs:
-            gap = rest[leg] - reach(cur, t, leg, leg[bone_of], mode, flat_foot)
+            gap = rest[leg] + 0.3 - reach(cur, t, leg, leg[bone_of], mode, flat_foot, fix_shin)  # 다리를 다 편 끝에 걸리지 않게 0.3칸 여유
             need = max(need, gap)
-        if need > 0.01:
-            ry += need + 0.01
+        if need > 0:
+            ry += need
             lowered = True
             cur['root'] = [[t, rot, rx, ry]]
         root_keys.append([t, round(rot, 2), round(rx, 2), round(ry, 2)])
         for leg in legs:
             b = leg[bone_of]
-            a = solve(cur, t, leg, b, mode, rest[leg], flat_foot, prefer=prev.get(leg))
+            a = solve(cur, t, leg, b, mode, rest[leg], flat_foot, prefer=prev.get(leg), shin_world=fix_shin)
             a0, ax, ay = cm.samp(tr.get(b, [[0, 0, 0, 0]]), t)
             a = a0 if a is None else a
             prev[leg] = a
             out_keys[leg].append([t, round(a, 2), ax, ay])
             cur[b] = [[t, a, ax, ay]]
+            if fix_shin:
+                keep_shin(cur, t, leg)
+                shin_keys[leg].append([t, round(cur[leg[1]][0][1], 2), 0, 0])
             if flat_foot and leg[2] in cm.B:
                 foot_keys[leg].append([t, round(foot_flat(cur, t, leg), 2), 0, 0])
     out = {}
     for leg in legs:
         out[leg[bone_of]] = out_keys[leg]
+        if fix_shin:
+            out[leg[1]] = shin_keys[leg]
         if flat_foot and leg[2] in cm.B:
             out[leg[2]] = foot_keys[leg]
     if lowered:
