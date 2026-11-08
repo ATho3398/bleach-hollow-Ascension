@@ -92,7 +92,7 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   const out: { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] = [{ kind: 'what', text: absorbModeText(faction)[m].sub }];
   const ev = evLine(p.ev, faction.id);
   if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
-  else if (evCapped(exp, m)) out.push({ kind: 'warn', text: EV_FULL_TEXT }); // GDD 176장 11: 노력치 상한이면 능력치 0 을 말로
+  else if (evCapped(exp, m)) out.push({ kind: 'warn', text: evFullText(m) }); // GDD 176장 11: 노력치 상한이면 능력치 0 을 말로 (202장 3: 갈래마다 이유 한 줄)
   // 놓아주기 = 리스크 게이지 −releaseRelief (GDD 168장 2): 게이지가 0 이라 더 못 내려가도 설명은 같은 값 (확인 창·도움말과 같게)
   // 리스크 줄은 바뀔 때만 ('그대로' 줄 없음), 첫 흡수 연습에서는 전부 숨김 (GDD 197장 1·2)
   if (showRiskLine(exp, m)) out.push({ kind: 'risk', text: `${faction.riskGaugeName}: ${m === 'none' ? releaseDelta(p.riskFrom, p.riskTo) : gaugeDelta(p.riskFrom, p.riskTo)}` });
@@ -106,6 +106,12 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
 
 /** 노력치 상한 안내 (GDD 176장 11) */
 export const EV_FULL_TEXT = '노력치가 가득 찼다. 능력치는 오르지 않는다.';
+/** 노력치 상한 안내 — 갈래마다 이유 한 줄 (GDD 202장 3): 상한이 가득이어도 흡수는 막지 않는다. '둘 다'는 블록·속성 강화 몫이 남아 그대로 할 수 있고, '스탯만'(흐림)은 지금 얻는 게 없다는 뜻 */
+export function evFullText(m: AbsorbChoice): string {
+  if (m === 'stat') return `${EV_FULL_TEXT} 지금 이 갈래로는 얻는 것이 없다.`;
+  if (m === 'both') return `${EV_FULL_TEXT} 블록과 속성 강화는 그대로 얻는다.`;
+  return EV_FULL_TEXT;
+}
 
 /** 능력치를 주는 갈래인데 노력치가 이미 가득 차 아무것도 안 오르나 (GDD 176장 11) */
 export function evCapped(exp: ExpeditionState, m: AbsorbChoice): boolean {
@@ -145,7 +151,7 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
     // 갈래 아래 작은 줄 = 이 갈래의 리스크 게이지 변화 (GDD 183장 S11 '위험 +n'). 값은 설명 칸과 같은 엔진 미리보기
     b.append(modeRiskLine(faction, exp, m));
     if (frenzy) b.title = `${faction.frenzyName} 상태가 된다`;
-    // 능력치만 얻는 갈래인데 노력치가 가득 = 흐리게 (GDD 176장 11). 고를 수는 있다(설명 칸에서 이유를 읽게) — 자리도 그대로
+    // 능력치만 얻는 갈래인데 노력치가 가득 = 흐리게 (GDD 176장 11 → 202장 3). 고를 수도 실행할 수도 있다(설명 칸에서 이유를 읽게) — 자리도 그대로. '둘 다'·'속성만'은 가득이어도 흐리지 않는다(블록·속성 강화 몫)
     if (m === 'stat' && evCapped(exp, m)) b.setAttribute('aria-disabled', 'true');
     // ▲▼ 하이라이트가 옮겨 오면 고르기 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
     b.addEventListener('bha-select', () => select(m));
