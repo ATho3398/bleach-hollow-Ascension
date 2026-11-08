@@ -77,6 +77,10 @@ self.addEventListener('message', (event) => {
 const LOOKUP = { ignoreSearch: true, ignoreVary: true };
 // 게임 화면을 네트워크에서 기다리는 최대 시간 (느린 망에서도 오프라인처럼 캐시로 바로 연다)
 const NAV_TIMEOUT_MS = 3000;
+// C.315 (GDD 195장): 새 버전으로 다시 시작한 화면(주소에 bha-v, pwa.ts RESTART_PARAM)은 새 index 를 받으러 온 것이라 더 기다린다 —
+// 3초 만에 옛 캐시 셸로 떨어지면 옛 빌드가 또 뜨고(고리 방지로 자동 다시 시작도 안 됨) 창만 남았다. 그래도 안 오면 캐시(오프라인)
+const RESTART_PARAM = 'bha-v';
+const RESTART_NAV_TIMEOUT_MS = 15000;
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -90,9 +94,12 @@ self.addEventListener('activate', (event) => {
 });
 
 // C.130: 새 워커가 일을 시작하면 열려 있는 화면에 알린다. C.130 이후 화면은 답하고 "새 버전 — 다시 시작" 띠를 띄운다(pwa.ts).
-// 답이 없는 화면 = 띠 코드가 없는 옛 버전(C.129 이전) → 한 번 다시 연다(원정 중이면 마지막 중간 저장에서 이어하기). 옛 버전이 계속 도는 걸 막는다
+// 답이 없는 화면 = 띠 코드가 없는 옛 버전(C.129 이전) → 한 번 다시 연다(원정 중이면 마지막 중간 저장에서 이어하기). 옛 버전이 계속 도는 걸 막는다.
+// C.315 (GDD 195장): 백그라운드(숨은·멈춘) 화면은 스크립트가 돌지 않아 답을 못 한다 — 옛 버전으로 오해해 게임 중 화면을 다시 열지 않는다.
+// 그 화면은 다시 꺼낼 때 스스로 버전을 확인해 창을 띄운다(pwa.ts)
 const ACK_MS = 1500;
 function refreshIfOld(client) {
+  if (client.visibilityState && client.visibilityState !== 'visible') return Promise.resolve();
   return new Promise((resolve) => {
     let acked = false;
     const ch = new MessageChannel();
@@ -155,7 +162,8 @@ self.addEventListener('fetch', (event) => {
       event.waitUntil(promoteShell(shell, res.clone()).catch(() => undefined));
       return res;
     });
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('nav timeout')), NAV_TIMEOUT_MS));
+    const waitMs = url.searchParams.has(RESTART_PARAM) ? RESTART_NAV_TIMEOUT_MS : NAV_TIMEOUT_MS;
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('nav timeout')), waitMs));
     event.respondWith(Promise.race([network, timeout]).catch(cached));
     return;
   }

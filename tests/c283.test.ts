@@ -148,9 +148,9 @@ describe('C.295 확인 시점 보강', () => {
   it('켜 둔 동안 1분마다 · 실패면 한 번 더 · 되살림(pageshow)·focus·online 때도 확인', () => {
     const pwa = read('src/pwa.ts');
     expect(pwa).toContain('export const UPDATE_CHECK_MS = 60 * 1000;');
-    expect(pwa).toContain('setTimeout(() => check(true), RETRY_MS)');
+    expect(pwa).toContain('setTimeout(() => check(true, resumed), RETRY_MS)'); // C.315: 몇 번 더(MAX_RETRIES)
     expect(pwa).toContain("window.addEventListener('pageshow'");
-    expect(pwa).toContain("window.addEventListener('online', () => check(true))");
+    expect(pwa).toContain("window.addEventListener('online', () => {"); // C.315: 재시도 횟수 처음부터 + 확인
   });
   it('버전 파일 요청이 멈추면 시간 초과로 null', async () => {
     const hang = (_u: string, i?: RequestInit) => new Promise<never>((_, rej) => i?.signal?.addEventListener('abort', () => rej(new Error('abort'))));

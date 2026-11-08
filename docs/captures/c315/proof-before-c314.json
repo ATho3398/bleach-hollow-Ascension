@@ -1,0 +1,89 @@
+{
+ "builds": {
+  "A": "043fd15-mw7oallq",
+  "B": "043fd15-mw7obnpa",
+  "C": "fake-newer-c"
+ },
+ "js": {
+  "A": "index-Cf3AmqMy.js",
+  "B": "index-BNCVXeK7.js",
+  "C": "index-BNCVXeK7.js"
+ },
+ "devices": {
+  "phone": {
+   "errors": [],
+   "prime": {
+    "run": "A",
+    "ctrl": true
+   },
+   "s3_resume": {
+    "first": "A",
+    "sig": "dialog",
+    "at": 0.134,
+    "run": "A",
+    "look": {
+     "open": true,
+     "inLcd": true,
+     "inLcdBox": true,
+     "parent": "bha-lcd",
+     "restart": {
+      "x": 398,
+      "y": 209.1944122314453,
+      "top": true
+     },
+     "later": {
+      "x": 398,
+      "y": 259.07080078125,
+      "top": true
+     },
+     "tutCards": 0
+    }
+   },
+   "s4_later_resume": {
+    "closed": true,
+    "first": "A",
+    "sig": null,
+    "at": null,
+    "run": "A",
+    "look": {
+     "open": false
+    }
+   },
+   "s1_cold": {
+    "first": "B",
+    "sig": null,
+    "at": null,
+    "run": "B",
+    "newBuildAt": 15.035,
+    "final": "B"
+   },
+   "s6_slow_net": {
+    "first": "A",
+    "sig": null,
+    "at": null,
+    "run": "A",
+    "newBuildAt": null,
+    "final": "A",
+    "versionHits": [
+     "3.1d",
+     "11.1d",
+     "63.1",
+     "67.1"
+    ]
+   },
+   "s7_slow_nav": {
+    "first": "A",
+    "sig": "auto",
+    "at": 3.292,
+    "run": "A",
+    "newBuildAt": null,
+    "final": "A",
+    "dialog": true,
+    "navHits": [
+     "0.0",
+     "5.5?bha-v=043fd15-mw7obnpa.mw7pxo6o"
+    ]
+   }
+  }
+ }
+}
