@@ -30,9 +30,12 @@ PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
 GAP = 2   # 칸 사이
 TOP = 1   # 아래 테두리 자리
 ROWGAP = 4  # 줄 사이(1배 칸 수)
-PARTS = ['head', 'hair', 'hair_back', 'torso', 'arm_L', 'forearm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'weapon', 'scabbard', 'cape']
-NAMES = {'head': '머리', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼 위팔(칼)', 'thumb_L': '엄지',
+PARTS = ['head', 'jaw', 'hair', 'hair_back', 'torso', 'arm_L', 'forearm_L', 'thumb_L', 'arm_R', 'forearm_R', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'foot_L', 'foot_R', 'weapon', 'scabbard', 'cape']
+NAMES = {'head': '머리', 'jaw': '턱', 'hair': '일반머리', 'hair_back': '뒷머리', 'torso': '몸통', 'arm_L': '왼 위팔(칼)', 'thumb_L': '엄지',
          'arm_R': '오른 위팔', 'forearm_R': '오른 아래팔', 'forearm_L': '왼 아래팔', 'leg_L': '왼다리', 'leg_R': '오른다리', 'foot_L': '왼발', 'foot_R': '오른발', 'weapon': '칼', 'scabbard': '칼집', 'shin_L': '왼 정강이', 'shin_R': '오른 정강이', 'cape': '망토'}
+# 사용자 도트를 잘라 쓴 몸(역관절·덩치, 115-A 72): 칼 없음, _L = 먼 쪽(뒤), _R = 가까운 쪽(앞)
+CREATURE_NAMES = {'arm_L': '뒤 위팔', 'forearm_L': '뒤 아래팔', 'arm_R': '앞 위팔', 'forearm_R': '앞 아래팔', 'leg_L': '뒷다리 허벅지', 'shin_L': '뒷다리 정강이', 'foot_L': '뒷발',
+                  'leg_R': '앞다리 허벅지', 'shin_R': '앞다리 정강이', 'foot_R': '앞발'}
 GHOST_A = 70
 MARKS: dict = {}  # 사용자가 칸 안에 그은 선(<out>/marks.json, 캔버스 좌표) — main 에서 읽는다
 LINE = (0, 190, 255, 140)
@@ -69,6 +72,8 @@ def main():
     boxes = []
     for p in PARTS:
         art = body.get(p) or (look[p] if isinstance(look.get(p), dict) else None)  # 칼·칼집은 외형 층
+        if p in ('hair', 'hair_back') and look['body'] in (RIG.get('cuts') or {}) and not isinstance(look.get(p), dict):
+            continue  # 사용자 도트를 잘라 쓴 몸(역관절·덩치)은 머리카락 층이 없음 — 칸 안 만듦 (115-A 72)
         if p in ('hair', 'hair_back'):
             # 머리카락은 머리카락 틀 전체가 칸. 자리 맞추기용 머리를 그대로(불투명) 깔고 그 위에 머리카락
             # (사용자 2026-10-28 "헤어 칸에 머리 투명화 넣지 말고 걍 박아놔. 머리만"). 머리는 ref 로 남겨 가져올 때 뺀다
@@ -118,7 +123,10 @@ def main():
         # 관절점: 이 슬롯의 뼈와 그 자식 뼈 관절 중 칸 안에 있는 것
         bone = slot_bone[b['slot']]
         pts = []
+        drawn = {slot_bone[s] for s in body if s in slot_bone} | {slot_bone[s] for s in look if s in slot_bone and isinstance(look.get(s), dict)}
         for bb in bones.values():
+            if bb['id'] not in drawn and bb['id'] != 'root':
+                continue  # 이 외형에 그림이 없는 부위의 관절(칼·칼집·망토 등)은 안 찍음
             if bb['id'] == bone or bb['parent'] == bone:
                 px, py = bb['pivot']
                 if cx <= px < cx + w and cy <= py < cy + h:
@@ -148,7 +156,8 @@ def main():
     for b in boxes:
         sx, sy = b['sheet']
         d.rectangle([sx * K, (sy - ROWGAP) * K + 2, sx * K + b['size'][0] * K, sy * K - 10], fill=(40, 44, 48, 255))
-        d.text((sx * K + 4, (sy - ROWGAP) * K + 4), NAMES[b['slot']], fill=(255, 255, 255, 255), font=f)
+        creature = look['body'] in (RIG.get('cuts') or {})
+        d.text((sx * K + 4, (sy - ROWGAP) * K + 4), (CREATURE_NAMES.get(b['slot']) if creature else None) or NAMES[b['slot']], fill=(255, 255, 255, 255), font=f)
         for pid in b['pivots']:
             bb = bones[pid]
             px, py = bb['pivot'][0] - b['canvas'][0] + sx, bb['pivot'][1] - b['canvas'][1] + sy
