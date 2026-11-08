@@ -40,6 +40,7 @@ import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
 import { registerLayer } from './bha/overlayHost';
+import { keepOldIcons } from './bha/iconMap';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -262,52 +263,52 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   // 지금 고른 사냥터 이름 (GDD 24-2). 종족 전체 지역 이름(huntingGroundName)이 아니라 사냥터별 이름
   const groundLabel = groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
   where.append(el('b', '', groundLabel));
-  // 폭주(GDD 23-2)·다음 칸 강적(GDD 76장 3번)은 C.298 부터 경고 칩 한 자리(warnChip)에서 보인다
+  // GDD 197장 3 (C.319): 왼쪽 위 = C.281 능력치 상태창 그대로 — 사냥터 이름 · (폭주 칩 · 다음 칸 강적 칩) · 바퀴 진행 · 배부름 · 컨디션(+공허) · 광기/호로화 · 슬롯 줄.
+  // 체력만 판에서 빼고 캐릭터 발밑 막대(GDD 189장 ② 확정 자리)에 둔다. 이름은 전부 종족 설정(fullnessName·riskGaugeName·frenzyName·slotName).
+  // 폭주 상태 칩 (GDD 23-2): 폭주(호로화)한 원정의 남은 동안 보인다
+  const frenzyChip = chip(faction.frenzyName, 'danger');
+  frenzyChip.classList.add('bha-frenzychip');
+  frenzyChip.prepend(icon('i-risk', 'sm'));
+  frenzyChip.hidden = true;
+  // 다음 칸이 강적 칸이면 작은 ⚠ (GDD 76장 3번)
+  const aheadChip = chip('다음 칸 강적', 'danger');
+  aheadChip.classList.add('bha-exp__ahead');
+  aheadChip.prepend(icon('i-warn', 'sm'));
+  aheadChip.hidden = true;
+  where.append(frenzyChip, aheadChip);
   const nextElite = (): boolean => exp.phase === 'moving' && nextCellIsElite(exp);
-
-  // GDD 189장 (C.298, 목업 걷기 A): 왼쪽 위 = 사냥터·바퀴 진행 한 판 / 체력 = 캐릭터 발밑 긴 막대(방·전투와 같은 자리·모양) /
-  // 오른쪽 위 = [가방][일시정지] 아이콘 2개 / [귀환하기]·[도움말]·컨디션 수치는 일시정지 창 안 / 배부름·광기·컨디션은 위험할 때만 경고 칩 1개.
-  const lapFill = el('i');
-  const lapNum = el('b', 'bha-num');
-  const plate = el('div', 'bha-exp__plate');
-  plate.setAttribute('role', 'img');
-  {
-    const top = el('div', 'bha-exp__platetop');
-    top.append(where, el('span', 'bha-exp__lap'));
-    top.lastElementChild!.append(lapNum, '바퀴');
-    const track = el('span', 'bha-chip-meter bha-exp__lapbar');
-    track.append(lapFill);
-    plate.append(top, track);
-  }
-  // 경고 칩 한 자리 (위험할 때만, 하나씩 — 위험한 순서: 폭주 > 광기 > 배부름 > 컨디션 > 다음 칸 강적)
-  const warnChip = el('span', 'bha-chip bha-chip--status bha-chip--alert is-danger bha-exp__warn');
-  warnChip.setAttribute('role', 'status');
-  warnChip.hidden = true;
+  const meters = el('div', 'bha-stack bha-stack--tight');
   const condChip = statChip('i-cond', '--bha-cond', '컨디션', 3);
   const fullChip = statChip('i-hunger', '--bha-hunger', faction.fullnessName, 3);
   const riskChip = statChip('i-risk', '--bha-risk', faction.riskGaugeName, 3);
   // 발밑 체력 (방 .bha-room__hp 와 같은 C.281 막대, GDD 192장 2): meter player 하나, 숫자 'n%' 는 막대 안 가운데
   const hpBox = el('div', 'bha-exp__hp');
 
-  const slotsLine = el('div', 'bha-exp__slots');
-  slotsLine.append(icon('i-slot', 'sm'), el('span', '', faction.slotName));
-  let empty = 0;
-  for (const id of exp.build.slots) {
-    if (!id) {
-      empty++;
-      continue;
+  // 특성 슬롯 한 줄: 왼쪽 위 판(C.281)과 일시정지 창에 하나씩
+  const makeSlotsLine = (): HTMLElement => {
+    const line = el('div', 'bha-exp__slots');
+    line.append(icon('i-slot', 'sm'), el('span', '', faction.slotName));
+    let empty = 0;
+    for (const id of exp.build.slots) {
+      if (!id) {
+        empty++;
+        continue;
+      }
+      const m = paintElement(el('span', 'bha-lin'), getTrait(id).element);
+      m.append(elementDot(getTrait(id).element, faction.id), traitName(id, faction.id));
+      line.append(m);
     }
-    const m = paintElement(el('span', 'bha-lin'), getTrait(id).element);
-    m.append(elementDot(getTrait(id).element, faction.id), traitName(id, faction.id));
-    slotsLine.append(m);
-  }
-  if (empty > 0) slotsLine.append(el('span', 'bha-faint', `빈칸 ${empty}`));
+    if (empty > 0) line.append(el('span', 'bha-faint', `빈칸 ${empty}`));
+    return line;
+  };
+  const slotsLine = makeSlotsLine();
 
   const chips = el('section', 'bha-exp__chips');
-  // 스토리 화 목표 (GDD 25-7): 사냥터 판 밑 한 줄. 그 밑 경고 칩 한 자리
+  // 스토리 화 목표 (GDD 25-7): 진행도와 함께 칩 묶음 맨 위 (C.281 그대로)
   const goal = el('span', 'bha-exp__goal');
   goal.setAttribute('role', 'status');
-  chips.append(plate, goal, warnChip);
+  chips.append(goal, where, meters, makeSlotsLine());
+  keepOldIcons(chips); // 판 안 아이콘 = C.281 그림 (전투 C.302 와 같은 방식, 이 판 안에서만)
 
   const walkArt = charArt(faction.id, h.tierIndex ?? 0, roomOf(faction).characterArt, WALK_ART_BASE, undefined, undefined, h.skinId);
   const walk = walkScene(faction.walkAnim, groundLabel, walkArt, groundSceneBg(faction, exp.groundId));
@@ -460,10 +461,19 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const bonus = riskBonus(exp);
 
     // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션(+ 공허 보너스) · 광기/호로화
-    lapNum.textContent = String(exp.lap);
-    lapFill.style.width = `${Math.round((exp.pos / EX.loopTiles) * 100)}%`;
-    plate.setAttribute('aria-label', `${groundLabel} · ${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`);
-    plate.title = `${exp.lap}바퀴 · 진행 ${exp.pos}/${EX.loopTiles}`;
+    // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
+    meters.replaceChildren(
+      meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
+      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(exp.hunger, PX.hungerMax)), max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
+      meter({
+        kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(exp.condition), max: PX.conditionMax, compact: true,
+        valueText: `${Math.round(exp.condition)}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
+      }),
+      meter({
+        kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
+        valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
+      }),
+    );
     const hpPct = Math.round(hpFractionOf(exp) * 100);
     hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFractionOf(exp) < 0.3, valueText: `${hpPct}%` }));
     hpBox.title = `체력 ${hpPct}%`;
@@ -473,16 +483,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     riskChip.set(exp.risk / RX.limit, exp.breakthrough ? `${Math.round(exp.risk)}` : String(Math.round(exp.risk)), Boolean(exp.breakthrough) || exp.risk >= 60,
       exp.breakthrough ? `${faction.frenzyName}!` : bonus > 0 ? `공허 +${Math.round(bonus * 100)}%` : '',
       exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`);
-    // 경고 칩 한 자리 (GDD 189장): 위험한 것 하나만. 배부름·광기 위험 기준은 칩 위험 표시와 같다, 컨디션은 30 아래
-    const condLow = exp.condition < PX.conditionMax * 0.3;
-    const riskHot = Boolean(exp.breakthrough) || exp.risk >= 60;
-    const warn: [string, string] | null = inFrenzy(exp) ? ['i-risk', faction.frenzyName]
-      : riskHot ? ['i-risk', `${faction.riskGaugeName} ${Math.round(exp.risk)}`]
-      : hungerDanger ? ['i-hunger', `${faction.fullnessName} ${full}`]
-      : condLow ? ['i-cond', `컨디션 ${Math.round(exp.condition)}`]
-      : nextElite() ? ['i-warn', '다음 칸 강적'] : null;
-    warnChip.hidden = warn === null;
-    if (warn) warnChip.replaceChildren(icon(warn[0], 'sm'), el('span', '', warn[1]));
+    // 폭주·다음 칸 강적 칩 (C.281 그대로 — 배부름·컨디션·광기 위험은 판 막대 위험 색으로 보인다)
+    frenzyChip.hidden = !inFrenzy(exp);
+    aheadChip.hidden = !nextElite();
     const goalText = storyGoalLine(exp);
     goal.hidden = goalText === null;
     if (goalText !== null) goal.replaceChildren(icon('i-flag-win'), goalText);
