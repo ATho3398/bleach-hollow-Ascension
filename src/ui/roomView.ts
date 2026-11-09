@@ -315,8 +315,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     blockers: [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras],
   });
   /**
-   * 상태창 묶음 올리기 (마스터 결정 14:3x): 상태창 아래 ~ 그린 머리 위에 알림 한 줄이 늘 들어가게 --note-lift 만큼 올린다 — 늘 같은 자리(값이 바뀔 때만 움직이지 않음).
-   * 머리 높이 = 정지 그림의 첫 안 투명한 줄(처음 한 번 읽어 두고, 읽은 뒤 다시 놓는다). 위 끝 하한(이름표가 장면 안)은 room.css 그대로. 캐릭터 자리는 안 건드린다
+   * 상태창 묶음 자리 (C.350 마스터 결정 — C.347 의 '늘 위로 올리기' 대신): 박스 아래 끝 = 그린 머리 윗변 − (알림 한 줄 + 위아래 여백). 그 이상 올리지 않는다.
+   * 알림이 없을 때도 같은 자리(값이 바뀔 때 박스가 안 움직임). 그 자리가 장면 위 끝 하한을 넘으면(사람 종이인형처럼 머리가 높을 때) 그때만 박스를 조이고(.is-tight),
+   * 그래도 모자라면 하한에 둔다 — 알림 줄은 박스 바로 아래, 머리 윗 몇 px 와 살짝 겹친다(NOTE_HEAD_OVERLAP). 머리 높이 = 그려진 캔버스의 첫 안 투명한 줄(못 읽으면 정지 그림 — 처음 한 번 읽어 두고, 읽은 뒤 다시 놓는다)
    */
   const liftForNote = () => {
     const src = charArtUrls.src;
@@ -329,9 +330,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const art = char.querySelector<HTMLElement>('.bha-char__body canvas, .bha-char__body img');
     const ar = art?.getBoundingClientRect();
     if (ratio === null || !ar || !ar.height) return;
-    const drawnTop = Math.min(ar.top + ratio * ar.height, drawnHeadY(char) ?? Infinity) - 3; // 정지 그림·움직이는 캔버스 중 더 높은 머리, 대기 숨쉬기(±2px)·소수점 여유 3px
+    const drawnTop = drawnHeadY(char) ?? ar.top + ratio * ar.height; // 실제로 그려진 머리(움직이는 캔버스) — 아직 안 그려졌으면 정지 그림의 첫 안 투명한 줄
     const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-1')) || 2;
-    /** 지금 모양(tight)에서: 안 올린 박스 아래 끝 · 끝까지 올린 아래 끝(위 끝 하한) · 필요한 거리 */
+    /** 지금 모양(tight)에서: 안 옮긴 박스 아래 끝 · 끝까지 올린 아래 끝(위 끝 하한)까지 거리 · 머리 위 자리까지 옮길 거리(+ 위, − 아래) */
     const measure = (tight: boolean) => {
       chipRow.classList.toggle('is-tight', tight);
       measureChips();
@@ -341,11 +342,11 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const room = natural - statusBtn.getBoundingClientRect().bottom;
       return { room, need: noteLift({ statusBottom: natural, drawnTop, noteH: probe.offsetHeight, gap, lift: 0 }) };
     };
-    // 1) 올리기만 → 2) 모자라면 박스를 조인다(여백·줄 간격·위 끝 여유, 칩 줄 높이) → 그래도 모자라면 올릴 수 있는 만큼 (알림이 못 들어가면 placeNote 가 숨김)
+    // 1) 머리 위 자리 그대로 → 2) 위 끝 하한에 막히면 박스를 조인다 → 3) 그래도 모자라면 하한(알림은 머리 윗 몇 px 와 겹침)
     let m = measure(false);
     if (m.need > m.room) m = measure(true);
     scene.style.setProperty('--note-lift', `${Math.min(m.need, m.room)}px`);
-    scene.dataset.noteRoom = `${Math.round(m.need)}/${Math.round(m.room)}`; // 필요한 거리 / 올릴 수 있는 거리 (proof 용)
+    scene.dataset.noteRoom = `${Math.round(m.need)}/${Math.round(m.room)}`; // 옮길 거리 / 올릴 수 있는 거리 (proof 용)
   };
 
   /** 바뀐 값 알림을 띄운다 — 떴으면 true (그럼 말풍선에서 수치 변화 문장을 뺀다, 209장 4) */
@@ -400,7 +401,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (!lowPose || !scene.isConnected || scene.clientWidth === 0) return;
     const cs = getComputedStyle(scene);
     const natural = parseFloat(cs.getPropertyValue('--char-y')) + charTopOffset(charArtUrls) - (parseFloat(cs.getPropertyValue('--bha-sp-4')) || 0);
-    if (!(chipRow.offsetTop > natural + 1)) return; // 머리 위에 들어간다
+    const lowered = Math.max(0, -(parseFloat(scene.style.getPropertyValue('--note-lift')) || 0)); // 머리 위 알림 자리로 내린 거리 (C.350)
+    if (!(chipRow.offsetTop > natural + lowered + 1)) return; // 머리 위에 들어간다
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
     const right = char.offsetLeft < scene.clientWidth * 0.35; // 캐릭터가 왼쪽에 있으면 오른쪽 옆
     chipRow.classList.add('is-side', ...(right ? ['is-right'] : []));

@@ -174,7 +174,7 @@ export function placeChangeNote(note: HTMLElement, o: { scene: HTMLElement; head
   if (!o.scene.isConnected || o.scene.clientWidth === 0) return true;
   const sb = o.scene.getBoundingClientRect();
   const rects: Rect[] = o.blockers.filter((b) => b.isConnected && b.offsetWidth > 0).map((b) => b.getBoundingClientRect());
-  rects.push({ left: o.head.left, right: o.head.right, top: o.head.y - 1, bottom: Infinity }); // 숨쉬기·흔들림 1px 여유
+  rects.push({ left: o.head.left, right: o.head.right, top: o.head.y + NOTE_HEAD_OVERLAP, bottom: Infinity }); // 머리 윗 4px 까지는 겹쳐도 됨 (C.350 — 사람 종이인형처럼 머리가 높을 때만 실제로 겹친다)
   const sayText = changeSayText(note);
   for (const withSay of sayText ? [true, false] : [false]) {
     setChangeSay(note, withSay ? sayText : null);
@@ -193,14 +193,20 @@ export function placeChangeNote(note: HTMLElement, o: { scene: HTMLElement; head
   return false;
 }
 
+/** 알림 줄이 그린 머리 윗변과 겹쳐도 되는 높이 (C.350 마스터 결정 2: 머리가 높아 박스를 조여도 모자랄 때만 — 머리 윗 2~4px) */
+export const NOTE_HEAD_OVERLAP = 4;
+/** 알림 줄 아래 ~ 머리 윗변 여유 (숨쉬기 흔들림 1px) — 위 여백 gap + 아래 여백 gap + 이 값 */
+export const NOTE_BREATH = 1;
+
 /**
- * 상태창 묶음을 올릴 거리 (마스터 결정 14:3x): 상태창 아래 ~ 그린 머리 위에 알림 한 줄(높이 noteH + 위아래 여백 gap)이 늘 들어가게.
- * 값 바뀔 때만이 아니라 늘 같은 자리(깜빡임 없이 고정). lift = 지금 올린 거리(다시 잴 때 되돌려 계산)
+ * 상태창 묶음을 옮길 거리 (C.350 마스터 결정 — C.347 의 '늘 위로 올리기' 대신): 박스 아래 끝 = 그린 머리 윗변 − (알림 한 줄 + 위아래 여백).
+ * 즉 박스와 머리 사이는 알림 한 줄이 딱 들어갈 만큼만. + = 위로, − = 아래로(머리 쪽으로). 알림이 없을 때도 같은 자리.
+ * lift = 지금 옮긴 거리(다시 잴 때 되돌려 계산 — 다시 재도 같은 값)
  */
 export function noteLift(o: { statusBottom: number; drawnTop: number; noteH: number; gap: number; lift: number }): number {
-  const natural = o.statusBottom + o.lift; // 안 올렸을 때 상태창 아래 끝
-  const want = o.drawnTop - 1 - o.gap * 2 - o.noteH; // 1 = 숨쉬기 여유
-  return Math.max(0, Math.ceil(natural - want));
+  const natural = o.statusBottom + o.lift; // 안 옮겼을 때 상태창 아래 끝
+  const want = o.drawnTop - NOTE_BREATH - o.gap * 2 - o.noteH;
+  return Math.ceil(natural - want);
 }
 
 /** 그림 한 장(정지 그림)의 첫 안 투명한 줄 비율 — 방에 들어올 때 상태창 자리를 정하는 데 쓴다(캔버스가 그려지기 전에도). undefined = 아직 안 읽음 */

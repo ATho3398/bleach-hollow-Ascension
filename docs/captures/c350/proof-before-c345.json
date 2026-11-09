@@ -1,0 +1,224 @@
+{
+ "checks": {
+  "pc-h": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 147,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 25,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "pc-hb": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 147,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 25,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "pc-ha": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 124,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 2,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "pc-s": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 125,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 3,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph-h": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 142,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 20,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph-hb": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 142,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": 20,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph-ha": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 119,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": -3,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": [
+     "status×머리",
+     "info×머리"
+    ]
+   }
+  },
+  "ph-s": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 122,
+    "headTop": 120,
+    "gap": null,
+    "tight": false,
+    "nameTop": 31,
+    "sceneTop": 16,
+    "space": -2,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": [
+     "status×머리",
+     "info×머리"
+    ]
+   }
+  },
+  "ph115-h": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 124,
+    "headTop": 142,
+    "gap": null,
+    "tight": false,
+    "nameTop": 30,
+    "sceneTop": 16,
+    "space": 18,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph115-hb": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 124,
+    "headTop": 142,
+    "gap": null,
+    "tight": false,
+    "nameTop": 30,
+    "sceneTop": 16,
+    "space": 18,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph115-ha": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 124,
+    "headTop": 119,
+    "gap": null,
+    "tight": false,
+    "nameTop": 30,
+    "sceneTop": 16,
+    "space": -5,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": [
+     "status×머리",
+     "info×머리"
+    ]
+   }
+  },
+  "ph115-s": {
+   "before": {
+    "note": null,
+    "lift": "0 need/room ",
+    "statusBottom": 124,
+    "headTop": 120,
+    "gap": null,
+    "tight": false,
+    "nameTop": 30,
+    "sceneTop": 16,
+    "space": -4,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": [
+     "status×머리",
+     "info×머리"
+    ]
+   }
+  }
+ },
+ "shots": [
+  "ph-h-idle.png"
+ ],
+ "errors": []
+}

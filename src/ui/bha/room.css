@@ -183,10 +183,10 @@
   position: absolute; z-index: 1;
   left: clamp(var(--chips-half, 0px), var(--char-x, 50%), calc(100% - var(--chips-half, 0px)));
   top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4) - var(--note-lift, 0px)), calc(var(--chip-h, 0px) + var(--bha-sp-6)));
-  /* --note-lift (GDD 209장 마스터 결정): 머리 위에 바뀐 값 알림 한 줄 자리가 늘 있게 올린 거리 — roomView 가 그린 머리 높이로 잰다 */
+  /* --note-lift (GDD 209장 보충 C.350): 박스 아래 끝 = 그린 머리 윗변 − (바뀐 값 알림 한 줄 + 위아래 여백)이 되게 옮긴 거리(+ 위, − 아래) — roomView 가 그린 머리 높이로 잰다. 알림이 없어도 같은 자리 */
   transform: translate(-50%, -100%);
 }
-/* 조인 상태창 (.is-tight): 올려도 알림 한 줄 자리가 모자랄 때(사람 종이인형은 머리가 박스 바로 아래) — 박스 위아래 여백·줄 간격·이름표 위 여유를 줄이고
+/* 조인 상태창 (.is-tight): 머리 바로 위 자리가 위 끝 하한을 넘을 때만(사람 종이인형처럼 머리가 높을 때) — 박스 위아래 여백·줄 간격·이름표 위 여유를 줄이고
    알림 칩·이름표 줄 높이를 1.1 로(박스 위 여백 0, 이름표는 장면 위 끝까지). 새 색·간격 없음(기존 토큰) */
 .bha-room__chips.is-tight { top: max(calc(var(--char-y, 54%) + var(--head-y, -50px) - var(--bha-sp-4) - var(--note-lift, 0px)), var(--chip-h, 0px)); }
 .bha-room__chips.is-tight > .bha-room__status { gap: 0; padding-top: 0; padding-bottom: var(--bha-sp-1); }
@@ -257,7 +257,7 @@
 .is-saying > .bha-room__chips { visibility: hidden; }
 /* '무엇이 바뀌나' 알림 (GDD 209장, changeNote.ts): 자리는 늘 상태창 박스 바로 아래 ~ 캐릭터 머리 위 한 곳 (마스터 결정 14:3x — 옆·위 대안 없음).
    한 줄 = [행동 글 · 바뀐 값 칩 [아이콘 이름 ▲/▼]], 수치 없음. 가로는 박스 가운데(장면 끝·물건 버튼에 걸리면 --change-dx 로 민다).
-   머리 위 빈 공간이 모자라면 roomView 가 상태창 묶음을 늘 위로 올려(--note-lift) 이 한 줄 자리를 만든다. 방·온천·가방 상태창 창 공통 */
+   상태창 묶음은 머리 바로 위(박스와 머리 사이 = 이 한 줄 + 여백, --note-lift — C.350). 방·온천·가방 상태창 창 공통 */
 .bha-room__change {
   position: absolute; z-index: 2; left: 50%; top: calc(100% + var(--bha-sp-1));
   transform: translateX(calc(-50% + var(--change-dx, 0px)));

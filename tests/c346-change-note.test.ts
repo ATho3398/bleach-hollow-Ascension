@@ -1,7 +1,7 @@
 // C.346·C.347 (GDD 209장 + 마스터 결정 14:3x — 자리는 상태창 아래 한 곳, 상태창 묶음을 올림): 상태창과 캐릭터 사이 '무엇이 바뀌나' 알림 — 바뀐 값만 칩 · ▲/▼ · 좋음/나쁨 색 · 깜빡임 끝(최소 1초)에 사라짐 · 겹침 0 자리 · 말풍선 수치 문장 뺌.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { changeItems, changeNoteFit, changeNoteMs, CHANGE_NOTE_MIN_AFTER_MS, changeNoteBox, noteLift, hideChangeNote, showChangeNote } from '../src/ui/bha/changeNote';
+import { changeItems, changeNoteFit, changeNoteMs, CHANGE_NOTE_MIN_AFTER_MS, changeNoteBox, noteLift, NOTE_BREATH, NOTE_HEAD_OVERLAP, hideChangeNote, showChangeNote } from '../src/ui/bha/changeNote';
 import { GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from '../src/ui/bha/gaugeBlink';
 import { ACTION_FILL_MS } from '../src/ui/bha/actionFx';
 import { careFeedback } from '../src/ui/bha/dockLogic';
@@ -130,20 +130,29 @@ describe('자리 · 겹침 0 (209장 1)', () => {
     expect(changeNoteFit({ left: -20, right: 60, top: 112, bottom: 130 }, scene, [], { slide: true })).toEqual({ dx: 22 });
     expect(changeNoteFit({ left: 10, right: 60, top: -5, bottom: 13 }, scene, [], { slide: true })).toBeNull(); // 위 끝 밖
   });
-  it('자리는 상태창 아래 한 곳뿐(옆·위 대안 없음) — 공간이 모자라면 상태창 묶음을 늘 올린다(--note-lift)', () => {
+  it('자리는 상태창 아래 한 곳뿐(옆·위 대안 없음) — 상태창 묶음은 머리 바로 위(박스-머리 간격 = 알림 한 줄 + 여백, C.350)', () => {
     const src = read('src/ui/bha/changeNote.ts');
     expect(src).not.toMatch(/is-side|is-above|side-left/);
     expect(read('src/ui/bha/room.css')).toMatch(/- var\(--note-lift, 0px\)\), calc\(var\(--chip-h/);
-    // 사람 종이인형: 박스 아래 122, 그린 머리 124, 한 줄 18 + 여백 2×2 → 올릴 거리 = 122 − (124 − 1 − 4 − 18) = 21
+    // 박스 아래 끝 = 머리 − (한 줄 18 + 여백 2×2 + 숨쉬기 1) = 머리 − 23
+    const gapOf = (statusBottom: number, drawnTop: number) => drawnTop - (statusBottom - noteLift({ statusBottom, drawnTop, noteH: 18, gap: 2, lift: 0 }));
+    expect(18 + 2 * 2 + NOTE_BREATH).toBe(23);
+    // 사람 종이인형(머리가 박스 바로 아래): 21 올림 → 간격 23
     expect(noteLift({ statusBottom: 122, drawnTop: 124, noteH: 18, gap: 2, lift: 0 })).toBe(21);
-    // 다시 재도 같은 값(올린 뒤 박스 아래 101) — 깜빡임 없이 고정
-    expect(noteLift({ statusBottom: 101, drawnTop: 124, noteH: 18, gap: 2, lift: 21 })).toBe(21);
-    // 덩치처럼 공간이 넉넉하면 0 (안 올림)
-    expect(noteLift({ statusBottom: 122, drawnTop: 147, noteH: 18, gap: 2, lift: 0 })).toBe(0);
+    expect(gapOf(122, 124)).toBe(23);
+    // 덩치처럼 머리 위가 넓으면 아래로(−) 내려서 간격 23 — C.347 처럼 장면 위 끝까지 끌어올리지 않는다
+    expect(noteLift({ statusBottom: 100, drawnTop: 147, noteH: 18, gap: 2, lift: 0 })).toBe(-24);
+    expect(gapOf(100, 147)).toBe(23);
+    // 다시 재도 같은 값(옮긴 뒤 박스 아래 124 · lift −24) — 값이 바뀔 때 박스가 안 움직인다
+    expect(noteLift({ statusBottom: 124, drawnTop: 147, noteH: 18, gap: 2, lift: -24 })).toBe(-24);
     const room = read('src/ui/roomView.ts');
     expect(room).toMatch(/liftForNote\(\);\s*placeStatus\(\);/);
-    // 올려도 모자라면 박스를 조인다(.is-tight — 여백·줄 간격·이름표 위 여유·줄 높이), 새 색 없음
+    // 그 자리가 위 끝 하한을 넘을 때만 박스를 조이고(.is-tight), 그래도 모자라면 하한(머리 윗 몇 px 겹침 허용) — 끝까지 끌어올리는 Math.max(0 없음
     expect(room).toMatch(/if \(m\.need > m\.room\) m = measure\(true\);/);
+    expect(src).not.toMatch(/Math\.max\(0, Math\.ceil\(natural - want\)\)/);
+    expect(NOTE_HEAD_OVERLAP).toBeGreaterThanOrEqual(2);
+    expect(NOTE_HEAD_OVERLAP).toBeLessThanOrEqual(4);
+    expect(src).toMatch(/top: o\.head\.y \+ NOTE_HEAD_OVERLAP/);
     expect(read('src/ui/bha/room.css')).toMatch(/\.bha-room__chips\.is-tight > \.bha-room__status \{ gap: 0;/);
     expect(room).toMatch(/const noted = noteChanges\(/);
   });
