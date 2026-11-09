@@ -2961,7 +2961,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 검증: typecheck · test · balance:check · build 통과. 세이브·밸런스 그대로.
 - 캡처 `docs/captures/c356/pc-4-lapend-swapped.png` 교체(같은 스크립트라 나머지 5장도 다시 찍힘).
 
-## C.360 — 길리안 = 호로 2단계 외형 · 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 강적 2(롯팽·마레하다) · 게임 종이인형 뼈대 여럿 (GDD 217장 · 115-A 88~100, v5.515, S-23, 종이인형 세션 Opus)
+## C.360 — 길리안 = 호로 2단계 외형 · 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 강적 2(롯팽·마레하다) · 게임 종이인형 뼈대 여럿 (GDD 219장 · 115-A 88~100, v5.516, S-23, 종이인형 세션 Opus)
 - 사용자 원문: "패치 끝나면 길리안은, 길리안 단계 진화체로 게임에 넣고, 뱀형은, 색깔 바리에이션 3개정도 만들어서 아쥬커스 등급 강적에 2개 넣고, 아쥬커스 진화체로도 1개 넣어. ㅇㅋ? 너 임의로 넣으면 돼. 넣고 커밋하고 배포까지 ㄱㄱ."
 - 엔진 `src/data/art/rig/pose.ts`: `RIG_PACKS`(humanoid·serpent — 뼈대·동작·동작 묶음)·`rigPackOfLook`·`rigPack`. `manifest.ts` 종이인형 판정·`rigArt`(정지 그림·부위 폴더 = `art/rig/<뼈대>/`, 머리 높이 = 그 뼈대 그림 칸)·`ArtUrls.rig.rigId`, `animPlayer.bindAnim` 이 그 뼈대로 재생. `rigAnim` `RIG_ACTION_FALLBACK`(게임 동작에 맞는 동작이 없는 몸: 공격 → 박치기).
 - 데이터: 스킨 `gillian`(단계 외형·시작 전용), 종족 설정 hollow `tierLooks "2"` = 전부 gillian, 그림 목록 `char.hollow.2`·`skin.gillian` = 종이인형 gillian-base(배율 `GILLIAN_SCALE` 2.3), `skin.wyrm` = serpent-base(진홍), `enemy.poison-heavy-chain` = serpent-green·`enemy.water-heavy-chain` = serpent-blue(`SERPENT_ENEMIES`, 배율 `SERPENT_SCALE` 1.6). 옛 2단계 배율(2·필드 1.5) 삭제.

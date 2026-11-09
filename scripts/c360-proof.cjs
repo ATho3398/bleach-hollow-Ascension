@@ -1,4 +1,4 @@
-// C.360 (GDD 217장) proof: 길리안 = 호로 2단계 외형(진짜 진화로), 뱀형 = 아쥬커스 '뱀형' 외형 + 뱀형 강적 2(롯팽 초록·마레하다 파랑).
+// C.360 (GDD 219장) proof: 길리안 = 호로 2단계 외형(진짜 진화로), 뱀형 = 아쥬커스 '뱀형' 외형 + 뱀형 강적 2(롯팽 초록·마레하다 파랑).
 // 실행: npx vite --port 5394 (또는 vite preview) → node scripts/c360-proof.cjs http://localhost:5394/ — 캡처 1배 844×390 docs/captures/c360/
 const fs = require('node:fs');
 const path = require('node:path');

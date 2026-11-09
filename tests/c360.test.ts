@@ -1,4 +1,4 @@
-// C.360 (GDD 217장): 길리안 = 호로 2단계 외형, 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 등급 강적 2 — 종이인형 뼈대 여럿(사람형·뱀형)
+// C.360 (GDD 219장): 길리안 = 호로 2단계 외형, 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 등급 강적 2 — 종이인형 뼈대 여럿(사람형·뱀형)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { ART_MANIFEST, GILLIAN_SCALE, SERPENT_ENEMIES, SERPENT_SCALE, charArt, enemyArt } from '../src/data/art/manifest';
@@ -15,7 +15,7 @@ const hollow = getFaction('hollow');
 const fb = hollow.room?.characterArt ?? '';
 const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, def: 0, [k]: 5 });
 
-describe('C.360 종이인형 뼈대 여럿 (GDD 217장 3)', () => {
+describe('C.360 종이인형 뼈대 여럿 (GDD 219장 3)', () => {
   it('게임 뼈대 = 사람형·뱀형, 둘 다 검사 통과, 외형 id 는 뼈대끼리 안 겹치고 시험 외형(-test)은 없다', () => {
     expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent']);
     const seen = new Set<string>();
@@ -45,7 +45,7 @@ describe('C.360 종이인형 뼈대 여럿 (GDD 217장 3)', () => {
   });
 });
 
-describe('C.360 길리안 = 호로 2단계 외형 (GDD 217장 1)', () => {
+describe('C.360 길리안 = 호로 2단계 외형 (GDD 219장 1)', () => {
   it('2단계 그림 = 종이인형 길리안, 시작 외형을 입어도 2단계 외형 표(tierLooks "2")가 길리안', () => {
     const a = charArt('hollow', 1, fb, '/', undefined, [], null, undefined, 'male');
     expect(a.rig?.look).toBe('gillian-base');
@@ -71,7 +71,7 @@ describe('C.360 길리안 = 호로 2단계 외형 (GDD 217장 1)', () => {
   });
 });
 
-describe('C.360 뱀형 (GDD 217장 2)', () => {
+describe('C.360 뱀형 (GDD 219장 2)', () => {
   it('색 외형 3 = 진홍(원래)·초록·파랑, 몸·관절·동작은 하나', () => {
     const r = rigPack('serpent').rig;
     expect(Object.keys(r.looks).sort()).toEqual(['serpent-base', 'serpent-blue', 'serpent-green']);

@@ -25,7 +25,7 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   lose: ['down'],
 };
 
-/** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 217장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */
+/** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 219장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */
 export const RIG_ACTION_FALLBACK: Partial<Record<AnimAction, readonly string[]>> = {
   attack: ['headbutt'],
 };

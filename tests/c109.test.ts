@@ -42,7 +42,7 @@ describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => 
     expect(shin.tierLooks).toEqual({});
   });
   it('표의 모든 외형이 단계 외형 스킨(시작 전용·호로) (그림 파일은 C.341 에 지움)', () => {
-    const tierIds = ['carapace', 'gillian', 'panther', 'raptor', 'rhino', 'scorpion', 'stag', 'wyrm']; // + 길리안(2단계 외형, C.360 GDD 217장 1)
+    const tierIds = ['carapace', 'gillian', 'panther', 'raptor', 'rhino', 'scorpion', 'stag', 'wyrm']; // + 길리안(2단계 외형, C.360 GDD 219장 1)
     const ids = tierLookIds({ tierLooks: hollow.tierLooks });
     expect(ids.sort()).toEqual(tierIds);
     for (const id of ids) {

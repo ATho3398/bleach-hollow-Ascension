@@ -26,7 +26,7 @@ describe('C.348 적·나 공용 크기 규칙', () => {
     const myField = new Set(mine.map(fieldOf));
     expect([...myField]).toEqual([HOLLOW_BRUTE_SCALE]);
     for (const el of Object.keys(BRUTE_ELEMENT_LOOKS)) for (const k of BRUTE_ENEMY_KINDS) {
-      if (SERPENT_ENEMIES[`${el}-${k}`]) continue; // 뱀형 강적 (C.360, GDD 217장 2)
+      if (SERPENT_ENEMIES[`${el}-${k}`]) continue; // 뱀형 강적 (C.360, GDD 219장 2)
       const f = enemyArt(`${el}-${k}`, '/');
       expect(f?.rig?.look.startsWith('brute-'), `${el}-${k}`).toBe(true);
       expect(f!.scale, `${el}-${k} 전투·걷기·도감`).toBe(HOLLOW_BRUTE_SCALE);

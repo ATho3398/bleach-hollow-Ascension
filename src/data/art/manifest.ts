@@ -60,11 +60,11 @@ export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'bru
 /** 덩치 몸 적 종류 (GDD 206장 2) — swift 는 마른 몸이라 빠짐 */
 export const BRUTE_ENEMY_KINDS = ['basic', 'sturdy', 'heavy-chain', 'heavy-seal', 'stance'] as const;
 const BRUTE_ENEMIES: Record<string, ArtEntry> = Object.fromEntries(Object.entries(BRUTE_ELEMENT_LOOKS).flatMap(([el, look]) => BRUTE_ENEMY_KINDS.map((k) => [`enemy.${el}-${k}`, { rig: look, scale: BRUTE_FOE_SCALE }])));
-/** 길리안(2단계 외형, 몸 hd) 배율 (GDD 217장 1): 정지 그림 키(칸의 0.37) × 2.3 ≈ 0.85 — 1단계 덩치(0.8)보다 조금 크게 */
+/** 길리안(2단계 외형, 몸 hd) 배율 (GDD 219장 1): 정지 그림 키(칸의 0.37) × 2.3 ≈ 0.85 — 1단계 덩치(0.8)보다 조금 크게 */
 export const GILLIAN_SCALE = 2.3;
-/** 뱀형(뼈대 serpent) 배율 (GDD 217장 2): 그림 칸 72(사람형 152) · 정지 그림 키(칸의 0.52) × 1.6 ≈ 0.83 — 덩치(0.8)와 비슷한 키(도트는 덩치보다 굵다) */
+/** 뱀형(뼈대 serpent) 배율 (GDD 219장 2): 그림 칸 72(사람형 152) · 정지 그림 키(칸의 0.52) × 1.6 ≈ 0.83 — 덩치(0.8)와 비슷한 키(도트는 덩치보다 굵다) */
 export const SERPENT_SCALE = 1.6;
-/** 뱀형 강적 (GDD 217장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
+/** 뱀형 강적 (GDD 219장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
 export const SERPENT_ENEMIES: Readonly<Record<string, string>> = { 'poison-heavy-chain': 'serpent-green', 'water-heavy-chain': 'serpent-blue' };
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
@@ -81,11 +81,11 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
   'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
-  // 길리안(2단계) = 종이인형 길리안 (GDD 217장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"). 옛 한 장 그림 배율(2배·필드 1.5배, C.137·C.176)은 폐기.
+  // 길리안(2단계) = 종이인형 길리안 (GDD 219장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"). 옛 한 장 그림 배율(2배·필드 1.5배, C.137·C.176)은 폐기.
   // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian
   'char.hollow.2': { rig: 'gillian-base', scale: GILLIAN_SCALE },
   'skin.gillian': { rig: 'gillian-base', scale: GILLIAN_SCALE },
-  // 아쥬커스 '뱀형' 외형 (GDD 53 · 217장 2, 사용자 "아쥬커스 진화체로도 1개"): 정신력 1위 단계 외형 = 종이인형 뱀(원래 색 진홍)
+  // 아쥬커스 '뱀형' 외형 (GDD 53 · 219장 2, 사용자 "아쥬커스 진화체로도 1개"): 정신력 1위 단계 외형 = 종이인형 뱀(원래 색 진홍)
   'skin.wyrm': { rig: 'serpent-base', scale: SERPENT_SCALE },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
@@ -93,7 +93,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 적 덩치 (GDD 115-A 85 · 206장 2): 덩치 몸 적 = <속성>-basic·sturdy·heavy-chain·heavy-seal·stance (8 × 5 = 40) 전부 종이인형 덩치(몸 hb, 동작 묶음 brute 하나 — 모션 통일)를
   // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. 날쌘형 swift(마른 몸)는 한 장 그림 그대로. 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
   ...BRUTE_ENEMIES,
-  // 뱀형 강적 (GDD 217장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
+  // 뱀형 강적 (GDD 219장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
   ...Object.fromEntries(Object.entries(SERPENT_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SERPENT_SCALE }])),
   // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)
   'skin.brute': { rig: 'brute-brown', scale: HOLLOW_BRUTE_SCALE },
