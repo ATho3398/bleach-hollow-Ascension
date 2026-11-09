@@ -190,9 +190,9 @@ describe('67장: 첫 원정 튜토리얼', () => {
     expect(e.absorbRecords).toEqual([]);
     expect(e.acquired).toEqual([]);
     for (const k of STAT_IDS) expect(e.evolution.ev[k] - evBefore[k]).toBe(TUT.statEv);
-    // 1단계 상한(합 56·능력치당 33 — GDD 202장) 안
+    // 1단계 상한(합 96·능력치당 67 — GDD 207장) 안
     const cap = evCaps(0);
-    expect(cap.total).toBe(56);
+    expect(cap.total).toBe(96);
     expect(TUT.statEv * STAT_IDS.length).toBeLessThanOrEqual(cap.total);
     expect(TUT.statEv).toBeLessThanOrEqual(cap.perStat);
     expect(summarize(e).laps).toBe(1);

@@ -26,11 +26,11 @@ function realGain(exp: ExpeditionState, m: 'stat' | 'both'): number {
 }
 
 describe('R213 노력치 흐림 = 실제 지급 (사용자 상태)', () => {
-  it('사용자 상태 = 합 22 · 힘 7 · 1단계 상한 56/33', () => {
+  it('사용자 상태 = 합 22 · 힘 7 · 1단계 상한 96/67', () => {
     const s = userSave();
     expect(evTotal(s.evolution.ev)).toBe(22);
     expect(s.evolution.ev.atk).toBe(7);
-    expect(evCaps(s.evolution.tierIndex)).toEqual({ total: 56, perStat: 33 }); // GDD 202장 (옛 36/18)
+    expect(evCaps(s.evolution.tierIndex)).toEqual({ total: 96, perStat: 67 }); // GDD 207장 (202장 56/33 · 옛 36/18)
   });
 
   it('빈사·★·허우적·연속 클리어·바퀴 어디서도 흐림과 실제 지급이 같고, 여유가 있으면 흐리지 않는다', () => {

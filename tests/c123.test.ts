@@ -19,13 +19,18 @@ describe('C.123 C.118 뒤 밸런스 목표 맞추기', () => {
     expect(e.hpInAttacks).toBe(150);
   });
 
-  it('★2 강적 입문 보정 ×0.9 → C.127 ×1 (혈·독·허 적이 ★1~2 길에서 빠져 되돌림), ★3 강적은 1', () => {
+  it('★2 강적 입문 보정 ×0.9 → C.127 ×1 (혈·독·허 적이 ★1~2 길에서 빠져 되돌림), ★3 강적은 ×1.15 (GDD 207장, C.342 바퀴 곡선 가드), ★4 는 1', () => {
     expect(DX.eliteEase[2]).toEqual({ hp: 0.9, attack: 0.9 }); // C.177 (GDD 107장 원정 체력 이어 가기): 1 → 0.9
     const elite = difficultyEnemyScale(2, 'elite');
     const normal = difficultyEnemyScale(2, 'normal');
     expect(elite.hp).toBeCloseTo(normal.hp * 0.9);
     expect(elite.attack).toBeCloseTo(normal.attack * 0.9);
-    expect(DX.eliteEase[3]).toBeUndefined();
+    expect(DX.eliteEase[3]).toEqual({ hp: 1.15, attack: 1.15 }); // C.342 (GDD 207장): 노력치 상한 2차 상향으로 3단계 갓 닿은 몸이 세져 바퀴 곡선 3단계 ★3 3바퀴 46% → 32%
+    const e3 = difficultyEnemyScale(3, 'elite');
+    const n3 = difficultyEnemyScale(3, 'normal');
+    expect(e3.hp).toBeCloseTo(n3.hp * 1.15);
+    expect(e3.attack).toBeCloseTo(n3.attack * 1.15);
+    expect(DX.eliteEase[4]).toBeUndefined();
   });
 
   it('탑 ★2 강적 층(15층)은 입문 보정을 상쇄한 배율에 ×1.08 을 곱한다 (C.195)', () => {
