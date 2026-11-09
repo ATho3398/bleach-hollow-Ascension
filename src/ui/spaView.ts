@@ -15,6 +15,7 @@ import { infoTip } from './bha/infoTip';
 import { applyBlink, blinkGauges } from './bha/gaugeBlink';
 import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
+import { keepToastsLow } from './bha/toastLow';
 import { applyCarePose, characterButton, charHeadOffset, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
 import { changeItems, changeNoteBox, drawnHeadY, horiz, placeChangeNote, showChangeNote } from './bha/changeNote';
 import { animOf } from './bha/animPlayer';
@@ -309,6 +310,12 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   scene.append(hud);
 
   const app = mountApp(root, { cls: 'bha-spa bha-v2' }, scene);
+  // 위 가장자리 공용 알림 띠는 온천에서는 장면 아래쪽으로 — 상태창·이름표를 덮지 않게 (GDD 209장 보충). '다 찼다' 안내 띠도 같은 규칙
+  keepToastsLow(app, {
+    floor: () => scene.getBoundingClientRect().bottom,
+    ceil: () => scene.getBoundingClientRect().top,
+    blockers: () => [status, ...(nameTag ? [nameTag] : []), ...scene.querySelectorAll<HTMLElement>('button:not(.bha-char)')],
+  });
   app.setAttribute('aria-label', name);
   backBtn.focus({ preventScroll: true });
 

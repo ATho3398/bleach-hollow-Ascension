@@ -12,6 +12,7 @@ import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, mountApp } from './bha/dom';
 import { showToast } from './bha/nest';
+import { keepToastsLow } from './bha/toastLow';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from './bha/gaugeBlink';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
@@ -502,6 +503,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   if (reviveBtn) body.append(reviveBtn); // 장면 밖(어두운 사망 장면 필터를 안 받게), 장면 왼쪽 위에 겹쳐 둔다 (GDD 177장 3)
   const warn = hd.resumeNote ? el('p', 'bha-room__note', hd.resumeNote) : null; // C.311: 이어 하지 못한 모험 안내 한 줄 (GDD 192장 1)
   const main = mountApp(dev.view, { cls: 'bha-room bha-room--home bha-v2' }, ...(hud.childElementCount > 0 ? [hud] : []), ...(warn ? [warn] : []), body, dock.root);
+  // 위 가장자리 공용 알림 띠는 방에서는 아래쪽(하단 버튼 줄 바로 위)으로 — 이름표·상태창을 덮지 않게 (GDD 209장 보충)
+  keepToastsLow(main, {
+    floor: () => dock.root.getBoundingClientRect().top,
+    ceil: () => scene.getBoundingClientRect().top,
+    blockers: () => [...props.values(), ...extras, ...(reviveBtn ? [reviveBtn] : []), ...(resumeBtn ? [resumeBtn] : [])], // 물건 이름표(물건 버튼)·버튼. 발밑 체력 막대는 2.6초 잠깐 덮을 수 있음(폰은 그 줄에 자리가 없다)
+  });
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 월드맵 물건 말고는 흐린 잠김 (room.css)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
