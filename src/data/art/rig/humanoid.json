@@ -201,7 +201,7 @@
       "head": { "art": "hd/head", "at": [-14, 24], "size": [42, 29] },
       "torso": { "art": "hd/torso", "at": [2, 44], "size": [18, 28] },
       "jaw": { "art": "hd/jaw", "at": [-4, 38], "size": [12, 9] },
-      "fold1": { "art": "hd/fold1", "at": [10, 35], "size": [20, 35] },
+      "fold1": { "art": "hd/fold1", "at": [5, 43], "size": [20, 35] },
       "fold2": { "art": "hd/fold2", "at": [14, 39], "size": [23, 24] },
       "arm_L": { "art": "hd/arm_L", "at": [-6, 47], "size": [16, 26] },
       "cape": { "art": "hd/cape", "at": [-2, 50], "size": [32, 30] },

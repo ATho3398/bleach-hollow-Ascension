@@ -2988,3 +2988,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 실측(`scripts/c361-proof.cjs` → proof.json): 튜토리얼 문·모험 장소 `is-shape`·테두리 none, 결과 칩 ['힘+3','지능+2','속도+1가득'] 잘림 없음, × 글 겹침 물건 상세·도움말·상점 0(PC·폰), 스토리 장별 버튼 위와 같음. 오류 0.
 - 검증: typecheck · test(새 tests/c361.test.ts 8) · balance:check · build 통과.
 - 캡처 `docs/captures/c361/` 1배 10장: `{pc,ph}-1-tut-shape`(월드맵 모험 숲 윤곽) · `-2-result-ev` · `-3-item-detail` · `-4-help` · `-5-story-locked`.
+
+## C.362 — 종이인형 편집기 고정(03:36) 게임 넣기: 길리안 옷 주름 1 자리 · 빈사·빔·이동·홈 대기 트랙 (GDD 219장 · 115-A, S-23, 종이인형 세션 Opus)
+- 사용자: 편집기 '고정' 댓글(2026-11-10 03:36) + "하고 게임에 적용".
+- 작업본에 고정 넣기(`apply_editor.py`): 길리안(몸 hd) 옷 주름 1(fold1) 자리 [10,35] → [5,43], 동작 묶음 gillian 빈사 주름 2·특수1(빔)·이동·홈 대기 머리 트랙(편집기 고정 표시 edited). `creature_motions.py hd` 다시 돌려도 같음(몸 높이 그대로).
+- 게임 넣기 `promote.py`: `src/data/art/rig/humanoid.json`·`motions.json` 만 바뀜(그림·정지 그림 그대로 — 주름 1 은 쉬는 자세에서 앞 층에 가려 정지 그림이 같다).
+- 검증: typecheck · test 264파일 3023개 · build 통과. 세이브·밸런스 그대로.
+
