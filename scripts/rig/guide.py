@@ -23,7 +23,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import sys as _sys
 _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paths import DRAFT_ART, DRAFT_RIG_JSON, GAME_ART, GAME_RIG_JSON  # noqa: E402
+from paths import DRAFT_ART, DRAFT_RIG_JSON, GAME_ART, GAME_RIG_JSON, look_art  # noqa: E402
 ART = DRAFT_ART
 RIG = json.load(open(DRAFT_RIG_JSON, encoding='utf-8'))  # 가이드 = 작업본
 PAD = 3   # 칸 사방 여유(관절 겹침·삐져나온 곳)
@@ -58,7 +58,9 @@ def main():
     bj = bj if isinstance(bj, dict) else {}
     bones = {b['id']: dict(b, pivot=(bj.get('pivots') or {}).get(b['id'], b['pivot'])) for b in RIG['bones']}
     hf = RIG['hairFrame']
-    body = dict(body)
+    body = {k: dict(v, art=look_art(look, v['art'])) for k, v in body.items()}  # 색 외형(115-A 85)은 그 색 그림
+    # 마디로 나눈 층(뒷머리·망토, 115-A 88)은 나누기 전 원본 그림으로 칸을 만든다
+    look = dict(look, **{k: v for k, v in ((RIG.get("segmentSrc") or {}).get(a.look) or {}).items() if isinstance(v, dict)})
     # 왼팔 아래팔(GDD 115-A 50): 아직 아래팔 그림이 없는 몸은 지금 왼팔을 팔꿈치 줄에서 나눠 위팔·아래팔 칸에 따로 넣어 준다
     if 'forearm_L' not in body and 'arm_L' in body:
         arm = body['arm_L']

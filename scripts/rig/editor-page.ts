@@ -15,6 +15,7 @@ type Comments = {
 declare const claude: {
   use(name: 'db'): Promise<{ doc(path: string): DocRef } | null>;
   use(name: 'comments'): Promise<Comments | null>;
+  use(name: 'downloads'): Promise<{ save(r: { filename: string; data: Blob }): Promise<{ status: string }> } | null>;
 } | undefined;
 const K = 6;
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
@@ -573,6 +574,29 @@ $('fix').onclick = async () => {
   btn.disabled = false;
 };
 function setSync(t: string) { const e = document.getElementById('sync'); if (e) e.textContent = t; }
+// 시트 받기 (사용자 2026-11-10 "툴에 그냥 캐릭별로 시트 다운받기 버튼 만들고, 누르면 너한테 명령 안보내도 알아서 다운되게"):
+// 페이지를 만들 때 외형마다 만든 가이드 시트(1배 = 그리기용, 8배 = 칸 이름·관절 확인용)를 지금 고른 외형으로 저장. 저장 못 하는 화면이면 단추를 숨김
+declare const SHEET_MAP: Record<string, { x1: string; x8: string }> | undefined;
+async function saveSheet(kind: 'x1' | 'x8') {
+  const sh = typeof SHEET_MAP !== 'undefined' ? SHEET_MAP[look] : undefined;
+  if (!sh) return setSync(`${look}: 시트 없음`);
+  const dl = typeof claude !== 'undefined' ? await claude.use('downloads').catch(() => null) : null;
+  if (!dl) return setSync('이 화면에서는 시트를 받을 수 없음');
+  const bin = Uint8Array.from(atob(sh[kind].slice(sh[kind].indexOf(',') + 1)), (c) => c.charCodeAt(0));
+  try {
+    await dl.save({ filename: `${look}-sheet${kind === 'x8' ? '-x8' : ''}.png`, data: new Blob([bin], { type: 'image/png' }) });
+    setSync(`${look} 시트 저장함`);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    setSync(code === 'declined' ? '시트 저장 안 함' : code === 'rate_limited' ? '저장 창이 이미 떠 있음 — 잠시 뒤 다시' : '시트 저장 실패');
+  }
+}
+$('sheet1').onclick = () => void saveSheet('x1');
+$('sheet8').onclick = () => void saveSheet('x8');
+void (async () => {
+  if (typeof claude === 'undefined' || typeof SHEET_MAP === 'undefined' || !Object.keys(SHEET_MAP).length) return;
+  if (await claude.use('downloads').catch(() => null)) $('sheetrow').hidden = false;
+})();
 syncMotionButtons(); buildColors(); buildChips(); save(false); draw(); requestAnimationFrame(tick);
 // 서버 값이 있으면 그걸 쓴다(어느 기기에서 열어도 같은 값). 없으면 이 기기 값을 한 번 올린다
 void (async () => {

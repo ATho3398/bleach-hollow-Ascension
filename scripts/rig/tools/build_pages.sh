@@ -6,9 +6,18 @@ cd "$(dirname "$0")/../../.."
 OUT="${1:-.rig-pages}"; mkdir -p "$OUT"
 npx esbuild scripts/rig/editor-page.ts --bundle --format=iife --outfile="$OUT/editor.js" --log-level=warning
 npx esbuild scripts/rig/tools/doll-entry.ts --bundle --format=iife --outfile="$OUT/bundle.js" --log-level=warning
+# 외형마다 시트(가이드 1배·8배 확인용) — 편집기 '시트 받기' 단추가 내려받는다(사용자 2026-11-10 "툴에 그냥 캐릭별로 시트 다운받기 버튼")
+rm -rf "$OUT/sheets"; mkdir -p "$OUT/sheets"
+for L in $(python3 -c "import json; print(' '.join(json.load(open('docs/design/rig-draft/humanoid.json'))['looks']))"); do
+  python3 scripts/rig/guide.py --look "$L" --out "$OUT/sheets/$L" >/dev/null || echo "시트 못 만듦: $L"
+done
+python3 scripts/rig/bone_guide.py beast beast-test "$OUT/sheets/beast-test" >/dev/null
+python3 scripts/rig/bone_guide.py serpent serpent-test "$OUT/sheets/serpent-test" >/dev/null
 python3 -I - "$OUT" <<'PY'
-import base64, glob, json, sys
+import base64, glob, json, os, sys
 out = sys.argv[1]
+b64 = lambda f: 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+sheets = {os.path.basename(d): {'x1': b64(d + '/guide.png'), 'x8': b64(d + '/guide-x8.png')} for d in glob.glob(out + '/sheets/*') if os.path.exists(d + '/guide-x8.png')}
 m = {}
 for rid in ('humanoid', 'beast', 'serpent'):
     root = 'docs/design/rig-draft/' + rid + '/'
@@ -16,7 +25,8 @@ for rid in ('humanoid', 'beast', 'serpent'):
 for page, js in (('rig-editor', 'editor.js'), ('paperdoll-test', 'bundle.js')):
     h = open('scripts/rig/tools/' + page + '.template.html').read()
     h = h.replace('<script>var ART_MAP={};</script>', '<script>var ART_MAP=' + json.dumps(m) + ';</script>')
+    h = h.replace('<script>var SHEET_MAP={};</script>', '<script>var SHEET_MAP=' + json.dumps(sheets) + ';</script>')
     h = h.replace('<script>/*JS*/</script>', '<script>' + open(out + '/' + js).read() + '</script>')
     open(out + '/' + page + '.html', 'w').write(h)
-print('pages ok', len(m), '→', out)
+print('pages ok', len(m), '시트', len(sheets), '→', out)
 PY

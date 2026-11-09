@@ -10,7 +10,8 @@
 | 관절 편집기 | https://claude.ai/artifact/9GzByhNrUmxaZfn7tgYfP7 | db `rig/editor`(편집 중)·`rig/fixed`(고정) — 짐승·뱀은 `rig/editor-beast`·`rig/fixed-beast` 등 |
 | 시험 페이지 | https://claude.ai/artifact/42DLdjssrAnZP1wFshLbvx | 없음(작업본을 그대로 보여 줌) |
 
-- 만들기: `bash scripts/rig/tools/build_pages.sh [출력 폴더]` (기본 `.rig-pages/`, git 에 안 올림) → 두 html 을 Artifact 로 같은 주소에 다시 올린다.
+- 만들기: `bash scripts/rig/tools/build_pages.sh [출력 폴더]` (기본 `.rig-pages/`, git 에 안 올림) → 두 html 을 Artifact 로 같은 주소에 다시 올린다. 외형마다 시트도 만들어 편집기에 넣는다('시트 받기' 단추, GDD 115-A 91).
+- **편집기 capabilities = `{comments: {}, db: {}, downloads: true}`** — 빈 객체가 아닌 값을 넘기면 전체가 바뀌므로 셋 다 적는다(보통은 생략해서 그대로 둠).
 - 템플릿: `rig-editor.template.html`·`paperdoll-test.template.html` (그림 표 `ART_MAP`·스크립트 자리만 비움). 편집기 코드 = `scripts/rig/editor-page.ts`, 시험 페이지 코드 = `doll-entry.ts`.
 - **편집기를 다시 올리기 전에** db `rig/editor` 를 읽어 `rig/fixed` 와 다르면(고정 안 한 값) 올리지 않는다 — 데이터 도장이 바뀌면 편집기가 초기화돼 그 값이 날아감.
 - **편집기를 다시 올렸으면** 바로 `python3 scripts/rig/tools/mark_editor.py` → `docs/design/rig-draft/editor-page.json`(그 페이지를 만든 커밋)을 커밋·푸시. 페이지는 커밋한 작업본으로 만든다(GDD 115-A 60).
