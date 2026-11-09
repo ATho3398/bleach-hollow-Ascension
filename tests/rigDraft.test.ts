@@ -175,13 +175,15 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Math.min(...mv.tracks.shin_R!.map((k) => k[1]))).toBeLessThan(-10);
     expect(Math.min(...mv.tracks.leg_R!.map((k) => k[3]))).toBeLessThan(0); // 든 다리는 엉덩이째 들어 올림
   });
-  it('길리안(몸 hd, 처음 이름 두건, GDD 115-A 92·95): 머리·턱·양팔·몸통·로브 세 마디, 동작은 이동·빈사·쓰러짐·대기·박치기·빔(특수1)·포효(해방=필살기)만, 늘 떠 있고 로브는 하늘하늘', () => {
+  it('길리안(몸 hd, 처음 이름 두건, GDD 115-A 92·95·97): 머리·턱·양팔·몸통·로브 세 마디, 동작은 이동·빈사·대기·박치기·빔(특수1)·포효(해방1 = 필살기 그대로)만(쓰러짐 없음), 늘 떠 있고 로브는 하늘하늘', () => {
     expect(Object.keys(rig.bodies.hd!).sort()).toEqual(['arm_L', 'arm_R', 'cape', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5', 'head', 'jaw', 'torso']); // 사용자 부위 시트 조립(115-A 93)
     for (const f of ['fold1', 'fold2', 'fold3', 'fold4', 'fold5']) expect(rig.sway?.[f]?.wave, f).toBeDefined(); // 옷 주름마다 하늘하늘
     expect(rig.looks['gillian-base']!.body).toBe('hd');
     const ms = resolveMotions(rig, motions, sets, 'hd');
-    for (const id of ['idle', 'homeIdle', 'move', 'dying', 'down', 'headbutt', 'skill', 'release1', 'ultimate']) expect(ms[id], id).toBeDefined();
-    for (const id of ['attack', 'attack2', 'hit', 'skill2', 'uppercut', 'rpunch', 'straight', 'bath', 'punch', 'kick']) expect(ms[id], id).toBeUndefined();
+    for (const id of ['idle', 'homeIdle', 'move', 'dying', 'headbutt', 'skill', 'release1', 'ultimate']) expect(ms[id], id).toBeDefined();
+    for (const id of ['down', 'attack', 'attack2', 'hit', 'skill2', 'uppercut', 'rpunch', 'straight', 'bath', 'punch', 'kick']) expect(ms[id], id).toBeUndefined();
+    expect(ms.ultimate!.tracks).toEqual(ms.release1!.tracks); // 필살기 = 해방1(편집기 고정 포함, 115-A 97)
+    expect(ms.ultimate!.duration).toBe(ms.release1!.duration);
     expect(Math.max(...ms.idle!.tracks.root!.map((k) => k[3]))).toBeLessThan(0); // 바닥에서 떠 있음
     expect(Math.min(...ms.skill!.tracks.jaw!.map((k) => k[1]))).toBeLessThan(-30); // 입 크게 벌림
     // 로브: 가만히 있어도 물결(wave)로 흔들리고, 몸 전체가 넘어지는 것(root)은 늘어짐에 안 셈

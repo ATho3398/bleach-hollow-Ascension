@@ -198,9 +198,9 @@
       "shin_L": { "art": "hb/shin_L", "at": [21, 66], "size": [14, 14] }
     },
     "hd": {
-      "head": { "art": "hd/head", "at": [-10, 28], "size": [42, 29] },
+      "head": { "art": "hd/head", "at": [-14, 24], "size": [42, 29] },
       "torso": { "art": "hd/torso", "at": [2, 44], "size": [18, 28] },
-      "jaw": { "art": "hd/jaw", "at": [0, 42], "size": [12, 9] },
+      "jaw": { "art": "hd/jaw", "at": [-4, 38], "size": [12, 9] },
       "fold1": { "art": "hd/fold1", "at": [10, 38], "size": [20, 32] },
       "fold2": { "art": "hd/fold2", "at": [14, 39], "size": [23, 24] },
       "arm_L": { "art": "hd/arm_L", "at": [-6, 49], "size": [15, 24] },
@@ -528,15 +528,15 @@
       "pivots": {
         "root": [16, 79],
         "torso": [10, 64],
-        "head": [19, 53],
-        "jaw": [10, 42],
+        "head": [17, 48],
+        "jaw": [5, 40],
         "arm_L": [5, 51],
         "arm_R": [20, 56],
         "cape": [16, 56],
         "fold1": [24, 66],
-        "fold2": [21, 39],
+        "fold2": [20, 43],
         "fold3": [25, 54],
-        "fold4": [3, 59],
+        "fold4": [5, 64],
         "fold5": [29, 64]
       }
     }

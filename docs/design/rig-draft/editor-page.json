@@ -1,5 +1,156 @@
 {
  "note": "지금 올라가 있는 관절 편집기 페이지를 만든 커밋(GDD 115-A 60). 편집기를 다시 올릴 때마다 python3 scripts/rig/tools/mark_editor.py 로 바꾼다. 고정(apply_editor.py)은 편집기 값이 이 커밋 데이터와 다른 항목만 고친 것으로 본다.",
  "commit": "8609779ffa5715f4b5f76e6d6a18f97374e5bf75",
- "applied": {}
+ "applied": {
+  "humanoid": {
+   "joints": [
+    [
+     "hd",
+     "pivots",
+     "fold2"
+    ],
+    [
+     "hd",
+     "pivots",
+     "fold4"
+    ],
+    [
+     "hd",
+     "pivots",
+     "head"
+    ],
+    [
+     "hd",
+     "pivots",
+     "jaw"
+    ]
+   ],
+   "at": [
+    [
+     "hd",
+     "head"
+    ],
+    [
+     "hd",
+     "jaw"
+    ]
+   ],
+   "motions": [
+    [
+     "gillian/dying",
+     "arm_R"
+    ],
+    [
+     "gillian/dying",
+     "fold1"
+    ],
+    [
+     "gillian/dying",
+     "fold2"
+    ],
+    [
+     "gillian/dying",
+     "fold3"
+    ],
+    [
+     "gillian/dying",
+     "fold4"
+    ],
+    [
+     "gillian/dying",
+     "fold5"
+    ],
+    [
+     "gillian/dying",
+     "head"
+    ],
+    [
+     "gillian/headbutt",
+     "fold2"
+    ],
+    [
+     "gillian/headbutt",
+     "fold3"
+    ],
+    [
+     "gillian/headbutt",
+     "head"
+    ],
+    [
+     "gillian/move",
+     "arm_R"
+    ],
+    [
+     "gillian/move",
+     "fold2"
+    ],
+    [
+     "gillian/move",
+     "head"
+    ],
+    [
+     "gillian/release1",
+     "fold2"
+    ],
+    [
+     "gillian/release1",
+     "fold4"
+    ],
+    [
+     "gillian/release1",
+     "head"
+    ],
+    [
+     "gillian/skill",
+     "head"
+    ]
+   ],
+   "orders": [
+    "gillian/dying"
+   ]
+  },
+  "serpent": {
+   "joints": [
+    [
+     "ref",
+     "pivots",
+     "head"
+    ],
+    [
+     "ref",
+     "pivots",
+     "neck1"
+    ],
+    [
+     "ref",
+     "rot",
+     "head"
+    ],
+    [
+     "ref",
+     "shift",
+     "head"
+    ]
+   ],
+   "at": [
+    [
+     "ref",
+     "head"
+    ],
+    [
+     "ref",
+     "neck1"
+    ]
+   ],
+   "motions": [
+    [
+     "ref/move",
+     "neck1"
+    ]
+   ],
+   "bodySlots": [
+    "ref"
+   ]
+  }
+ }
 }

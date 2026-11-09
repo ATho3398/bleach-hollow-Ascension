@@ -147,8 +147,8 @@
    "neck1": {
     "art": "ref/neck1",
     "at": [
-     11,
-     2
+     10,
+     5
     ],
     "size": [
      15,
@@ -158,8 +158,8 @@
    "head": {
     "art": "ref/head",
     "at": [
-     0,
-     0
+     -3,
+     3
     ],
     "size": [
      25,
@@ -387,5 +387,46 @@
    ]
   }
  },
- "assembled": "docs/design/user-art/serpent-ref/assembly.json"
+ "assembled": "docs/design/user-art/serpent-ref/assembly.json",
+ "bodySlots": {
+  "ref": [
+   "tail2",
+   "tail1",
+   "coil1",
+   "body1",
+   "neck1",
+   "head",
+   "coil2",
+   "body2",
+   "neck2",
+   "root",
+   "arm"
+  ]
+ },
+ "bodyJoints": {
+  "ref": {
+   "pivots": {
+    "neck1": [
+     19,
+     24
+    ],
+    "head": [
+     17,
+     16
+    ]
+   },
+   "rot": {
+    "head": -8
+   },
+   "shift": {
+    "head": [
+     0.83,
+     -0.2
+    ]
+   }
+  }
+ },
+ "bodyMotions": {
+  "ref": "ref"
+ }
 }
