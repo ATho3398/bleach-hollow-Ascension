@@ -348,8 +348,8 @@
     "note": "몸마다 따로 맞춘 관절(GDD 96장 33): pivots = 관절 자리, rot = 기본 각도(도, 쉬는 각도에 더함). 없으면 bones 의 값",
     "arrancar_f": {
       "pivots": {
-        "arm_R": [24, 34],
-        "forearm_R": [29, 39],
+        "arm_R": [22, 32],
+        "forearm_R": [29, 41],
         "foot_R": [22, 75],
         "forearm_L": [7, 44],
         "hair_back2": [22, 19],
@@ -358,14 +358,13 @@
         "arm_L": [11, 31]
       },
       "rot": {
-        "forearm_R": -15,
+        "forearm_R": -13,
         "torso": 2,
         "head": -5,
-        "arm_R": 4
+        "arm_R": 20
       },
       "shift": {
-        "arm_R": [-0.54, 0.43],
-        "forearm_R": [-0.52, 0.06]
+        "arm_R": [-0.4, 0.29]
       }
     },
     "female": {
