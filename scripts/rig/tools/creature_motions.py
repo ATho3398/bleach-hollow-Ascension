@@ -20,7 +20,7 @@ from body_sync import write_motions  # noqa: E402
 R = DRAFT_DIR + '/'
 rig = json.load(open(R + 'humanoid.json'))
 GROUND = 80
-BONES = ['root', 'torso', 'head', 'jaw', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R']
+BONES = ['root', 'torso', 'head', 'jaw', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R', 'cape', 'cape2', 'cape3']  # cape 마디 = 두건 로브(115-A 92)
 B, PTS, SC = {}, {}, 1
 
 
@@ -83,12 +83,15 @@ def build(spec):
         tr[b] = [[t, a, 0, 0] for t, a in zip(T, v)]
     for b, ys in (spec.get('shiftY') or {}).items():  # 뼈 위아래 옮김(칸, 걷기의 든 다리 — 115-A 89)
         tr[b] = [[k[0], k[1], k[2], y] for k, y in zip(tr[b], ys)]
+    for b, xs in (spec.get('shiftX') or {}).items():  # 뼈 앞뒤 옮김(칸, + = 뒤 — 두건 로브가 뒤로 끌림, 115-A 92)
+        tr[b] = [[k[0], k[1], x, k[3]] for k, x in zip(tr[b], xs)]
     rx = [v * SC for v in spec.get('rootX', [0]*n)]  # 도트 배율(115-A 71) — 몸 옮기기 칸 수도 같이
     rr = spec.get('rootRot', [0]*n); rr = spec.get('rootRot', [0]*n)
     tr['root'] = [[t, a, x, 0] for t, a, x in zip(T, rr, rx)]
     # 바닥에 닿는 부위: 발(없으면 종아리 — 짐승은 종아리에 발이 붙어 있음)
     feet = [s for s in FEET if s in PTS] or [s for s in ('shin_L', 'shin_R') if s in PTS]
-    slots = list(PTS) if spec.get('ground') == 'all' else feet
+    legless = not feet  # 다리 없는 몸(두건 — 로브 아랫단, 115-A 92): 몸 전체로 바닥을 재고 발 고정은 안 함
+    slots = list(PTS) if spec.get('ground') == 'all' or legless else feet
     ts = list(range(0, spec['duration']+1, spec['sample'])) if spec.get('sample') else T
     if spec['sample'] if spec.get('sample') else False:
         base = tr['root']; tr['root'] = [[t, *samp(base, t)[:2], 0] for t in ts]
@@ -118,7 +121,7 @@ def build(spec):
     for b in rig['bones']:
         m['tracks'].setdefault(b['id'], [[0, 0, 0, 0]])
     # 제자리 동작은 두 발바닥 고정(GDD 115-A 77·78): 몸 높이는 설계대로(가장 낮은 발 기준), 정강이(종아리)는 고정하고 허벅지 각을 풀어 두 발을 바닥 줄에
-    if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all' and not spec.get('bob')):
+    if spec.get('planted', not spec.get('sample') and spec.get('ground') != 'all' and not spec.get('bob') and not legless):
         import plant as pl
         pl.cm = sys.modules[__name__]
         mode = 'sole' if 'foot_L' in PTS else 'calf'
@@ -274,11 +277,51 @@ def hollow(spec):
 hollow(SPEC_HB)
 
 hollow(SPEC)
-SPECS = {'dg': SPEC, 'hb': SPEC_HB}
+# 두건(몸 hd, 사용자 도트 2026-11-10 — 부리 가면·두건 로브, 다리 없음) 전용 동작 (115-A 92, 사용자 "움직임도 이동, 빈사, 쓰러짐, 대기, 박치기, 입벌리고 빔쏘기, 포효만 있으면 댐"):
+# 늘 바닥에서 몇 칸 떠 있고(dip 음수 = 띄움) 로브 세 마디는 엔진이 늦게 따라오며 하늘하늘(rig.sway wave). 각도 + = 시계: 몸통+ 뒤로 젖힘, 머리+ 쳐듦, 턱− 벌림, 팔+ 앞으로
+SPEC_HD = {}
+SPEC_HD['idle'] = dict(times=[0, 800, 1600], duration=1600, loop=True, dip=[-3, -5, -3], bones={
+    'torso': [0, 2, 0], 'head': [0, -2, 0], 'jaw': [0, -3, 0], 'arm_L': [0, 5, 0], 'arm_R': [0, -4, 0], 'cape': [0, -3, 0]})
+# 로브는 폭이 넓어(96칸) 몸통이 기운 만큼 아랫단 끝이 크게 내려가 몸을 들어 올린다 → 로브 첫 마디는 몸통 기울기를 거의 되돌려 곧게 두고,
+# 끌림·펄럭임은 아래 마디의 앞뒤 옮김(shiftX, + = 뒤)과 작은 각 + 엔진 물결로
+SPEC_HD['move'] = dict(times=[0, 250, 500, 750, 1000], duration=1000, loop=True, dip=[-4, -6, -4, -6, -4], bones={
+    'torso': [-5, -6, -5, -6, -5], 'head': [3, 4, 3, 4, 3], 'jaw': [0, -2, 0, -2, 0],
+    'arm_L': [-16, -12, -16, -12, -16], 'arm_R': [-20, -16, -20, -16, -20],
+    'cape': [4, 5, 4, 5, 4], 'cape2': [-2, -3, -2, -3, -2], 'cape3': [-2, -3, -2, -3, -2]},
+    shiftX={'cape2': [2, 3, 2, 3, 2], 'cape3': [3, 5, 3, 5, 3]})
+SPEC_HD['dying'] = dict(times=[0, 700, 1200, 1900, 2400], duration=2400, loop=True, dip=[0, -0.6, -0.3, 0.2, 0], bones={
+    'torso': [-14, -11, -12, -15, -14], 'head': [-12, -8, -9, -13, -12], 'jaw': [-5, -8, -6, -4, -5],
+    'arm_L': [10, 8, 9, 11, 10], 'arm_R': [8, 6, 7, 9, 8], 'cape': [12, 10, 10, 13, 12]})
+SPEC_HD['down'] = dict(times=[0, 200, 500, 750, 1000], duration=1000, hold=True, ground='all', rootRot=[0, -6, -28, -62, -58], bones={
+    'torso': [0, -8, -18, -20, -18], 'head': [0, -6, -12, -8, -8], 'jaw': [0, -8, -20, -14, -14],
+    'arm_L': [0, 15, 40, 55, 52], 'arm_R': [0, 10, 30, 45, 42], 'cape': [0, 3, 6, 8, 8], 'cape2': [0, 2, 4, 5, 5], 'cape3': [0, 1, 3, 4, 4]})
+SPEC_HD['headbutt'] = dict(times=[0, 180, 300, 420, 650], duration=650, hit=300, rootX=[0, 1.5, -4, -3, 0], dip=[-3, -3, -2, -2.5, -3], bones={
+    'torso': [0, 8, -14, -9, 0], 'head': [0, 8, -16, -9, 0], 'jaw': [0, 0, -6, -3, 0],
+    'arm_L': [0, -12, 16, 8, 0], 'arm_R': [0, -14, 18, 10, 0], 'cape': [0, -6, 11, 7, 0], 'cape2': [0, -1, 2, 1, 0], 'cape3': [0, -1, 2, 1, 0]},
+    shiftX={'cape2': [0, -1, 3, 2, 0], 'cape3': [0, -2, 5, 3, 0]})
+# 입 벌리고 빔(특수1): 몸을 젖혀 모았다가 고개를 내밀며 턱을 크게 벌린 채 쏨(반동으로 살짝 밀리고 로브가 뒤로 날림). 빔 자체는 이펙트(게임 연출) 몫
+SPEC_HD['skill'] = dict(times=[0, 300, 500, 600, 850, 1100, 1300, 1600], duration=1600, hit=500, rootX=[0, 0, 0.5, 1, 0.8, 1, 0.5, 0], dip=[-3, -4, -3, -3, -3, -3, -3, -3], bones={
+    'torso': [0, 6, -4, -5, -4, -5, -2, 0], 'head': [0, 4, 3, 4, 3, 4, 1, 0], 'jaw': [0, -10, -38, -42, -40, -42, -10, 0],
+    'arm_L': [0, -15, 10, 12, 11, 12, 4, 0], 'arm_R': [0, -20, 12, 14, 13, 14, 5, 0],
+    'cape': [0, -5, 3, 4, 3, 4, 1, 0], 'cape2': [0, 1, -3, -4, -3, -4, -1, 0], 'cape3': [0, 1, -3, -4, -3, -4, -1, 0]},
+    shiftX={'cape2': [0, -1, 2, 3, 2, 3, 1, 0], 'cape3': [0, -1, 4, 5, 4, 5, 2, 0]})
+# 포효(해방 = 필살기): 웅크렸다가 몸을 펴며 고개를 쳐들고 턱을 활짝, 두 팔을 벌리고 로브가 크게 펄럭
+SPEC_HD['release1'] = dict(times=[0, 400, 600, 800, 1300, 1500, 1800], duration=1800, hit=600, dip=[-3, -1, -5, -6, -6, -4, -3], bones={
+    'torso': [0, -10, 12, 14, 13, 5, 0], 'head': [0, -10, 22, 25, 24, 8, 0], 'jaw': [0, -4, -45, -48, -46, -10, 0],
+    'arm_L': [0, -10, 32, 35, 34, 10, 0], 'arm_R': [0, 10, -30, -34, -32, -10, 0],
+    'cape': [0, 8, -10, -12, -11, -4, 0], 'cape2': [0, 2, -4, -5, -4, -2, 0], 'cape3': [0, 2, -5, -6, -5, -2, 0]},
+    shiftX={'cape2': [0, 0, 3, 4, 3, 1, 0], 'cape3': [0, 0, 5, 6, 5, 2, 0]})
+hollow(SPEC_HD)
+for _m in ('attack', 'attack2', 'hit'):  # 사용자 목록에 없는 동작(공격1·2·맞음)은 없음
+    SPEC_HD[_m] = 'off'
+
+SPECS = {'dg': SPEC, 'hb': SPEC_HB, 'hd': SPEC_HD}
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
          'hb': ('덩치(몸 hb, 사용자 부위 시트 2026-11-09 조립) 전용 동작 — 대기·걷기·공격·해방(포효), 특수2·필살기 없음(off) (GDD 115-A 73·75, 사용자 "얘로 도트변경하고, 특수2, 필살기 없애고, 해방에 포효하는거 추가해. 짐승이 아니라 덩치고"). '
-                '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로')}
+                '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로'),
+         'hd': ('두건(몸 hd, 사용자 도트 2026-11-10 — 부리 가면·두건 로브, 다리 없음) 전용 동작 — 대기(=홈 대기)·이동·빈사·쓰러짐·박치기·특수1(입 벌리고 빔)·해방(포효, =필살기)만, 나머지 off (GDD 115-A 92). '
+                '몸 높이는 로브 아랫단이 바닥 줄에 닿는 높이에서 dip 만큼 띄움. 로브 세 마디(cape·cape2·cape3)는 엔진 따라가기·물결(rig.sway)')}
 
 
 def main(bodies):
@@ -301,7 +344,7 @@ def main(bodies):
         for mid, v in (mo['sets'].get(rig['bodyMotions'][body]) or {}).items():
             if mid != 'note' and mid not in out:
                 out[mid] = v
-                if mid in pl.STANDING and not v.get('off'):
+                if mid in pl.STANDING and not v.get('off') and any(s in PTS for s in ('foot_L', 'foot_R', 'shin_L', 'shin_R')):
                     # 앞서 이 스크립트가 넣은 발 고정 트랙은 빼고 다시 풂(다시 돌려도 같은 결과)
                     v = json.loads(json.dumps(v))
                     for b in v.pop('planted', []):

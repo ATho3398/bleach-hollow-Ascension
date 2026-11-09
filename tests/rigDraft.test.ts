@@ -175,6 +175,21 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Math.min(...mv.tracks.shin_R!.map((k) => k[1]))).toBeLessThan(-10);
     expect(Math.min(...mv.tracks.leg_R!.map((k) => k[3]))).toBeLessThan(0); // 든 다리는 엉덩이째 들어 올림
   });
+  it('두건(몸 hd, GDD 115-A 92): 머리·턱·양팔·몸통·로브 세 마디, 동작은 이동·빈사·쓰러짐·대기·박치기·빔(특수1)·포효(해방=필살기)만, 늘 떠 있고 로브는 하늘하늘', () => {
+    expect(Object.keys(rig.bodies.hd!).sort()).toEqual(['arm_L', 'arm_R', 'cape', 'cape2', 'cape3', 'head', 'jaw', 'torso']);
+    expect(rig.looks['hood-base']!.body).toBe('hd');
+    const ms = resolveMotions(rig, motions, sets, 'hd');
+    for (const id of ['idle', 'homeIdle', 'move', 'dying', 'down', 'headbutt', 'skill', 'release1', 'ultimate']) expect(ms[id], id).toBeDefined();
+    for (const id of ['attack', 'attack2', 'hit', 'skill2', 'uppercut', 'rpunch', 'straight', 'bath', 'punch', 'kick']) expect(ms[id], id).toBeUndefined();
+    expect(Math.max(...ms.idle!.tracks.root!.map((k) => k[3]))).toBeLessThan(0); // 바닥에서 떠 있음
+    expect(Math.min(...ms.skill!.tracks.jaw!.map((k) => k[1]))).toBeLessThan(-30); // 입 크게 벌림
+    // 로브: 가만히 있어도 물결(wave)로 흔들리고, 몸 전체가 넘어지는 것(root)은 늘어짐에 안 셈
+    expect(rig.sway?.cape3?.wave).toBeDefined();
+    const still = { duration: 1400, loop: true, tracks: {} };
+    expect(Math.abs(samplePose(rig, still, 350).cape3!.rot)).toBeGreaterThan(1);
+    const tip = { duration: 1000, loop: true, tracks: { root: [[0, -60, 0, 0], [1000, -60, 0, 0]] as [number, number, number, number][] } };
+    expect(samplePose(rig, tip, 500).hair_back2!.rot).toBe(0);
+  });
   it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
     const b = DRAFT_RIGS.beast!;
     const ref = b.rig.bodies.ref!;

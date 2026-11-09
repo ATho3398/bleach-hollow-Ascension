@@ -51,7 +51,7 @@ export interface Rig {
 }
 
 /** 늘어진 마디 (GDD 115-A 88): 자기 각 += swing × (부모 화면 각(t − lag) − 부모 화면 각(t)) − hang × 부모 화면 각(t).
- *  부모 화면 각 = 부모까지 동작 각 합(쉬는 각 제외, 위 마디의 따라가기 포함). 쉬는 자세(동작 각 0)에서는 0 — 정지 그림은 그대로 */
+ *  부모 화면 각 = 부모까지 동작 각 합(쉬는 각·몸 전체 root 회전 제외, 위 마디의 따라가기 포함). 쉬는 자세(동작 각 0)에서는 0 — 정지 그림은 그대로 */
 export interface Sway {
   /** 늦게 따라오는 시간(ms) */
   lag: number;
@@ -59,6 +59,9 @@ export interface Sway {
   swing: number;
   /** 부모가 기운 만큼 거꾸로 돌려 아래로 늘어지게(0~1, 0.3 = 기운 각의 30% 만큼 되돌림) */
   hang: number;
+  /** 늘 하늘하늘(GDD 115-A 92): [각 진폭(도), 한 번 흔들리는 시간(ms), 늦음(ms)] — 가만히 있어도 흔들림. 아래 마디일수록 늦음을 크게 주면 물결이 아래로 흐른다.
+   *  되풀이 동작은 길이에 맞춰 흔들림 시간을 맞춘다(이음매 없게) */
+  wave?: [number, number, number];
 }
 
 export interface RigEdit {
@@ -218,9 +221,10 @@ function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number): Pose {
   const sway = rig.sway;
   if (!sway || depth > 3) return pose;
   const parent = new Map(rig.bones.map((b) => [b.id, b.parent] as const));
+  // 몸 전체 회전(root — 쓰러짐 등)은 빼고 잰다: 통째로 넘어질 때 마디마다 거꾸로 늘어지며 조각나지 않게(115-A 92)
   const worldRot = (p: Pose, id: string | null | undefined): number => {
     let r = 0;
-    for (let b = id; b; b = parent.get(b)) r += p[b]?.rot ?? 0;
+    for (let b = id; b && parent.get(b); b = parent.get(b)) r += p[b]?.rot ?? 0;
     return r;
   };
   const late = new Map<number, Pose>();
@@ -230,7 +234,13 @@ function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number): Pose {
     let before = late.get(sw.lag);
     if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1)));
     const now = worldRot(pose, b.parent);
-    pose[b.id] = { ...pose[b.id]!, rot: pose[b.id]!.rot + sw.swing * (worldRot(before, b.parent) - now) - sw.hang * now };
+    let wave = 0;
+    if (sw.wave) {
+      const [amp, period, phase] = sw.wave;
+      const per = motion.loop ? motion.duration / Math.max(1, Math.round(motion.duration / period)) : period;
+      wave = amp * Math.sin((2 * Math.PI * (t - phase)) / per);
+    }
+    pose[b.id] = { ...pose[b.id]!, rot: pose[b.id]!.rot + sw.swing * (worldRot(before, b.parent) - now) - sw.hang * now + wave };
   }
   return pose;
 }
@@ -404,6 +414,7 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
     const b = rig.bones.find((x) => x.id === id);
     if (!b?.parent) errs.push(`늘어진 마디 ${id}: 부모 있는 뼈가 아님`);
     if (!(sw.lag >= 0) || !(sw.swing >= 0) || !(sw.hang >= 0 && sw.hang <= 1)) errs.push(`늘어진 마디 ${id}: lag·swing ≥ 0, hang 0~1`);
+    if (sw.wave && !(sw.wave.length === 3 && sw.wave[1] > 0)) errs.push(`늘어진 마디 ${id}: wave = [진폭, 시간(>0), 늦음]`);
   }
   for (const [b, order] of Object.entries(rig.bodySlots ?? {})) {
     if (!rig.bodies[b]) errs.push(`몸별 앞뒤 순서 ${b}: 몸 없음`);

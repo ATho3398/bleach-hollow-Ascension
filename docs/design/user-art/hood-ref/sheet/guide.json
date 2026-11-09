@@ -1,0 +1,128 @@
+{
+ "note": "부위 시트 1배(GDD 115-A 92): sheet = 시트 왼쪽 위(1배), canvas = 캔버스 왼쪽 위(배율 적용), scale = 배율",
+ "look": "hood-base",
+ "body": "hd",
+ "scale": 2,
+ "boxes": [
+  {
+   "slot": "head",
+   "sheet": [
+    3,
+    6
+   ],
+   "size": [
+    27,
+    15
+   ],
+   "canvas": [
+    -38,
+    -18
+   ]
+  },
+  {
+   "slot": "jaw",
+   "sheet": [
+    33,
+    6
+   ],
+   "size": [
+    15,
+    14
+   ],
+   "canvas": [
+    -20,
+    0
+   ]
+  },
+  {
+   "slot": "arm_R",
+   "sheet": [
+    51,
+    6
+   ],
+   "size": [
+    11,
+    23
+   ],
+   "canvas": [
+    20,
+    24
+   ]
+  },
+  {
+   "slot": "arm_L",
+   "sheet": [
+    65,
+    6
+   ],
+   "size": [
+    10,
+    20
+   ],
+   "canvas": [
+    -22,
+    26
+   ]
+  },
+  {
+   "slot": "torso",
+   "sheet": [
+    3,
+    35
+   ],
+   "size": [
+    32,
+    31
+   ],
+   "canvas": [
+    -12,
+    -18
+   ]
+  },
+  {
+   "slot": "cape",
+   "sheet": [
+    38,
+    35
+   ],
+   "size": [
+    46,
+    13
+   ],
+   "canvas": [
+    -26,
+    28
+   ]
+  },
+  {
+   "slot": "cape2",
+   "sheet": [
+    3,
+    72
+   ],
+   "size": [
+    48,
+    11
+   ],
+   "canvas": [
+    -28,
+    46
+   ]
+  },
+  {
+   "slot": "cape3",
+   "sheet": [
+    3,
+    89
+   ],
+   "size": [
+    49,
+    10
+   ],
+   "canvas": [
+    -28,
+    60
+   ]
+  }
+ ]
+}
