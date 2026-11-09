@@ -241,7 +241,8 @@
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
       "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3], "size": [21, 22] },
-      "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] }
+      "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] },
+      "release": "arrancar-base-f-released"
     },
     "digitigrade-base": {
       "body": "dg"
@@ -255,16 +256,7 @@
       "cape2": { "art": "cape/test_s2", "at": [5, 41], "size": [25, 14] },
       "cape3": { "art": "cape/test_s3", "at": [4, 54], "size": [27, 15] }
     },
-    "arrancar-f-release-test": {
-      "body": "arrancar_f",
-      "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
-      "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
-      "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3], "size": [21, 22] },
-      "release": "arrancar-f-released-test",
-      "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] }
-    },
-    "arrancar-f-released-test": {
+    "arrancar-base-f-released": {
       "body": "arrancar_f",
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
@@ -847,7 +839,7 @@
     }
   },
   "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
-  "releaseNote": "해방 1안(GDD 115-A 49): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-f-release-test → arrancar-f-released-test(임시: 아란칼(여) + 임시 망토)",
+  "releaseNote": "해방 1안(GDD 115-A 49 → 90): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-base-f(아란칼(여) 기본) → arrancar-base-f-released(해방 후: 아란칼(여) + 임시 망토 cape/test, 3마디). 사용자 2026-11-10 \"아란칼 여 해방 시험 잡아놨으니까 이제 시험 없애고 기본을 저걸로 맞춰\" — 시험 외형(arrancar-f-release-test) 없앰",
   "cuts": {
     "note": "사용자 도트를 뼈대 선으로 잘라 쓰는 몸 (scripts/rig/cut_ref.py humanoid [몸]). image = 원본 1배 도트, at = 배율 도트 왼쪽 위의 캔버스 자리, scale = 도트 배율 (GDD 115-A 69·71·72)",
     "dg": {
@@ -978,14 +970,11 @@
     "arrancar-base-f": {
       "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
     },
-    "arrancar-f-release-test": {
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
-    },
-    "arrancar-f-released-test": {
-      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] },
+    "cape-test": {
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     },
-    "cape-test": {
+    "arrancar-base-f-released": {
+      "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] },
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
     }
   },

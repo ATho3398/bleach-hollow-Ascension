@@ -300,8 +300,9 @@ describe('필살기·해방·타격기 (GDD 115-A 48·49·51)', () => {
     const af = resolveMotions(rig, motions, sets, 'arrancar_f');
     const m = af.release1!;
     expect(af.release2).toBeUndefined();
-    expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt! - 1)).toBe('arrancar-f-release-test');
-    expect(motionLook(rig, 'arrancar-f-release-test', m, m.swapAt!)).toBe('arrancar-f-released-test');
+    expect(motionLook(rig, 'arrancar-base-f', m, m.swapAt! - 1)).toBe('arrancar-base-f'); // 해방 시험을 기본으로(115-A 90)
+    expect(motionLook(rig, 'arrancar-base-f', m, m.swapAt!)).toBe('arrancar-base-f-released');
+    expect(rig.looks['arrancar-f-release-test']).toBeUndefined();
     // 남자 몸도 같은 해방 동작(사용자 2026-11-01 "아란칼 여체 보고 남자도 해방 모션 따라하라니까?") 
     for (const b of ['shinigami', 'student', 'arrancar', 'bare']) expect(resolveMotions(rig, motions, sets, b).release1?.duration, b).toBe(m.duration);
     for (const b of ['female', 'shinigami_f', 'student_f']) expect(resolveMotions(rig, motions, sets, b).release1?.duration, b).toBe(m.duration); // 여체도(사용자 2026-11-01)
