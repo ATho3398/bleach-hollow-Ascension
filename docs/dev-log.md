@@ -2922,3 +2922,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c357-hit-delay.test.ts` 15개(평타·적 공격 swing → 지연 틱 뒤 landed·체력, 지연 0 은 바로, 같은 시드 피해 수열 동일·3틱 늦게 같은 누적, 먼저 쓰러지면 예약 버림(양쪽), 블록 키·replay 재현·각본 전투 완주, hitDelaysOf·cueHitMs·peek, hitInMs 앞 건너뛰기/기다림(종이인형·프레임), alignPlan). 옛 전투 시험 11파일(combat·family·enemies·absorb·c57·c89·c103·c134·c136·c177·c199)은 수치·순서만 보므로 `tests/helpers/hitDelay.ts useImmediateHits()` 로 그 파일 동안 지연 0. 전체 262파일 3001개 · typecheck · balance:check(회귀 가드 통과) · build 통과. 세이브 구조 변경 없음(예약은 전투 상태 안).
 - 캡처 `docs/captures/c357/`(1배 6장, `scripts/c357-proof.cjs`, proof.json — 사신, 테스트 모드 바로 전투): `pc-basic-before`(칼 들어올림, 적 체력 26081 그대로) · `pc-basic-after`(내리찍는 프레임에 26072) · `pc-block-hit`(권 1단계 '정권 지르기' 주먹 닿는 순간 −20·체력 감소) · 폰 같은 3장 `ph-basic-before`·`ph-basic-after`·`ph-block-hit`.
 - 병렬 코딩248(소모품 칸)·코딩251(해방 오라) battleView 코드는 건드리지 않음(react 의 swing/landed 분기·지연 표 넣기·familyFx·bodySlot 끌어올림만).
+## C.358 — 바퀴 끝 창 소모품 칸을 머리 줄 버튼으로 (C.355 임시 타일 1장과 함께 확인) (GDD 212장 3 보충, S-23, 코딩248 Opus)
+
+- 마스터 지적: C.356 캡처 pc-3·pc-4 가 C.355 적용 전 화면(드래프트 3장)이었다 → 최신 main 으로 다시 찍어 두 변경을 함께 확인.
+- 확인 결과: 드래프트 카드 없음·'임시 타일: ○○' 한 줄은 정상. 그런데 C.356 의 [귀환]/[한 바퀴 더] 위 소모품 한 줄(32px)이 본문 높이를 줄여 손 타일 카드('하급 호로 ×1')가 아래에서 잘렸다.
+- 수정: 소모품 칸 = 머리 줄(높이 48 고정) 제목과 체력 막대 사이 작은 버튼(`ui/bha/lapItemSlot.ts`, 아이콘 + '반창고 ×3', 빈 칸 '소모품 비었음', 최대 폭 168·말줄임, 상태 한 줄 '… · 다음 바퀴 1번 쓸 수 있다'는 title·aria). 누르면 C.356 과 같은 고르기 창(가진 전투 소모품·빼기). CSS 는 기존 토큰만(walk-scene.css `.bha-lapitem`).
+- 판단 (기획서 값 / 실제 값 / 이유): 212장 3 '다음 바퀴 준비 창에 소모품 칸' / 머리 줄 버튼 / 본문(길·손)과 버튼 줄 자리(173장 2: 버튼이 안 움직이게)를 건드리지 않는 유일한 고정 칸.
+- 실측(`scripts/c356-proof.cjs` proof.json): 머리 줄 조각 겹침 PC 0 · 폰 0, 본문 scrollHeight = clientHeight(PC 196/196 — 임시 타일·길·손 카드 다 보임), 드래프트 카드 0, 소모품 버튼 글 잘림 없음.
+- 검증: typecheck · test · balance:check · build 통과. 세이브·밸런스 그대로.
+- 캡처 `docs/captures/c356/` 교체(1배 6장): `pc-4-lapend-swapped`(임시 타일 줄 + 손 카드 + 머리 줄 '반창고 ×3'), `ph-4-lapend-swapped`(폰, 이번 판은 임시 타일 안 받음), `ph-3`·`pc-3` 고르기 창, `ph-1` 걷기 가방, `pc-2` 전투 '씀'.

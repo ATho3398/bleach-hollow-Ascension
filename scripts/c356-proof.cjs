@@ -126,12 +126,24 @@ async function resume(page) {
         await page.waitForTimeout(400);
       }
       await page.waitForTimeout(500);
-      facts[`${mode}-lapend`] = await page.locator('.bha-lapitem').textContent().catch(() => null);
+      facts[`${mode}-lapend`] = await page.locator('.bha-lapitem').getAttribute('title').catch(() => null);
+      facts[`${mode}-layout`] = await page.evaluate(() => {
+        const box = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
+        const head = [...document.querySelectorAll('.bha-lcd .bha-lapend > .bha-win-head > *')].map(box);
+        let overlaps = 0;
+        for (let i = 0; i < head.length; i++) for (let j = i + 1; j < head.length; j++) if (head[i].l < head[j].r - 0.5 && head[j].l < head[i].r - 0.5 && head[i].t < head[j].b && head[j].t < head[i].b) overlaps++;
+        const body = document.querySelector('.bha-lcd .bha-lapend > .bha-win-body');
+        const draft = document.querySelectorAll('.bha-lcd .bha-draft__card').length;
+        const temp = document.querySelector('.bha-lcd .bha-lapend .bha-win-body')?.textContent?.match(/임시 타일[^—]*/)?.[0] ?? null;
+        const item = document.querySelector('.bha-lcd .bha-lapitem');
+        const label = item?.querySelector('.bha-btn__label');
+        return { headOverlaps: overlaps, bodyScroll: body ? [body.scrollHeight, body.clientHeight] : null, draftCards: draft, temp, itemText: item?.textContent, itemCut: label ? label.scrollWidth > label.clientWidth + 1 : null };
+      });
       await page.locator('[data-lap-item-change]').first().click().catch(() => {}); await page.waitForTimeout(500);
       await shot('3-lapend-pick');
       await page.locator('.bha-shoppick [data-pick="heal-patch"]').first().click().catch(() => {}); await page.waitForTimeout(500);
       facts[`${mode}-lapend-after`] = await page.locator('.bha-lapitem').textContent().catch(() => null);
-      if (mode === 'pc') await shot('4-lapend-swapped');
+      await shot('4-lapend-swapped');
       await page.close();
     }
   } finally {

@@ -63,8 +63,8 @@ export interface ExpeditionViewHandlers {
   openHelp: (onClose: () => void) => void;
   /** [가방] (GDD 144장 3, C.223): 걷기·휴식 중 회복 물건을 쓴다. 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다. 없으면 버튼 없음 */
   openBag?: (onClose: () => void) => void;
-  /** 바퀴 끝 창 소모품 칸 (GDD 212장 3): 상태 한 줄과 [바꾸기] — change 는 고르기 창을 열고, 바꾸면 after 를 부른다(창 다시 그림). 없으면 줄 없음 */
-  lapItem?: { line: () => string; filled: () => boolean; canChange: () => boolean; change: (after: () => void) => void };
+  /** 바퀴 끝 창 소모품 칸 (GDD 212장 3): 머리 줄 버튼 글(short)·상태 한 줄(title) — change 는 고르기 창을 열고, 바꾸면 after 를 부른다(창 다시 그림). 없으면 줄 없음 */
+  lapItem?: { line: () => string; short: () => string; filled: () => boolean; canChange: () => boolean; change: (after: () => void) => void };
 }
 
 const EX = BALANCE.expedition;
@@ -580,7 +580,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     hpBar.classList.add('bha-lapend__hp');
     hpBar.dataset.lapHp = String(hpPct);
     const winHead = el('div', 'bha-win-head');
-    winHead.append(title, hpBar, helpBtn);
+    // 다음 바퀴 준비 — 소모품 칸 (GDD 212장 3): 머리 줄 체력 왼쪽 작은 버튼(본문을 밀지 않는다, C.358), 누르면 가방의 다른 소모품으로 바꿔 끼우기·빼기
+    const li = h.lapItem;
+    winHead.append(title, ...(li ? [lapItemSlot({ line: li.line(), short: li.short(), filled: li.filled(), canChange: li.canChange(), onChange: () => li.change(() => render()) })] : []), hpBar, helpBtn);
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -623,9 +625,6 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     ret.title = '돌아가면 얻은 것을 지킨다';
     notes.append(gain, multLine, multInfo);
     const actions = el('div', 'bha-continue');
-    // 다음 바퀴 준비 — 소모품 칸 (GDD 212장 3): 버튼 위 고정 한 줄, [바꾸기]로 가방의 다른 소모품으로 바꿔 끼우기·빼기
-    const li = h.lapItem;
-    if (li) actions.append(lapItemSlot({ line: li.line(), filled: li.filled(), canChange: li.canChange(), onChange: () => li.change(() => render()) }));
     actions.append(grid, notes);
     // v2 창 (GDD 183장 S12): 머리 48 · 본문(뽑기 · 손 · 배치판, 안에서 스크롤) · 아래 [귀환]/[한 바퀴 더] 같은 크기 48
     const sheet = el('div', 'bha-sheet bha-win bha-lapend');

@@ -1936,6 +1936,7 @@ export function startApp(host: HTMLElement): void {
       // 바퀴 끝 창 소모품 칸 (GDD 212장 3): 가진 전투 소모품으로 바꿔 끼우기 · 빼기 — 바꾸면 바로 저장
       ...(save ? { lapItem: {
         line: () => (save ? lapItemLine(save, { lap: exp.lap + 1, lapItems: exp.lapItems }, '다음 바퀴') : ''), // 바퀴 끝 창 = 다음 바퀴 기준
+        short: () => { const id = save?.shared.battleItem; return id ? `${consumableName(id)} ×${save?.shared.items[id] ?? 0}` : '소모품 비었음'; },
         filled: () => !!save?.shared.battleItem,
         canChange: () => !!save && (!!save.shared.battleItem || ownedBattleItems(save).length > 0),
         change: (after: () => void) => {

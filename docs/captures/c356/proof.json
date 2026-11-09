@@ -7,15 +7,37 @@
     "소모품 칸에 끼운 것만 쓴다 — 바퀴 끝 창에서 바꾼다"
    ]
   },
-  "ph-lapend": "소모품회복약 ×1 · 다음 바퀴 1번 쓸 수 있다바꾸기",
-  "ph-lapend-after": "소모품반창고 ×3 · 다음 바퀴 1번 쓸 수 있다바꾸기",
+  "ph-lapend": "회복약 ×1 · 다음 바퀴 1번 쓸 수 있다 — 눌러서 바꾸기",
+  "ph-layout": {
+   "headOverlaps": 0,
+   "bodyScroll": [
+    16,
+    16
+   ],
+   "draftCards": 0,
+   "temp": null,
+   "itemText": "회복약 ×1",
+   "itemCut": null
+  },
+  "ph-lapend-after": "반창고 ×3",
   "battle": {
    "title": "회복약 — 이번 바퀴에 썼다(다음 바퀴에 다시 1번)",
    "text": "소모품씀",
    "disabled": "true"
   },
-  "pc-lapend": "소모품회복약 ×2 · 다음 바퀴 1번 쓸 수 있다바꾸기",
-  "pc-lapend-after": "소모품반창고 ×3 · 다음 바퀴 1번 쓸 수 있다바꾸기"
+  "pc-lapend": "회복약 ×2 · 다음 바퀴 1번 쓸 수 있다 — 눌러서 바꾸기",
+  "pc-layout": {
+   "headOverlaps": 0,
+   "bodyScroll": [
+    218,
+    196
+   ],
+   "draftCards": 0,
+   "temp": "임시 타일: 뼈 표식 ",
+   "itemText": "회복약 ×2",
+   "itemCut": null
+  },
+  "pc-lapend-after": "반창고 ×3"
  },
  "errors": []
 }
