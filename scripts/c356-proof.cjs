@@ -117,7 +117,7 @@ async function resume(page) {
         await shot('2-battle-item-spent');
       }
       // ③ 바퀴 끝 창 → [바꾸기] 고르기 창
-      await patchAway(page, `${E} e.phase = 'moving'; e.pending = null; e.queuedBattle = null; e.wildCells = []; e.pos = e.slots.length - 1; e.lapItems = [{ lap: e.lap, itemId: 'heal-salve', where: 'battle' }]; ${END}`);
+      await patchAway(page, `${E} e.phase = 'moving'; e.pending = null; e.queuedBattle = null; e.wildCells = []; e.pos = e.slots.length - 1; e.lapItems = [{ lap: e.lap, itemId: 'heal-salve', where: 'battle' }]; e.hand = ['env-training']; e.tempHand = ['env-training']; ${END}`);
       await resume(page);
       for (let t = 0; t < 60; t++) {
         if (await page.getByRole('button', { name: '귀환', exact: true }).filter({ visible: true }).count()) break;
@@ -137,7 +137,11 @@ async function resume(page) {
         const temp = document.querySelector('.bha-lcd .bha-lapend .bha-win-body')?.textContent?.match(/임시 타일[^—]*/)?.[0] ?? null;
         const item = document.querySelector('.bha-lcd .bha-lapitem');
         const label = item?.querySelector('.bha-btn__label');
-        return { headOverlaps: overlaps, bodyScroll: body ? [body.scrollHeight, body.clientHeight] : null, draftCards: draft, temp, itemText: item?.textContent, itemCut: label ? label.scrollWidth > label.clientWidth + 1 : null };
+        const hand = [...document.querySelectorAll('.bha-lcd .bha-lapend .bha-win-body .bha-tilecard')].map((c) => { const h = c.querySelector('.bha-tilecard__hint'); const cb = c.getBoundingClientRect(); const bb = body.getBoundingClientRect(); return { name: c.querySelector('.bha-tilecard__name')?.textContent, hintLines: h ? Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)) : null, cut: cb.bottom > bb.bottom + 0.5, title: c.title }; });
+        const bb = body.getBoundingClientRect();
+        const parts = [...body.querySelectorAll(':scope > *, .bha-nestsheet__body > *, .bha-nestsheet__body .bha-road > *')].map((x) => [x.className.toString().slice(0, 40), Math.round(x.getBoundingClientRect().top - bb.top), Math.round(x.getBoundingClientRect().bottom - bb.top)]);
+        const cs = getComputedStyle(body); const ns = document.querySelector('.bha-lcd .bha-lapend .bha-nestsheet__body');
+        return { parts, pad: [cs.paddingTop, cs.paddingBottom], rowGap: ns ? getComputedStyle(ns).rowGap : null, hand, headOverlaps: overlaps, bodyScroll: body ? [body.scrollHeight, body.clientHeight] : null, draftCards: draft, temp, itemText: item?.textContent, itemCut: label ? label.scrollWidth > label.clientWidth + 1 : null };
       });
       await page.locator('[data-lap-item-change]').first().click().catch(() => {}); await page.waitForTimeout(500);
       await shot('3-lapend-pick');

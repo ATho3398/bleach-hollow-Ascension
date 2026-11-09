@@ -218,3 +218,7 @@
 .bha-lcd .bha-exp .bha-win-head > .bha-lapitem .bha-btn__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 걷기 가방 머리 소모품 칸 한 줄 (GDD 212장 2) */
 .bha-healbag__slot { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+/* 바퀴 끝 창 손 타일 카드 설명은 두 줄까지(전체는 카드 title) — 세 줄 설명이 카드 아래를 [귀환] 줄에 잘리게 하지 않게 (C.359, 뽑기 카드 C.308 과 같은 규칙) */
+.bha-lcd .bha-exp .bha-lapend .bha-tilecard__hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed > .bha-win-body { padding-bottom: 2px; row-gap: 4px; } /* 임시 타일 줄 ↔ 길 간격 8 → 4·아래 여백 4 → 2 (C.359): 임시 타일 줄 + 2줄 손 카드까지 본문 넘침 0 */
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed > .bha-win-body > .bha-notice { margin-bottom: 0; }

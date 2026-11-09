@@ -316,9 +316,11 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       ic.append(icon(tileIconId(css)));
       chip.append(ic, fitOneLine(el('b', 'bha-tilecard__name', o.tileName(id))), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
       const temp = tempHandCount(exp, id);
+      // 설명 전체는 title (바퀴 끝 창에서는 설명이 2줄 말줄임 — C.359, 뽑기 카드 C.308 과 같은 규칙)
+      chip.title = `${o.tileName(id)} — ${tileHint(getTile(id))}`;
       if (temp > 0) {
         chip.append(tempMark());
-        chip.title = `임시 타일 ${temp}장 — 이번 모험 동안만 놓을 수 있다`;
+        chip.title = `${chip.title} · 임시 타일 ${temp}장 — 이번 모험 동안만 놓을 수 있다`;
       }
       chip.onclick = () => {
         selected = selected === id ? null : id;
