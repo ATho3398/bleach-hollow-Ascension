@@ -141,6 +141,8 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
     img.style.setProperty('--art-dy', `${art.offsetY}%`);
     body.append(img);
     body.classList.add('has-art');
+    // 그림을 못 읽으면(지운 그림을 요청하는 낡은 목록·캐시 등) 깨진 그림 대신 자리표시 도형으로 (C.345, GDD 206장 1)
+    img.addEventListener('error', () => showPlaceholder(b, body), { once: true });
     bindAnim(b, img, art)?.setLoop('idle'); // 프레임 애니가 있는 동작만 (GDD 26장) — idle 이 없으면 정지 그림
   } else if (frames) {
     frames.forEach((f, i) => {
@@ -163,6 +165,14 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
   if (src) void fitLying(b, src, art);
   b.append(lift, shadow);
   return b;
+}
+
+/** 캐릭터 몸을 그림 없는 자리표시(둥근 몸 + 눈 두 개)로 바꾼다 — 그림 읽기 실패 때 (C.345) */
+export function showPlaceholder(owner: HTMLElement, body: HTMLElement): void {
+  body.replaceChildren(el('span', 'bha-char__eye'), el('span', 'bha-char__eye'));
+  body.classList.remove('has-art');
+  const shadow = owner.querySelector<HTMLElement>('.bha-char__shadow');
+  if (shadow) shadow.style.marginTop = '';
 }
 
 /** 그림의 불투명 픽셀 범위 (원본 px, right·bottom 은 포함 끝 + 1) */
