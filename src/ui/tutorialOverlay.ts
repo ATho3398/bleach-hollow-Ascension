@@ -85,6 +85,27 @@ function targetRect(ids: string[], host: HTMLElement): Rect | null {
   return unionRect(rects);
 }
 
+/** 강조 대상이 그림(방 물건·월드맵 장소·캐릭터 — 투명 바탕 그림)이면 그 그림 칸, 아니면 null (GDD 217장 1).
+ *  액자 그림(.bha-art--frame)·버튼·칸은 네모 그대로 */
+export function shapeOf(n: Element): HTMLElement | null {
+  const art = n.matches('.bha-art:not(.bha-art--frame)') ? n : n.querySelector(':scope > .bha-art.bha-char');
+  return art?.querySelector<HTMLElement>('.bha-art-img') ?? null;
+}
+/** 대상이 전부 그림이면 그 그림 칸들 (하나라도 네모 UI 면 null = 네모 테두리) */
+function targetShapes(ids: readonly string[]): HTMLElement[] | null {
+  const out: HTMLElement[] = [];
+  for (const id of ids) {
+    for (const n of document.querySelectorAll<HTMLElement>(id.startsWith('@') ? id.slice(1) : `[data-help="${id}"]`)) {
+      const r = n.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) continue;
+      const sh = shapeOf(n);
+      if (!sh) return null;
+      out.push(sh);
+    }
+  }
+  return out.length ? out : null;
+}
+
 /** 선택자 목록 ('@' 떼고 쉼표로 이은 것) */
 const selectorOf = (targets: readonly string[]) => targets.map((t) => (t.startsWith('@') ? t.slice(1) : `[data-help="${t}"]`)).join(', ');
 
@@ -243,6 +264,13 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   else layer.classList.add('is-nodim');
   const hole = el('div', 'bha-tut__hole');
   const card = el('div', 'bha-tut__card');
+  // 그림 모양 윤곽을 단 그림 칸들 (GDD 217장 1) — 단계가 바뀌거나 닫히면 뗀다
+  let shaped: HTMLElement[] = [];
+  const setShapes = (next: HTMLElement[]): void => {
+    for (const s of shaped) if (!next.includes(s)) s.classList.remove('bha-tut-shape');
+    for (const s of next) s.classList.add('bha-tut-shape');
+    shaped = next;
+  };
   if (opts.pauseLabel !== null) {
     const pauseTag = el('span', 'bha-chip bha-battle__pausetag');
     pauseTag.append(icon('i-pause'), opts.pauseLabel ?? '튜토리얼 중 — 전투 멈춤');
@@ -368,6 +396,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     unregister();
     unguard();
     layer.remove();
+    setShapes([]); // 그림 모양 윤곽도 뗀다
   };
   const finish = (status: Exclude<TutorialStatus, 'active'>) => {
     teardown();
@@ -441,6 +470,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     card.classList.toggle('is-placed', landscape);
     const pad = TUTORIAL_HOLE_PAD;
     hole.classList.toggle('is-none', !rect);
+    // 그림 대상 = 노란 네모 대신 그림 모양 윤곽 (구멍은 자리·덮개만 맡고 테두리는 숨긴다)
+    const shapes = rect ? targetShapes(stageOf(scene)?.targets ?? scene.targets) : null;
+    hole.classList.toggle('is-shape', !!shapes);
+    setShapes(shapes ?? []);
     if (rect) {
       hole.style.left = `${rect.left - pad}px`;
       hole.style.top = `${rect.top - pad}px`;

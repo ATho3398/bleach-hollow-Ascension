@@ -73,6 +73,7 @@ import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
 import { practiceListView, practiceResultView } from './practiceView';
 import { abortSummaryLine, resultView } from './resultView';
+import { evChipRow, evGains } from './bha/evChips';
 import { expeditionView, setSpeed } from './expeditionView';
 import { lowDepartHp, planView } from './planView';
 import { bookView } from './bookView';
@@ -1688,7 +1689,9 @@ export function startApp(host: HTMLElement): void {
       bg: towerSceneBg(faction, f),
       onQuit: () => nav.pop(),
       onEnd: (done) => {
+        const ev0 = { ...s0.evolution.ev }; // 결과 노력치 칩 (GDD 217장 3) — 탑은 지금 노력치를 주지 않아 보통 칩 없음
         const res = recordTowerBattle(s0, f, done);
+        const evRow = { start: ev0, end: { ...s0.evolution.ev } };
         persist();
         nav.replace({
           id: 'tower-result', locked: true,
@@ -1697,7 +1700,7 @@ export function startApp(host: HTMLElement): void {
               onNext: res.won && res.next !== null ? () => towerBattle(faction, towerFloor(res.next!), true) : null,
               onAgain: () => towerBattle(faction, f, true),
               onBack: () => nav.pop(),
-            });
+            }, evRow);
             root.scrollTop = 0;
           },
         });
@@ -2053,7 +2056,9 @@ export function startApp(host: HTMLElement): void {
     if (exp.endReason === 'abort') {
       if (afterResult) holdRoomGuides = true;
       nestScreen();
-      if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), yes: '확인', single: true, onYes: () => {} });
+      // 오른 노력치 칩 (GDD 217장 3) — 결과 화면 대신인 짧은 카드에도 같은 칩
+      const evRow = evChipRow(faction.id, evGains(exp.evStart, exp.evolution.ev, exp.evBlocked));
+      if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), ...(evRow ? { content: evRow } : {}), yes: '확인', single: true, onYes: () => {} });
       notices();
       afterResult?.();
       return;

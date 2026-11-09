@@ -1,7 +1,7 @@
 // 도전의 탑 화면 (GDD 36장 3번, C.85): 원정 출발 화면의 [탑] 탭. 왼쪽 = 지금 층·최고 층·다음 층(적 이름·종류·★·보상 미리 보기·[도전]),
 // 오른쪽 = 층 목록(지나온 층은 보이기만, 다시 하기 없음). 결과 화면도 여기. 문구는 종족 설정 tower, 화면은 종족 id 로 분기하지 않는다.
 import { bossName } from '../data/bosses';
-import { pickFaction } from '../data/schema';
+import { pickFaction, type StatId } from '../data/schema';
 import { TITLES, titleName } from '../data/titles';
 import { elapsedSeconds, type CombatState } from '../engine/combat';
 import { difficultyText, towerFloorText, towerLabels, type FactionConfig } from '../engine/faction';
@@ -17,6 +17,7 @@ import { battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
+import { evChipRow, evGains } from './bha/evChips';
 
 export interface TowerViewHandlers {
   onChallenge: (f: TowerFloor) => void;
@@ -127,7 +128,7 @@ export interface TowerResultHandlers {
   onBack: () => void;
 }
 
-export function towerResultView(root: HTMLElement, faction: FactionConfig, f: TowerFloor, s: CombatState, res: TowerOutcome, h: TowerResultHandlers): void {
+export function towerResultView(root: HTMLElement, faction: FactionConfig, f: TowerFloor, s: CombatState, res: TowerOutcome, h: TowerResultHandlers, ev?: { start: Record<StatId, number>; end: Record<StatId, number> }): void {
   const labels = battleLabels(faction);
   const L = towerLabels(faction);
   const won = res.won;
@@ -149,6 +150,9 @@ export function towerResultView(root: HTMLElement, faction: FactionConfig, f: To
   else if (won) rows.push({ label: '보상', icon: 'i-rare', value: '이미 받은 층' });
   if (res.ticket) rows.push({ label: '수련권', icon: 'i-rare', mod: 'good', value: '수련권 +1' }); // 강적·보스 층 무작위 (GDD 216장 1)
   rows.push({ label: '다음', icon: 'i-play', value: res.next === null ? '정상에 올랐다' : towerFloorText(faction, res.next) });
+  // 이번에 오른 노력치 칩 (GDD 217장 3) — 오른 것 없으면 칩 없음
+  const evRow = ev ? evChipRow(faction.id, evGains(ev.start, ev.end)) : null;
+  if (evRow) head.append(evRow);
   const dock = el('div', 'bha-dock');
   if (h.onNext) dock.append(button({ label: `${towerFloorText(faction, res.next!)} 도전`, icon: 'i-play', variant: 'primary', size: 'lg', onClick: h.onNext }));
   else if (!won) dock.append(button({ label: '다시 도전', icon: 'i-loop', variant: 'primary', size: 'lg', onClick: h.onAgain }));

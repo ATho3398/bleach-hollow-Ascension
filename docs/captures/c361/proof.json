@@ -1,0 +1,135 @@
+{
+ "facts": {
+  "pc": {
+   "tutDoor": {
+    "holeShape": true,
+    "holeOutline": "none",
+    "shapes": [
+     "bha-prop--outside"
+    ],
+    "filter": "drop-shadow(rgb(204, 167, 83) 2px 0px 0px) drop-shadow(rgb(2"
+   },
+   "tutMap": {
+    "holeShape": true,
+    "holeOutline": "none",
+    "shapes": [
+     "bha-prop--adventure"
+    ],
+    "filter": "drop-shadow(rgb(208, 174, 95) 2px 0px 0px) drop-shadow(rgb(2"
+   },
+   "resultChips": {
+    "chips": [
+     "힘+3",
+     "지능+2",
+     "속도+1가득"
+    ],
+    "inLeft": true,
+    "clipped": false
+   },
+   "x": {
+    "item": [
+     {
+      "box": "bha-modal bha-win bha-itemmodal",
+      "hits": []
+     }
+    ],
+    "help": [
+     {
+      "box": "bha-app bha-lcdpage bha-help-page",
+      "hits": []
+     }
+    ],
+    "settings": [],
+    "shop": [
+     {
+      "box": "bha-modal bha-win bha-itemmodal",
+      "hits": []
+     }
+    ]
+   },
+   "story": [
+    {
+     "title": "1장 「굶주린 영혼」",
+     "buttons": "열림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 앞 화를 깨면 열린다"
+    },
+    {
+     "title": "2장 「무리 속의 나」",
+     "buttons": "흐림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 3단계(아쥬커스)에 열린다"
+    },
+    {
+     "title": "3장 「가면을 깨는 자」",
+     "buttons": "흐림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 4단계(바스트로데)에 열린다"
+    }
+   ]
+  },
+  "ph": {
+   "tutDoor": {
+    "holeShape": true,
+    "holeOutline": "none",
+    "shapes": [
+     "bha-prop--outside"
+    ],
+    "filter": "drop-shadow(rgb(205, 168, 85) 2px 0px 0px) drop-shadow(rgb(2"
+   },
+   "tutMap": {
+    "holeShape": true,
+    "holeOutline": "none",
+    "shapes": [
+     "bha-prop--adventure"
+    ],
+    "filter": "drop-shadow(rgb(208, 174, 95) 2px 0px 0px) drop-shadow(rgb(2"
+   },
+   "resultChips": {
+    "chips": [
+     "힘+3",
+     "지능+2",
+     "속도+1가득"
+    ],
+    "inLeft": true,
+    "clipped": false
+   },
+   "x": {
+    "item": [
+     {
+      "box": "bha-modal bha-win bha-itemmodal",
+      "hits": []
+     }
+    ],
+    "help": [
+     {
+      "box": "bha-app bha-lcdpage bha-help-page",
+      "hits": []
+     }
+    ],
+    "settings": [],
+    "shop": [
+     {
+      "box": "bha-modal bha-win bha-itemmodal",
+      "hits": []
+     }
+    ]
+   },
+   "story": [
+    {
+     "title": "1장 「굶주린 영혼」",
+     "buttons": "열림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 앞 화를 깨면 열린다"
+    },
+    {
+     "title": "2장 「무리 속의 나」",
+     "buttons": "흐림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 3단계(아쥬커스)에 열린다"
+    },
+    {
+     "title": "3장 「가면을 깨는 자」",
+     "buttons": "흐림 흐림 흐림 흐림",
+     "cond": "열리는 조건: 4단계(바스트로데)에 열린다"
+    }
+   ]
+  }
+ },
+ "errors": []
+}

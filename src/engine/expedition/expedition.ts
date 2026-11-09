@@ -17,7 +17,7 @@ import {
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
-  addEv, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  addEv, addEvFree, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -317,6 +317,10 @@ export interface ExpeditionState extends RiskState {
   tilesLocked?: boolean;
   /** 튜토리얼 첫 흡수 보상 (GDD 67장 3번): 흡수 기록 대신 모든 능력치 노력치. 귀환 때 런 로그 tutorialRewards 로 */
   tutorialReward?: TutorialReward | null;
+  /** 원정 시작 때 노력치 (결과 화면 '힘 +3' 칩 = 끝 − 시작, GDD 217장 3). 옛 중간 저장엔 없음 → 칩 없음 */
+  evStart?: Record<StatId, number>;
+  /** 이번 원정에서 상한에 막혀 못 오른 노력치 (결과 화면 '가득' 표시, GDD 217장 3) */
+  evBlocked?: Partial<Record<StatId, number>>;
   /** 데리고 간 펫 (GDD 90장, C.144): 출발 때 친밀도까지 복사. 없으면 펫 효과 없음 */
   pet?: PetCarry | null;
   /** 바퀴 끝 펫 굴림을 하나 (게임만 켬 — 점검 봇·테스트는 끔) */
@@ -466,6 +470,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     foodLoot: [],
     lootRng: createRng((setup.seed ^ LOOT_SEED_SALT) >>> 0),
     evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
+    evStart: { ...(setup.evolution?.ev ?? newEvolution().ev) },
     risk: setup.risk ?? 0,
     riskPeak: setup.risk ?? 0,
     stability: setup.stability ?? RX.stabilityStart,
@@ -1046,7 +1051,7 @@ export type AbsorbResult = { ok: true } | { ok: false; reason: string };
 function trainingTileEv(exp: ExpeditionState, enemy: EnemyDef, n: number): void {
   const stat = trainingStatOf(enemy);
   if (!stat) return;
-  const got = addEv(exp.evolution, { [stat]: n })[stat] ?? 0;
+  const got = addEv(exp.evolution, { [stat]: n }, (exp.evBlocked ??= {}))[stat] ?? 0;
   exp.events.push({ kind: 'tile-ev', stat, amount: got });
 }
 
@@ -1146,7 +1151,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   logAbsorb(exp, offer, true, traitId, mode, enhance);
   const ev = absorbEvOf(offer, mode, exp.difficulty, exp.streak);
   const evK = dyingReward(exp) * lapRewardMult(exp.lap); // 빈사면 노력치 절반 (GDD 102장 수정), 이어하기 배율 (121장 5)
-  recordEvolutionAbsorb(exp.evolution, offer.element, evK === 1 ? ev : Object.fromEntries(Object.entries(ev).map(([k, v]) => [k, (v ?? 0) * evK])), mode !== 'stat');
+  recordEvolutionAbsorb(exp.evolution, offer.element, evK === 1 ? ev : Object.fromEntries(Object.entries(ev).map(([k, v]) => [k, (v ?? 0) * evK])), mode !== 'stat', (exp.evBlocked ??= {}));
   for (let i = 0; i < AX.bonusTiles; i++) drawTile(exp, 1, 'absorb');
   changeRisk(exp, absorbRisk(offer.strength, mode), 'absorb');
   // 스토리 흡수 목표 (GDD 25-4): 그 등급 적을 흡수
@@ -1195,13 +1200,13 @@ export function previewAbsorb(exp: ExpeditionState, mode: AbsorbMode | 'none'): 
 }
 
 /** 튜토리얼 첫 흡수 (GDD 67장 3번): 시스템상 흡수가 아니다 — 흡수 수·속성 카운트·특성·리스크·흡수 기록·보상 타일 없음.
- *  대신 능력치 6종 노력치를 같은 양(tutorialRun.statEv) 올리고(단계 상한 안), 원정을 끝낸다(귀환). 런 로그에는 귀환 때 '튜토리얼 보상'으로 따로 남는다 */
+ *  대신 능력치 6종 노력치를 같은 양(tutorialRun.statEv) 올리고(상한 밖 — GDD 217장 2), 원정을 끝낸다(귀환). 런 로그에는 귀환 때 '튜토리얼 보상'으로 따로 남는다 */
 export function tutorialAbsorb(exp: ExpeditionState): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer || !exp.tutorial) return { ok: false, reason: '튜토리얼 흡수를 고를 수 없는 때' };
   const want: Partial<Record<StatId, number>> = {};
   for (const s of STAT_IDS) want[s] = TUT.statEv;
-  exp.tutorialReward = { enemyId: offer.enemyId, element: offer.element, ev: addEv(exp.evolution, want) };
+  exp.tutorialReward = { enemyId: offer.enemyId, element: offer.element, ev: addEvFree(exp.evolution, want) }; // 상한 밖 (GDD 217장 2)
   exp.absorbOffer = null;
   exp.phase = 'moving';
   endExpedition(exp, 'returned', 'tutorial-clear');

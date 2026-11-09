@@ -23,6 +23,7 @@ import { expeditionEndVitals } from '../engine/nest';
 import { difficultyGoldMultiplier } from '../engine/difficulty';
 import { asBack } from './bha/screenBack';
 import { devText } from './displayName';
+import { evChipRow, evGains } from './bha/evChips';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -181,7 +182,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const left = el('section', 'bha-panel bha-result__left');
   const big = el('span', 'bha-result__big');
   big.append(icon(win ? 'i-return' : 'i-broken'));
-  left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evolveNote ? [evolveNote] : []));
+  // 이번에 오른 노력치 칩 (GDD 217장 3): '힘 +3' · 상한에 막혔으면 '가득'
+  const evRow = evChipRow(faction.id, evGains(exp.evStart, exp.evolution.ev, exp.evBlocked));
+  left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evRow ? [evRow] : []), ...(evolveNote ? [evolveNote] : []));
   const right = el('section', 'bha-result__right');
   right.append(...(storyBox ? [storyBox] : []), sum);
   const app = mountApp(root, { cls: `bha-v2 bha-resultv2 bha-resultv2--${win ? 'win' : 'lose'}` }, band, head, left, right, dock);

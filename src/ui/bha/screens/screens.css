@@ -139,6 +139,12 @@
 .bha-tut__actions .bha-btn--small { padding: 0 var(--bha-sp-4); font-size: var(--bha-fs-sm); }
 @keyframes bha-tut-ping { 0% { opacity: .8; transform: scale(.98); } 100% { opacity: 0; transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .bha-tut__hole::after { display: none; } }
+/* 그림 대상(방 물건·월드맵 장소·캐릭터) = 노란 네모 대신 그림 모양 윤곽 (GDD 217장 1): 구멍은 자리·덮개만, 테두리는 그림 칸 drop-shadow 네 방향 2px (같은 강조색) */
+.bha-tut__hole.is-shape { outline: none; }
+.bha-tut__hole.is-shape::after { display: none; }
+.bha-tut-shape { filter: drop-shadow(2px 0 0 var(--bha-chain2)) drop-shadow(-2px 0 0 var(--bha-chain2)) drop-shadow(0 2px 0 var(--bha-chain2)) drop-shadow(0 -2px 0 var(--bha-chain2)) drop-shadow(0 0 0 transparent); animation: bha-tut-shape 1.6s ease-in-out infinite; }
+@keyframes bha-tut-shape { 50% { filter: drop-shadow(2px 0 0 var(--bha-chain2)) drop-shadow(-2px 0 0 var(--bha-chain2)) drop-shadow(0 2px 0 var(--bha-chain2)) drop-shadow(0 -2px 0 var(--bha-chain2)) drop-shadow(0 0 6px var(--bha-chain2)); } }
+@media (prefers-reduced-motion: reduce) { .bha-tut-shape { animation: none; } }
 
 /* =========================================================
    상태 4바  .bha-nest__status   (돌보기 화면)

@@ -45,6 +45,9 @@ export interface EvolutionState {
   elitesDefeated: number;
   /** 노력치 (GDD 20-4): 흡수로 오르고 진화해도 유지된다. 단계별 상한 */
   ev: Stats;
+  /** 노력치 중 상한 밖 몫 (GDD 217장 2, 형식 67): 튜토리얼 보상(+3 × 6). ev 에 이미 들어 있고(능력치 값엔 더함) 단계 합계·능력치 하나 상한 계산에서만 뺀다.
+   *  진화해도 그대로, 부활은 ev 와 같은 비율로 깎이고, 환생하면 ev 와 같이 0(계승분은 ev 전체 기준). 없으면 0 */
+  evFree?: Stats;
   /** 지금 진화체의 고유 특성 방향 (진화 순간 노력치 최고 능력치, v4.0). 1단계는 null */
   ability: StatId | null;
   /** 단계 외형 스킨 id (GDD 53, 형식 33): 진화 순간 종족 설정 tierLooks 표로 정해 고정한다. 없거나 null = 기존 단계 그림 */
@@ -77,7 +80,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -98,18 +101,42 @@ export function evTotal(ev: Stats): number {
   return STAT_IDS.reduce((a, s) => a + ev[s], 0);
 }
 
-/** 노력치를 더한다 (상한까지만). 실제로 오른 양을 돌려준다 */
-export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
+/** 상한에 세는 노력치 = ev − 상한 밖 몫(evFree, 튜토리얼 보상 — GDD 217장 2) */
+export function evCounted(e: Pick<EvolutionState, 'ev' | 'evFree'>): Stats {
+  const out = zeroStats();
+  for (const s of STAT_IDS) out[s] = Math.max(0, e.ev[s] - (e.evFree?.[s] ?? 0));
+  return out;
+}
+
+/** 상한 밖 노력치를 더한다 (튜토리얼 보상, GDD 217장 2): 능력치 값엔 그대로 더하고 상한 계산엔 안 센다. 더한 양을 돌려준다 */
+export function addEvFree(e: EvolutionState, gain: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
+  const out: Partial<Record<StatId, number>> = {};
+  for (const s of STAT_IDS) {
+    const v = gain[s] ?? 0;
+    if (v <= 0) continue;
+    e.ev[s] += v;
+    (e.evFree ??= zeroStats())[s] += v;
+    out[s] = v;
+  }
+  return out;
+}
+
+/** 노력치를 더한다 (상한까지만 — 상한 밖 몫 evFree 는 세지 않는다). 실제로 오른 양을 돌려준다 */
+export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>, blocked?: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
   const cap = evCaps(e.tierIndex);
   const out: Partial<Record<StatId, number>> = {};
   const mult = evGainMultOf(e.abilities); // 허우적·마구잡이 (GDD 149장 3·4)
+  const counted = evCounted(e);
   for (const s of STAT_IDS) {
     const want = (gain[s] ?? 0) * mult;
     if (want <= 0) continue;
-    const room = Math.max(0, Math.min(cap.perStat - e.ev[s], cap.total - evTotal(e.ev)));
+    const room = Math.max(0, Math.min(cap.perStat - counted[s], cap.total - evTotal(counted)));
     const v = Math.round(Math.min(want, room) * 100) / 100; // 배율(×1/4 등)이 붙으면 소수 — 둘째 자리까지
+    // 상한에 막혀 못 오른 몫 (결과 화면 '가득' 표시, GDD 217장 3)
+    if (blocked && want - v > 1e-9) blocked[s] = Math.round(((blocked[s] ?? 0) + want - v) * 100) / 100;
     if (v > 0) {
       e.ev[s] += v;
+      counted[s] += v;
       out[s] = v;
     }
   }
@@ -117,10 +144,10 @@ export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>):
 }
 
 /** 흡수가 확정될 때: 단계 기록(흡수 수·속성별 흡수) + 노력치. countElement false(스탯만 흡수, GDD 52)면 속성 카운트는 안 올린다(흡수 수는 올린다) */
-export function recordEvolutionAbsorb(e: EvolutionState, element: string, ev: Partial<Record<StatId, number>> = {}, countElement = true): Partial<Record<StatId, number>> {
+export function recordEvolutionAbsorb(e: EvolutionState, element: string, ev: Partial<Record<StatId, number>> = {}, countElement = true, blocked?: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
   e.absorbs++;
   if (countElement) e.elementAbsorbs[element] = (e.elementAbsorbs[element] ?? 0) + 1;
-  return addEv(e, ev);
+  return addEv(e, ev, blocked);
 }
 
 export function recordEvolutionRelease(e: EvolutionState): void {
