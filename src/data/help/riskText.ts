@@ -4,6 +4,7 @@
 import { BALANCE } from '../../config/balance';
 import { fixParticles } from '../../engine/josa';
 import type { FactionConfig } from '../../engine/faction';
+import { tileName } from '../tiles';
 import { MINUS, multPct, num, numLine, pct, signed, zoneLine, type Zone } from './textFormat';
 
 const RX = BALANCE.provisional.risk;
@@ -16,7 +17,7 @@ const round1 = (v: number) => Math.round(v * 10) / 10;
 const absorbAt = (hpInAttacks: number) => round1(hpInAttacks * RX.absorbPerHpAttack);
 const lapAt = (lap: number) => round1((lap - LAP + 1) * RX.lateLapPerTile);
 
-type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
+type Names = Pick<FactionConfig, 'id' | 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
 
 export interface RiskText {
   /** 폭주 한 줄 (수치 줄) */
@@ -86,7 +87,8 @@ export function riskText(f: Names): RiskText {
     ],
     riskDown: [
       numLine('적 놓아주기', signed(-RX.releaseRelief)),
-      numLine('휴식 타일', signed(-RX.restRelief)),
+      // 휴식 칸은 C.355 (GDD 210장 1) 부터 리스크를 내리지 않는다 — 샘만
+      numLine(tileName('rest-spring', f.id), signed(-BALANCE.provisional.tiles.spring.riskRelief)),
       numLine(`${f.nestName} 돌봄 요청 응답`, ...careMoves('risk')),
     ],
     stabilityMove: [

@@ -237,8 +237,8 @@ describe('84장 1·10번 원정 칸 시간 ½ · 광기 자연 감소 느리게'
     expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
   });
 
-  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03, C.174 에서 0.02)', () => {
-    expect(RX.restRelief).toBe(10);
+  it('광기 하락: 휴식 15 → 10(C.355 부터 없음 — 210장) · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03, C.174 에서 0.02)', () => {
+    expect('restRelief' in RX).toBe(false);
     expect(RX.releaseRelief).toBe(1);
     expect(RX.nestActions.feed.risk).toBe(0); // C.351 (GDD 211장): 먹이 숨은 광기 하락 삭제 (옛 −3)
     expect(RX.nestActions.sleep.risk).toBe(-10);

@@ -145,7 +145,7 @@ describe('포식자 둥지 / 사냥꾼 출몰지', () => {
 });
 
 describe('영혼 샘 / 정화의 샘', () => {
-  it('배부름·컨디션 회복 없음, 리스크는 휴식(rest-a)의 ×2', () => {
+  it('배부름·컨디션 회복 없음, 리스크 −20 (C.355: 휴식 rest-a 는 리스크를 안 내린다)', () => {
     const run = (id: string) => {
       const e = exp();
       road(e, { 3: id });
@@ -160,8 +160,9 @@ describe('영혼 샘 / 정화의 샘', () => {
     };
     const rest = run('rest-a');
     const spring = run('rest-spring');
-    expect(rest.risk).toBe(RX.restRelief);
-    expect(spring.risk).toBe(RX.restRelief * T.spring.riskReliefMult);
+    expect(rest.risk).toBe(0);
+    expect(spring.risk).toBe(T.spring.riskRelief);
+    expect(T.spring.riskRelief).toBe(20);
     expect(spring.hunger).toBe(0);
     expect(spring.cond).toBe(0);
     expect(rest.hunger).toBeGreaterThan(0);

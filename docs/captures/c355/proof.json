@@ -1,0 +1,207 @@
+{
+ "checks": {
+  "ph-h": {
+   "restCard": 1,
+   "departed-lap1": {
+    "lap": 1,
+    "pos": 0,
+    "phase": "moving",
+    "hunger": 40.00680694444445,
+    "condition": 70,
+    "risk": 0,
+    "hp": 0.9016336666666668,
+    "slots": [
+     null,
+     "rest-a",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "tempLog": [],
+    "hand": [],
+    "draft": null
+   },
+   "patch1": [
+    "ok:1"
+   ],
+   "rest1": {
+    "start": {
+     "hunger": "45 / 100",
+     "cond": "50 · 공허 +8%",
+     "risk": "30 / 100",
+     "hp": "60%"
+    },
+    "end": {
+     "hunger": "46 / 100",
+     "cond": "51 · 공허 +5%",
+     "risk": "30 / 100",
+     "hp": "61%"
+    },
+    "after": {
+     "hunger": "60 / 100",
+     "cond": "65 · 공허 +5%",
+     "risk": "30 / 100",
+     "hp": "75%"
+    },
+    "msg": "배부름·컨디션이 회복됐다",
+    "changing": [
+     "hunger",
+     "cond",
+     "hp"
+    ],
+    "saved": {
+     "lap": 1,
+     "hunger": 40.4,
+     "condition": 65,
+     "risk": 30,
+     "hp": 0.75
+    }
+   },
+   "departed-lap3": {
+    "lap": 1,
+    "pos": 0,
+    "phase": "moving",
+    "hunger": 40.00692777777778,
+    "condition": 70,
+    "risk": 0,
+    "hp": 0.9016626666666668,
+    "slots": [
+     null,
+     "rest-a",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "tempLog": [],
+    "hand": [],
+    "draft": null
+   },
+   "patch3": [
+    "ok:1"
+   ],
+   "rest3": {
+    "start": {
+     "hunger": "45 / 100",
+     "cond": "50 · 공허 +8%",
+     "risk": "30 / 100",
+     "hp": "60%"
+    },
+    "end": {
+     "hunger": "45 / 100",
+     "cond": "50 · 공허 +6%",
+     "risk": "30 / 100",
+     "hp": "60%"
+    },
+    "after": {
+     "hunger": "54 / 100",
+     "cond": "60 · 공허 +6%",
+     "risk": "30 / 100",
+     "hp": "70%"
+    },
+    "msg": "배부름·컨디션이 회복됐다",
+    "changing": [
+     "hunger",
+     "cond",
+     "hp"
+    ],
+    "saved": {
+     "lap": 3,
+     "hunger": 45.8,
+     "condition": 59.6,
+     "risk": 30,
+     "hp": 0.696
+    }
+   }
+  },
+  "pc-h": {
+   "restCard": 1,
+   "departed": {
+    "lap": 1,
+    "pos": 0,
+    "phase": "moving",
+    "hunger": 40.00707361111111,
+    "condition": 70,
+    "risk": 0,
+    "hp": 0.9016976666666667,
+    "slots": [
+     null,
+     "rest-a",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "tempLog": [],
+    "hand": [],
+    "draft": null
+   },
+   "lapTries": [
+    {
+     "sheet": true,
+     "title": "1바퀴 끝 — 둥지에 도착",
+     "lapTemp": null,
+     "lapTempId": null,
+     "draft": null,
+     "msg": "둥지에 도착했다",
+     "handTemp": 0,
+     "lap": 1,
+     "tempLog": []
+    },
+    {
+     "sheet": true,
+     "title": "1바퀴 끝 — 둥지에 도착",
+     "lapTemp": null,
+     "lapTempId": null,
+     "draft": null,
+     "msg": "둥지에 도착했다",
+     "handTemp": 0,
+     "lap": 1,
+     "tempLog": []
+    },
+    {
+     "sheet": true,
+     "title": "1바퀴 끝 — 둥지에 도착",
+     "lapTemp": "임시 타일: 황무지 — 이번 모험 동안만 길에 놓을 수 있다",
+     "lapTempId": "env-wasteland",
+     "draft": null,
+     "msg": "임시 타일: 황무지 · 둥지에 도착했다",
+     "handTemp": 0,
+     "lap": 1,
+     "tempLog": [
+      {
+       "tileId": "env-wasteland",
+       "lap": 1,
+       "from": "lap"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "shots": [
+  "ph-h-rest-lap1.png",
+  "ph-h-rest-lap3.png",
+  "pc-h-lapend.png"
+ ],
+ "errors": []
+}

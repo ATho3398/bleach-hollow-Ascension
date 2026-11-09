@@ -185,10 +185,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let nearMsg: string | null = null;
 
   function tick(): void {
-    const before = exp.hand.length;
     const ev = advance(exp);
     if (!ev) return resumeClock();
-    const got = exp.hand.length - before;
     const events = drainEvents(exp);
     for (const e of events) {
       if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
@@ -205,14 +203,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         root.replaceChildren(stage);
         away = false;
         lastWatch = monoNow();
-        handle(ev, got);
+        handle(ev);
       });
       return;
     }
-    handle(ev, got);
+    handle(ev);
   }
 
-  function handle(ev: StepEvent, got: number): void {
+  function handle(ev: StepEvent): void {
     switch (ev.kind) {
       case 'move':
         msg = nearMsg ?? '';
@@ -252,7 +250,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         return;
       case 'lap-complete':
         planner.reset();
-        msg = `${got > 0 ? `타일 획득: ${tn(ev.rewardTile!)} · ` : ''}${faction.nestName}에 도착했다`;
+        // 바퀴 끝 임시 타일 (GDD 210장 2, C.355): 고르기 창 없이 받은 1장을 한 줄로 (못 받으면 도착만)
+        msg = `${ev.rewardTile ? `임시 타일: ${tn(ev.rewardTile)} · ` : ''}${faction.nestName}에 도착했다`;
         // 펫 (GDD 90장): 바퀴 끝 보상 펫 · pet-seek 타일 +1장
         if (ev.petFound) msg = `펫 발견: ${petName(ev.petFound, faction)}! · ${msg}`;
         if (ev.petTile) msg = `${msg} · 펫이 타일을 물어 왔다: ${tn(ev.petTile)}`;
@@ -631,6 +630,13 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 노란 알림은 맨 위 (GDD 140장 2)
     // 권장 바퀴 딱 = '다 돌았다', 넘기면 '넘겼다' (GDD 176장 18: 2바퀴 막 끝냈는데 '넘겼다'였다)
     if (over) info.append(notice('warn', exp.lap === EX.defaultLaps ? '권장 바퀴를 다 돌았다. 더 돌수록 보상도 위험도 커진다.' : `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 바퀴 끝 임시 타일 한 줄 알림 (GDD 210장 2, C.355): 이번 바퀴 끝에 받은 임시 타일(고르기 없음) — 없으면 줄 없음
+    const lapTemp = (exp.tempLog ?? []).find((t) => t.from === 'lap' && t.lap === exp.lap);
+    if (lapTemp) {
+      const line = notice('info', `임시 타일: ${tn(lapTemp.tileId)} — 이번 모험 동안만 길에 놓을 수 있다`, { icon: 'i-timer' });
+      line.dataset.lapTemp = lapTemp.tileId;
+      info.append(line);
+    }
 
     // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
     const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);

@@ -49,10 +49,10 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8');
     expect(src).toContain('const pace = exp.tutorial || bossId ? 1 : carryHitPacing(exp.difficulty);');
   });
-  it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~70%·3바퀴 15% 이하)", () => {
+  it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~75%(C.355 210장 3: 70 → 75)·3바퀴 15% 이하)", () => {
     const b = readFileSync('scripts/balance.ts', 'utf8');
     expect(b).not.toContain('R.defeat < 0.25 || R.defeat > 0.55');
-    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.7) && '2바퀴 25~70% 밖'");
+    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.75) && '2바퀴 25~75% 밖'");
   });
   it("화면 문구 '기본 4바퀴' → '권장 n바퀴' (C.212: 권장 2바퀴)", () => {
     expect(BALANCE.expedition.defaultLaps).toBe(2);

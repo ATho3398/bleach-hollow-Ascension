@@ -101,16 +101,21 @@ describe('121장 4: 타일 지급 — 임시 타일(이번 원정만) · 영구 
     }
   });
 
-  it('드래프트로 고른 타일은 [한 바퀴 더] 뒤에도 손에 남는다 (임시)', () => {
-    const e = mk({ seed: 11, tileVariants: true });
-    runLap(e);
-    expect(e.draft).not.toBeNull();
-    expect(chooseDraft(e, 0).ok).toBe(true);
-    const id = e.draft!.options[0]!;
-    chooseContinue(e);
-    expect(e.hand).toContain(id);
-    expect(e.tempHand).toContain(id);
-    expect(e.tempLog!.some((t) => t.from === 'draft' && t.tileId === id)).toBe(true);
+  it('바퀴 끝 임시 타일(C.355: 옛 드래프트 대신 70% 무작위 1장)은 [한 바퀴 더] 뒤에도 손에 남는다 (임시)', () => {
+    let seen = false;
+    for (let seed = 11; seed < 31 && !seen; seed++) {
+      const e = mk({ seed, tileVariants: true });
+      runLap(e);
+      expect(e.draft).toBeNull();
+      expect(chooseDraft(e, 0).ok).toBe(false);
+      const t = e.tempLog?.find((x) => x.from === 'lap' && x.lap === 1);
+      if (!t) continue;
+      seen = true;
+      chooseContinue(e);
+      expect(e.hand).toContain(t.tileId);
+      expect(e.tempHand).toContain(t.tileId);
+    }
+    expect(seen).toBe(true);
   });
 
   it('귀환으로 끝나면 영구 타일 굴림 1번(확률 = 40% + 4%/추가 바퀴, 최대 60%), 패배·바퀴 0 은 굴림 없음', () => {

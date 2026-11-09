@@ -210,7 +210,7 @@ describe('107장 원정 체력 이어 가기', () => {
     exp.restMult = 1;
     exp.restSpring = false;
     finishRest(exp);
-    expect(hpFractionOf(exp)).toBeCloseTo(Math.min(1, 0.4 + PX.hpCarry.winHeal + PX.hpCarry.restHeal), 6);
+    expect(hpFractionOf(exp)).toBeCloseTo(Math.min(1, 0.4 + PX.hpCarry.winHeal + PX.restRecover.base), 6); // C.355: 웅덩이 1바퀴 15%
     exp.hpFraction = 0.3;
     const toBattle = (): void => {
       for (let i = 0; i < 500; i++) {

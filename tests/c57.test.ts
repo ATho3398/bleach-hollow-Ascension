@@ -158,7 +158,7 @@ describe('② 인접 시너지', () => {
     expect(e.restMult).toBe(TV.synergies.oasis!.restMult);
     const before = e.hunger;
     finishRest(e);
-    expect(before - e.hunger).toBeCloseTo(BALANCE.provisional.expedition.restHunger * 1.5, 5);
+    expect(before - e.hunger).toBeCloseTo(BALANCE.provisional.expedition.hungerMax * BALANCE.provisional.expedition.restRecover.base * 1.5, 5); // C.355: 1바퀴 15% × 오아시스 1.5
   });
   it('타일 변수를 끄면 시너지·드래프트·변이가 없다', () => {
     const e = exp('hollow', { variants: false });
@@ -169,41 +169,52 @@ describe('② 인접 시너지', () => {
   });
 });
 
-describe('① 드래프트', () => {
-  it('카드 3장, 특수 칸은 덱 밖 타일 또는 이벤트', () => {
+describe('① 바퀴 끝 임시 타일 (옛 드래프트 — C.355 GDD 210장 2: 고르기 없이 70% 무작위 1장)', () => {
+  it('후보 풀 1장: 특수 칸은 덱 밖 타일 또는 이벤트', () => {
     const deck = ['prey-nest-a', 'prey-nest-a'];
     let special = 0;
     for (let s = 1; s <= 200; s++) {
       const d = drawDraft(createRng(s), 'hollow', deck);
       expect(d.length).toBe(TV.draft.cards);
-      expect(d.slice(0, 2).every((id) => id === 'prey-nest-a')).toBe(true);
-      if (d[2] !== 'prey-nest-a') {
+      expect(TV.draft.cards).toBe(1);
+      if (d[0] !== 'prey-nest-a') {
         special++;
-        expect(getTile(d[2]!).kind === 'event' || !deck.includes(d[2]!)).toBe(true);
+        expect(getTile(d[0]!).kind === 'event' || !deck.includes(d[0]!)).toBe(true);
       }
     }
     expect(special / 200).toBeGreaterThan(0.15);
     expect(special / 200).toBeLessThan(0.45);
   });
-  it('바퀴 끝에 3장 → 1장 고르면 임시 타일로 손에, 계속해도 이번 원정 동안 남는다(121장 4 ②). 덱·보유에는 안 들어감', () => {
-    const e = exp();
-    road(e, {});
-    stepTo(e, 0);
-    expect(e.phase).toBe('nest-choice');
-    expect(e.draft!.options.length).toBe(3);
-    const hand0 = e.hand.length;
-    const acq0 = e.acquired.length;
-    expect(chooseDraft(e, 1).ok).toBe(true);
-    expect(e.acquired.length).toBe(acq0);
-    expect(chooseDraft(e, 0).ok).toBe(false);
-    expect(e.hand.length).toBe(hand0 + 1);
-    const id = e.draft!.options[1]!;
-    expect(e.tempHand).toContain(id);
-    chooseContinue(e);
-    expect(e.hand.length).toBe(hand0 + 1);
-    expect(e.tempHand).toContain(id);
-    expect(e.draft).toBeNull();
-    expect(e.variantLog.drafts).toEqual([{ tileId: id, lap: 1 }]);
+  it('바퀴 끝: 고르기 창 없음(draft null), 받으면 임시 타일 1장이 손에 — 계속해도 이번 원정 동안 남고 덱·보유에는 안 들어감(121장 4 ②), 런 로그 drafts 에 남는다', () => {
+    let got = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const e = exp('hollow', { seed });
+      road(e, {});
+      const hand0 = e.hand.length;
+      const acq0 = e.acquired.length;
+      const ev = stepTo(e, 0);
+      expect(e.phase).toBe('nest-choice');
+      expect(e.draft).toBeNull();
+      expect(chooseDraft(e, 0).ok).toBe(false);
+      expect(ev).toMatchObject({ kind: 'lap-complete', lap: 1 });
+      const id = ev?.kind === 'lap-complete' ? ev.rewardTile : null;
+      expect(e.acquired.length).toBe(acq0);
+      if (id === null) {
+        expect(e.hand.length).toBe(hand0);
+        expect(e.variantLog.drafts).toEqual([]);
+        continue;
+      }
+      got++;
+      expect(e.hand.length).toBe(hand0 + 1);
+      expect(e.tempHand).toContain(id);
+      expect(e.tempLog!.filter((t) => t.lap === 1)).toEqual([{ tileId: id, lap: 1, from: 'lap' }]);
+      expect(e.variantLog.drafts).toEqual([{ tileId: id, lap: 1 }]);
+      chooseContinue(e);
+      expect(e.hand.length).toBe(hand0 + 1);
+      expect(e.tempHand).toContain(id);
+    }
+    expect(got).toBeGreaterThan(18); // 70% 안팎 (40판)
+    expect(got).toBeLessThan(38);
   });
   it('봇은 시너지가 생기는 카드를 골라 바로 놓는다', () => {
     const e = exp();
@@ -414,8 +425,8 @@ describe('골드·런 로그·세이브', () => {
     e.bonusSoul = 2;
     e.variantLog.events.push({ event: 'trap', choice: 'armed', lap: 1 });
     e.variantLog.mutations.push({ id: 'calm', lap: 1 });
-    stepTo(e, 0);
-    chooseDraft(e, 0);
+    const lapEv = stepTo(e, 0);
+    const lapTile = lapEv?.kind === 'lap-complete' ? lapEv.rewardTile : null;
     chooseReturn(e);
     const soul0 = s.shared.soulCrystals;
     recordExpedition(s, e, 5);
@@ -425,7 +436,7 @@ describe('골드·런 로그·세이브', () => {
     expect(run.synergies).toEqual(['pack']);
     expect(run.events).toEqual([{ event: 'trap', choice: 'armed', lap: 1 }]);
     expect(run.mutations).toEqual([{ id: 'calm', lap: 1 }]);
-    expect(run.drafts!.length).toBe(1);
+    expect(run.drafts).toEqual(lapTile ? [{ tileId: lapTile, lap: 1 }] : []); // C.355: 바퀴 끝 임시 타일(70%)이 drafts 기록
     expect(run.gold).toBe(BALANCE.provisional.gold.normal);
     expect(buildRunRecord(e).gold).toBe(run.gold);
   });

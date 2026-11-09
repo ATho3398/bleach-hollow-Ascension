@@ -133,12 +133,12 @@ describe('원정 순환', () => {
     expect(exp.acquired.length).toBe(exp.permTile ? 1 : 0);
   });
 
-  it('바퀴당 (임시) 타일 획득은 2~3장', () => {
+  it('바퀴당 (임시) 타일 획득은 1~3장 (바퀴 완주 1장이 C.355 부터 70% 확률 — GDD 210장 2)', () => {
     const exp = mk({ seed: 6 });
     for (let lap = 1; lap <= 4; lap++) {
       runLap(exp);
       const n = (exp.tempLog ?? []).filter((a) => a.lap === lap).length;
-      expect(n).toBeGreaterThanOrEqual(BALANCE.expedition.tilesPerLap.min);
+      expect(n).toBeGreaterThanOrEqual(BALANCE.expedition.tilesPerLap.min - 1);
       expect(n).toBeLessThanOrEqual(BALANCE.expedition.tilesPerLap.max);
       chooseContinue(exp);
     }
@@ -209,7 +209,7 @@ describe('허기', () => {
     expect(summarize(exp).outcome).toBe('defeated');
   });
 
-  it('휴식 타일은 허기·컨디션을 회복하고 시간을 쓴다', () => {
+  it('휴식 타일은 허기·컨디션을 최대치의 15%(1바퀴) 회복하고 시간을 쓴다 (GDD 210장 1)', () => {
     const exp = mk({ hunger: 60, condition: 40, seed: 12 });
     exp.hand = ['rest-a'];
     expect(placeTile(exp, 'rest-a', 1).ok).toBe(true);
@@ -217,8 +217,9 @@ describe('허기', () => {
     expect(exp.phase).toBe('rest');
     const before = { h: exp.hunger, c: exp.condition, t: exp.elapsedSeconds };
     finishRest(exp);
-    expect(exp.hunger).toBeCloseTo(before.h - BALANCE.provisional.expedition.restHunger);
-    expect(exp.condition).toBe(before.c + BALANCE.provisional.expedition.restCondition);
+    const R = BALANCE.provisional.expedition.restRecover;
+    expect(exp.hunger).toBeCloseTo(before.h - BALANCE.provisional.expedition.hungerMax * R.base);
+    expect(exp.condition).toBeCloseTo(before.c + BALANCE.provisional.expedition.conditionMax * R.base);
     expect(exp.elapsedSeconds).toBeGreaterThan(before.t);
     expect(exp.phase).toBe('moving');
   });

@@ -710,7 +710,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (exp.pos === 0) {
     exp.lapsCompleted = exp.lap;
-    const reward = drawTile(exp, 0, 'lap');
+    const reward = rollLapTempTile(exp);
     const petLap = lapPetRolls(exp);
     // 스토리 버티기 목표 (GDD 25-4): 마친 바퀴 수
     const st = exp.story;
@@ -720,8 +720,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     }
     if (exp.lap >= exp.maxLaps) return endExpedition(exp, 'returned', 'forced-max-laps');
     exp.phase = 'nest-choice';
-    // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장 (스토리는 끔)
-    if (exp.tileVariants && !exp.story && !exp.tilesLocked) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
+    // 옛 드래프트(3장 중 1장 고르기)는 C.355 (GDD 210장 2) 에서 폐지 — 바퀴 끝 임시 타일은 rollLapTempTile 이 고르기 없이 준다. draft 는 이어하기 호환으로만 남는다(늘 null)
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward, ...petLap };
   }
   const cell = exp.pos;
@@ -1192,18 +1191,27 @@ export function drainEvents(exp: ExpeditionState): EngineEvent[] {
   return exp.events.splice(0, exp.events.length);
 }
 
-/** 휴식 타일 효과: 허기·컨디션 회복, 시간 소모 */
+/** 휴식 칸 회복 비율 (GDD 210장 1, C.355): n바퀴째 = base × perLapDecay^(n−1), 최저 min — 배부름·컨디션·체력 모두 최대치의 이 비율(상위 타일·시너지 배율은 따로 곱한다) */
+export function restRecoverFraction(lap: number): number {
+  const R = PX.restRecover;
+  return Math.max(R.min, R.base * Math.pow(R.perLapDecay, Math.max(1, lap) - 1));
+}
+
+/** 휴식 타일 효과: 배부름·컨디션·체력 회복(바퀴마다 줄어듦, 리스크는 그대로 — GDD 210장 1), 시간 소모. 샘은 회복 없이 리스크만 내린다 */
 export function finishRest(exp: ExpeditionState): void {
   if (exp.phase !== 'rest') throw new Error('휴식 중이 아니다');
   // 회복 배율: 상위 타일(휴식+)·시너지(오아시스) (GDD 25-5)
   const k = exp.restMult ?? 1;
-  // 영혼 샘/정화의 샘 (C.124): 회복 대신 리스크만 크게
-  const sp = exp.restSpring ? TT.spring : { hungerMult: 1, conditionMult: 1, riskReliefMult: 1 };
-  exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k * sp.hungerMult);
-  changeRisk(exp, -RX.restRelief * k * sp.riskReliefMult, 'rest');
-  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k * sp.conditionMult);
-  // 웅덩이 체력 회복 (GDD 107장 3번 ②): 컨디션처럼 회복 배율·샘(회복 없음)을 따른다
-  healCarry(exp, PX.hpCarry.restHeal * k * sp.conditionMult);
+  if (exp.restSpring) {
+    // 영혼 샘/정화의 샘 (C.124, 210장 대상 아님): 회복 대신 리스크만
+    changeRisk(exp, -TT.spring.riskRelief * k, 'rest');
+  } else {
+    const frac = restRecoverFraction(exp.lap) * k;
+    exp.hunger = Math.max(0, exp.hunger - PX.hungerMax * frac);
+    exp.condition = Math.min(PX.conditionMax, exp.condition + PX.conditionMax * frac);
+    // 웅덩이 체력 회복 (GDD 107장 3번 ② → 210장 1): 배부름·컨디션과 같은 비율
+    healCarry(exp, frac);
+  }
   exp.restMult = 1;
   exp.restSpring = false;
   exp.elapsedSeconds += PX.restTimeTiles * EX.restSecondsPerTile;
@@ -1403,6 +1411,22 @@ function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?
   const tileChance = petBonus(exp.pet, 'seekTile');
   if (tileChance > 0 && nextFloat(rng) < tileChance) out.petTile = drawTile(exp);
   return out;
+}
+
+/** 바퀴 끝 임시 타일 (GDD 210장 2, C.355): chance(70%) 확률로 고르기 없이 무작위 1장, 나머지는 없음. 굴림은 걷기 RNG(exp.rng) — 같은 시드 = 같은 결과.
+ *  후보 풀은 옛 드래프트와 같다(타일 변수 켬·스토리 아님·타일 잠김 아님: 덱·덱 밖 타일·이벤트 타일, 변수 RNG) — 런 로그 drafts 에 그대로 남긴다. 그 밖(변수 끔·스토리)은 덱에서 1장.
+ *  바퀴 합계 상한(tilesPerLap.max)·빈 덱 규칙은 drawTile 과 같다 */
+function rollLapTempTile(exp: ExpeditionState): string | null {
+  if (nextFloat(exp.rng) >= TV.draft.chance) return null;
+  if (!(exp.tileVariants && !exp.story && !exp.tilesLocked)) return drawTile(exp, 0, 'lap');
+  if (exp.tilesThisLap >= EX.tilesPerLap.max) return null;
+  const id = drawDraft(exp.varRng, exp.factionId, exp.deck)[0];
+  if (id === undefined) return null;
+  addTemp(exp, id, 'lap');
+  exp.variantLog.drafts.push({ tileId: id, lap: exp.lap });
+  exp.hand.push(id);
+  exp.tilesThisLap++;
+  return id;
 }
 
 /** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게).

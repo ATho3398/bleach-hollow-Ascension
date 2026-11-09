@@ -18,7 +18,7 @@ describe('C.141', () => {
       const f = getFaction(id);
       const t = riskText(f);
       const all = [t.riskTip, ...t.riskDoes, ...zoneLines(riskZones(f)), ...t.riskUp, ...t.riskDown, ...t.stabilityDoes, ...t.stabilityMove].join('\n');
-      for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.breakthroughStabilityLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, RX.restRelief, RX.stabilityStart]) expect(all).toContain(String(n));
+      for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.breakthroughStabilityLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, BALANCE.provisional.tiles.spring.riskRelief, RX.stabilityStart]) expect(all).toContain(String(n)); // C.355: 휴식 칸 내림 삭제 → 샘 값
       expect(all).toContain(`+${Math.round(RX.breakthroughSpawnBonus * 100)}%`);
       expect(t.riskDoes[0]).toContain('직접 손해가 없고');
       expect(t.stabilityDoes[0]).toContain('해방 게이지');
