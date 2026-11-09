@@ -349,12 +349,13 @@
     "arrancar_f": {
       "pivots": {
         "arm_R": [24, 34],
-        "forearm_R": [29, 41],
+        "forearm_R": [29, 39],
         "foot_R": [22, 75],
         "forearm_L": [7, 44],
         "hair_back2": [22, 19],
         "cape2": [17, 42],
-        "cape3": [17, 55]
+        "cape3": [17, 55],
+        "arm_L": [11, 31]
       },
       "rot": {
         "forearm_R": -15,
@@ -363,7 +364,8 @@
         "arm_R": 4
       },
       "shift": {
-        "arm_R": [-0.54, 0.43]
+        "arm_R": [-0.54, 0.43],
+        "forearm_R": [-0.52, 0.06]
       }
     },
     "female": {
