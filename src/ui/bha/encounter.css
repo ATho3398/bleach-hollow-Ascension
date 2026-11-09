@@ -1,15 +1,16 @@
 /* 걷는 앞쪽에 서 있는 것 (GDD 128장 2·3, C.202): 조우한 적·휴식 칸 장소가 왼쪽(진행 방향)에서 다가와 캐릭터 앞에 선다.
    길(.bha-walk__ahead)은 장면 크기 상자라 cqw·cqh 로 캐릭터(가운데, 높이 60%·정사각) 바로 앞 자리를 잡는다. 디자인 토큰만 쓴다. */
 .bha-walk__ahead { position: absolute; inset: 0; z-index: 1; pointer-events: none; container-type: size; overflow: hidden; }
+/* 크기 규칙 하나 (C.348, GDD 206장 보충): 적 칸 키 = 내 캐릭터 칸 키(--bha-fig-h, 장면 높이 %). 일반·강적·보스 모두 같은 칸 —
+   그림 크기 차이는 그림 목록 배율(ART_MANIFEST scale, 적·나 공용)만 정한다. 그래야 적 덩치·내 덩치 도트 한 칸이 같다 */
+.bha-walk { --bha-fig-h: 53; --bha-fig-gap: 0.4; } /* 53 = C.345 걷기의 적 칸 46·내 칸 60 의 중간(사용자 "중간정도로"), 틈 = 몸 폭(≈칸 폭)의 0.4배 */
 .bha-ahead {
-  --ahead-h: 46cqh;
-  --ahead-stop: calc(50cqw + 30cqh + 2cqh);
+  --ahead-h: calc(var(--bha-fig-h) * 1cqh);
+  --ahead-stop: calc(50cqw + var(--bha-fig-h) * (0.5 + var(--bha-fig-gap)) * 1cqh);
   position: absolute; bottom: 10%; right: var(--ahead-stop); height: var(--ahead-h); aspect-ratio: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   animation: bha-ahead-come var(--ahead-ms, 1300ms) var(--bha-ease-out) both;
 }
-.bha-ahead--elite { --ahead-h: 52cqh; }
-.bha-ahead--boss { --ahead-h: 60cqh; --ahead-stop: calc(50cqw + 30cqh); }
 .bha-ahead--rest { --ahead-h: 40cqh; --ahead-stop: calc(50cqw + 26cqh); aspect-ratio: 1.4; }
 @keyframes bha-ahead-come { from { right: 100cqw; } to { right: var(--ahead-stop); } }
 @keyframes bha-ahead-go { from { right: var(--ahead-stop); } to { right: calc(var(--ahead-h) * -1.6); } }

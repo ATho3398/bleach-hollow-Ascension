@@ -9,12 +9,11 @@
 .bha-lcd .bha-exp__scene { flex: 1 1 0; min-width: 0; }
 
 /* 캐릭터: 장면 높이의 약 2/3, 오른쪽 가운데(62%). 걷는 상자 안에 머리 위 말풍선을 붙인다 */
-.bha-lcd .bha-exp { --walker-x: 62; }
-.bha-lcd .bha-walker { left: calc(var(--walker-x) * 1%); transform: translateX(-50%); bottom: 10%; height: 60%; width: auto; max-width: 70%; }
+.bha-lcd .bha-exp { --walker-x: 68; } /* C.348: 62 → 68 (사용자 "내 캐릭 걷는 위치 조금만 더 뒤로") */
+.bha-lcd .bha-walker { left: calc(var(--walker-x) * 1%); transform: translateX(-50%); bottom: 10%; height: calc(var(--bha-fig-h, 53) * 1%); width: auto; max-width: 70%; } /* 키 = 적 칸과 같은 --bha-fig-h (encounter.css, C.348) */
 .bha-walk__layer--ground { top: 62%; }
 /* 걷는 앞쪽(encounter.css)의 멈춤 자리를 캐릭터 자리(62%)에 맞춘다: 오른쪽 끝에서 (100 − 62)% + 캐릭터 반 폭(30cqh) */
-.bha-lcd .bha-exp .bha-ahead { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 32cqh); }
-.bha-lcd .bha-exp .bha-ahead--boss { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 30cqh); }
+.bha-lcd .bha-exp .bha-ahead { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + var(--bha-fig-h) * (0.5 + var(--bha-fig-gap)) * 1cqh); }
 .bha-lcd .bha-exp .bha-ahead--rest { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 26cqh); }
 
 /* GDD 197장 3 (C.319): 왼쪽 위 = C.281(68acec7) 능력치 상태창 값 그대로 — 사냥터 이름 · 폭주/강적 칩 · 바퀴·배부름·컨디션·광기 막대 · 슬롯 줄.
