@@ -49,10 +49,10 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8');
     expect(src).toContain('const pace = exp.tutorial || bossId ? 1 : carryHitPacing(exp.difficulty);');
   });
-  it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~70%·3바퀴 15% 이하)", () => {
+  it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~75%(C.355 210장 3: 70 → 75)·3바퀴 15% 이하)", () => {
     const b = readFileSync('scripts/balance.ts', 'utf8');
     expect(b).not.toContain('R.defeat < 0.25 || R.defeat > 0.55');
-    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.7) && '2바퀴 25~70% 밖'");
+    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.75) && '2바퀴 25~75% 밖'");
   });
   it("화면 문구 '기본 4바퀴' → '권장 n바퀴' (C.212: 권장 2바퀴)", () => {
     expect(BALANCE.expedition.defaultLaps).toBe(2);
@@ -120,7 +120,7 @@ describe('123장 3 방 발밑 체력 막대', () => {
     // C.303 (GDD 192장 2): v2 .bha-hp(C.284) → C.281 모양 그대로 = 기존 meter player, '현재 / 최대' 막대 안
     // C.318 (GDD 197장 4): 막대는 공용 부품 statusBox.homeHpMeter (방·온천 같은 것)
     expect(v).toContain('hpBox.replaceChildren(homeHpMeter(f, maxHp));');
-    expect(readFileSync('src/ui/bha/statusBox.ts', 'utf8')).toContain("return meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` });");
+    expect(readFileSync('src/ui/bha/statusBox.ts', 'utf8')).toContain("return tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` }), 'hp');"); // C.343: 깜빡임 대상 표시
     expect(readFileSync('src/ui/bha/room.ts', 'utf8')).toContain("'--foot-y'");
     expect(readFileSync('src/ui/bha/room.css', 'utf8')).toContain('var(--foot-y');
   });
@@ -329,7 +329,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(66); // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

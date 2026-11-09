@@ -1,0 +1,46 @@
+{
+  "shots": [
+    "ph-hollow-notice.png",
+    "ph-hollow-aura.png",
+    "pc-shinigami-aura.png",
+    "pc-shinigami-aura-sel.png"
+  ],
+  "checks": {
+    "ph-hollow": {
+      "before": {
+        "ready": false,
+        "notice": false
+      },
+      "atRise": {
+        "ready": true,
+        "notice": true,
+        "text": "레스렉시온 가능!",
+        "pointer": "none",
+        "pop": true
+      },
+      "after": {
+        "ready": true,
+        "notice": false,
+        "auraShown": "block"
+      }
+    },
+    "pc-shinigami": {
+      "before": {
+        "ready": false,
+        "notice": false
+      },
+      "atRise": {
+        "ready": true,
+        "notice": true,
+        "text": "만해 가능!",
+        "pointer": "none",
+        "pop": true
+      },
+      "after": {
+        "ready": true,
+        "notice": false,
+        "auraShown": "block"
+      }
+    }
+  }
+}

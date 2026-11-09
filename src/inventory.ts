@@ -6,7 +6,8 @@ import { cosmeticName, COSMETIC_ITEMS, foodBlurb, GOLD_ITEMS, getCosmetic, getGo
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
-import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nest';
+import { CARE_STATUS_NAMES, homeHpCap, homeHpOf } from './engine/nest';
+import { foodEffectText } from './foodText';
 import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { guidePending } from './engine/tutorial';
@@ -19,6 +20,7 @@ import { GEAR_GRADE_NAMES, GEAR_SLOTS, getGearSpecial, slotsForKind, type GearGr
 import { autoEquipPlan, enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
 import { statName } from './data/elements';
 import type { BattleItemEffect } from './engine/combat';
+import { lapItemUsed, markLapItem, type ExpeditionState } from './engine/expedition/expedition';
 
 const SX = BALANCE.shop;
 const COND_MAX = BALANCE.provisional.expedition.conditionMax;
@@ -127,8 +129,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   for (const f of FOOD_IDS) {
     const n = save.shared.food[f];
     if (n <= 0) continue;
-    const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, brief: foodBlurb(f, faction), detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(f) * 100)}%`, action: 'use', lock: save.activeExpedition != null ? '모험 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, brief: foodBlurb(f, faction), detail: foodEffectText(f, faction) /* 효과 전부 (GDD 211장: 적힌 것 = 실제로 바뀌는 것) */, action: 'use', lock: save.activeExpedition != null ? '모험 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {
@@ -207,7 +208,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
 /** 회복 물건 효과 한 줄 (GDD 144장): 회복량 · 쓰는 곳 */
 export function healItemText(id: string): string {
   const f = healItemFraction(id);
-  return f === null ? '' : `체력 ${f >= 1 ? '가득' : `+${Math.round(f * 100)}%`} · 모험 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
+  return f === null ? '' : `체력 ${f >= 1 ? '가득' : `+${Math.round(f * 100)}%`} · 소모품 칸에 끼우면 모험 걷기 중 [가방]·전투 [소모품]에서 바퀴당 1번`;
 }
 
 /** 원정 걷기 중 회복 물건 쓰기 (GDD 144장 3): 가방에서 하나 써서 이어 가는 체력(최대 체력 대비)을 채운다. 빈사 원정은 최대 체력이 이미 줄어 있어 그 안에서 찬다.
@@ -223,6 +224,64 @@ export function useHealItemOnWalk(save: SaveData, exp: { hpFraction?: number; st
   takeItem(save, id);
   logHomeHeal(save, { at: Date.now(), kind: 'item', itemId: id, hpFrom: Math.round(from * 100) / 100, hpTo: Math.round(to * 100) / 100 }); // 런 로그 (GDD 9장)
   return { ok: true, from, to };
+}
+
+/** 모험 중 소모품 (GDD 212장 1·2): 쓸 수 있는 것 = 소모품 칸에 끼운 1개뿐, 걷기·전투 어디서든 바퀴당 1번. 원정 상태 중 이 규칙이 보는 칸 */
+export type LapItemExp = Pick<ExpeditionState, 'lap' | 'lapItems'> & { hpFraction?: number; phase?: string };
+
+/** 모험 중 끼운 소모품을 지금 못 쓰는 이유 (GDD 212장 1·2). 쓸 수 있으면 null — 칸이 비었음 · 다 떨어짐 · 이번 바퀴에 이미 씀 */
+export function lapItemLock(save: Pick<SaveData, 'shared'>, exp: LapItemExp): string | null {
+  const id = save.shared.battleItem;
+  if (!id) return '소모품 칸이 비었다 — 바퀴 끝 창에서 끼운다';
+  if ((save.shared.items[id] ?? 0) <= 0) return `${consumableName(id)} — 다 떨어졌다`;
+  if (lapItemUsed(exp)) return LAP_ITEM_USED;
+  return null;
+}
+
+/** 이번 바퀴에 끼운 소모품을 썼을 때 이유 한 줄 (걷기 가방·전투 [소모품] 같은 말, GDD 212장 2) */
+export const LAP_ITEM_USED = '이번 바퀴에 이미 썼다 — 다음 바퀴에 다시 1번';
+
+/** 걷기 중 가방에서 쓰기 (GDD 144장 3 + 212장 1·2): 소모품 칸에 끼운 회복 물건만, 이번 바퀴에 아직 안 썼을 때. 쓰면 바퀴 사용을 남긴다(런 로그 lapItems) */
+export function useSlotItemOnWalk(save: SaveData, exp: LapItemExp, id: string): { ok: true; from: number; to: number } | { ok: false; reason: string } {
+  if (save.shared.battleItem !== id) return { ok: false, reason: '소모품 칸에 끼운 것만 쓴다 — 바퀴 끝 창에서 바꾼다' };
+  const lock = lapItemLock(save, exp);
+  if (lock) return { ok: false, reason: lock };
+  if (healItemFraction(id) === null) return { ok: false, reason: '전투 중에만 쓴다' };
+  const r = useHealItemOnWalk(save, exp, id);
+  if (r.ok) markLapItem(exp, id, 'walk');
+  return r;
+}
+
+/** 모험 소모품 칸 상태 한 줄 (걷기 가방 머리·바퀴 끝 창, GDD 212장 2·3): "회복약 ×2 · 이번 바퀴 1번" · "이번 바퀴에 썼다" · "비었다" */
+export function lapItemLine(save: Pick<SaveData, 'shared'>, exp: LapItemExp, when = '이번 바퀴'): string {
+  const id = save.shared.battleItem;
+  if (!id) return '소모품 칸이 비었다 — 바퀴 끝 창에서 끼운다';
+  const n = save.shared.items[id] ?? 0;
+  const head = `${consumableName(id)} ×${n}`;
+  if (n <= 0) return `${head} · 다 떨어졌다`;
+  return lapItemUsed(exp) ? `${head} · ${LAP_ITEM_USED}` : `${head} · ${when} 1번 쓸 수 있다`;
+}
+
+/** 출발 때 빈 소모품 칸 자동 채움 (GDD 193장 6 → 212장 4: 모험 중 자동 채움·고르기는 없고 출발 때 빈 칸일 때만). 넣었으면 true */
+export function departFillBattleSlot(save: Pick<SaveData, 'shared'>): boolean {
+  if (!battleSlotEmpty(save)) return false;
+  const best = bestBattleItem(save);
+  return best !== null && fillBattleSlot(save, best);
+}
+
+/** 전투에서 끼운 소모품을 썼다 (GDD 212장 2): 1개 줄이고 이번 바퀴 사용을 남긴다 */
+export function spendLapItem(save: Pick<SaveData, 'shared'>, exp: LapItemExp, id: string): void {
+  spendBattleItem(save, id);
+  markLapItem(exp, id, 'battle');
+}
+
+/** 바퀴 끝 창(다음 바퀴 준비)에서 소모품 칸 바꿔 끼우기·빼기 (GDD 212장 3): 둥지 칸 도착(nest-choice) 때만, null = 빼기. 가진(1개 이상) 전투 소모품만 넣는다. 바꿨으면 true */
+export function setLapItem(save: SaveData, exp: LapItemExp, id: string | null): boolean {
+  if (exp.phase !== 'nest-choice') return false;
+  if (id !== null && (!BATTLE_ITEM_IDS.includes(id) || (save.shared.items[id] ?? 0) <= 0)) return false;
+  if (save.shared.battleItem === id) return false;
+  save.shared.battleItem = id;
+  return true;
 }
 
 /** 보관함 소모품 하나 쓰기 */

@@ -41,13 +41,13 @@ describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => 
     expect(pickTierLook(shin, 3, evOf({ atk: 5 }), t3)).toBeNull();
     expect(shin.tierLooks).toEqual({});
   });
-  it('표의 모든 외형이 단계 외형 스킨(시작 전용·호로)이고 그림 파일이 있다', () => {
+  it('표의 모든 외형이 단계 외형 스킨(시작 전용·호로) (그림 파일은 C.341 에 지움)', () => {
     const tierIds = ['carapace', 'panther', 'raptor', 'rhino', 'scorpion', 'stag', 'wyrm'];
     const ids = tierLookIds({ tierLooks: hollow.tierLooks });
     expect(ids.sort()).toEqual(tierIds);
     for (const id of ids) {
       expect(getSkin(id)).toMatchObject({ factionId: 'hollow', startOnly: true, tierLook: true });
-      expect(existsSync(`public/art/skin-${id}.png`), id).toBe(true);
+      expect(existsSync(`public/art/skin-${id}.png`), id).toBe(false); // C.341 (GDD 206장 1): 가짜 도트 삭제 — 사용자 시트 대기
     }
     for (const c of COSMETIC_ITEMS.filter((x) => x.category === 'skin' && ids.includes(x.look))) expect(shopVisible(c, [c.id])).toBe(false);
   });

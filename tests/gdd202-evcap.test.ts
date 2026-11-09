@@ -1,4 +1,4 @@
-// GDD 202장 (C.334): 노력치(능력치) 상한 올리기 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·튜토리얼 몫 뺀 나머지),
+// GDD 202장 (C.334) → 207장 (C.342): 노력치(능력치) 상한 올리기 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(★ 권장·연속 0·튜토리얼 몫 뺀 나머지, 202장은 15·8번),
 // 상한이 가득이어도 흡수 자체는 막지 않는다('둘 다'·'속성만' 언제나, '스탯만'만 흐리게 + 이유 한 줄). 수치 provisional
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -54,34 +54,37 @@ function fullEvolution(): EvolutionState {
   return e;
 }
 
-describe('202장 1·2: 노력치 상한 = 흡수 횟수 기준', () => {
-  it('상한 [56, 108, 168, 240] · 능력치 하나 60% · 단계마다 오른다', () => {
-    expect(SX.evCapTotal).toEqual([56, 108, 168, 240]);
-    expect(SX.evCapPerStatRatio).toBe(0.6);
+describe('202장 1·2 → 207장: 노력치 상한 = 흡수 횟수 기준', () => {
+  it('상한 [96, 204, 324, 472] · 능력치 하나 70% · 단계마다 오른다 (207장, C.342)', () => {
+    expect(SX.evCapTotal).toEqual([96, 204, 324, 472]);
+    expect(SX.evCapPerStatRatio).toBe(0.7);
     for (let i = 1; i < SX.evCapTotal.length; i++) expect(SX.evCapTotal[i]!).toBeGreaterThan(SX.evCapTotal[i - 1]!);
-    expect(evCaps(0)).toEqual({ total: 56, perStat: 33 });
-    expect(evCaps(3)).toEqual({ total: 240, perStat: 144 });
+    expect(evCaps(0)).toEqual({ total: 96, perStat: 67 });
+    expect(evCaps(1)).toEqual({ total: 204, perStat: 142 });
+    expect(evCaps(2)).toEqual({ total: 324, perStat: 226 });
+    expect(evCaps(3)).toEqual({ total: 472, perStat: 330 });
   });
-  it("각 단계에서 새 자리가 차기까지 '둘 다' 13~17번 · '스탯만' 7~9번 (★ 권장·연속 0, 실제 적 ev 로 계산)", () => {
+  it("각 단계에서 새 자리가 차기까지 '둘 다' 28~32번 · '스탯만' 15~17번 (207장 = 202장의 2배, ★ 권장·연속 0, 실제 적 ev 로 계산)", () => {
     SX.evCapTotal.forEach((_, i) => {
       const both = roomAt(i) / mixEv('both', i + 1);
       const stat = roomAt(i) / mixEv('stat', i + 1);
-      expect(both, `${i + 1}단계 '둘 다' ${both.toFixed(1)}번`).toBeGreaterThanOrEqual(13);
-      expect(both, `${i + 1}단계 '둘 다' ${both.toFixed(1)}번`).toBeLessThanOrEqual(17);
-      expect(stat, `${i + 1}단계 '스탯만' ${stat.toFixed(1)}번`).toBeGreaterThanOrEqual(7);
-      expect(stat, `${i + 1}단계 '스탯만' ${stat.toFixed(1)}번`).toBeLessThanOrEqual(9);
+      expect(both, `${i + 1}단계 '둘 다' ${both.toFixed(1)}번`).toBeGreaterThanOrEqual(28);
+      expect(both, `${i + 1}단계 '둘 다' ${both.toFixed(1)}번`).toBeLessThanOrEqual(32);
+      expect(stat, `${i + 1}단계 '스탯만' ${stat.toFixed(1)}번`).toBeGreaterThanOrEqual(15);
+      expect(stat, `${i + 1}단계 '스탯만' ${stat.toFixed(1)}번`).toBeLessThanOrEqual(17);
     });
   });
-  it("한 능력치만 노리는 '스탯만'(★1 일반 4)도 1단계에서 7번 이상은 능력치 하나 상한에 먼저 막히지 않는다", () => {
+  it("한 능력치만 노리는 '스탯만'(★1 일반 4)도 1단계에서 15번 이상은 능력치 하나 상한에 먼저 막히지 않는다 (207장 비율 0.7 — 0.6 이면 13번)", () => {
     const e = newEvolution();
     for (const k of STAT_IDS) addEv(e, { [k]: TUT.statEv }); // 튜토리얼
     let n = 0;
     while ((addEv(e, { spd: 4 }).spd ?? 0) >= 4) n++;
-    expect(n).toBeGreaterThanOrEqual(7);
+    expect(n).toBeGreaterThanOrEqual(15);
+    expect(n).toBeLessThanOrEqual(17);
     expect(e.ev.spd).toBeLessThanOrEqual(evCaps(0).perStat);
     expect(evTotal(e.ev)).toBeLessThan(evCaps(0).total); // 합계가 아니라 능력치 하나 상한이 막은 것
   });
-  it('섞어 먹으면(튜토리얼 뒤 둘 다 흡수 15번, 능력치 6개 번갈아) 능력치 하나 상한에 닿지 않고 합계가 먼저 찬다', () => {
+  it('섞어 먹으면(튜토리얼 뒤 둘 다 흡수 약 30번, 능력치 6개 번갈아) 능력치 하나 상한에 닿지 않고 합계가 먼저 찬다', () => {
     const e = newEvolution();
     for (const k of STAT_IDS) addEv(e, { [k]: TUT.statEv });
     const cap = evCaps(0);

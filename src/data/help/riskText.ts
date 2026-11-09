@@ -4,6 +4,7 @@
 import { BALANCE } from '../../config/balance';
 import { fixParticles } from '../../engine/josa';
 import type { FactionConfig } from '../../engine/faction';
+import { tileName } from '../tiles';
 import { MINUS, multPct, num, numLine, pct, signed, zoneLine, type Zone } from './textFormat';
 
 const RX = BALANCE.provisional.risk;
@@ -16,7 +17,7 @@ const round1 = (v: number) => Math.round(v * 10) / 10;
 const absorbAt = (hpInAttacks: number) => round1(hpInAttacks * RX.absorbPerHpAttack);
 const lapAt = (lap: number) => round1((lap - LAP + 1) * RX.lateLapPerTile);
 
-type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
+type Names = Pick<FactionConfig, 'id' | 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'>;
 
 export interface RiskText {
   /** 폭주 한 줄 (수치 줄) */
@@ -57,6 +58,8 @@ export function riskText(f: Names): RiskText {
   const m = BALANCE.provisional.absorb.modes;
   const nest = RX.nestActions;
   const a = f.nestActions;
+  // 돌봄 행동별 값 — 0 인 행동은 빼고 적는다 (GDD 211장: 먹이는 리스크·안정 수치를 안 움직인다)
+  const careMoves = (k: 'risk' | 'stability'): string[] => (['feed', 'sleep', 'pet'] as const).filter((x) => nest[x][k] !== 0).map((x) => `${a[x]} ${signed(nest[x][k])}`);
   return {
     riskTip: numLine(`${g} ${RX.limit}`, `${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)),
     frenzyLead: fixParticles(`${g} ${RX.limit}이(가) 되면 모험당 1번 걸린다`),
@@ -84,14 +87,15 @@ export function riskText(f: Names): RiskText {
     ],
     riskDown: [
       numLine('적 놓아주기', signed(-RX.releaseRelief)),
-      numLine('휴식 타일', signed(-RX.restRelief)),
-      numLine(`${f.nestName} 돌봄 요청 응답`, `${a.feed} ${signed(nest.feed.risk)}`, `${a.sleep} ${signed(nest.sleep.risk)}`, `${a.pet} ${signed(nest.pet.risk)}`),
+      // 휴식 칸은 C.355 (GDD 210장 1) 부터 리스크를 내리지 않는다 — 샘만
+      numLine(tileName('rest-spring', f.id), signed(-BALANCE.provisional.tiles.spring.riskRelief)),
+      numLine(`${f.nestName} 돌봄 요청 응답`, ...careMoves('risk')),
     ],
     stabilityMove: [
       numLine('시작', num(RX.stabilityStart)),
       numLine('상한', num(RX.stabilityMax)),
       numLine('적 놓아주기', signed(RX.releaseStability)),
-      numLine(`${f.nestName} 돌봄 요청 응답`, `${a.feed} ${signed(nest.feed.stability)}`, `${a.sleep} ${signed(nest.sleep.stability)}`, `${a.pet} ${signed(nest.pet.stability)}`),
+      numLine(`${f.nestName} 돌봄 요청 응답`, ...careMoves('stability')),
       numLine(`${f.frenzyName} 후 귀환`, signed(-RX.breakthroughStabilityLoss)),
       numLine('꺼 둔 동안', `시간당 ${signed(-CP.stabilityPerHour)}`, `${f.fullnessName} 또는 컨디션 ${CP.stabilityDoubleBelow} 이하면 ×2`),
     ],

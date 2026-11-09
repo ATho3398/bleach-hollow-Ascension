@@ -43,6 +43,10 @@
 .bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center) { top: auto; bottom: calc(var(--bha-sp-1) + var(--toast-i, 0) * 34px); margin-top: 0; }
 .bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center).is-in { animation-name: bha-toast-in-up; }
 .bha-lcd:has([data-screen="settings"]) .bha-toast:not(.bha-toast--center).is-out { animation-name: bha-toast-out-down; }
+/* 상태창이 위에 있는 방·온천 (GDD 209장 보충, 마스터 결정 15:0x): 띠가 이름표·상태창을 덮지 않게 장면 아래쪽 — 하단 버튼 줄 바로 위, 물건 이름표·버튼과 안 겹치는 높이(toastLow.ts 가 잰다 --toast-bottom). 아래에서 올라왔다 아래로 사라진다 */
+.bha-lcd .bha-toast.is-low { top: auto; bottom: var(--toast-bottom, var(--bha-sp-1)); margin-top: 0; translate: var(--toast-dx, 0px) 0; } /* 가로 비킴(--toast-dx)은 translate — 들어오고 나가는 연출(transform)과 따로 */
+.bha-lcd .bha-toast.is-low.is-in { animation-name: bha-toast-in-up; }
+.bha-lcd .bha-toast.is-low.is-out { animation-name: bha-toast-out-down; }
 @keyframes bha-toast-in-up { from { opacity: 0; transform: translate(-50%, 130%); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes bha-toast-out-down { to { opacity: 0; transform: translate(-50%, 130%); } }
 /* 튜토리얼 달성 (GDD 109장 5번, C.180 → C.196 GDD 119장 6 "전부 상단 고정"): 가운데에서 맨 위 가운데로 — 다른 알림과 같이 쌓인다.

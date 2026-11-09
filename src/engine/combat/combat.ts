@@ -231,6 +231,33 @@ export interface CombatParams {
   physBlock: PhysBlock | null;
   /** 물공 블록 생성원 타이머 간격(초) (GDD 49-11, C.105): 물공 몸은 기본 블록 몫에서 공격이 빠지고 이 타이머 하나가 물공 블록을 낸다. 블록 가속 배율은 나눈다 */
   physBlockSpawnSeconds: number;
+  /** 타격 지연 (GDD 214장, C.357): 공격 주기는 그대로, 피해만 이 초 뒤 틱에 들어간다 = 그 공격 모션이 닿는 순간. 기본값 balance, 화면이 실제 동작 데이터로 바꾼다 */
+  hitDelay: HitDelayParams;
+}
+
+/** 타격 지연(초) — 종족 무관, 숫자만. basic 내 평타 / block 블록 공격 기본값 / blockBy 계열·단계별(`계열:단계`)·'combo'·'liberation' / enemy 적 기본 공격 / heavy 강공격 착탄 / counter 반격 */
+export interface HitDelayParams {
+  basic: number;
+  block: number;
+  blockBy?: Record<string, number>;
+  enemy: number;
+  heavy: number;
+  counter: number;
+}
+
+/** 타격 지연 틱 수 (0 이면 바로) */
+export function hitDelayTicks(p: Pick<CombatParams, 'tickSeconds'>, seconds: number): number {
+  return Math.max(0, Math.round((seconds > 0 ? seconds : 0) / p.tickSeconds));
+}
+
+/** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값 */
+export function blockHitDelayOf(p: Pick<CombatParams, 'hitDelay'>, key: string | null): number {
+  return (key ? p.hitDelay.blockBy?.[key] : undefined) ?? p.hitDelay.block;
+}
+
+/** 블록 공격 타격 지연 키: 계열 공격 = `계열:단계(1~3)`, 콤보 'combo', 해방 블록 'liberation', 그 밖(계열 없는 기본 블록) null */
+export function blockHitKey(family: string | null, chain: number): string | null {
+  return family ? `${family}:${Math.max(1, Math.min(3, chain))}` : null;
 }
 
 /** 전투용 소모품 효과 (GDD 105장 수정 3, provisional): heal = 최대 체력 × fraction 회복(성향·강화 회복 보정 곱), haste = seconds 동안 블록 생성 × spawnMult */
@@ -414,11 +441,13 @@ export interface Finisher {
 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit }
-  | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean }
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean }
+  | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean }
   | { kind: 'heavy-cast'; seconds: number }
-  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup; crit?: boolean }
+  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup; crit?: boolean; landed?: boolean }
+  /** 휘두르기 (GDD 214장, C.357): 공격이 발동했고 피해는 atTick 에 들어간다. hit = 그때 다시 나올 사건(landed: true). 화면은 이때 공격 모션을 시작하고, 피해 숫자·체력 막대는 hit 가 나올 때 */
+  | { kind: 'swing'; hit: SwingHit; atTick: number }
   /** 독 지속 피해 한 번 (GDD 20-2) */
   | { kind: 'dot'; target: 'enemy' | 'player'; damage: number }
   /** 혈 흡혈 회복 (GDD 20-2) */
@@ -426,7 +455,7 @@ export type CombatEvent =
   | { kind: 'seal'; seconds: number }
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
-  | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean }
+  | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean }
   /** 해방 게이지가 찼다 (GDD 83장) */
   | { kind: 'liberation-ready' }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
@@ -458,6 +487,25 @@ export type CombatEvent =
   /** 각본 전투 마무리 체인의 피해가 지금 들어갔다 (GDD 146장): 블록 사건(block)은 쓸 때, 피해 숫자·체력 감소는 이 사건에 */
   | { kind: 'script-impact'; damage: number }
   | { kind: 'end'; status: CombatStatus };
+
+/** 타격 지연이 있는 공격 사건: 발동 때 swing 안에, 맞는 순간 landed: true 로 다시 */
+export type SwingHit = Extract<CombatEvent, { kind: 'player-attack' | 'enemy-attack' | 'block' | 'heavy-hit' | 'counter' }>;
+
+/** 예약된 피해 (GDD 214장): atTick 에 landHit 가 넣는다. 데이터만(닫힘 함수 없음) — 같은 시드·입력이면 같은 결과 */
+export interface PendingHit {
+  atTick: number;
+  target: 'enemy' | 'player';
+  amount: number;
+  event: SwingHit;
+  /** target enemy: 마무리 일격 정보 */
+  finisher?: Finisher;
+  /** 맞힌 뒤 효과(혈 흡혈·독)에 쓰는 공격 속성. 없으면 효과 없음 */
+  elements?: string[];
+  /** 내 평타인가 (피 냄새 등 평타 전용 효과) */
+  basic?: boolean;
+  /** target player: 막기로 돌려주는 반사 피해(강공격) */
+  reflected?: number;
+}
 
 export interface CombatState {
   seed: number;
@@ -568,6 +616,8 @@ export interface CombatState {
   finisher: Finisher | null;
   /** 해방 (GDD 83장): 게이지(0~100), 처음 쓴 틱, 쓴 횟수, 남은 지속 틱, 쓰기 전 능력치·최대 체력(풀릴 때 되돌린다), 끝날 때 오른 리스크 합 */
   liberation: LiberationState;
+  /** 예약된 피해 (GDD 214장, C.357): 틱 시작에 atTick 이 된 것부터 순서대로 넣는다. 전투가 끝나면 남은 것은 버린다. 옛 상태(없음) = 빈 목록 */
+  pendingHits?: PendingHit[];
   /** 보스전이면 페이즈·기믹 상태 (GDD 25-3), 일반 전투는 없음 */
   boss?: BossState;
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
@@ -1276,9 +1326,7 @@ function basicAttack(s: CombatState): void {
   for (let k = 0; k < flash.n; k++) {
     const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
     last = damage;
-    emit(s, { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem });
-    dealDamage(s, damage, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
-    onHit(s, 'enemy', p.playerElements, damage, true);
+    strike(s, p.hitDelay.basic, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
     if (s.status !== 'playing') return;
   }
   // 버프 소모: 다음 평타 n회 버프는 1회씩, 바위 자세 쌓임은 한 번에, 두 번 때림은 1회
@@ -1300,9 +1348,7 @@ function basicAttack(s: CombatState): void {
   const dh = a.doubleHit;
   if (dh && nextFloat((s.abilityRng ??= createRng((s.seed ^ ABILITY_SEED_SALT) >>> 0))) < dh) {
     proc(s, 'doubleHit', last);
-    emit(s, { kind: 'player-attack', damage: last, matchup: hit.matchup });
-    dealDamage(s, last, { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup });
-    onHit(s, 'enemy', p.playerElements, last, true);
+    strike(s, p.hitDelay.basic, { target: 'enemy', amount: last, event: { kind: 'player-attack', damage: last, matchup: hit.matchup }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
   }
 }
 
@@ -1343,6 +1389,53 @@ function applyPhysBlock(s: CombatState): void {
 
 function emit(s: CombatState, e: CombatEvent): void {
   s.events.push(e);
+}
+
+/** 예약된 피해를 넣는다 (GDD 214장): 사건을 landed 로 다시 내고 피해·맞힌 뒤 효과. 이미 끝난 전투면 버린다 */
+function landHit(s: CombatState, h: PendingHit): void {
+  if (s.status !== 'playing') return;
+  emit(s, { ...h.event, landed: true });
+  if (h.target === 'enemy') {
+    dealDamage(s, h.amount, h.finisher ?? { kind: 'basic-attack', traitId: null, element: null });
+    if (h.elements) onHit(s, 'enemy', h.elements, h.amount, h.basic);
+  } else {
+    if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
+    takeDamage(s, h.amount);
+    if (h.elements) onHit(s, 'player', h.elements, h.amount);
+  }
+}
+
+/** 공격 한 번 (GDD 214장, C.357): 발동은 지금, 피해는 delaySeconds 뒤 틱에. 지연 0·피해 0·각본 마무리 체인(holdHit)은 지금 바로(옛 동작) */
+function strike(s: CombatState, delaySeconds: number, h: Omit<PendingHit, 'atTick'>): void {
+  const d = s.script?.holdHit || h.amount <= 0 ? 0 : hitDelayTicks(s.params, delaySeconds);
+  if (d <= 0) {
+    emit(s, h.event);
+    if (h.target === 'enemy') {
+      dealDamage(s, h.amount, h.finisher ?? { kind: 'basic-attack', traitId: null, element: null });
+      if (h.elements) onHit(s, 'enemy', h.elements, h.amount, h.basic);
+    } else {
+      if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
+      takeDamage(s, h.amount);
+      if (h.elements) onHit(s, 'player', h.elements, h.amount);
+    }
+    return;
+  }
+  const atTick = s.tick + d;
+  emit(s, { kind: 'swing', hit: h.event, atTick });
+  (s.pendingHits ??= []).push({ ...h, atTick });
+}
+
+/** 이 틱에 맞는 예약 피해를 순서대로 넣는다 */
+function landDueHits(s: CombatState): void {
+  const list = s.pendingHits;
+  if (!list || list.length === 0) return;
+  const due = list.filter((h) => h.atTick <= s.tick);
+  if (due.length === 0) return;
+  s.pendingHits = list.filter((h) => h.atTick > s.tick);
+  for (const h of due) {
+    landHit(s, h);
+    if (s.status !== 'playing') return;
+  }
 }
 
 export function drainCombatEvents(s: CombatState): CombatEvent[] {
@@ -1628,8 +1721,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.comboBlocksUsed++;
     addGauge(s, p.liberationGaugePerBlock);
     const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, []);
-    emit(s, { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
-    dealDamage(s, damage, { kind: 'combo', traitId: b.traitId, element: null });
+    strike(s, blockHitDelayOf(p, 'combo'), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem }, finisher: { kind: 'combo', traitId: b.traitId, element: null } });
     updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
@@ -1640,9 +1732,7 @@ function useBlock(s: CombatState, index: number): boolean {
     const { damage, crit, elem } = playerHit(s, blockDamage(s, b), true, p.playerElements);
     const hit = liberationHit(s);
     if (liberationActive(s)) s.liberation.chains++;
-    emit(s, { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem });
-    dealDamage(s, damage, { kind: 'liberation', traitId: null, element: hit.element, weak: hit.weak, matchup: hit.matchup });
-    onHit(s, 'enemy', p.playerElements, damage);
+    strike(s, blockHitDelayOf(p, 'liberation'), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem }, finisher: { kind: 'liberation', traitId: null, element: hit.element, weak: hit.weak, matchup: hit.matchup }, elements: [...p.playerElements] });
     updateCombos(s, null, 0);
     counterIfStance(s);
     return true;
@@ -1680,9 +1770,8 @@ function useBlock(s: CombatState, index: number): boolean {
   if (bonus) applyChainBonus(s, bonus);
   const { damage, crit, elem } = playerHit(s, blockDamage(s, b, chain), true, skill.element ? [skill.element] : []);
   const family = skill.family ?? null;
-  emit(s, { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem });
-  dealDamage(s, damage, { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m });
-  if (skill.element) onHit(s, 'enemy', [skill.element], damage);
+  // 피해는 모션이 닿는 순간에 (GDD 214장): 계열·단계별 타격 지연. 피해 0(막기 블록 등)은 바로
+  strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain)), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
   // 단련 (GDD 49장 노멀 특성): 스킬 블록 1개마다 이번 전투 평타 +
   if (p.abilityEffects.tempering) s.temperingBlocks = (s.temperingBlocks ?? 0) + chain;
   // 물공 블록 효과 (GDD 49장): 기본 공격 블록이 물공 블록인 몸에서 그 블록을 썼을 때
@@ -1914,12 +2003,6 @@ function evaded(s: CombatState): boolean {
   return true;
 }
 
-/** 적의 공격이 맞았다: 피해 + 적 속성 효과(혈 흡혈·독) */
-function enemyHits(s: CombatState, damage: number): void {
-  takeDamage(s, damage);
-  onHit(s, 'player', enemyElements(s.enemy.def), damage);
-}
-
 /** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다 */
 function resolveHeavy(s: CombatState): void {
   const pattern = s.enemy.def.pattern;
@@ -1930,8 +2013,7 @@ function resolveHeavy(s: CombatState): void {
     const guarded = s.guard.ticks > 0;
     if (guarded) s.guardSuccesses++;
     const damage = guarded ? 0 : Math.max(0, s.player.hp - s.player.maxHp * sc.leaveHpFraction);
-    emit(s, { kind: 'heavy-hit', damage, guarded, reflected: 0, matchup: enemyMatchup(s), crit: false });
-    enemyHits(s, damage);
+    strike(s, s.params.hitDelay.heavy, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected: 0, matchup: enemyMatchup(s), crit: false }, elements: enemyElements(s.enemy.def) });
     return;
   }
   if (!pattern || !('heavyInAttacks' in pattern)) return;
@@ -1946,9 +2028,7 @@ function resolveHeavy(s: CombatState): void {
     s.guardSuccesses++;
     reflected = blocked * s.guard.reflect;
   }
-  emit(s, { kind: 'heavy-hit', damage, guarded, reflected, matchup: enemyMatchup(s), crit });
-  if (reflected > 0) dealDamage(s, reflected, { kind: 'reflect', traitId: null, element: null });
-  enemyHits(s, damage);
+  strike(s, s.params.hitDelay.heavy, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected, matchup: enemyMatchup(s), crit }, elements: enemyElements(s.enemy.def), reflected });
 }
 
 /** 패턴의 특수 행동 하나를 시작한다 (종류별 일반 처리, 적 id 분기 없음) */
@@ -1988,8 +2068,7 @@ function counterIfStance(s: CombatState): void {
   const raw = enemyDamage(s, pattern.counterInAttacks) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
   const damage = raw * (1 - guardReductionOf(s));
-  emit(s, { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit });
-  enemyHits(s, damage);
+  strike(s, s.params.hitDelay.counter, { target: 'player', amount: damage, event: { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit }, elements: enemyElements(s.enemy.def) });
 }
 
 /** 한 틱 진행: 버프 → 안개 섞기 → 블록 생성 → 내 기본 공격 → 적 행동 → 시간 제한 */
@@ -1997,6 +2076,9 @@ function advanceTick(s: CombatState): void {
   const p = s.params;
   const t = (sec: number) => ticksOf(p, sec);
   s.tick++;
+  // 예약된 피해 (GDD 214장): 발동 뒤 타격 지연이 지난 공격이 지금 맞는다
+  landDueHits(s);
+  if (s.status !== 'playing') return;
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.stunTicks && s.stunTicks > 0) s.stunTicks--;
   chargeButtons(s);
@@ -2080,8 +2162,7 @@ function advanceTick(s: CombatState): void {
         const raw = enemyDamage(s, e.def.attackInAttacks) * (p.attackScale[e.def.class] ?? 1) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
         const guarded = s.guard.ticks > 0;
         const damage = raw * (1 - guardReductionOf(s));
-        emit(s, { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit });
-        enemyHits(s, damage);
+        strike(s, p.hitDelay.enemy, { target: 'player', amount: damage, event: { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit }, elements: enemyElements(e.def) });
       }
     }
     if (hasSpecialActions(pattern) && s.status === 'playing' && --e.actionTimer <= 0) startAction(s, pattern);

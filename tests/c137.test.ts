@@ -14,8 +14,9 @@ describe('C.137', () => {
     for (let i = 1; i <= 6; i++) expect(existsSync(`public/art/char-hollow/move-${i}.png`)).toBe(true);
     const files = [...Array.from({ length: 6 }, (_, i) => `char-hollow/move-${i + 1}.png`), 'char-hollow.png'];
     const a = charArt('hollow', 0, 'char.hollow', '/', undefined, files);
-    expect(a.anims?.move?.frames.length).toBe(6);
-    expect(a.src).toContain('char-hollow.png');
+    // C.345 (GDD 206장 보충): 기본 그림 = 덩치 종이인형 — 종족 공통 종이인형이 먼저라 이 프레임은 안 쓴다(파일은 남김)
+    expect(a.rig?.look).toBe('brute-base');
+    expect(a.anims).toBeUndefined();
   });
   it('85장 1: 메노스 그랑데(2단계)는 2배 크기 (이동 방식은 모두 걷기, GDD 125장)', () => {
     const a = charArt('hollow', 1, 'char.hollow', '/', undefined, ['char-hollow-2.png']);

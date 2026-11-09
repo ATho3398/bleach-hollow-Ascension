@@ -10,13 +10,14 @@ import { newSaveData, migrateSave, loadSave, writeSave, SAVE_FORMAT_VERSION, art
 describe('C.143', () => {
   it('기본 그림 키 char.hollow 자리 = 스토커 정지 그림 + 걷기 6장', () => {
     expect(charArtKeys('hollow', 0)).toEqual(['char.hollow.1', 'char.hollow']);
-    expect(existsSync('public/art/char-hollow.png')).toBe(true);
+    expect(existsSync('public/art/char-hollow.png')).toBe(false); // C.341: 가짜 도트 삭제 (GDD 206장 1), 걷기 6장은 진짜 도트라 남김
     expect(existsSync('public/art/skin-stalker.png')).toBe(false);
-    expect(existsSync('public/art/skin-mantis.png')).toBe(true);
+    expect(existsSync('public/art/skin-mantis.png')).toBe(false); // C.341: 가짜 도트 삭제
     for (let i = 1; i <= 6; i++) expect(existsSync(`public/art/char-hollow/move-${i}.png`)).toBe(true);
     expect(JSON.parse(readFileSync('public/art/char-hollow/anim.json', 'utf8')).move.ms).toBe(130);
     const files = [...Array.from({ length: 6 }, (_, i) => `char-hollow/move-${i + 1}.png`), 'char-hollow.png'];
-    expect(charArt('hollow', 0, 'char.hollow', '/', undefined, files).anims?.move?.frames.length).toBe(6);
+    // C.345 (GDD 206장 보충): 기본 그림 = 덩치 종이인형 — 종족 공통 종이인형이 종족 공통 그림 파일·걷기 프레임보다 먼저 (charArt 기존 순서)
+    expect(charArt('hollow', 0, 'char.hollow', '/', undefined, files).rig?.look).toBe('brute-base');
   });
   it('startLooks = 사마귀·거구·망령·속박자, stalker 스킨은 없다', () => {
     const h = FACTIONS.find((f) => f.id === 'hollow')!;
@@ -41,6 +42,6 @@ describe('C.143', () => {
     expect(artSkinOf(m!)).toBeNull();
     expect(m!.shared.cosmetics).not.toContain('skin-stalker');
     const files = ['char-hollow.png'];
-    expect(charArt('hollow', 0, 'char.hollow', '/', undefined, files, 'stalker').src).toContain('char-hollow.png');
+    expect(charArt('hollow', 0, 'char.hollow', '/', undefined, files, 'stalker').rig?.look).toBe('brute-base'); // C.345: 기본 그림 = 덩치
   });
 });

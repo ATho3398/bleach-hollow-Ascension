@@ -18,7 +18,7 @@ const BD = NX.bond;
 const RX = BALANCE.provisional.risk;
 const PX = BALANCE.provisional.expedition;
 
-type Names = Pick<FactionConfig, 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
+type Names = Pick<FactionConfig, 'id' | 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
 
 export type StatusInfoKind = StatusChip['kind'] | 'stab' | 'dead';
 

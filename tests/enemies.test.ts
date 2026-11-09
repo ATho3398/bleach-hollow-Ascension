@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { ENEMIES, enemyGradeName, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
 import { ELEMENTS } from '../src/data/elements';
@@ -15,6 +16,7 @@ import { enemyPool, pickFromPool } from '../src/engine/enemyPool';
 import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { createRng } from '../src/engine/rng';
 import { newTileStock, sanitizeDeck } from '../src/game';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
 const pool = ENEMIES.filter((e) => !e.testOnly);

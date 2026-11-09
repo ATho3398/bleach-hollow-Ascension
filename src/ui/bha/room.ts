@@ -141,6 +141,8 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
     img.style.setProperty('--art-dy', `${art.offsetY}%`);
     body.append(img);
     body.classList.add('has-art');
+    // 그림을 못 읽으면(지운 그림을 요청하는 낡은 목록·캐시 등) 깨진 그림 대신 자리표시 도형으로 (C.345, GDD 206장 1)
+    img.addEventListener('error', () => showPlaceholder(b, body), { once: true });
     bindAnim(b, img, art)?.setLoop('idle'); // 프레임 애니가 있는 동작만 (GDD 26장) — idle 이 없으면 정지 그림
   } else if (frames) {
     frames.forEach((f, i) => {
@@ -163,6 +165,14 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
   if (src) void fitLying(b, src, art);
   b.append(lift, shadow);
   return b;
+}
+
+/** 캐릭터 몸을 그림 없는 자리표시(둥근 몸 + 눈 두 개)로 바꾼다 — 그림 읽기 실패 때 (C.345) */
+export function showPlaceholder(owner: HTMLElement, body: HTMLElement): void {
+  body.replaceChildren(el('span', 'bha-char__eye'), el('span', 'bha-char__eye'));
+  body.classList.remove('has-art');
+  const shadow = owner.querySelector<HTMLElement>('.bha-char__shadow');
+  if (shadow) shadow.style.marginTop = '';
 }
 
 /** 그림의 불투명 픽셀 범위 (원본 px, right·bottom 은 포함 끝 + 1) */
@@ -231,6 +241,13 @@ export function bubbleSpot(bottomY: number, bubbleH: number, charCenterX: number
   return charCenterX > sceneW / 2 ? 'left' : 'right';
 }
 
+/** 말풍선 자리가 비었는지 (GDD 208장 2): 방(scene) 안에 다 들어가고, 상태창·ⓘ·방 물건 버튼 어느 것과도 겹치지 않음 */
+export function bubbleClear(b: RectLike, scene: RectLike, blockers: readonly RectLike[]): boolean {
+  if (b.left < scene.left - 0.5 || b.top < scene.top - 0.5 || b.right > scene.right + 0.5 || b.bottom > scene.bottom + 0.5) return false;
+  return blockers.every((r) => b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom);
+}
+export interface RectLike { left: number; top: number; right: number; bottom: number }
+
 /** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
 export function charTopOffset(art: ArtUrls): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)
@@ -243,6 +260,19 @@ export function charTopOffset(art: ArtUrls): number {
   const top = pivot + (bodyH - drawn + drawn * (art.headTop ?? 0) - pivot) * art.scale + (art.offsetY / 100) * bodyH;
   // 종이인형(headTop)은 머리 위가 비어 있어 머리에 맞추면 칩이 캐릭터 버튼 상자 안으로 내려와 겹친다 — 상자 윗변보다 아래로는 안 내린다 (C.190)
   return boxTop + Math.min(top, art.headTop ? 0 : bodyH);
+}
+
+/** 그린 머리 윗변 (캐릭터 상자 중심 기준 px, GDD 209장 1): charTopOffset 과 같은 식이되 종이인형도 상자 윗변에 묶지 않는다 — 상태창 아래 ~ 머리 위 빈 공간을 잴 때 */
+export function charHeadOffset(art: ArtUrls): number {
+  const PAD = 8, SHADOW = 10;
+  const hasArt = !!(art.src || art.frames);
+  const bodyH = hasArt ? CHAR_BODY_H : 75;
+  const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD;
+  if (!art.src) return boxTop;
+  const drawn = 130;
+  const pivot = bodyH * 0.92;
+  const top = pivot + (bodyH - drawn + drawn * (art.headTop ?? 0) - pivot) * art.scale + (art.offsetY / 100) * bodyH;
+  return boxTop + Math.min(top, bodyH);
 }
 
 export interface FloorEntry {

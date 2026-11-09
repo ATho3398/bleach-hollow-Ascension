@@ -10,6 +10,8 @@ import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../d
 import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
+import { changeItems } from './bha/changeNote';
+import { changedKeys } from './bha/gaugeBlink';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
@@ -615,14 +617,17 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
 
 /**
  * 아이템 쓰기 연출 (GDD 132장 3 · 201장): 상태창이 가려진 가방 화면이라 머리 위 상태창(같은 박스 + 발밑 체력 막대)을 잠깐 띄워
- * 오른 값이 0.8초 동안 차오르게 한다(회복 수치 글자 없음). 오른 값이 없으면(구급상자 등) false — 부르는 쪽이 예전처럼 알림 띠
+ * 오른 값이 0.8초 동안 차오르게 한다(회복 수치 글자 없음). 바뀐 값이 없으면(구급상자 등) false — 부르는 쪽이 예전처럼 알림 띠
  */
 function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemArt: HTMLElement, before: GaugeShown): boolean {
   const to = nestShown(save.nest, homeHp(save).fraction);
   const from = riseFrom(before, to);
-  if (!from) return false;
+  // 바뀐 값(오름·내림 — 광기 내림 약 등)이 있으면 상태창을 띄워 그 막대·아이콘만 깜빡임 (GDD 208장 3·4). 오른 값만 차오른다.
+  // 상태창 창 제목('…을(를) 썼다')이 알림 띠와 같은 말이고 자리(화면 위 가운데)도 같아 겹치므로, 창을 띄우면 띠는 없다. 바뀐 값이 없으면(구급상자 등) 예전 알림 띠
+  const blink = changedKeys(before, to);
+  if (!from && blink.length === 0) return false;
   const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
-  statusFillFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), chips: () => statusChips(save.nest, faction), from, to, maxHp: homeMaxHp(save), owner: save.nest });
+  statusFillFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), chips: () => statusChips(save.nest, faction), from: from ?? to, to, maxHp: homeMaxHp(save), owner: save.nest, blink, note: changeItems(before, to, faction, blink) }); // 바뀐 값 칩 (GDD 209장)
   return true;
 }
 

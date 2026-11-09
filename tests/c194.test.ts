@@ -49,10 +49,12 @@ function allLooks(): Look[] {
 const LOOKS = allLooks();
 
 describe('C.194 발 = 그림자 (GDD 120장 1·3·4)', () => {
-  it('점검 대상: 종이인형(사신 학생·사신복·아란칼, 남녀)과 옛 한 장 그림(호로)이 모두 들어 있다', () => {
+  it('점검 대상: 종이인형(사신 학생·사신복·아란칼 남녀, 호로 덩치 외형)이 모두 들어 있다', () => {
     const looks = new Set(LOOKS.map((l) => l.art.rig?.look ?? l.art.src));
-    for (const l of ['shinigami-student', 'shinigami-student-f', 'shinigami-base', 'shinigami-base-f', 'arrancar-base', 'arrancar-base-f']) expect(looks.has(l), l).toBe(true);
-    expect(LOOKS.some((l) => !l.art.rig && l.art.src)).toBe(true);
+    for (const l of ['shinigami-student', 'shinigami-student-f', 'shinigami-base', 'shinigami-base-f', 'arrancar-base', 'arrancar-base-f', 'brute-brown', 'brute-gray', 'brute-red']) expect(looks.has(l), l).toBe(true);
+    // C.345 (GDD 206장 보충): 호로 옛 한 장 그림(가짜 도트)은 지웠고 그 자리는 기본 덩치(brute-base) — 모든 모습에 그림이 있다
+    expect(looks.has('brute-base')).toBe(true);
+    expect(LOOKS.every((l) => l.art.src)).toBe(true);
   });
 
   it('모든 모습의 발 높이 = 그림자 중심 (방 4px 안, 걷기·전투 = 확대 기준점 92% ± 그림 높이 2%) — 이동 방식은 걷기 하나 (GDD 125장)', () => {

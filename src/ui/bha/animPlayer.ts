@@ -19,6 +19,8 @@ export interface PlayOptions {
   onEnd?: () => void;
   /** 타격 순간부터 재생 (GDD 117장 3, 블록 즉발): 휘두른 끝에서 시작해 되돌아온다. onHit 은 바로. 돌려주는 길이는 남은 길이, 타격 시각 0 */
   fromHit?: boolean;
+  /** 타격이 이 ms(1배) 뒤에 오게 시작 위치를 맞춘다 (GDD 214장, C.357 — 엔진 피해 시각에 맞추기): 동작의 타격 시각이 더 늦으면 앞부분을 건너뛰고, 더 이르면 그만큼 기다렸다(첫 장을 보인 채) 시작한다. fromHit 보다 우선. 0 = fromHit 과 같다 */
+  hitInMs?: number;
   /** 계열 몸동작 (GDD 118장 2): 종이인형은 이 묶음의 동작을 쓴다(없으면 action 그대로). 프레임 그림은 무시 */
   motion?: FamilyMotionKind;
   /** 종이인형 동작 고정 (GDD 181장, 종족 설정 tiers[].rigMotion): 그 동작이 있으면 그것만(motion 묶음·action 대신). 프레임 그림은 무시 */
@@ -32,6 +34,8 @@ export interface AnimPlayer {
   setLoop(action: AnimAction | null): void;
   /** 한 번 재생(sleep 같은 반복 동작은 stop 할 때까지). 없는 동작이면 null — 호출하는 쪽이 기존 연출을 쓴다. 1배속 기준 길이·타격 시각(ms)을 돌려준다 */
   play(action: AnimAction, o?: PlayOptions): { durationMs: number; hitAtMs: number } | null;
+  /** 재생하지 않고 그 동작의 길이·타격 시각(ms, 1배)만 (GDD 214장: 엔진 타격 지연을 실제 동작 데이터로). 변형이 여럿이면 타격이 가장 늦은 것. 없는 동작이면 null */
+  peek(action: AnimAction, o?: Pick<PlayOptions, 'motion' | 'rigMotion'>): { durationMs: number; hitAtMs: number } | null;
   /** 재생 중인 동작을 끝내고 쉬는 동작으로 돌아간다 */
   stop(): void;
   setRate(rate: number): void;
@@ -93,12 +97,18 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       phase = 'once';
       curOpts = o;
       const hitAt = clipHitMs(c);
-      elapsed = o.fromHit ? hitAt : 0;
-      hitFired = !!o.fromHit;
-      show(c.frames[o.fromHit ? frameAt(c, elapsed).index : 0]);
-      if (o.fromHit) o.onHit?.();
+      // 시작 위치 (GDD 214장): hitInMs 가 있으면 타격이 그때 오게(음수 = 기다림), fromHit 은 타격부터
+      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) : o.fromHit ? hitAt : 0;
+      elapsed = start;
+      hitFired = start >= hitAt;
+      show(c.frames[frameAt(c, elapsed).index]);
+      if (hitFired) o.onHit?.();
       wake();
-      return o.fromHit ? { durationMs: clipDurationMs(c) - hitAt, hitAtMs: 0 } : { durationMs: clipDurationMs(c), hitAtMs: hitAt };
+      return { durationMs: clipDurationMs(c) - start, hitAtMs: hitAt - start };
+    },
+    peek(action) {
+      const c = anims[action];
+      return c ? { durationMs: clipDurationMs(c), hitAtMs: clipHitMs(c) } : null;
     },
     stop() {
       locked = false;
@@ -117,7 +127,7 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       elapsed += dtMs * rate;
       const f = frameAt(cur, elapsed);
       show(cur.frames[f.index]);
-      if (!hitFired && f.index >= cur.hitFrame) {
+      if (!hitFired && elapsed >= 0 && f.index >= cur.hitFrame) {
         hitFired = true;
         curOpts.onHit?.();
       }

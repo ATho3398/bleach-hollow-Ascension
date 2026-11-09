@@ -1,0 +1,538 @@
+{
+  "note": "keyH = 화면 그림 키(px, 정지 자세 몸 키 × 화면 배율), poseH = 그 순간 자세의 키, dotPx = 도트 한 칸(px), ratio = 적/나 (key·dot 이 기준, pose 는 동작 차이 참고)",
+  "runs": [
+    {
+      "screen": "walk-pre",
+      "dev": "pc",
+      "body": "hollow-base",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 155.3,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 447.5,
+        "right": 613.9,
+        "figW": 166.5
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "pc",
+      "body": "hollow-base",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 158.6,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 448.8,
+        "right": 612,
+        "figW": 163.2
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 150.1,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 181.7,
+        "right": 367.1,
+        "figW": 185.5
+      },
+      "ratio": {
+        "key": 1,
+        "dot": 1,
+        "pose": 0.9464
+      },
+      "gap": {
+        "px": 81.7,
+        "perBodyW": 0.469
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 744,
+          "t": 16,
+          "b": 374
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 467.90625,
+          "r": 607.90625,
+          "t": 348,
+          "b": 370
+        }
+      }
+    },
+    {
+      "screen": "battle-boss",
+      "dev": "pc",
+      "body": "hollow-base",
+      "enemy": "forest-lord",
+      "hero": {
+        "sel": ".bha-hero .bha-rigcanvas, .bha-hero img.bha-hero__img",
+        "kind": "rig",
+        "cls": "bha-hero__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 315,
+        "poseH": 120.2,
+        "keyH": 120.2,
+        "cellSrc": 8,
+        "dotPx": 4.14,
+        "left": 513.9,
+        "right": 662.1,
+        "figW": 148.2
+      },
+      "foe": null,
+      "ratio": null
+    },
+    {
+      "screen": "walk-pre",
+      "dev": "pc",
+      "body": "hollow-brute",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 155.3,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 447.5,
+        "right": 613.9,
+        "figW": 166.5
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "pc",
+      "body": "hollow-brute",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 155.3,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 439,
+        "right": 621.1,
+        "figW": 182.2
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 150.1,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 181.7,
+        "right": 367.1,
+        "figW": 185.5
+      },
+      "ratio": {
+        "key": 1,
+        "dot": 1,
+        "pose": 0.9665
+      },
+      "gap": {
+        "px": 71.9,
+        "perBodyW": 0.391
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 744,
+          "t": 16,
+          "b": 374
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 467.90625,
+          "r": 607.90625,
+          "t": 348,
+          "b": 370
+        }
+      }
+    },
+    {
+      "screen": "walk-pre",
+      "dev": "pc",
+      "body": "shinigami",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 252.3,
+        "poseH": 135.3,
+        "keyH": 134.5,
+        "cellSrc": 4,
+        "dotPx": 1.66,
+        "left": 454.1,
+        "right": 564.1,
+        "figW": 110
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "pc",
+      "body": "shinigami",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 252.3,
+        "poseH": 135.7,
+        "keyH": 134.5,
+        "cellSrc": 4,
+        "dotPx": 1.66,
+        "left": 447.4,
+        "right": 566.5,
+        "figW": 119.1
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 398.4,
+        "poseH": 150.1,
+        "keyH": 152,
+        "cellSrc": 8,
+        "dotPx": 5.24,
+        "left": 181.7,
+        "right": 367.1,
+        "figW": 185.5
+      },
+      "ratio": {
+        "key": 1.1301,
+        "dot": 3.1566,
+        "pose": 1.1061
+      },
+      "gap": {
+        "px": 80.3,
+        "perBodyW": 0.527
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 744,
+          "t": 16,
+          "b": 374
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 467.90625,
+          "r": 607.90625,
+          "t": 348,
+          "b": 370
+        }
+      }
+    },
+    {
+      "screen": "walk-pre",
+      "dev": "phone",
+      "body": "hollow-base",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 152.7,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 416.3,
+        "right": 580,
+        "figW": 163.7
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "phone",
+      "body": "hollow-base",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 155.9,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 417.6,
+        "right": 578.1,
+        "figW": 160.4
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 147.5,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 155,
+        "right": 337.3,
+        "figW": 182.3
+      },
+      "ratio": {
+        "key": 1,
+        "dot": 1,
+        "pose": 0.9461
+      },
+      "gap": {
+        "px": 80.3,
+        "perBodyW": 0.469
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 696,
+          "t": 16,
+          "b": 368
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 435.265625,
+          "r": 575.265625,
+          "t": 342,
+          "b": 364
+        }
+      }
+    },
+    {
+      "screen": "walk-pre",
+      "dev": "phone",
+      "body": "hollow-brute",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 152.7,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 414.4,
+        "right": 583.9,
+        "figW": 169.5
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "phone",
+      "body": "hollow-brute",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 151.4,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 405.4,
+        "right": 586.5,
+        "figW": 181.1
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 147.5,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 155,
+        "right": 337.3,
+        "figW": 182.3
+      },
+      "ratio": {
+        "key": 1,
+        "dot": 1,
+        "pose": 0.9742
+      },
+      "gap": {
+        "px": 68.1,
+        "perBodyW": 0.375
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 696,
+          "t": 16,
+          "b": 368
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 435.265625,
+          "r": 575.265625,
+          "t": 342,
+          "b": 364
+        }
+      }
+    },
+    {
+      "screen": "walk-pre",
+      "dev": "phone",
+      "body": "shinigami",
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 248.1,
+        "poseH": 133,
+        "keyH": 132.2,
+        "cellSrc": 4,
+        "dotPx": 1.63,
+        "left": 422.8,
+        "right": 531,
+        "figW": 108.1
+      }
+    },
+    {
+      "screen": "walk-encounter",
+      "dev": "phone",
+      "body": "shinigami",
+      "aheadKind": "foe",
+      "arrived": true,
+      "hero": {
+        "sel": ".bha-walker .bha-rigcanvas, .bha-walker img.bha-walker__img",
+        "kind": "rig",
+        "cls": "bha-walker__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 248.1,
+        "poseH": 133,
+        "keyH": 132.2,
+        "cellSrc": 4,
+        "dotPx": 1.63,
+        "left": 429.4,
+        "right": 531.4,
+        "figW": 102
+      },
+      "foe": {
+        "sel": ".bha-ahead .bha-foe .bha-rigcanvas, .bha-ahead .bha-foe img.bha-foe__img",
+        "kind": "rig",
+        "cls": "bha-foe__img bha-rigcanvas",
+        "canvasH": 608,
+        "boxH": 391.7,
+        "poseH": 147.5,
+        "keyH": 149.5,
+        "cellSrc": 8,
+        "dotPx": 5.15,
+        "left": 155,
+        "right": 337.3,
+        "figW": 182.3
+      },
+      "ratio": {
+        "key": 1.1309,
+        "dot": 3.1595,
+        "pose": 1.109
+      },
+      "gap": {
+        "px": 92.1,
+        "perBodyW": 0.648
+      },
+      "insideScene": true,
+      "edges": {
+        "scene": {
+          "l": 100,
+          "r": 696,
+          "t": 16,
+          "b": 368
+        },
+        "chips": {
+          "l": 106,
+          "r": 286,
+          "t": 22,
+          "b": 155.75
+        },
+        "hp": {
+          "l": 435.265625,
+          "r": 575.265625,
+          "t": 342,
+          "b": 364
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "shots": [
+    "walk-encounter-hollow-base-pc.png",
+    "walk-encounter-shinigami-pc.png",
+    "walk-encounter-hollow-base-phone.png",
+    "walk-encounter-shinigami-phone.png"
+  ]
+}

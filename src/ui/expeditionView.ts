@@ -27,6 +27,7 @@ import { createExpClock, monoNow } from './bha/expClock';
 import { elementDot, paintElement } from './bha/element';
 import { roadPlanner } from './bha/road';
 import { continueDetail, continueWords, lapGainLine } from './bha/lapEnd';
+import { lapItemSlot } from './bha/lapItemSlot';
 import { infoTip } from './bha/infoTip';
 import { playCosmeticFx, takeEnterFx } from './bha/cosmeticFx';
 import { isWalking, walkScene } from './bha/walk';
@@ -37,6 +38,7 @@ import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
 import { floatEl } from './bha/battle';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
+import { applyBlink, blinkGauges, changedKeys, tagGauge } from './bha/gaugeBlink';
 import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
@@ -61,6 +63,8 @@ export interface ExpeditionViewHandlers {
   openHelp: (onClose: () => void) => void;
   /** [가방] (GDD 144장 3, C.223): 걷기·휴식 중 회복 물건을 쓴다. 열려 있는 동안 원정 시간은 멈추고, 닫으면 onClose 로 이어간다. 없으면 버튼 없음 */
   openBag?: (onClose: () => void) => void;
+  /** 바퀴 끝 창 소모품 칸 (GDD 212장 3): 머리 줄 버튼 글(short)·상태 한 줄(title) — change 는 고르기 창을 열고, 바꾸면 after 를 부른다(창 다시 그림). 없으면 줄 없음 */
+  lapItem?: { line: () => string; short: () => string; filled: () => boolean; canChange: () => boolean; change: (after: () => void) => void };
 }
 
 const EX = BALANCE.expedition;
@@ -154,6 +158,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     restArrived = false;
     ahead.leave(); // 쉬던 장소가 뒤로 흘러간다 (GDD 128장 3)
     h.onSave();
+    // 바뀐 값(오름·내림 — 온천 칸 리스크 내림 포함)의 판 막대·아이콘만 깜빡임 (GDD 208장 3·4)
+    const blink = changedKeys({ hunger: before.full, cond: before.cond, risk: before.risk, hp: before.hp }, { hunger: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk, hp: hpFractionOf(exp) });
+    blinkGauges(meters, blink);
+    blinkGauges(hpBox, blink);
     if (spring) {
       // 줄어드는 값(리스크)은 예전처럼 떠오르는 숫자 (C.176, GDD 106장 2 · 201장 5)
       const fx = floatEl('heal', `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`, { left: 50, top: 8 });
@@ -180,10 +188,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let nearMsg: string | null = null;
 
   function tick(): void {
-    const before = exp.hand.length;
     const ev = advance(exp);
     if (!ev) return resumeClock();
-    const got = exp.hand.length - before;
     const events = drainEvents(exp);
     for (const e of events) {
       if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
@@ -200,14 +206,14 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         root.replaceChildren(stage);
         away = false;
         lastWatch = monoNow();
-        handle(ev, got);
+        handle(ev);
       });
       return;
     }
-    handle(ev, got);
+    handle(ev);
   }
 
-  function handle(ev: StepEvent, got: number): void {
+  function handle(ev: StepEvent): void {
     switch (ev.kind) {
       case 'move':
         msg = nearMsg ?? '';
@@ -247,7 +253,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         return;
       case 'lap-complete':
         planner.reset();
-        msg = `${got > 0 ? `타일 획득: ${tn(ev.rewardTile!)} · ` : ''}${faction.nestName}에 도착했다`;
+        // 바퀴 끝 임시 타일 (GDD 210장 2, C.355): 고르기 창 없이 받은 1장을 한 줄로 (못 받으면 도착만)
+        msg = `${ev.rewardTile ? `임시 타일: ${tn(ev.rewardTile)} · ` : ''}${faction.nestName}에 도착했다`;
         // 펫 (GDD 90장): 바퀴 끝 보상 펫 · pet-seek 타일 +1장
         if (ev.petFound) msg = `펫 발견: ${petName(ev.petFound, faction)}! · ${msg}`;
         if (ev.petTile) msg = `${msg} · 펫이 타일을 물어 왔다: ${tn(ev.petTile)}`;
@@ -475,18 +482,20 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
-      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
-      meter({
+      tagGauge(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }), 'hunger'),
+      tagGauge(meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true,
         valueText: `${condNow}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
-      }),
-      meter({
+      }), 'cond'),
+      tagGauge(meter({
         kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
         valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
-      }),
+      }), 'risk'),
     );
     const hpPct = Math.round(hpFrac * 100);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` }));
+    hpBox.replaceChildren(tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` }), 'hp'));
+    applyBlink(meters); // 깜빡이는 중이면 다시 그린 줄에도 (GDD 208장 3)
+    applyBlink(hpBox);
     hpBox.title = `체력 ${hpPct}%`;
   }
 
@@ -571,7 +580,9 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     hpBar.classList.add('bha-lapend__hp');
     hpBar.dataset.lapHp = String(hpPct);
     const winHead = el('div', 'bha-win-head');
-    winHead.append(title, hpBar, helpBtn);
+    // 다음 바퀴 준비 — 소모품 칸 (GDD 212장 3): 머리 줄 체력 왼쪽 작은 버튼(본문을 밀지 않는다, C.358), 누르면 가방의 다른 소모품으로 바꿔 끼우기·빼기
+    const li = h.lapItem;
+    winHead.append(title, ...(li ? [lapItemSlot({ line: li.line(), short: li.short(), filled: li.filled(), canChange: li.canChange(), onChange: () => li.change(() => render()) })] : []), hpBar, helpBtn);
     const ret = button({
       label: '귀환', icon: 'i-return', variant: 'primary', size: 'lg',
       onClick: () => {
@@ -624,6 +635,13 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 노란 알림은 맨 위 (GDD 140장 2)
     // 권장 바퀴 딱 = '다 돌았다', 넘기면 '넘겼다' (GDD 176장 18: 2바퀴 막 끝냈는데 '넘겼다'였다)
     if (over) info.append(notice('warn', exp.lap === EX.defaultLaps ? '권장 바퀴를 다 돌았다. 더 돌수록 보상도 위험도 커진다.' : `권장 ${EX.defaultLaps}바퀴를 넘겼다. 더 돌수록 보상도 위험도 커진다.`));
+    // 바퀴 끝 임시 타일 한 줄 알림 (GDD 210장 2, C.355): 이번 바퀴 끝에 받은 임시 타일(고르기 없음) — 없으면 줄 없음
+    const lapTemp = (exp.tempLog ?? []).find((t) => t.from === 'lap' && t.lap === exp.lap);
+    if (lapTemp) {
+      const line = notice('info', `임시 타일: ${tn(lapTemp.tileId)} — 이번 모험 동안만 길에 놓을 수 있다`, { icon: 'i-timer' });
+      line.dataset.lapTemp = lapTemp.tileId;
+      info.append(line);
+    }
 
     // 가로 화면 한 장에 다 들어가게 (C.218, GDD 140장 2): 드래프트가 있으면 왼쪽 = 카드 3장(같은 크기 세로 줄), 오른쪽 = 길·손 배치판
     const body = el('div', `bha-nestsheet__body${d ? ' has-draft' : ''}`);

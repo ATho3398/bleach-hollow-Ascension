@@ -1,5 +1,6 @@
 // C.177 (GDD 105장 수정 v5.233·106장 4·107장·108장 3번): 막기 게이지 0.5초 강공격 막기 · 회복 버튼 없음 · [소모품]·[장비] 버튼 · 해방 = 평소 출현표 · 원정 체력 이어 가기
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { applyInput, canGuard, canUseGear, canUseItem, createCombat, drainCombatEvents, halted, playCombatHuman, replayCombat, spawnTableOf, defaultCombatParams, step, ticksOf, type CombatParams } from '../src/engine/combat';
@@ -8,6 +9,7 @@ import { createExpedition, finishBattle, finishRest, hpFractionOf, playExpeditio
 import { BATTLE_ITEM_IDS, battleItemEffectOf, spendBattleItem } from '../src/inventory';
 import { newSaveData, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT } from '../src/game';
 import { actionFor } from '../src/ui/shortcutMap';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
 const quiet = (params: Partial<CombatParams> = {}) => {
@@ -210,7 +212,7 @@ describe('107장 원정 체력 이어 가기', () => {
     exp.restMult = 1;
     exp.restSpring = false;
     finishRest(exp);
-    expect(hpFractionOf(exp)).toBeCloseTo(Math.min(1, 0.4 + PX.hpCarry.winHeal + PX.hpCarry.restHeal), 6);
+    expect(hpFractionOf(exp)).toBeCloseTo(Math.min(1, 0.4 + PX.hpCarry.winHeal + PX.restRecover.base), 6); // C.355: 웅덩이 1바퀴 15%
     exp.hpFraction = 0.3;
     const toBattle = (): void => {
       for (let i = 0; i < 500; i++) {
@@ -233,6 +235,6 @@ describe('107장 원정 체력 이어 가기', () => {
   });
 
   it('세이브 형식·문턱 50 (마이그레이션 없음)', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([64, 54]); // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([66, 54]); // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184
   });
 });

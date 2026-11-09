@@ -117,15 +117,15 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
 });
 
 describe('C.108 노력치 상한·수련 보상', () => {
-  it('상한 = [56, 108, 168, 240]·능력치 1개 60% (GDD 202장) — 옛 15%/8% 규칙은 202장에서 흡수 횟수 기준으로 바뀜', () => {
-    expect(SX.evCapTotal).toEqual([56, 108, 168, 240]); // GDD 202장 (C.334): 흡수 횟수 기준('둘 다' 약 15번). 옛 [36, 44, 70, 88] = C.280
+  it('상한 = [96, 204, 324, 472]·능력치 1개 70% (GDD 207장) — 옛 15%/8% 규칙은 202장에서 흡수 횟수 기준으로 바뀜', () => {
+    expect(SX.evCapTotal).toEqual([96, 204, 324, 472]); // GDD 207장 (C.342): 흡수 횟수 기준('둘 다' 약 30번). 202장 [56, 108, 168, 240] = 약 15번. 옛 [36, 44, 70, 88] = C.280
     SX.evCapTotal.forEach((cap, i) => {
-      expect(evCaps(i)).toEqual({ total: cap, perStat: Math.floor(cap * 0.6) }); // 202장 2: 능력치 하나 60%
+      expect(evCaps(i)).toEqual({ total: cap, perStat: Math.floor(cap * 0.7) }); // 207장: 능력치 하나 70% (202장 60%)
     });
     const e = newEvolution();
-    expect(addEv(e, { atk: 99 })).toEqual({ atk: 33 });
-    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 23 });
-    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(56);
+    expect(addEv(e, { atk: 99 })).toEqual({ atk: 67 });
+    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 29 });
+    expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(96);
   });
   it('수련 4종 노력치 +4~5', () => {
     const G = BALANCE.provisional.training.games;

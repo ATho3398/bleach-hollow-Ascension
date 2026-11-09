@@ -26,7 +26,7 @@ import { consumableName } from '../inventory';
 import { battleItemText } from '../shop';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
-import { button, el, icon, tag } from './bha/dom';
+import { button, chip, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
 import { keepOldIcons } from './bha/iconMap';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
@@ -50,6 +50,7 @@ import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
 import { pickDialog } from './pickDialog';
 import { showToast } from './bha/nest';
+import { libAuraEl, libReadyEdge, libReadyNoticeEl, libReadyText } from './bha/libReady';
 import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -57,7 +58,8 @@ import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
-import { attackFx, fxModeOf } from './attackFx';
+import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
+import type { PixelBodySlot } from './pixelAttack';
 import { FX_REACH_FIELD } from './attackFxConfig';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
@@ -67,6 +69,8 @@ import { abilityProcText } from './evolutionPanel';
 import { shownName } from './displayName';
 
 export interface BattleViewOptions {
+  /** 이기면 승리 창 보상 칸에 보일 줄 (GDD 216장 1: 강적·보스 처치 수련권 '수련권 +1'). 없으면 보상 칸 없음 */
+  winRewards?: string[];
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
   banner?: string;
   /** 있으면 필드 가운데 칩 줄 맨 위에 안내(.bha-notice)를 보인다 (체험 전투 "기록되지 않음" 등, C.160) */
@@ -98,6 +102,8 @@ export interface BattleViewOptions {
   /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 가진 전투 소모품 고르기 창 — options 가 비면 창 없이 안내만.
    *  pick = 고른 것을 칸에 넣고 이 전투에 싣는다(돌려준 값이 battleItem 대신) */
   pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
+  /** 모험 전투 (GDD 212장 1·2): 소모품은 칸에 끼운 1개를 바퀴당 1번(걷기에서 썼어도). spentId = 이번 바퀴에 이미 쓴 끼운 소모품 id(버튼 흐림 '씀'), 문구는 '바퀴당 1번'. 없으면 전투당 1번(탑·등급전 등) */
+  lapItem?: { spentId: string | null };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -453,6 +459,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libCut = el('div', 'bha-libcut');
   libCut.setAttribute('aria-hidden', 'true');
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
+  // 해방 준비 (GDD 215장, C.353): 발밑에서 솟구치는 기운 + 가득 차는 순간 '<해방 이름> 가능!' 알림 (이름 = 종족 설정)
+  const libReadyNotice = libReadyNoticeEl();
+  const libReadyRose = libReadyEdge();
+  if (libOn) hero.root.prepend(libAuraEl());
 
   // 막기 게이지·[소모품]·[장비] (GDD 105장 수정 v5.233 6번): 해방 알약 버튼 모양, 범례 줄 오른쪽 해방 옆. 못 쓸 때도 자리 그대로(흐리게)
   const actBtn = (kind: 'guard' | 'item' | 'gear', iconId: string, name: string) => {
@@ -570,7 +580,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, log);
+  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, libReadyNotice, log);
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
@@ -873,6 +883,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   for (const f of faction.families)
     for (const st of f.pixelFx?.stages ?? [])
       for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
+  // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
+  // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
+  const familyFx = (id: string, stage: number): FamilyFxSpec | null => {
+    const f = familyOf(faction, id);
+    if (!f) return null;
+    const t = f.tiers[stage - 1];
+    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
+  };
+  // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+  const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');
+  // 타격 지연 (GDD 214장, C.357): 엔진이 피해를 넣는 시각 = 실제 동작 데이터(종이인형 hit 시각·프레임 hit 장·도트 연출 첫 반응)의 타격 순간. 전투가 시작되기 전(틱 0)에만 — 종족 무관, 숫자만 넘긴다
+  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -882,18 +904,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
     maxReach: () => arena.offsetWidth * FX_REACH_FIELD, // 몸통박치기는 필드 폭의 18% 만 앞으로 (적까지 가지 않는다, GDD 99장 4)
-    // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
     layer: fxLayer,
-    // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
-    familyFx: (id, stage) => {
-      const f = familyOf(faction, id);
-      if (!f) return null;
-      const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
-    },
-    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트, 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+    familyFx,
+    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트
     pixelSheet: readyPixelFx,
-    bodySlot: () => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames'),
+    bodySlot,
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
@@ -934,13 +949,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 튜토리얼 마무리 체인의 블록 사건 (GDD 146장): 착탄까지 숫자를 미룬다 */
   let heldBlock: Extract<CombatEvent, { kind: 'block' }> | null = null;
   const react = (e: CombatEvent) => {
+    // 휘두르기 (GDD 214장, C.357): 공격 모션은 지금 시작하고, 피해 숫자·체력 막대·맞음 반응은 엔진 피해가 들어가는 틱(atTick)에.
+    // 연출에는 남은 ms 를 넘겨 타격 프레임을 그 순간에 맞춘다(이 프레임에 이미 지났으면 0 = 타격부터)
+    if (e.kind === 'swing') {
+      attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000) });
+      return;
+    }
+    // 맞은 순간(landed): 모션은 swing 때 시작했으니 숫자·번쩍임·효과음만
+    const landed = 'landed' in e && !!e.landed;
     // 각본 마무리 체인 (GDD 146장): 동작 → 스킬 연출 → 닿는 순간 피해. 피해는 엔진이 맡겨 두고 연출이 닿을 때 scriptLand 로 넣는다
     const landing = e.kind === 'block' && s.script?.stage === 'chain-hit' && !!s.script.held;
     if (landing) heldBlock = e;
     const cue = landing ? null : cueOf(e, top);
     if (cue) cues.push(cue);
     if (landing) attack.react(e, { windup: true, onLand: () => void scriptLand(s) });
-    else attack.react(e);
+    else if (!landed) attack.react(e);
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':
@@ -1271,8 +1294,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
     const it = p.battleItem;
     const itemLeft = armedItem && it ? armedItem.count - (s.itemUsed ? 1 : 0) : 0;
-    setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
-    setAct(itemBtn, canUseItem(s), !it ? (opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    // 모험 전투 (GDD 212장 2): 이번 바퀴에 이미 쓴 칸 = 싣지 않고 '씀' 흐림 + 이유 한 줄(title)
+    const lapSpent = opts.lapItem?.spentId ?? null;
+    const per = opts.lapItem ? '바퀴당 1번' : '전투당 1번';
+    setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : lapSpent ? '씀' : '');
+    itemBtn.root.classList.toggle('is-spent', lapSpent !== null || (it !== null && s.itemUsed));
+    setAct(itemBtn, canUseItem(s), !it ? (lapSpent ? `${consumableName(lapSpent)} — 이번 바퀴에 썼다(다음 바퀴에 다시 1번)` : opts.lapItem ? '소모품 칸이 비었다(바퀴 끝 창에서 끼운다)' : opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — ${opts.lapItem ? '이번 바퀴에 썼다' : '이번 전투에 썼다'}` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (${per}, 남은 ${itemLeft}개)`);
     // 빈 칸이면 눌러서 고를 수 있다 (GDD 193장 6) — 모양은 흐린 그대로(C.302 C.281), 누를 수 있다는 것만 알린다
     if (!it && opts.pickBattleItem && !s.script) setAttr(itemBtn.root, 'aria-disabled', 'false');
     const cdSec = s.gearCooldown * p.tickSeconds;
@@ -1292,6 +1319,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const ready = canLiberate(s);
       libBtn.classList.toggle('is-ready', ready);
       app.classList.toggle('is-lib-ready', ready);
+      if (libReadyRose(ready)) {
+        setText(libReadyNotice.firstElementChild as HTMLElement, libReadyText(labels.liberation.name));
+        replayOnce(libReadyNotice, 'is-on', 1200);
+        replayOnce(libBtn, 'is-ready-pop', 700);
+      }
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
       setAttr(libBtn, 'aria-disabled', String(!ready));
@@ -1437,6 +1469,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         el('span', 'bha-battle-ov__eyebrow', `${Math.round(elapsedSeconds(s))}초${s.chain3Count > 0 ? ` · ${labels.chain}${top} ${s.chain3Count}` : ''}`),
         el('h2', 'bha-battle-ov__title', '승리'),
         el('p', 'bha-battle-ov__sub', `${enemyName}을(를) 쓰러뜨렸다.`),
+        ...(opts.winRewards?.length ? [(() => {
+          const row = el('p', 'bha-battle-ov__sub');
+          row.dataset.battle = 'win-rewards';
+          for (const r of opts.winRewards) {
+            const c = chip('', 'guard');
+            c.append(icon('i-rare'), r);
+            row.append(c);
+          }
+          return row;
+        })()] : []),
         actions,
       );
     } else {

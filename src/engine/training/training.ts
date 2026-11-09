@@ -16,7 +16,7 @@ export type TrainingGameId = (typeof TRAINING_GAMES)[number];
 export interface TrainingState {
   /** 수련치 (완료 기준 pointsToComplete). 완료 뒤에도 쌓인다(노력치 목적으로 계속 가능) */
   points: number;
-  /** 수련권 (원정 귀환마다 +1, 최대 ticketsMax). 한 판에 1장 */
+  /** 수련권 (GDD 216장: 원정·탑 강적·보스 처치 때 무작위로 +1, 개수 제한 없음). 한 판에 1장 */
   tickets: number;
   /** 종목별 누적 승리 (난이도 단계 기준) */
   wins: Record<TrainingGameId, number>;
@@ -31,7 +31,7 @@ export function newTrainingState(): TrainingState {
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
 
-/** 저장된 수련 상태 정리 (모르는 값·음수·상한 넘는 수련권 보정) */
+/** 저장된 수련 상태 정리 (모르는 값·음수 보정. 수련권 개수 제한은 없다 — GDD 216장 2) */
 export function sanitizeTraining(raw: unknown): TrainingState {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<Record<keyof TrainingState, unknown>>;
   const w = (typeof r.wins === 'object' && r.wins !== null ? r.wins : {}) as Record<string, unknown>;
@@ -40,7 +40,7 @@ export function sanitizeTraining(raw: unknown): TrainingState {
   const completed = r.completed === true;
   return {
     points: nonNegInt(r.points),
-    tickets: Math.min(TX.ticketsMax, nonNegInt(r.tickets)),
+    tickets: nonNegInt(r.tickets),
     wins,
     completed,
     completedAt: completed && typeof r.completedAt === 'number' ? r.completedAt : null,
@@ -62,11 +62,15 @@ export function trainingLevel(t: Pick<TrainingState, 'wins'>, game: TrainingGame
   return level;
 }
 
-/** 원정에서 돌아올 때 수련권 +1 (최대 ticketsMax). 실제로 늘었는지 돌려준다 */
-export function addTrainingTicket(t: TrainingState): boolean {
-  if (t.tickets >= TX.ticketsMax) return false;
-  t.tickets = Math.min(TX.ticketsMax, t.tickets + TX.ticketsPerReturn);
-  return true;
+/** 수련권 n장 더하기 (GDD 216장 2: 개수 제한 없음) */
+export function addTrainingTicket(t: TrainingState, n = 1): void {
+  t.tickets += Math.max(0, Math.floor(n));
+}
+
+/** 수련권 드롭 굴림 (GDD 216장 1): 강적 ticketDrop.elite·보스 ticketDrop.boss 확률로 1장. 일반 적은 없음. rand = 0 이상 1 미만 */
+export function rollTrainingTicket(from: 'normal' | 'elite' | 'boss', rand: () => number): boolean {
+  if (from === 'normal') return false;
+  return rand() < TX.ticketDrop[from];
 }
 
 export type TrainingBlock = 'tier' | 'tickets' | 'condition';

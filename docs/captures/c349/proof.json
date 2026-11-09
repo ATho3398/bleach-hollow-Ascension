@@ -1,0 +1,171 @@
+{
+ "checks": {
+  "pc-h": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 사신 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 337,
+       "t": 286,
+       "r": 515,
+       "b": 316
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": false
+   },
+   "roomSeen": true
+  },
+  "pc-s": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 호로 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 337,
+       "t": 286,
+       "r": 515,
+       "b": 316
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": false
+   },
+   "roomSeen": true,
+   "spa": {
+    "toasts": [
+     {
+      "text": "온천 체력이 가득 찼다",
+      "low": true,
+      "r": {
+       "l": 345,
+       "t": 342,
+       "r": 499,
+       "b": 372
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": false
+   }
+  },
+  "ph-h": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 사신 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 323,
+       "t": 280,
+       "r": 501,
+       "b": 310
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": true
+   },
+   "roomSeen": true
+  },
+  "ph-s": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 호로 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 323,
+       "t": 280,
+       "r": 501,
+       "b": 310
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": true
+   },
+   "roomSeen": true,
+   "spa": {
+    "toasts": [
+     {
+      "text": "온천 체력이 가득 찼다",
+      "low": true,
+      "r": {
+       "l": 321,
+       "t": 336,
+       "r": 475,
+       "b": 366
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": false
+   }
+  },
+  "ph115-h": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 사신 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 322,
+       "t": 280,
+       "r": 522,
+       "b": 310
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": true
+   },
+   "roomSeen": true
+  },
+  "ph115-s": {
+   "room": {
+    "toasts": [
+     {
+      "text": "새 트랙 호로 트랙이 열렸다",
+      "low": true,
+      "r": {
+       "l": 322,
+       "t": 280,
+       "r": 522,
+       "b": 310
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": true
+   },
+   "roomSeen": true,
+   "spa": {
+    "toasts": [
+     {
+      "text": "온천 체력이 가득 찼다",
+      "low": true,
+      "r": {
+       "l": 313,
+       "t": 336,
+       "r": 483,
+       "b": 366
+      }
+     }
+    ],
+    "overlaps": [],
+    "hpCover": false
+   }
+  }
+ },
+ "shots": [
+  "pc-h-toast.png",
+  "ph-s-toast.png"
+ ],
+ "errors": []
+}

@@ -9,13 +9,13 @@ const hollow = FACTIONS.find((f) => f.id === 'hollow')!;
 const shin = FACTIONS.find((f) => f.id !== 'hollow')!;
 
 describe('C.107 호로 시작 외형 5종 랜덤 (GDD 51)', () => {
-  it('startLooks 는 호로 설정에만 있고 모두 입을 수 있는 시작 전용 스킨이며 그림이 있다', () => {
+  it('startLooks 는 호로 설정에만 있고 모두 입을 수 있는 시작 전용 스킨 (그림 파일은 C.341 에 지움)', () => {
     expect(hollow.startLooks).toEqual(['mantis', 'brute', 'ghoul', 'shackled']);
     for (const id of hollow.startLooks!) {
       const s = SKINS.find((x) => x.id === id)!;
       expect(s.factionId).toBe('hollow');
       expect(s.startOnly).toBe(true);
-      expect(existsSync(`public/art/skin-${id}.png`)).toBe(true);
+      expect(existsSync(`public/art/skin-${id}.png`)).toBe(false); // C.341 (GDD 206장 1): 가짜 도트 삭제 — 덩치 셋은 종이인형, 사마귀는 사용자 시트 대기
     }
     expect(shin.startLooks).toEqual([]);
   });

@@ -1,0 +1,143 @@
+{
+  "runs": [
+    {
+      "enemy": "normal-sturdy",
+      "dev": "pc",
+      "look": "brute",
+      "hero": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 120.2,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 120.2,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    },
+    {
+      "enemy": "normal-basic",
+      "dev": "phone",
+      "look": "ghoul",
+      "hero": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    },
+    {
+      "enemy": "fire-heavy-chain",
+      "dev": "pc",
+      "look": "mantis",
+      "hero": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 119.7,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 119.7,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    },
+    {
+      "enemy": "normal-heavy-seal",
+      "dev": "phone",
+      "look": "shackled",
+      "hero": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    },
+    {
+      "enemy": "earth-stance",
+      "dev": "pc",
+      "look": "brute",
+      "hero": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 120.2,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 315,
+        "canvasH": 608,
+        "figH": 120.2,
+        "pxPerCanvas": 0.5181,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    },
+    {
+      "enemy": "kyo-heavy-chain",
+      "dev": "phone",
+      "look": "mantis",
+      "hero": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "foe": {
+        "boxH": 332.4,
+        "canvasH": 608,
+        "figH": 126.8,
+        "pxPerCanvas": 0.5468,
+        "dpr": 1
+      },
+      "ratio": {
+        "fig": 1,
+        "dot": 1
+      }
+    }
+  ],
+  "errors": []
+}

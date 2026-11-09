@@ -10,6 +10,7 @@ import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '..
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
+import { rollTrainingTicket } from '../training/training';
 import { getTrait } from '../../data/traits';
 import {
   absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
@@ -52,6 +53,8 @@ const PET_SEED_SALT = 0x7f4a7c15;
 const GEAR_SEED_SALT = 0x2f6b9d43;
 /** 영구 타일 굴림 전용 난수 (GDD 121장 4 ①): 원정 끝에 한 번 */
 const PERM_TILE_SEED_SALT = 0x3c6ef372;
+/** 수련권 드롭 굴림 (GDD 216장 1): 이긴 전투마다 (시드 ^ 이 값 ^ 전투 번호) — 원정 난수를 건드리지 않는다 */
+const TICKET_SEED_SALT = 0x4cf5ad43;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -326,8 +329,32 @@ export interface ExpeditionState extends RiskState {
   gearDrops?: boolean;
   /** 이 원정에서 나온 장비 (귀환 때 game.ts 가 보관함에 — 가득이면 골드로) */
   gearFinds?: { roll: GearRoll; lap: number; from: 'normal' | 'elite' | 'boss' }[];
+  /** 이 원정에서 나온 수련권 (GDD 216장 1, C.354): 강적·보스를 이긴 전투마다 굴림. 귀환 때 game.ts 가 수련권에 더하고 런 로그 trainingTickets 에 남긴다. 옛 원정 저장엔 없음 */
+  ticketFinds?: { lap: number; from: 'elite' | 'boss'; enemyId: string }[];
   /** 출발 때 돌봄 상태 (GDD 102-2): 쇠약 = 전투 시작 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow. 없으면 효과 없음 */
   care?: CareCarry;
+  /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
+   *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
+  lapItems?: LapItemUse[];
+}
+
+/** 모험 소모품 한 번 사용 (GDD 212장 5 — 런 로그) */
+export interface LapItemUse {
+  lap: number;
+  itemId: string;
+  where: 'walk' | 'battle';
+}
+
+/** 이번 바퀴에 끼운 소모품을 이미 썼나 (GDD 212장 2): 걷기·전투 어디서든 한 번 쓰면 그 바퀴 끝까지. 다음 바퀴(lap+1)는 새로 1번 */
+export function lapItemUsed(exp: Pick<ExpeditionState, 'lap' | 'lapItems'>): boolean {
+  return (exp.lapItems ?? []).some((u) => u.lap === exp.lap);
+}
+
+/** 이번 바퀴 사용을 남긴다 (GDD 212장 2·5). 이미 썼으면 false(아무것도 안 바뀜) */
+export function markLapItem(exp: Pick<ExpeditionState, 'lap' | 'lapItems'>, itemId: string, where: LapItemUse['where']): boolean {
+  if (lapItemUsed(exp)) return false;
+  (exp.lapItems ??= []).push({ lap: exp.lap, itemId, where });
+  return true;
 }
 
 /** 출발 때 둥지에서 가져가는 상태 (GDD 102-2·102장 수정 v5.228 빈사) */
@@ -705,7 +732,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
   }
   if (exp.pos === 0) {
     exp.lapsCompleted = exp.lap;
-    const reward = drawTile(exp, 0, 'lap');
+    const reward = rollLapTempTile(exp);
     const petLap = lapPetRolls(exp);
     // 스토리 버티기 목표 (GDD 25-4): 마친 바퀴 수
     const st = exp.story;
@@ -715,8 +742,7 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     }
     if (exp.lap >= exp.maxLaps) return endExpedition(exp, 'returned', 'forced-max-laps');
     exp.phase = 'nest-choice';
-    // 드래프트 (GDD 25-5 ①): 바퀴 끝 배치 팝업에서 3장 중 1장 (스토리는 끔)
-    if (exp.tileVariants && !exp.story && !exp.tilesLocked) exp.draft = { lap: exp.lap, options: drawDraft(exp.varRng, exp.factionId, exp.deck), picked: null };
+    // 옛 드래프트(3장 중 1장 고르기)는 C.355 (GDD 210장 2) 에서 폐지 — 바퀴 끝 임시 타일은 rollLapTempTile 이 고르기 없이 준다. draft 는 이어하기 호환으로만 남는다(늘 null)
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward, ...petLap };
   }
   const cell = exp.pos;
@@ -965,6 +991,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   healCarry(exp, winHealOf(exp.lap)); // 사냥 힐 (GDD 121장 6): 바퀴가 갈수록 줄고 4바퀴부터 0
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
+  // 수련권 드롭 (GDD 216장 1): 강적 20%·보스 50%. 이 전투 번호(= 방금 넣은 기록 자리)로 굴려 화면이 미리 알 수 있다(ticketDropOf)
+  if (ticketDropOf(exp, exp.battles.length - 1, pending)) (exp.ticketFinds ??= []).push({ lap: exp.lap, from: pending.boss ? 'boss' : 'elite', enemyId: pending.boss ?? pending.enemy.id });
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지 — 임시 타일 (GDD 121장 4 ②)
   if (exp.victoriesThisLap === 0) drawTile(exp, 0, 'win');
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
@@ -1185,18 +1213,27 @@ export function drainEvents(exp: ExpeditionState): EngineEvent[] {
   return exp.events.splice(0, exp.events.length);
 }
 
-/** 휴식 타일 효과: 허기·컨디션 회복, 시간 소모 */
+/** 휴식 칸 회복 비율 (GDD 210장 1, C.355): n바퀴째 = base × perLapDecay^(n−1), 최저 min — 배부름·컨디션·체력 모두 최대치의 이 비율(상위 타일·시너지 배율은 따로 곱한다) */
+export function restRecoverFraction(lap: number): number {
+  const R = PX.restRecover;
+  return Math.max(R.min, R.base * Math.pow(R.perLapDecay, Math.max(1, lap) - 1));
+}
+
+/** 휴식 타일 효과: 배부름·컨디션·체력 회복(바퀴마다 줄어듦, 리스크는 그대로 — GDD 210장 1), 시간 소모. 샘은 회복 없이 리스크만 내린다 */
 export function finishRest(exp: ExpeditionState): void {
   if (exp.phase !== 'rest') throw new Error('휴식 중이 아니다');
   // 회복 배율: 상위 타일(휴식+)·시너지(오아시스) (GDD 25-5)
   const k = exp.restMult ?? 1;
-  // 영혼 샘/정화의 샘 (C.124): 회복 대신 리스크만 크게
-  const sp = exp.restSpring ? TT.spring : { hungerMult: 1, conditionMult: 1, riskReliefMult: 1 };
-  exp.hunger = Math.max(0, exp.hunger - PX.restHunger * k * sp.hungerMult);
-  changeRisk(exp, -RX.restRelief * k * sp.riskReliefMult, 'rest');
-  exp.condition = Math.min(PX.conditionMax, exp.condition + PX.restCondition * k * sp.conditionMult);
-  // 웅덩이 체력 회복 (GDD 107장 3번 ②): 컨디션처럼 회복 배율·샘(회복 없음)을 따른다
-  healCarry(exp, PX.hpCarry.restHeal * k * sp.conditionMult);
+  if (exp.restSpring) {
+    // 영혼 샘/정화의 샘 (C.124, 210장 대상 아님): 회복 대신 리스크만
+    changeRisk(exp, -TT.spring.riskRelief * k, 'rest');
+  } else {
+    const frac = restRecoverFraction(exp.lap) * k;
+    exp.hunger = Math.max(0, exp.hunger - PX.hungerMax * frac);
+    exp.condition = Math.min(PX.conditionMax, exp.condition + PX.conditionMax * frac);
+    // 웅덩이 체력 회복 (GDD 107장 3번 ② → 210장 1): 배부름·컨디션과 같은 비율
+    healCarry(exp, frac);
+  }
   exp.restMult = 1;
   exp.restSpring = false;
   exp.elapsedSeconds += PX.restTimeTiles * EX.restSecondsPerTile;
@@ -1370,6 +1407,16 @@ function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): 
   (exp.gearFinds ??= []).push({ roll, lap: exp.lap, from });
 }
 
+/** 이 원정의 battleIndex 번째 전투(0부터)를 이기면 수련권이 나오나 (GDD 216장 1). 지금 상대(pending) 등급으로 본다 — 강적·보스만, 튜토리얼은 없음.
+ *  전투 화면이 승리 창에 '수련권 +1' 을 미리 띄울 때 exp.battles.length 로, finishBattle 은 기록을 넣은 뒤 length − 1 로 부른다(같은 값) */
+export function ticketDropOf(exp: ExpeditionState, battleIndex: number = exp.battles.length, p: PendingBattle | null = exp.pending): boolean {
+  if (!p || exp.tutorial) return false;
+  const from = p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'normal';
+  if (from === 'normal') return false;
+  const rng = createRng((exp.seed ^ TICKET_SEED_SALT ^ Math.imul(battleIndex + 1, 2246822519)) >>> 0);
+  return rollTrainingTicket(from, () => nextFloat(rng));
+}
+
 /** 바퀴 끝 펫 굴림 (GDD 90장): 바퀴 끝 보상 펫(petDrops, 2%) · pet-seek 타일 +1장(10%). 바퀴마다 따로 만든 난수라 다른 굴림을 밀지 않는다 */
 function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?: string | null } {
   if (exp.tutorial || (!exp.pet && !exp.petDrops)) return {};
@@ -1386,6 +1433,22 @@ function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?
   const tileChance = petBonus(exp.pet, 'seekTile');
   if (tileChance > 0 && nextFloat(rng) < tileChance) out.petTile = drawTile(exp);
   return out;
+}
+
+/** 바퀴 끝 임시 타일 (GDD 210장 2, C.355): chance(70%) 확률로 고르기 없이 무작위 1장, 나머지는 없음. 굴림은 걷기 RNG(exp.rng) — 같은 시드 = 같은 결과.
+ *  후보 풀은 옛 드래프트와 같다(타일 변수 켬·스토리 아님·타일 잠김 아님: 덱·덱 밖 타일·이벤트 타일, 변수 RNG) — 런 로그 drafts 에 그대로 남긴다. 그 밖(변수 끔·스토리)은 덱에서 1장.
+ *  바퀴 합계 상한(tilesPerLap.max)·빈 덱 규칙은 drawTile 과 같다 */
+function rollLapTempTile(exp: ExpeditionState): string | null {
+  if (nextFloat(exp.rng) >= TV.draft.chance) return null;
+  if (!(exp.tileVariants && !exp.story && !exp.tilesLocked)) return drawTile(exp, 0, 'lap');
+  if (exp.tilesThisLap >= EX.tilesPerLap.max) return null;
+  const id = drawDraft(exp.varRng, exp.factionId, exp.deck)[0];
+  if (id === undefined) return null;
+  addTemp(exp, id, 'lap');
+  exp.variantLog.drafts.push({ tileId: id, lap: exp.lap });
+  exp.hand.push(id);
+  exp.tilesThisLap++;
+  return id;
 }
 
 /** 덱에서 타일 1장 획득. 바퀴 합계 상한(tilesPerLap.max)을 넘기면 얻지 않는다. reserve 만큼은 남겨 둔다(흡수 보상이 바퀴 완주 보상을 밀어내지 않게).
@@ -1708,6 +1771,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     continueRun: continueRunOf(exp),
     ...(exp.abandoned ? { abandoned: exp.abandoned } : {}),
     kills: killsByEnemy(exp.battles), // 잡은 적 id·수 (GDD 200장 6, C.330)
+    ...(exp.lapItems?.length ? { lapItems: exp.lapItems.map((u) => ({ ...u })) } : {}), // 바퀴별 쓴 소모품 (GDD 212장 5)
   };
 }
 

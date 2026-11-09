@@ -1,5 +1,6 @@
 // C.199 (GDD 123장 5): 첫 원정 첫 전투 각본 — 순서 고정·난수 없음·두 종족
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
 import {
@@ -10,6 +11,7 @@ import { guidePending } from '../src/engine/tutorial';
 import { absenceOf, newSaveData, nextRunId, recordExpedition, tickIdle } from '../src/game';
 import { homeHp, HP_POTION_ID } from '../src/home';
 import { CURE_ITEM_ID, recoverCure, recoverFeed, recoverGrantBag, recoverSpa, recoverStep } from '../src/recoverTutorial';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const TS = BALANCE.provisional.tutorialScript;
 const TR = BALANCE.provisional.tutorialRecover;

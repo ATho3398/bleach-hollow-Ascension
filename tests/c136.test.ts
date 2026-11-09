@@ -2,6 +2,7 @@
 // 블록 출현 = 타이머 하나 + 확률표 · 막기·회복 속성 특성 삭제 · 같은 속성 반복 흡수 강화(속성마다 100) · 광기 자연 감소 느리게
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { TRAITS } from '../src/data/traits';
@@ -15,6 +16,7 @@ import {
 import { createRng } from '../src/engine/rng';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
 const RX = BALANCE.provisional.risk;
@@ -215,7 +217,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
   });
 
   it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 45(C.167)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(66); // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     const s = newSaveData('hollow', 1);
     expect(s.build.enhance).toEqual({});
     s.build.enhance = { earth: 120, fire: 3 };
@@ -237,10 +239,10 @@ describe('84장 1·10번 원정 칸 시간 ½ · 광기 자연 감소 느리게'
     expect(BALANCE.expedition.secondsPerTile).toBe(1.25);
   });
 
-  it('광기 하락: 휴식 15 → 10 · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03, C.174 에서 0.02)', () => {
-    expect(RX.restRelief).toBe(10);
+  it('광기 하락: 휴식 15 → 10(C.355 부터 없음 — 210장) · 놓아주기 2 → 1 · 먹이 5 → 3 · 재우기·쓰다듬기 20 → 10 (공허 블록 몫은 C.173 101장에서 0.03, C.174 에서 0.02)', () => {
+    expect('restRelief' in RX).toBe(false);
     expect(RX.releaseRelief).toBe(1);
-    expect(RX.nestActions.feed.risk).toBe(-3);
+    expect(RX.nestActions.feed.risk).toBe(0); // C.351 (GDD 211장): 먹이 숨은 광기 하락 삭제 (옛 −3)
     expect(RX.nestActions.sleep.risk).toBe(-10);
     expect(RX.nestActions.pet.risk).toBe(-10);
     expect(CX.voidChance).toBe(0.02);

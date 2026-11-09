@@ -442,6 +442,36 @@ export function foodEffect(food: FoodId): { hunger: number; condition: number } 
   return NX.foods[food];
 }
 
+/** 먹이 효과 한 줄의 값 이름 (GDD 211장): hunger = 배부름 +, cond = 컨디션 ±, hp = 홈 체력 +(최대 체력 %), bond = 교감 + */
+export type FoodFxKey = 'hunger' | 'cond' | 'hp' | 'bond';
+export interface FoodFx { key: FoodFxKey; amount: number }
+
+/** 먹이 한 개의 효과 전부 (GDD 211장 — 먹이 = 이 목록뿐, 숨은 효과 없음). 방 먹이 카드·가방·상점 설명과 실제 적용(doNestAction feed)이 같은 값을 쓴다.
+ *  순서 = 배부름 · 컨디션 · 체력 · 교감. 0 인 값은 뺀다 */
+export function foodEffectList(food: FoodId): FoodFx[] {
+  const f = foodEffect(food);
+  const out: FoodFx[] = [];
+  if (f.hunger) out.push({ key: 'hunger', amount: f.hunger });
+  if (f.condition) out.push({ key: 'cond', amount: f.condition });
+  const hp = Math.round(foodHpHeal(food) * 100);
+  if (hp) out.push({ key: 'hp', amount: hp });
+  if (BX.gain.feed) out.push({ key: 'bond', amount: BX.gain.feed });
+  return out;
+}
+
+/** 지금 먹이면 실제로 움직이는 효과만 (GDD 193장 16 '가득이면 안 보임' + 211장): 가득·상한·하루 교감 한도에 닿은 값은 뺀다. 줄이는 효과는 0 이 아닐 때만 */
+export function foodEffectsNow(food: FoodId, nest: NestState, nowMs: number = Date.now()): FoodFx[] {
+  const bondLeft = Math.min(BX.max - nest.bond, nest.bondDay === dayKey(nowMs) ? BX.dailyMax - nest.bondToday : BX.dailyMax);
+  return foodEffectList(food).filter((e) => {
+    switch (e.key) {
+      case 'hunger': return nest.hunger > 0;
+      case 'cond': return e.amount > 0 ? nest.condition < MAX : nest.condition > 0;
+      case 'hp': return !nest.dead && homeHpOf(nest) < homeHpCap(nest);
+      case 'bond': return bondLeft > 0;
+    }
+  });
+}
+
 const FL = NX.feedLimit;
 /** 지금 먹일 수 있는 남은 개수 (GDD 109장 6): 마지막으로 먹은 뒤 windowMinutes 가 지났으면(또는 시계를 되돌렸으면) max */
 export function feedsLeft(nest: Pick<NestState, 'feedCount' | 'lastFedAt'>, nowMs: number): number {

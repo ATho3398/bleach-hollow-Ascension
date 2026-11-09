@@ -6,7 +6,7 @@ import { accrueIdle, newSaveData } from '../src/game';
 import { autoEquipGear, bestBattleItem, BATTLE_ITEM_IDS, fillBattleSlot, inventoryOf, ownedBattleItems } from '../src/inventory';
 import { storeConsumable } from '../src/shop';
 import { careStatusShort, statusChips } from '../src/ui/bha/roomLogic';
-import { foodCardLine } from '../src/ui/bha/dock';
+import { foodEffectsNow } from '../src/engine/nest';
 import { actionChipOf } from '../src/ui/lcdScreens';
 import { idleShortfall, idleSummaryText, idleYieldLines } from '../src/ui/idleView';
 import { idleYield } from '../src/engine/idle';
@@ -86,13 +86,18 @@ describe('193장 15 상태이상 푸는 법 짧게', () => {
   });
 });
 
-describe('193장 16 먹이 카드 가득 찬 수치', () => {
-  const eff = ['배부름 +2', '컨디션 +4'];
-  it('컨디션이 가득이면 배부름 쪽, 둘 다 가득이면 가득', () => {
-    expect(foodCardLine({ hunger: 2, condition: 4 }, eff, { fullness: false, condition: false })).toBe('컨디션 +4');
-    expect(foodCardLine({ hunger: 2, condition: 4 }, eff, { fullness: false, condition: true })).toBe('배부름 +2');
-    expect(foodCardLine({ hunger: 2, condition: 4 }, eff, { fullness: true, condition: true })).toBe('가득');
-    expect(foodCardLine({ hunger: 2, condition: -3 }, ['배부름 +2', '컨디션 −3'], { fullness: true, condition: true })).toBe('컨디션 −3');
+describe('193장 16 먹이 카드 가득 찬 수치 (211장부터 효과 전부 중 움직이는 것)', () => {
+  it('컨디션이 가득이면 컨디션 +n 이 빠지고, 다 가득이면 빈 목록(카드 = 가득)', () => {
+    const s = newSaveData('shinigami');
+    const now = Date.now();
+    Object.assign(s.nest, { hunger: 50, condition: 50, hpFraction: 0.5 });
+    expect(foodEffectsNow('snack', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'cond', 'hp', 'bond']);
+    s.nest.condition = 100;
+    expect(foodEffectsNow('snack', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'hp', 'bond']);
+    Object.assign(s.nest, { hunger: 0, hpFraction: 1, bond: 100 });
+    expect(foodEffectsNow('snack', s.nest, now)).toEqual([]);
+    // 줄이는 효과(잔치 컨디션 −)는 가득이어도 움직이므로 남는다
+    expect(foodEffectsNow('feast', s.nest, now).map((e) => e.key)).toEqual(['cond']);
   });
 });
 

@@ -144,6 +144,19 @@ export interface BattleRecord {
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */
+/** 수련권 획득 1건 (GDD 216장 3, C.354, 세이브 형식 65): 원정·탑에서 강적/보스를 잡아 나온 수련권.
+ *  source = expedition(runId·lap) · tower(floor). enemyId = 잡은 적(보스면 보스 id) */
+export interface TrainingTicketRecord {
+  at: number;
+  factionId: string;
+  source: 'expedition' | 'tower';
+  from: 'elite' | 'boss';
+  enemyId: string;
+  runId?: number;
+  lap?: number;
+  floor?: number;
+}
+
 export interface TrainingRecord {
   /** 시각(ms) */
   at: number;
@@ -297,6 +310,8 @@ export interface RunRecord {
   abandoned?: 'stale' | 'version' | 'corrupt';
   /** C.330 (세이브 형식 64, GDD 200장 6·9장): 이 원정에서 잡은(이긴 전투) 적 id → 수. 형식 64 이전 기록에는 없다(전투 기록 battles 로 알 수 있다) */
   kills?: Record<string, number>;
+  /** C.356 (세이브 형식 66, GDD 212장 5·9장): 바퀴별 쓴 모험 소모품(소모품 칸에 끼운 것, 바퀴당 1번) — 바퀴·품목·쓴 곳(걷기/전투). 안 썼으면 없다. 형식 66 이전 기록에는 없다 */
+  lapItems?: { lap: number; itemId: string; where: 'walk' | 'battle' }[];
 }
 
 /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장 3번·9장): 첫 원정의 '첫 흡수'는 흡수 기록(absorbs)에 넣지 않고 여기에 따로 남긴다 — 히든 조건이 흡수와 구분해 읽게 */
@@ -395,6 +410,8 @@ export interface RunLog {
   runs: RunRecord[];
   /** 수련 기록 (C.54, 세이브 형식 18) */
   trainings: TrainingRecord[];
+  /** 수련권 획득 기록 (C.354, 세이브 형식 65, GDD 216장 3) */
+  trainingTickets: TrainingTicketRecord[];
   /** 아란칼화 / 참백도 구상화 도전 기록 (C.220, 세이브 형식 57, GDD 126장 3 — 지금은 보스전 임시). 옛 세이브엔 없음 */
   ascensions?: AscensionRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
@@ -630,6 +647,7 @@ export function emptyRunLog(): RunLog {
     rankBattles: [],
     runs: [],
     trainings: [],
+    trainingTickets: [],
     rebirths: [],
     bossBattles: [],
     shopPurchases: [],

@@ -1,6 +1,7 @@
 // C.134 (S-23, GDD 83장): 저장형 필살기 삭제 → 해방(영력 해방 · 레스렉시온/만해). 해방 게이지 = 옛 저장 게이지, 해방 블록 슬롯, 5단계 고유 효과
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { FACTIONS, getFaction } from '../src/data/factions';
@@ -14,6 +15,7 @@ import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { parseFactionConfig } from '../src/engine/faction';
 import { liberationAccess, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 import { liberationLabels } from '../src/ui/labels';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const LB = BALANCE.provisional.liberation;
 const normal = getEnemy('test-a');
@@ -165,7 +167,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(66); // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);

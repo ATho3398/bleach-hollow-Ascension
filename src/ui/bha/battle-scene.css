@@ -205,7 +205,32 @@
 .bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
 
-/* 해방 준비 아우라 (C.216, GDD 139장 3): 규칙은 v2/bha.css 의 .is-lib-ready. 뿜어 나오는 고리 */
-@keyframes bha-lib-burst{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.25)}}
-@keyframes bha-lib-shape{from{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 3px var(--bha-accent-hi))}to{filter:drop-shadow(0 0 1px var(--bha-accent-hi)) drop-shadow(0 0 6px var(--bha-accent-hi)) drop-shadow(0 0 12px var(--bha-accent-hi))}} /* 해방 준비 = 몸 그림 모양대로 뿜어 나오는 빛 (GDD 178장 3, 규칙은 v2/bha.css .is-lib-ready) */
-@media (prefers-reduced-motion: reduce){.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-hero__body{animation:none}}
+/* 해방 준비 오라 (GDD 215장, C.353): 캐릭터 발밑에서 위로 솟구치는 기운 — 위로 흐르는 줄기 + 떠오르는 입자 + 맥동하는 발밑 빛.
+   둘레 테두리형 빛은 쓰지 않는다(기기 초점 .bha-sel = 몸 둘레 초점색 테두리와 구분). 색 = 종족 테마의 강조색 토큰(호로 붉은색 / 사신 푸른색) */
+.bha-libaura { position: absolute; left: 50%; bottom: 0; width: 80%; height: 100%; transform: translateX(-50%); z-index: 0; pointer-events: none; display: none; }
+.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-libaura { display: block; }
+.bha-libaura__base { position: absolute; left: 6%; right: 6%; bottom: 0; height: 18%; border-radius: 50%; background: radial-gradient(closest-side, var(--bha-accent-hi), var(--bha-accent) 50%, transparent); animation: bha-libaura-pulse 0.8s ease-in-out infinite alternate; }
+.bha-libaura__flame { position: absolute; bottom: 4%; left: var(--x); width: 30%; height: var(--h); transform-origin: 50% 100%; border-radius: 50% 50% 40% 40% / 85% 85% 15% 15%; background: linear-gradient(to top, var(--bha-accent-hi), var(--bha-accent) 45%, transparent); opacity: 0; animation: bha-libaura-rise 1.05s ease-out infinite; animation-delay: calc(var(--i) * -0.37s); }
+.bha-libaura__spark { position: absolute; left: var(--x); top: 92%; width: 5px; height: 5px; background: var(--bha-accent-hi); box-shadow: 0 0 6px var(--bha-accent-hi); opacity: 0; animation: bha-libaura-spark 1.3s linear infinite; animation-delay: calc(var(--i) * -0.29s); }
+@keyframes bha-libaura-pulse { from { opacity: 0.55; transform: scaleX(0.85); } to { opacity: 1; transform: scaleX(1.12); } }
+@keyframes bha-libaura-rise { 0% { opacity: 0; transform: translate(-50%, 0) scale(1, 0.5); } 20% { opacity: 1; } 65% { opacity: 0.85; } 100% { opacity: 0; transform: translate(-50%, -24%) scale(0.5, 1.15); } }
+@keyframes bha-libaura-spark { 0% { opacity: 0; top: 92%; transform: translateX(0); } 15% { opacity: 1; } 60% { transform: translateX(var(--dx)); } 100% { opacity: 0; top: 0; transform: translateX(calc(var(--dx) * -1)); } }
+/* 가득 찬 순간 한 번 강조 (해방 버튼 = 캐릭터 칸): 기운이 크게 터지고 몸이 한 번 번쩍 */
+.bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-libaura { animation: bha-libaura-pop 0.7s var(--bha-ease-out); }
+.bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-hero__body { animation: bha-libready-flash 0.7s var(--bha-ease-out); }
+@keyframes bha-libaura-pop { 0% { transform: translateX(-50%) scale(1.45); filter: brightness(1.6); } 100% { transform: translateX(-50%) scale(1); filter: none; } }
+@keyframes bha-libready-flash { 0% { filter: brightness(1.9); } 100% { filter: none; } }
+/* '<해방 이름> 가능!' 알림: 장면 가운데 위쪽, 약 1.2초, 누름 통과 */
+.bha-libready { position: absolute; left: 0; right: 0; top: 16%; z-index: var(--bha-z-float); display: flex; justify-content: center; pointer-events: none; opacity: 0; }
+.bha-libready.is-on { animation: bha-libready 1200ms var(--bha-ease-out) both; }
+.bha-libready__text { padding: var(--bha-sp-1) var(--bha-sp-4); border-radius: var(--bha-r-pill); background: linear-gradient(90deg, transparent, var(--bha-accent-soft) 15%, var(--bha-accent-soft) 85%, transparent); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); color: var(--bha-text-1); white-space: nowrap; text-shadow: 0 0 6px var(--bha-accent-hi), 0 2px 4px var(--bha-bg-0); }
+@keyframes bha-libready { 0% { opacity: 0; transform: translateY(8px) scale(0.85); } 14% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+/* 동작 줄이기: 기운은 멈춘 모양으로, 가득 찬 순간 한 번 번쩍만 */
+@media (prefers-reduced-motion: reduce) {
+  .bha-libaura__base { animation: none; opacity: 0.85; }
+  .bha-libaura__flame { animation: none; opacity: 0.7; transform: translate(-50%, 0) scale(0.8, 0.85); }
+  .bha-libaura__spark { display: none; }
+  .bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-libaura { animation: bha-libready-flash 0.5s linear; }
+  .bha-libready.is-on { animation: bha-libready-still 1200ms steps(1, end) both; }
+}
+@keyframes bha-libready-still { 0% { opacity: 1; } 100% { opacity: 0; } }

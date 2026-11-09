@@ -22,7 +22,7 @@ describe('C.94 탑 구간별 배율', () => {
   it('★2·★3 구간 보스 층(20·30층)만 보스 층 배율을 곱하고 40층은 1 (C.136: ★3 0.65 → C.176 0.72 → C.212 0.65 → GDD 202장 4 0.75)', () => {
     expect(TX.bossScaleByBand[2]).toBe(0.72);
     expect(TX.bossScaleByBand[3]).toBe(0.75); // GDD 202장 4: 노력치 상한 상향으로 3단계 몸이 세져 0.65 → 0.75 (30층 forest-lord 88% → 46%)
-    expect(TX.eliteScaleByBand[3]).toBe(1.3); // GDD 202장 4: 25층 강적 99% → 78%
+    expect(TX.eliteScaleByBand[3]).toBe(1.15); // GDD 207장 (C.342): 원정 ★3 강적 보정 1.15 가 탑에도 곱해져 1.3 → 1.15 (1.15 × 1.15 ≈ 전 1.3). GDD 202장 4: 1 → 1.3 (25층 강적 99% → 78%)
     expect(towerFloorMultiplier(20)).toBeCloseTo((1 + 9 * 0.02) * 0.72);
     expect(towerFloorMultiplier(30)).toBeCloseTo((1 + 9 * TX.perFloorInBand) * 0.75);
     expect(towerFloorMultiplier(40)).toBeCloseTo(1 + 9 * TX.perFloorInBand);

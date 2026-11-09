@@ -9,12 +9,11 @@
 .bha-lcd .bha-exp__scene { flex: 1 1 0; min-width: 0; }
 
 /* 캐릭터: 장면 높이의 약 2/3, 오른쪽 가운데(62%). 걷는 상자 안에 머리 위 말풍선을 붙인다 */
-.bha-lcd .bha-exp { --walker-x: 62; }
-.bha-lcd .bha-walker { left: calc(var(--walker-x) * 1%); transform: translateX(-50%); bottom: 10%; height: 60%; width: auto; max-width: 70%; }
+.bha-lcd .bha-exp { --walker-x: 68; } /* C.348: 62 → 68 (사용자 "내 캐릭 걷는 위치 조금만 더 뒤로") */
+.bha-lcd .bha-walker { left: calc(var(--walker-x) * 1%); transform: translateX(-50%); bottom: 10%; height: calc(var(--bha-fig-h, 53) * 1%); width: auto; max-width: 70%; } /* 키 = 적 칸과 같은 --bha-fig-h (encounter.css, C.348) */
 .bha-walk__layer--ground { top: 62%; }
 /* 걷는 앞쪽(encounter.css)의 멈춤 자리를 캐릭터 자리(62%)에 맞춘다: 오른쪽 끝에서 (100 − 62)% + 캐릭터 반 폭(30cqh) */
-.bha-lcd .bha-exp .bha-ahead { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 32cqh); }
-.bha-lcd .bha-exp .bha-ahead--boss { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 30cqh); }
+.bha-lcd .bha-exp .bha-ahead { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + var(--bha-fig-h) * (0.5 + var(--bha-fig-gap)) * 1cqh); }
 .bha-lcd .bha-exp .bha-ahead--rest { --ahead-stop: calc((100 - var(--walker-x)) * 1cqw + 26cqh); }
 
 /* GDD 197장 3 (C.319): 왼쪽 위 = C.281(68acec7) 능력치 상태창 값 그대로 — 사냥터 이름 · 폭주/강적 칩 · 바퀴·배부름·컨디션·광기 막대 · 슬롯 줄.
@@ -214,3 +213,12 @@
 .bha-lapend .bha-continue__notes > .bha-continue__info { align-self: center; }
 /* 뽑기 카드 설명은 두 줄까지(전체는 카드 설명 title) — 긴 설명 하나가 카드 줄을 키워 길·안내 줄을 버튼 아래로 밀지 않게 (C.308) */
 .bha-lcd .bha-exp .bha-lapend .bha-draft__hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* 바퀴 끝 창 소모품 칸 (GDD 212장 3, C.358): 머리 줄 체력 막대 왼쪽 작은 버튼 — 본문(길·손 타일)을 밀지 않는다. 긴 이름은 말줄임(전체는 title) */
+.bha-lcd .bha-exp .bha-win-head > .bha-lapitem { flex: 0 1 auto; min-width: 0; max-width: 168px; margin-right: var(--bha-sp-2); }
+.bha-lcd .bha-exp .bha-win-head > .bha-lapitem .bha-btn__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 걷기 가방 머리 소모품 칸 한 줄 (GDD 212장 2) */
+.bha-healbag__slot { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+/* 바퀴 끝 창 손 타일 카드 설명은 두 줄까지(전체는 카드 title) — 세 줄 설명이 카드 아래를 [귀환] 줄에 잘리게 하지 않게 (C.359, 뽑기 카드 C.308 과 같은 규칙) */
+.bha-lcd .bha-exp .bha-lapend .bha-tilecard__hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed > .bha-win-body { padding-bottom: 2px; row-gap: 4px; } /* 임시 타일 줄 ↔ 길 간격 8 → 4·아래 여백 4 → 2 (C.359): 임시 타일 줄 + 2줄 손 카드까지 본문 넘침 0 */
+.bha-lcd .bha-exp .bha-lapend.bha-sheet--fixed > .bha-win-body > .bha-notice { margin-bottom: 0; }

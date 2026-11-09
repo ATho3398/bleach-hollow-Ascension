@@ -14,6 +14,8 @@ import { shownName } from '../displayName';
 import { ACTION_FILL_MS, beginAction, tween } from './actionFx';
 import { getOverlayHost } from './overlayHost';
 import { fullnessOf } from './fullness';
+import { changeNoteBox, showChangeNote, type ChangeItem } from './changeNote';
+import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS, tagGauge, type GaugeKey } from './gaugeBlink';
 
 /** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름(+ 푸는 법 짧게) */
 export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
@@ -28,6 +30,7 @@ export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
     // 상태이상 줄 아래 푸는 법 짧게 (GDD 193장 15: '모험 1번' 류) — 자세한 것은 툴팁·ⓘ
     if (c.short) row.append(el('span', 'bha-room__gaugehint', c.short));
     if (c.hint) row.title = c.hint;
+    if (c.value !== null) row.dataset.gauge = c.kind; // 바뀌는 값 깜빡임 대상 (GDD 208장 3, gaugeBlink)
     return row;
   });
 }
@@ -85,7 +88,7 @@ export function liveStatusChips(n: NestState, faction: FactionConfig, live?: { f
 /** 발밑 체력 막대 (C.281 모양, GDD 192장 2): 기존 체력 막대(meter player) 하나 — 숫자 '현재 / 최대' 는 막대 안 가운데, 30% 아래 위험 구간·위험 색 */
 export function homeHpMeter(fraction: number, maxHp: number): HTMLElement {
   const { now, max } = hpNumbers(fraction * maxHp, maxHp);
-  return meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` });
+  return tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` }), 'hp');
 }
 
 // ── 회복 차오름 (GDD 201장): 전투 밖에서 상태창 값이 오르면 '+n' 숫자 대신 막대가 이전 값 → 새 값으로 ACTION_FILL_MS(0.8초) 동안 차고 옆 숫자도 따라 오른다.
@@ -139,7 +142,7 @@ export function chipsAt(chips: readonly StatusChip[], v: GaugeShown): StatusChip
  * 상태창이 가려진 화면(가방 등)에서 회복했을 때 (GDD 201장 4): 머리 위 상태창(같은 박스 모양 + 발밑 체력 막대)을 화면 위 가운데에 잠깐 띄워
  * 이전 값 → 새 값으로 차오르게 하고, 끝나면 사라진다. 누름은 막지 않는다. 회복 수치 글자는 없다(행동 이름만)
  */
-export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () => StatusChip[]; from: GaugeShown; to: GaugeShown; maxHp: number; owner?: object }): void {
+export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () => StatusChip[]; from: GaugeShown; to: GaugeShown; maxHp: number; owner?: object; blink?: readonly GaugeKey[]; note?: readonly ChangeItem[] }): void {
   const end = beginAction();
   const box = el('div', 'bha-actfx');
   box.setAttribute('role', 'status');
@@ -150,13 +153,20 @@ export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () =>
   head.append(who, el('b', 'bha-actfx__title', o.title));
   const status = el('div', 'bha-room__status bha-actfx__status');
   const hp = el('div', 'bha-room__hp bha-actfx__hp');
-  box.append(head, status, hp);
+  // 바뀐 값 알림 (GDD 209장 — 방 가방): 상태창 박스 아래에 바뀐 값만 칩 한 줄. 넘겨받은 것만(수련 결과 등 다른 화면은 이번 대상 아님, 209장 5)
+  const note = o.note && o.note.length > 0 ? changeNoteBox() : null;
+  box.append(head, status, ...(note ? [note] : []), hp);
   getOverlayHost().append(box);
+  if (note) showChangeNote(note, o.note!);
   const paint = (t: number) => {
     const v = lerpShown(o.from, o.to, t);
     status.replaceChildren(...statusGaugeRows(chipsAt(o.chips(), v)));
     hp.replaceChildren(homeHpMeter(v.hp, o.maxHp));
+    applyBlink(box);
   };
+  // 바뀐 값만 깜빡임 (GDD 208장 3): 부르는 쪽이 넘긴 것(내린 값 포함) 또는 차오르는 값
+  paint(0);
+  blinkGauges(box, o.blink ?? changedKeys(o.from, o.to));
   tween(ACTION_FILL_MS, paint, () => {
     if (o.owner) rememberShown(o.owner, o.to); // 방으로 돌아가도 같은 회복을 다시 차오르게 하지 않는다
     window.setTimeout(() => {
@@ -166,5 +176,5 @@ export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () =>
     }, ACTION_FILL_HOLD_MS);
   });
 }
-/** 가방 회복 창이 다 찬 뒤 머무는 시간 */
-const ACTION_FILL_HOLD_MS = 500;
+/** 가방 회복 창이 다 찬 뒤 머무는 시간 — 끝난 뒤 깜빡임(0.25초 × 3)이 다 보이게 (GDD 208장 3) */
+const ACTION_FILL_HOLD_MS = GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER;

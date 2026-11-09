@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { ENEMIES, enemyPatternKind, getEnemy } from '../src/data/enemies';
 import type { EnemyDef } from '../src/data/schema';
@@ -18,6 +19,7 @@ import {
 import { doNestAction, newNest } from '../src/engine/nest';
 import { loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { useLegacyMigrations } from './helpers/legacyGate';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
@@ -465,13 +467,13 @@ describe('리스크 게이지', () => {
     expect(at(6)).toBeGreaterThan(at(5));
   });
 
-  it('휴식 타일에서 내려간다', () => {
+  it('휴식 타일에서는 내려가지 않는다 (C.355, GDD 210장 1)', () => {
     const exp = mk({ seed: 13, risk: 50 });
     exp.hand = ['rest-a'];
     placeTile(exp, 'rest-a', 1);
     advance(exp);
     finishRest(exp);
-    expect(exp.risk).toBeCloseTo(50 - RX.restRelief);
+    expect(exp.risk).toBe(50);
   });
 
   it('둥지 행동으로 내려가고 안정 수치가 오른다', () => {

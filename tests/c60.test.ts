@@ -103,14 +103,14 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     s.shared.items.calm = BALANCE.provisional.inventory.consumableCap;
     expect(row(s, 'calm')!.lock).toBe('보관 가득 (9/9)');
   });
-  it('수련권: 5단계 이상 트랙에서만 보이고, 지금 트랙 +1 (상한 3)', () => {
+  it('수련권: 5단계 이상 트랙에서만 보이고, 지금 트랙 +1 (C.354 GDD 216장 2: 상한 없음)', () => {
     const s = rich();
     expect(row(s, 'training-ticket')).toBeUndefined();
     s.evolution.tierIndex = 4;
     s.training.tickets = 2;
     expect(buyShopItem(s, H, 'training-ticket').ok).toBe(true);
     expect(s.training.tickets).toBe(3);
-    expect(row(s, 'training-ticket')!.canBuy).toBe(false);
+    expect(row(s, 'training-ticket')!.canBuy).toBe(true); // 3장이어도 더 살 수 있다
   });
   it('희귀 타일 꾸러미: 안 가진 바탕 타일 1장 → 보관함 (C.140: 덱 밖 → 안 가진)', () => {
     const s = rich();

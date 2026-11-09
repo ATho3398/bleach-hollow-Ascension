@@ -19,9 +19,10 @@ const PX = BALANCE.provisional.expedition;
 const HOUR = 3_600_000;
 
 describe('119장 1 원정 체력 회복값 = 기획값 (107장 3)', () => {
-  it('승리 10%·웅덩이 35%', () => {
+  it('승리 10% · 웅덩이는 C.355(210장 1)부터 restRecover 15% × 0.8^(바퀴−1), 최저 3%', () => {
     expect(PX.hpCarry.winHeal).toBe(0.1);
-    expect(PX.hpCarry.restHeal).toBe(0.35);
+    expect('restHeal' in PX.hpCarry).toBe(false);
+    expect(PX.restRecover).toEqual({ base: 0.15, perLapDecay: 0.8, min: 0.03 });
   });
   it('난이도 가드는 원정 적 공격 배율로 (원정 안에서만, ★1 이 더 낮다)', () => {
     expect(carryAttackMult(1)).toBeLessThan(carryAttackMult(2));

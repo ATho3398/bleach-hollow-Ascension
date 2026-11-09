@@ -95,7 +95,7 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
       { keys: '1 ~ 8', does: '블록 1~8번 칸 사용 (그 칸을 누른 것과 같다)' },
       { keys: 'R', does: '해방 (게이지가 찼을 때)' },
       { keys: 'Q', does: '막기 (게이지가 다 찼을 때, 0.5초 강공격 막기)' },
-      { keys: 'W / E', does: '소모품 (전투당 1번) / 장비 발동 (쿨다운)' },
+      { keys: 'W / E', does: '소모품 (모험은 바퀴당 1번) / 장비 발동 (쿨다운)' },
       { keys: 'Space', does: '일시정지 / 계속' },
       { keys: '방향키 / F·Enter', does: '커서 이동(버튼 줄 → 블록 칸) / 커서 대상 누르기 (기기 ▲▼ / ✓ 와 같다)' },
       { keys: 'H', does: '도움말' },
