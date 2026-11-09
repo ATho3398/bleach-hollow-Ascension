@@ -10,9 +10,9 @@ import { newSaveData, migrateSave, loadSave, writeSave, SAVE_FORMAT_VERSION, art
 describe('C.143', () => {
   it('기본 그림 키 char.hollow 자리 = 스토커 정지 그림 + 걷기 6장', () => {
     expect(charArtKeys('hollow', 0)).toEqual(['char.hollow.1', 'char.hollow']);
-    expect(existsSync('public/art/char-hollow.png')).toBe(true);
+    expect(existsSync('public/art/char-hollow.png')).toBe(false); // C.341: 가짜 도트 삭제 (GDD 206장 1), 걷기 6장은 진짜 도트라 남김
     expect(existsSync('public/art/skin-stalker.png')).toBe(false);
-    expect(existsSync('public/art/skin-mantis.png')).toBe(true);
+    expect(existsSync('public/art/skin-mantis.png')).toBe(false); // C.341: 가짜 도트 삭제
     for (let i = 1; i <= 6; i++) expect(existsSync(`public/art/char-hollow/move-${i}.png`)).toBe(true);
     expect(JSON.parse(readFileSync('public/art/char-hollow/anim.json', 'utf8')).move.ms).toBe(130);
     const files = [...Array.from({ length: 6 }, (_, i) => `char-hollow/move-${i + 1}.png`), 'char-hollow.png'];

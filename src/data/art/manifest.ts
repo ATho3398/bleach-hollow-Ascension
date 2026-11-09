@@ -51,6 +51,12 @@ export interface ArtUrls {
   headTop?: number;
 }
 
+/** 덩치 몸 적의 속성 색 (GDD 205장 3, 지금 적 그림 색 그대로) */
+export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'brute-base', blood: 'brute-red', normal: 'brute-gray', earth: 'brute-brown', fire: 'brute-orange', poison: 'brute-green', thunder: 'brute-yellow', water: 'brute-blue' };
+/** 덩치 몸 적 종류 (GDD 206장 2) — swift 는 마른 몸이라 빠짐 */
+export const BRUTE_ENEMY_KINDS = ['basic', 'sturdy', 'heavy-chain', 'heavy-seal', 'stance'] as const;
+const BRUTE_ENEMIES: Record<string, ArtEntry> = Object.fromEntries(Object.entries(BRUTE_ELEMENT_LOOKS).flatMap(([el, look]) => BRUTE_ENEMY_KINDS.map((k) => [`enemy.${el}-${k}`, { rig: look, scale: 1.78 }])));
+
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.cave': {},
   'scene.room': {},
@@ -69,16 +75,13 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
-  // 적 덩치 (<속성>-basic, GDD 115-A 85 · 사용자 2026-11-09 "적으로 나오는 덩치도 이 모션 넣으면 된다잉"): 종이인형 덩치(몸 hb, 동작 묶음 brute 하나)를 지금 그림 색 그대로.
-  // 배율 1.78 = 정지 그림 키(칸의 0.38)를 지금 적 그림 키(0.68)에 맞춤. 발 줄은 둘 다 칸 아래 8%
-  'enemy.kyo-basic': { rig: 'brute-base', scale: 1.78 },
-  'enemy.blood-basic': { rig: 'brute-red', scale: 1.78 },
-  'enemy.normal-basic': { rig: 'brute-gray', scale: 1.78 },
-  'enemy.earth-basic': { rig: 'brute-brown', scale: 1.78 },
-  'enemy.fire-basic': { rig: 'brute-orange', scale: 1.78 },
-  'enemy.poison-basic': { rig: 'brute-green', scale: 1.78 },
-  'enemy.thunder-basic': { rig: 'brute-yellow', scale: 1.78 },
-  'enemy.water-basic': { rig: 'brute-blue', scale: 1.78 },
+  // 적 덩치 (GDD 115-A 85 · 206장 2): 덩치 몸 적 = <속성>-basic·sturdy·heavy-chain·heavy-seal·stance (8 × 5 = 40) 전부 종이인형 덩치(몸 hb, 동작 묶음 brute 하나 — 모션 통일)를
+  // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. 날쌘형 swift(마른 몸)는 한 장 그림 그대로. 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
+  ...BRUTE_ENEMIES,
+  // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)
+  'skin.brute': { rig: 'brute-brown', scale: 2.1 },
+  'skin.ghoul': { rig: 'brute-gray', scale: 2.1 },
+  'skin.shackled': { rig: 'brute-red', scale: 2.1 },
   'prop.door': {},
   'prop.altar': {},
   'prop.book': {},
@@ -195,6 +198,9 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     return null;
   };
   if (skinId && getSkin(skinId)) {
+    // 종이인형 스킨 (GDD 206장 3): 목록의 skin.<id> 에 rig 가 있으면 그 외형이 움직인다(적 덩치와 같은 길). 여성 외형(-f)이 있으면 그쪽
+    const skinRig = manifest[skinArtKey(skinId)]?.rig;
+    if (skinRig && HUMANOID.looks[skinRig]) return rigArt(female && HUMANOID.looks[skinRig + RIG_FEMALE_SUFFIX] ? skinRig + RIG_FEMALE_SUFFIX : skinRig, manifest[skinArtKey(skinId)]!, base);
     const skin = tryKeys([skinArtKey(skinId)]);
     if (skin) return skin; // 스킨 그림이 아직 하나도 없으면 진화체 그림으로 (빈 화면 방지)
   }

@@ -2682,3 +2682,15 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 흡수 화면 '가득' 흐림 규칙(C.334)·엔진·세이브 형식 그대로(옛 세이브는 상한만 오름).
 - 테스트: `tests/gdd202-evcap.test.ts` 기대값 갱신(상한·비율·횟수 28~32/15~17번·한 능력치 노림 15~17번) + c108·c115·c120·absorb-evcap-user-state(상한 96/67) · c123(★3 강적 1.15) · c94(탑 ★3 1.15). 전체 2885 통과, typecheck·build 통과.
 - **캡처** `docs/captures/c342/`(1배, `scripts/c342-proof.cjs`, 2장): pc 844×390 호로 상태 화면 '노력치 40 / 96 (이 단계 상한 · 능력치 하나 67)' · ph 796×384 터치 사신 상태 화면 '96 / 96' 가득. proof.json 오류 0.
+## C.343 — 가짜 도트 그림 삭제 · 덩치 몸 호로 전부 종이인형 (GDD 206장 1~4, v5.507, S-23, 코딩240 Opus)
+- 번호: 지시 C.341 → main 에 C.342 가 먼저 들어가 C.343(그것+1). 테스트·캡처·proof 파일 이름은 지시대로 c341.
+- 사용자 원문: "호로들 아직 이미지 안바뀐거같은데. 도트가 아니라 도트인척하는 가짜이미지인듯? 그리고 덩치 그림 쓰는 호로들은 전부 종이인형 적용시키라니까 왜 안됐지?" → "푸시하고 가짜도트 이미지는 전부 삭제. 종이인형 아닌애들은 내가 다 시트 만들어서 반영할거니까 일단 덩치만 ㄱㄱ"
+- 삭제(`public/art/`): `char-hollow.png`, `char-hollow-2.png` + `char-hollow-2/` 18장, `skin-*.png` 12장, `skin-grandfisher/` 5장. 남김: `enemy-*.png` 48장·`char-shinigami.png`·`char-hollow-5.png`·`char-hollow/` 걷기 6장·`rig/`·`logo-*`. 파일 목록은 빌드 때 폴더에서 모으므로(`__ART_FILES__`) 따로 고칠 목록 없음 — 같은 이름 파일을 넣으면 그대로 붙는다.
+- 그림 목록 `src/data/art/manifest.ts`: `BRUTE_ELEMENT_LOOKS`(속성 → 덩치 색, C.340 basic 과 같은 표) × `BRUTE_ENEMY_KINDS`(basic·sturdy·heavy-chain·heavy-seal·stance) = 적 40종 rig·배율 1.78. swift 그대로. `skin.brute`=brute-brown · `skin.ghoul`=brute-gray · `skin.shackled`=brute-red, 배율 2.1.
+- `charArt`: 스킨 차례에서 목록 `skin.<id>` 의 rig 가 있으면 `rigArt`(적 덩치·사신과 같은 길, 여성 외형 `-f` 있으면 그쪽). 종족 분기 없음(데이터). 방·걷기·전투·스킨 패널·사진·상점 미리보기가 모두 `charArt` 라 한 곳으로 끝.
+- `src/ui/bha/fxLab.ts`(이펙트 실험실) 상대 그림 char-hollow.png → enemy-normal-swift.png.
+- 판단:
+  - 걷기 프레임 `char-hollow/`: 기획서 값 = 이상하면 지우거나 실루엣 통일 / 실제 값 = 파일은 남김 / 이유 = 정지 그림이 없으면 `charArt` 가 그 폴더를 안 읽어 화면은 이미 자리표시로 통일됨(진짜 도트라 사용자 시트와 맞으면 재사용 가능).
+  - 호로 덩치 외형 배율: 기획서 값 = 없음 / 실제 값 = 2.1 / 이유 = 지운 스킨 그림 키(칸의 0.8)에 맞춤(종이인형 정지 그림 키 0.38 × 2.1 ≈ 0.8). 발 = 그림자 점검(c194) 통과. 적 덩치는 지시대로 1.78.
+- 테스트: `tests/c341.test.ts` 5개(지운 파일 없음·진짜 도트 남음, 사마귀 자리표시·파일 넣으면 붙음, 덩치 32종 rig = basic 색·1.78, swift 그대로, 스킨 3종 rig 남녀). 기대값 고침: c107·c109(스킨 그림 파일 없음), c143(char-hollow·skin-mantis 없음), c194(점검 대상에 덩치 외형, 그림 없는 모습), c340(rig 없는 적 = swift).
+- 캡처 `docs/captures/c341/`(1배, `scripts/c341-proof.cjs`, 오류 0): 1 방 거구(PC 844) · 2 방 망령(폰 796) · 3 방 속박자(PC) · 4 방 사마귀 자리표시(폰) · 5 전투 normal-sturdy vs 거구(PC, 테스트 바로 전투) · 6 전투 fire-heavy-chain(폰). ★1 원정 첫 전투는 12번 모두 basic 이라 sturdy·heavy 는 테스트 패널 바로 전투로 찍음(배지 ★4 = 테스트 표시).

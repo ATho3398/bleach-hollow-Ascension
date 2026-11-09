@@ -1,0 +1,49 @@
+{
+  "rooms": [
+    {
+      "look": "brute",
+      "changed": 1,
+      "rigCanvas": true,
+      "imgs": []
+    },
+    {
+      "look": "ghoul",
+      "changed": 1,
+      "rigCanvas": true,
+      "imgs": []
+    },
+    {
+      "look": "shackled",
+      "changed": 1,
+      "rigCanvas": true,
+      "imgs": []
+    },
+    {
+      "look": "mantis",
+      "changed": 1,
+      "rigCanvas": false,
+      "imgs": []
+    }
+  ],
+  "battle": [
+    {
+      "enemy": "normal-sturdy",
+      "foeRig": true,
+      "meRig": true
+    },
+    {
+      "enemy": "fire-heavy-chain",
+      "foeRig": true,
+      "meRig": true
+    }
+  ],
+  "shots": [
+    "1-room-brute-pc.png",
+    "2-room-ghoul-phone.png",
+    "3-room-shackled-pc.png",
+    "4-room-mantis-phone.png",
+    "5-battle-normal-sturdy-pc.png",
+    "6-battle-fire-heavy-chain-phone.png"
+  ],
+  "errors": []
+}

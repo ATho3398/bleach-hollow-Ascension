@@ -7065,6 +7065,7 @@ data/
   2. **덩치 몸 적 전부 종이인형**: C.340 의 <속성>-basic 에 더해 같은 덩치 몸 그림인 `sturdy`·`heavy-chain`·`heavy-seal`·`stance`(속성 8 × 4 = 32종)도 같은 덩치 종이인형(몸 hb, 동작 묶음 brute — 모션 통일, 그 속성 색 외형 brute-<색>). 쇠사슬·뼈 갑옷 같은 장식은 이번엔 없음(덩치 몸만). 날쌘형 `swift`(마른 몸)는 그대로.
   3. **플레이어 호로 덩치 외형**: 시작 외형 거구(brute)·망령(ghoul)·속박자(shackled) = 덩치 종이인형 색 외형(거구 = 갈색, 망령 = 회색, 속박자 = 빨강 — 지운 그림의 몸 색에 가장 가까운 기존 색 외형). 다른 외형(사마귀·그랜드피셔·아쥬커스 7종)은 그림 없음 상태로(사용자 시트 대기).
   4. 규칙·수치·세이브 그대로(그림 연결만).
+- 구현 완료(C.343 — 지시 C.341, main 의 C.342 다음 번호, 코딩240): 가짜 도트 31개(char-hollow·char-hollow-2(+폴더 18)·skin-* 12·skin-grandfisher 폴더) 삭제 — 사마귀·그랜드피셔·아쥬커스 7종·호로 1~2단계 = 자리표시. 걷기 프레임 `char-hollow/`(진짜 도트)는 남김: 정지 그림이 없으면 그 폴더를 안 읽어 화면에 안 나옴(자리표시로 통일), `char-hollow.png` 을 다시 넣으면 다시 붙음. 그림 목록 `manifest.ts` 에 `enemy.<속성>-<basic·sturdy·heavy-chain·heavy-seal·stance>` 40종(속성 색 표 하나, 배율 1.78)·`skin.brute/ghoul/shackled` = brute-brown/gray/red(배율 2.1 = 지운 그림 키 0.8 에 맞춤), `charArt` 스킨 차례에서 목록 rig 를 먼저(적 덩치와 같은 rigArt). 테스트 `tests/c341.test.ts`, 캡처 `docs/captures/c341/`.
 - 세션: 코딩240(Opus).
 
 ## 207. 노력치 상한 2차 상향 (v5.508, 사용자 2026-11-09 09:2x)

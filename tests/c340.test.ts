@@ -23,7 +23,8 @@ describe('205장: 적 덩치 종이인형 (사용자 2026-11-09 "적으로 나�
     expect(new Set(BASIC.map((id) => enemyArt(id, '/')!.rig!.look)).size).toBe(8); // 속성마다 다른 색
   });
   it('다른 적은 그대로(종이인형 없음)', () => {
-    for (const k of Object.keys(ART_MANIFEST).filter((k) => k.startsWith('enemy.') && !k.endsWith('-basic'))) expect(ART_MANIFEST[k]!.rig, k).toBeUndefined();
+    // C.341 (GDD 206장 2): sturdy·heavy-*·stance 도 덩치 종이인형이 됨 — 남은 한 장 그림 적은 swift(마른 몸)
+    for (const k of Object.keys(ART_MANIFEST).filter((k) => k.startsWith('enemy.') && k.endsWith('-swift'))) expect(ART_MANIFEST[k]!.rig, k).toBeUndefined();
     expect(enemyArt('normal-swift', '/')?.rig).toBeUndefined();
   });
   it('덩치 색 외형은 모두 같은 몸·같은 동작(모션 통일), 그림만 색 폴더', () => {
