@@ -157,6 +157,18 @@ export interface TrainingTicketRecord {
   floor?: number;
 }
 
+/** 전투 재시작 1건 (GDD 222장 6, C.365, 세이브 형식 69): 원정 전투 도중 앱을 다시 켜 그 전투를 들어가기 직전 상태로 처음부터 다시 했다.
+ *  itemRestored = 전투 중 쓴 소모품을 되돌렸으면 그 id */
+export interface BattleRestartRecord {
+  at: number;
+  factionId: string;
+  runId: number;
+  lap: number;
+  cell: number;
+  enemyId: string;
+  itemRestored?: string;
+}
+
 export interface TrainingRecord {
   /** 시각(ms) */
   at: number;
@@ -412,6 +424,8 @@ export interface RunLog {
   trainings: TrainingRecord[];
   /** 수련권 획득 기록 (C.354, 세이브 형식 65, GDD 216장 3) */
   trainingTickets: TrainingTicketRecord[];
+  /** 전투 재시작 기록 (C.365, 세이브 형식 69, GDD 222장 6) */
+  battleRestarts: BattleRestartRecord[];
   /** 아란칼화 / 참백도 구상화 도전 기록 (C.220, 세이브 형식 57, GDD 126장 3 — 지금은 보스전 임시). 옛 세이브엔 없음 */
   ascensions?: AscensionRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
@@ -648,6 +662,7 @@ export function emptyRunLog(): RunLog {
     runs: [],
     trainings: [],
     trainingTickets: [],
+    battleRestarts: [],
     rebirths: [],
     bossBattles: [],
     shopPurchases: [],

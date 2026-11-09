@@ -8,6 +8,7 @@ import type { SkillRole } from '../data/schema';
 import type { CombatParams } from '../engine/combat';
 import { fixParticles } from '../engine/josa';
 import { formHasUniqueRelease, formRelease, tryGetForm } from '../data/evolution';
+import { FACTIONS } from '../data/factions';
 
 export { BLOCK_WORDS };
 
@@ -115,12 +116,17 @@ export function comboBlockLabel(labels: Pick<BattleLabels, 'families'>, family: 
   return abbr ? `${BLOCK_WORDS.combo}_${abbr}` : BLOCK_WORDS.combo;
 }
 
-/** 지형 타일 효과 설명: 효과 종류는 엔진, 문구는 종족 무관 */
-export function tileHint(t: TerrainTileDef): string {
+/** 흡수 행동 이름 = 종족 설정 absorbActionName(호로 '포식', 사신 '정화 흡수', GDD 222장 7). 종족을 모르면 엔진 낱말 '흡수' */
+export function absorbWord(factionId = ''): string {
+  return FACTIONS.find((f) => f.id === factionId)?.absorbActionName ?? '흡수';
+}
+
+/** 지형 타일 효과 설명: 효과 종류는 엔진, 흡수 낱말만 종족 설정(222장 7) */
+export function tileHint(t: TerrainTileDef, factionId = ''): string {
   const e = t.effect;
   let base: string;
   const T = BALANCE.provisional.tiles;
-  if (e.type === 'spawn' && e.hunter) base = `강적보다 센 사냥꾼 1마리 (체력 ×${T.hunter.hpMult}·공격 ×${T.hunter.attackMult}) · 이기면 흡수 후보 ×${T.hunter.absorbCandidateMult}`;
+  if (e.type === 'spawn' && e.hunter) base = `강적보다 센 사냥꾼 1마리 (체력 ×${T.hunter.hpMult}·공격 ×${T.hunter.attackMult}) · 이기면 ${absorbWord(factionId)} 후보 ×${T.hunter.absorbCandidateMult}`;
   else if (e.type === 'spawn') base = e.enemyClass === 'elite' ? '강적 출현 + 좋은 보상' : '약한 적 출현';
   else if (e.type === 'rest' && e.spring) base = `회복 없음 · 리스크 −${T.spring.riskRelief} · 시간 소모`;
   // 휴식 칸 (GDD 210장 1, C.355): 배부름·컨디션·체력 = 최대치의 15% (바퀴마다 줄어듦), 리스크 내림 없음
@@ -136,7 +142,7 @@ export function tileHint(t: TerrainTileDef): string {
       training: `약한 적 · 이기면 노력치 +${T.training.ev} (그 적의 능력치 하나, 상한 안)`,
     }[e.preset];
   }
-  return t.upgradeOf ? `${base} · 상위: ${variantModsText(TV.upgrade[t.kind] as VariantMods).join(' · ')}` : base;
+  return t.upgradeOf ? `${base} · 상위: ${variantModsText(TV.upgrade[t.kind] as VariantMods, factionId).join(' · ')}` : base;
 }
 
 /** 이벤트 타일 한 줄 설명 (GDD 25-5 ③, 수치는 BALANCE 에서) */
@@ -168,7 +174,7 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
   if (m.voidMult !== undefined) out.push(`공허 블록 ×${m.voidMult}`);
   if (m.voidBonus) out.push('공허 블록 ↑');
   if (m.elementBias) out.push(`${elementName(m.elementBias, factionId)} 속성 적 ↑`);
-  if (m.absorbBonus) out.push(`흡수 후보 +${m.absorbBonus}`);
+  if (m.absorbBonus) out.push(`${absorbWord(factionId)} 후보 +${m.absorbBonus}`);
   if (m.restMult !== undefined) out.push(`휴식 회복 ×${m.restMult}`);
   if (m.nextShield) out.push(`다음 전투 보호막 ${Math.round(m.nextShield * 100)}%`);
   if (m.riskOnce) out.push(`리스크 ${m.riskOnce > 0 ? '+' : '−'}${Math.abs(m.riskOnce)}`);

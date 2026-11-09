@@ -340,6 +340,16 @@ export interface ExpeditionState extends RiskState {
   /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
    *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
   lapItems?: LapItemUse[];
+  /** 전투 들어가기 직전 소모품 (GDD 222장 6, 세이브 형식 69): 전투 중간 상태는 저장하지 않으므로, 전투 도중 다시 켜면 이 값으로 소모품 칸·보관 개수를 되돌리고
+   *  그 전투를 처음부터(같은 시드 · 들어갈 때 체력 · 새 블록 바) 다시 한다. seed = 그 전투(pending.seed). 전투가 끝나거나 원정이 끝나면 지운다. 옛 중간 저장에는 없다 */
+  battleEntry?: BattleEntry;
+}
+
+/** 전투 들어가기 직전 소모품 (GDD 222장 6): itemId = 그때 끼운 소모품(없으면 null), itemCount = 그 보관 개수 */
+export interface BattleEntry {
+  seed: number;
+  itemId: string | null;
+  itemCount: number;
 }
 
 /** 모험 소모품 한 번 사용 (GDD 212장 5 — 런 로그) */
@@ -980,6 +990,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.battles.push(record);
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
+  delete exp.battleEntry; // 222장 6: 끝난 전투는 되돌리지 않는다
   exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1) * petHungerMult(exp));
   exp.condition = Math.max(conditionFloor(exp), exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
@@ -1695,6 +1706,7 @@ function endExpedition(exp: ExpeditionState, outcome: 'returned' | 'defeated', r
   exp.endReason = reason;
   if (outcome === 'returned') rollPermTile(exp, reason);
   exp.pending = null;
+  delete exp.battleEntry; // 222장 6: 끝난 전투는 되돌리지 않는다
   exp.eventPending = null;
   exp.queuedBattle = null;
   exp.draft = null;

@@ -1,0 +1,192 @@
+{
+ "facts": {
+  "pc": {
+   "urge": {
+    "urge": true,
+    "anim": "bha-gauge-blink",
+    "itemTitle": "회복약 — 최대 체력 50% 회복 (바퀴당 1번, 남은 2개)",
+    "me": "43 / 212",
+    "foe": "514 / 522"
+   },
+   "afterUse": {
+    "urge": false,
+    "anim": "none",
+    "itemTitle": "회복약 — 이번 바퀴에 썼다",
+    "me": "139 / 212",
+    "foe": "481 / 522",
+    "items": 1
+   },
+   "beforeReload": {
+    "urge": false,
+    "anim": "none",
+    "itemTitle": "회복약 — 이번 바퀴에 썼다",
+    "me": "132 / 212",
+    "foe": "456 / 522"
+   },
+   "restart": {
+    "urge": true,
+    "anim": "bha-gauge-blink",
+    "itemTitle": "회복약 — 최대 체력 50% 회복 (바퀴당 1번, 남은 2개)",
+    "me": "43 / 212",
+    "foe": "522 / 522",
+    "toast": 1,
+    "items": 2,
+    "log": [
+     {
+      "at": 1794253563651,
+      "factionId": "shinigami",
+      "runId": 1,
+      "lap": 1,
+      "cell": 2,
+      "enemyId": "water-basic",
+      "itemRestored": "heal-salve"
+     }
+    ]
+   },
+   "lapGain": "이번 바퀴: 승리 2 · 정화 흡수 1",
+   "result": {
+    "leftOverflow": 0,
+    "sumOverflow": 0,
+    "moreShown": false,
+    "moreCoversRow": false,
+    "rows": [
+     {
+      "label": "얻은 블록",
+      "visible": true
+     },
+     {
+      "label": "잃은 블록",
+      "visible": true
+     },
+     {
+      "label": "골드",
+      "visible": true
+     },
+     {
+      "label": "얻은 식량",
+      "visible": true
+     },
+     {
+      "label": "지킨 타일",
+      "visible": true
+     },
+     {
+      "label": "잃은 타일",
+      "visible": true
+     },
+     {
+      "label": "영구 타일",
+      "visible": true
+     },
+     {
+      "label": "임시 타일",
+      "visible": true
+     }
+    ],
+    "side": [
+     "호로화 최고/끝 0/0",
+     "영압 안정도 50",
+     "남은 배부름 79",
+     "남은 컨디션 80"
+    ]
+   }
+  },
+  "ph": {
+   "urge": {
+    "urge": true,
+    "anim": "bha-gauge-blink",
+    "itemTitle": "회복약 — 최대 체력 50% 회복 (바퀴당 1번, 남은 2개)",
+    "me": "43 / 212",
+    "foe": "512 / 522"
+   },
+   "afterUse": {
+    "urge": false,
+    "anim": "none",
+    "itemTitle": "회복약 — 이번 바퀴에 썼다",
+    "me": "141 / 212",
+    "foe": "471 / 522",
+    "items": 1
+   },
+   "beforeReload": {
+    "urge": false,
+    "anim": "none",
+    "itemTitle": "회복약 — 이번 바퀴에 썼다",
+    "me": "134 / 212",
+    "foe": "441 / 522"
+   },
+   "restart": {
+    "urge": true,
+    "anim": "bha-gauge-blink",
+    "itemTitle": "회복약 — 최대 체력 50% 회복 (바퀴당 1번, 남은 2개)",
+    "me": "43 / 212",
+    "foe": "522 / 522",
+    "toast": 1,
+    "items": 2,
+    "log": [
+     {
+      "at": 1794253604404,
+      "factionId": "hollow",
+      "runId": 1,
+      "lap": 1,
+      "cell": 2,
+      "enemyId": "fire-basic",
+      "itemRestored": "heal-salve"
+     }
+    ]
+   },
+   "lapGain": "이번 바퀴: 승리 2 · 포식 1",
+   "result": {
+    "leftOverflow": 0,
+    "sumOverflow": 0,
+    "moreShown": false,
+    "moreCoversRow": false,
+    "rows": [
+     {
+      "label": "얻은 블록",
+      "visible": true
+     },
+     {
+      "label": "잃은 블록",
+      "visible": true
+     },
+     {
+      "label": "골드",
+      "visible": true
+     },
+     {
+      "label": "얻은 먹이",
+      "visible": true
+     },
+     {
+      "label": "지킨 타일",
+      "visible": true
+     },
+     {
+      "label": "잃은 타일",
+      "visible": true
+     },
+     {
+      "label": "임시 타일",
+      "visible": true
+     }
+    ],
+    "side": [
+     "광기 최고/끝 0/0",
+     "영압 안정도 50",
+     "남은 배부름 68",
+     "남은 컨디션 15 (끝 78)"
+    ]
+   }
+  },
+  "firstAbsorb": {
+   "name": "first-absorb",
+   "only": null,
+   "pass": false,
+   "selSc": null,
+   "selOnly": false,
+   "screen": "bha-app bha-lcdpage bha-absorbpage bha-tutabsorb",
+   "stat": "능력치 모두 +3"
+  }
+ },
+ "errors": []
+}

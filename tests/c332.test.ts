@@ -12,7 +12,7 @@ describe('흡수 줄 격자 (200장 9 보충)', () => {
   const view = read('src/ui/enemyDexView.ts');
   const css = read('src/ui/bha/screens-lcd.css');
   it('상세 흡수 줄은 글자 한 줄이 아니라 갈래마다 칸(이름·숫자) 4개 격자', () => {
-    expect(view).toMatch(/line\('흡수', absorbsGrid\(faction, entry\)\)/);
+    expect(view).toMatch(/line\(faction\.absorbActionName, absorbsGrid\(faction, entry\)\)/ /* 222장 7: 흡수 이름 = 종족 설정 */);
     expect(view).toMatch(/for \(const k of ABSORB_KINDS\)/);
     expect(ABSORB_KINDS).toHaveLength(4);
     expect(css).toMatch(/\.bha-edex__absorbs \{[^}]*display: grid;[^}]*grid-template-columns: repeat\(2, max-content\)/);

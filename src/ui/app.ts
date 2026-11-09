@@ -28,7 +28,7 @@ import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
@@ -1678,7 +1678,8 @@ export function startApp(host: HTMLElement): void {
     st.params.battleItem = it;
     const lapItem = { spentId: spent ? sv.shared.battleItem : null };
     if (!it) return { battleItem: undefined, lapItem };
-    return { battleItem: { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendLapItem(sv, exp, it.id); saveProgress(exp); } }, lapItem };
+    // 222장 6: 쓰면 세이브만 저장 — 원정 중간 저장은 전투 직전 그대로(다시 켜면 battleEntry 로 되돌림), 바퀴 사용 기록은 전투가 끝날 때 저장
+    return { battleItem: { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendLapItem(sv, exp, it.id); persist(); } }, lapItem };
   }
 
   /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
@@ -1852,8 +1853,14 @@ export function startApp(host: HTMLElement): void {
     const faction = getFaction(exp.factionId);
     activeExp = exp;
     // 저장된 배속 값은 무시한다 (C.118, GDD 62장: 1배 고정)
-    if (exp.phase === 'battle') runBattle(faction, exp);
-    else if (exp.phase === 'absorb') afterBattle(faction, exp);
+    if (exp.phase === 'battle') {
+      // 전투 재시작 (GDD 222장 6): 전투 중간 상태는 저장하지 않는다 — 들어가기 직전 상태(체력·블록 바·소모품)로 그 전투를 처음부터. 런 로그 battleRestarts
+      if (save && restartBattleOnResume(save, exp)) {
+        persist();
+        showToast({ eyebrow: '전투 재시작', title: '싸우던 전투를 처음부터 다시 한다', meta: '들어가기 직전 상태(체력·소모품)로 되돌렸다' }, 0, 3200);
+      }
+      runBattle(faction, exp);
+    } else if (exp.phase === 'absorb') afterBattle(faction, exp);
     else if (drainEvents(exp).length > 0) breakthroughScreen(faction, exp, () => showExpedition(faction, exp, '모험을 이어간다'));
     else showExpedition(faction, exp, '모험을 이어간다');
   }
@@ -1877,6 +1884,7 @@ export function startApp(host: HTMLElement): void {
   function beginBattle(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = exp;
     const p = exp.pending!;
+    if (save && markBattleEntry(save, exp)) saveProgress(exp); // 222장 6: 전투 직전 소모품을 중간 저장에 (다시 켜면 이 값으로 되돌림)
     const s = startBattle(exp);
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}${p.synergy ? ` · ${synergyName(p.synergy, faction.id)}${p.second ? ' 2연전' : ''}` : ''}${p.trap ? ' · 함정' : ''}${exp.mutation ? ` · ${mutationName(exp.mutation, faction.id)}` : ''}`;
     // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠

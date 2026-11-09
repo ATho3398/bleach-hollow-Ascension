@@ -151,7 +151,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
   function onCell(i: number): void {
     const id = exp.slots[i] ?? null;
     const act = cellAction({ slot: id, editable: placedHere.has(i), selection: selection(), index: i });
-    if (act === 'info') note = `${LOCKED_NOTE} · ${o.tileName(id!)}: ${tileHint(getTile(id!))}`;
+    if (act === 'info') note = `${LOCKED_NOTE} · ${o.tileName(id!)}: ${tileHint(getTile(id!), exp.factionId)}`;
     else if (act === 'select-placed') {
       selectedCell = i;
       selected = null;
@@ -264,7 +264,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       if (id && isTempCell(exp, i)) b.append(tempMark());
       if (id && placedHere.has(i)) b.dataset.drag = 'cell';
       else delete b.dataset.drag;
-      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 모험만)' : ''} — ${tileHint(getTile(id))}${locked ? ` (${LOCKED_NOTE})` : ''}` : dim ? `빈 칸 — 놓을 수 있는 ${exp.planLimit}칸을 다 놓았다` : '빈 칸';
+      b.title = id ? `${o.tileName(id)}${isTempCell(exp, i) ? ' (임시 — 이번 모험만)' : ''} — ${tileHint(getTile(id), exp.factionId)}${locked ? ` (${LOCKED_NOTE})` : ''}` : dim ? `빈 칸 — 놓을 수 있는 ${exp.planLimit}칸을 다 놓았다` : '빈 칸';
       b.setAttribute('aria-label', `${i}번 칸${id ? ` (${o.tileName(id)}${placedHere.has(i) ? ', 눌러서 선택' : ', 고정 칸'})` : mode === 'can' || canMove ? ' (놓을 수 있음)' : dim ? ' (더 놓을 수 없음)' : ' (비어 있음)'}`);
     }
     // 인접 시너지 (GDD 25-5 ②): 붙은 두 칸을 테두리로 묶고 오른쪽 칸 왼쪽 위(두 칸 사이)에 이름표. 줄이 바뀌는 짝(6열 경계)은 오른쪽 칸 모서리에
@@ -284,7 +284,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       badge.style.setProperty('--n', String(cells.length));
       road.append(badge);
       cells[p.right]!.setAttribute('aria-label', `${cells[p.right]!.getAttribute('aria-label')} · 시너지 ${name}`);
-      details.push(`${name}(${p.left}·${p.right}) ${variantModsText(synergyMods(p.id)).join(' · ')}`);
+      details.push(`${name}(${p.left}·${p.right}) ${variantModsText(synergyMods(p.id), exp.factionId).join(' · ')}`);
       const seen = byName.get(name);
       if (seen) {
         seen.n++;
@@ -295,7 +295,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       const item = el('span', 'bha-road__synitem');
       const nameEl = el('b', '', name);
       byName.set(name, { n: 1, b: nameEl });
-      item.append(nameEl, el('span', 'bha-road__synmods', ` ${variantModsText(synergyMods(p.id)).join(' · ')}`));
+      item.append(nameEl, el('span', 'bha-road__synmods', ` ${variantModsText(synergyMods(p.id), exp.factionId).join(' · ')}`));
       synLine.append(item);
     }
     synLine.title = details.join('\n');
@@ -314,10 +314,10 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       chip.setAttribute('aria-pressed', String(selected === id));
       const ic = el('span', 'bha-tilecard__icon');
       ic.append(icon(tileIconId(css)));
-      chip.append(ic, fitOneLine(el('b', 'bha-tilecard__name', o.tileName(id))), el('small', 'bha-tilecard__hint', tileHint(getTile(id))), el('span', 'bha-tilecard__count', `×${count}`));
+      chip.append(ic, fitOneLine(el('b', 'bha-tilecard__name', o.tileName(id))), el('small', 'bha-tilecard__hint', tileHint(getTile(id), exp.factionId)), el('span', 'bha-tilecard__count', `×${count}`));
       const temp = tempHandCount(exp, id);
       // 설명 전체는 title (바퀴 끝 창에서는 설명이 2줄 말줄임 — C.359, 뽑기 카드 C.308 과 같은 규칙)
-      chip.title = `${o.tileName(id)} — ${tileHint(getTile(id))}`;
+      chip.title = `${o.tileName(id)} — ${tileHint(getTile(id), exp.factionId)}`;
       if (temp > 0) {
         chip.append(tempMark());
         chip.title = `${chip.title} · 임시 타일 ${temp}장 — 이번 모험 동안만 놓을 수 있다`;
@@ -327,7 +327,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
         selectedCell = null;
         // 다 놓았으면(GDD 193장 19) 빈 칸 대신 놓은 타일과 바꾸는 법을 말한다
         const isFull = exp.planLimit !== undefined && placedCount(exp) >= exp.planLimit;
-        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id))}. ${isFull ? `${exp.planLimit}칸을 다 놓았다 — 놓은 타일을 누르면 바꾼다` : '빈 칸(＋)을 누르거나 끌어서 놓는다'}` : '';
+        note = selected ? `${o.tileName(id)}: ${tileHint(getTile(id), exp.factionId)}. ${isFull ? `${exp.planLimit}칸을 다 놓았다 — 놓은 타일을 누르면 바꾼다` : '빈 칸(＋)을 누르거나 끌어서 놓는다'}` : '';
         refresh();
         // 카드를 고르면 기기 초점 = 놓을 수 있는 첫 빈 칸 (GDD 176장 14 — 기기 버튼 약 25번 → 몇 번)
         if (selected) gotoEl(cells.find((c) => c.classList.contains('is-can')) ?? null);

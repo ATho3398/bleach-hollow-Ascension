@@ -155,6 +155,7 @@ function validShape(e: unknown): e is ExpeditionState {
   // 임시 타일 (GDD 121장 4 ②): 손의 부분 집합·놓인 칸 (없으면 임시 타일 없음)
   if (e.tempHand !== undefined && !(isStrArr(e.tempHand) && e.tempHand.every((id) => knows(getTile, id)))) return false;
   if (e.tempCells !== undefined && !(Array.isArray(e.tempCells) && e.tempCells.every((c) => isInt(c, 1) && (c as number) < L))) return false;
+  if (e.battleEntry !== undefined && !(isObj(e.battleEntry) && isInt(e.battleEntry.seed, Number.MIN_SAFE_INTEGER) && (e.battleEntry.itemId === null || typeof e.battleEntry.itemId === 'string') && isInt(e.battleEntry.itemCount))) return false; // 222장 6
   // 모험 소모품 바퀴 사용 기록 (GDD 212장 2): 없으면 아직 안 씀
   if (e.lapItems !== undefined && !(Array.isArray(e.lapItems) && e.lapItems.every((u) => isObj(u) && isInt(u.lap, 1) && typeof u.itemId === 'string' && (u.where === 'walk' || u.where === 'battle')))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;

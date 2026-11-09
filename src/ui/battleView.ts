@@ -68,6 +68,9 @@ import { isTestMode, testSpeedMul } from './testMode';
 import { abilityProcText } from './evolutionPanel';
 import { shownName } from './displayName';
 
+/** 소모품 칸 깜빡임 체력 비율 (GDD 222장 8, 화면 연출값 — 체력 막대 is-danger 와 같은 30%) */
+export const ITEM_URGE_HP = 0.3;
+
 export interface BattleViewOptions {
   /** 이기면 승리 창 보상 칸에 보일 줄 (GDD 216장 1: 강적·보스 처치 수련권 '수련권 +1'). 없으면 보상 칸 없음 */
   winRewards?: string[];
@@ -1302,6 +1305,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setAct(itemBtn, canUseItem(s), !it ? (lapSpent ? `${consumableName(lapSpent)} — 이번 바퀴에 썼다(다음 바퀴에 다시 1번)` : opts.lapItem ? '소모품 칸이 비었다(바퀴 끝 창에서 끼운다)' : opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — ${opts.lapItem ? '이번 바퀴에 썼다' : '이번 전투에 썼다'}` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (${per}, 남은 ${itemLeft}개)`);
     // 빈 칸이면 눌러서 고를 수 있다 (GDD 193장 6) — 모양은 흐린 그대로(C.302 C.281), 누를 수 있다는 것만 알린다
     if (!it && opts.pickBattleItem && !s.script) setAttr(itemBtn.root, 'aria-disabled', 'false');
+    // 체력 낮을 때 소모품 알림 (GDD 222장 8): 내 체력 30% 이하 + 끼운 소모품을 지금 쓸 수 있으면 칸 깜빡임(gaugeBlink 박자, 동작 줄이기면 테두리). 자동 사용은 아님
+    const urge = it !== null && canUseItem(s) && s.player.hp > 0 && s.player.hp / s.player.maxHp <= ITEM_URGE_HP;
+    if (itemBtn.root.classList.contains('is-urge') !== urge) itemBtn.root.classList.toggle('is-urge', urge);
     const cdSec = s.gearCooldown * p.tickSeconds;
     setText(gearBtn.meta, p.activeGear ? (cdSec > 0 ? `${Math.ceil(cdSec)}` : '\u00a0') : ''); // 발동 장비가 있으면 쿨다운이 끝나도 글자 칸 자리 유지 (C.182)
     setAct(gearBtn, canUseGear(s), !p.activeGear ? '발동 장비가 없다(발동 효과가 있는 장비를 끼면 쓸 수 있다)' : `${gearActiveText(p)}${cdSec > 0 ? ` · ${Math.ceil(cdSec)}초 뒤` : ' · 준비됨'}`);

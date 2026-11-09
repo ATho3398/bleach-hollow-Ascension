@@ -623,7 +623,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     grid.append(ret, more);
     // 버튼 아래 작은 글 두 칸: [귀환] 아래 = 이번 바퀴 얻은 것(GDD 193장 3 — 돌아가면 지킨다는 [귀환] 설명으로), [한 바퀴 더] 아래 = 다음 바퀴(말로) + ⓘ (C.218)
     const notes = el('div', 'bha-continue__notes');
-    const gain = el('p', 'bha-continue-keep bha-lapend__gain', lapGainLine(exp, faction.foodGroupName, TRADE_CURRENCY_NAME));
+    const gain = el('p', 'bha-continue-keep bha-lapend__gain', lapGainLine(exp, faction.foodGroupName, TRADE_CURRENCY_NAME, faction.absorbActionName));
     gain.dataset.lapGain = '';
     gain.title = `${gain.textContent} — 돌아가면 얻은 것을 지킨다`;
     multLine.title = multLine.textContent ?? '';
@@ -669,8 +669,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         // 이름 = 맨 위 한 줄(카드 폭 전부, 넘치면 글자 줄임 — C.309), 아래 = 아이콘(24) + 설명 두 줄 (C.310 아이콘 되살림 — 190장, 옆 손 카드와 같은 모양)
         const ic = el('span', 'bha-tilechip__icon');
         ic.append(icon(tileIconId(css)));
-        card.append(fitOneLine(el('b', 'bha-draft__name', tn(id))), ic, el('small', 'bha-draft__hint', tileHint(t)));
-        card.title = `${tn(id)} — ${tileHint(t)}`; // 설명은 카드에서 두 줄까지 (C.308)
+        card.append(fitOneLine(el('b', 'bha-draft__name', tn(id))), ic, el('small', 'bha-draft__hint', tileHint(t, faction.id)));
+        card.title = `${tn(id)} — ${tileHint(t, faction.id)}`; // 설명은 카드에서 두 줄까지 (C.308)
         if (t.kind === 'event' || !exp.deck.includes(id)) card.append(el('span', 'bha-chip bha-chip--rare bha-draft__tag', t.kind === 'event' ? '이벤트' : '새 타일'));
         card.onclick = () => {
           const r = chooseDraft(exp, i);

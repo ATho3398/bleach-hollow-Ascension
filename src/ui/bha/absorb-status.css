@@ -151,7 +151,7 @@
 .bha-resultv2 .bha-result__right { position: absolute; left: calc(var(--bha-gutter) + 170px + var(--bha-gutter)); right: var(--bha-gutter); top: 62px; bottom: calc(var(--bha-dock-h) + var(--bha-sp-4)); display: flex; flex-direction: column; gap: var(--bha-sp-3); min-width: 0; }
 .bha-resultv2 .bha-result__story { flex: none; padding: var(--bha-sp-3) var(--bha-sp-5); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px var(--bha-line-1); }
 .bha-resultv2 .bha-result__story .bha-growth__line { text-align: left; font-size: var(--bha-fs-xs); }
-.bha-resultv2 .bha-result__sum { flex: 1 1 0; min-height: 0; padding: var(--bha-sp-3) var(--bha-sp-5) 0; gap: var(--bha-sp-2); }
+.bha-resultv2 .bha-result__sum { flex: 1 1 0; min-height: 0; padding: var(--bha-sp-2) var(--bha-sp-5) 0; gap: var(--bha-sp-1); }
 .bha-resultv2 .bha-result__sum .bha-panel__head, .bha-resultv2 .bha-result__sum > header { margin: 0; }
 .bha-result__scroll { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
 .bha-result__info { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-6); grid-auto-flow: row dense; }
@@ -164,6 +164,17 @@
 .bha-result__info .bha-info__row--good dd { color: var(--bha-good); }
 .bha-result__info .bha-info__row--bad dd { color: var(--bha-danger); }
 .bha-result__info .bha-info__row--em dd { color: var(--bha-warn); }
+/* 요약 두 칸 (GDD 222장 4): 왼쪽 판 바닥 '둥지 상태' 한 열(리스크·안정·배부름·컨디션) · 오른쪽 '▼ 더 있음'은 스크롤 칸 밖 제 띠(줄을 덮지 않음) */
+.bha-resultv2 .bha-result__side { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--bha-sp-4); margin-top: auto; flex: none; }
+.bha-resultv2 .bha-result__side .bha-info__row { min-height: 0; gap: var(--bha-sp-2); padding: var(--bha-sp-1) 0; }
+.bha-resultv2 .bha-result__side .bha-info__row:nth-last-child(-n + 2) { border-bottom: 0; }
+.bha-resultv2 .bha-result__side dd { white-space: nowrap; }
+.bha-resultv2 .bha-result__info dd { line-height: 1.25; }
+.bha-resultv2 .bha-result__runline { font-size: var(--bha-fs-xs); font-weight: 700; color: var(--bha-text-2); white-space: nowrap; }
+.bha-resultv2 .bha-result__big { display: none; } /* 결과 큰 그림은 뺀다 — 승패 톤은 머리 제목·띠 색 (자리 = 둥지 상태 칸) */
+.bha-resultv2 .bha-result__scroll > .bha-result__info .bha-info__row { min-height: 0; padding: var(--bha-sp-1) 0; gap: var(--bha-sp-3); }
+.bha-resultv2 .bha-result__scroll > .bha-result__info .bha-info__row:has(small) { grid-column: auto; } /* 이름 목록도 제 반 칸 안에서 줄바꿈 — 짝(얻은/잃은 블록·골드/먹이·지킨/잃은 타일)이 한 줄에 */
+.bha-resultv2 .bha-result__more { position: static; flex: none; margin-inline: calc(-1 * var(--bha-sp-5)); pointer-events: none; }
 .bha-resultv2 .bha-result__dock { justify-content: flex-end; }
 .bha-resultv2 .bha-seedline { margin: 0 auto 0 0; text-align: left; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
 .bha-resultv2 .bha-result__home { width: var(--bha-dock-btn-w); height: var(--bha-btn-h); min-height: 0; flex: none; font-size: var(--bha-fs-lg); }

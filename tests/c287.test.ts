@@ -29,7 +29,7 @@ describe('흡수 S11', () => {
     expect(v2css).toContain('.bha-absorbv2 .bha-absorb__desc { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto;');
     expect(a).toContain("'bha-more bha-more--sticky bha-absorb__more'"); // 공용 '더 있음' 띠 (C.296)
     expect(read('src/ui/bha/components/v2-shared.css')).toMatch(/\.bha-more--sticky:where\(:not\(\.bha-root \*\)\) \{ position: sticky; [^}]*bottom: 0;/);
-    expect(a).toContain("l.text.slice(0, at)), el('b', 'bha-absorb__v', l.text.slice(at + 2))");
+    expect(a).toContain("l.text.slice(0, at)), ' ', el('b', 'bha-absorb__v', l.text.slice(at + 2))");
   });
 });
 

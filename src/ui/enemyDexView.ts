@@ -90,7 +90,7 @@ function cardDetail(faction: FactionConfig, card: EnemyCard, entry: EnemyDexEntr
     row.append(h('span', 'bha-edex__label', label), typeof value === 'string' ? h('b', 'bha-edex__value', value) : value);
     return row;
   };
-  body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line('흡수', absorbsGrid(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
+  body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line(faction.absorbActionName, absorbsGrid(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
   return [id, body];
 }
 

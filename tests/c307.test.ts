@@ -46,8 +46,8 @@ describe('193장 11 준비 설명 칸 = 말, 숫자는 ⓘ', () => {
 describe('193장 3 바퀴 끝 창', () => {
   const base = { lap: 2, victoriesThisLap: 3, acquiredTraits: [{ traitId: 'a', lap: 2 }, { traitId: 'b', lap: 1 }], foodLoot: [{ food: 'snack' as const, lap: 2 }, { food: 'snack' as const, lap: 2 }], goldLoot: [{ amount: 40, lap: 2 }, { amount: -10, lap: 2 }, { amount: 99, lap: 1 }], acquired: [], gearFinds: [], petFinds: [] };
   it('이번 바퀴 것만 한 줄 (0 인 것은 빼고, 쓴 골드는 안 셈)', () => {
-    expect(lapGainLine(base, '먹이', '골드')).toBe('이번 바퀴: 승리 3 · 흡수 1 · 먹이 2 · 골드 +40');
-    expect(lapGainLine({ ...base, victoriesThisLap: 0, acquiredTraits: [], foodLoot: [], goldLoot: [] }, '먹이', '골드')).toBe('이번 바퀴: 얻은 것 없음');
+    expect(lapGainLine(base, '먹이', '골드', '포식')).toBe('이번 바퀴: 승리 3 · 포식 1 · 먹이 2 · 골드 +40');
+    expect(lapGainLine({ ...base, victoriesThisLap: 0, acquiredTraits: [], foodLoot: [], goldLoot: [] }, '먹이', '골드', '포식')).toBe('이번 바퀴: 얻은 것 없음');
   });
   it('다음 바퀴는 말로(× 없음), 숫자는 ⓘ — balance 값 그대로', () => {
     for (const nx of [2, 3, 5]) {

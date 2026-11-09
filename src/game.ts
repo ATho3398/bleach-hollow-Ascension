@@ -59,7 +59,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 68; // C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 69; // C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -1288,6 +1288,40 @@ export function resumeWindowMs(): number {
   return BALANCE.provisional.expedition.resumeWindowMinutes * 60_000;
 }
 
+/** 전투 들어가기 직전 소모품을 원정 상태에 적는다 (GDD 222장 6): 그 전투(pending.seed)에 처음 들어갈 때만 — 다시 켜서 같은 전투를 다시 하면 그대로 둔다.
+ *  적었으면 true (부르는 쪽이 원정 중간 저장을 다시 쓴다) */
+export function markBattleEntry(save: Pick<SaveData, 'shared'>, exp: ExpeditionState): boolean {
+  if (exp.phase !== 'battle' || !exp.pending) return false;
+  if (exp.battleEntry?.seed === exp.pending.seed) return false;
+  const itemId = save.shared.battleItem ?? null;
+  exp.battleEntry = { seed: exp.pending.seed, itemId, itemCount: itemId ? save.shared.items[itemId] ?? 0 : 0 };
+  return true;
+}
+
+/** 전투 도중 다시 켰을 때 소모품을 전투 직전 값으로 되돌린다 (GDD 222장 6). 여러 번 불러도 같은 결과. 되돌린(전투 중 썼던) 소모품 id, 없으면 null */
+export function restoreBattleEntry(save: Pick<SaveData, 'shared'>, exp: ExpeditionState): string | null {
+  const e = exp.battleEntry;
+  if (exp.phase !== 'battle' || !exp.pending || !e || e.seed !== exp.pending.seed) return null;
+  const changed = e.itemId !== null && (save.shared.items[e.itemId] ?? 0) !== e.itemCount;
+  if (e.itemId !== null) {
+    if (e.itemCount > 0) save.shared.items[e.itemId] = e.itemCount;
+    else delete save.shared.items[e.itemId];
+  }
+  save.shared.battleItem = e.itemId;
+  return changed ? e.itemId : null;
+}
+
+/** 전투 재시작 (GDD 222장 6): 원정 전투 도중 다시 켜서 이어 하면 그 전투를 들어가기 직전 상태로 처음부터 — 소모품 되돌림 + 런 로그 battleRestarts. 전투 단계가 아니면 아무것도 안 함(false) */
+export function restartBattleOnResume(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): boolean {
+  if (exp.phase !== 'battle' || !exp.pending) return false;
+  const item = restoreBattleEntry(save, exp);
+  (save.runLog.battleRestarts ??= []).push({
+    at: nowMs, factionId: save.factionId, runId: exp.runId, lap: exp.lap, cell: exp.pending.cell, enemyId: exp.pending.boss ?? exp.pending.enemy.id,
+    ...(item ? { itemRestored: item } : {}),
+  });
+  return true;
+}
+
 /** 이어할 원정이 있는가 (GDD 192장 1, C.311). 원정 중간 저장이 ① 나간 뒤(leftAtMs, 없으면 savedAtMs) 시한(resumeWindowMinutes)을 넘겼거나 ② 밸런스 버전이 다르면(새 패치) 이어 하지 않고
  *  **모험 실패(패배)로 정산**한다(recordExpedition 의 패배 경로 그대로: 쓰러짐·마지막 바퀴 획득물·골드 상실, 런 로그 runs endReason 'abandoned' + 이유). ③ 손상이면 상태가 없어 기록만(읽히는 만큼) 남기고 비운다.
  *  첫 모험 튜토리얼은 정산하지 않고 비운다(처음부터 다시 — 튜토리얼 보상·안내가 runs 기록 수를 본다). 시한 안 + 같은 버전이면 그대로 이어 한다(밸런스 수치는 지금 값).
@@ -1301,7 +1335,8 @@ export function readActiveExpedition(save: SaveData, nowMs: number = Date.now())
     return { ok: false, reason: 'corrupt', settled: logCorruptExpedition(save, raw), exp: null };
   }
   const why: Exclude<AbandonReason, 'corrupt'> | null = r.balanceVersion !== BALANCE_VERSION ? 'version' : nowMs - expeditionLeftAt(r) > resumeWindowMs() ? 'stale' : null;
-  if (why === null) return r;
+  if (why === null) return r; // 이어 하면 restartBattleOnResume 이 소모품을 되돌리고 기록한다 (222장 6)
+  restoreBattleEntry(save, r.exp); // 222장 6: 전투 도중 저장을 실패 정산 — 소모품은 전투 직전 값
   if (r.exp.tutorial) {
     save.activeExpedition = null;
     return { ok: false, reason: why, settled: false, exp: null };
@@ -1811,6 +1846,12 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   67: (save) => {
     save.dexSort = newDexSortState();
   },
+  // 형식 68 → 69 (C.365, GDD 222장 6): 런 로그 전투 재시작 기록 battleRestarts — 옛 세이브는 빈 목록(두 트랙 모두). 옛 원정 중간 저장엔 battleEntry 가 없다(= 되돌릴 소모품 없음, 전투는 그대로 처음부터)
+  68: (save) => {
+    for (const t of [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])]) {
+      if (isRec(t.runLog)) (t.runLog as unknown as Record<string, unknown>).battleRestarts = [];
+    }
+  },
 };
 
 /** 형식 67: 트랙 하나의 튜토리얼 노력치를 상한 밖 몫으로 (SAVE_MIGRATIONS[66]) */
@@ -2289,6 +2330,7 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
   t.training = sanitizeTraining(t.training);
   t.runLog.trainings = Array.isArray(t.runLog.trainings) ? t.runLog.trainings : [];
   t.runLog.trainingTickets = Array.isArray(t.runLog.trainingTickets) ? t.runLog.trainingTickets : [];
+  t.runLog.battleRestarts = Array.isArray(t.runLog.battleRestarts) ? t.runLog.battleRestarts : [];
   t.rank = sanitizeRankState(t.rank);
   t.runLog.rankBattles = Array.isArray(t.runLog.rankBattles) ? t.runLog.rankBattles : [];
   delete (t.runLog as Partial<RunLog>).fusions; // 합체 기록은 슬롯 단위(slotLog)

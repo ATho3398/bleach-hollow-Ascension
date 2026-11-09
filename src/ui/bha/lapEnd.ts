@@ -5,13 +5,14 @@ import type { InfoGroup } from './infoTip';
 
 type LapView = Pick<ExpeditionState, 'lap' | 'victoriesThisLap' | 'acquiredTraits' | 'foodLoot' | 'goldLoot' | 'acquired' | 'gearFinds' | 'petFinds'>;
 
-/** "이번 바퀴: 승리 3 · 흡수 1 · 먹이 4 · 골드 +120" — 0 인 것은 뺀다. 없으면 "이번 바퀴: 얻은 것 없음" */
-export function lapGainLine(exp: LapView, foodName: string, goldName: string): string {
+/** "이번 바퀴: 승리 3 · 포식 1 · 먹이 4 · 골드 +120" — 0 인 것은 뺀다. 없으면 "이번 바퀴: 얻은 것 없음".
+ *  흡수 이름은 종족 설정 absorbActionName(호로 '포식', 사신 '정화 흡수', GDD 222장 7) */
+export function lapGainLine(exp: LapView, foodName: string, goldName: string, absorbName: string): string {
   const lap = exp.lap;
   const gold = exp.goldLoot.filter((g) => g.lap === lap && g.amount > 0).reduce((a, g) => a + g.amount, 0);
   const parts = [
     exp.victoriesThisLap > 0 ? `승리 ${exp.victoriesThisLap}` : '',
-    countLap(exp.acquiredTraits, lap) > 0 ? `흡수 ${countLap(exp.acquiredTraits, lap)}` : '',
+    countLap(exp.acquiredTraits, lap) > 0 ? `${absorbName} ${countLap(exp.acquiredTraits, lap)}` : '',
     countLap(exp.foodLoot, lap) > 0 ? `${foodName} ${countLap(exp.foodLoot, lap)}` : '',
     gold > 0 ? `${goldName} +${gold}` : '',
     countLap(exp.acquired, lap) > 0 ? `타일 ${countLap(exp.acquired, lap)}` : '',

@@ -188,7 +188,7 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
       p.dataset.line = l.kind;
       // '이름: 값' 줄은 두 열로 (GDD 183장 S11) — 글은 그대로, 첫 ': ' 에서 나눠 보여 주기만
       const at = l.kind === 'what' || l.kind === 'warn' ? -1 : l.text.indexOf(': ');
-      if (at > 0) p.append(el('span', 'bha-absorb__k', l.text.slice(0, at)), el('b', 'bha-absorb__v', l.text.slice(at + 2)));
+      if (at > 0) p.append(el('span', 'bha-absorb__k', l.text.slice(0, at)), ' ', el('b', 'bha-absorb__v', l.text.slice(at + 2))); // 사이 띄어쓰기 = 두 열(grid)이 아닌 화면에서도 '능력치 모두 +3' (222장 10, grid 에선 공백 글자가 안 그려짐)
       else p.append(l.text);
       return p;
     }), ...(extra?.(m) ?? []), more);

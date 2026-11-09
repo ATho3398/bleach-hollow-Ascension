@@ -148,7 +148,7 @@ export function tileDrawCard(faction: FactionConfig, tileId: string, count: numb
   back.append(icon('i-rare'));
   const front = el('div', 'bha-draw__face bha-draw__face--front');
   front.style.setProperty('--tile', `var(--bha-tile-${css})`);
-  front.append(icon(tileIconId(css)), el('b', 'bha-draw__name', tileName(tileId, faction.id)), el('small', 'bha-draw__hint', tileHint(t)));
+  front.append(icon(tileIconId(css)), el('b', 'bha-draw__name', tileName(tileId, faction.id)), el('small', 'bha-draw__hint', tileHint(t, faction.id)));
   card.append(back, front);
   const stage = el('div', 'bha-draw__stage');
   stage.append(card);

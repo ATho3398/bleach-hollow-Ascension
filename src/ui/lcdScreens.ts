@@ -443,7 +443,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
         const upHave = save.tiles.collection[up] ?? 0;
         main.append(
           h('span', 'bha-deckrow__name', tileName(up, faction.id)),
-          h('span', 'bha-deckrow__desc', `${variantModsText(BALANCE.provisional.tileVariants.upgrade[t.kind] as VariantMods).join(' · ')} · 재료 ${have}/${cost}${upHave > 0 ? ` · 보유 ${upHave}` : ''}`),
+          h('span', 'bha-deckrow__desc', `${variantModsText(BALANCE.provisional.tileVariants.upgrade[t.kind] as VariantMods, faction.id).join(' · ')} · 재료 ${have}/${cost}${upHave > 0 ? ` · 보유 ${upHave}` : ''}`),
         );
         const go = button({
           label: `합성 (${cost}장)`, size: 'small', disabled: have < cost,
@@ -474,7 +474,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const ic = h('span', 'bha-deckrow__icon');
       ic.append(icon(kind.icon));
       const main = h('span', 'bha-deckrow__main');
-      main.append(h('span', 'bha-deckrow__name', tileName(t.id, faction.id)), h('span', 'bha-deckrow__desc', `${tileHint(t)} · 보유 ${save.tiles.collection[t.id]}`));
+      main.append(h('span', 'bha-deckrow__name', tileName(t.id, faction.id)), h('span', 'bha-deckrow__desc', `${tileHint(t, faction.id)} · 보유 ${save.tiles.collection[t.id]}`));
       row.append(ic, main);
       list.append(row);
     }

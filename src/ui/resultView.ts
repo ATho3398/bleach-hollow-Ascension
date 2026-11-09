@@ -74,11 +74,11 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const out: IconInfoRow[] = [];
     if (exp.permTile !== undefined) {
       out.push(exp.permTile
-        ? { label: '영구 타일', icon: 'i-deck', value: val(tileName(exp.permTile, faction.id), '가방에 들어갔다'), mod: 'good' }
-        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음', '모험 2~3번에 1장 꼴') });
+        ? { label: '영구 타일', icon: 'i-deck', value: val(tileName(exp.permTile, faction.id)), mod: 'good' }
+        : { label: '영구 타일', icon: 'i-deck', value: val('이번엔 없음') });
     }
     const temp = exp.tempLog?.length ?? 0;
-    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 모험만 — 끝나며 사라졌다') });
+    if (temp > 0) out.push({ label: '임시 타일', icon: 'i-deck', value: val(`${temp}장`, '이번 모험만') });
     return out;
   }
 
@@ -124,35 +124,52 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   head.append(mark, el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('span', 'bha-label', stageTitle(exp, faction)));
 
   const home = expeditionEndVitals(exp);
+  // 요약 두 칸 (GDD 222장 4): 오른쪽 '모험 요약' = 얻고 잃은 것(블록·골드·먹이·타일)이 위 — '▼ 더 있음' 아래로 숨지 않게.
+  // 둥지로 가져가는 상태 값(리스크·안정·배부름·컨디션)은 왼쪽 판 빈 자리 '둥지 상태' 칸으로
   const rows: IconInfoRow[] = [
-    { label: '도달 바퀴', icon: 'i-loop', value: val(`${s.laps}`, `/ 권장 ${BALANCE.expedition.defaultLaps}`) },
-    { label: '치른 전투', icon: 'i-practice', value: val(`${exp.battles.length}회`, `(승 ${wins})`) },
+    countRow('얻은 블록', 'i-slot', s.keptTraits, (id) => traitNameWithElement(id, faction.id), '개', 'good'), // 속성까지 '흙 탄 · 물 조' (GDD 176장 17)
+    countRow('잃은 블록', 'i-slot', s.lostTraits, (id) => traitNameWithElement(id, faction.id), '개', 'bad'),
+    goldRow(),
+    foodRow(),
     countRow('지킨 타일', 'i-deck', s.kept, (id) => tileName(id, faction.id), '장', 'good'),
     countRow('잃은 타일', 'i-deck', s.lost, (id) => tileName(id, faction.id), '장', 'bad'),
     ...permTileRows(),
-    countRow('얻은 블록', 'i-slot', s.keptTraits, (id) => traitNameWithElement(id, faction.id), '개', 'good'), // 속성까지 '흙 탄 · 물 조' (GDD 176장 17)
-    countRow('잃은 블록', 'i-slot', s.lostTraits, (id) => traitNameWithElement(id, faction.id), '개', 'bad'),
-    foodRow(),
-    goldRow(),
+  ];
+  const sideRows: IconInfoRow[] = [
     {
-      label: `${faction.riskGaugeName} (최고 / 끝)`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
-      value: val(`${Math.round(exp.riskPeak)} / ${Math.round(exp.risk)}`, exp.breakthrough ? faction.frenzyName : undefined),
+      label: `${faction.riskGaugeName} 최고/끝`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
+      value: val(`${Math.round(exp.riskPeak)}/${Math.round(exp.risk)}`, exp.breakthrough ? faction.frenzyName : undefined),
     },
     { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
     // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
-    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `모험 끝 ${Math.round(exp.condition)}` : undefined) },
+    { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `(끝 ${Math.round(exp.condition)})` : undefined) },
   ];
-  // 모험 요약 = '이름: 값' 줄 두 열, 고정 높이 칸 안에서 스크롤 + 바닥 '▼ 더 있음' (GDD 183장 S13 · 168장 3)
+  // 왼쪽 판 둥지 상태 = 2×2 (아이콘 + 값, 이름은 화면 읽기·툴팁 — 상태창 줄과 같은 아이콘)
+  const side = el('dl', 'bha-result__info bha-result__side');
+  for (const r of sideRows) {
+    const row = el('div', r.mod ? `bha-info__row bha-info__row--${r.mod}` : 'bha-info__row');
+    row.title = r.label;
+    const dt = el('dt');
+    if (r.icon) dt.append(icon(r.icon));
+    dt.append(el('span', 'bha-sr-only', r.label));
+    const dd = el('dd');
+    dd.append(r.value);
+    row.append(dt, dd);
+    side.append(row);
+  }
+  // 모험 요약 = '이름: 값' 줄 두 열, 고정 높이 칸 안에서 스크롤. '▼ 더 있음'은 스크롤 칸 밖 제 띠(줄을 덮지 않음, 222장 4 · 168장 3)
   const info = iconInfo(rows);
   info.className = 'bha-result__info'; // 옛 dl 목록 이름(.bha-info)은 v2 에서 ⓘ 버튼 — 이 화면은 제 이름으로
   const scroller = el('div', 'bha-result__scroll');
-  const more = el('div', 'bha-more bha-more--sticky bha-result__more', '▼ 더 있음'); // 공용 띠 (C.296)
+  const more = el('div', 'bha-more bha-result__more', '▼ 더 있음'); // 공용 띠 (C.296)
   more.setAttribute('aria-hidden', 'true');
-  scroller.append(info, more);
+  scroller.append(info);
   const syncMore = (): void => { more.hidden = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2; };
   scroller.addEventListener('scroll', syncMore, { passive: true });
-  const sum = panel({ title: '모험 요약' }, scroller);
+  // 도달 바퀴·치른 전투는 칸 머리 한 줄 (222장 4 — 줄 하나를 얻고 잃은 것에)
+  const runLine = el('span', 'bha-result__runline bha-num', `${s.laps}바퀴 (권장 ${BALANCE.expedition.defaultLaps}) · 전투 ${exp.battles.length}회 (승 ${wins})`);
+  const sum = panel({ title: '모험 요약', aside: runLine }, scroller, more);
   sum.classList.add('bha-result__sum');
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
@@ -184,7 +201,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   big.append(icon(win ? 'i-return' : 'i-broken'));
   // 이번에 오른 노력치 칩 (GDD 217장 3): '힘 +3' · 상한에 막혔으면 '가득'
   const evRow = evChipRow(faction.id, evGains(exp.evStart, exp.evolution.ev, exp.evBlocked));
-  left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evRow ? [evRow] : []), ...(evolveNote ? [evolveNote] : []));
+  left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evRow ? [evRow] : []), ...(evolveNote ? [evolveNote] : []), side);
   const right = el('section', 'bha-result__right');
   right.append(...(storyBox ? [storyBox] : []), sum);
   const app = mountApp(root, { cls: `bha-v2 bha-resultv2 bha-resultv2--${win ? 'win' : 'lose'}` }, band, head, left, right, dock);
