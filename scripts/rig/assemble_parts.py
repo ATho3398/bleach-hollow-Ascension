@@ -4,6 +4,7 @@
 1배 조립 자리(at), 1배 관절(pivots). 조각 = 시트에서 sheet 칸과 이어진 불투명 덩어리(8방향). 부위 그림 = 조각을 배율만큼 키운 것.
 결과: docs/design/rig-draft/humanoid/<몸>/<슬롯>.png, 작업본 humanoid.json 의 bodies.<몸>·bodyJoints.<몸>.pivots (캔버스 = 1배 × scale + offset)
 사용: python3 scripts/rig/assemble_parts.py docs/design/user-art/beast-base-ref/assembly.json
+조립 파일에 "rig": "serpent" 같이 적으면 그 뼈대(짐승·뱀 — 몸 하나, 관절 = 뼈 기본 자리, order = 슬롯 차례)
 """
 import json
 import os
@@ -45,9 +46,11 @@ def main(path):
     src = np.array(Image.open(os.path.join(ROOT, a['sheet'])).convert('RGBA'))
     alpha = src[..., 3] > 0
     sc, (ox, oy) = int(a.get('scale', 1)), a.get('offset', [0, 0])
-    body, out_dir = a['body'], os.path.join(DRAFT_ART, a['body'])
+    rid = a.get('rig', 'humanoid')  # 뼈대(사람형 외 짐승·뱀도 — 뱀 부위 시트 2026-11-10, GDD 115-A 96)
+    rig_path = DRAFT_RIG_JSON if rid == 'humanoid' else os.path.join(os.path.dirname(DRAFT_RIG_JSON), f'{rid}.json')
+    body, out_dir = a['body'], os.path.join(os.path.dirname(DRAFT_RIG_JSON), rid, a['body'])
     os.makedirs(out_dir, exist_ok=True)
-    rig = json.load(open(DRAFT_RIG_JSON, encoding='utf-8'))
+    rig = json.load(open(rig_path, encoding='utf-8'))
     parts = {}
     for slot, p in a['parts'].items():
         m = piece(alpha, *p['sheet'])
@@ -61,8 +64,20 @@ def main(path):
         im.save(os.path.join(out_dir, f'{slot}.png'))
         parts[slot] = {'art': f'{body}/{slot}', 'at': [p['at'][0] * sc + ox, p['at'][1] * sc + oy], 'size': [im.width, im.height]}
     rig['bodies'][body] = parts
-    rig.setdefault('bodyJoints', {})[body] = {'pivots': {b: [x * sc + ox, y * sc + oy] for b, (x, y) in a['pivots'].items()}}
-    dump(rig)
+    piv = {b: [x * sc + ox, y * sc + oy] for b, (x, y) in a['pivots'].items()}
+    if rid == 'humanoid':
+        rig.setdefault('bodyJoints', {})[body] = {'pivots': piv}
+        dump(rig)
+    else:
+        # 짐승·뱀은 몸이 하나 — 뼈 기본 관절 자리를 바로 고치고, 슬롯 차례(order)가 있으면 그대로
+        for b in rig['bones']:
+            if b['id'] in piv:
+                b['pivot'] = piv[b['id']]
+        if a.get('order'):
+            ids = [s['id'] for s in rig['slots']]
+            rest = [s for s in rig['slots'] if s['id'] not in a['order']]
+            rig['slots'] = [next(s for s in rig['slots'] if s['id'] == i) for i in a['order'] if i in ids] + rest
+        open(rig_path, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
     print(body, '부위', len(parts), '→', out_dir)
 
 

@@ -1,0 +1,123 @@
+{
+ "note": "뱀(뼈대 serpent, 몸 ref) 조립 — 사용자 부위 시트(2026-11-10, 149×111, 조각 6개 + 오른쪽 위 참고 그림, 팔 없앰)를 참고 그림에서 색이 가장 많이 맞는 자리로 놓음(GDD 115-A 96, 사용자 \"뱀 시트 이거 기반으로 다시 만들고, 뱀 관절도 여기에 맞춰. 팔 없앴으니까\"). 이음 = 아래 몸(body1) → 목·윗몸(neck1) → 머리(head), 똬리(coil1) → 꼬리(tail1) → 꼬리 끝(tail2). 관절 = 이웃 조각과 맞닿은 자리 가운데. 그림 없는 뼈 body2·neck2·coil2·arm 은 동작이 그대로 돌게 남김(arm 그림 없음). 다시 만들기: python3 scripts/rig/assemble_parts.py docs/design/user-art/serpent-ref/assembly.json",
+ "rig": "serpent",
+ "sheet": "docs/design/user-art/serpent-ref/parts-2026-11-10.png",
+ "body": "ref",
+ "scale": 1,
+ "offset": [
+  0,
+  0
+ ],
+ "parts": {
+  "neck1": {
+   "sheet": [
+    49,
+    55
+   ],
+   "at": [
+    11,
+    2
+   ]
+  },
+  "head": {
+   "sheet": [
+    14,
+    61
+   ],
+   "at": [
+    0,
+    0
+   ]
+  },
+  "tail2": {
+   "sheet": [
+    112,
+    66
+   ],
+   "at": [
+    29,
+    10
+   ]
+  },
+  "coil1": {
+   "sheet": [
+    94,
+    84
+   ],
+   "at": [
+    20,
+    24
+   ]
+  },
+  "tail1": {
+   "sheet": [
+    123,
+    88
+   ],
+   "at": [
+    32,
+    24
+   ]
+  },
+  "body1": {
+   "sheet": [
+    68,
+    89
+   ],
+   "at": [
+    9,
+    18
+   ]
+  }
+ },
+ "pivots": {
+  "head": [
+   17,
+   7
+  ],
+  "neck1": [
+   21,
+   21
+  ],
+  "body2": [
+   21,
+   21
+  ],
+  "neck2": [
+   19,
+   13
+  ],
+  "body1": [
+   21,
+   39
+  ],
+  "root": [
+   21,
+   39
+  ],
+  "coil1": [
+   23,
+   32
+  ],
+  "coil2": [
+   29,
+   31
+  ],
+  "tail1": [
+   35,
+   32
+  ],
+  "tail2": [
+   37,
+   23
+  ]
+ },
+ "order": [
+  "tail2",
+  "tail1",
+  "coil1",
+  "neck1",
+  "body1",
+  "head"
+ ]
+}
