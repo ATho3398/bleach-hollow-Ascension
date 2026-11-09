@@ -107,9 +107,14 @@ export function formRelease(form: Pick<FormDef, 'release'> | null | undefined, f
 /** 표시 이름: 손으로 쓴 정식 이름(종족별)이 있으면 그것, 없으면 자리 표시. inherited = 지금 캐릭터 속성(아란칼 히든의 `_속성`).
  *  ascended = 아란칼화 / 참백도 구상화를 깼다 — 종족 설정 ascension.formNameKey 가 있으면 진화체 release 의 그 칸(호로 = 레스렉시온 이름, GDD 198장) */
 export function formName(form: FormDef, factionId: string, inherited: readonly string[] = [], ascended = false): string {
-  const key = getFaction(factionId).ascension.formNameKey;
+  const fac = getFaction(factionId);
+  const key = fac.ascension.formNameKey;
   const released = ascended && key ? formRelease(form, factionId)?.[key] : undefined;
   if (released) return released;
+  // GDD 220장 3: 4단계 진화체 이름 = 레스렉시온 이름(호로) / 참백도 이름(사신) — 종족 설정 liberation.formNameKey 칸
+  const nameKey = fac.liberation.formNameKey;
+  const named = nameKey ? formRelease(form, factionId)?.[nameKey] : undefined;
+  if (named) return named;
   return form.name ? pickFaction(form.name, factionId) : placeholderName(form, factionId, inherited);
 }
 

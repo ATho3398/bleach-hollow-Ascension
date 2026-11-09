@@ -457,7 +457,8 @@
     "cutin": "본능을 해방한다 — 레스렉시온!",
     "endText": "해방이 풀렸다. 광기가 스며든다…",
     "formKey": "name",
-    "formCutin": "{command}, {name}!"
+    "formCutin": "{command}, {name}!",
+    "formNameKey": "name"
   },
   "rebirth": {
     "name": "환생",

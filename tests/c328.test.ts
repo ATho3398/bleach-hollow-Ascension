@@ -64,17 +64,17 @@ describe('198장 쓰는 곳', () => {
     return e;
   };
 
-  it('호로: 아란칼화 전 = 지금 자리 표시 이름, 깬 뒤 = 레스렉시온 이름 (종족 설정 ascension.formNameKey)', () => {
+  it('220장 3: 4단계 진화체 이름 = 레스렉시온 이름(호로) / 참백도 이름(사신) — 아란칼화 전후 같다 (종족 설정 liberation.formNameKey)', () => {
     const e = ascended('t4:fire:special');
     e.ascended = false;
-    expect(formDisplayName(e, 'hollow')).toBe(formName(getForm('t4:fire:special'), 'hollow'));
-    expect(formDisplayName(e, 'hollow')).not.toBe('루시에르나가');
+    expect(formDisplayName(e, 'hollow')).toBe('루시에르나가');
     e.ascended = true;
     expect(formDisplayName(e, 'hollow')).toBe('루시에르나가');
     expect(formName(getForm('t4:fire:special'), 'hollow', [], true)).toBe('루시에르나가');
-    // 사신은 진화체 표시 이름 그대로 (formNameKey 없음)
+    // 사신 = 참백도 이름 (releases.json shinigami.name)
     expect(formDisplayName(e, 'shinigami')).toBe(formName(getForm('t4:fire:special'), 'shinigami'));
     expect(getFaction('shinigami').ascension.formNameKey).toBeUndefined();
+    expect(getFaction('shinigami').liberation.formNameKey).toBe('name');
   });
 
   it('해방 컷인: 호로 = 언령, 이름 — 레스렉시온! / 사신 = 만해 — 만해 이름! (깨기 전은 기본 해방)', () => {
@@ -104,6 +104,7 @@ describe('198장 쓰는 곳', () => {
     const h = getFaction('hollow');
     expect(() => parseFactionConfig({ ...h, liberation: { ...h.liberation, formKey: 'command' } })).toThrow(/liberation.formKey/);
     expect(() => parseFactionConfig({ ...h, ascension: { ...h.ascension, formNameKey: 'x' } })).toThrow(/ascension.formNameKey/);
+    expect(() => parseFactionConfig({ ...h, liberation: { ...h.liberation, formNameKey: 'command' } })).toThrow(/liberation.formNameKey/);
   });
 });
 

@@ -1,8 +1,10 @@
-// 적 도감 화면 (GDD 200장, C.330): 책장 묶음(진화체 도감·칭호 도감 ▾)의 세 번째 도감. 틀은 진화체 도감과 같다 — 왼쪽 목록 · 오른쪽 상세, 위 '발견 n / 전체'.
+// 적 도감 화면 (GDD 200장, C.330 → 220장 1·2): 책장 묶음(진화체 도감·칭호 도감 ▾)의 세 번째 도감. 틀은 진화체 도감과 같다 — 바둑판 카드(그림·이름·속성) + 누르면 상세 창, 위 '발견 n / 전체'·정렬 버튼.
 // 카드 = 일반(속성 8 × 짐승형·부유형·갑각형) · 강적 24 · 보스 3(탑 층 보스도 같은 보스라 같은 칸). 만나기 전 = 그림 실루엣 + '???'(속성·등급 숨김),
 // 만난 뒤 = 그림 · 이름 · 속성 · 강적·보스 등급(198장 grade — 여기서만 보인다) · 잡은 수 'n마리' · 흡수 종류별 횟수(200장 9, 0도 자리 고정) · 처음 만난 곳 한 줄. 처음 만난 카드는 '새' 점 하나(알림 없음), 상세를 보면 지운다.
-// 종족 분기 없음: 이름·속성 이름·사냥터/탑 이름은 종족 설정·데이터에서 읽는다. 기기 ▲▼✓◀ = masterDetail 그대로.
+// 종족 분기 없음: 이름·속성 이름·사냥터/탑 이름은 종족 설정·데이터에서 읽는다. 기기 ▲▼ = 카드 이동, ✓ = 상세 창, ◀ = 창 닫기(공용 창 레이어).
+import { ELEMENT_IDS } from '../data/elements';
 import { enemyGradeName } from '../data/enemies';
+import { ENEMY_DEX_SORTS, newDexSortState, nextDexSort, sortDex, type DexSortFacts } from '../engine/dexSort';
 import { GROUNDS } from '../data/grounds';
 import { pickFaction } from '../data/schema';
 import { groundName, towerLabels, type FactionConfig } from '../engine/faction';
@@ -11,7 +13,9 @@ import type { SaveData } from '../game';
 import { foeArtOf } from './bha/battle';
 import { h, icon } from './bha/dom';
 import { elementMark, paintElement } from './bha/element';
-import { lcdHead, lcdPage, masterDetail, type ListRow } from './bha/lcdpage';
+import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
+import { dexCaption, dexCard, dexGrid, dexSortButton } from './bha/dexGrid';
+import { itemDialog } from './bha/itemUi';
 import { logoMark } from './bha/logo';
 import { shownName } from './displayName';
 
@@ -73,62 +77,82 @@ function cardChips(card: EnemyCard): HTMLElement[] {
   return out;
 }
 
-function cardRow(faction: FactionConfig, card: EnemyCard, dex: EnemyDex, persist: (() => void) | undefined, caption?: string): ListRow {
+/** 상세 창 본문 (예전 오른쪽 상세 칸 내용 전부): 종류·등급 칩 · 속성 · 잡은 수 · 흡수 종류별 횟수 · 처음 만난 곳 */
+function cardDetail(faction: FactionConfig, card: EnemyCard, entry: EnemyDexEntry): Node[] {
+  // 머리 줄(C.332): 칩 묶음은 한 덩어리 — 이름은 창 머리에 있다
+  const chips = h('span', 'bha-edex__chips');
+  chips.append(...cardChips(card));
+  const id = h('div', 'bha-edex__id');
+  id.append(chips);
+  const body = h('p', 'bha-mddetail__body bha-edex__body');
+  const line = (label: string, value: Node | string) => {
+    const row = h('span', 'bha-edex__line');
+    row.append(h('span', 'bha-edex__label', label), typeof value === 'string' ? h('b', 'bha-edex__value', value) : value);
+    return row;
+  };
+  body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line('흡수', absorbsGrid(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
+  return [id, body];
+}
+
+function cardOf(faction: FactionConfig, card: EnemyCard, dex: EnemyDex, persist: (() => void) | undefined): HTMLElement {
   const entry = dex[card.id];
+  const kindName = ENEMY_KIND_LABEL[card.kind];
   if (!entry || !enemyKnown(dex, card.id)) {
-    return {
-      label: '미발견', cls: 'is-unknown', caption,
-      content: [enemyArtBox(card.id, false, 'bha-edex__art--row'), h('span', 'bha-mdrow__name', '???'), h('small', 'bha-mdrow__state', '미발견')],
-      detail: () => {
-        const d = h('div', 'bha-mdhint');
-        d.append(enemyArtBox(card.id, false, 'bha-edex__art--hero'), h('b', '', '미발견'), h('small', '', '만난 적만 보인다.'));
-        return [d];
-      },
-    };
+    return dexCard({
+      name: '???', unknown: true, art: enemyArtBox(card.id, false, 'bha-edex__art--card'), marks: null,
+      onOpen: () => itemDialog({ heading: kindName, name: '미발견', desc: '만난 적만 보인다.', art: enemyArtBox(card.id, false, 'bha-edex__art--hero'), hero: true, cls: 'bha-dexmodal', actions: [] }),
+    });
   }
   const name = shownName(pickFaction(card.def.name, faction.id));
-  const newDot = entry.fresh ? h('i', 'bha-edex__new') : null;
+  const newDot = entry.fresh ? h('i', 'bha-edex__new bha-dexcard__new') : null;
   if (newDot) newDot.setAttribute('aria-label', '새');
-  return {
-    label: name, caption,
-    cls: `bha-edex__row--${card.kind}`,
-    paint: (node: HTMLElement) => paintElement(node, card.def.element),
-    content: [enemyArtBox(card.id, true, 'bha-edex__art--row'), h('span', 'bha-mdrow__name', name), ...(newDot ? [newDot] : []), h('small', 'bha-mdrow__state', killsText(entry.kills))],
-    detail: () => {
+  return dexCard({
+    name, unknown: false, art: enemyArtBox(card.id, true, 'bha-edex__art--card'), marks: elementMark(card.def.element, faction.id),
+    dot: newDot, cls: `bha-edex__row--${card.kind}`,
+    paint: (node) => paintElement(node, card.def.element),
+    onOpen: () => {
       // 상세를 보면 '새' 점을 지운다 (GDD 200장 7)
       if (markEnemyCardSeen(dex, card.id)) {
         newDot?.remove();
         persist?.();
       }
-      const head = h('div', 'bha-mddetail__head bha-edex__head');
-      const title = h('h2', 'bha-mddetail__title', name);
-      // 머리 줄(C.332): 그림 | [이름 + 칩 묶음]. 칩 묶음은 한 덩어리 — 이름 오른쪽에 한 줄, 넘치면 이름 아래 한 줄로(그림 아래로 떨어지지 않는다)
-      const chips = h('span', 'bha-edex__chips');
-      chips.append(...cardChips(card));
-      const id = h('div', 'bha-edex__id');
-      id.append(title, chips);
-      head.append(enemyArtBox(card.id, true, 'bha-edex__art--hero'), id);
-      const body = h('p', 'bha-mddetail__body bha-edex__body');
-      const line = (label: string, value: Node | string) => {
-        const row = h('span', 'bha-edex__line');
-        row.append(h('span', 'bha-edex__label', label), typeof value === 'string' ? h('b', 'bha-edex__value', value) : value);
-        return row;
-      };
-      body.append(line('속성', elementMark(card.def.element, faction.id)), line('잡은 수', killsText(entry.kills)), line('흡수', absorbsGrid(faction, entry)), line('처음 만난 곳', whereText(faction, entry.where)));
-      return [head, body];
+      itemDialog({ heading: kindName, name, desc: '', content: cardDetail(faction, card, entry), art: enemyArtBox(card.id, true, 'bha-edex__art--hero'), hero: true, cls: 'bha-dexmodal bha-edex', actions: [] });
     },
-  };
+  });
 }
 
-/** 적 도감: 일반 → 강적 → 보스 한 목록 + 종류 머리줄(발견 n/전체). 첫 선택 = 맨 위(새 카드를 바로 고르면 '새' 점이 보이기도 전에 지워진다) */
+/** 적 도감 (220장 1·2): 바둑판 + 정렬 버튼. 기본 정렬은 일반 → 강적 → 보스 + 종류 머리줄(발견 n/전체) */
 export function enemyDexView(root: HTMLElement, faction: FactionConfig, save: SaveData, title: string | Node = '적 도감', persist?: () => void): void {
   const dex = (save.enemyDex ??= {});
   const counts = enemyDexCounts(dex);
-  const rows = ENEMY_CARD_KINDS.flatMap((kind) =>
-    ENEMY_CARDS.filter((c) => c.kind === kind).map((c, i) => cardRow(faction, c, dex, persist, i === 0 ? `${ENEMY_KIND_LABEL[kind]} ${counts.byKind[kind].found}/${counts.byKind[kind].total}` : undefined)),
-  );
-  const md = masterDetail(rows, 0, '적');
+  const sortState = (save.dexSort ??= newDexSortState());
+  const cards = ENEMY_CARD_KINDS.flatMap((kind) => ENEMY_CARDS.filter((c) => c.kind === kind));
+  const facts = (c: EnemyCard): DexSortFacts => ({
+    known: enemyKnown(dex, c.id), name: pickFaction(c.def.name, faction.id), element: ELEMENT_IDS.indexOf(c.def.element),
+    kind: ENEMY_CARD_KINDS.indexOf(c.kind), kills: dex[c.id]?.kills ?? 0, group: ENEMY_CARD_KINDS.indexOf(c.kind),
+  });
+  const grid = dexGrid('적');
+  const fill = (): void => {
+    const nodes: HTMLElement[] = [];
+    let lastKind: EnemyCardKind | null = null;
+    for (const c of sortDex(cards, sortState.enemies, facts)) {
+      if (sortState.enemies === 'default' && c.kind !== lastKind) {
+        lastKind = c.kind;
+        nodes.push(dexCaption(`${ENEMY_KIND_LABEL[c.kind]} ${counts.byKind[c.kind].found}/${counts.byKind[c.kind].total}`));
+      }
+      nodes.push(cardOf(faction, c, dex, persist));
+    }
+    grid.replaceChildren(...nodes);
+    grid.scrollTop = 0;
+  };
+  fill();
+  const sort = dexSortButton(sortState.enemies, () => {
+    sortState.enemies = nextDexSort(ENEMY_DEX_SORTS, sortState.enemies);
+    persist?.();
+    fill();
+    return sortState.enemies;
+  });
   const sub = h('span');
   sub.append('발견 ', h('b', '', String(counts.found)), ` / ${counts.total}`);
-  lcdPage(root, { cls: 'bha-dex-page bha-edex', cols: 'minmax(0, 0.9fr) minmax(0, 1.1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [md.list], [md.detail]);
+  lcdPage(root, { cls: 'bha-dex-page bha-dexgrid-page bha-edex', cols: 'minmax(0, 1fr)' }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined, aside: [selectLast(sort)] }), [grid], []);
 }

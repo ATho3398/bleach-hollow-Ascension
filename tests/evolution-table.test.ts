@@ -124,34 +124,41 @@ describe('이름 자리 표시 (종족 설정 단계 이름, 원작 이름 없�
       expect(formName(t3, fac.id)).toContain('불');
       const t4 = FORM_TABLE.find((f) => f.id === 't4:water:special')!;
       const specialAbbr = fac.families.find((x) => x.category === 'special')!.abbr;
-      expect(formName(t4, fac.id)).toBe(`${fac.tierNames[3]}_물_${specialAbbr}`);
+      expect(placeholderName(t4, fac.id)).toBe(`${fac.tierNames[3]}_물_${specialAbbr}`); // 220장 3: 4단계 표시 이름은 release 이름, 자리 표시는 남아 있다
       for (const f of FORM_TABLE) {
         expect(formName(f, fac.id).length).toBeGreaterThan(0);
         expect(formHint(f, fac.id).length).toBeGreaterThan(0);
       }
     }
-    expect(formName(FORM_TABLE.find((f) => f.id === 'h4:fusion:water+earth')!, 'hollow')).toContain('융합');
+    expect(placeholderName(FORM_TABLE.find((f) => f.id === 'h4:fusion:water+earth')!, 'hollow')).toContain('융합');
   });
   it('형식 `단계_속성_분류` (GDD 20장 v5.3): 2단계는 단계 이름만, 히든은 `단계_히든 이름`, 행동 히든은 이은 속성을 뒤에', () => {
     const name = (id: string, fac = 'hollow', inh: string[] = []) => formName(FORM_TABLE.find((f) => f.id === id)!, fac, inh);
+    // 4단계 28종은 표시 이름이 레스렉시온/참백도 이름(220장 3)이라 자리 표시 형식은 placeholderName 으로 본다
+    const ph = (id: string, fac = 'hollow', inh: string[] = []) => placeholderName(FORM_TABLE.find((f) => f.id === id)!, fac, inh);
     expect(name('t2:base')).toBe('길리안');
     expect(name('t3:normal')).toBe('아쥬커스_노멀');
     expect(name('t3:fire')).toBe('아쥬커스_불');
-    expect(name('t4:fire:special')).toBe('바스트로데_불_탄');
-    expect(name('t4:fire:physical')).toBe('바스트로데_불_조');
-    expect(name('t4:fire:mixed')).toBe('바스트로데_불_교');
-    expect(name('t4:fire:special', 'shinigami')).toBe('수석 대원_불_귀');
+    expect(ph('t4:fire:special')).toBe('바스트로데_불_탄');
+    expect(ph('t4:fire:physical')).toBe('바스트로데_불_조');
+    expect(ph('t4:fire:mixed')).toBe('바스트로데_불_교');
+    expect(ph('t4:fire:special', 'shinigami')).toBe('수석 대원_불_귀');
     expect(name('t3:fire', 'shinigami')).toBe('평대원_불');
     expect(name('h3:passage')).toBe('아쥬커스_히든');
     expect(name('h3:fail')).toBe('호로'); // C.106 (49-8 2번): 망한 진화체·실패형은 1단계 이름 그대로
-    expect(name('h4:fusion:water+earth')).toBe('바스트로데_융합_물흙');
-    expect(name('h4:complete')).toBe('바스트로데_4속성형');
-    expect(name('h4:fail')).toBe('호로');
-    expect(name('h4:fail', 'shinigami')).toBe('혼백');
-    expect(name('h4:frenzy', 'hollow', ['fire'])).toBe('바스트로데_폭주형_불');
-    expect(name('h4:frenzy', 'shinigami', ['fire'])).toBe('수석 대원_호로화형_불');
-    expect(name('h4:restraint', 'hollow', ['water', 'earth'])).toBe('바스트로데_절제형_물흙');
-    expect(name('h4:hunter')).toBe('바스트로데_사냥꾼'); // 도감처럼 상태가 없으면 속성 생략
-    expect(name('h4:void')).toBe('바스트로데_허무형');
+    expect(ph('h4:fusion:water+earth')).toBe('바스트로데_융합_물흙');
+    expect(ph('h4:complete')).toBe('바스트로데_4속성형');
+    expect(ph('h4:fail')).toBe('호로');
+    expect(ph('h4:fail', 'shinigami')).toBe('혼백');
+    expect(ph('h4:frenzy', 'hollow', ['fire'])).toBe('바스트로데_폭주형_불');
+    expect(ph('h4:frenzy', 'shinigami', ['fire'])).toBe('수석 대원_호로화형_불');
+    expect(ph('h4:restraint', 'hollow', ['water', 'earth'])).toBe('바스트로데_절제형_물흙');
+    expect(ph('h4:hunter')).toBe('바스트로데_사냥꾼'); // 도감처럼 상태가 없으면 속성 생략
+    expect(ph('h4:void')).toBe('바스트로데_허무형');
+    // 220장 3: 4단계 표시 이름 = 레스렉시온 이름(호로) / 참백도 이름(사신)
+    expect(name('t4:fire:special')).toBe('루시에르나가');
+    expect(name('t4:fire:special', 'shinigami')).toBe('석양홍');
+    expect(name('h4:fail', 'shinigami')).toBe('둔도');
+    expect(name('h4:frenzy', 'hollow', ['fire'])).toBe(name('h4:frenzy', 'hollow'));
   });
 });

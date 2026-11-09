@@ -161,6 +161,9 @@ export interface LiberationConfig {
   formKey?: 'name' | 'final';
   /** 고유 해방 컷인 틀 (GDD 198장): {name}·{command}·{final} 을 진화체 release 값으로 채운다. 채울 값이 없으면 cutin */
   formCutin?: string;
+  /** 진화체 표시 이름 칸 (GDD 220장 3): 진화체 release 의 이 칸이 있으면 언제나 그 이름이 진화체 이름(호로 = 레스렉시온 이름, 사신 = 참백도 이름 — 둘 다 'name').
+   *  없으면 손으로 쓴 이름 / 자리 표시 그대로 */
+  formNameKey?: 'name' | 'final';
 }
 
 /** 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 4단계부터 수련장에서 도전(지금은 보스전 임시). 깨면 레스렉시온/만해 해금.
@@ -778,6 +781,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   const RELEASE_KEYS = ['name', 'final'];
   if (lb.formKey !== undefined && !RELEASE_KEYS.includes(lb.formKey as string)) errors.push('liberation.formKey: name | final');
   if (lb.formCutin !== undefined && !isString(lb.formCutin)) errors.push('liberation.formCutin: 비어 있지 않은 문자열이어야 한다');
+  if (lb.formNameKey !== undefined && !RELEASE_KEYS.includes(lb.formNameKey as string)) errors.push('liberation.formNameKey: name | final');
   if (asc.formNameKey !== undefined && !RELEASE_KEYS.includes(asc.formNameKey as string)) errors.push('ascension.formNameKey: name | final');
   const rb = (r.rebirth ?? {}) as Record<string, unknown>;
   for (const k of ['name', 'cutin', 'rebornText']) if (!isString(rb[k])) errors.push(`rebirth.${k}: 비어 있지 않은 문자열이어야 한다`);

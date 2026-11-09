@@ -88,7 +88,7 @@ describe('217장 2: 튜토리얼 노력치는 상한 밖', () => {
 
 describe('세이브 형식 67 (217장 2)', () => {
   it('66 → 67: 튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로 (값 그대로)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(67);
+    expect(SAVE_FORMAT_VERSION).toBe(68); // C.363 도감 정렬
     expect(typeof SAVE_MIGRATIONS[66]).toBe('function');
     const s = newSaveData('hollow', 7);
     playTutorial(s);
@@ -97,7 +97,7 @@ describe('세이브 형식 67 (217장 2)', () => {
     s.meta.format = 66;
     const m = migrateSave(JSON.parse(JSON.stringify(s)));
     expect(m).not.toBeNull();
-    expect(m!.meta.format).toBe(67);
+    expect(m!.meta.format).toBe(68);
     expect(m!.evolution.evFree).toEqual(all(TUT.statEv));
     expect(m!.evolution.ev.atk).toBe(TUT.statEv + 10);
   });

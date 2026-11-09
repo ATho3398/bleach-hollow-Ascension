@@ -382,7 +382,8 @@
     "cutin": "참백도의 진명을 부른다 — 만해!",
     "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…",
     "formKey": "final",
-    "formCutin": "만해 — {final}!"
+    "formCutin": "만해 — {final}!",
+    "formNameKey": "name"
   },
   "rebirth": {
     "name": "환생",

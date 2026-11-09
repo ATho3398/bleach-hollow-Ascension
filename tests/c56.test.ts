@@ -181,8 +181,8 @@ describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 
   it('데이터: 4단계 히든 각성형(혼합)·허무형(혼합) 하나씩', () => {
     const f = getForm('h4:awakened');
     expect([f.tier, f.hidden, f.label.kind, f.elements, f.label.category]).toEqual([4, true, 'awakened', undefined, 'mixed']);
-    expect(formName(f, 'hollow', ['fire'])).toBe('바스트로데_각성형_불');
-    expect(formName(getForm('h4:void'), 'shinigami')).toBe('수석 대원_허무형');
+    expect(formName(f, 'hollow', ['fire'])).toBe('아르바'); // 220장 3: 레스렉시온 이름
+    expect(formName(getForm('h4:void'), 'shinigami')).toBe('공화'); // 참백도 이름
   });
   it('허무형은 환생 1회 이상일 때만 후보 (혈·독·허 각 20%↑)', () => {
     expect(evolutionCandidates(t3(), ctxOf(0)).hidden.map((c) => c.formId)).not.toContain('h4:void');

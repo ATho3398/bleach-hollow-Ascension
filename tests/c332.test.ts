@@ -32,8 +32,9 @@ describe('머리 줄 칩 묶음', () => {
   it('그림 | [이름 + 칩 묶음] — 칩은 한 덩어리(줄바꿈 없음), 머리 줄은 그림 아래로 접히지 않는다', () => {
     const view = read('src/ui/enemyDexView.ts');
     const css = read('src/ui/bha/screens-lcd.css');
-    expect(view).toMatch(/id\.append\(title, chips\)/);
-    expect(view).toMatch(/head\.append\(enemyArtBox\(card\.id, true, 'bha-edex__art--hero'\), id\)/);
+    // C.363(GDD 220장 1): 이름·그림은 상세 창 머리(공용 창 틀), 본문 첫 줄 = 칩 묶음
+    expect(view).toMatch(/id\.append\(chips\)/);
+    expect(view).toMatch(/art: enemyArtBox\(card\.id, true, 'bha-edex__art--hero'\)/);
     expect(css).toMatch(/\.bha-edex__head \{ flex-wrap: nowrap;/);
     expect(css).toMatch(/\.bha-edex__chips \{[^}]*flex-wrap: nowrap;/);
     expect(css).toMatch(/\.bha-edex__id \{[^}]*flex-wrap: wrap;/);

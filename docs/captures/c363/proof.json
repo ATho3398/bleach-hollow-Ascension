@@ -1,0 +1,1112 @@
+{
+  "shots": [
+    "pc-h-5-home.png",
+    "pc-h-1-dex.png",
+    "pc-h-2-dexDetail.png",
+    "pc-h-3-enemy.png",
+    "pc-h-4-enemyDetail.png",
+    "ph-s-4-home.png",
+    "ph-s-1-dex.png",
+    "ph-s-2-special.png",
+    "ph-s-3-sorted.png"
+  ],
+  "checks": {
+    "pc-h": {
+      "format": 68,
+      "homeText": "책장가방월드맵번호 쟁탈전체력210 / 210시험루시에르나가8080500+20먹이3/3재우기교감",
+      "dex": {
+        "cards": 36,
+        "cols": 1,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 620,
+        "cardW": 98,
+        "cardH": 108,
+        "names": [
+          "길리안",
+          "아쥬커스 물",
+          "아쥬커스 불",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "마르티요",
+          "바라쿠다",
+          "루시에르나가",
+          "판타노",
+          "아르바",
+          "나다",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [
+          "아르바"
+        ],
+        "inheritText": false,
+        "captions": [
+          "길리안 1/1",
+          "아쥬커스 2/7",
+          "바스트로데 6/28"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "dexDetail": {
+        "open": true,
+        "name": "루시에르나가",
+        "heading": "바스트로데",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "불지금임시불 3단계에서 탄 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 97 · 힘 93 · 지능 117 · 방어 88 · 정신력 83 · 속도 107본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)레스렉시온: 꼬리를 끌어라, 루시에르나가!성향 특성 노력치 최고 능력치 — 진화하는 ",
+        "special": false
+      },
+      "special": {
+        "open": true,
+        "name": "아르바",
+        "heading": "바스트로데",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "특임시한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화종족값 체력 108 · 힘 97 · 지능 97 · 방어 97 · 정신력 108 · 속도 107본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)레스렉시온: 되살아나라, 아르바!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다전",
+        "special": true
+      },
+      "dexClosed": true,
+      "dexSorts": [
+        {
+          "sort": "name",
+          "first": [
+            "길리안",
+            "나다",
+            "루시에르나가",
+            "마르티요",
+            "바라쿠다",
+            "아르바"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "길리안",
+            "마르티요",
+            "아쥬커스 물",
+            "바라쿠다",
+            "판타노",
+            "아쥬커스 불"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "found",
+          "first": [
+            "길리안",
+            "아쥬커스 불",
+            "아쥬커스 물",
+            "루시에르나가",
+            "마르티요",
+            "바라쿠다"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "default",
+          "first": [
+            "길리안",
+            "아쥬커스 물",
+            "아쥬커스 불",
+            "???",
+            "???",
+            "???"
+          ],
+          "unknownLast": false,
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "enemy": {
+        "cards": 51,
+        "cols": 6,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 620,
+        "cardW": 98,
+        "cardH": 108,
+        "names": [
+          "짐승형 호로",
+          "부유형 호로",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "스모크 위도우",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [],
+        "inheritText": false,
+        "captions": [
+          "일반 2/24",
+          "강적 1/24",
+          "보스 1/3"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "enemyDetail": {
+        "open": true,
+        "name": "스모크 위도우",
+        "heading": "강적",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "강적아쥬커스속성불불잡은 수12마리흡수포식10속성 포식0능력치 포식1놓아주기0처음 만난 곳모래 협곡",
+        "special": false
+      },
+      "freshCleared": true,
+      "devBackClosed": true,
+      "devOkOpened": true,
+      "devBackClosed2": true,
+      "enemySorts": [
+        {
+          "sort": "name",
+          "first": [
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "짐승형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kind",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kills",
+          "first": [
+            "스모크 위도우",
+            "짐승형 호로",
+            "아레나 보라스",
+            "부유형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "savedSort": {
+        "forms": "default",
+        "enemies": "kills"
+      },
+      "dexSortAfterReopen": "default"
+    },
+    "pc-s": {
+      "format": 68,
+      "homeText": "책장가방월드맵진급 시험체력210 / 210시험석양홍8080500+20식사3/3재우기손질",
+      "dex": {
+        "cards": 36,
+        "cols": 1,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 620,
+        "cardW": 98,
+        "cardH": 108,
+        "names": [
+          "영술원 학생",
+          "평대원 물",
+          "평대원 불",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "백련",
+          "백랑파",
+          "석양홍",
+          "이소",
+          "환혼",
+          "공화",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [
+          "환혼"
+        ],
+        "inheritText": false,
+        "captions": [
+          "영술원 학생 1/1",
+          "평대원 2/7",
+          "수석 대원 6/28"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "dexDetail": {
+        "open": true,
+        "name": "석양홍",
+        "heading": "수석 대원",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "불지금임시불 3단계에서 귀 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 97 · 힘 93 · 지능 117 · 방어 88 · 정신력 83 · 속도 107본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 만해 — 석양홍운!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다속성",
+        "special": false
+      },
+      "special": {
+        "open": true,
+        "name": "환혼",
+        "heading": "수석 대원",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "특임시한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화종족값 체력 108 · 힘 97 · 지능 97 · 방어 97 · 정신력 108 · 속도 107본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 만해 — 구사환혼!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다전용 특성",
+        "special": true
+      },
+      "dexClosed": true,
+      "dexSorts": [
+        {
+          "sort": "name",
+          "first": [
+            "공화",
+            "백랑파",
+            "백련",
+            "석양홍",
+            "영술원 학생",
+            "이소"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "영술원 학생",
+            "백련",
+            "평대원 물",
+            "백랑파",
+            "이소",
+            "평대원 불"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "found",
+          "first": [
+            "영술원 학생",
+            "평대원 불",
+            "평대원 물",
+            "석양홍",
+            "백련",
+            "백랑파"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "default",
+          "first": [
+            "영술원 학생",
+            "평대원 물",
+            "평대원 불",
+            "???",
+            "???",
+            "???"
+          ],
+          "unknownLast": false,
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "enemy": {
+        "cards": 51,
+        "cols": 6,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 620,
+        "cardW": 98,
+        "cardH": 108,
+        "names": [
+          "짐승형 호로",
+          "부유형 호로",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "스모크 위도우",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [],
+        "inheritText": false,
+        "captions": [
+          "일반 2/24",
+          "강적 1/24",
+          "보스 1/3"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "enemyDetail": {
+        "open": true,
+        "name": "스모크 위도우",
+        "heading": "강적",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "강적아쥬커스속성불불잡은 수12마리흡수정화 흡수10속성 흡수0능력치 흡수1놓아주기0처음 만난 곳카라쿠라 마을",
+        "special": false
+      },
+      "freshCleared": true,
+      "devBackClosed": true,
+      "devOkOpened": true,
+      "devBackClosed2": true,
+      "enemySorts": [
+        {
+          "sort": "name",
+          "first": [
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "짐승형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kind",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kills",
+          "first": [
+            "스모크 위도우",
+            "짐승형 호로",
+            "아레나 보라스",
+            "부유형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "savedSort": {
+        "forms": "default",
+        "enemies": "kills"
+      },
+      "dexSortAfterReopen": "default"
+    },
+    "ph-h": {
+      "format": 68,
+      "homeText": "책장가방월드맵번호 쟁탈전체력210 / 210시험루시에르나가8080500+20먹이3/3재우기교감",
+      "dex": {
+        "cards": 36,
+        "cols": 1,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 572,
+        "cardW": 90,
+        "cardH": 108,
+        "names": [
+          "길리안",
+          "아쥬커스 물",
+          "아쥬커스 불",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "마르티요",
+          "바라쿠다",
+          "루시에르나가",
+          "판타노",
+          "아르바",
+          "나다",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [
+          "아르바"
+        ],
+        "inheritText": false,
+        "captions": [
+          "길리안 1/1",
+          "아쥬커스 2/7",
+          "바스트로데 6/28"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "dexDetail": {
+        "open": true,
+        "name": "루시에르나가",
+        "heading": "바스트로데",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "불지금임시불 3단계에서 탄 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 97 · 힘 93 · 지능 117 · 방어 88 · 정신력 83 · 속도 107본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)레스렉시온: 꼬리를 끌어라, 루시에르나가!성향 특성 노력치 최고 능력치 — 진화하는 ",
+        "special": false
+      },
+      "special": {
+        "open": true,
+        "name": "아르바",
+        "heading": "바스트로데",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "특임시한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화종족값 체력 108 · 힘 97 · 지능 97 · 방어 97 · 정신력 108 · 속도 107본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)레스렉시온: 되살아나라, 아르바!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다전",
+        "special": true
+      },
+      "dexClosed": true,
+      "dexSorts": [
+        {
+          "sort": "name",
+          "first": [
+            "길리안",
+            "나다",
+            "루시에르나가",
+            "마르티요",
+            "바라쿠다",
+            "아르바"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "길리안",
+            "마르티요",
+            "아쥬커스 물",
+            "바라쿠다",
+            "판타노",
+            "아쥬커스 불"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "found",
+          "first": [
+            "길리안",
+            "아쥬커스 불",
+            "아쥬커스 물",
+            "루시에르나가",
+            "마르티요",
+            "바라쿠다"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "default",
+          "first": [
+            "길리안",
+            "아쥬커스 물",
+            "아쥬커스 불",
+            "???",
+            "???",
+            "???"
+          ],
+          "unknownLast": false,
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "enemy": {
+        "cards": 51,
+        "cols": 6,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 572,
+        "cardW": 90,
+        "cardH": 108,
+        "names": [
+          "짐승형 호로",
+          "부유형 호로",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "스모크 위도우",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [],
+        "inheritText": false,
+        "captions": [
+          "일반 2/24",
+          "강적 1/24",
+          "보스 1/3"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "enemyDetail": {
+        "open": true,
+        "name": "스모크 위도우",
+        "heading": "강적",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "강적아쥬커스속성불불잡은 수12마리흡수포식10속성 포식0능력치 포식1놓아주기0처음 만난 곳모래 협곡",
+        "special": false
+      },
+      "freshCleared": true,
+      "devBackClosed": true,
+      "devOkOpened": true,
+      "devBackClosed2": true,
+      "enemySorts": [
+        {
+          "sort": "name",
+          "first": [
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "짐승형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kind",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kills",
+          "first": [
+            "스모크 위도우",
+            "짐승형 호로",
+            "아레나 보라스",
+            "부유형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "savedSort": {
+        "forms": "default",
+        "enemies": "kills"
+      },
+      "dexSortAfterReopen": "default"
+    },
+    "ph-s": {
+      "format": 68,
+      "homeText": "책장가방월드맵진급 시험체력210 / 210시험석양홍8080500+20식사3/3재우기손질",
+      "dex": {
+        "cards": 36,
+        "cols": 1,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 572,
+        "cardW": 90,
+        "cardH": 108,
+        "names": [
+          "영술원 학생",
+          "평대원 물",
+          "평대원 불",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "백련",
+          "백랑파",
+          "석양홍",
+          "이소",
+          "환혼",
+          "공화",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [
+          "환혼"
+        ],
+        "inheritText": false,
+        "captions": [
+          "영술원 학생 1/1",
+          "평대원 2/7",
+          "수석 대원 6/28"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "dexDetail": {
+        "open": true,
+        "name": "석양홍",
+        "heading": "수석 대원",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "불지금임시불 3단계에서 귀 계열 공격 블록을 가장 많이 장착하고 진화종족값 체력 97 · 힘 93 · 지능 117 · 방어 88 · 정신력 83 · 속도 107본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 만해 — 석양홍운!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다속성",
+        "special": false
+      },
+      "special": {
+        "open": true,
+        "name": "환혼",
+        "heading": "수석 대원",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "특임시한 번 망했던 몸을 다시 태어나서까지 고르게 단련해 진화종족값 체력 108 · 힘 97 · 지능 97 · 방어 97 · 정신력 108 · 속도 107본체는 그대로, 참백도 슬롯의 외형이 변한다만해: 만해 — 구사환혼!성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다전용 특성",
+        "special": true
+      },
+      "dexClosed": true,
+      "dexSorts": [
+        {
+          "sort": "name",
+          "first": [
+            "공화",
+            "백랑파",
+            "백련",
+            "석양홍",
+            "영술원 학생",
+            "이소"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "영술원 학생",
+            "백련",
+            "평대원 물",
+            "백랑파",
+            "이소",
+            "평대원 불"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "found",
+          "first": [
+            "영술원 학생",
+            "평대원 불",
+            "평대원 물",
+            "석양홍",
+            "백련",
+            "백랑파"
+          ],
+          "unknownLast": true,
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "default",
+          "first": [
+            "영술원 학생",
+            "평대원 물",
+            "평대원 불",
+            "???",
+            "???",
+            "???"
+          ],
+          "unknownLast": false,
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "enemy": {
+        "cards": 51,
+        "cols": 6,
+        "overlap": 0,
+        "clippedX": 0,
+        "textOverflow": 0,
+        "gridW": 572,
+        "cardW": 90,
+        "cardH": 108,
+        "names": [
+          "짐승형 호로",
+          "부유형 호로",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "스모크 위도우",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???",
+          "???"
+        ],
+        "special": [],
+        "inheritText": false,
+        "captions": [
+          "일반 2/24",
+          "강적 1/24",
+          "보스 1/3"
+        ],
+        "sort": "default",
+        "sortInHead": true,
+        "more": true
+      },
+      "enemyDetail": {
+        "open": true,
+        "name": "스모크 위도우",
+        "heading": "강적",
+        "inViewport": true,
+        "xOverlap": false,
+        "inside": true,
+        "body": "강적아쥬커스속성불불잡은 수12마리흡수정화 흡수10속성 흡수0능력치 흡수1놓아주기0처음 만난 곳카라쿠라 마을",
+        "special": false
+      },
+      "freshCleared": true,
+      "devBackClosed": true,
+      "devOkOpened": true,
+      "devBackClosed2": true,
+      "enemySorts": [
+        {
+          "sort": "name",
+          "first": [
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "짐승형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "element",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kind",
+          "first": [
+            "짐승형 호로",
+            "부유형 호로",
+            "스모크 위도우",
+            "아레나 보라스",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        },
+        {
+          "sort": "kills",
+          "first": [
+            "스모크 위도우",
+            "짐승형 호로",
+            "아레나 보라스",
+            "부유형 호로",
+            "???"
+          ],
+          "overlap": 0,
+          "clippedX": 0
+        }
+      ],
+      "savedSort": {
+        "forms": "default",
+        "enemies": "kills"
+      },
+      "dexSortAfterReopen": "default"
+    }
+  },
+  "errors": []
+}

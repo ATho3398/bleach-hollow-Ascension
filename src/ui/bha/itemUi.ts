@@ -123,6 +123,12 @@ export interface ItemDialogSpec {
   actions: { label: (qty: number) => string; variant?: 'primary' | 'danger' | 'ghost'; disabled?: boolean; note?: string; onClick: (qty: number) => void; key?: string }[];
   /** 막힌 이유 한 줄 */
   lock?: string | null;
+  /** 설명 글 대신 본문에 넣을 요소들 (도감 상세, GDD 220장 1) — 같은 고정 높이 스크롤 칸 + '▼ 더 있음' */
+  content?: Node[];
+  /** 꼬리표 없이도 본문 왼쪽에 큰 그림 (도감 상세) */
+  hero?: boolean;
+  /** 창 모양 변형 클래스 (예 'bha-dexmodal') */
+  cls?: string;
 }
 
 /** 상세 창을 연다 (리디자인 v2 창 틀, PROMPT 6절 S04): 머리 48 = 그림·제목(작은 분류 + 이름)·× / 본문 = 설명(고정 높이 안 스크롤 + '▼ 더 있음')·가진 수·수량·막힌 이유 /
@@ -134,7 +140,7 @@ export function itemDialog(s: ItemDialogSpec): () => void {
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', s.name);
-  const modal = el('div', 'bha-modal bha-win bha-itemmodal');
+  const modal = el('div', `bha-modal bha-win bha-itemmodal${s.cls ? ` ${s.cls}` : ''}`);
   let closed = false;
   let untrap: () => void = () => {};
   let unregister: () => void = () => {};
@@ -148,9 +154,10 @@ export function itemDialog(s: ItemDialogSpec): () => void {
   // ── 머리: 그림 · 분류/이름 · × ──
   const head = el('div', 'bha-win-head bha-itemmodal__headrow');
   const headArt = el('span', 'bha-itemmodal__icon');
-  const big = s.tag ? el('div', 'bha-itemmodal__art') : null;
+  const big = s.tag || s.hero ? el('div', 'bha-itemmodal__art') : null;
   if (big) {
-    big.append(el('span', 'bha-itemmodal__tag', s.tag!), s.art);
+    if (s.tag) big.append(el('span', 'bha-itemmodal__tag', s.tag));
+    big.append(s.art);
     headArt.append(s.art.cloneNode(true));
   } else headArt.append(s.art);
   const titles = el('div', 'bha-itemmodal__titles');
@@ -162,7 +169,8 @@ export function itemDialog(s: ItemDialogSpec): () => void {
   const body = el('div', 'bha-win-body bha-itemmodal__body');
   const main = el('div', 'bha-itemmodal__right');
   const descBox = el('div', 'bha-itemmodal__descbox');
-  const desc = el('p', 'bha-itemmodal__desc', s.desc);
+  const desc = s.content ? el('div', 'bha-itemmodal__desc bha-itemmodal__rich') : el('p', 'bha-itemmodal__desc', s.desc);
+  if (s.content) desc.append(...s.content);
   desc.tabIndex = -1;
   descBox.append(desc);
   main.append(descBox);

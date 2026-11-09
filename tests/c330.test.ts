@@ -182,10 +182,10 @@ describe('기록 훅 (200장 3·6, 9장)', () => {
 });
 
 describe('화면 (200장 1·2·7·8)', () => {
-  it('책장 토글 = 진화체 도감 · 칭호 도감 · 적 도감 (새 버튼 자리 없음), 적 도감은 masterDetail 틀', () => {
+  it('책장 토글 = 진화체 도감 · 칭호 도감 · 적 도감 (새 버튼 자리 없음), 적 도감은 바둑판 틀 (220장)', () => {
     expect(BOOK_TABS.map((t) => t.label)).toEqual(['진화체 도감', '칭호 도감', '적 도감']);
     const view = read('src/ui/enemyDexView.ts');
-    expect(view).toContain('masterDetail(');
+    expect(view).toContain('dexCard('); // C.363(GDD 220장 1): 목록 → 바둑판 + 상세 창
     expect(view).toContain("'???'");
     expect(view).toContain('is-silhouette');
     expect(view).toContain('enemyGradeName(');

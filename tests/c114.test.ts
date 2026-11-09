@@ -16,7 +16,8 @@ describe('C.114 책장 머리 제목 토글 (GDD 58)', () => {
     expect(read('src/ui/titleDexView.ts')).toMatch(/title: string \| Node = '칭호 도감'/);
     // 머리 aside 에는 단계/종류 탭만 남는다 (옛 lead 탭줄 없음)
     // C.171(GDD 100장 #73): 진화체 도감은 단계 탭 대신 한 목록 + 단계 머리줄 — 머리 aside 없음
-    expect(read('src/ui/dexView.ts')).not.toContain('aside:');
+    // C.363(GDD 220장 2): 진화체 도감 머리 aside = 정렬 버튼 하나
+    expect(read('src/ui/dexView.ts')).toContain('aside: [selectLast(sort)]');
     expect(read('src/ui/titleDexView.ts')).toContain('aside: [selectLast(tabs)]');
   });
   it('토글: 같은 도감을 누르면 닫기만, 바깥 누르면 닫힘, 화면이 사라지면 리스너를 푼다', () => {
