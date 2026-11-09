@@ -77,6 +77,32 @@ export function coverTutorials(el: Element | null = null): () => void {
     if (!tutorialsCovered()) notifyCover(false);
   };
 }
+/** 튜토리얼 안내 카드(.bha-tut)가 떠 있나 */
+export const tutorialCardOpen = (): boolean => document.querySelector('.bha-tut') !== null;
+/**
+ * 튜토리얼 카드가 다 끝난 뒤에 띄우기 (GDD 222장 1): 대기 보상 복귀 창처럼 저절로 뜨는 창은 안내 카드가 떠 있으면 기다렸다가,
+ * 카드가 없는 상태가 두 번 잇달아 보이면(카드가 이어 뜨는 틈 제외) 띄운다. still() 이 false 가 되면(다른 화면으로 감 등) 띄우지 않는다. 돌려주는 함수로 그만둔다
+ */
+export function afterTutorials(fn: () => void, still: () => boolean = () => true, pollMs = 400): () => void {
+  let quiet = 0;
+  let stopped = false;
+  const tick = (): void => {
+    if (stopped) return;
+    if (!still()) return void (stopped = true);
+    quiet = tutorialCardOpen() ? 0 : quiet + 1;
+    if (quiet >= 2) {
+      stopped = true;
+      fn();
+      return;
+    }
+    timer = window.setTimeout(tick, pollMs);
+  };
+  let timer = window.setTimeout(tick, pollMs);
+  return () => {
+    stopped = true;
+    window.clearTimeout(timer);
+  };
+}
 /** 테스트용: 덮개·구독을 처음으로 */
 export function resetTutorialCoverForTest(): void {
   covers.clear();

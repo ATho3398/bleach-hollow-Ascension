@@ -66,6 +66,8 @@ export async function loadFakeBackend(): Promise<CloudBackend> {
     },
     async signInGuest() {
       await delay();
+      // `?cloudfake=noguest`: 익명 로그인이 꺼진 서버 응답 (GDD 222장 2 게스트 실패 안내 확인용)
+      if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('cloudfake') === 'noguest') throw fail('auth/admin-restricted-operation');
       setUser(FAKE_GUEST_USER);
     },
     // 이메일: 비밀번호 'wrong…' 이면 틀림, 'taken@' 로 시작하는 이메일 가입은 이미 가입 — 오류 문구 확인용

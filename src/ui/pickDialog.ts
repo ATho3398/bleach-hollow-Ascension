@@ -2,7 +2,7 @@
 // 방 [상점] 4곳 고르기·상태 화면 탈착 특성 [끼우기]가 쓴다. 모양은 확인 창(bha-confirm)과 같다
 import { button, el } from './bha/dom';
 import { trapModalFocus } from './bha/modalFocus';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 
 export interface PickOption {
   label: string;
@@ -22,11 +22,13 @@ export function pickDialog(o: { title: string; body: string; options: readonly P
   let closed = false;
   let unregister: () => void = () => {};
   let untrap: () => void = () => {};
+  let uncover: () => void = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
     layer.remove();
+    uncover();
     untrap();
     o.onClose?.(); // 고르든 닫든 한 번 (전투 화면이 멈춤을 푸는 데 쓴다, GDD 193장 6)
   };
@@ -40,6 +42,8 @@ export function pickDialog(o: { title: string; body: string; options: readonly P
   modal.append(list);
   layer.append(modal);
   getOverlayHost().append(layer);
+  // 공용 창은 열린 동안 튜토리얼 카드·입력 막기를 비켜 간다 (GDD 222장 1) — 카드와 겹쳐도 창 버튼이 눌린다
+  uncover = coverTutorials(layer);
   untrap = trapModalFocus(layer);
   btns[0]?.focus({ preventScroll: true });
   unregister = registerLayer(layer, close);

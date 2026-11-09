@@ -9,6 +9,7 @@ import { CARE_STATUS_NAMES } from '../engine/nest';
 import type { IdleRecord } from '../engine/runLog';
 import { idleClaimable, idlePendingYield, type IdleAccrual, type SaveData } from '../game';
 import { el, meter } from './bha/dom';
+import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 
 const IX = BALANCE.provisional.idle;
@@ -40,15 +41,27 @@ export function idleYieldLines(y: IdleYield, faction: Pick<FactionConfig, 'foodN
   ].filter(Boolean);
 }
 
-/** 덜 돈 까닭 한 줄 (GDD 193장 17): 빈사면 '빈사라 자동 모험을 하지 못했다', 배고픔·쇠약으로 덜 돌았으면 그 말. 다 돌았으면 null */
-export function idleShortfall(p: { hours: number; activeHours: number }, nest: { collapsed?: boolean }): string | null {
+/** 덜 돈 차이를 적지 않는 몫 (GDD 222장 3): 쌓인 시간의 5% 미만 차이는 까닭 줄 없음 */
+export const IDLE_SHORTFALL_MIN = 0.05;
+/** 덜 돈 까닭 한 줄 (GDD 193장 17 → 222장 3): 실제로 걸린 상태만 — 빈사·사망(못 돎) · 배고픔(배부름 바닥에서 멈춤) · 쇠약(절반만 돎).
+ *  지금 둥지 상태로 본다(쌓을 때와 같은 상태 — 다시 열 때 쌓고 바로 띄운다). 걸린 게 없거나 차이가 아주 작으면(5% 미만) null */
+export function idleShortfall(
+  p: { hours: number; activeHours: number },
+  nest: { collapsed?: boolean; dead?: boolean; hunger?: number; weakened?: boolean },
+): string | null {
   if (p.activeHours + 1e-6 >= p.hours) return null;
-  if (nest.collapsed && p.activeHours <= 1e-6) return `${CARE_STATUS_NAMES.collapsed}라 자동 모험을 하지 못했다`;
-  return '배고프거나 지쳐서 덜 돌았다';
+  if ((nest.collapsed || nest.dead) && p.activeHours <= 1e-6) return `${nest.dead ? CARE_STATUS_NAMES.dead : CARE_STATUS_NAMES.collapsed}라 자동 모험을 하지 못했다`;
+  if (p.hours - p.activeHours < p.hours * IDLE_SHORTFALL_MIN) return null;
+  const why = [
+    nest.collapsed || nest.dead ? `${nest.dead ? CARE_STATUS_NAMES.dead : CARE_STATUS_NAMES.collapsed}라 쉬었다` : '',
+    (nest.hunger ?? 0) >= 100 ? '배가 고파 멈췄다' : '',
+    nest.weakened ? `${CARE_STATUS_NAMES.weak}이라 절반만 돌았다` : '', // '쇠약' 받침 — 이름이 종족 설정이 아니라 고정이라 조사도 고정
+  ].filter(Boolean);
+  return why.length > 0 ? `덜 돌았다 — ${why.join(' · ')}` : null;
 }
 
 /** 받은 뒤 요약 (런 로그 IdleRecord): 제목 + 본문 한 단락 */
-export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foodNames' | 'id'>): { title: string; body: string } {
+export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foodNames' | 'id'>): { title: string; body: string; got: string } {
   const got = [
     `${TRADE_CURRENCY_NAME} +${r.gold}`,
     r.steps > 0 ? `진화 걸음 +${r.steps}` : '',
@@ -58,10 +71,11 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
     (r.gear ?? 0) > 0 ? `장비 ${r.gear}개` : '',
   ].filter(Boolean);
   // 시간은 적지 않는다 (GDD 193장 17: 비운 시간·쌓인 시간·돈 시간 셋이 섞였다) — 받은 것만
-  const stopped = r.activeHours + 1e-6 < r.hours ? ` (${r.activeHours <= 0 ? '모험하지 못했다' : '배고프거나 지쳐서 덜 돌았다'})` : '';
+  const stopped = r.activeHours <= 0 ? ' (모험하지 못했다)' : ''; // 까닭을 짐작해 적지 않는다 (GDD 222장 3)
   return {
     title: '대기 보상을 받았다',
     body: `자동 모험 ${r.laps}바퀴${stopped}. 받은 것: ${got.join(' · ') || '없음'}.`,
+    got: got.join(' · ') || '받은 것 없음',
   };
 }
 
@@ -102,17 +116,19 @@ function listOf(save: SaveData, faction: FactionConfig): HTMLElement {
     ul.append(el('li', 'bha-small', '쌓인 보상이 없다.'));
     return ul;
   }
-  if (p.activeHours > 1e-6) for (const line of idleYieldLines(y, faction)) ul.append(el('li', '', line)); // 하나도 안 돌았으면 '골드 +0' 대신 까닭 한 줄만
+  // 한 바퀴도 못 돌았으면(222장 3: 0바퀴 = 보상 0) '골드 +0' 대신 안내 한 줄만
+  if (y.laps > 0) for (const line of idleYieldLines(y, faction)) ul.append(el('li', '', line));
+  else if (p.activeHours > 1e-6) ul.append(el('li', 'bha-small', '아직 한 바퀴를 다 돌지 못했다. 조금 더 쌓이면 받는다.'));
   // 시간 줄은 뺐다 (GDD 193장 17: 창 제목·진행 막대 시간 하나만). 덜 돈 까닭만 한 줄, 시간 없이
   const why = idleShortfall(p, save.nest);
   if (why) ul.append(el('li', 'bha-small', why));
   return ul;
 }
 
-/** 받기 뒤 요약 알림 */
+/** 받기 뒤 요약 (GDD 222장 3): 두 번째 창 없이 공용 알림 한 줄 — 받은 것만 */
 function showClaimed(r: IdleRecord, faction: FactionConfig): void {
   const t = idleSummaryText(r, faction);
-  confirmDialog({ title: t.title, body: t.body, yes: '확인', single: true, onYes: () => {} });
+  showToast({ eyebrow: t.title, title: t.got }, 0, 3200); // 띠는 한 줄이라(보조 설명은 툴팁뿐) 받은 것을 제목 자리에
 }
 
 /** 복귀 창 (92장 2번): 몇 시간 만에 왔는지 + 쌓인 보상 + [받기]. [나중에] 로 닫으면 보상은 아이콘에 남는다 */
@@ -133,7 +149,7 @@ export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: Factio
 
 /** 방 '대기 보상' 아이콘 창 (92장 1번): 규칙 한 줄 + 쌓인 시간 진행 막대 + 지금 쌓인 것 + [받기]. 받을 게 없으면 [받기]는 비활성으로 자리만 지킨다 (100장 #16) */
 export function showIdlePanel(save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null): void {
-  const has = idleClaimable(save);
+  const has = idleClaimable(save) && (idlePendingYield(save)?.laps ?? 0) > 0; // 한 바퀴도 못 돌았으면 [받기] 비활성 — 시간은 계속 쌓인다 (222장 3)
   const pr = idleProgress(save);
   const box = el('div', 'bha-idlebox');
   box.append(meter({ kind: 'sp', label: '쌓인 시간', icon: 'i-timer', value: Math.min(pr.minutes, pr.max), max: pr.max, valueText: pr.text, compact: true }));

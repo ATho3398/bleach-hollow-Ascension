@@ -30,6 +30,9 @@ export interface WorldMapHandlers {
   onLocked?: (p: WorldPlace) => void;
   /** 열리기 전이라 잠긴 장소와 그 이유 한 줄 (GDD 139장 1: 탑 해금 전). 흐린 잠김 + 자물쇠, 누르면 onLocked */
   lockReasons?: Partial<Record<WorldPlace, string>>;
+  /** 안쪽 일부만 잠긴 장소 (GDD 222장 5: 수련장 — 수련은 4단계부터, 훈련 인형은 지금도). 자물쇠만 달고 들어갈 수 있다 — 누르면 onPartLocked(이유 알림) 뒤 그대로 걸어간다 */
+  partLocks?: Partial<Record<WorldPlace, string>>;
+  onPartLocked?: (p: WorldPlace) => void;
   /** 캐릭터가 서 있는 장소 = 지금 있던 곳 (GDD 132장 2: 홈에서 열면 홈 위, 시장에서 돌아오면 시장 위). 없으면 홈 */
   at?: WorldPlace;
   /** 처음 기기 초점 장소 (없으면 at). 첫 모험 강제 중 = 모험 */
@@ -100,8 +103,16 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
     b.onclick = () => {
       if (walking) return; // 출발하는 동안 입력 잠금 (GDD 153장 3)
       if (locked) return hd.onLocked?.(p);
+      if (part !== undefined) hd.onPartLocked?.(p);
       walkTo(p);
     };
+    const part = locked ? undefined : hd.partLocks?.[p];
+    if (part !== undefined) {
+      lockProp(b);
+      b.classList.add('is-partlock');
+      b.title = part;
+      b.setAttribute('aria-description', part);
+    }
     if (locked) {
       b.classList.add('is-locked');
       b.setAttribute('aria-disabled', 'true');

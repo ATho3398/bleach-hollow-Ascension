@@ -8,7 +8,7 @@ import { formatPlayedAt } from '../saveSlots';
 import { confirmDialog } from './confirmDialog';
 import { button, el, info, notice } from './bha/dom';
 import { trapModalFocus } from './bha/modalFocus';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 
 /** 설정 화면·처음 로그인 창·막기 창이 쓰는 조작 묶음 (app.ts 가 CloudSync 로 만든다) */
 export interface CloudUi {
@@ -53,15 +53,18 @@ function modalLayer(cls: string, title: string, role: 'dialog' | 'alertdialog', 
   let closed = false;
   let unregister: () => void = () => {};
   let untrap: () => void = () => {};
+  let uncover: () => void = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
     layer.remove();
+    uncover();
     untrap();
   };
   const mount = () => {
     getOverlayHost().append(layer);
+    uncover = coverTutorials(layer); // GDD 222장 1
     untrap = trapModalFocus(layer);
     unregister = registerLayer(layer, onCancel ?? (() => {}));
   };
@@ -295,21 +298,27 @@ export const GATE_TEXT = {
   google: 'Google 로그인',
   email: '이메일 로그인',
   guest: '게스트로 시작',
+  /** 로그인 없이 하기 (GDD 222장 2): 고르면 기억해 다시 안 띄운다 */
+  offline: '로그인 없이 하기',
   skipped: '이 기기에만 저장한다. 설정 > 기타에서 언제든 로그인할 수 있다.',
+  /** 게스트 실패 (222장 2): 쉬운 말 + 로그인 없이 계속 */
+  guestFailed: '로그인 없이 하기로 계속한다. 설정 > 기타에서 언제든 로그인할 수 있다.',
 } as const;
 
 /**
  * 처음 로그인 창 (GDD 199장 2): 로그인 안 된 채 켜면 처음 화면 위에. [Google 로그인]·[이메일 로그인]·[게스트로 시작]. 열리면 SDK 를 미리 받는다(199장 1).
  * 로그인되면(어느 방법이든 onChange 로) 닫고 onDone('signed-in'). 뒤로·Esc = 로그인 없이 기기 저장으로(onDone('skipped') — 기억하지 않아 다음에 다시 뜬다). 실패 문구는 창 안
+ * GDD 222장 2: [로그인 없이 하기] = onDone('declined')(기억해 다시 안 띄움). [게스트로 시작] 이 실패하면 창을 닫고 onDone('guest-failed', 까닭) — 로그인 없이 계속
  */
-export function loginGateDialog(ui: CloudUi, onDone: (how: 'signed-in' | 'skipped') => void): () => void {
+export type GateOutcome = 'signed-in' | 'skipped' | 'declined' | 'guest-failed';
+export function loginGateDialog(ui: CloudUi, onDone: (how: GateOutcome, why?: string) => void): () => void {
   let done = false;
-  const finish = (how: 'signed-in' | 'skipped') => {
+  const finish = (how: GateOutcome, why?: string) => {
     if (done) return;
     done = true;
     off();
     m.close();
-    onDone(how);
+    onDone(how, why);
   };
   const m = modalLayer('bha-cloud-gate', GATE_TEXT.title, 'dialog', () => finish('skipped'));
   m.modal.append(el('p', 'bha-modal__body', GATE_TEXT.body));
@@ -322,7 +331,9 @@ export function loginGateDialog(ui: CloudUi, onDone: (how: 'signed-in' | 'skippe
   email.dataset.set = 'gate-email';
   const guest = button({ label: GATE_TEXT.guest, variant: 'ghost' });
   guest.dataset.set = 'gate-guest';
-  const all = [google, email, guest];
+  const offline = button({ label: GATE_TEXT.offline, variant: 'ghost', onClick: () => finish('declined') });
+  offline.dataset.set = 'gate-offline';
+  const all = [google, email, guest]; // [로그인 없이 하기]는 늘 눌린다 (SDK 받는 중에도)
   let busy = false;
   const run = async (fn: () => Promise<string | null>) => {
     if (busy) return;
@@ -338,11 +349,20 @@ export function loginGateDialog(ui: CloudUi, onDone: (how: 'signed-in' | 'skippe
     }
   };
   google.onclick = () => void run(() => ui.signIn({ quiet: true }));
-  guest.onclick = () => void run(() => ui.signInGuest({ quiet: true }));
+  // 게스트 실패(익명 로그인 꺼짐 등)는 창 안에 남기지 않고 로그인 없이 계속한다 (222장 2) — 그만둠(팝업 닫음 등)이 아니면
+  guest.onclick = () =>
+    void run(async () => {
+      const err = await ui.signInGuest({ quiet: true });
+      if (err && !ui.state().user) finish('guest-failed', err);
+      return null;
+    });
   email.onclick = () => void emailLoginDialog(ui); // 로그인되면 onChange 가 이 창도 닫는다
   const actions = el('div', 'bha-modal__actions bha-modal__actions--three');
   actions.append(google, email, guest);
   m.modal.append(actions);
+  const skipRow = el('div', 'bha-modal__actions');
+  skipRow.append(offline);
+  m.modal.append(skipRow);
   const paint = () => {
     const s = ui.state();
     if (s.user) return finish('signed-in');

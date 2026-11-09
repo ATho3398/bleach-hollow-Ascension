@@ -11,7 +11,7 @@ import { button, el, icon, mountApp } from './bha/dom';
 import { applyTilePreset, cellsOfPlan, type PresetResult, type TilePreset } from '../tilePresets';
 import { roadPlanner } from './bha/road';
 import { presetPanel } from './bha/tilePresets';
-import { departTabs, type DepartTab } from './storyView';
+import { departTabs, type DepartTab, type DepartTower } from './storyView';
 import { infoTip, type InfoGroup } from './bha/infoTip';
 import { confirmDialog } from './confirmDialog';
 import { multPct, numLine } from '../data/help/textFormat';
@@ -23,6 +23,8 @@ export interface PlanViewHandlers {
   onHelp: () => void;
   /** [스토리] 탭 (GDD 25-7): 있으면 머리에 [자유 원정]/[스토리] 탭을 보인다. 탑은 월드맵 장소 (139장 1) */
   onTab?: (id: Exclude<DepartTab, 'free'>) => void;
+  /** 머리 탭의 탑 칸 (GDD 222장 9) */
+  tower?: DepartTower;
   /** 연 원정 난이도 ★ 최대 (GDD 32-1, 세이브 difficulty.unlocked). 없으면 1 */
   unlockedDifficulty?: number;
   /** 연속 클리어 (GDD 32-1 10번, 세이브 difficulty.streak): 그 ★를 고르면 "★3 · 연속 4" 와 적·보상 가산을 보인다 */
@@ -199,7 +201,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
   const onTab = h.onTab;
   const grow = el('span', 'bha-grow');
-  head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grow, help);
+  head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }, h.tower) : title, grow, help);
 
   // 체력이 문턱 아래면 [출발] 전에 확인 창 (GDD 193장 2) — 기본 선택 = 그만
   const depart = () => h.onStart(finishPlanning(exp));

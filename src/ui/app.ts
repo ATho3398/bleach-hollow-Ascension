@@ -19,7 +19,7 @@ import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
 import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, ticketDropOf, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
-import { chapterLabel, storyView, type DepartTab } from './storyView';
+import { chapterLabel, storyView, type DepartTab, type DepartTower } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
@@ -28,7 +28,7 @@ import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
@@ -37,7 +37,7 @@ import { registerCancelHook } from './bha/shortcuts';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
-import { trainingPlayView, trainingResultView, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
+import { trainingPlayView, trainingResultView, trainingLockedText, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
 import type { RankHolderDef } from '../data/ranks';
 import { ascensionResultView, rankLabel, rankLockedText, rankResultView, rankView } from './rankView';
 import { rankUnlocked } from '../engine/rank';
@@ -54,10 +54,10 @@ import { slotPickView, type SlotPickMode } from './slotView';
 import { confirmDialog } from './confirmDialog';
 import { signalHold } from './bha/hold';
 import { IDLE, rotateStep, type RotateEvent, type RotateState } from './bha/rotateResume';
-import { blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
+import { afterTutorials, blockInput, coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { button, el, mountApp } from './bha/dom';
 import { BUILD_ID, setUpdateHost } from '../pwa';
-import { CloudSync, deviceLabel, markLoginGateDone, needsLoginGate, type ActiveDevice, type CloudConflict } from '../cloudSave';
+import { CloudSync, deviceLabel, firstGateNote, markLoginGateDone, needsLoginGate, type ActiveDevice, type CloudConflict } from '../cloudSave';
 import { GATE_TEXT, loginGateDialog, otherDeviceDialog, showCloudConflict, type CloudUi } from './cloudView';
 import { isStandalone } from '../pwaInstall';
 import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
@@ -329,10 +329,12 @@ export function startApp(host: HTMLElement): void {
   /** 처음 로그인 창 (GDD 199장 2): 처음 화면 위에. 로그인하면 기억해 다음부터 안 띄운다. 뒤로(로그인 없이)는 기억하지 않는다 — 다음에 다시 묻는다 */
   function showLoginGate(): void {
     if (!cloudUi || !cloud || closeGate || closeBlocked) return;
-    closeGate = loginGateDialog(cloudUi, (how) => {
+    closeGate = loginGateDialog(cloudUi, (how, why) => {
       closeGate = null;
-      if (how === 'signed-in') markLoginGateDone(store);
-      else showToast({ eyebrow: '클라우드', title: '로그인 없이 시작한다', meta: GATE_TEXT.skipped }, 0, 4600);
+      // GDD 222장 2: 로그인·[로그인 없이 하기]·게스트 실패는 기억해 다시 안 띄운다(뒤로만 다음에 다시 묻는다). 게스트 실패는 쉬운 말로 알리고 로그인 없이 계속
+      if (how !== 'skipped') markLoginGateDone(store);
+      if (how === 'guest-failed') showToast({ eyebrow: '클라우드', title: `${(why ?? '게스트로 시작하지 못했다.').replace(/\.$/, '')} — 로그인 없이 하기로 계속한다`, meta: GATE_TEXT.guestFailed }, 0, 4600);
+      else if (how !== 'signed-in' && firstGateNote(store)) showToast({ eyebrow: '클라우드', title: '로그인 없이 시작한다', meta: GATE_TEXT.skipped }, 0, 3200); // 처음 한 번만
       showCloudConflictIfIdle();
     });
   }
@@ -1203,6 +1205,9 @@ export function startApp(host: HTMLElement): void {
       locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,
       lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
       onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
+      // 수련장 (GDD 222장 5): 수련은 4단계부터 — 자물쇠 + 누르면 여는 조건 알림. 훈련 인형은 지금도 되니 들어가는 건 막지 않는다
+      partLocks: s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex && !s.nest.dead ? { training: trainingLockedText(faction) } : undefined,
+      onPartLocked: () => showToast({ eyebrow: roomOf(faction).props.altar, title: `${trainingLockedText(faction)} 훈련 인형은 지금도 된다.` }, 0, 2400),
     });
   }
 
@@ -1293,7 +1298,11 @@ export function startApp(host: HTMLElement): void {
       openChest();
     };
     // 복귀 창은 이번에 minMinutes 이상 꺼 두었고 받을 만큼 쌓였을 때만 — 켜 둔 동안 쌓인 것은 아이콘으로 (95장 B1)
-    if (idle && idleCounts(idle.awayHours) && idleClaimable(s)) window.setTimeout(() => showIdleReturn(idle, s, faction, claim), 500);
+    // GDD 222장 1: 튜토리얼 안내 카드가 떠 있으면 카드가 끝난 뒤에 띄운다(겹쳐서 입력이 막히지 않게). 그사이 방을 떠났으면 띄우지 않는다 — 보상은 아이콘에 남는다.
+    // 222장 3: 한 바퀴도 못 돌았으면(받을 것 0) 복귀 창을 띄우지 않는다
+    if (idle && idleCounts(idle.awayHours) && idleClaimable(s) && (idlePendingYield(s)?.laps ?? 0) > 0) {
+      afterTutorials(() => showIdleReturn(idle, s, faction, claim), () => save === s && nav.top?.id === 'room');
+    }
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
@@ -1571,8 +1580,9 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1)
-          onTab: () => storyScreen(faction),
+          // 머리 탭 (GDD 25-7 → 222장 9): [스토리]·[탑] — 같은 자리에서 바꿔 끼운다. 탑은 월드맵 장소이기도 하다 (139장 1)
+          onTab: (id) => departTab(faction, id),
+          tower: departTower(faction),
         });
         root.scrollTop = 0;
         // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
@@ -1592,6 +1602,7 @@ export function startApp(host: HTMLElement): void {
         setBgm('expedition');
         storyView(root, faction, save!, {
           onTab: (id) => departTab(faction, id),
+          tower: departTower(faction),
           // 스토리도 자유 모험 [출발]과 같은 출발 체력 확인 창 (GDD 193장 2)
           onPick: (chapterId, episodeId) => askLowHp(save!, () => startStory(faction, chapterId, episodeId)),
           onHelp: () => openHelp('expedition', false),
@@ -1604,19 +1615,32 @@ export function startApp(host: HTMLElement): void {
   /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리) */
   function departTab(faction: FactionConfig, id: DepartTab): void {
     if (id === 'free') departScreen(faction, true);
-    else storyScreen(faction);
+    else if (id === 'story') storyScreen(faction);
+    else {
+      // [탑] 탭 (GDD 222장 9): 잠겼으면 월드맵 탑과 같은 알림, 열렸으면 이 자리를 탑 화면으로 바꿔 끼운다(뒤로 = 모험 준비를 연 곳)
+      const t = departTower(faction);
+      if (t.locked) return void showToast({ eyebrow: t.name, title: t.locked, meta: '' }, 0, 1800);
+      if (save && careBlocked(save)) return;
+      towerScreen(faction, true);
+    }
+  }
+  /** 머리 탭 탑 칸 (GDD 222장 9): 이름 + 잠긴 이유(월드맵 탑과 같은 문구) */
+  function departTower(faction: FactionConfig): DepartTower {
+    const L = towerLabels(faction);
+    return { name: L.name, locked: save && towerOpen(save.runLog, faction.id, save.tower.best) ? null : L.locked };
   }
 
   // ── 도전의 탑 (GDD 36장, C.85 → 139장 1): 월드맵 장소 [탑]. 뒤로 = 월드맵. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
-  function towerScreen(faction: FactionConfig): void {
+  function towerScreen(faction: FactionConfig, replace = false): void {
     if (!save) return;
-    nav.push({
+    nav[replace ? 'replace' : 'push']({
       id: 'tower', locked: false,
       render: () => {
         setBgm('expedition');
         towerView(root, faction, save!, {
           onChallenge: (f) => towerBattle(faction, f),
           onHelp: () => openHelp('expedition', false),
+          ...(replace ? { onTab: (id: DepartTab) => departTab(faction, id) } : {}),
         });
         root.scrollTop = 0;
       },

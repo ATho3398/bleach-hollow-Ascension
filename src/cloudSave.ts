@@ -294,6 +294,18 @@ export function needsLoginGate(storage: StorageLike, online: boolean): boolean {
   }
 }
 
+/** '로그인 없이 시작한다' 알림을 처음 한 번만 (GDD 222장 2): 처음이면 true 를 돌려주고 기억한다 */
+export const CLOUD_GATE_NOTE_KEY = 'bha-cloud-gate-noted';
+export function firstGateNote(storage: StorageLike): boolean {
+  try {
+    if (storage.getItem(CLOUD_GATE_NOTE_KEY) !== null) return false;
+    storage.setItem(CLOUD_GATE_NOTE_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function markLoginGateDone(storage: StorageLike, nowMs: number = Date.now()): void {
   writeJson(storage, CLOUD_GATE_KEY, { at: nowMs });
 }
@@ -388,7 +400,7 @@ export const AUTH_ERROR_TEXT: Readonly<Record<string, string>> = {
   'auth/network-request-failed': '연결을 확인한다.',
   'auth/user-disabled': '쓸 수 없는 계정이다.',
   'auth/operation-not-allowed': '이 로그인 방법이 꺼져 있다.',
-  'auth/admin-restricted-operation': '게스트 로그인이 꺼져 있다.',
+  'auth/admin-restricted-operation': '게스트 로그인이 아직 꺼져 있다.', // GDD 222장 2 — 창에서는 '로그인 없이 하기로 계속' 과 함께
   'auth/missing-password': '비밀번호를 적는다.',
   // 팝업 (GDD 199장 1): 누른 뒤 SDK 를 받느라 늦게 열리면 브라우저가 막는다 — 이제 SDK 가 받아져 있어 한 번 더 누르면 바로 열린다
   'auth/popup-blocked': '팝업이 막혔다. 한 번 더 누른다.',

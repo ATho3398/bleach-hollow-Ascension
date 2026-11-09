@@ -5,7 +5,7 @@ import { iconArt, itemCard, itemGrid } from './itemUi';
 import { ACTION_FILL_MS, tween } from './actionFx';
 import { applyBlink, blinkGauges, tagGauge } from './gaugeBlink';
 import { trapModalFocus } from './modalFocus';
-import { getOverlayHost, registerLayer } from './overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './overlayHost';
 
 export interface HealBagItem {
   id: string;
@@ -41,6 +41,7 @@ export function healBag(o: HealBagSpec): () => void {
   let closed = false;
   let untrap: () => void = () => {};
   let unregister: () => void = () => {};
+  let uncover: () => void = () => {};
   let note = '';
   /** 차오르는 중 보여 줄 체력 비율 (null = 지금 값) */
   let fillHp: number | null = null;
@@ -57,6 +58,7 @@ export function healBag(o: HealBagSpec): () => void {
     stopFill();
     unregister();
     layer.remove();
+    uncover();
     untrap();
     o.onClose();
   };
@@ -107,6 +109,7 @@ export function healBag(o: HealBagSpec): () => void {
   };
   layer.append(modal);
   getOverlayHost().append(layer);
+  uncover = coverTutorials(layer); // GDD 222장 1
   render();
   untrap = trapModalFocus(layer);
   render(); // 초점을 첫 물건으로 (trap 이 첫 버튼에 둔 초점을 바꾼다)

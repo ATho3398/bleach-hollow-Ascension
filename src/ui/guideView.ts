@@ -15,7 +15,7 @@ import { heroEl } from './bha/battle';
 import { tween } from './bha/actionFx';
 import { tileCss, tileIconId } from './bha/expedition';
 import { lcdPage } from './bha/lcdpage';
-import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
 import { tileHint } from './labels';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { shownName } from './displayName';
@@ -154,11 +154,13 @@ export function tileDrawCard(faction: FactionConfig, tileId: string, count: numb
   stage.append(card);
   let closed = false;
   let unregister: () => void = () => {};
+  let uncover: () => void = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
     unregister();
     layer.remove();
+    uncover();
     onClose();
   };
   const ok = button({ label: '확인', variant: 'primary', onClick: close });
@@ -167,6 +169,7 @@ export function tileDrawCard(faction: FactionConfig, tileId: string, count: numb
   modal.append(el('h2', 'bha-modal__title', '타일 뽑기'), stage, el('p', 'bha-modal__body', `${tileName(tileId, faction.id)} → 가방 (보유 ${count}장)`), actions);
   layer.append(modal);
   getOverlayHost().append(layer);
+  uncover = coverTutorials(layer); // GDD 222장 1
   unregister = registerLayer(layer, close);
   // 한 번 뒤집기: 그린 다음 프레임에 (모션 줄이기 설정이면 CSS 가 전환을 끈다)
   requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('is-flipped')));

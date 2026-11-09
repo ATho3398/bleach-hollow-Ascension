@@ -1141,8 +1141,9 @@ export function idlePendingYield(save: Pick<SaveData, 'idlePending' | 'tiles' | 
 export function claimIdle(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): IdleRecord | null {
   const p = save.idlePending;
   if (!p || !idleClaimable(save)) return null;
-  save.idlePending = null;
   const y = idleYield(p.activeHours, idleBondMult(save.nest));
+  if (y.laps < 1) return null; // 한 바퀴도 못 돌았으면 받지 않고 쌓인 시간을 그대로 둔다 (GDD 222장 3)
+  save.idlePending = null;
   const IX = BALANCE.provisional.idle;
   save.shared.tradeCoins += y.gold;
   const need = stepsNeeded(save.evolution);

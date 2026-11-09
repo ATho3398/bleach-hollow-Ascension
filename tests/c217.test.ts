@@ -24,15 +24,15 @@ describe('139장 1 탑 → 월드맵', () => {
     for (const f of FACTIONS) expect(m).toContain(`'place.tower.${f.id}': {}`);
     expect(read('src/ui/worldMapView.ts')).toContain(': `place.${p}.${faction.id}`;'); // C.238: 비면 PLACE_ART_FALLBACK (수련장 = 짚인형)
   });
-  it('모험 시작 화면 머리 탭 = 자유 원정·스토리 (탑 없음), 탑 화면은 탭 대신 제목', () => {
+  it('모험 시작 화면 머리 탭 = 자유 모험·스토리·탑 (GDD 222장 9가 139장 1 의 탑 삭제를 되돌림), 월드맵에서 연 탑 화면은 탭 대신 제목', () => {
     const sv = read('src/ui/storyView.ts');
-    expect(sv).toContain("export type DepartTab = 'free' | 'story';");
-    expect(sv).not.toContain("label: '탑'");
-    expect(read('src/ui/towerView.ts')).not.toContain('departTabs');
+    expect(sv).toContain("export type DepartTab = 'free' | 'story' | 'tower';");
+    expect(sv).not.toContain("label: '탑'"); // 탑 이름은 종족 설정 towerLabels
+    expect(read('src/ui/towerView.ts')).toContain("h.onTab ? departTabs('tower'");
   });
   it('탑 화면은 월드맵 위에 쌓인다 (뒤로 = 월드맵), 사망이면 막힘', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toMatch(/function towerScreen[\s\S]{0,80}nav\.push\(\{\s*id: 'tower'/);
+    expect(app).toMatch(/function towerScreen[\s\S]{0,120}nav\[replace \? 'replace' : 'push'\]\(\{\s*id: 'tower'/);
     expect(app).toContain("onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },");
     expect(read('src/ui/worldMapView.ts')).toContain("if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead)");
   });

@@ -42,7 +42,7 @@ import { applyBlink, blinkGauges, changedKeys, tagGauge } from './bha/gaugeBlink
 import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
-import { registerLayer } from './bha/overlayHost';
+import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { keepOldIcons } from './bha/iconMap';
 
 const WALK_ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -423,7 +423,12 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     ov.append(win);
     main.append(ov);
     pauseOv = ov;
-    unregPause = registerLayer(ov, resumeFromPause);
+    const unregLayer = registerLayer(ov, resumeFromPause);
+    const uncoverTut = coverTutorials(ov); // 일시정지 창도 튜토리얼 카드·입력 막기를 비켜 간다 (GDD 194장 3·222장 1 겹침 전수)
+    unregPause = () => {
+      unregLayer();
+      uncoverTut();
+    };
   };
   pauseBtn.onclick = () => {
     if (pauseOv) resumeFromPause();

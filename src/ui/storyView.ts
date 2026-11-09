@@ -8,9 +8,8 @@ import { getFaction } from '../data/factions';
 import { chapterOpen, episodeOpen, storyProgressOf, type SaveData } from '../game';
 import type { ExpeditionState } from '../engine/expedition';
 import { storyEpisodeOf } from '../engine/expedition';
-import { button, el } from './bha/dom';
+import { button, el, icon } from './bha/dom';
 import { lcdPage, masterDetail, selectLast, type ListRow } from './bha/lcdpage';
-import { viewTitle } from './bha/viewtitle';
 import { v2Icon } from './bha/iconMap';
 
 /** 그림 칸 (183장, PROMPT 4절 스토리): 잠기면 그림만 흐리게 + 그 칸 안 오른쪽 아래 자물쇠 */
@@ -46,17 +45,52 @@ export interface StoryViewHandlers {
   /** 열린 화 [도전] */
   onPick: (chapterId: string, episodeId: string) => void;
   onHelp: () => void;
+  /** 머리 탭의 탑 칸 (GDD 222장 9) */
+  tower?: DepartTower;
 }
 
-export type DepartTab = 'free' | 'story';
+export type DepartTab = 'free' | 'story' | 'tower';
 
-/** 원정 출발 화면 머리의 제목 토글 "자유 원정 ▾" — 누르면 [자유 원정] / [스토리] 목록이 열린다 (GDD 25-7, 예전 탭 줄을 대신함 C.114). 탑은 월드맵 장소로 옮김 (139장 1) */
-export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void): HTMLElement {
-  const t = viewTitle([{ id: 'free', label: '자유 모험' }, { id: 'story', label: '스토리' }], current, (id) => {
-    if (id !== current) onSelect(id as DepartTab);
-  });
-  t.classList.add('bha-depart-tabs');
-  return t;
+/** 머리 탭의 탑 칸 (GDD 222장 9): 이름 + 잠겼으면 이유 한 줄(자물쇠) */
+export interface DepartTower {
+  name: string;
+  /** 잠긴 이유 (null = 열림) */
+  locked: string | null;
+}
+
+/**
+ * 모험 준비 머리 탭 [자유 모험][스토리][탑] (GDD 222장 9 — 옛 '자유 모험 ▾' 펼침 목록 대신, 스토리 입구가 숨지 않게).
+ * 잠긴 탑은 자물쇠 + aria-disabled — 눌러도 탭은 바뀌지 않고 onSelect('tower') 로 이유 알림만(부르는 쪽). 지금 탭을 다시 누르면 아무 일도 없다
+ */
+export function departTabs(current: DepartTab, onSelect: (id: DepartTab) => void, tower?: DepartTower): HTMLElement {
+  const root = el('div', 'bha-seg bha-seg--sm bha-depart-tabs');
+  root.setAttribute('role', 'tablist');
+  root.setAttribute('aria-label', '모험 종류');
+  const items: { id: DepartTab; label: string; lock?: string | null }[] = [
+    { id: 'free', label: '자유 모험' },
+    { id: 'story', label: '스토리' },
+    ...(tower ? [{ id: 'tower' as const, label: tower.name, lock: tower.locked }] : []),
+  ];
+  for (const it of items) {
+    const b = el('button', 'bha-seg__item');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.dataset.id = it.id;
+    b.dataset.tab = it.id;
+    b.setAttribute('aria-selected', String(it.id === current));
+    if (it.lock) {
+      b.append(icon('i-lock', 'sm'));
+      b.setAttribute('aria-disabled', 'true');
+      b.title = it.lock;
+      b.setAttribute('aria-description', it.lock);
+    }
+    b.append(it.label);
+    b.onclick = () => {
+      if (it.id !== current) onSelect(it.id);
+    };
+    root.append(b);
+  }
+  return root;
 }
 
 /** 목표 문구 (GDD 25-7 표기): "일반 적 3마리 처치" · "2바퀴 버티기" · "강적 1마리 포식" · "보스 처치". 흡수 행동 이름은 종족 설정 absorbActionName (C.172) */
@@ -161,7 +195,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   // 머리 (C.63, GDD 28장 8번): [자유 원정]/[스토리] 탭을 출발 화면(planView)과 같은 자리(머리 맨 왼쪽)에 둔다 — 탭을 바꿔도 탭이 움직이지 않게
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(departTabs('story', h.onTab), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
+  head.append(departTabs('story', h.onTab, h.tower), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
   const { app } = lcdPage(root, { cls: 'bha-story', cols: '2fr 3fr' }, head, [md.list], [md.detail]);
   app.dataset.screen = 'story';
   app.classList.add('bha-v2'); // v2 그림 칸·자물쇠·이유 한 줄(.bha-art · .bha-lock · .bha-pop)

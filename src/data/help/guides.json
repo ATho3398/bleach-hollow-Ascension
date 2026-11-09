@@ -31,7 +31,7 @@
         "id": "next",
         "targets": [],
         "title": "다음 할 일",
-        "body": "첫 모험을 마쳤다.\n{nestActionsShort.feed}을(를) 챙기고 수련장에서 단련하며 다시 모험을 떠나자."
+        "body": "{nestActionsShort.feed}을(를) 챙기고 {room.props.altar}의 훈련 인형으로 손을 풀며 다시 모험을 떠나자.\n{training.title}은(는) {tier4}이(가) 되면 열린다."
       }
     ],
     "tile-intro": [

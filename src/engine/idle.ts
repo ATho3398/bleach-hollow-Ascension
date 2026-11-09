@@ -48,6 +48,8 @@ export interface IdleYield {
 export function idleYield(activeHours: number, bonus = 1): IdleYield {
   const k = Math.max(0, activeHours) * IX.share * bonus;
   const f = IX.fullHour;
+  // 한 바퀴도 못 돌았으면 아무것도 없다 (GDD 222장 3: '자동 모험 0바퀴'인데 골드가 생기던 것) — 쌓인 시간은 그대로 남아 다음에 바퀴가 되면 받는다
+  if (Math.floor(f.laps * k) < 1) return { laps: 0, steps: 0, gold: 0, ev: 0, tiles: 0, food: 0, gear: 0, gearChance: 0 };
   return {
     laps: Math.floor(f.laps * k), steps: Math.floor(f.steps * k), gold: Math.floor(f.gold * k),
     ev: Math.floor(f.ev * k), tiles: Math.floor(f.tiles * k), food: Math.floor(f.food * k),

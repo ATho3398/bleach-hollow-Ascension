@@ -1,0 +1,189 @@
+{
+ "facts": {
+  "pc": {
+   "gateButtons": [
+    "Google 로그인",
+    "이메일 로그인",
+    "게스트로 시작",
+    "로그인 없이 하기"
+   ],
+   "guestFailed": {
+    "gateOpen": 0,
+    "toasts": [
+     "클라우드 게스트 로그인이 아직 꺼져 있다 — 로그인 없이 하기로 계속한다"
+    ]
+   },
+   "gateAfterReload": 0,
+   "offline": {
+    "gateOpen": 0,
+    "toasts": [
+     "클라우드 로그인 없이 시작한다"
+    ],
+    "remembered": true
+   },
+   "patch": [
+    {
+     "runs": 1
+    }
+   ],
+   "overlap": {
+    "card": 1,
+    "confirms": []
+   },
+   "afterCard": {
+    "card": 0,
+    "confirms": [
+     "40분 만에 돌아왔다"
+    ],
+    "list": [
+     "골드 +58",
+     "진화 걸음 +32",
+     "노력치 +1",
+     "자동 모험 2바퀴"
+    ]
+   },
+   "claimed": {
+    "confirms": [],
+    "toasts": [
+     "대기 보상을 받았다 골드 +58 · 진화 걸음 +32 · 노력치 +1 · 장비 1개"
+    ]
+   },
+   "training": {
+    "lock": true,
+    "partlock": true,
+    "title": "바스트로데가 되면 본능 수련이 열린다."
+   },
+   "trainingToast": [
+    "수련장 바스트로데가 되면 본능 수련이 열린다. 훈련 인형은 지금도 된다."
+   ],
+   "trainingScreen": false,
+   "tabs": {
+    "items": [
+     {
+      "id": "free",
+      "text": "자유 모험",
+      "on": "true",
+      "lock": false,
+      "disabled": null
+     },
+     {
+      "id": "story",
+      "text": "스토리",
+      "on": "false",
+      "lock": false,
+      "disabled": null
+     },
+     {
+      "id": "tower",
+      "text": "도전의 탑",
+      "on": "false",
+      "lock": true,
+      "disabled": "true"
+     }
+    ],
+    "overflow": false,
+    "minH": 36
+   },
+   "towerToast": [
+    "도전의 탑 스토리 1장을 깨면 열린다"
+   ],
+   "storyTabs": {
+    "screen": "story",
+    "on": "story"
+   }
+  },
+  "ph": {
+   "gateButtons": [
+    "Google 로그인",
+    "이메일 로그인",
+    "게스트로 시작",
+    "로그인 없이 하기"
+   ],
+   "guestFailed": {
+    "gateOpen": 0,
+    "toasts": [
+     "클라우드 게스트 로그인이 아직 꺼져 있다 — 로그인 없이 하기로 계속한다"
+    ]
+   },
+   "gateAfterReload": 0,
+   "offline": {
+    "gateOpen": 0,
+    "toasts": [
+     "클라우드 로그인 없이 시작한다"
+    ],
+    "remembered": true
+   },
+   "patch": [
+    {
+     "runs": 1
+    }
+   ],
+   "overlap": {
+    "card": 1,
+    "confirms": []
+   },
+   "afterCard": {
+    "card": 0,
+    "confirms": [
+     "40분 만에 돌아왔다"
+    ],
+    "list": [
+     "골드 +58",
+     "진화 걸음 +32",
+     "노력치 +1",
+     "자동 모험 2바퀴"
+    ]
+   },
+   "claimed": {
+    "confirms": [],
+    "toasts": [
+     "대기 보상을 받았다 골드 +58 · 진화 걸음 +32 · 노력치 +1"
+    ]
+   },
+   "training": {
+    "lock": true,
+    "partlock": true,
+    "title": "바스트로데가 되면 본능 수련이 열린다."
+   },
+   "trainingToast": [
+    "수련장 바스트로데가 되면 본능 수련이 열린다. 훈련 인형은 지금도 된다."
+   ],
+   "trainingScreen": false,
+   "tabs": {
+    "items": [
+     {
+      "id": "free",
+      "text": "자유 모험",
+      "on": "true",
+      "lock": false,
+      "disabled": null
+     },
+     {
+      "id": "story",
+      "text": "스토리",
+      "on": "false",
+      "lock": false,
+      "disabled": null
+     },
+     {
+      "id": "tower",
+      "text": "도전의 탑",
+      "on": "false",
+      "lock": true,
+      "disabled": "true"
+     }
+    ],
+    "overflow": false,
+    "minH": 36
+   },
+   "towerToast": [
+    "도전의 탑 스토리 1장을 깨면 열린다"
+   ],
+   "storyTabs": {
+    "screen": "story",
+    "on": "story"
+   }
+  }
+ },
+ "errors": []
+}
