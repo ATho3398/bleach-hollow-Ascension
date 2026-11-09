@@ -78,8 +78,8 @@ describe('159장 24·25·36·37: 소모품 갈래 · 한 줄 효과', () => {
     expect(cardDetailOf({ ...e, brief: undefined })).toContain('모험 걷기 중');
   });
   it('음식 한 줄 = 하는 일 (종족 배부름 이름) — 상점·가방 같은 줄', () => {
-    expect(foodBlurb('snack', H)).toBe(`${H.fullnessName}이 조금 찬다`);
-    expect(foodBlurb('tonic', S)).toBe('컨디션이 오른다');
+    expect(foodBlurb('snack', H)).toBe(`${H.fullnessName}·컨디션이 조금 오른다`); // C.351 (GDD 211장): 컨디션도 적는다
+    expect(foodBlurb('tonic', S)).toBe(`컨디션이 크게, ${S.fullnessName}이 조금 오른다`);
     expect(read('src/data/shop/blurbs.json')).not.toContain('"먹이다"');
   });
   it('가방 위쪽 탭 = 장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타, 장비 탭 숫자 = 장비 + 전투용 소모품', () => {

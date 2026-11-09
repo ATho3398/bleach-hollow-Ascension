@@ -11,7 +11,7 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from './data/economy';
 import type { FactionConfig } from './engine/faction';
 import { CARE_STATUS_NAMES, dayKey } from './engine/nest';
 import { addFood } from './engine/food';
-import { foodHpHeal } from './engine/nest';
+import { foodEffectText } from './foodText';
 import { grantPet, pickNewPet } from './engine/pet';
 import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
@@ -183,9 +183,8 @@ function goldName(item: GoldItemDef, faction: FactionConfig): string {
 function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
   switch (item.kind) {
     case 'food': {
-      // 효과 한 줄 (GDD 100장 #62): 보관함 카드와 같은 '배부름 +n · 컨디션 +n'. 보관 한도는 '보유 n/9' 배지가 말한다
-      const fx = BALANCE.provisional.nest.foods[item.food!];
-      return `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(item.food!) * 100)}%`;
+      // 효과 한 줄 (GDD 100장 #62 · 211장): 보관함 카드와 같은 글 — 먹이 효과 전부. 보관 한도는 '보유 n/9' 배지가 말한다
+      return foodEffectText(item.food!, faction);
     }
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;

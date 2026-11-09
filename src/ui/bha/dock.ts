@@ -2,7 +2,8 @@
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
-import { foodEffect } from '../../engine/nest';
+import { foodEffectList, type FoodFx } from '../../engine/nest';
+import { foodEffectText, foodFxAmount, foodFxText } from '../../foodText';
 import { button, el, icon, provisionalTag } from './dom';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 import { registerCancelHook } from './shortcuts';
@@ -14,14 +15,25 @@ export interface DockMenuItem {
   onClick: () => void;
 }
 
-/** 먹이 카드 수치 한 줄 (GDD 189장 17 · 193장 16): 큰 쪽 효과 하나(배부름·컨디션). 가득 찬 수치의 '+n' 은 빼고 고른다(컨디션 100 인데 '컨디션 +4'가 보였다).
- *  줄이는 효과(−)는 가득이어도 보인다. 다 가득이면 '가득'. eff = [배부름 글, 컨디션 글?] */
-export function foodCardLine(f: { hunger: number; condition: number }, eff: readonly string[], full: { fullness: boolean; condition: boolean }): string {
-  const cands = [
-    ...(full.fullness ? [] : [{ text: eff[0]!, size: f.hunger }]),
-    ...(f.condition !== 0 && (f.condition < 0 || !full.condition) ? [{ text: eff[1]!, size: Math.abs(f.condition) }] : []),
-  ];
-  return cands.length === 0 ? '가득' : cands.reduce((a, b) => (b.size > a.size ? b : a)).text;
+/** 먹이 효과 아이콘 = 상태창·바뀐 값 칩과 같은 아이콘 (changeNote ICONS · 교감은 상태 화면 교감 막대) */
+const FOOD_FX_ICON: Record<FoodFx['key'], string> = { hunger: 'i-hunger', cond: 'i-cond', hp: 'i-heal', bond: 'i-care-pet' };
+
+/** 먹이 카드 효과 줄 (GDD 211장 — 189장 17 '수치 한 개'를 대신함): 지금 먹이면 실제로 움직이는 효과 전부를 아이콘 + 수치로.
+ *  가득·상한에 닿은 값은 빠진다(193장 16). 하나도 없으면 '가득' 글. 적힌 것 = 먹인 뒤 바뀐 값 칩 */
+export function foodCardFx(list: readonly FoodFx[], faction: Pick<FactionConfig, 'fullnessName'>): HTMLElement {
+  const row = el('small', 'bha-homedock__foodfx');
+  if (list.length === 0) {
+    row.textContent = '가득';
+    return row;
+  }
+  for (const e of list) {
+    const fx = el('span', `bha-homedock__fx bha-room__chip--${e.key}`);
+    fx.dataset.fx = e.key;
+    fx.title = foodFxText(e, faction);
+    fx.append(icon(FOOD_FX_ICON[e.key]), foodFxAmount(e));
+    row.append(fx);
+  }
+  return row;
 }
 
 export interface DockOpts {
@@ -30,8 +42,8 @@ export interface DockOpts {
   onCare: (action: NestAction, food?: FoodId) => void;
   /** 먹이 종류별 보유 개수 (GDD 23-1): 먹이 칸에 개수를 보이고 0개는 비활성 */
   foodCount: (food: FoodId) => number;
-  /** 지금 가득 찬 수치 (GDD 193장 16): 가득인 수치의 '+n' 은 먹이 카드에 안 보인다. 없으면 둘 다 가득 아님 */
-  gaugeFull?: () => { fullness: boolean; condition: boolean };
+  /** 지금 먹이면 실제로 움직이는 효과 (GDD 193장 16 · 211장, engine foodEffectsNow): 카드에 이것만 보인다. 없으면 효과 전부 */
+  foodEffectsNow?: (food: FoodId) => FoodFx[];
   /** 먹이 한도 (GDD 109장 6): 지금 더 먹일 수 있는 개수와 한도. 먹이 버튼 옆에 작게 '2/3' */
   feedsLeft?: () => { left: number; max: number };
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
@@ -137,22 +149,17 @@ export function createDock(o: DockOpts): Dock {
       tray.setAttribute('aria-label', `${faction.nestActionsShort?.feed ?? faction.nestActions.feed} 고르기`);
       tray.dataset.scList = '';
       for (const id of FOOD_IDS) {
-        const f = foodEffect(id);
         const b = el('button', 'bha-homedock__food');
         b.type = 'button';
         b.dataset.food = id;
         const have = o.foodCount(id);
         b.disabled = have <= 0;
-        const eff = [`${faction.fullnessName} +${f.hunger}`];
-        if (f.condition !== 0) eff.push(`컨디션 ${f.condition > 0 ? '+' : '−'}${Math.abs(f.condition)}`);
-        const full = o.gaugeFull?.() ?? { fullness: false, condition: false };
+        const all = foodEffectText(id, faction); // 효과 전부 (GDD 211장) — aria·title
         const name = el('span', 'bha-homedock__foodname', faction.foodNames[id]);
         name.append(' ', el('b', 'bha-num', `×${have}`));
-        // 카드 설명은 수치 한 개만 (GDD 189장 17): 큰 쪽 효과 하나(배부름·컨디션 중 절댓값이 큰 것). 전부는 aria·title
-        const main = foodCardLine(f, eff, full);
-        b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개, ${eff.join(', ')}`);
-        b.title = eff.join(' · ');
-        b.append(name, el('small', '', main));
+        b.setAttribute('aria-label', `${faction.foodNames[id]} ${have}개, ${all}`);
+        b.title = all;
+        b.append(name, foodCardFx(o.foodEffectsNow?.(id) ?? foodEffectList(id), faction));
         b.onclick = () => {
           if (o.foodCount(id) <= 0) return;
           setPanel(CLOSED, careBtns.get('feed')!); // 먹인 뒤 초점 = [먹이] 버튼 (GDD 176장 4)

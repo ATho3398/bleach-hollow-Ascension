@@ -84,6 +84,10 @@
 .bha-homedock__traynote { flex: 1 0 100%; display: flex; justify-content: flex-end; line-height: 1; }
 .bha-homedock__traynote[hidden] { display: none; }
 .bha-homedock__foodname, .bha-homedock__food small { white-space: nowrap; }
+/* 먹이 카드 효과 줄 (GDD 211장): 지금 먹이면 움직이는 효과 전부 = 아이콘(상태창 색) + 수치. 좁으면 다음 줄로 */
+.bha-homedock__foodfx { display: flex; flex-wrap: wrap; justify-content: center; column-gap: var(--bha-sp-2); row-gap: 0; }
+.bha-homedock__fx { --c: var(--bha-text-2); display: inline-flex; align-items: center; gap: 1px; }
+.bha-homedock__fx .bha-icon { width: 12px; height: 12px; flex: none; color: var(--c); }
 
 /* ── 방 장면 ── */
 .bha-room__scene {

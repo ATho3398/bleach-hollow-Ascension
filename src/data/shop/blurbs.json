@@ -11,11 +11,11 @@
   "wandererGear": { "*": "무엇이 나올지 모르는 장비" },
   "foodNote": "C.239 (GDD 159장 25·37): 음식은 종류마다 하는 일을 짧게 — {fullness} = 종족 설정 fullnessName. 상점 음식 칸·가방 음식 칸이 같은 줄을 쓴다",
   "food": {
-    "snack": "{fullness}이(가) 조금 찬다",
+    "snack": "{fullness}·컨디션이 조금 오른다",
     "basic": "{fullness}이(가) 찬다",
     "hearty": "{fullness}이(가) 많이 찬다",
-    "tonic": "컨디션이 오른다",
-    "feast": "{fullness}이(가) 가득 찬다"
+    "tonic": "컨디션이 크게, {fullness}이(가) 조금 오른다",
+    "feast": "{fullness}이(가) 크게 차지만 컨디션이 떨어진다"
   },
   "kind": {
     "food": { "*": "배를 채운다" },

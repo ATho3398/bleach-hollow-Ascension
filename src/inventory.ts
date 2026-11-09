@@ -6,7 +6,8 @@ import { cosmeticName, COSMETIC_ITEMS, foodBlurb, GOLD_ITEMS, getCosmetic, getGo
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
-import { CARE_STATUS_NAMES, foodHpHeal, homeHpCap, homeHpOf } from './engine/nest';
+import { CARE_STATUS_NAMES, homeHpCap, homeHpOf } from './engine/nest';
+import { foodEffectText } from './foodText';
 import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { guidePending } from './engine/tutorial';
@@ -127,8 +128,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   for (const f of FOOD_IDS) {
     const n = save.shared.food[f];
     if (n <= 0) continue;
-    const fx = BALANCE.provisional.nest.foods[f];
-    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, brief: foodBlurb(f, faction), detail: `${faction.fullnessName} +${fx.hunger}${fx.condition ? ` · 컨디션 ${fx.condition > 0 ? '+' : ''}${fx.condition}` : ''} · 체력 +${Math.round(foodHpHeal(f) * 100)}%`, action: 'use', lock: save.activeExpedition != null ? '모험 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
+    out.push({ id: `food-${f}`, category: 'food', name: faction.foodNames[f], count: n, brief: foodBlurb(f, faction), detail: foodEffectText(f, faction) /* 효과 전부 (GDD 211장: 적힌 것 = 실제로 바뀌는 것) */, action: 'use', lock: save.activeExpedition != null ? '모험 중인 캐릭터에는 못 쓴다' : save.nest.dead ? `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` : null });
   }
   // 소모품: 보관한 정화제·각성제·상인 소모품 + 다시 뽑기권(흡수 화면에서 씀)
   for (const id of CONSUMABLE_IDS) {

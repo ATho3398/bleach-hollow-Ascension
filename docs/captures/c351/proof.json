@@ -1,0 +1,609 @@
+{
+ "checks": {
+  "ph-h": {
+   "feeds": [
+    {
+     "food": "snack",
+     "card": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "basic",
+     "card": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "hearty",
+     "card": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "tonic",
+     "card": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "feast",
+     "card": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▼",
+      "hp▲"
+     ],
+     "match": true
+    }
+   ],
+   "cards": [
+    {
+     "food": "snack",
+     "fx": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "text": "+2+4+2%+1",
+     "title": "배부름 +2 · 컨디션 +4 · 체력 +2% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "basic",
+     "fx": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "text": "+5+3%+1",
+     "title": "배부름 +5 · 체력 +3% · 교감 +1",
+     "lines": 14,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "hearty",
+     "fx": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "text": "+8+5%+1",
+     "title": "배부름 +8 · 체력 +5% · 교감 +1",
+     "lines": 14,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "tonic",
+     "fx": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "text": "+3+10+4%+1",
+     "title": "배부름 +3 · 컨디션 +10 · 체력 +4% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "feast",
+     "fx": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "text": "+11−5+8%+1",
+     "title": "배부름 +11 · 컨디션 −5 · 체력 +8% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    }
+   ]
+  },
+  "ph-s": {
+   "feeds": [
+    {
+     "food": "snack",
+     "card": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "basic",
+     "card": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "hearty",
+     "card": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "tonic",
+     "card": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "feast",
+     "card": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▼",
+      "hp▲"
+     ],
+     "match": true
+    }
+   ],
+   "cards": [
+    {
+     "food": "snack",
+     "fx": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "text": "+2+4+2%+1",
+     "title": "배부름 +2 · 컨디션 +4 · 체력 +2% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "basic",
+     "fx": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "text": "+5+3%+1",
+     "title": "배부름 +5 · 체력 +3% · 교감 +1",
+     "lines": 14,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "hearty",
+     "fx": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "text": "+8+5%+1",
+     "title": "배부름 +8 · 체력 +5% · 교감 +1",
+     "lines": 14,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "tonic",
+     "fx": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "text": "+3+10+4%+1",
+     "title": "배부름 +3 · 컨디션 +10 · 체력 +4% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "feast",
+     "fx": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "text": "+11−5+8%+1",
+     "title": "배부름 +11 · 컨디션 −5 · 체력 +8% · 교감 +1",
+     "lines": 29,
+     "w": 110,
+     "h": 58,
+     "overflow": false
+    }
+   ]
+  },
+  "pc-h": {
+   "feeds": [
+    {
+     "food": "snack",
+     "card": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "basic",
+     "card": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "hearty",
+     "card": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "tonic",
+     "card": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "feast",
+     "card": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▼",
+      "hp▲"
+     ],
+     "match": true
+    }
+   ],
+   "cards": [
+    {
+     "food": "snack",
+     "fx": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "text": "+2+4+2%+1",
+     "title": "배부름 +2 · 컨디션 +4 · 체력 +2% · 교감 +1",
+     "lines": 29,
+     "w": 120,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "basic",
+     "fx": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "text": "+5+3%+1",
+     "title": "배부름 +5 · 체력 +3% · 교감 +1",
+     "lines": 14,
+     "w": 120,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "hearty",
+     "fx": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "text": "+8+5%+1",
+     "title": "배부름 +8 · 체력 +5% · 교감 +1",
+     "lines": 14,
+     "w": 120,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "tonic",
+     "fx": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "text": "+3+10+4%+1",
+     "title": "배부름 +3 · 컨디션 +10 · 체력 +4% · 교감 +1",
+     "lines": 29,
+     "w": 120,
+     "h": 58,
+     "overflow": false
+    },
+    {
+     "food": "feast",
+     "fx": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "text": "+11−5+8%+1",
+     "title": "배부름 +11 · 컨디션 −5 · 체력 +8% · 교감 +1",
+     "lines": 29,
+     "w": 120,
+     "h": 58,
+     "overflow": false
+    }
+   ]
+  },
+  "ph115-s": {
+   "feeds": [
+    {
+     "food": "snack",
+     "card": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "basic",
+     "card": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "hearty",
+     "card": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "tonic",
+     "card": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▲",
+      "hp▲"
+     ],
+     "match": true
+    },
+    {
+     "food": "feast",
+     "card": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "chips": [
+      "hunger▲",
+      "cond▼",
+      "hp▲"
+     ],
+     "match": true
+    }
+   ],
+   "cards": [
+    {
+     "food": "snack",
+     "fx": [
+      "hunger+2",
+      "cond+4",
+      "hp+2%",
+      "bond+1"
+     ],
+     "text": "+2+4+2%+1",
+     "title": "배부름 +2 · 컨디션 +4 · 체력 +2% · 교감 +1",
+     "lines": 33,
+     "w": 110,
+     "h": 65,
+     "overflow": false
+    },
+    {
+     "food": "basic",
+     "fx": [
+      "hunger+5",
+      "hp+3%",
+      "bond+1"
+     ],
+     "text": "+5+3%+1",
+     "title": "배부름 +5 · 체력 +3% · 교감 +1",
+     "lines": 33,
+     "w": 110,
+     "h": 65,
+     "overflow": false
+    },
+    {
+     "food": "hearty",
+     "fx": [
+      "hunger+8",
+      "hp+5%",
+      "bond+1"
+     ],
+     "text": "+8+5%+1",
+     "title": "배부름 +8 · 체력 +5% · 교감 +1",
+     "lines": 33,
+     "w": 110,
+     "h": 65,
+     "overflow": false
+    },
+    {
+     "food": "tonic",
+     "fx": [
+      "hunger+3",
+      "cond+10",
+      "hp+4%",
+      "bond+1"
+     ],
+     "text": "+3+10+4%+1",
+     "title": "배부름 +3 · 컨디션 +10 · 체력 +4% · 교감 +1",
+     "lines": 33,
+     "w": 110,
+     "h": 65,
+     "overflow": false
+    },
+    {
+     "food": "feast",
+     "fx": [
+      "hunger+11",
+      "cond−5",
+      "hp+8%",
+      "bond+1"
+     ],
+     "text": "+11−5+8%+1",
+     "title": "배부름 +11 · 컨디션 −5 · 체력 +8% · 교감 +1",
+     "lines": 33,
+     "w": 110,
+     "h": 65,
+     "overflow": false
+    }
+   ]
+  }
+ },
+ "shots": [
+  "ph-h-tray.png",
+  "ph-h-fed.png"
+ ],
+ "errors": []
+}

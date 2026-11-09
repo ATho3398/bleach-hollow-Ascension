@@ -22,7 +22,7 @@ import { artTopRatio, changeChip, changeItems, changeNoteBox, drawnHeadY, horiz,
 import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charHeadOffset, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
-import { feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
+import { feedsLeft, foodEffectsNow, previewHomeHp, reviveEvLossOf } from '../engine/nest';
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
@@ -421,7 +421,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const dock = createDock({
     faction,
     foodCount: (food) => save.shared.food[food],
-    gaugeFull: () => ({ fullness: fullnessOf(n.hunger) >= 100, condition: n.condition >= BALANCE.provisional.expedition.conditionMax }),
+    foodEffectsNow: (food) => foodEffectsNow(food, n, Date.now()), // 카드 = 지금 먹이면 실제로 움직이는 효과 전부 (GDD 211장)
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
