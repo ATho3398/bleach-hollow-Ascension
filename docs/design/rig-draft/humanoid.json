@@ -201,13 +201,13 @@
       "head": { "art": "hd/head", "at": [-14, 24], "size": [42, 29] },
       "torso": { "art": "hd/torso", "at": [2, 44], "size": [18, 28] },
       "jaw": { "art": "hd/jaw", "at": [-4, 38], "size": [12, 9] },
-      "fold1": { "art": "hd/fold1", "at": [10, 38], "size": [20, 32] },
+      "fold1": { "art": "hd/fold1", "at": [10, 35], "size": [20, 35] },
       "fold2": { "art": "hd/fold2", "at": [14, 39], "size": [23, 24] },
-      "arm_L": { "art": "hd/arm_L", "at": [-6, 49], "size": [15, 24] },
-      "cape": { "art": "hd/cape", "at": [2, 54], "size": [28, 26] },
+      "arm_L": { "art": "hd/arm_L", "at": [-6, 47], "size": [16, 26] },
+      "cape": { "art": "hd/cape", "at": [-2, 50], "size": [32, 30] },
       "arm_R": { "art": "hd/arm_R", "at": [18, 52], "size": [11, 22] },
       "fold3": { "art": "hd/fold3", "at": [20, 54], "size": [19, 16] },
-      "fold4": { "art": "hd/fold4", "at": [-6, 59], "size": [12, 19] },
+      "fold4": { "art": "hd/fold4", "at": [-6, 53], "size": [14, 25] },
       "fold5": { "art": "hd/fold5", "at": [20, 64], "size": [23, 15] }
     }
   },
