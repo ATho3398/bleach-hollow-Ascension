@@ -230,6 +230,15 @@ describe('뱀형 (GDD 115-A 44·45, 사용자 도트 형태)', () => {
     expect(followMove(b.rig, 'serpent-test', 'coil1')!.parts.map((p) => p.slot)).toEqual(['coil1', 'tail1', 'tail2']);
     expect(followMove(b.rig, 'serpent-test', 'tail2')!.parts.map((p) => p.slot)).toEqual(['tail2']);
   });
+  it('공격2 = 밑에서 위로 쳐올리기(GDD 115-A 98): 머리를 앞아래로 숙였다가 타격 때 위로 쳐듦, 팔 트랙 없음', () => {
+    const a2 = b.motions.attack2!;
+    expect(a2.tracks.arm).toBeUndefined();
+    const head = (t: number) => samplePose(b.rig, a2, t).head!.rot;
+    const chain = (t: number) => ['body1', 'body2', 'neck1', 'neck2', 'head'].reduce((s, id) => s + samplePose(b.rig, a2, t)[id]!.rot, 0);
+    expect(chain(220)).toBeLessThan(-20); // 앞아래로 모음
+    expect(chain(a2.hit!)).toBeGreaterThan(20); // 위로 쳐올림
+    expect(head(a2.hit!)).toBeGreaterThan(head(0));
+  });
 });
 
 describe('편집기 같이 옮기기 (GDD 96장 42)', () => {

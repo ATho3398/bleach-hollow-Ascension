@@ -24,6 +24,16 @@
      "ref",
      "neck1"
     ]
+   ],
+   "motions": [
+    [
+     "ref/attack",
+     "neck1"
+    ],
+    [
+     "ref/move",
+     "neck1"
+    ]
    ]
   }
  }

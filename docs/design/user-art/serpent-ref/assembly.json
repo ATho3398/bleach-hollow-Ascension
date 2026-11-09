@@ -1,7 +1,7 @@
 {
- "note": "뱀(뼈대 serpent, 몸 ref) 조립 — 사용자 부위 시트(2026-11-10, 149×111, 조각 6개 + 오른쪽 위 참고 그림, 팔 없앰)를 참고 그림에서 색이 가장 많이 맞는 자리로 놓음(GDD 115-A 96, 사용자 \"뱀 시트 이거 기반으로 다시 만들고, 뱀 관절도 여기에 맞춰. 팔 없앴으니까\"). 이음 = 아래 몸(body1) → 목·윗몸(neck1) → 머리(head), 똬리(coil1) → 꼬리(tail1) → 꼬리 끝(tail2). 관절 = 이웃 조각과 맞닿은 자리 가운데. 그림 없는 뼈 body2·neck2·coil2·arm 은 동작이 그대로 돌게 남김(arm 그림 없음). 다시 만들기: python3 scripts/rig/assemble_parts.py docs/design/user-art/serpent-ref/assembly.json",
+ "note": "뱀(뼈대 serpent, 몸 ref) 조립 — 사용자 부위 시트(2026-11-10, 149×111, 조각 6개 + 오른쪽 위 참고 그림, 팔 없앰)를 참고 그림에서 색이 가장 많이 맞는 자리로 놓음(GDD 115-A 96, 사용자 \"뱀 시트 이거 기반으로 다시 만들고, 뱀 관절도 여기에 맞춰. 팔 없앴으니까\"). 이음 = 아래 몸(body1) → 목·윗몸(neck1) → 머리(head), 똬리(coil1) → 꼬리(tail1) → 꼬리 끝(tail2). 관절 = 이웃 조각과 맞닿은 자리 가운데. 그림 없는 뼈 body2·neck2·coil2·arm 은 동작이 그대로 돌게 남김(arm 그림 없음). 2026-11-10 02:2x 사용자가 편집기 시트(1배)에서 목·윗몸(neck1) 왼쪽 위 45칸을 지움(sheet-edit-2026-11-10.png) → 부위 시트 parts-2026-11-10b.png 에 같은 칸을 지워 씀(GDD 115-A 98). 조립 자리(at) = 편집기 고정(02:20)까지 맞춘 자리. 다시 만들기: python3 scripts/rig/assemble_parts.py docs/design/user-art/serpent-ref/assembly.json",
  "rig": "serpent",
- "sheet": "docs/design/user-art/serpent-ref/parts-2026-11-10.png",
+ "sheet": "docs/design/user-art/serpent-ref/parts-2026-11-10b.png",
  "body": "ref",
  "scale": 1,
  "offset": [
@@ -11,12 +11,12 @@
  "parts": {
   "neck1": {
    "sheet": [
-    49,
-    55
+    54,
+    57
    ],
    "at": [
-    11,
-    2
+    12,
+    6
    ]
   },
   "head": {
@@ -25,8 +25,8 @@
     61
    ],
    "at": [
-    0,
-    0
+    -4,
+    2
    ]
   },
   "tail2": {
