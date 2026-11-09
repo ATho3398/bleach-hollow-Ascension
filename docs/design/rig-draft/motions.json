@@ -4139,11 +4139,15 @@
      ]
     },
     "order": [
+     "cape2",
+     "cape3",
      "cape",
      "arm_L",
      "outer_arm_L",
      "weapon",
      "thumb_L",
+     "hair_back2",
+     "hair_back3",
      "hair_back",
      "foot_L",
      "foot_R",
@@ -4735,11 +4739,15 @@
      ]
     },
     "order": [
+     "cape2",
+     "cape3",
      "cape",
      "arm_L",
      "outer_arm_L",
      "weapon",
      "thumb_L",
+     "hair_back2",
+     "hair_back3",
      "hair_back",
      "foot_L",
      "foot_R",
@@ -6151,11 +6159,15 @@
      ]
     },
     "order": [
+     "cape2",
+     "cape3",
      "cape",
      "arm_L",
      "outer_arm_L",
      "weapon",
      "thumb_L",
+     "hair_back2",
+     "hair_back3",
      "hair_back",
      "foot_L",
      "foot_R",
@@ -6880,11 +6892,15 @@
      ]
     },
     "order": [
+     "cape2",
+     "cape3",
      "cape",
      "arm_L",
      "outer_arm_L",
      "weapon",
      "thumb_L",
+     "hair_back2",
+     "hair_back3",
      "hair_back",
      "foot_L",
      "foot_R",

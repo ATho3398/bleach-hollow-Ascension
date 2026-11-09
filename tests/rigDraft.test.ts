@@ -154,6 +154,19 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     }
     for (const c of ['보라', '빨강', '회색', '연갈색', '청록']) expect(brutes.some(([, l]) => l.color === c), c).toBe(true);
   });
+  it('뒷머리·망토 마디 따라가기(GDD 115-A 88): 쉬는 자세 0, 머리를 기울이면 아래 마디는 거꾸로 늘어지고, 움직이면 늦게 따라온다', () => {
+    for (const id of ['hair_back2', 'hair_back3', 'cape2', 'cape3']) expect(rig.sway?.[id], id).toBeDefined();
+    expect(lookLayers(rig, 'shinigami-base-f').filter((l) => l.slot.startsWith('hair_back')).map((l) => l.slot).sort()).toEqual(['hair_back', 'hair_back2', 'hair_back3']);
+    expect(lookLayers(rig, 'cape-test').filter((l) => l.slot.startsWith('cape')).length).toBe(3);
+    const still = { duration: 1000, loop: true, tracks: {} };
+    expect(samplePose(rig, still, 300).hair_back2!.rot).toBe(0);
+    const tilt = { duration: 1000, loop: true, tracks: { head: [[0, 10, 0, 0], [1000, 10, 0, 0]] as [number, number, number, number][] } };
+    const p = samplePose(rig, tilt, 500);
+    expect(p.hair_back2!.rot).toBeCloseTo(-3, 5); // hang 0.3 × 10°
+    expect(p.hair_back3!.rot).toBeLessThan(0);
+    const swing = { duration: 1000, loop: false, tracks: { head: [[0, 0, 0, 0], [200, 20, 0, 0], [1000, 20, 0, 0]] as [number, number, number, number][] } };
+    expect(samplePose(rig, swing, 150).hair_back2!.rot).toBeLessThan(samplePose(rig, swing, 600).hair_back2!.rot); // 움직이는 동안 더 뒤처짐
+  });
   it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
     const b = DRAFT_RIGS.beast!;
     const ref = b.rig.bodies.ref!;
@@ -195,8 +208,8 @@ describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
   const rig = DRAFT_RIGS.humanoid!.rig;
   it('머리를 옮기면 일반머리·뒷머리와 뒷머리 관절도 같이', () => {
     const m = followMove(rig, 'shinigami-base-f', 'head')!;
-    expect(m.parts.map((p) => p.slot)).toEqual(['head', 'hair', 'hair_back']);
-    expect(m.bones).toEqual(['hair_back']);
+    expect(m.parts.map((p) => p.slot)).toEqual(['head', 'hair', 'hair_back', 'hair_back2', 'hair_back3']); // 뒷머리 마디(115-A 88)도 같이
+    expect(m.bones).toEqual(['hair_back', 'hair_back2', 'hair_back3']);
   });
   it('오른 위팔 → 아래팔(팔꿈치 관절 포함), 왼 위팔 → 아래팔·엄지, 다리 → 정강이·발(무릎·발목 관절)', () => {
     expect(followMove(rig, 'bare-base', 'arm_R')!.parts.map((p) => p.slot)).toEqual(['arm_R', 'forearm_R']);
@@ -208,7 +221,9 @@ describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
     expect(followMove(rig, 'digitigrade-base', 'leg_L')!.bones).toEqual(['shin_L', 'foot_L']);
   });
   it('뒤에 오는 부위를 옮기면 그것만', () => {
-    for (const s of ['hair', 'hair_back', 'thumb_L', 'forearm_R', 'foot_L']) expect(followMove(rig, 'shinigami-base-f', s)!.parts.map((p) => p.slot)).toEqual([s]);
+    for (const s of ['hair', 'hair_back3', 'thumb_L', 'forearm_R', 'foot_L']) expect(followMove(rig, 'shinigami-base-f', s)!.parts.map((p) => p.slot)).toEqual([s]);
+    expect(followMove(rig, 'shinigami-base-f', 'hair_back')!.parts.map((p) => p.slot)).toEqual(['hair_back', 'hair_back2', 'hair_back3']); // 뒷머리 마디(115-A 88)
+    expect(followMove(rig, 'shinigami-base-f', 'hair_back2')!.parts.map((p) => p.slot)).toEqual(['hair_back2', 'hair_back3']);
     expect(followMove(rig, 'digitigrade-base', 'shin_L')!.parts.map((p) => p.slot)).toEqual(['shin_L', 'foot_L']);
   });
 });

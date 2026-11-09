@@ -43,3 +43,8 @@
 | `mark_editor.py` | 편집기를 다시 올린 뒤 그 페이지를 만든 커밋을 `editor-page.json` 에 적음 |
 | `check-editor.cjs` | 편집기 html 을 playwright 로 열어 기본 각도·'이 동작에만' 저장 확인 |
 | `shot.cjs`·`cap-one.mjs`·`sheet.py` | 페이지 캡처·한 외형 캡처(`#manual=1&look=`)·시트 |
+
+## 마디·색 그림 (`scripts/rig/`)
+
+- `split_chain.py`: 뒷머리·망토를 가로 띠 마디로 나눔(GDD 115-A 88). 원본 그림은 `segmentSrc` — 원본을 바꿨으면 그 외형의 segmentSrc 를 지우고 다시 돌린다. 따라가기 값은 뼈대 데이터 `sway`.
+- `recolor.py`: 색 외형 그림(GDD 115-A 85) — 원본 부위 그림을 바꾸면 다시 돌린다.

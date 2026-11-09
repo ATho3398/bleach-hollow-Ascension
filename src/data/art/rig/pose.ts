@@ -46,6 +46,19 @@ export interface Rig {
   bodySlots?: Record<string, string[]>;
   /** 관절 편집기 전용(게임은 안 씀): 부위 이름, 부위 버튼 묶음, 부위를 옮기면 같이 옮겨 갈 부위(GDD 96장 42) */
   edit?: RigEdit;
+  /** 늘어진 마디(뒷머리·망토를 나눈 아래 마디, GDD 115-A 88): 뼈 id → 따라가기. 동작 키 없이 부모가 움직인 대로 늦게 따라오고(lag·swing) 아래로 늘어진다(hang) */
+  sway?: Record<string, Sway>;
+}
+
+/** 늘어진 마디 (GDD 115-A 88): 자기 각 += swing × (부모 화면 각(t − lag) − 부모 화면 각(t)) − hang × 부모 화면 각(t).
+ *  부모 화면 각 = 부모까지 동작 각 합(쉬는 각 제외, 위 마디의 따라가기 포함). 쉬는 자세(동작 각 0)에서는 0 — 정지 그림은 그대로 */
+export interface Sway {
+  /** 늦게 따라오는 시간(ms) */
+  lag: number;
+  /** 늦음을 얼마나 키울지(1 = 부모가 lag 전에 있던 각을 그대로 따라감) */
+  swing: number;
+  /** 부모가 기운 만큼 거꾸로 돌려 아래로 늘어지게(0~1, 0.3 = 기운 각의 30% 만큼 되돌림) */
+  hang: number;
 }
 
 export interface RigEdit {
@@ -191,11 +204,33 @@ function sampleTrack(keys: Key[], t: number): BonePose {
 
 /** 동작의 t(ms) 순간 자세. 반복 동작은 길이로 감고, 한 번 동작은 끝에서 멈춘다. 키 없는 뼈는 0 */
 export function samplePose(rig: Rig, motion: Motion, tMs: number): Pose {
+  return swayPose(rig, motion, tMs, 0);
+}
+
+/** 늘어진 마디 따라가기(GDD 115-A 88)까지 넣은 자세. depth = 늦은 시각을 다시 계산한 횟수(마디 수만큼만 — 끝없이 거슬러 가지 않게) */
+function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number): Pose {
   const t = motion.loop ? ((tMs % motion.duration) + motion.duration) % motion.duration : Math.min(Math.max(0, tMs), motion.duration);
   const pose: Pose = {};
   for (const b of rig.bones) {
     const keys = motion.tracks[b.id];
     pose[b.id] = keys ? sampleTrack(keys, t) : { rot: 0, x: 0, y: 0 };
+  }
+  const sway = rig.sway;
+  if (!sway || depth > 3) return pose;
+  const parent = new Map(rig.bones.map((b) => [b.id, b.parent] as const));
+  const worldRot = (p: Pose, id: string | null | undefined): number => {
+    let r = 0;
+    for (let b = id; b; b = parent.get(b)) r += p[b]?.rot ?? 0;
+    return r;
+  };
+  const late = new Map<number, Pose>();
+  for (const b of rig.bones) {
+    const sw = sway[b.id];
+    if (!sw || !b.parent) continue;
+    let before = late.get(sw.lag);
+    if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1)));
+    const now = worldRot(pose, b.parent);
+    pose[b.id] = { ...pose[b.id]!, rot: pose[b.id]!.rot + sw.swing * (worldRot(before, b.parent) - now) - sw.hang * now };
   }
   return pose;
 }
@@ -365,6 +400,11 @@ export function validateRig(rig: Rig, motions: Record<string, Motion>, sets: Mot
   const ids = new Set(rig.bones.map((b) => b.id));
   for (const b of rig.bones) if (b.parent && !ids.has(b.parent)) errs.push(`${b.id}: 부모 ${b.parent} 없음`);
   for (const s of rig.slots) if (!ids.has(s.bone)) errs.push(`슬롯 ${s.id}: 뼈 ${s.bone} 없음`);
+  for (const [id, sw] of Object.entries(rig.sway ?? {})) {
+    const b = rig.bones.find((x) => x.id === id);
+    if (!b?.parent) errs.push(`늘어진 마디 ${id}: 부모 있는 뼈가 아님`);
+    if (!(sw.lag >= 0) || !(sw.swing >= 0) || !(sw.hang >= 0 && sw.hang <= 1)) errs.push(`늘어진 마디 ${id}: lag·swing ≥ 0, hang 0~1`);
+  }
   for (const [b, order] of Object.entries(rig.bodySlots ?? {})) {
     if (!rig.bodies[b]) errs.push(`몸별 앞뒤 순서 ${b}: 몸 없음`);
     for (const id of order) if (!rig.slots.some((s) => s.id === id)) errs.push(`몸별 앞뒤 순서 ${b}: 슬롯 ${id} 없음`);
