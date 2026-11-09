@@ -175,10 +175,15 @@ function fitWrap() {
     y1 = Math.max(y1, l.at[1] + l.size[1]);
   }
   const m = 16; // 팔 휘두르는 여유(캔버스 칸)
-  wrap.style.paddingLeft = `${Math.max(140, (m - x0) * K)}px`;
-  wrap.style.paddingRight = `${Math.max(60, (x1 - W + m) * K)}px`;
+  const pl = Math.max(140, (m - x0) * K);
+  const pr = Math.max(60, (x1 - W + m) * K);
+  wrap.style.paddingLeft = `${pl}px`;
+  wrap.style.paddingRight = `${pr}px`;
   wrap.style.paddingTop = `${Math.max(14, (m - y0) * K)}px`;
   wrap.style.paddingBottom = `${Math.max(14, (y1 - H + 4) * K)}px`;
+  // 칸 밖을 자르면(overflow hidden) 칸 너비가 0 까지 줄 수 있어 너비를 정해 준다(사용자 2026-11-10 "다른 인형들은 제대로 보지도 못하게" — 아란칼(여) 미리보기가 좁아져 잘림, 115-A 95)
+  wrap.style.boxSizing = 'border-box';
+  wrap.style.width = `${W * K + pl + pr}px`;
 }
 /** 동작 단추: 지금 몸에 없는 동작(묶음에서 off — 덩치 특수2·필살기)은 숨김 */
 function syncMotionButtons() {
@@ -466,9 +471,31 @@ document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onc
   mode = b.dataset.mode as 'pivot' | 'part';
   document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
 });
-document.querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.onclick = () => {
-  const [dx, dy] = b.dataset.d!.split(',').map(Number);
-  nudge(dx!, dy!);
+// 방향 단추를 꾹 누르면 주르륵(사용자 2026-11-10 "관절옮기기랑 부위그림은 방향키 꾹누르고 있으면 주루루룩"): 누르면 한 칸, 0.35초 뒤부터 0.06초마다 한 칸. 키보드 방향키도
+document.querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => {
+  const [dx, dy] = b.dataset.d!.split(',').map(Number) as [number, number];
+  let timer = 0;
+  let rep = 0;
+  const stop = () => { clearTimeout(timer); clearInterval(rep); timer = rep = 0; };
+  b.onpointerdown = (e) => {
+    e.preventDefault();
+    try { b.setPointerCapture(e.pointerId); } catch { /* 무시 */ }
+    stop();
+    nudge(dx, dy);
+    timer = window.setTimeout(() => { rep = window.setInterval(() => nudge(dx, dy), 60); }, 350);
+  };
+  b.onpointerup = stop;
+  b.onpointercancel = stop;
+  b.onlostpointercapture = stop;
+  b.onclick = (e) => { if (e.detail === 0) nudge(dx, dy); }; // 키보드로 단추를 누른 것(Enter·Space)만 — 마우스·터치는 pointerdown 에서
+});
+const ARROWS: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+document.addEventListener('keydown', (e) => {
+  const d = ARROWS[e.key];
+  const t = e.target as HTMLElement | null;
+  if (!d || (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable))) return;
+  e.preventDefault();
+  nudge(d[0], d[1]); // 꾹 누르면 키보드가 저절로 되풀이
 });
 // 기본 각도(이 몸에서 쉬는 자세의 관절 각도) — 저장된다
 const brot = document.getElementById('brot') as HTMLInputElement | null;

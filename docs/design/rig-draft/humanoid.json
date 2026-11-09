@@ -198,17 +198,17 @@
       "shin_L": { "art": "hb/shin_L", "at": [21, 66], "size": [14, 14] }
     },
     "hd": {
-      "head": { "art": "hd/head", "at": [-37, -25], "size": [84, 58] },
-      "torso": { "art": "hd/torso", "at": [-13, 7], "size": [36, 56] },
-      "jaw": { "art": "hd/jaw", "at": [-17, 3], "size": [24, 18] },
-      "fold1": { "art": "hd/fold1", "at": [4, -4], "size": [40, 64] },
-      "fold2": { "art": "hd/fold2", "at": [13, -2], "size": [46, 48] },
-      "arm_L": { "art": "hd/arm_L", "at": [-28, 18], "size": [30, 48] },
-      "cape": { "art": "hd/cape", "at": [-12, 28], "size": [56, 52] },
-      "arm_R": { "art": "hd/arm_R", "at": [20, 25], "size": [22, 44] },
-      "fold3": { "art": "hd/fold3", "at": [24, 28], "size": [38, 32] },
-      "fold4": { "art": "hd/fold4", "at": [-28, 38], "size": [24, 38] },
-      "fold5": { "art": "hd/fold5", "at": [24, 48], "size": [46, 30] }
+      "head": { "art": "hd/head", "at": [-10, 28], "size": [42, 29] },
+      "torso": { "art": "hd/torso", "at": [2, 44], "size": [18, 28] },
+      "jaw": { "art": "hd/jaw", "at": [0, 42], "size": [12, 9] },
+      "fold1": { "art": "hd/fold1", "at": [10, 38], "size": [20, 32] },
+      "fold2": { "art": "hd/fold2", "at": [14, 39], "size": [23, 24] },
+      "arm_L": { "art": "hd/arm_L", "at": [-6, 49], "size": [15, 24] },
+      "cape": { "art": "hd/cape", "at": [2, 54], "size": [28, 26] },
+      "arm_R": { "art": "hd/arm_R", "at": [18, 52], "size": [11, 22] },
+      "fold3": { "art": "hd/fold3", "at": [20, 54], "size": [19, 16] },
+      "fold4": { "art": "hd/fold4", "at": [-6, 59], "size": [12, 19] },
+      "fold5": { "art": "hd/fold5", "at": [20, 64], "size": [23, 15] }
     }
   },
   "looks": {
@@ -339,7 +339,7 @@
       "artFolder": "hb-blue",
       "color": "파랑"
     },
-    "hood-base": {
+    "gillian-base": {
       "body": "hd"
     }
   },
@@ -526,18 +526,18 @@
     },
     "hd": {
       "pivots": {
-        "root": [16, 78],
-        "torso": [5, 47],
-        "head": [22, 26],
-        "jaw": [3, 5],
-        "arm_L": [-6, 22],
-        "arm_R": [23, 32],
-        "cape": [16, 32],
-        "fold1": [32, 53],
-        "fold2": [26, -2],
-        "fold3": [34, 28],
-        "fold4": [-10, 38],
-        "fold5": [42, 48]
+        "root": [16, 79],
+        "torso": [10, 64],
+        "head": [19, 53],
+        "jaw": [10, 42],
+        "arm_L": [5, 51],
+        "arm_R": [20, 56],
+        "cape": [16, 56],
+        "fold1": [24, 66],
+        "fold2": [21, 39],
+        "fold3": [25, 54],
+        "fold4": [3, 59],
+        "fold5": [29, 64]
       }
     }
   },
@@ -552,7 +552,7 @@
     "bare": "bare",
     "shinigami": "shinigami",
     "hb": "brute",
-    "hd": "hood"
+    "hd": "gillian"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -1098,60 +1098,60 @@
     },
     "cape": {
       "lag": 60,
-      "swing": 1.0,
-      "hang": 0.2,
+      "swing": 0.5,
+      "hang": 0.15,
       "wave": [
-        1.5,
+        0.5,
         1400,
         0
       ]
     },
     "fold1": {
       "lag": 70,
-      "swing": 1.2,
-      "hang": 0.3,
+      "swing": 0.6,
+      "hang": 0.15,
       "wave": [
-        3.5,
+        1.22,
         1500,
         0
       ]
     },
     "fold2": {
       "lag": 70,
-      "swing": 1.2,
-      "hang": 0.3,
+      "swing": 0.6,
+      "hang": 0.15,
       "wave": [
-        4,
+        1.4,
         1300,
         200
       ]
     },
     "fold3": {
       "lag": 70,
-      "swing": 1.2,
-      "hang": 0.3,
+      "swing": 0.6,
+      "hang": 0.15,
       "wave": [
-        4.5,
+        1.57,
         1700,
         120
       ]
     },
     "fold4": {
       "lag": 70,
-      "swing": 1.2,
-      "hang": 0.3,
+      "swing": 0.6,
+      "hang": 0.15,
       "wave": [
-        3,
+        1.05,
         1400,
         320
       ]
     },
     "fold5": {
       "lag": 70,
-      "swing": 1.2,
-      "hang": 0.3,
+      "swing": 0.6,
+      "hang": 0.15,
       "wave": [
-        5,
+        1.75,
         1600,
         450
       ]
