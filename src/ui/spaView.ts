@@ -12,6 +12,7 @@ import { homeMaxHp } from '../home';
 import { beginAction, beginSceneMove } from './bha/actionFx';
 import { el, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
+import { applyBlink, blinkGauges } from './bha/gaugeBlink';
 import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
 import { applyCarePose, characterButton, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
@@ -249,10 +250,17 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   let exiting = false;
 
   // 방과 같은 상태 박스(배부름·컨디션·영압 안정도·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
+  let painted: { hunger: number; cond: number; hp: number } | null = null;
   const paint = (fraction: number, fullness: number, condition: number) => {
     shown = { fullness, condition };
     paintStatusBox(status, liveStatusChips(n, faction, shown), nameTag);
     hpBox.replaceChildren(homeHpMeter(fraction, maxHp));
+    // 바뀌는 값 깜빡임 (GDD 208장 3·4): 0.1초마다 오르는 동안 그 막대·아이콘만, 멈춘 뒤 0.25초 × 3 더
+    const now = { hunger: fullness, cond: condition, hp: fraction };
+    const prev = painted;
+    if (prev) blinkGauges(scene, (['hunger', 'cond', 'hp'] as const).filter((k) => Math.abs(now[k] - prev[k]) > 1e-6), 0); // 반올림 전 값 — 천천히 오르는 체력도 오르는 동안 이어서
+    painted = now;
+    applyBlink(scene);
     clampStatus();
     rememberShown(n, { hunger: fullness, cond: condition, stab: n.stability, risk: n.risk, hp: fraction }); // 방으로 돌아가도 쉬며 찬 만큼 다시 차오르지 않게 (GDD 201장)
   };

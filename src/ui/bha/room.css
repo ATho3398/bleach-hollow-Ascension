@@ -241,13 +241,25 @@
 }
 .bha-room__bubble.is-pop { animation: bha-bubble-pop 0.18s ease-out; }
 /* 옆 자리 (C.194): 캐릭터 상자 옆(--char-half = 상자 반폭, roomView 가 잰다), 위 끝은 방 안. 캐릭터가 오른쪽 절반이면 왼쪽(.is-left) */
-.bha-room__bubble.is-side { top: var(--bha-sp-2); left: calc(var(--char-x, 50%) + var(--char-half, 0px)); transform: none; max-width: calc(100% - var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
+/* --bubble-shift (GDD 208장 2): 옆 자리도 상태창·이름표에 걸리면 roomView 가 그 바깥까지 더 밀어낸다 */
+.bha-room__bubble.is-side { top: var(--bha-sp-2); left: calc(var(--char-x, 50%) + var(--char-half, 0px) + var(--bubble-shift, 0px)); transform: none; max-width: calc(100% - var(--char-x, 50%) - var(--char-half, 0px) - var(--bubble-shift, 0px) - var(--bha-sp-2)); }
 .bha-room__bubble.is-side.is-pop { animation-name: bha-bubble-pop-side; }
-.bha-room__bubble.is-side.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + var(--char-half, 0px)); max-width: calc(var(--char-x, 50%) - var(--char-half, 0px) - var(--bha-sp-2)); }
+.bha-room__bubble.is-side.is-left { left: auto; right: calc(100% - var(--char-x, 50%) + var(--char-half, 0px) + var(--bubble-shift, 0px)); max-width: calc(var(--char-x, 50%) - var(--char-half, 0px) - var(--bubble-shift, 0px) - var(--bha-sp-2)); }
+/* 그냥 대화(값 변화 없음) 동안만 상태 칩을 잠깐 숨긴다 (C.176 · GDD 208장 0 사용자 정정 — 그대로).
+   상태 값이 바뀌는 순간에는 roomView 가 .is-saying 을 붙이지 않고 말풍선을 상태창과 안 겹치는 자리(옆·알림 띠)로 옮긴다 (208장 1·2 — C.331 의 차오름 동안만 보임 삭제) */
 .is-saying > .bha-room__chips { visibility: hidden; }
-/* 회복 차오름 동안 (GDD 201장 4): 말풍선에 가려진 상태창을 보이게, 말풍선은 차오름이 끝난 뒤 — 끝나면 원래대로(.is-filling 을 뗀다) */
-.is-saying.is-filling > .bha-room__chips { visibility: visible; }
-.is-filling > .bha-room__bubble { visibility: hidden; }
+/* 바뀌는 값 깜빡임 (GDD 208장 3, gaugeBlink.ts): 그 줄의 아이콘·막대만 0.25초 간격으로 흐려졌다 돌아온다. 박자(--blink-delay)는 줄을 다시 그려도 이어진다.
+   방·온천·가방 상태창 줄(.bha-room__gauge) · 체력·걷기 막대(.bha-meter) 공통. 동작 줄이기면 깜빡임 대신 강조 테두리 한 번 */
+.is-changing[data-gauge] > .bha-icon, .is-changing[data-gauge] > .bha-room__gaugetrack,
+.bha-meter.is-changing[data-gauge] .bha-meter__label .bha-icon, .bha-meter.is-changing[data-gauge] .bha-meter__track {
+  animation: bha-gauge-blink 0.25s ease-in-out infinite; animation-delay: var(--blink-delay, 0ms);
+}
+@keyframes bha-gauge-blink { 0%, 100% { opacity: 1; filter: none; } 50% { opacity: 0.35; filter: brightness(1.6); } }
+@media (prefers-reduced-motion: reduce) {
+  .is-changing[data-gauge] > .bha-icon, .is-changing[data-gauge] > .bha-room__gaugetrack,
+  .bha-meter.is-changing[data-gauge] .bha-meter__label .bha-icon, .bha-meter.is-changing[data-gauge] .bha-meter__track { animation: none; }
+  .is-changing[data-gauge] { outline: 1px solid var(--bha-accent); outline-offset: 1px; border-radius: var(--bha-r-xs); }
+}
 /* 상태 ⓘ (C.176, GDD 104장 2 · 190장 3 = C.281): 박스 오른쪽 바깥 2px, 아래 끝 = 박스 아래 끝. 보이는 원 22px(누르는 자리는 button.bha-info::before 로 36) */
 .bha-room__chips > .bha-info.bha-room__statusinfo { position: absolute; left: calc(100% + var(--bha-sp-1)); bottom: 0; margin: 0; width: 22px; height: 22px; background: var(--bha-scene-box); }
 /* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 머리 위에 박스 자리가 없으면 박스를 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).

@@ -39,10 +39,10 @@ describe('C.160 덤: 방 말풍선', () => {
     const room = read('src/ui/roomView.ts');
     expect(room).toContain("scene.style.setProperty('--head-y'");
     expect(room).toContain("scene.style.setProperty('--chip-h'");
-    expect(room).toContain("scene.classList.add('is-saying')");
+    expect(room).toContain("scene.classList.toggle('is-saying', !keepStatus)"); // C.344 (GDD 208장 0·1): 그냥 대화만 숨김, 값이 바뀔 때는 유지
     const rc = read('src/ui/bha/room.css');
     expect(rc).toContain('left: clamp(25%, var(--char-x, 50%), 75%);');
-    expect(rc).toContain('.is-saying > .bha-room__chips { visibility: hidden; }'); // C.284 (GDD 183장 화면 A, v2 S01~S05): 칩 줄(상태 칩 + ⓘ) 한 묶음
+    expect(rc).toContain('.is-saying > .bha-room__chips { visibility: hidden; }'); // C.284 (GDD 183장 화면 A): 칩 줄(상태 칩 + ⓘ) 한 묶음 — 208장 0: 그냥 대화 동안만
     expect(rc).not.toContain('left: 50%; top: 14%;');
   });
 });

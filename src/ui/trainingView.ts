@@ -402,10 +402,12 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
   actions.append(asBack(button({ label: '수련 화면으로', variant: 'primary', icon: 'i-return', onClick: hd.onBack })));
   right.push(actions);
   lcdPage(dev.view, { cls: 'bha-train-page bha-train-result' }, lcdHead({ title: faction.training.title }), left, right);
-  // 오른 값이 있으면 (GDD 201장 3·4): 가려진 머리 위 상태창을 잠깐 띄워 이전 값 → 새 값으로 차오르게 (줄어든 값은 바로 새 값)
-  if (out.condition > 0 || out.hunger < 0) {
+  // 상태창 값이 바뀌었으면 (GDD 201장 3·4 · 208장 3): 가려진 머리 위 상태창을 잠깐 띄워 오른 값은 이전 값 → 새 값으로 차오르게 (줄어든 값은 바로 새 값)
+  // 바뀐 값(내린 컨디션·배부름·오른 리스크 포함)은 그 막대·아이콘만 깜빡임 (GDD 208장 3·4) — 줄어든 값은 바로 새 값, 오른 값만 차오름
+  const blink = ([out.hunger !== 0 ? 'hunger' : '', out.condition !== 0 ? 'cond' : '', out.risk ? 'risk' : ''] as const).filter((k): k is 'hunger' | 'cond' | 'risk' => k !== '');
+  if (blink.length > 0) {
     const to = nestShown(save.nest, homeHp(save).fraction);
     const from = { ...to, cond: to.cond - Math.max(0, out.condition), hunger: to.hunger - Math.max(0, -out.hunger) };
-    statusFillFx({ title: cfg.name, chips: () => statusChips(save.nest, faction), from, to, maxHp: homeMaxHp(save), owner: save.nest });
+    statusFillFx({ title: cfg.name, chips: () => statusChips(save.nest, faction), from, to, maxHp: homeMaxHp(save), owner: save.nest, blink });
   }
 }

@@ -1,0 +1,416 @@
+{
+ "checks": {
+  "pc-h": {
+   "before": {
+    "statusVisible": true,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:30",
+     "cond:45",
+     "stab:50",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedMid": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "영혼 조각",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 491,
+      "t": 20,
+      "r": 565,
+      "b": 52
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab"
+    ],
+    "notBlinking": [
+     "risk"
+    ],
+    "rows": [
+     "hunger:31",
+     "cond:48",
+     "stab:51",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "영혼 조각",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 491,
+      "t": 20,
+      "r": 565,
+      "b": 52
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "talk": {
+    "statusVisible": false,
+    "bubble": {
+     "text": "흥, 나쁘지 않군.",
+     "side": false,
+     "left": false,
+     "rect": {
+      "l": 369,
+      "t": 90,
+      "r": 475,
+      "b": 121
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": [
+     "bubble×status",
+     "bubble×info"
+    ]
+   },
+   "restCard": 1,
+   "walk": {
+    "blinking": [
+     "hunger",
+     "cond",
+     "hp"
+    ],
+    "notBlinking": [
+     "risk"
+    ]
+   }
+  },
+  "ph-s": {
+   "before": {
+    "statusVisible": true,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:30",
+     "cond:45",
+     "stab:50",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedMid": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "주먹밥",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 467,
+      "t": 20,
+      "r": 527,
+      "b": 52
+     }
+    },
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab"
+    ],
+    "notBlinking": [
+     "risk"
+    ],
+    "rows": [
+     "hunger:31",
+     "cond:48",
+     "stab:51",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "주먹밥",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 467,
+      "t": 20,
+      "r": 527,
+      "b": 52
+     }
+    },
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "talk": {
+    "statusVisible": false,
+    "bubble": {
+     "text": "수련하기 좋은 날이다.",
+     "side": false,
+     "left": false,
+     "rect": {
+      "l": 330,
+      "t": 75,
+      "r": 466,
+      "b": 106
+     }
+    },
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": [
+     "bubble×status",
+     "bubble×info"
+    ]
+   },
+   "bagPatched": [
+    "bha-save-test"
+   ],
+   "bagUsed": true,
+   "bag": {
+    "fx": true,
+    "blinking": [
+     "cond"
+    ],
+    "notBlinking": [
+     "hunger",
+     "stab",
+     "risk",
+     "hp"
+    ],
+    "toast": []
+   },
+   "restCard": 1,
+   "walk": {
+    "blinking": [
+     "hunger",
+     "cond",
+     "risk",
+     "hp"
+    ],
+    "notBlinking": []
+   }
+  },
+  "ph115": {
+   "before": {
+    "statusVisible": true,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:30",
+     "cond:45",
+     "stab:50",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedMid": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "영혼 조각",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 467,
+      "t": 20,
+      "r": 548,
+      "b": 54
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab"
+    ],
+    "notBlinking": [
+     "risk"
+    ],
+    "rows": [
+     "hunger:31",
+     "cond:48",
+     "stab:51",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "statusVisible": true,
+    "bubble": {
+     "text": "영혼 조각",
+     "side": true,
+     "left": false,
+     "rect": {
+      "l": 467,
+      "t": 20,
+      "r": 548,
+      "b": 54
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": []
+   },
+   "talk": {
+    "statusVisible": false,
+    "bubble": {
+     "text": "…뭘 보나.",
+     "side": false,
+     "left": false,
+     "rect": {
+      "l": 356,
+      "t": 82,
+      "r": 440,
+      "b": 116
+     }
+    },
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "notBlinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "rows": [
+     "hunger:32",
+     "cond:49",
+     "stab:52",
+     "risk:0"
+    ],
+    "overlaps": [
+     "bubble×status"
+    ]
+   }
+  }
+ },
+ "shots": [
+  "pc-h-feed.png",
+  "pc-h-walk.png",
+  "ph-s-feed.png",
+  "ph-s-bag.png",
+  "ph-s-walk.png",
+  "ph115-feed115.png"
+ ],
+ "errors": []
+}

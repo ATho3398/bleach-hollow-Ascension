@@ -11,11 +11,13 @@ import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, mountApp } from './bha/dom';
+import { showToast } from './bha/nest';
+import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from './bha/gaugeBlink';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
 import { feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
@@ -133,27 +135,68 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   bubble.setAttribute('aria-live', 'polite');
   bubble.hidden = true;
   let bubbleTimer = 0;
-  /** 말풍선 자리 (C.194, GDD 120장 2): 머리 위가 기본. 방 위 끝을 넘으면 방 위 끝 안쪽, 캐릭터 상자 옆(방 가운데 쪽)에 둔다 — 아래로 끌어내려 머리를 가리지 않는다 */
-  const placeBubble = () => {
+  /** 상태 값이 바뀌는 중(차오름 + 깜빡임)이 끝나는 시각 (GDD 208장 0·1): 이때까지는 말풍선이 떠도 상태창을 숨기지 않는다 */
+  let statusBusyUntil = 0;
+  const markStatusBusy = (ms: number) => (statusBusyUntil = Math.max(statusBusyUntil, Date.now() + ms + GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER));
+  /** 말풍선 자리 (C.194, GDD 120장 2 · 208장 2): 머리 위가 기본. 방 위 끝을 넘으면 캐릭터 옆(방 가운데 쪽).
+   *  keep(상태 값이 바뀌는 순간 — 상태창을 숨기지 않음)이면 상태창(박스·ⓘ·이름표)·방 물건 버튼과 겹치지 않는 자리를 찾는다: 머리 위 → 옆(밀어내기) → 반대쪽 옆,
+   *  다 막히면 말풍선 대신 공용 알림 띠(showToast). 띠로 보냈으면 false */
+  const placeBubble = (text: string, keep: boolean): boolean => {
     bubble.classList.remove('is-side', 'is-left');
+    scene.style.setProperty('--bubble-shift', '0px');
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
     // offsetTop·offsetLeft 는 transform 을 빼고 잰다: 말풍선 top = 아래 끝(translate −100%), 캐릭터 상자 left = 가운데(translate −50%)
-    const spot = bubbleSpot(bubble.offsetTop, bubble.offsetHeight, char.offsetLeft, scene.clientWidth);
-    if (spot === 'above') return;
-    bubble.classList.add('is-side');
-    if (spot === 'left') bubble.classList.add('is-left');
+    const first = bubbleSpot(bubble.offsetTop, bubble.offsetHeight, char.offsetLeft, scene.clientWidth);
+    if (!keep || scene.clientWidth === 0) {
+      // 그냥 대화(값 변화 없음) = 예전 자리 그대로, 상태창은 잠깐 숨는다 (208장 0 사용자 정정). 붙기 전(잴 수 없음)도 기본 자리
+      if (first !== 'above') bubble.classList.add('is-side', ...(first === 'left' ? ['is-left'] : []));
+      return true;
+    }
+    const sideFirst: 'left' | 'right' = first === 'above' ? (char.offsetLeft > scene.clientWidth / 2 ? 'left' : 'right') : first;
+    const spots: ('above' | 'left' | 'right')[] = [...(first === 'above' ? ['above' as const] : []), sideFirst, sideFirst === 'left' ? 'right' : 'left'];
+    const sceneBox = scene.getBoundingClientRect();
+    // 피할 것: 상태창 박스·ⓘ·이름표(박스 위로 삐져나옴)·방 물건 버튼·떠 있는 알림 띠
+    const blockers = [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras, ...document.querySelectorAll<HTMLElement>('.bha-toast')]
+      .filter((b) => b.isConnected && b.offsetWidth > 0).map((b) => b.getBoundingClientRect());
+    const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-2')) || 4;
+    for (const spot of spots) {
+      bubble.classList.toggle('is-side', spot !== 'above');
+      bubble.classList.toggle('is-left', spot === 'left');
+      scene.style.setProperty('--bubble-shift', '0px');
+      let r = bubble.getBoundingClientRect();
+      if (bubbleClear(r, sceneBox, blockers)) return true;
+      if (spot === 'above') continue;
+      // 옆 자리가 상태창·이름표에 걸리면 걸린 것 바깥까지 캐릭터에서 더 떨어뜨린다
+      const hits = blockers.filter((b) => r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom);
+      const shift = Math.max(0, ...hits.map((b) => (spot === 'right' ? b.right - r.left : r.right - b.left) + gap));
+      scene.style.setProperty('--bubble-shift', `${Math.ceil(shift)}px`);
+      r = bubble.getBoundingClientRect();
+      if (bubbleClear(r, sceneBox, blockers)) return true;
+    }
+    scene.style.setProperty('--bubble-shift', '0px');
+    bubble.classList.remove('is-side', 'is-left');
+    bubble.hidden = true;
+    showToast({ eyebrow: save.name || '방', title: text }, 0, 2600);
+    return false;
   };
-  const say = (text: string, ms = 3000) => {
+  /** keep = 상태 값이 바뀌는 순간의 말(돌보기 결과 등). 아니어도 값이 바뀌는 중(차오름·깜빡임)이면 keep (GDD 208장 0·1) */
+  const say = (text: string, ms = 3000, keep = false) => {
+    const keepStatus = keep || Date.now() < statusBusyUntil;
     bubble.textContent = text;
-    // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1 — C.170 의 '옆 허리 높이'는 캐릭터 오른쪽에 떠 보였다). 대사 동안 상태 칩은 잠깐 숨긴다
-    scene.classList.add('is-saying');
+    // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1). 그냥 대화 동안 상태 칩은 잠깐 숨긴다(208장 0 정정 — 그대로).
+    // 상태 값이 바뀔 때는 상태창을 숨기지 않고(208장 1) 말풍선을 상태창과 안 겹치는 자리로(208장 2)
+    scene.classList.toggle('is-saying', !keepStatus);
     dev.refresh(); // 말풍선 동안 숨은 상태 칩은 기기 초점에서 빠진다 (GDD 176장 4)
     bubble.hidden = false;
     bubble.classList.remove('is-pop');
     void bubble.offsetWidth;
     bubble.classList.add('is-pop');
-    placeBubble();
     window.clearTimeout(bubbleTimer);
+    if (!placeBubble(text, keepStatus)) {
+      scene.classList.remove('is-saying');
+      dev.refresh();
+      return;
+    }
     bubbleTimer = window.setTimeout(() => {
       bubble.hidden = true;
       scene.classList.remove('is-saying');
@@ -237,10 +280,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const chips = over ? chipsAt(statusChips(n, faction), over) : statusChips(n, faction);
     // 목록형 상태 게이지 (GDD 189장 4 · 190장 3, C.281 모양) — 공용 부품(statusBox, 온천도 같은 것). 자세한 뜻은 ⓘ · 누르면 상태 화면
     paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ');
+    applyBlink(scene); // 바뀌는 값 깜빡임은 다시 그려도 이어진다 (GDD 208장 3)
     if (!over) rememberShown(n, shownNow());
   };
   // 방에 들어올 때 (GDD 201장 1·3): 지난번 방·온천·가방에서 보여 준 값보다 오른 값(진화로 가득·부활·쉬는 동안 회복 등)은 이전 값에서 차오른다
-  const enterFrom = riseFrom(shownBefore(n), shownNow());
+  const enterBefore = shownBefore(n);
+  const enterFrom = riseFrom(enterBefore, shownNow());
   paintGauges(enterFrom ?? undefined);
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
   const measureChips = () => {
@@ -260,12 +305,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const paintHp = (fraction?: number) => {
     const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
     hpBox.replaceChildren(homeHpMeter(f, maxHp));
+    applyBlink(scene);
   };
   paintHp(enterFrom?.hp);
+  // 지난번에 보여 준 값에서 바뀐 값(오름·내림)만 깜빡임 (GDD 208장 3·4) — 오른 값은 차오르는 동안 + 끝난 뒤
+  const enterChanged = changedKeys(enterBefore, shownNow());
+  blinkGauges(scene, enterChanged, enterFrom ? ACTION_FILL_MS : 0);
+  if (enterChanged.length > 0) markStatusBusy(enterFrom ? ACTION_FILL_MS : 0);
   if (enterFrom) {
     const to = shownNow();
     fxOn = true;
-    scene.classList.add('is-filling');
     tween(ACTION_FILL_MS, (t) => {
       if (!hpBox.isConnected && t < 1) return;
       const v = lerpShown(enterFrom, to, t);
@@ -273,7 +322,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       paintHp(v.hp);
     }, () => {
       fxOn = false;
-      scene.classList.remove('is-filling');
       paintGauges();
       paintHp();
     }, false);
@@ -340,7 +388,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const from = nestShown(before, hpBefore);
       const to = shownNow();
       fxOn = true;
-      scene.classList.add('is-filling'); // 말풍선이 가리던 상태창을 차오르는 동안 보이게 (GDD 201장 4)
+      const changed = changedKeys(from, to);
+      blinkGauges(scene, changed); // 바뀐 값(오름·내림)의 막대·아이콘만 깜빡임 (GDD 208장 3)
+      if (changed.length > 0) markStatusBusy(ACTION_FILL_MS); // 그동안 뜨는 말풍선은 상태창을 숨기지 않는다 (208장 1)
       tween(ACTION_FILL_MS, (t) => {
         if (!main.isConnected) return;
         const v = lerpShown(from, to, t);
@@ -348,7 +398,6 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
         paintHp(v.hp); // 먹이 체력 회복 (GDD 123장 4)
       }, () => {
         fxOn = false;
-        scene.classList.remove('is-filling');
         if (main.isConnected) {
           paintGauges();
           paintHp();

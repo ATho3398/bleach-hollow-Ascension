@@ -75,7 +75,7 @@ describe('201장 회복 수치 글자 없앰', () => {
     expect(read('src/ui/bha/actionFx.ts')).not.toContain('itemUseFx');
   });
   it('방에 들어올 때 오른 값 차오름 · 온천도 보여 준 값 기억', () => {
-    expect(read('src/ui/roomView.ts')).toContain('const enterFrom = riseFrom(shownBefore(n), shownNow());');
+    expect(read('src/ui/roomView.ts')).toContain('const enterFrom = riseFrom(enterBefore, shownNow());');
     expect(read('src/ui/spaView.ts')).toContain('rememberShown(n, {');
   });
 });

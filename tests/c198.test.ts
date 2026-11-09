@@ -120,7 +120,7 @@ describe('123장 3 방 발밑 체력 막대', () => {
     // C.303 (GDD 192장 2): v2 .bha-hp(C.284) → C.281 모양 그대로 = 기존 meter player, '현재 / 최대' 막대 안
     // C.318 (GDD 197장 4): 막대는 공용 부품 statusBox.homeHpMeter (방·온천 같은 것)
     expect(v).toContain('hpBox.replaceChildren(homeHpMeter(f, maxHp));');
-    expect(readFileSync('src/ui/bha/statusBox.ts', 'utf8')).toContain("return meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` });");
+    expect(readFileSync('src/ui/bha/statusBox.ts', 'utf8')).toContain("return tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: now, max, compact: true, inside: true, zoneLow: 0.3, danger: fraction < 0.3, valueText: `${now} / ${max}` }), 'hp');"); // C.343: 깜빡임 대상 표시
     expect(readFileSync('src/ui/bha/room.ts', 'utf8')).toContain("'--foot-y'");
     expect(readFileSync('src/ui/bha/room.css', 'utf8')).toContain('var(--foot-y');
   });

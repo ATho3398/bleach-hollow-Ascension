@@ -3,6 +3,7 @@
 import { button, el, meter } from './dom';
 import { iconArt, itemCard, itemGrid } from './itemUi';
 import { ACTION_FILL_MS, tween } from './actionFx';
+import { applyBlink, blinkGauges, tagGauge } from './gaugeBlink';
 import { trapModalFocus } from './modalFocus';
 import { getOverlayHost, registerLayer } from './overlayHost';
 
@@ -41,7 +42,8 @@ export function healBag(o: HealBagSpec): () => void {
   const hpSlot = el('div', 'bha-healbag__hp');
   const paintHp = () => {
     const pct = Math.round((fillHp ?? o.hp()) * 100);
-    hpSlot.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: pct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: pct < 30, valueText: `${pct}%` }));
+    hpSlot.replaceChildren(tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: pct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: pct < 30, valueText: `${pct}%` }), 'hp'));
+    applyBlink(hpSlot); // 쓰는 동안 깜빡임 (GDD 208장 3)
   };
   const close = () => {
     if (closed) return;
@@ -68,6 +70,7 @@ export function healBag(o: HealBagSpec): () => void {
           note = '';
           stopFill();
           render(it.id);
+          if (Math.round(r.from * 100) !== Math.round(r.to * 100)) blinkGauges(hpSlot, ['hp']); // 바뀌는 체력 막대·아이콘만 깜빡임 (GDD 208장 3)
           stopFill = tween(ACTION_FILL_MS, (t) => {
             fillHp = t >= 1 ? null : r.from + (r.to - r.from) * t;
             paintHp();

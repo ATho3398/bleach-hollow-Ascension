@@ -231,6 +231,13 @@ export function bubbleSpot(bottomY: number, bubbleH: number, charCenterX: number
   return charCenterX > sceneW / 2 ? 'left' : 'right';
 }
 
+/** 말풍선 자리가 비었는지 (GDD 208장 2): 방(scene) 안에 다 들어가고, 상태창·ⓘ·방 물건 버튼 어느 것과도 겹치지 않음 */
+export function bubbleClear(b: RectLike, scene: RectLike, blockers: readonly RectLike[]): boolean {
+  if (b.left < scene.left - 0.5 || b.top < scene.top - 0.5 || b.right > scene.right + 0.5 || b.bottom > scene.bottom + 0.5) return false;
+  return blockers.every((r) => b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom);
+}
+export interface RectLike { left: number; top: number; right: number; bottom: number }
+
 /** 방 캐릭터 그림의 윗변 높이: 캐릭터 상자 중심에서 위로 몇 px 인지(음수). 머리 위 상태 칩이 이 위에 놓인다. room.css 의 .bha-char 치수와 맞출 것 */
 export function charTopOffset(art: ArtUrls): number {
   const PAD = 8, SHADOW = 10; // .bha-char 안쪽 여백, 그림자 줄(높이 6 + 위 여백 4)

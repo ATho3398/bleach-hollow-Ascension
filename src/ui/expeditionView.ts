@@ -37,6 +37,7 @@ import { bossName } from '../data/bosses';
 import { statName } from '../data/elements';
 import { floatEl } from './bha/battle';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
+import { applyBlink, blinkGauges, changedKeys, tagGauge } from './bha/gaugeBlink';
 import { foeAheadKind, walkAhead } from './bha/walkAhead';
 import { onScreenBack } from './bha/screenBack';
 import { showToast } from './bha/nest';
@@ -154,6 +155,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     restArrived = false;
     ahead.leave(); // 쉬던 장소가 뒤로 흘러간다 (GDD 128장 3)
     h.onSave();
+    // 바뀐 값(오름·내림 — 온천 칸 리스크 내림 포함)의 판 막대·아이콘만 깜빡임 (GDD 208장 3·4)
+    const blink = changedKeys({ hunger: before.full, cond: before.cond, risk: before.risk, hp: before.hp }, { hunger: fullnessOf(exp.hunger, PX.hungerMax), cond: exp.condition, risk: exp.risk, hp: hpFractionOf(exp) });
+    blinkGauges(meters, blink);
+    blinkGauges(hpBox, blink);
     if (spring) {
       // 줄어드는 값(리스크)은 예전처럼 떠오르는 숫자 (C.176, GDD 106장 2 · 201장 5)
       const fx = floatEl('heal', `${faction.riskGaugeName} −${Math.round(before.risk - exp.risk)}`, { left: 50, top: 8 });
@@ -475,18 +480,20 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
-      meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }),
-      meter({
+      tagGauge(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }), 'hunger'),
+      tagGauge(meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true,
         valueText: `${condNow}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
-      }),
-      meter({
+      }), 'cond'),
+      tagGauge(meter({
         kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
         valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
-      }),
+      }), 'risk'),
     );
     const hpPct = Math.round(hpFrac * 100);
-    hpBox.replaceChildren(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` }));
+    hpBox.replaceChildren(tagGauge(meter({ kind: 'player', label: '체력', icon: 'i-heal', value: hpPct, max: 100, compact: true, inside: true, zoneLow: 0.3, danger: hpFrac < 0.3, valueText: `${hpPct}%` }), 'hp'));
+    applyBlink(meters); // 깜빡이는 중이면 다시 그린 줄에도 (GDD 208장 3)
+    applyBlink(hpBox);
     hpBox.title = `체력 ${hpPct}%`;
   }
 
