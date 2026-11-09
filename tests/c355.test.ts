@@ -37,7 +37,7 @@ function restAt(lap: number, id = 'rest-a') {
 describe('210장 1: 휴식 칸(영혼 웅덩이)', () => {
   it('수치(provisional): 15% · 바퀴마다 ×0.8 · 최저 3%, 밸런스 114', () => {
     expect(R).toEqual({ base: 0.15, perLapDecay: 0.8, min: 0.03 });
-    expect(BALANCE_VERSION).toBe(114);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(114); // C.357 에서 115 (타격 지연 hitDelay 신설, 수치 그대로)
     expect(restRecoverFraction(1)).toBeCloseTo(0.15, 9);
     expect(restRecoverFraction(2)).toBeCloseTo(0.12, 9);
     expect(restRecoverFraction(3)).toBeCloseTo(0.096, 9);

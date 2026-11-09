@@ -1,7 +1,7 @@
 // 공격 연출(몸통박치기) 로직 (GDD 17-4, R-4, C.35).
 // 위쪽은 DOM 이 없는 순수 함수(사건 → 강도 단계, 연출 큐, 애니메이션 계획)라 단위 테스트한다 (tests/attackfx.test.ts).
 // 아래쪽 attackFx() 가 Web Animations 로 그림 한 장을 움직인다. 엔진 틱·결과는 건드리지 않고, 사건이 났을 때 연출만 얹는다.
-import type { CombatEvent } from '../engine/combat';
+import { blockHitKey, type CombatEvent, type HitDelayParams } from '../engine/combat';
 import type { AttackFxKind, FamilyMotionKind } from '../engine/faction';
 import type { AnimAction } from '../data/art/anim';
 import type { PixelFxStage } from '../engine/faction';
@@ -45,6 +45,8 @@ export interface AttackCue {
   windup?: boolean;
   /** 연출이 적에게 닿는 순간(마지막 타격) 한 번 부른다 — 각본 전투가 이때 피해를 넣는다 (GDD 146장) */
   onLand?: () => void;
+  /** 엔진 피해가 들어가기까지 남은 ms(1배) (GDD 214장, C.357): 연출의 첫 맞음 반응을 이 시각에 맞춘다 — 동작의 타격 시각이 더 늦으면 앞을 건너뛰고, 더 이르면 기다렸다 시작. 없으면 옛 타이밍(즉발·동작 그대로) */
+  hitInMs?: number;
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
@@ -72,17 +74,7 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true, instant: true };
       const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false, instant: true };
       const stage = familyStage(e.chain);
-      const spec = e.family && e.role === 'attack' ? familyFx?.(e.family, stage) : null;
-      const fx = typeof spec === 'string' ? spec : spec?.fx;
-      if (fx) {
-        cue.fx = fx;
-        cue.stage = stage;
-        cue.fam = e.family!;
-        if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
-        if (typeof spec === 'object' && spec?.motion) cue.motion = spec.motion;
-        if (typeof spec === 'object' && spec?.rigMotion) cue.rigMotion = spec.rigMotion;
-        if (typeof spec === 'object' && spec?.pixel) cue.pixel = { stage: spec.pixel, element: e.element ?? NORMAL_ELEMENT };
-      }
+      if (e.family && e.role === 'attack') applyFamilySpec(cue, e.family, stage, familyFx?.(e.family, stage), e.element);
       return cue;
     }
     case 'enemy-attack':
@@ -94,6 +86,71 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
     default:
       return null;
   }
+}
+
+/** 계열 연출 설정을 신호에 얹는다 (종류·단계·계열·모양·몸동작·도트 연출) */
+function applyFamilySpec(cue: AttackCue, family: string, stage: number, spec: FamilyFxSpec | null | undefined, element: string | null): void {
+  const fx = typeof spec === 'string' ? spec : spec?.fx;
+  if (!fx) return;
+  cue.fx = fx;
+  cue.stage = stage;
+  cue.fam = family;
+  if (typeof spec === 'object' && spec?.look) cue.look = spec.look;
+  if (typeof spec === 'object' && spec?.motion) cue.motion = spec.motion;
+  if (typeof spec === 'object' && spec?.rigMotion) cue.rigMotion = spec.rigMotion;
+  if (typeof spec === 'object' && spec?.pixel) cue.pixel = { stage: spec.pixel, element: element ?? NORMAL_ELEMENT };
+}
+
+/** 동작 시각만 보는 재생기 조각 (hitDelaysOf 용 — 재생하지 않는다) */
+export type AnimTiming = Pick<AnimPlayer, 'has' | 'peek'>;
+
+/**
+ * 이 연출에서 맞는 쪽이 처음 맞는 시각(ms, 1배, 시작부터) (GDD 214장, C.357) — run() 과 같은 규칙:
+ * 도트 연출 연결 동작이면 그 계획의 첫 반응, 아니면 동작(peek 타격 시각 — 변형 중 가장 늦은 것) 또는 몸통박치기·발사 계획의 닿는 시각 + 도트 연출 첫 반응.
+ * 엔진은 이 값만큼 피해를 미루고, run() 은 cue.hitInMs 로 다시 이 시각에 맞춘다
+ */
+export function cueHitMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion'>, anim: AnimTiming | null, slot: PixelBodySlot): number {
+  const act = anim ? animActionOf(cue, (a) => anim.has(a)) : null;
+  const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, slot) ? pixelPlan(cue.pixel.stage, slot) : null;
+  const chainBody = !!pplan?.body && !!anim;
+  const level = ATTACK_FX[cue.tier];
+  const motion = cue.fx ? familyMotion(cue.fx) : null;
+  const clipHit = chainBody ? 0 : act && anim ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? null : null;
+  const base = clipHit !== null ? clipHit : motion?.move === 'cast' ? Math.max(60, level.backMs) + motion.travelMs : level.backMs + level.lungeMs;
+  return base + (pplan ? pplan.reactAt[0] ?? 0 : 0);
+}
+
+/**
+ * 엔진 타격 지연 표(초) (GDD 214장, C.357): 실제 동작 데이터로 — 내 평타·블록(계열:단계·콤보·해방)·적 기본 공격·강공격·반격.
+ * 동작이 없는 쪽은 몸통박치기 계획의 닿는 시각. fallback 은 표에 없는 키의 값(balance 기본)
+ */
+export function hitDelaysOf(o: {
+  player: AnimTiming | null;
+  enemy: AnimTiming | null;
+  slot: PixelBodySlot;
+  familyIds: readonly string[];
+  familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined;
+  fallback: HitDelayParams;
+}): HitDelayParams {
+  const sec = (ms: number) => Math.round(ms) / 1000;
+  const blockBy: Record<string, number> = { ...(o.fallback.blockBy ?? {}) };
+  for (const id of o.familyIds) {
+    for (let stage = 1; stage <= FAMILY_STAGE_FX.length; stage++) {
+      const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true };
+      applyFamilySpec(cue, id, stage, o.familyFx?.(id, stage), null);
+      blockBy[blockHitKey(id, stage)!] = sec(cueHitMs(cue, o.player, o.slot));
+    }
+  }
+  blockBy.combo = sec(cueHitMs({ tier: 'special', ult: true }, o.player, o.slot));
+  blockBy.liberation = sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot));
+  return {
+    basic: sec(cueHitMs({ tier: 'basic' }, o.player, o.slot)),
+    block: sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot)),
+    blockBy,
+    enemy: sec(cueHitMs({ tier: 'basic' }, o.enemy, o.slot)),
+    heavy: sec(cueHitMs({ tier: 'special' }, o.enemy, o.slot)),
+    counter: sec(cueHitMs({ tier: 'chain1' }, o.enemy, o.slot)),
+  };
 }
 
 /** 체인 수 → 계열 연출 단계 (1~3) */
@@ -236,6 +293,15 @@ export interface LungePlan {
   /** 부딪히는 시각(ms, 1배 기준) */
   hitAtMs: number;
   ghosts: number;
+  /** 시작 전에 기다리는 ms (GDD 214장: 엔진 착탄이 계획의 닿는 시각보다 늦을 때 그만큼) — durationMs·hitAtMs 에 이미 더해져 있다 */
+  leadMs?: number;
+}
+
+/** 계획의 닿는 시각을 hitInMs 에 맞춘다 (GDD 214장): 더 늦게 닿아야 하면 그만큼 기다렸다 시작. 더 일찍은 못 당긴다(그대로) */
+export function alignPlan(plan: LungePlan, hitInMs: number | undefined): LungePlan {
+  if (hitInMs === undefined || hitInMs <= plan.hitAtMs) return plan;
+  const lead = hitInMs - plan.hitAtMs;
+  return { ...plan, durationMs: plan.durationMs + lead, hitAtMs: hitInMs, leadMs: (plan.leadMs ?? 0) + lead };
 }
 
 /**
@@ -350,7 +416,7 @@ export function animActionOf(cue: Pick<AttackCue, 'ult' | 'fx' | 'tier'>, has: (
 
 export interface AttackFxDriver {
   /** 사건을 연출로 바꿔 큐에 넣는다. 연출이 필요 없는 사건이면 false */
-  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand'>): boolean;
+  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand' | 'hitInMs'>): boolean;
   /** 배속(1~4) 바꾸기: 재생 중인 연출도 따라간다 */
   setSpeed(speed: number): void;
   /** 일시정지/재개: 재생 중인 연출을 멈췄다 이어간다 */
@@ -724,16 +790,21 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 타격 순간은 애니의 hit 프레임. 동작이 없으면 아래 기존 연출 그대로
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
-    const quick = !!cue.instant && !cue.windup; // 즉발: 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
     // 블록 도트 연출 (이펙트 배치 도구 확정 값): 있으면 이펙트·맞음 반응·연결 동작을 그 계획대로 (모션 줄이기 = 번쩍임만이면 옛 방식)
     const slot = opts.bodySlot?.() ?? 'male';
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
     const pplan = px ? pixelPlan(px.stage, slot) : null;
     const chainBody = pplan?.body && from.anim ? pplan.body : null;
-    const clipPlay = act && !chainBody ? from.anim!.play(act, { fromHit: quick, motion: cue.motion, rigMotion: cue.rigMotion }) : null;
+    // 엔진 착탄에 맞추기 (GDD 214장, C.357): 첫 맞음 반응이 cue.hitInMs 에 오게. 도트 연출은 그 계획의 첫 반응(reactAt[0])만큼 앞에서 시작한다.
+    // 큐에서 기다리다 늦게 시작해 착탄이 이미 지났으면(0) 옛 즉발처럼 타격부터 보인다(피해 숫자는 엔진 사건이 이미 띄웠다)
+    const want = cue.hitInMs;
+    const quick = want === undefined && !!cue.instant && !cue.windup; // 옛 즉발(엔진 지연 정보가 없을 때만): 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
+    const firstReact = pplan ? pplan.reactAt[0] ?? 0 : 0;
+    const clipHitIn = want !== undefined ? Math.max(0, want - firstReact) : quick ? 0 : undefined;
+    const clipPlay = act && !chainBody ? from.anim!.play(act, { hitInMs: clipHitIn, motion: cue.motion, rigMotion: cue.rigMotion }) : null;
     if (mode === 'flash') {
-      // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰)
-      const at = clipPlay?.hitAtMs ?? 0;
+      // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰, 아니면 엔진 착탄에)
+      const at = clipPlay?.hitAtMs ?? clipHitIn ?? 0;
       hit(to, level, cue.guarded, at);
       landAt(at);
       const ms = Math.max(at + Math.max(level.hitMs, HIT_FLASH_MIN_MS), clipPlay?.durationMs ?? 0);
@@ -744,13 +815,17 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const lv = scaled(level, unit());
     const motion = cue.fx ? familyMotion(cue.fx) : null;
     const plan: LungePlan = chainBody
-      ? { keyframes: [], durationMs: 1, hitAtMs: 0, ghosts: 0 }
+      ? { keyframes: [], durationMs: 1, hitAtMs: clipHitIn ?? 0, ghosts: 0 }
       : clipPlay
       ? { keyframes: [], durationMs: clipPlay.durationMs, hitAtMs: clipPlay.hitAtMs, ghosts: 0 }
-      : motion?.move === 'cast'
-        ? castPlan(lv, from.dir, motion.travelMs)
-        : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1));
-    const timing: KeyframeAnimationOptions = { duration: plan.durationMs, easing: 'linear', fill: 'none' };
+      : alignPlan(
+        motion?.move === 'cast'
+          ? castPlan(lv, from.dir, motion.travelMs)
+          : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1)),
+        clipHitIn,
+      );
+    const lead = plan.leadMs ?? 0;
+    const timing: KeyframeAnimationOptions = { duration: Math.max(1, plan.durationMs - lead), delay: lead, easing: 'linear', fill: 'none' };
     from.root.style.zIndex = '4';
     const main = track(from.root.animate(clipPlay || chainBody ? [{}, {}] : plan.keyframes, timing)); // 애니는 길이만 재는 빈 애니메이션(배속·일시정지를 따른다)
     // 잔상: 몸을 복제해 투명도를 낮추고 조금씩 늦게 같은 길을 따라가게 한다
@@ -763,14 +838,14 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       (from.body.parentElement ?? from.root).insertBefore(g, from.body);
       const ga = track(g.animate(
         plan.keyframes.map((k) => ({ ...k, opacity: ghostOpacity(i) })),
-        { ...timing, delay: GHOST_LAG_MS * (i + 1), fill: 'backwards' },
+        { ...timing, delay: lead + GHOST_LAG_MS * (i + 1), fill: 'backwards' },
       ));
       const rm = () => g.remove();
       ga.addEventListener('finish', rm);
       ga.addEventListener('cancel', rm);
     }
     let endAt = plan.durationMs;
-    const hitAt = quick ? 0 : plan.hitAtMs;
+    const hitAt = quick && !clipPlay ? 0 : plan.hitAtMs; // 옛 즉발 + 동작 없음: 타격을 먼저 보이고 몸통박치기는 뒤따른다
     if (pplan && px && layer) {
       // 블록 도트 연출: 이펙트 조각들, 맞는 쪽 반응(투사체면 도착 순간), 마지막 반응에 3단계 흔들림, 연결 동작
       const stage = cue.stage ?? 1;

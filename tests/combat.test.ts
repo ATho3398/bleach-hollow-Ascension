@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { ENEMIES, getEnemy } from '../src/data/enemies';
 import { FACTIONS, getFaction } from '../src/data/factions';
@@ -19,6 +20,7 @@ import { emptyRunLog, LEGACY_TILE_ROLES } from '../src/engine/runLog';
 import { loadSave, migrateSave, newSaveData, recordBattle, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { battleLabels } from '../src/ui/labels';
 import { useLegacyMigrations } from './helpers/legacyGate';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 

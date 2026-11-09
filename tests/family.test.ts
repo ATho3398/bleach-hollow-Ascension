@@ -1,5 +1,6 @@
 // 체인 계열 개편 (GDD 17-3, R-3 C.34): 데이터 모델
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { FACTIONS } from '../src/data/factions';
 import { ELEMENTS } from '../src/data/elements';
 import { TRAITS, parseTrait } from '../src/data/traits';
@@ -21,6 +22,7 @@ import { blockAbbr, blockName } from '../src/ui/battleView';
 import { helpVars } from '../src/data/help';
 import { getFaction } from '../src/data/factions';
 import { useLegacyMigrations } from './helpers/legacyGate';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 

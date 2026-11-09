@@ -92,13 +92,23 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const id = list[k]!;
       const m = motions[id]!;
       const hitAt = m.hit ?? m.duration / 2;
-      // 타격부터 (GDD 117장 3, 블록 즉발): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
-      const skip = !!o.fromHit && m.hit !== undefined;
-      once = { action: a, id, opts: o, hitFired: m.hit === undefined || skip };
-      t = skip ? hitAt : 0;
-      if (skip) o.onHit?.();
+      // 시작 위치 (GDD 214장, C.357): hitInMs 가 있으면 타격이 그때 오게 — 더 늦은 타격은 앞을 건너뛰고, 더 이른 타격은 기다렸다(음수 t, 첫 자세) 시작.
+      // 타격부터 (GDD 117장 3, 옛 블록 즉발 = hitInMs 0): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
+      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) : o.fromHit && m.hit !== undefined ? hitAt : 0;
+      const fired = m.hit !== undefined && start >= hitAt;
+      once = { action: a, id, opts: o, hitFired: m.hit === undefined || fired };
+      t = start;
+      if (fired) o.onHit?.();
       wake();
-      return skip ? { durationMs: m.duration - hitAt, hitAtMs: 0 } : { durationMs: m.duration, hitAtMs: hitAt };
+      return { durationMs: m.duration - start, hitAtMs: hitAt - start };
+    },
+    peek(a, o = {}) {
+      const fixed = o.rigMotion && motions[o.rigMotion] ? [o.rigMotion] : [];
+      const fam = fixed.length ? fixed : byMotion(o.motion);
+      const list = fam.length ? fam : ids(a);
+      if (!list.length) return null;
+      const ms = list.map((id) => motions[id]!);
+      return { durationMs: Math.max(...ms.map((m) => m.duration)), hitAtMs: Math.max(...ms.map((m) => m.hit ?? m.duration / 2)) };
     },
     stop() {
       locked = false;

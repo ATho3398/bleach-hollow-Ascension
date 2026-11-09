@@ -58,7 +58,8 @@ import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
-import { attackFx, fxModeOf } from './attackFx';
+import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
+import type { PixelBodySlot } from './pixelAttack';
 import { FX_REACH_FIELD } from './attackFxConfig';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
@@ -882,6 +883,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   for (const f of faction.families)
     for (const st of f.pixelFx?.stages ?? [])
       for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
+  // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
+  // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
+  const familyFx = (id: string, stage: number): FamilyFxSpec | null => {
+    const f = familyOf(faction, id);
+    if (!f) return null;
+    const t = f.tiers[stage - 1];
+    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
+  };
+  // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+  const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');
+  // 타격 지연 (GDD 214장, C.357): 엔진이 피해를 넣는 시각 = 실제 동작 데이터(종이인형 hit 시각·프레임 hit 장·도트 연출 첫 반응)의 타격 순간. 전투가 시작되기 전(틱 0)에만 — 종족 무관, 숫자만 넘긴다
+  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -891,18 +904,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     mode: fxModeOf(prefersReducedMotion(), fx.shake),
     unit: () => 1.6, // 장면이 커졌으므로 물러남·밀림 거리도 함께 키운다
     maxReach: () => arena.offsetWidth * FX_REACH_FIELD, // 몸통박치기는 필드 폭의 18% 만 앞으로 (적까지 가지 않는다, GDD 99장 4)
-    // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
     layer: fxLayer,
-    // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
-    familyFx: (id, stage) => {
-      const f = familyOf(faction, id);
-      if (!f) return null;
-      const t = f.tiers[stage - 1];
-      return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
-    },
-    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트, 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
+    familyFx,
+    // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 시트
     pixelSheet: readyPixelFx,
-    bodySlot: () => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames'),
+    bodySlot,
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
@@ -943,13 +949,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 튜토리얼 마무리 체인의 블록 사건 (GDD 146장): 착탄까지 숫자를 미룬다 */
   let heldBlock: Extract<CombatEvent, { kind: 'block' }> | null = null;
   const react = (e: CombatEvent) => {
+    // 휘두르기 (GDD 214장, C.357): 공격 모션은 지금 시작하고, 피해 숫자·체력 막대·맞음 반응은 엔진 피해가 들어가는 틱(atTick)에.
+    // 연출에는 남은 ms 를 넘겨 타격 프레임을 그 순간에 맞춘다(이 프레임에 이미 지났으면 0 = 타격부터)
+    if (e.kind === 'swing') {
+      attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000) });
+      return;
+    }
+    // 맞은 순간(landed): 모션은 swing 때 시작했으니 숫자·번쩍임·효과음만
+    const landed = 'landed' in e && !!e.landed;
     // 각본 마무리 체인 (GDD 146장): 동작 → 스킬 연출 → 닿는 순간 피해. 피해는 엔진이 맡겨 두고 연출이 닿을 때 scriptLand 로 넣는다
     const landing = e.kind === 'block' && s.script?.stage === 'chain-hit' && !!s.script.held;
     if (landing) heldBlock = e;
     const cue = landing ? null : cueOf(e, top);
     if (cue) cues.push(cue);
     if (landing) attack.react(e, { windup: true, onLand: () => void scriptLand(s) });
-    else attack.react(e);
+    else if (!landed) attack.react(e);
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'player-attack':

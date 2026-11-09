@@ -2905,3 +2905,20 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: `tests/c356-lap-item.test.ts`(끼운 것만·바퀴당 1번 걷기↔전투·다음 바퀴 다시·바꿔 끼우기/빼기·출발 자동 채움·모험 전투 고르기 창 없음·런 로그·변환) + 형식 66 기준 갱신(c134·c136·c140·c144·c177·c178·c179·c184·c198·c213·c223·c323·c354).
 - 검증(C.355 위에 rebase): typecheck · test 261파일 2986개 통과 · balance:check 회귀 가드 통과(보정 없음) · build 통과. 패치 번호·세이브 형식은 병렬 세션(C.351~C.355, 형식 65)을 피해 C.356·형식 66.
 - 캡처 `docs/captures/c356/`(1배 5장, `scripts/c356-proof.cjs`, proof.json): `ph-1-walk-bag-used`(걷기 가방 쓴 뒤 흐림·이유), `pc-2-battle-item-spent`(전투 [소모품] '씀'), `ph-3-lapend-pick`·`pc-3-lapend-pick`(바퀴 끝 창 고르기 창), `pc-4-lapend-swapped`(반창고로 바꾼 뒤 한 줄).
+
+## C.357 — 공격 피해를 모션 타격 순간에: 발동은 그대로, 피해만 타격 지연 뒤 틱에 (GDD 214장, v5.514, S-23, 코딩250 Fable)
+- 사용자 원문: "공격할 때, 뎀 먼저 들어가고 모션들어가는거 너무 어색한데, 딜로스는 안나면서 모션에 맞춰서 딜들어가게 어캐바꾸지??"
+- 원인: 엔진이 발동 틱에 피해를 바로 넣고 사건을 내면 화면이 그때 숫자·체력 막대를 바꾸고 모션을 '시작'했다 — 모션의 타격 프레임(공격1 300ms·공격2 280ms)은 그 뒤.
+- 바꾼 것 (엔진, 종족 무관 — `src/engine/combat/combat.ts`):
+  - `CombatParams.hitDelay`(초): basic 평타 · block 블록 기본값 · blockBy `계열:단계(1~3)`·'combo'·'liberation' · enemy 적 기본 공격 · heavy 강공격 · counter 반격. 기본값 `balance.provisional.combat.hitDelay` 전부 0.3(= 사람형 attack.hit 300ms), BALANCE_VERSION 113.
+  - `strike()`: 공격 주기·발동(타이머·블록 소모·게이지·기록·콤보·반격 유발)은 그대로, 피해·맞힌 뒤 효과(혈·독·반사)만 `pendingHits`(데이터만 — atTick·대상·양·사건·마무리 정보)에 예약하고 `swing { hit, atTick }` 사건을 낸다. 틱 시작(`landDueHits`)에 순서대로 들어가며 같은 사건을 `landed: true` 로 다시 낸다 → 로그·숫자 시각 = 맞은 시각. 쓰러지면(status ≠ playing) 남은 예약은 그대로 버려진다.
+  - 바로 넣는 경우(옛 동작): 지연 0 · 피해 0(막기 블록 등) · 각본 마무리 체인 holdHit(146장) · 졸개 공격·공허 블록·되갚기·독(모션 없음).
+- 바꾼 것 (화면): `attackFx.hitDelaysOf`/`cueHitMs` — 전투 시작 틱 0 에 실제 재생기로 지연 표를 만들어 `s.params.hitDelay` 에 넣는다(종이인형 `peek` = 변형 중 가장 늦은 타격, 프레임 그림 hit 장, 도트 연출 `pixelPlan.reactAt[0]`, 동작 없으면 몸통박치기/발사 계획의 닿는 시각). `battleView.react`: swing → 모션만 시작(`hitInMs` = 착탄까지 남은 ms), landed → 숫자·번쩍임·효과음만. 재생기 `PlayOptions.hitInMs`(animPlayer·rigAnim): 타격이 그 ms 에 오게 시작 위치를 맞춤(더 늦으면 앞 건너뜀, 더 이르면 음수 t 로 기다림), `alignPlan` 은 몸통박치기 계획을 기다렸다 시작. 큐에서 늦게 시작해 착탄이 지났으면 0 = 타격부터(옛 즉발). 픽셀FX·맞음 모션·흔들림 연결은 그대로(시각만 hitAt 기준).
+- 판단:
+  - 블록 즉발(117장 3): 기획서 값 = 블록은 타격을 맨 앞에 / 실제 값 = 214장 1 대로 모션 처음부터 → 그 연출이 처음 닿는 시각에 피해(사신 참 = 도트 연결 동작 효과 0ms → 지연 0, 권 0.24초, 귀 1단계 0.96초, 콤보 0.8초) / 이유 = 214장이 '블록 발동 시각 그대로 + 피해만 타격 순간'이라 즉발의 '타격 먼저'와 양립 불가. 기본 공격 연출을 끊고 바로 시작하는 끼어들기는 유지(반응성). 느리면 동작 데이터(motions.json hit)나 fx-tool 값을 줄이면 된다(밸런스 아님).
+  - 지연 값 출처: 기획서 값 = 동작 데이터 hit 프레임 시각 / 실제 값 = 화면이 표로 만들어 엔진에 넘김(엔진은 숫자만) + 화면 없는 봇·시뮬은 0.3초 / 이유 = 변형(300·280)·큐 지연은 엔진이 미리 모르므로 화면이 타격 프레임을 엔진 착탄에 맞추는 쪽이 재현성(같은 시드·입력 = 같은 결과, 예약은 데이터뿐)을 지킨다.
+  - 적 공격도 같은 규칙(적 그림 attack hit 장, 없으면 몸통박치기 0.22초): 맞음 숫자가 돌진보다 먼저 뜨던 것도 같은 문제.
+- 측정 (같은 시드, 사람형 봇, 적 48종 × 시드 20 = 960쌍, 전 = 지연 0 / 후 = 0.3초): 판당 준 피해 일반 397.9 → 397.9(버린 마지막 예약 평균 1.6)·강적 908.9 → 907.6(+6.8 버림) · 전투 시간 일반 18.21 → 18.51초(+0.30)·강적 36.63 → 36.82초(승리 +0.29) · 승률 100 → 100% / 75.8 → 75.2% · 초당 피해 변화율 평균 −1.17%(버린 예약까지 더하면 −0.59%, 시간이 0.3초 늘어난 몫). `npm run balance:check` 회귀 가드 통과(일반 약 16초 기준 그대로, 갱신 없음). 밸런스 보정 없음.
+- 테스트: 새 `tests/c357-hit-delay.test.ts` 15개(평타·적 공격 swing → 지연 틱 뒤 landed·체력, 지연 0 은 바로, 같은 시드 피해 수열 동일·3틱 늦게 같은 누적, 먼저 쓰러지면 예약 버림(양쪽), 블록 키·replay 재현·각본 전투 완주, hitDelaysOf·cueHitMs·peek, hitInMs 앞 건너뛰기/기다림(종이인형·프레임), alignPlan). 옛 전투 시험 11파일(combat·family·enemies·absorb·c57·c89·c103·c134·c136·c177·c199)은 수치·순서만 보므로 `tests/helpers/hitDelay.ts useImmediateHits()` 로 그 파일 동안 지연 0. 전체 262파일 3001개 · typecheck · balance:check(회귀 가드 통과) · build 통과. 세이브 구조 변경 없음(예약은 전투 상태 안).
+- 캡처 `docs/captures/c357/`(1배 6장, `scripts/c357-proof.cjs`, proof.json — 사신, 테스트 모드 바로 전투): `pc-basic-before`(칼 들어올림, 적 체력 26081 그대로) · `pc-basic-after`(내리찍는 프레임에 26072) · `pc-block-hit`(권 1단계 '정권 지르기' 주먹 닿는 순간 −20·체력 감소) · 폰 같은 3장 `ph-basic-before`·`ph-basic-after`·`ph-block-hit`.
+- 병렬 코딩248(소모품 칸)·코딩251(해방 오라) battleView 코드는 건드리지 않음(react 의 swing/landed 분기·지연 표 넣기·familyFx·bodySlot 끌어올림만).

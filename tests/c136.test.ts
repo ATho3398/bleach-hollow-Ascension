@@ -2,6 +2,7 @@
 // 블록 출현 = 타이머 하나 + 확률표 · 막기·회복 속성 특성 삭제 · 같은 속성 반복 흡수 강화(속성마다 100) · 광기 자연 감소 느리게
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { TRAITS } from '../src/data/traits';
@@ -15,6 +16,7 @@ import {
 import { createRng } from '../src/engine/rng';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
 const RX = BALANCE.provisional.risk;

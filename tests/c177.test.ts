@@ -1,5 +1,6 @@
 // C.177 (GDD 105장 수정 v5.233·106장 4·107장·108장 3번): 막기 게이지 0.5초 강공격 막기 · 회복 버튼 없음 · [소모품]·[장비] 버튼 · 해방 = 평소 출현표 · 원정 체력 이어 가기
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { applyInput, canGuard, canUseGear, canUseItem, createCombat, drainCombatEvents, halted, playCombatHuman, replayCombat, spawnTableOf, defaultCombatParams, step, ticksOf, type CombatParams } from '../src/engine/combat';
@@ -8,6 +9,7 @@ import { createExpedition, finishBattle, finishRest, hpFractionOf, playExpeditio
 import { BATTLE_ITEM_IDS, battleItemEffectOf, spendBattleItem } from '../src/inventory';
 import { newSaveData, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT } from '../src/game';
 import { actionFor } from '../src/ui/shortcutMap';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
 const quiet = (params: Partial<CombatParams> = {}) => {

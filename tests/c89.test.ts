@@ -1,6 +1,7 @@
 // C.89 진화체 특성 (GDD 39장): 칸 2개(성향 + 속성·전용), label → 특성 매핑, 효과 종류(crit·doubleHit·chainHaste·thorns …) 공통 구현
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { FORM_TABLE, getForm, validateAbilities } from '../src/data/evolution';
@@ -10,6 +11,7 @@ import {
   type Block, type CombatEvent, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { abilityEffectsOf, abilityLines, applyEvolutionToParams, formAbilitiesOf, newEvolution, zeroStats } from '../src/engine/evolution';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const AB = BALANCE.provisional.abilities;
 const normal = getEnemy('test-a');

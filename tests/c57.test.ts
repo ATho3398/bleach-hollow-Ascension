@@ -1,5 +1,6 @@
 // C.57 (S-13, GDD 25-5 v5.23): 타일 변수 5종 — 드래프트, 인접 시너지 8종, 이벤트 타일 5종, 바퀴 변이 5종, 타일 합성. 골드 전리품, 세이브 형식 21, 원정 중간 저장 형식 5
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import {
   baseTilesFor, deckTilesFor, eventTilesFor, getTile, MUTATIONS, mutationName, SYNERGIES, synergyName, TERRAIN_TILES, tileName, upgradeIdOf,
@@ -19,6 +20,7 @@ import { canSynthesize, migrateSave, newSaveData, recordExpedition, sanitizeDeck
 import { roadSynergies } from '../src/ui/bha/road';
 import { eventHint, tileHint, variantModsText } from '../src/ui/labels';
 import { useLegacyMigrations } from './helpers/legacyGate';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 

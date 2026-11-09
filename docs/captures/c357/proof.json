@@ -1,0 +1,280 @@
+{
+  "url": "http://localhost:5393/",
+  "cases": [
+    {
+      "tag": "ph",
+      "delay": {
+        "basic": 0.3,
+        "block": 0.3,
+        "blockBy": {
+          "family-a:1": 0,
+          "family-a:2": 0,
+          "family-a:3": 0,
+          "family-b:1": 0.24,
+          "family-b:2": 0,
+          "family-b:3": 0.09,
+          "family-c:1": 0.96,
+          "family-c:2": 0,
+          "family-c:3": 0,
+          "combo": 0.8,
+          "liberation": 0.3
+        },
+        "enemy": 0.22,
+        "heavy": 0.215,
+        "counter": 0.215
+      },
+      "basic": {
+        "before": {
+          "hp": 26080.424999999996,
+          "at": 8,
+          "tick": 5
+        },
+        "b1": {
+          "tick": 6,
+          "hp": 26080.424999999996,
+          "pending": [
+            {
+              "at": 8,
+              "target": "enemy",
+              "kind": "player-attack",
+              "amount": 9.1
+            }
+          ],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        },
+        "after": {
+          "hp": 26071.304999999997,
+          "tick": 8
+        },
+        "a1": {
+          "tick": 9,
+          "hp": 26071.304999999997,
+          "pending": [],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        }
+      },
+      "block": {
+        "target": {
+          "i": 0,
+          "uid": 1,
+          "family": "family-b",
+          "kind": "skill",
+          "delay": 0.24
+        },
+        "hp0": 26062.184999999998,
+        "sw": {
+          "at": 22,
+          "tick": 21,
+          "family": "family-b",
+          "chain": 1,
+          "amount": 20
+        },
+        "land": {
+          "hp": 26033.103892307692,
+          "tick": 22
+        },
+        "a2": {
+          "tick": 23,
+          "hp": 26014.863892307694,
+          "pending": [],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        }
+      }
+    },
+    {
+      "tag": "pc",
+      "delay": {
+        "basic": 0.3,
+        "block": 0.3,
+        "blockBy": {
+          "family-a:1": 0,
+          "family-a:2": 0,
+          "family-a:3": 0,
+          "family-b:1": 0.24,
+          "family-b:2": 0,
+          "family-b:3": 0.09,
+          "family-c:1": 0.96,
+          "family-c:2": 0,
+          "family-c:3": 0,
+          "combo": 0.8,
+          "liberation": 0.3
+        },
+        "enemy": 0.22,
+        "heavy": 0.215,
+        "counter": 0.215
+      },
+      "basic": {
+        "before": {
+          "hp": 26080.424999999996,
+          "at": 8,
+          "tick": 5
+        },
+        "b1": {
+          "tick": 5,
+          "hp": 26080.424999999996,
+          "pending": [
+            {
+              "at": 8,
+              "target": "enemy",
+              "kind": "player-attack",
+              "amount": 9.1
+            }
+          ],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        },
+        "after": {
+          "hp": 26071.304999999997,
+          "tick": 8
+        },
+        "a1": {
+          "tick": 9,
+          "hp": 26071.304999999997,
+          "pending": [],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        }
+      },
+      "block": {
+        "target": {
+          "i": 2,
+          "uid": 3,
+          "family": "family-b",
+          "kind": "skill",
+          "delay": 0.24
+        },
+        "hp0": 25934.505000000012,
+        "sw": {
+          "at": 88,
+          "tick": 87,
+          "family": "family-b",
+          "chain": 1,
+          "amount": 20
+        },
+        "land": {
+          "hp": 25905.423892307706,
+          "tick": 88
+        },
+        "a2": {
+          "tick": 89,
+          "hp": 25896.303892307707,
+          "pending": [],
+          "delay": {
+            "basic": 0.3,
+            "block": 0.3,
+            "blockBy": {
+              "family-a:1": 0,
+              "family-a:2": 0,
+              "family-a:3": 0,
+              "family-b:1": 0.24,
+              "family-b:2": 0,
+              "family-b:3": 0.09,
+              "family-c:1": 0.96,
+              "family-c:2": 0,
+              "family-c:3": 0,
+              "combo": 0.8,
+              "liberation": 0.3
+            },
+            "enemy": 0.22,
+            "heavy": 0.215,
+            "counter": 0.215
+          }
+        }
+      }
+    }
+  ],
+  "errors": []
+}

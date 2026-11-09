@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 114; // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
+export const BALANCE_VERSION = 115; // C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
 // 109: // C.311 (GDD 192장 1, provisional): 원정 이어 하기 시한 expedition.resumeWindowMinutes 30 신설 — 나간 뒤 30분 넘게·새 패치면 모험 실패 정산.
@@ -861,6 +861,9 @@ export const BALANCE = {
        *  블록형 몸의 블록 보정 +4%p(blockPlayCrit)는 블록 치명에 더해진다(물공 몸 제외 — 지금과 같은 값). 특성·장비 치명 가산은 두 값에 함께 (진화체별 나눔은 2차) */
       blockCritChance: 0.05,
       blockCritChanceMax: 0.5,
+      /** 타격 지연(초, GDD 214장, C.357): 공격 주기(평타 타이머·블록 발동 시각)는 그대로, 피해만 그 공격 모션이 닿는 순간만큼 뒤 틱에 들어간다(초당 피해 동일).
+       *  여기 값은 화면이 없을 때(봇·시뮬)의 기본값 = 사람형 종이인형 공격 동작 타격 시각(motions.json attack.hit 300ms). 화면은 실제 동작 데이터(hit 프레임 시각)로 바꿔 넣는다(attackFx hitDelaysOf). 0 = 바로 */
+      hitDelay: { basic: 0.3, block: 0.3, enemy: 0.3, heavy: 0.3, counter: 0.3 } as { basic: number; block: number; blockBy?: Record<string, number>; enemy: number; heavy: number; counter: number },
     },
     /** 떠돌이 상인 (GDD 85장 5번, C.140 provisional — 사용자 "1바퀴 돌 떄마다 떠돌이 상인 뜰 확률 가중 … 한 3~50바퀴 돌아야 뜨게", 수치는 코드 판단).
      *  원정 바퀴를 마칠 때마다 '지난 방문 뒤 바퀴 수 k' 가 1 오르고 그 바퀴에 올 확률 = min(1, perLap × k) (선형 가중 — 앞 바퀴는 거의 0).

@@ -1,6 +1,7 @@
 // C.103 물공 특수 블록·특성 (GDD 49장·49-1): 5단계 물리(조·참) 단일 속성 6종(흙·혈·불·물·뇌·노멀)의 기본 공격 블록 3계열 전부 + 특성 1칸.
 // 효과는 엔진(종족 무관), 이름은 데이터(종족별), 수치는 BALANCE.provisional.physBlocks
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { FORM_TABLE, PHYS_ELEMENT_IDS, getForm, physAbilityName, physBlockName, physProcText, validatePhysBlocks } from '../src/data/evolution';
@@ -13,6 +14,7 @@ import { abilityEffectsOf, abilityLines, applyEvolutionToParams, formAbilitiesOf
 import { battleLabels } from '../src/ui/labels';
 import { blockName } from '../src/ui/battleView';
 import { abilityProcText } from '../src/ui/evolutionPanel';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const PB = BALANCE.provisional.physBlocks;
 const normal = getEnemy('test-a');

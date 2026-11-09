@@ -1,6 +1,7 @@
 // C.134 (S-23, GDD 83장): 저장형 필살기 삭제 → 해방(영력 해방 · 레스렉시온/만해). 해방 게이지 = 옛 저장 게이지, 해방 블록 슬롯, 5단계 고유 효과
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { FACTIONS, getFaction } from '../src/data/factions';
@@ -14,6 +15,7 @@ import { createExpedition, playExpedition } from '../src/engine/expedition';
 import { parseFactionConfig } from '../src/engine/faction';
 import { liberationAccess, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 import { liberationLabels } from '../src/ui/labels';
+useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const LB = BALANCE.provisional.liberation;
 const normal = getEnemy('test-a');
