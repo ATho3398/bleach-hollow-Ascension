@@ -164,47 +164,65 @@ export function changeNoteFit(note: Rect, scene: Rect, blockers: readonly Rect[]
   return null;
 }
 
-/** 자리 후보 순서 (209장 1): 상태창 아래(빈 공간) → ⓘ 오른쪽 옆 → 상태창 왼쪽 옆 → 이름표 위. 각 자리 이름 있음 → 이름 줄임(아이콘 + ▲/▼) */
-export const CHANGE_NOTE_SPOTS = ['below', 'side', 'side-left', 'above'] as const;
-export type ChangeNoteSpot = (typeof CHANGE_NOTE_SPOTS)[number];
-
 /**
- * 알림 자리 정하기 (방·온천 공용). head = 캐릭터 그림 머리 윗변(y)과 캐릭터 상자 좌우 — 그 아래 칸은 피한다(머리·몸과 겹침 0).
- * 행동 글 줄이 있으면 그것까지 들어가는 자리 먼저, 없으면 칩만(행동 글 생략). 다 막히면 숨기고 false(부르는 쪽은 예전 말풍선). 잴 수 없으면(붙기 전) 기본 자리 true
+ * 알림 자리 정하기 (방·온천 공용, GDD 209장 1 · 마스터 결정 14:3x): 자리는 늘 '상태창 아래 ~ 머리 위' 한 곳(옆·위 대안 없음).
+ * head = 캐릭터 그림 머리 윗변(y)과 캐릭터 상자 좌우 — 그 아래 칸은 피한다(머리·몸과 겹침 0). 물건 버튼·장면 끝에 걸리면 가로로만 민다.
+ * 한 줄 = [행동 글 · 칩] → [행동 글 · 줄인 칩] → [칩] → [줄인 칩](아이콘+▲▼). 다 안 되면 숨기고 false(부르는 쪽은 예전 말풍선). 잴 수 없으면(붙기 전) true
  */
-export function placeChangeNote(note: HTMLElement, o: { scene: HTMLElement; head: { y: number; left: number; right: number }; blockers: readonly HTMLElement[]; nameTag?: HTMLElement | null }): boolean {
+export function placeChangeNote(note: HTMLElement, o: { scene: HTMLElement; head: { y: number; left: number; right: number }; blockers: readonly HTMLElement[] }): boolean {
   if (note.hidden) return false;
   if (!o.scene.isConnected || o.scene.clientWidth === 0) return true;
   const sb = o.scene.getBoundingClientRect();
   const rects: Rect[] = o.blockers.filter((b) => b.isConnected && b.offsetWidth > 0).map((b) => b.getBoundingClientRect());
   rects.push({ left: o.head.left, right: o.head.right, top: o.head.y - 1, bottom: Infinity }); // 숨쉬기·흔들림 1px 여유
-  note.style.setProperty('--change-up', `${o.nameTag?.offsetHeight ?? 0}px`);
-  // 자리가 먼저(209장 4-1: 상태창 옆·위 구석은 되도록 안 씀): 한 자리에서 [행동 글 + 칩] → 칩만(행동 글 생략) → 다음 자리
   const sayText = changeSayText(note);
-  for (const spot of CHANGE_NOTE_SPOTS) {
-    for (const withSay of sayText ? [true, false] : [false]) {
-      setChangeSay(note, withSay ? sayText : null);
-      if (placeAt(note, spot, sb, rects)) return true;
+  for (const withSay of sayText ? [true, false] : [false]) {
+    setChangeSay(note, withSay ? sayText : null);
+    for (const compact of [false, true]) {
+      note.classList.toggle('is-compact', compact);
+      note.style.setProperty('--change-dx', '0px');
+      const r = note.getBoundingClientRect();
+      const fit = changeNoteFit(r, sb, rects, { slide: true, maxSlide: (r.right - r.left) / 2 });
+      if (fit) {
+        note.style.setProperty('--change-dx', `${fit.dx}px`);
+        return true;
+      }
     }
   }
   hideChangeNote(note);
   return false;
 }
-function placeAt(note: HTMLElement, spot: ChangeNoteSpot, sb: Rect, rects: readonly Rect[]): boolean {
-  for (const compact of [false, true]) {
-    note.classList.remove('is-below', 'is-side', 'is-side-left', 'is-above');
-    note.classList.add(`is-${spot}`);
-    note.classList.toggle('is-compact', compact);
-    note.dataset.place = spot;
-    note.style.setProperty('--change-dx', '0px');
-    const r = note.getBoundingClientRect();
-    const fit = changeNoteFit(r, sb, rects, { slide: spot === 'below' || spot === 'above', maxSlide: (r.right - r.left) / 2 });
-    if (fit) {
-      note.style.setProperty('--change-dx', `${fit.dx}px`);
-      return true;
-    }
+
+/**
+ * 상태창 묶음을 올릴 거리 (마스터 결정 14:3x): 상태창 아래 ~ 그린 머리 위에 알림 한 줄(높이 noteH + 위아래 여백 gap)이 늘 들어가게.
+ * 값 바뀔 때만이 아니라 늘 같은 자리(깜빡임 없이 고정). lift = 지금 올린 거리(다시 잴 때 되돌려 계산)
+ */
+export function noteLift(o: { statusBottom: number; drawnTop: number; noteH: number; gap: number; lift: number }): number {
+  const natural = o.statusBottom + o.lift; // 안 올렸을 때 상태창 아래 끝
+  const want = o.drawnTop - 1 - o.gap * 2 - o.noteH; // 1 = 숨쉬기 여유
+  return Math.max(0, Math.ceil(natural - want));
+}
+
+/** 그림 한 장(정지 그림)의 첫 안 투명한 줄 비율 — 방에 들어올 때 상태창 자리를 정하는 데 쓴다(캔버스가 그려지기 전에도). undefined = 아직 안 읽음 */
+const artRatio = new Map<string, number | null>();
+const artLoading = new Map<string, Promise<number | null>>();
+export const artTopRatio = (src: string): number | null | undefined => artRatio.get(src);
+export function loadArtTopRatio(src: string): Promise<number | null> {
+  if (artRatio.has(src)) return Promise.resolve(artRatio.get(src)!);
+  let p = artLoading.get(src);
+  if (!p) {
+    p = new Promise<number | null>((done) => {
+      const im = new Image();
+      im.onload = () => done(opaqueTopRatio(im, im.naturalWidth, im.naturalHeight));
+      im.onerror = () => done(null);
+      im.src = src;
+    }).then((r) => {
+      artRatio.set(src, r);
+      return r;
+    });
+    artLoading.set(src, p);
   }
-  return false;
+  return p;
 }
 
 /** 그림 위 투명 여백을 뺀 실제 머리 윗변 (화면 y): 캐릭터 몸의 종이인형 캔버스·그림 한 장에서 처음으로 안 투명한 줄. 못 읽으면(그리기 전·jsdom) null */

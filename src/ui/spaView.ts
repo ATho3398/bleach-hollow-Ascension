@@ -188,7 +188,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   /** 알림 자리 (209장 1, 방과 같은 함수): 그린 머리 윗변 = 캐릭터 상자 중심 + charHeadOffset */
   const placeNote = () => {
     const cr = char.getBoundingClientRect();
-    placeChangeNote(note, { scene, head: { ...horiz(cr), y: drawnHeadY(char) ?? cr.top + cr.height / 2 + charHeadOffset(art) }, blockers: [status, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...scene.querySelectorAll<HTMLElement>('button:not(.bha-char)')], nameTag }); // 상태창·이름표·장면 버튼(돌아가기·ⓘ)
+    placeChangeNote(note, { scene, head: { ...horiz(cr), y: drawnHeadY(char) ?? cr.top + cr.height / 2 + charHeadOffset(art) }, blockers: [status, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...scene.querySelectorAll<HTMLElement>('button:not(.bha-char)')] }); // 상태창·이름표·장면 버튼(돌아가기·ⓘ)
   };
   const put = (left: number, bottom: number, wl: number | null) => {
     actor.style.left = `${left}%`;

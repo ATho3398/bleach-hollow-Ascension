@@ -1,7 +1,7 @@
-// C.346 (GDD 209장): 상태창과 캐릭터 사이 '무엇이 바뀌나' 알림 — 바뀐 값만 칩 · ▲/▼ · 좋음/나쁨 색 · 깜빡임 끝(최소 1초)에 사라짐 · 겹침 0 자리 · 말풍선 수치 문장 뺌.
+// C.346·C.347 (GDD 209장 + 마스터 결정 14:3x — 자리는 상태창 아래 한 곳, 상태창 묶음을 올림): 상태창과 캐릭터 사이 '무엇이 바뀌나' 알림 — 바뀐 값만 칩 · ▲/▼ · 좋음/나쁨 색 · 깜빡임 끝(최소 1초)에 사라짐 · 겹침 0 자리 · 말풍선 수치 문장 뺌.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { changeItems, changeNoteFit, changeNoteMs, CHANGE_NOTE_MIN_AFTER_MS, CHANGE_NOTE_SPOTS, changeNoteBox, hideChangeNote, showChangeNote } from '../src/ui/bha/changeNote';
+import { changeItems, changeNoteFit, changeNoteMs, CHANGE_NOTE_MIN_AFTER_MS, changeNoteBox, noteLift, hideChangeNote, showChangeNote } from '../src/ui/bha/changeNote';
 import { GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from '../src/ui/bha/gaugeBlink';
 import { ACTION_FILL_MS } from '../src/ui/bha/actionFx';
 import { careFeedback } from '../src/ui/bha/dockLogic';
@@ -130,15 +130,27 @@ describe('자리 · 겹침 0 (209장 1)', () => {
     expect(changeNoteFit({ left: -20, right: 60, top: 112, bottom: 130 }, scene, [], { slide: true })).toEqual({ dx: 22 });
     expect(changeNoteFit({ left: 10, right: 60, top: -5, bottom: 13 }, scene, [], { slide: true })).toBeNull(); // 위 끝 밖
   });
-  it('자리 순서 = 아래 → ⓘ 옆 → 왼쪽 옆 → 이름표 위, 다 막히면 숨기고 말풍선 수치 문장은 남긴다', () => {
-    expect(CHANGE_NOTE_SPOTS).toEqual(['below', 'side', 'side-left', 'above']);
+  it('자리는 상태창 아래 한 곳뿐(옆·위 대안 없음) — 공간이 모자라면 상태창 묶음을 늘 올린다(--note-lift)', () => {
+    const src = read('src/ui/bha/changeNote.ts');
+    expect(src).not.toMatch(/is-side|is-above|side-left/);
+    expect(read('src/ui/bha/room.css')).toMatch(/- var\(--note-lift, 0px\)\), calc\(var\(--chip-h/);
+    // 사람 종이인형: 박스 아래 122, 그린 머리 124, 한 줄 18 + 여백 2×2 → 올릴 거리 = 122 − (124 − 1 − 4 − 18) = 21
+    expect(noteLift({ statusBottom: 122, drawnTop: 124, noteH: 18, gap: 2, lift: 0 })).toBe(21);
+    // 다시 재도 같은 값(올린 뒤 박스 아래 101) — 깜빡임 없이 고정
+    expect(noteLift({ statusBottom: 101, drawnTop: 124, noteH: 18, gap: 2, lift: 21 })).toBe(21);
+    // 덩치처럼 공간이 넉넉하면 0 (안 올림)
+    expect(noteLift({ statusBottom: 122, drawnTop: 147, noteH: 18, gap: 2, lift: 0 })).toBe(0);
     const room = read('src/ui/roomView.ts');
+    expect(room).toMatch(/liftForNote\(\);\s*placeStatus\(\);/);
+    // 올려도 모자라면 박스를 조인다(.is-tight — 여백·줄 간격·이름표 위 여유·줄 높이), 새 색 없음
+    expect(room).toMatch(/if \(m\.need > m\.room\) m = measure\(true\);/);
+    expect(read('src/ui/bha/room.css')).toMatch(/\.bha-room__chips\.is-tight > \.bha-room__status \{ gap: 0;/);
     expect(room).toMatch(/const noted = noteChanges\(/);
   });
 });
 
 describe('행동 글도 같은 자리 (209장 4-1)', () => {
-  it('값이 바뀔 때 행동 글은 알림 위 줄 · 칩은 아래 줄, 다음 알림이면 바뀌고 없으면 숨김', () => {
+  it('값이 바뀔 때 행동 글은 칩 왼쪽 같은 줄(첫 칸), 다음 알림이면 바뀌고 없으면 숨김', () => {
     const box = changeNoteBox() as unknown as FakeEl;
     showChangeNote(box as unknown as HTMLElement, changeItems({ hunger: 40 }, { hunger: 60 }, H), ACTION_FILL_MS, { say: '짐승 고기' });
     expect(sayLine(box).hidden).toBe(false);
@@ -152,7 +164,7 @@ describe('행동 글도 같은 자리 (209장 4-1)', () => {
     expect(room).toMatch(/noteChanges\(changeItems\(from, to, faction, changed\), ACTION_FILL_MS, careFeedback\(faction, action, food \?\? null, delta, false\)\)/);
     expect(room).toMatch(/if \(!noted\) say\(careFeedback\(faction, action, food \?\? null, delta\)\)/);
     expect(room).toMatch(/if \(!note\.hidden\) \{\s*setChangeSay\(note, text\);\s*if \(placeNote\(\)\) return;/);
-    expect(read('src/ui/bha/changeNote.ts')).toMatch(/for \(const spot of CHANGE_NOTE_SPOTS\) \{\s*for \(const withSay of sayText \? \[true, false\] : \[false\]\)/); // 자리 먼저, 그 자리에 모자라면 칩만
+    expect(read('src/ui/bha/changeNote.ts')).toMatch(/for \(const withSay of sayText \? \[true, false\] : \[false\]\)/); // 한 줄에 모자라면 칩만
   });
 });
 

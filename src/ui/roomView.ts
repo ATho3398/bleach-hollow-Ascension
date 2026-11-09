@@ -17,7 +17,7 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { changeItems, changeNoteBox, drawnHeadY, horiz, placeChangeNote, setChangeSay, showChangeNote, type ChangeItem } from './bha/changeNote';
+import { artTopRatio, changeChip, changeItems, changeNoteBox, drawnHeadY, horiz, loadArtTopRatio, noteLift, placeChangeNote, setChangeSay, showChangeNote, type ChangeItem } from './bha/changeNote';
 import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charHeadOffset, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
@@ -304,12 +304,49 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const statusInfoBtn = statusInfoButton(() => statusChips(n, faction), faction, n);
   // '무엇이 바뀌나' 알림 (GDD 209장): 상태창 박스 바로 아래 ~ 캐릭터 머리 위 빈 공간, 바뀐 값만 칩 한 줄. 깜빡임이 끝나면 사라진다
   const note = changeNoteBox();
-  chipRow.append(statusBtn, statusInfoBtn, note);
-  /** 알림 자리 (209장 1): 상태창 아래 → 안 되면 상태창(이름표) 위. 상태창·ⓘ·이름표·물건 버튼·그린 머리와 겹치면 다음 자리, 다 막히면 숨기고 false */
+  // 한 줄 높이 재기용 숨은 칩 (상태창을 올릴 거리 — 글자 크기 1.15 등에 따라 달라진다)
+  const probe = el('span', 'bha-room__changerow bha-room__changeprobe');
+  probe.append(changeChip({ key: 'hunger', label: '', icon: 'i-hunger', up: true, good: true }));
+  chipRow.append(statusBtn, statusInfoBtn, note, probe);
+  /** 알림 자리 (209장 1 · 마스터 결정): 늘 상태창 아래 ~ 머리 위 한 곳. 상태창·ⓘ·이름표·물건 버튼·그린 머리와 겹치면 가로로만 밀고, 그래도 안 되면 숨기고 false */
   const placeNote = (): boolean => placeChangeNote(note, {
     scene, head: { ...horiz(char.getBoundingClientRect()), y: drawnHeadY(char) ?? scene.getBoundingClientRect().top + char.offsetTop + charHeadOffset(charArtUrls) }, // 그린 머리 윗변 (실제 픽셀 → 못 읽으면 계산식) · 캐릭터 상자 좌우
-    blockers: [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras], nameTag,
+    blockers: [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras],
   });
+  /**
+   * 상태창 묶음 올리기 (마스터 결정 14:3x): 상태창 아래 ~ 그린 머리 위에 알림 한 줄이 늘 들어가게 --note-lift 만큼 올린다 — 늘 같은 자리(값이 바뀔 때만 움직이지 않음).
+   * 머리 높이 = 정지 그림의 첫 안 투명한 줄(처음 한 번 읽어 두고, 읽은 뒤 다시 놓는다). 위 끝 하한(이름표가 장면 안)은 room.css 그대로. 캐릭터 자리는 안 건드린다
+   */
+  const liftForNote = () => {
+    const src = charArtUrls.src;
+    if (!src || !scene.isConnected || scene.clientWidth === 0) return;
+    const ratio = artTopRatio(src);
+    if (ratio === undefined) {
+      void loadArtTopRatio(src).then(() => main.isConnected && place());
+      return;
+    }
+    const art = char.querySelector<HTMLElement>('.bha-char__body canvas, .bha-char__body img');
+    const ar = art?.getBoundingClientRect();
+    if (ratio === null || !ar || !ar.height) return;
+    const drawnTop = Math.min(ar.top + ratio * ar.height, drawnHeadY(char) ?? Infinity) - 3; // 정지 그림·움직이는 캔버스 중 더 높은 머리, 대기 숨쉬기(±2px)·소수점 여유 3px
+    const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-1')) || 2;
+    /** 지금 모양(tight)에서: 안 올린 박스 아래 끝 · 끝까지 올린 아래 끝(위 끝 하한) · 필요한 거리 */
+    const measure = (tight: boolean) => {
+      chipRow.classList.toggle('is-tight', tight);
+      measureChips();
+      scene.style.setProperty('--note-lift', '0px');
+      const natural = statusBtn.getBoundingClientRect().bottom;
+      scene.style.setProperty('--note-lift', '9999px');
+      const room = natural - statusBtn.getBoundingClientRect().bottom;
+      return { room, need: noteLift({ statusBottom: natural, drawnTop, noteH: probe.offsetHeight, gap, lift: 0 }) };
+    };
+    // 1) 올리기만 → 2) 모자라면 박스를 조인다(여백·줄 간격·위 끝 여유, 칩 줄 높이) → 그래도 모자라면 올릴 수 있는 만큼 (알림이 못 들어가면 placeNote 가 숨김)
+    let m = measure(false);
+    if (m.need > m.room) m = measure(true);
+    scene.style.setProperty('--note-lift', `${Math.min(m.need, m.room)}px`);
+    scene.dataset.noteRoom = `${Math.round(m.need)}/${Math.round(m.room)}`; // 필요한 거리 / 올릴 수 있는 거리 (proof 용)
+  };
+
   /** 바뀐 값 알림을 띄운다 — 떴으면 true (그럼 말풍선에서 수치 변화 문장을 뺀다, 209장 4) */
   const noteChanges = (items: readonly ChangeItem[], ms: number, sayText?: string): boolean => {
     if (!showChangeNote(note, items, ms, { say: sayText ?? null })) return false;
@@ -369,6 +406,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   const place = () => {
     layoutOnFloor(scene, room.floor, floorEntries);
+    liftForNote();
     placeStatus();
   };
   if (enterItems.length > 0) requestAnimationFrame(() => main.isConnected && noteChanges(enterItems, enterFrom ? ACTION_FILL_MS : 0));

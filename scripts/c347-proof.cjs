@@ -1,5 +1,5 @@
-// C.346 proof (GDD 209장, 코딩243): 상태창 아래 ~ 머리 위 '무엇이 바뀌나' 칩 — 바뀐 값만 · ▲/▼ · 좋음/나쁨 색 · 깜빡임 끝(최소 1초)에 사라짐 · 겹침 0 · 행동 글은 칩 위 줄(4-1, 말풍선 없음).
-// 모드: pc/ph/ph115 × 호로(h)/사신(s) 실측, 캡처 1배 5장 docs/captures/c346/.
+// C.346·C.347 proof (GDD 209장 + 마스터 결정 14:3x — 자리는 상태창 아래 한 곳, 상태창 묶음을 올림, 코딩243): 상태창 아래 ~ 머리 위 '무엇이 바뀌나' 칩 — 바뀐 값만 · ▲/▼ · 좋음/나쁨 색 · 깜빡임 끝(최소 1초)에 사라짐 · 겹침 0 · 행동 글은 칩 위 줄(4-1, 말풍선 없음).
+// 모드: pc/ph/ph115 × 호로 덩치(h)·아란칼(ha)·사신(s) 실측, 캡처 1배 6장 docs/captures/c347/. 실행: node scripts/c346-proof.cjs <주소> [저장 폴더]
 // 실행: node scripts/c344-proof.cjs <주소> [저장 폴더]   (vite 서버는 따로 띄운다)
 const fs = require('node:fs');
 const path = require('node:path');
@@ -13,10 +13,12 @@ const MODES = [
   { id: 'pc-h', fi: 0, ctx: PC, shots: ['feed'] },
   { id: 'pc-ha', fi: 0, tier: 'arr', ctx: PC, shots: [] },
   { id: 'pc-s', fi: 1, ctx: PC, shots: [] },
-  { id: 'ph-h', fi: 0, ctx: PH, shots: [] },
+  { id: 'ph-h', fi: 0, ctx: PH, shots: ['feed'], food: 'basic' }, // 폰 먹이 → 짐승 고기 (209장 4-1 지적 장면)
+  { id: 'ph-ha', fi: 0, tier: 'arr', ctx: PH, shots: [] },
   { id: 'ph-s', fi: 1, ctx: PH, shots: ['sleep', 'bag'], sleep: true, bag: true },
-  { id: 'ph115-h', fi: 0, ctx: PH, scale: 1.15, shots: ['feed'] },
-  { id: 'ph115-s', fi: 1, ctx: PH, scale: 1.15, shots: [], spa: true },
+  { id: 'ph115-h', fi: 0, ctx: PH, scale: 1.15, shots: [] },
+  { id: 'ph115-ha', fi: 0, tier: 'arr', ctx: PH, scale: 1.15, shots: [] },
+  { id: 'ph115-s', fi: 1, ctx: PH, scale: 1.15, shots: ['feed'], spa: true },
 ];
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -115,12 +117,18 @@ const noteState = (page) => page.evaluate(() => {
     const sr = R(scene);
     if (sr && (nr.l < sr.l || nr.r > sr.r || nr.t < sr.t)) overlaps.push('note×scene-edge');
   }
+  // 상태창 묶음(이름표·박스·ⓘ) × 알림 띠·장면 위 끝 · 상태창 × 그린 머리 (올린 뒤에도)
+  for (const t of document.querySelectorAll('.bha-toast')) for (const [k, r] of Object.entries({ status: R(status), name: R(name), info: R(info) })) if (hit(R(t), r)) overlaps.push(`${k}×알림띠`);
+  const scr = R(scene);
+  if (scr && R(name) && R(name).t < scr.t) overlaps.push('name×장면위');
+  const sceneEl = document.querySelector('.bha-lcd .bha-room__scene, .bha-lcd .bha-room__body > *');
+  const lift = sceneEl ? getComputedStyle(sceneEl).getPropertyValue('--note-lift') : '';
   const bubble = document.querySelector('.bha-lcd .bha-room__bubble');
   const br = bubble && !bubble.hidden ? R(bubble) : null;
   if (br && nr && hit(br, nr)) overlaps.push('bubble×note');
   return {
     note: nr ? { rect: nr, place: note.dataset.place, compact: note.classList.contains('is-compact'), say: note.querySelector('.bha-room__changesay:not([hidden])')?.textContent ?? null, chips: [...note.querySelectorAll('[data-change]')].map((c) => `${c.dataset.change}${c.dataset.dir === 'up' ? '▲' : '▼'}${c.classList.contains('bha-chip--guard') ? '+' : '-'}:${c.textContent}`) } : null,
-    statusBottom: R(status)?.b ?? null, headTop, gap: nr && headTop !== null ? headTop - nr.b : null,
+    lift: (document.querySelector('.bha-lcd .bha-room__chips')?.parentElement?.style.getPropertyValue('--note-lift') || '0') + ' need/room ' + (document.querySelector('.bha-lcd .bha-room__chips')?.parentElement?.dataset.noteRoom ?? ''), statusBottom: R(status)?.b ?? null, headTop, gap: nr && headTop !== null ? headTop - nr.b : null,
     space: R(status) && headTop !== null ? headTop - R(status).b : null,
     bubble: br ? bubble.textContent : null,
     toast: [...document.querySelectorAll('.bha-toast')].map((t) => t.textContent.trim()),
@@ -169,7 +177,7 @@ async function run(url, out) {
       // ① 먹이 직후 0.35초
       await page.locator('.bha-homedock [data-care="feed"]').first().click();
       await wait(300);
-      await page.locator('.bha-homedock__food:not([disabled])').first().click();
+      await page.locator(mode.food ? `.bha-homedock__food[data-food="${mode.food}"]` : '.bha-homedock__food:not([disabled])').first().click();
       await wait(350);
       c.feedMid = await noteState(page);
       await shot('feed');
@@ -247,4 +255,4 @@ async function run(url, out) {
   console.log(JSON.stringify(proof, null, 0).slice(0, 9000));
 }
 
-run(process.argv[2], path.resolve(process.argv[3] || path.join(ROOT, 'docs/captures/c346')));
+run(process.argv[2], path.resolve(process.argv[3] || path.join(ROOT, 'docs/captures/c347')));
