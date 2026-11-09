@@ -1535,6 +1535,8 @@ export function startApp(host: HTMLElement): void {
           unlockedDifficulty: save!.difficulty.unlocked,
           streak: save!.difficulty.streak,
           tilesLocked: !tilesUnlocked(save!),
+          // 타일 안내가 뜰 차례면 [타일 배치] 탭으로 연다 (GDD 213장): 안내가 가리키는 가진 타일·길·프리셋 판이 그 탭에만 있다
+          startMode: tilesUnlocked(save!) && guidePending(save!.help, 'tile-plan') ? 'place' : 'prep',
           // 덱 없음 (GDD 85장 11번): 가진 타일 전부에서 최대 n칸 + 배치 프리셋
           placeLimit: placementLimitOf(save!),
           // 출발 체력 (GDD 193장 2): [출발] 띠 '체력 n%', 문턱 아래면 확인 창

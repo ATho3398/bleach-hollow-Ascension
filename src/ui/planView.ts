@@ -33,6 +33,8 @@ export interface PlanViewHandlers {
   placeLimit?: number;
   /** 출발 체력 (GDD 193장 2, 0~1 — departHpOf): [출발] 띠 왼쪽 '체력 n%', 문턱 아래면 [출발] 때 확인 창. 없으면 숨김 */
   hpFraction?: number;
+  /** 처음 열 탭 (없으면 [준비]). 타일 안내(tile-plan, GDD 213장)가 뜰 때는 [타일 배치] — 안내가 가리키는 가진 타일·길·프리셋 판이 그 탭에만 보인다 */
+  startMode?: 'prep' | 'place';
   /** true 면 체력 확인 창을 띄우지 않는다 (빈사 — 홈에서 빈사 확인 창을 이미 거쳤다) */
   hpNoWarn?: boolean;
   /** 배치 프리셋 (GDD 85장 11번): 이 종족 프리셋 목록·저장. 없으면 프리셋 줄을 숨긴다 */
@@ -308,6 +310,6 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   }
   const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, grounds, diff, desc, ...(planner ? [miniRow] : []), sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
   main.dataset.screen = 'expedition-plan';
-  setMode?.('prep');
+  setMode?.(h.startMode ?? 'prep');
   requestAnimationFrame(syncDescMore);
 }

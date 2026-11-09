@@ -44,12 +44,20 @@
     ],
     "tile-plan": [
       {
+        "id": "tabs",
+        "targets": [
+          "@.bha-plan__modetabs"
+        ],
+        "title": "타일 배치 탭",
+        "body": "타일은 [타일 배치] 탭에서 길에 놓는다.\n사냥터와 난이도는 [준비] 탭에서 고른다."
+      },
+      {
         "id": "deck",
         "targets": [
           "plan.hand"
         ],
         "title": "가진 타일",
-        "body": "아래 카드가 지금 가진 타일이다.\n눌러 고르거나 끌어서 길에 놓아 보자."
+        "body": "길 아래 카드가 지금 가진 타일이다.\n눌러 고르거나 끌어서 길에 놓아 보자."
       },
       {
         "id": "place",
@@ -66,6 +74,14 @@
         ],
         "title": "조합",
         "body": "두 타일을 바로 옆에 붙이면 조합이 생긴다.\n{tile.rest} 옆에 {tile.prey}을(를) 놓으면 「{comboExample}」이(가) 된다."
+      },
+      {
+        "id": "preset",
+        "targets": [
+          "@.bha-plan__side"
+        ],
+        "title": "배치 프리셋",
+        "body": "놓은 길은 이름 붙여 저장해 두고\n다음 모험 때 한 번에 불러올 수 있다."
       }
     ],
     "tile-draw": [

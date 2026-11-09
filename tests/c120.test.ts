@@ -265,8 +265,8 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
         }
       }
     }
-    expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
-    expect(renderHelpText(GUIDES['tile-plan'][2]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
+    expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
+    expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
     expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'practice']); // GDD 157장 3: 3장 → 2장, 연습·노력치 설명 삭제
     expect(renderHelpText(GUIDES['first-absorb'][1]!.body, { ...helpVars(H), ...guideVars(H) })).toBe(renderHelpText('갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자.', helpVars(H))); // GDD 172장 4: 고르기 → 설명 → 설명 아래 [흡수] 버튼
   });

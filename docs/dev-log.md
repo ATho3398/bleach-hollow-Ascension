@@ -2827,3 +2827,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 경로: 방 먹이(독)·방 가방·튜토리얼 회복 먹이 = 모두 `feedNest` 한 곳. 걷기 중 먹이 경로 없음(가방 잠금). 수련 '먹이사슬'은 미니게임(먹이 아이템 아님).
 - 테스트: `tests/c351-food-effects.test.ts`(22) — 두 종족 × 5종 × 방 먹이·방 가방 실제 변화 = 효과 목록, 바뀐 값 칩 키 = 목록, 가방·상점 글 = 목록 글(리스크·안정 이름 없음), 무작위 상태 400번 카드(`foodEffectsNow`) = 실제로 움직인 값. c136·c239·gdd193 기대값 갱신. 전체 typecheck · test · balance:check(회귀 가드 통과) · build.
 - 캡처 `docs/captures/c351/`(1배 2장, `scripts/c351-proof.cjs`, proof.json): `ph-h-tray`(폰 먹이 판 카드) · `ph-h-fed`(간식 직후 칩 = 배부름·컨디션·체력, 리스크 30·안정 50 그대로). proof: 폰·PC·폰 1.15 두 종족 5종 카드 = 칩 20/20 일치, 카드 넘침 0.
+
+## C.352 — 튜토리얼 모험 준비(타일 안내)도 새 [타일 배치] 창으로 (GDD 213장, v5.511, S-23, 코딩249 Opus)
+- 사용자 원문: "모험준비에서 블록 창 잘 바꿨는데, 튜토는 그대로거든?튜토도 블록 수정된대로 바꾸고"
+- 원인: 타일 안내(tile-plan)는 진짜 모험 준비 화면(`planView`) 위에서 돌지만 화면이 늘 [준비] 탭으로 열려, 카드가 가리키는 가진 타일(plan.hand)·길(plan.road)이 숨은 채였다(C.266 탭 → C.298 작은 네모 → C.307 프리셋 판 이동 뒤 안내만 옛 한 화면 기준). 튜토리얼 전용 블록 창 코드는 따로 없음 — 지울 코드 없음, 옛 문구·대상만 교체.
+- `planView.ts`: `startMode?: 'prep' | 'place'`(처음 열 탭, 없으면 준비). `app.ts`: 타일 안내 차례(`tilesUnlocked && guidePending('tile-plan')`)면 `'place'`. 안내가 끝나면([배치하기]) 그 탭에서 바로 놓기. 다음부터는 원래대로 [준비]로 열림.
+- `guides.json` tile-plan 3장 → 5장: ① 타일 배치 탭(`.bha-plan__modetabs` — "[타일 배치] 탭에서 놓는다 / [준비] 탭에서 사냥터·난이도") ② 가진 타일("길 아래 카드가…", 옛 "아래 카드") ③ 길에 놓기 ④ 조합 ⑤ 배치 프리셋(`.bha-plan__side`, 저장·불러오기). 카드당 2줄 규칙(c126) 그대로. 제목 아이콘 tabs=i-deck · preset=i-stored(`tutorialOverlay.ts`).
+- 기기 버튼: 단계 진행 = ✓([다음]), ◀ 무시, ▲▼ 초점 = 카드 버튼만(기존 가드 그대로). 안내 중 탭 직접 누름도 기존대로 무시.
+- 막힘 점검 `scripts/c352-proof.cjs`(c276 점검 함수 재사용): 호로·사신 × PC 844×390 / 폰 796×384 터치 — 카드 20장 모두 [타일 배치] 탭 위·대상 보임 20/20, 다른 곳 누름·◀·▼6번 **20/20 통과**, 안내 끝 → 타일 한 장 놓기 4/4, 다시 열면 [준비]로·안내 없음 4/4. 오류 0.
+- 테스트 +5(`tests/tile-plan-guide.test.ts`), 갱신 c120(조합 카드 번호 2→3)·c266(처음 탭 = startMode ?? prep).
+- 캡처 `docs/captures/c352/`(1배): hollow-phone-tile-plan(폰, 가진 타일 카드) · shinigami-pc-tile-plan(PC) · hollow-pc-normal-plan(안내 끝난 뒤 일반 모험 준비 [타일 배치], 비교) · hollow-pc-next(안내 다음 = 타일 한 장 놓음). proof.json.
+- 엔진·데이터 수치·세이브·밸런스 변경 없음(BALANCE·SAVE 그대로).
