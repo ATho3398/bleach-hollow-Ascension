@@ -138,7 +138,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
 
 describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
   it('하루 판매 기록이 빈 것으로 생기고, 가방 개수(옛 id)는 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(64); // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(65); // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[56]).toBe('function');
     const s = newSaveData('hollow', T0);
     s.shared.items = { 'battle-potion': 4, 'w-hp-potion': 1 };

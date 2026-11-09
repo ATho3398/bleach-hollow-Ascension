@@ -176,7 +176,7 @@ function unlockTrack(save: SaveData, nowMs: number): void {
   save.difficulty.unlocked = MAX_DIFFICULTY;
   const T = BALANCE.provisional.training;
   save.training.points = Math.max(save.training.points, T.pointsToComplete);
-  save.training.tickets = T.ticketsMax;
+  save.training.tickets = Math.max(save.training.tickets, 3); // 수련권 개수 제한은 없다 (GDD 216장 2) — 테스트는 3장까지 채움
   save.training.completed = true;
   save.training.completedAt ??= nowMs;
   save.rank.history.everRanked = true;
@@ -501,7 +501,7 @@ export function createTestItem(save: SaveData, c: TestItemChoice, nowMs: number 
   else if (cur === 'soulCrystals') sh.soulCrystals += n;
   else if (cur === 'rerollTickets') return addCapped(sh, 'rerollTickets', n, BALANCE.shop.rerollMax);
   else if (cur === 'trainingTickets') {
-    const add = Math.max(0, Math.min(n, BALANCE.provisional.training.ticketsMax - save.training.tickets));
+    const add = Math.max(0, Math.floor(n)); // 수련권 개수 제한 없음 (GDD 216장 2)
     save.training.tickets += add;
     return add;
   } else return 0;

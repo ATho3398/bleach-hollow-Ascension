@@ -144,6 +144,19 @@ export interface BattleRecord {
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */
+/** 수련권 획득 1건 (GDD 216장 3, C.354, 세이브 형식 65): 원정·탑에서 강적/보스를 잡아 나온 수련권.
+ *  source = expedition(runId·lap) · tower(floor). enemyId = 잡은 적(보스면 보스 id) */
+export interface TrainingTicketRecord {
+  at: number;
+  factionId: string;
+  source: 'expedition' | 'tower';
+  from: 'elite' | 'boss';
+  enemyId: string;
+  runId?: number;
+  lap?: number;
+  floor?: number;
+}
+
 export interface TrainingRecord {
   /** 시각(ms) */
   at: number;
@@ -395,6 +408,8 @@ export interface RunLog {
   runs: RunRecord[];
   /** 수련 기록 (C.54, 세이브 형식 18) */
   trainings: TrainingRecord[];
+  /** 수련권 획득 기록 (C.354, 세이브 형식 65, GDD 216장 3) */
+  trainingTickets: TrainingTicketRecord[];
   /** 아란칼화 / 참백도 구상화 도전 기록 (C.220, 세이브 형식 57, GDD 126장 3 — 지금은 보스전 임시). 옛 세이브엔 없음 */
   ascensions?: AscensionRecord[];
   /** 환생 기록 (C.56, 세이브 형식 20) */
@@ -630,6 +645,7 @@ export function emptyRunLog(): RunLog {
     rankBattles: [],
     runs: [],
     trainings: [],
+    trainingTickets: [],
     rebirths: [],
     bossBattles: [],
     shopPurchases: [],

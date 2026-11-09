@@ -26,7 +26,7 @@ import { consumableName } from '../inventory';
 import { battleItemText } from '../shop';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
-import { button, el, icon, tag } from './bha/dom';
+import { button, chip, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
 import { keepOldIcons } from './bha/iconMap';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
@@ -68,6 +68,8 @@ import { abilityProcText } from './evolutionPanel';
 import { shownName } from './displayName';
 
 export interface BattleViewOptions {
+  /** 이기면 승리 창 보상 칸에 보일 줄 (GDD 216장 1: 강적·보스 처치 수련권 '수련권 +1'). 없으면 보상 칸 없음 */
+  winRewards?: string[];
   /** 조우 연출 윗줄: 원정이면 바퀴·칸·타일 정보. 없으면 "전투 연습" */
   banner?: string;
   /** 있으면 필드 가운데 칩 줄 맨 위에 안내(.bha-notice)를 보인다 (체험 전투 "기록되지 않음" 등, C.160) */
@@ -1447,6 +1449,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         el('span', 'bha-battle-ov__eyebrow', `${Math.round(elapsedSeconds(s))}초${s.chain3Count > 0 ? ` · ${labels.chain}${top} ${s.chain3Count}` : ''}`),
         el('h2', 'bha-battle-ov__title', '승리'),
         el('p', 'bha-battle-ov__sub', `${enemyName}을(를) 쓰러뜨렸다.`),
+        ...(opts.winRewards?.length ? [(() => {
+          const row = el('p', 'bha-battle-ov__sub');
+          row.dataset.battle = 'win-rewards';
+          for (const r of opts.winRewards) {
+            const c = chip('', 'guard');
+            c.append(icon('i-rare'), r);
+            row.append(c);
+          }
+          return row;
+        })()] : []),
         actions,
       );
     } else {

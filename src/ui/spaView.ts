@@ -259,6 +259,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
 
   // 방과 같은 상태 박스(배부름·컨디션·영압 안정도·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
   let painted: { hunger: number; cond: number; hp: number } | null = null;
+  let noteFrom: { from: { hunger: number; cond: number; hp: number }; keys: Set<'hunger' | 'cond' | 'hp'> } | null = null;
   const paint = (fraction: number, fullness: number, condition: number) => {
     shown = { fullness, condition };
     paintStatusBox(status, liveStatusChips(n, faction, shown), nameTag);
@@ -269,7 +270,12 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     const moving = prev ? (['hunger', 'cond', 'hp'] as const).filter((k) => Math.abs(now[k] - prev[k]) > 1e-6) : [];
     if (prev) blinkGauges(scene, moving, 0); // 반올림 전 값 — 천천히 오르는 체력도 오르는 동안 이어서
     // 바뀐 값 알림 (209장 3): 같은 자리에서 내용만 바꾸고 끝 시각을 늦춘다(쌓지 않음)
-    if (prev && moving.length > 0) showChangeNote(note, changeItems(prev, now, faction, moving), 0, { extend: true, onShow: placeNote });
+    // 숫자 칩(216장 4)은 알림이 뜬 순간부터 쌓인 양 — 0.1초 한 번의 변화가 아니라 noteFrom(알림 시작 값) → 지금
+    if (prev && moving.length > 0) {
+      if (!noteFrom || note.hidden || note.classList.contains('is-out')) noteFrom = { from: prev, keys: new Set() };
+      for (const k of moving) noteFrom.keys.add(k);
+      showChangeNote(note, changeItems(noteFrom.from, now, faction, [...noteFrom.keys]), 0, { extend: true, onShow: placeNote });
+    }
     painted = now;
     applyBlink(scene);
     clampStatus();

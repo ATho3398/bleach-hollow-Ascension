@@ -1,12 +1,18 @@
 // '무엇이 바뀌나' 알림 (GDD 209장): 상태창 바로 아래 ~ 캐릭터 머리 위 빈 공간에 이번에 바뀐 값만 한 줄 칩 묶음.
-// 칩 = 그 값의 상태창 아이콘 + 이름 + ▲(오름)/▼(내림). 수치는 적지 않는다(201장). 오름/내림 색 = 기존 칩 토큰(좋음 guard · 나쁨 danger — 리스크는 내림이 좋음).
+// 칩 = 그 값의 상태창 아이콘 + 이름 + 정확한 변화량('배부름 +20'·'광기 −3', GDD 216장 4 — C.346 의 ▲▼ 대신). 오름/내림 색 = 기존 칩 토큰(좋음 guard · 나쁨 danger — 리스크는 내림이 좋음).
 // 상태창 깜빡임(gaugeBlink)과 같이 떴다가 깜빡임이 끝나면 사라진다. 연달아 바뀌면 같은 자리에서 새 내용(쌓지 않음). 종족 차이는 넘겨받은 이름(faction)뿐.
 import type { FactionConfig } from '../../engine/faction';
 import { el, icon } from './dom';
 import { ACTION_FILL_MS } from './actionFx';
 import { changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS, type GaugeKey } from './gaugeBlink';
 
-export interface ChangeItem { key: GaugeKey; label: string; icon: string; up: boolean; good: boolean }
+/** delta = 바뀐 양(보이는 값끼리의 차 — 반올림 정수, 체력은 최대 대비 %p). unit = 체력만 '%' */
+export interface ChangeItem { key: GaugeKey; label: string; icon: string; up: boolean; good: boolean; delta: number; unit: '' | '%' }
+
+/** 변화량 글: 오름 '+20', 내림 '−3' (빼기 기호 U+2212), 체력은 '+15%' (GDD 216장 4) */
+export function changeDeltaText(it: Pick<ChangeItem, 'delta' | 'unit'>): string {
+  return `${it.delta >= 0 ? '+' : '−'}${Math.abs(it.delta)}${it.unit}`;
+}
 
 /** 값 이름 → 상태창과 같은 아이콘 (roomLogic statusChips · homeHpMeter) */
 const ICONS: Record<GaugeKey, string> = { hunger: 'i-hunger', cond: 'i-cond', stab: 'i-stab', risk: 'i-risk', hp: 'i-heal' };
@@ -26,7 +32,10 @@ export function changeItems<T extends Partial<Record<GaugeKey, number>>>(from: T
     const a = from[key], b = to[key];
     if (a === undefined || b === undefined || a === b) return [];
     const up = b > a;
-    return [{ key, label: changeLabel(key, f), icon: ICONS[key], up, good: LOWER_IS_GOOD.has(key) ? !up : up }];
+    // 보이는 값(반올림)끼리의 차 (GDD 216장 4). 체력은 비율(0~1)이라 %p 로. 반올림해 0 이면 칩 없음(깜빡임 기준 changedKeys 와 같음)
+    const delta = key === 'hp' ? Math.round(b * 100) - Math.round(a * 100) : Math.round(b) - Math.round(a);
+    if (delta === 0) return [];
+    return [{ key, label: changeLabel(key, f), icon: ICONS[key], up, good: LOWER_IS_GOOD.has(key) ? !up : up, delta, unit: key === 'hp' ? '%' as const : '' as const }];
   });
 }
 
@@ -35,8 +44,8 @@ export function changeChip(it: ChangeItem): HTMLElement {
   const c = el('span', `bha-chip bha-chip--${it.good ? 'guard' : 'danger'} bha-room__changechip bha-room__chip--${it.key}`);
   c.dataset.change = it.key;
   c.dataset.dir = it.up ? 'up' : 'down';
-  c.append(icon(it.icon), el('span', 'bha-room__changename', it.label), el('b', 'bha-room__changedir', it.up ? '▲' : '▼'));
-  c.title = `${it.label} ${it.up ? '오름' : '내림'}`;
+  c.append(icon(it.icon), el('span', 'bha-room__changename', it.label), el('b', 'bha-room__changedir bha-num', changeDeltaText(it)));
+  c.title = `${it.label} ${changeDeltaText(it)}`;
   return c;
 }
 
@@ -98,12 +107,12 @@ export function showChangeNote(box: HTMLElement, items: readonly ChangeItem[], m
     clearTimeout(prev.timer);
     clearTimeout(prev.out);
   }
-  const sig = items.map((i) => `${i.key}:${i.up ? 1 : 0}`).join(',');
+  const sig = items.map((i) => `${i.key}:${i.delta}`).join(',');
   if (o.say !== undefined || !o.extend) setChangeSay(box, o.say ?? null); // 새 알림 = 새 행동 글(없으면 줄 숨김). 온천(extend)은 그대로
   if (box.hidden || box.dataset.sig !== sig || box.classList.contains('is-out')) {
     noteParts(box).row.replaceChildren(...items.map(changeChip));
     box.dataset.sig = sig;
-    box.setAttribute('aria-label', items.map((i) => `${i.label} ${i.up ? '오름' : '내림'}`).join(', '));
+    box.setAttribute('aria-label', items.map((i) => `${i.label} ${changeDeltaText(i)}`).join(', '));
     if (box.hidden || box.classList.contains('is-out') || !o.extend) {
       box.classList.remove('is-in', 'is-out');
       void box.offsetWidth;
@@ -167,7 +176,7 @@ export function changeNoteFit(note: Rect, scene: Rect, blockers: readonly Rect[]
 /**
  * 알림 자리 정하기 (방·온천 공용, GDD 209장 1 · 마스터 결정 14:3x): 자리는 늘 '상태창 아래 ~ 머리 위' 한 곳(옆·위 대안 없음).
  * head = 캐릭터 그림 머리 윗변(y)과 캐릭터 상자 좌우 — 그 아래 칸은 피한다(머리·몸과 겹침 0). 물건 버튼·장면 끝에 걸리면 가로로만 민다.
- * 한 줄 = [행동 글 · 칩] → [행동 글 · 줄인 칩] → [칩] → [줄인 칩](아이콘+▲▼). 다 안 되면 숨기고 false(부르는 쪽은 예전 말풍선). 잴 수 없으면(붙기 전) true
+ * 한 줄 = [행동 글 · 칩] → [행동 글 · 줄인 칩](아이콘+숫자) → [칩] → [줄인 칩]. 다 안 되면 숨기고 false(부르는 쪽은 예전 말풍선). 잴 수 없으면(붙기 전) true
  */
 export function placeChangeNote(note: HTMLElement, o: { scene: HTMLElement; head: { y: number; left: number; right: number }; blockers: readonly HTMLElement[] }): boolean {
   if (note.hidden) return false;

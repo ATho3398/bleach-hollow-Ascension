@@ -68,6 +68,9 @@ export interface TrainingHandlers {
   onAscend?: () => void;
 }
 
+/** 수련권 얻는 법 한 줄 (GDD 216장 1·2): 강적·보스 처치 때 무작위, 개수 제한 없음 */
+const TICKET_HOW = '모험·탑에서 강적·보스를 잡으면 얻을 때가 있다 (한 판에 1장)';
+
 /** 수련장 묶음의 두 화면: 수련(본능 수련) · 훈련 인형. 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
 export type TrainingScreenId = 'train' | 'practice';
 
@@ -95,20 +98,19 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     })(),
   });
 
-  // 왼쪽: 수련치 막대(0/60), 수련권(최대 3), 상태 안내
+  // 왼쪽: 수련치 막대(0/60), 수련권(개수 제한 없음 — GDD 216장 2), 상태 안내
   const prog = panel({ title: '수련', aside: t.completed ? tag('수련 완료', 'kind') : undefined });
   prog.dataset.training = 'progress';
   const pts = Math.min(t.points, TX.pointsToComplete);
   prog.append(meter({ kind: 'stab', label: '수련치', icon: 'i-stab', value: pts, max: TX.pointsToComplete, valueText: `${pts} / ${TX.pointsToComplete}`, full: t.completed }));
   const tickets = el('div', 'bha-train__tickets');
-  tickets.setAttribute('aria-label', `수련권 ${t.tickets} / ${TX.ticketsMax}`);
+  tickets.setAttribute('aria-label', `수련권 ${t.tickets}`);
   tickets.append(el('span', 'bha-train__ticketlabel', '수련권'));
-  for (let i = 0; i < TX.ticketsMax; i++) tickets.append(el('i', i < t.tickets ? 'is-on' : ''));
-  tickets.append(el('span', 'bha-num', `${t.tickets}/${TX.ticketsMax}`), el('span', 'bha-faint', '모험에서 돌아올 때마다 1장 (최대 3장, 한 판에 1장)'));
+  tickets.append(el('span', 'bha-num', `${t.tickets}`), el('span', 'bha-faint', TICKET_HOW));
   prog.append(tickets);
   const notes: HTMLElement[] = [];
   if (!gate.ok && gate.reason === 'tier') notes.push(notice('info', trainingLockedText(faction), { icon: 'i-lock' }));
-  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험에서 돌아오면 1장 생긴다.', { icon: 'i-lock' }));
+  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험·탑에서 강적·보스를 잡으면 얻을 때가 있다.', { icon: 'i-lock' }));
   else if (!gate.ok && gate.reason === 'condition') notes.push(notice('warn', `컨디션이 ${TX.minCondition} 미만이라 수련할 수 없다. ${faction.nestActions.sleep}(으)로 회복한다.`));
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). ${faction.riskGaugeName}이(가) 오르는 종목은 조심해야 한다.`));
@@ -387,7 +389,7 @@ export function trainingResultView(dev: Device, faction: FactionConfig, save: Sa
       const rose = out.condition > 0 || out.hunger < 0;
       return down ? [el('p', 'bha-faint', down)] : rose ? [] : [el('p', 'bha-faint', `${faction.nestName} 수치 변화 없음`)];
     })(),
-    el('p', 'bha-faint', `남은 수련권 ${t.tickets}/${TX.ticketsMax}`),
+    el('p', 'bha-faint', `남은 수련권 ${t.tickets}`),
   );
   const left = [panel({ title: `${cfg.name} · ${out.level}단계 ${out.won ? '승리' : '패배'}`, aside: out.won ? tag('승리', 'kind') : undefined }, rows)];
   const right: HTMLElement[] = [];

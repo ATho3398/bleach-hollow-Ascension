@@ -282,7 +282,7 @@
 .bha-room__change .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c, currentColor); }
 .bha-room__changeprobe .bha-icon { width: 14px; height: 14px; }
 .bha-room__changename { max-width: 7em; overflow: hidden; text-overflow: ellipsis; color: var(--bha-text-1); }
-.bha-room__change.is-compact .bha-room__changename { display: none; } /* 자리가 모자라면 아이콘 + ▲/▼ 만 (이름은 툴팁·읽기 글) */
+.bha-room__change.is-compact .bha-room__changename { display: none; } /* 자리가 모자라면 아이콘 + 숫자만 (이름은 툴팁·읽기 글, GDD 216장 4) */
 .bha-room__change.is-in { animation: bha-change-in 0.2s ease-out; }
 .bha-room__change.is-out { animation: bha-change-out 0.2s ease-in forwards; }
 @keyframes bha-change-in { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }

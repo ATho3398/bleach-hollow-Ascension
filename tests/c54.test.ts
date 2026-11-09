@@ -63,17 +63,20 @@ describe('해방 리스크 (GDD 22-5 → 83장)', () => {
 });
 
 describe('수련 상태 (GDD 22-4·22-5)', () => {
-  it('수련권: 원정 귀환마다 +1(승패 무관), 최대 3', () => {
+  it('수련권: 귀환 지급 없음 — 원정에서 나온 수련권(ticketFinds)만, 개수 제한 없음 (GDD 216장, C.354)', () => {
     const s = newSaveData('hollow', 1);
     expect(s.training.tickets).toBe(0);
+    let found = 0;
     for (let i = 0; i < 4; i++) {
       const exp = playExpedition(createExpedition({ factionId: 'hollow', seed: 10 + i, hunger: 20, condition: 80, deck: ['prey-nest-a'] }), { returnAfterLap: 1 });
+      found += exp.ticketFinds?.length ?? 0;
       recordExpedition(s, exp, 0);
-      expect(s.training.tickets).toBe(Math.min(TX.ticketsMax, i + 1));
+      expect(s.training.tickets).toBe(found);
     }
     const t = newTrainingState();
-    t.tickets = TX.ticketsMax;
-    expect(addTrainingTicket(t)).toBe(false);
+    t.tickets = 99;
+    addTrainingTicket(t);
+    expect(t.tickets).toBe(100);
   });
 
   it('시작 조건: 5단계 미만 · 수련권 0 · 컨디션 30 미만이면 막힌다', () => {
@@ -152,7 +155,7 @@ describe('수련 상태 (GDD 22-4·22-5)', () => {
     const t = { ...newTrainingState(), points: 70, tickets: 3, completed: true, completedAt: 9 };
     t.wins.clash = 4;
     expect(resetTrainingKeepCompletion(t)).toEqual({ ...newTrainingState(), completed: true, completedAt: 9 });
-    expect(sanitizeTraining({ points: -3, tickets: 99, wins: { duel: 2.7, bogus: 4 }, completed: 'yes' })).toEqual({ ...newTrainingState(), tickets: TX.ticketsMax, wins: { duel: 2, dodge: 0, clash: 0, chain: 0 } });
+    expect(sanitizeTraining({ points: -3, tickets: 99, wins: { duel: 2.7, bogus: 4 }, completed: 'yes' })).toEqual({ ...newTrainingState(), tickets: 99, wins: { duel: 2, dodge: 0, clash: 0, chain: 0 } });
     expect(sanitizeTraining(null)).toEqual(newTrainingState());
   });
 });

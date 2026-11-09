@@ -147,6 +147,7 @@ export function towerResultView(root: HTMLElement, faction: FactionConfig, f: To
   ];
   if (res.firstClear) rows.push({ label: '첫 클리어 보상', icon: 'i-rare', mod: 'good', value: towerRewardText(faction, f.reward) });
   else if (won) rows.push({ label: '보상', icon: 'i-rare', value: '이미 받은 층' });
+  if (res.ticket) rows.push({ label: '수련권', icon: 'i-rare', mod: 'good', value: '수련권 +1' }); // 강적·보스 층 무작위 (GDD 216장 1)
   rows.push({ label: '다음', icon: 'i-play', value: res.next === null ? '정상에 올랐다' : towerFloorText(faction, res.next) });
   const dock = el('div', 'bha-dock');
   if (h.onNext) dock.append(button({ label: `${towerFloorText(faction, res.next!)} 도전`, icon: 'i-play', variant: 'primary', size: 'lg', onClick: h.onNext }));

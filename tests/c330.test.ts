@@ -95,7 +95,7 @@ describe('집계 (200장 3·4)', () => {
 
 describe('세이브 (200장 4·5, 123장 6)', () => {
   it('형식 64 · 문턱 54 고정 · 새 세이브 enemyDex 빈 도감', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(64);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(64); // C.354 에서 65 (수련권 기록)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[63]).toBe('function');
     expect(newSaveData('hollow', 1000).enemyDex).toEqual({});

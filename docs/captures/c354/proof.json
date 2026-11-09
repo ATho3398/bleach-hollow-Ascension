@@ -1,0 +1,67 @@
+{
+ "checks": {
+  "ph": {
+   "feedBefore": {
+    "hunger": 40.005830555555555,
+    "cond": 60,
+    "risk": 30,
+    "stab": 49.99766833333333,
+    "tickets": 3,
+    "ticketLog": 0
+   },
+   "feedChips": [
+    "hunger:배부름+5:good",
+    "hunger:+20:good"
+   ],
+   "feedAfter": {
+    "hunger": 35.00926111111111,
+    "cond": 60,
+    "risk": 30,
+    "stab": 49.99766833333333,
+    "tickets": 3,
+    "ticketLog": 0
+   },
+   "towerSeed": 4,
+   "winRewards": "수련권 +1",
+   "towerResult": "도전의 탑 · 5층 · 카파라손돌파카파라손을 쓰러뜨렸다.6층 도전도전의 탑층5층 · 강적 · ★1전투 시간0.5초첫 클리어 보상골드 10 · 큰 사냥감 1수련권수련권 +1다음6층",
+   "afterTower": {
+    "hunger": 35.0297625,
+    "cond": 60,
+    "risk": 30,
+    "stab": 49.99451277777777,
+    "tickets": 3,
+    "ticketLog": 1
+   }
+  },
+  "pc": {
+   "feedBefore": {
+    "hunger": 40.005809722222224,
+    "cond": 60,
+    "risk": 30,
+    "stab": 49.99767666666666,
+    "tickets": 3,
+    "ticketLog": 0
+   },
+   "feedChips": [
+    "hunger:배부름+5:good",
+    "hunger:+20:good"
+   ],
+   "feedAfter": {
+    "hunger": 35.00922916666667,
+    "cond": 60,
+    "risk": 30,
+    "stab": 49.99767666666666,
+    "tickets": 3,
+    "ticketLog": 0
+   },
+   "ticketsText": "수련권7모험·탑에서 강적·보스를 잡으면 얻을 때가 있다 (한 판에 1장)"
+  }
+ },
+ "shots": [
+  "ph-feed.png",
+  "ph-tower-win.png",
+  "pc-feed.png",
+  "pc-training.png"
+ ],
+ "errors": []
+}

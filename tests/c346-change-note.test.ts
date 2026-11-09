@@ -57,16 +57,16 @@ describe('바뀐 값만 칩 (209장 2)', () => {
     expect(changeItems({ risk: 10 }, { risk: 20 }, S)[0]).toMatchObject({ label: S.riskGaugeName, up: true, good: false });
     expect(changeItems(null, { risk: 1 }, H)).toEqual([]);
   });
-  it('칩 = 상태창과 같은 아이콘 + 이름 + ▲/▼, 수치 없음, 좋음 = guard · 나쁨 = danger (새 색 없음)', () => {
+  it('칩 = 상태창과 같은 아이콘 + 이름 + 정확한 변화량(C.354, GDD 216장 4 — ▲▼ 대신), 좋음 = guard · 나쁨 = danger (새 색 없음)', () => {
     const box = changeNoteBox() as unknown as FakeEl;
     showChangeNote(box as unknown as HTMLElement, changeItems({ hunger: 40, risk: 30 }, { hunger: 30, risk: 20 }, H));
     const [a, b] = row(box).children;
     expect(a!.className).toContain('bha-chip--danger'); // 배부름 내림 = 나쁨
     expect(b!.className).toContain('bha-chip--guard'); // 광기 내림 = 좋음
     expect(a!.children[0]!.tag).toBe('svg');
-    expect(a!.text).toBe(`${H.fullnessName}▼`);
-    expect(b!.text).toBe(`${H.riskGaugeName}▼`);
-    expect(row(box).text).not.toMatch(/\d/);
+    expect(a!.text).toBe(`${H.fullnessName}−10`);
+    expect(b!.text).toBe(`${H.riskGaugeName}−10`);
+    expect(row(box).text).not.toMatch(/[▲▼]/);
     expect(sayLine(box).hidden).toBe(true); // 행동 글 없으면 위 줄 숨김
   });
 });
@@ -186,7 +186,7 @@ describe('말풍선 · 연결 (209장 4·5)', () => {
   it('방 돌보기·방 들어올 때·방 가방·온천에 연결, 걷기 판·수련 결과(statusFillFx 기본)는 대상 아님', () => {
     expect(read('src/ui/roomView.ts')).toMatch(/noteChanges\(enterItems/);
     expect(read('src/ui/lcdScreens.ts')).toMatch(/note: changeItems\(before, to, faction, blink\)/);
-    expect(read('src/ui/spaView.ts')).toMatch(/showChangeNote\(note, changeItems\(prev, now, faction, moving\), 0, \{ extend: true/);
+    expect(read('src/ui/spaView.ts')).toMatch(/showChangeNote\(note, changeItems\(noteFrom\.from, now, faction, \[\.\.\.noteFrom\.keys\]\), 0, \{ extend: true/);
     expect(read('src/ui/trainingView.ts')).not.toMatch(/changeNote|note:/);
     expect(read('src/ui/expeditionView.ts')).not.toMatch(/changeNote/);
   });

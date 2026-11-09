@@ -17,7 +17,7 @@ import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playe
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
-import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, type ExpeditionState } from '../engine/expedition';
+import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, ticketDropOf, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
@@ -29,7 +29,7 @@ import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, tickIdle, type IdleAccrual,
-  performRebirth, recordTraining, recordTowerBattle, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
+  performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
 import { genderScreen, nameScreen, type IdentityMode } from './identityView';
@@ -1671,6 +1671,7 @@ export function startApp(host: HTMLElement): void {
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
+      ...(towerTicketDrop(f, s.seed) ? { winRewards: ['수련권 +1'] } : {}), // 강적·보스 층 수련권 (GDD 216장 1) — recordTowerBattle 과 같은 굴림
       bg: towerSceneBg(faction, f),
       onQuit: () => nav.pop(),
       onEnd: (done) => {
@@ -1851,6 +1852,8 @@ export function startApp(host: HTMLElement): void {
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       risk: exp.risk,
       tutorial: tutorialFor(),
+      // 수련권 드롭 (GDD 216장 1): 이 전투를 이기면 나올지 시드로 미리 안다 → 승리 창 보상 칸
+      ...(ticketDropOf(exp) ? { winRewards: ['수련권 +1'] } : {}),
       // 원정 전투 일시정지 [귀환] (GDD 100장 v5.220, C.172): 패배로 치지 않고 걷기 중간 귀환과 같은 처리(짧은 결과 카드 · 방)
       ...(canAbortBattle(exp) ? { onReturn: () => {
         abortExpedition(exp);

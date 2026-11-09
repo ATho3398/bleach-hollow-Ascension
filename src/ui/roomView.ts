@@ -307,7 +307,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const note = changeNoteBox();
   // 한 줄 높이 재기용 숨은 칩 (상태창을 올릴 거리 — 글자 크기 1.15 등에 따라 달라진다)
   const probe = el('span', 'bha-room__changerow bha-room__changeprobe');
-  probe.append(changeChip({ key: 'hunger', label: '', icon: 'i-hunger', up: true, good: true }));
+  probe.append(changeChip({ key: 'hunger', label: '', icon: 'i-hunger', up: true, good: true, delta: 20, unit: '' }));
   chipRow.append(statusBtn, statusInfoBtn, note, probe);
   /** 알림 자리 (209장 1 · 마스터 결정): 늘 상태창 아래 ~ 머리 위 한 곳. 상태창·ⓘ·이름표·물건 버튼·그린 머리와 겹치면 가로로만 밀고, 그래도 안 되면 숨기고 false */
   const placeNote = (): boolean => placeChangeNote(note, {

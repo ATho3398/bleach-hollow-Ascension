@@ -10,6 +10,7 @@ import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '..
 import { deckTilesFor, getTile } from '../../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
+import { rollTrainingTicket } from '../training/training';
 import { getTrait } from '../../data/traits';
 import {
   absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
@@ -52,6 +53,8 @@ const PET_SEED_SALT = 0x7f4a7c15;
 const GEAR_SEED_SALT = 0x2f6b9d43;
 /** 영구 타일 굴림 전용 난수 (GDD 121장 4 ①): 원정 끝에 한 번 */
 const PERM_TILE_SEED_SALT = 0x3c6ef372;
+/** 수련권 드롭 굴림 (GDD 216장 1): 이긴 전투마다 (시드 ^ 이 값 ^ 전투 번호) — 원정 난수를 건드리지 않는다 */
+const TICKET_SEED_SALT = 0x4cf5ad43;
 const TV = BALANCE.provisional.tileVariants;
 const BX = BALANCE.provisional.boss;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -326,6 +329,8 @@ export interface ExpeditionState extends RiskState {
   gearDrops?: boolean;
   /** 이 원정에서 나온 장비 (귀환 때 game.ts 가 보관함에 — 가득이면 골드로) */
   gearFinds?: { roll: GearRoll; lap: number; from: 'normal' | 'elite' | 'boss' }[];
+  /** 이 원정에서 나온 수련권 (GDD 216장 1, C.354): 강적·보스를 이긴 전투마다 굴림. 귀환 때 game.ts 가 수련권에 더하고 런 로그 trainingTickets 에 남긴다. 옛 원정 저장엔 없음 */
+  ticketFinds?: { lap: number; from: 'elite' | 'boss'; enemyId: string }[];
   /** 출발 때 돌봄 상태 (GDD 102-2): 쇠약 = 전투 시작 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow. 없으면 효과 없음 */
   care?: CareCarry;
 }
@@ -965,6 +970,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   healCarry(exp, winHealOf(exp.lap)); // 사냥 힐 (GDD 121장 6): 바퀴가 갈수록 줄고 4바퀴부터 0
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
+  // 수련권 드롭 (GDD 216장 1): 강적 20%·보스 50%. 이 전투 번호(= 방금 넣은 기록 자리)로 굴려 화면이 미리 알 수 있다(ticketDropOf)
+  if (ticketDropOf(exp, exp.battles.length - 1, pending)) (exp.ticketFinds ??= []).push({ lap: exp.lap, from: pending.boss ? 'boss' : 'elite', enemyId: pending.boss ?? pending.enemy.id });
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지 — 임시 타일 (GDD 121장 4 ②)
   if (exp.victoriesThisLap === 0) drawTile(exp, 0, 'win');
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
@@ -1368,6 +1375,16 @@ function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): 
   if (rand() >= Math.min(1, G.dropChance[from] * lapRewardMult(exp.lap))) return; // 이어하기 배율 (121장 5)
   const roll = rollGear({ grade: rollGrade(G.dropGrades[from]!, rand), star: exp.difficulty }, rand);
   (exp.gearFinds ??= []).push({ roll, lap: exp.lap, from });
+}
+
+/** 이 원정의 battleIndex 번째 전투(0부터)를 이기면 수련권이 나오나 (GDD 216장 1). 지금 상대(pending) 등급으로 본다 — 강적·보스만, 튜토리얼은 없음.
+ *  전투 화면이 승리 창에 '수련권 +1' 을 미리 띄울 때 exp.battles.length 로, finishBattle 은 기록을 넣은 뒤 length − 1 로 부른다(같은 값) */
+export function ticketDropOf(exp: ExpeditionState, battleIndex: number = exp.battles.length, p: PendingBattle | null = exp.pending): boolean {
+  if (!p || exp.tutorial) return false;
+  const from = p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'normal';
+  if (from === 'normal') return false;
+  const rng = createRng((exp.seed ^ TICKET_SEED_SALT ^ Math.imul(battleIndex + 1, 2246822519)) >>> 0);
+  return rollTrainingTicket(from, () => nextFloat(rng));
 }
 
 /** 바퀴 끝 펫 굴림 (GDD 90장): 바퀴 끝 보상 펫(petDrops, 2%) · pet-seek 타일 +1장(10%). 바퀴마다 따로 만든 난수라 다른 굴림을 밀지 않는다 */
