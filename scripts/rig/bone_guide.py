@@ -3,7 +3,7 @@
 사용자 원문(2026-10-29): "필요한 모양 길이나 각도만 맞춰서 박스 안에 선으로 그려줘 … 뼈대만 그려주면 된단 얘기야. 내가 디자인을 거기 맞출게"
 
 뼈대 선 = 뼈대 데이터 skeletons.<몸>.<슬롯> = [{pts 꺾은선(캔버스 좌표), w 굵기}]. 칸 = 선을 굵기만큼 둘러싼 자리(+ 지금 그림이 있으면 그 자리까지).
-1배 guide.png 의 칸 테두리·뼈대 선·관절 점은 반투명이라 가져올 때 무시된다(불투명 칸만 그 부위 그림). 8배 guide-x8.png 에 칸 이름·관절 이름.
+1배 guide.png 의 칸 테두리·뼈대 선·관절 점은 반투명이라 가져올 때 무시된다(불투명 칸만 그 부위 그림). 지금 그림이 있는 부위는 그 그림을 칸 안 제자리에 불투명으로 넣는다(2026-11-10). 8배 guide-x8.png 에 칸 이름·관절 이름.
 guide.json = 칸 → 슬롯·캔버스 자리(guide.py 와 같은 모양 + rig).
 사용: python3 scripts/rig/bone_guide.py <뼈대 id> <외형 id> <출력 폴더>
      예) python3 scripts/rig/bone_guide.py beast beast-test docs/design/user-art/beast-guide
@@ -106,14 +106,25 @@ def main(rig_id, look_id, out):
             img[sy + h, sx - 1:sx + w + 1] = BOX
         img[sy - 1:sy + h + 1, sx - 1] = BOX
         img[sy - 1:sy + h + 1, min(W - 1, sx + w)] = BOX
+        # 지금 그림이 있으면 칸 안 제자리에 불투명으로(그 위에 고쳐 그림 — 사용자 2026-11-10 "짐승이랑 뱀 시트 보내줘"). 뼈대 선·관절 점은 그림 없는 칸에만
+        if b['slot'] in art:
+            a = np.array(Image.open(os.path.join(DRAFT_DIR, rig_id, art[b['slot']]['art'] + '.png')).convert('RGBA'))
+            (ax, ay) = art[b['slot']]['at']
+            for yy in range(a.shape[0]):
+                for xx in range(a.shape[1]):
+                    if a[yy, xx, 3]:
+                        X, Y = ax - cx + sx + xx, ay - cy + sy + yy
+                        if sx <= X < sx + w and sy <= Y < sy + h:
+                            img[Y, X] = a[yy, xx]
         for st in skel[b['slot']]:
             for p0, p1 in zip(st['pts'], st['pts'][1:]):
                 for px, py in line_px((p0[0] - cx + sx, p0[1] - cy + sy), (p1[0] - cx + sx, p1[1] - cy + sy)):
-                    if sx <= px < sx + w and sy <= py < sy + h:
+                    if sx <= px < sx + w and sy <= py < sy + h and img[py, px, 3] != 255:
                         img[py, px] = BONE
         for j in b['pivots']:
             px, py = piv[j][0] - cx + sx, piv[j][1] - cy + sy
-            img[py, px] = JOINT
+            if img[py, px, 3] != 255:
+                img[py, px] = JOINT
     os.makedirs(out, exist_ok=True)
     Image.fromarray(img).save(os.path.join(out, 'guide.png'))
     json.dump({'note': '뼈대 가이드 칸(GDD 115-A 47): sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안 반투명 선 = 뼈대(가져올 때 무시), 불투명 칸만 그 슬롯 그림',
