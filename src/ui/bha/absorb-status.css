@@ -138,6 +138,12 @@
 .bha-resultv2--lose .bha-result__big { color: var(--bha-accent-hi); }
 .bha-result__big .bha-icon { width: 48px; height: 48px; }
 .bha-resultv2 .bha-growth { padding: 0; border: 0; background: none; display: flex; flex-direction: column; gap: var(--bha-sp-2); }
+/* 결과 노력치 칩 (GDD 217장 3): 209장 바뀐 값 칩과 같은 알약 칩(bha-chip--guard) · 막힌 몫은 칩 옆 작은 '가득' */
+.bha-evchips { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--bha-sp-1); }
+.bha-evchips__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); }
+.bha-evchip { gap: var(--bha-sp-1); padding: 0 var(--bha-sp-3) 0 var(--bha-sp-2); min-height: 0; line-height: 1.35; }
+.bha-evchip__name { color: var(--bha-text-1); }
+.bha-evchips__full { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
 .bha-resultv2 .bha-growth__line { font-size: var(--bha-fs-sm); color: var(--bha-text-1); font-weight: 700; text-align: center; }
 /* 진화했으면 배지 (황동) — 이름은 둥지 진화 연출에서 처음 보인다 (GDD 176장 6) */
 .bha-resultv2 .bha-result__evolve { padding: var(--bha-sp-3) var(--bha-sp-4); border-radius: var(--bha-r-xs); background: var(--bha-toast-bg); box-shadow: 0 0 0 1px var(--bha-toast-line); }

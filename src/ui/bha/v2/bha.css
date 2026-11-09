@@ -279,6 +279,8 @@
 .bha-root .bha-modal{position:absolute;z-index:31;border-radius:var(--bha-r-lg);padding:10px 12px;
   background:linear-gradient(180deg,var(--bha-bg-3),var(--bha-bg-2));border:1px solid var(--bha-line-2);box-shadow:inset 0 1px 0 var(--bha-edge),0 12px 30px rgba(0,0,0,.55)}
 .bha-root .bha-modal__close{position:absolute;top:8px;right:8px}
+/* GDD 217장 4: × 가 있는 창의 머리 줄(첫 줄)은 × 자리만큼 오른쪽을 비운다 — 글이 × 밑으로 들어가지 않게 (× 36 + 오른쪽 8 + 틈 4 = sp-10) */
+.bha-root .bha-modal:has(> .bha-modal__close) > :first-child{padding-right:var(--bha-sp-10)}
 .bha-root .bha-stepper{display:flex;gap:6px;align-items:center}
 
 /* ───────── 목록·표 ───────── */

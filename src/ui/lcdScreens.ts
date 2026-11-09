@@ -39,7 +39,7 @@ import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/econo
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, evCaps, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -177,7 +177,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const cap = evCaps(evo.tierIndex);
   const evLineP = h('p', 'bha-faint');
   evLineP.dataset.evTotal = String(evTotal(evo.ev));
-  evLineP.append('노력치 ', evText(`${Math.round(evTotal(evo.ev) * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
+  // 튜토리얼 보상(상한 밖, GDD 217장 2)은 상한 숫자에 세지 않고 따로 적는다
+  const counted = evTotal(evCounted(evo));
+  const free = evo.evFree ? evTotal(evo.evFree) : 0;
+  evLineP.append('노력치 ', evText(`${Math.round(counted * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
+  if (free > 0) evLineP.append(` · 튜토리얼 +${Math.round(free * 100) / 100} 상한 밖`);
   // '초록 +n' 뜻 = 표 아래 작은 줄 (GDD 189장 5: 제목 줄에서 내림)
   evLineP.append(h('br'), h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
   statBox.after(evLineP);
