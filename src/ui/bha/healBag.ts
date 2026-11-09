@@ -13,11 +13,17 @@ export interface HealBagItem {
   count: number;
   /** 효과 한 줄 ("체력 +10%") */
   detail: string;
+  /** 소모품 칸에 끼운 것 (GDD 212장 1 — 모험 중 쓸 수 있는 유일한 것) */
+  slotted?: boolean;
+  /** 못 쓰는 이유 (끼운 것이 아님 · 이번 바퀴에 씀 등, GDD 212장 1·2). 있으면 카드 흐림, 누르면 이유 한 줄 */
+  lock?: string | null;
 }
 
 export interface HealBagSpec {
   /** 지금 가진 회복 물건 (0개도 흐리게 보인다) */
   items: () => HealBagItem[];
+  /** 소모품 칸 상태 한 줄 (GDD 212장 2: '회복약 ×2 · 이번 바퀴 1번 쓸 수 있다' / '이번 바퀴에 이미 썼다'). 없으면 숨김 */
+  status?: () => string;
   /** 지금 체력 비율 0~1 */
   hp: () => number;
   /** 쓴다: 성공이면 전·후 비율, 못 쓰면 이유 */
@@ -60,8 +66,13 @@ export function healBag(o: HealBagSpec): () => void {
     const cards = o.items().map((it) => {
       const c = itemCard({
         id: it.id, name: it.name, detail: it.detail, art: iconArt('i-heal'), badge: `×${it.count}`,
-        state: it.count > 0 && pct < 100 ? undefined : 'locked',
+        foot: it.slotted ? (it.lock ? '끼움 · 씀' : '끼움') : undefined,
+        state: it.lock || !(it.count > 0 && pct < 100) ? 'locked' : it.slotted ? 'worn' : undefined,
         onClick: () => {
+          if (it.lock) {
+            note = it.lock;
+            return render(it.id);
+          }
           const r = o.use(it.id);
           if (!r.ok) {
             note = r.reason;
@@ -82,6 +93,7 @@ export function healBag(o: HealBagSpec): () => void {
     modal.replaceChildren(
       el('h2', 'bha-modal__title', '가방 — 회복 물건'),
       hpSlot,
+      ...(o.status ? [el('p', 'bha-modal__body bha-healbag__slot', o.status())] : []),
       itemGrid(cards, '회복 물건이 없다. 상점 약 칸에서 산다.', 'i-heal'),
       ...(note ? [el('p', 'bha-modal__body', note)] : []),
       (() => {

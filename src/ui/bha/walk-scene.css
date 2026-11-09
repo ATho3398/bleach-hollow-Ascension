@@ -213,3 +213,11 @@
 .bha-lapend .bha-continue__notes > .bha-continue__info { align-self: center; }
 /* 뽑기 카드 설명은 두 줄까지(전체는 카드 설명 title) — 긴 설명 하나가 카드 줄을 키워 길·안내 줄을 버튼 아래로 밀지 않게 (C.308) */
 .bha-lcd .bha-exp .bha-lapend .bha-draft__hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* 바퀴 끝 창 소모품 칸 한 줄 (GDD 212장 3, C.356): [귀환]/[한 바퀴 더] 위 고정 높이 한 줄 — 아이콘·'소모품' · 끼운 것과 이번 바퀴 상태(말줄임) · [바꾸기] */
+.bha-lapitem { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--bha-sp-2); min-height: 32px; font-size: var(--bha-fs-xs); }
+.bha-lapitem__label { display: inline-flex; align-items: center; gap: 4px; color: var(--bha-text-2); }
+.bha-lapitem__label > svg { width: 16px; height: 16px; }
+.bha-lapitem__line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bha-text-1); }
+.bha-lapitem > .bha-btn { min-height: 28px; }
+/* 걷기 가방 머리 소모품 칸 한 줄 (GDD 212장 2) */
+.bha-healbag__slot { margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }

@@ -333,6 +333,28 @@ export interface ExpeditionState extends RiskState {
   ticketFinds?: { lap: number; from: 'elite' | 'boss'; enemyId: string }[];
   /** 출발 때 돌봄 상태 (GDD 102-2): 쇠약 = 전투 시작 최대 체력 −weakMaxHpCut, 피곤 = 블록 생성 간격 +tiredSpawnSlow. 없으면 효과 없음 */
   care?: CareCarry;
+  /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
+   *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
+  lapItems?: LapItemUse[];
+}
+
+/** 모험 소모품 한 번 사용 (GDD 212장 5 — 런 로그) */
+export interface LapItemUse {
+  lap: number;
+  itemId: string;
+  where: 'walk' | 'battle';
+}
+
+/** 이번 바퀴에 끼운 소모품을 이미 썼나 (GDD 212장 2): 걷기·전투 어디서든 한 번 쓰면 그 바퀴 끝까지. 다음 바퀴(lap+1)는 새로 1번 */
+export function lapItemUsed(exp: Pick<ExpeditionState, 'lap' | 'lapItems'>): boolean {
+  return (exp.lapItems ?? []).some((u) => u.lap === exp.lap);
+}
+
+/** 이번 바퀴 사용을 남긴다 (GDD 212장 2·5). 이미 썼으면 false(아무것도 안 바뀜) */
+export function markLapItem(exp: Pick<ExpeditionState, 'lap' | 'lapItems'>, itemId: string, where: LapItemUse['where']): boolean {
+  if (lapItemUsed(exp)) return false;
+  (exp.lapItems ??= []).push({ lap: exp.lap, itemId, where });
+  return true;
 }
 
 /** 출발 때 둥지에서 가져가는 상태 (GDD 102-2·102장 수정 v5.228 빈사) */
@@ -1749,6 +1771,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     continueRun: continueRunOf(exp),
     ...(exp.abandoned ? { abandoned: exp.abandoned } : {}),
     kills: killsByEnemy(exp.battles), // 잡은 적 id·수 (GDD 200장 6, C.330)
+    ...(exp.lapItems?.length ? { lapItems: exp.lapItems.map((u) => ({ ...u })) } : {}), // 바퀴별 쓴 소모품 (GDD 212장 5)
   };
 }
 

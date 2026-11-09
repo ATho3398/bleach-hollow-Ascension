@@ -189,7 +189,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${SX.wakeCondition} (${BALANCE.provisional.expedition.conditionMax} 위로는 안 오른다) · 가방에 쌓이고 가방에서 쓴다`;
     case 'medicine': return medicineText(item.cures!);
-    case 'battle': return healDaily(item.id) !== null ? `${battleItemText(item.id)} · 모험 걷기 중 [가방]에서 쓰고, 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번` : `${battleItemText(item.id)} · 장비 화면 소모품 칸에 넣으면 전투 [소모품]으로 전투당 1번`;
+    case 'battle': return healDaily(item.id) !== null ? `${battleItemText(item.id)} · 소모품 칸에 끼우면 모험 중 걷기 [가방]·전투 [소모품]에서 바퀴당 1번` : `${battleItemText(item.id)} · 소모품 칸에 끼우면 모험 전투 [소모품]으로 바퀴당 1번`;
     case 'trainingTicket': return '지금 트랙 수련권 +1 (개수 제한 없음)';
     case 'tileDraw': return `모험 타일 1장 → 가방 (같은 타일이면 장수 +1) · 기본 ${TD.weights.basic}% · 환경 ${TD.weights.env}% · B형 ${TD.weights.b}% · ${TD.groups.spring!.map((id) => tileName(id, faction.id)).join('·')} ${TD.weights.spring}% · 희귀(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) ${TD.weights.rare}%, 첫 뽑기는 환경 타일`;
     case 'rareTile': return '아직 안 가진 타일 무작위 1장 → 가방 (이벤트 타일 제외)';

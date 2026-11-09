@@ -104,7 +104,7 @@ import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
 import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
-import { battleItemEffectOf, consumableName, fillBattleSlot, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, ownedBattleItems, petNoticeOf, spendBattleItem, useHealItemOnWalk } from '../inventory';
+import { battleItemEffectOf, consumableName, departFillBattleSlot, fillBattleSlot, lapItemLine, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, lapItemLock, LAP_ITEM_USED, ownedBattleItems, petNoticeOf, setLapItem, spendBattleItem, spendLapItem, useSlotItemOnWalk } from '../inventory';
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
 import { shopPicker, shopView } from './shopView';
@@ -115,6 +115,7 @@ import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
+import { pickDialog } from './pickDialog';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
@@ -1562,6 +1563,7 @@ export function startApp(host: HTMLElement): void {
           },
           onStart: () => {
             save!.difficulty.last = exp.difficulty;
+            departFillBattleSlot(save!); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4)
             activeExp = exp;
             saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
             // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
@@ -1641,6 +1643,17 @@ export function startApp(host: HTMLElement): void {
         },
       },
     };
+  }
+
+  /** 모험(원정) 전투 소모품 (GDD 212장 1·2): 소모품 칸에 끼운 것만, 걷기·전투 어디서든 바퀴당 1번. 이번 바퀴에 이미 썼으면 싣지 않고 버튼 흐림('씀'),
+   *  쓰면 1개 줄이고 바퀴 사용을 남긴 뒤 저장. 빈 칸 고르기 창은 없음(193장 6 의 전투 중 고르기 — 212장 4 가 우선, 바꾸기는 바퀴 끝 창) */
+  function expBattleItemOpts(sv: SaveData, exp: ExpeditionState, st: CombatState): Pick<BattleViewOptions, 'battleItem' | 'lapItem'> {
+    const spent = lapItemLock(sv, exp) === LAP_ITEM_USED;
+    const it = spent ? null : battleItemEffectOf(sv);
+    st.params.battleItem = it;
+    const lapItem = { spentId: spent ? sv.shared.battleItem : null };
+    if (!it) return { battleItem: undefined, lapItem };
+    return { battleItem: { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendLapItem(sv, exp, it.id); saveProgress(exp); } }, lapItem };
   }
 
   /** 탑 전투 화면 (결과에서 [다음 층]·[다시 도전]으로 올 때는 같은 자리를 바꿔 끼운다) */
@@ -1771,6 +1784,7 @@ export function startApp(host: HTMLElement): void {
     });
     resumeNote = '';
     activeExp = exp;
+    departFillBattleSlot(save); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4)
     saveProgress(exp);
     const ep = getEpisode(faction.id, chapterId, episodeId);
     let opened = false;
@@ -1841,7 +1855,7 @@ export function startApp(host: HTMLElement): void {
     // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
     battleView(root, faction, s, {
-      ...(save ? battleItemOpts(save, s) : {}),
+      ...(save ? expBattleItemOpts(save, exp, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
       formId: save?.evolution.formId,
       skinId: save ? artSkinOf(save) : undefined,
@@ -1919,18 +1933,42 @@ export function startApp(host: HTMLElement): void {
       skinId: save ? artSkinOf(save) : undefined,
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
+      // 바퀴 끝 창 소모품 칸 (GDD 212장 3): 가진 전투 소모품으로 바꿔 끼우기 · 빼기 — 바꾸면 바로 저장
+      ...(save ? { lapItem: {
+        line: () => (save ? lapItemLine(save, { lap: exp.lap + 1, lapItems: exp.lapItems }, '다음 바퀴') : ''), // 바퀴 끝 창 = 다음 바퀴 기준
+        filled: () => !!save?.shared.battleItem,
+        canChange: () => !!save && (!!save.shared.battleItem || ownedBattleItems(save).length > 0),
+        change: (after: () => void) => {
+          const sv = save;
+          if (!sv) return;
+          const cur = sv.shared.battleItem;
+          const opts = ownedBattleItems(sv).filter((id) => id !== cur).map((id) => ({ key: id, label: `${consumableName(id)} ×${sv.shared.items[id] ?? 0} · ${battleItemBrief(id)}`, onPick: () => { if (setLapItem(sv, exp, id)) { saveProgress(exp); after(); } } }));
+          if (cur) opts.push({ key: 'none', label: `빼기 (${consumableName(cur)})`, onPick: () => { if (setLapItem(sv, exp, null)) { saveProgress(exp); after(); } } });
+          pickDialog({ title: '다음 바퀴 소모품', body: '소모품 칸에 끼운 1개만 모험 중에 쓴다(걷기·전투 어디서든 바퀴당 1번).', options: opts, cls: opts.length > 3 ? 'bha-shoppick--two' : undefined });
+        },
+      } } : {}),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
       openHelp: (onClose) => openHelp('expedition', false, onClose),
-      // 걷기 중 가방 (GDD 144장 3): 회복 물건 4종 — 쓰면 원정 체력이 차고 바로 저장
+      // 걷기 중 가방 (GDD 144장 3 + 212장 1·2): 회복 물건은 다 보이지만 쓰는 것은 소모품 칸에 끼운 1개만, 바퀴당 1번(전투에서 썼어도) — 쓰면 원정 체력이 차고 바로 저장
       openBag: (onClose) => {
         const sv = save;
         if (!sv) return onClose();
         healBag({
-          items: () => HEAL_ITEM_IDS.map((id) => ({ id, name: consumableName(id), count: sv.shared.items[id] ?? 0, detail: battleItemText(id) })),
+          items: () => {
+            const slotId = sv.shared.battleItem;
+            const ids = slotId && !HEAL_ITEM_IDS.includes(slotId) ? [slotId, ...HEAL_ITEM_IDS] : HEAL_ITEM_IDS;
+            const lock = lapItemLock(sv, exp);
+            return ids.map((id) => ({
+              id, name: consumableName(id), count: sv.shared.items[id] ?? 0, detail: battleItemText(id),
+              slotted: id === slotId,
+              lock: id !== slotId ? '소모품 칸에 끼운 것만 쓴다 — 바퀴 끝 창에서 바꾼다' : lock ?? (HEAL_ITEM_IDS.includes(id) ? null : '전투 중에만 쓴다'),
+            }));
+          },
+          status: () => lapItemLine(sv, exp),
           hp: () => hpFractionOf(exp),
           use: (id) => {
-            const r = useHealItemOnWalk(sv, exp, id);
+            const r = useSlotItemOnWalk(sv, exp, id);
             if (r.ok) saveProgress(exp);
             return r;
           },

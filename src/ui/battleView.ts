@@ -101,6 +101,8 @@ export interface BattleViewOptions {
   /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 가진 전투 소모품 고르기 창 — options 가 비면 창 없이 안내만.
    *  pick = 고른 것을 칸에 넣고 이 전투에 싣는다(돌려준 값이 battleItem 대신) */
   pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
+  /** 모험 전투 (GDD 212장 1·2): 소모품은 칸에 끼운 1개를 바퀴당 1번(걷기에서 썼어도). spentId = 이번 바퀴에 이미 쓴 끼운 소모품 id(버튼 흐림 '씀'), 문구는 '바퀴당 1번'. 없으면 전투당 1번(탑·등급전 등) */
+  lapItem?: { spentId: string | null };
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -1278,8 +1280,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
     const it = p.battleItem;
     const itemLeft = armedItem && it ? armedItem.count - (s.itemUsed ? 1 : 0) : 0;
-    setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : '');
-    setAct(itemBtn, canUseItem(s), !it ? (opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — 이번 전투에 썼다` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (전투당 1번, 남은 ${itemLeft}개)`);
+    // 모험 전투 (GDD 212장 2): 이번 바퀴에 이미 쓴 칸 = 싣지 않고 '씀' 흐림 + 이유 한 줄(title)
+    const lapSpent = opts.lapItem?.spentId ?? null;
+    const per = opts.lapItem ? '바퀴당 1번' : '전투당 1번';
+    setText(itemBtn.meta, it ? (s.itemUsed ? '씀' : `×${itemLeft}`) : lapSpent ? '씀' : '');
+    itemBtn.root.classList.toggle('is-spent', lapSpent !== null || (it !== null && s.itemUsed));
+    setAct(itemBtn, canUseItem(s), !it ? (lapSpent ? `${consumableName(lapSpent)} — 이번 바퀴에 썼다(다음 바퀴에 다시 1번)` : opts.lapItem ? '소모품 칸이 비었다(바퀴 끝 창에서 끼운다)' : opts.pickBattleItem ? '소모품 칸이 비었다 — 눌러서 고른다' : '소모품 칸이 비었다(장비 화면에서 넣는다)') : s.itemUsed ? `${consumableName(it.id)} — ${opts.lapItem ? '이번 바퀴에 썼다' : '이번 전투에 썼다'}` : it.effect === 'heal' && p.noHealSpawn ? `${consumableName(it.id)} — ${faction.frenzyName} 중에는 못 쓴다` : `${consumableName(it.id)} — ${battleItemText(it.id)} (${per}, 남은 ${itemLeft}개)`);
     // 빈 칸이면 눌러서 고를 수 있다 (GDD 193장 6) — 모양은 흐린 그대로(C.302 C.281), 누를 수 있다는 것만 알린다
     if (!it && opts.pickBattleItem && !s.script) setAttr(itemBtn.root, 'aria-disabled', 'false');
     const cdSec = s.gearCooldown * p.tickSeconds;
