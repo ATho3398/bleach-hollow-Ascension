@@ -248,6 +248,40 @@
 /* 그냥 대화(값 변화 없음) 동안만 상태 칩을 잠깐 숨긴다 (C.176 · GDD 208장 0 사용자 정정 — 그대로).
    상태 값이 바뀌는 순간에는 roomView 가 .is-saying 을 붙이지 않고 말풍선을 상태창과 안 겹치는 자리(옆·알림 띠)로 옮긴다 (208장 1·2 — C.331 의 차오름 동안만 보임 삭제) */
 .is-saying > .bha-room__chips { visibility: hidden; }
+/* '무엇이 바뀌나' 알림 (GDD 209장, changeNote.ts): 상태창 박스 바로 아래 ~ 캐릭터 머리 위, 바뀐 값만 칩 한 줄 [아이콘 이름 ▲/▼]. 수치 없음.
+   가로는 박스 가운데(장면 밖·물건 버튼에 걸리면 --change-dx 로 민다). 자리 순서 = 아래 → ⓘ 오른쪽 옆 → 박스 왼쪽 옆 → 이름표 위(--change-up = 이름표 높이), 각 자리 이름 → 줄임. 방·온천·가방 상태창 창 공통 */
+.bha-room__change {
+  position: absolute; z-index: 2; left: 50%; top: calc(100% + var(--bha-sp-1));
+  transform: translateX(calc(-50% + var(--change-dx, 0px)));
+  display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); width: max-content; pointer-events: none;
+}
+.bha-room__changerow { display: flex; flex-wrap: nowrap; gap: var(--bha-sp-1); }
+/* 위 줄 = 값이 바뀔 때의 행동 글 (209장 4-1 — '짐승 고기' 등, 예전 말풍선 대신). 말풍선과 같은 바탕·테두리, 한 줄 말줄임 */
+.bha-room__changesay {
+  max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 var(--bha-sp-3);
+  font-size: var(--bha-fs-sm); line-height: 1.35; color: var(--bha-text-1);
+  background: var(--bha-bg-0); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md);
+}
+.bha-room__changesay[hidden] { display: none; }
+.bha-room__change.is-side { align-items: flex-start; }
+.bha-room__change.is-side-left { align-items: flex-end; }
+.bha-room__change[hidden] { display: none; }
+.bha-room__change.is-above { top: auto; bottom: calc(100% + var(--change-up, 0px) + var(--bha-sp-2)); }
+/* 상태창 아래에 자리가 없으면(사람 종이인형은 머리가 박스 바로 아래) 박스 아래 끝에 맞춰 ⓘ 오른쪽 옆(.is-side) · 박스 왼쪽 옆(.is-side-left) */
+.bha-room__change.is-side { top: auto; bottom: 0; left: calc(100% + var(--bha-sp-1) + 22px + var(--bha-sp-2)); transform: none; }
+.bha-room__change.is-side-left { top: auto; bottom: 0; left: auto; right: calc(100% + var(--bha-sp-2)); transform: none; }
+.bha-room__changerow > .bha-chip { gap: var(--bha-sp-1); padding: 0 var(--bha-sp-3) 0 var(--bha-sp-2); min-height: 0; line-height: 1.35; background: var(--bha-scene-box); }
+.bha-room__change .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c, currentColor); }
+.bha-room__changename { max-width: 7em; overflow: hidden; text-overflow: ellipsis; color: var(--bha-text-1); }
+.bha-room__change.is-compact .bha-room__changename { display: none; } /* 자리가 모자라면 아이콘 + ▲/▼ 만 (이름은 툴팁·읽기 글) */
+.bha-room__change.is-in { animation: bha-change-in 0.2s ease-out; }
+.bha-room__change.is-out { animation: bha-change-out 0.2s ease-in forwards; }
+@keyframes bha-change-in { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+@keyframes bha-change-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 -4px; } }
+@media (prefers-reduced-motion: reduce) {
+  .bha-room__change.is-in, .bha-room__change.is-out { animation: none; }
+  .bha-room__change.is-out { visibility: hidden; }
+}
 /* 바뀌는 값 깜빡임 (GDD 208장 3, gaugeBlink.ts): 그 줄의 아이콘·막대만 0.25초 간격으로 흐려졌다 돌아온다. 박자(--blink-delay)는 줄을 다시 그려도 이어진다.
    방·온천·가방 상태창 줄(.bha-room__gauge) · 체력·걷기 막대(.bha-meter) 공통. 동작 줄이기면 깜빡임 대신 강조 테두리 한 번 */
 .is-changing[data-gauge] > .bha-icon, .is-changing[data-gauge] > .bha-room__gaugetrack,
@@ -340,5 +374,7 @@
 /* 가려진 화면에서 회복 (GDD 201장 4): 머리 위 상태창과 같은 박스(위 .bha-actfx__status) + 발밑 체력 막대(.bha-room__hp)를 창 안 가운데에 그대로 */
 .bha-actfx__status { align-self: center; }
 .bha-room__hp.bha-actfx__hp { position: static; transform: none; align-self: center; }
+/* 방 가방 상태창 창의 바뀐 값 알림 (GDD 209장 3): 상태창 박스 바로 아래 가운데, 창 안 흐름대로 */
+.bha-actfx > .bha-room__change { position: static; transform: none; align-self: center; }
 @keyframes bha-actfx-use { 0%, 100% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-4px) rotate(-8deg); } }
 @media (prefers-reduced-motion: reduce) { .bha-char.is-eating .bha-char__body, .bha-actfx__who { animation: none; } }

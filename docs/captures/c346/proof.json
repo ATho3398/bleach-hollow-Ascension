@@ -1,0 +1,531 @@
+{
+ "checks": {
+  "pc-h": {
+   "before": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 147,
+    "gap": null,
+    "space": 25,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 295,
+      "t": 124,
+      "r": 507,
+      "b": 142
+     },
+     "place": "below",
+     "compact": true,
+     "say": null,
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:광기▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 157,
+    "gap": 15,
+    "space": 35,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 145,
+    "gap": null,
+    "space": 23,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "pc-ha": {
+   "before": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 124,
+    "gap": null,
+    "space": 2,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 497,
+      "t": 82,
+      "r": 710,
+      "b": 122
+     },
+     "place": "side",
+     "compact": true,
+     "say": "영혼 조각",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:광기▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 135,
+    "gap": 13,
+    "space": 13,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 124,
+    "gap": null,
+    "space": 2,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "pc-s": {
+   "before": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 125,
+    "gap": null,
+    "space": 3,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 497,
+      "t": 82,
+      "r": 710,
+      "b": 122
+     },
+     "place": "side",
+     "compact": true,
+     "say": "주먹밥",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:호로화▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 138,
+    "gap": 16,
+    "space": 16,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 126,
+    "gap": null,
+    "space": 4,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph-h": {
+   "before": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 142,
+    "gap": null,
+    "space": 20,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 473,
+      "t": 82,
+      "r": 686,
+      "b": 122
+     },
+     "place": "side",
+     "compact": true,
+     "say": "영혼 조각",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:광기▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 152,
+    "gap": 30,
+    "space": 30,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 142,
+    "gap": null,
+    "space": 20,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph-s": {
+   "before": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 120,
+    "gap": null,
+    "space": -2,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 473,
+      "t": 82,
+      "r": 686,
+      "b": 122
+     },
+     "place": "side",
+     "compact": true,
+     "say": "주먹밥",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:호로화▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 132,
+    "gap": 10,
+    "space": 10,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 121,
+    "gap": null,
+    "space": -1,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   },
+   "sleepMid": {
+    "note": {
+     "rect": {
+      "l": 473,
+      "t": 82,
+      "r": 643,
+      "b": 122
+     },
+     "place": "side",
+     "compact": true,
+     "say": "재우기",
+     "chips": [
+      "hunger▼-:배부름▼",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:호로화▼"
+     ]
+    },
+    "statusBottom": 122,
+    "headTop": 120,
+    "gap": -2,
+    "space": -2,
+    "bubble": null,
+    "toast": [],
+    "blinking": [
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "sleepAfter": {
+    "note": null,
+    "statusBottom": 122,
+    "headTop": 122,
+    "gap": null,
+    "space": 0,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "bagUsed": true,
+   "bag": {
+    "fx": true,
+    "chips": [
+     "risk▼+:호로화▼"
+    ],
+    "blinking": [
+     "risk"
+    ],
+    "toast": []
+   }
+  },
+  "ph115-h": {
+   "before": {
+    "note": null,
+    "statusBottom": 124,
+    "headTop": 142,
+    "gap": null,
+    "space": 18,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 473,
+      "t": 79,
+      "r": 695,
+      "b": 124
+     },
+     "place": "side",
+     "compact": true,
+     "say": "영혼 조각",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:광기▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 124,
+    "headTop": 152,
+    "gap": 28,
+    "space": 28,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 124,
+    "headTop": 141,
+    "gap": null,
+    "space": 17,
+    "bubble": null,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   }
+  },
+  "ph115-s": {
+   "before": {
+    "note": null,
+    "statusBottom": 124,
+    "headTop": 120,
+    "gap": null,
+    "space": -4,
+    "bubble": null,
+    "toast": [],
+    "blinking": [],
+    "overlaps": []
+   },
+   "feedMid": {
+    "note": {
+     "rect": {
+      "l": 473,
+      "t": 79,
+      "r": 695,
+      "b": 124
+     },
+     "place": "side",
+     "compact": true,
+     "say": "주먹밥",
+     "chips": [
+      "hunger▲+:배부름▲",
+      "cond▲+:컨디션▲",
+      "stab▲+:영압 안정도▲",
+      "risk▼+:호로화▼",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 124,
+    "headTop": 134,
+    "gap": 10,
+    "space": 10,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [
+     "hp",
+     "hunger",
+     "cond",
+     "stab",
+     "risk"
+    ],
+    "overlaps": []
+   },
+   "feedAfter": {
+    "note": null,
+    "statusBottom": 124,
+    "headTop": 121,
+    "gap": null,
+    "space": -3,
+    "bubble": null,
+    "toast": [
+     "새 트랙 호로 트랙이 열렸다"
+    ],
+    "blinking": [],
+    "overlaps": []
+   },
+   "spa": {
+    "note": {
+     "rect": {
+      "l": 281,
+      "t": 164,
+      "r": 515,
+      "b": 185
+     },
+     "place": "below",
+     "compact": false,
+     "say": null,
+     "chips": [
+      "hunger▼-:배부름▼",
+      "cond▲+:컨디션▲",
+      "hp▲+:체력▲"
+     ]
+    },
+    "statusBottom": 162,
+    "headTop": 208,
+    "gap": 23,
+    "space": 46,
+    "bubble": null,
+    "toast": [],
+    "blinking": [
+     "hunger",
+     "cond",
+     "hp"
+    ],
+    "overlaps": []
+   },
+   "spaSeen": true
+  }
+ },
+ "shots": [
+  "pc-h-feed.png",
+  "ph-s-sleep.png",
+  "ph-s-bag.png",
+  "ph115-h-feed.png",
+  "ph115-s-spa.png"
+ ],
+ "errors": []
+}

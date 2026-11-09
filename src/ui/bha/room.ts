@@ -262,6 +262,19 @@ export function charTopOffset(art: ArtUrls): number {
   return boxTop + Math.min(top, art.headTop ? 0 : bodyH);
 }
 
+/** 그린 머리 윗변 (캐릭터 상자 중심 기준 px, GDD 209장 1): charTopOffset 과 같은 식이되 종이인형도 상자 윗변에 묶지 않는다 — 상태창 아래 ~ 머리 위 빈 공간을 잴 때 */
+export function charHeadOffset(art: ArtUrls): number {
+  const PAD = 8, SHADOW = 10;
+  const hasArt = !!(art.src || art.frames);
+  const bodyH = hasArt ? CHAR_BODY_H : 75;
+  const boxTop = -(PAD * 2 + bodyH + SHADOW) / 2 + PAD;
+  if (!art.src) return boxTop;
+  const drawn = 130;
+  const pivot = bodyH * 0.92;
+  const top = pivot + (bodyH - drawn + drawn * (art.headTop ?? 0) - pivot) * art.scale + (art.offsetY / 100) * bodyH;
+  return boxTop + Math.min(top, bodyH);
+}
+
 export interface FloorEntry {
   el: HTMLElement;
   /** 발 기준점 (장면 %) */

@@ -17,7 +17,8 @@ import { ACTION_FILL_MS, tween } from './bha/actionFx';
 import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { changeItems, changeNoteBox, drawnHeadY, horiz, placeChangeNote, setChangeSay, showChangeNote, type ChangeItem } from './bha/changeNote';
+import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charHeadOffset, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
 import { feedsLeft, previewHomeHp, reviveEvLossOf } from '../engine/nest';
@@ -156,7 +157,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const spots: ('above' | 'left' | 'right')[] = [...(first === 'above' ? ['above' as const] : []), sideFirst, sideFirst === 'left' ? 'right' : 'left'];
     const sceneBox = scene.getBoundingClientRect();
     // 피할 것: 상태창 박스·ⓘ·이름표(박스 위로 삐져나옴)·방 물건 버튼·떠 있는 알림 띠
-    const blockers = [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras, ...document.querySelectorAll<HTMLElement>('.bha-toast')]
+    const blockers = [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...(note.hidden ? [] : [note]), ...props.values(), ...extras, ...document.querySelectorAll<HTMLElement>('.bha-toast')]
       .filter((b) => b.isConnected && b.offsetWidth > 0).map((b) => b.getBoundingClientRect());
     const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-2')) || 4;
     for (const spot of spots) {
@@ -181,6 +182,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   /** keep = 상태 값이 바뀌는 순간의 말(돌보기 결과 등). 아니어도 값이 바뀌는 중(차오름·깜빡임)이면 keep (GDD 208장 0·1) */
   const say = (text: string, ms = 3000, keep = false) => {
+    // 값이 바뀌는 중(바뀐 값 알림이 떠 있음)에 하는 말은 말풍선 대신 그 알림 위 줄로 (GDD 209장 4-1 — 상태창 옆·위 구석으로 보내지 않는다).
+    // 자리가 정말 모자라면 칩만 남기고 글은 생략
+    if (!note.hidden) {
+      setChangeSay(note, text);
+      if (placeNote()) return;
+    }
     const keepStatus = keep || Date.now() < statusBusyUntil;
     bubble.textContent = text;
     // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1). 그냥 대화 동안 상태 칩은 잠깐 숨긴다(208장 0 정정 — 그대로).
@@ -295,7 +302,24 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   requestAnimationFrame(measureChips);
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
   const statusInfoBtn = statusInfoButton(() => statusChips(n, faction), faction, n);
-  chipRow.append(statusBtn, statusInfoBtn);
+  // '무엇이 바뀌나' 알림 (GDD 209장): 상태창 박스 바로 아래 ~ 캐릭터 머리 위 빈 공간, 바뀐 값만 칩 한 줄. 깜빡임이 끝나면 사라진다
+  const note = changeNoteBox();
+  chipRow.append(statusBtn, statusInfoBtn, note);
+  /** 알림 자리 (209장 1): 상태창 아래 → 안 되면 상태창(이름표) 위. 상태창·ⓘ·이름표·물건 버튼·그린 머리와 겹치면 다음 자리, 다 막히면 숨기고 false */
+  const placeNote = (): boolean => placeChangeNote(note, {
+    scene, head: { ...horiz(char.getBoundingClientRect()), y: drawnHeadY(char) ?? scene.getBoundingClientRect().top + char.offsetTop + charHeadOffset(charArtUrls) }, // 그린 머리 윗변 (실제 픽셀 → 못 읽으면 계산식) · 캐릭터 상자 좌우
+    blockers: [statusBtn, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...props.values(), ...extras], nameTag,
+  });
+  /** 바뀐 값 알림을 띄운다 — 떴으면 true (그럼 말풍선에서 수치 변화 문장을 뺀다, 209장 4) */
+  const noteChanges = (items: readonly ChangeItem[], ms: number, sayText?: string): boolean => {
+    if (!showChangeNote(note, items, ms, { say: sayText ?? null })) return false;
+    // 떠 있던 말풍선(요청·혼잣말)은 닫는다 — 알림과 겹치지 않게, 그냥 대화로 숨은 상태창(과 그 아래 알림)이 다시 보이게 (209장 4-1)
+    window.clearTimeout(bubbleTimer);
+    bubble.hidden = true;
+    scene.classList.remove('is-saying');
+    dev.refresh();
+    return placeNote();
+  };
   // 발밑 체력 막대 (GDD 123장 3): 홈 체력 '현재 / 최대' — 기존 체력 막대(meter player), 30% 아래면 위험 색. 대기 회복은 아래 타이머가 다시 그린다
   const hpBox = el('div', 'bha-room__hp');
   const maxHp = homeMaxHp(save);
@@ -312,6 +336,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const enterChanged = changedKeys(enterBefore, shownNow());
   blinkGauges(scene, enterChanged, enterFrom ? ACTION_FILL_MS : 0);
   if (enterChanged.length > 0) markStatusBusy(enterFrom ? ACTION_FILL_MS : 0);
+  const enterItems = changeItems(enterBefore, shownNow(), faction, enterChanged); // 방 들어올 때 바뀐 값 알림 (209장 3) — 장면이 붙은 뒤 자리를 재고 띄운다
   if (enterFrom) {
     const to = shownNow();
     fxOn = true;
@@ -346,6 +371,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     layoutOnFloor(scene, room.floor, floorEntries);
     placeStatus();
   };
+  if (enterItems.length > 0) requestAnimationFrame(() => main.isConnected && noteChanges(enterItems, enterFrom ? ACTION_FILL_MS : 0));
   place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
   requestAnimationFrame(place);
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(scene);
@@ -391,6 +417,9 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const changed = changedKeys(from, to);
       blinkGauges(scene, changed); // 바뀐 값(오름·내림)의 막대·아이콘만 깜빡임 (GDD 208장 3)
       if (changed.length > 0) markStatusBusy(ACTION_FILL_MS); // 그동안 뜨는 말풍선은 상태창을 숨기지 않는다 (208장 1)
+      const delta = { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk };
+      // 바뀐 값 알림 (209장 2·3) + 위 줄 행동 글(4-1: 수치 문장 없이 행동 이름 — 예전 결과 말풍선 대신)
+      const noted = noteChanges(changeItems(from, to, faction, changed), ACTION_FILL_MS, careFeedback(faction, action, food ?? null, delta, false));
       tween(ACTION_FILL_MS, (t) => {
         if (!main.isConnected) return;
         const v = lerpShown(from, to, t);
@@ -408,7 +437,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
         char.classList.add('is-eating');
         window.setTimeout(() => char.classList.remove('is-eating'), ACTION_FILL_MS);
       }
-      say(careFeedback(faction, action, food ?? null, { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk }));
+      if (!noted) say(careFeedback(faction, action, food ?? null, delta)); // 알림이 못 뜬 때(값이 안 바뀜·자리 없음)만 예전 결과 말풍선 (수치 문장 포함)
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
       if (!(clip && playAnim(clip))) hopChar();

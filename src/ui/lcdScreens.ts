@@ -10,6 +10,7 @@ import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../d
 import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
+import { changeItems } from './bha/changeNote';
 import { changedKeys } from './bha/gaugeBlink';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
@@ -626,7 +627,7 @@ function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemAr
   const blink = changedKeys(before, to);
   if (!from && blink.length === 0) return false;
   const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
-  statusFillFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), chips: () => statusChips(save.nest, faction), from: from ?? to, to, maxHp: homeMaxHp(save), owner: save.nest, blink });
+  statusFillFx({ title: fixParticles(`${e.name}을(를) 썼다`), art: src ? imageArt(src) : (itemArt.cloneNode(true) as HTMLElement), chips: () => statusChips(save.nest, faction), from: from ?? to, to, maxHp: homeMaxHp(save), owner: save.nest, blink, note: changeItems(before, to, faction, blink) }); // 바뀐 값 칩 (GDD 209장)
   return true;
 }
 

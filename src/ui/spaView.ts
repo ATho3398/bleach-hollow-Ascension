@@ -15,7 +15,8 @@ import { infoTip } from './bha/infoTip';
 import { applyBlink, blinkGauges } from './bha/gaugeBlink';
 import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
 import { showToast } from './bha/nest';
-import { applyCarePose, characterButton, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
+import { applyCarePose, characterButton, charHeadOffset, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
+import { changeItems, changeNoteBox, drawnHeadY, horiz, placeChangeNote, showChangeNote } from './bha/changeNote';
 import { animOf } from './bha/animPlayer';
 import { roomOf, worldMapOf } from '../engine/faction';
 
@@ -122,7 +123,8 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   /** 지금 보이는 배부름·컨디션 (paint 가 갱신) — ⓘ 창도 이 값으로 */
   let shown = { fullness: fullnessOfNest(n), condition: n.condition };
   const statusInfoBtn = statusInfoButton(() => liveStatusChips(n, faction, shown), faction, n);
-  chipRow.append(status, statusInfoBtn);
+  const note = changeNoteBox(); // 바뀐 값 알림 (GDD 209장): 상태창 아래 ~ 머리 위, 오르는 동안 + 깜빡임 끝까지
+  chipRow.append(status, statusInfoBtn, note);
   const nameTag = statusNameTag(save, faction);
   const actor = el('div', 'bha-spa__actor is-entering');
   actor.append(chipRow, char);
@@ -182,6 +184,11 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     const hh = hpBox.offsetWidth / 2;
     const hx = shift(hh, hh);
     hpBox.style.translate = hx ? `${Math.round(hx)}px 0` : '';
+  };
+  /** 알림 자리 (209장 1, 방과 같은 함수): 그린 머리 윗변 = 캐릭터 상자 중심 + charHeadOffset */
+  const placeNote = () => {
+    const cr = char.getBoundingClientRect();
+    placeChangeNote(note, { scene, head: { ...horiz(cr), y: drawnHeadY(char) ?? cr.top + cr.height / 2 + charHeadOffset(art) }, blockers: [status, statusInfoBtn, ...(nameTag ? [nameTag] : []), ...scene.querySelectorAll<HTMLElement>('button:not(.bha-char)')], nameTag }); // 상태창·이름표·장면 버튼(돌아가기·ⓘ)
   };
   const put = (left: number, bottom: number, wl: number | null) => {
     actor.style.left = `${left}%`;
@@ -258,7 +265,10 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     // 바뀌는 값 깜빡임 (GDD 208장 3·4): 0.1초마다 오르는 동안 그 막대·아이콘만, 멈춘 뒤 0.25초 × 3 더
     const now = { hunger: fullness, cond: condition, hp: fraction };
     const prev = painted;
-    if (prev) blinkGauges(scene, (['hunger', 'cond', 'hp'] as const).filter((k) => Math.abs(now[k] - prev[k]) > 1e-6), 0); // 반올림 전 값 — 천천히 오르는 체력도 오르는 동안 이어서
+    const moving = prev ? (['hunger', 'cond', 'hp'] as const).filter((k) => Math.abs(now[k] - prev[k]) > 1e-6) : [];
+    if (prev) blinkGauges(scene, moving, 0); // 반올림 전 값 — 천천히 오르는 체력도 오르는 동안 이어서
+    // 바뀐 값 알림 (209장 3): 같은 자리에서 내용만 바꾸고 끝 시각을 늦춘다(쌓지 않음)
+    if (prev && moving.length > 0) showChangeNote(note, changeItems(prev, now, faction, moving), 0, { extend: true, onShow: placeNote });
     painted = now;
     applyBlink(scene);
     clampStatus();

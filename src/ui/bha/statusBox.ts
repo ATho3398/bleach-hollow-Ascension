@@ -14,6 +14,7 @@ import { shownName } from '../displayName';
 import { ACTION_FILL_MS, beginAction, tween } from './actionFx';
 import { getOverlayHost } from './overlayHost';
 import { fullnessOf } from './fullness';
+import { changeNoteBox, showChangeNote, type ChangeItem } from './changeNote';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS, tagGauge, type GaugeKey } from './gaugeBlink';
 
 /** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름(+ 푸는 법 짧게) */
@@ -141,7 +142,7 @@ export function chipsAt(chips: readonly StatusChip[], v: GaugeShown): StatusChip
  * 상태창이 가려진 화면(가방 등)에서 회복했을 때 (GDD 201장 4): 머리 위 상태창(같은 박스 모양 + 발밑 체력 막대)을 화면 위 가운데에 잠깐 띄워
  * 이전 값 → 새 값으로 차오르게 하고, 끝나면 사라진다. 누름은 막지 않는다. 회복 수치 글자는 없다(행동 이름만)
  */
-export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () => StatusChip[]; from: GaugeShown; to: GaugeShown; maxHp: number; owner?: object; blink?: readonly GaugeKey[] }): void {
+export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () => StatusChip[]; from: GaugeShown; to: GaugeShown; maxHp: number; owner?: object; blink?: readonly GaugeKey[]; note?: readonly ChangeItem[] }): void {
   const end = beginAction();
   const box = el('div', 'bha-actfx');
   box.setAttribute('role', 'status');
@@ -152,8 +153,11 @@ export function statusFillFx(o: { title: string; art?: HTMLElement; chips: () =>
   head.append(who, el('b', 'bha-actfx__title', o.title));
   const status = el('div', 'bha-room__status bha-actfx__status');
   const hp = el('div', 'bha-room__hp bha-actfx__hp');
-  box.append(head, status, hp);
+  // 바뀐 값 알림 (GDD 209장 — 방 가방): 상태창 박스 아래에 바뀐 값만 칩 한 줄. 넘겨받은 것만(수련 결과 등 다른 화면은 이번 대상 아님, 209장 5)
+  const note = o.note && o.note.length > 0 ? changeNoteBox() : null;
+  box.append(head, status, ...(note ? [note] : []), hp);
   getOverlayHost().append(box);
+  if (note) showChangeNote(note, o.note!);
   const paint = (t: number) => {
     const v = lerpShown(o.from, o.to, t);
     status.replaceChildren(...statusGaugeRows(chipsAt(o.chips(), v)));
