@@ -1,7 +1,7 @@
 // C.340 (GDD 205장 · 115-A 85): 적 덩치(<속성>-basic) = 종이인형 덩치(지금 그림 색), 덩치 색 외형은 모두 몸 hb·동작 하나
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { enemyArt, ART_MANIFEST } from '../src/data/art/manifest';
+import { enemyArt, ART_MANIFEST, HOLLOW_BRUTE_SCALE } from '../src/data/art/manifest';
 import { HUMANOID, MOTIONS, MOTION_SETS, lookArt, lookLayers, resolveMotions } from '../src/data/art/rig/pose';
 import enemies from '../src/data/enemies/enemies.json';
 
@@ -18,7 +18,7 @@ describe('205장: 적 덩치 종이인형 (사용자 2026-11-09 "적으로 나�
       expect(a.src).toBe(`/art/rig/humanoid/still/${a.rig!.look}.png`);
       expect(existsSync(`public${a.src}`), a.src!).toBe(true);
       for (const l of lookLayers(HUMANOID, a.rig!.look)) expect(existsSync(`public/art/rig/humanoid/${l.art}.png`), `${id} ${l.art}`).toBe(true);
-      expect(a.scale).toBe(1.78);
+      expect(a.scale).toBe(HOLLOW_BRUTE_SCALE); // C.345: 1.78 → 내 덩치와 같은 배율
     }
     expect(new Set(BASIC.map((id) => enemyArt(id, '/')!.rig!.look)).size).toBe(8); // 속성마다 다른 색
   });

@@ -27,7 +27,7 @@ describe('pickLine', () => {
 
 describe('그림 매니페스트', () => {
   it('비어 있으면 자리표시(null)', () => {
-    expect(artUrls('char.hollow', '/', undefined, [])).toEqual({ src: null, frames: null, scale: 1, offsetY: 0 });
+    expect(artUrls('scene.room', '/', undefined, [])).toEqual({ src: null, frames: null, scale: 1, offsetY: 0 }); // C.345: char.hollow 는 덩치 종이인형(배율 있음)
     expect(artUrls('없는.키', '/', undefined, [])).toEqual({ src: null, frames: null, scale: 1, offsetY: 0 });
   });
   it('파일을 적으면 배포 경로(base)를 붙여 돌려준다', () => {

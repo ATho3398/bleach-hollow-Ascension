@@ -252,7 +252,7 @@
    방·온천·가방 상태창 줄(.bha-room__gauge) · 체력·걷기 막대(.bha-meter) 공통. 동작 줄이기면 깜빡임 대신 강조 테두리 한 번 */
 .is-changing[data-gauge] > .bha-icon, .is-changing[data-gauge] > .bha-room__gaugetrack,
 .bha-meter.is-changing[data-gauge] .bha-meter__label .bha-icon, .bha-meter.is-changing[data-gauge] .bha-meter__track {
-  animation: bha-gauge-blink 0.25s ease-in-out infinite; animation-delay: var(--blink-delay, 0ms);
+  animation: bha-gauge-blink 0.75s ease-in-out infinite; animation-delay: var(--blink-delay, 0ms);
 }
 @keyframes bha-gauge-blink { 0%, 100% { opacity: 1; filter: none; } 50% { opacity: 0.35; filter: brightness(1.6); } }
 @media (prefers-reduced-motion: reduce) {

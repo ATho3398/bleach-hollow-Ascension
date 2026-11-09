@@ -1,0 +1,82 @@
+{
+  "cases": [
+    {
+      "tag": "t1-mantis",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t1-mantis walk",
+      "broken": []
+    },
+    {
+      "tag": "t1-mantis battle",
+      "broken": []
+    },
+    {
+      "tag": "t1-brute",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t1-ghoul",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t1-shackled",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t2-mantis",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t2-brute",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t2-brute walk",
+      "broken": []
+    },
+    {
+      "tag": "t2-brute battle",
+      "broken": []
+    },
+    {
+      "tag": "t2-ghoul",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t2-shackled",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t1-mantis+grandfisher",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    },
+    {
+      "tag": "t2-mantis+grandfisher",
+      "broken": [],
+      "rig": true,
+      "imgs": []
+    }
+  ],
+  "bad": [],
+  "errors": []
+}

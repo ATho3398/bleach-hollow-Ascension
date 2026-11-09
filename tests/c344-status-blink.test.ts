@@ -54,11 +54,11 @@ describe('208장 3 바뀌는 값만 깜빡임 (gaugeBlink)', () => {
     expect(h.rows[1]!.props.has('--blink-delay')).toBe(false);
   });
 
-  it('바뀌는 동안(0.8초) + 끝난 뒤 0.25초 × 3 깜빡이고 끝나면 클래스가 빠진다', () => {
+  it('바뀌는 동안(0.8초) + 끝난 뒤 0.75초 × 3 깜빡이고 끝나면 클래스가 빠진다', () => {
     const h = new FakeHost();
     h.paint(['hunger', 'cond']);
     blinkGauges(h as unknown as HTMLElement, ['cond']);
-    expect(GAUGE_BLINK_PERIOD_MS).toBe(250);
+    expect(GAUGE_BLINK_PERIOD_MS).toBe(750);
     expect(GAUGE_BLINK_AFTER).toBe(3);
     vi.advanceTimersByTime(ACTION_FILL_MS + GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER - 10);
     expect(on(h)).toEqual(['cond']);
@@ -75,9 +75,9 @@ describe('208장 3 바뀌는 값만 깜빡임 (gaugeBlink)', () => {
     blinkGauges(h as unknown as HTMLElement, ['hp'], 0);
     vi.advanceTimersByTime(600);
     blinkGauges(h as unknown as HTMLElement, ['cond'], 0);
-    vi.advanceTimersByTime(600);
+    vi.advanceTimersByTime(GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER - 10); // C.345: 주기 0.75초 — 끝 시각 = 두 번째 바뀜 + 0.75초 × 3
     expect(on(h)).toEqual(['cond', 'hp']);
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(20);
     expect(on(h)).toEqual([]);
   });
 
@@ -126,7 +126,7 @@ describe('208장 0·1·2 값이 바뀔 때 상태창은 숨기지 않고 말풍�
     expect(exp).toContain("'hp'));");
     expect(read('src/ui/bha/healBag.ts')).toContain("blinkGauges(hpSlot, ['hp'])");
     const css = read('src/ui/bha/room.css');
-    expect(css).toContain('animation: bha-gauge-blink 0.25s');
+    expect(css).toContain(`animation: bha-gauge-blink ${GAUGE_BLINK_PERIOD_MS / 1000}s`);
     expect(css).toMatch(/prefers-reduced-motion: reduce\)[\s\S]*?\.is-changing\[data-gauge\] \{ outline: 1px solid var\(--bha-accent\)/);
   });
 });

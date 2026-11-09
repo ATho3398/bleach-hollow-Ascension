@@ -4,7 +4,7 @@
 import { ACTION_FILL_MS } from './actionFx';
 
 /** 깜빡임 한 번 간격 (마스터 수치 0.25초 — 화면 연출값이라 balance 밖) */
-export const GAUGE_BLINK_PERIOD_MS = 250;
+export const GAUGE_BLINK_PERIOD_MS = 750; // C.345 (GDD 208장 보충): 사용자 "점멸 주기 너무 빨라서 정신없어. 1/3로 낮춰" — 0.25초 → 0.75초. room.css bha-gauge-blink 시간과 같은 값
 /** 바뀐 뒤 더 깜빡이는 횟수 */
 export const GAUGE_BLINK_AFTER = 3;
 /** 깜빡이는 막대 줄에 붙는 클래스 */
