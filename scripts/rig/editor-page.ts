@@ -98,7 +98,19 @@ for (const c of Object.values(CTX)) {
     if (raw) merge(c, JSON.parse(raw) as Saved);
   } catch { /* 저장 못 쓰는 환경 */ }
 }
-const NAMES = () => rig.edit?.names ?? {};
+/** 사용자 도트를 잘라 쓰거나 조립한 몸(역관절·덩치·두건 — cuts·assembled): 칼 없음, _L = 뒤(먼 쪽)·_R = 앞(가까운 쪽) 이름 (GDD 115-A 72·94) */
+const isCreature = () => {
+  const r = rig as unknown as { cuts?: Record<string, unknown>; assembled?: Record<string, unknown> };
+  return !!(r.cuts?.[curBody()] || r.assembled?.[curBody()]);
+};
+const CREATURE_NAMES: Record<string, string> = { arm_L: '뒤 위팔', forearm_L: '뒤 아래팔', arm_R: '앞 위팔', forearm_R: '앞 아래팔', leg_L: '뒷다리 허벅지', shin_L: '뒷다리 정강이', foot_L: '뒷발', leg_R: '앞다리 허벅지', shin_R: '앞다리 정강이', foot_R: '앞발' };
+const CREATURE_GROUPS: Record<string, string> = { '왼팔(칼)': '뒤 팔', '오른팔': '앞 팔' };
+const NAMES = (): Record<string, string> => {
+  const base = rig.edit?.names ?? {};
+  if (!rig.looks[look] || !isCreature()) return base;
+  const body = rig.bodies[curBody()] ?? {};
+  return { ...base, ...CREATURE_NAMES, ...(body.forearm_R ? {} : { arm_L: '뒤 팔', arm_R: '앞 팔' }), ...(body.fold1 ? { cape: '로브 아랫단' } : {}) };
+};
 /** 지금 몸이 쓰는 동작(역관절 몸은 동작 묶음을 덮은 것) */
 const motionsNow = (): Record<string, Motion> => {
   const out = { ...resolveMotions(rig, C.src.motions, C.src.sets, curBody()) };
@@ -155,9 +167,18 @@ function fitWrap() {
     x0 = Math.min(x0, l.at[0]);
     x1 = Math.max(x1, l.at[0] + l.size[0]);
   }
+  // 위·아래도(두건처럼 캔버스 위로 크게 나가는 몸 — 사용자 2026-11-10 "툴이 뭔가 잘못됐다고 느끼지?": 머리가 미리보기 위로 나가 탭 단추를 덮었음, GDD 115-A 94)
+  let y0 = 0;
+  let y1 = H;
+  for (const l of lookLayers(rig, look)) {
+    y0 = Math.min(y0, l.at[1]);
+    y1 = Math.max(y1, l.at[1] + l.size[1]);
+  }
   const m = 16; // 팔 휘두르는 여유(캔버스 칸)
   wrap.style.paddingLeft = `${Math.max(140, (m - x0) * K)}px`;
   wrap.style.paddingRight = `${Math.max(60, (x1 - W + m) * K)}px`;
+  wrap.style.paddingTop = `${Math.max(14, (m - y0) * K)}px`;
+  wrap.style.paddingBottom = `${Math.max(14, (y1 - H + 4) * K)}px`;
 }
 /** 동작 단추: 지금 몸에 없는 동작(묶음에서 off — 덩치 특수2·필살기)은 숨김 */
 function syncMotionButtons() {
@@ -343,7 +364,7 @@ function layerPos(): string {
   return `${ids.indexOf(sel) + 1}/${ids.length}` + (m?.order ? ' (이 동작)' : ' (이 몸)');
 }
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
-const CHIP_GROUPS = (): [string, string[]][] => rig.edit?.groups ?? [];
+const CHIP_GROUPS = (): [string, string[]][] => (rig.edit?.groups ?? []).map(([label, ids]) => [isCreature() ? CREATURE_GROUPS[label] ?? label : label, ids]);
 function pick(id: string) { sel = id; buildChips(); draw(); }
 function buildChips() {
   const box = $('parts');
