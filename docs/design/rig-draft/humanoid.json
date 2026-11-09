@@ -25,10 +25,20 @@
     { "id": "scabbard", "parent": "torso", "pivot": [19, 49], "restRot": -32 },
     { "id": "cape", "parent": "torso", "pivot": [17, 29] },
     { "id": "cape2", "parent": "cape", "pivot": [17, 42] },
-    { "id": "cape3", "parent": "cape2", "pivot": [17, 55] }
+    { "id": "cape3", "parent": "cape2", "pivot": [17, 55] },
+    { "id": "fold1", "parent": "torso", "pivot": [22, -4] },
+    { "id": "fold2", "parent": "torso", "pivot": [26, -2] },
+    { "id": "fold3", "parent": "torso", "pivot": [34, 28] },
+    { "id": "fold4", "parent": "torso", "pivot": [-10, 38] },
+    { "id": "fold5", "parent": "torso", "pivot": [42, 48] }
   ],
   "slots": [
     { "id": "cape2", "bone": "cape2" },
+    { "id": "fold1", "bone": "fold1" },
+    { "id": "fold2", "bone": "fold2" },
+    { "id": "fold3", "bone": "fold3" },
+    { "id": "fold4", "bone": "fold4" },
+    { "id": "fold5", "bone": "fold5" },
     { "id": "cape3", "bone": "cape3" },
     { "id": "cape", "bone": "cape" },
     { "id": "arm_L", "bone": "arm_L" },
@@ -188,14 +198,17 @@
       "shin_L": { "art": "hb/shin_L", "at": [21, 66], "size": [14, 14] }
     },
     "hd": {
-      "head": { "art": "hd/head", "at": [-38, -18], "size": [54, 30] },
-      "jaw": { "art": "hd/jaw", "at": [-20, 0], "size": [30, 28] },
-      "torso": { "art": "hd/torso", "at": [-12, -18], "size": [64, 62] },
-      "arm_L": { "art": "hd/arm_L", "at": [-22, 26], "size": [20, 40] },
-      "arm_R": { "art": "hd/arm_R", "at": [20, 24], "size": [22, 46] },
-      "cape": { "art": "hd/cape", "at": [-26, 28], "size": [92, 26] },
-      "cape2": { "art": "hd/cape2", "at": [-28, 46], "size": [96, 22] },
-      "cape3": { "art": "hd/cape3", "at": [-28, 60], "size": [98, 20] }
+      "head": { "art": "hd/head", "at": [-38, -18], "size": [84, 58] },
+      "torso": { "art": "hd/torso", "at": [2, 18], "size": [36, 56] },
+      "jaw": { "art": "hd/jaw", "at": [-18, 10], "size": [24, 18] },
+      "fold1": { "art": "hd/fold1", "at": [4, -4], "size": [40, 64] },
+      "fold2": { "art": "hd/fold2", "at": [12, -2], "size": [46, 48] },
+      "arm_L": { "art": "hd/arm_L", "at": [-28, 18], "size": [30, 48] },
+      "cape": { "art": "hd/cape", "at": [-12, 28], "size": [56, 52] },
+      "arm_R": { "art": "hd/arm_R", "at": [20, 28], "size": [22, 44] },
+      "fold3": { "art": "hd/fold3", "at": [30, 28], "size": [38, 32] },
+      "fold4": { "art": "hd/fold4", "at": [-28, 38], "size": [24, 38] },
+      "fold5": { "art": "hd/fold5", "at": [24, 48], "size": [46, 30] }
     }
   },
   "looks": {
@@ -514,17 +527,18 @@
     "hd": {
       "pivots": {
         "root": [16, 78],
-        "torso": [16, 36],
-        "head": [6, 2],
-        "jaw": [2, 8],
-        "arm_L": [-10, 34],
-        "arm_R": [30, 36],
-        "cape": [16, 36],
-        "cape2": [16, 50],
-        "cape3": [16, 64]
-      },
-      "rot": {},
-      "shift": {}
+        "torso": [18, 68],
+        "head": [10, 18],
+        "jaw": [2, 12],
+        "arm_L": [-6, 22],
+        "arm_R": [34, 30],
+        "cape": [16, 32],
+        "fold1": [22, -4],
+        "fold2": [26, -2],
+        "fold3": [34, 28],
+        "fold4": [-10, 38],
+        "fold5": [42, 48]
+      }
     }
   },
   "bodyMotions": {
@@ -570,7 +584,12 @@
       "hair_back2": "뒷머리 2",
       "hair_back3": "뒷머리 끝",
       "cape2": "망토 2",
-      "cape3": "망토 끝"
+      "cape3": "망토 끝",
+      "fold1": "옷 주름 1",
+      "fold2": "옷 주름 2",
+      "fold3": "옷 주름 3",
+      "fold4": "옷 주름 4",
+      "fold5": "옷 주름 5"
     },
     "groups": [
       [
@@ -597,7 +616,12 @@
           "outer_torso",
           "cape",
           "cape2",
-          "cape3"
+          "cape3",
+          "fold1",
+          "fold2",
+          "fold3",
+          "fold4",
+          "fold5"
         ]
       ],
       [
@@ -865,117 +889,6 @@
           "w": 6
         }
       ]
-    },
-    "hd": {
-      "head": [
-        {
-          "pts": [
-            [7, -5],
-            [-9, -5],
-            [-33, -5]
-          ],
-          "w": 3
-        },
-        {
-          "pts": [
-            [-5, -11],
-            [5, -9]
-          ],
-          "w": 3
-        }
-      ],
-      "jaw": [
-        {
-          "pts": [
-            [3, 13],
-            [-5, 17],
-            [-13, 19]
-          ],
-          "w": 3
-        }
-      ],
-      "torso": [
-        {
-          "pts": [
-            [11, -11],
-            [23, -7],
-            [33, 1]
-          ],
-          "w": 3
-        },
-        {
-          "pts": [
-            [17, 1],
-            [19, 19],
-            [17, 33]
-          ],
-          "w": 3
-        },
-        {
-          "pts": [
-            [33, 7],
-            [41, 25]
-          ],
-          "w": 3
-        },
-        {
-          "pts": [
-            [1, 27],
-            [-3, 35]
-          ],
-          "w": 3
-        }
-      ],
-      "arm_L": [
-        {
-          "pts": [
-            [-9, 37],
-            [-15, 49],
-            [-17, 61]
-          ],
-          "w": 3
-        }
-      ],
-      "arm_R": [
-        {
-          "pts": [
-            [31, 39],
-            [29, 53],
-            [27, 67]
-          ],
-          "w": 3
-        }
-      ],
-      "cape": [
-        {
-          "pts": [
-            [-25, 43],
-            [19, 43],
-            [59, 43]
-          ],
-          "w": 3
-        }
-      ],
-      "cape2": [
-        {
-          "pts": [
-            [-27, 57],
-            [19, 57],
-            [65, 57]
-          ],
-          "w": 3
-        }
-      ],
-      "cape3": [
-        {
-          "pts": [
-            [-27, 71],
-            [19, 71],
-            [69, 71]
-          ],
-          "w": 3
-        }
-      ]
     }
   },
   "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
@@ -988,14 +901,6 @@
       "body": "dg",
       "at": [-18, 22],
       "scale": 2
-    },
-    "hd": {
-      "note": "두건(몸 hd) = 사용자 도트(2026-11-10, 54×50 — 부리 가면·두건 로브)를 뼈대 선 skeletons.hd 로 잘라 씀. scale 2(역관절·덩치와 같은 도트 크기), at = 2배 도트 왼쪽 위(로브 아랫단 = 바닥 줄 80, 몸 가운데 x 16) (GDD 115-A 92)",
-      "image": "docs/design/user-art/hood-ref/hood-base-2026-11-10.png",
-      "body": "hd",
-      "at": [-38, -20],
-      "scale": 2,
-      "bleed": 2
     }
   },
   "bodySlots": {
@@ -1028,19 +933,23 @@
       "outer_arm_R"
     ],
     "hd": [
-      "cape3",
-      "cape2",
+      "fold4",
+      "arm_L",
+      "fold2",
+      "fold5",
+      "fold1",
       "cape",
       "torso",
-      "arm_L",
-      "arm_R",
+      "head",
+      "fold3",
       "jaw",
-      "head"
+      "arm_R"
     ]
   },
   "assembled": {
     "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
-    "hb": "docs/design/user-art/beast-base-ref/assembly.json"
+    "hb": "docs/design/user-art/beast-base-ref/assembly.json",
+    "hd": "docs/design/user-art/hood-ref/assembly.json"
   },
   "recolors": {
     "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",
@@ -1175,6 +1084,56 @@
         1.5,
         1400,
         0
+      ]
+    },
+    "fold1": {
+      "lag": 70,
+      "swing": 1.2,
+      "hang": 0.3,
+      "wave": [
+        3.5,
+        1500,
+        0
+      ]
+    },
+    "fold2": {
+      "lag": 70,
+      "swing": 1.2,
+      "hang": 0.3,
+      "wave": [
+        4,
+        1300,
+        200
+      ]
+    },
+    "fold3": {
+      "lag": 70,
+      "swing": 1.2,
+      "hang": 0.3,
+      "wave": [
+        4.5,
+        1700,
+        120
+      ]
+    },
+    "fold4": {
+      "lag": 70,
+      "swing": 1.2,
+      "hang": 0.3,
+      "wave": [
+        3,
+        1400,
+        320
+      ]
+    },
+    "fold5": {
+      "lag": 70,
+      "swing": 1.2,
+      "hang": 0.3,
+      "wave": [
+        5,
+        1600,
+        450
       ]
     }
   }

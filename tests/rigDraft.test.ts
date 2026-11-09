@@ -176,7 +176,8 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Math.min(...mv.tracks.leg_R!.map((k) => k[3]))).toBeLessThan(0); // 든 다리는 엉덩이째 들어 올림
   });
   it('두건(몸 hd, GDD 115-A 92): 머리·턱·양팔·몸통·로브 세 마디, 동작은 이동·빈사·쓰러짐·대기·박치기·빔(특수1)·포효(해방=필살기)만, 늘 떠 있고 로브는 하늘하늘', () => {
-    expect(Object.keys(rig.bodies.hd!).sort()).toEqual(['arm_L', 'arm_R', 'cape', 'cape2', 'cape3', 'head', 'jaw', 'torso']);
+    expect(Object.keys(rig.bodies.hd!).sort()).toEqual(['arm_L', 'arm_R', 'cape', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5', 'head', 'jaw', 'torso']); // 사용자 부위 시트 조립(115-A 93)
+    for (const f of ['fold1', 'fold2', 'fold3', 'fold4', 'fold5']) expect(rig.sway?.[f]?.wave, f).toBeDefined(); // 옷 주름마다 하늘하늘
     expect(rig.looks['hood-base']!.body).toBe('hd');
     const ms = resolveMotions(rig, motions, sets, 'hd');
     for (const id of ['idle', 'homeIdle', 'move', 'dying', 'down', 'headbutt', 'skill', 'release1', 'ultimate']) expect(ms[id], id).toBeDefined();
