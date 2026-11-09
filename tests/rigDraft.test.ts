@@ -167,6 +167,14 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     const swing = { duration: 1000, loop: false, tracks: { head: [[0, 0, 0, 0], [200, 20, 0, 0], [1000, 20, 0, 0]] as [number, number, number, number][] } };
     expect(samplePose(rig, swing, 150).hair_back2!.rot).toBeLessThan(samplePose(rig, swing, 600).hair_back2!.rot); // 움직이는 동안 더 뒤처짐
   });
+  it('덩치 걷기(GDD 115-A 89): 늘 한 발이 바닥(80)에 닿고, 걸음마다 몸이 살짝 내려앉았다 올라오며(1~2칸), 든 다리는 무릎을 접는다', () => {
+    const mv = resolveMotions(rig, motions, sets, 'hb').move!;
+    const ys = mv.tracks.root!.map((k) => k[3]);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(0.8);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(2.5);
+    expect(Math.min(...mv.tracks.shin_R!.map((k) => k[1]))).toBeLessThan(-10);
+    expect(Math.min(...mv.tracks.leg_R!.map((k) => k[3]))).toBeLessThan(0); // 든 다리는 엉덩이째 들어 올림
+  });
   it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
     const b = DRAFT_RIGS.beast!;
     const ref = b.rig.bodies.ref!;
