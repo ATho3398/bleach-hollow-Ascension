@@ -226,9 +226,9 @@ describe('뱀형 (GDD 115-A 44·45, 사용자 도트 형태)', () => {
   });
   it('사용자 부위 시트(GDD 115-A 96): 조각 6개(팔 없음), 아래 몸을 옮기면 목·머리도 같이, 똬리를 옮기면 꼬리도, 꼬리 끝은 혼자', () => {
     expect(Object.keys(b.rig.bodies.ref!).sort()).toEqual(['body1', 'coil1', 'head', 'neck1', 'tail1', 'tail2']);
-    expect(followMove(b.rig, 'serpent-test', 'body1')!.parts.map((p) => p.slot)).toEqual(['body1', 'neck1', 'head']);
-    expect(followMove(b.rig, 'serpent-test', 'coil1')!.parts.map((p) => p.slot)).toEqual(['coil1', 'tail1', 'tail2']);
-    expect(followMove(b.rig, 'serpent-test', 'tail2')!.parts.map((p) => p.slot)).toEqual(['tail2']);
+    expect(followMove(b.rig, 'serpent-base', 'body1')!.parts.map((p) => p.slot)).toEqual(['body1', 'neck1', 'head']);
+    expect(followMove(b.rig, 'serpent-base', 'coil1')!.parts.map((p) => p.slot)).toEqual(['coil1', 'tail1', 'tail2']);
+    expect(followMove(b.rig, 'serpent-base', 'tail2')!.parts.map((p) => p.slot)).toEqual(['tail2']);
   });
   it('공격2 = 밑에서 위로 쳐올리기(GDD 115-A 98): 머리를 앞아래로 숙였다가 타격 때 위로 쳐듦, 팔 트랙 없음', () => {
     const a2 = b.motions.attack2!;

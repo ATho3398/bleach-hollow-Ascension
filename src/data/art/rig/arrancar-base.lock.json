@@ -6,6 +6,8 @@
   "head": [15, 17],
   "jaw": [15, 24],
   "hair_back": [26, 11],
+  "hair_back2": [31, 23],
+  "hair_back3": [28, 37],
   "arm_L": [12, 31],
   "forearm_L": [11, 44],
   "arm_R": [24, 33],
@@ -18,19 +20,35 @@
   "foot_R": [24, 75],
   "weapon": [9, 58],
   "scabbard": [19, 49],
-  "cape": [17, 29]
+  "cape": [17, 29],
+  "cape2": [17, 42],
+  "cape3": [17, 55],
+  "fold1": [22, -4],
+  "fold2": [26, -2],
+  "fold3": [34, 28],
+  "fold4": [-10, 38],
+  "fold5": [42, 48]
  },
  "restRot": {
   "weapon": 78,
   "scabbard": -32
  },
  "slots": [
+  "cape2",
+  "fold1",
+  "fold2",
+  "fold3",
+  "fold4",
+  "fold5",
+  "cape3",
   "cape",
   "arm_L",
   "outer_arm_L",
   "forearm_L",
   "weapon",
   "thumb_L",
+  "hair_back2",
+  "hair_back3",
   "hair_back",
   "foot_L",
   "foot_R",
@@ -51,21 +69,25 @@
  "bodyJoints": {
   "arrancar_f": {
    "pivots": {
-    "arm_R": [24, 34],
+    "arm_R": [22, 32],
     "forearm_R": [29, 41],
     "foot_R": [22, 75],
-    "forearm_L": [7, 44]
+    "forearm_L": [7, 44],
+    "hair_back2": [22, 19],
+    "cape2": [17, 42],
+    "cape3": [17, 55],
+    "arm_L": [11, 31]
    },
    "rot": {
-    "forearm_R": -15,
+    "forearm_R": -13,
     "torso": 2,
     "head": -5,
-    "arm_R": 4
+    "arm_R": 20
    },
    "shift": {
     "arm_R": [
-     -0.54,
-     0.43
+     -0.4,
+     0.29
     ]
    }
   },
@@ -115,7 +137,9 @@
    "pivots": {
     "arm_R": [25, 35],
     "forearm_L": [9, 44],
-    "forearm_R": [31, 40]
+    "forearm_R": [31, 40],
+    "cape2": [17, 42],
+    "cape3": [17, 55]
    },
    "rot": {
     "arm_R": 19,
@@ -134,7 +158,9 @@
     "forearm_L": [7, 44],
     "arm_R": [24, 34],
     "foot_R": [22, 75],
-    "forearm_R": [29, 41]
+    "forearm_R": [29, 41],
+    "hair_back2": [31, 23],
+    "hair_back3": [28, 37]
    },
    "rot": {
     "arm_R": 4,
@@ -155,7 +181,9 @@
     "forearm_L": [7, 44],
     "arm_R": [24, 34],
     "foot_R": [22, 75],
-    "forearm_R": [29, 41]
+    "forearm_R": [29, 41],
+    "hair_back2": [31, 23],
+    "hair_back3": [28, 37]
    },
    "rot": {
     "arm_R": 4,
@@ -213,6 +241,22 @@
     "leg_L": [34, 64],
     "shin_L": [29, 72]
    }
+  },
+  "hd": {
+   "pivots": {
+    "root": [16, 79],
+    "torso": [10, 64],
+    "head": [17, 48],
+    "jaw": [5, 40],
+    "arm_L": [5, 51],
+    "arm_R": [20, 56],
+    "cape": [16, 56],
+    "fold1": [24, 66],
+    "fold2": [20, 43],
+    "fold3": [25, 54],
+    "fold4": [5, 64],
+    "fold5": [29, 64]
+   }
   }
  },
  "looks": {
@@ -256,7 +300,8 @@
     "weapon": { "art": "weapon/sword", "at": [0, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] },
     "hair": { "art": "arrancar_f/hair", "at": [1, 1] },
-    "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3] }
+    "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3] },
+    "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18] }
    }
   },
   "bare-base": {
@@ -339,7 +384,9 @@
     "hair": { "art": "shinigami_f/hair", "at": [1, 2] },
     "weapon": { "art": "weapon/sword", "at": [1, 49] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
-    "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2] }
+    "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [6, -2] },
+    "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22] },
+    "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36] }
    }
   },
   "shinigami-student": {
@@ -382,7 +429,9 @@
     "hair": { "art": "shinigami_f/hair", "at": [1, 2] },
     "weapon": { "art": "weapon/sword", "at": [1, 49] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] },
-    "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2] }
+    "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [6, -2] },
+    "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22] },
+    "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36] }
    }
   }
  }

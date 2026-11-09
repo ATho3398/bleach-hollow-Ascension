@@ -25,6 +25,11 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   lose: ['down'],
 };
 
+/** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 217장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */
+export const RIG_ACTION_FALLBACK: Partial<Record<AnimAction, readonly string[]>> = {
+  attack: ['headbutt'],
+};
+
 /** 계열 몸동작 → 종이인형 동작 (GDD 118장 2 → 171장, 사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션"): 맨손 타격(권) = 스트레이트, 칼(참) = 공격1·2, 귀도(귀) = 특수1·2. 묶음에 있는 동작이 하나도 없으면 게임 동작(RIG_ACTIONS) 그대로 */
 export const FAMILY_RIG_MOTIONS: Readonly<Record<FamilyMotionKind, readonly string[]>> = {
   strike: ['straight'],
@@ -53,7 +58,10 @@ export interface RigPlayer extends AnimPlayer {
 }
 
 export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake: () => void = () => {}, rng: () => number = Math.random): RigPlayer {
-  const ids = (a: AnimAction) => (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
+  const ids = (a: AnimAction) => {
+    const own = (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
+    return own.length ? own : (RIG_ACTION_FALLBACK[a] ?? []).filter((id) => motions[id]);
+  };
   const byMotion = (m: FamilyMotionKind | undefined) => (m ? FAMILY_RIG_MOTIONS[m].filter((id) => motions[id]) : []);
   const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;

@@ -116,9 +116,10 @@ describe('106장 2·3: 웅덩이 · 메노스 크기', () => {
     expect(ev).toContain("floatEl('heal', `${faction.riskGaugeName} −"); // GDD 201장: 오른 값 숫자는 없앰, 리스크 내림(온천)만 숫자
   });
   it('메노스 그란데: 걷기·전투 필드 배율은 데이터(fieldScale), 방은 scale 그대로', () => {
-    expect(ART_MANIFEST['char.hollow.2']!.fieldScale).toBe(1.5);
-    expect(ART_MANIFEST['char.hollow.2']!.scale).toBe(2);
-    expect(artUrls('char.hollow.2').fieldScale).toBe(1.5);
+    // C.360 (GDD 217장 1): 2단계 = 종이인형 길리안(배율 하나, 필드 배율 없음) — 옛 한 장 그림 2배·필드 1.5배 폐기
+    expect(ART_MANIFEST['char.hollow.2']!.rig).toBe('gillian-base');
+    expect(ART_MANIFEST['char.hollow.2']!.fieldScale).toBeUndefined();
+    expect(ART_MANIFEST['char.shinigami']!.fieldScale).toBe(1.33); // 필드 배율 데이터는 그대로 쓰인다
     expect(artUrls('char.hollow').fieldScale).toBeUndefined();
     expect(read('src/ui/bha/walk.ts')).toContain('art.fieldScale ?? art.scale');
     expect(read('src/ui/bha/battle.ts')).toContain('art.fieldScale ?? art.scale');

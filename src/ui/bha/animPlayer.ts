@@ -4,7 +4,7 @@
 import { clipDurationMs, clipHitMs, frameAt, hasAnims, type AnimAction, type AnimClip, type AnimSet } from '../../data/art/anim';
 import type { FamilyMotionKind } from '../../engine/faction';
 import type { ArtUrls } from '../../data/art/manifest';
-import { HUMANOID, MOTION_SETS, MOTIONS } from '../../data/art/rig/pose';
+import { rigPack } from '../../data/art/rig/pose';
 import { bindRigAnim, RIG_ACTIONS } from './rigAnim';
 
 export interface AnimHost {
@@ -186,7 +186,8 @@ export function preloadFrames(anims: AnimSet): void {
 export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls | null): AnimPlayer | null {
   // 종이인형 그림(GDD 96장 30): 뼈대 동작으로 움직인다
   if (art?.rig && typeof document !== 'undefined') {
-    const player = bindRigAnim(img, HUMANOID, MOTIONS, art.rig.look, art.rig.partBase, MOTION_SETS);
+    const pack = rigPack(art.rig.rigId); // 뼈대(사람형·뱀형, GDD 115-A 100)
+    const player = bindRigAnim(img, pack.rig, pack.motions, art.rig.look, art.rig.partBase, pack.sets);
     registry.set(owner, player);
     owner.classList.add('has-anim');
     for (const a of Object.keys(RIG_ACTIONS)) owner.classList.add(`has-anim-${a}`);

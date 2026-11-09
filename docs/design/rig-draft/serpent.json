@@ -213,8 +213,19 @@
   }
  },
  "looks": {
-  "serpent-test": {
-   "body": "ref"
+  "serpent-base": {
+   "body": "ref",
+   "color": "진홍"
+  },
+  "serpent-green": {
+   "body": "ref",
+   "artFolder": "ref-green",
+   "color": "초록"
+  },
+  "serpent-blue": {
+   "body": "ref",
+   "artFolder": "ref-blue",
+   "color": "파랑"
   }
  },
  "hairFrame": {
@@ -232,12 +243,14 @@
   ]
  },
  "view": {
+  "note": "게임 화면에 그릴 때의 그림 칸(x, y, 가로, 세로 — 캔버스 좌표). 사람형과 같은 규격(정사각, 몸 바닥 가운데 x 22 = 칸 가운데, 바닥 y 39 = 아래에서 약 8% 위, GDD 115-A 100) — 머리를 쳐들거나(공격2) 앞으로 내미는(공격) 자리까지 72칸. clipY = 이 아래는 안 그린다",
   "rect": [
-   -12,
-   -10,
-   64,
-   50
-  ]
+   -14,
+   -27,
+   72,
+   72
+  ],
+  "clipY": 41
  },
  "edit": {
   "names": {
@@ -428,5 +441,26 @@
  },
  "bodyMotions": {
   "ref": "ref"
+ },
+ "recolors": {
+  "note": "색 외형 그림(GDD 115-A 85·100, scripts/rig/recolor.py serpent): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 뱀 = 도트 6색 중 살 두 색(밝은 #932b47·어두운 #2d101d = 진홍, 사용자 원래 색)과 눈(#03eaf8)만 바꿈 — 뼈(#fbeccc·#ceb299)·윤곽(검정)은 그대로",
+  "ref-green": {
+   "from": "ref",
+   "map": {
+    "#932b47": "#4e7a34",
+    "#2d101d": "#1a2e14",
+    "#03eaf8": "#f2d23c"
+   },
+   "source": "독 — 강적 롯팽(poison-heavy-chain)"
+  },
+  "ref-blue": {
+   "from": "ref",
+   "map": {
+    "#932b47": "#2f5f9a",
+    "#2d101d": "#101e36",
+    "#03eaf8": "#ff5050"
+   },
+   "source": "물 — 강적 마레하다(water-heavy-chain)"
+  }
  }
 }

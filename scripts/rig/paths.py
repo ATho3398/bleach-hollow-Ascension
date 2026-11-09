@@ -21,3 +21,16 @@ def look_art(look, art):
     """외형의 몸 부위 그림 경로 — artFolder(색 외형, GDD 115-A 85)가 있으면 그 폴더의 같은 이름 그림 (pose.ts lookArt 와 같음)"""
     f = look.get('artFolder')
     return f'{f}/{art.rsplit("/", 1)[-1]}' if isinstance(f, str) else art
+
+
+def rig_paths(rid):
+    """뼈대 id → (작업본 뼈대, 작업본 동작, 작업본 그림 폴더, 게임 뼈대, 게임 동작, 게임 그림 폴더). 사람형 = 위 이름들, 그 밖(serpent 등) = <id>.json·<id>-motions.json·<id>/ (GDD 115-A 100)"""
+    if rid == 'humanoid':
+        return DRAFT_RIG_JSON, DRAFT_MOTIONS, DRAFT_ART, GAME_RIG_JSON, GAME_MOTIONS, GAME_ART
+    gd = os.path.join(ROOT, 'src', 'data', 'art', 'rig')
+    return (os.path.join(DRAFT_DIR, f'{rid}.json'), os.path.join(DRAFT_DIR, f'{rid}-motions.json'), os.path.join(DRAFT_DIR, rid),
+            os.path.join(gd, f'{rid}.json'), os.path.join(gd, f'{rid}-motions.json'), os.path.join(ROOT, 'public', 'art', 'rig', rid))
+
+
+# 게임에 넣는 뼈대 (promote.py·still.py). 짐승형(beast)은 아직 게임이 안 씀
+GAME_RIGS = ('humanoid', 'serpent')

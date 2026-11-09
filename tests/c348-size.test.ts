@@ -3,7 +3,7 @@
 //            ② 같은 화면에서 적 칸 키 = 내 칸 키 (걷기 = --bha-fig-h 하나, 전투 = 같은 .bha-unit__fig). 실측은 scripts/c348-size.cjs.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ART_MANIFEST, BRUTE_ELEMENT_LOOKS, BRUTE_ENEMY_KINDS, BRUTE_FOE_SCALE, HOLLOW_BRUTE_SCALE, charArt, enemyArt } from '../src/data/art/manifest';
+import { ART_MANIFEST, BRUTE_ELEMENT_LOOKS, BRUTE_ENEMY_KINDS, BRUTE_FOE_SCALE, HOLLOW_BRUTE_SCALE, SERPENT_ENEMIES, charArt, enemyArt } from '../src/data/art/manifest';
 
 const css = (f: string) => readFileSync(`src/ui/bha/${f}`, 'utf8');
 /** 화면이 실제로 쓰는 배율: 걷기·전투 내 그림 = fieldScale ?? scale, 적 그림 = scale (walk.ts·battle.ts) */
@@ -12,7 +12,7 @@ const fieldOf = (a: { scale: number; fieldScale?: number }) => a.fieldScale ?? a
 describe('C.348 적·나 공용 크기 규칙', () => {
   it('덩치 몸 종이인형(brute-*)은 적·나 모두 같은 배율, 필드 배율 따로 없음', () => {
     const brutes = Object.entries(ART_MANIFEST).filter(([, e]) => e.rig?.startsWith('brute-'));
-    expect(brutes.length).toBeGreaterThanOrEqual(40 + 4);
+    expect(brutes.length).toBeGreaterThanOrEqual(40 - Object.keys(SERPENT_ENEMIES).length + 4); // 뱀형 강적 2 빼고 (C.360)
     for (const [k, e] of brutes) {
       expect(e.scale, k).toBe(HOLLOW_BRUTE_SCALE);
       expect(e.fieldScale, k).toBeUndefined();
@@ -26,6 +26,7 @@ describe('C.348 적·나 공용 크기 규칙', () => {
     const myField = new Set(mine.map(fieldOf));
     expect([...myField]).toEqual([HOLLOW_BRUTE_SCALE]);
     for (const el of Object.keys(BRUTE_ELEMENT_LOOKS)) for (const k of BRUTE_ENEMY_KINDS) {
+      if (SERPENT_ENEMIES[`${el}-${k}`]) continue; // 뱀형 강적 (C.360, GDD 217장 2)
       const f = enemyArt(`${el}-${k}`, '/');
       expect(f?.rig?.look.startsWith('brute-'), `${el}-${k}`).toBe(true);
       expect(f!.scale, `${el}-${k} 전투·걷기·도감`).toBe(HOLLOW_BRUTE_SCALE);

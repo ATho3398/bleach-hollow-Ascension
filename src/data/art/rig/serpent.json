@@ -1,0 +1,466 @@
+{
+ "id": "serpent",
+ "note": "뱀형 종이인형 뼈대 (GDD 115-A 44·45 → 96). 2026-11-10 사용자 부위 시트로 다시(조각 6개, 팔 없앰): 아래 몸(body1) → 목·윗몸(neck1) → 머리(head), 똬리(coil1) → 꼬리(tail1) → 꼬리 끝(tail2). 관절 = 이웃 조각이 맞닿은 자리. 그림 없는 뼈(body2·neck2·coil2·arm·root)는 동작이 그대로 돌게 남김. 앞 = 왼쪽, 그림 칸 40×40, 바닥 줄 y=39. 조립: docs/design/user-art/serpent-ref/assembly.json",
+ "canvas": [
+  40,
+  40
+ ],
+ "ground": 39,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    21,
+    39
+   ]
+  },
+  {
+   "id": "body1",
+   "parent": "root",
+   "pivot": [
+    21,
+    39
+   ]
+  },
+  {
+   "id": "body2",
+   "parent": "body1",
+   "pivot": [
+    21,
+    21
+   ]
+  },
+  {
+   "id": "neck1",
+   "parent": "body2",
+   "pivot": [
+    21,
+    21
+   ]
+  },
+  {
+   "id": "neck2",
+   "parent": "neck1",
+   "pivot": [
+    19,
+    13
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "neck2",
+   "pivot": [
+    17,
+    7
+   ]
+  },
+  {
+   "id": "arm",
+   "parent": "body2",
+   "pivot": [
+    14,
+    17
+   ]
+  },
+  {
+   "id": "coil1",
+   "parent": "root",
+   "pivot": [
+    23,
+    32
+   ]
+  },
+  {
+   "id": "coil2",
+   "parent": "coil1",
+   "pivot": [
+    29,
+    31
+   ]
+  },
+  {
+   "id": "tail1",
+   "parent": "coil2",
+   "pivot": [
+    35,
+    32
+   ]
+  },
+  {
+   "id": "tail2",
+   "parent": "tail1",
+   "pivot": [
+    37,
+    23
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "tail2",
+   "bone": "tail2"
+  },
+  {
+   "id": "tail1",
+   "bone": "tail1"
+  },
+  {
+   "id": "coil1",
+   "bone": "coil1"
+  },
+  {
+   "id": "neck1",
+   "bone": "neck1"
+  },
+  {
+   "id": "body1",
+   "bone": "body1"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "coil2",
+   "bone": "coil2"
+  },
+  {
+   "id": "body2",
+   "bone": "body2"
+  },
+  {
+   "id": "neck2",
+   "bone": "neck2"
+  },
+  {
+   "id": "root",
+   "bone": "root"
+  },
+  {
+   "id": "arm",
+   "bone": "arm"
+  }
+ ],
+ "bodies": {
+  "ref": {
+   "neck1": {
+    "art": "ref/neck1",
+    "at": [
+     12,
+     6
+    ],
+    "size": [
+     12,
+     23
+    ]
+   },
+   "head": {
+    "art": "ref/head",
+    "at": [
+     -4,
+     2
+    ],
+    "size": [
+     25,
+     16
+    ]
+   },
+   "tail2": {
+    "art": "ref/tail2",
+    "at": [
+     29,
+     10
+    ],
+    "size": [
+     10,
+     14
+    ]
+   },
+   "coil1": {
+    "art": "ref/coil1",
+    "at": [
+     20,
+     24
+    ],
+    "size": [
+     17,
+     14
+    ]
+   },
+   "tail1": {
+    "art": "ref/tail1",
+    "at": [
+     32,
+     24
+    ],
+    "size": [
+     8,
+     12
+    ]
+   },
+   "body1": {
+    "art": "ref/body1",
+    "at": [
+     9,
+     18
+    ],
+    "size": [
+     18,
+     22
+    ]
+   }
+  }
+ },
+ "looks": {
+  "serpent-base": {
+   "body": "ref",
+   "color": "진홍"
+  },
+  "serpent-green": {
+   "body": "ref",
+   "artFolder": "ref-green",
+   "color": "초록"
+  },
+  "serpent-blue": {
+   "body": "ref",
+   "artFolder": "ref-blue",
+   "color": "파랑"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   40,
+   40
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "note": "게임 화면에 그릴 때의 그림 칸(x, y, 가로, 세로 — 캔버스 좌표). 사람형과 같은 규격(정사각, 몸 바닥 가운데 x 22 = 칸 가운데, 바닥 y 39 = 아래에서 약 8% 위, GDD 115-A 100) — 머리를 쳐들거나(공격2) 앞으로 내미는(공격) 자리까지 72칸. clipY = 이 아래는 안 그린다",
+  "rect": [
+   -14,
+   -27,
+   72,
+   72
+  ],
+  "clipY": 41
+ },
+ "edit": {
+  "names": {
+   "root": "똬리 가운데",
+   "body1": "아래 몸",
+   "body2": "몸통 2(가슴)",
+   "neck1": "목·윗몸",
+   "neck2": "목 2",
+   "head": "머리",
+   "arm": "팔",
+   "coil1": "똬리",
+   "coil2": "똬리 2",
+   "tail1": "꼬리 1",
+   "tail2": "꼬리 끝"
+  },
+  "groups": [
+   [
+    "위로 선 몸",
+    [
+     "head",
+     "neck1",
+     "body1"
+    ]
+   ],
+   [
+    "똬리",
+    [
+     "coil1"
+    ]
+   ],
+   [
+    "꼬리",
+    [
+     "tail1",
+     "tail2"
+    ]
+   ]
+  ],
+  "follow": {
+   "body1": [
+    "neck1",
+    "head"
+   ],
+   "neck1": [
+    "head"
+   ],
+   "coil1": [
+    "tail1",
+    "tail2"
+   ],
+   "tail1": [
+    "tail2"
+   ]
+  }
+ },
+ "skeletons": {
+  "ref": {
+   "body1": [
+    {
+     "pts": [
+      [
+       21,
+       39
+      ],
+      [
+       21,
+       21
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "neck1": [
+    {
+     "pts": [
+      [
+       21,
+       21
+      ],
+      [
+       17,
+       7
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "head": [
+    {
+     "pts": [
+      [
+       17,
+       7
+      ],
+      [
+       0,
+       11
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coil1": [
+    {
+     "pts": [
+      [
+       23,
+       32
+      ],
+      [
+       35,
+       32
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "tail1": [
+    {
+     "pts": [
+      [
+       35,
+       32
+      ],
+      [
+       37,
+       23
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "tail2": [
+    {
+     "pts": [
+      [
+       37,
+       23
+      ],
+      [
+       29,
+       10
+      ]
+     ],
+     "w": 3
+    }
+   ]
+  }
+ },
+ "assembled": "docs/design/user-art/serpent-ref/assembly.json",
+ "bodySlots": {
+  "ref": [
+   "tail2",
+   "tail1",
+   "coil1",
+   "body1",
+   "neck1",
+   "head",
+   "coil2",
+   "body2",
+   "neck2",
+   "root",
+   "arm"
+  ]
+ },
+ "bodyJoints": {
+  "ref": {
+   "pivots": {
+    "neck1": [
+     17,
+     24
+    ],
+    "head": [
+     16,
+     15
+    ]
+   },
+   "rot": {
+    "head": -8
+   },
+   "shift": {
+    "head": [
+     0.83,
+     -0.2
+    ]
+   }
+  }
+ },
+ "bodyMotions": {
+  "ref": "ref"
+ },
+ "recolors": {
+  "note": "색 외형 그림(GDD 115-A 85·100, scripts/rig/recolor.py serpent): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 뱀 = 도트 6색 중 살 두 색(밝은 #932b47·어두운 #2d101d = 진홍, 사용자 원래 색)과 눈(#03eaf8)만 바꿈 — 뼈(#fbeccc·#ceb299)·윤곽(검정)은 그대로",
+  "ref-green": {
+   "from": "ref",
+   "map": {
+    "#932b47": "#4e7a34",
+    "#2d101d": "#1a2e14",
+    "#03eaf8": "#f2d23c"
+   },
+   "source": "독 — 강적 롯팽(poison-heavy-chain)"
+  },
+  "ref-blue": {
+   "from": "ref",
+   "map": {
+    "#932b47": "#2f5f9a",
+    "#2d101d": "#101e36",
+    "#03eaf8": "#ff5050"
+   },
+   "source": "물 — 강적 마레하다(water-heavy-chain)"
+  }
+ }
+}

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """종이인형 정지 그림 (GDD 96장 30): 외형마다 쉬는 자세(모든 동작 각도 0, 쉬는 각도만)를 게임 그림 칸(view.rect)에 4배로 그린다.
 게임에서 종이인형이 움직이기 전(부위 그림을 불러오는 동안)과, 움직이지 않는 곳(사진·목록 등)이 쓰는 한 장.
-출력: public/art/rig/humanoid/still/<외형>.png
+출력: public/art/rig/<뼈대>/still/<외형>.png (사람형 = humanoid, 뱀형 = serpent — GDD 115-A 100)
 
-사용: python3 scripts/rig/still.py [외형 ...]   (없으면 전부)
+사용: python3 scripts/rig/still.py [--rig serpent] [외형 ...]   (없으면 그 뼈대 외형 전부, 뼈대 기본 humanoid)
 """
 from __future__ import annotations
 
@@ -19,8 +19,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import look_art  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ART = os.path.join(ROOT, 'public', 'art', 'rig', 'humanoid')
-RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', 'humanoid.json'), encoding='utf-8'))
+_args = sys.argv[1:]
+RIG_ID = _args[_args.index('--rig') + 1] if '--rig' in _args else 'humanoid'
+LOOK_ARGS = [a for i, a in enumerate(_args) if a != '--rig' and (i == 0 or _args[i - 1] != '--rig')]
+ART = os.path.join(ROOT, 'public', 'art', 'rig', RIG_ID)
+RIG = json.load(open(os.path.join(ROOT, 'src', 'data', 'art', 'rig', f'{RIG_ID}.json'), encoding='utf-8'))
 K = 4
 
 
@@ -91,5 +94,5 @@ def render(look_id):
 
 
 if __name__ == '__main__':
-    for lid in (sys.argv[1:] or list(RIG['looks'])):
+    for lid in (LOOK_ARGS or list(RIG['looks'])):
         render(lid)

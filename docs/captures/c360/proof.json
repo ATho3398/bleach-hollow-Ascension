@@ -1,0 +1,84 @@
+{
+ "url": "http://localhost:5394/",
+ "picked": [
+  {
+   "tag": "tier1",
+   "ok": true
+  },
+  {
+   "tag": "gillian-vs-rotfang",
+   "foe": "롯팽",
+   "ok": true
+  },
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "wyrm-vs-marehada",
+   "foe": "마레하다",
+   "ok": true
+  }
+ ],
+ "battles": [
+  {
+   "tag": "gillian-vs-rotfang",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     288,
+     288
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "wyrm-vs-marehada",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     288,
+     288
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     288,
+     288
+    ],
+    "img": null
+   }
+  }
+ ],
+ "shots": [
+  "gillian-room.png",
+  "gillian-vs-rotfang-battle-0.png",
+  "gillian-vs-rotfang-battle-1.png",
+  "gillian-vs-rotfang-battle-2.png",
+  "gillian-vs-rotfang-battle-3.png",
+  "wyrm-vs-marehada-battle-0.png",
+  "wyrm-vs-marehada-battle-1.png",
+  "wyrm-vs-marehada-battle-2.png",
+  "wyrm-vs-marehada-battle-3.png"
+ ],
+ "save": [
+  null
+ ],
+ "errors": [],
+ "room": [
+  608,
+  608
+ ]
+}

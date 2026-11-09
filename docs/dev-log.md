@@ -2960,3 +2960,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 실측(`scripts/c356-proof.cjs`, 손 = 뼈 표식(긴 설명) + 무작위 임시 타일 1장): 본문 scrollHeight/clientHeight PC 196/196 · 폰 196/196(넘침 0), 손 카드 잘림 0, 설명 줄 수 2·1, 머리 줄 겹침 0.
 - 검증: typecheck · test · balance:check · build 통과. 세이브·밸런스 그대로.
 - 캡처 `docs/captures/c356/pc-4-lapend-swapped.png` 교체(같은 스크립트라 나머지 5장도 다시 찍힘).
+
+## C.360 — 길리안 = 호로 2단계 외형 · 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 강적 2(롯팽·마레하다) · 게임 종이인형 뼈대 여럿 (GDD 217장 · 115-A 88~100, v5.515, S-23, 종이인형 세션 Opus)
+- 사용자 원문: "패치 끝나면 길리안은, 길리안 단계 진화체로 게임에 넣고, 뱀형은, 색깔 바리에이션 3개정도 만들어서 아쥬커스 등급 강적에 2개 넣고, 아쥬커스 진화체로도 1개 넣어. ㅇㅋ? 너 임의로 넣으면 돼. 넣고 커밋하고 배포까지 ㄱㄱ."
+- 엔진 `src/data/art/rig/pose.ts`: `RIG_PACKS`(humanoid·serpent — 뼈대·동작·동작 묶음)·`rigPackOfLook`·`rigPack`. `manifest.ts` 종이인형 판정·`rigArt`(정지 그림·부위 폴더 = `art/rig/<뼈대>/`, 머리 높이 = 그 뼈대 그림 칸)·`ArtUrls.rig.rigId`, `animPlayer.bindAnim` 이 그 뼈대로 재생. `rigAnim` `RIG_ACTION_FALLBACK`(게임 동작에 맞는 동작이 없는 몸: 공격 → 박치기).
+- 데이터: 스킨 `gillian`(단계 외형·시작 전용), 종족 설정 hollow `tierLooks "2"` = 전부 gillian, 그림 목록 `char.hollow.2`·`skin.gillian` = 종이인형 gillian-base(배율 `GILLIAN_SCALE` 2.3), `skin.wyrm` = serpent-base(진홍), `enemy.poison-heavy-chain` = serpent-green·`enemy.water-heavy-chain` = serpent-blue(`SERPENT_ENEMIES`, 배율 `SERPENT_SCALE` 1.6). 옛 2단계 배율(2·필드 1.5) 삭제.
+- 종이인형 작업본: 뱀 외형 serpent-base(옛 serpent-test)·green·blue + `recolors`(살 두 색·눈), 게임 그림 칸 view [-14,-27,72,72]·clipY 41. 도구: `paths.rig_paths`·`GAME_RIGS`, `promote.py` 뼈대마다(사람형 + 뱀형), `still.py --rig`. promote: 작업본 115-A 88~100 전부 게임본으로(뒷머리·망토 마디 + 흔들림, 길리안 hd 그림, 아란칼(여) 해방 기본 등), 정지 그림 gillian-base·arrancar-base-f-released·serpent 3 새로, 뒷머리 한 장 그림 2개 지움(마디 그림으로).
+- 테스트: 새 `tests/c360.test.ts` 9개. 옛 그림 고정 시험을 새 설계로: c109(단계 외형 + 길리안), c176(2단계 배율 폐기), c190(사람 몸 캐릭터만), c341·c345·c348(2단계 = 길리안, 덩치 적 40 → 38 + 뱀형 강적 2). rigDraft serpent-test → serpent-base.
+- 캡처 `docs/captures/c360/`(1배 844×390, `scripts/c360-proof.cjs`, proof.json 오류 0): `gillian-room`(테스트 칸 1단계 → 진짜 진화 → 방 '시험 길리안' 종이인형), `gillian-vs-rotfang-battle-0~3`(길리안 vs 초록 뱀 롯팽, 둘 다 캔버스), `wyrm-vs-marehada-battle-0~3`(뱀형 외형 진홍 vs 파랑 뱀 마레하다).
+- 판단 (기획서 값 / 실제 값 / 이유): 강적 2 고르기 = 사용자 위임 / 롯팽(독)·마레하다(물) / 아쥬커스 등급 강적 중 이름이 뱀(송곳니·바다)에 어울림. 배율 = 위임 / 길리안 2.3·뱀 1.6 / 같은 도트면 길리안은 덩치와 키가 같고 뱀은 절반이라 화면 키로 맞춤(길리안 0.85·뱀 0.83, 덩치 0.8). 진화체 '1개' = 위임 / 단계 외형 표의 뱀형(wyrm) / 아쥬커스 외형 표(53장)에 이미 뱀형 자리가 있음.
+- 검증: typecheck · test · build 통과(아래). 세이브 형식·밸런스 그대로.
+

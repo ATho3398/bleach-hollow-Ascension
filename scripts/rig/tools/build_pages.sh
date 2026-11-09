@@ -18,7 +18,7 @@ for L in $(python3 -c "import json; print(' '.join(json.load(open('docs/design/r
   fi
 done
 python3 scripts/rig/bone_guide.py beast beast-test "$OUT/sheets/beast-test" >/dev/null
-python3 scripts/rig/bone_guide.py serpent serpent-test "$OUT/sheets/serpent-test" >/dev/null
+python3 scripts/rig/bone_guide.py serpent serpent-base "$OUT/sheets/serpent-base" >/dev/null
 python3 -I - "$OUT" <<'PY'
 import base64, glob, json, os, sys
 out = sys.argv[1]

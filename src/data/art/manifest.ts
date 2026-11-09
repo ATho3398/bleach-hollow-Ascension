@@ -15,7 +15,7 @@ import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } 
 import { getSkin, skinArtKey } from '../skins';
 import { FACTIONS } from '../factions';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
-import { HUMANOID } from './rig/pose';
+import { rigPackOfLook } from './rig/pose';
 
 /** 종이인형 여성 외형 id 꼬리 (humanoid.json looks: shinigami-base → shinigami-base-f) */
 export const RIG_FEMALE_SUFFIX = '-f';
@@ -45,8 +45,8 @@ export interface ArtUrls {
   offsetY: number;
   /** 프레임 애니 (GDD 26장): 동작별로 있는 것만. 없는 동작은 기존 연출을 쓴다 */
   anims?: AnimSet;
-  /** 종이인형 (GDD 96장 30): 외형 id 와 부위 그림 폴더 주소. src 는 쉬는 자세 정지 그림 */
-  rig?: { look: string; partBase: string };
+  /** 종이인형 (GDD 96장 30): 외형 id 와 부위 그림 폴더 주소. src 는 쉬는 자세 정지 그림. rigId = 뼈대(없으면 사람형, 뱀형 = serpent — GDD 115-A 100) */
+  rig?: { look: string; partBase: string; rigId?: string };
   /** 그림 위에서 머리 윗변까지 (그림 높이 대비 0~1, 없으면 0 = 그림 윗변). 종이인형은 칸이 칼 자리까지 넓어 머리 위가 비어 있다 — 머리 위 상태 칩 높이용 (C.190) */
   headTop?: number;
 }
@@ -60,6 +60,12 @@ export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'bru
 /** 덩치 몸 적 종류 (GDD 206장 2) — swift 는 마른 몸이라 빠짐 */
 export const BRUTE_ENEMY_KINDS = ['basic', 'sturdy', 'heavy-chain', 'heavy-seal', 'stance'] as const;
 const BRUTE_ENEMIES: Record<string, ArtEntry> = Object.fromEntries(Object.entries(BRUTE_ELEMENT_LOOKS).flatMap(([el, look]) => BRUTE_ENEMY_KINDS.map((k) => [`enemy.${el}-${k}`, { rig: look, scale: BRUTE_FOE_SCALE }])));
+/** 길리안(2단계 외형, 몸 hd) 배율 (GDD 217장 1): 정지 그림 키(칸의 0.37) × 2.3 ≈ 0.85 — 1단계 덩치(0.8)보다 조금 크게 */
+export const GILLIAN_SCALE = 2.3;
+/** 뱀형(뼈대 serpent) 배율 (GDD 217장 2): 그림 칸 72(사람형 152) · 정지 그림 키(칸의 0.52) × 1.6 ≈ 0.83 — 덩치(0.8)와 비슷한 키(도트는 덩치보다 굵다) */
+export const SERPENT_SCALE = 1.6;
+/** 뱀형 강적 (GDD 217장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
+export const SERPENT_ENEMIES: Readonly<Record<string, string>> = { 'poison-heavy-chain': 'serpent-green', 'water-heavy-chain': 'serpent-blue' };
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.cave': {},
@@ -75,15 +81,20 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
   'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
-  // 메노스 그랑데(2단계): 그림이 작아 2배 키움 (C.137, GDD 85장 1). 발은 그림 아래쪽 약 8% 위라 확대 기준점(92%)과 거의 같다.
-  // 걷기·전투 필드는 1.5배 (C.176, GDD 106장 3: 2배면 그림 높이가 1단계의 약 1.26배·폭 1.4배로 필드 위로 넘쳤다 → 높이·폭이 1단계와 비슷하게)
-  'char.hollow.2': { scale: 2, fieldScale: 1.5 },
+  // 길리안(2단계) = 종이인형 길리안 (GDD 217장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"). 옛 한 장 그림 배율(2배·필드 1.5배, C.137·C.176)은 폐기.
+  // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian
+  'char.hollow.2': { rig: 'gillian-base', scale: GILLIAN_SCALE },
+  'skin.gillian': { rig: 'gillian-base', scale: GILLIAN_SCALE },
+  // 아쥬커스 '뱀형' 외형 (GDD 53 · 217장 2, 사용자 "아쥬커스 진화체로도 1개"): 정신력 1위 단계 외형 = 종이인형 뱀(원래 색 진홍)
+  'skin.wyrm': { rig: 'serpent-base', scale: SERPENT_SCALE },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 적 덩치 (GDD 115-A 85 · 206장 2): 덩치 몸 적 = <속성>-basic·sturdy·heavy-chain·heavy-seal·stance (8 × 5 = 40) 전부 종이인형 덩치(몸 hb, 동작 묶음 brute 하나 — 모션 통일)를
   // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. 날쌘형 swift(마른 몸)는 한 장 그림 그대로. 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
   ...BRUTE_ENEMIES,
+  // 뱀형 강적 (GDD 217장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
+  ...Object.fromEntries(Object.entries(SERPENT_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SERPENT_SCALE }])),
   // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)
   'skin.brute': { rig: 'brute-brown', scale: HOLLOW_BRUTE_SCALE },
   'skin.ghoul': { rig: 'brute-gray', scale: HOLLOW_BRUTE_SCALE },
@@ -164,7 +175,7 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   const key = `enemy.${enemyId}`;
   // 종이인형 적 (GDD 115-A 85): 목록에 rig 가 있으면 그 외형이 움직인다(정지 그림 = 쉬는 자세 한 장)
   const rig = manifest[key]?.rig;
-  if (rig && HUMANOID.looks[rig]) return rigArt(rig, manifest[key]!, base);
+  if (rig && rigPackOfLook(rig)) return rigArt(rig, manifest[key]!, base);
   const a = artUrls(key, base, manifest, files);
   const anims = resolveAnims([key], base, files, overrides);
   // 한 장짜리 파일이 없고 idle 애니만 있으면 idle-1 을 정지 그림으로도 쓴다 (GDD 26-2)
@@ -172,15 +183,13 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   return src ? withAnims({ ...a, src }, anims) : null;
 }
 
-/** 종이인형 그림 (GDD 96장 30): 정지 그림 = still/<외형>.png, 부위 그림 폴더, 목록의 배율·위치 */
+/** 종이인형 그림 (GDD 96장 30): 정지 그림 = still/<외형>.png, 부위 그림 폴더, 목록의 배율·위치. 폴더 = 외형이 있는 뼈대(사람형·뱀형, GDD 115-A 100) */
 function rigArt(look: string, e: ArtEntry, base: string): ArtUrls {
-  return { src: joinBase(base, `art/rig/humanoid/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, 'art/rig/humanoid/') }, headTop: rigHeadTop() };
-}
-
-/** 종이인형 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율 */
-function rigHeadTop(): number {
-  const r = HUMANOID.view?.rect;
-  return r ? Math.max(0, -r[1] / r[3]) : 0;
+  const pack = rigPackOfLook(look);
+  const id = pack?.id ?? 'humanoid';
+  const r = pack?.rig.view?.rect;
+  const headTop = r ? Math.max(0, -r[1] / r[3]) : 0; // 그림 칸(view)에서 머리 윗변(캔버스 y 0)까지의 비율
+  return { src: joinBase(base, `art/rig/${id}/still/${look}.png`), frames: null, scale: e.scale ?? 1, ...(e.fieldScale !== undefined ? { fieldScale: e.fieldScale } : {}), offsetY: e.offsetY ?? 0, rig: { look, partBase: joinBase(base, `art/rig/${id}/`), rigId: id }, headTop };
 }
 
 /** 캐릭터 그림. 새 규칙(단계별 파일 > 종족 공통 파일)이 있으면 그 한 장이 우선이고(frames 없음),
@@ -206,7 +215,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   if (skinId && getSkin(skinId)) {
     // 종이인형 스킨 (GDD 206장 3): 목록의 skin.<id> 에 rig 가 있으면 그 외형이 움직인다(적 덩치와 같은 길). 여성 외형(-f)이 있으면 그쪽
     const skinRig = manifest[skinArtKey(skinId)]?.rig;
-    if (skinRig && HUMANOID.looks[skinRig]) return rigArt(female && HUMANOID.looks[skinRig + RIG_FEMALE_SUFFIX] ? skinRig + RIG_FEMALE_SUFFIX : skinRig, manifest[skinArtKey(skinId)]!, base);
+    if (skinRig && rigPackOfLook(skinRig)) return rigArt(female && rigPackOfLook(skinRig + RIG_FEMALE_SUFFIX) ? skinRig + RIG_FEMALE_SUFFIX : skinRig, manifest[skinArtKey(skinId)]!, base);
     const skin = tryKeys([skinArtKey(skinId)]);
     if (skin) return skin; // 스킨 그림이 아직 하나도 없으면 진화체 그림으로 (빈 화면 방지)
   }
@@ -218,7 +227,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   const rigKey = stagedRig ? keys[0]! : fallbackKey;
   const rigLook = stagedRig ?? (fallbackKey ? manifest[fallbackKey]?.rig : undefined);
   // 여성 외형 = 외형 id 뒤 -f (GDD 114·115장). 없으면 그 외형(남성) 그대로
-  const rigOf = (l: string, key: string) => rigArt(female && HUMANOID.looks[l + RIG_FEMALE_SUFFIX] ? l + RIG_FEMALE_SUFFIX : l, manifest[key]!, base);
+  const rigOf = (l: string, key: string) => rigArt(female && rigPackOfLook(l + RIG_FEMALE_SUFFIX) ? l + RIG_FEMALE_SUFFIX : l, manifest[key]!, base);
   if (rigLook) {
     if (!stagedRig) {
       const staged = tryKeys(keys.slice(0, 1));
@@ -230,6 +239,6 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   const file = tryKeys(keys);
   if (file) return file;
   const common = !fallbackKey ? manifest[keys[1]!]?.rig : undefined;
-  if (common && HUMANOID.looks[common]) return rigOf(common, keys[1]!);
+  if (common && rigPackOfLook(common)) return rigOf(common, keys[1]!);
   return artUrls(fallbackKey, base, manifest, files);
 }

@@ -3,6 +3,8 @@
 // 그리기(<img> 겹치기 + CSS transform)는 src/ui/bha/paperdoll.ts. 종족을 모른다: 어느 몸·머리카락을 쓸지는 looks 데이터.
 import rigRaw from './humanoid.json';
 import motionsRaw from './motions.json';
+import serpentRaw from './serpent.json';
+import serpentMotionsRaw from './serpent-motions.json';
 
 export type Vec2 = [number, number];
 /** CSS matrix(a, b, c, d, e, f) 순서: x' = a·x + c·y + e, y' = b·x + d·y + f */
@@ -183,6 +185,28 @@ export const HUMANOID: Rig = rigRaw as unknown as Rig;
 const humanoidMotions = readMotions(motionsRaw);
 export const MOTIONS: Record<string, Motion> = humanoidMotions.motions;
 export const MOTION_SETS: MotionSets = humanoidMotions.sets;
+
+/** 게임이 쓰는 뼈대 하나 (GDD 115-A 100): id = 그림 폴더 이름(public/art/rig/<id>/), 뼈대·동작·동작 묶음 */
+export interface RigPack {
+  id: string;
+  rig: Rig;
+  motions: Record<string, Motion>;
+  sets: MotionSets;
+}
+const serpentMotions = readMotions(serpentMotionsRaw);
+/** 게임 뼈대 목록: 사람형(사신·아란칼·덩치·길리안 …) + 뱀형. 외형 id 는 뼈대끼리 겹치지 않는다(테스트가 막음) */
+export const RIG_PACKS: readonly RigPack[] = [
+  { id: 'humanoid', rig: HUMANOID, motions: MOTIONS, sets: MOTION_SETS },
+  { id: 'serpent', rig: serpentRaw as unknown as Rig, motions: serpentMotions.motions, sets: serpentMotions.sets },
+];
+/** 외형 id → 그 외형이 있는 뼈대. 없으면 undefined */
+export function rigPackOfLook(look: string): RigPack | undefined {
+  return RIG_PACKS.find((p) => p.rig.looks[look]);
+}
+/** 뼈대 id → 뼈대 (없거나 모르는 id 면 사람형) */
+export function rigPack(id?: string): RigPack {
+  return RIG_PACKS.find((p) => p.id === id) ?? RIG_PACKS[0]!;
+}
 
 /** 키 사이를 부드럽게(처음·끝 느리게) 잇는다 */
 function ease(t: number): number {

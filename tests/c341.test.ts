@@ -1,7 +1,7 @@
 // C.341 (GDD 206장): 가짜 도트 그림 삭제 · 덩치 몸 적 전부 종이인형 · 호로 덩치 외형(거구·망령·속박자) 종이인형
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync } from 'node:fs';
-import { charArt, enemyArt, HOLLOW_BRUTE_SCALE } from '../src/data/art/manifest';
+import { charArt, enemyArt, HOLLOW_BRUTE_SCALE, SERPENT_ENEMIES } from '../src/data/art/manifest';
 import { HUMANOID } from '../src/data/art/rig/pose';
 import { getFaction } from '../src/data/factions';
 import enemies from '../src/data/enemies/enemies.json';
@@ -21,14 +21,15 @@ describe('206장 1: 가짜 도트 그림 삭제', () => {
     const files = readdirSync('public/art');
     expect(charArt('hollow', 0, fb, '/', undefined, files, 'mantis').src).toBe('/art/rig/humanoid/still/brute-base.png'); // C.345: 그림 없는 외형 = 기본 덩치
     expect(charArt('hollow', 0, fb, '/', undefined, [...files, 'skin-mantis.png'], 'mantis').src).toBe('/art/skin-mantis.png');
-    expect(charArt('hollow', 1, fb, '/', undefined, files).src).toBe('/art/rig/humanoid/still/brute-base.png'); // 메노스(2단계) 그림 지움 → 기본 덩치 (C.345)
+    expect(charArt('hollow', 1, fb, '/', undefined, files).src).toBe('/art/rig/humanoid/still/gillian-base.png'); // 메노스(2단계) 그림 지움 → 기본 덩치 (C.345) → 길리안 종이인형 (C.360, GDD 217장 1)
+    expect(charArt('hollow', 2, fb, '/', undefined, files).src).toBe('/art/rig/humanoid/still/brute-base.png'); // 3단계 기본(단계 외형 없음) = 기본 덩치
   });
 });
 
 describe('206장 2: 덩치 몸 적 전부 종이인형', () => {
-  it('sturdy·heavy-chain·heavy-seal·stance 32종 = basic 과 같은 색 덩치 외형, 배율 = 내 덩치와 같게(C.345)', () => {
+  it('sturdy·heavy-chain·heavy-seal·stance 32종(뱀형 강적 2 빼고 30) = basic 과 같은 색 덩치 외형, 배율 = 내 덩치와 같게(C.345)', () => {
     let n = 0;
-    for (const id of IDS.filter((id) => BRUTE_KINDS.some((k) => id.endsWith(`-${k}`)))) {
+    for (const id of IDS.filter((id) => BRUTE_KINDS.some((k) => id.endsWith(`-${k}`)) && !SERPENT_ENEMIES[id])) { // 뱀형 강적 2(C.360, GDD 217장 2)는 따로
       const a = enemyArt(id, '/')!;
       const basic = enemyArt(id.replace(/-(sturdy|heavy-chain|heavy-seal|stance)$/, '-basic'), '/')!;
       expect(a.rig?.look, id).toBe(basic.rig!.look);
@@ -37,7 +38,7 @@ describe('206장 2: 덩치 몸 적 전부 종이인형', () => {
       expect(existsSync(`public${a.src}`)).toBe(true);
       n++;
     }
-    expect(n).toBe(32);
+    expect(n).toBe(32 - Object.keys(SERPENT_ENEMIES).length);
   });
   it('swift 는 한 장 그림 그대로', () => {
     for (const id of IDS.filter((id) => id.endsWith('-swift'))) expect(enemyArt(id, '/')?.rig, id).toBeUndefined();
