@@ -2838,3 +2838,20 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 +5(`tests/tile-plan-guide.test.ts`), 갱신 c120(조합 카드 번호 2→3)·c266(처음 탭 = startMode ?? prep).
 - 캡처 `docs/captures/c352/`(1배): hollow-phone-tile-plan(폰, 가진 타일 카드) · shinigami-pc-tile-plan(PC) · hollow-pc-normal-plan(안내 끝난 뒤 일반 모험 준비 [타일 배치], 비교) · hollow-pc-next(안내 다음 = 타일 한 장 놓음). proof.json.
 - 엔진·데이터 수치·세이브·밸런스 변경 없음(BALANCE·SAVE 그대로).
+
+## C.353 — 해방 준비 오라 = 발밑에서 솟구치는 기운 · '<해방 이름> 가능!' 알림 (GDD 215장, v5.512, S-23, 코딩251 Opus)
+- 사용자 원문: "해방 오라랑, 캐릭터 선택중 표시랑 너무 유사함 / 해방 준비되면 오라 더 다이나믹하게 바꾸고, 해방 가능!알림창이라도 띄우삼."
+- 원인: 해방 준비(.is-lib-ready)가 몸 그림 둘레 drop-shadow 빛(bha-lib-shape)이라, 기기 초점(.bha-sel = 몸 둘레 초점색 drop-shadow)과 모양이 같았다.
+- 바꾼 것:
+  - 새 `src/ui/bha/libReady.ts`: 발밑 기운 요소 `.bha-libaura`(발밑 맥동 빛 1 + 위로 흐르는 줄기 5 + 떠오르는 입자 8, 캐릭터 그림 `.bha-hero` 첫 자식 = 몸 뒤), 알림 `.bha-libready`, 준비 안 됨→됨 감지 `libReadyEdge`, 문구 `libReadyText(name)`.
+  - 몸 테두리 빛(bha-lib-shape·bha-lib-burst) 삭제. 색은 종족 테마 강조색 토큰(`--bha-accent`/`--bha-accent-hi`)만 — 새 색 없음.
+  - 게이지가 가득 차는 순간(준비 안 됨→됨) 장면 가운데 위쪽에 '<labels.liberation.name> 가능!' 1.2초(누름 통과 pointer-events:none, role=status). 이름 = 종족 json(`liberation.name`, 아직 못 깼으면 `baseName`). 같은 전투에서 해방을 쓰고 다시 차면 또 한 번, 가득 찬 채로는 반복 없음.
+  - 같은 순간 해방 버튼(=캐릭터 칸) 한 번 강조: 기운이 크게 터지고(scale 1.45→1) 몸이 한 번 번쩍(.is-ready-pop, 0.7초).
+  - 동작 줄이기: 줄기 정지 모양·입자 숨김·맥동 없음, 가득 찬 순간 번쩍 한 번, 알림은 움직임 없이 1.2초 표시.
+  - 기기 초점(.bha-sel) 표시는 그대로.
+- 판단:
+  - 알림 부품: 기획서 값 = 공용 알림 띠/가운데 알림 / 실제 값 = 전투 장면 안 전용 알림(.bha-libready, 해방 컷인과 같은 층) / 이유 = 공용 가운데 띠(showToast center)는 누르면 닫히고(누름 통과 아님) 화면 전체 대기열·설정 화면 미루기를 타서 1.2초 순간 알림에 맞지 않음.
+  - 첫 갱신에 이미 가득 차 있으면(옛 세이브 등) 그때도 한 번 — '처음 가득 차는 순간'을 전투 화면이 처음 본 순간으로.
+- 테스트: 새 `tests/c353-lib-ready.test.ts`(가득 찰 때 1번·다시 차면 또 1번·이름 = 종족 json·부품에 종족 이름 하드코딩 없음·몸 테두리 빛 없음), `tests/c261.test.ts` 해방 준비 줄을 새 기운으로 갱신. 전체 258파일 2954개 · typecheck · balance:check(회귀 가드 통과) · build 통과.
+- 캡처 `docs/captures/c353/`(1배 4장, `scripts/c353-proof.cjs`, proof.json): `ph-hollow-notice`(폰 호로 '레스렉시온 가능!' 뜬 순간) · `ph-hollow-aura`(폰 호로 오라) · `pc-shinigami-aura`(PC 사신 오라) · `pc-shinigami-aura-sel`(기기 초점 + 오라 함께 — 초점은 몸 둘레 얇은 선, 오라는 발밑에서 솟는 줄기라 구분됨). proof: 두 종족 모두 준비 전 알림 없음 → 가득 찬 직후 알림 on·문구 '레스렉시온 가능!'/'만해 가능!'·누름 통과·버튼 강조 on → 1.5초 뒤 알림 꺼짐·오라 표시.
+- 병렬 코딩250(전투 피해 타이밍·attackFx)·코딩248(소모품 칸) 코드는 건드리지 않음(battleView 는 해방 블록 3곳만).

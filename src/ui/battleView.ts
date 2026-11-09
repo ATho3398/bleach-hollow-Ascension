@@ -50,6 +50,7 @@ import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
 import { pickDialog } from './pickDialog';
 import { showToast } from './bha/nest';
+import { libAuraEl, libReadyEdge, libReadyNoticeEl, libReadyText } from './bha/libReady';
 import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -453,6 +454,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libCut = el('div', 'bha-libcut');
   libCut.setAttribute('aria-hidden', 'true');
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
+  // 해방 준비 (GDD 215장, C.353): 발밑에서 솟구치는 기운 + 가득 차는 순간 '<해방 이름> 가능!' 알림 (이름 = 종족 설정)
+  const libReadyNotice = libReadyNoticeEl();
+  const libReadyRose = libReadyEdge();
+  if (libOn) hero.root.prepend(libAuraEl());
 
   // 막기 게이지·[소모품]·[장비] (GDD 105장 수정 v5.233 6번): 해방 알약 버튼 모양, 범례 줄 오른쪽 해방 옆. 못 쓸 때도 자리 그대로(흐리게)
   const actBtn = (kind: 'guard' | 'item' | 'gear', iconId: string, name: string) => {
@@ -570,7 +575,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, log);
+  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, libReadyNotice, log);
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
@@ -1292,6 +1297,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const ready = canLiberate(s);
       libBtn.classList.toggle('is-ready', ready);
       app.classList.toggle('is-lib-ready', ready);
+      if (libReadyRose(ready)) {
+        setText(libReadyNotice.firstElementChild as HTMLElement, libReadyText(labels.liberation.name));
+        replayOnce(libReadyNotice, 'is-on', 1200);
+        replayOnce(libBtn, 'is-ready-pop', 700);
+      }
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
       setAttr(libBtn, 'aria-disabled', String(!ready));

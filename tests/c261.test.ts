@@ -69,7 +69,8 @@ describe('강조는 그림 모양대로 (178장 3)', () => {
     const all = css('battle-scene.css') + css('v2/bha.css');
     expect(all).not.toMatch(/is-(liberated|unique|lib-ready) \.bha-unit--me \.bha-unit__fig(::before|::after)?\s*\{/);
     expect(all).toMatch(/is-liberated \.bha-unit--me \.bha-hero__body \{ filter: drop-shadow/);
-    expect(all).toMatch(/is-lib-ready \.bha-unit--me \.bha-hero__body\{animation:bha-lib-shape/);
+    // 해방 준비는 GDD 215장(C.353)에서 몸 테두리 빛 → 발밑에서 솟구치는 기운(.bha-libaura)으로 바뀜 (기기 초점과 구분)
+    expect(all).toMatch(/is-lib-ready \.bha-unit--me \.bha-libaura \{ display: block; \}/);
     // 투명 해방 버튼(그림 칸 네모)은 눌림·초점 상자를 그리지 않는다
     expect(css('v2/bha.css')).toMatch(/\.bha-v2herolib\.bha-sel[^{]*\{outline:0;box-shadow:none;background:none\}/);
   });
