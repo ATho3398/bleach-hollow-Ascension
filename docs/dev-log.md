@@ -3135,3 +3135,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `src/ui/attackFx.ts`: 적 공격 연출의 몸동작 칸 = 적(종이인형이면 male, 아니면 frames) — 전에는 내 칸(opts.bodySlot)을 써서 내가 여성이면 적 연결 동작이 빠졌음. `hitDelaysOf` heavy 도 같은 적 칸.
 - 테스트 `tests/c372-elite-heavy-body.test.ts` +2(짐승·뱀 연결 동작, 내가 female 이어도 적 칸 기준). 검증 `scripts/c376-proof.cjs` — 스톰후프·롯팽 실제 전투. 캡처 `docs/captures/c376/` 2장.
 - 테스트 3097 통과(273 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.377 — 계열 도트 연출 몸마다 따로 · 이펙트 배치 도구 캐릭터/몬스터 탭 (GDD 229장, v5.537, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "설마 지금 치는쪽 호로랑 길리안, 뱀, 짐승 등등 때리는 위치 다 통일임??? 다 구분해야지. 인간형이야 같은곳에서 때리지만 얘네는 모션마다 이펙트 출발 위치가 다른데;;" / "이펙트 배치도구를 캐릭터, 몬스터로 최상단 탭에서 나누고, 그 다음 호로 탄이든 뭐 치는 캐릭터 모델이든 선택하는거로 해. 그럼 치는쪽에 강적 죄다 추가할 필요 없잖아. 몬스터는 치는 모션도 그냥 강공1, 강공2 이런식으로 해놓으면 되고".
+- 게임: `FamilyPixelFx.byBody`(몸 키 → 1·2·3블록, 종족 설정 검사 추가), `pixelAttack.familyStagesFor`, `battleView` 가 내 그림 몸(rigPackOfLook)으로 고르고 그 몸 시트를 미리 받음. 지금 데이터엔 byBody 없음 = 동작 그대로.
+- 도구: 최상단 탭 캐릭터/몬스터, 캐릭터 = 공격 계열 + 치는 모델(사람형 4 · 호로 덩치·길리안·뱀(skin wyrm)·짐승(skin panther)), 몬스터 = 모델 4 + 공격 강공1. 덩치·길리안·뱀·짐승을 고르면 '<계열>@<몸>' 전용 값(처음 = 사람형 값 베낌). `apply.mjs` 몸 값 → byBody(사람형과 같으면 뺌). 몬스터 탭 = 227장 eliteHeavyFx.json.
+- 강공2 = [미정] 사용자 확인 대기.
+- 테스트 `tests/c377-body-split.test.ts`(2). apply 왕복(같은 몸 값은 안 들어가고 바꾼 몸만 byBody) 확인 뒤 되돌림.
+- 테스트 3099 통과(274 파일), typecheck·balance:check 회귀 가드 통과.

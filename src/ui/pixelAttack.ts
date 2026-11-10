@@ -2,7 +2,7 @@
 // 한 블록(체인 단계) 설정 → 타격 시각 · 이펙트 조각(타격마다 바꾼 값 반영, 시작 시각, 날아감) · 맞음 반응 시각(투사체면 도착) · 몸동작 시작.
 // 도구(scripts/pixelfx/tool/fx-tool.ts)와 같은 규칙: 시각은 첫 타격 = 0ms, 간격·늦춤·비행 시간은 시전 속도(speed)로 나눈다.
 // 0ms 보다 앞서는 것(음수 늦춤·몸동작 미리 시작)이 있으면 전체를 그만큼 뒤로 민다(shift). 표시만 — 피해·규칙은 엔진 그대로.
-import type { PixelFxBody, PixelFxLayer, PixelFxStage } from '../engine/faction';
+import type { FamilyPixelFx, PixelFxBody, PixelFxLayer, PixelFxStage } from '../engine/faction';
 
 export type PixelBodySlot = 'male' | 'female' | 'frames';
 
@@ -88,4 +88,9 @@ export function flyPoint(A: { x: number; y: number }, B: { x: number; y: number 
   const vx = E.x - B.x;
   const vy = E.y - B.y;
   return { x: B.x + vx * p, y: B.y + vy * p, dir: (Math.atan2(vy, vx) * 180) / Math.PI, vx };
+}
+
+/** 그 몸의 1·2·3블록 (GDD 229장): 몸(뼈대/몸 id)에 따로 맞춘 블록이 있으면 그것, 없으면 사람형 공통 */
+export function familyStagesFor(px: FamilyPixelFx | undefined, bodyKey: string | null | undefined): PixelFxStage[] | undefined {
+  return (bodyKey ? px?.byBody?.[bodyKey]?.stages : undefined) ?? px?.stages;
 }

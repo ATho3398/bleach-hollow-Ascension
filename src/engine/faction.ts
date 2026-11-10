@@ -88,8 +88,11 @@ export interface PixelFxStage {
   bodies: { male?: PixelFxBody; female?: PixelFxBody; frames?: PixelFxBody };
 }
 export interface FamilyPixelFx {
-  /** 1·2·3블록 */
+  /** 1·2·3블록 (사람형 몸 공통) */
   stages: PixelFxStage[];
+  /** 몸마다 따로 (GDD 229장, 사용자 2026-11-11 "인간형이야 같은곳에서 때리지만 얘네는 모션마다 이펙트 출발 위치가 다른데"):
+   *  '<뼈대 id>/<몸 id>'(humanoid/hb 덩치 · humanoid/hd 길리안 · serpent/ref 뱀 · beast/ref 짐승) → 그 몸의 1·2·3블록. 없으면 stages */
+  byBody?: Record<string, { stages: PixelFxStage[] }>;
 }
 
 /** 공격 계열 (GDD 17-3): 호로 조·교·탄 / 사신 참·권·귀. 특성의 family 가 이 id 를 가리킨다 */
@@ -658,7 +661,14 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
           return typeof y.hits === 'number' && y.hits >= 1 && Array.isArray(y.gaps) && typeof y.speed === 'number' && y.speed > 0 && Array.isArray(y.layers) && typeof y.bodies === 'object' && y.bodies !== null
             && (y.layers as Record<string, unknown>[]).every((l) => typeof l.fx === 'string' && /^[a-z0-9-]+\/[a-z0-9-]+$/.test(l.fx) && Array.isArray(l.on) && typeof l.scale === 'number' && l.scale > 0);
         });
-        if (!ok) errors.push(`families[${i}].pixelFx: { stages: [블록 ${FAMILY_TIERS}개 { hits, gaps, speed>0, layers[{ fx: 분류/이름, on, scale>0, … }], bodies } ] }`);
+        const okStage = (g: unknown) => {
+          const y = (g ?? {}) as Record<string, unknown>;
+          return typeof y.hits === 'number' && y.hits >= 1 && Array.isArray(y.gaps) && typeof y.speed === 'number' && y.speed > 0 && Array.isArray(y.layers) && typeof y.bodies === 'object' && y.bodies !== null
+            && (y.layers as Record<string, unknown>[]).every((l) => typeof l.fx === 'string' && /^[a-z0-9-]+\/[a-z0-9-]+$/.test(l.fx) && Array.isArray(l.on) && typeof l.scale === 'number' && l.scale > 0);
+        };
+        const bb = ((x.pixelFx ?? {}) as Record<string, unknown>).byBody;
+        const okBody = bb === undefined || (typeof bb === 'object' && bb !== null && Object.entries(bb).every(([k, v]) => /^[a-z0-9-]+\/[a-z0-9-]+$/.test(k) && Array.isArray((v as { stages?: unknown })?.stages) && (v as { stages: unknown[] }).stages.length === FAMILY_TIERS && (v as { stages: unknown[] }).stages.every(okStage)));
+        if (!ok || !okBody) errors.push(`families[${i}].pixelFx: { stages: [블록 ${FAMILY_TIERS}개 { hits, gaps, speed>0, layers[{ fx: 분류/이름, on, scale>0, … }], bodies } ], byBody?: { '<뼈대>/<몸>': { stages } } }`);
       }
       if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`families[${i}].category: ${ATTACK_CATEGORIES.join(' | ')}`);
       const tiers = x.tiers;
