@@ -3104,3 +3104,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 도구 확정 21:14 → `hollow.json` 탄 1·2·3블록 이펙트 자리(덩치 입에 맞춤).
 - 테스트 `tests/c372-elite-heavy-body.test.ts`(2) + `tests/c371-gillian-elite-cero.test.ts`(dx < 0). 검증 `scripts/c372-proof.cjs` 실제 전투 1배 — 스모크 위도우·스티치마우스·롯팽 셋 다 입에서 세로. 캡처 `docs/captures/c372/` 3장.
 - 테스트 3084 통과(272 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.373 — 강적 강공격 세로 자리 확정 (GDD 227장 보충 2, v5.533, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-10 21:38).
+- `node scripts/pixelfx/tool/apply.mjs` → `src/data/enemies/eliteHeavyFx.json` byBody 자리만: 덩치 −264,−12 → −346,−3 · 외눈 길리안 −261,−32 → −297,−28 · 뱀 −288,−28 → −314,−19. 크기·늦춤·불투명도·색 그대로.
+- 검증 `scripts/c373-proof.cjs` 실제 전투 1배 — 스모크 위도우(발톱 앞)·스티치마우스·롯팽 세로. 캡처 `docs/captures/c373/` 3장.
+- 테스트 3084 통과(272 파일), typecheck·balance:check 회귀 가드 통과.
