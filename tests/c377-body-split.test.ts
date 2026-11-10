@@ -27,9 +27,20 @@ import hollow from '../src/data/factions/hollow.json';
 describe('C.378 호로 탄 몸마다', () => {
   const tan = (hollow.families as unknown as { abbr: string; pixelFx: FamilyPixelFx }[]).find((f) => f.abbr === '탄')!.pixelFx;
   it('덩치·뱀·짐승은 따로 값, 길리안은 공통', () => {
-    expect(Object.keys(tan.byBody ?? {}).sort()).toEqual(['beast/ref', 'humanoid/hb', 'serpent/ref']);
+    expect(Object.keys(tan.byBody ?? {}).sort()).toEqual(['beast/ref', 'humanoid/hb', 'serpent/ref', 'spider/ref']);
     expect(familyStagesFor(tan, 'humanoid/hb')![1]!.layers[0]!.dx).not.toBe(tan.stages[1]!.layers[0]!.dx);
     expect(familyStagesFor(tan, 'humanoid/hd')).toBe(tan.stages);
     expect(() => parseFactionConfig(hollow)).not.toThrow();
+  });
+});
+
+// C.382 (GDD 230장 보충 2): 도구 확정 04:13 — 호로 거미(사슴형) 몸 전용 조·교·탄(거미 몸동작)
+describe('C.382 호로 거미 몸', () => {
+  const fam = (abbr: string) => (hollow.families as unknown as { abbr: string; pixelFx: FamilyPixelFx }[]).find((f) => f.abbr === abbr)!.pixelFx;
+  it('조 = 공격1, 교 = 공격2, 탄 = 특수1 (남 칸 — 거미 몸)', () => {
+    expect(familyStagesFor(fam('조'), 'spider/ref')![0]!.bodies.male!.chain.map((c) => c.id)).toEqual(['attack']);
+    expect(familyStagesFor(fam('교'), 'spider/ref')![0]!.bodies.male!.chain.map((c) => c.id)).toEqual(['attack2']);
+    expect(familyStagesFor(fam('탄'), 'spider/ref')![1]!.bodies.male!.chain.map((c) => c.id)).toEqual(['skill']);
+    expect(familyStagesFor(fam('조'), 'humanoid/arrancar')).toBe(fam('조').stages);
   });
 });

@@ -3189,3 +3189,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 이펙트 배치 도구: SEP_BODIES·BODY_NAMES += 외팔이·거미, 캐릭터 탭 '호로 외팔이'(skin carapace)·'호로 거미'(skin stag), 몬스터 탭 '외팔이'(샌드트랩)·'거미'(잉크베일), build.mjs BODY 맵.
 - 테스트 `tests/c372-elite-heavy-body.test.ts`(몸 목록 6, 샌드트랩 = 외팔이·잉크베일 = 거미). 검증 `scripts/c381-proof.cjs` 실제 전투 1배 — 둘 다 손에서 세로. 캡처 `docs/captures/c381/` 2장.
 - 테스트 3121 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.382 — 호로 거미 몸 전용 조·교·탄 (GDD 230장 보충 2, v5.544, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-11 04:13 — 캐릭터 탭 '호로 거미').
+- `apply.mjs` → `src/data/factions/hollow.json` byBody `spider/ref`: 조(1·2·3블록 공격1 ×1.1) · 교(공격2) · 탄(특수1, 3블록 ×0.45). 이펙트 자리는 사람형 값 그대로(몸동작만 거미). 다른 몸 변화 없음.
+- 테스트 `tests/c377-body-split.test.ts` +1(거미 몸동작·사람형은 공통), 탄 몸 키 목록 갱신. 실제 전투 캡처 없음(플레이어 거미 = 사슴형 외형).
+- 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
