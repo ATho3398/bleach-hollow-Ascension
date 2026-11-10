@@ -41,15 +41,19 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(resolveMotions(rig, motions, sets, 'bare').uppercut).toBeDefined(); // 다른 몸은 그대로
     expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로
   });
-  it('역관절 걷기: 늘 한 발은 디뎌 있고(발목이 쉬는 자세 높이 그대로) 바닥에 묻히지 않는다 — 역관절 기본 = 사용자 도트(GDD 115-A 69)', () => {
+  it('역관절 걷기: 늘 한 발은 디뎌 있고 바닥에 묻히지 않는다 — 역관절 = 사용자 부위 시트 조립(10부위, 발은 정강이 조각에 — GDD 115-A 109)', () => {
+    expect(Object.keys(rig.bodies.dg!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
     const dg = resolveMotions(rig, motions, sets, 'dg');
-    const piv = (rig.bodyJoints!.dg as { pivots: Record<string, [number, number]> }).pivots;
-    const tol = 0.6 * ((rig as { cuts?: Record<string, { scale?: number }> }).cuts?.dg?.scale ?? 1); // 도트 배율만큼(2배 = 1.2칸, 115-A 71)
     for (let t = 0; t <= dg.move!.duration; t += 40) {
       const m = boneMatrices(rig, samplePose(rig, dg.move!, t), 'dg');
-      const lift = (['foot_L', 'foot_R'] as const).map((f) => piv[f]![1] - apply(m[f]!, piv[f]!)[1]); // + = 뜸, - = 묻힘
-      expect(Math.min(...lift), `t=${t} 디딘 발`).toBeLessThan(tol);
-      expect(Math.min(...lift), `t=${t} 묻힘`).toBeGreaterThan(-tol);
+      // 정강이 조각 칸의 네 귀 중 가장 낮은 곳(어림 — 귀는 빈 칸일 수 있어 조금 넉넉히)
+      const gap = (['shin_L', 'shin_R'] as const).map((sl) => {
+        const p = rig.bodies.dg![sl]!;
+        const ys = [[0, 0], [p.size[0], 0], [0, p.size[1]], [p.size[0], p.size[1]]].map(([dx, dy]) => apply(m[sl]!, [p.at[0] + dx!, p.at[1] + dy!])[1]);
+        return 80 - Math.max(...ys);
+      });
+      expect(Math.min(...gap), `t=${t} 디딘 발`).toBeLessThan(2.5);
+      expect(Math.min(...gap), `t=${t} 묻힘`).toBeGreaterThan(-4);
     }
   });
   it('덩치 = 사용자 부위 시트 조립(115-A 73·75): 부위 10개(발 없음 — 종아리에 붙음), 부위 시트 b(새 도트), 특수2 없음, 걷기에서 늘 한 발은 디딤', () => {
@@ -276,14 +280,15 @@ describe('편집기 같이 옮기기 (GDD 96장 42)', () => {
     expect(followMove(rig, 'bare-base', 'arm_L')!.parts.map((p) => p.slot)).toEqual(['arm_L', 'forearm_L', 'thumb_L']);
     expect(followMove(rig, 'bare-base', 'arm_L')!.bones).toEqual(['forearm_L']);
     expect(followMove(rig, 'bare-base', 'forearm_L')!.parts.map((p) => p.slot)).toEqual(['forearm_L', 'thumb_L']);
-    expect(followMove(rig, 'digitigrade-base', 'leg_L')!.parts.map((p) => p.slot)).toEqual(['leg_L', 'shin_L', 'foot_L']);
-    expect(followMove(rig, 'digitigrade-base', 'leg_L')!.bones).toEqual(['shin_L', 'foot_L']);
+    expect(followMove(rig, 'digitigrade-base', 'leg_L')!.parts.map((p) => p.slot)).toEqual(['leg_L', 'shin_L']); // 역관절 새 몸은 발이 정강이 조각에(115-A 109)
+    expect(followMove(rig, 'digitigrade-base', 'leg_L')!.bones).toEqual(['shin_L']);
+    expect(followMove(rig, 'bare-base', 'leg_L')!.parts.map((p) => p.slot)).toEqual(['leg_L', 'foot_L']);
   });
   it('뒤에 오는 부위를 옮기면 그것만', () => {
     for (const s of ['hair', 'hair_back3', 'thumb_L', 'forearm_R', 'foot_L']) expect(followMove(rig, 'shinigami-base-f', s)!.parts.map((p) => p.slot)).toEqual([s]);
     expect(followMove(rig, 'shinigami-base-f', 'hair_back')!.parts.map((p) => p.slot)).toEqual(['hair_back', 'hair_back2', 'hair_back3']); // 뒷머리 마디(115-A 88)
     expect(followMove(rig, 'shinigami-base-f', 'hair_back2')!.parts.map((p) => p.slot)).toEqual(['hair_back2', 'hair_back3']);
-    expect(followMove(rig, 'digitigrade-base', 'shin_L')!.parts.map((p) => p.slot)).toEqual(['shin_L', 'foot_L']);
+    expect(followMove(rig, 'digitigrade-base', 'shin_L')!.parts.map((p) => p.slot)).toEqual(['shin_L']);
   });
 });
 

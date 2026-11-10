@@ -179,19 +179,16 @@
       "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42], "size": [12, 16] }
     },
     "dg": {
-      "head": { "art": "dg/head", "at": [-14, 22], "size": [26, 22] },
-      "jaw": { "art": "dg/jaw", "at": [-18, 42], "size": [22, 12] },
-      "torso": { "art": "dg/torso", "at": [8, 30], "size": [22, 16] },
-      "arm_R": { "art": "dg/arm_R", "at": [4, 40], "size": [10, 14] },
-      "forearm_R": { "art": "dg/forearm_R", "at": [-12, 50], "size": [24, 16] },
-      "arm_L": { "art": "dg/arm_L", "at": [24, 38], "size": [12, 8] },
-      "forearm_L": { "art": "dg/forearm_L", "at": [32, 44], "size": [18, 22] },
-      "leg_R": { "art": "dg/leg_R", "at": [4, 54], "size": [18, 10] },
-      "shin_R": { "art": "dg/shin_R", "at": [4, 62], "size": [16, 10] },
-      "foot_R": { "art": "dg/foot_R", "at": [4, 70], "size": [16, 10] },
-      "leg_L": { "art": "dg/leg_L", "at": [14, 44], "size": [14, 14] },
-      "shin_L": { "art": "dg/shin_L", "at": [20, 54], "size": [18, 16] },
-      "foot_L": { "art": "dg/foot_L", "at": [34, 68], "size": [16, 12] }
+      "torso": { "art": "dg/torso", "at": [2, 34], "size": [24, 28] },
+      "head": { "art": "dg/head", "at": [-20, 24], "size": [30, 32] },
+      "arm_R": { "art": "dg/arm_R", "at": [6, 46], "size": [6, 10] },
+      "forearm_R": { "art": "dg/forearm_R", "at": [-12, 48], "size": [24, 20] },
+      "arm_L": { "art": "dg/arm_L", "at": [10, 32], "size": [20, 16] },
+      "forearm_L": { "art": "dg/forearm_L", "at": [28, 42], "size": [18, 26] },
+      "leg_R": { "art": "dg/leg_R", "at": [2, 56], "size": [16, 12] },
+      "shin_R": { "art": "dg/shin_R", "at": [-2, 64], "size": [18, 16] },
+      "leg_L": { "art": "dg/leg_L", "at": [18, 54], "size": [16, 16] },
+      "shin_L": { "art": "dg/shin_L", "at": [28, 64], "size": [24, 16] }
     },
     "hb": {
       "torso": { "art": "hb/torso", "at": [2, 28], "size": [28, 42] },
@@ -531,20 +528,17 @@
     },
     "dg": {
       "pivots": {
-        "root": [18, 46],
-        "torso": [18, 44],
-        "head": [6, 36],
-        "jaw": [2, 44],
-        "arm_R": [10, 42],
-        "forearm_R": [10, 50],
-        "arm_L": [26, 38],
-        "forearm_L": [34, 46],
-        "leg_R": [18, 56],
-        "shin_R": [6, 62],
-        "foot_R": [16, 70],
-        "leg_L": [18, 46],
-        "shin_L": [24, 56],
-        "foot_L": [36, 68]
+        "root": [18, 58],
+        "torso": [18, 58],
+        "head": [4, 38],
+        "arm_R": [8, 46],
+        "forearm_R": [8, 52],
+        "arm_L": [12, 38],
+        "forearm_L": [28, 44],
+        "leg_R": [14, 58],
+        "shin_R": [6, 64],
+        "leg_L": [22, 58],
+        "shin_L": [30, 68]
       }
     },
     "shinigami": {
@@ -800,194 +794,11 @@
     }
   },
   "skeletonsNote": "뼈대 선(GDD 115-A 47): 몸 → 슬롯 → [{pts 꺾은선, w 굵기}]. 뼈대 가이드(scripts/rig/bone_guide.py)가 칸 안에 이 선을 그리고, 임시 그림·도트 자르기도 이것을 쓴다",
-  "skeletons": {
-    "dg": {
-      "head": [
-        {
-          "pts": [
-            [8, 34],
-            [0, 28],
-            [6, 24]
-          ],
-          "w": 6
-        },
-        {
-          "pts": [
-            [4, 38],
-            [-4, 40],
-            [-12, 42],
-            [-16, 43.0]
-          ],
-          "w": 6
-        }
-      ],
-      "jaw": [
-        {
-          "pts": [
-            [-16, 46],
-            [0, 46]
-          ],
-          "w": 4
-        },
-        {
-          "pts": [
-            [-14, 48],
-            [-14, 50]
-          ],
-          "w": 4
-        },
-        {
-          "pts": [
-            [-6, 48],
-            [-6, 52]
-          ],
-          "w": 4
-        }
-      ],
-      "torso": [
-        {
-          "pts": [
-            [18, 44],
-            [18, 34]
-          ],
-          "w": 12
-        },
-        {
-          "pts": [
-            [10, 36],
-            [28, 38]
-          ],
-          "w": 12
-        }
-      ],
-      "arm_R": [
-        {
-          "pts": [
-            [10, 42],
-            [10, 50]
-          ],
-          "w": 6
-        }
-      ],
-      "forearm_R": [
-        {
-          "pts": [
-            [10, 50],
-            [2, 54],
-            [-4, 58]
-          ],
-          "w": 4
-        },
-        {
-          "pts": [
-            [-8, 58],
-            [-10, 62]
-          ],
-          "w": 4
-        },
-        {
-          "pts": [
-            [-4, 58],
-            [-4, 62]
-          ],
-          "w": 4
-        }
-      ],
-      "arm_L": [
-        {
-          "pts": [
-            [26, 38],
-            [34, 46]
-          ],
-          "w": 6
-        }
-      ],
-      "forearm_L": [
-        {
-          "pts": [
-            [34, 46],
-            [40, 54],
-            [42, 62]
-          ],
-          "w": 4
-        },
-        {
-          "pts": [
-            [46, 58],
-            [46, 62]
-          ],
-          "w": 4
-        }
-      ],
-      "leg_R": [
-        {
-          "pts": [
-            [18, 56],
-            [6, 62]
-          ],
-          "w": 6
-        }
-      ],
-      "shin_R": [
-        {
-          "pts": [
-            [6, 62],
-            [16, 70]
-          ],
-          "w": 6
-        }
-      ],
-      "foot_R": [
-        {
-          "pts": [
-            [16, 70],
-            [12, 76],
-            [6, 78]
-          ],
-          "w": 6
-        }
-      ],
-      "leg_L": [
-        {
-          "pts": [
-            [18, 46],
-            [24, 56]
-          ],
-          "w": 6
-        }
-      ],
-      "shin_L": [
-        {
-          "pts": [
-            [24, 56],
-            [36, 68]
-          ],
-          "w": 6
-        }
-      ],
-      "foot_L": [
-        {
-          "pts": [
-            [36, 68],
-            [42, 74],
-            [46, 78]
-          ],
-          "w": 6
-        }
-      ]
-    }
-  },
+  "skeletons": {},
   "forearmLNote": "왼팔 팔꿈치(forearm_L, 사용자 2026-10-29 \"왼팔도 자를거임\"): 왼팔을 위팔(arm_L)·아래팔(forearm_L)로. 칼(weapon 뼈)·엄지(thumb_L)는 아래팔에 붙는다. 아래팔 그림이 없는 몸은 arm_L 한 장 그대로(아래팔 0°라 지금 모습 그대로)",
   "releaseNote": "해방 1안(GDD 115-A 49 → 90): 외형에 release = 해방 외형 id 를 두면 해방 동작(swapAt) 순간 그 외형으로 바꿔 그린다. arrancar-base-f(아란칼(여) 기본) → arrancar-base-f-released(해방 후: 아란칼(여) + 임시 망토 cape/test, 3마디). 사용자 2026-11-10 \"아란칼 여 해방 시험 잡아놨으니까 이제 시험 없애고 기본을 저걸로 맞춰\" — 시험 외형(arrancar-f-release-test) 없앰",
   "cuts": {
-    "note": "사용자 도트를 뼈대 선으로 잘라 쓰는 몸 (scripts/rig/cut_ref.py humanoid [몸]). image = 원본 1배 도트, at = 배율 도트 왼쪽 위의 캔버스 자리, scale = 도트 배율 (GDD 115-A 69·71·72)",
-    "dg": {
-      "note": "사람형 역관절 기본(몸 dg) = 사용자 도트(2026-11-08, 34×29)를 뼈대 선 skeletons.dg 로 잘라 씀(scripts/rig/cut_ref.py humanoid). scale 2 = 사용자 \"역관절 일단 2배 키우고\"(2026-11-09) — 도트 칸을 2배로(키 58칸), at = 2배 도트 왼쪽 위를 둘 캔버스 자리(발 = 바닥 줄 위 y 79, 몸 가운데 x 18 근처) (GDD 115-A 69·71)",
-      "image": "docs/design/user-art/digitigrade-ref/digitigrade-base-2026-11-08.png",
-      "body": "dg",
-      "at": [-18, 22],
-      "scale": 2
-    }
+    "note": "사용자 도트를 뼈대 선으로 잘라 쓰는 몸 (scripts/rig/cut_ref.py humanoid [몸]). image = 원본 1배 도트, at = 배율 도트 왼쪽 위의 캔버스 자리, scale = 도트 배율 (GDD 115-A 69·71·72)"
   },
   "bodySlots": {
     "hb": [
@@ -1083,13 +894,42 @@
       "fold3",
       "fold4",
       "fold5"
+    ],
+    "dg": [
+      "arm_L",
+      "forearm_L",
+      "leg_L",
+      "shin_L",
+      "torso",
+      "head",
+      "leg_R",
+      "shin_R",
+      "forearm_R",
+      "arm_R",
+      "cape2",
+      "cape3",
+      "cape",
+      "outer_arm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back2",
+      "hair_back3",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "outer_torso",
+      "scabbard",
+      "jaw",
+      "hair",
+      "outer_arm_R"
     ]
   },
   "assembled": {
     "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
     "hb": "docs/design/user-art/beast-base-ref/assembly.json",
     "hd": "docs/design/user-art/hood-ref/assembly.json",
-    "ho": "docs/design/user-art/onearm-ref/assembly.json"
+    "ho": "docs/design/user-art/onearm-ref/assembly.json",
+    "dg": "docs/design/user-art/digitigrade-ref/assembly.json"
   },
   "recolors": {
     "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",
