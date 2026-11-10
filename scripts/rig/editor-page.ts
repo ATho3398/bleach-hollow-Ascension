@@ -452,9 +452,72 @@ function buildColors() {
     b.textContent = l.color as string;
     b.dataset.color = id;
     b.classList.toggle('on', id === look);
-    b.onclick = () => { look = id; buildColors(); buildChips(); save(false); draw(); };
+    b.onclick = () => { look = id; buildColors(); buildSwaps(); buildChips(); save(false); draw(); };
     return b;
   })]));
+}
+/** 머리·무기 바꿔 끼우기 (GDD 115-A 113, 사용자 2026-11-11 "앞으로는 무기랑 머리 따로 분리하자 툴에서도 … 머리 변경, 무기 변경 만들어서 언제든 바꿀 수 있게"):
+ *  뼈대 데이터 parts.hair·parts.weapon 목록에서 골라 지금 외형의 머리카락 층(hair·hair_back 마디)·무기(weapon·scabbard)를 갈아 끼운다.
+ *  외형의 hairKind·weaponKind 에 고른 것을 적고, 뒷머리 관절은 이 몸에 같이 넣는다. '고정'하면 작업본에 들어간다(apply_editor.py) */
+interface HairKind { name: string; layers: Record<string, PartArt>; pivots?: Record<string, [number, number]> }
+interface WeaponKind { name: string; art?: string; size?: [number, number]; d?: [number, number]; scabbard?: boolean }
+const partsOf = () => (rig as unknown as { parts?: { hair?: Record<string, HairKind>; weapon?: Record<string, WeaponKind> } }).parts;
+const HAIR_LAYERS = ['hair', 'hair_back', 'hair_back2', 'hair_back3'];
+function setHair(id: string) {
+  const k = partsOf()?.hair?.[id];
+  const lk = rig.looks[look] as Record<string, unknown> | undefined;
+  if (!k || !lk) return;
+  for (const s of HAIR_LAYERS) {
+    if (k.layers[s]) lk[s] = JSON.parse(JSON.stringify(k.layers[s]));
+    else delete lk[s];
+  }
+  for (const [b, p] of Object.entries(k.pivots ?? {})) setPivot(b, [p[0], p[1]]);
+  lk.hairKind = id;
+  if (!lookLayers(rig, look).some((l) => l.slot === sel)) sel = 'root';
+  buildSwaps(); buildChips(); save(); draw();
+}
+function setWeapon(id: string) {
+  const all = partsOf()?.weapon;
+  const k = all?.[id];
+  const lk = rig.looks[look] as Record<string, unknown> | undefined;
+  if (!k || !lk || !all) return;
+  // 칼 자리(d = 0,0) 기준: 지금 무기 자리에서 지금 종류의 d 를 빼면 손 기준 자리 — 없음(none)이었으면 같은 몸 다른 외형의 칼 자리, 그것도 없으면 그대로 못 바꿈
+  const cur = lk.weapon as PartArt | undefined;
+  const curD = all[String(lk.weaponKind ?? 'sword')]?.d ?? [0, 0];
+  const base = (lk.weaponBase as [number, number] | undefined) ?? (cur ? [cur.at[0] - curD[0], cur.at[1] - curD[1]] as [number, number] : undefined);
+  if (!base) return;
+  lk.weaponBase = base;
+  if (k.art && k.size) lk.weapon = { art: k.art, at: [base[0] + (k.d?.[0] ?? 0), base[1] + (k.d?.[1] ?? 0)], size: k.size };
+  else delete lk.weapon;
+  // 칼집: 차는 무기면 같은 뼈대의 칼집 그림(다른 외형에서 가져옴), 아니면 없앰
+  if (k.scabbard) {
+    if (!lk.scabbard) {
+      const from = Object.values(rig.looks).find((l) => l.body === rig.looks[look]!.body && typeof l.scabbard === 'object') ?? Object.values(rig.looks).find((l) => typeof l.scabbard === 'object');
+      if (from) lk.scabbard = JSON.parse(JSON.stringify(from.scabbard));
+    }
+  } else delete lk.scabbard;
+  lk.weaponKind = id;
+  if (!lookLayers(rig, look).some((l) => l.slot === sel)) sel = 'root';
+  buildSwaps(); buildChips(); save(); draw();
+}
+function buildSwaps() {
+  const lk = rig.looks[look] as Record<string, unknown> | undefined;
+  const p = partsOf();
+  const can = !!p && !!lk && (typeof lk.hairKind === 'string' || typeof lk.weaponKind === 'string');
+  const row = (id: string, label: string, list: Record<string, { name: string }> | undefined, cur: unknown, on: (k: string) => void) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.hidden = !can || !list;
+    el.replaceChildren(...(el.hidden ? [] : [Object.assign(document.createElement('span'), { className: 'lbl', textContent: label }), ...Object.entries(list!).map(([k, v]) => {
+      const b = document.createElement('button');
+      b.textContent = v.name;
+      b.classList.toggle('on', k === cur);
+      b.onclick = () => on(k);
+      return b;
+    })]));
+  };
+  row('hairs', '머리 변경', p?.hair, lk?.hairKind, setHair);
+  row('weapons', '무기 변경', p?.weapon, lk?.weaponKind, setWeapon);
 }
 document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onclick = () => {
   look = b.dataset.look!;
@@ -465,7 +528,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   }
   sizeStage(); syncMotionButtons();
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
-  buildColors(); buildChips(); save(false); draw();
+  buildColors(); buildSwaps(); buildChips(); save(false); draw();
 });
 /** 외형 고르기 = 종족 탭(사신·아란칼·호로·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
  *  "사신 아란칼 호로 탭 먼저 나누고 그 안에서 사신 여자 사신 남자 나누고 거기서 혼백, 영술원 학생, 사신 … 호로는 진화체들 정리해서 넣고, 진화체 선택하면 색상도 고르게").
@@ -501,7 +564,7 @@ function syncTabs() {
 }
 document.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.onclick = () => { tab = b.dataset.tab!; showTabs(true); });
 document.querySelectorAll<HTMLButtonElement>('[data-sub]').forEach((b) => b.onclick = () => { sub = b.dataset.sub!; showTabs(true); });
-setTimeout(syncTabs, 0);
+setTimeout(() => { syncTabs(); buildSwaps(); }, 0);
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onclick = () => {
   mode = b.dataset.mode as 'pivot' | 'part';
   document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));

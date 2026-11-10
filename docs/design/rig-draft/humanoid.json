@@ -247,29 +247,39 @@
       "body": "shinigami",
       "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
+      "hairKind": "shinigami",
+      "weaponKind": "sword"
     },
     "arrancar-base": {
       "body": "arrancar",
       "hair": { "art": "arrancar/hair", "at": [0, -1], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [2, 50], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "hairKind": "arrancar",
+      "weaponKind": "sword"
     },
     "bare-base": {
       "body": "bare",
       "weapon": { "art": "weapon/sword", "at": [1, 50], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "hairKind": "none",
+      "weaponKind": "sword"
     },
     "female-base": {
       "body": "female",
       "weapon": { "art": "weapon/sword", "at": [0, 50], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
+      "hairKind": "none",
+      "weaponKind": "sword"
     },
     "shinigami-student": {
       "body": "student",
       "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 49], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] }
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
+      "hairKind": "student",
+      "weaponKind": "sword"
     },
     "shinigami-student-f": {
       "body": "student_f",
@@ -278,22 +288,26 @@
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
       "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
-      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
+      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] },
+      "hairKind": "shinigami_f",
+      "weaponKind": "sword"
     },
     "shinigami-soul-f": {
       "body": "soul_f",
       "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
-      "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
+      "weapon": { "art": "weapon/branch", "at": [2, 51], "size": [17, 43] },
       "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
-      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
+      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] },
+      "hairKind": "shinigami_f",
+      "weaponKind": "branch"
     },
     "shinigami-soul": {
       "body": "soul",
       "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
-      "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
-      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] }
+      "weapon": { "art": "weapon/branch", "at": [1, 53], "size": [17, 43] },
+      "hairKind": "shinigami",
+      "weaponKind": "branch"
     },
     "shinigami-base-f": {
       "body": "shinigami_f",
@@ -302,7 +316,9 @@
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
       "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
-      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
+      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] },
+      "hairKind": "shinigami_f",
+      "weaponKind": "sword"
     },
     "arrancar-base-f": {
       "body": "arrancar_f",
@@ -311,7 +327,9 @@
       "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
       "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3], "size": [21, 22] },
       "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] },
-      "release": "arrancar-base-f-released"
+      "release": "arrancar-base-f-released",
+      "hairKind": "arrancar_f",
+      "weaponKind": "sword"
     },
     "cape-test": {
       "body": "arrancar",
@@ -320,7 +338,9 @@
       "scabbard": { "art": "weapon/scabbard", "at": [18, 44], "size": [4, 27] },
       "cape": { "art": "cape/test_s1", "at": [7, 27], "size": [21, 15] },
       "cape2": { "art": "cape/test_s2", "at": [5, 41], "size": [25, 14] },
-      "cape3": { "art": "cape/test_s3", "at": [4, 54], "size": [27, 15] }
+      "cape3": { "art": "cape/test_s3", "at": [4, 54], "size": [27, 15] },
+      "hairKind": "arrancar",
+      "weaponKind": "sword"
     },
     "arrancar-base-f-released": {
       "body": "arrancar_f",
@@ -331,7 +351,9 @@
       "cape": { "art": "cape/test_s1", "at": [7, 27], "size": [21, 15] },
       "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] },
       "cape2": { "art": "cape/test_s2", "at": [5, 41], "size": [25, 14] },
-      "cape3": { "art": "cape/test_s3", "at": [4, 54], "size": [27, 15] }
+      "cape3": { "art": "cape/test_s3", "at": [4, 54], "size": [27, 15] },
+      "hairKind": "arrancar_f",
+      "weaponKind": "sword"
     },
     "brute-base": {
       "body": "hb",
@@ -1207,6 +1229,83 @@
         1600,
         450
       ]
+    }
+  },
+  "parts": {
+    "note": "머리·무기 바꿔 끼우기 목록 (GDD 115-A 113, 사용자 2026-11-11 \"앞으로는 무기랑 머리 따로 분리하자 … 툴에서 머리 변경, 무기 변경 만들어서 내가 넣은 걸로 언제든 바꿀 수 있게\"). hair.<id> = {name, layers(머리카락·뒷머리 마디 그림·자리 — 머리 그림 자리는 사람형 몸 모두 같음), pivots(뒷머리 관절), src(뒷머리 나누기 전 원본)}, weapon.<id> = {name, art, size, d(칼 자리에서 옮긴 칸), scabbard(칼집을 차는가)}. 외형은 hairKind·weaponKind 로 지금 고른 것을 적는다. 사용자가 새 머리·무기 그림을 주면 여기에 더한다",
+    "hair": {
+      "shinigami": {
+        "name": "사신(남) 머리",
+        "layers": {
+          "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] }
+        }
+      },
+      "student": {
+        "name": "학생(남) 머리",
+        "layers": {
+          "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] }
+        }
+      },
+      "shinigami_f": {
+        "name": "사신(여) 머리",
+        "layers": {
+          "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
+          "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
+          "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
+          "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
+        },
+        "pivots": {
+          "hair_back": [24, 9],
+          "hair_back2": [31, 23],
+          "hair_back3": [28, 37]
+        },
+        "src": {
+          "hair_back": { "art": "shinigami_f/hair_back", "at": [21, 2], "size": [19, 50] }
+        }
+      },
+      "arrancar": {
+        "name": "아란칼(남) 머리",
+        "layers": {
+          "hair": { "art": "arrancar/hair", "at": [0, -1], "size": [33, 29] }
+        }
+      },
+      "arrancar_f": {
+        "name": "아란칼(여) 머리",
+        "layers": {
+          "hair": { "art": "arrancar_f/hair", "at": [1, 1], "size": [28, 29] },
+          "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3], "size": [21, 22] },
+          "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] }
+        },
+        "pivots": {
+          "hair_back2": [22, 19]
+        },
+        "src": {
+          "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
+        }
+      },
+      "none": {
+        "name": "없음",
+        "layers": {}
+      }
+    },
+    "weapon": {
+      "sword": {
+        "name": "칼",
+        "art": "weapon/sword",
+        "size": [16, 42],
+        "d": [0, 0],
+        "scabbard": true
+      },
+      "branch": {
+        "name": "나뭇가지",
+        "art": "weapon/branch",
+        "size": [17, 43],
+        "d": [1, 2],
+        "scabbard": false
+      },
+      "none": {
+        "name": "없음"
+      }
     }
   }
 }

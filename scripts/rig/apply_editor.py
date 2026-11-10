@@ -143,6 +143,31 @@ if 'bodies' in data:
                     and (not (isinstance(l0, dict) and l0.get('at') == v.get('at')) or (lid, k) in prev_lk):
                 rig['looks'][lid][k]['at'] = v['at']
                 done['looks'].add((lid, k))
+    # 머리·무기 바꿔 끼우기(GDD 115-A 113): 편집기에서 '머리 변경'·'무기 변경'으로 고른 외형은 그 층(그림·자리·크기)을 통째로 넣고, 없앤 층은 지운다.
+    # 고른 종류(hairKind·weaponKind)·무기 기준 자리(weaponBase)도 같이. 뒷머리 나누기 전 원본(segmentSrc)은 목록(parts.hair.<id>.src)에서
+    for lid, lk in data.get('looks', {}).items():
+        cur, l0 = rig['looks'].get(lid), (base.get('looks') or {}).get(lid) or {}
+        if cur is None:
+            continue
+        for kind, layers in (('hairKind', ('hair', 'hair_back', 'hair_back2', 'hair_back3')), ('weaponKind', ('weapon', 'scabbard'))):
+            if kind not in lk or (lk.get(kind) == l0.get(kind) and (lid, kind) not in prev_lk):
+                continue
+            for k in layers:
+                if isinstance(lk.get(k), dict):
+                    cur[k] = lk[k]
+                else:
+                    cur.pop(k, None)
+            cur[kind] = lk[kind]
+            if kind == 'weaponKind' and lk.get('weaponBase'):
+                cur['weaponBase'] = lk['weaponBase']
+            if kind == 'hairKind':
+                src = (((rig.get('parts') or {}).get('hair') or {}).get(lk[kind]) or {}).get('src')
+                seg = rig.setdefault('segmentSrc', {})
+                if src:
+                    seg.setdefault(lid, {}).update(json.loads(json.dumps(src)))
+                elif isinstance(seg.get(lid), dict):
+                    seg[lid].pop('hair_back', None)
+            done['looks'].add((lid, kind))
     # '이 동작에만' 묶음이 아직 없는 몸 = 몸 이름으로 새 묶음 → 그 몸이 그 묶음을 쓰게
     for key in (data.get('motionEdits') or {}):
         setn = key.split('/', 1)[0]
