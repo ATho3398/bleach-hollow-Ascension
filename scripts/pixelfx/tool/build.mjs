@@ -37,6 +37,20 @@ for (const [fid, abbr] of ORDER) {
     : TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: [] }));
 }
 
+// 강적 강공격 빨간 세로 (GDD 227장, 사용자 2026-11-10 "강적 강공격 들은 빨간 세로" + "위치 파악해서 반영"): 몸마다 한 블록(입 자리가 다름).
+// 치는 쪽 = 그 몸의 강적(게임 적 그림). 자리는 도구 기준(오른쪽에서 왼쪽으로) — 게임이 적 쪽으로 좌우를 뒤집는다
+{
+  const eh = json('src/data/enemies/eliteHeavyFx.json');
+  const BODY = { 'humanoid/hb': ['덩치', 'elite-brute'], 'humanoid/hd': ['외눈 길리안', 'elite-gillian'], 'serpent/ref': ['뱀', 'elite-serpent'] };
+  const fill = (b) => b ?? { chain: [], bodyAt: 0, bodyFromHit: true };
+  for (const [bk, st] of Object.entries(eh.byBody)) {
+    const [name, char] = BODY[bk] ?? [bk, 'elite-brute'];
+    const key = `elite-heavy/${bk}`;
+    entries.push({ key, label: `강적 강공격 · ${name}`, faction: 'hollow', bg: dataUri('scripts/pixelfx/tool/battle-bg-hollow.png', 'image/png'), dir: -1, stages: 1, char, el: eh.element });
+    defaults[key] = [{ ...st, bodies: { male: fill(st.bodies.male), female: fill(st.bodies.female), frames: fill(st.bodies.frames) } }];
+  }
+}
+
 const CAT = { custom: '★ 커스텀 (직접 만든 것)', arcane: '비전', critters: '생물', explosions: '폭발', fire: '불', holy: '신성', ice: '얼음', impacts: '타격', lightning: '번개', melee: '근접', moves: '연속기', nature: '자연', pickups: '아이템', projectiles: '투사체', scifi: 'SF', shadow: '어둠', spawn: '등장·소멸', status: '상태', transitions: '화면 전환', ui: 'UI', water: '물', weather: '날씨' };
 
 // 배경 = 실제 전투 1배 캡처(scripts/c268-proof.cjs C268_BG=1, 종족마다), 맞는 몸·치는 몸 가운데(페이지 px)

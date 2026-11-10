@@ -1,0 +1,32 @@
+{
+  "url": "http://localhost:5381/",
+  "shots": [
+    "elite-gillian-custom-cero-blood.png",
+    "elite-brute-custom-cero-blood.png",
+    "elite-serpent-custom-cero-blood.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "elite-gillian",
+      "picked": "스티치마우스",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    },
+    {
+      "tag": "elite-brute",
+      "picked": "스모크 위도우",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    },
+    {
+      "tag": "elite-serpent",
+      "picked": "롯팽",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    }
+  ]
+}

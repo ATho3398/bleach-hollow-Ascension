@@ -1,0 +1,109 @@
+{
+  "note": "강적(보스 아님) 강공격 도트 연출 (GDD 227장, 사용자 2026-11-10 \"강적 강공격 들은 빨간 세로 쓰게 해줄래?? 투명도 70%정도로\" + \"위치 파악해서 반영\"). 몸(뼈대/몸 id)마다 한 블록 — 입 자리가 몸마다 달라서. 자리는 이펙트 배치 도구 기준(치는 쪽이 오른쪽에서 왼쪽을 향함), 적(왼쪽, 오른쪽을 향함)은 게임이 좌우를 뒤집는다. 색 = element(빨강 = 혈). 이펙트 배치 도구 \"강적 강공격 · <몸>\" 확정 값이 여기로 들어온다(apply.mjs).",
+  "element": "blood",
+  "fallback": "humanoid/hb",
+  "byBody": {
+    "humanoid/hb": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -264,
+          "dy": -12,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
+    },
+    "humanoid/hd": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -261,
+          "dy": -32,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
+    },
+    "serpent/ref": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -288,
+          "dy": -28,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
+    }
+  }
+}

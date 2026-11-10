@@ -32,7 +32,8 @@ describe('C.371 강적 강공격 = 빨간 세로 (GDD 227장 2)', () => {
   it('세로 한 겹: 빨강(혈 속성 시트)·불투명도 0.7·치는 쪽에서 오른쪽(적 → 나)으로', () => {
     const L = ELITE_HEAVY_CERO.layers[0]!;
     expect([L.fx, L.anchor, L.opacity]).toEqual(['custom/cero', 'attacker', 0.7]);
-    expect(L.dx).toBeGreaterThan(0);
+    // 자리는 도구 기준(치는 쪽이 왼쪽을 향함, dx < 0) — 적 쪽은 pixelInst 가 좌우를 뒤집어 오른쪽으로 (GDD 227장, C.372)
+    expect(L.dx).toBeLessThan(0);
     expect(existsSync(`public/fx/${fxSheetName(L.fx, ELITE_HEAVY_ELEMENT)}.png`)).toBe(true);
   });
   it('강공격 신호: 강적이면 세로 도트 연출, 아니면(보스) 옛 돌진', () => {

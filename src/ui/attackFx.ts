@@ -770,16 +770,18 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const flipY = L.altFlip && inst.hit % 2 === 1;
     const tgt = boxIn(layer, to.body);
     const src = boxIn(layer, from.body);
+    // 자리(dx·tx·ex)는 이펙트 배치 도구 기준(치는 쪽이 오른쪽에서 왼쪽을 향함) — 오른쪽을 향해 치는 쪽(적, GDD 227장)은 좌우를 뒤집는다
+    const mx = from.dir < 0 ? 1 : -1;
     let total = sheetMs;
     if (inst.flightMs === null) {
       const a = L.anchor === 'attacker' ? src : tgt;
-      wrap.style.transform = `translate(${(a.x + L.dx - w / 2).toFixed(1)}px, ${(a.y + L.dy - h / 2).toFixed(1)}px) ${pixelFxTransform(from.dir < 0, flipY, L.angle)}`;
+      wrap.style.transform = `translate(${(a.x + L.dx * mx - w / 2).toFixed(1)}px, ${(a.y + L.dy - h / 2).toFixed(1)}px) ${pixelFxTransform(from.dir < 0, flipY, L.angle)}`;
       track(el.animate(pixelFxKeyframes(s, sc), { duration: sheetMs, delay, fill: 'forwards' }));
     } else {
       // 날아감: 치는 쪽(+dx,dy) → 도착(맞는 쪽 +tx,ty, 곡선 arc) → 사라지는 곳(도착 +ex,ey), 나는 동안 시트 반복
-      const A = { x: src.x + L.dx, y: src.y + L.dy };
-      const B = { x: tgt.x + L.tx, y: tgt.y + L.ty };
-      const E = { x: B.x + L.ex, y: B.y + L.ey };
+      const A = { x: src.x + L.dx * mx, y: src.y + L.dy };
+      const B = { x: tgt.x + L.tx * mx, y: tgt.y + L.ty };
+      const E = { x: B.x + L.ex * mx, y: B.y + L.ey };
       const ms1 = inst.flightMs;
       const v = Math.hypot(B.x - A.x, B.y - A.y) / ms1 || 1;
       const ms2 = Math.hypot(E.x - B.x, E.y - B.y) / v;

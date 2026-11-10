@@ -9,6 +9,8 @@ export interface ToolChar {
   faction?: string;
   tier?: number;
   fallback?: string;
+  /** 적 그림(enemyArt)으로 불러올 때: 적 id — 강적 강공격 맞추기용 (GDD 227장) */
+  enemy?: string;
 }
 export const CHARACTERS: readonly ToolChar[] = [
   { id: 'arrancar-m', label: '아란칼 남', rig: 'arrancar-base' },
@@ -19,6 +21,10 @@ export const CHARACTERS: readonly ToolChar[] = [
   // 몸동작 칸 = 게임과 같이 'male'(종이인형이고 여성 외형이 아님) — 아란칼 남과 같은 칸
   { id: 'hollow-brute', label: '호로 덩치', rig: 'brute-base', faction: 'hollow', tier: 0, fallback: 'char.hollow' },
   { id: 'hollow-gillian', label: '호로 길리안', rig: 'gillian-base', faction: 'hollow', tier: 1, fallback: 'char.hollow' },
+  // 강적 몸 (GDD 227장, 사용자 2026-11-10 "강적 강공격 … 세로" + "위치 파악해서 반영"): 강적 강공격 세로를 몸마다 맞춘다 — 게임 적 그림 그대로(enemyArt)
+  { id: 'elite-brute', label: '강적 덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
+  { id: 'elite-gillian', label: '강적 외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
+  { id: 'elite-serpent', label: '강적 뱀', rig: 'serpent-green', enemy: 'poison-heavy-chain' },
 ];
 /** 게임 전투의 내 그림 자리 (1배 844×390 실측, scripts/c268-proof.cjs C268_NOHERO): 기본 상자 150 × (fieldScale ?? scale), 변형 기준점 */
 export const HERO_BOX = { x: 512, y: 78, size: 150, originX: 587, originY: 216 };

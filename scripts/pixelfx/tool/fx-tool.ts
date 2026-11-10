@@ -8,13 +8,15 @@ import { effects, categories } from '../../../vendor/pixelfx/src/fx/index.js';
 import { clearFrame, composite, createFrame, createFx } from '../../../vendor/pixelfx/src/core/index.js';
 import { pixelFxTransform } from '../../../src/ui/bha/pixelFx';
 import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
-import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
+import { charArt, enemyArt, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
-import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions } from '../../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
 import { FAMILY_RIG_MOTIONS, rigMotionIds } from '../../../src/ui/bha/rigAnim';
 
 interface FxLayer {
+  /** 불투명도 0~1 (없으면 1, GDD 227장 — 강적 강공격 빨간 세로 70%) */
+  opacity?: number;
   fx: string;
   color: 'element' | 'original';
   anchor: 'target' | 'attacker';
@@ -89,7 +91,7 @@ function ensureBodies(s: StageFx): void {
   Object.defineProperty(s, 'body', { configurable: true, enumerable: false, get: () => s.bodies![slotNow()].chain[0]?.id ?? '', set: () => {} });
 }
 type FamilyFx = StageFx[];
-interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind }
+interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind; /** 블록 수 (계열 3, 적 강공격 1 — GDD 227장) */ stages?: number; /** 처음 고를 치는 쪽 캐릭터 */ char?: string; /** 처음 미리볼 속성 색 */ el?: string }
 interface ToolData {
   stage: { w: number; h: number };
   view: { x: number; y: number; w: number; h: number };
@@ -246,7 +248,7 @@ for (const [id, p] of [['mark-t', D.target], ['mark-a', D.attacker]] as const) {
 const dot = $('dot');
 // ── 치는 쪽 캐릭터 (게임 재생기 그대로: 종이인형 bindRigAnim / 프레임 애니) ──
 const RIG_ART = (look: string): ArtUrls => ({ src: `./art/rig/humanoid/still/${look}.png`, frames: null, scale: 1.78, fieldScale: 1.33, offsetY: 0, rig: { look, partBase: './art/rig/humanoid/' } });
-const artOfChar = (c: ToolChar): ArtUrls => (c.faction ? charArt(c.faction, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male') : RIG_ART(c.rig!));
+const artOfChar = (c: ToolChar): ArtUrls => (c.enemy ? enemyArt(c.enemy, './')! : c.faction ? charArt(c.faction, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male') : RIG_ART(c.rig!));
 const heroHost = $('hero');
 let hero: { c: ToolChar; img: HTMLImageElement; player: AnimPlayer | null } | null = null;
 let charId = 'shinigami-m';
@@ -279,7 +281,8 @@ function bodyOptions(): BodyOpt[] {
   if (c?.rig) {
     const sp = HUMANOID.motionSpeed ?? 1; // 재생 속도(GDD 225장): 실제 길이·타격 = 동작 시각 ÷ sp (미리보기 재생기와 같게)
     // 그 몸에서 틀 수 있는 동작만(덩치·길리안은 몸 동작 묶음이 일부를 끈다 — 게임 resolveMotions 그대로, GDD 226장)
-    const ms = resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, HUMANOID.looks[c.rig]?.body);
+    const pack = rigPackOfLook(c.rig); // 뱀형 적은 뱀 뼈대 (GDD 227장)
+    const ms = pack ? resolveMotions(pack.rig, pack.motions, pack.sets, pack.rig.looks[c.rig]?.body) : resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, HUMANOID.looks[c.rig]?.body);
     return Object.entries(ms).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
   }
   const anims = c ? artOfChar(c).anims ?? {} : {};
@@ -393,6 +396,7 @@ function layout(): void {
         place(cv, a.x + L.dx, a.y + L.dy, w, hh, pixelFxTransform(entry.dir < 0, L.altFlip && hi % 2 === 1, L.angle));
       }
       cv.style.zIndex = String((L.z ?? 3) * 10 + li);
+      if (L.opacity !== undefined && L.opacity < 1) cv.style.opacity = String(L.opacity); // 불투명도 (게임 pixelInst 와 같게, GDD 227장)
       if (li === layerIx && (editHit < 0 || editHit === hi)) cv.classList.add('is-sel');
       world.insertBefore(cv, $('mark-t'));
       const rate = L.rate * s.speed;
@@ -812,7 +816,7 @@ function syncOn(): void {
     box.append(b);
   }
 }
-const syncLayer = gauges<FxLayer, 'z' | 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate'>($('layerbox'), [
+const syncLayer = gauges<FxLayer, 'z' | 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate' | 'opacity'>($('layerbox'), [
   { key: 'z', label: '레이어', step: 1, min: 1, max: 5, unit: '층' },
   { key: 'dx', label: '가로', step: 1, min: -400, max: 400, unit: 'px', signed: true },
   { key: 'dy', label: '세로', step: 1, min: -200, max: 200, unit: 'px', signed: true },
@@ -820,6 +824,7 @@ const syncLayer = gauges<FxLayer, 'z' | 'dx' | 'dy' | 'scale' | 'angle' | 'delay
   { key: 'angle', label: '각도', step: 1, min: -180, max: 180, unit: '°', signed: true },
   { key: 'delay', label: '늦춤', step: 10, min: -400, max: 800, unit: 'ms', signed: true },
   { key: 'rate', label: '재생 속도', step: 0.05, min: 0.25, max: 3, unit: '배' },
+  { key: 'opacity', label: '불투명도', step: 0.05, min: 0.1, max: 1, unit: '' },
 ], layerView);
 const syncFly = gauges<FxLayer, 'travel' | 'arc' | 'tx' | 'ty' | 'ex' | 'ey'>($('flybox'), [
   { key: 'travel', label: '비행 시간', step: 10, min: 50, max: 1500, unit: 'ms' },
@@ -914,6 +919,9 @@ const famBtn = $<HTMLButtonElement>('entry');
 famBtn.onclick = () =>
   openPicker('공격 계열', [{ items: D.entries.map((e) => ({ value: e.key, label: e.label })) }], entry.key, (v) => {
     entry = D.entries.find((e) => e.key === v) ?? entry;
+    stageIx = Math.min(stageIx, (entry.stages ?? 3) - 1);
+    if (entry.char) charId = entry.char;
+    if (entry.el) element = entry.el;
     layerIx = 0;
     editHit = -1;
     t = 0;
@@ -1066,7 +1074,10 @@ function refresh(): void {
   if (bgImg.getAttribute('src') !== entry.bg) bgImg.src = entry.bg;
   mountHero();
   for (const b of $('chars').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.char === charId));
-  for (const b of $('stages').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(Number(b.dataset.stage) === stageIx));
+  for (const b of $('stages').querySelectorAll<HTMLElement>('.chip')) {
+    b.setAttribute('aria-pressed', String(Number(b.dataset.stage) === stageIx));
+    b.style.display = Number(b.dataset.stage) >= (entry.stages ?? 3) ? 'none' : ''; // 적 강공격은 한 블록 (.chip 의 display 가 hidden 을 덮어서 직접)
+  }
   for (const b of $('elements').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.el === element));
   const tabs = $('layertabs');
   tabs.replaceChildren();
@@ -1173,7 +1184,7 @@ function load(saved: unknown): boolean {
     if (!b || !b.families || (b.stamp !== D.stamp && b.stamp !== 'v2')) return false;
     for (const e of D.entries) {
       const fam = b.families[e.key];
-      if (!Array.isArray(fam) || fam.length !== 3) continue;
+      if (!Array.isArray(fam) || fam.length !== (e.stages ?? 3)) continue;
       // v2 → v3: gapMs 하나 → 타격마다 간격, when(타격마다/첫/마지막) → 나오는 타격 목록, 시전 속도 1
       for (const s of fam as (StageFx & { gapMs?: number })[]) {
         if (!Array.isArray(s.gaps)) s.gaps = Array.from({ length: Math.max(0, s.hits - 1) }, () => s.gapMs ?? 100);

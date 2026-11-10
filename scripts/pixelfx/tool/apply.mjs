@@ -31,7 +31,7 @@ const fixed = JSON.parse(doc.json ?? doc.data?.json ?? JSON.stringify(doc));
 const families = fixed.families ?? {};
 
 // 레이어에서 게임이 쓰는 칸만 (도구 전용 칸·옛 칸은 뺀다)
-const LAYER_KEYS = ['fx', 'color', 'anchor', 'on', 'delay', 'dx', 'dy', 'scale', 'angle', 'rate', 'altFlip', 'move', 'travel', 'arc', 'tx', 'ty', 'ex', 'ey', 'face', 'sync', 'z', 'perHit'];
+const LAYER_KEYS = ['fx', 'color', 'anchor', 'on', 'delay', 'dx', 'dy', 'scale', 'angle', 'rate', 'altFlip', 'move', 'travel', 'arc', 'tx', 'ty', 'ex', 'ey', 'face', 'sync', 'z', 'opacity', 'perHit'];
 const LAYER_DEFAULTS = { move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3, rate: 1, delay: 0 };
 const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
 function stageOf(s) {
@@ -77,6 +77,28 @@ for (const fid of ['shinigami', 'hollow']) {
   }
   writeFileSync(p, patchText(text, fac));
   console.log(`${fid}: ${fac.families.filter((f) => f.pixelFx).map((f) => f.name).join(', ') || '없음'}`);
+}
+
+// 1-2) 강적 강공격 빨간 세로 (GDD 227장): families['elite-heavy/<뼈대>/<몸>'] = [한 블록] → src/data/enemies/eliteHeavyFx.json byBody (element·note 는 그대로)
+{
+  const ep = join(ROOT, 'src/data/enemies/eliteHeavyFx.json');
+  const eh = JSON.parse(readFileSync(ep, 'utf8'));
+  let n = 0;
+  for (const [key, raw] of Object.entries(families)) {
+    if (!key.startsWith('elite-heavy/') || !Array.isArray(raw) || !raw.length) continue;
+    const bk = key.slice('elite-heavy/'.length);
+    const st = stageOf(raw[0]);
+    eh.byBody[bk] = st;
+    n++;
+    for (const L of st.layers) {
+      if (L.color === 'element') sheets.set(sheetName(L.fx, eh.element), { id: L.fx, palette: PALETTES[eh.element], edge: EDGES[eh.element]?.[L.fx] });
+      else sheets.set(sheetName(L.fx, null), { id: L.fx });
+    }
+  }
+  if (n) {
+    writeFileSync(ep, `${JSON.stringify(eh, null, 2)}\n`);
+    console.log(`강적 강공격: ${Object.keys(eh.byBody).join(', ')}`);
+  }
 }
 
 // 2) 시트 (이미 같은 옵션으로 있으면 건너뛴다)

@@ -60,7 +60,8 @@ import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from '
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
 import type { PixelBodySlot } from './pixelAttack';
-import { ELITE_HEAVY_CERO, ELITE_HEAVY_ELEMENT, FX_REACH_FIELD } from './attackFxConfig';
+import { eliteHeavyFor, ELITE_HEAVY_ELEMENT, FX_REACH_FIELD } from './attackFxConfig';
+import { rigPackOfLook } from '../data/art/rig/pose';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { sceneBgEl } from './bha/sceneBg';
 import type { SceneBg } from '../data/art/backgrounds';
@@ -907,7 +908,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 타격 지연 (GDD 214장, C.357): 엔진이 피해를 넣는 시각 = 실제 동작 데이터(종이인형 hit 시각·프레임 hit 장·도트 연출 첫 반응)의 타격 순간. 전투가 시작되기 전(틱 0)에만 — 종족 무관, 숫자만 넘긴다
   // 튜토리얼 각본 전투(GDD 224장 2): 블록 도트 연결 동작을 처음부터(휘두르기 → 타격 프레임 = 피해) — 지연 표도 그 기준
   // 강적 강공격 = 빨간 세로 (GDD 227장): 보스가 아닌 강적만. 시트(혈 속성 = 빨강)를 미리 받아 둔다 — 못 받으면 그 이펙트만 빠진다
-  const heavyPixel = enemy.class === 'elite' && !(opts.boss || s.boss) ? ELITE_HEAVY_CERO : null;
+  // 강적 강공격 세로 (GDD 227장): 이 적 몸(뼈대/몸 id)의 블록 — 입 자리가 몸마다 다르다. 종이인형이 아니면 덩치 값
+  const foeRigLook = foeArtOf(enemy.id)?.rig?.look;
+  const foePack = foeRigLook ? rigPackOfLook(foeRigLook) : undefined;
+  const foeBodyKey = foePack && foeRigLook ? `${foePack.id}/${foePack.rig.looks[foeRigLook]!.body}` : null;
+  const heavyPixel = enemy.class === 'elite' && !(opts.boss || s.boss) ? eliteHeavyFor(foeBodyKey) : null;
   if (heavyPixel) for (const L of heavyPixel.layers) void loadPixelFx(fxSheetName(L.fx, L.color === 'element' ? ELITE_HEAVY_ELEMENT : null));
   if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script, heavyPixel });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */

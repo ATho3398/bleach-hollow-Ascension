@@ -3094,3 +3094,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 캡처 `docs/captures/c371/`(1배 844×390, `scripts/c371-proof.cjs`, proof.json 오류 0): `foe-gillian-cyclops`(스티치마우스 = 외눈 길리안 캔버스), `elite-heavy-cero-1·2`(강공격 세로 — 불투명도 0.7, 적 강공격 지연 0.393초).
 - 검증: typecheck · test · build · balance:check 통과(아래). 세이브·밸런스 그대로.
 
+
+## C.372 — 강적 강공격 빨간 세로 몸마다 입에서 · 도구로 맞추기 · 호로 탄 확정 값 (GDD 227장 보충, v5.532, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ. 그리고 종이인형 세션에다가 적도 강공격할 때 세로쓰라고 했거든? 그거 보조하던가 너가 메인 잡아서 위치 파악해서 반영 ㄱㄱ" (이 "ㅇㅋ" = 도구 [확정] 11-10 21:14).
+- C.371(종이인형 세션)이 먼저 넣은 강적 강공격 빨간 세로 위에서: 한 자리(dx +304 손으로 뒤집은 값)는 덩치만 맞고 길리안·뱀은 가슴에서 나감 → `src/data/enemies/eliteHeavyFx.json`(element blood, fallback humanoid/hb, byBody 덩치·외눈 길리안·뱀) + `attackFxConfig` `eliteHeavyFor`·`ELITE_HEAVY_BODIES`, `battleView` 가 적 그림 몸(rigPackOfLook → `<뼈대>/<몸>`)으로 고름.
+- `attackFx` pixelInst: 자리 dx·tx·ex 를 치는 쪽 방향으로 좌우 뒤집기(mx = from.dir < 0 ? 1 : −1) — 데이터는 모두 도구 기준(dx < 0). 내 공격은 dir −1 이라 그대로.
+- 처음 자리 = 도구에서 입을 재서: 덩치 −264,−12 · 외눈 길리안 −261,−32 · 뱀 −288,−28.
+- 이펙트 배치 도구: 항목 '강적 강공격 · 덩치/외눈 길리안/뱀'(한 블록 — Entry.stages, 처음 캐릭터·색), 치는 쪽에 '강적 덩치·외눈 길리안·뱀'(enemyArt, 뱀 뼈대 부위도 실음), 레이어 '불투명도' 게이지(그림에도 반영). `apply.mjs` 'elite-heavy/<몸>' → eliteHeavyFx.json byBody, LAYER_KEYS += opacity.
+- 도구 확정 21:14 → `hollow.json` 탄 1·2·3블록 이펙트 자리(덩치 입에 맞춤).
+- 테스트 `tests/c372-elite-heavy-body.test.ts`(2) + `tests/c371-gillian-elite-cero.test.ts`(dx < 0). 검증 `scripts/c372-proof.cjs` 실제 전투 1배 — 스모크 위도우·스티치마우스·롯팽 셋 다 입에서 세로. 캡처 `docs/captures/c372/` 3장.
+- 테스트 3084 통과(272 파일), typecheck·balance:check 회귀 가드 통과.

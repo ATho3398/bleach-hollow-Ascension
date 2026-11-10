@@ -1,18 +1,22 @@
 // 공격 연출(몸통박치기) 강도 상수 (GDD 17-4, R-4, C.35). 화면 연출 전용이라 balance.ts 가 아니라 여기에 둔다.
 // 값은 전부 CSS px / ms. 단계가 올라갈수록 물러나는 거리·돌진 속도·크기·잔상·피격 흔들림이 커진다.
 import type { AttackFxKind, PixelFxStage } from '../engine/faction';
+import eliteHeavyRaw from '../data/enemies/eliteHeavyFx.json';
 
 /** 강적 강공격 = 빨간 세로(Cero) 빔 (GDD 227장, 사용자 2026-11-10 "강적 강공격 들은 빨간 세로 쓰게 해줄래?? 투명도 70%정도로" → 불투명도 70%).
- *  호로 탄 2단계 세로(이펙트 배치 도구 확정 값: dx −304·크기 2.25·빠르기 0.85)를 적 쪽(오른쪽으로 쏨)으로 뒤집은 자리, 색 = 혈 속성 시트(빨강).
+ *  값 = 적 데이터 `src/data/enemies/eliteHeavyFx.json`(이펙트 배치 도구 '강적 강공격 · <몸>' 확정 값): 입 자리가 몸마다 달라 몸(뼈대/몸 id)마다 한 블록.
+ *  자리는 도구 기준(치는 쪽이 왼쪽을 향함) — 적 쪽은 attackFx pixelInst 가 좌우를 뒤집는다. 색 = element(혈 = 빨강).
  *  빔이 다 뻗은 뒤 맞게 60ms 앞당겨 시작(첫 맞음 반응 = 강공격 피해 시각 — hitDelaysOf 가 같은 값을 엔진에 넘긴다) */
-export const ELITE_HEAVY_ELEMENT = 'blood';
-export const ELITE_HEAVY_CERO: PixelFxStage = {
-  hits: 1,
-  gaps: [],
-  speed: 1,
-  layers: [{ fx: 'custom/cero', color: 'element', anchor: 'attacker', on: [0], delay: -60, dx: 304, dy: 2, scale: 2.25, angle: 0, rate: 0.85, altFlip: false, move: 'stay', travel: 300, arc: 0, tx: 0, ty: 0, ex: 0, ey: 0, face: true, sync: 'hit', z: 3, opacity: 0.7 }],
-  bodies: {},
-};
+const ELITE_HEAVY = eliteHeavyRaw as unknown as { element: string; fallback: string; byBody: Record<string, PixelFxStage> };
+export const ELITE_HEAVY_ELEMENT = ELITE_HEAVY.element;
+/** 몸 정보가 없을 때(프레임 그림 적 등) 쓰는 블록 = fallback 몸(덩치) */
+export const ELITE_HEAVY_CERO: PixelFxStage = ELITE_HEAVY.byBody[ELITE_HEAVY.fallback]!;
+/** 그 몸의 강적 강공격 블록 (bodyKey = '<뼈대 id>/<몸 id>', 예 humanoid/hb = 덩치, humanoid/hd = 길리안, serpent/ref = 뱀). 없으면 fallback */
+export function eliteHeavyFor(bodyKey: string | null | undefined): PixelFxStage {
+  return (bodyKey ? ELITE_HEAVY.byBody[bodyKey] : undefined) ?? ELITE_HEAVY_CERO;
+}
+/** 강적 강공격 블록이 있는 몸 목록 (도구·시트 미리 받기) */
+export const ELITE_HEAVY_BODIES: readonly string[] = Object.keys(ELITE_HEAVY.byBody);
 
 
 /** 연출 강도 단계: 기본 공격 < 체인 1·2·3 < 약점 < 필살 */
