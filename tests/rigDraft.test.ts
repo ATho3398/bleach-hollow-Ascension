@@ -215,6 +215,17 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Object.keys(b.motions.attack2!.tracks)).toContain('fleg_R');
     expect(Object.keys(b.motions.attack2!.tracks)).not.toContain('fleg_L');
   });
+  it('짐승형 = 사용자 부위 시트 조립(GDD 115-A 102): 조각 12개(배 그림 없음), 다리·꼬리 관절은 위·아래 마디 그림에 걸친 이음매', () => {
+    const b = DRAFT_RIGS.beast!;
+    const ref = b.rig.bodies.ref!;
+    expect(Object.keys(ref).sort()).toEqual(['body', 'fleg_L', 'fleg_L2', 'fleg_R', 'fleg_R2', 'head', 'hleg_L', 'hleg_L2', 'hleg_R', 'hleg_R2', 'tail', 'tail2']);
+    const piv = (id: string) => b.rig.bones.find((x) => x.id === id)!.pivot;
+    const near = (p: number[], s: string) => p[0]! >= ref[s]!.at[0] - 1 && p[0]! <= ref[s]!.at[0] + ref[s]!.size[0] && p[1]! >= ref[s]!.at[1] - 1 && p[1]! <= ref[s]!.at[1] + ref[s]!.size[1];
+    for (const [lo, up] of [['fleg_R2', 'fleg_R'], ['fleg_L2', 'fleg_L'], ['hleg_R2', 'hleg_R'], ['hleg_L2', 'hleg_L'], ['tail2', 'tail']] as const) {
+      expect(near(piv(lo), lo) && near(piv(lo), up), lo).toBe(true);
+    }
+    expect(near(piv('head'), 'head') && near(piv('head'), 'body')).toBe(true);
+  });
   it('짐승형 걷기: 대각선 짝 다리가 같이 움직인다', () => {
     const b = DRAFT_RIGS.beast!;
     const mv = b.motions.move!;
