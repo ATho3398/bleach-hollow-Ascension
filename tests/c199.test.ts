@@ -47,11 +47,11 @@ const runLog = (s: CombatState) => {
 
 describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: ①자동 ${TS.autoHits}대(설명 없음) → ②강공격·막기 → 막기 성공 → ③${TS.autoHits2}대 → ④못 막는 강공격(죽기 직전)·블록 1개 → 좋아! → ⑤같은 블록 3개 체인 처치 (GDD 157장 2)`, () => {
+    it(`${f}: ⓪'일반 공격은 자동' 카드(GDD 224장 1) → ①자동 ${TS.autoHits}대 → ②강공격·막기 → 막기 성공 → ③${TS.autoHits2}대 → ④못 막는 강공격(죽기 직전)·블록 1개 → 좋아! → ⑤같은 블록 3개 체인 처치 (GDD 157장 2)`, () => {
       const { s } = tutorialBattle(f);
-      expect(s.script?.stage).toBe('auto');
+      expect(s.script?.stage).toBe('auto-intro');
       const { prompts, events } = runLog(s);
-      expect(prompts).toEqual(['guard-now', 'guard-ok', 'hurt', 'nice', 'chain-use']);
+      expect(prompts).toEqual(['auto-intro', 'guard-now', 'guard-ok', 'hurt', 'nice', 'chain-use']);
       expect(s.status).toBe('won');
       // 사건 순서: 평타 3 → 예고 → 막기 → 막은 착탄 → 평타 2 → 예고 → 못 막은 착탄 → 블록 1 → 체인 3
       const seq = events.filter((e) => ['player-attack', 'heavy-cast', 'heavy-hit', 'block', 'enemy-attack'].includes(e.kind)).map((e) =>
@@ -106,6 +106,8 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
   it('157장 2: 강공격 카드는 예고 게이지가 거의 찼을 때, 막기 성공 카드는 막아 낸 뒤, 위기 카드는 블록 1개와 함께', () => {
     for (const f of ['hollow', 'shinigami']) {
       const { s } = tutorialBattle(f);
+      expect(scriptPrompt(s)).toEqual({ stage: 'auto-intro', wait: 'ack' }); // 224장 1: 시작하자마자 자동 공격 카드
+      scriptAck(s);
       while (!scriptPrompt(s)) scriptStep(s);
       expect(scriptPrompt(s)?.stage).toBe('guard-now');
       expect(s.enemy.cast!.ticks).toBeLessThanOrEqual(2);

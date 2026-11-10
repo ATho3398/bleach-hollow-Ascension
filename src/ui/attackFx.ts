@@ -43,6 +43,8 @@ export interface AttackCue {
   instant?: boolean;
   /** 각본 마무리 체인 (GDD 146장): 즉발처럼 기다리지 않고 바로 시작하되, 동작을 처음부터(휘두르기 → 스킬 → 타격) 보인다 */
   windup?: boolean;
+  /** 도트 연결 동작을 처음부터 (GDD 224장 2, 튜토리얼 각본 전투): 첫 동작의 '타격 프레임부터'(bodyFromHit)를 무시하고 휘두르기부터 보이며, 그 타격 프레임 = 첫 맞음 반응 = 피해. windup 이면 언제나 */
+  bodyWindup?: boolean;
   /** 연출이 적에게 닿는 순간(마지막 타격) 한 번 부른다 — 각본 전투가 이때 피해를 넣는다 (GDD 146장) */
   onLand?: () => void;
   /** 엔진 피해가 들어가기까지 남은 ms(1배) (GDD 214장, C.357): 연출의 첫 맞음 반응을 이 시각에 맞춘다 — 동작의 타격 시각이 더 늦으면 앞을 건너뛰고, 더 이르면 기다렸다 시작. 없으면 옛 타이밍(즉발·동작 그대로) */
@@ -109,13 +111,46 @@ export type AnimTiming = Pick<AnimPlayer, 'has' | 'peek'>;
  * 도트 연출 연결 동작이면 그 계획의 첫 반응, 아니면 동작(peek 타격 시각 — 변형 중 가장 늦은 것) 또는 몸통박치기·발사 계획의 닿는 시각 + 도트 연출 첫 반응.
  * 엔진은 이 값만큼 피해를 미루고, run() 은 cue.hitInMs 로 다시 이 시각에 맞춘다
  */
-export function cueHitMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion'>, anim: AnimTiming | null, slot: PixelBodySlot): number {
+/**
+ * 도트 연결 동작을 처음부터 보일 때(GDD 224장 2) 첫 동작의 휘두르기 길이(ms, 1배): 첫 동작이 '타격 프레임부터'(bodyFromHit)면 그 동작의 타격 시각 ÷ 빠르기, 아니면 0.
+ * 몸은 원래 시작 시각(body.at)보다 이만큼 먼저 시작해 도구가 정한 순간(= 첫 맞음 반응)에 타격 프레임이 온다
+ */
+export function bodySwingMs(body: PixelPlan['body'], anim: AnimTiming | null): number {
+  const first = body?.chain[0];
+  if (!body || !first || !body.bodyFromHit || !anim) return 0;
+  const r = 'pose' in anim ? anim.peek('skill', { rigMotion: first.id }) : anim.peek(first.id as AnimAction);
+  const rate = (first.rate > 0 ? first.rate : 1) * body.speed;
+  return r ? r.hitAtMs / rate : 0;
+}
+
+/**
+ * 연결 동작의 마지막 동작 타격 시각(ms, 1배, 몸 시작부터) (GDD 224장 2): 앞 동작 길이 합 + 마지막 동작 타격 — 각 동작 ÷ 빠르기.
+ * fromStart 가 아니고 첫 동작이 '타격 프레임부터'면 첫 동작은 타격 뒤만 센다. 알 수 없으면 null
+ */
+export function bodyLastHitMs(body: PixelPlan['body'], anim: AnimTiming | null, fromStart: boolean): number | null {
+  if (!body || !anim || !body.chain.length) return null;
+  let t = 0;
+  for (const [i, st] of body.chain.entries()) {
+    const r = 'pose' in anim ? anim.peek('skill', { rigMotion: st.id }) : anim.peek(st.id as AnimAction);
+    if (!r) return null;
+    const k = (st.rate > 0 ? st.rate : 1) * body.speed;
+    const skip = i === 0 && body.bodyFromHit && !fromStart ? r.hitAtMs : 0;
+    if (i === body.chain.length - 1) return t + (r.hitAtMs - skip) / k;
+    t += (r.durationMs - skip) / k;
+  }
+  return null;
+}
+
+/** 휘두르기가 연출 시작(0) 앞으로 넘치는 만큼(ms) — 이펙트·맞음 반응·피해를 이만큼 뒤로 민다 */
+export const bodyLeadMs = (body: PixelPlan['body'], anim: AnimTiming | null): number => (body ? Math.max(0, bodySwingMs(body, anim) - body.at) : 0);
+
+export function cueHitMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion' | 'bodyWindup'>, anim: AnimTiming | null, slot: PixelBodySlot): number {
   const act = anim ? animActionOf(cue, (a) => anim.has(a)) : null;
   const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, slot) ? pixelPlan(cue.pixel.stage, slot) : null;
   const chainBody = !!pplan?.body && !!anim;
   const level = ATTACK_FX[cue.tier];
   const motion = cue.fx ? familyMotion(cue.fx) : null;
-  const clipHit = chainBody ? 0 : act && anim ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? null : null;
+  const clipHit = chainBody ? (cue.bodyWindup ? bodyLeadMs(pplan!.body, anim) : 0) : act && anim ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? null : null;
   const base = clipHit !== null ? clipHit : motion?.move === 'cast' ? Math.max(60, level.backMs) + motion.travelMs : level.backMs + level.lungeMs;
   return base + (pplan ? pplan.reactAt[0] ?? 0 : 0);
 }
@@ -131,12 +166,14 @@ export function hitDelaysOf(o: {
   familyIds: readonly string[];
   familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined;
   fallback: HitDelayParams;
+  /** 블록 도트 연결 동작을 처음부터 (GDD 224장 2 — 튜토리얼 각본 전투) */
+  bodyWindup?: boolean;
 }): HitDelayParams {
   const sec = (ms: number) => Math.round(ms) / 1000;
   const blockBy: Record<string, number> = { ...(o.fallback.blockBy ?? {}) };
   for (const id of o.familyIds) {
     for (let stage = 1; stage <= FAMILY_STAGE_FX.length; stage++) {
-      const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true };
+      const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true, bodyWindup: o.bodyWindup };
       applyFamilySpec(cue, id, stage, o.familyFx?.(id, stage), null);
       blockBy[blockHitKey(id, stage)!] = sec(cueHitMs(cue, o.player, o.slot));
     }
@@ -284,6 +321,9 @@ export class AttackQueue {
   }
 }
 
+/** 마무리 체인 착탄 안전장치 (GDD 224장 2): 마지막 동작 타격 예상 시각 + 이만큼(ms) 지나도 onHit 이 안 오면 그때 넣는다 */
+const FINAL_HIT_SAFETY_MS = 400;
+
 // ───────────────────────── 애니메이션 계획 (순수) ─────────────────────────
 
 export interface LungePlan {
@@ -293,13 +333,18 @@ export interface LungePlan {
   /** 부딪히는 시각(ms, 1배 기준) */
   hitAtMs: number;
   ghosts: number;
-  /** 시작 전에 기다리는 ms (GDD 214장: 엔진 착탄이 계획의 닿는 시각보다 늦을 때 그만큼) — durationMs·hitAtMs 에 이미 더해져 있다 */
+  /** 시작 전에 기다리는 ms (GDD 214장: 엔진 착탄이 계획의 닿는 시각보다 늦을 때 그만큼) — durationMs·hitAtMs 에 이미 더해져 있다. 음수 = 그만큼 건너뛰고 시작(224장 3) */
   leadMs?: number;
 }
 
-/** 계획의 닿는 시각을 hitInMs 에 맞춘다 (GDD 214장): 더 늦게 닿아야 하면 그만큼 기다렸다 시작. 더 일찍은 못 당긴다(그대로) */
+/** 계획의 닿는 시각을 hitInMs 에 맞춘다 (GDD 214장): 더 늦게 닿아야 하면 그만큼 기다렸다 시작, 더 일찍이면 앞을 건너뛴다(224장 3) */
 export function alignPlan(plan: LungePlan, hitInMs: number | undefined): LungePlan {
-  if (hitInMs === undefined || hitInMs <= plan.hitAtMs) return plan;
+  if (hitInMs === undefined || hitInMs === plan.hitAtMs) return plan;
+  // 더 일찍 맞아야 하면 앞을 건너뛴다 (GDD 224장 3, C.367 — 동작 그림 hitInMs 와 같은 규칙): leadMs 음수 = 그만큼 진행된 채 시작. 안 그러면 피해가 닿기 전에 뜬다
+  if (hitInMs < plan.hitAtMs) {
+    const skip = plan.hitAtMs - Math.max(0, hitInMs);
+    return { ...plan, durationMs: plan.durationMs - skip, hitAtMs: plan.hitAtMs - skip, leadMs: (plan.leadMs ?? 0) - skip };
+  }
   const lead = hitInMs - plan.hitAtMs;
   return { ...plan, durationMs: plan.durationMs + lead, hitAtMs: hitInMs, leadMs: (plan.leadMs ?? 0) + lead };
 }
@@ -416,7 +461,7 @@ export function animActionOf(cue: Pick<AttackCue, 'ult' | 'fx' | 'tier'>, has: (
 
 export interface AttackFxDriver {
   /** 사건을 연출로 바꿔 큐에 넣는다. 연출이 필요 없는 사건이면 false */
-  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand' | 'hitInMs'>): boolean;
+  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand' | 'hitInMs' | 'bodyWindup'>): boolean;
   /** 배속(1~4) 바꾸기: 재생 중인 연출도 따라간다 */
   setSpeed(speed: number): void;
   /** 일시정지/재개: 재생 중인 연출을 멈췄다 이어간다 */
@@ -448,6 +493,10 @@ export interface AttackFxOptions {
   bodySlot?: () => PixelBodySlot;
   /** 3단계 계열 공격의 화면 흔들림 (설정에서 흔들림을 끄면 호출하는 쪽이 무시한다) */
   shake?: () => void;
+  /** 맞는 쪽 반응이 실제로 일어난 순간(타격 프레임) 알림 — 테스트 모드 실측용(GDD 224장, C.367). 평소 없음 */
+  onHitFrame?: (side: Side, guarded: boolean, tier: string) => void;
+  /** 치는 쪽 동작이 타격 프레임에 닿은 순간 알림 — 테스트 모드 실측용(GDD 224장, C.367). 평소 없음 */
+  onSwingFrame?: (side: Side, tier: string) => void;
 }
 
 const SVG_OPEN = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">';
@@ -494,6 +543,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     live.add(a);
     a.playbackRate = rate;
     if (paused) a.pause();
+    // 시작 시각 = 이 프레임 시각 (GDD 224장 3, C.367): 그냥 두면 다음 프레임부터 흘러(대기 시작) 타격·맞음 반응이 엔진 착탄(같은 프레임 시계)보다 1~2 프레임 늦다
+    else if (typeof document !== 'undefined' && document.timeline?.currentTime != null) a.startTime = document.timeline.currentTime;
     const drop = () => live.delete(a);
     a.addEventListener('finish', drop);
     a.addEventListener('cancel', drop);
@@ -512,6 +563,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   const hit = (target: AttackActor, level: AttackFxLevel, guarded: boolean, delayMs: number): void => {
     // 맞는 순간의 동작을 보고 정한다(그 사이 공격을 시작했을 수 있다)
     if (delayMs > 0) return void after(target.body, delayMs, () => hit(target, level, guarded, 0));
+    if (opts.onHitFrame) opts.onHitFrame(target === opts.player ? 'player' : 'enemy', guarded, (Object.keys(ATTACK_FX) as AttackTier[]).find((k) => ATTACK_FX[k] === level) ?? '?');
     // 맞음 애니가 있고 대기·이동 중이면 흔들림 대신 그 애니 (막았을 땐 기존 막기 표시).
     // 공격·특수 모션 중이면 끊지 않고 깜빡임·작은 흔들림만 (GDD 117장 2). 맞음 애니가 없으면 아래 기존 흔들림
     const hitAnim = target.anim;
@@ -744,7 +796,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   };
 
   /** 연결 동작: 차례로, 동작마다 빠르기(× 시전 속도 × 지금 배속), 끝나면 다음 동작. 종이인형은 동작 id(rigMotion), 프레임 그림은 그 동작 이름 */
-  const playChain = (anim: AnimPlayer, body: NonNullable<PixelPlan['body']>): void => {
+  /** onFinalHit: 마지막 동작의 타격 프레임(재생기가 실제로 그 자세를 올린 순간)에 한 번 — 마무리 체인 착탄(GDD 224장 2) */
+  const playChain = (anim: AnimPlayer, body: NonNullable<PixelPlan['body']>, swingProbe?: { side: Side; tier: string }, fromStart = false, onFinalHit?: () => void, onFirstHit?: () => void): void => {
     const isRig = 'pose' in anim;
     let i = 0;
     const next = (): void => {
@@ -754,11 +807,23 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       }
       const st = body.chain[i]!;
       const first = i === 0;
+      const last = i === body.chain.length - 1;
       i++;
       anim.setRate(rate * (st.rate > 0 ? st.rate : 1) * body.speed);
-      const o = { fromHit: first && body.bodyFromHit, onEnd: next };
+      const onHit = swingProbe || (last && onFinalHit) || (first && onFirstHit)
+        ? () => {
+          if (swingProbe) opts.onSwingFrame?.(swingProbe.side, swingProbe.tier);
+          if (first) onFirstHit?.();
+          if (last) onFinalHit?.();
+        }
+        : undefined;
+      const o = { fromHit: first && body.bodyFromHit && !fromStart, onEnd: next, onHit };
       const r = isRig ? anim.play('skill', { ...o, rigMotion: st.id }) : anim.play(st.id as AnimAction, o);
-      if (!r) next();
+      if (!r) {
+        if (first) onFirstHit?.();
+        if (last) onFinalHit?.();
+        next();
+      }
     };
     next();
   };
@@ -795,13 +860,16 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
     const pplan = px ? pixelPlan(px.stage, slot) : null;
     const chainBody = pplan?.body && from.anim ? pplan.body : null;
+    // 연결 동작을 처음부터 (GDD 224장 2): 첫 동작 휘두르기 길이만큼 이펙트·맞음 반응을 뒤로 — 몸의 타격 프레임 = 첫 맞음 반응
+    const bodySwing = chainBody && (cue.bodyWindup || cue.windup) ? bodySwingMs(chainBody, from.anim ?? null) : 0;
+    const bodyLead = chainBody ? Math.max(0, bodySwing - chainBody.at) : 0;
     // 엔진 착탄에 맞추기 (GDD 214장, C.357): 첫 맞음 반응이 cue.hitInMs 에 오게. 도트 연출은 그 계획의 첫 반응(reactAt[0])만큼 앞에서 시작한다.
     // 큐에서 기다리다 늦게 시작해 착탄이 이미 지났으면(0) 옛 즉발처럼 타격부터 보인다(피해 숫자는 엔진 사건이 이미 띄웠다)
     const want = cue.hitInMs;
     const quick = want === undefined && !!cue.instant && !cue.windup; // 옛 즉발(엔진 지연 정보가 없을 때만): 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
     const firstReact = pplan ? pplan.reactAt[0] ?? 0 : 0;
-    const clipHitIn = want !== undefined ? Math.max(0, want - firstReact) : quick ? 0 : undefined;
-    const clipPlay = act && !chainBody ? from.anim!.play(act, { hitInMs: clipHitIn, motion: cue.motion, rigMotion: cue.rigMotion }) : null;
+    const clipHitIn = want !== undefined ? Math.max(bodyLead, want - firstReact) : quick ? 0 : chainBody ? bodyLead : undefined;
+    const clipPlay = act && !chainBody ? from.anim!.play(act, { hitInMs: clipHitIn, motion: cue.motion, rigMotion: cue.rigMotion, ...(opts.onSwingFrame ? { onHit: () => opts.onSwingFrame?.(cue.side, cue.tier) } : {}) }) : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰, 아니면 엔진 착탄에)
       const at = clipPlay?.hitAtMs ?? clipHitIn ?? 0;
@@ -852,13 +920,40 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       spawnSide = cue.side;
       let fxEnd = 0;
       for (const inst of pplan.insts) fxEnd = Math.max(fxEnd, pixelInst(layer, px.element, inst, from, to, hitAt));
-      for (const ms of pplan.reactAt) hit(to, level, cue.guarded, hitAt + ms);
+      // 연결 동작을 처음부터 보이면(GDD 224장 2) 첫 맞음 반응은 몸의 첫 타격 자세가 실제로 올라온 순간(재생기 onHit) — 타이머와 재생기 시계가 1~2 프레임 어긋난다(C.367 실측)
+      const firstFromBody = !!chainBody && bodySwing > 0;
+      for (const [i, ms] of pplan.reactAt.entries()) if (!(firstFromBody && i === 0)) hit(to, level, cue.guarded, hitAt + ms);
       const lastReact = hitAt + Math.max(...pplan.reactAt);
-      landAt(lastReact);
-      if (familyShakes(stage) && opts.shake) after(from.root, lastReact, opts.shake);
+      let landAtFinal = lastReact;
       if (chainBody && from.anim) {
         const anim = from.anim;
-        after(from.root, hitAt + chainBody.at, () => playChain(anim, chainBody));
+        const probe = opts.onSwingFrame ? { side: cue.side, tier: cue.tier } : undefined;
+        const startAt = Math.max(0, hitAt + chainBody.at - bodySwing);
+        // 마무리 체인 (GDD 146장·224장 2): 피해는 마지막 타격 — 몸의 마지막 동작 타격이 이펙트 마지막 반응보다 늦으면 그때 (맞음 반응도 그때 한 번 더)
+        // 착탄은 마지막 동작이 실제로 타격 자세를 올린 순간(재생기 onHit) — 예상 시각 + 여유는 안전장치
+        let onFinal: (() => void) | undefined;
+        if (cue.windup) {
+          const last = bodyLastHitMs(chainBody, anim, bodySwing > 0);
+          const bodyLast = last === null ? null : (startAt < 1 ? 0 : startAt) + last;
+          if (bodyLast !== null && bodyLast > lastReact + 1) {
+            landAtFinal = -1;
+            onFinal = () => {
+              hit(to, level, cue.guarded, 0);
+              land();
+              if (familyShakes(stage) && opts.shake) opts.shake();
+            };
+            window.setTimeout(land, (bodyLast + FINAL_HIT_SAFETY_MS) / rate + FX_SAFETY_MS);
+            endAt = Math.max(endAt, bodyLast + level.hitMs);
+          }
+        }
+        const go = () => playChain(anim, chainBody, probe, bodySwing > 0, onFinal, firstFromBody ? () => hit(to, level, cue.guarded, 0) : undefined);
+        // 지금 시작이면 바로 (빈 애니메이션 끝을 기다리면 1~2 프레임 늦어 타격 프레임이 맞음 반응보다 뒤로 밀린다, GDD 224장 3)
+        if (startAt < 1) go(); // 1ms 미만(부동소수 찌꺼기 포함)은 지금
+        else after(from.root, startAt, go);
+      }
+      if (landAtFinal >= 0) {
+        landAt(landAtFinal);
+        if (familyShakes(stage) && opts.shake) after(from.root, landAtFinal, opts.shake);
       }
       endAt = Math.max(endAt, fxEnd, lastReact + level.hitMs);
     } else if (cue.fx && motion) {

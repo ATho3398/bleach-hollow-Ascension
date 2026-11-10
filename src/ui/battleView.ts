@@ -366,6 +366,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const enemyHp = hpBar('foe', '적 체력', hpNumbers(s.enemy.hp, s.enemy.maxHp).now, hpNumbers(s.enemy.hp, s.enemy.maxHp).max);
   const playerHp = hpBar('hp', '내 체력', hpNumbers(s.player.hp, s.player.maxHp).now, hpNumbers(s.player.hp, s.player.maxHp).max);
   playerHp.root.dataset.help = 'battle.hp'; // 각본 전투 카드 대상 (C.199)
+  hero.root.dataset.help = 'battle.hero'; // 각본 전투 '일반 공격은 자동' 카드 대상 (GDD 224장 1)
   setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
   setHpBar(playerHp, s.player.hp, s.player.maxHp);
   const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
@@ -647,6 +648,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const scriptHold = (): boolean => !!s.script && scriptPrompt(s) !== null;
   /** 각본 행동 단계(막기·블록)에서 누른 입력 (GDD 129-2 1): 카드를 먼저 닫고 SCRIPT_ACT_DELAY_MS 빈 화면(전투 멈춘 채) 뒤에 엔진에 넣는다 */
   let scriptPending: { input: CombatInput; at: number; stage: string } | null = null;
+  /** 각본 행동 입력이 방금 들어갔다 (GDD 224장 2): 이 프레임에 시작한 모션과 엔진 시계를 같은 출발점에 — 멈춰 있던 동안의 프레임 시간을 더하지 않고 연출도 바로 푼다 */
+  let scriptResumed = 0;
   /** 누른 입력이 지금 기다리는 행동과 맞는가 (막기 = guard, 블록 = use) — 맞지 않는 누름은 카드를 닫지 않는다 */
   const scriptWants = (x: CombatInput): boolean => {
     const pr = scriptPrompt(s);
@@ -670,6 +673,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const { input, stage } = scriptPending;
     scriptPending = null;
     const ok = scriptPrompt(s)?.stage === stage && scriptStep(s, input)[0] === true;
+    if (ok) scriptResumed = 2; // 이번 프레임 + 다음 프레임: 새 연출은 다음 프레임부터 시간이 흐른다(실측 C.367 — 안 그러면 피해가 1프레임 먼저)
     if (!ok && scriptCardStage === `act:${stage}`) scriptCardStage = null; // 안 됐으면 같은 카드를 다시
     syncScript();
     drawHud();
@@ -866,7 +870,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let hurtCount = 0;
   const pool = floatPool(floats);
   /** 피해 숫자(내가 준 것·받은 것·공허)는 설정에서 끌 수 있다. 막기·회복·체인 표시는 그대로 */
+  // 실측 기록 (GDD 224장, C.367): 테스트 모드(?test=1)에서만 — 피해 숫자 등장·타격 프레임·엔진 사건 시각. 평소에는 없음
+  const probe: Record<string, unknown>[] | null = isTestMode() ? ((window as unknown as { __bhaProbe?: Record<string, unknown>[] }).__bhaProbe = []) : null;
+  const note = (type: string, extra: Record<string, unknown>) => probe?.push({ t: performance.now(), tick: s.tick, stage: s.script?.stage ?? null, ...extra, type });
   const spawnFloat = (kind: FloatKind, text: string, opt: FloatOpts = {}) => {
+    note('float', { kind, text });
     if (!fx.damageNumbers && (kind === 'attack' || kind === 'hurt' || kind === 'void')) return;
     const onMe = kind === 'hurt' || kind === 'void' || kind === 'guard' || kind === 'heal'; // 맞은 쪽 머리 위 (GDD 100장 #38)
     pool.show(kind, text, onMe ? HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]! : floatSpot(floatCount++), opt);
@@ -897,7 +905,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
   const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');
   // 타격 지연 (GDD 214장, C.357): 엔진이 피해를 넣는 시각 = 실제 동작 데이터(종이인형 hit 시각·프레임 hit 장·도트 연출 첫 반응)의 타격 순간. 전투가 시작되기 전(틱 0)에만 — 종족 무관, 숫자만 넘긴다
-  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay });
+  // 튜토리얼 각본 전투(GDD 224장 2): 블록 도트 연결 동작을 처음부터(휘두르기 → 타격 프레임 = 피해) — 지연 표도 그 기준
+  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -920,6 +929,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       return name ? { name } : null;
     },
     shake,
+    onHitFrame: probe ? (side, guarded, tier) => note('hit-frame', { side, guarded, tier }) : undefined,
+    onSwingFrame: probe ? (side, tier) => note('swing-frame', { side, tier }) : undefined,
   });
   if (testSpeedMul() !== 1) attack.setSpeed(testSpeedMul());
   const n0 = (v: number) => String(Math.round(v));
@@ -954,8 +965,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const react = (e: CombatEvent) => {
     // 휘두르기 (GDD 214장, C.357): 공격 모션은 지금 시작하고, 피해 숫자·체력 막대·맞음 반응은 엔진 피해가 들어가는 틱(atTick)에.
     // 연출에는 남은 ms 를 넘겨 타격 프레임을 그 순간에 맞춘다(이 프레임에 이미 지났으면 0 = 타격부터)
+    if (probe && e.kind !== 'swing') note('event', { kind: e.kind, landed: 'landed' in e && !!e.landed, damage: 'damage' in e ? e.damage : undefined, ...(e.kind === 'block' ? { family: e.family, chain: e.chain } : {}) });
     if (e.kind === 'swing') {
-      attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000) });
+      note('swing', { kind: e.hit.kind, atTick: e.atTick, damage: e.hit.damage });
+      // 남은 ms = 남은 틱 × 틱 길이 − 이번 프레임에 이미 쌓인 시간(acc): 다음 틱은 acc 만큼 일찍 온다 (GDD 224장 3, C.367 — 빼지 않으면 최대 한 프레임 일찍 맞음)
+      attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), ...(s.script ? { bodyWindup: true } : {}) });
       return;
     }
     // 맞은 순간(landed): 모션은 swing 때 시작했으니 숫자·번쩍임·효과음만
@@ -1525,7 +1539,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (scriptHold() && !halted()) {
         if (queue.length || scriptPending) pumpScriptInput(now);
       }
-      const f = frameTicks(acc, dt, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
+      const resumed = scriptResumed > 0;
+      if (resumed) scriptResumed--;
+      if (resumed && !(halted() || scriptHold()) && fxHalted) attack.setPaused((fxHalted = false));
+      const f = frameTicks(resumed ? 0 : acc, resumed ? 0 : dt, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing' && !scriptHold(); n++) {
         const usedBefore = s.itemUsed;

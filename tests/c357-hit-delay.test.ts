@@ -216,9 +216,13 @@ describe('화면: 타격 프레임을 엔진 착탄에 맞춘다 (hitInMs·align
     p.advance(20);
     expect(fired).toBe(1);
   });
-  it('alignPlan: 닿는 시각보다 늦게 맞아야 하면 그만큼 기다린다(leadMs), 더 이르면 그대로', () => {
+  it('alignPlan: 닿는 시각보다 늦게 맞아야 하면 그만큼 기다린다(leadMs), 더 이르면 앞을 건너뛴다(음수 leadMs, GDD 224장 3)', () => {
     const plan = lungePlan(ATTACK_FX.basic, 1, 20);
-    expect(alignPlan(plan, 100)).toBe(plan);
+    const early = alignPlan(plan, 100);
+    expect(early.hitAtMs).toBe(100);
+    expect(early.leadMs).toBe(100 - plan.hitAtMs);
+    expect(early.durationMs).toBe(plan.durationMs - (plan.hitAtMs - 100));
+    expect(alignPlan(plan, 0).hitAtMs).toBe(0); // 착탄이 이미 지났으면 타격부터
     expect(alignPlan(plan, undefined)).toBe(plan);
     const late = alignPlan(plan, plan.hitAtMs + 80);
     expect(late.leadMs).toBe(80);

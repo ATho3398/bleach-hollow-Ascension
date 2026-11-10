@@ -245,9 +245,9 @@ export interface HitDelayParams {
   counter: number;
 }
 
-/** 타격 지연 틱 수 (0 이면 바로) */
+/** 타격 지연 틱 수 (0 이면 바로). 올림 (GDD 224장 3, C.367): 반올림이면 모션 타격 프레임보다 최대 반 틱(50ms) 먼저 들어갈 수 있다 — 화면은 늦은 쪽에 모션을 맞춘다 */
 export function hitDelayTicks(p: Pick<CombatParams, 'tickSeconds'>, seconds: number): number {
-  return Math.max(0, Math.round((seconds > 0 ? seconds : 0) / p.tickSeconds));
+  return Math.max(0, Math.ceil((seconds > 0 ? seconds : 0) / p.tickSeconds - 1e-6));
 }
 
 /** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값 */
@@ -1405,9 +1405,18 @@ function landHit(s: CombatState, h: PendingHit): void {
   }
 }
 
-/** 공격 한 번 (GDD 214장, C.357): 발동은 지금, 피해는 delaySeconds 뒤 틱에. 지연 0·피해 0·각본 마무리 체인(holdHit)은 지금 바로(옛 동작) */
+/**
+ * step() 안에서 받은 입력은 그 step 의 틱(s.tick + 1) 시각에 일어난 것 (GDD 224장 3, C.367): 예약을 한 틱 뒤로 — 안 그러면 같은 step 의 틱 증가가
+ * 지연을 한 틱 깎아(0.1초 지연이면 0) 모션 타격보다 피해가 먼저 들어간다. 틱 없이 입력만 받는 곳(각본 대기 단계)은 0. 순수 데이터 흐름이라 재현성 그대로
+ */
+let inputTickLead = 0;
+
+/** 피해가 0 이어도 모션이 있는 공격 (GDD 224장, C.367): 막아 낸 적 공격·강공격·반격 — '막기' 표시도 그 모션의 타격 순간에 */
+const swingsAtZero = (e: SwingHit): boolean => (e.kind === 'enemy-attack' || e.kind === 'heavy-hit' || e.kind === 'counter') && e.guarded;
+
+/** 공격 한 번 (GDD 214장, C.357): 발동은 지금, 피해는 delaySeconds 뒤 틱에. 지연 0·피해 0(막아 낸 적 공격 제외, 224장)·각본 마무리 체인(holdHit)은 지금 바로(옛 동작) */
 function strike(s: CombatState, delaySeconds: number, h: Omit<PendingHit, 'atTick'>): void {
-  const d = s.script?.holdHit || h.amount <= 0 ? 0 : hitDelayTicks(s.params, delaySeconds);
+  const d = s.script?.holdHit || (h.amount <= 0 && !swingsAtZero(h.event)) ? 0 : hitDelayTicks(s.params, delaySeconds);
   if (d <= 0) {
     emit(s, h.event);
     if (h.target === 'enemy') {
@@ -1420,7 +1429,7 @@ function strike(s: CombatState, delaySeconds: number, h: Omit<PendingHit, 'atTic
     }
     return;
   }
-  const atTick = s.tick + d;
+  const atTick = s.tick + d + inputTickLead;
   emit(s, { kind: 'swing', hit: h.event, atTick });
   (s.pendingHits ??= []).push({ ...h, atTick });
 }
@@ -2178,7 +2187,13 @@ function advanceTick(s: CombatState): void {
 export function step(s: CombatState, input?: CombatInput | CombatInput[] | null): boolean[] {
   if (s.status !== 'playing') return [];
   const list = input ? (Array.isArray(input) ? input : [input]) : [];
-  const accepted = list.map((x) => applyInput(s, x));
+  inputTickLead = 1;
+  let accepted: boolean[];
+  try {
+    accepted = list.map((x) => applyInput(s, x));
+  } finally {
+    inputTickLead = 0;
+  }
   if (s.status === 'playing') advanceTick(s);
   if (s.status !== 'playing') endLiberation(s); // 해방 중에 전투가 끝나도 풀리며 리스크가 오른다
   return accepted;
