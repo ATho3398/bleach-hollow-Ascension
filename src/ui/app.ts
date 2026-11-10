@@ -593,7 +593,7 @@ export function startApp(host: HTMLElement): void {
       if (scene) {
         tutorialOverlay(faction, {
           scenes: [scene], name: 'home-intro', pauseLabel: null, finishLabel: '다음', vars,
-          script: { step: `홈 안내 ${i + 1} / ${total}` },
+          script: { step: `홈 안내 ${i + 1} / ${total}`, onPrev: i > 0 ? () => show(i - 1) : undefined }, // [이전] (GDD 229장 1)
           onFinish: (st) => (st === 'completed' ? show(i + 1) : void (homeIntroOpen = false)),
         });
         return;

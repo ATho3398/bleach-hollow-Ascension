@@ -14,7 +14,7 @@ import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf,
-  scriptAck, scriptLand, scriptPrompt, scriptStep, SCRIPT_STAGES,
+  scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -645,7 +645,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let scriptCardStage: string | null = null;
   let scriptAckOpen = false;
   /** 설명 카드가 뜨는 단계 (단계 글자 "튜토리얼 n / 7") */
-  const SCRIPT_CARDS = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
+  const SCRIPT_CARDS: readonly string[] = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
   const scriptHold = (): boolean => !!s.script && scriptPrompt(s) !== null;
   /** 각본 행동 단계(막기·블록)에서 누른 입력 (GDD 129-2 1): 카드를 먼저 닫고 SCRIPT_ACT_DELAY_MS 빈 화면(전투 멈춘 채) 뒤에 엔진에 넣는다 */
   let scriptPending: { input: CombatInput; at: number; stage: string } | null = null;
@@ -704,7 +704,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       name: 'script',
       pauseLabel: ack ? '튜토리얼 중 — 전투 멈춤' : null,
       finishLabel: '다음',
-      script: { step: `튜토리얼 ${SCRIPT_CARDS.indexOf(pr.stage) + 1} / ${SCRIPT_CARDS.length}`, waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined },
+      script: { step: scriptStepOf(pr.stage), waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined, onPrev: ack ? scriptBackFrom(pr.stage, pr.stage) : undefined },
       onFinish: (status) => {
         if (scriptCardStage !== id) return;
         scriptCard = null;
@@ -715,6 +715,42 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         syncScript();
         drawHud();
         drawTray();
+      },
+    });
+  };
+  const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
+  /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
+  const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {
+    for (let i = SCRIPT_CARDS.indexOf(stage) + dir; i >= 0 && i < SCRIPT_CARDS.length; i += dir) if (scriptWaitOf(SCRIPT_CARDS[i]!) === 'ack') return SCRIPT_CARDS[i]!;
+    return null;
+  };
+  /** [이전] 동작: 앞 설명 카드가 있으면 그 글을 다시 띄우는 함수 (없으면 undefined = [이전] 없음). cur = 지금 전투가 기다리는 단계 */
+  const scriptBackFrom = (stage: string, cur: string): (() => void) | undefined => {
+    const back = scriptAckNear(stage, -1);
+    return back ? () => scriptReview(back, cur) : undefined;
+  };
+  /**
+   * 각본 전투 [이전] (GDD 229장 1): 앞 설명 카드의 글만 다시 보여 준다 — 전투 상태(엔진 각본 단계)는 멈춘 그대로.
+   * [다음]은 다음 설명 카드로, 지금 단계까지 오면 지금 카드를 다시 띄운다. 지금 카드가 설명 카드일 때만 [이전]이 있어 전투는 내내 멈춰 있다
+   */
+  const scriptReview = (stage: string, cur: string): void => {
+    const scene = SCRIPT_SCENES[stage];
+    if (!scene || scriptCardStage !== cur) return;
+    scriptCard = tutorialOverlay(faction, {
+      scenes: [scene],
+      name: 'script',
+      pauseLabel: '튜토리얼 중 — 전투 멈춤',
+      finishLabel: '다음',
+      script: { step: scriptStepOf(stage), onPrev: scriptBackFrom(stage, cur) },
+      onFinish: (status) => {
+        if (scriptCardStage !== cur) return;
+        scriptCard = null;
+        if (status !== 'completed') return;
+        const fwd = scriptAckNear(stage, 1);
+        if (fwd && SCRIPT_CARDS.indexOf(fwd) < SCRIPT_CARDS.indexOf(cur)) return scriptReview(fwd, cur);
+        // 지금 카드로 돌아옴: syncScript 가 같은 단계를 새로 띄운다
+        scriptCardStage = null;
+        syncScript();
       },
     });
   };
