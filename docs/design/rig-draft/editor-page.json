@@ -1,5 +1,5 @@
 {
  "note": "지금 올라가 있는 관절 편집기 페이지를 만든 커밋(GDD 115-A 60). 편집기를 다시 올릴 때마다 python3 scripts/rig/tools/mark_editor.py 로 바꾼다. 고정(apply_editor.py)은 편집기 값이 이 커밋 데이터와 다른 항목만 고친 것으로 본다.",
- "commit": "12bf57a9374f2820026d406a08f8c907afca92f0",
+ "commit": "2cda137b619fcaa6105b7f7e1d37f883c5ab1e08",
  "applied": {}
 }
