@@ -36,9 +36,10 @@ export interface TutorialOverlayOptions {
   vars?: Record<string, string>;
   /** 오버레이 이름 (data-tutorial 값, 없으면 'true') */
   name?: string;
-  /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기·이전 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
-   *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장) */
-  script?: { step: string; waitFor?: string; act?: TutorialAct };
+  /** 각본 전투 카드 (GDD 123장 5, C.199): 건너뛰기 없이 단계 글자(step)만. waitFor 가 있으면 [다음] 없이 전투를 만지게 두고(직접 해 보기와 같음),
+   *  기기 ▲▼ 는 그 선택자에 맞는 전투 대상만 고른다 (GDD 122장).
+   *  onPrev (GDD 229장 1): 있으면 [이전] — 이 카드를 치우고 부른 쪽이 앞 장을 띄운다. 행동을 기다리는 카드(waitFor·act)에는 붙지 않는다 */
+  script?: { step: string; waitFor?: string; act?: TutorialAct; onPrev?: () => void };
   /** 도움말에서 직접 연 다시 보기 (GDD 129-1): 이때만 뒤 화면을 회색으로 덮는다. 없으면(저절로 뜨는 안내·각본 카드) 카드·강조 테두리만 */
   replay?: boolean;
 }
@@ -300,6 +301,20 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 직접 해 보기를 아직 못 넘는가: 블록을 하나 쓰고, minBlocks 만큼 모일 때까지 */
   const mustWait = (scene: TutorialScene) => !!scene.practice && (!practiced || blocks < (scene.minBlocks ?? 0));
   let nextBtn: HTMLButtonElement | null = null;
+  /** 지금 카드의 버튼 줄 (GDD 229장 2): 카드 최소 폭을 이 줄이 한 줄로 들어가는 폭으로 */
+  let actionsRow: HTMLElement | null = null;
+  /** [이전]이 갈 앞 장 (GDD 229장 1): 직접 해 보기 장면은 건너뛴다. 없으면 -1 */
+  const prevIndex = (i: number): number => {
+    let j = i - 1;
+    while (j >= 0 && SCENES[j]!.practice) j--;
+    return j;
+  };
+  /** 버튼 글자를 칸에 담는다 — 폭이 정말 모자라면 글자를 숨기고 아이콘만 (GDD 229장 2) */
+  const labeled = (b: HTMLButtonElement, label: string): HTMLButtonElement => {
+    b.append(el('span', 'bha-tut__label', label));
+    b.setAttribute('aria-label', label);
+    return b;
+  };
   /** 실제 조작 카드: 해야 할 것을 했다 */
   let actDone = false;
   let actTimer = 0;
@@ -424,8 +439,22 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 대상 옆 빈 곳에 맞춘 너비의 하한 (이보다 좁으면 글이 너무 접힌다) */
   const MIN_SIDE_W = 200;
 
+  /** 버튼 줄을 한 줄로 담는 카드 폭 (안쪽 여백 포함, 아이콘만 모습이면 그 폭) */
+  function rowNeed(): number {
+    if (!actionsRow) return 0;
+    const cs = getComputedStyle(card);
+    return Math.ceil(actionsRow.scrollWidth + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
+  }
+  /** 버튼 줄이 카드에 다 들어가는가 — 안 들어가면 글자를 숨기고 아이콘만 (GDD 229장 2) */
+  function fitRow(): void {
+    if (!actionsRow) return;
+    actionsRow.classList.remove('is-iconic');
+    if (actionsRow.scrollWidth > actionsRow.clientWidth + 0.5 || rowNeed() > card.clientWidth + 0.5) actionsRow.classList.add('is-iconic');
+  }
+
   function layout(): void {
     if (covered) return; // 숨은 동안은 잴 수 없다 — 다시 보일 때 render 가 놓는다
+    actionsRow?.classList.remove('is-iconic');
     const scene = SCENES[state.index]!;
     const vp = host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight };
     const rect = targetRect(stageOf(scene)?.targets ?? scene.targets, host);
@@ -442,7 +471,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       // 가로: 너비 후보마다 높이를 재고, 대상 옆에 붙는 자리·크기를 함께 고른다 (GDD 169장)
       // + 대상 왼쪽·오른쪽 빈 곳에 꼭 맞는 너비 (GDD 162장 1): 위·아래가 막혔을 때 대상 옆에 좁게 선다
       const sideW = keep ? [keep.left - 16, vp.width - keep.left - keep.width - 16].filter((w) => w >= MIN_SIDE_W && w < NARROW_W) : [];
-      const sizes = [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16), Math.min(SLIM_W, vp.width - 16), ...sideW].map((w) => {
+      // 카드 최소 폭 = 버튼 줄이 한 줄로 들어가는 폭 (GDD 229장 2): 좁은 후보는 이 폭까지 넓힌다
+      const minW = Math.min(vp.width - 16, rowNeed());
+      const widths = [Math.min(WIDE_W, vp.width - 16), Math.min(NARROW_W, vp.width - 16), Math.min(SLIM_W, vp.width - 16), ...sideW].map((w) => Math.max(w, minW));
+      const sizes = widths.filter((w, i) => widths.indexOf(w) === i).map((w) => {
         card.style.width = `${w}px`;
         return { width: w, height: card.offsetHeight };
       });
@@ -468,6 +500,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     card.dataset.side = side;
     card.style.bottom = 'auto';
     card.classList.toggle('is-placed', landscape);
+    fitRow();
     const pad = TUTORIAL_HOLE_PAD;
     hole.classList.toggle('is-none', !rect);
     // 그림 대상 = 노란 네모 대신 그림 모양 윤곽 (구멍은 자리·덮개만 맡고 테두리는 숨긴다)
@@ -500,23 +533,32 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (covered) return; // 덮는 창이 닫히면 applyCover 가 다시 그린다 (GDD 194장 1)
     const scene = SCENES[state.index]!;
     const last = state.index === state.count - 1;
+    const sc = opts.script;
     const skip = button({ label: '건너뛰기', variant: 'ghost', size: 'small', onClick: () => {
       state = tutorialSkip(state);
       finish('skipped');
     } });
-    const prev = button({ label: '이전', icon: 'i-chevron-left', size: 'small', onClick: () => {
-      state = tutorialPrev(state);
+    // [이전] (GDD 229장 1): 첫 장이 아니면 모든 카드에. 행동을 기다리는 카드(직접 해 보기·각본 대기·실제 조작)에는 없고,
+    // 앞 장이 그런 카드면 그 앞의 일반 카드로 건너뛴다. 각본 카드는 부른 쪽(onPrev)이 앞 장을 띄운다(전투 상태는 그대로)
+    const back = prevIndex(state.index);
+    const canPrev = sc ? !!sc.onPrev && !sc.waitFor && !sc.act : !scene.practice && back >= 0;
+    const prev = labeled(button({ icon: 'i-chevron-left', size: 'small', onClick: () => {
+      if (sc) {
+        teardown();
+        sc.onPrev?.();
+        return;
+      }
+      while (state.index > back) state = tutorialPrev(state);
       render();
-    } });
-    prev.disabled = state.index === 0;
+    } }), '이전');
     const mustTry = mustWait(scene);
-    const sc = opts.script;
-    const next = button({ label: last ? opts.finishLabel ?? '전투 시작' : '다음', variant: 'primary', size: 'small', onClick: () => {
+    const next = labeled(button({ variant: 'primary', size: 'small', onClick: () => {
       state = tutorialNext(state);
       if (isTutorialActive(state)) render();
       else finish('completed');
-    } });
+    } }), last ? opts.finishLabel ?? '전투 시작' : '다음');
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
+    next.dataset.devStart = 'tut-next'; // 기기 커서 시작 = [다음] (GDD 229장 — [이전]이 앞에 붙어도 첫 버튼이 아니라 [다음]에서 시작)
     next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
     const acting = !!sc?.act && !actDone;
     if (acting) next.disabled = true; // 실제 조작 카드: 하기 전에는 [다음] 잠김 (GDD 129-2 2)
@@ -528,9 +570,11 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     else if (scene.practice && (stage?.targets ?? scene.targets).length > 0) layer.dataset.devOnly = selectorOf(stage?.targets ?? scene.targets); // 직접 해 보기도 구멍 대상만 (GDD 180장 1)
     else delete layer.dataset.devOnly;
     const actions = el('div', 'bha-tut__actions');
-    // 각본 카드: 강제 진행 — 건너뛰기·이전 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행)
-    if (!sc) actions.append(skip, prev, next);
-    else if (!sc.waitFor) actions.append(next);
+    actionsRow = actions;
+    // 각본 카드: 건너뛰기 없음, 기다리는 카드는 [다음]도 없음 (막기·블록을 눌러야 진행). 버튼 줄은 언제나 한 줄 (GDD 229장 2)
+    if (!sc) actions.append(skip);
+    if (canPrev) actions.append(prev);
+    if (!sc?.waitFor) actions.append(next);
 
     const title = el('h2', 'bha-tut__title');
     title.id = 'tutorial-title';
@@ -544,6 +588,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     top.append(steps, actions);
     const body = linesBody(t(scene.practice && practiced && scene.done ? scene.done : sc?.act && actDone && scene.done ? scene.done : (acting ? stage?.body : undefined) ?? scene.body), 'bha-tut__body');
     card.replaceChildren(top, title, body);
+    // 실측용 표시 (GDD 229장 3): 행동을 기다리는 카드인가 · [이전]이 있는가
+    card.dataset.wait = sc?.waitFor || sc?.act || scene.practice ? '1' : '0';
+    card.dataset.prev = canPrev ? '1' : '0';
     if (scene.sample?.length) card.append(sampleRow(scene.sample));
     card.style.visibility = 'hidden';
     if (holdWhileMoving()) return; // 연출이 끝나면 다시 그린다

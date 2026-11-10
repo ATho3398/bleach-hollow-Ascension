@@ -72,6 +72,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <h1>이펙트 배치 도구</h1>
     <span class="dim" id="built"></span>
   </header>
+  <div class="row" id="modes" role="tablist" aria-label="캐릭터 / 몬스터"></div>
   <div class="row">
     <button class="btn pickbtn" id="entry" type="button" aria-label="공격 계열"></button>
     <div class="row" id="stages" aria-label="블록 수"></div>
@@ -85,7 +86,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
     <span id="time"></span>
     <label class="row"><input id="repeat" type="checkbox" checked> 반복</label>
   </div>
-  <div class="row"><span class="dim">치는 쪽</span><div class="row" id="chars" aria-label="치는 쪽 캐릭터"></div></div>
+  <div class="row"><span class="dim" id="charslabel">치는 모델</span><div class="row" id="chars" aria-label="치는 모델"></div></div>
   <div class="row" id="elements" aria-label="미리볼 속성 색"></div>
   <div class="two">
     <section class="panel">

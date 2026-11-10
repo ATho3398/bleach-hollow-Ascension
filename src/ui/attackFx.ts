@@ -192,7 +192,7 @@ export function hitDelaysOf(o: {
     block: sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot)),
     blockBy,
     enemy: sec(cueHitMs({ tier: 'basic' }, o.enemy, o.slot)),
-    heavy: sec(cueHitMs(heavyCue(false, o.heavyPixel), o.enemy, o.slot)),
+    heavy: sec(cueHitMs(heavyCue(false, o.heavyPixel), o.enemy, o.enemy && 'pose' in o.enemy ? 'male' : 'frames')), // 적 칸 (GDD 227장 보충 4)
     counter: sec(cueHitMs({ tier: 'chain1' }, o.enemy, o.slot)),
   };
 }
@@ -867,7 +867,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 즉발(블록 공격, GDD 117장 3): 애니는 타격 순간부터(휘두른 끝 → 되돌아옴), 맞음 반응은 0ms
     const act = from.anim ? animActionOf(cue, (a) => from.anim!.has(a)) : null;
     // 블록 도트 연출 (이펙트 배치 도구 확정 값): 있으면 이펙트·맞음 반응·연결 동작을 그 계획대로 (모션 줄이기 = 번쩍임만이면 옛 방식)
-    const slot = opts.bodySlot?.() ?? 'male';
+    // 몸동작 칸: 내 공격 = 내 칸(남·여·프레임), 적 공격 = 적 칸(종이인형이면 남, 아니면 프레임 — 강적 강공격 연결 동작, GDD 227장 보충 4)
+    const slot = cue.side === 'player' ? opts.bodySlot?.() ?? 'male' : from.anim && 'pose' in from.anim ? 'male' : 'frames';
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
     const pplan = px ? pixelPlan(px.stage, slot) : null;
     const chainBody = pplan?.body && from.anim ? pplan.body : null;

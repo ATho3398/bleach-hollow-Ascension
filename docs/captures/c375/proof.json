@@ -1,0 +1,24 @@
+{
+  "url": "http://localhost:5381/",
+  "shots": [
+    "elite-beast-custom-cero-blood.png",
+    "elite-beast-kyo-custom-cero-blood.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "elite-beast",
+      "picked": "스톰후프",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    },
+    {
+      "tag": "elite-beast-kyo",
+      "picked": "나이트램",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    }
+  ]
+}

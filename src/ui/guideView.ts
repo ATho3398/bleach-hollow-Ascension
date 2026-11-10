@@ -123,7 +123,7 @@ export function tutorialWoundView(root: HTMLElement, faction: FactionConfig, art
     tutorialOverlay(faction, {
       scenes: [{ id: `wound-${i}`, targets: ['@.bha-wound__hp'], title: c.title, body: c.body, stages: [{ targets: ['@.bha-wound__hp'], avoid: ['@.bha-wound__hero'] }] }], // 막대·캐릭터를 가리지 않게
       name: 'wound', pauseLabel: null, finishLabel: '다음',
-      script: { step: `튜토리얼 ${i + 1} / ${cards.length}` },
+      script: { step: `튜토리얼 ${i + 1} / ${cards.length}`, onPrev: i > 0 ? () => show(i - 1) : undefined }, // [이전] (GDD 229장 1)
       onFinish: (status) => {
         if (status === 'completed') show(i + 1);
         else onDone();

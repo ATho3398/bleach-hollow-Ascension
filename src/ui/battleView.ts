@@ -14,7 +14,7 @@ import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf,
-  scriptAck, scriptLand, scriptPrompt, scriptStep, SCRIPT_STAGES,
+  scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -24,7 +24,7 @@ import { infoTip } from './bha/infoTip';
 import { statusInfo } from './bha/statusInfo';
 import { consumableName } from '../inventory';
 import { battleItemText } from '../shop';
-import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
+import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig, type FamilyConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, chip, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
@@ -59,7 +59,7 @@ import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
-import type { PixelBodySlot } from './pixelAttack';
+import { familyStagesFor, type PixelBodySlot } from './pixelAttack';
 import { eliteHeavyFor, ELITE_HEAVY_ELEMENT, FX_REACH_FIELD } from './attackFxConfig';
 import { rigPackOfLook } from '../data/art/rig/pose';
 import { playCosmeticFx } from './bha/cosmeticFx';
@@ -645,7 +645,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let scriptCardStage: string | null = null;
   let scriptAckOpen = false;
   /** 설명 카드가 뜨는 단계 (단계 글자 "튜토리얼 n / 7") */
-  const SCRIPT_CARDS = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
+  const SCRIPT_CARDS: readonly string[] = SCRIPT_STAGES.filter((x) => !!SCRIPT_SCENES[x]);
   const scriptHold = (): boolean => !!s.script && scriptPrompt(s) !== null;
   /** 각본 행동 단계(막기·블록)에서 누른 입력 (GDD 129-2 1): 카드를 먼저 닫고 SCRIPT_ACT_DELAY_MS 빈 화면(전투 멈춘 채) 뒤에 엔진에 넣는다 */
   let scriptPending: { input: CombatInput; at: number; stage: string } | null = null;
@@ -704,7 +704,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       name: 'script',
       pauseLabel: ack ? '튜토리얼 중 — 전투 멈춤' : null,
       finishLabel: '다음',
-      script: { step: `튜토리얼 ${SCRIPT_CARDS.indexOf(pr.stage) + 1} / ${SCRIPT_CARDS.length}`, waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined },
+      script: { step: scriptStepOf(pr.stage), waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined, onPrev: ack ? scriptBackFrom(pr.stage, pr.stage) : undefined },
       onFinish: (status) => {
         if (scriptCardStage !== id) return;
         scriptCard = null;
@@ -715,6 +715,42 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         syncScript();
         drawHud();
         drawTray();
+      },
+    });
+  };
+  const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
+  /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
+  const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {
+    for (let i = SCRIPT_CARDS.indexOf(stage) + dir; i >= 0 && i < SCRIPT_CARDS.length; i += dir) if (scriptWaitOf(SCRIPT_CARDS[i]!) === 'ack') return SCRIPT_CARDS[i]!;
+    return null;
+  };
+  /** [이전] 동작: 앞 설명 카드가 있으면 그 글을 다시 띄우는 함수 (없으면 undefined = [이전] 없음). cur = 지금 전투가 기다리는 단계 */
+  const scriptBackFrom = (stage: string, cur: string): (() => void) | undefined => {
+    const back = scriptAckNear(stage, -1);
+    return back ? () => scriptReview(back, cur) : undefined;
+  };
+  /**
+   * 각본 전투 [이전] (GDD 229장 1): 앞 설명 카드의 글만 다시 보여 준다 — 전투 상태(엔진 각본 단계)는 멈춘 그대로.
+   * [다음]은 다음 설명 카드로, 지금 단계까지 오면 지금 카드를 다시 띄운다. 지금 카드가 설명 카드일 때만 [이전]이 있어 전투는 내내 멈춰 있다
+   */
+  const scriptReview = (stage: string, cur: string): void => {
+    const scene = SCRIPT_SCENES[stage];
+    if (!scene || scriptCardStage !== cur) return;
+    scriptCard = tutorialOverlay(faction, {
+      scenes: [scene],
+      name: 'script',
+      pauseLabel: '튜토리얼 중 — 전투 멈춤',
+      finishLabel: '다음',
+      script: { step: scriptStepOf(stage), onPrev: scriptBackFrom(stage, cur) },
+      onFinish: (status) => {
+        if (scriptCardStage !== cur) return;
+        scriptCard = null;
+        if (status !== 'completed') return;
+        const fwd = scriptAckNear(stage, 1);
+        if (fwd && SCRIPT_CARDS.indexOf(fwd) < SCRIPT_CARDS.indexOf(cur)) return scriptReview(fwd, cur);
+        // 지금 카드로 돌아옴: syncScript 가 같은 단계를 새로 띄운다
+        scriptCardStage = null;
+        syncScript();
       },
     });
   };
@@ -892,8 +928,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const cues: FxCue[] = [];
   // 블록 도트 이펙트 시트 미리 받기 (이펙트 배치 도구 확정 값, 종족 설정 families[].pixelFx): 속성 색이면 속성 8색, 원래 색이면 한 장. 못 받은 시트는 그 이펙트만 빠진다
+  // 몸마다 따로(GDD 230장): 내 몸(뼈대/몸 id)에 따로 맞춘 블록이 있으면 그것 — 사람형은 공통(stages)
+  const heroBodyKey = (() => {
+    const look = heroArt.rig?.look;
+    const pack = look ? rigPackOfLook(look) : undefined;
+    return pack && look ? `${pack.id}/${pack.rig.looks[look]!.body}` : null;
+  })();
+  const stagesOf = (f: FamilyConfig) => familyStagesFor(f.pixelFx, heroBodyKey);
   for (const f of faction.families)
-    for (const st of f.pixelFx?.stages ?? [])
+    for (const st of stagesOf(f) ?? [])
       for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
   // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
   // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
@@ -901,7 +944,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const f = familyOf(faction, id);
     if (!f) return null;
     const t = f.tiers[stage - 1];
-    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
+    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: stagesOf(f)?.[stage - 1] ?? null };
   };
   // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
   const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');

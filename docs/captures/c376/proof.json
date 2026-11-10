@@ -1,0 +1,24 @@
+{
+  "url": "http://localhost:5381/",
+  "shots": [
+    "elite-beast-custom-cero-blood.png",
+    "elite-serpent-custom-cero-blood.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "elite-beast",
+      "picked": "스톰후프",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    },
+    {
+      "tag": "elite-serpent",
+      "picked": "롯팽",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    }
+  ]
+}

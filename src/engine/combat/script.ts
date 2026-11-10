@@ -24,6 +24,11 @@ export function newCombatScript(): CombatScript {
   return { stage: 'auto-intro', hits: 0, ticks: 0, spawned: 0, allow: [], leaveHpFraction: TS.leaveHpFraction, heavyHits: 0, lethal: false };
 }
 
+/** 단계가 무엇을 기다리는가 (흐르는 단계면 null). 화면이 카드 [이전]의 앞 장을 고를 때 쓴다 (GDD 229장 1 — 기다리는 카드는 건너뜀) */
+export function scriptWaitOf(stage: string): ScriptWait | null {
+  return WAIT[stage as ScriptStage] ?? null;
+}
+
 const stageOf = (s: CombatState): ScriptStage | null => (s.script ? (s.script.stage as ScriptStage) : null);
 
 /** 지금 멈춰 기다리는가: 단계 id 와 기다리는 것. 각본이 없거나 흐르는 단계면 null (그때는 scriptStep 이 틱을 돌린다) */
