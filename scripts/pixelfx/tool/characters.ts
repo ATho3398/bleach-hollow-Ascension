@@ -28,12 +28,17 @@ export const CHARACTERS: readonly ToolChar[] = [
   // 호로 뱀형·표범형(짐승) 외형 (GDD 230장 — 몸마다 이펙트 자리가 달라 따로 맞춘다)
   { id: 'hollow-serpent', label: '호로 뱀', rig: 'serpent-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'wyrm' },
   { id: 'hollow-beast', label: '호로 짐승', rig: 'beast-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'panther' },
+  // 외팔이(갑충형 skin carapace)·거미(사슴형 skin stag) — C.380 게임 넣기, 사용자 "fx툴에도 연동 ㄱㄱ"
+  { id: 'hollow-onearm', label: '호로 외팔이', rig: 'onearm-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'carapace' },
+  { id: 'hollow-spider', label: '호로 거미', rig: 'spider-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'stag' },
   // 강적 몸 (GDD 227장, 사용자 2026-11-10 "강적 강공격 … 세로" + "위치 파악해서 반영"): 강적 강공격 세로를 몸마다 맞춘다 — 게임 적 그림 그대로(enemyArt)
   { id: 'elite-brute', kind: 'monster', label: '덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
   { id: 'elite-gillian', kind: 'monster', label: '외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
   { id: 'elite-serpent', kind: 'monster', label: '뱀', rig: 'serpent-green', enemy: 'poison-heavy-chain' },
   // 짐승형 (C.374 게임 넣기, 사용자 "짐승형 fx에도 반영시켜"): 강적 스톰후프(thunder-heavy-chain) = beast-yellow
   { id: 'elite-beast', kind: 'monster', label: '짐승', rig: 'beast-yellow', enemy: 'thunder-heavy-chain' },
+  { id: 'elite-onearm', kind: 'monster', label: '외팔이', rig: 'onearm-brown', enemy: 'earth-heavy-seal' },
+  { id: 'elite-spider', kind: 'monster', label: '거미', rig: 'spider-blue', enemy: 'water-heavy-seal' },
 ];
 /** 게임 전투의 내 그림 자리 (1배 844×390 실측, scripts/c268-proof.cjs C268_NOHERO): 기본 상자 150 × (fieldScale ?? scale), 변형 기준점 */
 export const HERO_BOX = { x: 512, y: 78, size: 150, originX: 587, originY: 216 };

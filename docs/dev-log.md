@@ -3182,3 +3182,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 편집기: 외형 고르기 = 종족 탭 → 성별 → 단계/진화체 → 색(115-A 110).
 - 이펙트(byBody humanoid/ho·spider/ref, 이펙트 배치 도구 항목, 계열 도트 연출 몸별 값)는 픽셀FX 담당에 부탁 — 그 전까지 fallback.
 - 검증: `tests/c380.test.ts` 8개 + `tests/rigSpider.test.ts` 4개 + 옛 시험 갱신, `scripts/c380-proof.cjs` 실제 전투 1배(갑충형 vs 잉크베일, 사슴형 vs 샌드트랩, 새형 vs 듄워든) 캡처 `docs/captures/c380/` 6장.
+
+## C.381 — 외팔이·거미 이펙트 연동: 강적 강공격 세로 자리 · 도구 몸 추가 (GDD 227장 보충 5·230장 보충, v5.543, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문(종이인형 세션 전달, 11-11 03:4x): "fx툴에도 연동 ㄱㄱ".
+- C.380(종이인형 — 외팔이 몸 ho, 거미 뼈대 spider, 역관절 삭제) 위에서: `src/data/enemies/eliteHeavyFx.json` byBody `humanoid/ho` −297,10 · `spider/ref` −278,−32(도구 재생 중 특수1 자세의 손을 재서; 전엔 덩치 자리로 나감).
+- 이펙트 배치 도구: SEP_BODIES·BODY_NAMES += 외팔이·거미, 캐릭터 탭 '호로 외팔이'(skin carapace)·'호로 거미'(skin stag), 몬스터 탭 '외팔이'(샌드트랩)·'거미'(잉크베일), build.mjs BODY 맵.
+- 테스트 `tests/c372-elite-heavy-body.test.ts`(몸 목록 6, 샌드트랩 = 외팔이·잉크베일 = 거미). 검증 `scripts/c381-proof.cjs` 실제 전투 1배 — 둘 다 손에서 세로. 캡처 `docs/captures/c381/` 2장.
+- 테스트 3121 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
