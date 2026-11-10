@@ -36,3 +36,24 @@ describe('C.372 강적 강공격 세로 몸마다', () => {
     expect(eliteHeavyFor(bodyKeyOf('normal-heavy-seal')).layers[0]!.dy).not.toBe(eliteHeavyFor('humanoid/hb').layers[0]!.dy);
   });
 });
+
+// C.376 (GDD 227장 보충 4): 강적 강공격 연결 동작(뱀 = 특수1, 짐승 = 해방 포효) — 적 공격은 적 칸(종이인형 = 남)에서 고른다(내 성별 칸이 아니라)
+import { cueHitMs, heavyCue, hitDelaysOf } from '../src/ui/attackFx';
+import { createRigPlayer } from '../src/ui/bha/rigAnim';
+import { rigPack, resolveMotions } from '../src/data/art/rig/pose';
+
+describe('C.376 강적 강공격 몸동작은 적 칸', () => {
+  it('짐승 = 해방(release1), 뱀 = 특수1(skill) — 남 칸', () => {
+    expect(eliteHeavyFor('beast/ref').bodies.male?.chain.map((c) => c.id)).toEqual(['release1']);
+    expect(eliteHeavyFor('serpent/ref').bodies.male?.chain.map((c) => c.id)).toEqual(['skill']);
+  });
+  it('엔진 강공격 지연: 내가 여성(female 칸)이어도 적 연결 동작(남 칸) 기준', () => {
+    const p = rigPack('beast');
+    const foe = createRigPlayer(p.rig, resolveMotions(p.rig, p.motions, p.sets, 'ref'), () => {}, () => 0);
+    const st = eliteHeavyFor('beast/ref');
+    const fb = { basic: 0.3, block: 0.3, enemy: 0.3, heavy: 0.3, counter: 0.3 };
+    const t = hitDelaysOf({ player: null, enemy: foe, slot: 'female', familyIds: [], fallback: fb, heavyPixel: st });
+    expect(t.heavy).toBeCloseTo(Math.round(cueHitMs(heavyCue(false, st), foe, 'male')) / 1000, 3);
+    expect(cueHitMs(heavyCue(false, st), foe, 'male')).not.toBeCloseTo(cueHitMs(heavyCue(false, st), foe, 'female'), 0);
+  });
+});

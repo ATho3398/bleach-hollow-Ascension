@@ -3128,3 +3128,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 이펙트 배치 도구: 치는 쪽 '강적 짐승'(thunder-heavy-chain = beast-yellow), 항목 '강적 강공격 · 짐승'(build.mjs BODY). 뼈대 beast 부위 그림도 실음(collect = rigPackOfLook).
 - 검증 `scripts/c375-proof.cjs` 실제 전투 1배 사신 vs 스톰후프 — 세로가 짐승 입에서. 캡처 `docs/captures/c375/` 1장.
 - 테스트 3095 통과(273 파일, c372 테스트에 짐승 몸 추가), typecheck·balance:check 회귀 가드 통과.
+
+## C.376 — 강적 강공격 몸동작(짐승 포효·뱀 특수1) · 짐승 자리 · 적 공격 몸동작 칸 수정 (GDD 227장 보충 4, v5.536, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-11 01:53).
+- `apply.mjs` → `src/data/enemies/eliteHeavyFx.json`: beast/ref 자리 −309,2 + bodies.male release1 ×1.3, serpent/ref bodies.male skill ×1.
+- `src/ui/attackFx.ts`: 적 공격 연출의 몸동작 칸 = 적(종이인형이면 male, 아니면 frames) — 전에는 내 칸(opts.bodySlot)을 써서 내가 여성이면 적 연결 동작이 빠졌음. `hitDelaysOf` heavy 도 같은 적 칸.
+- 테스트 `tests/c372-elite-heavy-body.test.ts` +2(짐승·뱀 연결 동작, 내가 female 이어도 적 칸 기준). 검증 `scripts/c376-proof.cjs` — 스톰후프·롯팽 실제 전투. 캡처 `docs/captures/c376/` 2장.
+- 테스트 3097 통과(273 파일), typecheck·balance:check 회귀 가드 통과.
