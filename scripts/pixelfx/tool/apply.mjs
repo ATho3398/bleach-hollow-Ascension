@@ -63,13 +63,23 @@ for (const fid of ['shinigami', 'hollow']) {
   const fac = JSON.parse(text);
   for (const fam of fac.families) {
     const raw = families[`${fid}/${fam.id}`];
+    const empty = () => Array.from({ length: 3 }, () => ({ hits: 1, gaps: [], speed: 1, layers: [], bodies: {} }));
     const stages = Array.isArray(raw) && raw.length === 3 ? raw.map(stageOf) : null;
-    if (!stages || !used(stages)) {
+    // 몸마다 따로 (GDD 230장): 도구 키 '<종족>/<계열>@<뼈대>/<몸>' → pixelFx.byBody. 사람형 공통(stages)과 같으면 넣지 않는다
+    const byBody = {};
+    for (const [key, rb] of Object.entries(families)) {
+      const at = key.indexOf('@');
+      if (at < 0 || key.slice(0, at) !== `${fid}/${fam.id}` || !Array.isArray(rb) || rb.length !== 3) continue;
+      const sb = rb.map(stageOf);
+      if (JSON.stringify(sb) !== JSON.stringify(stages ?? empty())) byBody[key.slice(at + 1)] = { stages: sb };
+    }
+    const anyBody = Object.values(byBody).some((b) => used(b.stages));
+    if ((!stages || !used(stages)) && !anyBody) {
       delete fam.pixelFx;
       continue;
     }
-    fam.pixelFx = { stages };
-    for (const s of stages)
+    fam.pixelFx = { stages: stages ?? empty(), ...(Object.keys(byBody).length ? { byBody } : {}) };
+    for (const s of [...fam.pixelFx.stages, ...Object.values(byBody).flatMap((b) => b.stages)])
       for (const L of s.layers) {
         if (L.color === 'element') for (const el of Object.keys(PALETTES)) sheets.set(sheetName(L.fx, el), { id: L.fx, palette: PALETTES[el], edge: EDGES[el]?.[L.fx] });
         else sheets.set(sheetName(L.fx, null), { id: L.fx });

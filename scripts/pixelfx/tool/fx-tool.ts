@@ -91,7 +91,7 @@ function ensureBodies(s: StageFx): void {
   Object.defineProperty(s, 'body', { configurable: true, enumerable: false, get: () => s.bodies![slotNow()].chain[0]?.id ?? '', set: () => {} });
 }
 type FamilyFx = StageFx[];
-interface Entry { key: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind; /** 블록 수 (계열 3, 적 강공격 1 — GDD 227장) */ stages?: number; /** 처음 고를 치는 쪽 캐릭터 */ char?: string; /** 처음 미리볼 속성 색 */ el?: string }
+interface Entry { key: string; /** 탭: 캐릭터(계열 블록) / 몬스터(강공1…) */ kind?: 'char' | 'monster'; /** 몬스터 공격 이름(강공1 …) · 그 공격의 몸 */ attack?: string; body?: string; label: string; faction: string; bg: string; dir: 1 | -1; motion?: FamilyMotionKind; /** 블록 수 (계열 3, 적 강공격 1 — GDD 227장) */ stages?: number; /** 처음 고를 치는 쪽 캐릭터 */ char?: string; /** 처음 미리볼 속성 색 */ el?: string }
 interface ToolData {
   stage: { w: number; h: number };
   view: { x: number; y: number; w: number; h: number };
@@ -138,6 +138,25 @@ let stageIx = 0;
 let layerIx = 0;
 let element = D.elements[0]!.id;
 let playing = true;
+/** 최상단 탭 (사용자 2026-11-11 "이펙트 배치도구를 캐릭터, 몬스터로 최상단 탭에서 나누고, 그 다음 호로 탄이든 뭐 치는 캐릭터 모델이든 선택하는거로 해") */
+let mode: 'char' | 'monster' = 'char';
+/** 몸마다 따로 맞추는 몸 (GDD 230장, 사용자 "인간형이야 같은곳에서 때리지만 얘네는 모션마다 이펙트 출발 위치가 다른데"): 덩치·길리안·뱀·짐승. 사람형은 공통 */
+const SEP_BODIES = ['humanoid/hb', 'humanoid/hd', 'serpent/ref', 'beast/ref'];
+const BODY_NAMES: Record<string, string> = { 'humanoid/hb': '덩치', 'humanoid/hd': '길리안', 'serpent/ref': '뱀', 'beast/ref': '짐승' };
+function bodyKeyOfChar(c: ToolChar | undefined): string | null {
+  if (!c?.rig) return null;
+  const p = rigPackOfLook(c.rig);
+  return p ? `${p.id}/${p.rig.looks[c.rig]!.body}` : null;
+}
+/** 지금 고치는 데이터 키: 캐릭터 탭이면 계열(사람형 공통) 또는 '계열@몸'(따로 — 처음이면 사람형 값을 베껴 시작), 몬스터 탭이면 그 공격 */
+function curKey(): string {
+  if (entry.kind === 'monster') return entry.key;
+  const bk = bodyKeyOfChar(CHARACTERS.find((x) => x.id === charId));
+  if (!bk || !SEP_BODIES.includes(bk)) return entry.key;
+  const k = `${entry.key}@${bk}`;
+  if (!data[k]) data[k] = clone(data[entry.key]!);
+  return k;
+}
 let repeat = true;
 let t = 0;
 
@@ -149,7 +168,7 @@ const h = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): 
   return n;
 };
 const st = (): StageFx => {
-  const s = data[entry.key]![stageIx]!;
+  const s = data[curKey()]![stageIx]!;
   ensureBodies(s);
   return s;
 };
@@ -248,7 +267,7 @@ for (const [id, p] of [['mark-t', D.target], ['mark-a', D.attacker]] as const) {
 const dot = $('dot');
 // ── 치는 쪽 캐릭터 (게임 재생기 그대로: 종이인형 bindRigAnim / 프레임 애니) ──
 const RIG_ART = (look: string): ArtUrls => ({ src: `./art/rig/humanoid/still/${look}.png`, frames: null, scale: 1.78, fieldScale: 1.33, offsetY: 0, rig: { look, partBase: './art/rig/humanoid/' } });
-const artOfChar = (c: ToolChar): ArtUrls => (c.enemy ? enemyArt(c.enemy, './')! : c.faction ? charArt(c.faction, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male') : RIG_ART(c.rig!));
+const artOfChar = (c: ToolChar): ArtUrls => (c.enemy ? enemyArt(c.enemy, './')! : c.faction ? charArt(c.faction, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, c.skin ?? null, undefined, 'male') : RIG_ART(c.rig!));
 const heroHost = $('hero');
 let hero: { c: ToolChar; img: HTMLImageElement; player: AnimPlayer | null } | null = null;
 let charId = 'shinigami-m';
@@ -716,7 +735,10 @@ function syncBodyMisc(s: StageFx): void {
   add.disabled = s.chain.length >= MAX_CHAIN || !opts.length;
   add.textContent = `+ 연결 동작 (${s.chain.length}/${MAX_CHAIN})`;
   const custom = !!bodyOf(s);
-  $('bodyslot').textContent = `지금 고치는 칸: ${slotName(slotNow())} (치는 쪽 캐릭터를 바꾸면 그 성별 칸)`;
+  const ck = curKey();
+  $('bodyslot').textContent = entry.kind === 'monster'
+    ? `몬스터 ${entry.attack ?? ''} · ${BODY_NAMES[entry.body ?? ''] ?? entry.body ?? ''} 몸 (이 몸 전용)`
+    : `지금 고치는 칸: ${slotName(slotNow())} · 이펙트 자리: ${ck.includes('@') ? `${BODY_NAMES[ck.slice(ck.indexOf('@') + 1)]} 따로` : '사람형 공통'} (치는 쪽 모델을 바꾸면 그 몸·성별 칸)`;
   ($('bodyother') as HTMLButtonElement).disabled = slotNow() === 'frames';
   bodyHit.checked = s.bodyFromHit;
   bodyHit.disabled = !custom;
@@ -731,7 +753,7 @@ const slotName = (k: BodySlot) => (k === 'male' ? '남' : k === 'female' ? '여'
 $('bodystages').onclick = () => {
   const slot = slotNow();
   const src = clone(st().bodies![slot]);
-  data[entry.key]!.forEach((sx, j) => {
+  data[curKey()]!.forEach((sx, j) => {
     if (j === stageIx) return;
     ensureBodies(sx);
     sx.bodies![slot] = clone(src);
@@ -916,23 +938,62 @@ function openPicker(title: string, groups: PickGroup[], current: string, onPick:
 
 // ── 고르기 ──
 const famBtn = $<HTMLButtonElement>('entry');
-famBtn.onclick = () =>
-  openPicker('공격 계열', [{ items: D.entries.map((e) => ({ value: e.key, label: e.label })) }], entry.key, (v) => {
-    entry = D.entries.find((e) => e.key === v) ?? entry;
-    stageIx = Math.min(stageIx, (entry.stages ?? 3) - 1);
-    if (entry.char) charId = entry.char;
-    if (entry.el) element = entry.el;
-    layerIx = 0;
-    editHit = -1;
-    t = 0;
+/** 탭마다 마지막으로 고른 공격·모델 */
+const lastOf: Record<'char' | 'monster', { entry: string; char: string }> = {
+  char: { entry: D.entries.find((e) => e.kind !== 'monster')!.key, char: 'shinigami-m' },
+  monster: { entry: D.entries.find((e) => e.kind === 'monster')?.key ?? '', char: 'elite-brute' },
+};
+function pickEntry(e: Entry): void {
+  entry = e;
+  stageIx = Math.min(stageIx, (entry.stages ?? 3) - 1);
+  if (entry.el) element = entry.el;
+  lastOf[mode].entry = entry.key;
+  layerIx = 0;
+  editHit = -1;
+  t = 0;
+}
+/** 몬스터 모델 → 그 몸의 공격 목록 (지금 강공1 = 강공격 하나) */
+const monsterAttacks = (c: ToolChar | undefined) => D.entries.filter((e) => e.kind === 'monster' && e.body === bodyKeyOfChar(c));
+famBtn.onclick = () => {
+  const items = mode === 'monster'
+    ? monsterAttacks(CHARACTERS.find((x) => x.id === charId)).map((e) => ({ value: e.key, label: e.attack ?? e.label }))
+    : D.entries.filter((e) => e.kind !== 'monster').map((e) => ({ value: e.key, label: e.label }));
+  openPicker(mode === 'monster' ? '몬스터 공격' : '공격 계열', [{ items }], entry.key, (v) => {
+    pickEntry(D.entries.find((e) => e.key === v) ?? entry);
     refresh();
   });
+};
+// 최상단 탭: 캐릭터 / 몬스터
+for (const [m, label] of [['char', '캐릭터'], ['monster', '몬스터']] as const) {
+  const b = h('button', 'chip', label);
+  b.type = 'button';
+  b.dataset.mode = m;
+  b.setAttribute('role', 'tab');
+  b.onclick = () => {
+    if (mode === m) return;
+    mode = m;
+    charId = lastOf[m].char;
+    const e = D.entries.find((x) => x.key === lastOf[m].entry) ?? (m === 'monster' ? monsterAttacks(CHARACTERS.find((x) => x.id === charId))[0] : undefined) ?? entry;
+    pickEntry(e);
+    refresh();
+    swing();
+  };
+  $('modes').append(b);
+}
 for (const c of CHARACTERS) {
   const b = h('button', 'chip', c.label);
   b.type = 'button';
   b.dataset.char = c.id;
+  b.dataset.kind = c.kind ?? 'char';
   b.onclick = () => {
     charId = c.id;
+    lastOf[mode].char = c.id;
+    // 몬스터 모델을 바꾸면 그 몸의 같은 공격(없으면 첫 공격)
+    if (mode === 'monster') {
+      const list = monsterAttacks(c);
+      const same = list.find((e) => e.attack === entry.attack) ?? list[0];
+      if (same) pickEntry(same);
+    }
     t = span.from;
     refresh();
     swing();
@@ -1045,8 +1106,9 @@ $('dellayer').onclick = () => {
 };
 $('copystage').onclick = () => {
   const src = clone(st());
-  const fam = data[entry.key]!;
-  data[entry.key] = fam.map((s, i) => {
+  const ck = curKey();
+  const fam = data[ck]!;
+  data[ck] = fam.map((s, i) => {
     if (i === stageIx) return src;
     const out = { ...s, layers: clone(src.layers) };
     ensureBodies(out);
@@ -1064,7 +1126,7 @@ $<HTMLInputElement>('scrub').oninput = (ev) => {
   draw();
 };
 $('reset').onclick = () => {
-  data[entry.key] = clone(D.defaults[entry.key]!);
+  data[curKey()] = clone(D.defaults[curKey()] ?? D.defaults[entry.key]!);
   layerIx = 0;
   changed();
   status(`${entry.label} 을(를) 처음 값으로 되돌렸다`);
@@ -1073,7 +1135,12 @@ $('reset').onclick = () => {
 function refresh(): void {
   if (bgImg.getAttribute('src') !== entry.bg) bgImg.src = entry.bg;
   mountHero();
-  for (const b of $('chars').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.char === charId));
+  for (const b of $('chars').querySelectorAll<HTMLElement>('.chip')) {
+    b.setAttribute('aria-pressed', String(b.dataset.char === charId));
+    b.style.display = b.dataset.kind === mode ? '' : 'none'; // 탭마다 그 탭의 모델만
+  }
+  for (const b of $('modes').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-selected', String(b.dataset.mode === mode)), b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  $('charslabel').textContent = mode === 'monster' ? '몬스터 모델' : '치는 모델';
   for (const b of $('stages').querySelectorAll<HTMLElement>('.chip')) {
     b.setAttribute('aria-pressed', String(Number(b.dataset.stage) === stageIx));
     b.style.display = Number(b.dataset.stage) >= (entry.stages ?? 3) ? 'none' : ''; // 적 강공격은 한 블록 (.chip 의 display 가 hidden 을 덮어서 직접)
@@ -1170,7 +1237,7 @@ $('fix').onclick = async () => {
   }
 };
 $('copy').onclick = async () => {
-  const text = JSON.stringify({ [entry.key]: data[entry.key] });
+  const text = JSON.stringify({ [curKey()]: data[curKey()] });
   try {
     await navigator.clipboard.writeText(text);
     status('이 계열 값을 복사했다');
@@ -1182,9 +1249,7 @@ function load(saved: unknown): boolean {
   try {
     const b = (typeof saved === 'string' ? JSON.parse(saved) : saved) as { stamp?: string; families?: Record<string, FamilyFx> };
     if (!b || !b.families || (b.stamp !== D.stamp && b.stamp !== 'v2')) return false;
-    for (const e of D.entries) {
-      const fam = b.families[e.key];
-      if (!Array.isArray(fam) || fam.length !== (e.stages ?? 3)) continue;
+    const norm = (fam: FamilyFx): void => {
       // v2 → v3: gapMs 하나 → 타격마다 간격, when(타격마다/첫/마지막) → 나오는 타격 목록, 시전 속도 1
       for (const s of fam as (StageFx & { gapMs?: number })[]) {
         if (!Array.isArray(s.gaps)) s.gaps = Array.from({ length: Math.max(0, s.hits - 1) }, () => s.gapMs ?? 100);
@@ -1199,7 +1264,19 @@ function load(saved: unknown): boolean {
         }
         fitStage(s);
       }
+    };
+    for (const e of D.entries) {
+      const fam = b.families[e.key];
+      if (!Array.isArray(fam) || fam.length !== (e.stages ?? 3)) continue;
+      norm(fam);
       data[e.key] = fam;
+    }
+    // 몸마다 따로 (GDD 230장): '<계열>@<뼈대>/<몸>'
+    for (const [k, fam] of Object.entries(b.families)) {
+      const at = k.indexOf('@');
+      if (at < 0 || !D.entries.some((e) => e.kind !== 'monster' && e.key === k.slice(0, at)) || !SEP_BODIES.includes(k.slice(at + 1)) || !Array.isArray(fam) || fam.length !== 3) continue;
+      norm(fam);
+      data[k] = fam;
     }
     return true;
   } catch {
