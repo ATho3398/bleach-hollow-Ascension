@@ -133,7 +133,7 @@ async function run(browser, mode, fi, out, errors) {
         continue;
       }
       // 카드 없음: 화면 진행 버튼
-      const go = page.locator('.bha-lcd button:not([disabled])').filter({ hasText: /^(계속|흡수|출발|확인|돌아가기|귀환|방으로|둥지로|다음)$/ }).filter({ visible: true });
+      const go = page.locator('.bha-lcd button:not([disabled])').filter({ hasText: /^(계속|흡수|출발|확인|돌아가기|귀환|방으로|둥지로|대원실로|다음)$/ }).filter({ visible: true });
       if (await go.count()) { if (process.env.C379_DEBUG) console.log(phase, 'go', await go.last().textContent()); await tap(go.last()).catch(() => {}); await page.waitForTimeout(500); continue; }
       const absorbPick = page.locator('.bha-lcd [data-absorb-go]').filter({ visible: true });
       if (await absorbPick.count()) { if (process.env.C379_DEBUG) console.log(phase, 'pick'); await tap(absorbPick.first()).catch(() => {}); await page.waitForTimeout(400); continue; }
