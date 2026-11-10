@@ -1,6 +1,5 @@
 // 도전의 탑 화면 (GDD 36장 3번, C.85): 원정 출발 화면의 [탑] 탭. 왼쪽 = 지금 층·최고 층·다음 층(적 이름·종류·★·보상 미리 보기·[도전]),
 // 오른쪽 = 층 목록(지나온 층은 보이기만, 다시 하기 없음). 결과 화면도 여기. 문구는 종족 설정 tower, 화면은 종족 id 로 분기하지 않는다.
-import { departTabs, type DepartTab } from './storyView';
 import { bossName } from '../data/bosses';
 import { pickFaction, type StatId } from '../data/schema';
 import { TITLES, titleName } from '../data/titles';
@@ -23,8 +22,6 @@ import { evChipRow, evGains } from './bha/evChips';
 export interface TowerViewHandlers {
   onChallenge: (f: TowerFloor) => void;
   onHelp: () => void;
-  /** 모험 준비 머리 탭에서 왔으면 제목 대신 같은 탭 [자유 모험][스토리][탑] (GDD 222장 9) */
-  onTab?: (id: DepartTab) => void;
 }
 
 /** 층의 적 이름: 꼭대기 = 종족 설정 finalBossName, 보스 = 보스 이름, 아니면 적 이름 */
@@ -54,7 +51,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
 
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(h.onTab ? departTabs('tower', h.onTab, { name: L.name, locked: null }) : el('h2', 'bha-plan__title', L.name), el('p', 'bha-depart-head__sub', L.desc), selectLast(help)); // 월드맵 장소 (GDD 139장 1): 제목, 모험 준비 탭에서 왔으면 탭 (222장 9)
+  head.append(el('h2', 'bha-plan__title', L.name), el('p', 'bha-depart-head__sub', L.desc), selectLast(help)); // 월드맵 장소 (GDD 139장 1): 출발 화면 탭 대신 제목
 
   // 왼쪽: 지금 층·최고 층 + 다음 층 카드
   const left: HTMLElement[] = [];

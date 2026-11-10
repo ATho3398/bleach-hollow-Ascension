@@ -1,0 +1,43 @@
+{
+ "facts": {
+  "pc": {
+   "depart": {
+    "seg": false,
+    "btn": "자유 모험",
+    "options": [
+     "자유 모험",
+     "스토리"
+    ],
+    "towerTab": false
+   },
+   "tower": {
+    "screen": "bha-app bha-lcdpage bha-tower",
+    "title": "도전의 탑",
+    "tabs": false,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ]
+   }
+  },
+  "ph": {
+   "depart": {
+    "seg": false,
+    "btn": "자유 모험",
+    "options": [
+     "자유 모험",
+     "스토리"
+    ],
+    "towerTab": false
+   },
+   "tower": {
+    "screen": "bha-app bha-lcdpage bha-tower",
+    "title": "도전의 탑",
+    "tabs": false,
+    "toast": [
+     "새 트랙 사신 트랙이 열렸다"
+    ]
+   }
+  }
+ },
+ "errors": []
+}

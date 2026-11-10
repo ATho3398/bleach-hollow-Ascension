@@ -19,7 +19,7 @@ import { TITLES, titleName } from '../data/titles';
 import type { GrowthInput } from './bha/growthLogic';
 import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, ticketDropOf, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
-import { chapterLabel, storyView, type DepartTab, type DepartTower } from './storyView';
+import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
@@ -1580,9 +1580,8 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // 머리 탭 (GDD 25-7 → 222장 9): [스토리]·[탑] — 같은 자리에서 바꿔 끼운다. 탑은 월드맵 장소이기도 하다 (139장 1)
-          onTab: (id) => departTab(faction, id),
-          tower: departTower(faction),
+          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1)
+          onTab: () => storyScreen(faction),
         });
         root.scrollTop = 0;
         // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
@@ -1602,7 +1601,6 @@ export function startApp(host: HTMLElement): void {
         setBgm('expedition');
         storyView(root, faction, save!, {
           onTab: (id) => departTab(faction, id),
-          tower: departTower(faction),
           // 스토리도 자유 모험 [출발]과 같은 출발 체력 확인 창 (GDD 193장 2)
           onPick: (chapterId, episodeId) => askLowHp(save!, () => startStory(faction, chapterId, episodeId)),
           onHelp: () => openHelp('expedition', false),
@@ -1615,32 +1613,19 @@ export function startApp(host: HTMLElement): void {
   /** 출발 화면 머리 탭 전환 (자유 원정 = 배치 단계 / 스토리) */
   function departTab(faction: FactionConfig, id: DepartTab): void {
     if (id === 'free') departScreen(faction, true);
-    else if (id === 'story') storyScreen(faction);
-    else {
-      // [탑] 탭 (GDD 222장 9): 잠겼으면 월드맵 탑과 같은 알림, 열렸으면 이 자리를 탑 화면으로 바꿔 끼운다(뒤로 = 모험 준비를 연 곳)
-      const t = departTower(faction);
-      if (t.locked) return void showToast({ eyebrow: t.name, title: t.locked, meta: '' }, 0, 1800);
-      if (save && careBlocked(save)) return;
-      towerScreen(faction, true);
-    }
-  }
-  /** 머리 탭 탑 칸 (GDD 222장 9): 이름 + 잠긴 이유(월드맵 탑과 같은 문구) */
-  function departTower(faction: FactionConfig): DepartTower {
-    const L = towerLabels(faction);
-    return { name: L.name, locked: save && towerOpen(save.runLog, faction.id, save.tower.best) ? null : L.locked };
+    else storyScreen(faction);
   }
 
   // ── 도전의 탑 (GDD 36장, C.85 → 139장 1): 월드맵 장소 [탑]. 뒤로 = 월드맵. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
-  function towerScreen(faction: FactionConfig, replace = false): void {
+  function towerScreen(faction: FactionConfig): void {
     if (!save) return;
-    nav[replace ? 'replace' : 'push']({
+    nav.push({
       id: 'tower', locked: false,
       render: () => {
         setBgm('expedition');
         towerView(root, faction, save!, {
           onChallenge: (f) => towerBattle(faction, f),
           onHelp: () => openHelp('expedition', false),
-          ...(replace ? { onTab: (id: DepartTab) => departTab(faction, id) } : {}),
         });
         root.scrollTop = 0;
       },

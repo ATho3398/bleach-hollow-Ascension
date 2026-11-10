@@ -3035,3 +3035,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 실측(`scripts/c365-proof.cjs` → proof.json, PC 844×390 사신 + 폰 796×384 터치 호로): 체력 20% 전투 → 소모품 칸 is-urge + bha-gauge-blink · 회복약 쓰고(2 → 1) 다시 켜기 → 적 522/522·내 체력 43/212(들어갈 때)·회복약 2·알림 '전투 재시작'·런 로그 itemRestored heal-salve · 바퀴 끝 '승리 2 · 정화 흡수 1'/'승리 2 · 포식 1' · 결과(PC 귀환·폰 패배) 왼쪽·오른쪽 넘침 0, '더 있음' 안 뜸 · 첫 포식 '능력치 모두 +3' · 페이지 오류 0.
 - 검증: npm ci 상태 typecheck · test 267파일 3059개 · balance:check 통과(회귀 가드, 후반 보류 경고는 전부터) · build 통과.
 - 캡처 `docs/captures/c365/` 1배 9장: `{pc,ph}-1-item-urge` · `-2-battle-restart` · `-3-lapend-absorb` · `-4-result-summary` · `pc-5-first-absorb`.
+
+## C.366 — 모험 준비 탭 되돌림: '자유 모험 ▼' 제목 토글 · 탑은 월드맵만 (GDD 223장, v5.526, S-23, 코딩259 Opus)
+- C.364 의 222장 9 부분만 되돌림(통째 revert 아님): `storyView.ts`·`towerView.ts`·`planView.ts`·`tests/c217.test.ts` = 83d1b01 그대로. `app.ts` 는 ⑨ 줄만 — `departTower`·[탑] 탭 분기(잠김 알림·탑 바꿔 끼우기)·`towerScreen(replace)` 삭제, 자유 모험 `onTab = storyScreen`.
+- 모험 준비 머리 = 제목 토글 '자유 모험 ▼'(펼치면 자유 모험/스토리), 탑 탭 없음, 탑 화면 머리 = 제목(월드맵 '도전의 탑'에서만 들어감, 139장 1).
+- 테스트: c217 '탑 탭 없음' 원래 단언 복구, c364 의 ⑨ 단언 삭제. C.364 1·2·3·5 · C.365 그대로. 세이브·밸런스 그대로.
+- 실측(`scripts/c366-proof.cjs` → proof.json, PC 844×390 + 폰 796×384 터치): 모험 준비 머리 = 제목 토글 '자유 모험 ▲', 펼침 = [자유 모험, 스토리](탑 없음, bha-seg 아님) · 월드맵 도전의 탑 → 탑 화면 머리 = 제목 '도전의 탑'(탭 없음) · 페이지 오류 0.
+- 검증: npm ci 상태 typecheck · test 267파일 3058개 · balance:check 통과(회귀 가드) · build 통과.
+- 캡처 `docs/captures/c366/` 1배 4장: `{pc,ph}-1-depart-toggle` · `{pc,ph}-2-tower-head`.

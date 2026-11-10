@@ -1,4 +1,4 @@
-// C.364 (GDD 222장 1·2·3·5·9): 튜토리얼 카드 + 공용 창 겹침 · 처음 로그인 창 · 대기 보상 문구·0바퀴 · 수련장 잠김 안내 · 모험 준비 머리 탭
+// C.364 (GDD 222장 1·2·3·5): 튜토리얼 카드 + 공용 창 겹침 · 처음 로그인 창 · 대기 보상 문구·0바퀴 · 수련장 잠김 안내 (222장 9 탭은 223장에서 되돌림, C.366)
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { firstGateNote, CLOUD_GATE_NOTE_KEY } from '../src/cloudSave';
@@ -96,19 +96,5 @@ describe('222장 5 수련장 잠김 안내', () => {
     const wm = read('src/ui/worldMapView.ts');
     expect(wm).toContain('if (part !== undefined) hd.onPartLocked?.(p);');
     expect(trainingLockedText(getFaction('hollow'))).toBe('바스트로데가 되면 본능 수련이 열린다.');
-  });
-});
-
-describe('222장 9 모험 준비 머리 탭', () => {
-  it('[자유 모험][스토리][탑] 탭(펼침 목록 아님), 잠긴 탑은 자물쇠·aria-disabled, 이름은 종족 설정', () => {
-    const sv = read('src/ui/storyView.ts');
-    const fn = sv.slice(sv.indexOf('export function departTabs'), sv.indexOf('/** 목표 문구'));
-    expect(fn).toContain("el('div', 'bha-seg bha-seg--sm bha-depart-tabs')");
-    expect(fn).not.toContain('viewTitle(');
-    expect(fn).toContain("{ id: 'tower' as const, label: tower.name, lock: tower.locked }");
-    expect(fn).toContain("b.append(icon('i-lock', 'sm'));");
-    const app = read('src/ui/app.ts');
-    expect(app).toContain('tower: departTower(faction),');
-    expect(app).toContain('if (t.locked) return void showToast({ eyebrow: t.name, title: t.locked');
   });
 });
