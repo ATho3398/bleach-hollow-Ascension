@@ -21,3 +21,15 @@ describe('C.377 몸마다 따로', () => {
     expect(() => parseFactionConfig(withBody({ 'bad key': { stages: [stage(-1), stage(-2), stage(-3)] } }))).toThrow(/pixelFx/);
   });
 });
+
+// C.378 (GDD 230장 보충): 도구 확정 02:19 — 호로 탄을 덩치·뱀·짐승 따로. 길리안·사람형은 공통
+import hollow from '../src/data/factions/hollow.json';
+describe('C.378 호로 탄 몸마다', () => {
+  const tan = (hollow.families as unknown as { abbr: string; pixelFx: FamilyPixelFx }[]).find((f) => f.abbr === '탄')!.pixelFx;
+  it('덩치·뱀·짐승은 따로 값, 길리안은 공통', () => {
+    expect(Object.keys(tan.byBody ?? {}).sort()).toEqual(['beast/ref', 'humanoid/hb', 'serpent/ref']);
+    expect(familyStagesFor(tan, 'humanoid/hb')![1]!.layers[0]!.dx).not.toBe(tan.stages[1]!.layers[0]!.dx);
+    expect(familyStagesFor(tan, 'humanoid/hd')).toBe(tan.stages);
+    expect(() => parseFactionConfig(hollow)).not.toThrow();
+  });
+});

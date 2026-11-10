@@ -3143,3 +3143,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 강공2 = [미정] 사용자 확인 대기.
 - 테스트 `tests/c377-body-split.test.ts`(2). apply 왕복(같은 몸 값은 안 들어가고 바꾼 몸만 byBody) 확인 뒤 되돌림.
 - 테스트 3099 통과(274 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.378 — 호로 탄 몸마다 따로(덩치·뱀·짐승) (GDD 230장 보충, v5.539, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-11 02:19 — C.377 캐릭터 탭에서 몸마다 맞춤).
+- `apply.mjs` → `src/data/factions/hollow.json` 탄 `pixelFx.byBody`: humanoid/hb(덩치 1·2·3블록) · serpent/ref(뱀 2·3블록, 1블록은 공통과 같음) · beast/ref(짐승 1·2·3블록). 길리안·다른 계열의 몸 값은 사람형과 같아 안 넣음. 시트 추가 없음.
+- 검증 `scripts/c378-proof.cjs` 실제 전투 1배 호로 1단계(덩치) 탄 불 1블록. 캡처 `docs/captures/c378/` 1장. 테스트 `tests/c377-body-split.test.ts` +1(탄 몸 키·덩치 값이 공통과 다름·길리안 = 공통).
+- 테스트 3100 통과(274 파일), typecheck·balance:check 회귀 가드 통과.
