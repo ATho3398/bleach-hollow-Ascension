@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import DRAFT_DIR, DRAFT_RIG_JSON  # noqa: E402
 from feet_weapon import dump  # noqa: E402
 
-GROUPS = {'bare': ['shinigami', 'student', 'arrancar'], 'female': ['shinigami_f', 'student_f', 'arrancar_f']}
+GROUPS = {'bare': ['shinigami', 'student', 'arrancar'], 'female': ['shinigami_f', 'student_f', 'arrancar_f', 'soul_f']}
 LOOK_BONES = {'hair', 'hair_back', 'cape'}
 MOTIONS_JSON = os.path.join(DRAFT_DIR, 'motions.json')
 KINDS = ('pivots', 'rot', 'shift')  # 관절 자리·기본 각도·보정 이동(115-A 61)

@@ -97,7 +97,7 @@
       "foot_L": { "art": "arrancar/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "arrancar/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "arrancar/thumb_L", "at": [7, 53], "size": [3, 6] },
-      "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 39], "size": [14, 17] },
+      "forearm_R": { "art": "arrancar/forearm_R", "at": [20, 38], "size": [14, 17] },
       "forearm_L": { "art": "arrancar/forearm_L", "at": [1, 42], "size": [15, 17] }
     },
     "bare": {
@@ -229,6 +229,19 @@
       "shin_R": { "art": "ho/shin_R", "at": [0, 68], "size": [15, 12] },
       "leg_L": { "art": "ho/leg_L", "at": [20, 60], "size": [12, 12] },
       "shin_L": { "art": "ho/shin_L", "at": [22, 70], "size": [12, 10] }
+    },
+    "soul_f": {
+      "torso": { "art": "soul_f/torso", "at": [9, 25], "size": [18, 31] },
+      "arm_L": { "art": "soul_f/arm_L", "at": [4, 29], "size": [13, 15] },
+      "arm_R": { "art": "soul_f/arm_R", "at": [21, 29], "size": [13, 15] },
+      "leg_L": { "art": "soul_f/leg_L", "at": [6, 51], "size": [17, 25] },
+      "leg_R": { "art": "soul_f/leg_R", "at": [-3, 46], "size": [34, 29] },
+      "head": { "art": "shinigami/head", "at": [7, 10], "size": [16, 19] },
+      "foot_L": { "art": "shinigami/foot_L", "at": [5, 72], "size": [11, 9] },
+      "foot_R": { "art": "shinigami/foot_R", "at": [20, 72], "size": [9, 9] },
+      "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
+      "forearm_R": { "art": "soul_f/forearm_R", "at": [20, 37], "size": [14, 18] },
+      "forearm_L": { "art": "soul_f/forearm_L", "at": [1, 42], "size": [12, 16] }
     }
   },
   "looks": {
@@ -265,7 +278,16 @@
       "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [6, -2], "size": [32, 25] },
+      "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
+      "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
+      "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
+    },
+    "shinigami-soul-f": {
+      "body": "soul_f",
+      "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
+      "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
+      "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
       "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
     },
@@ -274,7 +296,7 @@
       "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
       "weapon": { "art": "weapon/sword", "at": [1, 49], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [6, -2], "size": [32, 25] },
+      "hair_back": { "art": "shinigami_f/hair_back_s1", "at": [21, 2], "size": [17, 21] },
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
       "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
     },
@@ -581,6 +603,26 @@
         "leg_L": [23, 64],
         "shin_L": [27, 70]
       }
+    },
+    "soul_f": {
+      "pivots": {
+        "hair_back": [24, 9],
+        "forearm_L": [7, 44],
+        "arm_R": [24, 34],
+        "foot_R": [22, 75],
+        "forearm_R": [29, 41],
+        "hair_back2": [31, 23],
+        "hair_back3": [28, 37]
+      },
+      "rot": {
+        "arm_R": 4,
+        "forearm_R": -15,
+        "head": -5,
+        "torso": 2
+      },
+      "shift": {
+        "arm_R": [-0.54, 0.43]
+      }
     }
   },
   "bodyMotions": {
@@ -595,7 +637,8 @@
     "shinigami": "shinigami",
     "hb": "brute",
     "hd": "gillian",
-    "ho": "onearm"
+    "ho": "onearm",
+    "soul_f": "soul_f"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -1134,10 +1177,10 @@
   "segmentSrc": {
     "note": "마디로 나누기 전 원본 부위(scripts/rig/split_chain.py, GDD 115-A 88) — 외형 → 슬롯 → 원본 그림. 가이드·가져오기는 이 원본을 쓴다",
     "shinigami-student-f": {
-      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [21, 2], "size": [19, 50] }
     },
     "shinigami-base-f": {
-      "hair_back": { "art": "shinigami_f/hair_back", "at": [6, -2], "size": [34, 54] }
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [21, 2], "size": [19, 50] }
     },
     "arrancar-base-f": {
       "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] }
@@ -1148,6 +1191,9 @@
     "arrancar-base-f-released": {
       "hair_back": { "art": "arrancar_f/hair_back", "at": [8, -3], "size": [21, 32] },
       "cape": { "art": "cape/test", "at": [4, 27], "size": [27, 42] }
+    },
+    "shinigami-soul-f": {
+      "hair_back": { "art": "shinigami_f/hair_back", "at": [21, 2], "size": [19, 50] }
     }
   },
   "sway": {
