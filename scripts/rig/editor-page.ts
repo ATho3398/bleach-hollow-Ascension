@@ -447,7 +447,7 @@ function buildColors() {
   const body = rig.looks[look]?.body;
   const list = Object.entries(rig.looks).filter(([, l]) => l.body === body && typeof l.color === 'string');
   row.hidden = list.length < 2;
-  row.replaceChildren(...(list.length < 2 ? [] : [Object.assign(document.createElement('span'), { className: 'lbl', textContent: '색' }), ...list.map(([id, l]) => {
+  row.replaceChildren(...(list.length < 2 ? [] : [Object.assign(document.createElement('span'), { className: 'lbl', textContent: '종류·색' }), ...list.map(([id, l]) => {
     const b = document.createElement('button');
     b.textContent = l.color as string;
     b.dataset.color = id;

@@ -383,11 +383,13 @@
       "color": "파랑"
     },
     "gillian-base": {
-      "body": "hd"
+      "body": "hd",
+      "color": "기본"
     },
     "gillian-cyclops": {
       "body": "hd",
-      "artFolder": "hd-cyclops"
+      "artFolder": "hd-cyclops",
+      "color": "외눈"
     },
     "onearm-base": {
       "body": "ho",
