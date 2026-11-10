@@ -10,7 +10,7 @@ import { fxSheetName, mountPixelFx, pixelFxKeyframes, pixelFxTransform, sheetDur
 import { flyPoint, hasPixelStage, pixelPlan, type PixelBodySlot, type PixelInst, type PixelPlan } from './pixelAttack';
 import type { AnimPlayer } from './bha/animPlayer';
 import {
-  ATTACK_FX, ATTACK_TIER_ORDER, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY, HIT_FLASH_MIN_MS,
+  ATTACK_FX, ATTACK_TIER_ORDER, ELITE_HEAVY_ELEMENT, FAMILY_MOTION, FAMILY_STAGE_FX, FX_RATE_MAX, FX_RATE_MIN, FX_SAFETY_MS, GHOST_LAG_MS, GHOST_OPACITY, HIT_FLASH_MIN_MS,
   GUARDED_HIT_RATIO, REACH_RATIO, SKILL_NAME_MS, type AttackFxLevel, type AttackTier, type FamilyMotion,
 } from './attackFxConfig';
 
@@ -67,7 +67,7 @@ export function chainTier(chain: number, top: number): AttackTier {
  * 전투 사건 하나 → 연출. 연출이 필요 없는 사건(막기·회복·공허·상태 변화 …)은 null.
  * familyFx(계열 id) = 그 계열의 연출 종류 (종족 설정에서 읽는 함수, 없으면 몸통박치기). 자동 기본 공격은 늘 몸통박치기.
  */
-export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined): AttackCue | null {
+export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined, heavyPixel?: PixelFxStage | null): AttackCue | null {
   switch (e.kind) {
     case 'player-attack':
       return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false } : null;
@@ -84,10 +84,15 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
     case 'counter':
       return { side: 'enemy', tier: 'chain1', guarded: e.guarded };
     case 'heavy-hit':
-      return { side: 'enemy', tier: 'special', guarded: e.guarded };
+      return heavyCue(e.guarded, heavyPixel);
     default:
       return null;
   }
+}
+
+/** 적 강공격 신호 (GDD 227장): heavyPixel(강적 = 빨간 세로)이 있으면 그 도트 연출 — 엔진 지연 표(hitDelaysOf)도 같은 신호로 잰다 */
+export function heavyCue(guarded: boolean, heavyPixel?: PixelFxStage | null): AttackCue {
+  return { side: 'enemy', tier: 'special', guarded, ...(heavyPixel ? { pixel: { stage: heavyPixel, element: ELITE_HEAVY_ELEMENT } } : {}) };
 }
 
 /** 계열 연출 설정을 신호에 얹는다 (종류·단계·계열·모양·몸동작·도트 연출) */
@@ -168,6 +173,8 @@ export function hitDelaysOf(o: {
   fallback: HitDelayParams;
   /** 블록 도트 연결 동작을 처음부터 (GDD 224장 2 — 튜토리얼 각본 전투) */
   bodyWindup?: boolean;
+  /** 적 강공격 도트 연출 (강적 = 빨간 세로, GDD 227장) */
+  heavyPixel?: PixelFxStage | null;
 }): HitDelayParams {
   const sec = (ms: number) => Math.round(ms) / 1000;
   const blockBy: Record<string, number> = { ...(o.fallback.blockBy ?? {}) };
@@ -185,7 +192,7 @@ export function hitDelaysOf(o: {
     block: sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot)),
     blockBy,
     enemy: sec(cueHitMs({ tier: 'basic' }, o.enemy, o.slot)),
-    heavy: sec(cueHitMs({ tier: 'special' }, o.enemy, o.slot)),
+    heavy: sec(cueHitMs(heavyCue(false, o.heavyPixel), o.enemy, o.slot)),
     counter: sec(cueHitMs({ tier: 'chain1' }, o.enemy, o.slot)),
   };
 }
@@ -485,6 +492,8 @@ export interface AttackFxOptions {
   layer?: HTMLElement;
   /** 계열 id → 연출 종류 (종족 설정 families[].fx) */
   familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined;
+  /** 적 강공격 도트 연출 (강적 = 빨간 세로, GDD 227장). 없으면 옛 돌진 */
+  heavyPixel?: PixelFxStage | null;
   /** 사건 → 크게 띄울 기술 이름 (없으면 null) */
   nameOf?: (e: CombatEvent) => { name: string; ult?: boolean } | null;
   /** 이름 → 이미 받아 둔 도트 시트 (pixelFx.ts readyPixelFx). 없으면 그 이펙트는 건너뛴다 */
@@ -753,7 +762,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     wrap.setAttribute('aria-hidden', 'true');
     wrap.dataset.side = spawnSide;
     wrap.dataset.fx = s.name;
-    wrap.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px;pointer-events:none;z-index:${(L.z ?? 3) * 10 + inst.layer}`;
+    wrap.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px;pointer-events:none;z-index:${(L.z ?? 3) * 10 + inst.layer}${L.opacity !== undefined && L.opacity < 1 ? `;opacity:${L.opacity}` : ''}`;
     const el = mountPixelFx(wrap, s, { cx: w / 2, cy: h / 2, scale: sc });
     layer.append(wrap);
     const sheetMs = sheetDurationMs(s) / inst.rate;
@@ -1001,7 +1010,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
 
   return {
     react(e, extra) {
-      const cue = attackCueOf(e, opts.top, opts.familyFx);
+      const cue = attackCueOf(e, opts.top, opts.familyFx, opts.heavyPixel);
       if (!cue) {
         extra?.onLand?.(); // 연출이 없는 사건이면 바로 닿은 것으로
         return false;

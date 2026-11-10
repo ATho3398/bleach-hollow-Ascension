@@ -3085,3 +3085,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 검증 `scripts/c370-proof.cjs`(c369 기반) 실제 전투 1배 호로 1단계 덩치: 조 흙 1블록 할퀴기, 탄 불 1블록 총알 궤적·체인2 일반 세로(덩치 입 앞에서). 오류 0. 캡처 `docs/captures/c370/` 3장.
 - 새 방식(마스터AL 11-10): 작업 브랜치 푸시 → 마스터 ff 합치기·배포.
 - 테스트 3077 통과(270 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.371 — 외눈 길리안 = 강적 스티치마우스 · 강적 강공격 = 빨간 세로(불투명도 70%) (GDD 227장 · 115-A 101, v5.531, S-23, 종이인형 세션 Opus)
+- 사용자 원문: "방금 외눈 길리안을 보스로 넣어줘. 그리고 강적 강공격 들은 빨간 세로 쓰게 해줄래?? 투명도 70%정도로" → 확인: "보스 대신 강적 스티치마우스 그림으로"·"보스는 ㄴㄴ 잘못말함"·"불투명도 70%".
+- 그림: 작업본 외형 gillian-cyclops-test → gillian-cyclops(편집기·시험 페이지 '길리안(외눈)') → promote(hd-cyclops 그림 11장·정지 그림 gillian-cyclops). `manifest.ts` `GILLIAN_ENEMIES`(normal-heavy-seal → gillian-cyclops, 배율 GILLIAN_SCALE).
+- 세로: `attackFxConfig.ts` `ELITE_HEAVY_CERO`(custom/cero, 혈 속성 시트, 치는 쪽 dx +304·dy 2·크기 2.25·빠르기 0.85·delay −60·opacity 0.7)·`ELITE_HEAVY_ELEMENT`. 도트 이펙트 층 `opacity?`(faction.ts PixelFxLayer, attackFx pixelInst 가 바깥 상자에). `attackFx.heavyCue`·`attackCueOf(…, heavyPixel)`·`hitDelaysOf({ heavyPixel })`·옵션 `heavyPixel`. `battleView` = 강적이고 보스 아니면 세로 + 시트 미리 받기.
+- 테스트: 새 `tests/c371-gillian-elite-cero.test.ts` 6개, c341·c345·c348 덩치 적 수(길리안형 강적 빼기), rigDraft 외눈 외형 이름.
+- 캡처 `docs/captures/c371/`(1배 844×390, `scripts/c371-proof.cjs`, proof.json 오류 0): `foe-gillian-cyclops`(스티치마우스 = 외눈 길리안 캔버스), `elite-heavy-cero-1·2`(강공격 세로 — 불투명도 0.7, 적 강공격 지연 0.393초).
+- 검증: typecheck · test · build · balance:check 통과(아래). 세이브·밸런스 그대로.
+

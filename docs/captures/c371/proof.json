@@ -1,0 +1,21 @@
+{
+ "url": "http://localhost:5395/",
+ "shots": [
+  "foe-gillian-cyclops.png",
+  "elite-heavy-cero-1.png",
+  "elite-heavy-cero-2.png"
+ ],
+ "errors": [],
+ "foe": {
+  "canvas": true,
+  "size": [
+   608,
+   608
+  ],
+  "delay": 0.393
+ },
+ "cero": {
+  "opacity": "0.7"
+ },
+ "picked": true
+}

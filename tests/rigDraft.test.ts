@@ -193,8 +193,8 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     const tip = { duration: 1000, loop: true, tracks: { root: [[0, -60, 0, 0], [1000, -60, 0, 0]] as [number, number, number, number][] } };
     expect(samplePose(rig, tip, 500).hair_back2!.rot).toBe(0);
   });
-  it('길리안 외눈 가면 시험(GDD 115-A 101): 몸·관절·동작은 길리안 그대로, 머리 그림만 외눈 가면(빈 곳 없이 검정 채움), 게임에는 안 넣는 시험 외형', () => {
-    const l = rig.looks['gillian-cyclops-test']!;
+  it('길리안 외눈 가면 시험(GDD 115-A 101): 몸·관절·동작은 길리안 그대로, 머리 그림만 외눈 가면(빈 곳 없이 검정 채움), 강적 스티치마우스 그림(GDD 227장)', () => {
+    const l = rig.looks['gillian-cyclops']!;
     expect(l.body).toBe('hd');
     expect(l.artFolder).toBe('hd-cyclops');
     const dir = 'docs/design/rig-draft/humanoid/';

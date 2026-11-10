@@ -66,6 +66,8 @@ export const GILLIAN_SCALE = 2.3;
 export const SERPENT_SCALE = 1.6;
 /** 뱀형 강적 (GDD 219장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
 export const SERPENT_ENEMIES: Readonly<Record<string, string>> = { 'poison-heavy-chain': 'serpent-green', 'water-heavy-chain': 'serpent-blue' };
+/** 길리안형 강적 (GDD 227장, 사용자 2026-11-10 "외눈 길리안을 … 강적 스티치마우스 그림으로"): 유일한 길리안 등급 강적 스티치마우스(노멀) = 외눈 가면 길리안. 덩치 적 목록을 덮는다 */
+export const GILLIAN_ENEMIES: Readonly<Record<string, string>> = { 'normal-heavy-seal': 'gillian-cyclops' };
 
 export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'scene.cave': {},
@@ -95,6 +97,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   ...BRUTE_ENEMIES,
   // 뱀형 강적 (GDD 219장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
   ...Object.fromEntries(Object.entries(SERPENT_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SERPENT_SCALE }])),
+  // 길리안형 강적 (GDD 227장): 스티치마우스 = 외눈 길리안 (배율 = 내 2단계 길리안과 같게)
+  ...Object.fromEntries(Object.entries(GILLIAN_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: GILLIAN_SCALE }])),
   // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)
   'skin.brute': { rig: 'brute-brown', scale: HOLLOW_BRUTE_SCALE },
   'skin.ghoul': { rig: 'brute-gray', scale: HOLLOW_BRUTE_SCALE },

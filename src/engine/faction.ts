@@ -68,6 +68,8 @@ export interface PixelFxLayer {
   sync: 'hit' | 'arrive';
   /** 겹침 순서 1~5 (클수록 앞) */
   z: number;
+  /** 불투명도 0~1 (없으면 1). 강적 강공격 세로 0.7 (GDD 227장) */
+  opacity?: number;
   /** 타격마다 따로 바꾼 값 (타격 번호 → 바꾼 칸) */
   perHit?: Record<string, Partial<Pick<PixelFxLayer, 'dx' | 'dy' | 'scale' | 'angle' | 'delay' | 'rate' | 'z' | 'travel' | 'arc' | 'tx' | 'ty' | 'ex' | 'ey'>>>;
 }

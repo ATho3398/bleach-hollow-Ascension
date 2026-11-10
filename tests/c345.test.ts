@@ -51,7 +51,7 @@ describe('C.345 지운 그림 자리 = 자리표시 (깨진 그림 0)', () => {
   it('적 덩치 배율 = 내 덩치 배율 (사용자 "적 사이즈 나랑 맞춰" — 전투 실측 키·도트 비 1.000, docs/captures/c345/size-proof.json)', () => {
     const me = charArt('hollow', 0, FACTIONS.find((f) => f.id === 'hollow')!.room?.characterArt ?? '', '/', undefined, FILES, null, undefined, 'male');
     const brutes = (enemies as { id: string }[]).map((e) => enemyArt(e.id, '/', undefined, FILES)).filter((a) => a?.rig && a.rig.look.startsWith('brute-'));
-    expect(brutes.length).toBe(40 - 2); // 뱀형 강적 2 (C.360, GDD 219장 2)
+    expect(brutes.length).toBe(40 - 3); // 뱀형 강적 2 (C.360, GDD 219장 2) · 길리안형 강적 1 (C.371, 227장)
     for (const a of brutes) {
       expect(a!.scale).toBe(me.fieldScale ?? me.scale);
       expect(a!.fieldScale).toBeUndefined();
