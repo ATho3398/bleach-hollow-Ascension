@@ -10,8 +10,8 @@ export interface DollPlayOptions {
   onEnd?: () => void;
 }
 
-/** 시간 흐름 + 반복 동작/한 번 동작 전환 (DOM 없음) */
-export function createDollClock(motions: Record<string, Motion>) {
+/** 시간 흐름 + 반복 동작/한 번 동작 전환 (DOM 없음). speed = 동작 재생 속도(뼈대 motionSpeed, GDD 225장) */
+export function createDollClock(motions: Record<string, Motion>, speed = 1) {
   let loopId: string | null = 'idle';
   let onceId: string | null = null;
   let t = 0;
@@ -42,7 +42,7 @@ export function createDollClock(motions: Record<string, Motion>) {
       return true;
     },
     advance(dt: number) {
-      t += dt;
+      t += dt * speed;
       const id = onceId;
       if (!id) return;
       const m = motions[id]!;
@@ -122,7 +122,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
   fx.setAttribute('height', String(h * k));
   fx.style.cssText = 'position:absolute;left:0;top:0;overflow:visible;pointer-events:none';
   root.append(fx);
-  const clock = createDollClock(motions);
+  const clock = createDollClock(motions, rig.motionSpeed ?? 1);
   const draw = () => {
     const cur = clock.current;
     const m = cur ? motions[cur.id] : undefined;

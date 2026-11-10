@@ -51,7 +51,7 @@ describe('117장 3: 블록 공격 즉발', () => {
     const r = p.play('attack', { fromHit: true, onHit: () => hit++, onEnd: () => end++ })!;
     expect(hit).toBe(1);
     expect(r.hitAtMs).toBe(0);
-    expect(r.durationMs).toBe(MOTIONS.attack!.duration - MOTIONS.attack!.hit!);
+    expect(r.durationMs).toBe((MOTIONS.attack!.duration - MOTIONS.attack!.hit!) / (HUMANOID.motionSpeed ?? 1)); // 실제 ms = 동작 시각 ÷ 재생 속도(GDD 225장)
     p.advance(r.durationMs + 1);
     expect([hit, end]).toEqual([1, 1]);
   });

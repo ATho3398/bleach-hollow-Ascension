@@ -1,0 +1,44 @@
+// C.368 (GDD 225장): 종이인형 동작 재생 속도 1.5배 — 동작 키 시각은 그대로, 재생기가 시간을 1.5배로 흘린다.
+// 도트 연결 동작 빠르기(chain rate)는 fx 도구에서 이미 올려 둔 것을 ÷1.5(최소 1) — 실제 빠르기는 그대로
+import { describe, expect, it } from 'vitest';
+import { HUMANOID, MOTIONS, RIG_PACKS } from '../src/data/art/rig/pose';
+import { createRigPlayer } from '../src/ui/bha/rigAnim';
+import { createDollClock } from '../src/ui/bha/paperdoll';
+import { DRAFT_RIGS } from '../scripts/rig/draft';
+
+describe('C.368 종이인형 동작 재생 속도 (GDD 225장)', () => {
+  it('게임 뼈대(사람형·뱀형)와 작업본 뼈대 모두 motionSpeed 1.5', () => {
+    for (const p of RIG_PACKS) expect(p.rig.motionSpeed, p.id).toBe(1.5);
+    for (const [id, d] of Object.entries(DRAFT_RIGS)) expect(d.rig.motionSpeed, id).toBe(1.5);
+  });
+  it('재생기: 실제 시간 = 동작 시각 ÷ 1.5 (길이·타격 시각·끝)', () => {
+    const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => 0);
+    const m = MOTIONS.attack!;
+    let hit = 0;
+    let end = 0;
+    const r = p.play('attack', { onHit: () => hit++, onEnd: () => end++ })!;
+    // 공격 변형 중 rng 0 → 첫 변형(attack)
+    expect(r.durationMs).toBeCloseTo(m.duration / 1.5, 6);
+    expect(r.hitAtMs).toBeCloseTo(m.hit! / 1.5, 6);
+    p.advance(m.hit! / 1.5 - 1);
+    expect(hit).toBe(0);
+    p.advance(2);
+    expect(hit).toBe(1);
+    expect(p.pose().t).toBeCloseTo((m.hit! / 1.5 + 1) * 1.5, 6); // 동작 시각
+    p.advance(m.duration / 1.5);
+    expect(end).toBe(1);
+  });
+  it('연결 동작 빠르기(setRate)는 재생 속도 위에 곱해진다', () => {
+    const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => 0);
+    p.setRate(2);
+    p.play('attack');
+    p.advance(100);
+    expect(p.pose().t).toBeCloseTo(100 * 2 * 1.5, 6);
+  });
+  it('시험 페이지 시계(createDollClock)도 같은 속도', () => {
+    const c = createDollClock(MOTIONS, 1.5);
+    c.play('attack');
+    c.advance(100);
+    expect(c.current!.t).toBeCloseTo(150, 6);
+  });
+});

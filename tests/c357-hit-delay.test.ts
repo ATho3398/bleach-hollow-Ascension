@@ -170,9 +170,10 @@ describe('화면: 엔진 지연 표는 실제 동작 데이터에서 (hitDelaysO
   });
   it('종이인형 peek: 변형 중 가장 늦은 타격(공격1 300·공격2 280 → 300), 특수 800·700 → 800', () => {
     const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => 0);
-    expect(p.peek('attack')?.hitAtMs).toBe(Math.max(MOTIONS.attack!.hit!, MOTIONS.attack2!.hit!));
-    expect(p.peek('skill')?.hitAtMs).toBe(Math.max(MOTIONS.skill!.hit!, MOTIONS.skill2!.hit!));
-    expect(p.peek('skill', { motion: 'strike' })?.hitAtMs).toBe(MOTIONS.straight!.hit);
+    const S = HUMANOID.motionSpeed ?? 1; // 실제 ms = 동작 시각 ÷ 재생 속도(GDD 225장)
+    expect(p.peek('attack')?.hitAtMs).toBe(Math.max(MOTIONS.attack!.hit!, MOTIONS.attack2!.hit!) / S);
+    expect(p.peek('skill')?.hitAtMs).toBe(Math.max(MOTIONS.skill!.hit!, MOTIONS.skill2!.hit!) / S);
+    expect(p.peek('skill', { motion: 'strike' })?.hitAtMs).toBe(MOTIONS.straight!.hit! / S);
     expect(p.peek('eat')).toBeNull();
   });
 });
@@ -180,20 +181,21 @@ describe('화면: 엔진 지연 표는 실제 동작 데이터에서 (hitDelaysO
 describe('화면: 타격 프레임을 엔진 착탄에 맞춘다 (hitInMs·alignPlan)', () => {
   it('종이인형: 타격이 더 늦으면 앞을 건너뛰고(100ms 뒤 타격), 더 이르면 기다렸다 시작(500ms 뒤 타격)', () => {
     const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => 0);
+    const S = HUMANOID.motionSpeed ?? 1; // 재생 속도(GDD 225장): 동작 시각 = 실제 ms × S
     const hit = MOTIONS.attack!.hit!;
     let fired = 0;
     const a = p.play('attack', { hitInMs: 100, onHit: () => fired++ })!;
-    expect(a.hitAtMs).toBe(100);
-    expect(a.durationMs).toBe(MOTIONS.attack!.duration - (hit - 100));
+    expect(a.hitAtMs).toBeCloseTo(100, 6);
+    expect(a.durationMs).toBeCloseTo((MOTIONS.attack!.duration - (hit - 100 * S)) / S, 6);
     p.advance(99);
     expect(fired).toBe(0);
     p.advance(2);
     expect(fired).toBe(1);
     p.stop();
     const b = p.play('attack', { hitInMs: 500, onHit: () => fired++ })!;
-    expect(b.hitAtMs).toBe(500);
-    expect(b.durationMs).toBe(MOTIONS.attack!.duration + (500 - hit));
-    expect(p.pose().t).toBe(hit - 500); // 음수 = 기다리는 중 (첫 자세)
+    expect(b.hitAtMs).toBeCloseTo(500, 6);
+    expect(b.durationMs).toBeCloseTo((MOTIONS.attack!.duration + (500 * S - hit)) / S, 6);
+    expect(p.pose().t).toBe(hit - 500 * S); // 음수 = 기다리는 중 (첫 자세)
     p.advance(499);
     expect(fired).toBe(1);
     p.advance(2);

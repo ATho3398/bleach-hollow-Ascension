@@ -11,7 +11,7 @@ import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
 import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
-import { MOTIONS } from '../../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS } from '../../../src/data/art/rig/pose';
 import { FAMILY_RIG_MOTIONS } from '../../../src/ui/bha/rigAnim';
 
 interface FxLayer {
@@ -277,7 +277,8 @@ interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number
 function bodyOptions(): BodyOpt[] {
   const c = hero?.c;
   if (c?.rig) {
-    return Object.entries(MOTIONS).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration, hitMs: m.hit ?? null }));
+    const sp = HUMANOID.motionSpeed ?? 1; // 재생 속도(GDD 225장): 실제 길이·타격 = 동작 시각 ÷ sp (미리보기 재생기와 같게)
+    return Object.entries(MOTIONS).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
   }
   const anims = c ? artOfChar(c).anims ?? {} : {};
   return Object.entries(anims).map(([id, clip]) => {

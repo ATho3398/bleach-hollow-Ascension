@@ -42,6 +42,9 @@ export interface Rig {
   /** 게임 화면에 그릴 그림 칸(x, y, 가로, 세로, 캔버스 좌표) — 칼을 휘둘러도 안 잘리게 넉넉히 */
   /** 게임 그림 칸 (C.190: 옛 한 장 그림 규격 — 정사각·발 가운데·발 아래 8% 위). clipY = 이 캔버스 y 아래는 안 그린다 */
   view?: { rect: [number, number, number, number]; clipY?: number };
+  /** 동작 재생 속도 (GDD 225장, 사용자 2026-11-10 "모션속도들을 1.5배로"): 동작 키 시각(ms)은 그대로 두고 재생할 때 시간을 이 배수로 흘린다(없으면 1).
+   *  재생기가 밖으로 알려 주는 길이·타격 시각은 실제 ms(÷ 이 값) — 도트 연결 동작 빠르기(chain rate)는 이 위에 곱해진다 */
+  motionSpeed?: number;
   /** 몸 id → 동작 묶음 이름(motions.json 의 sets). 역관절 다리처럼 몸에 따라 일부 뼈 동작만 바꿔 끼운다(GDD 96장 40) */
   bodyMotions?: Record<string, string>;
   /** 몸 id → 그 몸만의 그림 앞뒤 순서(슬롯 id, 뒤 → 앞). 없으면 slots 순서. 편집기 '기본 자세(이 몸)'의 앞·뒤로 보내기 (GDD 115-A 74) */

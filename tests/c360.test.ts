@@ -65,7 +65,7 @@ describe('C.360 길리안 = 호로 2단계 외형 (GDD 219장 1)', () => {
     expect(ms.ultimate!.tracks).toEqual(ms.release1!.tracks);
     const player = createRigPlayer(p.rig, ms, () => {}, () => 0);
     expect(player.has('attack')).toBe(true);
-    expect(player.play('attack')!.durationMs).toBe(ms.headbutt!.duration);
+    expect(player.play('attack')!.durationMs).toBeCloseTo(ms.headbutt!.duration / (p.rig.motionSpeed ?? 1), 6); // 실제 ms = 동작 시각 ÷ 재생 속도(GDD 225장)
     expect(player.pose().motion).toBe(ms.headbutt);
     expect(player.has('lose')).toBe(false); // 쓰러짐 없음 → 기존 연출
   });

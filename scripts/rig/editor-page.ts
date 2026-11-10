@@ -592,7 +592,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 let last = 0;
 function tick(now: number) {
   if (motion) {
-    if (last) mt += Math.min(100, now - last);
+    if (last) mt += Math.min(100, now - last) * (rig.motionSpeed ?? 1); // 게임과 같은 재생 속도(GDD 225장)
     const m = motionsNow()[motion];
     if (!m) motion = null;
     else if (!m.loop && mt > m.duration + 400) mt = 0;

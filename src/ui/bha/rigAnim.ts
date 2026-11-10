@@ -66,6 +66,8 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
   const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
+  /** 동작 재생 속도 (GDD 225장): t 는 동작 시각(ms), 밖으로 알려 주는 길이·타격 시각은 실제 ms = 동작 시각 ÷ speed */
+  const speed = rig.motionSpeed && rig.motionSpeed > 0 ? rig.motionSpeed : 1;
   let t = 0;
   let rate = 1;
   let paused = false;
@@ -90,7 +92,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       if (!list.length) return null;
       if (locked && a !== 'win' && a !== 'lose') {
         const m0 = motions[list[0]!]!;
-        return { durationMs: m0.duration, hitAtMs: m0.hit ?? m0.duration / 2 };
+        return { durationMs: m0.duration / speed, hitAtMs: (m0.hit ?? m0.duration / 2) / speed };
       }
       locked = a === 'win' || a === 'lose';
       const hist = (recent[fixed.length ? `r:${fixed[0]}` : fam.length ? `m:${o.motion}` : a] ??= []);
@@ -102,13 +104,13 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const hitAt = m.hit ?? m.duration / 2;
       // 시작 위치 (GDD 214장, C.357): hitInMs 가 있으면 타격이 그때 오게 — 더 늦은 타격은 앞을 건너뛰고, 더 이른 타격은 기다렸다(음수 t, 첫 자세) 시작.
       // 타격부터 (GDD 117장 3, 옛 블록 즉발 = hitInMs 0): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
-      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) : o.fromHit && m.hit !== undefined ? hitAt : 0;
+      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) * speed : o.fromHit && m.hit !== undefined ? hitAt : 0;
       const fired = m.hit !== undefined && start >= hitAt;
       once = { action: a, id, opts: o, hitFired: m.hit === undefined || fired };
       t = start;
       if (fired) o.onHit?.();
       wake();
-      return { durationMs: m.duration - start, hitAtMs: hitAt - start };
+      return { durationMs: (m.duration - start) / speed, hitAtMs: (hitAt - start) / speed };
     },
     peek(a, o = {}) {
       const fixed = o.rigMotion && motions[o.rigMotion] ? [o.rigMotion] : [];
@@ -116,7 +118,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
       const ms = list.map((id) => motions[id]!);
-      return { durationMs: Math.max(...ms.map((m) => m.duration)), hitAtMs: Math.max(...ms.map((m) => m.hit ?? m.duration / 2)) };
+      return { durationMs: Math.max(...ms.map((m) => m.duration)) / speed, hitAtMs: Math.max(...ms.map((m) => m.hit ?? m.duration / 2)) / speed };
     },
     stop() {
       locked = false;
@@ -133,7 +135,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     },
     advance(dt) {
       if (paused) return;
-      t += dt * rate;
+      t += dt * rate * speed;
       if (!once) return;
       const m = motions[once.id]!;
       if (!once.hitFired && m.hit !== undefined && t >= m.hit) {

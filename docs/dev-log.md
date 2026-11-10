@@ -3061,3 +3061,12 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 실측(`scripts/c367-proof.cjs` → `docs/captures/c367/proof.json`, PC 844×390 + 폰 796×384 터치, 두 종족, 프레임 = 1/60초): 튜토리얼 16장면(막은 강공격·못 막은 강공격·블록 1개·3체인 마무리) 전부 피해 숫자 − 맞는 쪽 반응 |≤0.3| · 치는 쪽 타격 프레임 |≤0.3|. 일반 전투(테스트 '바로 전투' 강적) 48장면(블록 3계열 × 1·2·3체인 + 강공격 못 막음·막음) 중 47장면 ±1 이내, 1장면 −1.4(사신 A계열 3체인 즉발 — 연출 큐 지터).
 - 테스트: 새 `tests/c367-tutorial-hit-sync.test.ts` 10개(카드 시작·멈춤·문구·대상, 막은 강공격 예약·카드 순서, 위기·좋아! 카드는 착탄 뒤, 지연 올림, step 입력 +1틱, bodySwingMs·bodyLeadMs·bodyLastHitMs). `c199` 시작 단계 auto-intro 반영, `c357` alignPlan 앞 건너뛰기 반영. npm ci 상태 typecheck · test 268파일 3068개 · balance:check(회귀 가드 통과, 기준 갱신 없음) · build 통과. 세이브·밸런스 수치 그대로.
 - 캡처 `docs/captures/c367/` 1배 8장: `pc-hollow-auto-card`·`pc-shinigami-auto-card`·`ph-hollow-auto-card`(자동 공격 카드) · `pc-hollow-heavy-hit`(강공격 맞는 프레임 −186) · `ph-shinigami-heavy-guard`(막은 강공격 '막기' 프레임) · `pc-shinigami-block1-hit`·`ph-shinigami-block1-hit`(블록 타격 프레임 −18) · `pc-hollow-chain3-hit`(3체인 마무리 착탄).
+
+## C.368 — 종이인형 동작 속도 1.5배 · 도트 연결 동작 빠르기 맞춤 (GDD 225장, v5.528, S-23, 종이인형 세션 Opus)
+- 사용자 원문: "모션속도들을 1.5배로 늘려. 그리고 fx세션이랑 소통해서, fx세션에서 이미 속도 올려놓은 모션은 올라간 속도에 맞춰서 좀 늦춰. ㅇㅋ?"
+- 엔진: `Rig.motionSpeed`(pose.ts) — `createRigPlayer` 가 t += dt × rate × motionSpeed, play·peek 의 durationMs·hitAtMs = 동작 시각 ÷ motionSpeed, hitInMs(실제 ms) → 동작 시각 × motionSpeed. 시험 페이지 `createDollClock(motions, speed)`, 편집기 미리보기도 같은 속도.
+- 데이터: 작업본·게임본 humanoid.json·serpent.json(작업본 beast.json 도) `motionSpeed: 1.5` → promote. 종족 설정 pixelFx 연결 동작 rate > 1 → max(1, ÷1.5): 호로 family-a 3단계 punch·straight 3 → 2, 사신 family-a 2단계 attack 3 → 2·attack2 1.55 → 1.03, 3단계 2.45/2.6/2.65 → 1.63/1.73/1.77, family-b 2단계 1.75 → 1.17, 3단계 2.25/2.35/1.95 → 1.5/1.57/1.3, family-c 2단계 skill 1.3 → 1 (남녀 같게).
+- 픽셀FX 도구 `scripts/pixelfx/tool/fx-tool.ts` 동작 길이·타격 표시 ÷ motionSpeed. 픽셀FX 담당 세션에 변경 내용·도구 저장값 맞춤 부탁 전송.
+- 테스트: 새 `tests/c368-motion-speed.test.ts` 4개(뼈대 값, 재생기 길이·타격·끝, setRate 곱, 시험 페이지 시계). 실제 ms 를 동작 시각으로 보던 c191·c357-hit-delay·c360 을 ÷ motionSpeed 로.
+- 검증: typecheck · test · build · balance:check 통과(아래). 세이브·밸런스 그대로.
+
