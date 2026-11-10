@@ -574,9 +574,9 @@
         "head": [11, 42],
         "arm_R": [8, 51],
         "forearm_R": [2, 55],
-        "arm_L": [28, 40],
+        "arm_L": [30, 38],
         "forearm_L": [37, 49],
-        "leg_R": [14, 63],
+        "leg_R": [14, 64],
         "shin_R": [12, 70],
         "leg_L": [23, 64],
         "shin_L": [27, 70]
@@ -1013,10 +1013,10 @@
       "forearm_R",
       "shin_R",
       "shin_L",
-      "leg_R",
-      "leg_L",
       "torso",
       "head",
+      "leg_R",
+      "leg_L",
       "arm_L",
       "forearm_L",
       "cape2",
@@ -1034,7 +1034,12 @@
       "scabbard",
       "jaw",
       "hair",
-      "outer_arm_R"
+      "outer_arm_R",
+      "fold1",
+      "fold2",
+      "fold3",
+      "fold4",
+      "fold5"
     ]
   },
   "assembled": {

@@ -1,0 +1,714 @@
+{
+ "id": "spider",
+ "note": "거미형 종이인형 뼈대 (GDD 115-A 106, 사용자 2026-11-11 03:0x \"거미처럼 다리 4개가 각자 움직이게 할 수 있어???\"). 사용자 부위 시트(400×400, 조각 14개 + 오른쪽 위 참고 그림 80×81): 뿔 가면 머리·몸통·배(abdomen)·먼 팔(위팔 arm_R + 손 hand_R)·가까운 팔(arm_L 한 조각)·다리 넷(화면 왼쪽부터 leg1~4, 윗마디 legN + 아랫마디 legNb — 발끝이 바닥을 짚음). 뼈: 전체(root) → 배 → 몸통 → 머리·팔, 배 → 다리 넷. 다리는 동작 도구(scripts/rig/tools/spider_motions.py)가 발끝 자리에서 거꾸로 풀어(두 마디 풀이) 다리마다 따로 움직인다. 앞 = 왼쪽, 그림 칸 80×82, 바닥 줄 y=81(안쪽 두 다리 발끝 — 바깥 두 다리는 뒤쪽이라 발끝이 조금 높다). 조립: docs/design/user-art/spider-ref/assembly.json",
+ "motionSpeed": 1.5,
+ "motionSpeedNote": "동작 재생 속도(GDD 225장): 동작 키 시각은 그대로, 재생기가 1.5배로 흘린다",
+ "motionSpeedExcept": [
+  "idle",
+  "homeIdle",
+  "move"
+ ],
+ "motionSpeedExceptNote": "재생 속도 예외(GDD 228장 1): 대기·홈 대기·이동은 1배 그대로",
+ "canvas": [
+  80,
+  82
+ ],
+ "ground": 81,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    39,
+    47
+   ]
+  },
+  {
+   "id": "abdomen",
+   "parent": "root",
+   "pivot": [
+    39,
+    47
+   ]
+  },
+  {
+   "id": "torso",
+   "parent": "abdomen",
+   "pivot": [
+    33,
+    41
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "torso",
+   "pivot": [
+    27,
+    19
+   ]
+  },
+  {
+   "id": "arm_R",
+   "parent": "torso",
+   "pivot": [
+    24,
+    24
+   ]
+  },
+  {
+   "id": "hand_R",
+   "parent": "arm_R",
+   "pivot": [
+    17,
+    30
+   ]
+  },
+  {
+   "id": "arm_L",
+   "parent": "torso",
+   "pivot": [
+    41,
+    24
+   ]
+  },
+  {
+   "id": "leg1",
+   "parent": "abdomen",
+   "pivot": [
+    32,
+    51
+   ]
+  },
+  {
+   "id": "leg1b",
+   "parent": "leg1",
+   "pivot": [
+    12,
+    52
+   ]
+  },
+  {
+   "id": "leg2",
+   "parent": "abdomen",
+   "pivot": [
+    35,
+    50
+   ]
+  },
+  {
+   "id": "leg2b",
+   "parent": "leg2",
+   "pivot": [
+    19,
+    47
+   ]
+  },
+  {
+   "id": "leg3",
+   "parent": "abdomen",
+   "pivot": [
+    46,
+    51
+   ]
+  },
+  {
+   "id": "leg3b",
+   "parent": "leg3",
+   "pivot": [
+    58,
+    47
+   ]
+  },
+  {
+   "id": "leg4",
+   "parent": "abdomen",
+   "pivot": [
+    52,
+    48
+   ]
+  },
+  {
+   "id": "leg4b",
+   "parent": "leg4",
+   "pivot": [
+    69,
+    48
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "leg1b",
+   "bone": "leg1b"
+  },
+  {
+   "id": "leg1",
+   "bone": "leg1"
+  },
+  {
+   "id": "leg4b",
+   "bone": "leg4b"
+  },
+  {
+   "id": "leg4",
+   "bone": "leg4"
+  },
+  {
+   "id": "abdomen",
+   "bone": "abdomen"
+  },
+  {
+   "id": "arm_R",
+   "bone": "arm_R"
+  },
+  {
+   "id": "torso",
+   "bone": "torso"
+  },
+  {
+   "id": "leg2b",
+   "bone": "leg2b"
+  },
+  {
+   "id": "leg2",
+   "bone": "leg2"
+  },
+  {
+   "id": "leg3b",
+   "bone": "leg3b"
+  },
+  {
+   "id": "leg3",
+   "bone": "leg3"
+  },
+  {
+   "id": "arm_L",
+   "bone": "arm_L"
+  },
+  {
+   "id": "hand_R",
+   "bone": "hand_R"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  }
+ ],
+ "bodies": {
+  "ref": {
+   "leg1b": {
+    "art": "ref/leg1b",
+    "at": [
+     0,
+     51
+    ],
+    "size": [
+     14,
+     25
+    ]
+   },
+   "leg1": {
+    "art": "ref/leg1",
+    "at": [
+     12,
+     45
+    ],
+    "size": [
+     23,
+     10
+    ]
+   },
+   "leg4b": {
+    "art": "ref/leg4b",
+    "at": [
+     65,
+     46
+    ],
+    "size": [
+     15,
+     31
+    ]
+   },
+   "leg4": {
+    "art": "ref/leg4",
+    "at": [
+     55,
+     43
+    ],
+    "size": [
+     19,
+     10
+    ]
+   },
+   "abdomen": {
+    "art": "ref/abdomen",
+    "at": [
+     28,
+     39
+    ],
+    "size": [
+     22,
+     17
+    ]
+   },
+   "arm_R": {
+    "art": "ref/arm_R",
+    "at": [
+     15,
+     20
+    ],
+    "size": [
+     11,
+     13
+    ]
+   },
+   "torso": {
+    "art": "ref/torso",
+    "at": [
+     23,
+     13
+    ],
+    "size": [
+     23,
+     31
+    ]
+   },
+   "leg2b": {
+    "art": "ref/leg2b",
+    "at": [
+     11,
+     45
+    ],
+    "size": [
+     12,
+     36
+    ]
+   },
+   "leg2": {
+    "art": "ref/leg2",
+    "at": [
+     15,
+     40
+    ],
+    "size": [
+     25,
+     19
+    ]
+   },
+   "leg3b": {
+    "art": "ref/leg3b",
+    "at": [
+     55,
+     46
+    ],
+    "size": [
+     11,
+     34
+    ]
+   },
+   "leg3": {
+    "art": "ref/leg3",
+    "at": [
+     42,
+     40
+    ],
+    "size": [
+     21,
+     20
+    ]
+   },
+   "arm_L": {
+    "art": "ref/arm_L",
+    "at": [
+     32,
+     18
+    ],
+    "size": [
+     23,
+     34
+    ]
+   },
+   "hand_R": {
+    "art": "ref/hand_R",
+    "at": [
+     0,
+     27
+    ],
+    "size": [
+     20,
+     22
+    ]
+   },
+   "head": {
+    "art": "ref/head",
+    "at": [
+     18,
+     0
+    ],
+    "size": [
+     22,
+     27
+    ]
+   }
+  }
+ },
+ "looks": {
+  "spider-base": {
+   "body": "ref"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   80,
+   82
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "note": "게임 화면에 그릴 때의 그림 칸(정사각, 몸 가운데 x 39 = 칸 가운데, 바닥 y 81 = 아래에서 약 8% 위) — 아직 게임 미사용",
+  "rect": [
+   -21,
+   -29,
+   120,
+   120
+  ],
+  "clipY": 83
+ },
+ "edit": {
+  "names": {
+   "root": "전체",
+   "abdomen": "배",
+   "torso": "몸통",
+   "head": "머리",
+   "arm_R": "먼 위팔",
+   "hand_R": "먼 손",
+   "arm_L": "가까운 팔",
+   "leg1": "다리 1(왼쪽 바깥)",
+   "leg1b": "다리 1 아래",
+   "leg2": "다리 2(왼쪽 안)",
+   "leg2b": "다리 2 아래",
+   "leg3": "다리 3(오른쪽 안)",
+   "leg3b": "다리 3 아래",
+   "leg4": "다리 4(오른쪽 바깥)",
+   "leg4b": "다리 4 아래"
+  },
+  "groups": [
+   [
+    "전체",
+    [
+     "root"
+    ]
+   ],
+   [
+    "몸",
+    [
+     "head",
+     "torso",
+     "abdomen",
+     "arm_R",
+     "hand_R",
+     "arm_L"
+    ]
+   ],
+   [
+    "왼쪽 다리",
+    [
+     "leg1",
+     "leg1b",
+     "leg2",
+     "leg2b"
+    ]
+   ],
+   [
+    "오른쪽 다리",
+    [
+     "leg3",
+     "leg3b",
+     "leg4",
+     "leg4b"
+    ]
+   ]
+  ],
+  "follow": {
+   "arm_R": [
+    "hand_R"
+   ],
+   "leg1": [
+    "leg1b"
+   ],
+   "leg2": [
+    "leg2b"
+   ],
+   "leg3": [
+    "leg3b"
+   ],
+   "leg4": [
+    "leg4b"
+   ],
+   "torso": [
+    "head",
+    "arm_R",
+    "hand_R",
+    "arm_L"
+   ],
+   "abdomen": [
+    "torso",
+    "head",
+    "arm_R",
+    "hand_R",
+    "arm_L",
+    "leg1",
+    "leg1b",
+    "leg2",
+    "leg2b",
+    "leg3",
+    "leg3b",
+    "leg4",
+    "leg4b"
+   ]
+  }
+ },
+ "skeletons": {
+  "ref": {
+   "leg1b": [
+    {
+     "pts": [
+      [
+       12,
+       52
+      ],
+      [
+       1,
+       76
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg1": [
+    {
+     "pts": [
+      [
+       32,
+       51
+      ],
+      [
+       12,
+       52
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg4b": [
+    {
+     "pts": [
+      [
+       69,
+       48
+      ],
+      [
+       78,
+       77
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg4": [
+    {
+     "pts": [
+      [
+       52,
+       48
+      ],
+      [
+       69,
+       48
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "abdomen": [
+    {
+     "pts": [
+      [
+       39,
+       47
+      ],
+      [
+       38,
+       54
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_R": [
+    {
+     "pts": [
+      [
+       24,
+       24
+      ],
+      [
+       17,
+       30
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "torso": [
+    {
+     "pts": [
+      [
+       33,
+       41
+      ],
+      [
+       27,
+       19
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg2b": [
+    {
+     "pts": [
+      [
+       19,
+       47
+      ],
+      [
+       14,
+       81
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg2": [
+    {
+     "pts": [
+      [
+       35,
+       50
+      ],
+      [
+       19,
+       47
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg3b": [
+    {
+     "pts": [
+      [
+       58,
+       47
+      ],
+      [
+       62,
+       80
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "leg3": [
+    {
+     "pts": [
+      [
+       46,
+       51
+      ],
+      [
+       58,
+       47
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_L": [
+    {
+     "pts": [
+      [
+       41,
+       24
+      ],
+      [
+       38,
+       50
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand_R": [
+    {
+     "pts": [
+      [
+       17,
+       30
+      ],
+      [
+       4,
+       40
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "head": [
+    {
+     "pts": [
+      [
+       27,
+       19
+      ],
+      [
+       28,
+       2
+      ]
+     ],
+     "w": 3
+    }
+   ]
+  }
+ },
+ "tips": {
+  "note": "다리 아랫마디의 발끝(캔버스 좌표, 쉬는 자세) — 동작 도구가 이 점을 바닥에 붙인다",
+  "ref": {
+   "leg1b": [
+    1.0,
+    76.0
+   ],
+   "leg2b": [
+    14.5,
+    81.0
+   ],
+   "leg3b": [
+    61.5,
+    80.0
+   ],
+   "leg4b": [
+    77.5,
+    77.0
+   ]
+  }
+ },
+ "assembled": "docs/design/user-art/spider-ref/assembly.json"
+}
