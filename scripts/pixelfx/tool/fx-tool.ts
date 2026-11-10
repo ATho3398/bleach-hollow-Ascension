@@ -11,8 +11,8 @@ import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
 import { charArt, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
-import { HUMANOID, MOTIONS } from '../../../src/data/art/rig/pose';
-import { FAMILY_RIG_MOTIONS } from '../../../src/ui/bha/rigAnim';
+import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions } from '../../../src/data/art/rig/pose';
+import { FAMILY_RIG_MOTIONS, rigMotionIds } from '../../../src/ui/bha/rigAnim';
 
 interface FxLayer {
   fx: string;
@@ -246,7 +246,7 @@ for (const [id, p] of [['mark-t', D.target], ['mark-a', D.attacker]] as const) {
 const dot = $('dot');
 // ── 치는 쪽 캐릭터 (게임 재생기 그대로: 종이인형 bindRigAnim / 프레임 애니) ──
 const RIG_ART = (look: string): ArtUrls => ({ src: `./art/rig/humanoid/still/${look}.png`, frames: null, scale: 1.78, fieldScale: 1.33, offsetY: 0, rig: { look, partBase: './art/rig/humanoid/' } });
-const artOfChar = (c: ToolChar): ArtUrls => (c.rig ? RIG_ART(c.rig) : charArt(c.faction!, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male'));
+const artOfChar = (c: ToolChar): ArtUrls => (c.faction ? charArt(c.faction, c.tier ?? 0, c.fallback ?? '', './', undefined, undefined, null, undefined, 'male') : RIG_ART(c.rig!));
 const heroHost = $('hero');
 let hero: { c: ToolChar; img: HTMLImageElement; player: AnimPlayer | null } | null = null;
 let charId = 'shinigami-m';
@@ -271,14 +271,16 @@ function mountHero(): void {
 const MOTION_NAMES: Record<string, string> = {
   idle: '대기', homeIdle: '홈 대기', move: '걷기', attack: '공격1', attack2: '공격2', skill: '특수1', skill2: '특수2', hit: '맞음',
   punch: '주먹', kick: '발차기', ultimate: '필살기', straight: '스트레이트', down: '쓰러짐', dying: '빈사', bath: '온천', headbutt: '박치기',
-  rpunch: '오른손 치기', uppercut: '어퍼컷', lose: '패배', win: '승리',
+  rpunch: '오른손 치기', uppercut: '어퍼컷', release1: '해방(포효)', lose: '패배', win: '승리',
 };
 interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number | null }
 function bodyOptions(): BodyOpt[] {
   const c = hero?.c;
   if (c?.rig) {
     const sp = HUMANOID.motionSpeed ?? 1; // 재생 속도(GDD 225장): 실제 길이·타격 = 동작 시각 ÷ sp (미리보기 재생기와 같게)
-    return Object.entries(MOTIONS).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
+    // 그 몸에서 틀 수 있는 동작만(덩치·길리안은 몸 동작 묶음이 일부를 끈다 — 게임 resolveMotions 그대로, GDD 226장)
+    const ms = resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, HUMANOID.looks[c.rig]?.body);
+    return Object.entries(ms).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
   }
   const anims = c ? artOfChar(c).anims ?? {} : {};
   return Object.entries(anims).map(([id, clip]) => {
@@ -289,7 +291,9 @@ function bodyOptions(): BodyOpt[] {
 /** 지금 캐릭터가 틀 수 있는 연결 동작들 (없는 동작은 뺀다) */
 const chainOf = (s: StageFx): { b: BodyOpt; rate: number }[] => {
   const opts = bodyOptions();
-  return s.chain.map((c) => ({ b: opts.find((o) => o.id === c.id)!, rate: c.rate > 0 ? c.rate : 1 })).filter((x) => x.b);
+  // 이 몸에 없는 동작은 게임과 같은 대신 동작으로(GDD 226장 — 덩치 주먹 = 공격1, 길리안 = 박치기)
+  const have = Object.fromEntries(opts.map((o) => [o.id, true]));
+  return s.chain.map((c) => ({ b: opts.find((o) => o.id === (rigMotionIds(c.id, have)[0] ?? c.id))!, rate: c.rate > 0 ? c.rate : 1 })).filter((x) => x.b);
 };
 const bodyOf = (s: StageFx): BodyOpt | null => chainOf(s)[0]?.b ?? null;
 /** 연결 동작 전체 길이(ms, 첫 동작이 타격 프레임부터면 그만큼 짧다, 시전 속도 반영) */
@@ -657,7 +661,9 @@ function syncBodySel(): void {
     sel.id = `chain-${i}`;
     sel.setAttribute('aria-label', `${i + 1}번째 동작`);
     const cur = opts.find((b) => b.id === c.id);
-    sel.textContent = `${i + 1}. ${cur ? optLabel(cur) : i === 0 ? '게임 기본 (계열 몸동작)' : '동작 고르기'} ▾`;
+    const subId = !cur && c.id ? rigMotionIds(c.id, Object.fromEntries(opts.map((o) => [o.id, true])))[0] : undefined;
+    const subTxt = subId ? `${MOTION_NAMES[c.id] ?? c.id} (${c.id}) — 이 몸엔 없어 ${MOTION_NAMES[subId] ?? subId}` : null;
+    sel.textContent = `${i + 1}. ${cur ? optLabel(cur) : subTxt ?? (i === 0 ? '게임 기본 (계열 몸동작)' : '동작 고르기')} ▾`;
     sel.onclick = () => {
       const items = [...(i === 0 ? [{ value: '', label: '게임 기본 (계열 몸동작)' }] : []), ...opts.map((b) => ({ value: b.id, label: optLabel(b) }))];
       openPicker(`${i + 1}번째 동작`, [{ items }], c.id, (v) => {
@@ -741,7 +747,10 @@ $('bodyother').onclick = () => {
 /** 게임 기본일 때 첫 동작: 그 계열 몸동작 묶음의 첫 동작(종이인형) / 특수·공격(프레임 그림) */
 function defaultFirst(): string {
   const opts = bodyOptions();
-  const want = hero?.c.rig ? [...(entry.motion ? FAMILY_RIG_MOTIONS[entry.motion] : []), 'skill', 'attack'] : ['skill', 'attack'];
+  const fam = entry.motion ? FAMILY_RIG_MOTIONS[entry.motion] : [];
+  // 묶음 동작이 이 몸에 없으면 게임과 같은 대신 동작(GDD 226장 — 덩치 주먹 = 공격1·2, 길리안 = 박치기)
+  const sub = fam[0] ? rigMotionIds(fam[0], Object.fromEntries(opts.map((o) => [o.id, true]))) : [];
+  const want = hero?.c.rig ? [...fam, ...sub, 'skill', 'attack'] : ['skill', 'attack'];
   return want.find((id) => opts.some((o) => o.id === id)) ?? opts[0]?.id ?? '';
 }
 $('bodyadd').onclick = () => {

@@ -5,7 +5,7 @@ export interface ToolChar {
   label: string;
   /** 종이인형 외형 id */
   rig?: string;
-  /** 프레임 애니 캐릭터: 종족·단계(0부터)·기본 그림 키 */
+  /** 게임 그림(charArt)으로 불러올 때: 종족·단계(0부터)·기본 그림 키 — 종이인형이면 rig 도 같이 적는다(배율·자리는 게임 값) */
   faction?: string;
   tier?: number;
   fallback?: string;
@@ -15,7 +15,10 @@ export const CHARACTERS: readonly ToolChar[] = [
   { id: 'arrancar-f', label: '아란칼 여', rig: 'arrancar-base-f' },
   { id: 'shinigami-m', label: '사신 남', rig: 'shinigami-base' },
   { id: 'shinigami-f', label: '사신 여', rig: 'shinigami-base-f' },
-  { id: 'hollow', label: '호로', faction: 'hollow', tier: 1, fallback: 'char.hollow' },
+  // 호로 = 게임 그림 그대로(charArt): 1단계 덩치·2단계 길리안 종이인형 (사용자 2026-11-10 "호로 중 덩치랑 길리안 새로 불러와", GDD 226장). 옛 프레임 호로는 게임에서 안 써서 뺌.
+  // 몸동작 칸 = 게임과 같이 'male'(종이인형이고 여성 외형이 아님) — 아란칼 남과 같은 칸
+  { id: 'hollow-brute', label: '호로 덩치', rig: 'brute-base', faction: 'hollow', tier: 0, fallback: 'char.hollow' },
+  { id: 'hollow-gillian', label: '호로 길리안', rig: 'gillian-base', faction: 'hollow', tier: 1, fallback: 'char.hollow' },
 ];
 /** 게임 전투의 내 그림 자리 (1배 844×390 실측, scripts/c268-proof.cjs C268_NOHERO): 기본 상자 150 × (fieldScale ?? scale), 변형 기준점 */
 export const HERO_BOX = { x: 512, y: 78, size: 150, originX: 587, originY: 216 };

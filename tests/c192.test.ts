@@ -22,7 +22,8 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
     expect([fam('권').category, fam('참').category, fam('귀').category]).toEqual(['physical', 'mixed', 'special']);
     expect([fam('권').motion, fam('참').motion, fam('귀').motion]).toEqual(['strike', 'slash', 'cast']);
     expect(familyCategory('shinigami', fam('권').id)).toBe('physical');
-    expect(getFaction('hollow').families.map((f) => [f.category, f.motion])).toEqual([['physical', undefined], ['mixed', undefined], ['special', undefined]]);
+    // GDD 225장: 호로 조 = 주먹 묶음, 교 = 박치기 (탄은 그대로 없음)
+    expect(getFaction('hollow').families.map((f) => [f.category, f.motion])).toEqual([['physical', 'punch'], ['mixed', 'headbutt'], ['special', undefined]]);
     expect(() => parseFactionConfig(shinigami)).not.toThrow();
     expect(() => parseFactionConfig(hollow)).not.toThrow();
     expect(() => parseFactionConfig({ ...shinigami, families: shinigami.families.map((f) => ({ ...f, motion: 'dance' })) })).toThrow(/motion/);
@@ -41,7 +42,7 @@ describe('118장 2: 사신 권 = 물리 · 참 = 혼합 · 귀 = 특공', () => 
     expect(cue.motion).toBe('strike');
     expect(animActionOf(cue, () => true)).toBe('skill');
     // GDD 171장 (사용자 2026-11-01 "권 블록=스트레이트, 귀 블록=특수1,2, 참 블록=공격1,2 모션")
-    expect(FAMILY_RIG_MOTIONS).toEqual({ strike: ['straight'], slash: ['attack', 'attack2'], cast: ['skill', 'skill2'] });
+    expect(FAMILY_RIG_MOTIONS).toEqual({ strike: ['straight'], slash: ['attack', 'attack2'], cast: ['skill', 'skill2'], punch: ['punch', 'straight', 'rpunch', 'uppercut'], headbutt: ['headbutt'] });
     let k = 0;
     const p = createRigPlayer(HUMANOID, MOTIONS, () => {}, () => [0, 0.99][k++ % 2]!);
     const seen = (motion: 'strike' | 'slash' | 'cast', n: number) => Array.from({ length: n }, () => {
