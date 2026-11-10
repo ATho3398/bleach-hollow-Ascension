@@ -1,4 +1,4 @@
-# 호로 / 사신 키우기 — 기획서 v5.545 (Claude Code 인수인계용)
+# 호로 / 사신 키우기 — 기획서 v5.546 (Claude Code 인수인계용)
 
 > 프로젝트 이름: 블리치 할로우 어센션 (Bleach Hollow Ascension). 변경 이력과 결정 기록은 12장, 개발 로드맵과 현재 상태는 13장. 기획은 이 문서 하나가 기준이다.
 
@@ -356,6 +356,9 @@ data/
 ---
 
 ## 12. 결정 기록 / 변경 이력
+
+### v5.546 (2026-11-11, 코딩264 — C.383 232장 구현)
+- 232장 구현 완료: 실패 오류 코드 보관·'로그인' 줄 쉬운 말+코드, [다시 올리기], 콘솔 한 줄, 가짜 백엔드 실패 각본. 서버 확인: Firestore 데이터베이스는 있음(② 제외). 세이브 구조 변경 없음.
 
 ### v5.545 (2026-11-11, 마스터AL — 232장)
 - 232장: 클라우드 저장 실패 원인 찾기 — 오류 코드 표시·[다시 올리기]. 코딩264.
@@ -7546,3 +7549,5 @@ data/
   3. 콘솔 로그에도 코드·메시지 한 줄(디버그용, 개인정보·uid 노출 금지).
   4. 테스트(가짜 백엔드로 permission-denied·unavailable·준비 실패 각각 문구), 세이브 구조 그대로.
 - 세션: 코딩264(Opus). 사용자 할 일(동시): Firebase 콘솔 > Firestore Database 가 만들어져 있는지 · 규칙 탭에 `firestore.rules` 전체가 게시돼 있는지 확인.
+- **구현 완료 (C.383, v5.546)**: `CloudState.lastError {code, stage: sdk·read·write·device}` + `retrying`. 문구 "클라우드 저장에 실패했다: 권한 없음(규칙 확인) · permission-denied. 잠시 뒤 다시 올린다." (not-found·failed-precondition = 데이터베이스 없음, unavailable·deadline-exceeded = 연결 불안정, SDK = 불러오기 실패(앱 다시 열기) · 오류 이름, 그 밖 = 알 수 없음(코드)). [다시 올리기] = 로그인 줄 셋째 버튼(실패 때만, 진행 중 흐림, `CloudSync.retryNow`). 콘솔 `[클라우드] <stage> 실패: <code> — <메시지>`(uid·이메일·문서 경로 uid 지움). 가짜 클라우드 `bha-cloud-fake.fail`·`?cloudfake=sdkfail`. 세이브 구조 변경 없음.
+- 원인 조사 결과(코딩264): 인증 없이 Firestore REST 로 읽어 보니 404(데이터베이스 없음)가 아니라 403 PERMISSION_DENIED → **데이터베이스는 있고 Native 모드**(② 제외). 코드의 문서 모양(undefined 값 없음·칸 이름·타입·크기)은 규칙과 맞음 → 코드 쪽 원인 없음. 남은 후보 = ① 규칙 미게시·옛 규칙(permission-denied) 또는 ③ 옛 빌드 캐시(SDK). 원인 확정은 이 빌드에서 '로그인' 줄 코드를 보고 한다.

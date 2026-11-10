@@ -471,7 +471,7 @@ describe('C.323 구조·문구·배포', () => {
     expect(texts.length).toBeGreaterThan(5);
     for (const t of texts) expect(t).not.toMatch(/요\.|습니다|하세요/);
     const settings = src('src/ui/settingsView.ts');
-    expect(settings).toContain("panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint)");
+    expect(settings).toContain("panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.retryButton, cloudNodes.hint)");
     expect(view).toContain("'이메일 로그인'"); // C.325: 둘째 버튼 이름은 cloudSecondLabel (게스트면 [로그아웃])
     expect(view).toContain("button({ label: '취소', variant: 'ghost', onClick: m.close })");
     expect(view).toContain("label: '가입'");

@@ -260,6 +260,7 @@ export function startApp(host: HTMLElement): void {
     link: (kind, email, password) => cloud.linkAccount(kind, email, password),
     reclaim: () => cloud.reclaim(),
     warm: () => cloud.warm(),
+    retry: () => cloud.retryNow(),
     notify: (title, meta) => showToast({ eyebrow: '클라우드', title, meta }, 0, 4600),
     onChange: (cb) => cloud.onChange(cb),
   } : undefined;

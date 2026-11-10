@@ -3195,3 +3195,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `apply.mjs` → `src/data/factions/hollow.json` byBody `spider/ref`: 조(1·2·3블록 공격1 ×1.1) · 교(공격2) · 탄(특수1, 3블록 ×0.45). 이펙트 자리는 사람형 값 그대로(몸동작만 거미). 다른 몸 변화 없음.
 - 테스트 `tests/c377-body-split.test.ts` +1(거미 몸동작·사람형은 공통), 탄 몸 키 목록 갱신. 실제 전투 캡처 없음(플레이어 거미 = 사슴형 외형).
 - 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.383 — 클라우드 저장 실패 원인 보이기: 오류 코드 문구 · [다시 올리기] (GDD 232장, v5.546, S-23, 코딩264 Opus)
+- 사용자 원문: "이거지금 계정 연동 데이터 저장 안되는거지. 일시적인건지 아직 구현 미스인지 원인분석 ㄱㄱ" (캡처: '이승호 계정으로 로그인했다. 클라우드 저장에 실패했다. 잠시 뒤 다시 올린다.')
+- `src/cloudSave.ts`: 실패 catch(SDK 받기·올리기·읽기·기기 차지/판정)마다 `recordError` → `CloudState.lastError {code, stage}`(Firebase code, 없으면 이름) + `console.warn` 한 줄(uid·이메일 지움). 성공하면 지운다. `retryNow()` = 재시도 대기 무시하고 한 번(SDK 없으면 다시 받기, 밀린 것 있으면 올리기, 아니면 서버와 맞추기), `retrying` 상태.
+- `src/ui/cloudView.ts`: 'error' 줄에 쉬운 말+코드(`cloudErrorText`), [다시 올리기] 버튼(`data-set=cloud-retry`, 실패 때만 보임·진행 중 흐림). `settingsView.ts` 로그인 줄에 붙임, `screens-lcd.css` 숨김 한 줄(새 토큰 없음). `app.ts` CloudUi.retry.
+- `src/cloudFake.ts`: `bha-cloud-fake.fail`(읽기·쓰기 실패 코드) · `?cloudfake=sdkfail`(SDK 받기 실패) — 점검용.
+- 원인 조사: Firestore REST 무인증 읽기 = 403 PERMISSION_DENIED(404 아님) → 데이터베이스는 있음. 문서 모양·규칙·크기는 맞음 → 코드 쪽 원인은 못 찾음(원인 미확정). 유력 = 규칙 미게시·옛 규칙(permission-denied) — 이 빌드의 '로그인' 줄 코드로 확정한다.
+- 테스트 `tests/c383.test.ts` 신규(코드별 문구 4종·SDK 실패·콘솔 한 줄·다시 올리기 성공/실패/SDK), `tests/c323.test.ts` 로그인 줄 구조 갱신. 세이브 구조 변경 없음.
+- 캡처 `docs/captures/c383/` (scripts/c383-proof.cjs): pc-1 permission-denied · pc-2 다시 올리기 뒤 · ph-3 unavailable · ph-4 SDK 실패.
+
