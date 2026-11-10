@@ -1,0 +1,70 @@
+## brute (일반 전투, 호로 1단계 + 스킨)
+LOOK bha-hero__img bha-rigcanvas
+  OK  block family-a 1 20 −20 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-b 1 20 −20 react 0 swing 0 start→dmg 201
+  OK  block family-b 2 43.9 −44 react 0 swing 0 start→dmg 200
+  OK  heavy-hit   33.2 −33 react 0 swing null start→dmg 295
+  OK  block family-b 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-c 1 20 −20 react 0 swing 8 start→dmg 700
+  OK  block family-c 2 43.9 −44 react 0 swing 0 start→dmg 600
+  OK  block family-c 3 71.9 −72 react 0 swing 0 start→dmg 600
+  OK  heavy-hit   44.8 −45 react 0 swing null start→dmg 300
+  OK  heavy-hit   0 막기 react 0 swing null start→dmg 300
+## 뱀형 (일반 전투, 호로 1단계 + 스킨)
+LOOK bha-hero__img bha-rigcanvas
+  OK  block family-a 1 20 −20 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-b 1 20 −20 react 0 swing 0 start→dmg 500
+  OK  heavy-hit   34.3 −34 react 0 swing null start→dmg 293
+  OK  block family-b 2 43.9 −44 react 0 swing 0 start→dmg 500
+  OK  block family-b 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-c 1 20 −20 react 0 swing 10 start→dmg 698
+  OK  block family-c 2 43.9 −44 react 0 swing 0 start→dmg 501
+  OK  block family-c 3 71.9 −72 react 0 swing 0 start→dmg 506
+  OK  heavy-hit   41.9 −42 react 0.1 swing null start→dmg 300
+  OK  heavy-hit   0 막기 react 0 swing null start→dmg 299
+## 표범형 (일반 전투, 호로 1단계 + 스킨)
+LOOK bha-hero__img bha-rigcanvas
+  OK  block family-a 1 20 −20 react -0.5 swing -0.5 start→dmg 0
+  OK  block family-a 2 43.9 −44 react -0.2 swing -0.2 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-b 1 20 −20 react 0 swing 0 start→dmg 500
+  OK  heavy-hit   68.4 −68 react 0 swing null start→dmg 305
+  OK  block family-b 2 43.9 −44 react 0 swing 0 start→dmg 504
+  OK  block family-b 3 71.9 −72 react -0.5 swing -0.5 start→dmg 0
+  OK  block family-c 1 20 −20 react 0 swing 10 start→dmg 699
+  OK  block family-c 2 43.9 −44 react 0 swing 0 start→dmg 500
+  OK  block family-c 3 71.9 −72 react 0 swing 0 start→dmg 500
+  OK  heavy-hit   65.6 −66 react 0 swing null start→dmg 303
+  OK  heavy-hit   0 막기 react 0 swing null start→dmg 303
+## 갑충형 (일반 전투, 호로 1단계 + 스킨)
+LOOK bha-hero__img bha-rigcanvas
+  OK  block family-a 1 20 −20 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-a 2 43.9 −44 react -0.2 swing -0.2 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-b 1 20 −20 react 0.2 swing 0.1 start→dmg 200
+  OK  heavy-hit   40.1 −40 react 0.1 swing null start→dmg 304
+  OK  block family-b 2 43.9 −44 react 0.1 swing 0.1 start→dmg 199
+  OK  block family-b 3 71.9 −72 react -0.5 swing -0.6 start→dmg 0
+  OK  block family-c 1 20 −20 react 0.2 swing 10.2 start→dmg 799
+  OK  block family-c 2 43.9 −44 react 0.1 swing 0.1 start→dmg 598
+  OK  block family-c 3 71.9 −72 react 0 swing 0 start→dmg 596
+  OK  heavy-hit   48 −48 react 0 swing null start→dmg 300
+  OK  heavy-hit   0 막기 react 0.1 swing null start→dmg 304
+## 사슴형 (일반 전투, 호로 1단계 + 스킨)
+LOOK bha-hero__img bha-rigcanvas
+  OK  block family-a 1 20 −20 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-a 2 43.9 −44 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-a 3 71.9 −72 react -0.3 swing -0.3 start→dmg 0
+  OK  block family-b 1 20 −20 react -0.2 swing -0.2 start→dmg 0
+  OK  heavy-hit   45 −45 react 0 swing null start→dmg 300
+  OK  block family-b 2 43.9 −44 react -0.4 swing -0.5 start→dmg 0
+  OK  block family-b 3 71.9 −72 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-c 1 20 −20 react 0 swing 10.8 start→dmg 203
+  OK  block family-c 2 43.9 −44 react -0.4 swing -0.4 start→dmg 0
+  OK  block family-c 3 71.9 −72 react -0.5 swing -0.5 start→dmg 0
+  OK  heavy-hit   36.9 −37 react 0 swing null start→dmg 299
+  OK  heavy-hit   0 막기 react 0 swing null start→dmg 302

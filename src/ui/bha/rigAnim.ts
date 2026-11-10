@@ -272,7 +272,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
   const tick = (now: number) => {
     raf = 0;
     if (!live()) return; // 화면에서 빠졌으면 멈춘다
-    const dt = last ? Math.min(100, now - last) : 0;
+    const dt = last ? Math.min(100, Math.max(0, now - last)) : 0;
     last = now;
     player.advance(dt);
     if (now - lastDraw >= MIN_FRAME_MS && draw()) lastDraw = now;
@@ -285,6 +285,14 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     raf = requestAnimationFrame(tick);
   };
   const player = createRigPlayer(rig, motions, wake);
+  // 새 동작은 시작한 순간부터 센다 (GDD 224장 보충, C.385): 돌던 재생(대기 등) 중 프레임 사이(타이머 등)에서 play 하면 다음 프레임 dt 가
+  // play 전 시간까지 넣어 타격 프레임이 최대 한 프레임 일찍 왔다(덩치 공격2 213ms → 200ms 실측). play 순간을 기준으로 다시 잡는다
+  const play0 = player.play.bind(player);
+  player.play = (a, o) => {
+    const r = play0(a, o);
+    if (r && last && typeof performance !== 'undefined') last = performance.now();
+    return r;
+  };
   // 부위 그림이 다 오면 한 번 그린다(그 전엔 정지 그림 src 그대로)
   for (const { im } of layers) im.addEventListener('load', () => { if (!raf) draw(); }, { once: true });
   return player;

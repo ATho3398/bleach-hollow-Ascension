@@ -3212,3 +3212,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 검증 `scripts/c384-proof.cjs`(c367-proof 기반) PC 1배 두 종족: 각본 강공격 막음(guard-land)·맞음(hurt-hold) 피해 = 맞는 쪽 반응 0~0.3프레임 OK, 시트 custom-cero-blood·불투명도 0.7. 캡처 `docs/captures/c384/` 2장.
 - 참고(이 패치와 무관, main 에 이미 있음): 호로 튜토리얼 블록(skill-hold) 피해가 맞는 쪽 반응보다 1.2~2프레임 늦음 — 이 변경 없이 main 에서도 2프레임(C.367 때는 0). 마스터에 보고.
 - 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.385 — 호로 튜토리얼 블록 타격 동기화 수정: 종이인형 재생 시계 · 한 동작 마무리 착탄 (GDD 224장 보충, v5.548, S-23, 픽셀FX 담당 Opus)
+- 배정: 마스터AL(11-11 04:37) — C.384 때 보고한 별건 "호로 튜토리얼 블록 skill-hold 피해가 맞는 쪽 반응보다 1.2~2프레임 늦음, C.367 땐 0".
+- 원인 1 `src/ui/bha/rigAnim.ts` bindRigAnim: 돌던 재생 중 프레임 사이에서 play 하면 다음 tick 의 dt 가 play 전 시간까지 포함 → 타격 자세 최대 1프레임 이름(덩치 공격2 예상 213ms, 실제 200ms). 엔진이 213ms 를 틱(100ms)으로 올려 300ms 가 되자 튜토리얼 '처음부터' 시작이 타이머(after)로 바뀐 호로만 드러남. → play 를 감싸 last = performance.now(), dt ≥ 0.
+- 원인 2 `src/ui/attackFx.ts` run(windup): 조 3블록이 한 동작(C.370)이 된 뒤 마무리 착탄이 타이머(landAt)라 몸 타격보다 1프레임 먼저 → 연결 동작 1개·반응 1번이면 onFinal(몸 onHit)에서 맞음 반응+착탄(onFirstHit 는 끔 — 두 번 안 맞게).
+- 실측 `scripts/c385-proof.cjs`(SKIN= 스킨 착용 일반 전투 추가): 튜토리얼 두 종족 강공격·블록·마무리 0~0.2프레임, 일반 전투 사신·호로 덩치·뱀형·표범형·갑충형·사슴형 블록 1·2·3·강공격 ±0.9프레임 안. `docs/captures/c385/`.
+- 테스트 3136 통과(278 파일), typecheck·balance:check 회귀 가드 통과.
