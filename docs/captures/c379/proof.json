@@ -1,0 +1,4836 @@
+{
+  "note": "GDD 229장 3 전수 실측. pc = 844×390 마우스, ph = 796×384 터치, 1배. 행 = 카드마다 [이전] 유무(prev)·규칙 기대값(expectPrev: 첫 장·행동 대기 카드 = 없음)·버튼 한 줄(oneRow·noWrap·btnInCard)·화면 안(inView)·[이전] 왕복(back·returned)·기기 커서(deviceCursor, pc-hollow·ph-shinigami 만 — 커서 수정 뒤 실행). A = 첫 플레이, B = 안내 다시 보기, C = 전투 튜토리얼 다시 보기. 실행별 출처: {\"pc-hollow\":\"p6\",\"pc-shinigami\":\"p3\",\"ph-hollow\":\"p4\",\"ph-shinigami\":\"p7\"}",
+  "summary": {
+    "pc-hollow": {
+      "cards": 42,
+      "withPrev": 16,
+      "waitCards": 11,
+      "prevRuleOk": true,
+      "oneRow": true,
+      "inView": true,
+      "prevRoundTrip": true,
+      "iconic": 0
+    },
+    "pc-shinigami": {
+      "cards": 41,
+      "withPrev": 16,
+      "waitCards": 11,
+      "prevRuleOk": true,
+      "oneRow": true,
+      "inView": true,
+      "prevRoundTrip": true,
+      "iconic": 0
+    },
+    "ph-hollow": {
+      "cards": 42,
+      "withPrev": 16,
+      "waitCards": 11,
+      "prevRuleOk": true,
+      "oneRow": true,
+      "inView": true,
+      "prevRoundTrip": true,
+      "iconic": 0
+    },
+    "ph-shinigami": {
+      "cards": 42,
+      "withPrev": 16,
+      "waitCards": 11,
+      "prevRuleOk": true,
+      "oneRow": true,
+      "inView": true,
+      "prevRoundTrip": true,
+      "iconic": 0
+    }
+  },
+  "rows": {
+    "pc-hollow": [
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 1 / 3",
+        "title": "둥지",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 505,
+          "top": 104,
+          "width": 231,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 2 / 3",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 191,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "홈 안내 1 / 3",
+          "title": "둥지",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 3 / 3",
+        "title": "첫 모험",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 24,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "걷기 시작",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "걷기 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 219,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 267,
+          "top": 189,
+          "width": 280,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 128,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 146,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 6 / 6",
+        "title": "체인",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 195,
+          "top": 176,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "포식",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 96,
+          "width": 456,
+          "height": 198
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 포식",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "알겠어요",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 456,
+          "top": 149,
+          "width": 280,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "포식",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 1 / 2",
+        "title": "겨우 쓰러뜨렸다",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 440,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 2 / 2",
+        "title": "둥지로",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 440,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 1 / 4",
+        "title": "빈사",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 52,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 280,
+          "top": 258,
+          "width": 456,
+          "height": 99
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 3 / 4",
+        "title": "온천",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 24,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 4 / 4",
+        "title": "먹이",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 187,
+          "width": 240,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "알겠어요",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 202,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "1 / 2",
+        "title": "둥지",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 505,
+          "top": 94,
+          "width": 231,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "2 / 2",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "닫기",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 191,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "둥지",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음 안내",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 202,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "포식",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 128,
+          "width": 240,
+          "height": 238
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 포식",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음 안내",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "포식",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "닫기",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 223,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-intro",
+        "step": "1 / 1",
+        "title": "모험 타일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음 안내",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "1 / 5",
+        "title": "타일 배치 탭",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "2 / 5",
+        "title": "가진 타일",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 5",
+          "title": "타일 배치 탭",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "3 / 5",
+        "title": "길에 놓기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "2 / 5",
+          "title": "가진 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "4 / 5",
+        "title": "조합",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 202,
+          "width": 240,
+          "height": 164
+        },
+        "back": {
+          "step": "3 / 5",
+          "title": "길에 놓기",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "5 / 5",
+        "title": "배치 프리셋",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음 안내",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "4 / 5",
+          "title": "조합",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "1 / 2",
+        "title": "새 타일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 221,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "2 / 2",
+        "title": "뽑기 타일",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "닫기",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 267,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "새 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:각본",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 219,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "1 / 4",
+        "title": "블록 바: 눌러서 사용",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 90,
+          "width": 280,
+          "height": 191
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "2 / 4",
+        "title": "직접 해 보기: 블록 하나 써 보기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 138,
+          "width": 280,
+          "height": 143
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 280,
+          "top": 141,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 128,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 146,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "3 / 4",
+        "title": "같은 블록을 붙여서 체인",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 61,
+          "width": 280,
+          "height": 220
+        },
+        "back": {
+          "step": "1 / 4",
+          "title": "블록 바: 눌러서 사용",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "4 / 4",
+        "title": "영력 해방, 그리고 포식",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "전투 시작",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "전투 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 204,
+          "top": 53,
+          "width": 280,
+          "height": 202
+        },
+        "back": {
+          "step": "3 / 4",
+          "title": "같은 블록을 붙여서 체인",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      }
+    ],
+    "pc-shinigami": [
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 1 / 3",
+        "title": "대원실",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 505,
+          "top": 95,
+          "width": 231,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 2 / 3",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 191,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "홈 안내 1 / 3",
+          "title": "대원실",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 3 / 3",
+        "title": "첫 모험",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 24,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "걷기 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 219,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 267,
+          "top": 189,
+          "width": 280,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 128,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 146,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 6 / 6",
+        "title": "체인",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 195,
+          "top": 176,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "정화 흡수",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 96,
+          "width": 456,
+          "height": 198
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 456,
+          "top": 149,
+          "width": 280,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "정화 흡수",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 1 / 2",
+        "title": "겨우 쓰러뜨렸다",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 440,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 2 / 2",
+        "title": "대원실로",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 440,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 1 / 4",
+        "title": "빈사",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 52,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 280,
+          "top": 258,
+          "width": 456,
+          "height": 99
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 3 / 4",
+        "title": "온천",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 24,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 4 / 4",
+        "title": "식사",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 187,
+          "width": 240,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 202,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "1 / 2",
+        "title": "대원실",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 505,
+          "top": 85,
+          "width": 231,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "2 / 2",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 191,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "대원실",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 202,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "정화 흡수",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 109,
+          "width": 240,
+          "height": 257
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "정화 흡수",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-intro",
+        "step": "1 / 1",
+        "title": "모험 타일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "1 / 5",
+        "title": "타일 배치 탭",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "2 / 5",
+        "title": "가진 타일",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 5",
+          "title": "타일 배치 탭",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "3 / 5",
+        "title": "길에 놓기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "2 / 5",
+          "title": "가진 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "4 / 5",
+        "title": "조합",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 164
+        },
+        "back": {
+          "step": "3 / 5",
+          "title": "길에 놓기",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "5 / 5",
+        "title": "배치 프리셋",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "4 / 5",
+          "title": "조합",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "1 / 2",
+        "title": "새 타일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "2 / 2",
+        "title": "뽑기 타일",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "새 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:각본",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 267,
+          "top": 189,
+          "width": 280,
+          "height": 105
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "1 / 4",
+        "title": "블록 바: 눌러서 사용",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 90,
+          "width": 280,
+          "height": 191
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "2 / 4",
+        "title": "직접 해 보기: 블록 하나 써 보기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 157,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 133,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 128,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 194,
+          "top": 146,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "3 / 4",
+        "title": "같은 블록을 붙여서 체인",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 61,
+          "width": 280,
+          "height": 220
+        },
+        "back": {
+          "step": "1 / 4",
+          "title": "블록 바: 눌러서 사용",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "4 / 4",
+        "title": "한정 해제, 그리고 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "전투 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 204,
+          "top": 53,
+          "width": 280,
+          "height": 202
+        },
+        "back": {
+          "step": "3 / 4",
+          "title": "같은 블록을 붙여서 체인",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      }
+    ],
+    "ph-hollow": [
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 1 / 3",
+        "title": "둥지",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 481,
+          "top": 100,
+          "width": 207,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 2 / 3",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 185,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "홈 안내 1 / 3",
+          "title": "둥지",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 3 / 3",
+        "title": "첫 모험",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 236,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "걷기 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 180,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 231,
+          "top": 189,
+          "width": 280,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 127,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 143,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 6 / 6",
+        "title": "체인",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 171,
+          "top": 175,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "포식",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 93,
+          "width": 456,
+          "height": 198
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 포식",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 437,
+          "top": 146,
+          "width": 250,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "포식",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 1 / 2",
+        "title": "겨우 쓰러뜨렸다",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 404,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 2 / 2",
+        "title": "둥지로",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 404,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 1 / 4",
+        "title": "빈사",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 46,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 232,
+          "top": 258,
+          "width": 456,
+          "height": 99
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 3 / 4",
+        "title": "온천",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 236,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 4 / 4",
+        "title": "먹이",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 181,
+          "width": 240,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 196,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "1 / 2",
+        "title": "둥지",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 481,
+          "top": 89,
+          "width": 207,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "2 / 2",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 185,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "둥지",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 196,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "포식",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 122,
+          "width": 240,
+          "height": 238
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 포식",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "포식",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 217,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-intro",
+        "step": "1 / 1",
+        "title": "모험 타일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "1 / 5",
+        "title": "타일 배치 탭",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "2 / 5",
+        "title": "가진 타일",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 5",
+          "title": "타일 배치 탭",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "3 / 5",
+        "title": "길에 놓기",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "2 / 5",
+          "title": "가진 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "4 / 5",
+        "title": "조합",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 196,
+          "width": 240,
+          "height": 164
+        },
+        "back": {
+          "step": "3 / 5",
+          "title": "길에 놓기",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "5 / 5",
+        "title": "배치 프리셋",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "4 / 5",
+          "title": "조합",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "1 / 2",
+        "title": "새 타일",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 215,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "2 / 2",
+        "title": "뽑기 타일",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 261,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "새 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:각본",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 180,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "1 / 4",
+        "title": "블록 바: 눌러서 사용",
+        "wait": false,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 89,
+          "width": 280,
+          "height": 191
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "2 / 4",
+        "title": "직접 해 보기: 블록 하나 써 보기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 137,
+          "width": 280,
+          "height": 143
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 232,
+          "top": 143,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 127,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 143,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "3 / 4",
+        "title": "같은 블록을 붙여서 체인",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 60,
+          "width": 280,
+          "height": 220
+        },
+        "back": {
+          "step": "1 / 4",
+          "title": "블록 바: 눌러서 사용",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "4 / 4",
+        "title": "영력 해방, 그리고 포식",
+        "wait": false,
+        "prev": true,
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "전투 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 175,
+          "top": 53,
+          "width": 280,
+          "height": 202
+        },
+        "back": {
+          "step": "3 / 4",
+          "title": "같은 블록을 붙여서 체인",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      }
+    ],
+    "ph-shinigami": [
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 1 / 3",
+        "title": "대원실",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 481,
+          "top": 91,
+          "width": 207,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 2 / 3",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 185,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "홈 안내 1 / 3",
+          "title": "대원실",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "home-intro",
+        "step": "홈 안내 3 / 3",
+        "title": "첫 모험",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 236,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "걷기 시작",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "걷기 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 180,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 231,
+          "top": 189,
+          "width": 280,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 127,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 143,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "script",
+        "step": "튜토리얼 6 / 6",
+        "title": "체인",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 171,
+          "top": 175,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "정화 흡수",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 93,
+          "width": 456,
+          "height": 198
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "알겠어요",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 437,
+          "top": 146,
+          "width": 250,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "정화 흡수",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 1 / 2",
+        "title": "겨우 쓰러뜨렸다",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 404,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "wound",
+        "step": "튜토리얼 2 / 2",
+        "title": "대원실로",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 404,
+          "top": 107,
+          "width": 280,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 2",
+          "title": "겨우 쓰러뜨렸다",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 1 / 4",
+        "title": "빈사",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 46,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 2 / 4",
+        "title": "구급상자",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 232,
+          "top": 258,
+          "width": 456,
+          "height": 99
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 3 / 4",
+        "title": "온천",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 258,
+          "top": 236,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "recover",
+        "step": "회복 안내 4 / 4",
+        "title": "식사",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 181,
+          "width": 240,
+          "height": 124
+        }
+      },
+      {
+        "phase": "A",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "알겠어요",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "알겠어요"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 196,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "1 / 2",
+        "title": "대원실",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 481,
+          "top": 80,
+          "width": 207,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:홈 안내",
+        "tut": "home-intro",
+        "step": "2 / 2",
+        "title": "돌보기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "닫기",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 185,
+          "width": 240,
+          "height": 120
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "대원실",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run",
+        "step": "1 / 1",
+        "title": "첫 모험",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음 안내",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 196,
+          "width": 240,
+          "height": 164
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "1 / 2",
+        "title": "정화 흡수",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 103,
+          "width": 240,
+          "height": 257
+        }
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-absorb",
+        "step": "2 / 2",
+        "title": "첫 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음 안내",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "정화 흡수",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:첫 모험 안내",
+        "tut": "first-run-room",
+        "step": "1 / 1",
+        "title": "다음 할 일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "닫기",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 143
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-intro",
+        "step": "1 / 1",
+        "title": "모험 타일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음 안내",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "1 / 5",
+        "title": "타일 배치 탭",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "2 / 5",
+        "title": "가진 타일",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "1 / 5",
+          "title": "타일 배치 탭",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "3 / 5",
+        "title": "길에 놓기",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        },
+        "back": {
+          "step": "2 / 5",
+          "title": "가진 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "4 / 5",
+        "title": "조합",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 164
+        },
+        "back": {
+          "step": "3 / 5",
+          "title": "길에 놓기",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-plan",
+        "step": "5 / 5",
+        "title": "배치 프리셋",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음 안내",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음 안내"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 253,
+          "height": 145
+        },
+        "back": {
+          "step": "4 / 5",
+          "title": "조합",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "1 / 2",
+        "title": "새 타일",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 240,
+          "height": 145
+        }
+      },
+      {
+        "phase": "B:타일 안내",
+        "tut": "tile-draw",
+        "step": "2 / 2",
+        "title": "뽑기 타일",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "닫기",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "닫기"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 24,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "1 / 2",
+          "title": "새 타일",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:각본",
+        "tut": "script",
+        "step": "튜토리얼 1 / 6",
+        "title": "자동 공격",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 180,
+          "top": 92,
+          "width": 280,
+          "height": 124
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "1 / 4",
+        "title": "블록 바: 눌러서 사용",
+        "wait": false,
+        "prev": false,
+        "deviceCursor": "다음",
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 89,
+          "width": 280,
+          "height": 191
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "2 / 4",
+        "title": "직접 해 보기: 블록 하나 써 보기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 137,
+          "width": 280,
+          "height": 143
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 2 / 6",
+        "title": "강공격",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 232,
+          "top": 143,
+          "width": 456,
+          "height": 105
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 3 / 6",
+        "title": "막기 성공",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 130,
+          "width": 456,
+          "height": 124
+        },
+        "back": {
+          "step": "튜토리얼 1 / 6",
+          "title": "자동 공격",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 4 / 6",
+        "title": "위기",
+        "wait": true,
+        "prev": false,
+        "deviceCursor": null,
+        "expectPrev": false,
+        "prevOk": true,
+        "buttons": [],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 127,
+          "width": 280,
+          "height": 153
+        }
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "script",
+        "step": "튜토리얼 5 / 6",
+        "title": "좋아!",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 170,
+          "top": 143,
+          "width": 456,
+          "height": 99
+        },
+        "back": {
+          "step": "튜토리얼 3 / 6",
+          "title": "막기 성공",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "3 / 4",
+        "title": "같은 블록을 붙여서 체인",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "다음",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "다음"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 108,
+          "top": 60,
+          "width": 280,
+          "height": 220
+        },
+        "back": {
+          "step": "1 / 4",
+          "title": "블록 바: 눌러서 사용",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": false
+        },
+        "returned": true
+      },
+      {
+        "phase": "C:전투 튜토리얼",
+        "tut": "true",
+        "step": "4 / 4",
+        "title": "한정 해제, 그리고 정화 흡수",
+        "wait": false,
+        "prev": true,
+        "deviceCursor": "전투 시작",
+        "expectPrev": true,
+        "prevOk": true,
+        "buttons": [
+          "건너뛰기",
+          "이전",
+          "전투 시작"
+        ],
+        "iconic": false,
+        "oneRow": true,
+        "noWrap": true,
+        "btnInCard": true,
+        "inView": true,
+        "card": {
+          "left": 175,
+          "top": 53,
+          "width": 280,
+          "height": 202
+        },
+        "back": {
+          "step": "3 / 4",
+          "title": "같은 블록을 붙여서 체인",
+          "wait": false,
+          "oneRow": true,
+          "inView": true,
+          "prev": true
+        },
+        "returned": true
+      }
+    ]
+  },
+  "errors": []
+}
