@@ -3077,3 +3077,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 이펙트 배치 도구: `characters.ts` 옛 프레임 '호로' → '호로 덩치'(charArt 1단계)·'호로 길리안'(2단계), `fx-tool.ts` 연결 동작 목록 = 그 몸 resolveMotions, 없는 동작은 대신 동작 표시·미리보기, 게임 기본 첫 동작도 대신 동작. C.368 과 겹친 곳(bodyOptions 속도 ÷ motionSpeed)은 둘 다 살림. 도구 저장값 연결 동작 빠르기 ÷1.5(225장 규칙, 26칸) — 게임 값과 같음 확인.
 - 테스트 `tests/gdd226-hollow-motion.test.ts`(5: 종족 설정·아란칼 남녀·덩치·길리안·고정 동작 대신) + `tests/c192.test.ts`(호로 motion·묶음 표) 갱신. 전체 3077 통과(270 파일)·typecheck·balance:check 통과.
 - 검증 `scripts/c369-proof.cjs` 실제 전투 1배(호로 1단계 = 덩치): 교 물 = 박치기 자세, 조 불 = 공격(주먹 대신). 캡처 `docs/captures/c369/` 2장.
+
+## C.370 — 블록 도트 이펙트 4차: 호로 조 몸동작·자리 · 탄 1·2·3블록 (GDD 226장 6, v5.530, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-10 13:24:02).
+- `node scripts/pixelfx/tool/apply.mjs` → `src/data/factions/hollow.json` 조(남 attack2 ×1·×1.1 / 여 punch, 3블록 punch×2→uppercut×2, 할퀴기 자리·크기) · 탄(1블록 간격 190, 2블록 세로 −334 ×2.25, 3블록 간격 170) 한 줄씩. C.369 의 `"motion"` 줄 그대로. 시트 추가 없음.
+- 검증 `scripts/c370-proof.cjs`(c369 기반) 실제 전투 1배 호로 1단계 덩치: 조 흙 1블록 할퀴기, 탄 불 1블록 총알 궤적·체인2 일반 세로(덩치 입 앞에서). 오류 0. 캡처 `docs/captures/c370/` 3장.
+- 새 방식(마스터AL 11-10): 작업 브랜치 푸시 → 마스터 ff 합치기·배포.
+- 테스트 3077 통과(270 파일), typecheck·balance:check 회귀 가드 통과.
