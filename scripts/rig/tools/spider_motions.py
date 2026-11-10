@@ -16,12 +16,51 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from paths import DRAFT_DIR  # noqa: E402
 
-RIG = json.load(open(os.path.join(DRAFT_DIR, 'spider.json'), encoding='utf-8'))
+RIG_PATH = os.path.join(DRAFT_DIR, 'spider.json')
+RIG = json.load(open(RIG_PATH, encoding='utf-8'))
 OUT = os.path.join(DRAFT_DIR, 'spider-motions.json')
-B = {b['id']: b for b in RIG['bones']}
-TIPS = RIG['tips']['ref']
 LEGS = ['leg1', 'leg2', 'leg3', 'leg4']
 STEP = 50  # 다리 풀이 키 간격(ms)
+# 몸(ref)에 따로 맞춘 관절·기본 각도·보정 이동(편집기 고정 — pose.ts bodyBones 와 같게)
+_J = (RIG.get('bodyJoints') or {}).get('ref') or {}
+B = {b['id']: dict(b, pivot=(_J.get('pivots') or {}).get(b['id'], b['pivot']), restRot=b.get('restRot', 0) + (_J.get('rot') or {}).get(b['id'], 0),
+                   shift=(_J.get('shift') or {}).get(b['id'], b.get('shift', [0, 0]))) for b in RIG['bones']}
+
+
+def mul(m, n):
+    return [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]]
+
+
+def app(m, p):
+    return [m[0]*p[0]+m[2]*p[1]+m[4], m[1]*p[0]+m[3]*p[1]+m[5]]
+
+
+def rest_mat(bid):
+    """쉬는 자세에서 그 뼈의 '그림 좌표 → 화면 좌표' 행렬 (pose.ts local·boneMatrices 와 같은 식)"""
+    b = B[bid]
+    r = math.radians(b['restRot'])
+    c, s_ = math.cos(r), math.sin(r)
+    px, py = b['pivot']
+    sx, sy = b['shift']
+    m = [c, s_, -s_, c, px - c*px + s_*py + sx, py - s_*px - c*py + sy]
+    return mul(rest_mat(b['parent']), m) if b['parent'] else m
+
+
+def art_tip(slot):
+    """아랫마디 그림의 발끝(그림 좌표): 가장 낮은 불투명 줄의 가운데 아래"""
+    from PIL import Image
+    import numpy as np
+    p = RIG['bodies']['ref'][slot]
+    a = np.array(Image.open(os.path.join(DRAFT_DIR, 'spider', p['art'] + '.png')).convert('RGBA'))[..., 3] > 0
+    ys, xs = np.nonzero(a)
+    y = ys.max()
+    return [round(float(xs[ys == y].mean()) + p['at'][0] + 0.5, 2), float(y + p['at'][1] + 1)]
+
+
+TIPS = {leg + 'b': art_tip(leg + 'b') for leg in LEGS}                       # 그림 좌표(뼈대 데이터 tips 에 적어 둠 — 시험이 씀)
+ROOT_PIV = app(rest_mat('root'), B['root']['pivot'])
+# 쉬는 자세의 화면 좌표: 엉덩이(윗마디 관절)·무릎(아랫마디 관절)·발끝
+REST = {leg: (app(rest_mat(leg), B[leg]['pivot']), app(rest_mat(leg + 'b'), B[leg + 'b']['pivot']), app(rest_mat(leg + 'b'), TIPS[leg + 'b'])) for leg in LEGS}
 
 
 def rot(p, c, deg):
@@ -39,10 +78,10 @@ def norm(d):
 
 
 def solve_leg(leg, root, tip_d):
-    """root = (기울기°, x, y), tip_d = 발끝 옮김 → (윗마디 각, 아랫마디 각) — 뼈 자기 각도(부모 기준)"""
-    H, K, T = B[leg]['pivot'], B[leg + 'b']['pivot'], TIPS[leg + 'b']
+    """root = (기울기°, x, y), tip_d = 발끝 옮김 → (윗마디 각, 아랫마디 각) — 쉬는 자세에 더하는 동작 각"""
+    H, K, T = REST[leg]
     rr, rx, ry = root
-    h = rot(H, B['root']['pivot'], rr)
+    h = rot(H, ROOT_PIV, rr)
     h = [h[0] + rx, h[1] + ry]
     t = [T[0] + tip_d[0], T[1] + tip_d[1]]
     l1, l2 = math.dist(H, K), math.dist(K, T)
@@ -189,6 +228,11 @@ def main():
         out[mid] = m
     for k, v in prev.items():  # 이 도구가 만들지 않는 동작·묶음은 그대로
         out.setdefault(k, v)
+    # 발끝(그림 좌표)을 뼈대 데이터에 적어 둔다 — 그림·자리를 고친 뒤(편집기 고정) 이 도구를 다시 돌리면 같이 바뀜
+    rig = json.load(open(RIG_PATH, encoding='utf-8'))
+    if (rig.get('tips') or {}).get('ref') != TIPS:
+        rig.setdefault('tips', {})['ref'] = TIPS
+        open(RIG_PATH, 'w', encoding='utf-8').write(json.dumps(rig, ensure_ascii=False, indent=1) + '\n')
     s = json.dumps(out, ensure_ascii=False, indent=1)
     s = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2, \3, \4]', s)
     open(OUT, 'w', encoding='utf-8').write(s + '\n')

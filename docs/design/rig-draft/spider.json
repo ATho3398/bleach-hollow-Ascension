@@ -199,8 +199,8 @@
    "leg1b": {
     "art": "ref/leg1b",
     "at": [
-     0,
-     51
+     1,
+     50
     ],
     "size": [
      14,
@@ -210,7 +210,7 @@
    "leg1": {
     "art": "ref/leg1",
     "at": [
-     12,
+     9,
      45
     ],
     "size": [
@@ -221,7 +221,7 @@
    "leg4b": {
     "art": "ref/leg4b",
     "at": [
-     65,
+     57,
      46
     ],
     "size": [
@@ -232,7 +232,7 @@
    "leg4": {
     "art": "ref/leg4",
     "at": [
-     55,
+     47,
      43
     ],
     "size": [
@@ -276,8 +276,8 @@
    "leg2b": {
     "art": "ref/leg2b",
     "at": [
-     11,
-     45
+     10,
+     46
     ],
     "size": [
      12,
@@ -287,8 +287,8 @@
    "leg2": {
     "art": "ref/leg2",
     "at": [
-     15,
-     40
+     14,
+     41
     ],
     "size": [
      25,
@@ -298,7 +298,7 @@
    "leg3b": {
     "art": "ref/leg3b",
     "at": [
-     55,
+     52,
      46
     ],
     "size": [
@@ -309,7 +309,7 @@
    "leg3": {
     "art": "ref/leg3",
     "at": [
-     42,
+     39,
      40
     ],
     "size": [
@@ -693,22 +693,77 @@
   "note": "다리 아랫마디의 발끝(캔버스 좌표, 쉬는 자세) — 동작 도구가 이 점을 바닥에 붙인다",
   "ref": {
    "leg1b": [
-    1.0,
-    76.0
+    2.0,
+    75.0
    ],
    "leg2b": [
-    14.5,
-    81.0
+    13.5,
+    82.0
    ],
    "leg3b": [
-    61.5,
+    58.5,
     80.0
    ],
    "leg4b": [
-    77.5,
+    69.5,
     77.0
    ]
   }
  },
- "assembled": "docs/design/user-art/spider-ref/assembly.json"
+ "assembled": "docs/design/user-art/spider-ref/assembly.json",
+ "bodySlots": {
+  "ref": [
+   "leg1b",
+   "leg1",
+   "leg4b",
+   "leg4",
+   "leg2b",
+   "leg2",
+   "abdomen",
+   "arm_R",
+   "torso",
+   "leg3b",
+   "leg3",
+   "arm_L",
+   "hand_R",
+   "head"
+  ]
+ },
+ "bodyJoints": {
+  "ref": {
+   "pivots": {
+    "leg1b": [
+     12,
+     51
+    ],
+    "leg4b": [
+     61,
+     48
+    ],
+    "leg3": [
+     39,
+     55
+    ],
+    "abdomen": [
+     36,
+     45
+    ],
+    "leg4": [
+     44,
+     52
+    ],
+    "leg2b": [
+     18,
+     48
+    ],
+    "leg3b": [
+     55,
+     47
+    ]
+   },
+   "rot": {
+    "leg1b": -12
+   }
+  }
+ }
 }

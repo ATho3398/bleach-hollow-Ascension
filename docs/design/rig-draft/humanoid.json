@@ -97,7 +97,7 @@
       "foot_L": { "art": "arrancar/foot_L", "at": [5, 72], "size": [11, 9] },
       "foot_R": { "art": "arrancar/foot_R", "at": [21, 72], "size": [9, 9] },
       "thumb_L": { "art": "arrancar/thumb_L", "at": [7, 53], "size": [3, 6] },
-      "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 37], "size": [14, 19] },
+      "forearm_R": { "art": "arrancar/forearm_R", "at": [19, 39], "size": [14, 17] },
       "forearm_L": { "art": "arrancar/forearm_L", "at": [1, 42], "size": [15, 17] }
     },
     "bare": {
@@ -219,7 +219,7 @@
       "fold5": { "art": "hd/fold5", "at": [20, 64], "size": [23, 15] }
     },
     "ho": {
-      "torso": { "art": "ho/torso", "at": [6, 29], "size": [28, 40] },
+      "torso": { "art": "ho/torso", "at": [6, 29], "size": [29, 40] },
       "head": { "art": "ho/head", "at": [-6, 24], "size": [23, 28] },
       "arm_R": { "art": "ho/arm_R", "at": [0, 48], "size": [11, 10] },
       "forearm_R": { "art": "ho/forearm_R", "at": [-9, 54], "size": [13, 23] },

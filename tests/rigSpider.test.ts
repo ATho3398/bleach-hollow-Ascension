@@ -5,9 +5,12 @@ import { DRAFT_RIGS } from '../scripts/rig/draft';
 import { apply, boneMatrices, lookLayers, samplePose, validateRig, type Vec2 } from '../src/data/art/rig/pose';
 
 const { rig, motions, sets } = DRAFT_RIGS.spider!;
-const tips = (rig as unknown as { tips: { ref: Record<string, Vec2> } }).tips.ref;
 const LEGS = ['leg1b', 'leg2b', 'leg3b', 'leg4b'];
-const tipAt = (id: string, t: number) => Object.fromEntries(LEGS.map((l) => [l, apply(boneMatrices(rig, samplePose(rig, motions[id]!, t))[l]!, tips[l]!)]));
+const local = (rig as unknown as { tips: { ref: Record<string, Vec2> } }).tips.ref; // 발끝(그림 좌표)
+const restM = boneMatrices(rig, {}, 'ref');
+/** 쉬는 자세의 발끝(화면 좌표) — 몸(ref)에 맞춘 관절·기본 각도(편집기 고정) 반영 */
+const tips: Record<string, Vec2> = Object.fromEntries(LEGS.map((l) => [l, apply(restM[l]!, local[l]!)]));
+const tipAt = (id: string, t: number) => Object.fromEntries(LEGS.map((l) => [l, apply(boneMatrices(rig, samplePose(rig, motions[id]!, t), 'ref')[l]!, local[l]!)]));
 
 describe('거미형 뼈대 (GDD 115-A 106)', () => {
   it('뼈대 검사 통과, 조각 14개 그림이 있고 동작 7개', () => {
@@ -29,8 +32,8 @@ describe('거미형 뼈대 (GDD 115-A 106)', () => {
       }
     }
     // 몸은 실제로 움직인다
-    const mid = boneMatrices(rig, samplePose(rig, motions.idle!, 900));
-    expect(mid.torso![5] - boneMatrices(rig, {}).torso![5]).toBeGreaterThan(0.5);
+    const mid = boneMatrices(rig, samplePose(rig, motions.idle!, 900), 'ref');
+    expect(mid.torso![5] - restM.torso![5]).toBeGreaterThan(0.5);
   });
   it('이동: 다리마다 발을 떼는 때가 다르고(넷이 따로), 디딘 발끝은 바닥 높이 그대로', () => {
     const m = motions.move!;
