@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { DRAFT_RIGS } from '../scripts/rig/draft';
 import { followMove } from '../scripts/rig/follow';
 import { createDollClock } from '../src/ui/bha/paperdoll';
@@ -192,6 +192,17 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Math.abs(samplePose(rig, still, 350).cape3!.rot)).toBeGreaterThan(1);
     const tip = { duration: 1000, loop: true, tracks: { root: [[0, -60, 0, 0], [1000, -60, 0, 0]] as [number, number, number, number][] } };
     expect(samplePose(rig, tip, 500).hair_back2!.rot).toBe(0);
+  });
+  it('길리안 외눈 가면 시험(GDD 115-A 101): 몸·관절·동작은 길리안 그대로, 머리 그림만 외눈 가면(빈 곳 없이 검정 채움), 게임에는 안 넣는 시험 외형', () => {
+    const l = rig.looks['gillian-cyclops-test']!;
+    expect(l.body).toBe('hd');
+    expect(l.artFolder).toBe('hd-cyclops');
+    const dir = 'docs/design/rig-draft/humanoid/';
+    for (const part of Object.keys(rig.bodies.hd!)) {
+      const a = readFileSync(`${dir}hd/${part}.png`);
+      const b = readFileSync(`${dir}hd-cyclops/${part}.png`);
+      expect(a.equals(b), part).toBe(part !== 'head');
+    }
   });
   it('짐승형 꼬리: 꼬리 관절은 엉덩이(꼬리 그림 안), 꼬리 끝 관절은 두 마디 이음매(두 그림에 걸침) · 공격2 = 가까운 앞발 — GDD 115-A 83', () => {
     const b = DRAFT_RIGS.beast!;

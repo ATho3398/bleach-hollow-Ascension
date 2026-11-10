@@ -343,6 +343,10 @@
     },
     "gillian-base": {
       "body": "hd"
+    },
+    "gillian-cyclops-test": {
+      "body": "hd",
+      "artFolder": "hd-cyclops"
     }
   },
   "hairFrame": {
@@ -1046,6 +1050,14 @@
         "#3a2c48": "#2a324c"
       },
       "source": "적 water"
+    },
+    "hd-cyclops": {
+      "from": "hd",
+      "map": {},
+      "replace": {
+        "head": "docs/design/user-art/hood-ref/mask-trials-2026-11-10/head-cyclops-filled.png"
+      },
+      "source": "길리안 외눈 가면 시험(사용자 2026-11-10 \"외눈가면만 살리고 … 종이인형으로 구현해봐\") — 머리만 외눈 가면, 나머지 부위·관절·동작은 길리안 그대로"
     }
   },
   "segmentSrc": {

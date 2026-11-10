@@ -3,6 +3,7 @@
 원본 폴더의 부위 그림마다 색만 바꿔 <폴더>/ 에 같은 이름으로 쓴다. 외형의 artFolder 가 이 폴더를 가리킨다(몸·관절·동작은 원본 몸 그대로).
 덩치(hb) = 사용자 색 시트(2026-11-09 넷째 줄 5색) + 게임 적 덩치(<속성>-basic) 속성 색 — 도트 6색 중 몸 두 색(밝은·어두운)만 바뀐다.
 원본 부위 그림을 고치면(가져오기·편집기 고정과 무관한 그림 교체) 다시 돌린다.
+replace = {부위 이름: 그림 경로(저장소 기준)} 가 있으면 색을 바꾼 뒤 그 부위 그림만 통째로 바꿔 넣는다(길리안 외눈 가면 시험, GDD 115-A 101).
 사용: python3 scripts/rig/recolor.py [humanoid]
 """
 import json
@@ -14,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paths import DRAFT_DIR  # noqa: E402
+from paths import DRAFT_DIR, ROOT  # noqa: E402
 
 
 def hexrgb(h):
@@ -44,7 +45,9 @@ def main(rig_id='humanoid'):
                 out[m, :3] = c1
             Image.fromarray(out).save(os.path.join(out_dir, f))
             n += 1
-        print(f'{folder} ← {spec["from"]} ({n}장, 색 {len(pairs)}개)')
+        for part, src in (spec.get('replace') or {}).items():
+            shutil.copyfile(os.path.join(ROOT, src), os.path.join(out_dir, f'{part}.png'))
+        print(f'{folder} ← {spec["from"]} ({n}장, 색 {len(pairs)}개{", 바꿔 넣기 " + ",".join(spec["replace"]) if spec.get("replace") else ""})')
 
 
 if __name__ == '__main__':
