@@ -3,7 +3,7 @@ import { createPaperdoll } from '../../../src/ui/bha/paperdoll';
 declare const ART_MAP: Record<string, string>;
 const stage = document.getElementById('stage')!;
 const LOOKS: [string, string][] = [
-  ...['shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f', 'arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'digitigrade-base', 'brute-base', 'gillian-base', 'gillian-cyclops', 'cape-test'].map((l) => ['humanoid', l] as [string, string]),
+  ...['shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f', 'arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'digitigrade-base', 'brute-base', 'onearm-base', 'gillian-base', 'gillian-cyclops', 'cape-test'].map((l) => ['humanoid', l] as [string, string]),
   ['beast', 'beast-base'],
   ['serpent', 'serpent-base'],
 ];
