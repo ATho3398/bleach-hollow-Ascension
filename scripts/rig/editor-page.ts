@@ -467,6 +467,41 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
   buildColors(); buildChips(); save(false); draw();
 });
+/** 외형 고르기 = 종족 탭(사신·아란칼·호로·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
+ *  "사신 아란칼 호로 탭 먼저 나누고 그 안에서 사신 여자 사신 남자 나누고 거기서 혼백, 영술원 학생, 사신 … 호로는 진화체들 정리해서 넣고, 진화체 선택하면 색상도 고르게").
+ *  외형 단추는 묶음(data-group) 줄에 들어 있고, 탭·성별에 맞는 줄만 보인다. pick = 그 줄의 첫 외형을 고른다 */
+let tab = 'arrancar';
+let sub = 'm';
+const GENDERED = ['shinigami', 'arrancar'];
+const groupOf = () => (GENDERED.includes(tab) ? `${tab}-${sub}` : tab);
+function showTabs(pick: boolean) {
+  document.querySelectorAll<HTMLElement>('[data-tab]').forEach((x) => x.classList.toggle('on', x.dataset.tab === tab));
+  document.querySelectorAll<HTMLElement>('[data-sub]').forEach((x) => x.classList.toggle('on', x.dataset.sub === sub));
+  const subs = document.getElementById('subs');
+  if (subs) subs.hidden = !GENDERED.includes(tab);
+  let shown: HTMLElement | null = null;
+  document.querySelectorAll<HTMLElement>('[data-group]').forEach((g) => {
+    g.hidden = g.dataset.group !== groupOf();
+    if (!g.hidden) shown = g;
+  });
+  if (pick && shown && !(shown as HTMLElement).querySelector('[data-look].on')) (shown as HTMLElement).querySelector<HTMLButtonElement>('[data-look]')?.click();
+}
+/** 지금 고른 외형(색 외형이면 그 몸의 대표 단추)이 든 줄로 탭·성별을 맞춘다 */
+function syncTabs() {
+  const body = rig.looks[look]?.body;
+  const btn = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-look]')).find((x) => x.dataset.look === look)
+    ?? Array.from(document.querySelectorAll<HTMLButtonElement>('[data-look]')).find((x) => ctxOfLook(x.dataset.look!) === C && rig.looks[x.dataset.look!]?.body === body);
+  const g = btn?.closest<HTMLElement>('[data-group]')?.dataset.group;
+  if (!g) return;
+  const [t, s] = g.split('-');
+  tab = t!;
+  if (s) sub = s;
+  document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === btn));
+  showTabs(false);
+}
+document.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.onclick = () => { tab = b.dataset.tab!; showTabs(true); });
+document.querySelectorAll<HTMLButtonElement>('[data-sub]').forEach((b) => b.onclick = () => { sub = b.dataset.sub!; showTabs(true); });
+setTimeout(syncTabs, 0);
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onclick = () => {
   mode = b.dataset.mode as 'pivot' | 'part';
   document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
