@@ -29,12 +29,15 @@ for (const [fid, abbr] of ORDER) {
   if (!fam) throw new Error(`${fid} 에 ${abbr} 계열 없음`);
   const key = `${fid}/${fam.id}`;
   // motion = 계열 몸동작(종이인형이 고르는 동작 묶음, 게임 attackFx 와 같다)
-  entries.push({ key, label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1, ...(fam.motion ? { motion: fam.motion } : {}) });
+  entries.push({ key, kind: 'char', label: `${fac.name} ${fam.name}`, faction: fid, bg: dataUri(`scripts/pixelfx/tool/battle-bg-${fid}.png`, 'image/png'), dir: -1, ...(fam.motion ? { motion: fam.motion } : {}) });
   const all = (n) => Array.from({ length: n }, (_, i) => i);
   // 처음 값 = 게임 값(종족 설정 families[].pixelFx, C.281 부터). 없는 계열은 빈 값(지금 게임 연타 시각)
+  const fillStages = (stages) => stages.map((st) => ({ ...st, bodies: { male: st.bodies.male ?? { chain: [], bodyAt: 0, bodyFromHit: true }, female: st.bodies.female ?? { chain: [], bodyAt: 0, bodyFromHit: true }, frames: st.bodies.frames ?? { chain: [], bodyAt: 0, bodyFromHit: true } } }));
   defaults[key] = fam.pixelFx?.stages
-    ? fam.pixelFx.stages.map((st) => ({ ...st, bodies: { male: st.bodies.male ?? { chain: [], bodyAt: 0, bodyFromHit: true }, female: st.bodies.female ?? { chain: [], bodyAt: 0, bodyFromHit: true }, frames: st.bodies.frames ?? { chain: [], bodyAt: 0, bodyFromHit: true } } }))
+    ? fillStages(fam.pixelFx.stages)
     : TIMING.map(([hits, gapMs]) => ({ hits, gaps: all(hits - 1).map(() => gapMs), speed: 1, layers: [] }));
+  // 몸마다 따로 (GDD 230장): 게임 pixelFx.byBody → 도구 키 '<계열>@<뼈대>/<몸>'. 없는 몸은 도구가 사람형 값을 베껴 시작한다
+  for (const [bk, b] of Object.entries(fam.pixelFx?.byBody ?? {})) defaults[`${key}@${bk}`] = fillStages(b.stages);
 }
 
 // 강적 강공격 빨간 세로 (GDD 227장, 사용자 2026-11-10 "강적 강공격 들은 빨간 세로" + "위치 파악해서 반영"): 몸마다 한 블록(입 자리가 다름).
@@ -46,7 +49,8 @@ for (const [fid, abbr] of ORDER) {
   for (const [bk, st] of Object.entries(eh.byBody)) {
     const [name, char] = BODY[bk] ?? [bk, 'elite-brute'];
     const key = `elite-heavy/${bk}`;
-    entries.push({ key, label: `강적 강공격 · ${name}`, faction: 'hollow', bg: dataUri('scripts/pixelfx/tool/battle-bg-hollow.png', 'image/png'), dir: -1, stages: 1, char, el: eh.element });
+    // 몬스터 탭 (사용자 2026-11-11 "캐릭터, 몬스터로 최상단 탭에서 나누고 … 몬스터는 치는 모션도 그냥 강공1, 강공2 이런식으로"): 공격 = 강공1(지금 강공격)
+    entries.push({ key, kind: 'monster', attack: '강공1', body: bk, label: `강공1 (강공격)`, faction: 'hollow', bg: dataUri('scripts/pixelfx/tool/battle-bg-hollow.png', 'image/png'), dir: -1, stages: 1, char, el: eh.element });
     defaults[key] = [{ ...st, bodies: { male: fill(st.bodies.male), female: fill(st.bodies.female), frames: fill(st.bodies.frames) } }];
   }
 }
