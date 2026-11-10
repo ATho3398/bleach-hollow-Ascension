@@ -1,0 +1,104 @@
+{
+ "url": "http://localhost:5399/",
+ "picked": [
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "carapace-vs-inkveil",
+   "foe": "잉크베일",
+   "ok": true
+  },
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "stag-vs-sandtrap",
+   "foe": "샌드트랩",
+   "ok": true
+  },
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "raptor-vs-dunewarden",
+   "foe": "듄워든",
+   "ok": true
+  }
+ ],
+ "battles": [
+  {
+   "tag": "carapace-vs-inkveil",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "stag-vs-sandtrap",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "raptor-vs-dunewarden",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   }
+  }
+ ],
+ "shots": [
+  "carapace-vs-inkveil-battle-0.png",
+  "carapace-vs-inkveil-battle-1.png",
+  "stag-vs-sandtrap-battle-0.png",
+  "stag-vs-sandtrap-battle-1.png",
+  "raptor-vs-dunewarden-battle-0.png",
+  "raptor-vs-dunewarden-battle-1.png"
+ ],
+ "save": [],
+ "errors": []
+}

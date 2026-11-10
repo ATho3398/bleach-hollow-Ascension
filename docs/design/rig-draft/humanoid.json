@@ -178,18 +178,6 @@
       "forearm_R": { "art": "arrancar_f/forearm_R", "at": [20, 38], "size": [13, 16] },
       "forearm_L": { "art": "arrancar_f/forearm_L", "at": [4, 42], "size": [12, 16] }
     },
-    "dg": {
-      "torso": { "art": "dg/torso", "at": [2, 34], "size": [24, 28] },
-      "head": { "art": "dg/head", "at": [-20, 24], "size": [30, 32] },
-      "arm_R": { "art": "dg/arm_R", "at": [6, 46], "size": [6, 10] },
-      "forearm_R": { "art": "dg/forearm_R", "at": [-12, 48], "size": [24, 20] },
-      "arm_L": { "art": "dg/arm_L", "at": [10, 32], "size": [20, 16] },
-      "forearm_L": { "art": "dg/forearm_L", "at": [28, 42], "size": [18, 26] },
-      "leg_R": { "art": "dg/leg_R", "at": [2, 56], "size": [16, 12] },
-      "shin_R": { "art": "dg/shin_R", "at": [-2, 64], "size": [18, 16] },
-      "leg_L": { "art": "dg/leg_L", "at": [18, 54], "size": [16, 16] },
-      "shin_L": { "art": "dg/shin_L", "at": [28, 64], "size": [24, 16] }
-    },
     "hb": {
       "torso": { "art": "hb/torso", "at": [2, 28], "size": [28, 42] },
       "head": { "art": "hb/head", "at": [-8, 22], "size": [24, 30] },
@@ -231,14 +219,27 @@
       "torso": { "art": "soul_f/torso", "at": [9, 25], "size": [18, 28] },
       "arm_L": { "art": "soul_f/arm_L", "at": [4, 29], "size": [13, 15] },
       "arm_R": { "art": "soul_f/arm_R", "at": [21, 29], "size": [13, 15] },
-      "leg_L": { "art": "soul_f/leg_L", "at": [6, 50], "size": [17, 26] },
+      "leg_L": { "art": "soul_f/leg_L", "at": [7, 50], "size": [17, 26] },
       "leg_R": { "art": "soul_f/leg_R", "at": [13, 46], "size": [18, 29] },
       "head": { "art": "shinigami/head", "at": [7, 10], "size": [16, 19] },
-      "foot_L": { "art": "shinigami/foot_L", "at": [5, 72], "size": [11, 9] },
+      "foot_L": { "art": "shinigami/foot_L", "at": [6, 72], "size": [11, 9] },
       "foot_R": { "art": "shinigami/foot_R", "at": [20, 72], "size": [9, 9] },
       "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
       "forearm_R": { "art": "soul_f/forearm_R", "at": [20, 37], "size": [14, 18] },
       "forearm_L": { "art": "soul_f/forearm_L", "at": [1, 42], "size": [12, 16] }
+    },
+    "soul": {
+      "torso": { "art": "soul/torso", "at": [9, 26], "size": [18, 30] },
+      "arm_L": { "art": "soul/arm_L", "at": [4, 29], "size": [13, 15] },
+      "arm_R": { "art": "soul/arm_R", "at": [21, 29], "size": [13, 15] },
+      "leg_L": { "art": "soul/leg_L", "at": [6, 51], "size": [17, 25] },
+      "leg_R": { "art": "soul/leg_R", "at": [14, 49], "size": [16, 27] },
+      "head": { "art": "shinigami/head", "at": [7, 10], "size": [16, 19] },
+      "foot_L": { "art": "shinigami/foot_L", "at": [5, 72], "size": [11, 9] },
+      "foot_R": { "art": "shinigami/foot_R", "at": [21, 72], "size": [9, 9] },
+      "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
+      "forearm_R": { "art": "soul/forearm_R", "at": [20, 38], "size": [14, 18] },
+      "forearm_L": { "art": "soul/forearm_L", "at": [2, 42], "size": [11, 16] }
     }
   },
   "looks": {
@@ -288,6 +289,12 @@
       "hair_back2": { "art": "shinigami_f/hair_back_s2", "at": [25, 22], "size": [11, 15] },
       "hair_back3": { "art": "shinigami_f/hair_back_s3", "at": [24, 36], "size": [16, 16] }
     },
+    "shinigami-soul": {
+      "body": "soul",
+      "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
+      "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
+      "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] }
+    },
     "shinigami-base-f": {
       "body": "shinigami_f",
       "hair": { "art": "shinigami_f/hair", "at": [1, 2], "size": [27, 25] },
@@ -305,9 +312,6 @@
       "hair_back": { "art": "arrancar_f/hair_back_s1", "at": [8, -3], "size": [21, 22] },
       "hair_back2": { "art": "arrancar_f/hair_back_s2", "at": [15, 18], "size": [14, 11] },
       "release": "arrancar-base-f-released"
-    },
-    "digitigrade-base": {
-      "body": "dg"
     },
     "cape-test": {
       "body": "arrancar",
@@ -386,7 +390,23 @@
       "artFolder": "hd-cyclops"
     },
     "onearm-base": {
-      "body": "ho"
+      "body": "ho",
+      "color": "보라"
+    },
+    "onearm-brown": {
+      "body": "ho",
+      "artFolder": "ho-brown",
+      "color": "갈색"
+    },
+    "onearm-blue": {
+      "body": "ho",
+      "artFolder": "ho-blue",
+      "color": "파랑"
+    },
+    "onearm-yellow": {
+      "body": "ho",
+      "artFolder": "ho-yellow",
+      "color": "황토"
     }
   },
   "hairFrame": {
@@ -526,21 +546,6 @@
         "arm_R": [-0.54, 0.43]
       }
     },
-    "dg": {
-      "pivots": {
-        "root": [18, 58],
-        "torso": [18, 58],
-        "head": [4, 38],
-        "arm_R": [8, 46],
-        "forearm_R": [8, 52],
-        "arm_L": [12, 38],
-        "forearm_L": [28, 44],
-        "leg_R": [14, 58],
-        "shin_R": [6, 64],
-        "leg_L": [22, 58],
-        "shin_L": [30, 68]
-      }
-    },
     "shinigami": {
       "pivots": {
         "forearm_L": [9, 44],
@@ -606,7 +611,9 @@
         "foot_R": [22, 75],
         "forearm_R": [29, 41],
         "hair_back2": [31, 23],
-        "hair_back3": [28, 37]
+        "hair_back3": [28, 37],
+        "leg_L": [14, 53],
+        "foot_L": [13, 75]
       },
       "rot": {
         "arm_R": 4,
@@ -617,10 +624,20 @@
       "shift": {
         "arm_R": [-0.54, 0.43]
       }
+    },
+    "soul": {
+      "pivots": {
+        "forearm_L": [9, 44],
+        "arm_R": [25, 35],
+        "forearm_R": [32, 42]
+      },
+      "rot": {
+        "arm_R": 19,
+        "forearm_R": -35
+      }
     }
   },
   "bodyMotions": {
-    "dg": "digitigrade",
     "arrancar_f": "arrancarRelease",
     "female": "female",
     "student": "student",
@@ -632,7 +649,8 @@
     "hb": "brute",
     "hd": "gillian",
     "ho": "onearm",
-    "soul_f": "soul_f"
+    "soul_f": "soul_f",
+    "soul": "soul"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -895,21 +913,18 @@
       "fold4",
       "fold5"
     ],
-    "dg": [
-      "arm_L",
-      "forearm_L",
-      "leg_L",
-      "shin_L",
-      "torso",
-      "head",
-      "leg_R",
-      "shin_R",
-      "forearm_R",
-      "arm_R",
+    "shinigami": [
       "cape2",
+      "fold1",
+      "fold2",
+      "fold3",
+      "fold4",
+      "fold5",
       "cape3",
       "cape",
+      "arm_L",
       "outer_arm_L",
+      "forearm_L",
       "weapon",
       "thumb_L",
       "hair_back2",
@@ -917,19 +932,59 @@
       "hair_back",
       "foot_L",
       "foot_R",
+      "leg_L",
+      "shin_L",
+      "leg_R",
+      "shin_R",
+      "torso",
       "outer_torso",
       "scabbard",
       "jaw",
-      "hair",
-      "outer_arm_R"
+      "head",
+      "arm_R",
+      "outer_arm_R",
+      "forearm_R",
+      "hair"
+    ],
+    "soul": [
+      "cape2",
+      "fold1",
+      "fold2",
+      "fold3",
+      "fold4",
+      "fold5",
+      "cape3",
+      "cape",
+      "arm_L",
+      "outer_arm_L",
+      "forearm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back2",
+      "hair_back3",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "leg_L",
+      "shin_L",
+      "leg_R",
+      "shin_R",
+      "torso",
+      "outer_torso",
+      "scabbard",
+      "jaw",
+      "head",
+      "arm_R",
+      "outer_arm_R",
+      "forearm_R",
+      "hair"
     ]
   },
   "assembled": {
     "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
     "hb": "docs/design/user-art/beast-base-ref/assembly.json",
     "hd": "docs/design/user-art/hood-ref/assembly.json",
-    "ho": "docs/design/user-art/onearm-ref/assembly.json",
-    "dg": "docs/design/user-art/digitigrade-ref/assembly.json"
+    "ho": "docs/design/user-art/onearm-ref/assembly.json"
   },
   "recolors": {
     "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",
@@ -1012,6 +1067,30 @@
         "head": "docs/design/user-art/hood-ref/mask-trials-2026-11-10/head-cyclops-filled.png"
       },
       "source": "길리안 외눈 가면 시험(사용자 2026-11-10 \"외눈가면만 살리고 … 종이인형으로 구현해봐\") — 머리만 외눈 가면, 나머지 부위·관절·동작은 길리안 그대로"
+    },
+    "ho-brown": {
+      "from": "ho",
+      "map": {
+        "#885d82": "#967654",
+        "#4c314b": "#4e3a2a"
+      },
+      "source": "땅 — 강적 샌드트랩(earth-heavy-seal)"
+    },
+    "ho-blue": {
+      "from": "ho",
+      "map": {
+        "#885d82": "#58688c",
+        "#4c314b": "#2a324c"
+      },
+      "source": "물 — 강적 셸그레이브(water-stance)"
+    },
+    "ho-yellow": {
+      "from": "ho",
+      "map": {
+        "#885d82": "#a68e5e",
+        "#4c314b": "#58462e"
+      },
+      "source": "번개 — 강적 파라라요스(thunder-stance)"
     }
   },
   "segmentSrc": {

@@ -33,4 +33,4 @@ def rig_paths(rid):
 
 
 # 게임에 넣는 뼈대 (promote.py·still.py). 짐승형(beast)도 게임에 넣는다(GDD 228장)
-GAME_RIGS = ('humanoid', 'serpent', 'beast')
+GAME_RIGS = ('humanoid', 'serpent', 'beast', 'spider')  # 거미형도(GDD 231장)

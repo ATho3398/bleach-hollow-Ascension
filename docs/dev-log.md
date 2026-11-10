@@ -3172,3 +3172,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 실측 도중 생긴 일: 한 번은 pc-사신 실행이 브라우저 종료로 끊겼고, 한 번은 새로 띄운 서버 첫 로드가 늦어 첫 각본 카드를 기다리다 멈췄다. 둘 다 다시 돌려 통과했으며 표는 통과한 실행을 모은 것이다.
 - 캡처 `docs/captures/c379/` 8장(1배): 1·2 고쳐서 한 줄이 된 첫 포식 카드(PC·폰) · 3 240 폭 버튼 3개 한 줄 · 4·5 전투 각본 [이전] → 앞 장(전투 그대로) · 6 막기 대기 카드([이전] 없음) · 7 회복 실제 조작 카드([이전] 없음) · 8 전투 튜토리얼 [이전].
 - 테스트 `tests/c379.test.ts` 7개. 세이브·밸런스 변경 없음.
+
+## C.380 — 역관절 삭제 · 외팔이 = 물리, 거미형 = 특수·혼합(아쥬커스 외형 + 아쥬커스 강적) (GDD 231장 · 115-A 105~112, v5.542, S-23, 종이인형 세션)
+- 사용자 원문: "아 역관절 저 호로는 아예 없애자. 게임 내에서도 아예 지워버려." · "거미랑 외팔이도 색상 n개씩 추가하고, 아쥬커스 진화체에 적당히 포함시켜. 외팔이는 무조건 물리로만, 거미는 혼합이랑 특공으로. 각각 아쥬커스 등급 강적으로도 몇개 추가시키고 fx툴에도 연동 ㄱㄱ" · "사신 남자 영혼도 추가해서 … 누더기 느낌으로".
+- 삭제: 종이인형 역관절(외형 digitigrade-base·몸 dg·동작 묶음·그림) — 작업본·게임본.
+- 엔진: `RIG_PACKS` 에 spider(게임 뼈대 넷째). `paths.GAME_RIGS` 에 spider.
+- 데이터: `skin.carapace` = onearm-base, `skin.stag` = spider-base, `skin.raptor` = spider-teal, `ONEARM_ENEMIES`(earth-heavy-seal·water-stance·thunder-stance — 전부 물리), `SPIDER_ENEMIES`(water-heavy-seal·thunder-heavy-seal 특수, earth-stance 혼합), `ONEARM_SCALE` 2.2 · `SPIDER_SCALE` 1.2.
+- 작업본 → 게임(promote): 외팔이(색 4)·거미(색 5, 다리 넷 발끝 풀이)·혼백(여)·혼백(남, `tools/soul_m.py`)·사신(여) 뒷머리·아란칼 오른팔·편집기 고정 03:02~03:52.
+- 편집기: 외형 고르기 = 종족 탭 → 성별 → 단계/진화체 → 색(115-A 110).
+- 이펙트(byBody humanoid/ho·spider/ref, 이펙트 배치 도구 항목, 계열 도트 연출 몸별 값)는 픽셀FX 담당에 부탁 — 그 전까지 fallback.
+- 검증: `tests/c380.test.ts` 8개 + `tests/rigSpider.test.ts` 4개 + 옛 시험 갱신, `scripts/c380-proof.cjs` 실제 전투 1배(갑충형 vs 잉크베일, 사슴형 vs 샌드트랩, 새형 vs 듄워든) 캡처 `docs/captures/c380/` 6장.

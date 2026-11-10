@@ -315,9 +315,9 @@ describe('몸별 그림 앞뒤 순서 bodySlots (GDD 115-A 74)', () => {
   it('몸별 순서가 있으면 그 몸만 그 순서, 다른 몸은 공통 slots 그대로', () => {
     const rig = { ...HUMANOID, bodySlots: { bare: ['arm_R', ...HUMANOID.slots.map((s) => s.id).filter((id) => id !== 'arm_R')] } };
     expect(slotsOf(rig, 'bare')[0]!.id).toBe('arm_R');
-    expect(slotsOf(rig, 'shinigami')).toBe(rig.slots);
+    expect(slotsOf(rig, 'student')).toBe(rig.slots); // 몸별 순서 없는 몸(사신(남)은 편집기 고정으로 따로 생김 — 115-A 110)
     expect(lookLayers(rig, 'bare-base')[0]!.slot).toBe('arm_R');
-    expect(lookLayers(rig, 'shinigami-base').map((l) => l.slot)).toEqual(lookLayers(HUMANOID, 'shinigami-base').map((l) => l.slot));
+    expect(lookLayers(rig, 'shinigami-student').map((l) => l.slot)).toEqual(lookLayers(HUMANOID, 'shinigami-student').map((l) => l.slot));
   });
   it('목록에 없는 슬롯은 원래 자리 순으로 뒤에, 없는 몸·슬롯은 데이터 점검에서 잡는다', () => {
     const rig = { ...HUMANOID, bodySlots: { bare: ['head', 'torso'] } };
