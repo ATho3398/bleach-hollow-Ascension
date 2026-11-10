@@ -3205,3 +3205,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 `tests/c383.test.ts` 신규(코드별 문구 4종·SDK 실패·콘솔 한 줄·다시 올리기 성공/실패/SDK), `tests/c323.test.ts` 로그인 줄 구조 갱신. 세이브 구조 변경 없음.
 - 캡처 `docs/captures/c383/` (scripts/c383-proof.cjs): pc-1 permission-denied · pc-2 다시 올리기 뒤 · ph-3 unavailable · ph-4 SDK 실패.
 
+
+## C.384 — 튜토리얼 강공격에도 빨간 세로 (GDD 227장 보충 6, v5.547, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문(마스터AL 전달, 11-11 04:2x): "튜토 강공격도 fx 반영 해야지?".
+- `src/ui/battleView.ts` heavyPixel 조건 = `(enemy.class === 'elite' || scripted) && !boss` — 튜토리얼 각본 전투(scripted = s.script)의 강공격(각본 강공격·막기 단계)도 그 적 몸의 빨간 세로(eliteHeavyFor). heavyCue·hitDelaysOf 가 같은 신호라 엔진 강공격 지연·각본 '맞은 뒤 멈춤'도 같이 맞음. 종족 분기 없음. 일반 몬스터 평소 강공격·보스 그대로.
+- 검증 `scripts/c384-proof.cjs`(c367-proof 기반) PC 1배 두 종족: 각본 강공격 막음(guard-land)·맞음(hurt-hold) 피해 = 맞는 쪽 반응 0~0.3프레임 OK, 시트 custom-cero-blood·불투명도 0.7. 캡처 `docs/captures/c384/` 2장.
+- 참고(이 패치와 무관, main 에 이미 있음): 호로 튜토리얼 블록(skill-hold) 피해가 맞는 쪽 반응보다 1.2~2프레임 늦음 — 이 변경 없이 main 에서도 2프레임(C.367 때는 0). 마스터에 보고.
+- 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
