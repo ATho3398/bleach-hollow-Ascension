@@ -43,7 +43,7 @@ const readCard = (page) => page.evaluate(() => {
   const step = c.querySelector('.bha-tut__step')?.textContent ?? '';
   return {
     tut: L.dataset.tutorial, step, title: c.querySelector('.bha-tut__title')?.textContent ?? '', wait: c.dataset.wait === '1', prev: c.dataset.prev === '1',
-    devOnly: L.dataset.devOnly ?? null, iconic: !!row?.classList.contains('is-iconic'),
+    devOnly: L.dataset.devOnly ?? null, sel: (() => { const b = row?.querySelector('button.bha-sel'); return b ? b.getAttribute('aria-label') || b.textContent.trim() : null; })(), iconic: !!row?.classList.contains('is-iconic'),
     buttons: btns.map((b) => b.label), nextOn: btns.some((b) => /다음|시작|알겠어요|닫기|배치하기|걷기|안내/.test(b.label) && !/이전|건너뛰기/.test(b.label) && !b.disabled),
     oneRow, noWrap, btnInCard, inView, card: { left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) }, vw, vh,
   };
@@ -83,7 +83,7 @@ async function run(browser, mode, fi, out, errors) {
     await page.waitForTimeout(250);
     c = (await readCard(page)) ?? c;
     const expectPrev = !c.wait && !isFirst(c);
-    const row = { phase, tut: c.tut, step: c.step, title: c.title, wait: c.wait, prev: c.prev, expectPrev, prevOk: c.prev === expectPrev, buttons: c.buttons, iconic: c.iconic, oneRow: c.oneRow, noWrap: c.noWrap, btnInCard: c.btnInCard, inView: c.inView, card: c.card };
+    const row = { phase, tut: c.tut, step: c.step, title: c.title, wait: c.wait, prev: c.prev, deviceCursor: c.sel, expectPrev, prevOk: c.prev === expectPrev, buttons: c.buttons, iconic: c.iconic, oneRow: c.oneRow, noWrap: c.noWrap, btnInCard: c.btnInCard, inView: c.inView, card: c.card };
     if (c.prev) {
       // [이전] → 앞 장 (행동 대기 카드가 아니어야) → [다음]으로 원래 카드까지
       const from = keyOf(c);

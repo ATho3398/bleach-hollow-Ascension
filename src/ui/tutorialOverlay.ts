@@ -558,6 +558,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
       else finish('completed');
     } }), last ? opts.finishLabel ?? '전투 시작' : '다음');
     next.append(icon(last ? 'i-play' : 'i-chevron-right'));
+    next.dataset.devStart = 'tut-next'; // 기기 커서 시작 = [다음] (GDD 229장 — [이전]이 앞에 붙어도 첫 버튼이 아니라 [다음]에서 시작)
     next.disabled = mustTry; // 직접 해 보기는 블록을 하나 써야 넘어간다 (건너뛰기는 언제나 가능)
     const acting = !!sc?.act && !actDone;
     if (acting) next.disabled = true; // 실제 조작 카드: 하기 전에는 [다음] 잠김 (GDD 129-2 2)
