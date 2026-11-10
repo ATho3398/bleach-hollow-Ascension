@@ -1,6 +1,6 @@
 // 종이인형 관절 편집기 (시험용 페이지) — 게임 코드의 pose.ts 를 그대로 쓰고, 값은 작업본(draft.ts, GDD 96장 36)
 import { DRAFT_RIGS, type DraftRig } from './draft';
-import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
+import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
@@ -592,7 +592,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 let last = 0;
 function tick(now: number) {
   if (motion) {
-    if (last) mt += Math.min(100, now - last) * (rig.motionSpeed ?? 1); // 게임과 같은 재생 속도(GDD 225장)
+    if (last) mt += Math.min(100, now - last) * motionSpeedOf(rig, motion); // 게임과 같은 재생 속도(GDD 225장, 대기·홈 대기는 1배 — 115-A 103)
     const m = motionsNow()[motion];
     if (!m) motion = null;
     else if (!m.loop && mt > m.duration + 400) mt = 0;

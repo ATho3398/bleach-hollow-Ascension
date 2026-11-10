@@ -1,7 +1,7 @@
 // 종이인형 그리기 (GDD 96장): 부위 그림(<img>)을 같은 캔버스에 겹쳐 두고, 뼈 행렬(pose.ts)을 CSS transform 으로 건다.
 // 매 순간 실시간으로 움직인다(크루세이더 퀘스트식). 도트는 image-rendering: pixelated 로 흐림 없이 확대·회전된다.
 // 코어(createDollClock)는 DOM 없이 시간·동작 전환만 다뤄 테스트한다.
-import { boneMatrices, fxAt, layerMatrix, lookLayers, motionLook, orderLayers, resolveMotions, samplePose, type Mat, type Motion, type MotionSets, type Rig } from '../../data/art/rig/pose';
+import { boneMatrices, fxAt, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, type Mat, type Motion, type MotionSets, type Rig } from '../../data/art/rig/pose';
 import { fxSvg } from './rigFx';
 import { el } from '../dom';
 
@@ -10,8 +10,9 @@ export interface DollPlayOptions {
   onEnd?: () => void;
 }
 
-/** 시간 흐름 + 반복 동작/한 번 동작 전환 (DOM 없음). speed = 동작 재생 속도(뼈대 motionSpeed, GDD 225장) */
-export function createDollClock(motions: Record<string, Motion>, speed = 1) {
+/** 시간 흐름 + 반복 동작/한 번 동작 전환 (DOM 없음). speed = 동작 재생 속도(뼈대 motionSpeed, GDD 225장) — 함수면 동작마다(예외 동작 = 1, 115-A 103) */
+export function createDollClock(motions: Record<string, Motion>, speed: number | ((id: string) => number) = 1) {
+  const speedOf = (id: string | null) => (typeof speed === 'function' ? (id ? speed(id) : 1) : speed);
   let loopId: string | null = 'idle';
   let onceId: string | null = null;
   let t = 0;
@@ -42,7 +43,7 @@ export function createDollClock(motions: Record<string, Motion>, speed = 1) {
       return true;
     },
     advance(dt: number) {
-      t += dt * speed;
+      t += dt * speedOf(onceId ?? loopId);
       const id = onceId;
       if (!id) return;
       const m = motions[id]!;
@@ -122,7 +123,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
   fx.setAttribute('height', String(h * k));
   fx.style.cssText = 'position:absolute;left:0;top:0;overflow:visible;pointer-events:none';
   root.append(fx);
-  const clock = createDollClock(motions, rig.motionSpeed ?? 1);
+  const clock = createDollClock(motions, (id) => motionSpeedOf(rig, id));
   const draw = () => {
     const cur = clock.current;
     const m = cur ? motions[cur.id] : undefined;

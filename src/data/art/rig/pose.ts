@@ -45,6 +45,8 @@ export interface Rig {
   /** 동작 재생 속도 (GDD 225장, 사용자 2026-11-10 "모션속도들을 1.5배로"): 동작 키 시각(ms)은 그대로 두고 재생할 때 시간을 이 배수로 흘린다(없으면 1).
    *  재생기가 밖으로 알려 주는 길이·타격 시각은 실제 ms(÷ 이 값) — 도트 연결 동작 빠르기(chain rate)는 이 위에 곱해진다 */
   motionSpeed?: number;
+  /** 재생 속도를 안 곱하는 동작(1배 그대로) — 대기·홈 대기 (GDD 115-A 103, 사용자 2026-11-11 "1.5배 하라그런거 대기랑 홈대기는 예외야") */
+  motionSpeedExcept?: string[];
   /** 몸 id → 동작 묶음 이름(motions.json 의 sets). 역관절 다리처럼 몸에 따라 일부 뼈 동작만 바꿔 끼운다(GDD 96장 40) */
   bodyMotions?: Record<string, string>;
   /** 몸 id → 그 몸만의 그림 앞뒤 순서(슬롯 id, 뒤 → 앞). 없으면 slots 순서. 편집기 '기본 자세(이 몸)'의 앞·뒤로 보내기 (GDD 115-A 74) */
@@ -209,6 +211,12 @@ export function rigPackOfLook(look: string): RigPack | undefined {
 /** 뼈대 id → 뼈대 (없거나 모르는 id 면 사람형) */
 export function rigPack(id?: string): RigPack {
   return RIG_PACKS.find((p) => p.id === id) ?? RIG_PACKS[0]!;
+}
+
+/** 이 동작의 재생 속도: 뼈대 motionSpeed, 예외 동작(motionSpeedExcept)은 1 (GDD 225장·115-A 103) */
+export function motionSpeedOf(rig: Rig, motionId?: string | null): number {
+  if (motionId && rig.motionSpeedExcept?.includes(motionId)) return 1;
+  return rig.motionSpeed && rig.motionSpeed > 0 ? rig.motionSpeed : 1;
 }
 
 /** 키 사이를 부드럽게(처음·끝 느리게) 잇는다 */
