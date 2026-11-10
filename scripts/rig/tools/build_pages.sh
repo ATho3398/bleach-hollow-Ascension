@@ -17,7 +17,7 @@ for L in $(python3 -c "import json; print(' '.join(json.load(open('docs/design/r
     python3 scripts/rig/guide.py --look "$L" --out "$OUT/sheets/$L" >/dev/null || echo "시트 못 만듦: $L"
   fi
 done
-python3 scripts/rig/bone_guide.py beast beast-test "$OUT/sheets/beast-test" >/dev/null
+python3 scripts/rig/bone_guide.py beast beast-base "$OUT/sheets/beast-base" >/dev/null
 python3 scripts/rig/bone_guide.py serpent serpent-base "$OUT/sheets/serpent-base" >/dev/null
 python3 -I - "$OUT" <<'PY'
 import base64, glob, json, os, sys

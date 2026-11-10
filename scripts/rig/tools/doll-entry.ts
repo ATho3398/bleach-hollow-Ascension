@@ -4,7 +4,7 @@ declare const ART_MAP: Record<string, string>;
 const stage = document.getElementById('stage')!;
 const LOOKS: [string, string][] = [
   ...['shinigami-base', 'shinigami-base-f', 'shinigami-student', 'shinigami-student-f', 'arrancar-base', 'arrancar-base-f', 'bare-base', 'female-base', 'digitigrade-base', 'brute-base', 'gillian-base', 'gillian-cyclops', 'cape-test'].map((l) => ['humanoid', l] as [string, string]),
-  ['beast', 'beast-test'],
+  ['beast', 'beast-base'],
   ['serpent', 'serpent-base'],
 ];
 // 주소 뒤 #look=<외형> 이면 그 외형 하나만 크게(캡처·확인용)

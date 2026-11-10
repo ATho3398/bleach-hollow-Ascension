@@ -5,7 +5,7 @@
 (게임본에만 있는 그림은 지운다, still/ 은 남김). 뱀형도 같게(serpent.json·serpent-motions.json·serpent/, GDD 115-A 100 — paths.GAME_RIGS).
 그 뒤 정지 그림(still.py)·고정 파일(lock.py)을 게임본으로 다시 만든다.
 시험 외형(id 가 -test 로 끝남 — 역관절·망토 임시 그림, GDD 96장 39·40)은 게임에 안 넣는다: 그 외형만 쓰는 몸·그림도 빠진다.
-짐승형(beast.json)은 아직 게임이 안 쓰므로 옮기지 않는다.
+짐승형(beast.json·beast-motions.json·beast/)도 같게 옮긴다(GDD 228장).
 사용: python3 scripts/rig/promote.py [--dry]   (--dry = 바뀌는 것만 보여 주기)
 """
 import json

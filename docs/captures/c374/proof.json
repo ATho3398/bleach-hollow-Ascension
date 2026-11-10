@@ -1,0 +1,96 @@
+{
+ "url": "http://localhost:5398/",
+ "picked": [
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "panther-vs-stormhoof",
+   "foe": "스톰후프",
+   "ok": true
+  },
+  {
+   "tag": "brute-vs-brasero",
+   "foe": "브라세로",
+   "ok": true
+  },
+  {
+   "tag": "brute-vs-nightram",
+   "foe": "나이트램",
+   "ok": true
+  }
+ ],
+ "battles": [
+  {
+   "tag": "panther-vs-stormhoof",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     320,
+     320
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     320,
+     320
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "brute-vs-brasero",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     320,
+     320
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "brute-vs-nightram",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     320,
+     320
+    ],
+    "img": null
+   }
+  }
+ ],
+ "shots": [
+  "panther-vs-stormhoof-battle-0.png",
+  "panther-vs-stormhoof-battle-1.png",
+  "brute-vs-brasero-battle-0.png",
+  "brute-vs-brasero-battle-1.png",
+  "brute-vs-nightram-battle-0.png",
+  "brute-vs-nightram-battle-1.png"
+ ],
+ "save": [],
+ "errors": []
+}

@@ -66,6 +66,10 @@ export const GILLIAN_SCALE = 2.3;
 export const SERPENT_SCALE = 1.6;
 /** 뱀형 강적 (GDD 219장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
 export const SERPENT_ENEMIES: Readonly<Record<string, string>> = { 'poison-heavy-chain': 'serpent-green', 'water-heavy-chain': 'serpent-blue' };
+/** 짐승형(뼈대 beast) 배율 (GDD 228장 2): 그림 칸 80 · 정지 그림 키(칸의 0.39) × 1.5 ≈ 0.58, 몸길이 ≈ 칸 너비 — 네 발이라 키는 덩치(0.8)보다 낮고 길이가 길다 */
+export const BEAST_SCALE = 1.5;
+/** 짐승형 강적 (GDD 228장 2, 사용자 2026-11-11 "짐승형도 배색 4개정도 추가해서, 아쥬커스 강적에 3개정도 추가하고"): 아쥬커스 등급 강적 중 셋 — 스톰후프(번개) = 노랑, 브라세로(불) = 주황, 나이트램(허) = 보라. 덩치 적 목록을 덮는다 */
+export const BEAST_ENEMIES: Readonly<Record<string, string>> = { 'thunder-heavy-chain': 'beast-yellow', 'fire-heavy-chain': 'beast-orange', 'kyo-heavy-chain': 'beast-violet' };
 /** 길리안형 강적 (GDD 227장, 사용자 2026-11-10 "외눈 길리안을 … 강적 스티치마우스 그림으로"): 유일한 길리안 등급 강적 스티치마우스(노멀) = 외눈 가면 길리안. 덩치 적 목록을 덮는다 */
 export const GILLIAN_ENEMIES: Readonly<Record<string, string>> = { 'normal-heavy-seal': 'gillian-cyclops' };
 
@@ -89,6 +93,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'skin.gillian': { rig: 'gillian-base', scale: GILLIAN_SCALE },
   // 아쥬커스 '뱀형' 외형 (GDD 53 · 219장 2, 사용자 "아쥬커스 진화체로도 1개"): 정신력 1위 단계 외형 = 종이인형 뱀(원래 색 진홍)
   'skin.wyrm': { rig: 'serpent-base', scale: SERPENT_SCALE },
+  // 아쥬커스 '표범형' 외형 (GDD 53 · 228장 2, 사용자 "주인공 아쥬커스 진화체에도 하나"): 속도 1위 단계 외형 = 종이인형 짐승(원래 색 청록)
+  'skin.panther': { rig: 'beast-base', scale: BEAST_SCALE },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
@@ -97,6 +103,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   ...BRUTE_ENEMIES,
   // 뱀형 강적 (GDD 219장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
   ...Object.fromEntries(Object.entries(SERPENT_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SERPENT_SCALE }])),
+  // 짐승형 강적 (GDD 228장 2): 스톰후프·브라세로·나이트램 = 종이인형 짐승 색 외형 (덩치 적 줄을 덮음)
+  ...Object.fromEntries(Object.entries(BEAST_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: BEAST_SCALE }])),
   // 길리안형 강적 (GDD 227장): 스티치마우스 = 외눈 길리안 (배율 = 내 2단계 길리안과 같게)
   ...Object.fromEntries(Object.entries(GILLIAN_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: GILLIAN_SCALE }])),
   // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)

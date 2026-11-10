@@ -599,7 +599,8 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - (2026-11-10, 작업본) 편집기 고정(03:36): 길리안 옷 주름 1 자리 [10,35] → [5,43], 빈사 주름 2·특수(빔)·이동·홈 대기 머리 트랙. → C.362 로 게임에 넣음.
 - (2026-11-10, 작업본) 길리안 가면 시도 4개(시트만) → 외눈 가면만 살려 빈 곳 검정 채움, 시험 외형 gillian-cyclops-test(그림 폴더 hd-cyclops, recolor.py replace), 편집기·시험 페이지 '길리안(외눈 시험)'. 시험 rigDraft 1개 (GDD 115-A 101).
 - (2026-11-10, 작업본) 짐승형 = 사용자 부위 시트 조립(조각 12개, 배 그림 없음, 참고 그림 색 맞춤 + 전체 겹쳐 다듬기, 관절 = 맞닿은 자리), cut 뺌·skeletons 새로. 시험 rigDraft 짐승 1개 (GDD 115-A 102).
-- (2026-11-11, 작업본) 대기·홈 대기 재생 속도 예외(뼈대 `motionSpeedExcept`, 엔진 `motionSpeedOf` — 게임본 뼈대엔 아직 없음 = 게임 그대로), 짐승 대기 = 아랫마디 발 고정·윗다리는 몸 따라. 시험 c368 3개 (GDD 115-A 103).
+- (2026-11-11, 작업본) 대기·홈 대기 재생 속도 예외(뼈대 `motionSpeedExcept`, 엔진 `motionSpeedOf`), 짐승 대기 = 아랫마디 발 고정·윗다리는 몸 따라. 시험 c368 3개 (GDD 115-A 103).
+- (2026-11-11, 작업본) 이동도 속도 예외, 짐승 외형 beast-base + 색 3(노랑·주황·보라, recolors)·게임 그림 칸 (GDD 115-A 104) → C.374 로 게임 넣기.
 - (C.189 merge 메모) 이 소절은 종이인형 브랜치에서 같은 번호 C.151 로 쓰였다 — main C.151(인게임 UI v2 1단계)과 겹쳐 'C.151 종이인형'으로 따로 살림. 여기의 'GDD 96장' = 지금 기획서 115-A.
 
 ### C.152 인게임 UI v2 2단계 — 전투 화면 필드/스킬창 + 각인 컷 블록 (STAGE S-23, UI담당자C, GDD 96장, v5.201)
@@ -3112,3 +3113,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `node scripts/pixelfx/tool/apply.mjs` → `src/data/enemies/eliteHeavyFx.json` byBody 자리만: 덩치 −264,−12 → −346,−3 · 외눈 길리안 −261,−32 → −297,−28 · 뱀 −288,−28 → −314,−19. 크기·늦춤·불투명도·색 그대로.
 - 검증 `scripts/c373-proof.cjs` 실제 전투 1배 — 스모크 위도우(발톱 앞)·스티치마우스·롯팽 세로. 캡처 `docs/captures/c373/` 3장.
 - 테스트 3084 통과(272 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.374 — 종이인형 대기·이동 속도 예외 · 짐승형 = 아쥬커스 표범형 외형 + 아쥬커스 강적 3 (GDD 228장 · 115-A 102~104, v5.534, S-23, 종이인형 세션)
+- 사용자 원문: "내가 1.5배 하라그런거 대기랑 홈대기는 예외야ㅠㅠ 대기 모션이 너무 빨라" · "얘들 이동도 배속 풀어" · "짐승형도 배색 4개정도 추가해서, 아쥬커스 강적에 3개정도 추가하고, 주인공 아쥬커스 진화체에도 하나 넣으삼" · "짐승형 fx에도 반영시켜".
+- 엔진: `Rig.motionSpeedExcept`·`motionSpeedOf`(`pose.ts`) — 대기·홈 대기·이동은 1배, 나머지 1.5배. `rigAnim.ts`(길이·타격 시각도 동작마다)·`paperdoll.ts` 시계·편집기. `RIG_PACKS` 에 beast.
+- 데이터: `skin.panther` = beast-base, `BEAST_ENEMIES`(thunder/fire/kyo-heavy-chain = beast-yellow/orange/violet), `BEAST_SCALE` 1.5. 뼈대 3종 `motionSpeedExcept`.
+- 작업본 → 게임(promote): 짐승 뼈대·동작·그림(ref + 색 3)·정지 그림 4, 짐승 대기 발 고정. `paths.GAME_RIGS` 에 beast.
+- 이펙트(강적 강공격 세로의 짐승 자리 `eliteHeavyFx.json` byBody beast/ref, 이펙트 배치 도구 짐승 항목)는 픽셀FX 담당에 부탁 — 그 전까지 fallback(덩치 자리).
+- 검증: `tests/c374.test.ts` 7개 + c341·c345·c348·c360·c368 갱신, `scripts/c374-proof.cjs` 실제 전투 1배(표범형 vs 스톰후프, 브라세로, 나이트램) 캡처 `docs/captures/c374/` 6장.

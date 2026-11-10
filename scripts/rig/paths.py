@@ -32,5 +32,5 @@ def rig_paths(rid):
             os.path.join(gd, f'{rid}.json'), os.path.join(gd, f'{rid}-motions.json'), os.path.join(ROOT, 'public', 'art', 'rig', rid))
 
 
-# 게임에 넣는 뼈대 (promote.py·still.py). 짐승형(beast)은 아직 게임이 안 씀
-GAME_RIGS = ('humanoid', 'serpent')
+# 게임에 넣는 뼈대 (promote.py·still.py). 짐승형(beast)도 게임에 넣는다(GDD 228장)
+GAME_RIGS = ('humanoid', 'serpent', 'beast')

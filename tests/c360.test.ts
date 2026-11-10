@@ -17,7 +17,7 @@ const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, 
 
 describe('C.360 종이인형 뼈대 여럿 (GDD 219장 3)', () => {
   it('게임 뼈대 = 사람형·뱀형, 둘 다 검사 통과, 외형 id 는 뼈대끼리 안 겹치고 시험 외형(-test)은 없다', () => {
-    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent']);
+    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent', 'beast']); // 짐승형 추가(C.374, GDD 228장)
     const seen = new Set<string>();
     for (const p of RIG_PACKS) {
       expect(validateRig(p.rig, p.motions, p.sets), p.id).toEqual([]);

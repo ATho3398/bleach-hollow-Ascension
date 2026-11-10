@@ -3,8 +3,12 @@
  "note": "짐승형(네 발) 종이인형 뼈대 (GDD 115-A 41·47). 사용자 도트 준거(두 번째 사진 왼쪽 위 청록 짐승, docs/design/user-art/beast-ref)의 형태: 앞으로 뻗은 해골 머리, 뼈 갈기·갈비뼈 몸통(가슴 body·배 belly 두 마디 — 사용자 2026-10-29 \"몸통 가슴이랑 배로 반반 나눠서\"), 다리 넷(앞다리 = 어깨·팔꿈치, 뒷다리 = 엉덩이·뒤로 꺾인 발목), 엉덩이(뒷다리 뒤, [46,18])에서 나와 오른쪽 아래로 돌아 위로 솟은 꼬리(꼬리 = 짙은 아랫마디, 꼬리 끝 = 위로 말린 뼈 끝 — 115-A 83). 앞 = 왼쪽. 그림 칸 52×32, 바닥 줄 y=31. _R = 가까운 쪽(몸 앞), _L = 먼 쪽(몸 뒤) — 앞다리: 아래로 곧게 디딘 다리 = 가까운(fleg_R), 앞으로 뻗은 다리 = 먼(fleg_L) (115-A 79). 몸 ref = 사용자 부위 시트(2026-11-10) 조립 — docs/design/user-art/beast-ref/assembly.json (GDD 115-A 102)",
  "motionSpeed": 1.5,
  "motionSpeedNote": "동작 재생 속도(GDD 225장, 사용자 2026-11-10 \"모션속도들을 1.5배로 늘려\"): 동작 키 시각은 그대로, 재생기가 1.5배로 흘린다",
- "motionSpeedExcept": ["idle", "homeIdle"],
- "motionSpeedExceptNote": "재생 속도 예외(GDD 115-A 103, 사용자 2026-11-11 \"1.5배 하라그런거 대기랑 홈대기는 예외야\"): 이 동작은 1배 그대로",
+ "motionSpeedExcept": [
+  "idle",
+  "homeIdle",
+  "move"
+ ],
+ "motionSpeedExceptNote": "재생 속도 예외(GDD 115-A 103, 사용자 2026-11-11 \"1.5배 하라그런거 대기랑 홈대기는 예외야\"): 이 동작은 1배 그대로. 이동도 같이(사용자 2026-11-11 \"얘들 이동도 배속 풀어\")",
  "canvas": [
   52,
   32
@@ -315,8 +319,54 @@
   }
  },
  "looks": {
-  "beast-test": {
-   "body": "ref"
+  "beast-base": {
+   "body": "ref",
+   "color": "청록"
+  },
+  "beast-yellow": {
+   "body": "ref",
+   "artFolder": "ref-yellow",
+   "color": "노랑"
+  },
+  "beast-orange": {
+   "body": "ref",
+   "artFolder": "ref-orange",
+   "color": "주황"
+  },
+  "beast-violet": {
+   "body": "ref",
+   "artFolder": "ref-violet",
+   "color": "보라"
+  }
+ },
+ "recolors": {
+  "note": "색 외형 그림(GDD 115-A 85·104, scripts/rig/recolor.py beast): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 짐승 = 도트 6색 중 살 두 색(밝은 #044e5e·어두운 #021f29 = 청록, 사용자 원래 색)과 눈(#fab403)만 바꿈 — 뼈(#fcedcb·#ccaf96)·윤곽(검정)은 그대로",
+  "ref-yellow": {
+   "from": "ref",
+   "map": {
+    "#044e5e": "#a8862c",
+    "#021f29": "#463412",
+    "#fab403": "#5fe0ff"
+   },
+   "source": "번개 — 강적 스톰후프(thunder-heavy-chain)"
+  },
+  "ref-orange": {
+   "from": "ref",
+   "map": {
+    "#044e5e": "#b0522a",
+    "#021f29": "#481c12",
+    "#fab403": "#ffe04a"
+   },
+   "source": "불 — 강적 브라세로(fire-heavy-chain)"
+  },
+  "ref-violet": {
+   "from": "ref",
+   "map": {
+    "#044e5e": "#5a3f8e",
+    "#021f29": "#1e1436",
+    "#fab403": "#ff5050"
+   },
+   "source": "허 — 강적 나이트램(kyo-heavy-chain)"
   }
  },
  "hairFrame": {
@@ -334,12 +384,14 @@
   ]
  },
  "view": {
+  "note": "게임 화면에 그릴 때의 그림 칸(x, y, 가로, 세로 — 캔버스 좌표). 사람형·뱀형과 같은 규격(정사각, 몸 가운데 x 27 = 칸 가운데, 바닥 y 31 = 아래에서 약 8% 위, GDD 115-A 104) — 앞으로 덮치는(공격) 자리까지 80칸. clipY = 이 아래는 안 그린다",
   "rect": [
-   -14,
-   -10,
+   -13,
+   -43,
    80,
-   44
-  ]
+   80
+  ],
+  "clipY": 33
  },
  "edit": {
   "names": {
