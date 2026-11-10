@@ -18,7 +18,7 @@ export const ATTACK_FX_KINDS = ['claw', 'bite', 'shot', 'slash', 'impact', 'beam
 export type AttackFxKind = (typeof ATTACK_FX_KINDS)[number];
 
 /** 계열 블록의 캐릭터 몸동작 (GDD 118장 2): strike = 맨손 타격(주먹·발차기) / slash = 칼 휘두르기 / cast = 손에서 쏘기(귀도). 없으면 특수 동작(skill) 그대로 */
-export const FAMILY_MOTION_KINDS = ['strike', 'slash', 'cast'] as const;
+export const FAMILY_MOTION_KINDS = ['strike', 'slash', 'cast', 'punch', 'headbutt'] as const;
 export type FamilyMotionKind = (typeof FAMILY_MOTION_KINDS)[number];
 
 /** 체인 묶음 상한 기본값 (GDD 19-2): 종족 설정 maxChain 이 없을 때 */

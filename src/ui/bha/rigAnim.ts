@@ -35,7 +35,29 @@ export const FAMILY_RIG_MOTIONS: Readonly<Record<FamilyMotionKind, readonly stri
   strike: ['straight'],
   slash: ['attack', 'attack2'],
   cast: ['skill', 'skill2'],
+  // GDD 226장 (사용자 2026-11-10 "앞으로 호로 조=주먹으로 때리는 공격 중 하나로 통일하고, 교는 박치기로 통일"): 주먹 묶음 = 주먹·스트레이트·오른손 치기·어퍼컷 중 하나, 박치기 = 박치기
+  punch: ['punch', 'straight', 'rpunch', 'uppercut'],
+  headbutt: ['headbutt'],
 };
+
+/** 몸에 없는 동작을 고정·묶음으로 부를 때 대신 쓰는 동작 (GDD 226장): 호로 몸(덩치·길리안, 115-A 76)은 주먹·스트레이트·오른손 치기·어퍼컷이 없다 →
+ *  그 몸의 손 공격(공격1·2), 그것도 없으면(길리안) 박치기. 차례대로 그 몸에 있는 첫 묶음 */
+export const RIG_MOTION_SUBSTITUTE: Readonly<Record<string, readonly (readonly string[])[]>> = {
+  punch: [['attack', 'attack2'], ['headbutt']],
+  straight: [['attack', 'attack2'], ['headbutt']],
+  rpunch: [['attack', 'attack2'], ['headbutt']],
+  uppercut: [['attack', 'attack2'], ['headbutt']],
+};
+/** 그 몸에서 고정 동작 id 가 실제로 틀 동작들 (없으면 RIG_MOTION_SUBSTITUTE, 그것도 없으면 빈 목록) — 순수 */
+export function rigMotionIds(id: string | undefined, motions: Record<string, unknown>): string[] {
+  if (!id) return [];
+  if (motions[id]) return [id];
+  for (const group of RIG_MOTION_SUBSTITUTE[id] ?? []) {
+    const got = group.filter((g) => motions[g]);
+    if (got.length) return got;
+  }
+  return [];
+}
 
 /** 같은 변형을 연속으로 몇 번까지 허용하나 (GDD 117장 4: 두 번까지, 세 번째는 다른 것) */
 export const VARIANT_REPEAT_MAX = 2;
@@ -62,7 +84,12 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     const own = (RIG_ACTIONS[a] ?? []).filter((id) => motions[id]);
     return own.length ? own : (RIG_ACTION_FALLBACK[a] ?? []).filter((id) => motions[id]);
   };
-  const byMotion = (m: FamilyMotionKind | undefined) => (m ? FAMILY_RIG_MOTIONS[m].filter((id) => motions[id]) : []);
+  const byMotion = (m: FamilyMotionKind | undefined) => {
+    if (!m) return [];
+    const own = FAMILY_RIG_MOTIONS[m].filter((id) => motions[id]);
+    // 묶음 동작이 이 몸에 하나도 없으면 묶음 첫 동작의 대신 동작 (GDD 226장 — 덩치의 주먹 묶음 = 공격1·2)
+    return own.length ? own : rigMotionIds(FAMILY_RIG_MOTIONS[m][0], motions);
+  };
   const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
@@ -86,7 +113,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     },
     play(a, o = {}) {
       // 단계 고정 동작(GDD 181장) → 계열 몸동작 묶음(118장 2) → 게임 동작 순
-      const fixed = o.rigMotion && motions[o.rigMotion] ? [o.rigMotion] : [];
+      const fixed = rigMotionIds(o.rigMotion, motions);
       const fam = fixed.length ? fixed : byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
@@ -113,7 +140,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       return { durationMs: (m.duration - start) / speed, hitAtMs: (hitAt - start) / speed };
     },
     peek(a, o = {}) {
-      const fixed = o.rigMotion && motions[o.rigMotion] ? [o.rigMotion] : [];
+      const fixed = rigMotionIds(o.rigMotion, motions);
       const fam = fixed.length ? fixed : byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
