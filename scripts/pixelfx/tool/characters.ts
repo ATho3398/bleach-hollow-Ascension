@@ -25,6 +25,8 @@ export const CHARACTERS: readonly ToolChar[] = [
   { id: 'elite-brute', label: '강적 덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
   { id: 'elite-gillian', label: '강적 외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
   { id: 'elite-serpent', label: '강적 뱀', rig: 'serpent-green', enemy: 'poison-heavy-chain' },
+  // 짐승형 (C.374 게임 넣기, 사용자 "짐승형 fx에도 반영시켜"): 강적 스톰후프(thunder-heavy-chain) = beast-yellow
+  { id: 'elite-beast', label: '강적 짐승', rig: 'beast-yellow', enemy: 'thunder-heavy-chain' },
 ];
 /** 게임 전투의 내 그림 자리 (1배 844×390 실측, scripts/c268-proof.cjs C268_NOHERO): 기본 상자 150 × (fieldScale ?? scale), 변형 기준점 */
 export const HERO_BOX = { x: 512, y: 78, size: 150, originX: 587, originY: 216 };

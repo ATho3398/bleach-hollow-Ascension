@@ -3121,3 +3121,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 작업본 → 게임(promote): 짐승 뼈대·동작·그림(ref + 색 3)·정지 그림 4, 짐승 대기 발 고정. `paths.GAME_RIGS` 에 beast.
 - 이펙트(강적 강공격 세로의 짐승 자리 `eliteHeavyFx.json` byBody beast/ref, 이펙트 배치 도구 짐승 항목)는 픽셀FX 담당에 부탁 — 그 전까지 fallback(덩치 자리).
 - 검증: `tests/c374.test.ts` 7개 + c341·c345·c348·c360·c368 갱신, `scripts/c374-proof.cjs` 실제 전투 1배(표범형 vs 스톰후프, 브라세로, 나이트램) 캡처 `docs/captures/c374/` 6장.
+
+## C.375 — 짐승형 강적 강공격 세로 자리 · 도구 짐승 항목 (GDD 227장 보충 3, v5.535, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문(종이인형 세션 전달, 11-11 01:3x): "짐승형 fx에도 반영시켜".
+- C.374(종이인형 — 뼈대 beast, 강적 스톰후프·브라세로·나이트램) 위에서: `src/data/enemies/eliteHeavyFx.json` byBody `beast/ref` = −290,12(도구에서 짐승 입을 재서; 없으면 덩치 자리로 나가던 것).
+- 이펙트 배치 도구: 치는 쪽 '강적 짐승'(thunder-heavy-chain = beast-yellow), 항목 '강적 강공격 · 짐승'(build.mjs BODY). 뼈대 beast 부위 그림도 실음(collect = rigPackOfLook).
+- 검증 `scripts/c375-proof.cjs` 실제 전투 1배 사신 vs 스톰후프 — 세로가 짐승 입에서. 캡처 `docs/captures/c375/` 1장.
+- 테스트 3095 통과(273 파일, c372 테스트에 짐승 몸 추가), typecheck·balance:check 회귀 가드 통과.

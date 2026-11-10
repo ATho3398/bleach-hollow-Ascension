@@ -104,6 +104,40 @@
         }
       ],
       "bodies": {}
+    },
+    "beast/ref": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -290,
+          "dy": 12,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
     }
   }
 }
