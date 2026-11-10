@@ -24,7 +24,7 @@ import { infoTip } from './bha/infoTip';
 import { statusInfo } from './bha/statusInfo';
 import { consumableName } from '../inventory';
 import { battleItemText } from '../shop';
-import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig } from '../engine/faction';
+import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig, type FamilyConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
 import { button, chip, el, icon, tag } from './bha/dom';
 import { mountV2Root } from './bha/v2/root';
@@ -59,7 +59,7 @@ import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
 import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
-import type { PixelBodySlot } from './pixelAttack';
+import { familyStagesFor, type PixelBodySlot } from './pixelAttack';
 import { eliteHeavyFor, ELITE_HEAVY_ELEMENT, FX_REACH_FIELD } from './attackFxConfig';
 import { rigPackOfLook } from '../data/art/rig/pose';
 import { playCosmeticFx } from './bha/cosmeticFx';
@@ -892,8 +892,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const cues: FxCue[] = [];
   // 블록 도트 이펙트 시트 미리 받기 (이펙트 배치 도구 확정 값, 종족 설정 families[].pixelFx): 속성 색이면 속성 8색, 원래 색이면 한 장. 못 받은 시트는 그 이펙트만 빠진다
+  // 몸마다 따로(GDD 230장): 내 몸(뼈대/몸 id)에 따로 맞춘 블록이 있으면 그것 — 사람형은 공통(stages)
+  const heroBodyKey = (() => {
+    const look = heroArt.rig?.look;
+    const pack = look ? rigPackOfLook(look) : undefined;
+    return pack && look ? `${pack.id}/${pack.rig.looks[look]!.body}` : null;
+  })();
+  const stagesOf = (f: FamilyConfig) => familyStagesFor(f.pixelFx, heroBodyKey);
   for (const f of faction.families)
-    for (const st of f.pixelFx?.stages ?? [])
+    for (const st of stagesOf(f) ?? [])
       for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
   // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
   // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
@@ -901,7 +908,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const f = familyOf(faction, id);
     if (!f) return null;
     const t = f.tiers[stage - 1];
-    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: f.pixelFx?.stages[stage - 1] ?? null };
+    return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: stagesOf(f)?.[stage - 1] ?? null };
   };
   // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
   const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');
