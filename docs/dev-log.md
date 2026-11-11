@@ -3257,3 +3257,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 이름: 배부름·안정 수치 = 종족 설정(fullnessName·stabilityName), 빈사·사망 = CARE_STATUS_NAMES. 세이브·밸런스 변경 없음.
 - 테스트 새 `tests/c389.test.ts`(4), c364(복귀 창 호출 인자) 갱신.
 - 캡처 `docs/captures/c389/`(scripts/c389-proof.cjs, PC 1배): 01 보상 + 비운 동안 줄어든 것 · 02 줄어든 것만 + [확인] — 둘 다 노란 복귀 띠 없음(proof.json toasts 에 복귀 없음).
+
+## C.390 — 방 상태 박스 자리 정리: 열 맞춤·'모험 1번'·ⓘ 박스 안 (GDD 238장, v5.560, S-23, 코딩266 Opus)
+- 사용자 원문(방 캡처 `docs/captures/c390/00-user-before.jpg`): "위치 왜이럼 고쳐".
+- 원인: 줄마다 따로 flex 라 숫자 칸 폭이 줄마다 달라 상태이상 줄('쇠약')만 막대가 길고 박스 오른쪽으로 삐져나옴, 푸는 법은 오른쪽 정렬, ⓘ 는 박스 바깥(옆자리에선 왼쪽 바깥).
+- `src/ui/bha/room.css`: 박스 = 3열 격자 + 줄 subgrid(열 공유), 푸는 법 = 막대 열 시작 왼쪽 정렬, ⓘ = 박스 안 오른쪽 아래(오른쪽 여백 sp-6 → sp-7), 옆자리 바깥 ⓘ 규칙 삭제. `roomView.ts` 박스 반폭에서 ⓘ 몫 뺌. 토큰만, 새 색·간격 없음. 세이브·밸런스 변경 없음.
+- 실측 `scripts/c390-proof.cjs`(proof.json): 폰 가로 상태이상 1·2개·PC 0개 — 모든 줄 막대 왼끝·오른끝 한 값, ⓘ·줄 전부 박스 안. 폰 세로는 기기 전체가 90° 돌아간 화면이라 좌표가 돌아 있으나 박스 안 판정 통과.
+- 캡처 `docs/captures/c390/`(1배): 00-user-before(전) · ph-land-status1(쇠약, 같은 상태 후) · ph-land-status2(쇠약+피곤) · ph-port-status1 · pc-status0.
+- 테스트 새 `tests/c390.test.ts`(3).

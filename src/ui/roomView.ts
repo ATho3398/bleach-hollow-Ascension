@@ -297,7 +297,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
   const measureChips = () => {
     scene.style.setProperty('--chip-h', `${chipRow.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`);
-    scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2 + statusInfoBtn.offsetWidth) + 6}px`); // 박스 반폭 + 바깥 ⓘ
+    scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2) + 6}px`); // 박스 반폭 (ⓘ 는 박스 안, GDD 238장)
   };
   requestAnimationFrame(measureChips);
   // 상태 ⓘ (C.176, GDD 104장 2): 칩 오른쪽 위. 누르면(폰)·올리면(PC) 지금 칩마다 무슨 뜻인지·풀리는 법이 창으로 뜬다
