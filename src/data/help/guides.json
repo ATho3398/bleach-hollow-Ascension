@@ -127,13 +127,16 @@
           "@.bha-prop--chest"
         ],
         "title": "장비가 열렸다",
-        "body": "{tier3}이(가) 되어 장비를 쓸 수 있다.\n{room.props.chest}의 [{gearTitle}] 탭에서 가진 장비를 본다."
+        "body": "{tier3}이(가) 되어 낡은 무기·방어구·신발을 하나씩 받았다.\n{room.props.chest}을(를) 눌러 [{gearTitle}] 탭을 열어 보자."
       },
       {
         "id": "wear",
-        "targets": [],
+        "targets": [
+          "@.bha-equip-page .bha-eqright .bha-itemcard",
+          "@.bha-itemdialog [data-act^=\"equip-\"]"
+        ],
         "title": "착용",
-        "body": "무기·방어구·신발 칸에 하나씩 착용한다.\n장비는 모험에서 떨어지고, {market.name}의 장비 상점에서도 산다."
+        "body": "장비를 눌러 [착용] — 낡은 무기·낡은 방어구·낡은 신발을 하나씩 끼워 보자.\n장비는 모험에서 떨어지고, {market.name}의 장비 상점에서도 산다."
       },
       {
         "id": "enhance",
@@ -236,6 +239,30 @@
         "targets": [],
         "title": "끼우기",
         "body": "{room.props.chest}에서 출정품 칸에 끼워 둔다.\n모험을 떠날 때 1개씩 저절로 쓰이고, 그 모험 동안 효과가 이어진다."
+      }
+    ],
+    "hogyoku-appear": [
+      {
+        "id": "appear",
+        "targets": [
+          "@.bha-prop--hogyoku"
+        ],
+        "title": "붕옥이 나타났다",
+        "body": "이야기가 끝난 자리에 작은 구슬 하나가 남았다.\n\"…두 갈래의 힘을 하나로 잇는 구슬, 붕옥.\""
+      },
+      {
+        "id": "track",
+        "targets": [],
+        "title": "두 번째 트랙",
+        "body": "붕옥이 다른 종족의 길을 열었다 — 같은 슬롯에서 새 캐릭터를 1단계부터 키운다.\n이름표 옆 버튼으로 두 캐릭터를 바꾼다."
+      },
+      {
+        "id": "tab",
+        "targets": [
+          "@.bha-prop--hogyoku"
+        ],
+        "title": "붕옥",
+        "body": "방의 붕옥을 누르면 붕옥 화면이 열린다.\n모은 영혼 결정을 먹여 붕옥을 깨운다."
       }
     ]
   },

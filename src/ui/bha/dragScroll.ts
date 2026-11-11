@@ -28,3 +28,24 @@ export function enableDragScroll(root: HTMLElement, signal?: AbortSignal): void 
     e.preventDefault();
   }, { capture: true, signal });
 }
+
+/** 가로로 넘치는 줄의 '더 있음' 표시 (GDD 243장 4): 넘친 쪽 끝을 흐리게(is-more-left·is-more-right) — 드래그로 넘겨 본다는 신호.
+ *  pick = 처음에 보이게 맞출 칸(고른 탭). 화면에 붙은 뒤·스크롤할 때마다 다시 잰다 */
+export function edgeCue(root: HTMLElement, pick?: HTMLElement | null, signal?: AbortSignal): void {
+  const paint = (): void => {
+    const max = root.scrollWidth - root.clientWidth;
+    root.classList.toggle('is-more-left', max > 1 && root.scrollLeft > 1);
+    root.classList.toggle('is-more-right', max > 1 && root.scrollLeft < max - 1);
+  };
+  root.addEventListener('scroll', paint, { passive: true, signal });
+  requestAnimationFrame(() => {
+    if (!root.isConnected) return;
+    if (pick) {
+      const r = pick.getBoundingClientRect();
+      const box = root.getBoundingClientRect();
+      if (r.right > box.right) root.scrollLeft += r.right - box.right;
+      else if (r.left < box.left) root.scrollLeft -= box.left - r.left;
+    }
+    paint();
+  });
+}

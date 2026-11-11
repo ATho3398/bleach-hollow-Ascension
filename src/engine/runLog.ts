@@ -556,7 +556,7 @@ export interface PetRecord {
   gold?: number;
 }
 
-/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인, from = 드롭한 상대 등급),
+/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인 · idle 대기 보상 · unlock 장비 해금 때 낡은 장비(GDD 243장 3), from = 드롭한 상대 등급),
  *  equip/unequip = 장착·해제(slot), enhance = 강화(plus = 오른 뒤 단계, gold = 쓴 골드), sell = 판매, autoSell = 보관함이 가득 차 얻자마자 골드로 */
 export interface GearRecord {
   at: number;
@@ -566,7 +566,7 @@ export interface GearRecord {
   gearKind: string;
   grade: string;
   star?: number;
-  source?: 'drop' | 'shop' | 'wanderer' | 'idle';
+  source?: 'drop' | 'shop' | 'wanderer' | 'idle' | 'unlock';
   from?: 'normal' | 'elite' | 'boss';
   slot?: string;
   plus?: number;

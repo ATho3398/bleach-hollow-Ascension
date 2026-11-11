@@ -14,7 +14,7 @@ export type GuideMark = 'pending' | 'done';
 /** 'home-intro' = 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장, C.207). 새 세이브는 'first-run' 과 같이 pending */
 /** 'recover-cure' = 회복 안내용 구급상자를 이미 넣었다 (GDD 134장 1, C.211 — 시작 구급상자와 따로 한 번만, 상태만 저장) */
 /** 'unlock-*' = 해금 안내 카드 (GDD 241-0, C.399): 장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품이 열린 뒤 방에서 한 번. 타일은 'tile-intro' */
-export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw', 'birth', 'recover', 'home-intro', 'recover-cure', 'unlock-gear', 'unlock-battle-item', 'unlock-instinct', 'unlock-rank', 'unlock-accessory', 'unlock-pet', 'unlock-sortie'] as const;
+export const GUIDE_IDS = ['first-run', 'first-run-room', 'tile-intro', 'tile-plan', 'tile-draw', 'birth', 'recover', 'home-intro', 'recover-cure', 'unlock-gear', 'unlock-battle-item', 'unlock-instinct', 'unlock-rank', 'unlock-accessory', 'unlock-pet', 'unlock-sortie', 'hogyoku-appear'] as const;
 export type GuideId = (typeof GUIDE_IDS)[number];
 /** 문구가 있는 안내 (birth 는 첫 시작 탄생 연출 — 상태만 저장, 문구 없음. GDD 74장 C.126 · recover 는 튜토리얼 회복 안내 — 문구는 tutorial.json recover, GDD 123장 5 C.199) */
 export type TextGuideId = Exclude<GuideId, 'birth' | 'recover' | 'home-intro' | 'recover-cure'>;

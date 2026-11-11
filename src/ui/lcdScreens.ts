@@ -596,16 +596,19 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => (e.sortie ? openSortie(save, e.id, changed) : openItem(faction, save, e, artOf(e), changed)),
   }));
-  const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  // 잠긴 칸 (GDD 243장 2): 전투 소모품 = 3단계 · 출정품 = 첫 환생 — 빈 칸이면 '상점에서 사면…' 대신 잠김 한 줄(자물쇠)만
+  const gate = mode !== 'items' ? null : itemsUi.group === 'battle' ? 'battleItem' as const : itemsUi.group === 'sortie' ? 'sortie' as const : null;
+  const lockedEmpty = gate !== null && !gateOpen(save, gate) && cards.length === 0;
+  const empty = lockedEmpty ? gateHint(faction, gate!) : mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (mode === 'items') box.append(tabs);
-  if (mode === 'items' && itemsUi.group === 'sortie') box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
+  if (mode === 'items' && itemsUi.group === 'sortie' && !lockedEmpty) box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
   if (mode === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
     box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
   }
-  box.append(itemGrid(cards, empty));
+  box.append(itemGrid(cards, empty, lockedEmpty ? 'i-lock' : undefined));
   return [box, h('div')];
 }
 
@@ -640,7 +643,9 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   row.dataset.gear = '';
   const btn = button({ label: `${roomOf(faction).props.chest} · ${equipTitle(faction)}`, icon: 'i-attack', size: 'small', onClick: onGear });
   btn.dataset.act = 'gear-screen';
-  row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '장착한 장비가 없다.'));
+  // 장비 해금 전에는 '장착한 장비가 없다' 줄을 숨긴다 (GDD 243장 4 보충) — 버튼은 그대로(누르면 가방 장비 탭의 잠김 안내)
+  row.append(btn);
+  if (sum || gateOpen(save, 'gear')) row.append(h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '장착한 장비가 없다.'));
   return row;
 }
 

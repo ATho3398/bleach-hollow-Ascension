@@ -206,10 +206,15 @@
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__title { flex: none; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__note { flex: 1 1 auto; min-width: 0; text-align: right; }
 /* 프리셋 = 세로 줄 목록(v2 .bha-row 모양), 넘치면 안에서 스크롤 */
-.bha-lcd .bha-plan .bha-plan__side .bha-presets__chips { flex: 1 1 0; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 2px; gap: 4px; }
+/* 243장 4: 목록 높이 = 정확히 2줄(36 + 4 + 36 + 위아래 2) — 셋째 줄부터는 스크롤해 줄 단위로(반쯤 잘린 줄 없음). 남는 높이는 버튼 줄 위로 */
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__chips { flex: none; height: 80px; min-height: 0; box-sizing: border-box; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 2px; gap: 4px; scroll-snap-type: y mandatory; scroll-padding-top: 2px; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__chip { scroll-snap-align: start; }
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__chip { flex: none; max-width: none; min-height: 36px; justify-content: flex-start; padding: 0 10px; font-size: var(--bha-fs-sm); font-weight: 800; }
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__view { flex: none; }
-.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts { flex: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts { flex: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: auto; }
+/* 버튼 4개 한 줄(적용·저장·이름·삭제) — 아이콘 빼고 글자만 (목록 2줄 자리를 내준다) */
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn { padding: 0 var(--bha-sp-1); }
+.bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn .bha-icon { display: none; }
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn { font-size: var(--bha-fs-xs); min-height: 30px; }
 /* 고른 프리셋 미리보기 줄은 길 줄이 바로 위에 보여서 이 판에서는 뺀다(좁은 판 높이를 칩 목록에) — 이름 입력 칸일 때만 보인다 */
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__view:not(:has(.bha-presets__input)) { display: none; }
@@ -268,8 +273,8 @@
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__hand .bha-tilecard__icon { width: 24px; height: 24px; }
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__hand .bha-tilecard__icon .bha-icon { width: 16px; height: 16px; }
 .bha-lcd .bha-app.bha-plan.is-place .bha-road__hand .bha-tilecard__name { padding-right: 0; }
-/* 장수 ×n 은 카드 오른쪽 아래로(이름 줄 폭을 이름에) — 준비 단계엔 임시 타일 표시가 없어 그 자리가 빈다 */
-.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand .bha-tilecard__count { top: auto; bottom: 6px; right: 8px; }
+/* 장수 ×n 은 설명 아래 자기 줄 오른쪽 끝으로 (GDD 243장 4 — 오른쪽 아래 겹쳐 놓을 때 두 줄 설명 끝과 겹쳤다) */
+.bha-lcd .bha-app.bha-plan.is-place .bha-road__hand .bha-tilecard__count { position: static; grid-column: 1 / -1; justify-self: end; margin-top: -2px; }
 .bha-lcd .bha-plan .bha-road__hand > .bha-empty { grid-column: 1 / -1; }
 /* 놓을 수 있는 수를 다 놓은 뒤 남은 빈 칸 (GDD 193장 19): 흐리게, 누를 수 없음 표시 */
 .bha-road__cell.is-full { opacity: .35; cursor: not-allowed; }

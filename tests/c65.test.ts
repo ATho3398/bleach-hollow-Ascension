@@ -1,4 +1,5 @@
 // C.65 (S-18c, GDD 30장): 첫 기기 디자인 사신대행증 — 기본 제공·자동 착용, [디자인] 목록, 겹 두께
+import { clearStory } from './helpers/storyClear';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE_VERSION } from '../src/config/balance';
@@ -87,7 +88,7 @@ describe('기본 제공·자동 착용 (30장 2번)', () => {
   });
   it('기본형 선택은 트랙별: 한 트랙만 바꿔도 다른 트랙은 그대로', () => {
     const s = newSaveData('hollow');
-    s.evolution.tierIndex = 4;
+    clearStory(s); // GDD 243장 1: 스토리 전부 클리어 → 두 번째 트랙
     checkTrackOpen(s);
     expect(s.otherTracks.length).toBe(1);
     unwearCategory(s, 'device');

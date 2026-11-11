@@ -1,5 +1,6 @@
 // C.60 (S-16, GDD 25-9): 상점 1차 — 골드 탭 11종(산 즉시 쓰기·상한), 영옥 탭 꾸밈 8분류(보유 공유·착용 트랙별·분류당 1개),
 // 다시 뽑기권(흡수 1번에 1장), 덱 칸, 튜토리얼 영옥 +1, 세이브 형식 24 마이그레이션, 런 로그 shopPurchases·흡수 rerolled
+import { clearStory } from './helpers/storyClear';
 import { placementLimitOf } from '../src/tilePresets';
 import { useInventoryItem } from '../src/inventory';
 import { readFileSync } from 'node:fs';
@@ -115,6 +116,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
   it('희귀 타일 꾸러미: 안 가진 바탕 타일 1장 → 보관함 (C.140: 덱 밖 → 안 가진)', () => {
     const s = rich();
     s.tiles.unlocked = true; // C.120: 첫 진화 전에는 타일 품목이 잠긴다
+    s.shared.unlocks.tiles = 0; // GDD 243장 2: 상점 타일 품목도 해금 판정
     s.tiles.collection = { 'prey-nest-a': 2, 'elite-den-a': 1 };
     const pool = rareTilePool(s);
     expect(pool.length).toBeGreaterThan(0);
@@ -138,6 +140,7 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
   });
   it('배치 칸: 400 → 800, 최대 +2, 원정 배치 8 → 9 → 10 (확인 창 품목)', () => {
     const s = rich();
+    s.shared.unlocks.tiles = 0; // GDD 243장 2: 배치 칸은 타일 해금 뒤
     expect(row(s, 'deck-slot')).toMatchObject({ price: 400, confirm: true });
     expect(row(s, 'food-basic')!.confirm).toBe(false);
     buyShopItem(s, H, 'deck-slot');
@@ -188,7 +191,7 @@ describe('영옥 탭: 꾸밈 보유(공유)·착용(트랙별, 분류당 1개)',
   });
   it('보유는 두 트랙 공유, 착용은 트랙마다 (트랙 전환 후 따로)', () => {
     const s = rich();
-    s.evolution.tierIndex = 4;
+    clearStory(s); // GDD 243장 1: 스토리 전부 클리어 → 두 번째 트랙
     checkTrackOpen(s, 2000);
     buyShopItem(s, H, 'tint-mono');
     wearCosmetic(s, 'tint-mono');

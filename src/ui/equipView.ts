@@ -19,7 +19,7 @@ import { affinityOf } from '../engine/pet';
 import { petArtSrc, petIconId } from './bha/pet';
 import { imageArt } from './bha/itemUi';
 import { gateHint, gateOpen } from '../unlockGate';
-import { enableDragScroll } from './bha/dragScroll';
+import { edgeCue, enableDragScroll } from './bha/dragScroll';
 import { battleItemBrief } from '../shop';
 import { pickDialog } from './pickDialog';
 import { shownName } from './displayName';
@@ -368,6 +368,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     redraw(null);
   }, '장비 분류');
   enableDragScroll(tabs, hd.signal); // 탭은 좁히지 않고 가로로 끌어 본다 (GDD 241-D 3)
+  edgeCue(tabs, tabs.querySelector<HTMLElement>('.is-on'), hd.signal); // 넘친 쪽 끝 흐림 + 고른 탭이 보이게 (GDD 243장 4)
   // 펫 탭 (GDD 241-D 3 — 가방 위 '펫' 탭을 이리로): 가진 펫 카드, 누르면 데리고 가기/두고 가기. 첫 환생 전에는 잠김 한 줄
   const petCards = ui.tab !== 'pet' || !petOpen ? [] : inventoryOf(save, faction).filter((e) => e.category === 'pet').map((e) => {
     const on = save.shared.pets.active === e.id;

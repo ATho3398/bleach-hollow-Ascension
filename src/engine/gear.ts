@@ -30,6 +30,8 @@ export interface GearItem {
   special: { id: string; value: number } | null;
   plus: number;
   gotAt: number;
+  /** 고정 이름 (낡은 장비 등, GDD 243장 3). 없으면 '등급 + 종류 이름' */
+  name?: string;
 }
 
 /** 슬롯 공유 장비 상태 (세이브 shared.gear, 형식 44) */
@@ -79,7 +81,7 @@ export function sanitizeGear(raw: unknown): GearState {
     const sp = isRec(v.special) && typeof v.special.id === 'string' && getGearSpecial(v.special.id) && typeof v.special.value === 'number' && Number.isFinite(v.special.value)
       ? { id: v.special.id, value: v.special.value } : null;
     seen.add(v.uid);
-    out.items.push({ uid: v.uid, kind: v.kind, grade: v.grade, star: clampStar(v.star), stats, special: sp, plus: Math.min(GX.maxPlus, nonNeg(v.plus)), gotAt: nonNeg(v.gotAt) });
+    out.items.push({ uid: v.uid, kind: v.kind, grade: v.grade, star: clampStar(v.star), stats, special: sp, plus: Math.min(GX.maxPlus, nonNeg(v.plus)), gotAt: nonNeg(v.gotAt), ...(typeof v.name === 'string' && v.name.length > 0 ? { name: v.name.slice(0, 20) } : {}) });
     if (out.items.length >= GX.cap) break;
   }
   const eq = isRec(r.equipped) ? r.equipped : {};

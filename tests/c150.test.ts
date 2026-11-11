@@ -226,14 +226,15 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
     s.evolution.tierIndex = 2;
     checkUnlocks(s, 1); // C.403: 해금은 진화 때 저장된다 (engine/unlocks)
     expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 신발 → 가방 장비 탭' });
-    expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 3 }) // 3단계(장비 해금, 241-0 수정) 권장 ★3;
-    expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });
+    expect(s.shared.gear.items.map((i) => i.name ?? null)).toEqual(['낡은 무기', '낡은 방어구', '낡은 신발', null]); // GDD 243장 3: 해금 때 낡은 장비 3개
+    expect(s.shared.gear.items.at(-1)).toMatchObject({ kind: 'shoes', grade: 'normal', star: 3 }) // 3단계(장비 해금, 241-0 수정) 권장 ★3;
+    expect(s.runLog.gear.map((g) => g.source)).toEqual(['unlock', 'unlock', 'unlock', 'shop']);
     expect(['w-gear-rare', 'w-gear-epic', 'w-gear-legend'].map((id) => getWandererItem(id)!.grade)).toEqual(['rare', 'epic', 'legendary']);
     s.shared.tradeCoins = 5000;
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 4, stock: [{ itemId: 'w-gear-legend', price: 1500, sold: false }] };
     expect(buyWandererItem(s, H, 'w-gear-legend', 10, () => 0.5).ok).toBe(true);
-    expect(s.shared.gear.items[1]).toMatchObject({ grade: 'legendary' });
-    expect(s.shared.gear.items[1]!.special).not.toBeNull();
+    expect(s.shared.gear.items.at(-1)).toMatchObject({ grade: 'legendary' });
+    expect(s.shared.gear.items.at(-1)!.special).not.toBeNull();
   });
 });
 

@@ -1,4 +1,5 @@
 // C.64 (S-18b, GDD 29장): 기본 키링 "영옥 구슬" 무료 지급·자동 착용, 뒤집기 옆면 두께 4.5배, 옆면 그림 자리
+import { clearStory } from './helpers/storyClear';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE_VERSION } from '../src/config/balance';
@@ -80,7 +81,7 @@ describe('기본 키링 영옥 구슬 (29장 1번)', () => {
   });
   it('두 번째 트랙·환생·합체 뒤에도 기본 키링이 따라온다', () => {
     const s = newSaveData('hollow', 1000);
-    s.evolution.tierIndex = 4;
+    clearStory(s); // GDD 243장 1: 스토리 전부 클리어 → 두 번째 트랙
     checkTrackOpen(s, 2000);
     expect(s.otherTracks[0]!.wear.keyring).toBe('keyring-orb');
     expect(switchTrack(s, s.otherTracks[0]!.factionId, 3000)).toBe(true);
@@ -118,7 +119,7 @@ describe('세이브 형식 26 마이그레이션 (키링 없던 세이브)', () 
   });
   it('쉬는 트랙도 입힌다 / 한 번뿐: 해제 뒤 저장→열기는 그대로 해제', () => {
     const s = newSaveData('hollow', 1000);
-    s.evolution.tierIndex = 4;
+    clearStory(s); // GDD 243장 1: 스토리 전부 클리어 → 두 번째 트랙
     checkTrackOpen(s, 2000);
     const raw = JSON.parse(JSON.stringify(s));
     raw.meta.format = 25;

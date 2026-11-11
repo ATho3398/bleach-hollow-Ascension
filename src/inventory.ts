@@ -419,9 +419,9 @@ export function gearKindName(kind: GearKind, faction: Pick<FactionConfig, 'gearS
   return faction.gearSlotNames[slotsForKind(kind)[0]!];
 }
 
-/** 장비 이름: "레어 송곳니 +2" */
-export function gearName(it: Pick<GearItem, 'grade' | 'kind'> & { plus?: number }, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
-  return `${GEAR_GRADE_NAMES[it.grade]} ${gearKindName(it.kind, faction)}${it.plus ? ` +${it.plus}` : ''}`;
+/** 장비 이름: "레어 송곳니 +2" · 고정 이름이면 "낡은 무기 +1" */
+export function gearName(it: Pick<GearItem, 'grade' | 'kind'> & { plus?: number; name?: string }, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
+  return `${it.name ?? `${GEAR_GRADE_NAMES[it.grade]} ${gearKindName(it.kind, faction)}`}${it.plus ? ` +${it.plus}` : ''}`; // 고정 이름(낡은 장비, GDD 243장 3)이 있으면 그것
 }
 
 const statLabel = (s: GearStat, factionId: string): string => (s === 'crit' ? '치명' : statName(s, factionId));

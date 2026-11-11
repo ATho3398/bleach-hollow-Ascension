@@ -10,7 +10,8 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { marketOf, type FactionConfig, type MarketSpot } from '../engine/faction';
 import type { SaveData } from '../game';
 import { artTierIndexOf } from '../game';
-import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buyShopItem, buyWandererItem, goldRows, healDaily, consumableGroupOf, shopDailyLeft, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
+import { buyTraitItem, equipTrait, traitRows, traitToggleLock, unequipTrait, buyShopItem, buyWandererItem, goldGate, goldRows, healDaily, consumableGroupOf, shopDailyLeft, SOLD_OUT_TODAY, jadeRows, wandererRows, type BuyResult, type ShopRow } from '../shop';
+import { gateOpen } from '../unlockGate';
 import { BATTLE_ITEMS_NAME, MEDICINE_NAME, foodBlurb, getWandererItem, WANDERER_PROVISIONAL } from '../data/shop';
 import { GEAR_KIND_ICONS } from '../data/gear';
 import blurbsJson from '../data/shop/blurbs.json';
@@ -250,9 +251,13 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     // 남은 구매 수가 정해진 품목은 한 줄 = 'n/m개 구매 가능' (GDD 159장 3·33: 떠돌이 상인 칸마다 1개 · 회복 물건 하루 판매 수)
     const daily = shopDailyLeft(save, row.id);
     const left = shopUi.tab === 'wanderer' ? `${(row as { sold?: boolean }).sold ? 0 : 1}/1개 구매 가능` : daily !== null ? `오늘 ${daily}/${healDaily(row.id)}개 구매 가능` : null;
+    // 해금 전 품목 (GDD 243장 2): 배지 '잠김' + 한 줄 = 열리는 때 (unlockHintText)
+    const gi = shopUi.tab === 'wanderer' ? undefined : getGoldItem(row.id);
+    const gate = gi ? goldGate(gi) : null;
+    const gated = !owned && gate !== null && !gateOpen(save, gate);
     const c = itemCard({
-      id: row.id, name: row.name, detail: left ?? (shopBlurb(row, faction) || undefined),
-      art: artOf(row), badge: owned ? (row.worn ? (isTrait(row.id) ? '끼움' : '착용 중') : '보유') : row.have ?? undefined,
+      id: row.id, name: row.name, detail: gated ? (row.lock ?? undefined) : left ?? (shopBlurb(row, faction) || undefined),
+      art: artOf(row), badge: gated ? '잠김' : owned ? (row.worn ? (isTrait(row.id) ? '끼움' : '착용 중') : '보유') : row.have ?? undefined,
       foot: owned ? (isTrait(row.id) ? (row.worn ? '빼기' : '끼우기') : row.worn ? '해제' : '착용') : soldOut ? SOLD_OUT_TODAY : full ? '가득' : row.price === null ? row.lock ?? '살 수 없다' : `${cur(row.currency)} ${row.price}`,
       price: !owned && !soldOut && !full && row.price !== null ? { icon: CUR_ICON[row.currency], value: row.price } : undefined,
       state: owned ? (row.worn ? 'worn' : 'owned') : row.canBuy ? undefined : 'locked',

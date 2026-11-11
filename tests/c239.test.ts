@@ -100,6 +100,8 @@ describe('159장 3·28·31~35: 상점 · 전투 소모품 상세', () => {
     expect(deck.effect).not.toContain('트랙');
     expect(deck.have).toMatch(/^보유 \+\d\/\d$/);
     s.shared.deckSlots = 99;
+    expect(goldRows(s, H).find((r) => r.id === 'deck-slot')!.lock).toBe('길리안이 되면 지형 타일이 열린다'); // GDD 243장 2: 잠김이 먼저
+    s.shared.unlocks.tiles = 0;
     expect(goldRows(s, H).find((r) => r.id === 'deck-slot')!.lock).toBe('가득');
   });
   it('떠돌이 상인: 칸 한 줄 n/1개 구매 가능, 칸마다 하나씩 문구 없음, 장비 이름에 (레어) 없음', () => {

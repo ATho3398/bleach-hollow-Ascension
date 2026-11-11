@@ -1,0 +1,97 @@
+{
+ "errors": [],
+ "shots": [
+  "01-gear-guide-open.png",
+  "02-gear-guide-wear.png",
+  "03-gear-guide-worn.png",
+  "05-gear-tabs-after-drag.png",
+  "06-bag-battle-locked.png",
+  "07-shop-tiles-locked.png",
+  "07-shop-battle-locked.png",
+  "08-tile-place.png",
+  "09-hogyoku-appear.png",
+  "10-hogyoku-second-track.png"
+ ],
+ "facts": {
+  "gearCard1": "장비 안내 1 / 3다음장비가 열렸다아쥬커스가 되어 낡은 무기·방어구·신발을 하나씩 받았다.가방을 눌러 [장비] 탭을 열어 보자.",
+  "gearCard2": "장비 안내 2 / 3다음착용장비를 눌러 [착용] — 낡은 무기·낡은 방어구·낡은 신발을 하나씩 끼워 보자.장비는 모험에서 떨어지고, 시장의 장비 상점에서도 산다.",
+  "gearCards": [
+   "낡은 무기",
+   "낡은 방어구",
+   "낡은 신발"
+  ],
+  "nextLockedBefore": 1,
+  "slotsAfter": [
+   "낡은 무기",
+   "낡은 방어구",
+   "낡은 신발",
+   "펫",
+   "장신구 1",
+   "장신구 2"
+  ],
+  "nextLockedAfter": 0,
+  "gearCard3": "장비 안내 3 / 3알겠어요강화장비를 강화하면 능력치가 더 오른다.모험 중에는 장비를 바꿀 수 없으니 떠나기 전에 챙기자.",
+  "gearGuideOpen": 0,
+  "tabsBefore": {
+   "cls": "bha-tabs bha-itemtabs is-more-right",
+   "stripRight": 684,
+   "petLeft": 645,
+   "petRight": 697,
+   "clipped": true
+  },
+  "tabsAfter": {
+   "cls": "bha-tabs bha-itemtabs is-more-left",
+   "stripRight": 684,
+   "petLeft": 629,
+   "petRight": 681,
+   "clipped": false
+  },
+  "bagBattle": "아쥬커스가 되면 전투 소모품이 열린다",
+  "bagSortie": "음식7약6전투 소모품0출정품0첫 환생 후 출정품이 열린다더 있음",
+  "shop-타일": [
+   "타일 뽑기길리안이 되면 지형 타일이 열린다잠김300",
+   "희귀 타일 꾸러미길리안이 되면 지형 타일이 열린다잠김60"
+  ],
+  "shop-전투": [
+   "용기의 물약첫 환생 후 출정품이 열린다잠김90",
+   "철피 물약첫 환생 후 출정품이 열린다잠김90",
+   "행운의 부적 가루첫 환생 후 출정품이 열린다잠김120",
+   "전투 각성제아쥬커스가 되면 전투 소모품이 열린다잠김70"
+  ],
+  "place": {
+   "chips": [
+    177,
+    257
+   ],
+   "rows": [
+    [
+     179,
+     215
+    ],
+    [
+     219,
+     255
+    ],
+    [
+     259,
+     295
+    ],
+    [
+     299,
+     335
+    ]
+   ],
+   "cardsOverlap": false
+  },
+  "hogCard1": "1 / 3건너뛰기다음붕옥이 나타났다이야기가 끝난 자리에 작은 구슬 하나가 남았다.\"…두 갈래의 힘을 하나로 잇는 구슬, 붕옥.\"",
+  "hogIcon": 1,
+  "hogCard2": "2 / 3건너뛰기이전다음두 번째 트랙붕옥이 다른 종족의 길을 열었다 — 같은 슬롯에서 새 캐릭터를 1단계부터 키운다.이름표 옆 버튼으로 두 캐릭터를 바꾼다.",
+  "saveAfter": {
+   "tabOpen": true,
+   "appearedAt": 1794440529152,
+   "tracks": [
+    "shinigami"
+   ]
+  }
+ }
+}

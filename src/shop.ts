@@ -4,7 +4,7 @@
 // 꾸밈·스킨 = 보유만(끼기는 보관함). 떠돌이 상인(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
 import { sortieEffectText, sortiePrice } from './engine/sortie';
-import { gateHint, gateOpen } from './unlockGate';
+import { gateHint, gateOpen, type GateId } from './unlockGate';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type MedicineCure, type WandererGrade, type WearCategory } from './data/shop';
 import { wandererAmount } from './engine/wanderer';
 import { canWear } from './data/skins';
@@ -263,12 +263,25 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
   }
 }
 
+/** 품목이 따르는 해금 (GDD 241-0 · 243장 2). 없으면 늘 열림 */
+export function goldGate(it: Pick<GoldItemDef, 'id' | 'kind' | 'gearKind'>): GateId | null {
+  switch (it.kind) {
+    case 'gear': return it.gearKind === 'accessory' ? 'accessory' : 'gear';
+    case 'sortie': return 'sortie';
+    case 'tileDraw':
+    case 'rareTile':
+    case 'deckSlot': return 'tiles';
+    case 'battle': return consumableGroupOf(it.id) === 'battle' ? 'battleItem' : null; // 회복 물건(반창고·구급약 등, 가방 '약' 칸)은 처음부터 — 전투 전용만 3단계
+    default: return null;
+  }
+}
+
 /** 골드 탭 줄 (GDD 25-9 표 순서). 수련권은 수련이 열린 트랙(5단계 이상)에서만 보인다 */
 export function goldRows(save: SaveData, faction: FactionConfig, nowMs: number = Date.now()): ShopRow[] {
   return GOLD_ITEMS.filter((it) => it.kind !== 'trainingTicket' || trainingOpen(save)).map((it) => {
     const price = goldPrice(save, it);
-    // 해금 전 품목 (GDD 241-0 수정): 장비 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
-    const gate = it.kind === 'gear' ? (it.gearKind === 'accessory' ? 'accessory' : 'gear') : it.kind === 'sortie' ? 'sortie' : null;
+    // 해금 전 품목 (GDD 241-0 수정 · 243장 2): 타일 뽑기·희귀 타일·타일 배치 칸 = 2단계 · 장비·전투 소모품 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
+    const gate = goldGate(it);
     const block = (gate && !gateOpen(save, gate) ? gateHint(faction, gate) : null) ?? goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
     const effect = goldEffect(it, faction) + (it.kind === 'tileDraw' && save.tiles.unlocked ? ` · 뽑은 횟수 ${save.tiles.draws}` : '');
     return { id: it.id, currency: 'gold', name: goldName(it, faction), effect, price, canBuy: block === null && price !== null, lock: block, have: goldHave(save, it), confirm: it.kind === 'deckSlot' };

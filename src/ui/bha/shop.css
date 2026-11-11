@@ -142,6 +142,10 @@
 .bha-equip-page .bha-eqright .bha-itemtab { flex: 0 0 auto; flex-direction: column; justify-content: center; gap: 0; min-width: 52px; height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-3); font-size: var(--bha-fs-xs); line-height: 1.1; }
 /* 241-D 3: 탭을 좁히지 않는다 — 넘치면 가로로 끌어 본다 (dragScroll.ts) */
 .bha-equip-page .bha-eqright .bha-itemtabs { touch-action: pan-x; user-select: none; -webkit-user-select: none; }
+/* 243장 4: 넘친 쪽 끝에 강조 세로줄 — 옆으로 끌면 더 있다는 표시 (edgeCue). 끝까지 넘기면 그 쪽 줄은 사라진다 (v2: 그라데이션 없이 토큰 색만) */
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-right { box-shadow: inset -3px 0 0 var(--bha-accent); }
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-left { box-shadow: inset 3px 0 0 var(--bha-accent); }
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-left.is-more-right { box-shadow: inset 3px 0 0 var(--bha-accent), inset -3px 0 0 var(--bha-accent); }
 .bha-equip-page .bha-eqright .bha-itemtab__count { margin-left: 0; }
 .bha-itemgrid--equip { grid-auto-rows: 84px; gap: var(--bha-sp-3); }
 .bha-itemgrid--equip .bha-itemcard { justify-content: center; padding: var(--bha-sp-3) var(--bha-sp-1) var(--bha-sp-2); gap: var(--bha-sp-1); }

@@ -8,7 +8,7 @@ import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
-import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
+import { GUIDES, guideVars, HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
@@ -633,7 +633,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   /** 해금 안내 카드 순서 = 해금 표 순서 (GDD 241-0) */
-  const UNLOCK_GUIDE_ORDER = FEATURE_IDS.map((id) => UNLOCK_GUIDES[id]);
+  const UNLOCK_GUIDE_ORDER: TextGuideId[] = ['hogyoku-appear', ...FEATURE_IDS.map((id) => UNLOCK_GUIDES[id])]; // 붕옥 등장 컷이 먼저 (GDD 243장 1)
 
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
   function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
@@ -651,9 +651,53 @@ export function startApp(host: HTMLElement): void {
   /** 해금 안내 카드 (GDD 241-0, C.394): 방에 돌아왔을 때 띄울 차례인 것을 표 순서대로 하나씩 이어서 — 장비 → 타일 → 출정품 → 본능 수련 → 번호 쟁탈전 → 펫 */
   function runUnlockGuides(faction: FactionConfig): boolean {
     for (const id of UNLOCK_GUIDE_ORDER) {
+      if (id === 'unlock-gear') {
+        if (runGearGuide(faction)) return true;
+        continue;
+      }
       if (runGuide(id, faction, { finishLabel: '알겠어요', onDone: () => window.setTimeout(() => { if (nav.top?.id === 'room') runUnlockGuides(faction); }, 250) })) return true;
     }
     return false;
+  }
+
+  /**
+   * 장비 해금 안내 = 따라 하기 (GDD 243장 3): ① 가방을 눌러 장비 탭 열기 ② 받은 낡은 무기·방어구·신발을 하나씩 [착용](무기·방어구·신발 칸이 차면 [다음]) ③ 강화 설명.
+   * 실제 조작 카드(TutorialAct) — 그동안 눌러도 되는 것은 가방·장비 카드·상세 창뿐. 낄 장비가 없는 종류는 기다리지 않는다(보관함이 가득이라 못 받은 옛 세이브)
+   */
+  function runGearGuide(faction: FactionConfig): boolean {
+    if (!save || guideOpen || !guidePending(save.help, 'unlock-gear')) return false;
+    const s = save;
+    guideOpen = true;
+    const scenes = GUIDES['unlock-gear'];
+    const worn = (): boolean => (['weapon', 'armor', 'shoes'] as const).every((k) => s.shared.gear.equipped[k] !== null || !s.shared.gear.items.some((it) => it.kind === k));
+    const acts: Record<string, TutorialAct | undefined> = {
+      open: { selector: '.bha-prop--chest', autoFinish: true, done: () => document.querySelector('.bha-equip-page') !== null },
+      wear: { selector: '.bha-equip-page .bha-eqright .bha-itemcard, .bha-equip-page .bha-eqslot[data-slot], .bha-itemdialog, .bha-prop--chest', done: worn }, // 가방을 닫아 버려도 다시 열 수 있게 가방도
+    };
+    const finish = (): void => {
+      guideOpen = false;
+      markGuideDone(s.help, 'unlock-gear');
+      persist();
+      window.setTimeout(() => { if (nav.top?.id === 'room') runUnlockGuides(faction); }, 250);
+    };
+    const show = (i: number): void => {
+      const scene = scenes[i];
+      if (!scene) return finish();
+      // 이미 한 단계는 건너뛴다 (가방이 이미 열려 있음 · 이미 다 낌)
+      if (scene.id === 'open' && document.querySelector('.bha-equip-page')) return show(i + 1);
+      if (scene.id === 'wear' && worn() && i > 0) return show(i + 1);
+      if (scene.id === 'open') openChestAtGear();
+      tutorialOverlay(faction, {
+        scenes: [scene], name: 'unlock-gear', pauseLabel: null, finishLabel: i === scenes.length - 1 ? '알겠어요' : '다음', vars: guideVars(faction),
+        script: { step: `장비 안내 ${i + 1} / ${scenes.length}`, act: acts[scene.id] },
+        onFinish: (status) => {
+          if (status !== 'completed') return finish();
+          window.setTimeout(() => show(i + 1), 300);
+        },
+      });
+    };
+    show(0);
+    return true;
   }
 
   /** 첫 시작 탄생 연출이 재생 중이다 (GDD 74장, C.126) */
@@ -1265,13 +1309,16 @@ export function startApp(host: HTMLElement): void {
     const loss = away && away.hours * 60 >= BALANCE.provisional.idle.minMinutes ? absenceLossLines(away, faction) : [];
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];
+    // 붕옥 등장 컷(안내 카드 hogyoku-appear)이 두 번째 트랙까지 알리므로 그때는 알림을 띄우지 않는다 (GDD 243장 1)
+    const appearCut = guidePending(s.help, 'hogyoku-appear');
+    if (s.trackNotice && appearCut) s.trackNotice = null;
     if (s.trackNotice) {
       const opened = getFaction(s.trackNotice);
       notes.push({ eyebrow: '새 트랙', title: `${opened.name} 트랙이 열렸다`, meta: `같은 슬롯에서 새 ${opened.name} 캐릭터를 1단계부터 키운다. 이름표 옆 [${toward(opened.name)}] 버튼으로 바꾼다.` });
       s.trackNotice = null;
     }
     if (s.hogyoku.tabNotice) {
-      notes.push({ eyebrow: '붕옥', title: '붕옥 탭이 열렸다', meta: '두 캐릭터가 모두 마지막 단계(4단계)에 닿았다. 더보기 ⋯ → [붕옥]' });
+      if (!appearCut) notes.push({ eyebrow: '붕옥', title: '붕옥이 나타났다', meta: '방의 붕옥을 누르면 붕옥 화면이 열린다.' });
       s.hogyoku.tabNotice = false;
     }
     // 떠돌이 상인 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다

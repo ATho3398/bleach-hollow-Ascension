@@ -15,6 +15,7 @@ import {
 } from '../src/game';
 import { fusionBlockText, fusionFinalText, fusionLists } from '../src/ui/hogyokuView';
 import { useLegacyMigrations } from './helpers/legacyGate';
+import { clearStory } from './helpers/storyClear';
 
 useLegacyMigrations(); // 옛 형식 마이그레이션 시험 (C.120, GDD 61장)
 
@@ -77,9 +78,9 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
 function fusionReady(forms: [string, string] = ['t4:fire:physical', 't4:water:special']): SaveData {
   const s = newSaveData('hollow', 1000);
   toTier5(s, forms[0]);
+  clearStory(s); // 스토리 전부 클리어 → 붕옥 등장 + 두 번째 트랙 (GDD 243장 1)
   checkTrackOpen(s, 2000);
   toTier5(s.otherTracks[0]!, forms[1]);
-  checkTrackOpen(s, 3000);
   for (const t of allTracks(s)) makeTop(t);
   s.shared.soulCrystals = HX.liberateCost + HX.fusionCost;
   feedHogyoku(s);
@@ -106,21 +107,20 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     }
     expect(m.meta.startPatch).toBe((before.meta as { startPatch: string }).startPatch);
     expect(m.otherTracks).toEqual([]);
-    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 });
+    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, appearedAt: null, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 });
     expect(m.transcendentDex).toEqual([]);
     expect(m.slotLog).toEqual({ fusions: [], trackOpens: [], identities: [] }); // C.326 이름·성별 기록
   });
 
-  it('이미 5단계인 옛 세이브는 열 때 다른 종족 트랙이 열리고(종족 데이터에서), 알림이 한 번 걸린다. 원래 트랙은 그대로', () => {
+  it('이미 마지막 단계인 옛 세이브도 스토리를 다 깨지 않았으면 다른 종족 트랙이 열리지 않는다 (GDD 243장 1). 원래 트랙은 그대로', () => {
     const st = memStorage();
     st.setItem('k', JSON.stringify(oldFormat22()));
     const s = loadSave(st, 'k')!;
     expect(s.factionId).toBe('hollow');
     expect(s.evolution.tierIndex).toBe(3); // C.220: 옛 5단계 → 4단계
-    expect(s.otherTracks.map((t) => t.factionId)).toEqual([other('hollow')]);
-    expect(s.otherTracks[0]!.evolution.tierIndex).toBe(0);
-    expect(s.trackNotice).toBe(other('hollow'));
-    expect(s.slotLog.trackOpens).toHaveLength(1);
+    expect(s.otherTracks).toEqual([]);
+    expect(s.trackNotice).toBeNull();
+    expect(s.slotLog.trackOpens).toHaveLength(0);
     expect(s.hogyoku.tabOpen).toBe(false);
   });
 
@@ -148,11 +148,12 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
 });
 
 describe('투트랙 개방·전환 (GDD 22-3)', () => {
-  it('5단계 전에는 열리지 않고, 닿으면 종족 데이터 순서에서 아직 없는 종족이 열린다 (두 종족 모두)', () => {
+  it('스토리를 전부 깨기 전에는(마지막 단계여도) 열리지 않고, 깨면 종족 데이터 순서에서 아직 없는 종족이 열린다 (두 종족 모두, GDD 243장 1)', () => {
     for (const f of FACTIONS) {
       const s = newSaveData(f.id, 1);
+      s.evolution.tierIndex = 3;
       expect(checkTrackOpen(s, 2)).toBeNull();
-      s.evolution.tierIndex = 4;
+      clearStory(s);
       expect(checkTrackOpen(s, 3)).toBe(other(f.id));
       expect(checkTrackOpen(s, 4)).toBeNull(); // 트랙 칸이 다 찼다
       expect(allTracks(s)).toHaveLength(BALANCE.provisional.twoTrack.maxTracks);
@@ -161,13 +162,14 @@ describe('투트랙 개방·전환 (GDD 22-3)', () => {
 
   it('종족 목록은 데이터에서 읽는다: 세 번째 종족이 있어도 하드코딩 없이 그 순서대로', () => {
     const s = newSaveData('shinigami', 1);
-    s.evolution.tierIndex = 4;
+    clearStory(s);
     expect(checkTrackOpen(s, 2, [{ id: 'shinigami' }, { id: 'quincy' }, { id: 'hollow' }])).toBe('quincy');
   });
 
   it('전환은 트랙 필드를 맞바꾸고 공유 자원은 그대로, 쉬는 동안 허기가 오른다', () => {
     const s = newSaveData('hollow', 0);
     toTier5(s);
+    clearStory(s);
     checkTrackOpen(s, 0);
     s.shared.soulCrystals = 11;
     const hollowEvo = JSON.stringify(s.evolution);
@@ -188,6 +190,7 @@ describe('투트랙 개방·전환 (GDD 22-3)', () => {
   it('원정 중간 저장은 트랙마다 따로 남는다', () => {
     const s = newSaveData('hollow', 0);
     toTier5(s);
+    clearStory(s);
     checkTrackOpen(s, 0);
     s.activeExpedition = { version: 6 } as never;
     switchTrack(s, other('hollow'), 1);
@@ -197,15 +200,22 @@ describe('투트랙 개방·전환 (GDD 22-3)', () => {
 });
 
 describe('붕옥 (탭·해방·보너스)', () => {
-  it('두 트랙 모두 5단계에 한 번 닿아야 탭이 열린다 (영구)', () => {
+  it('스토리를 전부 깨면 붕옥 등장(탭·등장 컷)과 두 번째 트랙이 같은 순간 한 번 (GDD 243장 1, 영구)', () => {
     const s = newSaveData('hollow', 0);
     toTier5(s);
     checkTrackOpen(s, 0);
     expect(s.hogyoku.tabOpen).toBe(false);
-    s.otherTracks[0]!.rebirth.count = 1; // 환생은 5단계에서만 = 닿은 적 있음
+    expect(s.otherTracks).toHaveLength(0);
+    clearStory(s);
     checkTrackOpen(s, 1);
     expect(s.hogyoku.tabOpen).toBe(true);
     expect(s.hogyoku.tabNotice).toBe(true);
+    expect(s.hogyoku.appearedAt).toBe(1);
+    expect(s.help.guides['hogyoku-appear']).toBe('pending');
+    expect(s.otherTracks).toHaveLength(1);
+    checkTrackOpen(s, 2); // 두 번째: 아무것도 바뀌지 않는다
+    expect(s.hogyoku.appearedAt).toBe(1);
+    expect(s.otherTracks).toHaveLength(1);
   });
 
   it('영혼 결정 100 → 해방 → 두 캐릭터 전 능력치 +5%, 해방 뒤 먹이면 2단계 게이지(최대 300)', () => {

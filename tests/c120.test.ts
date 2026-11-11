@@ -94,15 +94,18 @@ describe('64장 2번: 상점 타일 뽑기', () => {
   it('첫 진화 전에는 잠김("첫 진화 후 열림"), 열리면 가격 = balance', () => {
     const s = rich();
     const row = goldRows(s, H).find((r) => r.id === 'tile-draw')!;
-    expect(row).toMatchObject({ canBuy: false, lock: TILES_LOCKED_TEXT, price: TD.price });
+    expect(row).toMatchObject({ canBuy: false, lock: '길리안이 되면 지형 타일이 열린다', price: TD.price }); // GDD 243장 2: 해금 판정(featureUnlocked) 잠김 한 줄
     expect(buyShopItem(s, H, 'tile-draw').ok).toBe(false);
+    expect(TILES_LOCKED_TEXT).toBeTruthy();
     grantStarterTiles(s);
+    s.shared.unlocks.tiles = 0; // 진화 때 checkUnlocks 가 함께 연다
     expect(goldRows(s, H).find((r) => r.id === 'tile-draw')!.canBuy).toBe(true);
   });
 
   it('첫 뽑기는 환경 타일 확정, 중복은 장수 +1, 구매 기록에 결과', () => {
     const s = rich();
     grantStarterTiles(s);
+    s.shared.unlocks.tiles = 0;
     const r = buyShopItem(s, H, 'tile-draw', 5, () => 0.99);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -281,6 +284,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'hogyoku-appear', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

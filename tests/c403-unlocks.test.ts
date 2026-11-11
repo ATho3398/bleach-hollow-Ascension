@@ -103,12 +103,12 @@ describe('세이브 형식 75 (74 → 75 마이그레이션): 옛 세이브는 �
     return migrateSave(raw)!;
   };
   it('형식 74, 단계 표에 73 이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
+    expect(SAVE_FORMAT_VERSION).toBe(78); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
     expect(SAVE_MIGRATIONS[73]).toBeTypeOf('function');
   });
   it('1단계 옛 세이브: 쓰던 장비·전투 소모품 칸·장신구 칸은 열린 채(안내 없음), 타일·펫은 안 받았으면 표대로 잠김', () => {
     const m = old74(() => undefined);
-    expect(m.meta.format).toBe(77);
+    expect(m.meta.format).toBe(78);
     expect(m.shared.unlocks).toEqual({ gear: 0, battleItem: 0, accessory: 0 });
     for (const g of ['unlock-gear', 'unlock-battle-item', 'unlock-accessory'] as const) expect(guidePending(m.help, g)).toBe(false);
   });
@@ -188,7 +188,7 @@ describe('241-C 1 해금 안내 카드', () => {
   });
   it('방에 돌아오면 표 순서로 하나씩 이어서 뜬다 · 도움말에서 다시 본다', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain('const UNLOCK_GUIDE_ORDER = FEATURE_IDS.map((id) => UNLOCK_GUIDES[id]);');
+    expect(app).toContain("const UNLOCK_GUIDE_ORDER: TextGuideId[] = ['hogyoku-appear', ...FEATURE_IDS.map((id) => UNLOCK_GUIDES[id])];"); // GDD 243장 1: 붕옥 등장 컷이 먼저
     expect(app).toContain("if (!runGuide('first-run-room', faction)) runUnlockGuides(faction);");
     expect(app).toContain('out.push({ label: `${featureName(faction, id)} 안내`, run: chain([g]) });');
   });
