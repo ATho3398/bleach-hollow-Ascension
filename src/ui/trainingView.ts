@@ -69,7 +69,7 @@ export interface TrainingHandlers {
 }
 
 /** 수련권 얻는 법 한 줄 (GDD 216장 1·2): 강적·보스 처치 때 무작위, 개수 제한 없음 */
-const TICKET_HOW = '모험·탑에서 강적·보스를 잡으면 얻을 때가 있다 (한 판에 1장)';
+const TICKET_HOW = '모험·탑에서 강적·보스를 쓰러뜨리면 가끔 얻는다 (수련 한 번에 1장)';
 
 /** 수련장 묶음의 두 화면: 수련(본능 수련) · 훈련 인형. 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
 export type TrainingScreenId = 'train' | 'practice';
@@ -111,7 +111,7 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   prog.append(tickets);
   const notes: HTMLElement[] = [];
   if (!gate.ok && gate.reason === 'tier') notes.push(notice('info', trainingLockedText(faction), { icon: 'i-lock' }));
-  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험·탑에서 강적·보스를 잡으면 얻을 때가 있다.', { icon: 'i-lock' }));
+  else if (!gate.ok && gate.reason === 'tickets') notes.push(notice('info', '수련권이 없다. 모험·탑에서 강적·보스를 쓰러뜨리면 가끔 얻는다.', { icon: 'i-lock' }));
   else if (!gate.ok && gate.reason === 'condition') notes.push(notice('warn', `컨디션이 ${TX.minCondition} 미만이라 수련할 수 없다. ${faction.nestActions.sleep}(으)로 회복한다.`));
   if (gate.ok || gate.reason !== 'tier') {
     if (trainingRiskWarning(n.risk)) notes.push(notice('risk', `${faction.riskGaugeName}이(가) 한계 근처다 (${Math.round(n.risk)}). ${faction.riskGaugeName}이(가) 오르는 종목은 조심해야 한다.`));

@@ -70,8 +70,8 @@ describe('222장 3 대기 보상', () => {
     const full = { collapsed: false, dead: false, hunger: 0, weakened: false };
     expect(idleShortfall({ hours: 1, activeHours: 0.9 }, full)).toBeNull(); // 배부른데 '배고프거나' 라던 것
     expect(idleShortfall({ hours: 1, activeHours: 0.98 }, { ...full, hunger: 100 })).toBeNull(); // 5% 미만 차이
-    expect(idleShortfall({ hours: 1, activeHours: 0.5 }, { ...full, hunger: 100 })).toBe('덜 돌았다 — 배가 고파 멈췄다');
-    expect(idleShortfall({ hours: 1, activeHours: 0.5 }, { ...full, weakened: true })).toBe('덜 돌았다 — 쇠약이라 절반만 돌았다');
+    expect(idleShortfall({ hours: 1, activeHours: 0.5 }, { ...full, hunger: 100 })).toBe('덜 모험했다 — 배가 고파 멈췄다'); // C.407 문구 검수 (GDD 241-C 10)
+    expect(idleShortfall({ hours: 1, activeHours: 0.5 }, { ...full, weakened: true })).toBe('덜 모험했다 — 쇠약이라 절반만 모험했다');
     expect(idleShortfall({ hours: 1, activeHours: 0 }, { ...full, collapsed: true })).toBe('빈사라 자동 모험을 하지 못했다');
     expect(idleShortfall({ hours: 1, activeHours: 1 }, { ...full, hunger: 100 })).toBeNull();
   });

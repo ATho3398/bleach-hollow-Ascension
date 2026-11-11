@@ -73,7 +73,7 @@ export function difficultyDetail(faction: FactionConfig, star: number, streak = 
   lines.push(numLine(`${faction.foodGroupName}·노력치`, food > 1 ? multPct(food) : '그대로'));
   lines.push(numLine('골드', gold > 1 ? multPct(gold) : '그대로'));
   if (n > 0) lines.push(numLine('연속', `${n}번째`));
-  lines.push('같은 ★을 연속으로 깨면 적과 보상이 조금씩 는다');
+  lines.push('같은 ★을 연속으로 클리어하면 적과 보상이 조금씩 는다');
   return { title: difficultyText(faction, star), lines };
 }
 

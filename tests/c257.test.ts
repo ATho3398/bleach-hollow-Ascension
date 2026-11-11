@@ -63,7 +63,7 @@ describe('C.257 174장 3 잠금 그대로', () => {
 describe('C.257 174장 4 문구', () => {
   it('도움말 진급 시험 줄 = 방 책장 아래 (수련장 아님)', () => {
     const g = read('src/data/help/glossary.json');
-    expect(g).toContain('{nestName}의 {room.props.book} 바로 아래에서 열린다.');
+    expect(g).toContain('{tier4}이(가) 되면 {worldmap.name}에서 열린다.'); // C.407: 번호 쟁탈전·진급 시험 = 월드맵 (GDD 241-C 3)
     expect(g).not.toContain('월드맵의 수련장 안에서 열린다');
   });
 });

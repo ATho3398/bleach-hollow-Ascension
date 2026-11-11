@@ -47,7 +47,7 @@ describe('외형이 갈리는 단계 = 종족 설정 (114장 2)', () => {
     for (const p of ['src/engine/gender.ts', 'src/data/art/manifest.ts', 'src/ui/settingsView.ts']) expect(read(p)).not.toMatch(/=== '(hollow|shinigami)'/);
   });
   it('안내 문구는 종족 설정의 단계 이름으로', () => {
-    expect(genderLookNote(getFaction('hollow').tierNames, 5, getFaction('hollow').ascension)).toBe('아란칼화를 깬 뒤부터 모습이 달라진다.');
+    expect(genderLookNote(getFaction('hollow').tierNames, 5, getFaction('hollow').ascension)).toBe('아란칼화 클리어 후부터 모습이 달라진다.'); // C.407 (GDD 241-C 10): '깬 뒤' → '클리어 후'
     expect(genderLookNote(getFaction('shinigami').tierNames, 1)).toMatch(/^처음부터/);
   });
 });

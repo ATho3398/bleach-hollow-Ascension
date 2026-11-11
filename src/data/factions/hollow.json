@@ -133,7 +133,7 @@
   "appearanceChange": true,
   "defeatStateName": "가면이 깨져 쓰러짐",
   "basicSkillName": "본체 능력",
-  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장을 깨면 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장 클리어 후 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
   "arenaBg": "seireitei",
@@ -471,7 +471,7 @@
       "keyring-bell": "bonebell"
     }
   },
-  "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 깨면 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5, "formNameKey": "name" },
+  "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 클리어 후 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5, "formNameKey": "name" },
   "liberation": {
     "baseName": "영력 해방",
     "baseCutin": "영력을 끌어올린다 — 영력 해방!",

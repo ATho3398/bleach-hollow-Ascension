@@ -38,6 +38,6 @@ export function activeGender(): Gender {
 export function genderLookNote(tierNames: readonly string[], genderLookFromTier: number | undefined, ascension?: { name: string; artTier?: number }): string {
   if (genderLookFromTier === undefined) return '모습은 성별과 상관없이 같다.';
   // C.220 (GDD 126장 3): 그림 단계가 육성 단계를 넘으면(호로 5 = 아란칼 모습) 아란칼화를 깬 뒤부터
-  const from = genderLookFromTier <= 1 ? '처음' : tierNames[genderLookFromTier - 1] ?? (ascension && ascension.artTier !== undefined && genderLookFromTier >= ascension.artTier ? fixParticles(`${ascension.name}을(를) 깬 뒤`) : `${genderLookFromTier}단계`);
+  const from = genderLookFromTier <= 1 ? '처음' : tierNames[genderLookFromTier - 1] ?? (ascension && ascension.artTier !== undefined && genderLookFromTier >= ascension.artTier ? `${ascension.name} 클리어 후` : `${genderLookFromTier}단계`);
   return `${from}부터 모습이 달라진다.`;
 }

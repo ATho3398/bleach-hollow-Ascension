@@ -124,7 +124,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
           numLine(`${a.sleep}·${a.pet}(돌봄 요청 응답)`, `${a.sleep} ${signed(BD.gain.sleep)}`, `${a.pet} ${signed(BD.gain.pet)}`),
           numLine('하루 최대', signed(BD.dailyMax)),
           numLine('눌러서 말 걸기', `${BD.touch.likeCount}번째까지 ${signed(BD.touch.gain)}`, `${BD.touch.likeCount + BD.touch.dislikeCount + 1}번째부터 ${signed(-BD.touch.loss)}`, `${BD.touch.resetHours}시간 뒤 처음부터`),
-          numLine('꺼 둔 동안', `${BD.decayHours}시간마다 ${MINUS}1`),
+          numLine('자리를 비운 동안', `${BD.decayHours}시간마다 ${MINUS}1`),
           numLine(CARE_NAMES.collapsed, signed(-BD.collapseLoss)),
           numLine('사망·부활', '절반'),
         ],

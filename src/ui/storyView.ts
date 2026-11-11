@@ -98,7 +98,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   const tier = save.evolution.tierIndex;
 
   const episodeRow = (chId: string, ep: StoryEpisode, i: number, chLock: string | null): HTMLElement => {
-    const why = chLock ?? '앞 화를 깨면 열린다'; // 장이 잠겼으면 장이 열리는 조건
+    const why = chLock ?? '앞 화 클리어 후 열린다'; // 장이 잠겼으면 장이 열리는 조건
     const open = episodeOpen(save, chId, ep.id);
     const done = prog.cleared[episodeKey(chId, ep.id)];
     const row = el('div', `bha-story-ep${open ? '' : ' is-locked'}${done ? ' is-cleared' : ''}`);
@@ -161,7 +161,7 @@ export function storyView(root: HTMLElement, faction: FactionConfig, save: SaveD
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   // 머리 (C.63, GDD 28장 8번): [자유 원정]/[스토리] 탭을 출발 화면(planView)과 같은 자리(머리 맨 왼쪽)에 둔다 — 탭을 바꿔도 탭이 움직이지 않게
   const head = el('header', 'bha-exp__head bha-depart-head');
-  head.append(departTabs('story', h.onTab), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 깨면 다음 화가 열린다'), selectLast(help));
+  head.append(departTabs('story', h.onTab), el('p', 'bha-depart-head__sub', '정해진 길 · 목표 1개 · 대화. 화를 클리어하면 다음 화가 열린다'), selectLast(help));
   const { app } = lcdPage(root, { cls: 'bha-story', cols: '2fr 3fr' }, head, [md.list], [md.detail]);
   app.dataset.screen = 'story';
   app.classList.add('bha-v2'); // v2 그림 칸·자물쇠·이유 한 줄(.bha-art · .bha-lock · .bha-pop)

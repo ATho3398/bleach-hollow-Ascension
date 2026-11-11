@@ -57,9 +57,9 @@ export function idleShortfall(
   const why = [
     nest.collapsed || nest.dead ? `${nest.dead ? CARE_STATUS_NAMES.dead : CARE_STATUS_NAMES.collapsed}라 쉬었다` : '',
     (nest.hunger ?? 0) >= 100 ? '배가 고파 멈췄다' : '',
-    nest.weakened ? `${CARE_STATUS_NAMES.weak}이라 절반만 돌았다` : '', // '쇠약' 받침 — 이름이 종족 설정이 아니라 고정이라 조사도 고정
+    nest.weakened ? `${CARE_STATUS_NAMES.weak}이라 절반만 모험했다` : '', // '쇠약' 받침 — 이름이 종족 설정이 아니라 고정이라 조사도 고정
   ].filter(Boolean);
-  return why.length > 0 ? `덜 돌았다 — ${why.join(' · ')}` : null;
+  return why.length > 0 ? `덜 모험했다 — ${why.join(' · ')}` : null;
 }
 
 /** 받은 뒤 요약 (런 로그 IdleRecord): 제목 + 본문 한 단락 */
@@ -83,7 +83,7 @@ export function idleSummaryText(r: IdleRecord, faction: Pick<FactionConfig, 'foo
 
 /** 규칙 한 줄 (아이콘 창, C.170 GDD 100장 #16: 3줄 → 1줄. 받기 기준·최대 시간은 진행 막대가 보인다) */
 export function idleRuleText(): string {
-  return `켜 두든 꺼 두든 흐른 시간만큼 자동으로 모험한다. 보상은 직접 돌았을 때의 ${Math.round(IX.share * 100)}%다.`;
+  return `플레이와 관계없이 흐른 시간만큼 자동으로 모험한다. 보상은 직접 모험했을 때의 ${Math.round(IX.share * 100)}%다.`;
 }
 
 /** 진행 막대 한 줄 (#16): "쌓인 시간 3분 / 10분부터 받기 · 최대 24시간". 받을 수 있으면 최대 시간 기준 */
@@ -150,7 +150,7 @@ export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: Factio
   if (loss.length) content.append(absenceLossBlock(loss));
   confirmDialog({
     title: `${hm(acc.awayHours)} 만에 돌아왔다`,
-    body: capped ? `대기 보상은 최대 ${IX.maxHours}시간까지만 쌓인다. 쌓인 보상:` : '꺼 둔 동안 자동 모험으로 쌓인 보상:',
+    body: capped ? `대기 보상은 최대 ${IX.maxHours}시간까지만 쌓인다. 쌓인 보상:` : '자리를 비운 동안 자동 모험으로 쌓인 보상:',
     content,
     yes: '받기',
     no: '나중에',

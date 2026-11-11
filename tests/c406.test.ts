@@ -200,3 +200,28 @@ describe('241-C 8·9·11 문구·화면 · 241-G 이름', () => {
     for (const f of FACTIONS) expect(f.id).toBeTruthy();
   });
 });
+
+describe('C.407 241-C 10 문구 검수', () => {
+  const read2 = (p: string) => readFileSync(p, 'utf8');
+  it("대기 보상: '플레이와 관계없이' · '직접 모험했을 때'", () => {
+    const iv = read2('src/ui/idleView.ts');
+    expect(iv).toContain('플레이와 관계없이 흐른 시간만큼 자동으로 모험한다. 보상은 직접 모험했을 때의 ');
+    expect(iv).not.toMatch(/켜 두든|직접 돌았을 때|덜 돌았다/);
+  });
+  it("'깬 뒤'·'깨면' → '클리어 후'·'클리어하면' (화면 문구 — 이야기 대사 '가면을 깨는 자' 같은 말은 그대로)", () => {
+    for (const f of ['src/ui/planView.ts', 'src/ui/storyView.ts', 'src/data/help/glossary.json', 'src/data/help/tutorial.json', 'src/engine/gender.ts']) {
+      const strings = read2(f).split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+      expect(strings, f).not.toMatch(/깨면|깬 뒤`|을\(를\) 깬/);
+    }
+    for (const f of FACTIONS) {
+      const raw = read2(`src/data/factions/${f.id}.json`);
+      expect(raw).toContain('"locked": "스토리 1장 클리어 후 열린다"');
+      expect(f.ascension.desc).toContain('클리어 후');
+    }
+  });
+  it('도움말에 개발용 (임시) 표시가 없다 · 번호 쟁탈전 위치 = 월드맵', () => {
+    const g = read2('src/data/help/glossary.json');
+    expect(g).not.toMatch(/\(임시\)|\(수치는 임시\)|\(조건은 임시\)|오오라/);
+    expect(g).toContain('{tier4}이(가) 되면 {worldmap.name}에서 열린다.');
+  });
+});

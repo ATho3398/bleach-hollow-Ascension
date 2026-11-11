@@ -118,7 +118,7 @@ describe('개수 제한 없음 (216장 2)', () => {
     const v = read('src/ui/trainingView.ts');
     expect(v).not.toMatch(/ticketsMax|최대 3장|돌아오면 1장/);
     expect(v).toMatch(/`수련권 \$\{t\.tickets\}`/);
-    expect(v).toMatch(/강적·보스를 잡으면 얻을 때가 있다/);
+    expect(v).toMatch(/강적·보스를 쓰러뜨리면 가끔 얻는다/); // C.407 문구 검수 (GDD 241-C 10)
   });
 });
 
