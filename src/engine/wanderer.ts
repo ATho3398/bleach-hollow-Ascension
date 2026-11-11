@@ -87,9 +87,10 @@ export function wandererAmount(itemId: string): number {
 }
 
 /** 품목 stockSize 개 뽑기: 칸마다 등급을 티어 표로 뽑고 그 등급에서 아직 안 나온 품목 하나 (그 등급이 바닥나면 남은 품목 아무거나) */
-export function rollWandererStock(tier: number, rand: () => number): WandererStockItem[] {
+export function rollWandererStock(tier: number, rand: () => number, skip?: (itemId: string) => boolean): WandererStockItem[] {
   const odds = wandererGradeOdds(tier);
-  const left = [...WANDERER_ITEMS];
+  // skip = 아직 못 쓰는 품목은 목록에서 뺀다 (GDD 241-0: 펫 해금 전 펫 알)
+  const left = WANDERER_ITEMS.filter((it) => !skip?.(it.id));
   const out: WandererStockItem[] = [];
   while (out.length < WX.stockSize && left.length > 0) {
     const grade = weighted(WANDERER_GRADES.map((g) => [g, odds[g]] as const), rand);
@@ -104,14 +105,14 @@ export function rollWandererStock(tier: number, rand: () => number): WandererSto
 
 /** 원정에서 laps 바퀴를 마쳤다: 바퀴마다 가중 확률로 굴린다. 이미 와 있으면 굴리지 않고 바퀴만 센다.
  *  chanceMult = 펫 pet-seek 배율(GDD 90장, 없으면 1). 오면 visit 을 채우고 '기다린 바퀴 수'를 돌려준다(안 오면 null) */
-export function advanceWanderer(state: WandererState, laps: number, o: { at: number; runId: number }, rand: () => number, chanceMult = 1): { waited: number } | null {
+export function advanceWanderer(state: WandererState, laps: number, o: { at: number; runId: number }, rand: () => number, chanceMult = 1, skip?: (itemId: string) => boolean): { waited: number } | null {
   let arrived: { waited: number } | null = null;
   for (let i = 0; i < Math.max(0, Math.floor(laps)); i++) {
     state.lapsSince++;
     if (state.visit) continue;
     if (rand() < Math.min(1, wandererChance(state.lapsSince) * chanceMult)) {
       const tier = rollWandererTier(rand);
-      state.visit = { at: o.at, runId: o.runId, tier, stock: rollWandererStock(tier, rand) };
+      state.visit = { at: o.at, runId: o.runId, tier, stock: rollWandererStock(tier, rand, skip) };
       arrived = { waited: state.lapsSince };
       state.lapsSince = 0;
     }

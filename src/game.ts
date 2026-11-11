@@ -48,7 +48,7 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
-import { FREE_COSMETICS, getCosmetic, getGoldItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
+import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
@@ -1092,7 +1092,9 @@ function settleWanderer(save: SaveData, exp: ExpeditionState, nowMs: number): vo
   }
   if (exp.tutorial) return;
   const rng = createRng((exp.seed ^ 0x5eed77a1) >>> 0);
-  const got = advanceWanderer(w, exp.lapsCompleted, { at: nowMs, runId: exp.runId }, () => nextFloat(rng), 1 + petBonus(exp.pet, 'seekWanderer'));
+  const got = advanceWanderer(w, exp.lapsCompleted, { at: nowMs, runId: exp.runId }, () => nextFloat(rng), 1 + petBonus(exp.pet, 'seekWanderer'),
+    // 펫이 열리기 전(첫 환생 전)에는 펫 품목이 목록에 안 나온다 (GDD 241-0, C.408)
+    petsUnlocked(save) ? undefined : (id) => getWandererItem(id)?.kind === 'pet');
   const visit = save.shared.wanderer.visit;
   if (got && visit) log.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: visit.tier, runId: exp.runId, waited: got.waited });
 }

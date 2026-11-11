@@ -3423,3 +3423,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: `tests/c406.test.ts` 에 문구 검수 3건 추가 + 옛 문구를 그대로 비교하던 5곳 갱신. 전체 3318 통과(291 파일), typecheck·build(balance:check 는 수치 변경이 없어 C.406 결과 그대로).
 - 캡처 `docs/captures/c407/` 2장(`scripts/c407-proof.cjs`): 01 대기 보상 창 규칙 줄 · 02 월드맵 탑 잠김 알림.
 - 명령 시각 2026-11-12 03:40 KST / 답변 시각 2026-11-12 05:11 KST
+
+## C.408 — 떠돌이 상인 펫 알 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0 보충, v5.581, S-23, 코딩269 Fable)
+- 마스터 결정(C.403 보고 ④ 답): "떠돌이 상인 펫 알은 펫 해금 전에는 목록에서 빼줘(해금 흐름 일관)".
+- `engine/wanderer.ts rollWandererStock·advanceWanderer` 에 skip(못 쓰는 품목 빼기) · `game.ts` 가 펫 해금 전이면 펫 품목을 뺀다 · `shop.ts wandererRows` 는 이미 와 있던 상인의 펫 알도 목록에서 빼고 `buyWandererItem` 은 없는 줄이면 실패.
+- 수치·세이브 구조 변경 없음. 테스트 `tests/c403-unlocks.test.ts` +1(전체 3319 통과·291 파일), typecheck·balance:check 회귀 가드 통과·build. 화면은 목록에서 줄 하나가 빠지는 것뿐이라 캡처 없음.
+- 명령 시각 2026-11-12 05:15 KST / 답변 시각 2026-11-12 05:21 KST

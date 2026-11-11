@@ -456,7 +456,9 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
 export function wandererRows(save: SaveData, faction: FactionConfig): (ShopRow & { grade: WandererGrade; sold: boolean })[] {
   const v = save.shared.wanderer.visit;
   if (!v) return [];
-  return v.stock.map((st) => {
+  // 펫이 열리기 전에 와 있던 상인의 펫 품목은 목록에서 뺀다 (GDD 241-0, C.408 — 새로 오는 상인은 처음부터 안 들고 온다)
+  const petOpen = gateOpen(save, 'pet');
+  return v.stock.filter((st) => petOpen || getWandererItem(st.itemId)?.kind !== 'pet').map((st) => {
     const w = getWandererItem(st.itemId)!;
     const block = st.sold ? '팔림' : wandererBlock(save, st.itemId) ?? (wallet(save, 'gold') < st.price ? shortText('gold', st.price - wallet(save, 'gold')) : null);
     return { id: st.itemId, currency: 'gold' as const, name: w.name, effect: wandererEffect(st.itemId, faction), price: st.price, canBuy: block === null, lock: block, have: WANDERER_GRADE_NAMES[w.grade], confirm: false, grade: w.grade, sold: st.sold };
@@ -470,7 +472,8 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   const w = getWandererItem(itemId);
   if (!v || !st || !w) return { ok: false, reason: '상인이 팔지 않는 품목이다' };
   if (st.sold) return { ok: false, reason: '이미 팔렸다' };
-  const row = wandererRows(save, faction).find((r) => r.id === itemId)!;
+  const row = wandererRows(save, faction).find((r) => r.id === itemId);
+  if (!row) return { ok: false, reason: '상인이 팔지 않는 품목이다' }; // 아직 안 열린 품목(펫 해금 전 펫 알)
   if (!row.canBuy) return { ok: false, reason: row.lock ?? '살 수 없다' };
   const n = wandererAmount(itemId);
   let detail = '';

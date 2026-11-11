@@ -232,3 +232,27 @@ describe('242장 2 홈 화면 붕옥 아이콘 자리', () => {
     expect(rv).toContain('hogyoku: () => hd.onHogyoku?.(),');
   });
 });
+
+describe('C.408 떠돌이 상인 펫 품목 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0)', () => {
+  it('해금 전: 새로 오는 상인 목록에 없고, 와 있던 상인의 펫 알도 목록에서 빠져 살 수 없다 — 해금 뒤에는 그대로 판다', async () => {
+    const { rollWandererStock } = await import('../src/engine/wanderer');
+    const { wandererRows, buyWandererItem } = await import('../src/shop');
+    const { getWandererItem } = await import('../src/data/shop');
+    const isPet = (id: string) => getWandererItem(id)?.kind === 'pet';
+    for (let seed = 0; seed < 200; seed++) {
+      let x = seed + 1;
+      const rand = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+      expect(rollWandererStock(4, rand, isPet).some((st) => isPet(st.itemId))).toBe(false);
+    }
+    const s = newSaveData('hollow', 1);
+    s.shared.tradeCoins = 5000;
+    s.shared.wanderer.visit = { at: 1, runId: 1, tier: 4, stock: [{ itemId: 'w-pet-egg', price: 600, sold: false }] };
+    const H = getFaction('hollow');
+    expect(wandererRows(s, H)).toEqual([]);
+    expect(buyWandererItem(s, H, 'w-pet-egg', 9, () => 0).ok).toBe(false);
+    s.rebirth.count = 1;
+    checkUnlocks(s, 5);
+    expect(wandererRows(s, H).map((r) => r.id)).toEqual(['w-pet-egg']);
+    expect(read('src/game.ts')).toContain("petsUnlocked(save) ? undefined : (id) => getWandererItem(id)?.kind === 'pet'");
+  });
+});

@@ -202,6 +202,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     const s = newSaveData('shinigami', 1);
     s.shared.tradeCoins = 5000;
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 4, stock: [{ itemId: 'w-pet-egg', price: 600, sold: false }] };
+    s.shared.unlocks.pet = 1; // C.408 (GDD 241-0): 펫 알은 펫이 열린 뒤(첫 환생)에만 판다
     const r = buyWandererItem(s, S, 'w-pet-egg', 9, () => 0);
     expect(r.ok).toBe(true);
     expect(s.shared.pets.owned['pet-gold']).toBeDefined();
