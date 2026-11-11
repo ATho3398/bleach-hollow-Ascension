@@ -1,6 +1,7 @@
 // 카드 배치 단계 (GDD 17-1): 원정을 시작하기 직전, 덱의 지형 타일을 12칸 길에 놓는다. 길 순서가 보이는 두 곳 중 하나(다른 하나는 바퀴 끝 팝업).
 // 엔진 상태는 이 화면이 닫힐 때까지 저장하지 않는다 — 취소하면 이어하던 원정은 그대로 남는다.
 import { beginPlanning, chooseDifficulty, chooseGround, finishPlanning, type ExpeditionState } from '../engine/expedition';
+import { unlockHintText } from '../engine/unlocks';
 import { difficultyLabels, difficultyText, groundName, type FactionConfig } from '../engine/faction';
 import { clampStreak, difficultyGoldMultiplier, difficultyRewardMultiplier, MAX_DIFFICULTY, recommendedDifficulty, streakEnemyFactor } from '../engine/difficulty';
 import { GROUNDS, type GroundDef } from '../data/grounds';
@@ -258,7 +259,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     mini.setAttribute('aria-label', `길 ${exp.slots.length}칸 · 놓은 타일 ${cap}`);
   };
   if (h.tilesLocked) {
-    sub.append(icon('i-lock'), ' 타일 배치는 첫 진화 후에 열린다. 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적).');
+    sub.append(icon('i-lock'), ` ${unlockHintText(faction, 'tiles')}. 지금은 기본 길을 걷는다(빈 칸마다 떠돌이 적).`);
     sub.dataset.tilesLocked = '';
   } else {
     // 두 탭 같은 말 '놓은 타일 n/최대' (GDD 193장 19) — 최대를 다 놓으면 남은 빈 칸은 흐려진다(road.ts is-full)

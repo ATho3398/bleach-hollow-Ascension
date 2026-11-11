@@ -4,6 +4,7 @@
 // - 목록(진화체·특성·적·보스·스토리·꾸밈)은 모두 데이터에서 읽는다. 종족 id 로 분기하지 않는다(38-6).
 import { setHomeHp } from './nest';
 import { GUIDE_IDS } from './tutorial';
+import { FEATURE_IDS } from './unlocks';
 import { BALANCE } from '../config/balance';
 import { BOSSES } from '../data/bosses';
 import { ENEMIES, scaleEnemy } from '../data/enemies';
@@ -191,6 +192,7 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   // 타일 (GDD 64장): 열린 상태 + 기준 21장, 첫 원정·타일 안내는 본 것으로 (C.120)
   for (const [id, n] of Object.entries(BALANCE.provisional.expedition.referenceCollection)) save.tiles.collection[id] = Math.max(save.tiles.collection[id] ?? 0, n);
   save.tiles.unlocked = true;
+  for (const id of FEATURE_IDS) save.shared.unlocks[id] ??= nowMs; // 기능 해금 전부 (GDD 241-0)
   save.tiles.draws = Math.max(1, save.tiles.draws);
   for (const g of GUIDE_IDS) save.help.guides[g] = 'done';
   fillDefaultTraits(save);

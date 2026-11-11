@@ -85,8 +85,8 @@ export function rareTilePool(save: Pick<SaveData, 'factionId' | 'tiles'>): strin
 }
 
 const TD = BALANCE.provisional.tileDraw;
-/** 타일이 열리기 전(첫 진화 전, GDD 64장) 잠김 문구 */
-export const TILES_LOCKED_TEXT = '첫 진화 후 열림';
+/** 타일이 열리기 전(3단계 전, GDD 64장 → 241-0) 잠김 문구. 여는 때 한 줄은 engine/unlocks unlockHintText(faction, 'tiles') */
+export const TILES_LOCKED_TEXT = '아직 잠김';
 
 /** 타일 뽑기 묶음 → 그 종족이 쓸 수 있는 타일 id (env = 환경 타일 전부) */
 export function tileDrawGroup(group: string, factionId: string): string[] {

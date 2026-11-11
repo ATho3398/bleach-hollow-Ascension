@@ -5,7 +5,7 @@ import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
 import { advance, buildRunRecord, createExpedition, startBattle } from '../src/engine/expedition';
 import { SORTIE_IDS, sortieMods, sanitizeSortie } from '../src/engine/sortie';
-import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
+import { checkUnlocks, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { inventoryOf } from '../src/inventory';
 import { buyShopItem, goldRows } from '../src/shop';
 import { sellRows } from '../src/sell';
@@ -67,6 +67,7 @@ describe('241-D 5 상점·가방·팔기·세이브', () => {
     const row = () => goldRows(s, H).find((r) => r.id === 'sortie-courage')!;
     expect(row()).toMatchObject({ name: '용기의 물약', price: SX.items['sortie-courage']!.price, canBuy: false, lock: '첫 환생 후 출정품이 열린다' });
     s.rebirth.count = 1;
+    checkUnlocks(s, 1); // C.403: 해금은 환생 때 저장된다 (engine/unlocks)
     expect(row().canBuy).toBe(true);
     expect(buyShopItem(s, H, 'sortie-courage', 5)).toMatchObject({ ok: true });
     expect(s.shared.items['sortie-courage']).toBe(1);
@@ -74,7 +75,7 @@ describe('241-D 5 상점·가방·팔기·세이브', () => {
     expect(sellRows(s, H).find((e) => e.key === 'sortie-courage')).toMatchObject({ count: 1, group: 'battle' });
   });
   it('세이브 형식 74: 73 → 74 = 빈 칸 2개, 저장·불러오기로 칸·개수가 남는다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(74);
+    expect(SAVE_FORMAT_VERSION).toBe(75); // C.403 기능 해금
     const s = newSaveData('hollow', 0);
     s.shared.items['sortie-luck'] = 3;
     s.shared.sortie = ['sortie-luck', null];
@@ -111,6 +112,7 @@ describe('241-0 수정 전투 소모품 칸 게이트', () => {
     s.shared.battleItem = null;
     expect(gateOpen(s, 'battleItem')).toBe(false);
     s.evolution.tierIndex = 2;
+    checkUnlocks(s, 1); // C.403: 해금은 진화 때 저장된다 (engine/unlocks)
     expect(gateOpen(s, 'battleItem')).toBe(true);
     expect(gateHint(H, 'battleItem')).toBe('아쥬커스가 되면 전투 소모품이 열린다');
     expect(read('src/ui/equipView.ts')).toContain("const battleOpen = gateOpen(save, 'battleItem');");

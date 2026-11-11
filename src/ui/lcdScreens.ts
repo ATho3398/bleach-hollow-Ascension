@@ -29,6 +29,7 @@ import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
 import { skinItemId } from '../data/shop';
 import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/materials';
+import { unlockHintText } from '../engine/unlocks';
 import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
@@ -437,7 +438,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const lock = panel({ title: '타일', aside: h('span', 'bha-chip', TILES_LOCKED_TEXT) });
       lock.dataset.tilesLocked = '';
       lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
-      lock.append(h('p', 'bha-dim', `모험 타일은 첫 진화 후 열린다. 첫 진화 때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 소모품 상점 [타일 뽑기]로 모은다.`));
+      lock.append(h('p', 'bha-dim', `${unlockHintText(faction, 'tiles')}. 그때 ${BALANCE.provisional.expedition.starterTiles.map((id) => tileName(id, faction.id)).join(' · ')} 1장씩을 받고, 그 뒤로는 소모품 상점 [타일 뽑기]로 모은다.`));
       page.left.replaceChildren(lock);
       page.right.replaceChildren(h('p', 'bha-faint', '지금 모험은 타일 없이 기본 길을 걷는다.'));
       return;
@@ -610,7 +611,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => (e.sortie ? openSortie(save, e.id, changed) : openItem(faction, save, e, artOf(e), changed)),
   }));
-  const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 진화 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (mode === 'items') box.append(tabs);
   if (mode === 'items' && itemsUi.group === 'sortie') box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)

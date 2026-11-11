@@ -47,10 +47,10 @@ describe('165장 2 능력치 ⓘ 문구', () => {
 describe('165장 1 방 수련장 없음', () => {
   it('두 종족 방 화면은 altar 를 건너뛴다(종족 분기 없이 공통)', () => {
     const rv = read('src/ui/roomView.ts');
-    expect(rv).toContain("if (p === 'altar') continue;");
+    expect(rv).toContain("if (p === 'rank') continue;"); // C.394 (GDD 241-C 3): 방 = 수련장, rank 는 월드맵
     expect(rv).not.toMatch(/'hollow'|'shinigami'/);
   });
   it('월드맵 수련장 그림 폴백 = 짚인형 유지', () => {
-    expect(read('src/ui/worldMapView.ts')).toContain("training: 'prop.altar'");
+    expect(read('src/ui/worldMapView.ts')).toContain("rank: 'prop.rank'"); // C.394: 월드맵 그 자리 = 번호 쟁탈전·진급 시험
   });
 });

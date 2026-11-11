@@ -30,14 +30,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 /** 장면 종류 → 실제 게임 화면 그리기 (보기용 세이브·빈 처리기). 새 장면 종류는 여기에 한 줄 */
 const RENDER: Record<string, (dev: Device, f: FactionConfig, save: SaveData) => void> = {
   room: (dev, f, save) => roomView(dev, f, save, roomHandlers()),
-  worldmap: (dev, f, save) => worldMapView(dev, f, save, { onHome: noop, onMarket: noop, onTraining: noop, onAdventure: noop, onTower: noop, onSpa: noop }),
+  worldmap: (dev, f, save) => worldMapView(dev, f, save, { onHome: noop, onMarket: noop, onRank: noop, onAdventure: noop, onTower: noop, onSpa: noop }),
   market: (dev, f, save) => marketView(dev, f, save, { onShop: noop, onSmith: noop, onWanderer: noop, onBack: noop }),
 };
 
 function roomHandlers(): RoomHandlers {
   return {
     onBook: noop, onChest: noop, onStatus: noop, onSwitchTrack: null, onHogyoku: null, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
-    onTamago: noop, onBackup: null, onTest: null, onTitle: noop, persist: noop, resume: null, resumeNote: '', onOutside: noop, onRank: noop,
+    onTamago: noop, onBackup: null, onTest: null, onTitle: noop, persist: noop, resume: null, resumeNote: '', onOutside: noop, onTraining: noop,
   };
 }
 

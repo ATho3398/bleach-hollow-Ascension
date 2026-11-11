@@ -329,10 +329,10 @@
     },
     "layout": {
       "book": { "x": 71.4, "y": 68.8, "scale": 0.91 },
-      "altar": { "x": 90, "y": 70, "scale": 0.68 },
+      "altar": { "x": 83.7, "y": 87.1, "scale": 1.03 },
       "chest": { "x": 28.9, "y": 91.2, "scale": 0.86 },
       "outside": { "x": 9, "y": 78, "scale": 1 },
-      "rank": { "x": 83.7, "y": 87.1, "scale": 1.03 }
+      "rank": { "x": 90, "y": 70, "scale": 0.68 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {

@@ -31,7 +31,8 @@ describe('C.137', () => {
     const tv = read('src/ui/trainingView.ts');
     expect(tv).toContain("id: 'practice'"); // C.163: 입구는 머리 제목 토글(trainingTitle)
     expect(tv).not.toContain('rankBattleName'); // C.257 (GDD 174장 1): 진급 시험은 수련장 토글에서 빠져 방 책장 아래 물건으로
-    expect(read('src/ui/roomView.ts')).toContain('hd.onRank');
+    expect(read('src/ui/roomView.ts')).toContain('altar: hd.onTraining'); // C.394 (GDD 241-C 3): 방 = 수련장, 번호 쟁탈전·진급 시험은 월드맵
+    expect(read('src/ui/worldMapView.ts')).toContain('rank: hd.onRank');
     expect(existsSync('public/art/prop-dummy.webp')).toBe(false);
   });
   it('85장 8: 속성 피해 5종은 각각 한 줄(능력치 행과 같은 형식)', () => {

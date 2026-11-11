@@ -90,9 +90,11 @@ describe('222장 5 수련장 잠김 안내', () => {
     expect(g).toContain('{room.props.altar}의 훈련 인형으로 손을 풀며');
     expect(g).toContain('{training.title}은(는) {tier4}이(가) 되면 열린다.');
   });
-  it('월드맵 수련장: 4단계 전이면 자물쇠(들어갈 수는 있다) + 누르면 여는 조건 알림', () => {
+  it('수련장 (C.394, GDD 241-C 2): 잠금 표시 없이 들어가고, 4단계 전이면 제목 목록의 본능 수련에 자물쇠 + 고르면 여는 조건 알림', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain('partLocks: s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex && !s.nest.dead ? { training: trainingLockedText(faction) } : undefined,');
+    expect(app).not.toContain('partLocks:');
+    expect(app).toContain("if (id === 'train' && trainLocked(s)) return void showToast({ eyebrow: roomOf(faction).props.altar, title: trainingLockedText(faction), meta: '' }, 0, 2200);");
+    expect(read('src/ui/trainingView.ts')).toContain("{ id: 'train', label: faction.training.title, locked: trainLocked },");
     const wm = read('src/ui/worldMapView.ts');
     expect(wm).toContain('if (part !== undefined) hd.onPartLocked?.(p);');
     expect(trainingLockedText(getFaction('hollow'))).toBe('바스트로데가 되면 본능 수련이 열린다.');

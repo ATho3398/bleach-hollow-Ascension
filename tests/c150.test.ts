@@ -12,7 +12,7 @@ import {
   applyGearToParams, carryOfItems, enhanceCost, equipGear, gearCarry, gearLineValue, gearStatsOf, grantGear, newGearState, referenceLoadout, rollGear, sanitizeGear, type GearRoll,
 } from '../src/engine/gear';
 import { refStatOf } from '../src/engine/evolution';
-import { migrateSave, newSaveData, recordExpedition, type SaveData } from '../src/game';
+import { checkUnlocks, migrateSave, newSaveData, recordExpedition, type SaveData } from '../src/game';
 import { enhanceGearItem, equipGearItem, gearName, gearSlotName, gearSpecialText, inventoryOf, sellGearEntry, unequipGearItem } from '../src/inventory';
 import { buyShopItem, buyWandererItem, goldRows } from '../src/shop';
 
@@ -224,6 +224,7 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
     s.shared.tradeCoins = 500;
     expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: false, reason: '아쥬커스가 되면 장비가 열린다' }); // 241-0 수정: 장비 = 3단계
     s.evolution.tierIndex = 2;
+    checkUnlocks(s, 1); // C.403: 해금은 진화 때 저장된다 (engine/unlocks)
     expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 신발 → 가방 장비 탭' });
     expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 3 }) // 3단계(장비 해금, 241-0 수정) 권장 ★3;
     expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });

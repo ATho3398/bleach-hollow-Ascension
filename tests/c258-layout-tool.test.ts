@@ -20,11 +20,12 @@ describe('장면 목록 (데이터로 늘림)', () => {
   it('물건 목록은 게임 화면과 같다: 방 = 수련장 빼고, 시장 = 월드맵 물건 + 온천 뺀 자리, 월드맵 = 장소 6곳', () => {
     const f = FACTIONS[0]!;
     const items = (kind: string) => LAYOUT_KINDS.find((k) => k.kind === kind)!.read(f).items.map((i) => i.key);
-    expect(items('room')).not.toContain('altar');
+    expect(items('room')).not.toContain('rank'); // C.394 (GDD 241-C 3): 방 = 수련장(altar), rank 는 월드맵
+    expect(items('room')).toContain('altar');
     expect(items('room')).toContain('outside');
     expect(items('market')[0]).toBe('outside');
     expect(items('market')).not.toContain('spa');
-    expect(items('worldmap')).toEqual(['home', 'market', 'training', 'adventure', 'tower', 'spa']);
+    expect(items('worldmap')).toEqual(['home', 'market', 'rank', 'adventure', 'tower', 'spa']); // C.394 (GDD 241-C 3)
   });
 });
 
@@ -181,7 +182,7 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
     expect(spot(a!.book)).toEqual({ x: 71.4, y: 68.8, scale: 0.91 });
     // y 91.7 → 91.2: 기준 장면 바닥 아래 끝(이름표 자리)에서 게임이 91.2 로 끌어 놓던 값을 그대로 적음 (보이는 자리 같음)
     expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.86 }); // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
-    expect(spot(a!.rank)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 });
+    expect(spot(a!.altar)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 }); // C.394 (GDD 241-C 3): 그 자리에 수련장
   });
   it('시장 공통 기본값(DEFAULT_MARKET) = C.263 값 — 두 종족은 C.335·C.336 부터 json 으로 따로', () => {
     const m = marketOf({});
@@ -208,7 +209,7 @@ describe('C.264 월드맵 배치 반영 (종족별)', () => {
     const w = W('shinigami');
     expect(spot(w.home)).toEqual({ x: 47.2, y: 70.7, scale: 1.28 }); // C.271 (사용자 2026-11-04 01:33 "이건 사신 월드맵만 적용"): ×1.7 → ×1.28 + 대원실 그림 교체
     expect(spot(w.market)).toEqual({ x: 66.8, y: 42.7, scale: 0.98 });
-    expect(spot(w.training)).toEqual({ x: 71, y: 90.5, scale: 0.85 });
+    expect(spot(w.rank)).toEqual({ x: 71, y: 90.5, scale: 0.85 }); // C.394: 옛 수련장 자리 = 번호 쟁탈전·진급 시험
     expect(spot(w.adventure)).toEqual({ x: 14.6, y: 90.6, scale: 0.96 });
     expect(spot(w.tower)).toEqual({ x: 19.6, y: 45.4, scale: 1.15 });
     expect(spot(w.spa)).toEqual({ x: 88.6, y: 63.1, scale: 1.33 });

@@ -1,0 +1,280 @@
+{
+ "errors": [],
+ "shots": [
+  "01-room-t1-training.png",
+  "02-worldmap-t1-rank-locked.png",
+  "03-market-t1-gearshop-locked.png",
+  "04-training-list-instinct-locked.png",
+  "05-t2-tile-intro-synth-card.png",
+  "06-t3-unlock-gear-card.png",
+  "07-t3-unlock-battle-item-card.png",
+  "08-ascend-unlock-accessory-card.png",
+  "09-rebirth-unlock-pet-card.png",
+  "10-t4-room-hogyoku-icon.png"
+ ],
+ "facts": {
+  "t1": {
+   "ok": true,
+   "tier": 0,
+   "unlocks": [],
+   "guides": []
+  },
+  "roomProps": [
+   [
+    "altar",
+    false,
+    false
+   ],
+   [
+    "book",
+    false,
+    false
+   ],
+   [
+    "chest",
+    false,
+    false
+   ],
+   [
+    "outside",
+    false,
+    false
+   ]
+  ],
+  "worldPlaces": [
+   [
+    "home",
+    false,
+    ""
+   ],
+   [
+    "market",
+    false,
+    ""
+   ],
+   [
+    "rank",
+    true,
+    "바스트로데가 되면 번호 쟁탈전이 열린다"
+   ],
+   [
+    "adventure",
+    false,
+    ""
+   ],
+   [
+    "tower",
+    true,
+    "스토리 1장을 깨면 열린다"
+   ],
+   [
+    "spa",
+    false,
+    ""
+   ]
+  ],
+  "rankLockedToast": [
+   "번호 쟁탈전 바스트로데가 되면 번호 쟁탈전이 열린다"
+  ],
+  "marketSpots": [
+   [
+    "shop",
+    false
+   ],
+   [
+    "gearShop",
+    true
+   ],
+   [
+    "skinShop",
+    false
+   ],
+   [
+    "traitShop",
+    false
+   ],
+   [
+    "smith",
+    false
+   ]
+  ],
+  "gearShopToast": [
+   "장비 상점 아쥬커스가 되면 장비가 열린다"
+  ],
+  "t1b": {
+   "ok": true,
+   "tier": 0,
+   "unlocks": [],
+   "guides": []
+  },
+  "trainingTitle": "수련장 · 훈련 인형",
+  "trainingList": [
+   [
+    "수련장 · 훈련 인형",
+    false
+   ],
+   [
+    "본능 수련",
+    true
+   ]
+  ],
+  "instinctToast": [
+   "수련장 바스트로데가 되면 본능 수련이 열린다."
+  ],
+  "stillPractice": "수련장 · 훈련 인형",
+  "t2": {
+   "ok": true,
+   "tier": 1,
+   "unlocks": [
+    "tiles"
+   ],
+   "guides": [
+    "tile-intro",
+    "tile-plan"
+   ]
+  },
+  "cards2": [
+   "1 / 4건너뛰기다음지형 타일이 열렸다길리안이 되어 지형 타일 3장을 받았다.타일을 모험 길에 놓으면 그 칸에서 타일의 일이 생긴다.",
+   "2 / 4건너뛰기이전다음타일 종류[떠도는 영혼] 칸에서는 적이, [상급 호로] 칸에서는 강적이 나오고 [영혼 웅덩이] 칸에서는 쉬어 간다.타일을 안 놓은 칸에는 떠돌이 적이 나온다.",
+   "3 / 4건너뛰기이전다음합성같은 타일 3장을 모으면 더 좋은 타일 1장으로 합성한다.가방의 [타일] 탭에서 [합성]으로 한다.",
+   "4 / 4건너뛰기이전알겠어요배치모험을 떠날 때 [타일 배치] 탭에서 타일을 길에 놓는다.놓은 길은 프리셋으로 저장해 두고 다음에 한 번에 불러온다."
+  ],
+  "t3": {
+   "ok": true,
+   "tier": 2,
+   "unlocks": [
+    "tiles",
+    "gear",
+    "battleItem"
+   ],
+   "guides": [
+    "tile-intro",
+    "tile-plan",
+    "unlock-gear",
+    "unlock-battle-item"
+   ]
+  },
+  "cards3": [
+   "1 / 4건너뛰기다음지형 타일이 열렸다길리안이 되어 지형 타일 3장을 받았다.타일을 모험 길에 놓으면 그 칸에서 타일의 일이 생긴다.",
+   "2 / 4건너뛰기이전다음타일 종류[떠도는 영혼] 칸에서는 적이, [상급 호로] 칸에서는 강적이 나오고 [영혼 웅덩이] 칸에서는 쉬어 간다.타일을 안 놓은 칸에는 떠돌이 적이 나온다.",
+   "3 / 4건너뛰기이전다음합성같은 타일 3장을 모으면 더 좋은 타일 1장으로 합성한다.가방의 [타일] 탭에서 [합성]으로 한다.",
+   "4 / 4건너뛰기이전알겠어요배치모험을 떠날 때 [타일 배치] 탭에서 타일을 길에 놓는다.놓은 길은 프리셋으로 저장해 두고 다음에 한 번에 불러온다.",
+   "1 / 3건너뛰기다음장비가 열렸다아쥬커스가 되어 장비를 쓸 수 있다.가방의 [장비] 탭에서 가진 장비를 본다.",
+   "2 / 3건너뛰기이전다음착용무기·방어구·신발 칸에 하나씩 착용한다.장비는 모험에서 떨어지고, 시장의 장비 상점에서도 산다.",
+   "3 / 3건너뛰기이전알겠어요강화장비를 강화하면 능력치가 더 오른다.모험 중에는 장비를 바꿀 수 없으니 떠나기 전에 챙기자.",
+   "1 / 2건너뛰기다음전투 소모품 칸이 열렸다아쥬커스가 되어 전투 소모품 칸이 열렸다.가방의 [장비] 탭에서 회복약 같은 소모품을 넣어 둔다.",
+   "2 / 2건너뛰기이전알겠어요쓰기넣어 둔 소모품은 전투와 모험 길에서 [소모품] 버튼으로 쓴다.칸이 비어 있으면 모험을 떠날 때 가진 것으로 저절로 채운다."
+  ],
+  "asc": {
+   "ok": true,
+   "tier": 3,
+   "unlocks": [
+    "tiles",
+    "gear",
+    "battleItem",
+    "instinct",
+    "rankBattle",
+    "accessory"
+   ],
+   "guides": [
+    "unlock-accessory"
+   ]
+  },
+  "cardsAsc": [
+   "1 / 2건너뛰기다음장신구가 열렸다아란칼화를 클리어해 장신구 칸 3개가 열렸다.가방의 [장비] 탭에서 장신구를 착용한다.",
+   "2 / 2건너뛰기이전알겠어요착용장신구는 칸 3개에 하나씩 착용한다.무기·방어구·신발과 함께 능력치를 올려 준다."
+  ],
+  "reb": {
+   "ok": true,
+   "tier": 3,
+   "unlocks": [
+    "tiles",
+    "gear",
+    "battleItem",
+    "instinct",
+    "rankBattle",
+    "pet",
+    "sortie"
+   ],
+   "guides": [
+    "unlock-pet",
+    "unlock-sortie"
+   ]
+  },
+  "cardsReb": [
+   "1 / 2건너뛰기다음펫이 열렸다처음 환생한 기념으로 펫 한 마리가 따라왔다.가방의 [장비] 탭에서 데려갈 펫을 고른다.",
+   "2 / 2건너뛰기이전알겠어요같이 싸운다데려간 펫은 전투에서 같이 공격한다.함께 돈 바퀴가 쌓이면 친밀도가 올라 효과가 커진다.",
+   "1 / 2건너뛰기다음출정품이 열렸다처음 환생해 출정품 칸이 열렸다.출정품은 모험에 챙겨 가는 물건이다.",
+   "2 / 2건너뛰기이전알겠어요끼우기가방에서 출정품 칸에 끼워 둔다.모험을 떠날 때 1개씩 저절로 쓰이고, 그 모험 동안 효과가 이어진다."
+  ],
+  "t4": {
+   "ok": true,
+   "tier": 3,
+   "unlocks": [
+    "tiles",
+    "gear",
+    "battleItem",
+    "instinct",
+    "rankBattle"
+   ],
+   "guides": []
+  },
+  "roomProps4": [
+   "altar",
+   "book",
+   "chest",
+   "outside",
+   "hogyoku"
+  ],
+  "worldPlaces4": [
+   [
+    "home",
+    false
+   ],
+   [
+    "market",
+    false
+   ],
+   [
+    "rank",
+    false
+   ],
+   [
+    "adventure",
+    false
+   ],
+   [
+    "tower",
+    true
+   ],
+   [
+    "spa",
+    false
+   ]
+  ],
+  "s1": {
+   "ok": true,
+   "tier": 0,
+   "unlocks": [],
+   "guides": []
+  },
+  "roomPropsS": [
+   [
+    "altar",
+    "수련장"
+   ],
+   [
+    "book",
+    "책장"
+   ],
+   [
+    "chest",
+    "가방"
+   ],
+   [
+    "outside",
+    "월드맵"
+   ]
+  ]
+ }
+}

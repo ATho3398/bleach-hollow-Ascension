@@ -134,12 +134,14 @@ export type SlotLocation = 'body' | 'zanpakuto';
 /** 메인 방 화면의 물건 (GDD 16-1 4번, 18-3 훈련 인형). 이름은 종족 설정이 정한다 */
 /** shop = 상점 (C.63, GDD 28장 9번: 더보기에서 방 물건으로 옮김, 이름은 종족 설정) */
 /** outside = 월드맵 물건 (GDD 130장 1, C.204 · 158장 2 이름 '월드맵'): 누르면 월드맵. 옛 모험 문·장터 물건은 폐기 (GDD 137장 3, C.215) */
-/** altar = 수련장 이름만 (GDD 158장 1·165장 1): 방에는 서지 않고 월드맵 장소 training 의 이름으로 쓴다(그림 prop.altar 짚인형은 월드맵 수련장 폴백) */
-/** rank = 진급 시험(등급전) 물건 (GDD 174장 2, C.257): 책장 바로 아래. 이름 = 종족 설정 rankBattleName(room.props.rank 로 덮을 수 있다), 그림 키 prop.rank */
-export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside', 'rank'] as const;
+/** altar = 수련장 (GDD 241-C 3, C.394): 다시 방 물건 — 옛 진급 시험 물건 자리. (158장 1·165장 1 의 '월드맵 장소'는 번호 쟁탈전과 자리를 바꿨다) */
+/** rank = 번호 쟁탈전·진급 시험(등급전) 이름만 (GDD 241-C 3): 방에는 서지 않고 월드맵 장소 rank 의 이름으로 쓴다. 이름 = 종족 설정 rankBattleName(room.props.rank 로 덮을 수 있다), 그림 키 prop.rank */
+/** hogyoku = 붕옥 아이콘 (GDD 242장 2, C.399): 붕옥이 등장한 뒤(세이브 hogyoku.tabOpen)에만 서고, 그 전에는 안 보인다(잠금 아이콘 아님). 누르면 붕옥 탭 */
+export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside', 'rank', 'hogyoku'] as const;
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */
-export const WORLD_PLACES = ['home', 'market', 'training', 'adventure', 'tower', 'spa'] as const;
+/** rank = 번호 쟁탈전·진급 시험 (GDD 241-C 3·241-E 3, C.394): 옛 수련장(training) 자리 — 수련장은 방 물건(altar)으로 */
+export const WORLD_PLACES = ['home', 'market', 'rank', 'adventure', 'tower', 'spa'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
 /** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
@@ -270,12 +272,13 @@ export const DEFAULT_ROOM: RoomConfig = {
   shape: 'room',
   sceneArt: 'scene.room',
   characterArt: 'char.hollow',
-  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵', rank: '진급 시험' },
+  props: { altar: '수련장', book: '책장', chest: '상자', outside: '월드맵', rank: '진급 시험', hogyoku: '붕옥' },
   floor: { aspect: 2, poly: [[0, 0.46], [1, 0.46], [1, 1], [0, 1]] },
   layout: {
-    book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 90, y: 70, scale: 0.81 },
+    book: { x: 76, y: 60, scale: 0.54 }, altar: { x: 76, y: 90, scale: 0.81 }, // 수련장 = 책장 바로 아래 (옛 진급 시험 자리, GDD 241-C 3)
     chest: { x: 26, y: 90, scale: 0.81 }, outside: { x: 9, y: 78, scale: 1 },
-    rank: { x: 76, y: 90, scale: 0.81 }, // 책장 바로 아래 (책장 x 그대로, 바닥 앞쪽 — GDD 174장 2)
+    hogyoku: { x: 37, y: 58, scale: 0.6 }, // 붕옥 아이콘 자리 (GDD 242장 2, provisional): 월드맵 물건과 캐릭터 사이 뒤쪽 — UI 배치 도구로 옮긴다
+    rank: { x: 90, y: 70, scale: 0.81 }, // 방에 서지 않는다 (GDD 241-C 3: 수련장과 자리를 바꿔 값만 남김 — 옛 수련장 자리)
   },
   characterFoot: { x: 50, y: 80 },
   talk: {
@@ -387,7 +390,7 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   layout: {
     // 사용자 2026-11-03: 홈(대원실 그림)·탑·온천 ×1.2 (C.254)
     // 자리·크기 = 사용자가 UI 배치 도구로 잡은 호로 값 (C.263 → C.264 모험·탑 → C.270 홈 → C.278 배경과 함께 전부, 2026-11-04 03:31). 사신은 shinigami.json worldmap.layout 으로 따로 (2026-11-04 00:19)
-    home: { x: 47.2, y: 65.4, scale: 1.61 }, market: { x: 65, y: 39.6, scale: 0.98 }, training: { x: 67.6, y: 86.4, scale: 0.86 },
+    home: { x: 47.2, y: 65.4, scale: 1.61 }, market: { x: 65, y: 39.6, scale: 0.98 }, rank: { x: 67.6, y: 86.4, scale: 0.86 }, // rank = 옛 수련장 자리 (GDD 241-C 3)
     adventure: { x: 19.1, y: 89.7, scale: 0.9 }, tower: { x: 22.1, y: 44.3, scale: 1.28 }, spa: { x: 85.6, y: 58.9, scale: 1.41 },
   },
   characterFoot: { x: 32, y: 90 },
@@ -395,7 +398,7 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   spaName: '온천',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 수련장 = room.props.altar, 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 번호 쟁탈전·진급 시험 = room.props.rank(rankBattleName), 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
 export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
@@ -404,7 +407,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, training: roomOf(f).props.altar, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
+    places: { home: f.nestName, market: marketOf(f).name, rank: roomOf(f).props.rank, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
   };
 }
 

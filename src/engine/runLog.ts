@@ -459,6 +459,8 @@ export interface RunLog {
   homeHeals: HomeHealRecord[];
   /** 칭호 해금 기록 (C.106, 세이브 형식 32, GDD 9장 — 특별 태그 지급 등): 해금 순간의 트랙 상태 */
   titleUnlocks?: TitleUnlockRecord[];
+  /** 기능 해금 기록 (C.394, GDD 241-0·9장): 열린 순간의 종족·단계·환생 수. 옛 세이브에서 이미 쓰던 것(시각 모름)은 남기지 않는다 */
+  unlocks?: FeatureUnlockRecord[];
   /** 합체 기록 — 저장은 슬롯 단위(SaveData.slotLog)이고, 칭호 평가 때만 이 자리에 넣어 읽는다 (C.59) */
   fusions?: FusionRecord[];
 }
@@ -528,14 +530,23 @@ export interface WandererRecord {
   unsold?: number;
 }
 
-/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 첫 진화 선물),
+/** 기능 해금 기록 1건 (GDD 241-0, C.394): featureId = engine/unlocks FeatureId */
+export interface FeatureUnlockRecord {
+  at: number;
+  factionId: string;
+  featureId: string;
+  tierIndex: number;
+  rebirths: number;
+}
+
+/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 옛 첫 진화 선물 · rebirth 첫 환생 선물, GDD 241-0),
  *  take = 데리고 감, leave = 두고 감, level = 친밀도 오름(level = 오른 뒤 값), dupGold = 바퀴 끝 보상이 이미 가진 펫이라 골드로 바뀜 */
 export interface PetRecord {
   at: number;
   factionId: string;
   kind: 'get' | 'take' | 'leave' | 'level' | 'dupGold';
   petId: string;
-  source?: 'lap' | 'wanderer' | 'evolution';
+  source?: 'lap' | 'wanderer' | 'evolution' | 'rebirth';
   level?: number;
   runId?: number;
   gold?: number;

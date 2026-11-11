@@ -9,7 +9,7 @@ import { artSkinOf, artTierIndexOf, type SaveData } from '../game';
 import type { ShopKind } from '../data/shop';
 import { el, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
-import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { lockProp, applyCarePose, characterButton, extraPropButtons, layoutOnFloor, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 
 export interface MarketHandlers {
   /** 상점 4곳 중 하나 (GDD 150장 2) */
@@ -18,6 +18,9 @@ export interface MarketHandlers {
   onSmith: () => void;
   /** 떠돌이 상인 창 (와 있을 때만 불린다) */
   onWanderer: () => void;
+  /** 아직 안 열린 자리와 그 이유 (GDD 241-0: 장비 상점 = 장비 해금 뒤). 흐린 잠김 + 자물쇠, 누르면 onLocked */
+  lockReasons?: Partial<Record<MarketSpot, string>>;
+  onLocked?: (p: MarketSpot) => void;
   /** 월드맵 물건 (GDD 158장 3) — 뒤로와 같다 */
   onBack: () => void;
 }
@@ -65,7 +68,15 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
     const b = propButton({ prop: p, name: mk.props[p], ...mk.layout[p], art: !!artUrls(`prop.${p}`).src });
     b.dataset.spot = p;
     if (p === 'wanderer') b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass', '왔다')); // 와 있을 때만 서 있다 (v2 S03)
-    b.onclick = act[p as Exclude<MarketSpot, 'spa'>];
+    const reason = hd.lockReasons?.[p];
+    if (reason !== undefined) {
+      b.classList.add('is-locked');
+      b.setAttribute('aria-disabled', 'true');
+      lockProp(b);
+      b.title = reason;
+      b.setAttribute('aria-description', reason);
+      b.onclick = () => hd.onLocked?.(p);
+    } else b.onclick = act[p as Exclude<MarketSpot, 'spa'>];
     scene.append(b);
     btns.push(b);
     floor.push({ el: b, foot: mk.layout[p], kind: 'prop' });

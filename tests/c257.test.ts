@@ -35,20 +35,21 @@ describe('C.257 174장 2 방 물건 rank', () => {
   });
   it('방에서 열고 뒤로 = 방 (nav open), 종족 분기 없음', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("onRank: () => open('rank', () => rankScreen(faction)),");
+    expect(app).toContain("onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },"); // C.394 (GDD 241-C 3): 월드맵 장소로
     const rv = read('src/ui/roomView.ts');
     expect(rv).not.toMatch(/faction\.id\s*===|'hollow'|'shinigami'/);
-    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'chest', 'rank'];");
+    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'hogyoku', 'chest', 'altar'];"); // C.394: 그 자리 = 수련장
   });
 });
 
 describe('C.257 174장 3 잠금 그대로', () => {
   it('해금 단계 전이면 자물쇠·흐림(is-locked) + 토스트, 문구는 해금 단계·종족 이름', () => {
-    const rv = read('src/ui/roomView.ts');
-    expect(rv).toContain("b.classList.add('is-locked');");
-    expect(rv).toContain('lockProp(b);'); // C.265: 자물쇠는 그림 칸 안 귀퉁이 (room.ts lockProp)
+    // C.394 (GDD 241-C 3): 잠김은 월드맵 장소의 lockReasons 로 (흐림 + 자물쇠 + 이유 알림 그대로)
+    const wm = read('src/ui/worldMapView.ts');
+    expect(wm).toContain("b.classList.add('is-locked');");
+    expect(wm).toContain('lockProp(b);'); // C.265: 자물쇠는 그림 칸 안 귀퉁이 (room.ts lockProp)
     const app = read('src/ui/app.ts');
-    expect(app).toContain('rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),');
+    expect(app).toContain('...(rankUnlocked(s.evolution.tierIndex) ? {} : { rank: rankLockedText(faction) }),');
     for (const f of FACTIONS) {
       const t = rankLockedText(f);
       expect(t).toContain(f.tierNames[BALANCE.rank.unlockTierIndex]!);

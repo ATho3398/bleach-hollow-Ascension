@@ -28,7 +28,7 @@ import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
@@ -103,6 +103,7 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
+import { FEATURE_IDS, featureName, featureUnlocked, UNLOCK_GUIDES, unlockHintText } from '../engine/unlocks';
 import { applyGearToParams, gearCarry } from '../engine/gear';
 import { carriedPet, petAttackOf } from '../engine/pet';
 import { departSortie } from '../sortie';
@@ -621,6 +622,9 @@ export function startApp(host: HTMLElement): void {
     return true;
   }
 
+  /** 해금 안내 카드 순서 = 해금 표 순서 (GDD 241-0) */
+  const UNLOCK_GUIDE_ORDER = FEATURE_IDS.map((id) => UNLOCK_GUIDES[id]);
+
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
   function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
     if (!save || guideOpen || !guidePending(save.help, id)) return false;
@@ -632,6 +636,14 @@ export function startApp(host: HTMLElement): void {
       o.onDone?.();
     } });
     return true;
+  }
+
+  /** 해금 안내 카드 (GDD 241-0, C.394): 방에 돌아왔을 때 띄울 차례인 것을 표 순서대로 하나씩 이어서 — 장비 → 타일 → 출정품 → 본능 수련 → 번호 쟁탈전 → 펫 */
+  function runUnlockGuides(faction: FactionConfig): boolean {
+    for (const id of UNLOCK_GUIDE_ORDER) {
+      if (runGuide(id, faction, { finishLabel: '알겠어요', onDone: () => window.setTimeout(() => { if (nav.top?.id === 'room') runUnlockGuides(faction); }, 250) })) return true;
+    }
+    return false;
   }
 
   /** 첫 시작 탄생 연출이 재생 중이다 (GDD 74장, C.126) */
@@ -714,6 +726,11 @@ export function startApp(host: HTMLElement): void {
     } });
     if (faction.birthFx) out.push({ label: '탄생 연출', run: () => void playBirth(faction) });
     if (save && tilesUnlocked(save)) out.push({ label: '타일 안내', run: chain(['tile-intro', 'tile-plan', 'tile-draw']) });
+    // 해금 안내 다시 보기 (GDD 241-0): 열린 것만
+    if (save) for (const id of FEATURE_IDS) {
+      const g = UNLOCK_GUIDES[id];
+      if (g !== 'tile-intro' && featureUnlocked(save, id)) out.push({ label: `${featureName(faction, id)} 안내`, run: chain([g]) });
+    }
     return out;
   }
 
@@ -1153,6 +1170,9 @@ export function startApp(host: HTMLElement): void {
     if (wandererToast?.isConnected) wandererToast.classList.replace('is-in', 'is-out'); // 방에서 뜬 알림이 장터까지 남지 않게 (사라지는 연출 뒤 지워진다)
     wandererToast = null;
     open('market', () => marketView(dev, faction, s, {
+      // 장비 상점 = 장비가 열린 뒤 (GDD 241-0: 2단계) — 그 전에는 자물쇠 + 여는 때 알림
+      lockReasons: gearUnlocked(s) ? undefined : { gearShop: unlockHintText(faction, 'gear') },
+      onLocked: (spot) => showToast({ eyebrow: marketOf(faction).props[spot], title: unlockHintText(faction, 'gear'), meta: '' }, 0, 2000),
       onShop: (kind) => open('shop', () => shopView(dev, faction, s, { persist, kind, onWear: () => dress(s.wear) })),
       onWanderer: () => open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' })),
       // 대장장이 (GDD 153장 2, provisional): 기능은 나중 — 노란 알림 한 줄만
@@ -1177,20 +1197,22 @@ export function startApp(host: HTMLElement): void {
       focus: forceAdventure ? 'adventure' : worldAt,
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
-      // 수련장 (GDD 158장 1·165장 1): 월드맵 장소에만, 뒤로 = 월드맵. 진화 정보는 수련 화면 머리의 [진화 정보]. 사망이면 막힘, 빈사면 확인 창 (GDD 102장 수정)
-      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { worldAt = 'training'; open('training', () => renderTraining(faction, s)); }); },
+      // 번호 쟁탈전·진급 시험 (GDD 241-C 3·241-E 3, C.394): 옛 수련장 자리. 뒤로 = 월드맵. 사망이면 막힘. 4단계 전이면 잠김(lockReasons)
+      onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
       onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
       // 온천 (GDD 153장 1): 시장 안 칸 → 월드맵 장소. 뒤로 = 월드맵, 저절로 나오면 방(그대로)
       onSpa: () => { openSpa(faction, s); if (nav.top?.id === 'spa') worldAt = 'spa'; }, // 못 들어갔으면(막힘 알림) 제자리
       // 첫 모험 강제 (GDD 131장 2): 홈·시장·수련장·탑·온천 잠김. 탑 해금 전(36장)이면 탑은 이유 한 줄과 함께 잠김
-      locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,
-      lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },
-      onLocked: (p) => showToast(!forceAdventure && p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' } : FORCE_HINT, 0, 1800),
-      // 수련장 (GDD 222장 5): 수련은 4단계부터 — 자물쇠 + 누르면 여는 조건 알림. 훈련 인형은 지금도 되니 들어가는 건 막지 않는다
-      partLocks: s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex && !s.nest.dead ? { training: trainingLockedText(faction) } : undefined,
-      onPartLocked: () => showToast({ eyebrow: roomOf(faction).props.altar, title: `${trainingLockedText(faction)} 훈련 인형은 지금도 된다.` }, 0, 2400),
+      locked: forceAdventure ? ['home', 'market', 'rank', 'tower', 'spa'] : undefined,
+      lockReasons: {
+        ...(towerOpen(s.runLog, faction.id, s.tower.best) ? {} : { tower: towerLabels(faction).locked }),
+        ...(rankUnlocked(s.evolution.tierIndex) ? {} : { rank: rankLockedText(faction) }), // 번호 쟁탈전 = 4단계부터 (GDD 241-0)
+      },
+      onLocked: (p) => showToast(forceAdventure ? FORCE_HINT
+        : p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' }
+        : p === 'rank' ? { eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' } : FORCE_HINT, 0, 1800),
     });
   }
 
@@ -1223,7 +1245,7 @@ export function startApp(host: HTMLElement): void {
       if (runRecover(faction)) return; // 튜토리얼 원정 뒤 회복 안내가 먼저 (GDD 123장 5 수정)
       if (runHomeIntro(faction)) return; // 처음 켰을 때 홈 안내 → 첫 모험 강제 (GDD 131장). 탄생 연출 중이면 연출이 끝난 뒤
       if (homeIntroOpen) return;
-      if (!runGuide('first-run-room', faction) && s.tiles.unlocked) runGuide('tile-intro', faction);
+      if (!runGuide('first-run-room', faction)) runUnlockGuides(faction);
     }, 400);
     const greet = hungryGreet;
     hungryGreet = false;
@@ -1303,10 +1325,8 @@ export function startApp(host: HTMLElement): void {
       },
       onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
-      // 진급 시험 물건 (GDD 174장 2·3, C.257): 책장 아래. 해금 전이면 자물쇠·흐림 + 탑과 같은 토스트 안내
-      onRank: () => open('rank', () => rankScreen(faction)),
-      rankLock: rankUnlocked(s.evolution.tierIndex) ? null : rankLockedText(faction),
-      onRankLocked: () => showToast({ eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' }, 0, 1800),
+      // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리). 잠금 표시 없이 기본 = 훈련 인형, 본능 수련은 머리 제목 목록에서(4단계 전이면 자물쇠)
+      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
@@ -1381,11 +1401,15 @@ export function startApp(host: HTMLElement): void {
 
   /** 수련장 두 화면(수련 · 훈련 인형)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163). 진급 시험은 방 물건 (174장 1) */
   function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
+    // 본능 수련은 4단계부터 (GDD 241-C 2): 그 전에 고르면 화면은 그대로 두고 여는 때를 알린다
+    if (id === 'train' && trainLocked(s)) return void showToast({ eyebrow: roomOf(faction).props.altar, title: trainingLockedText(faction), meta: '' }, 0, 2200);
     const render = id === 'practice' ? () => practiceScreen(faction) : () => renderTraining(faction, s);
     nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
   }
   const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
-    save ? trainingTitle(faction, roomOf(faction).props.altar, id, (to) => switchTraining(faction, save!, to)) : undefined;
+    save ? trainingTitle(faction, roomOf(faction).props.altar, id, (to) => switchTraining(faction, save!, to), trainLocked(save)) : undefined;
+  /** 본능 수련이 이번 생에 아직 잠겼나 (4단계 전, GDD 241-0) */
+  const trainLocked = (s: SaveData): boolean => s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex;
 
   /** 한 판: 수련권을 먼저 쓰고(저장) 미니게임 → 결과. 흐름은 잠겨 있어 취소로 빠지지 않는다. again = 결과 화면의 [한 판 더](자리를 바꿔 끼운다) */
   function playTraining(faction: FactionConfig, s: SaveData, game: TrainingGameId, again: boolean): void {
@@ -1502,10 +1526,10 @@ export function startApp(host: HTMLElement): void {
       // 첫 진화 전에는 타일 잠김 (GDD 64장): 드래프트·이벤트 타일 없음
       tilesLocked: !tilesUnlocked(save),
       // 펫 (GDD 90장): 데리고 다니는 펫(친밀도까지) · 바퀴 끝 보상 펫
-      pet: carriedPet(save.shared.pets),
-      petDrops: true,
+      pet: petsUnlocked(save) ? carriedPet(save.shared.pets) : null, // 펫 = 첫 환생 뒤 (GDD 241-0)
+      petDrops: petsUnlocked(save),
       gear: gearCarry(save.shared.gear),
-      gearDrops: true,
+      gearDrops: gearUnlocked(save), // 장비 = 2단계부터 (GDD 241-0)
     });
     // 테스트 패널 [불러오기] 원정 예약 (GDD 112장 2): 이벤트 타일은 첫 빈 칸, 변이는 1바퀴에
     if (testOn) {
@@ -1550,7 +1574,7 @@ export function startApp(host: HTMLElement): void {
           },
           onStart: () => {
             save!.difficulty.last = exp.difficulty;
-            departFillBattleSlot(save!); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4)
+            if (battleItemUnlocked(save!)) departFillBattleSlot(save!); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4) — 칸이 열린 뒤에만 (241-0)
             const sortieUsed = departSortie(save!, exp); // 출정품: 칸마다 1개 소모 → 이 원정 효과 (GDD 241-D 5)
             if (sortieUsed.length) showToast({ eyebrow: '출정품', title: sortieUsed.map((id) => consumableName(id)).join(' · '), meta: '이번 모험 동안 효과' }, 0, 2400);
             activeExp = exp;
@@ -1638,7 +1662,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 전투 [소모품] (GDD 108장 3번·105장 수정 3): 장비 화면 소모품 칸에 든 것을 이 전투에 싣고, 쓰면 보관 개수 −1 후 저장. 칸이 비었거나 0개면 버튼 비활성 */
   function armBattleItem(sv: SaveData, st: CombatState): BattleViewOptions['battleItem'] {
-    const it = battleItemEffectOf(sv);
+    const it = battleItemUnlocked(sv) ? battleItemEffectOf(sv) : null; // 전투 소모품 칸 = 3단계부터 (GDD 241-0)
     st.params.battleItem = it;
     if (!it) return undefined;
     return { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendBattleItem(sv, it.id); persist(); } };
@@ -1649,9 +1673,9 @@ export function startApp(host: HTMLElement): void {
     return {
       battleItem: armBattleItem(sv, st),
       pickBattleItem: {
-        options: () => ownedBattleItems(sv).map((id) => ({ id, label: `${consumableName(id)} ×${sv.shared.items[id] ?? 0} · ${battleItemBrief(id)}` })),
+        options: () => (battleItemUnlocked(sv) ? ownedBattleItems(sv) : []).map((id) => ({ id, label: `${consumableName(id)} ×${sv.shared.items[id] ?? 0} · ${battleItemBrief(id)}` })),
         pick: (id) => {
-          if (!fillBattleSlot(sv, id)) return undefined;
+          if (!battleItemUnlocked(sv) || !fillBattleSlot(sv, id)) return undefined;
           persist();
           return armBattleItem(sv, st);
         },
@@ -1663,7 +1687,7 @@ export function startApp(host: HTMLElement): void {
    *  쓰면 1개 줄이고 바퀴 사용을 남긴 뒤 저장. 빈 칸 고르기 창은 없음(193장 6 의 전투 중 고르기 — 212장 4 가 우선, 바꾸기는 바퀴 끝 창) */
   function expBattleItemOpts(sv: SaveData, exp: ExpeditionState, st: CombatState): Pick<BattleViewOptions, 'battleItem' | 'lapItem'> {
     const spent = lapItemLock(sv, exp) === LAP_ITEM_USED;
-    const it = spent ? null : battleItemEffectOf(sv);
+    const it = spent || !battleItemUnlocked(sv) ? null : battleItemEffectOf(sv);
     st.params.battleItem = it;
     const lapItem = { spentId: spent ? sv.shared.battleItem : null };
     if (!it) return { battleItem: undefined, lapItem };
@@ -1793,14 +1817,14 @@ export function startApp(host: HTMLElement): void {
       statBonus: statBonusOf(save).total,
       story: { chapterId, episodeId },
       tilesLocked: !tilesUnlocked(save),
-      pet: carriedPet(save.shared.pets),
-      petDrops: true,
+      pet: petsUnlocked(save) ? carriedPet(save.shared.pets) : null, // 펫 = 첫 환생 뒤 (GDD 241-0)
+      petDrops: petsUnlocked(save),
       gear: gearCarry(save.shared.gear),
-      gearDrops: true,
+      gearDrops: gearUnlocked(save), // 장비 = 2단계부터 (GDD 241-0)
     });
     resumeNote = '';
     activeExp = exp;
-    departFillBattleSlot(save); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4)
+    if (battleItemUnlocked(save)) departFillBattleSlot(save); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4) — 칸이 열린 뒤에만 (241-0)
     saveProgress(exp);
     const ep = getEpisode(faction.id, chapterId, episodeId);
     let opened = false;
@@ -1957,7 +1981,7 @@ export function startApp(host: HTMLElement): void {
       onBattle: () => runBattle(faction, exp),
       onSave: () => saveProgress(exp),
       // 바퀴 끝 창 소모품 칸 (GDD 212장 3): 가진 전투 소모품으로 바꿔 끼우기 · 빼기 — 바꾸면 바로 저장
-      ...(save ? { lapItem: {
+      ...(save && battleItemUnlocked(save) ? { lapItem: { // 전투 소모품 칸이 열린 뒤에만 (GDD 241-0)
         line: () => (save ? lapItemLine(save, { lap: exp.lap + 1, lapItems: exp.lapItems }, '다음 바퀴') : ''), // 바퀴 끝 창 = 다음 바퀴 기준
         short: () => { const id = save?.shared.battleItem; return id ? `${consumableName(id)} ×${save?.shared.items[id] ?? 0}` : '소모품 비었음'; },
         filled: () => !!save?.shared.battleItem,
@@ -1978,6 +2002,11 @@ export function startApp(host: HTMLElement): void {
       openBag: (onClose) => {
         const sv = save;
         if (!sv) return onClose();
+        // 전투 소모품 칸이 열리기 전 (GDD 241-0: 3단계): 여는 때만 알린다
+        if (!battleItemUnlocked(sv)) {
+          showToast({ eyebrow: featureName(faction, 'battleItem'), title: unlockHintText(faction, 'battleItem'), meta: '' }, 0, 2200);
+          return onClose();
+        }
         healBag({
           items: () => {
             const slotId = sv.shared.battleItem;

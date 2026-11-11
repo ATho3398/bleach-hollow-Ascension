@@ -27,10 +27,10 @@ describe('C.159 A3 대기 보상 시계 버튼', () => {
 });
 
 describe('C.159 A4 방 물건 크기', () => {
-  it('수련장 0.68 그대로, 책장·가방은 사용자 배치(C.263·C.268), 모험(문)은 그대로 — 두 종족 같은 값', () => {
+  it('수련장 = 옛 진급 시험 자리 크기(C.394), 책장·가방은 사용자 배치(C.263·C.268), 모험(문)은 그대로 — 두 종족 같은 값', () => {
     for (const f of [hollow, shinigami]) {
       const l = (f as any).room.layout;
-      expect(l.altar.scale).toBe(0.68);
+      expect(l.altar.scale).toBe(1.03); // C.394 (GDD 241-C 3): 수련장이 옛 진급 시험 자리·크기로
       for (const p of ['book', 'chest']) expect(l[p].scale).toBe((hollow as any).room.layout[p].scale);
       expect(l.outside.scale).toBe(1); // C.215: 옛 모험 문 → 밖으로 (GDD 137장 3)
     }

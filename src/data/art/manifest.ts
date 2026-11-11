@@ -188,6 +188,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 월드맵 수련장 (GDD 158장 1): 키 = place.training.<종족 id> — 사용자 그림 대기(비어 있으면 방 짚인형 그림 prop.altar, GDD 160장 4)
   'place.training.hollow': {},
   'place.training.shinigami': {},
+  // 월드맵 번호 쟁탈전·진급 시험 (GDD 241-C 3, C.394): 키 = place.rank.<종족 id> — 사용자 그림 대기(비어 있으면 prop.rank, 그것도 없으면 아이콘)
+  'place.rank.hollow': {},
+  'place.rank.shinigami': {},
   // 휴식 칸 장소 그림 (GDD 128장 3, C.202): 걷는 앞쪽에 서는 장소 — 사용자 그림 대기(비어 있으면 임시 웅덩이 그림). 키 = place.<타일 id>.<종족 id>
   'place.rest-a.hollow': {},
   'place.rest-a.shinigami': {},

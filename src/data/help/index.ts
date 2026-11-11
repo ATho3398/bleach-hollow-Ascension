@@ -82,6 +82,8 @@ export function guideVars(f: FactionConfig): Record<string, string> {
     statEv: String(BALANCE.provisional.tutorialRun.statEv),
     tutorialCell: String(BALANCE.provisional.tutorialRun.cell),
     deckSize: String(BALANCE.provisional.expedition.deckSize),
+    // 해금 안내 (GDD 241-0, C.394): 2단계 이름·합성 장수·장비 화면 이름
+    tier2: f.tierNames[1] ?? '', battleSlotName: f.gearScreen?.battleSlot ?? '전투 소모품', synthCost: String(BALANCE.provisional.tileVariants.synthCost), gearTitle: f.gearScreen?.title ?? '장비',
   };
 }
 

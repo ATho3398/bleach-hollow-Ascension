@@ -38,8 +38,30 @@
       {
         "id": "tiles",
         "targets": [],
-        "title": "모험 타일",
-        "body": "첫 진화 기념으로 모험 타일을 받았다.\n모험을 떠날 때 길에 놓아 보자."
+        "title": "지형 타일이 열렸다",
+        "body": "{tier2}이(가) 되어 지형 타일 {starterCount}장을 받았다.\n타일을 모험 길에 놓으면 그 칸에서 타일의 일이 생긴다."
+      },
+      {
+        "id": "kinds",
+        "targets": [],
+        "title": "타일 종류",
+        "body": "[{tile.prey}] 칸에서는 적이, [{tile.elite}] 칸에서는 강적이 나오고 [{tile.rest}] 칸에서는 쉬어 간다.\n타일을 안 놓은 칸에는 떠돌이 적이 나온다."
+      },
+      {
+        "id": "synth",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "합성",
+        "body": "같은 타일 {synthCost}장을 모으면 더 좋은 타일 1장으로 합성한다.\n{room.props.chest}의 [타일] 탭에서 [합성]으로 한다."
+      },
+      {
+        "id": "place",
+        "targets": [
+          "@.bha-prop--outside"
+        ],
+        "title": "배치",
+        "body": "모험을 떠날 때 [타일 배치] 탭에서 타일을 길에 놓는다.\n놓은 길은 프리셋으로 저장해 두고 다음에 한 번에 불러온다."
       }
     ],
     "tile-plan": [
@@ -96,6 +118,124 @@
         "targets": [],
         "title": "뽑기 타일",
         "body": "뽑기에서만 나오는 특별한 타일도 있다."
+      }
+    ],
+    "unlock-gear": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "장비가 열렸다",
+        "body": "{tier3}이(가) 되어 장비를 쓸 수 있다.\n{room.props.chest}의 [{gearTitle}] 탭에서 가진 장비를 본다."
+      },
+      {
+        "id": "wear",
+        "targets": [],
+        "title": "착용",
+        "body": "무기·방어구·신발 칸에 하나씩 착용한다.\n장비는 모험에서 떨어지고, {market.name}의 장비 상점에서도 산다."
+      },
+      {
+        "id": "enhance",
+        "targets": [],
+        "title": "강화",
+        "body": "장비를 강화하면 능력치가 더 오른다.\n모험 중에는 장비를 바꿀 수 없으니 떠나기 전에 챙기자."
+      }
+    ],
+    "unlock-battle-item": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "{battleSlotName} 칸이 열렸다",
+        "body": "{tier3}이(가) 되어 {battleSlotName} 칸이 열렸다.\n{room.props.chest}의 [{gearTitle}] 탭에서 회복약 같은 소모품을 넣어 둔다."
+      },
+      {
+        "id": "use",
+        "targets": [],
+        "title": "쓰기",
+        "body": "넣어 둔 소모품은 전투와 모험 길에서 [소모품] 버튼으로 쓴다.\n칸이 비어 있으면 모험을 떠날 때 가진 것으로 저절로 채운다."
+      }
+    ],
+    "unlock-instinct": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--altar"
+        ],
+        "title": "{training.title}이(가) 열렸다",
+        "body": "{tier4}이(가) 되어 {training.title}을(를) 할 수 있다.\n{room.props.altar}의 위쪽 제목 목록에서 [{training.title}]을(를) 고른다."
+      },
+      {
+        "id": "play",
+        "targets": [],
+        "title": "수련",
+        "body": "수련권 1장으로 한 판을 하고, 이기면 수련치와 노력치가 오른다.\n수련을 마치면 전투의 {liberation.name}이(가) 더 강해진다."
+      }
+    ],
+    "unlock-rank": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--outside"
+        ],
+        "title": "{rankBattleName}이(가) 열렸다",
+        "body": "{tier4}이(가) 되어 {rankBattleName}에 나갈 수 있다.\n{worldmap.name}의 {rankBattleName} 자리로 가 보자."
+      },
+      {
+        "id": "challenge",
+        "targets": [],
+        "title": "도전",
+        "body": "바로 위 순위의 상대에게 도전해, 이기면 그 자리를 차지한다.\n지면 모험을 한 번 다녀온 뒤 다시 도전할 수 있다."
+      }
+    ],
+    "unlock-accessory": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "장신구가 열렸다",
+        "body": "{ascension.name}을(를) 클리어해 장신구 칸 3개가 열렸다.\n{room.props.chest}의 [{gearTitle}] 탭에서 장신구를 착용한다."
+      },
+      {
+        "id": "wear",
+        "targets": [],
+        "title": "착용",
+        "body": "장신구는 칸 3개에 하나씩 착용한다.\n무기·방어구·신발과 함께 능력치를 올려 준다."
+      }
+    ],
+    "unlock-pet": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "펫이 열렸다",
+        "body": "처음 환생한 기념으로 펫 한 마리가 따라왔다.\n{room.props.chest}의 [{gearTitle}] 탭에서 데려갈 펫을 고른다."
+      },
+      {
+        "id": "fight",
+        "targets": [],
+        "title": "같이 싸운다",
+        "body": "데려간 펫은 전투에서 같이 공격한다.\n함께 돈 바퀴가 쌓이면 친밀도가 올라 효과가 커진다."
+      }
+    ],
+    "unlock-sortie": [
+      {
+        "id": "open",
+        "targets": [
+          "@.bha-prop--chest"
+        ],
+        "title": "출정품이 열렸다",
+        "body": "처음 환생해 출정품 칸이 열렸다.\n출정품은 모험에 챙겨 가는 물건이다."
+      },
+      {
+        "id": "equip",
+        "targets": [],
+        "title": "끼우기",
+        "body": "{room.props.chest}에서 출정품 칸에 끼워 둔다.\n모험을 떠날 때 1개씩 저절로 쓰이고, 그 모험 동안 효과가 이어진다."
       }
     ]
   },

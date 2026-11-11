@@ -7,7 +7,7 @@ import { ITEM_CATEGORIES, getWandererItem } from '../src/data/shop';
 import { advance, chooseRelease, createExpedition, finishBattle, finishRest, playExpedition, startBattle, type ExpeditionState, type StepEvent } from '../src/engine/expedition';
 import { addPetLaps, affinityMult, affinityOf, carriedPet, grantPet, newPetState, nextAffinityLaps, petBonus, pickNewPet, sanitizePets, setActivePet } from '../src/engine/pet';
 import { advanceWanderer, newWandererState } from '../src/engine/wanderer';
-import { migrateSave, newSaveData, performEvolution, recordExpedition, settleIdle, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT, type SaveData } from '../src/game';
+import { checkUnlocks, migrateSave, newSaveData, performEvolution, recordExpedition, settleIdle, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT, type SaveData } from '../src/game';
 import { buyWandererItem, wandererRows } from '../src/shop';
 import { choosePet, inventoryOf, petEffectText, petNoticeOf } from '../src/inventory';
 
@@ -183,14 +183,18 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     expect(s.shared.pets.owned['pet-belly']!.laps).toBe(r.laps);
   });
 
-  it('첫 진화 선물: 슬롯에서 처음 진화할 때 안 가진 펫 1마리 (한 번만)', () => {
+  it('펫 해금 선물 (C.403, GDD 241-0 — 옛 첫 진화 선물): 첫 환생 때 안 가진 펫 1마리 (한 번만), 첫 진화에는 없음', () => {
     const s = newSaveData('hollow', 1);
     s.evolution.steps = 99999;
     const r = performEvolution(s, 50);
     expect(r.ok).toBe(true);
+    expect(s.shared.pets.gifted).toBe(false);
+    expect(Object.keys(s.shared.pets.owned)).toHaveLength(0);
+    s.rebirth.count = 1;
+    expect(checkUnlocks(s, 60)).toContain('pet');
     expect(s.shared.pets.gifted).toBe(true);
     expect(Object.keys(s.shared.pets.owned)).toHaveLength(1);
-    expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'get', source: 'evolution' });
+    expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'get', source: 'rebirth' });
   });
 
   it('떠돌이 상인 전설 품목 w-pet-egg: 안 가진 펫 1마리, 다 가졌으면 못 삼', () => {
@@ -224,7 +228,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([74, 54]); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([75, 54]); // C.403 기능 해금 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);

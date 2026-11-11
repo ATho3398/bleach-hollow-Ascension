@@ -81,10 +81,10 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
     label: (f) => `방 · ${f.nestName}`,
     read: (f) => {
       const r = roomOf(f);
-      // 수련장(altar)은 방에 없다 — 월드맵 장소 (GDD 158장 1). 방 화면(roomView)과 같은 목록
-      const items: BaseItem[] = ROOM_PROPS.filter((p) => p !== 'altar').map((p) => ({
+      // 번호 쟁탈전·진급 시험(rank)은 방에 없다 — 월드맵 장소 (GDD 241-C 3). 방 화면(roomView)과 같은 목록
+      const items: BaseItem[] = ROOM_PROPS.filter((p) => p !== 'rank').map((p) => ({
         key: p, name: r.props[p], spot: r.layout[p], artKey: `prop.${p}`, fallbackArt: p === 'outside' ? 'prop.door' : undefined,
-        nameNote: p === 'outside' ? '종족 설정 room.props.outside — 시장의 월드맵 물건 이름도 같이 바뀐다' : p === 'rank' ? '종족 설정 room.props.rank (비우면 rankBattleName — 진급 시험 화면 이름은 그대로)' : `종족 설정 room.props.${p}`, nameEditable: true,
+        nameNote: p === 'outside' ? '종족 설정 room.props.outside — 시장의 월드맵 물건 이름도 같이 바뀐다' : `종족 설정 room.props.${p}`, nameEditable: true,
       }));
       return { shape: r.shape, sceneArt: r.sceneArt, floor: r.floor, charFoot: r.characterFoot, items, extras: r.extras ?? [] };
     },
@@ -106,7 +106,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       const note: Record<string, [string, boolean]> = {
         home: ['종족 설정 nestName — 홈 이름이라 여러 화면에 같이 쓰인다', true],
         market: ['종족 설정 market.name — 시장 화면 제목도 같이 바뀐다', true],
-        training: ['종족 설정 room.props.altar — 수련장 이름', true],
+        rank: ['종족 설정 rankBattleName — 번호 쟁탈전·진급 시험 화면 이름도 같이 바뀐다', true],
         adventure: ['종족 설정 worldmap.adventureName', true],
         tower: ['종족 설정 tower.name — 탑 화면 제목도 같이 바뀐다', true],
         spa: ['종족 설정 worldmap.spaName', true],
@@ -116,8 +116,8 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
         return {
           // 그림 키 = 게임(worldMapView)이 실제로 쓰는 것: 공통 그림 prop.<장소> 파일이 있으면 그것(두 종족 공통), 없으면 종족별 장소 그림 place.<장소>.<종족> (홈 = 둥지·대원실 따로)
           key: p, name: w.places[p], spot: w.layout[p], artKey: hasFileArt(`prop.${p}`) ? `prop.${p}` : place,
-          // 대신 그림: 수련장은 장소 그림이 없으면 방 짚인형 (GDD 160장 4)
-          fallbackArt: p === 'training' && !hasFileArt(place) ? 'prop.altar' : place,
+          // 대신 그림: 번호 쟁탈전은 장소 그림이 없으면 옛 방 물건 그림 prop.rank (GDD 241-C 3)
+          fallbackArt: p === 'rank' && !hasFileArt(place) ? 'prop.rank' : place,
           nameNote: note[p]?.[0] ?? '', nameEditable: note[p]?.[1] ?? false,
         };
       });
@@ -136,7 +136,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       m.worldmap = wm;
       if (n.home) m.nestName = n.home;
       if (n.market) m.market = { ...(f.market ?? {}), name: n.market };
-      if (n.training) m.room = { ...(f.room ?? {}), props: { ...f.room?.props, altar: n.training } };
+      if (n.rank) m.rankBattleName = n.rank;
       if (n.tower) m.tower = { ...(f.tower ?? {}), name: n.tower };
     },
   },

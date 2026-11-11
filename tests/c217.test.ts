@@ -9,7 +9,7 @@ const read = (p: string) => readFileSync(p, 'utf8');
 
 describe('139장 1 탑 → 월드맵', () => {
   it('장소 순서 = 홈 → 시장 → 모험 → 탑, 탑 이름 = 종족 설정 towerLabels', () => {
-    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'training', 'adventure', 'tower', 'spa']); // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
+    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'rank', 'adventure', 'tower', 'spa']); // C.394 (GDD 241-C 3): 수련장 자리 = 번호 쟁탈전·진급 시험 // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
     for (const f of FACTIONS) expect(worldMapOf(f).places.tower).toBe(towerLabels(f).name);
   });
   it('지도 위 탑 자리가 다른 장소와 겹치지 않는다 (발 기준 거리)', () => {
@@ -34,12 +34,12 @@ describe('139장 1 탑 → 월드맵', () => {
     const app = read('src/ui/app.ts');
     expect(app).toMatch(/function towerScreen[\s\S]{0,80}nav\.push\(\{\s*id: 'tower'/);
     expect(app).toContain("onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },");
-    expect(read('src/ui/worldMapView.ts')).toContain("if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead)");
+    expect(read('src/ui/worldMapView.ts')).toContain("if ((p === 'adventure' || p === 'tower' || p === 'rank') && save.nest.dead)");
   });
   it('첫 모험 강제 중 탑 잠김, 해금 전이면 이유 한 줄과 함께 잠김', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'training', 'tower', 'spa'] : undefined,");
-    expect(app).toContain('lockReasons: towerOpen(s.runLog, faction.id, s.tower.best) ? undefined : { tower: towerLabels(faction).locked },');
+    expect(app).toContain("locked: forceAdventure ? ['home', 'market', 'rank', 'tower', 'spa'] : undefined,");
+    expect(app).toContain('...(towerOpen(s.runLog, faction.id, s.tower.best) ? {} : { tower: towerLabels(faction).locked }),'); // C.394: 번호 쟁탈전 잠김과 같이 묶음
     expect(read('src/ui/worldMapView.ts')).toContain("b.setAttribute('aria-description', reason);");
   });
   it('홈 안내 [밖으로] 카드에 탑도 (이름은 종족 설정에서)', () => {

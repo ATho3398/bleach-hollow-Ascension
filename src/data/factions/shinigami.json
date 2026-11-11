@@ -233,7 +233,7 @@
     "name": "소울 소사이어티", "adventureName": "모험", "spaName": "온천",
     "sceneArt": "scene.worldmap.shinigami",
     "floor": { "aspect": 2, "poly": [[0, 0.16], [1, 0.16], [1, 1], [0, 1]], "view": { "zoom": 1.37, "x": 46.4, "y": 0 } },
-    "layout": { "home": { "x": 47.2, "y": 70.7, "scale": 1.28 }, "market": { "x": 66.8, "y": 42.7, "scale": 0.98 }, "training": { "x": 71, "y": 90.5, "scale": 0.85 }, "adventure": { "x": 14.6, "y": 90.6, "scale": 0.96 }, "tower": { "x": 19.6, "y": 45.4, "scale": 1.15 }, "spa": { "x": 88.6, "y": 63.1, "scale": 1.33 } }
+    "layout": { "home": { "x": 47.2, "y": 70.7, "scale": 1.28 }, "market": { "x": 66.8, "y": 42.7, "scale": 0.98 }, "rank": { "x": 71, "y": 90.5, "scale": 0.85 }, "adventure": { "x": 14.6, "y": 90.6, "scale": 0.96 }, "tower": { "x": 19.6, "y": 45.4, "scale": 1.15 }, "spa": { "x": 88.6, "y": 63.1, "scale": 1.33 } }
   },
   "room": {
     "shape": "room",
@@ -251,10 +251,10 @@
     },
     "layout": {
       "book": { "x": 71.4, "y": 68.8, "scale": 0.91 },
-      "altar": { "x": 90, "y": 70, "scale": 0.68 },
+      "altar": { "x": 83.7, "y": 87.1, "scale": 1.03 },
       "chest": { "x": 28.9, "y": 91.2, "scale": 0.86 },
       "outside": { "x": 9, "y": 78, "scale": 1 },
-      "rank": { "x": 83.7, "y": 87.1, "scale": 1.03 }
+      "rank": { "x": 90, "y": 70, "scale": 0.68 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {

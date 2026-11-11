@@ -54,6 +54,7 @@ import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, typ
 import { createRng, nextFloat } from './engine/rng';
 import { newSortieSlots, sanitizeSortie, SORTIE_IDS } from './engine/sortie';
 import { grantGear, newGearState, rollGear, rollGrade, sanitizeGear, sellGold, type GearState } from './engine/gear';
+import { applyUnlocks, featureUnlocked, newUnlockState, sanitizeUnlocks, UNLOCK_GUIDES, type FeatureId, type UnlockProgress, type UnlockState } from './engine/unlocks';
 import { addPetLaps, carriedPet, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
 import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
@@ -61,7 +62,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 74; // C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 75; // C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -339,6 +340,8 @@ export interface SharedState {
   traits: string[];
   /** 출정품 칸 (GDD 241-D 5, 형식 74): 칸마다 품목 id(없으면 null). 모험 출발 때 칸마다 1개 소모 → 그 원정 효과. 개수가 0 이어도 칸에 남는다 */
   sortie: (string | null)[];
+  /** 기능 해금 (GDD 241-0, 형식 75): 열린 기능 → 열린 시각. 슬롯 공유·한 번 열리면 영구. 판정은 engine/unlocks */
+  unlocks: UnlockState;
 }
 
 export interface ShopDaily {
@@ -357,7 +360,7 @@ export function defaultWear(): WearState {
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: newSortieSlots() };
+  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: newSortieSlots(), unlocks: newUnlockState() };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -383,6 +386,7 @@ export function sanitizeShared(raw: unknown): SharedState {
     shopDaily: sanitizeShopDaily(r.shopDaily),
     traits: Array.isArray(r.traits) ? [...new Set(r.traits.filter((id): id is string => typeof id === 'string' && getDetachTrait(id) !== undefined))] : [],
     sortie: sanitizeSortie(r.sortie),
+    unlocks: sanitizeUnlocks(r.unlocks),
   };
 }
 
@@ -649,7 +653,7 @@ export function tilesUnlocked(save: Pick<SaveData, 'tiles'>): boolean {
   return save.tiles.unlocked === true;
 }
 
-/** 첫 진화 시작 타일 (GDD 64장 1번): 아직 안 받았으면 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 보관함에 넣고 타일 안내를 띄울 차례로. 준 타일 id (이미 받았으면 []) */
+/** 타일 해금 시작 타일 (GDD 64장 1번·241-0: 2단계에 닿을 때 = 첫 진화): 아직 안 받았으면 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 보관함에 넣고 타일 안내를 띄울 차례로. 준 타일 id (이미 받았으면 []) */
 export function grantStarterTiles(save: Pick<SaveData, 'tiles' | 'help' | 'factionId'>): string[] {
   if (save.tiles.unlocked) return [];
   save.tiles.unlocked = true;
@@ -701,6 +705,49 @@ export function sanitizeMachine(raw: unknown, fallbackAt: number): MachineRecord
 }
 
 /** 새 캐릭터 트랙 (1단계 완전 초기 상태). seedSalt 로 같은 시각에 만든 두 트랙의 단계 시드를 다르게 한다 */
+/** 해금 판정용 슬롯 진행 (GDD 241-0): 모든 트랙 중 닿아 본 최고 단계 · 해방 클리어 여부 · 가장 많은 환생 수 */
+export function unlockProgressOf(save: Pick<SaveData, TrackKey | 'otherTracks'>): UnlockProgress {
+  let maxTierIndex = 0;
+  let rebirths = 0;
+  let ascended = false;
+  for (const t of [save, ...(save.otherTracks ?? [])]) {
+    maxTierIndex = Math.max(maxTierIndex, maxTierReached(t));
+    rebirths = Math.max(rebirths, t.rebirth?.count ?? 0);
+    // 해방 클리어 = 아란칼화/참백도 구상화를 이긴 적이 있다 (이번 생 표시 evolution.ascended 는 환생하면 지워지므로 런 로그 기록도 본다)
+    if (t.evolution?.ascended === true || (t.runLog?.ascensions ?? []).some((a) => a.won)) ascended = true;
+  }
+  return { maxTierIndex, ascended, rebirths };
+}
+
+/** 해금 확인 (GDD 241-0, C.394): 진화·환생·불러오기 때. 조건을 채운 기능을 열고(영구) 안내 카드를 띄울 차례로, 런 로그에 남긴다.
+ *  타일 = 시작 타일 3장 + 타일 안내 · 펫 = 안 가진 펫 1마리 선물(옛 첫 진화 선물을 첫 환생으로 옮김). 새로 열린 기능 id */
+export function checkUnlocks(save: SaveData, nowMs: number = Date.now()): FeatureId[] {
+  const p = unlockProgressOf(save);
+  const fresh = applyUnlocks(save.shared.unlocks, p, nowMs);
+  for (const id of fresh) {
+    if (id === 'tiles') grantStarterTiles(save);
+    else queueGuide(save.help, UNLOCK_GUIDES[id]);
+    if (id === 'pet') giftFirstPet(save, nowMs);
+    (save.runLog.unlocks ??= []).push({ at: nowMs, factionId: save.factionId, featureId: id, tierIndex: save.evolution.tierIndex, rebirths: p.rebirths });
+  }
+  return fresh;
+}
+
+/** 펫 해금 선물 (GDD 90장 4번 ③ → 241-0): 슬롯에서 한 번, 안 가진 펫 무작위 1마리. 열린 시각으로 굴린다 */
+function giftFirstPet(save: SaveData, nowMs: number): void {
+  const ps = save.shared.pets;
+  if (ps.gifted) return;
+  ps.gifted = true;
+  const rng = createRng((nowMs ^ 0x3c6ef372) >>> 0);
+  const id = pickNewPet(ps, () => nextFloat(rng));
+  if (id && grantPet(ps, id, nowMs)) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'rebirth' });
+}
+
+/** 펫을 데려갈 수 있나 · 장비가 열렸나 · 전투 소모품 칸이 열렸나 (GDD 241-0): 원정 출발 때 펫 동행·펫 드롭·장비 드롭·소모품 버튼을 이것으로 정한다 */
+export const petsUnlocked = (save: Pick<SaveData, 'shared'>): boolean => featureUnlocked(save, 'pet');
+export const gearUnlocked = (save: Pick<SaveData, 'shared'>): boolean => featureUnlocked(save, 'gear');
+export const battleItemUnlocked = (save: Pick<SaveData, 'shared'>): boolean => featureUnlocked(save, 'battleItem');
+
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, nest: newNest(nowMs), build: newBuild(), evolution: { ...newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), abilities: newAbilityLoadout() }, runLog: emptyRunLog(), activeExpedition: null,
@@ -1411,22 +1458,14 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     const hpFrom = homeHpOf(save.nest);
     const hpTo = setHomeHp(save.nest, 1);
     if (hpTo > hpFrom + 1e-9) logHomeHeal(save, { at: nowMs, kind: 'evolution', hpFrom: Math.round(hpFrom * 100) / 100, hpTo: Math.round(hpTo * 100) / 100 });
-    // 첫 진화 (1→2단계) 때 시작 타일 3장 + 타일 안내 (GDD 64장 1번). 이미 받았으면(환생 뒤 등) 없음
-    if (save.evolution.tierIndex >= 1) grantStarterTiles(save);
+    // 진화마다 하나씩 열린다 (GDD 241-0): 2단계 타일(시작 타일 3장 + 타일 안내, 64장 1번) · 3단계 장비·전투 소모품 · 4단계 본능 수련·번호 쟁탈전
+    checkUnlocks(save, nowMs);
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
     // 단계 외형이 정해지면 시작 외형(시작 전용 스킨)은 그 외형에 덮인다 (GDD 53). 상점에서 산 스킨은 그대로. 스킨 패널에서 다시 고를 수 있다
     if (save.evolution.look && getSkin(save.skin)?.startOnly) save.skin = null;
     checkTitles(save, 'evolution', nowMs);
-    // 첫 진화 선물 (GDD 90장 4번 ③): 슬롯에서 처음 진화할 때 안 가진 펫 무작위 1마리 (펫을 알게 하려고). 진화 기록 시각으로 굴린다
-    const ps = save.shared.pets;
-    if (!ps.gifted) {
-      ps.gifted = true;
-      const rng = createRng((nowMs ^ 0x3c6ef372) >>> 0);
-      const id = pickNewPet(ps, () => nextFloat(rng));
-      if (id && grantPet(ps, id, nowMs)) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'evolution' });
-    }
     // 5단계에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 닿으면 붕옥 탭이 열린다 (GDD 22-3)
     checkTrackOpen(save, nowMs);
   }
@@ -1579,6 +1618,7 @@ export function recordAscension(save: SaveData, s: CombatState, nowMs: number = 
   if (won && !save.evolution.ascended) {
     const e = save.evolution;
     e.ascended = true;
+    checkUnlocks(save, nowMs); // 해방 클리어 = 장신구 3칸이 열린다 (GDD 241-0)
     const fac = getFaction(save.factionId);
     const form = e.formId ? tryGetForm(e.formId) : undefined;
     if (fac.ascension.lookChange && form) {
@@ -1687,6 +1727,8 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   const carry = nextCarry(save.rebirth, prev);
   const count = save.rebirth.count + 1;
   save.rebirth = { count, carry };
+  // 첫 환생에 펫·출정품이 열린다 (GDD 241-0): 안 가진 펫 1마리 선물 + 안내
+  checkUnlocks(save, nowMs);
   const evolution = newEvolution(nextStageSeed(prev.stageSeed, 100 + count));
   evolution.carry = startingCarry(carry);
   // 특성 (GDD 126-1 수정 1·2): 보유·장착은 환생해도 남고, 칸은 환생 1회당 +1 (최대 4)
@@ -1903,6 +1945,26 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 형식 74 (C.400, GDD 241-D 5): 출정품 칸 2개(빈 칸). 원정 중간 저장·런 로그의 sortie 는 없어도 되는 칸이라 옛 기록 그대로
   73: (save) => {
     if (isRec(save.shared) && !Array.isArray((save.shared as unknown as Record<string, unknown>).sortie)) save.shared.sortie = newSortieSlots();
+  },
+  // 형식 74 → 75 (C.403, GDD 241-0): 기능 해금 shared.unlocks. 옛 세이브는 이미 열려 있던 것을 닫지 않는다 — 장비·전투 소모품 칸·장신구 칸(처음부터 열려 있었다)·펫(가졌거나 선물을 받았으면)·타일(받았으면),
+  // 그리고 이미 4단계에 닿아 본 슬롯의 본능 수련·번호 쟁탈전은 안내 없이 연 것으로. 출정품(새 기능)과 나머지는 불러온 뒤 checkUnlocks 가 조건대로 열고 안내를 건다
+  74: (save) => {
+    const sh = save.shared as unknown;
+    if (!isRec(sh)) return;
+    const u = sanitizeUnlocks(sh.unlocks);
+    for (const id of ['gear', 'battleItem', 'accessory'] as const) u[id] ??= 0;
+    const pets = isRec(sh.pets) ? sh.pets : {};
+    if (pets.gifted === true || (isRec(pets.owned) && Object.keys(pets.owned).length > 0)) u.pet ??= 0;
+    if (isRec(save.tiles) && save.tiles.unlocked === true) u.tiles ??= 0;
+    if (Array.isArray(sh.sortie) && sh.sortie.some((x) => x !== null)) u.sortie ??= 0; // 이미 끼워 쓰던 출정품 칸 (C.400 임시 게이트로 열렸던 슬롯)
+    const tracks = [save, ...(Array.isArray(save.otherTracks) ? save.otherTracks : [])].filter((t) => isRec(t) && isRec(t.evolution));
+    const best = Math.max(0, ...tracks.map((t) => maxTierReached(t)));
+    const U = BALANCE.provisional.unlocks;
+    for (const id of ['instinct', 'rankBattle'] as const) {
+      const rule = U[id];
+      if ('tierIndex' in rule && best >= rule.tierIndex) u[id] ??= 0;
+    }
+    sh.unlocks = u;
   },
 };
 
@@ -2274,6 +2336,9 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   save.idlePending = sanitizeIdlePending(save.idlePending);
   save.formDex = (save.formDex ?? []).filter((id) => tryGetForm(id) !== undefined);
   save.help = sanitizeHelpState(save.help);
+  // 해금 (GDD 241-0): 타일을 이미 받은 슬롯은 타일이 열린 것, 그리고 조건을 이미 채운 기능은 여기서 연다(안내 카드 대기)
+  if (save.tiles.unlocked && save.shared.unlocks.tiles === undefined) save.shared.unlocks.tiles = 0;
+  checkUnlocks(save);
   save.settings = sanitizeSlotSettings(save.settings);
   save.gender = parseGender(save.gender);
   save.name = parseName(save.name);

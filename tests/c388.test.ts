@@ -123,7 +123,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
 
 describe('세이브 형식 71', () => {
   it('70 → 71: 두 트랙 런 로그에 빈 sales', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(74);
+    expect(SAVE_FORMAT_VERSION).toBe(75); // C.403 기능 해금
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.runLog.sales;
     s.meta.format = 70;
@@ -132,7 +132,7 @@ describe('세이브 형식 71', () => {
     delete s.runLog.sales;
     s.meta.format = 70;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(74);
+    expect(m.meta.format).toBe(75);
     expect(m.runLog.sales).toEqual([]);
   });
 });

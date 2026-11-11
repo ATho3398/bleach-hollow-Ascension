@@ -515,6 +515,8 @@ button.bha-slot { cursor: pointer; }
   color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); text-align: left; white-space: nowrap; touch-action: manipulation;
 }
 .bha-viewtitle__item.is-on { background: var(--bha-bg-3); border-color: var(--bha-accent); }
+/* 잠긴 보기 (GDD 241-C 2): 자물쇠 + 흐린 글자 */
+.bha-viewtitle__item.is-locked { color: var(--bha-text-3); display: inline-flex; align-items: center; gap: var(--bha-sp-1); }
 .bha-viewtitle__item:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 2px; }
 /* 게임 안 고르기 칸 (C.190, GDD 116장 추가 5): 브라우저 기본 select 대신 — 버튼 + 오버레이 자리에 뜨는 제목 토글 모양 목록 (pickList.ts) */
 .bha-pick { display: flex; align-items: center; justify-content: space-between; gap: var(--bha-sp-1); text-align: left; cursor: pointer; touch-action: manipulation; }

@@ -30,13 +30,14 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
 describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 수련장 짚인형은 유지', () => {
   it('방 물건에 수련장(altar)이 없고, 월드맵 수련장 장소는 그대로', () => {
     const rv = read('src/ui/roomView.ts');
-    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'chest', 'rank'];"); // rank = C.257 (GDD 174장 2)
+    // C.394 (GDD 241-C 3): 자리 바꿈 — 수련장(altar)이 다시 방 물건(옛 진급 시험 자리), 번호 쟁탈전·진급 시험(rank)이 월드맵 장소
+    expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'hogyoku', 'chest', 'altar'];");
     expect(rv).not.toContain('altar: hd.onAltar,');
-    expect(rv).toContain("if (p === 'altar') continue;");
-    expect([...ROOM_PROPS]).toContain('altar'); // 이름·그림 키용
+    expect(rv).toContain("if (p === 'rank') continue;");
+    expect([...ROOM_PROPS]).toContain('rank'); // 이름·그림 키용
     for (const f of FACTIONS) {
       expect(roomOf(f).layout.altar).toBeDefined();
-      expect(worldMapOf(f).places.training).toBe(roomOf(f).props.altar);
+      expect(worldMapOf(f).places.rank).toBe(f.rankBattleName);
     }
   });
   it('단축키 T·홈 안내 수련장 카드도 삭제', () => {
@@ -46,11 +47,13 @@ describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 �
   it('방에서 여는 길 없음 — 수련장은 월드맵에서만(뒤로 = 월드맵)', () => {
     const app = read('src/ui/app.ts');
     expect(app).not.toContain('onAltar');
-    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { worldAt = 'training'; open('training', () => renderTraining(faction, s)); }); },");
+    // C.394 (GDD 241-C 2·3): 수련장은 방에서 연다 — 기본 = 훈련 인형. 월드맵 그 자리는 번호 쟁탈전·진급 시험
+    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },");
+    expect(app).toContain("onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },");
   });
   it('월드맵 수련장 그림이 비면 짚인형 그림', () => {
     const wm = read('src/ui/worldMapView.ts');
-    expect(wm).toContain("const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { training: 'prop.altar' };");
+    expect(wm).toContain("const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { rank: 'prop.rank' };"); // C.394: 월드맵 그 자리는 번호 쟁탈전
     expect(wm).not.toMatch(/'hollow'|'shinigami'/);
     for (const f of FACTIONS) expect(artUrls(`place.training.${f.id}`).src).toBeNull();
     expect(artUrls('prop.altar').src).not.toBeNull();

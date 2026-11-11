@@ -8,7 +8,7 @@ const read = (p: string) => readFileSync(p, 'utf8');
 
 describe('137장 3 밖으로 고정 (옛 스위치·모험 문·장터 폐기)', () => {
   it('방 물건 = 수련장·책장·가방·밖으로(옛 문 자리) — 모험 문·장터는 없다', () => {
-    expect([...ROOM_PROPS]).toEqual(['altar', 'book', 'chest', 'outside', 'rank']); // rank = C.257 (GDD 174장 2)
+    expect([...ROOM_PROPS]).toEqual(['altar', 'book', 'chest', 'outside', 'rank', 'hogyoku']); // hogyoku = C.403 붕옥 아이콘 자리 (GDD 242장 2) · // rank = C.257 (GDD 174장 2)
     for (const f of FACTIONS) {
       const r = roomOf(f);
       expect(r.props.outside).toBe('월드맵'); // C.236 (GDD 158장 2): '밖으로' → '월드맵'
@@ -34,10 +34,10 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
   it('월드맵 이름 = 호로 웨코문도 / 사신 소울 소사이어티, 장소 = 홈(nestName)·시장·모험·탑(139장 1)', () => {
     expect(worldMapOf(getFaction('hollow')).name).toBe('웨코문도');
     expect(worldMapOf(getFaction('shinigami')).name).toBe('소울 소사이어티');
-    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'training', 'adventure', 'tower', 'spa']); // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
+    expect([...WORLD_PLACES]).toEqual(['home', 'market', 'rank', 'adventure', 'tower', 'spa']); // C.394 (GDD 241-C 3): 수련장 자리 = 번호 쟁탈전·진급 시험 // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
     for (const f of FACTIONS) {
       const w = worldMapOf(f);
-      expect(w.places).toEqual({ home: f.nestName, market: '시장', training: '수련장', adventure: '모험', tower: '도전의 탑', spa: '온천' }); // 온천 = C.228, 수련장 = C.236
+      expect(w.places).toEqual({ home: f.nestName, market: '시장', rank: f.rankBattleName, adventure: '모험', tower: '도전의 탑', spa: '온천' }); // 온천 = C.228, 수련장 = C.236
       expect(w.sceneArt).toBe(`scene.worldmap.${f.id}`); // C.278: 종족별 월드맵 배경 (배치 도구로 올린 그림)
     }
     expect(worldMapOf(getFaction('hollow')).places.home).toBe('둥지');
@@ -77,7 +77,7 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
     expect(wm).toContain('WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208 (GDD 132장 2): 첫 선택 = 지금 있던 장소
     expect(wm).toContain("if (p === 'market' && here)");
-    expect(wm).toContain("if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead)"); // C.217: 탑도 사망 잠김 (139장 1), C.236 수련장도
+    expect(wm).toContain("if ((p === 'adventure' || p === 'tower' || p === 'rank') && save.nest.dead)"); // C.217: 탑도 사망 잠김 (139장 1), C.236 수련장도
   });
   it('회복 안내 온천: 밖으로 → 월드맵 온천 (C.228, GDD 153장 1), 대상 = 밖으로 (C.206 부터 사용자가 직접 간다)', () => {
     expect(app).toContain(`'.bha-prop--outside, .bha-worldmap [data-place="spa"]'`);

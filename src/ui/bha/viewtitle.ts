@@ -8,6 +8,8 @@ import { elementLocalRect } from './viewport';
 export interface ViewTitleOption {
   id: string;
   label: string;
+  /** 아직 잠긴 보기 (GDD 241-C 2): 목록에 자물쇠와 함께 보이고, 눌러도 onPick 으로 간다 — 부르는 쪽이 이유를 알린다 */
+  locked?: boolean;
 }
 
 /** 제목 버튼 + 펼침 목록. options = 고를 수 있는 보기, current = 지금 보기 id, onPick = 다른 보기를 골랐을 때(같은 것을 누르면 닫기만).
@@ -30,6 +32,11 @@ export function viewTitle(options: readonly ViewTitleOption[], current: string, 
     it.setAttribute('role', 'option');
     it.setAttribute('aria-selected', String(o.id === now.id));
     it.textContent = o.label;
+    if (o.locked) {
+      it.classList.add('is-locked');
+      it.dataset.locked = '';
+      it.prepend(icon('i-lock', 'sm'));
+    }
     it.onclick = () => {
       close();
       if (o.id !== now.id) onPick(o.id);

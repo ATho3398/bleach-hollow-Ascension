@@ -74,11 +74,12 @@ const TICKET_HOW = '모험·탑에서 강적·보스를 잡으면 얻을 때가 
 /** 수련장 묶음의 두 화면: 수련(본능 수련) · 훈련 인형. 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
 export type TrainingScreenId = 'train' | 'practice';
 
-/** 수련장 두 화면이 같이 쓰는 머리 제목 토글 (GDD 99장 2, C.163 · 174장 1): 수련 ↔ 훈련 인형. altarName = 수련장 이름 */
-export function trainingTitle(faction: FactionConfig, altarName: string, current: TrainingScreenId, onSwitch: (id: TrainingScreenId) => void): HTMLElement {
+/** 수련장 두 화면이 같이 쓰는 머리 제목 토글 (GDD 99장 2, C.163 · 174장 1): 수련 ↔ 훈련 인형. altarName = 수련장 이름.
+ *  GDD 241-C 2 (C.394): 기본 = 훈련 인형(먼저), 본능 수련은 4단계 전이면 목록에 자물쇠 — 누르면 부르는 쪽이 '<4단계 이름>이 되면 열린다' 알림 */
+export function trainingTitle(faction: FactionConfig, altarName: string, current: TrainingScreenId, onSwitch: (id: TrainingScreenId) => void, trainLocked = false): HTMLElement {
   return selectLast(viewTitle([
-    { id: 'train', label: `${altarName} · ${faction.training.title}` },
-    { id: 'practice', label: '훈련 인형' },
+    { id: 'practice', label: `${altarName} · 훈련 인형` },
+    { id: 'train', label: faction.training.title, locked: trainLocked },
   ], current, (id) => onSwitch(id as TrainingScreenId)));
 }
 

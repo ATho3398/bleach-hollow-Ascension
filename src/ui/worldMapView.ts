@@ -1,5 +1,5 @@
 // 월드맵 (GDD 130장 2, C.204): 방 물건 [월드맵]으로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
-// 장소 6개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 수련장(수련 화면, GDD 158장 1) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
+// 장소 6개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 번호 쟁탈전·진급 시험(GDD 241-C 3 — 옛 수련장 자리, 수련장은 방으로) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
 // 고르면(✓) 캐릭터가 그쪽으로 한두 걸음 출발하는 모습(약 0.4초)과 함께 바로 화면이 어두워지고(페이드아웃) 그 화면이 밝아진다(페이드인) — GDD 153장 3(137장 '끝까지 걷기' 대체).
 // 출발하는 동안 입력 잠금, 뒤로 = 취소하고 제자리.
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
@@ -13,14 +13,14 @@ import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
 import { applyCarePose, characterButton, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
 
-/** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 수련장 = 방 짚인형 (GDD 160장 4) */
-const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { training: 'prop.altar' };
+/** 장소 그림(place.<장소>.<종족>)이 비었을 때 대신 쓰는 그림 키 — 번호 쟁탈전 = 옛 방 물건 그림 prop.rank(있으면) */
+const PLACE_ART_FALLBACK: Partial<Record<WorldPlace, string>> = { rank: 'prop.rank' };
 
 export interface WorldMapHandlers {
   onHome: () => void;
   onMarket: () => void;
-  /** 수련장 (GDD 158장 1): 방 물건 → 월드맵 장소. 뒤로 = 월드맵 */
-  onTraining: () => void;
+  /** 번호 쟁탈전·진급 시험 (GDD 241-C 3, C.394): 옛 수련장 자리. 뒤로 = 월드맵 */
+  onRank: () => void;
   onAdventure: () => void;
   onTower: () => void;
   /** 온천 (GDD 153장 1): 시장 안 칸에서 월드맵 장소로 */
@@ -89,7 +89,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──
   const scene = sceneBox(wm);
   scene.classList.add('bha-worldmap__scene');
-  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, training: hd.onTraining, adventure: hd.onAdventure, tower: hd.onTower, spa: hd.onSpa };
+  const act: Record<WorldPlace, () => void> = { home: hd.onHome, market: hd.onMarket, rank: hd.onRank, adventure: hd.onAdventure, tower: hd.onTower, spa: hd.onSpa };
   const floor: FloorEntry[] = [];
   const btns = new Map<WorldPlace, HTMLButtonElement>();
   for (const p of WORLD_PLACES) {
@@ -127,8 +127,8 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       b.classList.add('has-visitor');
       b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass bha-prop__badge', '상인')); // v2 S02: 이름표 안 황동 배지
     }
-    // 사망이면 모험·탑·수련장 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
-    if ((p === 'adventure' || p === 'tower' || p === 'training') && save.nest.dead) {
+    // 사망이면 모험·탑·번호 쟁탈전 잠김 표시 (GDD 102-7·139장 1·158장 1). 눌러도 막힘 안내는 onAdventure·onTower·onTraining 쪽
+    if ((p === 'adventure' || p === 'tower' || p === 'rank') && save.nest.dead) {
       b.classList.add('is-locked');
       lockProp(b);
     }

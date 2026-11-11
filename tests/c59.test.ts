@@ -54,6 +54,8 @@ function oldFormat22(): Record<string, unknown> {
   s.nest.hunger = 33;
   s.skin = null;
   s.tiles.collection['prey-nest-a'] = 7;
+  s.tiles.unlocked = true; // C.394 (GDD 241-0): 타일을 이미 쓰던 슬롯 — 불러올 때 시작 타일을 다시 주지 않는다
+  s.shared.pets.gifted = true; // 옛 첫 진화 선물을 이미 받은 슬롯 — 펫 해금 선물을 다시 주지 않는다
   s.story = { hollow: { cleared: { 'ch1/ep1': { firstAt: 10, clears: 2 } }, chapters: [] } };
   delete (s as unknown as Record<string, unknown>).difficulty; // 형식 29(C.75) 필드 — 형식 22 세이브에는 없다
   s.bossDex = { 'sand-maw': { kills: 1, firstAt: 20 } };

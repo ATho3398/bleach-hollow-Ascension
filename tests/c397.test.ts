@@ -8,7 +8,7 @@ import { createCombat, drainCombatEvents, step, ticksOf, type CombatParams } fro
 import { affinityMult, petAttackOf } from '../src/engine/pet';
 import { GEAR_KIND_FACTIONS, GEAR_KINDS, GEAR_SLOTS, gearKindAllowed } from '../src/data/gear';
 import { FACTIONS, getFaction } from '../src/data/factions';
-import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
+import { checkUnlocks, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { gateHint, gateOpen } from '../src/unlockGate';
 
 useImmediateHits();
@@ -60,7 +60,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     }
   });
   it('세이브 형식 73: 72 → 73 = 옛 장비·낀 칸 그대로 + 3번째 장신구 칸 null', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(74);
+    expect(SAVE_FORMAT_VERSION).toBe(75); // C.403 기능 해금
     const s = newSaveData('hollow', 0);
     s.shared.gear.items.push({ uid: 'g1', kind: 'accessory', grade: 'rare', star: 1, stats: { spr: 3 }, special: null, plus: 1, gotAt: 1 });
     s.shared.gear.equipped.acc2 = 'g1';
@@ -70,7 +70,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     SAVE_MIGRATIONS[72]!(raw);
     expect(raw.shared.gear.equipped.acc3).toBeNull();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(74);
+    expect(m.meta.format).toBe(75);
     expect(m.shared.gear.items.map((i) => i.uid)).toEqual(['g1']);
     expect(m.shared.gear.equipped).toMatchObject({ acc2: 'g1', acc3: null });
   });
@@ -88,16 +88,21 @@ describe('241-D 3·6·8 화면', () => {
   it('241-0 수정 표: 장비 = 3단계 · 장신구 = 해방 클리어 · 펫·출정품 = 첫 환생 (이미 가진 것은 열림) — 종족 이름으로 안내', () => {
     const s = newSaveData('hollow', 0);
     for (const id of ['gear', 'accessory', 'pet', 'sortie'] as const) expect(gateOpen(s, id)).toBe(false);
+    // C.403: 판정은 engine/unlocks (진화·해방 클리어·환생 때 checkUnlocks 가 열고 저장 — 한 번 열리면 영구)
     s.evolution.tierIndex = 1;
+    checkUnlocks(s, 1);
     expect(gateOpen(s, 'gear')).toBe(false);
     s.evolution.tierIndex = 2;
+    checkUnlocks(s, 2);
     expect(gateOpen(s, 'gear')).toBe(true);
     expect(gateOpen(s, 'accessory')).toBe(false);
     s.evolution.ascended = true;
+    checkUnlocks(s, 3);
     expect(gateOpen(s, 'accessory')).toBe(true);
-    s.shared.pets.owned['pet-gold'] = { laps: 0, gotAt: 1 };
-    expect(gateOpen(s, 'pet')).toBe(true);
+    expect(gateOpen(s, 'pet')).toBe(false);
     s.rebirth.count = 1;
+    checkUnlocks(s, 4);
+    expect(gateOpen(s, 'pet')).toBe(true);
     expect(gateOpen(s, 'sortie')).toBe(true);
     const H = getFaction('hollow');
     expect(gateHint(H, 'gear')).toBe('아쥬커스가 되면 장비가 열린다');
