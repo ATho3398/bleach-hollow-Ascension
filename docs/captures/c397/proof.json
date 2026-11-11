@@ -1,0 +1,98 @@
+{
+  "url": "http://localhost:5397/",
+  "shots": [
+    "hollow-01-gear.png",
+    "hollow-02-pet-tab.png",
+    "hollow-03-pet-dialog.png",
+    "hollow-04-battle-pet.png",
+    "shinigami-01-gear.png",
+    "shinigami-02-pet-tab.png",
+    "shinigami-03-pet-dialog.png",
+    "shinigami-04-battle-pet.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "hollow",
+      "slots": [
+        "무기: 레어 무기 +2",
+        "방어구: 노멀 방어구",
+        "신발: 영웅 신발 +1",
+        "펫: 뼈 까마귀",
+        "장신구 1: 레어 장신구",
+        "장신구 2: 노멀 장신구",
+        "장신구 3: 전설 장신구 +3",
+        "전투 소모품: 비어 있음"
+      ],
+      "tabs": [
+        "전체7",
+        "무기1",
+        "방어구1",
+        "신발1",
+        "장신구4",
+        "펫2"
+      ],
+      "tabScroll": [
+        360,
+        360
+      ],
+      "wallet": [
+        "골드 1234",
+        "영옥 56"
+      ],
+      "headTabs": [
+        "gear",
+        "slots",
+        "tiles",
+        "items",
+        "skin",
+        "material"
+      ]
+    },
+    {
+      "tag": "hollow",
+      "dragScrollLeft": 0
+    },
+    {
+      "tag": "shinigami",
+      "slots": [
+        "무기: 레어 무기 +2",
+        "방어구: 노멀 방어구",
+        "신발: 영웅 신발 +1",
+        "펫: 지옥나비",
+        "장신구 1: 레어 장신구",
+        "장신구 2: 노멀 장신구",
+        "장신구 3: 전설 장신구 +3",
+        "전투 소모품: 비어 있음"
+      ],
+      "tabs": [
+        "전체7",
+        "무기1",
+        "방어구1",
+        "신발1",
+        "장신구4",
+        "펫2"
+      ],
+      "tabScroll": [
+        360,
+        360
+      ],
+      "wallet": [
+        "골드 1234",
+        "영옥 56"
+      ],
+      "headTabs": [
+        "gear",
+        "slots",
+        "tiles",
+        "items",
+        "skin",
+        "material"
+      ]
+    },
+    {
+      "tag": "shinigami",
+      "dragScrollLeft": 0
+    }
+  ]
+}

@@ -22,7 +22,8 @@ import { riskText } from '../data/help/riskText';
 import { numLine, SECTION } from '../data/help/textFormat';
 import { infoTip } from './bha/infoTip';
 import { statusInfo } from './bha/statusInfo';
-import { consumableName } from '../inventory';
+import { consumableName, petName } from '../inventory';
+import { petBuddy } from './bha/pet';
 import { battleItemText } from '../shop';
 import { FAMILY_TIERS, familyOf, roomOf, type FactionConfig, type FamilyConfig } from '../engine/faction';
 import { frameTicks } from '../engine/tutorial';
@@ -381,6 +382,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   const units = el('div', 'bha-v2units');
   units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root), unit('bha-unit--foe', foeHeads, foe, enemyHp.root));
+  // 펫 (GDD 241-D 4): 데리고 간 펫이 내 옆에서 같이 때린다 — 공격 때 앞으로 튀는 연출 + 피해 숫자
+  const petId = s.params.petAttack?.petId ?? null;
+  const petEl = petBuddy(petId, petName(petId ?? '', faction));
+  if (petEl) {
+    petEl.classList.add('bha-pet--battle');
+    units.querySelector('.bha-unit--me .bha-unit__fig')?.append(petEl);
+  }
 
   const floats = el('div', 'bha-battle__floats');
   // 사건 로그 (C.63, GDD 28장 3번): 가운데 실시간 안내 대신 [로그] 버튼으로 여는 목록. 닫혀 있으면 안 보인다(일시정지 없이 겹쳐 본다)
@@ -1036,6 +1044,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     else if (!landed) attack.react(e);
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
+      case 'pet-attack':
+        if (petEl) replayOnce(petEl, 'is-pounce', 420);
+        spawnFloat('attack', `${shownName(petName(e.petId, faction))} −${n0(e.damage)}`);
+        break;
       case 'player-attack':
         // 기본 공격 숫자는 평소 띄우지 않는다(화면이 붐빈다). 치명타만 크게
         if (e.crit) spawnFloat('attack', `−${n0(e.damage)}`, { critical: true });

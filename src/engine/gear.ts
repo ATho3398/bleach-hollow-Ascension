@@ -57,7 +57,7 @@ export interface GearCarry {
 export type GearRoll = Omit<GearItem, 'uid' | 'plus' | 'gotAt'>;
 
 export function newGearState(): GearState {
-  return { items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null }, nextId: 1 };
+  return { items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null, acc3: null }, nextId: 1 };
 }
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -290,12 +290,12 @@ export function applyGearToParams(params: Partial<CombatParams>, carry: GearCarr
   }
 }
 
-/** 그 단계 평균 장비 (balance:check 참고 줄, GDD 91장 7번): 5칸 모두 refLoadout 등급·강화, ★ = 권장(단계 + 1). 무기 = 힘, 장신구 = 정신력 + 치명. 특수 효과 없음(레어) */
+/** 그 단계 평균 장비 (balance:check 참고 줄, GDD 91장 7번 → 241-D 2 장신구 3칸): 6칸 모두 refLoadout 등급·강화, ★ = 권장(단계 + 1). 무기 = 힘, 장신구 = 정신력 + 치명. 특수 효과 없음(레어) */
 export function referenceLoadout(tierIndex: number): GearCarry {
   const star = Math.min(STAR_MAX, tierIndex + 1);
   const grade = GX.refLoadout.grade as GearGrade;
   const mk = (kind: GearKind, stats: GearStat[]) => ({ stats: Object.fromEntries(stats.map((s) => [s, gearLineValue(kind, grade, star, s)])), plus: GX.refLoadout.plus, special: null });
-  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['spd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
+  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['spd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
 }
 
 /** 장비 세기 점수 (GDD 108장 4번 자동 착용 비교, C.179 provisional): 능력치 줄을 '그 줄의 노말 ★1 값' 몇 배인지로 더한다(종류가 달라도 같은 눈금).

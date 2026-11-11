@@ -1,10 +1,10 @@
-// 장비 (GDD 91장 v5.187 확정, C.150 가칭·provisional): 칸 5개(무기·방어구·신발·장신구 1·2) · 종류 4(장신구 두 칸은 같은 종류) · 등급 4 · 영웅·전설 특수 효과 1줄.
+// 장비 (GDD 91장 v5.187 확정, C.150 가칭·provisional → 241-D C.397): 칸 6개(무기·방어구·신발·장신구 1·2·3) · 종류 4(장신구 두 칸은 같은 종류) · 등급 4 · 영웅·전설 특수 효과 1줄.
 // 칸 이름은 종족 설정(faction json gearSlotNames), 수치는 balance.ts provisional.gear, 그림 없으면 종류 아이콘(아이콘 스프라이트). 여기는 종류·칸·특수 효과 종류만.
 import raw from './gear.json';
 
 export const GEAR_KINDS = ['weapon', 'armor', 'shoes', 'accessory'] as const;
 export type GearKind = (typeof GEAR_KINDS)[number];
-export const GEAR_SLOTS = ['weapon', 'armor', 'shoes', 'acc1', 'acc2'] as const;
+export const GEAR_SLOTS = ['weapon', 'armor', 'shoes', 'acc1', 'acc2', 'acc3'] as const;
 export type GearSlot = (typeof GEAR_SLOTS)[number];
 /** 등급 (GDD 91장 3번): 블록 등급과 같은 4단계. 표시 이름은 공통 */
 export const GEAR_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
@@ -28,12 +28,16 @@ export interface GearSpecialDef {
 
 const isIn = <T extends string>(list: readonly T[], v: unknown): v is T => (list as readonly unknown[]).includes(v);
 
-function parse(): { icons: Record<GearKind, string>; slotKind: Record<GearSlot, GearKind>; specials: GearSpecialDef[] } {
+function parse(): { icons: Record<GearKind, string>; factions: Record<GearKind, readonly string[]>; slotKind: Record<GearSlot, GearKind>; specials: GearSpecialDef[] } {
   const errors: string[] = [];
   const icons = {} as Record<GearKind, string>;
-  for (const k of raw.kinds) {
+  const factions = {} as Record<GearKind, readonly string[]>;
+  for (const k of raw.kinds as { id?: unknown; icon?: unknown; factions?: unknown }[]) {
     if (!isIn(GEAR_KINDS, k.id) || typeof k.icon !== 'string') errors.push(`kinds: ${String(k.id)}`);
-    else icons[k.id] = k.icon;
+    else {
+      icons[k.id] = k.icon;
+      factions[k.id] = Array.isArray(k.factions) ? k.factions.filter((f): f is string => typeof f === 'string') : [];
+    }
   }
   const slotKind = {} as Record<GearSlot, GearKind>;
   for (const s of raw.slots) {
@@ -48,7 +52,7 @@ function parse(): { icons: Record<GearKind, string>; slotKind: Record<GearSlot, 
     else specials.push({ id: r.id, effect: r.effect, ...(typeof r.family === 'string' ? { family: r.family } : {}), ...(typeof r.name === 'string' ? { name: r.name } : {}) });
   }
   if (errors.length) throw new Error(`장비 데이터 오류: ${errors.join(', ')}`);
-  return { icons, slotKind, specials };
+  return { icons, factions, slotKind, specials };
 }
 
 const P = parse();
@@ -57,6 +61,13 @@ export const GEAR_PROVISIONAL: boolean = raw.provisional;
 export const GEAR_KIND_ICONS: Readonly<Record<GearKind, string>> = P.icons;
 /** 칸 → 받는 종류 (장신구 1·2 는 같은 종류) */
 export const GEAR_SLOT_KIND: Readonly<Record<GearSlot, GearKind>> = P.slotKind;
+/** 종족 전용 장비 칸 (GDD 241-D 1, 구조만): 비면 두 종족 공용. 지금은 모두 비어 있다 — 종족 전용 장비는 나중에 데이터로 */
+export const GEAR_KIND_FACTIONS: Readonly<Record<GearKind, readonly string[]>> = P.factions;
+/** 이 종족이 이 종류 장비를 쓸 수 있나 (faction 제한이 비면 공용) */
+export function gearKindAllowed(kind: GearKind, factionId: string): boolean {
+  const f = GEAR_KIND_FACTIONS[kind];
+  return !f || f.length === 0 || f.includes(factionId);
+}
 export const GEAR_SPECIALS: readonly GearSpecialDef[] = P.specials;
 
 export function getGearSpecial(id: string): GearSpecialDef | undefined {
@@ -65,7 +76,7 @@ export function getGearSpecial(id: string): GearSpecialDef | undefined {
 export const isGearKind = (v: unknown): v is GearKind => isIn(GEAR_KINDS, v);
 export const isGearSlot = (v: unknown): v is GearSlot => isIn(GEAR_SLOTS, v);
 export const isGearGrade = (v: unknown): v is GearGrade => isIn(GEAR_GRADES, v);
-/** 이 종류를 받는 칸들 (장신구 = 두 칸) */
+/** 이 종류를 받는 칸들 (장신구 = 세 칸) */
 export function slotsForKind(kind: GearKind): GearSlot[] {
   return GEAR_SLOTS.filter((s) => GEAR_SLOT_KIND[s] === kind);
 }

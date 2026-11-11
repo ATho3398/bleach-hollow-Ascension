@@ -39,15 +39,16 @@ function walkLap(e: ExpeditionState): void {
 }
 
 describe('91장 장비 데이터 (가칭)', () => {
-  it('칸 5개 = 무기·방어구·신발·장신구 1·2 (장신구 두 칸은 같은 종류), 칸 이름은 종족 설정', () => {
-    expect(GEAR_SLOTS).toEqual(['weapon', 'armor', 'shoes', 'acc1', 'acc2']);
+  it('칸 6개 = 무기·방어구·신발·장신구 1·2·3 (장신구 세 칸은 같은 종류, 241-D 2), 칸 이름은 종족 설정 — 두 종족 같은 이름 (241-D 1)', () => {
+    expect(GEAR_SLOTS).toEqual(['weapon', 'armor', 'shoes', 'acc1', 'acc2', 'acc3']);
     expect(GEAR_KINDS).toEqual(['weapon', 'armor', 'shoes', 'accessory']);
-    expect([GEAR_SLOT_KIND.acc1, GEAR_SLOT_KIND.acc2]).toEqual(['accessory', 'accessory']);
-    expect(GEAR_SLOTS.map((s) => H.gearSlotNames[s])).toEqual(['송곳니', '껍질', '발톱 싸개', '부적', '부적']);
-    expect(GEAR_SLOTS.map((s) => S.gearSlotNames[s])).toEqual(['칼자루 장식', '사패장', '짚신', '부적', '부적']);
-    expect(gearSlotName('acc2', H)).toBe('부적 2');
-    expect(gearSlotName('weapon', S)).toBe('칼자루 장식');
-    expect(gearName({ kind: 'armor', grade: 'legendary', plus: 3 }, H)).toBe('전설 껍질 +3');
+    expect([GEAR_SLOT_KIND.acc1, GEAR_SLOT_KIND.acc2, GEAR_SLOT_KIND.acc3]).toEqual(['accessory', 'accessory', 'accessory']);
+    expect(GEAR_SLOTS.map((s) => H.gearSlotNames[s])).toEqual(['무기', '방어구', '신발', '장신구', '장신구', '장신구']);
+    expect(GEAR_SLOTS.map((s) => S.gearSlotNames[s])).toEqual(['무기', '방어구', '신발', '장신구', '장신구', '장신구']);
+    expect(gearSlotName('acc2', H)).toBe('장신구 2');
+    expect(gearSlotName('acc3', S)).toBe('장신구 3');
+    expect(gearSlotName('weapon', S)).toBe('무기');
+    expect(gearName({ kind: 'armor', grade: 'legendary', plus: 3 }, H)).toBe('전설 방어구 +3');
   });
 
   it('굴림: 무기 = 힘/지능 1줄 · 방어구 = 체력·방어 · 신발 = 속도 · 장신구 1~2줄, 영웅·전설만 특수 효과', () => {
@@ -90,15 +91,17 @@ describe('91장 강화·장착·판매 (보관함)', () => {
     expect(s.runLog.gear.filter((r) => r.kind === 'enhance').map((r) => r.plus)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('장착: 장신구는 빈 칸부터 두 칸, 셋째는 첫 칸 교체 · 다른 종류 칸은 거절 · 원정 중 잠금 · 해제 · 낀 장비는 못 판다', () => {
+  it('장착: 장신구는 빈 칸부터 세 칸, 넷째는 첫 칸 교체 · 다른 종류 칸은 거절 · 원정 중 잠금 · 해제 · 낀 장비는 못 판다', () => {
     const s = newSaveData('hollow', 0);
     const g = s.shared.gear;
     const acc = (n: number) => grantGear(g, { kind: 'accessory', grade: 'normal', star: 1, stats: { spr: n }, special: null }, n)!;
-    const [a, b, c] = [acc(1), acc(2), acc(3)];
+    const [a, b, d, c] = [acc(1), acc(2), acc(4), acc(3)];
     expect(equipGearItem(s, a.uid)).toBe('acc1');
     expect(equipGearItem(s, b.uid)).toBe('acc2');
+    expect(equipGearItem(s, d.uid)).toBe('acc3');
+    s.runLog.gear = s.runLog.gear.filter((r) => r.uid !== d.uid);
     expect(equipGearItem(s, c.uid)).toBe('acc1');
-    expect(g.equipped).toMatchObject({ acc1: c.uid, acc2: b.uid });
+    expect(g.equipped).toMatchObject({ acc1: c.uid, acc2: b.uid, acc3: d.uid });
     expect(equipGear(g, a.uid, 'weapon')).toBeNull();
     expect(equipGearItem(s, a.uid, 'acc2')).toBe('acc2');
     expect(s.runLog.gear.map((r) => r.kind)).toEqual(['equip', 'equip', 'unequip', 'equip', 'unequip', 'equip']);
@@ -119,8 +122,8 @@ describe('91장 강화·장착·판매 (보관함)', () => {
     equipGearItem(s, a.uid);
     const rows = inventoryOf(s, H).filter((e) => e.category === 'equipment');
     expect(rows.map((e) => e.id)).toEqual([a.uid, b.uid]);
-    expect(rows[0]).toMatchObject({ name: '노멀 송곳니', action: 'unequip', gear: { grade: 'normal', kind: 'weapon', slot: 'weapon' } });
-    expect(rows[1]).toMatchObject({ name: '전설 발톱 싸개', action: 'equip', detail: '속도 +9 · 강적·보스에게 피해 +12%' });
+    expect(rows[0]).toMatchObject({ name: '노멀 무기', action: 'unequip', gear: { grade: 'normal', kind: 'weapon', slot: 'weapon' } });
+    expect(rows[1]).toMatchObject({ name: '전설 신발', action: 'equip', detail: '속도 +9 · 강적·보스에게 피해 +12%' });
   });
 });
 
@@ -217,9 +220,9 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
   it('기본 상점 장비 탭 = 노말 종류별 4개(★ = 권장) · 떠돌이 상인 = 레어·영웅·전설', () => {
     const s = newSaveData('hollow', 0);
     const rows = goldRows(s, H).filter((r) => getGoldItem(r.id)?.kind === 'gear');
-    expect(rows.map((r) => [r.name, r.price])).toEqual([['노멀 송곳니', GX.shopPrice], ['노멀 껍질', GX.shopPrice], ['노멀 발톱 싸개', GX.shopPrice], ['노멀 부적', GX.shopPrice]]);
+    expect(rows.map((r) => [r.name, r.price])).toEqual([['노멀 무기', GX.shopPrice], ['노멀 방어구', GX.shopPrice], ['노멀 신발', GX.shopPrice], ['노멀 장신구', GX.shopPrice]]);
     s.shared.tradeCoins = 500;
-    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 발톱 싸개 → 가방 장비 탭' });
+    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 신발 → 가방 장비 탭' });
     expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 1 });
     expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });
     expect(['w-gear-rare', 'w-gear-epic', 'w-gear-legend'].map((id) => getWandererItem(id)!.grade)).toEqual(['rare', 'epic', 'legendary']);
@@ -243,17 +246,17 @@ describe('91장 세이브·참고 줄', () => {
     raw.shared.gear = { items: [{ uid: 'g1', kind: 'armor', grade: 'rare', star: 99, stats: { hp: 4, nope: 3 }, plus: 77, special: { id: 'sp-x', value: 1 } }, { uid: 'g2', kind: 'hat' }], equipped: { weapon: 'g1', armor: 'g1' }, nextId: 'x' };
     const g = migrateSave(JSON.parse(JSON.stringify(raw)))!.shared.gear;
     expect(g.items).toEqual([{ uid: 'g1', kind: 'armor', grade: 'rare', star: 4, stats: { hp: 4 }, special: null, plus: GX.maxPlus, gotAt: 0 }]);
-    expect(g.equipped).toEqual({ weapon: null, armor: 'g1', shoes: null, acc1: null, acc2: null });
+    expect(g.equipped).toEqual({ weapon: null, armor: 'g1', shoes: null, acc1: null, acc2: null, acc3: null });
     expect(g.nextId).toBe(2);
     expect(sanitizeGear(undefined)).toEqual(newGearState());
   });
 
-  it('balance:check 참고 줄 = 그 단계 평균 장비(5칸 레어 +2, ★ 권장) — 단계가 오를수록 크다', () => {
+  it('balance:check 참고 줄 = 그 단계 평균 장비(6칸 레어 +2, ★ 권장 — 241-D 2 장신구 3) — 단계가 오를수록 크다', () => {
     const r1 = referenceLoadout(0);
     const r5 = referenceLoadout(4);
     expect(Object.keys(r1.stats).sort()).toEqual(['atk', 'def', 'hp', 'spd', 'spr']);
     expect(r5.stats.atk!).toBeGreaterThan(r1.stats.atk!);
-    expect(r1.crit).toBeCloseTo(2 * GX.critLine.rare! * 1.2);
+    expect(r1.crit).toBeCloseTo(3 * GX.critLine.rare! * 1.2);
     expect(read('scripts/balance.ts')).toContain('참고 — 그 단계 평균 장비');
   });
 });

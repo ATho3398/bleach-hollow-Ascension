@@ -278,11 +278,12 @@
     "relic": "가면 파편"
   },
   "gearSlotNames": {
-    "weapon": "송곳니",
-    "armor": "껍질",
-    "shoes": "발톱 싸개",
-    "acc1": "부적",
-    "acc2": "부적"
+    "weapon": "무기",
+    "armor": "방어구",
+    "shoes": "신발",
+    "acc1": "장신구",
+    "acc2": "장신구",
+    "acc3": "장신구"
   },
   "gearScreen": { "title": "장비", "battleSlot": "전투 소모품" },
   "petNames": {

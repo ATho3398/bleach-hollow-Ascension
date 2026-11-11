@@ -64,7 +64,7 @@ export function emptyLegacyMatches(): Record<LegacyTileRole, number> {
 }
 
 /** 마무리 일격(적을 쓰러뜨린 공격) 종류 (C.6) */
-export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot' | 'liberation' | 'gear';
+export type FinisherKind = 'basic-attack' | 'skill' | 'special' | 'void' | 'reflect' | 'stored' | 'combo' | 'dot' | 'liberation' | 'gear' | 'pet';
 
 export interface BattleRecord {
   runId: number;

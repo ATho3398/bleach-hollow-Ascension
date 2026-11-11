@@ -30,7 +30,7 @@ import { getBoss, isBossId } from '../../data/bosses';
 import { killsByEnemy } from '../enemyDex';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
-import { petBonus, rollAnyPet, type PetCarry } from '../pet';
+import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
 
 const EX = BALANCE.expedition;
@@ -861,6 +861,8 @@ function startBattleAt(
   // 펫 보호막 (GDD 90장): 전투 시작 보호막(최대 체력 비율)에 더한다
   const petShield = petBonus(exp.pet, 'guard');
   if (petShield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + petShield;
+  // 펫 공격 (GDD 241-D 4): 데리고 간 펫이 전투에서 같이 때린다 (튜토리얼 원정은 펫을 싣지 않는다)
+  params.petAttack = petAttackOf(exp.pet);
   // 장비 (GDD 91장 4번): 능력치·치명·계열 블록 피해·치명 피해·시작 보호막, 강적·보스면 강적 피해
   applyGearToParams(params, exp.gear, cls === 'elite' || bossId !== null);
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서

@@ -22,6 +22,7 @@ import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
 import { categoryName, cosmeticToken, getCosmetic, getGoldItem, BATTLE_ITEMS_NAME, ITEM_CATEGORY_NAMES, MEDICINE_NAME, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory } from '../data/shop';
+import { gateHint, gateOpen } from './bha/unlockGate';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
@@ -287,6 +288,21 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   return p;
 }
 
+/** 가방 머리 재화 칩 (GDD 241-D 6): 골드·영옥 — 상점 머리와 같은 칩 */
+export function bagWallet(save: Pick<SaveData, 'shared'>): HTMLElement {
+  const wallet = h('div', 'bha-shop__wallet bha-bagwallet');
+  const chip = (cls: string, ic: string, name: string, v: number): HTMLElement => {
+    const c = h('span', `bha-chip ${cls}`);
+    c.setAttribute('aria-label', `${name} ${v}`);
+    c.title = name;
+    c.dataset.currency = cls === 'bha-chip--gold' ? 'trade' : 'jade';
+    c.append(icon(ic), h('b', 'bha-num', String(v)));
+    return c;
+  };
+  wallet.append(chip('bha-chip--gold', 'v2-coin', TRADE_CURRENCY_NAME, save.shared.tradeCoins), chip('bha-chip--jade', 'v2-gem', JADE_NAME, save.shared.jade));
+  return wallet;
+}
+
 /** 가진 것 (GDD 23-1·22-3·23-4·25-9): 먹이 종류별 개수, 영혼 결정, 골드·영옥(상점), 다시 뽑기권 */
 function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   const p = panel({ title: '가진 것' });
@@ -306,7 +322,7 @@ function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
   return p;
 }
 
-type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'skin' | 'pet' | 'material';
+type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'skin' | 'material';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };
 
 /** 가방을 장비 탭으로 연다 (상태 화면 장비 바로가기, GDD 109장 4번) */
@@ -327,15 +343,17 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
 
   // 위쪽 탭 [장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료 · 159장 24 물건 → 소모품, 스킨은 위 탭으로).
   // 장비·타일·펫·기타에는 가진 수를 같이 보인다 (기타 = 재료 + 다시 뽑기권·수련권)
-  const petCount = () => inventoryOf(save, faction).filter((e) => e.category === 'pet').length;
+  // 펫은 장비 탭 안 '펫' 분류로 옮겼다 (GDD 241-D 3)
   const headTabs = (): HTMLElement => selectLast(categoryTabs([
     // 장비 탭 숫자 = 장비 수 (GDD 159장 27 → 193장 9: 전투 소모품은 소모품 탭 한 곳)
-    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'pet', label: '펫', count: petCount() }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
+    { id: 'gear', label: equipTitle(faction), count: save.shared.gear.items.length }, { id: 'slots', label: '슬롯' }, { id: 'tiles', label: '타일', count: tileCount() }, { id: 'items', label: ITEM_CATEGORY_NAMES.consumable }, { id: 'skin', label: ITEM_CATEGORY_NAMES.skin }, { id: 'material', label: '기타', count: ownedMaterials(save.shared.items).length + etcEntries(save, faction).length },
   ], chestUi.tab, (id) => {
     chestUi.tab = id as ChestTab;
     fill();
   }, `${title} 보기`));
-  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: [headTabs()] }), [], []);
+  // 머리 = 재화(골드·영옥 — 가방을 열면 늘 보인다, GDD 241-D 6) + 탭
+  const head = (): HTMLElement[] => [bagWallet(save), headTabs()];
+  const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: head() }), [], []);
   const signal = screenSignal(dev.view);
   /** 탭 그림마다 새로 받는 신호 (장비 탭 좌우 키 리스너가 다시 그릴 때마다 쌓이지 않게) */
   let tabCtl = new AbortController();
@@ -356,14 +374,25 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     tabCtl.abort();
     tabCtl = new AbortController();
     // 탭의 타일·펫 수와 눌린 탭을 새로 맞춘다 (탭 줄만 다시 만든다)
-    dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(headTabs());
+    dev.view.querySelector('.bha-chest-page .bha-lcdpage__aside')?.replaceChildren(...head());
     // 두 열/한 열 전환은 탭마다 먼저 맞춘다 (C.159 A2: 물건·펫 탭에서 숨긴 오른쪽 열이 슬롯 탭으로 돌아와도 숨은 채여서 장착 칸만 보였다)
     const body = page.left.parentElement!;
-    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'skin' || chestUi.tab === 'pet' || chestUi.tab === 'material';
+    if (!(['gear', 'slots', 'tiles', 'items', 'skin', 'material'] as ChestTab[]).includes(chestUi.tab)) chestUi.tab = 'gear';
+    const oneCol = chestUi.tab === 'items' || chestUi.tab === 'skin' || chestUi.tab === 'material';
     body.style.gridTemplateColumns = oneCol ? 'minmax(0, 1fr)' : chestUi.tab === 'gear' ? '252px minmax(0, 1fr)' : '1fr 1fr';
     page.right.hidden = oneCol;
     page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
     page.app.querySelector(':scope > .bha-eqfoot')?.remove();
+    if (chestUi.tab === 'gear' && !gateOpen(save, 'gear')) {
+      // 장비는 2단계에 열린다 (GDD 241-0): 잠김 안내 한 줄
+      const lock = panel({ title: equipTitle(faction), aside: h('span', 'bha-chip', '잠김') });
+      lock.dataset.gearLocked = '';
+      lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
+      lock.append(h('p', 'bha-dim', gateHint(faction, 'gear')));
+      page.left.replaceChildren(lock);
+      page.right.replaceChildren(h('div'));
+      return;
+    }
     if (chestUi.tab === 'gear') {
       // 장비 탭 (GDD 109장 4번): C.179 장비 화면 → 리디자인 v2 S14 (아래 고정 줄은 화면 맨 아래 두 열에 걸쳐)
       const t = equipTab(dev, faction, save, { persist, rerender: fill, scope: () => page.app, signal: tabCtl.signal });
@@ -397,7 +426,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
         persist();
         onWear?.();
         fill();
-      }, chestUi.tab === 'pet' ? 'pet' : chestUi.tab === 'skin' ? 'skin' : 'items');
+      }, chestUi.tab === 'skin' ? 'skin' : 'items');
       page.left.replaceChildren(l);
       page.right.replaceChildren(r);
       return;
@@ -615,7 +644,7 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   row.dataset.gear = '';
   const btn = button({ label: `${roomOf(faction).props.chest} · ${equipTitle(faction)}`, icon: 'i-attack', size: 'small', onClick: onGear });
   btn.dataset.act = 'gear-screen';
-  row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '낀 장비가 없다.'));
+  row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '장착한 장비가 없다.'));
   return row;
 }
 

@@ -149,6 +149,8 @@ export interface CombatParams {
   battleItem: BattleItemEffect | null;
   /** 전투 [장비] (GDD 105장 수정 4): 낀 장비의 '발동' 효과 하나. 없으면 버튼 비활성. 쿨다운 gearCooldownSeconds, 전투 시작 때 × gearStartCooldown */
   activeGear: ActiveGearEffect | null;
+  /** 펫 공격 (GDD 241-D 4, C.397 provisional): 데리고 간 펫이 seconds 마다 기본 공격 1회 × fraction 피해. 없으면 펫 공격 없음 (튜토리얼·각본 전투는 쉼) */
+  petAttack?: { petId: string; seconds: number; fraction: number } | null;
   gearCooldownSeconds: number;
   gearStartCooldown: number;
   /** 강공격 배율: heavyInAttacks × 이 값 (101장 추가 결정 5번). 연속 강공격은 한 타마다 heavyChainHitMultiplier */
@@ -468,6 +470,8 @@ export type CombatEvent =
   | { kind: 'item'; id: string; effect: BattleItemEffect['effect']; heal: number }
   /** 장비 발동 (GDD 105장 수정 4): shield = 방패 초, burst = 준 피해 */
   | { kind: 'gear'; id: string; effect: ActiveGearEffect['effect']; damage: number }
+  /** 펫 공격 한 번 (GDD 241-D 4) */
+  | { kind: 'pet-attack'; petId: string; damage: number }
   /** 해방이 풀렸다: 리스크 게이지 상승량 */
   | { kind: 'liberation-end'; risk: number }
   /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
@@ -568,6 +572,8 @@ export interface CombatState {
   };
   /** shield: 남은 보호막 (GDD 25-5 성역·갈림길, 없으면 0) */
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
+  /** 다음 펫 공격까지 남은 틱 (params.petAttack 이 있을 때만, GDD 241-D 4) */
+  petTimer?: number;
   tray: Tray;
   nextUid: number;
   /** 다음 블록 생성까지 남은 틱 (GDD 84장 6번, C.136): 생성 타이머는 하나, 나올 때마다 출현표(spawnTableOf)에서 뽑는다 */
@@ -1349,6 +1355,14 @@ function basicAttack(s: CombatState): void {
     proc(s, 'doubleHit', last);
     strike(s, p.hitDelay.basic, { target: 'enemy', amount: last, event: { kind: 'player-attack', damage: last, matchup: hit.matchup }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
   }
+}
+
+/** 펫 공격 한 번 (GDD 241-D 4): 기본 공격 1회 × fraction, 속성 없는 상성(방어만). 치명·물공 버프 없음 */
+function petAttack(s: CombatState, pa: NonNullable<CombatParams['petAttack']>): void {
+  const damage = unitDamage(s.params) * pa.fraction * plainHitMultiplier(s);
+  if (damage <= 0) return;
+  emit(s, { kind: 'pet-attack', petId: pa.petId, damage });
+  dealDamage(s, damage, { kind: 'pet', traitId: null, element: null });
 }
 
 /** 물공 블록을 썼을 때의 효과 (기본 공격 블록이 물공 블록일 때만). 체인이어도 한 번 */
@@ -2134,6 +2148,16 @@ function advanceTick(s: CombatState): void {
     s.player.attackTimer = t(currentAttackSeconds(s));
     basicAttack(s);
     if (s.status !== 'playing') return;
+  }
+  // 펫 공격 (GDD 241-D 4): 내 막기·기절과 상관없이 제 간격으로. 각본(튜토리얼) 전투는 쉼
+  const pa = p.petAttack;
+  if (pa && !s.script) {
+    s.petTimer ??= t(pa.seconds);
+    if (--s.petTimer <= 0) {
+      s.petTimer = t(pa.seconds);
+      petAttack(s, pa);
+      if (s.status !== 'playing') return;
+    }
   }
   // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
   const e = s.enemy;

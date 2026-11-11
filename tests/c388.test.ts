@@ -123,7 +123,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
 
 describe('세이브 형식 71', () => {
   it('70 → 71: 두 트랙 런 로그에 빈 sales', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(72);
+    expect(SAVE_FORMAT_VERSION).toBe(73);
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.runLog.sales;
     s.meta.format = 70;
@@ -132,7 +132,7 @@ describe('세이브 형식 71', () => {
     delete s.runLog.sales;
     s.meta.format = 70;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(72);
+    expect(m.meta.format).toBe(73);
     expect(m.runLog.sales).toEqual([]);
   });
 });

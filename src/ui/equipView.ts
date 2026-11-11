@@ -1,6 +1,6 @@
 // 가방 '장비' 탭 (GDD 108장 C.179 장비 화면 → 109장 4번 C.180 가방 첫 탭으로 옮김).
-// 왼쪽 = 캐릭터 외형 + 착용 칸 60×66(왼쪽 세로 무기·방어구·신발 / 오른쪽 세로 장신구 1·2·소모품 칸) + 이름·단계 (리디자인 v2 S14 — 능력치 줄은 상세 창으로),
-// 오른쪽 = 탭(전체·무기·방어구·신발·장신구·소모품) + 바둑판 4열, 아래 고정 줄(보관 개수·[정렬]·[자동 착용]·[일괄 판매]).
+// 왼쪽 = 캐릭터 외형 + 착용 칸 60×66(왼쪽 세로 무기·방어구·신발·펫 / 오른쪽 세로 장신구 1·2·3·소모품 칸) + 이름·단계 (리디자인 v2 S14 — 능력치 줄은 상세 창으로, 241-D 2·3 장신구 3·펫 칸),
+// 오른쪽 = 탭(전체·무기·방어구·신발·장신구·펫 — 좁히지 않고 가로 드래그) + 바둑판 4열, 아래 고정 줄(보관 개수·[정렬]·[자동 착용]·[일괄 판매]).
 // 조작: ▲▼ = 차례로 고르기, 좌우 키 = 왼쪽 칸 ↔ 오른쪽 바둑판(탭 위에서는 탭 바꾸기), ✓ = 상세 창(착용·해제·강화·판매), 뒤로 = 가방 닫기 → 방. 끌어다 칸에 놓기(C.149 슬롯 화면과 같은 enableDrag).
 // 종족 무관 — 칸·화면 이름은 종족 설정 gearSlotNames·gearScreen, 판정·기록은 inventory.ts·engine/gear.ts.
 import { BALANCE } from '../config/balance';
@@ -13,8 +13,13 @@ import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearSta
 import { artSkinOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
 import {
   autoEquipGear, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
-  ownedBattleItems, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
+  choosePet, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
 } from '../inventory';
+import { affinityOf } from '../engine/pet';
+import { petArtSrc, petIconId } from './bha/pet';
+import { imageArt } from './bha/itemUi';
+import { gateHint, gateOpen } from './bha/unlockGate';
+import { enableDragScroll } from './bha/dragScroll';
 import { battleItemBrief } from '../shop';
 import { pickDialog } from './pickDialog';
 import { shownName } from './displayName';
@@ -26,7 +31,7 @@ import { roomCharArt } from './bha/room';
 import { enableDrag } from './bha/dragdrop';
 import type { Device } from './bha/device';
 
-type EquipTab = 'all' | GearKind;
+type EquipTab = 'all' | GearKind | 'pet';
 type SortMode = 'grade' | 'kind' | 'plus';
 const SORT_NAMES: Record<SortMode, string> = { grade: '등급순', kind: '종류순', plus: '강화순' };
 /** 화면 사이에 남는 UI 상태 (탭·정렬). focus = 다시 그린 뒤 하이라이트를 돌려줄 칸·카드 (GDD 109장 1번: 안 그러면 첫 칸 무기로 돌아갔다) */
@@ -209,6 +214,29 @@ export function pickBattleItem(faction: Pick<FactionConfig, 'gearScreen'>, save:
   });
 }
 
+/** 펫 그림 (그림 파일이 없으면 효과 아이콘) */
+export function petCardArt(id: string): HTMLElement {
+  const src = petArtSrc(id);
+  return src ? imageArt(src) : iconArt(petIconId(id));
+}
+
+/** 펫 상세 창 (GDD 90장 → 241-D 3 장비 탭): 효과·친밀도·전투 공격 + [데리고 가기]/[두고 가기] */
+export function openPet(faction: FactionConfig, save: SaveData, id: string, changed: () => void): void {
+  const o = save.shared.pets.owned[id];
+  if (!o) return;
+  const on = save.shared.pets.active === id;
+  const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
+  let close: () => void = () => {};
+  close = itemDialog({
+    heading: '펫', name: petName(id, faction), art: petCardArt(id), lock: locked,
+    desc: [`${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, '전투에서 같이 공격한다.', petAffinityText(save, id)].join('\n'),
+    actions: [{
+      key: on ? 'leave' : 'take', label: () => (on ? '두고 가기' : '데리고 가기'), variant: on ? 'ghost' : 'primary', disabled: locked !== null,
+      onClick: () => { close(); if (choosePet(save, on ? null : id)) changed(); },
+    }],
+  });
+}
+
 export interface EquipTabHost {
   persist: () => void;
   /** 가방 화면을 다시 그린다 (장비 탭 그대로) */
@@ -272,10 +300,25 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
     pickBattleItem(faction, save, changedAt('slot:battle'));
   };
+  // 펫 칸 (GDD 241-D 3): 데리고 다니는 펫. 첫 환생 전에는 잠김 — 누르면 언제 열리는지 (241-0)
+  const petOpen = gateOpen(save, 'pet');
+  const pid = save.shared.pets.active;
+  const petBtn = h('button', `bha-eqslot bha-eqslot--pet${pid ? '' : ' is-empty'}${petOpen ? '' : ' is-locked'}`);
+  petBtn.type = 'button';
+  petBtn.dataset.slot = 'pet';
+  petBtn.dataset.drag = 'slot';
+  petBtn.append(petOpen ? (pid ? petCardArt(pid) : icon('i-care-pet')) : icon('i-lock'), h('span', 'bha-eqslot__name', pid ? shownName(petName(pid, faction)) : '펫'));
+  petBtn.setAttribute('aria-label', `펫: ${!petOpen ? '잠김' : pid ? petName(pid, faction) : '비어 있음'}`);
+  petBtn.onclick = () => {
+    if (!petOpen) return showToast({ eyebrow: '펫', title: '잠겨 있다', meta: gateHint(faction, 'pet') }, 0, 2400);
+    if (pid) return openPet(faction, save, pid, changedAt('slot:pet'));
+    ui.tab = 'pet';
+    redraw('slot:pet');
+  };
   const colL = h('div', 'bha-eqcol');
-  colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn));
+  colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn);
   const colR = h('div', 'bha-eqcol');
-  colR.append(...(['acc1', 'acc2'] as GearSlot[]).map(slotBtn), battleBtn);
+  colR.append(...(['acc1', 'acc2', 'acc3'] as GearSlot[]).map(slotBtn), battleBtn);
   const figure = h('div', 'bha-eqfigure');
   const art = roomCharArt(roomOf(faction), faction.id, artTierIndexOf(save), artSkinOf(save));
   if (art.src) {
@@ -294,15 +337,28 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 능력치 줄은 리디자인 v2(PROMPT 6절 S14)에서 뺐다 — 캐릭터 아래는 이름·단계만, 수치·비교 ▲▼ 는 칸·카드를 누른 상세 창(openGear 비교 줄)에서 본다
 
   // ── 오른쪽: 탭 · 바둑판 · 아래 줄 ──
-  const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS];
+  const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'pet'];
   if (!kindTabs.includes(ui.tab)) ui.tab = 'all';
-  const tabName = (t: EquipTab) => (t === 'all' ? '전체' : gearKindName(t, faction));
-  const countOf = (t: EquipTab) => (t === 'all' ? g.items.length : g.items.filter((i) => i.kind === t).length);
+  const tabName = (t: EquipTab) => (t === 'all' ? '전체' : t === 'pet' ? '펫' : gearKindName(t, faction));
+  const petIds = Object.keys(save.shared.pets.owned);
+  const countOf = (t: EquipTab) => (t === 'all' ? g.items.length : t === 'pet' ? petIds.length : g.items.filter((i) => i.kind === t).length);
   const tabs = categoryTabs(kindTabs.map((t) => ({ id: t, label: tabName(t), count: countOf(t) })), ui.tab, (id) => {
     ui.tab = id as EquipTab;
     redraw(null);
   }, '장비 분류');
-  const gearCards = sortGear(ui.tab === 'all' ? g.items : g.items.filter((i) => i.kind === ui.tab), ui.sort, isWorn).map((it) => {
+  enableDragScroll(tabs, hd.signal); // 탭은 좁히지 않고 가로로 끌어 본다 (GDD 241-D 3)
+  // 펫 탭 (GDD 241-D 3 — 가방 위 '펫' 탭을 이리로): 가진 펫 카드, 누르면 데리고 가기/두고 가기. 첫 환생 전에는 잠김 한 줄
+  const petCards = ui.tab !== 'pet' || !petOpen ? [] : inventoryOf(save, faction).filter((e) => e.category === 'pet').map((e) => {
+    const on = save.shared.pets.active === e.id;
+    const card = itemCard({
+      id: e.id, name: e.name, detail: petEffectText(e.id, affinityOf(save.shared.pets.owned[e.id]?.laps ?? 0)), art: petCardArt(e.id),
+      badge: on ? '동행 중' : undefined, state: on ? 'worn' : undefined,
+      onClick: () => openPet(faction, save, e.id, changedAt(`item:${e.id}`)),
+    });
+    card.dataset.drag = 'pet';
+    return card;
+  });
+  const gearCards = ui.tab === 'pet' ? petCards : sortGear(ui.tab === 'all' ? g.items : g.items.filter((i) => i.kind === ui.tab), ui.sort, isWorn).map((it) => {
     const worn = equippedSlotOf(g, it.uid);
     const card = itemCard({
       id: it.uid, name: gearName(it, faction), art: gearArt(it.kind, it.grade), grade: it.grade,
@@ -313,7 +369,9 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     card.dataset.drag = 'gear';
     return card;
   });
-  const empty = '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
+  const empty = ui.tab === 'pet'
+    ? (petOpen ? '아직 펫이 없다. 모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : gateHint(faction, 'pet'))
+    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
   const grid = itemGrid(gearCards, empty);
   grid.classList.add('bha-itemgrid--equip');
 
@@ -334,7 +392,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', onClick: () => {
     confirmDialog({
-      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 낀 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
+      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 장착한 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
       onYes: () => {
         const n = autoEquipGear(save);
         // 바꾼 칸 알림은 뺐다 (GDD 233장 5) — 능력치 줄에 반영된다. 바꿀 게 없을 때 이유만 남긴다 (233장 6)
@@ -349,7 +407,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const sellBtn = button({ label: '일괄 판매', icon: 'i-rare', size: 'small', variant: 'danger', onClick: () => {
     const gold = sellTargets.reduce((a, it) => a + sellGold(it), 0);
     confirmDialog({
-      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 안 낀 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
+      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 장착하지 않은 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
       onYes: () => {
         const r = bulkSellGear(save); // 판매 알림은 뺐다 (GDD 233장 5) — 골드·목록이 바뀐다
         if (r.count > 0) changedAt('act:bulk-sell')();
@@ -357,7 +415,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     });
   } });
   sellBtn.dataset.act = 'bulk-sell';
-  why(sellBtn, locked ? LOCKED : sellTargets.length === 0 ? `팔 ${GEAR_GRADE_NAMES.normal} 등급 장비가 없다(낀 것은 안 판다)` : null);
+  why(sellBtn, locked ? LOCKED : sellTargets.length === 0 ? `팔 ${GEAR_GRADE_NAMES.normal} 등급 장비가 없다(장착한 것은 안 판다)` : null);
   // 아래 고정 줄 (v2 .bha-dock, PROMPT 6절 S14): 가방 화면 맨 아래 두 열에 걸쳐 놓는다 (chestView)
   const foot = h('div', 'bha-eqfoot');
   const count = h('span', 'bha-chip bha-eqfoot__count');
@@ -375,7 +433,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
 
 
   // 끌어다 놓기 (C.149 슬롯 화면과 같은 방식): 카드 → 같은 종류 칸(착용) · 소모품 카드 → 소모품 칸, 칸 → 오른쪽 바둑판(해제)
-  type Src = { kind: 'gear' | 'battle' | 'slot'; id: string };
+  type Src = { kind: 'gear' | 'battle' | 'slot' | 'pet'; id: string };
   const wire = (root: HTMLElement) => enableDrag<Src>({
     root,
     scope: hd.scope,
@@ -383,9 +441,11 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       if (locked) return null;
       if (n.dataset.drag === 'gear' && n.dataset.item) return { kind: 'gear', id: n.dataset.item };
       if (n.dataset.drag === 'battle' && n.dataset.item) return { kind: 'battle', id: n.dataset.item };
+      if (n.dataset.drag === 'pet' && n.dataset.item) return { kind: 'pet', id: n.dataset.item };
       if (n.dataset.drag === 'slot' && n.dataset.slot) {
         const s = n.dataset.slot;
         if (s === 'battle') return save.shared.battleItem ? { kind: 'slot', id: s } : null;
+        if (s === 'pet') return save.shared.pets.active ? { kind: 'slot', id: s } : null;
         return g.equipped[s as GearSlot] ? { kind: 'slot', id: s } : null;
       }
       return null;
@@ -394,12 +454,14 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     onDrop: (src, target) => {
       const to = target?.dataset.slot;
       let ok = false;
-      if (src.kind === 'gear' && to && to !== 'battle') {
+      if (src.kind === 'pet' && to === 'pet') ok = choosePet(save, src.id);
+      else if (src.kind === 'gear' && to && to !== 'battle' && to !== 'pet') {
         const it = findGear(g, src.id);
         if (it && GEAR_SLOT_KIND[to as GearSlot] === it.kind) ok = equipGearItem(save, src.id, to as GearSlot) !== null;
       } else if (src.kind === 'battle' && to === 'battle') ok = setBattleItem(save, src.id);
       else if (src.kind === 'slot' && target?.classList.contains('bha-eqright')) {
         if (src.id === 'battle') ok = setBattleItem(save, null);
+        else if (src.id === 'pet') ok = choosePet(save, null);
         else {
           const uid = g.equipped[src.id as GearSlot];
           ok = !!uid && unequipGearItem(save, uid);
@@ -431,13 +493,13 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (slots.includes(cur)) {
       // 왼쪽 세로줄 → 오른쪽 세로줄 → 바둑판
       const i = slots.indexOf(cur);
-      if (dir > 0) target = i < 3 ? slots[i + 3]! : cards[0] ?? tabs.querySelector<HTMLElement>('[aria-selected="true"]');
-      else target = i >= 3 ? slots[i - 3]! : null;
+      if (dir > 0) target = i < 4 ? slots[i + 4]! : cards[0] ?? tabs.querySelector<HTMLElement>('[aria-selected="true"]');
+      else target = i >= 4 ? slots[i - 4]! : null;
     } else if (cards.includes(cur) || right.contains(cur)) {
       if (dir < 0) {
         const cols = Math.max(1, Math.round(grid.clientWidth / Math.max(1, cards[0]?.offsetWidth ?? 1)));
         const i = cards.indexOf(cur);
-        target = i >= 0 && i % cols !== 0 ? cards[i - 1]! : slots[3] ?? null;
+        target = i >= 0 && i % cols !== 0 ? cards[i - 1]! : slots[4] ?? null;
       } else {
         const i = cards.indexOf(cur);
         target = i >= 0 && i + 1 < cards.length ? cards[i + 1]! : null;

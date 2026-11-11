@@ -1,17 +1,18 @@
 {
   "provisional": true,
   "kinds": [
-    { "id": "weapon", "icon": "i-attack" },
-    { "id": "armor", "icon": "i-guard" },
-    { "id": "shoes", "icon": "i-speed" },
-    { "id": "accessory", "icon": "i-rare" }
+    { "id": "weapon", "icon": "i-attack", "factions": [] },
+    { "id": "armor", "icon": "i-guard", "factions": [] },
+    { "id": "shoes", "icon": "i-speed", "factions": [] },
+    { "id": "accessory", "icon": "i-rare", "factions": [] }
   ],
   "slots": [
     { "id": "weapon", "kind": "weapon" },
     { "id": "armor", "kind": "armor" },
     { "id": "shoes", "kind": "shoes" },
     { "id": "acc1", "kind": "accessory" },
-    { "id": "acc2", "kind": "accessory" }
+    { "id": "acc2", "kind": "accessory" },
+    { "id": "acc3", "kind": "accessory" }
   ],
   "specials": [
     { "id": "sp-family-a", "effect": "family", "family": "family-a" },

@@ -41,8 +41,8 @@ describe('화면 E 리디자인 v2', () => {
     expect(eq).toContain('return { left, right, foot, restore };');
     expect(read('src/ui/lcdScreens.ts')).toContain('page.app.append(t.foot);');
   });
-  it('장비 분류 탭은 글자 폭만큼 (전투 소모품·칼자루 장식 넘침 고침)', () => {
-    expect(css).toMatch(/\.bha-equip-page \.bha-eqright \.bha-itemtab \{ flex: 1 0 auto;/);
+  it('장비 분류 탭은 글자 폭만큼 — 좁히지 않고 가로 드래그 (241-D 3)', () => {
+    expect(css).toMatch(/\.bha-equip-page \.bha-eqright \.bha-itemtab \{ flex: 0 0 auto;[^}]*min-width: 52px/);
   });
 });
 

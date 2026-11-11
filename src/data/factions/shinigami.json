@@ -199,11 +199,12 @@
     "relic": "명가의 진상품"
   },
   "gearSlotNames": {
-    "weapon": "칼자루 장식",
-    "armor": "사패장",
-    "shoes": "짚신",
-    "acc1": "부적",
-    "acc2": "부적"
+    "weapon": "무기",
+    "armor": "방어구",
+    "shoes": "신발",
+    "acc1": "장신구",
+    "acc2": "장신구",
+    "acc3": "장신구"
   },
   "gearScreen": { "title": "장비", "battleSlot": "전투 소모품" },
   "petNames": {

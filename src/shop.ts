@@ -417,7 +417,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'trainingTicket': return `지금 트랙 수련권 +${n} (개수 제한 없음)`;
     case 'rareTile': return `드문 타일(${TD.groups.rare!.map((id) => tileName(id, faction.id)).join('·')}) 1장 → 가방`;
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
-    case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 펫 탭';
+    case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 장비 탭 펫';
     case 'hpPotion': return `${battleItemText(itemId)} · 모험 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
     case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
@@ -485,7 +485,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       const id = pickNewPet(save.shared.pets, rand)!;
       grantPet(save.shared.pets, id, nowMs);
       save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'wanderer' });
-      detail = `${faction.petNames[id] ?? id} → 가방 펫 탭`;
+      detail = `${faction.petNames[id] ?? id} → 가방 장비 탭 펫`;
       break;
     }
     case 'gear':

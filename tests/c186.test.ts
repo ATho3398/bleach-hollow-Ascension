@@ -29,7 +29,7 @@ describe('112장 3 장비 전부', () => {
   });
   it('특수 효과 지정 장비는 그 효과가 붙고, 노말·레어를 고르면 영웅으로', () => {
     const s = newTestSave(fid);
-    s.shared.gear = { ...s.shared.gear, items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null } };
+    s.shared.gear = { ...s.shared.gear, items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null, acc3: null } };
     expect(testGearGrade('armor:sp-shield', 'normal')).toBe('epic');
     expect(testGearGrade('armor:sp-shield', 'legendary')).toBe('legendary');
     expect(testGearGrade('armor', 'rare')).toBe('rare');
@@ -42,7 +42,7 @@ describe('112장 3 장비 전부', () => {
   });
   it('[전부 한 개씩 받기]: 보관함이 비었으면 목록 수만큼, 차면 멈춘다', () => {
     const s = newTestSave(fid);
-    s.shared.gear = { ...s.shared.gear, items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null } };
+    s.shared.gear = { ...s.shared.gear, items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null, acc3: null } };
     const n = createTestGearAll(s, { grade: 'legendary', plus: 0 }, 1, rnd);
     expect(n).toBe(Math.min(testGearAllIds().length, BALANCE.provisional.gear.cap));
     expect(s.shared.gear.items.slice(GEAR_KINDS.length).map((g) => g.special!.id).sort()).toEqual(GEAR_SPECIALS.map((x) => x.id).sort());

@@ -103,8 +103,8 @@ import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorial
 import { showToast } from './bha/nest';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
-import { carriedPet } from '../engine/pet';
 import { applyGearToParams, gearCarry } from '../engine/gear';
+import { carriedPet, petAttackOf } from '../engine/pet';
 import { battleItemEffectOf, consumableName, departFillBattleSlot, fillBattleSlot, lapItemLine, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, lapItemLock, LAP_ITEM_USED, ownedBattleItems, petNoticeOf, setLapItem, spendBattleItem, spendLapItem, useSlotItemOnWalk } from '../inventory';
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
@@ -1683,6 +1683,7 @@ export function startApp(host: HTMLElement): void {
     params.liberationStartGauge = liberationStartGaugeOf();
     // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
     applyGearToParams(params, gearCarry(s0.shared.gear), f.kind === 'elite' || !!f.bossId);
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
     applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
     // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
     const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
@@ -2164,6 +2165,7 @@ export function startApp(host: HTMLElement): void {
       params.liberationStartGauge = liberationStartGaugeOf();
       // 장비 (GDD 91장): 연습도 낀 장비 그대로 (훈련 인형 DPS 측정)
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
+      params.petAttack = petAttackOf(carriedPet(save.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
       applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
@@ -2216,6 +2218,7 @@ export function startApp(host: HTMLElement): void {
     params.liberationStartGauge = liberationStartGaugeOf();
     // 장비 (GDD 91장): 등급전 상대는 강적으로 본다
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
     applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
@@ -2252,6 +2255,7 @@ export function startApp(host: HTMLElement): void {
     applyDifficultyToParams(params, AX.difficulty);
     params.liberationStartGauge = liberationStartGaugeOf();
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
     applyCareToParams(params, battleCareOf(s0));
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });
     battleView(root, faction, s, {

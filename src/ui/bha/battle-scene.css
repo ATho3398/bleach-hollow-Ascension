@@ -234,3 +234,9 @@
   .bha-libready.is-on { animation: bha-libready-still 1200ms steps(1, end) both; }
 }
 @keyframes bha-libready-still { 0% { opacity: 1; } 100% { opacity: 0; } }
+/* 펫 (GDD 241-D 4, C.397): 내 옆 아래에 작게, 공격 때 적 쪽으로 튀었다 돌아온다 */
+.bha-unit__fig { position: relative; }
+.bha-unit__fig > .bha-pet--battle { position: absolute; right: 0; bottom: 0; }
+.bha-pet--battle.is-pounce { animation: bha-pet-pounce var(--bha-dur-4) var(--bha-ease-out) 1; }
+@keyframes bha-pet-pounce { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(var(--bha-sp-6)) translateY(calc(-1 * var(--bha-sp-2))); } }
+@media (prefers-reduced-motion: reduce) { .bha-pet--battle.is-pounce { animation: none; } }

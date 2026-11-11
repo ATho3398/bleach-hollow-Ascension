@@ -76,6 +76,12 @@ export function petBonus(pet: PetCarry | null | undefined, key: PetBonusKey): nu
   return PX.effects[key] * affinityMult(pet.level);
 }
 
+/** 펫 공격 값 (GDD 241-D 4, C.397 provisional): 간격 attack.seconds, 피해 = 기본 공격 × attack.fraction × 친밀도 배율. 펫이 없으면 null */
+export function petAttackOf(pet: PetCarry | null | undefined): { petId: string; seconds: number; fraction: number } | null {
+  if (!pet || !getPet(pet.id)) return null;
+  return { petId: pet.id, seconds: PX.attack.seconds, fraction: PX.attack.fraction * affinityMult(pet.level) };
+}
+
 /** 지금 데리고 다니는 펫 (원정 출발 때 복사) */
 export function carriedPet(state: PetState): PetCarry | null {
   const id = state.active;

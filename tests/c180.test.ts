@@ -40,9 +40,10 @@ describe('4 장비 → 가방', () => {
   it('두 종족 모두 보관함 이름 = 가방', () => {
     for (const f of FACTIONS) expect(roomOf(f).props.chest).toBe('가방');
   });
-  it('가방 탭 = 장비 · 슬롯 · 타일 · 물건 · 펫 (장비 첫 탭), 물건 분류에 장비 없음', () => {
+  it('가방 탭 = 장비 · 슬롯 · 타일 · 물건 · 스킨 · 기타 (장비 첫 탭, 펫은 장비 탭 안 — 241-D 3), 물건 분류에 장비 없음', () => {
     const lcd = read('src/ui/lcdScreens.ts');
-    expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)[^\n]*\{ id: 'slots'[^\n]*\{ id: 'tiles'[^\n]*\{ id: 'items'[^\n]*\{ id: 'skin'[^\n]*\{ id: 'pet'/);
+    expect(lcd).toMatch(/\{ id: 'gear', label: equipTitle\(faction\)[^\n]*\{ id: 'slots'[^\n]*\{ id: 'tiles'[^\n]*\{ id: 'items'[^\n]*\{ id: 'skin'[^\n]*\{ id: 'material'/);
+    expect(lcd).not.toMatch(/\{ id: 'pet', label: '펫'/);
     expect(lcd).toMatch(/tab: 'gear', traits/);
     expect(bagGroupOf({ id: 'g1', category: 'equipment' })).toBeNull(); // C.239: 소모품 탭에 장비 없음
   });

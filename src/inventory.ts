@@ -375,7 +375,7 @@ export function choosePet(save: SaveData, id: string | null, nowMs: number = Dat
 export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = petName(rec.petId, faction);
   switch (rec.kind) {
-    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '모험 바퀴 끝 보상'} · 가방 펫 탭에서 데리고 간다` };
+    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '모험 바퀴 끝 보상'} · 가방 장비 탭 펫에서 데리고 간다` };
     case 'level': return { eyebrow: '펫', title: `${name} 친밀도 ${rec.level}/${PET_MAX_LEVEL}`, meta: petEffectText(rec.petId, rec.level ?? 1) };
     case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
     default: return null;
