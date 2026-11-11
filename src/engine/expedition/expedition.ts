@@ -30,6 +30,7 @@ import { getBoss, isBossId } from '../../data/bosses';
 import { killsByEnemy } from '../enemyDex';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
+import { SORTIE_IDS, sortieMods } from '../sortie';
 import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
 
@@ -49,6 +50,17 @@ const REROLL_SEED_SALT = 0x6c8e9cf5;
 const FREE_BOSS_SEED_SALT = 0x1b873593;
 /** 펫 굴림 (GDD 90장): 바퀴마다 (시드 ^ 이 값 ^ 바퀴) — 원정 난수(rng·lootRng·varRng)를 건드리지 않는다. 펫이 없으면 굴리지 않는다 */
 const PET_SEED_SALT = 0x7f4a7c15;
+/** 출정품 드롭 굴림 (GDD 241-D 5): gearDrops 일 때만(게임만). 이긴 전투마다 sortie.dropChance[상대 등급] × 출정품 드롭 배율 → 3종 고르게 1개 */
+function rollSortieDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): void {
+  if (!exp.gearDrops || exp.tutorial || SORTIE_IDS.length === 0) return;
+  const rng = createRng((exp.seed ^ SORTIE_SEED_SALT ^ Math.imul(exp.battles.length, 2654435761)) >>> 0);
+  const chance = BALANCE.provisional.sortie.dropChance[from] * (1 + sortieMods(exp.sortie).drop);
+  if (nextFloat(rng) >= Math.min(1, chance)) return;
+  const id = SORTIE_IDS[Math.min(SORTIE_IDS.length - 1, Math.floor(nextFloat(rng) * SORTIE_IDS.length))]!;
+  (exp.sortieFinds ??= []).push({ id, lap: exp.lap, from });
+}
+const SORTIE_SEED_SALT = 0x5047a11e;
+
 /** 장비 드롭 굴림 (GDD 91장 2번): 이긴 전투마다 (시드 ^ 이 값 ^ 전투 번호) — 원정 난수를 건드리지 않는다. gearDrops 가 아니면 굴리지 않는다 */
 const GEAR_SEED_SALT = 0x2f6b9d43;
 /** 영구 타일 굴림 전용 난수 (GDD 121장 4 ①): 원정 끝에 한 번 */
@@ -340,6 +352,10 @@ export interface ExpeditionState extends RiskState {
   /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
    *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
   lapItems?: LapItemUse[];
+  /** 이번 원정에 쓴 출정품 (GDD 241-D 5, 세이브 형식 74): 출발 때 칸마다 1개 소모한 품목 id. 효과 = sortieMods (공격 피해·받는 피해·드롭). 런 로그 원정 기록 sortie 로 간다. 옛 중간 저장에는 없다(= 없음) */
+  sortie?: string[];
+  /** 이 원정에서 나온 출정품 (GDD 241-D 5): 귀환 때 game.ts 가 가방에 (가득이면 버림) */
+  sortieFinds?: { id: string; lap: number; from: 'normal' | 'elite' | 'boss' }[];
   /** 전투 들어가기 직전 소모품 (GDD 222장 6, 세이브 형식 69): 전투 중간 상태는 저장하지 않으므로, 전투 도중 다시 켜면 이 값으로 소모품 칸·보관 개수를 되돌리고
    *  그 전투를 처음부터(같은 시드 · 들어갈 때 체력 · 새 블록 바) 다시 한다. seed = 그 전투(pending.seed). 전투가 끝나거나 원정이 끝나면 지운다. 옛 중간 저장에는 없다 */
   battleEntry?: BattleEntry;
@@ -861,6 +877,10 @@ function startBattleAt(
   // 펫 보호막 (GDD 90장): 전투 시작 보호막(최대 체력 비율)에 더한다
   const petShield = petBonus(exp.pet, 'guard');
   if (petShield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + petShield;
+  // 출정품 (GDD 241-D 5): 공격 피해 +·받는 피해 − (그 원정 동안)
+  const so = sortieMods(exp.sortie);
+  if (so.power > 0) params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * (1 + so.power);
+  if (so.guard > 0) params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * Math.max(0, 1 - so.guard);
   // 펫 공격 (GDD 241-D 4): 데리고 간 펫이 전투에서 같이 때린다 (튜토리얼 원정은 펫을 싣지 않는다)
   params.petAttack = petAttackOf(exp.pet);
   // 장비 (GDD 91장 4번): 능력치·치명·계열 블록 피해·치명 피해·시작 보호막, 강적·보스면 강적 피해
@@ -1007,6 +1027,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   healCarry(exp, winHealOf(exp.lap)); // 사냥 힐 (GDD 121장 6): 바퀴가 갈수록 줄고 4바퀴부터 0
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
+  rollSortieDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
   // 수련권 드롭 (GDD 216장 1): 강적 20%·보스 50%. 이 전투 번호(= 방금 넣은 기록 자리)로 굴려 화면이 미리 알 수 있다(ticketDropOf)
   if (ticketDropOf(exp, exp.battles.length - 1, pending)) (exp.ticketFinds ??= []).push({ lap: exp.lap, from: pending.boss ? 'boss' : 'elite', enemyId: pending.boss ?? pending.enemy.id });
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지 — 임시 타일 (GDD 121장 4 ②)
@@ -1039,7 +1060,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     return record;
   }
   // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더. 시너지·변이·상위 타일·함정 배율은 굴림 횟수로 (GDD 25-5)
-  for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult, mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap });
+  for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult * (1 + sortieMods(exp.sortie).drop), mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap }); // 출정품 드롭 (241-D 5)
   // 골드 (C.57): 일반·강적 바탕값 × 보상·골드 배율
   const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult * petGoldMult(exp));
   if (gold > 0) (exp.goldLoot ??= []).push({ amount: gold, lap: exp.lap });
@@ -1414,7 +1435,7 @@ function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): 
   const G = BALANCE.provisional.gear;
   const rng = createRng((exp.seed ^ GEAR_SEED_SALT ^ Math.imul(exp.battles.length, 2246822519)) >>> 0);
   const rand = () => nextFloat(rng);
-  if (rand() >= Math.min(1, G.dropChance[from] * lapRewardMult(exp.lap))) return; // 이어하기 배율 (121장 5)
+  if (rand() >= Math.min(1, G.dropChance[from] * lapRewardMult(exp.lap) * (1 + sortieMods(exp.sortie).drop))) return; // 이어하기 배율 (121장 5) · 출정품 드롭 (241-D 5)
   const roll = rollGear({ grade: rollGrade(G.dropGrades[from]!, rand), star: exp.difficulty }, rand);
   (exp.gearFinds ??= []).push({ roll, lap: exp.lap, from });
 }
@@ -1785,6 +1806,8 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     ...(exp.abandoned ? { abandoned: exp.abandoned } : {}),
     kills: killsByEnemy(exp.battles), // 잡은 적 id·수 (GDD 200장 6, C.330)
     ...(exp.lapItems?.length ? { lapItems: exp.lapItems.map((u) => ({ ...u })) } : {}), // 바퀴별 쓴 소모품 (GDD 212장 5)
+    ...(exp.sortie?.length ? { sortie: [...exp.sortie] } : {}), // 출발 때 쓴 출정품 (GDD 241-D 5)
+    ...(exp.sortieFinds?.length ? { sortieFinds: exp.sortieFinds.map((f) => f.id) } : {}),
   };
 }
 

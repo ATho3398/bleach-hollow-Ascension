@@ -2,6 +2,8 @@
 // 장비·스킨은 사면 바로 끼지 않는다 — 여기서 equip. 종족 무관: 이름은 종족 설정(먹이·리스크 게이지)·데이터, 수치는 balance.ts.
 // 화면(C.141 카드형 UI)은 inventoryOf 가 돌려준 목록만 그린다. 상점 품목·가격은 그대로(src/shop.ts).
 import { BALANCE } from './config/balance';
+import { SORTIE_IDS, sortieBrief, sortieEffectText } from './engine/sortie';
+import { sortieSlotsOf } from './sortie';
 import { cosmeticName, COSMETIC_ITEMS, foodBlurb, GOLD_ITEMS, getCosmetic, getGoldItem, getWandererItem, ITEM_CATEGORIES, WANDERER_ITEMS, shopVisible, type ItemCategory, type MedicineCure } from './data/shop';
 import { canWear } from './data/skins';
 import { deckTilesFor, tileName } from './data/tiles';
@@ -103,6 +105,8 @@ export interface InventoryEntry {
   cosmeticCategory?: string;
   /** 전투 소모품 칸에 넣을 수 있는 물건 (GDD 108장 3번·193장 9): inSlot = 지금 칸에 든 것 */
   battleSlot?: { inSlot: boolean };
+  /** 출정품 (GDD 241-D 5): 든 칸 번호들 (없으면 빈 배열) */
+  sortie?: { slots: number[] };
   /** 장비 (GDD 91장): 등급 · 종류 · 낀 칸 (안 꼈으면 null) */
   gear?: { grade: GearGrade; kind: GearKind; slot: GearSlot | null };
 }
@@ -141,6 +145,12 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
     if (CONSUMABLE_IDS.includes(id)) continue;
     const n = save.shared.items[id] ?? 0;
     if (n > 0 || save.shared.battleItem === id) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: battleItemBrief(id) || undefined, detail: `${battleItemText(id)} · 전투 소모품 칸에 넣으면 전투 중 한 번 쓴다`, action: null, lock: null, ...battleSlotOf(save, id) });
+  }
+  // 출정품 (GDD 241-D 5): 가방 소모품 탭 '출정품' 칸 — 칸에 끼우면 모험 출발 때 1개씩 쓴다(가방에서 [사용]은 없음). 칸에 든 0개짜리도 보인다
+  for (const id of SORTIE_IDS) {
+    const n = save.shared.items[id] ?? 0;
+    const slots = sortieSlotsOf(save, id);
+    if (n > 0 || slots.length > 0) out.push({ id, category: 'consumable', name: consumableName(id), count: n, brief: sortieBrief(id), detail: sortieEffectText(id), action: null, lock: null, sortie: { slots } });
   }
   if (save.shared.rerollTickets > 0) out.push({ id: 'reroll', category: 'consumable', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, brief: '블록 다시 뽑기', detail: `${faction.absorbActionName} 화면에서 블록 후보를 한 번 다시 뽑는다`, action: null, lock: null });
   // 장비 (GDD 91장): 낀 것 먼저(칸 순서), 그다음 등급 높은 것·최근 것. 장착·해제·강화·판매는 상세 창

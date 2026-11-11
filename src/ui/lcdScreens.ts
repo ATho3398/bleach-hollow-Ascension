@@ -22,7 +22,8 @@ import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
 import { categoryName, cosmeticToken, getCosmetic, getGoldItem, BATTLE_ITEMS_NAME, ITEM_CATEGORY_NAMES, MEDICINE_NAME, keyringShapeOf, SKIN_SUBTABS, SKIN_SUB_EMPTY, skinListed, skinSubOf, type SkinSubTab, type CosmeticCategory } from '../data/shop';
-import { gateHint, gateOpen } from './bha/unlockGate';
+import { gateHint, gateOpen } from '../unlockGate';
+import { openSortie, sortieArt, sortieSlotsRow, SORTIE_NAME } from './sortieView';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid, swatchArt } from './bha/itemUi';
 import { deviceCards, deviceEntries } from './bha/deviceCards';
 import { tileCss, tileIconId } from './bha/expedition';
@@ -338,7 +339,7 @@ export function openChestAtGear(): void {
 
 /** 상자(보관함): 슬롯(왼쪽 슬롯 칸 / 오른쪽 보유 특성) · 타일(왼쪽 설명·배치 프리셋 / 오른쪽 가진 타일 — 덱 없음, GDD 85장 11번) · 물건(카테고리별 보관품, 쓰기·끼기 — GDD 86장 4·5번).
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
-export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void): void {
+export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void, onTilePlace?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
 
   // 위쪽 탭 [장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료 · 159장 24 물건 → 소모품, 스킨은 위 탭으로).
@@ -456,6 +457,12 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     });
     synthBtn.dataset.sc = 'synth';
     info.append(synthBtn);
+    // 타일 배치하러 가기 (GDD 241-D 7): 모험 출발 때와 같은 배치판 — 놓아 보고 프리셋으로 저장
+    if (onTilePlace) {
+      const placeBtn = button({ label: '타일 배치하러 가기', icon: 'i-deck', block: true, variant: 'primary', onClick: onTilePlace });
+      placeBtn.dataset.sc = 'tile-place';
+      info.append(placeBtn);
+    }
     if (chestUi.synth) info.append(h('p', 'bha-faint', `같은 타일 ${cost}장 → "+" 상위 타일 1장`));
     if (chestUi.synth) {
       const list = h('div', 'bha-stack');
@@ -508,7 +515,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       list.append(row);
     }
     if (owned.length === 0) list.append(h('p', 'bha-faint', '가진 타일이 없다. 소모품 상점 [타일 뽑기]로 모은다.'));
-    info.append(h('p', 'bha-faint', '길에 놓기는 모험 출발 화면에서 한다.'));
+    info.append(h('p', 'bha-faint', onTilePlace ? '[타일 배치하러 가기]에서 놓아 보고 프리셋으로 저장한다.' : '길에 놓기는 모험 출발 화면에서 한다.'));
     page.left.replaceChildren(info);
     page.right.replaceChildren(list);
   }
@@ -517,8 +524,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
 
 /** 가방 소모품 탭 (GDD 86장 4·5번 · 159장 24): 칸 탭(음식 · 약 · 전투 소모품) + 카드 격자. 카드를 누르면 상세 창([사용]).
  *  스킨·펫은 위쪽 탭이 따로, 다시 뽑기권·수련권은 위쪽 '기타' 탭 */
-type BagGroup = 'food' | 'medicine' | 'battle';
-const BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME]];
+type BagGroup = 'food' | 'medicine' | 'battle' | 'sortie';
+const BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME], ['sortie', SORTIE_NAME]]; // 출정품 칸 (GDD 241-D 5)
 const itemsUi: { group: BagGroup; skinSub: SkinSubTab } = { group: 'food', skinSub: 'character' };
 /** 가방 칸 하나가 드는 소모품 칸 (음식·소모품만, 나머지 null). 다시 뽑기권·수련권 = 'etc' (위쪽 '기타' 탭) */
 export function bagGroupOf(e: Pick<InventoryEntry, 'id' | 'category'>): BagGroup | 'etc' | null {
@@ -539,8 +546,9 @@ export function cardDetailOf(e: Pick<InventoryEntry, 'detail' | 'category' | 'co
   return e.detail.replace(/^데리고 다니는 중 · /, '');
 }
 /** 카드 아래 동작 칩: 사용 · 착용/해제 · 데리고 가기/두고 가기 · 장착/강화 (없으면 undefined) */
-export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'> & { lock?: string | null; battleSlot?: InventoryEntry['battleSlot'] }): string | undefined {
+export function actionChipOf(e: Pick<InventoryEntry, 'action' | 'gear'> & { lock?: string | null; battleSlot?: InventoryEntry['battleSlot']; sortie?: InventoryEntry['sortie'] }): string | undefined {
   if (e.gear) return e.gear.slot ? '해제·강화' : '장착·강화';
+  if (e.sortie) return e.sortie.slots.length ? '칸에 넣음' : '칸에 넣기'; // 출정품 (GDD 241-D 5)
   // 전투에만 쓰는 소모품 (GDD 193장 9): 가방에서 [사용]은 없고 전투 소모품 칸에 넣는다
   if (e.action === null && e.battleSlot) return e.battleSlot.inSlot ? '칸에 넣음' : '칸에 넣기';
   switch (e.action) {
@@ -570,6 +578,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   const artOf = (e: InventoryEntry): HTMLElement => {
     // 장비 (GDD 91장 8번): 그림이 없으니 종류 아이콘 + 등급 색
     if (e.gear) return gearArt(e.gear.kind, e.gear.grade);
+    if (e.sortie) return sortieArt(e.id);
     if (e.category === 'tile') return iconArt(tileIconId(tileCss(getTile(e.id).kind)));
     if (e.category === 'pet') {
       const src = petArtSrc(e.id);
@@ -595,15 +604,16 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   const cards = devices ?? rows.map((e) => itemCard({
     id: e.id, name: e.name, detail: cardDetailOf(e), art: artOf(e),
     grade: e.gear?.grade,
-    badge: e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.battleSlot?.inSlot ? `넣음 ×${e.count}` : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
+    badge: e.sortie?.slots.length ? `넣음 ×${e.count}` : e.gear ? (e.gear.slot ? (slotsForKind(e.gear.kind).length > 1 ? `장착 · ${gearSlotName(e.gear.slot, faction)}` : '장착') : undefined) : e.action === 'unequip' ? '착용 중' : e.action === 'leave' ? '동행 중' : e.category === 'pet' ? undefined : e.battleSlot?.inSlot ? `넣음 ×${e.count}` : e.count > 1 || e.category !== 'skin' ? `×${e.count}` : undefined,
     // 전투 소모품 칸에 든 것 = 장비 칸에 낀 것과 같은 표시 (GDD 193장 9 — 장비 탭에 있던 '넣음' 카드가 이리로)
-    state: e.action === 'unequip' || e.action === 'leave' || e.battleSlot?.inSlot ? 'worn' : e.lock ? 'locked' : undefined,
+    state: e.action === 'unequip' || e.action === 'leave' || e.battleSlot?.inSlot || e.sortie?.slots.length ? 'worn' : e.lock ? 'locked' : undefined,
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
-    onClick: () => openItem(faction, save, e, artOf(e), changed),
+    onClick: () => (e.sortie ? openSortie(save, e.id, changed) : openItem(faction, save, e, artOf(e), changed)),
   }));
   const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 진화 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (mode === 'items') box.append(tabs);
+  if (mode === 'items' && itemsUi.group === 'sortie') box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
   if (mode === 'skin') {
     // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
     const skins = all.filter((e) => e.category === 'skin' && listed(e));

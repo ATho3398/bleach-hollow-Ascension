@@ -6,6 +6,15 @@
 
 C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.60~C.120 2026-10-27 마스터O, 사용량 절약). 필요할 때만 grep 으로 찾아 읽는다.
 
+### C.400 출정품 · 가방 [타일 배치하러 가기] · 해금 게이트 241-0 수정 (STAGE S-23, 코딩270, GDD 241-D 5·7, v5.573)
+- 원문: 「장착하면 모험 시작 때 자동으로 1개 소모, 그 모험 동안 효과 — 예 용기의 물약 = 공격력↑」「가방 타일 창에 '타일 배치하러 가기' — 누르면 타일 배치 창(모험 때처럼 배치·프리셋 저장)」.
+- 출정품 엔진 `src/engine/sortie.ts`(id·효과 합·문구) · 세이브 조작 `src/sortie.ts`(칸 끼우기·출발 소모) · 화면 `src/ui/sortieView.ts`(가방 소모품 탭 '출정품' 칸 2개·창). 상점 kind 'sortie'(전투 소모품 탭), 팔기 목록, 이긴 전투 드롭(`rollSortieDrop`, 일반 2%·강적 8%·보스 25%) → 귀환 정산 `settleSortieFinds`.
+- 효과(provisional `provisional.sortie`): 용기의 물약 = playerPowerMultiplier ×1.1 · 철피 물약 = damageTakenMultiplier ×0.9 · 행운의 부적 가루 = 먹이 굴림·장비·출정품 드롭 ×1.15. 출발(app onStart `departSortie`) 때 칸마다 1개 소모, 원정 `sortie` → 런 로그 원정 기록 `sortie`·`sortieFinds`. 세이브 73 → 74(`shared.sortie` 빈 칸 2개). BALANCE 120.
+- 타일 배치 창: `planView` `placeOnly`(머리 탭·[출발] 없음, [닫기]) + app `tilePlaceScreen` — 가방 타일 탭 [타일 배치하러 가기].
+- 게이트를 사용자 수정 241-0 표로(장비 3단계 · 장신구 해방 클리어 · 펫·출정품 첫 환생). 세션 C `featureUnlocked` 가 오면 `src/unlockGate.ts` 를 그것으로 바꾼다.
+- balance:check 회귀 가드 통과(봇은 출정품 없음). 경고 3건(4단계 이어하기·바퀴 곡선)은 전부터 있던 후반 보류 경고.
+- 테스트 `tests/c400.test.ts` 7개 + 옛 시험 형식·상점 목록 갱신. 캡처 `docs/captures/c400/`(proof `scripts/c400-proof.cjs`): 출정품 잠김·가방 출정품·창·타일 탭·배치 창(두 종족).
+
 ### C.397 장비 통일·장신구 3·펫 장비 탭·펫 공격·가방 재화 (STAGE S-23, 코딩270, GDD 241-D 1~4·6·8, v5.568)
 - 원문: 「장비 이름 발톱싸개 류 말고 무기·방어구·신발」「장신구 3개」「펫을 장비 탭으로, 탭은 좁히지 말고 가로 드래그로 보기」「펫도 같이 공격」「가방 열면 옆에 골드·영옥 등 재화 항상 표시」「'낀 장비' → '장착한 장비'」.
 - 칸 이름: 두 종족 `gearSlotNames` = 무기·방어구·신발·장신구(종족 설정 값, 코드 분기 없음). 장비 id 는 종류 id 라 옛 장비는 그대로 — 이름만 바뀜. 종족 전용 장비 자리 `gear.json` kinds[].factions(빈 배열 = 공용).

@@ -11,6 +11,7 @@ import { detachedOf, getDetachTrait } from './engine/traitShop';
 import type { SaveData } from './game';
 import { BATTLE_ITEM_IDS, CONSUMABLE_IDS, consumableName, gearName, sortedGear } from './inventory';
 import { consumableGroupOf, shopBuyPrice } from './shop';
+import { SORTIE_IDS } from './engine/sortie';
 
 const SL = BALANCE.provisional.sell;
 
@@ -70,11 +71,11 @@ export function sellRows(save: SaveData, faction: FactionConfig): SellEntry[] {
     if (n > 0) out.push({ key: `food-${f}`, group: 'food', name: faction.foodNames[f], count: n, unit: foodSellPrice(f), lock: null });
   }
   const recoverCure = save.help.guides.recover !== undefined && save.help.guides.recover !== 'done'; // 튜토리얼 회복 안내 중엔 구급상자 필수
-  for (const id of [...new Set([...CONSUMABLE_IDS, ...BATTLE_ITEM_IDS])]) {
+  for (const id of [...new Set([...CONSUMABLE_IDS, ...BATTLE_ITEM_IDS, ...SORTIE_IDS])]) {
     const n = save.shared.items[id] ?? 0;
     if (n <= 0) continue;
     const g = consumableGroupOf(id);
-    out.push({ key: id, group: g === 'medicine' ? 'medicine' : g === 'battle' ? 'battle' : 'etc', name: consumableName(id), count: n, unit: itemSellPrice(id), lock: recoverCure && id === 'med-cure' ? '튜토리얼에서 쓴다' : null });
+    out.push({ key: id, group: g === 'medicine' ? 'medicine' : g === 'battle' || g === 'sortie' ? 'battle' : 'etc', name: consumableName(id), count: n, unit: itemSellPrice(id), lock: recoverCure && id === 'med-cure' ? '튜토리얼에서 쓴다' : null });
   }
   if (save.shared.rerollTickets > 0) out.push({ key: 'reroll', group: 'etc', name: getGoldItem('reroll')?.name ?? '다시 뽑기권', count: save.shared.rerollTickets, unit: itemSellPrice('reroll'), lock: null });
   for (const it of sortedGear(save)) {

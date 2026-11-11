@@ -158,6 +158,9 @@ function validShape(e: unknown): e is ExpeditionState {
   if (e.battleEntry !== undefined && !(isObj(e.battleEntry) && isInt(e.battleEntry.seed, Number.MIN_SAFE_INTEGER) && (e.battleEntry.itemId === null || typeof e.battleEntry.itemId === 'string') && isInt(e.battleEntry.itemCount))) return false; // 222장 6
   // 모험 소모품 바퀴 사용 기록 (GDD 212장 2): 없으면 아직 안 씀
   if (e.lapItems !== undefined && !(Array.isArray(e.lapItems) && e.lapItems.every((u) => isObj(u) && isInt(u.lap, 1) && typeof u.itemId === 'string' && (u.where === 'walk' || u.where === 'battle')))) return false;
+  // 출정품 (GDD 241-D 5): 없으면 없음
+  if (e.sortie !== undefined && !isStrArr(e.sortie)) return false;
+  if (e.sortieFinds !== undefined && !(Array.isArray(e.sortieFinds) && e.sortieFinds.every((f) => isObj(f) && typeof f.id === 'string' && isInt(f.lap, 1)))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;
   if (!Array.isArray(e.battlesByLap) || e.battlesByLap.length < (e.lap as number) || !e.battlesByLap.every((n) => isInt(n))) return false;
   if (!Array.isArray(e.acquired) || !e.acquired.every((a) => isObj(a) && knows(getTile, a.tileId) && isInt(a.lap, 1))) return false;
