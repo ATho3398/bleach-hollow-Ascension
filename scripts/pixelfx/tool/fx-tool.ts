@@ -175,7 +175,8 @@ const st = (): StageFx => {
 /** 지금 캐릭터의 몸동작 칸 */
 function slotNow(): BodySlot {
   const c = CHARACTERS.find((x) => x.id === charId);
-  return !c?.rig ? 'frames' : c.id.endsWith('-f') ? 'female' : 'male';
+  // 게임 battleView bodySlot 과 같은 규칙: 종이인형 외형 id 가 '-f' 로 끝나면 여, 아니면 남 (그래서 '아란칼 해방(여)'는 게임에서도 남 칸)
+  return !c?.rig ? 'frames' : c.rig.endsWith('-f') ? 'female' : 'male';
 }
 const layer = (): FxLayer | null => st().layers[layerIx] ?? null;
 /** 편집할 타격: -1 = 전체(기본 값), 0부터 = 그 타격만 */
@@ -985,6 +986,8 @@ for (const c of CHARACTERS) {
   b.type = 'button';
   b.dataset.char = c.id;
   b.dataset.kind = c.kind ?? 'char';
+  if (c.group) b.dataset.group = c.group;
+  if (c.gender) b.dataset.gender = c.gender;
   b.onclick = () => {
     charId = c.id;
     lastOf[mode].char = c.id;
@@ -999,6 +1002,42 @@ for (const c of CHARACTERS) {
     swing();
   };
   $('chars').append(b);
+}
+// 치는 모델 분류 (사용자 2026-11-12 "사신, 아란칼, 호로로 대분류, 성별 중분류, 디테일 소분류로" — 종이인형 편집기 외형 고르기와 같게): 종족 → 성별(사신·아란칼만) → 단계·진화체
+let charGroup: 'shinigami' | 'arrancar' | 'hollow' = 'shinigami';
+let charGender: 'm' | 'f' = 'm';
+const GROUP_NAMES = [['shinigami', '사신'], ['arrancar', '아란칼'], ['hollow', '호로']] as const;
+/** 분류를 바꾸면 그 줄에서 지금 모델과 같은 이름(없으면 첫 모델)을 고른다 */
+function pickInGroup(): void {
+  const cur = CHARACTERS.find((x) => x.id === charId);
+  const list = CHARACTERS.filter((c) => (c.kind ?? 'char') === 'char' && c.group === charGroup && (charGroup === 'hollow' || c.gender === charGender));
+  const next = list.find((c) => c.label === cur?.label) ?? list[0];
+  if (!next) return;
+  charId = next.id;
+  lastOf.char.char = next.id;
+  t = span.from;
+  refresh();
+  swing();
+}
+for (const [g, label] of GROUP_NAMES) {
+  const b = h('button', 'chip', label);
+  b.type = 'button';
+  b.dataset.cgroup = g;
+  b.onclick = () => {
+    charGroup = g;
+    pickInGroup();
+  };
+  $('chargroups').append(b);
+}
+for (const [g, label] of [['m', '남'], ['f', '여']] as const) {
+  const b = h('button', 'chip', label);
+  b.type = 'button';
+  b.dataset.cgender = g;
+  b.onclick = () => {
+    charGender = g;
+    pickInGroup();
+  };
+  $('chargenders').append(b);
 }
 for (let i = 0; i < 3; i++) {
   const b = h('button', 'chip', `${i + 1}블록`);
@@ -1135,9 +1174,20 @@ $('reset').onclick = () => {
 function refresh(): void {
   if (bgImg.getAttribute('src') !== entry.bg) bgImg.src = entry.bg;
   mountHero();
+  // 지금 모델에 맞춰 종족·성별 표시 (모델을 코드로 바꿔도 따라가게)
+  const curChar = CHARACTERS.find((x) => x.id === charId);
+  if (mode === 'char' && curChar?.group) {
+    charGroup = curChar.group;
+    if (curChar.gender) charGender = curChar.gender;
+  }
+  for (const b of $('chargroups').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.cgroup === charGroup));
+  for (const b of $('chargenders').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-pressed', String(b.dataset.cgender === charGender));
+  $('chargroups').style.display = mode === 'char' ? '' : 'none';
+  $('chargenders').style.display = mode === 'char' && charGroup !== 'hollow' ? '' : 'none';
   for (const b of $('chars').querySelectorAll<HTMLElement>('.chip')) {
     b.setAttribute('aria-pressed', String(b.dataset.char === charId));
-    b.style.display = b.dataset.kind === mode ? '' : 'none'; // 탭마다 그 탭의 모델만
+    const inGroup = mode === 'monster' || (b.dataset.group === charGroup && (charGroup === 'hollow' || b.dataset.gender === charGender));
+    b.style.display = b.dataset.kind === mode && inGroup ? '' : 'none'; // 탭마다 그 탭의 모델만, 캐릭터 탭은 고른 종족·성별 줄만
   }
   for (const b of $('modes').querySelectorAll<HTMLElement>('.chip')) b.setAttribute('aria-selected', String(b.dataset.mode === mode)), b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
   $('charslabel').textContent = mode === 'monster' ? '몬스터 모델' : '치는 모델';
