@@ -49,6 +49,12 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     const hk = resolveMotions(rig, motions, sets, 'hk');
     for (const id of ['idle', 'move', 'attack', 'attack2', 'hit', 'release1', 'headbutt']) expect(hk[id], id).toBeDefined();
     expect(hk.attack!.tracks.hand_R!.some((k) => k[1] !== 0)).toBe(true);
+    // 걷기: 허벅지는 엉덩이 관절 둘레로 돌기만 한다 — 위아래로 옮기지 않음(사용자 "허벅지가 … 위아래로 들려서 이상해")
+    for (const b of ['leg_L', 'leg_R']) {
+      expect(hk.move!.tracks[b]!.every((k) => k[2] === 0 && k[3] === 0), b).toBe(true);
+      const r = hk.move!.tracks[b]!.map((k) => k[1]);
+      expect(Math.max(...r) - Math.min(...r), b).toBeGreaterThan(25);
+    }
   });
   it('역관절(dg)은 없앴다 (GDD 231장, 사용자 2026-11-11 "역관절 저 호로는 아예 없애자")', () => {
     expect(rig.bodies.dg).toBeUndefined();
