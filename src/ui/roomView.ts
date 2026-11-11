@@ -6,12 +6,12 @@ import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, careNest, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, mountApp } from './bha/dom';
-import { showToast } from './bha/nest';
 import { keepToastsLow } from './bha/toastLow';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from './bha/gaugeBlink';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
@@ -142,8 +142,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const markStatusBusy = (ms: number) => (statusBusyUntil = Math.max(statusBusyUntil, Date.now() + ms + GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER));
   /** 말풍선 자리 (C.194, GDD 120장 2 · 208장 2): 머리 위가 기본. 방 위 끝을 넘으면 캐릭터 옆(방 가운데 쪽).
    *  keep(상태 값이 바뀌는 순간 — 상태창을 숨기지 않음)이면 상태창(박스·ⓘ·이름표)·방 물건 버튼과 겹치지 않는 자리를 찾는다: 머리 위 → 옆(밀어내기) → 반대쪽 옆,
-   *  다 막히면 말풍선 대신 공용 알림 띠(showToast). 띠로 보냈으면 false */
-  const placeBubble = (text: string, keep: boolean): boolean => {
+   *  다 막히면 말풍선을 생략한다(GDD 233장 5 — 알림 띠로 돌리지 않는다). 생략했으면 false */
+  const placeBubble = (keep: boolean): boolean => {
     bubble.classList.remove('is-side', 'is-left');
     scene.style.setProperty('--bubble-shift', '0px');
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
@@ -177,8 +177,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     scene.style.setProperty('--bubble-shift', '0px');
     bubble.classList.remove('is-side', 'is-left');
-    bubble.hidden = true;
-    showToast({ eyebrow: save.name || '방', title: text }, 0, 2600);
+    bubble.hidden = true; // 말풍선을 못 띄우면 그냥 생략 — 대신 띄우던 알림 띠는 뺐다 (GDD 233장 5)
     return false;
   };
   /** keep = 상태 값이 바뀌는 순간의 말(돌보기 결과 등). 아니어도 값이 바뀌는 중(차오름·깜빡임)이면 keep (GDD 208장 0·1) */
@@ -200,7 +199,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     void bubble.offsetWidth;
     bubble.classList.add('is-pop');
     window.clearTimeout(bubbleTimer);
-    if (!placeBubble(text, keepStatus)) {
+    if (!placeBubble(keepStatus)) {
       scene.classList.remove('is-saying');
       dev.refresh();
       return;
@@ -425,12 +424,20 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
+      let reaction: FoodReaction = null;
       const hpBefore = previewHomeHp(n, Date.now()).fraction;
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
+        reaction = food ? foodReactionFor(save, food) : null; // 선호·비선호·싸구려 반응 (GDD 235장 2·3) — 먹기 전에 정한다
         const fed = food ? feedNest(save, food) : null;
         if (!fed) return say(fixParticles(`먹을 것이 없다. 모험에서 적을 이기면 ${faction.foodGroupName}을(를) 얻는다.`));
+        if (fed === 'refused') {
+          // 같은 먹이 10분에 2개를 넘김 (GDD 234장 3): 먹이 그대로·효과·교감 없음 — 돌봄 거절처럼 말풍선만
+          hd.persist();
+          dock.refreshFeeds();
+          return say(pickLine(room.talk, 'picky'));
+        }
         if (fed === 'spat') {
           // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
           hd.persist();
@@ -478,10 +485,17 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
         char.classList.add('is-eating');
         window.setTimeout(() => char.classList.remove('is-eating'), ACTION_FILL_MS);
       }
-      if (!noted) say(careFeedback(faction, action, food ?? null, delta)); // 알림이 못 뜬 때(값이 안 바뀜·자리 없음)만 예전 결과 말풍선 (수치 문장 포함)
+      const reactKey = reaction === 'like' ? 'foodLike' : reaction === 'dislike' ? 'foodDislike' : reaction === 'cheap' ? 'foodCheap' : null;
+      if (reactKey) say(pickLine(room.talk, reactKey)); // 먹이 반응 말풍선 (GDD 235장 2 — 선호·비선호는 표 없이 이것으로만 드러남)
+      else if (!noted) say(careFeedback(faction, action, food ?? null, delta)); // 알림이 못 뜬 때(값이 안 바뀜·자리 없음)만 예전 결과 말풍선 (수치 문장 포함)
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
       if (!(clip && playAnim(clip))) hopChar();
+      // 반응 동작 (GDD 235장 사용자 추가 — 선호 = 기쁨 · 비선호 = 싫음): 먹고 난 뒤 좋아하면 한 번 더 뛰고, 싫어하면 뱉을 때처럼 고개를 젓는다
+      if (reaction === 'like') window.setTimeout(() => main.isConnected && hopChar(), ACTION_FILL_MS);
+      else if (reaction === 'dislike') {
+        window.setTimeout(() => { if (!main.isConnected) return; char.classList.add('is-spit'); window.setTimeout(() => char.classList.remove('is-spit'), 700); }, ACTION_FILL_MS);
+      }
     },
     more: [
       // C.170 (GDD 100장 #17·#80): 4열 — 설정·도움말·사진·다마고치 / 백업·처음 화면·닫기. '첫 걸음 목표'는 도움말 안 [목표]로

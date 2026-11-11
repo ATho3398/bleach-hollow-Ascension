@@ -5,7 +5,6 @@ import type { FactionConfig } from '../../engine/faction';
 import type { SaveData } from '../../game';
 import { ownedDeviceDesigns, unwearCategory, wearCosmetic } from '../../shop';
 import { iconArt, imageArt, itemCard } from './itemUi';
-import { showToast } from './nest';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 
@@ -40,8 +39,7 @@ export function deviceCards(save: SaveData, faction: FactionConfig, changed: () 
         if (worn) return;
         if (e.id === null) unwearCategory(save, 'device');
         else if (!wearCosmetic(save, e.id)) return;
-        showToast({ eyebrow: '기기', title: `${e.name} 장착` }, 0, 1800);
-        changed();
+        changed(); // 장착 알림은 뺐다 (GDD 233장 5) — 카드 '✓ 착용 중'·기기 모습이 바뀐다
       },
     });
   });

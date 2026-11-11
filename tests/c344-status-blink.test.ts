@@ -109,7 +109,7 @@ describe('208장 0·1·2 값이 바뀔 때 상태창은 숨기지 않고 말풍�
     expect(room).toContain('if (changed.length > 0) markStatusBusy(ACTION_FILL_MS);');
     expect(room).toContain('if (enterChanged.length > 0) markStatusBusy(');
     expect(room).toContain('bubbleClear(r, sceneBox, blockers)');
-    expect(room).toContain("showToast({ eyebrow: save.name || '방', title: text }");
+    expect(room).not.toContain('showToast('); // GDD 233장 5: 말풍선 자리가 없으면 띠로 돌리지 않고 생략
   });
 
   it('바뀌는 곳마다 깜빡임 연결 (방 돌보기·들어올 때·가방·온천·걷기 휴식/가방·수련), 동작 줄이기는 테두리', () => {

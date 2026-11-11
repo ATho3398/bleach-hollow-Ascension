@@ -20,7 +20,7 @@ describe('222장 1 공용 창은 튜토리얼을 비켜 간다 + 대기 보상 �
   });
   it('대기 보상 복귀 창은 afterTutorials 로 카드가 끝난 뒤, 방을 떠났으면 띄우지 않는다', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("afterTutorials(() => showIdleReturn(idle, s, faction, claim), () => save === s && nav.top?.id === 'room')");
+    expect(app).toContain("afterTutorials(() => showIdleReturn(idle, s, faction, claim, loss), () => save === s && nav.top?.id === 'room')");
     expect(app).not.toContain('window.setTimeout(() => showIdleReturn(');
     const host = read('src/ui/bha/overlayHost.ts');
     expect(host).toContain("document.querySelector('.bha-tut') !== null");
@@ -75,11 +75,11 @@ describe('222장 3 대기 보상', () => {
     expect(idleShortfall({ hours: 1, activeHours: 0 }, { ...full, collapsed: true })).toBe('빈사라 자동 모험을 하지 못했다');
     expect(idleShortfall({ hours: 1, activeHours: 1 }, { ...full, hunger: 100 })).toBeNull();
   });
-  it("[받기] 뒤 '받았다' 두 번째 창 없음 — 공용 알림 한 줄", () => {
+  it("[받기] 뒤 '받았다' 두 번째 창 없음 · 받은 것 알림도 없음 (GDD 233장 1)", () => {
     const iv = read('src/ui/idleView.ts');
-    const fn = iv.slice(iv.indexOf('function showClaimed'), iv.indexOf('/** 복귀 창'));
-    expect(fn).toContain('showToast(');
-    expect(fn).not.toContain('confirmDialog(');
+    expect(iv).not.toContain('function showClaimed');
+    expect(iv).not.toContain('showToast(');
+    expect(iv.match(/onClaim\(\);/g)?.length).toBe(2);
   });
 });
 

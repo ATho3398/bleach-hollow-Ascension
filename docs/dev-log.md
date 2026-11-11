@@ -3186,3 +3186,78 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 편집기: 외형 고르기 = 종족 탭 → 성별 → 단계/진화체 → 색(115-A 110).
 - 이펙트(byBody humanoid/ho·spider/ref, 이펙트 배치 도구 항목, 계열 도트 연출 몸별 값)는 픽셀FX 담당에 부탁 — 그 전까지 fallback.
 - 검증: `tests/c380.test.ts` 8개 + `tests/rigSpider.test.ts` 4개 + 옛 시험 갱신, `scripts/c380-proof.cjs` 실제 전투 1배(갑충형 vs 잉크베일, 사슴형 vs 샌드트랩, 새형 vs 듄워든) 캡처 `docs/captures/c380/` 6장.
+
+## C.381 — 외팔이·거미 이펙트 연동: 강적 강공격 세로 자리 · 도구 몸 추가 (GDD 227장 보충 5·230장 보충, v5.543, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문(종이인형 세션 전달, 11-11 03:4x): "fx툴에도 연동 ㄱㄱ".
+- C.380(종이인형 — 외팔이 몸 ho, 거미 뼈대 spider, 역관절 삭제) 위에서: `src/data/enemies/eliteHeavyFx.json` byBody `humanoid/ho` −297,10 · `spider/ref` −278,−32(도구 재생 중 특수1 자세의 손을 재서; 전엔 덩치 자리로 나감).
+- 이펙트 배치 도구: SEP_BODIES·BODY_NAMES += 외팔이·거미, 캐릭터 탭 '호로 외팔이'(skin carapace)·'호로 거미'(skin stag), 몬스터 탭 '외팔이'(샌드트랩)·'거미'(잉크베일), build.mjs BODY 맵.
+- 테스트 `tests/c372-elite-heavy-body.test.ts`(몸 목록 6, 샌드트랩 = 외팔이·잉크베일 = 거미). 검증 `scripts/c381-proof.cjs` 실제 전투 1배 — 둘 다 손에서 세로. 캡처 `docs/captures/c381/` 2장.
+- 테스트 3121 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.382 — 호로 거미 몸 전용 조·교·탄 (GDD 230장 보충 2, v5.544, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문: "ㅇㅋ" (이펙트 배치 도구 [확정] 11-11 04:13 — 캐릭터 탭 '호로 거미').
+- `apply.mjs` → `src/data/factions/hollow.json` byBody `spider/ref`: 조(1·2·3블록 공격1 ×1.1) · 교(공격2) · 탄(특수1, 3블록 ×0.45). 이펙트 자리는 사람형 값 그대로(몸동작만 거미). 다른 몸 변화 없음.
+- 테스트 `tests/c377-body-split.test.ts` +1(거미 몸동작·사람형은 공통), 탄 몸 키 목록 갱신. 실제 전투 캡처 없음(플레이어 거미 = 사슴형 외형).
+- 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.383 — 클라우드 저장 실패 원인 보이기: 오류 코드 문구 · [다시 올리기] (GDD 232장, v5.546, S-23, 코딩264 Opus)
+- 사용자 원문: "이거지금 계정 연동 데이터 저장 안되는거지. 일시적인건지 아직 구현 미스인지 원인분석 ㄱㄱ" (캡처: '이승호 계정으로 로그인했다. 클라우드 저장에 실패했다. 잠시 뒤 다시 올린다.')
+- `src/cloudSave.ts`: 실패 catch(SDK 받기·올리기·읽기·기기 차지/판정)마다 `recordError` → `CloudState.lastError {code, stage}`(Firebase code, 없으면 이름) + `console.warn` 한 줄(uid·이메일 지움). 성공하면 지운다. `retryNow()` = 재시도 대기 무시하고 한 번(SDK 없으면 다시 받기, 밀린 것 있으면 올리기, 아니면 서버와 맞추기), `retrying` 상태.
+- `src/ui/cloudView.ts`: 'error' 줄에 쉬운 말+코드(`cloudErrorText`), [다시 올리기] 버튼(`data-set=cloud-retry`, 실패 때만 보임·진행 중 흐림). `settingsView.ts` 로그인 줄에 붙임, `screens-lcd.css` 숨김 한 줄(새 토큰 없음). `app.ts` CloudUi.retry.
+- `src/cloudFake.ts`: `bha-cloud-fake.fail`(읽기·쓰기 실패 코드) · `?cloudfake=sdkfail`(SDK 받기 실패) — 점검용.
+- 원인 조사: Firestore REST 무인증 읽기 = 403 PERMISSION_DENIED(404 아님) → 데이터베이스는 있음. 문서 모양·규칙·크기는 맞음 → 코드 쪽 원인은 못 찾음(원인 미확정). 유력 = 규칙 미게시·옛 규칙(permission-denied) — 이 빌드의 '로그인' 줄 코드로 확정한다.
+- 테스트 `tests/c383.test.ts` 신규(코드별 문구 4종·SDK 실패·콘솔 한 줄·다시 올리기 성공/실패/SDK), `tests/c323.test.ts` 로그인 줄 구조 갱신. 세이브 구조 변경 없음.
+- 캡처 `docs/captures/c383/` (scripts/c383-proof.cjs): pc-1 permission-denied · pc-2 다시 올리기 뒤 · ph-3 unavailable · ph-4 SDK 실패.
+
+
+## C.384 — 튜토리얼 강공격에도 빨간 세로 (GDD 227장 보충 6, v5.547, S-23, 픽셀FX 담당 Opus)
+- 사용자 원문(마스터AL 전달, 11-11 04:2x): "튜토 강공격도 fx 반영 해야지?".
+- `src/ui/battleView.ts` heavyPixel 조건 = `(enemy.class === 'elite' || scripted) && !boss` — 튜토리얼 각본 전투(scripted = s.script)의 강공격(각본 강공격·막기 단계)도 그 적 몸의 빨간 세로(eliteHeavyFor). heavyCue·hitDelaysOf 가 같은 신호라 엔진 강공격 지연·각본 '맞은 뒤 멈춤'도 같이 맞음. 종족 분기 없음. 일반 몬스터 평소 강공격·보스 그대로.
+- 검증 `scripts/c384-proof.cjs`(c367-proof 기반) PC 1배 두 종족: 각본 강공격 막음(guard-land)·맞음(hurt-hold) 피해 = 맞는 쪽 반응 0~0.3프레임 OK, 시트 custom-cero-blood·불투명도 0.7. 캡처 `docs/captures/c384/` 2장.
+- 참고(이 패치와 무관, main 에 이미 있음): 호로 튜토리얼 블록(skill-hold) 피해가 맞는 쪽 반응보다 1.2~2프레임 늦음 — 이 변경 없이 main 에서도 2프레임(C.367 때는 0). 마스터에 보고.
+- 테스트 3122 통과(277 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.385 — 호로 튜토리얼 블록 타격 동기화 수정: 종이인형 재생 시계 · 한 동작 마무리 착탄 (GDD 224장 보충, v5.548, S-23, 픽셀FX 담당 Opus)
+- 배정: 마스터AL(11-11 04:37) — C.384 때 보고한 별건 "호로 튜토리얼 블록 skill-hold 피해가 맞는 쪽 반응보다 1.2~2프레임 늦음, C.367 땐 0".
+- 원인 1 `src/ui/bha/rigAnim.ts` bindRigAnim: 돌던 재생 중 프레임 사이에서 play 하면 다음 tick 의 dt 가 play 전 시간까지 포함 → 타격 자세 최대 1프레임 이름(덩치 공격2 예상 213ms, 실제 200ms). 엔진이 213ms 를 틱(100ms)으로 올려 300ms 가 되자 튜토리얼 '처음부터' 시작이 타이머(after)로 바뀐 호로만 드러남. → play 를 감싸 last = performance.now(), dt ≥ 0.
+- 원인 2 `src/ui/attackFx.ts` run(windup): 조 3블록이 한 동작(C.370)이 된 뒤 마무리 착탄이 타이머(landAt)라 몸 타격보다 1프레임 먼저 → 연결 동작 1개·반응 1번이면 onFinal(몸 onHit)에서 맞음 반응+착탄(onFirstHit 는 끔 — 두 번 안 맞게).
+- 실측 `scripts/c385-proof.cjs`(SKIN= 스킨 착용 일반 전투 추가): 튜토리얼 두 종족 강공격·블록·마무리 0~0.2프레임, 일반 전투 사신·호로 덩치·뱀형·표범형·갑충형·사슴형 블록 1·2·3·강공격 ±0.9프레임 안. `docs/captures/c385/`.
+- 테스트 3136 통과(278 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.386 — 노란 알림 정리: 확인 성격 알림 빼기 (GDD 233장, v5.550, S-23, 코딩265 Opus)
+
+- 배정: 마스터AL(11-11) — 사용자 "복귀알람을 놔두고 보상받은걸 빼야지 / 튜토깬건 알람 빼 / 흡수 빼고 온천 빼고 / 16 17 18 20 22 23 29다빼".
+- 지운 `showToast` 호출: idleView showClaimed(대기 보상 받은 것, 함수째) · absorbView 흡수 결과 한 줄(resultLine 변수째, `absorbResultLine` 은 테스트용으로 남김) · spaView 가득 찼다(띠만, 2초 기다림은 남김) · app.ts 온천 끝 결과 · 이름·성별 바꿈 · 트랙 전환 · 붕옥 해방 · shopView 구매 확인 · 특성 끼움/뺌 · 착용/해제 · equipView 착용 · 강화 성공 · 자동 착용 n칸 · 일괄 판매 · lcdScreens 가방 사용(성공) · 펫 데리고 다님/두고 감 · 전투 소모품 칸 넣음/뺌 · deviceCards 기기 장착 · roomView 말풍선 대신 띠(말풍선을 못 띄우면 생략).
+- 남긴 것(233장 6·7): 복귀 알림(app.ts) · 온천 못 들어감 · 상점 '살 수 없다'·특성 잠김·일부만 삼(새로 'n개만 샀다' + 이유) · 펫 얻음 · '강화할 수 없다' · 자동 착용 '바꿀 것이 없다' · 장비 막힘 · 가방 '쓸 수 없다'·'뱉었다' · 타일 합성(목록 밖) · 도감 보상 · 나머지 7번 목록 · 테스트 모드.
+- 튜토리얼 목표 달성 알림: 이미 161장(C.239)부터 `NOTIFY.tutorialGoalToast = false` 로 꺼져 있었다 — 코드 변경 없음(보상 지급은 그대로).
+- 고친 테스트(233장 근거): c364(대기 보상 showClaimed → 없음), c273(온천 가득 띠 숨김 → showToast 없음), c344-status-blink(방 말 띠 → 없음), c208(가방 사용 useFx 줄).
+- 세이브·밸런스 변경 없음.
+
+## C.387 — 가방 알림 = 상태이상 풀 때만 · 같은 먹이 10분 2개 · 먹이 3유형 개편 (GDD 234장 1·3 · 235장, v5.554, S-23, 코딩266 Opus)
+- 사용자 원문(234장): "상태이상 풀때만 알람 띄우고, 지금 이제 먹이가 시간당 3개 먹이기 가능한가? / 이거 배부름 쓰는곳이 많아져서, 먹이 배부름 수치좀 늘리자. … / 그리고 10분 이내로 같은 먹이 3개 이상 안먹고, 먹이 구하는 루트를 어렵게 하면 딱 될 듯? / 일단 상점에선 없앨건데 기획서에 예정으로만 써놓고 아직은 없애지마". 235장 원문(먹이 3유형 · 일반 = 속성 이름·반응·공통 이름)은 기획서 235장. 마스터AL 범위 변경: 234장 2(×2) 대신 235장.
+- 234장 1: `useInventoryItem` 이 쓰기 전후 빈사·쇠약·피곤을 견줘 `cured` → 가방 화면은 그때만 '○○이(가) 풀렸다' 띠(상태창 연출 대신). 다른 사용은 알림 없음(뱉음·못 씀 띠는 233장 6 그대로).
+- 234장 3: `nest.foodStreak`(종류별 개수·마지막 시각) + `feedLimit.sameMax 2` — 3개째 `refused`(먹이·효과·교감 없음, 전체 한도 안 셈). 방 = 말풍선 `picky`(종족 말투), 가방 = '쓸 수 없다 · 같은 걸 연달아 먹지 않는다', 런 로그 vitals `refuse`. 튜토리얼 회복 먹이는 그 종류 묶음을 비워 예외(각본은 1개라 원래 안 막힘 — 방에서 미리 2개 먹인 경우 대비).
+- 235장: 먹이 12종 = 일반 6(속성 묶음, 공통 이름) · 특식 4(종족 이름) · 싸구려 2(공통). 옛 id 는 그대로 새 유형으로(간식 → 싸구려, 고기·사냥감 → 일반, 보양·잔치 → 특식) — 보유 개수 유지. 유형 수치 `nest.foodTypes`(특식 40/+8%/+1 · 일반 12/+3%/+1 · 싸구려 6/+1%/−1), 특식 효과 `nest.foods`(feast 리스크 +10 · tonic 컨디션 +30 · elixir 체력 가득 · relic 판매가 600 → 넘침 골드). 선호·비선호 = 진화체 속성 → `src/data/foods/prefs.json`(자기 속성 선호 ×2 · 약점 속성 비선호 ×0.5·교감 0·연속 2번째부터 −1, `nest.dislikeRun`). 방 반응 말풍선 3종 + 동작(좋아함 뛰기 · 싫어함 고개 젓기). 드롭: 일반 적 = 일반 6종, 강적 = 일반 + 특식, 보물 = 특식, 상인 = 전부. 상점 = 지금 먹이 + 싸구려 2종(234장 4 예정 그대로 안 뺌). 방 먹이 줄 = 가진 것만·한 줄 6칸. 카드에 리스크 아이콘 효과·'체력 가득' 표기.
+- 세이브 형식 69 → 70(`SAVE_MIGRATIONS[69]`: 두 트랙 foodStreak {}·dislikeRun 0, 새 먹이 7종은 0 — sanitizeFoodStock), MIN 54 그대로. BALANCE 115 → 116.
+- 밸런스 가드(11-09 규칙, 보정 없이 기준만): 난이도 '한 단계 아래 강적 승률 ≤ 권장 − 10%p' → **3%p**. 전 3단계 ★3 75%/★4 64%(간격 11) → 후 71%/66%(간격 5, 표본 44판) — 드롭·상인 표가 바뀌어 난수 흐름이 달라짐. 후반 경고 1건 새로(이어하기 4단계 ★4 1바퀴 안 패배 16% > 13%, 경고만).
+- 테스트: 새 `tests/c387.test.ts`(18), 고친 것 c181·c198·c239·c273·c351·c53·c60·c61·c84·dock·economy·gdd193·room-ui + 형식 70 숫자. 전체 3182 통과.
+- 캡처 `docs/captures/c387/`(scripts/c387-proof.cjs, PC 1배): 01 쇠약이 풀렸다 띠 · 02 같은 먹이 3번째 거절 말풍선 · 03 먹이 카드 새 값.
+- 안 한 것: 236장 팔기(별도 지시 대기), 234장 4 상점 먹이 삭제(예정).
+
+## C.388 — 팔기: 모든 상점에서 아무 물건이나 (GDD 236장, v5.555, S-23, 코딩266 Opus)
+- 사용자 원문: "지금 상점에 팔기 기능 없나??? 추가하고, 이미 상점에서 파는 템들은, 살때 가격의 절반으로 팔 수 있고, 상점에서 안파는 것들은 가격 적당히 메겨서 팔 수 있게 ㄱㄱ / 어느 상점에서든, 팔기는 구분없이 다 팔수 있음(소모품 상점에서 장비팔기 가능한 느낌)".
+- `src/sell.ts`(새): `sellRows`(먹이·소모품·다시 뽑기권·안 낀 장비·안 끼운 탈착 특성) · `sellEntry`(개수만큼 빼고 골드 +, 런 로그 sales) · `sellNeedsConfirm` · `foodSellPrice`·`itemSellPrice`. `src/shop.ts shopBuyPrice`(상점 산 값, 덱 칸·타일 뽑기·장비 제외).
+- 값 `BALANCE.provisional.sell`(BALANCE 117): shopRate 0.5 · prices(일반 먹이 15·elixir 200·relic 600 — relic 은 C.387 의 foods.sellPrice 에서 옮김, 넘침 골드도 이 표) · wandererGrade 20/60/150/300 · jadeToGold 10(표만) · confirmAt 100. 장비 = `gear.sellGold`(가방 일괄 판매와 같은 함수).
+- 화면 `src/ui/shopView.ts`: 탭 줄 끝 [팔기](모든 상점·떠돌이 상인), 칩·카드(보유 n · 한 개 값), 상세 창 수량 −/+/+10/전부 + '골드 +n'(`itemDialog qty.ten·maxLabel` 추가), 비싼 것 확인 창, 판 뒤 알림 없음.
+- 세이브 형식 70 → 71 (`SAVE_MIGRATIONS[70]` 두 트랙 runLog.sales = []), MIN 54.
+- 테스트: 새 `tests/c388.test.ts`(11), 형식 71 숫자 갱신. 전체 3194 통과.
+- 캡처 `docs/captures/c388/`(scripts/c388-proof.cjs, 1배): pc·ph-sell-gear-in-consumable-shop — 소모품 상점 [팔기]·장비 칩. 노말 장비 팔면 골드 50 → 65, 목록에서 빠짐, 알림 없음(proof.json).
+- 안 한 것: 가방 화면 안 팔기 버튼(가방 장비 일괄 판매는 그대로), 영옥 물건 판매(팔 수 있는 영옥 물건이 없음).
+
+## C.389 — 복귀 = 대기 보상 창 하나: 잃은 수치를 창에, 노란 복귀 알림 삭제 (GDD 237장, v5.557, S-23, 코딩266 Opus)
+- 사용자 원문(대기 보상 창 캡처와 함께): "여기다가 잠수탄동안 잃은 수치 쓰고, 노란 알람은 없애".
+- `src/ui/app.ts`: 복귀 알림 띠(absenceText 토스트, 233장 1 에서 남겼던 것) 삭제. 같은 내용 `absenceLossLines`(`src/ui/bha/roomLogic.ts`) → 대기 보상 복귀 창(`showIdleReturn(..., loss)`) 보상 목록 아래, 보상 창이 안 뜨면 `showAbsenceReturn`(같은 창 모양, 줄어든 것만 + [확인]). 줄어든 것이 없으면 아무것도 안 띄움. 둘 다 afterTutorials(튜토리얼 카드 뒤).
+- `src/ui/idleView.ts absenceLossBlock` · `room.css .bha-idleloss`(보상 아래일 때만 구분선, 글 색 --bha-danger — 새 색 없음). 방 아이콘 창(showIdlePanel)엔 안 보임(복귀 때 한 번).
+- 이름: 배부름·안정 수치 = 종족 설정(fullnessName·stabilityName), 빈사·사망 = CARE_STATUS_NAMES. 세이브·밸런스 변경 없음.
+- 테스트 새 `tests/c389.test.ts`(4), c364(복귀 창 호출 인자) 갱신.
+- 캡처 `docs/captures/c389/`(scripts/c389-proof.cjs, PC 1배): 01 보상 + 비운 동안 줄어든 것 · 02 줄어든 것만 + [확인] — 둘 다 노란 복귀 띠 없음(proof.json toasts 에 복귀 없음).

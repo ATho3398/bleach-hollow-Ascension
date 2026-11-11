@@ -1,0 +1,62 @@
+{
+  "runs": [
+    {
+      "mode": "pc",
+      "denied": {
+        "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장에 실패했다: 권한 없음(규칙 확인) · permission-denied. 잠시 뒤 다시 올린다.",
+        "retry": {
+          "shown": true,
+          "disabled": false,
+          "label": "다시 올리기",
+          "inside": true
+        }
+      },
+      "during": {
+        "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장에 실패했다: 권한 없음(규칙 확인) · permission-denied. 잠시 뒤 다시 올린다.",
+        "retry": {
+          "shown": true,
+          "disabled": true,
+          "label": "다시 올리기",
+          "inside": true
+        }
+      },
+      "after": {
+        "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장 11/10 19:26.",
+        "retry": {
+          "shown": false,
+          "disabled": false,
+          "label": "다시 올리기",
+          "inside": false
+        }
+      },
+      "uploaded": true
+    },
+    {
+      "mode": "ph",
+      "unavailable": {
+        "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장에 실패했다: 연결 불안정 · unavailable. 잠시 뒤 다시 올린다.",
+        "retry": {
+          "shown": true,
+          "disabled": false,
+          "label": "다시 올리기",
+          "inside": true
+        }
+      },
+      "sdkfail": {
+        "hint": "테스트 사용자 계정으로 로그인했다. 클라우드 저장에 실패했다: 불러오기 실패(앱 다시 열기) · TypeError. 잠시 뒤 다시 올린다.",
+        "retry": {
+          "shown": true,
+          "disabled": false,
+          "label": "다시 올리기",
+          "inside": true
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "warns": [
+    "pc: [클라우드] read 실패: permission-denied — fake permission-denied",
+    "ph: [클라우드] read 실패: unavailable — fake unavailable",
+    "ph: [클라우드] sdk 실패: TypeError — Failed to fetch dynamically imported module"
+  ]
+}

@@ -955,7 +955,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const foeRigLook = foeArtOf(enemy.id)?.rig?.look;
   const foePack = foeRigLook ? rigPackOfLook(foeRigLook) : undefined;
   const foeBodyKey = foePack && foeRigLook ? `${foePack.id}/${foePack.rig.looks[foeRigLook]!.body}` : null;
-  const heavyPixel = enemy.class === 'elite' && !(opts.boss || s.boss) ? eliteHeavyFor(foeBodyKey) : null;
+  // 강적 강공격 + 튜토리얼 각본 전투의 강공격(각본 강공격·막기 단계, GDD 227장 보충 6 — 사용자 "튜토 강공격도 fx 반영 해야지?")에 빨간 세로. 일반 몬스터 평소 강공격·보스는 그대로
+  const heavyPixel = (enemy.class === 'elite' || scripted) && !(opts.boss || s.boss) ? eliteHeavyFor(foeBodyKey) : null;
   if (heavyPixel) for (const L of heavyPixel.layers) void loadPixelFx(fxSheetName(L.fx, L.color === 'element' ? ELITE_HEAVY_ELEMENT : null));
   if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script, heavyPixel });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */

@@ -2,6 +2,7 @@
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
+import foodNamesRaw from '../data/foods/names.json';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
 import { PET_IDS } from '../data/pets';
 import { GEAR_SLOTS, type GearSlot } from '../data/gear';
@@ -119,8 +120,12 @@ export interface FamilyConfig {
 export const NEST_ACTIONS = ['feed', 'sleep', 'pet'] as const;
 export type NestAction = (typeof NEST_ACTIONS)[number];
 
-/** 먹이 종류 5종 (GDD 18-2). 수치는 BALANCE.provisional.nest.foods, 표시 이름은 종족 설정 foodNames */
-export const FOOD_IDS = ['snack', 'basic', 'hearty', 'tonic', 'feast'] as const;
+/** 일반·싸구려 먹이 공통 이름 (GDD 235장) */
+const COMMON_FOOD_NAMES = (foodNamesRaw as { common: Record<string, string> }).common;
+
+/** 먹이 종류 12종 (GDD 235장, C.387 — 옛 18-2 5종): 일반 6(속성 묶음 노멀·물·불·흙·뇌·특수) · 특식 4 · 싸구려 2 순서(방 먹이 줄·가방 순서).
+ *  유형·수치는 BALANCE.provisional.nest.foods. 이름: 일반·싸구려 = 두 종족 공통(src/data/foods/names.json), 특식만 종족 설정 foodNames — parseFactionConfig 가 합친다 */
+export const FOOD_IDS = ['basic', 'sushi', 'roast', 'hearty', 'fizz', 'mushroom', 'feast', 'tonic', 'elixir', 'relic', 'snack', 'scrap'] as const;
 export type FoodId = (typeof FOOD_IDS)[number];
 
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
@@ -143,7 +148,7 @@ export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
 /** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit'] as const;
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit', 'picky', 'foodLike', 'foodDislike', 'foodCheap'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
@@ -277,6 +282,8 @@ export const DEFAULT_ROOM: RoomConfig = {
     idle: ['…'], tired: ['피곤하다…'], risk: ['머리가 아프다…'], weak: ['아직 몸이 무겁다…'], collapsed: ['…일어설 수가 없다.'], happy: ['좋아!'], bondShy: ['…'], bondClose: ['또 와 줬구나.'], bondBest: ['기다리고 있었어.'], hungry: ['배고파하고 있었다.'],
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
     spit: ['더는 못 먹어…', '퉤! …더는 못 먹어.'], // 먹이 뱉음 (GDD 109장 6, C.181)
+    picky: ['같은 건 연달아 안 먹어.', '또 그거야? …다른 걸 줘.'], // 같은 먹이 거절 (GDD 234장 3, C.387)
+    foodLike: ['이거 좋아!', '맛있다!'], foodDislike: ['…이건 별로야.', '으, 싫은 맛이다.'], foodCheap: ['맛없어… 배고프니까 먹는 거야.', '…억지로 삼켰다.'], // 먹이 반응 (GDD 235장 2·3, C.387)
   },
 };
 
@@ -602,7 +609,9 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const a of NEST_ACTIONS) {
     if (!isString(na[a])) errors.push(`nestActions.${a}: 비어 있지 않은 문자열이어야 한다`);
   }
-  const fn = (r.foodNames ?? {}) as Record<string, unknown>;
+  // 일반·싸구려 먹이 이름 = 두 종족 공통 (GDD 235장 사용자 추가): 공용 데이터가 이기고, 종족 설정에는 특식 이름만 적는다
+  const fn = { ...((r.foodNames ?? {}) as Record<string, unknown>), ...COMMON_FOOD_NAMES } as Record<string, unknown>;
+  (r as Record<string, unknown>).foodNames = fn;
   for (const f of FOOD_IDS) {
     if (!isString(fn[f])) errors.push(`foodNames.${f}: 비어 있지 않은 문자열이어야 한다`);
   }

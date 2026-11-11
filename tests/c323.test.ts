@@ -471,7 +471,7 @@ describe('C.323 구조·문구·배포', () => {
     expect(texts.length).toBeGreaterThan(5);
     for (const t of texts) expect(t).not.toMatch(/요\.|습니다|하세요/);
     const settings = src('src/ui/settingsView.ts');
-    expect(settings).toContain("panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint)");
+    expect(settings).toContain("panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.retryButton, cloudNodes.hint)");
     expect(view).toContain("'이메일 로그인'"); // C.325: 둘째 버튼 이름은 cloudSecondLabel (게스트면 [로그아웃])
     expect(view).toContain("button({ label: '취소', variant: 'ghost', onClick: m.close })");
     expect(view).toContain("label: '가입'");
@@ -481,6 +481,6 @@ describe('C.323 구조·문구·배포', () => {
   });
   it('종족 분기 하드코딩 없음 · 세이브 형식 그대로', () => {
     for (const f of ['src/cloudSave.ts', 'src/cloudFirebase.ts', 'src/ui/cloudView.ts']) expect(src(f)).not.toMatch(/=== 'hollow'|=== 'shinigami'/);
-    expect(SAVE_FORMAT_VERSION).toBe(69); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326
+    expect(SAVE_FORMAT_VERSION).toBe(71); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326
   });
 });

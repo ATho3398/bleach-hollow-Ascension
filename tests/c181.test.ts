@@ -1,7 +1,7 @@
 // C.181 (GDD 109장 6·7): 먹이 배부름 고기 3·사냥감 5, 10분에 3개(넘으면 뱉음), 배부름 시간당 감소, 테스트 모드 키링·진화·아이템 생성·스킨·시간 앞당기기
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
-import { feedFood, feedResetMs, feedsLeft, fullnessOfNest, newNest, passNestTime } from '../src/engine/nest';
+import { foodEffect, feedFood, feedResetMs, feedsLeft, fullnessOfNest, newNest, passNestTime } from '../src/engine/nest';
 import { feedNest, loadSave, newSaveData, writeSave, SAVE_FORMAT_VERSION } from '../src/game';
 import { useInventoryItem } from '../src/inventory';
 import { getFaction } from '../src/data/factions';
@@ -16,25 +16,18 @@ const H = 3_600_000;
 /** 실제 시각 근처 (lastFedAt 0 = 먹인 적 없음) */
 const T = Date.now();
 
-describe('109장 6 먹이 수치', () => {
-  // C.272 (GDD 180장 3): 약 ×1.6 — 고기 3 → 5 · 사냥감 5 → 8 · 잔치 7 → 11
-  it('고기(basic) +5 · 사냥감(hearty) +8, 다른 먹이도 약 ×1.6 (C.272)', () => {
-    expect(NX.foods.basic.hunger).toBe(5);
-    expect(NX.foods.hearty.hunger).toBe(8);
-    expect(NX.foods.snack.hunger).toBe(2);
-    expect(NX.foods.tonic.hunger).toBe(3);
-    expect(NX.foods.feast.hunger).toBe(11);
-    expect(NX.feedHunger).toBe(NX.foods.basic.hunger);
-    expect(NX.foods.snack.hunger).toBeLessThan(NX.foods.basic.hunger);
-    expect(NX.foods.feast.hunger).toBeGreaterThan(NX.foods.hearty.hunger);
-    expect(NX.foods.feast.hunger).toBeLessThanOrEqual(12);
+describe('109장 6 먹이 수치 → 235장 3유형 (C.387)', () => {
+  // C.387 (GDD 235장): 옛 종류별 수치(고기 5·사냥감 8…)는 유형 수치로 대체 — 일반 12 · 특식 40 · 싸구려 6
+  it('유형별 배부름: 일반 12 · 특식 40 · 싸구려 6, feedHunger = 일반', () => {
+    expect(foodEffect('basic').hunger).toBe(12);
+    expect(foodEffect('hearty').hunger).toBe(12);
+    expect(foodEffect('feast').hunger).toBe(40);
+    expect(foodEffect('snack').hunger).toBe(6);
+    expect(NX.feedHunger).toBe(foodEffect('basic').hunger);
   });
-  // C.272: 고기 3개 = +15 약 3시간 · 사냥감 3개 = +24 약 4.8시간
-  it('한 번 와서 3개 = 고기 약 3시간 · 사냥감 약 4.8시간 버팀 (시간당 감소)', () => {
+  it('한 번 와서 일반 3개 = 옛 고기 3개(+15)보다 오래 버팀 (시간당 감소)', () => {
     const r = NX.idleHungerPerHour;
-    expect((3 * NX.foods.basic.hunger) / r).toBeGreaterThanOrEqual(2.5);
-    expect((3 * NX.foods.basic.hunger) / r).toBeLessThanOrEqual(3.5);
-    expect((3 * NX.foods.hearty.hunger) / r).toBeLessThanOrEqual(5);
+    expect((3 * foodEffect('basic').hunger) / r).toBeGreaterThan(15 / r);
   });
   it('밤 8시간 비우기: 배부름 61 이상이면 쇠약 없음, 48시간 전에는 빈사 없음', () => {
     const n = newNest(0);
@@ -51,20 +44,22 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
     const n = newNest(0);
     n.hunger = 80;
     expect(feedsLeft(n, T)).toBe(3);
-    for (let i = 0; i < 3; i++) expect(feedFood(n, 'basic', T + i * MIN)).toBe('ate');
-    expect(n.hunger).toBe(80 - 3 * NX.foods.basic.hunger);
+    // 같은 먹이 10분 2개 (GDD 234장 3) — 서로 다른 일반 먹이로 3개
+    const three = ['basic', 'sushi', 'roast'] as const;
+    for (let i = 0; i < 3; i++) expect(feedFood(n, three[i]!, T + i * MIN)).toBe('ate');
+    expect(n.hunger).toBe(80 - 3 * foodEffect('basic').hunger);
     expect(feedsLeft(n, T + 3 * MIN)).toBe(0);
     const bond = n.bond;
     expect(feedFood(n, 'hearty', T + 3 * MIN)).toBe('spat');
-    expect(n.hunger).toBe(80 - 3 * NX.foods.basic.hunger);
+    expect(n.hunger).toBe(80 - 3 * foodEffect('basic').hunger);
     expect(n.bond).toBe(bond);
     expect(feedResetMs(n, T + 3 * MIN)).toBe(2 * MIN + 10 * MIN - 3 * MIN);
   });
   it('마지막으로 먹인 뒤 10분이 지나면 다시 3개 (뱉은 건 시각을 안 옮긴다)', () => {
     const n = newNest(0);
     n.hunger = 90;
-    for (let i = 0; i < 3; i++) feedFood(n, 'snack', T);
-    feedFood(n, 'snack', T + 5 * MIN); // 뱉음
+    for (const f of ['snack', 'scrap', 'basic'] as const) feedFood(n, f, T);
+    feedFood(n, 'sushi', T + 5 * MIN); // 뱉음
     expect(feedsLeft(n, T + 9 * MIN)).toBe(0);
     expect(feedsLeft(n, T + 10 * MIN)).toBe(3);
     expect(feedFood(n, 'snack', T + 10 * MIN)).toBe('ate');
@@ -73,14 +68,19 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
   it('세이브: 먹이는 없어지고 런 로그 vitals 에 spit 한 줄, 보관함 사용도 같은 규칙', () => {
     const save = newSaveData('hollow', 0);
     save.shared.food.basic = 9;
+    save.shared.food.sushi = 1;
     const now = Date.now();
-    for (let i = 0; i < 3; i++) expect(feedNest(save, 'basic', now)).toBe('ate');
+    for (let i = 0; i < 2; i++) expect(feedNest(save, 'basic', now)).toBe('ate');
+    expect(feedNest(save, 'sushi', now)).toBe('ate');
+    expect(feedNest(save, 'basic', now)).toBe('refused'); // 같은 먹이 3개째 = 거절, 먹이 그대로 (GDD 234장 3)
+    expect(save.shared.food.basic).toBe(7);
+    save.nest.foodStreak = {};
     expect(feedNest(save, 'basic', now)).toBe('spat');
-    expect(save.shared.food.basic).toBe(5);
+    expect(save.shared.food.basic).toBe(6);
     expect(save.runLog.vitals.filter((v) => v.kind === 'spit')).toEqual([expect.objectContaining({ kind: 'spit', food: 'basic', at: now })]);
     const r = useInventoryItem(save, getFaction('hollow'), 'food-basic');
     expect(r).toMatchObject({ ok: true, spat: true });
-    expect(save.shared.food.basic).toBe(4);
+    expect(save.shared.food.basic).toBe(5);
   });
   it('세이브 왕복: 먹인 개수·시각이 남고 형식 49', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(49);
@@ -153,7 +153,8 @@ describe('109장 7 테스트 모드', () => {
     s.nest.lastTickMs = now;
     s.nest.hunger = 0;
     s.shared.food.snack = 9;
-    for (let i = 0; i < 3; i++) feedNest(s, 'snack', now);
+    s.shared.food.scrap = 9;
+    for (const f of ['snack', 'scrap', 'snack'] as const) feedNest(s, f, now);
     expect(feedsLeft(s.nest, now)).toBe(0);
     advanceTestTime(s, 10, now);
     expect(feedsLeft(s.nest, now)).toBe(3);

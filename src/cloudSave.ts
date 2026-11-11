@@ -141,6 +141,49 @@ export interface CloudState {
   savedAt: number | null;
   /** 이 기기를 막은 다른 기기 (status 'other-device' 일 때) */
   blockedBy: ActiveDevice | null;
+  /** 마지막 실패의 오류 코드 (GDD 232장 1) — 성공하면 지운다. 화면은 status 'error' 일 때만 보여 준다 */
+  lastError: CloudError | null;
+  /** [다시 올리기] 진행 중 (GDD 232장 2) — 버튼을 흐리게 */
+  retrying: boolean;
+}
+
+/** 클라우드 실패 기록 (GDD 232장): code = Firebase `code`(firestore/ 머리는 뗀다), 없으면 오류 이름. stage = 어디서 실패했나(sdk = Firebase 조각 받기) */
+export interface CloudError {
+  code: string;
+  stage: 'sdk' | 'read' | 'write' | 'device';
+}
+
+/** 오류 → 코드 문자열: Firebase `code` → 없으면 `name` → 'unknown' */
+export function cloudErrorCode(e: unknown): string {
+  const o = (typeof e === 'object' && e !== null ? e : {}) as { code?: unknown; name?: unknown };
+  if (typeof o.code === 'string' && o.code) return o.code.replace(/^firestore\//, '');
+  if (typeof o.name === 'string' && o.name) return o.name;
+  return 'unknown';
+}
+
+/** 코드별 쉬운 말 (GDD 232장 1) */
+export const CLOUD_ERROR_LABEL: Readonly<Record<string, string>> = {
+  'permission-denied': '권한 없음(규칙 확인)',
+  'not-found': '데이터베이스 없음',
+  'failed-precondition': '데이터베이스 없음',
+  unavailable: '연결 불안정',
+  'deadline-exceeded': '연결 불안정',
+};
+export const CLOUD_ERROR_SDK_LABEL = '불러오기 실패(앱 다시 열기)';
+
+/** 설정 '로그인' 줄에 붙는 실패 설명: "권한 없음(규칙 확인) · permission-denied" · SDK 준비 실패 "불러오기 실패(앱 다시 열기) · TypeError" · 그 밖 "알 수 없음(코드)" */
+export function cloudErrorText(err: CloudError): string {
+  if (err.stage === 'sdk') return `${CLOUD_ERROR_SDK_LABEL} · ${err.code}`;
+  const label = CLOUD_ERROR_LABEL[err.code];
+  return label ? `${label} · ${err.code}` : `알 수 없음(${err.code})`;
+}
+
+/** 콘솔 한 줄용 메시지 정리 (GDD 232장 3): uid·이메일을 지우고 짧게 */
+export function scrubCloudMessage(msg: string, uid: string | null): string {
+  let m = msg.replace(/[^\s@()]+@[^\s@()]+\.[^\s@()]+/g, '<email>');
+  if (uid) m = m.split(uid).join('<uid>');
+  m = m.replace(/(users|devices)\/[^\s)/]+/g, '$1/<uid>');
+  return m.length > 200 ? `${m.slice(0, 200)}…` : m;
 }
 
 /** 계정 연동 결과 (CloudSync.linkAccount) */
@@ -454,6 +497,10 @@ export class CloudSync {
   /** 이 기기가 차지 쓰기에 성공한 적이 있는가(이번 로그인) — 없으면 연결될 때 다시 시도 */
   private claimed = false;
   private lastClaimAt = 0;
+  /** 마지막 실패 (GDD 232장 1) */
+  private lastError: CloudError | null = null;
+  /** [다시 올리기] 진행 중 */
+  private retrying = false;
 
   constructor(private readonly host: CloudHost) {
     this.device = deviceIdOf(host.storage);
@@ -490,8 +537,10 @@ export class CloudSync {
   private loadOrRetry(): void {
     void this.ensureBackend().then(() => {
       this.failed = null;
+      if (this.lastError?.stage === 'sdk') this.lastError = null;
       this.emit();
-    }, () => {
+    }, (e: unknown) => {
+      this.recordError('sdk', e);
       this.failed = this.host.online() ? 'error' : 'offline';
       this.emit();
       this.armRetry(() => this.loadOrRetry());
@@ -501,7 +550,45 @@ export class CloudSync {
   state(): CloudState {
     const synced = this.readSynced();
     const savedAt = synced && this.user && synced.uid === this.user.uid ? synced.savedAt : null;
-    return { status: this.status(), user: this.user, savedAt, blockedBy: this.user ? this.blockedBy : null };
+    return { status: this.status(), user: this.user, savedAt, blockedBy: this.user ? this.blockedBy : null, lastError: this.user ? this.lastError : null, retrying: this.retrying };
+  }
+
+  /** 실패 기록 + 콘솔 한 줄 (GDD 232장 1·3): 코드·메시지만 — uid·이메일은 지운다 */
+  private recordError(stage: CloudError['stage'], e: unknown): void {
+    const code = cloudErrorCode(e);
+    this.lastError = { code, stage };
+    const raw = typeof e === 'object' && e !== null && typeof (e as { message?: unknown }).message === 'string' ? (e as { message: string }).message : String(e);
+    console.warn(`[클라우드] ${stage} 실패: ${code} — ${scrubCloudMessage(raw, this.user?.uid ?? null)}`);
+  }
+
+  /**
+   * [다시 올리기] (GDD 232장 2): 재시도 대기를 무시하고 지금 한 번. SDK 가 없으면 다시 받고(로그인 확인이 이어서 맞춘다), 밀린 것이 있으면 올리고, 없으면 서버와 다시 맞춘다.
+   * 실패하면 평소처럼 다음 재시도를 건다
+   */
+  async retryNow(): Promise<void> {
+    if (!this.user || this.retrying || this.blockedBy || this.inflight) return;
+    this.retrying = true;
+    this.clearRetry();
+    this.emit();
+    try {
+      if (!this.backend) {
+        try {
+          await this.ensureBackend();
+          this.failed = null;
+          if (this.lastError?.stage === 'sdk') this.lastError = null;
+        } catch (e) {
+          this.recordError('sdk', e);
+          this.failed = this.host.online() ? 'error' : 'offline';
+          this.armRetry(() => this.loadOrRetry());
+        }
+        return;
+      }
+      if (this.dirty) await this.flush();
+      else await this.reconcileFromServer();
+    } finally {
+      this.retrying = false;
+      this.emit();
+    }
   }
 
   private status(): CloudStatus {
@@ -664,6 +751,7 @@ export class CloudSync {
     this.blocked = false;
     this.tooBig = false;
     this.failed = null;
+    this.lastError = null;
     this.seenRemote = null;
     this.claimed = false;
     this.claiming = false;
@@ -701,7 +789,8 @@ export class CloudSync {
     let b: CloudBackend;
     try {
       b = await this.ensureBackend();
-    } catch {
+    } catch (e) {
+      this.recordError('sdk', e);
       return false;
     }
     if (this.user?.uid !== u.uid) return false;
@@ -712,9 +801,11 @@ export class CloudSync {
       if (this.user?.uid !== u.uid) return false;
       this.claimed = true;
       this.lastClaimAt = this.now();
+      if (this.lastError?.stage === 'device') this.lastError = null;
       this.setBlocked(null);
       return true;
-    } catch {
+    } catch (e) {
+      if (this.user?.uid === u.uid) this.recordError('device', e);
       return false;
     } finally {
       this.claiming = false;
@@ -792,8 +883,8 @@ export class CloudSync {
       if (!d || d.device === this.device) {
         if (this.blockedBy) this.setBlocked(null);
       } else if (!this.blockedBy || this.blockedBy.device !== d.device || this.blockedBy.at !== d.at) this.setBlocked(d);
-    } catch {
-      /* 다음 연결 때 */
+    } catch (e) {
+      this.recordError('device', e); // 다음 연결 때 다시
     }
   }
 
@@ -805,7 +896,8 @@ export class CloudSync {
     let doc: CloudDoc | null;
     try {
       doc = await b.read(u.uid);
-    } catch {
+    } catch (e) {
+      if (this.user?.uid === u.uid) this.recordError('read', e);
       this.failed = this.host.online() ? 'error' : 'offline';
       this.emit();
       this.armRetry(() => void this.reconcileFromServer());
@@ -813,6 +905,7 @@ export class CloudSync {
     }
     if (this.user?.uid !== u.uid || this.blockedBy) return;
     this.failed = null;
+    if (this.lastError?.stage === 'read' || this.lastError?.stage === 'sdk') this.lastError = null;
     this.seenRemote = doc?.savedAt ?? null;
     this.reconcile(doc);
     this.unwatchDoc?.();
@@ -950,7 +1043,8 @@ export class CloudSync {
     let b: CloudBackend;
     try {
       b = await this.ensureBackend();
-    } catch {
+    } catch (e) {
+      this.recordError('sdk', e);
       this.failed = this.host.online() ? 'error' : 'offline';
       this.emit();
       this.armRetry(() => void this.flush());
@@ -966,11 +1060,13 @@ export class CloudSync {
         this.writeSynced({ uid: u.uid, slot: target, savedAt: doc.savedAt, localAt: doc.savedAt, uploadedAt: doc.savedAt });
         this.seenRemote = doc.savedAt;
         this.failed = null;
+        this.lastError = null;
         this.retries = 0;
       }
-    } catch {
+    } catch (e) {
       this.dirty = true; // 다음에 다시 올린다
       if (this.blockedBy) return;
+      if (this.user?.uid === u.uid) this.recordError('write', e);
       this.failed = this.host.online() ? 'error' : 'offline';
       this.armRetry(() => void this.flush());
     } finally {

@@ -1,0 +1,2156 @@
+{
+ "url": "http://localhost:5400/",
+ "before": false,
+ "runs": [
+  {
+   "tag": "pc",
+   "faction": "hollow",
+   "hitDelay": {
+    "basic": 0.213,
+    "block": 0.213,
+    "blockBy": {
+     "family-a:1": 0.213,
+     "family-a:2": 0.213,
+     "family-a:3": 0.194,
+     "family-b:1": 0.2,
+     "family-b:2": 0.2,
+     "family-b:3": 0.2,
+     "family-c:1": 0.653,
+     "family-c:2": 0.533,
+     "family-c:3": 0.533,
+     "combo": 0.533,
+     "liberation": 0.213
+    },
+    "enemy": 0.213,
+    "heavy": 0.593,
+    "counter": 0.213
+   },
+   "renderedFrameMs": 16.7,
+   "cards": [
+    "auto-intro",
+    "guard-now",
+    "guard-ok",
+    "hurt",
+    "nice",
+    "chain-use"
+   ],
+   "hits": [
+    {
+     "kind": "heavy-hit",
+     "stage": "guard-land",
+     "damage": 0,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 615,
+     "damageAt": 13587,
+     "floatAt": 13587,
+     "floatText": "막기",
+     "barAt": 13589,
+     "targetReactAt": 13586,
+     "attackerHitFrameAt": 13520,
+     "vsTargetReactFrames": 0,
+     "vsAttackerHitFrameFrames": 4,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0,
+     "vsAttackerHitRenderedFrames": 4
+    },
+    {
+     "kind": "heavy-hit",
+     "stage": "hurt-hold",
+     "damage": 185.9,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 600,
+     "damageAt": 17887,
+     "floatAt": 17888,
+     "floatText": "−186",
+     "barAt": 17891,
+     "targetReactAt": 17886,
+     "attackerHitFrameAt": 17820,
+     "vsTargetReactFrames": 0,
+     "vsAttackerHitFrameFrames": 4,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0,
+     "vsAttackerHitRenderedFrames": 4
+    },
+    {
+     "kind": "block",
+     "stage": "skill-hold",
+     "family": "family-a",
+     "chain": 1,
+     "damage": 18.1,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 317,
+     "damageAt": 20140,
+     "floatAt": 20140,
+     "floatText": "−18",
+     "barAt": 20142,
+     "targetReactAt": 20119,
+     "attackerHitFrameAt": 20119,
+     "vsTargetReactFrames": 1.2,
+     "vsAttackerHitFrameFrames": 1.2,
+     "ok": false,
+     "vsTargetReactRenderedFrames": 1.2,
+     "vsAttackerHitRenderedFrames": 1.2
+    },
+    {
+     "kind": "script-impact",
+     "stage": "chain-hit",
+     "damage": 75.5,
+     "delayedByEngine": false,
+     "motionStartToDamageMs": 194,
+     "damageAt": 26487,
+     "floatAt": 26487,
+     "floatText": "−75",
+     "barAt": 26494,
+     "targetReactAt": 26503,
+     "attackerHitFrameAt": 26503,
+     "vsTargetReactFrames": -0.9,
+     "vsAttackerHitFrameFrames": -0.9,
+     "ok": true,
+     "vsTargetReactRenderedFrames": -0.9,
+     "vsAttackerHitRenderedFrames": -0.9
+    }
+   ],
+   "timeline": [
+    {
+     "t": 0,
+     "tick": 5,
+     "stage": "auto",
+     "kind": "player-attack",
+     "atTick": 8,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 314,
+     "tick": 7,
+     "stage": "auto",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 314,
+     "tick": 7,
+     "stage": "auto",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 500,
+     "tick": 10,
+     "stage": "auto",
+     "kind": "player-attack",
+     "atTick": 13,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 830,
+     "tick": 13,
+     "stage": "auto",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 830,
+     "tick": 13,
+     "stage": "auto",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 1014,
+     "tick": 15,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 18,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 1014,
+     "tick": 15,
+     "stage": "heavy-charge",
+     "kind": "heavy-cast",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 1347,
+     "tick": 18,
+     "stage": "heavy-charge",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 1364,
+     "tick": 18,
+     "stage": "heavy-charge",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 1513,
+     "tick": 20,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 23,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 1863,
+     "tick": 23,
+     "stage": "heavy-charge",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 1880,
+     "tick": 23,
+     "stage": "heavy-charge",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 2014,
+     "tick": 25,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 28,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 3247,
+     "tick": 28,
+     "stage": "guard-hold",
+     "kind": "block",
+     "landed": false,
+     "damage": 0,
+     "family": null,
+     "chain": 1,
+     "type": "event"
+    },
+    {
+     "t": 3248,
+     "tick": 28,
+     "stage": "guard-hold",
+     "kind": "guard",
+     "text": "0.5초",
+     "type": "float"
+    },
+    {
+     "t": 3313,
+     "tick": 28,
+     "stage": "guard-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 3313,
+     "tick": 28,
+     "stage": "guard-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 3466,
+     "tick": 30,
+     "stage": "guard-hold",
+     "kind": "heavy-hit",
+     "atTick": 36,
+     "damage": 0,
+     "type": "swing"
+    },
+    {
+     "t": 3865,
+     "tick": 34,
+     "stage": "guard-hold",
+     "kind": "player-attack",
+     "atTick": 37,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 4013,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "enemy",
+     "tier": "special",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4080,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "player",
+     "guarded": true,
+     "tier": "special",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4081,
+     "tick": 36,
+     "stage": "guard-land",
+     "kind": "heavy-hit",
+     "landed": true,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 4081,
+     "tick": 36,
+     "stage": "guard-land",
+     "kind": "guard",
+     "text": "막기",
+     "type": "float"
+    },
+    {
+     "t": 4163,
+     "tick": 36,
+     "stage": "guard-land",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4180,
+     "tick": 37,
+     "stage": "guard-land",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4367,
+     "tick": 39,
+     "stage": "guard-land",
+     "kind": "player-attack",
+     "atTick": 42,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 4697,
+     "tick": 42,
+     "stage": "guard-land",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4697,
+     "tick": 42,
+     "stage": "guard-land",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4880,
+     "tick": 44,
+     "stage": "guard-land",
+     "kind": "player-attack",
+     "atTick": 47,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 5613,
+     "tick": 47,
+     "stage": "auto2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 5630,
+     "tick": 47,
+     "stage": "auto2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 5767,
+     "tick": 49,
+     "stage": "auto2",
+     "kind": "player-attack",
+     "atTick": 52,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 6147,
+     "tick": 52,
+     "stage": "auto2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 6163,
+     "tick": 52,
+     "stage": "auto2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 6266,
+     "tick": 54,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 57,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 6266,
+     "tick": 54,
+     "stage": "heavy2",
+     "kind": "heavy-cast",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 6680,
+     "tick": 58,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 6697,
+     "tick": 58,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 6767,
+     "tick": 59,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 62,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 7213,
+     "tick": 63,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 7213,
+     "tick": 63,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 7280,
+     "tick": 64,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 67,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 7713,
+     "tick": 68,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 7730,
+     "tick": 68,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 7780,
+     "tick": 69,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 72,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 7780,
+     "tick": 69,
+     "stage": "heavy2",
+     "kind": "heavy-hit",
+     "atTick": 75,
+     "damage": 185.93344,
+     "type": "swing"
+    },
+    {
+     "t": 8247,
+     "tick": 73,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8263,
+     "tick": 73,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8295,
+     "tick": 74,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 77,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 8313,
+     "tick": 74,
+     "stage": "heavy2",
+     "side": "enemy",
+     "tier": "special",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8380,
+     "tick": 74,
+     "stage": "heavy2",
+     "side": "player",
+     "guarded": false,
+     "tier": "special",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8380,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "kind": "heavy-hit",
+     "landed": true,
+     "damage": 185.93344,
+     "type": "event"
+    },
+    {
+     "t": 8382,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "kind": "hurt",
+     "text": "−186",
+     "type": "float"
+    },
+    {
+     "t": 8747,
+     "tick": 78,
+     "stage": "hurt-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8780,
+     "tick": 78,
+     "stage": "hurt-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8780,
+     "tick": 79,
+     "stage": "hurt-hold",
+     "kind": "player-attack",
+     "atTick": 82,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 9280,
+     "tick": 83,
+     "stage": "hurt-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 9280,
+     "tick": 84,
+     "stage": "hurt-hold",
+     "kind": "player-attack",
+     "atTick": 87,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 9297,
+     "tick": 84,
+     "stage": "hurt-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 9380,
+     "tick": 85,
+     "stage": "hurt",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 10316,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "block",
+     "atTick": 88,
+     "damage": 18.14646153846154,
+     "type": "swing"
+    },
+    {
+     "t": 10320,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "ability",
+     "landed": false,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 10320,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "chain",
+     "text": "기합!",
+     "type": "float"
+    },
+    {
+     "t": 10322,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 88,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 10613,
+     "tick": 87,
+     "stage": "skill-hold",
+     "side": "player",
+     "tier": "chain1",
+     "type": "swing-frame"
+    },
+    {
+     "t": 10613,
+     "tick": 87,
+     "stage": "skill-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain1",
+     "type": "hit-frame"
+    },
+    {
+     "t": 10633,
+     "tick": 88,
+     "stage": "skill-hold",
+     "kind": "block",
+     "landed": true,
+     "damage": 18.14646153846154,
+     "family": "family-a",
+     "chain": 1,
+     "type": "event"
+    },
+    {
+     "t": 10633,
+     "tick": 88,
+     "stage": "skill-hold",
+     "kind": "attack",
+     "text": "−18",
+     "type": "float"
+    },
+    {
+     "t": 10847,
+     "tick": 90,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 93,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 11346,
+     "tick": 95,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 98,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12232,
+     "tick": 100,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 103,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12246,
+     "tick": 100,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 12246,
+     "tick": 100,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 12732,
+     "tick": 105,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 108,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12763,
+     "tick": 105,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 12763,
+     "tick": 105,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 13232,
+     "tick": 110,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 113,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 13296,
+     "tick": 110,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 13313,
+     "tick": 110,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 13746,
+     "tick": 115,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 118,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 13830,
+     "tick": 115,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 13830,
+     "tick": 115,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 14233,
+     "tick": 120,
+     "stage": "chain-spawn",
+     "kind": "player-attack",
+     "atTick": 123,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 14233,
+     "tick": 120,
+     "stage": "chain-spawn",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14347,
+     "tick": 121,
+     "stage": "chain-spawn",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 14347,
+     "tick": 121,
+     "stage": "chain-spawn",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 14546,
+     "tick": 123,
+     "stage": "chain-spawn",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14746,
+     "tick": 125,
+     "stage": "chain-spawn",
+     "kind": "player-attack",
+     "atTick": 128,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 14833,
+     "tick": 126,
+     "stage": "stack-hold",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14880,
+     "tick": 126,
+     "stage": "stack-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 14880,
+     "tick": 126,
+     "stage": "stack-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 15246,
+     "tick": 130,
+     "stage": "stack-hold",
+     "kind": "player-attack",
+     "atTick": 133,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 15396,
+     "tick": 131,
+     "stage": "stack-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 15396,
+     "tick": 131,
+     "stage": "stack-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 15746,
+     "tick": 135,
+     "stage": "stack-hold",
+     "kind": "player-attack",
+     "atTick": 138,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 16786,
+     "tick": 136,
+     "stage": "chain-hit",
+     "kind": "block",
+     "landed": false,
+     "damage": 65.32726153846154,
+     "family": "family-a",
+     "chain": 3,
+     "type": "event"
+    },
+    {
+     "t": 16792,
+     "tick": 136,
+     "stage": "chain-hit",
+     "kind": "ability",
+     "landed": false,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 16792,
+     "tick": 136,
+     "stage": "chain-hit",
+     "kind": "chain",
+     "text": "기합!",
+     "type": "float"
+    },
+    {
+     "t": 16863,
+     "tick": 136,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 16980,
+     "tick": 137,
+     "stage": "chain-hit",
+     "kind": "script-impact",
+     "landed": false,
+     "damage": 75.46059487179488,
+     "type": "event"
+    },
+    {
+     "t": 16981,
+     "tick": 137,
+     "stage": "chain-hit",
+     "kind": "attack",
+     "text": "−75",
+     "type": "float"
+    },
+    {
+     "t": 16983,
+     "tick": 137,
+     "stage": "chain-hit",
+     "kind": "end",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 16996,
+     "tick": 137,
+     "stage": "chain-hit",
+     "side": "player",
+     "tier": "chain3",
+     "type": "swing-frame"
+    },
+    {
+     "t": 16996,
+     "tick": 137,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain3",
+     "type": "hit-frame"
+    }
+   ]
+  },
+  {
+   "tag": "pc",
+   "faction": "shinigami",
+   "hitDelay": {
+    "basic": 0.2,
+    "block": 0.2,
+    "blockBy": {
+     "family-a:1": 0.2,
+     "family-a:2": 0.1,
+     "family-a:3": 0.123,
+     "family-b:1": 0.16,
+     "family-b:2": 0.137,
+     "family-b:3": 0.098,
+     "family-c:1": 0.693,
+     "family-c:2": 0.533,
+     "family-c:3": 0.533,
+     "combo": 0.533,
+     "liberation": 0.2
+    },
+    "enemy": 0.213,
+    "heavy": 0.593,
+    "counter": 0.213
+   },
+   "renderedFrameMs": 16.7,
+   "cards": [
+    "auto-intro",
+    "guard-now",
+    "guard-ok",
+    "hurt",
+    "nice",
+    "chain-use"
+   ],
+   "hits": [
+    {
+     "kind": "heavy-hit",
+     "stage": "guard-land",
+     "damage": 0,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 603,
+     "damageAt": 13540,
+     "floatAt": 13540,
+     "floatText": "막기",
+     "barAt": 13543,
+     "targetReactAt": 13535,
+     "attackerHitFrameAt": 13485,
+     "vsTargetReactFrames": 0.3,
+     "vsAttackerHitFrameFrames": 3.3,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0.3,
+     "vsAttackerHitRenderedFrames": 3.3
+    },
+    {
+     "kind": "heavy-hit",
+     "stage": "hurt-hold",
+     "damage": 185.9,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 586,
+     "damageAt": 17838,
+     "floatAt": 17840,
+     "floatText": "−186",
+     "barAt": 17842,
+     "targetReactAt": 17835,
+     "attackerHitFrameAt": 17785,
+     "vsTargetReactFrames": 0.2,
+     "vsAttackerHitFrameFrames": 3.2,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0.2,
+     "vsAttackerHitRenderedFrames": 3.2
+    },
+    {
+     "kind": "block",
+     "stage": "skill-hold",
+     "family": "family-a",
+     "chain": 1,
+     "damage": 18.1,
+     "delayedByEngine": true,
+     "motionStartToDamageMs": 218,
+     "damageAt": 20004,
+     "floatAt": 20004,
+     "floatText": "−18",
+     "barAt": 20007,
+     "targetReactAt": 20002,
+     "attackerHitFrameAt": 20002,
+     "vsTargetReactFrames": 0.1,
+     "vsAttackerHitFrameFrames": 0.1,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0.1,
+     "vsAttackerHitRenderedFrames": 0.1
+    },
+    {
+     "kind": "script-impact",
+     "stage": "chain-hit",
+     "damage": 75.5,
+     "delayedByEngine": false,
+     "motionStartToDamageMs": 812,
+     "damageAt": 26970,
+     "floatAt": 26970,
+     "floatText": "−75",
+     "barAt": 26976,
+     "targetReactAt": 26968,
+     "attackerHitFrameAt": 26968,
+     "vsTargetReactFrames": 0.1,
+     "vsAttackerHitFrameFrames": 0.1,
+     "ok": true,
+     "vsTargetReactRenderedFrames": 0.1,
+     "vsAttackerHitRenderedFrames": 0.1
+    }
+   ],
+   "timeline": [
+    {
+     "t": 0,
+     "tick": 5,
+     "stage": "auto",
+     "kind": "player-attack",
+     "atTick": 7,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 199,
+     "tick": 6,
+     "stage": "auto",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 199,
+     "tick": 6,
+     "stage": "auto",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 499,
+     "tick": 10,
+     "stage": "auto",
+     "kind": "player-attack",
+     "atTick": 12,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 699,
+     "tick": 11,
+     "stage": "auto",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 699,
+     "tick": 11,
+     "stage": "auto",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 999,
+     "tick": 15,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 17,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 999,
+     "tick": 15,
+     "stage": "heavy-charge",
+     "kind": "heavy-cast",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 1199,
+     "tick": 16,
+     "stage": "heavy-charge",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 1199,
+     "tick": 16,
+     "stage": "heavy-charge",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 1499,
+     "tick": 20,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 22,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 1699,
+     "tick": 21,
+     "stage": "heavy-charge",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 1699,
+     "tick": 21,
+     "stage": "heavy-charge",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 1999,
+     "tick": 25,
+     "stage": "heavy-charge",
+     "kind": "player-attack",
+     "atTick": 27,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 2199,
+     "tick": 26,
+     "stage": "heavy-charge",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 2199,
+     "tick": 26,
+     "stage": "heavy-charge",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 3249,
+     "tick": 28,
+     "stage": "guard-hold",
+     "kind": "block",
+     "landed": false,
+     "damage": 0,
+     "family": null,
+     "chain": 1,
+     "type": "event"
+    },
+    {
+     "t": 3250,
+     "tick": 28,
+     "stage": "guard-hold",
+     "kind": "guard",
+     "text": "0.5초",
+     "type": "float"
+    },
+    {
+     "t": 3468,
+     "tick": 30,
+     "stage": "guard-hold",
+     "kind": "heavy-hit",
+     "atTick": 36,
+     "damage": 0,
+     "type": "swing"
+    },
+    {
+     "t": 3868,
+     "tick": 34,
+     "stage": "guard-hold",
+     "kind": "player-attack",
+     "atTick": 36,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 4015,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "enemy",
+     "tier": "special",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4065,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "player",
+     "guarded": true,
+     "tier": "special",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4066,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4066,
+     "tick": 35,
+     "stage": "guard-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4070,
+     "tick": 36,
+     "stage": "guard-land",
+     "kind": "heavy-hit",
+     "landed": true,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 4070,
+     "tick": 36,
+     "stage": "guard-land",
+     "kind": "guard",
+     "text": "막기",
+     "type": "float"
+    },
+    {
+     "t": 4370,
+     "tick": 39,
+     "stage": "guard-land",
+     "kind": "player-attack",
+     "atTick": 41,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 4565,
+     "tick": 40,
+     "stage": "guard-land",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 4565,
+     "tick": 40,
+     "stage": "guard-land",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 4884,
+     "tick": 44,
+     "stage": "guard-land",
+     "kind": "player-attack",
+     "atTick": 46,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 5065,
+     "tick": 45,
+     "stage": "guard-land",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 5065,
+     "tick": 45,
+     "stage": "guard-land",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 5768,
+     "tick": 49,
+     "stage": "auto2",
+     "kind": "player-attack",
+     "atTick": 51,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 5965,
+     "tick": 50,
+     "stage": "auto2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 5965,
+     "tick": 50,
+     "stage": "auto2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 6268,
+     "tick": 54,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 56,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 6268,
+     "tick": 54,
+     "stage": "heavy2",
+     "kind": "heavy-cast",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 6467,
+     "tick": 55,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 6467,
+     "tick": 55,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 6770,
+     "tick": 59,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 61,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 6966,
+     "tick": 60,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 6966,
+     "tick": 60,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 7282,
+     "tick": 64,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 66,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 7465,
+     "tick": 65,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 7465,
+     "tick": 65,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 7782,
+     "tick": 69,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 71,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 7782,
+     "tick": 69,
+     "stage": "heavy2",
+     "kind": "heavy-hit",
+     "atTick": 75,
+     "damage": 185.93344,
+     "type": "swing"
+    },
+    {
+     "t": 7965,
+     "tick": 70,
+     "stage": "heavy2",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 7965,
+     "tick": 70,
+     "stage": "heavy2",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8282,
+     "tick": 74,
+     "stage": "heavy2",
+     "kind": "player-attack",
+     "atTick": 76,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 8315,
+     "tick": 74,
+     "stage": "heavy2",
+     "side": "enemy",
+     "tier": "special",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8365,
+     "tick": 74,
+     "stage": "heavy2",
+     "side": "player",
+     "guarded": false,
+     "tier": "special",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8368,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "kind": "heavy-hit",
+     "landed": true,
+     "damage": 185.93344,
+     "type": "event"
+    },
+    {
+     "t": 8370,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "kind": "hurt",
+     "text": "−186",
+     "type": "float"
+    },
+    {
+     "t": 8482,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8482,
+     "tick": 75,
+     "stage": "hurt-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 8782,
+     "tick": 79,
+     "stage": "hurt-hold",
+     "kind": "player-attack",
+     "atTick": 81,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 8982,
+     "tick": 80,
+     "stage": "hurt-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 8982,
+     "tick": 80,
+     "stage": "hurt-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 9282,
+     "tick": 84,
+     "stage": "hurt-hold",
+     "kind": "player-attack",
+     "atTick": 86,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 9382,
+     "tick": 85,
+     "stage": "hurt",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 10317,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "block",
+     "atTick": 87,
+     "damage": 18.14646153846154,
+     "type": "swing"
+    },
+    {
+     "t": 10325,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "ability",
+     "landed": false,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 10325,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "chain",
+     "text": "기합!",
+     "type": "float"
+    },
+    {
+     "t": 10326,
+     "tick": 85,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 87,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 10398,
+     "tick": 85,
+     "stage": "skill-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 10532,
+     "tick": 86,
+     "stage": "skill-hold",
+     "side": "player",
+     "tier": "chain1",
+     "type": "swing-frame"
+    },
+    {
+     "t": 10532,
+     "tick": 86,
+     "stage": "skill-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain1",
+     "type": "hit-frame"
+    },
+    {
+     "t": 10534,
+     "tick": 87,
+     "stage": "skill-hold",
+     "kind": "block",
+     "landed": true,
+     "damage": 18.14646153846154,
+     "family": "family-a",
+     "chain": 1,
+     "type": "event"
+    },
+    {
+     "t": 10534,
+     "tick": 87,
+     "stage": "skill-hold",
+     "kind": "attack",
+     "text": "−18",
+     "type": "float"
+    },
+    {
+     "t": 10834,
+     "tick": 90,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 92,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 11334,
+     "tick": 95,
+     "stage": "skill-hold",
+     "kind": "player-attack",
+     "atTick": 97,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12048,
+     "tick": 98,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 12065,
+     "tick": 98,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 12234,
+     "tick": 100,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 102,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12432,
+     "tick": 101,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 12448,
+     "tick": 102,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 12734,
+     "tick": 105,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 107,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 12932,
+     "tick": 106,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 12932,
+     "tick": 106,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 13236,
+     "tick": 110,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 112,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 13432,
+     "tick": 111,
+     "stage": "after-skill",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 13432,
+     "tick": 111,
+     "stage": "after-skill",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 13748,
+     "tick": 115,
+     "stage": "after-skill",
+     "kind": "player-attack",
+     "atTick": 117,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 13932,
+     "tick": 116,
+     "stage": "chain-spawn",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 13932,
+     "tick": 116,
+     "stage": "chain-spawn",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 14148,
+     "tick": 119,
+     "stage": "chain-spawn",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14248,
+     "tick": 120,
+     "stage": "chain-spawn",
+     "kind": "player-attack",
+     "atTick": 122,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 14448,
+     "tick": 121,
+     "stage": "chain-spawn",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 14448,
+     "tick": 121,
+     "stage": "chain-spawn",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 14448,
+     "tick": 122,
+     "stage": "chain-spawn",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14748,
+     "tick": 125,
+     "stage": "stack-hold",
+     "kind": "player-attack",
+     "atTick": 127,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 14749,
+     "tick": 125,
+     "stage": "stack-hold",
+     "kind": "spawn",
+     "landed": false,
+     "type": "event"
+    },
+    {
+     "t": 14948,
+     "tick": 126,
+     "stage": "stack-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 14948,
+     "tick": 126,
+     "stage": "stack-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 15248,
+     "tick": 130,
+     "stage": "stack-hold",
+     "kind": "player-attack",
+     "atTick": 132,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 15448,
+     "tick": 131,
+     "stage": "stack-hold",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 15448,
+     "tick": 131,
+     "stage": "stack-hold",
+     "side": "player",
+     "tier": "basic",
+     "type": "swing-frame"
+    },
+    {
+     "t": 15748,
+     "tick": 135,
+     "stage": "chain-use",
+     "kind": "player-attack",
+     "atTick": 137,
+     "damage": 10.133333333333333,
+     "type": "swing"
+    },
+    {
+     "t": 16688,
+     "tick": 135,
+     "stage": "chain-hit",
+     "kind": "block",
+     "landed": false,
+     "damage": 65.32726153846154,
+     "family": "family-a",
+     "chain": 3,
+     "type": "event"
+    },
+    {
+     "t": 16702,
+     "tick": 135,
+     "stage": "chain-hit",
+     "kind": "ability",
+     "landed": false,
+     "damage": 0,
+     "type": "event"
+    },
+    {
+     "t": 16702,
+     "tick": 135,
+     "stage": "chain-hit",
+     "kind": "chain",
+     "text": "기합!",
+     "type": "float"
+    },
+    {
+     "t": 16831,
+     "tick": 136,
+     "stage": "chain-hit",
+     "side": "player",
+     "tier": "chain3",
+     "type": "swing-frame"
+    },
+    {
+     "t": 16832,
+     "tick": 136,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain3",
+     "type": "hit-frame"
+    },
+    {
+     "t": 16882,
+     "tick": 136,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "basic",
+     "type": "hit-frame"
+    },
+    {
+     "t": 16915,
+     "tick": 137,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain3",
+     "type": "hit-frame"
+    },
+    {
+     "t": 17082,
+     "tick": 138,
+     "stage": "chain-hit",
+     "side": "player",
+     "tier": "chain3",
+     "type": "swing-frame"
+    },
+    {
+     "t": 17365,
+     "tick": 141,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain3",
+     "type": "hit-frame"
+    },
+    {
+     "t": 17498,
+     "tick": 142,
+     "stage": "chain-hit",
+     "side": "player",
+     "tier": "chain3",
+     "type": "swing-frame"
+    },
+    {
+     "t": 17498,
+     "tick": 142,
+     "stage": "chain-hit",
+     "side": "enemy",
+     "guarded": false,
+     "tier": "chain3",
+     "type": "hit-frame"
+    },
+    {
+     "t": 17500,
+     "tick": 142,
+     "stage": "chain-hit",
+     "kind": "script-impact",
+     "landed": false,
+     "damage": 75.46059487179488,
+     "type": "event"
+    },
+    {
+     "t": 17500,
+     "tick": 142,
+     "stage": "chain-hit",
+     "kind": "attack",
+     "text": "−75",
+     "type": "float"
+    },
+    {
+     "t": 17502,
+     "tick": 142,
+     "stage": "chain-hit",
+     "kind": "end",
+     "landed": false,
+     "type": "event"
+    }
+   ]
+  }
+ ],
+ "errors": [],
+ "captures": [
+  {
+   "tag": "pc",
+   "faction": "hollow",
+   "shots": [
+    {
+     "name": "pc-hollow-tut-heavy-cero",
+     "fx": [
+      "custom-cero-blood:enemy:0.7"
+     ],
+     "filters": "",
+     "stage": "hurt-hold",
+     "php": 25,
+     "ehp": 380,
+     "at": 16570
+    }
+   ]
+  },
+  {
+   "tag": "pc",
+   "faction": "shinigami",
+   "shots": [
+    {
+     "name": "pc-shinigami-tut-heavy-cero",
+     "fx": [
+      "custom-cero-blood:enemy:0.7"
+     ],
+     "filters": "",
+     "stage": "hurt-hold",
+     "php": 25,
+     "ehp": 380,
+     "at": 16699
+    }
+   ]
+  }
+ ]
+}

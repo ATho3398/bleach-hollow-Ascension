@@ -118,7 +118,7 @@ export interface ItemDialogSpec {
   /** 그림 위 작은 표시 ("미리보기") */
   tag?: string;
   /** 수량 고르기: max 가 1 이하면 숨긴다. unit = 개당 가격(글자 만들기용) */
-  qty?: { max: number };
+  qty?: { max: number; /** +10 버튼 (팔기 1·10·전부, GDD 236장 4) */ ten?: boolean; /** '최대' 버튼 글 (팔기 = '전부') */ maxLabel?: string };
   /** 아래 큰 버튼들. label 은 수량을 받아 만든다 (예 "골드 160") */
   actions: { label: (qty: number) => string; variant?: 'primary' | 'danger' | 'ghost'; disabled?: boolean; note?: string; onClick: (qty: number) => void; key?: string }[];
   /** 막힌 이유 한 줄 */
@@ -183,19 +183,22 @@ export function itemDialog(s: ItemDialogSpec): () => void {
     minus.disabled = qty <= 1;
     plus.disabled = qty >= max;
     maxBtn.disabled = qty >= max;
+    tenBtn.disabled = qty >= max;
     s.actions.forEach((a, i) => { btns[i]!.replaceChildren(a.label(qty)); });
   };
   const qtyLabel = el('b', 'bha-itemmodal__qty');
   qtyLabel.dataset.qty = '';
   const minus = button({ label: '하나 줄이기', iconOnly: true, icon: 'i-minus', size: 'small', onClick: () => { qty = Math.max(1, qty - 1); refresh(); } });
   const plus = button({ label: '하나 늘리기', iconOnly: true, icon: 'i-plus', size: 'small', onClick: () => { qty = Math.min(max, qty + 1); refresh(); } });
-  const maxBtn = button({ label: '최대', size: 'small', onClick: () => { qty = max; refresh(); } });
+  const maxBtn = button({ label: s.qty?.maxLabel ?? '최대', size: 'small', onClick: () => { qty = max; refresh(); } });
+  const tenBtn = button({ label: '+10', size: 'small', onClick: () => { qty = Math.min(max, qty === 1 ? 10 : qty + 10); refresh(); } });
+  tenBtn.dataset.qtyTen = '';
   minus.dataset.qtyMinus = '';
   plus.dataset.qtyPlus = '';
   maxBtn.dataset.qtyMax = '';
   if (max > 1) {
     const row = el('div', 'bha-itemmodal__qtyrow');
-    row.append(qtyLabel, minus, plus, maxBtn);
+    row.append(qtyLabel, minus, plus, ...(s.qty?.ten && max > 10 ? [tenBtn] : []), maxBtn);
     main.append(row);
   }
   // 막힌 이유 한 줄: 처음부터 있으면 보이고, 흐린 버튼을 누르면 그 버튼의 이유로 바뀐다 (자리 = 본문 안, 버튼은 안 움직임)

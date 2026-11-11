@@ -732,6 +732,7 @@ export function advanceTestTime(save: SaveData, minutes: number, nowMs: number =
   const back = Math.max(0, minutes) * 60_000;
   const n = save.nest;
   if (n.lastFedAt) n.lastFedAt -= back;
+  for (const st of Object.values(n.foodStreak ?? {})) if (st?.at) st.at -= back; // 같은 먹이 한도 (GDD 234장 3)
   if (n.careRequest) n.careRequest = { ...n.careRequest, until: n.careRequest.until - back };
   n.nextCareAt -= back;
   if (n.collapsed && n.collapsedAt) n.collapsedAt -= back;

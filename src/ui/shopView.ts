@@ -24,10 +24,10 @@ import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
-import { shownName } from './displayName';
+import { SELL_GROUPS, SELL_GROUP_NAMES, sellEntry, sellNeedsConfirm, sellRows, type SellEntry, type SellGroup } from '../sell';
 
 /** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 특성(GDD 150장 3) + 떠돌이 상인 */
-export type ShopTab = ShopTabId | 'wanderer';
+export type ShopTab = ShopTabId | 'wanderer' | 'sell'; // 'sell' = 팔기 탭 (GDD 236장 1, 모든 상점·떠돌이 상인)
 /** 상점 → 시장 자리 (이름 = 종족 설정 market.props, GDD 150장 2) */
 export const SHOP_SPOT: Record<ShopKind, MarketSpot> = { consumable: 'shop', gear: 'gearShop', skin: 'skinShop', trait: 'traitShop' };
 /** 상점 이름 (종족 설정) */
@@ -35,7 +35,7 @@ export const shopName = (faction: Pick<FactionConfig, 'market'>, kind: ShopKind)
 /** 색 견본이 참조하는 토큰 부분 (나머지는 토큰 하나) */
 const SWATCH_PART: Partial<Record<CosmeticCategory, string>> = { bar: 'line', shell: 'body', cut: 'line', room: 'line' };
 /** 상점마다 마지막으로 본 탭 (다시 열면 그 탭) */
-const shopUi: { tab: ShopTab; last: Partial<Record<ShopKind, ShopTabId>>; skinSub: SkinSubTab } = { tab: 'food', last: {}, skinSub: 'character' };
+const shopUi: { tab: ShopTab; last: Partial<Record<ShopKind, ShopTabId>>; skinSub: SkinSubTab; sellGroup: SellGroup } = { tab: 'food', last: {}, skinSub: 'character', sellGroup: 'all' };
 /** 화폐 아이콘 (PROMPT 4절: 골드 coin · 영옥 gem) */
 const CUR_ICON: Record<ShopRow['currency'], string> = { gold: 'v2-coin', jade: 'v2-gem' };
 /** 상점 탭 아이콘 (PROMPT 4절·S04 시안: 음식 food · 약 potion · 전투 소모품 sword · 타일 tile · 기타 box …) */
@@ -130,7 +130,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const one = () => (wanderer ? buyWandererItem(save, faction, row.id) : isTrait(row.id) ? buyTraitItem(save, row.id) : buyShopItem(save, faction, row.id));
     const go = () => {
       let bought = 0;
-      let spent = 0;
       let last: (BuyResult & { ok: true }) | null = null;
       let fail = '';
       const petLog0 = save.runLog.pets.length;
@@ -138,7 +137,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
         const r = one();
         if (!r.ok) { fail = r.reason; break; }
         bought++;
-        spent += r.price;
         last = r;
       }
       if (!last) {
@@ -155,9 +153,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
           hd.persist();
           showGuide(faction, 'tile-draw');
         });
-      } else showToast(bought > 1 ? { eyebrow: `상점 — ${cur(last.currency)} −${spent}`, title: `${row.name} ×${bought}`, meta: fail ? `${bought}개만 샀다: ${fail}` : last.detail } : boughtText(row, last), 0, 2600);
-      // 펫 (GDD 90장): 상인 품목으로 얻은 펫은 이름이 보이게 한 줄 더
-      save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).forEach((n, i) => n && showToast(n, i + 1, 4200));
+      } else if (fail) showToast({ eyebrow: '상점', title: `${bought}개만 샀다`, meta: fail }, 0, 2600); // 구매 확인 알림은 뺐다 (GDD 233장 5) — 돈·보유 수는 화면에 바로 보이고, 다 못 산 이유만 남긴다
+      // 펫 (GDD 90장): 상인 품목으로 얻은 펫은 이름이 보이게 한 줄 (펫 얻음 알림은 남긴다, 233장 7)
+      save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).forEach((n, i) => n && showToast(n, i + (fail ? 1 : 0), 4200));
     };
     if (row.confirm) {
       const t = shopConfirmText(row);
@@ -234,14 +232,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const lock = traitToggleLock(save, id);
       if (lock) return showToast({ eyebrow: shopName(faction, 'trait'), title: row.name, meta: lock }, 0, 2400);
       if (!(on ? equipTrait(save, id) : unequipTrait(save, id))) return;
-      hd.persist();
-      showToast({ eyebrow: shopName(faction, 'trait'), title: `${row.name} ${on ? '끼움' : '뺌'}`, meta: on ? '특성 칸에 들어갔다.' : '보유 목록에 남는다.' }, 0, 2000);
+      hd.persist(); // 끼움·뺌 알림은 뺐다 (GDD 233장 5) — 카드 표시가 바뀐다
       return render();
     }
     if (!(on ? equipInventoryItem(save, row.id) : unequipInventoryItem(save, row.id))) return;
     hd.persist();
-    hd.onWear?.();
-    showToast({ eyebrow: '상점', title: `${shownName(row.name)} ${on ? '착용' : '해제'}` }, 0, 1800);
+    hd.onWear?.(); // 착용·해제 알림은 뺐다 (GDD 233장 5) — 카드 표시가 바뀐다
     render();
   };
 
@@ -282,6 +278,61 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     return p;
   };
 
+  // ── 팔기 (GDD 236장): 어느 상점에서든 같은 목록, 받는 돈 = 골드. 판 뒤 알림 없음(233장) — 골드·목록이 바로 바뀐다 ──
+  const where = only ? 'wanderer' : kind;
+  const sellArt = (e: SellEntry): HTMLElement => {
+    if (e.group === 'equipment') {
+      const it = save.shared.gear.items.find((g) => `gear:${g.uid}` === e.key);
+      return gradeArt(iconArt(it ? GEAR_KIND_ICONS[it.kind] : 'i-unknown'), e.grade ?? 'normal');
+    }
+    return iconArt(e.group === 'food' ? 'i-hunger' : e.group === 'trait' ? 'i-slot' : e.group === 'medicine' ? 'i-heal' : e.group === 'battle' ? 'i-practice' : 'i-rare');
+  };
+  const doSell = (e: SellEntry, q: number) => {
+    const go = () => {
+      const r = sellEntry(save, faction, e.key, q, where);
+      if (!r.ok) showToast({ eyebrow: '팔기', title: '팔 수 없다', meta: r.reason }, 0, 2400);
+      else hd.persist();
+      render();
+    };
+    if (sellNeedsConfirm(e, q)) confirmDialog({ title: `${e.name} ${q}개 팔기`, body: `${TRADE_CURRENCY_NAME} +${e.unit * q}. 되돌릴 수 없다.`, yes: '팔기', no: '아니오', onYes: go });
+    else go();
+  };
+  const openSell = (e: SellEntry) => {
+    const close = itemDialog({
+      heading: '팔기', name: e.name,
+      desc: `한 개 ${TRADE_CURRENCY_NAME} ${e.unit}. 판 물건은 되돌릴 수 없다.`,
+      art: sellArt(e), have: `보유 ${e.count}`,
+      qty: { max: e.count, ten: true, maxLabel: '전부' },
+      lock: e.lock,
+      actions: [{ key: 'sell', variant: 'primary', label: (q) => `${TRADE_CURRENCY_NAME} +${e.unit * q}`, disabled: e.lock !== null, note: e.lock ?? undefined, onClick: (q) => { close(); doSell(e, q); } }],
+    });
+  };
+  /** 팔기 탭 본문: 카테고리 칩 + 카드 (장착 중 장비·끼운 특성·영구 해금은 목록에 없음) */
+  const sellBody = (): HTMLElement[] => {
+    const all = sellRows(save, faction);
+    const groups = SELL_GROUPS.filter((g) => g === 'all' || all.some((e) => e.group === g));
+    if (!groups.includes(shopUi.sellGroup)) shopUi.sellGroup = 'all';
+    const chips = categoryTabs(groups.map((g) => ({ id: g, label: SELL_GROUP_NAMES[g], count: String(g === 'all' ? all.length : all.filter((e) => e.group === g).length) })), shopUi.sellGroup, (id) => {
+      shopUi.sellGroup = id as SellGroup;
+      lastScroll = 0;
+      render();
+    }, '팔 물건 종류', true);
+    const shown = shopUi.sellGroup === 'all' ? all : all.filter((e) => e.group === shopUi.sellGroup);
+    const grid = itemGrid(shown.map((e) => {
+      const c = itemCard({
+        id: e.key, name: e.name, detail: `보유 ${e.count}`, art: sellArt(e), // 값은 아래 가격 칸(한 개) — 상세 창에서 개수 고르면 '골드 +n'
+        foot: e.lock ?? `${TRADE_CURRENCY_NAME} +${e.unit}`, price: e.lock ? undefined : { icon: CUR_ICON.gold, value: e.unit },
+        state: e.lock ? 'locked' : undefined, onClick: () => openSell(e),
+      });
+      c.dataset.sell = e.group;
+      if (e.grade) c.classList.add(`is-grade-${e.grade}`);
+      return c;
+    }), '팔 수 있는 물건이 없다.');
+    const note = h('p', 'bha-shop__note', '어느 상점에서든 같은 목록이다. 상점 물건은 산 값의 절반. 장착 중 장비·끼운 특성은 빼고 판다.');
+    note.append(' ', provisionalTag('임시 가격'));
+    return [chips, note, grid];
+  };
+
   function render(): void {
     const prev = root.querySelector<HTMLElement>('.bha-shop .bha-itemgrid');
     if (prev) lastScroll = prev.scrollTop;
@@ -298,16 +349,19 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     wallet.append(coinChip('bha-chip--gold', CUR_ICON.gold, TRADE_CURRENCY_NAME, save.shared.tradeCoins), coinChip('bha-chip--jade', CUR_ICON.jade, JADE_NAME, save.shared.jade));
     wallet.dataset.gold = String(save.shared.tradeCoins);
     wallet.dataset.jade = String(save.shared.jade);
-    const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'wanderer'
+    const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'sell' ? [] : shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
       : shopUi.tab === 'trait'
         ? traitRows(save)
         : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => shopTabOf(r.id) === shopUi.tab);
     // 이 상점의 탭만 (GDD 150장 1): 탭이 하나뿐인 상점(장비·스킨·특성)은 탭 줄 없음
-    const cats = kindTabs.map((id) => ({ id, icon: TAB_ICON[id], label: id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id] }));
+    const tabLabel = (id: ShopTab): string => (id === 'sell' ? '팔기' : id === 'wanderer' ? '사기' : id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id]);
+    // [팔기] 탭은 모든 상점 끝에 (GDD 236장 1) — 탭이 하나뿐이던 상점(장비·스킨·특성)·떠돌이 상인도 이제 탭 줄이 생긴다
+    const tabIds: ShopTab[] = only ? ['wanderer', 'sell'] : [...kindTabs, 'sell'];
+    const cats = tabIds.map((id) => ({ id, icon: id === 'sell' ? CUR_ICON.gold : id === 'wanderer' ? undefined : TAB_ICON[id], label: tabLabel(id) }));
     const tabs = categoryTabs(cats, shopUi.tab, (id) => {
       shopUi.tab = id as ShopTab;
-      shopUi.last[kind] = id as ShopTabId;
+      if (id !== 'sell' && id !== 'wanderer') shopUi.last[kind] = id as ShopTabId;
       lastScroll = 0;
       render();
     }, '상품 분류');
@@ -325,7 +379,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       : null;
     const shown = shopUi.tab === 'skin' ? skinRows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
     const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
-    const grid = itemGrid(devices ?? shown.map(cardOf), empty);
+    const sellParts = shopUi.tab === 'sell' ? sellBody() : null;
+    const grid = sellParts ? sellParts[2]! : itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [(() => {
         const p = h('p', 'bha-shop__note', '특별한 물건은 떠돌이 상인만 판다. 다음 모험에서 돌아오면 떠난다.');
@@ -334,8 +389,8 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       })()]
       : shopUi.tab === 'trait'
         ? [traitNote()]
-        : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), aside: [wallet] }), [...(only || kindTabs.length < 2 ? [] : [tabs]), ...(subTabs ? [subTabs] : []), ...note, grid], []);
+        : sellParts ? sellParts.slice(0, 2) : [];
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), aside: [wallet] }), [tabs, ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
     page.app.dataset.shop = only ? 'wanderer' : kind;
     grid.scrollTop = lastScroll;

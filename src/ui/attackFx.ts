@@ -944,11 +944,15 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         // 마무리 체인 (GDD 146장·224장 2): 피해는 마지막 타격 — 몸의 마지막 동작 타격이 이펙트 마지막 반응보다 늦으면 그때 (맞음 반응도 그때 한 번 더)
         // 착탄은 마지막 동작이 실제로 타격 자세를 올린 순간(재생기 onHit) — 예상 시각 + 여유는 안전장치
         let onFinal: (() => void) | undefined;
+        let finalIsFirst = false; // 한 동작·한 반응: 첫 반응 = 착탄 (onFinal 이 맞음 반응까지 — 두 번 맞지 않게)
         if (cue.windup) {
           const last = bodyLastHitMs(chainBody, anim, bodySwing > 0);
           const bodyLast = last === null ? null : (startAt < 1 ? 0 : startAt) + last;
-          if (bodyLast !== null && bodyLast > lastReact + 1) {
+          // 반응이 한 번뿐이고 그게 몸의 첫(= 마지막) 타격이면 착탄도 그 자세에 (C.385 — 조 3블록이 한 동작이 된 뒤 타이머 착탄이 몸 타격보다 한 프레임 먼저 왔다)
+          const onlyBody = firstFromBody && chainBody.chain.length === 1 && pplan.reactAt.every((r) => r === pplan.reactAt[0]);
+          if (bodyLast !== null && (bodyLast > lastReact + 1 || onlyBody)) {
             landAtFinal = -1;
+            finalIsFirst = onlyBody && !(bodyLast > lastReact + 1);
             onFinal = () => {
               hit(to, level, cue.guarded, 0);
               land();
@@ -958,7 +962,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
             endAt = Math.max(endAt, bodyLast + level.hitMs);
           }
         }
-        const go = () => playChain(anim, chainBody, probe, bodySwing > 0, onFinal, firstFromBody ? () => hit(to, level, cue.guarded, 0) : undefined);
+        const go = () => playChain(anim, chainBody, probe, bodySwing > 0, onFinal, firstFromBody && !finalIsFirst ? () => hit(to, level, cue.guarded, 0) : undefined);
         // 지금 시작이면 바로 (빈 애니메이션 끝을 기다리면 1~2 프레임 늦어 타격 프레임이 맞음 반응보다 뒤로 밀린다, GDD 224장 3)
         if (startAt < 1) go(); // 1ms 미만(부동소수 찌꺼기 포함)은 지금
         else after(from.root, startAt, go);

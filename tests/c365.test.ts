@@ -110,7 +110,7 @@ describe('222장 6: 원정 전투 도중 다시 켜면 그 전투를 들어가�
   });
 
   it('세이브 형식 69 · 68 → 69 마이그레이션 = 빈 battleRestarts', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(69);
+    expect(SAVE_FORMAT_VERSION).toBe(71);
     const s = newSaveData('hollow', T0) as unknown as Record<string, unknown>;
     delete (s.runLog as Record<string, unknown>).battleRestarts;
     s.formatVersion = 68;

@@ -435,6 +435,8 @@ export interface RunLog {
   storyRuns: StoryRunRecord[];
   /** 상점 구매 기록 (C.60, 세이브 형식 24, GDD 25-9): 한 번 살 때마다 */
   shopPurchases: ShopPurchaseRecord[];
+  /** 팔기 기록 (C.388, 세이브 형식 71, GDD 236장 5): 한 번 팔 때마다 무엇·개수·받은 골드 */
+  sales: SaleRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
   /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
@@ -468,13 +470,13 @@ export interface CareRecord {
 
 /** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 빈사(cause: absence 미접속 · defeat 원정 패배), death = 사망(빈사 시간이 다 됨, cause defeat = 빈사로 짐),
  *  revive = 부활(evLoss = 노력치 손실 비율, 그 전 단계·진화체), cure = 약으로 상태 풀림(status), recover = 원정을 마치고 쇠약·피곤 풀림(status).
- *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6).
+ *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6). refuse = 같은 먹이 10분 한도로 거절(먹이는 그대로, C.387 GDD 234장 3).
  *  bond = 그 순간 교감, hours = 비운 시간(미접속 쓰러짐·사망) */
 export interface VitalRecord {
   at: number;
   factionId: string;
-  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit';
-  /** spit: 뱉은 먹이 종류 */
+  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit' | 'refuse';
+  /** spit·refuse: 뱉은·거절한 먹이 종류 */
   food?: string;
   /** tutorial = 튜토리얼 원정 뒤 회복 안내의 빈사 복귀 (GDD 123장 5 수정, C.199) */
   cause?: 'absence' | 'defeat' | 'tutorial';
@@ -578,6 +580,16 @@ export interface IdleRecord {
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
+/** 팔기 1건 (GDD 236장 5): itemId = 판 물건(먹이 food-<id> · 소모품 id · 장비 gear:<등급>:<종류> · 특성 trait-<id>), where = 판 상점 */
+export interface SaleRecord {
+  at: number;
+  factionId: string;
+  itemId: string;
+  count: number;
+  gold: number;
+  where: string;
+}
+
 export interface ShopPurchaseRecord {
   at: number;
   factionId: string;
@@ -666,6 +678,7 @@ export function emptyRunLog(): RunLog {
     rebirths: [],
     bossBattles: [],
     shopPurchases: [],
+    sales: [],
     storyRuns: [],
     towerBattles: [],
     tutorialRewards: [],

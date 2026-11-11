@@ -11,7 +11,7 @@ import { applyAbsenceHunger, newNest } from '../src/engine/nest';
 import { createCombat, playCombatHuman } from '../src/engine/combat';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
 import { FOOD_IDS, groundName, parseFactionConfig, roomOf } from '../src/engine/faction';
-import { rollBattleFood } from '../src/engine/food';
+import { emptyFoodStock, rollBattleFood } from '../src/engine/food';
 import { createRng } from '../src/engine/rng';
 import {
   advance, buildRunRecord, chooseDifficulty, chooseGround, createExpedition, enemyScale, finishRest, lapScale, playExpedition, restoreExpedition, serializeExpedition, startBattle,
@@ -177,7 +177,7 @@ describe('24-3 도감 보상', () => {
     const save = newSaveData('hollow', 0);
     save.formDex = Array.from({ length: forms }, (_, i) => `f${i}`);
     save.titles = Array.from({ length: titles }, (_, i) => ({ titleId: `t${i}` }) as SaveData['titles'][number]);
-    save.shared.food = { snack: 0, basic: 0, hearty: 0, tonic: 0, feast: 0 };
+    save.shared.food = emptyFoodStock();
     return save;
   };
 

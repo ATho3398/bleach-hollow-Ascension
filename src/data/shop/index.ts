@@ -60,9 +60,9 @@ export function skinSubOf(category: string | undefined | null): SkinSubTab {
   return SKIN_SUB_OF[category as CosmeticCategory] ?? 'etc';
 }
 /** 음식 한 줄 (GDD 159장 25·37, provisional blurbs.json): 하는 일만 짧게. 상점 음식 칸·가방 음식 칸이 같이 쓴다 */
-export function foodBlurb(food: FoodId, faction: Pick<FactionConfig, 'fullnessName'>): string {
+export function foodBlurb(food: FoodId, faction: Pick<FactionConfig, 'fullnessName'> & Partial<Pick<FactionConfig, 'riskGaugeName'>>): string {
   const t = (blurbsRaw as { food: Record<string, string> }).food[food];
-  return t ? fixParticles(t.replaceAll('{fullness}', faction.fullnessName)) : '';
+  return t ? fixParticles(t.replaceAll('{fullness}', faction.fullnessName).replaceAll('{risk}', faction.riskGaugeName ?? '리스크')) : '';
 }
 /** 하위 탭이 비었을 때 문구 */
 export const SKIN_SUB_EMPTY = '아직 없음';

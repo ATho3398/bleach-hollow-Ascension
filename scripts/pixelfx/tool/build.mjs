@@ -44,7 +44,7 @@ for (const [fid, abbr] of ORDER) {
 // 치는 쪽 = 그 몸의 강적(게임 적 그림). 자리는 도구 기준(오른쪽에서 왼쪽으로) — 게임이 적 쪽으로 좌우를 뒤집는다
 {
   const eh = json('src/data/enemies/eliteHeavyFx.json');
-  const BODY = { 'humanoid/hb': ['덩치', 'elite-brute'], 'humanoid/hd': ['외눈 길리안', 'elite-gillian'], 'serpent/ref': ['뱀', 'elite-serpent'], 'beast/ref': ['짐승', 'elite-beast'] };
+  const BODY = { 'humanoid/hb': ['덩치', 'elite-brute'], 'humanoid/hd': ['외눈 길리안', 'elite-gillian'], 'serpent/ref': ['뱀', 'elite-serpent'], 'beast/ref': ['짐승', 'elite-beast'], 'humanoid/ho': ['외팔이', 'elite-onearm'], 'spider/ref': ['거미', 'elite-spider'] };
   const fill = (b) => b ?? { chain: [], bodyAt: 0, bodyFromHit: true };
   for (const [bk, st] of Object.entries(eh.byBody)) {
     const [name, char] = BODY[bk] ?? [bk, 'elite-brute'];

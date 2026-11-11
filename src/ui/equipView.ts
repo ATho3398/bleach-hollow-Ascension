@@ -131,10 +131,7 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
         key: `equip-${s}`, label: () => (many ? `${gearSlotName(s, faction)}에 착용${cur ? ' (교체)' : ''}` : `착용${cur ? ' (교체)' : ''}`), variant: 'primary', disabled: locked !== null,
         onClick: () => {
           close();
-          if (equipGearItem(save, uid, s)) {
-            showToast({ eyebrow: equipTitle(faction), title: `${gearName(it, faction)} 착용`, meta: cur ? `${gearName(cur, faction)}은(는) 보관으로` : gearSlotName(s, faction) }, 0, 2400);
-            changed();
-          }
+          if (equipGearItem(save, uid, s)) changed(); // 착용 알림은 뺐다 (GDD 233장 5) — 칸·능력치 줄이 바뀐다
         },
       });
     }
@@ -145,7 +142,7 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
     onClick: () => {
       const r = enhanceGearItem(save, uid);
       close();
-      showToast({ eyebrow: '장비 강화', title: r.ok ? `${gearName(it, faction)} 강화 성공` : '강화할 수 없다', meta: r.ok ? `골드 −${r.gold} · ${gearStatText(it, faction)}` : r.reason }, 0, 2400);
+      if (!r.ok) showToast({ eyebrow: '장비 강화', title: '강화할 수 없다', meta: r.reason }, 0, 2400); // 강화 성공 알림은 뺐다 (GDD 233장 5·6) — 실패 이유만
       if (r.ok) {
         changed();
         openGear(faction, save, uid, changed);
@@ -340,8 +337,9 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 낀 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
       onYes: () => {
         const n = autoEquipGear(save);
-        showToast({ eyebrow: equipTitle(faction), title: n > 0 ? `${n}칸 바꿨다` : '바꿀 것이 없다', meta: n > 0 ? '능력치 줄에 반영' : '빈 칸이 없고 더 센 장비도 없다' }, 0, 2400);
+        // 바꾼 칸 알림은 뺐다 (GDD 233장 5) — 능력치 줄에 반영된다. 바꿀 게 없을 때 이유만 남긴다 (233장 6)
         if (n > 0) changedAt('act:auto')();
+        else showToast({ eyebrow: equipTitle(faction), title: '바꿀 것이 없다', meta: '빈 칸이 없고 더 센 장비도 없다' }, 0, 2400);
       },
     });
   } });
@@ -353,8 +351,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     confirmDialog({
       title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 안 낀 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
       onYes: () => {
-        const r = bulkSellGear(save);
-        showToast({ eyebrow: equipTitle(faction), title: `${r.count}개 판매`, meta: `골드 +${r.gold}` }, 0, 2400);
+        const r = bulkSellGear(save); // 판매 알림은 뺐다 (GDD 233장 5) — 골드·목록이 바뀐다
         if (r.count > 0) changedAt('act:bulk-sell')();
       },
     });

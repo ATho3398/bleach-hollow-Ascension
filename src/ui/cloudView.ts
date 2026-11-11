@@ -1,7 +1,7 @@
 // 클라우드 세이브 화면 조각 (GDD 196장, C.323 · 199장, C.325): 처음 로그인 창 · 설정 > 기타 '로그인' 줄의 글·버튼 · 이메일 창(로그인/연동) · 계정 연동 고르기·거절 창 ·
 // [이 기기 / 클라우드] 고르기 창 · '다른 기기에서 로그인했다' 막기 창.
 // 문구는 text-style '~다' 체, 모양은 기존 bha- 부품(button·info·notice·confirmDialog)만 — 새 CSS 는 창 폭·버튼 세로 쌓기 두 줄(screens-lcd.css). 종족 이름·단계 이름은 종족 설정에서 읽는다.
-import { LINK_TAKEN_TEXT, type ActiveDevice, type CloudConflict, type CloudState, type CloudSummary, type EmailAction, type LinkKind, type LinkOutcome } from '../cloudSave';
+import { cloudErrorText, LINK_TAKEN_TEXT, type ActiveDevice, type CloudConflict, type CloudState, type CloudSummary, type EmailAction, type LinkKind, type LinkOutcome } from '../cloudSave';
 import { FACTIONS } from '../data/factions';
 import { fixParticles } from '../engine/josa';
 import { formatPlayedAt } from '../saveSlots';
@@ -26,6 +26,8 @@ export interface CloudUi {
   reclaim(): Promise<string | null>;
   /** 로그인 창이 보일 때 SDK 를 미리 받는다 (GDD 199장 1) */
   warm(): void;
+  /** [다시 올리기] (GDD 232장 2): 재시도 대기를 무시하고 지금 한 번 */
+  retry(): Promise<void>;
   /** 짧은 알림 (토스트) */
   notify(title: string, meta?: string): void;
   /** 상태가 바뀌면 부른다. 해제 함수 */
@@ -171,10 +173,18 @@ export const CLOUD_STATUS_TEXT: Record<CloudState['status'], string> = {
 /** 게스트 상태 설명 (GDD 199장 3) */
 export const GUEST_HINT = '게스트로 로그인했다. 계정을 연동하면 다른 기기에서도 이어 할 수 있다. 로그아웃하면 게스트 계정에는 다시 들어올 수 없다.';
 
+/** 실패 줄 (GDD 232장 1): "클라우드 저장에 실패했다: 권한 없음(규칙 확인) · permission-denied. 잠시 뒤 다시 올린다." */
+export function cloudErrorLine(s: CloudState): string {
+  return s.lastError ? `클라우드 저장에 실패했다: ${cloudErrorText(s.lastError)}. 잠시 뒤 다시 올린다.` : CLOUD_STATUS_TEXT.error;
+}
+
+/** [다시 올리기] 버튼이 보이는가 (GDD 232장 2): 실패 상태이거나 다시 올리는 중 */
+export const cloudRetryShown = (s: CloudState): boolean => !!s.user && (s.status === 'error' || s.retrying);
+
 /** 설정 줄 설명 글 */
 export function cloudHintText(s: CloudState): string {
   if (!s.user) return CLOUD_STATUS_TEXT[s.status === 'loading' ? 'loading' : 'signed-out'];
-  const tail = s.status === 'synced' && s.savedAt !== null ? `클라우드 저장 ${formatPlayedAt(s.savedAt)}.` : CLOUD_STATUS_TEXT[s.status];
+  const tail = s.status === 'synced' && s.savedAt !== null ? `클라우드 저장 ${formatPlayedAt(s.savedAt)}.` : s.status === 'error' && s.lastError ? cloudErrorLine(s) : CLOUD_STATUS_TEXT[s.status];
   if (s.user.anonymous) return `${GUEST_HINT} ${tail}`;
   const who = s.user.name ?? s.user.email ?? '계정';
   const head = `${who} 계정으로 로그인했다.`; // 이메일(영문)로 끝나면 조사를 못 붙여 '계정으로'
@@ -225,7 +235,7 @@ export function handleLinkOutcome(r: LinkOutcome, notify: (title: string, meta?:
 }
 
 /** 설정 '로그인' 줄의 버튼 둘(Google 로그인/계정 연동/로그아웃 · 이메일 로그인/로그아웃)과 설명. paint 를 부르면 지금 상태로 글을 바꾼다 */
-export function cloudPanelNodes(ui: CloudUi): { button: HTMLButtonElement; emailButton: HTMLButtonElement; hint: HTMLElement; paint: () => void } {
+export function cloudPanelNodes(ui: CloudUi): { button: HTMLButtonElement; emailButton: HTMLButtonElement; retryButton: HTMLButtonElement; hint: HTMLElement; paint: () => void } {
   const b = button({ label: cloudButtonLabel(ui.state()), icon: 'i-cloud', size: 'small' });
   b.dataset.set = 'cloud-login';
   b.classList.add('bha-settings__cloud-btn'); // 로그인 전·후 글자 길이가 달라도 같은 폭·자리 (173장 2)
@@ -233,6 +243,14 @@ export function cloudPanelNodes(ui: CloudUi): { button: HTMLButtonElement; email
   const eb = button({ label: cloudSecondLabel(ui.state()), icon: 'i-key', size: 'small' });
   eb.dataset.set = 'cloud-email';
   eb.classList.add('bha-settings__cloud-btn');
+  // [다시 올리기] (GDD 232장 2): 실패했을 때만 둘째 버튼 아래에 보인다 — 누르면 재시도 대기 없이 한 번, 진행 중이면 흐림
+  const rb = button({ label: '다시 올리기', icon: 'i-cloud', size: 'small' });
+  rb.dataset.set = 'cloud-retry';
+  rb.classList.add('bha-settings__cloud-btn');
+  rb.onclick = () => {
+    if (rb.disabled) return;
+    void ui.retry();
+  };
   const hint = el('p', 'bha-faint bha-settings__hint', cloudHintText(ui.state()));
   const askSignOut = (s: CloudState) => confirmDialog({
     title: '로그아웃',
@@ -268,10 +286,12 @@ export function cloudPanelNodes(ui: CloudUi): { button: HTMLButtonElement; email
     b.disabled = s.status === 'loading';
     eb.disabled = s.status === 'loading';
     eb.classList.toggle('bha-settings__cloud-btn--hidden', !!s.user && !s.user.anonymous);
+    rb.hidden = !cloudRetryShown(s);
+    rb.disabled = s.retrying || s.status === 'saving';
     hint.textContent = cloudHintText(s);
   };
   paint();
-  return { button: b, emailButton: eb, hint, paint };
+  return { button: b, emailButton: eb, retryButton: rb, hint, paint };
 }
 
 /** [이 기기 / 클라우드] 고르기 창 (GDD 196장 4). 뒤로·Esc = 이 기기(클라우드 복사본은 슬롯 백업에 남아 되돌릴 수 있다) */

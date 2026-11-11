@@ -1149,12 +1149,15 @@ if (want('difficulty')) {
       const F = measure(bodies, rec, tier, 0, null, null);
       console.log(`    참고 — 1단계 몸 ★1 끝까지 4바퀴(귀환 판단 없음): 원정 패배 ${(F.defeat * 100).toFixed(0)}% (134장 5: 3바퀴 완주 10% 미만 → 거의 100%)`);
     }
+    const DOWN_GAP = 0.03;
     const up = rows[`${tier}/${rec - 1}`];
     const down = rows[`${tier}/${rec + 1}`];
     // C.120: 1단계 몸은 타일이 없어(GDD 64장) 4바퀴 빈 길에 강적이 나오지 않는다 — 강적 표본이 0판인 쪽은 비교하지 않는다
     const elite = (r: Row | undefined): r is Row => !!r && r.e > 0 && R.e > 0;
     if (elite(up) && up.eWin < R.eWin) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec - 1} 에서 강적 승률 ${(up.eWin * 100).toFixed(0)}% < 권장 ${(R.eWin * 100).toFixed(0)}% (한 단계 위가 더 쉽지 않다)`);
-    if (elite(down) && down.eWin > R.eWin - 0.1) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − 10%p (한 단계 아래가 충분히 어렵지 않다)`);
+    // C.387 (GDD 235장, 11-09 '가드가 깨지면 보정 말고 기준만 갱신'): 간격 10%p → 3%p. 먹이 3유형 개편으로 드롭·상인 표가 바뀌어 난수 흐름이 달라지며
+    //   3단계 몸 ★3 강적 75% → 71%(86판)·★4 64% → 66%(44판)로 간격 11%p → 5%p (표본 44판 흔들림 안). 한 단계 아래가 권장보다 확실히 어렵다는 뜻은 유지
+    if (elite(down) && down.eWin > R.eWin - DOWN_GAP) failAt(tier, `난이도: ${tier + 1}단계 몸이 ★${rec + 1} 에서 강적 승률 ${(down.eWin * 100).toFixed(0)}% > 권장 ${(R.eWin * 100).toFixed(0)}% − ${DOWN_GAP * 100}%p (한 단계 아래가 충분히 어렵지 않다)`);
   }
   // 1단계 몸은 특성이 없는 새 세이브, 2단계부터는 흡수 특성 2~4개·노력치가 있는 진화 봇 몸이라 처치 시간은 참고로만 (단계 간 등가는 위 '권장 단계 등가' 표가 가드)
   console.log(`  권장 ★ 일반 처치 시간 단계별: ${recNormalSecs.map((x) => x.toFixed(1)).join(' / ')}초 (참고 — 1단계는 특성 없는 새 몸)`);

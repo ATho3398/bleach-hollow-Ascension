@@ -84,7 +84,7 @@ describe('132장 3 행동 진행 연출', () => {
   });
   it('카드는 연출이 끝나야 [다음]이 풀린다 · 아이템 쓰기·먹이·온천이 연출을 부른다', () => {
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);'); // C.245: 연출 중에는 창을 숨긴다
-    expect(read('src/ui/lcdScreens.ts')).toContain('if (!(r.ok && !r.spat && useFx(faction, save, e, art, before))) showToast(');
+    expect(read('src/ui/lcdScreens.ts')).toContain('if (r.ok && !r.spat) useFx(faction, save, e, art, before);'); // GDD 233장 5: 사용 확인 띠 없음
     expect(read('src/ui/roomView.ts')).toContain('tween(ACTION_FILL_MS, (t) => {');
     expect(read('src/ui/app.ts')).toContain('return (soaked = previewHomeHp(s.nest, Date.now()).fraction >= TR.spaTo - EPS);'); // C.214: 실제 시간으로 spaTo 까지
   });

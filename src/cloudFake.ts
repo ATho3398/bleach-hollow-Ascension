@@ -13,6 +13,8 @@ interface FakeState {
   active: ActiveDevice | null;
   /** [계정 연동] Google 이 '이미 세이브가 있는 계정'으로 나오게 */
   googleTaken: boolean;
+  /** 클라우드 읽기·쓰기 실패 각본 (GDD 232장 점검): 'permission-denied'·'unavailable' 등 Firestore 코드 — 지우면 [다시 올리기]가 성공한다 */
+  fail: string | null;
 }
 
 export const FAKE_GOOGLE_USER: CloudUser = { uid: 'fake-uid', name: '테스트 사용자', email: 'tester@example.com', anonymous: false };
@@ -27,9 +29,10 @@ function readState(): FakeState {
       doc: sanitizeCloudDoc(raw?.doc),
       active: sanitizeActive(raw?.active),
       googleTaken: raw?.googleTaken === true,
+      fail: typeof raw?.fail === 'string' && raw.fail ? raw.fail : null,
     };
   } catch {
-    return { user: null, doc: null, active: null, googleTaken: false };
+    return { user: null, doc: null, active: null, googleTaken: false, fail: null };
   }
 }
 function writeState(s: FakeState): void {
@@ -37,6 +40,11 @@ function writeState(s: FakeState): void {
 }
 
 export async function loadFakeBackend(): Promise<CloudBackend> {
+  // `?cloudfake=sdkfail`: Firebase 조각을 못 받은 경우 (GDD 232장 1 '불러오기 실패' 문구 확인용)
+  if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('cloudfake') === 'sdkfail') {
+    await new Promise((r) => setTimeout(r, 120));
+    throw new TypeError('Failed to fetch dynamically imported module');
+  }
   const authSubs = new Set<(u: CloudUser | null) => void>();
   const docSubs = new Set<(d: CloudDoc | null) => void>();
   const activeSubs = new Set<(d: ActiveDevice | null) => void>();
@@ -54,6 +62,10 @@ export async function loadFakeBackend(): Promise<CloudBackend> {
     for (const cb of authSubs) cb(u);
   };
   const fail = (code: string) => Object.assign(new Error('fake'), { code });
+  const failIfSet = () => {
+    const f = readState().fail;
+    if (f) throw Object.assign(new Error(`fake ${f}`), { code: f, name: 'FirebaseError' });
+  };
   return {
     watchAuth: (cb) => {
       authSubs.add(cb);
@@ -104,10 +116,12 @@ export async function loadFakeBackend(): Promise<CloudBackend> {
     },
     async read() {
       await delay();
+      failIfSet();
       return readState().doc;
     },
     async write(_uid, doc) {
       await delay();
+      failIfSet();
       const s = readState();
       s.doc = doc;
       writeState(s);

@@ -1,4 +1,4 @@
-// 먹이 = 전리품 (GDD 23-1). 종족 무관 순수 로직: 먹이 5종 보유 개수, 전투 드롭, 보관 상한, 막힘 방지.
+// 먹이 = 전리품 (GDD 23-1). 종족 무관 순수 로직: 먹이 12종(3유형, GDD 235장) 보유 개수, 전투 드롭, 보관 상한, 막힘 방지.
 // 먹이 이름은 종족 설정 foodNames, 효과는 BALANCE.provisional.nest.foods, 개수·드롭 수치는 BALANCE.provisional.food (모두 provisional).
 
 import { BALANCE } from '../config/balance';
@@ -118,8 +118,10 @@ export function settleFood(s: FoodStock, gained: FoodId[], lost: FoodId[] = []):
   return { gained: [...gained], overflow, overflowGold, lost: [...lost], fallback };
 }
 
-/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
+/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 판매가 표(sell.prices, 236장)에 있으면 그 값, 아니면 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
 export function foodOverflowGold(id: FoodId): number {
+  const sell = BALANCE.provisional.sell.prices[`food-${id}`]; // 상점에 없는 먹이 = 판매가 표 (GDD 235장 1 · 236장 2)
+  if (sell) return sell;
   return Math.round((BALANCE.shop.goldPrices[`food-${id}`] ?? 0) * FX.overflowGoldRate);
 }
 

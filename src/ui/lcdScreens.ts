@@ -627,7 +627,7 @@ function useFx(faction: FactionConfig, save: SaveData, e: InventoryEntry, itemAr
   const to = nestShown(save.nest, homeHp(save).fraction);
   const from = riseFrom(before, to);
   // 바뀐 값(오름·내림 — 광기 내림 약 등)이 있으면 상태창을 띄워 그 막대·아이콘만 깜빡임 (GDD 208장 3·4). 오른 값만 차오른다.
-  // 상태창 창 제목('…을(를) 썼다')이 알림 띠와 같은 말이고 자리(화면 위 가운데)도 같아 겹치므로, 창을 띄우면 띠는 없다. 바뀐 값이 없으면(구급상자 등) 예전 알림 띠
+  // 상태창 창 제목('…을(를) 썼다')이 알림 띠와 같은 말이고 자리(화면 위 가운데)도 같아 겹치므로, 창을 띄우면 띠는 없다. 바뀐 값이 없으면(구급상자 등) 아무것도 안 띄운다 (GDD 233장 5)
   const blink = changedKeys(before, to);
   if (!from && blink.length === 0) return false;
   const src = roomCharArt(roomOf(faction, save.wear.talk), faction.id, artTierIndexOf(save), artSkinOf(save)).src;
@@ -647,8 +647,11 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
         close();
         const before = nestShown(save.nest, homeHp(save).fraction);
         const r = useInventoryItem(save, faction, e.id);
-        // 오른 값이 있으면 상태창 차오름만 (GDD 201장 2: 회복 수치 알림 없음), 아니면(뱉음·구급상자·못 씀) 예전 알림 띠
-        if (!(r.ok && !r.spat && useFx(faction, save, e, art, before))) showToast({ eyebrow: '가방', title: r.ok ? (r.spat ? fixParticles(`${e.name}을(를) 뱉었다`) : `${e.name} 사용`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
+        // 오른 값이 있으면 상태창 차오름만 (GDD 201장 2: 회복 수치 알림 없음). '사용' 확인 알림은 뺐다 (GDD 233장 5) — 뱉음·못 씀만 알림 띠 (233장 6)
+        // 상태이상을 풀었을 때만 알림 한 줄 '○○이(가) 풀렸다' (GDD 234장 1) — 상태창(차오름)이 같은 자리에 뜨면 겹치지 않게 띠만
+        if (r.ok && r.cured?.length) showToast({ eyebrow: '가방', title: fixParticles(`${r.cured.join('·')}이(가) 풀렸다`) }, 0, 2400);
+        else if (r.ok && !r.spat) useFx(faction, save, e, art, before);
+        else showToast({ eyebrow: '가방', title: r.ok ? fixParticles(`${e.name}을(를) 뱉었다`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },
     });
@@ -658,10 +661,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: on ? 'take' : 'leave', label: () => (on ? '데리고 가기' : '두고 가기'), variant: on ? 'primary' : 'ghost', disabled: e.lock !== null,
       onClick: () => {
         close();
-        if (choosePet(save, on ? e.id : null)) {
-          showToast({ eyebrow: '펫', title: fixParticles(on ? `${e.name}을(를) 데리고 다닌다` : `${e.name}을(를) 두고 간다`), meta: on ? '모험 바퀴마다 친밀도가 오른다' : undefined }, 0, 2400);
-          changed();
-        }
+        if (choosePet(save, on ? e.id : null)) changed(); // 데리고 다님·두고 감 알림은 뺐다 (GDD 233장 5)
       },
     });
   } else if (e.action === 'equip' || e.action === 'unequip') {
@@ -684,10 +684,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       note: lock ?? undefined,
       onClick: () => {
         close();
-        if (setBattleItem(save, inSlot ? null : e.id)) {
-          showToast({ eyebrow: slot, title: fixParticles(inSlot ? `${e.name}을(를) 뺐다` : `${e.name}을(를) 넣었다`), meta: inSlot ? undefined : '전투 중 [소모품]으로 한 번 쓴다' }, 0, 2000);
-          changed();
-        }
+        if (setBattleItem(save, inSlot ? null : e.id)) changed(); // 넣음·뺌 알림은 뺐다 (GDD 233장 5)
       },
     });
   }

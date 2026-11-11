@@ -1,0 +1,13 @@
+{
+  "_comment": "GDD 235장 (C.387, provisional): 일반·싸구려 먹이 이름 = 두 종족 공통. 일반 6종은 속성과 이어진 이름(선호는 src/data/foods/prefs.json). 특식 이름은 종족 설정 foodNames.",
+  "common": {
+    "basic": "주먹밥",
+    "sushi": "초밥",
+    "roast": "구운 고기",
+    "hearty": "군고구마",
+    "fizz": "탄산 사탕",
+    "mushroom": "검은 버섯",
+    "snack": "눅눅한 건빵",
+    "scrap": "식은 죽"
+  }
+}

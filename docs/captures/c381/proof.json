@@ -1,0 +1,24 @@
+{
+  "url": "http://localhost:5381/",
+  "shots": [
+    "elite-onearm-custom-cero-blood.png",
+    "elite-spider-custom-cero-blood.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "elite-onearm",
+      "picked": "샌드트랩",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    },
+    {
+      "tag": "elite-spider",
+      "picked": "잉크베일",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    }
+  ]
+}

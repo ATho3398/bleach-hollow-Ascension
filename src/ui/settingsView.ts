@@ -580,7 +580,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   // 로그인·클라우드 세이브 (GDD 196장, C.323): 한 줄 — 버튼 하나(로그인 전 [Google 로그인] · 뒤 [로그아웃], 같은 자리) + 상태 설명. 상태가 바뀌면 글만 바뀐다
   const cloudNodes = o.cloud ? cloudPanelNodes(o.cloud) : null;
   if (cloudNodes) {
-    etcPanel.append(...panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.hint).childNodes);
+    etcPanel.append(...panel('로그인', cloudNodes.button, cloudNodes.emailButton, cloudNodes.retryButton, cloudNodes.hint).childNodes);
     cloudNodes.button.closest('.bha-setrow')?.classList.add('bha-setrow--cloud'); // 설명 줄 수가 바뀌어도 버튼은 줄 위쪽 같은 자리
     paints.push(cloudNodes.paint);
   }

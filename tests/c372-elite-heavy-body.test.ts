@@ -15,7 +15,7 @@ const bodyKeyOf = (enemyId: string): string | null => {
 
 describe('C.372 강적 강공격 세로 몸마다', () => {
   it('덩치·외눈 길리안·뱀 세 몸, 기본 = 덩치, 색 = 혈, 불투명도 0.7', () => {
-    expect([...ELITE_HEAVY_BODIES].sort()).toEqual(["beast/ref", "humanoid/hb", "humanoid/hd", "serpent/ref"]);
+    expect([...ELITE_HEAVY_BODIES].sort()).toEqual(["beast/ref", "humanoid/hb", "humanoid/hd", "humanoid/ho", "serpent/ref", "spider/ref"]);
     expect(ELITE_HEAVY_CERO).toBe(eliteHeavyFor('humanoid/hb'));
     expect(eliteHeavyFor(null)).toBe(ELITE_HEAVY_CERO);
     expect(eliteHeavyFor('nope/x')).toBe(ELITE_HEAVY_CERO);
@@ -33,6 +33,8 @@ describe('C.372 강적 강공격 세로 몸마다', () => {
     expect(bodyKeyOf('normal-heavy-seal')).toBe('humanoid/hd');
     expect(bodyKeyOf('poison-heavy-chain')).toBe('serpent/ref');
     expect(bodyKeyOf('thunder-heavy-chain')).toBe('beast/ref'); // C.375 짐승형
+    expect(bodyKeyOf('earth-heavy-seal')).toBe('humanoid/ho'); // C.381 외팔이
+    expect(bodyKeyOf('water-heavy-seal')).toBe('spider/ref'); // C.381 거미
     expect(eliteHeavyFor(bodyKeyOf('normal-heavy-seal')).layers[0]!.dy).not.toBe(eliteHeavyFor('humanoid/hb').layers[0]!.dy);
   });
 });

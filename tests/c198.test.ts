@@ -231,10 +231,12 @@ describe('123장 4 홈 회복', () => {
     expect(n.hpFraction).toBe(0.5);
     expect(n.spa).not.toBeNull();
   });
-  it('모든 먹이가 체력을 조금 채운다 (든든할수록 조금 더)', () => {
+  it('모든 먹이가 체력을 조금 채운다 — 유형별 특식 > 일반 > 싸구려 (GDD 235장 5), 체력 가득 특식 = 1', () => {
     for (const f of ['snack', 'basic', 'hearty', 'tonic', 'feast'] as const) expect(foodHpHeal(f)).toBeGreaterThan(0);
     expect(foodHpHeal('feast')).toBeGreaterThan(foodHpHeal('hearty'));
-    expect(foodHpHeal('hearty')).toBeGreaterThan(foodHpHeal('basic'));
+    expect(foodHpHeal('hearty')).toBe(foodHpHeal('basic'));
+    expect(foodHpHeal('basic')).toBeGreaterThan(foodHpHeal('snack'));
+    expect(foodHpHeal('elixir')).toBe(1);
     const n = newNest(T0);
     n.hpFraction = 0.5;
     doNestAction(n, 'feed', 'hearty', T0);
@@ -329,7 +331,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(69); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(71); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

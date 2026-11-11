@@ -1,0 +1,37 @@
+{
+  "_comment": "GDD 235장 (C.387, provisional): 일반 먹이 선호·비선호 = 진화체 속성으로. 자기 속성 먹이 = 선호, 상성상 약점(나를 이기는 속성) 먹이 = 비선호. 약점이 없는 노멀·특수(혈·독·허)는 서로를 비선호로. 융합(속성 2개)은 둘 다의 선호, 선호가 아닌 비선호. 사용자가 바꿀 곳은 이 파일 하나.",
+  "byElement": {
+    "normal": {
+      "like": "basic",
+      "dislike": "mushroom"
+    },
+    "water": {
+      "like": "sushi",
+      "dislike": "fizz"
+    },
+    "fire": {
+      "like": "roast",
+      "dislike": "sushi"
+    },
+    "earth": {
+      "like": "hearty",
+      "dislike": "roast"
+    },
+    "thunder": {
+      "like": "fizz",
+      "dislike": "hearty"
+    },
+    "blood": {
+      "like": "mushroom",
+      "dislike": "basic"
+    },
+    "poison": {
+      "like": "mushroom",
+      "dislike": "basic"
+    },
+    "kyo": {
+      "like": "mushroom",
+      "dislike": "basic"
+    }
+  }
+}

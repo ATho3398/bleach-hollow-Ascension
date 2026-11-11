@@ -81,6 +81,8 @@
 .bha-homedock__food .bha-num { color: var(--bha-hunger); font-weight: 400; }
 /* 먹이 줄 (GDD 189장 17): 카드 한 줄 + 아래 줄 임시 배지(오른쪽 끝) — 카드 위로 튀어나오지 않는다. 이름·설명 한 줄(말줄임 없이 들어가게 설명은 수치 하나) */
 .bha-homedock__tray--food { flex-wrap: wrap; }
+/* 먹이 12종 (GDD 235장, C.387): 가진 것만, 한 줄 6칸까지 — 넘으면 다음 줄 (이름이 겹치지 않게) */
+.bha-homedock__tray--food .bha-homedock__food { flex: 0 1 calc((100% - 5 * var(--bha-sp-2)) / 6); }
 .bha-homedock__traynote { flex: 1 0 100%; display: flex; justify-content: flex-end; line-height: 1; }
 .bha-homedock__traynote[hidden] { display: none; }
 .bha-homedock__foodname, .bha-homedock__food small { white-space: nowrap; }
@@ -352,6 +354,11 @@
 .bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
 .bha-modal__list .bha-small { color: var(--bha-text-2); }
 .bha-idlebox { display: grid; gap: var(--bha-sp-3); margin-top: var(--bha-sp-3); text-align: left; }
+/* 비운 동안 줄어든 것 (GDD 237장 2): 보상 줄과 구분 — 위 선 + 위험 색 글(기존 토큰) */
+.bha-idlebox > .bha-idleloss { padding-top: var(--bha-sp-2); border-top: 1px solid var(--bha-line-2); } /* 보상 목록 아래일 때만 구분선 */
+.bha-idleloss__head { margin: 0; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); text-align: center; }
+.bha-idleloss__list { margin-top: var(--bha-sp-1); }
+.bha-idleloss__list li { color: var(--bha-danger); }
 
 /* ── 종이인형 (GDD 96장): 부위 그림을 같은 캔버스에 겹치고 뼈 행렬을 transform 으로 건다 ── */
 .bha-doll { position: relative; flex: none; }
