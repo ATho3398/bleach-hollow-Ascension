@@ -365,8 +365,8 @@
    "forearm_L": {
     "art": "ref/forearm_L",
     "at": [
-     32,
-     30
+     30,
+     32
     ],
     "size": [
      24,
@@ -880,5 +880,8 @@
     "leg1b": -12
    }
   }
+ },
+ "bodyMotions": {
+  "ref": "ref"
  }
 }
