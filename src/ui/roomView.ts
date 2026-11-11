@@ -6,7 +6,7 @@ import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, careNest, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
 import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -263,7 +263,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   /** 지금 살아 있는 돌봄 요청의 말풍선 (GDD 82장) */
   const askLine = (): string | null => (n.careRequest ? pickLine(room.talk, careTalkKey('ask', n.careRequest.action)) : null);
-  char.onclick = () => react(askLine() ?? undefined);
+  // 눌러서 말 걸기 (GDD 241-C 7, C.406): 3시간 묶음에서 4번째까지 좋아함(교감 +1) · 5·6번째 싫어하는 티 · 7번째부터 싫어함(교감 −1). 교감이 바뀌면 말풍선 끝에 작게 적는다
+  char.onclick = () => {
+    const out = touchCharacter(save, Date.now());
+    if (!out) return react(askLine() ?? undefined);
+    hd.persist();
+    const tail = out.bond !== 0 ? ` (교감 ${out.bond > 0 ? '+' : '−'}${Math.abs(out.bond)})` : '';
+    if (out.kind === 'like') return react(`${askLine() ?? pickLine(room.talk, 'happy')}${tail}`); // 좋아함 = 기분 좋은 대사 (낯가림 대사 '가까이 오지 마라'에 +1 이 붙지 않게)
+    say(`${pickLine(room.talk, 'refusePet')}${tail}`);
+  };
   // 머리 위 상태 박스 (GDD 189장 4 · 190장 3 — C.281 모양 그대로): 어두운 박스 안 줄마다 아이콘·막대·숫자 + 박스 오른쪽 바깥 ⓘ 하나. 누르면 상태 화면. 돌보기를 하면 그 자리에서 다시 그린다
   const chipRow = el('div', 'bha-room__chips');
   const statusBtn = el('button', 'bha-room__status');

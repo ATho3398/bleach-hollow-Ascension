@@ -82,7 +82,7 @@ describe('82장 응답·거절', () => {
     for (const a of ['pet', 'sleep'] as const) {
       const n = withRequest(a);
       const want = { ...withRequest(a) };
-      doNestAction(want, a);
+      doNestAction(want, a, 'basic', T0 + MIN); // 같은 시각 (C.406: 쇠약 = 마지막으로 먹인 뒤 24시간 — 시각을 본다)
       expect(respondCare(n, a, T0 + MIN, () => 0)).toBe('answered');
       expect([n.condition, n.risk, n.weakened]).toEqual([want.condition, want.risk, want.weakened]);
       expect(n.careRequest).toBeNull();

@@ -45,6 +45,10 @@ export interface NestState {
   /** 먹이 한도 (GDD 109장 6, C.181): 지금 묶음에서 먹은 개수와 마지막으로 먹은 시각(ms, 0 = 없음). 마지막으로 먹은 뒤 feedLimit.windowMinutes 가 지나면 묶음이 새로 시작 */
   feedCount: number;
   lastFedAt: number;
+  /** 쇠약 시계 (GDD 241-C 6, C.406 · 형식 77): 마지막으로 먹이를 먹인 시각(ms) — 새 둥지·환생·부활은 그 시각부터 센다. 이 뒤로 care.weakAfterHours 가 지나면 쇠약. 0 = 모름(세지 않음) */
+  lastMealAt: number;
+  /** 터치로 말 걸기 (GDD 241-C 7, C.406 · 형식 77): 이번 묶음에서 누른 횟수와 마지막으로 누른 시각(ms). bond.touch.resetHours 가 지나면 처음부터 */
+  touch: { count: number; at: number };
   /** 같은 먹이 한도 (GDD 234장 3, C.387 · 형식 70): 종류별로 지금 묶음에서 먹은 개수와 그 종류를 마지막으로 먹은 시각(ms). 그 뒤 feedLimit.windowMinutes 가 지나면 그 종류 묶음이 새로 시작 */
   foodStreak: Partial<Record<FoodId, FoodStreak>>;
   /** 비선호 일반 먹이를 연달아 먹은 횟수 (GDD 235장 2, 형식 70): 비선호가 아닌 먹이를 먹으면 0. 2번째부터 교감 −foodPref.dislikeRunLoss */
@@ -95,7 +99,7 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, foodStreak: {}, dislikeRun: 0, hpFraction: 1, spa: null };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, lastMealAt: nowMs, touch: { count: 0, at: 0 }, foodStreak: {}, dislikeRun: 0, hpFraction: 1, spa: null };
 }
 
 const CR = NX.careRequest;
@@ -148,9 +152,21 @@ export function fullnessOfNest(nest: Pick<NestState, 'hunger'>): number {
   return 100 - nest.hunger;
 }
 
-/** 쇠약·피곤이 걸리는 순간 (GDD 102-2): 문턱 이하가 되면 켠다. 끄는 것은 원정 귀환(applyExpeditionEnd)·약(cureStatus)뿐 */
-export function refreshCareStatus(nest: NestState): void {
-  if (fullnessOfNest(nest) <= CP.weakFullness) nest.weakened = true;
+/** 밥을 안 먹은 지 오래됐나 (GDD 241-C 6): 마지막으로 먹인 뒤 care.weakAfterHours 가 지났다. 시각을 모르면(0) 아니다 */
+export function mealOverdue(nest: Pick<NestState, 'lastMealAt'>, nowMs: number): boolean {
+  const at = nest.lastMealAt ?? 0;
+  return at > 0 && nowMs - at >= CP.weakAfterHours * 3_600_000;
+}
+
+/** 쇠약까지 남은 시간(시간 단위, 0 = 이미 지났다). 시각을 모르면 null */
+export function hoursToWeak(nest: Pick<NestState, 'lastMealAt'>, nowMs: number): number | null {
+  const at = nest.lastMealAt ?? 0;
+  return at > 0 ? Math.max(0, CP.weakAfterHours - (nowMs - at) / 3_600_000) : null;
+}
+
+/** 쇠약·피곤이 걸리는 순간 (GDD 102-2 → 241-C 6): 쇠약 = 마지막으로 먹인 뒤 24시간, 피곤 = 컨디션 문턱 이하. 끄는 것은 원정 귀환(applyExpeditionEnd)·약(cureStatus)뿐 */
+export function refreshCareStatus(nest: NestState, nowMs: number): void {
+  if (mealOverdue(nest, nowMs)) nest.weakened = true;
   if (nest.condition <= CP.tiredCondition) nest.tired = true;
 }
 
@@ -299,7 +315,7 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
     const lowFull = full <= CP.conditionBelowFullness;
     if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
-    refreshCareStatus(nest);
+    refreshCareStatus(nest, endMs - left * 3_600_000);
   }
   return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, hp: home.hp, spaEnded: home.spaEnded };
 }
@@ -381,6 +397,29 @@ export function gainBond(nest: NestState, amount: number, nowMs: number): number
   return add;
 }
 
+/** 터치로 말 걸기 결과 (GDD 241-C 7): like = 좋아함(교감 +) · dislike = 싫어하는 티(변화 없음) · hate = 싫어함(교감 −). n = 이번 묶음에서 몇 번째 터치, bond = 실제로 바뀐 교감 */
+export interface TouchOutcome {
+  kind: 'like' | 'dislike' | 'hate';
+  n: number;
+  bond: number;
+}
+
+/** 캐릭터를 눌러 말을 건다 (GDD 241-C 7): 마지막 터치 뒤 resetHours 가 지났으면 횟수를 처음부터. likeCount 번째까지 교감 +gain(하루 최대와 따로),
+ *  그다음 dislikeCount 번은 싫어하는 티만, 그 뒤로는 교감 −loss. 사망이면 반응 없음(null) */
+export function touchNest(nest: NestState, nowMs: number): TouchOutcome | null {
+  if (nest.dead) return null;
+  const TC = BX.touch;
+  const t = (nest.touch ??= { count: 0, at: 0 });
+  if (!t.at || nowMs - t.at >= TC.resetHours * 3_600_000 || nowMs < t.at) t.count = 0;
+  t.count++;
+  t.at = nowMs;
+  const before = nest.bond;
+  if (t.count <= TC.likeCount) nest.bond = Math.min(BX.max, nest.bond + TC.gain);
+  else if (t.count > TC.likeCount + TC.dislikeCount) nest.bond = Math.max(0, nest.bond - TC.loss);
+  const kind = t.count <= TC.likeCount ? 'like' : t.count <= TC.likeCount + TC.dislikeCount ? 'dislike' : 'hate';
+  return { kind, n: t.count, bond: nest.bond - before };
+}
+
 /** 다시 열었을 때 꺼 둔 동안의 결과 (복귀 알림 띠·런 로그) */
 export interface AbsenceReport {
   /** 비운 실제 시간 */
@@ -443,8 +482,8 @@ export function cureStatus(nest: NestState, status: CareStatus): boolean {
 }
 
 /** 출발 (GDD 102-2): 지금 수치가 문턱을 넘었으면 이번 원정을 마치고 돌아올 때 그 상태가 풀린다. 원정에 실을 쇠약·피곤·빈사를 돌려준다 */
-export function departCare(nest: NestState): { weak: boolean; tired: boolean; dying: boolean } {
-  nest.cureOnReturn = { weak: fullnessOfNest(nest) > CP.weakFullness, tired: nest.condition > CP.tiredCondition };
+export function departCare(nest: NestState, nowMs: number = Date.now()): { weak: boolean; tired: boolean; dying: boolean } {
+  nest.cureOnReturn = { weak: !mealOverdue(nest, nowMs), tired: nest.condition > CP.tiredCondition };
   return { weak: nest.weakened, tired: nest.tired, dying: nest.collapsed };
 }
 
@@ -526,6 +565,7 @@ export function feedFood(nest: NestState, food: FoodId, nowMs: number, reaction:
   doNestAction(nest, 'feed', food, nowMs, reaction);
   nest.feedCount++;
   nest.lastFedAt = nowMs;
+  nest.lastMealAt = nowMs; // 쇠약 시계를 다시 센다 (GDD 241-C 6)
   if (!nest.foodStreak) nest.foodStreak = {};
   nest.foodStreak[food] = { count: (sameFresh ? 0 : nest.foodStreak[food]?.count ?? 0) + 1, at: nowMs };
   return 'ate';
@@ -562,7 +602,7 @@ export function doNestAction(nest: NestState, action: NestAction, food: FoodId =
     nest.condition = clamp(nest.condition + (action === 'sleep' ? NX.sleepCondition : NX.petCondition), 0, MAX);
     // 돌보기도 배가 꺼진다 (GDD 170장 1): 배부름 −careFullnessCost(0 아래 없음), 쇠약 문턱 아래로 내려가면 지금 규칙 그대로 쇠약
     nest.hunger = clamp(nest.hunger + NX.careFullnessCost, 0, 100);
-    refreshCareStatus(nest);
+    refreshCareStatus(nest, nowMs);
   }
   nestRiskAction(nest, action);
   if (bond > 0) gainBond(nest, bond, nowMs);
@@ -603,7 +643,7 @@ export function applyExpeditionEnd(nest: NestState, exp: ExpeditionState, nowMs:
   // 홈 체력 (GDD 123장 2): 남은 원정 체력을 그대로 가져온다(빈사 원정은 최대 체력이 상한만큼이라 그 비율로). 지면 빈사 상한(10%)
   nest.spa = null;
   nest.hpFraction = defeated ? homeHpCap(nest) : homeHpOf({ collapsed: nest.collapsed, hpFraction: Math.min(1, Math.max(0, exp.hpFraction ?? 1)) * (exp.care?.dying ? CP.dying.hpFraction : 1) });
-  refreshCareStatus(nest);
+  refreshCareStatus(nest, nowMs);
   settleRiskToNest(nest, exp);
   nest.lastTickMs = nowMs;
   if (!died) died = checkDying(nest, nowMs);

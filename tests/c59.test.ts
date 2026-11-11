@@ -100,6 +100,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
       if (k === 'meta') continue;
       if (['evolution', 'formDex', 'runLog'].includes(k)) continue; // C.220 형식 57: 5단계 → 4단계 진화 상태·진화체 id 를 옮긴다 (saveTier4.test.ts)
       const got = (m as unknown as Record<string, unknown>)[k];
+      if (k === 'nest') delete (v as Record<string, unknown>).lastMealAt; // C.406: 쇠약 시계는 옮길 때 '지금'으로 다시 센다 (형식 76)
       if (typeof v === 'object' && v !== null && !Array.isArray(v)) expect(got, k).toMatchObject(v);
       else expect(got, k).toEqual(v);
     }

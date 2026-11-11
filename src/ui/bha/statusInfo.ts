@@ -58,7 +58,6 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       // 배부름 = 100 − 허기. 문턱(쇠약·컨디션 감소)은 BALANCE 에서 — 같은 손해가 이어지는 값끼리 한 구간
       const zones = zonesBy(0, 100, (v) => {
         const fx: string[] = [];
-        if (v <= CP.weakFullness) fx.push(CARE_NAMES.weak);
         if (v <= CP.conditionBelowFullness) fx.push(`컨디션 시간당 ${MINUS}${num(CP.conditionPerHour * (v <= 0 ? 2 : 1))}`);
         return fx.length > 0 ? fx.join(' · ') : '손해가 없다';
       });
@@ -117,13 +116,14 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
         };
       });
       return gaugeDoc(
-        `${a.feed}·${a.sleep}·${a.pet}(으)로만 오르고, 약으로는 오르지 않는다`,
+        `${a.feed}·${a.sleep}·${a.pet}, 그리고 가볍게 눌러 말을 걸면 오른다`,
         ['높을수록 빈사에서 오래 버티고, 부활 손실이 줄고, 대기 보상이 는다', `단계: ${BOND_STAGE_NAMES.join(' → ')}`],
         zones, value,
         [
           numLine(a.feed, signed(BD.gain.feed)),
           numLine(`${a.sleep}·${a.pet}(돌봄 요청 응답)`, `${a.sleep} ${signed(BD.gain.sleep)}`, `${a.pet} ${signed(BD.gain.pet)}`),
           numLine('하루 최대', signed(BD.dailyMax)),
+          numLine('눌러서 말 걸기', `${BD.touch.likeCount}번째까지 ${signed(BD.touch.gain)}`, `${BD.touch.likeCount + BD.touch.dislikeCount + 1}번째부터 ${signed(-BD.touch.loss)}`, `${BD.touch.resetHours}시간 뒤 처음부터`),
           numLine('꺼 둔 동안', `${BD.decayHours}시간마다 ${MINUS}1`),
           numLine(CARE_NAMES.collapsed, signed(-BD.collapseLoss)),
           numLine('사망·부활', '절반'),
@@ -136,9 +136,9 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
     }
     case 'weak':
       return ailmentDoc(
-        `${f.fullnessName}이(가) ${CP.weakFullness} 이하가 되는 순간 걸린다`,
+        `${a.feed}을(를) 안 준 지 ${CP.weakAfterHours}시간이 지나면 걸린다`,
         [numLine('모험 전투', `최대 체력 ${pctDelta(-CP.weakMaxHpCut)}`), numLine('대기 보상', `×${BALANCE.provisional.idle.weakenedRate}`)],
-        [`${f.fullnessName}을(를) ${CP.weakFullness} 넘게 채우고 모험을 한 번 다녀오면 풀린다`, `${medicineName('weak')}을(를) 먹이면 바로 풀린다`],
+        [`${a.feed}을(를) 주고 모험을 한 번 다녀오면 풀린다`, `${medicineName('weak')}을(를) 먹이면 바로 풀린다`],
       );
     case 'tired':
       return ailmentDoc(

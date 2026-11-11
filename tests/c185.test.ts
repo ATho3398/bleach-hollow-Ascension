@@ -188,6 +188,6 @@ describe('111장 후속 결정 2: 노멀 빈 칸 규칙 안내 한 줄', () => {
       expect(formHint(normalT4!, f.id)).toContain(note);
     }
     expect(read('src/ui/absorbView.ts')).toContain('normalSlotNote(faction.slotName)');
-    expect(read('src/ui/evolutionPanel.ts')).toContain('normalSlotNote(faction.slotName)');
+    expect(read('src/data/help/screens.json')).toContain('{normalSlotNote}'); // C.406 (GDD 241-C 9): 상태 화면 진화 안내 글 → 도움말 [진화]
   });
 });

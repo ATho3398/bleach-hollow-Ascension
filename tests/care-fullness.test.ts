@@ -42,12 +42,15 @@ describe('돌보기 배부름 감소 (GDD 170장 1)', () => {
     expect(n.hunger).toBe(100);
   });
 
-  it('쇠약 문턱 아래로 내려가면 지금 규칙 그대로 쇠약', () => {
-    const n = newNest(0);
-    n.hunger = 100 - (NX.care.weakFullness + 1);
+  it('돌보기로 배부름이 낮아져도 쇠약이 아니다 — 쇠약은 먹인 뒤 24시간 (C.406, GDD 241-C 6)', () => {
+    const T = 5_000_000;
+    const n = newNest(T);
+    n.hunger = 100 - 21;
     expect(n.weakened).toBe(false);
-    doNestAction(n, 'sleep', 'basic', 0);
-    expect(fullnessOfNest(n)).toBe(NX.care.weakFullness);
+    doNestAction(n, 'sleep', 'basic', T + 1000);
+    expect(fullnessOfNest(n)).toBe(20);
+    expect(n.weakened).toBe(false);
+    doNestAction(n, 'sleep', 'basic', T + NX.care.weakAfterHours * 3_600_000);
     expect(n.weakened).toBe(true);
   });
 

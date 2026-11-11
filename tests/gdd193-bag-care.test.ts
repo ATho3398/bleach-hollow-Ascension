@@ -80,7 +80,9 @@ describe('193장 15 상태이상 푸는 법 짧게', () => {
     const f = getFaction('shinigami');
     expect(careStatusShort({ hunger: 0, condition: 100 }, f).tired).toBe('모험 1번');
     expect(careStatusShort({ hunger: 0, condition: 10 }, f).tired).toBe('컨디션 채우기');
-    expect(careStatusShort({ hunger: 95, condition: 100 }, f).weak).toBe(`${f.fullnessName} 채우기`);
+    // C.406 (GDD 241-C 6): 쇠약 = 먹인 뒤 24시간 — 아직 안 먹였으면 '먹이 주기', 먹였으면 '모험 1번'
+    expect(careStatusShort({ hunger: 95, condition: 100, lastMealAt: 1 }, { feedName: '먹이' }, 1 + 25 * 3_600_000).weak).toBe('먹이 주기');
+    expect(careStatusShort({ hunger: 95, condition: 100, lastMealAt: 1 }, { feedName: '먹이' }, 1 + 3_600_000).weak).toBe('모험 1번');
     const chips = statusChips({ hunger: 0, condition: 100, risk: 0, weakened: false, tired: true }, f);
     expect(chips.find((c) => c.kind === 'tired')!.short).toBe('모험 1번');
   });

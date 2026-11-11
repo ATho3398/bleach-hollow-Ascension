@@ -81,6 +81,9 @@
       "arrhiddend"
     ]
   },
+  "specialLooks": [
+    { "id": "cyclops", "name": "외눈형", "toTierIndex": 1, "minBondCare": 3, "look": "gilliancyclops", "bonusEv": 5 }
+  ],
   "tierLooks": {
     "2": {
       "stat": { "atk": "gillian", "int": "gillian", "hp": "gillian", "spr": "gillian", "spd": "gillian", "def": "gillian" }

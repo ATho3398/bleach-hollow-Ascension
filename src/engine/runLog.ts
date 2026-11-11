@@ -221,6 +221,8 @@ export interface EvolutionRecord {
   formId: string;
   /** C.225 (GDD 148장) → C.226 (149장): 이 진화로 특성을 받은 결과 — new 새로 받음 · replaced 3단계 특성(from) → 새 특성 · owned 이미 가져 안 받음(from = 사라진 3단계 특성) · full 칸이 없어 못 받음 (C.225 의 enhanced 는 옛 기록에만). 특성을 주지 않는 진화면 없음 */
   abilityGain?: { kind: 'new' | 'replaced' | 'enhanced' | 'owned' | 'full'; id: string; from?: string; /** C.227 (GDD 150장 3): 진화 특성 칸을 비우려고 보유 목록으로 뺀 탈착 특성 */ bumped?: string };
+  /** C.406 (GDD 241-C 4): 숨은 모습으로 진화했으면 그 id(종족 설정 specialLooks) · 그 단계 동안 교감한 수 · 보너스를 이번에 받았나(세이브에서 처음 1번만) */
+  specialLook?: { id: string; bondCare: number; bonus: boolean };
   /** C.9 필드(조합 키): 의미가 사라져 새 기록에서는 비운다. C.9 기록에만 있다. 같이 있던 옛 안정 수치 stability 는 C.391 (형식 72) 에서 지운다 */
   comboKey?: string;
 }
@@ -470,6 +472,8 @@ export interface CareRecord {
   answered: { pet: number; sleep: number };
   refused: { pet: number; sleep: number };
   missed: number;
+  /** 눌러서 말 걸기 누계 (GDD 241-C 7, C.406): 좋아함(교감 +) · 싫어하는 티 · 싫어함(교감 −). 옛 기록엔 없음 = 0 */
+  touch?: { like: number; dislike: number; hate: number };
 }
 
 /** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 빈사(cause: absence 미접속 · defeat 원정 패배), death = 사망(빈사 시간이 다 됨, cause defeat = 빈사로 짐),

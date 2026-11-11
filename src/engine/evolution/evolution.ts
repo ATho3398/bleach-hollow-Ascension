@@ -58,6 +58,8 @@ export interface EvolutionState {
   faints?: number;
   longAbsences?: number;
   hunterRuns?: number;
+  /** 이 단계 동안 교감한 수 (GDD 241-C 4, C.406 — 숨은 모습 조건): 쓰다듬기 요청에 응답 + 눌러서 말 걸기(좋아함). 진화하면 0, 옛 세이브엔 없음 = 0 */
+  bondCare?: number;
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
   /** 특성 보유·장착 (C.220, GDD 126-1 수정): 진화할 때 얻고 환생해도 넘긴다. 없으면(점검 도구가 만든 옛 모양) 지금 진화체 특성을 전부 쓴다 */
@@ -168,6 +170,11 @@ export function recordEvolutionFaint(e: EvolutionState): void {
 }
 
 /** 24시간 넘게 꺼 뒀다 돌아왔다 (안정형 조건) */
+/** 이 단계에서 교감했다 (숨은 모습 조건, GDD 241-C 4) */
+export function recordEvolutionBondCare(e: EvolutionState): void {
+  e.bondCare = (e.bondCare ?? 0) + 1;
+}
+
 export function recordEvolutionLongAbsence(e: EvolutionState): void {
   e.longAbsences = (e.longAbsences ?? 0) + 1;
 }
@@ -350,6 +357,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.faints;
   delete e.longAbsences;
   delete e.hunterRuns;
+  delete e.bondCare;
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
   // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음

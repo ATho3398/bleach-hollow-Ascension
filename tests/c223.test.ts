@@ -71,7 +71,7 @@ describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () =
     expect(RECOVER_SCENES.length).toBeLessThanOrEqual(5); // 241-B 5 배부름 카드 +1
   });
   it('새 세이브 가방 = 구급상자 3 + 반창고 3·붕대 2·회복약 1', () => {
-    expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 });
+    expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'med-iv': 3, 'med-energy': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 }); // C.406 (GDD 241-C 5): 치료제 각 3개
   });
   it('첫 모험 회복 물건 안내 노란 알림은 161장에서 뺐다 (소모품은 알리지 않는다)', () => {
     expect(read('src/ui/app.ts')).not.toContain("title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다'");
@@ -138,7 +138,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
 
 describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
   it('하루 판매 기록이 빈 것으로 생기고, 가방 개수(옛 id)는 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(76); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[56]).toBe('function');
     const s = newSaveData('hollow', T0);
     s.shared.items = { 'battle-potion': 4, 'w-hp-potion': 1 };

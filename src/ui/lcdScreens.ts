@@ -116,7 +116,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
       },
     }));
     /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
-    const fix = careStatusShort(n, faction);
+    const fix = careStatusShort(n, { feedName: faction.nestActionsShort?.feed ?? faction.nestActions.feed });
     const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string) => {
       const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
       // 푸는 법 짧게 (GDD 193장 15) — 이름 뒤 흐린 글. 자세한 것은 ⓘ
@@ -226,7 +226,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   rightScroll.append(stats, evoPanel);
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
-  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, holdingsPanel(faction, save), skinPanel(faction, save, persist)], [rightScroll]);
+  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, skinPanel(faction, save, persist)], [rightScroll]);
 }
 
 /** 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 눌렀을 때·기기로 골랐을 때 예전 ⓘ 와 같은 창. 칸 글자는 그대로 읽힌다 */
@@ -305,24 +305,7 @@ export function bagWallet(save: Pick<SaveData, 'shared'>): HTMLElement {
   return wallet;
 }
 
-/** 가진 것 (GDD 23-1·22-3·23-4·25-9): 먹이 종류별 개수, 영혼 결정, 골드·영옥(상점), 다시 뽑기권 */
-function holdingsPanel(faction: FactionConfig, save: SaveData): HTMLElement {
-  const p = panel({ title: '가진 것' });
-  p.setAttribute('aria-label', '가진 것');
-  const food = h('p', 'bha-small');
-  food.append(`${faction.foodGroupName}: `, FOOD_IDS.map((id) => `${faction.foodNames[id]} ${save.shared.food[id]}`).join(' · '));
-  const crystals = h('p', 'bha-small');
-  crystals.append(`${SOUL_CRYSTAL_NAME} `, h('b', 'bha-num', String(save.shared.soulCrystals)));
-  const coins = h('p', 'bha-small');
-  coins.dataset.currency = 'trade';
-  coins.append(`${TRADE_CURRENCY_NAME} `, h('b', 'bha-num', String(save.shared.tradeCoins)), ' ', h('span', 'bha-faint', '상점'));
-  const jade = h('p', 'bha-small');
-  jade.dataset.currency = 'jade';
-  jade.append(`${JADE_NAME} `, h('b', 'bha-num', String(save.shared.jade)), ' ', h('span', 'bha-faint', '스킨 상점 (꾸밈)'));
-  p.append(food, crystals, coins, jade);
-  if (save.shared.rerollTickets > 0) p.append(h('p', 'bha-small', `다시 뽑기권 ${save.shared.rerollTickets}장`));
-  return p;
-}
+// 상태 화면의 '가진 것' 칸(먹이·영혼 결정·골드·영옥)은 뺐다 (GDD 241-C 9, C.406) — 재화는 가방·상점 머리에서 본다
 
 type ChestTab = 'gear' | 'slots' | 'tiles' | 'items' | 'skin' | 'material';
 const chestUi: { tab: ChestTab; traits: TraitsTabState; synth: boolean } = { tab: 'gear', traits: {}, synth: false };

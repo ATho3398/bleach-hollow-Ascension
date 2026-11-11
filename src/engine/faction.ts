@@ -141,6 +141,17 @@ export const ROOM_PROPS = ['altar', 'book', 'chest', 'outside', 'rank', 'hogyoku
 export type RoomProp = (typeof ROOM_PROPS)[number];
 /** 월드맵 장소 (GDD 130장 2·139장 1): 홈(방)·시장·수련장(158장 1)·모험(출발 준비 화면)·탑(도전의 탑 화면)·온천(153장 1). ▲▼ 순서도 이 순서 */
 /** rank = 번호 쟁탈전·진급 시험 (GDD 241-C 3·241-E 3, C.394): 옛 수련장(training) 자리 — 수련장은 방 물건(altar)으로 */
+/** 숨은 모습 1종 (GDD 241-C 4): toTierIndex = 이 단계가 되는 진화에서(1 = 2단계), minBondCare = 그 전 단계 동안 교감한 수(쓰다듬기 응답·눌러서 말 걸기) 이 이상, look = 스킨 id,
+ *  bonusEv = 모든 능력치에 주는 상한 밖 노력치(능력치 +n, 노력치 상한은 그만큼(n × 6) 넓어진다) — 세이브 전체에서 처음 1번만 */
+export interface SpecialLookDef {
+  id: string;
+  name: string;
+  toTierIndex: number;
+  minBondCare: number;
+  look: string;
+  bonusEv: number;
+}
+
 export const WORLD_PLACES = ['home', 'market', 'rank', 'adventure', 'tower', 'spa'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
 /** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
@@ -449,6 +460,8 @@ export interface FactionConfig {
   /** 성별 외형이 갈리는 첫 단계 번호 (GDD 114장 2, 1부터): 이 단계부터 여성은 여성 그림(그림 키 + `.f`)을 찾는다. 그 전 단계는 남녀 같은 그림. 없으면 외형이 갈리지 않는다 */
   genderLookFromTier?: number;
   /** forms = 진화체 id → 외형(능력치보다 먼저 — 히든 진화체), elementSuffix = 이 속성의 진화체는 외형 id 뒤에 속성 id 를 붙인다(속성 색, GDD 240장 — 예 wyrmwater) */
+  /** 숨은 모습 (GDD 241-C 4, C.406): 그 단계로 진화하는 순간 조건을 채웠으면 단계 외형 대신 이 외형 + 보너스(세이브 전체에서 처음 1번만). 없는 종족은 비운다 — 엔진에 종족 분기 없음 */
+  specialLooks?: SpecialLookDef[];
   tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[] }>;
   /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
   tierNames: [string, string, string, string];
@@ -730,6 +743,10 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.genderLookFromTier !== undefined && !(typeof r.genderLookFromTier === 'number' && Number.isInteger(r.genderLookFromTier) && r.genderLookFromTier >= 1)) errors.push('genderLookFromTier: 1 이상 정수(단계 번호)');
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
   if (r.formLooks !== undefined && !(isRec(r.formLooks) && Object.values(r.formLooks).every((v) => Array.isArray(v) && v.length > 0 && v.every((x) => isString(x))))) errors.push('formLooks: { 진화체 id: [스킨 id, …](비어 있지 않게) }');
+  if (r.specialLooks !== undefined) {
+    const ok = (v: unknown) => isRec(v) && isString(v.id) && isString(v.name) && isString(v.look) && [v.toTierIndex, v.minBondCare, v.bonusEv].every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 0);
+    if (!Array.isArray(r.specialLooks) || !r.specialLooks.every(ok)) errors.push('specialLooks: [{ id, name, toTierIndex, minBondCare, look, bonusEv }] (숫자는 0 이상 정수)');
+  }
   if (r.tierLooks !== undefined) {
     const tl = r.tierLooks;
     const okLook = (v: unknown) => isString(v);

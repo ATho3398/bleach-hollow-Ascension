@@ -33,7 +33,7 @@ describe('109장 6 먹이 수치 → 235장 3유형 (C.387)', () => {
     const n = newNest(0);
     n.hunger = 100 - 61;
     passNestTime(n, 8, true);
-    expect(fullnessOfNest(n)).toBeGreaterThan(NX.care.weakFullness);
+    expect(fullnessOfNest(n)).toBeGreaterThan(20); // C.406: 쇠약은 이제 배부름이 아니라 먹인 뒤 24시간 (GDD 241-C 6)
     expect(n.weakened).toBe(false);
     expect(n.collapsed).toBe(false);
   });

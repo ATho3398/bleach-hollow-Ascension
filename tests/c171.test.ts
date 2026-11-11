@@ -157,7 +157,7 @@ describe('훈련장·책장·상태 (#67~75·83·84)', () => {
     expect(read('src/ui/titleDexView.ts')).toContain("logo: logoMark(faction, 'bha-logo--md')");
   });
   it('상태: 장비 칸이 왼쪽 상태 아래, 능력치 2열 (#83·84)', () => {
-    expect(read('src/ui/lcdScreens.ts')).toContain('[weakSlot, status, gear, holdingsPanel'); // C.176: 광기·자아 설명 패널 → ⓘ 창
+    expect(read('src/ui/lcdScreens.ts')).toContain('[weakSlot, status, gear, skinPanel'); // C.406 (GDD 241-C 9): '가진 것' 칸 삭제 · // C.176: 광기·자아 설명 패널 → ⓘ 창
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-care-page .bha-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));');
   });
 });

@@ -1,7 +1,7 @@
 // 메인 방 화면의 순수 계산 (tests/room-ui.test.ts)
 import type { RoomConfig } from '../../engine/faction';
 import { BALANCE } from '../../config/balance';
-import { bondStage, CARE_STATUS_NAMES } from '../../engine/nest';
+import { bondStage, CARE_STATUS_NAMES, mealOverdue } from '../../engine/nest';
 
 const CP = BALANCE.provisional.nest.care;
 import { fullnessOf } from './fullness';
@@ -53,15 +53,16 @@ export interface StatusChip {
 
 /** 상태 칩 풀리는 법 한 줄 (GDD 102-2·102-3, C.185 '~다' 체 · 문턱은 BALANCE). 자세한 설명은 상태 ⓘ 창(statusInfo) */
 export const CARE_STATUS_HINTS = {
-  weak: `배부름을 ${CP.weakFullness} 넘게 채우고 모험을 한 번 다녀오거나 링거를 먹이면 풀린다`,
+  weak: '먹이를 먹이고 모험을 한 번 다녀오거나 링거를 먹이면 풀린다', // 쇠약 = 먹이를 안 먹인 지 care.weakAfterHours 시간 (GDD 241-C 6)
   tired: `컨디션을 ${CP.tiredCondition} 넘게 올리고 모험을 한 번 다녀오거나 에너지 드링크를 먹이면 풀린다`,
   collapsed: '상점 약 칸의 구급상자를 쓰면 풀린다. 남은 시간이 다 되거나 모험에서 지면 사망한다.',
 } as const;
 
 /** 상태이상 푸는 법 아주 짧게 (GDD 193장 15, 102-2·102-3): 수치를 문턱 넘게 채웠으면 '모험 1번', 아직이면 채울 수치 이름. 빈사 = 구급상자, 사망 = 부활 */
-export function careStatusShort(s: { hunger: number; condition: number }, names: { fullnessName?: string }): { weak: string; tired: string; collapsed: string; dead: string } {
+export function careStatusShort(s: { hunger: number; condition: number; lastMealAt?: number }, names: { feedName?: string; fullnessName?: string }, nowMs: number = Date.now()): { weak: string; tired: string; collapsed: string; dead: string } {
   return {
-    weak: fullnessOf(s.hunger) > CP.weakFullness ? '모험 1번' : `${names.fullnessName ?? '배부름'} 채우기`,
+    // 쇠약 (GDD 241-C 6): 아직 안 먹였으면 먹이부터, 먹였으면 모험 1번
+    weak: mealOverdue({ lastMealAt: s.lastMealAt ?? 0 }, nowMs) ? `${names.feedName ?? '먹이'} 주기` : '모험 1번',
     tired: s.condition > CP.tiredCondition ? '모험 1번' : '컨디션 채우기',
     collapsed: '구급상자',
     dead: '부활',
@@ -71,8 +72,8 @@ export function careStatusShort(s: { hunger: number; condition: number }, names:
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
  *  위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
 export function statusChips(
-  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean },
-  names: { riskGaugeName: string; fullnessName?: string },
+  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean; lastMealAt?: number },
+  names: { riskGaugeName: string; fullnessName?: string; feedName?: string },
   warn = { hunger: 80, condition: 40, risk: 60 },
 ): StatusChip[] {
   const chips: StatusChip[] = [

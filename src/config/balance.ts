@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 122; // C.404 (GDD 241-B): tutorialScript.libReadySeconds 0.8·libHoldSeconds 1.2(각본 해방 안내), nest.homeHp.spaEnterSeconds 2.4(온천 다 앉은 뒤부터), 먹이 tutorial(첫 끼니 배부름 100)·sell food-tutorial 1, tutorialRecover.food 'basic' → 'tutorial'·rewardEach 1. 그 전 121 — C.403 (GDD 241-0 사용자 수정): 해금 표 provisional.unlocks 신설(타일 2단계 · 장비·전투 소모품 3단계 · 본능 수련·번호 쟁탈전 4단계 · 장신구 해방 클리어 · 펫·출정품 첫 환생) — 펫 첫 지급이 첫 진화 → 첫 환생, 해금 전 장비·펫 드롭 없음. 전투 수치 그대로. 그 전 120 — C.400 (GDD 241-D 5): 출정품 provisional.sortie(칸 2 · 공격 피해 +10% · 받는 피해 −10% · 드롭 +15% · 값 90·90·120 · 드롭 2%·8%·25%). 그 전 119 — C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
+export const BALANCE_VERSION = 123; // C.406 (GDD 241-C 4~7): 쇠약 = 마지막으로 먹인 뒤 nest.care.weakAfterHours 24시간(옛 배부름 weakFullness 20 이하 삭제) · 눌러서 말 걸기 nest.bond.touch(4번째까지 +1 · 7번째부터 −1 · 3시간 주기) · 새 게임 시작 지급 startItems 링거 3·에너지 드링크 3 추가 + startNormalFoods 3(일반 먹이 종류마다) · 숨은 모습 보너스(종족 설정 specialLooks: 외눈형 모든 능력치 +5). 전투 수치 그대로. 그 전 122 — C.404 (GDD 241-B): tutorialScript.libReadySeconds 0.8·libHoldSeconds 1.2(각본 해방 안내), nest.homeHp.spaEnterSeconds 2.4(온천 다 앉은 뒤부터), 먹이 tutorial(첫 끼니 배부름 100)·sell food-tutorial 1, tutorialRecover.food 'basic' → 'tutorial'·rewardEach 1. 그 전 121 — C.403 (GDD 241-0 사용자 수정): 해금 표 provisional.unlocks 신설(타일 2단계 · 장비·전투 소모품 3단계 · 본능 수련·번호 쟁탈전 4단계 · 장신구 해방 클리어 · 펫·출정품 첫 환생) — 펫 첫 지급이 첫 진화 → 첫 환생, 해금 전 장비·펫 드롭 없음. 전투 수치 그대로. 그 전 120 — C.400 (GDD 241-D 5): 출정품 provisional.sortie(칸 2 · 공격 피해 +10% · 받는 피해 −10% · 드롭 +15% · 값 90·90·120 · 드롭 2%·8%·25%). 그 전 119 — C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
 // 109: // C.311 (GDD 192장 1, provisional): 원정 이어 하기 시한 expedition.resumeWindowMinutes 30 신설 — 나간 뒤 30분 넘게·새 패치면 모험 실패 정산.
@@ -575,7 +575,10 @@ export const BALANCE = {
     } as Record<'tiles' | 'gear' | 'battleItem' | 'instinct' | 'rankBattle' | 'accessory' | 'pet' | 'sortie', { tierIndex: number } | { ascended: true } | { rebirths: number }>,
     /** 새 세이브 가방 시작 소모품 (GDD 134장 1, C.211): 빈사 구급상자 3개. 튜토리얼 회복 안내 구급상자는 따로 1개(recoverTutorial) — 안내가 끝나면 이 수만큼 남는다. 진행 중 세이브엔 소급 안 함 */
     // C.223 (GDD 145장 3): + 체력 회복 물건 반창고 3·붕대 2·회복약 1 (원정·전투 중에 쓴다)
-    startItems: { 'med-cure': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 } as Record<string, number>,
+    // C.406 (GDD 241-C 5): 상태이상 치료제 각 3개 — 구급상자 3(그대로) + 링거 3 · 에너지 드링크 3
+    startItems: { 'med-cure': 3, 'med-iv': 3, 'med-energy': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 } as Record<string, number>,
+    /** 새 게임 시작 먹이 (GDD 241-C 5, C.406): 일반 먹이(nest.foods type normal) 종류마다 이만큼 — economy.food.start 보다 적으면 그 값. 진행 중 세이브엔 소급 안 함 */
+    startNormalFoods: 3,
     /** 환경 타일 프리셋: 전투 조건 변경. 이름은 종족 스킨, 효과 종류는 엔진 (GDD 6장) */
     tiles: {
       /** 안개(호로 스킨): 트레이 블록이 이 간격(초)마다 섞인다 */
@@ -680,7 +683,7 @@ export const BALANCE = {
       /** 돌봄 패널티 (GDD 102장, C.175 마스터 결정 provisional). 배부름 = 100 − 허기.
        *  conditionPerHour: 배부름 conditionBelowFullness 이하일 때만 컨디션 시간당 감소, 배부름 0 이면 ×2 (켜 있든 꺼 있든).
        *  (영압 안정도 시간당 감소 stabilityPerHour 2·stabilityDoubleBelow 30 은 C.391 GDD 239장 4 에서 삭제)
-       *  weakFullness / tiredCondition: 그 값 이하가 되는 순간 쇠약 / 피곤 — 수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
+       *  weakAfterHours: 마지막으로 먹인 뒤 이 시간이 지나면 쇠약 (GDD 241-C 6) / tiredCondition: 그 값 이하가 되는 순간 피곤 — 먹인 뒤·수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
        *  weakMaxHpCut: 쇠약 원정 전투 최대 체력 −20% (대기 보상 ×idle.weakenedRate). tiredSpawnSlow: 피곤 블록 생성 간격 +15%.
        *  collapseHours: 이만큼 미접속이면 빈사(옛 쓰러짐). 빈사가 된 순간부터 실제 시간 dyingBaseHours + 교감 × dyingHoursPerBond(교감 100 = 24시간) 안에 구급상자를 안 쓰면 사망 (GDD 102장 수정 v5.228).
        *  dying: 빈사 모험 — 최대 체력 × hpFraction(그 위로 회복 안 됨), 공격 속도·블록 생성 속도 × speedMult, 보상(골드·먹이·노력치) × rewardMult, 빈사에서 지면 사망.
@@ -688,7 +691,8 @@ export const BALANCE = {
       care: {
         conditionBelowFullness: 30,
         conditionPerHour: 4,
-        weakFullness: 20,
+        /** C.406 (GDD 241-C 6): 쇠약 = 마지막으로 먹이를 먹인 뒤 이 시간이 지나면 (옛 '배부름 weakFullness 20 이하가 되는 순간' 대체 — 꺼 두기만 해도 걸리던 것). 먹인 뒤 모험 1번·링거로 풀린다 */
+        weakAfterHours: 24,
         tiredCondition: 30,
         weakMaxHpCut: 0.2,
         tiredSpawnSlow: 0.15,
@@ -712,6 +716,9 @@ export const BALANCE = {
         idleBonusPerPoint: 0.002,
         idleBonusMax: 0.2,
         stages: [30, 70] as [number, number],
+        /** 터치로 말 걸기 (GDD 241-C 7, C.406, provisional): 캐릭터를 누른 횟수 — likeCount 번째까지 교감 +gain, 그다음 dislikeCount 번은 싫어하는 티(변화 없음), 그 뒤로는 누를 때마다 교감 −loss.
+         *  마지막 터치 뒤 resetHours 가 지나면 횟수를 처음부터. 하루 최대(dailyMax)와 따로 센다(자기 주기가 있다) */
+        touch: { likeCount: 4, dislikeCount: 2, gain: 1, loss: 1, resetHours: 3 },
       },
       /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 구급상자 약 6배, 링거·에너지 드링크 약 3배 */
       medicinePrices: { 'med-cure': 210, 'med-iv': 105, 'med-energy': 105 } as Record<string, number>,

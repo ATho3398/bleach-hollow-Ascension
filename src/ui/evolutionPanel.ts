@@ -90,15 +90,8 @@ export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): {
       right: [notice('rare', `더 이상 진화하지 않는다. ${faction.absorbActionName} 기록은 칭호 조건에 계속 쌓인다.`, { title: `마지막 단계(${tierName})에 도달했다`, icon: 'i-rare' })],
     };
   }
-  const how = h('div', 'bha-evo__cta');
-  const text = h('span', 'bha-evo__left');
-  text.append(
-    h('b', '', '진화할 때는 비밀이다.'), h('br'),
-    `모험을 다니다 보면 몸에 신호가 온다. 진화는 ${toward(faction.nestName)} 돌아오면 저절로 일어난다.`, h('br'),
-    h('span', 'bha-faint', `그 순간 장착한 블록의 속성·공격 블록 계열과 이 단계에 ${faction.absorbActionName}한 적이 결과를 정한다. ${normalSlotNote(faction.slotName)}.`),
-  );
-  how.append(text);
-  return { left, right: [how] };
+  // 진화 안내 글(타이밍은 비밀 …)은 도움말 [진화]로 옮겼다 (GDD 241-C 9, C.406) — 상태 화면에는 지금 진화체 정보만
+  return { left, right: [] };
 }
 
 /** 진화 결과 화면에 넘기는 지금 상태: 속성·성향 특성·노력치(실패형 2위 성향) */

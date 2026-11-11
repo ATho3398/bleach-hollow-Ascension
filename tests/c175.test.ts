@@ -70,18 +70,23 @@ describe('102-1 시간 흐름', () => {
 });
 
 describe('102-2 쇠약·피곤', () => {
-  it('문턱 이하가 되는 순간 걸리고, 먹이·재우기로 수치를 채워도 안 풀린다', () => {
-    const n = newNest(0);
+  it('쇠약 = 마지막으로 먹인 뒤 24시간(C.406, GDD 241-C 6 — 옛 배부름 20 이하), 피곤 = 컨디션 문턱. 먹이·재우기로 수치를 채워도 안 풀린다', () => {
+    const T = 1_000_000;
+    const n = newNest(T);
     n.hunger = 79;
     n.condition = 31;
-    passNestTime(n, 0.2, false);
-    expect(n.weakened).toBe(true); // 배부름 20 이하
+    passNestTime(n, 0.2, false, T + 0.2 * H);
+    expect(100 - n.hunger).toBeLessThanOrEqual(20);
+    expect(n.weakened).toBe(false); // 배부름이 낮아도 쇠약이 아니다
+    passNestTime(n, CP.weakAfterHours - 0.3, false, T + (CP.weakAfterHours - 0.1) * H);
+    expect(n.weakened).toBe(false); // 24시간 전
+    passNestTime(n, 0.2, false, T + (CP.weakAfterHours + 0.1) * H);
+    expect(n.weakened).toBe(true); // 24시간이 지났다
     n.condition = 30;
-    passNestTime(n, 0.01, false);
+    passNestTime(n, 0.01, false, T + (CP.weakAfterHours + 0.11) * H);
     expect(n.tired).toBe(true);
-    doNestAction(n, 'feed', 'feast');
-    doNestAction(n, 'sleep');
-    expect(100 - n.hunger).toBeGreaterThan(CP.weakFullness);
+    doNestAction(n, 'feed', 'feast', T + 25 * H);
+    doNestAction(n, 'sleep', 'basic', T + 25 * H);
     expect(n.condition).toBeGreaterThan(CP.tiredCondition);
     expect([n.weakened, n.tired]).toEqual([true, true]);
   });

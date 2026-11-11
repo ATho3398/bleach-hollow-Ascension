@@ -1,0 +1,114 @@
+{
+ "errors": [],
+ "shots": [
+  "01-touch-like.png",
+  "02-touch-7th-hate.png",
+  "03-status-no-holdings.png",
+  "04-status-info.png",
+  "05-title-dex-tabs.png",
+  "06-bag-start-items.png",
+  "07-gillian-cyclops-room.png"
+ ],
+ "facts": {
+  "start": {
+   "food": {
+    "basic": 3,
+    "sushi": 3,
+    "roast": 3,
+    "hearty": 3,
+    "fizz": 3,
+    "mushroom": 3,
+    "feast": 0,
+    "tonic": 0,
+    "flesh": 0,
+    "elixir": 0,
+    "purify": 0,
+    "relic": 0,
+    "snack": 5,
+    "scrap": 0
+   },
+   "items": {
+    "med-cure": 3,
+    "med-iv": 3,
+    "med-energy": 3,
+    "heal-patch": 3,
+    "battle-potion": 2,
+    "heal-salve": 1
+   }
+  },
+  "charSel": [
+   "bha-art bha-char has-anim has-anim-idle has-anim-move has-anim-attack has-anim-skill has-anim-hit has-anim-homeIdle has-anim-dying has-anim-bath has-anim-lose"
+  ],
+  "touch": [
+   "이 정도면 쓸 만하다. (교감 +1)",
+   "흥, 나쁘지 않군. (교감 +1)",
+   "흥, 나쁘지 않군. (교감 +1)",
+   "흥, 나쁘지 않군. (교감 +1)",
+   "건드리지 마라.",
+   "손 치워라. 지금은 싫다.",
+   "건드리지 마라. (교감 −1)"
+  ],
+  "bondAfter": 3,
+  "statusPanels": [
+   "상태",
+   "스킨",
+   "능력치",
+   "진화 정보"
+  ],
+  "statusEvo": [
+   "진화 정보호로1단계 · 호로 · 속성 노노멀"
+  ],
+  "infoText": [
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  "bookViews": [
+   "진화체 도감",
+   "칭호 도감",
+   "적 도감"
+  ],
+  "titleTabs": [
+   "일반 0/10",
+   "에픽 0/5",
+   "히든 0/3",
+   "스토리 0/6",
+   "탑 0/5"
+  ],
+  "cyclops": {
+   "look": "gilliancyclops",
+   "special": {
+    "id": "cyclops",
+    "bondCare": 3,
+    "bonus": true
+   },
+   "evFree": {
+    "hp": 5,
+    "atk": 5,
+    "int": 5,
+    "def": 5,
+    "spr": 5,
+    "spd": 5
+   },
+   "specialLooks": [
+    "hollow:cyclops"
+   ]
+  }
+ }
+}

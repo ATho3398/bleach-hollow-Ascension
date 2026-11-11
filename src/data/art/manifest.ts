@@ -126,6 +126,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian
   'char.hollow.2': { rig: 'gillian-base', scale: GILLIAN_SCALE },
   'skin.gillian': { rig: 'gillian-base', scale: GILLIAN_SCALE },
+  'skin.gilliancyclops': { rig: 'gillian-cyclops', scale: GILLIAN_SCALE }, // 길리안 외눈형 — 숨은 모습 (GDD 241-C 4)
   // 아쥬커스 단계 외형 (GDD 240장): 능력치 1위로 모델, 진화체 속성으로 색 — AJUCHAS_MODELS. 옛 '새형'(raptor, 속도+지능 쌍 — 표에서 빠짐)은 옛 세이브용으로 속도형 노멀
   ...AJUCHAS_SKINS,
   'skin.raptor': { rig: 'speed-base', scale: SPEED_SCALE },

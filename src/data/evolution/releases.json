@@ -106,9 +106,9 @@
         "command": "웅크려라"
       },
       "shinigami": {
-        "name": "금강저",
+        "name": "반석",
         "command": "뿌리내려라",
-        "final": "부동금강저"
+        "final": "부동반석"
       }
     },
     "t4:earth:special": {

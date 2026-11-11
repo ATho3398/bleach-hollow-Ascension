@@ -142,6 +142,6 @@ describe('C.109 세이브 형식 33 마이그레이션', () => {
   });
   it('스킨 표에 시작 전용 4종 + 단계 외형 7종이 모두 호로 전용', () => {
     expect(SKINS.filter((x) => x.startOnly).every((x) => x.factionId === 'hollow')).toBe(true);
-    expect(SKINS.filter((x) => x.tierLook).length).toBe(1 + 8 + 28 + 36); // 길리안 1(C.360) + 아쥬커스 모델 7·옛 새형 1 + 속성 색 7 × 4(C.392) + 아란칼 36(C.110)
+    expect(SKINS.filter((x) => x.tierLook).length).toBe(1 + 1 + 8 + 28 + 36); // 길리안 외눈형 1(C.406 숨은 모습) + 길리안 1(C.360) + 아쥬커스 모델 7·옛 새형 1 + 속성 색 7 × 4(C.392) + 아란칼 36(C.110)
   });
 });

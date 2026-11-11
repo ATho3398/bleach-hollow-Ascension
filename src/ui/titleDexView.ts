@@ -13,9 +13,10 @@ import { logoMark } from './bha/logo';
 import { devText } from './displayName';
 
 export const TITLE_TABS: { kind: TitleKind; label: string }[] = [
-  { kind: 'rank', label: '등급' },
-  { kind: 'hidden-rank', label: '히든 등급' },
-  { kind: 'tag', label: '특별 태그' },
+  // GDD 241-C 11 (C.406): '등급·히든 등급·특별 태그' → 일반·에픽·히든 (에픽 = 옛 특별 태그)
+  { kind: 'rank', label: '일반' },
+  { kind: 'tag', label: '에픽' },
+  { kind: 'hidden-rank', label: '히든' },
   { kind: 'story', label: '스토리' },
   { kind: 'tower', label: '탑' },
 ];
