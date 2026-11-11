@@ -294,7 +294,7 @@ function draw() {
   let pose: Pose = {};
   const MOTIONS = motionsNow();
   if (motion && !MOTIONS[motion]) motion = null;
-  if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt);
+  if (motion) pose = samplePose(rig, MOTIONS[motion]!, mt, performance.now()); // 자락 물결은 이어지는 시계로(115-A 116)
   const mats = boneMatrices(rig, pose, curBody());
   drawn = [];
   // 해방 동작이면 그 순간 외형, 필살기면 칼을 맨 앞으로(GDD 115-A 48·49)

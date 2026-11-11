@@ -16,12 +16,17 @@ export function createDollClock(motions: Record<string, Motion>, speed: number |
   let loopId: string | null = 'idle';
   let onceId: string | null = null;
   let t = 0;
+  /** 동작이 바뀌어도 이어지는 시계(ms) — 자락 물결용 (GDD 115-A 116) */
+  let now = 0;
   let opts: DollPlayOptions = {};
   let hitFired = true;
   return {
     get current(): { id: string; t: number } | null {
       const id = onceId ?? loopId;
       return id && motions[id] ? { id, t } : null;
+    },
+    get now(): number {
+      return now;
     },
     setLoop(id: string | null) {
       // 끝 자세로 멈춰 있던 동작(쓰러짐)은 반복 동작을 고르면 풀린다
@@ -43,6 +48,7 @@ export function createDollClock(motions: Record<string, Motion>, speed: number |
       return true;
     },
     advance(dt: number) {
+      now += dt;
       t += dt * speedOf(onceId ?? loopId);
       const id = onceId;
       if (!id) return;
@@ -128,7 +134,7 @@ export function createPaperdoll(o: PaperdollOptions): Paperdoll {
     const cur = clock.current;
     const m = cur ? motions[cur.id] : undefined;
     const t = cur?.t ?? 0;
-    const pose = m && cur ? samplePose(rig, m, t) : {};
+    const pose = m && cur ? samplePose(rig, m, t, clock.now) : {};
     const mats = boneMatrices(rig, pose, body);
     const showing = motionLook(rig, o.look, m, t);
     for (const [lid, parts] of sets) {

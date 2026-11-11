@@ -108,4 +108,32 @@ describe('부유형 뼈대 (GDD 115-A 114)', () => {
     const b2 = samplePose(w.rig, w.motions.idle!, 1100).tail2!.rot;
     expect(Math.abs(a - b2)).toBeGreaterThan(1);
   });
+  it('공격1 = 왼손 내려찍기, 공격2 = 오른손으로 왼쪽을 내려찍기, 공격3 = 박치기, 특수1 = 왼손만 들어 쏘기 (사용자 2026-11-12)', () => {
+    const tipOf = (id: string, t: number, hand: string) => {
+      const p = w.rig.bodies.ref![hand]!;
+      return apply(boneMatrices(w.rig, samplePose(w.rig, w.motions[id]!, t), 'ref')[hand]!, [p.at[0] + p.size[0] / 2, p.at[1] + p.size[1]]);
+    };
+    const rest = (hand: string) => { const p = w.rig.bodies.ref![hand]!; return apply(boneMatrices(w.rig, {}, 'ref')[hand]!, [p.at[0] + p.size[0] / 2, p.at[1] + p.size[1]]); };
+    // 공격1: 왼손이 머리 위로 올라갔다가(쉬는 자리보다 25칸 넘게 위) 아래로
+    expect(rest('hand1')[1] - tipOf('attack', 220, 'hand1')[1]).toBeGreaterThan(25);
+    expect(tipOf('attack', w.motions.attack!.hit!, 'hand1')[1]).toBeGreaterThan(tipOf('attack', 220, 'hand1')[1] + 25);
+    // 공격2: 오른손이 올라갔다가 몸 앞을 가로질러 왼쪽(쉬는 자리보다 20칸 넘게 왼쪽)으로 내려옴
+    expect(rest('hand2')[1] - tipOf('attack2', 240, 'hand2')[1]).toBeGreaterThan(25);
+    expect(rest('hand2')[0] - tipOf('attack2', w.motions.attack2!.hit!, 'hand2')[0]).toBeGreaterThan(20);
+    // 공격3: 머리가 앞(왼쪽)으로 10칸 넘게 나간다
+    const head = (t: number) => boneMatrices(w.rig, samplePose(w.rig, w.motions.attack3!, t), 'ref').head![4];
+    expect(head(0) - head(w.motions.attack3!.hit!)).toBeGreaterThan(8);
+    // 특수1: 왼손은 들리고 오른팔은 거의 그대로
+    expect(Math.abs(samplePose(w.rig, w.motions.skill!, 700).arm1!.rot)).toBeGreaterThan(45);
+    expect(Math.abs(samplePose(w.rig, w.motions.skill!, 700).arm2!.rot)).toBeLessThan(10);
+  });
+  it('자락 물결은 재생기 시계로 흐른다 — 동작이 처음부터 다시 돌아도(t = 0) 이어진다 (115-A 116)', () => {
+    const a = samplePose(w.rig, w.motions.attack!, 0, 5000).tail2!.rot;
+    const b = samplePose(w.rig, w.motions.attack!, 0, 5016).tail2!.rot;
+    const c = samplePose(w.rig, w.motions.idle!, 3000, 5032).tail2!.rot; // 동작이 바뀌어도
+    expect(Math.abs(a - b)).toBeLessThan(1);
+    expect(Math.abs(b - c)).toBeLessThan(1.5);
+    // 시계를 안 주면 예전처럼 동작 시각으로(정지 그림·옛 시험 그대로)
+    expect(samplePose(w.rig, w.motions.attack!, 0).tail2!.rot).toBe(samplePose(w.rig, w.motions.attack!, 0).tail2!.rot);
+  });
 });

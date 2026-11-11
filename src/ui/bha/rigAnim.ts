@@ -96,6 +96,8 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
   /** 동작 재생 속도 (GDD 225장): t 는 동작 시각(ms), 밖으로 알려 주는 길이·타격 시각은 실제 ms = 동작 시각 ÷ speed */
   const speedOf = (id?: string | null) => motionSpeedOf(rig, id);
   let t = 0;
+  /** 동작이 바뀌어도 이어지는 시계(ms) — 자락 물결이 튀지 않게 (GDD 115-A 116) */
+  let clock = 0;
   let rate = 1;
   let paused = false;
   /** 승리·패배(쓰러짐)를 틀면 다음 stop 까지 다른 동작을 무시한다 — 프레임 애니 재생기와 같게. 마지막 타격의 늦은 '맞음'이 쓰러짐을 덮지 않게 (GDD 171장, C.250) */
@@ -166,6 +168,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     },
     advance(dt) {
       if (paused) return;
+      clock += dt;
       t += dt * rate * speedOf(curId());
       if (!once) return;
       const m = motions[once.id]!;
@@ -190,7 +193,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     pose() {
       const id = curId();
       const m = id ? motions[id] : undefined;
-      return { pose: m ? samplePose(rig, m, t) : {}, motion: m, t };
+      return { pose: m ? samplePose(rig, m, t, clock) : {}, motion: m, t };
     },
     get playing() {
       return once?.action ?? loopAction;

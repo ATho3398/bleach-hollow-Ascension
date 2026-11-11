@@ -249,12 +249,14 @@ function sampleTrack(keys: Key[], t: number): BonePose {
 }
 
 /** 동작의 t(ms) 순간 자세. 반복 동작은 길이로 감고, 한 번 동작은 끝에서 멈춘다. 키 없는 뼈는 0 */
-export function samplePose(rig: Rig, motion: Motion, tMs: number): Pose {
-  return swayPose(rig, motion, tMs, 0);
+export function samplePose(rig: Rig, motion: Motion, tMs: number, clockMs?: number): Pose {
+  return swayPose(rig, motion, tMs, 0, clockMs);
 }
 
 /** 늘어진 마디 따라가기(GDD 115-A 88)까지 넣은 자세. depth = 늦은 시각을 다시 계산한 횟수(마디 수만큼만 — 끝없이 거슬러 가지 않게) */
-function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number): Pose {
+/** clockMs = 재생기가 흘려보낸 시간(동작이 바뀌어도 이어지는 시계, GDD 115-A 116): 주면 물결(wave)이 동작 시각 대신 이 시계로 흘러, 동작이 바뀌거나
+ *  한 번 동작이 처음부터 다시 돌아도 자락이 튀지 않고 이어진다. 안 주면(정지 그림·시험) 예전처럼 동작 시각으로 */
+function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number, clockMs?: number): Pose {
   const t = motion.loop ? ((tMs % motion.duration) + motion.duration) % motion.duration : Math.min(Math.max(0, tMs), motion.duration);
   const pose: Pose = {};
   for (const b of rig.bones) {
@@ -275,13 +277,16 @@ function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number): Pose {
     const sw = sway[b.id];
     if (!sw || !b.parent) continue;
     let before = late.get(sw.lag);
-    if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1)));
+    if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1, clockMs === undefined ? undefined : clockMs - sw.lag)));
     const now = worldRot(pose, b.parent);
     let wave = 0;
     if (sw.wave) {
       const [amp, period, phase] = sw.wave;
-      const per = motion.loop ? motion.duration / Math.max(1, Math.round(motion.duration / period)) : period;
-      wave = amp * Math.sin((2 * Math.PI * (t - phase)) / per);
+      if (clockMs !== undefined) wave = amp * Math.sin((2 * Math.PI * (clockMs - phase)) / period);
+      else {
+        const per = motion.loop ? motion.duration / Math.max(1, Math.round(motion.duration / period)) : period;
+        wave = amp * Math.sin((2 * Math.PI * (t - phase)) / per);
+      }
     }
     pose[b.id] = { ...pose[b.id]!, rot: pose[b.id]!.rot + sw.swing * (worldRot(before, b.parent) - now) - sw.hang * now + wave };
   }
