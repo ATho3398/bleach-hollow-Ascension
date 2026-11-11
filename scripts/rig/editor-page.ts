@@ -192,7 +192,26 @@ function syncMotionButtons() {
   document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => {
     const m = b.dataset.m!;
     b.hidden = m !== 'stop' && !ms[m];
+    const name = attackName(m);
+    if (name) b.textContent = name;
   });
+}
+/** 공격 동작 이름 (사용자 2026-11-12 04:1x "용어를 기본 공격, 박치기, 무기 공격, 특수 공격으로 나누자 — 호로는 무기가 없으니까 무기공격은 없겠지? 이래야 이펙트 먹이기 편할듯"):
+ *  무기를 든 외형(무기 그림이 있는 몸 — 사신·아란칼·혼백)의 공격1·2 = 무기 공격 1·2, 무기 없는 몸(호로 전부·알몸)의 공격1·2·3 = 기본 공격 1·2·3,
+ *  맨손 치기(스트레이트·오른손 치기·어퍼컷) = 기본 공격(이름), 박치기 = 박치기(부유형 공격3 도 박치기), 특수1·2 = 특수 공격 1·2. 동작 id 는 그대로(이름표만) */
+function attackName(m: string): string | null {
+  const armed = lookLayers(C.rig, look).some((l) => l.slot === 'weapon');
+  const kind = armed ? '무기 공격' : '기본 공격';
+  if (m === 'attack') return `${kind} 1`;
+  if (m === 'attack2') return `${kind} 2`;
+  if (m === 'attack3') return C.id === 'wraith' ? '박치기(공격3)' : '기본 공격 3';
+  if (m === 'skill') return '특수 공격 1';
+  if (m === 'skill2') return '특수 공격 2';
+  if (m === 'straight') return '기본 공격(스트레이트)';
+  if (m === 'rpunch') return '기본 공격(오른손 치기)';
+  if (m === 'uppercut') return '기본 공격(어퍼컷)';
+  if (m === 'headbutt') return '박치기';
+  return null;
 }
 /** 동작 단추 칸: 미리보기 높이를 넘으면 오른쪽에 새 줄로 (사용자 2026-10-31 "미리보기칸 넘어가는 모션버튼은 오른쪽 옆에 새 줄") */
 function fitSide() {
