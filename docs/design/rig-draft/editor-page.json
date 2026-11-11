@@ -1,50 +1,5 @@
 {
  "note": "지금 올라가 있는 관절 편집기 페이지를 만든 커밋(GDD 115-A 60). 편집기를 다시 올릴 때마다 python3 scripts/rig/tools/mark_editor.py 로 바꾼다. 고정(apply_editor.py)은 편집기 값이 이 커밋 데이터와 다른 항목만 고친 것으로 본다.",
- "commit": "33b3ca4e2e5e5f15a3daa405adcc9365b0c26d58",
- "applied": {
-  "humanoid": {
-   "joints": [
-    [
-     "hk",
-     "pivots",
-     "arm_R"
-    ],
-    [
-     "hk",
-     "pivots",
-     "forearm_R"
-    ],
-    [
-     "hk",
-     "pivots",
-     "hand_R"
-    ]
-   ],
-   "at": [
-    [
-     "hk",
-     "arm_R"
-    ],
-    [
-     "hk",
-     "forearm_R"
-    ],
-    [
-     "hk",
-     "hand_R"
-    ],
-    [
-     "hk",
-     "shin_L"
-    ],
-    [
-     "hk",
-     "shin_R"
-    ]
-   ],
-   "bodySlots": [
-    "hk"
-   ]
-  }
- }
+ "commit": "904839093639d0ffacd877be53f4d6fe9b895ccb",
+ "applied": {}
 }
