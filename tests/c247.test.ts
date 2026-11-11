@@ -36,10 +36,10 @@ function toAbsorb(factionId: string, risk: number): ExpeditionState {
 describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −releaseRelief)', () => {
   it('BALANCE 값은 1 그대로, 엔진 releaseEffect 가 그만큼 내리고 0 아래로는 안 내려간다', () => {
     expect(RX.releaseRelief).toBe(1);
-    const s = { risk: 5, stability: 50 } as Parameters<typeof releaseEffect>[0];
+    const s = { risk: 5 } as Parameters<typeof releaseEffect>[0];
     releaseEffect(s);
     expect(s.risk).toBe(5 - RX.releaseRelief);
-    const z = { risk: 0, stability: 50 } as Parameters<typeof releaseEffect>[0];
+    const z = { risk: 0 } as Parameters<typeof releaseEffect>[0];
     releaseEffect(z);
     expect(z.risk).toBe(0);
   });
@@ -59,6 +59,7 @@ describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −release
       const cards = (guidesJson as unknown as { guides: Record<string, { body: string }[]> }).guides['first-absorb']!;
       const body = renderHelpText(cards[0]!.body, vars);
       expect(body).not.toContain(f.riskGaugeName); // 첫 흡수 안내 = 리스크 문장 없음 (GDD 197장 2, C.320)
+      expect(body).not.toContain('영압 안정도'); // C.391 (GDD 239장): 놓아주기 줄 = '얻지 않고 놓아준다'
       expect(riskText(f).riskDown[0]).toBe(`적 놓아주기: −${RX.releaseRelief}`);
     });
   }
@@ -71,7 +72,7 @@ describe('2 놓아주기 = 리스크 게이지 −1 (엔진은 원래 −release
 describe('3 리스크 ⓘ 창: 계산식 대신 쉬운 말 + 대표 값, 잘리면 스크롤', () => {
   for (const f of FACTIONS) {
     it(`${f.id}: 상태 ⓘ 창 전부에 개발자 계산식이 없다`, () => {
-      for (const k of ['hunger', 'cond', 'bond', 'risk', 'stab'] as const) {
+      for (const k of ['hunger', 'cond', 'bond', 'risk'] as const) {
         const doc = statusInfo(k as Parameters<typeof statusInfo>[0], f, 10);
         const all = [doc.lead, ...doc.groups.flatMap((g) => g.lines)].join('\n');
         expect(all, `${k}`).not.toMatch(/\[기본 공격 횟수\]|×\s*0\.\d|\(바퀴 −|absorbPerHpAttack|lateLapPerTile/);

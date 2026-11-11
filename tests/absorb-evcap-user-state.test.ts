@@ -38,7 +38,7 @@ describe('R213 노력치 흐림 = 실제 지급 (사용자 상태)', () => {
     for (const dying of [false, true]) for (const star of [1, 2, 3, 4]) for (const fail of [false, true]) for (const streak of [0, 3]) for (const seed of [1, 2, 3]) {
       const s = userSave();
       if (fail) s.evolution.abilities = { ...s.evolution.abilities!, equipped: ['uniq:fail'] };
-      const exp = createExpedition({ factionId: 'hollow', seed: seed * 77 + star, hunger: 10, condition: 100, care: { weak: false, tired: false, dying }, hpFraction: 1, deck: DECK, risk: 0, stability: 60, build: s.build, evolution: s.evolution, difficulty: star, streak, tilesLocked: true });
+      const exp = createExpedition({ factionId: 'hollow', seed: seed * 77 + star, hunger: 10, condition: 100, care: { weak: false, tired: false, dying }, hpFraction: 1, deck: DECK, risk: 0, build: s.build, evolution: s.evolution, difficulty: star, streak, tilesLocked: true });
       let n = 0;
       for (let i = 0; i < 600 && exp.phase !== 'ended' && exp.lap <= 3; i++) {
         if (exp.phase === 'battle') {

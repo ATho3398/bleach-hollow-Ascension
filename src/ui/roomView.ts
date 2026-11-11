@@ -114,7 +114,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     for (const t of [
       `노력치 전부 −${loss}% (교감 ${Math.round(n.bond)} 기준)`,
       `진화 초기화 — 1단계 ${faction.tierNames[0]}(으)로 다시 시작`,
-      fixParticles(`${faction.fullnessName}·컨디션·${faction.stabilityName}은(는) 시작값`),
+      fixParticles(`${faction.fullnessName}·컨디션은(는) 시작값`),
       `가진 물건·골드·타일·${faction.absorbActionName} 블록·도감·칭호·스킨은 그대로`,
       fixParticles(`${faction.rebirth.name}과(와) 다르다 — 보상·횟수 없음`),
     ]) list.append(el('li', '', t));
@@ -423,7 +423,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     foodEffectsNow: (food) => foodEffectsNow(food, n, Date.now()), // 카드 = 지금 먹이면 실제로 움직이는 효과 전부 (GDD 211장)
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
-      const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
+      const before = { hunger: n.hunger, condition: n.condition, risk: n.risk };
       let reaction: FoodReaction = null;
       const hpBefore = previewHomeHp(n, Date.now()).fraction;
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
@@ -465,7 +465,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const changed = changedKeys(from, to);
       blinkGauges(scene, changed); // 바뀐 값(오름·내림)의 막대·아이콘만 깜빡임 (GDD 208장 3)
       if (changed.length > 0) markStatusBusy(ACTION_FILL_MS); // 그동안 뜨는 말풍선은 상태창을 숨기지 않는다 (208장 1)
-      const delta = { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, stability: n.stability - before.stability, risk: n.risk - before.risk };
+      const delta = { hunger: n.hunger - before.hunger, condition: n.condition - before.condition, risk: n.risk - before.risk };
       // 바뀐 값 알림 (209장 2·3) + 위 줄 행동 글(4-1: 수치 문장 없이 행동 이름 — 예전 결과 말풍선 대신)
       const noted = noteChanges(changeItems(from, to, faction, changed), ACTION_FILL_MS, careFeedback(faction, action, food ?? null, delta, false));
       tween(ACTION_FILL_MS, (t) => {

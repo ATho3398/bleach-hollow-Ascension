@@ -1,5 +1,5 @@
 // 리스크 게이지(호로 광기 / 사신 호로화, 이름은 종족 설정) 순수 로직 (GDD 5장, 4-1).
-// 폭주(호로화) = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션·안정 수치 하락, 게이지 60.
+// 폭주(호로화) = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션 하락, 게이지 60.
 
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
@@ -34,8 +34,6 @@ export interface RiskState {
   risk: number;
   /** 이번 원정의 최고치 */
   riskPeak: number;
-  /** 안정 수치 (호로 자아 / 사신 영압 안정도). 컨디션·허기와 별개 */
-  stability: number;
   /** 이번 원정에서 폭주(호로화)가 일어났는가 → 남은 동안 임시 페널티 */
   breakthrough: { lap: number; cell: number } | null;
   events: EngineEvent[];
@@ -53,10 +51,6 @@ export function changeRisk(s: RiskState, delta: number, _cause: RiskCause): void
   }
 }
 
-export function changeStability(s: { stability: number }, delta: number): void {
-  s.stability = clamp(s.stability + delta, 0, RX.stabilityMax);
-}
-
 /** 강한 적을 흡수했을 때의 상승량: 적 강함(hpInAttacks)에 비례 — 강적이 일반 적의 약 2배. 갈래(GDD 52)마다 배율(속성만 ×0.7·스탯만 ×0.5) */
 export function absorbRisk(strength: number, mode: AbsorbMode = 'both'): number {
   return strength * RX.absorbPerHpAttack * absorbModeRule(mode).risk;
@@ -67,10 +61,9 @@ export function lateLapRisk(lap: number, lateLapStart: number): number {
   return lap >= lateLapStart ? (lap - lateLapStart + 1) * RX.lateLapPerTile : 0;
 }
 
-/** 놓아주기: 리스크 하락 + 안정 수치 상승 */
+/** 놓아주기: 리스크 하락 (안정 수치 상승은 C.391 GDD 239장 4 에서 삭제) */
 export function releaseEffect(s: RiskState): void {
   changeRisk(s, -RX.releaseRelief, 'release');
-  changeStability(s, RX.releaseStability);
 }
 
 /** 돌파 임시 페널티: 그 원정 남은 동안 공허 생성률 가산 */
@@ -81,23 +74,17 @@ export function breakthroughSpawnBonus(s: RiskState): number {
 /** 둥지 쪽 수치 (저장 구조 NestState 가 들고 있다) */
 export interface NestRisk {
   risk: number;
-  stability: number;
 }
 
-/** 둥지 행동: 리스크 하락 + 안정 수치 상승 (GDD 5장 "둥지 쓰다듬기" 등, 행동별 수치는 임시) */
+/** 둥지 행동: 리스크 하락 (GDD 5장 "둥지 쓰다듬기" 등, 행동별 수치는 임시. 안정 수치 상승은 C.391 에서 삭제) */
 export function nestRiskAction(n: NestRisk, action: NestAction): void {
   const e = RX.nestActions[action];
   n.risk = clamp(n.risk + e.risk, 0, RX.limit);
-  n.stability = clamp(n.stability + e.stability, 0, RX.stabilityMax);
 }
 
 /** 원정이 끝나 둥지로 돌아올 때: 게이지 값을 둥지 저장값으로 합친다.
- *  돌파했으면 안정 수치 하락(임시 페널티)하고 게이지는 riskAfterBreakthrough 아래로 가라앉는다(바로 또 돌파하지 않게) */
+ *  돌파했으면 게이지는 riskAfterBreakthrough 아래로 가라앉는다(바로 또 돌파하지 않게). 옛 '안정 수치 하락'은 C.391 (GDD 239장 4) 에서 삭제 */
 export function settleRiskToNest(n: NestRisk, s: RiskState): void {
   n.risk = s.risk;
-  n.stability = s.stability;
-  if (s.breakthrough) {
-    n.stability = clamp(n.stability - RX.breakthroughStabilityLoss, 0, RX.stabilityMax);
-    n.risk = Math.min(n.risk, RX.riskAfterBreakthrough);
-  }
+  if (s.breakthrough) n.risk = Math.min(n.risk, RX.riskAfterBreakthrough);
 }

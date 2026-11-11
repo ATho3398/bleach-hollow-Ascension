@@ -79,45 +79,56 @@ describe('234장 3: 같은 먹이 10분에 2개 — 3개째는 거절(먹이 그
 });
 
 describe('235장: 먹이 3유형', () => {
-  it('12종 = 일반 6 · 특식 4 · 싸구려 2, 옛 id 매핑(간식 → 싸구려, 고기·사냥감 → 일반, 보양·잔치 → 특식)', () => {
+  it('14종 = 일반 6 · 특식 6 · 싸구려 2 (C.391 GDD 239장: 특식 살점·정화 추가), 옛 id 매핑(간식 → 싸구려, 고기·사냥감 → 일반, 보양·잔치 → 특식)', () => {
     const by = (t: string) => FOOD_IDS.filter((f) => foodTypeOf(f) === t);
+    expect(FOOD_IDS).toHaveLength(14);
     expect(by('normal')).toHaveLength(6);
-    expect(by('special')).toEqual(['feast', 'tonic', 'elixir', 'relic']);
+    expect(by('special')).toEqual(['feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic']);
     expect(by('cheap')).toEqual(['snack', 'scrap']);
     expect([foodTypeOf('basic'), foodTypeOf('hearty')]).toEqual(['normal', 'normal']);
     for (const id of ['hollow', 'shinigami'] as const) for (const f of FOOD_IDS) expect(getFaction(id).foodNames[f].length).toBeGreaterThan(0);
   });
-  it('특식 배부름 40 + 추가 효과: 리스크 + · 컨디션 + · 체력 가득 · 판매가(넘침 골드)', () => {
+  it('특식 = 먹이마다 배부름 + 득실 (C.391 GDD 239장): 대식 · 응축 · 살점 · 재생 · 정화 · 진상품(판매가 = 넘침 골드)', () => {
     const n = newNest(T);
-    Object.assign(n, { hunger: 100, risk: 10, condition: 20, hpFraction: 0.3 });
-    doNestAction(n, 'feed', 'feast', T);
-    expect([n.hunger, n.risk]).toEqual([60, 10 + NX.foods.feast!.risk!]);
-    doNestAction(n, 'feed', 'tonic', T);
-    expect(n.condition).toBe(50);
-    doNestAction(n, 'feed', 'elixir', T);
-    expect(n.hpFraction).toBe(1);
+    Object.assign(n, { hunger: 100, risk: 10, condition: 20, hpFraction: 0.3, bond: 10 });
+    doNestAction(n, 'feed', 'feast', T); // 배부름 40, 컨디션 −15
+    expect([n.hunger, n.risk, n.condition]).toEqual([60, 10, 5]);
+    doNestAction(n, 'feed', 'tonic', T); // 배부름 8, 컨디션 +25
+    expect([n.hunger, n.condition]).toEqual([52, 30]);
+    doNestAction(n, 'feed', 'flesh', T); // 배부름 20, 리스크 +20
+    expect([n.hunger, n.risk]).toEqual([32, 30]);
+    doNestAction(n, 'feed', 'elixir', T); // 배부름 10, 체력 가득, 컨디션 −10
+    expect([n.hunger, n.hpFraction, n.condition]).toEqual([22, 1, 20]);
+    const bond = n.bond;
+    doNestAction(n, 'feed', 'purify', T); // 배부름 5, 리스크 −15, 교감 −1
+    expect([n.hunger, n.risk, n.bond]).toEqual([17, 15, bond - 1]);
     expect(foodOverflowGold('relic')).toBe(BALANCE.provisional.sell.prices['food-relic']);
-    expect(foodEffect('relic').hunger).toBe(40);
+    expect(foodEffect('relic')).toMatchObject({ hunger: 10, condition: 0, risk: 0 });
+    expect(NX.foods.feast).toMatchObject({ hunger: 40, condition: -15 });
+    expect(NX.foods.tonic).toMatchObject({ hunger: 8, condition: 25 });
+    expect(NX.foods.flesh).toMatchObject({ hunger: 20, risk: 20 });
+    expect(NX.foods.elixir).toMatchObject({ hunger: 10, hpFull: true, condition: -10 });
+    expect(NX.foods.purify).toMatchObject({ hunger: 5, risk: -15, bond: -1 });
   });
-  it('일반: 배부름 12·교감 +1, 선호 ×2, 비선호 배부름 ×0.5·교감 0, 연달아 2번째부터 교감 −1', () => {
+  it('일반: 배부름 8(C.391)·교감 +1, 선호 ×2, 비선호 배부름 ×0.5·교감 0, 연달아 2번째부터 교감 −1', () => {
     const n = newNest(T);
     Object.assign(n, { hunger: 100, bond: 10 });
     doNestAction(n, 'feed', 'basic', T);
-    expect([n.hunger, n.bond]).toEqual([88, 11]);
+    expect([n.hunger, n.bond]).toEqual([92, 11]);
     doNestAction(n, 'feed', 'basic', T, 'like');
-    expect([n.hunger, n.bond]).toEqual([64, 13]);
+    expect([n.hunger, n.bond]).toEqual([76, 13]);
     doNestAction(n, 'feed', 'basic', T, 'dislike');
-    expect([n.hunger, n.bond, n.dislikeRun]).toEqual([58, 13, 1]);
+    expect([n.hunger, n.bond, n.dislikeRun]).toEqual([72, 13, 1]);
     doNestAction(n, 'feed', 'basic', T, 'dislike');
-    expect([n.hunger, n.bond, n.dislikeRun]).toEqual([52, 12, 2]);
+    expect([n.hunger, n.bond, n.dislikeRun]).toEqual([68, 12, 2]);
     doNestAction(n, 'feed', 'basic', T);
     expect(n.dislikeRun).toBe(0);
   });
-  it('싸구려: 배부름 6, 먹을 때마다 교감 −1 (하루 한도와 상관없이)', () => {
+  it('싸구려: 배부름 4(C.391), 먹을 때마다 교감 −1 (하루 한도와 상관없이)', () => {
     const n = newNest(T);
     Object.assign(n, { hunger: 100, bond: 5 });
     doNestAction(n, 'feed', 'snack', T, 'cheap');
-    expect([n.hunger, n.bond]).toEqual([94, 4]);
+    expect([n.hunger, n.bond]).toEqual([96, 4]);
   });
   it('선호·비선호 = 진화체 속성 (사용자 추가): 자기 속성 먹이 선호, 약점 속성(나를 이기는 속성) 먹이 비선호', () => {
     for (const el of ELEMENTAL_IDS) {
@@ -148,16 +159,16 @@ describe('235장: 먹이 3유형', () => {
     expect(H.foodNames.roast).toBe('구운 고기');
     expect(H.foodNames.sushi).toBe('초밥');
   });
-  it('세이브 경로: 1단계(노멀) = 주먹밥 선호(배부름 24) · 검은 버섯 비선호(배부름 6)', () => {
+  it('세이브 경로: 1단계(노멀) = 주먹밥 선호(배부름 16) · 검은 버섯 비선호(배부름 4) (C.391 일반 8)', () => {
     const s = newSaveData('hollow', T);
     s.nest.hunger = 100;
     s.shared.food.basic = 1;
     s.shared.food.mushroom = 1;
     expect(foodReactionFor(s, 'basic')).toBe('like');
     feedNest(s, 'basic', T);
-    expect(s.nest.hunger).toBe(76);
+    expect(s.nest.hunger).toBe(84);
     feedNest(s, 'mushroom', T);
-    expect(s.nest.hunger).toBe(70);
+    expect(s.nest.hunger).toBe(80);
   });
   it('방: 선호·비선호·싸구려 반응 말풍선(종족 설정), 코드에 종족 분기 없음', () => {
     const v = read('src/ui/roomView.ts');
@@ -177,7 +188,7 @@ describe('235장: 먹이 3유형', () => {
 
 describe('세이브 형식 70', () => {
   it('형식 70 · 문턱 54, 69 → 70 = 빈 foodStreak·dislikeRun 0, 옛 먹이 개수 그대로 + 새 종류 0', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([71, 54]);
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([72, 54]);
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.nest.foodStreak;
     delete s.nest.dislikeRun;
@@ -187,7 +198,7 @@ describe('세이브 형식 70', () => {
     expect([s.nest.foodStreak, s.nest.dislikeRun]).toEqual([{}, 0]);
     s.meta.format = 69;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(71);
+    expect(m.meta.format).toBe(72);
     expect(m.shared.food).toMatchObject({ snack: 4, basic: 2, hearty: 1, tonic: 3, feast: 1, sushi: 0, elixir: 0, relic: 0, scrap: 0 });
     expect(m.nest.foodStreak).toEqual({});
   });

@@ -15,7 +15,7 @@
         "id": "absorb",
         "targets": [],
         "title": "{absorbActionName}",
-        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 블록과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 블록만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 놓아주면 {stabilityName}이(가) 오른다"
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 블록과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 블록만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 얻지 않고 놓아준다"
       },
       {
         "id": "practice",

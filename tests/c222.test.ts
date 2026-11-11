@@ -13,7 +13,7 @@ const TS = BALANCE.provisional.tutorialScript;
 const tutorialBattle = (factionId: string): CombatState => {
   const save = newSaveData(factionId, 1);
   const exp = createExpedition({
-    factionId, seed: 7, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+    factionId, seed: 7, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
     build: save.build, evolution: save.evolution, tutorial: true,
   });
   while (exp.phase === 'moving') advance(exp);

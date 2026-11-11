@@ -9,7 +9,6 @@ import { newSaveData } from '../src/game';
 import { consumableBrief, inventoryOf } from '../src/inventory';
 import { consumableGroupOf, goldRows } from '../src/shop';
 import { bagGroupOf, cardDetailOf } from '../src/ui/lcdScreens';
-import { stabilityZones } from '../src/data/help/riskText';
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
@@ -79,8 +78,8 @@ describe('159장 24·25·36·37: 소모품 갈래 · 한 줄 효과', () => {
   });
   it('음식 한 줄 = 하는 일 (종족 배부름 이름) — 상점·가방 같은 줄', () => {
     expect(foodBlurb('snack', H)).toBe(`${H.fullnessName}이 조금 찬다. 맛은 없다`); // C.387 (GDD 235장 3): 싸구려
-    expect(foodBlurb('tonic', S)).toBe(`${S.fullnessName}이 크게 차고 컨디션도 크게 오른다`);
-    expect(foodBlurb('feast', H)).toContain(H.riskGaugeName); // 특식 리스크 (235장 1) — {risk} = 종족 이름
+    expect(foodBlurb('tonic', S)).toMatch(new RegExp(`^컨디션이 크게 오르지만 ${S.fullnessName}[은는] 조금$`)); // C.391 (GDD 239장): 특식 득실
+    expect(foodBlurb('flesh', H)).toContain(H.riskGaugeName); // 특식 리스크 (239장) — {risk} = 종족 이름
     expect(read('src/data/shop/blurbs.json')).not.toContain('"먹이다"');
   });
   it('가방 위쪽 탭 = 장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타, 장비 탭 숫자 = 장비 + 전투용 소모품', () => {
@@ -127,11 +126,6 @@ describe('159장 그 밖', () => {
     expect(read('src/ui/bgm.ts')).not.toContain("eyebrow: '배경음'");
     expect(read('src/ui/bha/nest.ts')).toContain('if (toastBlocked()) deferUntilSettingsClosed(start);'); // 193장 18: 진화 연출 중에도 미룬다
     expect(read('src/ui/bha/nest.ts')).toMatch(/toastBlocked = \(\): boolean => settingsOpen\(\) \|\|/);
-  });
-  it('23: 영압 안정도 구간 값은 정수, 겹치지 않는다', () => {
-    const z = stabilityZones(H).map((x) => x.text);
-    for (const t of z) expect(t).not.toMatch(/\d\.\d/);
-    expect(z.join('|')).toBe('전투 시작 해방 게이지 0~12/100|전투 시작 해방 게이지 13~24/100|전투 시작 해방 게이지 25~37/100|전투 시작 해방 게이지 38~50/100');
   });
   it('41·42: 탑 배율은 ⓘ 안, 쟁탈전 목록은 번호 칸만(순번·무번호 줄 없음)', () => {
     expect(read('src/ui/towerView.ts')).not.toContain("el('span', 'bha-faint bha-num', `적 +");

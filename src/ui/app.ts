@@ -729,7 +729,7 @@ export function startApp(host: HTMLElement): void {
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
       applyDifficultyToParams(params, star);
-      params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
+      params.liberationStartGauge = liberationStartGaugeOf();
     }
     // 다시 보기도 첫 원정 첫 전투와 같은 각본 전투 (GDD 123장 5, C.199 — 옛 '직접 해 보기' 대체)
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript() });
@@ -1502,7 +1502,6 @@ export function startApp(host: HTMLElement): void {
       hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
-      stability: save.nest.stability,
       build: save.build,
       evolution: save.evolution,
       groundId: lastGround(save),
@@ -1674,7 +1673,7 @@ export function startApp(host: HTMLElement): void {
     const s0 = save;
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
-    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    params.liberationStartGauge = liberationStartGaugeOf();
     // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
     applyGearToParams(params, gearCarry(s0.shared.gear), f.kind === 'elite' || !!f.bossId);
     applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
@@ -1726,7 +1725,6 @@ export function startApp(host: HTMLElement): void {
       hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: [],
       risk: save.nest.risk,
-      stability: save.nest.stability,
       build: save.build,
       evolution: save.evolution,
       gold: save.shared.tradeCoins,
@@ -1775,7 +1773,6 @@ export function startApp(host: HTMLElement): void {
       hpFraction: departHpOf(save), // 홈 체력 그대로 출발 (GDD 123장 2)
       deck: ownedTileList(save.tiles, faction.id),
       risk: save.nest.risk,
-      stability: save.nest.stability,
       build: save.build,
       evolution: save.evolution,
       liberationTrained: liberationAccess(save).trained,
@@ -2045,7 +2042,7 @@ export function startApp(host: HTMLElement): void {
     }
     const showResult = () => {
       setBgm('expedition'); // 결과 화면은 원정 음악 (스토리 끝 대사의 story 음악에서 돌아온다)
-      resultView(root, faction, exp, save?.nest.stability ?? exp.stability, () => {
+      resultView(root, faction, exp, () => {
         if (afterResult) holdRoomGuides = true;
         nestScreen();
         const next = afterResult;
@@ -2157,7 +2154,7 @@ export function startApp(host: HTMLElement): void {
     if (save && params) {
       applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
       applyDifficultyToParams(params, star);
-      params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
+      params.liberationStartGauge = liberationStartGaugeOf();
       // 장비 (GDD 91장): 연습도 낀 장비 그대로 (훈련 인형 DPS 측정)
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
       applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
@@ -2209,7 +2206,7 @@ export function startApp(host: HTMLElement): void {
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
     // 보유자마다 정해진 난이도 ★ (GDD 32-1 7번: 아래 번호일수록 낮고 No.1 = ★5)
     applyDifficultyToParams(params, holder.difficulty);
-    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    params.liberationStartGauge = liberationStartGaugeOf();
     // 장비 (GDD 91장): 등급전 상대는 강적으로 본다
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
     applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
@@ -2246,7 +2243,7 @@ export function startApp(host: HTMLElement): void {
     const params = buildCombatParams(s0.build, faction.id);
     applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
     applyDifficultyToParams(params, AX.difficulty);
-    params.liberationStartGauge = liberationStartGaugeOf(s0.nest.stability);
+    params.liberationStartGauge = liberationStartGaugeOf();
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
     applyCareToParams(params, battleCareOf(s0));
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });

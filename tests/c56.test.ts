@@ -71,7 +71,6 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     const s = tier5Save();
     s.skin = 'grandfisher';
     s.titles = [{ id: 'x' } as never];
-    const stability = s.nest.stability;
     const r = performRebirth(s, traitIds[1]!, 5000);
     expect(r.ok).toBe(true);
     const e = s.evolution;
@@ -85,7 +84,6 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     expect([s.nest.risk, s.nest.weakened]).toEqual([0, false]);
     expect(s.nest.hunger).toBe(BALANCE.provisional.nest.startHunger);
     expect(s.nest.condition).toBe(BALANCE.provisional.nest.startCondition);
-    expect(s.nest.stability).toBe(stability);
     expect(s.formDex).toEqual(['t2:base', 't3:fire', 't4:fire:physical']);
     expect(s.titles).toHaveLength(1);
     expect([s.training.completed, s.training.points, s.training.tickets]).toEqual([true, 61, 2]);

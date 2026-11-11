@@ -256,7 +256,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   }));
   let exiting = false;
 
-  // 방과 같은 상태 박스(배부름·컨디션·영압 안정도·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
+  // 방과 같은 상태 박스(배부름·컨디션·리스크 + 상태이상 줄)·발밑 체력 막대 (GDD 197장 4) — 온천에서 오르내리는 배부름·컨디션·체력은 지금 값으로 (GDD 135장 2)
   let painted: { hunger: number; cond: number; hp: number } | null = null;
   let noteFrom: { from: { hunger: number; cond: number; hp: number }; keys: Set<'hunger' | 'cond' | 'hp'> } | null = null;
   const paint = (fraction: number, fullness: number, condition: number) => {
@@ -278,7 +278,7 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     painted = now;
     applyBlink(scene);
     clampStatus();
-    rememberShown(n, { hunger: fullness, cond: condition, stab: n.stability, risk: n.risk, hp: fraction }); // 방으로 돌아가도 쉬며 찬 만큼 다시 차오르지 않게 (GDD 201장)
+    rememberShown(n, { hunger: fullness, cond: condition, risk: n.risk, hp: fraction }); // 방으로 돌아가도 쉬며 찬 만큼 다시 차오르지 않게 (GDD 201장)
   };
   { const p0 = previewHomeHp(n, Date.now()); paint(p0.fraction, fullnessOfNest(n), p0.condition); }
 

@@ -74,7 +74,7 @@ describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {
     expect(s.nest.hpFraction).toBe(1);
     s.nest.hpFraction = 0.4;
     expect(departHpOf(s)).toBeCloseTo(0.4);
-    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, stability: 50, build: s.build, evolution: s.evolution, hpFraction: departHpOf(s) });
+    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, build: s.build, evolution: s.evolution, hpFraction: departHpOf(s) });
     expect(exp.hpFraction).toBeCloseTo(0.4);
     exp.hpFraction = 0.23;
     exp.outcome = 'returned';
@@ -84,7 +84,7 @@ describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {
   });
   it('지면 빈사(체력 10%)', () => {
     const s = newSaveData('hollow', T0);
-    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, stability: 50, build: s.build, evolution: s.evolution });
+    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, build: s.build, evolution: s.evolution });
     exp.outcome = 'defeated';
     exp.phase = 'ended';
     exp.endReason = 'battle-lost';
@@ -98,7 +98,7 @@ describe('123장 2 홈 체력 = 원정 밖에서도 유지', () => {
     collapseNest(s.nest, T0);
     s.nest.hpFraction = 0.05;
     expect(departHpOf(s)).toBeCloseTo(0.5);
-    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, stability: 50, build: s.build, evolution: s.evolution, care: { weak: false, tired: false, dying: true }, hpFraction: departHpOf(s) });
+    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 20, condition: 80, deck: [], risk: 0, build: s.build, evolution: s.evolution, care: { weak: false, tired: false, dying: true }, hpFraction: departHpOf(s) });
     exp.hpFraction = 0.8;
     exp.outcome = 'returned';
     exp.phase = 'ended';
@@ -331,7 +331,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(71); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(72); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

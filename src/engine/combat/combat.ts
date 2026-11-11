@@ -192,7 +192,7 @@ export interface CombatParams {
   evadeChance: number;
   /** 해방 (GDD 83장, C.134 — 옛 저장형 필살기 자리): 이 전투에서 해방할 수 있는가. false 면 게이지도 차지 않는다 (튜토리얼·연습 등 부르는 쪽이 정한다) */
   liberationEnabled: boolean;
-  /** 해방 게이지: 블록 1개 사용당, 체인 단계별 보너스(사용 한 번), 전투 시작 게이지(둥지 애착: 안정 수치 비례, liberationStartGaugeOf) */
+  /** 해방 게이지: 블록 1개 사용당, 체인 단계별 보너스(사용 한 번), 전투 시작 게이지(고정값, liberationStartGaugeOf — C.391) */
   liberationGaugePerBlock: number;
   liberationChainBonus: readonly number[];
   liberationStartGauge: number;
@@ -1082,10 +1082,9 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
   };
 }
 
-/** 안정 수치(0~stabilityMax) → 전투 시작 해방 게이지 (0~startGaugeMax, 비례 — 옛 저장 필살 시작 게이지) */
-export function liberationStartGaugeOf(stability: number): number {
-  const max = BALANCE.provisional.risk.stabilityMax;
-  return (Math.min(max, Math.max(0, stability)) / max) * LB.startGaugeMax;
+/** 전투 시작 해방 게이지 (C.391 GDD 239장 4: 고정값 liberation.startGauge — 옛 안정 수치 비례를 기본 시작값으로 묶음) */
+export function liberationStartGaugeOf(): number {
+  return LB.startGauge;
 }
 
 export function elapsedSeconds(s: CombatState): number {

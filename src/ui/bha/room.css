@@ -226,7 +226,6 @@
 .bha-room__chip--hunger { --c: var(--bha-hunger); }
 .bha-room__chip--cond { --c: var(--bha-cond); }
 .bha-room__chip--risk { --c: var(--bha-risk, var(--bha-danger)); }
-.bha-room__chip--stab { --c: var(--bha-stab); }
 .bha-room__chip--bond { --c: var(--bha-good); }
 .bha-room__chip--hp { --c: var(--bha-player-hp); }
 .bha-room__chip--weak, .bha-room__chip--tired, .bha-room__chip--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }

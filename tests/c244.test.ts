@@ -34,7 +34,7 @@ const evDiff = (a: ExpeditionState, b: ExpeditionState) => Object.fromEntries(ST
 
 describe('흡수 미리보기 = 실제 (GDD 163장 2)', () => {
   for (const m of ABSORB_MODES) {
-    it(`${m}: 능력치·리스크·타일·안정도가 실제 실행과 같고, 원래 상태는 안 바뀐다`, () => {
+    it(`${m}: 능력치·리스크·타일이 실제 실행과 같고, 원래 상태는 안 바뀐다`, () => {
       const exp = toAbsorb('shinigami', { risk: 5 });
       const before = JSON.stringify(exp);
       const p = previewAbsorb(exp, m);
@@ -45,7 +45,7 @@ describe('흡수 미리보기 = 실제 (GDD 163장 2)', () => {
       expect(p.ev).toEqual(evDiff(exp, real));
       expect(p.riskTo).toBe(real.risk);
       expect(p.tiles).toBe(real.hand.length - exp.hand.length);
-      expect(p.stabilityTo).toBe(real.stability);
+      expect('stabilityTo' in p).toBe(false); // 영압 안정도 삭제 (C.391)
       expect(real.hunger).toBe(exp.hunger); // GDD 163장 5: 흡수해도 배부름 그대로
       if (m === 'trait' || m === 'none') expect(p.ev).toEqual({});
       if (m === 'none') expect(p.riskTo).toBeLessThan(p.riskFrom);
@@ -82,13 +82,11 @@ describe('설명 칸 줄 (GDD 163장 2)', () => {
     expect(lines[3]!.text).toBe('받는 것: 타일 +1');
     for (const s of Object.keys(p.ev)) expect(lines[1]!.text).toContain(`+${p.ev[s as keyof typeof p.ev]}`);
   });
-  it('놓아주기: 호로화 −n, 영압 안정도 오름, 타일 없음', () => {
+  it('놓아주기: 호로화 −n, 받는 것 줄 없음(영압 안정도 C.391 삭제·타일 없음)', () => {
     const exp = toAbsorb('shinigami', { risk: 5 });
     const lines = absorbDescLines(S, exp, 'none');
     expect(lines.find((l) => l.kind === 'risk')!.text).toBe(`호로화: −${RX.releaseRelief} (5 → ${5 - RX.releaseRelief})`);
-    const gain = lines.find((l) => l.kind === 'gain')!.text;
-    expect(gain).toContain('영압 안정도 +');
-    expect(gain).not.toContain('타일');
+    expect(lines.some((l) => l.kind === 'gain')).toBe(false);
     expect(lines.some((l) => l.kind === 'stat')).toBe(false);
   });
   it('호로판도 종족 이름(리스크 게이지·배부름)을 json 에서', () => {

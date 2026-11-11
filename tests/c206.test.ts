@@ -27,7 +27,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
   const afterTutorial = (factionId: string) => {
     const save = newSaveData(factionId, 1000);
     const exp = createExpedition({
-      factionId, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+      factionId, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
       build: save.build, evolution: save.evolution, tutorial: true,
     });
     playExpedition(exp, { returnAfterLap: 1, absorb: 'absorb' });

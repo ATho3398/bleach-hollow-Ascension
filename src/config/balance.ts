@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 117; // C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
+export const BALANCE_VERSION = 118; // C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
 // 109: // C.311 (GDD 192장 1, provisional): 원정 이어 하기 시한 expedition.resumeWindowMinutes 30 신설 — 나간 뒤 30분 넘게·새 패치면 모험 실패 정산.
@@ -108,9 +108,8 @@ export const BALANCE = {
       // 휴식 타일(rest-a) 리스크 하락 restRelief 는 C.355 (GDD 210장 1) 에서 삭제 — 휴식 칸은 리스크를 내리지 않는다. 샘(rest-spring)은 tiles.spring.riskRelief 절대값. 역사: C.136 15 → 10
       /** 5바퀴째부터 칸을 지날 때마다 상승: (바퀴 − 5 + 1) × 이 값 (GDD 5장 "5바퀴 이후") */
       lateLapPerTile: 0.5,
-      /** 돌파 페널티: 그 원정 남은 동안 공허 생성률 가산, 둥지 복귀 시 안정 수치 하락 */
+      /** 돌파 페널티: 그 원정 남은 동안 공허 생성률 가산 (둥지 복귀 시 안정 수치 하락 breakthroughStabilityLoss 25 는 C.391 GDD 239장 4 에서 안정도와 함께 삭제) */
       breakthroughSpawnBonus: 0.2,
-      breakthroughStabilityLoss: 25,
       /** 폭주(호로화) = 폭주 (GDD 23-2): 그 원정 남은 동안 주는 피해·받는 피해 배율, 둥지로 돌아오면 컨디션 하락 */
       frenzyDamageDealt: 1.3,
       frenzyDamageTaken: 1.6, // C.173 (GDD 101장 4번): 1.3 → 1.6, 대신 회피 frenzyEvadeChance
@@ -119,17 +118,14 @@ export const BALANCE = {
       frenzyConditionLoss: 30,
       /** 돌파한 원정에서 귀환하면 게이지가 이 값으로 가라앉는다(바로 또 돌파하지 않게) */
       riskAfterBreakthrough: 60,
-      /** 안정 수치(호로 자아 / 사신 영압 안정도): 시작값·상한, 놓아줄 때 상승 */
-      stabilityStart: 50,
-      stabilityMax: 100,
-      releaseStability: 6,
-      /** 둥지 행동의 리스크 하락·안정 수치 상승 (GDD 5장 "둥지 쓰다듬기" 등). C.52: 재우기·쓰다듬기 −10 → −20 (GDD 23-2 "한 번에 크게") */
+      // 안정 수치(영압 안정도) stabilityStart 50·stabilityMax 100·releaseStability 6 은 C.391 (GDD 239장 4) 에서 삭제
+      /** 둥지 행동의 리스크 하락 (안정 수치 상승은 C.391 에서 삭제) (GDD 5장 "둥지 쓰다듬기" 등). C.52: 재우기·쓰다듬기 −10 → −20 (GDD 23-2 "한 번에 크게") */
       /*  C.136 (GDD 84장 10번 "광기 수치 너무 잘 줄어드는듯"): 먹이 −5 → −3 · 재우기·쓰다듬기 −20 → −10 */
       nestActions: {
         // C.351 (GDD 211장): 먹이 −3·+2 → 0·0 — 카드에 안 적힌 숨은 효과였고 기획서 5장 하락원에 먹이가 없다. 먹이 효과는 nest.foods·homeHp.foodHeal·bond.gain.feed 만
-        feed: { risk: 0, stability: 0 },
-        sleep: { risk: -10, stability: 3 },
-        pet: { risk: -10, stability: 8 },
+        feed: { risk: 0 },
+        sleep: { risk: -10 },
+        pet: { risk: -10 },
       },
     },
     // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 ──
@@ -177,8 +173,8 @@ export const BALANCE = {
       /** C.154 (GDD 95장 B2): 피해로도 찬다 — 적 최대 체력만큼 주면 +gaugePerDealt, 내 최대 체력만큼 받으면 +gaugePerTaken (평타·블록·반격 모두). 블록을 안 쓰는 평타형·자동전투도 강적전에 해방할 수 있게 */
       gaugePerDealt: 15,
       gaugePerTaken: 90,
-      /** 전투 시작 게이지 = 안정 수치(0~stabilityMax) 비례로 0~이 값 (둥지 애착 반영, 옛 저장 필살 시작 게이지) */
-      startGaugeMax: 50,
+      /** 전투 시작 게이지 (C.391 GDD 239장 4: 고정값) — 옛 '안정 수치 비례 0~startGaugeMax 50' 을 기본 시작 안정 수치 50/100 으로 계산한 값 25 로 묶어 밸런스 그대로 */
+      startGauge: 25,
       /** 지속(초, 기획 "약 10초"). 끝나면 게이지 0 부터 다시 — 한 전투에 여러 번. C.134 조정: 10 → 8 (해방 한 번이 1칸 몸 강적 승률 +8%p 안팎이라 — 회귀 가드, 흡수 타이머 4.6 과 같이). C.166: 8 → 4 (순간 2개·생성 ×1.8 로 해방 한 번이 세져 — 1~4단계 강적·보스·탑 가드). C.168: 4 → 6 (마스터 "4초는 너무 짧다" — 순간 블록 2 → 1 로 맞춤) */
       seconds: 6,
       /** 해방 중 블록 생성 속도 배율: 생성 타이머(흡수·기본·물공)가 이 배로 빨리 돌고, 나오는 블록은 전부 장착 블록(장착이 없으면 기본 블록, 98장 B — 해방 칸은 C.167 에 폐지).
@@ -237,7 +233,7 @@ export const BALANCE = {
      *  jadeToGold: 영옥으로 산 물건을 팔 때 영옥 1 = 골드 n (지금 영옥 물건은 전부 영구 해금이라 팔 수 없음 — 표만). confirmAt: 한 번에 이 골드 이상이면 확인 창 */
     sell: {
       shopRate: 0.5,
-      prices: { 'food-sushi': 15, 'food-roast': 15, 'food-fizz': 15, 'food-mushroom': 15, 'food-elixir': 200, 'food-relic': 600 } as Record<string, number>,
+      prices: { 'food-sushi': 15, 'food-roast': 15, 'food-fizz': 15, 'food-mushroom': 15, 'food-elixir': 200, 'food-relic': 600, 'food-flesh': 80, 'food-purify': 80 } as Record<string, number>,
       wandererGrade: { normal: 20, rare: 60, epic: 150, legendary: 300 } as Record<string, number>,
       jadeToGold: 10,
       confirmAt: 100,
@@ -253,7 +249,7 @@ export const BALANCE = {
       normalTable: { basic: 10, hearty: 10, sushi: 10, fizz: 10, mushroom: 10, roast: 10 } as Record<string, number>, // C.387 (GDD 235장): 일반 6종 같은 비율 (옛 간식 50·고기 35·사냥감 15)
       /** 강적을 이기면 확정 1개 + 이 확률로 1개 더 */
       eliteExtraChance: 0.3,
-      eliteTable: { basic: 10, hearty: 10, sushi: 10, fizz: 10, mushroom: 10, roast: 10, feast: 5, tonic: 5, elixir: 5, relic: 5 } as Record<string, number>, // C.387 (GDD 235장 1): 특식은 강적부터 약 25% (옛 사냥감 40·보양 40·잔치 20)
+      eliteTable: { basic: 10, hearty: 10, sushi: 10, fizz: 10, mushroom: 10, roast: 10, feast: 5, tonic: 5, elixir: 5, relic: 5, flesh: 5, purify: 5 } as Record<string, number>, // C.391: 특식 6종. C.387 (GDD 235장 1): 특식은 강적부터 약 25% (옛 사냥감 40·보양 40·잔치 20)
       /** 휴식 타일을 지나면 간식 +이 값 */
       restSnack: 1,
       /** 막힘 방지: 원정에서 돌아왔을 때 먹이가 하나도 없으면 간식 이만큼 */
@@ -438,9 +434,9 @@ export const BALANCE = {
         /** 돌봄 실패(강제): 장착 특성 없음, 또는 허기 failHunger 이상 / 컨디션 failCondition 이하 */
         failHunger: 85,
         failCondition: 25,
-        /** 폭주형: 그 단계 폭주(호로화) 횟수 이상 + 진화 순간 안정 수치 frenzyStabilityBelow 미만 (배부름 무관) */
+        /** 폭주형: 그 단계 폭주(호로화) 횟수 이상 + 진화 순간 리스크 게이지 frenzyRiskAtLeast 이상 (배부름 무관). C.391 (GDD 239장 4, provisional): 옛 '안정 수치 10 미만' → 리스크 게이지 90 이상(폭주 직전) */
         breakthroughs: 3,
-        frenzyStabilityBelow: 10,
+        frenzyRiskAtLeast: 90,
         /** 절제형: 놓아준 수 > 흡수 수 + 진화 순간 배부름(100 − 허기) 이 값 이하 */
         restraintFullnessMax: 50,
         /** 안정형: 교감 이 값 이상 + 3단계 동안 빈사 0 · 폭주 0 · 24시간 넘는 미접속 0 */
@@ -654,11 +650,11 @@ export const BALANCE = {
       /** ③ 이벤트 타일 */
       events: {
         /** 상인: 판매 줄 수(먹이 2 + 타일 1), 가격(골드) */
-        merchant: { foodOffers: 2, prices: { snack: 15, scrap: 10, basic: 25, hearty: 25, sushi: 25, fizz: 25, mushroom: 25, roast: 25, tonic: 120, feast: 120, elixir: 120, relic: 150, tile: 30 } as Record<string, number> },
+        merchant: { foodOffers: 2, prices: { snack: 15, scrap: 10, basic: 25, hearty: 25, sushi: 25, fizz: 25, mushroom: 25, roast: 25, tonic: 120, feast: 120, flesh: 100, elixir: 120, purify: 100, relic: 150, tile: 30 } as Record<string, number> },
         /** 제단: 리스크 +risk 대신 장착 특성 하나 위력 +traitPower (이번 원정 동안) */
         altar: { risk: 15, traitPower: 0.1 },
         /** 보물: foodChance 로 희귀 먹이 1(표), 아니면 골드 gold[0]~gold[1] */
-        treasure: { foodChance: 0.5, foodTable: { tonic: 25, feast: 25, elixir: 25, relic: 25 } as Record<string, number>, gold: [20, 40] as [number, number] },
+        treasure: { foodChance: 0.5, foodTable: { tonic: 17, feast: 17, flesh: 16, elixir: 17, purify: 16, relic: 17 } as Record<string, number>, gold: [20, 40] as [number, number] },
         /** 함정: 다음 전투 시작 체력 비율, 이기면 보상 배율 */
         trap: { startHpFraction: 0.8, rewardMult: 1.25 },
         /** 갈림길: 다음 전투 보호막(최대 체력 비율) / 골드 */
@@ -677,7 +673,7 @@ export const BALANCE = {
       idleHungerNotice: 5,
       /** 돌봄 패널티 (GDD 102장, C.175 마스터 결정 provisional). 배부름 = 100 − 허기.
        *  conditionPerHour: 배부름 conditionBelowFullness 이하일 때만 컨디션 시간당 감소, 배부름 0 이면 ×2 (켜 있든 꺼 있든).
-       *  stabilityPerHour: 꺼 둔 동안만 영압 안정도 시간당 감소, 배부름 또는 컨디션이 doubleBelow 이하면 ×2.
+       *  (영압 안정도 시간당 감소 stabilityPerHour 2·stabilityDoubleBelow 30 은 C.391 GDD 239장 4 에서 삭제)
        *  weakFullness / tiredCondition: 그 값 이하가 되는 순간 쇠약 / 피곤 — 수치를 넘긴 뒤 원정을 한 번 끝내거나 약으로만 풀린다.
        *  weakMaxHpCut: 쇠약 원정 전투 최대 체력 −20% (대기 보상 ×idle.weakenedRate). tiredSpawnSlow: 피곤 블록 생성 간격 +15%.
        *  collapseHours: 이만큼 미접속이면 빈사(옛 쓰러짐). 빈사가 된 순간부터 실제 시간 dyingBaseHours + 교감 × dyingHoursPerBond(교감 100 = 24시간) 안에 구급상자를 안 쓰면 사망 (GDD 102장 수정 v5.228).
@@ -686,8 +682,6 @@ export const BALANCE = {
       care: {
         conditionBelowFullness: 30,
         conditionPerHour: 4,
-        stabilityPerHour: 2,
-        stabilityDoubleBelow: 30,
         weakFullness: 20,
         tiredCondition: 30,
         weakMaxHpCut: 0.2,
@@ -715,16 +709,16 @@ export const BALANCE = {
       },
       /** 약 3종 값 (GDD 102-4, provisional): 보통 먹이(shop.goldPrices food-basic 35) 기준 구급상자 약 6배, 링거·에너지 드링크 약 3배 */
       medicinePrices: { 'med-cure': 210, 'med-iv': 105, 'med-energy': 105 } as Record<string, number>,
-      feedHunger: 12, // C.387 (GDD 235장 2): 일반 먹이(basic) 배부름과 같게 5 → 12. 옛 C.272 (GDD 180장 3): 3 → 5
+      feedHunger: 8, // C.391 (GDD 239장 1): 일반 먹이 배부름과 같게 12 → 8. C.387 (GDD 235장 2): 5 → 12. 옛 C.272 (GDD 180장 3): 3 → 5
       /** 먹이 3유형 (GDD 235장, C.387 provisional — 유형 이름은 개발용, 화면에 안 씀). 유형이 배부름·체력 회복(최대 체력 비율)·교감을 정한다.
        *  옛 5종 수치(18-2·109장 6·180장 3: 간식 2·고기 5·사냥감 8·보양 3·잔치 11, 컨디션 ±)는 이 개편으로 대체 — 234장 2(×2)도 대체 */
       foodTypes: {
         /** 특식: 얻기 힘듦(강적·보스 드롭·보물·떠돌이 상인), 배부름 크게 + 종류마다 추가 효과 하나(foods) */
-        special: { hunger: 40, heal: 0.08, bond: 1 },
+        special: { hunger: 40, heal: 0.08, bond: 1 }, // 배부름은 특식마다 foods[id].hunger (C.391, GDD 239장 3)
         /** 일반: 6종 수치 같음, 진화체 선호·비선호(foodPref) */
-        normal: { hunger: 12, heal: 0.03, bond: 1 },
+        normal: { hunger: 8, heal: 0.03, bond: 1 }, // C.391 (GDD 239장 1): 12 → 8
         /** 싸구려: 상점 판매, 맛없어 억지로 — 먹을 때마다 교감 −1 */
-        cheap: { hunger: 6, heal: 0.01, bond: -1 },
+        cheap: { hunger: 4, heal: 0.01, bond: -1 }, // C.391 (GDD 239장 1): 6 → 4
       },
       /** 먹이 12종 = 유형 + (특식만) 추가 효과: risk = 리스크 게이지 +, condition = 컨디션 +, hpFull = 체력 가득, 팔 때 값은 sell.prices (C.388).
        *  옛 id 그대로 새 유형으로 (GDD 235장 4): 간식(snack) → 싸구려, 고기(basic)·사냥감(hearty) → 일반, 보양(tonic)·잔치(feast) → 특식 */
@@ -737,11 +731,14 @@ export const BALANCE = {
         fizz: { type: 'normal' },
         mushroom: { type: 'normal' },
         roast: { type: 'normal' },
-        feast: { type: 'special', risk: 10 },
-        tonic: { type: 'special', condition: 30 },
-        elixir: { type: 'special', hpFull: true },
-        relic: { type: 'special' }, // 판매가는 sell.prices['food-relic'] (C.388 GDD 236장)
-      } as Record<string, { type: 'special' | 'normal' | 'cheap'; risk?: number; condition?: number; hpFull?: boolean }>,
+        // 특식 = 득실이 있는 6종 (C.391, GDD 239장 3 — 좋은 것만 있는 특식 없음): 대식 · 응축 · 살점 · 재생 · 정화 · 진상품. 옛 4종 id 그대로 이어받음
+        feast: { type: 'special', hunger: 40, condition: -15 }, // 대식: 배부름 크게, 컨디션 −15
+        tonic: { type: 'special', hunger: 8, condition: 25 }, // 응축: 컨디션 +25, 배부름 적음
+        flesh: { type: 'special', hunger: 20, risk: 20 }, // 살점: 배부름 꽤, 리스크 게이지 +20
+        elixir: { type: 'special', hunger: 10, hpFull: true, condition: -10 }, // 재생: 체력 가득, 컨디션 −10
+        purify: { type: 'special', hunger: 5, risk: -15, bond: -1 }, // 정화: 리스크 게이지 −15, 교감 −1(쓴맛)
+        relic: { type: 'special', hunger: 10 }, // 진상품: 팔면 600(sell.prices['food-relic']), 먹으면 아까움
+      } as Record<string, { type: 'special' | 'normal' | 'cheap'; hunger?: number; risk?: number; condition?: number; hpFull?: boolean; bond?: number }>,
       /** 일반 먹이 선호·비선호 (GDD 235장 2, provisional): 진화체마다 선호 1·비선호 1(src/data/foodPrefs.json — 없으면 진화체 id 로 임시 배정).
        *  선호 = 배부름·교감 ×likeMult. 비선호 = 배부름 ×dislikeHunger, 교감 0, 비선호를 연달아 먹으면 2번째부터 교감 −dislikeRunLoss */
       foodPref: { likeMult: 2, dislikeHunger: 0.5, dislikeRunLoss: 1 },

@@ -73,9 +73,9 @@ describe('83장 1번 저장형 필살기 삭제 → 해방 게이지', () => {
     expect(drainCombatEvents(s).filter((e) => e.kind === 'liberation-ready')).toHaveLength(1);
   });
 
-  it('시작 게이지 = 안정 수치 비례 0~50 (옛 저장 필살 시작 게이지), 꺼져 있으면 0 이고 차지 않는다', () => {
-    expect(liberationStartGaugeOf(0)).toBe(0);
-    expect(liberationStartGaugeOf(BALANCE.provisional.risk.stabilityMax)).toBe(LB.startGaugeMax);
+  it('시작 게이지 = 고정값 startGauge 25 (C.391 GDD 239장 — 안정 수치 삭제), 꺼져 있으면 0 이고 차지 않는다', () => {
+    expect(LB.startGauge).toBe(25);
+    expect(liberationStartGaugeOf()).toBe(LB.startGauge);
     expect(mk({ liberationStartGauge: 30 }).liberation.gauge).toBe(30);
     const off = quiet(mk({ liberationStartGauge: 30, liberationEnabled: false }));
     expect(off.liberation.gauge).toBe(0);
@@ -167,7 +167,7 @@ describe('83장 3번 해방 블록 슬롯 → 98장 B 폐지 (C.167): 해방 중
   });
 
   it('세이브: 형식 46(C.175) · 문턱 같이, 옛 해방 칸 필드는 지운다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(71); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(72); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     const s = newSaveData('hollow', 1);
     expect('liberation' in s.build).toBe(false);

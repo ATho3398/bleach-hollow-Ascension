@@ -94,12 +94,10 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
     expect(e.absorbRecords.at(-1)).toMatchObject({ absorbed: true, traitId: null, mode: 'stat' });
   });
 
-  it('흡수 안 함 = 놓아주기 그대로 (리스크 −, 안정 +, 허기 그대로, 기록에 mode 없음)', () => {
+  it('흡수 안 함 = 놓아주기 그대로 (리스크 −, 허기 그대로, 기록에 mode 없음)', () => {
     const { e } = atAbsorb();
-    const stab = e.stability;
     expect(chooseRelease(e).ok).toBe(true);
     expect(e.risk).toBe(20 - RX.releaseRelief);
-    expect(e.stability).toBe(stab + RX.releaseStability);
     expect(e.hunger).toBe(60);
     expect(e.evolution.releases).toBe(1);
     const rec = e.absorbRecords.at(-1)!;

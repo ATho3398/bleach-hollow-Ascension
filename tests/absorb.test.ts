@@ -422,13 +422,12 @@ describe('흡수의 효과', () => {
     expect(exp.tilesThisLap).toBeLessThanOrEqual(BALANCE.expedition.tilesPerLap.max);
   });
 
-  it('놓아주면 리스크 하락 + 안정 수치 상승, 특성·허기는 그대로', () => {
-    const exp = mk({ seed: 10, hunger: 40, risk: 30, stability: 20 });
+  it('놓아주면 리스크 하락, 특성·허기는 그대로', () => {
+    const exp = mk({ seed: 10, hunger: 40, risk: 30 });
     toAbsorb(exp);
     const hunger = exp.hunger;
     expect(chooseRelease(exp).ok).toBe(true);
     expect(exp.risk).toBeCloseTo(30 - RX.releaseRelief);
-    expect(exp.stability).toBe(20 + RX.releaseStability);
     expect(exp.hunger).toBe(hunger);
     expect(exp.build.owned).toEqual([]);
     expect(exp.absorbRecords[0]).toMatchObject({ absorbed: false, traitId: null });
@@ -476,13 +475,11 @@ describe('리스크 게이지', () => {
     expect(exp.risk).toBe(50);
   });
 
-  it('둥지 행동으로 내려가고 안정 수치가 오른다', () => {
+  it('둥지 행동으로 내려간다', () => {
     const n = newNest(0);
     n.risk = 50;
-    const stab = n.stability;
     doNestAction(n, 'pet');
     expect(n.risk).toBe(50 + RX.nestActions.pet.risk);
-    expect(n.stability).toBe(stab + RX.nestActions.pet.stability);
     n.risk = 3;
     doNestAction(n, 'sleep');
     expect(n.risk).toBe(0);
@@ -491,14 +488,12 @@ describe('리스크 게이지', () => {
   it('원정은 둥지의 저장값으로 시작하고, 귀환하면 둥지 값으로 합쳐진다', () => {
     const save = newSaveData('hollow', 0);
     save.nest.risk = 25;
-    save.nest.stability = 40;
-    const exp = mk({ seed: 14, runId: nextRunId(save), risk: save.nest.risk, stability: save.nest.stability });
+    const exp = mk({ seed: 14, runId: nextRunId(save), risk: save.nest.risk });
     expect(exp.risk).toBe(25);
     fightNext(exp);
     winWith(exp, { risk: 40 }); // C.125: 이기면 바로 흡수 화면
     chooseRelease(exp);
     const expected = exp.risk;
-    const stab = exp.stability;
     while (exp.phase !== 'nest-choice' && exp.phase !== 'ended') {
       if (exp.phase === 'moving') advance(exp);
       else if (exp.phase === 'battle') winWith(exp);
@@ -508,8 +503,6 @@ describe('리스크 게이지', () => {
     chooseReturn(exp);
     recordExpedition(save, exp, 10);
     expect(save.nest.risk).toBeCloseTo(exp.risk);
-    expect(save.nest.stability).toBe(exp.stability);
-    expect(save.nest.stability).toBeGreaterThanOrEqual(stab);
     expect(expected).toBeGreaterThan(0);
   });
 });
@@ -559,16 +552,14 @@ describe('한계 돌파', () => {
     expect(RX.breakthroughSpawnBonus).toBeGreaterThanOrEqual(0.15);
   });
 
-  it('임시 페널티: 둥지 복귀 시 안정 수치 하락, 게이지는 가라앉는다', () => {
-    const n = { risk: 0, stability: 0 };
-    const s = mk({ seed: 23, risk: 10, stability: 70 });
+  it('임시 페널티: 둥지 복귀 시 게이지는 가라앉는다', () => {
+    const n = { risk: 0 };
+    const s = mk({ seed: 23, risk: 10 });
     changeRisk(s, 200, 'absorb');
     settleRiskToNest(n, s);
-    expect(n.stability).toBe(70 - RX.breakthroughStabilityLoss);
     expect(n.risk).toBe(RX.riskAfterBreakthrough);
-    const calm = mk({ seed: 23, risk: 10, stability: 70 });
+    const calm = mk({ seed: 23, risk: 10 });
     settleRiskToNest(n, calm);
-    expect(n.stability).toBe(70);
     expect(n.risk).toBe(10);
   });
 
@@ -690,19 +681,18 @@ describe('시드 결정성', () => {
 });
 
 describe('저장 구조', () => {
-  it('새 세이브에는 빌드·리스크·안정 수치가 있다', () => {
+  it('새 세이브에는 빌드·리스크가 있고 안정 수치는 없다', () => {
     const s = newSaveData('hollow', 0);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(4);
     expect(s.build).toEqual(newBuild());
     expect(s.nest.risk).toBe(0);
-    expect(s.nest.stability).toBe(RX.stabilityStart);
+    expect('stability' in s.nest).toBe(false);
   });
 
   it('형식 3 세이브가 열리고 새 필드가 채워진다', () => {
     const old = newSaveData('shinigami', 0) as unknown as Record<string, any>;
     delete old.build;
     delete old.nest.risk;
-    delete old.nest.stability;
     old.meta.format = 3;
     old.runLog.absorbs = [{ runId: 1, enemyId: 'test-a', lineageId: 'lineage-a', rare: false, absorbed: true }];
     old.runLog.runs = [{ runId: 1, laps: 2, outcome: 'returned', gained: ['x'], lost: [], endReason: 'returned', seed: 1, factionId: 'shinigami' }];
@@ -713,7 +703,7 @@ describe('저장 구조', () => {
     expect(s.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(s.build).toEqual(newBuild());
     expect(s.nest.risk).toBe(0);
-    expect(s.nest.stability).toBe(RX.stabilityStart);
+    expect('stability' in s.nest).toBe(false);
     expect(s.runLog.absorbs[0]).toMatchObject({ traitId: null, lap: 0, element: null, lineageId: 'lineage-a' });
     expect(s.runLog.runs[0]).toMatchObject({ gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false });
     expect(migrateSave({ ...old, meta: { format: 99 } })).toBeNull();
@@ -721,10 +711,9 @@ describe('저장 구조', () => {
 });
 
 describe('종족 설정만 바꿔도 표기가 바뀐다', () => {
-  it('안정 수치·슬롯·계통 보너스·특성 종류 이름은 종족 설정에서 나온다', () => {
+  it('슬롯·계통 보너스·특성 종류 이름은 종족 설정에서 나온다', () => {
     const h = getFaction('hollow');
     const s = getFaction('shinigami');
-    expect([h.stabilityName, s.stabilityName]).toEqual(['영압 안정도', '영압 안정도']);
     expect([h.lineageBonusName, s.lineageBonusName]).toEqual(['계열 기술 강화', '참백도 속성 확정']);
     expect([h.slotLocation, s.slotLocation]).toEqual(['body', 'zanpakuto']);
     expect(h.appearanceChange).toBe(true);

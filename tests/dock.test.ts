@@ -22,8 +22,8 @@ describe('독 펼침 상태', () => {
 });
 
 describe('먹이 5종', () => {
-  it('12종(3유형, GDD 235장)이고 종족마다 이름이 모두 있다(종족 id 분기 없이 설정에서 읽는다)', () => {
-    expect(FOOD_IDS).toHaveLength(12);
+  it('14종(3유형, GDD 235장 · 239장 특식 6종)이고 종족마다 이름이 모두 있다(종족 id 분기 없이 설정에서 읽는다)', () => {
+    expect(FOOD_IDS).toHaveLength(14);
     expect(Object.keys(BALANCE.provisional.nest.foods).sort()).toEqual([...FOOD_IDS].sort());
     for (const f of FACTIONS) for (const id of FOOD_IDS) expect(f.foodNames[id].length).toBeGreaterThan(0);
   });
@@ -40,7 +40,7 @@ describe('먹이 5종', () => {
     n.condition = 50;
     doNestAction(n, 'feed', 'tonic');
     expect(n.hunger).toBe(Math.max(0, 90 - foodEffect('tonic').hunger));
-    expect(n.condition).toBe(80);
+    expect(n.condition).toBe(50 + foodEffect('tonic').condition);
     n.hunger = 3;
     doNestAction(n, 'feed', 'feast');
     expect(n.hunger).toBe(0);
@@ -53,10 +53,10 @@ describe('먹이 5종', () => {
 describe('돌보기 결과 문구', () => {
   const f = FACTIONS[0]!;
   it('먹이는 먹이 이름만 — 오른 수치는 글로 쓰지 않고 상태창이 차오른다 (GDD 201장), 줄어든 수치는 그대로', () => {
-    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: 4, stability: 0, risk: 0 })).toBe(f.foodNames.snack); // C.63: 허기 −15 = 배부름 +15 → 글 없음
-    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: -3, stability: 0, risk: 0 })).toBe(`${f.foodNames.snack}: 컨디션 −3`);
+    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: 4, risk: 0 })).toBe(f.foodNames.snack); // C.63: 허기 −15 = 배부름 +15 → 글 없음
+    expect(careFeedback(f, 'feed', 'snack', { hunger: -15, condition: -3, risk: 0 })).toBe(`${f.foodNames.snack}: 컨디션 −3`);
   });
   it('변화가 없으면 그렇게 말한다', () => {
-    expect(careFeedback(f, 'sleep', null, { hunger: 0, condition: 0, stability: 0, risk: 0 })).toBe(`${f.nestActions.sleep}: 변화 없음`);
+    expect(careFeedback(f, 'sleep', null, { hunger: 0, condition: 0, risk: 0 })).toBe(`${f.nestActions.sleep}: 변화 없음`);
   });
 });

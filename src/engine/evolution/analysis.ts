@@ -1,4 +1,4 @@
-// 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·안정 수치·교감·계보도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
+// 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·리스크 게이지·교감·계보도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
 // 장착 특성·흡수 속성 분포·돌보기 상태·행동 기록을 무작위로 만들어 judgeEvolution 을 그대로 돌린다. 종족 무관, 데이터만 본다.
 import { ELEMENT_IDS } from '../../data/elements';
 import { TRAITS } from '../../data/traits';
@@ -80,7 +80,7 @@ export function analyzeTree(table: readonly FormDef[], factionId: string, sample
       const good = nextFloat(rng) < 0.85;
       const ctx = {
         factionId, build, hunger: good ? nextInt(rng, 60) : 60 + nextInt(rng, 41), condition: good ? 40 + nextInt(rng, 61) : nextInt(rng, 60), rebirths: nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0,
-        stability: nextInt(rng, 101), bond: nextFloat(rng) < 0.3 ? 100 : nextInt(rng, 100), failLineage: nextFloat(rng) < 0.3, statTotal: 400 + nextInt(rng, 400),
+        risk: nextInt(rng, 101), bond: nextFloat(rng) < 0.3 ? 100 : nextInt(rng, 100), failLineage: nextFloat(rng) < 0.3, statTotal: 400 + nextInt(rng, 400),
       };
       const { form } = judgeEvolution(e, ctx, table);
       picked[form.id] = (picked[form.id] ?? 0) + 1;

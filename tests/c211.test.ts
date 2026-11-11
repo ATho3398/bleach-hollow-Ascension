@@ -23,7 +23,7 @@ describe('134장 1: 새 세이브 = 가방에 구급상자 3개, 안내용 구�
     for (const f of FACTIONS) {
       const save = newSaveData(f.id, 1000);
       const exp = createExpedition({
-        factionId: f.id, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+        factionId: f.id, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
         build: save.build, evolution: save.evolution, tutorial: true,
       });
       playExpedition(exp, { returnAfterLap: 1, absorb: 'absorb' });

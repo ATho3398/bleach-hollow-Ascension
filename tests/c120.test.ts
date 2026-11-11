@@ -29,7 +29,7 @@ const autoWin = (s: CombatState) => {
   s.finisher = { kind: 'basic-attack', traitId: null, element: null };
 };
 const tutorialExp = (save: SaveData, seed = 11): ExpeditionState => createExpedition({
-  factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+  factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
   build: save.build, evolution: save.evolution, tutorial: true,
 });
 /** 걷기 → 정해진 칸 전투(승리 처리)까지 */

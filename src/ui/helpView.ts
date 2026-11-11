@@ -27,7 +27,7 @@ export interface HelpOptions {
 const SCREEN_ICON: Record<string, string> = { nest: 'i-nest', expedition: 'i-loop', battle: 'i-practice', evolution: 'i-evolve' };
 const TERM_ICON: Record<string, string> = {
   lineage: 'i-lin-a', chain: 'i-chain-3', liberation: 'i-special', 'void-block': 'i-void', weakness: 'i-weak',
-  stability: 'i-stab', 'risk-gauge': 'i-risk', 'evolution-condition': 'i-evolve', 'form-dex': 'i-dex', 'title-dex': 'i-title', 'resume-expedition': 'i-return',
+  'risk-gauge': 'i-risk', 'evolution-condition': 'i-evolve', 'form-dex': 'i-dex', 'title-dex': 'i-title', 'resume-expedition': 'i-return',
 };
 
 /** 화면 위에 도움말을 연다. 돌려주는 함수로 닫는다 */

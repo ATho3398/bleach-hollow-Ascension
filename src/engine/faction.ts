@@ -125,7 +125,7 @@ const COMMON_FOOD_NAMES = (foodNamesRaw as { common: Record<string, string> }).c
 
 /** 먹이 종류 12종 (GDD 235장, C.387 — 옛 18-2 5종): 일반 6(속성 묶음 노멀·물·불·흙·뇌·특수) · 특식 4 · 싸구려 2 순서(방 먹이 줄·가방 순서).
  *  유형·수치는 BALANCE.provisional.nest.foods. 이름: 일반·싸구려 = 두 종족 공통(src/data/foods/names.json), 특식만 종족 설정 foodNames — parseFactionConfig 가 합친다 */
-export const FOOD_IDS = ['basic', 'sushi', 'roast', 'hearty', 'fizz', 'mushroom', 'feast', 'tonic', 'elixir', 'relic', 'snack', 'scrap'] as const;
+export const FOOD_IDS = ['basic', 'sushi', 'roast', 'hearty', 'fizz', 'mushroom', 'feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic', 'snack', 'scrap'] as const; // C.391 특식 6종 (GDD 239장 3)
 export type FoodId = (typeof FOOD_IDS)[number];
 
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */
@@ -478,8 +478,6 @@ export interface FactionConfig {
   defeatStateName: string;
   /** 육성 1단계부터 쓰는 기본 기술 이름: 호로=본체 능력, 사신=시해 (GDD 4장). 슬롯에 skill 특성이 없을 때 나오는 기본 블록 이름 */
   basicSkillName: string;
-  /** 안정 수치 이름: 두 종족 모두 영압 안정도 (GDD 102-5, 옛 호로 자아). 컨디션·허기와 별개 */
-  stabilityName: string;
   /** 배부름 게이지 이름 (C.63, GDD 28장 10번): 화면은 허기를 뒤집어 "가득 → 줄어듦"으로 보인다 */
   fullnessName: string;
   /** 흡수 특성 슬롯 이름 (슬롯 위치 slotLocation 과 짝): 본체 슬롯 / 참백도 슬롯 */
@@ -590,7 +588,7 @@ export function extrasErrors(where: string, v: unknown): string[] {
 export function parseFactionConfig(raw: unknown): FactionConfig {
   const errors: string[] = [];
   const r = (raw ?? {}) as Record<string, unknown>;
-  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'stabilityName', 'fullnessName', 'foodGroupName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
+  for (const k of ['id', 'name', 'theme', 'riskGaugeName', 'absorbActionName', 'defeatStateName', 'huntingGroundName', 'basicSkillName', 'nestName', 'fullnessName', 'foodGroupName', 'slotName', 'lineageBonusName', 'breakthroughText', 'frenzyName', 'skillBlockName', 'voidBlockName', 'chainName', 'unrankedName', 'rankUnitName', 'rankBattleName', 'rankWinText', 'rankLoseText']) {
     if (!isString(r[k])) errors.push(`${k}: 비어 있지 않은 문자열이어야 한다`);
   }
   const amn = (r.absorbModeNames ?? {}) as Record<string, unknown>;
