@@ -359,7 +359,20 @@ _fast = dict(SPEC_HK['move'])
 _fast['times'] = [round(t * 0.75) for t in _fast['times']]
 _fast['duration'] = 600
 _fast['sample'] = 30
+# 속도형 걷기 팔 (사용자 2026-11-12 03:4x "지금 팔이 교대로 교차하는게 아니라 양 팔 동시에 벌렸다 조였다 하잖아"): 이 몸은 정면에 가까운 그림이라
+# 두 팔이 몸 양옆에 있어, 위팔을 서로 반대로 크게 흔들면 '벌렸다 모았다'로 보인다. 그래서 위팔은 둘이 **같은 쪽으로** 조금만 기울고(몸이 트는 느낌),
+# 번갈아 나가는 건 아래팔·손을 **번갈아 들어 올리는** 것으로 보인다 — 왼다리가 나갈 때 화면 왼쪽 팔(arm_R)이 들리고, 오른다리가 나갈 때 오른쪽 팔(arm_L)이 들린다
+_w = [math.cos(2 * math.pi * (i - 3) / 8) for i in range(9)]
+_fast['bones'] = dict(_fast['bones'],
+                      arm_R=[round(2 + 6 * w, 1) for w in _w], forearm_R=[round(11 + 15 * w, 1) for w in _w],
+                      arm_L=[round(-2 + 6 * w, 1) for w in _w], forearm_L=[round(-11 + 15 * w, 1) for w in _w])
+for _s in ('L', 'R'):
+    _fast['bones']['hand_' + _s] = [round(v * 0.4, 2) for v in _fast['bones']['forearm_' + _s]]
 SPEC_HV['move'] = _fast
+# 꼬리 (사용자 2026-11-12 03:4x "속도형은 망토 아니고 꼬리니까 꼬리처럼 움직이게"): 꼬리 마디(cape → cape2 → cape3)에 키 동작을 넣는다 — 뿌리에서 끝으로 물결이 넘어가게
+# (마디마다 1/5 바퀴 늦고 끝으로 갈수록 크게). 반복 동작은 한 바퀴에 한 번(대기는 작게, 걷기는 크게), 한 번 동작은 몸통이 기운 반대쪽으로 균형을 잡듯 늦게 따라온다.
+# 엔진 따라가기(sway — 망토와 같은 값)는 그 위에 조금 얹힌다
+TAILS = {'hv': dict(chain=['cape', 'cape2', 'cape3'], amp={'idle': [3, 5, 8], 'homeIdle': [3, 5, 8], 'move': [6, 10, 15]}, loop=[4, 7, 10], counter=[0.5, 0.7, 0.9], delay=60)}
 SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK, 'hv': SPEC_HV}
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
@@ -413,6 +426,25 @@ def main(bodies):
                     new = pl.plant(full, mode, target=GROUND, flat_foot=(mode == 'sole'), step=50, fix_shin=True)
                     out[mid]['tracks'].update(new)
                     out[mid]['planted'] = sorted({'root', *new})
+        tail = TAILS.get(body)
+        if tail:
+            for mid, v in out.items():
+                if mid == 'note' or not isinstance(v, dict) or v.get('off'):
+                    continue
+                base = mo.get(mid) or {}
+                dur = v.get('duration', base.get('duration'))
+                if not dur:
+                    continue
+                tr = v.setdefault('tracks', {})
+                if v.get('loop', base.get('loop')):
+                    amps = tail['amp'].get(mid, tail['loop'])
+                    for i, bone in enumerate(tail['chain']):
+                        tr[bone] = [[round(dur * k / 8), round(amps[i] * math.sin(2 * math.pi * (k / 8 - 0.2 * i)), 2), 0, 0] for k in range(9)]
+                else:
+                    torso = tr.get('torso') or base.get('tracks', {}).get('torso') or [[0, 0, 0, 0]]
+                    ts = sorted({k[0] for k in torso} | {0, dur})
+                    for i, bone in enumerate(tail['chain']):
+                        tr[bone] = [[t, round(-tail['counter'][i] * samp(torso, max(0, t - tail['delay'] * (i + 1)))[0], 2), 0, 0] for t in ts]
         mo['sets'][rig['bodyMotions'][body]] = out
         print(body, '→', rig['bodyMotions'][body], list(out)[1:])
     write_motions(mo)
