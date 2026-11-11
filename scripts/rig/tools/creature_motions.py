@@ -20,7 +20,7 @@ from body_sync import write_motions  # noqa: E402
 R = DRAFT_DIR + '/'
 rig = json.load(open(R + 'humanoid.json'))
 GROUND = 80
-BONES = ['root', 'torso', 'head', 'jaw', 'arm_L', 'forearm_L', 'arm_R', 'forearm_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R', 'cape', 'cape2', 'cape3', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5']  # cape 마디·옷 주름 = 두건 로브(115-A 92·93)
+BONES = ['root', 'torso', 'head', 'jaw', 'arm_L', 'forearm_L', 'hand_L', 'arm_R', 'forearm_R', 'hand_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R', 'cape', 'cape2', 'cape3', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5']  # cape 마디·옷 주름 = 두건 로브(115-A 92·93)
 B, PTS, SC = {}, {}, 1
 
 
@@ -326,11 +326,24 @@ SPEC_HO['attack'] = dict(times=[0, 220, 340, 470, 700], duration=700, hit=340, r
     'leg_R': [0, -6, 10, 8, 0], 'shin_R': [0, 6, -8, -6, 0],
     'leg_L': [0, -4, -8, -6, 0], 'shin_L': [0, 4, 6, 4, 0]})
 # 역관절(dg)은 없앰(사용자 2026-11-11 "역관절 저 호로는 아예 없애자", GDD 231장) — SPEC(옛 역관절 설계)은 참고로만 남김
-SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO}
+# 가시형(몸 hk, 사용자 부위 시트 2026-11-12 — 손이 따로, 115-A 115): 덩치 동작 설계에 손이 아래팔을 조금 더 따라 꺾이게(아래팔 각의 0.4배)만 더함
+SPEC_HK = {}
+for _id, _sp in SPEC_HB.items():
+    if not isinstance(_sp, dict):
+        SPEC_HK[_id] = _sp
+        continue
+    _b = dict(_sp['bones'])
+    for _s in ('L', 'R'):
+        if 'forearm_' + _s in _b:
+            _b['hand_' + _s] = [round(v * 0.4, 2) for v in _b['forearm_' + _s]]
+    SPEC_HK[_id] = dict(_sp, bones=_b)
+SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK}
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
          'hb': ('덩치(몸 hb, 사용자 부위 시트 2026-11-09 조립) 전용 동작 — 대기·걷기·공격·해방(포효), 특수2·필살기 없음(off) (GDD 115-A 73·75, 사용자 "얘로 도트변경하고, 특수2, 필살기 없애고, 해방에 포효하는거 추가해. 짐승이 아니라 덩치고"). '
                 '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로'),
+         'hk': ('가시형(임시 이름, 몸 hk, 사용자 부위 시트 2026-11-12 조립 — 손이 따로) 전용 동작 — 덩치 동작 설계를 이 몸으로 다시 계산, 손은 아래팔을 따라 조금 더 꺾임 (GDD 115-A 115). ',
+                '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산'),
          'ho': ('외팔이(몸 ho, 사용자 부위 시트 2026-11-11 조립) 전용 동작 — 덩치 동작 설계를 이 몸(1배, 큰 팔 = 가까운 쪽 *_L)으로 다시 계산 (GDD 115-A 105, 사용자 "얘 외팔이로 추가 ㄱㄱ"). ',
                 '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산'),
          'hd': ('길리안(몸 hd, 처음 이름 두건 — 사용자 도트 2026-11-10, 부리 가면·로브, 다리 없음, 1배) 전용 동작 — 대기(=홈 대기)·이동·빈사·박치기·특수1(입 벌리고 빔)·해방1(포효)만, 필살기 = 해방1을 그대로 베낌(편집기 고정 포함), 쓰러짐 등 나머지 off (GDD 115-A 92·97). '

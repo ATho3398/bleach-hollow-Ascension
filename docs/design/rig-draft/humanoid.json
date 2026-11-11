@@ -21,8 +21,10 @@
     { "id": "hair_back3", "parent": "hair_back2", "pivot": [28, 37] },
     { "id": "arm_L", "parent": "torso", "pivot": [12, 31] },
     { "id": "forearm_L", "parent": "arm_L", "pivot": [11, 44] },
+    { "id": "hand_L", "parent": "forearm_L", "pivot": [11, 44] },
     { "id": "arm_R", "parent": "torso", "pivot": [24, 33] },
     { "id": "forearm_R", "parent": "arm_R", "pivot": [32, 41] },
+    { "id": "hand_R", "parent": "forearm_R", "pivot": [32, 41] },
     { "id": "leg_L", "parent": "root", "pivot": [11, 52] },
     { "id": "leg_R", "parent": "root", "pivot": [20, 52] },
     { "id": "shin_L", "parent": "leg_L", "pivot": [12, 63] },
@@ -52,6 +54,7 @@
     { "id": "arm_L", "bone": "arm_L" },
     { "id": "outer_arm_L", "bone": "arm_L" },
     { "id": "forearm_L", "bone": "forearm_L" },
+    { "id": "hand_L", "bone": "hand_L" },
     { "id": "weapon", "bone": "weapon" },
     { "id": "thumb_L", "bone": "forearm_L" },
     { "id": "hair_back2", "bone": "hair_back2" },
@@ -71,7 +74,8 @@
     { "id": "hair", "bone": "head" },
     { "id": "arm_R", "bone": "arm_R" },
     { "id": "outer_arm_R", "bone": "arm_R" },
-    { "id": "forearm_R", "bone": "forearm_R" }
+    { "id": "forearm_R", "bone": "forearm_R" },
+    { "id": "hand_R", "bone": "hand_R" }
   ],
   "bodies": {
     "shinigami": {
@@ -240,6 +244,20 @@
       "thumb_L": { "art": "shinigami/thumb_L", "at": [8, 51], "size": [3, 6] },
       "forearm_R": { "art": "soul/forearm_R", "at": [21, 37], "size": [14, 18] },
       "forearm_L": { "art": "soul/forearm_L", "at": [2, 42], "size": [11, 16] }
+    },
+    "hk": {
+      "torso": { "art": "hk/torso", "at": [3, 12], "size": [35, 42] },
+      "head": { "art": "hk/head", "at": [-9, 3], "size": [38, 35] },
+      "arm_R": { "art": "hk/arm_R", "at": [-3, 30], "size": [13, 15] },
+      "forearm_R": { "art": "hk/forearm_R", "at": [-15, 38], "size": [18, 20] },
+      "hand_R": { "art": "hk/hand_R", "at": [-21, 52], "size": [18, 26] },
+      "arm_L": { "art": "hk/arm_L", "at": [21, 20], "size": [22, 25] },
+      "forearm_L": { "art": "hk/forearm_L", "at": [37, 37], "size": [13, 24] },
+      "hand_L": { "art": "hk/hand_L", "at": [36, 48], "size": [21, 30] },
+      "leg_R": { "art": "hk/leg_R", "at": [1, 43], "size": [18, 16] },
+      "shin_R": { "art": "hk/shin_R", "at": [-4, 55], "size": [19, 23] },
+      "leg_L": { "art": "hk/leg_L", "at": [19, 40], "size": [14, 21] },
+      "shin_L": { "art": "hk/shin_L", "at": [25, 55], "size": [13, 24] }
     }
   },
   "looks": {
@@ -431,6 +449,9 @@
       "body": "ho",
       "artFolder": "ho-yellow",
       "color": "황토"
+    },
+    "spiky-base": {
+      "body": "hk"
     }
   },
   "hairFrame": {
@@ -669,6 +690,23 @@
       "shift": {
         "forearm_R": [-0.03, 1.89]
       }
+    },
+    "hk": {
+      "pivots": {
+        "root": [18, 45],
+        "torso": [18, 45],
+        "head": [10, 20],
+        "arm_R": [7, 33],
+        "forearm_R": [0, 41],
+        "hand_R": [-13, 54],
+        "arm_L": [27, 26],
+        "forearm_L": [40, 41],
+        "hand_L": [44, 53],
+        "leg_R": [15, 46],
+        "shin_R": [7, 56],
+        "leg_L": [21, 45],
+        "shin_L": [31, 57]
+      }
     }
   },
   "bodyMotions": {
@@ -684,7 +722,8 @@
     "hd": "gillian",
     "ho": "onearm",
     "soul_f": "soul_f",
-    "soul": "soul"
+    "soul": "soul",
+    "hk": "spiky"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -721,7 +760,9 @@
       "fold2": "옷 주름 2",
       "fold3": "옷 주름 3",
       "fold4": "옷 주름 4",
-      "fold5": "옷 주름 5"
+      "fold5": "옷 주름 5",
+      "hand_L": "왼손",
+      "hand_R": "오른손"
     },
     "groups": [
       [
@@ -762,6 +803,7 @@
           "arm_L",
           "outer_arm_L",
           "forearm_L",
+          "hand_L",
           "thumb_L"
         ]
       ],
@@ -770,7 +812,8 @@
         [
           "arm_R",
           "outer_arm_R",
-          "forearm_R"
+          "forearm_R",
+          "hand_R"
         ]
       ],
       [
@@ -803,11 +846,13 @@
       "arm_L": [
         "outer_arm_L",
         "forearm_L",
+        "hand_L",
         "thumb_L"
       ],
       "arm_R": [
         "outer_arm_R",
-        "forearm_R"
+        "forearm_R",
+        "hand_R"
       ],
       "torso": [
         "outer_torso"
@@ -827,6 +872,7 @@
         "foot_R"
       ],
       "forearm_L": [
+        "hand_L",
         "thumb_L"
       ],
       "hair_back": [
@@ -842,6 +888,9 @@
       ],
       "cape2": [
         "cape3"
+      ],
+      "forearm_R": [
+        "hand_R"
       ]
     }
   },
@@ -1012,13 +1061,49 @@
       "outer_arm_R",
       "forearm_R",
       "hair"
+    ],
+    "hk": [
+      "arm_L",
+      "hand_L",
+      "forearm_L",
+      "leg_L",
+      "shin_L",
+      "shin_R",
+      "leg_R",
+      "torso",
+      "head",
+      "arm_R",
+      "hand_R",
+      "forearm_R",
+      "cape2",
+      "fold1",
+      "fold2",
+      "fold3",
+      "fold4",
+      "fold5",
+      "cape3",
+      "cape",
+      "outer_arm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back2",
+      "hair_back3",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "outer_torso",
+      "scabbard",
+      "jaw",
+      "hair",
+      "outer_arm_R"
     ]
   },
   "assembled": {
     "note": "사용자가 부위를 따로 그려 온 몸 → 조립 파일 (scripts/rig/assemble_parts.py, GDD 115-A 73·75). 조립 뒤 편집기 고정이 있으면 작업본이 기준",
     "hb": "docs/design/user-art/beast-base-ref/assembly.json",
     "hd": "docs/design/user-art/hood-ref/assembly.json",
-    "ho": "docs/design/user-art/onearm-ref/assembly.json"
+    "ho": "docs/design/user-art/onearm-ref/assembly.json",
+    "hk": "docs/design/user-art/spiky-ref/assembly.json"
   },
   "recolors": {
     "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",

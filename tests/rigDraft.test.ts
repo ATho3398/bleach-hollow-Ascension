@@ -41,6 +41,15 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(resolveMotions(rig, motions, sets, 'bare').uppercut).toBeDefined(); // 다른 몸은 그대로
     expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로
   });
+  it('가시형(임시 이름, 몸 hk — 115-A 115): 부위 12개(손이 따로), 손 뼈는 아래팔에 붙고 다른 몸에는 손 그림이 없다, 동작에서 손이 아래팔을 따라 더 꺾인다', () => {
+    expect(Object.keys(rig.bodies.hk!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'hand_L', 'hand_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
+    expect(rig.looks['spiky-base']!.body).toBe('hk');
+    for (const s of ['L', 'R']) expect(rig.bones.find((b) => b.id === `hand_${s}`)!.parent).toBe(`forearm_${s}`);
+    for (const [id, b] of Object.entries(rig.bodies)) if (id !== 'hk') expect(b.hand_L ?? b.hand_R, id).toBeUndefined();
+    const hk = resolveMotions(rig, motions, sets, 'hk');
+    for (const id of ['idle', 'move', 'attack', 'attack2', 'hit', 'release1', 'headbutt']) expect(hk[id], id).toBeDefined();
+    expect(hk.attack!.tracks.hand_R!.some((k) => k[1] !== 0)).toBe(true);
+  });
   it('역관절(dg)은 없앴다 (GDD 231장, 사용자 2026-11-11 "역관절 저 호로는 아예 없애자")', () => {
     expect(rig.bodies.dg).toBeUndefined();
     expect(rig.looks['digitigrade-base']).toBeUndefined();
