@@ -79,7 +79,7 @@ describe('160장 5~7 상태 화면', () => {
     expect(nest).not.toContain('is-tip');
     expect(nest).not.toContain('bha-statrow__tip');
     expect(read('src/ui/bha/components/components.css')).not.toContain('.bha-statrow__tip');
-    expect(lcd).toContain("statRow('평타 치명', pctText(cc.basic));");
+    expect(lcd).toContain("statRow('일반 공격 치명', pctText(cc.basic));");
     expect(lcd).toContain('statInfoLines(faction,');
     expect(lcd).not.toContain('기본 ${');
   });

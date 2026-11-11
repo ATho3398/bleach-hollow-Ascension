@@ -201,6 +201,8 @@ function curedNames(before: (keyof typeof CARE_STATUS_NAMES)[], save: Pick<SaveD
 
 /** 같은 먹이 거절 이유 (GDD 234장 3) */
 export const SAME_FOOD_REFUSED = '같은 걸 연달아 먹지 않는다 — 10분 뒤에 다시';
+/** 배부름 가득 (GDD 243장 6): 먹이 그대로 */
+export const FULLY_FED = '배부르다 — 더는 못 먹는다';
 
 /** 보관함에서 쓴다: 먹이(`food-<종류>`) = 먹이 주기, 소모품 = 효과를 지금 캐릭터에 바로. 실패하면 아무것도 바뀌지 않는다 */
 export function useInventoryItem(save: SaveData, faction: FactionConfig, id: string): InventoryResult {
@@ -213,7 +215,8 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     const fed = feedNest(save, f);
     if (!fed) return { ok: false, reason: '먹을 것이 없다' };
     if (fed === 'refused') return { ok: false, reason: SAME_FOOD_REFUSED }; // 같은 먹이 10분 2개 (GDD 234장 3): 먹이 그대로
-    if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다', spat: true };
+    if (fed === 'full') return { ok: false, reason: FULLY_FED }; // 배부름 가득 (GDD 243장 6): 먹이 그대로
+    if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다(먹이는 그대로)', spat: true }; // C.411: 뱉어도 먹이는 안 줄어든다
     return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}`, cured: curedNames(before, save) }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
   const e = consumableEffect(id);
@@ -440,7 +443,7 @@ export function gearSpecialText(it: Pick<GearItem, 'special'>, faction: Pick<Fac
     case 'critDamage': return `치명 피해 +${Math.round(v * 100) / 100}배`;
     case 'shield': return `전투 시작 보호막 (최대 체력 ${pct(v)})`;
     case 'activeShield': return `발동 ${def.name ?? ''}: ${BALANCE.provisional.gear.activeShieldSeconds}초 받는 피해 −${pct(v)} (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
-    case 'activeBurst': return `발동 ${def.name ?? ''}: 기본 공격 ${v}회분 피해 (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
+    case 'activeBurst': return `발동 ${def.name ?? ''}: 일반 공격 ${v}회분 피해 (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
   }
 }
 

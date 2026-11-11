@@ -168,7 +168,7 @@ describe('111장 후속: 노멀 skill 특성 설명 = 기본 블록 (C.184 반�
         expect(d).toContain('효과: 고르면 노멀 강화 +1');
         expect(d).not.toContain('위력');
         expect(traitBrief(f, t.id)).toBe('고르면 노멀 강화 +1');
-      } else if (t.kind === 'skill') expect(d).toContain('위력 기본 공격');
+      } else if (t.kind === 'skill') expect(d).toContain('위력 일반 공격');
     }
   });
 });

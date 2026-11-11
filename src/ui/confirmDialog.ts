@@ -1,4 +1,4 @@
-// 예/아니오 확인창 (Q-3, C.31): LCD 창 위에 레이어로 뜬다. 기기의 위/아래/확정으로 고르고, 취소 버튼·Esc 는 "아니오".
+// 예/아니요 확인창 (Q-3, C.31): LCD 창 위에 레이어로 뜬다. 기기의 위/아래/확정으로 고르고, 취소 버튼·Esc 는 "아니요".
 import { button, el } from './bha/dom';
 import { trapModalFocus } from './bha/modalFocus';
 import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost';
@@ -12,13 +12,13 @@ export interface ConfirmOptions {
   no?: string;
   /** 위험한 선택(덮어쓰기 등)이면 예 버튼을 danger 로 */
   danger?: boolean;
-  /** 위험하지 않아도 '아니오'에서 시작 (예: 홈 뒤로 → 처음 화면 확인, GDD 124장 1) */
+  /** 위험하지 않아도 '아니요'에서 시작 (예: 홈 뒤로 → 처음 화면 확인, GDD 124장 1) */
   focusNo?: boolean;
   /** 알림 창: 확인 버튼 하나만 (C.140 대기 모드 결과 요약) */
   single?: boolean;
   /** 예 버튼을 비활성으로 둔다 (자리는 그대로, C.170 대기 보상 — 받을 게 없을 때) */
   yesDisabled?: boolean;
-  /** 가운데 세 번째 버튼 (C.178 설정 '저장 안 함'): [아니오][alt][예] 순서 */
+  /** 가운데 세 번째 버튼 (C.178 설정 '저장 안 함'): [아니요][alt][네] 순서 */
   alt?: { label: string; onClick: () => void };
   /** 입력해야 열리는 확인 (GDD 241-A 4 슬롯 삭제): 입력 칸에 word 를 그대로 쳐야 [예]가 켜진다. hint = 입력 칸 위 안내 */
   typeToConfirm?: { word: string; hint: string };
@@ -72,17 +72,17 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     o.onYes();
   };
   const actions = el('div', o.alt ? 'bha-modal__actions bha-modal__actions--three' : 'bha-modal__actions');
-  if (!o.single) actions.append(button({ label: o.no ?? '아니오', variant: 'ghost', onClick: no }));
+  if (!o.single) actions.append(button({ label: o.no ?? '아니요', variant: 'ghost', onClick: no }));
   if (o.alt) {
     const alt = o.alt;
     actions.append(button({ label: alt.label, onClick: () => { close(); alt.onClick(); } }));
   }
-  const yesBtn = button({ label: o.yes ?? '예', variant: o.danger ? 'danger' : 'primary', disabled: o.yesDisabled || !matched(), onClick: yes });
+  const yesBtn = button({ label: o.yes ?? '네', variant: o.danger ? 'danger' : 'primary', disabled: o.yesDisabled || !matched(), onClick: yes });
   actions.append(yesBtn);
   if (typed) {
     const t = typed;
     t.addEventListener('input', () => { yesBtn.disabled = !!o.yesDisabled || !matched(); });
-    // Enter = [예](맞게 쳤을 때만), Esc 는 입력 칸에서 기기 뒤로까지 번지게 둔다(= 아니오) — 한글 조합 중 Enter 는 글자 확정
+    // Enter = [예](맞게 쳤을 때만), Esc 는 입력 칸에서 기기 뒤로까지 번지게 둔다(= 아니요) — 한글 조합 중 Enter 는 글자 확정
     t.addEventListener('keydown', (e) => {
       if (e.isComposing || e.key !== 'Enter') return;
       e.preventDefault();
@@ -97,7 +97,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   uncover = coverTutorials(layer);
   untrap = trapModalFocus(layer); // 초기 초점(첫 버튼)·Tab 순환·배경 inert (C.139, GDD 88장 9) — 기기 선택은 초점 있는 항목에서 시작
   // 기본 선택 = 주 버튼(시작·귀환하기) (C.170, GDD 100장 #7·#8·#31): 강조가 둘(밝은 주 버튼 + 선택 테두리)로 갈리지 않게.
-  // 지우기·덮어쓰기 같은 위험한 확인(danger)은 그대로 '아니오'에서 시작한다
+  // 지우기·덮어쓰기 같은 위험한 확인(danger)은 그대로 '아니요'에서 시작한다
   if (typed) typed.focus({ preventScroll: true });
   else if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });
   unregister = registerLayer(layer, no);

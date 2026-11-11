@@ -413,7 +413,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', onClick: () => {
     confirmDialog({
-      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 장착한 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
+      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 장착한 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니요',
       onYes: () => {
         const n = autoEquipGear(save);
         // 바꾼 칸 알림은 뺐다 (GDD 233장 5) — 능력치 줄에 반영된다. 바꿀 게 없을 때 이유만 남긴다 (233장 6)
@@ -428,7 +428,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const sellBtn = button({ label: '일괄 판매', icon: 'i-rare', size: 'small', variant: 'danger', onClick: () => {
     const gold = sellTargets.reduce((a, it) => a + sellGold(it), 0);
     confirmDialog({
-      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 장착하지 않은 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
+      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 장착하지 않은 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니요', danger: true,
       onYes: () => {
         const r = bulkSellGear(save); // 판매 알림은 뺐다 (GDD 233장 5) — 골드·목록이 바뀐다
         if (r.count > 0) changedAt('act:bulk-sell')();

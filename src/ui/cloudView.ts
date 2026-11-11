@@ -257,7 +257,7 @@ export function cloudPanelNodes(ui: CloudUi): { button: HTMLButtonElement; email
     body: s.user?.anonymous
       ? '게스트 계정은 로그아웃하면 다시 들어올 수 없다. 이 기기의 세이브는 그대로 남고, 클라우드 저장만 멈춘다.'
       : '로그아웃해도 이 기기의 세이브는 그대로 남는다. 클라우드 저장만 멈춘다.',
-    yes: '로그아웃', no: '아니오',
+    yes: '로그아웃', no: '아니요',
     danger: !!s.user?.anonymous,
     onYes: () => ui.signOut(),
   });
@@ -439,7 +439,7 @@ export function otherDeviceDialog(ui: CloudUi, by: ActiveDevice): () => void {
       out.disabled = false;
     }
   };
-  out.onclick = () => confirmDialog({ title: BLOCKED_TEXT.signOut, body: BLOCKED_TEXT.signOutBody, yes: BLOCKED_TEXT.signOut, no: '아니오', focusNo: true, onYes: () => ui.signOut() });
+  out.onclick = () => confirmDialog({ title: BLOCKED_TEXT.signOut, body: BLOCKED_TEXT.signOutBody, yes: BLOCKED_TEXT.signOut, no: '아니요', focusNo: true, onYes: () => ui.signOut() });
   const actions = el('div', 'bha-modal__actions');
   actions.append(out, retake);
   m.modal.append(actions);

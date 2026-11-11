@@ -422,19 +422,32 @@ export function foodReactionFor(save: Pick<SaveData, 'evolution'>, food: FoodId)
 }
 
 /** 둥지에서 먹이 주기 (GDD 23-1): 그 먹이가 있어야 먹일 수 있고, 하나 쓴다. 없으면 null (아무것도 바뀌지 않는다).
- *  C.181 (GDD 109장 6): 10분에 3개 — 넘으면 'spat'(먹이는 없어지고 효과 없음, 런 로그 vitals 'spit').
- *  C.387 (GDD 234장 3): 같은 종류 10분에 2개 — 넘으면 'refused'(먹이 그대로·효과 없음, 런 로그 vitals 'refuse') */
-export function feedNest(save: SaveData, food: FoodId, nowMs: number = Date.now()): 'ate' | 'spat' | 'refused' | null {
+ *  C.181 (GDD 109장 6): 10분에 3개 — 넘으면 'spat'(효과 없음 — C.411 부터 먹이도 그대로, 런 로그 vitals 'spit').
+ *  C.387 (GDD 234장 3): 같은 종류 10분에 2개 — 넘으면 'refused'(먹이 그대로·효과 없음, 런 로그 vitals 'refuse')
+ *  C.411 (GDD 243장 6): 배부름 가득(화면 100)이면 'full' — 먹이 그대로·효과 없음(런 로그 vitals 'full'). 뱉음('spat')도 먹이를 소모하지 않는다 */
+export function feedNest(save: SaveData, food: FoodId, nowMs: number = Date.now()): 'ate' | 'spat' | 'refused' | 'full' | null {
   if (save.nest.dead) return null;
   if ((save.shared.food[food] ?? 0) <= 0) return null;
+  if (isFullyFed(save.nest)) {
+    logVital(save, { at: nowMs, kind: 'full', food });
+    return 'full';
+  }
   const r = feedFood(save.nest, food, nowMs, foodReactionFor(save, food));
   if (r === 'refused') {
     logVital(save, { at: nowMs, kind: 'refuse', food });
     return r;
   }
+  if (r === 'spat') {
+    logVital(save, { at: nowMs, kind: 'spit', food });
+    return r;
+  }
   takeFood(save.shared.food, food);
-  if (r === 'spat') logVital(save, { at: nowMs, kind: 'spit', food });
   return r;
+}
+
+/** 배부름이 가득인가 (GDD 243장 6): 화면 배부름(100 − 허기, 반올림)이 100 — 더 먹여도 넘치기만 한다 */
+export function isFullyFed(nest: Pick<NestState, 'hunger'>): boolean {
+  return Math.round(100 - nest.hunger) >= 100;
 }
 
 /** 튜토리얼 보상 1건의 실제 지급량 (먹이는 상한까지만) */

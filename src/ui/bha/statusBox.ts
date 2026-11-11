@@ -37,7 +37,8 @@ export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
 
 /** 상태 박스(.bha-room__status) 안을 다시 그린다: 줄 + 이름표(있으면 박스 위 가운데) + 읽기 글·툴팁. ariaLead = 읽기 글 앞 (방 = '상태 보기: ') */
 export function paintStatusBox(box: HTMLElement, chips: readonly StatusChip[], nameTag: HTMLElement | null, ariaLead = ''): void {
-  box.setAttribute('aria-label', `${ariaLead}${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
+  // 값은 정수로 (GDD 243장 9-9: 차오르는 연출 중 '배부름 99.98394…' 소수가 읽기 글에 나오던 것)
+  box.setAttribute('aria-label', `${ariaLead}${chips.map((c) => (c.value === null ? c.label : `${c.label} ${Math.round(c.value)}`)).join(', ')}`);
   // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
   box.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
   box.replaceChildren(...statusGaugeRows(chips));

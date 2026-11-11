@@ -46,7 +46,7 @@ describe('설명 되살림 (GDD 141장 2)', () => {
     expect(helpVars(getFaction('hollow')).skillBlockName).toBeTruthy();
   });
   it('성향 괴력 = 평타 피해 ↑', () => {
-    expect(abilityDescription('atk', 'hollow')).toContain('평타');
+    expect(abilityDescription('atk', 'hollow')).toContain('일반 공격');
     expect(abilityDescription('def', 'shinigami')).toContain('적의');
   });
   it('상태 화면 능력치 ⓘ: 6줄, 힘 = 평타·지능 = 블록 공격', () => {

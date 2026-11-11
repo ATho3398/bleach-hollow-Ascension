@@ -165,8 +165,11 @@ export function createDock(o: DockOpts): Dock {
         b.append(name, foodCardFx(o.foodEffectsNow?.(id) ?? foodEffectList(id), faction));
         b.onclick = () => {
           if (o.foodCount(id) <= 0) return;
-          setPanel(CLOSED, careBtns.get('feed')!); // 먹인 뒤 초점 = [먹이] 버튼 (GDD 176장 4)
           o.onCare('feed', id);
+          // 먹인 뒤에도 목록은 열어 둔다 (GDD 243장 6 — 176장 4 '먹인 뒤 닫힘' 대체): 개수·효과만 새로, 초점은 같은 먹이(다 떨어졌으면 첫 칸, 없으면 [먹이])
+          if (panel !== 'food' || !root.isConnected) return;
+          fillTray();
+          o.onItemsChange(trayBtns.find((x) => x.dataset.food === id) ?? trayBtns[0] ?? careBtns.get('feed')!);
         };
         trayBtns.push(b);
         tray.append(b);

@@ -118,7 +118,7 @@ function gearActiveText(p: CombatParams): string {
   const g = p.activeGear;
   if (!g) return '발동 장비 없음';
   const name = getGearSpecial(g.id)?.name ?? '장비';
-  return g.effect === 'shield' ? `${name} — ${g.seconds}초 받는 피해 −${Math.round(g.reduction * 100)}%` : `${name} — 기본 공격 ${g.powerInAttacks}회분 피해`;
+  return g.effect === 'shield' ? `${name} — ${g.seconds}초 받는 피해 −${Math.round(g.reduction * 100)}%` : `${name} — 일반 공격 ${g.powerInAttacks}회분 피해`;
 }
 
 /** 블록 이름 (GDD 84장 4번, C.138): 스킬 = 계열 약어(조·탄·교)·`막기`·`회복`(속성은 색으로만), 공허 = `공허`, 콤보 = `콤보_계열` */
@@ -838,7 +838,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       settingsOverlay(() => (overlayOpen = false));
     } }));
     if (opts.onQuit) actions.append(button({ label: '그만두기', variant: 'danger', icon: 'i-quit', onClick: () => { unregPause(); quit(); } }));
-    // C.172 (GDD 100장 v5.220): 원정 전투는 [귀환] — 걷기 중간 귀환과 같은 확인 창(기본 선택 = 귀환하기), 아니오면 일시정지 그대로
+    // C.172 (GDD 100장 v5.220): 원정 전투는 [귀환] — 걷기 중간 귀환과 같은 확인 창(기본 선택 = 귀환하기), 아니요면 일시정지 그대로
     if (opts.onReturn) actions.append(button({ label: '귀환', icon: 'i-return', onClick: () => {
       if (overlayOpen) return;
       overlayOpen = true;
@@ -875,7 +875,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setPaused(true);
     return true;
   }, { button: true });
-  // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니오로 닫히면 우리가 멈춘 것만 풀어 준다
+  // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니요로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;
   unhold = onHold((sig) => {
     if (!app.isConnected || stopped) return stop();

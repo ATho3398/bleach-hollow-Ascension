@@ -21,12 +21,13 @@ export interface SkinDef {
   tierLook?: true;
 }
 
+// GDD 243장 9-7: 화면에 '(가칭)'이 보이던 시작 외형·스킨 이름 = 지금 이름을 정식으로(tentativeName false) — 그림·수치는 provisional 그대로
 const BASE_SKINS: readonly SkinDef[] = [
-  { id: 'grandfisher', name: '그랜드피셔', factionId: 'hollow', tentativeName: true, provisional: true },
-  { id: 'mantis', name: '사마귀', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
-  { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
-  { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
-  { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
+  { id: 'grandfisher', name: '그랜드피셔', factionId: 'hollow', tentativeName: false, provisional: true },
+  { id: 'mantis', name: '사마귀', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true },
+  { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true },
+  { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true },
+  { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true },
   // 아쥬커스 외형 (GDD 53 → 240장, 사용자 2026-11-12): 진화 순간 노력치 1위 능력치로 모델이 정해지고(힘 가시형·지능 뱀형·체력 외팔형·정신력 거미형·속도 속도형·방어 짐승형),
   // 히든 진화체는 부유형. 진화체 속성(물·불·흙·뇌)이면 같은 모델의 속성 색 외형(id 뒤에 속성 id — 예 wyrmwater, 아래 AJUCHAS_ELEMENT_SKINS) — 노멀은 보라.
   // id 는 옛 세이브에 저장된 값이라 그대로 두고 이름·그림만 바꿨다(옛 이름: 갑충·사슴·코뿔소·뱀·표범·전갈). 새형(raptor, 옛 속도+지능 쌍)은 표에서 빠졌고 옛 세이브용으로 속도형 그림

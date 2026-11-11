@@ -8,8 +8,8 @@ import { familyOf, type FactionConfig } from '../engine/faction';
 
 /** 패시브가 건드리는 능력치 이름 (데이터 passive.stat → 플레이어 말) */
 export const PASSIVE_STAT_TEXT: Record<PassiveStat, string> = {
-  attackPower: '기본 공격 위력',
-  attackSpeed: '기본 공격 속도',
+  attackPower: '일반 공격 위력',
+  attackSpeed: '일반 공격 속도',
   damageTaken: '받는 피해',
   blockSpawn: '블록 생성 속도',
 };

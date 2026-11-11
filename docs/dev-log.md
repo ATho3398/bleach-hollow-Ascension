@@ -3442,3 +3442,14 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `scripts/pixelfx/tool/fx-tool.ts`: `motionName(id, look?)` 한 곳으로 — 동작 목록·연결 동작 줄 대신 동작 문구·프레임 그림 목록 모두 기본 공격·박치기·무기 공격·특수 공격. MOTION_NAMES 도 같은 용어로(attack3 추가). BODY_NAMES·`characters.ts` 몬스터·`build.mjs` BODY 이름 뱀형·짐승형·외팔형·거미형.
 - Pixel 7 확인(C.409 main 7be8321 기준 빌드): 사신·호로 9·몬스터 9 동작 목록 — 짐승 공격3·빈사·쓰러짐, 뱀 빈사·쓰러짐, 거미 공격3·빈사·쓰러짐, 부유형 박치기(공격3)·빈사·쓰러짐, 오류 0. 게임 코드 변경 없음.
 - 확인만: 짐승·뱀·거미·부유형 몸엔 headbutt 가 없어 교 = 공격1·2·3 중 하나(게임 RIG_ACTIONS 대신) — 부유형 교 = 공격3 고정은 사용자 결정 대기.
+
+## C.411 — 11-12 검수 5~9: 첫 포식 · 먹이(가득이면 그대로·목록 유지) · 돌봄 요청 · 줄어든 것만 복귀 창 · 문구 통일 (GDD 243장 5~9, v5.585, S-23, 코딩273 Opus)
+- 사용자 원문(243장): 5「첫 포식 '어느 갈래를 골라도 같다' 수정 + 이번 포식은 모두 같은 효과 표시」 6「먹이 목록 닫히는 것 수정. 배부름 그대로 쓰는 건 의도. 대신 배부름 가득·더 못 먹는 상황에서 먹일 때 개수만 까이는 건 수정」 7「컨디션 100에 재워라 수정」 8「배부름 복귀 창은 뭔 소리」 9「아니요·네로 통일, 일반 공격으로 통일, 사신은 식사, 명칭 수정, 단축키 수정」.
+- 5: `guideView.tutorialAbsorbView` 모순 문구 삭제 → 오른쪽 열 = 쓰러뜨린 적 카드(`absorbView.foeCardEl` 로 뽑아 공용). `modeRiskLine` 첫 포식(exp.tutorial) = '모두 같은 효과'(TUTORIAL_SAME_EFFECT). 왼쪽 덩어리 세로 가운데.
+- 6: `game.feedNest` 배부름 가득(`isFullyFed`) → 'full'(먹이·수치 그대로, 런 로그 vitals 'full'), 'spat' 도 먹이 그대로. `dock.ts` 먹인 뒤 목록 유지(fillTray + 같은 먹이 초점). 방 말풍선 `room.talk.full`(ROOM_TALK 키 + 두 종족 json). 가방 `FULLY_FED`.
+- 7: `nest.tickCareRequest` 무작위 재우기 삭제(balance careRequest.sleepWeight 삭제), `touchDisliked` 중엔 쓰다듬기 요청 안 만듦, `touchNest` 싫어함 순간 살아 있던 쓰다듬기 요청 거둠. 상태 ⓘ 첫 줄 플레이어 말투.
+- 8: `idle.lossOnlyMinMinutes` 60(provisional) + `roomLogic.lossOnlyReturnShown` — app.ts 줄어든 것만 창 문턱.
+- 9: confirmDialog 기본 [아니요][네] + 모든 '아니오' → '아니요'. 화면 글 '기본 공격'·'평타' → '일반 공격'(106줄, 주석 제외). 사신 식사(튜토리얼 회복 본문 `{nestActionsShort.feed}(으)로`, 쇠약 칩 `weakHintOf`·짧은 안내). 번호 보유자 정식 이름(holders.json 종족별), 스킨 '(가칭)' 정리, '처음 화면' 통일·단축키 순서, 노력치 줄 다시 씀, 이름 글자 수 분모 14 고정, 상태 읽기 글 정수.
+- 기획서 값/실제 값: 243장 '구현 완료' 줄. BALANCE 123 → 124(sleepWeight 삭제·lossOnlyMinMinutes 추가, 전투 수치 그대로). 세이브 형식 77 그대로(vitals kind 'full' 추가만 — 옛 세이브 영향 없음).
+- 테스트: `tests/c411.test.ts` 16건 + 옛 문구·규칙을 그대로 비교하던 12곳 갱신(c55·c61·c131·c133·c181·c185·c198·c215·c219·c238·c242·c351·c389·room-ui). 전체 3335 통과(292 파일), typecheck, balance:check 통과(후반 보류 경고 3건 그대로).
+- 캡처 `docs/captures/c411/`(796×384, 1배): 01~04 첫 포식(호로·사신, 안내 카드/카드 뒤) · 05 먹인 뒤 목록 유지(주먹밥 9 → 8) · 06 가득일 때 안 줄어듦(8 그대로 + '배가 찼다') · 07 처음 화면 확인 [아니요][네] · 08 사신 [식사] 가득 말풍선. proof.json.

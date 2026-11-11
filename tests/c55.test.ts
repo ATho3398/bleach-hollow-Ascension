@@ -232,8 +232,8 @@ describe('공격 연출이 고르는 동작 (26-3, 다른 동작으로 대신하
 describe('스킨 데이터·세이브 (26-5)', () => {
   it('첫 스킨은 그랜드피셔(가칭, 호로)이고 종족이 다르면 목록에 안 보인다 — 데이터의 종족 필드로', () => {
     const g = getSkin('grandfisher')!;
-    expect([g.name, g.tentativeName, g.provisional]).toEqual(['그랜드피셔', true, true]);
-    expect(skinLabel(g)).toBe('그랜드피셔(가칭)');
+    expect([g.name, g.tentativeName, g.provisional]).toEqual(['그랜드피셔', false, true]); // GDD 243장 9-7: 가칭 → 정식
+    expect(skinLabel(g)).toBe('그랜드피셔');
     expect(skinsFor(g.factionId).map((s) => s.id)).toContain('grandfisher');
     const other = FACTIONS.find((x) => x.id !== g.factionId)!;
     expect(skinsFor(other.id).map((s) => s.id)).not.toContain('grandfisher');

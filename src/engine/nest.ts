@@ -116,7 +116,8 @@ function careInterval(rand: () => number): number {
  * 돌봄 요청 시계 (GDD 82장). 방에 있을 때 주기적으로, 그리고 방을 열 때 부른다.
  *  - 요청이 유지 시간을 넘겼으면 사라진다(놓침, 벌칙 없음). 다음 시각 = 사라진 시각 + 간격.
  *  - 요청이 없고 다음 시각이 지났으면 새 요청 하나(지금부터 holdMinutes 유지). 오래 꺼 두었다 와도 하나만 생긴다.
- *  - 피곤이거나 컨디션이 sleepBelowCondition 미만이면 재우기를 청한다(쇠약·낮은 컨디션은 재우기로 푸는 것이라, 코드 판단). 아니면 sleepWeight 확률로 재우기, 나머지 쓰다듬기.
+ *  - 피곤이거나 컨디션이 sleepBelowCondition 미만일 때만 재우기를 청한다(GDD 243장 7 — 옛 sleepWeight 무작위 재우기 삭제: 컨디션 100에 '재워라'). 나머지는 쓰다듬기.
+ *  - 터치를 싫어하는 중(touch 횟수 > likeCount, 마지막 터치 뒤 resetHours 안)이면 쓰다듬기 요청을 만들지 않는다(243장 7 — 다음 시각만 새로 잡는다).
  * 돌려주는 값: created = 새 요청이 생김, missed = 응답 못 한 요청이 사라짐 (오래 꺼 두었다 오면 둘 다 true 일 수 있다)
  */
 export function tickCareRequest(nest: NestState, nowMs: number, rand: () => number = Math.random): { created: boolean; missed: boolean } {
@@ -127,7 +128,11 @@ export function tickCareRequest(nest: NestState, nowMs: number, rand: () => numb
     missed = true;
   }
   if (!nest.careRequest && nowMs >= nest.nextCareAt) {
-    const action: CareAction = nest.tired || nest.condition < CR.sleepBelowCondition || rand() < CR.sleepWeight ? 'sleep' : 'pet';
+    const action: CareAction = nest.tired || nest.condition < CR.sleepBelowCondition ? 'sleep' : 'pet';
+    if (action === 'pet' && touchDisliked(nest, nowMs)) {
+      nest.nextCareAt = nowMs + careInterval(rand);
+      return { created: false, missed };
+    }
     nest.careRequest = { action, until: nowMs + CR.holdMinutes * 60_000 };
     return { created: true, missed };
   }
@@ -404,6 +409,13 @@ export interface TouchOutcome {
   bond: number;
 }
 
+/** 터치를 싫어하는 중인가 (GDD 243장 7): 이번 주기(마지막 터치 뒤 resetHours 안) 터치 횟수가 likeCount 를 넘었다 — 이때는 쓰다듬기 요청을 내지 않는다 */
+export function touchDisliked(nest: Pick<NestState, 'touch'>, nowMs: number): boolean {
+  const t = nest.touch;
+  const TC = BX.touch;
+  return !!t && t.at > 0 && nowMs >= t.at && nowMs - t.at < TC.resetHours * 3_600_000 && t.count > TC.likeCount;
+}
+
 /** 캐릭터를 눌러 말을 건다 (GDD 241-C 7): 마지막 터치 뒤 resetHours 가 지났으면 횟수를 처음부터. likeCount 번째까지 교감 +gain(하루 최대와 따로),
  *  그다음 dislikeCount 번은 싫어하는 티만, 그 뒤로는 교감 −loss. 사망이면 반응 없음(null) */
 export function touchNest(nest: NestState, nowMs: number): TouchOutcome | null {
@@ -417,6 +429,11 @@ export function touchNest(nest: NestState, nowMs: number): TouchOutcome | null {
   if (t.count <= TC.likeCount) nest.bond = Math.min(BX.max, nest.bond + TC.gain);
   else if (t.count > TC.likeCount + TC.dislikeCount) nest.bond = Math.max(0, nest.bond - TC.loss);
   const kind = t.count <= TC.likeCount ? 'like' : t.count <= TC.likeCount + TC.dislikeCount ? 'dislike' : 'hate';
+  // 싫다면서 쓰다듬어 달라지 않게 (GDD 243장 7): 살아 있던 쓰다듬기 요청은 거둔다 — 다음 요청은 평소 간격 뒤(그때도 싫어하는 중이면 또 미룸)
+  if (kind !== 'like' && nest.careRequest?.action === 'pet') {
+    nest.careRequest = null;
+    nest.nextCareAt = nowMs + CR.intervalMinutes[0] * 60_000;
+  }
   return { kind, n: t.count, bond: nest.bond - before };
 }
 

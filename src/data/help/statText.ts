@@ -22,7 +22,7 @@ export function statUseLines(f: { id: string }): string[] {
 export function statInfoLines(f: { id: string }, critMax: { basic: string; block: string }): string[] {
   return [
     ...statUseLines(f),
-    `평타 치명 = 일반 공격이 치명타로 터질 확률 (최대 ${critMax.basic})`,
+    `일반 공격 치명 = 일반 공격이 치명타로 터질 확률 (최대 ${critMax.basic})`,
     `블록 치명 = 블록 공격이 치명타로 터질 확률 (최대 ${critMax.block})`,
     '치명타 피해 = 치명타가 터지면 들어가는 피해 배율',
     '속성 피해 = 그 속성 공격 피해 관련',

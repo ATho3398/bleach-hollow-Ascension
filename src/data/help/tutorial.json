@@ -30,7 +30,7 @@
         "battle.tray"
       ],
       "title": "같은 블록을 붙여서 {chainName}",
-      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 버튼으로 막고({roleNames.guard} 게이지가 다 차야 누를 수 있고 {guardSeconds}초만 막는다), {voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이다(피해는 평타 수준, 쓰면 {riskGaugeName} ↑)."
+      "body": "완전히 같은 블록이 나란히 붙어 있을 때 누르면 함께 발동해 {chainName}이(가) 된다(최대 {chainMax}).\n강공격 예고는 착탄 직전에 {roleNames.guard} 버튼으로 막고({roleNames.guard} 게이지가 다 차야 누를 수 있고 {guardSeconds}초만 막는다), {voidBlockName}은(는) 블록 자리를 빼앗는 손해 블록이다(피해는 일반 공격 수준, 쓰면 {riskGaugeName} ↑)."
     },
     {
       "id": "liberation",
@@ -188,7 +188,7 @@
         "@.bha-room__hp"
       ],
       "title": "{fullnessName}",
-      "body": "{spaName}에서 쉬는 동안 배가 꺼져 {fullnessName}이(가) {fullnessNow}(으)로 줄었다.\n{fullnessName}이(가) 낮으면 컨디션이 떨어진다. 먹이를 먹여 채워 주자."
+      "body": "{spaName}에서 쉬는 동안 배가 꺼져 {fullnessName}이(가) {fullnessNow}(으)로 줄었다.\n{fullnessName}이(가) 낮으면 컨디션이 떨어진다. {nestActionsShort.feed}(으)로 채워 주자."
     },
     {
       "id": "feed",

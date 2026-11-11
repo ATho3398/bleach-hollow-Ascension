@@ -161,7 +161,7 @@ export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
 /** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit', 'picky', 'foodLike', 'foodDislike', 'foodCheap'] as const;
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit', 'picky', 'full', 'foodLike', 'foodDislike', 'foodCheap'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
@@ -297,6 +297,7 @@ export const DEFAULT_ROOM: RoomConfig = {
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
     spit: ['더는 못 먹어…', '퉤! …더는 못 먹어.'], // 먹이 뱉음 (GDD 109장 6, C.181)
     picky: ['같은 건 연달아 안 먹어.', '또 그거야? …다른 걸 줘.'], // 같은 먹이 거절 (GDD 234장 3, C.387)
+    full: ['배부르다. 더는 안 들어가.', '지금은 배가 가득해.'], // 배부름 가득 — 먹이 그대로 (GDD 243장 6, C.411)
     foodLike: ['이거 좋아!', '맛있다!'], foodDislike: ['…이건 별로야.', '으, 싫은 맛이다.'], foodCheap: ['맛없어… 배고프니까 먹는 거야.', '…억지로 삼켰다.'], // 먹이 반응 (GDD 235장 2·3, C.387)
   },
 };

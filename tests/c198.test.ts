@@ -413,7 +413,7 @@ describe('124장 홈 뒤로 = 처음 화면 확인 · 더보기 [닫기] 삭제'
     expect(left).toBe(1);
   });
   it('처음 화면 확인 창 기본 선택 = 아니오', () => {
-    expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("yes: '예', no: '아니오', focusNo: true");
+    expect(readFileSync('src/ui/app.ts', 'utf8')).toContain("yes: '네', no: '아니요', focusNo: true");
     expect(readFileSync('src/ui/confirmDialog.ts', 'utf8')).toContain('!o.focusNo');
   });
   it('더보기 줄에 [닫기] 칸이 없다, ui-audit 검사', () => {

@@ -43,7 +43,7 @@ describe('82장 요청 시계', () => {
     expect(n.careRequest!.until).toBe(later + CR.holdMinutes * MIN);
     expect(tickCareRequest(n, later + 1).created).toBe(false);
   });
-  it('피곤이거나 컨디션이 낮으면 재우기를 청한다, 아니면 sleepWeight 로 고른다', () => {
+  it('피곤이거나 컨디션이 낮을 때만 재우기를 청한다, 아니면 쓰다듬기 (GDD 243장 7)', () => {
     const weak = { ...newNest(T0), tired: true }; // C.175: 피곤(GDD 102-2)이면 재우기
     tickCareRequest(weak, weak.nextCareAt, () => 0.99);
     expect(weak.careRequest!.action).toBe('sleep');
@@ -51,8 +51,8 @@ describe('82장 요청 시계', () => {
     tickCareRequest(tired, tired.nextCareAt, () => 0.99);
     expect(tired.careRequest!.action).toBe('sleep');
     const ok = newNest(T0);
-    tickCareRequest(ok, ok.nextCareAt, () => CR.sleepWeight - 0.01);
-    expect(ok.careRequest!.action).toBe('sleep');
+    tickCareRequest(ok, ok.nextCareAt, () => 0);
+    expect(ok.careRequest!.action).toBe('pet');
   });
 });
 

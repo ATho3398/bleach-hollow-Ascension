@@ -27,7 +27,9 @@
 /* GDD 241-B 6: 첫 포식 설명은 두 줄뿐 — 설명 칸을 남은 높이로 늘리지 않고 글만큼, [포식하기]가 바로 아래(빈 칸 없음) */
 .bha-absorbpage.bha-tutabsorb .bha-lcdpage__col > .bha-absorb__pick { flex: none; }
 .bha-absorbpage.bha-tutabsorb .bha-absorb__pick > .bha-absorb__desc { flex: none; }
-.bha-absorbpage.bha-tutabsorb .bha-lcdpage__col:has(> .bha-absorb__pick) { justify-content: flex-start; }  /* 첫 포식엔 상대 카드가 없어 "…을(를) 쓰러뜨렸다" 를 보인다 */
+.bha-absorbpage.bha-tutabsorb .bha-lcdpage__col:has(> .bha-absorb__pick) { justify-content: safe center; }  /* GDD 243장 5: 아래 절반이 비던 것 — 갈래·설명·버튼 덩어리를 세로 가운데로 */
+/* GDD 243장 5: 갈래 버튼마다 '모두 같은 효과' 한 줄(리스크 줄 자리) · 오른쪽 빈 칸 = 쓰러뜨린 적 카드(세로 가운데) */
+.bha-tutabsorb .bha-absorb__risk--same { color: var(--bha-text-2); white-space: nowrap; }
 /* C.211 (GDD 134장 2): 튜토리얼 치명상 장면 — 캐릭터 비틀거림 · 체력 막대 붉게 깜빡 */
 .bha-wound__fig { display: flex; align-items: flex-end; justify-content: center; height: 100%; min-height: 120px; }
 .bha-wound__fig > .bha-hero { height: 100%; aspect-ratio: 1; max-width: 100%; }

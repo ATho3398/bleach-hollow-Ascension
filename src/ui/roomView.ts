@@ -97,14 +97,14 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다 (공용 statusBox — 온천도 같은 것)
   const nameTag = statusNameTag(save, faction, !!hd.onSwitchTrack);
   // 빈사·사망 (GDD 177장 — 102-3·102-7 의 방 위 큰 안내 띠는 삭제): 상태는 머리 위 칩으로만, 남은 시간·푸는 법은 칩 ⓘ. 방 장면은 늘 같은 크기.
-  // 사망이면 할 수 있는 일([부활], 확인 창 기본 = 아니오)이 장면 왼쪽 위에 따로 — 아무 안내 없이 막히지 않게 (177장 3)
+  // 사망이면 할 수 있는 일([부활], 확인 창 기본 = 아니요)이 장면 왼쪽 위에 따로 — 아무 안내 없이 막히지 않게 (177장 3)
   let reviveBtn: HTMLButtonElement | null = null;
   if (n.dead) {
     reviveBtn = button({ label: '부활', icon: 'i-return', size: 'small', variant: 'danger', onClick: () => askRevive() });
     reviveBtn.classList.add('bha-room__revive');
     items.push({ el: reviveBtn });
   }
-  /** 부활 확인 창 (GDD 102-3·102-7): 잃는 것 목록, 되돌릴 수 없어 기본 선택 = 아니오(danger) */
+  /** 부활 확인 창 (GDD 102-3·102-7): 잃는 것 목록, 되돌릴 수 없어 기본 선택 = 아니요(danger) */
   function askRevive(): void {
     const loss = Math.round(reviveEvLossOf(n.bond) * 100);
     const list = el('ul', 'bha-riskexplain__list');
@@ -115,7 +115,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       `가진 물건·골드·타일·${faction.absorbActionName} 블록·도감·칭호·스킨은 그대로`,
       fixParticles(`${faction.rebirth.name}과(와) 다르다 — 보상·횟수 없음`),
     ]) list.append(el('li', '', t));
-    confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니오', danger: true, onYes: () => hd.onRevive?.() });
+    confirmDialog({ title: '부활한다', body: '되돌릴 수 없다.', content: list, yes: '부활', no: '아니요', danger: true, onYes: () => hd.onRevive?.() });
   }
   if (hd.resume) {
     resumeBtn = button({ label: '모험 이어하기', icon: 'i-return', size: 'small', variant: 'primary', onClick: hd.resume.onResume });
@@ -431,6 +431,12 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
         reaction = food ? foodReactionFor(save, food) : null; // 선호·비선호·싸구려 반응 (GDD 235장 2·3) — 먹기 전에 정한다
         const fed = food ? feedNest(save, food) : null;
         if (!fed) return say(fixParticles(`먹을 것이 없다. 모험에서 적을 이기면 ${faction.foodGroupName}을(를) 얻는다.`));
+        if (fed === 'full') {
+          // 배부름 가득 (GDD 243장 6): 먹이 그대로·효과·교감 없음 — 말풍선만
+          hd.persist();
+          dock.refreshFeeds();
+          return say(pickLine(room.talk, 'full'));
+        }
         if (fed === 'refused') {
           // 같은 먹이 10분에 2개를 넘김 (GDD 234장 3): 먹이 그대로·효과·교감 없음 — 돌봄 거절처럼 말풍선만
           hd.persist();
@@ -438,7 +444,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
           return say(pickLine(room.talk, 'picky'));
         }
         if (fed === 'spat') {
-          // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
+          // 10분에 3개를 넘김 (GDD 109장 6): 효과 없음(C.411 GDD 243장 6: 먹이도 그대로) — 뱉는 모션 + 말풍선
           hd.persist();
           dock.refreshFeeds();
           char.classList.remove('is-spit', 'is-react');

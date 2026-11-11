@@ -204,6 +204,27 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   return { actions, desc, go, first: btns[0]! };
 }
 
+/** 쓰러뜨린 적 카드 (흡수 화면 왼쪽 판 · 첫 포식 오른쪽 빈 칸 GDD 243장 5) */
+export function foeCardEl(faction: FactionConfig, offer: AbsorbOffer, foeName: string): HTMLElement {
+  const card = el('article', 'bha-foecard');
+  const foe = el('div', 'bha-foe');
+  foe.style.setProperty('--aura', elementColor(offer.element));
+  const body = el('span', 'bha-foe__body');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', offer.elite ? '#foe-b' : '#foe-a');
+  svg.append(use);
+  body.append(svg);
+  foe.append(el('span', 'bha-foe__aura'), body);
+  const tags = el('div', 'bha-foecard__tags');
+  tags.append(tag(offer.elite ? '강적' : '일반', offer.elite ? 'elite' : 'normal'), elementMark(offer.element, faction.id));
+  const text = el('div', 'bha-foecard__text');
+  text.append(el('h2', 'bha-foecard__name', foeName), tags);
+  card.append(foe, text);
+  return card;
+}
+
 /** 리스크 줄을 보이나 (GDD 197장 1·2): 첫 흡수 연습(exp.tutorial) = 전부 숨김(놓아주기 포함).
  *  그 밖엔 게이지가 실제로 바뀌는 갈래만 — 놓아주기도 게이지가 0 이라 못 내려가면 숨김(197장 C.320 마스터 결정, 168장 2 규칙(−n·0 아래 없음)은 그대로) */
 export function showRiskLine(exp: ExpeditionState, m: AbsorbChoice): boolean {
@@ -220,9 +241,20 @@ export function modeRiskText(faction: Pick<FactionConfig, 'riskGaugeName'>, exp:
   return `${faction.riskGaugeName} ${signed(Math.round(p.riskTo) - Math.round(p.riskFrom))}`;
 }
 
+/** 첫 포식 갈래 버튼 아래 줄 (GDD 243장 5) */
+export const TUTORIAL_SAME_EFFECT = '모두 같은 효과';
+
 /** 리스크 줄이 없을 때도 같은 높이의 빈 줄을 둔다 (GDD 173장 2: 줄이 빠져도 갈래 버튼 높이·[흡수] 버튼 자리 그대로) */
 function modeRiskLine(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): HTMLElement {
   const sm = el('small', 'bha-absorb__risk');
+  // 첫 포식 연습(GDD 243장 5): 리스크 줄 자리에 '모두 같은 효과' — 어느 갈래든 결과가 같다는 걸 버튼에서 바로 보인다
+  if (exp.tutorial) {
+    sm.classList.add('bha-absorb__risk--same');
+    sm.dataset.same = '';
+    sm.append(TUTORIAL_SAME_EFFECT);
+    sm.title = `이번 ${faction.absorbActionName}은(는) 모두 같은 효과`;
+    return sm;
+  }
   const t = modeRiskText(faction, exp, m);
   if (t) sm.append(v2Icon('warning', 'sm'), t);
   else {
@@ -302,25 +334,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     return nav;
   };
 
-  const foeCard = (): HTMLElement => {
-    const card = el('article', 'bha-foecard');
-    const foe = el('div', 'bha-foe');
-    foe.style.setProperty('--aura', elementColor(offer!.element));
-    const body = el('span', 'bha-foe__body');
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 100 100');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', offer!.elite ? '#foe-b' : '#foe-a');
-    svg.append(use);
-    body.append(svg);
-    foe.append(el('span', 'bha-foe__aura'), body);
-    const tags = el('div', 'bha-foecard__tags');
-    tags.append(tag(offer!.elite ? '강적' : '일반', offer!.elite ? 'elite' : 'normal'), elementMark(offer!.element, faction.id));
-    const text = el('div', 'bha-foecard__text');
-    text.append(el('h2', 'bha-foecard__name', foeName), tags);
-    card.append(foe, text);
-    return card;
-  };
+  const foeCard = (): HTMLElement => foeCardEl(faction, offer!, foeName);
 
   /** 슬롯 현황: 칸마다 특성 이름·종류·속성, 속성 보너스 진행/완성, 외형 파츠 문구 */
   const slotSummary = (): HTMLElement => {
@@ -592,7 +606,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     app.dataset.owner = owner;
     (first as HTMLElement | null)?.focus({ preventScroll: true }); // 기본 선택 = 첫 갈래(163장 1)·첫 후보·첫 슬롯 ([돌아가기] 가 아니라, GDD 100장 #50)
   }
-  // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2단계는 1단계로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니오)
+  // 뒤로 (GDD 128장 4, C.202): 열린 창은 기기가 먼저 닫는다 → 2단계는 1단계로 → 첫 단계는 '흡수 안 하고 넘어가기' 확인(기본 아니요)
   onScreenBack({
     // 다른 흡수 화면이 열렸으면 이 처리기는 끝난 것
     alive: () => !done && (root.querySelector<HTMLElement>('.bha-absorbv2')?.dataset.owner ?? owner) === owner,
@@ -604,7 +618,7 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
           title: `${act} 안 하고 넘어가기`,
           body: `${foeName}을(를) 놓아준다 · ${faction.riskGaugeName} −${RX.releaseRelief}`,
           yes: '넘어가기',
-          no: '아니오',
+          no: '아니요',
           focusNo: true,
           onYes: () => {
             if (!done) finish(chooseRelease(exp), false);

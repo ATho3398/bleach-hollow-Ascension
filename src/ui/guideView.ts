@@ -20,7 +20,7 @@ import { coverTutorials, getOverlayHost, registerLayer } from './bha/overlayHost
 import { tileHint } from './labels';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { shownName } from './displayName';
-import { absorbModePicker } from './absorbView';
+import { absorbModePicker, foeCardEl } from './absorbView';
 
 
 export interface GuideOptions {
@@ -65,7 +65,8 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     el('p', 'bha-dim bha-absorb__lead', `${foe}을(를) 쓰러뜨렸다.`),
     pick,
   ], [
-    el('p', 'bha-small', `이번 첫 ${act}은(는) 연습이다. 어느 갈래를 골라도 모든 능력치가 똑같이 오른다.`),
+    // GDD 243장 5: 갈래 설명과 어긋나던 '어느 갈래를 골라도 같다' 문구 삭제(버튼마다 '모두 같은 효과') — 빈 오른쪽엔 쓰러뜨린 적 카드
+    foeCardEl(faction, offer, foe),
   ]);
   picker.first.focus({ preventScroll: true });
   showGuide(faction, 'first-absorb', { finishLabel: '알겠어요', pauseLabel: '안내 중' });

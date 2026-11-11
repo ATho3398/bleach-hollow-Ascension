@@ -176,7 +176,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   const quit = panel({ title: '테스트 모드' }, row(button({ label: '테스트 모드 끄기', icon: 'i-quit', variant: 'danger', onClick: () => confirmDialog({
     title: '테스트 모드 끄기',
     body: '진짜 세이브로 돌아가 처음부터 다시 연다. 테스트 칸은 지우지 않고 남는다. 다시 켜려면 설정 > [정보] 버전 줄을 7번 누른다.',
-    yes: '끄기', no: '아니오', danger: true,
+    yes: '끄기', no: '아니요', danger: true,
     onYes: disableTestMode,
   }) })), note('끄는 법: 여기, 또는 설정 > [정보] > [테스트 모드 끄기], 또는 주소에 ?test=0.'));
 

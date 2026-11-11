@@ -33,6 +33,7 @@ import { unlockHintText } from '../engine/unlocks';
 import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
 import { skinsFor, skinLabel } from '../data/skins';
+import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
 import { traitsTab, type TraitsTabState } from './buildPanel';
 import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
@@ -153,7 +154,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const gc = gearCarry(save.shared.gear);
   // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 설명은 능력치 ⓘ 창 (GDD 160장 7·165장 2 — 최대만, '기본 n%' 없음)
   const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
-  const critRows = statRow('평타 치명', pctText(cc.basic));
+  const critRows = statRow('일반 공격 치명', pctText(cc.basic));
   critRows.dataset.crit = 'basic';
   const blockCritRow = statRow('블록 치명', pctText(cc.block));
   blockCritRow.dataset.crit = 'block';
@@ -183,10 +184,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 튜토리얼 보상(상한 밖, GDD 217장 2)은 상한 숫자에 세지 않고 따로 적는다
   const counted = evTotal(evCounted(evo));
   const free = evo.evFree ? evTotal(evo.evFree) : 0;
-  evLineP.append('노력치 ', evText(`${Math.round(counted * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
-  if (free > 0) evLineP.append(` · 튜토리얼 +${Math.round(free * 100) / 100} 상한 밖`);
+  // GDD 243장 9-6: 한 번에 읽히게 — '모은 양 / 이 단계 최대'와 따로 받은 튜토리얼 몫을 나눠 쓴다
+  evLineP.append('노력치 ', evText(`${Math.round(counted * 100) / 100} / ${cap.total}`), ` — 이 단계에서 모을 수 있는 최대 (능력치 하나는 ${cap.perStat}까지)`);
+  if (free > 0) evLineP.append(h('br'), `튜토리얼 보상 +${Math.round(free * 100) / 100} — 최대치에 세지 않는다`);
   // '초록 +n' 뜻 = 표 아래 작은 줄 (GDD 189장 5: 제목 줄에서 내림)
-  evLineP.append(h('br'), h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
+  evLineP.append(h('br'), h('span', 'bha-care__evhint', `능력치 옆 초록 +숫자 = 노력치로 오른 몫(${faction.rebirth.name} 계승 포함)`));
   statBox.after(evLineP);
   evLineP.after(extraBox);
   const mark = rebirthMark(save.rebirth.count);
@@ -284,7 +286,7 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
   };
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
-  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
+  for (const sk of skins) add(sk.id, shownName(skinLabel(sk)), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
   mark();
   p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
   return p;

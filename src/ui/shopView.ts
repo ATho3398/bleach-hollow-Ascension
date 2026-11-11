@@ -159,7 +159,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     };
     if (row.confirm) {
       const t = shopConfirmText(row);
-      confirmDialog({ title: t.title, body: t.body, yes: '사기', no: '아니오', onYes: go });
+      confirmDialog({ title: t.title, body: t.body, yes: '사기', no: '아니요', onYes: go });
     } else go();
   };
 
@@ -294,7 +294,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       else hd.persist();
       render();
     };
-    if (sellNeedsConfirm(e, q)) confirmDialog({ title: `${e.name} ${q}개 팔기`, body: `${TRADE_CURRENCY_NAME} +${e.unit * q}. 되돌릴 수 없다.`, yes: '팔기', no: '아니오', onYes: go });
+    if (sellNeedsConfirm(e, q)) confirmDialog({ title: `${e.name} ${q}개 팔기`, body: `${TRADE_CURRENCY_NAME} +${e.unit * q}. 되돌릴 수 없다.`, yes: '팔기', no: '아니요', onYes: go });
     else go();
   };
   const openSell = (e: SellEntry) => {

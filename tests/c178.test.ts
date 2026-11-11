@@ -92,7 +92,7 @@ describe('설정 화면 (103장 1·2·4)', () => {
     expect(s).toContain("if (host && scope === 'slot') {");
     expect(s).not.toContain("text = !slotable(k) ? '공통만'");
     expect(s).toContain("panel('이 캐릭터만 쓰던 설정'");
-    expect(s).toContain("yes: '지우기', no: '아니오', danger: true,");
+    expect(s).toContain("yes: '지우기', no: '아니요', danger: true,");
   });
   it('시작 화면 [설정] = 공통만, 방에서 연 설정은 슬롯 토글', () => {
     expect(read('src/ui/startView.ts')).toContain("button({ label: '설정', icon: 'i-settings', onClick: h.onSettings })");

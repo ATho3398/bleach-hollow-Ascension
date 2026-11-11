@@ -135,7 +135,7 @@ export interface SpeciesHandlers {
   onPick: (faction: FactionConfig) => void;
   onSettings: () => void;
   onHelp: () => void;
-  /** 고른 종족 확인 (확인 한 번). 확인창을 띄우고 예 → onYes, 아니오 → onNo */
+  /** 고른 종족 확인 (확인 한 번). 확인창을 띄우고 네 → onYes, 아니요 → onNo */
   confirm: (faction: FactionConfig, onYes: () => void, onNo: () => void) => void;
 }
 

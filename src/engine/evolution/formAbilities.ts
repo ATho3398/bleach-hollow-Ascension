@@ -335,18 +335,18 @@ export function physSpawnSecondsFor(element: string | null): number {
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 
 /** 특성 칸 화면 이름: '물공' 칸은 데이터 키일 뿐 화면에는 '기본 공격' (블록 타입 숨김, GDD 137장 1) */
-export const ABILITY_SLOT_LABEL: Record<AbilityLine['slot'], string> = { 성향: '성향', 속성: '속성', 전용: '전용', 물공: '기본 공격' };
+export const ABILITY_SLOT_LABEL: Record<AbilityLine['slot'], string> = { 성향: '성향', 속성: '속성', 전용: '전용', 물공: '일반 공격' };
 
 /** 물공 블록 효과 한 줄 (화면용, 종족 무관) */
 export function physBlockSummary(pb: PhysBlock): string {
   const head = `블록 피해 ×${pb.power}`;
   switch (pb.effect) {
-    case 'stoneStance': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 받는 피해 −${pct(pb.takenReduction)} · 그동안 맞을 때마다 다음 기본 공격 +${pct(pb.perHit)}(최대 +${pct(pb.max)})`;
-    case 'knockback': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회 +${pct(pb.bonus)} · 적 ${pb.seconds}초 정지(넉백)`;
+    case 'stoneStance': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 받는 피해 −${pct(pb.takenReduction)} · 그동안 맞을 때마다 다음 일반 공격 +${pct(pb.perHit)}(최대 +${pct(pb.max)})`;
+    case 'knockback': return `${head}, 쓴 뒤 다음 일반 공격 ${pb.hits}회 +${pct(pb.bonus)} · 적 ${pb.seconds}초 정지(넉백)`;
     case 'ember': return `${head} (바에 쌓아 두는 용)`;
-    case 'wave': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 기본 공격 간격 −${pct(pb.haste)}`;
-    case 'flash': return `${head}, 쓴 뒤 다음 기본 공격 ${pb.hits}회 2연타(각 ${pct(pb.each)})`;
-    case 'shout': return `${head}, 쓰는 순간 기본 공격 1회가 바로 나간다`;
+    case 'wave': return `${head}, 쓴 뒤 ${pb.seconds}초 동안 일반 공격 간격 −${pct(pb.haste)}`;
+    case 'flash': return `${head}, 쓴 뒤 다음 일반 공격 ${pb.hits}회 2연타(각 ${pct(pb.each)})`;
+    case 'shout': return `${head}, 쓰는 순간 일반 공격 1회가 바로 나간다`;
   }
 }
 
@@ -357,7 +357,7 @@ function effectSummary(fx: AbilityEffects, critChance: number): string {
   if (fx.blockPower) parts.push(`블록 위력 +${pct(fx.blockPower)}`);
   if (fx.ignoreDefense) parts.push(`적 방어·정신력 ${pct(fx.ignoreDefense)} 무시`);
   if (fx.thorns) parts.push(`받은 피해가 최대 체력 ${pct(fx.thorns.threshold)} 쌓이면 ${pct(fx.thorns.ret)} 반사`);
-  if (fx.doubleHit) parts.push(`기본 공격 ${pct(fx.doubleHit)} 확률 한 번 더`);
+  if (fx.doubleHit) parts.push(`일반 공격 ${pct(fx.doubleHit)} 확률 한 번 더`);
   if (fx.bloodlust) parts.push(`체력 ${pct(fx.bloodlust.fullAt)} 이하에서 공격 최대 +${pct(fx.bloodlust.max)}`);
   if (fx.corrode) parts.push(`${fx.corrode.everySeconds}초마다 적이 받는 피해 +${pct(fx.corrode.per)} (최대 +${pct(fx.corrode.max)})`);
   if (fx.chainHaste) parts.push(`체인 단계당 다음 블록 생성 ${pct(fx.chainHaste)} 빠르게`);
@@ -367,12 +367,12 @@ function effectSummary(fx: AbilityEffects, critChance: number): string {
   if (fx.eliteSlayer) parts.push(`강적·보스에게 피해 +${pct(fx.eliteSlayer)}`);
   if (fx.lastStand) parts.push(`전투마다 1번 체력 ${pct(fx.lastStand)}로 버티기`);
   if (fx.mutation) parts.push(`주는 피해 +${pct(fx.mutation.dealt)} · 받는 피해 −${pct(fx.mutation.taken)}`);
-  if (fx.hardFist) parts.push(`되갚기가 터지면 다음 기본 공격 ${fx.hardFist.hits}회 +${pct(fx.hardFist.bonus)}`);
-  if (fx.bloodScent) parts.push(`넉백 중인 적에게 기본 공격 흡혈 ×${fx.bloodScent}`);
-  if (fx.emberStack) parts.push(`바에 쌓인 공격 블록 1개당 기본 공격 +${pct(fx.emberStack.per)} (최대 +${pct(fx.emberStack.max)})`);
-  if (fx.current) parts.push(`기본 공격이 연속으로 맞을 때마다 +${pct(fx.current.per)} (최대 +${pct(fx.current.max)}, 맞으면 0)`);
-  if (fx.charge) parts.push(`기본 공격 ${fx.charge}회마다 블록 1개`);
-  if (fx.tempering) parts.push(`블록 1개 쓸 때마다 기본 공격 +${pct(fx.tempering.per)} (최대 +${pct(fx.tempering.max)})`);
+  if (fx.hardFist) parts.push(`되갚기가 터지면 다음 일반 공격 ${fx.hardFist.hits}회 +${pct(fx.hardFist.bonus)}`);
+  if (fx.bloodScent) parts.push(`넉백 중인 적에게 일반 공격 흡혈 ×${fx.bloodScent}`);
+  if (fx.emberStack) parts.push(`바에 쌓인 공격 블록 1개당 일반 공격 +${pct(fx.emberStack.per)} (최대 +${pct(fx.emberStack.max)})`);
+  if (fx.current) parts.push(`일반 공격이 연속으로 맞을 때마다 +${pct(fx.current.per)} (최대 +${pct(fx.current.max)}, 맞으면 0)`);
+  if (fx.charge) parts.push(`일반 공격 ${fx.charge}회마다 블록 1개`);
+  if (fx.tempering) parts.push(`블록 1개 쓸 때마다 일반 공격 +${pct(fx.tempering.per)} (최대 +${pct(fx.tempering.max)})`);
   return parts.join(' · ');
 }
 

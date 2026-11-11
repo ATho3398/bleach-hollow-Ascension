@@ -478,12 +478,12 @@ export interface CareRecord {
 
 /** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 빈사(cause: absence 미접속 · defeat 원정 패배), death = 사망(빈사 시간이 다 됨, cause defeat = 빈사로 짐),
  *  revive = 부활(evLoss = 노력치 손실 비율, 그 전 단계·진화체), cure = 약으로 상태 풀림(status), recover = 원정을 마치고 쇠약·피곤 풀림(status).
- *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6). refuse = 같은 먹이 10분 한도로 거절(먹이는 그대로, C.387 GDD 234장 3).
+ *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6). refuse = 같은 먹이 10분 한도로 거절(먹이는 그대로, C.387 GDD 234장 3). full = 배부름 가득이라 안 먹음(먹이 그대로, C.411 GDD 243장 6).
  *  bond = 그 순간 교감, hours = 비운 시간(미접속 쓰러짐·사망) */
 export interface VitalRecord {
   at: number;
   factionId: string;
-  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit' | 'refuse';
+  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit' | 'refuse' | 'full';
   /** spit·refuse: 뱉은·거절한 먹이 종류 */
   food?: string;
   /** tutorial = 튜토리얼 원정 뒤 회복 안내의 빈사 복귀 (GDD 123장 5 수정, C.199) */

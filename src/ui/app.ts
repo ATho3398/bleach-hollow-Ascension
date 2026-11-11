@@ -23,7 +23,7 @@ import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
-import { absenceLossLines, careBlockText } from './bha/roomLogic';
+import { absenceLossLines, careBlockText, lossOnlyReturnShown } from './bha/roomLogic';
 import { fullnessOfNest, previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { NORMAL_FOODS } from '../engine/foodPref';
 import { playDialogue } from './dialogueView';
@@ -884,7 +884,7 @@ export function startApp(host: HTMLElement): void {
         else confirmDialog({
           title: `슬롯 ${sum.slot} 덮어쓰기`,
           body: '이 슬롯의 기록이 새 세이브로 바뀐다. 덮어쓰기 전의 세이브는 슬롯 백업에 한 번 보관된다.',
-          yes: '덮어쓰기', no: '아니오', danger: true,
+          yes: '덮어쓰기', no: '아니요', danger: true,
           onYes: begin,
         });
       } else {
@@ -1071,8 +1071,8 @@ export function startApp(host: HTMLElement): void {
     let uncover = (): void => undefined;
     confirmDialog({
       title: '처음 화면으로',
-      body: inExpedition ? '모험은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 시작 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
-      yes: '예', no: '아니오', focusNo: true, // 기본 선택 = 아니오 (GDD 124장 1)
+      body: inExpedition ? '모험은 지금 상태로 저장된다. 이어하기로 돌아오면 이어서 할 수 있다(싸우던 전투는 처음부터 다시 시작한다).' : '지금 상태를 저장하고 처음 화면으로 돌아간다. 이어하기로 다시 열 수 있다.',
+      yes: '네', no: '아니요', focusNo: true, // 기본 선택 = 아니요 (GDD 124장 1)
       onYes: () => {
         confirmingTitle = false;
         uncover();
@@ -1311,8 +1311,9 @@ export function startApp(host: HTMLElement): void {
     // 222장 3: 한 바퀴도 못 돌았으면(받을 것 0) 복귀 창을 띄우지 않는다
     if (idle && idleCounts(idle.awayHours) && idleClaimable(s) && (idlePendingYield(s)?.laps ?? 0) > 0) {
       afterTutorials(() => showIdleReturn(idle, s, faction, claim, loss), () => save === s && nav.top?.id === 'room');
-    } else if (away && loss.length > 0) {
-      // 대기 보상 창이 안 뜨는 복귀 (237장 3): 같은 창 모양으로 줄어든 것만 + [확인]. 줄어든 것도 없으면 아무것도 안 띄움
+    } else if (away && loss.length > 0 && lossOnlyReturnShown(away.hours)) {
+      // 대기 보상 창이 안 뜨는 복귀 (237장 3): 같은 창 모양으로 줄어든 것만 + [확인]. 줄어든 것도 없으면 아무것도 안 띄움.
+      // GDD 243장 8: 보상 없이 줄어든 것만이면 lossOnlyMinMinutes(1시간) 이상 비웠을 때만 — 10분마다 '배부름 −1' 창이 뜨지 않게
       afterTutorials(() => showAbsenceReturn(away.hours, loss), () => save === s && nav.top?.id === 'room');
     }
     roomView(dev, faction, s, {
@@ -1477,14 +1478,14 @@ export function startApp(host: HTMLElement): void {
     nav.reset({ id: 'rebirth-scene', locked: true, render: () => { setBgm('nest'); rebirthView(root, faction, r.record, r, nestScreen); root.scrollTop = 0; } });
   }
 
-  /** 빈사로 모험 나가기 전 확인 창 (GDD 102장 수정 v5.228 5번): 기본 선택 = 아니오. 빈사가 아니면 바로 go */
+  /** 빈사로 모험 나가기 전 확인 창 (GDD 102장 수정 v5.228 5번): 기본 선택 = 아니요. 빈사가 아니면 바로 go */
   function askDying(s: SaveData, go: () => void): void {
     if (!s.nest.collapsed || s.nest.dead) return go();
     const k = BALANCE.provisional.nest.care.dying;
     confirmDialog({
       title: '빈사 상태로 나간다',
       body: `빈사 — 체력 ${Math.round(k.hpFraction * 100)}% · 공격·블록 속도와 보상 절반, 지면 사망한다.`,
-      yes: '나간다', no: '아니오', danger: true, onYes: go,
+      yes: '나간다', no: '아니요', danger: true, onYes: go,
     });
   }
 
@@ -2139,7 +2140,7 @@ export function startApp(host: HTMLElement): void {
       onNewFaction: (fid) => confirmDialog({
         title: `새 테스트 칸 — ${getFaction(fid).name}`,
         body: '지금 테스트 칸은 지워지고 전체 해금 상태로 새로 시작한다. 진짜 세이브는 그대로 남는다.',
-        yes: '새로 만들기', no: '아니오',
+        yes: '새로 만들기', no: '아니요',
         onYes: () => {
           save = newTestSave(fid);
           persist();
@@ -2149,7 +2150,7 @@ export function startApp(host: HTMLElement): void {
       onReset: () => confirmDialog({
         title: '테스트 칸 초기화',
         body: '테스트 칸(슬롯·백업 포함)을 모두 지우고 처음 화면으로 간다. 진짜 세이브는 그대로 남는다.',
-        yes: '초기화', no: '아니오', danger: true,
+        yes: '초기화', no: '아니요', danger: true,
         onYes: () => {
           clearTestSlot(localStorage);
           titleScreen('테스트 칸을 비웠다. [새로 시작]으로 전체 해금 테스트 칸을 만든다.');

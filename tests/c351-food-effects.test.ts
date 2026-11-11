@@ -1,5 +1,6 @@
 // C.351 (GDD 211장): 먹이 = 적힌 효과만. 먹이마다 '설명에 적힌 효과'와 '실제로 바뀌는 값'(C.346 바뀐 값 칩이 보여 주는 값 + 교감)을 전수 비교한다.
 // 경로: 방 먹이(feedNest — 독 먹이 카드·튜토리얼 회복 먹이 공통) · 방 가방(useInventoryItem). 걷기 중에는 먹이를 쓸 수 없다(가방 잠금).
+import { isFullyFed } from '../src/game';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
@@ -100,6 +101,11 @@ describe('C.351 먹이 숨은 효과 없음 — 설명 = 실제 변화 (전수)'
       if (s.nest.bondDay === 'today') s.nest.bondDay = dayKey(now);
       const shown = foodEffectsNow(food, s.nest, now).map((e) => e.key).sort();
       const b = snap(s.nest);
+      if (isFullyFed(s.nest)) { // 배부름 가득 = 안 먹음·아무것도 안 바뀜 (GDD 243장 6)
+        expect(feedNest(s, food, now)).toBe('full');
+        expect(snap(s.nest)).toEqual(b);
+        continue;
+      }
       expect(feedNest(s, food, now)).toBe('ate');
       const d = diff(b, snap(s.nest));
       const moved = (['hunger', 'cond', 'risk', 'hp', 'bond'] as const).filter((k) => d[k] !== 0).sort();

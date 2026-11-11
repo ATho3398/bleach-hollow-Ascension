@@ -121,21 +121,21 @@ export const SHORTCUT_HELP: { title: string; rows: ShortcutHelpRow[] }[] = [
     ],
   },
   {
-    title: '메뉴·목록·시작 화면·결과 창',
+    title: '메뉴·목록·처음 화면·결과 창',
     rows: [
       { keys: 'W S / A D', does: '이전 / 다음 항목' },
       { keys: 'F, Space', does: '확정' },
       { keys: 'Q, Esc', does: '취소 / 뒤로' },
-      { keys: '1 ~ 9', does: '번호가 붙은 목록의 N번째 (시작 화면·슬롯 등)' },
+      { keys: '1 ~ 9', does: '번호가 붙은 목록의 N번째 (처음 화면·슬롯 등)' },
     ],
   },
   {
-    title: '시작 화면·불러오기·종족 고르기',
+    title: '처음 화면·불러오기·종족 고르기',
     rows: [
-      { keys: '1 / 2 / 3', does: '시작 화면: 이어하기 / 새로 시작 / 불러오기' },
+      { keys: '1 / 2 / 3', does: '처음 화면: 이어하기 / 불러오기 / 새로 시작 (위에서부터 — 세이브가 없으면 1 = 불러오기)' },
       { keys: '1 ~ 3', does: '새로 시작·불러오기 창: 슬롯 N' },
       { keys: 'R', does: '불러오기 창: 백업 파일 가져오기' },
-      { keys: '1 ~ 9', does: '종족 고르기: 왼쪽부터 N번째 종족 (확인창에서 F·Space = 예, Q·Esc = 아니오)' },
+      { keys: '1 ~ 9', does: '종족 고르기: 왼쪽부터 N번째 종족 (확인창에서 F·Space = 네, Q·Esc = 아니요)' },
       { keys: 'E / H', does: '종족 고르기: 설정 / 도움말·튜토리얼' },
     ],
   },

@@ -65,8 +65,9 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
     expect(feedFood(n, 'snack', T + 10 * MIN)).toBe('ate');
     expect(feedsLeft(n, T + 10 * MIN)).toBe(2);
   });
-  it('세이브: 먹이는 없어지고 런 로그 vitals 에 spit 한 줄, 보관함 사용도 같은 규칙', () => {
+  it('세이브: 뱉으면 런 로그 vitals 에 spit 한 줄(C.411 GDD 243장 6: 먹이는 그대로), 보관함 사용도 같은 규칙', () => {
     const save = newSaveData('hollow', 0);
+    save.nest.hunger = 60; // 배부름 가득이면 'full' (GDD 243장 6)
     save.shared.food.basic = 9;
     save.shared.food.sushi = 1;
     const now = Date.now();
@@ -76,11 +77,11 @@ describe('109장 6 10분에 3개 — 넘으면 뱉음', () => {
     expect(save.shared.food.basic).toBe(7);
     save.nest.foodStreak = {};
     expect(feedNest(save, 'basic', now)).toBe('spat');
-    expect(save.shared.food.basic).toBe(6);
+    expect(save.shared.food.basic).toBe(7);
     expect(save.runLog.vitals.filter((v) => v.kind === 'spit')).toEqual([expect.objectContaining({ kind: 'spit', food: 'basic', at: now })]);
     const r = useInventoryItem(save, getFaction('hollow'), 'food-basic');
     expect(r).toMatchObject({ ok: true, spat: true });
-    expect(save.shared.food.basic).toBe(5);
+    expect(save.shared.food.basic).toBe(7);
   });
   it('세이브 왕복: 먹인 개수·시각이 남고 형식 49', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(49);
@@ -151,7 +152,7 @@ describe('109장 7 테스트 모드', () => {
     const s = newSaveData('hollow', now);
     s.lastSeenAt = now;
     s.nest.lastTickMs = now;
-    s.nest.hunger = 0;
+    s.nest.hunger = 60; // 가득(0)이면 안 먹는다 (GDD 243장 6)
     s.shared.food.snack = 9;
     s.shared.food.scrap = 9;
     for (const f of ['snack', 'scrap', 'snack'] as const) feedNest(s, f, now);

@@ -166,7 +166,7 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
 export function roomStatusInfo(chips: readonly StatusChip[], f: Names): InfoBody {
   return {
     // 상태마다 지금 구간 한 줄만 (GDD 159장 21: 모든 구간 줄이 빽빽해 아래가 잘렸다). 자세한 구간표는 상태별 ⓘ
-    lead: '상태마다 지금 구간 한 줄 — 자세한 구간은 상태 화면의 ⓘ에서 본다',
+    lead: '지금 상태가 모험에 주는 영향이다 — 구간별 자세한 내용은 상태 화면의 ⓘ에서 볼 수 있다', // GDD 243장 7: 개발 메모 말투 → 플레이어 말투
     groups: chips.map((c) => {
       const title = c.value === null ? c.label : `${c.label} ${c.value}`;
       const kind: StatusInfoKind = c.kind === 'collapsed' && c.label === CARE_NAMES.dead ? 'dead' : c.kind;

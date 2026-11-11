@@ -19,7 +19,8 @@ const MODE_TITLE: Record<IdentityMode, { title: string; done: string }> = {
 
 /** 입력 칸 아래 안내 한 줄: 문제가 있으면 그 까닭(위험 색), 없으면 남은 칸 */
 function paintMsg(msg: HTMLElement, count: HTMLElement, c: NameCheck, composing: boolean): void {
-  count.textContent = `${c.width}/${c.max}`;
+  // 분모는 늘 같은 값 (GDD 243장 9-8: 빈칸 '0/12' → 한글을 치면 '4/14'로 바뀌던 것) — 영어만 12자 한도는 안내 줄이 알린다
+  count.textContent = `${c.width}/${NAME_RULE.widthMax}`;
   count.classList.toggle('is-over', !c.ok && c.problem === 'long');
   // 한글 조합 중(자음만 친 순간)에는 '자음·모음' 안내를 띄우지 않는다 — 다 치면 다시 본다
   const quiet = c.ok || (composing && c.problem === 'jamo') || (c.problem === 'empty');

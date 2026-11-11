@@ -24,7 +24,7 @@ describe('237장 2·3·4: 창', () => {
   });
   it('보상 창이 뜨면 그 안에, 안 뜨면 줄어든 것만 창(줄어든 것도 없으면 아무것도 안 띄움)', () => {
     expect(app).toContain('showIdleReturn(idle, s, faction, claim, loss)');
-    expect(app).toContain('} else if (away && loss.length > 0) {');
+    expect(app).toContain('} else if (away && loss.length > 0 && lossOnlyReturnShown(away.hours)) {');
     expect(app).toContain('afterTutorials(() => showAbsenceReturn(away.hours, loss)');
   });
   it('아이콘으로 나중에 받는 창(showIdlePanel)에는 줄어든 것이 없다 · 색은 기존 토큰', () => {
