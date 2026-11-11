@@ -13,12 +13,12 @@ const tips: Record<string, Vec2> = Object.fromEntries(LEGS.map((l) => [l, apply(
 const tipAt = (id: string, t: number) => Object.fromEntries(LEGS.map((l) => [l, apply(boneMatrices(rig, samplePose(rig, motions[id]!, t), 'ref')[l]!, local[l]!)]));
 
 describe('거미형 뼈대 (GDD 115-A 106)', () => {
-  it('뼈대 검사 통과, 조각 14개 그림이 있고 동작 7개', () => {
+  it('뼈대 검사 통과, 조각 14개 그림이 있고 동작 8개(공격3 포함)', () => {
     expect(validateRig(rig, motions, sets)).toEqual([]);
     const layers = lookLayers(rig, 'spider-base');
     expect(layers.length).toBe(14);
     for (const l of layers) expect(existsSync(`docs/design/rig-draft/spider/${l.art}.png`), l.art).toBe(true);
-    expect(Object.keys(motions).sort()).toEqual(['attack', 'attack2', 'hit', 'idle', 'move', 'release1', 'skill']);
+    expect(Object.keys(motions).sort()).toEqual(['attack', 'attack2', 'attack3', 'hit', 'idle', 'move', 'release1', 'skill']);
   });
   it('제자리 동작(대기·공격1·특수·맞음): 몸이 움직여도 발끝 넷은 바닥 그 자리', () => {
     for (const id of ['idle', 'attack', 'skill', 'hit']) {
@@ -62,5 +62,47 @@ describe('거미형 뼈대 (GDD 115-A 106)', () => {
     const hit = tipAt('attack2', motions.attack2!.hit!);
     expect(hit.leg2b![0]).toBeLessThan(tips.leg2b![0] - 6); // 앞으로 내리찍음
     expect(Math.abs(hit.leg2b![1] - tips.leg2b![1])).toBeLessThan(1.5);
+  });
+  it('공격3: 몸을 확 치켜들고(공격2보다 높이) 앞다리 둘로 내리찍는다 — 뒷다리 둘은 바닥 밑으로 안 내려감 (115-A 114)', () => {
+    const top = (id: string, t: number) => boneMatrices(rig, samplePose(rig, motions[id]!, t), 'ref').torso![5];
+    const rest = restM.torso![5];
+    expect(rest - top('attack3', 400)).toBeGreaterThan(8); // 몸이 8칸 넘게 뜬다
+    expect(rest - top('attack3', 400)).toBeGreaterThan(rest - top('attack2', 220) + 4); // 공격2보다 확실히 높이
+    const up = tipAt('attack3', 400);
+    expect(tips.leg1b![1] - up.leg1b![1]).toBeGreaterThan(20);
+    expect(tips.leg2b![1] - up.leg2b![1]).toBeGreaterThan(25);
+    const hit = tipAt('attack3', motions.attack3!.hit!);
+    expect(hit.leg2b![0]).toBeLessThan(tips.leg2b![0] - 9); // 앞으로 멀리 내리찍음(공격2보다 멀리)
+    expect(Math.abs(hit.leg2b![1] - tips.leg2b![1])).toBeLessThan(1.5);
+    for (let t = 0; t <= motions.attack3!.duration; t += 25) {
+      const p = tipAt('attack3', t);
+      for (const l of ['leg3b', 'leg4b']) expect(tips[l]![1] - p[l]![1], `${l} t${t}`).toBeGreaterThan(-0.8);
+    }
+  });
+});
+
+describe('부유형 뼈대 (GDD 115-A 114)', () => {
+  const w = DRAFT_RIGS.wraith!;
+  it('뼈대 검사 통과, 조각 16개 그림, 동작 종류 = 거미와 같은 8개', () => {
+    expect(validateRig(w.rig, w.motions, w.sets)).toEqual([]);
+    const layers = lookLayers(w.rig, 'wraith-base');
+    expect(layers.length).toBe(16);
+    for (const l of layers) expect(existsSync(`docs/design/rig-draft/wraith/${l.art}.png`), l.art).toBe(true);
+    expect(Object.keys(w.motions).sort()).toEqual(Object.keys(motions).sort());
+  });
+  it('떠 있다: 쉬는 자세에서 가장 낮은 조각도 바닥 줄 위, 대기는 몸이 오르내린다', () => {
+    const low = Math.max(...Object.values(w.rig.bodies.ref!).map((p) => p.at[1] + p.size[1]));
+    expect(w.rig.ground! - low).toBeGreaterThanOrEqual(4);
+    const r0 = boneMatrices(w.rig, {}).torso![5];
+    expect(r0 - boneMatrices(w.rig, samplePose(w.rig, w.motions.idle!, 1000)).torso![5]).toBeGreaterThan(1.5);
+  });
+  it('등 가시·옷자락·꼬리는 따라가기(sway)로 흔들린다 — 동작 키 없이', () => {
+    for (const b of ['spike1', 'spike2', 'wisp1', 'wisp2', 'wisp3', 'wisp4', 'tail1', 'tail2']) {
+      expect(w.rig.sway?.[b], b).toBeDefined();
+      expect(w.motions.idle!.tracks[b], b).toBeUndefined();
+    }
+    const a = samplePose(w.rig, w.motions.idle!, 300).tail2!.rot;
+    const b2 = samplePose(w.rig, w.motions.idle!, 1100).tail2!.rot;
+    expect(Math.abs(a - b2)).toBeGreaterThan(1);
   });
 });

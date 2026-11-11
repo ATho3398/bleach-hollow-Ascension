@@ -1,0 +1,858 @@
+{
+ "id": "wraith",
+ "note": "부유형(떠다니는 호로) 종이인형 뼈대 (GDD 115-A 114, 사용자 2026-11-12 01:3x \"이거 아쥬커스 부유형으로 인형 넣어. 모션 종류는 거미랑 갯수 맞추고\"). 사용자 부위 시트(400×400, 조각 16개 + 오른쪽 위 참고 그림 82×80): 뿔 가면 머리·구멍 뚫린 몸통·두 팔(위·아래·발톱 손 — 화면 왼쪽 = 1, 오른쪽 = 2)·등 가시 둘·옷자락 넷·꼬리 둘(다리 없음 — 바닥에서 떠 있음). 뼈: 전체 → 몸통 → 머리·팔(위 → 아래 → 손)·등 가시·옷자락·꼬리(→ 꼬리 끝). 등 가시·옷자락·꼬리는 엔진 따라가기·물결(sway)로 하늘하늘. 앞 = 왼쪽, 그림 칸 82×86, 바닥 줄 y=85(꼬리 끝이 5칸 떠 있음). 조립: docs/design/user-art/wraith-ref/assembly.json, 동작: scripts/rig/tools/wraith_motions.py",
+ "motionSpeed": 1.5,
+ "motionSpeedNote": "동작 재생 속도(GDD 225장): 동작 키 시각은 그대로, 재생기가 1.5배로 흘린다",
+ "motionSpeedExcept": [
+  "idle",
+  "homeIdle",
+  "move"
+ ],
+ "motionSpeedExceptNote": "재생 속도 예외(GDD 228장 1): 대기·홈 대기·이동은 1배 그대로",
+ "canvas": [
+  82,
+  86
+ ],
+ "ground": 85,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    38,
+    30
+   ]
+  },
+  {
+   "id": "torso",
+   "parent": "root",
+   "pivot": [
+    38,
+    30
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "torso",
+   "pivot": [
+    35,
+    20
+   ]
+  },
+  {
+   "id": "arm1",
+   "parent": "torso",
+   "pivot": [
+    25,
+    27
+   ]
+  },
+  {
+   "id": "forearm1",
+   "parent": "arm1",
+   "pivot": [
+    19,
+    36
+   ]
+  },
+  {
+   "id": "hand1",
+   "parent": "forearm1",
+   "pivot": [
+    11,
+    46
+   ]
+  },
+  {
+   "id": "arm2",
+   "parent": "torso",
+   "pivot": [
+    53,
+    26
+   ]
+  },
+  {
+   "id": "forearm2",
+   "parent": "arm2",
+   "pivot": [
+    60,
+    32
+   ]
+  },
+  {
+   "id": "hand2",
+   "parent": "forearm2",
+   "pivot": [
+    69,
+    45
+   ]
+  },
+  {
+   "id": "spike1",
+   "parent": "torso",
+   "pivot": [
+    51,
+    20
+   ]
+  },
+  {
+   "id": "spike2",
+   "parent": "torso",
+   "pivot": [
+    52,
+    23
+   ]
+  },
+  {
+   "id": "wisp1",
+   "parent": "torso",
+   "pivot": [
+    32,
+    46
+   ]
+  },
+  {
+   "id": "wisp2",
+   "parent": "torso",
+   "pivot": [
+    46,
+    46
+   ]
+  },
+  {
+   "id": "wisp3",
+   "parent": "torso",
+   "pivot": [
+    34,
+    51
+   ]
+  },
+  {
+   "id": "wisp4",
+   "parent": "torso",
+   "pivot": [
+    43,
+    49
+   ]
+  },
+  {
+   "id": "tail1",
+   "parent": "torso",
+   "pivot": [
+    39,
+    53
+   ]
+  },
+  {
+   "id": "tail2",
+   "parent": "tail1",
+   "pivot": [
+    35,
+    64
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "spike2",
+   "bone": "spike2"
+  },
+  {
+   "id": "spike1",
+   "bone": "spike1"
+  },
+  {
+   "id": "arm2",
+   "bone": "arm2"
+  },
+  {
+   "id": "arm1",
+   "bone": "arm1"
+  },
+  {
+   "id": "forearm2",
+   "bone": "forearm2"
+  },
+  {
+   "id": "forearm1",
+   "bone": "forearm1"
+  },
+  {
+   "id": "tail2",
+   "bone": "tail2"
+  },
+  {
+   "id": "tail1",
+   "bone": "tail1"
+  },
+  {
+   "id": "torso",
+   "bone": "torso"
+  },
+  {
+   "id": "wisp2",
+   "bone": "wisp2"
+  },
+  {
+   "id": "wisp1",
+   "bone": "wisp1"
+  },
+  {
+   "id": "wisp4",
+   "bone": "wisp4"
+  },
+  {
+   "id": "wisp3",
+   "bone": "wisp3"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "hand2",
+   "bone": "hand2"
+  },
+  {
+   "id": "hand1",
+   "bone": "hand1"
+  }
+ ],
+ "bodies": {
+  "ref": {
+   "spike2": {
+    "art": "ref/spike2",
+    "at": [
+     47,
+     15
+    ],
+    "size": [
+     30,
+     13
+    ]
+   },
+   "spike1": {
+    "art": "ref/spike1",
+    "at": [
+     47,
+     8
+    ],
+    "size": [
+     20,
+     16
+    ]
+   },
+   "arm2": {
+    "art": "ref/arm2",
+    "at": [
+     48,
+     22
+    ],
+    "size": [
+     15,
+     13
+    ]
+   },
+   "arm1": {
+    "art": "ref/arm1",
+    "at": [
+     17,
+     24
+    ],
+    "size": [
+     13,
+     15
+    ]
+   },
+   "forearm2": {
+    "art": "ref/forearm2",
+    "at": [
+     58,
+     30
+    ],
+    "size": [
+     19,
+     21
+    ]
+   },
+   "forearm1": {
+    "art": "ref/forearm1",
+    "at": [
+     5,
+     33
+    ],
+    "size": [
+     16,
+     19
+    ]
+   },
+   "tail2": {
+    "art": "ref/tail2",
+    "at": [
+     33,
+     62
+    ],
+    "size": [
+     8,
+     18
+    ]
+   },
+   "tail1": {
+    "art": "ref/tail1",
+    "at": [
+     28,
+     52
+    ],
+    "size": [
+     18,
+     20
+    ]
+   },
+   "torso": {
+    "art": "ref/torso",
+    "at": [
+     14,
+     13
+    ],
+    "size": [
+     43,
+     42
+    ]
+   },
+   "wisp2": {
+    "art": "ref/wisp2",
+    "at": [
+     46,
+     42
+    ],
+    "size": [
+     8,
+     11
+    ]
+   },
+   "wisp1": {
+    "art": "ref/wisp1",
+    "at": [
+     25,
+     42
+    ],
+    "size": [
+     9,
+     9
+    ]
+   },
+   "wisp4": {
+    "art": "ref/wisp4",
+    "at": [
+     41,
+     46
+    ],
+    "size": [
+     10,
+     20
+    ]
+   },
+   "wisp3": {
+    "art": "ref/wisp3",
+    "at": [
+     27,
+     47
+    ],
+    "size": [
+     11,
+     13
+    ]
+   },
+   "head": {
+    "art": "ref/head",
+    "at": [
+     23,
+     0
+    ],
+    "size": [
+     30,
+     28
+    ]
+   },
+   "hand2": {
+    "art": "ref/hand2",
+    "at": [
+     55,
+     40
+    ],
+    "size": [
+     25,
+     32
+    ]
+   },
+   "hand1": {
+    "art": "ref/hand1",
+    "at": [
+     0,
+     42
+    ],
+    "size": [
+     24,
+     26
+    ]
+   }
+  }
+ },
+ "looks": {
+  "wraith-base": {
+   "body": "ref"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   82,
+   86
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "note": "게임 화면에 그릴 때의 그림 칸(정사각, 몸 가운데 x 41 = 칸 가운데, 바닥 y 85 = 아래에서 약 8% 위) — 아직 게임 미사용",
+  "rect": [
+   -19,
+   -25,
+   120,
+   120
+  ],
+  "clipY": 87
+ },
+ "edit": {
+  "names": {
+   "root": "전체",
+   "torso": "몸통",
+   "head": "머리",
+   "arm1": "왼팔 위",
+   "forearm1": "왼팔 아래",
+   "hand1": "왼손",
+   "arm2": "오른팔 위",
+   "forearm2": "오른팔 아래",
+   "hand2": "오른손",
+   "spike1": "등 가시 1",
+   "spike2": "등 가시 2",
+   "wisp1": "옷자락 1(왼쪽 위)",
+   "wisp2": "옷자락 2(오른쪽 위)",
+   "wisp3": "옷자락 3(왼쪽 아래)",
+   "wisp4": "옷자락 4(오른쪽 아래)",
+   "tail1": "꼬리",
+   "tail2": "꼬리 끝"
+  },
+  "groups": [
+   [
+    "전체",
+    [
+     "root"
+    ]
+   ],
+   [
+    "몸",
+    [
+     "head",
+     "torso",
+     "spike1",
+     "spike2"
+    ]
+   ],
+   [
+    "왼팔",
+    [
+     "arm1",
+     "forearm1",
+     "hand1"
+    ]
+   ],
+   [
+    "오른팔",
+    [
+     "arm2",
+     "forearm2",
+     "hand2"
+    ]
+   ],
+   [
+    "옷자락·꼬리",
+    [
+     "wisp1",
+     "wisp2",
+     "wisp3",
+     "wisp4",
+     "tail1",
+     "tail2"
+    ]
+   ]
+  ],
+  "follow": {
+   "arm1": [
+    "forearm1",
+    "hand1"
+   ],
+   "forearm1": [
+    "hand1"
+   ],
+   "arm2": [
+    "forearm2",
+    "hand2"
+   ],
+   "forearm2": [
+    "hand2"
+   ],
+   "tail1": [
+    "tail2"
+   ],
+   "torso": [
+    "head",
+    "arm1",
+    "forearm1",
+    "hand1",
+    "arm2",
+    "forearm2",
+    "hand2",
+    "spike1",
+    "spike2",
+    "wisp1",
+    "wisp2",
+    "wisp3",
+    "wisp4",
+    "tail1",
+    "tail2"
+   ]
+  }
+ },
+ "skeletons": {
+  "ref": {
+   "spike2": [
+    {
+     "pts": [
+      [
+       52,
+       23
+      ],
+      [
+       76,
+       20
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "spike1": [
+    {
+     "pts": [
+      [
+       51,
+       20
+      ],
+      [
+       66,
+       10
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm2": [
+    {
+     "pts": [
+      [
+       53,
+       26
+      ],
+      [
+       60,
+       32
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm1": [
+    {
+     "pts": [
+      [
+       25,
+       27
+      ],
+      [
+       19,
+       36
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "forearm2": [
+    {
+     "pts": [
+      [
+       60,
+       32
+      ],
+      [
+       69,
+       45
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "forearm1": [
+    {
+     "pts": [
+      [
+       19,
+       36
+      ],
+      [
+       11,
+       46
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "tail2": [
+    {
+     "pts": [
+      [
+       35,
+       64
+      ],
+      [
+       36,
+       79
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "tail1": [
+    {
+     "pts": [
+      [
+       39,
+       53
+      ],
+      [
+       35,
+       64
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "torso": [
+    {
+     "pts": [
+      [
+       38,
+       30
+      ],
+      [
+       39,
+       53
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "wisp2": [
+    {
+     "pts": [
+      [
+       46,
+       46
+      ],
+      [
+       52,
+       50
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "wisp1": [
+    {
+     "pts": [
+      [
+       32,
+       46
+      ],
+      [
+       26,
+       44
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "wisp4": [
+    {
+     "pts": [
+      [
+       43,
+       49
+      ],
+      [
+       48,
+       64
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "wisp3": [
+    {
+     "pts": [
+      [
+       34,
+       51
+      ],
+      [
+       28,
+       58
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "head": [
+    {
+     "pts": [
+      [
+       35,
+       20
+      ],
+      [
+       37,
+       2
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand2": [
+    {
+     "pts": [
+      [
+       69,
+       45
+      ],
+      [
+       70,
+       70
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand1": [
+    {
+     "pts": [
+      [
+       11,
+       46
+      ],
+      [
+       8,
+       66
+      ]
+     ],
+     "w": 3
+    }
+   ]
+  }
+ },
+ "sway": {
+  "spike1": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    3,
+    1500,
+    0
+   ]
+  },
+  "spike2": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    4,
+    1700,
+    300
+   ]
+  },
+  "wisp1": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    5,
+    1300,
+    100
+   ]
+  },
+  "wisp2": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    5,
+    1500,
+    500
+   ]
+  },
+  "wisp3": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    6,
+    1400,
+    700
+   ]
+  },
+  "wisp4": {
+   "lag": 80,
+   "swing": 0.8,
+   "hang": 0.2,
+   "wave": [
+    6,
+    1600,
+    250
+   ]
+  },
+  "tail1": {
+   "lag": 100,
+   "swing": 1.2,
+   "hang": 0.3,
+   "wave": [
+    5,
+    1600,
+    0
+   ]
+  },
+  "tail2": {
+   "lag": 100,
+   "swing": 1.4,
+   "hang": 0.3,
+   "wave": [
+    8,
+    1600,
+    400
+   ]
+  }
+ },
+ "assembled": "docs/design/user-art/wraith-ref/assembly.json"
+}

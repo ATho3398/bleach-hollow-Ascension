@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""부유형(뼈대 wraith) 동작 만들기 (GDD 115-A 114, 사용자 2026-11-12 "아쥬커스 부유형으로 인형 넣어. 모션 종류는 거미랑 갯수 맞추고").
+동작 8 = 거미와 같은 종류: 대기·이동·공격1·공격2·공격3·특수1·맞음·해방1. 다리가 없어 발 고정은 없고, 늘 떠서 몸이 오르내린다.
+키 = [t, 각도(+ = 시계 — 왼팔은 + 가 앞(왼쪽)으로, 오른팔은 − 가 바깥(오른쪽 위)으로), x, y]. 등 가시·옷자락·꼬리는 엔진 따라가기(rig.sway)라 키 없음.
+편집기에서 고정한 뼈 트랙(edited)은 다시 만들어도 그대로.
+사용: python3 scripts/rig/tools/wraith_motions.py   → docs/design/rig-draft/wraith-motions.json
+"""
+import json
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from paths import DRAFT_DIR  # noqa: E402
+
+OUT = os.path.join(DRAFT_DIR, 'wraith-motions.json')
+
+
+def m(duration, times, root, bones, loop=False, hit=None, front=None):
+    """times = 키 시각, root = [(각, x, y)…], bones = {뼈: [각…]}"""
+    tr = {'root': [[t, *r] for t, r in zip(times, root)]}
+    for b, v in bones.items():
+        assert len(v) == len(times), (b, len(v), len(times))
+        tr[b] = [[t, a, 0, 0] for t, a in zip(times, v)]
+    out = {'duration': duration, 'loop': loop}
+    if hit is not None:
+        out['hit'] = hit
+    if front:
+        out['front'] = front
+    out['tracks'] = tr
+    return out
+
+
+SPEC = {
+    # 대기: 떠서 2칸 오르내림, 두 팔이 살짝 벌어졌다 모임
+    'idle': m(2000, [0, 500, 1000, 1500, 2000], [(0, 0, 0), (0, 0, -1), (0, 0, -2), (0, 0, -1), (0, 0, 0)],
+              {'torso': [0, -1, 0, 1, 0], 'head': [0, 1.5, 0, -1.5, 0],
+               'arm1': [0, 2, 4, 2, 0], 'forearm1': [0, 2, 3, 1, 0], 'hand1': [0, 2, 4, 2, 0],
+               'arm2': [0, -2, -4, -2, 0], 'forearm2': [0, -2, -3, -1, 0], 'hand2': [0, -2, -4, -2, 0]}, loop=True),
+    # 이동: 앞으로 기울어 미끄러지듯, 팔은 뒤로 끌림
+    'move': m(900, [0, 225, 450, 675, 900], [(-7, 0, -1), (-8, 0, -2.5), (-7, 0, -1), (-6, 0, 0.5), (-7, 0, -1)],
+              {'torso': [-3, -4, -3, -2, -3], 'head': [6, 7, 6, 5, 6],
+               'arm1': [-14, -18, -14, -10, -14], 'forearm1': [-8, -12, -8, -5, -8], 'hand1': [-6, -9, -6, -3, -6],
+               'arm2': [-10, -14, -10, -7, -10], 'forearm2': [-6, -9, -6, -4, -6], 'hand2': [-5, -8, -5, -3, -5]}, loop=True),
+    # 공격1: 왼손(앞 발톱)으로 할퀴기 — 뒤로 젖혔다가 앞으로 휘두름
+    'attack': m(600, [0, 180, 300, 420, 600], [(0, 0, 0), (5, 3, -2), (-7, -6, 1), (-5, -4, 0.5), (0, 0, 0)],
+                {'torso': [0, 6, -9, -6, 0], 'head': [0, -4, 7, 4, 0],
+                 'arm1': [0, -45, 50, 38, 0], 'forearm1': [0, -30, 25, 18, 0], 'hand1': [0, -20, 30, 20, 0],
+                 'arm2': [0, -8, 10, 6, 0], 'forearm2': [0, -6, 6, 4, 0], 'hand2': [0, -4, 6, 3, 0]}, hit=300, front=['arm1', 'forearm1', 'hand1']),
+    # 공격2: 두 팔을 활짝 벌렸다가 안으로 모아 움켜쥠
+    'attack2': m(700, [0, 230, 350, 480, 700], [(0, 0, 0), (4, 2, -3), (-5, -5, 1), (-4, -3, 0.5), (0, 0, 0)],
+                 {'torso': [0, 5, -7, -5, 0], 'head': [0, -5, 6, 4, 0],
+                  'arm1': [0, -35, 40, 30, 0], 'forearm1': [0, -20, 35, 25, 0], 'hand1': [0, -25, 25, 15, 0],
+                  'arm2': [0, -40, 35, 26, 0], 'forearm2': [0, -25, 30, 22, 0], 'hand2': [0, -20, 25, 15, 0]}, hit=350, front=['arm2', 'forearm2', 'hand2']),
+    # 공격3: 높이 솟구쳤다가 두 손으로 내리덮침
+    'attack3': m(900, [0, 300, 430, 520, 650, 900], [(0, 0, 0), (8, 2, -10), (9, 2, -11), (-12, -6, 4), (-9, -4, 3), (0, 0, 0)],
+                 {'torso': [0, 8, 9, -12, -9, 0], 'head': [0, -10, -11, 10, 7, 0],
+                  'arm1': [0, 95, 100, 20, 14, 0], 'forearm1': [0, 30, 34, -10, -6, 0], 'hand1': [0, 25, 28, 15, 10, 0],
+                  'arm2': [0, -95, -100, 15, 10, 0], 'forearm2': [0, -30, -34, 14, 9, 0], 'hand2': [0, -25, -28, 12, 8, 0]}, hit=520, front=['arm2', 'forearm2', 'hand2']),
+    # 특수1: 두 손을 가슴 구멍 앞에 모아 기를 모았다가(떨림) 앞으로 내쏨
+    'skill': m(1250, [0, 400, 520, 640, 750, 1000, 1250], [(0, 0, 0), (3, 1, -2), (3, 1, -2.5), (3, 1, -2), (-4, 3, -1), (-3, 2, -1), (0, 0, 0)],
+               {'torso': [0, 4, 4.5, 4, -5, -4, 0], 'head': [0, -3, -3, -3, 5, 4, 0],
+                'arm1': [0, -20, -22, -20, 30, 24, 0], 'forearm1': [0, -45, -47, -45, 10, 8, 0], 'hand1': [0, -30, -32, -30, 20, 15, 0],
+                'arm2': [0, 30, 32, 30, 5, 4, 0], 'forearm2': [0, 45, 47, 45, 10, 8, 0], 'hand2': [0, 25, 27, 25, 10, 8, 0]}, hit=750),
+    # 맞음: 뒤로 밀리며 젖혀짐
+    'hit': m(360, [0, 80, 200, 360], [(0, 0, 0), (9, 5, -1), (4, 2, 0), (0, 0, 0)],
+             {'torso': [0, 8, 3, 0], 'head': [0, -10, -4, 0], 'arm1': [0, -20, -6, 0], 'forearm1': [0, -12, -4, 0], 'arm2': [0, -15, -5, 0], 'forearm2': [0, -10, -3, 0]}),
+    # 해방1(포효): 웅크렸다가 솟구치며 두 팔을 활짝 펼치고 머리를 젖혀 포효
+    'release1': m(1700, [0, 400, 650, 900, 1000, 1100, 1300, 1700], [(0, 0, 0), (-4, 0, 3), (3, 0, -6), (6, 1, -9), (6, 1, -8.5), (6, 1, -9), (5, 1, -8), (0, 0, 0)],
+                  {'torso': [0, -8, 4, 9, 8, 9, 8, 0], 'head': [0, 8, -8, -16, -13, -16, -14, 0],
+                   'arm1': [0, -15, 40, 75, 72, 75, 70, 0], 'forearm1': [0, -25, 10, 25, 22, 25, 22, 0], 'hand1': [0, -15, 15, 30, 27, 30, 27, 0],
+                   'arm2': [0, 15, -40, -75, -72, -75, -70, 0], 'forearm2': [0, 25, -10, -25, -22, -25, -22, 0], 'hand2': [0, 15, -15, -30, -27, -30, -27, 0]}, hit=900),
+}
+
+NOTE = ('부유형 동작 (GDD 115-A 114) — scripts/rig/tools/wraith_motions.py 가 만든다. 키 = [t, 각도(+=시계), x, y]. 앞 = 왼쪽. 동작 8 = 거미와 같은 종류'
+        '(대기·이동·공격1·2·3·특수1·맞음·해방1). 등 가시·옷자락·꼬리는 엔진 따라가기(sway). 편집기에서 고정한 트랙은 edited 로 남아 다시 만들어도 유지')
+
+
+def main():
+    prev = json.load(open(OUT, encoding='utf-8')) if os.path.exists(OUT) else {}
+    out = {'note': NOTE}
+    for mid, mo in SPEC.items():
+        mo = json.loads(json.dumps(mo))
+        ed = (prev.get(mid) or {}).get('edited') or []
+        if ed:
+            mo['tracks'].update({b: prev[mid]['tracks'][b] for b in ed if b in prev[mid].get('tracks', {})})
+            mo['edited'] = list(ed)
+        out[mid] = mo
+    for k, v in prev.items():
+        out.setdefault(k, v)
+    s = json.dumps(out, ensure_ascii=False, indent=1)
+    s = re.sub(r'\[\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]', r'[\1, \2, \3, \4]', s)
+    open(OUT, 'w', encoding='utf-8').write(s + '\n')
+    print('wraith-motions.json:', ', '.join(SPEC))
+
+
+if __name__ == '__main__':
+    main()

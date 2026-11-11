@@ -7,6 +7,7 @@ const LOOKS: [string, string][] = [
   ['beast', 'beast-base'],
   ['serpent', 'serpent-base'],
   ['spider', 'spider-base'],
+  ['wraith', 'wraith-base'],
 ];
 // 주소 뒤 #look=<외형> 이면 그 외형 하나만 크게(캡처·확인용)
 const hp = new URLSearchParams(location.hash.slice(1));
