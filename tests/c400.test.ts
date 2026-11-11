@@ -1,10 +1,10 @@
-// C.398 (GDD 241-F 2, 115-A 119·120): 호로 모델 빈사·쓰러짐 채우기, 짐승 공격3, 거미 팔 관절, 가시형 가슴·배, 속도형 꼬리·팔.
+// C.400 (GDD 241-F 2, 115-A 119·120): 호로 모델 빈사·쓰러짐 채우기, 짐승 공격3, 거미 팔 관절, 가시형 가슴·배, 속도형 꼬리·팔.
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { apply, boneMatrices, lookLayers, resolveMotions, rigPack, samplePose, validateRig } from '../src/data/art/rig/pose';
 import { RIG_ACTIONS } from '../src/ui/bha/rigAnim';
 
-describe('C.398 호로 모델 빈사·쓰러짐·공격3 (GDD 241-F 2)', () => {
+describe('C.400 호로 모델 빈사·쓰러짐·공격3 (GDD 241-F 2)', () => {
   it('뱀·짐승·거미·부유형에 빈사(반복)·쓰러짐(한 번, 끝 자세)이 있고 뼈대 검사를 통과한다', () => {
     for (const id of ['serpent', 'beast', 'spider', 'wraith']) {
       const p = rigPack(id);

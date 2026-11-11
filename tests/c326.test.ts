@@ -109,15 +109,19 @@ describe('화면 (199장 6·7, 173장 2)', () => {
     expect(sv).toContain("label: '이름·성별 바꾸기'");
     expect(sv).not.toContain("panel('이 캐릭터 · 성별'");
   });
-  it('두 화면에 \'나중에 바꿀 수 있다\' 한 줄, 주 버튼은 첫 줄 같은 자리(키보드에 안 가림), 종족 분기 없음', () => {
-    expect(view.match(/IDENTITY_LATER_LINE\)/g)?.length).toBe(2);
-    expect(view.match(/row\.append\((field|list), (next|done)\)/g)?.length).toBe(2);
+  it('한 화면에 \'나중에 바꿀 수 있다\' 한 줄, 주 버튼은 첫 줄 같은 자리(키보드에 안 가림), 종족 분기 없음', () => {
+    // GDD 241-A 3: 이름·성별 한 화면 — 이름 아래 빈 자리에 성별 버튼, 외형 안내 문구 없음
+    expect(view.match(/IDENTITY_LATER_LINE\)/g)?.length).toBe(1);
+    expect(view).toContain('row.append(field, done)');
+    expect(view).toContain('body.append(row, msg, list,');
+    expect(view).not.toContain('genderLookNote');
+    expect(read('src/ui/app.ts')).not.toContain('genderLookNote');
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-ident__main { flex: none; width: 128px;');
     for (const p of ['src/ui/identityView.ts', 'src/engine/playerName.ts']) expect(read(p)).not.toMatch(/'(hollow|shinigami)'/);
   });
   it('종족 설정 이름이 화면 머리 줄에 (종족 json 값)', () => {
     for (const f of FACTIONS) expect(getFaction(f.id).name.length).toBeGreaterThan(0);
-    expect(view).toContain('sub: `${f.name} · 1/2`');
+    expect(view).toContain('sub: f.name');
   });
 });
 

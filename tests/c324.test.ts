@@ -20,7 +20,9 @@ describe('C.324 설정 겹침', () => {
   });
   it('본문이 길면 바닥 \'▼ 더 있음\' (공용 띠, 끝까지 내리면 숨김)', () => {
     const s = read('src/ui/settingsView.ts');
-    expect(s).toContain("el('div', 'bha-more bha-more--sticky bha-settings__more', '▼ 더 있음')");
+    // GDD 241-A 6: 띠는 스크롤 칸 밖(본문 위 겹침) — 숨길 때 스크롤 높이가 바뀌지 않는다
+    expect(s).toContain("el('div', 'bha-more bha-settings__more', '▼ 더 있음')");
+    expect(s).toContain('(scroller.parentElement ?? scroller).append(more);');
     expect(s).toContain("scroller.addEventListener('scroll', syncMore, { passive: true });");
   });
 });

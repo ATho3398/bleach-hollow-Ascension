@@ -48,12 +48,14 @@ export interface IdleYield {
 export function idleYield(activeHours: number, bonus = 1): IdleYield {
   const k = Math.max(0, activeHours) * IX.share * bonus;
   const f = IX.fullHour;
+  // 1분씩 더한 시간(15 × 1/60)이 0.2499… 가 되어 1바퀴가 0바퀴로 내려가던 부동소수 오차 (GDD 241-A 7) — 아주 작은 여유를 두고 내림
+  const floor = (v: number): number => Math.floor(v + 1e-9);
   // 한 바퀴도 못 돌았으면 아무것도 없다 (GDD 222장 3: '자동 모험 0바퀴'인데 골드가 생기던 것) — 쌓인 시간은 그대로 남아 다음에 바퀴가 되면 받는다
-  if (Math.floor(f.laps * k) < 1) return { laps: 0, steps: 0, gold: 0, ev: 0, tiles: 0, food: 0, gear: 0, gearChance: 0 };
+  if (floor(f.laps * k) < 1) return { laps: 0, steps: 0, gold: 0, ev: 0, tiles: 0, food: 0, gear: 0, gearChance: 0 };
   return {
-    laps: Math.floor(f.laps * k), steps: Math.floor(f.steps * k), gold: Math.floor(f.gold * k),
-    ev: Math.floor(f.ev * k), tiles: Math.floor(f.tiles * k), food: Math.floor(f.food * k),
-    gear: Math.floor(f.gear * k), gearChance: f.gear * k - Math.floor(f.gear * k),
+    laps: floor(f.laps * k), steps: floor(f.steps * k), gold: floor(f.gold * k),
+    ev: floor(f.ev * k), tiles: floor(f.tiles * k), food: floor(f.food * k),
+    gear: floor(f.gear * k), gearChance: Math.max(0, f.gear * k - floor(f.gear * k)),
   };
 }
 

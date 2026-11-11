@@ -19,6 +19,11 @@ import { rigPackOfLook } from './rig/pose';
 
 /** 종이인형 여성 외형 id 꼬리 (humanoid.json looks: shinigami-base → shinigami-base-f) */
 export const RIG_FEMALE_SUFFIX = '-f';
+/** 여성 종이인형 외형인가 (C.398, 마스터AL "여성 해방 아란칼 bodySlot 버그"): id 가 '-f' 로 끝나거나 '-f-' 를 품으면 여(예 arrancar-base-f-released = 여성 해방).
+ *  블록 도트 연출 몸동작 칸(남·여)을 고를 때 쓴다 */
+export function isFemaleRigLook(look: string): boolean {
+  return look.endsWith(RIG_FEMALE_SUFFIX) || look.includes(`${RIG_FEMALE_SUFFIX}-`);
+}
 
 export interface ArtEntry {
   /** 한 장짜리 그림 경로 (public/ 기준, 예 "art/scene-hollow.png"). 비우면 자리표시 도형 */

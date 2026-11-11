@@ -1,4 +1,4 @@
-// 시작 화면 (GDD 18-1·19-3·103장 1): 타이틀 + [이어하기][새로 시작][불러오기][설정]. 이어하기는 슬롯 선택 없이 가장 최근 슬롯을 바로 열고, 새로 시작·불러오기는 슬롯 선택 화면(slotView)을 연다.
+// 시작 화면 (GDD 18-1·19-3·103장 1): 타이틀 + [이어하기][불러오기][새로 시작][설정]. 이어하기는 슬롯 선택 없이 가장 최근 슬롯을 바로 열고, 새로 시작·불러오기는 슬롯 선택 화면(slotView)을 연다.
 // 종족 고르기(GDD 19-4)는 새로 시작 다음 화면(speciesView): 종족 수만큼 화면을 등분해 아이콘(이모티콘)과 이름만 크게. 칸마다 data-bha-theme 로 그 종족 테마를 입힌다.
 import { emblemOf, type FactionConfig } from '../engine/faction';
 import { formatPlayedAt, lastPlayedSlot, type SlotSummary } from '../saveSlots';
@@ -89,7 +89,7 @@ function incompatibleNotice(stale: readonly Extract<SlotSummary, { state: 'incom
   return box;
 }
 
-/** 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + [이어하기][새로 시작][불러오기] 세로 3개. 슬롯 고르기는 이어하기·새로 시작을 누르면 뜬다 */
+/** 시작 화면 (GDD 18-1): 타이틀 중앙 상단 + [이어하기][불러오기][새로 시작] 세로 3개(241-A 1). 슬롯 고르기는 이어하기·새로 시작을 누르면 뜬다 */
 export function startView(root: HTMLElement, summaries: readonly SlotSummary[], h: StartHandlers, note = ''): void {
   const hero = el('header', 'bha-start__hero');
   const title = el('h1', 'bha-start__title');
@@ -103,8 +103,9 @@ export function startView(root: HTMLElement, summaries: readonly SlotSummary[], 
   // 버튼은 모두 같은 어두운 모양, 고른 버튼은 초점 테두리 하나로만 (GDD 159장 16: 밝게 채운 버튼과 초점이 따로 보였다)
   if (last !== null) menu.append(button({ label: '이어하기', icon: 'i-loop', onClick: h.onContinue }));
   menu.append(
-    button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
+    // GDD 241-A 1: 이어하기 · 불러오기 · 새로 시작 순
     button({ label: '불러오기', icon: 'i-deck', onClick: h.onImport }),
+    button({ label: '새로 시작', icon: 'i-play', onClick: h.onNew }),
   );
   if (h.onSettings) {
     const set = button({ label: '설정', icon: 'i-settings', onClick: h.onSettings });
@@ -157,8 +158,7 @@ export function speciesView(root: HTMLElement, factions: readonly FactionConfig[
     card.setAttribute('aria-label', f.name);
     const mark = logoMark(f, 'bha-logo--xl');
     card.append(mark ?? el('span', 'bha-species__emblem', emblemOf(f)), el('span', 'bha-species__name', f.name));
-    // 종족 한 줄 소개 (GDD 193장 10, C.304 — 129장 2 에서 뺐던 것을 다시): 문구는 종족 설정 tagline
-    if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));
+    // GDD 241-A 2: 종족 칸은 아이콘 + 이름만 (한 줄 소개 tagline 은 다시 뺐다)
     card.onclick = () => {
       for (const c of cards) {
         const on = c === card;

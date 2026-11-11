@@ -18,7 +18,7 @@ describe('C.145 슬롯 선택·확인·삭제', () => {
     expect(v).toContain("onClick: () => sum && onPick(sum)");
     expect(v.match(/onPick\(/g)!.length).toBe(1);
     expect(v).toContain("icon: 'i-check'");
-    expect(v).toContain("variant: 'danger'");
+    expect(v).not.toContain("variant: 'danger'"); // GDD 241-A 4: [삭제]는 빨강 강조 없는 기본 모양
   });
   it('삭제: 기록 있는 슬롯만, 확인창 문구 + 예 → deleteSlot, 세 모드 모두 같은 화면', () => {
     const v = read('src/ui/slotView.ts');

@@ -642,7 +642,9 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   const grid = el('div', 'bha-settings__grid');
   // 본문이 판보다 길면 바닥에 '▼ 더 있음' (C.324, 공용 띠 .bha-more--sticky · GDD 168장 3): 폰은 스크롤 막대가 안 보여 맨 아래 줄(로그인 등)이 잘린 채 끝난 것처럼 보였다.
   // 띠는 grid 를 감싼 스크롤 칸(.bha-lcdpage__col) 바닥에 붙고, 끝까지 내리면 숨는다
-  const more = el('div', 'bha-more bha-more--sticky bha-settings__more', '▼ 더 있음');
+  // GDD 241-A 6: 띠는 스크롤 칸 밖(본문 바닥 위에 겹침)에 둔다 — 스크롤 칸 안(sticky)에 있으면 끝에서 띠가 숨을 때 스크롤 높이가 줄어 위치가 튀고,
+  // 폰에서 한 번 끌어 끝에 닿은 손짓이 끊겨 두 번 끌어야 했다. 본문 칸(.bha-settings__grid)도 스크롤 칸이 아니게(바깥 열 하나만 스크롤)
+  const more = el('div', 'bha-more bha-settings__more', '▼ 더 있음');
   more.setAttribute('aria-hidden', 'true');
   more.hidden = true;
   const syncMore = (): void => {
@@ -757,7 +759,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
   page.app.dataset.screen = 'settings';
   const scroller = grid.parentElement;
   if (scroller) {
-    scroller.append(more);
+    (scroller.parentElement ?? scroller).append(more);
     scroller.addEventListener('scroll', syncMore, { passive: true });
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(syncMore).observe(grid);
   }

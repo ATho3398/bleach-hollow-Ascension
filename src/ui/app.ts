@@ -2,13 +2,13 @@
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
-import { DEFAULT_GENDER, genderLookNote, setActiveGender, type Gender } from '../engine/gender';
+import { DEFAULT_GENDER, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
-import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText, type TutorialScene } from '../data/help';
+import { HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
@@ -32,7 +32,7 @@ import {
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
-import { genderScreen, nameScreen, type IdentityMode } from './identityView';
+import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
 import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
@@ -866,9 +866,11 @@ export function startApp(host: HTMLElement): void {
       onImport: () => open('slot-import', () => renderSlotPick('import')),
       selected,
       onDelete: (sum) => confirmDialog({
-        title: `슬롯 ${sum.slot} 지우기`,
+        // GDD 241-A 4: '정말 삭제하시겠습니까?' + 입력칸 — '삭제' 를 쳐야 [확인]이 켜진다 (빨강 강조 없음, 시작 초점 = 입력칸)
+        title: '정말 삭제하시겠습니까?',
         body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 지우기 전 세이브 하나는 백업으로 남는다.`), // GDD 159장 15: '되돌릴 수 없다'와 '백업' 말이 어긋났다
-        yes: '지우기', no: '아니오', danger: true,
+        typeToConfirm: { word: '삭제', hint: '삭제하려면 삭제 를 입력하세요' },
+        yes: '확인', no: '취소',
         onYes: () => {
           if (!deleteSlot(store, sum.slot)) showToast({ eyebrow: '슬롯', title: '지우지 못했다', meta: '저장소가 막혀 있다.' }, 0, 4200);
           renderSlotPick(mode, sum.slot);
@@ -898,44 +900,18 @@ export function startApp(host: HTMLElement): void {
       onSettings: settingsOpener(false),
       onHelp: () => openHelp(undefined, true),
       confirm: (f, onYes, onNo) => confirmDialog({
-        title: `${f.name} — 이 종족으로 시작`,
-        body: f.pickNote ? renderHelpText(f.pickNote, helpVars(f)) : undefined, // 종족 소개 2문장 (GDD 193장 10, 종족 설정 pickNote)
-        yes: '시작', no: '아니오',
+        title: fixParticles(`${f.name}(으)로 시작하시겠습니까?`), // GDD 241-A 2: 설명 없이 묻기만 · 네/아니요
+        yes: '네', no: '아니요',
         onYes, onNo,
       }),
     });
   }
 
   /**
-   * 이름 정하기 → 성별 정하기 한 흐름 (GDD 199장 6~8, C.326): 화면 스택 한 칸 안에서 두 단계를 바꿔 그린다. 성별 단계의 뒤로(◀·Esc·[이전]) = 이름 단계.
-   * 이름 단계의 뒤로 = onCancel (없으면 뒤로 없음 — 옛 세이브). 돌려주는 함수 = 그 칸의 render
+   * 이름·성별 한 화면 (GDD 199장 6~8, C.326 → 241-A 3 한 화면). 뒤로 = onCancel (없으면 뒤로 없음 — 옛 세이브). 돌려주는 함수 = 그 칸의 render
    */
   function identityFlow(f: FactionConfig, mode: IdentityMode, init: { name: string; gender: Gender | null }, onDone: (name: string, gender: Gender) => void, onCancel?: () => void): () => void {
-    let name = init.name;
-    let gender = init.gender;
-    let step: 'name' | 'gender' = 'name';
-    let unhook = () => {};
-    const draw = (): void => {
-      unhook();
-      if (step === 'name') {
-        nameScreen(root, f, { mode, initial: name, onNext: (n) => { name = n; step = 'gender'; draw(); }, onBack: onCancel });
-      } else {
-        genderScreen(root, f, {
-          mode, name, initial: gender, note: genderLookNote(f.tierNames, f.genderLookFromTier, f.ascension),
-          onDone: (g) => { gender = g; unhook(); onDone(name, g); },
-          onBack: () => { step = 'name'; draw(); },
-        });
-      }
-      const here = root.querySelector('.bha-ident');
-      unhook = registerCancelHook(() => {
-        if (!here?.isConnected) return 'gone';
-        if (step !== 'gender') return false;
-        step = 'name';
-        draw();
-        return true;
-      }, { button: true });
-    };
-    return draw;
+    return () => identityScreen(root, f, { mode, initialName: init.name, initialGender: init.gender, onDone, onBack: onCancel });
   }
 
   /** 설정 > 기타 [이름·성별 바꾸기] (GDD 199장 7): 같은 두 화면, 끝나면 설정으로 */

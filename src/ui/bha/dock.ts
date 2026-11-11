@@ -7,7 +7,6 @@ import { foodEffectText, foodFxAmount, foodFxText } from '../../foodText';
 import { button, el, icon, provisionalTag } from './dom';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 import { registerCancelHook } from './shortcuts';
-import { v2Icon } from './iconMap';
 import { fixParticles } from '../../engine/josa';
 
 export interface DockMenuItem {
@@ -128,7 +127,7 @@ export function createDock(o: DockOpts): Dock {
     const idleBtn = button({ label: '대기 보상', icon: 'i-timer', iconOnly: true, variant: 'ghost', onClick: () => { setPanel(CLOSED, idleBtn); o.idle!.onOpen(); } });
     idleBtn.dataset.sc = 'idle-reward'; // 1분마다 refreshIdleBadge 가 이 버튼의 배지를 고친다
     idleBtn.classList.add('bha-homedock__idle');
-    idleBtn.querySelector('.bha-icon')?.replaceWith(v2Icon('gift')); // v2 S01: 대기 보상 = 선물 + 쌓인 시간 (PROMPT 4절)
+    // 대기 보상 아이콘 = 초시계(i-timer 옛 스프라이트) — GDD 241-A 5: C.284 선물상자 롤백
     if (o.idle.badge) {
       idleBtn.append(el('small', 'bha-room__idlebadge', o.idle.badge));
       idleBtn.title = `대기 보상 ${o.idle.badge} 쌓임`;

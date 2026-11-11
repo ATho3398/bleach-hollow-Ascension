@@ -48,7 +48,8 @@ describe('아이콘 매핑 (GDD 183장 3)', () => {
   const sprite = read('src/ui/bha/sprite.svg');
   const ids = [...new Set([...sprite.matchAll(/<symbol id="(i-[a-z0-9-]+)"/g)].map((m) => m[1]!))];
   it('게임 i-* 아이콘 전부(fx-* 제외)에 v2 짝이 있고, 짝 이름은 v2 150개 안에 있다', () => {
-    const want = ids.filter((id) => !id.startsWith('i-fx-'));
+    // GDD 241-A 5: 대기 보상 초시계(i-timer)·설정 톱니(i-settings)는 옛 그림으로 롤백 — v2 짝 없음
+    const want = ids.filter((id) => !id.startsWith('i-fx-') && id !== 'i-timer' && id !== 'i-settings');
     expect(want.filter((id) => !V2_ICON[id])).toEqual([]);
     expect(Object.values(V2_ICON).filter((n) => !V2_ICON_NAMES.includes(n))).toEqual([]);
     expect(V2_ICON_NAMES.length).toBe(150);

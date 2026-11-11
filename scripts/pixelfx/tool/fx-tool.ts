@@ -8,7 +8,7 @@ import { effects, categories } from '../../../vendor/pixelfx/src/fx/index.js';
 import { clearFrame, composite, createFrame, createFx } from '../../../vendor/pixelfx/src/core/index.js';
 import { pixelFxTransform } from '../../../src/ui/bha/pixelFx';
 import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
-import { charArt, enemyArt, type ArtUrls } from '../../../src/data/art/manifest';
+import { charArt, enemyArt, isFemaleRigLook, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
 import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
@@ -175,8 +175,8 @@ const st = (): StageFx => {
 /** 지금 캐릭터의 몸동작 칸 */
 function slotNow(): BodySlot {
   const c = CHARACTERS.find((x) => x.id === charId);
-  // 게임 battleView bodySlot 과 같은 규칙: 종이인형 외형 id 가 '-f' 로 끝나면 여, 아니면 남 (그래서 '아란칼 해방(여)'는 게임에서도 남 칸)
-  return !c?.rig ? 'frames' : c.rig.endsWith('-f') ? 'female' : 'male';
+  // 게임 battleView bodySlot 과 같은 규칙(isFemaleRigLook, C.398): '-f' 로 끝나거나 '-f-' 를 품으면 여 — 아란칼 해방(여)도 여 칸
+  return !c?.rig ? 'frames' : isFemaleRigLook(c.rig) ? 'female' : 'male';
 }
 const layer = (): FxLayer | null => st().layers[layerIx] ?? null;
 /** 편집할 타격: -1 = 전체(기본 값), 0부터 = 그 타격만 */

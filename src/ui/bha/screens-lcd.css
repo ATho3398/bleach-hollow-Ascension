@@ -183,7 +183,9 @@
 .bha-settings-page .bha-lcdpage__aside { margin-left: auto; flex: none; }
 .bha-settings__tabs { flex: none; }
 .bha-settings__tabs .bha-tab { font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); }
-.bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3) var(--bha-sp-4); align-items: stretch; align-content: start; min-height: 0; overflow-y: auto; }
+.bha-settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-3) var(--bha-sp-4); align-items: stretch; align-content: start; min-height: 0; } /* 스크롤 칸이 아니다 — 바깥 열 하나만 스크롤 (GDD 241-A 6) */
+.bha-settings-page .bha-lcdpage__body { position: relative; }
+.bha-settings__more { pointer-events: none; } /* 공용 .bha-more = 본문 바닥에 겹친 띠(스크롤 칸 밖, 241-A 6) */
 .bha-setgroup { display: contents; }
 .bha-setgroup[hidden] { display: none; }
 /* 설정 줄 .bha-setrow · 붙은 고르기 칸 .bha-settings__choices 는 공용 (components/v2-shared.css, C.296) */
@@ -545,8 +547,8 @@ button.bha-slot { cursor: pointer; }
 .bha-cloud-gate .bha-modal, .bha-cloud-blocked .bha-modal { width: min(560px, 96%); }
 .bha-cloud-gate .bha-modal__actions--three .bha-btn { min-width: 0; padding-inline: var(--bha-sp-3); } /* 세 버튼 한 줄 — 폰 폭에서 글자가 밀려 두 줄이 되지 않게 */
 
-/* ═════ 이름 정하기 · 성별 정하기 (GDD 199장 6~8, C.326) ═════
-   폰 가상 키보드가 아래 절반을 덮어도 보이게: 입력 칸·[다음]/[시작] 은 머리 바로 아래 첫 줄. 주 버튼 폭·자리는 두 화면 같다 (GDD 173장 2).
+/* ═════ 이름·성별 한 화면 (GDD 199장 6~8, C.326 → 241-A 3: 이름 아래 빈 자리에 성별 버튼) ═════
+   폰 가상 키보드가 아래 절반을 덮어도 보이게: 입력 칸·주 버튼은 머리 바로 아래 첫 줄 (GDD 173장 2). 성별 줄 = 안내 줄 바로 아래, 두 칸.
    안내 줄(.bha-ident__msg)은 늘 한 줄 높이 — 글이 바뀌어도 아래 줄이 안 움직인다 */
 .bha-ident__body { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-ident__row { flex: none; display: flex; align-items: stretch; gap: var(--bha-sp-4); min-height: calc(var(--bha-touch) + var(--bha-sp-3)); }
@@ -564,7 +566,7 @@ button.bha-slot { cursor: pointer; }
 .bha-ident__msg.is-bad { color: var(--bha-danger); font-weight: var(--bha-fw-bold); }
 .bha-ident__rule, .bha-ident__later { flex: none; margin: 0; font-size: var(--bha-fs-xs); line-height: 1.4; color: var(--bha-text-2); }
 .bha-ident__later { color: var(--bha-text-3); }
-.bha-ident__genders { flex: 1 1 0; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-4); }
+.bha-ident__genders { flex: none; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--bha-sp-4); }
 .bha-ident__gender {
   display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-3); min-height: calc(var(--bha-touch) + var(--bha-sp-3));
   border: 0; border-radius: var(--bha-r-md); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--bha-line-2); color: var(--bha-text-1);

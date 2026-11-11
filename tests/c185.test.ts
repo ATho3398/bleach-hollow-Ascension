@@ -145,7 +145,8 @@ describe('111장 4: 설명 데이터 말투', () => {
   it('확인 창 제목은 물음이 아닌 명사, 본문은 \'~다\' (C.185)', () => {
     for (const p of ['src/ui/app.ts', 'src/ui/battleView.ts', 'src/ui/expeditionView.ts', 'src/ui/settingsView.ts', 'src/ui/hogyokuView.ts', 'src/ui/rebirthView.ts', 'src/ui/backupView.ts']) {
       const src = read(p);
-      expect(src, p).not.toMatch(/title: [`'][^`']*\?[`']/);
+      // GDD 241-A 2·4: 사용자가 정한 물음 제목 두 개('○○로 시작하시겠습니까?'·'정말 삭제하시겠습니까?')만 예외
+      expect(src.replace(/title: fixParticles\(`\$\{f\.name\}\(으\)로 시작하시겠습니까\?`\)|title: '정말 삭제하시겠습니까\?'/g, ''), p).not.toMatch(/title: [`'][^`']*\?[`']/);
       expect(src, p).not.toMatch(/body: [`'][^`']*(요|니다)\.?[`']/);
     }
   });

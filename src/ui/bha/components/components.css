@@ -271,7 +271,8 @@
   transform: translate(-50%, 0);
   pointer-events: none;
 }
-.bha-toast.is-in { animation: bha-toast-in var(--bha-dur-4) var(--bha-ease-snap) both; }
+/* GDD 241-A 8: 들어오기는 매끄러운 감속(--bha-ease-out). 예전 --bha-ease-snap(steps(3)) 은 280ms 동안 3번만 움직여 '알림 프레임이 떨어진다'로 보였다 */
+.bha-toast.is-in { animation: bha-toast-in var(--bha-dur-4) var(--bha-ease-out) both; }
 .bha-toast.is-out { animation: bha-toast-out var(--bha-dur-3) var(--bha-ease-in) both; }
 .bha-toast__icon { display: grid; place-items: center; width: 16px; height: 16px; color: var(--bha-rare); flex: none; }
 .bha-toast__icon .bha-icon { width: 16px; height: 16px; }
@@ -307,6 +308,10 @@
 }
 .bha-modal:where(:not(.bha-root *, .bha-win)) > :not(.bha-modal__title):not(.bha-modal__actions) { flex: none; margin: var(--bha-sp-4) var(--bha-sp-5) 0; }
 .bha-modal__body:where(:not(.bha-root *)) { font-size: var(--bha-fs-sm); color: var(--bha-text-2); text-align: left; line-height: 1.5; }
+/* 입력해야 열리는 확인 칸 (GDD 241-A 4 슬롯 삭제) — 토큰만 */
+.bha-modal__input { min-height: var(--bha-touch); padding: 0 var(--bha-sp-4); border: 0; border-radius: var(--bha-r-md); background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-2); color: var(--bha-text-1); font: inherit; font-size: var(--bha-fs-md); }
+.bha-modal__input:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--bha-accent); }
+.bha-modal__input::placeholder { color: var(--bha-text-3); }
 .bha-modal__actions:where(:not(.bha-root *)) { flex: none; display: flex; gap: var(--bha-sp-3); margin-top: auto; padding: var(--bha-sp-4); }
 .bha-modal__actions:where(:not(.bha-root *)) > .bha-btn { flex: 1 1 0; min-width: 0; }
 

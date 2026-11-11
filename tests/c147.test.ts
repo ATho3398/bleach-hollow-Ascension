@@ -88,13 +88,18 @@ describe('92장 대기 모드 받을 보상', () => {
     expect(claimIdle(s)).toBeNull();
     accrueIdle(s, s.lastSeenAt + 5 * 60_000);
     applyAbsence(s, s.lastSeenAt + 5 * 60_000);
+    // GDD 241-A 7: 10분은 0.67바퀴 — 한 바퀴도 못 돌면 '받을 수 있다'·배지 없음. 15분(1바퀴)부터
+    expect(idleClaimable(s)).toBe(false);
+    expect(idleBadge(s)).toBeNull();
+    accrueIdle(s, s.lastSeenAt + 5 * 60_000);
+    applyAbsence(s, s.lastSeenAt + 5 * 60_000);
     expect(idleClaimable(s)).toBe(true);
-    expect(idleBadge(s)).toBe('10분');
+    expect(idleBadge(s)).toBe('15분');
     s.nest.hunger = 0;
     accrueIdle(s, s.lastSeenAt + 3 * HOUR);
     const hunger = applyAbsence(s, s.lastSeenAt + 3 * HOUR);
     expect(hunger).toBeGreaterThan(0); // 불리한 변화는 지금처럼 바로
-    expect(s.idlePending!.hours).toBeCloseTo(3 + 10 / 60);
+    expect(s.idlePending!.hours).toBeCloseTo(3 + 15 / 60);
   });
 
   it('펫 친밀도는 받을 때 반영 (쌓을 때는 아님)', () => {

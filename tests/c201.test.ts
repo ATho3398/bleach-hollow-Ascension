@@ -76,8 +76,8 @@ describe('129장 1·2 슬롯 제목 · 종족 소개', () => {
     expect(slotTitle(ok({ rebirths: 2 }), S)).toBe('영술원 학생 +환생 2회');
     expect(slotTitle(ok({ rebirths: 0 }), S)).toBe('영술원 학생');
   });
-  it('종족 선택 카드에 한 줄 소개(tagline)를 다시 그린다 (GDD 193장 10, C.304 — 129장 2 를 되돌림)', () => {
-    expect(readFileSync('src/ui/startView.ts', 'utf8')).toContain("if (f.tagline) card.append(el('span', 'bha-species__tagline', f.tagline));");
+  it('종족 선택 카드는 아이콘·이름만 — 한 줄 소개(tagline)는 다시 뺐다 (GDD 241-A 2, 193장 10 을 되돌림)', () => {
+    expect(readFileSync('src/ui/startView.ts', 'utf8')).not.toContain("'bha-species__tagline'");
   });
 });
 
