@@ -24,7 +24,6 @@ import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
-import { shownName } from './displayName';
 
 /** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 특성(GDD 150장 3) + 떠돌이 상인 */
 export type ShopTab = ShopTabId | 'wanderer';
@@ -130,7 +129,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const one = () => (wanderer ? buyWandererItem(save, faction, row.id) : isTrait(row.id) ? buyTraitItem(save, row.id) : buyShopItem(save, faction, row.id));
     const go = () => {
       let bought = 0;
-      let spent = 0;
       let last: (BuyResult & { ok: true }) | null = null;
       let fail = '';
       const petLog0 = save.runLog.pets.length;
@@ -138,7 +136,6 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
         const r = one();
         if (!r.ok) { fail = r.reason; break; }
         bought++;
-        spent += r.price;
         last = r;
       }
       if (!last) {
@@ -155,9 +152,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
           hd.persist();
           showGuide(faction, 'tile-draw');
         });
-      } else showToast(bought > 1 ? { eyebrow: `상점 — ${cur(last.currency)} −${spent}`, title: `${row.name} ×${bought}`, meta: fail ? `${bought}개만 샀다: ${fail}` : last.detail } : boughtText(row, last), 0, 2600);
-      // 펫 (GDD 90장): 상인 품목으로 얻은 펫은 이름이 보이게 한 줄 더
-      save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).forEach((n, i) => n && showToast(n, i + 1, 4200));
+      } else if (fail) showToast({ eyebrow: '상점', title: `${bought}개만 샀다`, meta: fail }, 0, 2600); // 구매 확인 알림은 뺐다 (GDD 233장 5) — 돈·보유 수는 화면에 바로 보이고, 다 못 산 이유만 남긴다
+      // 펫 (GDD 90장): 상인 품목으로 얻은 펫은 이름이 보이게 한 줄 (펫 얻음 알림은 남긴다, 233장 7)
+      save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).forEach((n, i) => n && showToast(n, i + (fail ? 1 : 0), 4200));
     };
     if (row.confirm) {
       const t = shopConfirmText(row);
@@ -234,14 +231,12 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       const lock = traitToggleLock(save, id);
       if (lock) return showToast({ eyebrow: shopName(faction, 'trait'), title: row.name, meta: lock }, 0, 2400);
       if (!(on ? equipTrait(save, id) : unequipTrait(save, id))) return;
-      hd.persist();
-      showToast({ eyebrow: shopName(faction, 'trait'), title: `${row.name} ${on ? '끼움' : '뺌'}`, meta: on ? '특성 칸에 들어갔다.' : '보유 목록에 남는다.' }, 0, 2000);
+      hd.persist(); // 끼움·뺌 알림은 뺐다 (GDD 233장 5) — 카드 표시가 바뀐다
       return render();
     }
     if (!(on ? equipInventoryItem(save, row.id) : unequipInventoryItem(save, row.id))) return;
     hd.persist();
-    hd.onWear?.();
-    showToast({ eyebrow: '상점', title: `${shownName(row.name)} ${on ? '착용' : '해제'}` }, 0, 1800);
+    hd.onWear?.(); // 착용·해제 알림은 뺐다 (GDD 233장 5) — 카드 표시가 바뀐다
     render();
   };
 

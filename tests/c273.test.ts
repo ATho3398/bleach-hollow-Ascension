@@ -32,7 +32,7 @@ describe('180장 2 온천 가득 안내', () => {
     const spa = read('src/ui/spaView.ts');
     expect(spa).toContain('const go = clearFullHold();');
     expect(spa).toContain('clearFullHold(); // 가득 알림을 기다리던 중이면 나가기 연출이 맡는다');
-    expect(spa).toContain("h.toast.style.visibility = 'hidden';");
+    expect(spa).not.toContain('showToast('); // GDD 233장 4: 가득 알림 띠 없음 — 기다림(2초)만 남는다
   });
   it('알림 이름(온천)은 종족 설정 — 코드에 종족 분기 없음', () => {
     const spa = read('src/ui/spaView.ts');

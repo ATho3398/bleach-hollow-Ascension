@@ -9,7 +9,6 @@ import { CARE_STATUS_NAMES } from '../engine/nest';
 import type { IdleRecord } from '../engine/runLog';
 import { idleClaimable, idlePendingYield, type IdleAccrual, type SaveData } from '../game';
 import { el, meter } from './bha/dom';
-import { showToast } from './bha/nest';
 import { confirmDialog } from './confirmDialog';
 
 const IX = BALANCE.provisional.idle;
@@ -125,12 +124,6 @@ function listOf(save: SaveData, faction: FactionConfig): HTMLElement {
   return ul;
 }
 
-/** 받기 뒤 요약 (GDD 222장 3): 두 번째 창 없이 공용 알림 한 줄 — 받은 것만 */
-function showClaimed(r: IdleRecord, faction: FactionConfig): void {
-  const t = idleSummaryText(r, faction);
-  showToast({ eyebrow: t.title, title: t.got }, 0, 3200); // 띠는 한 줄이라(보조 설명은 툴팁뿐) 받은 것을 제목 자리에
-}
-
 /** 복귀 창 (92장 2번): 몇 시간 만에 왔는지 + 쌓인 보상 + [받기]. [나중에] 로 닫으면 보상은 아이콘에 남는다 */
 export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null): void {
   const capped = acc.added + 1e-6 < Math.min(acc.awayHours, IX.maxHours) || acc.awayHours > IX.maxHours;
@@ -141,8 +134,7 @@ export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: Factio
     yes: '받기',
     no: '나중에',
     onYes: () => {
-      const r = onClaim();
-      if (r) showClaimed(r, faction);
+      onClaim(); // 받은 것 알림은 뺐다 (GDD 233장 1) — 얼마나 받는지는 이 창 목록에 이미 보인다
     },
   });
 }
@@ -163,8 +155,7 @@ export function showIdlePanel(save: SaveData, faction: FactionConfig, onClaim: (
     yesDisabled: !has,
     onYes: () => {
       if (!has) return;
-      const r = onClaim();
-      if (r) showClaimed(r, faction);
+      onClaim(); // 받은 것 알림은 뺐다 (GDD 233장 1) — 얼마나 받는지는 이 창 목록에 이미 보인다
     },
   });
 }

@@ -2,7 +2,7 @@
 // 화면 텍스트는 FactionConfig·데이터 스킨에서 읽고, 종족 id 로 분기하지 않는다.
 import { ENEMIES } from '../data/enemies';
 import { FACTIONS, getFaction } from '../data/factions';
-import { DEFAULT_GENDER, GENDER_LABEL, genderLookNote, setActiveGender, type Gender } from '../engine/gender';
+import { DEFAULT_GENDER, genderLookNote, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
 import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
@@ -12,7 +12,7 @@ import { HOME_INTRO, RECOVER_SCENES, helpVars, renderHelpText, type TutorialScen
 import { fixParticles } from '../engine/josa';
 import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaEndText, spaExitFx, spaHoldFull, spaView } from './spaView';
+import { spaExitFx, spaHoldFull, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -947,8 +947,7 @@ export function startApp(host: HTMLElement): void {
       setIdentity(s, name, gender, 'settings');
       setActiveGender(s.gender);
       persist();
-      nav.pop();
-      showToast({ eyebrow: '설정', title: '이름·성별을 바꿨다', meta: `${s.name} · ${GENDER_LABEL[s.gender]}` }, 0, 2400);
+      nav.pop(); // '이름·성별을 바꿨다' 알림은 뺐다 (GDD 233장 5) — 이름표에 바로 보인다
     }, () => nav.pop()));
   }
 
@@ -1141,8 +1140,7 @@ export function startApp(host: HTMLElement): void {
             if (recoverOpen && nav.top?.id === 'spa') return;
             // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
             if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
-            toRoom();
-            showToast({ eyebrow: name, title: spaEndText(e, faction.fullnessName), meta: '' }, 0, 3200);
+            toRoom(); // 온천 끝 결과 알림은 뺐다 (GDD 233장 4) — 방 체력·배부름 막대로 보인다
           },
         });
         root.scrollTop = 0;
@@ -1332,8 +1330,7 @@ export function startApp(host: HTMLElement): void {
       onSwitchTrack: canSwitchFaction(s) ? (fid) => {
         if (!switchTrack(s, fid)) return;
         persist();
-        nestScreen();
-        showToast({ eyebrow: '트랙 전환', title: `${getFaction(fid).name} 트랙`, meta: `키우기는 트랙마다 따로, ${getFaction(fid).foodGroupName}·타일·영혼 결정은 같이 쓴다.` }, 0, 3000);
+        nestScreen(); // 트랙 전환 알림은 뺐다 (GDD 233장 5) — 방이 그 트랙으로 바뀐다
       } : null,
       onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
       onSettings: settingsOpener(true),
@@ -1365,8 +1362,7 @@ export function startApp(host: HTMLElement): void {
       },
       onLiberate: () => {
         if (!liberateHogyoku(s)) return;
-        persist();
-        showToast({ eyebrow: '붕옥', title: '붕옥 해방', meta: `두 캐릭터 모두 전 능력치 +${Math.round(BALANCE.provisional.hogyoku.liberatedBonus * 100)}%` }, 0, 3600);
+        persist(); // '붕옥 해방' 알림은 뺐다 (GDD 233장 5) — 붕옥 화면이 해방 상태로 다시 그려진다
         nav.top?.render();
       },
       onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)),

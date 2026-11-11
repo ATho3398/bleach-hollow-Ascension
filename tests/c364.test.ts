@@ -75,11 +75,11 @@ describe('222장 3 대기 보상', () => {
     expect(idleShortfall({ hours: 1, activeHours: 0 }, { ...full, collapsed: true })).toBe('빈사라 자동 모험을 하지 못했다');
     expect(idleShortfall({ hours: 1, activeHours: 1 }, { ...full, hunger: 100 })).toBeNull();
   });
-  it("[받기] 뒤 '받았다' 두 번째 창 없음 — 공용 알림 한 줄", () => {
+  it("[받기] 뒤 '받았다' 두 번째 창 없음 · 받은 것 알림도 없음 (GDD 233장 1)", () => {
     const iv = read('src/ui/idleView.ts');
-    const fn = iv.slice(iv.indexOf('function showClaimed'), iv.indexOf('/** 복귀 창'));
-    expect(fn).toContain('showToast(');
-    expect(fn).not.toContain('confirmDialog(');
+    expect(iv).not.toContain('function showClaimed');
+    expect(iv).not.toContain('showToast(');
+    expect(iv.match(/onClaim\(\);/g)?.length).toBe(2);
   });
 });
 

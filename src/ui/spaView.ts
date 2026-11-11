@@ -14,7 +14,6 @@ import { el, mountApp } from './bha/dom';
 import { infoTip } from './bha/infoTip';
 import { applyBlink, blinkGauges } from './bha/gaugeBlink';
 import { homeHpMeter, liveStatusChips, paintStatusBox, rememberShown, statusInfoButton, statusNameTag } from './bha/statusBox';
-import { showToast } from './bha/nest';
 import { keepToastsLow } from './bha/toastLow';
 import { applyCarePose, characterButton, charHeadOffset, charTopOffset, roomCharArt, spaceBackButton } from './bha/room';
 import { changeItems, changeNoteBox, drawnHeadY, horiz, placeChangeNote, showChangeNote } from './bha/changeNote';
@@ -285,16 +284,12 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
 
   // ── 왼쪽 위: [방으로 돌아가기] 작게 + ⓘ 쉬는 중 설명 ──
   /** 가득 찬 뒤 방으로 가기를 기다리는 중 (GDD 180장 2) — [돌아가기]·✓ = 바로 방으로 */
-  let fullHold: { timer: number; go: () => void; toast: HTMLElement } | null = null;
+  let fullHold: { timer: number; go: () => void } | null = null;
   const clearFullHold = (): (() => void) | null => {
     if (!fullHold) return null;
     const h = fullHold;
     fullHold = null;
     window.clearTimeout(h.timer);
-    // 방 위에 다시 보이지 않게 바로 감춘다 (퇴장 애니메이션은 그대로 돌아 칸이 비워진다)
-    h.toast.style.visibility = 'hidden';
-    h.toast.classList.remove('is-in');
-    h.toast.classList.add('is-out');
     return h.go;
   };
   const backBtn = spaceBackButton(() => {
@@ -352,15 +347,15 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     walkPath(from, 0, finish, finish);
     return true;
   };
-  const holdFull = (eyebrow: string, go: () => void): boolean => {
+  // 가득 알림 띠는 뺐다 (GDD 233장 4) — 체력 막대가 가득 찬 채로 잠깐 머문 뒤 방으로
+  const holdFull = (_eyebrow: string, go: () => void): boolean => {
     if (!actor.isConnected || exiting) return false;
     if (fullHold) return true;
-    const toast = showToast({ eyebrow, title: SPA_FULL_TEXT, meta: '' }, 0, SPA_FULL_HOLD_MS);
     const timer = window.setTimeout(() => {
       const g = clearFullHold();
       if (g && app.isConnected) g();
     }, SPA_FULL_HOLD_MS);
-    fullHold = { timer, go, toast };
+    fullHold = { timer, go };
     backBtn.focus({ preventScroll: true }); // ✓ = 바로 방으로
     return true;
   };

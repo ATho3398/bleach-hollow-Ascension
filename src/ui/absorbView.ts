@@ -12,7 +12,6 @@ import { chooseAbsorb, chooseRelease, previewAbsorb, type ExpeditionState } from
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, mountApp, notice, tag } from './bha/dom';
 import { v2Icon } from './bha/iconMap';
-import { showToast } from './bha/nest';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { elementColor, elementDot, elementMark, paintElement } from './bha/element';
 import { devText, plainText, shownName } from './displayName';
@@ -276,11 +275,9 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
   /** 이 화면이 끝났나 (뒤로 처리기를 푼다). owner = 이 흡수 화면 표시 */
   let done = false;
   const owner = `a${++absorbSeq}`;
-  /** 흡수가 끝나면 띄울 한 줄 (GDD 176장 11) — 갈래를 실행하는 순간 정한다 */
-  let resultLine = '';
   const finish = (r: { ok: true } | { ok: false; reason: string }, absorbed: boolean) => {
     if (r.ok) done = true;
-    if (r.ok && absorbed && resultLine) showToast({ eyebrow: act, title: resultLine }, 0, 2500);
+    // 흡수 결과 한 줄 알림(176장 11)은 뺐다 (GDD 233장 3) — 결과는 상태창 값 칩·막대로 보인다
     if (!r.ok) {
       error = r.reason;
       render();
@@ -392,7 +389,6 @@ export function absorbView(root: HTMLElement, faction: FactionConfig, exp: Exped
     const selLine = el('span', 'bha-sub bha-absorb__sel');
     selLine.append('고른 갈래: ', picked_);
     const picker = absorbModePicker(faction, exp, (m) => {
-      resultLine = absorbResultLine(faction, exp, m); // 실행 전 미리보기 = 결과 (GDD 176장 11 흡수 결과 한 줄)
       if (m === 'none') return finish(chooseRelease(exp), false);
       mode = m;
       if (m === 'stat') return finish(chooseAbsorb(exp, null, undefined, 'stat'), true);

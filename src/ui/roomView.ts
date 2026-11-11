@@ -11,7 +11,6 @@ import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
 import { button, el, mountApp } from './bha/dom';
-import { showToast } from './bha/nest';
 import { keepToastsLow } from './bha/toastLow';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS } from './bha/gaugeBlink';
 import { ACTION_FILL_MS, tween } from './bha/actionFx';
@@ -142,8 +141,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const markStatusBusy = (ms: number) => (statusBusyUntil = Math.max(statusBusyUntil, Date.now() + ms + GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER));
   /** 말풍선 자리 (C.194, GDD 120장 2 · 208장 2): 머리 위가 기본. 방 위 끝을 넘으면 캐릭터 옆(방 가운데 쪽).
    *  keep(상태 값이 바뀌는 순간 — 상태창을 숨기지 않음)이면 상태창(박스·ⓘ·이름표)·방 물건 버튼과 겹치지 않는 자리를 찾는다: 머리 위 → 옆(밀어내기) → 반대쪽 옆,
-   *  다 막히면 말풍선 대신 공용 알림 띠(showToast). 띠로 보냈으면 false */
-  const placeBubble = (text: string, keep: boolean): boolean => {
+   *  다 막히면 말풍선을 생략한다(GDD 233장 5 — 알림 띠로 돌리지 않는다). 생략했으면 false */
+  const placeBubble = (keep: boolean): boolean => {
     bubble.classList.remove('is-side', 'is-left');
     scene.style.setProperty('--bubble-shift', '0px');
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
@@ -177,8 +176,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     }
     scene.style.setProperty('--bubble-shift', '0px');
     bubble.classList.remove('is-side', 'is-left');
-    bubble.hidden = true;
-    showToast({ eyebrow: save.name || '방', title: text }, 0, 2600);
+    bubble.hidden = true; // 말풍선을 못 띄우면 그냥 생략 — 대신 띄우던 알림 띠는 뺐다 (GDD 233장 5)
     return false;
   };
   /** keep = 상태 값이 바뀌는 순간의 말(돌보기 결과 등). 아니어도 값이 바뀌는 중(차오름·깜빡임)이면 keep (GDD 208장 0·1) */
@@ -200,7 +198,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     void bubble.offsetWidth;
     bubble.classList.add('is-pop');
     window.clearTimeout(bubbleTimer);
-    if (!placeBubble(text, keepStatus)) {
+    if (!placeBubble(keepStatus)) {
       scene.classList.remove('is-saying');
       dev.refresh();
       return;
