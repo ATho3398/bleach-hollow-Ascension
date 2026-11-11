@@ -732,7 +732,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     });
   };
   /** 각본 카드 자리표시자: {libName} = 지금 쓰는 해방 이름(영력 해방 / 레스렉시온 — 종족 설정) (GDD 241-B 1) */
-  const scriptVars = { libName: labels.liberation.name };
+  // {libFullName} = 진화 뒤 해방 이름(레스렉시온 / 만해 — 종족 설정 liberation.name). GDD 243장 9 보충: 공격 속도는 그때만 오른다
+  const scriptVars = { libName: labels.liberation.name, libFullName: faction.liberation.name };
   const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
   /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
   const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {

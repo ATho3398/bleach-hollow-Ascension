@@ -104,7 +104,7 @@
         "battle.tray"
       ],
       "title": "{libName} 중",
-      "body": "{libName}하면 블록이 빨리 나오고 공격 속도도 빨라진다.\n진화체에 따라 특수 효과도 붙는다."
+      "body": "{libName}하면 블록이 빨리 나온다.\n진화가 끝나 {libFullName}이(가) 되면 공격 속도와 진화체만의 효과도 붙는다."
     },
     {
       "id": "chain-use",
