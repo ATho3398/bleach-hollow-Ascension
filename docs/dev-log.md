@@ -3239,3 +3239,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c387.test.ts`(18), 고친 것 c181·c198·c239·c273·c351·c53·c60·c61·c84·dock·economy·gdd193·room-ui + 형식 70 숫자. 전체 3182 통과.
 - 캡처 `docs/captures/c387/`(scripts/c387-proof.cjs, PC 1배): 01 쇠약이 풀렸다 띠 · 02 같은 먹이 3번째 거절 말풍선 · 03 먹이 카드 새 값.
 - 안 한 것: 236장 팔기(별도 지시 대기), 234장 4 상점 먹이 삭제(예정).
+
+## C.388 — 팔기: 모든 상점에서 아무 물건이나 (GDD 236장, v5.555, S-23, 코딩266 Opus)
+- 사용자 원문: "지금 상점에 팔기 기능 없나??? 추가하고, 이미 상점에서 파는 템들은, 살때 가격의 절반으로 팔 수 있고, 상점에서 안파는 것들은 가격 적당히 메겨서 팔 수 있게 ㄱㄱ / 어느 상점에서든, 팔기는 구분없이 다 팔수 있음(소모품 상점에서 장비팔기 가능한 느낌)".
+- `src/sell.ts`(새): `sellRows`(먹이·소모품·다시 뽑기권·안 낀 장비·안 끼운 탈착 특성) · `sellEntry`(개수만큼 빼고 골드 +, 런 로그 sales) · `sellNeedsConfirm` · `foodSellPrice`·`itemSellPrice`. `src/shop.ts shopBuyPrice`(상점 산 값, 덱 칸·타일 뽑기·장비 제외).
+- 값 `BALANCE.provisional.sell`(BALANCE 117): shopRate 0.5 · prices(일반 먹이 15·elixir 200·relic 600 — relic 은 C.387 의 foods.sellPrice 에서 옮김, 넘침 골드도 이 표) · wandererGrade 20/60/150/300 · jadeToGold 10(표만) · confirmAt 100. 장비 = `gear.sellGold`(가방 일괄 판매와 같은 함수).
+- 화면 `src/ui/shopView.ts`: 탭 줄 끝 [팔기](모든 상점·떠돌이 상인), 칩·카드(보유 n · 한 개 값), 상세 창 수량 −/+/+10/전부 + '골드 +n'(`itemDialog qty.ten·maxLabel` 추가), 비싼 것 확인 창, 판 뒤 알림 없음.
+- 세이브 형식 70 → 71 (`SAVE_MIGRATIONS[70]` 두 트랙 runLog.sales = []), MIN 54.
+- 테스트: 새 `tests/c388.test.ts`(11), 형식 71 숫자 갱신. 전체 3194 통과.
+- 캡처 `docs/captures/c388/`(scripts/c388-proof.cjs, 1배): pc·ph-sell-gear-in-consumable-shop — 소모품 상점 [팔기]·장비 칩. 노말 장비 팔면 골드 50 → 65, 목록에서 빠짐, 알림 없음(proof.json).
+- 안 한 것: 가방 화면 안 팔기 버튼(가방 장비 일괄 판매는 그대로), 영옥 물건 판매(팔 수 있는 영옥 물건이 없음).

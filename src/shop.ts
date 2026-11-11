@@ -208,6 +208,15 @@ function goldPrice(save: SaveData, item: GoldItemDef): number | null {
   return SX.goldPrices[item.id] ?? null;
 }
 
+/** 상점에서 파는 골드 물건의 산 값 (팔기 GDD 236장 2): 세이브와 상관없는 품목만 — 덱 칸·타일 뽑기·장비(판매가 따로)는 null */
+export function shopBuyPrice(id: string): number | null {
+  const item = getGoldItem(id);
+  if (!item || item.kind === 'deckSlot' || item.kind === 'tileDraw' || item.kind === 'gear') return null;
+  if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
+  if (item.kind === 'battle') return BALANCE.provisional.battleItems[item.id]?.price ?? null;
+  return SX.goldPrices[item.id] ?? null;
+}
+
 /** 품목 효과로 막힌 이유 (돈과 별개). 없으면 null */
 function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()): string | null {
   switch (item.kind) {

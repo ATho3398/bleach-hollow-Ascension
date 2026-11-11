@@ -435,6 +435,8 @@ export interface RunLog {
   storyRuns: StoryRunRecord[];
   /** 상점 구매 기록 (C.60, 세이브 형식 24, GDD 25-9): 한 번 살 때마다 */
   shopPurchases: ShopPurchaseRecord[];
+  /** 팔기 기록 (C.388, 세이브 형식 71, GDD 236장 5): 한 번 팔 때마다 무엇·개수·받은 골드 */
+  sales: SaleRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
   /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
@@ -578,6 +580,16 @@ export interface IdleRecord {
 }
 
 /** 상점 구매 1건 (GDD 25-9·9장, 세이브 형식 24): 시각·트랙 종족·품목 id·화폐·가격. 꾸밈 착용 변화는 남기지 않는다 */
+/** 팔기 1건 (GDD 236장 5): itemId = 판 물건(먹이 food-<id> · 소모품 id · 장비 gear:<등급>:<종류> · 특성 trait-<id>), where = 판 상점 */
+export interface SaleRecord {
+  at: number;
+  factionId: string;
+  itemId: string;
+  count: number;
+  gold: number;
+  where: string;
+}
+
 export interface ShopPurchaseRecord {
   at: number;
   factionId: string;
@@ -666,6 +678,7 @@ export function emptyRunLog(): RunLog {
     rebirths: [],
     bossBattles: [],
     shopPurchases: [],
+    sales: [],
     storyRuns: [],
     towerBattles: [],
     tutorialRewards: [],

@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 116; // C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
+export const BALANCE_VERSION = 117; // C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
 // 109: // C.311 (GDD 192장 1, provisional): 원정 이어 하기 시한 expedition.resumeWindowMinutes 30 신설 — 나간 뒤 30분 넘게·새 패치면 모험 실패 정산.
@@ -230,6 +230,17 @@ export const BALANCE = {
       chain: { seconds: 30, target: 12, cells: 9, preyScore: 1, predatorScore: -3, showSeconds: [1.3, 1.1, 0.95, 0.8], spawnSeconds: [1.0, 0.9, 0.8, 0.7], predatorShare: [0.3, 0.33, 0.36, 0.4],
         /** 첫 등장 시각(초), 등장 간격 흔들림 간격 × (base + 난수 × range) — C.139 엔진에서 옮김(값 그대로) */
         firstSpawnSeconds: 0.5, spawnJitter: { base: 0.8, range: 0.4 } },
+    },
+    /** 팔기 (GDD 236장, C.388 provisional): 어느 상점에서든 [팔기] 탭, 받는 돈 = 골드.
+     *  shopRate: 상점에서 파는 물건 = 산 값 × 이 비율(내림, 최소 1). prices: 상점에서 안 파는 물건(먹이 food-<id> · 소모품 id) 골드 — 특식 높게, '거금' 특식(relic) 최고.
+     *  wandererGrade: 떠돌이 상인 전용 소모품(값이 방문마다 달라 등급으로). 탈착 특성 = 산 값 × shopRate. 장비 = gear.sellGold(등급, 가방 일괄 판매와 같은 함수).
+     *  jadeToGold: 영옥으로 산 물건을 팔 때 영옥 1 = 골드 n (지금 영옥 물건은 전부 영구 해금이라 팔 수 없음 — 표만). confirmAt: 한 번에 이 골드 이상이면 확인 창 */
+    sell: {
+      shopRate: 0.5,
+      prices: { 'food-sushi': 15, 'food-roast': 15, 'food-fizz': 15, 'food-mushroom': 15, 'food-elixir': 200, 'food-relic': 600 } as Record<string, number>,
+      wandererGrade: { normal: 20, rare: 60, epic: 150, legendary: 300 } as Record<string, number>,
+      jadeToGold: 10,
+      confirmAt: 100,
     },
     // ── 먹이 = 전리품 (GDD 23-1, 수치 provisional): 먹이 5종 개수제, 슬롯 공유 자원 ──
     food: {
@@ -715,7 +726,7 @@ export const BALANCE = {
         /** 싸구려: 상점 판매, 맛없어 억지로 — 먹을 때마다 교감 −1 */
         cheap: { hunger: 6, heal: 0.01, bond: -1 },
       },
-      /** 먹이 12종 = 유형 + (특식만) 추가 효과: risk = 리스크 게이지 +, condition = 컨디션 +, hpFull = 체력 가득, sellPrice = 팔 때 값(골드 — 가방 '팔기'가 아직 없어 보관 한도 넘침 골드에만 씀).
+      /** 먹이 12종 = 유형 + (특식만) 추가 효과: risk = 리스크 게이지 +, condition = 컨디션 +, hpFull = 체력 가득, 팔 때 값은 sell.prices (C.388).
        *  옛 id 그대로 새 유형으로 (GDD 235장 4): 간식(snack) → 싸구려, 고기(basic)·사냥감(hearty) → 일반, 보양(tonic)·잔치(feast) → 특식 */
       foods: {
         snack: { type: 'cheap' },
@@ -729,8 +740,8 @@ export const BALANCE = {
         feast: { type: 'special', risk: 10 },
         tonic: { type: 'special', condition: 30 },
         elixir: { type: 'special', hpFull: true },
-        relic: { type: 'special', sellPrice: 600 },
-      } as Record<string, { type: 'special' | 'normal' | 'cheap'; risk?: number; condition?: number; hpFull?: boolean; sellPrice?: number }>,
+        relic: { type: 'special' }, // 판매가는 sell.prices['food-relic'] (C.388 GDD 236장)
+      } as Record<string, { type: 'special' | 'normal' | 'cheap'; risk?: number; condition?: number; hpFull?: boolean }>,
       /** 일반 먹이 선호·비선호 (GDD 235장 2, provisional): 진화체마다 선호 1·비선호 1(src/data/foodPrefs.json — 없으면 진화체 id 로 임시 배정).
        *  선호 = 배부름·교감 ×likeMult. 비선호 = 배부름 ×dislikeHunger, 교감 0, 비선호를 연달아 먹으면 2번째부터 교감 −dislikeRunLoss */
       foodPref: { likeMult: 2, dislikeHunger: 0.5, dislikeRunLoss: 1 },

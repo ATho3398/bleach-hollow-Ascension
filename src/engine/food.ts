@@ -118,9 +118,9 @@ export function settleFood(s: FoodStock, gained: FoodId[], lost: FoodId[] = []):
   return { gained: [...gained], overflow, overflowGold, lost: [...lost], fallback };
 }
 
-/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 판매가(sellPrice, 235장)가 있으면 그 값, 아니면 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
+/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 판매가 표(sell.prices, 236장)에 있으면 그 값, 아니면 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
 export function foodOverflowGold(id: FoodId): number {
-  const sell = BALANCE.provisional.nest.foods[id]?.sellPrice; // 팔면 거금인 특식 (GDD 235장 1): 판매가 그대로 — 가방 '팔기'는 아직 없음
+  const sell = BALANCE.provisional.sell.prices[`food-${id}`]; // 상점에 없는 먹이 = 판매가 표 (GDD 235장 1 · 236장 2)
   if (sell) return sell;
   return Math.round((BALANCE.shop.goldPrices[`food-${id}`] ?? 0) * FX.overflowGoldRate);
 }

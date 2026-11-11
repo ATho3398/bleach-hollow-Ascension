@@ -96,7 +96,7 @@ describe('235장: 먹이 3유형', () => {
     expect(n.condition).toBe(50);
     doNestAction(n, 'feed', 'elixir', T);
     expect(n.hpFraction).toBe(1);
-    expect(foodOverflowGold('relic')).toBe(NX.foods.relic!.sellPrice);
+    expect(foodOverflowGold('relic')).toBe(BALANCE.provisional.sell.prices['food-relic']);
     expect(foodEffect('relic').hunger).toBe(40);
   });
   it('일반: 배부름 12·교감 +1, 선호 ×2, 비선호 배부름 ×0.5·교감 0, 연달아 2번째부터 교감 −1', () => {
@@ -177,7 +177,7 @@ describe('235장: 먹이 3유형', () => {
 
 describe('세이브 형식 70', () => {
   it('형식 70 · 문턱 54, 69 → 70 = 빈 foodStreak·dislikeRun 0, 옛 먹이 개수 그대로 + 새 종류 0', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([70, 54]);
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([71, 54]);
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.nest.foodStreak;
     delete s.nest.dislikeRun;
@@ -187,7 +187,7 @@ describe('세이브 형식 70', () => {
     expect([s.nest.foodStreak, s.nest.dislikeRun]).toEqual([{}, 0]);
     s.meta.format = 69;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(70);
+    expect(m.meta.format).toBe(71);
     expect(m.shared.food).toMatchObject({ snack: 4, basic: 2, hearty: 1, tonic: 3, feast: 1, sushi: 0, elixir: 0, relic: 0, scrap: 0 });
     expect(m.nest.foodStreak).toEqual({});
   });
