@@ -52,8 +52,8 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
     expect(end).toBe(1);
   });
   it('사신 그림은 종이인형(정지 그림 = 쉬는 자세 한 장), 단계별 파일이 있으면 그쪽이 먼저', () => {
-    // 1·2단계(혼백·학생) = 학생복, 3단계부터 사신복 (C.190, GDD 116장 2)
-    expect(charArt('shinigami', 0, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-student');
+    // 1단계(혼백) = 혼백 모델(GDD 241-F), 2단계(학생) = 학생복, 3단계부터 사신복 (C.190, GDD 116장 2)
+    expect(charArt('shinigami', 0, 'char.shinigami', '/', undefined, ['char-shinigami.png']).rig?.look).toBe('shinigami-soul');
     const a = charArt('shinigami', 2, 'char.shinigami', '/', undefined, ['char-shinigami.png']);
     expect(a.rig?.look).toBe('shinigami-base');
     expect(a.src).toBe('/art/rig/humanoid/still/shinigami-base.png');

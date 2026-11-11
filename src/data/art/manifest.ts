@@ -114,8 +114,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
   // 방(홈)은 다시 C.189 키 1.78, 걷기·전투 필드만 1.33 (C.192, GDD 118장 1: "홈에서 사신, 아란칼 크기는 원래가 좋아. 모험이랑 전투할 떄 사이즈는 지금이 딱 좋음")
   'char.shinigami': { rig: 'shinigami-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
-  // 사신 1단계(혼백)·2단계(학생) = 진앙영술원 학생복 (사용자 2026-10-29 "기본적으로 혼백, 학생은 진앙영술원 학생복으로 시작", GDD 116장 2). 3단계부터 종족 공통(사신복)
-  'char.shinigami.1': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  // 사신 1단계(혼백) = 혼백 모델(누더기 옷·나뭇가지, 칼집 없음 — GDD 241-F 1, 115-A 작업본. 옛 학생복은 폐기), 2단계(학생) = 진앙영술원 학생복(GDD 116장 2). 3단계부터 종족 공통(사신복)
+  'char.shinigami.1': { rig: 'shinigami-soul', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 길리안(2단계) = 종이인형 길리안 (GDD 219장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"). 옛 한 장 그림 배율(2배·필드 1.5배, C.137·C.176)은 폐기.
   // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian

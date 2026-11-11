@@ -45,11 +45,11 @@ describe('C.190 크기 ×0.75 (116장 4)', () => {
 describe('C.190 혼백·학생 = 학생복 (116장 2)', () => {
   it('사신 1·2단계 학생복, 3단계부터 사신복, 여성은 -f', () => {
     const look = (t: number, g: 'male' | 'female') => charArt('shinigami', t, 'char.shinigami', '/', undefined, [], null, undefined, g).rig?.look;
-    expect([0, 1, 2, 3, 4].map((t) => look(t, 'male'))).toEqual(['shinigami-student', 'shinigami-student', 'shinigami-base', 'shinigami-base', 'shinigami-base']);
-    expect([0, 1, 2].map((t) => look(t, 'female'))).toEqual(['shinigami-student-f', 'shinigami-student-f', 'shinigami-base-f']);
+    expect([0, 1, 2, 3, 4].map((t) => look(t, 'male'))).toEqual(['shinigami-soul', 'shinigami-student', 'shinigami-base', 'shinigami-base', 'shinigami-base']);
+    expect([0, 1, 2].map((t) => look(t, 'female'))).toEqual(['shinigami-soul-f', 'shinigami-student-f', 'shinigami-base-f']);
   });
   it('단계 → 외형은 그림 목록(manifest) 데이터로만 — 코드에 종족 분기 없음', () => {
-    expect(ART_MANIFEST['char.shinigami.1']!.rig).toBe('shinigami-student');
+    expect(ART_MANIFEST['char.shinigami.1']!.rig).toBe('shinigami-soul');
     for (const f of ['src/data/art/manifest.ts', 'src/ui/bha/rigAnim.ts', 'src/ui/bha/room.ts', 'src/data/art/backgrounds.ts']) {
       expect(read(f)).not.toMatch(/===\s*'(hollow|shinigami)'/);
     }
