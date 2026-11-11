@@ -16,20 +16,30 @@ export interface ToolChar {
   skin?: string;
   /** 탭 (사용자 2026-11-11 "이펙트 배치도구를 캐릭터, 몬스터로 최상단 탭에서 나누고"): 없으면 캐릭터 */
   kind?: 'char' | 'monster';
+  /** 캐릭터 탭 분류 (사용자 2026-11-12 "치는 모델, 종이인형 세션 참고해서, 사신, 아란칼, 호로로 대분류, 성별 중분류, 디테일 소분류로"):
+   *  대분류 = 종족 · 중분류 = 성별(사신·아란칼만 — 호로는 성별 외형이 없다, 종이인형 편집기와 같게) · 소분류 = label(단계·진화체) */
+  group?: 'shinigami' | 'arrancar' | 'hollow';
+  gender?: 'm' | 'f';
 }
 /** 아쥬커스 모델 이름 (게임 스킨 이름과 같게, GDD 240장) */
-const AJUCHAS_NAMES: Record<string, string> = { carapace: '가시형', stag: '뱀형', rhino: '외팔형', wyrm: '거미형', panther: '속도형', scorpion: '짐승형', wraith: '부유형' };
+const AJUCHAS_NAMES: Record<string, string> = { carapace: '가시형(힘)', stag: '뱀형(지능)', rhino: '외팔형(체력)', wyrm: '거미형(정신력)', panther: '속도형(속도)', scorpion: '짐승형(방어력)', wraith: '부유형(히든)' }; // 종이인형 편집기 진화체 단추 이름 = ~형(능력치)
 export const CHARACTERS: readonly ToolChar[] = [
-  { id: 'arrancar-m', label: '아란칼 남', rig: 'arrancar-base' },
-  { id: 'arrancar-f', label: '아란칼 여', rig: 'arrancar-base-f' },
-  { id: 'shinigami-m', label: '사신 남', rig: 'shinigami-base' },
-  { id: 'shinigami-f', label: '사신 여', rig: 'shinigami-base-f' },
-  // 호로 = 게임 그림 그대로(charArt): 1단계 덩치·2단계 길리안 종이인형 (사용자 2026-11-10 "호로 중 덩치랑 길리안 새로 불러와", GDD 226장). 옛 프레임 호로는 게임에서 안 써서 뺌.
-  // 몸동작 칸 = 게임과 같이 'male'(종이인형이고 여성 외형이 아님) — 아란칼 남과 같은 칸
-  { id: 'hollow-brute', label: '호로 덩치', rig: 'brute-base', faction: 'hollow', tier: 0, fallback: 'char.hollow' },
-  { id: 'hollow-gillian', label: '호로 길리안', rig: 'gillian-base', faction: 'hollow', tier: 1, fallback: 'char.hollow' },
-  // 아쥬커스 모델 (GDD 240장 — 스킨 id 는 그대로, 이름·그림만 바뀜): 게임 표 AJUCHAS_MODELS 에서 노멀 색 외형으로. 몸마다 이펙트 자리를 따로 맞춘다(GDD 230장)
-  ...Object.entries(AJUCHAS_MODELS).map(([skin, m]): ToolChar => ({ id: `hollow-${skin}`, label: `호로 ${AJUCHAS_NAMES[skin] ?? skin}`, rig: m.looks.normal, faction: 'hollow', tier: 2, fallback: 'char.hollow', skin })),
+  // 사신 (종이인형 편집기 단계 줄과 같은 순서: 혼백 · 영술원 학생 · 사신)
+  { id: 'shinigami-soul', label: '혼백', rig: 'shinigami-soul', group: 'shinigami', gender: 'm' },
+  { id: 'shinigami-student', label: '영술원 학생', rig: 'shinigami-student', group: 'shinigami', gender: 'm' },
+  { id: 'shinigami-m', label: '사신', rig: 'shinigami-base', group: 'shinigami', gender: 'm' },
+  { id: 'shinigami-soul-f', label: '혼백', rig: 'shinigami-soul-f', group: 'shinigami', gender: 'f' },
+  { id: 'shinigami-student-f', label: '영술원 학생', rig: 'shinigami-student-f', group: 'shinigami', gender: 'f' },
+  { id: 'shinigami-f', label: '사신', rig: 'shinigami-base-f', group: 'shinigami', gender: 'f' },
+  // 아란칼 (기본형, 여성은 해방 외형도)
+  { id: 'arrancar-m', label: '아란칼 기본형', rig: 'arrancar-base', group: 'arrancar', gender: 'm' },
+  { id: 'arrancar-f', label: '아란칼 기본형', rig: 'arrancar-base-f', group: 'arrancar', gender: 'f' },
+  { id: 'arrancar-f-released', label: '아란칼 해방', rig: 'arrancar-base-f-released', group: 'arrancar', gender: 'f' },
+  // 호로 = 게임 그림 그대로(charArt): 1단계 덩치·2단계 길리안 (GDD 226장) + 아쥬커스 모델 7(게임 표 AJUCHAS_MODELS, 노멀 색, GDD 240장). 종이인형 편집기 진화체 줄 순서
+  { id: 'hollow-brute', label: '덩치', rig: 'brute-base', faction: 'hollow', tier: 0, fallback: 'char.hollow', group: 'hollow' },
+  { id: 'hollow-gillian', label: '길리안', rig: 'gillian-base', faction: 'hollow', tier: 1, fallback: 'char.hollow', group: 'hollow' },
+  ...['rhino', 'carapace', 'panther', 'scorpion', 'stag', 'wyrm', 'wraith'].filter((k) => AJUCHAS_MODELS[k]).map((skin): ToolChar => ({ id: `hollow-${skin}`, label: AJUCHAS_NAMES[skin] ?? skin, rig: AJUCHAS_MODELS[skin]!.looks.normal, faction: 'hollow', tier: 2, fallback: 'char.hollow', skin, group: 'hollow' })),
+  ...Object.keys(AJUCHAS_MODELS).filter((k) => !['rhino', 'carapace', 'panther', 'scorpion', 'stag', 'wyrm', 'wraith'].includes(k)).map((skin): ToolChar => ({ id: `hollow-${skin}`, label: AJUCHAS_NAMES[skin] ?? skin, rig: AJUCHAS_MODELS[skin]!.looks.normal, faction: 'hollow', tier: 2, fallback: 'char.hollow', skin, group: 'hollow' })),
   // 강적 몸 (GDD 227장, 사용자 2026-11-10 "강적 강공격 … 세로" + "위치 파악해서 반영"): 강적 강공격 세로를 몸마다 맞춘다 — 게임 적 그림 그대로(enemyArt)
   { id: 'elite-brute', kind: 'monster', label: '덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
   { id: 'elite-gillian', kind: 'monster', label: '외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
