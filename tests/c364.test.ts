@@ -20,7 +20,7 @@ describe('222장 1 공용 창은 튜토리얼을 비켜 간다 + 대기 보상 �
   });
   it('대기 보상 복귀 창은 afterTutorials 로 카드가 끝난 뒤, 방을 떠났으면 띄우지 않는다', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("afterTutorials(() => showIdleReturn(idle, s, faction, claim), () => save === s && nav.top?.id === 'room')");
+    expect(app).toContain("afterTutorials(() => showIdleReturn(idle, s, faction, claim, loss), () => save === s && nav.top?.id === 'room')");
     expect(app).not.toContain('window.setTimeout(() => showIdleReturn(');
     const host = read('src/ui/bha/overlayHost.ts');
     expect(host).toContain("document.querySelector('.bha-tut') !== null");

@@ -3249,3 +3249,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c388.test.ts`(11), 형식 71 숫자 갱신. 전체 3194 통과.
 - 캡처 `docs/captures/c388/`(scripts/c388-proof.cjs, 1배): pc·ph-sell-gear-in-consumable-shop — 소모품 상점 [팔기]·장비 칩. 노말 장비 팔면 골드 50 → 65, 목록에서 빠짐, 알림 없음(proof.json).
 - 안 한 것: 가방 화면 안 팔기 버튼(가방 장비 일괄 판매는 그대로), 영옥 물건 판매(팔 수 있는 영옥 물건이 없음).
+
+## C.389 — 복귀 = 대기 보상 창 하나: 잃은 수치를 창에, 노란 복귀 알림 삭제 (GDD 237장, v5.557, S-23, 코딩266 Opus)
+- 사용자 원문(대기 보상 창 캡처와 함께): "여기다가 잠수탄동안 잃은 수치 쓰고, 노란 알람은 없애".
+- `src/ui/app.ts`: 복귀 알림 띠(absenceText 토스트, 233장 1 에서 남겼던 것) 삭제. 같은 내용 `absenceLossLines`(`src/ui/bha/roomLogic.ts`) → 대기 보상 복귀 창(`showIdleReturn(..., loss)`) 보상 목록 아래, 보상 창이 안 뜨면 `showAbsenceReturn`(같은 창 모양, 줄어든 것만 + [확인]). 줄어든 것이 없으면 아무것도 안 띄움. 둘 다 afterTutorials(튜토리얼 카드 뒤).
+- `src/ui/idleView.ts absenceLossBlock` · `room.css .bha-idleloss`(보상 아래일 때만 구분선, 글 색 --bha-danger — 새 색 없음). 방 아이콘 창(showIdlePanel)엔 안 보임(복귀 때 한 번).
+- 이름: 배부름·안정 수치 = 종족 설정(fullnessName·stabilityName), 빈사·사망 = CARE_STATUS_NAMES. 세이브·밸런스 변경 없음.
+- 테스트 새 `tests/c389.test.ts`(4), c364(복귀 창 호출 인자) 갱신.
+- 캡처 `docs/captures/c389/`(scripts/c389-proof.cjs, PC 1배): 01 보상 + 비운 동안 줄어든 것 · 02 줄어든 것만 + [확인] — 둘 다 노란 복귀 띠 없음(proof.json toasts 에 복귀 없음).

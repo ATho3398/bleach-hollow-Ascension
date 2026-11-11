@@ -23,7 +23,7 @@ import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
-import { absenceText, careBlockText } from './bha/roomLogic';
+import { absenceLossLines, careBlockText } from './bha/roomLogic';
 import { previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
@@ -109,7 +109,7 @@ import { battleItemEffectOf, consumableName, departFillBattleSlot, fillBattleSlo
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
 import { shopPicker, shopView } from './shopView';
-import { idleBadge, refreshIdleBadge, showIdlePanel, showIdleReturn } from './idleView';
+import { idleBadge, refreshIdleBadge, showAbsenceReturn, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
@@ -1243,16 +1243,10 @@ export function startApp(host: HTMLElement): void {
     }, 400);
     const greet = hungryGreet;
     hungryGreet = false;
-    // 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · …" + 이번에 쓰러졌거나 죽었으면 그 줄
+    // 비운 동안 줄어든 것 (GDD 237장): 옛 복귀 알림 띠(102-7·233장 1)는 지우고, 같은 내용을 대기 보상 창(또는 같은 모양 창) 안에 — 복귀 때 한 번
     const away = absence;
     absence = null;
-    if (away && away.hours * 60 >= BALANCE.provisional.idle.minMinutes) {
-      const line = absenceText(away, faction);
-      // 알림 띠는 한 줄(머리말 + 제목)이라 비운 시간·줄어든 양을 제목에 (C.170 알림 띠)
-      const head = away.died ? '복귀 · 사망' : away.collapsed ? '복귀 · 빈사' : '복귀';
-      // 방 위 빈사·사망 안내 상자는 없어졌다(GDD 177장) — 알림 띠는 평소 자리 (159장 19 의 가운데 띄우기는 필요 없음)
-      window.setTimeout(() => showToast({ eyebrow: head, title: line, meta: '' }, 0, 5200), 300);
-    }
+    const loss = away && away.hours * 60 >= BALANCE.provisional.idle.minMinutes ? absenceLossLines(away, faction) : [];
     // 투트랙 개방·붕옥 탭 개방 알림 (GDD 22-3): 한 번만. 저장 때 뜨는 튜토리얼·도감 토스트와 겹치지 않게 조금 뒤에
     const notes: { eyebrow: string; title: string; meta: string }[] = [];
     if (s.trackNotice) {
@@ -1300,7 +1294,10 @@ export function startApp(host: HTMLElement): void {
     // GDD 222장 1: 튜토리얼 안내 카드가 떠 있으면 카드가 끝난 뒤에 띄운다(겹쳐서 입력이 막히지 않게). 그사이 방을 떠났으면 띄우지 않는다 — 보상은 아이콘에 남는다.
     // 222장 3: 한 바퀴도 못 돌았으면(받을 것 0) 복귀 창을 띄우지 않는다
     if (idle && idleCounts(idle.awayHours) && idleClaimable(s) && (idlePendingYield(s)?.laps ?? 0) > 0) {
-      afterTutorials(() => showIdleReturn(idle, s, faction, claim), () => save === s && nav.top?.id === 'room');
+      afterTutorials(() => showIdleReturn(idle, s, faction, claim, loss), () => save === s && nav.top?.id === 'room');
+    } else if (away && loss.length > 0) {
+      // 대기 보상 창이 안 뜨는 복귀 (237장 3): 같은 창 모양으로 줄어든 것만 + [확인]. 줄어든 것도 없으면 아무것도 안 띄움
+      afterTutorials(() => showAbsenceReturn(away.hours, loss), () => save === s && nav.top?.id === 'room');
     }
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,

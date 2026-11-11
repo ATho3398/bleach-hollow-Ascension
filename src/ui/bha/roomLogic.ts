@@ -114,6 +114,19 @@ export function absenceText(r: { hours: number; flow: { hunger: number; conditio
   return parts.length ? `${h} 동안 비웠다 — ${parts.join(' · ')}` : `${h} 동안 비웠다`;
 }
 
+/** 비운 동안 줄어든 것 줄 (GDD 237장 1): 배부름·컨디션·안정 수치 −n(줄어든 것만) + 이번에 빈사·사망으로 이어졌으면 그 한 줄. 없으면 빈 목록 */
+export function absenceLossLines(r: { flow: { hunger: number; condition: number; stability: number }; collapsed?: boolean; died?: boolean }, names: { fullnessName: string; stabilityName: string }): string[] {
+  const parts = [
+    r.flow.hunger >= 0.5 ? `${names.fullnessName} −${Math.round(r.flow.hunger)}` : '',
+    r.flow.condition <= -0.5 ? `컨디션 −${Math.round(-r.flow.condition)}` : '',
+    r.flow.stability <= -0.5 ? `${names.stabilityName} −${Math.round(-r.flow.stability)}` : '',
+  ].filter(Boolean);
+  const out = parts.length ? [parts.join(' · ')] : [];
+  if (r.died) out.push(`${CARE_STATUS_NAMES.dead} — 비운 사이 빈사 시간이 다 됐다`);
+  else if (r.collapsed) out.push(`${CARE_STATUS_NAMES.collapsed} — 오래 비워 쓰러졌다`);
+  return out;
+}
+
 /** 돌봄 요청·거절 말풍선 키 (GDD 82장): 문구는 종족 설정 room.talk 의 이 키에서 */
 export function careTalkKey(kind: 'ask' | 'refuse', action: 'pet' | 'sleep'): keyof RoomConfig['talk'] {
   const keys = { ask: { pet: 'askPet', sleep: 'askSleep' }, refuse: { pet: 'refusePet', sleep: 'refuseSleep' } } as const;

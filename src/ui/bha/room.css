@@ -354,6 +354,11 @@
 .bha-modal__list { margin: var(--bha-sp-3) 0 0; padding: 0; list-style: none; display: grid; gap: var(--bha-sp-1); font-size: var(--bha-fs-sm); color: var(--bha-text-1); text-align: center; }
 .bha-modal__list .bha-small { color: var(--bha-text-2); }
 .bha-idlebox { display: grid; gap: var(--bha-sp-3); margin-top: var(--bha-sp-3); text-align: left; }
+/* 비운 동안 줄어든 것 (GDD 237장 2): 보상 줄과 구분 — 위 선 + 위험 색 글(기존 토큰) */
+.bha-idlebox > .bha-idleloss { padding-top: var(--bha-sp-2); border-top: 1px solid var(--bha-line-2); } /* 보상 목록 아래일 때만 구분선 */
+.bha-idleloss__head { margin: 0; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); text-align: center; }
+.bha-idleloss__list { margin-top: var(--bha-sp-1); }
+.bha-idleloss__list li { color: var(--bha-danger); }
 
 /* ── 종이인형 (GDD 96장): 부위 그림을 같은 캔버스에 겹치고 뼈 행렬을 transform 으로 건다 ── */
 .bha-doll { position: relative; flex: none; }

@@ -124,19 +124,39 @@ function listOf(save: SaveData, faction: FactionConfig): HTMLElement {
   return ul;
 }
 
-/** 복귀 창 (92장 2번): 몇 시간 만에 왔는지 + 쌓인 보상 + [받기]. [나중에] 로 닫으면 보상은 아이콘에 남는다 */
-export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null): void {
+/** '비운 동안 줄어든 것' 묶음 (GDD 237장 1·2): 보상 줄과 구분되게 위험 색(기존 토큰 --bha-danger) — 이미 반영된 결과라 안내만 */
+export function absenceLossBlock(lines: readonly string[]): HTMLElement {
+  const box = el('div', 'bha-idleloss');
+  box.dataset.absenceLoss = '';
+  box.append(el('p', 'bha-idleloss__head', '비운 동안 줄어든 것'));
+  const ul = el('ul', 'bha-modal__list bha-idleloss__list');
+  for (const l of lines) ul.append(el('li', '', l));
+  box.append(ul);
+  return box;
+}
+
+/** 복귀 창 (92장 2번): 몇 시간 만에 왔는지 + 쌓인 보상 + [받기]. [나중에] 로 닫으면 보상은 아이콘에 남는다.
+ *  loss (GDD 237장 1): 비운 동안 줄어든 것 — 복귀 때 한 번만(나중에 아이콘으로 받을 때는 안 보임) */
+export function showIdleReturn(acc: IdleAccrual, save: SaveData, faction: FactionConfig, onClaim: () => IdleRecord | null, loss: readonly string[] = []): void {
   const capped = acc.added + 1e-6 < Math.min(acc.awayHours, IX.maxHours) || acc.awayHours > IX.maxHours;
+  const content = el('div', 'bha-idlebox');
+  content.append(listOf(save, faction));
+  if (loss.length) content.append(absenceLossBlock(loss));
   confirmDialog({
     title: `${hm(acc.awayHours)} 만에 돌아왔다`,
     body: capped ? `대기 보상은 최대 ${IX.maxHours}시간까지만 쌓인다. 쌓인 보상:` : '꺼 둔 동안 자동 모험으로 쌓인 보상:',
-    content: listOf(save, faction),
+    content,
     yes: '받기',
     no: '나중에',
     onYes: () => {
       onClaim(); // 받은 것 알림은 뺐다 (GDD 233장 1) — 얼마나 받는지는 이 창 목록에 이미 보인다
     },
   });
+}
+
+/** 대기 보상 창이 안 뜨는 복귀 (GDD 237장 3): 같은 창 모양으로 '○시간 ○분 만에 돌아왔다' + 줄어든 것만 + [확인]. 줄어든 것이 없으면 부르지 않는다 */
+export function showAbsenceReturn(awayHours: number, loss: readonly string[]): void {
+  confirmDialog({ title: `${hm(awayHours)} 만에 돌아왔다`, body: '', content: absenceLossBlock(loss), yes: '확인', single: true, onYes: () => {} });
 }
 
 /** 방 '대기 보상' 아이콘 창 (92장 1번): 규칙 한 줄 + 쌓인 시간 진행 막대 + 지금 쌓인 것 + [받기]. 받을 게 없으면 [받기]는 비활성으로 자리만 지킨다 (100장 #16) */
