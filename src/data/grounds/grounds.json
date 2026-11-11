@@ -31,15 +31,25 @@
       "food": {
         "normalDropChance": 0.7,
         "normalTable": {
-          "snack": 35,
-          "basic": 40,
-          "hearty": 25
+          "basic": 10,
+          "hearty": 10,
+          "sushi": 10,
+          "fizz": 10,
+          "mushroom": 10,
+          "roast": 10
         },
         "eliteExtraChance": 0.45,
         "eliteTable": {
-          "hearty": 35,
-          "tonic": 40,
-          "feast": 25
+          "basic": 8,
+          "hearty": 8,
+          "sushi": 8,
+          "fizz": 8,
+          "mushroom": 8,
+          "roast": 8,
+          "feast": 7,
+          "tonic": 7,
+          "elixir": 7,
+          "relic": 7
         }
       }
     },
@@ -58,15 +68,25 @@
       "food": {
         "normalDropChance": 0.8,
         "normalTable": {
-          "snack": 20,
-          "basic": 40,
-          "hearty": 40
+          "basic": 10,
+          "hearty": 10,
+          "sushi": 10,
+          "fizz": 10,
+          "mushroom": 10,
+          "roast": 10
         },
         "eliteExtraChance": 0.6,
         "eliteTable": {
-          "hearty": 25,
-          "tonic": 40,
-          "feast": 35
+          "basic": 6,
+          "hearty": 6,
+          "sushi": 6,
+          "fizz": 6,
+          "mushroom": 6,
+          "roast": 6,
+          "feast": 10,
+          "tonic": 10,
+          "elixir": 10,
+          "relic": 10
         }
       }
     }

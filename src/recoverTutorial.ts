@@ -5,6 +5,7 @@
 import { BALANCE } from './config/balance';
 import type { FoodId } from './engine/faction';
 import { guidePending, markGuideDone, queueGuide } from './engine/tutorial';
+import { clearFoodStreak } from './engine/nest';
 import { cureNest, feedNest, tickIdle, type SaveData } from './game';
 import { grantFood, homeHp, setHomeHpOf, spaEnter, spaLeave, spaSoak } from './home';
 import { storeConsumable } from './shop';
@@ -74,6 +75,7 @@ export function recoverSpaSoak(save: SaveData, nowMs: number): boolean {
 /** ⑥ 먹이 카드가 뜰 때 먹이 1개 지급 (GDD 129-2 2: 먹이는 사용자가 독 [먹이]로 직접 준다) */
 export function grantRecoverFood(save: SaveData): void {
   grantFood(save, TR.food as FoodId, 1);
+  clearFoodStreak(save.nest, TR.food as FoodId); // 튜토리얼 예외 (GDD 234장 3): 같은 먹이 한도로 안내 먹이가 막히지 않게 그 종류 묶음만 비운다
 }
 
 /** ⑥ 사용자가 먹이를 준 뒤: 배부름·체력 가득(튜토리얼 각본 값) · 안내를 마친다 → 다음 안내('다음 할 일') 차례 */
@@ -88,6 +90,7 @@ export function recoverFeedDone(save: SaveData): void {
 export function recoverFeed(save: SaveData, nowMs: number): void {
   const food = TR.food as FoodId;
   grantFood(save, food, 1);
+  clearFoodStreak(save.nest, food); // 튜토리얼 예외 (GDD 234장 3)
   feedNest(save, food, nowMs);
   save.nest.hunger = 0;
   setHomeHpOf(save, 1);

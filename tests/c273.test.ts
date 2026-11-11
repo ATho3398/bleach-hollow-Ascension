@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
+import { foodEffect } from '../src/engine/nest';
 import { SPA_FULL_HOLD_MS, SPA_FULL_TEXT } from '../src/ui/spaView';
 import { careFeedback } from '../src/ui/bha/dockLogic';
 import { getFaction } from '../src/data/factions';
@@ -41,13 +42,13 @@ describe('180장 2 온천 가득 안내', () => {
   });
 });
 
-describe('180장 3 먹이 배부름 약 ×1.6', () => {
-  const F = BALANCE.provisional.nest.foods;
-  it('간식 2 · 고기 5 · 사냥감 8 · 보양 3 · 잔치 11, feedHunger 5, 컨디션·한도 그대로', () => {
-    expect([F.snack.hunger, F.basic.hunger, F.hearty.hunger, F.tonic.hunger, F.feast.hunger]).toEqual([2, 5, 8, 3, 11]);
-    expect(BALANCE.provisional.nest.feedHunger).toBe(5);
-    expect([F.snack.condition, F.basic.condition, F.hearty.condition, F.tonic.condition, F.feast.condition]).toEqual([4, 0, 0, 10, -5]);
-    expect(BALANCE.provisional.nest.feedLimit).toEqual({ max: 3, windowMinutes: 10 });
+describe('180장 3 먹이 배부름 약 ×1.6 → 235장 3유형 (C.387)', () => {
+  const F = { basic: foodEffect('basic') };
+  it('유형별: 싸구려 6 · 일반 12 · 특식 40, feedHunger 12, 한도 10분 3개(같은 먹이 2개)', () => {
+    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).hunger)).toEqual([6, 12, 12, 40, 40]);
+    expect(BALANCE.provisional.nest.feedHunger).toBe(12);
+    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).condition)).toEqual([0, 0, 0, 30, 0]);
+    expect(BALANCE.provisional.nest.feedLimit).toEqual({ max: 3, windowMinutes: 10, sameMax: 2 });
   });
   it('고기 1개를 먹이면 방 말풍선에 회복 수치가 없다 (GDD 201장 — 상태창 막대가 차오른다)', () => {
     for (const id of ['hollow', 'shinigami'] as const) {

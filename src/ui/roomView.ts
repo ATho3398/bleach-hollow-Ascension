@@ -6,7 +6,8 @@ import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { artSkinOf, careNest, feedNest, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, careNest, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
 import { animOf } from './bha/animPlayer';
@@ -423,12 +424,20 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, stability: n.stability, risk: n.risk };
+      let reaction: FoodReaction = null;
       const hpBefore = previewHomeHp(n, Date.now()).fraction;
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {
+        reaction = food ? foodReactionFor(save, food) : null; // 선호·비선호·싸구려 반응 (GDD 235장 2·3) — 먹기 전에 정한다
         const fed = food ? feedNest(save, food) : null;
         if (!fed) return say(fixParticles(`먹을 것이 없다. 모험에서 적을 이기면 ${faction.foodGroupName}을(를) 얻는다.`));
+        if (fed === 'refused') {
+          // 같은 먹이 10분에 2개를 넘김 (GDD 234장 3): 먹이 그대로·효과·교감 없음 — 돌봄 거절처럼 말풍선만
+          hd.persist();
+          dock.refreshFeeds();
+          return say(pickLine(room.talk, 'picky'));
+        }
         if (fed === 'spat') {
           // 10분에 3개를 넘김 (GDD 109장 6): 먹이는 없어지고 효과 없음 — 뱉는 모션 + 말풍선
           hd.persist();
@@ -476,10 +485,17 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
         char.classList.add('is-eating');
         window.setTimeout(() => char.classList.remove('is-eating'), ACTION_FILL_MS);
       }
-      if (!noted) say(careFeedback(faction, action, food ?? null, delta)); // 알림이 못 뜬 때(값이 안 바뀜·자리 없음)만 예전 결과 말풍선 (수치 문장 포함)
+      const reactKey = reaction === 'like' ? 'foodLike' : reaction === 'dislike' ? 'foodDislike' : reaction === 'cheap' ? 'foodCheap' : null;
+      if (reactKey) say(pickLine(room.talk, reactKey)); // 먹이 반응 말풍선 (GDD 235장 2 — 선호·비선호는 표 없이 이것으로만 드러남)
+      else if (!noted) say(careFeedback(faction, action, food ?? null, delta)); // 알림이 못 뜬 때(값이 안 바뀜·자리 없음)만 예전 결과 말풍선 (수치 문장 포함)
       // 먹기·잠 애니가 있으면 그것을, 없으면 기존 뛰는 반응 (다른 동작 애니로 대신하지 않는다)
       const clip = action === 'feed' ? 'eat' : action === 'sleep' ? 'sleep' : null;
       if (!(clip && playAnim(clip))) hopChar();
+      // 반응 동작 (GDD 235장 사용자 추가 — 선호 = 기쁨 · 비선호 = 싫음): 먹고 난 뒤 좋아하면 한 번 더 뛰고, 싫어하면 뱉을 때처럼 고개를 젓는다
+      if (reaction === 'like') window.setTimeout(() => main.isConnected && hopChar(), ACTION_FILL_MS);
+      else if (reaction === 'dislike') {
+        window.setTimeout(() => { if (!main.isConnected) return; char.classList.add('is-spit'); window.setTimeout(() => char.classList.remove('is-spit'), 700); }, ACTION_FILL_MS);
+      }
     },
     more: [
       // C.170 (GDD 100장 #17·#80): 4열 — 설정·도움말·사진·다마고치 / 백업·처음 화면·닫기. '첫 걸음 목표'는 도움말 안 [목표]로

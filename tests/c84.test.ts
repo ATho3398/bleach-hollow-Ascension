@@ -234,7 +234,7 @@ describe('상점 가격 확정 (GDD 25-9 v5.70)', () => {
   it('가격표는 확정 구역(BALANCE.shop)으로, 값은 그대로, 임시 표시 없음', () => {
     expect((BALANCE.provisional as Record<string, unknown>).shop).toBeUndefined();
     expect(BALANCE.shop.goldPrices).toEqual({
-      'food-snack': 20, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
+      'food-snack': 20, 'food-scrap': 12, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
       calm: 80, wake: 60, 'training-ticket': 90, 'rare-tile': 60, reroll: 120,
     });
     expect(BALANCE.shop.deckSlotPrices).toEqual([400, 800]);

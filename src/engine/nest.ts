@@ -4,6 +4,7 @@
 import { BALANCE } from '../config/balance';
 import { nestRiskAction, settleRiskToNest } from './absorb/risk';
 import type { FoodId, NestAction } from './faction';
+import { foodTypeOf, type FoodReaction } from './foodPref';
 import type { ExpeditionState } from './expedition';
 import { conditionFloor, summarize } from './expedition';
 
@@ -46,10 +47,20 @@ export interface NestState {
   /** 먹이 한도 (GDD 109장 6, C.181): 지금 묶음에서 먹은 개수와 마지막으로 먹은 시각(ms, 0 = 없음). 마지막으로 먹은 뒤 feedLimit.windowMinutes 가 지나면 묶음이 새로 시작 */
   feedCount: number;
   lastFedAt: number;
+  /** 같은 먹이 한도 (GDD 234장 3, C.387 · 형식 70): 종류별로 지금 묶음에서 먹은 개수와 그 종류를 마지막으로 먹은 시각(ms). 그 뒤 feedLimit.windowMinutes 가 지나면 그 종류 묶음이 새로 시작 */
+  foodStreak: Partial<Record<FoodId, FoodStreak>>;
+  /** 비선호 일반 먹이를 연달아 먹은 횟수 (GDD 235장 2, 형식 70): 비선호가 아닌 먹이를 먹으면 0. 2번째부터 교감 −foodPref.dislikeRunLoss */
+  dislikeRun: number;
   /** 홈 체력 (GDD 123장 2, C.198): 최대 체력 대비 비율 0~1. 원정 출발 체력이 되고 원정이 끝나면 남은 체력으로 돌아온다(귀환해도 가득 아님). 빈사면 상한 care.dying.hpFraction */
   hpFraction: number;
   /** 온천에 있는 중 (GDD 123장 4): 들어간 시각과 그때 체력·배부름(런 로그용). 방에 있으면 null. 앱을 꺼도 유지되고, 체력 상한 또는 배부름 0 이면 저절로 나온다 */
   spa: SpaStay | null;
+}
+
+/** 같은 먹이 묶음 (GDD 234장 3): 개수·마지막으로 먹인 시각 */
+export interface FoodStreak {
+  count: number;
+  at: number;
 }
 
 /** 온천에 들어간 기록 (런 로그 홈 회복에 남긴다) */
@@ -84,7 +95,7 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, hpFraction: 1, spa: null };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, foodStreak: {}, dislikeRun: 0, hpFraction: 1, spa: null };
 }
 
 const CR = NX.careRequest;
@@ -432,30 +443,35 @@ export function departCare(nest: NestState): { weak: boolean; tired: boolean; dy
   return { weak: nest.weakened, tired: nest.tired, dying: nest.collapsed };
 }
 
-/** 먹이 한 종류의 홈 체력 회복 (비율, GDD 123장 4 provisional) */
+/** 먹이 한 개의 체력 회복(최대 체력 대비): 유형별(GDD 235장 5), 체력 가득 특식은 1 */
 export function foodHpHeal(food: FoodId): number {
-  return HH.foodHeal[food] ?? 0;
+  const d = NX.foods[food];
+  if (d?.hpFull) return 1;
+  return NX.foodTypes[foodTypeOf(food)].heal;
 }
 
-/** 먹이 한 종류의 효과 (허기 감소, 컨디션 변화). 임시 수치 (BALANCE.provisional.nest.foods) */
-export function foodEffect(food: FoodId): { hunger: number; condition: number } {
-  return NX.foods[food];
+/** 먹이 한 종류의 기본 효과 (GDD 235장): 유형의 배부름·교감 + 특식 추가 효과(컨디션·리스크). 선호·비선호 배율 전 값. 임시 수치 (BALANCE.provisional.nest.foodTypes·foods) */
+export function foodEffect(food: FoodId): { hunger: number; condition: number; risk: number; bond: number } {
+  const d = NX.foods[food];
+  const t = NX.foodTypes[foodTypeOf(food)];
+  return { hunger: t.hunger, condition: d?.condition ?? 0, risk: d?.risk ?? 0, bond: t.bond };
 }
 
-/** 먹이 효과 한 줄의 값 이름 (GDD 211장): hunger = 배부름 +, cond = 컨디션 ±, hp = 홈 체력 +(최대 체력 %), bond = 교감 + */
-export type FoodFxKey = 'hunger' | 'cond' | 'hp' | 'bond';
+/** 먹이 효과 한 줄의 값 이름 (GDD 211장 · 235장): hunger = 배부름 +, cond = 컨디션 ±, risk = 리스크 게이지 +, hp = 홈 체력 +(최대 체력 %), bond = 교감 ± */
+export type FoodFxKey = 'hunger' | 'cond' | 'risk' | 'hp' | 'bond';
 export interface FoodFx { key: FoodFxKey; amount: number }
 
-/** 먹이 한 개의 효과 전부 (GDD 211장 — 먹이 = 이 목록뿐, 숨은 효과 없음). 방 먹이 카드·가방·상점 설명과 실제 적용(doNestAction feed)이 같은 값을 쓴다.
- *  순서 = 배부름 · 컨디션 · 체력 · 교감. 0 인 값은 뺀다 */
+/** 먹이 한 개의 효과 전부 (GDD 211장 — 먹이 = 이 목록뿐. 선호·비선호는 표 없이 먹을 때 반응으로만, 235장 2). 방 먹이 카드·가방·상점 설명과 실제 적용(doNestAction feed)이 같은 값을 쓴다.
+ *  순서 = 배부름 · 컨디션 · 리스크 · 체력 · 교감. 0 인 값은 뺀다 */
 export function foodEffectList(food: FoodId): FoodFx[] {
   const f = foodEffect(food);
   const out: FoodFx[] = [];
   if (f.hunger) out.push({ key: 'hunger', amount: f.hunger });
   if (f.condition) out.push({ key: 'cond', amount: f.condition });
+  if (f.risk) out.push({ key: 'risk', amount: f.risk });
   const hp = Math.round(foodHpHeal(food) * 100);
   if (hp) out.push({ key: 'hp', amount: hp });
-  if (BX.gain.feed) out.push({ key: 'bond', amount: BX.gain.feed });
+  if (f.bond) out.push({ key: 'bond', amount: f.bond });
   return out;
 }
 
@@ -467,12 +483,15 @@ export function foodEffectsNow(food: FoodId, nest: NestState, nowMs: number = Da
       case 'hunger': return nest.hunger > 0;
       case 'cond': return e.amount > 0 ? nest.condition < MAX : nest.condition > 0;
       case 'hp': return !nest.dead && homeHpOf(nest) < homeHpCap(nest);
-      case 'bond': return bondLeft > 0;
+      case 'risk': return e.amount > 0 ? nest.risk < RISK_LIMIT : nest.risk > 0;
+      case 'bond': return e.amount > 0 ? bondLeft > 0 : nest.bond > 0;
     }
   });
 }
 
 const FL = NX.feedLimit;
+const FP = NX.foodPref;
+const RISK_LIMIT = BALANCE.provisional.risk.limit;
 /** 지금 먹일 수 있는 남은 개수 (GDD 109장 6): 마지막으로 먹은 뒤 windowMinutes 가 지났으면(또는 시계를 되돌렸으면) max */
 export function feedsLeft(nest: Pick<NestState, 'feedCount' | 'lastFedAt'>, nowMs: number): number {
   if (!nest.lastFedAt || nowMs - nest.lastFedAt >= FL.windowMinutes * 60_000 || nowMs < nest.lastFedAt) return FL.max;
@@ -484,25 +503,56 @@ export function feedResetMs(nest: Pick<NestState, 'feedCount' | 'lastFedAt'>, no
   return feedsLeft(nest, nowMs) > 0 ? 0 : Math.max(0, nest.lastFedAt + FL.windowMinutes * 60_000 - nowMs);
 }
 
-/** 먹이 하나를 먹인다 (GDD 109장 6): 남은 개수가 있으면 먹음(doNestAction feed, 묶음 +1, 마지막 시각 = 지금).
+/** 같은 먹이를 지금 더 먹일 수 있는 개수 (GDD 234장 3): 그 종류를 마지막으로 먹인 뒤 windowMinutes 가 지났으면(또는 시계를 되돌렸으면) sameMax */
+export function sameFoodLeft(nest: Pick<NestState, 'foodStreak'>, food: FoodId, nowMs: number): number {
+  const st = nest.foodStreak?.[food];
+  if (!st || !st.at || nowMs - st.at >= FL.windowMinutes * 60_000 || nowMs < st.at) return FL.sameMax;
+  return Math.max(0, FL.sameMax - st.count);
+}
+
+/** 먹이 하나를 먹인다 (GDD 109장 6 · 234장 3): 같은 종류를 10분 안에 sameMax 개 먹었으면 거절(refused — 아무것도 안 바뀜, 먹이 차감도 하지 않는다).
+ *  그 밖에 전체 남은 개수가 있으면 먹음(doNestAction feed, 묶음 +1, 마지막 시각 = 지금, 그 종류 묶음 +1).
  *  없으면 뱉음 — 효과·교감 없음, 마지막 시각도 그대로(뱉은 건 '먹인 것'이 아니다). 먹이 개수 차감은 부르는 쪽 */
-export function feedFood(nest: NestState, food: FoodId, nowMs: number): 'ate' | 'spat' {
+export function feedFood(nest: NestState, food: FoodId, nowMs: number, reaction: FoodReaction = null): 'ate' | 'spat' | 'refused' {
+  if (sameFoodLeft(nest, food, nowMs) <= 0) return 'refused';
   if (feedsLeft(nest, nowMs) <= 0) return 'spat';
   if (feedsLeft(nest, nowMs) >= FL.max) nest.feedCount = 0;
-  doNestAction(nest, 'feed', food, nowMs);
+  const sameFresh = sameFoodLeft(nest, food, nowMs) >= FL.sameMax;
+  doNestAction(nest, 'feed', food, nowMs, reaction);
   nest.feedCount++;
   nest.lastFedAt = nowMs;
+  if (!nest.foodStreak) nest.foodStreak = {};
+  nest.foodStreak[food] = { count: (sameFresh ? 0 : nest.foodStreak[food]?.count ?? 0) + 1, at: nowMs };
   return 'ate';
 }
 
-/** 둥지 행동: 먹이(허기↓, 종류별 컨디션 변화) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑) — 재우기·쓰다듬기는 배부름 −careFullnessCost(GDD 170장 1). food 는 먹이일 때만 쓰고 기본은 basic(예전 단일 먹이).
- *  C.175 (GDD 102-2·102-6): 수치만 올리고 쇠약·피곤은 안 푼다(옛 '재우기로 쇠약 해소' 삭제). 교감 +bond.gain(하루 상한) */
-export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic', nowMs: number = Date.now()): void {
+/** 같은 먹이 한도를 그 종류만 비운다 (GDD 234장 3 — 튜토리얼 회복 안내 먹이 단계는 막히지 않게) */
+export function clearFoodStreak(nest: NestState, food: FoodId): void {
+  if (nest.foodStreak) delete nest.foodStreak[food];
+}
+
+/** 둥지 행동: 먹이(배부름↑ — 유형·특식 효과, GDD 235장) / 재우기(컨디션↑) / 쓰다듬기(컨디션 소량↑) — 재우기·쓰다듬기는 배부름 −careFullnessCost(GDD 170장 1). food 는 먹이일 때만 쓰고 기본은 basic.
+ *  reaction (GDD 235장 2·3): like = 배부름·교감 ×likeMult, dislike = 배부름 ×dislikeHunger·교감 0(연달아 2번째부터 −dislikeRunLoss), cheap 은 유형 교감(−1) 그대로.
+ *  C.175 (GDD 102-2·102-6): 수치만 올리고 쇠약·피곤은 안 푼다. 교감 +bond.gain(하루 상한) — 먹이는 유형 교감 */
+export function doNestAction(nest: NestState, action: NestAction, food: FoodId = 'basic', nowMs: number = Date.now(), reaction: FoodReaction = null): void {
+  let bond: number = BX.gain[action];
   if (action === 'feed') {
     const f = foodEffect(food);
-    nest.hunger = clamp(nest.hunger - f.hunger, 0, 100);
+    let hunger = f.hunger;
+    bond = f.bond;
+    if (reaction === 'like') {
+      hunger *= FP.likeMult;
+      bond *= FP.likeMult;
+    } else if (reaction === 'dislike') {
+      hunger = Math.round(hunger * FP.dislikeHunger);
+      nest.dislikeRun = (nest.dislikeRun ?? 0) + 1;
+      bond = nest.dislikeRun >= 2 ? -FP.dislikeRunLoss : 0;
+    }
+    if (reaction !== 'dislike') nest.dislikeRun = 0;
+    nest.hunger = clamp(nest.hunger - hunger, 0, 100);
     nest.condition = clamp(nest.condition + f.condition, 0, MAX);
-    healHomeHp(nest, foodHpHeal(food)); // 먹이 체력 소폭 회복 (GDD 123장 4)
+    if (f.risk) nest.risk = clamp(nest.risk + f.risk, 0, RISK_LIMIT); // 특식 리스크 (GDD 235장 1)
+    healHomeHp(nest, foodHpHeal(food)); // 먹이 체력 회복 (GDD 123장 4 · 235장 5)
   } else {
     nest.condition = clamp(nest.condition + (action === 'sleep' ? NX.sleepCondition : NX.petCondition), 0, MAX);
     // 돌보기도 배가 꺼진다 (GDD 170장 1): 배부름 −careFullnessCost(0 아래 없음), 쇠약 문턱 아래로 내려가면 지금 규칙 그대로 쇠약
@@ -510,7 +560,8 @@ export function doNestAction(nest: NestState, action: NestAction, food: FoodId =
     refreshCareStatus(nest);
   }
   nestRiskAction(nest, action);
-  gainBond(nest, BX.gain[action], nowMs);
+  if (bond > 0) gainBond(nest, bond, nowMs);
+  else if (bond < 0) nest.bond = Math.max(0, nest.bond + bond); // 싸구려·비선호 연속 (GDD 235장): 하루 한도와 상관없이 깎인다
 }
 
 /** 원정이 끝나 둥지로 돌아갈 때의 허기·컨디션 (결과 화면 표시와 둥지 갱신이 같은 값을 쓴다, C.68). 패배: 허기 가산 + 컨디션 급락. 폭주했으면 컨디션 추가 하락 */

@@ -648,7 +648,9 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
         const before = nestShown(save.nest, homeHp(save).fraction);
         const r = useInventoryItem(save, faction, e.id);
         // 오른 값이 있으면 상태창 차오름만 (GDD 201장 2: 회복 수치 알림 없음). '사용' 확인 알림은 뺐다 (GDD 233장 5) — 뱉음·못 씀만 알림 띠 (233장 6)
-        if (r.ok && !r.spat) useFx(faction, save, e, art, before);
+        // 상태이상을 풀었을 때만 알림 한 줄 '○○이(가) 풀렸다' (GDD 234장 1) — 상태창(차오름)이 같은 자리에 뜨면 겹치지 않게 띠만
+        if (r.ok && r.cured?.length) showToast({ eyebrow: '가방', title: fixParticles(`${r.cured.join('·')}이(가) 풀렸다`) }, 0, 2400);
+        else if (r.ok && !r.spat) useFx(faction, save, e, art, before);
         else showToast({ eyebrow: '가방', title: r.ok ? fixParticles(`${e.name}을(를) 뱉었다`) : '쓸 수 없다', meta: r.ok ? r.detail : r.reason }, 0, 2400); // 뱉음 = 10분에 3개 넘김 (GDD 109장 6)
         if (r.ok) changed();
       },

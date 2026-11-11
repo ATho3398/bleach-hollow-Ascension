@@ -8,6 +8,12 @@
       "food": "snack"
     },
     {
+      "id": "food-scrap",
+      "kind": "food",
+      "category": "food",
+      "food": "scrap"
+    },
+    {
       "id": "food-basic",
       "kind": "food",
       "category": "food",

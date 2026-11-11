@@ -175,7 +175,22 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   return out.sort((a, b) => ITEM_CATEGORIES.indexOf(a.category) - ITEM_CATEGORIES.indexOf(b.category));
 }
 
-export type InventoryResult = { ok: true; detail: string; /** 먹이를 뱉음 (GDD 109장 6) */ spat?: boolean } | { ok: false; reason: string };
+export type InventoryResult = { ok: true; detail: string; /** 먹이를 뱉음 (GDD 109장 6) */ spat?: boolean; /** 이 사용으로 풀린 상태이상 이름 (GDD 234장 1 — 이것만 알림) */ cured?: string[] } | { ok: false; reason: string };
+
+/** 지금 걸린 상태이상 (빈사·쇠약·피곤 — 사망은 물건으로 못 푼다) */
+function statusesOf(save: Pick<SaveData, 'nest'>): (keyof typeof CARE_STATUS_NAMES)[] {
+  const n = save.nest;
+  return [...(n.collapsed ? ['collapsed' as const] : []), ...(n.weakened ? ['weak' as const] : []), ...(n.tired ? ['tired' as const] : [])];
+}
+
+/** 쓰기 전·후 상태를 견줘 풀린 상태이상 이름 (GDD 234장 1) */
+function curedNames(before: (keyof typeof CARE_STATUS_NAMES)[], save: Pick<SaveData, 'nest'>): string[] {
+  const now = statusesOf(save);
+  return before.filter((k) => !now.includes(k)).map((k) => CARE_STATUS_NAMES[k]);
+}
+
+/** 같은 먹이 거절 이유 (GDD 234장 3) */
+export const SAME_FOOD_REFUSED = '같은 걸 연달아 먹지 않는다 — 10분 뒤에 다시';
 
 /** 보관함에서 쓴다: 먹이(`food-<종류>`) = 먹이 주기, 소모품 = 효과를 지금 캐릭터에 바로. 실패하면 아무것도 바뀌지 않는다 */
 export function useInventoryItem(save: SaveData, faction: FactionConfig, id: string): InventoryResult {
@@ -184,25 +199,28 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     if (!(FOOD_IDS as readonly string[]).includes(f)) return { ok: false, reason: '모르는 음식이다' };
     if (save.activeExpedition != null) return { ok: false, reason: '모험 중인 캐릭터에는 못 쓴다' };
     if (save.nest.dead) return { ok: false, reason: `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다` };
+    const before = statusesOf(save);
     const fed = feedNest(save, f);
     if (!fed) return { ok: false, reason: '먹을 것이 없다' };
+    if (fed === 'refused') return { ok: false, reason: SAME_FOOD_REFUSED }; // 같은 먹이 10분 2개 (GDD 234장 3): 먹이 그대로
     if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다', spat: true };
-    return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}` }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
+    return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}`, cured: curedNames(before, save) }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
   const e = consumableEffect(id);
   if (!e || (save.shared.items[id] ?? 0) <= 0) return { ok: false, reason: '가진 소모품이 아니다' };
   const lock = consumableLock(save, id, faction);
   if (lock) return { ok: false, reason: lock };
+  const before = statusesOf(save);
   if (e.medicine) {
     cureNest(save, e.medicine);
     takeItem(save, id);
-    return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림` };
+    return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림`, cured: curedNames(before, save) };
   }
   save.nest.risk = Math.max(0, save.nest.risk - e.risk);
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);
   if (e.cure) save.nest.weakened = false;
   takeItem(save, id);
-  return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}` };
+  return { ok: true, detail: `${faction.riskGaugeName} ${Math.round(save.nest.risk)} · 컨디션 ${Math.round(save.nest.condition)}`, cured: curedNames(before, save) };
 }
 
 /** 회복 물건 효과 한 줄 (GDD 144장): 회복량 · 쓰는 곳 */

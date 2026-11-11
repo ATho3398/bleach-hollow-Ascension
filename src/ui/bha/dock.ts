@@ -8,6 +8,7 @@ import { button, el, icon, provisionalTag } from './dom';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 import { registerCancelHook } from './shortcuts';
 import { v2Icon } from './iconMap';
+import { fixParticles } from '../../engine/josa';
 
 export interface DockMenuItem {
   label: string;
@@ -16,7 +17,7 @@ export interface DockMenuItem {
 }
 
 /** 먹이 효과 아이콘 = 상태창·바뀐 값 칩과 같은 아이콘 (changeNote ICONS · 교감은 상태 화면 교감 막대) */
-const FOOD_FX_ICON: Record<FoodFx['key'], string> = { hunger: 'i-hunger', cond: 'i-cond', hp: 'i-heal', bond: 'i-care-pet' };
+const FOOD_FX_ICON: Record<FoodFx['key'], string> = { hunger: 'i-hunger', cond: 'i-cond', risk: 'i-risk', hp: 'i-heal', bond: 'i-care-pet' };
 
 /** 먹이 카드 효과 줄 (GDD 211장 — 189장 17 '수치 한 개'를 대신함): 지금 먹이면 실제로 움직이는 효과 전부를 아이콘 + 수치로.
  *  가득·상한에 닿은 값은 빠진다(193장 16). 하나도 없으면 '가득' 글. 적힌 것 = 먹인 뒤 바뀐 값 칩 */
@@ -148,7 +149,10 @@ export function createDock(o: DockOpts): Dock {
     if (panel === 'food') {
       tray.setAttribute('aria-label', `${faction.nestActionsShort?.feed ?? faction.nestActions.feed} 고르기`);
       tray.dataset.scList = '';
-      for (const id of FOOD_IDS) {
+      // 먹이 12종 (GDD 235장): 가진 것만 칸으로 — 없는 종류까지 다 늘어놓으면 줄이 넘친다. 하나도 없으면 빈 줄 안내
+      const owned = FOOD_IDS.filter((id) => o.foodCount(id) > 0);
+      if (owned.length === 0) tray.append(el('p', 'bha-homedock__traynote bha-faint', fixParticles(`${faction.foodGroupName}이(가) 없다`)));
+      for (const id of owned) {
         const b = el('button', 'bha-homedock__food');
         b.type = 'button';
         b.dataset.food = id;

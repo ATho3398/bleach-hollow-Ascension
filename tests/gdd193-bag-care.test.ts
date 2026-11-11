@@ -91,13 +91,14 @@ describe('193장 16 먹이 카드 가득 찬 수치 (211장부터 효과 전부 
     const s = newSaveData('shinigami');
     const now = Date.now();
     Object.assign(s.nest, { hunger: 50, condition: 50, hpFraction: 0.5 });
-    expect(foodEffectsNow('snack', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'cond', 'hp', 'bond']);
+    // C.387 (GDD 235장): 컨디션이 오르는 먹이 = 특식(tonic)
+    expect(foodEffectsNow('tonic', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'cond', 'hp', 'bond']);
     s.nest.condition = 100;
-    expect(foodEffectsNow('snack', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'hp', 'bond']);
-    Object.assign(s.nest, { hunger: 0, hpFraction: 1, bond: 100 });
-    expect(foodEffectsNow('snack', s.nest, now)).toEqual([]);
-    // 줄이는 효과(잔치 컨디션 −)는 가득이어도 움직이므로 남는다
-    expect(foodEffectsNow('feast', s.nest, now).map((e) => e.key)).toEqual(['cond']);
+    expect(foodEffectsNow('tonic', s.nest, now).map((e) => e.key)).toEqual(['hunger', 'hp', 'bond']);
+    Object.assign(s.nest, { hunger: 0, hpFraction: 1, bond: 100, risk: 100 });
+    expect(foodEffectsNow('tonic', s.nest, now)).toEqual([]);
+    // 줄이는 효과(싸구려 교감 −)는 가득이어도 움직이므로 남는다
+    expect(foodEffectsNow('snack', s.nest, now).map((e) => e.key)).toEqual(['bond']);
   });
 });
 

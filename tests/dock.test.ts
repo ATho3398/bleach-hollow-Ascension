@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
 import { FOOD_IDS } from '../src/engine/faction';
-import { doNestAction, newNest } from '../src/engine/nest';
+import { doNestAction, foodEffect, newNest } from '../src/engine/nest';
 import { careFeedback, CLOSED, togglePanel, type DockPanel } from '../src/ui/bha/dockLogic';
 const NX_FOODS = BALANCE.provisional.nest.foods;
 
@@ -22,13 +22,13 @@ describe('독 펼침 상태', () => {
 });
 
 describe('먹이 5종', () => {
-  it('5종이고 종족마다 이름이 모두 있다(종족 id 분기 없이 설정에서 읽는다)', () => {
-    expect(FOOD_IDS).toHaveLength(5);
+  it('12종(3유형, GDD 235장)이고 종족마다 이름이 모두 있다(종족 id 분기 없이 설정에서 읽는다)', () => {
+    expect(FOOD_IDS).toHaveLength(12);
     expect(Object.keys(BALANCE.provisional.nest.foods).sort()).toEqual([...FOOD_IDS].sort());
     for (const f of FACTIONS) for (const id of FOOD_IDS) expect(f.foodNames[id].length).toBeGreaterThan(0);
   });
   it('basic 은 예전 단일 먹이와 같다(기본 인자도 basic)', () => {
-    expect(BALANCE.provisional.nest.foods.basic.hunger).toBe(BALANCE.provisional.nest.feedHunger);
+    expect(foodEffect('basic').hunger).toBe(BALANCE.provisional.nest.feedHunger);
     const n = newNest(0);
     n.hunger = 80;
     doNestAction(n, 'feed');
@@ -38,9 +38,9 @@ describe('먹이 5종', () => {
     const n = newNest(0);
     n.hunger = 90;
     n.condition = 50;
-    doNestAction(n, 'feed', 'feast');
-    expect(n.hunger).toBe(90 - NX_FOODS.feast.hunger);
-    expect(n.condition).toBe(45);
+    doNestAction(n, 'feed', 'tonic');
+    expect(n.hunger).toBe(Math.max(0, 90 - foodEffect('tonic').hunger));
+    expect(n.condition).toBe(80);
     n.hunger = 3;
     doNestAction(n, 'feed', 'feast');
     expect(n.hunger).toBe(0);

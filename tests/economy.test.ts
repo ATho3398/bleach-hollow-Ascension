@@ -5,14 +5,14 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { TUTORIAL_GOALS, parseTutorialGoal } from '../src/data/tutorials';
 import { helpVars, placeholdersOf } from '../src/data/help';
 import { FOOD_IDS } from '../src/engine/faction';
-import { addFood, newFoodStock, rollBattleFood, sanitizeFoodStock, settleFood, totalFood } from '../src/engine/food';
+import { addFood, emptyFoodStock, newFoodStock, rollBattleFood, sanitizeFoodStock, settleFood, totalFood } from '../src/engine/food';
 import { createRng } from '../src/engine/rng';
 import {
   advance, applyFrenzy, chooseReturn, createExpedition, finishBattle, finishRest, inFrenzy, playExpedition, restoreExpedition, serializeExpedition, startBattle, summarize,
   type ExpeditionState,
 } from '../src/engine/expedition';
 import { changeRisk } from '../src/engine/absorb';
-import { applyExpeditionEnd, doNestAction, newNest } from '../src/engine/nest';
+import { applyExpeditionEnd, doNestAction, foodEffect, newNest } from '../src/engine/nest';
 import { goalAchieved } from '../src/engine/tutorialGoals';
 import { claimTutorialGoals, feedNest, loadSave, migrateSave, newSaveData, nextRunId, recordExpedition, SAVE_FORMAT_VERSION, writeSave } from '../src/game';
 import { emptyRunLog } from '../src/engine/runLog';
@@ -47,13 +47,13 @@ const storage = () => {
 describe('먹이 = 전리품 (GDD 23-1)', () => {
   it('시작 지급 간식 5·보통 3, 상한 9, 모르는 값 정리', () => {
     const s = newFoodStock();
-    expect(s).toEqual({ snack: 5, basic: 3, hearty: 0, tonic: 0, feast: 0 });
+    expect(s).toEqual({ ...emptyFoodStock(), snack: 5, basic: 3 });
     expect(addFood(s, 'snack', 10)).toBe(FX.cap - 5);
     expect(s.snack).toBe(FX.cap);
-    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ snack: FX.cap, basic: 0, hearty: 2, tonic: 0, feast: 0 });
+    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: FX.cap, hearty: 2 });
   });
 
-  it('드롭 표: 일반 적은 약 50% 1개(간식·보통·든든), 강적은 확정 1개 + 약 30% 1개 더(든든·보양식·잔치)', () => {
+  it('드롭 표: 일반 적은 약 50% 1개(일반 6종), 강적은 확정 1개 + 약 30% 1개 더(일반 6종 + 특식 4종, GDD 235장)', () => {
     const rng = createRng(7);
     const N = 4000;
     let normal = 0;
@@ -74,8 +74,8 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     expect(normal / N).toBeLessThan(0.55);
     expect(elite / N - 1).toBeGreaterThan(0.25);
     expect(elite / N - 1).toBeLessThan(0.35);
-    expect([...normalKinds].sort()).toEqual(['basic', 'hearty', 'snack']);
-    expect([...eliteKinds].sort()).toEqual(['feast', 'hearty', 'tonic']);
+    expect([...normalKinds].sort()).toEqual(['basic', 'fizz', 'hearty', 'mushroom', 'roast', 'sushi']);
+    expect([...eliteKinds].sort()).toEqual(['basic', 'elixir', 'feast', 'fizz', 'hearty', 'mushroom', 'relic', 'roast', 'sushi', 'tonic']);
   });
 
   it('원정: 이기면 먹이가 쌓이고 휴식 타일은 간식 +1, 전리품 난수가 따로라 적·타일 결과는 그대로', () => {
@@ -121,11 +121,11 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
   });
 
   it('막힘 방지: 돌아왔을 때 먹이가 하나도 없으면 간식 2개', () => {
-    const s = { snack: 0, basic: 0, hearty: 0, tonic: 0, feast: 0 };
+    const s = emptyFoodStock();
     const r = settleFood(s, []);
     expect(r.fallback).toBe(FX.fallbackSnack);
     expect(s.snack).toBe(2);
-    const t = { snack: 0, basic: 1, hearty: 0, tonic: 0, feast: 0 };
+    const t = { ...emptyFoodStock(), basic: 1 };
     expect(settleFood(t, []).fallback).toBe(0);
     expect(totalFood(t)).toBe(1);
   });
@@ -135,7 +135,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     save.nest.hunger = 80;
     expect(feedNest(save, 'snack')).toBe('ate');
     expect(save.shared.food.snack).toBe(4);
-    expect(save.nest.hunger).toBe(80 - BALANCE.provisional.nest.foods.snack.hunger);
+    expect(save.nest.hunger).toBe(80 - foodEffect('snack').hunger);
     const h = save.nest.hunger;
     expect(feedNest(save, 'feast')).toBe(null);
     expect(save.nest.hunger).toBe(h);
@@ -234,11 +234,11 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     const save = newSaveData('hollow', 0);
     expect(claimTutorialGoals(save, 1)).toEqual([]);
     save.help.tutorialSeen = true;
-    save.shared.food.snack = 8;
+    save.shared.food.basic = 8;
     const g = claimTutorialGoals(save, 2);
     expect(g.map((x) => x.goal.id)).toEqual(['tutorial']);
-    expect(g[0]!.food).toEqual([['snack', 1]]); // 3 중 상한까지 1
-    expect(save.shared.food.snack).toBe(FX.cap);
+    expect(g[0]!.food).toEqual([['basic', 1]]); // 3 중 상한까지 1 (C.387: 튜토리얼 보상 간식 → 일반 먹이)
+    expect(save.shared.food.basic).toBe(FX.cap);
     expect(claimTutorialGoals(save, 3)).toEqual([]);
     save.evolution.tierIndex = 4;
     save.rank.history.everRanked = true;
