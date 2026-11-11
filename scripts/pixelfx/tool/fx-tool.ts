@@ -142,7 +142,7 @@ let playing = true;
 let mode: 'char' | 'monster' = 'char';
 /** 몸마다 따로 맞추는 몸 (GDD 230장, 사용자 "인간형이야 같은곳에서 때리지만 얘네는 모션마다 이펙트 출발 위치가 다른데"): 덩치·길리안·뱀·짐승. 사람형은 공통 */
 const SEP_BODIES = ['humanoid/hb', 'humanoid/hd', 'serpent/ref', 'beast/ref', 'humanoid/ho', 'spider/ref', 'humanoid/hk', 'humanoid/hv', 'wraith/ref'];
-const BODY_NAMES: Record<string, string> = { 'humanoid/hb': '덩치', 'humanoid/hd': '길리안', 'serpent/ref': '뱀', 'beast/ref': '짐승', 'humanoid/ho': '외팔이', 'spider/ref': '거미', 'humanoid/hk': '가시형', 'humanoid/hv': '속도형', 'wraith/ref': '부유형' };
+const BODY_NAMES: Record<string, string> = { 'humanoid/hb': '덩치', 'humanoid/hd': '길리안', 'serpent/ref': '뱀형', 'beast/ref': '짐승형', 'humanoid/ho': '외팔형', 'spider/ref': '거미형', 'humanoid/hk': '가시형', 'humanoid/hv': '속도형', 'wraith/ref': '부유형' };
 function bodyKeyOfChar(c: ToolChar | undefined): string | null {
   if (!c?.rig) return null;
   const p = rigPackOfLook(c.rig);
@@ -291,9 +291,9 @@ function mountHero(): void {
 }
 // 몸동작 목록: 종이인형 = 게임 motions.json 의 동작 전부(새 동작이 게임 데이터에 들어오면 도구를 다시 만들 때 저절로 늘어난다), 프레임 그림 = 그 그림에 있는 동작
 const MOTION_NAMES: Record<string, string> = {
-  idle: '대기', homeIdle: '홈 대기', move: '걷기', attack: '공격1', attack2: '공격2', skill: '특수1', skill2: '특수2', hit: '맞음',
-  punch: '주먹', kick: '발차기', ultimate: '필살기', straight: '스트레이트', down: '쓰러짐', dying: '빈사', bath: '온천', headbutt: '박치기',
-  rpunch: '오른손 치기', uppercut: '어퍼컷', release1: '해방(포효)', lose: '패배', win: '승리',
+  idle: '대기', homeIdle: '홈 대기', move: '걷기', attack: '기본 공격 1', attack2: '기본 공격 2', attack3: '기본 공격 3', skill: '특수 공격 1', skill2: '특수 공격 2', hit: '맞음',
+  punch: '기본 공격(주먹)', kick: '발차기', ultimate: '필살기', straight: '기본 공격(스트레이트)', down: '쓰러짐', dying: '빈사', bath: '온천', headbutt: '박치기',
+  rpunch: '기본 공격(오른손 치기)', uppercut: '기본 공격(어퍼컷)', release1: '해방(포효)', lose: '패배', win: '승리',
 };
 interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number | null }
 /** 공격 동작 이름 = 종이인형 편집기 attackName 과 같게 (사용자 2026-11-12 04:1x "용어를 기본 공격, 박치기, 무기 공격, 특수 공격으로 나누자 — 호로는 무기가 없으니까 무기공격은 없겠지? 이래야 이펙트 먹이기 편할듯"):
@@ -313,6 +313,10 @@ function attackName(m: string, look: string): string | null {
   if (m === 'headbutt') return '박치기';
   return null;
 }
+/** 도구 어디서나 쓰는 동작 이름 (C.410, 종이인형 08:2x 전달 — 옛 이름 '공격1·특수1' 이 남은 자리 통일): 종이인형 몸이면 attackName, 아니면 MOTION_NAMES, 그것도 없으면 id */
+function motionName(m: string, look?: string): string {
+  return (look ? attackName(m, look) : null) ?? MOTION_NAMES[m] ?? m;
+}
 function bodyOptions(): BodyOpt[] {
   const c = hero?.c;
   if (c?.rig) {
@@ -320,12 +324,12 @@ function bodyOptions(): BodyOpt[] {
     // 그 몸에서 틀 수 있는 동작만(덩치·길리안은 몸 동작 묶음이 일부를 끈다 — 게임 resolveMotions 그대로, GDD 226장)
     const pack = rigPackOfLook(c.rig); // 뱀형 적은 뱀 뼈대 (GDD 227장)
     const ms = pack ? resolveMotions(pack.rig, pack.motions, pack.sets, pack.rig.looks[c.rig]?.body) : resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, HUMANOID.looks[c.rig]?.body);
-    return Object.entries(ms).map(([id, m]) => ({ id, label: `${attackName(id, c.rig!) ?? MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
+    return Object.entries(ms).map(([id, m]) => ({ id, label: `${motionName(id, c.rig)} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
   }
   const anims = c ? artOfChar(c).anims ?? {} : {};
   return Object.entries(anims).map(([id, clip]) => {
     const ms = (clip as { frameMs: number[] }).frameMs.reduce((a, b) => a + b, 0);
-    return { id, label: `${MOTION_NAMES[id] ?? id} (${id})`, durationMs: ms, hitMs: null };
+    return { id, label: `${motionName(id)} (${id})`, durationMs: ms, hitMs: null };
   });
 }
 /** 지금 캐릭터가 틀 수 있는 연결 동작들 (없는 동작은 뺀다) */
@@ -703,7 +707,7 @@ function syncBodySel(): void {
     sel.setAttribute('aria-label', `${i + 1}번째 동작`);
     const cur = opts.find((b) => b.id === c.id);
     const subId = !cur && c.id ? rigMotionIds(c.id, Object.fromEntries(opts.map((o) => [o.id, true])))[0] : undefined;
-    const subTxt = subId ? `${MOTION_NAMES[c.id] ?? c.id} (${c.id}) — 이 몸엔 없어 ${MOTION_NAMES[subId] ?? subId}` : null;
+    const subTxt = subId ? `${motionName(c.id, hero?.c.rig)} (${c.id}) — 이 몸엔 없어 ${motionName(subId, hero?.c.rig)}` : null;
     sel.textContent = `${i + 1}. ${cur ? optLabel(cur) : subTxt ?? (i === 0 ? '게임 기본 (계열 몸동작)' : '동작 고르기')} ▾`;
     sel.onclick = () => {
       const items = [...(i === 0 ? [{ value: '', label: '게임 기본 (계열 몸동작)' }] : []), ...opts.map((b) => ({ value: b.id, label: optLabel(b) }))];
