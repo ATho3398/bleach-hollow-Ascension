@@ -103,3 +103,16 @@ describe('241-D 7 가방 [타일 배치하러 가기]', () => {
     expect(pv).toContain("main.dataset.screen = 'tile-place';");
   });
 });
+
+describe('241-0 수정 전투 소모품 칸 게이트', () => {
+  it('3단계 전에는 잠김(이미 넣은 칸이 있으면 열림), 장비 탭 칸은 자물쇠', async () => {
+    const { gateOpen, gateHint } = await import('../src/unlockGate');
+    const s = newSaveData('hollow', 0);
+    s.shared.battleItem = null;
+    expect(gateOpen(s, 'battleItem')).toBe(false);
+    s.evolution.tierIndex = 2;
+    expect(gateOpen(s, 'battleItem')).toBe(true);
+    expect(gateHint(H, 'battleItem')).toBe('아쥬커스가 되면 전투 소모품이 열린다');
+    expect(read('src/ui/equipView.ts')).toContain("const battleOpen = gateOpen(save, 'battleItem');");
+  });
+});

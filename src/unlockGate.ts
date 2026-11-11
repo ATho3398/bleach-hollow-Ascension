@@ -4,15 +4,16 @@
 import type { FactionConfig } from './engine/faction';
 import type { SaveData } from './game';
 
-export type GateId = 'gear' | 'accessory' | 'sortie' | 'pet';
+export type GateId = 'gear' | 'battleItem' | 'accessory' | 'sortie' | 'pet';
 const GEAR_AT_TIER = 2;
-const NAMES: Record<GateId, string> = { gear: '장비', accessory: '장신구', sortie: '출정품', pet: '펫' };
+const NAMES: Record<GateId, string> = { gear: '장비', battleItem: '전투 소모품', accessory: '장신구', sortie: '출정품', pet: '펫' };
 
 export function gateOpen(save: Pick<SaveData, 'evolution' | 'rebirth' | 'shared'>, id: GateId): boolean {
   if (save.rebirth.count > 0) return true;
   const sh = save.shared;
   switch (id) {
     case 'gear': return save.evolution.tierIndex >= GEAR_AT_TIER || sh.gear.items.length > 0;
+    case 'battleItem': return save.evolution.tierIndex >= GEAR_AT_TIER || sh.battleItem !== null;
     case 'accessory': return save.evolution.ascended === true || sh.gear.items.some((i) => i.kind === 'accessory');
     case 'pet': return Object.keys(sh.pets.owned).length > 0;
     case 'sortie': return (sh.sortie ?? []).some((x) => x !== null);
@@ -24,7 +25,7 @@ export function gateHint(faction: Pick<FactionConfig, 'tierNames' | 'ascension'>
   if (id === 'pet' || id === 'sortie') return `첫 환생 후 ${NAMES[id]}${josa(NAMES[id], '이', '가')} 열린다`;
   if (id === 'accessory') return `${faction.ascension.name} 클리어 후 장신구 칸이 열린다`;
   const name = faction.tierNames[GEAR_AT_TIER] ?? `${GEAR_AT_TIER + 1}단계`;
-  return `${name}${josa(name, '이', '가')} 되면 장비가 열린다`;
+  return `${name}${josa(name, '이', '가')} 되면 ${NAMES[id]}${josa(NAMES[id], '이', '가')} 열린다`;
 }
 
 function josa(word: string, withBatchim: string, without: string): string {
