@@ -19,8 +19,11 @@ export const hm = (h: number): string => {
   return m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ` ${m % 60}분` : ''}` : `${m}분`;
 };
 
+/** 대기 보상 표시에 쓰는 세이브 조각 — 받을 수 있나는 교감 보너스(nest.bond)까지 본다 (GDD 241-A 7) */
+type IdleSave = Pick<SaveData, 'idlePending'> & { nest?: Pick<SaveData, 'nest'>['nest'] };
+
 /** 방 아이콘 배지: 쌓인 시간(시간 단위로 내림, 1시간 미만이면 분). 받을 만큼(합계 minMinutes 이상, 95장 B1) 안 쌓였으면 null */
-export function idleBadge(save: Pick<SaveData, 'idlePending'>): string | null {
+export function idleBadge(save: IdleSave): string | null {
   const p = save.idlePending;
   if (!p || !idleClaimable(save)) return null;
   return p.hours >= 1 ? `${Math.floor(p.hours)}시간` : `${Math.round(p.hours * 60)}분`;
@@ -84,15 +87,18 @@ export function idleRuleText(): string {
 }
 
 /** 진행 막대 한 줄 (#16): "쌓인 시간 3분 / 10분부터 받기 · 최대 24시간". 받을 수 있으면 최대 시간 기준 */
-export function idleProgress(save: Pick<SaveData, 'idlePending'>): { minutes: number; max: number; text: string } {
+export function idleProgress(save: IdleSave): { minutes: number; max: number; text: string } {
   const minutes = Math.round((save.idlePending?.hours ?? 0) * 60);
   const ready = idleClaimable(save);
-  const max = ready ? IX.maxHours * 60 : IX.minMinutes;
-  return { minutes, max, text: `${hm(minutes / 60)} / ${ready ? '받을 수 있다' : `${IX.minMinutes}분부터 받기`} · 최대 ${IX.maxHours}시간` };
+  // GDD 241-A 7: 시간은 찼어도 한 바퀴도 못 돌았으면 '받을 수 있다'라고 하지 않는다
+  const short = !ready && minutes >= IX.minMinutes;
+  const max = ready || short ? IX.maxHours * 60 : IX.minMinutes;
+  const state = ready ? '받을 수 있다' : short ? '아직 받을 보상이 없다' : `${IX.minMinutes}분부터 받기`;
+  return { minutes, max, text: `${hm(minutes / 60)} / ${state} · 최대 ${IX.maxHours}시간` };
 }
 
 /** 켜 둔 동안 방 '대기 보상' 아이콘 배지 갱신 (95장 B1, 1분마다): 방 화면이 그린 버튼(data-sc="idle-reward")의 배지만 바꾼다 — 방이 아니면 아무것도 안 함 */
-export function refreshIdleBadge(scope: ParentNode, save: Pick<SaveData, 'idlePending'>): void {
+export function refreshIdleBadge(scope: ParentNode, save: IdleSave): void {
   const btn = scope.querySelector<HTMLElement>('[data-sc="idle-reward"]');
   if (!btn) return;
   const text = idleBadge(save);

@@ -27,7 +27,7 @@ export const V2_ICON: Readonly<Record<string, string>> = {
   'i-pattern-fast': 'wing', // 임시
   'i-pattern-tough': 'armor', // 임시
   'i-pattern-heavy': 'fist', // 임시
-  'i-timer': 'hourglass',
+  // 'i-timer' · 'i-settings' 는 옛 스프라이트(초시계·톱니바퀴, C.281 그림)로 되돌렸다 — GDD 241-A 5 (C.282 v2 모래시계·도트 톱니 롤백)
   'i-release': 'release',
   'i-target': 'target',
   'i-speed': 'wing', // 임시
@@ -45,7 +45,6 @@ export const V2_ICON: Readonly<Record<string, string>> = {
   'i-title': 'medal', // 임시
   'i-frame': 'fullscreen',
   'i-shelf': 'bookshelf',
-  'i-settings': 'gear',
   'i-help': 'help',
   'i-pause': 'pause',
   'i-play': 'play',

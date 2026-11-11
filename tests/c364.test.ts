@@ -61,7 +61,7 @@ describe('222장 3 대기 보상', () => {
   it('0바퀴면 [받기]가 받지 않고 쌓인 시간을 그대로 둔다', () => {
     const s = newSaveData('hollow', 1);
     s.idlePending = { from: 0, hours: 0.2, activeHours: 0.2 };
-    expect(idleClaimable(s)).toBe(true);
+    expect(idleClaimable(s)).toBe(false); // GDD 241-A 7: 0바퀴면 '받을 수 있다'도 아니다
     expect(idlePendingYield(s)!.laps).toBe(0);
     expect(claimIdle(s)).toBeNull();
     expect(s.idlePending).not.toBeNull();
@@ -96,5 +96,19 @@ describe('222장 5 수련장 잠김 안내', () => {
     const wm = read('src/ui/worldMapView.ts');
     expect(wm).toContain('if (part !== undefined) hd.onPartLocked?.(p);');
     expect(trainingLockedText(getFaction('hollow'))).toBe('바스트로데가 되면 본능 수련이 열린다.');
+  });
+});
+
+describe('241-A 7 대기 보상 — 받을 수 있을 때만 그 표시', () => {
+  it('시간은 찼어도 0바퀴면 배지·받을 수 있다 없음, 진행 줄 = 아직 받을 보상이 없다', async () => {
+    const { idleBadge, idleProgress } = await import('../src/ui/idleView');
+    const s = newSaveData('hollow', 1);
+    s.idlePending = { from: 0, hours: 3, activeHours: 0 };
+    expect(idleClaimable(s)).toBe(false);
+    expect(idleBadge(s)).toBeNull();
+    expect(idleProgress(s).text).toContain('아직 받을 보상이 없다');
+    s.idlePending = { from: 0, hours: 3, activeHours: 1 };
+    expect(idleClaimable(s)).toBe(true);
+    expect(idleProgress(s).text).toContain('받을 수 있다');
   });
 });

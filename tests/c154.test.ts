@@ -36,6 +36,8 @@ describe('95장 B1 대기 보상 상시', () => {
     expect(s.idlePending!.hours).toBeCloseTo(9 / 60);
     expect(idleClaimable(s)).toBe(false);
     tickIdle(s, (t += MIN));
+    expect(idleClaimable(s)).toBe(false); // GDD 241-A 7: 10분 = 0.67바퀴 — 한 바퀴(15분)부터
+    for (let i = 0; i < 5; i++) tickIdle(s, (t += MIN));
     expect(idleClaimable(s)).toBe(true);
     expect(s.lastSeenAt).toBe(t);
   });

@@ -1,0 +1,74 @@
+{
+  "shots": [
+    "02-species.png",
+    "03-species-confirm.png",
+    "04-identity-empty-gender.png",
+    "04b-identity.png",
+    "06-room-lock-toast.png",
+    "07-room-more-settings-icon.png",
+    "01-start.png",
+    "05-slot-delete.png",
+    "08-settings-etc-after-one-drag.png"
+  ],
+  "errors": [],
+  "checks": {
+    "speciesTagline": 0,
+    "confirm": "호로로 시작하시겠습니까?\n아니요\n네",
+    "identity": "이름·성별 정하기\n\n호로\n\n6/14\n시작\n\n쓸 수 있는 이름이다\n\n남성\n여성\n\n한글 7자 · 영어 12자까지 · 섞으면 한글 1자 = 영어 2자\n\n이름과 성별은 나중에 설정에서 바꿀 수 있다.\n\n이전",
+    "lockToast": [
+      {
+        "states": 18,
+        "frames": 31,
+        "maxFrameMs": 16.8
+      },
+      {
+        "states": 18,
+        "frames": 30,
+        "maxFrameMs": 16.7
+      },
+      {
+        "states": 18,
+        "frames": 30,
+        "maxFrameMs": 16.8
+      },
+      {
+        "states": 18,
+        "frames": 30,
+        "maxFrameMs": 16.8
+      },
+      {
+        "states": 18,
+        "frames": 31,
+        "maxFrameMs": 16.8
+      },
+      {
+        "states": 18,
+        "frames": 30,
+        "maxFrameMs": 16.8
+      }
+    ],
+    "startOrder": [
+      "이어하기",
+      "불러오기",
+      "새로 시작",
+      "설정"
+    ],
+    "deleteBtnClass": "bha-btn",
+    "deleteYesDisabledEmpty": true,
+    "deleteYesDisabledPartial": true,
+    "deleteYesEnabledTyped": true,
+    "settingsEtcDrag": {
+      "before": {
+        "top": 0,
+        "max": 18,
+        "sh": 312
+      },
+      "afterOneDrag": {
+        "top": 18,
+        "max": 18,
+        "sh": 312
+      },
+      "gridScroller": "visible"
+    }
+  }
+}

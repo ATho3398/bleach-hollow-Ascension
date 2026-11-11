@@ -1114,10 +1114,13 @@ export function accrueIdle(save: SaveData, nowMs: number = Date.now(), online = 
   if (!(hours > 0)) return null;
   const IX = BALANCE.provisional.idle;
   const prev = save.idlePending;
-  const room = Math.max(0, IX.maxHours - (prev?.hours ?? 0));
+  // GDD 241-A 7: 아직 받을 게 없는(한 바퀴도 못 돈) 쌓인 시간이 상한에 닿아 있으면 오래된 빈 시간을 밀어내고 새 시간을 받는다 — 상한에 막혀 영영 못 받는 일이 없게
+  const stale = prev !== null && !idleClaimable(save);
+  const room = stale ? hours : Math.max(0, IX.maxHours - (prev?.hours ?? 0));
   const added = Math.min(hours, room);
   const active = idleActiveHours(hours, save.nest) * (added / hours);
-  const pending: IdlePending = { from: prev?.from ?? save.lastSeenAt, hours: (prev?.hours ?? 0) + added, activeHours: (prev?.activeHours ?? 0) + active };
+  const sumHours = (prev?.hours ?? 0) + added;
+  const pending: IdlePending = { from: prev?.from ?? save.lastSeenAt, hours: Math.min(IX.maxHours, sumHours), activeHours: Math.min(IX.maxHours, (prev?.activeHours ?? 0) + active) };
   if (pending.hours > 0) save.idlePending = pending;
   return { awayHours: Math.max(0, (nowMs - save.lastSeenAt) / 3_600_000), added, pending };
 }
@@ -1135,9 +1138,10 @@ export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
 }
 
 /** 받을 수 있나 (95장 B1): 쌓인 합계가 minMinutes 이상 — 배지·[받기]·복귀 창의 기준 */
-export function idleClaimable(save: Pick<SaveData, 'idlePending'>): boolean {
+export function idleClaimable(save: Pick<SaveData, 'idlePending'> & { nest?: Partial<Pick<NestState, 'bond'>> }): boolean {
   const p = save.idlePending;
-  return p !== null && idleCounts(p.hours);
+  // GDD 241-A 7: 쌓인 시간만 차고 실제로 한 바퀴도 못 돌았으면(배고픔·쇠약·빈사로 덜 돎) '받을 수 있다'·배지·[받기]를 켜지 않는다
+  return p !== null && idleCounts(p.hours) && idleYield(p.activeHours, idleBondMult(save.nest ?? {})).laps >= 1;
 }
 
 /** 받을 보상 미리 보기 (아이콘 창·복귀 창): 지금 받으면 들어올 기준량 (타일은 장 수만 — 무엇이 나올지는 받을 때 뽑는다). 진화 걸음·노력치·먹이는 받을 때 상한에서 잘릴 수 있다 */

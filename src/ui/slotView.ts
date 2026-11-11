@@ -70,7 +70,7 @@ export function slotPickView(root: HTMLElement, mode: SlotPickMode, summaries: r
     ok.dataset.sc = 'slots.ok';
     actions.append(ok);
     if (extra.onDelete) {
-      const del = button({ label: '삭제', icon: 'i-close', variant: 'danger', disabled: !sum || sum.state === 'empty', onClick: () => sum && extra.onDelete?.(sum) });
+      const del = button({ label: '삭제', icon: 'i-close', disabled: !sum || sum.state === 'empty', onClick: () => sum && extra.onDelete?.(sum) });
       del.dataset.sc = 'slots.delete';
       actions.append(del);
     }

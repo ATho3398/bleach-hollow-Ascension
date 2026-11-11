@@ -3342,3 +3342,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `src/data/art/manifest.ts` `isFemaleRigLook(look)` = '-f' 로 끝나거나 '-f-' 를 품음. `src/ui/battleView.ts` bodySlot·`scripts/pixelfx/tool/fx-tool.ts` slotNow 가 이것을 씀 → arrancar-base-f-released 가 여 칸 연결 동작을 씀.
 - 테스트 `tests/c398-female-slot.test.ts`(2 — 사람형 외형 전부 /-f(-|$)/ 와 같게).
 - 테스트 3236 통과(285 파일), typecheck·balance:check 회귀 가드 통과.
+
+## C.399 — 처음 화면·새로 시작·설정 8건 (GDD 241-A 1~8, v5.572, S-23, 코딩267 Opus)
+- 사용자 원문(241-A): 「초기화면 이어하기·불러오기·새로시작 순」 「종족 선택 때 설명 빼고 호로·사신만」 「누르면 '호로로 시작하시겠습니까?' 네/아니요만」 「이름 아래 빈 공간에 성별 버튼」 「성별에 '아란칼화를 깬 뒤부터' 류 문구 삭제」 「새로 시작 삭제 = 빨강 강조 X」 「대기 보상 아이콘 선물상자 → 초시계 롤백」 「설정 아이콘 롤백」 「설정 기타 드래그 2번 해야 됨」 「대기 보상 '받을 수 있다' 인데 덜 돌아 못 받음」 「잠긴 아이콘 누르면 알림 프레임 떨어짐」.
+- 1 `startView` 순서. 2 종족 칸 tagline 삭제, 확인 창 제목만 + 네/아니요. 3 `identityView.identityScreen` 한 화면(이름 → 안내 → 남성·여성), genderScreen·외형 안내 삭제. 4 `slotView` [삭제] 기본 버튼, `confirmDialog.typeToConfirm`(입력칸 `.bha-modal__input` 토큰만) — '삭제' 를 쳐야 [확인].
+- 5 아이콘: C.282 매핑(i-timer 모래시계·i-settings 도트 톱니)·C.284 선물상자 → 옛 스프라이트(초시계·톱니). 전투는 원래 옛 그림.
+- 6 설정: 격자 overflow 삭제(바깥 열만 스크롤), '▼ 더 있음' = 스크롤 칸 밖 겹친 띠(숨겨도 스크롤 높이 312 그대로 — 옛 340↔312 튐). 폰 터치 한 번 끌기 0 → 18(끝).
+- 7 대기 보상: `idleClaimable` = 10분 이상 + 한 바퀴 이상(교감 배율), 아니면 '아직 받을 보상이 없다'·배지 없음. 빈 시간이 상한을 채우면 새 시간이 밀어냄. `idleYield` 내림 부동소수 여유(15 × 1/60 = 1바퀴).
+- 8 측정(빌드, 폰 796×384, CPU 4배, 잠긴 번호 쟁탈전 6번): 알림 띠 들어오기 보이는 상태 4 → 18 / 30프레임, 최대 프레임 16.8ms. 원인 = `.bha-toast.is-in` steps(3) → `--bha-ease-out`. toastLow 강제 레이아웃(누름 처리 9ms@4배)은 rAF 로 미루면 프레임 꼬리 35 → 47ms 라 되돌림(그대로).
+- 세이브·밸런스 변경 없음(balance:check 통과). 테스트 새 `tests/c399.test.ts`(8) + c145·c147·c154·c185·c201·c282·c324·c326·c364 갱신.
+- 캡처 `docs/captures/c399/`(scripts/c399-proof.cjs, 폰 1배): 01 처음 화면 · 02 종족 · 03 종족 확인 · 04/04b 이름·성별 · 05 슬롯 삭제 입력 · 06 잠긴 아이콘 알림 · 07 더보기(초시계·톱니) · 08 설정 기타 한 번 끌기 뒤.
