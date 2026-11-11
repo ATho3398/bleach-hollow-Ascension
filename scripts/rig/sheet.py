@@ -28,7 +28,7 @@ GAP = 2  # 여백 상자끼리 사이(투명)
 
 SHEETS = {
     # 시트 이름 → [(부위 이름, 그림 키, 뼈)] — 공통 머리는 두 시트에 다 넣는다(어느 쪽에서 고쳐도 같은 파일)
-    'shinigami': [('head', 'head_bald', 'head'), ('hair', 'shinigami/hair', 'head'), ('torso', 'shinigami/torso', 'torso'),
+    'shinigami': [('head', 'head_bald', 'head'), ('hair', 'student/hair', 'head'), ('torso', 'shinigami/torso', 'torso'),
                   ('arm_L', 'shinigami/arm_L', 'arm_L'), ('arm_R', 'shinigami/arm_R', 'arm_R'),
                   ('leg_L', 'shinigami/leg_L', 'leg_L'), ('leg_R', 'shinigami/leg_R', 'leg_R')],
     'arrancar': [('head', 'head_bald', 'head'), ('hair', 'arrancar/hair', 'head'), ('mask', 'arrancar/mask', 'head'),

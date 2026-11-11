@@ -245,10 +245,10 @@
   "looks": {
     "shinigami-base": {
       "body": "shinigami",
-      "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/sword", "at": [0, 51], "size": [16, 42] },
       "scabbard": { "art": "weapon/scabbard", "at": [17, 44], "size": [4, 27] },
-      "hairKind": "shinigami",
+      "hairKind": "student",
       "weaponKind": "sword"
     },
     "arrancar-base": {
@@ -304,9 +304,9 @@
     },
     "shinigami-soul": {
       "body": "soul",
-      "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] },
+      "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] },
       "weapon": { "art": "weapon/branch", "at": [1, 53], "size": [17, 43] },
-      "hairKind": "shinigami",
+      "hairKind": "student",
       "weaponKind": "branch"
     },
     "shinigami-base-f": {
@@ -1234,14 +1234,8 @@
   "parts": {
     "note": "머리·무기 바꿔 끼우기 목록 (GDD 115-A 113, 사용자 2026-11-11 \"앞으로는 무기랑 머리 따로 분리하자 … 툴에서 머리 변경, 무기 변경 만들어서 내가 넣은 걸로 언제든 바꿀 수 있게\"). hair.<id> = {name, layers(머리카락·뒷머리 마디 그림·자리 — 머리 그림 자리는 사람형 몸 모두 같음), pivots(뒷머리 관절), src(뒷머리 나누기 전 원본)}, weapon.<id> = {name, art, size, d(칼 자리에서 옮긴 칸), scabbard(칼집을 차는가)}. 외형은 hairKind·weaponKind 로 지금 고른 것을 적는다. 사용자가 새 머리·무기 그림을 주면 여기에 더한다",
     "hair": {
-      "shinigami": {
-        "name": "사신(남) 머리",
-        "layers": {
-          "hair": { "art": "shinigami/hair", "at": [-1, 0], "size": [33, 29] }
-        }
-      },
       "student": {
-        "name": "학생(남) 머리",
+        "name": "사신 기본머리",
         "layers": {
           "hair": { "art": "student/hair", "at": [-1, 0], "size": [33, 29] }
         }
