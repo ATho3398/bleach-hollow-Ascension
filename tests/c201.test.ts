@@ -52,8 +52,9 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
     expect(app).toContain("if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;");
     expect(app).toMatch(/function openMarket[\s\S]*?if \(visit\) wandererAnnounced = visit\.at;/);
   });
-  it('온천이 저절로 끝나면 방으로 (장터에서 들어갔어도)', () => {
-    expect(app).toContain("if (nav.top?.id === 'spa') nestScreen();");
+  it('온천이 저절로 끝나면 방으로, 월드맵에서 들어갔으면 월드맵으로 (GDD 241-E 1)', () => {
+    expect(app).toContain("if (!backLabel) return nestScreen();");
+    expect(app).toContain("spaLeaving = true; // 이미 나온 뒤라");
   });
   it('떠돌이 상인 배지 = 월드맵 시장 (방에는 없음)', () => {
     expect(readFileSync('src/ui/worldMapView.ts', 'utf8')).toContain("if (p === 'market' && here)");
