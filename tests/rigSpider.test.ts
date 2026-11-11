@@ -94,7 +94,10 @@ describe('부유형 뼈대 (GDD 115-A 114)', () => {
     const low = Math.max(...Object.values(w.rig.bodies.ref!).map((p) => p.at[1] + p.size[1]));
     expect(w.rig.ground! - low).toBeGreaterThanOrEqual(4);
     const r0 = boneMatrices(w.rig, {}).torso![5];
-    expect(r0 - boneMatrices(w.rig, samplePose(w.rig, w.motions.idle!, 1000)).torso![5]).toBeGreaterThan(1.5);
+    expect(r0 - boneMatrices(w.rig, samplePose(w.rig, w.motions.idle!, 1300)).torso![5]).toBeGreaterThan(1.5);
+    // 끊기지 않게(사용자 2026-11-12 "너무 뚝뚝 끊기네"): 키는 움직임의 양 끝에만 — 몸 높이가 오르는 동안 중간에 멈칫(같은 높이 두 번)하지 않는다
+    const ys = Array.from({ length: 25 }, (_, i) => boneMatrices(w.rig, samplePose(w.rig, w.motions.idle!, 100 + i * 48)).torso![5]);
+    for (let i = 1; i < ys.length; i++) expect(ys[i - 1]! - ys[i]!, `t${100 + i * 48}`).toBeGreaterThan(0.02);
   });
   it('등 가시·옷자락·꼬리는 따라가기(sway)로 흔들린다 — 동작 키 없이', () => {
     for (const b of ['spike1', 'spike2', 'wisp1', 'wisp2', 'wisp3', 'wisp4', 'tail1', 'tail2']) {
