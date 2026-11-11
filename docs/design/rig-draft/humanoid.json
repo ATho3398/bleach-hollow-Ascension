@@ -248,8 +248,9 @@
       "forearm_L": { "art": "soul/forearm_L", "at": [2, 42], "size": [11, 16] }
     },
     "hk": {
-      "torso": { "art": "hk/torso", "at": [3, 12], "size": [35, 42] },
-      "head": { "art": "hk/head", "at": [-9, 3], "size": [38, 35] },
+      "torso": { "art": "hk/torso", "at": [3, 7], "size": [35, 37] },
+      "pelvis": { "art": "hk/pelvis", "at": [11, 39], "size": [15, 15] },
+      "head": { "art": "hk/head", "at": [-9, 3], "size": [32, 35] },
       "arm_R": { "art": "hk/arm_R", "at": [-1, 28], "size": [13, 15] },
       "forearm_R": { "art": "hk/forearm_R", "at": [-12, 34], "size": [18, 20] },
       "hand_R": { "art": "hk/hand_R", "at": [-17, 47], "size": [18, 26] },
@@ -764,7 +765,8 @@
     "hk": {
       "pivots": {
         "root": [18, 45],
-        "torso": [18, 45],
+        "torso": [18, 41],
+        "pelvis": [18, 41],
         "head": [10, 20],
         "arm_R": [9, 31],
         "forearm_R": [2, 39],
@@ -1164,6 +1166,7 @@
       "leg_L",
       "forearm_R",
       "leg_R",
+      "pelvis",
       "torso",
       "arm_L",
       "hand_L",

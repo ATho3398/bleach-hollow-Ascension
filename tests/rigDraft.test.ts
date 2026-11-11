@@ -42,7 +42,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(resolveMotions(rig, motions, sets)).toBe(motions); // 몸 없으면 기본 동작 그대로
   });
   it('가시형(임시 이름, 몸 hk — 115-A 115): 부위 12개(손이 따로), 손 뼈는 아래팔에 붙고 다른 몸에는 손 그림이 없다, 동작에서 손이 아래팔을 따라 더 꺾인다', () => {
-    expect(Object.keys(rig.bodies.hk!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'hand_L', 'hand_R', 'head', 'leg_L', 'leg_R', 'shin_L', 'shin_R', 'torso']);
+    expect(Object.keys(rig.bodies.hk!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'hand_L', 'hand_R', 'head', 'leg_L', 'leg_R', 'pelvis', 'shin_L', 'shin_R', 'torso']); // 배(pelvis) = 몸통을 가슴 + 배로 나눔(115-A 120)
     expect(rig.looks['spiky-base']!.body).toBe('hk');
     for (const s of ['L', 'R']) expect(rig.bones.find((b) => b.id === `hand_${s}`)!.parent).toBe(`forearm_${s}`);
     for (const [id, b] of Object.entries(rig.bodies)) if (id !== 'hk' && id !== 'hv') expect(b.hand_L ?? b.hand_R, id).toBeUndefined(); // 손 그림 = 가시형·속도형만
@@ -62,7 +62,9 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       expect(Math.sign(at('arm_L', t)), `t${t} arm_L·leg_R`).toBe(Math.sign(at('leg_R', t)));
     }
     const sw = hk.move!.tracks.arm_R!.map((k) => k[1]);
-    expect(Math.max(...sw) - Math.min(...sw)).toBeGreaterThan(35);
+    // 팔 흔들림 폭 = 외팔형(덩치 걷기)과 같게 — 크게 휘두르지 않음(사용자 2026-11-12 04:1x "팔을 너무 크게 휘둘러서 이상한가? … 외팔형이 딱 자연스러운데", 115-A 120 ⑥)
+    expect(Math.max(...sw) - Math.min(...sw)).toBeLessThan(30);
+    expect(sw).toEqual(resolveMotions(rig, motions, sets, 'ho').move!.tracks.arm_R!.map((k) => k[1]));
   });
   it('역관절(dg)은 없앴다 (GDD 231장, 사용자 2026-11-11 "역관절 저 호로는 아예 없애자")', () => {
     expect(rig.bodies.dg).toBeUndefined();

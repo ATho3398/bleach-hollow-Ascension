@@ -16,9 +16,9 @@ describe('거미형 뼈대 (GDD 115-A 106)', () => {
   it('뼈대 검사 통과, 조각 14개 그림이 있고 동작 8개(공격3 포함)', () => {
     expect(validateRig(rig, motions, sets)).toEqual([]);
     const layers = lookLayers(rig, 'spider-base');
-    expect(layers.length).toBe(14);
+    expect(layers.length).toBe(15); // 가까운 팔 = 위팔 + 아래팔·손(115-A 120)
     for (const l of layers) expect(existsSync(`docs/design/rig-draft/spider/${l.art}.png`), l.art).toBe(true);
-    expect(Object.keys(motions).sort()).toEqual(['attack', 'attack2', 'attack3', 'hit', 'idle', 'move', 'release1', 'skill']);
+    expect(Object.keys(motions).sort()).toEqual(['attack', 'attack2', 'attack3', 'down', 'dying', 'hit', 'idle', 'move', 'release1', 'skill']);
   });
   it('제자리 동작(대기·공격1·특수·맞음): 몸이 움직여도 발끝 넷은 바닥 그 자리', () => {
     for (const id of ['idle', 'attack', 'skill', 'hit']) {
