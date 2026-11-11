@@ -124,11 +124,6 @@
   "duration": 650,
   "loop": false,
   "hit": 340,
-  "front": [
-   "arm1",
-   "forearm1",
-   "hand1"
-  ],
   "tracks": {
    "root": [
     [0, 0, 0, 0],
@@ -199,11 +194,6 @@
   "duration": 700,
   "loop": false,
   "hit": 360,
-  "front": [
-   "arm2",
-   "forearm2",
-   "hand2"
-  ],
   "tracks": {
    "root": [
     [0, 0, 0, 0],
@@ -344,11 +334,6 @@
   "duration": 1250,
   "loop": false,
   "hit": 750,
-  "front": [
-   "arm1",
-   "forearm1",
-   "hand1"
-  ],
   "tracks": {
    "root": [
     [0, 0, 0, 0],

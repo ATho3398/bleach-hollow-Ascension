@@ -124,6 +124,8 @@ describe('부유형 뼈대 (GDD 115-A 114)', () => {
     // 공격3: 머리가 앞(왼쪽)으로 10칸 넘게 나간다
     const head = (t: number) => boneMatrices(w.rig, samplePose(w.rig, w.motions.attack3!, t), 'ref').head![4];
     expect(head(0) - head(w.motions.attack3!.hit!)).toBeGreaterThan(8);
+    // 동작 중에 팔을 맨 앞으로 올리지 않는다 — 앞뒤 순서는 고정한 순서 그대로(사용자 "왼팔이 맘대로 몸 위로 올라옴")
+    for (const [id, mo] of Object.entries(w.motions)) expect(mo.front ?? [], id).toEqual([]);
     // 특수1: 왼손은 들리고 오른팔은 거의 그대로
     expect(Math.abs(samplePose(w.rig, w.motions.skill!, 700).arm1!.rot)).toBeGreaterThan(45);
     expect(Math.abs(samplePose(w.rig, w.motions.skill!, 700).arm2!.rot)).toBeLessThan(10);
