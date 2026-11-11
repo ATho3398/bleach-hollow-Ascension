@@ -12,6 +12,7 @@ import type { FactionConfig } from '../engine/faction';
 import type { TextGuideId } from '../engine/tutorial';
 import { button, el, icon, meter, setMeter } from './bha/dom';
 import { heroEl } from './bha/battle';
+import { animOf } from './bha/animPlayer';
 import { tween } from './bha/actionFx';
 import { tileCss, tileIconId } from './bha/expedition';
 import { lcdPage } from './bha/lcdpage';
@@ -101,6 +102,12 @@ export function tutorialWoundView(root: HTMLElement, faction: FactionConfig, art
   const pct = (x: number) => Math.round(Math.max(0, Math.min(1, x)) * 100);
   const hero = heroEl(art);
   hero.root.classList.add('bha-wound__hero');
+  // 빈사 자세 (GDD 241-B 3): 종이인형에 빈사 자세 동작이 있으면 그 동작을 반복(비틀거림 CSS 는 끈다). 없으면 옛 비틀거림 그대로
+  const anim = animOf(hero.root);
+  if (anim?.has('dying')) {
+    anim.setLoop('dying');
+    hero.root.classList.add('is-rig-dying');
+  }
   const fig = el('div', 'bha-wound__fig');
   fig.append(hero.root);
   const from = pct(hpFrom);

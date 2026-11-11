@@ -4,7 +4,7 @@ import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
 import {
-  playScriptedCombat, scriptAck, scriptPrompt, scriptStep, type CombatEvent, type CombatState, type ScriptStage,
+  canLiberate, liberationActive, playScriptedCombat, scriptAck, scriptPrompt, scriptStep, type CombatEvent, type CombatState, type ScriptStage,
 } from '../src/engine/combat';
 import { advance, createExpedition, playExpedition, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { guidePending } from '../src/engine/tutorial';
@@ -39,6 +39,7 @@ const runLog = (s: CombatState) => {
     if (p?.wait === 'ack') scriptAck(s);
     else if (p?.wait === 'guard') scriptStep(s, { type: 'guard' });
     else if (p?.wait === 'use') scriptStep(s, { type: 'use', cell: 0 });
+    else if (p?.wait === 'liberate') scriptStep(s, { type: 'liberate' }); // GDD 241-B 1
     else scriptStep(s);
     events.push(...s.events.splice(0));
   }
@@ -51,7 +52,7 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
       const { s } = tutorialBattle(f);
       expect(s.script?.stage).toBe('auto-intro');
       const { prompts, events } = runLog(s);
-      expect(prompts).toEqual(['auto-intro', 'guard-now', 'guard-ok', 'hurt', 'nice', 'chain-use']);
+      expect(prompts).toEqual(['auto-intro', 'guard-now', 'guard-ok', 'hurt', 'nice', 'lib-now', 'lib-explain', 'chain-use']); // GDD 241-B 1: 해방 안내
       expect(s.status).toBe('won');
       // 사건 순서: 평타 3 → 예고 → 막기 → 막은 착탄 → 평타 2 → 예고 → 못 막은 착탄 → 블록 1 → 체인 3
       const seq = events.filter((e) => ['player-attack', 'heavy-cast', 'heavy-hit', 'block', 'enemy-attack'].includes(e.kind)).map((e) =>
@@ -126,6 +127,18 @@ describe('123장 5: 첫 원정 첫 전투 = 각본 전투', () => {
       expect(scriptPrompt(s)).toEqual({ stage: 'nice', wait: 'ack' });
       scriptAck(s);
       while (!scriptPrompt(s)) scriptStep(s);
+      // GDD 241-B 1: 해방 게이지 가득 → 해방을 기다림(다른 입력은 안 받음) → 해방 중 같은 블록 3개 → 해방 설명 → 체인
+      expect(scriptPrompt(s)).toEqual({ stage: 'lib-now', wait: 'liberate' });
+      expect(canLiberate(s)).toBe(true);
+      expect(scriptStep(s, { type: 'use', cell: 0 })).toEqual([false]);
+      expect(scriptStep(s, { type: 'liberate' })).toEqual([true]);
+      expect(liberationActive(s)).toBe(true);
+      expect(s.tray).toHaveLength(0); // 각본은 해방 즉시 지급 블록(난수)을 넣지 않는다
+      while (!scriptPrompt(s)) scriptStep(s);
+      expect(scriptPrompt(s)).toEqual({ stage: 'lib-explain', wait: 'ack' });
+      expect(s.tray).toHaveLength(TS.chainLength);
+      expect(liberationActive(s)).toBe(true);
+      scriptAck(s);
       expect(scriptPrompt(s)).toEqual({ stage: 'chain-use', wait: 'use' });
       expect(s.tray).toHaveLength(TS.chainLength);
     }

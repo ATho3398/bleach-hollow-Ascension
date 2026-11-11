@@ -68,6 +68,8 @@ export interface SpaStay {
   fullness: number;
   /** 튜토리얼 온천 (GDD 145장 1, 형식 57): 옛 빠르기(homeHp.tutorialSpa, 10초에 가득) — 평소 온천은 약 20초(GDD 164장) */
   fast?: true;
+  /** 탕에 다 앉는 시각 (GDD 241-B 4, 형식 73): 화면에서 걸어 들어갈 때만 = 들어간 시각 + homeHp.spaEnterSeconds. 그 전까지는 체력·컨디션·배부름이 안 바뀐다. 없으면 바로 */
+  soakAt?: number;
 }
 
 /** 온천에서 나온 결과 (GDD 123장 4): reason = full(체력 상한) / hungry(배부름 0) / left(뒤로) / away(원정·빈사로 끊김) */
@@ -204,12 +206,12 @@ export function spaFull(nest: Pick<NestState, 'hpFraction' | 'collapsed' | 'cond
 }
 
 /** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력·컨디션 둘 다 가득(135장 2)·배부름 0 이면 못 들어간다(이유). 들어가면 null */
-export function enterSpa(nest: NestState, nowMs: number, fast = false): 'dead' | 'already' | 'full' | 'hungry' | null {
+export function enterSpa(nest: NestState, nowMs: number, fast = false, walkIn = false): 'dead' | 'already' | 'full' | 'hungry' | null {
   if (nest.dead) return 'dead';
   if (nest.spa) return 'already';
   if (spaFull(nest)) return 'full';
   if (fullnessOfNest(nest) <= 0) return 'hungry';
-  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest), ...(fast ? { fast: true as const } : {}) };
+  nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest), ...(fast ? { fast: true as const } : {}), ...(walkIn ? { soakAt: nowMs + HH.spaEnterSeconds * 1000 } : {}) };
   return null;
 }
 
@@ -227,6 +229,12 @@ export function spaRateOf(stay: Pick<SpaStay, 'fast'> | null | undefined): { hpP
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
+  // 걸어 들어가는 동안 (GDD 241-B 4): 화면에서 들어갔으면 다 앉기 전(soakAt)까지는 아무것도 안 바뀐다 — 온천 시간으로는 센다
+  const wait = nest.spa.soakAt === undefined ? 0 : Math.min(minutes, Math.max(0, (nest.spa.soakAt - startMs) / 60_000));
+  if (wait > 1e-9) {
+    const r = wait >= minutes ? { used: 0, ended: null } : spaStep(nest, minutes - wait, startMs + wait * 60_000);
+    return { used: wait + r.used, ended: r.ended };
+  }
   const cap = homeHpCap(nest);
   nest.hpFraction = homeHpOf(nest);
   const rate = spaRateOf(nest.spa);

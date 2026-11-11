@@ -24,7 +24,8 @@
     "purify": "{risk}이(가) 내려가지만 써서 교감이 준다",
     "relic": "귀한 물건이라 비싸게 팔린다. 먹으면 아깝다",
     "snack": "{fullness}이(가) 조금 찬다. 맛은 없다",
-    "scrap": "{fullness}이(가) 조금 찬다. 맛은 없다"
+    "scrap": "{fullness}이(가) 조금 찬다. 맛은 없다",
+    "tutorial": "{fullness}이(가) 가득 찬다. 튜토리얼용"
   },
   "kind": {
     "food": { "*": "배를 채운다" },

@@ -6,6 +6,7 @@ import { BALANCE } from './config/balance';
 import type { FoodId } from './engine/faction';
 import { guidePending, markGuideDone, queueGuide } from './engine/tutorial';
 import { clearFoodStreak } from './engine/nest';
+import { NORMAL_FOODS } from './engine/foodPref';
 import { cureNest, feedNest, tickIdle, type SaveData } from './game';
 import { grantFood, homeHp, setHomeHpOf, spaEnter, spaLeave, spaSoak } from './home';
 import { storeConsumable } from './shop';
@@ -78,10 +79,16 @@ export function grantRecoverFood(save: SaveData): void {
   clearFoodStreak(save.nest, TR.food as FoodId); // 튜토리얼 예외 (GDD 234장 3): 같은 먹이 한도로 안내 먹이가 막히지 않게 그 종류 묶음만 비운다
 }
 
+/** 회복 안내 보상 (GDD 241-B 5): 먹이 안내를 마치면 일반 먹이 6종 각 rewardEach 개. 받은 [먹이, 개수] (새 게임 시작 지급 241-C 5 와 별개) */
+export function grantRecoverReward(save: SaveData): [FoodId, number][] {
+  return NORMAL_FOODS.map((f) => [f, grantFood(save, f, TR.rewardEach)] as [FoodId, number]);
+}
+
 /** ⑥ 사용자가 먹이를 준 뒤: 배부름·체력 가득(튜토리얼 각본 값) · 안내를 마친다 → 다음 안내('다음 할 일') 차례 */
 export function recoverFeedDone(save: SaveData): void {
   save.nest.hunger = 0;
   setHomeHpOf(save, 1);
+  grantRecoverReward(save);
   markGuideDone(save.help, 'recover');
   queueGuide(save.help, 'first-run-room');
 }
@@ -94,6 +101,7 @@ export function recoverFeed(save: SaveData, nowMs: number): void {
   feedNest(save, food, nowMs);
   save.nest.hunger = 0;
   setHomeHpOf(save, 1);
+  grantRecoverReward(save);
   markGuideDone(save.help, 'recover');
   queueGuide(save.help, 'first-run-room');
 }

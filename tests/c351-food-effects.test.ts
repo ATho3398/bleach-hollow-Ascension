@@ -26,6 +26,7 @@ function expected(list: readonly FoodFx[], before?: Snap): Snap {
   const e: Snap = { hunger: 0, cond: 0, hp: 0, bond: 0, risk: 0 };
   for (const f of list) e[f.key] = f.amount;
   if (before && e.hp >= 100) e.hp = Math.round((100 - before.hp) * 10) / 10; // 체력 가득 특식 (GDD 235장 1): 가득까지
+  if (before && e.hunger >= 100) e.hunger = Math.round((100 - before.hunger) * 10) / 10; // 배부름 가득 = 첫 끼니 (GDD 241-B 5): 가득까지
   return e;
 }
 

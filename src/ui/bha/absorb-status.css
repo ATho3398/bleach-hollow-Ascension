@@ -186,6 +186,16 @@
 .bha-lcd .bha-evolvev2 > section[hidden] { display: none; }
 .bha-lcd .bha-evolvev2 .bha-evolve__crack { flex: none; width: 96px; height: 96px; margin: 0; color: var(--bha-sp-hi); }
 .bha-lcd .bha-evolvev2 .bha-evolve__crack .bha-i { width: 96px; height: 96px; }
+/* 새 진화체 그림 (GDD 241-B 7): 연출 = 변화 아이콘 자리에 그림이 빛 속에서 드러남(아이콘은 뒤에서 흩어짐), 결과 = 왼쪽 판 맨 위 */
+.bha-lcd .bha-evolvev2 .bha-evolve__crack.has-fig { position: relative; width: 150px; height: 150px; }
+.bha-lcd .bha-evolvev2 .bha-evolve__crack.has-fig > .bha-i { position: absolute; inset: 0; margin: auto; animation: bha-evo2-spark 1.6s ease-out both; }
+.bha-evolve__fig { display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.bha-evolve__fig > .bha-hero { height: 100%; aspect-ratio: 1; max-width: 100%; }
+.bha-evolve__fig--reveal { position: absolute; inset: 0; animation: bha-evo2-reveal 1.8s ease-out both; }
+.bha-evolve__fig--result { flex: none; height: 96px; }
+@keyframes bha-evo2-reveal { 0% { opacity: 0; filter: brightness(0); transform: scale(0.85); } 45% { opacity: 1; filter: brightness(0) drop-shadow(0 0 10px var(--bha-sp-hi)); } 100% { opacity: 1; filter: none; transform: scale(1); } }
+@keyframes bha-evo2-spark { 0% { opacity: 1; transform: scale(0.6); } 60% { opacity: 0.8; transform: scale(1.4); } 100% { opacity: 0; transform: scale(1.8); } }
+@media (prefers-reduced-motion: reduce) { .bha-evolve__fig--reveal, .bha-lcd .bha-evolvev2 .bha-evolve__crack.has-fig > .bha-i { animation: none; } .bha-lcd .bha-evolvev2 .bha-evolve__crack.has-fig > .bha-i { opacity: 0; } }
 .bha-lcd .bha-evolvev2 .bha-evolve__lines { min-height: 0; gap: var(--bha-sp-4); align-items: flex-start; text-align: left; }
 .bha-lcd .bha-evolvev2 .bha-evolve__line { font-size: var(--bha-fs-lg); animation-name: bha-evo2-line; }
 .bha-evolvev2 .bha-evolve__dock { justify-content: flex-end; }

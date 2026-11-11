@@ -23,7 +23,7 @@ describe('독 펼침 상태', () => {
 
 describe('먹이 5종', () => {
   it('14종(3유형, GDD 235장 · 239장 특식 6종)이고 종족마다 이름이 모두 있다(종족 id 분기 없이 설정에서 읽는다)', () => {
-    expect(FOOD_IDS).toHaveLength(14);
+    expect(FOOD_IDS).toHaveLength(15); // + 첫 끼니 (GDD 241-B 5)
     expect(Object.keys(BALANCE.provisional.nest.foods).sort()).toEqual([...FOOD_IDS].sort());
     for (const f of FACTIONS) for (const id of FOOD_IDS) expect(f.foodNames[id].length).toBeGreaterThan(0);
   });

@@ -47,7 +47,7 @@ describe('182-2 허용 대상에서 시작한 누름은 끝까지 지나간다',
 describe('182-2 단계마다 가르치는 행동 = 허용 대상 (두 종족 공통 — 종족 분기 없음)', () => {
   const bv = read('src/ui/battleView.ts');
   it('각본 전투: 막기 안내 = [막기], 블록 안내(블록 1개·체인) = 블록 바 블록 (기기 ▲▼✓ 도 같은 선택자)', () => {
-    expect(bv).toContain(`waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined`);
+    expect(bv).toContain(`waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : pr.wait === 'liberate' ? '[data-sc="liberate"]' : undefined`); // 241-B 1 해방 안내 = 캐릭터(해방 버튼)
     expect(bv).toContain("tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));");
     // 블록 바는 누름을 붙잡는다 → 위 누름 추적이 있어야 놓기가 지나간다
     expect(bv).toContain('tray.root.setPointerCapture(e.pointerId);');

@@ -45,7 +45,7 @@ describe('155장 2 회복 안내 6/7 멈춤', () => {
     expect(v).toContain('    if (exiting) return;\n    if (p.spaEnded || !n.spa) {');
   });
   it('회복 안내 카드 = 4장 (빈사·가방 → 구급상자 → 온천 → 먹이, GDD 193장 8 — 옛 7장)', () => {
-    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'feed']);
+    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'fullness', 'feed']); // GDD 241-B 5
   });
   for (const fid of ['hollow', 'shinigami']) {
     it(`${fid}: 1~7 끝까지 — 온천에서 저절로 가득 차 나온 뒤 [다음](나가기 다시 부름)이어도 먹이 단계로 이어진다`, () => {

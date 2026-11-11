@@ -24,7 +24,8 @@ import { towerResultView, towerView } from './towerView';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceLossLines, careBlockText } from './bha/roomLogic';
-import { previewHomeHp, type AbsenceReport } from '../engine/nest';
+import { fullnessOfNest, previewHomeHp, type AbsenceReport } from '../engine/nest';
+import { NORMAL_FOODS } from '../engine/foodPref';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
@@ -433,6 +434,7 @@ export function startApp(host: HTMLElement): void {
       spaHpPct: pct(HH.tutorialSpa.hpPerSecond), spaFullness: String(HH.tutorialSpa.fullnessPerSecond), spaCond: String(HH.tutorialSpa.conditionPerSecond), spaNormalSec: String(Math.round(1 / HH.spa.hpPerSecond)), // 튜토리얼 온천 10초 · 평소 약 20초 (GDD 164장 1)
       idleHpPct: pct(HH.idlePerMinute), // 옛 7/7 '회복 끝' 문구용(193장 8 에서 카드 삭제) — 주석 안에 묻혀 빠져 있어 카드가 빈 채 멈췄다 (GDD 155장 2)
       foodName: faction.foodNames[BALANCE.provisional.tutorialRecover.food], foodId: TR.food, nestName: faction.nestName, // '방' = 종족 이름 (GDD 176장 9)
+      fullnessNow: '', // 배부름 카드 지금 값 — 카드를 띄울 때 채운다 (GDD 241-B 5)
     };
     const toRoom = () => {
       if (nav.top?.id !== 'room') nestScreen();
@@ -481,6 +483,8 @@ export function startApp(host: HTMLElement): void {
           if (!spaExitFx(leave)) leave();
         },
       },
+      // 배부름 카드 (GDD 241-B 5): 지금 배부름 수치를 먼저 보여 준다 — 설명 카드([다음]), 펼친 먹이 줄 없이 방에서
+      fullness: { show: () => toRoom() },
       feed: {
         // 먹인 순간(방 onFed) 각본 값을 넣어, 방 막대가 약 1초에 걸쳐 그 값까지 차는 걸 보여 준다 (GDD 132장 3)
         show: () => { grantRecoverFood(s); fedAt = s.nest.lastFedAt; recoverFedHook = () => recoverFeedDone(s); persist(); onRoomRender(); },
@@ -494,7 +498,13 @@ export function startApp(host: HTMLElement): void {
           return true;
         } },
         // 끝나면: 펼친 먹이 줄이 남아 있으면 닫는다 — 옛 '회복 끝' 카드가 하던 일 (GDD 162장 2)
-        next: (go) => { document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click(); go(); },
+        next: (go) => {
+          document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click();
+          // 보상 (GDD 241-B 5): 일반 먹이 6종 각 rewardEach 개 — 지급은 recoverFeedDone, 여기선 알림만
+          showToast({ eyebrow: '튜토리얼 보상', title: `일반 ${faction.foodGroupName} 6종 각 ${TR.rewardEach}개`, meta: NORMAL_FOODS.map((f) => faction.foodNames[f]).join(' · '), center: true }, 0, 3200);
+          onRoomRender();
+          go();
+        },
       },
     };
     /** 투명한 막(recover-wait)으로 ms 동안 터치·기기 버튼을 받지 않다가 then */
@@ -510,8 +520,8 @@ export function startApp(host: HTMLElement): void {
       }, ms);
     };
     const ids = RECOVER_SCENES.map((x) => x.id);
-    // 이어 가기: 빈사 = 처음, 온천 = 방에서 온천 카드, 먹이 = 방에서 먹이 카드
-    const first = start === 'dying' ? 0 : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('feed');
+    // 이어 가기: 빈사 = 처음, 온천 = 방에서 온천 카드, 먹이 = 방에서 배부름 카드(GDD 241-B 5 — 먹이 카드 앞)
+    const first = start === 'dying' ? 0 : start === 'spa' ? ids.indexOf('to-spa') : ids.indexOf('fullness');
     const show = (i: number): void => {
       const scene = RECOVER_SCENES[i];
       if (!scene) {
@@ -524,7 +534,7 @@ export function startApp(host: HTMLElement): void {
       if (st.skip?.()) return show(i + 1);
       st.show?.();
       tutorialOverlay(faction, {
-        scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars,
+        scenes: [scene], name: 'recover', pauseLabel: null, finishLabel: '다음', vars: { ...vars, fullnessNow: String(Math.round(fullnessOfNest(s.nest))) }, // 배부름 카드는 지금 값 (GDD 241-B 5)
         script: { step: `회복 안내 ${i + 1} / ${RECOVER_SCENES.length}`, act: st.act },
         onFinish: (status) => {
           if (status !== 'completed') {
@@ -1112,7 +1122,7 @@ export function startApp(host: HTMLElement): void {
     const name = worldMapOf(faction).places.spa;
     if (enter) {
       if (careBlocked(s)) return;
-      const why = s.nest.spa ? null : spaEnter(s);
+      const why = s.nest.spa ? null : spaEnter(s, Date.now(), true); // 걸어 들어가 다 앉은 뒤부터 찬다 (GDD 241-B 4)
       if (why) return void showToast({ eyebrow: name, title: SPA_BLOCK_TEXT[why], meta: '' }, 0, 2600);
       persist();
     }
@@ -2071,7 +2081,7 @@ export function startApp(host: HTMLElement): void {
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded), art: heroArtOf(roomOf(faction), faction.id, artTierIndexOf(s), artSkinOf(s)) }; // 새 진화체 그림 (GDD 241-B 7)
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
@@ -2159,7 +2169,7 @@ export function startApp(host: HTMLElement): void {
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
       onEvolved: (fromTier, r) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded) };
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: heroArtOf(roomOf(faction), faction.id, artTierIndexOf(s), artSkinOf(s)) }; // 새 진화체 그림 (GDD 241-B 7)
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);

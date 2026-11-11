@@ -667,6 +667,8 @@ export interface LiberationState {
   base: { stats: Stats; maxHp: number } | null;
   /** 해방이 끝나며 오른 리스크 게이지 합 (안 썼으면 0). 원정·둥지가 전투 뒤에 반영한다 */
   risk: number;
+  /** 각본 전투(튜토리얼)에서 켠 해방이면 true — 풀려도 리스크가 오르지 않는다 (GDD 241-B 1) */
+  scripted?: boolean;
 }
 
 export interface Dot {
@@ -1669,6 +1671,13 @@ export function scriptSpawnBlock(s: CombatState, traitId: string, family: string
   return spawn(s, 'skill', traitId, family);
 }
 
+/** 각본 전투 해방 안내 (GDD 241-B 1): 해방 게이지를 가득 채운다 (각본 전투는 게이지가 저절로 차지 않는다). 해방이 꺼져 있으면 아무것도 안 함 */
+export function scriptFillLiberation(s: CombatState): void {
+  if (!s.params.liberationEnabled || liberationActive(s)) return;
+  s.liberation.gauge = LIBERATION_GAUGE_MAX;
+  emit(s, { kind: 'liberation-ready' });
+}
+
 /** 각본 전투 (GDD 123장 5): 적이 지금 강공격을 시전한다 (예고 seconds 초) */
 export function scriptHeavyCast(s: CombatState, seconds: number): void {
   const total = ticksOf(s.params, seconds);
@@ -1914,6 +1923,7 @@ function liberate(s: CombatState): boolean {
   if (lb.usedAtTick === null) lb.usedAtTick = s.tick;
   lb.uses++;
   lb.gauge = 0;
+  if (s.script) lb.scripted = true;
   lb.ticksLeft = ticksOf(p, p.liberationSeconds);
   lb.spawnAcc = 0;
   lb.nextSlot = 0;
@@ -1934,6 +1944,7 @@ function liberate(s: CombatState): boolean {
 /** 해방 순간 지급 (GDD 95장 B2 C.166 후속·106장 4): 평소 출현표(공허 빼고)에서 n개를 바로 넣어 첫 블록까지 공백을 없앤다. 바가 차 있으면 맨 오른쪽 옛 블록을 밀어낸다.
  *  다음 생성은 해방 간격 한 번 뒤 */
 function grantLiberationBlocks(s: CombatState, n: number): void {
+  if (s.script) return; // 각본 전투(GDD 241-B 1)는 난수 없이 — 해방 뒤 블록은 각본이 3개 놓는다
   const entries = spawnTableOf(s.params).entries.filter((e) => e.source);
   if (entries.length === 0) return;
   for (let k = 0; k < n; k++) {
@@ -1956,8 +1967,10 @@ function endLiberation(s: CombatState): void {
   }
   lb.ticksLeft = 0;
   lb.gauge = 0;
-  lb.risk += s.params.liberationRisk;
-  s.events.push({ kind: 'liberation-end', risk: s.params.liberationRisk });
+  // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다
+  const risk = lb.scripted ? 0 : s.params.liberationRisk;
+  lb.risk += risk;
+  s.events.push({ kind: 'liberation-end', risk });
 }
 
 function shuffleTray(s: CombatState): void {

@@ -67,8 +67,8 @@ describe('144장 2·3: 쓰는 곳 = 원정 걷기·전투만', () => {
 
 describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () => {
   it('방 포션 단계·상인 안내 삭제 → 구급상자 → 온천', () => {
-    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'feed']); // 193장 8 (C.304): 빈사+가방 · 온천(쉬기 합침) · 먹이(회복 끝 합침) — 옛 7장
-    expect(RECOVER_SCENES.length).toBeLessThanOrEqual(4);
+    expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'fullness', 'feed']); // GDD 241-B 5: 먹이 앞 배부름 카드 // 193장 8 (C.304): 빈사+가방 · 온천(쉬기 합침) · 먹이(회복 끝 합침) — 옛 7장
+    expect(RECOVER_SCENES.length).toBeLessThanOrEqual(5); // 241-B 5 배부름 카드 +1
   });
   it('새 세이브 가방 = 구급상자 3 + 반창고 3·붕대 2·회복약 1', () => {
     expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 });
@@ -138,7 +138,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
 
 describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
   it('하루 판매 기록이 빈 것으로 생기고, 가방 개수(옛 id)는 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(75); // C.403 기능 해금 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(76); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[56]).toBe('function');
     const s = newSaveData('hollow', T0);
     s.shared.items = { 'battle-potion': 4, 'w-hp-potion': 1 };

@@ -49,7 +49,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(75); // C.403 기능 해금 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(76); // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {

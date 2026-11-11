@@ -51,7 +51,7 @@ describe("224장 1: '일반 공격은 자동' 카드", () => {
     expect(tutorial.script[0]!.id).toBe('auto-intro');
     const stages: string[] = [];
     playScriptedCombat(scripted({ hitDelay: HD(0.3, { heavy: 0.8 }) }), (x) => { if (stages.at(-1) !== x) stages.push(x); });
-    expect(stages).toEqual(['auto-intro', 'guard-now', 'guard-ok', 'hurt', 'nice', 'chain-use']);
+    expect(stages).toEqual(['auto-intro', 'guard-now', 'guard-ok', 'hurt', 'nice', 'lib-now', 'lib-explain', 'chain-use']); // GDD 241-B 1
   });
 });
 

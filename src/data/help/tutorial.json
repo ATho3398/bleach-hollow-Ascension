@@ -91,6 +91,22 @@
       "body": "블록 스킬을 잘 썼다!"
     },
     {
+      "id": "lib-now",
+      "targets": [
+        "battle.liberation"
+      ],
+      "title": "{libName}",
+      "body": "{libName} 게이지가 가득 찼다! 캐릭터 주위가 빛나면 {libName}을(를) 쓸 수 있다.\n캐릭터를 눌러 {libName}해 보자."
+    },
+    {
+      "id": "lib-explain",
+      "targets": [
+        "battle.tray"
+      ],
+      "title": "{libName} 중",
+      "body": "{libName}하면 블록이 빨리 나오고 공격 속도도 빨라진다.\n진화체에 따라 특수 효과도 붙는다."
+    },
+    {
       "id": "chain-use",
       "targets": [
         "battle.tray"
@@ -160,7 +176,19 @@
           "body": "체력이 차오른다."
         }
       ],
-      "done": "체력이 가득 찼다!"
+      "done": "체력이 {spaToPct}%까지 찼다!"
+    },
+    {
+      "id": "fullness",
+      "targets": [
+        "@.bha-room__status [data-gauge=\"hunger\"]"
+      ],
+      "avoid": [
+        "@.bha-room__status",
+        "@.bha-room__hp"
+      ],
+      "title": "{fullnessName}",
+      "body": "{spaName}에서 쉬는 동안 배가 꺼져 {fullnessName}이(가) {fullnessNow}(으)로 줄었다.\n{fullnessName}이(가) 낮으면 컨디션이 떨어진다. 먹이를 먹여 채워 주자."
     },
     {
       "id": "feed",
@@ -168,13 +196,13 @@
         "@.bha-homedock__carebtn--feed"
       ],
       "title": "{nestActionsShort.feed}",
-      "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자.",
+      "body": "튜토리얼용 {foodName}을(를) 받았다. 먹이면 {fullnessName}이(가) 가득 찬다.\n{foodName}을(를) 먹여 보자.",
       "stages": [
         {
           "targets": [
             "@.bha-homedock__carebtn--feed"
           ],
-          "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+          "body": "튜토리얼용 {foodName}을(를) 받았다. 먹이면 {fullnessName}이(가) 가득 찬다.\n{foodName}을(를) 먹여 보자."
         },
         {
           "targets": [
@@ -185,7 +213,7 @@
             "@.bha-room__status",
             "@.bha-room__hp"
           ],
-          "body": "{spaName}에서 배가 꺼졌다.\n{foodName}을(를) 먹어 보자."
+          "body": "튜토리얼용 {foodName}을(를) 받았다. 먹이면 {fullnessName}이(가) 가득 찬다.\n{foodName}을(를) 먹여 보자."
         }
       ],
       "avoid": [

@@ -1,0 +1,154 @@
+{
+ "facts": {
+  "shots": [
+   "02-guard-shield",
+   "01-lib-now",
+   "03-lib-explain",
+   "04-first-absorb",
+   "05-wound-dying",
+   "06-spa-done",
+   "07-fullness-card",
+   "08-feed-reward",
+   "09-evolve-cutscene",
+   "10-evolve-result"
+  ],
+  "stages": [
+   {
+    "name": "home-intro",
+    "title": "둥지",
+    "body": "여기가 둥지다.위는 배부름·컨디션·광기이고, 체력은 그대로 모험에 가져간다."
+   },
+   {
+    "name": "home-intro",
+    "title": "돌보기",
+    "body": "먹이·재우기·교감으로 돌본다."
+   },
+   {
+    "name": "home-intro",
+    "title": "첫 모험",
+    "body": "이제 모험을 떠나자.월드맵으로 나가 보자."
+   },
+   {
+    "name": "first-run",
+    "title": "첫 모험",
+    "body": "모험을 떠나 길을 나아가다 보면 적을 마주친다.적과 마주치면 전투가 시작된다."
+   },
+   {
+    "name": "script",
+    "title": "자동 공격",
+    "body": "일반 공격은 자동이다!따로 누르지 않아도 알아서 적을 공격한다."
+   },
+   {
+    "name": "script",
+    "title": "강공격",
+    "body": "적의 강공격 게이지가 가득 찼다!막기를 눌러 보자."
+   },
+   {
+    "name": "script",
+    "title": "막기 성공",
+    "body": "강공격을 막아 냈다!강적의 강공격은 때맞춰 막기로 막을 수 있다."
+   },
+   {
+    "name": "script",
+    "title": "위기",
+    "body": "연달아 들어온 강공격에 체력이 얼마 남지 않았다.블록 스킬로 적을 더 빨리 쓰러뜨려 보자."
+   },
+   {
+    "name": "script",
+    "title": "좋아!",
+    "body": "블록 스킬을 잘 썼다!"
+   },
+   {
+    "name": "script",
+    "title": "영력 해방",
+    "body": "영력 해방 게이지가 가득 찼다! 캐릭터 주위가 빛나면 영력 해방을 쓸 수 있다.캐릭터를 눌러 영력 해방해 보자."
+   },
+   {
+    "name": "script",
+    "title": "영력 해방 중",
+    "body": "영력 해방하면 블록이 빨리 나오고 공격 속도도 빨라진다.진화체에 따라 특수 효과도 붙는다."
+   },
+   {
+    "name": "script",
+    "title": "체인",
+    "body": "같은 블록이 모이면 체인이 발동해 더 강한 공격이 나간다(최대 3개).3체인 블록을 써 보자."
+   },
+   {
+    "name": "first-absorb",
+    "title": "포식",
+    "body": "적을 쓰러뜨리면 포식해서 성장할 수 있다.포식: 블록과 능력치를 함께 얻는다속성 포식: 블록만 얻고 그 속성 쪽으로 자란다능력치 포식: 능력치를 두 배로 얻는다놓아주기: 얻지 않고 놓아준다"
+   },
+   {
+    "name": "first-absorb",
+    "title": "첫 포식",
+    "body": "갈래를 고르면 아래에 설명이 나온다.설명 아래 버튼을 눌러 포식해 보자."
+   },
+   {
+    "name": "wound",
+    "title": "겨우 쓰러뜨렸다",
+    "body": "겨우 쓰러뜨렸지만 치명상을 입었다.이대로는 위험하다…"
+   },
+   {
+    "name": "wound",
+    "title": "둥지로",
+    "body": "갈라진 가면 틈으로 영력이 새어 나간다.비틀거리며 둥지로 돌아간다."
+   },
+   {
+    "name": "recover",
+    "title": "빈사",
+    "body": "치명상을 입어 빈사가 됐고, 이대로 두면 죽는다.구급상자가 들어왔으니 가방을 열어 보자."
+   },
+   {
+    "name": "recover",
+    "title": "구급상자",
+    "body": "구급상자를 사용해 보자."
+   },
+   {
+    "name": "recover",
+    "title": "온천",
+    "body": "온천으로 가 보자."
+   },
+   {
+    "name": "recover",
+    "title": "배부름",
+    "body": "온천에서 쉬는 동안 배가 꺼져 배부름이 69로 줄었다.배부름이 낮으면 컨디션이 떨어진다. 먹이를 먹여 채워 주자."
+   },
+   {
+    "name": "recover",
+    "title": "먹이",
+    "body": "튜토리얼용 첫 끼니를 받았다. 먹이면 배부름이 가득 찬다.첫 끼니를 먹여 보자."
+   }
+  ],
+  "guard": {
+   "shield": "block"
+  },
+  "absorbBox": {
+   "actions": [
+    74,
+    101
+   ],
+   "desc": [
+    109,
+    163
+   ],
+   "go": [
+    171,
+    219
+   ],
+   "col": [
+    44,
+    374
+   ]
+  },
+  "rigDying": true,
+  "spaDone": "체력이 80%까지 찼다!",
+  "reward": "튜토리얼 보상 일반 먹이 6종 각 1개",
+  "food": "\"food\":{\"basic\":9,\"sushi\":1,\"roast\":2,\"hearty\":1,\"fizz\":1,\"mushroom\":1,\"feast\":0,\"tonic\":0,\"flesh\":0,\"elixir\":0,\"purify\":0,\"relic\":0,\"snack\":5,\"scrap\":0,\"tutorial\":0}",
+  "evoFig": {
+   "form": "t2:base",
+   "cut": true,
+   "result": true
+  }
+ },
+ "errors": []
+}

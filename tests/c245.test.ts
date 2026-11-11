@@ -48,7 +48,8 @@ describe('162장 2 먹이 단계', () => {
   it('먹으면 연출이 끝난 뒤 [다음] 없이 다음 안내로 · 연출 중에는 창을 숨김 · 펼친 먹이 줄을 닫음 (193장 8 C.304: 결과 카드 \'회복 끝\' 삭제)', () => {
     const app = read('src/ui/app.ts');
     expect(app).toMatch(/bha-homedock__food\[data-food="\$\{TR\.food\}"\]`, autoFinish: true/);
-    expect(app).toContain(`next: (go) => { document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click(); go(); },`);
+    const nx = app.slice(app.indexOf('next: (go) => {', app.indexOf('feed: {')), app.indexOf('go();', app.indexOf('next: (go) => {', app.indexOf('feed: {'))) + 5);
+    expect(nx).toContain(`document.querySelector<HTMLButtonElement>('.bha-homedock__carebtn--feed[aria-expanded="true"]')?.click();`); // 241-B 5: 사이에 보상 알림
     expect(read('src/ui/tutorialOverlay.ts')).toContain('if (actionBusy()) return showCard(false);');
     expect(by.done).toBeUndefined();
     expect(by.feed!.avoid).toContain('@.bha-room__bubble');

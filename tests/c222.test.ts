@@ -29,6 +29,7 @@ const toChainUse = (s: CombatState): void => {
     if (p?.wait === 'ack') scriptAck(s);
     else if (p?.wait === 'guard') scriptStep(s, { type: 'guard' });
     else if (p?.wait === 'use') scriptStep(s, { type: 'use', cell: 0 });
+    else if (p?.wait === 'liberate') scriptStep(s, { type: 'liberate' }); // GDD 241-B 1
     else scriptStep(s);
   }
   s.events.splice(0);

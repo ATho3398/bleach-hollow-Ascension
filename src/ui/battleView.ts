@@ -230,7 +230,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'gear':
       return { role: 'chain', icon: e.effect === 'shield' ? 'i-guard' : 'i-attack', text: e.effect === 'shield' ? `장비 발동! ${gearActiveText(s.params)}` : `장비 발동! ${n(e.damage)} 피해` };
     case 'liberation-end':
-      return { role: 'void', icon: 'i-risk', text: `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` };
+      return { role: 'void', icon: 'i-risk', text: e.risk > 0 ? `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` : labels.liberation.endText.split('.')[0] + '.' };
     case 'end':
       return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${shownName(pickFaction(s.enemy.def.name, factionId))}을(를) 쓰러뜨렸다!` } : null;
     default:
@@ -476,6 +476,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libReadyNotice = libReadyNoticeEl();
   const libReadyRose = libReadyEdge();
   if (libOn) hero.root.prepend(libAuraEl());
+  // 막기 방어막 (GDD 241-B 2): 막는 동안 몸 둘레 반구 막(색 = --bha-guard 토큰). 보이는 것은 CSS(.is-guarding)
+  const guardShield = el('span', 'bha-guardshield');
+  guardShield.setAttribute('aria-hidden', 'true');
+  hero.root.append(guardShield);
 
   // 막기 게이지·[소모품]·[장비] (GDD 105장 수정 v5.233 6번): 해방 알약 버튼 모양, 범례 줄 오른쪽 해방 옆. 못 쓸 때도 자리 그대로(흐리게)
   const actBtn = (kind: 'guard' | 'item' | 'gear', iconId: string, name: string) => {
@@ -662,7 +666,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   /** 누른 입력이 지금 기다리는 행동과 맞는가 (막기 = guard, 블록 = use) — 맞지 않는 누름은 카드를 닫지 않는다 */
   const scriptWants = (x: CombatInput): boolean => {
     const pr = scriptPrompt(s);
-    return !!pr && ((pr.wait === 'guard' && x.type === 'guard') || (pr.wait === 'use' && x.type === 'use'));
+    return !!pr && pr.wait !== 'ack' && pr.wait === x.type;
   };
   /** 각본 행동 입력 처리 (프레임마다): 맞는 입력이 오면 카드 닫기 → 0.5초 뒤 엔진. 받아들여지지 않으면 카드를 다시 띄운다 */
   const pumpScriptInput = (now: number): void => {
@@ -710,9 +714,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     scriptCard = tutorialOverlay(faction, {
       scenes: [scene],
       name: 'script',
+      vars: scriptVars,
       pauseLabel: ack ? '튜토리얼 중 — 전투 멈춤' : null,
       finishLabel: '다음',
-      script: { step: scriptStepOf(pr.stage), waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : undefined, onPrev: ack ? scriptBackFrom(pr.stage, pr.stage) : undefined },
+      script: { step: scriptStepOf(pr.stage), waitFor: pr.wait === 'guard' ? '[data-sc="guard"]' : pr.wait === 'use' ? '[data-sc^="block."]' : pr.wait === 'liberate' ? '[data-sc="liberate"]' : undefined, onPrev: ack ? scriptBackFrom(pr.stage, pr.stage) : undefined },
       onFinish: (status) => {
         if (scriptCardStage !== id) return;
         scriptCard = null;
@@ -726,6 +731,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       },
     });
   };
+  /** 각본 카드 자리표시자: {libName} = 지금 쓰는 해방 이름(영력 해방 / 레스렉시온 — 종족 설정) (GDD 241-B 1) */
+  const scriptVars = { libName: labels.liberation.name };
   const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
   /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
   const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {
@@ -747,6 +754,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     scriptCard = tutorialOverlay(faction, {
       scenes: [scene],
       name: 'script',
+      vars: scriptVars,
       pauseLabel: '튜토리얼 중 — 전투 멈춤',
       finishLabel: '다음',
       script: { step: scriptStepOf(stage), onPrev: scriptBackFrom(stage, cur) },
@@ -1337,6 +1345,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     weakenGauge.set({ on: buffSec > 0, fill: gaugeFill(buffSec, totals.weaken), label: buffLabel, slot: meSlots[2]! });
     foe.classList.toggle('is-casting', cast !== null);
     foe.classList.toggle('is-guard', s.enemy.stance !== null);
+    app.classList.toggle('is-guarding', s.guard.ticks > 0);
 
     // 상태 칩
     setHidden(voidChip.root, s.voidUsed <= 0);

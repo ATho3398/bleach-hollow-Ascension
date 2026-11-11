@@ -30,7 +30,7 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
     const extra = {
       chestName: '가방', spaName: '온천', marketName: '시장', dyingPct: '10', spaToPct: '80', spaHpPct: '10', spaFullness: '10', spaCond: '1', idleHpPct: '1', spaNormalMin: '5',
       spaPath: '밖으로 → 지도 → 온천', worldMapName: '지도', foodName: '도시락', foodId: 'basic', spaFirst: '밖으로', outsideName: '밖으로', adventureName: '모험', towerName: '도전의 탑', worldName: '지도', goPath: '',
-      altarName: '', bookName: '', careNames: '',
+      altarName: '', bookName: '', careNames: '', fullnessNow: '60', // 241-B 5 배부름 카드
     };
     for (const f of FACTIONS) {
       const v = { ...helpVars(f), ...extra };

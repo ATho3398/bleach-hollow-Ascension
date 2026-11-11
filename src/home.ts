@@ -46,11 +46,12 @@ export const SPA_BLOCK_TEXT: Record<'dead' | 'already' | 'full' | 'hungry' | 'ex
 };
 
 /** 온천에 들어간다. 못 들어가면 이유 키, 들어가면 null */
-export function spaEnter(save: SaveData, nowMs: number = Date.now()): keyof typeof SPA_BLOCK_TEXT | null {
+/** walkIn = 화면에서 걸어 들어간다 (GDD 241-B 4: 탕에 다 앉은 뒤부터 찬다) */
+export function spaEnter(save: SaveData, nowMs: number = Date.now(), walkIn = false): keyof typeof SPA_BLOCK_TEXT | null {
   if (save.activeExpedition != null) return 'expedition';
   // 들어가기 전까지의 시간은 먼저 대기로 흘린다 (C.214 — 온천이 10초에 가득이라, 마지막 1분 시계 뒤 시간이 온천 시간으로 잡히면 들어가자마자 가득 찼다)
   tickIdle(save, nowMs);
-  return enterSpa(save.nest, nowMs, guidePending(save.help, 'recover')); // 튜토리얼 회복 안내 중의 온천만 10초 (GDD 145장 1)
+  return enterSpa(save.nest, nowMs, guidePending(save.help, 'recover'), walkIn); // 튜토리얼 회복 안내 중의 온천만 10초 (GDD 145장 1)
 }
 
 /** 온천에서 나온다 (뒤로). 런 로그 homeHeals 'spa'. 온천이 아니었으면 null */

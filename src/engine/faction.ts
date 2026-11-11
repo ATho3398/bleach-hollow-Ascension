@@ -125,7 +125,7 @@ const COMMON_FOOD_NAMES = (foodNamesRaw as { common: Record<string, string> }).c
 
 /** 먹이 종류 12종 (GDD 235장, C.387 — 옛 18-2 5종): 일반 6(속성 묶음 노멀·물·불·흙·뇌·특수) · 특식 4 · 싸구려 2 순서(방 먹이 줄·가방 순서).
  *  유형·수치는 BALANCE.provisional.nest.foods. 이름: 일반·싸구려 = 두 종족 공통(src/data/foods/names.json), 특식만 종족 설정 foodNames — parseFactionConfig 가 합친다 */
-export const FOOD_IDS = ['basic', 'sushi', 'roast', 'hearty', 'fizz', 'mushroom', 'feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic', 'snack', 'scrap'] as const; // C.391 특식 6종 (GDD 239장 3)
+export const FOOD_IDS = ['basic', 'sushi', 'roast', 'hearty', 'fizz', 'mushroom', 'feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic', 'snack', 'scrap', 'tutorial'] as const; // C.391 특식 6종 (GDD 239장 3) · tutorial = 튜토리얼 회복 안내 전용 먹이(GDD 241-B 5 — 상점·드롭 없음)
 export type FoodId = (typeof FOOD_IDS)[number];
 
 /** 슬롯 위치: 호로=본체(body), 사신=참백도(zanpakuto) (GDD 4장) */

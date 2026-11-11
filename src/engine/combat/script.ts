@@ -1,23 +1,25 @@
 // 첫 원정 첫 전투 각본 (GDD 123장 5, C.199). DOM 에 의존하지 않는 순수 함수라 단위 테스트한다.
 // 순서 (GDD 157장 2): ⓪ '일반 공격은 자동' 설명 카드(224장 1 — 카드가 떠 있는 동안만 멈춤, 지켜보기 단계 없음) ① 자동 공격 N대 ② 강공격 예고 게이지가 차면 멈춤 → 막기를 눌러야 진행 → 막아 냄 → 멈춤·'막기 성공' ③ N대 더
-// ④ 곧바로 못 막는 강공격 → 죽기 직전 체력 → 멈춤 → 블록 1개 → 눌러 쓰게 함 → 멈춤·'좋아!' ⑤ 같은 블록 3개 → 멈춤 → 체인으로 처치.
+// ④ 곧바로 못 막는 강공격 → 죽기 직전 체력 → 멈춤 → 블록 1개 → 눌러 쓰게 함 → 멈춤·'좋아!'
+// ⑤ (GDD 241-B 1) 해방 게이지 가득 → 해방을 눌러 쓰게 함 → 해방 중 같은 블록 3개 → 멈춤·해방 설명(블록이 빨리·공격 속도·진화체 특수 효과) → 체인으로 처치.
 // ⑦ 의 체인 (GDD 146장): 쓰는 순간에는 피해를 맡겨 두고(chain-hit) 동작·스킬 연출이 적에게 닿을 때 화면이 scriptLand 로 넣는다 → 피해 숫자·체력 감소 → 쓰러짐.
 // 화면이 부르지 않으면(헤드리스·연출 끔) chainHitMaxSeconds 뒤에 넣는다.
 // 난수를 쓰지 않는다: 블록 생성·적 일반 공격·치명타는 엔진이 각본 전투에서 끈다(combat.ts script). 종족 분기 없음 — 문구는 src/data/help/tutorial.json.
 import { BALANCE } from '../../config/balance';
-import { applyInput, BASIC_SKILL_ID, blockDamage, maxChain, scriptHeavyCast, scriptLandHit, scriptSpawnBlock, spawnTableOf, step, type CombatInput, type CombatScript, type CombatState } from './combat';
+import { applyInput, BASIC_SKILL_ID, scriptFillLiberation, blockDamage, maxChain, scriptHeavyCast, scriptLandHit, scriptSpawnBlock, spawnTableOf, step, type CombatInput, type CombatScript, type CombatState } from './combat';
 
 const TS = BALANCE.provisional.tutorialScript;
 
 export const SCRIPT_STAGES = [
-  'auto-intro', 'auto', 'heavy-charge', 'guard-now', 'guard-hold', 'guard-land', 'guard-ok', 'auto2', 'heavy2', 'hurt-hold', 'hurt', 'skill-hold', 'nice', 'after-skill', 'chain-spawn', 'stack-hold', 'chain-use', 'chain-hit', 'done',
+  'auto-intro', 'auto', 'heavy-charge', 'guard-now', 'guard-hold', 'guard-land', 'guard-ok', 'auto2', 'heavy2', 'hurt-hold', 'hurt', 'skill-hold', 'nice', 'after-skill',
+  'lib-ready', 'lib-now', 'lib-hold', 'chain-spawn', 'stack-hold', 'lib-explain', 'chain-use', 'chain-hit', 'done',
 ] as const;
 export type ScriptStage = (typeof SCRIPT_STAGES)[number];
 
-/** 멈춰서 기다리는 단계와 무엇을 기다리는가: ack = 설명 카드 [다음](✓), guard = 막기, use = 블록 사용 */
-export type ScriptWait = 'ack' | 'guard' | 'use';
+/** 멈춰서 기다리는 단계와 무엇을 기다리는가: ack = 설명 카드 [다음](✓), guard = 막기, use = 블록 사용, liberate = 해방 (GDD 241-B 1) */
+export type ScriptWait = 'ack' | 'guard' | 'use' | 'liberate';
 const WAIT: Partial<Record<ScriptStage, ScriptWait>> = {
-  'auto-intro': 'ack', 'guard-now': 'guard', 'guard-ok': 'ack', hurt: 'use', nice: 'ack', 'chain-use': 'use',
+  'auto-intro': 'ack', 'guard-now': 'guard', 'guard-ok': 'ack', hurt: 'use', nice: 'ack', 'lib-now': 'liberate', 'lib-explain': 'ack', 'chain-use': 'use',
 };
 
 export function newCombatScript(): CombatScript {
@@ -46,7 +48,7 @@ function enter(s: CombatState, stage: ScriptStage): void {
   sc.ticks = 0;
   sc.heavyHits = 0;
   const w = WAIT[stage];
-  sc.allow = w === 'guard' ? ['guard'] : w === 'use' ? ['use'] : [];
+  sc.allow = w === 'guard' || w === 'use' || w === 'liberate' ? [w] : [];
   if (stage === 'done') s.script = undefined; // 끝: 혹시 처치하지 못했으면 보통 전투로 이어진다
 }
 
@@ -65,6 +67,7 @@ export function scriptAck(s: CombatState): boolean {
   if (p.stage === 'auto-intro') enter(s, 'auto');
   else if (p.stage === 'guard-ok') enter(s, 'auto2');
   else if (p.stage === 'nice') enter(s, 'after-skill');
+  else if (p.stage === 'lib-explain') enter(s, 'chain-use');
   return true;
 }
 
@@ -93,6 +96,7 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
         if (c) c.ticks = Math.min(c.ticks, Math.max(1, s.guard.ticks - 1));
         enter(s, 'guard-hold');
       } else if (p.stage === 'hurt') enter(s, 'skill-hold');
+      else if (p.wait === 'liberate') enter(s, 'lib-hold');
       else enter(s, sc.held ? 'chain-hit' : 'done');
       return true;
     });
@@ -125,8 +129,13 @@ export function scriptStep(s: CombatState, input?: CombatInput | CombatInput[] |
     scriptSpawnBlock(s, b.traitId, b.family);
     enter(s, 'hurt');
   } else if (st === 'skill-hold' && sc.ticks >= tick(TS.hurtHoldSeconds)) enter(s, 'nice'); // 스킬이 나간 모습을 보여 준 뒤
-  else if (st === 'stack-hold' && sc.ticks >= tick(TS.stackHoldSeconds)) enter(s, 'chain-use'); // 블록이 쌓인 모습을 보여 준 뒤
-  else if (st === 'after-skill' && sc.ticks >= tick(TS.afterSkillSeconds)) enter(s, 'chain-spawn');
+  else if (st === 'stack-hold' && sc.ticks >= tick(TS.stackHoldSeconds)) enter(s, 'lib-explain'); // 블록이 쌓인 모습을 보여 준 뒤 해방 설명 (GDD 241-B 1)
+  else if (st === 'after-skill' && sc.ticks >= tick(TS.afterSkillSeconds)) {
+    // 해방 안내 (GDD 241-B 1): 게이지를 가득 채워 '해방 가능' 모습을 잠깐 보여 준 뒤 해방을 기다린다 (각본 전투는 게이지가 저절로 차지 않는다)
+    scriptFillLiberation(s);
+    enter(s, 'lib-ready');
+  } else if (st === 'lib-ready' && sc.ticks >= tick(TS.libReadySeconds)) enter(s, 'lib-now');
+  else if (st === 'lib-hold' && sc.ticks >= tick(TS.libHoldSeconds)) enter(s, 'chain-spawn'); // 해방 컷인을 보여 준 뒤 블록 3개
   else if (st === 'chain-hit' && sc.ticks >= tick(TS.chainHitMaxSeconds)) scriptLand(s); // 화면이 착탄을 알리지 않았으면 (헤드리스·연출 끔)
   else if (st === 'chain-spawn') {
     const n = Math.min(TS.chainLength, maxChain(s.params));
@@ -163,6 +172,7 @@ export function playScriptedCombat(s: CombatState, onPrompt?: (stage: ScriptStag
     if (p?.wait === 'ack') scriptAck(s);
     else if (p?.wait === 'guard') scriptStep(s, { type: 'guard' });
     else if (p?.wait === 'use') scriptStep(s, { type: 'use', cell: 0 });
+    else if (p?.wait === 'liberate') scriptStep(s, { type: 'liberate' });
     else scriptStep(s);
   }
   return s;

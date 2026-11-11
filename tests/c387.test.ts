@@ -81,9 +81,9 @@ describe('234장 3: 같은 먹이 10분에 2개 — 3개째는 거절(먹이 그
 describe('235장: 먹이 3유형', () => {
   it('14종 = 일반 6 · 특식 6 · 싸구려 2 (C.391 GDD 239장: 특식 살점·정화 추가), 옛 id 매핑(간식 → 싸구려, 고기·사냥감 → 일반, 보양·잔치 → 특식)', () => {
     const by = (t: string) => FOOD_IDS.filter((f) => foodTypeOf(f) === t);
-    expect(FOOD_IDS).toHaveLength(14);
+    expect(FOOD_IDS).toHaveLength(15); // + 튜토리얼 전용 '첫 끼니'(GDD 241-B 5, 특식 유형·공용 이름)
     expect(by('normal')).toHaveLength(6);
-    expect(by('special')).toEqual(['feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic']);
+    expect(by('special')).toEqual(['feast', 'tonic', 'flesh', 'elixir', 'purify', 'relic', 'tutorial']);
     expect(by('cheap')).toEqual(['snack', 'scrap']);
     expect([foodTypeOf('basic'), foodTypeOf('hearty')]).toEqual(['normal', 'normal']);
     for (const id of ['hollow', 'shinigami'] as const) for (const f of FOOD_IDS) expect(getFaction(id).foodNames[f].length).toBeGreaterThan(0);
@@ -153,7 +153,7 @@ describe('235장: 먹이 3유형', () => {
   it('이름: 일반·싸구려 = 두 종족 공통, 특식만 종족별', () => {
     const S = getFaction('shinigami');
     for (const f of FOOD_IDS) {
-      if (foodTypeOf(f) === 'special') expect(H.foodNames[f]).not.toBe(S.foodNames[f]);
+      if (foodTypeOf(f) === 'special' && f !== 'tutorial') expect(H.foodNames[f]).not.toBe(S.foodNames[f]); // 첫 끼니(GDD 241-B 5)는 공용 이름
       else expect(H.foodNames[f]).toBe(S.foodNames[f]);
     }
     expect(H.foodNames.roast).toBe('구운 고기');
@@ -188,7 +188,7 @@ describe('235장: 먹이 3유형', () => {
 
 describe('세이브 형식 70', () => {
   it('형식 70 · 문턱 54, 69 → 70 = 빈 foodStreak·dislikeRun 0, 옛 먹이 개수 그대로 + 새 종류 0', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([75, 54]); // C.403 기능 해금
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([76, 54]);
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.nest.foodStreak;
     delete s.nest.dislikeRun;
@@ -198,7 +198,7 @@ describe('세이브 형식 70', () => {
     expect([s.nest.foodStreak, s.nest.dislikeRun]).toEqual([{}, 0]);
     s.meta.format = 69;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(75);
+    expect(m.meta.format).toBe(76);
     expect(m.shared.food).toMatchObject({ snack: 4, basic: 2, hearty: 1, tonic: 3, feast: 1, sushi: 0, elixir: 0, relic: 0, scrap: 0 });
     expect(m.nest.foodStreak).toEqual({});
   });

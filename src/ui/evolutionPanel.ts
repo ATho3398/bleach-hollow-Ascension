@@ -17,6 +17,8 @@ import { playCosmeticFx } from './bha/cosmeticFx';
 import { devText, shownName } from './displayName';
 import { asBack } from './bha/screenBack';
 import { v2Icon } from './bha/iconMap';
+import { heroEl } from './bha/battle';
+import type { ArtUrls } from '../data/art/manifest';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -114,6 +116,8 @@ export interface EvolutionExtra {
   /** 이 진화로 늘어난 특성 칸 (GDD 151장 2: 4단계 진화 처음 +1)과 늘어난 뒤 칸 수 */
   abilitySlotsAdded?: number;
   abilitySlots?: number;
+  /** 새 진화체 그림 (GDD 241-B 7): 진화 뒤 캐릭터 그림(종이인형·스프라이트 그대로 — 전투 heroArtOf 와 같은 것). 없으면 옛 아이콘만 */
+  art?: ArtUrls;
 }
 
 /** 진화 결과 화면에 넘길 특성 결과 (받은 뒤 세기는 보유 목록에서) */
@@ -189,6 +193,19 @@ export function evolutionView(
   const linesSection = h('section');
   const crack = h('div', 'bha-evolve__crack');
   crack.append(v2Icon('spark', 'xl')); // 리디자인 v2: 깨진 가면(해골) 대신 두 종족 공통 '변화' 도트 아이콘 (GDD 183장 화면 D)
+  // 새 진화체 그림 (GDD 241-B 7): 연출 동안 빛 속에서 모습이 드러나고(.bha-evolve__fig--reveal), 결과 왼쪽 판 맨 위에도. 그림이 없으면 옛 아이콘만
+  const figOf = (cls: string): HTMLElement | null => {
+    if (!extra?.art || (!extra.art.src && !extra.art.frames?.length && !extra.art.rig)) return null;
+    const fig = h('div', `bha-evolve__fig ${cls}`);
+    fig.dataset.evolveFig = '';
+    fig.append(heroEl(extra.art).root);
+    return fig;
+  };
+  const cutFig = figOf('bha-evolve__fig--reveal');
+  if (cutFig) {
+    crack.classList.add('has-fig');
+    crack.append(cutFig);
+  }
   const lines = h('div', 'bha-evolve__lines');
   lines.setAttribute('aria-live', 'polite');
   // 진화 이유 (GDD 134장 3, C.211): 그 단계가 된 이유 1~2줄(종족 설정)이 있으면 연출 마지막 줄을 대신하고 결과 화면에도 남는다. 실패 진화는 공통 줄 그대로
@@ -255,7 +272,8 @@ export function evolutionView(
   const resHead = h('header', 'bha-head bha-evolve__head');
   resHead.append(h('span', 'bha-badge bha-badge--brass bha-evolve__eyebrow', '진화'), title);
   resultMain.classList.add('bha-panel');
-  resultMain.append(path, ...(reason ? [reason] : []), created);
+  const resFig = figOf('bha-evolve__fig--result');
+  resultMain.append(...(resFig ? [resFig] : []), path, ...(reason ? [reason] : []), created);
   resultSide.append(effects); // 개발 메모 줄(진화 트리 임시·기획 20-5)은 GDD 168장 4 에서 삭제
   const resDock = h('footer', 'bha-dock bha-evolve__dock');
   resDock.append(home);
