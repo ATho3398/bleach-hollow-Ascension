@@ -66,11 +66,12 @@ describe('거미형 뼈대 (GDD 115-A 106)', () => {
   it('공격3: 몸을 확 치켜들고(공격2보다 높이) 앞다리 둘로 내리찍는다 — 뒷다리 둘은 바닥 밑으로 안 내려감 (115-A 114)', () => {
     const top = (id: string, t: number) => boneMatrices(rig, samplePose(rig, motions[id]!, t), 'ref').torso![5];
     const rest = restM.torso![5];
-    expect(rest - top('attack3', 400)).toBeGreaterThan(8); // 몸이 8칸 넘게 뜬다
-    expect(rest - top('attack3', 400)).toBeGreaterThan(rest - top('attack2', 220) + 4); // 공격2보다 확실히 높이
-    const up = tipAt('attack3', 400);
-    expect(tips.leg1b![1] - up.leg1b![1]).toBeGreaterThan(20);
-    expect(tips.leg2b![1] - up.leg2b![1]).toBeGreaterThan(25);
+    expect(rest - top('attack3', 850)).toBeGreaterThan(12); // 몸이 12칸 넘게 뜬다
+    expect(motions.attack3!.duration).toBeGreaterThanOrEqual(1400); // 잘 보이게 느리게(사용자 "너무 빨라서 잘 안보여")
+    expect(rest - top('attack3', 850)).toBeGreaterThan(rest - top('attack2', 220) + 4); // 공격2보다 확실히 높이
+    const up = tipAt('attack3', 850);
+    expect(tips.leg1b![1] - up.leg1b![1]).toBeGreaterThan(28);
+    expect(tips.leg2b![1] - up.leg2b![1]).toBeGreaterThan(34);
     const hit = tipAt('attack3', motions.attack3!.hit!);
     expect(hit.leg2b![0]).toBeLessThan(tips.leg2b![0] - 9); // 앞으로 멀리 내리찍음(공격2보다 멀리)
     expect(Math.abs(hit.leg2b![1] - tips.leg2b![1])).toBeLessThan(1.5);
