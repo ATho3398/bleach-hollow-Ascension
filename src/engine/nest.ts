@@ -1,4 +1,4 @@
-// 둥지 / 대원실 (GDD 7장, P2 → 102장 돌봄 패널티 C.175): 허기·컨디션·영압 안정도·교감 수치와 돌봄 행동, 시간 흐름, 쇠약·피곤·쓰러짐·사망 상태. 종족 무관 순수 로직.
+// 둥지 / 대원실 (GDD 7장, P2 → 102장 돌봄 패널티 C.175): 허기·컨디션·교감 수치(영압 안정도는 C.391 에서 삭제)와 돌봄 행동, 시간 흐름, 쇠약·피곤·쓰러짐·사망 상태. 종족 무관 순수 로직.
 // 행동 이름·문구는 종족 설정(FactionConfig.nestActions)에서 읽는다. 수치는 balance.ts provisional.nest(care·bond).
 
 import { BALANCE } from '../config/balance';
@@ -36,8 +36,6 @@ export interface NestState {
   bondToday: number;
   /** 리스크 게이지(호로 광기 / 사신 호로화) 둥지 저장값. 원정은 이 값으로 시작하고 귀환하면 합쳐진다 */
   risk: number;
-  /** 안정 수치(호로 자아 / 사신 영압 안정도). 컨디션·허기와 별개 */
-  stability: number;
   /** 마지막으로 방치 허기를 계산한 시각(ms) */
   lastTickMs: number;
   /** 돌봄 요청 (GDD 82장): 캐릭터가 지금 원하는 돌봄(쓰다듬기·재우기)과 유지 끝 시각. 없으면 null */
@@ -95,7 +93,7 @@ export interface CareRequest {
 export type CareOutcome = 'answered' | 'refused';
 
 export function newNest(nowMs: number): NestState {
-  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, stability: BALANCE.provisional.risk.stabilityStart, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, foodStreak: {}, dislikeRun: 0, hpFraction: 1, spa: null };
+  return { hunger: NX.startHunger, condition: NX.startCondition, weakened: false, tired: false, collapsed: false, collapsedAt: 0, dead: false, cureOnReturn: { weak: false, tired: false }, bond: 0, bondDay: '', bondToday: 0, risk: 0, lastTickMs: nowMs, careRequest: null, nextCareAt: nowMs + NX.careRequest.firstDelayMinutes * 60_000, feedCount: 0, lastFedAt: 0, foodStreak: {}, dislikeRun: 0, hpFraction: 1, spa: null };
 }
 
 const CR = NX.careRequest;
@@ -158,7 +156,6 @@ export function refreshCareStatus(nest: NestState): void {
 export interface TimeFlow {
   hunger: number;
   condition: number;
-  stability: number;
   /** 홈 체력 변화 (비율, GDD 123장 4) */
   hp?: number;
   /** 이 시간 안에 온천에서 저절로 나왔으면 그 결과 */
@@ -279,10 +276,11 @@ export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp:
 
 /** 시간 흐름 (GDD 102-1): hours 동안 허기 +idleHungerPerHour/시, 배부름 conditionBelowFullness 이하면 컨디션 −conditionPerHour/시(배부름 0 이면 ×2),
  *  배부름 30 초과면 컨디션 그대로(홈 대기 회복 없음 — GDD 135장 수정 v5.315, 컨디션은 온천·잠·쓰다듬기로만 오름),
- *  offline(꺼 둔 동안)이면 영압 안정도 −stabilityPerHour/시(배부름 또는 컨디션 stabilityDoubleBelow 이하면 ×2). 0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다.
+ *  0.1시간 걸음으로 나눠 그 순간 값으로 배율을 정하고, 걸음마다 쇠약·피곤을 본다. (꺼 둔 동안 영압 안정도 감소는 C.391 GDD 239장 4 에서 삭제 — offline 은 이제 안 씀)
  *  리스크·교감은 여기서 안 바뀐다. 변화량(음수 = 줄어듦, 허기는 오른 양)을 돌려준다 */
 export function passNestTime(nest: NestState, hours: number, offline: boolean, endMs: number = Date.now()): TimeFlow {
-  const before = { hunger: nest.hunger, condition: nest.condition, stability: nest.stability };
+  void offline;
+  const before = { hunger: nest.hunger, condition: nest.condition };
   // 홈 체력·온천 (GDD 123장 4): 온천 배부름 소모를 먼저 반영하고 아래 걸음이 그 값으로 쇠약·컨디션을 본다
   const home = passHomeHp(nest, hours, endMs);
   let left = Number.isFinite(hours) ? Math.max(0, hours) : 0;
@@ -292,11 +290,10 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
     const full = fullnessOfNest(nest);
     const lowFull = full <= CP.conditionBelowFullness;
     if (lowFull) nest.condition = clamp(nest.condition - CP.conditionPerHour * dt * (full <= 0 ? 2 : 1), 0, MAX);
-    if (offline) nest.stability = clamp(nest.stability - CP.stabilityPerHour * dt * (full <= CP.stabilityDoubleBelow || nest.condition <= CP.stabilityDoubleBelow ? 2 : 1), 0, BALANCE.provisional.risk.stabilityMax);
     nest.hunger = clamp(nest.hunger + NX.idleHungerPerHour * dt, 0, 100);
     refreshCareStatus(nest);
   }
-  return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, stability: nest.stability - before.stability, hp: home.hp, spaEnded: home.spaEnded };
+  return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, hp: home.hp, spaEnded: home.spaEnded };
 }
 
 /** 교감 문턱 표 [[문턱, 값], …](높은 것부터)에서 지금 교감의 값 */
@@ -392,7 +389,7 @@ export interface AbsenceReport {
  *  collapseHours 이상 비웠으면 빈사(그 시각부터, 교감 −collapseLoss) · 빈사 시간(실제 시간, deathHoursOf)이 지났으면 사망(교감 절반).
  *  paused(원정 중간 저장이 있음)·사망 상태면 아무것도 안 바뀐다. 기기 시계를 되돌렸으면(지금이 마지막 접속보다 앞) 0. 접속 시각 갱신은 부르는 쪽이 한다 */
 export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): AbsenceReport {
-  const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, stability: 0, hp: 0, spaEnded: null }, bond: 0, collapsed: false, died: false };
+  const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, hp: 0, spaEnded: null }, bond: 0, collapsed: false, died: false };
   if (paused || nest.dead || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return none;
   const hours = (nowMs - lastSeenAt) / HOUR;
   const bond0 = nest.bond;
@@ -409,7 +406,7 @@ export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: n
   return applyAbsenceTime(nest, lastSeenAt, nowMs, paused).flow.hunger;
 }
 
-/** 켜 둔 동안 시간 흐름 (GDD 102-1): 마지막으로 셈한 시각(lastTickMs)부터 지금까지. 영압 안정도는 안 줄고(돌봄 요청이 그 역할), 48시간 미접속 빈사는 없다(접속이 곧 '왔다').
+/** 켜 둔 동안 시간 흐름 (GDD 102-1): 마지막으로 셈한 시각(lastTickMs)부터 지금까지. 48시간 미접속 빈사는 없다(접속이 곧 '왔다').
  *  빈사 시간은 켜 있어도 흐른다(v5.228) — 다 되면 사망. paused(원정 중 — 원정은 자기 허기·컨디션을 쓴다, 빈사 사망은 귀환 때 본다)·사망이면 시각만 옮긴다. 시계를 되돌렸으면 그대로 */
 export function tickNestOnline(nest: NestState, nowMs: number, paused = false): TimeFlow | null {
   if (!Number.isFinite(nest.lastTickMs) || nowMs <= nest.lastTickMs) return null;
@@ -454,7 +451,7 @@ export function foodHpHeal(food: FoodId): number {
 export function foodEffect(food: FoodId): { hunger: number; condition: number; risk: number; bond: number } {
   const d = NX.foods[food];
   const t = NX.foodTypes[foodTypeOf(food)];
-  return { hunger: t.hunger, condition: d?.condition ?? 0, risk: d?.risk ?? 0, bond: t.bond };
+  return { hunger: d?.hunger ?? t.hunger, condition: d?.condition ?? 0, risk: d?.risk ?? 0, bond: d?.bond ?? t.bond };
 }
 
 /** 먹이 효과 한 줄의 값 이름 (GDD 211장 · 235장): hunger = 배부름 +, cond = 컨디션 ±, risk = 리스크 게이지 +, hp = 홈 체력 +(최대 체력 %), bond = 교감 ± */

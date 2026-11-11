@@ -24,8 +24,8 @@ export interface JudgeContext {
   condition: number;
   /** 지금까지 환생한 횟수 (허무형·각성형). 없으면 0 */
   rebirths?: number;
-  /** 진화 순간 안정 수치(호로 자아 / 사신 영압 안정도, 폭주형). 없으면 조건을 못 채운 것으로 본다 */
-  stability?: number;
+  /** 진화 순간 리스크 게이지(폭주형, C.391 GDD 239장 4 — 옛 안정 수치 대신). 없으면 조건을 못 채운 것으로 본다 */
+  risk?: number;
   /** 진화 순간 교감 (안정형). 없으면 0 */
   bond?: number;
   /** 실패형(망한 진화체 포함)을 거친 적 있는 계보 (각성형) */
@@ -172,7 +172,7 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
     if (rebirths >= H.voidRebirths && voidMin >= H.voidShare) out.push(hidden('h4:void', voidMin / H.voidShare - 1));
     if (isScattered(e)) out.push(hidden('h4:fail', H.failTopShare / Math.max(0.01, topShare(e)) - 1));
   }
-  if (e.breakthroughs >= H.breakthroughs && ctx.stability !== undefined && ctx.stability < H.frenzyStabilityBelow) out.push(hidden('h4:frenzy', e.breakthroughs / H.breakthroughs - 1));
+  if (e.breakthroughs >= H.breakthroughs && ctx.risk !== undefined && ctx.risk >= H.frenzyRiskAtLeast) out.push(hidden('h4:frenzy', e.breakthroughs / H.breakthroughs - 1));
   if (e.releases > e.absorbs && 100 - ctx.hunger <= H.restraintFullnessMax) out.push(hidden('h4:restraint', e.releases / Math.max(1, e.absorbs) - 1));
   if ((ctx.bond ?? 0) >= H.stableBond && faintsOf(e) === 0 && e.breakthroughs === 0 && longAbsencesOf(e) === 0) out.push(hidden('h4:stable', 0));
   if (hunterRunsOf(e) >= H.hunterRuns) out.push(hidden('h4:hunter', hunterRunsOf(e) / H.hunterRuns - 1));

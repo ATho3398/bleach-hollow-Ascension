@@ -18,11 +18,11 @@ const T = Date.now();
 
 describe('109장 6 먹이 수치 → 235장 3유형 (C.387)', () => {
   // C.387 (GDD 235장): 옛 종류별 수치(고기 5·사냥감 8…)는 유형 수치로 대체 — 일반 12 · 특식 40 · 싸구려 6
-  it('유형별 배부름: 일반 12 · 특식 40 · 싸구려 6, feedHunger = 일반', () => {
-    expect(foodEffect('basic').hunger).toBe(12);
-    expect(foodEffect('hearty').hunger).toBe(12);
+  it('유형별 배부름 (C.391 GDD 239장): 일반 8 · 잔치 특식 40 · 싸구려 4, feedHunger = 일반', () => {
+    expect(foodEffect('basic').hunger).toBe(8);
+    expect(foodEffect('hearty').hunger).toBe(8);
     expect(foodEffect('feast').hunger).toBe(40);
-    expect(foodEffect('snack').hunger).toBe(6);
+    expect(foodEffect('snack').hunger).toBe(4);
     expect(NX.feedHunger).toBe(foodEffect('basic').hunger);
   });
   it('한 번 와서 일반 3개 = 옛 고기 3개(+15)보다 오래 버팀 (시간당 감소)', () => {

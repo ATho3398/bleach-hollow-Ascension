@@ -28,7 +28,7 @@ export function careButtons(faction: FactionConfig, onAct: (a: NestAction) => vo
   const meta: Record<NestAction, { icon: string; cls: string; sub: string }> = {
     feed: { icon: 'i-care-feed', cls: 'feed', sub: `${faction.fullnessName} +` },
     sleep: { icon: 'i-care-sleep', cls: 'sleep', sub: '컨디션 +' },
-    pet: { icon: 'i-care-pet', cls: 'pet', sub: `${faction.stabilityName} +` },
+    pet: { icon: 'i-care-pet', cls: 'pet', sub: '컨디션 +' }, // 옛 영압 안정도 + (C.391 삭제) — 쓰다듬기는 컨디션을 올린다
   };
   const root = el('div', 'bha-care');
   for (const a of NEST_ACTIONS) {
@@ -44,8 +44,6 @@ export function careButtons(faction: FactionConfig, onAct: (a: NestAction) => vo
 export interface StatusOpts {
   hunger: number;
   condition: number;
-  stability: number;
-  stabilityMax: number;
   risk: number;
   riskLimit: number;
   /** 컨디션 경고 기준 (미만이면 위험) / 리스크 경고 기준 (이상이면 높음) */
@@ -55,7 +53,7 @@ export interface StatusOpts {
   bond?: { value: number; max: number; stage: string; info?: string[] };
 }
 
-/** 상태 4바: 배부름(허기를 뒤집어 표시, C.63)·컨디션·안정 수치·리스크. 경고 문구는 기존 규칙 그대로 */
+/** 상태 3바: 배부름(허기를 뒤집어 표시, C.63)·컨디션·리스크 (안정 수치는 C.391 삭제). 경고 문구는 기존 규칙 그대로 */
 export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement {
   const root = el('div', 'bha-nest__status');
   const withTip = (m: HTMLElement, kind: StatusInfoKind, label: string, value?: number): HTMLElement => {
@@ -69,7 +67,6 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
       kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), max: 100,
       danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 공허 블록 ↑' : undefined,
     }), 'cond', '컨디션', s.condition),
-    withTip(meter({ kind: 'stab', label: faction.stabilityName, icon: 'i-stab', value: Math.round(s.stability), max: s.stabilityMax }), 'stab', faction.stabilityName, s.stability),
     withTip(meter({
       kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), max: s.riskLimit,
       zone: s.riskWarn / s.riskLimit, danger: s.risk >= s.riskWarn, note: s.risk >= s.riskWarn ? '높음: 모험 시작부터 위험' : undefined,

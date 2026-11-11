@@ -97,7 +97,7 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     const below = (br.bottom - hr.top) * k + 6;
     const roomBelow = host.clientHeight - below - 4;
     const roomAbove = (br.top - hr.top) * k - 6 - 4;
-    // C.182 UI 검수 (GDD 110장 2): 위·아래 어느 쪽에도 다 안 들어가면(구간표가 긴 영압 안정도·광기) 아이콘 옆(왼쪽·오른쪽 중 넓은 쪽)에
+    // C.182 UI 검수 (GDD 110장 2): 위·아래 어느 쪽에도 다 안 들어가면(구간표가 긴 광기 등) 아이콘 옆(왼쪽·오른쪽 중 넓은 쪽)에
     // LCD 높이 전체로 넓게 연다 — 예전엔 좁은 쪽 높이만 써서 마지막 구간 줄이 잘려 보였다. 아이콘은 덮지 않는다(PC 마우스 올림·다시 누름)
     if (pop.offsetHeight > Math.max(roomBelow, roomAbove)) {
       const sideL = (br.left - hr.left) * k - 6 - 4;

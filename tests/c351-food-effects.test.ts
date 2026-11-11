@@ -16,14 +16,14 @@ const FACTIONS = ['hollow', 'shinigami'] as const;
 
 /** 먹이기 전후 값 (화면 단위: 배부름 0~100 · 체력 % · 교감) */
 function snap(n: NestState) {
-  return { hunger: 100 - n.hunger, cond: n.condition, hp: Math.round(homeHpOf(n) * 1000) / 10, bond: n.bond, risk: n.risk, stab: n.stability };
+  return { hunger: 100 - n.hunger, cond: n.condition, hp: Math.round(homeHpOf(n) * 1000) / 10, bond: n.bond, risk: n.risk };
 }
 type Snap = ReturnType<typeof snap>;
 const diff = (a: Snap, b: Snap) => Object.fromEntries((Object.keys(a) as (keyof Snap)[]).map((k) => [k, Math.round((b[k] - a[k]) * 10) / 10])) as Snap;
 
 /** 적힌 효과 → 기대 변화 (적히지 않은 값은 0) */
 function expected(list: readonly FoodFx[], before?: Snap): Snap {
-  const e: Snap = { hunger: 0, cond: 0, hp: 0, bond: 0, risk: 0, stab: 0 };
+  const e: Snap = { hunger: 0, cond: 0, hp: 0, bond: 0, risk: 0 };
   for (const f of list) e[f.key] = f.amount;
   if (before && e.hp >= 100) e.hp = Math.round((100 - before.hp) * 10) / 10; // 체력 가득 특식 (GDD 235장 1): 가득까지
   return e;
@@ -36,14 +36,14 @@ const plain = (s: SaveData, food: FoodId) => { const r = foodReactionFor(s, food
 function midSave(faction: string): SaveData {
   const s = newSaveData(faction);
   const now = Date.now();
-  Object.assign(s.nest, { hunger: 50, condition: 50, hpFraction: 0.5, bond: 10, bondToday: 0, bondDay: '', risk: 40, stability: 50, lastTickMs: now, feedCount: 0, lastFedAt: 0, careRequest: null });
+  Object.assign(s.nest, { hunger: 50, condition: 50, hpFraction: 0.5, bond: 10, bondToday: 0, bondDay: '', risk: 40, lastTickMs: now, feedCount: 0, lastFedAt: 0, careRequest: null });
   for (const id of FOOD_IDS) s.shared.food[id] = 3;
   return s;
 }
 
 describe('C.351 먹이 숨은 효과 없음 — 설명 = 실제 변화 (전수)', () => {
-  it('먹이 행동 자체는 리스크·안정 수치를 움직이지 않는다 (GDD 211장 — 리스크는 특식 효과로만 적힌다, 235장 1)', () => {
-    expect(BALANCE.provisional.risk.nestActions.feed).toEqual({ risk: 0, stability: 0 });
+  it('먹이 행동 자체는 리스크를 움직이지 않는다 (GDD 211장 — 리스크는 특식 효과로만 적힌다, 235장 1 · 안정 수치는 C.391 삭제)', () => {
+    expect(BALANCE.provisional.risk.nestActions.feed).toEqual({ risk: 0 });
   });
 
   for (const fid of FACTIONS) {
@@ -59,7 +59,7 @@ describe('C.351 먹이 숨은 효과 없음 — 설명 = 실제 변화 (전수)'
         expect(feedNest(a, food)).toBe('ate');
         expect(diff(before, snap(a.nest))).toEqual(expected(list, before));
         // 바뀐 값 칩(C.346) = 적힌 상태창 값(배부름·컨디션·체력)과 같다 — 리스크·안정 칩이 뜨면 안 된다
-        const chips = changedKeys(nestShown({ hunger: 100 - before.hunger, condition: before.cond, stability: before.stab, risk: before.risk }, hpBefore), nestShown(a.nest, homeHpOf(a.nest)));
+        const chips = changedKeys(nestShown({ hunger: 100 - before.hunger, condition: before.cond, risk: before.risk }, hpBefore), nestShown(a.nest, homeHpOf(a.nest)));
         expect(chips).toEqual(list.map((e) => e.key).filter((k) => k !== 'bond'));
         // 방 가방
         const b = midSave(fid);
@@ -76,7 +76,7 @@ describe('C.351 먹이 숨은 효과 없음 — 설명 = 실제 변화 (전수)'
         expect(inventoryOf(s, faction).find((e) => e.id === `food-${food}`)!.detail).toBe(text);
         expect(goldRows(s, faction).find((r) => r.id === `food-${food}`)?.effect ?? text).toBe(text);
         if (!list.some((e) => e.key === 'risk')) expect(text).not.toContain(faction.riskGaugeName);
-        expect(text).not.toContain(faction.stabilityName);
+        expect(text).not.toContain('영압 안정도');
         // 카드(지금 움직이는 효과)는 가운데 상태에서 효과 전부
         expect(foodEffectsNow(food, s.nest)).toEqual(list);
       });
@@ -103,7 +103,6 @@ describe('C.351 먹이 숨은 효과 없음 — 설명 = 실제 변화 (전수)'
       const d = diff(b, snap(s.nest));
       const moved = (['hunger', 'cond', 'risk', 'hp', 'bond'] as const).filter((k) => d[k] !== 0).sort();
       expect(moved, `${food} ${JSON.stringify(b)}`).toEqual(shown);
-      expect(d.stab).toBe(0);
     }
   });
 });

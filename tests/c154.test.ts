@@ -77,8 +77,8 @@ describe('95장 B1 대기 보상 상시', () => {
 
 const pool = ENEMIES.filter((e) => !e.testOnly);
 const elite = pool.find((e) => e.class === 'elite')!;
-/** 새 세이브 안정 수치의 시작 게이지 (balance 점검 봇과 같음) */
-const START = { liberationStartGauge: liberationStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
+/** 고정 시작 게이지 (balance 점검 봇과 같음, C.391) */
+const START = { liberationStartGauge: liberationStartGaugeOf() };
 /** 블록을 전혀 안 쓰는 자동전투(평타만) — 해방만 누른다 */
 function autoOnly(s: CombatState): CombatState {
   while (s.status === 'playing') {

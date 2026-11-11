@@ -65,9 +65,9 @@ describe('돌보기 배부름 감소 (GDD 170장 1)', () => {
       s.nest.hunger = 30;
       s.nest.condition = 50;
       s.nest.careRequest = { action, until: Date.now() + 600_000 };
-      const before = { hunger: s.nest.hunger, condition: s.nest.condition, stability: s.nest.stability, risk: s.nest.risk };
+      const before = { hunger: s.nest.hunger, condition: s.nest.condition, risk: s.nest.risk };
       expect(careNest(s, action)).toBe('answered');
-      const line = careFeedback(f, action, null, { hunger: s.nest.hunger - before.hunger, condition: s.nest.condition - before.condition, stability: s.nest.stability - before.stability, risk: s.nest.risk - before.risk });
+      const line = careFeedback(f, action, null, { hunger: s.nest.hunger - before.hunger, condition: s.nest.condition - before.condition, risk: s.nest.risk - before.risk });
       expect(line.startsWith(`${f.nestActions[action]}: `)).toBe(true);
       expect(line).toContain(`${f.fullnessName} −1`);
     }

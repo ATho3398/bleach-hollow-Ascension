@@ -29,7 +29,7 @@ describe('82장 요청 시계', () => {
     const before = { ...n };
     expect(tickCareRequest(n, at + CR.holdMinutes * MIN, () => 0.5)).toEqual({ created: false, missed: true });
     expect(n.careRequest).toBeNull();
-    expect([n.hunger, n.condition, n.risk, n.stability]).toEqual([before.hunger, before.condition, before.risk, before.stability]);
+    expect([n.hunger, n.condition, n.risk]).toEqual([before.hunger, before.condition, before.risk]);
     const gap = n.nextCareAt - (at + CR.holdMinutes * MIN);
     expect(gap).toBeGreaterThanOrEqual(CR.intervalMinutes[0] * MIN);
     expect(gap).toBeLessThanOrEqual(CR.intervalMinutes[1] * MIN);
@@ -84,7 +84,7 @@ describe('82장 응답·거절', () => {
       const want = { ...withRequest(a) };
       doNestAction(want, a);
       expect(respondCare(n, a, T0 + MIN, () => 0)).toBe('answered');
-      expect([n.condition, n.risk, n.stability, n.weakened]).toEqual([want.condition, want.risk, want.stability, want.weakened]);
+      expect([n.condition, n.risk, n.weakened]).toEqual([want.condition, want.risk, want.weakened]);
       expect(n.careRequest).toBeNull();
       expect(n.nextCareAt).toBe(T0 + MIN + CR.intervalMinutes[0] * MIN);
     }

@@ -50,7 +50,7 @@ afterEach(() => {
 
 describe('바뀐 값만 칩 (209장 2)', () => {
   it('반올림해 바뀐 값만, 상태창 순서 · ▲/▼ · 리스크는 내림이 좋음', () => {
-    const items = changeItems({ hunger: 40, cond: 50, stab: 60, risk: 30, hp: 0.5 }, { hunger: 55, cond: 50.2, stab: 60, risk: 27, hp: 0.4 }, H);
+    const items = changeItems({ hunger: 40, cond: 50, risk: 30, hp: 0.5 }, { hunger: 55, cond: 50.2, risk: 27, hp: 0.4 }, H);
     expect(items.map((i) => [i.key, i.up, i.good])).toEqual([['hunger', true, true], ['risk', false, true], ['hp', false, false]]);
     expect(items.map((i) => i.label)).toEqual([H.fullnessName, H.riskGaugeName, '체력']);
     // 종족 이름은 설정에서 (사신 = 호로화)
@@ -179,9 +179,9 @@ describe('행동 글도 같은 자리 (209장 4-1)', () => {
 
 describe('말풍선 · 연결 (209장 4·5)', () => {
   it('알림이 뜨면 수치 변화 문장은 빼고 행동 이름만 · 안 바뀌면 그대로 "변화 없음"', () => {
-    expect(careFeedback(H, 'sleep', null, { hunger: 1, condition: 20, stability: 0, risk: -10 }, false)).toBe(H.nestActions.sleep);
-    expect(careFeedback(H, 'sleep', null, { hunger: 1, condition: 20, stability: 0, risk: 2 })).toBe(`${H.nestActions.sleep}: ${H.fullnessName} −1 · ${H.riskGaugeName} +2`);
-    expect(careFeedback(H, 'sleep', null, { hunger: 0, condition: 0, stability: 0, risk: 0 }, false)).toBe(`${H.nestActions.sleep}: 변화 없음`);
+    expect(careFeedback(H, 'sleep', null, { hunger: 1, condition: 20, risk: -10 }, false)).toBe(H.nestActions.sleep);
+    expect(careFeedback(H, 'sleep', null, { hunger: 1, condition: 20, risk: 2 })).toBe(`${H.nestActions.sleep}: ${H.fullnessName} −1 · ${H.riskGaugeName} +2`);
+    expect(careFeedback(H, 'sleep', null, { hunger: 0, condition: 0, risk: 0 }, false)).toBe(`${H.nestActions.sleep}: 변화 없음`);
   });
   it('방 돌보기·방 들어올 때·방 가방·온천에 연결, 걷기 판·수련 결과(statusFillFx 기본)는 대상 아님', () => {
     expect(read('src/ui/roomView.ts')).toMatch(/noteChanges\(enterItems/);

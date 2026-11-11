@@ -402,9 +402,8 @@ export interface ExpeditionSetup {
   condition: number;
   deck: string[];
   maxLaps?: number;
-  /** 둥지에서 가져온 리스크 게이지·안정 수치·흡수 빌드 (없으면 0 / 시작값 / 빈 빌드) */
+  /** 둥지에서 가져온 리스크 게이지·흡수 빌드 (없으면 0 / 빈 빌드). 안정 수치는 C.391 에서 삭제 */
   risk?: number;
-  stability?: number;
   build?: BuildState;
   /** 둥지에서 가져온 진화 상태 (없으면 1단계 새 상태) */
   evolution?: EvolutionState;
@@ -483,7 +482,6 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     evStart: { ...(setup.evolution?.ev ?? newEvolution().ev) },
     risk: setup.risk ?? 0,
     riskPeak: setup.risk ?? 0,
-    stability: setup.stability ?? RX.stabilityStart,
     breakthrough: null,
     events: [],
     elapsedSeconds: 0,
@@ -833,7 +831,7 @@ function startBattleAt(
   const sm = syn ? synergyMods(syn.id) : null;
   const m: VariantMods = combineMods(sm, mutationMods(exp.mutation), upgradeMods(id));
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
-  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(exp.stability), liberationEnabled: exp.liberationEnabled !== false };
+  const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(), liberationEnabled: exp.liberationEnabled !== false };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
@@ -1117,7 +1115,7 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
   return { ok: true };
 }
 
-/** 놓아줌: 리스크 하락 + 안정 수치 상승 (GDD 4장 "흡수 안 하면") */
+/** 놓아줌: 리스크 하락 (GDD 4장 "흡수 안 하면" — 안정 수치 상승은 C.391 에서 삭제) */
 export function chooseRelease(exp: ExpeditionState): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
@@ -1186,8 +1184,6 @@ export interface AbsorbPreview {
   frenzy: boolean;
   /** 받는 보상 타일 수 (흡수의 배부름 효과는 GDD 163장 5 에 삭제) */
   tiles: number;
-  stabilityFrom: number;
-  stabilityTo: number;
 }
 
 export function previewAbsorb(exp: ExpeditionState, mode: AbsorbMode | 'none'): AbsorbPreview {
@@ -1205,8 +1201,6 @@ export function previewAbsorb(exp: ExpeditionState, mode: AbsorbMode | 'none'): 
     riskTo: r.ok ? c.risk : exp.risk,
     frenzy: r.ok && exp.breakthrough === null && c.breakthrough !== null,
     tiles: r.ok ? Math.max(0, c.hand.length - exp.hand.length) : 0,
-    stabilityFrom: exp.stability,
-    stabilityTo: r.ok ? c.stability : exp.stability,
   };
 }
 

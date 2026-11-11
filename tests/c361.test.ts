@@ -16,7 +16,7 @@ const autoWin = (s: CombatState) => {
   s.finisher = { kind: 'basic-attack', traitId: null, element: null };
 };
 const tutorialExp = (save: SaveData, seed = 11): ExpeditionState => createExpedition({
-  factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+  factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
   build: save.build, evolution: save.evolution, tutorial: true,
 });
 /** 튜토리얼 원정을 흡수 화면까지 → 튜토리얼 흡수 → 귀환 정산 */
@@ -88,7 +88,7 @@ describe('217장 2: 튜토리얼 노력치는 상한 밖', () => {
 
 describe('세이브 형식 67 (217장 2)', () => {
   it('66 → 67: 튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로 (값 그대로)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(71); // C.363 도감 정렬
+    expect(SAVE_FORMAT_VERSION).toBe(72); // C.363 도감 정렬
     expect(typeof SAVE_MIGRATIONS[66]).toBe('function');
     const s = newSaveData('hollow', 7);
     playTutorial(s);
@@ -97,7 +97,7 @@ describe('세이브 형식 67 (217장 2)', () => {
     s.meta.format = 66;
     const m = migrateSave(JSON.parse(JSON.stringify(s)));
     expect(m).not.toBeNull();
-    expect(m!.meta.format).toBe(71);
+    expect(m!.meta.format).toBe(72);
     expect(m!.evolution.evFree).toEqual(all(TUT.statEv));
     expect(m!.evolution.ev.atk).toBe(TUT.statEv + 10);
   });

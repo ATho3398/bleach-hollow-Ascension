@@ -212,6 +212,12 @@
   padding: var(--bha-sp-2) var(--bha-sp-6) var(--bha-sp-2) var(--bha-sp-3);
   background: var(--bha-scene-box); border-radius: var(--bha-r-md);
 }
+/* 한 덩어리 열 (GDD 238장, C.390): 박스 = [아이콘 | 막대 | 숫자] 3열 격자, 줄마다 같은 열(subgrid) — 상태이상 줄('쇠약')도 같은 열·같은 폭(숫자 열 = 가장 넓은 글),
+   푸는 법('모험 1번')은 그 줄 바로 아래 막대 열 시작에 맞춘 작은 글. 옛 줄별 flex 는 숫자 열 폭이 줄마다 달라 상태이상 줄이 삐져나왔다 */
+.bha-room__chips > .bha-room__status { padding-right: var(--bha-sp-7); } /* ⓘ 자리(14px) + 숫자와 간격 (C.390) */
+.bha-room__status:is(.bha-room__chips > *, .bha-actfx__status) { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; column-gap: var(--bha-sp-2); row-gap: var(--bha-sp-1); align-content: start; }
+:is(.bha-room__chips > .bha-room__status, .bha-actfx__status) > .bha-room__gauge { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; row-gap: 0; }
+:is(.bha-room__chips > .bha-room__status, .bha-actfx__status) > .bha-room__gauge > .bha-room__gaugehint { grid-column: 2 / -1; text-align: left; }
 .bha-room__gauge { --c: var(--bha-text-2); display: flex; align-items: center; gap: var(--bha-sp-2); }
 .bha-room__gauge .bha-icon { width: 14px; height: 14px; flex: none; color: var(--c); }
 .bha-room__gaugetrack { flex: 1 1 auto; height: 5px; border-radius: var(--bha-r-pill); background: var(--bha-bg-3); overflow: hidden; }
@@ -220,7 +226,6 @@
 .bha-room__chip--hunger { --c: var(--bha-hunger); }
 .bha-room__chip--cond { --c: var(--bha-cond); }
 .bha-room__chip--risk { --c: var(--bha-risk, var(--bha-danger)); }
-.bha-room__chip--stab { --c: var(--bha-stab); }
 .bha-room__chip--bond { --c: var(--bha-good); }
 .bha-room__chip--hp { --c: var(--bha-player-hp); }
 .bha-room__chip--weak, .bha-room__chip--tired, .bha-room__chip--collapsed, .bha-room__gauge.is-danger { --c: var(--bha-danger); }
@@ -307,13 +312,13 @@
   .is-changing[data-gauge] { outline: 1px solid var(--bha-accent); outline-offset: 1px; border-radius: var(--bha-r-xs); }
 }
 /* 상태 ⓘ (C.176, GDD 104장 2 · 190장 3 = C.281): 박스 오른쪽 바깥 2px, 아래 끝 = 박스 아래 끝. 보이는 원 22px(누르는 자리는 button.bha-info::before 로 36) */
-.bha-room__chips > .bha-info.bha-room__statusinfo { position: absolute; left: calc(100% + var(--bha-sp-1)); bottom: 0; margin: 0; width: 22px; height: 22px; background: var(--bha-scene-box); }
+/* C.390 (GDD 238장): ⓘ 는 박스 안 오른쪽 아래 — 박스 오른쪽 여백 칸(20px, 위쪽 모서리는 키 글자 배지 자리)에 들어가는 14px 원. 누르는 자리는 그대로 36(::before) */
+.bha-room__chips > .bha-info.bha-room__statusinfo { position: absolute; left: auto; right: var(--bha-sp-1); bottom: var(--bha-sp-1); top: auto; margin: 0; width: 14px; height: 14px; background: var(--bha-scene-box); }
 /* 빈사·쓰러짐 자세 (GDD 176장, 171장 남은 것): 머리 위에 박스 자리가 없으면 박스를 캐릭터 옆 위로 — 머리를 가리지 않는다 (roomView 가 .is-side 를 붙인다).
    위 끝은 방 안(이름표 포함), 옆은 캐릭터 상자 바깥(--char-half). 캐릭터가 왼쪽에 있으면 오른쪽(.is-right). ⓘ 는 캐릭터 반대쪽 바깥(C.281) */
 .bha-room__chips.is-side { top: calc(var(--chip-h, 0px) + var(--bha-sp-6)); left: calc(var(--char-x, 50%) - var(--char-half, 65px) - var(--bha-sp-2)); transform: translate(-100%, -100%); }
 .bha-room__chips.is-side.is-right { left: calc(var(--char-x, 50%) + var(--char-half, 65px) + var(--bha-sp-2)); transform: translate(0, -100%); }
-.bha-room__chips.is-side:not(.is-right) > .bha-room__statusinfo { left: auto; right: calc(100% + var(--bha-sp-3)); }
-.bha-room__chips.is-side.is-right > .bha-room__statusinfo { left: calc(100% + var(--bha-sp-3)); }
+/* ⓘ 는 옆자리에서도 박스 안 (C.390, GDD 238장 — 옛 박스 바깥 자리 삭제) */
 @keyframes bha-bubble-pop { from { opacity: 0; transform: translate(-50%, -100%) scale(0.9); } }
 @keyframes bha-bubble-pop-side { from { opacity: 0; transform: scale(0.9); } }
 

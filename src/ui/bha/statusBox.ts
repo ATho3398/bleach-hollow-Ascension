@@ -94,13 +94,13 @@ export function homeHpMeter(fraction: number, maxHp: number): HTMLElement {
 // ── 회복 차오름 (GDD 201장): 전투 밖에서 상태창 값이 오르면 '+n' 숫자 대신 막대가 이전 값 → 새 값으로 ACTION_FILL_MS(0.8초) 동안 차고 옆 숫자도 따라 오른다.
 //    줄어든 값은 바로 새 값(201장 5). 동작 줄이기 설정이면 tween 이 바로 끝 = 바로 새 값.
 
-/** 상태창이 보여 주는 값 한 벌: 배부름(0~100)·컨디션·영압 안정도·리스크·체력 비율(0~1) */
-export interface GaugeShown { hunger: number; cond: number; stab: number; risk: number; hp: number }
-const GAUGE_KEYS = ['hunger', 'cond', 'stab', 'risk', 'hp'] as const;
+/** 상태창이 보여 주는 값 한 벌: 배부름(0~100)·컨디션·리스크·체력 비율(0~1) — 영압 안정도는 C.391 (GDD 239장 4) 에서 삭제 */
+export interface GaugeShown { hunger: number; cond: number; risk: number; hp: number }
+const GAUGE_KEYS = ['hunger', 'cond', 'risk', 'hp'] as const;
 
 /** 둥지 값으로 한 벌 (체력 비율은 부르는 쪽이 넘긴다 — 방 = previewHomeHp, 가방 = homeHp) */
-export function nestShown(n: Pick<NestState, 'hunger' | 'condition' | 'stability' | 'risk'>, hp: number): GaugeShown {
-  return { hunger: fullnessOf(n.hunger), cond: n.condition, stab: n.stability, risk: n.risk, hp };
+export function nestShown(n: Pick<NestState, 'hunger' | 'condition' | 'risk'>, hp: number): GaugeShown {
+  return { hunger: fullnessOf(n.hunger), cond: n.condition, risk: n.risk, hp };
 }
 
 /** 이 캐릭터(둥지 객체)의 상태창에 마지막으로 보여 준 값 — 방을 다시 열 때 그 사이 오른 값(진화로 가득·부활·대기 회복 등)을 차오르게 */
@@ -135,7 +135,7 @@ export function lerpShown(a: GaugeShown, b: GaugeShown, t: number): GaugeShown {
 
 /** 칩 값을 차오르는 중인 값으로 덮어쓴다 (상태이상 줄은 그대로) */
 export function chipsAt(chips: readonly StatusChip[], v: GaugeShown): StatusChip[] {
-  return chips.map((c) => (c.value !== null && (c.kind === 'hunger' || c.kind === 'cond' || c.kind === 'stab' || c.kind === 'risk') ? { ...c, value: v[c.kind] } : c));
+  return chips.map((c) => (c.value !== null && (c.kind === 'hunger' || c.kind === 'cond' || c.kind === 'risk') ? { ...c, value: v[c.kind] } : c));
 }
 
 /**

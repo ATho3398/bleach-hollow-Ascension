@@ -156,7 +156,7 @@ describe('세이브 반영 (형식 15)', () => {
   });
   it('원정에서 이긴 강적 수만큼 영혼 결정 +1 (진 강적·일반 적은 없음)', () => {
     const save = newSaveData('hollow', 0);
-    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 0, condition: 100, deck: [], risk: 0, stability: 50, build: save.build, evolution: save.evolution });
+    const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 0, condition: 100, deck: [], risk: 0, build: save.build, evolution: save.evolution });
     exp.phase = 'ended';
     exp.outcome = 'returned';
     exp.endReason = 'returned';

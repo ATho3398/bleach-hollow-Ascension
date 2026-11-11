@@ -40,20 +40,12 @@ describe('102-1 시간 흐름', () => {
     passNestTime(z, 1, false);
     expect(z.condition).toBeCloseTo(80 - CP.conditionPerHour * 2, 5);
   });
-  it('영압 안정도는 꺼 둔 동안만 시간당 −2, 배부름·컨디션 30 이하면 ×2', () => {
+  it('영압 안정도는 삭제됐다 (C.391 GDD 239장): 둥지·시간 흐름·balance 에 남지 않는다', () => {
     const n = newNest(0);
-    n.hunger = 0;
-    n.stability = 50;
-    passNestTime(n, 1, false);
-    expect(n.stability).toBe(50);
-    passNestTime(n, 1, true);
-    expect(n.stability).toBeCloseTo(50 - CP.stabilityPerHour, 5);
-    const low = newNest(0);
-    low.hunger = 0;
-    low.condition = 20;
-    low.stability = 50;
-    passNestTime(low, 1, true);
-    expect(low.stability).toBeCloseTo(50 - CP.stabilityPerHour * 2, 5);
+    expect('stability' in n).toBe(false);
+    expect('stabilityPerHour' in CP).toBe(false);
+    expect('stabilityDoubleBelow' in CP).toBe(false);
+    expect('stability' in passNestTime(n, 1, true)).toBe(false);
   });
   it('+60 상한이 없어 100/시간당 흐름(C.181: 5 → 20시간)이면 배부름 0, 리스크는 그대로', () => {
     const n = newNest(0);
@@ -67,11 +59,9 @@ describe('102-1 시간 흐름', () => {
     const n = newNest(0);
     n.hunger = 70;
     n.condition = 80;
-    n.stability = 50;
     tickNestOnline(n, 2 * H);
     expect(n.hunger).toBeCloseTo(70 + 2 * BALANCE.provisional.nest.idleHungerPerHour);
     expect(n.condition).toBeLessThan(80);
-    expect(n.stability).toBe(50);
     const before = n.hunger;
     tickNestOnline(n, 3 * H, true);
     expect(n.hunger).toBe(before);
@@ -167,7 +157,7 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
     s.evolution.formHistory = ['a', 'b', 'c'];
     s.evolution.ev = { hp: 41, atk: 30, def: 0, spr: 9, int: 10, spd: 3 } as SaveData['evolution']['ev'];
     s.shared.tradeCoins = 777;
-    Object.assign(s.nest, { dead: true, collapsed: true, weakened: true, tired: true, hunger: 100, condition: 0, stability: 0, bond: 0 });
+    Object.assign(s.nest, { dead: true, collapsed: true, weakened: true, tired: true, hunger: 100, condition: 0, bond: 0 });
     expect(performRevive(s, 5).ok).toBe(true);
     expect(s.evolution).toMatchObject({ tierIndex: 0, formId: null, formHistory: [] });
     expect(s.evolution.ev.hp).toBe(Math.floor(41 * (1 - reviveEvLossOf(0))));
@@ -209,10 +199,10 @@ describe('102-4 약 3종', () => {
 });
 
 describe('102-5 용어', () => {
-  it('두 종족 모두 영압 안정도, 폭주 상태 = 호로 폭주 / 사신 호로화, 도움말에 한계 돌파 없음', () => {
+  it('영압 안정도 이름 없음(C.391), 폭주 상태 = 호로 폭주 / 사신 호로화, 도움말에 한계 돌파 없음', () => {
     const h = getFaction('hollow');
     const s = getFaction('shinigami');
-    expect([h.stabilityName, s.stabilityName]).toEqual(['영압 안정도', '영압 안정도']);
+    expect('stabilityName' in h || 'stabilityName' in s).toBe(false);
     expect([h.frenzyName, s.frenzyName]).toEqual(['폭주', '호로화']);
     for (const f of [h, s]) {
       const t = riskText(f);
@@ -234,10 +224,9 @@ describe('102-6 교감', () => {
     expect(n.bond).toBe(NX.bond.dailyMax);
     expect(gainBond(n, 2, new Date(2026, 9, 28, 1).getTime())).toBe(2);
   });
-  it('방 상태 칩: 영압 안정도(교감은 상태 화면에서만, 109장 수정 v5.243)·쓰러짐·쇠약·피곤 칩(풀리는 법), 기분 = 쓰러짐 먼저', () => {
-    const chips = statusChips({ hunger: 90, condition: 20, risk: 0, weakened: true, tired: true, collapsed: true, stability: 42 }, getFaction('hollow'));
-    expect(chips.map((c) => c.kind)).toEqual(['hunger', 'cond', 'stab', 'risk', 'collapsed', 'weak', 'tired']);
-    expect(chips.find((c) => c.kind === 'stab')).toMatchObject({ value: 42, label: '영압 안정도' });
+  it('방 상태 칩: 배부름·컨디션·리스크(영압 안정도 C.391 삭제, 교감은 상태 화면에서만, 109장 수정 v5.243)·쓰러짐·쇠약·피곤 칩(풀리는 법), 기분 = 쓰러짐 먼저', () => {
+    const chips = statusChips({ hunger: 90, condition: 20, risk: 0, weakened: true, tired: true, collapsed: true }, getFaction('hollow'));
+    expect(chips.map((c) => c.kind)).toEqual(['hunger', 'cond', 'risk', 'collapsed', 'weak', 'tired']);
     expect(chips.filter((c) => c.hint).length).toBe(3);
     expect(moodOf({ weakened: true, collapsed: true, condition: 10, risk: 0, riskLimit: 100 })).toBe('collapsed');
   });

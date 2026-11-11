@@ -79,7 +79,7 @@ export function critPercentText(build: SaveData['build'], evo?: SaveData['evolut
   return pctText(critChances(build, evo, gearCrit).basic);
 }
 
-/** 상태 자리: 왼쪽 상태 4바(배부름·컨디션·안정 수치·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
+/** 상태 자리: 왼쪽 상태 3바(배부름·컨디션·리스크) / 오른쪽 능력치 6줄·속성·고유 특성(GDD 20-3) + 쇠약 안내. 돌보기(먹이·재우기·쓰다듬기)는 홈 하단 독으로 옮겼다 (GDD 18-2) */
 export interface CareHandlers {
   /** 진화 정보 패널(C.137, GDD 85장 7): 진화체 도감·진화 도움말·환생 */
   onDex: () => void;
@@ -105,7 +105,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const paint = () => {
     status.querySelector('.bha-nest__status')?.remove();
     status.append(statusBlock(faction, {
-      hunger: n.hunger, condition: n.condition, stability: n.stability, stabilityMax: RX.stabilityMax, risk: n.risk, riskLimit: RX.limit, condWarn: 40, riskWarn: 60,
+      hunger: n.hunger, condition: n.condition, risk: n.risk, riskLimit: RX.limit, condWarn: 40, riskWarn: 60,
       // 교감 (GDD 102-6 · 109장 3번): 따로 떨어진 줄 대신 상태 수치 목록 안 같은 막대 한 줄
       // 설명 글은 이름 옆 ⓘ 창 (C.176, GDD 104장 2)
       bond: {

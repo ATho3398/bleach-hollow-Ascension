@@ -71,8 +71,9 @@ describe('첫 흡수 연습 글 = 리스크 문장 없음 (C.320)', () => {
     expect(gv).not.toContain('riskGaugeName}은(는) 그대로다');
     const guides = JSON.parse(readFileSync('src/data/help/guides.json', 'utf8')) as { guides: Record<string, { body: string }[]> };
     for (const c of guides.guides['first-absorb']!) {
-      expect(c.body).not.toContain('{riskGaugeName}');
       expect(c.body).not.toContain('{releaseRelief}');
+      expect(c.body).not.toContain('{riskGaugeName}');
+      expect(c.body).not.toContain('{stabilityName}'); // C.391 (GDD 239장): 영압 안정도 삭제
     }
   });
 });

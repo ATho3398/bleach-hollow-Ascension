@@ -161,8 +161,11 @@ describe('트리 판정 (GDD 126장, C.220)', () => {
     expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }), { rebirths: 1 })).toEqual(['h4:void']);
     const fr = atTier(2);
     fr.breakthroughs = H.breakthroughs;
-    expect(ids(fr, { stability: H.frenzyStabilityBelow - 1 })).toEqual(['h4:frenzy']);
-    expect(ids(fr, { stability: H.frenzyStabilityBelow })).toEqual([]);
+    expect(ids(fr, { risk: H.frenzyRiskAtLeast })).toEqual(['h4:frenzy']); // C.391 (GDD 239장): 진화 순간 리스크 게이지 ≥ 90
+    expect(H.frenzyRiskAtLeast).toBe(90);
+    expect(ids(fr, { risk: H.frenzyRiskAtLeast - 1 })).toEqual([]);
+    expect(ids(fr)).toEqual([]); // 리스크를 모르면 후보 없음
+    expect(ids(atTier(2), { risk: 100 })).toEqual([]); // 돌파 횟수 모자람
     const rs = atTier(2);
     rs.releases = 3;
     rs.absorbs = 1;

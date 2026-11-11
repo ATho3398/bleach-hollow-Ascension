@@ -5,7 +5,7 @@ import { FACTIONS } from '../src/data/factions';
 import { GLOSSARY, GUIDES, guideVars, helpVars, RECOVER_SCENES, renderHelpText, SCREEN_HELPS, SCRIPT_SCENES, TUTORIAL_SCENES } from '../src/data/help';
 
 const SCRIPT_SCENES_LIST = Object.values(SCRIPT_SCENES);
-import { riskText, riskZones, stabilityZones, zoneLines } from '../src/data/help/riskText';
+import { riskText, riskZones, zoneLines } from '../src/data/help/riskText';
 import { MINUS, multPct, numLine, pctDelta, range, SECTION, signed, zonesBy } from '../src/data/help/textFormat';
 import { TRAITS, traitDescription } from '../src/data/traits';
 import { statusChips } from '../src/ui/bha/roomLogic';
@@ -36,7 +36,7 @@ describe('111장 4: 문구 헬퍼 (textFormat)', () => {
 });
 
 describe('111장 4: 상태 ⓘ 창 구조', () => {
-  const gauges: StatusInfoKind[] = ['hunger', 'cond', 'stab', 'risk', 'bond'];
+  const gauges: StatusInfoKind[] = ['hunger', 'cond', 'risk', 'bond']; // 영압 안정도(stab)는 C.391 삭제
   const ailments: StatusInfoKind[] = ['weak', 'tired', 'collapsed', 'dead'];
   it('수치 상태 = 요약 → 하는 일 → 구간별 손해 → 오르내림, 상태 이상 = 요약 → (손해) → 풀리는 법 — 두 종족 같은 순서', () => {
     for (const f of FACTIONS) {
@@ -55,7 +55,7 @@ describe('111장 4: 상태 ⓘ 창 구조', () => {
       }
     }
   });
-  it('구간은 0~상한을 빈틈없이 덮는다 (배부름·컨디션·영압 안정도·광기·교감)', () => {
+  it('구간은 0~상한을 빈틈없이 덮는다 (배부름·컨디션·광기·교감)', () => {
     const f = FACTIONS[0]!;
     for (const k of gauges) {
       const lines = statusInfo(k, f).groups[1]!.lines;
@@ -75,25 +75,24 @@ describe('111장 4: 상태 ⓘ 창 구조', () => {
         }
       }
       expect(JSON.stringify(statusInfo('risk', f))).toContain(f.riskGaugeName);
-      expect(JSON.stringify(statusInfo('stab', f))).toContain(f.stabilityName);
       expect(JSON.stringify(statusInfo('hunger', f))).toContain(f.nestActions.feed);
     }
   });
   it('방 상태 ⓘ: 칩마다 한 묶음 + 한 줄 요약', () => {
     const f = FACTIONS[0]!;
-    const chips = statusChips({ hunger: 90, condition: 20, risk: 85, weakened: true, tired: true, stability: 30 }, f);
+    const chips = statusChips({ hunger: 90, condition: 20, risk: 85, weakened: true, tired: true }, f);
     const doc = roomStatusInfo(chips, f) as { lead: string; groups: { title: string; lines: string[] }[] };
     expect(doc.lead).toMatch(/다$/);
     expect(doc.groups).toHaveLength(chips.length);
   });
-  it('광기·영압 안정도 설명(도움말과 ⓘ 창)이 같은 줄을 쓴다', () => {
+  it('광기 설명(도움말과 ⓘ 창)이 같은 줄을 쓴다', () => {
     for (const f of FACTIONS) {
       const vars = helpVars(f);
       const rt = riskText(f);
       expect(vars.riskZoneText).toBe(zoneLines(riskZones(f)).join('\n'));
-      expect(vars.stabilityZoneText).toBe(zoneLines(stabilityZones(f)).join('\n'));
+      expect('stabilityZoneText' in vars).toBe(false);
       expect(statusInfo('risk', f).groups[2]!.lines).toEqual([...rt.riskUp, ...rt.riskDown]);
-      for (const l of [...rt.riskUp, ...rt.riskDown, ...rt.stabilityMove, ...rt.frenzyLines]) expect(l, l).toMatch(/^[^:]+: \S/);
+      for (const l of [...rt.riskUp, ...rt.riskDown, ...rt.frenzyLines]) expect(l, l).toMatch(/^[^:]+: \S/);
     }
   });
 });

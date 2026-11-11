@@ -44,16 +44,16 @@ describe('180장 2 온천 가득 안내', () => {
 
 describe('180장 3 먹이 배부름 약 ×1.6 → 235장 3유형 (C.387)', () => {
   const F = { basic: foodEffect('basic') };
-  it('유형별: 싸구려 6 · 일반 12 · 특식 40, feedHunger 12, 한도 10분 3개(같은 먹이 2개)', () => {
-    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).hunger)).toEqual([6, 12, 12, 40, 40]);
-    expect(BALANCE.provisional.nest.feedHunger).toBe(12);
-    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).condition)).toEqual([0, 0, 0, 30, 0]);
+  it('유형별 (C.391 GDD 239장): 싸구려 4 · 일반 8 · 특식은 먹이마다, feedHunger 8, 한도 10분 3개(같은 먹이 2개)', () => {
+    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).hunger)).toEqual([4, 8, 8, 8, 40]);
+    expect(BALANCE.provisional.nest.feedHunger).toBe(8);
+    expect((['snack', 'basic', 'hearty', 'tonic', 'feast'] as const).map((f) => foodEffect(f).condition)).toEqual([0, 0, 0, 25, -15]);
     expect(BALANCE.provisional.nest.feedLimit).toEqual({ max: 3, windowMinutes: 10, sameMax: 2 });
   });
   it('고기 1개를 먹이면 방 말풍선에 회복 수치가 없다 (GDD 201장 — 상태창 막대가 차오른다)', () => {
     for (const id of ['hollow', 'shinigami'] as const) {
       const f = getFaction(id);
-      expect(careFeedback(f, 'feed', 'basic', { hunger: -F.basic.hunger, condition: 0, stability: 0, risk: 0 })).toBe(f.foodNames.basic);
+      expect(careFeedback(f, 'feed', 'basic', { hunger: -F.basic.hunger, condition: 0, risk: 0 })).toBe(f.foodNames.basic);
     }
   });
 });

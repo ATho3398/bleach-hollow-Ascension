@@ -9,7 +9,7 @@ import { statusChips } from '../src/ui/bha/roomLogic';
 import { getFaction } from '../src/data/factions';
 
 const read = (p: string) => readFileSync(p, 'utf8');
-const base: GaugeShown = { hunger: 40, cond: 50, stab: 60, risk: 10, hp: 0.5 };
+const base: GaugeShown = { hunger: 40, cond: 50, risk: 10, hp: 0.5 };
 
 describe('201장 차오름 계산', () => {
   it('0.8초 · 화면 상수 (balance 밖)', () => {
@@ -27,7 +27,7 @@ describe('201장 차오름 계산', () => {
     const to = { ...base, hunger: 80, hp: 1 };
     expect(lerpShown(base, to, 0.5)).toMatchObject({ hunger: 60, hp: 0.75, cond: 50 });
     const f = getFaction('hollow');
-    const chips = statusChips({ hunger: 60, condition: 50, risk: 10, stability: 60, weakened: true }, f);
+    const chips = statusChips({ hunger: 60, condition: 50, risk: 10, weakened: true }, f);
     const over = chipsAt(chips, { ...base, hunger: 55 });
     expect(over.find((c) => c.kind === 'hunger')!.value).toBe(55);
     expect(over.find((c) => c.kind === 'weak')!.value).toBeNull();
@@ -37,7 +37,7 @@ describe('201장 차오름 계산', () => {
     expect(shownBefore(owner)).toBeUndefined();
     rememberShown(owner, base);
     expect(shownBefore(owner)).toEqual(base);
-    expect(nestShown({ hunger: 30, condition: 50, stability: 60, risk: 10 }, 0.5)).toEqual({ hunger: 70, cond: 50, stab: 60, risk: 10, hp: 0.5 });
+    expect(nestShown({ hunger: 30, condition: 50, risk: 10 }, 0.5)).toEqual({ hunger: 70, cond: 50, risk: 10, hp: 0.5 });
   });
 });
 
@@ -58,9 +58,9 @@ describe('201장 동작 줄이기 = 바로 새 값', () => {
 describe('201장 회복 수치 글자 없앰', () => {
   it.each(['hollow', 'shinigami'] as const)('%s: 돌보기 말풍선 — 회복은 이름만, 줄어든 값·리스크 비용은 그대로', (id) => {
     const f = getFaction(id);
-    expect(careFeedback(f, 'feed', 'basic', { hunger: -8, condition: 2, stability: 1, risk: 0 })).toBe(f.foodNames.basic);
-    expect(careFeedback(f, 'sleep', null, { hunger: 1, condition: 20, stability: 0, risk: 0 })).toBe(`${f.nestActions.sleep}: ${f.fullnessName} −1`);
-    expect(careFeedback(f, 'sleep', null, { hunger: 0, condition: 0, stability: 0, risk: 2 })).toBe(`${f.nestActions.sleep}: ${f.riskGaugeName} +2`);
+    expect(careFeedback(f, 'feed', 'basic', { hunger: -8, condition: 2, risk: 0 })).toBe(f.foodNames.basic);
+    expect(careFeedback(f, 'sleep', null, { hunger: 1, condition: 20, risk: 0 })).toBe(`${f.nestActions.sleep}: ${f.fullnessName} −1`);
+    expect(careFeedback(f, 'sleep', null, { hunger: 0, condition: 0, risk: 2 })).toBe(`${f.nestActions.sleep}: ${f.riskGaugeName} +2`);
   });
   it('온천 가득 알림에 체력 % 없음', () => {
     expect(spaEndText({ reason: 'full', hpTo: 1 }, '배부름')).not.toMatch(/\d/);

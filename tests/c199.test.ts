@@ -19,7 +19,7 @@ const TR = BALANCE.provisional.tutorialRecover;
 const tutorialBattle = (factionId: string, seed = 7): { exp: ExpeditionState; s: CombatState } => {
   const save = newSaveData(factionId, 1);
   const exp = createExpedition({
-    factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+    factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
     build: save.build, evolution: save.evolution, tutorial: true,
   });
   while (exp.phase === 'moving') advance(exp);
@@ -169,7 +169,7 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
   const afterTutorial = (factionId: string) => {
     const save = newSaveData(factionId, 1000);
     const exp = createExpedition({
-      factionId, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+      factionId, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
       build: save.build, evolution: save.evolution, tutorial: true,
     });
     playExpedition(exp, { returnAfterLap: 1, absorb: 'absorb' });

@@ -1,4 +1,4 @@
-// 바뀌는 상태 값 깜빡임 (GDD 208장 3): 상태창 값(배부름·컨디션·영압 안정도/리스크·체력)이 오르거나 내리는 동안 그 막대와 아이콘만 깜빡인다.
+// 바뀌는 상태 값 깜빡임 (GDD 208장 3): 상태창 값(배부름·컨디션·리스크·체력)이 오르거나 내리는 동안 그 막대와 아이콘만 깜빡인다.
 // 바뀌는 동안(차오름 0.8초) + 끝난 뒤 짧게(0.25초 간격 3번). 안 바뀐 값은 그대로. 동작 줄이기(prefers-reduced-motion)면 CSS 가 깜빡임 대신 테두리 강조 한 번(room.css).
 // 그리는 쪽은 막대 줄마다 data-gauge="<값 이름>" 을 달고, 다시 그릴 때마다 applyBlink(host) 를 부른다 — 줄이 새로 만들어져도 박자(animation-delay)가 이어진다. 종족 무관.
 import { ACTION_FILL_MS } from './actionFx';
@@ -11,7 +11,7 @@ export const GAUGE_BLINK_AFTER = 3;
 export const BLINK_CLASS = 'is-changing';
 
 /** 깜빡임 대상 값 이름 = 상태창 줄 이름(roomLogic StatusChip.kind) + 체력 */
-export type GaugeKey = 'hunger' | 'cond' | 'stab' | 'risk' | 'hp';
+export type GaugeKey = 'hunger' | 'cond' | 'risk' | 'hp'; // 'stab'(영압 안정도)는 C.391 에서 삭제
 
 interface BlinkState { keys: Set<string>; t0: number; until: number; timer: ReturnType<typeof setTimeout> | 0 }
 const states = new WeakMap<HTMLElement, BlinkState>();
@@ -28,7 +28,7 @@ export function tagGauge<T extends HTMLElement>(node: T, key: GaugeKey): T {
 export function changedKeys<T extends Partial<Record<GaugeKey, number>>>(a: T | null | undefined, b: T): GaugeKey[] {
   if (!a) return [];
   const out: GaugeKey[] = [];
-  for (const k of ['hunger', 'cond', 'stab', 'risk', 'hp'] as const) {
+  for (const k of ['hunger', 'cond', 'risk', 'hp'] as const) {
     const x = a[k], y = b[k];
     if (x === undefined || y === undefined) continue;
     const diff = k === 'hp' ? Math.round(x * 100) !== Math.round(y * 100) : Math.round(x) !== Math.round(y);

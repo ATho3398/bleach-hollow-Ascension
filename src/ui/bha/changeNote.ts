@@ -15,13 +15,13 @@ export function changeDeltaText(it: Pick<ChangeItem, 'delta' | 'unit'>): string 
 }
 
 /** 값 이름 → 상태창과 같은 아이콘 (roomLogic statusChips · homeHpMeter) */
-const ICONS: Record<GaugeKey, string> = { hunger: 'i-hunger', cond: 'i-cond', stab: 'i-stab', risk: 'i-risk', hp: 'i-heal' };
+const ICONS: Record<GaugeKey, string> = { hunger: 'i-hunger', cond: 'i-cond', risk: 'i-risk', hp: 'i-heal' };
 /** 내림이 좋은 값 (리스크 = 광기·영압 폭주 등, 종족 이름은 faction.riskGaugeName) */
 const LOWER_IS_GOOD: ReadonlySet<GaugeKey> = new Set(['risk']);
 
-type Names = Pick<FactionConfig, 'fullnessName' | 'stabilityName' | 'riskGaugeName'>;
+type Names = Pick<FactionConfig, 'fullnessName' | 'riskGaugeName'>;
 export function changeLabel(key: GaugeKey, f: Names): string {
-  return key === 'hunger' ? f.fullnessName : key === 'cond' ? '컨디션' : key === 'stab' ? f.stabilityName : key === 'risk' ? f.riskGaugeName : '체력';
+  return key === 'hunger' ? f.fullnessName : key === 'cond' ? '컨디션' : key === 'risk' ? f.riskGaugeName : '체력';
 }
 
 /** 두 값 묶음에서 바뀐 값만(반올림해 숫자가 달라진 것 — 깜빡임과 같은 기준), 상태창 순서로 */

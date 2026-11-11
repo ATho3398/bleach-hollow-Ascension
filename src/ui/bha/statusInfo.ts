@@ -1,10 +1,10 @@
 // 상태 ⓘ 설명 문구 (C.176, GDD 104장 2 → C.185 말투·서식 통일 GDD 111장 4): 방 상태 칩·상태 화면이 같이 읽는다.
 // 이름은 종족 설정, 수치는 BALANCE(riskText 와 같은 규칙) — 숫자 하드코딩 없음.
-// 창 구조: 한 줄 요약('~다') → 소제목. 수치 상태(배부름·컨디션·영압 안정도·광기·교감) = 하는 일 → 구간별 손해 → 오르내림,
+// 창 구조: 한 줄 요약('~다') → 소제목. 수치 상태(배부름·컨디션·광기·교감 — 영압 안정도는 C.391 삭제) = 하는 일 → 구간별 손해 → 오르내림,
 // 상태 이상(쇠약·피곤·빈사·사망) = 손해 → 풀리는 법. 줄 서식은 data/help/textFormat.ts.
 import { BALANCE } from '../../config/balance';
 import { GOLD_ITEMS } from '../../data/shop';
-import { riskText, riskZones, stabilityZones, zoneLines } from '../../data/help/riskText';
+import { riskText, riskZones, zoneLines } from '../../data/help/riskText';
 import { MINUS, num, numLine, pct, pctDelta, range, SECTION, signed, zonesBy, type Zone } from '../../data/help/textFormat';
 import { bondIdleBonus, bondStage, CARE_STATUS_NAMES as CARE_NAMES, deathHoursOf, reviveEvLossOf } from '../../engine/nest';
 import { fixParticles } from '../../engine/josa';
@@ -18,9 +18,9 @@ const BD = NX.bond;
 const RX = BALANCE.provisional.risk;
 const PX = BALANCE.provisional.expedition;
 
-type Names = Pick<FactionConfig, 'id' | 'riskGaugeName' | 'stabilityName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
+type Names = Pick<FactionConfig, 'id' | 'riskGaugeName' | 'nestName' | 'absorbActionName' | 'fullnessName' | 'frenzyName' | 'nestActions'> & Partial<Pick<FactionConfig, 'room' | 'market' | 'worldmap'>>;
 
-export type StatusInfoKind = StatusChip['kind'] | 'stab' | 'dead';
+export type StatusInfoKind = StatusChip['kind'] | 'dead';
 
 /** 그 상태를 푸는 약 이름 (상점 데이터) */
 const medicineName = (cures: string): string => GOLD_ITEMS.find((g) => g.kind === 'medicine' && g.cures === cures)?.name ?? '';
@@ -55,12 +55,11 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
   const a = f.nestActions;
   switch (kind) {
     case 'hunger': {
-      // 배부름 = 100 − 허기. 문턱(쇠약·컨디션 감소·안정도 ×2)은 BALANCE 에서 — 같은 손해가 이어지는 값끼리 한 구간
+      // 배부름 = 100 − 허기. 문턱(쇠약·컨디션 감소)은 BALANCE 에서 — 같은 손해가 이어지는 값끼리 한 구간
       const zones = zonesBy(0, 100, (v) => {
         const fx: string[] = [];
         if (v <= CP.weakFullness) fx.push(CARE_NAMES.weak);
         if (v <= CP.conditionBelowFullness) fx.push(`컨디션 시간당 ${MINUS}${num(CP.conditionPerHour * (v <= 0 ? 2 : 1))}`);
-        if (v <= CP.stabilityDoubleBelow) fx.push(`꺼 둔 동안 ${f.stabilityName} 감소 ×2`);
         return fx.length > 0 ? fx.join(' · ') : '손해가 없다';
       });
       return gaugeDoc(
@@ -76,15 +75,14 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       );
     }
     case 'cond': {
-      // 공허 블록 가산 = 최대 × (1 − 컨디션 ÷ 상한): 네 구간 + 피곤·안정도 ×2 문턱으로 끊는다
+      // 공허 블록 가산 = 최대 × (1 − 컨디션 ÷ 상한): 네 구간 + 피곤 문턱으로 끊는다
       const max = PX.conditionMax;
       const voidAt = (v: number) => Math.round(PX.conditionRiskBonusMax * (1 - v / max) * 100);
-      const cuts = [...new Set([0, max * 0.25, max * 0.5, max * 0.75, CP.tiredCondition + 1, CP.stabilityDoubleBelow + 1, max + 1].map(Math.round))].sort((x, y) => x - y);
+      const cuts = [...new Set([0, max * 0.25, max * 0.5, max * 0.75, CP.tiredCondition + 1, max + 1].map(Math.round))].sort((x, y) => x - y);
       const zones: Zone[] = cuts.slice(0, -1).map((from, i) => {
         const to = cuts[i + 1]! - 1;
         const fx = [`공허 블록 확률 +${range(voidAt(to), voidAt(from))}%p`];
         if (to <= CP.tiredCondition) fx.push(CARE_NAMES.tired);
-        if (to <= CP.stabilityDoubleBelow) fx.push(`꺼 둔 동안 ${f.stabilityName} 감소 ×2`);
         return { from, to, text: fx.join(' · ') };
       });
       return gaugeDoc(
@@ -135,10 +133,6 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
     case 'risk': {
       const rt = riskText(f);
       return gaugeDoc(rt.riskLead, rt.riskDoes, riskZones(f), value, [...rt.riskUp, ...rt.riskDown]);
-    }
-    case 'stab': {
-      const rt = riskText(f);
-      return gaugeDoc(rt.stabilityLead, rt.stabilityDoes, stabilityZones(f), value, rt.stabilityMove);
     }
     case 'weak':
       return ailmentDoc(

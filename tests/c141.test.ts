@@ -17,31 +17,30 @@ describe('C.141', () => {
     for (const id of ['hollow', 'shinigami']) {
       const f = getFaction(id);
       const t = riskText(f);
-      const all = [t.riskTip, ...t.riskDoes, ...zoneLines(riskZones(f)), ...t.riskUp, ...t.riskDown, ...t.stabilityDoes, ...t.stabilityMove].join('\n');
-      for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.breakthroughStabilityLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, BALANCE.provisional.tiles.spring.riskRelief, RX.stabilityStart]) expect(all).toContain(String(n)); // C.355: 휴식 칸 내림 삭제 → 샘 값
+      const all = [t.riskTip, ...t.riskDoes, ...zoneLines(riskZones(f)), ...t.riskUp, ...t.riskDown].join('\n');
+      for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, BALANCE.provisional.tiles.spring.riskRelief]) expect(all).toContain(String(n)); // C.355: 휴식 칸 내림 삭제 → 샘 값
       expect(all).toContain(`+${Math.round(RX.breakthroughSpawnBonus * 100)}%`);
       expect(t.riskDoes[0]).toContain('직접 손해가 없고');
-      expect(t.stabilityDoes[0]).toContain('해방 게이지');
-      expect(all).toContain(f.riskGaugeName);
-      expect(all).toContain(f.stabilityName);
+        expect(all).toContain(f.riskGaugeName);
     }
   });
   it('84장 9: 도움말 용어(광기·자아)가 손해 문구로 렌더되고 자리표시자가 남지 않는다', () => {
     for (const id of ['hollow', 'shinigami']) {
       const f = getFaction(id);
       const vars = helpVars(f);
-      for (const tid of ['risk-gauge', 'stability']) {
+      for (const tid of ['risk-gauge']) { // 'stability' 용어는 C.391 (GDD 239장) 삭제
         const term = GLOSSARY.find((g) => g.id === tid)!;
         const body = renderHelpText(term.body, vars);
         expect(body).toContain('손해');
         expect(body).not.toMatch(/\{[A-Za-z.]+\}/);
-        expect(body).toContain(tid === 'risk-gauge' ? String(RX.frenzyConditionLoss) : String(RX.breakthroughStabilityLoss));
+        expect(body).toContain(String(RX.frenzyConditionLoss));
       }
     }
   });
   it('84장 9: 광기·자아 설명은 상태 막대 이름 옆 ⓘ 창 (C.176 GDD 104장 2 — 옛 설명 패널 대체)', () => {
     expect(read('src/ui/lcdScreens.ts')).not.toContain('explain.dataset.riskExplain');
-    expect(read('src/ui/bha/nest.ts')).toContain("withTip(meter({ kind: 'stab'");
+    expect(read('src/ui/bha/nest.ts')).not.toContain("withTip(meter({ kind: 'stab'"); // 영압 안정도 막대 삭제 (C.391)
+    expect(read('src/ui/bha/nest.ts')).toMatch(/withTip\(meter\(\{\s*kind: 'risk'/);
     expect(read('src/ui/bha/statusInfo.ts')).toContain('riskText(f)');
   });
   it('85장 11: 손 타일은 카드, 끌어놓기는 눌러 고르기와 같은 규칙(onCell)으로 처리한다', () => {

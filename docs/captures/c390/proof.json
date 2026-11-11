@@ -1,0 +1,105 @@
+{
+ "facts": {
+  "ph-land-status1": {
+   "box": {
+    "l": 251,
+    "r": 349,
+    "t": 46,
+    "b": 132
+   },
+   "info": {
+    "l": 333,
+    "r": 347,
+    "t": 116,
+    "b": 130
+   },
+   "infoInside": true,
+   "rowsInside": true,
+   "trackLefts": [
+    273
+   ],
+   "trackRights": [
+    304
+   ],
+   "hintLeft": 273
+  },
+  "ph-land-status2": {
+   "box": {
+    "l": 251,
+    "r": 349,
+    "t": 46,
+    "b": 161
+   },
+   "info": {
+    "l": 333,
+    "r": 347,
+    "t": 145,
+    "b": 159
+   },
+   "infoInside": true,
+   "rowsInside": true,
+   "trackLefts": [
+    273
+   ],
+   "trackRights": [
+    304
+   ],
+   "hintLeft": 273
+  },
+  "ph-port-status1": {
+   "box": {
+    "l": 258,
+    "r": 344,
+    "t": 251,
+    "b": 349
+   },
+   "info": {
+    "l": 260,
+    "r": 274,
+    "t": 333,
+    "b": 347
+   },
+   "infoInside": true,
+   "rowsInside": true,
+   "trackLefts": [
+    335,
+    307,
+    293,
+    279,
+    265
+   ],
+   "trackRights": [
+    340,
+    312,
+    298,
+    284,
+    270
+   ],
+   "hintLeft": 316
+  },
+  "pc-status0": {
+   "box": {
+    "l": 591,
+    "r": 689,
+    "t": 229,
+    "b": 287
+   },
+   "info": {
+    "l": 673,
+    "r": 687,
+    "t": 271,
+    "b": 285
+   },
+   "infoInside": true,
+   "rowsInside": true,
+   "trackLefts": [
+    613
+   ],
+   "trackRights": [
+    647
+   ],
+   "hintLeft": null
+  }
+ },
+ "errors": []
+}

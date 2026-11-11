@@ -33,7 +33,7 @@ function freeRun(save: SaveData, seed: number): ExpeditionState {
   const e = playExpedition(
     createExpedition({
       factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, build: save.build, evolution: save.evolution,
       tileVariants: true, gold: save.shared.tradeCoins,
     }),
     { returnAfterLap: 4, absorb: 'absorb', playBattle: human },
@@ -47,7 +47,7 @@ function storyRun(save: SaveData, seed: number, episodeId: string): ExpeditionSt
   const e = playExpedition(
     createExpedition({
       factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+      deck: botDeck(save.tiles, save.factionId), risk: save.nest.risk, build: save.build, evolution: save.evolution,
       tileVariants: true, gold: save.shared.tradeCoins, story: { chapterId: 'ch1', episodeId },
     }),
     { returnAfterLap: 99, absorb: 'absorb', place: false, playBattle: human },
@@ -174,7 +174,7 @@ for (const profile of ['권장 단계대로(3화 전 2단계까지 자유 원정
           const e = playExpedition(
             createExpedition({
               factionId: fid, seed: seed * 613 + laps, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-              deck: botDeck(save.tiles, fid), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tileVariants: true, gold: save.shared.tradeCoins,
+              deck: botDeck(save.tiles, fid), risk: save.nest.risk, build: save.build, evolution: save.evolution, tileVariants: true, gold: save.shared.tradeCoins,
             }),
             { returnAfterLap: laps, absorb: 'absorb', place, playBattle: human },
           );

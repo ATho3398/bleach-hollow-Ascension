@@ -131,7 +131,7 @@ const buildOf = (ids: string[]): Partial<CombatParams> => {
   return { ...buildCombatParams(b, BALANCE_FACTION), combos: comboRulesOf(newEvolution()), ...START };
 };
 /** C.17: 점검 봇의 시작 저장 게이지 = 새 세이브 안정 수치(stabilityStart)에 비례한 값 */
-const START = { liberationStartGauge: liberationStartGaugeOf(BALANCE.provisional.risk.stabilityStart) };
+const START = { liberationStartGauge: liberationStartGaugeOf() };
 type BuildDef = { name: string; params: Partial<CombatParams>; ref: boolean; /** 사람형 봇 강적 승률 목표 [하한, 상한]. 없으면 참고 출력만 */ elite?: [number, number] };
 const builds: BuildDef[] = [
   { name: '빈 슬롯(기본 블록)', params: { ...START }, ref: false },
@@ -609,7 +609,7 @@ function botAscend(save: SaveData): void {
 }
 /** 첫 원정 튜토리얼 (C.120, GDD 67장): 새 세이브는 고정 길 1판(약한 적 1마리 → 튜토리얼 흡수 = 모든 능력치 +3)부터 */
 function botTutorialRun(save: SaveData, seed: number): void {
-  const e = playExpedition(createExpedition({ factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tutorial: true }), { returnAfterLap: 1, absorb: 'absorb' });
+  const e = playExpedition(createExpedition({ factionId: save.factionId, seed, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, build: save.build, evolution: save.evolution, tutorial: true }), { returnAfterLap: 1, absorb: 'absorb' });
   recordExpedition(save, e, 0);
 }
 /** 타일 뽑기 봇 (C.120, GDD 64장 2번): 타일이 열렸으면 골드가 되는 만큼 상점 [타일 뽑기]를 하고, 덱에 빈 칸이 있으면 넣는다. 뽑은 수를 돌려준다 */
@@ -651,7 +651,7 @@ function campaign(policy: { absorbWanted?: (seed: number) => (exp: ExpeditionSta
       const e = playExpedition(
         createExpedition({
           factionId: fid, seed: seed * 1000 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-          deck: botDeck(save.tiles, fid), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
+          deck: botDeck(save.tiles, fid), risk: save.nest.risk, build: save.build, evolution: save.evolution, tilesLocked: !save.tiles.unlocked,
         }),
         { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb', ...(wanted ? { absorbWanted: wanted } : {}) },
       );
@@ -765,7 +765,7 @@ if (want('boss23')) {
       for (let k = 1; k <= K; k++) {
         const seed = 90000 + bi * 101 + k;
         const mk = (beaten: string[]) => createExpedition({
-          factionId: 'hollow', seed, hunger: 20, condition: 80, deck: botDeck(body.tiles, 'hollow'), stability: body.nest.stability,
+          factionId: 'hollow', seed, hunger: 20, condition: 80, deck: botDeck(body.tiles, 'hollow'),
           build: body.build, evolution: body.evolution, tileVariants: true, groundId: g.id, difficulty: star, bossesBeaten: beaten,
         });
         const off = playExpedition(mk([]), { returnAfterLap: 4, absorb: 'absorb', absorbWanted: mixedWanted });
@@ -807,7 +807,7 @@ if (want('rebirth')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', seed: (i + 1) * 100003 + life * 1009 + run, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition,
-            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb' },
         );
@@ -827,7 +827,7 @@ if (want('rebirth')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', seed: (i + 1) * 7777 + life * 31 + run, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb' },
         );
@@ -997,7 +997,7 @@ if (want('phys')) {
         for (const k of PHYS_ABILITY_EFFECTS) delete fx[k];
         params.abilityEffects = fx as CombatParams['abilityEffects'];
       }
-      params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
+      params.liberationStartGauge = liberationStartGaugeOf();
       return params;
     };
     let ng = 0, nw = 0, ns = 0, eg = 0, ew = 0, es = 0, n = 0, taken = 0, secs = 0, phys = 0;
@@ -1106,7 +1106,7 @@ if (want('difficulty')) {
         const e = playExpedition(
           createExpedition({
             factionId: 'hollow', difficulty: star, streak, seed: 50000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution, gear,
+            deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, build: save.build, evolution: save.evolution, gear,
           }),
           { returnAfterLap: 4, ...(minContinueHp !== null ? { minContinueHp } : {}), absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
         );
@@ -1179,7 +1179,7 @@ if (want('difficulty')) {
           const e = playExpedition(
             createExpedition({
               factionId: 'hollow', difficulty: star, seed: 71000 + bi * 97 + k * 13 + tier * 7, runId: nextRunId(save), hunger: 20, condition: 80,
-              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, build: save.build, evolution: save.evolution,
             }),
             { returnAfterLap: ML, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
           );
@@ -1254,7 +1254,7 @@ if (want('laps')) {
         const e = playExpedition(
           createExpedition({
             factionId: fid, difficulty: star, seed: 83000 + bi * 97 + k * 13 + tier * 7 + star * 1000, runId: nextRunId(save), hunger: 20, condition: 80,
-            deck: botDeck(save.tiles, fid), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+            deck: botDeck(save.tiles, fid), risk: save.nest.risk, build: save.build, evolution: save.evolution,
           }),
           { returnAfterLap: ML, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b), onLapEnd: (x) => void row.hp[x.lap - 1]!.push(x.hpFraction ?? 1) },
         );
@@ -1319,7 +1319,7 @@ if (want('grounds')) {
           const e = playExpedition(
             createExpedition({
               factionId: 'hollow', groundId: g.id, seed: 50000 + bi * 97 + k * 13 + tier, runId: nextRunId(save), hunger: 20, condition: 80,
-              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, stability: save.nest.stability, build: save.build, evolution: save.evolution,
+              deck: botDeck(save.tiles, 'hollow'), risk: save.nest.risk, build: save.build, evolution: save.evolution,
             }),
             { returnAfterLap: 4, minContinueHp: HUMAN_CONTINUE_HP, absorb: 'absorb', playBattle: (b) => void playCombatHuman(b) },
           );
@@ -1367,7 +1367,7 @@ if (want('liberation')) {
           for (let k = 0; k < LR; k++) {
             const params = buildCombatParams(body.build, 'hollow');
             applyEvolutionToParams(params, body.evolution, 'hollow');
-            params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
+            params.liberationStartGauge = liberationStartGaugeOf();
             params.liberationEnabled = liberation;
             applyDifficultyToParams(params, recommendedDifficulty(tier));
             // C.76: 기준 = 권장 ★ · 연속 LIB_STREAK(적 +25%) — 사냥터 강도 일원화 뒤 "해방이 필요한 싸움"
@@ -1429,7 +1429,7 @@ if (want('bosses')) {
         const params = buildCombatParams(body.build, 'hollow');
         applyEvolutionToParams(params, body.evolution, 'hollow');
         applyDifficultyToParams(params, boss.difficulty);
-        params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf();
         const end = playCombatHuman(createCombat(80000 + bi * 131 + k * 17, { enemy: scaleEnemy(boss.enemy, enemyScale(1, ground, boss.difficulty)), params, boss: bossSetupOf(boss.id) }));
         games++;
         if (end.status === 'won') {
@@ -1472,7 +1472,7 @@ if (want('rank')) {
         const params = buildCombatParams(save.build, 'hollow');
         applyEvolutionToParams(params, save.evolution, 'hollow');
         applyDifficultyToParams(params, h.difficulty);
-        params.liberationStartGauge = liberationStartGaugeOf(save.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf();
         const end = playCombatHuman(createCombat(9000 + h.rank * 100 + k * 7 + games, { enemy: enemyAtDifficulty(h, h.difficulty), params }));
         games++;
         if (end.status === 'won') {
@@ -1506,7 +1506,7 @@ if (want('tower')) {
       for (let k = 0; k < TR; k++) {
         const params = buildCombatParams(body.build, 'hollow');
         applyEvolutionToParams(params, body.evolution, 'hollow');
-        params.liberationStartGauge = liberationStartGaugeOf(body.nest.stability);
+        params.liberationStartGauge = liberationStartGaugeOf();
         const end = playCombatHuman(createTowerCombat(f, params, seedBase + floor * 1009 + bi * 131 + k * 17));
         games++;
         if (end.status === 'won') {

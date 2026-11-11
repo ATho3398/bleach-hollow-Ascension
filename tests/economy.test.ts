@@ -53,7 +53,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: FX.cap, hearty: 2 });
   });
 
-  it('드롭 표: 일반 적은 약 50% 1개(일반 6종), 강적은 확정 1개 + 약 30% 1개 더(일반 6종 + 특식 4종, GDD 235장)', () => {
+  it('드롭 표: 일반 적은 약 50% 1개(일반 6종), 강적은 확정 1개 + 약 30% 1개 더(일반 6종 + 특식 6종, GDD 235장 · 239장)', () => {
     const rng = createRng(7);
     const N = 4000;
     let normal = 0;
@@ -75,7 +75,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     expect(elite / N - 1).toBeGreaterThan(0.25);
     expect(elite / N - 1).toBeLessThan(0.35);
     expect([...normalKinds].sort()).toEqual(['basic', 'fizz', 'hearty', 'mushroom', 'roast', 'sushi']);
-    expect([...eliteKinds].sort()).toEqual(['basic', 'elixir', 'feast', 'fizz', 'hearty', 'mushroom', 'relic', 'roast', 'sushi', 'tonic']);
+    expect([...eliteKinds].sort()).toEqual(['basic', 'elixir', 'feast', 'fizz', 'flesh', 'hearty', 'mushroom', 'purify', 'relic', 'roast', 'sushi', 'tonic']);
   });
 
   it('원정: 이기면 먹이가 쌓이고 휴식 타일은 간식 +1, 전리품 난수가 따로라 적·타일 결과는 그대로', () => {
@@ -187,8 +187,8 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     expect(calm.params.evadeChance ?? 0).toBe(0);
   });
 
-  it('폭주는 원정당 1회, 귀환하면 컨디션 −30·리스크 60·안정 수치 하락', () => {
-    const e = mk({ seed: 30, risk: 90, stability: 70, condition: 80 });
+  it('폭주는 원정당 1회, 귀환하면 컨디션 −30·리스크 60 (안정 수치 하락은 C.391 삭제)', () => {
+    const e = mk({ seed: 30, risk: 90, condition: 80 });
     changeRisk(e, 50, 'absorb');
     changeRisk(e, -50, 'release');
     changeRisk(e, 60, 'absorb');
@@ -205,7 +205,6 @@ describe('리스크 수치·폭주 (GDD 23-2)', () => {
     // C.95 (GDD 42장 3번): 바퀴당 감소 하한(출발 − 25 × 바퀴) 아래로는 안 깎는다
     expect(n.condition).toBe(Math.max(0, e.condition - RX.frenzyConditionLoss, 80 - BALANCE.provisional.expedition.conditionLossPerLapMax * e.lap));
     expect(n.risk).toBeLessThanOrEqual(RX.riskAfterBreakthrough);
-    expect(n.stability).toBe(Math.max(0, e.stability - RX.breakthroughStabilityLoss));
   });
 
   it('폭주 문구는 종족 설정 (호로 폭주 / 사신 호로화)', () => {

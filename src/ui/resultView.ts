@@ -58,7 +58,7 @@ export function stageTitle(exp: Pick<ExpeditionState, 'story' | 'factionId' | 'g
   return groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
 }
 
-export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, stability: number, onHome: () => void, growth?: GrowthInput): void {
+export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onHome: () => void, growth?: GrowthInput): void {
   const s = summarize(exp);
   const win = endTone(exp.endReason!) === 'win';
   const wins = exp.battles.filter((b) => b.won).length;
@@ -140,7 +140,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
       label: `${faction.riskGaugeName} 최고/끝`, icon: 'i-risk', mod: exp.breakthrough ? 'em' : undefined,
       value: val(`${Math.round(exp.riskPeak)}/${Math.round(exp.risk)}`, exp.breakthrough ? faction.frenzyName : undefined),
     },
-    { label: faction.stabilityName, icon: 'i-stab', value: val(`${Math.round(stability)}`) },
+    // 영압 안정도 줄은 C.391 (GDD 239장 4) 에서 삭제
     // 둥지로 가져가는 값 = 패배·폭주 감소를 뺀 뒤 (둥지 상태와 같은 값, C.68)
     { label: `남은 ${faction.fullnessName}`, icon: 'i-hunger', value: val(`${Math.round(fullnessOf(home.hunger))}`) },
     { label: '남은 컨디션', icon: 'i-cond', value: val(`${Math.round(home.condition)}`, Math.round(home.condition) < Math.round(exp.condition) ? `(끝 ${Math.round(exp.condition)})` : undefined) },

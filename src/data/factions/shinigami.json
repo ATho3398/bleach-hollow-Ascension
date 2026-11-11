@@ -193,7 +193,9 @@
   "foodNames": {
     "feast": "잔칫상",
     "tonic": "영력 차",
+    "flesh": "정체 모를 고깃점",
     "elixir": "4번대 비약",
+    "purify": "쓴 약탕",
     "relic": "명가의 진상품"
   },
   "gearSlotNames": {
@@ -210,7 +212,6 @@
     "pet-guard": "수호 거북",
     "pet-seek": "길잡이 까마귀"
   },
-  "stabilityName": "영압 안정도",
   "fullnessName": "배부름",
   "slotName": "참백도 슬롯",
   "lineageBonusName": "참백도 속성 확정",

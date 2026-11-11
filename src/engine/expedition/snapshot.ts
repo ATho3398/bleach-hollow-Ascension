@@ -148,7 +148,7 @@ function validShape(e: unknown): e is ExpeditionState {
   if (!isObj(e.lootRng) || !isInt(e.lootRng.state)) return false;
   if (!Array.isArray(e.foodLoot) || !e.foodLoot.every((a) => isObj(a) && typeof a.food === 'string' && (FOOD_IDS as readonly string[]).includes(a.food) && isInt(a.lap, 1))) return false;
   if (typeof e.phase !== 'string' || !PHASES.includes(e.phase)) return false;
-  for (const k of ['hunger', 'condition', 'risk', 'riskPeak', 'stability', 'elapsedSeconds'] as const) if (!isNum(e[k])) return false;
+  for (const k of ['hunger', 'condition', 'risk', 'riskPeak', 'elapsedSeconds'] as const) if (!isNum(e[k])) return false;
   for (const k of ['elitesThisLap', 'victoriesThisLap', 'tilesThisLap', 'lapsCompleted'] as const) if (!isInt(e[k])) return false;
   if (!isStrArr(e.deck) || !isStrArr(e.hand) || !e.deck.every((id) => knows(getTile, id)) || !e.hand.every((id) => knows(getTile, id))) return false;
   if (!Array.isArray(e.slots) || e.slots.length !== L || !e.slots.every((s) => s === null || knows(getTile, s))) return false;

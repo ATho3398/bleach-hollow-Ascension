@@ -51,7 +51,7 @@ describe('155장 2 회복 안내 6/7 멈춤', () => {
     it(`${fid}: 1~7 끝까지 — 온천에서 저절로 가득 차 나온 뒤 [다음](나가기 다시 부름)이어도 먹이 단계로 이어진다`, () => {
       const save = newSaveData(fid, 1000);
       const exp = createExpedition({
-        factionId: fid, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk, stability: save.nest.stability,
+        factionId: fid, seed: 5, runId: nextRunId(save), hunger: save.nest.hunger, condition: save.nest.condition, deck: [], risk: save.nest.risk,
         build: save.build, evolution: save.evolution, tutorial: true,
       });
       playExpedition(exp, { returnAfterLap: 1, absorb: 'absorb' });

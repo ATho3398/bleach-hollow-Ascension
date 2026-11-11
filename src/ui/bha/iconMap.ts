@@ -34,7 +34,7 @@ export const V2_ICON: Readonly<Record<string, string>> = {
   // 돌보기·상태
   'i-hunger': 'food',
   'i-cond': 'bolt',
-  'i-stab': 'spirit', // 임시 (영압 안정도)
+  'i-stab': 'spirit', // 임시 (수련치 막대 — 영압 안정도는 C.391 삭제)
   'i-risk': 'madness', // 임시 (광기/호로화 — 종족 구분 없이 한 그림)
   'i-care-feed': 'food',
   'i-care-sleep': 'sleep',

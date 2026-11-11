@@ -211,8 +211,8 @@ describe('배부름 표시 (28장 10번)', () => {
     expect(S.fullnessName).toBe('배부름');
     expect(fullnessDeltaText('배부름', -35)).toBe('배부름 +35');
     expect(fullnessDeltaText('배부름', 10)).toBe('배부름 −10');
-    expect(careFeedback(H, 'feed', 'snack', { hunger: -15, condition: 0, stability: 0, risk: 0 })).not.toContain('+'); // GDD 201장: 회복 수치 글 없음
-    expect(careFeedback(H, 'feed', 'snack', { hunger: 10, condition: 0, stability: 0, risk: 0 })).toContain('배부름 −10');
+    expect(careFeedback(H, 'feed', 'snack', { hunger: -15, condition: 0, risk: 0 })).not.toContain('+'); // GDD 201장: 회복 수치 글 없음
+    expect(careFeedback(H, 'feed', 'snack', { hunger: 10, condition: 0, risk: 0 })).toContain('배부름 −10');
     const [c] = statusChips({ hunger: 85, condition: 100, risk: 0, weakened: false }, H);
     expect(c).toMatchObject({ label: '배부름', value: 15, danger: true });
   });

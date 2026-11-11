@@ -271,7 +271,9 @@
   "foodNames": {
     "feast": "영혼 덩어리",
     "tonic": "영압 응축물",
+    "flesh": "호로의 살점",
     "elixir": "초속재생 핵",
+    "purify": "정화된 영자",
     "relic": "가면 파편"
   },
   "gearSlotNames": {
@@ -288,7 +290,6 @@
     "pet-guard": "껍질 게",
     "pet-seek": "그림자 박쥐"
   },
-  "stabilityName": "영압 안정도",
   "fullnessName": "배부름",
   "slotName": "본체 슬롯",
   "lineageBonusName": "계열 기술 강화",

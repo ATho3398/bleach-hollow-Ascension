@@ -38,7 +38,7 @@ export function idleTalkKey(bond: number, rand: () => number = Math.random): key
 }
 
 export interface StatusChip {
-  kind: 'hunger' | 'cond' | 'stab' | 'risk' | 'bond' | 'weak' | 'tired' | 'collapsed';
+  kind: 'hunger' | 'cond' | 'risk' | 'bond' | 'weak' | 'tired' | 'collapsed';
   /** 표시 이름(종족 설정에서 온 것은 호출한 쪽이 넘긴다) */
   label: string;
   icon: string;
@@ -71,16 +71,15 @@ export function careStatusShort(s: { hunger: number; condition: number }, names:
 /** 방 캐릭터 머리 위 상태 칩 (GDD 18-8): 배부름(C.63, 허기를 뒤집어 표시)·컨디션·리스크 게이지·교감(GDD 102-6) + 쓰러짐·쇠약·피곤 칩(GDD 102-7).
  *  위험 구간은 기존 경고 기준(허기 80↑, 컨디션 40↓, 리스크 60↑)과 같다 */
 export function statusChips(
-  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean; stability?: number },
-  names: { riskGaugeName: string; fullnessName?: string; stabilityName?: string },
+  s: { hunger: number; condition: number; risk: number; weakened: boolean; tired?: boolean; collapsed?: boolean; dead?: boolean },
+  names: { riskGaugeName: string; fullnessName?: string },
   warn = { hunger: 80, condition: 40, risk: 60 },
 ): StatusChip[] {
   const chips: StatusChip[] = [
     // 배부름 (C.63): 값은 100 − 허기 (가득 = 100), 위험 구간은 그대로(허기 80↑ = 배부름 20↓)
     { kind: 'hunger', label: names.fullnessName ?? '배부름', icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), danger: s.hunger >= warn.hunger },
     { kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), danger: s.condition < warn.condition },
-    // 영압 안정도 (GDD 109장 수정 v5.243): 방 = 배부름·컨디션·영압 안정도·광기 4줄. 교감은 상태 화면에서만
-    ...(s.stability !== undefined ? [{ kind: 'stab' as const, label: names.stabilityName ?? '안정', icon: 'i-stab', value: Math.round(s.stability), danger: false }] : []),
+    // 방 = 배부름·컨디션·리스크 3줄 (영압 안정도 줄은 C.391 GDD 239장 4 에서 삭제). 교감은 상태 화면에서만
     { kind: 'risk', label: names.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), danger: s.risk >= warn.risk },
   ];
   const short = careStatusShort(s, names);
@@ -103,23 +102,21 @@ export function dyingClock(leftMs: number): string {
   return hh > 0 ? `${hh}시간 ${m % 60}분` : `${m % 60}분`;
 }
 
-/** 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · 컨디션 −n · 영압 안정도 −n". 줄어든 것이 없으면 그 칸은 뺀다 */
-export function absenceText(r: { hours: number; flow: { hunger: number; condition: number; stability: number } }, names: { fullnessName: string; stabilityName: string }): string {
+/** 복귀 알림 띠 (GDD 102-7): "○시간 동안 비웠다 — 배부름 −n · 컨디션 −n" (안정도는 C.391 삭제). 줄어든 것이 없으면 그 칸은 뺀다 */
+export function absenceText(r: { hours: number; flow: { hunger: number; condition: number } }, names: { fullnessName: string }): string {
   const h = r.hours >= 1 ? `${Math.floor(r.hours)}시간` : `${Math.max(1, Math.round(r.hours * 60))}분`;
   const parts = [
     r.flow.hunger >= 0.5 ? `${names.fullnessName} −${Math.round(r.flow.hunger)}` : '',
     r.flow.condition <= -0.5 ? `컨디션 −${Math.round(-r.flow.condition)}` : '',
-    r.flow.stability <= -0.5 ? `${names.stabilityName} −${Math.round(-r.flow.stability)}` : '',
   ].filter(Boolean);
   return parts.length ? `${h} 동안 비웠다 — ${parts.join(' · ')}` : `${h} 동안 비웠다`;
 }
 
-/** 비운 동안 줄어든 것 줄 (GDD 237장 1): 배부름·컨디션·안정 수치 −n(줄어든 것만) + 이번에 빈사·사망으로 이어졌으면 그 한 줄. 없으면 빈 목록 */
-export function absenceLossLines(r: { flow: { hunger: number; condition: number; stability: number }; collapsed?: boolean; died?: boolean }, names: { fullnessName: string; stabilityName: string }): string[] {
+/** 비운 동안 줄어든 것 줄 (GDD 237장 1): 배부름·컨디션 −n(줄어든 것만, 안정 수치는 C.391 삭제) + 이번에 빈사·사망으로 이어졌으면 그 한 줄. 없으면 빈 목록 */
+export function absenceLossLines(r: { flow: { hunger: number; condition: number }; collapsed?: boolean; died?: boolean }, names: { fullnessName: string }): string[] {
   const parts = [
     r.flow.hunger >= 0.5 ? `${names.fullnessName} −${Math.round(r.flow.hunger)}` : '',
     r.flow.condition <= -0.5 ? `컨디션 −${Math.round(-r.flow.condition)}` : '',
-    r.flow.stability <= -0.5 ? `${names.stabilityName} −${Math.round(-r.flow.stability)}` : '',
   ].filter(Boolean);
   const out = parts.length ? [parts.join(' · ')] : [];
   if (r.died) out.push(`${CARE_STATUS_NAMES.dead} — 비운 사이 빈사 시간이 다 됐다`);

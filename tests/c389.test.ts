@@ -9,10 +9,10 @@ const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'u
 describe('237장 1: 비운 동안 줄어든 것 줄', () => {
   const H = getFaction('hollow');
   it('줄어든 것만 한 줄(종족 이름), 빈사·사망이면 한 줄 더, 없으면 빈 목록', () => {
-    expect(absenceLossLines({ flow: { hunger: 11.4, condition: -3, stability: -0.2 } }, H)).toEqual([`${H.fullnessName} −11 · 컨디션 −3`]);
-    expect(absenceLossLines({ flow: { hunger: 0, condition: 0, stability: -5 }, collapsed: true }, H)).toEqual([`${H.stabilityName} −5`, '빈사 — 오래 비워 쓰러졌다']);
-    expect(absenceLossLines({ flow: { hunger: 40, condition: 0, stability: 0 }, died: true }, H)[1]).toContain('사망');
-    expect(absenceLossLines({ flow: { hunger: 0.2, condition: 0, stability: 0 } }, H)).toEqual([]);
+    expect(absenceLossLines({ flow: { hunger: 11.4, condition: -3 } }, H)).toEqual([`${H.fullnessName} −11 · 컨디션 −3`]);
+    expect(absenceLossLines({ flow: { hunger: 0, condition: 0 }, collapsed: true }, H)).toEqual(['빈사 — 오래 비워 쓰러졌다']);
+    expect(absenceLossLines({ flow: { hunger: 40, condition: 0 }, died: true }, H)[1]).toContain('사망');
+    expect(absenceLossLines({ flow: { hunger: 0.2, condition: 0 } }, H)).toEqual([]);
   });
 });
 

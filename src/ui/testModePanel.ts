@@ -434,7 +434,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       ...(hd.onTimeAdvanced ? [panel({ title: '시간 앞당기기' },
         row(...TEST_TIME_STEPS.map((t) => button({ label: t.label, icon: 'i-timer', size: 'small', variant: 'primary', onClick: () => advance(t.minutes) }))),
         row(...[12, 48, 72].map((hr) => button({ label: `+${hr}시간`, icon: 'i-timer', size: 'small', onClick: () => advance(hr * 60) }))),
-        note('그 시간만큼 지난 것처럼 셈한다 (배부름·컨디션·영압 안정도·교감·대기 보상·먹이 10분 한도·돌봄 요청·빈사·사망). 셈한 뒤 방으로 간다.'))] : []),
+        note('그 시간만큼 지난 것처럼 셈한다 (배부름·컨디션·교감·대기 보상·먹이 10분 한도·돌봄 요청·빈사·사망). 셈한 뒤 방으로 간다.'))] : []),
       panel({ title: '테스트 칸' }, row(
         button({ label: '테스트 칸 초기화', icon: 'i-loop', variant: 'danger', onClick: hd.onReset }),
       ), note('초기화하면 테스트 칸을 지우고 처음 화면으로 간다. 테스트 모드 끄기는 맨 아래에 있다.')),

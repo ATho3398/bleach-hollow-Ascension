@@ -1,5 +1,5 @@
 // 흡수 화면 (GDD 4장, 4-1): 전투 승리 후 흡수 / 놓아줌 → 특성 후보 선택 → 슬롯 장착(가득 차면 교체/포기).
-// 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName, stabilityName …)에서 읽는다.
+// 문구는 FactionConfig(absorbActionName, chainName, riskGaugeName …)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { findEnemyDef } from '../data/bosses';
@@ -48,7 +48,7 @@ interface StepParts {
 const STEP_LABELS = ['갈래', '블록'] as const; // GDD 183장 S11: 1 갈래 · 2 블록(193장 14 이름 통일: 흡수로 얻는 전투 블록 = '블록'. 3 교체는 193장 13 C.312 에 2단계 한 화면으로 합침)
 
 /** 포식 갈래 이름·이 흡수가 뭔지 한 줄 (GDD 52·100장 #47 → 163장 2): 갈래 버튼 이름과 설명 칸 첫 줄이 이 한 곳에서 읽는다. 이름은 종족 설정 absorbModeNames (GDD 158장 6) */
-export function absorbModeText(faction: Pick<FactionConfig, 'absorbModeNames' | 'riskGaugeName' | 'stabilityName'>): Record<AbsorbMode | 'none', { label: string; sub: string }> {
+export function absorbModeText(faction: Pick<FactionConfig, 'absorbModeNames' | 'riskGaugeName'>): Record<AbsorbMode | 'none', { label: string; sub: string }> {
   const n = faction.absorbModeNames;
   return {
     both: { label: n.both, sub: '블록과 능력치를 함께 얻는다.' },
@@ -98,7 +98,6 @@ export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m:
   if (p.frenzy) out.push({ kind: 'warn', text: `한계(${RX.limit})에 닿아 ${faction.frenzyName} 상태가 된다.` });
   const gain: string[] = [];
   if (p.tiles > 0) gain.push(`타일 +${p.tiles}`);
-  if (Math.round(p.stabilityTo) !== Math.round(p.stabilityFrom)) gain.push(`${faction.stabilityName} ${gaugeDelta(p.stabilityFrom, p.stabilityTo)}`);
   if (gain.length) out.push({ kind: 'gain', text: `받는 것: ${gain.join(' · ')}` });
   return out;
 }
