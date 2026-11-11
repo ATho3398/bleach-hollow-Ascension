@@ -43,7 +43,7 @@ import {
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
-import { RIG_FEMALE_SUFFIX } from '../data/art/manifest';
+import { isFemaleRigLook } from '../data/art/manifest';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -955,7 +955,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: stagesOf(f)?.[stage - 1] ?? null };
   };
   // 블록 도트 이펙트 (이펙트 배치 도구 확정 값): 치는 쪽 몸동작 칸(종이인형 여성 외형 = female, 남성 = male, 프레임 그림 = frames)
-  const bodySlot = (): PixelBodySlot => (heroArt.rig ? (heroArt.rig.look.endsWith(RIG_FEMALE_SUFFIX) ? 'female' : 'male') : 'frames');
+  // 여성 외형(해방 등 '-f-' 를 품은 것 포함, C.398) = 여 칸
+  const bodySlot = (): PixelBodySlot => (heroArt.rig ? (isFemaleRigLook(heroArt.rig.look) ? 'female' : 'male') : 'frames');
   // 타격 지연 (GDD 214장, C.357): 엔진이 피해를 넣는 시각 = 실제 동작 데이터(종이인형 hit 시각·프레임 hit 장·도트 연출 첫 반응)의 타격 순간. 전투가 시작되기 전(틱 0)에만 — 종족 무관, 숫자만 넘긴다
   // 튜토리얼 각본 전투(GDD 224장 2): 블록 도트 연결 동작을 처음부터(휘두르기 → 타격 프레임 = 피해) — 지연 표도 그 기준
   // 강적 강공격 = 빨간 세로 (GDD 227장): 보스가 아닌 강적만. 시트(혈 속성 = 빨강)를 미리 받아 둔다 — 못 받으면 그 이펙트만 빠진다

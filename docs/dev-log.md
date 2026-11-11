@@ -3336,3 +3336,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 발견(게임, 미수정 — 마스터 보고): 여성 해방 외형 arrancar-base-f-released 는 '-f' 로 안 끝나 battleView bodySlot 이 남 칸으로 고름.
 - 도구 Pixel 7 확인: 사신(남→여)·혼백·아란칼(여 유지)·해방·호로·거미형·몬스터 탭 오가기, 오류 0. 게임 코드 변경 없음.
 - 테스트 3226 통과(283 파일), typecheck 통과(게임 코드·수치 변경 없음).
+
+## C.398 — 여성 해방 아란칼 블록 몸동작 칸 = 여 (GDD 230장 보충 5, v5.571, S-23, 픽셀FX 담당 Opus)
+- 지시: 마스터AL(11-12 04:0x) "여성 해방 아란칼 bodySlot 버그는 고쳐줘(-f 접미사가 끝이 아니라 포함/RIG_FEMALE_SUFFIX 기준으로 여 칸 판정, 테스트 추가)" — C.396 때 픽셀FX 가 보고한 것.
+- `src/data/art/manifest.ts` `isFemaleRigLook(look)` = '-f' 로 끝나거나 '-f-' 를 품음. `src/ui/battleView.ts` bodySlot·`scripts/pixelfx/tool/fx-tool.ts` slotNow 가 이것을 씀 → arrancar-base-f-released 가 여 칸 연결 동작을 씀.
+- 테스트 `tests/c398-female-slot.test.ts`(2 — 사람형 외형 전부 /-f(-|$)/ 와 같게).
+- 테스트 3236 통과(285 파일), typecheck·balance:check 회귀 가드 통과.
