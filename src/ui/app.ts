@@ -1135,7 +1135,14 @@ export function startApp(host: HTMLElement): void {
             tickIdle(s); // 실제로 흘려 온천에서 나오고 런 로그에 남긴다 — 이 뒤로는 회복·배부름 감소 없음 (GDD 180장 2: 알림 2초 동안 멈춤)
             persist();
             // 저절로 나오면 방으로 (GDD 127장 2: 장터에서 들어갔어도 방 — C.198 그대로)
-            const toRoom = () => { if (nav.top?.id === 'spa') nestScreen(); };
+            // GDD 241-E 1: 월드맵에서 들어왔으면(backLabel = '월드맵으로 돌아가기') 나가는 곳도 월드맵 — 방으로 보내지 않는다
+            const toRoom = () => {
+              if (nav.top?.id !== 'spa') return;
+              if (!backLabel) return nestScreen();
+              spaLeaving = true; // 이미 나온 뒤라 나가기 연출은 건너뛴다
+              nav.back();
+              spaLeaving = false;
+            };
             // 튜토리얼 회복 안내 중 (GDD 180장 2 보충, C.274): 알림·자동 방 이동 없이 온천에 그대로 — 안내 카드('체력이 가득 찼다!')와 [다음] 흐름이 방 이동을 정한다
             if (recoverOpen && nav.top?.id === 'spa') return;
             // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
