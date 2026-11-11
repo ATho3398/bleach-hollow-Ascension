@@ -1,0 +1,16 @@
+{
+  "url": "http://localhost:5381/",
+  "shots": [
+    "elite-spiky-custom-cero-blood.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "elite-spiky",
+      "picked": "본크러셔",
+      "got": {
+        "name": "custom-cero-blood"
+      }
+    }
+  ]
+}

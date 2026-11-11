@@ -228,6 +228,108 @@
         }
       ],
       "bodies": {}
+    },
+    "humanoid/hk": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -308,
+          "dy": -5,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
+    },
+    "humanoid/hv": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -306,
+          "dy": 0,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
+    },
+    "wraith/ref": {
+      "hits": 1,
+      "gaps": [],
+      "speed": 1,
+      "layers": [
+        {
+          "fx": "custom/cero",
+          "color": "element",
+          "anchor": "attacker",
+          "on": [
+            0
+          ],
+          "delay": -60,
+          "dx": -285,
+          "dy": -47,
+          "scale": 2.25,
+          "angle": 0,
+          "rate": 0.85,
+          "altFlip": false,
+          "move": "stay",
+          "travel": 300,
+          "arc": 0,
+          "tx": 0,
+          "ty": 0,
+          "ex": 0,
+          "ey": 0,
+          "face": true,
+          "sync": "hit",
+          "z": 3,
+          "opacity": 0.7
+        }
+      ],
+      "bodies": {}
     }
   }
 }

@@ -141,8 +141,8 @@ let playing = true;
 /** 최상단 탭 (사용자 2026-11-11 "이펙트 배치도구를 캐릭터, 몬스터로 최상단 탭에서 나누고, 그 다음 호로 탄이든 뭐 치는 캐릭터 모델이든 선택하는거로 해") */
 let mode: 'char' | 'monster' = 'char';
 /** 몸마다 따로 맞추는 몸 (GDD 230장, 사용자 "인간형이야 같은곳에서 때리지만 얘네는 모션마다 이펙트 출발 위치가 다른데"): 덩치·길리안·뱀·짐승. 사람형은 공통 */
-const SEP_BODIES = ['humanoid/hb', 'humanoid/hd', 'serpent/ref', 'beast/ref', 'humanoid/ho', 'spider/ref'];
-const BODY_NAMES: Record<string, string> = { 'humanoid/hb': '덩치', 'humanoid/hd': '길리안', 'serpent/ref': '뱀', 'beast/ref': '짐승', 'humanoid/ho': '외팔이', 'spider/ref': '거미' };
+const SEP_BODIES = ['humanoid/hb', 'humanoid/hd', 'serpent/ref', 'beast/ref', 'humanoid/ho', 'spider/ref', 'humanoid/hk', 'humanoid/hv', 'wraith/ref'];
+const BODY_NAMES: Record<string, string> = { 'humanoid/hb': '덩치', 'humanoid/hd': '길리안', 'serpent/ref': '뱀', 'beast/ref': '짐승', 'humanoid/ho': '외팔이', 'spider/ref': '거미', 'humanoid/hk': '가시형', 'humanoid/hv': '속도형', 'wraith/ref': '부유형' };
 function bodyKeyOfChar(c: ToolChar | undefined): string | null {
   if (!c?.rig) return null;
   const p = rigPackOfLook(c.rig);
