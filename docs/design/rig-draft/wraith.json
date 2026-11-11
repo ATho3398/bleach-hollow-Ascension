@@ -859,18 +859,18 @@
   "ref": [
    "arm1",
    "wisp2",
-   "forearm2",
    "forearm1",
    "tail2",
    "tail1",
    "torso",
-   "arm2",
    "wisp1",
    "wisp4",
    "wisp3",
    "head",
-   "hand2",
    "hand1",
+   "forearm2",
+   "hand2",
+   "arm2",
    "spike2",
    "spike1"
   ]
@@ -897,6 +897,10 @@
     "hand2": [
      68,
      44
+    ],
+    "spike2": [
+     49,
+     22
     ]
    }
   }
