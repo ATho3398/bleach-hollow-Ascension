@@ -245,8 +245,8 @@
    "arm2": {
     "art": "ref/arm2",
     "at": [
-     48,
-     22
+     47,
+     21
     ],
     "size": [
      15,
@@ -256,8 +256,8 @@
    "arm1": {
     "art": "ref/arm1",
     "at": [
-     17,
-     24
+     18,
+     23
     ],
     "size": [
      13,
@@ -267,8 +267,8 @@
    "forearm2": {
     "art": "ref/forearm2",
     "at": [
-     58,
-     30
+     57,
+     29
     ],
     "size": [
      19,
@@ -278,8 +278,8 @@
    "forearm1": {
     "art": "ref/forearm1",
     "at": [
-     5,
-     33
+     6,
+     32
     ],
     "size": [
      16,
@@ -290,7 +290,7 @@
     "art": "ref/tail2",
     "at": [
      33,
-     62
+     61
     ],
     "size": [
      8,
@@ -301,7 +301,7 @@
     "art": "ref/tail1",
     "at": [
      28,
-     52
+     51
     ],
     "size": [
      18,
@@ -322,7 +322,7 @@
    "wisp2": {
     "art": "ref/wisp2",
     "at": [
-     46,
+     45,
      42
     ],
     "size": [
@@ -333,7 +333,7 @@
    "wisp1": {
     "art": "ref/wisp1",
     "at": [
-     25,
+     26,
      42
     ],
     "size": [
@@ -377,8 +377,8 @@
    "hand2": {
     "art": "ref/hand2",
     "at": [
-     55,
-     40
+     54,
+     39
     ],
     "size": [
      25,
@@ -388,8 +388,8 @@
    "hand1": {
     "art": "ref/hand1",
     "at": [
-     0,
-     42
+     1,
+     41
     ],
     "size": [
      24,
@@ -854,5 +854,51 @@
    ]
   }
  },
- "assembled": "docs/design/user-art/wraith-ref/assembly.json"
+ "assembled": "docs/design/user-art/wraith-ref/assembly.json",
+ "bodySlots": {
+  "ref": [
+   "arm1",
+   "wisp2",
+   "forearm2",
+   "forearm1",
+   "tail2",
+   "tail1",
+   "torso",
+   "arm2",
+   "wisp1",
+   "wisp4",
+   "wisp3",
+   "head",
+   "hand2",
+   "hand1",
+   "spike2",
+   "spike1"
+  ]
+ },
+ "bodyJoints": {
+  "ref": {
+   "pivots": {
+    "forearm1": [
+     20,
+     35
+    ],
+    "hand1": [
+     12,
+     45
+    ],
+    "forearm2": [
+     59,
+     31
+    ],
+    "tail2": [
+     35,
+     63
+    ],
+    "hand2": [
+     68,
+     44
+    ]
+   }
+  }
+ }
 }
