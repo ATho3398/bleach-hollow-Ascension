@@ -11,7 +11,7 @@ import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
 import { charArt, enemyArt, isFemaleRigLook, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
-import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, lookLayers, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
 import { FAMILY_RIG_MOTIONS, rigMotionIds } from '../../../src/ui/bha/rigAnim';
 
 interface FxLayer {
@@ -296,6 +296,23 @@ const MOTION_NAMES: Record<string, string> = {
   rpunch: '오른손 치기', uppercut: '어퍼컷', release1: '해방(포효)', lose: '패배', win: '승리',
 };
 interface BodyOpt { id: string; label: string; durationMs: number; hitMs: number | null }
+/** 공격 동작 이름 = 종이인형 편집기 attackName 과 같게 (사용자 2026-11-12 04:1x "용어를 기본 공격, 박치기, 무기 공격, 특수 공격으로 나누자 — 호로는 무기가 없으니까 무기공격은 없겠지? 이래야 이펙트 먹이기 편할듯"):
+ *  무기 그림이 있는 외형(사신·아란칼·혼백)의 공격1·2 = 무기 공격 1·2, 무기 없는 몸(호로 전부)의 공격1·2·3 = 기본 공격 1·2·3, 맨손 치기 = 기본 공격(이름), 박치기(부유형 공격3 도), 특수1·2 = 특수 공격 1·2 */
+function attackName(m: string, look: string): string | null {
+  const pack = rigPackOfLook(look);
+  const armed = !!pack && lookLayers(pack.rig, look).some((l) => l.slot === 'weapon');
+  const kind = armed ? '무기 공격' : '기본 공격';
+  if (m === 'attack') return `${kind} 1`;
+  if (m === 'attack2') return `${kind} 2`;
+  if (m === 'attack3') return pack?.id === 'wraith' ? '박치기(공격3)' : '기본 공격 3';
+  if (m === 'skill') return '특수 공격 1';
+  if (m === 'skill2') return '특수 공격 2';
+  if (m === 'straight') return '기본 공격(스트레이트)';
+  if (m === 'rpunch') return '기본 공격(오른손 치기)';
+  if (m === 'uppercut') return '기본 공격(어퍼컷)';
+  if (m === 'headbutt') return '박치기';
+  return null;
+}
 function bodyOptions(): BodyOpt[] {
   const c = hero?.c;
   if (c?.rig) {
@@ -303,7 +320,7 @@ function bodyOptions(): BodyOpt[] {
     // 그 몸에서 틀 수 있는 동작만(덩치·길리안은 몸 동작 묶음이 일부를 끈다 — 게임 resolveMotions 그대로, GDD 226장)
     const pack = rigPackOfLook(c.rig); // 뱀형 적은 뱀 뼈대 (GDD 227장)
     const ms = pack ? resolveMotions(pack.rig, pack.motions, pack.sets, pack.rig.looks[c.rig]?.body) : resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, HUMANOID.looks[c.rig]?.body);
-    return Object.entries(ms).map(([id, m]) => ({ id, label: `${MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
+    return Object.entries(ms).map(([id, m]) => ({ id, label: `${attackName(id, c.rig!) ?? MOTION_NAMES[id] ?? '새 동작'} (${id})`, durationMs: m.duration / sp, hitMs: m.hit !== undefined ? Math.round(m.hit / sp) : null }));
   }
   const anims = c ? artOfChar(c).anims ?? {} : {};
   return Object.entries(anims).map(([id, clip]) => {
