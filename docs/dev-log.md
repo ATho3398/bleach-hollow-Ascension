@@ -3299,3 +3299,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 작업본 → 게임(promote): 가시형·속도형·부유형, 색 외형(모델 7 × 5), 거미 공격3, 머리·무기 목록·혼백 나뭇가지·사신 기본머리, 편집기 고정 여러 건.
 - 이펙트(byBody humanoid/hk·hv·wraith/ref, 도구 항목)는 픽셀FX 담당에 부탁 — 그 전까지 fallback. 스모크 위도우는 도구 기준 그림이라 덩치 그대로.
 - 검증: `tests/c392.test.ts` 9개 + 옛 시험 갱신, `scripts/c392-proof.cjs` 실제 전투 1배(가시형 vs 옵시디아나, 속도형 vs 본크러셔, 부유형 vs 손하이드) 캡처 `docs/captures/c392/` 6장.
+
+## C.393 — 가시형·속도형·부유형 이펙트 연동 · 도구 호로 모델 = 아쥬커스 표 (GDD 227장 보충 7·230장 보충 3, v5.563, S-23, 픽셀FX 담당 Opus)
+- 요청: 종이인형 세션(C.392, GDD 240장 — 새 강적 몸 3·아쥬커스 스킨 이름·그림 바뀜) "eliteHeavyFx.json byBody 줄 + 배치 도구 항목 + 계열 도트 몸별 값 부탁".
+- `src/data/enemies/eliteHeavyFx.json` byBody += humanoid/hk(−308,−5) · humanoid/hv(−306,0) · wraith/ref(−285,−47) — 도구 재생 중 특수1 자세 앞 손을 재서.
+- 이펙트 배치 도구: SEP_BODIES·BODY_NAMES += 가시형·속도형·부유형, 캐릭터 탭 호로 모델 = `AJUCHAS_MODELS`(가시형·뱀형·외팔형·거미형·속도형·짐승형·부유형, 노멀 색) — 옛 손으로 묶은 스킨 모델(뱀=wyrm 등, 이제 다른 몸)을 대신함. 몬스터 탭 += 가시형(본크러셔)·속도형(카파라손)·부유형(손하이드).
+- 테스트 `tests/c372-elite-heavy-body.test.ts`(몸 9, 새 강적 3 몸 키). 검증 `scripts/c393-proof.cjs` — 본크러셔 실제 전투 발톱에서 세로(카파라손·손하이드는 방어·반격형이라 강공격 없음). 캡처 `docs/captures/c393/` 1장.
+- 테스트 3226 통과(283 파일), typecheck·balance:check 회귀 가드 통과.

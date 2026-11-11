@@ -1,3 +1,4 @@
+import { AJUCHAS_MODELS } from '../../../src/data/art/manifest';
 // 이펙트 배치 도구의 치는 쪽 캐릭터 (사용자 2026-11-04 "종이인형 세션에서 캐릭터 도트랑 모션 가져와서 구현할 수 있게 수정(아란칼 남, 녀, 사신 남, 녀, 호로 각 하나씩만 있으면 됨) 맞는 쪽은 필요 없음")
 // 종이인형 = 게임 humanoid.json 외형 id(게임과 같은 재생기 bindRigAnim), 호로 = 게임 프레임 애니(charArt) — 공격 동작이 있는 단계(char.hollow.2 = 단계 1)
 export interface ToolChar {
@@ -16,6 +17,8 @@ export interface ToolChar {
   /** 탭 (사용자 2026-11-11 "이펙트 배치도구를 캐릭터, 몬스터로 최상단 탭에서 나누고"): 없으면 캐릭터 */
   kind?: 'char' | 'monster';
 }
+/** 아쥬커스 모델 이름 (게임 스킨 이름과 같게, GDD 240장) */
+const AJUCHAS_NAMES: Record<string, string> = { carapace: '가시형', stag: '뱀형', rhino: '외팔형', wyrm: '거미형', panther: '속도형', scorpion: '짐승형', wraith: '부유형' };
 export const CHARACTERS: readonly ToolChar[] = [
   { id: 'arrancar-m', label: '아란칼 남', rig: 'arrancar-base' },
   { id: 'arrancar-f', label: '아란칼 여', rig: 'arrancar-base-f' },
@@ -25,12 +28,8 @@ export const CHARACTERS: readonly ToolChar[] = [
   // 몸동작 칸 = 게임과 같이 'male'(종이인형이고 여성 외형이 아님) — 아란칼 남과 같은 칸
   { id: 'hollow-brute', label: '호로 덩치', rig: 'brute-base', faction: 'hollow', tier: 0, fallback: 'char.hollow' },
   { id: 'hollow-gillian', label: '호로 길리안', rig: 'gillian-base', faction: 'hollow', tier: 1, fallback: 'char.hollow' },
-  // 호로 뱀형·표범형(짐승) 외형 (GDD 230장 — 몸마다 이펙트 자리가 달라 따로 맞춘다)
-  { id: 'hollow-serpent', label: '호로 뱀', rig: 'serpent-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'wyrm' },
-  { id: 'hollow-beast', label: '호로 짐승', rig: 'beast-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'panther' },
-  // 외팔이(갑충형 skin carapace)·거미(사슴형 skin stag) — C.380 게임 넣기, 사용자 "fx툴에도 연동 ㄱㄱ"
-  { id: 'hollow-onearm', label: '호로 외팔이', rig: 'onearm-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'carapace' },
-  { id: 'hollow-spider', label: '호로 거미', rig: 'spider-base', faction: 'hollow', tier: 2, fallback: 'char.hollow', skin: 'stag' },
+  // 아쥬커스 모델 (GDD 240장 — 스킨 id 는 그대로, 이름·그림만 바뀜): 게임 표 AJUCHAS_MODELS 에서 노멀 색 외형으로. 몸마다 이펙트 자리를 따로 맞춘다(GDD 230장)
+  ...Object.entries(AJUCHAS_MODELS).map(([skin, m]): ToolChar => ({ id: `hollow-${skin}`, label: `호로 ${AJUCHAS_NAMES[skin] ?? skin}`, rig: m.looks.normal, faction: 'hollow', tier: 2, fallback: 'char.hollow', skin })),
   // 강적 몸 (GDD 227장, 사용자 2026-11-10 "강적 강공격 … 세로" + "위치 파악해서 반영"): 강적 강공격 세로를 몸마다 맞춘다 — 게임 적 그림 그대로(enemyArt)
   { id: 'elite-brute', kind: 'monster', label: '덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
   { id: 'elite-gillian', kind: 'monster', label: '외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
@@ -39,6 +38,10 @@ export const CHARACTERS: readonly ToolChar[] = [
   { id: 'elite-beast', kind: 'monster', label: '짐승', rig: 'beast-yellow', enemy: 'thunder-heavy-chain' },
   { id: 'elite-onearm', kind: 'monster', label: '외팔이', rig: 'onearm-brown', enemy: 'earth-heavy-seal' },
   { id: 'elite-spider', kind: 'monster', label: '거미', rig: 'spider-blue', enemy: 'water-heavy-seal' },
+  // 가시형·속도형·부유형 강적 (C.392, GDD 240장 4)
+  { id: 'elite-spiky', kind: 'monster', label: '가시형', rig: 'spiky-base', enemy: 'normal-heavy-chain' },
+  { id: 'elite-speed', kind: 'monster', label: '속도형', rig: 'speed-base', enemy: 'normal-stance' },
+  { id: 'elite-wraith', kind: 'monster', label: '부유형', rig: 'wraith-base', enemy: 'blood-stance' },
 ];
 /** 게임 전투의 내 그림 자리 (1배 844×390 실측, scripts/c268-proof.cjs C268_NOHERO): 기본 상자 150 × (fieldScale ?? scale), 변형 기준점 */
 export const HERO_BOX = { x: 512, y: 78, size: 150, originX: 587, originY: 216 };
