@@ -376,6 +376,11 @@
    "body": "ref",
    "artFolder": "ref-brown",
    "color": "갈색"
+  },
+  "spider-orange": {
+   "body": "ref",
+   "artFolder": "ref-orange",
+   "color": "주황"
   }
  },
  "recolors": {
@@ -411,6 +416,14 @@
     "#4f3550": "#4e3a2a"
    },
    "source": "땅 — 강적 듄워든(earth-stance)"
+  },
+  "ref-orange": {
+   "from": "ref",
+   "map": {
+    "#876388": "#a86848",
+    "#4f3550": "#5a3226"
+   },
+   "source": "불 속성 색 (GDD 115-A 118)"
   }
  },
  "hairFrame": {

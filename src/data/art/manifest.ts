@@ -78,6 +78,28 @@ export const ONEARM_ENEMIES: Readonly<Record<string, string>> = { 'earth-heavy-s
 export const SPIDER_SCALE = 1.2;
 /** 거미형 강적 (GDD 231장 3, 사용자 "거미는 혼합이랑 특공으로"): 아쥬커스 등급·특수/혼합 강적 셋 — 잉크베일(물·특수) = 파랑, 숨비도(번개·특수) = 황토, 듄워든(땅·혼합) = 갈색. 덩치 적 목록을 덮는다 */
 export const SPIDER_ENEMIES: Readonly<Record<string, string>> = { 'water-heavy-seal': 'spider-blue', 'thunder-heavy-seal': 'spider-yellow', 'earth-stance': 'spider-brown' };
+/** 가시형(사람형 뼈대, 몸 hk)·속도형(몸 hv) 배율 (GDD 240장): 1배 도트(키 77·74칸 = 칸의 0.5) × 1.65 ≈ 0.82 — 덩치와 비슷한 키 */
+export const SPIKY_SCALE = 1.65;
+export const SPEED_SCALE = 1.65;
+/** 부유형(뼈대 wraith) 배율 (GDD 240장): 그림 칸 120 · 떠 있는 키(칸의 0.71) × 1.15 ≈ 0.82 */
+export const WRAITH_SCALE = 1.15;
+/** 새 모델 강적 (GDD 240장 4, 사용자 2026-11-12 "아쥬커스 기반 강적들한테 입히고"): 아직 덩치 그림이던 아쥬커스 등급 강적 다섯 — 속성 색으로. 혈(손하이드)은 속성 색이 없어 노멀(보라). 스모크 위도우(fire-heavy-seal)만 덩치 그대로 — 이펙트 배치 도구의 '강적 덩치' 기준이라 픽셀FX 담당과 맞춘 뒤 바꾼다 */
+export const SPIKY_ENEMIES: Readonly<Record<string, string>> = { 'normal-heavy-chain': 'spiky-base', 'earth-heavy-chain': 'spiky-brown' };
+export const SPEED_ENEMIES: Readonly<Record<string, string>> = { 'normal-stance': 'speed-base', 'fire-stance': 'speed-orange' };
+export const WRAITH_ENEMIES: Readonly<Record<string, string>> = { 'blood-stance': 'wraith-base' };
+/** 아쥬커스 모델 (GDD 240장 2·3): 단계 외형 스킨 id → 배율 + 속성별 종이인형 외형. 노멀 = 보라, 물 = 파랑, 불 = 주황, 흙 = 갈색, 뇌 = 황토.
+ *  스킨 id 는 옛 세이브에 저장된 값 그대로(이름·그림만 바뀜): carapace = 가시형(힘), stag = 뱀형(지능), rhino = 외팔형(체력), wyrm = 거미형(정신력), panther = 속도형(속도), scorpion = 짐승형(방어), wraith = 부유형(히든) */
+export const AJUCHAS_MODELS: Readonly<Record<string, { scale: number; looks: Readonly<Record<'normal' | 'water' | 'fire' | 'earth' | 'thunder', string>> }>> = {
+  carapace: { scale: SPIKY_SCALE, looks: { normal: 'spiky-base', water: 'spiky-blue', fire: 'spiky-orange', earth: 'spiky-brown', thunder: 'spiky-yellow' } },
+  stag: { scale: SERPENT_SCALE, looks: { normal: 'serpent-purple', water: 'serpent-blue', fire: 'serpent-orange', earth: 'serpent-brown', thunder: 'serpent-yellow' } },
+  rhino: { scale: ONEARM_SCALE, looks: { normal: 'onearm-base', water: 'onearm-blue', fire: 'onearm-orange', earth: 'onearm-brown', thunder: 'onearm-yellow' } },
+  wyrm: { scale: SPIDER_SCALE, looks: { normal: 'spider-base', water: 'spider-blue', fire: 'spider-orange', earth: 'spider-brown', thunder: 'spider-yellow' } },
+  panther: { scale: SPEED_SCALE, looks: { normal: 'speed-base', water: 'speed-blue', fire: 'speed-orange', earth: 'speed-brown', thunder: 'speed-yellow' } },
+  scorpion: { scale: BEAST_SCALE, looks: { normal: 'beast-purple', water: 'beast-blue', fire: 'beast-orange', earth: 'beast-brown', thunder: 'beast-yellow' } },
+  wraith: { scale: WRAITH_SCALE, looks: { normal: 'wraith-base', water: 'wraith-blue', fire: 'wraith-orange', earth: 'wraith-brown', thunder: 'wraith-yellow' } },
+};
+const AJUCHAS_SKINS: Record<string, ArtEntry> = Object.fromEntries(Object.entries(AJUCHAS_MODELS).flatMap(([id, m]) =>
+  Object.entries(m.looks).map(([el, look]) => [el === 'normal' ? `skin.${id}` : `skin.${id}${el}`, { rig: look, scale: m.scale }])));
 /** 길리안형 강적 (GDD 227장, 사용자 2026-11-10 "외눈 길리안을 … 강적 스티치마우스 그림으로"): 유일한 길리안 등급 강적 스티치마우스(노멀) = 외눈 가면 길리안. 덩치 적 목록을 덮는다 */
 export const GILLIAN_ENEMIES: Readonly<Record<string, string>> = { 'normal-heavy-seal': 'gillian-cyclops' };
 
@@ -99,14 +121,9 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian
   'char.hollow.2': { rig: 'gillian-base', scale: GILLIAN_SCALE },
   'skin.gillian': { rig: 'gillian-base', scale: GILLIAN_SCALE },
-  // 아쥬커스 '뱀형' 외형 (GDD 53 · 219장 2, 사용자 "아쥬커스 진화체로도 1개"): 정신력 1위 단계 외형 = 종이인형 뱀(원래 색 진홍)
-  'skin.wyrm': { rig: 'serpent-base', scale: SERPENT_SCALE },
-  // 아쥬커스 '표범형' 외형 (GDD 53 · 228장 2, 사용자 "주인공 아쥬커스 진화체에도 하나"): 속도 1위 단계 외형 = 종이인형 짐승(원래 색 청록)
-  'skin.panther': { rig: 'beast-base', scale: BEAST_SCALE },
-  // 아쥬커스 '갑충형'(힘 1위 = 물리) = 종이인형 외팔이 보라, '사슴형'(지능 1위 = 특수 공격) = 거미 보라, '새형'(속도+지능 1·2위 = 두 능력치 혼합) = 거미 청록 (GDD 231장 2·3 — 외형 이름은 53장 임시 이름 그대로)
-  'skin.carapace': { rig: 'onearm-base', scale: ONEARM_SCALE },
-  'skin.stag': { rig: 'spider-base', scale: SPIDER_SCALE },
-  'skin.raptor': { rig: 'spider-teal', scale: SPIDER_SCALE },
+  // 아쥬커스 단계 외형 (GDD 240장): 능력치 1위로 모델, 진화체 속성으로 색 — AJUCHAS_MODELS. 옛 '새형'(raptor, 속도+지능 쌍 — 표에서 빠짐)은 옛 세이브용으로 속도형 노멀
+  ...AJUCHAS_SKINS,
+  'skin.raptor': { rig: 'speed-base', scale: SPEED_SCALE },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
@@ -120,6 +137,10 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 외팔이·거미형 강적 (GDD 231장): 덩치 적 줄을 덮음
   ...Object.fromEntries(Object.entries(ONEARM_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: ONEARM_SCALE }])),
   ...Object.fromEntries(Object.entries(SPIDER_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SPIDER_SCALE }])),
+  // 가시형·속도형·부유형 강적 (GDD 240장 4)
+  ...Object.fromEntries(Object.entries(SPIKY_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SPIKY_SCALE }])),
+  ...Object.fromEntries(Object.entries(SPEED_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SPEED_SCALE }])),
+  ...Object.fromEntries(Object.entries(WRAITH_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: WRAITH_SCALE }])),
   // 길리안형 강적 (GDD 227장): 스티치마우스 = 외눈 길리안 (배율 = 내 2단계 길리안과 같게)
   ...Object.fromEntries(Object.entries(GILLIAN_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: GILLIAN_SCALE }])),
   // 호로 시작 외형 중 덩치 몸 (GDD 206장 3): 거구·망령·속박자 = 덩치 색 외형. 배율 2.1 = 지운 그림 키(칸의 0.8)에 맞춤. 다른 외형은 그림 없음(사용자 시트 대기)

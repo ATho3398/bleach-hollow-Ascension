@@ -445,7 +445,8 @@ export interface FactionConfig {
   formLooks?: Record<string, string[]>;
   /** 성별 외형이 갈리는 첫 단계 번호 (GDD 114장 2, 1부터): 이 단계부터 여성은 여성 그림(그림 키 + `.f`)을 찾는다. 그 전 단계는 남녀 같은 그림. 없으면 외형이 갈리지 않는다 */
   genderLookFromTier?: number;
-  tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[] }>;
+  /** forms = 진화체 id → 외형(능력치보다 먼저 — 히든 진화체), elementSuffix = 이 속성의 진화체는 외형 id 뒤에 속성 id 를 붙인다(속성 색, GDD 240장 — 예 wyrmwater) */
+  tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[] }>;
   /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
   tierNames: [string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
@@ -733,10 +734,14 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (!isRec(t)) return false;
       const st = (t as Record<string, unknown>).stat;
       const pairs = (t as Record<string, unknown>).pairs;
+      const forms = (t as Record<string, unknown>).forms;
+      const suffix = (t as Record<string, unknown>).elementSuffix;
+      if (forms !== undefined && !(isRec(forms) && Object.values(forms).every((v) => okLook(v)))) return false;
+      if (suffix !== undefined && !(Array.isArray(suffix) && suffix.every((x) => isString(x)))) return false;
       return isRec(st) && Object.entries(st).every(([k, v]) => (STAT_IDS as readonly string[]).includes(k) && okLook(v))
         && (pairs === undefined || (Array.isArray(pairs) && pairs.every((p) => isRec(p) && Array.isArray((p as Record<string, unknown>).stats) && ((p as Record<string, unknown>).stats as unknown[]).length === 2 && ((p as Record<string, unknown>).stats as unknown[]).every((s) => (STAT_IDS as readonly string[]).includes(String(s))) && okLook((p as Record<string, unknown>).look))));
     };
-    if (!isRec(tl) || !Object.entries(tl).every(([k, v]) => /^[1-9]\d*$/.test(k) && okTier(v))) errors.push('tierLooks: { 단계번호: { stat: {능력치: 스킨 id}, pairs?: [{ stats: [a, b], look }] } }');
+    if (!isRec(tl) || !Object.entries(tl).every(([k, v]) => /^[1-9]\d*$/.test(k) && okTier(v))) errors.push('tierLooks: { 단계번호: { stat: {능력치: 스킨 id}, pairs?: [{ stats: [a, b], look }], forms?: {진화체 id: 스킨 id}, elementSuffix?: [속성 id] } }');
   }
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {

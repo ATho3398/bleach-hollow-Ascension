@@ -20,7 +20,7 @@ from body_sync import write_motions  # noqa: E402
 R = DRAFT_DIR + '/'
 rig = json.load(open(R + 'humanoid.json'))
 GROUND = 80
-BONES = ['root', 'torso', 'head', 'jaw', 'arm_L', 'forearm_L', 'hand_L', 'arm_R', 'forearm_R', 'hand_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R', 'cape', 'cape2', 'cape3', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5']  # cape 마디·옷 주름 = 두건 로브(115-A 92·93)
+BONES = ['root', 'torso', 'pelvis', 'head', 'jaw', 'arm_L', 'forearm_L', 'hand_L', 'arm_R', 'forearm_R', 'hand_R', 'leg_L', 'shin_L', 'foot_L', 'leg_R', 'shin_R', 'foot_R', 'cape', 'cape2', 'cape3', 'fold1', 'fold2', 'fold3', 'fold4', 'fold5']  # cape 마디·옷 주름 = 두건 로브(115-A 92·93)
 B, PTS, SC = {}, {}, 1
 
 
@@ -353,11 +353,20 @@ _mv['bones'].update(
 for _s in ('L', 'R'):
     _mv['bones']['hand_' + _s] = [round(v * 0.4, 2) for v in _mv['bones']['forearm_' + _s]]
 SPEC_HK['move'] = _mv
-SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK}
+# 속도형(몸 hv, 사용자 부위 시트 2026-11-12 — 손 따로·골반·꼬리 3마디, 115-A 117): 가시형 동작 설계 그대로(사람처럼 걷기 포함), 걷기만 더 빠르게(0.8초 → 0.6초). 꼬리는 엔진 따라가기
+SPEC_HV = dict(SPEC_HK)
+_fast = dict(SPEC_HK['move'])
+_fast['times'] = [round(t * 0.75) for t in _fast['times']]
+_fast['duration'] = 600
+_fast['sample'] = 30
+SPEC_HV['move'] = _fast
+SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK, 'hv': SPEC_HV}
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
          'hb': ('덩치(몸 hb, 사용자 부위 시트 2026-11-09 조립) 전용 동작 — 대기·걷기·공격·해방(포효), 특수2·필살기 없음(off) (GDD 115-A 73·75, 사용자 "얘로 도트변경하고, 특수2, 필살기 없애고, 해방에 포효하는거 추가해. 짐승이 아니라 덩치고"). '
                 '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 그 밖 동작은 사람형 기본 그대로'),
+         'hv': ('속도형(몸 hv, 사용자 부위 시트 2026-11-12 조립 — 손 따로·골반·꼬리 3마디) 전용 동작 — 가시형 동작 설계를 이 몸으로 다시 계산, 걷기는 더 빠르게 (GDD 115-A 117). ',
+                '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산. 꼬리(cape 마디)는 엔진 따라가기'),
          'hk': ('가시형(임시 이름, 몸 hk, 사용자 부위 시트 2026-11-12 조립 — 손이 따로) 전용 동작 — 덩치 동작 설계를 이 몸으로 다시 계산, 손은 아래팔을 따라 조금 더 꺾임 (GDD 115-A 115). ',
                 '모든 뼈를 이 묶음에서 정함. 각도 = 조립한 쉬는 자세 기준. 몸 높이(root y)는 종아리(발 포함)가 바닥 줄에 닿게 계산'),
          'ho': ('외팔이(몸 ho, 사용자 부위 시트 2026-11-11 조립) 전용 동작 — 덩치 동작 설계를 이 몸(1배, 큰 팔 = 가까운 쪽 *_L)으로 다시 계산 (GDD 115-A 105, 사용자 "얘 외팔이로 추가 ㄱㄱ"). ',

@@ -17,7 +17,7 @@ const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, 
 
 describe('C.360 종이인형 뼈대 여럿 (GDD 219장 3)', () => {
   it('게임 뼈대 = 사람형·뱀형, 둘 다 검사 통과, 외형 id 는 뼈대끼리 안 겹치고 시험 외형(-test)은 없다', () => {
-    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent', 'beast', 'spider']); // 짐승형(C.374, 228장)·거미형(C.380, 231장) 추가
+    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent', 'beast', 'spider', 'wraith']); // 짐승형(C.374)·거미형(C.380)·부유형(C.392) 추가
     const seen = new Set<string>();
     for (const p of RIG_PACKS) {
       expect(validateRig(p.rig, p.motions, p.sets), p.id).toEqual([]);
@@ -74,17 +74,17 @@ describe('C.360 길리안 = 호로 2단계 외형 (GDD 219장 1)', () => {
 describe('C.360 뱀형 (GDD 219장 2)', () => {
   it('색 외형 3 = 진홍(원래)·초록·파랑, 몸·관절·동작은 하나', () => {
     const r = rigPack('serpent').rig;
-    expect(Object.keys(r.looks).sort()).toEqual(['serpent-base', 'serpent-blue', 'serpent-green']);
+    expect(Object.keys(r.looks).sort()).toEqual(['serpent-base', 'serpent-blue', 'serpent-brown', 'serpent-green', 'serpent-orange', 'serpent-purple', 'serpent-yellow']); // 속성 색 5 + 진홍·초록(C.392, GDD 240장)
     for (const l of Object.values(r.looks)) expect(l.body).toBe('ref');
     expect(rigPackOfLook('serpent-green')!.id).toBe('serpent');
     expect(rigPackOfLook('brute-base')!.id).toBe('humanoid');
   });
-  it('아쥬커스 뱀형 외형(정신력 1위) = 종이인형 뱀 진홍', () => {
+  it('아쥬커스 뱀형 외형 = 지능 1위(스킨 id stag — C.392, GDD 240장 2: 옛 정신력 → 지능), 종이인형 뱀 보라(노멀)', () => {
     const t3 = (forms as FormDef[]).find((f) => f.tier === 3)!;
-    expect(pickTierLook(hollow, 3, ev('spr'), t3)).toBe('wyrm');
-    const a = charArt('hollow', 2, fb, '/', undefined, [], 'wyrm', undefined, 'male');
-    expect(a.rig).toEqual({ look: 'serpent-base', partBase: '/art/rig/serpent/', rigId: 'serpent' });
-    expect(a.src).toBe('/art/rig/serpent/still/serpent-base.png');
+    expect(pickTierLook(hollow, 3, ev('int'), t3)).toBe('stag');
+    const a = charArt('hollow', 2, fb, '/', undefined, [], 'stag', undefined, 'male');
+    expect(a.rig).toEqual({ look: 'serpent-purple', partBase: '/art/rig/serpent/', rigId: 'serpent' });
+    expect(a.src).toBe('/art/rig/serpent/still/serpent-purple.png');
     expect(a.scale).toBe(SERPENT_SCALE);
     expect(a.headTop).toBeGreaterThan(0);
   });

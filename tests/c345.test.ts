@@ -40,8 +40,8 @@ describe('C.345 지운 그림 자리 = 자리표시 (깨진 그림 0)', () => {
       const tierLook = t === 1 ? 'gillian-base' : 'brute-base'; // C.360 (GDD 219장 1): 2단계 = 종이인형 길리안
       expect(a.rig?.look, `${t + 1}단계`).toBe(tierLook);
       expect(a.anims, `${t + 1}단계`).toBeUndefined(); // 걷기 프레임만 남은 char-hollow/ 는 안 쓴다
-      for (const s of ['mantis', 'grandfisher', 'rhino', 'scorpion']) expect(charArt('hollow', t, key, '/', undefined, FILES, s, undefined, 'male').rig?.look, s).toBe(tierLook);
-      expect(charArt('hollow', t, key, '/', undefined, FILES, 'wyrm', undefined, 'male').rig?.look).toBe('serpent-base'); // 뱀형 = 종이인형 뱀 (GDD 219장 2)
+      for (const s of ['mantis', 'grandfisher']) expect(charArt('hollow', t, key, '/', undefined, FILES, s, undefined, 'male').rig?.look, s).toBe(tierLook);
+      expect(charArt('hollow', t, key, '/', undefined, FILES, 'wyrm', undefined, 'male').rig?.look).toBe('spider-base'); // 스킨 id wyrm = 거미형(정신력, C.392 GDD 240장 2 — 옛 뱀형)
     }
     expect(charArt('hollow', 4, fb, '/', undefined, FILES, null, undefined, 'male').rig?.look).toBe('arrancar-base'); // 5단계 아란칼은 그대로
     expect(charArt('hollow', 0, fb, '/', undefined, FILES, 'ghoul', undefined, 'male').rig?.look).toBe('brute-gray'); // 덩치 스킨 색이 먼저
@@ -51,7 +51,7 @@ describe('C.345 지운 그림 자리 = 자리표시 (깨진 그림 0)', () => {
   it('적 덩치 배율 = 내 덩치 배율 (사용자 "적 사이즈 나랑 맞춰" — 전투 실측 키·도트 비 1.000, docs/captures/c345/size-proof.json)', () => {
     const me = charArt('hollow', 0, FACTIONS.find((f) => f.id === 'hollow')!.room?.characterArt ?? '', '/', undefined, FILES, null, undefined, 'male');
     const brutes = (enemies as { id: string }[]).map((e) => enemyArt(e.id, '/', undefined, FILES)).filter((a) => a?.rig && a.rig.look.startsWith('brute-'));
-    expect(brutes.length).toBe(40 - 12); // 외팔이·거미형 강적 6 (C.380, 231장) · 짐승형 강적 3 (C.374, 228장) · 뱀형 강적 2 (C.360, GDD 219장 2) · 길리안형 강적 1 (C.371, 227장)
+    expect(brutes.length).toBe(40 - 17); // 가시형·속도형·부유형 강적 5 (C.392, 240장) · 외팔이·거미형 강적 6 (C.380, 231장) · 짐승형 강적 3 (C.374, 228장) · 뱀형 강적 2 (C.360, GDD 219장 2) · 길리안형 강적 1 (C.371, 227장)
     for (const a of brutes) {
       expect(a!.scale).toBe(me.fieldScale ?? me.scale);
       expect(a!.fieldScale).toBeUndefined();

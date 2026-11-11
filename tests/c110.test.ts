@@ -68,7 +68,7 @@ describe('C.110 아란칼 외형 표 (GDD 54 → C.220: 4단계 + 아란칼화)'
     expect(pickLook(hollow, tryGetForm('t4:earth:mixed')!, ev, 7)).toBe('arrearthc');
     expect(pickLook(hollow, tryGetForm('t4:earth:mixed')!, ev, 7, false)).toBeNull();
     expect(pickLook(hollow, tryGetForm('t3:normal')!, ev, 7)).toBe('scorpion');
-    expect(pickLook(hollow, tryGetForm('t3:fire')!, ev, 7)).toBe('scorpion');
+    expect(pickLook(hollow, tryGetForm('t3:fire')!, ev, 7)).toBe('scorpionfire'); // 불 속성 = 같은 모델의 주황(C.392, GDD 240장 3)
     expect(pickLook(shin, tryGetForm('t4:fire:mixed')!, ev, 7)).toBeNull();
   });
   it('설정 검증: 빈 목록·문자열이 아닌 값은 거부, 사신은 빈 표', () => {

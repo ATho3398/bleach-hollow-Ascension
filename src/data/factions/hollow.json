@@ -87,7 +87,8 @@
     },
     "3": {
       "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "spd": "panther", "def": "scorpion" },
-      "pairs": [{ "stats": ["spd", "int"], "look": "raptor" }]
+      "forms": { "h3:fail": "wraith", "h3:passage": "wraith" },
+      "elementSuffix": ["water", "fire", "earth", "thunder"]
     }
   },
   "tierNames": [

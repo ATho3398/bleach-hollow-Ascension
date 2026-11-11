@@ -9,6 +9,8 @@ import beastRaw from './beast.json';
 import beastMotionsRaw from './beast-motions.json';
 import spiderRaw from './spider.json';
 import spiderMotionsRaw from './spider-motions.json';
+import wraithRaw from './wraith.json';
+import wraithMotionsRaw from './wraith-motions.json';
 
 export type Vec2 = [number, number];
 /** CSS matrix(a, b, c, d, e, f) 순서: x' = a·x + c·y + e, y' = b·x + d·y + f */
@@ -205,12 +207,14 @@ export interface RigPack {
 const serpentMotions = readMotions(serpentMotionsRaw);
 const beastMotions = readMotions(beastMotionsRaw);
 const spiderMotions = readMotions(spiderMotionsRaw);
+const wraithMotions = readMotions(wraithMotionsRaw);
 /** 게임 뼈대 목록: 사람형(사신·아란칼·덩치·길리안 …) + 뱀형 + 짐승형(GDD 228장). 외형 id 는 뼈대끼리 겹치지 않는다(테스트가 막음) */
 export const RIG_PACKS: readonly RigPack[] = [
   { id: 'humanoid', rig: HUMANOID, motions: MOTIONS, sets: MOTION_SETS },
   { id: 'serpent', rig: serpentRaw as unknown as Rig, motions: serpentMotions.motions, sets: serpentMotions.sets },
   { id: 'beast', rig: beastRaw as unknown as Rig, motions: beastMotions.motions, sets: beastMotions.sets },
   { id: 'spider', rig: spiderRaw as unknown as Rig, motions: spiderMotions.motions, sets: spiderMotions.sets }, // 거미형(GDD 231장)
+  { id: 'wraith', rig: wraithRaw as unknown as Rig, motions: wraithMotions.motions, sets: wraithMotions.sets }, // 부유형(GDD 240장)
 ];
 /** 외형 id → 그 외형이 있는 뼈대. 없으면 undefined */
 export function rigPackOfLook(look: string): RigPack | undefined {

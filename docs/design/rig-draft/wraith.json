@@ -400,7 +400,63 @@
  },
  "looks": {
   "wraith-base": {
-   "body": "ref"
+   "body": "ref",
+   "color": "보라"
+  },
+  "wraith-blue": {
+   "body": "ref",
+   "artFolder": "ref-blue",
+   "color": "파랑"
+  },
+  "wraith-orange": {
+   "body": "ref",
+   "artFolder": "ref-orange",
+   "color": "주황"
+  },
+  "wraith-brown": {
+   "body": "ref",
+   "artFolder": "ref-brown",
+   "color": "갈색"
+  },
+  "wraith-yellow": {
+   "body": "ref",
+   "artFolder": "ref-yellow",
+   "color": "황토"
+  }
+ },
+ "recolors": {
+  "note": "색 외형 그림(GDD 115-A 85·118, scripts/rig/recolor.py wraith): 살 두 색만 바꿈 — 뼈·윤곽·눈은 그대로",
+  "ref-blue": {
+   "from": "ref",
+   "map": {
+    "#7f5e84": "#58688c",
+    "#3b2741": "#2a324c"
+   },
+   "source": "물 속성 색 (GDD 115-A 118)"
+  },
+  "ref-orange": {
+   "from": "ref",
+   "map": {
+    "#7f5e84": "#a86848",
+    "#3b2741": "#5a3226"
+   },
+   "source": "불 속성 색 (GDD 115-A 118)"
+  },
+  "ref-brown": {
+   "from": "ref",
+   "map": {
+    "#7f5e84": "#967654",
+    "#3b2741": "#4e3a2a"
+   },
+   "source": "흙 속성 색 (GDD 115-A 118)"
+  },
+  "ref-yellow": {
+   "from": "ref",
+   "map": {
+    "#7f5e84": "#a68e5e",
+    "#3b2741": "#58462e"
+   },
+   "source": "뇌 속성 색 (GDD 115-A 118)"
   }
  },
  "hairFrame": {

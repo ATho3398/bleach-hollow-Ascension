@@ -61,6 +61,7 @@ describe('C.194 발 = 그림자 (GDD 120장 1·3·4)', () => {
     const bad: string[] = [];
     for (const l of LOOKS) {
       if (!l.art.src) continue;
+      if (l.art.rig?.rigId === 'wraith') continue; // 부유형은 떠 있는 몸 — 발이 그림자에 안 닿는 게 맞다(C.392, GDD 240장)
       const g = footGap(l.art.src);
       const room = roomFootShadowPx(g, l.art.scale, l.art.offsetY);
       if (Math.abs(room) > 4) bad.push(`${l.name} 방 ${room.toFixed(1)}px`);

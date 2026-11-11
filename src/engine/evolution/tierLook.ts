@@ -8,14 +8,20 @@ import { rankedStats } from './formAbilities';
 export function pickTierLook(faction: Pick<FactionConfig, 'tierLooks'>, tier: number, ev: Stats, form: FormDef): string | null {
   const table = faction.tierLooks?.[String(tier)];
   if (!table) return null;
+  // 속성 색 (GDD 240장): elementSuffix 에 든 속성의 진화체는 외형 id 뒤에 속성 id 를 붙인다(예 wyrm + water = wyrmwater — 스킨 id 는 영문 소문자만). 없는 속성 = 그대로(노멀 색)
+  const el = form.elements?.[0];
+  const tint = (look: string | null): string | null => (look && el && table.elementSuffix?.includes(el) ? `${look}${el}` : look);
+  // 진화체로 정한 외형(히든 진화체 등)이 먼저 (GDD 240장)
+  const byForm = table.forms?.[form.id];
+  if (byForm) return tint(byForm);
   const rank = rankedStats(ev, form);
   const [first, second] = rank;
   // 1·2위 쌍(순서 무관)을 먼저 본다. 2위도 노력치가 0보다 커야 한다(0 동률의 순서로 쌍이 되지 않게)
   for (const pair of table.pairs ?? []) {
     const [a, b] = pair.stats;
-    if (first !== undefined && second !== undefined && ev[first] > 0 && ev[second] > 0 && ((first === a && second === b) || (first === b && second === a))) return pair.look;
+    if (first !== undefined && second !== undefined && ev[first] > 0 && ev[second] > 0 && ((first === a && second === b) || (first === b && second === a))) return tint(pair.look);
   }
-  return first !== undefined ? table.stat[first] ?? null : null;
+  return first !== undefined ? tint(table.stat[first] ?? null) : null;
 }
 
 /** 진화체 id 로 정한 외형 (GDD 54): formLooks[form.id] 가 하나면 그것, 둘 이상이면 seed 로 하나를 뽑는다(같은 seed → 같은 결과). 표에 없으면 null */
@@ -40,8 +46,14 @@ export function tierLookIds(faction: Pick<FactionConfig, 'tierLooks' | 'formLook
   const out = new Set<string>();
   for (const list of Object.values((faction as Pick<FactionConfig, 'formLooks'>).formLooks ?? {})) for (const id of list) out.add(id);
   for (const t of Object.values(faction.tierLooks ?? {})) {
-    for (const s of STAT_IDS) if (t.stat[s]) out.add(t.stat[s]!);
-    for (const p of t.pairs ?? []) out.add(p.look);
+    const base = new Set<string>();
+    for (const s of STAT_IDS) if (t.stat[s]) base.add(t.stat[s]!);
+    for (const p of t.pairs ?? []) base.add(p.look);
+    for (const l of Object.values(t.forms ?? {})) base.add(l);
+    for (const l of base) {
+      out.add(l);
+      for (const el of t.elementSuffix ?? []) out.add(`${l}${el}`);
+    }
   }
   return [...out];
 }

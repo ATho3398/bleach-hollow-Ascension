@@ -19,7 +19,7 @@ describe('C.374 짐승형 (GDD 228장 2)', () => {
     const p = rigPack('beast');
     expect(p.id).toBe('beast');
     expect(validateRig(p.rig, p.motions, p.sets)).toEqual([]);
-    expect(Object.keys(p.rig.looks).sort()).toEqual(['beast-base', 'beast-orange', 'beast-violet', 'beast-yellow']);
+    expect(Object.keys(p.rig.looks).sort()).toEqual(['beast-base', 'beast-blue', 'beast-brown', 'beast-orange', 'beast-purple', 'beast-violet', 'beast-yellow']); // 속성 색 5 + 청록·진보라(C.392, GDD 240장)
     for (const [l, look] of Object.entries(p.rig.looks)) {
       expect(look.body, l).toBe('ref');
       expect(rigPackOfLook(l)!.id, l).toBe('beast');
@@ -33,14 +33,14 @@ describe('C.374 짐승형 (GDD 228장 2)', () => {
     expect(w).toBe(h);
     expect((r.ground! - y) / h).toBeCloseTo(0.92, 1);
   });
-  it("아쥬커스 표범형 외형(속도 1위) = 종이인형 짐승 청록", () => {
+  it("아쥬커스 짐승형 외형 = 방어 1위(스킨 id scorpion — C.392, GDD 240장 2: 옛 속도 → 방어), 종이인형 짐승 보라(노멀)", () => {
     const t3 = (forms as FormDef[]).find((f) => f.tier === 3)!;
-    expect(pickTierLook(hollow, 3, ev('spd'), t3)).toBe('panther');
-    const a = charArt('hollow', 2, fb, '/', undefined, [], 'panther', undefined, 'male');
-    expect(a.rig).toEqual({ look: 'beast-base', partBase: '/art/rig/beast/', rigId: 'beast' });
-    expect(a.src).toBe('/art/rig/beast/still/beast-base.png');
+    expect(pickTierLook(hollow, 3, ev('def'), t3)).toBe('scorpion');
+    const a = charArt('hollow', 2, fb, '/', undefined, [], 'scorpion', undefined, 'male');
+    expect(a.rig).toEqual({ look: 'beast-purple', partBase: '/art/rig/beast/', rigId: 'beast' });
+    expect(a.src).toBe('/art/rig/beast/still/beast-purple.png');
     expect(a.scale).toBe(BEAST_SCALE);
-    expect(ART_MANIFEST['skin.panther']!.rig).toBe('beast-base');
+    expect(ART_MANIFEST['skin.scorpion']!.rig).toBe('beast-purple');
   });
   it('짐승형 강적 3 = 아쥬커스 등급 강적(스톰후프 노랑·브라세로 주황·나이트램 보라), 뱀형 강적과 안 겹친다', () => {
     expect(BEAST_ENEMIES).toEqual({ 'thunder-heavy-chain': 'beast-yellow', 'fire-heavy-chain': 'beast-orange', 'kyo-heavy-chain': 'beast-violet' });

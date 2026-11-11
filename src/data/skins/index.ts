@@ -27,14 +27,17 @@ const BASE_SKINS: readonly SkinDef[] = [
   { id: 'brute', name: '거구', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'ghoul', name: '망령', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
   { id: 'shackled', name: '속박자', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true },
-  // 아쥬커스 외형 (GDD 53): 진화 순간 노력치 1위 능력치로 정해진다 (힘 갑충·지능 사슴·체력 코뿔소·정신력 뱀·속도 표범·방어 전갈, 속도+지능 1·2위 = 새)
-  { id: 'carapace', name: '갑충형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'stag', name: '사슴형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'rhino', name: '코뿔소형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'wyrm', name: '뱀형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'panther', name: '표범형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'scorpion', name: '전갈형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
-  { id: 'raptor', name: '새형', factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true },
+  // 아쥬커스 외형 (GDD 53 → 240장, 사용자 2026-11-12): 진화 순간 노력치 1위 능력치로 모델이 정해지고(힘 가시형·지능 뱀형·체력 외팔형·정신력 거미형·속도 속도형·방어 짐승형),
+  // 히든 진화체는 부유형. 진화체 속성(물·불·흙·뇌)이면 같은 모델의 속성 색 외형(id 뒤에 속성 id — 예 wyrmwater, 아래 AJUCHAS_ELEMENT_SKINS) — 노멀은 보라.
+  // id 는 옛 세이브에 저장된 값이라 그대로 두고 이름·그림만 바꿨다(옛 이름: 갑충·사슴·코뿔소·뱀·표범·전갈). 새형(raptor, 옛 속도+지능 쌍)은 표에서 빠졌고 옛 세이브용으로 속도형 그림
+  { id: 'carapace', name: '가시형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'stag', name: '뱀형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'rhino', name: '외팔형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'wyrm', name: '거미형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'panther', name: '속도형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'scorpion', name: '짐승형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'wraith', name: '부유형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  { id: 'raptor', name: '속도형(옛 새형)', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
   // 길리안 외형 (GDD 219장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"): 2단계(길리안)에 닿으면 능력치와 상관없이 이 외형 — 종이인형 길리안(몸 hd)
   { id: 'gillian', name: '길리안', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
 ];
@@ -46,7 +49,15 @@ const ARRANCAR_SKINS: readonly SkinDef[] = [
   ...([['limit', getFaction('hollow').frenzyName], ['restraint', '절제'], ['hunter', '강적 사냥꾼'], ['reborn', '환생']] as const).map(([_k, name], i): SkinDef => ({ id: `arrhidden${'abcd'[i]}`, name: `아란칼 ${name}`, factionId: 'hollow', tentativeName: true, provisional: true, startOnly: true, tierLook: true })),
 ];
 
-export const SKINS: readonly SkinDef[] = [...BASE_SKINS, ...ARRANCAR_SKINS];
+/** 아쥬커스 모델의 속성 색 외형 (GDD 240장): `<모델 id><속성 id>`(예 wyrmwater) — 종족 설정 tierLooks 의 elementSuffix 가 진화체 속성으로 고른다 */
+export const AJUCHAS_MODEL_SKINS = ['carapace', 'stag', 'rhino', 'wyrm', 'panther', 'scorpion', 'wraith'] as const;
+export const AJUCHAS_ELEMENT_NAMES: readonly (readonly [string, string])[] = [['water', '물'], ['fire', '불'], ['earth', '흙'], ['thunder', '뇌']];
+const AJUCHAS_ELEMENT_SKINS: readonly SkinDef[] = AJUCHAS_MODEL_SKINS.flatMap((id) => {
+  const base = BASE_SKINS.find((x) => x.id === id)!;
+  return AJUCHAS_ELEMENT_NAMES.map(([el, name]): SkinDef => ({ ...base, id: `${id}${el}`, name: `${base.name}(${name})` }));
+});
+
+export const SKINS: readonly SkinDef[] = [...BASE_SKINS, ...AJUCHAS_ELEMENT_SKINS, ...ARRANCAR_SKINS];
 
 
 export function getSkin(id: string | null | undefined): SkinDef | undefined {

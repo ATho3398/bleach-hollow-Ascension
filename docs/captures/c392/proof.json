@@ -1,0 +1,104 @@
+{
+ "url": "http://localhost:5401/",
+ "picked": [
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "spiky-vs-obsidiana",
+   "foe": "옵시디아나",
+   "ok": true
+  },
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "speed-vs-bonecrusher",
+   "foe": "본크러셔",
+   "ok": true
+  },
+  {
+   "tag": "skin",
+   "ok": true
+  },
+  {
+   "tag": "wraith-vs-sonhide",
+   "foe": "손하이드",
+   "ok": true
+  }
+ ],
+ "battles": [
+  {
+   "tag": "spiky-vs-obsidiana",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "speed-vs-bonecrusher",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     608,
+     608
+    ],
+    "img": null
+   }
+  },
+  {
+   "tag": "wraith-vs-sonhide",
+   "enemy": null,
+   "me": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   },
+   "foe": {
+    "canvas": true,
+    "size": [
+     480,
+     480
+    ],
+    "img": null
+   }
+  }
+ ],
+ "shots": [
+  "spiky-vs-obsidiana-battle-0.png",
+  "spiky-vs-obsidiana-battle-1.png",
+  "speed-vs-bonecrusher-battle-0.png",
+  "speed-vs-bonecrusher-battle-1.png",
+  "wraith-vs-sonhide-battle-0.png",
+  "wraith-vs-sonhide-battle-1.png"
+ ],
+ "save": [],
+ "errors": []
+}

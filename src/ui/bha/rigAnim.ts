@@ -15,7 +15,7 @@ import type { AnimPlayer, PlayOptions } from './animPlayer';
 export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   idle: ['idle'],
   move: ['move'],
-  attack: ['attack', 'attack2'],
+  attack: ['attack', 'attack2', 'attack3'], // 공격3 = 거미·부유형(GDD 240장 5) — 없는 몸은 공격1·2만
   skill: ['skill', 'skill2'],
   hit: ['hit'],
   // GDD 171장 (사용자 2026-11-01·11-03): 방 평소 = 홈 대기, 빈사·상태 이상 = 빈사 자세, 온천 = 온천 자세, 전투 패배·사망 = 쓰러짐

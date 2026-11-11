@@ -244,7 +244,8 @@ describe('자세·행렬', () => {
     for (const look of Object.keys(HUMANOID.looks)) {
       const w = lookLayers(HUMANOID, look).find((x) => x.slot === 'weapon');
       if (!w) continue; // 칼 없는 몸(역관절·덩치 — 사용자 도트, GDD 115-A 72)
-      const l = lookLayers(HUMANOID, look).find((x) => x.slot === 'scabbard')!;
+      const l = lookLayers(HUMANOID, look).find((x) => x.slot === 'scabbard');
+      if (!l) continue; // 칼집을 안 차는 무기(혼백의 나뭇가지 — GDD 115-A 113)
       expect(l.art).not.toBe(w.art);
     }
   });

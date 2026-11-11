@@ -1,7 +1,7 @@
 // C.380 (GDD 231장): 역관절 삭제, 외팔이(물리)·거미형(특수·혼합) = 아쥬커스 외형 + 아쥬커스 등급 강적, 게임 종이인형 뼈대 넷째(spider)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { ART_MANIFEST, BEAST_ENEMIES, GILLIAN_ENEMIES, ONEARM_ENEMIES, ONEARM_SCALE, SERPENT_ENEMIES, SPIDER_ENEMIES, SPIDER_SCALE, charArt, enemyArt } from '../src/data/art/manifest';
+import { ART_MANIFEST, BEAST_ENEMIES, GILLIAN_ENEMIES, ONEARM_ENEMIES, ONEARM_SCALE, SERPENT_ENEMIES, SPEED_ENEMIES, SPIDER_ENEMIES, SPIDER_SCALE, SPIKY_ENEMIES, WRAITH_ENEMIES, charArt, enemyArt } from '../src/data/art/manifest';
 import { RIG_PACKS, apply, boneMatrices, lookLayers, resolveMotions, rigPack, rigPackOfLook, samplePose, validateRig, type Vec2 } from '../src/data/art/rig/pose';
 import { createRigPlayer } from '../src/ui/bha/rigAnim';
 import { getFaction } from '../src/data/factions';
@@ -32,7 +32,7 @@ describe('C.380 외팔이 = 물리 (GDD 231장 2)', () => {
   it('색 외형 4 = 보라(원래)·갈색·파랑·황토, 몸 ho·동작 하나, 그림 파일 있음', () => {
     const p = rigPack('humanoid');
     const looks = Object.entries(p.rig.looks).filter(([, l]) => l.body === 'ho');
-    expect(looks.map(([id]) => id).sort()).toEqual(['onearm-base', 'onearm-blue', 'onearm-brown', 'onearm-yellow']);
+    expect(looks.map(([id]) => id).sort()).toEqual(['onearm-base', 'onearm-blue', 'onearm-brown', 'onearm-orange', 'onearm-yellow']); // + 주황(불, C.392)
     for (const [id, l] of looks) {
       expect(typeof l.color, id).toBe('string');
       expect(existsSync(`public/art/rig/humanoid/still/${id}.png`), id).toBe(true);
@@ -41,9 +41,9 @@ describe('C.380 외팔이 = 물리 (GDD 231장 2)', () => {
     const ms = resolveMotions(p.rig, p.motions, p.sets, 'ho');
     for (const id of ['idle', 'move', 'attack', 'attack2', 'skill', 'hit', 'release1', 'headbutt']) expect(ms[id], id).toBeDefined();
   });
-  it("아쥬커스 '갑충형'(힘 1위) = 외팔이 보라", () => {
-    expect(pickTierLook(hollow, 3, ev({ atk: 5 }), t3)).toBe('carapace');
-    const a = charArt('hollow', 2, fb, '/', undefined, [], 'carapace', undefined, 'male');
+  it("아쥬커스 외팔형 = 체력 1위(스킨 id rhino — C.392, GDD 240장 2: 옛 힘 → 체력), 외팔이 보라", () => {
+    expect(pickTierLook(hollow, 3, ev({ hp: 5 }), t3)).toBe('rhino');
+    const a = charArt('hollow', 2, fb, '/', undefined, [], 'rhino', undefined, 'male');
     expect(a.rig).toEqual({ look: 'onearm-base', partBase: '/art/rig/humanoid/', rigId: 'humanoid' });
     expect(a.scale).toBe(ONEARM_SCALE);
   });
@@ -67,7 +67,7 @@ describe('C.380 거미형 = 특수·혼합 (GDD 231장 3)', () => {
     expect(RIG_PACKS.map((p) => p.id)).toContain('spider');
     const p = rigPack('spider');
     expect(validateRig(p.rig, p.motions, p.sets)).toEqual([]);
-    expect(Object.keys(p.rig.looks).sort()).toEqual(['spider-base', 'spider-blue', 'spider-brown', 'spider-teal', 'spider-yellow']);
+    expect(Object.keys(p.rig.looks).sort()).toEqual(['spider-base', 'spider-blue', 'spider-brown', 'spider-orange', 'spider-teal', 'spider-yellow']); // + 주황(불, C.392)
     const [, y, w, h] = p.rig.view!.rect;
     expect(w).toBe(h);
     expect((p.rig.ground! - y) / h).toBeCloseTo(0.92, 1);
@@ -77,19 +77,18 @@ describe('C.380 거미형 = 특수·혼합 (GDD 231장 3)', () => {
       for (const layer of lookLayers(p.rig, l)) expect(existsSync(`public/art/rig/spider/${layer.art}.png`), `${l} ${layer.art}`).toBe(true);
     }
   });
-  it("아쥬커스 '사슴형'(지능 1위 = 특수 공격) = 거미 보라, '새형'(속도+지능 1·2위) = 거미 청록", () => {
-    expect(pickTierLook(hollow, 3, ev({ int: 5 }), t3)).toBe('stag');
-    expect(pickTierLook(hollow, 3, ev({ spd: 5, int: 4 }), t3)).toBe('raptor');
-    const a = charArt('hollow', 2, fb, '/', undefined, [], 'stag', undefined, 'male');
+  it("아쥬커스 거미형 = 정신력 1위(스킨 id wyrm — C.392, GDD 240장 2: 옛 지능 → 정신력), 거미 보라. 옛 새형(raptor)은 속도형 그림", () => {
+    expect(pickTierLook(hollow, 3, ev({ spr: 5 }), t3)).toBe('wyrm');
+    const a = charArt('hollow', 2, fb, '/', undefined, [], 'wyrm', undefined, 'male');
     expect(a.rig).toEqual({ look: 'spider-base', partBase: '/art/rig/spider/', rigId: 'spider' });
     expect(a.scale).toBe(SPIDER_SCALE);
-    expect(charArt('hollow', 2, fb, '/', undefined, [], 'raptor', undefined, 'male').rig?.look).toBe('spider-teal');
+    expect(charArt('hollow', 2, fb, '/', undefined, [], 'raptor', undefined, 'male').rig?.look).toBe('speed-base');
   });
   it('거미형 강적 3 = 아쥬커스 등급 · 특수 또는 혼합(물리 없음), 다른 몸 강적과 안 겹친다', () => {
     expect(Object.keys(SPIDER_ENEMIES).length).toBe(3);
     const cats = new Set<string>();
     for (const [id, look] of Object.entries(SPIDER_ENEMIES)) {
-      for (const other of [ONEARM_ENEMIES, BEAST_ENEMIES, SERPENT_ENEMIES, GILLIAN_ENEMIES]) expect(other[id], id).toBeUndefined();
+      for (const other of [ONEARM_ENEMIES, BEAST_ENEMIES, SERPENT_ENEMIES, GILLIAN_ENEMIES, SPIKY_ENEMIES, SPEED_ENEMIES, WRAITH_ENEMIES]) expect(other[id], id).toBeUndefined();
       const e = E.find((x) => x.id === id)!;
       expect(e.class, id).toBe('elite');
       expect(e.grade, id).toBe('adjuchas');

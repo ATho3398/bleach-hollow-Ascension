@@ -2,6 +2,7 @@
  "note": "고정값 (사용자 2026-10-28 \"이대로 고정시키고\"). 아란칼 기본형 = 옷 입은 몸, 알몸 기본형 = 옷 입히기 바탕. 관절·부위 자리를 바꾸면 tests/paperdoll.test.ts 가 막는다 — 사용자가 고친 값이면 scripts/rig/lock.py 로 이 파일도 같이 고친다",
  "pivots": {
   "root": [16, 52],
+  "pelvis": [16, 52],
   "torso": [16, 51],
   "head": [15, 17],
   "jaw": [15, 24],
@@ -10,8 +11,10 @@
   "hair_back3": [28, 37],
   "arm_L": [12, 31],
   "forearm_L": [11, 44],
+  "hand_L": [11, 44],
   "arm_R": [24, 33],
   "forearm_R": [32, 41],
+  "hand_R": [32, 41],
   "leg_L": [11, 52],
   "leg_R": [20, 52],
   "shin_L": [12, 63],
@@ -45,6 +48,7 @@
   "arm_L",
   "outer_arm_L",
   "forearm_L",
+  "hand_L",
   "weapon",
   "thumb_L",
   "hair_back2",
@@ -56,6 +60,7 @@
   "shin_L",
   "leg_R",
   "shin_R",
+  "pelvis",
   "torso",
   "outer_torso",
   "scabbard",
@@ -64,7 +69,8 @@
   "hair",
   "arm_R",
   "outer_arm_R",
-  "forearm_R"
+  "forearm_R",
+  "hand_R"
  ],
  "bodyJoints": {
   "arrancar_f": {
@@ -139,7 +145,10 @@
     "forearm_L": [9, 44],
     "forearm_R": [31, 40],
     "cape2": [17, 42],
-    "cape3": [17, 55]
+    "cape3": [17, 55],
+    "hair_back": [24, 9],
+    "hair_back3": [28, 37],
+    "hair_back2": [31, 23]
    },
    "rot": {
     "arm_R": 19,
@@ -284,11 +293,59 @@
    "pivots": {
     "forearm_L": [9, 44],
     "arm_R": [25, 35],
-    "forearm_R": [32, 42]
+    "forearm_R": [29, 41],
+    "hair_back3": [28, 37],
+    "arm_L": [11, 32],
+    "hair_back": [24, 9],
+    "hair_back2": [31, 23]
    },
    "rot": {
     "arm_R": 19,
     "forearm_R": -35
+   },
+   "shift": {
+    "forearm_R": [
+     -0.03,
+     1.89
+    ]
+   }
+  },
+  "hk": {
+   "pivots": {
+    "root": [18, 45],
+    "torso": [18, 45],
+    "head": [10, 20],
+    "arm_R": [9, 31],
+    "forearm_R": [2, 39],
+    "hand_R": [-10, 50],
+    "arm_L": [27, 26],
+    "forearm_L": [40, 41],
+    "hand_L": [44, 53],
+    "leg_R": [15, 46],
+    "shin_R": [7, 56],
+    "leg_L": [21, 45],
+    "shin_L": [31, 57]
+   }
+  },
+  "hv": {
+   "pivots": {
+    "root": [18, 44],
+    "torso": [18, 44],
+    "pelvis": [18, 44],
+    "head": [13, 28],
+    "arm_R": [8, 34],
+    "forearm_R": [0, 47],
+    "hand_R": [-8, 53],
+    "arm_L": [24, 32],
+    "forearm_L": [35, 43],
+    "hand_L": [42, 56],
+    "leg_R": [16, 50],
+    "shin_R": [4, 58],
+    "leg_L": [20, 47],
+    "shin_L": [27, 61],
+    "cape": [25, 45],
+    "cape2": [54, 42],
+    "cape3": [50, 22]
    }
   }
  },
@@ -309,7 +366,7 @@
     "forearm_L": { "art": "arrancar/forearm_L", "at": [1, 42] }
    },
    "layers": {
-    "hair": { "art": "arrancar/hair", "at": [0, -1] },
+    "hair": { "art": "student/hair", "at": [-1, 0] },
     "weapon": { "art": "weapon/sword", "at": [2, 50] },
     "scabbard": { "art": "weapon/scabbard", "at": [18, 44] }
    }
@@ -393,7 +450,7 @@
     "forearm_L": { "art": "shinigami/forearm_L", "at": [2, 42] }
    },
    "layers": {
-    "hair": { "art": "shinigami/hair", "at": [-1, 0] },
+    "hair": { "art": "student/hair", "at": [-1, 0] },
     "weapon": { "art": "weapon/sword", "at": [0, 51] },
     "scabbard": { "art": "weapon/scabbard", "at": [17, 44] }
    }
