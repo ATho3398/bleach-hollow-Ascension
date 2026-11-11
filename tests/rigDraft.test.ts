@@ -55,6 +55,14 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
       const r = hk.move!.tracks[b]!.map((k) => k[1]);
       expect(Math.max(...r) - Math.min(...r), b).toBeGreaterThan(25);
     }
+    // 사람처럼: 한쪽 다리가 앞으로 나갈 때 반대쪽 팔이 같이 앞으로(사용자 "왼발 나갈 때 오른팔 같이")
+    const at = (b: string, t: number) => samplePose(rig, hk.move!, t)[b]!.rot;
+    for (const t of [0, 100, 300, 400, 500, 700]) {
+      expect(Math.sign(at('arm_R', t)), `t${t} arm_R·leg_L`).toBe(Math.sign(at('leg_L', t)));
+      expect(Math.sign(at('arm_L', t)), `t${t} arm_L·leg_R`).toBe(Math.sign(at('leg_R', t)));
+    }
+    const sw = hk.move!.tracks.arm_R!.map((k) => k[1]);
+    expect(Math.max(...sw) - Math.min(...sw)).toBeGreaterThan(35);
   });
   it('역관절(dg)은 없앴다 (GDD 231장, 사용자 2026-11-11 "역관절 저 호로는 아예 없애자")', () => {
     expect(rig.bodies.dg).toBeUndefined();
