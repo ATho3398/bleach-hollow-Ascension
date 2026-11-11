@@ -30,7 +30,7 @@ describe('타일 안내 = 새 [타일 배치] 창 (GDD 213장)', () => {
   });
 
   it('안내 차례면 모험 준비를 [타일 배치] 탭으로 연다 (보통은 [준비])', () => {
-    expect(read('src/ui/planView.ts')).toContain("setMode?.(h.startMode ?? 'prep');");
+    expect(read('src/ui/planView.ts')).toContain("setMode?.(h.placeOnly ? 'place' : h.startMode ?? 'prep');"); // 241-D 7 배치만 하는 창은 늘 [타일 배치]
     expect(read('src/ui/app.ts')).toContain("startMode: tilesUnlocked(save!) && guidePending(save!.help, 'tile-plan') ? 'place' : 'prep',");
   });
 

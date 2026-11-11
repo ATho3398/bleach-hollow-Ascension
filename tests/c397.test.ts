@@ -9,7 +9,7 @@ import { affinityMult, petAttackOf } from '../src/engine/pet';
 import { GEAR_KIND_FACTIONS, GEAR_KINDS, GEAR_SLOTS, gearKindAllowed } from '../src/data/gear';
 import { FACTIONS, getFaction } from '../src/data/factions';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
-import { gateHint, gateOpen } from '../src/ui/bha/unlockGate';
+import { gateHint, gateOpen } from '../src/unlockGate';
 
 useImmediateHits();
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -60,7 +60,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     }
   });
   it('세이브 형식 73: 72 → 73 = 옛 장비·낀 칸 그대로 + 3번째 장신구 칸 null', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(73);
+    expect(SAVE_FORMAT_VERSION).toBe(74);
     const s = newSaveData('hollow', 0);
     s.shared.gear.items.push({ uid: 'g1', kind: 'accessory', grade: 'rare', star: 1, stats: { spr: 3 }, special: null, plus: 1, gotAt: 1 });
     s.shared.gear.equipped.acc2 = 'g1';
@@ -70,7 +70,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     SAVE_MIGRATIONS[72]!(raw);
     expect(raw.shared.gear.equipped.acc3).toBeNull();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(73);
+    expect(m.meta.format).toBe(74);
     expect(m.shared.gear.items.map((i) => i.uid)).toEqual(['g1']);
     expect(m.shared.gear.equipped).toMatchObject({ acc2: 'g1', acc3: null });
   });
@@ -85,16 +85,25 @@ describe('241-D 3·6·8 화면', () => {
     expect(eq).toContain('enableDragScroll(tabs, hd.signal);');
     expect(read('src/ui/lcdScreens.ts')).not.toContain("{ id: 'pet', label: '펫'");
   });
-  it('펫 잠김 = 첫 환생 전 (이미 가진 펫이 있으면 열림), 장비 = 2단계 — 종족 단계 이름으로 안내', () => {
+  it('241-0 수정 표: 장비 = 3단계 · 장신구 = 해방 클리어 · 펫·출정품 = 첫 환생 (이미 가진 것은 열림) — 종족 이름으로 안내', () => {
     const s = newSaveData('hollow', 0);
-    expect(gateOpen(s, 'pet')).toBe(false);
-    expect(gateOpen(s, 'gear')).toBe(false);
+    for (const id of ['gear', 'accessory', 'pet', 'sortie'] as const) expect(gateOpen(s, id)).toBe(false);
     s.evolution.tierIndex = 1;
+    expect(gateOpen(s, 'gear')).toBe(false);
+    s.evolution.tierIndex = 2;
     expect(gateOpen(s, 'gear')).toBe(true);
+    expect(gateOpen(s, 'accessory')).toBe(false);
+    s.evolution.ascended = true;
+    expect(gateOpen(s, 'accessory')).toBe(true);
     s.shared.pets.owned['pet-gold'] = { laps: 0, gotAt: 1 };
     expect(gateOpen(s, 'pet')).toBe(true);
-    expect(gateHint(getFaction('hollow'), 'gear')).toBe('길리안이 되면 장비가 열린다');
-    expect(gateHint(getFaction('hollow'), 'sortie')).toBe(`${getFaction('hollow').tierNames[2]}가 되면 출정품이 열린다`);
+    s.rebirth.count = 1;
+    expect(gateOpen(s, 'sortie')).toBe(true);
+    const H = getFaction('hollow');
+    expect(gateHint(H, 'gear')).toBe('아쥬커스가 되면 장비가 열린다');
+    expect(gateHint(H, 'accessory')).toBe('아란칼화 클리어 후 장신구 칸이 열린다');
+    expect(gateHint(H, 'pet')).toBe('첫 환생 후 펫이 열린다');
+    expect(gateHint(H, 'sortie')).toBe('첫 환생 후 출정품이 열린다');
   });
   it('가방 머리 재화(골드·영옥) · \'장착한 장비\' 문구', () => {
     const lcd = read('src/ui/lcdScreens.ts');

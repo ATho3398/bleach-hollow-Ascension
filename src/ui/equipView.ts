@@ -18,7 +18,7 @@ import {
 import { affinityOf } from '../engine/pet';
 import { petArtSrc, petIconId } from './bha/pet';
 import { imageArt } from './bha/itemUi';
-import { gateHint, gateOpen } from './bha/unlockGate';
+import { gateHint, gateOpen } from '../unlockGate';
 import { enableDragScroll } from './bha/dragScroll';
 import { battleItemBrief } from '../shop';
 import { pickDialog } from './pickDialog';
@@ -132,8 +132,9 @@ export function openGear(faction: FactionConfig, save: SaveData, uid: string, ch
     const many = slotsForKind(it.kind).length > 1;
     for (const s of slotsForKind(it.kind)) {
       const cur = g.equipped[s] ? findGear(g, g.equipped[s]!) : undefined;
+      const accLock = it.kind === 'accessory' && !gateOpen(save, 'accessory') ? gateHint(faction, 'accessory') : null; // 241-0 수정: 장신구 = 해방 클리어 후
       actions.push({
-        key: `equip-${s}`, label: () => (many ? `${gearSlotName(s, faction)}에 착용${cur ? ' (교체)' : ''}` : `착용${cur ? ' (교체)' : ''}`), variant: 'primary', disabled: locked !== null,
+        key: `equip-${s}`, label: () => (many ? `${gearSlotName(s, faction)}에 착용${cur ? ' (교체)' : ''}` : `착용${cur ? ' (교체)' : ''}`), variant: 'primary', disabled: locked !== null || accLock !== null, note: accLock ?? undefined,
         onClick: () => {
           close();
           if (equipGearItem(save, uid, s)) changed(); // 착용 알림은 뺐다 (GDD 233장 5) — 칸·능력치 줄이 바뀐다
@@ -268,8 +269,19 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const isWorn = (uid: string) => equippedSlotOf(g, uid) !== null;
 
   // ── 왼쪽: 착용 칸 · 외형 · 이름 · 능력치 ──
+  // 장신구 3칸은 해방 클리어 후 (GDD 241-0 수정) — 잠긴 칸은 자물쇠, 누르면 언제 열리는지
+  const accOpen = gateOpen(save, 'accessory');
   const slotBtn = (s: GearSlot): HTMLButtonElement => {
     const it = g.equipped[s] ? findGear(g, g.equipped[s]!) : undefined;
+    if (!accOpen && GEAR_SLOT_KIND[s] === 'accessory' && !it) {
+      const lb = h('button', 'bha-eqslot is-empty is-locked');
+      lb.type = 'button';
+      lb.dataset.slot = s;
+      lb.append(icon('i-lock'), h('span', 'bha-eqslot__name', gearSlotName(s, faction)));
+      lb.setAttribute('aria-label', `${gearSlotName(s, faction)}: 잠김`);
+      lb.onclick = () => showToast({ eyebrow: equipTitle(faction), title: '잠겨 있다', meta: gateHint(faction, 'accessory') }, 0, 2400);
+      return lb;
+    }
     const b = h('button', `bha-eqslot${it ? ` is-grade-${it.grade}` : ' is-empty'}`);
     b.type = 'button';
     b.dataset.slot = s;
@@ -296,7 +308,16 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
   battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
   // 빈 칸을 누르면 고르기 창 (GDD 193장 6). 전투 소모품 카드는 가방 '소모품' 탭 한 곳에만 있다 (193장 9 — 이 탭의 '전투 소모품' 분류는 뺐다)
+  // 전투 소모품 칸은 3단계부터 (GDD 241-0 수정) — 잠기면 자물쇠, 누르면 언제 열리는지
+  const battleOpen = gateOpen(save, 'battleItem');
+  if (!battleOpen) {
+    battleBtn.classList.add('is-locked');
+    battleBtn.replaceChildren(icon('i-lock'), h('span', 'bha-eqslot__name', '소모품'));
+    battleBtn.setAttribute('aria-label', `${slotName}: 잠김`);
+    battleBtn.dataset.drag = '';
+  }
   battleBtn.onclick = () => {
+    if (!battleOpen) return showToast({ eyebrow: slotName, title: '잠겨 있다', meta: gateHint(faction, 'battleItem') }, 0, 2400);
     if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
     pickBattleItem(faction, save, changedAt('slot:battle'));
   };
@@ -458,7 +479,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       else if (src.kind === 'gear' && to && to !== 'battle' && to !== 'pet') {
         const it = findGear(g, src.id);
         if (it && GEAR_SLOT_KIND[to as GearSlot] === it.kind) ok = equipGearItem(save, src.id, to as GearSlot) !== null;
-      } else if (src.kind === 'battle' && to === 'battle') ok = setBattleItem(save, src.id);
+      } else if (src.kind === 'battle' && to === 'battle' && battleOpen) ok = setBattleItem(save, src.id);
       else if (src.kind === 'slot' && target?.classList.contains('bha-eqright')) {
         if (src.id === 'battle') ok = setBattleItem(save, null);
         else if (src.id === 'pet') ok = choosePet(save, null);

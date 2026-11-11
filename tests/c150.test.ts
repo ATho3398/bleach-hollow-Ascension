@@ -222,8 +222,10 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
     const rows = goldRows(s, H).filter((r) => getGoldItem(r.id)?.kind === 'gear');
     expect(rows.map((r) => [r.name, r.price])).toEqual([['노멀 무기', GX.shopPrice], ['노멀 방어구', GX.shopPrice], ['노멀 신발', GX.shopPrice], ['노멀 장신구', GX.shopPrice]]);
     s.shared.tradeCoins = 500;
+    expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: false, reason: '아쥬커스가 되면 장비가 열린다' }); // 241-0 수정: 장비 = 3단계
+    s.evolution.tierIndex = 2;
     expect(buyShopItem(s, H, 'gear-shoes', 9, () => 0)).toMatchObject({ ok: true, detail: '노멀 신발 → 가방 장비 탭' });
-    expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 1 });
+    expect(s.shared.gear.items[0]).toMatchObject({ kind: 'shoes', grade: 'normal', star: 3 }) // 3단계(장비 해금, 241-0 수정) 권장 ★3;
     expect(s.runLog.gear[0]).toMatchObject({ kind: 'get', source: 'shop' });
     expect(['w-gear-rare', 'w-gear-epic', 'w-gear-legend'].map((id) => getWandererItem(id)!.grade)).toEqual(['rare', 'epic', 'legendary']);
     s.shared.tradeCoins = 5000;

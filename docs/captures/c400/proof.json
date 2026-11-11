@@ -1,0 +1,67 @@
+{
+  "url": "http://localhost:5400/",
+  "shots": [
+    "hollow-01-sortie-locked.png",
+    "hollow-02-sortie-bag.png",
+    "hollow-03-sortie-dialog.png",
+    "hollow-04-tiles-tab.png",
+    "hollow-05-tile-place.png",
+    "shinigami-02-sortie-bag.png",
+    "shinigami-05-tile-place.png"
+  ],
+  "errors": [],
+  "trace": [
+    {
+      "tag": "hollow",
+      "locked": "첫 환생 후 출정품이 열린다"
+    },
+    {
+      "tag": "hollow",
+      "dialog": [
+        "",
+        "닫기",
+        "칸 2에 넣기"
+      ]
+    },
+    {
+      "tag": "hollow",
+      "placeScreen": {
+        "screen": "tile-place",
+        "go": [
+          "닫기"
+        ],
+        "tabs": 0
+      }
+    },
+    {
+      "tag": "hollow",
+      "afterClose": "room"
+    },
+    {
+      "tag": "shinigami",
+      "locked": "첫 환생 후 출정품이 열린다"
+    },
+    {
+      "tag": "shinigami",
+      "dialog": [
+        "",
+        "닫기",
+        "칸 2에 넣기"
+      ]
+    },
+    {
+      "tag": "shinigami",
+      "placeScreen": {
+        "screen": "tile-place",
+        "go": [
+          "닫기"
+        ],
+        "tabs": 0
+      }
+    },
+    {
+      "tag": "shinigami",
+      "afterClose": "room"
+    }
+  ]
+}

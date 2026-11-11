@@ -1,64 +1,118 @@
-// C.400 (GDD 241-F 2, 115-A 119·120): 호로 모델 빈사·쓰러짐 채우기, 짐승 공격3, 거미 팔 관절, 가시형 가슴·배, 속도형 꼬리·팔.
+// C.400 (GDD 241-D 5·7): 출정품(칸 2개·출발 때 소모·원정 효과·드롭·상점·팔기·런 로그·세이브 74) · 가방 [타일 배치하러 가기]
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
-import { apply, boneMatrices, lookLayers, resolveMotions, rigPack, samplePose, validateRig } from '../src/data/art/rig/pose';
-import { RIG_ACTIONS } from '../src/ui/bha/rigAnim';
+import { BALANCE } from '../src/config/balance';
+import { getFaction } from '../src/data/factions';
+import { advance, buildRunRecord, createExpedition, startBattle } from '../src/engine/expedition';
+import { SORTIE_IDS, sortieMods, sanitizeSortie } from '../src/engine/sortie';
+import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
+import { inventoryOf } from '../src/inventory';
+import { buyShopItem, goldRows } from '../src/shop';
+import { sellRows } from '../src/sell';
+import { departSortie, setSortieSlot } from '../src/sortie';
 
-describe('C.400 호로 모델 빈사·쓰러짐·공격3 (GDD 241-F 2)', () => {
-  it('뱀·짐승·거미·부유형에 빈사(반복)·쓰러짐(한 번, 끝 자세)이 있고 뼈대 검사를 통과한다', () => {
-    for (const id of ['serpent', 'beast', 'spider', 'wraith']) {
-      const p = rigPack(id);
-      expect(validateRig(p.rig, p.motions, p.sets), id).toEqual([]);
-      const body = Object.values(p.rig.looks)[0]!.body;
-      const m = resolveMotions(p.rig, p.motions, p.sets, body);
-      expect(m.dying?.loop, `${id} dying`).toBe(true);
-      expect(m.down && !m.down.loop, `${id} down`).toBe(true);
-    }
-    expect(RIG_ACTIONS.dying).toEqual(['dying']);
-    expect(RIG_ACTIONS.lose).toEqual(['down']);
+const read = (p: string) => readFileSync(p, 'utf8');
+const SX = BALANCE.provisional.sortie;
+const H = getFaction('hollow');
+
+describe('241-D 5 출정품 데이터·효과', () => {
+  it('시작 3종(용기의 물약·철피 물약·행운의 부적 가루), 칸 2개, 효과 합', () => {
+    expect(SORTIE_IDS).toEqual(['sortie-courage', 'sortie-ironskin', 'sortie-luck']);
+    expect(SX.slots).toBe(2);
+    expect(sortieMods(['sortie-courage', 'sortie-courage', 'sortie-luck'])).toEqual({ power: 0.2, guard: 0, drop: 0.15 });
+    expect(sanitizeSortie(['sortie-luck', 'nope', 'x'])).toEqual(['sortie-luck', null]);
   });
-  it('사람형 뼈대의 호로 몸(덩치·외팔형·가시형·속도형)도 빈사·쓰러짐이 있다 — 길리안만 쓰러짐 없음(사용자 2026-11-10 "길리안은 쓰러짐모션 없애")', () => {
-    const p = rigPack('humanoid');
-    for (const body of ['hb', 'ho', 'hk', 'hv']) {
-      const m = resolveMotions(p.rig, p.motions, p.sets, body);
-      expect(m.dying, body).toBeDefined();
-      expect(m.down, body).toBeDefined();
-    }
-    const hd = resolveMotions(p.rig, p.motions, p.sets, 'hd');
-    expect(hd.dying).toBeDefined();
-    expect(hd.down).toBeUndefined();
+  it('끼우기(가진 것만, 모험 중 금지) → 출발 때 칸마다 1개 소모 → 원정 sortie · 0개 칸은 건너뜀 · 튜토리얼은 안 씀', () => {
+    const s = newSaveData('hollow', 0);
+    expect(setSortieSlot(s, 0, 'sortie-courage')).toBe(false);
+    s.shared.items['sortie-courage'] = 1;
+    s.shared.items['sortie-ironskin'] = 2;
+    expect(setSortieSlot(s, 0, 'sortie-courage')).toBe(true);
+    expect(setSortieSlot(s, 1, 'sortie-ironskin')).toBe(true);
+    const exp = createExpedition({ factionId: 'hollow', seed: 3, hunger: 20, condition: 80, deck: [] });
+    expect(departSortie(s, exp)).toEqual(['sortie-courage', 'sortie-ironskin']);
+    expect(exp.sortie).toEqual(['sortie-courage', 'sortie-ironskin']);
+    expect(s.shared.items['sortie-courage']).toBeUndefined();
+    expect(s.shared.items['sortie-ironskin']).toBe(1);
+    expect(s.shared.sortie).toEqual(['sortie-courage', 'sortie-ironskin']); // 0개가 돼도 칸에 남는다
+    const exp2 = createExpedition({ factionId: 'hollow', seed: 4, hunger: 20, condition: 80, deck: [] });
+    expect(departSortie(s, exp2)).toEqual(['sortie-ironskin']);
+    const tut = createExpedition({ factionId: 'hollow', seed: 5, hunger: 20, condition: 80, deck: [], tutorial: true });
+    s.shared.items['sortie-ironskin'] = 1;
+    expect(departSortie(s, tut)).toEqual([]);
+    s.activeExpedition = {} as never;
+    expect(setSortieSlot(s, 0, null)).toBe(false);
   });
-  it('짐승 공격3: 몸을 크게 치켜드는 동안에도 뒷발 둘은 바닥 그 자리(1칸 안), 머리는 12칸 넘게 올라간다', () => {
-    const p = rigPack('beast');
-    const m = p.motions.attack3!;
-    expect(m.hit).toBe(900);
-    expect(RIG_ACTIONS.attack).toContain('attack3');
-    const at = (t: number, bone: string) => apply(boneMatrices(p.rig, samplePose(p.rig, m, t))[bone]!, p.rig.bones.find((b) => b.id === bone)!.pivot);
-    const rest = { R: at(0, 'hleg_R2'), L: at(0, 'hleg_L2'), head: at(0, 'head') };
-    let top = 0;
-    for (let t = 0; t <= m.duration; t += 50) {
-      for (const s of ['R', 'L'] as const) {
-        const q = at(t, `hleg_${s}2`);
-        expect(Math.hypot(q[0] - rest[s][0], q[1] - rest[s][1]), `t${t} ${s}`).toBeLessThan(1);
-      }
-      top = Math.max(top, rest.head[1] - at(t, 'head')[1]);
-    }
-    expect(top).toBeGreaterThan(12);
+  it('원정 전투: 공격 피해 ×(1+power) · 받는 피해 ×(1−guard), 런 로그 원정 기록 sortie', () => {
+    const mk = (sortie?: string[]) => {
+      const exp = createExpedition({ factionId: 'hollow', seed: 11, hunger: 20, condition: 80, deck: ['prey-nest-a'] });
+      if (sortie) exp.sortie = sortie;
+      for (let i = 0; i < 500 && exp.phase !== 'battle'; i++) advance(exp);
+      return { exp, b: startBattle(exp) };
+    };
+    const base = mk();
+    const buff = mk(['sortie-courage', 'sortie-ironskin']);
+    expect(buff.b.params.playerPowerMultiplier).toBeCloseTo(base.b.params.playerPowerMultiplier * 1.1, 9);
+    expect(buff.b.params.damageTakenMultiplier).toBeCloseTo(base.b.params.damageTakenMultiplier * 0.9, 9);
+    for (const x of [buff, base]) Object.assign(x.exp, { phase: 'ended', outcome: 'returned', endReason: 'returned' });
+    expect(buildRunRecord(buff.exp).sortie).toEqual(['sortie-courage', 'sortie-ironskin']);
+    expect(buildRunRecord(base.exp).sortie).toBeUndefined();
   });
-  it('거미: 가까운 팔 = 위팔 + 아래팔·손(forearm_L), 아래팔은 위팔을 따라 더 꺾인다', () => {
-    const p = rigPack('spider');
-    expect(p.rig.bones.find((b) => b.id === 'forearm_L')!.parent).toBe('arm_L');
-    expect(lookLayers(p.rig, 'spider-base').map((l) => l.slot)).toContain('forearm_L');
-    for (const look of Object.keys(p.rig.looks)) for (const l of lookLayers(p.rig, look)) expect(existsSync(`public/art/rig/spider/${l.art}.png`), l.art).toBe(true);
-    expect(p.motions.attack!.tracks.forearm_L!.some((k) => k[1] !== 0)).toBe(true);
+});
+
+describe('241-D 5 상점·가방·팔기·세이브', () => {
+  it('상점 전투 소모품 탭: 잠김(첫 환생 전) → 열리면 산다 · 가방 소모품 \'출정품\' 칸 · 팔기 목록', () => {
+    const s = newSaveData('hollow', 0);
+    s.shared.tradeCoins = 1000;
+    const row = () => goldRows(s, H).find((r) => r.id === 'sortie-courage')!;
+    expect(row()).toMatchObject({ name: '용기의 물약', price: SX.items['sortie-courage']!.price, canBuy: false, lock: '첫 환생 후 출정품이 열린다' });
+    s.rebirth.count = 1;
+    expect(row().canBuy).toBe(true);
+    expect(buyShopItem(s, H, 'sortie-courage', 5)).toMatchObject({ ok: true });
+    expect(s.shared.items['sortie-courage']).toBe(1);
+    expect(inventoryOf(s, H).find((e) => e.id === 'sortie-courage')).toMatchObject({ category: 'consumable', action: null, sortie: { slots: [] } });
+    expect(sellRows(s, H).find((e) => e.key === 'sortie-courage')).toMatchObject({ count: 1, group: 'battle' });
   });
-  it('가시형: 몸통 = 가슴(torso) + 배(pelvis), 색 외형 그림도 있다 / 속도형: 꼬리 마디에 키 동작', () => {
-    const p = rigPack('humanoid');
-    expect(p.rig.bodies.hk!.pelvis).toBeDefined();
-    for (const look of ['spiky-base', 'spiky-blue', 'spiky-orange', 'spiky-brown', 'spiky-yellow'])
-      for (const l of lookLayers(p.rig, look)) expect(existsSync(`public/art/rig/humanoid/${l.art}.png`), l.art).toBe(true);
-    const hv = resolveMotions(p.rig, p.motions, p.sets, 'hv');
-    for (const id of ['idle', 'move', 'attack']) expect(hv[id]!.tracks.cape3!.some((k) => k[1] !== 0), id).toBe(true);
-    expect(hv.move!.tracks.forearm_L!.some((k) => k[1] !== 0)).toBe(true); // 걷기 아래팔은 사용자가 편집기에서 고정한 값(03:07)
+  it('세이브 형식 74: 73 → 74 = 빈 칸 2개, 저장·불러오기로 칸·개수가 남는다', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(74);
+    const s = newSaveData('hollow', 0);
+    s.shared.items['sortie-luck'] = 3;
+    s.shared.sortie = ['sortie-luck', null];
+    const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
+    expect(m.shared.sortie).toEqual(['sortie-luck', null]);
+    expect(m.shared.items['sortie-luck']).toBe(3);
+    const raw = JSON.parse(JSON.stringify(s));
+    delete raw.shared.sortie;
+    SAVE_MIGRATIONS[73]!(raw);
+    expect(raw.shared.sortie).toEqual([null, null]);
+  });
+  it('출발 때 소모(app onStart) · 드롭 굴림 · 귀환 정산 연결', () => {
+    expect(read('src/ui/app.ts')).toContain('const sortieUsed = departSortie(save!, exp);');
+    const ex = read('src/engine/expedition/expedition.ts');
+    expect(ex).toContain("rollSortieDrop(exp, pending.boss ? 'boss'");
+    expect(read('src/game.ts')).toContain('settleSortieFinds(save, exp);');
+  });
+});
+
+describe('241-D 7 가방 [타일 배치하러 가기]', () => {
+  it('가방 타일 창 버튼 → 배치만 하는 창(출발 없음·[닫기]·프리셋 저장)', () => {
+    expect(read('src/ui/lcdScreens.ts')).toContain("label: '타일 배치하러 가기'");
+    expect(read('src/ui/app.ts')).toContain('placeOnly: { onClose: () => nav.pop() },');
+    const pv = read('src/ui/planView.ts');
+    expect(pv).toContain("const close = button({ label: '닫기'");
+    expect(pv).toContain("main.dataset.screen = 'tile-place';");
+  });
+});
+
+describe('241-0 수정 전투 소모품 칸 게이트', () => {
+  it('3단계 전에는 잠김(이미 넣은 칸이 있으면 열림), 장비 탭 칸은 자물쇠', async () => {
+    const { gateOpen, gateHint } = await import('../src/unlockGate');
+    const s = newSaveData('hollow', 0);
+    s.shared.battleItem = null;
+    expect(gateOpen(s, 'battleItem')).toBe(false);
+    s.evolution.tierIndex = 2;
+    expect(gateOpen(s, 'battleItem')).toBe(true);
+    expect(gateHint(H, 'battleItem')).toBe('아쥬커스가 되면 전투 소모품이 열린다');
+    expect(read('src/ui/equipView.ts')).toContain("const battleOpen = gateOpen(save, 'battleItem');");
   });
 });

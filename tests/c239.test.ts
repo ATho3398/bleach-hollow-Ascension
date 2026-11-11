@@ -85,7 +85,7 @@ describe('159장 24·25·36·37: 소모품 갈래 · 한 줄 효과', () => {
   it('가방 위쪽 탭 = 장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타, 장비 탭 숫자 = 장비 + 전투용 소모품', () => {
     const l = read('src/ui/lcdScreens.ts');
     expect(l).not.toContain("label: '물건'");
-    expect(l).toContain("BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME]]");
+    expect(l).toContain("BAG_GROUPS: readonly [BagGroup, string][] = [['food', ITEM_CATEGORY_NAMES.food], ['medicine', MEDICINE_NAME], ['battle', BATTLE_ITEMS_NAME], ['sortie', SORTIE_NAME]]"); // 241-D 5 출정품 칸
     expect(l).toContain("count: save.shared.gear.items.length }"); // 193장 9: 전투 소모품은 소모품 탭 한 곳 — 장비 탭 숫자 = 장비만
   });
 });

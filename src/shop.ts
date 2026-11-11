@@ -3,6 +3,8 @@
 // C.140 (GDD 86장 4번): 산 것은 보관함으로 — 먹이 = 먹이 개수 +1, 정화제·각성제 = 보관함 소모품 +1(보관함에서 씀, inventory.ts), 수련권 = 지금 트랙 +1, 타일 = 보관함 +1,
 // 꾸밈·스킨 = 보유만(끼기는 보관함). 떠돌이 상인(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
+import { sortieEffectText, sortiePrice } from './engine/sortie';
+import { gateHint, gateOpen } from './unlockGate';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type MedicineCure, type WandererGrade, type WearCategory } from './data/shop';
 import { wandererAmount } from './engine/wanderer';
 import { canWear } from './data/skins';
@@ -148,12 +150,13 @@ function countShopDaily(save: Pick<SaveData, 'shared'>, id: string, nowMs: numbe
 /** 전투용 소모품 효과 한 줄 (GDD 105장 수정 3, C.177 provisional) */
 /** 소모품 갈래 (GDD 159장 24·36): 약(치료·회복·정화 — 상태 이상 약·체력 회복 물건·정화제·각성제·영약) / 전투 소모품(회복이 아닌 전투용) / 기타(다시 뽑기권 등).
  *  가방 '소모품' 탭의 칸과 상점 '약'·'전투 소모품' 탭이 같은 구분을 쓴다. 약도 지금처럼 장비 화면 소모품 칸에 끼울 수 있다(battleItems 표 그대로) */
-export type ConsumableGroup = 'medicine' | 'battle' | 'etc';
+export type ConsumableGroup = 'medicine' | 'battle' | 'sortie' | 'etc';
 const MEDICINE_KINDS: ReadonlySet<string> = new Set(['medicine', 'calm', 'wake', 'elixir', 'hpPotion']);
 export function consumableGroupOf(id: string): ConsumableGroup {
   const b = BALANCE.provisional.battleItems[id];
   if (b) return b.effect === 'heal' ? 'medicine' : 'battle';
   const kind = getGoldItem(id)?.kind ?? getWandererItem(id)?.kind;
+  if (kind === 'sortie') return 'sortie'; // 출정품 (GDD 241-D 5)
   return kind && MEDICINE_KINDS.has(kind) ? 'medicine' : 'etc';
 }
 
@@ -196,6 +199,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'reroll': return `${faction.absorbActionName} 화면 블록 후보를 한 번 다시 뽑는다 (${faction.absorbActionName} 1번에 1장, 보유 ${SX.rerollMax}장까지)`;
     case 'deckSlot': return `모험 길에 놓을 수 있는 타일 칸 +1 (영구, 최대 +${SX.deckSlotPrices.length})`; // GDD 159장 32: '트랙' 말 삭제
     case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노멀 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
+    case 'sortie': return `${sortieEffectText(item.id)} · 가방 소모품 '출정품' 칸에 끼우면 모험 출발 때 1개씩 쓴다`;
   }
 }
 
@@ -205,6 +209,7 @@ function goldPrice(save: SaveData, item: GoldItemDef): number | null {
   if (item.kind === 'gear') return BALANCE.provisional.gear.shopPrice;
   if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
   if (item.kind === 'battle') return BALANCE.provisional.battleItems[item.id]?.price ?? null;
+  if (item.kind === 'sortie') return sortiePrice(item.id);
   return SX.goldPrices[item.id] ?? null;
 }
 
@@ -214,6 +219,7 @@ export function shopBuyPrice(id: string): number | null {
   if (!item || item.kind === 'deckSlot' || item.kind === 'tileDraw' || item.kind === 'gear') return null;
   if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
   if (item.kind === 'battle') return BALANCE.provisional.battleItems[item.id]?.price ?? null;
+  if (item.kind === 'sortie') return sortiePrice(item.id);
   return SX.goldPrices[item.id] ?? null;
 }
 
@@ -233,6 +239,7 @@ function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'deckSlot': return save.shared.deckSlots >= SX.deckSlotPrices.length ? '가득' : null; // GDD 159장 32·34: 효과 줄 '최대 +n' 되풀이 대신 다른 칸과 같은 '가득'
     case 'gear': return gearFullText(save);
+    case 'sortie': return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
   }
 }
 
@@ -252,6 +259,7 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
     case 'tileDraw': return null; // 뽑은 횟수는 상세 창 효과 줄 (GDD 159장 35: 배지가 그림에 걸렸다)
     case 'rareTile': return null;
     case 'gear': return `보유 ${save.shared.gear.items.length}/${BALANCE.provisional.gear.cap}`;
+    case 'sortie': return `보유 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
   }
 }
 
@@ -259,7 +267,9 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
 export function goldRows(save: SaveData, faction: FactionConfig, nowMs: number = Date.now()): ShopRow[] {
   return GOLD_ITEMS.filter((it) => it.kind !== 'trainingTicket' || trainingOpen(save)).map((it) => {
     const price = goldPrice(save, it);
-    const block = goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
+    // 해금 전 품목 (GDD 241-0 수정): 장비 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
+    const gate = it.kind === 'gear' ? (it.gearKind === 'accessory' ? 'accessory' : 'gear') : it.kind === 'sortie' ? 'sortie' : null;
+    const block = (gate && !gateOpen(save, gate) ? gateHint(faction, gate) : null) ?? goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
     const effect = goldEffect(it, faction) + (it.kind === 'tileDraw' && save.tiles.unlocked ? ` · 뽑은 횟수 ${save.tiles.draws}` : '');
     return { id: it.id, currency: 'gold', name: goldName(it, faction), effect, price, canBuy: block === null && price !== null, lock: block, have: goldHave(save, it), confirm: it.kind === 'deckSlot' };
   });
@@ -312,6 +322,10 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
         storeConsumable(save, gold.id);
         countShopDaily(save, gold.id, nowMs);
         detail = `${gold.name} → 가방 (${save.shared.items[gold.id]}개)`;
+        break;
+      case 'sortie':
+        storeConsumable(save, gold.id);
+        detail = `${gold.name} → 가방 출정품 (${save.shared.items[gold.id]}개)`;
         break;
       case 'trainingTicket':
         save.training.tickets += 1;

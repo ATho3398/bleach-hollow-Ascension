@@ -10,7 +10,7 @@ describe('C.266 모험 준비 화면 탭 [준비] / [타일 배치]', () => {
   it('옛 손패/프리셋 토글 대신 [준비]/[타일 배치] 탭, 처음은 준비', () => {
     expect(pv).toContain("k === 'prep' ? '준비' : '타일 배치'");
     expect(pv).not.toContain("label: k === 'hand' ? '손패' : '프리셋'");
-    expect(pv).toContain("setMode?.(h.startMode ?? 'prep');"); // C.352 (GDD 213장): 타일 안내 차례면 [타일 배치]로 연다
+    expect(pv).toContain("setMode?.(h.placeOnly ? 'place' : h.startMode ?? 'prep');"); // 241-D 7 배치만 하는 창은 늘 [타일 배치] // C.352 (GDD 213장): 타일 안내 차례면 [타일 배치]로 연다
   });
   // GDD 193장 12 (C.307): 프리셋 판은 [타일 배치] 탭으로 옮김 — 준비 탭은 프리셋·가진 타일 모두 숨김
   it('준비 = 프리셋·가진 타일 숨김, 타일 배치 = 가진 타일 + 프리셋 판 + 화면 클래스 is-place', () => {

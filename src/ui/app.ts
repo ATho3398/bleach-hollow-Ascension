@@ -105,6 +105,7 @@ import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
 import { applyGearToParams, gearCarry } from '../engine/gear';
 import { carriedPet, petAttackOf } from '../engine/pet';
+import { departSortie } from '../sortie';
 import { battleItemEffectOf, consumableName, departFillBattleSlot, fillBattleSlot, lapItemLine, gearDropText, gearNoticeOf, HEAL_ITEM_IDS, lapItemLock, LAP_ITEM_USED, ownedBattleItems, petNoticeOf, setLapItem, spendBattleItem, spendLapItem, useSlotItemOnWalk } from '../inventory';
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
@@ -1268,7 +1269,7 @@ export function startApp(host: HTMLElement): void {
     const idle = idleReport;
     idleReport = null;
     // 가방 (GDD 109장 4번): 장비는 가방 첫 탭. 상태 화면 장비 바로가기는 가방 장비 탭으로 연다
-    const openChest = () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear)));
+    const openChest = () => open('chest', () => chestView(dev, faction, s, props.chest, persist, () => dress(s.wear), () => tilePlaceScreen(faction)));
     const openEquip = () => {
       openChestAtGear();
       openChest();
@@ -1550,6 +1551,8 @@ export function startApp(host: HTMLElement): void {
           onStart: () => {
             save!.difficulty.last = exp.difficulty;
             departFillBattleSlot(save!); // 출발 때 빈 소모품 칸이면 자동으로 (GDD 212장 4)
+            const sortieUsed = departSortie(save!, exp); // 출정품: 칸마다 1개 소모 → 이 원정 효과 (GDD 241-D 5)
+            if (sortieUsed.length) showToast({ eyebrow: '출정품', title: sortieUsed.map((id) => consumableName(id)).join(' · '), meta: '이번 모험 동안 효과' }, 0, 2400);
             activeExp = exp;
             saveProgress(exp); // 이어하던 원정이 있었다면 여기서 덮어쓴다 = 패배 처리 없이 버려진다
             // 원정 흐름(지도·전투·흡수·결과)은 한 덩어리라 취소로 빠져나가지 않는다(locked). 끝나면 홈으로
@@ -1566,6 +1569,31 @@ export function startApp(host: HTMLElement): void {
     };
     if (replace) nav.replace(entry);
     else nav.push(entry);
+  }
+
+  /** 가방 타일 [타일 배치하러 가기] (GDD 241-D 7): 모험 출발 때와 같은 배치판·프리셋 저장 — 출발 없이 [닫기]. 이 창의 원정 상태는 저장하지 않는다 */
+  function tilePlaceScreen(faction: FactionConfig): void {
+    if (!save) return;
+    const s = save;
+    const exp = createExpedition({ factionId: faction.id, seed: 1, hunger: s.nest.hunger, condition: s.nest.condition, deck: ownedTileList(s.tiles, faction.id), risk: s.nest.risk, build: s.build, evolution: s.evolution, groundId: lastGround(s) });
+    nav.push({
+      id: 'tile-place', locked: false,
+      render: () => {
+        planView(root, faction, exp, s.evolution.tierIndex, {
+          placeOnly: { onClose: () => nav.pop() },
+          onStart: () => nav.pop(),
+          onHelp: () => openHelp('expedition', false),
+          placeLimit: placementLimitOf(s),
+          presets: {
+            list: () => tilePresetsFor(s.tiles, faction.id),
+            save: (cells, name, index) => { const r = saveTilePreset(s, name, cells, index); if (r.ok) persist(); return r; },
+            rename: (index, name) => { const ok = renameTilePreset(s, index, name); if (ok) persist(); return ok; },
+            remove: (index) => { const ok = deleteTilePreset(s, index); if (ok) persist(); return ok; },
+          },
+        });
+        root.scrollTop = 0;
+      },
+    });
   }
 
   /** 스토리 장·화 목록 (GDD 25-4·25-7): 원정 출발 화면의 [스토리] 탭. [자유 원정] 탭이면 배치 단계로 돌아간다 */

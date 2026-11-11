@@ -71,6 +71,24 @@
       "cures": "tired"
     },
     {
+      "id": "sortie-courage",
+      "kind": "sortie",
+      "category": "consumable",
+      "name": "용기의 물약"
+    },
+    {
+      "id": "sortie-ironskin",
+      "kind": "sortie",
+      "category": "consumable",
+      "name": "철피 물약"
+    },
+    {
+      "id": "sortie-luck",
+      "kind": "sortie",
+      "category": "consumable",
+      "name": "행운의 부적 가루"
+    },
+    {
       "id": "heal-patch",
       "kind": "battle",
       "category": "consumable",

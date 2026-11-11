@@ -37,6 +37,8 @@ export interface PlanViewHandlers {
   startMode?: 'prep' | 'place';
   /** true 면 체력 확인 창을 띄우지 않는다 (빈사 — 홈에서 빈사 확인 창을 이미 거쳤다) */
   hpNoWarn?: boolean;
+  /** 배치만 하는 창 (GDD 241-D 7 가방 [타일 배치하러 가기]): [타일 배치] 탭 고정, [준비] 탭·[출발] 없음 — 아래 띠 = [닫기]. 프리셋 저장·불러오기는 그대로 */
+  placeOnly?: { onClose: () => void };
   /** 배치 프리셋 (GDD 85장 11번): 이 종족 프리셋 목록·저장. 없으면 프리셋 줄을 숨긴다 */
   presets?: {
     list: () => { index: number; preset: TilePreset }[];
@@ -199,7 +201,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
   const onTab = h.onTab;
   const grow = el('span', 'bha-grow');
-  head.append(onTab ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grow, help);
+  head.append(onTab && !h.placeOnly ? departTabs('free', (id) => { if (id !== 'free') onTab(id); }) : title, grow, help);
 
   // 체력이 문턱 아래면 [출발] 전에 확인 창 (GDD 193장 2) — 기본 선택 = 그만
   const depart = () => h.onStart(finishPlanning(exp));
@@ -224,7 +226,12 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     hpEl.dataset.departHp = String(hpPct);
     go.append(hpEl);
   }
-  go.append(start);
+  if (h.placeOnly) {
+    // 배치만 하는 창 (241-D 7): 출발 대신 닫기 — 놓은 길은 프리셋으로 저장해 모험 때 불러온다
+    const close = button({ label: '닫기', icon: 'i-return', variant: 'primary', size: 'lg', block: true, onClick: h.placeOnly.onClose });
+    close.dataset.sc = 'go';
+    go.replaceChildren(el('span', 'bha-plan__sub', '프리셋으로 저장해 두면 모험 출발 때 불러온다'), close);
+  } else go.append(start);
   // 한 줄 안내 (GDD 100장 #25): 배치 요령 긴 문단은 ? 도움말(툴팁)로, 화면엔 "타일 고르기 → 빈 칸 누르기 · 놓은 타일 n/최대"
   // 준비 탭은 길 미리보기 오른쪽에 'n/최대' 만, 타일 배치 탭은 한 줄 전부
   const sub = el('p', 'bha-plan__sub bha-plan__line');
@@ -304,12 +311,17 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
       });
     };
     toggle.append(...tabs);
-    head.insertBefore(toggle, help);
+    if (!h.placeOnly) head.insertBefore(toggle, help); // 배치만 하는 창은 탭 없음 (241-D 7)
     // 프리셋 칸은 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
     planner.el.append(presetEl);
   }
   const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, grounds, diff, desc, ...(planner ? [miniRow] : []), sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
   main.dataset.screen = 'expedition-plan';
-  setMode?.(h.startMode ?? 'prep');
+  setMode?.(h.placeOnly ? 'place' : h.startMode ?? 'prep');
+  if (h.placeOnly) {
+    main.dataset.screen = 'tile-place';
+    (main.closest('.bha-app') ?? main).classList.add('is-place'); // 탭 줄을 안 붙여 setMode 가 못 찾는다 — 배치 화면 배치(길·가진 타일·프리셋)로
+    title.replaceChildren(icon('i-deck'), '타일 배치');
+  }
   requestAnimationFrame(syncDescMore);
 }

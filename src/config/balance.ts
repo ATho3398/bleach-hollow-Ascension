@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 119; // C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
+export const BALANCE_VERSION = 120; // C.400 (GDD 241-D 5): 출정품 provisional.sortie(칸 2 · 공격 피해 +10% · 받는 피해 −10% · 드롭 +15% · 값 90·90·120 · 드롭 2%·8%·25%). 그 전 119 — C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
 // 109: // C.311 (GDD 192장 1, provisional): 원정 이어 하기 시한 expedition.resumeWindowMinutes 30 신설 — 나간 뒤 30분 넘게·새 패치면 모험 실패 정산.
@@ -987,6 +987,18 @@ export const BALANCE = {
       sellGold: { normal: 15, rare: 40, epic: 100, legendary: 250 } as Record<string, number>,
       cap: 40,
       refLoadout: { grade: 'rare', plus: 2 },
+    },
+    /** 출정품 (GDD 241-D 5, C.400 provisional — 이름·수치 마스터 위임): 칸 slots 개(3단계 해금, 241-0). 모험 출발 때 끼운 것마다 1개 소모 → 그 원정 동안 효과.
+     *  power = 내 공격 피해 + value · guard = 받는 피해 − value · drop = 먹이·장비·출정품 드롭 확률 × (1 + value). price = 상점 골드(팔기는 그 절반, 236장).
+     *  drop: 이긴 전투마다 dropChance[상대 등급] → 3종 고르게 1개 (가방 가득이면 없음) */
+    sortie: {
+      slots: 2,
+      items: {
+        'sortie-courage': { effect: 'power', value: 0.1, price: 90 },
+        'sortie-ironskin': { effect: 'guard', value: 0.1, price: 90 },
+        'sortie-luck': { effect: 'drop', value: 0.15, price: 120 },
+      } as Record<string, { effect: 'power' | 'guard' | 'drop'; value: number; price: number }>,
+      dropChance: { normal: 0.02, elite: 0.08, boss: 0.25 } as Record<'normal' | 'elite' | 'boss', number>,
     },
     /** 전투용 소모품 (GDD 105장 수정 3·108장 3번, C.177 provisional): 장비 화면 소모품 칸에 넣으면 전투 [소모품]이 전투당 1번 쓴다. 값 = 골드 */
     battleItems: {

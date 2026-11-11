@@ -41,7 +41,7 @@ const CUR_ICON: Record<ShopRow['currency'], string> = { gold: 'v2-coin', jade: '
 /** 상점 탭 아이콘 (PROMPT 4절·S04 시안: 음식 food · 약 potion · 전투 소모품 sword · 타일 tile · 기타 box …) */
 const TAB_ICON: Partial<Record<ShopTabId, string>> = { food: 'v2-food', medicine: 'v2-potion', consumable: 'v2-sword', tile: 'v2-tile', etc: 'v2-box', equipment: 'v2-equip', skin: 'v2-shirt', trait: 'v2-spark' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
-const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket']);
+const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket', 'sortie']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
 const QTY_CAP = 99;
 /** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 구급상자 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
@@ -54,7 +54,7 @@ const shopTabOf = (id: string): ShopTabId => {
   const cat = itemCategoryOf(id) ?? 'etc';
   if (cat !== 'consumable') return cat;
   const g = consumableGroupOf(id);
-  return g === 'medicine' ? 'medicine' : g === 'battle' ? 'consumable' : 'etc';
+  return g === 'medicine' ? 'medicine' : g === 'battle' || g === 'sortie' ? 'consumable' : 'etc'; // 출정품은 전투 소모품 탭 (241-D 5)
 };
 
 export interface ShopHandlers {
