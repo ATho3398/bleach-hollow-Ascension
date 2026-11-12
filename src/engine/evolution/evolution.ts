@@ -12,8 +12,9 @@ import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/sche
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import { cloneBuild, familyCategory, familyTable, type BuildState } from '../absorb/build';
 import { resolveMaxChain } from '../faction';
+import { tryGetTranscendent } from '../../data/transcendents';
 import type { EvolutionRecord } from '../runLog';
-import { abilityEffectsOf, equippedAbilitiesOf, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
+import { abilityEffectsOf, equippedAbilitiesOf, type FormAbilities, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
 
@@ -72,6 +73,9 @@ export interface EvolutionState {
   ascended?: boolean;
   /** 전투 기반 (GDD 12-4 v6.037, C.435 — 초월자 트랙만): 합체 순간 저장한 기반별 빌드와 지금 고른 기반. 없으면 캐릭터(자기 진화체 그대로) */
   basis?: CombatBasis;
+  /** 초월 특성 (GDD 12-4 v6.039, C.436 — 형식 84): 가진 초월 특성의 초월자 id. 전투 기반과 상관없이 늘 붙는다(기반을 바꿔도 그대로, 기반 특성 칸과 별도).
+   *  효과는 초월자 데이터 trait.effect 에서 읽는다. 없으면 빈 목록 */
+  transcendentTraits?: string[];
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
@@ -117,6 +121,50 @@ export function combatEvolutionOf(e: EvolutionState): EvolutionState {
   return out;
 }
 
+/** 초월 특성 칸 (GDD 12-4 v6.039, C.436): 가진 초월 특성(초월자 id 순서) — 데이터에 없는 id 는 뺀다 */
+export function transcendentTraitsOf(e: Pick<EvolutionState, 'transcendentTraits'>): { id: string; name: string; description: string; provisional: boolean; empty: boolean }[] {
+  return (e.transcendentTraits ?? []).flatMap((id) => {
+    const t = tryGetTranscendent(id)?.trait;
+    if (!t) return [];
+    const fx = t.effect;
+    const empty = Object.keys(fx.abilities ?? {}).length === 0 && !fx.dealt && !fx.taken && !fx.maxHp && !fx.blockCrit;
+    return [{ id, name: t.name, description: t.description, provisional: t.provisional === true, empty }];
+  });
+}
+
+/** 초월 특성 효과 합 (데이터 trait.effect): 진화 특성 id → 세기(겹치면 더함) + 탈착 특성 모양 수치 */
+export function transcendentTraitEffects(e: Pick<EvolutionState, 'transcendentTraits'>): { abilities: Record<string, number>; totals: { dealt: number; taken: number; maxHp: number; blockCrit: number } } {
+  const abilities: Record<string, number> = {};
+  const totals = { dealt: 0, taken: 0, maxHp: 0, blockCrit: 0 };
+  for (const id of e.transcendentTraits ?? []) {
+    const fx = tryGetTranscendent(id)?.trait.effect;
+    if (!fx) continue;
+    for (const [k, v] of Object.entries(fx.abilities ?? {})) abilities[k] = (abilities[k] ?? 0) + v;
+    totals.dealt += fx.dealt ?? 0;
+    totals.taken += fx.taken ?? 0;
+    totals.maxHp += fx.maxHp ?? 0;
+    totals.blockCrit += fx.blockCrit ?? 0;
+  }
+  return { abilities, totals };
+}
+
+/** 전투에 실리는 특성 묶음 (C.436): 전투 기반 진화체의 칸에 낀 특성(옛 모양이면 진화체 특성 전부) + 초월 특성(기반 무관). 전투·상태 화면 치명 계산이 같이 쓴다 */
+export function combatAbilitiesOf(stat: EvolutionState): FormAbilities {
+  const e = combatEvolutionOf(stat);
+  const form = e.formId ? tryGetForm(e.formId) : undefined;
+  const fa = e.abilities ? equippedAbilitiesOf(form ?? null, e.abilities) : formAbilitiesOf(form ?? null, e.ev, e.ability);
+  const extra = transcendentTraitEffects(stat).abilities;
+  const ids = Object.keys(extra);
+  if (ids.length > 0) {
+    const x = equippedAbilitiesOf(form ?? null, { owned: extra, equipped: ids, slots: ids.length, tier4Ever: false });
+    fa.dispositions.push(...x.dispositions);
+    fa.elements.push(...x.elements);
+    fa.uniques.push(...x.uniques);
+    fa.physAbilities.push(...x.physAbilities.filter((p) => !fa.physAbilities.includes(p)));
+  }
+  return fa;
+}
+
 export function zeroStats(): Stats {
   return { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 };
 }
@@ -129,7 +177,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -479,7 +527,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
   params.liberationStatMultiplier = unique ? (trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier) : 1;
   // 특성 (GDD 39장 → 126-1 수정): 칸에 낀 것만. 보유·장착이 없는 옛 모양(점검 도구)이면 지금 진화체 특성 전부
-  const fa = e.abilities ? equippedAbilitiesOf(form ?? null, e.abilities) : formAbilitiesOf(form ?? null, e.ev, e.ability);
+  // 초월 특성 (GDD 12-4 v6.039, C.436): 기반과 상관없이 같이 실린다(combatAbilitiesOf)
+  const fa = combatAbilitiesOf(stat);
   for (const d of fa.dispositions) applyAbility(params, d);
   // 블록 풀 성향 보정 (GDD 44장 4번)
   params.dispositions = [...fa.dispositions];
@@ -504,12 +553,17 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
     params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
   }
   applyDetachedTraits(params, detachedOf(e.abilities));
+  applyTraitTotals(params, transcendentTraitEffects(stat).totals);
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
 export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly string[]): void {
   if (ids.length === 0) return;
-  const t = detachTotals(ids);
+  applyTraitTotals(params, detachTotals(ids));
+}
+
+/** 탈착 특성 모양 수치를 전투 파라미터에 (탈착 특성·초월 특성 공용): 주는/받는 피해(변이의 기운 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
+export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: number; taken: number; maxHp: number; blockCrit: number }): void {
   if (t.dealt || t.taken) {
     const fx = { ...(params.abilityEffects ?? {}) };
     fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + t.dealt, taken: (fx.mutation?.taken ?? 0) + t.taken };

@@ -370,15 +370,15 @@ describe('초월자 6종 결정 규칙', () => {
     expect(() => parseTranscendent({ id: 'x', order: 1, name: 'x', concept: '', combo: ['physical', 'fire'], trackKind: 'transcendent', provisional: true })).toThrow();
   });
 
-  it('조합 6가지(순서 무관) → 초월자 하나씩 (GDD 12-4 v6.037): 물+물 이치고 · 특+특 아이젠 · 혼+혼 유하바하 · 물+특 영왕 · 물+혼 태초 · 특+혼 Unknown;03398', () => {
+  it('조합 6가지(순서 무관) → 초월자 하나씩 (GDD 12-4 v6.039): 물+물 이치고 · 특+특 아이젠 · 물+특 영왕 · 특+혼 유하바하 · 혼+혼 태초 · 물+혼 Unknown;03398', () => {
     const d = (a: FusionInput, b: FusionInput) => decideTranscendent([a, b], [])!.id;
     const P = ch({ category: 'physical' }), S = ch({ category: 'special' }), M = ch({ category: 'mixed' });
     expect(d(P, P)).toBe('ichigo');
     expect(d(S, S)).toBe('aizen');
-    expect(d(M, M)).toBe('yhwach');
+    expect(d(M, M)).toBe('zero-sage');
     expect([d(P, S), d(S, P)]).toEqual(['iron-tyrant', 'iron-tyrant']);
-    expect([d(P, M), d(M, P)]).toEqual(['zero-sage', 'zero-sage']);
-    expect([d(S, M), d(M, S)]).toEqual(['rift-wanderer', 'rift-wanderer']);
+    expect([d(P, M), d(M, P)]).toEqual(['rift-wanderer', 'rift-wanderer']);
+    expect([d(S, M), d(M, S)]).toEqual(['yhwach', 'yhwach']);
     // 환생·히든·속성은 결정에 안 쓴다 (옛 조건 삭제)
     expect(d(ch({ rebirths: 5, hidden: true, category: 'physical' }), ch({ rebirths: 5, hidden: true, category: 'physical' }))).toBe('ichigo');
   });

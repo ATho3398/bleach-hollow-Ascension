@@ -72,8 +72,8 @@ describe('초월자 = 분류 조합 (GDD 12-4 v6.037)', () => {
     expect(new Set(TRANSCENDENTS.map((t) => comboKey(t.combo[0], t.combo[1]))).size).toBe(6);
     const by = Object.fromEntries(TRANSCENDENTS.map((t) => [comboKey(t.combo[0], t.combo[1]), t.name]));
     expect(by).toEqual({
-      'physical+physical': '이치고', 'special+special': '아이젠', 'mixed+mixed': '유하바하',
-      'physical+special': '영왕', 'mixed+physical': '태초', 'mixed+special': 'Unknown;03398',
+      'physical+physical': '이치고', 'special+special': '아이젠', 'mixed+mixed': '태초',
+      'physical+special': '영왕', 'mixed+physical': 'Unknown;03398', 'mixed+special': '유하바하',
     });
     expect(transcendentComboText(['physical', 'special'])).toBe('두 캐릭터 진화체 분류 물리 + 특수');
   });
@@ -172,7 +172,7 @@ describe('전투 기반 3택 (GDD 12-4 v6.037)', () => {
 
 describe('세이브 형식 83 (82 → 83)', () => {
   it('이미 있는 초월자 트랙: 지금 합친 빌드 = 초월자 기반, 키웠던 캐릭터 = 합친 빌드 복사 + 합체 기록의 진화체 · id 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(83);
+    expect(SAVE_FORMAT_VERSION).toBe(84);
     const s = ready();
     performFusion(s, 9000);
     const raw = JSON.parse(JSON.stringify(s)) as SaveData;
@@ -181,7 +181,7 @@ describe('세이브 형식 83 (82 → 83)', () => {
     raw.transcendentId = 'aizen'; // 조합과 안 맞는 옛 id 도 그대로
     raw.slotLog.fusions[0]!.transcendentId = 'aizen';
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(83);
+    expect(m.meta.format).toBe(84);
     expect(m.transcendentId).toBe('aizen');
     const b = m.evolution.basis!;
     expect(b.current).toBe(TRANSCENDENT_BASIS);

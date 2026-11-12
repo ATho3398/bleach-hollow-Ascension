@@ -11,6 +11,24 @@ export function comboKey(a: AttackCategory, b: AttackCategory): string {
   return [a, b].sort().join('+');
 }
 
+/** 초월 특성 효과 (GDD 12-4 v6.039, C.436): 기존 특성 효과 구조 그대로 — abilities = 진화 특성 id → 세기(AbilityLoadout.owned 와 같은 모양: el:<속성>·el4:<속성>·uniq:<키>·phys:<속성>·disp:<능력치>),
+ *  dealt·taken·maxHp·blockCrit = 탈착 특성(traits.json detach)과 같은 칸. 빈 객체 = 효과 없음. 데이터만 채우면 전투·상태 화면에 실린다(엔진은 id 분기 없음) */
+export interface TranscendentTraitEffect {
+  abilities?: Record<string, number>;
+  dealt?: number;
+  taken?: number;
+  maxHp?: number;
+  blockCrit?: number;
+}
+
+/** 초월 특성 (GDD 12-4 v6.039): 초월자가 되면 얻고 전투 기반과 상관없이 늘 붙는다(기반 특성과 별도 칸). 내용 [미정] — 지금은 자리만(provisional) */
+export interface TranscendentTraitDef {
+  name: string;
+  description: string;
+  effect: TranscendentTraitEffect;
+  provisional?: boolean;
+}
+
 export interface TranscendentDef {
   id: string;
   /** 도감 순서 (작을수록 앞) */
@@ -32,6 +50,8 @@ export interface TranscendentDef {
   combo: TranscendentCombo;
   /** 합체 뒤 이 초월자 트랙의 종류 (GDD 12-4 v6.028 — src/data/trackKinds/<id>.json: 진화 없음·시간 감소 없음 등) */
   trackKind: string;
+  /** 초월 특성 (GDD 12-4 v6.039, C.436) */
+  trait: TranscendentTraitDef;
   provisional: true;
 }
 
@@ -52,6 +72,13 @@ export function parseTranscendent(r: unknown): TranscendentDef {
   if (m !== undefined && !(m.kind === 'glitchMosaic' && Number.isInteger(m.seed) && Number.isInteger(m.tile) && (m.tile as number) > 0
     && Array.isArray(m.grid) && m.grid.length === 2 && m.grid.every((v) => Number.isInteger(v) && v > 0)
     && (m.scale === undefined || (typeof m.scale === 'number' && m.scale > 0 && m.scale <= 2)))) errors.push('model (glitchMosaic seed·tile·grid·scale)');
+  const tr = t.trait as Partial<TranscendentTraitDef> | undefined;
+  const fx = tr?.effect as Record<string, unknown> | undefined;
+  const numOk = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));
+  if (!(tr && typeof tr.name === 'string' && tr.name && typeof tr.description === 'string' && fx && typeof fx === 'object'
+    && ['dealt', 'taken', 'maxHp', 'blockCrit'].every((k) => numOk(fx[k]))
+    && (fx.abilities === undefined || (typeof fx.abilities === 'object' && fx.abilities !== null && Object.entries(fx.abilities).every(([k, v]) => /^(el|el4|uniq|phys|disp):.+/.test(k) && typeof v === 'number')))
+    && Object.keys(fx).every((k) => ['abilities', 'dealt', 'taken', 'maxHp', 'blockCrit'].includes(k)))) errors.push('trait (name·description·effect)');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

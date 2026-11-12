@@ -94,6 +94,8 @@ export interface BattleViewOptions {
   tierIndex?: number;
   /** 지금 진화체 id (GDD 198장): 고유 해방 컷인을 진화체 레스렉시온·만해 이름으로 채운다. 없으면 종족 기본 컷인 */
   formId?: string | null;
+  /** 블록·계열·콤보·해방 이름을 읽는 종족 설정 (GDD 12-4 v6.037 전투 기반, C.436): 초월자 트랙이면 고른 기반의 종족. 없으면 faction */
+  combatFaction?: FactionConfig;
   /** 입고 있는 스킨 id (GDD 26-5) */
   skinId?: string | null;
   /** 보스전 (GDD 25-3·25-7): 등장 이름 띠 위 줄 문구 ("보스"). 있으면 강적 표시 대신 보스 표시·페이즈 칩을 보인다 */
@@ -272,7 +274,12 @@ function setMeterValue(root: HTMLElement, value: number, max?: number): void {
 }
 
 export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatState, opts: BattleViewOptions): void {
-  const labels = battleLabels(faction, opts.tierIndex ?? 0, s.params.liberationUnique, s.params.liberationUnique ? formReleaseCutin(opts.formId ? tryGetForm(opts.formId) : undefined, faction.id) : null);
+  // 전투 기반 (C.436): 블록·계열·콤보·해방 이름은 기반 종족(bf), 리스크·패배 상태·사냥터 같은 트랙 몫은 트랙 종족(faction)
+  const bf = opts.combatFaction ?? faction;
+  const labels = {
+    ...battleLabels(bf, opts.tierIndex ?? 0, s.params.liberationUnique, s.params.liberationUnique ? formReleaseCutin(opts.formId ? tryGetForm(opts.formId) : undefined, bf.id) : null),
+    riskGauge: faction.riskGaugeName, defeatState: faction.defeatStateName, huntingGround: faction.huntingGroundName, factionName: faction.name,
+  };
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
@@ -736,7 +743,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   /** 각본 카드 자리표시자: {libName} = 지금 쓰는 해방 이름(영력 해방 / 레스렉시온 — 종족 설정) (GDD 241-B 1) */
   // {libFullName} = 진화 뒤 해방 이름(레스렉시온 / 만해 — 종족 설정 liberation.name). GDD 243장 9 보충: 공격 속도는 그때만 오른다
-  const scriptVars = { libName: labels.liberation.name, libFullName: faction.liberation.name };
+  const scriptVars = { libName: labels.liberation.name, libFullName: bf.liberation.name };
   const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
   /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
   const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {
@@ -955,13 +962,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return pack && look ? `${pack.id}/${pack.rig.looks[look]!.body}` : null;
   })();
   const stagesOf = (f: FamilyConfig) => familyStagesFor(f.pixelFx, heroBodyKey);
-  for (const f of faction.families)
+  for (const f of bf.families)
     for (const st of stagesOf(f) ?? [])
       for (const L of st.layers) for (const el of L.color === 'element' ? ELEMENT_IDS : [null]) void loadPixelFx(fxSheetName(L.fx, el));
   // 계열별 공격 (GDD 19-2): 연출 종류는 종족 설정 계열 데이터(fx)에서, 기술 이름은 17-3 단계 기술 이름
   // 단계 고유 연출 (C.63): 종족 설정 tiers[].fx·fxLook 이 있으면 그 단계만 다르게 (예 세로 오스큐라스 = 검은 빔 + 녹색 테두리)
   const familyFx = (id: string, stage: number): FamilyFxSpec | null => {
-    const f = familyOf(faction, id);
+    const f = familyOf(bf, id);
     if (!f) return null;
     const t = f.tiers[stage - 1];
     return { fx: t?.fx ?? f.fx, look: t?.fxLook ?? null, motion: f.motion ?? null, rigMotion: t?.rigMotion ?? null, pixel: stagesOf(f)?.[stage - 1] ?? null };
@@ -979,7 +986,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 강적 강공격 + 튜토리얼 각본 전투의 강공격(각본 강공격·막기 단계, GDD 227장 보충 6 — 사용자 "튜토 강공격도 fx 반영 해야지?")에 빨간 세로. 일반 몬스터 평소 강공격·보스는 그대로
   const heavyPixel = (enemy.class === 'elite' || scripted) && !(opts.boss || s.boss) ? eliteHeavyFor(foeBodyKey) : null;
   if (heavyPixel) for (const L of heavyPixel.layers) void loadPixelFx(fxSheetName(L.fx, L.color === 'element' ? ELITE_HEAVY_ELEMENT : null));
-  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: faction.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script, heavyPixel });
+  if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: bf.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script, heavyPixel });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -997,7 +1004,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     bodySlot,
     nameOf: (e) => {
       if (e.kind !== 'block' || e.damage <= 0) return null;
-      if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, faction.id) : '콤보', ult: true };
+      if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, bf.id) : '콤보', ult: true };
       if (e.block !== 'skill' || e.role !== 'attack') return null;
       const name = familySkillName(labels, e.family, Math.min(e.chain, FAMILY_TIERS));
       return name ? { name } : null;
@@ -1092,11 +1099,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         break;
       case 'ability':
         // 진화체 특성 발동 글자 (GDD 39장 5번): 연타! / 되갚기! / 다시 일어남! / 연쇄!
-        spawnFloat('chain', abilityProcText(e.effect, faction.id), { chain3: e.effect !== 'chainHaste' });
+        spawnFloat('chain', abilityProcText(e.effect, bf.id), { chain3: e.effect !== 'chainHaste' });
         if (e.effect === 'thorns') spawnFloat('attack', `−${n0(e.damage)}`, { size: 'big' });
         break;
       case 'combo':
-        spawnFloat('chain', `콤보! ${comboName(e.comboId, faction.id)}`, { chain3: true });
+        spawnFloat('chain', `콤보! ${comboName(e.comboId, bf.id)}`, { chain3: true });
         flash('is-special', 600);
         break;
       case 'liberate':
@@ -1114,7 +1121,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else if (e.damage > 0) {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
+          spawnFloat('hurt', `${catWord(e.cat, bf.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
         }
         break;
       case 'heavy-hit':
@@ -1127,7 +1134,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard', 600);
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: 'big', critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
+          spawnFloat('hurt', `${catWord(e.cat, bf.id)}−${n0(e.damage)}`, { size: 'big', critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
           shake();
         }
         break;
@@ -1142,7 +1149,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
+          spawnFloat('hurt', `${catWord(e.cat, bf.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
         }
         break;
       case 'end':
@@ -1172,7 +1179,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const eff = blockEffect(s, b);
     const isBasic = b.kind === 'skill' && (b.traitId === BASIC_SKILL_ID || !b.traitId);
     const visual = blockVisual(b.kind, isBasic, eff?.skill.role ?? null);
-    const label = blockName(b, labels, faction.id, s.params);
+    const label = blockName(b, labels, bf.id, s.params);
     const weak = eff?.matchup === 'strong';
     // 각인 컷 (핸드오프 README 5): 공격 = 속성 색 + 계열 글자·아이콘, 막기·회복·공허·콤보·해방 = 고정 색 + 역할 글자·아이콘
     if (visual === 'guard') return v2BlockEl({ kind: 'guard', path: V2_PATH.guard, glyph: V2_GLYPH.guard, label, uid: b.uid, weak });
@@ -1184,7 +1191,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const elId = isBasic ? NORMAL_ELEMENT : (b.element ?? blockElementOf(s.params, b));
     return v2BlockEl({
       kind: v2AttackKind(elId),
-      path: v2FamilyPath(faction.families.find((f) => f.id === b.family)?.fx),
+      path: v2FamilyPath(bf.families.find((f) => f.id === b.family)?.fx),
       glyph: familyAbbr(labels, b.family) ?? V2_GLYPH.combo,
       label, uid: b.uid, weak,
     });
@@ -1650,7 +1657,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
     if (halted()) queue.length = 0;
     for (const ev of drainCombatEvents(s)) {
-      const line = eventLine(ev, s, labels, faction.id);
+      const line = eventLine(ev, s, labels, bf.id);
       if (line) say(line);
       react(ev);
       if (ev.kind === 'boss-phase') {

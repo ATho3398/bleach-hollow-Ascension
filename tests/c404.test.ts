@@ -26,7 +26,7 @@ describe('241-B 1: 각본 전투 해방 안내 카드', () => {
     expect(ex.body).toContain('{libName}하면 블록이 빨리 나온다.');
     expect(ex.body).not.toContain('공격 속도도 빨라진다');
     expect(ex.body).toContain('{libFullName}이(가) 되면 공격 속도와 진화체만의 효과도 붙는다');
-    expect(read('src/ui/battleView.ts')).toContain("libName: labels.liberation.name, libFullName: faction.liberation.name");
+    expect(read('src/ui/battleView.ts')).toContain("libName: labels.liberation.name, libFullName: bf.liberation.name");
   });
 });
 

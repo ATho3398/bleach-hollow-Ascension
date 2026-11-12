@@ -38,14 +38,14 @@ import { isTestMode } from './testMode';
 import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
 import { traitsTab, type TraitsTabState } from './buildPanel';
-import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
+import { abilityParagraph, evolutionAbilityLines, evolutionColumns, transcendentTraitBlock } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
@@ -69,12 +69,12 @@ import type { VariantMods } from '../engine/expedition';
  *  블록 치명은 블록형 몸(물공 블록이 없는 몸)만 블록 보정(blockPlayCrit)을 더한다 — 전투와 같은 규칙 */
 export function critChances(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): { basic: number; block: number; basicMax: number; blockMax: number; bonus: number; blockPlay: number } {
   const CX = BALANCE.provisional.combat;
-  const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
-  const fa = evo ? (evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability)) : null;
+  // 전투와 같은 특성 묶음 (C.436): 전투 기반 진화체 + 초월 특성
+  const fa = evo ? combatAbilitiesOf(evo) : null;
   const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
   const bonus = critChanceBonus(build) + fromForm + gearCrit;
   const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
-  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit; // 탈착 특성 '집중' (GDD 150장 4): 블록 치명만, 상한도 같이
+  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit + (evo ? transcendentTraitEffects(evo).totals.blockCrit : 0); // 탈착 특성 '집중' (GDD 150장 4)·초월 특성: 블록 치명만, 상한도 같이
   const basicMax = CX.critChanceMax + fromForm;
   const blockMax = CX.blockCritChanceMax + fromForm + detach;
   return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay + detach), basicMax, blockMax, bonus, blockPlay };
@@ -211,6 +211,9 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
+  // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 기반 특성 칸 아래 따로 — 기반을 바꿔도 그대로
+  const tt = transcendentTraitBlock(evo);
+  if (tt) stats.append(tt);
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
   const evoPanel = panel({ title: '진화 정보' });
   evoPanel.setAttribute('aria-label', '진화 정보');
@@ -440,6 +443,9 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
         persist();
         fill();
       }, save.evolution.tierIndex);
+      // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 빌드 탭에도 — 기반과 상관없이 늘 붙는다
+      const tt = transcendentTraitBlock(save.evolution);
+      if (tt) slotsPanel!.append(tt);
       page.left.replaceChildren(slotsPanel!);
       page.right.replaceChildren(ownedPanel!);
       return;
@@ -792,7 +798,7 @@ function abilitySlotsBlock(faction: FactionConfig, save: SaveData, changed: () =
     const id = l.equipped[i];
     const dId = id ? undefined : det[i - l.equipped.length];
     if (id) {
-      const line = abilityIdLine(id, l.owned[id] ?? 1, faction.id);
+      const line = abilityIdLine(id, l.owned[id] ?? 1, combatFactionIdOf(save)); // 특성 이름 = 전투 기반 종족 표기 (C.436)
       if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
       else p.append(`${i + 1}칸 · 비어 있음`);
     } else if (dId) {

@@ -35,6 +35,7 @@ import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
+  combatFactionIdOf,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
@@ -122,6 +123,12 @@ import { applyCosmetics } from './bha/cosmetics';
 import { initTamago } from './bha/tamago';
 import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
+import { combatEvolutionOf } from '../engine/evolution';
+
+/** 전투 화면 기반 표시 (GDD 12-4 v6.037, C.436): 블록·계열·해방 이름 = 고른 전투 기반의 종족 설정, 해방 컷인 진화체 = 기반 진화체 */
+function battleBasis(save: SaveData): { combatFaction: FactionConfig; formId: string | null } {
+  return { combatFaction: getFaction(combatFactionIdOf(save)), formId: combatEvolutionOf(save.evolution).formId };
+}
 import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
 import { pickDialog } from './pickDialog';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
@@ -822,7 +829,7 @@ export function startApp(host: HTMLElement): void {
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save ? artTierIndexOf(save) : undefined,
-      formId: save?.evolution.formId,
+      ...(save ? battleBasis(save) : {}),
       skinId: save ? artSkinOf(save) : undefined,
       notice: '튜토리얼 체험 전투 (기록되지 않음)',
       tutorial: { onDone: () => { if (save) { markTutorialSeen(save.help); persist(); } } },
@@ -1805,7 +1812,7 @@ export function startApp(host: HTMLElement): void {
           battleView(root, faction, s, {
             ...battleItemOpts(s0, s),
             tierIndex: artTierIndexOf(s0),
-            formId: s0.evolution.formId,
+            ...battleBasis(s0),
             skinId: artSkinOf(s0),
             banner: `${specialDungeonLabels(faction).name} · ${name} · ${difficultyText(faction, run.star)}${enemies.length > 1 ? ` · ${i + 1}/${enemies.length}판` : ''}`,
             ...(bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -1906,7 +1913,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
-      formId: s0.evolution.formId,
+      ...battleBasis(s0),
       skinId: artSkinOf(s0),
       banner: `${towerLabels(faction).name} · ${towerFloorText(faction, f.floor)} · ${difficultyText(faction, f.star)}`,
       ...(f.bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
@@ -2090,7 +2097,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...(save ? expBattleItemOpts(save, exp, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
-      formId: save?.evolution.formId,
+      ...(save ? battleBasis(save) : {}),
       skinId: save ? artSkinOf(save) : undefined,
       banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
       ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 모험' } } : {}),
@@ -2397,7 +2404,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...(save ? battleItemOpts(save, s) : {}),
       tierIndex: save ? artTierIndexOf(save) : undefined,
-      formId: save?.evolution.formId,
+      ...(save ? battleBasis(save) : {}),
       skinId: save ? artSkinOf(save) : undefined,
       notice,
       tutorial: tutorialFor(),
@@ -2454,7 +2461,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
-      formId: s0.evolution.formId,
+      ...battleBasis(s0),
       skinId: artSkinOf(s0),
       banner: `${faction.rankBattleName} · ${rankLabel(faction, c.targetRank)}`,
       enter: true,
@@ -2491,7 +2498,7 @@ export function startApp(host: HTMLElement): void {
     battleView(root, faction, s, {
       ...battleItemOpts(s0, s),
       tierIndex: artTierIndexOf(s0),
-      formId: s0.evolution.formId,
+      ...battleBasis(s0),
       skinId: artSkinOf(s0),
       banner: `${faction.ascension.name} · ${faction.ascension.foe}`,
       enter: true,

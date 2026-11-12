@@ -4,7 +4,7 @@ import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
-import { ABILITY_SLOT_LABEL, abilityIdLine, abilityLines, equippedAbilitiesOf, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityGain, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { ABILITY_SLOT_LABEL, abilityIdLine, abilityLines, combatEvolutionOf, equippedAbilitiesOf, transcendentTraitsOf, formAbilitiesOf, formDisplayName, isMaxTier, playerElementsOf, tierDisplayName, zeroStats, type AbilityGain, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
@@ -38,7 +38,9 @@ export function formEffectLines(faction: FactionConfig, form: FormDef): string[]
 }
 
 /** 지금 특성 줄 (GDD 39장 → 126-1 수정, C.220): 특성 칸에 낀 것 (보유·장착이 없는 옛 모양이면 진화체 특성 전부) */
-export function evolutionAbilityLines(evo: EvolutionState, factionId: string): AbilityLine[] {
+export function evolutionAbilityLines(stat: EvolutionState, factionId: string): AbilityLine[] {
+  // 초월자 전투 기반 (GDD 12-4 v6.037, C.436): 물공 블록 특성 등은 고른 기반의 진화체로 — 전투와 같은 규칙
+  const evo = combatEvolutionOf(stat);
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
   return abilityLines(evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
 }
@@ -62,6 +64,26 @@ export function abilityParagraph(lines: readonly AbilityLine[], cls = 'bha-dim')
     p.append(tag, h('b', '', l.name), ` — ${l.description}`);
   });
   return p;
+}
+
+/** 초월 특성 칸 (GDD 12-4 v6.039, C.436): 초월자 트랙만 — 전투 기반과 상관없이 늘 붙는 특성(기반 특성 칸과 별도). 내용 [미정]이면 '효과 없음' + 임시 표.
+ *  상태 화면·가방 빌드 탭이 같이 쓴다. 초월 특성이 없으면 null */
+export function transcendentTraitBlock(evo: Pick<EvolutionState, 'transcendentTraits'>): HTMLElement | null {
+  const list = transcendentTraitsOf(evo);
+  if (list.length === 0) return null;
+  const box = h('div', 'bha-stack bha-stack--tight');
+  box.dataset.transcendentTraits = String(list.length);
+  const head = h('p', 'bha-small');
+  head.append(h('b', '', '초월 특성'), ' · 전투 기반과 상관없이 늘 붙는다');
+  box.append(head);
+  for (const t of list) {
+    const p = h('p', 'bha-faint');
+    p.dataset.transcendentTrait = t.id;
+    p.append(h('b', '', t.name), ` — ${t.description}`, t.empty ? ' · 효과 없음' : '');
+    if (t.provisional) p.append(' ', provisionalTag());
+    box.append(p);
+  }
+  return box;
 }
 
 /** 전투 중 특성 발동 글자 (연타! / 되갚기! / 다시 일어남! / 연쇄!) — 이름은 데이터에서 */
