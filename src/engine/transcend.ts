@@ -51,17 +51,17 @@ export function slotStatBonus(developedSteps: number, transcendents: number, def
   return { liberation, transcendents: tr, total: Math.round((liberation + tr) * 1e6) / 1e6 };
 }
 
-/** 붕옥 강화 트랙 id = 재료 id (balance hogyoku.trackCost 의 키 — 종족 무관) */
-export type HogyokuTrackId = keyof typeof HX.trackCost;
-export const HOGYOKU_TRACK_IDS = Object.keys(HX.trackCost) as HogyokuTrackId[];
+/** 붕옥 강화 트랙 id = 재료 id (balance hogyoku.trackIds — 종족 무관) */
+export type HogyokuTrackId = (typeof HX.trackIds)[number];
+export const HOGYOKU_TRACK_IDS: readonly HogyokuTrackId[] = HX.trackIds;
 
 /** 붕옥 개발 재료 3종 (GDD 12-3) — 트랙마다 강 수, 재료마다 개수 등에 같이 쓴다 */
 export type HogyokuCost = Record<HogyokuTrackId, number>;
 
 /** 트랙 track 을 n강(1~trackMax)으로 올리는 데 드는 그 트랙 재료 수 */
 export function trackStepCost(track: HogyokuTrackId, n: number): number {
-  const c = HX.trackCost[track];
-  return Math.floor(n) <= HX.trackHalf ? c[0]! : c[1]!;
+  void track; // 세 트랙 같은 식 (GDD 12-3 v6.016: n강 = n개) — 트랙마다 달라지면 여기서
+  return Math.max(1, Math.floor(n)) * HX.costPerLevel;
 }
 
 /** 트랙 track 의 from+1 ~ to 강 재료 합 */

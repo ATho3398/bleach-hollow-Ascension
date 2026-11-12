@@ -14,18 +14,18 @@ import { clearStory } from './helpers/storyClear';
 
 const HX = BALANCE.provisional.hogyoku;
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const rich = (s: SaveData) => { s.shared.soulCrystals = 999; s.shared.hogyokuShards = 999; s.shared.resonanceEssence = 999; };
+const rich = (s: SaveData) => { s.shared.soulCrystals = 5000; s.shared.hogyokuShards = 5000; s.shared.resonanceEssence = 5000; };
 const other = (fid: string) => FACTIONS.find((f) => f.id !== fid)!.id;
 
 // C.425 (GDD v6.014): 10단계 개발 → 재료별 강화 트랙 3개(각 50강) — 이 묶음의 기대값을 트랙 규칙으로 바꿈 (지키던 결정: 반각성 한계·공명 처음 한 번·모자라면 안 깎임·개발 기록)
 describe('12-3 강화 트랙 표 (balance 한 곳)', () => {
-  it('트랙 3개 = 재료 3종 · 50강 · 반각성 25강 · 강당 비용 = 옛 10단계 합계 · 단계 이름 10개(10% 구간)', () => {
+  it('트랙 3개 = 재료 3종 · 50강 · 반각성 25강 · 강당 비용 n강 = n개(C.426 v6.016) · 합체 뒤 30강 · 단계 이름 10개(10% 구간)', () => {
     expect(HOGYOKU_TRACK_IDS).toEqual(['soul', 'shard', 'essence']);
     expect([HX.trackMax, HX.trackHalf]).toEqual([50, 25]);
     expect(HOGYOKU_STEP_NAMES).toHaveLength(10);
-    expect(HOGYOKU_TRACK_IDS.map((t) => [trackCostSum(t, 0, 25), trackCostSum(t, 25, 50)])).toEqual([[50, 100], [75, 25], [25, 25]]);
-    expect(trackStepCost('soul', 25)).toBe(2);
-    expect(trackStepCost('soul', 26)).toBe(4);
+    expect(HOGYOKU_TRACK_IDS.map((t) => [trackCostSum(t, 0, 25), trackCostSum(t, 25, 50)])).toEqual([[325, 950], [325, 950], [325, 950]]);
+    for (const t of HOGYOKU_TRACK_IDS) expect([trackStepCost(t, 1), trackStepCost(t, 26), trackStepCost(t, 50)]).toEqual([1, 26, 50]);
+    expect(HX.afterFusionLevel).toBe(30);
     expect(HX.perStepBonus * HX.trackMax * 3).toBeCloseTo(0.15); // 세 트랙 50강 = +15%
   });
 });

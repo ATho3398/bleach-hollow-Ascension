@@ -220,7 +220,7 @@ export interface HogyokuState {
   /** 등장한 시각(ms). 옛 세이브에서 이미 열린 것은 0, 아직이면 null */
   appearedAt: number | null;
   /** 붕옥 강화 트랙 (GDD 12-3 v6.014, 형식 80): 재료 id → 지금 강(0~trackMax). 1~trackHalf강 = 반각성(등장)부터, 그 위 = 공명부터.
-   *  개발 % = 세 트랙 평균 ÷ trackMax. 합체하면 트랙마다 trackHalf 로 (26~50강 진행만 0) */
+   *  개발 % = 세 트랙 평균 ÷ trackMax. 합체하면 트랙마다 afterFusionLevel(30강)로 (31~50강 진행만 0, GDD 12-4 v6.017) */
   tracks: HogyokuCost;
   /** 지금까지 올린 강 수 합 (영구 능력치 +0.1%씩 — 합체로 트랙이 내려가도 줄지 않는다). 형식 80 변환 = 옛 단계 1개 = 10강 몫(1%)으로 보존 */
   developed: number;
@@ -1101,12 +1101,12 @@ export function performFusion(save: SaveData, nowMs: number = Date.now()): Fusio
   const characters = tracks.map(summaryOf);
   const jade = save.transcendentDex.length === 0 ? HX.firstTranscendentJade : 0;
   const index = save.slotLog.fusions.length + 1;
-  const soulSpent = trackCostSum(HOGYOKU_TRACK_IDS[0]!, HX.trackHalf, HX.trackMax);
+  const soulSpent = trackCostSum(HOGYOKU_TRACK_IDS[0]!, HX.afterFusionLevel, HX.trackMax);
   const record: FusionRecord = { at: nowMs, index, transcendentId: def.id, matched, characters, soulSpent, jade };
   save.slotLog.fusions.push(record);
   save.transcendentDex.push({ id: def.id, at: nowMs, fusionIndex: index });
-  // 세 트랙 26~50강 진행만 0 으로 (GDD 12-4 v6.014): 1~25강은 남고, 강화로 오른 능력치(developed)는 그대로
-  for (const id of HOGYOKU_TRACK_IDS) save.hogyoku.tracks[id] = Math.min(save.hogyoku.tracks[id] ?? 0, HX.trackHalf);
+  // 세 트랙 31~50강 진행만 0 으로 (GDD 12-4 v6.017, 돌아갈 강 = afterFusionLevel 30 = 개발 60%): 강화로 오른 능력치(developed)는 그대로
+  for (const id of HOGYOKU_TRACK_IDS) save.hogyoku.tracks[id] = Math.min(save.hogyoku.tracks[id] ?? 0, HX.afterFusionLevel);
   save.shared.jade += jade;
   // 새 두 트랙: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다
   const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin, wear: { ...t.wear } });

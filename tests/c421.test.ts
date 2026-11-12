@@ -64,8 +64,8 @@ describe('C.421 붕옥 그림', () => {
     expect(read('src/ui/bha/room.css')).toMatch(/\.bha-prop--hogyoku[^{]*\{[^}]*32px\)/);
   });
 
-  it('방 ··· 메뉴 붕옥 = 그림 아이콘 (그림 없으면 스프라이트)', () => {
-    expect(read('src/ui/roomView.ts')).toContain("art: 'prop.hogyoku'");
+  it('방 ··· 메뉴에 붕옥 줄 없음 (C.426 사용자 "더보기에 붕옥 지워" — 들어가는 길 = 방 물건 붕옥), 메뉴 그림 아이콘 틀은 유지', () => {
+    expect(read('src/ui/roomView.ts')).not.toContain("art: 'prop.hogyoku'");
     expect(read('src/ui/bha/dock.ts')).toContain('m.art ? artIcon(m.art, m.icon) : icon(m.icon)');
   });
 });

@@ -5,7 +5,7 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_MATERIAL_SOURCE, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, HOGYOKU_TRACK_NAMES, transcendentConditionText } from '../data/hogyoku';
-import { HOGYOKU_TRACK_IDS, slotStatBonus, type HogyokuCost, type HogyokuTrackId } from '../engine/transcend';
+import { HOGYOKU_TRACK_IDS, slotStatBonus, trackStepCost, type HogyokuCost, type HogyokuTrackId } from '../engine/transcend';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
@@ -259,8 +259,7 @@ function trackDetail(save: SaveData, m: Material): HTMLElement {
       hgRow('강화 뒤 전체', `+${pct(b.total)} → +${pct(after.total)}`, 'good'),
     );
   }
-  const c = HX.trackCost[m.id];
-  rows.append(hgRow('강당 재료', `1~${HX.trackHalf}강 ${c[0]}개 · ${HX.trackHalf + 1}~${HX.trackMax}강 ${c[1]}개`), hgRow('얻는 곳', m.from()));
+  rows.append(hgRow('강당 재료', `n강 = ${m.name} ${HX.costPerLevel === 1 ? 'n' : `n×${HX.costPerLevel}`}개 (1강 ${trackStepCost(m.id, 1)}개 ~ ${HX.trackMax}강 ${trackStepCost(m.id, HX.trackMax)}개)`), hgRow('얻는 곳', m.from()));
   p.append(top, rows);
   const blocks = g.missing.filter((x) => x !== 'tab' && x !== 'max');
   if (blocks.length) {
@@ -286,7 +285,7 @@ function orbDetail(save: SaveData): HTMLElement {
   }
   const avg = HOGYOKU_MATERIALS.reduce((a, m) => a + (hg.tracks[m.id] ?? 0), 0) / HOGYOKU_MATERIALS.length;
   rows.append(hgRow('평균', `${Math.round(avg * 10) / 10}강 → 개발 ${per}% · ${stepNameOf(per)}`, 'em'));
-  p.append(stageChips(hogyokuStage(save)), rows, h('p', 'bha-faint', `개발 % = ${HOGYOKU_MATERIALS.map((x) => x.track).join('·')} 평균 ÷ ${HX.trackMax}. 강마다 두 캐릭터 전 능력치 +${pct(HX.perStepBonus)}(영구). 1~${HX.trackHalf}강 = ${HOGYOKU_STAGE_NAMES.half}, ${HX.trackHalf + 1}강부터 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%(세 강화 모두 ${HX.trackMax}강)면 합체할 수 있다. 합체하면 세 강화가 ${HX.trackHalf}강으로 돌아가지만 오른 능력치는 남는다.`));
+  p.append(stageChips(hogyokuStage(save)), rows, h('p', 'bha-faint', `개발 % = ${HOGYOKU_MATERIALS.map((x) => x.track).join('·')} 평균 ÷ ${HX.trackMax}. 강마다 두 캐릭터 전 능력치 +${pct(HX.perStepBonus)}(영구). 1~${HX.trackHalf}강 = ${HOGYOKU_STAGE_NAMES.half}, ${HX.trackHalf + 1}강부터 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%(세 강화 모두 ${HX.trackMax}강)면 합체할 수 있다. 합체하면 세 강화가 ${HX.afterFusionLevel}강(개발 ${Math.round((HX.afterFusionLevel / HX.trackMax) * 100)}%)으로 돌아가지만 오른 능력치는 남는다.`));
   return p;
 }
 
@@ -518,11 +517,11 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
     gone: [
       '지금 두 캐릭터 (초월체 도감에 전시된다)',
       '두 캐릭터의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
-      `붕옥 강화 세 가지의 ${HX.trackHalf + 1}~${HX.trackMax}강 진행 (다음 합체를 위해 다시 강화)`,
+      `붕옥 강화 세 가지의 ${HX.afterFusionLevel + 1}~${HX.trackMax}강 진행 (다음 합체를 위해 다시 강화)`,
     ],
     keeps: [
       '도감·칭호 기록, 초월체 도감',
-      `붕옥 강화 ${HX.trackHalf}강까지·공명, 강화로 오른 능력치 (새 캐릭터에도)`,
+      `붕옥 강화 ${HX.afterFusionLevel}강까지·공명, 강화로 오른 능력치 (새 캐릭터에도)`,
       `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 붕옥 재료`,
       '스토리 진행·보스 도감·입은 스킨',
     ],

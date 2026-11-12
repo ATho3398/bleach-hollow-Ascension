@@ -28,10 +28,10 @@ const opened = (resonance: boolean): SaveData => {
 describe('C.425 붕옥 재료별 강화 트랙 (GDD v6.014 12-3·12-4)', () => {
   it('트랙 강화 = 그 트랙 재료만, 개발 % = 세 트랙 평균 ÷ 50', () => {
     const s = opened(true);
-    s.shared.soulCrystals = 10; s.shared.hogyokuShards = 9;
-    for (let i = 0; i < 5; i++) expect(developHogyoku(s, 'soul', 1)).not.toBeNull(); // 2개씩
+    s.shared.soulCrystals = 15; s.shared.hogyokuShards = 9;
+    for (let i = 0; i < 5; i++) expect(developHogyoku(s, 'soul', 1)).not.toBeNull(); // n강 = n개 (C.426): 1+2+3+4+5
     expect(s.shared.soulCrystals).toBe(0);
-    expect(developHogyoku(s, 'shard', 1)?.shard).toBe(3);
+    expect(developHogyoku(s, 'shard', 1)?.shard).toBe(1);
     expect(s.hogyoku.tracks).toEqual({ soul: 5, shard: 1, essence: 0 });
     expect(hogyokuPercent(s.hogyoku)).toBe(4); // 평균 2 ÷ 50
     s.hogyoku.tracks = { soul: 30, shard: 20, essence: 10 };
@@ -49,10 +49,10 @@ describe('C.425 붕옥 재료별 강화 트랙 (GDD v6.014 12-3·12-4)', () => {
 
   it('일괄 강화: 가진 재료로 갈 수 있는 데까지, 낮은 트랙부터 번갈아', () => {
     const s = opened(true);
-    s.shared.soulCrystals = 6; s.shared.hogyokuShards = 6; s.shared.resonanceEssence = 1;
+    s.shared.soulCrystals = 6; s.shared.hogyokuShards = 5; s.shared.resonanceEssence = 1;
     s.hogyoku.tracks.shard = 1;
     const r = developAll(s, 5);
-    expect(r.gained).toEqual({ soul: 3, shard: 2, essence: 1 });
+    expect(r.gained).toEqual({ soul: 3, shard: 2, essence: 1 }); // n강 = n개: 1+2+3 · 2+3 · 1
     expect(s.hogyoku.tracks).toEqual({ soul: 3, shard: 3, essence: 1 });
     expect([s.shared.soulCrystals, s.shared.hogyokuShards, s.shared.resonanceEssence]).toEqual([0, 0, 0]);
     expect(r.records.map((x) => x.track).slice(0, 3)).toEqual(['soul', 'essence', 'soul']); // 0강 둘 → 목록 순서 soul, 다음 essence(0) …
@@ -136,13 +136,12 @@ describe('C.425 붕옥 용어·얻는 곳 (GDD v6.015)', () => {
     const b = (won: boolean, enemyClass: string) => ({ won, enemyClass });
     const sum = (c: Record<string, number>) => Object.values(c).reduce((a, x) => a + x, 0);
     expect(sum(rollHogyokuDrops([b(true, 'elite'), b(true, 'boss'), b(false, 'elite')], 7))).toBe(D.eliteCount + D.bossCount);
-    const many = Array.from({ length: 2000 }, () => b(true, 'normal'));
+    const many = Array.from({ length: 3000 }, () => b(true, 'normal'));
     const r = rollHogyokuDrops(many, 3);
     expect(r).toEqual(rollHogyokuDrops(many, 3));
-    expect(sum(r) / 2000).toBeGreaterThan(D.normalChance - 0.05);
-    expect(sum(r) / 2000).toBeLessThan(D.normalChance + 0.05);
-    expect(r.soul).toBeGreaterThan(r.shard); // weights soul > shard > essence
-    expect(r.shard).toBeGreaterThan(r.essence);
+    expect(sum(r) / 3000).toBeGreaterThan(D.normalChance - 0.05);
+    expect(sum(r) / 3000).toBeLessThanOrEqual(D.normalChance + 0.05);
+    for (const id of ['soul', 'shard', 'essence'] as const) expect(r[id] / sum(r)).toBeCloseTo(D.weights[id] / (D.weights.soul + D.weights.shard + D.weights.essence), 1); // C.426 비율 1:1:1
     expect(rollHogyokuDrops([], 1, 2).soul).toBe(2); // 폭풍 강적 추가분 = 첫 재료
   });
 

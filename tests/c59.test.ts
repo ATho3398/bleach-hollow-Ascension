@@ -76,9 +76,9 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
 
 /** 붕옥 강화 세 트랙을 50강까지 (재료를 넉넉히 채워 한 강씩, C.425 트랙) */
 function developAll(s: SaveData): void {
-  s.shared.soulCrystals += 1000;
-  s.shared.hogyokuShards += 1000;
-  s.shared.resonanceEssence += 1000;
+  s.shared.soulCrystals += 5000;
+  s.shared.hogyokuShards += 5000;
+  s.shared.resonanceEssence += 5000;
   for (const t of HOGYOKU_TRACK_IDS) while (developHogyoku(s, t, 3500)) { /* 50강까지 */ }
   s.shared.soulCrystals = 0;
   s.shared.hogyokuShards = 0;
@@ -304,7 +304,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.shared.tradeCoins).toBe(77);
     expect(s.formDex).toEqual(['t4:fire:physical']);
     expect(s.titles.some((t) => t.titleId === 'rank-1')).toBe(true);
-    expect(s.hogyoku.tracks).toEqual({ soul: HX.trackHalf, shard: HX.trackHalf, essence: HX.trackHalf }); // 26~50강 진행만 0 (GDD 12-4 v6.014)
+    expect(s.hogyoku.tracks).toEqual({ soul: HX.afterFusionLevel, shard: HX.afterFusionLevel, essence: HX.afterFusionLevel }); // 31~50강 진행만 0 → 30강 = 60% (GDD 12-4 v6.017, C.426)
     expect(s.hogyoku.developed).toBe(HX.trackMax * 3); // 오른 능력치는 그대로
     expect(s.hogyoku.resonance).toBe(true);
     expect(s.hogyoku.tabOpen).toBe(true);
@@ -312,7 +312,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(statBonusOf(s).total).toBeCloseTo(0.17);
     // 런 로그: 합체 기록 (두 캐릭터 요약·결과)
     const rec = s.slotLog.fusions[0]!;
-    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: trackCostSum('soul', HX.trackHalf, HX.trackMax), jade: HX.firstTranscendentJade });
+    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: trackCostSum('soul', HX.afterFusionLevel, HX.trackMax), jade: HX.firstTranscendentJade });
     expect(rec.characters.map((c) => c.factionId)).toEqual(['hollow', other('hollow')]);
     expect(rec.characters[0]).toMatchObject({ tierIndex: 3, formId: 't4:fire:physical', rank: 1, rebirths: 2 });
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
@@ -342,7 +342,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.titles.some((t) => t.titleId === 'hogyoku-complete')).toBe(true);
     expect(fusionGate(s).missing).toContain('complete');
     expect(performFusion(s).ok).toBe(false);
-    expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.075 * 6 + 0.12); // C.425: 세 트랙 150강 + 합체마다 75강씩 다시 (6번) = 600강 × 0.1% + 초월체 6종
+    expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.06 * 6 + 0.12); // C.426: 세 트랙 150강 + 합체마다 60강씩 다시(30 → 50강, 6번) = 510강 × 0.1% + 초월체 6종
   });
 });
 

@@ -612,7 +612,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '다마고치', icon: 'i-nest', onClick: hd.onTamago },
       // 트랙 전환 (GDD 22-3·100장 #8·#9): '사신 트랙'처럼 조사 없이 (종족 이름은 설정 파일)
       ...others.map((t) => ({ label: `${getFaction(t.factionId).name} 트랙`, icon: 'i-swap', onClick: () => hd.onSwitchTrack!(t.factionId) })),
-      ...(hd.onHogyoku ? [{ label: '붕옥', icon: 'i-evolve', art: 'prop.hogyoku', onClick: hd.onHogyoku }] : []),
+      // 붕옥 줄은 뺐다 (GDD 12-2 v6.016 사용자 "더보기에 붕옥 지워", C.426) — 들어가는 길 = 방 물건 붕옥뿐
       ...(hd.onTest ? [{ label: '테스트', icon: 'i-settings', onClick: hd.onTest }] : []),
       ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),
       { label: '처음 화면', icon: 'i-quit', onClick: hd.onTitle },

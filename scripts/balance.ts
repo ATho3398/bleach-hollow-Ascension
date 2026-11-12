@@ -1558,16 +1558,16 @@ if (want('tower')) {
   if (top.rate < 0.15 || top.rate > 0.75) lateFail(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
 }
 
-// ── 붕옥 재료 공급 · 6번 합체 시간 (C.414 → C.425, GDD 12-3 v6.015, 참고 지표 — 가드 없음) ──
+// ── 붕옥 재료 공급 · 6번 합체 시간 (C.414 → C.425 → C.426, GDD 12-3 v6.016, 참고 지표 — 가드 없음) ──
 // 재료 = 사냥 드롭(모험 전투 승리마다, 귀환 정산) + 떠돌이 상인뿐. 캠페인 봇(흡수 봇, 4바퀴 원정)의 원정 1회 일반·강적 승리 수로 드롭 기댓값을 어림한다.
-// 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초. 회차마다 필요한 원정 = 재료마다 (필요 ÷ 원정 1회 기댓값) 중 가장 큰 것. 떠돌이 상인은 계산에서 뺀다(드문 방문 — 모자란 재료를 메우는 몫).
+// 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초. 필요한 원정 = 재료마다 (필요 ÷ 원정 1회 기댓값) 중 가장 큰 것(완전 개방 = 세 트랙 50강). 떠돌이 상인은 계산에서 뺀다(드문 방문 — 모자란 재료를 메우는 몫).
 if (want('hogyoku')) {
   const HX = BALANCE.provisional.hogyoku;
   const D = BALANCE.provisional.hogyokuDrops;
   const ids = ['soul', 'shard', 'essence'] as const;
   const name = { soul: '윤활제', shard: '여과기', essence: '영압 결정' } as const;
-  const half = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, 0, HX.trackHalf)])) as Record<(typeof ids)[number], number>;
-  const full = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, HX.trackHalf, HX.trackMax)])) as Record<(typeof ids)[number], number>;
+  const full = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, 0, HX.trackMax)])) as Record<(typeof ids)[number], number>;
+  const reopen = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, HX.afterFusionLevel, HX.trackMax)])) as Record<(typeof ids)[number], number>;
   const runs = campaignSaves.flatMap((x) => x.runLog.runs.filter((r) => !r.tutorial));
   const won = (cls: string) => campaignSaves.reduce((n, x) => n + x.runLog.battles.filter((b) => b.won && (cls === 'normal' ? b.enemyClass !== 'elite' && b.enemyClass !== 'boss' : b.enemyClass === cls)).length, 0);
   const battleSec = campaignSaves.reduce((n, x) => n + x.runLog.battles.reduce((m, b) => m + b.durationSeconds, 0), 0);
@@ -1581,18 +1581,17 @@ if (want('hogyoku')) {
   const per = Object.fromEntries(ids.map((t) => [t, (dropsPerRun * D.weights[t]) / wSum])) as Record<(typeof ids)[number], number>;
   const runsFor = (need: Record<(typeof ids)[number], number>) => {
     const each = ids.map((t) => need[t] / Math.max(1e-9, per[t]));
-    const worst = ids[each.indexOf(Math.max(...each))]!;
-    return { runs: Math.max(...each), worst, each };
+    return { runs: Math.max(...each), worst: ids[each.indexOf(Math.max(...each))]!, each };
   };
-  const first = runsFor({ soul: half.soul + full.soul, shard: half.shard + full.shard, essence: half.essence + full.essence });
-  const later = runsFor(full);
-  const fmt = (r: ReturnType<typeof runsFor>) => `${r.runs.toFixed(0)}회 (재료별 ${ids.map((t, i) => `${name[t]} ${r.each[i]!.toFixed(0)}`).join(' · ')} — 가장 늦는 재료 ${name[r.worst]})`;
+  const first = runsFor(full);
+  const later = runsFor(reopen);
+  const hrs = (n: number) => ((n * minPerRun) / 60).toFixed(1);
   console.log(`
-붕옥 재료 공급 (C.425 사냥 드롭, GDD 12-3 v6.015, 참고 — 가드 없음) · 비용 1~${HX.trackHalf}강 = ${ids.map((t) => `${name[t]} ${half[t]}`).join(' · ')} / ${HX.trackHalf + 1}~${HX.trackMax}강 = ${ids.map((t) => `${name[t]} ${full[t]}`).join(' · ')}`);
-  console.log(`  봇 원정 1회: 일반 승리 ${normalPerRun.toFixed(2)} × ${D.normalChance} + 강적 승리 ${elitePerRun.toFixed(2)} × ${D.eliteCount} = 드롭 ${dropsPerRun.toFixed(2)}개 (${ids.map((t) => `${name[t]} ${per[t].toFixed(2)}`).join(' · ')}) · 약 ${minPerRun.toFixed(1)}분/원정`);
-  console.log(`  첫 합체까지 원정 ${fmt(first)} · 2번째부터 ${fmt(later)} (목표 약 115회 · 42회)`);
+붕옥 재료 공급 (C.426, GDD 12-3 v6.016 — 비용 n강 = n개, 참고·가드 없음) · 트랙 하나 0→${HX.trackMax}강 = ${full.soul}개 · 합체 뒤 ${HX.afterFusionLevel}→${HX.trackMax}강 = ${reopen.soul}개 (세 트랙 같음)`);
+  console.log(`  봇 원정 1회: 일반 승리 ${normalPerRun.toFixed(2)} × ${D.normalChance} + 강적 승리 ${elitePerRun.toFixed(2)} × ${D.eliteCount} = 재료 ${dropsPerRun.toFixed(2)}개 (목표 약 10, ${ids.map((t) => `${name[t]} ${per[t].toFixed(2)}`).join(' · ')}) · 약 ${minPerRun.toFixed(1)}분/원정`);
+  console.log(`  완전 개방까지 원정 ${first.runs.toFixed(0)}회 ≈ ${hrs(first.runs)}시간 · 합체 뒤 다시 완전 개방 ${later.runs.toFixed(0)}회 ≈ ${hrs(later.runs)}시간 (가장 늦는 재료 ${name[first.worst]})`);
   const total = first.runs + later.runs * (TRANSCENDENTS_COUNT - 1);
-  console.log(`    → 6번 합체까지 원정 약 ${total.toFixed(0)}회 ≈ ${((total * minPerRun) / 60).toFixed(1)}시간 (돌봄·등급전·탑 전투 시간 제외, 떠돌이 상인 빼고)`);
+  console.log(`    → 6번 합체까지 원정 약 ${total.toFixed(0)}회 ≈ ${hrs(total)}시간 (돌봄·등급전·탑 전투 시간 제외, 떠돌이 상인 빼고)`);
 }
 
 if (lateHeld.length > 0) console.warn(`\n후반 보류(45-6) — 4단계 이후 가드 ${lateHeld.length}건, 실패 대신 경고:\n- ${lateHeld.join('\n- ')}`);
