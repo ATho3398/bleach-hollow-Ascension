@@ -18,7 +18,7 @@
 
 ## 기술 스택 (기획서 17절)
 
-- 모바일 세로 기준 웹 게임, 한국어. Vite + TypeScript(strict), 화면은 외부 라이브러리 없이 DOM/CSS.
+- 모바일 웹 게임(가로 기준 844×390, 세로로 든 폰은 화면을 90° 돌려 표시 — 기획서 14절), 한국어. Vite + TypeScript(strict), 화면은 외부 라이브러리 없이 DOM/CSS.
 - 오프라인 그대로 + 로그인했을 때만 클라우드 저장(Firebase Google·이메일 로그인 + Firestore, GDD 16-4 — SDK 는 로그인 때만 동적 import). 게임 실행 중 AI API 호출 없음. 테스트는 vitest.
 - 배포: GitHub Pages(`.github/workflows/pages.yml`), https://atho3398.github.io/bleach-hollow-Ascension/
 
