@@ -1328,7 +1328,7 @@
 ### 19-2 현재 상태 (마스터AL → AM 인수인계, 2026-11-12 17:4x)
 - 최신 배포 패치 = **C.424**(붕옥 6단계 그림·불꽃 도트 맞춤·붕옥 1.5배). 11-11~12 패치 C.386~C.424 는 `docs/dev-log.md`. 다음 번호: 패치 = `PATCH_LABEL` 최댓값+1(C.425부터), 코딩 세션 = 279부터. 기획서는 v6(주제별 20절, 장 덧붙이지 않고 해당 절 수정 + 20절 한 줄).
 - 진행 중 코딩 세션 없음(코딩266~278 끝 — 제목 `_완료`·`_대기`).
-- **마스터 = 마스터AM**(마스터AL session_01YVaigHqv5N8mzeitzKf2jg 에서 인수). 사용자 직통 상시 세션 — 끝나면 브랜치/해시를 마스터에 보내고 마스터가 main 에 합침(ff 안 되면 그 커밋만 cherry-pick):
+- **마스터 = 마스터AM session_01YVaigL3CXmHKgGoxWgP99u**(마스터AL session_01YVaigHqv5N8mzeitzKf2jg 에서 인수). 사용자 직통 상시 세션 — 끝나면 브랜치/해시를 마스터에 보내고 마스터가 main 에 합침(ff 안 되면 그 커밋만 cherry-pick):
   - 종이인형 session_01YVaigGhDfgc2J3AHK6JUSq (브랜치 claude/funny-feynman-18tks6, ff 요청)
   - 픽셀FX 담당 session_01YVaigFiaja9wMnt7JPXHNy (브랜치 claude/loving-bohr-vqbu8d — 옛 정리 merge 가 쌓여 있어 **보내 준 단일 커밋 해시만 cherry-pick**)
   - UI 배치 도구 session_01YVaigGR7HvgTSRhU9Hv12h (main 에 직접 푸시·보고)
