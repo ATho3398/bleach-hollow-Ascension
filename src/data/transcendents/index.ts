@@ -51,6 +51,8 @@ export interface TranscendentDef {
     churnMs: [number, number]; swap: [number, number];
     /** 모노톤·흑백 ('가다가 모노톤이나 흑백도'): 교체 조각이 모노톤/흑백일 확률 · 몸 전체 흑백/모노톤 간격·지속 [최소, 최대] ms · 모노톤 색 = 디자인 토큰 이름 */
     monoChance: number; fullMonoEveryMs: [number, number]; fullMonoHoldMs: [number, number]; monoTokens: string[];
+    /** 칸 바탕 (C.438): 조각의 투명 화소 = 그 조각 그림 평균색 × cellBgDarken (0~1) — 몸이 늘 꽉 찬 네모 덩어리 */
+    cellBgDarken: number;
     provisional?: boolean;
   };
   /** 이 초월자가 나오는 두 캐릭터 진화체 분류 조합 (GDD 12-4 v6.037, provisional 대응) */
@@ -81,7 +83,8 @@ export function parseTranscendent(r: unknown): TranscendentDef {
     && (m.scale === undefined || (typeof m.scale === 'number' && m.scale > 0 && m.scale <= 2))
     && [m.churnMs, m.swap, m.fullMonoEveryMs, m.fullMonoHoldMs].every((r) => Array.isArray(r) && r.length === 2 && r.every((v) => typeof v === 'number' && v > 0) && r[0]! <= r[1]!)
     && typeof m.monoChance === 'number' && m.monoChance >= 0 && m.monoChance <= 1
-    && Array.isArray(m.monoTokens) && m.monoTokens.length > 0 && m.monoTokens.every((k) => typeof k === 'string' && k.startsWith('--bha-')))) errors.push('model (glitchMosaic seed·tile·grid·scale·churnMs·swap·monoChance·fullMonoEveryMs·fullMonoHoldMs·monoTokens)');
+    && typeof m.cellBgDarken === 'number' && m.cellBgDarken >= 0 && m.cellBgDarken <= 1
+    && Array.isArray(m.monoTokens) && m.monoTokens.length > 0 && m.monoTokens.every((k) => typeof k === 'string' && k.startsWith('--bha-')))) errors.push('model (glitchMosaic seed·tile·grid·scale·churnMs·swap·monoChance·fullMonoEveryMs·fullMonoHoldMs·monoTokens·cellBgDarken)');
   const tr = t.trait as Partial<TranscendentTraitDef> | undefined;
   const fx = tr?.effect as Record<string, unknown> | undefined;
   const numOk = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));

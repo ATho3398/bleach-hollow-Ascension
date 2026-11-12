@@ -1,0 +1,33 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-room-t0.png",
+    "02-pc-room-t1.png",
+    "03-pc-room-t2.png",
+    "04-pc-room-mono-pieces.png",
+    "05-phone-room-t0.png"
+  ],
+  "facts": {
+    "pc": {
+      "changing": true,
+      "monoMoment": {
+        "full": "",
+        "mono": 6,
+        "src": "AAAABklEQVQDAPr5tppH6aaWAAAAAElFTkSuQmCC"
+      },
+      "opaque": {
+        "size": [
+          192,
+          256
+        ],
+        "minCellOpaque": 1
+      }
+    },
+    "phone": {
+      "changing": true
+    },
+    "reduced": {
+      "reducedSame": true
+    }
+  }
+}

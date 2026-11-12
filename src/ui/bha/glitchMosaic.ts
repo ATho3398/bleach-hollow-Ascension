@@ -52,7 +52,8 @@ export function mosaicPickTone(model: MosaicModel, rand: () => number = Math.ran
 }
 
 /** 한 번의 교체: 바꿀 칸 번호들(서로 다름, swap 범위)과 그 자리에 들어갈 다른 조각 — monoChance 로 흑백/모노톤 */
-export function mosaicChurn(model: MosaicModel, sources: number, rand: () => number = Math.random): { at: number[]; cells: MosaicCell[] } {
+/** solid = 기본 배치와 같은 '조각의 40% 이상이 그림' 검사 (C.438 — 교체 조각도 거의 빈 조각은 다시 고른다, 최대 12번) */
+export function mosaicChurn(model: MosaicModel, sources: number, rand: () => number = Math.random, solid: (src: number, tx: number, ty: number) => boolean = () => true): { at: number[]; cells: MosaicCell[] } {
   const total = model.grid[0] * model.grid[1];
   const [lo, hi] = model.swap;
   const n = Math.min(total, lo + Math.floor(rand() * (hi - lo + 1)));
@@ -63,7 +64,11 @@ export function mosaicChurn(model: MosaicModel, sources: number, rand: () => num
   return {
     at,
     cells: at.map(() => {
-      const c: MosaicCell = { src: Math.floor(rand() * Math.max(1, sources)), tx: Math.floor(rand() * per), ty: Math.floor(rand() * per) };
+      let c: MosaicCell = { src: 0, tx: 0, ty: 0 };
+      for (let k = 0; k < 12; k++) {
+        c = { src: Math.floor(rand() * Math.max(1, sources)), tx: Math.floor(rand() * per), ty: Math.floor(rand() * per) };
+        if (solid(c.src, c.tx, c.ty)) break;
+      }
       if (rand() < model.monoChance) c.tone = mosaicPickTone(model, rand);
       return c;
     }),
@@ -83,6 +88,19 @@ export function mosaicTonePixels(px: Uint8ClampedArray, rgb: readonly [number, n
       const c = rgb ? rgb[k]! : 128;
       px[i + k] = rgb ? (l < 0.5 ? c * l * 2 : c + (255 - c) * (l - 0.5) * 2) : l * 255;
     }
+  }
+}
+
+/** 칸 바탕 채우기 (C.438 — 몸이 늘 꽉 찬 네모 덩어리): 투명 화소를 그 조각 그림 화소 평균색 × darken 바탕 위에 합성, 모두 불투명.
+ *  그림 화소가 하나도 없으면 바탕 = 검정 × darken 쪽(0) */
+export function mosaicFillCell(px: Uint8ClampedArray, darken: number): void {
+  let r = 0, g = 0, b = 0, w = 0;
+  for (let i = 0; i < px.length; i += 4) { const a = px[i + 3]! / 255; r += px[i]! * a; g += px[i + 1]! * a; b += px[i + 2]! * a; w += a; }
+  const bg = w > 0 ? [r / w * darken, g / w * darken, b / w * darken] : [0, 0, 0];
+  for (let i = 0; i < px.length; i += 4) {
+    const a = px[i + 3]! / 255;
+    for (let k = 0; k < 3; k++) px[i + k] = px[i + k]! * a + bg[k]! * (1 - a);
+    px[i + 3] = 255;
   }
 }
 
@@ -112,6 +130,8 @@ interface Driver {
   full: number | null;
   fullUntil: number;
   nextFull: number;
+  /** 조각이 그림으로 차 있나 (기본 배치·교체 같은 검사, 결과 기억) */
+  solid: (s: number, tx: number, ty: number) => boolean;
 }
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -143,11 +163,10 @@ function drawCell(ctx: CanvasRenderingContext2D, srcs: readonly HTMLImageElement
   const x = (i % model.grid[0]) * out, y = Math.floor(i / model.grid[0]) * out;
   ctx.clearRect(x, y, out, out);
   ctx.drawImage(im, c.tx * st, c.ty * st, st, st, x, y, out, out);
-  if (c.tone !== undefined) {
-    const data = ctx.getImageData(x, y, out, out);
-    mosaicTonePixels(data.data, toneRgb(model, c.tone));
-    ctx.putImageData(data, x, y);
-  }
+  const data = ctx.getImageData(x, y, out, out);
+  mosaicFillCell(data.data, model.cellBgDarken); // 칸 바탕까지 채워 늘 꽉 찬 네모 (C.438)
+  if (c.tone !== undefined) mosaicTonePixels(data.data, toneRgb(model, c.tone)); // 모노톤·흑백은 바탕까지 같이
+  ctx.putImageData(data, x, y);
 }
 
 function ctxOf(cv: HTMLCanvasElement): CanvasRenderingContext2D | null {
@@ -187,12 +206,12 @@ function publish(d: Driver, tone: number | null = d.full): void {
 }
 
 /** 고정(캡처): 시드 고정 한 장면 — 기본 모습에서 조각 여럿이 바뀌고 흑백·모노톤 조각이 섞인 모습 */
-export function mosaicFrozenCells(model: MosaicModel, base: readonly MosaicCell[], sources: number): MosaicCell[] {
+export function mosaicFrozenCells(model: MosaicModel, base: readonly MosaicCell[], sources: number, solid?: (src: number, tx: number, ty: number) => boolean): MosaicCell[] {
   const r = createRng(model.seed + 1);
   const cells = [...base];
   const changed: number[] = [];
   for (let k = 0; k < 6; k++) {
-    const g = mosaicChurn(model, sources, () => nextFloat(r));
+    const g = mosaicChurn(model, sources, () => nextFloat(r), solid);
     g.at.forEach((i, j) => { cells[i] = g.cells[j]!; changed.push(i); });
   }
   // 캡처에서 보이게: 바뀐 조각 중 둘은 흑백·모노톤
@@ -202,7 +221,7 @@ export function mosaicFrozenCells(model: MosaicModel, base: readonly MosaicCell[
 }
 
 function showFrozen(d: Driver, srcs: readonly HTMLImageElement[]): void {
-  const cells = mosaicFrozenCells(d.model, d.base, srcs.length);
+  const cells = mosaicFrozenCells(d.model, d.base, srcs.length, d.solid);
   drawCells(d, srcs, cells);
   publish(d, null);
 }
@@ -220,7 +239,7 @@ function tick(d: Driver, srcs: readonly HTMLImageElement[]): void {
   const now = performance.now();
   if (d.full !== null && now >= d.fullUntil) { d.full = null; d.nextFull = now + dl.fullEvery; }
   else if (d.full === null && now >= d.nextFull) { d.full = mosaicPickTone(d.model); d.fullUntil = now + dl.fullHold; }
-  const g = mosaicChurn(d.model, srcs.length);
+  const g = mosaicChurn(d.model, srcs.length, Math.random, d.solid);
   g.at.forEach((i, k) => { d.cells[i] = g.cells[k]!; });
   d.atBase = false;
   drawCells(d, srcs, d.cells, g.at);
@@ -236,7 +255,16 @@ function wake(d: Driver, srcs: readonly HTMLImageElement[]): void {
 function solidChecker(srcs: readonly HTMLImageElement[], tile: number): (s: number, tx: number, ty: number) => boolean {
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const memo = new Map<string, boolean>();
   return (s, tx, ty) => {
+    const key = `${s}:${tx}:${ty}`;
+    const hit = memo.get(key);
+    if (hit !== undefined) return hit;
+    const v = check(s, tx, ty);
+    memo.set(key, v);
+    return v;
+  };
+  function check(s: number, tx: number, ty: number): boolean {
     const im = srcs[s];
     if (!im || !ctx) return true;
     const st = Math.max(1, Math.round((im.naturalWidth / 64) * tile));
@@ -247,7 +275,7 @@ function solidChecker(srcs: readonly HTMLImageElement[], tile: number): (s: numb
     let on = 0;
     for (let i = 3; i < px.length; i += 4) if (px[i]! > 32) on++;
     return on / (st * st) >= 0.4; // 조각의 40% 이상이 그림
-  };
+  }
 }
 
 function driverFor(id: string): Driver | null {
@@ -261,12 +289,13 @@ function driverFor(id: string): Driver | null {
     cv.height = def.model!.grid[1] * def.model!.tile * MOSAIC_OUT_SCALE;
     return cv;
   };
-  d = { model: def.model, imgs: new Set(), canvas: mk(), fx: mk(), base: [], cells: [], atBase: true, ready: false, timer: 0, full: null, fullUntil: 0, nextFull: 0 };
+  d = { model: def.model, imgs: new Set(), canvas: mk(), fx: mk(), base: [], cells: [], atBase: true, ready: false, timer: 0, full: null, fullUntil: 0, nextFull: 0, solid: () => true };
   drivers.set(id, d);
   const drv = d;
   void loadSources().then((srcs) => {
     if (srcs.length === 0) return;
-    drv.base = mosaicLayout(drv.model, srcs.length, solidChecker(srcs, drv.model.tile));
+    drv.solid = solidChecker(srcs, drv.model.tile);
+    drv.base = mosaicLayout(drv.model, srcs.length, drv.solid);
     drv.cells = [...drv.base];
     drv.ready = true;
     if (glitchFrozen()) showFrozen(drv, srcs);
