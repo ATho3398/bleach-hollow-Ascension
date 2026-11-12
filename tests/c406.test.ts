@@ -70,7 +70,7 @@ describe('241-C 4 길리안 외눈형 (숨은 모습 — 종족 설정 specialLo
     expect(r.ok && r.record.specialLook).toEqual({ id: 'cyclops', bondCare: 3, bonus: false });
   });
   it('쓰다듬기 요청에 응답한 것도 교감으로 센다', () => {
-    const s = newSaveData('hollow', 1);
+    const s = newSaveData('hollow', 1); s.help.guides = {}; // 튜토리얼이 끝난 세이브 — 튜토리얼 중엔 돌봄 요청이 없다 (GDD 245장 8)
     s.nest.careRequest = { action: 'pet', until: 10_000 };
     expect(careNest(s, 'pet', 5000, () => 0.5)).toBe('answered');
     expect(s.evolution.bondCare).toBe(1);
@@ -83,11 +83,11 @@ describe('241-C 4 길리안 외눈형 (숨은 모습 — 종족 설정 specialLo
 });
 
 describe('241-C 5 새 게임 시작 지급', () => {
-  it('상태이상 치료제 각 3개 · 일반 먹이 종류마다 3개 (싸구려·특식은 그대로)', () => {
+  it('상태이상 치료제 각 3개 · 일반 먹이는 시작 지급 없음 (GDD 245장 2 — 첫 끼니 뒤 보상으로) · 싸구려는 그대로', () => {
     const s = newSaveData('hollow', 1);
-    for (const id of ['med-cure', 'med-iv', 'med-energy']) expect(s.shared.items[id], id).toBe(3);
+    for (const id of ['med-cure', 'med-iv', 'med-energy']) expect(s.shared.items[id], id).toBeUndefined(); // GDD 245장 9: 빈사 치료 뒤 지급
     for (const [id, def] of Object.entries(NX.foods)) {
-      if (def.type === 'normal') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(3);
+      if (def.type === 'normal') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
       if (def.type === 'special') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
     }
     expect(s.shared.food.snack).toBe(BALANCE.provisional.food.start.snack);

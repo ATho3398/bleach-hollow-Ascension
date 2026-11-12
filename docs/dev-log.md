@@ -3496,3 +3496,39 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 3 방 말풍선: 상태 박스 바로 아래 ~ 머리 위 고정(`.bha-room__bubble.is-slot`, `--bubble-top`·`--bubble-dx`), 장면 끝·물건 버튼에 걸리면 옆으로, 말하는 동안 상태 박스 유지. 세로 폰 회전 출력은 uiBox 로 장면 좌표로 잰다. 박스가 옆으로 간 자세(빈사 등)는 옛 규칙.
 - 테스트: `tests/c416.test.ts` 8건, c404(진화 그림 문자열)·c109(단계 외형 수 74 → 73) 갱신.
 - 캡처 `docs/captures/c416/`(1배, proof `scripts/c416-proof.cjs`): 01·02 아란칼화 결과 남·여(390×844) · 03 스킨 목록(옛 세이브 skin-raptor 보유, 새형 없음) · 04 방 말풍선 폰 가로 796×384 · 05 폰 세로 390×844 · 06 PC 1280×800. proof: 말풍선 모두 박스 아래·장면 안·물건과 안 겹침·상태 박스 보임.
+## C.417 — 튜토리얼 다듬기 · 강공격 = 예고 끝 빔·그 순간 판정 · 능력치 표시 · 적 공격 분류 = 공격마다 데이터 (GDD v6.003 3·4·5·7·8·13절 ← 보관본 245장 1~11, S-23, 코딩275 Opus)
+- 사용자 원문·결정: 보관본 `docs/GDD-archive-v5.md` 245장(+ 보충 9~11) · 마스터AL 정정(11: "2개인 애라고 물·마 번갈아가는 게 아냐. 물리만 쓸 수도 있고, 이런 다양한 경우가 다 존재한다는 거임" → 공격마다 분류를 데이터로). 세부 = 세션 추천안(GDD 20절 v6.003 줄).
+- 1 강조 테두리(`tutorialOverlay`): `placeHole` 분리 — 대상이 1px 이상 움직이면 테두리만 따라감(카드는 그대로). 원인 = 방 상태 줄이 18px 내려갔는데 옛 기준(24px 초과·카드가 덮을 때만)이라 그대로 남음.
+- 2·9 시작 지급(`balance` startItems·food.start, `game` startFoodStock 삭제): 일반 먹이·치료제 3종 시작 지급 삭제 → 첫 끼니 뒤 6종 각 3(`tutorialRecover.rewardEach` 3) · 빈사가 풀린 순간 치료제 각 3(`grantCureReward`, `tutorialRecover.cureReward`, 안내 상태 `recover-cure-reward` — 세이브 구조 그대로).
+- 3 강공격(`combat.ts`): `resolveHeavy` = 예고 끝 틱 바로 판정(strike 지연 0). `heavyWindup` = 판정 `hitDelay.heavy` 전 사건 `heavy-windup {atTick}`(cast.windup 뒤로는 경직·넉백이 판정을 늦추지 않음), 그 뒤 heavy-hit 은 landed. 화면(`battleView`·`attackFx`): windup 때 빔 모션 시작(hitInMs = 판정까지, `startNow` = 적 연출 대기열을 기다리지 않음 — 기다리면 1~3프레임 늦었다), 맞는 순간 막았나는 `guardedAt`(엔진 판정)으로. 각본 대기에서 풀릴 때 빔이 날아가는 중이면 엔진 시간도 바로 이어 흐름(C.367 의 '풀린 두 프레임 엔진 정지'를 그때만 뺌 — 안 빼면 튜토리얼 막기 빔이 2~3프레임 먼저 닿았다).
+- 4 능력치 표시(`src/statDisplay.ts`, `home.statusStatDisplay`, `bha/nest statsBlock`): 체력 = 최대 체력 · 속도 'n.n초에 1번' · 방어/정신력 '받는 물리/특수 피해 ×0.nn'. ⓘ 줄(`statText` STAT_USE) 같은 뜻으로.
+- 5 첫 포식(`guides.json` first-absorb 6장, `absorbView`): '모두 같은 효과' 줄 삭제, 갈래 버튼 하나씩 강조 → [포식] 버튼.
+- 6 컷인(`hollow.json`·`shinigami.json` liberation.baseCutin·cutin) = 이름만. 7 온천 튜토리얼 `spaTo` 1 · '체력이 가득 찼다!'. 8 `game.tutorialInProgress` → `tickCare` 가 튜토리얼 중 요청 안 만듦.
+- 11 적 공격 분류 = 공격마다 데이터(`combat.ts` enemyAttackCat·heavyOrderOf, 스키마 `EnemyDef.attackCategory`·`physicalShare`·패턴 `heavyCategories`, `combat.mixedPhysicalShare` 0.5): 칸이 없으면 그 적 category(물리 적 = 전부 물리, 특수 적 = 전부 특수), mixed = 굴림. 옛 '두 능력치 평균' 삭제. 사건 `cat` → 피해 숫자 '물리 −n'·'특수 −n', 로그 'n 물리 피해'.
+- 혼합 적 배정표(provisional — 일반 공격(·반격) / 강공격 순번):
+  | 적 | 패턴 | 일반 공격 | 강공격 |
+  |---|---|---|---|
+  | test-d | 기본 | 굴림 50% | — |
+  | normal-sturdy | 단단 | 물리 | — |
+  | normal-stance | 방어 자세 | 특수(반격도) | — |
+  | water-swift | 속공 | 굴림 50% | — |
+  | water-heavy-chain | 연속 3타 | 물리 | 물리 → 특수 → 물리 |
+  | fire-basic | 기본 | 특수 | — |
+  | fire-heavy-seal | 강공격↔봉인 | 굴림 50% | 특수 |
+  | earth-sturdy | 단단 | 굴림(물리 70%) | — |
+  | earth-stance | 방어 자세 | 물리(반격도) | — |
+  | thunder-swift | 속공 | 특수 | — |
+  | thunder-heavy-chain | 연속 3타 | 특수 | 특수 → 특수 → 물리 |
+  | blood-basic | 기본 | 굴림(물리 30%) | — |
+  | blood-heavy-seal | 강공격↔봉인 | 물리 | 물리 |
+  | poison-sturdy | 단단 | 특수 | — |
+  | poison-stance | 방어 자세 | 굴림 50%(반격도) | — |
+  | kyo-swift | 속공 | 물리 | — |
+  | kyo-heavy-chain | 연속 3타 | 굴림 50% | 물리 → 물리 → 물리 |
+  | rank-holder-h (No.8) | 연속 3타 | 굴림 50% | 물리 → 특수 → 물리 |
+  | rank-holder-e (No.5) | 연속 4타 | 물리 | 특수 → 물리 → 특수 → 물리 |
+  | rank-holder-b (No.2) | 연속 4타 | 특수 | 물리 → 물리 → 특수 → 특수 |
+- BALANCE 126 → 127. 세이브 형식 그대로(79).
+- 밸런스(`npm run balance:check`, 전후 회귀 가드 모두 통과, 기준 변경 없음): 4단계 ★4 권장 — 강적 승률 63% → 74%·원정 패배 63% → 62%·일반 93% → 92%(8.7초 → 8.9초). 그 밖 차이 1~2%p 안. 후반 보류 경고(4단계 이후, 실패 아님) 가드 6+3건 → 7+2건: 보스 forest-lord 승률 31%(가드 35~85% — 변경 전 다른 구간에서도 33~34%로 이미 경고) 추가, 이어하기 1바퀴 패배 16% 경고 사라짐.
+- 테스트: `tests/g245.test.ts` 12건(강공격 windup 틱 = 판정 틱·막기·보스·연속, 능력치 표시, 시작 지급·온천·돌봄 요청, 혼합 적 분류) + 옛 규칙 테스트 갱신(c120·c126·c133·c199·c206·c211·c214·c219·c223·c242·c244·c252·c328·c367·c404·c406·c411·care-fullness·economy).
+- 캡처 `docs/captures/c417/`(PC 844×390 1배 11장, proof `scripts/c417-proof.cjs` — proof.json 흐름 · proof-heavy.json 강공격): 01 배부름 강조(줄 y63~77 ↔ 테두리 y58~84, 여백 6px) · 02 튜토리얼 강공격 방어막에 막힘 · 03 첫 포식 갈래 카드 · 04 온천 가득(115/115) · 05 먹이 보상 · 06 상태 능력치(테스트 모드 새 게임, 방 체력 212 = 상태 체력 212) · 07 강적 강공격 맞음(특수 −43)·막힘 · 08 튜토리얼 강공격 맞음 · 09 보스 강공격 맞음·막힘. 강공격 실측 8건(튜토리얼 2·강적 2·보스 4) 모두 예고 끝 프레임·빔 맞음 반응·피해 숫자가 판정 프레임과 0.5프레임 이내. `scripts/c276-proof.cjs` newGame 을 지금 시작 흐름([네] 확인·이름 한 화면)에 맞춤.

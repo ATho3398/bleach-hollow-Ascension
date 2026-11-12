@@ -81,9 +81,10 @@ describe('241-B 4: 온천은 탕에 다 앉은 뒤부터 찬다', () => {
     expect(v).toContain('export const SPA_STEP_MS = 300;');
     expect(HH.spaEnterSeconds).toBe(2.4);
   });
-  it("튜토리얼 온천 카드: spaTo(80%)에서 '가득 찼다' 대신 그 값", () => {
+  it("튜토리얼 온천 카드: 체력 가득까지 쉬고 '가득 찼다' (GDD 245장 7 — 241-B 4 의 80% 되돌림)", () => {
     const sc = RECOVER_SCENES.find((x) => x.id === 'to-spa')!;
-    expect(sc.done).toBe('체력이 {spaToPct}%까지 찼다!');
+    expect(sc.done).toBe('체력이 가득 찼다!');
+    expect(BALANCE.provisional.tutorialRecover.spaTo).toBe(1);
   });
 });
 

@@ -17,14 +17,13 @@ const TC = NX.bond.touch;
 const MIN = 60_000;
 
 describe('243장 5 첫 포식 화면', () => {
-  it("'어느 갈래를 골라도 같다' 문구 삭제 · 갈래 버튼마다 '모두 같은 효과' · 오른쪽 = 쓰러뜨린 적 카드", () => {
+  it("'어느 갈래를 골라도 같다' 문구 삭제 · 오른쪽 = 쓰러뜨린 적 카드 ('모두 같은 효과' 줄은 GDD 245장 5 에서 삭제)", () => {
     const g = read('src/ui/guideView.ts');
     expect(g).not.toContain('어느 갈래를 골라도 모든 능력치가 똑같이 오른다');
     expect(g).toContain('foeCardEl(faction, offer, foe)');
     const a = read('src/ui/absorbView.ts');
-    expect(a).toContain("export const TUTORIAL_SAME_EFFECT = '모두 같은 효과';");
-    expect(a).toMatch(/if \(exp\.tutorial\) \{\s+sm\.classList\.add\('bha-absorb__risk--same'\)/);
-    expect(read('src/ui/bha/guide.css')).toContain('.bha-tutabsorb .bha-absorb__risk--same');
+    expect(a).not.toContain('모두 같은 효과');
+    expect(read('src/ui/bha/guide.css')).not.toContain('bha-absorb__risk--same');
   });
 });
 

@@ -514,8 +514,20 @@ export function claimDexRewards(save: SaveData, nowMs: number = Date.now(), defs
   });
 }
 
+/** 튜토리얼 안내가 아직 남았다 (GDD 245장 8): 홈 안내·첫 모험·회복 안내·'다음 할 일' 중 하나라도 띄울 차례 */
+export function tutorialInProgress(save: Pick<SaveData, 'help'>): boolean {
+  return TUTORIAL_FLOW_GUIDES.some((id) => guidePending(save.help, id));
+}
+const TUTORIAL_FLOW_GUIDES = ['home-intro', 'first-run', 'recover', 'first-run-room'] as const;
+
 /** 돌봄 요청 시계 (GDD 82장): 방을 열 때·방에 있는 동안 부른다. 놓친 요청은 런 로그 care.missed 에 센다. 새 요청이 막 생겼으면 true */
 export function tickCare(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): boolean {
+  // 튜토리얼 중에는 돌봄 요청(쓰다듬기·재우기 배지)을 만들지 않는다 — 끝난 뒤부터 첫 요청 시계(firstDelayMinutes)가 간다 (GDD 245장 8)
+  if (tutorialInProgress(save)) {
+    save.nest.careRequest = null;
+    save.nest.nextCareAt = nowMs + BALANCE.provisional.nest.careRequest.firstDelayMinutes * 60_000;
+    return false;
+  }
   const r = tickCareRequest(save.nest, nowMs, rand);
   if (r.missed) save.runLog.care.missed++;
   return r.created;
@@ -707,17 +719,9 @@ export function firstRunPending(save: Pick<SaveData, 'help' | 'runLog'>): boolea
   return guidePending(save.help, 'first-run') && save.runLog.runs.length === 0;
 }
 
-/** 새 게임 시작 먹이 (GDD 241-C 5): 기본 지급 + 일반 먹이 종류마다 startNormalFoods 개 */
-function startFoodStock(): FoodStock {
-  const s = newFoodStock();
-  const n = BALANCE.provisional.startNormalFoods;
-  for (const [id, def] of Object.entries(BALANCE.provisional.nest.foods)) if (def.type === 'normal') s[id as keyof FoodStock] = Math.max(s[id as keyof FoodStock] ?? 0, n);
-  return s;
-}
-
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
-    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: startFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약·일반 먹이 (241-C 5)
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: newFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약 (241-C 5). 일반 먹이는 튜토리얼 첫 끼니 뒤 (245장 2)
     lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {}, enemyDex: {}, dexSort: newDexSortState(),
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
     settings: null, gender: DEFAULT_GENDER, name: null,

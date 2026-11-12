@@ -478,10 +478,10 @@
   "ascension": { "name": "아란칼화", "desc": "가면을 깨고 사신의 힘에 닿는다. 클리어 후 레스렉시온을 쓸 수 있고 모습이 아란칼로 바뀐다.", "foe": "가면 속의 짐승", "cutin": "가면이 깨진다 — 아란칼화!", "completeText": ["가면이 깨지며 사신의 힘에 닿았다.", "짐승의 껍질을 벗고 아란칼로 눈을 떴다."], "lookChange": true, "artTier": 5, "formNameKey": "name" },
   "liberation": {
     "baseName": "영력 해방",
-    "baseCutin": "영력을 끌어올린다 — 영력 해방!",
+    "baseCutin": "영력 해방!",
     "baseEndText": "해방이 풀렸다. 광기가 스며든다…",
     "name": "레스렉시온",
-    "cutin": "본능을 해방한다 — 레스렉시온!",
+    "cutin": "레스렉시온!",
     "endText": "해방이 풀렸다. 광기가 스며든다…",
     "formKey": "name",
     "formCutin": "{command}, {name}!",

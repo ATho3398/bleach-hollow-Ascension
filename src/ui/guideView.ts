@@ -58,14 +58,14 @@ export function tutorialAbsorbView(root: HTMLElement, faction: FactionConfig, ex
     if (!tutorialAbsorb(exp).ok) return onDone();
     result();
   });
-  // 갈래 줄 + 설명 칸을 한 덩어리로: 첫 흡수 안내 2장(guides first-absorb practice)이 이 덩어리를 강조하고 카드는 그 밖에 놓인다
+  // 갈래 줄 + 설명 칸을 한 덩어리로. 첫 흡수 안내(guides first-absorb, GDD 245장 5)는 갈래 버튼을 하나씩 강조해 설명하고 마지막에 [흡수] 버튼을 가리킨다
   const pick = el('div', 'bha-stack bha-absorb__pick');
   pick.append(picker.actions, picker.desc, picker.go);
   lcdPage(root, { cls: 'bha-absorbpage bha-tutabsorb', cols: 'minmax(0, 1.1fr) minmax(0, 0.9fr)' }, head(`첫 ${act}`), [
     el('p', 'bha-dim bha-absorb__lead', `${foe}을(를) 쓰러뜨렸다.`),
     pick,
   ], [
-    // GDD 243장 5: 갈래 설명과 어긋나던 '어느 갈래를 골라도 같다' 문구 삭제(버튼마다 '모두 같은 효과') — 빈 오른쪽엔 쓰러뜨린 적 카드
+    // GDD 243장 5: 갈래 설명과 어긋나던 '어느 갈래를 골라도 같다' 문구 삭제 — 빈 오른쪽엔 쓰러뜨린 적 카드. 갈래 설명은 안내 카드가 버튼 하나씩 (245장 5)
     foeCardEl(faction, offer, foe),
   ]);
   picker.first.focus({ preventScroll: true });

@@ -17,12 +17,14 @@ describe('73장 안내 문구 줄바꿈', () => {
     expect(parseLines('')).toEqual([]);
   });
 
-  it('첫 포식 1/2 갈래 목록 (C.235 GDD 157장 3: 첫 줄 + 네 갈래): 항목마다 한 줄, 이름 굵게 (이어 붙인 · 없음)', () => {
-    const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'][0] as { body: string };
-    const lines = parseLines(g.body);
-    expect(lines).toHaveLength(5);
-    expect(lines.slice(1).every((l) => l[0]!.b)).toBe(true);
-    expect(g.body).not.toContain(' · ');
+  it('첫 포식 갈래 = 카드 한 장에 하나씩 (GDD 245장 5 — 옛 C.235 한 장 목록): 갈래 이름이 제목, 그 버튼을 강조', () => {
+    const cards = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'] as { id: string; title: string; targets: string[]; body: string }[];
+    for (const m of ['both', 'trait', 'stat', 'none']) {
+      const c = cards.find((x) => x.id === `mode-${m}`)!;
+      expect(c.title).toBe(`{absorbModeNames.${m}}`);
+      expect(c.targets).toEqual([`@.bha-absorb__actions [data-mode="${m}"]`]);
+      expect(c.body).not.toContain(' · ');
+    }
   });
 
   it('안내·튜토리얼 문구: 한 줄에 문장이 둘 이상 이어 붙어 있지 않다 (문장마다 줄바꿈)', () => {

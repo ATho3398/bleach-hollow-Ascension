@@ -441,13 +441,20 @@ export interface Finisher {
   matchup?: Matchup;
 }
 
+/** 적 공격 한 번의 분류 (GDD 245장 11): 물리·특수. 혼합(옛 평균)은 굴린 뒤라 없음 — 각본 전투 등 분류를 안 쓰는 피해는 표시 없음 */
+export type HitCategory = 'physical' | 'special';
+const shownCat = (c: AttackCategory): HitCategory | undefined => (c === 'mixed' ? undefined : c);
+
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
   | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean }
-  | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean }
+  /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
+  | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean }
   | { kind: 'heavy-cast'; seconds: number }
-  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup; crit?: boolean; landed?: boolean }
+  /** 강공격 빔 발사 준비 (GDD 245장 3): 예고가 끝나는 틱(atTick)에 빔이 닿고 그 순간 피해 판정 — 화면은 지금 공격 모션을 시작해 빔이 atTick 에 닿게 한다(타격 지연 hitDelay.heavy 만큼 앞서). 그 뒤 heavy-hit 는 landed: true */
+  | { kind: 'heavy-windup'; atTick: number }
+  | { kind: 'heavy-hit'; damage: number; guarded: boolean; reflected: number; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** 휘두르기 (GDD 214장, C.357): 공격이 발동했고 피해는 atTick 에 들어간다. hit = 그때 다시 나올 사건(landed: true). 화면은 이때 공격 모션을 시작하고, 피해 숫자·체력 막대는 hit 가 나올 때 */
   | { kind: 'swing'; hit: SwingHit; atTick: number }
   /** 독 지속 피해 한 번 (GDD 20-2) */
@@ -457,7 +464,7 @@ export type CombatEvent =
   | { kind: 'seal'; seconds: number }
   | { kind: 'stance'; seconds: number }
   | { kind: 'stance-end' }
-  | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean }
+  | { kind: 'counter'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** 해방 게이지가 찼다 (GDD 83장) */
   | { kind: 'liberation-ready' }
   | { kind: 'spawn'; index: number; block: Block['kind'] }
@@ -560,7 +567,8 @@ export interface CombatState {
     /** 다음 특수 행동이 패턴 순서의 몇 번째인가 */
     actionIndex: number;
     /** 강공격 시전(예고) 중이면 남은 틱. hitsLeft = 이 시전 뒤에 이어질 연속 강공격 수 */
-    cast: { ticks: number; total: number; hitsLeft: number } | null;
+    /** windup = 빔 발사 준비 사건을 냈다 (GDD 245장 3 — 그 뒤로는 경직으로 늦춰지지 않는다: 빔이 이미 나가는 중) */
+    cast: { ticks: number; total: number; hitsLeft: number; windup?: boolean } | null;
     /** 적 능력치 = 기준 능력치 × 성향 (GDD 20-3) */
     stats: Stats;
     /** 독 지속 피해: 남은 틱과 틱당 피해 */
@@ -1683,6 +1691,19 @@ export function scriptHeavyCast(s: CombatState, seconds: number): void {
   const total = ticksOf(s.params, seconds);
   s.enemy.cast = { ticks: total, total, hitsLeft: 0 };
   emit(s, { kind: 'heavy-cast', seconds });
+  heavyWindup(s);
+}
+
+/**
+ * 강공격 빔 발사 준비 (GDD 245장 3): 예고가 끝나기 hitDelay.heavy(빔 모션이 닿는 데 걸리는 시간) 전에 'heavy-windup' 을 한 번 낸다.
+ * 화면은 그때 모션을 시작해 예고가 끝나는 틱에 빔이 닿고, 엔진은 그 틱에 바로 판정한다(막기 중이면 그 순간 막힘). 예고가 더 짧으면 예고 시작에 바로
+ */
+function heavyWindup(s: CombatState): void {
+  const c = s.enemy.cast;
+  if (!c || c.windup || c.ticks <= 0) return;
+  if (c.ticks > hitDelayTicks(s.params, s.params.hitDelay.heavy)) return;
+  c.windup = true;
+  emit(s, { kind: 'heavy-windup', atTick: s.tick + c.ticks }); // 남은 틱마다 한 번씩 줄어 0 이 되는 틱 = 판정 틱
 }
 
 /** 해방 게이지 적립 (GDD 83장, 옛 저장 게이지): 블록을 쓸 때 + 피해를 주고받을 때(95장 B2) 찬다. 해방 중에는 차지 않고(끝나면 0 부터), 100 에서 멈춘다 */
@@ -1701,7 +1722,7 @@ function applyChainBonus(s: CombatState, bonus: ChainBonus): void {
     const d = ticksOf(p, bonus.value);
     s.enemy.attackTimer += d;
     if (hasSpecialActions(s.enemy.def.pattern)) s.enemy.actionTimer += d;
-    if (s.enemy.cast) s.enemy.cast.ticks += d;
+    if (s.enemy.cast && !s.enemy.cast.windup) s.enemy.cast.ticks += d; // 빔이 이미 나가는 중이면 그대로 (GDD 245장 3)
   } else if (bonus.kind === 'reflect') {
     s.guard.reflect = Math.max(s.guard.reflect, bonus.value);
   } else {
@@ -1988,10 +2009,33 @@ export function enemyMatchup(s: CombatState): Matchup {
 }
 
 /** 적 공격 피해 (GDD 20-3): 기본 공격 N회 분량 × 흔들림 × 받는 피해 배율 × 능력치 비(적 → 나, 적 분류) × 상성 × 분류별 받는 피해 */
-function enemyDamage(s: CombatState, inAttacks: number): number {
+/**
+ * 이번 적 공격의 분류 (GDD v6 7-10, 보관본 245장 11 정정): 공격마다 데이터로 — 일반 공격·반격 = attackCategory, 강공격 = pattern.heavyCategories[순번].
+ * 없으면 그 적 category 를 물려받는다(물리 적 = 전부 물리, 특수 적 = 전부 특수). mixed 면 physicalShare(없으면 balance mixedPhysicalShare) 비율로 굴린다. 적 id 분기 없음
+ */
+function enemyAttackCat(s: CombatState, heavyOrder: number | null = null): AttackCategory {
+  const def = s.enemy.def;
+  const pat = def.pattern;
+  const list = heavyOrder !== null && pat && 'heavyCategories' in pat ? pat.heavyCategories : undefined;
+  const c = (heavyOrder !== null ? list?.[heavyOrder] : def.attackCategory) ?? def.category;
+  if (c !== 'mixed') return c;
+  return nextFloat(s.rng) < (def.physicalShare ?? CX.mixedPhysicalShare) ? 'physical' : 'special';
+}
+
+/** 이번 강공격의 한 주기 안 순번(0부터): 연속 강공격 = 몇 번째 타, 강공격·봉인 번갈아 = 순서 속 몇 번째 강공격 */
+function heavyOrderOf(s: CombatState, chainLeft: number): number {
+  const pat = s.enemy.def.pattern;
+  if (pat?.kind === 'heavy-chain') return Math.max(0, pat.hits - 1 - chainLeft);
+  if (pat?.kind === 'heavy-seal') {
+    const at = (s.enemy.actionIndex - 1 + pat.sequence.length) % pat.sequence.length;
+    return Math.max(0, pat.sequence.slice(0, at + 1).filter((a) => a === 'heavy').length - 1);
+  }
+  return 0;
+}
+
+function enemyDamage(s: CombatState, inAttacks: number, cat: AttackCategory = s.enemy.def.category): number {
   const p = s.params;
   const jitter = 1 + (nextFloat(s.rng) * 2 - 1) * p.enemyDamageVariance;
-  const cat = s.enemy.def.category;
   const els = enemyElements(s.enemy.def);
   const ratio = statRatio(s.enemy.stats, s.player.stats, cat);
   const em = enemyMatchup(s);
@@ -2038,8 +2082,9 @@ function evaded(s: CombatState): boolean {
   return true;
 }
 
-/** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다 */
-function resolveHeavy(s: CombatState): void {
+/** 강공격 착탄: 막기 상태면 크게 줄고(막기 성공), 반사 효과가 있으면 막은 피해를 돌려준다.
+ *  GDD 245장 3: 예고가 끝나는 이 틱에 바로 판정·피해(옛 hitDelay.heavy 만큼 뒤 착탄 삭제). 빔 모션은 heavy-windup 때 시작했으므로 그랬으면 사건은 landed */
+function resolveHeavy(s: CombatState, wound = false, chainLeft = 0): void {
   const pattern = s.enemy.def.pattern;
   const sc = s.script;
   if (sc) {
@@ -2048,13 +2093,14 @@ function resolveHeavy(s: CombatState): void {
     const guarded = s.guard.ticks > 0;
     if (guarded) s.guardSuccesses++;
     const damage = guarded ? 0 : Math.max(0, s.player.hp - s.player.maxHp * sc.leaveHpFraction);
-    strike(s, s.params.hitDelay.heavy, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected: 0, matchup: enemyMatchup(s), crit: false }, elements: enemyElements(s.enemy.def) });
+    strike(s, 0, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected: 0, matchup: enemyMatchup(s), crit: false, ...(wound ? { landed: true } : {}) }, elements: enemyElements(s.enemy.def) });
     return;
   }
   if (!pattern || !('heavyInAttacks' in pattern)) return;
   if (evaded(s)) return;
   const crit = rollCrit(s, 'enemy');
-  let damage = enemyDamage(s, pattern.heavyInAttacks * (pattern.kind === 'heavy-chain' ? s.params.heavyChainHitMultiplier : s.params.heavyHitMultiplier)) * (crit ? s.params.critMultiplier : 1);
+  const cat = enemyAttackCat(s, heavyOrderOf(s, chainLeft));
+  let damage = enemyDamage(s, pattern.heavyInAttacks * (pattern.kind === 'heavy-chain' ? s.params.heavyChainHitMultiplier : s.params.heavyHitMultiplier), cat) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
   let reflected = 0;
   if (guarded) {
@@ -2063,7 +2109,7 @@ function resolveHeavy(s: CombatState): void {
     s.guardSuccesses++;
     reflected = blocked * s.guard.reflect;
   }
-  strike(s, s.params.hitDelay.heavy, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected, matchup: enemyMatchup(s), crit }, elements: enemyElements(s.enemy.def), reflected });
+  strike(s, 0, { target: 'player', amount: damage, event: { kind: 'heavy-hit', damage, guarded, reflected, matchup: enemyMatchup(s), crit, cat: shownCat(cat), ...(wound ? { landed: true } : {}) }, elements: enemyElements(s.enemy.def), reflected });
 }
 
 /** 패턴의 특수 행동 하나를 시작한다 (종류별 일반 처리, 적 id 분기 없음) */
@@ -2087,6 +2133,7 @@ function startAction(s: CombatState, pattern: Extract<EnemyPattern, { everySecon
     const total = t(pattern.castSeconds);
     e.cast = { ticks: total, total, hitsLeft: pattern.kind === 'heavy-chain' ? pattern.hits - 1 : 0 };
     emit(s, { kind: 'heavy-cast', seconds: pattern.castSeconds });
+    heavyWindup(s);
   } else if (pattern.kind === 'heavy-seal') {
     s.sealTicks = Math.max(s.sealTicks, t(pattern.sealSeconds));
     emit(s, { kind: 'seal', seconds: pattern.sealSeconds });
@@ -2100,10 +2147,11 @@ function counterIfStance(s: CombatState): void {
   if (!s.enemy.stance || pattern?.kind !== 'stance' || s.status !== 'playing') return;
   if (evaded(s)) return;
   const crit = rollCrit(s, 'enemy');
-  const raw = enemyDamage(s, pattern.counterInAttacks) * (crit ? s.params.critMultiplier : 1);
+  const cat = enemyAttackCat(s);
+  const raw = enemyDamage(s, pattern.counterInAttacks, cat) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
   const damage = raw * (1 - guardReductionOf(s));
-  strike(s, s.params.hitDelay.counter, { target: 'player', amount: damage, event: { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit }, elements: enemyElements(s.enemy.def) });
+  strike(s, s.params.hitDelay.counter, { target: 'player', amount: damage, event: { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit, cat: shownCat(cat) }, elements: enemyElements(s.enemy.def) });
 }
 
 /** 한 틱 진행: 버프 → 안개 섞기 → 블록 생성 → 내 기본 공격 → 적 행동 → 시간 제한 */
@@ -2181,22 +2229,26 @@ function advanceTick(s: CombatState): void {
     emit(s, { kind: 'stance-end' });
   }
   // 넉백 (GDD 49장 혈 블록): 적의 공격·시전·특수 행동 타이머가 모두 멈춘다
-  if ((s.knockbackTicks ?? 0) > 0) {
+  // 빔이 이미 나가는 중(heavy-windup 뒤)이면 넉백도 강공격 판정을 늦추지 않는다 — 빔이 닿는 순간 = 판정 (GDD 245장 3)
+  if ((s.knockbackTicks ?? 0) > 0 && !e.cast?.windup) {
     s.knockbackTicks!--;
   } else if (e.cast) {
+    if ((s.knockbackTicks ?? 0) > 0) s.knockbackTicks!--;
     if (--e.cast.ticks <= 0) {
       const more = e.cast.hitsLeft;
+      const wound = !!e.cast.windup;
       e.cast = null;
-      resolveHeavy(s);
+      resolveHeavy(s, wound, more);
       if (s.status === 'playing' && more > 0 && pattern?.kind === 'heavy-chain') {
         const total = t(pattern.followCastSeconds);
         e.cast = { ticks: total, total, hitsLeft: more - 1 };
         emit(s, { kind: 'heavy-cast', seconds: pattern.followCastSeconds });
+        heavyWindup(s);
       } else {
         e.attackTimer = attackTicks;
         if (hasSpecialActions(pattern)) e.actionTimer = t(pattern.everySeconds);
       }
-    }
+    } else heavyWindup(s);
   } else if (!s.script) {
     // 각본 전투는 적 일반 공격·특수 행동이 없다 — 강공격은 각본이 시전시킨다 (GDD 123장 5)
     if (--e.attackTimer <= 0) {
@@ -2204,10 +2256,11 @@ function advanceTick(s: CombatState): void {
       if (!evaded(s)) {
         const crit = rollCrit(s, 'enemy');
         // 기본 공격 피해 배율 (C.306, GDD 193장 1): 적 등급별 — 강공격·반격·졸개(105장 '최대 체력 약 20%')는 그대로
-        const raw = enemyDamage(s, e.def.attackInAttacks) * (p.attackScale[e.def.class] ?? 1) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
+        const cat = enemyAttackCat(s);
+        const raw = enemyDamage(s, e.def.attackInAttacks, cat) * (p.attackScale[e.def.class] ?? 1) * (p.enemyHitPacing ?? 1) * (crit ? p.critMultiplier : 1);
         const guarded = s.guard.ticks > 0;
         const damage = raw * (1 - guardReductionOf(s));
-        strike(s, p.hitDelay.enemy, { target: 'player', amount: damage, event: { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit }, elements: enemyElements(e.def) });
+        strike(s, p.hitDelay.enemy, { target: 'player', amount: damage, event: { kind: 'enemy-attack', damage, guarded, matchup: enemyMatchup(s), crit, cat: shownCat(cat) }, elements: enemyElements(e.def) });
       }
     }
     if (hasSpecialActions(pattern) && s.status === 'playing' && --e.actionTimer <= 0) startAction(s, pattern);

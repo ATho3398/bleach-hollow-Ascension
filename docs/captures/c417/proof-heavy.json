@@ -1,0 +1,119 @@
+{
+ "facts": {
+  "shots": [
+   "02-tut-heavy-guarded",
+   "08-tut-heavy-hit",
+   "07-elite-heavy-hit",
+   "07-elite-heavy-guarded",
+   "09-boss-heavy-hit",
+   "09-boss-heavy-guarded"
+  ],
+  "stages": [],
+  "tutDelay": 0.593,
+  "tutHeavy": [
+   {
+    "stage": "guard-land",
+    "damage": 0,
+    "landed": true,
+    "guardedAtHit": true,
+    "windupToHitMs": 1120,
+    "floatText": "막기",
+    "castEndVsHitFrames": 0.2,
+    "beamReactVsHitFrames": -0.2,
+    "floatVsHitFrames": 0,
+    "ok": true
+   },
+   {
+    "stage": "hurt-hold",
+    "damage": 185.9,
+    "landed": true,
+    "guardedAtHit": false,
+    "windupToHitMs": 604,
+    "floatText": "−186",
+    "castEndVsHitFrames": 0.3,
+    "beamReactVsHitFrames": -0.3,
+    "floatVsHitFrames": 0.1,
+    "ok": true
+   }
+  ],
+  "eliteDelay": 0.275,
+  "eliteHeavy": [
+   {
+    "stage": null,
+    "damage": 42.9,
+    "landed": true,
+    "guardedAtHit": false,
+    "windupToHitMs": 301,
+    "floatText": "특수 −43",
+    "castEndVsHitFrames": 0.3,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0.1,
+    "ok": true
+   },
+   {
+    "stage": null,
+    "damage": 0,
+    "landed": true,
+    "guardedAtHit": true,
+    "windupToHitMs": 295,
+    "floatText": "막기",
+    "castEndVsHitFrames": 0.3,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0,
+    "ok": true
+   }
+  ],
+  "bossDelay": 0.215,
+  "bossHeavy": [
+   {
+    "stage": null,
+    "damage": 19.3,
+    "landed": true,
+    "guardedAtHit": false,
+    "windupToHitMs": 301,
+    "floatText": "물리 −19",
+    "castEndVsHitFrames": 0.4,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0.1,
+    "ok": true
+   },
+   {
+    "stage": null,
+    "damage": 14.1,
+    "landed": true,
+    "guardedAtHit": false,
+    "windupToHitMs": 300,
+    "floatText": "물리 −14",
+    "castEndVsHitFrames": 0.5,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0.3,
+    "ok": true
+   },
+   {
+    "stage": null,
+    "damage": 0,
+    "landed": true,
+    "guardedAtHit": true,
+    "windupToHitMs": 296,
+    "floatText": "막기",
+    "castEndVsHitFrames": 0.4,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0,
+    "ok": true
+   },
+   {
+    "stage": null,
+    "damage": 12.7,
+    "landed": true,
+    "guardedAtHit": false,
+    "windupToHitMs": 300,
+    "floatText": "물리 −13",
+    "castEndVsHitFrames": 0.2,
+    "beamReactVsHitFrames": 0,
+    "floatVsHitFrames": 0.1,
+    "ok": true
+   }
+  ]
+ },
+ "errors": []
+}

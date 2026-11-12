@@ -15,15 +15,47 @@
         "id": "absorb",
         "targets": [],
         "title": "{absorbActionName}",
-        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 블록과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 블록만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 얻지 않고 놓아준다"
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n{absorbActionName}에는 갈래가 네 가지 있다.\n하나씩 보자."
+      },
+      {
+        "id": "mode-both",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"both\"]"
+        ],
+        "title": "{absorbModeNames.both}",
+        "body": "블록과 능력치를 함께 얻는다."
+      },
+      {
+        "id": "mode-trait",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"trait\"]"
+        ],
+        "title": "{absorbModeNames.trait}",
+        "body": "블록만 얻고, 그 속성 쪽으로 자란다."
+      },
+      {
+        "id": "mode-stat",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"stat\"]"
+        ],
+        "title": "{absorbModeNames.stat}",
+        "body": "블록 없이 능력치를 두 배로 얻는다."
+      },
+      {
+        "id": "mode-none",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"none\"]"
+        ],
+        "title": "{absorbModeNames.none}",
+        "body": "얻지 않고 놓아준다."
       },
       {
         "id": "practice",
         "targets": [
-          "@.bha-absorb__pick"
+          "@.bha-absorb__go"
         ],
         "title": "첫 {absorbActionName}",
-        "body": "갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자."
+        "body": "갈래를 누르면 위 칸에 자세한 설명이 나온다.\n하나 골라 이 버튼을 눌러 {absorbActionName}해 보자."
       }
     ],
     "first-run-room": [

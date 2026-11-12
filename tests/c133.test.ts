@@ -94,7 +94,7 @@ describe('82장 응답·거절', () => {
 describe('82장 런 로그·세이브', () => {
   it('런 로그 care 에 응답·거절·놓침을 센다', () => {
     expect(emptyRunLog().care).toEqual({ answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 });
-    const s = newSaveData('hollow', T0);
+    const s = newSaveData('hollow', T0); s.help.guides = {}; // 튜토리얼이 끝난 세이브 — 튜토리얼 중엔 돌봄 요청이 없다 (GDD 245장 8)
     expect(careNest(s, 'pet', T0)).toBe('refused');
     tickCare(s, s.nest.nextCareAt, () => 0.9); // pet 요청
     expect(careNest(s, 'sleep', s.nest.nextCareAt)).toBe('refused');

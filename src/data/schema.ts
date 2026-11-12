@@ -23,6 +23,10 @@ export interface EnemyDef {
   element: string;
   /** 공격 분류 (GDD 20-1): 적의 공격(기본·강공격·반격)이 내 방어(물리)·정신력(특수)·둘의 평균(혼합) 중 무엇에 막히는가 */
   category: AttackCategory;
+  /** 일반 공격(·반격)의 분류 (GDD v6 7-10, 임시·provisional): 없으면 category 를 물려받는다. mixed = 공격마다 physicalShare 비율로 물리/특수를 굴림 */
+  attackCategory?: AttackCategory;
+  /** 굴림(mixed)일 때 물리로 나갈 비율 0~1 (없으면 balance combat.mixedPhysicalShare). 나머지는 특수 */
+  physicalShare?: number;
   /** 능력치 성향 (GDD 20-3): 그 단계 기준 능력치에 곱하는 배율. 없는 능력치는 1. 방어·정신력 차이가 내 공격 분류 선택을 의미 있게 한다. 임시 */
   statBias?: Partial<Record<StatId, number>>;
   /** 흡수하면 오르는 노력치 (GDD 20-4, 임시): 능력치 → 점수 */
@@ -56,6 +60,8 @@ export type EnemyPattern =
   | (PatternBase & { kind: 'sturdy'; attackSeconds: number })
   | (PatternBase & {
       kind: 'heavy-seal';
+      /** 강공격 순번(한 주기 안 1번째·2번째…)별 분류 (GDD v6 7-10, 임시·provisional). 없거나 모자라면 그 적 category, mixed = 굴림 */
+      heavyCategories?: AttackCategory[];
       /** 특수 행동 간격(초): 직전 행동이 끝난 뒤 이만큼 지나면 다음 행동 */
       everySeconds: number;
       /** 행동 순서 (끝나면 처음부터 반복) */
@@ -69,6 +75,8 @@ export type EnemyPattern =
     })
   | (PatternBase & {
       kind: 'heavy-chain';
+      /** 강공격 순번(한 주기 안 1번째·2번째…)별 분류 (GDD v6 7-10, 임시·provisional). 없거나 모자라면 그 적 category, mixed = 굴림 */
+      heavyCategories?: AttackCategory[];
       everySeconds: number;
       /** 첫 강공격 시전 시간(초) */
       castSeconds: number;

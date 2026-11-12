@@ -3,7 +3,8 @@
 import { infoTip } from './infoTip';
 import { statusInfo, type StatusInfoKind } from './statusInfo';
 import { fullnessOf } from './fullness';
-import { STAT_IDS, type Stats, type TerrainTileDef } from '../../data/schema';
+import { STAT_IDS, type StatId, type Stats, type TerrainTileDef } from '../../data/schema';
+import { STAT_DISPLAY_NOTE } from '../../statDisplay';
 import { statName } from '../../data/elements';
 import { BALANCE } from '../../config/balance';
 import { button, el, icon, meter, provisionalTag } from './dom';
@@ -83,7 +84,7 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
 
 /** 능력치 6줄 (GDD 20-3): 종족값 + 노력치. C.131(GDD 77장 ①)부터 막대 없이 이름 + 값만 (ref 는 옛 호출 호환용).
  *  노력치(+계승)는 값 옆 따로 굵게·한 단계 크게 (.bha-ev, GDD 160장 6) */
-export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: number, carry?: Stats): HTMLElement {
+export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: number, carry?: Stats, shown?: Partial<Record<StatId, { text: string }>>): HTMLElement {
   const root = el('div', 'bha-stack bha-stats');
   for (const k of STAT_IDS) {
     const v = Math.round(stats[k]);
@@ -91,7 +92,10 @@ export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: num
     const extra = [ev[k] > 0 ? `+${ev[k]}` : '', c > 0 ? `계승 +${c}` : ''].filter(Boolean).join(' · ');
     // 능력치 절대 상한 (GDD 22-1): 닿으면 '상한' 표시
     const capped = v >= STAT_MAX ? ' 상한' : '';
-    const row = statRow(statName(k, factionId), `${v}${capped}`);
+    // 화면 값 (GDD 245장 4): 체력 = 최대 체력 · 속도 = 'n.n초에 1번' · 방어·정신력 = 받는 피해 배율. 힘·지능은 능력치 그대로
+    const note = shown?.[k] ? STAT_DISPLAY_NOTE[k] : undefined;
+    const row = statRow(statName(k, factionId), shown?.[k] ? `${note ? `${note} ` : ''}${shown[k]!.text}${capped}` : `${v}${capped}`);
+    row.dataset.stat = k;
     if (extra) row.append(evText(extra));
     if (capped) row.dataset.capped = 'true';
     root.append(row);

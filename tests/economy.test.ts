@@ -45,9 +45,9 @@ const storage = () => {
 };
 
 describe('먹이 = 전리품 (GDD 23-1)', () => {
-  it('시작 지급 간식 5·보통 3, 상한 9, 모르는 값 정리', () => {
+  it('시작 지급 간식 5(일반 먹이는 튜토리얼 첫 끼니 뒤 — GDD 245장 2), 상한 9, 모르는 값 정리', () => {
     const s = newFoodStock();
-    expect(s).toEqual({ ...emptyFoodStock(), snack: 5, basic: 3 });
+    expect(s).toEqual({ ...emptyFoodStock(), snack: 5 });
     expect(addFood(s, 'snack', 10)).toBe(FX.cap - 5);
     expect(s.snack).toBe(FX.cap);
     expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: FX.cap, hearty: 2 });

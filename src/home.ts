@@ -2,8 +2,10 @@
 // 수치는 balance.ts provisional.nest.homeHp. 런 로그 homeHeals(온천, 옛 기록은 포션도)를 여기서 남긴다. 종족 무관 — 온천 이름은 종족 설정 spaName.
 // 튜토리얼(C.199 회복 안내)도 이 함수들을 부른다: spaEnter → spaSoak(분) → spaLeave, grantFood → feedNest.
 import { buildCombatParams } from './engine/absorb';
-import { defaultCombatParams, playerStatsOf } from './engine/combat';
-import { applyEvolutionToParams } from './engine/evolution';
+import { defaultCombatParams, playerStatsOf, type CombatParams } from './engine/combat';
+import { applyEvolutionToParams, refStatOf } from './engine/evolution';
+import type { StatId } from './data/schema';
+import { statDisplay, type StatDisplay } from './statDisplay';
 import { addFood } from './engine/food';
 import { applyGearToParams, gearCarry } from './engine/gear';
 import type { FoodId } from './engine/faction';
@@ -29,11 +31,22 @@ export function homeHp(save: Pick<SaveData, 'nest'>): HomeHp {
 
 /** 원정에서의 최대 체력 (방 체력 막대 '현재 / 최대' 숫자): 원정 전투와 같은 식 — 빌드·진화·붕옥/초월체 보너스·수련·장비. 쇠약·빈사 축소는 빼고 본래 값 */
 export function homeMaxHp(save: SaveData): number {
+  const p = expeditionParamsOf(save);
+  return p.playerMaxHp * (playerStatsOf(p).hp / p.playerRefStat) * p.playerHpScale;
+}
+
+/** 원정 전투와 같은 식으로 만든 전투 수치 (빌드·진화·붕옥/초월체 보너스·수련·장비) */
+function expeditionParamsOf(save: SaveData): CombatParams {
   const params = buildCombatParams(save.build, save.factionId);
   applyEvolutionToParams(params, save.evolution, save.factionId, statBonusOf(save).total, save.training.completed);
   applyGearToParams(params, gearCarry(save.shared.gear), false);
-  const p = { ...defaultCombatParams(), ...params };
-  return p.playerMaxHp * (playerStatsOf(p).hp / p.playerRefStat) * p.playerHpScale;
+  return { ...defaultCombatParams(), ...params };
+}
+
+/** 상태 화면 능력치 표시 값 (GDD 245장 4): 원정 전투와 같은 수치로 — 최대 체력 = 방 체력 막대 최대값, 공격 간격, 받는 피해 배율(지금 단계 권장 적 기준) */
+export function statusStatDisplay(save: SaveData): Record<StatId, StatDisplay> {
+  const p = expeditionParamsOf(save);
+  return statDisplay(playerStatsOf(p), refStatOf(save.evolution.tierIndex), p);
 }
 
 /** 온천 들어가기를 막는 이유 (화면 문구) */

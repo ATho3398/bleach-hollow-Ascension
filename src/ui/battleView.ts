@@ -12,7 +12,7 @@ import { traitAbbr, traitName } from '../data/traits';
 import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
-  type Block, type CombatEvent, type ElemHit, type CombatInput, type CombatParams, type CombatState,
+  type Block, type CombatEvent, type HitCategory, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf,
   scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
 } from '../engine/combat';
@@ -41,7 +41,7 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { categoryName, ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
 import { isFemaleRigLook } from '../data/art/manifest';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
@@ -157,6 +157,9 @@ interface LogLine {
 }
 
 /** 사건 한 줄 (전투 연출 텍스트) */
+/** 적 공격 분류 글자 '물리 '·'특수 ' (GDD 245장 11 — 혼합 적은 공격마다 굴린 결과). 분류가 없으면 '' */
+const catWord = (cat: HitCategory | undefined, factionId: string): string => (cat ? `${categoryName(cat, factionId)} ` : '');
+
 function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, factionId: string): LogLine | null {
   const n = (v: number) => Math.round(v);
   switch (e.kind) {
@@ -193,8 +196,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 버튼으로 막아라` };
     case 'heavy-hit':
       return e.guarded
-        ? { role: 'guard', icon: 'i-guard', text: `강공격을 막았다! ${n(e.damage)} 피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` }
-        : { role: 'cast', icon: 'i-cast', text: `강공격 적중! ${n(e.damage)} 피해` };
+        ? { role: 'guard', icon: 'i-guard', text: `강공격을 막았다! ${n(e.damage)} ${catWord(e.cat, factionId)}피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` }
+        : { role: 'cast', icon: 'i-cast', text: `강공격 적중! ${n(e.damage)} ${catWord(e.cat, factionId)}피해` };
     case 'seal':
       return { role: 'cast', icon: 'i-seal', text: `봉인! ${e.seconds}초 동안 ${labels.skillBlock} 생성 정지` };
     case 'cell-seal':
@@ -217,7 +220,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'stance-end':
       return { role: 'guard', icon: 'i-guard', text: '방어 자세가 풀렸다' };
     case 'counter':
-      return { role: 'cast', icon: 'i-cast', text: `반격! ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
+      return { role: 'cast', icon: 'i-cast', text: `반격! ${n(e.damage)} ${catWord(e.cat, factionId)}피해${e.guarded ? ' (막기로 경감)' : ''}` };
     case 'shuffle':
       return { role: 'chain', icon: 'i-swap', text: '블록 바의 순서가 섞였다' };
     case 'ability':
@@ -1031,6 +1034,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
     if (e.block === 'combo') flash('is-special', 600);
   };
+  /** 이번 강공격 판정 결과 막았나 (GDD 245장 3): 빔 모션은 판정 전에 시작하고, 빔이 닿는 프레임에 이 값(아직 판정 전이면 지금 막기 중인가)을 읽는다 */
+  let heavyGuarded: boolean | null = null;
+  /** 강공격 빔 모션이 나가는 중 (windup 뒤 판정 전) */
+  let heavyInFlight = false;
   /** 튜토리얼 마무리 체인의 블록 사건 (GDD 146장): 착탄까지 숫자를 미룬다 */
   let heldBlock: Extract<CombatEvent, { kind: 'block' }> | null = null;
   const react = (e: CombatEvent) => {
@@ -1041,6 +1048,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       note('swing', { kind: e.hit.kind, atTick: e.atTick, damage: e.hit.damage });
       // 남은 ms = 남은 틱 × 틱 길이 − 이번 프레임에 이미 쌓인 시간(acc): 다음 틱은 acc 만큼 일찍 온다 (GDD 224장 3, C.367 — 빼지 않으면 최대 한 프레임 일찍 맞음)
       attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), ...(s.script ? { bodyWindup: true } : {}) });
+      return;
+    }
+    // 강공격 빔 발사 준비 (GDD 245장 3): 예고가 끝나는 틱(atTick)에 빔이 닿게 지금 모션을 시작한다. 피해 숫자·막기 표시는 그 틱의 heavy-hit(landed) 때 — 같은 프레임
+    if (e.kind === 'heavy-windup') {
+      heavyGuarded = null;
+      heavyInFlight = true;
+      note('swing', { kind: 'heavy-hit', atTick: e.atTick, damage: 0 });
+      attack.react(e, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), guardedAt: () => heavyGuarded ?? s.guard.ticks > 0, startNow: true, ...(s.script ? { bodyWindup: true } : {}) });
       return;
     }
     // 맞은 순간(landed): 모션은 swing 때 시작했으니 숫자·번쩍임·효과음만
@@ -1099,10 +1114,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else if (e.damage > 0) {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit });
+          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
         }
         break;
       case 'heavy-hit':
+        heavyGuarded = e.guarded;
+        heavyInFlight = false;
         if (e.guarded) {
           blockedUntil = performance.now() + 1200;
           blockedDamage = e.damage;
@@ -1110,7 +1127,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard', 600);
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`, { size: 'big', critical: !!e.crit });
+          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: 'big', critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
           shake();
         }
         break;
@@ -1125,7 +1142,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           flash('is-guard');
         } else {
           replayOnce(flashHit, 'is-on', 600);
-          spawnFloat('hurt', `−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit });
+          spawnFloat('hurt', `${catWord(e.cat, faction.id)}−${n0(e.damage)}`, { size: damageTier(e.damage, hurtUnit), critical: !!e.crit }); // 물리/특수 (GDD 245장 11)
         }
         break;
       case 'end':
@@ -1618,7 +1635,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const resumed = scriptResumed > 0;
       if (resumed) scriptResumed--;
       if (resumed && !(halted() || scriptHold()) && fxHalted) attack.setPaused((fxHalted = false));
-      const f = frameTicks(resumed ? 0 : acc, resumed ? 0 : dt, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
+      // 각본 대기에서 풀린 두 프레임은 엔진 시간을 흘리지 않는다(새 연출이 다음 프레임부터 흐르므로, C.367). 단 강공격 빔이 날아가는 중(막기 안내 동안 같이 멈춰 있던 연출)이면
+      // 그 연출은 풀린 프레임부터 바로 흐르므로 엔진도 멈추기 전 몫(acc)과 이번 프레임 시간을 그대로 이어 쓴다 — 빔이 닿는 프레임 = 판정 (GDD 245장 3)
+      const keep = !resumed || heavyInFlight;
+      const f = frameTicks(keep ? acc : 0, keep ? dt : 0, testSpeedMul(), tickMs, halted() || scriptHold()); // 1배 고정 (GDD 62장, C.118) × 테스트 모드 속도 배율 (GDD 38-4, 평소 1)
       acc = f.acc;
       for (let n = 0; n < f.ticks && s.status === 'playing' && !scriptHold(); n++) {
         const usedBefore = s.itemUsed;

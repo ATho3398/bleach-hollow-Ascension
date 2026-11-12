@@ -69,6 +69,7 @@ const SCENE_ICON: Record<string, string> = {
   auto: 'i-play', tray: 'i-attack', try: 'i-practice', chain: 'i-chain-2', heavy: 'i-cast', void: 'i-void', liberation: 'i-special', after: 'i-evolve',
   // 첫 원정·타일 안내 (C.120)
   walk: 'i-loop', encounter: 'i-practice', absorb: 'i-absorb', modes: 'i-absorb', practice: 'i-evolve', next: 'i-nest', tiles: 'i-deck', tabs: 'i-deck', deck: 'i-deck', place: 'i-tile-prey', combo: 'i-tile-combo', preset: 'i-stored', draw: 'i-rare', special: 'i-tile-combo',
+  'mode-both': 'i-absorb', 'mode-trait': 'i-absorb', 'mode-stat': 'i-absorb', 'mode-none': 'i-absorb', // 첫 포식 갈래 하나씩 (GDD 245장 5)
 };
 
 /** 대상 영역을 오버레이 자리(host: LCD 창 또는 화면 전체) 기준 좌표로 돌려준다 */
@@ -368,6 +369,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   let hiddenForMove = false;
   /** 마지막으로 놓은 대상 자리 — 대상이 크게 옮겨 갈 때만 다시 놓는다(제자리에서 흔들리는 대상을 따라 창이 움직이지 않게) */
   let placedFor: Rect | null = null;
+  /** 강조 테두리를 마지막으로 맞춘 대상 자리 (GDD 245장 1) */
+  let holeFor: Rect | null = null;
   const MOVE_POLL_MS = 100;
   const showCard = (on: boolean) => {
     card.style.visibility = on ? 'visible' : 'hidden';
@@ -452,6 +455,30 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (actionsRow.scrollWidth > actionsRow.clientWidth + 0.5 || rowNeed() > card.clientWidth + 0.5) actionsRow.classList.add('is-iconic');
   }
 
+  /** 강조 테두리(구멍)를 대상 자리에 맞춘다 (GDD 245장 1: 카드는 그대로 두고 테두리만 따라가는 데도 쓴다) */
+  function placeHole(rect: Rect | null, vp: { width: number; height: number }): void {
+    const scene = SCENES[state.index]!;
+    holeFor = rect;
+    const pad = TUTORIAL_HOLE_PAD;
+    hole.classList.toggle('is-none', !rect);
+    // 그림 대상 = 노란 네모 대신 그림 모양 윤곽 (구멍은 자리·덮개만 맡고 테두리는 숨긴다)
+    const shapes = rect ? targetShapes(stageOf(scene)?.targets ?? scene.targets) : null;
+    hole.classList.toggle('is-shape', !!shapes);
+    setShapes(shapes ?? []);
+    if (rect) {
+      hole.style.left = `${rect.left - pad}px`;
+      hole.style.top = `${rect.top - pad}px`;
+      hole.style.width = `${rect.width + pad * 2}px`;
+      hole.style.height = `${rect.height + pad * 2}px`;
+    } else {
+      // 대상이 없는 장면(처음·마지막 안내): 크기 0 구멍이 화면 전체를 어둡게 덮는다
+      hole.style.left = `${vp.width / 2}px`;
+      hole.style.top = `${vp.height / 2}px`;
+      hole.style.width = '0px';
+      hole.style.height = '0px';
+    }
+  }
+
   function layout(): void {
     if (covered) return; // 숨은 동안은 잴 수 없다 — 다시 보일 때 render 가 놓는다
     actionsRow?.classList.remove('is-iconic');
@@ -501,24 +528,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     card.style.bottom = 'auto';
     card.classList.toggle('is-placed', landscape);
     fitRow();
-    const pad = TUTORIAL_HOLE_PAD;
-    hole.classList.toggle('is-none', !rect);
-    // 그림 대상 = 노란 네모 대신 그림 모양 윤곽 (구멍은 자리·덮개만 맡고 테두리는 숨긴다)
-    const shapes = rect ? targetShapes(stageOf(scene)?.targets ?? scene.targets) : null;
-    hole.classList.toggle('is-shape', !!shapes);
-    setShapes(shapes ?? []);
-    if (rect) {
-      hole.style.left = `${rect.left - pad}px`;
-      hole.style.top = `${rect.top - pad}px`;
-      hole.style.width = `${rect.width + pad * 2}px`;
-      hole.style.height = `${rect.height + pad * 2}px`;
-    } else {
-      // 대상이 없는 장면(처음·마지막 안내): 크기 0 구멍이 화면 전체를 어둡게 덮는다
-      hole.style.left = `${vp.width / 2}px`;
-      hole.style.top = `${vp.height / 2}px`;
-      hole.style.width = '0px';
-      hole.style.height = '0px';
-    }
+    placeHole(rect, vp);
     // 카드가 대상 아래(is-below)면 위쪽 꼬리, 위(is-above)면 아래쪽 꼬리. 옆·모서리·대상 없음이면 꼬리 없음
     const tail = !!rect && !aside;
     card.classList.toggle('is-below', tail && belowCard);
@@ -626,8 +636,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (hiddenForMove || card.style.visibility === 'hidden') return;
     const sc = SCENES[state.index]!;
     const r = targetRect(stageOf(sc)?.targets ?? sc.targets, host);
-    if (movedFar(r, placedFor)) return layout();
+    if (movedFar(r, placedFor, 24)) return layout();
     if (r && movedFar(r, placedFor, 2) && rectsOverlap(hostRect(card), padRect(r, TUTORIAL_HOLE_PAD))) layout();
+    // 조금 옮겨 간 대상(화면이 자리 잡는 사이 이름표가 생겨 줄이 내려가는 등): 카드는 두고 강조 테두리만 따라간다 (GDD 245장 1 — 24px 옮겼는데 테두리가 옛 자리에 남았다)
+    else if (r && movedFar(r, holeFor, 1)) placeHole(r, host === document.body ? { width: window.innerWidth, height: window.innerHeight } : { width: host.clientWidth, height: host.clientHeight });
   }, ACT_POLL_MS);
   if (SCENES[state.index]!.stages) {
     stageIdx = currentStage(SCENES[state.index]!.stages!, host);

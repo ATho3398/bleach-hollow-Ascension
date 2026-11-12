@@ -41,6 +41,14 @@ export function recoverGrantBag(save: SaveData): void {
   }
 }
 
+/** 빈사 치료 보상 (GDD 245장 9): 회복 안내 중 빈사가 풀렸으면 한 번만 치료제 3종(tutorialRecover.cureReward). 줬으면 true */
+export function grantCureReward(save: SaveData): boolean {
+  if (!recoverPending(save) || save.nest.collapsed || save.nest.dead || save.help.guides['recover-cure-reward'] === 'done') return false;
+  for (const [id, n] of Object.entries(TR.cureReward)) storeConsumable(save, id, n);
+  markGuideDone(save.help, 'recover-cure-reward');
+  return true;
+}
+
 /** ③ 구급상자 → 빈사 해제 (구급상자 1개 사용) */
 export function recoverCure(save: SaveData, nowMs: number): boolean {
   recoverGrantBag(save);
@@ -48,6 +56,7 @@ export function recoverCure(save: SaveData, nowMs: number): boolean {
   const n = (save.shared.items[CURE_ITEM_ID] ?? 1) - 1;
   if (n <= 0) delete save.shared.items[CURE_ITEM_ID];
   else save.shared.items[CURE_ITEM_ID] = n;
+  grantCureReward(save); // 빈사 치료 뒤 치료제 보상 (GDD 245장 9)
   return true;
 }
 

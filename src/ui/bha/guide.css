@@ -29,7 +29,6 @@
 .bha-absorbpage.bha-tutabsorb .bha-absorb__pick > .bha-absorb__desc { flex: none; }
 .bha-absorbpage.bha-tutabsorb .bha-lcdpage__col:has(> .bha-absorb__pick) { justify-content: safe center; }  /* GDD 243장 5: 아래 절반이 비던 것 — 갈래·설명·버튼 덩어리를 세로 가운데로 */
 /* GDD 243장 5: 갈래 버튼마다 '모두 같은 효과' 한 줄(리스크 줄 자리) · 오른쪽 빈 칸 = 쓰러뜨린 적 카드(세로 가운데) */
-.bha-tutabsorb .bha-absorb__risk--same { color: var(--bha-text-2); white-space: nowrap; }
 /* C.211 (GDD 134장 2): 튜토리얼 치명상 장면 — 캐릭터 비틀거림 · 체력 막대 붉게 깜빡 */
 .bha-wound__fig { display: flex; align-items: flex-end; justify-content: center; height: 100%; min-height: 120px; }
 .bha-wound__fig > .bha-hero { height: 100%; aspect-ratio: 1; max-width: 100%; }

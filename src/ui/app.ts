@@ -10,7 +10,7 @@ import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { GUIDES, guideVars, HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
 import { fixParticles } from '../engine/josa';
-import { grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
+import { grantCureReward, grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
 import { spaExitFx, spaHoldFull, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
@@ -424,6 +424,7 @@ export function startApp(host: HTMLElement): void {
     const s = save;
     const start = recoverStep(s);
     if (!start) return false;
+    if (grantCureReward(s)) persist(); // 빈사를 고친 뒤 껐다 켰으면 여기서 치료제 보상 (GDD 245장 9)
     recoverOpen = true;
     const props = roomOf(faction).props;
     const wm = worldMapOf(faction); // 온천 = 월드맵 장소 (GDD 153장 1)
@@ -462,7 +463,14 @@ export function startApp(host: HTMLElement): void {
         act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' },
       },
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
-      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }, next: (go) => { toRoom(); go(); } },
+      cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => {
+        // 빈사가 풀린 순간 치료제 3종 보상 (GDD 245장 9 — 새 게임 시작 지급 대신)
+        if (!s.nest.collapsed && grantCureReward(s)) {
+          persist();
+          showToast({ eyebrow: '튜토리얼 보상', title: `치료제 3종 각 ${Object.values(TR.cureReward)[0]}개`, meta: Object.keys(TR.cureReward).map(consumableName).join(' · '), center: true }, 0, 3200);
+        }
+        return closeItemWhen(!s.nest.collapsed);
+      } }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
         // 온천에 들어가면(원래 조작, 방 → 월드맵 → 온천 단계 안내 — GDD 157장 4) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
         // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다

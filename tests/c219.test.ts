@@ -54,7 +54,7 @@ describe('설명 되살림 (GDD 141장 2)', () => {
     expect(lines).toHaveLength(6);
     expect(lines.find((l) => l.startsWith('힘'))).toContain('일반 공격'); // C.241: 165장 2 문구
     expect(lines.find((l) => l.startsWith('지능'))).toContain('블록 공격');
-    expect(lines.join(' ')).not.toMatch(/\(가\)|\(와\)|물리|특수|혼합/);
+    expect(lines.join(' ')).not.toMatch(/\(가\)|\(와\)|혼합/); // 물리·특수: GDD 245장 4 에서 방어·정신력 = 받는 물리·특수 피해 배율로 바뀜
     // C.241 (165장 2): 머리 줄('평타는 힘, 블록 공격은 지능을 따라간다') 삭제
   });
 });

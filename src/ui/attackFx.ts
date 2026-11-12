@@ -49,6 +49,10 @@ export interface AttackCue {
   onLand?: () => void;
   /** 엔진 피해가 들어가기까지 남은 ms(1배) (GDD 214장, C.357): 연출의 첫 맞음 반응을 이 시각에 맞춘다 — 동작의 타격 시각이 더 늦으면 앞을 건너뛰고, 더 이르면 기다렸다 시작. 없으면 옛 타이밍(즉발·동작 그대로) */
   hitInMs?: number;
+  /** 맞는 순간 막았나를 그때 묻는다 (GDD 245장 3 강공격 빔): 모션은 판정 전에 시작하므로, 빔이 닿는 프레임에 엔진 판정(막기 → 방어막에 막힘)을 읽는다. 없으면 guarded */
+  guardedAt?: () => boolean;
+  /** 대기열을 기다리지 않고 바로 (GDD 245장 3 강공격 빔): 엔진 판정 틱에 닿아야 하므로 앞 연출이 끝나길 기다리면 늦는다 */
+  startNow?: boolean;
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
@@ -85,6 +89,9 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       return { side: 'enemy', tier: 'chain1', guarded: e.guarded };
     case 'heavy-hit':
       return heavyCue(e.guarded, heavyPixel);
+    case 'heavy-windup':
+      return heavyCue(false, heavyPixel); // 빔 발사 준비 (GDD 245장 3): 막았나는 닿는 순간 guardedAt 으로
+
     default:
       return null;
   }
@@ -290,7 +297,7 @@ export class AttackQueue {
   /** 결과: started 바로 재생 / queued 대기 / replaced 대기 중이던 것을 바꿈 / dropped 새 것을 버림 */
   push(cue: AttackCue): 'started' | 'queued' | 'replaced' | 'dropped' {
     // 각본 마무리 체인(windup)은 무엇이 재생 중이든 바로 (GDD 146장 — 닿는 순간 피해가 들어가므로 기다리면 안 된다)
-    if (!this.running || cue.windup || (cue.instant && !this.running.instant)) {
+    if (!this.running || cue.windup || cue.startNow || (cue.instant && !this.running.instant)) {
       this.start(cue);
       return 'started';
     }
@@ -468,7 +475,7 @@ export function animActionOf(cue: Pick<AttackCue, 'ult' | 'fx' | 'tier'>, has: (
 
 export interface AttackFxDriver {
   /** 사건을 연출로 바꿔 큐에 넣는다. 연출이 필요 없는 사건이면 false */
-  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand' | 'hitInMs' | 'bodyWindup'>): boolean;
+  react(e: CombatEvent, extra?: Pick<AttackCue, 'windup' | 'onLand' | 'hitInMs' | 'bodyWindup' | 'guardedAt' | 'startNow'>): boolean;
   /** 배속(1~4) 바꾸기: 재생 중인 연출도 따라간다 */
   setSpeed(speed: number): void;
   /** 일시정지/재개: 재생 중인 연출을 멈췄다 이어간다 */
@@ -569,9 +576,10 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     return Math.max(0, dx - (a.offsetWidth + b.offsetWidth) / 2 + Math.min(a.offsetWidth, b.offsetWidth) * 0.5);
   };
 
-  const hit = (target: AttackActor, level: AttackFxLevel, guarded: boolean, delayMs: number): void => {
+  const hit = (target: AttackActor, level: AttackFxLevel, guardedOf: boolean | (() => boolean), delayMs: number): void => {
     // 맞는 순간의 동작을 보고 정한다(그 사이 공격을 시작했을 수 있다)
-    if (delayMs > 0) return void after(target.body, delayMs, () => hit(target, level, guarded, 0));
+    if (delayMs > 0) return void after(target.body, delayMs, () => hit(target, level, guardedOf, 0));
+    const guarded = typeof guardedOf === 'function' ? guardedOf() : guardedOf; // 막았나 = 맞는 순간의 판정 (GDD 245장 3)
     if (opts.onHitFrame) opts.onHitFrame(target === opts.player ? 'player' : 'enemy', guarded, (Object.keys(ATTACK_FX) as AttackTier[]).find((k) => ATTACK_FX[k] === level) ?? '?');
     // 맞음 애니가 있고 대기·이동 중이면 흔들림 대신 그 애니 (막았을 땐 기존 막기 표시).
     // 공격·특수 모션 중이면 끊지 않고 깜빡임·작은 흔들림만 (GDD 117장 2). 맞음 애니가 없으면 아래 기존 흔들림
@@ -885,7 +893,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰, 아니면 엔진 착탄에)
       const at = clipPlay?.hitAtMs ?? clipHitIn ?? 0;
-      hit(to, level, cue.guarded, at);
+      hit(to, level, cue.guardedAt ?? cue.guarded, at);
       landAt(at);
       const ms = Math.max(at + Math.max(level.hitMs, HIT_FLASH_MIN_MS), clipPlay?.durationMs ?? 0);
       after(from.root, ms, done);
@@ -934,7 +942,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       for (const inst of pplan.insts) fxEnd = Math.max(fxEnd, pixelInst(layer, px.element, inst, from, to, hitAt));
       // 연결 동작을 처음부터 보이면(GDD 224장 2) 첫 맞음 반응은 몸의 첫 타격 자세가 실제로 올라온 순간(재생기 onHit) — 타이머와 재생기 시계가 1~2 프레임 어긋난다(C.367 실측)
       const firstFromBody = !!chainBody && bodySwing > 0;
-      for (const [i, ms] of pplan.reactAt.entries()) if (!(firstFromBody && i === 0)) hit(to, level, cue.guarded, hitAt + ms);
+      for (const [i, ms] of pplan.reactAt.entries()) if (!(firstFromBody && i === 0)) hit(to, level, cue.guardedAt ?? cue.guarded, hitAt + ms);
       const lastReact = hitAt + Math.max(...pplan.reactAt);
       let landAtFinal = lastReact;
       if (chainBody && from.anim) {
@@ -954,7 +962,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
             landAtFinal = -1;
             finalIsFirst = onlyBody && !(bodyLast > lastReact + 1);
             onFinal = () => {
-              hit(to, level, cue.guarded, 0);
+              hit(to, level, cue.guardedAt ?? cue.guarded, 0);
               land();
               if (familyShakes(stage) && opts.shake) opts.shake();
             };
@@ -962,7 +970,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
             endAt = Math.max(endAt, bodyLast + level.hitMs);
           }
         }
-        const go = () => playChain(anim, chainBody, probe, bodySwing > 0, onFinal, firstFromBody && !finalIsFirst ? () => hit(to, level, cue.guarded, 0) : undefined);
+        const go = () => playChain(anim, chainBody, probe, bodySwing > 0, onFinal, firstFromBody && !finalIsFirst ? () => hit(to, level, cue.guardedAt ?? cue.guarded, 0) : undefined);
         // 지금 시작이면 바로 (빈 애니메이션 끝을 기다리면 1~2 프레임 늦어 타격 프레임이 맞음 반응보다 뒤로 밀린다, GDD 224장 3)
         if (startAt < 1) go(); // 1ms 미만(부동소수 찌꺼기 포함)은 지금
         else after(from.root, startAt, go);
@@ -989,12 +997,12 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         for (const [i, h] of hits.entries()) mark(layer, cue.fx, famId, tgt, h.scale, h.atMs, from.dir, motion.markMs, i);
       }
       spawnLook = null;
-      for (const h of hits) hit(to, level, cue.guarded, h.atMs);
+      for (const h of hits) hit(to, level, cue.guardedAt ?? cue.guarded, h.atMs);
       landAt(landAtMs(hitAt, stage));
       if (familyShakes(stage) && opts.shake) after(from.root, hits[hits.length - 1]!.atMs, opts.shake);
       endAt = Math.max(endAt, hits[hits.length - 1]!.atMs + motion.markMs * 0.6);
     } else {
-      hit(to, level, cue.guarded, hitAt);
+      hit(to, level, cue.guardedAt ?? cue.guarded, hitAt);
       landAt(landAtMs(hitAt, null));
     }
     let ended = false;

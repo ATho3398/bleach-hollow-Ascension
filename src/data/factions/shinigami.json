@@ -398,10 +398,10 @@
   "ascension": { "name": "참백도 구상화", "desc": "참백도의 정령을 눈앞에 불러내 굴복시킨다. 클리어 후 만해를 쓸 수 있다.", "foe": "참백도의 정령", "cutin": "정령을 불러낸다 — 참백도 구상화!", "completeText": ["참백도의 정령을 눈앞에 불러내 굴복시켰다.", "진명을 알아내 만해에 닿았다."], "lookChange": false },
   "liberation": {
     "baseName": "한정 해제",
-    "baseCutin": "영압을 묶은 봉인을 푼다 — 한정 해제!",
+    "baseCutin": "한정 해제!",
     "baseEndText": "봉인이 다시 걸렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
-    "cutin": "참백도의 진명을 부른다 — 만해!",
+    "cutin": "만해!",
     "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…",
     "formKey": "final",
     "formCutin": "만해 — {final}!",

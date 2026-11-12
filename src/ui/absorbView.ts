@@ -241,20 +241,10 @@ export function modeRiskText(faction: Pick<FactionConfig, 'riskGaugeName'>, exp:
   return `${faction.riskGaugeName} ${signed(Math.round(p.riskTo) - Math.round(p.riskFrom))}`;
 }
 
-/** 첫 포식 갈래 버튼 아래 줄 (GDD 243장 5) */
-export const TUTORIAL_SAME_EFFECT = '모두 같은 효과';
-
 /** 리스크 줄이 없을 때도 같은 높이의 빈 줄을 둔다 (GDD 173장 2: 줄이 빠져도 갈래 버튼 높이·[흡수] 버튼 자리 그대로) */
 function modeRiskLine(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): HTMLElement {
   const sm = el('small', 'bha-absorb__risk');
-  // 첫 포식 연습(GDD 243장 5): 리스크 줄 자리에 '모두 같은 효과' — 어느 갈래든 결과가 같다는 걸 버튼에서 바로 보인다
-  if (exp.tutorial) {
-    sm.classList.add('bha-absorb__risk--same');
-    sm.dataset.same = '';
-    sm.append(TUTORIAL_SAME_EFFECT);
-    sm.title = `이번 ${faction.absorbActionName}은(는) 모두 같은 효과`;
-    return sm;
-  }
+  // 첫 포식 연습: 243장 5 의 갈래 아래 '같은 효과' 줄은 GDD 245장 5 에서 삭제 — 튜토리얼 카드가 갈래 버튼을 하나씩 설명한다(빈 줄 = 리스크 줄 없음과 같음)
   const t = modeRiskText(faction, exp, m);
   if (t) sm.append(v2Icon('warning', 'sm'), t);
   else {

@@ -35,7 +35,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
     return save;
   };
   for (const f of ['hollow', 'shinigami']) {
-    it(`${f}: 가방에서 구급상자를 원래대로 쓰면 빈사 풀림, 튜토리얼 온천(10초) 들어가면 80%, 먹이 준 뒤 가득 · '다음 할 일'`, () => {
+    it(`${f}: 가방에서 구급상자를 원래대로 쓰면 빈사 풀림, 튜토리얼 온천(10초) 들어가면 가득(245장 7), 먹이 준 뒤 가득 · '다음 할 일'`, () => {
       const s = afterTutorial(f);
       const fc = getFaction(f);
       expect(recoverStep(s)).toBe('dying');
@@ -46,7 +46,7 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
       expect(spaEnter(s, 2500)).toBeNull(); // 세이브 시각과 이어지게 (C.214: 들어가기 전에 시계를 흘림)
       expect(s.nest.spa?.fast).toBe(true); // 튜토리얼 온천 = 10초 빠르기 (GDD 145장 1)
       expect(recoverSpaSoak(s, 2600)).toBe(true);
-      expect(s.nest.spa).not.toBeNull(); // 들어간 채로 (쉬기 설명 뒤 방으로)
+      // GDD 245장 7: 체력 가득까지 — 체력·컨디션이 다 차면 엔진은 온천을 저절로 닫는다(화면은 회복 안내가 '가득 찼다!' 카드 뒤 방으로, C.274)
       expect(homeHp(s).fraction).toBeGreaterThanOrEqual(TR.spaTo - 1e-6);
       const before = s.shared.food[TR.food];
       grantRecoverFood(s);
@@ -73,7 +73,8 @@ describe('129-2 2 회복 안내 = 원래 조작', () => {
     for (const old of ["label: '구급상자 쓰기'", "label: '체력 포션 마시기'", "label: '먹이 주기'", "label: '쉬기'", '열기`, act:']) expect(app).not.toContain(old);
     expect(app).toContain("finishLabel: '다음', vars,");
     expect(app).toContain("act: { selector: '.bha-prop--chest', autoFinish: true, done: () => nav.top?.id === 'chest' }"); // C.279: 가방이 열리면 바로 다음 카드 (GDD 182장 1)
-    expect(app).toContain(`act: { selector: '[data-item="med-cure"]', done: () => closeItemWhen(!s.nest.collapsed) }`); // C.214: 쓰면 물건 창 닫음
+    expect(app).toContain(`act: { selector: '[data-item="med-cure"]', done: () => {`); // C.214: 쓰면 물건 창 닫음
+    expect(app).toContain('return closeItemWhen(!s.nest.collapsed);'); // GDD 245장 9: 그 전에 치료제 보상
   });
   it('tutorialOverlay: 행동 카드는 하기 전 [다음] 잠김 · 뒤 화면 통과(data-dev-pass·data-dev-only) · 하면 [다음] 켜짐', () => {
     const o = read('src/ui/tutorialOverlay.ts');

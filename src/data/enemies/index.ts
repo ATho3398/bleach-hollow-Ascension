@@ -59,6 +59,10 @@ export function parseEnemy(r: unknown): EnemyDef {
   if (typeof e.attackInAttacks !== 'number' || e.attackInAttacks < 0) errors.push('attackInAttacks: 0 이상');
   if (!isElement(e.element)) errors.push(`element: 없는 속성 ${String(e.element)}`);
   if (!(ATTACK_CATEGORIES as readonly unknown[]).includes(e.category)) errors.push(`category: ${ATTACK_CATEGORIES.join(' | ')}`);
+  if (e.attackCategory !== undefined && !(ATTACK_CATEGORIES as readonly unknown[]).includes(e.attackCategory)) errors.push(`attackCategory: ${ATTACK_CATEGORIES.join(' | ')}`);
+  const hc = (e.pattern as { heavyCategories?: unknown } | undefined)?.heavyCategories;
+  if (hc !== undefined && !(Array.isArray(hc) && hc.every((c) => (ATTACK_CATEGORIES as readonly unknown[]).includes(c)))) errors.push('pattern.heavyCategories: 분류 목록');
+  if (e.physicalShare !== undefined && !(typeof e.physicalShare === 'number' && e.physicalShare >= 0 && e.physicalShare <= 1)) errors.push('physicalShare: 0~1');
   const statMap = (v: unknown, min: number) => typeof v === 'object' && v !== null && Object.entries(v).every(([k, x]) => (STAT_IDS as readonly string[]).includes(k) && typeof x === 'number' && x >= min);
   if (e.statBias !== undefined && !statMap(e.statBias, 0.01)) errors.push('statBias: { 능력치: 양수 배율 }');
   if (!statMap(e.ev, 0)) errors.push('ev: { 능력치: 0 이상 }');

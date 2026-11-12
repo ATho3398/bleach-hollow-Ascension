@@ -41,12 +41,12 @@ describe('화면 (172장 1·3)', () => {
 });
 
 describe('튜토리얼 (172장 4)', () => {
-  it('첫 흡수 안내 2장 = 고르고 → 설명 아래 버튼, 강조 대상은 갈래·설명·버튼 덩어리', () => {
-    const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'][1];
-    expect(g.targets).toEqual(['@.bha-absorb__pick']);
+  it('첫 흡수 안내 마지막 장 = 갈래 고르고 [흡수] 버튼 (GDD 245장 5 — 강조 대상은 그 버튼)', () => {
+    const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'].at(-1);
+    expect(g.targets).toEqual(['@.bha-absorb__go']);
     for (const id of ['shinigami', 'hollow']) {
       const body = renderHelpText(g.body, helpVars(getFaction(id)));
-      expect(body).toContain('설명 아래 버튼을 눌러');
+      expect(body).toContain('이 버튼을 눌러');
       expect(body).not.toContain('한 번 더');
     }
   });

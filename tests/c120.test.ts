@@ -270,8 +270,9 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     }
     expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
     expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
-    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'practice']); // GDD 157장 3: 3장 → 2장, 연습·노력치 설명 삭제
-    expect(renderHelpText(GUIDES['first-absorb'][1]!.body, { ...helpVars(H), ...guideVars(H) })).toBe(renderHelpText('갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자.', helpVars(H))); // GDD 172장 4: 고르기 → 설명 → 설명 아래 [흡수] 버튼
+    // GDD 245장 5: 첫 장 → 갈래 버튼 4개 하나씩 강조 → 마지막 장이 [흡수] 버튼을 가리킨다
+    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'mode-both', 'mode-trait', 'mode-stat', 'mode-none', 'practice']);
+    expect(GUIDES['first-absorb'].at(-1)!.targets).toEqual(['@.bha-absorb__go']);
   });
 
   it('안내는 1회성: 본 것으로 저장하면 다시 차례가 아니고, 저장 값은 보정된다', () => {
@@ -284,6 +285,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'hogyoku-appear', 'hogyoku-resonance', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // C.414 'hogyoku-resonance'(공명 컷, GDD 244장 2) · C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'hogyoku-appear', 'hogyoku-resonance', 'home-intro', 'recover', 'recover-cure', 'recover-cure-reward', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // GDD 245장 9 'recover-cure-reward'(빈사 치료 뒤 치료제 보상) · C.414 'hogyoku-resonance'(공명 컷, GDD 244장 2) · C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });
