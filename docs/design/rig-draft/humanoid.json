@@ -279,6 +279,21 @@
       "cape": { "art": "hv/cape", "at": [18, 46], "size": [32, 15] },
       "cape2": { "art": "hv/cape2", "at": [43, 29], "size": [10, 24] },
       "cape3": { "art": "hv/cape3", "at": [32, 28], "size": [15, 11] }
+    },
+    "hx": {
+      "shin_L": { "art": "hx/shin_L", "at": [21, 69], "size": [10, 11] },
+      "shin_R": { "art": "hx/shin_R", "at": [7, 68], "size": [12, 12] },
+      "leg_L": { "art": "hx/leg_L", "at": [16, 64], "size": [10, 9] },
+      "leg_R": { "art": "hx/leg_R", "at": [11, 64], "size": [8, 9] },
+      "pelvis": { "art": "hx/pelvis", "at": [14, 61], "size": [8, 9] },
+      "arm_R": { "art": "hx/arm_R", "at": [8, 58], "size": [9, 9] },
+      "arm_L": { "art": "hx/arm_L", "at": [17, 54], "size": [15, 13] },
+      "torso": { "art": "hx/torso", "at": [11, 53], "size": [14, 12] },
+      "forearm_R": { "art": "hx/forearm_R", "at": [2, 63], "size": [11, 13] },
+      "forearm_L": { "art": "hx/forearm_L", "at": [26, 62], "size": [8, 15] },
+      "hand_R": { "art": "hx/hand_R", "at": [2, 72], "size": [6, 7] },
+      "hand_L": { "art": "hx/hand_L", "at": [32, 71], "size": [2, 7] },
+      "head": { "art": "hx/head", "at": [8, 38], "size": [17, 22] }
     }
   },
   "looks": {
@@ -523,6 +538,9 @@
       "body": "hv",
       "artFolder": "hv-yellow",
       "color": "황토"
+    },
+    "auto-test": {
+      "body": "hx"
     }
   },
   "hairFrame": {
@@ -800,6 +818,24 @@
         "cape2": [47, 51],
         "cape3": [43, 31]
       }
+    },
+    "hx": {
+      "pivots": {
+        "torso": [18, 65],
+        "head": [16, 58],
+        "arm_R": [14, 60],
+        "forearm_R": [10, 64],
+        "hand_R": [4, 73],
+        "arm_L": [22, 60],
+        "forearm_L": [28, 64],
+        "hand_L": [33, 74],
+        "leg_R": [16, 68],
+        "shin_R": [14, 72],
+        "leg_L": [20, 68],
+        "shin_L": [24, 72],
+        "root": [18, 65],
+        "pelvis": [18, 65]
+      }
     }
   },
   "bodyMotions": {
@@ -817,7 +853,8 @@
     "soul_f": "soul_f",
     "soul": "soul",
     "hk": "spiky",
-    "hv": "speed"
+    "hv": "speed",
+    "hx": "autotest"
   },
   "formsNote": "2026-10-29 사용자 \"인간형이지만 다리 역관절도 구현필요 / 망토도 달 수 있게, 망토 슬롯도 하나 만들어\": 정강이(shin_L·shin_R, 무릎 관절)·망토(cape, 목 아래) 뼈·슬롯 추가. 정강이 그림이 없는 몸은 다리 한 장 그대로(정강이는 기본 동작에서 0°). 역관절 몸은 bodyMotions 로 동작 묶음 digitigrade 를 쓴다. digitigrade-test·cape-test 는 임시 그림(placeholder.py) 시험 외형",
   "edit": {
@@ -1229,6 +1266,42 @@
       "jaw",
       "hair",
       "outer_arm_R"
+    ],
+    "hx": [
+      "shin_L",
+      "shin_R",
+      "leg_L",
+      "leg_R",
+      "pelvis",
+      "arm_R",
+      "arm_L",
+      "torso",
+      "forearm_R",
+      "forearm_L",
+      "hand_R",
+      "hand_L",
+      "head",
+      "cape2",
+      "fold1",
+      "fold2",
+      "fold3",
+      "fold4",
+      "fold5",
+      "cape3",
+      "cape",
+      "outer_arm_L",
+      "weapon",
+      "thumb_L",
+      "hair_back2",
+      "hair_back3",
+      "hair_back",
+      "foot_L",
+      "foot_R",
+      "outer_torso",
+      "scabbard",
+      "jaw",
+      "hair",
+      "outer_arm_R"
     ]
   },
   "assembled": {
@@ -1237,7 +1310,8 @@
     "hd": "docs/design/user-art/hood-ref/assembly.json",
     "ho": "docs/design/user-art/onearm-ref/assembly.json",
     "hk": "docs/design/user-art/spiky-ref/assembly.json",
-    "hv": "docs/design/user-art/speed-ref/assembly.json"
+    "hv": "docs/design/user-art/speed-ref/assembly.json",
+    "hx": "docs/design/user-art/auto-test-ref/assembly.json"
   },
   "recolors": {
     "note": "색 외형 그림(GDD 115-A 85, scripts/rig/recolor.py): 폴더 → {from 원본 폴더, map {원래 색: 새 색}}. 덩치 = 도트 6색 중 몸 두 색(밝은 #78608a·어두운 #3a2c48 = 보라, 사용자 시트 4번째·적 kyo)만 바꿈. 색 출처: 사용자 색 시트(2026-11-09 넷째 줄 5색)·게임 적 덩치(<속성>-basic) 그림",

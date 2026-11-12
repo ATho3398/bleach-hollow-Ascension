@@ -1,0 +1,14 @@
+{
+ "note": "자동 부위 시트 시험(GDD 115-A 122): 사용자 원본(source.png 32×42) + 자르는 선(cuts.png). seeds = 부위 안의 한 칸(화면 왼쪽 팔·다리 = _R, 오른쪽 = _L — 가시형·속도형과 같은 이름)",
+ "image": "docs/design/user-art/auto-test-ref/source.png",
+ "cuts": "docs/design/user-art/auto-test-ref/cuts.png",
+ "out": "docs/design/user-art/auto-test-ref",
+ "body": "hx",
+ "offset": [2, 38],
+ "seeds": {"head": [10, 8], "torso": [14, 22], "pelvis": [13, 27], "arm_R": [9, 23], "forearm_R": [5, 28], "hand_R": [1, 36],
+           "arm_L": [20, 18], "forearm_L": [26, 28], "hand_L": [31, 35], "leg_R": [12, 30], "shin_R": [10, 38], "leg_L": [20, 30], "shin_L": [22, 38]},
+ "joints": [["torso", "pelvis"], ["head", "torso"], ["arm_R", "torso"], ["forearm_R", "arm_R"], ["hand_R", "forearm_R"],
+            ["arm_L", "torso"], ["forearm_L", "arm_L"], ["hand_L", "forearm_L"], ["leg_R", "pelvis"], ["shin_R", "leg_R"], ["leg_L", "pelvis"], ["shin_L", "leg_L"]],
+ "same": {"root": "torso", "pelvis": "torso"},
+ "order": ["shin_L", "shin_R", "leg_L", "leg_R", "pelvis", "arm_R", "arm_L", "torso", "forearm_R", "forearm_L", "hand_R", "hand_L", "head"]
+}

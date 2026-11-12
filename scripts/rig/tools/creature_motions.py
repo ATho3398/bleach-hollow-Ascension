@@ -361,7 +361,7 @@ SPEC_HV['move'] = _fast
 # (마디마다 1/5 바퀴 늦고 끝으로 갈수록 크게). 반복 동작은 한 바퀴에 한 번(대기는 작게, 걷기는 크게), 한 번 동작은 몸통이 기운 반대쪽으로 균형을 잡듯 늦게 따라온다.
 # 엔진 따라가기(sway — 망토와 같은 값)는 그 위에 조금 얹힌다
 TAILS = {'hv': dict(chain=['cape', 'cape2', 'cape3'], amp={'idle': [3, 5, 8], 'homeIdle': [3, 5, 8], 'move': [6, 10, 15]}, loop=[4, 7, 10], counter=[0.5, 0.7, 0.9], delay=60)}
-SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK, 'hv': SPEC_HV}
+SPECS = {'hb': SPEC_HB, 'hd': SPEC_HD, 'ho': SPEC_HO, 'hk': SPEC_HK, 'hv': SPEC_HV, 'hx': SPEC_HK}  # hx = 자동 부위 시트 시험 몸(115-A 122) — 가시형 동작 설계 그대로
 NOTES = {'dg': ('역관절 기본(몸 dg, 사용자 도트 2026-11-08) 전용 동작 (GDD 115-A 70, 사용자 2026-11-09 "지금 역관절 기본이 너무 움직임이 이상해 … 캐릭터에 잘 어울리게 다시 만들어. 대기, 홈 대기, 걷기, 공격1,2 특수,1, 맞음, 해방, 박치기, 빈사, 쓰러짐만"): '
                 '모든 뼈를 이 묶음에서 정함(사람형 기본 동작을 덮음). 각도 = 쉬는 자세(도트 그대로) 기준. 몸 높이(root y)는 발(쓰러짐은 몸 전체)이 바닥 줄에 닿게 계산'),
          'hb': ('덩치(몸 hb, 사용자 부위 시트 2026-11-09 조립) 전용 동작 — 대기·걷기·공격·해방(포효), 특수2·필살기 없음(off) (GDD 115-A 73·75, 사용자 "얘로 도트변경하고, 특수2, 필살기 없애고, 해방에 포효하는거 추가해. 짐승이 아니라 덩치고"). '
@@ -381,7 +381,7 @@ def main(bodies):
     mo = json.load(open(P, encoding='utf-8'))
     for body in bodies:
         setup(body)
-        out = {'note': NOTES[body]}
+        out = {'note': NOTES.get(body) or f'{body}: 자동 부위 시트 시험 몸(GDD 115-A 122) — 가시형 동작 설계를 이 몸으로 다시 계산'}
         prev = mo['sets'].get(rig['bodyMotions'][body]) or {}
         for mid, s in SPECS[body].items():
             out[mid] = {'off': True} if s == 'off' else build(s)

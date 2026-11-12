@@ -45,7 +45,7 @@ describe('역관절 다리·망토·짐승형 (GDD 96장 39~41)', () => {
     expect(Object.keys(rig.bodies.hk!).sort()).toEqual(['arm_L', 'arm_R', 'forearm_L', 'forearm_R', 'hand_L', 'hand_R', 'head', 'leg_L', 'leg_R', 'pelvis', 'shin_L', 'shin_R', 'torso']); // 배(pelvis) = 몸통을 가슴 + 배로 나눔(115-A 120)
     expect(rig.looks['spiky-base']!.body).toBe('hk');
     for (const s of ['L', 'R']) expect(rig.bones.find((b) => b.id === `hand_${s}`)!.parent).toBe(`forearm_${s}`);
-    for (const [id, b] of Object.entries(rig.bodies)) if (id !== 'hk' && id !== 'hv') expect(b.hand_L ?? b.hand_R, id).toBeUndefined(); // 손 그림 = 가시형·속도형만
+    for (const [id, b] of Object.entries(rig.bodies)) if (id !== 'hk' && id !== 'hv' && id !== 'hx') expect(b.hand_L ?? b.hand_R, id).toBeUndefined(); // 손 그림 = 가시형·속도형(+ 자동 시트 시험 몸 hx, 115-A 122)만
     const hk = resolveMotions(rig, motions, sets, 'hk');
     for (const id of ['idle', 'move', 'attack', 'attack2', 'hit', 'release1', 'headbutt']) expect(hk[id], id).toBeDefined();
     expect(hk.attack!.tracks.hand_R!.some((k) => k[1] !== 0)).toBe(true);
