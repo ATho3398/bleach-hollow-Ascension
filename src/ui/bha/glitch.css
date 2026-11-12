@@ -14,3 +14,5 @@
 .bha-glitch.is-rgb { text-shadow: 1px 0 var(--bha-danger), -1px 0 var(--bha-el-water); }
 /* 도감 칸 이름 한 줄 (C.430 — 'Unknown;0 / 3398' 두 줄 접힘): 접지 않고(nowrap) 글자를 조금 줄여 칸 폭 안에. 말줄임은 이름 뜻이 깨져서 쓰지 않는다 */
 .bha-dexcard__name:has(.bha-glitch) { white-space: nowrap; font-size: calc(var(--bha-fs-xs) * 0.8); letter-spacing: -0.03em; }
+/* 조각 모델 (C.431, GDD 12-4 v6.029 — glitchMosaic.ts): 도트 그대로 (스무딩 끔) */
+img.bha-mosaic { image-rendering: pixelated; }

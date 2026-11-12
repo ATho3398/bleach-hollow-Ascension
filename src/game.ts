@@ -21,6 +21,7 @@ import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
 import { DEFAULT_TRACK_KIND, getTrackKind, type TrackKindConfig } from './data/trackKinds';
+import { MOSAIC_LOOK_PREFIX } from './data/art/manifest';
 import { allTranscendentsOwned, conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
 import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
@@ -3064,8 +3065,9 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 /** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
 export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
   // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
-  const art = s.transcendentId ? tryGetTranscendent(s.transcendentId)?.art : undefined;
-  if (art) return art;
+  const def = s.transcendentId ? tryGetTranscendent(s.transcendentId) : undefined;
+  if (def?.art) return def.art;
+  if (def?.model) return `${MOSAIC_LOOK_PREFIX}${def.id}`; // 조각 모델 (C.431, GDD 12-4 v6.029)
   return s.skin ?? s.evolution.look ?? null;
 }
 

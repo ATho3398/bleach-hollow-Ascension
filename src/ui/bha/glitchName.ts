@@ -37,8 +37,18 @@ export function fixedGlitchAt(name: string): number {
 // 캡처·테스트 모드: 모든 글리치 이름을 깨진 순간에 고정 (C.430 "타이머를 테스트 모드에서 고정해 찍기")
 let frozen = false;
 const live = new Set<HTMLElement>();
+const freezeListeners = new Set<(on: boolean) => void>();
+/** 고정 상태가 바뀔 때 (조각 모델 글리치가 같은 스위치를 쓴다, C.431) */
+export function onGlitchFreeze(cb: (on: boolean) => void): () => void {
+  freezeListeners.add(cb);
+  return () => freezeListeners.delete(cb);
+}
+export function glitchFrozen(): boolean {
+  return frozen;
+}
 export function setGlitchFrozen(on: boolean): void {
   frozen = on;
+  for (const cb of freezeListeners) cb(on);
   for (const el of [...live]) (el.isConnected ? paint : (x: HTMLElement) => live.delete(x))(el);
 }
 

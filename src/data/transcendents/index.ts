@@ -28,6 +28,9 @@ export interface TranscendentDef {
   art?: string;
   /** 이름 글리치 (GDD 12-4 v6.027, C.430): 화면에 찍히는 이름 일부가 잠깐씩 깨진 글자로 바뀐다. 저장값·읽기 이름은 원래 이름 */
   nameGlitch?: boolean;
+  /** 만든 모델 (GDD 12-4 v6.029, C.431): glitchMosaic = 게임의 캐릭터·적 도트 그림에서 사각 조각을 잘라 모은 네모 도트 하나(시드 고정 기본 모습) + 조각 글리치.
+   *  tile = 조각 한 변(64칸 기준 원본 화소), grid = [가로, 세로] 조각 수 */
+  model?: { kind: 'glitchMosaic'; seed: number; tile: number; grid: [number, number] };
   condition: TranscendentCondition;
   /** 합체 뒤 이 초월자 트랙의 종류 (GDD 12-4 v6.028 — src/data/trackKinds/<id>.json: 진화 없음·시간 감소 없음 등) */
   trackKind: string;
@@ -50,6 +53,9 @@ export function parseTranscendent(r: unknown): TranscendentDef {
   if (typeof t.trackKind !== 'string' || !t.trackKind) errors.push('trackKind');
   if (t.art !== undefined && (typeof t.art !== 'string' || !t.art.startsWith('char.'))) errors.push('art (char.<이름>)');
   if (t.nameGlitch !== undefined && typeof t.nameGlitch !== 'boolean') errors.push('nameGlitch');
+  const m = t.model as Partial<NonNullable<TranscendentDef['model']>> | undefined;
+  if (m !== undefined && !(m.kind === 'glitchMosaic' && Number.isInteger(m.seed) && Number.isInteger(m.tile) && (m.tile as number) > 0
+    && Array.isArray(m.grid) && m.grid.length === 2 && m.grid.every((v) => Number.isInteger(v) && v > 0))) errors.push('model (glitchMosaic seed·tile·grid)');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

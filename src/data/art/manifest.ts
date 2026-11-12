@@ -25,6 +25,20 @@ export function isFemaleRigLook(look: string): boolean {
   return look.endsWith(RIG_FEMALE_SUFFIX) || look.includes(`${RIG_FEMALE_SUFFIX}-`);
 }
 
+// ── 조각 모델 표시 주소 (C.431, GDD 12-4 v6.029) ──
+/** 외형 id 앞머리: 'mosaic:<초월자 id>' (artSkinOf 가 돌려준다) */
+export const MOSAIC_LOOK_PREFIX = 'mosaic:';
+const MOSAIC_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+export const MOSAIC_MARK = '#mosaic=';
+/** 몸 그림 표시 주소: 1×1 투명 그림 + 표시. 화면 관찰자가 이 주소를 단 그림을 찾아 합성 그림으로 바꾼다 */
+export function mosaicSrc(transcendentId: string): string {
+  return `${MOSAIC_BLANK}${MOSAIC_MARK}${transcendentId}`;
+}
+export function mosaicIdOf(src: string | null): string | null {
+  const i = src ? src.indexOf(MOSAIC_MARK) : -1;
+  return i >= 0 ? src!.slice(i + MOSAIC_MARK.length) : null;
+}
+
 export interface ArtEntry {
   /** 한 장짜리 그림 경로 (public/ 기준, 예 "art/scene-hollow.png"). 비우면 자리표시 도형 */
   src?: string;
@@ -282,6 +296,8 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     }
     return null;
   };
+  // 조각 모델 (C.431, GDD 12-4 v6.029): 'mosaic:<초월자 id>' = 표시 주소 — 화면 관찰자(ui/bha/glitchMosaic)가 합성 그림으로 바꿔 끼운다
+  if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) return { src: mosaicSrc(skinId.slice(MOSAIC_LOOK_PREFIX.length)), frames: null, scale: 1, offsetY: 0 };
   // 그림 키를 직접 받은 외형 (C.430 — 초월자 데이터 art 'char.<이름>'): 그 키의 그림(프레임 애니 포함)이 있으면 그것. 없으면 아래 진화체 그림(자리 표시)
   if (skinId && skinId.startsWith('char.') && !getSkin(skinId)) {
     const own = tryKeys([skinId]);

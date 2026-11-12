@@ -17,6 +17,7 @@ import { dexCard, dexGrid } from './bha/dexGrid';
 import { imageArt, itemDialog } from './bha/itemUi';
 import { heroArtOf } from './bha/battle';
 import { bindAnim } from './bha/animPlayer';
+import { MOSAIC_LOOK_PREFIX, MOSAIC_MARK } from '../data/art/manifest';
 import { transcendentNameNode } from './bha/glitchName';
 
 /** 글자·노드 섞인 요소 (초월자 이름 노드를 끼울 때) */
@@ -471,16 +472,18 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
 
 /** 초월자 그림 칸 (C.430): 데이터 art 키의 그림이 있으면 그 그림(대기 프레임 반복 — 태초 = 검은 구슬 + 후광), 없으면 아이콘 자리 표시.
  *  못 모은 것은 실루엣·? (그림이 있어도 보여 주지 않는다) */
-export function transcendentArt(known: boolean, def?: Pick<TranscendentDef, 'art'>): HTMLElement {
+export function transcendentArt(known: boolean, def?: Pick<TranscendentDef, 'id' | 'art' | 'model'>): HTMLElement {
   const box = h('span', `bha-dexart${known ? '' : ' is-silhouette'}`);
-  const art = known && def?.art ? heroArtOf(roomOf(FACTIONS[0]!), FACTIONS[0]!.id, 0, def.art) : null;
-  if (art?.src && art.src.includes(def!.art!.replace(/\./g, '-'))) {
+  // 그림 키(art) 또는 조각 모델(model — C.431, 화면 관찰자가 합성 그림으로 바꿔 끼움)
+  const key = def?.art ?? (def?.model ? `${MOSAIC_LOOK_PREFIX}${def.id}` : undefined);
+  const art = known && key ? heroArtOf(roomOf(FACTIONS[0]!), FACTIONS[0]!.id, 0, key) : null;
+  if (art?.src && (art.src.includes(MOSAIC_MARK) || (def?.art && art.src.includes(def.art.replace(/\./g, '-'))))) {
     const img = h('img', 'bha-itemart bha-itemart--img bha-trart') as HTMLImageElement;
     img.src = art.src;
     img.alt = '';
     img.draggable = false;
     box.classList.add('has-art');
-    box.dataset.art = def!.art!;
+    box.dataset.art = key!;
     box.append(img);
     bindAnim(box, img, art)?.setLoop('idle');
     return box;

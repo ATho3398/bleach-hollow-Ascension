@@ -48,12 +48,14 @@ import { installLandscapeKeyboard } from './ui/bha/orientation';
 import { applyDraft, draftHasEdits, loadDraft } from './ui/bha/layoutDraft';
 import { FACTIONS } from './data/factions';
 import { installNameGlitch } from './ui/bha/glitchName';
+import { installMosaic } from './ui/bha/glitchMosaic';
 
 captureInstallPrompt(); // 브라우저의 작은 설치 띠를 막고 요청을 잡아 둔다 (GDD 68장) — 이벤트가 앱 시작보다 먼저 올 수 있어 맨 앞에서
 mountSprite();
 installLandscapeKeyboard(); // 글자 입력칸 = 가로 키보드 시도 (GDD 109장 8번)
 applyCalmMode();
 installNameGlitch(document.body); // 초월자 이름 글리치 (C.430, GDD 12-4 v6.027): 화면 어디에 찍혀도 — 알림 띠·확인 창·메뉴 포함
+installMosaic(document.body); // Unknown;03398 조각 모델 (C.431, GDD 12-4 v6.029): 몸 그림이 나오는 모든 곳
 const app = document.querySelector<HTMLDivElement>('#app');
 // UI 배치 도구 미리보기 (GDD 175장 4): 도구에서 [미리보기 켜기]면 같은 브라우저로 연 게임에 편집본을 먼저 적용한다(종족 설정·실행 중 그림만, 세이브 무관)
 if (!new URLSearchParams(location.search).has('layout')) {

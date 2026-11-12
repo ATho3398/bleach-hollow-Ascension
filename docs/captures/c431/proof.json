@@ -1,0 +1,31 @@
+{
+  "errors": [],
+  "shots": [
+    "pc-room-mosaic-base",
+    "pc-room-mosaic-glitch",
+    "pc-dex-detail-mosaic",
+    "pc-battle-mosaic",
+    "phone-room-mosaic-base"
+  ],
+  "facts": {
+    "pc-fusion": true,
+    "pc-room": {
+      "mosaic": true,
+      "live": "1",
+      "w": 256,
+      "srcHead": "data:image/png;base64,"
+    },
+    "detail": [
+      256,
+      256
+    ],
+    "battle": 1,
+    "phone-fusion": true,
+    "phone-room": {
+      "mosaic": true,
+      "live": "1",
+      "w": 256,
+      "srcHead": "data:image/png;base64,"
+    }
+  }
+}
