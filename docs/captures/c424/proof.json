@@ -7,9 +7,10 @@
     "04-hogyoku-60.png",
     "05-hogyoku-80.png",
     "06-hogyoku-100.png",
-    "07-material-detail.png",
-    "08-list-fusion.png",
-    "09-pc-80.png"
+    "07-hogyoku-100-frame11.png",
+    "08-material-detail.png",
+    "09-list-fusion.png",
+    "10-pc-80.png"
   ],
   "facts": {
     "p00": {
@@ -236,6 +237,57 @@
       "detail": "develop"
     },
     "p100": {
+      "level": "10",
+      "band": "5",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame",
+      "flameRect": [
+        164,
+        114,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:9",
+        "shard:50",
+        "essence:9"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p100b": {
       "level": "10",
       "band": "5",
       "art": "hogyoku.orb",

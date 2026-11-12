@@ -78,6 +78,10 @@ async function boot(page, url, src) {
       await openHog(); await freeze(); F[key] = await facts();
       await shot(`${String(n++).padStart(2, '0')}-hogyoku-${lv * 10}`);
     }
+    // 100% 두 번째 정지 프레임 (프레임 11)
+    await page.evaluate(() => { const f = document.querySelector('.bha-hgorb__flame'); if (f) { f.style.animationPlayState = 'paused'; f.style.animationDelay = `${-(10.5) * 1333 / 16}ms`; } });
+    F.p100b = await facts();
+    await shot(`${String(n++).padStart(2, '0')}-hogyoku-100-frame11`);
     // 재료 칸 누르기 → 상세 = 재료 (100% 화면)
     await page.locator('.bha-hgmat--shard').click(); await page.waitForTimeout(300); await freeze();
     F.material = await facts();
