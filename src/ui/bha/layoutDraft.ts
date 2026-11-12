@@ -3,6 +3,7 @@
 // 새 물건은 같은 설정의 extras(아이콘만, 기능 없음). 그림·아이콘은 그림 키 단위 — prop.<물건> 은 두 종족 공통(사용자 2026-11-03 "홈 ui 아이콘은 통일 (대원실, 둥지 빼고)"),
 // 월드맵 장소 중 공통 그림 파일이 없는 것(홈 등)은 게임처럼 종족별 키 place.<장소>.<종족> (C.272: 둥지·대원실이 한 키에 덮이던 것 수리).
 // 종족 분기 없음: 장면 = 장면 종류(LAYOUT_KINDS) × 종족 목록(FACTIONS). 온천 같은 새 장면은 LAYOUT_KINDS 에 한 항목만 더한다.
+import { ROOMS, type RoomDef } from '../../data/rooms';
 import { ART_MANIFEST, artUrls, setRuntimeArt } from '../../data/art/manifest';
 import {
   MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, sceneViewOk, worldMapOf,
@@ -69,12 +70,37 @@ export interface LayoutKind {
   read: (f: FactionConfig) => { shape: string; sceneArt: string; floor: RoomFloorConfig; charFoot: { x: number; y: number }; items: BaseItem[]; extras: readonly ExtraProp[] };
   /** 종족 설정(실제 객체)에 자리·이름·배경 키·새 물건을 써 넣는다 — 미리보기 켠 게임에서만 */
   write: (f: FactionConfig, w: { spots: Record<string, PropSpot>; names: Record<string, string>; sceneArt?: string; extras: ExtraProp[]; floor?: RoomFloorConfig }) => void;
+  /** 종족과 상관없는 장면 (방 목록의 방 — C.432): 장면 목록에 한 번만(첫 종족 이름표로 읽음) */
+  shared?: boolean;
 }
 
 type Mut<T> = { -readonly [K in keyof T]: T[K] };
 const mut = (f: FactionConfig) => f as Mut<FactionConfig>;
 
-/** 장면 종류 목록 — 늘릴 때 여기에 한 항목 (온천 등) */
+/** 방 목록의 방 하나 (GDD 12-4 v6.032·17-5, C.432): 방 키 → { 배경, 물건 자리 }. 이름표는 종족 방 이름 그대로, 자리·배경은 방 목록 항목에 써 넣는다 */
+function roomKind(def: RoomDef): LayoutKind {
+  return {
+    kind: `room@${def.id}`,
+    label: () => `방 · ${def.label}`,
+    shared: true,
+    read: (f) => {
+      const r = roomOf(f, null, def.id);
+      const items: BaseItem[] = ROOM_PROPS.filter((p) => p !== 'rank').map((p) => ({
+        key: p, name: r.props[p], spot: r.layout[p], artKey: `prop.${p}`, fallbackArt: p === 'outside' ? 'prop.door' : undefined,
+        nameNote: '이름은 종족 설정 room.props (방 목록에는 자리만)', nameEditable: false,
+      }));
+      return { shape: r.shape, sceneArt: r.sceneArt, floor: r.floor, charFoot: r.characterFoot, items, extras: r.extras ?? [] };
+    },
+    write: (_f, w) => {
+      def.layout = { ...def.layout, ...w.spots };
+      if (w.sceneArt) def.sceneArt = w.sceneArt;
+      def.extras = w.extras;
+      if (w.floor) def.floor = w.floor;
+    },
+  };
+}
+
+/** 장면 종류 목록 — 늘릴 때 여기에 한 항목 (온천 등). 방 목록(src/data/rooms)의 방은 뒤에 하나씩 */
 export const LAYOUT_KINDS: readonly LayoutKind[] = [
   {
     kind: 'room',
@@ -174,7 +200,8 @@ export interface LayoutSceneDef { id: string; factionId: string; kind: LayoutKin
 
 /** 장면 목록: 장면 종류 × 종족 (id = <종류>.<종족 id>) */
 export function layoutScenes(factions: readonly FactionConfig[]): LayoutSceneDef[] {
-  return LAYOUT_KINDS.flatMap((k) => factions.map((f) => ({ id: `${k.kind}.${f.id}`, factionId: f.id, kind: k, label: `${k.label(f)} (${f.name})` })));
+  const kinds = [...LAYOUT_KINDS, ...ROOMS.map(roomKind)];
+  return kinds.flatMap((k) => (k.shared ? factions.slice(0, 1) : factions).map((f) => ({ id: k.shared ? k.kind : `${k.kind}.${f.id}`, factionId: f.id, kind: k, label: k.shared ? k.label(f) : `${k.label(f)} (${f.name})` })));
 }
 
 /** 장면의 지금 모습 = 게임 데이터 + 편집 */

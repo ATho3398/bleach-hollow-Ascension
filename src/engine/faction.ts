@@ -1,6 +1,7 @@
 // 종족 설정(faction config) 타입과 검증. 종족 차이는 전부 이 설정에서 읽는다 (CLAUDE.md 규칙 2).
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
+import { tryGetRoom } from '../data/rooms';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import foodNamesRaw from '../data/foods/names.json';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
@@ -303,8 +304,11 @@ export const DEFAULT_ROOM: RoomConfig = {
 };
 
 /** 종족 설정의 room 에 빠진 값을 기본값으로 채운다. talkPack = 입은 말풍선 팩 id(GDD 25-11): 팩이 가진 키만 혼잣말 문구를 덮고, 없는 키는 기본 문구 */
-export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null): RoomConfig {
-  const r = f.room ?? {};
+export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null, roomKey?: string | null): RoomConfig {
+  // 방 키 (GDD 12-4 v6.032, C.432 — 초월자마다 자기 방): 방 목록(src/data/rooms)의 배경·자리가 종족 방 위에 덮인다. 빈 칸은 종족 방 그대로
+  const own = tryGetRoom(roomKey);
+  const fr = f.room ?? {};
+  const r = own ? { ...fr, sceneArt: own.sceneArt, ...(own.shape ? { shape: own.shape } : {}), layout: { ...fr.layout, ...own.layout }, ...(own.floor ? { floor: own.floor } : {}), ...(own.characterFoot ? { characterFoot: own.characterFoot } : {}), ...(own.extras ? { extras: own.extras } : {}) } : fr;
   const pack = talkPack ? f.cosmetics?.talkPacks?.[talkPack] : undefined;
   return {
     ...DEFAULT_ROOM,

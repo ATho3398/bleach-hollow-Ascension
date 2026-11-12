@@ -8,7 +8,7 @@ import { consumableGroupOf } from '../shop';
 import { gateOpen } from '../unlockGate';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { trackIdOf, trackNameOf, trackRulesOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { roomKeyOf, trackIdOf, trackNameOf, trackRulesOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
 import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -88,7 +88,7 @@ let hpTimer = 0;
 export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd: RoomHandlers): void {
   tickCare(save); // 돌봄 요청 (GDD 82장): 꺼 두었다 와도 최대 1개
   hd.persist();
-  const room = roomOf(faction, save.wear.talk); // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
+  const room = roomOf(faction, save.wear.talk, roomKeyOf(save)); // 초월자 자기 방 (C.432) // 말풍선 팩 (GDD 25-11): 입은 팩이 혼잣말 문구를 덮는다
   const n = save.nest;
   const RX = BALANCE.provisional.risk;
   // 덱 없음 (GDD 85장 11번, C.140): 출발 때 가진 타일 전부에서 놓는다. 타일이 없어도 빈 길로 떠날 수 있다

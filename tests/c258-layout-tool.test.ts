@@ -1,4 +1,5 @@
 // C.258 UI 배치 도구 (GDD 175장): 편집본 → 게임 데이터 구조(room/market/worldmap layout·props·extras) 그대로 읽고 쓰기, 미리보기 적용, 내보내기 파일, 새 물건 검증
+import { ROOMS } from '../src/data/rooms';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { artUrls, clearRuntimeArt } from '../src/data/art/manifest';
@@ -15,7 +16,7 @@ describe('장면 목록 (데이터로 늘림)', () => {
   it('장면 = 종류(방·월드맵·시장) × 종족 — 종족 분기 없이 목록에서', () => {
     const ids = layoutScenes(FACTIONS).map((s) => s.id);
     expect(LAYOUT_KINDS.map((k) => k.kind)).toEqual(['room', 'worldmap', 'market']);
-    expect(ids).toEqual(LAYOUT_KINDS.flatMap((k) => FACTIONS.map((f) => `${k.kind}.${f.id}`)));
+    expect(ids).toEqual([...LAYOUT_KINDS.flatMap((k) => FACTIONS.map((f) => `${k.kind}.${f.id}`)), ...ROOMS.map((r) => `room@${r.id}`)]); // C.432: 방 목록의 방은 종족과 상관없이 한 번씩
   });
   it('물건 목록은 게임 화면과 같다: 방 = 수련장 빼고, 시장 = 월드맵 물건 + 온천 뺀 자리, 월드맵 = 장소 6곳', () => {
     const f = FACTIONS[0]!;

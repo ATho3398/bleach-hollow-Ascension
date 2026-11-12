@@ -1,0 +1,17 @@
+{
+  "errors": [],
+  "shots": [
+    "pc-room-ichigo",
+    "phone-room-ichigo"
+  ],
+  "facts": {
+    "pc": {
+      "name": "이치고초월자 · 소로",
+      "bg": []
+    },
+    "phone": {
+      "name": "이치고초월자 · 소로",
+      "bg": []
+    }
+  }
+}

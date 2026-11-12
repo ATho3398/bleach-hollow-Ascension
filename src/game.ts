@@ -3071,6 +3071,11 @@ export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick
   return s.skin ?? s.evolution.look ?? null;
 }
 
+/** 지금 트랙의 방 키 (GDD 12-4 v6.032, C.432): 초월자 데이터 room — 없으면 null(종족 방) */
+export function roomKeyOf(s: Partial<Pick<SaveData, 'transcendentId'>>): string | null {
+  return (s.transcendentId ? tryGetTranscendent(s.transcendentId)?.room : undefined) ?? null;
+}
+
 export function equipSkin(save: SaveData, skinId: string | null): boolean {
   if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;

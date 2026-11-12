@@ -3678,3 +3678,13 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 추천안: 조각 크기·칸 수·원본 범위(캐릭터 + 적)·투명 조각 다시 고르기 40%·가끔 남음 15%/1.5초 — 전부 provisional(GDD 12-4 구현 줄).
 - 테스트: 새 `tests/c431.test.ts` 6건(데이터·검증 · 표시 주소 · 원본 수집 · 시드 고정 배치·투명 조각 · 글리치 1~4칸·타이밍 · 화면 연결 문자열).
 - 캡처 `docs/captures/c431/`(1배, `scripts/c431-proof.cjs`): PC 844×390 = 01 방 기본 모습 · 02 방 글리치 순간(고정) · 03 도감 상세 · 04 모험 전투 / 폰 796×384 = 05 방. proof.json 오류 0.
+
+## C.432 — 초월자마다 자기 방: 방 목록(방 키 → 배경·물건 자리) · 이치고의 방 배경 · 배치 도구 장면 (GDD v6.032·v6.033 12-4·17-5, S-23, 코딩281 Opus)
+사용 모델: Opus 5.5. 세이브 형식·밸런스 변경 없음.
+- 사용자 원문(마스터AM 전달): "초월자 달면 각각 하나씩 방 만들어줄건데, 이치고의 방 이거로 배경 넣어라." (그림 `docs/design/user-art/transcendent-rooms/ichigo-room.png`)
+- 확인: 배치 도구는 장면 = 종류 × 종족이라 방 자리가 **종족 설정에만** 있었다(방 키별 구조 아님) → 방 목록을 새로 만들어 키별로 읽게 했다.
+- 방 목록 `src/data/rooms/*.json` + `index.ts`(자동 수집·검증): `{ id, label, sceneArt, layout?, floor?, characterFoot?, extras?, shape? }` = 방 키 → { 배경, 물건 자리 }(배치 도구 '새 방 만들기'와 맞물리는 모양 — 추천안). `transcendent-ichigo` = 이치고의 방, 배경 `scene.room-ichigo`(`public/art/scene-room-ichigo.webp`, 원본 1846×852 → webp q90).
+- 초월자 데이터 `room`(이치고만). `roomOf(종족, 말풍선, 방 키)` 가 방 목록 값을 덮고 빈 칸은 종족 방 그대로 — 물건 자리는 지금 방 자리(사용자가 배치 도구로 맞출 예정). `roomKeyOf(save)` → 방 화면(roomView)·사진(photoView). id 분기 없음.
+- 배치 도구: 장면 목록 끝에 방 목록의 방이 종족과 상관없이 한 번씩(`room@<방 키>`, 장면 종류 `shared`). 미리보기 써 넣기는 그 방 항목으로(종족 방은 그대로).
+- 테스트: 새 `tests/c432.test.ts` 3건 + c258 장면 목록 기대값(방 목록 방 추가).
+- 캡처 `docs/captures/c432/`(1배, `scripts/c432-proof.cjs`): 01 PC 844×390 이치고 초월자 방 · 02 폰 796×384. proof.json 오류 0.
