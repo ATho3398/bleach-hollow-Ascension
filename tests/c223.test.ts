@@ -70,8 +70,8 @@ describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () =
     expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'fullness', 'feed']); // GDD 241-B 5: 먹이 앞 배부름 카드 // 193장 8 (C.304): 빈사+가방 · 온천(쉬기 합침) · 먹이(회복 끝 합침) — 옛 7장
     expect(RECOVER_SCENES.length).toBeLessThanOrEqual(5); // 241-B 5 배부름 카드 +1
   });
-  it('새 세이브 가방 = 반창고 3·붕대 2·회복약 1 (치료제 3종은 GDD 245장 9 — 튜토리얼 빈사 치료 뒤)', () => {
-    expect(newSaveData('hollow', T0).shared.items).toEqual({ 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 });
+  it('새 세이브 가방 = 빈 채 (옛 시작 물건 전부 GDD v6.005 — 튜토리얼 빈사 치료 뒤)', () => {
+    expect(newSaveData('hollow', T0).shared.items).toEqual({});
   });
   it('첫 모험 회복 물건 안내 노란 알림은 161장에서 뺐다 (소모품은 알리지 않는다)', () => {
     expect(read('src/ui/app.ts')).not.toContain("title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다'");
@@ -88,7 +88,8 @@ describe('145장 1 → 164장 1: 온천 = 약 20초(옛 5분), 튜토리얼 온�
     passNestTime(n, 19 / 3600, false, 19_000);
     expect(n.spa).not.toBeNull();
     const f = passNestTime(n, 2 / 3600, false, 21_000);
-    expect(f.spaEnded?.reason).toBe('full');
+    expect(f.spaEnded).toBeNull(); // 가득 차도 머문다 (GDD v6.005)
+    expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(1, 6);
     expect(100 - n.hunger).toBeGreaterThan(89); // 온천 −10 (가득까지 배부름 총량 그대로)
   });

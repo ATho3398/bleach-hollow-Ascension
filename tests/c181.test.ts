@@ -125,7 +125,7 @@ describe('109장 7 테스트 모드', () => {
     expect(createTestItem(s, { kind: 'gear', id: 'weapon', count: 2, grade: 'legendary', plus: 3 }, 1, () => 0.5)).toBe(2);
     expect(s.shared.gear.items.map((i) => [i.kind, i.grade, i.plus])).toEqual([['weapon', 'legendary', 3], ['weapon', 'legendary', 3]]);
     s.shared.food.hearty = 0;
-    expect(createTestItem(s, { kind: 'food', id: 'hearty', count: 50 })).toBe(BALANCE.provisional.food.cap);
+    expect(createTestItem(s, { kind: 'food', id: 'hearty', count: 50 })).toBe(50); // 먹이 보관 상한 없음 (GDD v6.005)
     expect(createTestItem(s, { kind: 'currency', id: 'gold', count: 777 })).toBe(777);
     expect(s.shared.tradeCoins).toBe(777);
     const cos = testItemIds('cosmetic').find((id) => !s.shared.cosmetics.includes(id))!;

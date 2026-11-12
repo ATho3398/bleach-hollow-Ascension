@@ -22,7 +22,6 @@ import type { SaveData } from './game';
 import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 
 const SX = BALANCE.shop;
-const FOOD_MAX = BALANCE.provisional.food.cap;
 /** 보관함 소모품 종류별 상한 (GDD 86장 4번) */
 export const CONSUMABLE_CAP = BALANCE.provisional.inventory.consumableCap;
 
@@ -186,7 +185,7 @@ function goldName(item: GoldItemDef, faction: FactionConfig): string {
 function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
   switch (item.kind) {
     case 'food': {
-      // 효과 한 줄 (GDD 100장 #62 · 211장): 보관함 카드와 같은 글 — 먹이 효과 전부. 보관 한도는 '보유 n/9' 배지가 말한다
+      // 효과 한 줄 (GDD 100장 #62 · 211장): 보관함 카드와 같은 글 — 먹이 효과 전부. 보유 수는 '보유 n' 배지가 말한다(보관 상한 없음, GDD v6.005)
       return foodEffectText(item.food!, faction);
     }
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
@@ -226,7 +225,7 @@ export function shopBuyPrice(id: string): number | null {
 /** 품목 효과로 막힌 이유 (돈과 별개). 없으면 null */
 function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()): string | null {
   switch (item.kind) {
-    case 'food': return save.shared.food[item.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
+    case 'food': return null; // 먹이 보관 상한 없음 (GDD v6.005)
     case 'calm':
     case 'wake':
     case 'medicine':
@@ -245,7 +244,7 @@ function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()
 
 function goldHave(save: SaveData, item: GoldItemDef): string | null {
   switch (item.kind) {
-    case 'food': return `보유 ${save.shared.food[item.food!]}/${FOOD_MAX}`;
+    case 'food': return `보유 ${save.shared.food[item.food!]}`;
     case 'trainingTicket': return `보유 ${save.training.tickets}`;
     case 'reroll': return `보유 ${save.shared.rerollTickets}/${SX.rerollMax}`;
     // 배지는 가진 수 '보유 n' 하나로 (GDD 159장 33·35: 긴 배지가 그림을 덮었다). 하루 판매 수는 칸 한 줄 'n/m개 구매 가능'(shopDailyLeft)
@@ -326,7 +325,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
     switch (gold.kind) {
       case 'food':
         addFood(save.shared.food, gold.food!, 1);
-        detail = `${faction.foodNames[gold.food!]} ${save.shared.food[gold.food!]}/${FOOD_MAX}`;
+        detail = `${faction.foodNames[gold.food!]} 보유 ${save.shared.food[gold.food!]}`;
         break;
       case 'calm':
       case 'wake':
@@ -437,7 +436,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
   if (!w) return '';
   const n = wandererAmount(itemId);
   switch (w.kind) {
-    case 'food': return `${faction.foodNames[w.food!]} +${n} (종류별 보관 ${FOOD_MAX}개까지)`;
+    case 'food': return `${faction.foodNames[w.food!]} +${n}`;
     case 'reroll': return `다시 뽑기권 +${n} (보유 ${SX.rerollMax}장까지)`;
     case 'calm': return `${faction.riskGaugeName} −${n} · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${n} · 가방에 쌓이고 가방에서 쓴다`;
@@ -455,7 +454,7 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
   const w = getWandererItem(itemId);
   if (!w) return '모르는 품목이다';
   switch (w.kind) {
-    case 'food': return save.shared.food[w.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
+    case 'food': return null; // 먹이 보관 상한 없음 (GDD v6.005)
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'trainingTicket': return null; // 수련권 개수 제한 없음 (GDD 216장 2)
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
@@ -494,7 +493,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   switch (w.kind) {
     case 'food':
       addFood(save.shared.food, w.food!, n);
-      detail = `${faction.foodNames[w.food!]} ${save.shared.food[w.food!]}/${FOOD_MAX}`;
+      detail = `${faction.foodNames[w.food!]} 보유 ${save.shared.food[w.food!]}`;
       break;
     case 'reroll':
       save.shared.rerollTickets = Math.min(SX.rerollMax, save.shared.rerollTickets + n);

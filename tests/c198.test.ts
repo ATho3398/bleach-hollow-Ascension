@@ -188,10 +188,12 @@ describe('123장 4 홈 회복', () => {
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5);
   });
-  it('들어갈 수 없는 경우: 체력·컨디션 가득·배부름 0·사망·이미 온천', () => {
+  it('들어갈 수 없는 경우: 배부름 0·사망·이미 온천 (가득이어도 평소 온천은 들어감, 튜토리얼 온천만 full — GDD v6.005)', () => {
     const n = newNest(T0);
-    n.condition = 100; // 둘 다 가득일 때만 'full' (GDD 135장 2)
-    expect(enterSpa(n, T0)).toBe('full');
+    n.condition = 100;
+    expect(enterSpa(n, T0, true)).toBe('full');
+    expect(enterSpa(n, T0)).toBeNull();
+    n.spa = null;
     n.hpFraction = 0.5;
     n.hunger = 100;
     expect(enterSpa(n, T0)).toBe('hungry');
@@ -211,7 +213,8 @@ describe('123장 4 홈 회복', () => {
     s.nest.hunger = 0;
     soakSpa(s.nest, 5, T0);
     expect(s.nest.hpFraction).toBeCloseTo(0.1);
-    expect(s.nest.spa).toBeNull(); // 상한에 닿아 저절로 나옴
+    expect(s.nest.spa).not.toBeNull(); // 상한에 닿아도 머문다 (GDD v6.005)
+    leaveSpa(s.nest, T0);
     healHomeHp(s.nest, 0.5);
     expect(s.nest.hpFraction).toBeCloseTo(0.1);
     cureStatus(s.nest, 'collapsed');
@@ -227,7 +230,7 @@ describe('123장 4 홈 회복', () => {
     enterSpa(n, T0);
     const p = previewHomeHp(n, T0 + 6 * MIN);
     expect(p.fraction).toBeCloseTo(1);
-    expect(p.spaEnded?.reason).toBe('full');
+    expect(p.spaEnded).toBeNull(); // 가득 차도 저절로 나오지 않는다 (GDD v6.005)
     expect(n.hpFraction).toBe(0.5);
     expect(n.spa).not.toBeNull();
   });
@@ -286,7 +289,7 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     s.activeExpedition = {} as SaveData['activeExpedition'];
     expect(spaEnter(s, T0)).toBe('expedition');
   });
-  it('꺼 둔 동안 온천에서 저절로 나오면 런 로그에 남는다 (absenceOf)', () => {
+  it('꺼 둔 동안 튜토리얼 온천에서 저절로 나오면 런 로그에 남는다 (absenceOf) — 평소 온천은 머문다 (GDD v6.005)', () => {
     const s = newSaveData('hollow', T0);
     s.nest.hpFraction = 0.6;
     s.nest.condition = 100; // 체력만 차면 나오게 (GDD 135장 2)
@@ -294,10 +297,20 @@ describe('123장 4 튜토리얼이 부를 세이브 쪽 API (C.199)', () => {
     s.lastSeenAt = T0;
     spaEnter(s, T0);
     absenceOf(s, T0 + 30 * MIN);
-    expect(s.nest.spa).toBeNull();
-    expect(s.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full' });
-    expect((s.runLog.homeHeals.at(-1) as { minutes: number }).minutes).toBeCloseTo(8 / 60, 2); // 8초 = +40% (평소 온천 약 20초에 가득, GDD 164장 1)
+    expect(s.nest.spa).not.toBeNull(); // 평소 온천: 가득 차도 머문다
+    expect(homeHpOf(s.nest)).toBeCloseTo(1);
     leaveSpa(s.nest, T0);
+    const t = newSaveData('hollow', T0);
+    t.help.guides.recover = 'pending' as never; // 튜토리얼 온천(빠름)
+    t.nest.hpFraction = 0.6;
+    t.nest.condition = 100;
+    t.nest.hunger = 0;
+    t.lastSeenAt = T0;
+    spaEnter(t, T0);
+    expect(t.nest.spa?.fast).toBe(true);
+    absenceOf(t, T0 + 30 * MIN);
+    expect(t.nest.spa).toBeNull();
+    expect(t.runLog.homeHeals.at(-1)).toMatchObject({ kind: 'spa', reason: 'full' });
   });
 });
 

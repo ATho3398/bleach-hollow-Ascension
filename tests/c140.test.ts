@@ -284,6 +284,7 @@ describe('86장 보관함', () => {
   it('보관함 목록: 먹이·소모품·타일·수련권이 카테고리 순서로, 먹이는 보관함에서 먹인다', () => {
     const s = newSaveData('hollow', 1);
     s.shared.items = { wake: 2 };
+    s.shared.food.snack = 5; // 새 게임 간식은 빈사 치료 뒤 (GDD v6.005)
     s.tiles.collection = { 'rest-a': 2 };
     s.training.tickets = 1;
     const inv = inventoryOf(s, H);

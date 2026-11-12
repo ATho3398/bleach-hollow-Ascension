@@ -17,17 +17,17 @@ export function emptyFoodStock(): FoodStock {
 /** 새 게임 시작 지급 (간식 5·보통 3) */
 export function newFoodStock(): FoodStock {
   const s = emptyFoodStock();
-  for (const id of FOOD_IDS) s[id] = Math.min(FX.cap, FX.start[id] ?? 0);
+  for (const id of FOOD_IDS) s[id] = FX.start[id] ?? 0;
   return s;
 }
 
-/** 저장된 값을 보유 개수로 정리한다: 모르는 종류는 버리고, 0~상한 정수로 */
+/** 저장된 값을 보유 개수로 정리한다: 모르는 종류는 버리고, 0 이상 정수로 (보관 상한 없음 — GDD v6.005) */
 export function sanitizeFoodStock(raw: unknown): FoodStock {
   const s = emptyFoodStock();
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
   for (const id of FOOD_IDS) {
     const v = r[id];
-    s[id] = typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(FX.cap, Math.floor(v))) : 0;
+    s[id] = typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
   }
   return s;
 }
@@ -36,9 +36,9 @@ export function totalFood(s: FoodStock): number {
   return FOOD_IDS.reduce((n, id) => n + s[id], 0);
 }
 
-/** 먹이를 더한다. 상한을 넘는 몫은 버리고, 실제로 들어간 개수를 돌려준다 */
+/** 먹이를 더한다 (보관 상한 없음 — GDD v6.005). 들어간 개수를 돌려준다 */
 export function addFood(s: FoodStock, id: FoodId, n: number): number {
-  const added = Math.max(0, Math.min(n, FX.cap - s[id]));
+  const added = Math.max(0, Math.floor(n));
   s[id] += added;
   return added;
 }
@@ -91,11 +91,11 @@ export function rollBattleFoodMult(rng: Rng, elite: boolean, table: FoodDropTabl
 
 /** 원정에서 가져온 먹이를 보유에 넣은 결과 (결과 화면 표시용) */
 export interface FoodSettlement {
-  /** 원정에서 얻어 지킨 먹이 (상한으로 버려진 것 포함) */
+  /** 원정에서 얻어 지킨 먹이 */
   gained: FoodId[];
-  /** 상한 때문에 못 넣은 개수 */
+  /** 옛 보관 상한 때문에 못 넣은 개수 (GDD v6.005 부터 늘 0, 옛 결과 기록 호환) */
   overflow: number;
-  /** 못 넣은 먹이를 바꾼 골드 (GDD 42장 4번). 옛 결과에는 없다 */
+  /** 옛 넘침 골드 (GDD v6.005 삭제, 옛 결과 기록에만 있다) */
   overflowGold?: number;
   /** 패배로 잃은 먹이 (마지막 바퀴 획득분) */
   lost: FoodId[];
@@ -105,24 +105,10 @@ export interface FoodSettlement {
 
 /** 원정에서 얻은 먹이를 보유에 넣고, 그래도 하나도 없으면 막힘 방지 간식을 준다 (GDD 23-1) */
 export function settleFood(s: FoodStock, gained: FoodId[], lost: FoodId[] = []): FoodSettlement {
-  let overflow = 0;
-  let overflowGold = 0;
-  for (const id of gained) {
-    if (addFood(s, id, 1) === 0) {
-      overflow++;
-      overflowGold += foodOverflowGold(id);
-    }
-  }
+  for (const id of gained) addFood(s, id, 1); // 보관 상한·넘침 골드 없음 (GDD v6.005)
   let fallback = 0;
   if (totalFood(s) === 0) fallback = addFood(s, 'snack', FX.fallbackSnack);
-  return { gained: [...gained], overflow, overflowGold, lost: [...lost], fallback };
-}
-
-/** 보관 한도를 넘친 먹이 1개의 골드 (GDD 42장 4번): 판매가 표(sell.prices, 236장)에 있으면 그 값, 아니면 상점 골드 가격(food-<id>) × overflowGoldRate, 반올림. 상점에 없는 먹이는 0. 부르는 쪽이 골드에 더한다 */
-export function foodOverflowGold(id: FoodId): number {
-  const sell = BALANCE.provisional.sell.prices[`food-${id}`]; // 상점에 없는 먹이 = 판매가 표 (GDD 235장 1 · 236장 2)
-  if (sell) return sell;
-  return Math.round((BALANCE.shop.goldPrices[`food-${id}`] ?? 0) * FX.overflowGoldRate);
+  return { gained: [...gained], overflow: 0, lost: [...lost], fallback };
 }
 
 /** 종류별 개수로 묶는다 (표시용): [[id, 개수]] FOOD_IDS 순서 */

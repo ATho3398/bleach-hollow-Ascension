@@ -45,12 +45,12 @@ const storage = () => {
 };
 
 describe('먹이 = 전리품 (GDD 23-1)', () => {
-  it('시작 지급 간식 5(일반 먹이는 튜토리얼 첫 끼니 뒤 — GDD 245장 2), 상한 9, 모르는 값 정리', () => {
+  it('새 먹이 보유 = 빈 칸(간식 5도 빈사 치료 뒤 — GDD v6.005), 상한 없음, 모르는 값 정리', () => {
     const s = newFoodStock();
-    expect(s).toEqual({ ...emptyFoodStock(), snack: 5 });
-    expect(addFood(s, 'snack', 10)).toBe(FX.cap - 5);
-    expect(s.snack).toBe(FX.cap);
-    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: FX.cap, hearty: 2 });
+    expect(s).toEqual(emptyFoodStock());
+    expect(addFood(s, 'snack', 10)).toBe(10);
+    expect(s.snack).toBe(10);
+    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: 99, hearty: 2 });
   });
 
   it('드롭 표: 일반 적은 약 50% 1개(일반 6종), 강적은 확정 1개 + 약 30% 1개 더(일반 6종 + 특식 6종, GDD 235장 · 239장)', () => {
@@ -107,7 +107,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     recordExpedition(save, exp, 1);
     const kept = summarize(exp).keptFood;
     expect(exp.foodSettled?.gained).toEqual(kept);
-    for (const id of FOOD_IDS) expect(save.shared.food[id]).toBe(Math.min(FX.cap, before[id] + kept.filter((x) => x === id).length));
+    for (const id of FOOD_IDS) expect(save.shared.food[id]).toBe(before[id] + kept.filter((x) => x === id).length); // 보관 상한 없음 (GDD v6.005)
     const lost = mk({ seed: 3 });
     lost.foodLoot = [{ food: 'hearty', lap: 1 }, { food: 'snack', lap: 2 }];
     lost.lap = 2;
@@ -132,6 +132,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
 
   it('둥지 먹이 주기는 하나를 쓰고, 0개면 먹이지 못한다', () => {
     const save = newSaveData('hollow', 0);
+    save.shared.food.snack = 5; // 새 게임 간식은 빈사 치료 뒤 (GDD v6.005)
     save.nest.hunger = 80;
     expect(feedNest(save, 'snack')).toBe('ate');
     expect(save.shared.food.snack).toBe(4);
@@ -236,8 +237,8 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     save.shared.food.basic = 8;
     const g = claimTutorialGoals(save, 2);
     expect(g.map((x) => x.goal.id)).toEqual(['tutorial']);
-    expect(g[0]!.food).toEqual([['basic', 1]]); // 3 중 상한까지 1 (C.387: 튜토리얼 보상 간식 → 일반 먹이)
-    expect(save.shared.food.basic).toBe(FX.cap);
+    expect(g[0]!.food).toEqual([['basic', 3]]); // 보관 상한 없음 — 다 받는다 (GDD v6.005)
+    expect(save.shared.food.basic).toBe(11);
     expect(claimTutorialGoals(save, 3)).toEqual([]);
     save.evolution.tierIndex = 4;
     save.rank.history.everRanked = true;

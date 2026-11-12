@@ -4,7 +4,7 @@ import { BALANCE } from '../src/config/balance';
 import { getTrait } from '../src/data/traits';
 import { FORM_TABLE } from '../src/data/evolution';
 import { advance, chooseAbsorb, conditionFloor, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
-import { foodOverflowGold, newFoodStock, settleFood } from '../src/engine/food';
+import { newFoodStock, settleFood } from '../src/engine/food';
 import { expeditionEndVitals } from '../src/engine/nest';
 import { fillDefaultTraits, newTestSave } from '../src/engine/testMode';
 import { newSaveData, sanitizeDeck, settleStory } from '../src/game';
@@ -112,29 +112,25 @@ describe('C.95 ③ 컨디션 바퀴당 감소 하한 (GDD 42장 3번)', () => {
   });
 });
 
-describe('C.95 ④ 넘친 먹이 → 골드 (GDD 42장 4번)', () => {
-  it('1개 = 상점 가격 × 20%', () => {
-    expect(foodOverflowGold('snack')).toBe(Math.round(BALANCE.shop.goldPrices['food-snack']! * 0.2));
-    expect(foodOverflowGold('feast')).toBe(28);
-  });
-  it('원정 정산: 한도를 넘친 몫만 골드로', () => {
+describe('C.95 ④ 넘친 먹이 → 골드 — GDD v6.005 에서 삭제(먹이 보관 상한 없음)', () => {
+  it('원정 정산: 상한 없이 다 들어가고 넘침·골드 없음', () => {
     const s = newFoodStock();
-    s.snack = BALANCE.provisional.food.cap;
+    s.snack = 9;
     const r = settleFood(s, ['snack', 'snack', 'basic']);
-    expect(r.overflow).toBe(2);
-    expect(r.overflowGold).toBe(2 * foodOverflowGold('snack'));
-    expect(s.basic).toBe(newFoodStock().basic + 1);
+    expect(r.overflow).toBe(0);
+    expect(r.overflowGold).toBeUndefined();
+    expect(s.snack).toBe(11);
   });
-  it('화 보상 먹이가 한도면 골드로 받고 화 보상 골드에 더해진다', () => {
+  it('화 보상 먹이: 많이 가져도 받는다 · 골드는 화 보상 골드만', () => {
     const save = newSaveData('hollow', 1);
     const SX = BALANCE.provisional.story;
-    save.shared.food[SX.episodeFood as 'basic'] = BALANCE.provisional.food.cap;
+    save.shared.food[SX.episodeFood as 'basic'] = 9;
     const exp = mk('hollow', { chapterId: 'ch1', episodeId: 'ep1' });
     exp.story!.cleared = true;
     const before = save.shared.tradeCoins;
     const r = settleStory(save, exp, 1);
-    expect(r.food[1]).toBe(0);
-    expect(r.overflowGold).toBe(foodOverflowGold(SX.episodeFood as 'basic'));
-    expect(save.shared.tradeCoins - before).toBe(SX.episodeGold + r.overflowGold!);
+    expect(r.food[1]).toBe(1);
+    expect(r.overflowGold).toBeUndefined();
+    expect(save.shared.tradeCoins - before).toBe(SX.episodeGold);
   });
 });

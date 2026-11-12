@@ -146,7 +146,7 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     expect(r2.ended?.reason).toBe('full');
     expect(n.condition).toBe(100);
     expect(n.spa).toBeNull();
-    expect(enterSpa(n, 0)).toBe('full');
+    expect(enterSpa(n, 0, true)).toBe('full'); // 튜토리얼 온천만 '가득' 막힘 (GDD v6.005 — 평소 온천은 가득이어도 들어감)
     n.condition = 80;
     n.hunger = 0;
     expect(enterSpa(n, 0)).toBeNull(); // 체력 가득이어도 컨디션이 덜 차면 들어간다

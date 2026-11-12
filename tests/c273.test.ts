@@ -15,19 +15,13 @@ describe('180장 2 온천 가득 안내', () => {
     expect(SPA_FULL_TEXT).toBe('체력이 가득 찼다');
     expect(SPA_FULL_HOLD_MS).toBe(2000);
   });
-  it('가득으로 나오면 온천 안에서 알림 → 방, 방에서는 토스트를 다시 띄우지 않는다', () => {
+  it('GDD v6.005: 가득 뒤 2초 머묾 알림 삭제 — 저절로 나올 때는 바로 방, 튜토리얼 회복 안내 중에는 카드 흐름이 정한다', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;");
-    // 가득 아닌(배부름 0) 나오기만 방에서 알림
-    const i = app.indexOf("if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;");
-    expect(app.slice(i, i + 300)).toContain('toRoom();');
-  });
-  it('C.274 튜토리얼 회복 안내 중에는 알림·자동 방 이동 없음 (카드 [다음] 이 정한다)', () => {
-    const app = read('src/ui/app.ts');
+    expect(app).not.toContain('spaHoldFull(name, toRoom)');
     const a = app.indexOf("if (recoverOpen && nav.top?.id === 'spa') return;");
-    const b = app.indexOf("if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;");
     expect(a).toBeGreaterThan(0);
-    expect(a).toBeLessThan(b);
+    expect(app.slice(a, a + 400)).toContain('toRoom();');
+    expect(app).toContain("act: { selector: `${spaWay}, .bha-spa__actor`, autoFinish: true, done: () => {"); // 튜토리얼 온천 = 가득 차면 바로 나감
   });
   it('[돌아가기]·✓ = 기다리지 않고 바로 방, 나가기 연출이 시작되면 기다림을 끈다', () => {
     const spa = read('src/ui/spaView.ts');

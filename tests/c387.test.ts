@@ -7,7 +7,6 @@ import { FOOD_IDS } from '../src/engine/faction';
 import { FOOD_PREFS, foodReactionOf, foodTypeOf, NORMAL_FOODS } from '../src/engine/foodPref';
 import { ELEMENTAL_IDS, ELEMENT_IDS, weaknessesOf } from '../src/data/elements';
 import { doNestAction, feedFood, foodEffect, newNest, sameFoodLeft } from '../src/engine/nest';
-import { foodOverflowGold } from '../src/engine/food';
 import { feedNest, foodReactionFor, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, MIN_LOADABLE_SAVE_FORMAT } from '../src/game';
 import { SAME_FOOD_REFUSED, useInventoryItem } from '../src/inventory';
 import { grantRecoverFood } from '../src/recoverTutorial';
@@ -102,7 +101,6 @@ describe('235장: 먹이 3유형', () => {
     const bond = n.bond;
     doNestAction(n, 'feed', 'purify', T); // 배부름 5, 리스크 −15, 교감 −1
     expect([n.hunger, n.risk, n.bond]).toEqual([17, 15, bond - 1]);
-    expect(foodOverflowGold('relic')).toBe(BALANCE.provisional.sell.prices['food-relic']);
     expect(foodEffect('relic')).toMatchObject({ hunger: 10, condition: 0, risk: 0 });
     expect(NX.foods.feast).toMatchObject({ hunger: 40, condition: -15 });
     expect(NX.foods.tonic).toMatchObject({ hunger: 8, condition: 25 });

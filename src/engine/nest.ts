@@ -226,11 +226,11 @@ export function spaFull(nest: Pick<NestState, 'hpFraction' | 'collapsed' | 'cond
   return homeHpOf(nest) >= homeHpCap(nest) - 1e-9 && nest.condition >= MAX - 1e-9;
 }
 
-/** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·체력·컨디션 둘 다 가득(135장 2)·배부름 0 이면 못 들어간다(이유). 들어가면 null */
+/** 온천에 들어간다 (GDD 123장 4): 사망·이미 온천·배부름 0 이면 못 들어간다(이유). 체력·컨디션이 가득이어도 평소 온천은 들어가 쉴 수 있다(GDD v6.005 — 튜토리얼 온천만 '가득' 막힘). 들어가면 null */
 export function enterSpa(nest: NestState, nowMs: number, fast = false, walkIn = false): 'dead' | 'already' | 'full' | 'hungry' | null {
   if (nest.dead) return 'dead';
   if (nest.spa) return 'already';
-  if (spaFull(nest)) return 'full';
+  if (fast && spaFull(nest)) return 'full';
   if (fullnessOfNest(nest) <= 0) return 'hungry';
   nest.spa = { at: nowMs, hp: homeHpOf(nest), fullness: fullnessOfNest(nest), ...(fast ? { fast: true as const } : {}), ...(walkIn ? { soakAt: nowMs + HH.spaEnterSeconds * 1000 } : {}) };
   return null;
@@ -246,7 +246,7 @@ export function spaRateOf(stay: Pick<SpaStay, 'fast'> | null | undefined): { hpP
   return stay?.fast ? HH.tutorialSpa : HH.spa;
 }
 
-/** 온천 시간 한 토막: 1초에 체력 +spa.hpPerSecond·컨디션 +spa.conditionPerSecond(GDD 135장 2·139장 2)·배부름 −spa.fullnessPerSecond (아래 계산은 분 단위라 ×60), 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되는 순간 저절로 나온다.
+/** 온천 시간 한 토막: 1초에 체력 +spa.hpPerSecond·컨디션 +spa.conditionPerSecond(GDD 135장 2·139장 2)·배부름 −spa.fullnessPerSecond (아래 계산은 분 단위라 ×60), 체력 상한과 컨디션 가득 둘 다 닿거나 배부름 0 이 되면 회복이 멈춘다(튜토리얼 온천만 그 순간 저절로 나온다, GDD v6.005).
  *  startMs = 이 토막이 시작한 시각(나온 시각 계산용). 온천에서 보낸 분과 나온 결과 */
 function spaStep(nest: NestState, minutes: number, startMs: number): { used: number; ended: SpaEnd | null } {
   if (!nest.spa || minutes <= 0) return { used: 0, ended: null };
@@ -269,7 +269,9 @@ function spaStep(nest: NestState, minutes: number, startMs: number): { used: num
   nest.condition = Math.min(MAX, nest.condition + used * condPm);
   nest.hunger = clamp(nest.hunger + used * fullPm, 0, 100);
   const full = spaFull(nest);
-  const ended = full || fullnessOfNest(nest) <= 1e-9 ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
+  // 저절로 나오기 (GDD v6.005): 튜토리얼 온천만 — 가득 차는 순간 바로 나온다(머묾 0). 평소 온천은 가득 차거나 배부름이 0 이어도 머문다:
+  // 가득 뒤엔 회복이 없어 온천 배부름 소모도 없고 방과 같은 속도로만 배가 꺼지며(passNestTime), 배부름 0 이면 회복이 멈춘다. 나가기는 [돌아가기]로만
+  const ended = nest.spa.fast && (full || fullnessOfNest(nest) <= 1e-9) ? closeSpa(nest, Math.round(startMs + used * 60_000), full ? 'full' : 'hungry') : null;
   return { used, ended };
 }
 

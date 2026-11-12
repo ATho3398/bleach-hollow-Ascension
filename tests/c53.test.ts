@@ -206,7 +206,7 @@ describe('24-3 도감 보상', () => {
     save.shared.food.tonic = 8;
     const g = claimDexRewards(save, 9);
     expect(g.map((x) => x.milestone.id)).toEqual(['forms-5', 'forms-10', 'forms-20', 'titles-5', 'titles-10']);
-    expect(save.shared.food.tonic).toBe(BALANCE.provisional.food.cap);
+    expect(save.shared.food.tonic).toBe(8 + 1 + 2); // 보관 상한 없음 (GDD v6.005)
     expect(save.shared.jade).toBe(1 + 2 + 3 + 1 + 2);
     expect(save.shared.dexRewards.length).toBe(5);
     expect(dexCounts(save)).toEqual({ forms: 21, titles: 10 });

@@ -116,7 +116,7 @@ describe('전체 해금 (38-3)', () => {
       expect(new Set(s.shared.cosmetics)).toEqual(new Set(COSMETIC_ITEMS.map((c) => c.id)));
       expect(s.shared.tradeCoins).toBe(TEST_WEALTH);
       expect(s.shared.jade).toBe(TEST_WEALTH);
-      for (const id of FOOD_IDS) expect(s.shared.food[id]).toBe(BALANCE.provisional.food.cap);
+      for (const id of FOOD_IDS) expect(s.shared.food[id]).toBeGreaterThanOrEqual(9); // 테스트 채우기 = 9개씩 (보관 상한은 GDD v6.005 에서 삭제)
       for (const b of BOSSES) expect(s.bossDex[b.id]!.kills).toBeGreaterThan(0);
       expect(s.help.tutorialSeen).toBe(true);
     });

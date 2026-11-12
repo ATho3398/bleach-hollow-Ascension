@@ -212,7 +212,7 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   sh.tradeCoins = TEST_WEALTH;
   sh.jade = TEST_WEALTH;
   sh.soulCrystals = TEST_WEALTH;
-  for (const id of FOOD_IDS) sh.food[id] = BALANCE.provisional.food.cap;
+  for (const id of FOOD_IDS) sh.food[id] = Math.max(sh.food[id], 9); // 먹이는 보관 상한이 없다(GDD v6.005) — 테스트 채우기는 옛 상한 9개씩
   sh.rerollTickets = BALANCE.shop.rerollMax;
   sh.deckSlots = BALANCE.shop.deckSlotPrices.length;
   sh.cosmetics = [...new Set([...sh.cosmetics, ...COSMETIC_ITEMS.map((c) => c.id)])];

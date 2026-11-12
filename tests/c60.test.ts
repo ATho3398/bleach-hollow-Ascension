@@ -65,7 +65,7 @@ describe('상점 데이터 (25-9 표)', () => {
 });
 
 describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
-  it('먹이: +1, 골드 차감, 런 로그 기록. 종류별 9개면 잠김. 모자라면 "골드 n 부족"', () => {
+  it('먹이: +1, 골드 차감, 런 로그 기록. 보관 상한 없음(GDD v6.005). 모자라면 "골드 n 부족"', () => {
     const s = rich();
     const before = s.shared.food.basic;
     const r = buyShopItem(s, H, 'food-basic', 777);
@@ -74,9 +74,9 @@ describe('골드 탭: 산 즉시 쓰기·상한·잠김', () => {
     expect(s.shared.tradeCoins).toBe(5000 - 35);
     expect(s.runLog.shopPurchases).toEqual([{ at: 777, factionId: 'hollow', itemId: 'food-basic', currency: 'gold', price: 35 }]);
     s.shared.food.snack = 9;
-    expect(row(s, 'food-snack')!.canBuy).toBe(false);
-    expect(row(s, 'food-snack')!.lock).toBe('보관 가득 (9/9)');
-    expect(buyShopItem(s, H, 'food-snack').ok).toBe(false);
+    expect(row(s, 'food-snack')!.canBuy).toBe(true);
+    expect(buyShopItem(s, H, 'food-snack').ok).toBe(true);
+    expect(s.shared.food.snack).toBe(10);
     s.shared.tradeCoins = 15;
     expect(row(s, 'food-hearty')!.lock).toBe('골드 45 부족');
     expect(shortText('gold', 45)).toBe('골드 45 부족');

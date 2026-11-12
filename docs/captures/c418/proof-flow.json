@@ -1,0 +1,127 @@
+{
+ "facts": {
+  "shots": [
+   "03-absorb-mode-card",
+   "04-spa-full",
+   "01-fullness-highlight",
+   "05-food-reward",
+   "06-status-stats"
+  ],
+  "stages": [
+   "home-intro:둥지",
+   "home-intro:돌보기",
+   "home-intro:첫 모험",
+   "first-run:첫 모험",
+   "script:자동 공격",
+   "script:강공격",
+   "script:막기 성공",
+   "script:위기",
+   "script:좋아!",
+   "script:영력 해방",
+   "script:영력 해방 중",
+   "script:체인",
+   "first-absorb:포식",
+   "first-absorb:속성 포식",
+   "first-absorb:능력치 포식",
+   "first-absorb:놓아주기",
+   "first-absorb:첫 포식",
+   "wound:겨우 쓰러뜨렸다",
+   "wound:둥지로",
+   "recover:빈사",
+   "recover:구급상자",
+   "recover:온천",
+   "recover:배부름",
+   "recover:먹이"
+  ],
+  "absorbCards": [
+   {
+    "title": "포식",
+    "body": "적을 쓰러뜨리면 포식해서 성장할 수 있다.포식에는 갈래가 네 가지 있다.하나씩 보자.",
+    "hole": {
+     "x": 0,
+     "y": 0,
+     "w": 0,
+     "h": 0
+    },
+    "sameBadge": 0
+   },
+   {
+    "title": "속성 포식",
+    "body": "블록만 얻고, 그 속성 쪽으로 자란다.",
+    "hole": {
+     "x": 192,
+     "y": 143,
+     "w": 93,
+     "h": 39
+    },
+    "sameBadge": 0
+   },
+   {
+    "title": "능력치 포식",
+    "body": "블록 없이 능력치를 두 배로 얻는다.",
+    "hole": {
+     "x": 277,
+     "y": 143,
+     "w": 93,
+     "h": 39
+    },
+    "sameBadge": 0
+   },
+   {
+    "title": "첫 포식",
+    "body": "갈래를 누르면 위 칸에 자세한 설명이 나온다.하나 골라 이 버튼을 눌러 포식해 보자.",
+    "hole": {
+     "x": 107,
+     "y": 239,
+     "w": 349,
+     "h": 60
+    },
+    "sameBadge": 0
+   }
+  ],
+  "cureToast": "가방 빈사가 풀렸다 | 튜토리얼 보상 가방에 회복 물건이 들어왔다",
+  "spaDone": {
+   "body": null,
+   "toast": "온천 체력이 가득 찼다!",
+   "hp": "115 / 115"
+  },
+  "fullnessHole": {
+   "hole": {
+    "x": 374,
+    "y": 58,
+    "w": 84,
+    "h": 26
+   },
+   "hunger": {
+    "x": 379,
+    "y": 63,
+    "w": 72,
+    "h": 14
+   },
+   "pad": 6
+  },
+  "foodToast": "튜토리얼 보상 일반 먹이 6종 각 3개",
+  "items": {
+   "items": "\"items\":{\"med-cure\":3,\"med-iv\":3,\"med-energy\":3,\"heal-patch\":3,\"battle-potion\":2,\"heal-salve\":1}",
+   "food": "\"food\":{\"basic\":10,\"sushi\":3,\"roast\":3,\"hearty\":3,\"fizz\":3,\"mushroom\":3,\"feast\":0,\"tonic\":0,\"flesh\":0,\"elixir\":0,\"purify\":0,\"relic\":0,\"snack\":5,\"scrap\":0,\"tutorial\":0}"
+  },
+  "statRows": [
+   "체력115+3",
+   "힘53+3",
+   "지능53+3",
+   "방어받는 물리 피해 ×0.94+3",
+   "정신력받는 특수 피해 ×0.94+3",
+   "속도0.9초에 1번+3",
+   "일반 공격 치명5%",
+   "블록 치명9%",
+   "치명타 피해×1.5",
+   "노 노멀 피해+0%",
+   "물 물 피해+0%",
+   "불 불 피해+0%",
+   "흙 흙 피해+0%",
+   "뇌 뇌 피해+0%"
+  ],
+  "roomMaxHp": null
+ },
+ "errors": []
+}

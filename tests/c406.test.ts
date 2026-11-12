@@ -90,7 +90,7 @@ describe('241-C 5 새 게임 시작 지급', () => {
       if (def.type === 'normal') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
       if (def.type === 'special') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
     }
-    expect(s.shared.food.snack).toBe(BALANCE.provisional.food.start.snack);
+    expect(s.shared.food.snack).toBe(0); // 싸구려 간식도 빈사 치료 뒤 (GDD v6.005)
   });
 });
 

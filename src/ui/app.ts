@@ -12,7 +12,7 @@ import { GUIDES, guideVars, HOME_INTRO, RECOVER_SCENES, type TutorialScene } fro
 import { fixParticles } from '../engine/josa';
 import { grantCureReward, grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
-import { spaExitFx, spaHoldFull, spaView } from './spaView';
+import { spaExitFx, spaView } from './spaView';
 import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
@@ -464,17 +464,18 @@ export function startApp(host: HTMLElement): void {
       },
       // 구급상자 다음은 방에서 온천 카드 (GDD 144장 4 — 방에서 포션 마시는 단계 삭제)
       cure: { skip: () => !s.nest.collapsed, act: { selector: '[data-item="med-cure"]', done: () => {
-        // 빈사가 풀린 순간 치료제 3종 보상 (GDD 245장 9 — 새 게임 시작 지급 대신)
+        // 빈사가 풀린 순간 옛 시작 가방 물건 전부(치료제·회복 물건·싸구려 간식) 보상 (GDD 245장 9 · v6.005 — 새 게임 시작 지급 대신)
         if (!s.nest.collapsed && grantCureReward(s)) {
           persist();
-          showToast({ eyebrow: '튜토리얼 보상', title: `치료제 3종 각 ${Object.values(TR.cureReward)[0]}개`, meta: Object.keys(TR.cureReward).map(consumableName).join(' · '), center: true }, 0, 3200);
+          showToast({ eyebrow: '튜토리얼 보상', title: '가방에 회복 물건이 들어왔다', meta: [...Object.entries(TR.cureReward).map(([id, n]) => `${consumableName(id)} ${n}`), ...Object.entries(TR.cureFood).map(([id, n]) => `${faction.foodNames[id as keyof typeof faction.foodNames]} ${n}`)].join(' · '), center: true }, 0, 3600); // 옛 시작 가방 물건 전부 (GDD v6.005)
         }
         return closeItemWhen(!s.nest.collapsed);
       } }, next: (go) => { toRoom(); go(); } },
       'to-spa': {
         // 온천에 들어가면(원래 조작, 방 → 월드맵 → 온천 단계 안내 — GDD 157장 4) 실제 시간으로 찬다 (GDD 139장 2 — 10초에 가득이라 시간을 흘리는 연출 없이 막대가 실시간으로 차오름).
         // 체력이 spaTo 에 닿으면 [다음]. 배부름이 먼저 바닥나 나왔으면 각본 값 spaTo 까지 채운다
-        act: { selector: `${spaWay}, .bha-spa__actor`, done: () => {
+        // GDD v6.005: 튜토리얼 온천은 가득 차는 순간 바로 나간다(머묾 0) — 카드 [다음] 없이 '체력이 가득 찼다!' 알림과 함께 걸어 나가 방으로
+        act: { selector: `${spaWay}, .bha-spa__actor`, autoFinish: true, done: () => {
           if (soaked) return true;
           if (!s.nest.spa) {
             if (!inSpa) return false;
@@ -488,6 +489,7 @@ export function startApp(host: HTMLElement): void {
         } },
         // C.274 (GDD 180장 2 보충): 가득 차도 튜토리얼 온천은 저절로 나가지 않으므로, '온천' 카드 [다음] 에서 걸어 나가 방으로 (옛 '쉬기' 카드는 193장 8 에서 삭제)
         next: (go) => {
+          showToast({ eyebrow: wm.places.spa, title: '체력이 가득 찼다!', center: true }, 0, 2000);
           const leave = () => { spaLeave(s); persist(); nestScreen(); go(); };
           if (!spaExitFx(leave)) leave();
         },
@@ -1202,8 +1204,7 @@ export function startApp(host: HTMLElement): void {
             };
             // 튜토리얼 회복 안내 중 (GDD 180장 2 보충, C.274): 알림·자동 방 이동 없이 온천에 그대로 — 안내 카드('체력이 가득 찼다!')와 [다음] 흐름이 방 이동을 정한다
             if (recoverOpen && nav.top?.id === 'spa') return;
-            // 가득 차서 나올 때 (GDD 180장 2, C.273): 온천 안에서 노란 알림 → 2초 뒤(✓ 면 바로) 방. 방에서는 알림을 다시 띄우지 않는다
-            if (e.reason === 'full' && spaHoldFull(name, toRoom)) return;
+            // 옛 '가득 뒤 2초 머묾 알림'(C.273)은 GDD v6.005 에서 삭제 — 평소 온천은 가득 차도 저절로 나오지 않고, 저절로 나올 때는 바로 방으로
             toRoom(); // 온천 끝 결과 알림은 뺐다 (GDD 233장 4) — 방 체력·배부름 막대로 보인다
           },
         });

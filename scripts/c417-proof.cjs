@@ -153,8 +153,8 @@ async function tutorialFlow(browser, url, facts, errors) {
       facts.fullnessHole = { hole: await rectOf(page, '.bha-tut__hole'), hunger: await rectOf(page, '.bha-room__status [data-gauge="hunger"]'), pad: 6 };
       await shot('01-fullness-highlight');
     }
-    if (st.spa && /가득 찼다/.test(st.body ?? '') && !seen.has('spadone')) { seen.add('spadone'); facts.spaDone = { body: st.body, hp: await page.evaluate(() => document.querySelector('.bha-spa')?.textContent?.match(/\d+\s*\/\s*\d+/)?.[0] ?? null) }; await shot('04-spa-full'); }
-    if ((st.toast ?? '').includes('치료제') && !seen.has('cure')) { seen.add('cure'); facts.cureToast = st.toast; }
+    if (st.spa && /가득 찼다/.test(`${st.body ?? ''} ${st.toast ?? ''}`) && !seen.has('spadone')) { seen.add('spadone'); facts.spaDone = { body: st.body, toast: st.toast, hp: await page.evaluate(() => document.querySelector('.bha-spa')?.textContent?.match(/\d+\s*\/\s*\d+/)?.[0] ?? null) }; await shot('04-spa-full'); }
+    if ((st.toast ?? '').includes('회복 물건') && !seen.has('cure')) { seen.add('cure'); facts.cureToast = st.toast; }
     if ((st.toast ?? '').includes('튜토리얼 보상') && /먹이|6종/.test(st.toast) && !seen.has('reward')) {
       seen.add('reward'); facts.foodToast = st.toast; await page.waitForTimeout(600); await shot('05-food-reward');
       facts.items = await page.evaluate(() => { for (let i = 0; i < localStorage.length; i++) { const raw = localStorage.getItem(localStorage.key(i)); if (raw && raw.includes('"runLog"')) { const m = raw.match(/"items":\{[^}]*\}/); const f = raw.match(/"food":\{[^}]*\}/); return { items: m?.[0] ?? null, food: f?.[0] ?? null }; } } return null; });
