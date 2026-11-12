@@ -938,7 +938,7 @@ export function startApp(host: HTMLElement): void {
       onImport: () => open('slot-import', () => renderSlotPick('import')),
       selected,
       onDelete: (sum) => confirmDialog({
-        // GDD 241-A 4: '정말 삭제하시겠습니까?' + 입력칸 — '삭제' 를 쳐야 [확인]이 켜진다 (빨강 강조 없음, 시작 초점 = 입력칸)
+        // GDD 241-A 4: '정말 삭제하시겠습니까?' + 입력칸 — '삭제' 를 쳐야 [확인]이 켜진다 (빨강 강조 없음, 시작 초점 = [취소] — 244장 1: 입력칸은 눌러야 자판)
         title: '정말 삭제하시겠습니까?',
         body: fixParticles(`슬롯 ${sum.slot}을(를) 지운다. 지우기 전 세이브 하나는 백업으로 남는다.`), // GDD 159장 15: '되돌릴 수 없다'와 '백업' 말이 어긋났다
         typeToConfirm: { word: '삭제', hint: '삭제하려면 삭제 를 입력하세요' },

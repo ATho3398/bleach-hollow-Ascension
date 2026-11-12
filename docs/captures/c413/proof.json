@@ -1,0 +1,12 @@
+{
+  "errors": [],
+  "shots": [
+    "01-delete-open-no-keyboard.png"
+  ],
+  "facts": {
+    "focusOnOpen": "BUTTON.bha-btn:취소",
+    "inputFocusedOnOpen": false,
+    "hintVisible": true,
+    "inputFocusedAfterTap": true
+  }
+}

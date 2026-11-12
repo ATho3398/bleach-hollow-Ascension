@@ -72,7 +72,8 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     o.onYes();
   };
   const actions = el('div', o.alt ? 'bha-modal__actions bha-modal__actions--three' : 'bha-modal__actions');
-  if (!o.single) actions.append(button({ label: o.no ?? '아니요', variant: 'ghost', onClick: no }));
+  const noBtn = o.single ? null : button({ label: o.no ?? '아니요', variant: 'ghost', onClick: no });
+  if (noBtn) actions.append(noBtn);
   if (o.alt) {
     const alt = o.alt;
     actions.append(button({ label: alt.label, onClick: () => { close(); alt.onClick(); } }));
@@ -98,7 +99,9 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   untrap = trapModalFocus(layer); // 초기 초점(첫 버튼)·Tab 순환·배경 inert (C.139, GDD 88장 9) — 기기 선택은 초점 있는 항목에서 시작
   // 기본 선택 = 주 버튼(시작·귀환하기) (C.170, GDD 100장 #7·#8·#31): 강조가 둘(밝은 주 버튼 + 선택 테두리)로 갈리지 않게.
   // 지우기·덮어쓰기 같은 위험한 확인(danger)은 그대로 '아니요'에서 시작한다
-  if (typed) typed.focus({ preventScroll: true });
+  // 입력 확인 창(GDD 244장 1): 입력 칸에 자동 초점을 주지 않는다 — 폰에서 자판이 바로 떠 안내 문구를 가리므로, 입력 칸을 눌러야 자판이 뜬다.
+  // trapModalFocus 가 첫 항목(입력 칸)에 준 초점을 '아니요'로 옮긴다(위험한 확인의 기본 선택)
+  if (typed) (noBtn ?? yesBtn).focus({ preventScroll: true });
   else if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });
   unregister = registerLayer(layer, no);
   return close;
