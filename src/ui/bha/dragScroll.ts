@@ -1,3 +1,4 @@
+import { pointerLocal } from './viewport';
 // 가로 끌어서 넘기기 (GDD 241-D 3 장비 분류 탭: 좁히지 않고 가로 드래그로 본다). 손가락은 브라우저 기본 가로 스크롤, 마우스·펜은 여기서 끈다.
 // 5px 넘게 끌면 그 뒤 클릭(탭 바꾸기)을 한 번 먹는다 — 끄는 것과 누르는 것을 가린다.
 export function enableDragScroll(root: HTMLElement, signal?: AbortSignal): void {
@@ -48,4 +49,42 @@ export function edgeCue(root: HTMLElement, pick?: HTMLElement | null, signal?: A
     }
     paint();
   });
+}
+
+/** 세로 끌어서 넘기기 (GDD 6-16 v6.017 특수던전 왼쪽 버튼 목록, C.427): 손가락·마우스·펜 모두 여기서 끈다 — 세로 폰은 화면을 90° 돌려 보여 주므로(GDD 14절)
+ *  브라우저 기본 스크롤 축이 어긋난다. 그래서 포인터 좌표를 기기 안 좌표(pointerLocal)로 바꿔 잰다. 6px 넘게 끌면 그 뒤 클릭(버튼 누름)을 한 번 먹는다 */
+export function enableDragScrollY(root: HTMLElement, signal?: AbortSignal): void {
+  root.style.touchAction = 'none';
+  let start: { y: number; top: number; id: number } | null = null;
+  let moved = false;
+  root.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    start = { y: pointerLocal(e).y, top: root.scrollTop, id: e.pointerId };
+    moved = false;
+  }, { signal });
+  root.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const dy = pointerLocal(e).y - start.y;
+    if (!moved && Math.abs(dy) < 6) return;
+    if (!moved) {
+      try {
+        root.setPointerCapture?.(e.pointerId);
+      } catch {
+        /* 잡기 실패해도 move 는 온다 */
+      }
+    }
+    moved = true;
+    root.scrollTop = start.top - dy;
+  }, { signal });
+  const end = (e: PointerEvent) => {
+    if (start && e.pointerId === start.id) start = null;
+  };
+  root.addEventListener('pointerup', end, { signal });
+  root.addEventListener('pointercancel', end, { signal });
+  root.addEventListener('click', (e) => {
+    if (!moved) return;
+    moved = false;
+    e.stopPropagation();
+    e.preventDefault();
+  }, { capture: true, signal });
 }

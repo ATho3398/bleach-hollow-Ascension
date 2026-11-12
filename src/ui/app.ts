@@ -5,7 +5,7 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { DEFAULT_GENDER, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
-import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatState } from '../engine/combat';
+import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { GUIDES, guideVars, HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
@@ -21,8 +21,11 @@ import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonRe
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
+import { bossRushName, specialDungeonView, specialHead, specialResultView, weeklyName } from './specialDungeonView';
+import { bossRushEnemy, createSpecialCombat, hpFractionAfter, weeklyEnemies, type BossRushEntry, type SpecialTab } from '../engine/specialDungeon';
+import type { HogyokuTrackId } from '../engine/transcend';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
-import { difficultyText, towerFloorText, towerLabels } from '../engine/faction';
+import { difficultyText, specialDungeonLabels, towerFloorText, towerLabels } from '../engine/faction';
 import { absenceLossLines, careBlockText, lossOnlyReturnShown } from './bha/roomLogic';
 import { fullnessOfNest, previewHomeHp, type AbsenceReport } from '../engine/nest';
 import { NORMAL_FOODS } from '../engine/foodPref';
@@ -30,7 +33,7 @@ import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
-  performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
+  performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
@@ -47,7 +50,7 @@ import { armEnterFx } from './bha/cosmeticFx';
 import { photoView } from './photoView';
 import { absorbView } from './absorbView';
 import { battleView, type BattleViewOptions } from './battleView';
-import { arenaSceneBg, groundSceneBg, towerSceneBg } from './bha/sceneBg';
+import { arenaSceneBg, groundSceneBg, specialSceneBg, towerSceneBg } from './bha/sceneBg';
 import { applyTheme } from './bha/theme';
 import { speciesView, startView } from './startView';
 import { enterFullscreenOnStart, watchFullscreen } from './fullscreen';
@@ -1275,7 +1278,7 @@ export function startApp(host: HTMLElement): void {
         ...(rankUnlocked(s.evolution.tierIndex) ? {} : { rank: rankLockedText(faction) }), // 번호 쟁탈전 = 4단계부터 (GDD 241-0)
       },
       onLocked: (p) => showToast(forceAdventure ? FORCE_HINT
-        : p === 'tower' ? { eyebrow: towerLabels(faction).name, title: towerLabels(faction).locked, meta: '' }
+        : p === 'tower' ? { eyebrow: specialDungeonLabels(faction).name, title: towerLabels(faction).locked, meta: '' }
         : p === 'rank' ? { eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' } : FORCE_HINT, 0, 1800),
     });
   }
@@ -1720,20 +1723,108 @@ export function startApp(host: HTMLElement): void {
     else storyScreen(faction);
   }
 
-  // ── 도전의 탑 (GDD 36장, C.85 → 139장 1): 월드맵 장소 [탑]. 뒤로 = 월드맵. 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로) ──
+  // ── 특수던전 (GDD 6-16 v6.017, C.427 — 옛 도전의 탑 36장 → 139장 1): 월드맵 장소. 위 탭 [탑][주간던전][보스전], 처음 = 탑. 뒤로 = 월드맵.
+  //    탑 = 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로). 주간던전·보스전도 같은 전투 엔진·같은 규칙(리스크·배부름 변화 없음) ──
+  let specialTab: SpecialTab = 'tower';
   function towerScreen(faction: FactionConfig): void {
     if (!save) return;
-    nav.push({
-      id: 'tower', locked: false,
-      render: () => {
-        setBgm('expedition');
-        towerView(root, faction, save!, {
-          onChallenge: (f) => towerBattle(faction, f),
-          onHelp: () => openHelp('expedition', false),
+    specialTab = 'tower'; // 월드맵에서 들어오면 처음 = 탑
+    const render = (): void => {
+      setBgm('expedition');
+      const hd = { onTab: (t: SpecialTab) => { specialTab = t; render(); }, onHelp: () => openHelp('expedition', false) };
+      if (specialTab === 'tower') {
+        towerView(root, faction, save!, { onChallenge: (f) => towerBattle(faction, f), onHelp: hd.onHelp }, specialHead(faction, 'tower', hd));
+      } else {
+        specialState(save!); // 주가 바뀌었으면 횟수 비움
+        specialDungeonView(root, faction, save!, specialTab, {
+          ...hd,
+          onWeekly: (track, star) => startSpecialRun(faction, { mode: 'weekly', target: track, star }),
+          onBoss: (e, star) => startSpecialRun(faction, { mode: 'boss', target: e.id, star, entry: e }),
         });
-        root.scrollTop = 0;
-      },
-    });
+      }
+      root.scrollTop = 0;
+    };
+    nav.push({ id: 'tower', locked: false, render });
+  }
+
+  /** 특수던전 주간던전·보스전 한 입장: 횟수 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과 */
+  function startSpecialRun(faction: FactionConfig, run: { mode: 'weekly' | 'boss'; target: string; star: number; entry?: BossRushEntry }): void {
+    if (!save || careBlocked(save)) return;
+    const s0 = save;
+    if (!enterSpecial(s0, run.mode, run.target)) {
+      showToast({ eyebrow: specialDungeonLabels(faction).name, title: '이번 주 횟수를 다 썼다', meta: '월요일 05:00 에 초기화' }, 0, 1800);
+      return;
+    }
+    persist();
+    const enemies = run.mode === 'weekly' ? weeklyEnemies(run.target as HogyokuTrackId, run.star, s0.shared.special.weekStart) : [bossRushEnemy(run.entry!, run.star)];
+    const bossId = run.mode === 'boss' ? run.entry!.bossId : undefined;
+    const name = run.mode === 'weekly' ? weeklyName(faction, run.target as HogyokuTrackId) : bossRushName(faction, run.entry!);
+    const done: CombatState[] = [];
+    let settled = false;
+    const settle = (quit: boolean) => {
+      if (settled) return null;
+      settled = true;
+      const res = settleSpecialRun(s0, { mode: run.mode, target: run.target, bossId, star: run.star, battles: done, total: enemies.length, quit });
+      persist();
+      return res;
+    };
+    const fight = (i: number, hp: number, first: boolean): void => {
+      const e = {
+        id: 'special-battle', locked: true,
+        render: () => {
+          const params = sideBattleParams(s0, !!bossId || enemies[i]!.class === 'elite');
+          const enemy = run.mode === 'boss' && run.entry?.owner ? { ...enemies[i]!, name: { '*': towerLabels(faction).finalBossName } } : enemies[i]!;
+          const s = createSpecialCombat(enemy, run.star, params, Math.floor(Math.random() * 2 ** 32), hp, bossId);
+          setBgm(bossId ? 'boss' : enemy.class === 'elite' ? 'elite' : 'battle');
+          const bgKey = run.mode === 'weekly' ? specialDungeonLabels(faction).weekly[run.target]?.art : specialDungeonLabels(faction).bossArt[run.target];
+          battleView(root, faction, s, {
+            ...battleItemOpts(s0, s),
+            tierIndex: artTierIndexOf(s0),
+            formId: s0.evolution.formId,
+            skinId: artSkinOf(s0),
+            banner: `${specialDungeonLabels(faction).name} · ${name} · ${difficultyText(faction, run.star)}${enemies.length > 1 ? ` · ${i + 1}/${enemies.length}판` : ''}`,
+            ...(bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
+            bg: specialSceneBg(bgKey ?? faction.arenaBg),
+            onQuit: () => { settle(true); nav.pop(); },
+            onEnd: (st) => {
+              recordSpecialBattle(s0, st);
+              done.push(st);
+              if (st.status === 'won' && i < enemies.length - 1) {
+                persist();
+                fight(i + 1, hpFractionAfter(st), false);
+                return;
+              }
+              const res = settle(false)!;
+              nav.replace({
+                id: 'special-result', locked: true,
+                render: () => {
+                  specialResultView(root, faction, s0, { mode: run.mode, target: run.target, name, star: run.star, total: enemies.length, battles: done }, res, {
+                    onBack: () => nav.pop(),
+                  });
+                  root.scrollTop = 0;
+                },
+              });
+              showTitleToasts(s0, faction, persist);
+            },
+          });
+          root.scrollTop = 0;
+        },
+      };
+      if (first) nav.push(e);
+      else nav.replace(e);
+    };
+    fight(0, 1, true);
+  }
+
+  /** 원정 밖 전투(탑·특수던전) 공통 전투 파라미터: 빌드·진화·해방 시작 게이지·장비(strong = 강적·보스 피해)·펫·빈사 */
+  function sideBattleParams(s0: SaveData, strong: boolean): Partial<CombatParams> {
+    const params = buildCombatParams(s0.build, s0.factionId);
+    applyEvolutionToParams(params, s0.evolution, s0.factionId, statBonusOf(s0).total, s0.training.completed);
+    params.liberationStartGauge = liberationStartGaugeOf();
+    applyGearToParams(params, gearCarry(s0.shared.gear), strong);
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
+    applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
+    return params;
   }
 
   /** 전투 [소모품] (GDD 108장 3번·105장 수정 3): 장비 화면 소모품 칸에 든 것을 이 전투에 싣고, 쓰면 보관 개수 −1 후 저장. 칸이 비었거나 0개면 버튼 비활성 */
@@ -1782,13 +1873,7 @@ export function startApp(host: HTMLElement): void {
   function runTower(faction: FactionConfig, f: TowerFloor): void {
     if (!save) return;
     const s0 = save;
-    const params = buildCombatParams(s0.build, faction.id);
-    applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
-    params.liberationStartGauge = liberationStartGaugeOf();
-    // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
-    applyGearToParams(params, gearCarry(s0.shared.gear), f.kind === 'elite' || !!f.bossId);
-    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
-    applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
+    const params = sideBattleParams(s0, f.kind === 'elite' || !!f.bossId); // 장비 (GDD 91장): 강적·보스 층이면 강적 피해도
     // 꼭대기 보스 이름은 종족 설정 (적 정의의 이름을 그 문구로 바꿔 끼운다)
     const floor = f.final ? { ...f, enemy: { ...f.enemy, name: { '*': towerLabels(faction).finalBossName } } } : f;
     const s = createTowerCombat(floor, params, Math.floor(Math.random() * 2 ** 32));

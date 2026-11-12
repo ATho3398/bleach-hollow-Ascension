@@ -401,6 +401,25 @@ export interface TowerBattleRecord {
   firstClear: boolean;
 }
 
+/** 특수던전 주간던전·보스전 한 입장 (GDD 6-16 v6.017, C.427, 형식 81): 입장 시각·종류·대상·★·판마다 결과·받은 보상. 끝까지 못 가고 나가면 won false·quit true */
+export interface SpecialRunRecord {
+  at: number;
+  factionId: string;
+  mode: 'weekly' | 'boss';
+  /** 주간던전 = 붕옥 트랙 id, 보스전 = 보스 칸 id (스토리 보스 id 또는 'tower-owner') */
+  target: string;
+  star: number;
+  won: boolean;
+  /** 전투 중 [나가기]로 끝냄 */
+  quit: boolean;
+  battles: { enemyId: string; won: boolean; durationSeconds: number; startHp: number }[];
+  gold: number;
+  /** 받은 붕옥 재료 (트랙 id → 개수) */
+  materials: Record<string, number>;
+  tierIndex: number;
+  formId: string | null;
+}
+
 /** 칭호 해금 1건 (C.106, GDD 9장): 어느 트랙·어느 몸으로 받았나 */
 export interface TitleUnlockRecord {
   at: number;
@@ -443,6 +462,8 @@ export interface RunLog {
   sales: SaleRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
+  /** C.427 (형식 81): 특수던전 주간던전·보스전 입장 기록. 형식 81 이전 세이브는 빈 목록 */
+  specialRuns: SpecialRunRecord[];
   /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
   tutorialRewards: TutorialRewardRecord[];
   /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
@@ -669,8 +690,8 @@ export interface HogyokuMaterialRecord {
   /** 재료 = 강화 트랙 id (soul 고순도 윤활제 · shard 혼백 여과기 · essence 영압 결정). 'soul' 은 C.425 부터 */
   kind: 'soul' | 'shard' | 'essence';
   amount: number;
-  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 떠돌이 상인. 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
-  source: 'hunt' | 'wanderer' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 떠돌이 상인 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
+  source: 'hunt' | 'wanderer' | 'weekly' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
   factionId: string;
 }
 
@@ -729,6 +750,7 @@ export function emptyRunLog(): RunLog {
     sales: [],
     storyRuns: [],
     towerBattles: [],
+    specialRuns: [],
     tutorialRewards: [],
     care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
     vitals: [],

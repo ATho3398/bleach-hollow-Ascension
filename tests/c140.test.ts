@@ -304,7 +304,7 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([80, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([81, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);

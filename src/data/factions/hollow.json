@@ -134,6 +134,7 @@
   "defeatStateName": "가면이 깨져 쓰러짐",
   "basicSkillName": "본체 능력",
   "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장 클리어 후 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "specialDungeon": { "name": "특수던전", "desc": "탑을 오르고, 주마다 열리는 던전과 보스에 도전한다.", "tabs": { "tower": "탑", "weekly": "주간던전", "boss": "보스전" }, "weekly": { "soul": { "name": "세공의 사구", "art": "desert" }, "shard": { "name": "정제의 숲", "art": "forest" }, "essence": { "name": "주입의 균열", "art": "dangai" } }, "bossArt": { "sand-maw": "desert", "canyon-king": "desert", "forest-lord": "forest", "tower-owner": "dangai" } },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "웨코문도",
   "arenaBg": "seireitei",

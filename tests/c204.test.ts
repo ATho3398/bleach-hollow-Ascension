@@ -37,7 +37,7 @@ describe('130장 2·3 월드맵·시장 (종족 설정)', () => {
     expect([...WORLD_PLACES]).toEqual(['home', 'market', 'rank', 'adventure', 'tower', 'spa']); // C.394 (GDD 241-C 3): 수련장 자리 = 번호 쟁탈전·진급 시험 // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
     for (const f of FACTIONS) {
       const w = worldMapOf(f);
-      expect(w.places).toEqual({ home: f.nestName, market: '시장', rank: f.rankBattleName, adventure: '모험', tower: '도전의 탑', spa: '온천' }); // 온천 = C.228, 수련장 = C.236
+      expect(w.places).toEqual({ home: f.nestName, market: '시장', rank: f.rankBattleName, adventure: '모험', tower: '특수던전', spa: '온천' }); // C.427 (GDD 6-16 v6.017): 탑 자리 = 특수던전 // 온천 = C.228, 수련장 = C.236
       expect(w.sceneArt).toBe(`scene.worldmap.${f.id}`); // C.278: 종족별 월드맵 배경 (배치 도구로 올린 그림)
     }
     expect(worldMapOf(getFaction('hollow')).places.home).toBe('둥지');

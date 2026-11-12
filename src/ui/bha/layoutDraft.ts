@@ -108,7 +108,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
         market: ['종족 설정 market.name — 시장 화면 제목도 같이 바뀐다', true],
         rank: ['종족 설정 rankBattleName — 번호 쟁탈전·진급 시험 화면 이름도 같이 바뀐다', true],
         adventure: ['종족 설정 worldmap.adventureName', true],
-        tower: ['종족 설정 tower.name — 탑 화면 제목도 같이 바뀐다', true],
+        tower: ['종족 설정 specialDungeon.name — 특수던전 화면 제목도 같이 바뀐다 (GDD 6-16 v6.017)', true],
         spa: ['종족 설정 worldmap.spaName', true],
       };
       const items: BaseItem[] = WORLD_PLACES.map((p) => {
@@ -137,7 +137,7 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
       if (n.home) m.nestName = n.home;
       if (n.market) m.market = { ...(f.market ?? {}), name: n.market };
       if (n.rank) m.rankBattleName = n.rank;
-      if (n.tower) m.tower = { ...(f.tower ?? {}), name: n.tower };
+      if (n.tower) m.specialDungeon = { ...(f.specialDungeon ?? {}), name: n.tower };
     },
   },
   {

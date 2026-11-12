@@ -410,8 +410,8 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   spaName: '온천',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 번호 쟁탈전·진급 시험 = room.props.rank(rankBattleName), 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
-export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 번호 쟁탈전·진급 시험 = room.props.rank(rankBattleName), 모험 = worldmap.adventureName, 탑 자리 = 특수던전 이름 specialDungeonLabels(GDD 6-16 v6.017), 온천 = worldmap.spaName) */
+export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room' | 'specialDungeon'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
     ...DEFAULT_WORLDMAP,
@@ -419,7 +419,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, rank: roomOf(f).props.rank, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
+    places: { home: f.nestName, market: marketOf(f).name, rank: roomOf(f).props.rank, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: specialDungeonLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
   };
 }
 
@@ -518,6 +518,8 @@ export interface FactionConfig {
   difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
   /** 도전의 탑 문구 (GDD 36장, C.85): 이름·층 표시({n})·꼭대기 보스 이름·잠김 문구·한 줄 설명. 없으면 기본 문구 (towerLabels) */
   tower?: Partial<TowerLabels> & { starGrounds?: Record<string, string> };
+  /** 특수던전 (GDD 6-16 v6.017, C.427): 월드맵 장소 이름·한 줄 설명·탭 이름·주간던전(트랙 id → 이름·그림 장면 id)·보스전 그림(보스 칸 id → 장면 id). 없으면 기본 (specialDungeonLabels) */
+  specialDungeon?: Partial<Omit<SpecialDungeonLabels, 'tabs' | 'weekly' | 'bossArt'>> & { tabs?: Partial<SpecialDungeonLabels['tabs']>; weekly?: Record<string, { name?: string; art?: string }>; bossArt?: Record<string, string> };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
@@ -656,6 +658,17 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       for (const k of TOWER_LABEL_KEYS) if (t[k] !== undefined && !isString(t[k])) errors.push(`tower.${k}: 비어 있지 않은 문자열`);
       const sg = t.starGrounds as Record<string, unknown> | undefined;
       if (sg !== undefined && (typeof sg !== 'object' || sg === null || Array.isArray(sg) || Object.values(sg).some((v) => !isString(v)))) errors.push('tower.starGrounds: { ★: 사냥터 id }');
+    }
+  }
+  if (r.specialDungeon !== undefined) {
+    const t = r.specialDungeon as Record<string, unknown>;
+    if (typeof t !== 'object' || t === null || Array.isArray(t)) errors.push('specialDungeon: { name?, desc?, tabs?, weekly?, bossArt? }');
+    else {
+      for (const k of ['name', 'desc']) if (t[k] !== undefined && !isString(t[k])) errors.push(`specialDungeon.${k}: 비어 있지 않은 문자열`);
+      const isMap = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+      if (t.tabs !== undefined && (!isMap(t.tabs) || Object.values(t.tabs).some((v) => !isString(v)))) errors.push('specialDungeon.tabs: { tower?, weekly?, boss? } 문자열');
+      if (t.bossArt !== undefined && (!isMap(t.bossArt) || Object.values(t.bossArt).some((v) => !isString(v)))) errors.push('specialDungeon.bossArt: { 보스 칸 id: 장면 id }');
+      if (t.weekly !== undefined && (!isMap(t.weekly) || Object.values(t.weekly).some((v) => !isMap(v) || (v.name !== undefined && !isString(v.name)) || (v.art !== undefined && !isString(v.art))))) errors.push('specialDungeon.weekly: { 트랙 id: { name?, art? } }');
     }
   }
   if (r.huntingGrounds !== undefined) {
@@ -889,6 +902,30 @@ export function towerLabels(f: Pick<FactionConfig, 'tower'>): TowerLabels {
   return {
     name: t.name ?? '도전의 탑', floor: t.floor ?? '{n}층', finalBossName: t.finalBossName ?? '탑의 주인',
     locked: t.locked ?? '스토리 1장 클리어 후 열린다', desc: t.desc ?? '한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다.',
+  };
+}
+
+/** 특수던전 문구 (GDD 6-16 v6.017, C.427) */
+export interface SpecialDungeonLabels {
+  /** 월드맵 장소 이름 ("특수던전") */
+  name: string;
+  desc: string;
+  tabs: { tower: string; weekly: string; boss: string };
+  /** 주간던전: 트랙 id → 이름·그림(장면 id — 그림 파일이 오면 이 키만 바꾼다) */
+  weekly: Record<string, { name: string; art?: string }>;
+  /** 보스전 그림: 보스 칸 id → 장면 id (없으면 arenaBg) */
+  bossArt: Record<string, string>;
+}
+
+/** 특수던전 문구: 종족 설정 specialDungeon, 빈 곳은 기본 (주간던전 이름 기본 = '<트랙 이름> 던전'은 화면이 채운다) */
+export function specialDungeonLabels(f: Pick<FactionConfig, 'specialDungeon'>): SpecialDungeonLabels {
+  const t = f.specialDungeon ?? {};
+  const weekly: SpecialDungeonLabels['weekly'] = {};
+  for (const [k, v] of Object.entries(t.weekly ?? {})) if (v.name) weekly[k] = { name: v.name, ...(v.art ? { art: v.art } : {}) };
+  return {
+    name: t.name ?? '특수던전', desc: t.desc ?? '탑을 오르고, 주마다 열리는 던전과 보스에 도전한다.',
+    tabs: { tower: t.tabs?.tower ?? '탑', weekly: t.tabs?.weekly ?? '주간던전', boss: t.tabs?.boss ?? '보스전' },
+    weekly, bossArt: { ...(t.bossArt ?? {}) },
   };
 }
 
