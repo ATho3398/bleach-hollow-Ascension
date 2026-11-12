@@ -1,0 +1,104 @@
+{
+ "format": "bha-layout",
+ "version": 1,
+ "patch": "C.420",
+ "exportedAt": "2026-11-12T04:37:19.364Z",
+ "resolved": {
+  "room.hollow": {
+   "faction": "hollow",
+   "kind": "room",
+   "bgChanged": false,
+   "bgView": null,
+   "items": [
+    {
+     "key": "altar",
+     "extra": false,
+     "name": "수련장",
+     "x": 91.1,
+     "y": 65.3,
+     "scale": 1.03,
+     "hidden": false,
+     "icon": "i-practice",
+     "art": null
+    },
+    {
+     "key": "book",
+     "extra": false,
+     "name": "책장",
+     "x": 65.9,
+     "y": 64.4,
+     "scale": 0.91,
+     "hidden": false,
+     "icon": "i-shelf",
+     "art": null
+    },
+    {
+     "key": "chest",
+     "extra": false,
+     "name": "가방",
+     "x": 28.2,
+     "y": 91.4,
+     "scale": 0.86,
+     "hidden": false,
+     "icon": "i-deck",
+     "art": null
+    },
+    {
+     "key": "outside",
+     "extra": false,
+     "name": "월드맵",
+     "x": 9,
+     "y": 78,
+     "scale": 1,
+     "hidden": false,
+     "icon": "i-loop",
+     "art": null
+    },
+    {
+     "key": "hogyoku",
+     "extra": false,
+     "name": "붕옥",
+     "x": 79.3,
+     "y": 88.2,
+     "scale": 0.77,
+     "hidden": false,
+     "icon": "i-evolve",
+     "art": "uploaded"
+    }
+   ]
+  }
+ },
+ "draft": {
+  "v": 1,
+  "preview": false,
+  "scenes": {
+   "room.hollow": {
+    "items": {
+     "hogyoku": {
+      "x": 79.3,
+      "y": 88.2,
+      "scale": 0.77
+     },
+     "altar": {
+      "x": 91.1,
+      "y": 65.3
+     },
+     "book": {
+      "x": 65.9,
+      "y": 64.4
+     },
+     "chest": {
+      "x": 28.2,
+      "y": 91.4
+     }
+    },
+    "extras": []
+   }
+  },
+  "looks": {
+   "prop.hogyoku": {
+    "art": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADHUlEQVR4nNWXPUgbURzAf2mlhhBMLaktIZUiQSyUInawOJUMJZOjXZK9Q3FwEFxdLB07OEiHwnXKmElExCm0Uh2K2FAOkRCOoiE9JYS0xF6Hy3u+XHIfsdLSPwTu4937/d7/fQb+87Dav38DLuyZ2WrdEhJ/RaQDXK1b1mrhwBLXlxEZ6ANMYc/MzYzHNEArfj3Ntd/J62rd0gDi0ZAFhK5KwHIBd4Uq0pbAT8RLwGpXhh+4l4gjG64ivR6qYNzAtypo4rqWxFWunTniUYnqYDoFLC+whM40u0nFsKeMQ6SnjVWtW54tbqTC8j6iN3mY+AnAvnFDSr17uc3sYqZnHZ92Ssn57PSKKtElIBukiDjhE7fsoVPeqQPQITZidkkIsLj3FBBgkbLS1qkEpMcHZWGjek6p1urV0A4JUc+b9x+XAJwZcJ0FUiRtV7BX/uFWVIZ+0ADg0Qi8evscQBNgt/BdBwR4anQQswk3w3brvWIifIe15V2aYy1POMA1r5di1Ef0pt0V9XPMJkSi1ynVWkT0JhHdHnz6QYO5zDBzmWHWlncBMLaPVtxrtyPoUkwjFbb7vA2eSsdgdJCB0gmt0RhTo4Pk179j7hwGrbI/ga4PSycAtCZuU9o65fPPX33DwacLxKLSSIXlAFPnvxq94Imn9/9sDAiguXnsWcY4OiO7MEl2YZJUcgSAw7LuV3UwgSDxbCbsX+iyArUkuY1ikbhxsertGzfs5VeJoUqND3kDvXLMYVkPlP5AAgCzi5ncRrGIuXmMuXlMIxXGODpjo3ixKa3my33DoY9ZMLuYyRVer2sAY5WUfJ7mHqv5suzzfuA9BSoVQwNIJhNdO5q6wQgZeExzrLWUGLvvC7ubGOpamFSBUDwakjtifuuLphZ0CikyHeXcYHPpB0D3ecCZgZA4QjkPJiIzbkJO6DfjTO5+CrgD3ktAFlBENIAinScdKTQek2ABDQL2EvAWaWdEyYCmgpdfPFmp1i1fsIgg0zCE3TXEoyFmxmOaOGQ4Yz47rcJDfnBfO5foGCNqBG31VYWFfYz7q/8N3UQuHb8BTqix1ZGhHd8AAAAASUVORK5CYII="
+   }
+  }
+ }
+}
