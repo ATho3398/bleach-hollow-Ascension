@@ -31,7 +31,7 @@ import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
-  canSwitchFaction, feedHogyoku, liberateHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
+  canSwitchFaction, developHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
@@ -633,7 +633,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   /** 해금 안내 카드 순서 = 해금 표 순서 (GDD 241-0) */
-  const UNLOCK_GUIDE_ORDER: TextGuideId[] = ['hogyoku-appear', ...FEATURE_IDS.map((id) => UNLOCK_GUIDES[id])]; // 붕옥 등장 컷이 먼저 (GDD 243장 1)
+  const UNLOCK_GUIDE_ORDER: TextGuideId[] = ['hogyoku-appear', 'hogyoku-resonance', ...FEATURE_IDS.map((id) => UNLOCK_GUIDES[id])]; // 붕옥 등장 컷이 먼저 (GDD 243장 1)
 
   /** 한 번만 뜨는 안내 (C.120): 띄울 차례면 띄우고 본 것으로 저장. 띄웠으면 true */
   function runGuide(id: TextGuideId, faction: FactionConfig, o: { finishLabel?: string; pauseLabel?: string; onDone?: () => void } = {}): boolean {
@@ -1412,16 +1412,12 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  // ── 붕옥 (GDD 22-3, C.59): 게이지·해방 → 합체 미리보기(확인 1) → 최종 확인(확인 2) → 자동 백업 'fusion' → 합체 → 연출 → 새 1단계 방 ──
+  // ── 붕옥 (GDD 22-3 → 244장, C.414): 붕옥 개발 → 합체 미리보기(확인 1) → 최종 확인(확인 2) → 자동 백업 'fusion' → 합체 → 연출 → 새 1단계 방 ──
   function renderHogyoku(s: SaveData): void {
     hogyokuView(dev, s, {
-      onFeed: () => {
-        if (feedHogyoku(s) > 0) persist();
-        nav.top?.render();
-      },
-      onLiberate: () => {
-        if (!liberateHogyoku(s)) return;
-        persist(); // '붕옥 해방' 알림은 뺐다 (GDD 233장 5) — 붕옥 화면이 해방 상태로 다시 그려진다
+      onDevelop: () => {
+        // 붕옥 개발 한 단계 (GDD 244장 4): 재료를 바치고 단계 +1 — 화면이 새 단계로 다시 그려진다
+        if (developHogyoku(s)) persist();
         nav.top?.render();
       },
       onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)),

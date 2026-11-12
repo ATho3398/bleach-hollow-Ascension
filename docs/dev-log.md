@@ -3469,3 +3469,15 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - `confirmDialog` 입력 확인(typeToConfirm): `typed.focus()` 삭제. `trapModalFocus` 가 첫 항목(입력칸)에 주던 초점을 [취소](없으면 [확인])로 옮김 → 폰 자판이 바로 안 뜨고 안내 문구가 보인다. 입력칸을 누르면 자판.
 - 테스트: `tests/c413.test.ts` 2건.
 - 캡처 `docs/captures/c413/`(796×384 터치, 1배, proof `scripts/c413-proof.cjs`): 01 삭제 창 열린 직후(초점 = 취소, 입력칸 초점 없음, 누르면 초점).
+
+## C.414 — 붕옥 안 B + 붕옥 개발: 반각성 → 공명 · 재료 3종 · 10단계(단계마다 +1%) · 100% 뒤 합체 (GDD 244장 2~6, v5.591, S-23, 코딩274 Opus)
+- 사용자: "붕옥은 b로 가고, 붕옥 열린다음, 붕옥은 개발계속 해야댐. 붕옥 재료 3개정도 만든다음, 붕옥 개발 진행하는 식으로. 개발할 때 마다 스텟같은거 오르고ㅇㅇ. 붕옥 100% 다 채워야 합체 가능.ㅇㅋ?"
+- 엔진(`game.ts`): `HogyokuState` = level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 삭제). `checkResonance`(스토리 전부 깬 종족 수 ≥ 트랙 수 → 정수 +30·컷 `hogyoku-resonance`), `developGate`/`developHogyoku`(재료 3종 한꺼번에, 6단계부터 공명), `gainHogyokuMaterial`(파편·정수 + 런 로그). `fusionGate` 막힘 = tab·resonance·tracks·develop·rank·expedition·complete. 합체 뒤 level → 5.
+- 재료 연결: `settleStory`(화 첫 클리어 +5 · 장 완주 +20, 결과 `shards`), `recordTowerBattle`(10층마다 첫 클리어 +5), `performEvolution`·`recordAscension`(정수 +3).
+- 보너스: `slotStatBonus(developed, 초월체 수)` = 단계당 +1% + 초월체 +2%.
+- 데이터: `src/data/hogyoku`(재료 이름·단계 이름 10개·상태 이름·초월체 조건 문구). BALANCE 125 → 126(`hogyoku.develop` 표·perLevelBonus·halfLevel·maxLevel, `hogyokuShards`, `resonanceEssence`, 옛 liberateCost·liberatedBonus·fusionCost 삭제).
+- 화면(`hogyokuView`): 상태 띠(반각성/공명/합체 가능, `.bha-hogyoku__stages` 토큰만) · 개발 n% 막대·재료 3종(가진/필요)·[n% 개발] · 개발 단계 목록 10줄(이름·+1%·결정/파편/정수·✓/다음/공명) · 합체 칸 '지금 두 캐릭터라면 → 「○○」' · 도감 못 모은 칸 조건 공개.
+- 세이브 형식 78 → 79(`SAVE_MIGRATIONS[78]`: 해방 = 5단계 · 게이지 비율 → 6~10단계 · 나머지 결정 돌려줌 · 합체 기록 있으면 공명). 런 로그 `slotLog.hogyokuDev`·`hogyokuMaterials`.
+- `npm run balance` 새 구간 `hogyoku`(참고, 가드 없음): 6번 합체 원정 약 325회 ≈ 9.0시간(환생 1회/트랙/회차 404회 ≈ 11.2시간).
+- 테스트: `tests/c414.test.ts` 9건, c59(붕옥·합체 → 개발 규칙) 갱신, 형식 78 → 79·안내 id·shared 키 갱신(c120·c403·economy 외 형식 숫자).
+- 캡처 `docs/captures/c414/`(796×384 터치 1배 8장 + PC 1280×800 1장, proof `scripts/c414-proof.cjs`): 01 반각성 · 02 개발 단계 목록 · 03 반각성 50% = 공명 필요 · 04 공명 컷 · 05 공명 70% · 06 100% 합체 가능 · 07 도감 조건 공개 · 08 합체 미리보기 · 09 PC 공명.

@@ -578,3 +578,7 @@ button.bha-slot { cursor: pointer; }
 .bha-ident__tick { visibility: hidden; color: var(--bha-accent); }
 .bha-ident__gender.is-on .bha-ident__tick { visibility: visible; }
 .bha-ident__foot { justify-content: flex-start; }
+
+/* ═════ 붕옥 상태 띠 (GDD 244장 2 안 B: 반각성 · 공명 · 합체 가능, C.414) — 토큰만 ═════ */
+.bha-hogyoku__stages { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1); }
+.bha-hogyoku__stages .bha-chip.is-off { opacity: 0.5; }

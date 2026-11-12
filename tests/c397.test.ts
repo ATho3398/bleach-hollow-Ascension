@@ -60,7 +60,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     }
   });
   it('세이브 형식 73: 72 → 73 = 옛 장비·낀 칸 그대로 + 3번째 장신구 칸 null', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(78); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(79); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', 0);
     s.shared.gear.items.push({ uid: 'g1', kind: 'accessory', grade: 'rare', star: 1, stats: { spr: 3 }, special: null, plus: 1, gotAt: 1 });
     s.shared.gear.equipped.acc2 = 'g1';
@@ -70,7 +70,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     SAVE_MIGRATIONS[72]!(raw);
     expect(raw.shared.gear.equipped.acc3).toBeNull();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(78);
+    expect(m.meta.format).toBe(79);
     expect(m.shared.gear.items.map((i) => i.uid)).toEqual(['g1']);
     expect(m.shared.gear.equipped).toMatchObject({ acc2: 'g1', acc3: null });
   });

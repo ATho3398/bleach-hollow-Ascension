@@ -22,6 +22,8 @@ import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
 import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story';
+import { TRANSCENDENTS } from '../src/data/transcendents';
+const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
@@ -43,10 +45,10 @@ const HUMAN_CONTINUE_HP = 0.5;
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
   { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 },
-  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 },
+  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
 ];
 const CAMPAIGN_SECONDS = 63;
-const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower'];
+const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower', 'hogyoku'];
 const onlyArg = process.argv.find((a) => a.startsWith('--only='));
 const ONLY: Set<string> | null = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').filter(Boolean)) : null;
 if (ONLY) for (const s of ONLY) if (!SECTIONS.some((x) => x.name === s) && s !== 'campaign') throw new Error(`모르는 구간 ${s} (${SECTIONS.map((x) => x.name).join(', ')})`);
@@ -1553,6 +1555,68 @@ if (want('tower')) {
   console.log(`  ${TT.floors}층 (${towerFloor(TT.floors).bossId} 강화판): 키운 5단계 몸 ${grown.length}명 ${pct(top.rate)} ${top.secs.toFixed(1)}초 · 갓 5단계 몸 ${pct(top5.rate)} (참고)`);
   if (grown.length < CAMPAIGNS * 0.8) lateFail(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
   if (top.rate < 0.15 || top.rate > 0.75) lateFail(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
+}
+
+// ── 붕옥 재료 공급 · 6번 합체 시간 (C.414, GDD 244장 3·4, 참고 지표 — 가드 없음) ──
+// 캠페인 봇(흡수 봇, 4바퀴 원정)의 원정 1회 강적 승리·시간으로 재료 공급을 어림한다. 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초.
+// 한 생 = 마지막 단계까지 원정 수(봇 평균) + 스토리 화(종족 장·화 수) + 등급전(번호 보유자 수만큼 이김) + 탑 최고층(가정 30층). 환생은 회차마다 트랙당 R회(가정).
+if (want('hogyoku')) {
+  const HX = BALANCE.provisional.hogyoku;
+  const HS = BALANCE.provisional.hogyokuShards;
+  const HE = BALANCE.provisional.resonanceEssence;
+  const SC = BALANCE.provisional.soulCrystals;
+  const sum = (a: readonly number[], from = 0, to = a.length) => a.slice(from, to).reduce((x, y) => x + y, 0);
+  const half = { soul: sum(HX.develop.soul, 0, HX.halfLevel), shard: sum(HX.develop.shard, 0, HX.halfLevel), essence: sum(HX.develop.essence, 0, HX.halfLevel) };
+  const full = { soul: sum(HX.develop.soul, HX.halfLevel), shard: sum(HX.develop.shard, HX.halfLevel), essence: sum(HX.develop.essence, HX.halfLevel) };
+  const runs = campaignSaves.flatMap((x) => x.runLog.runs.filter((r) => !r.tutorial));
+  const elites = campaignSaves.reduce((n, x) => n + x.runLog.battles.filter((b) => b.won && b.enemyClass === 'elite').length, 0);
+  const battleSec = campaignSaves.reduce((n, x) => n + x.runLog.battles.reduce((m, b) => m + b.durationSeconds, 0), 0);
+  const walkSec = runs.reduce((n, r) => n + r.laps * BALANCE.expedition.loopTiles * BALANCE.expedition.secondsPerTile, 0);
+  const elitePerRun = elites / Math.max(1, runs.length);
+  const minPerRun = (battleSec + walkSec) / Math.max(1, runs.length) / 60;
+  const lifeRuns = avg(campaignFinalRuns);
+  const eps = STORY_CHAPTERS.reduce((n, c) => n + (chapterContent('hollow', c.id)?.episodes.length ?? 0), 0);
+  const TOWER_ASSUMED = 30;
+  const towerShards = Math.floor(TOWER_ASSUMED / HS.towerEvery) * HS.perTowerStep;
+  const rankWins = RANK_HOLDERS.length;
+  const evoPerLife = MAX_TIER_INDEX + 1; // 진화 3번 + 아란칼화/참백도 구상화 1번
+  const storyShards = eps * HS.perEpisodeFirst + STORY_CHAPTERS.length * HS.perChapterBoss;
+  /** 트랙 하나 한 생(마지막 단계·1위·탑 30층)의 공급과 원정 수. story = 스토리를 이번에 처음 깨나, rebirths = 이번 생 전에 환생한 횟수 */
+  const life = (story: boolean, rebirths: number) => {
+    const exps = lifeRuns * (1 + rebirths) + (story ? eps : 0) + TOWER_ASSUMED / 3;
+    return {
+      exps,
+      soul: Math.round(exps * elitePerRun * SC.perElite + rankWins * SC.perRankWin + rebirths * SC.perRebirth),
+      shard: (story ? storyShards : 0) + towerShards,
+      essence: evoPerLife * (1 + rebirths) * HE.perEvolution,
+    };
+  };
+  console.log(`
+붕옥 재료 공급 (C.414, GDD 244장 3·4, 참고 — 가드 없음) · 개발 1~${HX.halfLevel}단계 = 결정 ${half.soul} · 파편 ${half.shard} · 정수 ${half.essence} / ${HX.halfLevel + 1}~${HX.maxLevel}단계 = ${full.soul} · ${full.shard} · ${full.essence}`);
+  console.log(`  봇 원정 1회: 강적 승리 ${elitePerRun.toFixed(2)}개(= 결정) · 약 ${minPerRun.toFixed(1)}분(전투 + 이동 ${BALANCE.expedition.secondsPerTile}초/칸) · 한 생 마지막 단계까지 원정 ${lifeRuns.toFixed(1)}회`);
+  console.log(`  스토리 한 종족 = 화 ${eps}개 × ${HS.perEpisodeFirst} + 장 보스 ${STORY_CHAPTERS.length} × ${HS.perChapterBoss} = 파편 ${storyShards} · 탑 ${TOWER_ASSUMED}층 = 파편 ${towerShards} · 등급전 1위 = 승리 ${rankWins}번 × 결정 ${SC.perRankWin} · 진화 ${evoPerLife}번 × 정수 ${HE.perEvolution}`);
+  let totalExps = 0;
+  const lines: string[] = [];
+  for (const R of [0, 1]) {
+    totalExps = 0;
+    const cyc: string[] = [];
+    for (let k = 1; k <= TRANSCENDENTS_COUNT; k++) {
+      // 1회차 = 두 트랙 모두 스토리 처음 + 공명 정수, 2회차부터 = 스토리 없음
+      const a = life(k === 1, k === 1 ? 0 : R);
+      const b = life(k === 1, k === 1 ? 0 : R);
+      const supply = { soul: a.soul + b.soul, shard: a.shard + b.shard, essence: a.essence + b.essence + (k === 1 ? HE.onResonance : 0) };
+      const need = k === 1 ? { soul: half.soul + full.soul, shard: half.shard + full.shard, essence: half.essence + full.essence } : full;
+      // 모자란 재료는 원정을 더 돌아 채운다 — 결정만 원정으로 늘어난다(파편·정수는 다음 생·탑으로, 모자라면 표시)
+      const extra = Math.max(0, Math.ceil((need.soul - supply.soul) / Math.max(0.01, elitePerRun)));
+      const exps = a.exps + b.exps + extra;
+      totalExps += exps;
+      const short = [need.shard > supply.shard ? `파편 −${need.shard - supply.shard}` : '', need.essence > supply.essence ? `정수 −${need.essence - supply.essence}` : ''].filter(Boolean).join(' ');
+      cyc.push(`${k}번째 원정 ${exps.toFixed(0)}회(결정 ${supply.soul}/${need.soul}·파편 ${supply.shard}/${need.shard}·정수 ${supply.essence}/${need.essence}${short ? ` 모자람 ${short}` : ''})`);
+    }
+    lines.push(`  환생 ${R}회/트랙/회차: ${cyc.join(' · ')}`);
+    lines.push(`    → 6번 합체까지 원정 약 ${totalExps.toFixed(0)}회 ≈ ${((totalExps * minPerRun) / 60).toFixed(1)}시간 (돌봄·등급전·탑 전투 시간 제외)`);
+  }
+  for (const l of lines) console.log(l);
 }
 
 if (lateHeld.length > 0) console.warn(`\n후반 보류(45-6) — 4단계 이후 가드 ${lateHeld.length}건, 실패 대신 경고:\n- ${lateHeld.join('\n- ')}`);

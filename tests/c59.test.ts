@@ -10,7 +10,7 @@ import { createExpedition, restoreExpedition, serializeExpedition } from '../src
 import { conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from '../src/engine/transcend';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import {
-  activeTrackOf, allTracks, checkTrackOpen, feedHogyoku, fusionGate, fusionPreview, liberateHogyoku, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
+  activeTrackOf, allTracks, checkTrackOpen, developHogyoku, fusionGate, fusionPreview, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
   statBonusOf, switchTrack, TRACK_KEYS, trackIsTopRank, writeSave, type SaveData, type TrackKey,
 } from '../src/game';
 import { fusionBlockText, fusionFinalText, fusionLists } from '../src/ui/hogyokuView';
@@ -74,7 +74,18 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
 }
 
-/** 두 트랙 모두 5단계·1위, 붕옥 해방·2단계 게이지 가득인 세이브 */
+/** 붕옥 개발을 10단계까지 (재료를 넉넉히 채워 한 단계씩) */
+function developAll(s: SaveData): void {
+  s.shared.soulCrystals += 1000;
+  s.shared.hogyokuShards += 1000;
+  s.shared.resonanceEssence += 1000;
+  while (developHogyoku(s, 3500)) { /* 10단계까지 */ }
+  s.shared.soulCrystals = 0;
+  s.shared.hogyokuShards = 0;
+  s.shared.resonanceEssence = 0;
+}
+
+/** 두 트랙 모두 5단계·1위, 두 종족 스토리 클리어(공명)·붕옥 개발 100% 인 세이브 (GDD 244장) */
 function fusionReady(forms: [string, string] = ['t4:fire:physical', 't4:water:special']): SaveData {
   const s = newSaveData('hollow', 1000);
   toTier5(s, forms[0]);
@@ -82,10 +93,9 @@ function fusionReady(forms: [string, string] = ['t4:fire:physical', 't4:water:sp
   checkTrackOpen(s, 2000);
   toTier5(s.otherTracks[0]!, forms[1]);
   for (const t of allTracks(s)) makeTop(t);
-  s.shared.soulCrystals = HX.liberateCost + HX.fusionCost;
-  feedHogyoku(s);
-  liberateHogyoku(s, 3500);
-  feedHogyoku(s);
+  clearStory(s, other('hollow')); // 다른 종족 스토리도 전부 → 공명 (GDD 244장 2)
+  checkTrackOpen(s, 3000);
+  developAll(s);
   return s;
 }
 
@@ -107,9 +117,9 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     }
     expect(m.meta.startPatch).toBe((before.meta as { startPatch: string }).startPatch);
     expect(m.otherTracks).toEqual([]);
-    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, appearedAt: null, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 });
+    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, appearedAt: null, level: 0, developed: 0, resonance: false, resonatedAt: null });
     expect(m.transcendentDex).toEqual([]);
-    expect(m.slotLog).toEqual({ fusions: [], trackOpens: [], identities: [] }); // C.326 이름·성별 기록
+    expect(m.slotLog).toEqual({ fusions: [], trackOpens: [], identities: [], hogyokuDev: [], hogyokuMaterials: [] }); // C.326 이름·성별 기록 · C.414 붕옥 개발·재료
   });
 
   it('이미 마지막 단계인 옛 세이브도 스토리를 다 깨지 않았으면 다른 종족 트랙이 열리지 않는다 (GDD 243장 1). 원래 트랙은 그대로', () => {
@@ -218,37 +228,22 @@ describe('붕옥 (탭·해방·보너스)', () => {
     expect(s.otherTracks).toHaveLength(1);
   });
 
-  it('영혼 결정 100 → 해방 → 두 캐릭터 전 능력치 +5%, 해방 뒤 먹이면 2단계 게이지(최대 300)', () => {
+  it('붕옥 개발 10단계 + 공명 → 두 캐릭터 전 능력치 +10%, 개발 기록은 런 로그에 (GDD 244장 4·6)', () => {
     const s = fusionReady();
-    expect(s.hogyoku.liberated).toBe(true);
-    expect(s.hogyoku.fed).toBe(HX.liberateCost);
-    expect(s.hogyoku.fusionFed).toBe(HX.fusionCost);
-    expect(s.shared.soulCrystals).toBe(0);
-    expect(statBonusOf(s).total).toBeCloseTo(0.05);
+    expect(s.hogyoku.level).toBe(HX.maxLevel);
+    expect(s.hogyoku.developed).toBe(HX.maxLevel);
+    expect(s.hogyoku.resonance).toBe(true);
+    expect(statBonusOf(s).total).toBeCloseTo(0.1);
+    expect(s.slotLog.hogyokuDev.map((r) => r.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     const t = newSaveData('hollow', 0);
-    t.evolution.tierIndex = 4;
-    checkTrackOpen(t, 0);
-    t.shared.soulCrystals = 60;
-    expect(liberateHogyoku(t)).toBe(false); // 탭이 닫혀 있다
-    expect(feedHogyoku(t)).toBe(0);
-  });
-
-  it('게이지가 덜 차면 해방하지 못하고, 가진 만큼만 먹인다', () => {
-    const s = newSaveData('hollow', 0);
-    s.hogyoku.tabOpen = true;
-    s.shared.soulCrystals = 60;
-    expect(feedHogyoku(s)).toBe(60);
-    expect(liberateHogyoku(s)).toBe(false);
-    s.shared.soulCrystals = 70;
-    expect(feedHogyoku(s)).toBe(40);
-    expect(s.shared.soulCrystals).toBe(30);
-    expect(liberateHogyoku(s)).toBe(true);
+    t.shared.soulCrystals = 999;
+    expect(developHogyoku(t)).toBeNull(); // 붕옥이 아직 없다
   });
 
   it('보너스는 능력치·전투 파라미터·원정에 곱해지고(999 상한), 초월체 1종 +2% 최대 12%', () => {
-    expect(slotStatBonus(false, 0).total).toBe(0);
-    expect(slotStatBonus(true, 3).total).toBeCloseTo(0.11);
-    expect(slotStatBonus(false, 9).transcendents).toBeCloseTo(0.12);
+    expect(slotStatBonus(0, 0).total).toBe(0);
+    expect(slotStatBonus(5, 3).total).toBeCloseTo(0.11);
+    expect(slotStatBonus(0, 9).transcendents).toBeCloseTo(0.12);
     const s = newSaveData('hollow', 0);
     toTier5(s);
     const base = currentStats(s.evolution, 'hollow');
@@ -274,11 +269,11 @@ describe('합체 (GDD 22-3)', () => {
     expect(trackIsTopRank(s.otherTracks[0]!)).toBe(false);
     expect(fusionGate(s).missing).toEqual(['rank']);
     makeTop(s.otherTracks[0]!);
-    s.hogyoku.fusionFed = 10;
+    s.hogyoku.level = 9;
     s.activeExpedition = {} as never;
-    expect(fusionGate(s).missing).toEqual(['gauge', 'expedition']);
+    expect(fusionGate(s).missing).toEqual(['develop', 'expedition']);
     expect(performFusion(s).ok).toBe(false);
-    for (const b of ['tab', 'liberation', 'tracks', 'gauge', 'rank', 'expedition', 'complete'] as const) expect(fusionBlockText(b)).toMatch(/\./);
+    for (const b of ['tab', 'resonance', 'tracks', 'develop', 'rank', 'expedition', 'complete'] as const) expect(fusionBlockText(b)).toMatch(/\./);
   });
 
   it('두 캐릭터는 사라지고 같은 종족의 새 두 트랙이 1단계 완전 초기, 슬롯 자원·도감·칭호·해방은 남는다', () => {
@@ -309,14 +304,15 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.shared.tradeCoins).toBe(77);
     expect(s.formDex).toEqual(['t4:fire:physical']);
     expect(s.titles.some((t) => t.titleId === 'rank-1')).toBe(true);
-    expect(s.hogyoku.liberated).toBe(true);
+    expect(s.hogyoku.level).toBe(HX.halfLevel); // 6~10단계 진행만 0 (GDD 244장 5)
+    expect(s.hogyoku.developed).toBe(HX.maxLevel); // 오른 능력치는 그대로
+    expect(s.hogyoku.resonance).toBe(true);
     expect(s.hogyoku.tabOpen).toBe(true);
-    expect(s.hogyoku.fusionFed).toBe(0);
     expect(s.transcendentDex).toEqual([{ id: r.def.id, at: 9000, fusionIndex: 1 }]);
-    expect(statBonusOf(s).total).toBeCloseTo(0.07);
+    expect(statBonusOf(s).total).toBeCloseTo(0.12);
     // 런 로그: 합체 기록 (두 캐릭터 요약·결과)
     const rec = s.slotLog.fusions[0]!;
-    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: HX.fusionCost, jade: HX.firstTranscendentJade });
+    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: HX.develop.soul.slice(HX.halfLevel).reduce((a, b) => a + b, 0), jade: HX.firstTranscendentJade });
     expect(rec.characters.map((c) => c.factionId)).toEqual(['hollow', other('hollow')]);
     expect(rec.characters[0]).toMatchObject({ tierIndex: 3, formId: 't4:fire:physical', rank: 1, rebirths: 2 });
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
@@ -338,8 +334,7 @@ describe('합체 (GDD 22-3)', () => {
         toTier5(t, j === 0 ? 't4:fire:physical' : 't4:water:special');
         makeTop(t);
       }
-      keep.shared.soulCrystals = HX.fusionCost;
-      feedHogyoku(keep);
+      developAll(keep);
       s = keep;
     }
     expect(new Set(got).size).toBe(TRANSCENDENTS.length);
@@ -347,7 +342,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.titles.some((t) => t.titleId === 'hogyoku-complete')).toBe(true);
     expect(fusionGate(s).missing).toContain('complete');
     expect(performFusion(s).ok).toBe(false);
-    expect(statBonusOf(s).total).toBeCloseTo(0.05 + 0.12);
+    expect(statBonusOf(s).total).toBeCloseTo(0.05 + 0.05 * 7 + 0.12); // 개발 10 + 합체마다 5단계씩 다시 (6번) = 40단계 + 초월체 6종
   });
 });
 

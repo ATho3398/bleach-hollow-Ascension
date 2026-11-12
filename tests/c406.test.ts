@@ -124,7 +124,7 @@ describe('241-C 6 쇠약 = 마지막으로 먹인 뒤 24시간', () => {
     expect(n.cureOnReturn.weak).toBe(true);
   });
   it('세이브 형식 77: 76 → 77 = 쇠약 시계는 지금부터, 터치 빈 기록, 숨은 모습 보너스 빈 목록', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(78); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(79); // C.406 쇠약 시계·터치·숨은 모습
     expect(SAVE_MIGRATIONS[76]).toBeTypeOf('function');
     const s = newSaveData('hollow', 1);
     const raw = JSON.parse(JSON.stringify(s));
@@ -135,7 +135,7 @@ describe('241-C 6 쇠약 = 마지막으로 먹인 뒤 24시간', () => {
     raw.lastSeenAt = Date.now() - 40 * H; // 40시간 비운 옛 세이브
     const before = Date.now();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(78);
+    expect(m.meta.format).toBe(79);
     expect(m.nest.lastMealAt).toBeGreaterThanOrEqual(before);
     expect(m.nest.touch).toEqual({ count: 0, at: 0 });
     expect(m.shared.specialLooks).toEqual([]);

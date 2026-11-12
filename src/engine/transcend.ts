@@ -43,9 +43,36 @@ export function allTranscendentsOwned(owned: readonly string[], defs: readonly T
   return defs.every((d) => owned.includes(d.id));
 }
 
-/** 슬롯 보너스 = 붕옥 해방 +5% + 초월체 1종마다 +2%(최대 종 수만큼). 전 능력치에 곱하는 배율의 + 부분 (0.05 = +5%) */
-export function slotStatBonus(liberated: boolean, transcendents: number, defs: readonly TranscendentDef[] = TRANSCENDENTS): { liberation: number; transcendents: number; total: number } {
-  const liberation = liberated ? HX.liberatedBonus : 0;
+/** 슬롯 보너스 (GDD 244장 4·5) = 붕옥 개발로 오른 단계 수 × 1% (영구 — 합체로 6~10단계 진행이 0 이 되어도 오른 몫은 남는다) + 초월체 1종마다 +2%(최대 종 수만큼).
+ *  전 능력치에 곱하는 배율의 + 부분 (0.05 = +5%). liberation = 붕옥 개발 몫(옛 이름 그대로 — 5단계 = 옛 붕옥 해방 +5%) */
+export function slotStatBonus(developedSteps: number, transcendents: number, defs: readonly TranscendentDef[] = TRANSCENDENTS): { liberation: number; transcendents: number; total: number } {
+  const liberation = Math.max(0, Math.floor(developedSteps)) * HX.perLevelBonus;
   const tr = Math.min(defs.length, Math.max(0, transcendents)) * HX.perTranscendentBonus;
   return { liberation, transcendents: tr, total: liberation + tr };
+}
+
+/** 붕옥 개발 재료 3종 (GDD 244장 3) */
+export interface HogyokuCost {
+  soul: number;
+  shard: number;
+  essence: number;
+}
+
+/** 단계 level(1~10)로 올리는 데 드는 재료 (balance hogyoku.develop 표) */
+export function developCost(level: number): HogyokuCost {
+  const d = HX.develop;
+  const i = Math.min(d.soul.length, Math.max(1, Math.floor(level))) - 1;
+  return { soul: d.soul[i]!, shard: d.shard[i]!, essence: d.essence[i]! };
+}
+
+/** from+1 ~ to 단계 재료 합 */
+export function developCostSum(from: number, to: number): HogyokuCost {
+  const out: HogyokuCost = { soul: 0, shard: 0, essence: 0 };
+  for (let l = from + 1; l <= to; l++) {
+    const c = developCost(l);
+    out.soul += c.soul;
+    out.shard += c.shard;
+    out.essence += c.essence;
+  }
+  return out;
 }

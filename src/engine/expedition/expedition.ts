@@ -162,6 +162,8 @@ export interface StorySettlement {
   jade: number;
   chapterCleared: boolean;
   bossFirstKill: string | null;
+  /** 붕옥 파편 (GDD 244장 3, C.414): 화 첫 클리어 + 장 보스(장 완주). 받지 않았으면 없다 */
+  shards?: number;
 }
 
 /** 보스전 한 판의 결과 (런 로그 bossBattles 재료, GDD 25-3) */

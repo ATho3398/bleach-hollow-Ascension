@@ -1,14 +1,16 @@
-// 붕옥 탭 (GDD 22-3·22-9, C.59): 1단계 게이지 → 해방(+5%) → 2단계 게이지 + 모든 트랙 등급 1위 → 합체 미리보기 → 확인 2번 → 연출.
+// 붕옥 화면 (GDD 22-3·22-9 → 244장, C.414): 재료 3종으로 붕옥 개발 10단계(반각성 50% → 공명 100%) → 모든 트랙 등급 1위 → 합체 미리보기 → 확인 2번 → 연출.
 // 왼쪽 = 붕옥 게이지·합체 조건, 오른쪽 = 초월체 도감(전시)·보유 보너스. 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
 import { getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
+import { HOGYOKU_SHARD_NAME, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, RESONANCE_ESSENCE_NAME, transcendentConditionText } from '../data/hogyoku';
+import { developCost, type HogyokuCost } from '../engine/transcend';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import type { FactionConfig } from '../engine/faction';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
-import { allTracks, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type FusionBlock, type SaveData, type TrackKey } from '../game';
+import { allTracks, developGate, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
 import { button, chip, h, info, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementsMark } from './bha/element';
@@ -39,27 +41,87 @@ export function trackName(t: Pick<SaveData, 'factionId' | 'evolution'>): string 
 /** 합체가 막힌 이유 한 줄 */
 export function fusionBlockText(b: FusionBlock): string {
   switch (b) {
-    case 'tab': return '붕옥 탭이 아직 열리지 않았다.';
-    case 'liberation': return '먼저 붕옥을 해방해야 한다.';
+    case 'tab': return '붕옥이 아직 나타나지 않았다.';
+    case 'resonance': return '붕옥이 공명해야 한다 — 두 종족의 스토리를 모두 끝내면.';
     case 'tracks': return '두 캐릭터가 모두 있어야 한다.';
-    case 'gauge': return `붕옥 2단계에 ${SOUL_CRYSTAL_NAME} ${HX.fusionCost}개를 먹여야 한다.`;
+    case 'develop': return `붕옥 개발을 100%(${HX.maxLevel}단계)까지 채워야 한다.`;
     case 'rank': return '두 캐릭터 모두 등급 1위여야 한다.';
     case 'expedition': return '진행 중인 모험이 있다. 모험을 끝내야 한다.';
     case 'complete': return '초월체 6종을 모두 모았다. 더는 합체할 수 없다.';
   }
 }
 
-/** 보유 보너스 한 줄: "붕옥 해방 +5% · 초월체 2종 +4% = 전 능력치 +9%" (없으면 null) */
+/** 개발이 막힌 이유 한 줄 */
+export function developBlockText(b: DevelopBlock): string {
+  switch (b) {
+    case 'tab': return '붕옥이 아직 나타나지 않았다.';
+    case 'max': return '붕옥 개발 100% — 더 올릴 단계가 없다.';
+    case 'resonance': return `${HX.halfLevel * 10}%부터는 공명이 필요하다 — 다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다.`;
+    case 'soul': return `${SOUL_CRYSTAL_NAME}${subjectParticle(SOUL_CRYSTAL_NAME)} 모자라다 (강적 처치·등급전 승리·환생).`;
+    case 'shard': return `${HOGYOKU_SHARD_NAME}${subjectParticle(HOGYOKU_SHARD_NAME)} 모자라다 (스토리 화 첫 클리어·장 보스·탑 ${BALANCE.provisional.hogyokuShards.towerEvery}층마다).`;
+    case 'essence': return `${RESONANCE_ESSENCE_NAME}${subjectParticle(RESONANCE_ESSENCE_NAME)} 모자라다 (진화할 때마다·공명).`;
+  }
+}
+
+/** 보유 보너스 한 줄: "붕옥 개발 +5% · 초월체 2종 +4% = 전 능력치 +9%" (없으면 null) */
 export function bonusLine(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): string | null {
   const b = statBonusOf(save);
   if (b.total <= 0) return null;
   const parts: string[] = [];
-  if (b.liberation > 0) parts.push(`붕옥 해방 +${pct(b.liberation)}`);
+  if (b.liberation > 0) parts.push(`붕옥 개발 +${pct(b.liberation)}`);
   if (b.transcendents > 0) parts.push(`초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`);
   return `${parts.join(' · ')} = 전 능력치 +${pct(b.total)}`;
 }
 
-/** 초월체 도감 (전시): 6칸, 모은 것은 이름·컨셉·몇 번째 합체, 못 모은 것은 ??? */
+/** 붕옥 상태 (GDD 244장 2 안 B): 반각성 → 공명 → 합체 가능 */
+export function hogyokuStage(save: SaveData): keyof typeof HOGYOKU_STAGE_NAMES {
+  if (!save.hogyoku.resonance) return 'half';
+  return fusionGate(save).ok ? 'ready' : 'resonance';
+}
+
+/** 재료 3종 한 줄: 가진 수 / 다음 단계에 드는 수 */
+function costLine(save: SaveData, cost: HogyokuCost | null): HTMLElement {
+  const rows: [string, number, number | null][] = [
+    [SOUL_CRYSTAL_NAME, save.shared.soulCrystals, cost?.soul ?? null],
+    [HOGYOKU_SHARD_NAME, save.shared.hogyokuShards, cost?.shard ?? null],
+    [RESONANCE_ESSENCE_NAME, save.shared.resonanceEssence, cost?.essence ?? null],
+  ];
+  const dl = info(rows.map(([name, have, need]) => ({
+    label: name,
+    value: need === null ? `${have}` : `${have} / ${need}`,
+    mod: need === null ? undefined : have >= need ? ('good' as const) : ('bad' as const),
+  })));
+  dl.setAttribute('aria-label', '붕옥 재료');
+  dl.dataset.materials = '';
+  return dl;
+}
+
+/** 개발 단계 목록 (GDD 244장 4: 단계 이름·효과 문구): 단계마다 이름 · 효과 · 재료 · 상태(✓ 다음 / 공명 필요) */
+function stepList(save: SaveData): HTMLElement {
+  const h0 = save.hogyoku;
+  const p = panel({ title: '개발 단계', aside: `${h0.level} / ${HX.maxLevel}` });
+  p.setAttribute('aria-label', '붕옥 개발 단계');
+  const list = info(HOGYOKU_STEP_NAMES.slice(0, HX.maxLevel).map((name, i) => {
+    const lv = i + 1;
+    const c = developCost(lv);
+    const done = h0.level >= lv;
+    const locked = lv > HX.halfLevel && !h0.resonance;
+    const state = done ? ' ✓' : lv === h0.level + 1 ? (locked ? ' 공명' : ' 다음') : locked ? ' 공명' : '';
+    return {
+      label: `${lv * 10}% ${name}`,
+      value: `+${pct(HX.perLevelBonus)} · ${c.soul}/${c.shard}/${c.essence}${state}`,
+      mod: done ? ('good' as const) : locked ? undefined : lv === h0.level + 1 ? ('em' as const) : undefined,
+    };
+  }));
+  list.querySelectorAll('.bha-info__row').forEach((row, i) => {
+    (row as HTMLElement).dataset.level = String(i + 1);
+    (row as HTMLElement).dataset.done = String(h0.level >= i + 1);
+  });
+  p.append(list, h('p', 'bha-faint', `단계마다 두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)}(영구). 재료 = ${SOUL_CRYSTAL_NAME} / ${HOGYOKU_SHARD_NAME} / ${RESONANCE_ESSENCE_NAME}. '공명' = 공명해야 열림. ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 합체하면 ${HX.halfLevel * 10 + 10}~100% 진행만 처음으로(오른 능력치는 남는다).`));
+  return p;
+}
+
+/** 초월체 도감 (전시): 6칸, 모은 것은 이름·컨셉·몇 번째 합체, 못 모은 것은 ??? + 조건 공개 (GDD 244장 5) */
 function transcendentDexPanel(save: SaveData): HTMLElement {
   const owned = new Map(save.transcendentDex.map((e) => [e.id, e]));
   const p = panel({ title: '초월체 도감', aside: `${owned.size} / ${TRANSCENDENTS.length}` });
@@ -69,7 +131,7 @@ function transcendentDexPanel(save: SaveData): HTMLElement {
     const got = owned.get(d.id);
     return got
       ? { label: `${d.order}. ${d.name} · ${got.fusionIndex}번째 합체`, value: d.concept, mod: 'stack' as const }
-      : { label: `${d.order}. ???`, value: '아직 만나지 못한 초월체' };
+      : { label: `${d.order}. ???`, value: `조건: ${transcendentConditionText(d.condition)}` };
   }));
   list.querySelectorAll('.bha-info__row').forEach((row, i) => {
     const d = TRANSCENDENTS[i]!;
@@ -78,7 +140,7 @@ function transcendentDexPanel(save: SaveData): HTMLElement {
   });
   p.append(list);
   const line = bonusLine(save);
-  p.append(h('p', 'bha-faint', line ? `보유 보너스: ${line}` : `보유 보너스: 붕옥 해방 +${pct(HX.liberatedBonus)}, 초월체 1종마다 +${pct(HX.perTranscendentBonus)} (두 캐릭터 모두)`));
+  p.append(h('p', 'bha-faint', line ? `보유 보너스: ${line}` : `보유 보너스: 붕옥 개발 단계마다 +${pct(HX.perLevelBonus)}, 초월체 1종마다 +${pct(HX.perTranscendentBonus)} (두 캐릭터 모두)`));
   if (owned.size >= TRANSCENDENTS.length) p.append(notice('rare', '초월체 6종을 모두 모았다. 칭호 「붕옥 완성」. 이후 합체는 막히고 육성은 계속된다.', { title: '붕옥 완성' }));
   return p;
 }
@@ -97,56 +159,61 @@ function rankChecklist(save: SaveData): HTMLElement {
 }
 
 export interface HogyokuHandlers {
-  onFeed: () => void;
-  onLiberate: () => void;
+  onDevelop: () => void;
   onPreview: () => void;
 }
 
-/** 붕옥 탭 본 화면 */
+/** 붕옥 화면 (GDD 244장): 왼쪽 = 단계 띠·붕옥 개발(재료·[개발])·개발 단계 목록, 오른쪽 = 합체(지금 두 캐릭터라면 → 「○○」·조건)·초월체 도감(못 모은 조건 공개) */
 export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
   const hg = save.hogyoku;
+  const stage = hogyokuStage(save);
   const sub = h('span');
-  sub.append(`${SOUL_CRYSTAL_NAME} `, h('b', 'bha-num', String(save.shared.soulCrystals)), '개 · 두 캐릭터가 같이 쌓는다 ', provisionalTag('임시 수치'));
+  sub.append(`두 캐릭터가 재료를 같이 모은다 `, provisionalTag('임시 수치'));
   const head = lcdHead({ title: '붕옥', sub });
 
-  const core = panel({ title: hg.liberated ? '붕옥 — 해방됨' : '붕옥' });
-  core.setAttribute('aria-label', '붕옥 게이지');
-  const crystals = save.shared.soulCrystals;
-  if (!hg.liberated) {
-    const full = hg.fed >= HX.liberateCost;
-    core.append(meter({ kind: 'stored', label: '1단계 · 해방', icon: 'i-rare', value: hg.fed, max: HX.liberateCost, full, lg: true }));
-    core.append(h('p', 'bha-small', `${SOUL_CRYSTAL_NAME} ${HX.liberateCost}개를 먹이면 붕옥이 해방된다 → 두 캐릭터 모두 전 능력치 +${pct(HX.liberatedBonus)} (영구, 합체 뒤에도 유지).`));
-    if (full) {
-      const lib = button({ label: '붕옥 해방', icon: 'i-rare', variant: 'primary', block: true, onClick: hd.onLiberate });
-      lib.dataset.sc = 'hogyoku-liberate';
-      core.append(lib);
-    } else {
-      const feed = button({ label: `${SOUL_CRYSTAL_NAME} 먹이기 (${Math.min(crystals, HX.liberateCost - hg.fed)}개)`, icon: 'i-plus', variant: 'primary', block: true, disabled: crystals <= 0, onClick: hd.onFeed });
-      feed.dataset.sc = 'hogyoku-feed';
-      core.append(feed);
-    }
-  } else {
-    core.append(notice('good', `두 캐릭터 모두 전 능력치 +${pct(HX.liberatedBonus)} (영구).`, { title: '붕옥 해방', icon: 'i-check' }));
-    const full = hg.fusionFed >= HX.fusionCost;
-    core.append(meter({ kind: 'sp', label: '2단계 · 합체', icon: 'i-rare', value: hg.fusionFed, max: HX.fusionCost, full, lg: true }));
-    if (!full) {
-      const feed = button({ label: `${SOUL_CRYSTAL_NAME} 먹이기 (${Math.min(crystals, HX.fusionCost - hg.fusionFed)}개)`, icon: 'i-plus', variant: 'primary', block: true, disabled: crystals <= 0, onClick: hd.onFeed });
-      feed.dataset.sc = 'hogyoku-feed';
-      core.append(feed);
-    }
+  const stages = h('div', 'bha-hogyoku__stages');
+  stages.setAttribute('aria-label', '붕옥 상태');
+  stages.dataset.stage = stage;
+  for (const k of ['half', 'resonance', 'ready'] as const) {
+    const on = k === stage;
+    const c = chip(HOGYOKU_STAGE_NAMES[k], on ? 'rare' : undefined);
+    if (!on) c.classList.add('is-off');
+    c.dataset.stage = k;
+    stages.append(c);
   }
+
+  const gate = developGate(save);
+  const core = panel({ title: `붕옥 개발 ${hg.level * 10}%` });
+  core.setAttribute('aria-label', '붕옥 개발');
+  core.append(stages);
+  core.append(meter({ kind: hg.resonance ? 'sp' : 'stored', label: hg.level >= HX.maxLevel ? '개발 100%' : `다음 ${gate.next * 10}% · ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}`, icon: 'i-rare', value: hg.level, max: HX.maxLevel, full: hg.level >= HX.maxLevel, lg: true }));
+  core.append(costLine(save, gate.cost));
+  const shown = gate.missing.filter((m) => m !== 'tab');
+  if (hg.level < HX.maxLevel) {
+    const btn = button({ label: `${gate.next * 10}% 개발 — 전 능력치 +${pct(HX.perLevelBonus)}`, icon: 'i-plus', variant: 'primary', block: true, disabled: !gate.ok, onClick: hd.onDevelop });
+    btn.dataset.sc = 'hogyoku-develop';
+    core.append(btn);
+  }
+  for (const m of shown) core.append(h('p', 'bha-faint', `· ${developBlockText(m)}`));
 
   const fusion = panel({ title: '초월체 합체', aside: provisionalTag('임시 조건') });
   fusion.setAttribute('aria-label', '초월체 합체');
-  fusion.append(h('p', 'bha-small', `해방된 붕옥에 ${SOUL_CRYSTAL_NAME} ${HX.fusionCost}개 + 두 캐릭터 모두 등급 1위 → 두 캐릭터가 초월체 하나가 된다. 되돌릴 수 없다.`), rankChecklist(save));
-  const gate = fusionGate(save);
-  const shown = gate.missing.filter((m) => m !== 'tab' && m !== 'rank');
-  for (const m of shown) fusion.append(h('p', 'bha-faint', `· ${fusionBlockText(m)}`));
-  const prev = button({ label: '합체 미리보기', icon: 'i-chevron-right', variant: gate.ok ? 'danger' : 'ghost', block: true, disabled: !gate.ok, onClick: hd.onPreview });
+  const pv = fusionPreview(save);
+  if (pv.def) {
+    const now = h('p', 'bha-small');
+    now.dataset.preview = pv.def.id;
+    now.append('지금 두 캐릭터라면 → ', h('b', '', `「${pv.def.name}」`));
+    fusion.append(now);
+  }
+  fusion.append(h('p', 'bha-small', `붕옥 개발 100% + ${HOGYOKU_STAGE_NAMES.resonance} + 두 캐릭터 모두 등급 1위 → 두 캐릭터가 초월체 하나가 된다. 되돌릴 수 없다.`), rankChecklist(save));
+  const fg = fusionGate(save);
+  // 공명이 개발 칸에 이미 막힌 이유로 나왔으면 합체 칸에서는 되풀이하지 않는다
+  for (const m of fg.missing.filter((x) => x !== 'tab' && x !== 'rank' && !(x === 'resonance' && gate.missing.includes('resonance')))) fusion.append(h('p', 'bha-faint', `· ${fusionBlockText(m)}`));
+  const prev = button({ label: '합체 미리보기', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
   prev.dataset.sc = 'hogyoku-preview';
   fusion.append(prev);
 
-  lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [core, fusion], [transcendentDexPanel(save)]);
+  lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [core, stepList(save)], [fusion, transcendentDexPanel(save)]);
 }
 
 /** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */
@@ -169,12 +236,12 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
     gone: [
       '지금 두 캐릭터 (초월체 도감에 전시된다)',
       '두 캐릭터의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
-      `붕옥 2단계 게이지 (${SOUL_CRYSTAL_NAME} ${HX.fusionCost}개 사용)`,
+      `붕옥 개발 ${HX.halfLevel * 10 + 10}~100% 진행 (다음 합체를 위해 다시 개발)`,
     ],
     keeps: [
       '도감·칭호 기록, 초월체 도감',
-      `붕옥 해방 (+${pct(HX.liberatedBonus)}는 새 캐릭터에도)`,
-      `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 ${SOUL_CRYSTAL_NAME}`,
+      `붕옥 개발 ${HX.halfLevel * 10}%까지·공명, 개발로 오른 능력치 (새 캐릭터에도)`,
+      `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 붕옥 재료`,
       '스토리 진행·보스 도감·입은 스킨',
     ],
   };

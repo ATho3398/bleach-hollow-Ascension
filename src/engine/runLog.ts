@@ -643,8 +643,32 @@ export interface FusionRecord {
   /** 조건이 맞아서 정해졌나 (false = 조건 맞는 미보유가 없어 표 아래쪽부터 채움) */
   matched: boolean;
   characters: FusionCharacterSummary[];
+  /** 이번 합체까지 6~10단계 개발에 쓴 영혼 결정 (C.414 전: 2단계 게이지에 먹인 수) */
   soulSpent: number;
   jade: number;
+}
+
+/** 붕옥 개발 기록 (GDD 244장 4·6, C.414 형식 79): 한 단계 올릴 때마다 — 오른 단계·바친 재료 3종·그때 트랙 종족(누른 쪽) */
+export interface HogyokuDevRecord {
+  at: number;
+  /** 올라간 단계 (1~10) */
+  level: number;
+  soul: number;
+  shard: number;
+  essence: number;
+  factionId: string;
+  /** 몇 번째 합체를 향한 개발인가 (지금까지 합체 수 + 1) */
+  cycle: number;
+}
+
+/** 붕옥 재료를 얻은 기록 (GDD 244장 3, C.414 형식 79): 파편·정수만(영혼 결정은 원정·등급전·환생 기록에 이미 있다) */
+export interface HogyokuMaterialRecord {
+  at: number;
+  kind: 'shard' | 'essence';
+  amount: number;
+  /** 얻은 곳: episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
+  source: 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  factionId: string;
 }
 
 /** 다른 종족 트랙이 열린 기록 (GDD 22-3, 형식 23) */
@@ -673,10 +697,14 @@ export interface SlotLog {
   trackOpens: TrackOpenRecord[];
   /** C.326 (형식 63): 이름·성별 기록. 형식 63 이전 세이브는 빈 목록 */
   identities: IdentityRecord[];
+  /** C.414 (형식 79, GDD 244장 6): 붕옥 개발 단계·쓴 재료. 형식 79 이전 세이브는 빈 목록 */
+  hogyokuDev: HogyokuDevRecord[];
+  /** C.414 (형식 79, GDD 244장 3): 붕옥 파편·공명의 정수를 얻은 기록 */
+  hogyokuMaterials: HogyokuMaterialRecord[];
 }
 
 export function emptySlotLog(): SlotLog {
-  return { fusions: [], trackOpens: [], identities: [] };
+  return { fusions: [], trackOpens: [], identities: [], hogyokuDev: [], hogyokuMaterials: [] };
 }
 
 export function emptyRunLog(): RunLog {
