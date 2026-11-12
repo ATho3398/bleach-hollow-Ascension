@@ -10,6 +10,7 @@ import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
+import type { AttackCategory } from '../data/schema';
 import { characterTracks, artSkinOf, artTierIndexOf, developAll, developGate, hogyokuPercent, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
 import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
@@ -407,71 +408,133 @@ function trackDetailDialog(save: SaveData, t: Pick<SaveData, TrackKey>): void {
   itemDialog({ heading: `${f.name} · 합체 재료`, name: trackName(t), desc: '', art: trackArt(t), hero: true, cls: 'bha-dexmodal bha-hgtrackmodal', content: [rows, stats], actions: [] });
 }
 
-/** 합체 조건 목록 (충족 ✓ / 미충족 ✗): 개발 100% · 공명 · 두 캐릭터 등급 1위 · 진행 중 모험 없음 · 조합 초월자 미보유 */
-function fusionConditions(save: SaveData): HTMLElement {
+/** 합체 조건 하나 (GDD 12-2 v6.040 아래 띠 칩): 짧은 이름표 + 충족 여부 + 자세한 이유(칩을 누르면 띠 한 줄에) */
+export interface FusionCond { key: FusionBlock; short: string; ok: boolean; detail: string }
+
+/** 합체 조건 칩 5개 (순서 = 붕옥 100% · 공명 · 둘 다 1위 · 모험 없음 · 조합 미보유 — 화면 문구는 '원정' 대신 '모험', 159장) + 두 캐릭터가 없으면 맨 앞에 '두 캐릭터'. 막힌 이유 첫 번째 = 이 순서의 첫 ✗ */
+export function fusionConds(save: SaveData): FusionCond[] {
   const missing = new Set(fusionGate(save).missing);
-  const list = h('div', 'bha-hgrows bha-hgconds');
-  list.setAttribute('aria-label', '합체 조건');
-  const cond = (key: FusionBlock, label: string, ok: string, ng: string) => {
-    const bad = missing.has(key);
-    const r = hgRow(`${bad ? '✗' : '✓'} ${label}`, bad ? ng : ok, bad ? 'bad' : 'good');
-    r.dataset.cond = key;
-    r.dataset.ok = String(!bad);
-    list.append(r);
-  };
-  cond('develop', '붕옥 개발 100%', '완료', `지금 ${hogyokuPercent(save.hogyoku)}% (${HOGYOKU_MATERIALS.map((m) => `${m.track} ${save.hogyoku.tracks[m.id] ?? 0}`).join(' · ')}강)`);
-  cond('resonance', HOGYOKU_STAGE_NAMES.resonance, '완료', '두 종족의 스토리를 모두 끝내면');
-  cond('rank', '두 캐릭터 모두 등급 1위', '완료', tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`).join(' · '));
-  cond('expedition', '진행 중인 모험 없음', '없음', '모험을 끝내야 한다');
-  // 조합 초월자 미보유 (GDD 12-4 v6.037): 두 캐릭터 진화체 분류 조합 하나에 초월자 하나 — 이미 가졌으면 다른 분류로 키워야 한다
   const pv = fusionPreview(save);
-  const combo = pv.def ? `${transcendentComboText(pv.def.combo)} → ${pv.def.name}` : '';
-  cond('owned', '이 조합의 초월자를 아직 안 가짐', combo, `${combo} — ${fusionBlockText('owned')}`);
-  if (missing.has('tracks')) cond('tracks', '두 캐릭터가 모두 있다', '', fusionBlockText('tracks'));
-  return list;
+  const out: FusionCond[] = [];
+  const add = (key: FusionBlock, short: string, ok: string, ng: string) => out.push({ key, short, ok: !missing.has(key), detail: missing.has(key) ? ng : ok });
+  if (missing.has('tab')) add('tab', '붕옥', '', fusionBlockText('tab'));
+  if (missing.has('tracks')) add('tracks', '두 캐릭터', '', fusionBlockText('tracks'));
+  add('develop', '붕옥 100%', '붕옥 개발 100% — 완료.',
+    `붕옥 개발 100% 필요 — 지금 ${hogyokuPercent(save.hogyoku)}% (${HOGYOKU_MATERIALS.map((m) => `${m.track} ${save.hogyoku.tracks[m.id] ?? 0}`).join(' · ')}강 / 각 ${HX.trackMax}강).`);
+  add('resonance', HOGYOKU_STAGE_NAMES.resonance, `${HOGYOKU_STAGE_NAMES.resonance} — 완료.`, fusionBlockText('resonance'));
+  const notTop = tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`);
+  add('rank', '둘 다 1위', '두 캐릭터 모두 등급 1위 — 완료.', `두 캐릭터 모두 등급 1위여야 한다 — 지금 ${notTop.join(' · ')}.`);
+  add('expedition', '모험 없음', '진행 중인 모험 없음 — 완료.', fusionBlockText('expedition'));
+  const combo = pv.def ? `${pv.inputs.map((x) => ATTACK_CATEGORY_WORDS[x.category]).join(' + ')} → ${pv.def.name}` : '';
+  add('owned', '조합 미보유', `${combo} — 아직 없는 초월자.`, `${combo} — ${fusionBlockText('owned')}`);
+  return out;
 }
 
-/** 합체 창 (C.425, GDD 12-2 "합체 = 별도 창"): 붕옥은 안 보인다. 사각형 2칸 = 두 캐릭터 그림(종족 설정 순서) + [상세 보기] ·
- *  지금 두 캐릭터라면 → 「○○」 · 조건 목록 · [합체](확인 1 → 확인 2 → 자동 백업 흐름 그대로) */
+/** 합체 부모 카드 (사용자 v6.013 결정 유지 — 사각형·그림·[상세 보기]): 종족 이름표 · 그림 · 진화체 이름 · 단계 · 분류 칩 · 등급 칩 */
+function fusionParentCard(save: SaveData, t: Pick<SaveData, TrackKey>, i: number): HTMLElement {
+  const f = getFaction(t.factionId);
+  const inp = fusionInputOf(t);
+  const top = trackIsTopRank(t);
+  const card = h('section', 'bha-fuse__parent');
+  card.dataset.faction = t.factionId;
+  card.setAttribute('aria-label', `${f.name} · ${trackName(t)}`);
+  const chips = h('div', 'bha-fuse__chips');
+  const cat = chip(ATTACK_CATEGORY_WORDS[inp.category]);
+  cat.dataset.category = inp.category;
+  const rank = chip(rankLabel(f, rankOf(t.rank)), top ? 'rare' : 'danger');
+  rank.dataset.top = String(top);
+  chips.append(cat, rank);
+  const more = button({ label: '상세 보기', icon: 'i-chevron-right', size: 'small', block: true, onClick: () => trackDetailDialog(save, t) });
+  more.dataset.sc = `fusion-detail-${i}`;
+  card.append(
+    h('span', 'bha-fuse__fac', f.name), trackArt(t),
+    h('b', 'bha-fuse__name', trackName(t)),
+    h('small', 'bha-fuse__tier', `${t.evolution.tierIndex + 1}단계 ${f.tierNames[t.evolution.tierIndex] ?? ''}`.trim()),
+    chips, more,
+  );
+  return card;
+}
+
+/** 부모 → 결과 잇는 선 (가운데 ＋ 표, 결과 쪽 화살촉). 합체 가능이면 은은한 반짝임(움직임 줄이기면 정지) */
+function fusionLink(side: 'left' | 'right'): HTMLElement {
+  const link = h('span', `bha-fuse__link bha-fuse__link--${side}`);
+  link.setAttribute('aria-hidden', 'true');
+  link.append(h('span', 'bha-fuse__plus', '＋'));
+  return link;
+}
+
+/** 가운데 결과 카드: 나올 초월자 그림(그림·조각 모델 있으면 그것, 없으면 실루엣) · 이름(글리치 유지) · 조합 칩 · 이미 있음 도장 · 얻는 것 요약 */
+function fusionResultCard(save: SaveData, cats: readonly AttackCategory[]): HTMLElement {
+  const pv = fusionPreview(save);
+  const def = pv.def;
+  const card = h('section', 'bha-fuse__result');
+  card.setAttribute('aria-label', '합체 결과');
+  card.dataset.preview = def?.id ?? '';
+  card.dataset.owned = String(pv.owned);
+  const artBox = h('div', 'bha-fuse__resart');
+  artBox.append(def && (def.art || def.model) ? transcendentArt(true, def) : transcendentArt(false));
+  if (pv.owned) artBox.append(h('span', 'bha-fuse__stamp', '이미 있음'));
+  const name = def ? hx('b', 'bha-fuse__resname', '「', transcendentNameNode(def), '」') : h('b', 'bha-fuse__resname', '???');
+  const combo = h('div', 'bha-fuse__chips');
+  if (cats.length) combo.append(chip(cats.map((c) => ATTACK_CATEGORY_WORDS[c]).join(' + '), 'rare'));
+  const gains = h('ul', 'bha-fuse__gains');
+  gains.setAttribute('aria-label', '얻는 것');
+  const trait = def?.trait?.name;
+  gains.append(
+    h('li', '', `초월자 보너스 전 능력치 +${pct(HX.perTranscendentBonus)}`),
+    h('li', '', trait ? (trait.startsWith('초월 특성') ? trait : `초월 특성 ${trait}`) : '초월 특성 (자리)'),
+  );
+  card.append(h('span', 'bha-fuse__cap', '지금 두 캐릭터라면 → '), artBox, name, combo, gains);
+  return card;
+}
+
+/** 합체 창 (GDD 12-2 v6.040 "합체 창 배치 다시" — 여신전생 악마 합체·드퀘 몬스터즈 배합처럼 부모 둘 → 가운데 결과):
+ *  가로 한 줄 [첫 종족 카드] ─＋→ [결과 카드(크게)] ←＋─ [둘째 종족 카드] (종족 설정 순서) + 아래 띠 = 조건 칩 5개(누르면 자세한 이유 한 줄) · 오른쪽 큰 [합체].
+ *  '되돌릴 수 없다' 경고는 확인 창에서만 (확인 1 → 확인 2 → 자동 백업 흐름 그대로). 붕옥은 안 보인다 */
 export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () => void }): void {
   const tracks = tracksInFactionOrder(save);
   const sub = h('span', '', `${tracks.map((t) => getFaction(t.factionId).name).join(' + ')} → 초월자 `);
   sub.append(provisionalTag('임시 조건'));
   const head = lcdHead({ title: '합체', sub });
-  const pair = h('div', 'bha-hgpair');
-  pair.setAttribute('aria-label', '합체할 두 캐릭터');
-  tracks.forEach((t, i) => {
-    const f = getFaction(t.factionId);
-    const card = h('section', 'bha-hgpair__card');
-    card.dataset.faction = t.factionId;
-    card.append(h('span', 'bha-hgpair__fac', f.name), trackArt(t), h('b', 'bha-hgpair__name', trackName(t)), h('small', 'bha-hgpair__rank', rankLabel(f, rankOf(t.rank))));
-    const more = button({ label: '상세 보기', icon: 'i-chevron-right', size: 'small', block: true, onClick: () => trackDetailDialog(save, t) });
-    more.dataset.sc = `fusion-detail-${i}`;
-    card.append(more);
-    if (i > 0) pair.append(h('span', 'bha-hgpair__plus', '+'));
-    pair.append(card);
-  });
-  const right = h('div', 'bha-hgright');
-  const detail = h('div', 'bha-hgdetail');
-  const p = panel({ title: '초월자 합체', aside: provisionalTag('임시 조건') });
-  p.setAttribute('aria-label', '초월자 합체');
-  const pv = fusionPreview(save);
-  if (pv.def) {
-    const now = h('p', 'bha-hgpreview');
-    now.dataset.preview = pv.def.id;
-    now.dataset.owned = String(pv.owned);
-    now.append('지금 두 캐릭터라면 → ', hx('b', '', '「', transcendentNameNode(pv.def), '」'), pv.owned ? ' (이미 있음)' : '');
-    p.append(now, h('p', 'bha-faint', `${pv.inputs.map((x) => ATTACK_CATEGORY_WORDS[x.category]).join(' + ')} 조합 — 조합 6가지에 초월자 하나씩`));
-  }
-  p.append(fusionConditions(save), h('p', 'bha-faint', '두 캐릭터가 초월자 하나가 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. 되돌릴 수 없다 (직전 상태는 자동 백업).'));
-  detail.append(p);
   const fg = fusionGate(save);
-  const go = button({ label: '합체', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
+  const stage = h('div', `bha-fuse${fg.ok ? ' is-ready' : ''}`);
+  stage.setAttribute('aria-label', '합체할 두 캐릭터와 결과');
+  const parents = tracks.map((t, i) => fusionParentCard(save, t, i));
+  const result = fusionResultCard(save, tracks.map((t) => fusionInputOf(t).category));
+  stage.append(parents[0] ?? h('section', 'bha-fuse__parent is-empty'), fusionLink('left'), result, fusionLink('right'), parents[1] ?? h('section', 'bha-fuse__parent is-empty'));
+  // 아래 띠: 조건 칩 한 줄 + 이유 한 줄(기본 = 첫 번째 막힌 이유, 칩을 누르면 그 조건의 자세한 이유) + 오른쪽 [합체]
+  const conds = fusionConds(save);
+  const first = conds.find((c) => !c.ok);
+  const why = h('p', `bha-fusestrip__why${first ? ' is-bad' : ' is-ok'}`, first ? first.detail : '조건을 모두 채웠다 — 합체할 수 있다.');
+  why.setAttribute('aria-live', 'polite');
+  const chipRow = h('div', 'bha-fusestrip__conds');
+  chipRow.setAttribute('aria-label', '합체 조건');
+  const btns = conds.map((c) => {
+    const b = h('button', `bha-fusecond ${c.ok ? 'is-ok' : 'is-bad'}`, `${c.ok ? '✓' : '✗'} ${c.short}`) as HTMLButtonElement;
+    b.type = 'button';
+    b.dataset.cond = c.key;
+    b.dataset.ok = String(c.ok);
+    b.setAttribute('aria-pressed', 'false');
+    b.title = c.detail;
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      for (const x of btns) x.setAttribute('aria-pressed', 'false');
+      b.setAttribute('aria-pressed', String(on));
+      const shown = on ? c : first;
+      why.textContent = shown ? shown.detail : '조건을 모두 채웠다 — 합체할 수 있다.';
+      why.className = `bha-fusestrip__why${shown && !shown.ok ? ' is-bad' : ' is-ok'}`;
+    });
+    return b;
+  });
+  chipRow.append(...btns);
+  const info = h('div', 'bha-fusestrip__info');
+  info.append(chipRow, why);
+  const go = button({ label: '합체', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', disabled: !fg.ok, onClick: hd.onPreview });
+  go.classList.add('bha-fusestrip__go');
   go.dataset.sc = 'hogyoku-preview';
-  const foot = h('div', 'bha-hgfoot');
-  foot.append(go);
-  right.append(detail, foot);
-  lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main bha-hgfusion-page' }, head, [pair], [right]);
+  const strip = h('div', 'bha-fusestrip');
+  strip.append(info, go);
+  lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hgfusion-page', cols: 'minmax(0, 1fr)', foot: [strip] }, head, [stage], []);
 }
 
 /** 초월자 그림 칸 (C.430): 데이터 art 키의 그림이 있으면 그 그림(대기 프레임 반복 — 태초 = 검은 구슬 + 후광), 없으면 아이콘 자리 표시.

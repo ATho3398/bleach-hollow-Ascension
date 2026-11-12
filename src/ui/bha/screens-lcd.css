@@ -654,20 +654,69 @@ button.bha-slot { cursor: pointer; }
 .bha-hgrow--good .bha-hgrow__value { color: var(--bha-good); }
 .bha-hgrow--bad .bha-hgrow__value { color: var(--bha-danger); }
 .bha-hgrow--em .bha-hgrow__value { color: var(--bha-warn); }
-.bha-hgconds .bha-hgrow--good .bha-hgrow__label { color: var(--bha-good); }
-.bha-hgconds .bha-hgrow--bad .bha-hgrow__label { color: var(--bha-danger); }
 .bha-hgcap { margin: var(--bha-sp-1) 0 0; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
 .bha-hgwhy p { margin: 0; color: var(--bha-danger); }
-.bha-hgpreview { margin: 0; font-size: var(--bha-fs-sm); }
-.bha-hgpreview b { color: var(--bha-rare); }
-/* 합체 창 (C.425): 사각형 2칸 — 종족 설정 순서로 두 캐릭터 그림 + [상세 보기] */
-.bha-hgpair { display: flex; align-items: stretch; gap: var(--bha-sp-2); min-height: 0; height: 100%; }
-.bha-hgpair__card { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); padding: var(--bha-sp-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--bha-line-2); text-align: center; }
-.bha-hgpair__card .bha-dexart { flex: 1 1 0; min-height: 0; width: 100%; }
-.bha-hgpair__fac { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
-.bha-hgpair__name { font-size: var(--bha-fs-sm); line-height: 1.2; word-break: keep-all; }
-.bha-hgpair__rank { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
-.bha-hgpair__plus { flex: none; align-self: center; font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); }
+/* 합체 창 (GDD 12-2 v6.040 "합체 창 배치 다시"): 부모 둘 → 가운데 결과 (여신전생 악마 합체·드퀘 몬스터즈 배합 배치).
+   가로 한 줄 [부모] ─＋→ [결과(크게)] ←＋─ [부모] + 아래 띠(조건 칩·이유 한 줄·[합체]). 글자는 줄바꿈 없이 말줄임 — 칸이 좁아져도 한 글자씩 세로로 깨지지 않게(C.424) */
+.bha-hgfusion-page .bha-lcdpage__col--left { overflow: hidden; }
+.bha-hgfusion-page .bha-lcdpage__col--right { display: none; }
+.bha-hgfusion-page .bha-lcdpage__col--left > .bha-fuse { flex: 1 1 0; }
+.bha-fuse { flex: 1 1 0; min-height: 0; height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1.35fr) 30px minmax(0, 1fr); align-items: stretch; }
+.bha-fuse__parent, .bha-fuse__result { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); padding: var(--bha-sp-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--bha-line-2); text-align: center; }
+.bha-fuse__parent > *, .bha-fuse__result > * { max-width: 100%; }
+.bha-fuse__parent .bha-dexart { flex: 1 1 0; min-height: 0; width: 100%; }
+.bha-fuse__parent > .bha-btn { flex: none; }
+.bha-fuse__fac { position: absolute; top: var(--bha-sp-1); left: var(--bha-sp-2); z-index: 1; font-size: var(--bha-fs-xs); color: var(--bha-text-3); white-space: nowrap; }
+.bha-fuse__name, .bha-fuse__resname { flex: none; font-size: var(--bha-fs-sm); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-fuse__tier { flex: none; font-size: var(--bha-fs-xs); line-height: 1.2; color: var(--bha-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-fuse__chips { flex: none; display: flex; flex-wrap: nowrap; justify-content: center; gap: var(--bha-sp-1); min-width: 0; }
+.bha-fuse__chips .bha-chip { min-height: 20px; padding: 0 var(--bha-sp-2); font-size: var(--bha-fs-xs); white-space: nowrap; }
+/* 결과 카드: 테두리 = 희귀색, 그림 크게 */
+.bha-fuse__result { box-shadow: inset 0 0 0 1px var(--bha-rare), var(--bha-shadow-1); }
+.bha-fuse__cap { flex: none; font-size: var(--bha-fs-xs); color: var(--bha-rare); letter-spacing: var(--bha-tracking-label); line-height: 1; }
+.bha-fuse__resname { font-size: var(--bha-fs-md); color: var(--bha-rare); }
+.bha-fuse__resart { position: relative; flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+.bha-fuse__resart > .bha-dexart { flex: 1 1 0; min-height: 0; width: 100%; }
+/* 그림 = 칸에 꼭 맞춤(칸 높이가 정해지지 않아 height:100% 가 풀리던 것 — 세로 긴 조각 모델이 아래만 보임) */
+.bha-fuse .bha-dexart { position: relative; }
+.bha-fuse .bha-dexart > .bha-itemart--img { position: absolute; inset: 0; }
+.bha-fuse__resart > .bha-dexart > .bha-icon { width: var(--bha-icon-xl); height: var(--bha-icon-xl); }
+.bha-fuse__stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: var(--bha-sp-1) var(--bha-sp-3); border: 2px solid var(--bha-danger); border-radius: var(--bha-r-sm); background: var(--bha-scrim); color: var(--bha-danger); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-heavy); white-space: nowrap; pointer-events: none; }
+.bha-fuse__result[data-owned="true"] .bha-dexart { opacity: 0.55; }
+.bha-fuse__gains { flex: none; margin: 0; padding: 0; list-style: none; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-text-2); }
+.bha-fuse__gains li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-fuse__gains li::before { content: '＋ '; color: var(--bha-good); }
+/* 부모 → 결과 잇는 선: 가는 선 + 가운데 ＋ 표 + 결과 쪽 화살촉. 합체 가능이면 선 위로 은은한 빛이 결과 쪽으로 흐른다 */
+.bha-fuse__link { position: relative; align-self: center; height: 24px; display: grid; place-items: center; }
+.bha-fuse__link::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); background: var(--bha-line-2); }
+.bha-fuse__link::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border: 5px solid transparent; }
+.bha-fuse__link--left::after { right: -2px; border-left-color: var(--bha-line-2); border-right-width: 0; }
+.bha-fuse__link--right::after { left: -2px; border-right-color: var(--bha-line-2); border-left-width: 0; }
+.bha-fuse__plus { position: relative; z-index: 1; display: grid; place-items: center; width: 20px; height: 20px; border-radius: var(--bha-r-pill); background: var(--bha-bg-1); box-shadow: inset 0 0 0 1px var(--bha-line-2); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); line-height: 1; }
+.bha-fuse.is-ready .bha-fuse__link::before { background: linear-gradient(90deg, var(--bha-line-2) 0%, var(--bha-rare) 50%, var(--bha-line-2) 100%) 0 0 / 200% 100%; animation: bha-fuse-flow 2.4s var(--bha-ease-linear) infinite; }
+.bha-fuse.is-ready .bha-fuse__link--right::before { animation-direction: reverse; }
+.bha-fuse.is-ready .bha-fuse__link--left::after { border-left-color: var(--bha-rare); }
+.bha-fuse.is-ready .bha-fuse__link--right::after { border-right-color: var(--bha-rare); }
+.bha-fuse.is-ready .bha-fuse__plus { color: var(--bha-rare); box-shadow: inset 0 0 0 1px var(--bha-rare); }
+/* 합체 확인 1 '「○○」이(가) 된다' 줄: 폰 폭에서 오른쪽이 잘리던 것 — 상세 칸 안에서는 줄바꿈 허용·한 단계 작은 글자 */
+.bha-fusion-page .bha-panel p.bha-lcdpage__title { font-size: var(--bha-fs-lg); white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+@keyframes bha-fuse-flow { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .bha-fuse.is-ready .bha-fuse__link::before { animation: none; background: var(--bha-rare); } }
+/* 아래 띠: 왼쪽 = 조건 칩 한 줄 + 이유 한 줄, 오른쪽 = 큰 [합체] */
+.bha-hgfusion-page .bha-lcdpage__foot > .bha-fusestrip { flex: 1 1 0; min-width: 0; }
+.bha-fusestrip { display: flex; align-items: center; gap: var(--bha-sp-3); min-width: 0; }
+.bha-fusestrip__info { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
+.bha-fusestrip__conds { display: flex; flex-wrap: nowrap; gap: var(--bha-sp-1); min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.bha-fusecond { flex: none; min-height: 24px; padding: 0 var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-pill); background: var(--bha-bg-2); font: inherit; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); white-space: nowrap; cursor: pointer; touch-action: manipulation; }
+.bha-fusecond.is-ok { color: var(--bha-good); }
+.bha-fusecond.is-bad { color: var(--bha-danger); border-color: var(--bha-danger); }
+.bha-fusecond[aria-pressed="true"] { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-accent); }
+.bha-fusecond:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: 1px; }
+.bha-fusestrip__why { margin: 0; font-size: var(--bha-fs-xs); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-fusestrip__why.is-bad { color: var(--bha-danger); }
+.bha-fusestrip__why.is-ok { color: var(--bha-good); }
+.bha-fusestrip__go { flex: none; min-width: 120px; min-height: var(--bha-btn-h-lg); }
+.bha-fusestrip__go:disabled { opacity: 0.45; }
 .bha-hgcost { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1) var(--bha-sp-3); }
 .bha-hgcost__item { white-space: nowrap; }
 .bha-hgcost__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
