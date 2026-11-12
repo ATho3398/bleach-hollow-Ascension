@@ -363,3 +363,22 @@ describe('C.337 호로 시장 반영', () => {
     expect(marketOf(FACTIONS.find((f) => f.id === 'shinigami')!).sceneArt).toBe('scene.market.shinigami');
   });
 });
+
+// C.419 (사용자 2026-11-12 "최신버전으로 업데이트"): 배치 도구를 지금 게임에 맞춤 — 붕옥(등장 전엔 게임에 안 서는 방 물건)도 도구에선 그려 자리를 잡고,
+// 도구 페이지에도 새 버전 알림(게임의 '새 버전' 창은 기기 틀 안에 떠 도구엔 안 보였다 → 폰에 받아 둔 옛 도구가 계속 열림)
+describe('C.419 배치 도구 = 최신 게임', () => {
+  it('장면 물건 목록 = 지금 게임 화면 (방: 번호 쟁탈전·진급 시험 빼고 붕옥 포함, 월드맵: 6곳에 rank 포함)', () => {
+    const f = FACTIONS[0]!;
+    const items = (kind: string) => LAYOUT_KINDS.find((k) => k.kind === kind)!.read(f).items.map((i) => i.key);
+    expect(items('room')).toContain('hogyoku');
+    expect(items('room')).not.toContain('rank');
+    expect(items('worldmap')).toContain('rank');
+  });
+  it('도구 방 화면은 붕옥을 그린다(onHogyoku) · 새 버전 버튼', () => {
+    const tool = read('src/ui/bha/layoutTool.ts');
+    expect(tool).toContain('onSwitchTrack: null, onHogyoku: noop,');
+    expect(tool).toContain('onUpdateReady(() => {');
+    expect(tool).toContain("label: '새 버전 — 다시 열기'");
+    expect(tool.indexOf('const say = ')).toBeLessThan(tool.indexOf('onUpdateReady(() => {')); // 바로 불려도 상태 줄이 있다
+  });
+});

@@ -7,6 +7,7 @@ import { FACTIONS, getFaction } from '../../data/factions';
 import type { FactionConfig } from '../../engine/faction';
 import { newSaveData, type SaveData } from '../../game';
 import { PATCH_LABEL } from '../../version';
+import { onUpdateReady, restartToLatest } from '../../pwa';
 import { marketView } from '../marketView';
 import { roomView, type RoomHandlers } from '../roomView';
 import { worldMapView } from '../worldMapView';
@@ -36,7 +37,8 @@ const RENDER: Record<string, (dev: Device, f: FactionConfig, save: SaveData) => 
 
 function roomHandlers(): RoomHandlers {
   return {
-    onBook: noop, onChest: noop, onStatus: noop, onSwitchTrack: null, onHogyoku: null, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
+    // 붕옥(onHogyoku)은 게임에선 등장 뒤에만 서지만 도구에선 늘 보여 자리를 잡게 한다 (C.419)
+    onBook: noop, onChest: noop, onStatus: noop, onSwitchTrack: null, onHogyoku: noop, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
     onTamago: noop, onBackup: null, onTest: null, onTitle: noop, persist: noop, resume: null, resumeNote: '', onOutside: noop, onTraining: noop,
   };
 }
@@ -190,6 +192,15 @@ export function mountLayoutTool(host: HTMLElement): void {
   const status = el('p', 'bha-ltool__status');
   status.setAttribute('role', 'status');
   const say = (t: string) => (status.textContent = t);
+  // 새 버전 (C.419): 게임의 '새 버전' 창은 기기 틀 안에 뜨는데 이 도구엔 그 틀이 없어, 폰에 받아 둔 옛 도구가 계속 열렸다 — 머리 줄에 버튼으로.
+  // 편집본은 바꿀 때마다 저장돼 있어 바로 다시 열어도 잃는 것 없음
+  onUpdateReady(() => {
+    if (head.querySelector('[data-ltool-update]')) return;
+    const up = button({ label: '새 버전 — 다시 열기', icon: 'i-loop', size: 'small', variant: 'primary', onClick: () => restartToLatest() });
+    up.dataset.ltoolUpdate = '';
+    head.append(up);
+    say('새 버전이 나왔다 — 위 [새 버전 — 다시 열기] 를 누르면 최신 도구로 다시 열린다 (편집본은 그대로)');
+  });
 
   const tools = el('div', 'bha-ltool__row');
   const panel = el('section', 'bha-ltool__panel');
