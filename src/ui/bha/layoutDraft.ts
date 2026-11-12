@@ -5,8 +5,9 @@
 // 종족 분기 없음: 장면 = 장면 종류(LAYOUT_KINDS) × 종족 목록(FACTIONS). 온천 같은 새 장면은 LAYOUT_KINDS 에 한 항목만 더한다.
 import { ROOMS, type RoomDef } from '../../data/rooms';
 import { ART_MANIFEST, artUrls, setRuntimeArt } from '../../data/art/manifest';
+import { ART_FILES } from '../../data/art/files';
 import {
-  MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, sceneViewOk, worldMapOf,
+  DEFAULT_ROOM, MARKET_SPOTS, ROOM_PROPS, WORLD_PLACES, marketOf, roomOf, sceneViewOk, worldMapOf,
   type ExtraProp, type FactionConfig, type PropSpot, type RoomFloorConfig, type SceneView,
 } from '../../engine/faction';
 import { PROP_ICON } from './room';
@@ -29,6 +30,21 @@ export interface SceneEdit {
 /** 물건 모양 (그림 키 단위 — 두 종족 공통). art = 올린 그림 data URL, null = 그림 끄고 아이콘 */
 export interface PropLook { icon?: string; art?: string | null }
 
+/**
+ * 새 방 (GDD 17절 '새 방 만들기', C.432): 도구 안에서 만든 빈 방. 게임에는 아직 안 잇는다 — 사용자가 용도를 알려 주면 그때 연결.
+ * 자리·크기·배경 그림·배경 보기·새 물건은 다른 장면처럼 scenes[newroom.<키>] 에 적힌다. 내보내기 = `rooms: { 방 키 → { sceneArt, floor, layout, extras } }`(방 설정 room 과 같은 모양)
+ */
+export interface CustomRoom {
+  /** 보이는 이름 (키는 바뀌지 않는다) */
+  name: string;
+  /** 보기 종족: 캐릭터·물건 이름·기본 자리를 이 종족 방에서 빌린다 */
+  base: string;
+  /** 배경 그림 키 (게임에 있는 scene.* 그림 중) — 올린 그림(scenes[id].bg)이 있으면 그게 덮는다 */
+  sceneArt: string;
+  /** 놓인 방 물건 (ROOM_ITEM_PROPS 중) */
+  props: string[];
+}
+
 export interface LayoutDraft {
   v: 1;
   /** 같은 브라우저로 게임을 열 때 편집본을 미리 적용 (GDD 175장 4) */
@@ -36,9 +52,11 @@ export interface LayoutDraft {
   scenes: Record<string, SceneEdit>;
   /** 그림 키(prop.<물건>) → 모양 */
   looks: Record<string, PropLook>;
+  /** 새 방 (방 키 → 방) */
+  rooms: Record<string, CustomRoom>;
 }
 
-export const emptyDraft = (): LayoutDraft => ({ v: 1, preview: false, scenes: {}, looks: {} });
+export const emptyDraft = (): LayoutDraft => ({ v: 1, preview: false, scenes: {}, looks: {}, rooms: {} });
 export const emptyScene = (): SceneEdit => ({ items: {}, extras: [] });
 
 /** 그림 파일(목록·파일 규칙)이 있나 — 도구가 건 실행 중 그림은 빼고 본다 (매니페스트 사본을 넘기면 실행 중 그림을 안 본다) */
@@ -196,12 +214,111 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
   },
 ];
 
-export interface LayoutSceneDef { id: string; factionId: string; kind: LayoutKind; label: string }
+export interface LayoutSceneDef {
+  id: string;
+  factionId: string;
+  kind: LayoutKind;
+  label: string;
+  /** 새 방이면 그 방 키 (게임에 안 잇는 장면) */
+  roomKey?: string;
+}
 
-/** 장면 목록: 장면 종류 × 종족 (id = <종류>.<종족 id>) */
-export function layoutScenes(factions: readonly FactionConfig[]): LayoutSceneDef[] {
+/** 장면 목록: 장면 종류 × 종족 (id = <종류>.<종족 id>). draft 를 주면 새 방도 뒤에 붙인다(도구 전용 — 게임 미리보기·정리는 draft 없이 불러 새 방을 안 본다) */
+export function layoutScenes(factions: readonly FactionConfig[], draft?: Pick<LayoutDraft, 'rooms'>): LayoutSceneDef[] {
+  // 방 목록(src/data/rooms)의 방은 종족 무관 한 번 (C.432 코딩281) — 그 뒤에 도구에서 만든 새 방
   const kinds = [...LAYOUT_KINDS, ...ROOMS.map(roomKind)];
-  return kinds.flatMap((k) => (k.shared ? factions.slice(0, 1) : factions).map((f) => ({ id: k.shared ? k.kind : `${k.kind}.${f.id}`, factionId: f.id, kind: k, label: k.shared ? k.label(f) : `${k.label(f)} (${f.name})` })));
+  const out: LayoutSceneDef[] = kinds.flatMap((k) => (k.shared ? factions.slice(0, 1) : factions).map((f) => ({ id: k.shared ? k.kind : `${k.kind}.${f.id}`, factionId: f.id, kind: k, label: k.shared ? k.label(f) : `${k.label(f)} (${f.name})` })));
+  for (const [key, cr] of Object.entries(draft?.rooms ?? {})) {
+    const f = factions.find((x) => x.id === cr.base) ?? factions[0]!;
+    out.push({ id: customSceneId(key), factionId: f.id, kind: customRoomKind(cr, factions), label: `새 방 · ${cr.name}`, roomKey: key });
+  }
+  return out;
+}
+
+// ── 새 방 (GDD 17절, C.432) ──
+export const CUSTOM_SCENE_PREFIX = 'newroom.';
+export const customSceneId = (key: string): string => `${CUSTOM_SCENE_PREFIX}${key}`;
+/** 방에 놓을 수 있는 물건 = 방 화면이 그리는 물건 (rank 는 월드맵 장소) */
+export const ROOM_ITEM_PROPS: readonly string[] = ROOM_PROPS.filter((p) => p !== 'rank');
+
+/** 새 방 바닥: 배경 그림을 쓰는 종족 방이 있으면 그 방 바닥(그림 위 땅 모양), 아니면 기본 방 바닥 */
+function customFloor(cr: CustomRoom, factions: readonly FactionConfig[]): RoomFloorConfig {
+  const owner = factions.find((f) => roomOf(f).sceneArt === cr.sceneArt);
+  return owner ? roomOf(owner).floor : DEFAULT_ROOM.floor;
+}
+
+/** 새 방 장면 종류: 종족 방(room)을 빌려 그리되 배경·바닥·놓인 물건만 이 방 것. 안 놓인 물건은 숨김으로 써 넣는다 */
+function customRoomKind(cr: CustomRoom, factions: readonly FactionConfig[]): LayoutKind {
+  const room = LAYOUT_KINDS.find((k) => k.kind === 'room')!;
+  return {
+    kind: 'room', // 그리기 = 실제 방 화면(roomView)
+    label: () => `새 방 · ${cr.name}`,
+    read: (f) => {
+      const b = room.read(f);
+      const items = b.items.filter((i) => cr.props.includes(i.key)).map((i) => ({ ...i, nameEditable: false, nameNote: '물건 이름은 종족 방과 같다 (새 방에서는 못 고친다)' }));
+      return { ...b, sceneArt: cr.sceneArt, floor: customFloor(cr, factions), items, extras: [] };
+    },
+    write: (f, w) => {
+      const r = { ...(f.room ?? {}) };
+      const base = roomOf(f).layout;
+      const off = Object.fromEntries(ROOM_PROPS.filter((p) => !cr.props.includes(p)).map((p) => [p, { ...base[p], hidden: true }]));
+      r.layout = { ...r.layout, ...off, ...w.spots };
+      r.sceneArt = w.sceneArt ?? cr.sceneArt;
+      r.extras = w.extras;
+      r.floor = w.floor ?? customFloor(cr, factions);
+      mut(f).room = r;
+    },
+  };
+}
+
+/**
+ * 게임에 있는 방 배경 그림 키 (public/art 의 scene-*.png·webp) — 새 방 배경 고르기.
+ * 파일 이름 → 키는 거꾸로 하면 모호해서(키의 . 와 - 가 둘 다 파일에선 -) 게임 데이터가 이미 쓰는 키(known)를 먼저 쓰고, 없으면 scene.<나머지>
+ */
+export function sceneArtKeys(files: readonly string[] = ART_FILES, known: readonly string[] = [...ROOMS.map((r) => r.sceneArt), ...Object.keys(ART_MANIFEST).filter((k) => k.startsWith('scene.'))]): string[] {
+  const byStem = new Map(known.map((k) => [k.replace(/\./g, '-'), k]));
+  const keys = files.filter((n) => /^scene-[a-z0-9-]+\.(png|webp)$/.test(n)).map((n) => {
+    const stem = n.replace(/\.(png|webp)$/, '');
+    return byStem.get(stem) ?? `scene.${stem.slice('scene-'.length)}`;
+  });
+  return [...new Set(keys)].sort();
+}
+
+/** 새 방 만들기: 키 = room-<번호>(겹치지 않게), 물건 없음(빈 방) */
+export function addRoom(d: LayoutDraft, name: string, base: string, sceneArt: string): string {
+  let n = 1;
+  while (d.rooms[`room-${n}`]) n++;
+  const key = `room-${n}`;
+  d.rooms[key] = { name: name.trim() || `새 방 ${n}`, base, sceneArt, props: [] };
+  d.scenes[customSceneId(key)] = emptyScene();
+  return key;
+}
+
+/** 새 방 복제 (자리·배경·새 물건까지) */
+export function duplicateRoom(d: LayoutDraft, key: string): string | null {
+  const cr = d.rooms[key];
+  if (!cr) return null;
+  const nk = addRoom(d, `${cr.name} 복사`, cr.base, cr.sceneArt);
+  d.rooms[nk]!.props = [...cr.props];
+  const ed = d.scenes[customSceneId(key)];
+  if (ed) d.scenes[customSceneId(nk)] = JSON.parse(JSON.stringify(ed)) as SceneEdit;
+  return nk;
+}
+
+/** 새 방 지우기 (그 방 편집도) */
+export function deleteRoom(d: LayoutDraft, key: string): boolean {
+  if (!d.rooms[key]) return false;
+  delete d.rooms[key];
+  delete d.scenes[customSceneId(key)];
+  return true;
+}
+
+/** 새 방에 방 물건 놓기/빼기 */
+export function toggleRoomProp(d: LayoutDraft, key: string, prop: string): boolean {
+  const cr = d.rooms[key];
+  if (!cr || !ROOM_ITEM_PROPS.includes(prop)) return false;
+  cr.props = cr.props.includes(prop) ? cr.props.filter((p) => p !== prop) : [...cr.props, prop];
+  return cr.props.includes(prop);
 }
 
 /** 장면의 지금 모습 = 게임 데이터 + 편집 */
@@ -336,15 +453,20 @@ export function normalizeDraft(raw: unknown): LayoutDraft {
     d.scenes[id] = { items: { ...(s.items ?? {}) }, extras: Array.isArray(s.extras) ? s.extras.filter((x) => x && typeof x.id === 'string') : [], ...(typeof s.bg === 'string' ? { bg: s.bg } : {}), ...(sceneViewOk(s.bgView) && s.bgView ? { bgView: s.bgView } : {}) };
   }
   for (const [k, l] of Object.entries(r.looks ?? {})) if (l && typeof l === 'object') d.looks[k] = l;
+  for (const [k, v] of Object.entries((r as { rooms?: Record<string, Partial<CustomRoom>> }).rooms ?? {})) {
+    if (!/^[a-z0-9-]+$/.test(k) || !v || typeof v.name !== 'string' || typeof v.base !== 'string' || typeof v.sceneArt !== 'string') continue;
+    d.rooms[k] = { name: v.name, base: v.base, sceneArt: v.sceneArt, props: Array.isArray(v.props) ? v.props.filter((p): p is string => ROOM_ITEM_PROPS.includes(p as string)) : [] };
+  }
   return d;
 }
 
 /** 편집이 하나라도 있나 */
 export const draftHasEdits = (d: LayoutDraft): boolean =>
-  Object.keys(d.looks).length > 0 || Object.values(d.scenes).some((s) => Object.keys(s.items).length > 0 || s.extras.length > 0 || !!s.bg || !!s.bgView);
+  Object.keys(d.looks).length > 0 || Object.keys(d.rooms).length > 0 || Object.values(d.scenes).some((s) => Object.keys(s.items).length > 0 || s.extras.length > 0 || !!s.bg || !!s.bgView);
 
 /** 장면 하나의 편집을 종족 설정 객체에 써 넣는다 (게임 미리보기 = 실제 설정, 도구 = 사본). 올린 그림은 실행 중 그림으로 건다 */
-export function applySceneEdit(def: LayoutSceneDef, f: FactionConfig, ed: SceneEdit | undefined): void {
+export function applySceneEdit(def: LayoutSceneDef, f: FactionConfig, edIn: SceneEdit | undefined): void {
+  const ed = edIn ?? (def.roomKey ? emptyScene() : undefined); // 새 방은 편집이 없어도 배경·물건 구성을 써 넣는다
   if (!ed) return;
   const base = def.kind.read(f);
   const spots: Record<string, PropSpot> = {};
@@ -435,9 +557,29 @@ export function applyDraft(d: LayoutDraft, factions: readonly FactionConfig[]): 
 /** 내보내기 파일 (GDD 175장 5): 초안 그대로(올린 그림은 data URL) + 장면별 최종 값 표(반영 패치가 읽기 쉽게) */
 export function exportFile(d: LayoutDraft, factions: readonly FactionConfig[], patch: string, now = new Date()): string {
   const resolved: Record<string, unknown> = {};
-  for (const def of layoutScenes(factions)) {
-    const ed = d.scenes[def.id];
+  const rooms: Record<string, unknown> = {};
+  for (const def of layoutScenes(factions, d)) {
+    const ed = d.scenes[def.id] ?? (def.roomKey ? emptyScene() : undefined);
     if (!ed) continue;
+    if (def.roomKey) {
+      // 새 방 = 방 목록(src/data/rooms) 한 칸과 같은 모양 RoomDef { id, label, sceneArt, floor, layout, extras } (+ base = 보기 종족).
+      // layout 은 방 물건 전부: 놓은 것 = 자리, 안 놓은 것 = hidden — 종족 방 위에 덮여도(roomOf) 이 방 그대로 보이게. 올린 배경은 sceneArt 'uploaded'(그림은 draft.scenes 에)
+      const f = factions.find((x) => x.id === def.factionId)!;
+      const r = resolveScene(def, f, d);
+      const cr = d.rooms[def.roomKey]!;
+      const placed = new Map(r.items.filter((i) => !i.extra).map((i) => [i.key, i]));
+      const baseLayout = roomOf(f).layout as Record<string, PropSpot>;
+      rooms[def.roomKey] = {
+        id: def.roomKey, label: cr.name, base: cr.base, sceneArt: ed.bg ? 'uploaded' : cr.sceneArt, floor: r.floor,
+        layout: Object.fromEntries(ROOM_ITEM_PROPS.map((p) => {
+          const i = placed.get(p);
+          const b = baseLayout[p]!;
+          return [p, i ? { x: i.spot.x, y: i.spot.y, scale: i.spot.scale, ...(i.spot.hidden ? { hidden: true } : {}) } : { x: b.x, y: b.y, ...(b.scale !== undefined ? { scale: b.scale } : {}), hidden: true }];
+        })),
+        extras: r.items.filter((i) => i.extra).map((i) => ({ id: i.key, name: i.name, icon: i.icon, x: i.spot.x, y: i.spot.y, scale: i.spot.scale, art: ed.extras.find((x) => x.id === i.key)?.art ? 'uploaded' : null })),
+      };
+      continue;
+    }
     const f = factions.find((x) => x.id === def.factionId)!;
     const r = resolveScene(def, f, d);
     resolved[def.id] = {
@@ -445,7 +587,7 @@ export function exportFile(d: LayoutDraft, factions: readonly FactionConfig[], p
       items: r.items.map((i) => ({ key: i.key, extra: i.extra, name: i.name, ...i.spot, icon: i.icon, art: i.extra ? (ed.extras.find((x) => x.id === i.key)?.art ? 'uploaded' : null) : lookState(d.looks[i.artKey]) })),
     };
   }
-  return JSON.stringify({ format: 'bha-layout', version: 1, patch, exportedAt: now.toISOString(), resolved, draft: d }, null, 1);
+  return JSON.stringify({ format: 'bha-layout', version: 1, patch, exportedAt: now.toISOString(), resolved, rooms, draft: d }, null, 1);
 }
 
 function lookState(l: PropLook | undefined): string | null {

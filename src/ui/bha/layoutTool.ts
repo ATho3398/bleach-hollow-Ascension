@@ -4,6 +4,7 @@
 // [미리보기 켜기]면 같은 브라우저로 게임을 열 때 편집본이 적용된다. [내보내기] = 파일 하나(.json, 올린 그림은 data URL) — 대화에 올리면 코딩 세션이 게임 데이터에 반영한다.
 import { artUrls, clearRuntimeArt } from '../../data/art/manifest';
 import { FACTIONS, getFaction } from '../../data/factions';
+import { ROOMS } from '../../data/rooms';
 import type { FactionConfig } from '../../engine/faction';
 import { newSaveData, type SaveData } from '../../game';
 import { PATCH_LABEL } from '../../version';
@@ -14,12 +15,12 @@ import { worldMapView } from '../worldMapView';
 import type { Device } from './device';
 import { button, el, icon } from './dom';
 import {
-  addExtra, applyLooks, applySceneEdit, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, pruneLooks, removeExtra, resolveScene, saveDraft,
+  addExtra, addRoom, applyLooks, applySceneEdit, customSceneId, deleteRoom, duplicateRoom, ROOM_ITEM_PROPS, sceneArtKeys, toggleRoomProp, draftHasEdits, editItem, emptyScene, exportFile, layoutScenes, loadDraft, normalizeDraft, pruneLooks, removeExtra, resolveScene, saveDraft,
   type LayoutDraft, type LayoutItem, type LayoutSceneDef, type ResolvedScene,
 } from './layoutDraft';
 import { layoutOnFloor, PROP_ICON } from './room';
 import { bgBox, floorPolyPx } from './roomFloor';
-import { SCENE_VIEW_ZOOM, type RoomFloorConfig, type SceneView } from '../../engine/faction';
+import { marketOf, roomOf, worldMapOf, SCENE_VIEW_ZOOM, type RoomFloorConfig, type SceneView } from '../../engine/faction';
 import { applyTheme } from './theme';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -41,6 +42,15 @@ function roomHandlers(): RoomHandlers {
     onBook: noop, onChest: noop, onStatus: noop, onSwitchTrack: null, onHogyoku: noop, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
     onTamago: noop, onBackup: null, onTest: null, onTitle: noop, persist: noop, resume: null, resumeNote: '', onOutside: noop, onTraining: noop,
   };
+}
+
+/** 방 목록(src/data/rooms)의 처음 값 — 도구가 그 객체에 편집을 써 넣으므로 그릴 때마다 되돌린다 */
+const ROOMS0 = structuredClone(ROOMS);
+function restoreRooms(): void {
+  ROOMS.forEach((r, i) => {
+    for (const k of Object.keys(r)) delete (r as unknown as Record<string, unknown>)[k];
+    Object.assign(r, structuredClone(ROOMS0[i]));
+  });
 }
 
 /** 보기용 세이브 (종족마다 하나): 새 세이브 + 떠돌이 상인이 와 있는 상태(시장에 자리가 보이게) */
@@ -145,13 +155,14 @@ function pickFile(accept: string): Promise<File | null> {
 
 export function mountLayoutTool(host: HTMLElement): void {
   document.title = 'UI 배치 도구 · 블리치 할로우 어센션';
-  const scenes = layoutScenes(FACTIONS);
   let draft: LayoutDraft = loadDraft();
+  /** 장면 목록 = 종족 장면 + 새 방 (새 방은 만들고 지울 때마다 바뀐다) */
+  const scenesNow = () => layoutScenes(FACTIONS, draft);
   // 옛 도구가 남긴, 지금 어느 물건도 안 쓰는 그림(예: 둥지·대원실이 함께 덮던 공통 키 prop.home) 정리 (C.272)
   const pruned = pruneLooks(draft, FACTIONS);
   if (pruned.length) saveDraft(draft);
   let undo: string | null = null;
-  let sceneId = scenes[0]!.id;
+  let sceneId = scenesNow()[0]!.id;
   let picked: string | null = null;
   let showIcons = false;
   /** 배경 맞추기 칸 (C.275): 켜면 편집 칸 = 배경 확대·위치, 장면 빈 곳을 끌면 배경이 움직인다 */
@@ -166,17 +177,34 @@ export function mountLayoutTool(host: HTMLElement): void {
   const title = el('h1', 'bha-ltool__title', 'UI 배치 도구');
   const sel = el('select', 'bha-ltool__select');
   sel.setAttribute('aria-label', '장면');
-  for (const s of scenes) {
-    const o = el('option', '', s.label);
-    o.value = s.id;
-    sel.append(o);
-  }
+  /** 장면 고르기 칸: 새 방이 생기고 없어질 때마다 다시 채운다 */
+  const fillSelect = () => {
+    sel.replaceChildren(...scenesNow().map((s) => {
+      const o = el('option', '', s.label);
+      o.value = s.id;
+      return o;
+    }));
+  };
+  fillSelect();
   sel.onchange = () => {
     sceneId = sel.value;
     picked = null;
     render();
   };
-  head.append(title, sel, el('span', 'bha-ltool__note', `개발 전용 · ${PATCH_LABEL}`));
+  // 새 방 만들기 (GDD 17절, C.432): 이름 → 빈 방(물건 없음, 배경 = 지금 보기 종족의 방 배경). 게임에는 아직 안 잇는다
+  const newRoomBtn = button({ label: '새 방', icon: 'i-plus', size: 'small', onClick: () => {
+    const name = prompt('새 방 이름 (용도는 나중에 — 게임에는 아직 안 나온다)', '')?.trim();
+    if (name === undefined) return;
+    const base = def().factionId;
+    commit(() => {
+      const key = addRoom(draft, name ?? '', base, roomOf(getFaction(base)).sceneArt);
+      sceneId = customSceneId(key);
+      picked = null;
+      bgMode = false;
+    }, '빈 방을 만들었다 — 아래 [방 설정]에서 배경·물건을 고른다');
+  } });
+  newRoomBtn.dataset.newRoom = '';
+  head.append(title, sel, newRoomBtn, el('span', 'bha-ltool__note', `개발 전용 · ${PATCH_LABEL}`));
 
   // ── 기기 틀 + 게임 화면 ──
   const stage = el('div', 'bha-ltool__stage');
@@ -204,11 +232,17 @@ export function mountLayoutTool(host: HTMLElement): void {
 
   const tools = el('div', 'bha-ltool__row');
   const panel = el('section', 'bha-ltool__panel');
+  /** 새 방 설정 칸 (새 방을 고른 동안만): 이름·복제·삭제 · 보기 종족 · 배경 · 놓을 물건 */
+  const roomPanel = el('section', 'bha-ltool__panel');
+  roomPanel.dataset.roomPanel = '';
   const items = el('div', 'bha-ltool__items');
   const foot = el('div', 'bha-ltool__row bha-ltool__foot');
-  root.append(head, stage, tools, items, panel, foot, status);
+  root.append(head, stage, tools, roomPanel, items, panel, foot, status);
 
-  const def = (): LayoutSceneDef => scenes.find((s) => s.id === sceneId)!;
+  const def = (): LayoutSceneDef => {
+    const all = scenesNow();
+    return all.find((s) => s.id === sceneId) ?? all[0]!;
+  };
   const pristine = (): FactionConfig => getFaction(def().factionId);
 
   /** 바꾸기 한 번 = 되돌리기 1단계 저장 → 바꿈 → 저장 → 다시 그림 */
@@ -225,10 +259,14 @@ export function mountLayoutTool(host: HTMLElement): void {
     const d = def();
     const f = structuredClone(pristine()) as FactionConfig;
     clearRuntimeArt();
+    restoreRooms(); // 방 목록 장면의 편집은 방 목록 객체에 써 넣으므로 그리기마다 처음 값에서 다시 (안 그러면 '처음으로'가 안 먹는다)
     applySceneEdit(d, f, draft.scenes[d.id]);
     applyLooks(draft, iconTable());
     applyTheme(f);
-    RENDER[d.kind.kind]!(dev, f, sampleSave(f.id));
+    // 방 목록의 방(room@<방 키>, C.432): 보기용 세이브는 초월자 트랙이 아니라 그 방을 안 고르므로, 사본 종족 방을 그 방(roomOf + 방 키)으로 바꿔 실제 방 화면으로 그린다
+    const roomKey = d.kind.kind.startsWith('room@') ? d.kind.kind.slice('room@'.length) : null;
+    if (roomKey) (f as { room?: FactionConfig['room'] }).room = roomOf(f, null, roomKey);
+    RENDER[roomKey ? 'room' : d.kind.kind]!(dev, f, sampleSave(f.id));
     const scene = dev.view.querySelector<HTMLElement>('.bha-room__scene');
     if (!scene || !resolved) return;
     // 바닥(걷는 면) 윤곽 — 물건 발은 이 안으로만 놓인다
@@ -586,8 +624,8 @@ export function mountLayoutTool(host: HTMLElement): void {
         }
       } }),
       button({ label: '전부 초기화', icon: 'i-broken', size: 'small', variant: 'danger', onClick: () => {
-        if (!confirm('모든 장면의 편집·올린 그림을 지운다. (먼저 내보내기를 권함)')) return;
-        commit(() => { draft = { ...draft, scenes: {}, looks: {} }; picked = null; }, '전부 처음 값으로');
+        if (!confirm('모든 장면의 편집·올린 그림과 새 방을 지운다. (먼저 내보내기를 권함)')) return;
+        commit(() => { draft = { ...draft, scenes: {}, looks: {}, rooms: {} }; picked = null; }, '전부 처음 값으로');
       } }),
     );
   }
@@ -607,14 +645,92 @@ export function mountLayoutTool(host: HTMLElement): void {
     say(`내보냄: ${a.download} (${Math.round(text.length / 1024)}KB) — 이 파일을 대화에 올리면 게임 데이터에 반영한다`);
   }
 
+  /** 새 방 설정 칸 (GDD 17절 '새 방 만들기', C.432) */
+  function drawRoomPanel(): void {
+    const key = def().roomKey;
+    const cr = key ? draft.rooms[key] : undefined;
+    roomPanel.hidden = !cr;
+    if (!key || !cr) return roomPanel.replaceChildren();
+    const rows: HTMLElement[] = [];
+    const row = (...n: (Node | string)[]) => {
+      const r = el('div', 'bha-ltool__row');
+      r.append(...n);
+      rows.push(r);
+    };
+    row(
+      el('strong', 'bha-ltool__label', '방 설정'),
+      el('span', 'bha-ltool__note', `${cr.name} · 키 ${key} · 게임에는 아직 안 나온다(용도를 알려 주면 연결)`),
+    );
+    row(
+      button({ label: '이름 바꾸기', icon: 'i-settings', size: 'small', onClick: () => {
+        const name = prompt('방 이름', cr.name)?.trim();
+        if (!name) return;
+        commit(() => (draft.rooms[key]!.name = name), `방 이름 → ${name}`);
+      } }),
+      button({ label: '복제', icon: 'i-swap', size: 'small', onClick: () => commit(() => {
+        const nk = duplicateRoom(draft, key);
+        if (nk) sceneId = customSceneId(nk);
+      }, `${cr.name} 복제`) }),
+      button({ label: '방 삭제', icon: 'i-broken', size: 'small', variant: 'danger', onClick: () => {
+        if (!confirm(`'${cr.name}' 방을 지운다. (자리·배경·새 물건도 같이)`)) return;
+        commit(() => { deleteRoom(draft, key); sceneId = scenesNow()[0]!.id; picked = null; }, `${cr.name} 지움`);
+      } }),
+    );
+    // 보기 종족: 캐릭터·물건 이름·처음 자리를 빌릴 방
+    const baseSel = el('select', 'bha-ltool__select');
+    baseSel.setAttribute('aria-label', '보기 종족');
+    for (const f of FACTIONS) {
+      const o = el('option', '', `${f.name} (${f.nestName})`);
+      o.value = f.id;
+      baseSel.append(o);
+    }
+    baseSel.value = cr.base;
+    baseSel.onchange = () => commit(() => (draft.rooms[key]!.base = baseSel.value), '보기 종족 바꿈');
+    // 배경: 게임에 있는 방 배경 그림 (올린 그림은 위 [배경 바꾸기])
+    const bgSel = el('select', 'bha-ltool__select');
+    bgSel.setAttribute('aria-label', '배경 그림');
+    bgSel.dataset.roomBg = '';
+    // 게임 데이터가 쓰는 배경 키(종족 방·시장·월드맵·방 목록)를 먼저 — 같은 파일을 다른 이름으로 적지 않게
+    const known = [...FACTIONS.flatMap((x) => [roomOf(x).sceneArt, marketOf(x).sceneArt, worldMapOf(x).sceneArt]), ...ROOMS.map((r) => r.sceneArt)];
+    const keys = sceneArtKeys(undefined, known);
+    for (const k of keys.includes(cr.sceneArt) ? keys : [cr.sceneArt, ...keys]) {
+      const o = el('option', '', k);
+      o.value = k;
+      bgSel.append(o);
+    }
+    bgSel.value = cr.sceneArt;
+    bgSel.onchange = () => commit(() => (draft.rooms[key]!.sceneArt = bgSel.value), `배경 → ${bgSel.value}`);
+    row(el('span', 'bha-ltool__label', '보기 종족'), baseSel, el('span', 'bha-ltool__label', '배경'), bgSel);
+    if (draft.scenes[customSceneId(key)]?.bg) row(el('span', 'bha-ltool__note', '올린 배경 그림이 위 목록보다 먼저 보인다 ([원래 배경] 으로 끄기)'));
+    // 놓을 물건: 방 물건 목록에서 넣기·빼기 (넣으면 보기 종족 방의 자리에서 시작 — 끌어 옮긴다)
+    const names = roomOf(getFaction(cr.base)).props as Record<string, string>;
+    row(
+      el('span', 'bha-ltool__label', '물건'),
+      ...ROOM_ITEM_PROPS.map((p) => {
+        const on = cr.props.includes(p);
+        const b = button({ label: names[p] ?? p, icon: PROP_ICON[p as keyof typeof PROP_ICON] ?? 'i-special', size: 'small', on, onClick: () => commit(() => {
+          const now = toggleRoomProp(draft, key, p);
+          picked = now ? p : null;
+        }, on ? `${names[p] ?? p} 뺌` : `${names[p] ?? p} 놓음 — 끌어서 옮긴다`) });
+        b.dataset.roomProp = p;
+        return b;
+      }),
+    );
+    row(el('span', 'bha-ltool__note', '목록에 없는 새 물건(아이콘만)은 위 [새 물건]. 배경 그림 올리기·확대·위치는 위 [배경 바꾸기]·[배경 맞추기]'));
+    roomPanel.replaceChildren(...rows);
+  }
+
   function render(): void {
     root.classList.toggle('is-bg', bgMode); // 배경 맞추기: 장면 끌기 = 배경 이동 (폰 스크롤 막음)
-    sel.value = sceneId;
+    fillSelect();
     const d = def();
+    sceneId = d.id;
+    sel.value = sceneId;
     resolved = resolveScene(d, pristine(), draft);
     if (picked && !resolved.items.some((i) => i.key === picked)) picked = null;
     drawScene();
     drawTools();
+    drawRoomPanel();
     drawItems();
     drawPanel();
     drawFoot();

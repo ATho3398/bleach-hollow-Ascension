@@ -6,7 +6,7 @@ import { artUrls, clearRuntimeArt } from '../src/data/art/manifest';
 import { FACTIONS } from '../src/data/factions';
 import { extrasErrors, marketOf, parseFactionConfig, roomOf, sceneViewOk, worldMapOf, type FactionConfig } from '../src/engine/faction';
 import {
-  addExtra, applyDraft, applyLooks, draftHasEdits, hasFileArt, pruneLooks, runtimeUrl, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
+  addExtra, applyDraft, applyLooks, applySceneEdit, draftHasEdits, hasFileArt, pruneLooks, runtimeUrl, editItem, emptyDraft, exportFile, extraArtKey, layoutScenes, loadDraft, normalizeDraft, removeExtra, resolveScene, saveDraft, LAYOUT_KINDS, LAYOUT_STORE_KEY,
 } from '../src/ui/bha/layoutDraft';
 
 const clone = (): FactionConfig[] => FACTIONS.map((f) => structuredClone(f) as FactionConfig);
@@ -383,5 +383,80 @@ describe('C.419 배치 도구 = 최신 게임', () => {
     expect(tool).toContain('onUpdateReady(() => {');
     expect(tool).toContain("label: '새 버전 — 다시 열기'");
     expect(tool.indexOf('const say = ')).toBeLessThan(tool.indexOf('onUpdateReady(() => {')); // 바로 불려도 상태 줄이 있다
+  });
+});
+
+// C.432 (사용자 2026-11-12 "ui배치도구한테, 내가 방 새로 만드는 기능도 만들라해. 용도는 만들때마다 알려줄테니까 일단 만드는 기능 부터 구현 ㄱㄱ", GDD 17절 '새 방 만들기')
+describe('C.432 새 방 만들기', () => {
+  it('만들기·물건 넣고 빼기·복제·삭제 — 키 room-<번호>, 빈 방으로 시작', async () => {
+    const { addRoom, toggleRoomProp, duplicateRoom, deleteRoom, customSceneId, ROOM_ITEM_PROPS } = await import('../src/ui/bha/layoutDraft');
+    const d = emptyDraft();
+    const k = addRoom(d, '이치고의 방', 'shinigami', 'scene.room');
+    expect(k).toBe('room-1');
+    expect(d.rooms[k]).toEqual({ name: '이치고의 방', base: 'shinigami', sceneArt: 'scene.room', props: [] });
+    expect(ROOM_ITEM_PROPS).not.toContain('rank');
+    expect(toggleRoomProp(d, k, 'chest')).toBe(true);
+    expect(toggleRoomProp(d, k, 'rank')).toBe(false); // 방에 안 서는 물건
+    editItem(d, customSceneId(k), 'chest', { x: 40, y: 80 });
+    const k2 = duplicateRoom(d, k)!;
+    expect(d.rooms[k2]).toMatchObject({ name: '이치고의 방 복사', props: ['chest'] });
+    expect(d.scenes[customSceneId(k2)]!.items.chest).toEqual({ x: 40, y: 80 });
+    expect(deleteRoom(d, k2)).toBe(true);
+    expect(d.rooms[k2]).toBeUndefined();
+    expect(d.scenes[customSceneId(k2)]).toBeUndefined();
+    expect(toggleRoomProp(d, k, 'chest')).toBe(false);
+  });
+  it('도구 장면 목록에만 붙고(게임 미리보기·정리엔 안 붙음), 그리면 놓은 물건만 보이고 배경·바닥은 그 방 것', async () => {
+    const { addRoom, toggleRoomProp, customSceneId } = await import('../src/ui/bha/layoutDraft');
+    const d = emptyDraft();
+    const k = addRoom(d, '새', 'hollow', 'scene.room');
+    toggleRoomProp(d, k, 'book');
+    expect(layoutScenes(FACTIONS).some((s) => s.roomKey)).toBe(false);
+    const def = layoutScenes(FACTIONS, d).find((s) => s.id === customSceneId(k))!;
+    expect(def).toMatchObject({ roomKey: k, factionId: 'hollow', label: '새 방 · 새' });
+    const f = clone().find((x) => x.id === 'hollow')!;
+    applySceneEdit(def, f, undefined); // 편집 없어도 구성은 써 넣는다
+    const r = roomOf(f);
+    expect(r.sceneArt).toBe('scene.room');
+    expect(r.layout.book.hidden).toBeUndefined();
+    for (const p of ['chest', 'outside', 'altar', 'hogyoku'] as const) expect(r.layout[p].hidden).toBe(true);
+    // 배경 scene.room = 사신 대원실 → 바닥도 대원실 바닥 (호로 굴 바닥이 아니라)
+    expect(r.floor).toEqual(roomOf(FACTIONS.find((x) => x.id === 'shinigami')!).floor);
+    // 게임 미리보기는 새 방을 안 건드린다
+    const fs = clone();
+    applyDraft(d, fs);
+    expect(roomOf(fs.find((x) => x.id === 'hollow')!).sceneArt).toBe(roomOf(FACTIONS.find((x) => x.id === 'hollow')!).sceneArt);
+  });
+  it('내보내기 rooms = 방 키 → { sceneArt, floor, layout, extras } (방 설정 모양), 다시 불러오면 같은 초안', async () => {
+    const { addRoom, toggleRoomProp, customSceneId, ROOM_ITEM_PROPS } = await import('../src/ui/bha/layoutDraft');
+    const d = emptyDraft();
+    const k = addRoom(d, '이치고의 방', 'shinigami', 'scene.room');
+    toggleRoomProp(d, k, 'outside');
+    editItem(d, customSceneId(k), 'outside', { x: 12, y: 80 });
+    addExtra(d, customSceneId(k), '침대', 'i-care-sleep');
+    (d.scenes[customSceneId(k)] ??= { items: {}, extras: [] }).bgView = { zoom: 1.2, x: 40, y: 50 };
+    expect(draftHasEdits(d)).toBe(true);
+    const j = JSON.parse(exportFile(d, FACTIONS, 'C.432'));
+    // 방 목록(src/data/rooms, C.432 코딩281) RoomDef 와 같은 모양: id·label·sceneArt·floor·layout·extras (+ base). 안 놓은 물건은 hidden
+    expect(j.rooms[k]).toMatchObject({ id: k, label: '이치고의 방', base: 'shinigami', sceneArt: 'scene.room', layout: { outside: { x: 12, y: 80, scale: 1 } } });
+    expect(j.rooms[k].layout.chest.hidden).toBe(true);
+    expect(Object.keys(j.rooms[k].layout).sort()).toEqual([...ROOM_ITEM_PROPS].sort());
+    const { parseRoomDef } = await import('../src/data/rooms');
+    expect(() => parseRoomDef({ ...j.rooms[k] })).not.toThrow();
+    expect(j.rooms[k].floor.view).toEqual({ zoom: 1.2, x: 40, y: 50 });
+    expect(j.rooms[k].extras[0]).toMatchObject({ id: 'new-1', name: '침대', icon: 'i-care-sleep' });
+    expect(normalizeDraft(j)).toEqual(d);
+  });
+  it('배경 고르기 목록 = public/art 의 scene-* 그림', async () => {
+    const { sceneArtKeys } = await import('../src/ui/bha/layoutDraft');
+    const files = ['scene-room.webp', 'scene-cave.png', 'scene-worldmap-hollow.webp', 'prop-chest.png', 'scene-room.png', 'scene-room-ichigo.webp'];
+    // 데이터가 쓰는 키가 먼저: 방 목록 scene.room-ichigo (scene.room.ichigo 가 아니라), 월드맵 scene.worldmap.hollow
+    expect(sceneArtKeys(files, ['scene.room-ichigo', 'scene.worldmap.hollow'])).toEqual(['scene.cave', 'scene.room', 'scene.room-ichigo', 'scene.worldmap.hollow']);
+    expect(sceneArtKeys(['scene-room-ichigo.webp'])).toEqual(['scene.room-ichigo']); // 기본 known = 방 목록
+    expect(artUrls('scene.worldmap.hollow', '/', undefined, ['scene-worldmap-hollow.webp']).src).toBe('/art/scene-worldmap-hollow.webp');
+  });
+  it('도구: [새 방] 버튼 · 방 설정 칸(이름·복제·삭제·보기 종족·배경·물건)', () => {
+    const tool = read('src/ui/bha/layoutTool.ts');
+    for (const s of ["label: '새 방'", "label: '이름 바꾸기'", "label: '복제'", "label: '방 삭제'", "setAttribute('aria-label', '보기 종족')", "setAttribute('aria-label', '배경 그림')", 'b.dataset.roomProp = p;']) expect(tool).toContain(s);
   });
 });

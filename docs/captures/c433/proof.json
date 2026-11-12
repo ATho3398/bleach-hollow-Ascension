@@ -1,0 +1,95 @@
+{
+  "shots": [
+    "1-new-room-empty.png",
+    "2-new-room-placed.png"
+  ],
+  "errors": [],
+  "created": {
+    "status": "빈 방을 만들었다 — 아래 [방 설정]에서 배경·물건을 고른다",
+    "scene": "newroom.room-1",
+    "drawn": []
+  },
+  "bgChoices": [
+    "scene.cave",
+    "scene.market.hollow",
+    "scene.market.shinigami",
+    "scene.room",
+    "scene.room-ichigo",
+    "scene.spa",
+    "scene.worldmap.hollow",
+    "scene.worldmap.shinigami"
+  ],
+  "placed": {
+    "status": "책장 옮김 · x 53.5 · y 67.7",
+    "drawn": [
+      "book",
+      "chest",
+      "outside"
+    ],
+    "bg": "url(\"http://localhost:5204/art/scene-room-ichigo.webp\")"
+  },
+  "afterReload": [
+    "book",
+    "chest",
+    "outside"
+  ],
+  "exportRooms": {
+    "room-1": {
+      "id": "room-1",
+      "label": "연습 방",
+      "base": "hollow",
+      "sceneArt": "scene.room-ichigo",
+      "floor": {
+        "aspect": 2,
+        "poly": [
+          [
+            0,
+            0.46
+          ],
+          [
+            1,
+            0.46
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "layout": {
+        "altar": {
+          "x": 91.1,
+          "y": 65.3,
+          "scale": 1.03,
+          "hidden": true
+        },
+        "book": {
+          "x": 53.5,
+          "y": 67.7,
+          "scale": 0.91
+        },
+        "chest": {
+          "x": 28.2,
+          "y": 91.2,
+          "scale": 0.86
+        },
+        "outside": {
+          "x": 9,
+          "y": 78,
+          "scale": 1
+        },
+        "hogyoku": {
+          "x": 79.3,
+          "y": 88.2,
+          "scale": 0.77,
+          "hidden": true
+        }
+      },
+      "extras": []
+    }
+  }
+}
