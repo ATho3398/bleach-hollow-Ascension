@@ -198,7 +198,7 @@ export function hogyokuFlameOn(save: Pick<SaveData, 'hogyoku'>): boolean {
 
 const absUrl = (src: string) => (typeof document === 'undefined' ? src : new URL(src, document.baseURI).href);
 
-/** 붕옥 그림 칸: 112×116 칸 하나에 상자 그림(112×116)·붕옥(64, 칸 안 24·25 = 상자 속 붕옥 자리)·불꽃(96, 붕옥과 같은 중심)을 같은 정수 배율로 겹친다 */
+/** 붕옥 그림 칸: 112×116 칸 하나에 상자 그림(112×116)·붕옥(64, 칸 안 24·25 = 상자 속 붕옥 자리)·불꽃(96, 칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24)을 같은 배율(1.5)로 겹친다 */
 function orbArt(save: SaveData): HTMLElement {
   const look = hogyokuLook(save.hogyoku.level);
   const box = h('div', 'bha-hgorb__art');

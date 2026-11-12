@@ -1,0 +1,452 @@
+{
+  "errors": [],
+  "shots": [
+    "01-hogyoku-0.png",
+    "02-hogyoku-20.png",
+    "03-hogyoku-40.png",
+    "04-hogyoku-60.png",
+    "05-hogyoku-80.png",
+    "06-hogyoku-100.png",
+    "07-material-detail.png",
+    "08-list-fusion.png",
+    "09-pc-80.png"
+  ],
+  "facts": {
+    "p00": {
+      "level": "0",
+      "band": "0",
+      "art": "hogyoku.stage1",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "imgSrc": "/art/hogyoku-stage1.png",
+      "flame": null,
+      "flameRect": null,
+      "flameZ": null,
+      "scale": "1.5",
+      "orbInFlame": null,
+      "orbInBox": [
+        0,
+        0
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:10/5",
+        "shard:30/8",
+        "essence:2/2"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p20": {
+      "level": "2",
+      "band": "1",
+      "art": "hogyoku.stage2",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "imgSrc": "/art/hogyoku-stage2.png",
+      "flame": null,
+      "flameRect": null,
+      "flameZ": null,
+      "scale": "1.5",
+      "orbInFlame": null,
+      "orbInBox": [
+        0,
+        0
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:43/10",
+        "shard:30/16",
+        "essence:6/3"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p40": {
+      "level": "4",
+      "band": "2",
+      "art": "hogyoku.stage3",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "imgSrc": "/art/hogyoku-stage3.png",
+      "flame": null,
+      "flameRect": null,
+      "flameZ": null,
+      "scale": "1.5",
+      "orbInFlame": null,
+      "orbInBox": [
+        0,
+        0
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:43/15",
+        "shard:30/24",
+        "essence:6/4"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p60": {
+      "level": "6",
+      "band": "3",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": null,
+      "flameRect": null,
+      "flameZ": null,
+      "scale": "1.5",
+      "orbInFlame": null,
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:63/15",
+        "shard:20/5",
+        "essence:40/4"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p80": {
+      "level": "8",
+      "band": "4",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame-calm",
+      "flameRect": [
+        164,
+        114,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:63/20",
+        "shard:20/7",
+        "essence:40/6"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "p100": {
+      "level": "10",
+      "band": "5",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame",
+      "flameRect": [
+        164,
+        114,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:9",
+        "shard:50",
+        "essence:9"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    },
+    "material": {
+      "level": "10",
+      "band": "5",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame",
+      "flameRect": [
+        164,
+        114,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:9",
+        "shard:50",
+        "essence:9"
+      ],
+      "list": [
+        "develop",
+        "soul",
+        "shard*",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "shard"
+    },
+    "materialText": "붕옥 파편임시 수치보유 50다음 단계에 드는 수없음 (개발 100%)얻는 곳스토리 화 첫 클리어 · 장 보스 첫 처치 · 탑 10층마다쓰는 곳붕옥 개발에만 쓴다 (두 캐릭터 공용, 팔 수 없음)",
+    "fusion": {
+      "level": "10",
+      "band": "5",
+      "art": "hogyoku.orb",
+      "box": [
+        152,
+        112,
+        168,
+        174
+      ],
+      "img": [
+        188,
+        150,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame",
+      "flameRect": [
+        164,
+        114,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:9",
+        "shard:50",
+        "essence:9"
+      ],
+      "list": [
+        "develop",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion*",
+        "dex"
+      ],
+      "detail": "fusion"
+    },
+    "sizes": [
+      ".bha-lcdpage__body: top 74 h 286 bottom 360",
+      ".bha-lcdpage__col--right: top 66 h 302 bottom 368",
+      ".bha-hgright: top 74 h 286 bottom 360",
+      ".bha-hglist: top 74 h 286 bottom 360",
+      ".bha-hgdetail: top 74 h 286 bottom 360",
+      ".bha-lcd, .bha-app: top 15 h 354 bottom 369"
+    ],
+    "pc": {
+      "level": "8",
+      "band": "4",
+      "art": "hogyoku.orb",
+      "box": [
+        381,
+        320,
+        168,
+        174
+      ],
+      "img": [
+        417,
+        358,
+        96,
+        96
+      ],
+      "imgSrc": "/art/hogyoku-orb.png",
+      "flame": "hogyoku.flame-calm",
+      "flameRect": [
+        393,
+        322,
+        144,
+        144
+      ],
+      "flameZ": "0",
+      "scale": "1.5",
+      "orbInFlame": [
+        16,
+        24
+      ],
+      "orbInBox": [
+        24,
+        25
+      ],
+      "imgZ": "1",
+      "mats": [
+        "soul:63/20",
+        "shard:20/7",
+        "essence:40/6"
+      ],
+      "list": [
+        "develop*",
+        "soul",
+        "shard",
+        "essence",
+        "steps",
+        "fusion",
+        "dex"
+      ],
+      "detail": "develop"
+    }
+  }
+}

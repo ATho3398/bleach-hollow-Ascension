@@ -58,7 +58,7 @@ describe('C.421 붕옥 그림', () => {
     expect(css).toMatch(/\.bha-hgorb__img \{[^}]*image-rendering: pixelated/);
     expect(css).toMatch(/\.bha-hgorb__img\.is-orb \{[^}]*calc\(64px \* var\(--hg-s\)\)/);
     expect(css).toMatch(/\.bha-hgorb__flame \{[^}]*calc\(1536px \* var\(--hg-s\)\)[^}]*steps\(16\) infinite/);
-    expect(css).toMatch(/\.bha-hogyoku-page \{ --hg-s: 2; \}/);
+    expect(css).toMatch(/\.bha-hogyoku-page \{ --hg-s: [\d.]+; \}/); // C.423 → 1.5
     const block = css.slice(css.indexOf('붕옥 창 배치 (C.421'), css.indexOf('.bha-articon'));
     expect(block).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i);
     expect(read('src/ui/bha/room.css')).toMatch(/\.bha-prop--hogyoku[^{]*\{[^}]*32px\)/);

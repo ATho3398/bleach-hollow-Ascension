@@ -32,12 +32,13 @@ describe('C.423 붕옥 단계 그림·스케치 배치', () => {
     expect(size('public/art/hogyoku-flame-calm.png')).toEqual([1536, 96]);
   });
 
-  it('한 칸 112×116 · 같은 정수 배율: 붕옥 24·25 · 불꽃 8·9 (붕옥과 같은 중심) · 불꽃은 붕옥 뒤 레이어', () => {
+  it('한 칸 112×116 · 같은 배율 1.5: 붕옥 24·25 · 불꽃 8·1 (불꽃 프레임 안 붕옥 자리 16·24) · 불꽃은 붕옥 뒤 레이어', () => {
     const css = read('src/ui/bha/screens-lcd.css');
     expect(css).toMatch(/\.bha-hgorb__art \{[^}]*calc\(112px \* var\(--hg-s\)\)[^}]*calc\(116px \* var\(--hg-s\)\)/);
     expect(css).toMatch(/\.bha-hgorb__img\.is-orb \{[^}]*calc\(24px \* var\(--hg-s\)\)[^}]*calc\(25px \* var\(--hg-s\)\)/);
-    expect(css).toMatch(/\.bha-hgorb__flame \{[^}]*z-index: 0;[^}]*calc\(8px \* var\(--hg-s\)\)[^}]*calc\(9px \* var\(--hg-s\)\)/);
+    expect(css).toMatch(/\.bha-hgorb__flame \{[^}]*z-index: 0;[^}]*calc\(8px \* var\(--hg-s\)\)[^}]*calc\(1px \* var\(--hg-s\)\)/);
     expect(css).toMatch(/\.bha-hgorb__img \{[^}]*z-index: 1;[^}]*pixelated/);
+    expect(css).toMatch(/\.bha-hogyoku-page \{ --hg-s: 1\.5; \}/);
     const block = css.slice(css.indexOf('붕옥 창 배치 (C.421 → C.423'), css.indexOf('.bha-articon'));
     expect(block).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i);
   });
