@@ -474,9 +474,17 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       hd.onTrackChanged?.();
     } });
     const h = save.hogyoku;
+    // 초월 조각 (GDD 12-4 v6.048, C.441): 전용 블록 강화 시험용
+    const shards = button({ label: '초월 조각 +100', icon: 'i-rare', size: 'small', onClick: () => {
+      save.shared.transcendShards += 100;
+      hd.persist();
+      showToast({ eyebrow: '테스트', title: `초월 조각 ${save.shared.transcendShards}`, meta: '상태 화면 「전용 블록 강화」에서 쓴다.' }, 0, 1800);
+      redraw();
+    } });
     return [
       panel({ title: '초월자 얻기', aside: `${owned.size}/${testTranscendents().length}` }, row(...grants),
         note('누르면 그 초월자 트랙을 만들어 바로 간다(이미 있으면 그 트랙으로). 진짜 합체(개발 100%·1위 조건·두 캐릭터 초기화)는 거치지 않는다.')),
+      panel({ title: '초월 조각', aside: String(save.shared.transcendShards) }, row(shards), note('아이젠 전용 블록(경화수월·귀도) 강화 재료. 진짜 게임에선 초월자로 이긴 전투마다 나온다.')),
       panel({ title: '초월자 트랙 전환', aside: `${tracks.length}개` }, grid([['트랙', trackSel.el]]), row(go),
         note(`붕옥 ${h.tabOpen ? '등장' : '닫힘'} · ${h.resonance ? '공명' : '공명 전'} — 테스트 칸은 늘 켜 둔다. 방 더보기의 트랙 전환과 같다.`)),
     ];

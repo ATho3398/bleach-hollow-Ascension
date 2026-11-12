@@ -29,6 +29,40 @@ export interface TranscendentTraitDef {
   provisional?: boolean;
 }
 
+/** 초월자 전용 블록 하나 (GDD 12-4 v6.048, C.441): 이름·장치만 — 수치는 BALANCE.provisional.transcendentKits[초월자 id].blocks[블록 id].
+ *  장치 = solo(체인 안 됨) · counter(적 공격을 받은 뒤 창 안에 쓰면 반격 — 대사) · stack(최대 체인마다 스택, 가득이면 다음 최대 체인이 마무리 기술) ·
+ *  releaseSwap(해방 중 이 블록 대신 나오는 블록) · releaseOnly(해방 중에만 — 다른 블록의 releaseSwap 로만 나옴) · upgradeAs(강화 단계를 같이 쓰는 블록) */
+export interface TranscendentKitBlockDef {
+  id: string;
+  name: string;
+  /** 블록 칸 글자 (한 글자) */
+  short: string;
+  /** 화면 연출 키 (clone = 몸 그림 반투명 사본이 때림, 그 밖 = 기존 블록 연출) */
+  fx: string;
+  /** 체인 단계 이름 (없으면 블록 이름) */
+  tierNames?: string[];
+  solo?: boolean;
+  counter?: { line: string };
+  stack?: { finisherName: string };
+  releaseSwap?: string;
+  releaseOnly?: boolean;
+  upgradeAs?: string;
+}
+
+/** 초월자 전용 블록 묶음 (GDD 12-4 v6.048): 있으면 '초월자' 전투 기반에서 일반 블록 대신 이 블록만 나온다. 없으면(나머지 5종 — 블록 [미정]) 합체 순간 이어받은 빌드 그대로 */
+export interface TranscendentKitDef {
+  /** 해방 이름 (해방 수치는 진화체 만해와 같음) */
+  liberationName: string;
+  /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
+  evade?: boolean;
+  /** 쓰러지면 전투당 1회 되살아남 (수치 = balance revive) */
+  revive?: { line: string };
+  /** 스택 이름 (전투 화면 표시) */
+  stackName?: string;
+  blocks: TranscendentKitBlockDef[];
+  provisional: true;
+}
+
 export interface TranscendentDef {
   id: string;
   /** 도감 순서 (작을수록 앞) */
@@ -61,7 +95,24 @@ export interface TranscendentDef {
   trackKind: string;
   /** 초월 특성 (GDD 12-4 v6.039, C.436) */
   trait: TranscendentTraitDef;
+  /** 전용 블록 (GDD 12-4 v6.048, C.441) — 아이젠만 */
+  kit?: TranscendentKitDef;
   provisional: true;
+}
+
+function kitErrors(k: unknown): boolean {
+  const kit = k as Partial<TranscendentKitDef> | undefined;
+  if (kit === undefined) return true;
+  if (!kit || typeof kit.liberationName !== 'string' || !kit.liberationName || !Array.isArray(kit.blocks) || kit.blocks.length === 0 || kit.provisional !== true) return false;
+  const ids = new Set(kit.blocks.map((b) => b?.id));
+  if (ids.size !== kit.blocks.length) return false;
+  return kit.blocks.every((b) => b && typeof b.id === 'string' && b.id && typeof b.name === 'string' && b.name && typeof b.short === 'string' && [...b.short].length === 1 && typeof b.fx === 'string'
+    && (b.tierNames === undefined || (Array.isArray(b.tierNames) && b.tierNames.every((n) => typeof n === 'string' && n)))
+    && (b.releaseSwap === undefined || (ids.has(b.releaseSwap) && b.releaseSwap !== b.id))
+    && (b.upgradeAs === undefined || ids.has(b.upgradeAs))
+    && (b.counter === undefined || typeof b.counter.line === 'string')
+    && (b.stack === undefined || typeof b.stack.finisherName === 'string'))
+    && kit.blocks.some((b) => !b.releaseOnly);
 }
 
 export function parseTranscendent(r: unknown): TranscendentDef {
@@ -92,6 +143,7 @@ export function parseTranscendent(r: unknown): TranscendentDef {
     && ['dealt', 'taken', 'maxHp', 'blockCrit'].every((k) => numOk(fx[k]))
     && (fx.abilities === undefined || (typeof fx.abilities === 'object' && fx.abilities !== null && Object.entries(fx.abilities).every(([k, v]) => /^(el|el4|uniq|phys|disp):.+/.test(k) && typeof v === 'number')))
     && Object.keys(fx).every((k) => ['abilities', 'dealt', 'taken', 'maxHp', 'blockCrit'].includes(k)))) errors.push('trait (name·description·effect)');
+  if (!kitErrors(t.kit)) errors.push('kit (liberationName·blocks id·name·short·fx·releaseSwap·upgradeAs)');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

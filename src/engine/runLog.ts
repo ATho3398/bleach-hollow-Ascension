@@ -141,6 +141,8 @@ export interface BattleRecord {
   startHp?: number;
   itemUsed?: boolean;
   gearUses?: number;
+  /** 초월자 전용 블록 기록 (GDD 12-4 v6.048, C.441 — 형식 85): 반격 성공(경화수월)·마무리 기술(흑관)·되살아남(깨져라, 경화수월) 횟수. 전용 블록 전투만 */
+  kit?: { id: string; counters: number; finishers: number; revives: number };
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */
@@ -459,7 +461,14 @@ export interface BasisChangeRecord {
   to: string;
 }
 
+/** 초월 조각 기록 (GDD 12-4 v6.048, C.441 — 형식 85, 초월자 트랙): 원정에서 얻음(gain) · 전용 블록 강화(upgrade: 블록·오른 강·쓴 조각) */
+export type KitShardRecord =
+  | { at: number; kind: 'gain'; runId: number; amount: number }
+  | { at: number; kind: 'upgrade'; blockId: string; level: number; cost: number };
+
 export interface RunLog {
+  /** 초월 조각 얻음·전용 블록 강화 기록 (GDD 12-4 v6.048, 형식 85). 캐릭터 트랙·없으면 없음 */
+  kitShards?: KitShardRecord[];
   /** 초월자 트랙이면 시작 기록 (GDD 12-4 v6.028, 형식 82). 캐릭터 트랙은 없음 */
   transcendence?: TranscendenceRecord;
   /** 초월자 전투 기반 바꾼 기록 (GDD 12-4 v6.037, 형식 83). 캐릭터 트랙·바꾼 적 없으면 없음 */

@@ -174,7 +174,7 @@ describe('초월 특성 (GDD 12-4 v6.039)', () => {
   });
 
   it('형식 84: 83 → 84 = 이미 있는 초월자 트랙에 초월 특성 칸 (쉬는 트랙 포함), 캐릭터 트랙엔 없음', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(84);
+    expect(SAVE_FORMAT_VERSION).toBe(85);
     const s = ready();
     performFusion(s, 9000);
     testGrantTranscendent(s, 'zero-sage', 9500); // 두 번째 초월자 트랙 (지금 트랙이 됨)
@@ -182,7 +182,7 @@ describe('초월 특성 (GDD 12-4 v6.039)', () => {
     raw.meta.format = 83;
     for (const t of allTracks(raw)) delete t.evolution.transcendentTraits;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(84);
+    expect(m.meta.format).toBe(85);
     const tr = allTracks(m).filter((t) => t.transcendentId);
     expect(tr).toHaveLength(2);
     for (const t of tr) expect(t.evolution.transcendentTraits).toEqual([t.transcendentId]);

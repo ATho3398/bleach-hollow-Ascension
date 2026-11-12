@@ -48,6 +48,8 @@ export interface AbsorbOffer {
   rerolled?: boolean;
   /** 특수 속성(혈·독·허) 적이었다면 그 적의 등장 숨김이 풀린 까닭 (런 로그용, GDD 75장·9장). 부르는 쪽(원정)이 채운다 */
   specialGates?: SpecialGate[];
+  /** 노력치 흡수·놓아주기만 (GDD 12-4 v6.048, C.441 — 초월자 전용 블록 몸): 특성 후보 없음, 흡수 갈래는 'stat' 만 */
+  statOnly?: boolean;
 }
 
 /** 특수 속성(혈·독·허) 특성인가 */

@@ -13,6 +13,8 @@ export interface Block {
   element?: string | null;
   /** 보스 기믹 칸 봉인 (GDD 25-3 seal, C.58): 남은 틱. 0 보다 크면 누를 수 없고 옆 블록과 체인으로 묶이지 않는다 (없음 = 봉인 안 됨) */
   sealTicks?: number;
+  /** 체인으로 묶이지 않는 블록 (GDD 12-4 v6.048, C.441 — 초월자 전용 블록 장치 solo: 경화수월). 없음 = 묶임 */
+  solo?: boolean;
 }
 
 /** 블록 바. 길이 = 지금 놓인 블록 수 (최대 BALANCE trayCapacity), 빈 칸이 없다 */
@@ -28,6 +30,7 @@ export function inTray(t: Tray, i: number): boolean {
 export function sameChainKind(a: Block | undefined, b: Block | undefined): boolean {
   if (!a || !b || a.kind !== 'skill' || b.kind !== 'skill') return false;
   if ((a.sealTicks ?? 0) > 0 || (b.sealTicks ?? 0) > 0) return false;
+  if (a.solo || b.solo) return false;
   return a.traitId === b.traitId && (a.family ?? null) === (b.family ?? null) && (a.element ?? null) === (b.element ?? null);
 }
 

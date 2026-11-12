@@ -13,7 +13,7 @@ import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type HitCategory, type ElemHit, type CombatInput, type CombatParams, type CombatState,
-  canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf,
+  canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf, kitBlockOf, kitCounterOpen,
   scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
@@ -128,6 +128,9 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   if (b.kind === 'void') return labels.voidBlock;
   if (b.kind === 'combo') return comboBlockLabel(labels, comboOf(p, b.traitId)?.family);
   if (b.kind === 'liberation') return liberationBlockLabel(factionId, p.playerElements[0]);
+  // 초월자 전용 블록 (GDD 12-4 v6.048): 데이터의 블록 이름 (경화수월·귀도·프라고르)
+  const kb = kitBlockOf(p, b.traitId);
+  if (kb) return kb.name;
   const src = sourceOf(p, b.traitId);
   // 물공 특수 블록 (GDD 49장): 기본 공격 블록이 물공 블록인 몸은 표의 이름(종족별 데이터)
   if (p.physBlock && isBasicBlockId(src?.id) && src?.role === 'attack') return physBlockName(p.physBlock.element, factionId) ?? labels.skillBlock;
@@ -166,6 +169,11 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
   const n = (v: number) => Math.round(v);
   switch (e.kind) {
     case 'block': {
+      // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름(체인 단계·마무리 기술) + 반격 성공
+      if (e.kitName) {
+        const kitText = `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}${e.kitCounter ? ' · 반격' : ''}${e.heal > 0 ? ` · 회복 +${n(e.heal)}` : ''}${e.kitFinisher ? ' · 적 공격 불능' : ''}`;
+        return { role: e.chain > 1 || e.kitCounter || e.kitFinisher ? 'chain' : 'attack', icon: e.kitFinisher || e.kitCounter ? 'i-special' : e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: kitText };
+      }
       // 블록 이름은 `속성_계열`(GDD 20장 v5.4), 계열 공격은 단계 기술 이름(17-3)을 뒤에 붙인다
       const skillName = e.block === 'skill' ? familySkillName(labels, e.family, e.chain) : null;
       const name = e.block === 'skill'
@@ -212,6 +220,10 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'cast', icon: 'i-cast', text: `졸개의 공격 ${n(e.damage)} 피해${e.guarded ? ' (막기로 경감)' : ''}` };
     case 'minion-down':
       return { role: 'chain', icon: 'i-chain-3', text: '졸개를 쓰러뜨렸다!' };
+    case 'kit-line':
+      return { role: 'chain', icon: 'i-special', text: `「${e.text}」` };
+    case 'kit-stack':
+      return { role: 'chain', icon: 'i-special', text: `${s.params.kit?.stackName ?? '스택'} ${e.stack}/${e.full}` };
     case 'evade':
       // 폭주 중 회피 (GDD 101장 4번)
       return { role: 'guard', icon: 'i-guard', text: '회피! 적의 공격을 통째로 피했다' };
@@ -280,6 +292,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     ...battleLabels(bf, opts.tierIndex ?? 0, s.params.liberationUnique, s.params.liberationUnique ? formReleaseCutin(opts.formId ? tryGetForm(opts.formId) : undefined, bf.id) : null),
     riskGauge: faction.riskGaugeName, defeatState: faction.defeatStateName, huntingGround: faction.huntingGroundName, factionName: faction.name,
   };
+  // 초월자 해방 이름 (GDD 12-4 v6.048 — 아이젠 = 붕옥 융합): 초월자 데이터 kit.liberationName
+  if (s.params.kit) labels.liberation = { ...labels.liberation, name: s.params.kit.liberationName, cutin: `${s.params.kit.liberationName}!` };
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
@@ -478,6 +492,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libChip.append(labels.liberation.name, ' ', libChipValue);
   libChip.hidden = true;
   const libChipRoot = { root: libChip, value: libChipValue };
+  // 초월자 스택 칩 (GDD 12-4 v6.048 영창): 스택 장치 블록이 있을 때만 — '영창 n/5'
+  const kitStack = p.kit?.blocks.find((b) => b.stack)?.stack;
+  const stackChip = kitStack ? v2Chip('', 'default', { icon: 'i-special' }) : null;
+  const stackChipValue = el('span');
+  if (stackChip) {
+    stackChip.classList.add('bha-kitstack');
+    stackChip.append(p.kit!.stackName, ' ', stackChipValue);
+  }
+  let stackShown = -1;
+  // 초월자 대사 띠 (GDD 12-4 v6.048): 반격 성공·되살아남 대사를 장면 가운데에 잠깐
+  const kitLine = el('div', 'bha-kitline');
+  kitLine.setAttribute('role', 'status');
+  kitLine.setAttribute('aria-live', 'polite');
+  kitLine.append(el('span', 'bha-kitline__text'));
   // 해방 컷인 (공통 연출 하나, 11-5 변주는 미정): 장면 위에 한 줄
   const libCut = el('div', 'bha-libcut');
   libCut.setAttribute('aria-hidden', 'true');
@@ -528,6 +556,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend);
+  if (stackChip) libChip.after(stackChip); // 영창 칩 (초월자 스택 장치만)
   // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
@@ -607,7 +636,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     arena.classList.add('has-bg');
     arena.append(sceneBgEl(opts.bg, false));
   }
-  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, libReadyNotice, log);
+  arena.append(units, fieldTags, meStatus, topRow, fxLayer, floats, fxFlash, libCut, libReadyNotice, kitLine, log);
   const v2 = mountV2Root(root, faction, arena, controls, flashVoid, flashHit);
   const app = v2.root;
   app.classList.add('bha-battle'); // 해방 오오라·광기 테두리 같은 효과 CSS 가 이 클래스를 본다
@@ -1035,11 +1064,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (e.matchup === 'strong') spawnFloat('strong', labels.matchupText.strong);
     else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
     if (e.chain > 1) {
-      // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N
-      if (!familySkillName(labels, e.family, e.chain)) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+      // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N. 초월자 전용 블록은 기술 이름(아래 react)
+      if (!familySkillName(labels, e.family, e.chain) && !e.kitName) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
       flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
     }
     if (e.block === 'combo') flash('is-special', 600);
+  };
+  /** 경화수월 분신 (GDD 12-4 v6.048): 내 몸 그림을 반투명으로 복제해 적 쪽으로 미끄러지게 — 0.6초 뒤 지운다 */
+  const kitClone = () => {
+    if (prefersReducedMotion()) return;
+    const ghost = hero.root.cloneNode(true) as HTMLElement;
+    ghost.classList.add('bha-kitclone');
+    ghost.removeAttribute('data-help');
+    ghost.setAttribute('aria-hidden', 'true');
+    hero.root.parentElement?.append(ghost);
+    window.setTimeout(() => ghost.remove(), 650);
   };
   /** 이번 강공격 판정 결과 막았나 (GDD 245장 3): 빔 모션은 판정 전에 시작하고, 빔이 닿는 프레임에 이 값(아직 판정 전이면 지금 막기 중인가)을 읽는다 */
   let heavyGuarded: boolean | null = null;
@@ -1054,6 +1093,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (e.kind === 'swing') {
       note('swing', { kind: e.hit.kind, atTick: e.atTick, damage: e.hit.damage });
       // 남은 ms = 남은 틱 × 틱 길이 − 이번 프레임에 이미 쌓인 시간(acc): 다음 틱은 acc 만큼 일찍 온다 (GDD 224장 3, C.367 — 빼지 않으면 최대 한 프레임 일찍 맞음)
+      if (e.hit.kind === 'block' && e.hit.kitFx === 'clone') kitClone(); // 경화수월 분신은 휘두르는 순간
       attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), ...(s.script ? { bodyWindup: true } : {}) });
       return;
     }
@@ -1087,8 +1127,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       case 'block': {
         // 튜토리얼 마무리 체인 (GDD 146장): 피해 숫자·번쩍임은 연출이 닿을 때(script-impact)
         if (heldBlock !== e) blockFloats(e);
+        // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름을 크게. 분신(clone) = 몸 그림 반투명 사본이 앞으로 나가 때린다(새 도트 이펙트 없음)
+        if (e.kitName) {
+          spawnFloat('chain', `${e.kitName}!`, { chain3: e.chain >= top || !!e.kitFinisher || !!e.kitCounter });
+          if (e.kitFinisher) { flash('is-special', 700); shake(); }
+          if (e.kitFx === 'clone' && !e.landed) kitClone(); // 지연 없는 블록 — 지연 있으면 휘두를 때(swing) 이미 냈다
+        }
         break;
       }
+      case 'kit-line':
+        setText(kitLine.firstElementChild as HTMLElement, e.text);
+        replayOnce(kitLine, 'is-on', 2200);
+        if (e.tone === 'revive') flash('is-special', 700);
+        break;
       case 'script-impact':
         if (heldBlock) {
           blockFloats({ ...heldBlock, damage: e.damage });
@@ -1187,6 +1238,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (visual === 'void') return v2BlockEl({ kind: 'void', path: V2_PATH.void, glyph: V2_GLYPH.void, label, uid: b.uid, weak });
     if (b.kind === 'liberation') return v2BlockEl({ kind: 'release', path: V2_PATH.release, glyph: V2_GLYPH.release, label, uid: b.uid, weak });
     if (b.kind === 'combo') return v2BlockEl({ kind: 'combo', path: V2_PATH.combo, glyph: V2_GLYPH.combo, label, uid: b.uid, weak });
+    // 초월자 전용 블록 (GDD 12-4 v6.048): 반격·해방 블록(경화수월·프라고르) = 해방 각인, 그 밖(귀도) = 콤보 각인 + 데이터의 한 글자
+    const kb = kitBlockOf(s.params, b.traitId);
+    if (kb) {
+      const kk = kb.counter || kb.releaseOnly ? 'release' : 'combo';
+      return v2BlockEl({ kind: kk, path: V2_PATH[kk], glyph: kb.short, label, uid: b.uid, weak: false });
+    }
     // 블록 색 = 그 블록의 실제 속성 (C.131, GDD 77장 ⑦·79장): 기본 블록은 내 속성이 아니라 노말
     const elId = isBasic ? NORMAL_ELEMENT : (b.element ?? blockElementOf(s.params, b));
     return v2BlockEl({
@@ -1251,6 +1308,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
     // 칸마다 블록 배치 + 상태 클래스
     const casting = s.enemy.cast !== null;
+    const counterOpen = kitCounterOpen(s);
     tray.cells.forEach((cell, i) => {
       const b = s.tray[i];
       if (!b) {
@@ -1274,8 +1332,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       node.setAttribute('aria-disabled', String(locked));
       cell.toggleAttribute('data-dev-off', locked);
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
+      // 반격 창 (GDD 12-4 v6.048 경화수월): 적 공격을 받은 뒤 창 동안 반격 블록 테두리 발광
+      node.classList.toggle('bha-kitglow', counterOpen && !!kitBlockOf(p, b.traitId)?.counter);
     });
     seeded = true;
+    if (stackChip && s.kit && s.kit.stack !== stackShown) {
+      stackShown = s.kit.stack;
+      setText(stackChipValue, `${stackShown}/${kitStack!.full}`);
+      stackChip.classList.toggle('is-full', stackShown >= kitStack!.full);
+    }
     // 안내 줄: 봉인
     const sealed = s.sealTicks > 0;
     tray.root.classList.toggle('is-sealed', sealed);

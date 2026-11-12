@@ -159,7 +159,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
       : []),
     ...(s.params.combos.length > 0 ? [{ label: '콤보 (발동 / 사용)', icon: 'i-special', value: `${s.combosTriggered}회 / ${s.comboBlocksUsed}회` }] : []),
     { label: '강공격 막기', icon: 'i-guard', value: `${s.guardSuccesses}회` },
-    { label: labels.liberation.name, icon: 'i-special', mod: 'em', value: `${s.liberation.uses}회 사용 (해방 중 ${labels.chain} ${s.liberation.chains}회)` },
+    { label: s.params.kit?.liberationName ?? labels.liberation.name, icon: 'i-special', mod: 'em', value: `${s.liberation.uses}회 사용 (해방 중 ${labels.chain} ${s.liberation.chains}회)` },
     { label: `${labels.voidBlock} (${labels.riskGauge} 상승)`, icon: 'i-void', value: val(`${s.voidUsed}회`, `(+${s.riskGained})`) },
     { label: '마무리 일격', icon: 'i-attack', value: finText },
     { label: faction.absorbActionName, icon: 'i-absorb', mod: reasons.length > 0 ? 'good' : undefined, value: `${reasons.length > 0 ? '가능' : '불가'} (연습에서는 쓰지 않음)` },

@@ -17,7 +17,7 @@ import {
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
-  addEv, addEvFree, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  addEv, addEvFree, applyEvolutionToParams, kitActive, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -320,6 +320,8 @@ export interface ExpeditionState extends RiskState {
   lastTile?: { cell: number; tileId: string } | null;
   /** 바퀴 변이(폭풍)로 더 받는 붕옥 재료(고순도 윤활제, 옛 영혼 결정) */
   bonusSoul: number;
+  /** 이 원정에서 얻은 초월 조각 (GDD 12-4 v6.048, C.441): 정산(recordExpedition) 때 채운다 — 결과 화면 표시용. 초월자 트랙만 */
+  transcendShards?: number;
   variantLog: VariantLog;
   /** 스토리 화 진행 (GDD 25-4). 자유 원정은 null. 스토리에서는 드래프트·바퀴 변이를 끄고 인접 시너지는 고정 길대로 발동한다 */
   story: StoryRun | null;
@@ -1058,6 +1060,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.victoriesThisLap++;
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, 1, offerElementsOf(pending.boss, pending.enemy.element));
     markSpecialGates(exp, exp.absorbOffer, elite, true);
+    limitKitAbsorb(exp, exp.absorbOffer);
     exp.phase = 'absorb';
     return record;
   }
@@ -1074,12 +1077,20 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 이기면 언제나 흡수 화면 (C.125, GDD 71장: 흡수 조건 삭제 — 흡수 / 놓아줌 네 갈래). 첫 원정 튜토리얼(67장)은 tutorialAbsorb 로 끝난다
   exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, mods.absorbMult ?? 1);
   markSpecialGates(exp, exp.absorbOffer, elite);
+  limitKitAbsorb(exp, exp.absorbOffer);
   if (exp.tutorial) exp.absorbOffer.reasons = ['tutorial'];
   exp.phase = 'absorb';
   return record;
 }
 
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
+
+/** 초월자 전용 블록 몸 (GDD 12-4 v6.048): 흡수 화면 = 노력치 흡수·놓아주기만 — 특성 후보 없음, statOnly 표시 */
+function limitKitAbsorb(exp: ExpeditionState, offer: AbsorbOffer): void {
+  if (!kitActive(exp.evolution)) return;
+  offer.candidates = [];
+  offer.statOnly = true;
+}
 
 /** 뼈 표식/수련 말뚝 (C.124, GDD 65장): 그 적의 노력치(ev)가 가장 큰 능력치 하나에 n (단계 상한 안 — 넘으면 0). 오른 양을 엔진 이벤트로 */
 function trainingTileEv(exp: ExpeditionState, enemy: EnemyDef, n: number): void {
@@ -1132,6 +1143,7 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (offer.rerolled) return { ok: false, reason: '이 흡수에서는 이미 다시 뽑았다' };
+  if (offer.statOnly) return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
   if (offer.candidates.length === 0) return { ok: false, reason: '다시 뽑을 후보가 없다' };
   const rng = createRng((exp.seed ^ REROLL_SEED_SALT ^ Math.imul(exp.absorbRecords.length + 1, 2654435761)) >>> 0);
   const boss = isBossId(offer.enemyId) ? offer.enemyId : null;
@@ -1170,6 +1182,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' };
+  if (offer.statOnly && mode !== 'stat') return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 블록이다' };

@@ -7,7 +7,8 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { basisChoices, combatFactionIdOf, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { kitLevelMultiplier, kitLevelOf, kitUpgradeCost, upgradableBlocks } from '../engine/transcendKit';
+import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -45,7 +46,7 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { kitActive, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
@@ -239,6 +240,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const rightScroll = h('div', 'bha-care__scroll');
   const basis = basisPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
   if (basis) rightScroll.append(basis);
+  const kitP = kitPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  if (kitP) rightScroll.append(kitP);
   rightScroll.append(stats, evoPanel);
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
@@ -271,6 +274,43 @@ function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
   const info = h('p', 'bha-small');
   info.append('공격 분류 ', h('b', '', ATTACK_CATEGORY_WORDS[cat]), ` · 장착 블록 ${traits} · 보유 블록 ${save.build.owned.length} · 특성 ${abil}`);
   p.append(pick, info, h('p', 'bha-faint', locked ? '모험 중에는 바꿀 수 없다.' : '바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다.'));
+  return p;
+}
+
+/** 전용 블록 강화 (GDD 12-4 v6.048, C.441 — 초월자 트랙 + 전용 블록이 있는 초월자만): 초월 조각(슬롯 공유)으로 블록마다 1~10강.
+ *  강마다 그 블록 피해·회복 +8%, n강 비용 = 10×n 조각 (provisional). 모험 중엔 잠김 */
+function kitPanel(save: SaveData, rerender: () => void): HTMLElement | null {
+  const k = save.evolution.kit;
+  if (!save.transcendentId || !k) return null;
+  const blocks = upgradableBlocks(save.transcendentId);
+  if (blocks.length === 0) return null;
+  const G = BALANCE.provisional.transcendentGrowth;
+  const p = panel({ title: '전용 블록 강화', aside: provisionalTag('임시') });
+  p.setAttribute('aria-label', '전용 블록 강화');
+  p.dataset.kitPanel = '';
+  const locked = save.activeExpedition != null;
+  const have = save.shared.transcendShards;
+  const head = h('p', 'bha-small');
+  head.append('초월 조각 ', h('b', '', String(have)), ` · 강마다 그 블록 피해 +${Math.round(G.perLevel * 100)}% · 최대 ${G.maxLevel}강`);
+  p.append(head);
+  const list = h('div', 'bha-stack bha-stack--tight');
+  for (const b of blocks) {
+    const lv = kitLevelOf(k, b.id);
+    const cost = kitUpgradeCost(k, b.id);
+    const row = h('div', 'bha-row');
+    row.dataset.kitBlock = b.id;
+    const name = h('span', 'bha-small');
+    name.append(h('b', '', b.name), ` ${lv}강 (+${Math.round((kitLevelMultiplier(lv) - 1) * 100)}%)`);
+    const btn = button({
+      label: cost === null ? '최대' : `강화 · 조각 ${cost}`, size: 'small', icon: 'i-evolve',
+      disabled: locked || cost === null || have < cost,
+      onClick: () => { if (upgradeTranscendentBlock(save, b.id).ok) rerender(); },
+    });
+    btn.dataset.sc = `kit-up-${b.id}`;
+    row.append(name, btn);
+    list.append(row);
+  }
+  p.append(list, h('p', 'bha-faint', locked ? '모험 중에는 강화할 수 없다.' : kitActive(save.evolution) ? '초월 조각은 초월자로 이긴 전투마다 나온다 (일반 1 · 강적 3 · 보스 8).' : '전용 블록은 전투 기반이 초월자일 때만 나온다.'));
   return p;
 }
 

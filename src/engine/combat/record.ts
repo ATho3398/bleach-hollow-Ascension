@@ -54,5 +54,6 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     startHp: Math.round(Math.min(1, Math.max(0, s.params.playerStartHpFraction)) * 1000) / 1000,
     itemUsed: s.itemUsed,
     gearUses: s.inputs.filter((x) => x.input.type === 'gear').length,
+    ...(s.kit && s.params.kit ? { kit: { id: s.params.kit.id, counters: s.kit.counters, finishers: s.kit.finishers, revives: s.kit.revives } } : {}),
   };
 }

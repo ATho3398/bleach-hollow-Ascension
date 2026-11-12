@@ -2,6 +2,7 @@
 // 진화 타이밍 = 그 단계에서 원정으로 걸은 칸 수(숨김). 흡수는 진화 결과(속성·노력치·히든)만 정한다. 어떤 진화체로 가는지는 judge.ts.
 // 사망·퇴화·단계 스킵은 없다. 진화는 둥지로 돌아올 때 자동으로 일어난다(원정 중에는 일어나지 않는다).
 
+import { combatKitOf, type KitState } from '../transcendKit';
 import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formHasUniqueRelease, formName, formRelease, getForm, tryGetForm } from '../../data/evolution';
@@ -76,6 +77,9 @@ export interface EvolutionState {
   /** 초월 특성 (GDD 12-4 v6.039, C.436 — 형식 84): 가진 초월 특성의 초월자 id. 전투 기반과 상관없이 늘 붙는다(기반을 바꿔도 그대로, 기반 특성 칸과 별도).
    *  효과는 초월자 데이터 trait.effect 에서 읽는다. 없으면 빈 목록 */
   transcendentTraits?: string[];
+  /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441 — 형식 85): 초월자 트랙만 — 초월자 id·블록 강화 단계. '초월자' 전투 기반이고 그 초월자 데이터에 kit 이 있으면
+   *  일반 블록 대신 전용 블록만 나온다(블록 [미정] 초월자는 이어받은 빌드 그대로). 없으면 캐릭터 */
+  kit?: KitState;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
@@ -119,6 +123,12 @@ export function combatEvolutionOf(e: EvolutionState): EvolutionState {
   const out: EvolutionState = { ...e, formId: b.formId, formHistory: b.formHistory };
   if (b.ascended) out.ascended = true; else delete out.ascended;
   return out;
+}
+
+/** 지금 전투에 초월자 전용 블록이 실리는가 (GDD 12-4 v6.048): 초월자 트랙 + '초월자' 전투 기반 + 그 초월자 데이터에 kit. 흡수 화면 제한(노력치·놓아주기만)도 이 조건 */
+export function kitActive(e: Pick<EvolutionState, 'kit' | 'basis'>): boolean {
+  if (!e.kit || (e.basis?.current ?? TRANSCENDENT_BASIS) !== TRANSCENDENT_BASIS) return false;
+  return combatKitOf(e.kit) !== null;
 }
 
 /** 초월 특성 칸 (GDD 12-4 v6.039, C.436): 가진 초월 특성(초월자 id 순서) — 데이터에 없는 id 는 뺀다 */
@@ -177,7 +187,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -554,6 +564,19 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   }
   applyDetachedTraits(params, detachedOf(e.abilities));
   applyTraitTotals(params, transcendentTraitEffects(stat).totals);
+  // 초월자 전용 블록 (GDD 12-4 v6.048, C.441): '초월자' 기반이면 일반 블록(기본·흡수·물공·콤보) 대신 전용 블록만 + 기본 회피율 + 해방 수치 = 진화체 만해와 같음
+  const kit = kitActive(stat) ? combatKitOf(stat.kit) : null;
+  params.kit = kit;
+  if (kit) {
+    params.skills = [];
+    params.physBlock = null;
+    params.combos = [];
+    if (kit.evadeChance > 0) params.evadeChance = Math.max(params.evadeChance ?? 0, kit.evadeChance);
+    params.liberationUnique = true;
+    params.liberationAttackSpeed = LB.uniqueAttackSpeed;
+    params.liberationChainSpeed = LB.uniqueChainSpeed;
+    params.liberationStatMultiplier = trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier;
+  }
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */

@@ -251,3 +251,22 @@
 @keyframes bha-guardshield-in { from { opacity: 0; transform: translateX(-50%) scale(0.6); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 @keyframes bha-guardshield-pulse { from { opacity: 0.75; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .bha-root.bha-battle.is-guarding .bha-unit--me .bha-guardshield { animation: none; } }
+
+/* 초월자 전용 블록 (GDD 12-4 v6.048, C.441) — 토큰만.
+   반격 창: 적 공격을 받은 뒤 창 동안 반격 블록(경화수월) 테두리 발광 */
+.bha-root .bha-block.bha-kitglow { outline: 3px solid var(--bha-warn); outline-offset: 2px; box-shadow: 0 0 10px var(--bha-warn), 0 0 22px var(--bha-accent-hi); z-index: 2; animation: bha-kitglow 0.25s ease-in-out infinite alternate; }
+@keyframes bha-kitglow { from { outline-color: var(--bha-accent-hi); box-shadow: 0 0 6px var(--bha-warn), 0 0 12px var(--bha-accent-hi); } to { outline-color: var(--bha-warn); box-shadow: 0 0 12px var(--bha-warn), 0 0 26px var(--bha-accent-hi); } }
+/* 대사 띠 ('언제부터 경화수월을 쓰고 있다고 착각한 거지?' · '깨져라, 경화수월'): 해방 가능 알림과 같은 띠 모양, 조금 아래에 오래 */
+.bha-kitline { position: absolute; left: 0; right: 0; top: 34%; z-index: var(--bha-z-float); display: flex; justify-content: center; pointer-events: none; opacity: 0; padding: 0 var(--bha-sp-4); }
+.bha-kitline.is-on { animation: bha-kitline 2200ms var(--bha-ease-out) both; }
+.bha-kitline__text { max-width: 100%; padding: var(--bha-sp-1) var(--bha-sp-4); border-radius: var(--bha-r-pill); background: linear-gradient(90deg, transparent, var(--bha-bg-0) 10%, var(--bha-bg-0) 90%, transparent); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-lg); color: var(--bha-text-1); text-align: center; text-shadow: 0 0 6px var(--bha-special-a), 0 2px 4px var(--bha-bg-0); }
+@keyframes bha-kitline { 0% { opacity: 0; transform: scale(0.9); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
+/* 경화수월 분신: 몸 그림 반투명 사본이 적 쪽(왼쪽)으로 미끄러져 사라진다 */
+.bha-kitclone { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; z-index: 4; animation: bha-kitclone 0.6s var(--bha-ease-out) both; }
+@keyframes bha-kitclone { 0% { opacity: 0; transform: translateX(0); } 20% { opacity: 0.55; } 70% { opacity: 0.45; transform: translateX(calc(-1 * var(--bha-sp-9) * 3)); } 100% { opacity: 0; transform: translateX(calc(-1 * var(--bha-sp-9) * 3.4)); } }
+/* 영창 스택 칩: 가득(흑관 준비)이면 강조색 */
+.bha-kitstack.is-full { color: var(--bha-accent-hi); box-shadow: 0 0 8px var(--bha-accent); }
+@media (prefers-reduced-motion: reduce) {
+  .bha-root .bha-block.bha-kitglow { animation: none; }
+  .bha-kitline.is-on { animation: bha-libready-still 2200ms steps(1, end) both; }
+}

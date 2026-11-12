@@ -235,6 +235,62 @@ export interface CombatParams {
   physBlockSpawnSeconds: number;
   /** 타격 지연 (GDD 214장, C.357): 공격 주기는 그대로, 피해만 이 초 뒤 틱에 들어간다 = 그 공격 모션이 닿는 순간. 기본값 balance, 화면이 실제 동작 데이터로 바꾼다 */
   hitDelay: HitDelayParams;
+  /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441): 있으면 일반 블록(기본·흡수·물공) 대신 이 블록만 나온다. 없으면(null) 보통 블록 */
+  kit?: CombatKit | null;
+}
+
+/** 초월자 전용 블록 하나 (GDD 12-4 v6.048, C.441 — src/engine/transcendKit.ts 가 데이터 + 수치 + 강화로 만든다). 엔진은 장치만 본다:
+ *  solo 체인 안 됨 · maxOnRail 레일 최대 개수 · counter 반격 창 · stack 최대 체인마다 스택 → 가득이면 마무리 기술 · releaseSwap 해방 중 대신 나오는 블록 · releaseOnly 해방 중에만 */
+export interface CombatKitBlock {
+  id: string;
+  name: string;
+  short: string;
+  fx: string;
+  /** 체인 n 의 기술 이름 */
+  tierNames: string[];
+  /** 출현 몫 (해방 밖 = releaseOnly 아닌 블록끼리, 해방 중 = releaseSwap 를 적용한 뒤 블록끼리 나눈다) */
+  weight: number;
+  maxOnRail?: number;
+  /** 피해 = power × tiers[체인−1] × mult × 기본 공격 1회분 × 능력치 비 */
+  power: number;
+  tiers: number[];
+  /** 강화 배율 (1 + 강 × perLevel) — 피해·회복에 */
+  mult: number;
+  solo?: boolean;
+  releaseOnly?: boolean;
+  releaseSwap?: string;
+  counter?: { windowSeconds: number; damageMult: number; critBonus: number; healLostFraction: number; line: string };
+  stack?: { cutPerStack: number; maxCut: number; full: number; finisherName: string; finisherPower: number; enemyStunSeconds: number };
+}
+
+export interface CombatKit {
+  id: string;
+  liberationName: string;
+  stackName: string;
+  blocks: CombatKitBlock[];
+  evadeChance: number;
+  revive?: { hpFraction: number; line: string };
+}
+
+/** 초월자 전용 블록의 바 블록 traitId 앞머리 (traitId = 'kit:<블록 id>') */
+export const KIT_TRAIT_PREFIX = 'kit:';
+
+/** 바 블록 → 초월자 전용 블록 정의 (아니면 undefined) */
+export function kitBlockOf(p: Pick<CombatParams, 'kit'>, traitId: string | null | undefined): CombatKitBlock | undefined {
+  if (!p.kit || !traitId || !traitId.startsWith(KIT_TRAIT_PREFIX)) return undefined;
+  const id = traitId.slice(KIT_TRAIT_PREFIX.length);
+  return p.kit.blocks.find((b) => b.id === id);
+}
+
+/** 전투 중 초월자 전용 블록 상태 (GDD 12-4 v6.048): 반격 창(끝 틱·그 공격 손실 체력) · 스택 · 되살아남 · 기록(반격 성공·마무리 기술·되살아남) */
+export interface KitCombatState {
+  counterUntil: number;
+  counterLost: number;
+  stack: number;
+  revived: boolean;
+  counters: number;
+  finishers: number;
+  revives: number;
 }
 
 /** 타격 지연(초) — 종족 무관, 숫자만. basic 내 평타 / block 블록 공격 기본값 / blockBy 계열·단계별(`계열:단계`)·'combo'·'liberation' / enemy 적 기본 공격 / heavy 강공격 착탄 / counter 반격 */
@@ -411,6 +467,7 @@ export function defaultCombatParams(): CombatParams {
     elementDamage: zeroElementDamage(),
     physBlock: null,
     physBlockSpawnSeconds: BALANCE.provisional.physBlocks.spawnSeconds,
+    kit: null,
   };
 }
 
@@ -450,7 +507,14 @@ export type CombatEvent =
   | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean }
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean }
+  /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean }
+  /** 초월자 반격 창이 열렸다 (GDD 12-4 v6.048 경화수월): seconds 동안 반격 블록 테두리 발광 */
+  | { kind: 'kit-window'; seconds: number }
+  /** 초월자 대사 띠 (반격 성공·되살아남 등) */
+  | { kind: 'kit-line'; text: string; tone: 'counter' | 'revive' | 'finisher' }
+  /** 초월자 스택이 바뀌었다 (영창 등): 지금 값·가득 값 */
+  | { kind: 'kit-stack'; stack: number; full: number }
   | { kind: 'heavy-cast'; seconds: number }
   /** 강공격 빔 발사 준비 (GDD 245장 3): 예고가 끝나는 틱(atTick)에 빔이 닿고 그 순간 피해 판정 — 화면은 지금 공격 모션을 시작해 빔이 atTick 에 닿게 한다(타격 지연 hitDelay.heavy 만큼 앞서). 그 뒤 heavy-hit 는 landed: true */
   | { kind: 'heavy-windup'; atTick: number }
@@ -578,6 +642,8 @@ export interface CombatState {
     /** 이 전투에서 흡혈로 되찾은 체력 합계 (상한 drainCapFraction, C.53) */
     drained?: number;
   };
+  /** 초월자 전용 블록 상태 (GDD 12-4 v6.048, C.441) — params.kit 이 있을 때만 */
+  kit?: KitCombatState;
   /** shield: 남은 보호막 (GDD 25-5 성역·갈림길, 없으면 0) */
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   /** 다음 펫 공격까지 남은 틱 (params.petAttack 이 있을 때만, GDD 241-D 4) */
@@ -881,7 +947,8 @@ export interface SpawnEntry {
  * 해방 중에도 이 표 그대로, 간격만 해방 생성 배율로 줄인다 (GDD 106장 4 확정 v5.236 — 옛 '해방 표 = 장착 본체 블록' 98장 B 대체).
  * 돌려주는 seconds = 블록 하나가 나오는 평균 간격(초) = 1 ÷ 총량
  */
-export function spawnTableOf(p: CombatParams): { seconds: number; entries: SpawnEntry[] } {
+export function spawnTableOf(p: CombatParams, releasing = false): { seconds: number; entries: SpawnEntry[] } {
+  if (p.kit) return kitSpawnTableOf(p, p.kit, releasing);
   const rates: { kind: SpawnEntry['kind']; source: CombatSkill | null; family: string | null; rate: number; phys?: boolean }[] = [];
   // 공격 몫: 흡수 특성마다(옛 타이머 간격의 역수) + 기본 공격(80장 칸 수별 기본 몫) 또는 물공 몸의 물공 블록(49-11)
   for (const src of p.skills) rates.push({ kind: 'skill', source: src, family: src.family ?? null, rate: 1 / spawnSecondsOf(p, src) });
@@ -904,6 +971,35 @@ export function spawnTableOf(p: CombatParams): { seconds: number; entries: Spawn
   return { seconds: 1 / total, entries };
 }
 
+/** 초월자 전용 블록 출현표 (GDD 12-4 v6.048, C.441): 일반 블록(기본·흡수·물공)이 없고 전용 블록만. 간격 = 흡수 0칸 몸의 기본 간격(같은 가속 보정),
+ *  몫 = 블록 weight (해방 중이면 releaseSwap 를 적용한 블록의 weight). 공허 몫은 그대로(블록이 아니라 리스크 패널티) */
+function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean): { seconds: number; entries: SpawnEntry[] } {
+  const seconds = spawnTableOf({ ...p, kit: null, skills: [], physBlock: null }).seconds;
+  const picks = kit.blocks.filter((b) => !b.releaseOnly).map((b) => (releasing && b.releaseSwap ? kit.blocks.find((x) => x.id === b.releaseSwap) ?? b : b));
+  const total = Math.max(1e-6, picks.reduce((a, b) => a + b.weight, 0));
+  const v = Math.max(0, voidChanceOf(p));
+  const entries: SpawnEntry[] = picks.map((b) => ({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: (b.weight / total) * (1 - v) }));
+  if (v > 0) entries.push({ kind: 'void', source: null, family: null, chance: v });
+  return { seconds, entries };
+}
+
+/** 전용 블록의 생성원 모양 (출현표·화면 공용 — 피해는 kitDamageOf 가 따로 계산) */
+export function kitSkillOf(p: CombatParams, b: CombatKitBlock): CombatSkill {
+  return { id: KIT_TRAIT_PREFIX + b.id, element: null, category: 'mixed', family: null, role: 'attack', powerInAttacks: b.power, chainBonus: p.basicBlockChainBonus, powerMultiplier: b.mult };
+}
+
+/** 지금 스택이 줄이는 생성 주기(초) (영창 — 스택 1당 cutPerStack, 최대 maxCut) */
+export function kitSpawnCutOf(s: Pick<CombatState, 'params' | 'kit'>): number {
+  const st = s.params.kit?.blocks.find((b) => b.stack)?.stack;
+  if (!st || !s.kit) return 0;
+  return Math.min(st.maxCut, st.cutPerStack * s.kit.stack);
+}
+
+/** 반격 창이 열려 있는가 (화면: 반격 블록 테두리 발광) */
+export function kitCounterOpen(s: Pick<CombatState, 'kit' | 'tick'>): boolean {
+  return !!s.kit && s.tick <= s.kit.counterUntil;
+}
+
 /** 출현표에서 하나를 뽑는다 (전투 난수) */
 function drawSpawn(s: CombatState, entries: readonly SpawnEntry[]): SpawnEntry | null {
   let r = nextFloat(s.rng);
@@ -919,8 +1015,14 @@ function spawnIntervalOf(s: CombatState): number {
   const sec = spawnTableOf(s.params).seconds;
   const it = s.params.battleItem;
   const haste = s.hasteTicks > 0 && it?.effect === 'haste' ? it.spawnMult : 1;
-  return sec / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
+  const out = sec / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
+  // 영창 스택 (GDD 12-4 v6.048 귀도): 스택만큼 주기를 줄인다 (아래로는 KIT_MIN_SPAWN_SECONDS)
+  const cut = kitSpawnCutOf(s);
+  return cut > 0 ? Math.max(KIT_MIN_SPAWN_SECONDS, out - cut) : out;
 }
+
+/** 스택으로 줄어도 블록 생성 주기는 이 초 아래로 안 간다 (엔진 안전값) */
+const KIT_MIN_SPAWN_SECONDS = 0.3;
 
 /** 물공 블록의 계열: 종족 계열 표에서 하나를 고르게 뽑는다 (계열 표가 없으면 계열 없음) */
 function drawPhysFamily(s: CombatState): string | null {
@@ -1095,6 +1197,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     inputs: [],
     events: [],
     ...(setup.script ? { script: { ...setup.script, allow: [...setup.script.allow] } } : {}),
+    ...(params.kit ? { kit: { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0 } } : {}),
   };
 }
 
@@ -1187,8 +1290,29 @@ export function blockDamage(s: CombatState, b: Block, chain = 1): number {
   if (b.kind === 'void') return p.voidPowerInAttacks * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   if (b.kind === 'combo') return (comboOf(p, b.traitId)?.powerInAttacks ?? 0) * unitDamage(p) * plainHitMultiplier(s) * guardPose;
   if (b.kind === 'liberation') return p.liberationPowerInAttacks * unitDamage(p) * liberationHit(s).mult * guardPose;
+  const kb = b.kind === 'skill' ? kitBlockOf(p, b.traitId) : undefined;
+  if (kb) return kitDamageOf(s, kb, chain, kitWillFinish(s, kb, chain), !!kb.counter && kitCounterOpen(s));
   const e = blockEffect(s, b, chain);
   return e ? e.skill.powerInAttacks * e.mult * unitDamage(p) * guardPose : 0;
+}
+
+/** 전용 블록 피해 (치명·특성 배율 전): 마무리 기술이면 finisherPower, 아니면 power × 체인 단계 배율 — × 강화 × 기본 공격 1회분 × 능력치 비 × 방어 자세, 반격이면 × damageMult */
+export function kitDamageOf(s: CombatState, kb: CombatKitBlock, chain: number, finisher = false, counter = false): number {
+  const p = s.params;
+  const tier = kb.tiers[Math.min(kb.tiers.length, Math.max(1, chain)) - 1] ?? 1;
+  const base = finisher && kb.stack ? kb.stack.finisherPower : kb.power * tier;
+  return base * kb.mult * unitDamage(p) * plainHitMultiplier(s) * stanceMultiplier(s) * (counter && kb.counter ? kb.counter.damageMult : 1);
+}
+
+/** 이 체인이 마무리 기술(흑관 등)이 되는가: 스택 장치 블록의 최대 체인 + 스택 가득 */
+export function kitWillFinish(s: Pick<CombatState, 'kit'>, kb: CombatKitBlock, chain: number): boolean {
+  return !!kb.stack && !!s.kit && chain >= kb.tiers.length && s.kit.stack >= kb.stack.full;
+}
+
+/** 전용 블록 기술 이름 (체인·마무리 기술) */
+export function kitMoveName(s: Pick<CombatState, 'kit'>, kb: CombatKitBlock, chain: number): string {
+  if (kitWillFinish(s, kb, chain)) return kb.stack!.finisherName;
+  return kb.tierNames[Math.min(kb.tierNames.length, Math.max(1, chain)) - 1] ?? kb.name;
 }
 
 /** 방어 자세 중이면 내 블록 피해 배율(<1), 아니면 1 */
@@ -1267,14 +1391,14 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
 }
 
 /** 내 공격 피해: 특성 배율 → 블록 플레이 보정(GDD 84장 3번, 물공 몸 아님)·평타형 대가(물공 몸, C.142) → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타(블록은 치명 가산). 반사·독·공허 블록은 이 길을 지나지 않는다 */
-function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[]): { damage: number; crit: boolean; elem?: ElemHit } {
+function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[], extraCrit = 0): { damage: number; crit: boolean; elem?: ElemHit } {
   const p = s.params;
   const elem = elementDamageBonus(p, elements);
   // 블록 플레이 보정은 블록형 몸만 (평타형 = 물공 몸은 블록이 평타를 돕는 몸이라 없음 — 84장 3번 "평타캐보다"), 물공 몸은 대신 평타형 대가(C.142)
   const blockPlay = block && !p.physBlock;
   const blockMult = block ? (p.blockDamageMultiplier ?? 1) * (blockPlay ? (p.blockPlayDamage ?? 1) : 1) : 1;
   const physMult = p.physBlock?.damage ?? 1;
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * (elem ? 1 + elem.pct / 100 : 1), blockPlay ? (p.blockPlayCrit ?? 0) : 0, block);
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block);
   return elem ? { ...hit, elem } : hit;
 }
 
@@ -1421,11 +1545,22 @@ function landHit(s: CombatState, h: PendingHit): void {
   if (h.target === 'enemy') {
     dealDamage(s, h.amount, h.finisher ?? { kind: 'basic-attack', traitId: null, element: null });
     if (h.elements) onHit(s, 'enemy', h.elements, h.amount, h.basic);
-  } else {
-    if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
-    takeDamage(s, h.amount);
-    if (h.elements) onHit(s, 'player', h.elements, h.amount);
-  }
+  } else hitPlayer(s, h);
+}
+
+/** 적 공격이 나에게 닿는다: 반사 → 피해 → 흡혈·독 → 초월자 반격 창 (GDD 12-4 v6.048 경화수월 — 적 공격을 받은 뒤 창 안에 쓰면 반격) */
+function hitPlayer(s: CombatState, h: Omit<PendingHit, 'atTick'>): void {
+  const before = s.player.hp;
+  if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
+  takeDamage(s, h.amount);
+  if (h.elements) onHit(s, 'player', h.elements, h.amount);
+  const kb = s.params.kit?.blocks.find((b) => b.counter);
+  const k = s.kit;
+  const ev = h.event.kind;
+  if (!kb?.counter || !k || s.status !== 'playing' || !(ev === 'enemy-attack' || ev === 'heavy-hit' || ev === 'counter')) return;
+  k.counterUntil = s.tick + ticksOf(s.params, kb.counter.windowSeconds);
+  k.counterLost = Math.max(0, before - s.player.hp);
+  emit(s, { kind: 'kit-window', seconds: kb.counter.windowSeconds });
 }
 
 /**
@@ -1445,11 +1580,7 @@ function strike(s: CombatState, delaySeconds: number, h: Omit<PendingHit, 'atTic
     if (h.target === 'enemy') {
       dealDamage(s, h.amount, h.finisher ?? { kind: 'basic-attack', traitId: null, element: null });
       if (h.elements) onHit(s, 'enemy', h.elements, h.amount, h.basic);
-    } else {
-      if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
-      takeDamage(s, h.amount);
-      if (h.elements) onHit(s, 'player', h.elements, h.amount);
-    }
+    } else hitPlayer(s, h);
     return;
   }
   const atTick = s.tick + d + inputTickLead;
@@ -1637,6 +1768,14 @@ function takeDamage(s: CombatState, amount: number): void {
     s.player.hp = s.player.maxHp * last;
     proc(s, 'lastStand');
   }
+  // 깨져라, 경화수월 (GDD 12-4 v6.048): 초월자 되살아나기 — 전투당 1회. 각본 전투는 원래 지지 않는다
+  const rv = s.params.kit?.revive;
+  if (s.player.hp <= 0 && rv && s.kit && !s.kit.revived && !s.script) {
+    s.kit.revived = true;
+    s.kit.revives++;
+    s.player.hp = s.player.maxHp * rv.hpFraction;
+    emit(s, { kind: 'kit-line', text: rv.line, tone: 'revive' });
+  }
   if (s.player.hp > 0) applyThorns(s, amount);
   if (s.player.hp <= 0) {
     s.status = 'lost';
@@ -1655,6 +1794,20 @@ export function blockElementOf(p: CombatParams, b: Block): string | null {
 
 function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, family: string | null = null): boolean {
   if (s.tray.length >= s.params.trayCapacity) return false;
+  const kit = s.params.kit;
+  const kb0 = kind === 'skill' ? kitBlockOf(s.params, traitId) : undefined;
+  if (kit && kb0) {
+    // 초월자 전용 블록 (GDD 12-4 v6.048): 해방 중이면 치환 블록(프라고르), 레일 최대 개수(경화수월 2)를 넘으면 상한 없는 다른 블록(귀도)으로
+    let kb = liberationActive(s) && kb0.releaseSwap ? kit.blocks.find((x) => x.id === kb0.releaseSwap) ?? kb0 : kb0;
+    if (kb.maxOnRail !== undefined && s.tray.filter((x) => x.traitId === KIT_TRAIT_PREFIX + kb.id).length >= kb.maxOnRail) {
+      const alt = kit.blocks.find((x) => x !== kb && !x.releaseOnly && x.maxOnRail === undefined);
+      if (!alt) return false;
+      kb = alt;
+    }
+    s.tray.push({ uid: s.nextUid++, kind, traitId: KIT_TRAIT_PREFIX + kb.id, family: null, element: null, ...(kb.solo ? { solo: true } : {}) });
+    emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
+    return true;
+  }
   // 블록의 속성 (C.118, GDD 66장): 체인은 같은 계열 + 같은 속성끼리만. skill 블록은 그 특성(기본 블록은 물공 속성)의 속성, 나머지는 없음
   const element = kind === 'skill' ? (sourceOf(s.params, traitId)?.element ?? null) : null;
   s.tray.push({ uid: s.nextUid++, kind, traitId, family, element });
@@ -1789,6 +1942,8 @@ function useBlock(s: CombatState, index: number): boolean {
     counterIfStance(s);
     return true;
   }
+  const kb = b.kind === 'skill' ? kitBlockOf(p, b.traitId) : undefined;
+  if (kb) return useKitBlock(s, index, kb);
   // 스킬 블록: 함께 발동하는 칸들이 모두 소모된다. 체인 단계 = 함께 쓰인 블록 수
   const group = chainGroup(s.tray, index, maxChain(p));
   const chain = group.length;
@@ -1832,6 +1987,75 @@ function useBlock(s: CombatState, index: number): boolean {
   updateCombos(s, skill.family ?? null, chain);
   counterIfStance(s);
   return true;
+}
+
+/** 초월자 전용 블록 쓰기 (GDD 12-4 v6.048, C.441): 체인(solo 면 혼자) → 반격(창 안이면 피해·치명 가산·손실 체력 회복·즉시 1개) / 스택(최대 체인마다 +1, 가득이면 마무리 기술 + 적 공격 불능) */
+function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean {
+  const p = s.params;
+  const k = (s.kit ??= { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0 });
+  const group = kb.solo ? [index] : chainGroup(s.tray, index, Math.min(maxChain(p), kb.tiers.length));
+  const chain = group.length;
+  s.tray.splice(group[0]!, chain);
+  const id = KIT_TRAIT_PREFIX + kb.id;
+  for (let n = 0; n < chain; n++) s.skillsUsed.push(id);
+  s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + chain;
+  s.blocksByChain[chain - 1]!++;
+  if (chain >= p.chainMultipliers.length) s.chain3Count++;
+  addGauge(s, p.liberationGaugePerBlock * chain + (p.liberationChainBonus[chain - 1] ?? 0));
+  if (liberationActive(s)) s.liberation.chains++;
+  const counter = !!kb.counter && kitCounterOpen(s);
+  const finisher = kitWillFinish(s, kb, chain);
+  const name = kitMoveName(s, kb, chain);
+  const { damage, crit } = playerHit(s, kitDamageOf(s, kb, chain, finisher, counter), true, [], counter ? kb.counter!.critBonus : 0);
+  let heal = 0;
+  if (counter && kb.counter) {
+    k.counters++;
+    k.counterUntil = -1;
+    emit(s, { kind: 'kit-line', text: kb.counter.line, tone: 'counter' });
+    heal = Math.min(Math.max(0, s.player.maxHp - s.player.hp), k.counterLost * kb.counter.healLostFraction * kb.mult);
+    if (heal > 0) {
+      s.player.hp += heal;
+      emit(s, { kind: 'drain', target: 'player', heal });
+    }
+  }
+  if (kb.stack && chain >= kb.tiers.length) {
+    if (finisher) {
+      k.stack = 0;
+      k.finishers++;
+      // 공격 불능 = 적 행동 타이머 정지 (넉백과 같은 장치, GDD 7-10 상태 이상)
+      s.knockbackTicks = Math.max(s.knockbackTicks ?? 0, ticksOf(p, kb.stack.enemyStunSeconds));
+    } else k.stack = Math.min(kb.stack.full, k.stack + 1);
+    emit(s, { kind: 'kit-stack', stack: k.stack, full: kb.stack.full });
+  }
+  strike(s, blockHitDelayOf(p, null), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage, weak: false, heal, guardSeconds: 0, bonus: null, crit, kitName: name, kitFx: kb.fx, kitCounter: counter, kitFinisher: finisher }, finisher: { kind: 'skill', traitId: id, element: null, family: null, weak: false, matchup: 'neutral' } });
+  // 반격 성공: 생성 주기와 상관없이 같은 블록 1개를 바로 (GDD 12-4 v6.048 경화수월)
+  if (counter && s.status === 'playing') spawn(s, 'skill', id);
+  updateCombos(s, null, 0);
+  counterIfStance(s);
+  return true;
+}
+
+/** 해방이 시작·끝날 때 바의 전용 블록을 바꾼다 (GDD 12-4 v6.048 붕옥 융합: 경화수월 ↔ 프라고르). 되돌릴 때 레일 상한을 넘는 몫은 상한 없는 블록으로 */
+function kitSwapTray(s: CombatState, releasing: boolean): void {
+  const kit = s.params.kit;
+  if (!kit) return;
+  for (const src of kit.blocks) {
+    if (!src.releaseSwap) continue;
+    const to = kit.blocks.find((x) => x.id === src.releaseSwap);
+    if (!to) continue;
+    const [from, dest] = releasing ? [src, to] : [to, src];
+    const alt = kit.blocks.find((x) => x !== dest && !x.releaseOnly && x.maxOnRail === undefined);
+    let kept = s.tray.filter((b) => b.traitId === KIT_TRAIT_PREFIX + dest.id).length;
+    for (const b of s.tray) {
+      if (b.traitId !== KIT_TRAIT_PREFIX + from.id) continue;
+      const over = dest.maxOnRail !== undefined && kept >= dest.maxOnRail;
+      const use = over && alt ? alt : dest;
+      if (!over) kept++;
+      b.traitId = KIT_TRAIT_PREFIX + use.id;
+      b.uid = s.nextUid++; // 다른 블록이 됐다 — 화면이 새 블록으로 그린다
+      if (use.solo) b.solo = true; else delete b.solo;
+    }
+  }
 }
 
 /** 막기를 지금 누를 수 있는가 (GDD 105장 수정 v5.233): 게이지가 다 찼고 막기 중이 아니면(공허 경직 중에도 된다) */
@@ -1958,6 +2182,7 @@ function liberate(s: CombatState): boolean {
     s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
   }
   emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique });
+  kitSwapTray(s, true);
   grantLiberationBlocks(s, LB.instantBlocks);
   return true;
 }
@@ -1966,7 +2191,7 @@ function liberate(s: CombatState): boolean {
  *  다음 생성은 해방 간격 한 번 뒤 */
 function grantLiberationBlocks(s: CombatState, n: number): void {
   if (s.script) return; // 각본 전투(GDD 241-B 1)는 난수 없이 — 해방 뒤 블록은 각본이 3개 놓는다
-  const entries = spawnTableOf(s.params).entries.filter((e) => e.source);
+  const entries = spawnTableOf(s.params, liberationActive(s)).entries.filter((e) => e.source);
   if (entries.length === 0) return;
   for (let k = 0; k < n; k++) {
     if (s.tray.length >= s.params.trayCapacity) s.tray.splice(s.tray.length - 1, 1);
@@ -1988,6 +2213,7 @@ function endLiberation(s: CombatState): void {
   }
   lb.ticksLeft = 0;
   lb.gauge = 0;
+  kitSwapTray(s, false);
   // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다
   const risk = lb.scripted ? 0 : s.params.liberationRisk;
   lb.risk += risk;
@@ -2195,7 +2421,7 @@ function advanceTick(s: CombatState): void {
   // 해방 중(GDD 83장)에는 해방 표(장착 블록, 공허 없음)를 해방 생성 배율만큼 빠른 간격으로
   if (!s.script && s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
     s.spawnTimer = t(spawnIntervalOf(s));
-    const e = drawSpawn(s, spawnTableOf(p).entries);
+    const e = drawSpawn(s, spawnTableOf(p, liberationActive(s)).entries);
     if (e?.kind === 'void') spawn(s, 'void', null);
     else if (e?.phys) {
       // 물공 생성원 (GDD 49-11): 그 속성 물공 블록(기본 공격 블록) 1개, 계열은 종족 계열 표에서 고르게

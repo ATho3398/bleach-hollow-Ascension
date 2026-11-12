@@ -199,9 +199,12 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
     go.dataset.goMode = m;
     onSelect?.(m);
   }
-  actions.append(...btns);
+  // 초월자 전용 블록 몸 (GDD 12-4 v6.048): 노력치 흡수·놓아주기만 — 다른 갈래 버튼은 만들지 않은 것처럼 빼고, 처음 고른 갈래 = 노력치
+  const shown = exp.absorbOffer?.statOnly ? btns.filter((b) => b.dataset.mode === 'stat' || b.dataset.mode === 'none') : btns;
+  if (shown !== btns) sel = 'stat';
+  actions.append(...shown);
   select(sel);
-  return { actions, desc, go, first: btns[0]! };
+  return { actions, desc, go, first: shown[0]! };
 }
 
 /** 쓰러뜨린 적 카드 (흡수 화면 왼쪽 판 · 첫 포식 오른쪽 빈 칸 GDD 243장 5) */
