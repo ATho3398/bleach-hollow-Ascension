@@ -7,7 +7,7 @@ import { hpNumbers } from './battle';
 import { infoTip, type InfoBody } from './infoTip';
 import { roomStatusInfo } from './statusInfo';
 import { CARE_STATUS_HINTS, dyingClock, statusChips, type StatusChip } from './roomLogic';
-import type { SaveData } from '../../game';
+import { trackNameOf, trackRulesOf, type SaveData } from '../../game';
 import { formDisplayName } from '../../engine/evolution';
 import { rebirthMark } from '../rebirthView';
 import { shownName } from '../displayName';
@@ -63,9 +63,19 @@ export function statusInfoButton(chipsNow: () => StatusChip[], faction: FactionC
  * 이름이 없으면(옛 세이브 — 이어할 때 정함) 예전처럼 이름표 테 꾸밈을 입었거나 환생(★)·투트랙일 때만 진화체 이름, 아니면 null(이름표 없음).
  * tracks = 트랙 전환을 쓸 수 있는 화면인지 (방 = 전환 손잡이가 있을 때만)
  */
-export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
+export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null; transcendentId?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
   const stars = rebirthMark(save.rebirth.count);
   const form = shownName(formDisplayName(save.evolution, faction.id));
+  // 초월자 (GDD 12-4 v6.028): 이름 = 초월자 이름, 작게 '초월자 · 진화체'(종류 이름 = 트랙 종류 설정 label)
+  if (save.transcendentId) {
+    const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
+    const kind = `${trackRulesOf(save).label} · ${form}`;
+    tag.append(el('b', 'bha-room__nameown', trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })), el('span', 'bha-room__nameform', kind));
+    if (stars) tag.append(stars);
+    tag.title = `${trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })} · ${kind}`;
+    tag.dataset.transcendent = save.transcendentId;
+    return tag;
+  }
   if (save.name) {
     const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
     tag.append(el('b', 'bha-room__nameown', save.name), el('span', 'bha-room__nameform', form));

@@ -1,0 +1,14 @@
+{
+  "id": "character",
+  "label": "캐릭터",
+  "evolution": true,
+  "devolution": true,
+  "timeDecay": true,
+  "careRequests": true,
+  "rank": true,
+  "story": true,
+  "rebirth": true,
+  "fusion": true,
+  "allDifficulties": false,
+  "maxTracks": 2
+}

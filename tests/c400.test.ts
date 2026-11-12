@@ -75,7 +75,7 @@ describe('241-D 5 상점·가방·팔기·세이브', () => {
     expect(sellRows(s, H).find((e) => e.key === 'sortie-courage')).toMatchObject({ count: 1, group: 'battle' });
   });
   it('세이브 형식 74: 73 → 74 = 빈 칸 2개, 저장·불러오기로 칸·개수가 남는다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(81); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(82); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', 0);
     s.shared.items['sortie-luck'] = 3;
     s.shared.sortie = ['sortie-luck', null];

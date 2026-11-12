@@ -10,7 +10,7 @@ import { createExpedition, restoreExpedition, serializeExpedition } from '../src
 import { conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, slotStatBonus, trackCostSum, type FusionInput } from '../src/engine/transcend';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import {
-  activeTrackOf, allTracks, checkTrackOpen, developHogyoku, fusionGate, fusionPreview, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
+  activeTrackOf, allTracks, characterTracks, checkTrackOpen, developHogyoku, fusionGate, fusionPreview, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
   statBonusOf, switchTrack, TRACK_KEYS, trackIsTopRank, writeSave, type SaveData, type TrackKey,
 } from '../src/game';
 import { fusionBlockText, fusionFinalText, fusionLists } from '../src/ui/hogyokuView';
@@ -288,9 +288,11 @@ describe('합체 (GDD 22-3)', () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.def.id).toBe(pv.def!.id);
+    // C.429 (GDD 12-4 v6.028): 지금 트랙 = 새 초월자(바탕 = 지금 캐릭터 hollow), 두 캐릭터는 1단계로 쉬는 트랙에
     expect(s.factionId).toBe('hollow');
-    expect(s.otherTracks.map((t) => t.factionId)).toEqual([other('hollow')]);
-    for (const t of allTracks(s)) {
+    expect(s.transcendentId).toBe(r.def.id);
+    expect(characterTracks(s).map((t) => t.factionId)).toEqual(['hollow', other('hollow')]);
+    for (const t of characterTracks(s)) {
       expect(t.evolution.tierIndex).toBe(0);
       expect(t.evolution.ev).toEqual({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 });
       expect(t.build.owned).toEqual([]);
@@ -299,7 +301,7 @@ describe('합체 (GDD 22-3)', () => {
       expect(t.rebirth).toEqual({ count: 0, carry: { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 } });
       expect(t.runLog.runs).toEqual([]);
     }
-    expect(s.evolution.stageSeed).not.toBe(s.otherTracks[0]!.evolution.stageSeed);
+    expect(characterTracks(s)[0]!.evolution.stageSeed).not.toBe(characterTracks(s)[1]!.evolution.stageSeed);
     expect(s.shared.soulCrystals).toBe(25);
     expect(s.shared.tradeCoins).toBe(77);
     expect(s.formDex).toEqual(['t4:fire:physical']);

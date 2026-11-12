@@ -35,7 +35,7 @@ describe('C.257 174장 2 방 물건 rank', () => {
   });
   it('방에서 열고 뒤로 = 방 (nav open), 종족 분기 없음', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain("onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },"); // C.394 (GDD 241-C 3): 월드맵 장소로
+    expect(app).toContain("onRank: () => { if (careBlocked(s) || !trackRulesOf(s).rank) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },"); // C.429: 등급전 없는 트랙(초월자)은 막힘 // C.394 (GDD 241-C 3): 월드맵 장소로
     const rv = read('src/ui/roomView.ts');
     expect(rv).not.toMatch(/faction\.id\s*===|'hollow'|'shinigami'/);
     expect(rv).toContain("const order: RoomProp[] = ['book', 'outside', 'hogyoku', 'chest', 'altar'];"); // C.394: 그 자리 = 수련장

@@ -47,7 +47,7 @@ describe('243장 1 붕옥 등장 = 스토리 전부 클리어', () => {
     const raw = JSON.parse(JSON.stringify(s)) as SaveData & { meta: { format: number } };
     raw.meta.format = 77;
     delete (raw.hogyoku as Partial<SaveData['hogyoku']>).appearedAt;
-    expect(SAVE_FORMAT_VERSION).toBe(81);
+    expect(SAVE_FORMAT_VERSION).toBe(82);
     expect(typeof SAVE_MIGRATIONS[77]).toBe('function');
     const m = migrateSave(raw)!;
     expect(m.hogyoku.tabOpen).toBe(true);

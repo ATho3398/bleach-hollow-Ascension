@@ -34,7 +34,7 @@ import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
-  canSwitchFaction, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
+  canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
@@ -1265,7 +1265,7 @@ export function startApp(host: HTMLElement): void {
       onHome: () => nestScreen(),
       onMarket: () => { worldAt = 'market'; openMarket(faction, s); },
       // 번호 쟁탈전·진급 시험 (GDD 241-C 3·241-E 3, C.394): 옛 수련장 자리. 뒤로 = 월드맵. 사망이면 막힘. 4단계 전이면 잠김(lockReasons)
-      onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },
+      onRank: () => { if (careBlocked(s) || !trackRulesOf(s).rank) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },
       onAdventure: () => { worldAt = 'adventure'; departFromHome(faction, s); },
       // 탑 (GDD 139장 1): 모험 화면 탭에서 월드맵 장소로. 사망이면 막힘 안내
       onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },
@@ -1276,10 +1276,11 @@ export function startApp(host: HTMLElement): void {
       lockReasons: {
         ...(towerOpen(s.runLog, faction.id, s.tower.best) ? {} : { tower: towerLabels(faction).locked }),
         ...(rankUnlocked(s.evolution.tierIndex) ? {} : { rank: rankLockedText(faction) }), // 번호 쟁탈전 = 4단계부터 (GDD 241-0)
+        ...(trackRulesOf(s).rank ? {} : { rank: trackLockedText(s) }), // 등급전 없는 트랙 (초월자, GDD 12-4 v6.028) — 자물쇠 + 이유
       },
       onLocked: (p) => showToast(forceAdventure ? FORCE_HINT
         : p === 'tower' ? { eyebrow: specialDungeonLabels(faction).name, title: towerLabels(faction).locked, meta: '' }
-        : p === 'rank' ? { eyebrow: faction.rankBattleName, title: rankLockedText(faction), meta: '' } : FORCE_HINT, 0, 1800),
+        : p === 'rank' ? { eyebrow: faction.rankBattleName, title: trackRulesOf(s).rank ? rankLockedText(faction) : trackLockedText(s), meta: '' } : FORCE_HINT, 0, 1800),
     });
   }
 
@@ -1326,8 +1327,16 @@ export function startApp(host: HTMLElement): void {
     const appearCut = guidePending(s.help, 'hogyoku-appear');
     if (s.trackNotice && appearCut) s.trackNotice = null;
     if (s.trackNotice) {
-      const opened = getFaction(s.trackNotice);
-      notes.push({ eyebrow: '새 트랙', title: `${opened.name} 트랙이 열렸다`, meta: `같은 슬롯에서 새 ${opened.name} 캐릭터를 1단계부터 키운다. 이름표 옆 [${toward(opened.name)}] 버튼으로 바꾼다.` });
+      const notice = s.trackNotice;
+      const t = allTracks(s).find((x) => trackIdOf(x) === notice);
+      if (t?.transcendentId) {
+        // 합체 직후 초월자 방 (GDD 12-4 v6.028): 지금 트랙 = 새 초월자
+        const kind = trackRulesOf(t).label;
+        notes.push({ eyebrow: `새 ${kind}`, title: `${trackNameOf(t)}의 방`, meta: `두 캐릭터가 키운 것을 그대로 이어받았다. 진화·${faction.rankBattleName}·스토리·${faction.rebirth.name} 없이 빌드를 깎는다. 시간이 지나도 수치가 닳지 않는다. 캐릭터는 ··· 더보기에서 바꾼다.` });
+      } else if (t) {
+        const opened = getFaction(t.factionId);
+        notes.push({ eyebrow: '새 트랙', title: `${opened.name} 트랙이 열렸다`, meta: `같은 슬롯에서 새 ${opened.name} 캐릭터를 1단계부터 키운다. 이름표 옆 [${toward(opened.name)}] 버튼으로 바꾼다.` });
+      }
       s.trackNotice = null;
     }
     if (s.hogyoku.tabNotice) {
@@ -1662,8 +1671,8 @@ export function startApp(host: HTMLElement): void {
             nav.replace({ id: 'expedition', locked: true, render: () => { armEnterFx(); showExpedition(faction, exp, '출발!'); root.scrollTop = 0; } });
           },
           onHelp: () => openHelp('expedition', false),
-          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1)
-          onTab: () => storyScreen(faction),
+          // [스토리] 탭 (GDD 25-7): 같은 자리에서 스토리 장·화 목록으로 바꾼다. 탑은 월드맵 장소 (139장 1). 스토리 없는 트랙(초월자, 트랙 종류 story: false — GDD 12-4 v6.028)은 탭 없음
+          ...(trackRulesOf(save!).story ? { onTab: () => storyScreen(faction) } : {}),
         });
         root.scrollTop = 0;
         // 진화 후 첫 출발: 덱 고르기 → 첫 배치 → 조합 안내 (GDD 64장 3번 ①~③)
@@ -1701,7 +1710,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 스토리 장·화 목록 (GDD 25-4·25-7): 원정 출발 화면의 [스토리] 탭. [자유 원정] 탭이면 배치 단계로 돌아간다 */
   function storyScreen(faction: FactionConfig): void {
-    if (!save) return;
+    if (!save || !trackRulesOf(save).story) return;
     nav.replace({
       id: 'story', locked: false,
       render: () => {
@@ -2391,6 +2400,12 @@ export function startApp(host: HTMLElement): void {
 
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──
   // 들어오는 곳 = 방 책장 아래 물건 (GDD 174장 2, C.257): 머리 제목 = 종족 설정 rankBattleName, 뒤로 = 방
+  /** 이 트랙에서 막힌 메뉴의 이유 한 줄 (트랙 종류 설정 lockedReason — 초월자, GDD 12-4 v6.028) */
+  function trackLockedText(s: SaveData): string {
+    const r = trackRulesOf(s);
+    return r.lockedReason ?? `${r.label}은(는) 할 수 없다`;
+  }
+
   function rankScreen(faction: FactionConfig): void {
     if (!save) return;
     rankView(root, faction, save, { onChallenge: (holder) => !careBlocked(save!) && open('rank-battle', () => runRankBattle(faction, holder), true) });

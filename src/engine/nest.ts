@@ -327,6 +327,17 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
   return { hunger: nest.hunger - before.hunger, condition: nest.condition - before.condition, hp: home.hp, spaEnded: home.spaEnded };
 }
 
+/** 시간이 흘러도 수치가 안 닳는 트랙 (GDD 12-4 v6.028, C.429 — 트랙 종류 설정 timeDecay: false, 초월자): 배부름·컨디션·교감이 그대로이고
+ *  쇠약 시계(마지막 끼니)·빈사 시계는 그 시간만큼 뒤로 밀려 멈춘다. 홈 체력 자연 회복·온천(원할 때만 들어감)만 흐른다 */
+export function passNestFrozen(nest: NestState, hours: number, endMs: number = Date.now()): TimeFlow {
+  const h = Number.isFinite(hours) ? Math.max(0, hours) : 0;
+  const home = passHomeHp(nest, h, endMs);
+  const ms = h * HOUR;
+  if ((nest.lastMealAt ?? 0) > 0) nest.lastMealAt = Math.min(endMs, nest.lastMealAt + ms);
+  if (nest.collapsed && !nest.dead && nest.collapsedAt > 0) nest.collapsedAt = Math.min(endMs, nest.collapsedAt + ms);
+  return { hunger: 0, condition: 0, hp: home.hp, spaEnded: home.spaEnded };
+}
+
 /** 교감 문턱 표 [[문턱, 값], …](높은 것부터)에서 지금 교감의 값 */
 export function byBond(table: readonly (readonly [number, number])[], bond: number): number {
   for (const [at, v] of table) if (bond >= at) return v;
@@ -454,10 +465,16 @@ export interface AbsenceReport {
 /** 꺼 둔 동안 (GDD 24-1 → 102-1·102-3): 마지막 접속 시각부터 시간 흐름(offline), 교감 decayHours 마다 −1, 그리고
  *  collapseHours 이상 비웠으면 빈사(그 시각부터, 교감 −collapseLoss) · 빈사 시간(실제 시간, deathHoursOf)이 지났으면 사망(교감 절반).
  *  paused(원정 중간 저장이 있음)·사망 상태면 아무것도 안 바뀐다. 기기 시계를 되돌렸으면(지금이 마지막 접속보다 앞) 0. 접속 시각 갱신은 부르는 쪽이 한다 */
-export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false): AbsenceReport {
+export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false, decay = true): AbsenceReport {
   const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, hp: 0, spaEnded: null }, bond: 0, collapsed: false, died: false };
   if (paused || nest.dead || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return none;
   const hours = (nowMs - lastSeenAt) / HOUR;
+  // 수치가 안 닳는 트랙 (GDD 12-4 v6.028): 교감 감소·48시간 빈사·사망 없음
+  if (!decay) {
+    const flow = passNestFrozen(nest, hours, nowMs);
+    nest.lastTickMs = nowMs;
+    return { ...none, hours, flow };
+  }
   const bond0 = nest.bond;
   const flow = passNestTime(nest, hours, true, nowMs);
   nest.bond = Math.max(0, nest.bond - Math.floor(hours / BX.decayHours));
@@ -474,11 +491,12 @@ export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: n
 
 /** 켜 둔 동안 시간 흐름 (GDD 102-1): 마지막으로 셈한 시각(lastTickMs)부터 지금까지. 48시간 미접속 빈사는 없다(접속이 곧 '왔다').
  *  빈사 시간은 켜 있어도 흐른다(v5.228) — 다 되면 사망. paused(원정 중 — 원정은 자기 허기·컨디션을 쓴다, 빈사 사망은 귀환 때 본다)·사망이면 시각만 옮긴다. 시계를 되돌렸으면 그대로 */
-export function tickNestOnline(nest: NestState, nowMs: number, paused = false): TimeFlow | null {
+export function tickNestOnline(nest: NestState, nowMs: number, paused = false, decay = true): TimeFlow | null {
   if (!Number.isFinite(nest.lastTickMs) || nowMs <= nest.lastTickMs) return null;
   const hours = (nowMs - nest.lastTickMs) / HOUR;
   nest.lastTickMs = nowMs;
   if (paused || nest.dead) return null;
+  if (!decay) return passNestFrozen(nest, hours, nowMs); // 수치가 안 닳는 트랙 (GDD 12-4 v6.028)
   const flow = passNestTime(nest, hours, false, nowMs);
   checkDying(nest, nowMs);
   return flow;

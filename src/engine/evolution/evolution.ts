@@ -62,6 +62,9 @@ export interface EvolutionState {
   bondCare?: number;
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
+  /** 마지막 모습으로 굳었다 (GDD 12-4 v6.028, C.429 — 초월자 트랙): 진화 판정·걸음 수·임박 알림 없음, 노력치 상한 = 마지막 단계 상한.
+   *  트랙 종류 설정(evolution: false)에서 정해 넣는다 — 엔진은 이 표시만 본다. 없으면 false */
+  final?: boolean;
   /** 특성 보유·장착 (C.220, GDD 126-1 수정): 진화할 때 얻고 환생해도 넘긴다. 없으면(점검 도구가 만든 옛 모양) 지금 진화체 특성을 전부 쓴다 */
   abilities?: AbilityLoadout;
   /** 아란칼화 / 참백도 구상화를 깼다 (C.220, GDD 126장 3): 이번 생의 레스렉시온/만해 해금 · 외형(종족 설정 ascension.lookChange). 환생하면 false */
@@ -91,6 +94,11 @@ export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
 
 export function isMaxTier(e: EvolutionState): boolean {
   return e.tierIndex >= MAX_TIER_INDEX;
+}
+
+/** 노력치 상한을 정하는 단계: 마지막 모습으로 굳은 몸(final)은 마지막 단계 상한 (GDD 12-4 v6.028) */
+export function capTierOf(e: Pick<EvolutionState, 'tierIndex' | 'final'>): number {
+  return e.final ? MAX_TIER_INDEX : e.tierIndex;
 }
 
 /** 노력치 상한 (그 단계): 합계와 능력치 하나 */
@@ -125,7 +133,7 @@ export function addEvFree(e: EvolutionState, gain: Partial<Record<StatId, number
 
 /** 노력치를 더한다 (상한까지만 — 상한 밖 몫 evFree 는 세지 않는다). 실제로 오른 양을 돌려준다 */
 export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>, blocked?: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
-  const cap = evCaps(e.tierIndex);
+  const cap = evCaps(capTierOf(e));
   const out: Partial<Record<StatId, number>> = {};
   const mult = evGainMultOf(e.abilities); // 허우적·마구잡이 (GDD 149장 3·4)
   const counted = evCounted(e);
@@ -191,7 +199,7 @@ export function recordEvolutionPractice(e: EvolutionState): void {
 
 /** 다음 진화까지 필요한 걸음 수 (마지막 단계면 null). 화면에는 보이지 않는다 */
 export function stepsNeeded(e: EvolutionState): number | null {
-  return isMaxTier(e) ? null : (EV.stepsNeeded[e.tierIndex] ?? null);
+  return isMaxTier(e) || e.final ? null : (EV.stepsNeeded[e.tierIndex] ?? null);
 }
 
 export function canEvolve(e: EvolutionState): boolean {

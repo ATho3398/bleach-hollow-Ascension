@@ -10,7 +10,7 @@ import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
-import { allTracks, artSkinOf, artTierIndexOf, developAll, developGate, hogyokuPercent, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
+import { characterTracks, artSkinOf, artTierIndexOf, developAll, developGate, hogyokuPercent, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
 import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { dexCard, dexGrid } from './bha/dexGrid';
@@ -363,7 +363,7 @@ export function resetHogyokuSel(): void {
 /** 슬롯의 두 캐릭터를 종족 설정 순서(FACTIONS 목록 순)로 (C.425 합체 창 "왼쪽 호로·오른쪽 사신" — 종족 id 분기 없이 설정 순서) */
 export function tracksInFactionOrder(save: SaveData): Pick<SaveData, TrackKey>[] {
   const order = (id: string) => FACTIONS.findIndex((f) => f.id === id);
-  return [...allTracks(save)].sort((a, b) => order(a.factionId) - order(b.factionId));
+  return [...characterTracks(save)].sort((a, b) => order(a.factionId) - order(b.factionId)); // 초월자 트랙은 합체 재료가 아니다 (GDD 12-4 v6.028)
 }
 
 /** 캐릭터 그림 (방 그림과 같은 규칙 — 진화 외형·스킨 포함). 그림이 없으면 아이콘 */
@@ -515,11 +515,12 @@ function charCard(t: Pick<SaveData, TrackKey>): HTMLElement {
 export function fusionLists(): { gone: string[]; keeps: string[] } {
   return {
     gone: [
-      '지금 두 캐릭터 (초월자 도감에 전시된다)',
-      '두 캐릭터의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
+      '지금 두 캐릭터 (초월자 도감에 전시되고, 초월자로 이어서 키운다)',
+      '두 캐릭터 자리의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
       `붕옥 강화 세 가지의 ${HX.afterFusionLevel + 1}~${HX.trackMax}강 진행 (다음 합체를 위해 다시 강화)`,
     ],
     keeps: [
+      '초월자 = 새 캐릭터 하나: 두 캐릭터의 능력치(높은 쪽)·블록·특성·속성 강화를 그대로 이어받는다. 진화·등급전·스토리·환생 없음, 시간이 지나도 수치가 안 닳는다',
       '도감·칭호 기록, 초월자 도감',
       `붕옥 강화 ${HX.afterFusionLevel}강까지·공명, 강화로 오른 능력치 (새 캐릭터에도)`,
       `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 붕옥 재료`,
@@ -531,8 +532,8 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
 /** 합체 확인 1 (미리보기): 왼쪽 = 두 캐릭터, 오른쪽 = "이 조합이면 ○○" + 사라짐/남음 + [다음 — 최종 확인] */
 export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (def: TranscendentDef) => void }): void {
   const pv = fusionPreview(save);
-  const head = lcdHead({ title: '초월자 합체 — 확인 1/2', sub: `${allTracks(save).map((t) => getFaction(t.factionId).name).join(' + ')} → 초월자` });
-  const left: HTMLElement[] = allTracks(save).map(charCard);
+  const head = lcdHead({ title: '초월자 합체 — 확인 1/2', sub: `${characterTracks(save).map((t) => getFaction(t.factionId).name).join(' + ')} → 초월자` });
+  const left: HTMLElement[] = characterTracks(save).map(charCard);
   const right: HTMLElement[] = [];
   if (pv.def) {
     const p = panel({ title: '이 조합이면', mod: 'accent', aside: provisionalTag('임시 조건') });
@@ -558,7 +559,7 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
 
 /** 최종 확인(확인 2) 문구 */
 export function fusionFinalText(def: TranscendentDef): { title: string; body: string } {
-  return { title: '합체 최종 확인', body: `되돌릴 수 없다. 두 캐릭터는 「${def.name}」${subjectParticle(def.name)} 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)` };
+  return { title: '합체 최종 확인', body: `되돌릴 수 없다. 두 캐릭터는 「${def.name}」${subjectParticle(def.name)} 되어 이어서 키우고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)` };
 }
 
 /**
@@ -605,7 +606,8 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
     const form = c.formId ? tryGetForm(c.formId) : undefined;
     return `${f.name} ${shownName(form ? formName(form, f.id, c.elements) : f.tierNames[c.tierIndex]!)}`;
   }).join(' + '));
-  row('새로 시작', allTracks(save).map((t) => `${getFaction(t.factionId).name} 1단계 ${getFaction(t.factionId).tierNames[0]}`).join(' · '));
+  row('새로 시작', characterTracks(save).map((t) => `${getFaction(t.factionId).name} 1단계 ${getFaction(t.factionId).tierNames[0]}`).join(' · '));
+  row('초월자로 이어서', `${def.name} — 두 캐릭터가 키운 것을 그대로 (진화·${faction.rankBattleName}·스토리·${faction.rebirth.name} 없음)`);
   row('초월자 도감', `${save.transcendentDex.length} / ${TRANSCENDENTS.length}`);
   row('보상', [record.jade ? `${JADE_NAME} +${record.jade}` : null, bonusLine(save)].filter(Boolean).join(' · ') || '없음');
   got.append(dl);

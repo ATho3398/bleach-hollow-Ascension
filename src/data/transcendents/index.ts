@@ -25,6 +25,8 @@ export interface TranscendentDef {
   /** 오리지널(원작 밖) 초월자 */
   original?: boolean;
   condition: TranscendentCondition;
+  /** 합체 뒤 이 초월자 트랙의 종류 (GDD 12-4 v6.028 — src/data/trackKinds/<id>.json: 진화 없음·시간 감소 없음 등) */
+  trackKind: string;
   provisional: true;
 }
 
@@ -41,6 +43,7 @@ export function parseTranscendent(r: unknown): TranscendentDef {
   if (!TYPES.includes(c.type as string)) errors.push('condition.type');
   if (c.type === 'rebirthSum' && !(Number.isInteger(c.min) && (c.min as number) > 0)) errors.push('condition.min');
   if (c.type === 'allCategory' && !(ATTACK_CATEGORIES as readonly string[]).includes(c.category as string)) errors.push('condition.category');
+  if (typeof t.trackKind !== 'string' || !t.trackKind) errors.push('trackKind');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

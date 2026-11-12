@@ -1,8 +1,8 @@
 [
-  { "id": "yhwach", "order": 1, "name": "유하바하", "concept": "모든 것을 거둬들이는 자. 여러 생을 쌓은 끝", "condition": { "type": "rebirthSum", "min": 3 }, "provisional": true },
-  { "id": "aizen", "order": 2, "name": "아이젠", "concept": "붕옥과 하나가 된 자. 규칙 밖의 길만 걸은 끝", "condition": { "type": "allHidden" }, "provisional": true },
-  { "id": "ichigo", "order": 3, "name": "이치고", "concept": "호로와 사신이 한 몸에서 공명한 자", "condition": { "type": "sameElement" }, "provisional": true },
-  { "id": "iron-tyrant", "order": 4, "name": "영왕", "concept": "세 세계를 떠받치는 존재 (설명 문구 대기)", "condition": { "type": "allCategory", "category": "physical" }, "provisional": true },
-  { "id": "zero-sage", "order": 5, "name": "태초", "concept": "사용자 오리지널 (설명 문구 대기)", "original": true, "condition": { "type": "allCategory", "category": "special" }, "provisional": true },
-  { "id": "rift-wanderer", "order": 6, "name": "Unknown;03398", "concept": "사용자 오리지널 (설명 문구 대기)", "original": true, "condition": { "type": "otherwise" }, "provisional": true }
+  { "id": "yhwach", "order": 1, "name": "유하바하", "concept": "모든 것을 거둬들이는 자. 여러 생을 쌓은 끝", "condition": { "type": "rebirthSum", "min": 3 }, "trackKind": "transcendent", "provisional": true },
+  { "id": "aizen", "order": 2, "name": "아이젠", "concept": "붕옥과 하나가 된 자. 규칙 밖의 길만 걸은 끝", "condition": { "type": "allHidden" }, "trackKind": "transcendent", "provisional": true },
+  { "id": "ichigo", "order": 3, "name": "이치고", "concept": "호로와 사신이 한 몸에서 공명한 자", "condition": { "type": "sameElement" }, "trackKind": "transcendent", "provisional": true },
+  { "id": "iron-tyrant", "order": 4, "name": "영왕", "concept": "세 세계를 떠받치는 존재 (설명 문구 대기)", "condition": { "type": "allCategory", "category": "physical" }, "trackKind": "transcendent", "provisional": true },
+  { "id": "zero-sage", "order": 5, "name": "태초", "concept": "사용자 오리지널 (설명 문구 대기)", "original": true, "condition": { "type": "allCategory", "category": "special" }, "trackKind": "transcendent", "provisional": true },
+  { "id": "rift-wanderer", "order": 6, "name": "Unknown;03398", "concept": "사용자 오리지널 (설명 문구 대기)", "original": true, "condition": { "type": "otherwise" }, "trackKind": "transcendent", "provisional": true }
 ]

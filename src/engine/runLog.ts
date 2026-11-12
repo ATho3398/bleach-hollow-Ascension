@@ -432,7 +432,29 @@ export interface TitleUnlockRecord {
   statTotal: number;
 }
 
+/** 초월자 트랙 시작 기록 (GDD 12-4 v6.028·16-2, C.429 형식 82): 합체 순간 두 캐릭터에게서 무엇을 이어받았나. 그 트랙 런 로그 맨 앞에 하나 */
+export interface TranscendenceRecord {
+  at: number;
+  transcendentId: string;
+  /** 몇 번째 합체 (슬롯 기록 fusions 의 index) */
+  fusionIndex: number;
+  /** 바탕이 된 캐릭터의 종족 id (종족 설정·진화체·외형을 이 캐릭터에게서) */
+  baseFactionId: string;
+  /** 이어받은 캐릭터들의 종족 id (지금 캐릭터 먼저) */
+  from: string[];
+  tierIndex: number;
+  formId: string | null;
+  /** 이어받은 노력치 합 · 특성 블록 보유 수 · 진화 특성 보유 수 */
+  evTotal: number;
+  traits: number;
+  abilities: number;
+  /** 형식 82 변환으로 만든 트랙 (합체 순간 데이터가 없어 그때의 두 캐릭터 기록·지금 캐릭터로 채움) */
+  migrated?: boolean;
+}
+
 export interface RunLog {
+  /** 초월자 트랙이면 시작 기록 (GDD 12-4 v6.028, 형식 82). 캐릭터 트랙은 없음 */
+  transcendence?: TranscendenceRecord;
   absorbs: AbsorbRecord[];
   /** 속성 보너스 완성 기록 — 같은 속성 3개 보너스가 C.150 에 삭제돼 더 쌓이지 않는다 (GDD 94장 B 후속). 자리만 남김 */
   lineages: LineageRecord[];
@@ -667,6 +689,8 @@ export interface FusionRecord {
   /** 이번 합체까지 6~10단계 개발에 쓴 영혼 결정 (C.414 전: 2단계 게이지에 먹인 수) */
   soulSpent: number;
   jade: number;
+  /** 초월자 트랙의 바탕 캐릭터 종족 (GDD 12-4 v6.028, 형식 82). 그 전 기록은 없음 */
+  baseFactionId?: string;
 }
 
 /** 붕옥 개발 기록 (GDD 12-3, C.414 형식 79 → C.425 형식 80): 한 강 올릴 때마다 — 트랙·오른 강·바친 재료 3종(그 트랙 재료만 0 아님)·그때 트랙 종족(누른 쪽) */

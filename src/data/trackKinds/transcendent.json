@@ -1,0 +1,15 @@
+{
+  "id": "transcendent",
+  "label": "초월자",
+  "evolution": false,
+  "devolution": false,
+  "timeDecay": false,
+  "careRequests": false,
+  "rank": false,
+  "story": false,
+  "rebirth": false,
+  "fusion": false,
+  "allDifficulties": true,
+  "lockedReason": "초월자는 진화·등급전·스토리·환생 없이 빌드를 깎아 최종 보스를 노린다",
+  "provisional": true
+}

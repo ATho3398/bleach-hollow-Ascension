@@ -7,7 +7,7 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { trackRulesOf, artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -43,7 +43,7 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { STAT_IDS } from '../data/schema';
@@ -183,7 +183,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
     stats.append(line);
   }
   // 노력치 합계 / 이 단계 상한 (GDD 182장 3): '노력치가 가득 찼다'가 왜인지 보이게
-  const cap = evCaps(evo.tierIndex);
+  const cap = evCaps(capTierOf(evo));
   const evLineP = h('p', 'bha-faint');
   evLineP.dataset.evTotal = String(evTotal(evo.ev));
   // 튜토리얼 보상(상한 밖, GDD 217장 2)은 상한 숫자에 세지 않고 따로 적는다
@@ -219,7 +219,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const formTag = formEl?.querySelector('.bha-evo__formname > .bha-tag');
   if (formTag) formEl?.querySelector('.bha-evo__formname + .bha-dim')?.prepend(formTag, ' ');
   evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
-  const rebirthOk = canRebirth(evo);
+  const rebirthOk = canRebirth(evo) && trackRulesOf(save).rebirth; // 환생 없는 트랙 (초월자, GDD 12-4 v6.028)
   if (rebirthOk) evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`));
   // 아래 고정 버튼 줄 (183장 S15): [진화체 도감][도움말][환생] — 환생을 못 할 때도 흐리게 자리 유지 (PROMPT 5절 1)
   const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', disabled: !rebirthOk, onClick: hd.onRebirth });

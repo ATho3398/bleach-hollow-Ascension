@@ -1,0 +1,141 @@
+{
+  "errors": [],
+  "shots": [
+    "pc-room-transcendent",
+    "pc-status",
+    "pc-track-switch",
+    "pc-adventure-battle",
+    "phone-room-transcendent",
+    "phone-status",
+    "phone-track-switch",
+    "phone-adventure-battle"
+  ],
+  "facts": {
+    "pc-fusion": {
+      "ok": true,
+      "missing": null,
+      "def": "Unknown;03398",
+      "tracks": [
+        "tr:rift-wanderer",
+        "hollow",
+        "shinigami"
+      ],
+      "ev": {
+        "hp": 60,
+        "atk": 70,
+        "int": 40,
+        "def": 30,
+        "spr": 20,
+        "spd": 30
+      },
+      "owned": [
+        "t-fire-a",
+        "t-water-b",
+        "t-water-a"
+      ],
+      "slots": [
+        "t-fire-a",
+        "t-water-a",
+        null
+      ],
+      "enhance": {
+        "fire": 40,
+        "water": 60
+      },
+      "star": 4
+    },
+    "pc-room": {
+      "screen": null,
+      "name": "Unknown;03398초월자 · 소로",
+      "toast": ""
+    },
+    "pc-toast": "새 초월자 Unknown;03398의 방",
+    "pc-status": {
+      "rebirth": [
+        "환생(off)"
+      ]
+    },
+    "pc-more-transcendent": [
+      "호로 트랙",
+      "사신 트랙"
+    ],
+    "pc-more-hollow": [
+      "초월자 Unknown;03398",
+      "사신 트랙"
+    ],
+    "pc-back-name": "Unknown;03398초월자 · 소로",
+    "pc-worldmap-rank": "<button class=\"bha-art bha-prop bha-prop--rank is-locked\" type=\"button\" data-prop=\"rank\" aria-label=\"번호 쟁탈전\" data-place=\"rank\" aria-disabled=\"true\" title=\"초월자는 진화·등급전·스토리·환생 없이 빌드를 깎아 최종 보스를 노린다\" aria",
+    "pc-depart": {
+      "screen": "expedition-plan",
+      "tabs": [],
+      "stars": []
+    },
+    "pc-battle": {
+      "screen": null,
+      "battle": 1
+    },
+    "phone-fusion": {
+      "ok": true,
+      "missing": null,
+      "def": "Unknown;03398",
+      "tracks": [
+        "tr:rift-wanderer",
+        "hollow",
+        "shinigami"
+      ],
+      "ev": {
+        "hp": 60,
+        "atk": 70,
+        "int": 40,
+        "def": 30,
+        "spr": 20,
+        "spd": 30
+      },
+      "owned": [
+        "t-fire-a",
+        "t-water-b",
+        "t-water-a"
+      ],
+      "slots": [
+        "t-fire-a",
+        "t-water-a",
+        null
+      ],
+      "enhance": {
+        "fire": 40,
+        "water": 60
+      },
+      "star": 4
+    },
+    "phone-room": {
+      "screen": null,
+      "name": "Unknown;03398초월자 · 소로",
+      "toast": ""
+    },
+    "phone-toast": "새 초월자 Unknown;03398의 방",
+    "phone-status": {
+      "rebirth": [
+        "환생(off)"
+      ]
+    },
+    "phone-more-transcendent": [
+      "호로 트랙",
+      "사신 트랙"
+    ],
+    "phone-more-hollow": [
+      "초월자 Unknown;03398",
+      "사신 트랙"
+    ],
+    "phone-back-name": "Unknown;03398초월자 · 소로",
+    "phone-worldmap-rank": "<button class=\"bha-art bha-prop bha-prop--rank is-locked\" type=\"button\" data-prop=\"rank\" aria-label=\"번호 쟁탈전\" data-place=\"rank\" aria-disabled=\"true\" title=\"초월자는 진화·등급전·스토리·환생 없이 빌드를 깎아 최종 보스를 노린다\" aria",
+    "phone-depart": {
+      "screen": "expedition-plan",
+      "tabs": [],
+      "stars": []
+    },
+    "phone-battle": {
+      "screen": null,
+      "battle": 1
+    }
+  }
+}
