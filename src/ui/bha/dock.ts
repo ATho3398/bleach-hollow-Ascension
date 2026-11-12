@@ -1,4 +1,4 @@
-// 홈 하단 독 (GDD 18-2, 18-9): 돌보기 3개(먹이·재우기·교감, 효과 있는 버튼) + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
+// 홈 하단 독 (GDD 18-2, 18-9 · 14-3 v6.004): 돌보기 3개(먹이·재우기·교감, 효과 있는 버튼) + [소모품] 빠른 사용 + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
@@ -36,6 +36,16 @@ export function foodCardFx(list: readonly FoodFx[], faction: Pick<FactionConfig,
   return row;
 }
 
+/** 소모품 빠른 사용 칸 하나 (GDD 14-3, v6.004): 가방 소모품 중 방에서 고를 수 있는 것. lock = 지금 못 쓰는 이유(흐리게 + 한 줄) */
+export interface QuickItem {
+  id: string;
+  name: string;
+  count: number;
+  /** 효과 짧은 한 줄 (가방 목록 칸과 같은 글) */
+  brief: string;
+  lock: string | null;
+}
+
 export interface DockOpts {
   faction: FactionConfig;
   /** 돌보기 실행 (먹이는 고른 종류와 함께) */
@@ -46,6 +56,8 @@ export interface DockOpts {
   foodEffectsNow?: (food: FoodId) => FoodFx[];
   /** 먹이 한도 (GDD 109장 6): 지금 더 먹일 수 있는 개수와 한도. 먹이 버튼 옆에 작게 '2/3' */
   feedsLeft?: () => { left: number; max: number };
+  /** [소모품] 빠른 사용 (GDD 14-3, v6.004): 있으면 돌보기 3개 옆 버튼 — 누르면 독 위에 소모품 줄, 칸을 누르면 바로 쓴다(줄은 열어 둔다) */
+  items?: { label: string; list: () => QuickItem[]; onUse: (id: string) => void };
   /** 더보기 격자에 펼치는 항목 (아이콘 + 짧은 이름, 이 순서대로) */
   more: DockMenuItem[];
   /** 대기 보상 시계 버튼 (GDD 98장 A3): ⋯ 옆, 글자 없음, 쌓인 시간은 작은 배지. 누르면 대기 보상 창 */
@@ -101,6 +113,20 @@ export function createDock(o: DockOpts): Dock {
       o.onCare(a);
     };
     careBtns.set(a, b);
+    care.append(b);
+  }
+  // [소모품] 빠른 사용 (GDD 14-3, v6.004): 돌보기 줄 끝 같은 모양 버튼 — 가방을 거치지 않고 약 등을 바로 쓴다
+  let itemsBtn: HTMLButtonElement | null = null;
+  if (o.items) {
+    const b = el('button', 'bha-homedock__carebtn bha-homedock__carebtn--items');
+    b.type = 'button';
+    b.dataset.dock = 'items';
+    b.dataset.sc = 'dock.items';
+    b.setAttribute('aria-expanded', 'false');
+    b.append(icon('i-heal'), el('span', '', o.items.label));
+    b.title = `${o.items.label} 바로 쓰기`;
+    b.onclick = () => setPanel(togglePanel(panel, 'items'), b);
+    itemsBtn = b;
     care.append(b);
   }
   // 먹이 남은 개수 (GDD 109장 6): 버튼 글 옆 작은 숫자, 0 이면 흐리게
@@ -179,6 +205,34 @@ export function createDock(o: DockOpts): Dock {
       note.append(provisionalTag());
       note.hidden = note.firstElementChild!.hasAttribute('hidden');
       tray.append(note);
+    } else if (panel === 'items' && o.items) {
+      const it = o.items;
+      tray.setAttribute('aria-label', `${it.label} 고르기`);
+      tray.dataset.scList = '';
+      const list = it.list();
+      if (list.length === 0) tray.append(el('p', 'bha-homedock__traynote bha-faint', fixParticles(`${it.label}이(가) 없다. 상점에서 사면 여기에 들어온다.`)));
+      for (const q of list) {
+        // 먹이 칸과 같은 모양: 이름 ×n + 아래 짧은 효과. 못 쓰면(전투 전용 등) 흐리게 + 효과 자리에 이유 한 줄
+        const b = el('button', 'bha-homedock__food bha-homedock__item');
+        b.type = 'button';
+        b.dataset.item = q.id;
+        const name = el('span', 'bha-homedock__foodname', q.name);
+        name.append(' ', el('b', 'bha-num', `×${q.count}`));
+        b.append(name, el('small', '', q.lock ?? q.brief));
+        b.setAttribute('aria-label', `${q.name} ${q.count}개, ${q.lock ? `못 씀: ${q.lock}` : q.brief}`);
+        b.disabled = q.lock !== null;
+        b.title = q.lock ?? q.brief;
+        b.onclick = () => {
+          if (q.lock) return;
+          it.onUse(q.id);
+          // 쓴 뒤에도 줄은 열어 둔다 (먹이 줄과 같음): 개수·잠김만 새로, 초점은 같은 칸(다 떨어졌으면 첫 칸, 없으면 [소모품])
+          if (panel !== 'items' || !root.isConnected) return;
+          fillTray();
+          o.onItemsChange(trayBtns.find((x) => x.dataset.item === q.id) ?? trayBtns[0] ?? itemsBtn!);
+        };
+        trayBtns.push(b);
+        tray.append(b);
+      }
     } else if (panel === 'more') {
       tray.setAttribute('aria-label', '더보기');
       tray.dataset.scList = '';
@@ -206,11 +260,13 @@ export function createDock(o: DockOpts): Dock {
     root.classList.toggle('is-open', panel !== CLOSED);
     careBtns.get('feed')!.classList.toggle('is-active', panel === 'food');
     careBtns.get('feed')!.setAttribute('aria-expanded', String(panel === 'food'));
+    itemsBtn?.classList.toggle('is-active', panel === 'items');
+    itemsBtn?.setAttribute('aria-expanded', String(panel === 'items'));
     moreBtn.classList.toggle('is-active', panel === 'more');
     moreBtn.setAttribute('aria-expanded', String(panel === 'more'));
     fillTray();
     // 줄을 닫으면(뒤로 포함) 그 줄을 열었던 버튼으로 초점 (GDD 176장 4·8)
-    const back = was === 'food' ? careBtns.get('feed')! : was === 'more' ? moreBtn : null;
+    const back = was === 'food' ? careBtns.get('feed')! : was === 'items' ? itemsBtn : was === 'more' ? moreBtn : null;
     o.onItemsChange(panel === CLOSED ? opener ?? back : null);
   }
 
@@ -226,7 +282,7 @@ export function createDock(o: DockOpts): Dock {
 
   return {
     root,
-    items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...menuBtns],
+    items: () => [...trayBtns.filter((b) => !(b as HTMLButtonElement).disabled), ...careBtns.values(), ...(itemsBtn ? [itemsBtn] : []), ...menuBtns],
     panel: () => panel,
     close: () => { if (panel !== CLOSED) setPanel(CLOSED); },
     refreshFeeds,

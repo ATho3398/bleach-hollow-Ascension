@@ -2,8 +2,8 @@
 import type { FoodId, NestAction } from '../../engine/faction';
 import type { FactionConfig } from '../../engine/faction';
 
-/** 독이 위로 펼친 칸: 없음 / 먹이 종류 줄 / 더보기 줄. 한 번에 하나만 열린다 */
-export type DockPanel = 'none' | 'food' | 'more';
+/** 독이 위로 펼친 칸: 없음 / 먹이 종류 줄 / 소모품 빠른 사용 줄(GDD 14-3, v6.004) / 더보기 줄. 한 번에 하나만 열린다 */
+export type DockPanel = 'none' | 'food' | 'items' | 'more';
 
 /** 같은 버튼을 다시 누르면 닫고, 다른 칸이 열려 있으면 그것을 닫고 새로 연다 */
 export function togglePanel(cur: DockPanel, which: Exclude<DockPanel, 'none'>): DockPanel {

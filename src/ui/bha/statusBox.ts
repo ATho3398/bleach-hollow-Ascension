@@ -17,7 +17,7 @@ import { fullnessOf } from './fullness';
 import { changeNoteBox, showChangeNote, type ChangeItem } from './changeNote';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS, tagGauge, type GaugeKey } from './gaugeBlink';
 
-/** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름(+ 푸는 법 짧게) */
+/** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름 */
 export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
   const ordered = [...chips.filter((c) => c.value === null), ...chips.filter((c) => c.value !== null)];
   return ordered.map((c) => {
@@ -27,8 +27,7 @@ export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
     fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
     track.append(fill);
     row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
-    // 상태이상 줄 아래 푸는 법 짧게 (GDD 193장 15: '모험 1번' 류) — 자세한 것은 툴팁·ⓘ
-    if (c.short) row.append(el('span', 'bha-room__gaugehint', c.short));
+    // 푸는 법 줄은 두지 않는다 (GDD v6.004 3-2 — 박스가 줄마다 같은 폭·같은 자리). 푸는 법은 툴팁·ⓘ·상태 화면
     if (c.hint) row.title = c.hint;
     if (c.value !== null) row.dataset.gauge = c.kind; // 바뀌는 값 깜빡임 대상 (GDD 208장 3, gaugeBlink)
     return row;

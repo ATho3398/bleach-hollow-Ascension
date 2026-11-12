@@ -136,7 +136,7 @@ function movedFar(a: Rect | null, b: Rect | null, tol = 24): boolean {
 }
 
 /** 카드가 가리면 안 되는 열린 창 (GDD 132장 1): 단계에 적힌 것 + 늘 지키는 창(아이템 상세 창·독 펼친 줄) */
-const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--more'];
+const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--items', '@.bha-homedock__tray--more'];
 
 /** 카드가 되도록 피하는 주인공 (GDD 162장 1): 방 캐릭터·온천 캐릭터 — 먹는 모습·온천에 몸 담근 모습이 안내 창에 가리지 않게 */
 const SUBJECTS = ['@.bha-char', '@.bha-spa__actor'];

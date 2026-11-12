@@ -116,18 +116,22 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
         value: n.bond, max: BALANCE.provisional.nest.bond.max, stage: BOND_STAGE_NAMES[bondStage(n.bond)],
       },
     }));
-    /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
+    /** 돌봄 상태 블록 (GDD 3-2, v6.004): 모든 블록 같은 폭 — [아이콘 | 윗줄 '이름 · 푸는 법' / 아랫줄 '남은 시간'(있는 것만) | ⓘ 오른쪽 끝] */
     const fix = careStatusShort(n, { feedName: faction.nestActionsShort?.feed ?? faction.nestActions.feed });
-    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string) => {
-      const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
-      // 푸는 법 짧게 (GDD 193장 15) — 이름 뒤 흐린 글. 자세한 것은 ⓘ
-      row.append(icon(iconId), ' ', h('b', '', title), ' ', h('span', 'bha-faint', `· ${short}`), infoTip(title.split(' · ')[0]!, () => statusInfo(info, faction)));
+    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string, left?: string) => {
+      const row = h('div', `bha-small bha-nest__state bha-nest__state--${kind}`);
+      const text = h('span', 'bha-nest__statetext');
+      const top = h('span', 'bha-nest__stateline');
+      top.append(h('b', '', title), ' ', h('span', 'bha-faint', `· ${short}`));
+      text.append(top);
+      if (left) text.append(h('span', 'bha-nest__stateleft', left));
+      row.append(icon(iconId), text, infoTip(title, () => statusInfo(info, faction)));
       return row;
     };
     // C.185 (GDD 111장 4): 설명은 상태 ⓘ 창과 같은 문구 (손해 → 풀리는 법)
     const states = [
       ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, 'dead', fix.dead)] : []),
-      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, 'collapsed', fix.collapsed)] : []),
+      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.collapsed, 'collapsed', fix.collapsed, `남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`)] : []),
       ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak', fix.weak)] : []),
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired', fix.tired)] : []),
     ];

@@ -3,7 +3,9 @@
 // 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { fixParticles } from '../engine/josa';
 import { petBuddy } from './bha/pet';
-import { petName } from '../inventory';
+import { inventoryOf, petName, useInventoryItem } from '../inventory';
+import { consumableGroupOf } from '../shop';
+import { gateOpen } from '../unlockGate';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
 import { artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
@@ -69,6 +71,11 @@ export interface RoomHandlers {
   /** 먹이를 먹인 직후 (막대 연출 전): 튜토리얼 회복 안내가 각본 값을 넣는다 (GDD 132장 3) */
   onFed?: () => void;
 }
+
+/** 독 [소모품] 버튼·줄 이름 (GDD 14-3, v6.004 — 가방 '소모품' 탭과 같은 말, 종족 공통) */
+const QUICK_ITEMS_LABEL = '소모품';
+/** 전투 소모품 칸에 넣어 전투 중에만 쓰는 물건 (빠른 사용 줄에서 흐리게) */
+const BATTLE_ONLY_LOCK = '전투 중에만 쓴다';
 
 /** 마지막으로 방에 있을 때의 기분: 바뀌었으면 돌아왔을 때 캐릭터가 한마디 한다 (화면 사이에 남는 UI 상태) */
 let lastMood: Mood | null = null;
@@ -324,8 +331,16 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 지금 상태창 값 한 벌 (GDD 201장: 방을 다시 열 때 오른 값을 차오르게 비교) */
   const shownNow = (): GaugeShown => nestShown(n, previewHomeHp(n, Date.now()).fraction);
   /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3 · 201장: 돌보기·회복 뒤 막대가 0.8초 동안 차오르고 숫자도 따라 오름). 덮어쓰기가 없으면 보여 준 값을 기억 */
+  let stateCount = -1; // 상태이상 줄 수 — 바뀌면(구급상자 등) 박스 자리를 다시 잰다 (GDD 3-2 v6.004)
+  let placeReady: (() => void) | null = null;
   const paintGauges = (over?: GaugeShown) => {
     const chips = over ? chipsAt(statusChips(n, faction), over) : statusChips(n, faction);
+    const cnt = chips.filter((c) => c.value === null).length;
+    if (cnt !== stateCount) {
+      stateCount = cnt;
+      const re = placeReady;
+      if (re) requestAnimationFrame(re);
+    }
     // 목록형 상태 게이지 (GDD 189장 4 · 190장 3, C.281 모양) — 공용 부품(statusBox, 온천도 같은 것). 자세한 뜻은 ⓘ · 누르면 상태 화면
     paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ');
     applyBlink(scene); // 바뀌는 값 깜빡임은 다시 그려도 이어진다 (GDD 208장 3)
@@ -336,8 +351,17 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const enterFrom = riseFrom(enterBefore, shownNow());
   paintGauges(enterFrom ?? undefined);
   /** 칩 줄 크기: 방 위 끝에 붙지 않게(--chip-h, 이름표 포함) · 장면 끝에서 잘리지 않게(--chips-half) — room.css */
+  /** 상태이상 줄 높이 합 (GDD 3-2, v6.004): 자리는 이 줄들을 뺀 박스로 정하고, 줄은 아래로 붙는다 — 상태이상 개수와 상관없이 박스 자리 고정 */
+  const stateRowsH = (): number => {
+    const rows = [...statusBtn.querySelectorAll<HTMLElement>('.bha-room__gauge.is-state')];
+    if (rows.length === 0) return 0;
+    const gap = parseFloat(getComputedStyle(statusBtn).rowGap) || 0;
+    return rows.reduce((sum, r) => sum + r.offsetHeight + gap, 0);
+  };
   const measureChips = () => {
-    scene.style.setProperty('--chip-h', `${chipRow.offsetHeight + (nameTag?.offsetHeight ?? 0)}px`);
+    const stateH = stateRowsH();
+    scene.style.setProperty('--state-h', `${stateH}px`);
+    scene.style.setProperty('--chip-h', `${chipRow.offsetHeight - stateH + (nameTag?.offsetHeight ?? 0)}px`);
     scene.style.setProperty('--chips-half', `${Math.ceil(chipRow.offsetWidth / 2) + 6}px`); // 박스 반폭 (ⓘ 는 박스 안, GDD 238장)
   };
   requestAnimationFrame(measureChips);
@@ -370,16 +394,19 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const art = char.querySelector<HTMLElement>('.bha-char__body canvas, .bha-char__body img');
     const ar = art?.getBoundingClientRect();
     if (ratio === null || !ar || !ar.height) return;
-    const drawnTop = drawnHeadY(char) ?? ar.top + ratio * ar.height; // 실제로 그려진 머리(움직이는 캔버스) — 아직 안 그려졌으면 정지 그림의 첫 안 투명한 줄
+    // 머리 윗변 = 정지 그림의 첫 안 투명한 줄 (GDD 3-2 v6.004): 움직이는 캔버스의 지금 프레임으로 재면 잴 때마다 몇 px 달라 박스가 들쭉날쭉했다(제자리 안 지킴)
+    const drawnTop = ar.top + ratio * ar.height;
     const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-1')) || 2;
     /** 지금 모양(tight)에서: 안 옮긴 박스 아래 끝 · 끝까지 올린 아래 끝(위 끝 하한)까지 거리 · 머리 위 자리까지 옮길 거리(+ 위, − 아래) */
     const measure = (tight: boolean) => {
       chipRow.classList.toggle('is-tight', tight);
       measureChips();
       scene.style.setProperty('--note-lift', '0px');
-      const natural = statusBtn.getBoundingClientRect().bottom;
+      // 박스 아래 끝 = 상태이상 줄을 뺀 끝 (GDD 3-2 v6.004 — 자리는 상태이상 없는 박스로 정한다). 화면 배율(확대)만큼 줄여 뺀다
+      const br = statusBtn.getBoundingClientRect();
+      const natural = br.bottom - stateRowsH() * (statusBtn.offsetHeight > 0 ? br.height / statusBtn.offsetHeight : 1);
       scene.style.setProperty('--note-lift', '9999px');
-      const room = natural - statusBtn.getBoundingClientRect().bottom;
+      const room = natural - (statusBtn.getBoundingClientRect().bottom - (br.bottom - natural));
       return { room, need: noteLift({ statusBottom: natural, drawnTop, noteH: probe.offsetHeight, gap, lift: 0 }) };
     };
     // 1) 머리 위 자리 그대로 → 2) 위 끝 하한에 막히면 박스를 조인다 → 3) 그래도 모자라면 하한(알림은 머리 윗 몇 px 와 겹침)
@@ -433,29 +460,53 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   scene.append(char, hpBox, chipRow, bubble);
   // 이름표는 칩 위에 얹힌다: 칩이 방 위 끝에 붙지 않게 잴 때 이름표 높이도 넣는다
   floorEntries.push({ el: char, foot: room.characterFoot, kind: 'char' });
-  // 빈사·쓰러짐 자세 (GDD 176장): 머리 위에 칩 자리가 없어 칩이 머리로 내려오면(띠로 방이 낮아짐) 칩·ⓘ 를 캐릭터 옆 위로
-  const lowPose = n.collapsed || n.dead || !!n.weakened || !!n.tired;
+  // 옛 빈사·쓰러짐 옆자리(.is-side, 보관본 176장)는 v6.004 3-2 에서 삭제 — 상태이상이 생겨도 박스는 이름표 아래 같은 자리(상태이상 줄은 아래로 붙는다)
   const placeStatus = () => {
-    chipRow.classList.remove('is-side', 'is-right');
     if (scene.isConnected) measureChips();
-    if (!lowPose || !scene.isConnected || scene.clientWidth === 0) return;
-    const cs = getComputedStyle(scene);
-    const natural = parseFloat(cs.getPropertyValue('--char-y')) + charTopOffset(charArtUrls) - (parseFloat(cs.getPropertyValue('--bha-sp-4')) || 0);
-    const lowered = Math.max(0, -(parseFloat(scene.style.getPropertyValue('--note-lift')) || 0)); // 머리 위 알림 자리로 내린 거리 (C.350)
-    if (!(chipRow.offsetTop > natural + lowered + 1)) return; // 머리 위에 들어간다
-    scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
-    const right = char.offsetLeft < scene.clientWidth * 0.35; // 캐릭터가 왼쪽에 있으면 오른쪽 옆
-    chipRow.classList.add('is-side', ...(right ? ['is-right'] : []));
   };
   const place = () => {
     layoutOnFloor(scene, room.floor, floorEntries);
     liftForNote();
     placeStatus();
   };
+  placeReady = () => main.isConnected && place();
   if (enterItems.length > 0) requestAnimationFrame(() => main.isConnected && noteChanges(enterItems, enterFrom ? ACTION_FILL_MS : 0));
   place(); // 붙기 전이라 크기를 못 재면 기준 크기로, 붙은 뒤 다시 잰 값으로 놓는다
   requestAnimationFrame(place);
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(place).observe(scene);
+
+  /** 소모품 빠른 사용 (GDD 14-3, v6.004): 가방 [사용]과 같은 결과(useInventoryItem) — 방이라 머리 위 상태창이 그 자리에서 차오르고 바뀐 값 알림.
+   *  풀린 상태이상 '○○이(가) 풀렸다'(GDD 234장 1)·못 씀 이유는 방 말풍선(방은 알림 띠를 쓰지 않는다 — 208장) */
+  const useQuick = (id: string) => {
+    const before = shownNow();
+    const r = useInventoryItem(save, faction, id);
+    if (!r.ok) return say(r.reason);
+    hd.persist();
+    const cured = r.cured?.length ? fixParticles(`${r.cured.join('·')}이(가) 풀렸다`) : undefined;
+    const to = shownNow();
+    const changed = changedKeys(before, to);
+    if (changed.length === 0) {
+      paintGauges();
+      if (cured) say(cured);
+      return;
+    }
+    fxOn = true;
+    blinkGauges(scene, changed);
+    markStatusBusy(ACTION_FILL_MS);
+    if (!noteChanges(changeItems(before, to, faction, changed), ACTION_FILL_MS, cured) && cured) say(cured);
+    tween(ACTION_FILL_MS, (t) => {
+      if (!main.isConnected) return;
+      const v = lerpShown(before, to, t);
+      paintGauges(v);
+      paintHp(v.hp);
+    }, () => {
+      fxOn = false;
+      if (main.isConnected) {
+        paintGauges();
+        paintHp();
+      }
+    });
+  };
 
   // ── 하단 독 (GDD 18-2): 돌보기 3개 + 메뉴 아이콘 + 더보기 ──
   const dock = createDock({
@@ -543,6 +594,15 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       else if (reaction === 'dislike') {
         window.setTimeout(() => { if (!main.isConnected) return; char.classList.add('is-spit'); window.setTimeout(() => char.classList.remove('is-spit'), 700); }, ACTION_FILL_MS);
       }
+    },
+    // [소모품] 빠른 사용 (GDD 14-3, v6.004): 가방 소모품 탭의 약·전투 소모품(전투 소모품은 해금 뒤). 전투 전용은 흐리게 + 이유
+    items: {
+      label: QUICK_ITEMS_LABEL,
+      list: () => inventoryOf(save, faction)
+        .filter((e) => e.category === 'consumable' && (consumableGroupOf(e.id) === 'medicine' || (consumableGroupOf(e.id) === 'battle' && gateOpen(save, 'battleItem'))) && e.count > 0)
+        .map((e) => ({ id: e.id, name: e.name, count: e.count, brief: e.brief ?? e.detail, lock: e.action === 'use' ? e.lock : BATTLE_ONLY_LOCK }))
+        .sort((a, b) => Number(a.lock !== null) - Number(b.lock !== null)), // 지금 쓸 수 있는 것 먼저
+      onUse: (id) => useQuick(id),
     },
     more: [
       // C.170 (GDD 100장 #17·#80): 4열 — 설정·도움말·사진·다마고치 / 백업·처음 화면·닫기. '첫 걸음 목표'는 도움말 안 [목표]로

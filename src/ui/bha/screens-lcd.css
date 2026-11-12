@@ -143,8 +143,12 @@
 .bha-care__ailments { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
 .bha-care__ailments[hidden] { display: none; }
 .bha-care__label { margin: 0; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-heavy); letter-spacing: .06em; color: var(--bha-text-3); }
-.bha-care__ailmentlist { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); }
-.bha-care-page .bha-nest__state { min-height: 30px; padding: 0 var(--bha-sp-1) 0 var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px currentColor; font-size: var(--bha-fs-sm); }
+.bha-care__ailmentlist { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-2); }
+/* 상태이상 블록 (GDD 3-2, v6.004): 모든 블록 같은 폭(칸 너비 한 줄씩) — [아이콘 | 윗줄 '이름 · 푸는 법' / 아랫줄 남은 시간 | ⓘ 오른쪽 끝] */
+.bha-care-page .bha-nest__state { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--bha-sp-2); min-height: 30px; padding: var(--bha-sp-1) var(--bha-sp-1) var(--bha-sp-1) var(--bha-sp-3); border-radius: var(--bha-r-sm); background: var(--bha-bg-1); box-shadow: 0 0 0 1px currentColor; font-size: var(--bha-fs-sm); }
+.bha-nest__statetext { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.bha-nest__stateline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bha-nest__stateleft { font-size: var(--bha-fs-xs); white-space: nowrap; }
 /* 상태 막대 5: 한 줄 = 아이콘·이름·ⓘ | 막대 | 값 */
 .bha-care-page .bha-nest__status { display: flex; flex-direction: column; gap: var(--bha-sp-1); }
 .bha-care-page .bha-nest__status .bha-meter { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; column-gap: var(--bha-sp-2); row-gap: 0; min-height: 36px; }
