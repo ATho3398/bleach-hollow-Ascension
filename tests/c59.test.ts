@@ -349,15 +349,15 @@ describe('합체 (GDD 22-3)', () => {
 describe('초월자 6종 결정 규칙', () => {
   const ch = (o: Partial<FusionInput> = {}): FusionInput => ({ rebirths: 0, hidden: false, elements: ['fire'], category: 'mixed', ...o });
 
-  it('데이터: 6종·종족 무관·원작 이름은 유하바하·아이젠·이치고·영왕, 오리지널 2종(이름 자리 표시), 전부 provisional (C.426 GDD v6.023)', () => {
-    expect(TRANSCENDENTS.map((t) => t.name)).toEqual(['유하바하', '아이젠', '이치고', '영왕', '오리지널 초월자 1', '오리지널 초월자 2']);
+  it('데이터: 6종·종족 무관·원작 이름은 유하바하·아이젠·이치고·영왕, 오리지널 2종(태초·Unknown;03398), 전부 provisional (C.426 GDD v6.025)', () => {
+    expect(TRANSCENDENTS.map((t) => t.name)).toEqual(['유하바하', '아이젠', '이치고', '영왕', '태초', 'Unknown;03398']);
     expect(TRANSCENDENTS.map((t) => t.id)).toEqual(['yhwach', 'aizen', 'ichigo', 'iron-tyrant', 'zero-sage', 'rift-wanderer']); // 세이브 id 는 그대로
     expect(TRANSCENDENTS.filter((t) => t.original).length).toBe(2);
     expect(TRANSCENDENTS.every((t) => t.provisional === true)).toBe(true);
     expect(() => parseTranscendent({ id: 'x', order: 1, name: 'x', concept: '', condition: { type: 'rebirthSum', min: 0 }, provisional: true })).toThrow();
   });
 
-  it('위에서부터: 환생 합 3 → 유하바하, 모두 히든 → 아이젠, 속성 겹침 → 이치고, 모두 물리 → 영왕, 모두 특수 → 오리지널 1, 그 밖 → 오리지널 2', () => {
+  it('위에서부터: 환생 합 3 → 유하바하, 모두 히든 → 아이젠, 속성 겹침 → 이치고, 모두 물리 → 영왕, 모두 특수 → 태초, 그 밖 → Unknown;03398', () => {
     const d = (a: FusionInput, b: FusionInput) => decideTranscendent([a, b], [])!.id;
     expect(d(ch({ rebirths: 2, hidden: true }), ch({ rebirths: 1, hidden: true }))).toBe('yhwach');
     expect(d(ch({ hidden: true }), ch({ hidden: true }))).toBe('aizen');
