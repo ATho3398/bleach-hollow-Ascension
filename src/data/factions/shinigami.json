@@ -8,6 +8,10 @@
   "genderLookFromTier": 1,
   "startLooks": [],
   "specialLooks": [],
+  "skinGroups": [
+    { "id": "shinigami", "name": "사신", "tiers": [1, 2, 3, 4] },
+    { "id": "zanpakuto", "name": "참백도", "tiers": [] }
+  ],
   "tierLooks": {},
   "formLooks": {},
   "tierNames": [

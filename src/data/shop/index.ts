@@ -46,7 +46,8 @@ export const SHOP_KIND_TABS: Record<ShopKind, readonly ShopTabId[]> = {
 export const SKIN_SUBTABS = [['character', '캐릭터'], ['attackFx', '공격 이펙트'], ['moveFx', '이동 이펙트'], ['keyring', '키링'], ['device', '기기'], ['etc', '연출·꾸밈']] as const;
 export type SkinSubTab = (typeof SKIN_SUBTABS)[number][0];
 const SKIN_SUB_OF: Partial<Record<CosmeticCategory, SkinSubTab>> = {
-  skin: 'character', tint: 'character', aura: 'character',
+  // 색조·오라 = '연출·꾸밈' (C.440, GDD 5절 v6.044: 캐릭터 탭은 진화체·특수·한정 스킨만)
+  skin: 'character',
   fx: 'attackFx', cut: 'attackFx', absorb: 'attackFx', bar: 'attackFx',
   trail: 'moveFx',
   keyring: 'keyring',

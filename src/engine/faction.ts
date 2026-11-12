@@ -469,6 +469,9 @@ export interface FactionConfig {
   /** forms = 진화체 id → 외형(능력치보다 먼저 — 히든 진화체), elementSuffix = 이 속성의 진화체는 외형 id 뒤에 속성 id 를 붙인다(속성 색, GDD 240장 — 예 wyrmwater) */
   /** 숨은 모습 (GDD 241-C 4, C.406): 그 단계로 진화하는 순간 조건을 채웠으면 단계 외형 대신 이 외형 + 보너스(세이브 전체에서 처음 1번만). 없는 종족은 비운다 — 엔진에 종족 분기 없음 */
   specialLooks?: SpecialLookDef[];
+  /** 캐릭터 스킨 진화체 중분류 (GDD 5절 '캐릭터 스킨 분류' v6.044): 이름 + 묶는 단계(1부터). 없으면 단계 이름(tierNames + 깬 뒤 그림 단계 ascension.lookName)마다 한 칸.
+   *  진화체별로 외형이 같은 종족(사신)은 여기에 적는다. 초월자 칸은 엔진이 끝에 붙인다 */
+  skinGroups?: { id: string; name: string; tiers: number[] }[];
   tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[] }>;
   /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
   tierNames: [string, string, string, string];
@@ -767,6 +770,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const ok = (v: unknown) => isRec(v) && isString(v.id) && isString(v.name) && isString(v.look) && [v.toTierIndex, v.minBondCare, v.bonusEv].every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 0);
     if (!Array.isArray(r.specialLooks) || !r.specialLooks.every(ok)) errors.push('specialLooks: [{ id, name, toTierIndex, minBondCare, look, bonusEv }] (숫자는 0 이상 정수)');
   }
+  if (r.skinGroups !== undefined && !(Array.isArray(r.skinGroups) && r.skinGroups.length > 0 && r.skinGroups.every((g) => isRec(g) && isString(g.id) && isString(g.name) && Array.isArray(g.tiers) && g.tiers.every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 1)))) errors.push('skinGroups: [{ id, name, tiers: [단계 번호(1부터)] }] (비어 있지 않게)');
   if (r.tierLooks !== undefined) {
     const tl = r.tierLooks;
     const okLook = (v: unknown) => isString(v);

@@ -84,6 +84,13 @@
   "specialLooks": [
     { "id": "cyclops", "name": "외눈형", "toTierIndex": 1, "minBondCare": 3, "look": "gilliancyclops", "bonusEv": 5 }
   ],
+  "skinGroups": [
+    { "id": "tier1", "name": "호로", "tiers": [1] },
+    { "id": "tier2", "name": "길리안", "tiers": [2] },
+    { "id": "tier3", "name": "아쥬커스", "tiers": [3] },
+    { "id": "tier4", "name": "바스트로데", "tiers": [4] },
+    { "id": "tier5", "name": "아란칼", "tiers": [5] }
+  ],
   "tierLooks": {
     "2": {
       "stat": { "atk": "gillian", "int": "gillian", "hp": "gillian", "spr": "gillian", "spd": "gillian", "def": "gillian" }

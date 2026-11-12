@@ -7,7 +7,7 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { basisChoices, combatFactionIdOf, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { basisChoices, combatFactionIdOf, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -32,8 +32,8 @@ import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/material
 import { unlockHintText } from '../engine/unlocks';
 import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
-import { skinsFor } from '../data/skins';
-import { modelLookOptions } from '../data/skins/lookOptions';
+import { characterSkinEntries } from '../data/skins/lookOptions';
+import { characterSkinTab } from './bha/skinPick';
 import { isTestMode } from './testMode';
 import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
@@ -242,7 +242,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   rightScroll.append(stats, evoPanel);
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
-  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, skinPanel(faction, save, persist)], [rightScroll]);
+  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear], [rightScroll]);
 }
 
 /** 전투 기반 고르기 (GDD 12-4 v6.037 — 초월자 트랙만): [초월자][키웠던 호로][키웠던 사신] 세그먼트 + 지금 기반의 공격 분류·블록·특성 수.
@@ -290,54 +290,6 @@ function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
   row.append(tip);
 }
 
-/** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
- *  종족이 다른 스킨·안 산 스킨은 목록에 안 보인다. 보유한 스킨이 없으면 상점 안내만.
- *  모델 고르기 (C.434, GDD 17절 v6.036): 얻은 초월자 외형(그림/모델 있는 것)도 같은 목록에. 테스트 모드면 단계 모델(종족 설정 단계 이름 — 호로 4단계 바스트로데·5단계 아란칼 남/여)·초월자 전부.
- *  자기 그림이 없는 스킨(아란칼 진화체별 그림 자리 등)은 지금 진화체 그림으로 보여 헷갈려서 목록에서 뺀다 */
-function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void): HTMLElement {
-  const test = isTestMode();
-  const looks = modelLookOptions(faction.id, { test, owned: save.shared.cosmetics, dex: save.transcendentDex.map((x) => x.id) });
-  const p = panel({ title: test ? '모델 · 스킨' : '스킨' });
-  p.setAttribute('aria-label', '스킨');
-  p.dataset.skins = String(looks.length);
-  if (looks.length === 0) {
-    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
-    return p;
-  }
-  const list = h('div', 'bha-stack bha-stack--tight');
-  const rows: { id: string | null; btn: HTMLButtonElement }[] = [];
-  const mark = () => {
-    for (const r of rows) {
-      const on = (save.skin ?? null) === r.id;
-      r.btn.classList.toggle('is-on', on);
-      r.btn.setAttribute('aria-pressed', String(on));
-    }
-  };
-  const add = (id: string | null, label: string, thumb: string | null, group?: string) => {
-    const btn = button({ label, block: true, onClick: () => {
-      if (!equipSkin(save, id, { test })) return;
-      persist();
-      mark();
-    } });
-    if (thumb) {
-      const img = h('img', 'bha-skinthumb') as HTMLImageElement;
-      img.src = thumb;
-      img.alt = '';
-      img.draggable = false;
-      btn.prepend(img);
-    }
-    btn.dataset.skin = id ?? '';
-    if (group) btn.dataset.lookGroup = group;
-    rows.push({ id, btn });
-    list.append(btn);
-  };
-  const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-  add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
-  for (const o of looks) add(o.id, o.group === 'skin' ? shownName(o.label) : o.label, charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, o.id).src, o.group);
-  mark();
-  p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
-  return p;
-}
 
 /** 가방 머리 재화 칩 (GDD 241-D 6): 골드·영옥 — 상점 머리와 같은 칩 */
 export function bagWallet(save: Pick<SaveData, 'shared'>): HTMLElement {
@@ -656,9 +608,16 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   if (mode === 'items') box.append(tabs);
   if (mode === 'items' && itemsUi.group === 'sortie' && !lockedEmpty) box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
   if (mode === 'skin') {
-    // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
+    // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분. 캐릭터 = 분류된 스킨 목록(C.440, GDD 5절 v6.044 — 가진 것·얻은 초월자, 테스트 모드 전부)
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
-    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    const test = isTestMode();
+    const charCount = characterSkinEntries(faction.id, { test, owned: save.shared.cosmetics, dex: save.transcendentDex.map((x) => x.id) }).length;
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : id === 'character' ? charCount : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    if (itemsUi.skinSub === 'character') {
+      box.classList.add('bha-skinpick');
+      box.append(...characterSkinTab(faction, save, test, changed));
+      return [box, h('div')];
+    }
   }
   box.append(itemGrid(cards, empty, lockedEmpty ? 'i-lock' : undefined));
   return [box, h('div')];

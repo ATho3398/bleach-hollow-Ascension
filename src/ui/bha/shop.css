@@ -172,3 +172,13 @@
 .bha-sortie.is-locked { color: var(--bha-text-2); }
 .bha-sortie.is-locked .bha-icon { width: 16px; height: 16px; }
 .bha-sortie__note { flex: 1 1 160px; margin: 0; color: var(--bha-text-2); }
+
+/* ═════ 가방 > 스킨 > 캐릭터 (C.440, GDD 5절 '캐릭터 스킨 분류' v6.044): 대분류·중분류 탭 한 줄(카드 격자 두 줄이 보이게), 상세 창 색 칩 ═════ */
+.bha-skinpick { gap: var(--bha-sp-2); }
+.bha-skinpick__chips { flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-skinpick__chip { min-height: var(--bha-touch); cursor: pointer; font: inherit; font-size: var(--bha-fs-sm); }
+.bha-skinpick__chip.is-on { border-color: var(--bha-accent); background: var(--bha-bg-3); box-shadow: inset 0 -2px 0 var(--bha-accent); }
+.bha-skinpick__note:empty { display: none; }
+.bha-skinpick__bar { flex: none; flex-wrap: nowrap; gap: var(--bha-sp-3); min-width: 0; max-width: 100%; }
+.bha-skinpick__bar > .bha-skinpick__cls { flex: none; padding-right: var(--bha-sp-3); box-shadow: 1px 0 0 var(--bha-line-2); border-radius: 0; }
+.bha-skinpick__bar > .bha-skinpick__sub { flex: 1 1 auto; min-width: 0; }
