@@ -135,6 +135,11 @@
 .bha-prop .bha-prop__shape.has-art { width: calc(86px * var(--ps)); height: calc(76px * var(--ps)); background: none; border: 0; border-radius: var(--bha-r-sm); }
 /* 그림이 상자(가로가 긴 86×76)를 넘쳐 아래 이름표를 덮지 않게: 격자 칸 최소 크기를 풀어 그림을 상자 안에 가둔다 (사용자 2026-11-03 캡처 점검) */
 .bha-prop .bha-prop__shape.has-art > .bha-prop__img { min-width: 0; min-height: 0; object-position: 50% 100%; } /* 그림은 칸 바닥(이름표 바로 위)에 붙인다 — 가로로 긴 그림(지도)이 이름표에서 떠 보이지 않게 (C.255) */
+/* 붕옥 32×32 도트 (C.421): 상자에 맞춰 늘리지 않고 정수 배율(상자 높이에 가장 가까운 32 배수 — 기본 배치 0.6 이면 2배 64px, 옛 브라우저는 64×물건 배율) */
+.bha-prop--hogyoku .bha-prop__shape.has-art > .bha-prop__img {
+  width: calc(64px * var(--ps)); height: calc(64px * var(--ps)); margin: auto auto 0;
+  width: max(32px, round(nearest, calc(76px * var(--ps)), 32px)); height: max(32px, round(nearest, calc(76px * var(--ps)), 32px)); /* 상자 높이에 가장 가까운 32 배수 */
+}
 .bha-prop__tag { position: relative; z-index: 1; }
 /* 이름표 = v2 .bha-plate (어두운 판, 그림 아래) */
 .bha-prop__tag {

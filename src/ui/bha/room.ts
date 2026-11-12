@@ -14,7 +14,7 @@ export const PROP_ICON: Record<RoomProp | MarketSpot | WorldPlace, string> = {
   altar: 'i-practice', book: 'i-shelf', chest: 'i-deck', market: 'i-flag-win', shop: 'i-heal', spa: 'i-tile-rest', wanderer: 'i-special',
   gearShop: 'i-guard', skinShop: 'i-rare', traitShop: 'i-slot', smith: 'i-attack', // 상점 4곳 (GDD 150장 2): shop = 소모품 상점 · 대장장이 (153장 2)
   outside: 'i-loop', home: 'i-nest', adventure: 'i-loop', tower: 'i-title', // 월드맵 물건·월드맵 장소 (GDD 130장, C.204 · 탑 139장 1)
-  hogyoku: 'i-evolve', // 방 붕옥 아이콘 (GDD 242장 2): 그림 prop.hogyoku 대기
+  hogyoku: 'i-evolve', // 방 붕옥 (GDD 12-2): 그림 prop-hogyoku.png(C.421)가 있으면 그림, 이 아이콘은 그림이 빠졌을 때만
   rank: 'i-flag-win', // 월드맵 번호 쟁탈전·진급 시험 (GDD 241-C 3): 그림 대기 — 진급 시험 화면의 깃발과 같은 아이콘
 };
 

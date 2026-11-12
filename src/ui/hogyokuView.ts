@@ -1,5 +1,5 @@
 // 붕옥 화면 (GDD 22-3·22-9 → 244장, C.414): 재료 3종으로 붕옥 개발 10단계(반각성 50% → 공명 100%) → 모든 트랙 등급 1위 → 합체 미리보기 → 확인 2번 → 연출.
-// 왼쪽 = 붕옥 게이지·합체 조건, 오른쪽 = 초월체 도감(전시)·보유 보너스. 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
+// 왼쪽 = 붕옥 그림(100%면 불꽃)·개발 %, 오른쪽 = 탭 개발(재료 칸)·단계·합체·도감 (C.421). 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
 import { getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
@@ -12,7 +12,11 @@ import { formDisplayName, playerElementsOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
 import { allTracks, developGate, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
-import { button, chip, h, info, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { button, chip, h, icon, info, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { artIcon, artSrc } from './bha/artIcon';
+import { categoryTabs } from './bha/itemUi';
+import { edgeCue, enableDragScroll } from './bha/dragScroll';
+import { showToast } from './bha/nest';
 import { elementsMark } from './bha/element';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage } from './bha/lcdpage';
@@ -79,21 +83,31 @@ export function hogyokuStage(save: SaveData): keyof typeof HOGYOKU_STAGE_NAMES {
   return fusionGate(save).ok ? 'ready' : 'resonance';
 }
 
-/** 재료 3종 한 줄: 가진 수 / 다음 단계에 드는 수 */
-function costLine(save: SaveData, cost: HogyokuCost | null): HTMLElement {
-  const rows: [string, number, number | null][] = [
-    [SOUL_CRYSTAL_NAME, save.shared.soulCrystals, cost?.soul ?? null],
-    [HOGYOKU_SHARD_NAME, save.shared.hogyokuShards, cost?.shard ?? null],
-    [RESONANCE_ESSENCE_NAME, save.shared.resonanceEssence, cost?.essence ?? null],
-  ];
-  const dl = info(rows.map(([name, have, need]) => ({
-    label: name,
-    value: need === null ? `${have}` : `${have} / ${need}`,
-    mod: need === null ? undefined : have >= need ? ('good' as const) : ('bad' as const),
-  })));
-  dl.setAttribute('aria-label', '붕옥 재료');
-  dl.dataset.materials = '';
-  return dl;
+/** 재료 3종 = 아이템 칸 (GDD 12-3, C.421): 아이콘 · 이름 · 가진 수 / 다음 단계에 드는 수 · ⓘ 얻는 곳. 재료 그림이 없어 스프라이트 아이콘으로 대신 */
+export const HOGYOKU_MATERIALS = [
+  { id: 'soul', icon: 'i-rare', name: SOUL_CRYSTAL_NAME, have: (s: SaveData) => s.shared.soulCrystals, from: () => { const c = BALANCE.provisional.soulCrystals; return `강적 처치 +${c.perElite} · 등급전 승리 +${c.perRankWin} · 환생 +${c.perRebirth}`; } },
+  { id: 'shard', icon: 'i-special', name: HOGYOKU_SHARD_NAME, have: (s: SaveData) => s.shared.hogyokuShards, from: () => `스토리 화 첫 클리어 · 장 보스 첫 처치 · 탑 ${BALANCE.provisional.hogyokuShards.towerEvery}층마다` },
+  { id: 'essence', icon: 'i-sp', name: RESONANCE_ESSENCE_NAME, have: (s: SaveData) => s.shared.resonanceEssence, from: () => '진화할 때마다 · 공명' },
+] as const;
+
+function materialSlots(save: SaveData, cost: HogyokuCost | null): HTMLElement {
+  const grid = h('div', 'bha-hgmats');
+  grid.setAttribute('aria-label', '붕옥 재료');
+  grid.dataset.materials = '';
+  for (const m of HOGYOKU_MATERIALS) {
+    const have = m.have(save);
+    const need = cost ? cost[m.id] : null;
+    const cell = h('div', `bha-hgmat${need === null ? '' : have >= need ? ' is-ok' : ' is-short'}`);
+    cell.dataset.material = m.id;
+    const ib = h('button', 'bha-hgmat__info');
+    (ib as HTMLButtonElement).type = 'button';
+    ib.setAttribute('aria-label', `${m.name} 얻는 곳`);
+    ib.append(icon('i-help'));
+    ib.onclick = () => showToast({ eyebrow: '얻는 곳', title: m.name, meta: m.from() }, 0, 3200);
+    cell.append(icon(m.icon, 'lg'), h('span', 'bha-hgmat__name', m.name), h('b', 'bha-hgmat__n', need === null ? `${have}` : `${have} / ${need}`), ib);
+    grid.append(cell);
+  }
+  return grid;
 }
 
 /** 개발 단계 목록 (GDD 244장 4: 단계 이름·효과 문구): 단계마다 이름 · 효과 · 재료 · 상태(✓ 다음 / 공명 필요) */
@@ -161,15 +175,46 @@ function rankChecklist(save: SaveData): HTMLElement {
 export interface HogyokuHandlers {
   onDevelop: () => void;
   onPreview: () => void;
+  /** 화면을 떠나면 끊는다 (탭 가로 끌기) */
+  signal?: AbortSignal;
 }
 
-/** 붕옥 화면 (GDD 244장): 왼쪽 = 단계 띠·붕옥 개발(재료·[개발])·개발 단계 목록, 오른쪽 = 합체(지금 두 캐릭터라면 → 「○○」·조건)·초월체 도감(못 모은 조건 공개) */
-export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
+/** 붕옥 창 오른쪽 탭 (C.421): 개발 / 단계 / 합체 / 도감 — 가방 장비 탭과 같은 가로 끌기 탭 */
+export type HogyokuTab = 'develop' | 'steps' | 'fusion' | 'dex';
+export const HOGYOKU_TABS: readonly { id: HogyokuTab; label: string }[] = [
+  { id: 'develop', label: '개발' }, { id: 'steps', label: '단계' }, { id: 'fusion', label: '합체' }, { id: 'dex', label: '도감' },
+];
+let hogyokuTab: HogyokuTab = 'develop';
+
+/** 불꽃 이펙트가 켜지는가 (C.421): 붕옥 개발 100%(완전 각성)일 때만. 합체 뒤 6~10단계가 0이 되면 꺼진다 */
+export function hogyokuFlameOn(save: Pick<SaveData, 'hogyoku'>): boolean {
+  return save.hogyoku.level >= HX.maxLevel;
+}
+
+/** 왼쪽 붕옥 그림 칸 (가방 장비 탭의 캐릭터 칸처럼): 붕옥 그림 크게(64 → 정수 배율) · 100%면 뒤에 불꽃 16프레임 반복 · 개발 % · 단계 이름 · 상태 띠 */
+function orbFigure(save: SaveData, stage: ReturnType<typeof hogyokuStage>): HTMLElement {
   const hg = save.hogyoku;
-  const stage = hogyokuStage(save);
-  const sub = h('span');
-  sub.append(`두 캐릭터가 재료를 같이 모은다 `, provisionalTag('임시 수치'));
-  const head = lcdHead({ title: '붕옥', sub });
+  const fig = h('div', 'bha-hgorb');
+  fig.setAttribute('aria-label', `붕옥 개발 ${hg.level * 10}%`);
+  fig.dataset.level = String(hg.level);
+  const stageBox = h('div', 'bha-hgorb__art');
+  const flameSrc = hogyokuFlameOn(save) ? artSrc('hogyoku.flame') : null;
+  if (flameSrc) {
+    const flame = h('span', 'bha-hgorb__flame');
+    flame.style.setProperty('--hg-flame', `url("${typeof document === 'undefined' ? flameSrc : new URL(flameSrc, document.baseURI).href}")`);
+    flame.setAttribute('aria-hidden', 'true');
+    stageBox.append(flame);
+    fig.classList.add('is-full');
+  }
+  const orbSrc = artSrc('hogyoku.orb');
+  if (orbSrc) {
+    const img = h('img', 'bha-hgorb__img') as HTMLImageElement;
+    img.src = orbSrc;
+    img.alt = '';
+    img.draggable = false;
+    stageBox.append(img);
+  } else stageBox.append(artIcon('prop.hogyoku', 'i-evolve'));
+  fig.append(stageBox);
 
   const stages = h('div', 'bha-hogyoku__stages');
   stages.setAttribute('aria-label', '붕옥 상태');
@@ -181,21 +226,33 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
     c.dataset.stage = k;
     stages.append(c);
   }
+  const who = h('div', 'bha-hgorb__who');
+  who.append(h('b', '', `붕옥 개발 ${hg.level * 10}%`), h('small', '', hg.level > 0 ? HOGYOKU_STEP_NAMES[hg.level - 1] ?? '' : '개발 전'));
+  fig.append(who, meter({ kind: hg.resonance ? 'sp' : 'stored', label: '개발', value: hg.level, max: HX.maxLevel, full: hg.level >= HX.maxLevel }), stages);
+  return fig;
+}
 
+/** 개발 탭: 재료 3종 칸 · 다음 단계 강화 재료 · [개발] · 막힌 이유 · 설명 */
+function developTab(save: SaveData, hd: HogyokuHandlers): HTMLElement[] {
+  const hg = save.hogyoku;
   const gate = developGate(save);
-  const core = panel({ title: `붕옥 개발 ${hg.level * 10}%` });
+  const max = hg.level >= HX.maxLevel;
+  const core = panel({ title: max ? '개발 100% — 완전 각성' : `다음 ${gate.next * 10}% · ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}`, aside: max ? undefined : '드는 재료' });
   core.setAttribute('aria-label', '붕옥 개발');
-  core.append(stages);
-  core.append(meter({ kind: hg.resonance ? 'sp' : 'stored', label: hg.level >= HX.maxLevel ? '개발 100%' : `다음 ${gate.next * 10}% · ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}`, icon: 'i-rare', value: hg.level, max: HX.maxLevel, full: hg.level >= HX.maxLevel, lg: true }));
-  core.append(costLine(save, gate.cost));
-  const shown = gate.missing.filter((m) => m !== 'tab');
-  if (hg.level < HX.maxLevel) {
+  core.append(materialSlots(save, gate.cost));
+  if (!max) {
     const btn = button({ label: `${gate.next * 10}% 개발 — 전 능력치 +${pct(HX.perLevelBonus)}`, icon: 'i-plus', variant: 'primary', block: true, disabled: !gate.ok, onClick: hd.onDevelop });
     btn.dataset.sc = 'hogyoku-develop';
     core.append(btn);
   }
-  for (const m of shown) core.append(h('p', 'bha-faint', `· ${developBlockText(m)}`));
+  for (const m of gate.missing.filter((x) => x !== 'tab' && x !== 'max')) core.append(h('p', 'bha-faint', `· ${developBlockText(m)}`));
+  const about = h('p', 'bha-faint', `붕옥 재료 3종을 바쳐 한 단계씩 개발한다. 단계마다 두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)}(영구). ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%가 되면 합체할 수 있다. 재료 칸 ? = 얻는 곳.`);
+  const line = bonusLine(save);
+  return [core, ...(line ? [h('p', 'bha-small', `보유 보너스: ${line}`)] : []), about];
+}
 
+/** 합체 탭: 지금 두 캐릭터라면 → 「○○」 · 조건 · [합체 미리보기] */
+function fusionTab(save: SaveData, hd: HogyokuHandlers): HTMLElement {
   const fusion = panel({ title: '초월체 합체', aside: provisionalTag('임시 조건') });
   fusion.setAttribute('aria-label', '초월체 합체');
   const pv = fusionPreview(save);
@@ -207,13 +264,40 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
   }
   fusion.append(h('p', 'bha-small', `붕옥 개발 100% + ${HOGYOKU_STAGE_NAMES.resonance} + 두 캐릭터 모두 등급 1위 → 두 캐릭터가 초월체 하나가 된다. 되돌릴 수 없다.`), rankChecklist(save));
   const fg = fusionGate(save);
-  // 공명이 개발 칸에 이미 막힌 이유로 나왔으면 합체 칸에서는 되풀이하지 않는다
-  for (const m of fg.missing.filter((x) => x !== 'tab' && x !== 'rank' && !(x === 'resonance' && gate.missing.includes('resonance')))) fusion.append(h('p', 'bha-faint', `· ${fusionBlockText(m)}`));
+  for (const m of fg.missing.filter((x) => x !== 'tab' && x !== 'rank')) fusion.append(h('p', 'bha-faint', `· ${fusionBlockText(m)}`));
   const prev = button({ label: '합체 미리보기', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
   prev.dataset.sc = 'hogyoku-preview';
   fusion.append(prev);
+  return fusion;
+}
 
-  lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [core, stepList(save)], [fusion, transcendentDexPanel(save)]);
+/** 붕옥 화면 (GDD 12-2·12-3, C.421 배치): 왼쪽 = 붕옥 그림 크게(100%면 뒤에 불꽃)·개발 %·단계 이름·상태 띠,
+ *  오른쪽 = 탭(개발: 재료 3종 칸·[개발]·설명 / 단계: 개발 단계 목록 / 합체: 지금 두 캐릭터라면·조건 / 도감: 초월체 도감) */
+export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
+  const stage = hogyokuStage(save);
+  const sub = h('span');
+  sub.append(`두 캐릭터가 재료를 같이 모은다 `, provisionalTag('임시 수치'));
+  const head = lcdHead({ title: '붕옥', sub });
+
+  const body = h('div', 'bha-hgbody');
+  const fill = () => {
+    body.replaceChildren(...(hogyokuTab === 'develop' ? developTab(save, hd) : hogyokuTab === 'steps' ? [stepList(save)] : hogyokuTab === 'fusion' ? [fusionTab(save, hd)] : [transcendentDexPanel(save)]));
+    body.dataset.tab = hogyokuTab;
+  };
+  const tabs = categoryTabs(HOGYOKU_TABS.map((t) => ({ id: t.id, label: t.label })), hogyokuTab, (id) => {
+    hogyokuTab = id as HogyokuTab;
+    tabs.querySelectorAll<HTMLElement>('[role="tab"]').forEach((b) => {
+      const on = b.dataset.tab === id;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    fill();
+  }, '붕옥 분류');
+  enableDragScroll(tabs, hd.signal); // 가방 장비 탭과 같은 가로 끌기 (GDD 9절)
+  edgeCue(tabs, tabs.querySelector<HTMLElement>('.is-on'), hd.signal);
+  fill();
+
+  lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [orbFigure(save, stage)], [tabs, body]);
 }
 
 /** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */

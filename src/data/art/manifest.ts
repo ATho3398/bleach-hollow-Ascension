@@ -157,6 +157,11 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.altar': {},
   'prop.book': {},
   'prop.chest': {},
+  // 붕옥 (GDD 12-2·15-1, C.421 사용자 그림 hogyoku-1112): 방 물건·메뉴 아이콘 = prop-hogyoku.png(32×32, 반각성/공명 한 모양) ·
+  // 붕옥 창 왼쪽 큰 그림 = hogyoku-orb.png(64×64) · 개발 100% 뒤 불꽃 = hogyoku-flame.png(96×96 × 16프레임 가로 시트). 모두 픽셀 그대로·정수 배율
+  'prop.hogyoku': {},
+  'hogyoku.orb': {},
+  'hogyoku.flame': {},
   'prop.shop': {},
   // 온천 (GDD 123장 4, C.198): 방 물건·온천 화면 배경 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   'prop.spa': {},

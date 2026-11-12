@@ -5,6 +5,7 @@ import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestActio
 import { foodEffectList, type FoodFx } from '../../engine/nest';
 import { foodEffectText, foodFxAmount, foodFxText } from '../../foodText';
 import { button, el, icon, provisionalTag } from './dom';
+import { artIcon } from './artIcon';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 import { registerCancelHook } from './shortcuts';
 import { fixParticles } from '../../engine/josa';
@@ -12,6 +13,8 @@ import { fixParticles } from '../../engine/josa';
 export interface DockMenuItem {
   label: string;
   icon: string;
+  /** 그림 아이콘 키 (있으면 그림, 파일이 없으면 icon — 붕옥 = prop.hogyoku, C.421) */
+  art?: string;
   onClick: () => void;
 }
 
@@ -241,7 +244,7 @@ export function createDock(o: DockOpts): Dock {
         const b = el('button', 'bha-homedock__moreitem');
         b.type = 'button';
         b.setAttribute('aria-label', m.label);
-        b.append(icon(m.icon), el('span', '', m.label));
+        b.append(m.art ? artIcon(m.art, m.icon) : icon(m.icon), el('span', '', m.label));
         b.onclick = () => { setPanel(CLOSED, moreBtn); m.onClick(); };
         trayBtns.push(b);
         tray.append(b);

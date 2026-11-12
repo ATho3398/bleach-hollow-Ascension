@@ -586,3 +586,44 @@ button.bha-slot { cursor: pointer; }
 /* ═════ 붕옥 상태 띠 (GDD 244장 2 안 B: 반각성 · 공명 · 합체 가능, C.414) — 토큰만 ═════ */
 .bha-hogyoku__stages { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1); }
 .bha-hogyoku__stages .bha-chip.is-off { opacity: 0.5; }
+
+/* ═════ 붕옥 창 배치 (C.421, 사용자 그림 hogyoku-1112): 왼쪽 = 붕옥 그림 크게(가방 장비 탭 캐릭터 칸처럼) · 오른쪽 = 탭(개발·단계·합체·도감) ═════
+   그림은 픽셀 그대로 정수 배율 --hg-s (64 붕옥 → 64×s, 96 불꽃 → 96×s). 100%면 불꽃 16프레임 시트(1536×96)를 약 12fps 로 반복 */
+.bha-hogyoku-page { --hg-s: 2; }
+.bha-hogyoku-page:not(.bha-fusion-page) .bha-lcdpage__body { grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); }
+.bha-hgorb { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-2); min-width: 0; }
+.bha-hgorb__art { position: relative; flex: none; display: grid; place-items: center; width: calc(96px * var(--hg-s)); height: calc(96px * var(--hg-s)); }
+.bha-hgorb__img { position: relative; z-index: 1; width: calc(64px * var(--hg-s)); height: calc(64px * var(--hg-s)); image-rendering: pixelated; }
+.bha-hgorb__art > .bha-icon { width: calc(32px * var(--hg-s)); height: calc(32px * var(--hg-s)); color: var(--bha-ph); }
+.bha-hgorb__flame {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; image-rendering: pixelated;
+  background-image: var(--hg-flame); background-repeat: no-repeat;
+  background-size: calc(1536px * var(--hg-s)) calc(96px * var(--hg-s));
+  animation: bha-hg-flame 1333ms steps(16) infinite;
+}
+@keyframes bha-hg-flame { from { background-position: 0 0; } to { background-position: calc(-1536px * var(--hg-s)) 0; } }
+.bha-hgorb__who { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.2; }
+.bha-hgorb__who b { font-size: var(--bha-fs-lg); }
+.bha-hgorb__who small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-hgorb .bha-meter { align-self: stretch; }
+.bha-hgorb .bha-hogyoku__stages { justify-content: center; }
+.bha-hgorb.is-full .bha-hgorb__who b { color: var(--bha-rare); }
+.bha-hgbody { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-height: 0; }
+.bha-hgmats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--bha-sp-2); }
+.bha-hgmat {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0;
+  padding: var(--bha-sp-2) var(--bha-sp-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--bha-line-2);
+  text-align: center; line-height: 1.2;
+}
+.bha-hgmat > .bha-icon { color: var(--bha-rare); }
+.bha-hgmat__name { font-size: var(--bha-fs-xs); color: var(--bha-text-2); word-break: keep-all; }
+.bha-hgmat__n { font-size: var(--bha-fs-sm); }
+.bha-hgmat.is-ok .bha-hgmat__n { color: var(--bha-good); }
+.bha-hgmat.is-short .bha-hgmat__n { color: var(--bha-danger); }
+.bha-hgmat__info {
+  position: absolute; top: 0; right: 0; display: grid; place-items: center; width: var(--bha-touch); height: var(--bha-touch); max-width: 50%;
+  padding: 0; border: 0; background: none; color: var(--bha-text-3); cursor: pointer; touch-action: manipulation;
+}
+.bha-hgmat__info .bha-icon { width: 14px; height: 14px; }
+/* 그림 아이콘 (artIcon): 아이콘 칸 크기 그대로, 픽셀 그대로 */
+.bha-articon { image-rendering: pixelated; object-fit: contain; }
