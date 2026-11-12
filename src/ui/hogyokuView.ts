@@ -1,18 +1,22 @@
 // 붕옥 화면 (GDD 22-3·22-9 → 244장, C.414): 재료 3종으로 붕옥 개발 10단계(반각성 50% → 공명 100%) → 모든 트랙 등급 1위 → 합체 미리보기 → 확인 2번 → 연출.
-// 왼쪽 = 붕옥 그림(개발 % 6단계, 불꽃은 뒤)·둘레 재료 3칸, 오른쪽 = 상세 + 세로 목록 (C.423 사용자 스케치). 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
+// 왼쪽 = 붕옥 그림(개발 % 6단계, 불꽃은 뒤)·둘레 재료 3칸·총 효과, 오른쪽 = 고른 것의 상세 + 아래 고정 [강화], 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 (C.425). 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
-import { getFaction } from '../data/factions';
+import { FACTIONS, getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { HOGYOKU_SHARD_NAME, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, RESONANCE_ESSENCE_NAME, transcendentConditionText } from '../data/hogyoku';
-import { developCost, type HogyokuCost } from '../engine/transcend';
+import { slotStatBonus, type HogyokuCost } from '../engine/transcend';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
-import type { FactionConfig } from '../engine/faction';
-import { formDisplayName, playerElementsOf } from '../engine/evolution';
+import { roomOf, type FactionConfig } from '../engine/faction';
+import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
-import { allTracks, developGate, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
+import { allTracks, artSkinOf, artTierIndexOf, developGate, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
-import { button, chip, h, icon, info, meter, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
+import { dexCard, dexGrid } from './bha/dexGrid';
+import { imageArt, itemDialog } from './bha/itemUi';
+import { heroArtOf } from './bha/battle';
+import { statsBlock } from './bha/nest';
 import { artIcon, artSrc } from './bha/artIcon';
 import { elementsMark } from './bha/element';
 import type { Device } from './bha/device';
@@ -90,92 +94,31 @@ export const HOGYOKU_MATERIALS = [
 type Material = (typeof HOGYOKU_MATERIALS)[number];
 export type MaterialId = Material['id'];
 
-/** 다음 단계 강화 재료 줄 (상세 칸): 재료마다 아이콘 · 가진 수 / 드는 수 (모자라면 빨강) */
+/** 다음 단계 강화 재료 줄 (상세 칸): 재료마다 아이콘 · 이름 · 가진 수 / 드는 수 (모자라면 빨강). 칸마다 한 덩어리로 줄바꿈 (C.425) */
 function costRow(save: SaveData, cost: HogyokuCost | null): HTMLElement {
   const row = h('div', 'bha-hgcost');
-  row.setAttribute('aria-label', '다음 단계 강화 재료');
+  row.setAttribute('aria-label', '다음 강화 재료');
   row.dataset.materials = '';
   for (const m of HOGYOKU_MATERIALS) {
     const have = m.have(save);
     const need = cost ? cost[m.id] : null;
     const c = h('span', `bha-hgcost__item${need === null ? '' : have >= need ? ' is-ok' : ' is-short'}`);
     c.dataset.material = m.id;
-    c.append(icon(m.icon, 'sm'), h('span', '', m.name), h('b', '', need === null ? `${have}` : `${have} / ${need}`));
+    c.append(icon(m.icon, 'sm'), h('span', 'bha-hgcost__name', m.name), h('b', '', need === null ? `${have}` : `${have} / ${need}`));
     row.append(c);
   }
   return row;
 }
 
-/** 개발 단계 목록 (GDD 244장 4: 단계 이름·효과 문구): 단계마다 이름 · 효과 · 재료 · 상태(✓ 다음 / 공명 필요) */
-function stepList(save: SaveData): HTMLElement {
-  const h0 = save.hogyoku;
-  const p = panel({ title: '개발 단계', aside: `${h0.level} / ${HX.maxLevel}` });
-  p.setAttribute('aria-label', '붕옥 개발 단계');
-  const list = info(HOGYOKU_STEP_NAMES.slice(0, HX.maxLevel).map((name, i) => {
-    const lv = i + 1;
-    const c = developCost(lv);
-    const done = h0.level >= lv;
-    const locked = lv > HX.halfLevel && !h0.resonance;
-    const state = done ? ' ✓' : lv === h0.level + 1 ? (locked ? ' 공명' : ' 다음') : locked ? ' 공명' : '';
-    return {
-      label: `${lv * 10}% ${name}`,
-      value: `+${pct(HX.perLevelBonus)} · ${c.soul}/${c.shard}/${c.essence}${state}`,
-      mod: done ? ('good' as const) : locked ? undefined : lv === h0.level + 1 ? ('em' as const) : undefined,
-    };
-  }));
-  list.querySelectorAll('.bha-info__row').forEach((row, i) => {
-    (row as HTMLElement).dataset.level = String(i + 1);
-    (row as HTMLElement).dataset.done = String(h0.level >= i + 1);
-  });
-  p.append(list, h('p', 'bha-faint', `단계마다 두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)}(영구). 재료 = ${SOUL_CRYSTAL_NAME} / ${HOGYOKU_SHARD_NAME} / ${RESONANCE_ESSENCE_NAME}. '공명' = 공명해야 열림. ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 합체하면 ${HX.halfLevel * 10 + 10}~100% 진행만 처음으로(오른 능력치는 남는다).`));
-  return p;
+/** 지금 얻는 총 효과 (GDD 12-2 C.425 "붕옥 개발 글씨 아래에 지금 얻는 총 효과"): 붕옥 개발 보너스 + 초월체 보너스 */
+export function totalEffectText(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): { main: string; parts: string } {
+  const b = statBonusOf(save);
+  const parts = [`붕옥 개발 +${pct(b.liberation)}`, `초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
+  return { main: `두 캐릭터 전 능력치 +${pct(b.total)}`, parts };
 }
 
-/** 초월체 도감 (전시): 6칸, 모은 것은 이름·컨셉·몇 번째 합체, 못 모은 것은 ??? + 조건 공개 (GDD 244장 5) */
-function transcendentDexPanel(save: SaveData): HTMLElement {
-  const owned = new Map(save.transcendentDex.map((e) => [e.id, e]));
-  const p = panel({ title: '초월체 도감', aside: `${owned.size} / ${TRANSCENDENTS.length}` });
-  p.setAttribute('aria-label', '초월체 도감');
-  p.dataset.owned = String(owned.size);
-  const list = info(TRANSCENDENTS.map((d) => {
-    const got = owned.get(d.id);
-    return got
-      ? { label: `${d.order}. ${d.name} · ${got.fusionIndex}번째 합체`, value: d.concept, mod: 'stack' as const }
-      : { label: `${d.order}. ???`, value: `조건: ${transcendentConditionText(d.condition)}` };
-  }));
-  list.querySelectorAll('.bha-info__row').forEach((row, i) => {
-    const d = TRANSCENDENTS[i]!;
-    (row as HTMLElement).dataset.transcendent = d.id;
-    (row as HTMLElement).dataset.owned = String(owned.has(d.id));
-  });
-  p.append(list);
-  const line = bonusLine(save);
-  p.append(h('p', 'bha-faint', line ? `보유 보너스: ${line}` : `보유 보너스: 붕옥 개발 단계마다 +${pct(HX.perLevelBonus)}, 초월체 1종마다 +${pct(HX.perTranscendentBonus)} (두 캐릭터 모두)`));
-  if (owned.size >= TRANSCENDENTS.length) p.append(notice('rare', '초월체 6종을 모두 모았다. 칭호 「붕옥 완성」. 이후 합체는 막히고 육성은 계속된다.', { title: '붕옥 완성' }));
-  return p;
-}
-
-/** 두 캐릭터 조건 표: 이름 · 등급(1위면 ✓) */
-function rankChecklist(save: SaveData): HTMLElement {
-  const tracks = allTracks(save);
-  const dl = info(tracks.map((t) => {
-    const f = getFaction(t.factionId);
-    const top = trackIsTopRank(t);
-    return { label: `${f.name} · ${trackName(t)}`, value: top ? `${rankLabel(f, rankOf(t.rank))} ✓` : `${rankLabel(f, rankOf(t.rank))} → ${rankLabel(f, 1)} 필요`, mod: top ? ('good' as const) : ('bad' as const) };
-  }));
-  dl.setAttribute('aria-label', '합체 조건');
-  dl.querySelectorAll('.bha-info__row').forEach((row, i) => ((row as HTMLElement).dataset.top = String(trackIsTopRank(tracks[i]!))));
-  return dl;
-}
-
-export interface HogyokuHandlers {
-  onDevelop: () => void;
-  onPreview: () => void;
-}
-
-/** 붕옥 창 오른쪽 세로 목록 (C.423, 사용자 스케치 layout-sketch.jpg): 개발 · 재료 3종 · 개발 단계 · 합체 · 초월체 도감. 고른 것이 왼쪽 상세 칸에 뜬다 */
-export type HogyokuSel = 'develop' | MaterialId | 'steps' | 'fusion' | 'dex';
-export const HOGYOKU_LIST: readonly HogyokuSel[] = ['develop', 'soul', 'shard', 'essence', 'steps', 'fusion', 'dex'];
+/** 붕옥 창 선택 (C.425, GDD 12-2 "왼쪽에서 고른 것의 상세만"): 붕옥(강화) 또는 재료 칸 하나 */
+export type HogyokuSel = 'develop' | MaterialId;
 let hogyokuSel: HogyokuSel = 'develop';
 
 /** 붕옥 그림 단계 (C.423, GDD 12-2 — 사용자 "종합 해방도에 따라 0~19, 20~39, 40~59, 60~79, 80~99, 100일때 모습"):
@@ -198,10 +141,13 @@ export function hogyokuFlameOn(save: Pick<SaveData, 'hogyoku'>): boolean {
 
 const absUrl = (src: string) => (typeof document === 'undefined' ? src : new URL(src, document.baseURI).href);
 
-/** 붕옥 그림 칸: 112×116 칸 하나에 상자 그림(112×116)·붕옥(64, 칸 안 24·25 = 상자 속 붕옥 자리)·불꽃(96, 칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24)을 같은 배율(1.5)로 겹친다 */
-function orbArt(save: SaveData): HTMLElement {
+/** 붕옥 그림 칸: 112×116 칸 하나에 상자 그림(112×116)·붕옥(64, 칸 안 24·25 = 상자 속 붕옥 자리)·불꽃(96, 칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24)을 같은 배율(1.5)로 겹친다.
+ *  칸 전체가 버튼 — 누르면 붕옥(강화) 상세 (C.425) */
+function orbArt(save: SaveData): HTMLButtonElement {
   const look = hogyokuLook(save.hogyoku.level);
-  const box = h('div', 'bha-hgorb__art');
+  const box = h('button', 'bha-hgorb__art') as HTMLButtonElement;
+  box.type = 'button';
+  box.setAttribute('aria-label', `붕옥 강화 ${save.hogyoku.level} / ${HX.maxLevel}`);
   box.dataset.band = String(look.band);
   box.dataset.art = look.art;
   const flameSrc = look.flame ? artSrc(look.flame) : null;
@@ -223,7 +169,7 @@ function orbArt(save: SaveData): HTMLElement {
   return box;
 }
 
-/** 왼쪽 판 (스케치 위 칸): 가운데 붕옥 그림 · 둘레 재료 3칸(왼쪽 위·오른쪽 위·오른쪽 아래, 선으로 붕옥에 이어짐) · 아래 개발 % · 단계 이름 */
+/** 왼쪽 판: 가운데 붕옥 그림(누르면 강화 상세) · 둘레 재료 3칸(누르면 재료 상세, 선으로 붕옥에 이어짐) · 아래 개발 % · 단계 이름 · 지금 얻는 총 효과 */
 function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement {
   const hg = save.hogyoku;
   const board = h('div', 'bha-hgorb');
@@ -245,7 +191,10 @@ function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement 
     ln.setAttribute('vector-effect', 'non-scaling-stroke');
     lines.append(ln);
   }
-  field.append(lines, orbArt(save));
+  const art = orbArt(save);
+  art.dataset.sel = 'develop';
+  art.onclick = () => pick('develop');
+  field.append(lines, art);
   const cost = developGate(save).cost;
   for (const m of HOGYOKU_MATERIALS) {
     const have = m.have(save);
@@ -253,6 +202,7 @@ function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement 
     const b = h('button', `bha-hgmat bha-hgmat--${m.id}${need === null ? '' : have >= need ? ' is-ok' : ' is-short'}`) as HTMLButtonElement;
     b.type = 'button';
     b.dataset.material = m.id;
+    b.dataset.sel = m.id;
     b.setAttribute('aria-label', `${m.name} ${have}${need === null ? '' : ` / ${need}`}`);
     b.append(icon(m.icon), h('b', 'bha-hgmat__n', need === null ? `${have}` : `${have}/${need}`));
     b.onclick = () => pick(m.id);
@@ -260,6 +210,12 @@ function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement 
   }
   const who = h('div', 'bha-hgorb__who');
   who.append(h('b', '', `붕옥 개발 ${hg.level * 10}%`), h('small', '', hg.level > 0 ? HOGYOKU_STEP_NAMES[hg.level - 1] ?? '' : '개발 전'));
+  const eff = totalEffectText(save);
+  const total = h('p', 'bha-hgorb__total');
+  total.setAttribute('aria-label', '지금 얻는 총 효과');
+  total.dataset.bonus = String(statBonusOf(save).total);
+  total.append(h('span', 'bha-hgorb__totalcap', '지금 얻는 효과'), h('b', '', eff.main), h('small', '', eff.parts));
+  who.append(total);
   board.append(field, who);
   return board;
 }
@@ -279,114 +235,257 @@ function stageChips(stage: ReturnType<typeof hogyokuStage>): HTMLElement {
   return stages;
 }
 
-/** 상세: 붕옥 개발 — 상태 띠 · 개발 막대 · 다음 단계 강화 재료 · [개발] · 막힌 이유 · 보유 보너스 · 설명 */
-function developDetail(save: SaveData, hd: HogyokuHandlers): HTMLElement[] {
+/** 상세 칸 줄 하나: 이름표(왼쪽, 줄바꿈 없음) · 값(남는 폭에서 줄바꿈) — 이름표가 폭 0 으로 눌려 한 글자씩 세로로 깨지지 않게 (C.425) */
+function hgRow(label: string, value: string | Node, mod?: 'good' | 'bad' | 'em'): HTMLElement {
+  const r = h('div', `bha-hgrow${mod ? ` bha-hgrow--${mod}` : ''}`);
+  const v = h('span', 'bha-hgrow__value');
+  v.append(value);
+  r.append(h('span', 'bha-hgrow__label', label), v);
+  return r;
+}
+
+/** 상세: 붕옥 강화 — 지금 몇 강 · 상태 띠 · 막대 · 다음 강화 재료 · 이 강화로 얻는 것(이번 +1%, 강화 뒤 누적) · 막힌 이유 */
+function developDetail(save: SaveData): HTMLElement {
   const hg = save.hogyoku;
   const gate = developGate(save);
   const max = hg.level >= HX.maxLevel;
-  const core = panel({ title: max ? '개발 100% — 완전 각성' : `다음 ${gate.next * 10}% · ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}` });
-  core.setAttribute('aria-label', '붕옥 개발');
-  core.append(stageChips(hogyokuStage(save)), meter({ kind: hg.resonance ? 'sp' : 'stored', label: '개발', value: hg.level, max: HX.maxLevel, full: max }), costRow(save, gate.cost));
-  if (!max) {
-    const btn = button({ label: `${gate.next * 10}% 개발`, icon: 'i-plus', variant: 'primary', block: true, disabled: !gate.ok, onClick: hd.onDevelop });
-    btn.dataset.sc = 'hogyoku-develop';
-    core.append(btn);
+  const p = panel({ title: '붕옥 강화', aside: `${hg.level}강 / ${HX.maxLevel}` });
+  p.setAttribute('aria-label', '붕옥 강화 상세');
+  p.dataset.level = String(hg.level);
+  p.append(stageChips(hogyokuStage(save)));
+  const now = hg.level > 0 ? `${hg.level}강 · ${hg.level * 10}% ${HOGYOKU_STEP_NAMES[hg.level - 1] ?? ''}` : '0강 · 개발 전';
+  const b = statBonusOf(save);
+  const rows = h('div', 'bha-hgrows');
+  rows.append(hgRow('지금', now));
+  if (max) {
+    rows.append(hgRow('다음 강화', '없음 — 붕옥 개발 100% (완전 각성)', 'good'));
+    p.append(rows);
+  } else {
+    const after = slotStatBonus(hg.developed + 1, save.transcendentDex.length);
+    rows.append(
+      hgRow('다음 강화', `${gate.next}강 · ${gate.next * 10}% ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}`, 'em'),
+      hgRow('이 강화로 얻는 것', `두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)} (영구)`),
+      hgRow('강화 뒤 누적', `전 능력치 +${pct(b.total)} → +${pct(after.total)}`, 'good'),
+    );
+    p.append(rows, h('p', 'bha-hgcap', '다음 강화 재료 (보유 / 필요)'), costRow(save, gate.cost));
   }
-  for (const m of gate.missing.filter((x) => x !== 'tab' && x !== 'max')) core.append(h('p', 'bha-faint', `· ${developBlockText(m)}`));
-  const line = bonusLine(save);
-  const about = h('p', 'bha-faint', `붕옥 재료 3종을 바쳐 한 단계씩 개발한다. 단계마다 두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)}(영구). ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%가 되면 합체할 수 있다.`);
-  return [core, ...(line ? [h('p', 'bha-small', `보유 보너스: ${line}`)] : []), about];
+  const blocks = gate.missing.filter((x) => x !== 'tab' && x !== 'max');
+  if (blocks.length) {
+    const why = h('div', 'bha-hgwhy');
+    why.setAttribute('aria-label', '강화가 막힌 이유');
+    for (const m of blocks) why.append(h('p', 'bha-small', `· ${developBlockText(m)}`));
+    p.append(why);
+  }
+  p.append(h('p', 'bha-faint', `재료 3종을 바쳐 한 단계씩 강화한다(${HX.maxLevel}강 = 100%). ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%가 되면 합체할 수 있다. 합체하면 ${HX.halfLevel}강으로 돌아가지만 오른 능력치는 남는다.`));
+  return p;
 }
 
 /** 상세: 재료 하나 — 가진 수 · 다음 단계에 드는 수 · 얻는 곳 · 쓰는 곳 */
 function materialDetail(save: SaveData, m: Material): HTMLElement {
   const cost = developGate(save).cost;
+  const have = m.have(save);
   const p = panel({ title: m.name, aside: provisionalTag('임시 수치') });
   p.setAttribute('aria-label', `${m.name} 상세`);
   p.dataset.material = m.id;
   const top = h('div', 'bha-hgitem');
-  top.append(icon(m.icon, 'lg'), h('b', '', `보유 ${m.have(save)}`));
-  p.append(top, info([
-    { label: '다음 단계에 드는 수', value: cost ? `${cost[m.id]}` : '없음 (개발 100%)' },
-    { label: '얻는 곳', value: m.from(), mod: 'stack' as const },
-    { label: '쓰는 곳', value: '붕옥 개발에만 쓴다 (두 캐릭터 공용, 팔 수 없음)', mod: 'stack' as const },
-  ]));
+  top.append(icon(m.icon, 'lg'), h('b', '', `보유 ${have}`));
+  const rows = h('div', 'bha-hgrows');
+  rows.append(
+    hgRow('다음 강화에 드는 수', cost ? `${cost[m.id]}` : '없음 (개발 100%)', cost ? (have >= cost[m.id] ? 'good' : 'bad') : undefined),
+    hgRow('얻는 곳', m.from()),
+    hgRow('쓰는 곳', '붕옥 강화에만 쓴다 (두 캐릭터 공용, 팔 수 없음)'),
+  );
+  p.append(top, rows);
   return p;
 }
 
-/** 합체 상세: 지금 두 캐릭터라면 → 「○○」 · 조건 · [합체 미리보기] */
-function fusionDetail(save: SaveData, hd: HogyokuHandlers): HTMLElement {
-  const fusion = panel({ title: '초월체 합체', aside: provisionalTag('임시 조건') });
-  fusion.setAttribute('aria-label', '초월체 합체');
-  const pv = fusionPreview(save);
-  if (pv.def) {
-    const now = h('p', 'bha-small');
-    now.dataset.preview = pv.def.id;
-    now.append('지금 두 캐릭터라면 → ', h('b', '', `「${pv.def.name}」`));
-    fusion.append(now);
-  }
-  fusion.append(h('p', 'bha-small', `붕옥 개발 100% + ${HOGYOKU_STAGE_NAMES.resonance} + 두 캐릭터 모두 등급 1위 → 두 캐릭터가 초월체 하나가 된다. 되돌릴 수 없다.`), rankChecklist(save));
-  const fg = fusionGate(save);
-  for (const m of fg.missing.filter((x) => x !== 'tab' && x !== 'rank')) fusion.append(h('p', 'bha-faint', `· ${fusionBlockText(m)}`));
-  const prev = button({ label: '합체 미리보기', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
-  prev.dataset.sc = 'hogyoku-preview';
-  fusion.append(prev);
-  return fusion;
+export interface HogyokuHandlers {
+  onDevelop: () => void;
+  /** 오른쪽 위 탭 [합체] — 붕옥이 안 보이는 별도 창 */
+  onFusion: () => void;
+  /** 오른쪽 위 탭 [초월체 도감] — 별도 창 */
+  onDex: () => void;
 }
 
-/** 목록 한 줄: 아이콘 · 이름 · 작은 값 */
-function listMeta(save: SaveData, sel: HogyokuSel): { icon: string; name: string; value: string } {
-  const m = HOGYOKU_MATERIALS.find((x) => x.id === sel);
-  if (m) return { icon: m.icon, name: m.name, value: String(m.have(save)) };
-  switch (sel) {
-    case 'develop': return { icon: 'i-plus', name: '붕옥 개발', value: `${save.hogyoku.level * 10}%` };
-    case 'steps': return { icon: 'i-chain-3', name: '개발 단계', value: `${save.hogyoku.level}/${HX.maxLevel}` };
-    case 'fusion': return { icon: 'i-evolve', name: '합체', value: fusionGate(save).ok ? '가능' : '' };
-    default: return { icon: 'i-dex', name: '초월체 도감', value: `${save.transcendentDex.length}/${TRANSCENDENTS.length}` };
-  }
-}
-
-/** 붕옥 화면 (GDD 12-2·12-3, C.423 사용자 스케치): 왼쪽 판 = 붕옥 그림(개발 % 6단계·불꽃은 뒤)과 둘레 재료 3칸,
- *  오른쪽 판 = 상세 칸(고른 것: 개발·재료·단계·합체·도감) + 세로 목록(넘치면 세로 스크롤). 재료 칸·목록을 누르면 상세가 바뀐다 */
+/** 붕옥 화면 (GDD 12-2 C.425 사용자 재지시 "오른쪽 탭 다 지워"): 왼쪽 판 = 붕옥 그림 + 재료 3칸 + 개발 % + 지금 얻는 총 효과,
+ *  오른쪽 판 = 고른 것(붕옥·재료)의 상세 하나 + 아래 고정 [강화]. 머리 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 */
 export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
   const sub = h('span');
   sub.append(`두 캐릭터가 재료를 같이 모은다 `, provisionalTag('임시 수치'));
-  const head = lcdHead({ title: '붕옥', sub });
+  const fusionTab = button({ label: '합체', icon: 'i-evolve', size: 'small', onClick: hd.onFusion });
+  fusionTab.dataset.sc = 'hogyoku-fusion';
+  if (fusionGate(save).ok) fusionTab.classList.add('is-on');
+  const dexTab = button({ label: `초월체 도감 ${save.transcendentDex.length}/${TRANSCENDENTS.length}`, icon: 'i-dex', size: 'small', onClick: hd.onDex });
+  dexTab.dataset.sc = 'hogyoku-dex';
+  const head = lcdHead({ title: '붕옥', sub, aside: [fusionTab, dexTab] });
 
   const detail = h('div', 'bha-hgdetail');
   detail.setAttribute('aria-live', 'polite');
-  const list = h('div', 'bha-hglist');
-  list.setAttribute('role', 'listbox');
-  list.setAttribute('aria-label', '붕옥 목록');
-  const items = new Map<HogyokuSel, HTMLElement>();
+  const gate = developGate(save);
+  const max = save.hogyoku.level >= HX.maxLevel;
+  const btn = button({ label: max ? '강화 완료 (100%)' : `강화 — ${gate.next}강 (${gate.next * 10}%)`, icon: 'i-plus', variant: 'primary', block: true, disabled: !gate.ok, onClick: hd.onDevelop });
+  btn.dataset.sc = 'hogyoku-develop';
+  const foot = h('div', 'bha-hgfoot');
+  foot.append(btn);
+  let board: HTMLElement;
   const pick = (sel: HogyokuSel) => {
     hogyokuSel = sel;
-    for (const [k, b] of items) {
-      b.classList.toggle('is-on', k === sel);
-      b.setAttribute('aria-selected', String(k === sel));
-    }
-    board.querySelectorAll<HTMLElement>('.bha-hgmat').forEach((b) => b.classList.toggle('is-on', b.dataset.material === sel));
+    board.querySelectorAll<HTMLElement>('[data-sel]').forEach((b) => {
+      b.classList.toggle('is-on', b.dataset.sel === sel);
+      b.setAttribute('aria-pressed', String(b.dataset.sel === sel));
+    });
     const m = HOGYOKU_MATERIALS.find((x) => x.id === sel);
-    detail.replaceChildren(...(m ? [materialDetail(save, m)] : sel === 'develop' ? developDetail(save, hd) : sel === 'steps' ? [stepList(save)] : sel === 'fusion' ? [fusionDetail(save, hd)] : [transcendentDexPanel(save)]));
+    detail.replaceChildren(m ? materialDetail(save, m) : developDetail(save));
     detail.dataset.sel = sel;
     detail.scrollTop = 0;
   };
-  for (const sel of HOGYOKU_LIST) {
-    const meta = listMeta(save, sel);
-    const b = h('button', 'bha-hglist__item') as HTMLButtonElement;
-    b.type = 'button';
-    b.setAttribute('role', 'option');
-    b.dataset.sel = sel;
-    b.append(icon(meta.icon), h('span', 'bha-hglist__name', meta.name), h('small', 'bha-hglist__val', meta.value));
-    b.onclick = () => pick(sel);
-    items.set(sel, b);
-    list.append(b);
-  }
-  const board = orbBoard(save, pick);
+  board = orbBoard(save, pick);
   pick(hogyokuSel);
   const right = h('div', 'bha-hgright');
-  right.append(detail, list);
-  lcdPage(dev.view, { cls: 'bha-hogyoku-page' }, head, [board], [right]);
+  right.append(detail, foot);
+  lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main' }, head, [board], [right]);
+}
+
+/** 처음 열면 붕옥 선택 (C.425) — 붕옥 창을 새로 열 때 부른다 */
+export function resetHogyokuSel(): void {
+  hogyokuSel = 'develop';
+}
+
+/** 슬롯의 두 캐릭터를 종족 설정 순서(FACTIONS 목록 순)로 (C.425 합체 창 "왼쪽 호로·오른쪽 사신" — 종족 id 분기 없이 설정 순서) */
+export function tracksInFactionOrder(save: SaveData): Pick<SaveData, TrackKey>[] {
+  const order = (id: string) => FACTIONS.findIndex((f) => f.id === id);
+  return [...allTracks(save)].sort((a, b) => order(a.factionId) - order(b.factionId));
+}
+
+/** 캐릭터 그림 (방 그림과 같은 규칙 — 진화 외형·스킨 포함). 그림이 없으면 아이콘 */
+function trackArt(t: Pick<SaveData, TrackKey>): HTMLElement {
+  const f = getFaction(t.factionId);
+  const art = heroArtOf(roomOf(f), t.factionId, artTierIndexOf(t), artSkinOf(t));
+  const box = h('span', 'bha-dexart');
+  if (art.src) {
+    const img = imageArt(art.src);
+    img.style.setProperty('--art-scale', String(art.scale));
+    img.style.setProperty('--art-dy', `${art.offsetY}%`);
+    box.append(img);
+  } else box.append(icon('i-evolve'));
+  return box;
+}
+
+/** 캐릭터 상세 창 (합체 창 [상세 보기]): 공용 상세 창 틀(itemDialog, 도감 상세와 같은 틀) — 단계·등급·속성·히든·환생 + 능력치 표 */
+function trackDetailDialog(save: SaveData, t: Pick<SaveData, TrackKey>): void {
+  const f = getFaction(t.factionId);
+  const inp = fusionInputOf(t);
+  const top = trackIsTopRank(t);
+  const rows = h('div', 'bha-hgrows');
+  rows.append(
+    hgRow('단계', `${t.evolution.tierIndex + 1}단계 ${f.tierNames[t.evolution.tierIndex] ?? ''}`),
+    hgRow('등급', top ? `${rankLabel(f, rankOf(t.rank))} ✓` : `${rankLabel(f, rankOf(t.rank))} (합체엔 ${rankLabel(f, 1)} 필요)`, top ? 'good' : 'bad'),
+    hgRow('속성', elementsMark([...inp.elements], f.id)),
+    hgRow('진화체', inp.hidden ? '히든 진화체' : '일반 진화체'),
+    hgRow(f.rebirth.name, `${inp.rebirths}회`),
+  );
+  const stats = statsBlock(f.id, currentStats(t.evolution, f.id, statBonusOf(save).total), t.evolution.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), t.evolution.carry);
+  itemDialog({ heading: `${f.name} · 합체 재료`, name: trackName(t), desc: '', art: trackArt(t), hero: true, cls: 'bha-dexmodal bha-hgtrackmodal', content: [rows, stats], actions: [] });
+}
+
+/** 합체 조건 목록 (충족 ✓ / 미충족 ✗): 개발 100% · 공명 · 두 캐릭터 등급 1위 · 진행 중 모험 없음 · 못 모은 초월체 */
+function fusionConditions(save: SaveData): HTMLElement {
+  const missing = new Set(fusionGate(save).missing);
+  const list = h('div', 'bha-hgrows bha-hgconds');
+  list.setAttribute('aria-label', '합체 조건');
+  const cond = (key: FusionBlock, label: string, ok: string, ng: string) => {
+    const bad = missing.has(key);
+    const r = hgRow(`${bad ? '✗' : '✓'} ${label}`, bad ? ng : ok, bad ? 'bad' : 'good');
+    r.dataset.cond = key;
+    r.dataset.ok = String(!bad);
+    list.append(r);
+  };
+  cond('develop', '붕옥 개발 100%', '완료', `지금 ${save.hogyoku.level * 10}%`);
+  cond('resonance', HOGYOKU_STAGE_NAMES.resonance, '완료', '두 종족의 스토리를 모두 끝내면');
+  cond('rank', '두 캐릭터 모두 등급 1위', '완료', tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`).join(' · '));
+  cond('expedition', '진행 중인 모험 없음', '없음', '모험을 끝내야 한다');
+  cond('complete', '못 모은 초월체가 있다', `${TRANSCENDENTS.length - save.transcendentDex.length}종 남음`, '6종을 모두 모았다');
+  if (missing.has('tracks')) cond('tracks', '두 캐릭터가 모두 있다', '', fusionBlockText('tracks'));
+  return list;
+}
+
+/** 합체 창 (C.425, GDD 12-2 "합체 = 별도 창"): 붕옥은 안 보인다. 사각형 2칸 = 두 캐릭터 그림(종족 설정 순서) + [상세 보기] ·
+ *  지금 두 캐릭터라면 → 「○○」 · 조건 목록 · [합체](확인 1 → 확인 2 → 자동 백업 흐름 그대로) */
+export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () => void }): void {
+  const tracks = tracksInFactionOrder(save);
+  const sub = h('span', '', `${tracks.map((t) => getFaction(t.factionId).name).join(' + ')} → 초월체 `);
+  sub.append(provisionalTag('임시 조건'));
+  const head = lcdHead({ title: '합체', sub });
+  const pair = h('div', 'bha-hgpair');
+  pair.setAttribute('aria-label', '합체할 두 캐릭터');
+  tracks.forEach((t, i) => {
+    const f = getFaction(t.factionId);
+    const card = h('section', 'bha-hgpair__card');
+    card.dataset.faction = t.factionId;
+    card.append(h('span', 'bha-hgpair__fac', f.name), trackArt(t), h('b', 'bha-hgpair__name', trackName(t)), h('small', 'bha-hgpair__rank', rankLabel(f, rankOf(t.rank))));
+    const more = button({ label: '상세 보기', icon: 'i-chevron-right', size: 'small', block: true, onClick: () => trackDetailDialog(save, t) });
+    more.dataset.sc = `fusion-detail-${i}`;
+    card.append(more);
+    if (i > 0) pair.append(h('span', 'bha-hgpair__plus', '+'));
+    pair.append(card);
+  });
+  const right = h('div', 'bha-hgright');
+  const detail = h('div', 'bha-hgdetail');
+  const p = panel({ title: '초월체 합체', aside: provisionalTag('임시 조건') });
+  p.setAttribute('aria-label', '초월체 합체');
+  const pv = fusionPreview(save);
+  if (pv.def) {
+    const now = h('p', 'bha-hgpreview');
+    now.dataset.preview = pv.def.id;
+    now.append('지금 두 캐릭터라면 → ', h('b', '', `「${pv.def.name}」`));
+    p.append(now);
+  }
+  p.append(fusionConditions(save), h('p', 'bha-faint', '두 캐릭터가 초월체 하나가 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. 되돌릴 수 없다 (직전 상태는 자동 백업).'));
+  detail.append(p);
+  const fg = fusionGate(save);
+  const go = button({ label: '합체', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
+  go.dataset.sc = 'hogyoku-preview';
+  const foot = h('div', 'bha-hgfoot');
+  foot.append(go);
+  right.append(detail, foot);
+  lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main bha-hgfusion-page' }, head, [pair], [right]);
+}
+
+/** 초월체 그림 칸: 그림이 아직 없어 아이콘 (못 모은 것은 실루엣·?) */
+function transcendentArt(known: boolean): HTMLElement {
+  const box = h('span', `bha-dexart${known ? '' : ' is-silhouette'}`);
+  box.append(icon(known ? 'i-evolve' : 'i-unknown'));
+  return box;
+}
+
+/** 초월체 도감 창 (C.425, GDD 12-2 "기존 도감 화면 형식"): 진화체 도감과 같은 바둑판 카드(dexGrid·dexCard) — 누르면 공용 상세 창.
+ *  모은 것 = 이름·컨셉·몇 번째 합체, 못 모은 것 = ??? + 조건 공개. 붕옥은 안 보인다 */
+export function transcendentDexView(dev: Device, save: SaveData): void {
+  const owned = new Map(save.transcendentDex.map((e) => [e.id, e]));
+  const grid = dexGrid('초월체');
+  grid.dataset.owned = String(owned.size);
+  for (const d of TRANSCENDENTS) {
+    const got = owned.get(d.id);
+    const card = got
+      ? dexCard({
+        name: d.name, unknown: false, art: transcendentArt(true), marks: null, badge: `${got.fusionIndex}번째`,
+        onOpen: () => itemDialog({ heading: `초월체 ${d.order}`, name: d.name, desc: '', art: transcendentArt(true), hero: true, cls: 'bha-dexmodal', actions: [],
+          content: [h('p', 'bha-mddetail__body', d.concept), h('p', 'bha-faint', `${got.fusionIndex}번째 합체로 얻었다. 조건: ${transcendentConditionText(d.condition)}`)] }),
+      })
+      : dexCard({
+        name: '???', unknown: true, art: transcendentArt(false), marks: null,
+        onOpen: () => itemDialog({ heading: `초월체 ${d.order}`, name: '미발견', desc: `조건: ${transcendentConditionText(d.condition)}`, art: transcendentArt(false), hero: true, cls: 'bha-dexmodal', actions: [] }),
+      });
+    card.dataset.transcendent = d.id;
+    card.dataset.owned = String(!!got);
+    grid.append(card);
+  }
+  const sub = h('span');
+  const line = bonusLine(save);
+  sub.append('모음 ', h('b', '', String(owned.size)), ` / ${TRANSCENDENTS.length} · ${line ? `보유 보너스 ${line}` : `1종마다 전 능력치 +${pct(HX.perTranscendentBonus)}`} `, provisionalTag('임시 수치'));
+  const nodes: HTMLElement[] = [grid];
+  if (owned.size >= TRANSCENDENTS.length) nodes.unshift(notice('rare', '초월체 6종을 모두 모았다. 칭호 「붕옥 완성」. 이후 합체는 막히고 육성은 계속된다.', { title: '붕옥 완성' }));
+  lcdPage(dev.view, { cls: 'bha-dex-page bha-dexgrid-page bha-hgdex-page', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '초월체 도감', sub }), nodes, []);
 }
 
 /** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */

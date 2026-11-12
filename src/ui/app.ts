@@ -35,7 +35,7 @@ import {
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
-import { fusionConfirmView, fusionFinalText, fusionView, hogyokuView } from './hogyokuView';
+import { fusionConfirmView, fusionFinalText, fusionPickView, fusionView, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingLockedText, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
@@ -1401,7 +1401,7 @@ export function startApp(host: HTMLElement): void {
         persist();
         nestScreen(); // 트랙 전환 알림은 뺐다 (GDD 233장 5) — 방이 그 트랙으로 바뀐다
       } : null,
-      onHogyoku: s.hogyoku.tabOpen ? () => open('hogyoku', () => renderHogyoku(s)) : null,
+      onHogyoku: s.hogyoku.tabOpen ? () => { resetHogyokuSel(); open('hogyoku', () => renderHogyoku(s)); } : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
       // 상점 (GDD 25-9·150장 2): 4곳 고르는 작은 창 → 그 상점
@@ -1430,7 +1430,9 @@ export function startApp(host: HTMLElement): void {
         if (developHogyoku(s)) persist();
         nav.top?.render();
       },
-      onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)),
+      // 오른쪽 위 탭 2개 (C.425): 붕옥이 안 보이는 별도 창 — 뒤로 = 붕옥 창
+      onFusion: () => open('hogyoku-fusion', () => fusionPickView(dev, s, { onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)) })),
+      onDex: () => open('hogyoku-dex', () => transcendentDexView(dev, s)),
     });
   }
 

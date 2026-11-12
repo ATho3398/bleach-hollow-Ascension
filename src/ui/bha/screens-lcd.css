@@ -587,12 +587,12 @@ button.bha-slot { cursor: pointer; }
 .bha-hogyoku__stages { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1); }
 .bha-hogyoku__stages .bha-chip.is-off { opacity: 0.5; }
 
-/* ═════ 붕옥 창 배치 (C.421 → C.423 사용자 스케치 layout-sketch.jpg): 왼쪽 판 = 붕옥 그림 + 둘레 재료 3칸(선으로 이어짐) · 오른쪽 판 = 상세 + 세로 목록 ═════
+/* ═════ 붕옥 창 배치 (C.421 → C.423 → C.425 사용자 재지시 "오른쪽 탭 다 지워"): 왼쪽 판 = 붕옥 그림(버튼) + 둘레 재료 3칸(선으로 이어짐) + 총 효과 · 오른쪽 판 = 고른 것의 상세 + 아래 고정 [강화] ═════
    그림은 112×116 칸 하나(상자 그림 크기)에 같은 정수 배율 --hg-s 로 겹친다: 상자 112×116 · 붕옥 64 (칸 안 24·25 = 상자 속 붕옥 자리) · 불꽃 96 (칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24 — 사용자가 도트로 맞춘 자리, 프레임 구멍 중심 47·55 = 붕옥 중심 31·31 + 16·24).
    배율 1.5 (사용자 '1/3 줄여' — 2/3 ≈ 85px 에 가장 가까운 깔끔한 배율, 붕옥 96px · 고해상 폰(2배 화면)에서는 도트 하나 = 3화소로 고르게)
    불꽃 = 16프레임 가로 시트, 약 12fps 반복 (80~99% 작은 불꽃 · 100% 큰 불꽃, 붕옥 뒤 레이어) */
 .bha-hogyoku-page { --hg-s: 1.5; }
-.bha-hogyoku-page:not(.bha-fusion-page) .bha-lcdpage__body { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); }
+.bha-hogyoku-main .bha-lcdpage__body { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); }
 .bha-hgorb { display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); min-width: 0; min-height: 0; height: 100%; }
 .bha-hgorb__field { position: relative; flex: 1 1 auto; align-self: stretch; display: grid; place-items: center; min-height: calc(116px * var(--hg-s)); }
 .bha-hgorb__lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -629,22 +629,45 @@ button.bha-slot { cursor: pointer; }
 .bha-hgorb__who b { font-size: var(--bha-fs-lg); }
 .bha-hgorb__who small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-hgorb.is-full .bha-hgorb__who b { color: var(--bha-rare); }
-.bha-hogyoku-page:not(.bha-fusion-page) .bha-lcdpage__col--right { overflow: hidden; }
-.bha-hogyoku-page:not(.bha-fusion-page) .bha-lcdpage__col--right > .bha-hgright { flex: 1 1 0; }
-.bha-hgright { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 7.5em); gap: var(--bha-sp-2); min-height: 0; height: 100%; }
-.bha-hgdetail { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; min-height: 0; overflow-y: auto; }
-.bha-hglist { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-height: 0; overflow-y: auto; padding: var(--bha-sp-1); border-radius: var(--bha-r-md); background: var(--bha-bg-1); box-shadow: inset 0 0 0 1px var(--bha-line-2); }
-.bha-hglist__item {
-  flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: var(--bha-sp-1); align-items: center;
-  min-height: var(--bha-touch); padding: var(--bha-sp-1) var(--bha-sp-2); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-2);
-  box-shadow: inset 0 0 0 1px var(--bha-line-2); color: var(--bha-text-1); font: inherit; text-align: left; cursor: pointer; touch-action: manipulation;
-}
-.bha-hglist__item > .bha-icon { grid-row: 1 / 3; width: 18px; height: 18px; color: var(--bha-text-2); }
-.bha-hglist__name { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); line-height: 1.2; word-break: keep-all; }
-.bha-hglist__val { font-size: var(--bha-fs-xs); color: var(--bha-text-3); line-height: 1.1; }
-.bha-hglist__item.is-on { background: var(--bha-bg-3); box-shadow: inset 0 0 0 2px var(--bha-accent); }
-.bha-hglist__item.is-on > .bha-icon { color: var(--bha-accent); }
+.bha-hogyoku-main .bha-lcdpage__col--right { overflow: hidden; }
+.bha-hogyoku-main .bha-lcdpage__col--right > .bha-hgright { flex: 1 1 0; }
+/* 오른쪽 판 (C.425 "오른쪽 탭 다 지워"): 상세 하나(넘치면 이 칸만 스크롤) + 아래 고정 버튼 줄 */
+.bha-hgright { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; min-height: 0; height: 100%; }
+.bha-hgdetail { flex: 1 1 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; min-height: 0; overflow-y: auto; }
+.bha-hgfoot { flex: none; }
+/* 붕옥 그림 = 버튼 (누르면 강화 상세). 고른 것 강조 = 강조색 테두리 */
+.bha-hgorb__art { border: 0; padding: 0; background: none; border-radius: var(--bha-r-md); cursor: pointer; touch-action: manipulation; }
+.bha-hgorb__art.is-on { box-shadow: 0 0 0 2px var(--bha-accent); }
+/* 지금 얻는 총 효과 (개발 % 아래) */
+.bha-hgorb__total { display: flex; flex-direction: column; align-items: center; margin: var(--bha-sp-1) 0 0; line-height: 1.25; }
+.bha-hgorb__totalcap { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-hgorb__total b { font-size: var(--bha-fs-sm); color: var(--bha-good); }
+.bha-hgorb__total small { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+/* 상세 줄: 이름표는 제 폭(줄바꿈 없음), 값만 남는 폭에서 줄바꿈 — 이름표가 폭 0 으로 눌려 한 글자씩 세로로 깨지던 것(C.424 '호/로/·/마/르/티/요') 방지 */
+.bha-hgrows { display: flex; flex-direction: column; }
+.bha-hgrow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--bha-sp-3); padding: var(--bha-sp-1) 0; border-bottom: 1px solid var(--bha-line-1); min-width: 0; }
+.bha-hgrow:last-child { border-bottom: 0; }
+.bha-hgrow__label { flex: none; white-space: nowrap; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-hgrow__value { flex: 1 1 8em; min-width: 0; text-align: right; font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); color: var(--bha-text-1); word-break: keep-all; overflow-wrap: anywhere; }
+.bha-hgrow--good .bha-hgrow__value { color: var(--bha-good); }
+.bha-hgrow--bad .bha-hgrow__value { color: var(--bha-danger); }
+.bha-hgrow--em .bha-hgrow__value { color: var(--bha-warn); }
+.bha-hgconds .bha-hgrow--good .bha-hgrow__label { color: var(--bha-good); }
+.bha-hgconds .bha-hgrow--bad .bha-hgrow__label { color: var(--bha-danger); }
+.bha-hgcap { margin: var(--bha-sp-1) 0 0; font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-hgwhy p { margin: 0; color: var(--bha-danger); }
+.bha-hgpreview { margin: 0; font-size: var(--bha-fs-sm); }
+.bha-hgpreview b { color: var(--bha-rare); }
+/* 합체 창 (C.425): 사각형 2칸 — 종족 설정 순서로 두 캐릭터 그림 + [상세 보기] */
+.bha-hgpair { display: flex; align-items: stretch; gap: var(--bha-sp-2); min-height: 0; height: 100%; }
+.bha-hgpair__card { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--bha-sp-1); padding: var(--bha-sp-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); box-shadow: inset 0 0 0 1px var(--bha-line-2); text-align: center; }
+.bha-hgpair__card .bha-dexart { flex: 1 1 0; min-height: 0; width: 100%; }
+.bha-hgpair__fac { font-size: var(--bha-fs-xs); color: var(--bha-text-3); }
+.bha-hgpair__name { font-size: var(--bha-fs-sm); line-height: 1.2; word-break: keep-all; }
+.bha-hgpair__rank { font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+.bha-hgpair__plus { flex: none; align-self: center; font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-bold); color: var(--bha-text-3); }
 .bha-hgcost { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1) var(--bha-sp-3); }
+.bha-hgcost__item { white-space: nowrap; }
 .bha-hgcost__item { display: inline-flex; align-items: center; gap: var(--bha-sp-1); font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
 .bha-hgcost__item .bha-icon { color: var(--bha-rare); }
 .bha-hgcost__item b { color: var(--bha-text-1); }

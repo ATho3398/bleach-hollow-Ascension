@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ART_MANIFEST } from '../src/data/art/manifest';
 import { newSaveData } from '../src/game';
-import { HOGYOKU_LIST, hogyokuFlameOn, hogyokuLook } from '../src/ui/hogyokuView';
+import { hogyokuFlameOn, hogyokuLook } from '../src/ui/hogyokuView';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const buf = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url));
@@ -43,10 +43,9 @@ describe('C.423 붕옥 단계 그림·스케치 배치', () => {
     expect(block).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i);
   });
 
-  it('스케치 배치: 왼쪽 = 붕옥 + 둘레 재료 3칸(선) · 오른쪽 = 상세 + 세로 목록, 누르면 상세가 바뀐다', () => {
-    expect(HOGYOKU_LIST).toEqual(['develop', 'soul', 'shard', 'essence', 'steps', 'fusion', 'dex']);
+  it('스케치 배치: 왼쪽 = 붕옥 + 둘레 재료 3칸(선), 누르면 오른쪽 상세가 바뀐다 (오른쪽 세로 목록은 C.425 에 삭제)', () => {
     const v = read('src/ui/hogyokuView.ts');
-    for (const k of ["'bha-hgorb__lines'", "`bha-hgmat bha-hgmat--${m.id}", "b.onclick = () => pick(m.id)", "'bha-hglist'", "'bha-hgdetail'", 'materialDetail(save, m)']) expect(v).toContain(k);
-    expect(read('src/ui/bha/screens-lcd.css')).toMatch(/\.bha-hglist \{[^}]*overflow-y: auto/);
+    for (const k of ["'bha-hgorb__lines'", "`bha-hgmat bha-hgmat--${m.id}", "b.onclick = () => pick(m.id)", "'bha-hgdetail'", 'materialDetail(save, m)']) expect(v).toContain(k);
+    expect(read('src/ui/bha/screens-lcd.css')).toMatch(/\.bha-hgdetail \{[^}]*overflow-y: auto/);
   });
 });
