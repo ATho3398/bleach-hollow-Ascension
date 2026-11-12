@@ -52,6 +52,8 @@ import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, 
 import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
+import { gainHogyokuMaterial, materialHave, spendMaterial } from './engine/hogyokuMaterials';
+export { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
 import { newSortieSlots, sanitizeSortie, SORTIE_IDS } from './engine/sortie';
 import { grantGear, newGearState, rollGear, rollGrade, sanitizeGear, sellGold, type GearState } from './engine/gear';
 import { STARTER_GEAR } from './data/gear';
@@ -245,19 +247,6 @@ export function hogyokuPercent(h: Pick<HogyokuState, 'tracks'>): number {
   return Math.floor(hogyokuProgress(h.tracks) * 100 + 1e-9);
 }
 
-/** 트랙 하나가 지금 가진 재료 수 */
-export function materialHave(save: Pick<SaveData, 'shared'>, track: HogyokuTrackId): number {
-  const sh = save.shared;
-  return track === HOGYOKU_TRACK_IDS[0] ? sh.soulCrystals : track === HOGYOKU_TRACK_IDS[1] ? sh.hogyokuShards : sh.resonanceEssence;
-}
-
-function spendMaterial(save: Pick<SaveData, 'shared'>, track: HogyokuTrackId, n: number): void {
-  const sh = save.shared;
-  if (track === HOGYOKU_TRACK_IDS[0]) sh.soulCrystals -= n;
-  else if (track === HOGYOKU_TRACK_IDS[1]) sh.hogyokuShards -= n;
-  else sh.resonanceEssence -= n;
-}
-
 export function newHogyokuState(): HogyokuState {
   return { tabOpen: false, tabNotice: false, appearedAt: null, tracks: emptyHogyokuTracks(), developed: 0, resonance: false, resonatedAt: null };
 }
@@ -335,11 +324,11 @@ export interface TutorialClaim {
 }
 
 export interface SharedState {
-  /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3, 환생 +10. 수치 provisional */
+  /** 고순도 윤활제(세공 재료, 옛 키 이름 = 영혼 결정). 사냥 드롭·떠돌이 상인 (GDD 12-3 v6.015). 슬롯 공유 */
   soulCrystals: number;
-  /** 붕옥 파편 (GDD 244장 3, 형식 79): 스토리 화 첫 클리어 +5·장 보스 +20·탑 10층마다 +5. 붕옥 개발 재료, 슬롯 공유 */
+  /** 혼백 여과기(정제 재료, 옛 키 이름 = 붕옥 파편). 사냥 드롭·떠돌이 상인. 슬롯 공유 */
   hogyokuShards: number;
-  /** 공명의 정수 (GDD 244장 3, 형식 79): 두 트랙 캐릭터가 진화할 때마다 +3·공명 때 +30. 붕옥 개발 재료, 슬롯 공유 */
+  /** 영압 결정(주입 재료, 옛 키 이름 = 공명의 정수). 사냥 드롭·떠돌이 상인. 슬롯 공유 */
   resonanceEssence: number;
   /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
   food: FoodStock;
@@ -487,7 +476,6 @@ export function isFullyFed(nest: Pick<NestState, 'hunger'>): boolean {
 export interface TutorialGrant {
   goal: TutorialGoalDef;
   food: [FoodId, number][];
-  soulCrystals: number;
   /** 영옥 (GDD 25-9: 목표마다 +1) */
   jade: number;
 }
@@ -503,12 +491,10 @@ export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), d
     claims.push({ goalId: goal.id, at: nowMs });
     const food: [FoodId, number][] = [];
     for (const [id, n] of Object.entries(goal.reward.food ?? {}) as [FoodId, number][]) food.push([id, addFood(save.shared.food, id, n)]);
-    const soulCrystals = goal.reward.soulCrystals ?? 0;
-    save.shared.soulCrystals += soulCrystals;
     // 영옥 (GDD 25-9): 목표 하나마다 +1 (기존 보상은 그대로)
     const jade = BALANCE.shop.tutorialJade;
     save.shared.jade += jade;
-    return { goal, food, soulCrystals, jade };
+    return { goal, food, jade };
   });
 }
 
@@ -968,19 +954,31 @@ export function checkResonance(save: SaveData, nowMs: number = Date.now(), facti
   if (cleared < Math.min(factions.length, BALANCE.provisional.twoTrack.maxTracks)) return false;
   h.resonance = true;
   h.resonatedAt = nowMs;
-  gainHogyokuMaterial(save, 'essence', BALANCE.provisional.resonanceEssence.onResonance, 'resonance', nowMs);
   queueGuide(save.help, 'hogyoku-resonance');
   return true;
 }
 
-/** 붕옥 파편·공명의 정수를 얻는다 (GDD 244장 3): 붕옥 등장 전에도 쌓인다. 런 로그(slotLog.hogyokuMaterials)에 남긴다 */
-export function gainHogyokuMaterial(save: SaveData, kind: HogyokuMaterialRecord['kind'], amount: number, source: HogyokuMaterialRecord['source'], nowMs: number = Date.now()): number {
-  const n = Math.max(0, Math.floor(amount));
-  if (n <= 0) return 0;
-  if (kind === 'shard') save.shared.hogyokuShards += n;
-  else save.shared.resonanceEssence += n;
-  (save.slotLog.hogyokuMaterials ??= []).push({ at: nowMs, kind, amount: n, source, factionId: save.factionId });
-  return n;
+
+/** 사냥 드롭 (GDD 12-3 v6.015): 모험에서 이긴 전투마다 — 일반 = 확률로 1개, 강적·보스 = 확정 여러 개(+ 바퀴 변이 폭풍의 강적 추가분 = 첫 재료). 재료는 weights 비율.
+ *  난수 = 그 원정 runId 로 고정 (같은 원정 = 같은 드롭). 재료별 개수를 돌려준다 */
+export function rollHogyokuDrops(battles: readonly Pick<BattleRecord, 'won' | 'enemyClass'>[], runId: number, bonus = 0): HogyokuCost {
+  const D = BALANCE.provisional.hogyokuDrops;
+  const rng = createRng(((runId >>> 0) * 2654435761 + 0x5bd1e995) >>> 0);
+  const ids = HOGYOKU_TRACK_IDS;
+  const total = ids.reduce((a, id) => a + Math.max(0, D.weights[id] ?? 0), 0);
+  const pick = (): HogyokuTrackId => {
+    let r = nextFloat(rng) * total;
+    for (const id of ids) { r -= Math.max(0, D.weights[id] ?? 0); if (r < 0) return id; }
+    return ids[ids.length - 1]!;
+  };
+  const out = emptyHogyokuTracks();
+  for (const b of battles) {
+    if (!b.won) continue;
+    const n = b.enemyClass === 'boss' ? D.bossCount : b.enemyClass === 'elite' ? D.eliteCount : nextFloat(rng) < D.normalChance ? 1 : 0;
+    for (let k = 0; k < n; k++) out[pick()] += 1;
+  }
+  if (bonus > 0) out[ids[0]!] += Math.floor(bonus);
+  return out;
 }
 
 /** 슬롯 보너스 (GDD 244장 4·22-3): 붕옥 개발 단계마다 +1%(오른 몫은 영구) + 초월체 1종마다 +2%. 지금 캐릭터 둘 모두에 */
@@ -1142,8 +1140,9 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     if (exp.outcome === 'returned') log.risk.survivedBreakthroughs++;
   }
   // 속성 보너스 완성 기록(runLog.lineages)은 C.150 에 멈춤 — 같은 속성 3개 보너스 삭제 (GDD 94장 B 후속). 옛 기록 자리는 그대로 둔다
-  // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼 (+ 바퀴 변이 폭풍의 추가분, GDD 25-5)
-  save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite + (exp.bonusSoul ?? 0);
+  // 붕옥 재료 사냥 드롭 (GDD 12-3 v6.015): 이 원정에서 이긴 전투마다 (+ 바퀴 변이 폭풍의 강적 추가분, GDD 25-5). 런 로그 slotLog.hogyokuMaterials 'hunt'
+  const drops = rollHogyokuDrops(exp.battles, exp.runId, exp.bonusSoul ?? 0);
+  for (const id of HOGYOKU_TRACK_IDS) gainHogyokuMaterial(save, id, drops[id], 'hunt', nowMs);
   // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(보관 상한 없음 — GDD v6.005), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
   const sum = summarize(exp);
   exp.foodSettled = settleFood(save.shared.food, sum.keptFood, sum.lostFood);
@@ -1432,17 +1431,13 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
     out.gold = SX.episodeGold;
     out.food = [SX.episodeFood as FoodId, addFood(save.shared.food, SX.episodeFood as FoodId, 1)];
     save.shared.tradeCoins += out.gold;
-    const HS = BALANCE.provisional.hogyokuShards;
-    if (out.firstClear) {
-      out.jade += SX.firstClearJade;
-      out.shards = gainHogyokuMaterial(save, 'shard', HS.perEpisodeFirst, 'episode', nowMs); // 붕옥 파편 (GDD 244장 3): 화 첫 클리어
-    }
+    // 붕옥 재료는 스토리에서 주지 않는다 (GDD 12-3 v6.015 — 사냥 드롭·떠돌이 상인뿐, 옛 화 첫 클리어·장 보스 파편 삭제)
+    if (out.firstClear) out.jade += SX.firstClearJade;
     const eps = chapterContent(save.factionId, st.chapterId)?.episodes ?? [];
     if (!prog.chapters.includes(st.chapterId) && eps.length > 0 && eps.every((e) => prog.cleared[episodeKey(st.chapterId, e.id)])) {
       prog.chapters.push(st.chapterId);
       out.chapterCleared = true;
       out.jade += chapterClearJade(st.chapterId);
-      out.shards = (out.shards ?? 0) + gainHogyokuMaterial(save, 'shard', HS.perChapterBoss, 'chapter', nowMs); // 장 보스(장의 마지막 화) 첫 처치 = 장 완주
     }
   }
   save.shared.jade += out.jade;
@@ -1624,7 +1619,6 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     if (hpTo > hpFrom + 1e-9) logHomeHeal(save, { at: nowMs, kind: 'evolution', hpFrom: Math.round(hpFrom * 100) / 100, hpTo: Math.round(hpTo * 100) / 100 });
     // 진화마다 하나씩 열린다 (GDD 241-0): 2단계 타일(시작 타일 3장 + 타일 안내, 64장 1번) · 3단계 장비·전투 소모품 · 4단계 본능 수련·번호 쟁탈전
     checkUnlocks(save, nowMs);
-    gainHogyokuMaterial(save, 'essence', BALANCE.provisional.resonanceEssence.perEvolution, 'evolution', nowMs); // 공명의 정수 (GDD 244장 3): 진화할 때마다
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
@@ -1749,7 +1743,6 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
     difficulty: RANK_HOLDERS.find((h) => h.id === r.opponentId)?.difficulty,
   };
   save.runLog.rankBattles.push(rec);
-  if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
   dieIfDyingLost(save, won, nowMs, 'rank');
   checkTitles(save, 'rank', nowMs);
   return r;
@@ -1782,7 +1775,6 @@ export function recordAscension(save: SaveData, s: CombatState, nowMs: number = 
     const e = save.evolution;
     e.ascended = true;
     checkUnlocks(save, nowMs); // 해방 클리어 = 장신구 3칸이 열린다 (GDD 241-0)
-    gainHogyokuMaterial(save, 'essence', BALANCE.provisional.resonanceEssence.perEvolution, 'ascension', nowMs); // 공명의 정수 (GDD 244장 3): 아란칼화/참백도 구상화도 진화로 센다
     const fac = getFaction(save.factionId);
     const form = e.formId ? tryGetForm(e.formId) : undefined;
     if (fac.ascension.lookChange && form) {
@@ -1841,9 +1833,6 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
     out.jade = f.reward.jade;
     save.shared.jade += out.jade;
     out.next = nextTowerFloor(save.tower.best);
-    // 붕옥 파편 (GDD 244장 3): 그 트랙이 10층마다 처음 닿을 때
-    const HS = BALANCE.provisional.hogyokuShards;
-    if (f.floor % HS.towerEvery === 0) out.shards = gainHogyokuMaterial(save, 'shard', HS.perTowerStep, 'tower', nowMs);
   }
   // 보스 층은 보스 도감에도 처치 수를 센다 (첫 처치 영옥·보스 특성은 스토리에서만)
   if (won && f.bossId) {
@@ -1881,13 +1870,13 @@ export function recordTraining(save: SaveData, game: TrainingGameId, won: boolea
 
 /** 환생 결과 (화면이 연출·안내에 쓴다) */
 export type RebirthResult =
-  | { ok: true; record: RebirthRecord; soulCrystals: number; jade: number }
+  | { ok: true; record: RebirthRecord; jade: number }
   | { ok: false; reason: 'tier' | 'expedition' | 'trait' };
 
 /** 환생 (GDD 22-1·22-7): 5단계 이상에서 둥지로부터. 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'rebirth')은 부르는 쪽(화면)이 먼저 한다.
  *  초기화: 단계·진화체·경로·장착 특성(계승 1개 제외)·걸음·등급 사다리(번호·전적)·노력치(10% 누적 계승)·리스크 0·허기·컨디션 기본값·원정 중간 저장.
  *  남김: 도감·칭호, 등급 이력, 수련(완료·수련치·수련권), 공유 자원(먹이·골드·영옥·영혼 결정), 타일, 스킨, 런 로그.
- *  보상: 영혼 결정 +10, 첫 환생만 영옥 10 (튜토리얼 first-rebirth 는 다음 저장 때 claimTutorialGoals 가 준다) */
+ *  보상: 첫 환생만 영옥 10 (튜토리얼 first-rebirth 는 다음 저장 때 claimTutorialGoals 가 준다) */
 export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs: number = Date.now()): RebirthResult {
   if (!canRebirth(save.evolution)) return { ok: false, reason: 'tier' };
   if (save.activeExpedition != null) return { ok: false, reason: 'expedition' };
@@ -1915,16 +1904,14 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   save.activeExpedition = null;
   save.lastScreen = 'room';
   const RB = BALANCE.provisional.rebirth;
-  const soulCrystals = BALANCE.provisional.soulCrystals.perRebirth;
-  const jade = count === 1 ? RB.firstJade : 0;
-  save.shared.soulCrystals += soulCrystals;
+  const jade = count === 1 ? RB.firstJade : 0; // 붕옥 재료는 주지 않는다 (GDD 12-3 v6.015)
   save.shared.jade += jade;
   const record: RebirthRecord = {
     at: nowMs, count, factionId: save.factionId, prevFormId: prev.formId, prevTierIndex: prev.tierIndex, prevElements: playerElementsOf(prev),
     keptTraitId: keepTraitId, carry: { ...evolution.carry }, runsCompleted: runsCompleted(save),
   };
   save.runLog.rebirths.push(record);
-  return { ok: true, record, soulCrystals, jade };
+  return { ok: true, record, jade };
 }
 
 /** 실패형(망한 진화체 포함)을 거친 적 있는 계보 (각성형 ①, GDD 126장 협의 답): 이 슬롯 런 로그의 진화 기록·지금 진화 경로 */

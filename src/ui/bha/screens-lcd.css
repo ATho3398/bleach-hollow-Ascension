@@ -622,6 +622,7 @@ button.bha-slot { cursor: pointer; }
 .bha-hgmat--essence { left: 87%; top: 86%; }
 .bha-hgmat > .bha-icon { width: 20px; height: 20px; color: var(--bha-rare); }
 .bha-hgmat__n { font-size: var(--bha-fs-xs); white-space: nowrap; }
+.bha-hgmat__t { font-size: var(--bha-fs-xs); color: var(--bha-text-2); line-height: 1; }
 .bha-hgmat.is-ok .bha-hgmat__n { color: var(--bha-good); }
 .bha-hgmat.is-short .bha-hgmat__n { color: var(--bha-danger); }
 .bha-hgmat.is-on { box-shadow: inset 0 0 0 2px var(--bha-accent); }

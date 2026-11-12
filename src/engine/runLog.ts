@@ -663,13 +663,14 @@ export interface HogyokuDevRecord {
   cycle: number;
 }
 
-/** 붕옥 재료를 얻은 기록 (GDD 244장 3, C.414 형식 79): 파편·정수만(영혼 결정은 원정·등급전·환생 기록에 이미 있다) */
+/** 붕옥 재료를 얻은 기록 (GDD 12-3, C.414 형식 79 → C.425): 재료 3종 모두 (C.425 전에는 파편·정수만) */
 export interface HogyokuMaterialRecord {
   at: number;
-  kind: 'shard' | 'essence';
+  /** 재료 = 강화 트랙 id (soul 고순도 윤활제 · shard 혼백 여과기 · essence 영압 결정). 'soul' 은 C.425 부터 */
+  kind: 'soul' | 'shard' | 'essence';
   amount: number;
-  /** 얻은 곳: episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
-  source: 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 떠돌이 상인. 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
+  source: 'hunt' | 'wanderer' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
   factionId: string;
 }
 

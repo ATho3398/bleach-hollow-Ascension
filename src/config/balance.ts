@@ -3,7 +3,7 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 129; // C.425 (GDD v6.014 12-3): 붕옥 개발 10단계 → 재료별 강화 트랙 3개(각 50강, trackCost·trackMax·trackHalf·perStepBonus — 옛 develop·perLevelBonus·halfLevel·maxLevel 삭제).
+export const BALANCE_VERSION = 130; // C.425 (GDD v6.015 12-3): 붕옥 재료 = 사냥 드롭 hogyokuDrops(일반 0.3·강적 2·보스 5·비율 4:1.5:1)·떠돌이 상인 w-hg-* — 옛 soulCrystals·hogyokuShards·resonanceEssence 지급 삭제. 129 (GDD v6.014 12-3): 붕옥 개발 10단계 → 재료별 강화 트랙 3개(각 50강, trackCost·trackMax·trackHalf·perStepBonus — 옛 develop·perLevelBonus·halfLevel·maxLevel 삭제).
 // 이전: BALANCE_VERSION 128; // C.418 (GDD v6.005): 먹이 보관 상한 food.cap 9·넘침 골드 food.overflowGoldRate 0.2 삭제, 새 게임 시작 지급 startItems·food.start 비움 → tutorialRecover.cureReward(+반창고 3·붕대 2·회복약 1)·cureFood(간식 5) = 빈사 치료 뒤. 전투 수치 그대로. 그 전 127 — C.417 (GDD 245장): 새 게임 시작 지급에서 일반 먹이(food.start basic 3·startNormalFoods 3)·치료제 3종(startItems med-cure·med-iv·med-energy 각 3) 삭제 → 튜토리얼 첫 끼니 뒤 tutorialRecover.rewardEach 1 → 3 · 빈사 치료 뒤 tutorialRecover.cureReward 각 3, 튜토리얼 온천 tutorialRecover.spaTo 0.8 → 1(가득), 적 공격 분류 = 공격마다 데이터(적 attackCategory·pattern.heavyCategories, mixed 는 combat.mixedPhysicalShare 0.5 굴림 — provisional, 옛 두 능력치 평균 삭제), 강공격 판정 = 예고 끝 틱(hitDelay.heavy 는 빔 모션 앞당김 시간으로 뜻이 바뀜). 그 전 126 — C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.develop(10단계 재료 3종 표)·perLevelBonus 0.01·halfLevel 5·maxLevel 10, 재료 hogyokuShards(화 첫 클리어 5·장 보스 20·탑 10층마다 5)·resonanceEssence(진화 3·공명 30) 신설 — 옛 liberateCost 100·liberatedBonus 0.05·fusionCost 300 삭제(5단계 = +5%). 전투 수치 그대로. 그 전 125 — C.412 (GDD 243장 1): twoTrack.openTierIndex(4단계 도착 = 다른 종족 트랙) 삭제 — 두 번째 트랙·붕옥 탭은 스토리 전부 클리어 때. 전투 수치 그대로. 그 전 124 — C.411 (GDD 243장 7·8): 돌봄 요청 무작위 재우기 sleepWeight 삭제 · 줄어든 것만 있는 복귀 창 문턱 idle.lossOnlyMinMinutes 60(provisional). 옛 123 = C.406 (GDD 241-C 4~7): 쇠약 = 마지막으로 먹인 뒤 nest.care.weakAfterHours 24시간(옛 배부름 weakFullness 20 이하 삭제) · 눌러서 말 걸기 nest.bond.touch(4번째까지 +1 · 7번째부터 −1 · 3시간 주기) · 새 게임 시작 지급 startItems 링거 3·에너지 드링크 3 추가 + startNormalFoods 3(일반 먹이 종류마다) · 숨은 모습 보너스(종족 설정 specialLooks: 외눈형 모든 능력치 +5). 전투 수치 그대로. 그 전 122 — C.404 (GDD 241-B): tutorialScript.libReadySeconds 0.8·libHoldSeconds 1.2(각본 해방 안내), nest.homeHp.spaEnterSeconds 2.4(온천 다 앉은 뒤부터), 먹이 tutorial(첫 끼니 배부름 100)·sell food-tutorial 1, tutorialRecover.food 'basic' → 'tutorial'·rewardEach 1. 그 전 121 — C.403 (GDD 241-0 사용자 수정): 해금 표 provisional.unlocks 신설(타일 2단계 · 장비·전투 소모품 3단계 · 본능 수련·번호 쟁탈전 4단계 · 장신구 해방 클리어 · 펫·출정품 첫 환생) — 펫 첫 지급이 첫 진화 → 첫 환생, 해금 전 장비·펫 드롭 없음. 전투 수치 그대로. 그 전 120 — C.400 (GDD 241-D 5): 출정품 provisional.sortie(칸 2 · 공격 피해 +10% · 받는 피해 −10% · 드롭 +15% · 값 90·90·120 · 드롭 2%·8%·25%). 그 전 119 — C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
@@ -129,8 +129,6 @@ export const BALANCE = {
         pet: { risk: -10 },
       },
     },
-    // ── 영혼 결정 (GDD 22-3, 수치 provisional): 슬롯 공유 재화. 붕옥 탭이 열리기 전에도 쌓인다 ──
-    soulCrystals: { perElite: 1, perRankWin: 3, perRebirth: 10 },
     // ── 투트랙·붕옥·합체 (GDD 22-3·22-9, 수치 provisional) ──
     twoTrack: {
       /** 슬롯 하나의 캐릭터 트랙 수 */
@@ -139,7 +137,7 @@ export const BALANCE = {
     },
     hogyoku: {
       /** 붕옥 개발 = 재료마다 따로 강화하는 트랙 3개 (GDD 12-3 v6.014, C.425 provisional — 사용자 "재료마다 따로 강화임 … 각 강화탭마다 50까지").
-       *  트랙 id = 재료 id (soul 영혼 결정 · shard 붕옥 파편 · essence 공명의 정수). 한 강 = 그 트랙 재료만 [1~trackHalf강 값, trackHalf+1~trackMax강 값]개.
+       *  트랙 id = 재료 id (soul 세공·고순도 윤활제 · shard 정제·혼백 여과기 · essence 주입·영압 결정 — 이름은 data/hogyoku). 한 강 = 그 트랙 재료만 [1~trackHalf강 값, trackHalf+1~trackMax강 값]개.
        *  옛 10단계 표 합계에 맞춤: 결정 50·100 · 파편 75·25 · 정수 25·25 (옛 1~5단계 50·80·14, 6~10단계 90·30·24).
        *  개발 %(종합 해방도) = 세 트랙 강 수 평균 ÷ trackMax. 1~trackHalf강 = 반각성부터, 그 위 = 공명부터(트랙마다) */
       trackCost: {
@@ -158,21 +156,15 @@ export const BALANCE = {
       /** 첫 초월체 획득 영옥 (25-1 일회성 달성 보상) */
       firstTranscendentJade: 10,
     },
-    // ── 붕옥 재료 (GDD 244장 3, C.414 provisional): 슬롯 공유, 붕옥 등장 전에도 쌓인다(표시는 등장 뒤). 영혼 결정은 위 soulCrystals ──
-    hogyokuShards: {
-      /** 스토리 화 첫 클리어 (종족마다) */
-      perEpisodeFirst: 5,
-      /** 장 보스 첫 처치 = 그 종족의 장 완주(마지막 화 = 장 보스) 순간 */
-      perChapterBoss: 20,
-      /** 탑: 이 층수마다 그 트랙이 처음 닿을 때 (합체 뒤 새 캐릭터는 다시 받는다) */
-      towerEvery: 10,
-      perTowerStep: 5,
-    },
-    resonanceEssence: {
-      /** 두 트랙 캐릭터가 진화(단계 오름)할 때마다 — 마지막 단계의 아란칼화/참백도 구상화(승급)도 진화로 센다 */
-      perEvolution: 3,
-      /** 공명(두 종족 스토리 전부 클리어) 순간 한 번 */
-      onResonance: 30,
+    // ── 붕옥 재료 드롭 (GDD 12-3 v6.015, C.425 provisional — 사용자 "사냥 및 떠돌이 상인에서 구할 수 있고"): 슬롯 공유, 붕옥 등장 전에도 쌓인다(표시는 등장 뒤).
+    //    모험에서 이긴 전투마다 귀환(정산) 때 굴린다: 일반 = normalChance 확률로 1개, 강적 = eliteCount 개 확정, 보스 = bossCount 개 확정. 재료마다 weights 비율로 고른다.
+    //    공급 목표(마스터 추천안): 첫 합체까지 모험 약 115회 · 2번째부터 약 42회 — npm run balance '붕옥 재료 공급'. 떠돌이 상인 판매는 wanderer.items 'w-hg-*' ──
+    hogyokuDrops: {
+      normalChance: 0.3,
+      eliteCount: 2,
+      bossCount: 5,
+      /** 키 = 강화 트랙 id(hogyoku.trackCost 와 같은 키) — soul 고순도 윤활제 · shard 혼백 여과기 · essence 영압 결정 */
+      weights: { soul: 4, shard: 1.5, essence: 1 },
     },
     // ── 환생 (GDD 22-1·22-7, 수치 provisional) ──
     rebirth: {
@@ -966,6 +958,10 @@ export const BALANCE = {
         'w-gear-rare': { price: 300, amount: 1 },
         'w-gear-epic': { price: 700, amount: 1 },
         'w-gear-legend': { price: 1500, amount: 1 },
+        // 붕옥 재료 묶음 (GDD 12-3 v6.015, C.425): 사냥 밖 유일한 공급 — 몇 개씩 골드로
+        'w-hg-soul': { price: 120, amount: 6 },
+        'w-hg-shard': { price: 120, amount: 4 },
+        'w-hg-essence': { price: 120, amount: 3 },
       } as Record<string, { price: number; amount: number }>,
     },
     /** 대기 모드 = 방치 자동 모험 (GDD 85장 6번, C.140 provisional — 사용자 "24시간 내내 모험 돌릴 때 뜨는 템과 xp 스텟 등등의 n%만큼만", n·기준량은 코드 판단).

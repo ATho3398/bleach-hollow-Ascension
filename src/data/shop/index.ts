@@ -11,6 +11,7 @@ import raw from './items.json';
 import wandererRaw from './wanderer.json';
 import blurbsRaw from './blurbs.json';
 import { fixParticles } from '../../engine/josa';
+import { HOGYOKU_TRACK_IDS, type HogyokuTrackId } from '../../engine/transcend';
 
 export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'battle', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear', 'sortie'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
@@ -285,7 +286,7 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
 export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type WandererGrade = (typeof WANDERER_GRADES)[number];
 export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
-export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet', 'gear', 'hpPotion'] as const;
+export const WANDERER_KINDS = ['food', 'reroll', 'calm', 'wake', 'trainingTicket', 'rareTile', 'elixir', 'pet', 'gear', 'hpPotion', 'hogyokuMat'] as const;
 export type WandererKind = (typeof WANDERER_KINDS)[number];
 
 export interface WandererItemDef {
@@ -295,6 +296,8 @@ export interface WandererItemDef {
   kind: WandererKind;
   /** kind 'food' 의 먹이 종류 */
   food?: FoodId;
+  /** kind 'hogyokuMat' 의 붕옥 재료 = 강화 트랙 id (GDD 12-3 v6.015) */
+  material?: HogyokuTrackId;
   category: ItemCategory;
 }
 
@@ -306,9 +309,10 @@ function parseWanderer(r: unknown): WandererItemDef {
   if (!(WANDERER_GRADES as readonly unknown[]).includes(w.grade)) errors.push(`grade: ${WANDERER_GRADES.join(' | ')}`);
   if (!(WANDERER_KINDS as readonly unknown[]).includes(w.kind)) errors.push(`kind: ${WANDERER_KINDS.join(' | ')}`);
   if (w.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(w.food)) errors.push('food');
+  if (w.kind === 'hogyokuMat' && !(HOGYOKU_TRACK_IDS as readonly unknown[]).includes(w.material)) errors.push(`material: ${HOGYOKU_TRACK_IDS.join(' | ')}`);
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(w.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
   if (errors.length) throw new Error(`떠돌이 상인 품목 데이터 오류 (${String(w.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: w.id as string, name: w.name as string, grade: w.grade as WandererGrade, kind: w.kind as WandererKind, ...(w.food ? { food: w.food as FoodId } : {}), category: w.category as ItemCategory };
+  return { id: w.id as string, name: w.name as string, grade: w.grade as WandererGrade, kind: w.kind as WandererKind, ...(w.food ? { food: w.food as FoodId } : {}), ...(w.material ? { material: w.material as HogyokuTrackId } : {}), category: w.category as ItemCategory };
 }
 
 export const WANDERER_PROVISIONAL: boolean = wandererRaw.provisional;

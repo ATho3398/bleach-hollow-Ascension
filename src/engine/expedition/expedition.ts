@@ -162,7 +162,7 @@ export interface StorySettlement {
   jade: number;
   chapterCleared: boolean;
   bossFirstKill: string | null;
-  /** 붕옥 파편 (GDD 244장 3, C.414): 화 첫 클리어 + 장 보스(장 완주). 받지 않았으면 없다 */
+  /** 옛 붕옥 파편 (C.414~C.424, 화 첫 클리어 + 장 보스). C.425 부터 주지 않는다 (GDD 12-3 v6.015) */
   shards?: number;
 }
 
@@ -318,7 +318,7 @@ export interface ExpeditionState extends RiskState {
   restSpring?: boolean;
   /** 바로 앞 칸에서 효과가 난 타일 (메아리, C.124): 이벤트 타일은 밟으면 사라지므로 밟은 순간의 id 를 둔다. 메아리 칸·보스 칸·빈 칸이면 null */
   lastTile?: { cell: number; tileId: string } | null;
-  /** 바퀴 변이(폭풍)로 더 받는 영혼 결정 */
+  /** 바퀴 변이(폭풍)로 더 받는 붕옥 재료(고순도 윤활제, 옛 영혼 결정) */
   bonusSoul: number;
   variantLog: VariantLog;
   /** 스토리 화 진행 (GDD 25-4). 자유 원정은 null. 스토리에서는 드래프트·바퀴 변이를 끄고 인접 시너지는 고정 길대로 발동한다 */

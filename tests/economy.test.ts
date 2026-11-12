@@ -221,7 +221,7 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     for (const f of FACTIONS) for (const g of TUTORIAL_GOALS) for (const k of placeholdersOf(g.text)) expect(helpVars(f)[k], `${g.id} {${k}}`).toBeTruthy();
     expect(TUTORIAL_GOALS.filter((g) => !g.available).map((g) => g.check)).toEqual([]); // 환생은 C.56 에서 켬
     expect(() => parseTutorialGoal({ id: 'x', check: 'nope', text: 'a', reward: { soulCrystals: 1 } })).toThrow();
-    expect(() => parseTutorialGoal({ id: 'x', check: 'returned', text: 'a', reward: {} })).toThrow();
+    expect(() => parseTutorialGoal({ id: 'x', check: 'returned', text: 'a', reward: { soulCrystals: 1 } })).toThrow(); // C.425: 영혼 결정 보상 삭제
   });
 
   it('비활성 목표는 판정하지 않는다', () => {
@@ -230,7 +230,7 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     expect(goalAchieved({ check: 'tier5', available: true }, v)).toBe(true);
   });
 
-  it('자동 판정·지급: 이룬 목표만 한 번씩, 먹이는 상한까지, 영혼 결정은 더한다', () => {
+  it('자동 판정·지급: 이룬 목표만 한 번씩, 먹이는 상한까지 (붕옥 재료 보상은 C.425 에 삭제)', () => {
     const save = newSaveData('hollow', 0);
     expect(claimTutorialGoals(save, 1)).toEqual([]);
     save.help.tutorialSeen = true;
@@ -244,7 +244,7 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     save.rank.history.everRanked = true;
     const g2 = claimTutorialGoals(save, 4);
     expect(g2.map((x) => x.goal.id)).toEqual(['first-evolution', 'tier5', 'first-rank']);
-    expect(save.shared.soulCrystals).toBe(6);
+    expect(save.shared.soulCrystals).toBe(0);
     expect(save.shared.tutorials.hollow!.map((c) => c.goalId)).toEqual(['tutorial', 'first-evolution', 'tier5', 'first-rank']);
   });
 

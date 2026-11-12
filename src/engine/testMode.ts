@@ -444,7 +444,7 @@ export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장�
 /** 재화 id → 세이브 자리 (골드 = tradeCoins) */
 export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
 export type TestCurrency = (typeof TEST_CURRENCIES)[number];
-export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = { gold: '골드', jade: '영옥', soulCrystals: '영혼 결정', rerollTickets: '다시 뽑기권', trainingTickets: '수련권' };
+export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = { gold: '골드', jade: '영옥', soulCrystals: '고순도 윤활제', rerollTickets: '다시 뽑기권', trainingTickets: '수련권' };
 /** 한 번에 만들 수 있는 최대 개수 */
 export const TEST_ITEM_MAX = 99999;
 

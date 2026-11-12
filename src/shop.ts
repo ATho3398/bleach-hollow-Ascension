@@ -19,6 +19,8 @@ import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
 import { GEAR_GRADE_NAMES, type GearGrade } from './data/gear';
 import type { SaveData } from './game';
+import { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
+import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from './data/hogyoku';
 import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 
 const SX = BALANCE.shop;
@@ -445,6 +447,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 장비 탭 펫';
     case 'hpPotion': return `${battleItemText(itemId)} · 모험 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
+    case 'hogyokuMat': return `붕옥 재료 ${HOGYOKU_MATERIAL_NAMES[w.material!]} +${n} (${HOGYOKU_TRACK_NAMES[w.material!]} 강화에 쓴다)`;
     case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
 }
@@ -460,6 +463,7 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
     case 'pet': return pickNewPet(save.shared.pets, () => 0) === null ? '펫을 다 가졌다' : null;
     case 'gear': return gearFullText(save);
+    case 'hogyokuMat': return null; // 붕옥 재료 상한 없음
     default: return canStoreConsumable(save, itemId) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
   }
 }
@@ -517,6 +521,10 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       detail = `${faction.petNames[id] ?? id} → 가방 장비 탭 펫`;
       break;
     }
+    case 'hogyokuMat':
+      gainHogyokuMaterial(save, w.material!, n, 'wanderer', nowMs);
+      detail = `${HOGYOKU_MATERIAL_NAMES[w.material!]} 보유 ${materialHave(save, w.material!)}`;
+      break;
     case 'gear':
       detail = giveGear(save, faction, rollGear({ grade: w.grade as GearGrade, star: gearStarOf(save) }, rand), 'wanderer', nowMs);
       break;

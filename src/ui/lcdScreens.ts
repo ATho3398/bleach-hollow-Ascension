@@ -39,7 +39,7 @@ import { traitsTab, type TraitsTabState } from './buildPanel';
 import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
-import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
+import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';

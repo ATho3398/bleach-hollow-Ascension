@@ -9,6 +9,7 @@ import type { CombatParams } from '../engine/combat';
 import { fixParticles } from '../engine/josa';
 import { formHasUniqueRelease, formRelease, tryGetForm } from '../data/evolution';
 import { FACTIONS } from '../data/factions';
+import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
 
 export { BLOCK_WORDS };
 
@@ -179,7 +180,7 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
   if (m.nextShield) out.push(`다음 전투 보호막 ${Math.round(m.nextShield * 100)}%`);
   if (m.riskOnce) out.push(`리스크 ${m.riskOnce > 0 ? '+' : '−'}${Math.abs(m.riskOnce)}`);
   if (m.hungerMult !== undefined) out.push(`배고파지는 속도 ×${m.hungerMult}`);
-  if (m.eliteSoulBonus) out.push(`강적 처치 영혼 결정 +${m.eliteSoulBonus}`);
+  if (m.eliteSoulBonus) out.push(`강적 처치 ${HOGYOKU_MATERIAL_NAMES.soul} +${m.eliteSoulBonus}`);
   if (m.envMult !== undefined) out.push(`효과 ×${m.envMult}`);
   return out;
 }

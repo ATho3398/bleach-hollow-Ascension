@@ -4,7 +4,7 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { getTrait, traitName } from '../data/traits';
 import { formName, tryGetForm } from '../data/evolution';
-import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
+import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { statName } from '../data/elements';
 import { STAT_IDS, type Stats } from '../data/schema';
 import type { FactionConfig } from '../engine/faction';
@@ -56,7 +56,7 @@ export function rebirthLists(faction: FactionConfig): { resets: string[]; keeps:
       '진화 때 받은 특성 (특성 칸 +1, 최대 4)',
       '등급 이력',
       '수련 완료·수련치·수련권',
-      `${faction.foodGroupName}·${TRADE_CURRENCY_NAME}·${JADE_NAME}·${SOUL_CRYSTAL_NAME}·가진 타일`,
+      `${faction.foodGroupName}·${TRADE_CURRENCY_NAME}·${JADE_NAME}·붕옥 재료·가진 타일`,
       '입은 스킨',
     ],
   };
@@ -116,7 +116,7 @@ export function rebirthConfirmView(dev: Device, faction: FactionConfig, save: Sa
   const info = panel({ title: '다음 생', aside: provisionalTag('임시 수치') });
   info.setAttribute('aria-label', '다음 생');
   const RB = BALANCE.provisional.rebirth;
-  const reward = [`${SOUL_CRYSTAL_NAME} +${BALANCE.provisional.soulCrystals.perRebirth}`, ...(save.rebirth.count === 0 ? [`${JADE_NAME} +${RB.firstJade} (첫 ${faction.rebirth.name})`] : [])].join(' · ');
+  const reward = save.rebirth.count === 0 ? `${JADE_NAME} +${RB.firstJade} (첫 ${faction.rebirth.name})` : '없음';
   const stars = h('p', 'bha-small');
   stars.append('이름 옆 표시 ', rebirthMark(save.rebirth.count + 1)!);
   info.append((() => { const p = h('p', 'bha-small'); p.append('시작 노력치(계승): ', evText(carryLine(faction.id, carry))); return p; })(), h('p', 'bha-small', `보상: ${reward}`), stars);
@@ -140,7 +140,7 @@ export function rebirthFinalText(faction: FactionConfig, keepTraitId: string | n
  * 환생 연출: 화면이 하얗게 바랬다가 돌아오며(페이드) 종족 설정 문구 3줄 → 결과(1단계 이름 + ★, 계승 노력치·블록·보상) + [둥지로].
  * 3.4초 뒤 결과, [건너뛰기]로 바로.
  */
-export function rebirthView(root: HTMLElement, faction: FactionConfig, record: RebirthRecord, reward: { soulCrystals: number; jade: number }, onDone: () => void): void {
+export function rebirthView(root: HTMLElement, faction: FactionConfig, record: RebirthRecord, reward: { jade: number }, onDone: () => void): void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const linesSection = h('section');
   const lines = h('div', 'bha-evolve__lines');
@@ -181,7 +181,7 @@ export function rebirthView(root: HTMLElement, faction: FactionConfig, record: R
   row('이전 생', shownName(prev ? formName(prev, faction.id, record.prevElements) : faction.tierNames[record.prevTierIndex]!));
   row('블록', record.keptTraitId ? traitName(record.keptTraitId, faction.id) : '없음');
   row('계승 노력치', evText(carryLine(faction.id, record.carry as Stats))); // 노력치 글자 (GDD 160장 6)
-  row('보상', [`${SOUL_CRYSTAL_NAME} +${reward.soulCrystals}`, ...(reward.jade ? [`${JADE_NAME} +${reward.jade}`] : [])].join(' · '));
+  row('보상', reward.jade ? `${JADE_NAME} +${reward.jade}` : '없음');
   got.append(dl);
   side.append(got);
   result.append(main, side);

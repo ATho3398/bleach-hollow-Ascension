@@ -53,10 +53,10 @@ describe('244장 2 반각성 → 공명', () => {
     const ess = s.shared.resonanceEssence;
     checkTrackOpen(s, 11);
     expect(s.hogyoku).toMatchObject({ resonance: true, resonatedAt: 11 });
-    expect(s.shared.resonanceEssence).toBe(ess + BALANCE.provisional.resonanceEssence.onResonance);
+    expect(s.shared.resonanceEssence).toBe(ess); // C.425 (v6.015): 공명은 재료를 주지 않는다 — 안내 카드만
     expect(guidePending(s.help, 'hogyoku-resonance')).toBe(true);
     checkTrackOpen(s, 12);
-    expect(s.shared.resonanceEssence).toBe(ess + BALANCE.provisional.resonanceEssence.onResonance); // 두 번은 없다
+    expect(s.hogyoku.resonatedAt).toBe(11); // 두 번은 없다
     rich(s);
     for (const t of HOGYOKU_TRACK_IDS) while (developHogyoku(s, t, 13)) { /* */ }
     expect(s.hogyoku.tracks).toEqual({ soul: 50, shard: 50, essence: 50 });
@@ -89,31 +89,22 @@ describe('244장 2 반각성 → 공명', () => {
   });
 });
 
-describe('244장 3 재료 얻는 곳 (등장 전에도 쌓임)', () => {
-  it('스토리 화 첫 클리어 +5 · 장 보스(장 완주) +20 · 다시 깨면 없음 — 기록은 slotLog.hogyokuMaterials', () => {
+// C.425 (GDD v6.015): 재료 얻는 곳 = 사냥 드롭 + 떠돌이 상인뿐 — 옛 스토리·탑·진화·승급·공명 지급이 없어졌는지 (지키던 결정: 등장 전에도 쌓이고 기록은 slotLog.hogyokuMaterials)
+describe('12-3 재료 얻는 곳 (v6.015: 사냥 + 떠돌이 상인)', () => {
+  it('스토리 화 첫 클리어·장 보스로는 재료를 주지 않는다', () => {
     const s = newSaveData('hollow', 1);
     s.evolution.tierIndex = 3;
     const ch = STORY_CHAPTERS[0]!;
     const eps = chapterContent('hollow', ch.id)!.episodes;
-    const HS = BALANCE.provisional.hogyokuShards;
-    let want = 0;
-    for (const [i, e] of eps.entries()) {
-      const out = settleStory(s, { story: { chapterId: ch.id, episodeId: e.id, cleared: true, bossResult: null }, runId: `r${i}`, evolution: s.evolution, difficulty: 1 } as never, 100 + i);
-      want += HS.perEpisodeFirst + (i === eps.length - 1 ? HS.perChapterBoss : 0);
-      expect(out.shards).toBe(HS.perEpisodeFirst + (i === eps.length - 1 ? HS.perChapterBoss : 0));
-    }
-    expect(s.hogyoku.tabOpen).toBe(false);
-    expect(s.shared.hogyokuShards).toBe(want);
-    const again = settleStory(s, { story: { chapterId: ch.id, episodeId: eps[0]!.id, cleared: true, bossResult: null }, runId: 'x', evolution: s.evolution, difficulty: 1 } as never, 200);
-    expect(again.shards).toBeUndefined();
-    expect(s.slotLog.hogyokuMaterials.map((m) => m.source)).toEqual([...eps.slice(0, -1).map(() => 'episode'), 'episode', 'chapter']);
+    for (const [i, e] of eps.entries()) settleStory(s, { story: { chapterId: ch.id, episodeId: e.id, cleared: true, bossResult: null }, runId: `r${i}`, evolution: s.evolution, difficulty: 1 } as never, 100 + i);
+    expect([s.shared.soulCrystals, s.shared.hogyokuShards, s.shared.resonanceEssence]).toEqual([0, 0, 0]);
+    expect(s.slotLog.hogyokuMaterials).toEqual([]);
   });
 
-  it('진화·승급마다 정수 +3, 탑 10층마다 파편 +5 (엔진 연결)', () => {
+  it('진화·승급·탑·공명·등급전·환생 지급 코드가 없다', () => {
     const g = read('src/game.ts');
-    expect(g).toContain("gainHogyokuMaterial(save, 'essence', BALANCE.provisional.resonanceEssence.perEvolution, 'evolution', nowMs)");
-    expect(g).toContain("gainHogyokuMaterial(save, 'essence', BALANCE.provisional.resonanceEssence.perEvolution, 'ascension', nowMs)");
-    expect(g).toContain("if (f.floor % HS.towerEvery === 0) out.shards = gainHogyokuMaterial(save, 'shard', HS.perTowerStep, 'tower', nowMs);");
+    for (const gone of ["'essence', BALANCE", "'shard', HS.", "'resonance', nowMs)", 'perRankWin', 'perRebirth', 'hogyokuShards.perEpisodeFirst']) expect(g).not.toContain(gone);
+    expect(g).toContain("gainHogyokuMaterial(save, id, drops[id], 'hunt', nowMs)");
   });
 });
 
@@ -147,7 +138,7 @@ describe('244장 5 합체 뒤 · 6 옛 세이브', () => {
 
   it('붕옥 화면: 단계 띠·강화 버튼·강화 상세·지금 두 캐릭터라면·못 모은 조건 공개 (개발 단계 목록은 C.425 사용자 지시로 삭제)', () => {
     const v = read('src/ui/hogyokuView.ts');
-    for (const k of ["'bha-hogyoku__stages'", "dataset.sc = 'hogyoku-develop'", "'붕옥 개발'", '`${m.name} 강화`', "'지금 두 캐릭터라면 → '", 'transcendentConditionText(d.condition)']) expect(v).toContain(k);
+    for (const k of ["'bha-hogyoku__stages'", "dataset.sc = 'hogyoku-develop'", "'붕옥 개발'", '`${m.track} — ${m.name}`', "'지금 두 캐릭터라면 → '", 'transcendentConditionText(d.condition)']) expect(v).toContain(k);
     for (const d of TRANSCENDENTS) expect(transcendentConditionText(d.condition)).toMatch(/\S/);
     expect(read('src/ui/bha/screens-lcd.css')).toMatch(/\.bha-hogyoku__stages \{[^}]*var\(--bha-sp-1\)/);
   });

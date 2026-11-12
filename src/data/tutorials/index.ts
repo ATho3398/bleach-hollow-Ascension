@@ -6,9 +6,9 @@ import raw from './goals.json';
 export const TUTORIAL_CHECKS = ['tutorialSeen', 'returned', 'absorbed', 'chain3', 'evolved', 'eliteWin', 'tier5', 'ranked', 'training', 'rebirth'] as const;
 export type TutorialCheck = (typeof TUTORIAL_CHECKS)[number];
 
+/** 보상 = 먹이 (없을 수 있음 — 목표마다 영옥 +1 은 따로). 옛 영혼 결정 보상은 C.425 에 삭제 (GDD 12-3 v6.015: 붕옥 재료는 사냥·떠돌이 상인뿐) */
 export interface TutorialReward {
   food?: Partial<Record<FoodId, number>>;
-  soulCrystals?: number;
 }
 
 export interface TutorialGoalDef {
@@ -30,11 +30,10 @@ export function parseTutorialGoal(r: unknown): TutorialGoalDef {
   const rw = (g.reward ?? {}) as Record<string, unknown>;
   const food = (rw.food ?? {}) as Record<string, unknown>;
   for (const [k, v] of Object.entries(food)) if (!(FOOD_IDS as readonly string[]).includes(k) || !(Number.isInteger(v) && (v as number) > 0)) errors.push(`reward.food.${k}: 먹이 종류와 양의 정수`);
-  if (rw.soulCrystals !== undefined && !(Number.isInteger(rw.soulCrystals) && (rw.soulCrystals as number) > 0)) errors.push('reward.soulCrystals: 양의 정수');
-  if (Object.keys(food).length === 0 && rw.soulCrystals === undefined) errors.push('reward: 먹이나 영혼 결정 하나 이상');
+  if (rw.soulCrystals !== undefined) errors.push('reward.soulCrystals: 삭제됨 (C.425)');
   if (g.available !== undefined && typeof g.available !== 'boolean') errors.push('available: boolean');
   if (errors.length > 0) throw new Error(`튜토리얼 목표 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, check: g.check as TutorialCheck, text: g.text as string, reward: { food: food as TutorialReward['food'], ...(rw.soulCrystals !== undefined ? { soulCrystals: rw.soulCrystals as number } : {}) }, available: g.available !== false };
+  return { id: g.id as string, check: g.check as TutorialCheck, text: g.text as string, reward: { food: food as TutorialReward['food'] }, available: g.available !== false };
 }
 
 export const TUTORIAL_GOALS: readonly TutorialGoalDef[] = raw.goals.map(parseTutorialGoal);

@@ -96,16 +96,16 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     expect(performRebirth(s, null).ok).toBe(true);
     expect(s.build.slots.every((x) => x === null)).toBe(true);
   });
-  it('보상: 영혼 결정 +10 매번, 영옥 10 은 첫 환생만, 튜토리얼 first-rebirth 를 켠다', () => {
+  it('보상: 영옥 10 은 첫 환생만(붕옥 재료 없음 — C.425 v6.015), 튜토리얼 first-rebirth 를 켠다', () => {
     const s = tier5Save();
     const r1 = performRebirth(s, null);
-    expect(r1.ok && [r1.soulCrystals, r1.jade]).toEqual([10, RB.firstJade]);
-    expect([s.shared.soulCrystals, s.shared.jade]).toEqual([17, 3 + RB.firstJade]);
+    expect(r1.ok && r1.jade).toBe(RB.firstJade);
+    expect([s.shared.soulCrystals, s.shared.jade]).toEqual([7, 3 + RB.firstJade]);
     expect(claimTutorialGoals(s, 6000).map((g) => g.goal.id)).toContain('first-rebirth');
     const jadeAfterClaims = s.shared.jade; // C.60: 튜토리얼 목표마다 영옥 +1
     s.evolution.tierIndex = 4;
     const r2 = performRebirth(s, null);
-    expect(r2.ok && [r2.soulCrystals, r2.jade]).toEqual([10, 0]);
+    expect(r2.ok && r2.jade).toBe(0);
     expect(s.shared.jade).toBe(jadeAfterClaims);
     expect(claimTutorialGoals(s, 7000).map((g) => g.goal.id)).not.toContain('first-rebirth');
   });

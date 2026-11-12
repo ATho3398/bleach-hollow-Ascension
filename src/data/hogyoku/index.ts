@@ -1,14 +1,17 @@
-// 붕옥 개발 표시 데이터 (GDD 244장 3·4, C.414 provisional): 재료 이름·단계 이름. 두 종족 공통(슬롯 공유)이라 종족 설정이 아니라 여기 둔다.
-// 단계 수·재료 수치는 BALANCE.provisional.hogyoku.develop — 이 파일은 이름만.
+// 붕옥 개발 표시 데이터 (GDD 12-2·12-3 v6.015, C.425 provisional): 재료·강화 트랙·단계 이름. 두 종족 공통(슬롯 공유)이라 종족 설정이 아니라 여기 둔다.
+// 키 = 강화 트랙 id(BALANCE.provisional.hogyoku.trackCost 키). 세이브 키(shared.soulCrystals·hogyokuShards·resonanceEssence)는 옛 이름 그대로 — 이름만 여기서 바꾼다.
+// 수치는 BALANCE.provisional.hogyoku·hogyokuDrops — 이 파일은 이름만.
 import type { TranscendentCondition } from '../transcendents';
-export { SOUL_CRYSTAL_NAME } from '../economy';
+import type { HogyokuTrackId } from '../../engine/transcend';
 
-/** 붕옥 파편 (스토리 화 첫 클리어·장 보스·탑 10층마다) */
-export const HOGYOKU_SHARD_NAME = '붕옥 파편';
-/** 공명의 정수 (진화할 때마다·공명) */
-export const RESONANCE_ESSENCE_NAME = '공명의 정수';
+/** 붕옥 재료 이름 (사용자 2026-11-12): soul 고순도 윤활제(세공용) · shard 혼백 여과기(정제용) · essence 영압 결정(주입용) */
+export const HOGYOKU_MATERIAL_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '고순도 윤활제', shard: '혼백 여과기', essence: '영압 결정' };
+/** 강화 트랙 이름 (사용자 2026-11-12): 세공 · 정제 · 주입 */
+export const HOGYOKU_TRACK_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '세공', shard: '정제', essence: '주입' };
+/** 얻는 곳 한 줄 (GDD 12-3 v6.015: 사냥 + 떠돌이 상인뿐) */
+export const HOGYOKU_MATERIAL_SOURCE = '사냥(모험 전투 승리 드롭 — 강적·보스는 확정) · 떠돌이 상인';
 
-/** 개발 단계 이름 (i = i+1 단계, 10%씩). provisional */
+/** 개발 단계 이름 (i = 개발 % (i+1)×10% 구간). provisional */
 export const HOGYOKU_STEP_NAMES: readonly string[] = [
   '미약한 맥동', '금 간 껍질', '깨어나는 핵', '영압 흡수', '반쪽의 각성',
   '두 영압의 공명', '경계 융해', '의지의 발아', '초월의 문턱', '완전 각성',

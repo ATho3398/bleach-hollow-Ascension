@@ -121,3 +121,41 @@ describe('C.425 붕옥 창 재배치', () => {
     expect(block).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i);
   });
 });
+
+describe('C.425 붕옥 용어·얻는 곳 (GDD v6.015)', () => {
+  it('이름 = 데이터 한 곳: 트랙 세공·정제·주입 / 재료 고순도 윤활제·혼백 여과기·영압 결정', async () => {
+    const { HOGYOKU_TRACK_NAMES, HOGYOKU_MATERIAL_NAMES } = await import('../src/data/hogyoku');
+    expect(HOGYOKU_TRACK_NAMES).toEqual({ soul: '세공', shard: '정제', essence: '주입' });
+    expect(HOGYOKU_MATERIAL_NAMES).toEqual({ soul: '고순도 윤활제', shard: '혼백 여과기', essence: '영압 결정' });
+    for (const f of ['src/ui/hogyokuView.ts', 'src/ui/rebirthView.ts', 'src/ui/tutorialGoalsView.ts', 'src/data/help/guides.json']) for (const old of ['영혼 결정', '붕옥 파편', '공명의 정수']) expect(read(f), `${f} ${old}`).not.toContain(old);
+  });
+
+  it('사냥 드롭: 강적·보스 확정, 진 전투 없음, 같은 원정 = 같은 드롭', async () => {
+    const { rollHogyokuDrops } = await import('../src/game');
+    const D = BALANCE.provisional.hogyokuDrops;
+    const b = (won: boolean, enemyClass: string) => ({ won, enemyClass });
+    const sum = (c: Record<string, number>) => Object.values(c).reduce((a, x) => a + x, 0);
+    expect(sum(rollHogyokuDrops([b(true, 'elite'), b(true, 'boss'), b(false, 'elite')], 7))).toBe(D.eliteCount + D.bossCount);
+    const many = Array.from({ length: 2000 }, () => b(true, 'normal'));
+    const r = rollHogyokuDrops(many, 3);
+    expect(r).toEqual(rollHogyokuDrops(many, 3));
+    expect(sum(r) / 2000).toBeGreaterThan(D.normalChance - 0.05);
+    expect(sum(r) / 2000).toBeLessThan(D.normalChance + 0.05);
+    expect(r.soul).toBeGreaterThan(r.shard); // weights soul > shard > essence
+    expect(r.shard).toBeGreaterThan(r.essence);
+    expect(rollHogyokuDrops([], 1, 2).soul).toBe(2); // 폭풍 강적 추가분 = 첫 재료
+  });
+
+  it('떠돌이 상인: 재료 묶음 3종을 골드로 판다 → 보유 + 런 로그 wanderer', async () => {
+    const { buyWandererItem } = await import('../src/shop');
+    const { WANDERER_ITEMS } = await import('../src/data/shop');
+    expect(WANDERER_ITEMS.filter((w) => w.kind === 'hogyokuMat').map((w) => w.material)).toEqual(['soul', 'shard', 'essence']);
+    const s = newSaveData('hollow', 0);
+    s.shared.tradeCoins = 1000;
+    s.shared.wanderer.visit = { at: 0, runId: 1, tier: 1, stock: [{ itemId: 'w-hg-shard', price: 120, sold: false }] };
+    const r = buyWandererItem(s, FACTIONS[0]!, 'w-hg-shard', 9);
+    expect(r.ok).toBe(true);
+    expect(s.shared.hogyokuShards).toBe(BALANCE.provisional.wanderer.items['w-hg-shard']!.amount);
+    expect(s.slotLog.hogyokuMaterials.at(-1)).toMatchObject({ kind: 'shard', source: 'wanderer', at: 9 });
+  });
+});

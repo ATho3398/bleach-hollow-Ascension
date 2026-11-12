@@ -135,7 +135,7 @@ describe('세이브 반영 (형식 15)', () => {
     Object.assign(save.evolution, { tierIndex: UNLOCK, formId: 't4:fire:physical' });
     return save;
   };
-  it('등급전 승리: 번호·등급 이력·런 로그(등급전 기록 + 전투 기록 enemyClass rank)·영혼 결정 +3·등급 칭호', () => {
+  it('등급전 승리: 번호·등급 이력·런 로그(등급전 기록 + 전투 기록 enemyClass rank)·등급 칭호 (붕옥 재료 없음 — C.425)', () => {
     const save = aran();
     expect(rankChallenge(save)).toMatchObject({ ok: true, targetRank: 10 });
     const r = recordRankBattle(save, battleAgainst(true), 777);
@@ -144,7 +144,7 @@ describe('세이브 반영 (형식 15)', () => {
     expect(save.rank.history.everRanked).toBe(true);
     expect(save.runLog.rankBattles).toEqual([expect.objectContaining({ at: 777, won: true, rankBefore: null, rankAfter: 10, firstRanked: true, tierIndex: UNLOCK, formId: 't4:fire:physical', seed: 42 })]);
     expect(save.runLog.battles.at(-1)!.enemyClass).toBe('rank');
-    expect(save.shared.soulCrystals).toBe(BALANCE.provisional.soulCrystals.perRankWin);
+    expect(save.shared.soulCrystals).toBe(0);
     expect(save.titles.find((t) => t.titleId === 'rank-1')).toMatchObject({ at: 777, trigger: 'rank' });
   });
   it('등급전 패배: 기록은 남고 영혼 결정은 없다, 재도전 대기', () => {
@@ -154,7 +154,7 @@ describe('세이브 반영 (형식 15)', () => {
     expect(save.shared.soulCrystals).toBe(0);
     expect(rankChallenge(save)).toMatchObject({ ok: false, reason: 'rematch' });
   });
-  it('원정에서 이긴 강적 수만큼 영혼 결정 +1 (진 강적·일반 적은 없음)', () => {
+  it('원정 사냥 드롭 (C.425 v6.015): 이긴 강적마다 확정 eliteCount 개, 진 전투는 없음, 일반은 확률', () => {
     const save = newSaveData('hollow', 0);
     const exp = createExpedition({ factionId: 'hollow', seed: 1, runId: 1, hunger: 0, condition: 100, deck: [], risk: 0, build: save.build, evolution: save.evolution });
     exp.phase = 'ended';
@@ -163,7 +163,10 @@ describe('세이브 반영 (형식 15)', () => {
     const rec = (won: boolean, enemyClass: string) => ({ won, enemyClass }) as never;
     exp.battles.push(rec(true, 'elite'), rec(true, 'elite'), rec(false, 'elite'), rec(true, 'normal'));
     recordExpedition(save, exp, 0);
-    expect(save.shared.soulCrystals).toBe(2 * BALANCE.provisional.soulCrystals.perElite);
+    const got = save.shared.soulCrystals + save.shared.hogyokuShards + save.shared.resonanceEssence;
+    expect(got).toBeGreaterThanOrEqual(2 * BALANCE.provisional.hogyokuDrops.eliteCount);
+    expect(got).toBeLessThanOrEqual(2 * BALANCE.provisional.hogyokuDrops.eliteCount + 1);
+    expect(save.slotLog.hogyokuMaterials.every((m) => m.source === 'hunt')).toBe(true);
   });
   it('형식 14 세이브 → 15: 무번호·등급 이력 없음·영혼 결정 0·등급전 기록 빈 목록', () => {
     const old = JSON.parse(JSON.stringify(newSaveData('shinigami', 0)));
@@ -188,7 +191,7 @@ describe('세이브 반영 (형식 15)', () => {
     expect(loaded.rank).toEqual(save.rank);
     expect(rankOf(loaded.rank)).toBeNull();
     expect(loaded.rank.history).toEqual({ everRanked: true, best: 10, firstRankedAt: 5 });
-    expect(loaded.shared.soulCrystals).toBe(3);
+    expect(loaded.shared.soulCrystals).toBe(save.shared.soulCrystals); // C.425: 등급전 승리 재료 없음
     expect(loaded.runLog.rankBattles.map((r) => r.won)).toEqual([true, false]);
   });
 });

@@ -3,7 +3,7 @@
 import { BALANCE } from '../config/balance';
 import { TUTORIAL_GOALS, TUTORIAL_GOALS_PROVISIONAL, type TutorialGoalDef, type TutorialReward } from '../data/tutorials';
 import { helpVars, renderHelpText } from '../data/help';
-import { JADE_NAME, SOUL_CRYSTAL_NAME } from '../data/economy';
+import { JADE_NAME } from '../data/economy';
 import { DEX_LABEL } from '../data/dexRewards';
 import type { FactionConfig, FoodId } from '../engine/faction';
 import type { DexGrant, SaveData, TutorialGrant } from '../game';
@@ -18,12 +18,11 @@ export function tutorialGoalText(def: TutorialGoalDef, faction: FactionConfig): 
   return renderHelpText(def.text, helpVars(faction));
 }
 
-/** 보상 한 줄: "간식 3 · 영혼 결정 1" (도감 보상은 "· 영옥 2") */
-export function rewardText(reward: TutorialReward | { food: [FoodId, number][]; soulCrystals?: number; jade?: number }, faction: FactionConfig, plus = false): string {
+/** 보상 한 줄: "간식 3" (도감 보상은 "· 영옥 2") */
+export function rewardText(reward: TutorialReward | { food: [FoodId, number][]; jade?: number }, faction: FactionConfig, plus = false): string {
   const p = plus ? '+' : ''; // 알림 띠는 받은 양 "영옥 +11" (GDD 159장 30)
   const food = Array.isArray(reward.food) ? reward.food : (Object.entries(reward.food ?? {}) as [FoodId, number][]);
   const parts = food.filter(([, n]) => n > 0).map(([id, n]) => `${faction.foodNames[id]} ${p}${n}`);
-  if ((reward.soulCrystals ?? 0) > 0) parts.push(`${SOUL_CRYSTAL_NAME} ${p}${reward.soulCrystals}`);
   const jade = 'jade' in reward ? reward.jade ?? 0 : 0;
   if (jade > 0) parts.push(`${JADE_NAME} ${p}${jade}`);
   return parts.length > 0 ? parts.join(' · ') : '보관 한도가 차서 받지 못했다';
@@ -70,7 +69,6 @@ export function tutorialGoalsView(root: HTMLElement, faction: FactionConfig, sav
 interface RewardToastItem {
   name: string;
   food: [FoodId, number][];
-  soulCrystals?: number;
   jade?: number;
 }
 
@@ -87,26 +85,24 @@ function showRewardToasts(label: string, items0: readonly RewardToastItem[], fac
     return;
   }
   const food = new Map<FoodId, number>();
-  let crystals = 0;
   let jade = 0;
   for (const g of items) {
     for (const [id, n] of g.food) food.set(id, (food.get(id) ?? 0) + n);
-    crystals += g.soulCrystals ?? 0;
     jade += g.jade ?? 0;
   }
-  showToast({ eyebrow: label, title: rewardTitle(`목표 ${items.length}개 달성`, { food: [...food.entries()], soulCrystals: crystals, jade }, faction), center }, base, 3600);
+  showToast({ eyebrow: label, title: rewardTitle(`목표 ${items.length}개 달성`, { food: [...food.entries()], jade }, faction), center }, base, 3600);
 }
 
 /** 보상 토스트 제목: "진화체 도감 10종 등록 — 영옥 +3". 적을 보상이 없으면(소모품만이었으면, 161장) 이름만 */
-function rewardTitle(name: string, r: { food: [FoodId, number][]; soulCrystals?: number; jade?: number }, faction: FactionConfig): string {
-  const any = r.food.some(([, n]) => n > 0) || (r.soulCrystals ?? 0) > 0 || (r.jade ?? 0) > 0;
+function rewardTitle(name: string, r: { food: [FoodId, number][]; jade?: number }, faction: FactionConfig): string {
+  const any = r.food.some(([, n]) => n > 0) || (r.jade ?? 0) > 0;
   return any ? `${name} — ${rewardText(r, faction, true)}` : name;
 }
 
 /** 새로 받은 튜토리얼 보상 토스트 (GDD 23-3): 화면 가운데 (GDD 109장 5번). 161장: 지금은 끔(NOTIFY.tutorialGoalToast) — 보상은 그대로 받고 책장 > 튜토리얼에서 본다 */
 export function showTutorialToasts(grants: readonly TutorialGrant[], faction: FactionConfig): void {
   if (!NOTIFY.tutorialGoalToast) return;
-  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, soulCrystals: g.soulCrystals, jade: g.jade })), faction, true);
+  showRewardToasts('튜토리얼 달성', grants.map((g) => ({ name: tutorialGoalText(g.goal, faction), food: g.food, jade: g.jade })), faction, true);
 }
 
 /** 도감 이정표 이름: "진화체 도감 10종 등록" */
