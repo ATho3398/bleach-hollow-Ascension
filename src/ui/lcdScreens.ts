@@ -174,12 +174,12 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 노력치 합계 줄은 능력치 6칸 바로 아래 (GDD 189장: 첫 화면에 보이게). 치명·속성 피해 칸은 그 아래 따로 두 열
   const extraBox = h('div', 'bha-stack bha-stats bha-care__stats2');
   extraBox.append(...rows);
-  // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
+  // 붕옥 해방·초월자 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
     const line = h('p', 'bha-small');
     line.dataset.bonus = String(statBonusOf(save).total);
-    line.append('붕옥·초월체 보너스: ', h('b', '', bonus));
+    line.append('붕옥·초월자 보너스: ', h('b', '', bonus));
     stats.append(line);
   }
   // 노력치 합계 / 이 단계 상한 (GDD 182장 3): '노력치가 가득 찼다'가 왜인지 보이게

@@ -1,5 +1,5 @@
 // 붕옥 화면 (GDD 22-3·22-9 → 244장, C.414): 재료 3종으로 붕옥 개발 10단계(반각성 50% → 공명 100%) → 모든 트랙 등급 1위 → 합체 미리보기 → 확인 2번 → 연출.
-// 왼쪽 = 붕옥 그림(개발 % 6단계, 불꽃은 뒤)·둘레 재료 3칸·총 효과, 오른쪽 = 고른 것의 상세 + 아래 고정 [강화], 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 (C.425). 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
+// 왼쪽 = 붕옥 그림(개발 % 6단계, 불꽃은 뒤)·둘레 재료 3칸·총 효과, 오른쪽 = 고른 것의 상세 + 아래 고정 [강화], 오른쪽 위 탭 [합체][초월자 도감] = 별도 창 (C.425). 종족 문구는 각 트랙의 종족 설정에서 읽는다 (종족 분기 없음). 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
 import { FACTIONS, getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
@@ -53,7 +53,7 @@ export function fusionBlockText(b: FusionBlock): string {
     case 'develop': return `붕옥 개발을 100%(세 강화 모두 ${HX.trackMax}강)까지 채워야 한다.`;
     case 'rank': return '두 캐릭터 모두 등급 1위여야 한다.';
     case 'expedition': return '진행 중인 모험이 있다. 모험을 끝내야 한다.';
-    case 'complete': return '초월체 6종을 모두 모았다. 더는 합체할 수 없다.';
+    case 'complete': return '초월자 6종을 모두 모았다. 더는 합체할 수 없다.';
   }
 }
 
@@ -68,13 +68,13 @@ export function developBlockText(b: DevelopBlock, track: HogyokuTrackId): string
   }
 }
 
-/** 보유 보너스 한 줄: "붕옥 개발 +5% · 초월체 2종 +4% = 전 능력치 +9%" (없으면 null) */
+/** 보유 보너스 한 줄: "붕옥 개발 +5% · 초월자 2종 +4% = 전 능력치 +9%" (없으면 null) */
 export function bonusLine(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): string | null {
   const b = statBonusOf(save);
   if (b.total <= 0) return null;
   const parts: string[] = [];
   if (b.liberation > 0) parts.push(`붕옥 개발 +${pct(b.liberation)}`);
-  if (b.transcendents > 0) parts.push(`초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`);
+  if (b.transcendents > 0) parts.push(`초월자 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`);
   return `${parts.join(' · ')} = 전 능력치 +${pct(b.total)}`;
 }
 
@@ -100,10 +100,10 @@ export function stepNameOf(percent: number): string {
   return i > 0 ? HOGYOKU_STEP_NAMES[i - 1] ?? '' : '개발 전';
 }
 
-/** 지금 얻는 총 효과 (GDD 12-2 "붕옥 개발 글씨 아래에 지금 얻는 총 효과"): 강화 트랙 합 + 초월체 보너스 */
+/** 지금 얻는 총 효과 (GDD 12-2 "붕옥 개발 글씨 아래에 지금 얻는 총 효과"): 강화 트랙 합 + 초월자 보너스 */
 export function totalEffectText(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): { main: string; parts: string } {
   const b = statBonusOf(save);
-  const parts = [`붕옥 강화 ${save.hogyoku.developed}강 +${pct(b.liberation)}`, `초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
+  const parts = [`붕옥 강화 ${save.hogyoku.developed}강 +${pct(b.liberation)}`, `초월자 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
   return { main: `두 캐릭터 전 능력치 +${pct(b.total)}`, parts };
 }
 
@@ -296,19 +296,19 @@ export interface HogyokuHandlers {
   onDevelopAll: () => void;
   /** 오른쪽 위 탭 [합체] — 붕옥이 안 보이는 별도 창 */
   onFusion: () => void;
-  /** 오른쪽 위 탭 [초월체 도감] — 별도 창 */
+  /** 오른쪽 위 탭 [초월자 도감] — 별도 창 */
   onDex: () => void;
 }
 
 /** 붕옥 화면 (GDD 12-2 v6.014, C.425 사용자 재지시 "오른쪽 탭 다 지워" · "재료마다 따로 강화"): 왼쪽 판 = 붕옥 그림 + 강화 트랙 3칸 + 개발 % + 지금 얻는 총 효과,
- *  오른쪽 판 = 고른 것(트랙·붕옥 요약)의 상세 하나 + 아래 고정 [강화][일괄 강화]. 머리 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 */
+ *  오른쪽 판 = 고른 것(트랙·붕옥 요약)의 상세 하나 + 아래 고정 [강화][일괄 강화]. 머리 오른쪽 위 탭 [합체][초월자 도감] = 별도 창 */
 export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
   const sub = h('span');
   sub.append(`재료마다 따로 강화한다 `, provisionalTag('임시 수치'));
   const fusionTab = button({ label: '합체', icon: 'i-evolve', size: 'small', onClick: hd.onFusion });
   fusionTab.dataset.sc = 'hogyoku-fusion';
   if (fusionGate(save).ok) fusionTab.classList.add('is-on');
-  const dexTab = button({ label: `초월체 도감 ${save.transcendentDex.length}/${TRANSCENDENTS.length}`, icon: 'i-dex', size: 'small', onClick: hd.onDex });
+  const dexTab = button({ label: `초월자 도감 ${save.transcendentDex.length}/${TRANSCENDENTS.length}`, icon: 'i-dex', size: 'small', onClick: hd.onDex });
   dexTab.dataset.sc = 'hogyoku-dex';
   const head = lcdHead({ title: '붕옥', sub, aside: [fusionTab, dexTab] });
 
@@ -397,7 +397,7 @@ function trackDetailDialog(save: SaveData, t: Pick<SaveData, TrackKey>): void {
   itemDialog({ heading: `${f.name} · 합체 재료`, name: trackName(t), desc: '', art: trackArt(t), hero: true, cls: 'bha-dexmodal bha-hgtrackmodal', content: [rows, stats], actions: [] });
 }
 
-/** 합체 조건 목록 (충족 ✓ / 미충족 ✗): 개발 100% · 공명 · 두 캐릭터 등급 1위 · 진행 중 모험 없음 · 못 모은 초월체 */
+/** 합체 조건 목록 (충족 ✓ / 미충족 ✗): 개발 100% · 공명 · 두 캐릭터 등급 1위 · 진행 중 모험 없음 · 못 모은 초월자 */
 function fusionConditions(save: SaveData): HTMLElement {
   const missing = new Set(fusionGate(save).missing);
   const list = h('div', 'bha-hgrows bha-hgconds');
@@ -413,7 +413,7 @@ function fusionConditions(save: SaveData): HTMLElement {
   cond('resonance', HOGYOKU_STAGE_NAMES.resonance, '완료', '두 종족의 스토리를 모두 끝내면');
   cond('rank', '두 캐릭터 모두 등급 1위', '완료', tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`).join(' · '));
   cond('expedition', '진행 중인 모험 없음', '없음', '모험을 끝내야 한다');
-  cond('complete', '못 모은 초월체가 있다', `${TRANSCENDENTS.length - save.transcendentDex.length}종 남음`, '6종을 모두 모았다');
+  cond('complete', '못 모은 초월자가 있다', `${TRANSCENDENTS.length - save.transcendentDex.length}종 남음`, '6종을 모두 모았다');
   if (missing.has('tracks')) cond('tracks', '두 캐릭터가 모두 있다', '', fusionBlockText('tracks'));
   return list;
 }
@@ -422,7 +422,7 @@ function fusionConditions(save: SaveData): HTMLElement {
  *  지금 두 캐릭터라면 → 「○○」 · 조건 목록 · [합체](확인 1 → 확인 2 → 자동 백업 흐름 그대로) */
 export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () => void }): void {
   const tracks = tracksInFactionOrder(save);
-  const sub = h('span', '', `${tracks.map((t) => getFaction(t.factionId).name).join(' + ')} → 초월체 `);
+  const sub = h('span', '', `${tracks.map((t) => getFaction(t.factionId).name).join(' + ')} → 초월자 `);
   sub.append(provisionalTag('임시 조건'));
   const head = lcdHead({ title: '합체', sub });
   const pair = h('div', 'bha-hgpair');
@@ -440,8 +440,8 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
   });
   const right = h('div', 'bha-hgright');
   const detail = h('div', 'bha-hgdetail');
-  const p = panel({ title: '초월체 합체', aside: provisionalTag('임시 조건') });
-  p.setAttribute('aria-label', '초월체 합체');
+  const p = panel({ title: '초월자 합체', aside: provisionalTag('임시 조건') });
+  p.setAttribute('aria-label', '초월자 합체');
   const pv = fusionPreview(save);
   if (pv.def) {
     const now = h('p', 'bha-hgpreview');
@@ -449,7 +449,7 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
     now.append('지금 두 캐릭터라면 → ', h('b', '', `「${pv.def.name}」`));
     p.append(now);
   }
-  p.append(fusionConditions(save), h('p', 'bha-faint', '두 캐릭터가 초월체 하나가 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. 되돌릴 수 없다 (직전 상태는 자동 백업).'));
+  p.append(fusionConditions(save), h('p', 'bha-faint', '두 캐릭터가 초월자 하나가 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. 되돌릴 수 없다 (직전 상태는 자동 백업).'));
   detail.append(p);
   const fg = fusionGate(save);
   const go = button({ label: '합체', icon: 'i-chevron-right', variant: fg.ok ? 'danger' : 'ghost', block: true, disabled: !fg.ok, onClick: hd.onPreview });
@@ -460,30 +460,30 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
   lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main bha-hgfusion-page' }, head, [pair], [right]);
 }
 
-/** 초월체 그림 칸: 그림이 아직 없어 아이콘 (못 모은 것은 실루엣·?) */
+/** 초월자 그림 칸: 그림이 아직 없어 아이콘 (못 모은 것은 실루엣·?) */
 function transcendentArt(known: boolean): HTMLElement {
   const box = h('span', `bha-dexart${known ? '' : ' is-silhouette'}`);
   box.append(icon(known ? 'i-evolve' : 'i-unknown'));
   return box;
 }
 
-/** 초월체 도감 창 (C.425, GDD 12-2 "기존 도감 화면 형식"): 진화체 도감과 같은 바둑판 카드(dexGrid·dexCard) — 누르면 공용 상세 창.
+/** 초월자 도감 창 (C.425, GDD 12-2 "기존 도감 화면 형식"): 진화체 도감과 같은 바둑판 카드(dexGrid·dexCard) — 누르면 공용 상세 창.
  *  모은 것 = 이름·컨셉·몇 번째 합체, 못 모은 것 = ??? + 조건 공개. 붕옥은 안 보인다 */
 export function transcendentDexView(dev: Device, save: SaveData): void {
   const owned = new Map(save.transcendentDex.map((e) => [e.id, e]));
-  const grid = dexGrid('초월체');
+  const grid = dexGrid('초월자');
   grid.dataset.owned = String(owned.size);
   for (const d of TRANSCENDENTS) {
     const got = owned.get(d.id);
     const card = got
       ? dexCard({
         name: d.name, unknown: false, art: transcendentArt(true), marks: null, badge: `${got.fusionIndex}번째`,
-        onOpen: () => itemDialog({ heading: `초월체 ${d.order}`, name: d.name, desc: '', art: transcendentArt(true), hero: true, cls: 'bha-dexmodal', actions: [],
+        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: d.name, desc: '', art: transcendentArt(true), hero: true, cls: 'bha-dexmodal', actions: [],
           content: [h('p', 'bha-mddetail__body', d.concept), h('p', 'bha-faint', `${got.fusionIndex}번째 합체로 얻었다. 조건: ${transcendentConditionText(d.condition)}`)] }),
       })
       : dexCard({
         name: '???', unknown: true, art: transcendentArt(false), marks: null,
-        onOpen: () => itemDialog({ heading: `초월체 ${d.order}`, name: '미발견', desc: `조건: ${transcendentConditionText(d.condition)}`, art: transcendentArt(false), hero: true, cls: 'bha-dexmodal', actions: [] }),
+        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: '미발견', desc: `조건: ${transcendentConditionText(d.condition)}`, art: transcendentArt(false), hero: true, cls: 'bha-dexmodal', actions: [] }),
       });
     card.dataset.transcendent = d.id;
     card.dataset.owned = String(!!got);
@@ -493,8 +493,8 @@ export function transcendentDexView(dev: Device, save: SaveData): void {
   const line = bonusLine(save);
   sub.append('모음 ', h('b', '', String(owned.size)), ` / ${TRANSCENDENTS.length} · ${line ? `보유 보너스 ${line}` : `1종마다 전 능력치 +${pct(HX.perTranscendentBonus)}`} `, provisionalTag('임시 수치'));
   const nodes: HTMLElement[] = [grid];
-  if (owned.size >= TRANSCENDENTS.length) nodes.unshift(notice('rare', '초월체 6종을 모두 모았다. 칭호 「붕옥 완성」. 이후 합체는 막히고 육성은 계속된다.', { title: '붕옥 완성' }));
-  lcdPage(dev.view, { cls: 'bha-dex-page bha-dexgrid-page bha-hgdex-page', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '초월체 도감', sub }), nodes, []);
+  if (owned.size >= TRANSCENDENTS.length) nodes.unshift(notice('rare', '초월자 6종을 모두 모았다. 칭호 「붕옥 완성」. 이후 합체는 막히고 육성은 계속된다.', { title: '붕옥 완성' }));
+  lcdPage(dev.view, { cls: 'bha-dex-page bha-dexgrid-page bha-hgdex-page', cols: 'minmax(0, 1fr)' }, lcdHead({ title: '초월자 도감', sub }), nodes, []);
 }
 
 /** 합체 판정 줄 한 캐릭터: 종족 · 이름 · 속성 · 히든 · 환생 (공격 분류는 화면에 안 보임, GDD 137장 1) */
@@ -515,12 +515,12 @@ function charCard(t: Pick<SaveData, TrackKey>): HTMLElement {
 export function fusionLists(): { gone: string[]; keeps: string[] } {
   return {
     gone: [
-      '지금 두 캐릭터 (초월체 도감에 전시된다)',
+      '지금 두 캐릭터 (초월자 도감에 전시된다)',
       '두 캐릭터의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
       `붕옥 강화 세 가지의 ${HX.afterFusionLevel + 1}~${HX.trackMax}강 진행 (다음 합체를 위해 다시 강화)`,
     ],
     keeps: [
-      '도감·칭호 기록, 초월체 도감',
+      '도감·칭호 기록, 초월자 도감',
       `붕옥 강화 ${HX.afterFusionLevel}강까지·공명, 강화로 오른 능력치 (새 캐릭터에도)`,
       `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 붕옥 재료`,
       '스토리 진행·보스 도감·입은 스킨',
@@ -531,7 +531,7 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
 /** 합체 확인 1 (미리보기): 왼쪽 = 두 캐릭터, 오른쪽 = "이 조합이면 ○○" + 사라짐/남음 + [다음 — 최종 확인] */
 export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (def: TranscendentDef) => void }): void {
   const pv = fusionPreview(save);
-  const head = lcdHead({ title: '초월체 합체 — 확인 1/2', sub: `${allTracks(save).map((t) => getFaction(t.factionId).name).join(' + ')} → 초월체` });
+  const head = lcdHead({ title: '초월자 합체 — 확인 1/2', sub: `${allTracks(save).map((t) => getFaction(t.factionId).name).join(' + ')} → 초월자` });
   const left: HTMLElement[] = allTracks(save).map(charCard);
   const right: HTMLElement[] = [];
   if (pv.def) {
@@ -539,8 +539,8 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
     p.setAttribute('aria-label', '합체 미리보기');
     p.dataset.preview = pv.def.id;
     p.append(h('p', 'bha-lcdpage__title', `「${pv.def.name}」${subjectParticle(pv.def.name)} 된다`), h('p', 'bha-small', pv.def.concept));
-    p.append(h('p', 'bha-faint', pv.matched ? '두 캐릭터의 상태가 이 초월체의 조건에 맞았다.' : '조건이 맞는 초월체를 이미 가지고 있어, 아직 없는 초월체 중 표 아래쪽부터 채운다.'));
-    if (save.transcendentDex.length === 0) p.append(h('p', 'bha-small', `첫 초월체 보상: ${JADE_NAME} +${HX.firstTranscendentJade}`));
+    p.append(h('p', 'bha-faint', pv.matched ? '두 캐릭터의 상태가 이 초월자의 조건에 맞았다.' : '조건이 맞는 초월자를 이미 가지고 있어, 아직 없는 초월자 중 표 아래쪽부터 채운다.'));
+    if (save.transcendentDex.length === 0) p.append(h('p', 'bha-small', `첫 초월자 보상: ${JADE_NAME} +${HX.firstTranscendentJade}`));
     right.push(p);
   }
   const lists = fusionLists();
@@ -562,7 +562,7 @@ export function fusionFinalText(def: TranscendentDef): { title: string; body: st
 }
 
 /**
- * 합체 연출: 하얗게 바랬다가 돌아오며 문구 3줄 → 결과(초월체 이름·컨셉, 사라진 두 캐릭터, 새 두 트랙 1단계, 보상) + [둥지로].
+ * 합체 연출: 하얗게 바랬다가 돌아오며 문구 3줄 → 결과(초월자 이름·컨셉, 사라진 두 캐릭터, 새 두 트랙 1단계, 보상) + [둥지로].
  * 3.4초 뒤 결과, [건너뛰기]로 바로. 환생 연출과 같은 bha-evolve 틀
  */
 export function fusionView(root: HTMLElement, faction: FactionConfig, record: FusionRecord, save: SaveData, onDone: () => void): void {
@@ -571,7 +571,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   const linesSection = h('section');
   const lines = h('div', 'bha-evolve__lines');
   lines.setAttribute('aria-live', 'polite');
-  ['붕옥이 두 영혼을 삼킨다.', '하나가 되었다.', `초월체 「${def.name}」.`].forEach((t, i) => {
+  ['붕옥이 두 영혼을 삼킨다.', '하나가 되었다.', `초월자 「${def.name}」.`].forEach((t, i) => {
     const line = h('p', 'bha-evolve__line', t);
     line.style.setProperty('--k', String(i));
     lines.append(line);
@@ -586,7 +586,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
-  main.append(h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월체`), h('h1', 'bha-evolve__title', def.name), h('p', 'bha-evolve__path', def.concept));
+  main.append(h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월자`), h('h1', 'bha-evolve__title', def.name), h('p', 'bha-evolve__path', def.concept));
   const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();
@@ -606,7 +606,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
     return `${f.name} ${shownName(form ? formName(form, f.id, c.elements) : f.tierNames[c.tierIndex]!)}`;
   }).join(' + '));
   row('새로 시작', allTracks(save).map((t) => `${getFaction(t.factionId).name} 1단계 ${getFaction(t.factionId).tierNames[0]}`).join(' · '));
-  row('초월체 도감', `${save.transcendentDex.length} / ${TRANSCENDENTS.length}`);
+  row('초월자 도감', `${save.transcendentDex.length} / ${TRANSCENDENTS.length}`);
   row('보상', [record.jade ? `${JADE_NAME} +${record.jade}` : null, bonusLine(save)].filter(Boolean).join(' · ') || '없음');
   got.append(dl);
   side.append(got);

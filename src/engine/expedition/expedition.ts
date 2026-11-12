@@ -217,7 +217,7 @@ export interface AcquiredTrait {
 }
 
 export interface ExpeditionState extends RiskState {
-  /** 붕옥·초월체 패시브 (GDD 22-3, C.59). 옛 원정 중간 저장에는 없다(= 0) */
+  /** 붕옥·초월자 패시브 (GDD 22-3, C.59). 옛 원정 중간 저장에는 없다(= 0) */
   statBonus?: number;
   runId: number;
   factionId: string;
@@ -434,7 +434,7 @@ export interface ExpeditionSetup {
   gold?: number;
   /** 스토리 화 (GDD 25-4): 그 화의 고정 길·사냥터·최대 바퀴를 쓴다 (groundId·maxLaps 는 무시) */
   story?: { chapterId: string; episodeId: string };
-  /** 붕옥 해방·초월체 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
+  /** 붕옥 해방·초월자 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
   statBonus?: number;
   /** 스토리에서 한 번 이긴 보스 id (GDD 37장, 세이브 보스 도감). 자유 원정에서 그 사냥터 장 보스가 4바퀴째부터 나올 수 있다. 스토리 화는 무시 */
   bossesBeaten?: string[];

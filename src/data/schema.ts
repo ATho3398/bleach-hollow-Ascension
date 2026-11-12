@@ -245,7 +245,7 @@ export type TitleCondition =
   | { type: 'storyChapterCleared'; chapterId: string }
   /** 도전의 탑 이 층(이상)을 깬 적이 있다 (GDD 36장, C.85) */
   | { type: 'towerFloorCleared'; floor: number }
-  /** 초월체를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
+  /** 초월자를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
   | { type: 'transcendentsCollected'; min: number }
   /** 진화 줄기 능력치 (GDD 49-8 3번, C.106): 거친 진화체 중 label.kind 가 lineageKind 인 것이 있고(그 줄기), 지금 단계가 minTier(1부터) 이상이며,
    *  지금 능력치 6종 합계(종족값+노력치+계승, 슬롯 보너스 포함)가 tierTotals[totalOfTier − 1] 이상. 런 로그가 아니라 지금 상태를 읽는다 */

@@ -286,7 +286,7 @@ export function setForm(save: SaveData, formId: string | null): boolean {
 }
 
 /** 능력치 직접 입력: 노력치는 0, 계승분(carry, 성장 상한이 없는 자리)에 "원하는 값 − 진화체 기본값"을 넣는다 → 모든 전투(원정·등급전·연습)에 그대로 실린다.
- *  값은 0~STAT_MAX 정수. 슬롯 보너스(붕옥·초월체)가 있으면 그만큼 더 붙는다 */
+ *  값은 0~STAT_MAX 정수. 슬롯 보너스(붕옥·초월자)가 있으면 그만큼 더 붙는다 */
 export function setCustomStats(save: SaveData, want: Partial<Stats>): Stats {
   const e = save.evolution;
   const base = baseStatsOf(e, save.factionId);

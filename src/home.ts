@@ -29,13 +29,13 @@ export function homeHp(save: Pick<SaveData, 'nest'>): HomeHp {
   return { fraction: homeHpOf(save.nest), cap: homeHpCap(save.nest), dying: save.nest.collapsed, inSpa: save.nest.spa != null };
 }
 
-/** 원정에서의 최대 체력 (방 체력 막대 '현재 / 최대' 숫자): 원정 전투와 같은 식 — 빌드·진화·붕옥/초월체 보너스·수련·장비. 쇠약·빈사 축소는 빼고 본래 값 */
+/** 원정에서의 최대 체력 (방 체력 막대 '현재 / 최대' 숫자): 원정 전투와 같은 식 — 빌드·진화·붕옥/초월자 보너스·수련·장비. 쇠약·빈사 축소는 빼고 본래 값 */
 export function homeMaxHp(save: SaveData): number {
   const p = expeditionParamsOf(save);
   return p.playerMaxHp * (playerStatsOf(p).hp / p.playerRefStat) * p.playerHpScale;
 }
 
-/** 원정 전투와 같은 식으로 만든 전투 수치 (빌드·진화·붕옥/초월체 보너스·수련·장비) */
+/** 원정 전투와 같은 식으로 만든 전투 수치 (빌드·진화·붕옥/초월자 보너스·수련·장비) */
 function expeditionParamsOf(save: SaveData): CombatParams {
   const params = buildCombatParams(save.build, save.factionId);
   applyEvolutionToParams(params, save.evolution, save.factionId, statBonusOf(save).total, save.training.completed);

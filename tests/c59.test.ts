@@ -1,4 +1,4 @@
-// C.59 (S-15, GDD 22-3): 투트랙·붕옥·합체·초월체 6종 — 세이브 형식 23(트랙 2 + 공유 + 붕옥 + 초월체 도감 + 슬롯 런 로그)
+// C.59 (S-15, GDD 22-3): 투트랙·붕옥·합체·초월자 6종 — 세이브 형식 23(트랙 2 + 공유 + 붕옥 + 초월자 도감 + 슬롯 런 로그)
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
@@ -134,7 +134,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     expect(s.hogyoku.tabOpen).toBe(false);
   });
 
-  it('저장 → 불러오기 왕복에 쉬는 트랙·붕옥·초월체 도감이 그대로', () => {
+  it('저장 → 불러오기 왕복에 쉬는 트랙·붕옥·초월자 도감이 그대로', () => {
     const s = fusionReady();
     performFusion(s, 9000);
     const st = memStorage();
@@ -146,7 +146,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     expect(back.slotLog).toEqual(s.slotLog);
   });
 
-  it('깨진 쉬는 트랙·같은 종족 트랙·모르는 초월체는 버린다', () => {
+  it('깨진 쉬는 트랙·같은 종족 트랙·모르는 초월자는 버린다', () => {
     const s = newSaveData('hollow', 1);
     const raw = JSON.parse(JSON.stringify(s)) as SaveData;
     raw.otherTracks = [{ factionId: 'hollow' } as never, { factionId: 'nope' } as never, { junk: 1 } as never];
@@ -240,7 +240,7 @@ describe('붕옥 (탭·해방·보너스)', () => {
     expect(developHogyoku(t, 'soul')).toBeNull(); // 붕옥이 아직 없다
   });
 
-  it('보너스는 능력치·전투 파라미터·원정에 곱해지고(999 상한), 초월체 1종 +2% 최대 12%', () => {
+  it('보너스는 능력치·전투 파라미터·원정에 곱해지고(999 상한), 초월자 1종 +2% 최대 12%', () => {
     expect(slotStatBonus(0, 0).total).toBe(0);
     expect(slotStatBonus(5, 3).total).toBeCloseTo(0.065); // C.425: 강마다 +0.1%
     expect(slotStatBonus(0, 9).transcendents).toBeCloseTo(0.12);
@@ -318,7 +318,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
   });
 
-  it('첫 초월체만 영옥 10, 같은 초월체는 다시 나오지 않고 6번이면 6종 → 칭호 붕옥 완성, 이후 합체 막힘 (같은 상태로 반복해도)', () => {
+  it('첫 초월자만 영옥 10, 같은 초월자는 다시 나오지 않고 6번이면 6종 → 칭호 붕옥 완성, 이후 합체 막힘 (같은 상태로 반복해도)', () => {
     let s = fusionReady();
     const got: string[] = [];
     for (let i = 0; i < TRANSCENDENTS.length; i++) {
@@ -342,21 +342,22 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.titles.some((t) => t.titleId === 'hogyoku-complete')).toBe(true);
     expect(fusionGate(s).missing).toContain('complete');
     expect(performFusion(s).ok).toBe(false);
-    expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.06 * 6 + 0.12); // C.426: 세 트랙 150강 + 합체마다 60강씩 다시(30 → 50강, 6번) = 510강 × 0.1% + 초월체 6종
+    expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.06 * 6 + 0.12); // C.426: 세 트랙 150강 + 합체마다 60강씩 다시(30 → 50강, 6번) = 510강 × 0.1% + 초월자 6종
   });
 });
 
-describe('초월체 6종 결정 규칙', () => {
+describe('초월자 6종 결정 규칙', () => {
   const ch = (o: Partial<FusionInput> = {}): FusionInput => ({ rebirths: 0, hidden: false, elements: ['fire'], category: 'mixed', ...o });
 
-  it('데이터: 6종·종족 무관·원작 이름은 유하바하·아이젠·이치고, 오리지널 3종, 전부 provisional', () => {
-    expect(TRANSCENDENTS.map((t) => t.name)).toEqual(['유하바하', '아이젠', '이치고', '철혈 패왕', '영식 현자', '균열 방랑자']);
-    expect(TRANSCENDENTS.filter((t) => t.original).length).toBe(3);
+  it('데이터: 6종·종족 무관·원작 이름은 유하바하·아이젠·이치고·영왕, 오리지널 2종(이름 자리 표시), 전부 provisional (C.426 GDD v6.023)', () => {
+    expect(TRANSCENDENTS.map((t) => t.name)).toEqual(['유하바하', '아이젠', '이치고', '영왕', '오리지널 초월자 1', '오리지널 초월자 2']);
+    expect(TRANSCENDENTS.map((t) => t.id)).toEqual(['yhwach', 'aizen', 'ichigo', 'iron-tyrant', 'zero-sage', 'rift-wanderer']); // 세이브 id 는 그대로
+    expect(TRANSCENDENTS.filter((t) => t.original).length).toBe(2);
     expect(TRANSCENDENTS.every((t) => t.provisional === true)).toBe(true);
     expect(() => parseTranscendent({ id: 'x', order: 1, name: 'x', concept: '', condition: { type: 'rebirthSum', min: 0 }, provisional: true })).toThrow();
   });
 
-  it('위에서부터: 환생 합 3 → 유하바하, 모두 히든 → 아이젠, 속성 겹침 → 이치고, 모두 물리 → 철혈 패왕, 모두 특수 → 영식 현자, 그 밖 → 균열 방랑자', () => {
+  it('위에서부터: 환생 합 3 → 유하바하, 모두 히든 → 아이젠, 속성 겹침 → 이치고, 모두 물리 → 영왕, 모두 특수 → 오리지널 1, 그 밖 → 오리지널 2', () => {
     const d = (a: FusionInput, b: FusionInput) => decideTranscendent([a, b], [])!.id;
     expect(d(ch({ rebirths: 2, hidden: true }), ch({ rebirths: 1, hidden: true }))).toBe('yhwach');
     expect(d(ch({ hidden: true }), ch({ hidden: true }))).toBe('aizen');
@@ -382,10 +383,10 @@ describe('초월체 6종 결정 규칙', () => {
     expect(pv.def!.id).toBe('aizen');
     expect(pv.matched).toBe(true);
     expect(fusionFinalText(pv.def!).body).toContain('아이젠');
-    expect(fusionLists().keeps.join(' ')).toContain('초월체 도감');
+    expect(fusionLists().keeps.join(' ')).toContain('초월자 도감');
   });
 
-  it('칭호 붕옥 완성 데이터가 있다 (조건 = 초월체 6종, provisional)', () => {
+  it('칭호 붕옥 완성 데이터가 있다 (조건 = 초월자 6종, provisional)', () => {
     const t = TITLES.find((x) => x.id === 'hogyoku-complete')!;
     expect(t.condition).toEqual({ type: 'transcendentsCollected', min: 6 });
     expect(t.provisional).toBe(true);

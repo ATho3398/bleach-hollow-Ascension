@@ -279,7 +279,7 @@ export function tierDisplayName(e: Pick<EvolutionState, 'formHistory' | 'tierInd
 export const STAT_MAX: number = SX.statMax;
 
 /** 지금 능력치 = (종족값 + 노력치 + 환생 계승) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3·52), 능력치마다 STAT_MAX 에서 멈춘다.
- *  statBonus = 붕옥 해방·초월체 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
+ *  statBonus = 붕옥 해방·초월자 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
 export function currentStats(e: EvolutionState, factionId: string, statBonus = 0): Stats {
   const base = baseStatsOf(e, factionId);
   for (const s of STAT_IDS) {
@@ -396,7 +396,7 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
 }
 
 /**
- * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
+ * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월자 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
 export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0, trained = false): void {

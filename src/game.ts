@@ -158,14 +158,14 @@ export interface SaveData {
   enemyDex: EnemyDex;
   /** 도감 정렬 기준 (GDD 220장 2, C.363, 형식 68): 진화체 도감·적 도감 정렬 버튼에서 고른 기준. 슬롯 하나에 하나. 구조 = engine/dexSort.ts */
   dexSort: DexSortState;
-  /** 지금 키우지 않는 캐릭터 트랙 (GDD 22-3, 형식 23). 슬롯 = 캐릭터 트랙 최대 2(지금 트랙은 위 평평한 필드 TRACK_KEYS, 나머지는 여기) + 공유 + 붕옥 + 초월체 도감.
+  /** 지금 키우지 않는 캐릭터 트랙 (GDD 22-3, 형식 23). 슬롯 = 캐릭터 트랙 최대 2(지금 트랙은 위 평평한 필드 TRACK_KEYS, 나머지는 여기) + 공유 + 붕옥 + 초월자 도감.
    *  트랙 전환은 둘을 맞바꾼다(switchTrack). 형식을 올릴 때 트랙 필드를 바꾸면 여기 트랙도 같이 올린다(forEachTrack) */
   otherTracks: TrackData[];
   /** 투트랙 개방 알림 (형식 23): 새로 열린 트랙 종족 id — 방에 들어가면 한 번 알리고 비운다 */
   trackNotice: string | null;
   /** 붕옥 (GDD 22-3, 형식 23): 탭 개방·1단계 게이지·해방·2단계 게이지 */
   hogyoku: HogyokuState;
-  /** 초월체 도감 (GDD 22-3, 형식 23): 합체로 얻은 초월체(전시). 슬롯 단위, 합체해도 남는다 */
+  /** 초월자 도감 (GDD 22-3, 형식 23): 합체로 얻은 초월자(전시). 슬롯 단위, 합체해도 남는다 */
   transcendentDex: TranscendentEntry[];
   /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 합체·트랙 개방 기록 */
   slotLog: SlotLog;
@@ -981,7 +981,7 @@ export function rollHogyokuDrops(battles: readonly Pick<BattleRecord, 'won' | 'e
   return out;
 }
 
-/** 슬롯 보너스 (GDD 244장 4·22-3): 붕옥 개발 단계마다 +1%(오른 몫은 영구) + 초월체 1종마다 +2%. 지금 캐릭터 둘 모두에 */
+/** 슬롯 보너스 (GDD 244장 4·22-3): 붕옥 개발 단계마다 +1%(오른 몫은 영구) + 초월자 1종마다 +2%. 지금 캐릭터 둘 모두에 */
 export function statBonusOf(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): ReturnType<typeof slotStatBonus> {
   return slotStatBonus(save.hogyoku.developed, save.transcendentDex.length);
 }
@@ -1050,7 +1050,7 @@ export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth'>): Fusio
 
 export type FusionBlock = 'tab' | 'resonance' | 'tracks' | 'develop' | 'rank' | 'expedition' | 'complete';
 
-/** 합체할 수 있나 (GDD 244장 5): 공명 + 붕옥 개발 100%(10단계) + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 아직 못 모은 초월체. 막힌 이유를 모두 돌려준다 */
+/** 합체할 수 있나 (GDD 244장 5): 공명 + 붕옥 개발 100%(10단계) + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 아직 못 모은 초월자. 막힌 이유를 모두 돌려준다 */
 export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[] } {
   const h = save.hogyoku;
   const tracks = allTracks(save);
@@ -1065,7 +1065,7 @@ export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[
   return { ok: missing.length === 0, missing };
 }
 
-/** 합체 미리보기 (GDD 22-3 "이 조합이면 ○○"): 지금 두 캐릭터 상태로 정해질 초월체와 조건이 맞았는지. 다 모았으면 def null */
+/** 합체 미리보기 (GDD 22-3 "이 조합이면 ○○"): 지금 두 캐릭터 상태로 정해질 초월자와 조건이 맞았는지. 다 모았으면 def null */
 export function fusionPreview(save: SaveData): { def: TranscendentDef | null; matched: boolean; inputs: FusionInput[] } {
   const inputs = allTracks(save).map(fusionInputOf);
   const owned = save.transcendentDex.map((x) => x.id);
@@ -1088,9 +1088,9 @@ function summaryOf(t: Pick<SaveData, TrackKey>): FusionCharacterSummary {
 }
 
 /** 합체 (GDD 22-3): 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'fusion')은 부르는 쪽(화면)이 먼저 한다.
- *  두 캐릭터는 초월체가 되어 사라지고(초월체 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
- *  남김(슬롯): 도감·칭호, 초월체 도감, 붕옥 1~5단계·공명·개발로 오른 능력치, 먹이·타일·골드·영옥·남은 붕옥 재료, 스토리·보스 도감, 스킨·꾸밈 착용과 보유. 붕옥 6~10단계 진행은 0 (GDD 244장 5).
- *  첫 초월체는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
+ *  두 캐릭터는 초월자가 되어 사라지고(초월자 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
+ *  남김(슬롯): 도감·칭호, 초월자 도감, 붕옥 1~5단계·공명·개발로 오른 능력치, 먹이·타일·골드·영옥·남은 붕옥 재료, 스토리·보스 도감, 스킨·꾸밈 착용과 보유. 붕옥 6~10단계 진행은 0 (GDD 244장 5).
+ *  첫 초월자는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
 export function performFusion(save: SaveData, nowMs: number = Date.now()): FusionResult {
   const gate = fusionGate(save);
   if (!gate.ok) return { ok: false, missing: gate.missing };
@@ -2431,7 +2431,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   }
   if (save.meta.format < 23) {
     // 형식 22 → 23 (C.59, GDD 22-3 투트랙·붕옥): 지금 세이브 = 트랙 1개(위 평평한 필드 그대로 — 데이터 손실 없음), 쉬는 트랙 없음, 붕옥 처음 상태,
-    // 초월체 도감·합체 기록 빈 값. 이미 5단계에 닿은 세이브는 로드 때 checkTrackOpen 이 다른 종족 트랙을 연다
+    // 초월자 도감·합체 기록 빈 값. 이미 5단계에 닿은 세이브는 로드 때 checkTrackOpen 이 다른 종족 트랙을 연다
     save.otherTracks = [];
     save.trackNotice = null;
     save.hogyoku = newHogyokuState();

@@ -1,4 +1,4 @@
-// 붕옥·초월체 (GDD 22-3·22-9): 종족 무관 공통 로직. 초월체 결정·보유 보너스·붕옥 게이지. 수치는 BALANCE.provisional.hogyoku.
+// 붕옥·초월자 (GDD 22-3·22-9): 종족 무관 공통 로직. 초월자 결정·보유 보너스·붕옥 게이지. 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
 import type { AttackCategory } from '../data/schema';
 import { TRANSCENDENTS, type TranscendentCondition, type TranscendentDef } from '../data/transcendents';
@@ -38,12 +38,12 @@ export function decideTranscendent(chars: readonly FusionInput[], owned: readonl
   return left.find((d) => conditionMet(d.condition, chars, defs)) ?? left[left.length - 1]!;
 }
 
-/** 모든 초월체를 모았나 */
+/** 모든 초월자를 모았나 */
 export function allTranscendentsOwned(owned: readonly string[], defs: readonly TranscendentDef[] = TRANSCENDENTS): boolean {
   return defs.every((d) => owned.includes(d.id));
 }
 
-/** 슬롯 보너스 (GDD 12-3·12-4 v6.014) = 붕옥 강화로 올린 강 수 합 × 0.1% (영구 — 합체로 26~50강 진행이 0 이 되어도 오른 몫은 남는다) + 초월체 1종마다 +2%(최대 종 수만큼).
+/** 슬롯 보너스 (GDD 12-3·12-4 v6.014) = 붕옥 강화로 올린 강 수 합 × 0.1% (영구 — 합체로 26~50강 진행이 0 이 되어도 오른 몫은 남는다) + 초월자 1종마다 +2%(최대 종 수만큼).
  *  전 능력치에 곱하는 배율의 + 부분 (0.05 = +5%). liberation = 붕옥 개발 몫(옛 이름 그대로) */
 export function slotStatBonus(developedSteps: number, transcendents: number, defs: readonly TranscendentDef[] = TRANSCENDENTS): { liberation: number; transcendents: number; total: number } {
   const liberation = Math.round(Math.max(0, Math.floor(developedSteps)) * HX.perStepBonus * 1e6) / 1e6;

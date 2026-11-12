@@ -184,7 +184,7 @@ export interface TrainingRecord {
   completedNow: boolean;
 }
 
-/** 환생 1회 기록 (GDD 22-1·22-7, 세이브 형식 20): 환생 히든·초월체(22-3 유하바하)·태그 조건이 읽는다 */
+/** 환생 1회 기록 (GDD 22-1·22-7, 세이브 형식 20): 환생 히든·초월자(22-3 유하바하)·태그 조건이 읽는다 */
 export interface RebirthRecord {
   /** 시각(ms) */
   at: number;

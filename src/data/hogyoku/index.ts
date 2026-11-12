@@ -20,7 +20,7 @@ export const HOGYOKU_STEP_NAMES: readonly string[] = [
 /** 붕옥 상태 이름 (GDD 244장 2, 안 B 단계 띠) */
 export const HOGYOKU_STAGE_NAMES = { half: '반각성', resonance: '공명', ready: '합체 가능' } as const;
 
-/** 초월체 조건 한 줄 (GDD 244장 5 '못 모은 초월체 조건 공개') — 공격 분류는 블록 이름 대신 쉬운 말로 (GDD 137장 1) */
+/** 초월자 조건 한 줄 (GDD 244장 5 '못 모은 초월자 조건 공개') — 공격 분류는 블록 이름 대신 쉬운 말로 (GDD 137장 1) */
 export function transcendentConditionText(c: TranscendentCondition): string {
   switch (c.type) {
     case 'rebirthSum': return `두 캐릭터의 환생 횟수 합 ${c.min}회 이상`;

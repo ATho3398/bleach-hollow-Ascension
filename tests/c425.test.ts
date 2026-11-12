@@ -1,5 +1,5 @@
 // C.425 (GDD 12-2 v6.013, 코딩279): 붕옥 창 재배치 — 오른쪽 세로 목록·개발 단계 삭제, 오른쪽 = 고른 것의 상세 + 아래 고정 [강화],
-// 오른쪽 위 탭 [합체][초월체 도감] = 별도 창, 왼쪽 = 개발 % 아래 지금 얻는 총 효과, 한 글자씩 세로로 깨지던 상세 줄 수정
+// 오른쪽 위 탭 [합체][초월자 도감] = 별도 창, 왼쪽 = 개발 % 아래 지금 얻는 총 효과, 한 글자씩 세로로 깨지던 상세 줄 수정
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FACTIONS } from '../src/data/factions';
@@ -83,7 +83,7 @@ describe('C.425 붕옥 재료별 강화 트랙 (GDD v6.014 12-3·12-4)', () => {
 });
 
 describe('C.425 붕옥 창 재배치', () => {
-  it('지금 얻는 총 효과 = 붕옥 개발 보너스 + 초월체 보너스', () => {
+  it('지금 얻는 총 효과 = 붕옥 개발 보너스 + 초월자 보너스', () => {
     const s = newSaveData('hollow', 0);
     expect(totalEffectText(s).main).toBe('두 캐릭터 전 능력치 +0%');
     s.hogyoku.developed = 30;
@@ -91,7 +91,7 @@ describe('C.425 붕옥 창 재배치', () => {
     const t = totalEffectText(s);
     expect(t.main).toMatch(/\+5%$/); // 30강 × 0.1% + 1종 × 2% (임시값)
     expect(t.parts).toContain('붕옥 강화 30강 +3%');
-    expect(t.parts).toContain('초월체 1종 +2%');
+    expect(t.parts).toContain('초월자 1종 +2%');
   });
 
   it('합체 창 두 칸 순서 = 종족 설정 순서 (지금 키우는 트랙과 무관, 종족 id 분기 없음)', () => {
