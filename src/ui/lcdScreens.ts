@@ -32,7 +32,9 @@ import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/material
 import { unlockHintText } from '../engine/unlocks';
 import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
-import { skinsFor, skinLabel } from '../data/skins';
+import { skinsFor } from '../data/skins';
+import { modelLookOptions } from '../data/skins/lookOptions';
+import { isTestMode } from './testMode';
 import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
 import { traitsTab, type TraitsTabState } from './buildPanel';
@@ -253,13 +255,16 @@ function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
 }
 
 /** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
- *  종족이 다른 스킨·안 산 스킨은 목록에 안 보인다. 보유한 스킨이 없으면 상점 안내만 */
+ *  종족이 다른 스킨·안 산 스킨은 목록에 안 보인다. 보유한 스킨이 없으면 상점 안내만.
+ *  모델 고르기 (C.434, GDD 17절 v6.036): 얻은 초월자 외형(그림/모델 있는 것)도 같은 목록에. 테스트 모드면 단계 모델(종족 설정 단계 이름 — 호로 4단계 바스트로데·5단계 아란칼 남/여)·초월자 전부.
+ *  자기 그림이 없는 스킨(아란칼 진화체별 그림 자리 등)은 지금 진화체 그림으로 보여 헷갈려서 목록에서 뺀다 */
 function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void): HTMLElement {
-  const skins = skinsFor(faction.id).filter((sk) => save.shared.cosmetics.includes(skinItemId(sk.id)));
-  const p = panel({ title: '스킨' });
+  const test = isTestMode();
+  const looks = modelLookOptions(faction.id, { test, owned: save.shared.cosmetics, dex: save.transcendentDex.map((x) => x.id) });
+  const p = panel({ title: test ? '모델 · 스킨' : '스킨' });
   p.setAttribute('aria-label', '스킨');
-  p.dataset.skins = String(skins.length);
-  if (skins.length === 0) {
+  p.dataset.skins = String(looks.length);
+  if (looks.length === 0) {
     p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
     return p;
   }
@@ -272,9 +277,9 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
       r.btn.setAttribute('aria-pressed', String(on));
     }
   };
-  const add = (id: string | null, label: string, thumb: string | null) => {
+  const add = (id: string | null, label: string, thumb: string | null, group?: string) => {
     const btn = button({ label, block: true, onClick: () => {
-      if (!equipSkin(save, id)) return;
+      if (!equipSkin(save, id, { test })) return;
       persist();
       mark();
     } });
@@ -286,12 +291,13 @@ function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void):
       btn.prepend(img);
     }
     btn.dataset.skin = id ?? '';
+    if (group) btn.dataset.lookGroup = group;
     rows.push({ id, btn });
     list.append(btn);
   };
   const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
   add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
-  for (const sk of skins) add(sk.id, shownName(skinLabel(sk)), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
+  for (const o of looks) add(o.id, o.group === 'skin' ? shownName(o.label) : o.label, charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, o.id).src, o.group);
   mark();
   p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
   return p;

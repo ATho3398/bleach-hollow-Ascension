@@ -124,7 +124,7 @@ import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
 import { pickDialog } from './pickDialog';
-import { applyTestExpeditionForce, clearTestSlot, newTestSave, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
+import { applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
 import { shownName } from './displayName';
@@ -1030,6 +1030,7 @@ export function startApp(host: HTMLElement): void {
     if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: fixParticles(`슬롯 ${n}을(를) 백업에서 열었다`), meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
+    if (testOn) openTestHogyoku(loaded); // 테스트 모드는 붕옥·두 번째 캐릭터를 켜 둔다 (C.434, GDD 17절 v6.036 — 테스트 칸에만)
     slot = n;
     bindSlotSettings();
     activeExp = null;
@@ -2333,6 +2334,11 @@ export function startApp(host: HTMLElement): void {
       onBodyChanged: () => {
         dress(s.wear);
         nav.top?.render();
+      },
+      // 초월자 얻기·트랙 전환 (C.434): 지금 트랙이 바뀌었다 — 방을 그 트랙으로 다시 (종족·초월자 그림·방 키)
+      onTrackChanged: () => {
+        persist();
+        nestScreen();
       },
       // 시간 앞당기기 (GDD 102-7·109장 7): 패널이 셈한 결과로 방 복귀 알림
       onTimeAdvanced: (rep) => {

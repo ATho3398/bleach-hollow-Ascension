@@ -12,7 +12,7 @@
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
 import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
-import { getSkin, skinArtKey } from '../skins';
+import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook } from '../skins';
 import { FACTIONS } from '../factions';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
 import { rigPackOfLook } from './rig/pose';
@@ -296,6 +296,11 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     }
     return null;
   };
+  // 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델 = 그 단계 기본 그림(스킨 없이, :m/:f 면 그 성별 고정) · 초월자 외형 = 초월자 데이터의 그림 키/조각 모델
+  const tierLook = parseTierLookId(skinId);
+  if (tierLook) return charArt(factionId, tierLook.tier - 1, fallbackKey, base, manifest, files, null, overrides, tierLook.gender ?? gender);
+  const trLook = transcendentOfLook(skinId);
+  if (trLook) return charArt(factionId, tierIndex, fallbackKey, base, manifest, files, trLook.art ?? `${MOSAIC_LOOK_PREFIX}${trLook.id}`, overrides, gender);
   // 조각 모델 (C.431, GDD 12-4 v6.029): 'mosaic:<초월자 id>' = 표시 주소 — 화면 관찰자(ui/bha/glitchMosaic)가 합성 그림으로 바꿔 끼운다
   if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) return { src: mosaicSrc(skinId.slice(MOSAIC_LOOK_PREFIX.length)), frames: null, scale: 1, offsetY: 0 };
   // 그림 키를 직접 받은 외형 (C.430 — 초월자 데이터 art 'char.<이름>'): 그 키의 그림(프레임 애니 포함)이 있으면 그것. 없으면 아래 진화체 그림(자리 표시)
@@ -332,4 +337,13 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   const common = !fallbackKey ? manifest[keys[1]!]?.rig : undefined;
   if (common && rigPackOfLook(common)) return rigOf(common, keys[1]!);
   return artUrls(fallbackKey, base, manifest, files);
+}
+
+/** 스킨에 자기 그림이 있나 (C.434, GDD 17절 v6.036): 목록의 종이인형(rig) 또는 `skin-<id>` 한 장·폴더(여성 `-f` 포함).
+ *  없으면 charArt 가 지금 진화체 그림으로 대신 보여서 목록에서는 [그림 대기]로 뺀다(예 아란칼 진화체별 그림 skin-arr* 36칸) */
+export function skinHasArt(skinId: string, manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): boolean {
+  const key = skinArtKey(skinId);
+  const rig = manifest[key]?.rig;
+  if (rig && rigPackOfLook(rig)) return true;
+  return [key, key + FEMALE_KEY_SUFFIX].some((k) => findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
 }

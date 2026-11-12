@@ -202,6 +202,8 @@ export interface AscensionConfig {
   completeText: [string, string];
   lookChange: boolean;
   artTier?: number;
+  /** 깬 뒤 그림 단계(artTier)의 단계 이름 (GDD 15절·17절 v6.036: 호로 5단계 = '아란칼') — 모델 고르기 목록의 'n단계 이름'. 없으면 ascension.name */
+  lookName?: string;
   /** 깬 뒤 진화체 표시 이름을 진화체 release 의 이 칸으로 (GDD 198장: 호로 = 'name' 레스렉시온 이름). 없으면 표시 이름 그대로 */
   formNameKey?: 'name' | 'final';
 }
@@ -838,6 +840,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (!isStringTuple(asc.completeText, 2)) errors.push('ascension.completeText: 문자열 2개여야 한다');
   if (typeof asc.lookChange !== 'boolean') errors.push('ascension.lookChange: boolean');
   if (asc.artTier !== undefined && !(Number.isInteger(asc.artTier) && (asc.artTier as number) >= 1)) errors.push('ascension.artTier: 1 이상 정수');
+  if (asc.lookName !== undefined && !isString(asc.lookName)) errors.push('ascension.lookName: 비어 있지 않은 문자열');
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
   const RELEASE_KEYS = ['name', 'final'];

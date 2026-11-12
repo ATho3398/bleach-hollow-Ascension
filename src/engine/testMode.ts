@@ -13,9 +13,11 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
-import { SAVE_KEY, fastForward, newSaveData, performEvolution, storyProgressOf, type SaveData, type StorageLike } from '../game';
+import { SAVE_KEY, allTracks, characterTracks, fastForward, inheritTranscendentTrack, newSaveData, newTrack, performEvolution, storyProgressOf, switchTrack, trackIdOf, type SaveData, type StorageLike } from '../game';
+import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
-import { canWear, skinsFor, type SkinDef } from '../data/skins';
+import { canWear, validModelLook } from '../data/skins';
+import { modelLookOptions, type ModelLookOption } from '../data/skins/lookOptions';
 import { GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, isGearGrade, isGearKind, type GearGrade, type GearKind } from '../data/gear';
 import { CONSUMABLE_IDS } from '../inventory';
 import { buyWandererItem, storeConsumable, wearCosmetic } from '../shop';
@@ -251,9 +253,75 @@ function unlockTower(save: { tower?: unknown }): void {
   if (t && typeof t === 'object' && typeof t.best === 'number') t.best = Math.max(t.best, TOWER_FLOORS - 1);
 }
 
-/** 테스트 칸 새 세이브: 종족을 골라 전체 해금으로 */
+/** 테스트 칸 새 세이브: 종족을 골라 전체 해금으로 (+ 붕옥·두 번째 캐릭터 켜기, C.434) */
 export function newTestSave(factionId: string, nowMs: number = Date.now()): SaveData {
-  return fillAllUnlocked(newSaveData(factionId, nowMs), nowMs);
+  const save = fillAllUnlocked(newSaveData(factionId, nowMs), nowMs);
+  openTestHogyoku(save, nowMs);
+  return save;
+}
+
+// ── 붕옥·초월자 켜기 (GDD 17절 '테스트 모드 보강' v6.036, C.434): 테스트 칸에서만 — 일반 세이브는 이 길을 타지 않는다 ──
+
+/** 붕옥 등장·공명 상태로 열고(등장·공명 컷·알림 없이), 캐릭터 트랙이 모자라면 종족 데이터 순서로 다음 종족 트랙을 전체 해금으로 연다.
+ *  새 테스트 칸과 테스트 모드로 슬롯을 열 때마다 부른다(이미 켜져 있으면 그대로). 연 트랙의 종족 id (없으면 null) */
+export function openTestHogyoku(save: SaveData, nowMs: number = Date.now()): string | null {
+  const h = save.hogyoku;
+  if (!h.tabOpen) {
+    h.tabOpen = true;
+    h.appearedAt = nowMs;
+  }
+  h.tabNotice = false;
+  if (!h.resonance) {
+    h.resonance = true;
+    h.resonatedAt = nowMs;
+  }
+  const chars = characterTracks(save);
+  if (chars.length >= BALANCE.provisional.twoTrack.maxTracks) return null;
+  const next = FACTIONS.find((f) => !chars.some((t) => t.factionId === f.id));
+  if (!next) return null;
+  const home = trackIdOf(save);
+  save.otherTracks.push({ ...newTrack(next.id, nowMs, 1), parkedAt: nowMs });
+  save.slotLog.trackOpens.push({ at: nowMs, factionId: next.id, byFactionId: save.factionId });
+  // 새 트랙도 전체 해금(최고 단계 몸·★ 전부·기본 블록) — 잠깐 꺼내 채우고 돌아온다
+  if (switchTrack(save, next.id, nowMs)) {
+    unlockTrack(save, nowMs);
+    fillDefaultTraits(save);
+    switchTrack(save, home, nowMs);
+  }
+  save.trackNotice = null;
+  return next.id;
+}
+
+/** 테스트 초월자 목록 (데이터 순서) */
+export function testTranscendents(): { id: string; name: string }[] {
+  return TRANSCENDENTS.map((t) => ({ id: t.id, name: t.name }));
+}
+
+/** 초월자 바로 얻기 (추천안 = 합체 흐름 대신 바로 지급): 지금 캐릭터들을 이어받은 초월자 트랙(합체와 같은 inheritTranscendentTrack)을 만들어 초월자 도감에 넣고 그 트랙으로 간다.
+ *  두 캐릭터는 그대로 남는다(테스트 — 여러 초월자를 차례로 보려고). 합체 기록(slotLog.fusions)은 남기지 않는다(진짜 합체가 아니다).
+ *  이미 있으면 그 트랙으로만 간다. 'added' | 'owned' | false(모르는 id·캐릭터 없음) */
+export function testGrantTranscendent(save: SaveData, id: string, nowMs: number = Date.now()): 'added' | 'owned' | false {
+  const def = tryGetTranscendent(id);
+  if (!def) return false;
+  const existing = allTracks(save).find((t) => t.transcendentId === id);
+  if (existing) {
+    if (trackIdOf(existing) !== trackIdOf(save)) switchTrack(save, trackIdOf(existing), nowMs);
+    return 'owned';
+  }
+  const chars = characterTracks(save);
+  if (chars.length === 0) return false;
+  const index = save.transcendentDex.length + 1;
+  const track = inheritTranscendentTrack(chars, def, index, nowMs);
+  if (!save.transcendentDex.some((x) => x.id === id)) save.transcendentDex.push({ id, at: nowMs, fusionIndex: index });
+  save.otherTracks.push({ ...track, parkedAt: nowMs });
+  switchTrack(save, trackIdOf(track), nowMs);
+  return 'added';
+}
+
+/** 트랙 목록 (전환 칸): 트랙 id 와 지금 트랙인가 */
+export function testTrackIds(save: SaveData): { id: string; transcendentId: string | null; factionId: string; current: boolean }[] {
+  const cur = trackIdOf(save);
+  return allTracks(save).map((t) => ({ id: trackIdOf(t), transcendentId: t.transcendentId ?? null, factionId: t.factionId, current: trackIdOf(t) === cur }));
 }
 
 // ── 테스트 패널: 진화체·능력치·특성·둥지 값 (38-4) ──
@@ -690,9 +758,9 @@ export function applyTestExpeditionForce(exp: ExpeditionState): { eventTile: str
 
 // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족이 입을 수 있는 스킨·꾸밈 전부 ──
 
-/** 이 종족이 입을 수 있는 스킨 전부 (단계 외형·아란칼 외형 포함 — 상점에 안 나오는 것도) */
-export function testSkins(factionId: string): SkinDef[] {
-  return skinsFor(factionId);
+/** 이 종족이 입을 수 있는 모델·스킨 전부 (C.434, GDD 17절 v6.036): 단계 모델·초월자 외형 전부 + 스킨(단계 외형 포함 — 상점에 안 나오는 것도) + 그림 대기 */
+export function testSkins(factionId: string): ModelLookOption[] {
+  return modelLookOptions(factionId, { test: true, owned: [], dex: [], waiting: true });
 }
 
 /** 스킨을 입힌다 (null = 벗기). 이 종족이 못 입는 스킨이면 false */
@@ -701,7 +769,7 @@ export function testWearSkin(save: SaveData, skinId: string | null): boolean {
     save.skin = null;
     return true;
   }
-  if (!canWear(save.factionId, skinId)) return false;
+  if (!canWear(save.factionId, skinId) && !validModelLook(save.factionId, skinId)) return false;
   save.skin = skinId;
   return true;
 }

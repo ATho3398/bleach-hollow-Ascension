@@ -3,6 +3,7 @@
 // 성별 (GDD 114장, C.188): 여성 그림은 같은 키 뒤에 `-f` — 스킨 `skin-<id>-f.png`(폴더면 `skin-<id>-f/`), 진화체 `char-<종족>-<단계>-f.png`. 남성 = 지금 이름 그대로.
 //   여성이고 종족 설정 genderLookFromTier 단계 이상일 때만 `-f` 를 먼저 찾고, 없으면 지금 그림(남성)으로 보인다. 그 전 단계는 남녀 같은 그림(`-f` 를 넣어도 안 쓴다).
 import { getFaction } from '../factions'; // 히든 '폭주' 외형 이름 = 종족 설정 frenzyName (C.213, GDD 136장 2 — 옛 이름 폐기)
+import { TRANSCENDENTS, type TranscendentDef } from '../transcendents';
 
 export interface SkinDef {
   /** 파일 이름에 쓰는 고정 id (영문 소문자) */
@@ -90,4 +91,62 @@ export function skinLabel(s: SkinDef): string {
 /** 스킨의 그림 키 (files.ts 의 키 규칙: skin.<id> → skin-<id>) */
 export function skinArtKey(id: string): string {
   return `skin.${id}`;
+}
+
+// ── 모델 고르기 전용 외형 (GDD 17절 '테스트 모드 보강' v6.036, C.434) ──
+// 상점 스킨이 아니라 그림 자체를 고르는 id. 저장값은 save.skin 그대로(형식 변경 없음) — charArt 가 접두로 알아본다.
+//   tier:<n>[:m|f] = n단계(1부터, 종족 설정 단계 + 깬 뒤 그림 단계 ascension.artTier) 기본 모델. :m/:f 가 붙으면 그 성별 그림으로 고정
+//   transcendent:<초월자 id> = 초월자 그림(art)·조각 모델(model) — transcendents.json 에 그림/모델이 있는 초월자만
+// 종족 이름·초월자 id 로 나누지 않는다: 단계 이름은 종족 설정 tierNames·ascension.lookName, 초월자 목록은 데이터에서.
+
+export const TIER_LOOK_PREFIX = 'tier:';
+export const TRANSCENDENT_LOOK_PREFIX = 'transcendent:';
+
+/** 단계 모델 id (gender 를 주면 그 성별 그림으로 고정) */
+export function tierLookId(tier: number, gender?: 'male' | 'female'): string {
+  return `${TIER_LOOK_PREFIX}${tier}${gender ? `:${gender === 'female' ? 'f' : 'm'}` : ''}`;
+}
+
+/** 단계 모델 id 읽기: 아니면 null */
+export function parseTierLookId(id: string | null | undefined): { tier: number; gender?: 'male' | 'female' } | null {
+  const m = typeof id === 'string' ? /^tier:([1-9]\d*)(?::([mf]))?$/.exec(id) : null;
+  if (!m) return null;
+  return { tier: Number(m[1]), ...(m[2] ? { gender: m[2] === 'f' ? ('female' as const) : ('male' as const) } : {}) };
+}
+
+/** 이 종족의 단계 모델 칸 (1부터): 종족 단계 중 단계 외형 표(tierLooks)가 덮지 않는 단계 + 깬 뒤 그림 단계(ascension.lookChange·artTier).
+ *  단계 외형 표가 있는 단계(호로 길리안·아쥬커스)는 그 외형들이 스킨 목록에 따로 있어 빼고, 이름은 종족 설정 단계 이름 */
+export function tierLookTiers(factionId: string): { tier: number; name: string }[] {
+  const f = getFaction(factionId);
+  const out = f.tierNames.map((name, i) => ({ tier: i + 1, name })).filter((t) => !f.tierLooks?.[String(t.tier)]);
+  const A = f.ascension;
+  if (A.lookChange && A.artTier !== undefined && A.artTier > f.tierNames.length) out.push({ tier: A.artTier, name: A.lookName ?? A.name });
+  return out;
+}
+
+/** 이 종족이 고를 수 있는 단계 모델 id 인가 */
+export function validTierLook(factionId: string, id: string | null | undefined): boolean {
+  const p = parseTierLookId(id);
+  return !!p && tierLookTiers(factionId).some((t) => t.tier === p.tier);
+}
+
+/** 그림/모델이 있는 초월자 (스킨으로 입힐 수 있는 것) */
+export function transcendentLooks(): TranscendentDef[] {
+  return TRANSCENDENTS.filter((t) => t.art !== undefined || t.model !== undefined);
+}
+
+export function transcendentLookId(transcendentId: string): string {
+  return `${TRANSCENDENT_LOOK_PREFIX}${transcendentId}`;
+}
+
+/** 초월자 외형 id → 초월자 (그림/모델이 있는 것만, 아니면 undefined) */
+export function transcendentOfLook(id: string | null | undefined): TranscendentDef | undefined {
+  if (typeof id !== 'string' || !id.startsWith(TRANSCENDENT_LOOK_PREFIX)) return undefined;
+  const tid = id.slice(TRANSCENDENT_LOOK_PREFIX.length);
+  return transcendentLooks().find((t) => t.id === tid);
+}
+
+/** 모델 고르기 전용 외형(단계 모델·초월자)으로 올바른 id 인가 — 세이브 읽기 정리에 쓴다(보유 확인은 입힐 때) */
+export function validModelLook(factionId: string, id: string | null | undefined): boolean {
+  return validTierLook(factionId, id) || transcendentOfLook(id) !== undefined;
 }

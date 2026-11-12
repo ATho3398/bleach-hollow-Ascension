@@ -17,13 +17,13 @@ import { elementDamageAbbr, elementDamagePct } from './bha/element';
 import { MAX_DIFFICULTY, recommendedDifficulty } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
 import {
-  advanceTestTime, createTestItem, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
+  advanceTestTime, createTestItem, testGrantTranscendent, testTrackIds, testTranscendents, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
   createTestGearAll, getTestExpeditionForce, parseTestGearId, setTestExpeditionForce, testCallCare, testCallIdle, testCallWanderer, testClearCare, testClearIdle,
   testEventTiles, testGearGrade, testMutations, testRerollWanderer, testSendWanderer, TEST_IDLE_HOURS, TEST_WANDERER_TIERS,
   TEST_CURRENCY_NAMES, TEST_ITEM_KINDS, TEST_ITEM_KIND_NAMES, TEST_ITEM_MAX, TEST_TIME_STEPS, type TestCurrency, type TestItemKind,
   resetStats, setAbility, setCustomStats, setElementDamage, TEST_ELEMENT_DAMAGE_MAX, setForm, setNestValues, setTraitSlots, testFoes, TEST_SPEEDS, TOWER_FLOORS, type TestBattleChoice,
 } from '../engine/testMode';
-import { statBonusOf, type SaveData } from '../game';
+import { statBonusOf, switchTrack, type SaveData } from '../game';
 import type { FoodId } from '../engine/faction';
 import type { EvolveResult } from '../engine/evolution/evolution';
 import { consumableName, gearKindName } from '../inventory';
@@ -31,7 +31,8 @@ import { categoryName, cosmeticName, getCosmetic, getWandererItem, COSMETIC_ITEM
 import { CARE_ACTIONS, homeHpOf, type CareAction } from '../engine/nest';
 import { mutationName, tileName } from '../data/tiles';
 import { confirmDialog } from './confirmDialog';
-import { skinLabel } from '../data/skins';
+import { getSkin } from '../data/skins';
+import { MODEL_LOOK_GROUP_NAMES } from '../data/skins/lookOptions';
 import { GEAR_GRADES, GEAR_GRADE_NAMES, GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, type GearGrade } from '../data/gear';
 import { isWorn } from '../shop';
 import { button, el, info, panel, seg } from './bha/dom';
@@ -42,7 +43,7 @@ import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
 import { shownName } from './displayName';
 
-export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call';
+export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call' | 'transcend';
 const TABS: { id: TestTab; label: string }[] = [
   { id: 'form', label: '진화체' },
   { id: 'evolve', label: '진화' },
@@ -53,6 +54,7 @@ const TABS: { id: TestTab; label: string }[] = [
   { id: 'battle', label: '바로 전투' },
   { id: 'nest', label: '둥지·시간' },
   { id: 'call', label: '불러오기' },
+  { id: 'transcend', label: '붕옥·초월자' },
 ];
 
 export interface TestPanelHandlers {
@@ -69,6 +71,8 @@ export interface TestPanelHandlers {
   onReset: () => void;
   /** 진화체·종족이 바뀌어 방을 다시 그려야 할 때 (테마·그림) */
   onBodyChanged: () => void;
+  /** 초월자 얻기·트랙 전환으로 지금 트랙이 바뀌었다 (C.434) — 방을 그 트랙으로 */
+  onTrackChanged?: () => void;
 }
 
 /** 패널을 그린다. tab = 처음 보일 탭. 마지막 바로 전투 선택은 다음에 열 때 그대로 */
@@ -170,6 +174,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   else if (tab === 'items') body = itemsTab();
   else if (tab === 'skins') body = skinsTab();
   else if (tab === 'call') body = callTab();
+  else if (tab === 'transcend') body = transcendTab();
   else body = nestTab();
 
   // 테스트 모드 끄기 (GDD 112장 1): 어느 탭에서나 왼쪽 맨 아래 — 확인 창 뒤 끈다 (설정 > [정보] 줄과 같은 동작)
@@ -366,8 +371,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
 
   // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족 스킨·꾸밈 전부 착용·해제 ──
   function skinsTab(): Node[] {
+    // 모델 고르기 (C.434, GDD 17절 v6.036): 단계 모델(종족 설정 단계 이름) · 초월자 외형 · 스킨(단계·시작 외형 포함) · 그림 대기(자기 그림 없음 — 지금 진화체 그림으로 보임)
     const skins = testSkins(fid);
-    const skinSel = select([{ value: '', label: '— 기본(진화체) —' }, ...skins.map((k) => ({ value: k.id, label: `${skinLabel(k)}${save.skin === k.id ? ' (착용 중)' : ''}`, group: k.tierLook ? '단계 외형' : k.startOnly ? '시작 외형' : '스킨' }))], save.skin ?? '', '스킨');
+    const skinSel = select([{ value: '', label: '— 기본(진화체) —' }, ...skins.map((k) => {
+      const def = k.group === 'skin' ? getSkin(k.id) : undefined;
+      const group = k.group === 'skin' ? (def?.tierLook ? '단계 외형' : def?.startOnly ? '시작 외형' : '스킨') : MODEL_LOOK_GROUP_NAMES[k.group];
+      return { value: k.id, label: `${k.label}${save.skin === k.id ? ' (착용 중)' : ''}`, group };
+    })], save.skin ?? '', '스킨');
     const wearSkin = button({ label: '착용', icon: 'i-check', variant: 'primary', onClick: () => {
       if (!testWearSkin(save, skinSel.value || null)) return;
       saved(skinSel.value ? '스킨을 입혔다' : '스킨을 벗겼다');
@@ -406,7 +416,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [
       panel({ title: '스킨', aside: `${skins.length}종` }, grid([['스킨', skinSel.el]]), row(wearSkin, offSkin),
-        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 스킨 전부를 보인다(상점에 안 나오는 단계·아란칼 외형 포함).' : '이 종족은 스킨 데이터가 없다.')),
+        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 모델·스킨 전부를 보인다(단계 모델·초월자 외형·상점에 안 나오는 단계 외형 포함). 그림 대기 = 자기 그림이 아직 없어 지금 진화체 그림으로 보인다.' : '이 종족은 스킨 데이터가 없다.')),
       panel({ title: '꾸밈', aside: `${wearables.length}종` }, grid([['꾸밈', cosSel.el]]), row(wearCos, offCos), row(offAll),
         note('안 가진 꾸밈은 입힐 때 테스트 칸에 보유로 넣는다.')),
     ];
@@ -442,6 +452,36 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   }
 
   // ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다. 줄마다 고르기 → [지금 부르기] · 걷기 ──
+  // ── 붕옥·초월자 (C.434, GDD 17절 v6.036): 테스트 칸은 붕옥 등장·공명 + 두 캐릭터가 켜진 채. 초월자 6종 바로 얻기(추천안 = 합체 흐름 대신 바로 지급) · 트랙 전환 ──
+  function transcendTab(): Node[] {
+    const owned = new Set(save.transcendentDex.map((x) => x.id));
+    const grants = testTranscendents().map((t) => button({
+      label: `${t.name}${owned.has(t.id) ? ' ✓' : ''}`, icon: 'i-evolve', size: 'small', variant: owned.has(t.id) ? undefined : 'primary',
+      onClick: () => {
+        const r = testGrantTranscendent(save, t.id);
+        if (!r) return;
+        hd.persist();
+        showToast({ eyebrow: '테스트', title: r === 'added' ? `초월자 ${t.name} 얻음` : `초월자 ${t.name} 트랙으로`, meta: '지금 캐릭터들을 이어받은 초월자 트랙(합체와 같은 이어받기). 두 캐릭터는 그대로 남는다.' }, 0, 1800);
+        hd.onTrackChanged?.();
+      },
+    }));
+    const tracks = testTrackIds(save);
+    const nameOf = (t: (typeof tracks)[number]) => (t.transcendentId ? `초월자 ${testTranscendents().find((x) => x.id === t.transcendentId)?.name ?? t.transcendentId}` : `${FACTIONS.find((f) => f.id === t.factionId)?.name ?? t.factionId} 트랙`);
+    const trackSel = select(tracks.map((t) => ({ value: t.id, label: `${nameOf(t)}${t.current ? ' (지금)' : ''}`, group: t.transcendentId ? '초월자' : '캐릭터' })), tracks.find((t) => !t.current)?.id ?? tracks[0]?.id ?? '', '트랙');
+    const go = button({ label: '이 트랙으로', icon: 'i-swap', variant: 'primary', onClick: () => {
+      if (!switchTrack(save, trackSel.value)) return;
+      hd.persist();
+      hd.onTrackChanged?.();
+    } });
+    const h = save.hogyoku;
+    return [
+      panel({ title: '초월자 얻기', aside: `${owned.size}/${testTranscendents().length}` }, row(...grants),
+        note('누르면 그 초월자 트랙을 만들어 바로 간다(이미 있으면 그 트랙으로). 진짜 합체(개발 100%·1위 조건·두 캐릭터 초기화)는 거치지 않는다.')),
+      panel({ title: '초월자 트랙 전환', aside: `${tracks.length}개` }, grid([['트랙', trackSel.el]]), row(go),
+        note(`붕옥 ${h.tabOpen ? '등장' : '닫힘'} · ${h.resonance ? '공명' : '공명 전'} — 테스트 칸은 늘 켜 둔다. 방 더보기의 트랙 전환과 같다.`)),
+    ];
+  }
+
   function callTab(): Node[] {
     const done = (msg: string, meta: string) => {
       hd.persist();

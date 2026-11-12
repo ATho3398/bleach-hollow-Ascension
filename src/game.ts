@@ -42,7 +42,7 @@ import { DEFAULT_GROUND_ID } from './data/grounds';
 import { DEFAULT_GENDER, parseGender, type Gender } from './engine/gender';
 import { checkName, parseName } from './engine/playerName';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
-import { canWear, getSkin } from './data/skins';
+import { canWear, getSkin, transcendentOfLook, validModelLook, validTierLook } from './data/skins';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, rollTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { newDexSortState, sanitizeDexSort, type DexSortState } from './engine/dexSort';
@@ -683,7 +683,7 @@ export function performRevive(save: SaveData, nowMs: number = Date.now()): Reviv
   save.evolution = evolution;
   const fresh = newNest(nowMs);
   save.nest = { ...fresh, bond: save.nest.bond, bondDay: save.nest.bondDay, bondToday: save.nest.bondToday, careRequest: null };
-  save.skin = save.skin && canWear(save.factionId, save.skin) && !getSkin(save.skin)?.tierLook ? save.skin : null;
+  save.skin = save.skin && ((canWear(save.factionId, save.skin) && !getSkin(save.skin)?.tierLook) || validModelLook(save.factionId, save.skin)) ? save.skin : null;
   save.lastScreen = 'room';
   logVital(save, { at: nowMs, kind: 'revive', evLoss, tierIndex: prev.tierIndex, formId: prev.formId });
   return { ok: true, evLoss, prevTierIndex: prev.tierIndex, prevFormId: prev.formId };
@@ -2952,7 +2952,7 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
   t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];
   t.rebirth = sanitizeRebirth(t.rebirth);
   t.runLog.rebirths = Array.isArray(t.runLog.rebirths) ? t.runLog.rebirths : [];
-  t.skin = canWear(t.factionId, t.skin) && owned.includes(skinItemId(t.skin!)) ? t.skin : null;
+  t.skin = (canWear(t.factionId, t.skin) && owned.includes(skinItemId(t.skin!))) || validModelLook(t.factionId, t.skin) ? t.skin : null; // 모델 고르기 전용 외형은 올바른 id 만 (보유 확인은 입힐 때, C.434)
   t.training = sanitizeTraining(t.training);
   t.runLog.trainings = Array.isArray(t.runLog.trainings) ? t.runLog.trainings : [];
   t.runLog.trainingTickets = Array.isArray(t.runLog.trainingTickets) ? t.runLog.trainingTickets : [];
@@ -3076,8 +3076,14 @@ export function roomKeyOf(s: Partial<Pick<SaveData, 'transcendentId'>>): string 
   return (s.transcendentId ? tryGetTranscendent(s.transcendentId)?.room : undefined) ?? null;
 }
 
-export function equipSkin(save: SaveData, skinId: string | null): boolean {
-  if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
+/** 스킨 입기. 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델(tier:)은 테스트 모드에서만, 초월자 외형(transcendent:)은 이 슬롯이 그 초월자를 얻었거나 테스트 모드 */
+export function equipSkin(save: SaveData, skinId: string | null, opts: { test?: boolean } = {}): boolean {
+  const tr = transcendentOfLook(skinId);
+  if (skinId !== null && validTierLook(save.factionId, skinId)) {
+    if (!opts.test) return false;
+  } else if (skinId !== null && tr) {
+    if (!opts.test && !save.transcendentDex.some((x) => x.id === tr.id)) return false;
+  } else if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;
   return true;
 }
