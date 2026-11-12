@@ -24,6 +24,10 @@ export interface TranscendentDef {
   concept: string;
   /** 오리지널(원작 밖) 초월자 */
   original?: boolean;
+  /** 캐릭터 그림 키 (GDD 12-4, C.430): public/art/<키의 . → ->/idle-n 프레임 — 초월자 트랙의 방·상태·전투 몸, 도감·합체 결과 그림. 없으면 자리 표시 */
+  art?: string;
+  /** 이름 글리치 (GDD 12-4 v6.027, C.430): 화면에 찍히는 이름 일부가 잠깐씩 깨진 글자로 바뀐다. 저장값·읽기 이름은 원래 이름 */
+  nameGlitch?: boolean;
   condition: TranscendentCondition;
   /** 합체 뒤 이 초월자 트랙의 종류 (GDD 12-4 v6.028 — src/data/trackKinds/<id>.json: 진화 없음·시간 감소 없음 등) */
   trackKind: string;
@@ -44,6 +48,8 @@ export function parseTranscendent(r: unknown): TranscendentDef {
   if (c.type === 'rebirthSum' && !(Number.isInteger(c.min) && (c.min as number) > 0)) errors.push('condition.min');
   if (c.type === 'allCategory' && !(ATTACK_CATEGORIES as readonly string[]).includes(c.category as string)) errors.push('condition.category');
   if (typeof t.trackKind !== 'string' || !t.trackKind) errors.push('trackKind');
+  if (t.art !== undefined && (typeof t.art !== 'string' || !t.art.startsWith('char.'))) errors.push('art (char.<이름>)');
+  if (t.nameGlitch !== undefined && typeof t.nameGlitch !== 'boolean') errors.push('nameGlitch');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

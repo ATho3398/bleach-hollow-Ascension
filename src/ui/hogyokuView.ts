@@ -16,6 +16,15 @@ import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from '
 import { dexCard, dexGrid } from './bha/dexGrid';
 import { imageArt, itemDialog } from './bha/itemUi';
 import { heroArtOf } from './bha/battle';
+import { bindAnim } from './bha/animPlayer';
+import { transcendentNameNode } from './bha/glitchName';
+
+/** 글자·노드 섞인 요소 (초월자 이름 노드를 끼울 때) */
+const hx = (tag: string, cls: string, ...parts: (Node | string)[]): HTMLElement => {
+  const e = h(tag as 'p', cls);
+  e.append(...parts);
+  return e;
+};
 import { statsBlock } from './bha/nest';
 import { artIcon, artSrc } from './bha/artIcon';
 import { elementsMark } from './bha/element';
@@ -446,7 +455,7 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
   if (pv.def) {
     const now = h('p', 'bha-hgpreview');
     now.dataset.preview = pv.def.id;
-    now.append('지금 두 캐릭터라면 → ', h('b', '', `「${pv.def.name}」`));
+    now.append('지금 두 캐릭터라면 → ', hx('b', '', '「', transcendentNameNode(pv.def), '」'));
     p.append(now);
   }
   p.append(fusionConditions(save), h('p', 'bha-faint', '두 캐릭터가 초월자 하나가 되어 사라지고, 새 두 캐릭터가 1단계부터 시작한다. 되돌릴 수 없다 (직전 상태는 자동 백업).'));
@@ -460,9 +469,22 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
   lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main bha-hgfusion-page' }, head, [pair], [right]);
 }
 
-/** 초월자 그림 칸: 그림이 아직 없어 아이콘 (못 모은 것은 실루엣·?) */
-function transcendentArt(known: boolean): HTMLElement {
+/** 초월자 그림 칸 (C.430): 데이터 art 키의 그림이 있으면 그 그림(대기 프레임 반복 — 태초 = 검은 구슬 + 후광), 없으면 아이콘 자리 표시.
+ *  못 모은 것은 실루엣·? (그림이 있어도 보여 주지 않는다) */
+export function transcendentArt(known: boolean, def?: Pick<TranscendentDef, 'art'>): HTMLElement {
   const box = h('span', `bha-dexart${known ? '' : ' is-silhouette'}`);
+  const art = known && def?.art ? heroArtOf(roomOf(FACTIONS[0]!), FACTIONS[0]!.id, 0, def.art) : null;
+  if (art?.src && art.src.includes(def!.art!.replace(/\./g, '-'))) {
+    const img = h('img', 'bha-itemart bha-itemart--img bha-trart') as HTMLImageElement;
+    img.src = art.src;
+    img.alt = '';
+    img.draggable = false;
+    box.classList.add('has-art');
+    box.dataset.art = def!.art!;
+    box.append(img);
+    bindAnim(box, img, art)?.setLoop('idle');
+    return box;
+  }
   box.append(icon(known ? 'i-evolve' : 'i-unknown'));
   return box;
 }
@@ -477,8 +499,8 @@ export function transcendentDexView(dev: Device, save: SaveData): void {
     const got = owned.get(d.id);
     const card = got
       ? dexCard({
-        name: d.name, unknown: false, art: transcendentArt(true), marks: null, badge: `${got.fusionIndex}번째`,
-        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: d.name, desc: '', art: transcendentArt(true), hero: true, cls: 'bha-dexmodal', actions: [],
+        name: d.name, unknown: false, art: transcendentArt(true, d), marks: null, badge: `${got.fusionIndex}번째`,
+        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: d.name, desc: '', art: transcendentArt(true, d), hero: true, cls: 'bha-dexmodal', actions: [],
           content: [h('p', 'bha-mddetail__body', d.concept), h('p', 'bha-faint', `${got.fusionIndex}번째 합체로 얻었다. 조건: ${transcendentConditionText(d.condition)}`)] }),
       })
       : dexCard({
@@ -539,7 +561,7 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
     const p = panel({ title: '이 조합이면', mod: 'accent', aside: provisionalTag('임시 조건') });
     p.setAttribute('aria-label', '합체 미리보기');
     p.dataset.preview = pv.def.id;
-    p.append(h('p', 'bha-lcdpage__title', `「${pv.def.name}」${subjectParticle(pv.def.name)} 된다`), h('p', 'bha-small', pv.def.concept));
+    p.append(hx('p', 'bha-lcdpage__title', '「', transcendentNameNode(pv.def), `」${subjectParticle(pv.def.name)} 된다`), h('p', 'bha-small', pv.def.concept));
     p.append(h('p', 'bha-faint', pv.matched ? '두 캐릭터의 상태가 이 초월자의 조건에 맞았다.' : '조건이 맞는 초월자를 이미 가지고 있어, 아직 없는 초월자 중 표 아래쪽부터 채운다.'));
     if (save.transcendentDex.length === 0) p.append(h('p', 'bha-small', `첫 초월자 보상: ${JADE_NAME} +${HX.firstTranscendentJade}`));
     right.push(p);
@@ -572,8 +594,8 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   const linesSection = h('section');
   const lines = h('div', 'bha-evolve__lines');
   lines.setAttribute('aria-live', 'polite');
-  ['붕옥이 두 영혼을 삼킨다.', '하나가 되었다.', `초월자 「${def.name}」.`].forEach((t, i) => {
-    const line = h('p', 'bha-evolve__line', t);
+  ['붕옥이 두 영혼을 삼킨다.', '하나가 되었다.', null].forEach((t, i) => {
+    const line = t === null ? hx('p', 'bha-evolve__line', '초월자 「', transcendentNameNode(def), '」.') : h('p', 'bha-evolve__line', t);
     line.style.setProperty('--k', String(i));
     lines.append(line);
   });
@@ -587,7 +609,7 @@ export function fusionView(root: HTMLElement, faction: FactionConfig, record: Fu
   linesSection.append(h('span'), lines, asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: show })));
 
   const main = h('div', 'bha-evolve__resmain');
-  main.append(h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월자`), h('h1', 'bha-evolve__title', def.name), h('p', 'bha-evolve__path', def.concept));
+  main.append(transcendentArt(true, def), h('span', 'bha-evolve__eyebrow', `${record.index}번째 합체 · 초월자`), hx('h1', 'bha-evolve__title', transcendentNameNode(def)), h('p', 'bha-evolve__path', def.concept));
   const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', size: 'lg', block: true, onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
     onDone();

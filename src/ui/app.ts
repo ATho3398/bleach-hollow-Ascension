@@ -1230,6 +1230,20 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
+  /** 방에서 띄운 알림 띠를 방에서만 보이게 (C.430): 다른 화면으로 가면 사라지는 연출로 지운다 */
+  function roomOnlyToast(t: HTMLElement): void {
+    let shown = false;
+    const timer = window.setInterval(() => {
+      if (!t.isConnected) { if (shown) window.clearInterval(timer); return; } // 아직 줄 서 있으면 기다린다
+      shown = true;
+      if (nav.top?.id !== 'room') {
+        t.classList.replace('is-in', 'is-out');
+        window.clearInterval(timer);
+      }
+    }, 200);
+    window.setTimeout(() => window.clearInterval(timer), 30_000);
+  }
+
   /** 장터 (GDD 127장 2, C.201): 상점·온천·떠돌이 상인이 있는 따로 된 공간. 뒤로 = 방 */
   function openMarket(faction: FactionConfig, s: SaveData): void {
     const visit = s.shared.wanderer.visit;
@@ -1356,7 +1370,8 @@ export function startApp(host: HTMLElement): void {
     }
     if (notes.length > 0) {
       persist();
-      window.setTimeout(() => notes.forEach((n, i) => showToast(n, i, 5200)), 2600);
+      // 방 알림 띠는 방에서만 (C.430: 상태 화면 등 다른 창을 열면 숨긴다 — 내용을 가리지 않게). 그 사이 방을 떠났으면 띄우지 않는다
+      window.setTimeout(() => { if (nav.top?.id === 'room') notes.forEach((n, i) => roomOnlyToast(showToast(n, i, 5200))); }, 2600);
     }
     // 대기 모드 복귀 창 (GDD 92장 2번): 방이 그려진 뒤 한 번 — [나중에]로 닫으면 보상은 방 '대기 보상' 아이콘에 남는다
     const claim = () => {

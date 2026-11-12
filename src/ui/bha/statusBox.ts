@@ -8,6 +8,8 @@ import { infoTip, type InfoBody } from './infoTip';
 import { roomStatusInfo } from './statusInfo';
 import { CARE_STATUS_HINTS, dyingClock, statusChips, type StatusChip } from './roomLogic';
 import { trackNameOf, trackRulesOf, type SaveData } from '../../game';
+import { tryGetTranscendent } from '../../data/transcendents';
+import { transcendentNameNode } from './glitchName';
 import { formDisplayName } from '../../engine/evolution';
 import { rebirthMark } from '../rebirthView';
 import { shownName } from '../displayName';
@@ -70,7 +72,10 @@ export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | '
   if (save.transcendentId) {
     const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
     const kind = `${trackRulesOf(save).label} · ${form}`;
-    tag.append(el('b', 'bha-room__nameown', trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })), el('span', 'bha-room__nameform', kind));
+    const own = el('b', 'bha-room__nameown');
+    const def = tryGetTranscendent(save.transcendentId);
+    own.append(def ? transcendentNameNode(def) : trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })); // 이름 글리치 (C.430)
+    tag.append(own, el('span', 'bha-room__nameform', kind));
     if (stars) tag.append(stars);
     tag.title = `${trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })} · ${kind}`;
     tag.dataset.transcendent = save.transcendentId;

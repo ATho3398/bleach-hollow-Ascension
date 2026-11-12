@@ -1,0 +1,16 @@
+/* 이름 글리치 (GDD 12-4 v6.027, C.430 — glitchName.ts). 새 색 없음: RGB 어긋남 = 기존 토큰(위험 적 · 물 속성 청) */
+.bha-glitch { display: inline; white-space: nowrap; }
+.bha-glitch__c { position: relative; display: inline-block; white-space: pre; }
+/* 깨진 글자: 원래 글자는 자리(폭)만 남기고 숨기고, 같은 자리에 깨진 글자를 겹쳐 그린다 — 줄 폭이 안 변한다 */
+.bha-glitch__c.is-on { -webkit-text-fill-color: transparent; }
+.bha-glitch__c.is-on::after {
+  content: attr(data-g);
+  position: absolute; inset: 0;
+  text-align: center;
+  -webkit-text-fill-color: currentColor;
+  overflow: visible;
+}
+.bha-glitch.is-rgb .bha-glitch__c.is-on::after,
+.bha-glitch.is-rgb { text-shadow: 1px 0 var(--bha-danger), -1px 0 var(--bha-el-water); }
+/* 도감 칸 이름 한 줄 (C.430 — 'Unknown;0 / 3398' 두 줄 접힘): 접지 않고(nowrap) 글자를 조금 줄여 칸 폭 안에. 말줄임은 이름 뜻이 깨져서 쓰지 않는다 */
+.bha-dexcard__name:has(.bha-glitch) { white-space: nowrap; font-size: calc(var(--bha-fs-xs) * 0.8); letter-spacing: -0.03em; }

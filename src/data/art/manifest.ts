@@ -114,6 +114,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 호로 기본 그림 = 덩치 종이인형 원래 색(보라) (GDD 206장 보충 C.345, 사용자 "호로 기본 이미지를 덩치로해야지"). 단계별 그림·종이인형·스킨 그림이 있으면 그쪽이 먼저.
   // 배율 = HOLLOW_BRUTE_SCALE (덩치 스킨·적 덩치와 같은 값 — 전투에서 적·내 덩치 키·도트 크기가 같게)
   'char.hollow': { rig: 'brute-base', scale: HOLLOW_BRUTE_SCALE },
+  // 초월자 그림 (C.430, GDD 12-4): 초월자 데이터 art 키. 128×128 후광 프레임 가운데 64 구슬 — 종족 기본 배율(호로 덩치)을 물려받지 않게 1
+  'char.transcendent-zero-sage': { scale: 1 },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
@@ -280,6 +282,11 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     }
     return null;
   };
+  // 그림 키를 직접 받은 외형 (C.430 — 초월자 데이터 art 'char.<이름>'): 그 키의 그림(프레임 애니 포함)이 있으면 그것. 없으면 아래 진화체 그림(자리 표시)
+  if (skinId && skinId.startsWith('char.') && !getSkin(skinId)) {
+    const own = tryKeys([skinId]);
+    if (own) return own;
+  }
   if (skinId && getSkin(skinId)) {
     // 종이인형 스킨 (GDD 206장 3): 목록의 skin.<id> 에 rig 가 있으면 그 외형이 움직인다(적 덩치와 같은 길). 여성 외형(-f)이 있으면 그쪽
     const skinRig = manifest[skinArtKey(skinId)]?.rig;

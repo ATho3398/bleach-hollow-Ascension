@@ -3062,7 +3062,10 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 
 /** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
 /** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
-export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'>): string | null {
+export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
+  // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
+  const art = s.transcendentId ? tryGetTranscendent(s.transcendentId)?.art : undefined;
+  if (art) return art;
   return s.skin ?? s.evolution.look ?? null;
 }
 
