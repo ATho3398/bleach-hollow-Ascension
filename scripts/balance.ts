@@ -23,6 +23,7 @@ import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
 import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story';
 import { TRANSCENDENTS } from '../src/data/transcendents';
+import { trackCostSum } from '../src/engine/transcend';
 const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
@@ -1565,9 +1566,9 @@ if (want('hogyoku')) {
   const HS = BALANCE.provisional.hogyokuShards;
   const HE = BALANCE.provisional.resonanceEssence;
   const SC = BALANCE.provisional.soulCrystals;
-  const sum = (a: readonly number[], from = 0, to = a.length) => a.slice(from, to).reduce((x, y) => x + y, 0);
-  const half = { soul: sum(HX.develop.soul, 0, HX.halfLevel), shard: sum(HX.develop.shard, 0, HX.halfLevel), essence: sum(HX.develop.essence, 0, HX.halfLevel) };
-  const full = { soul: sum(HX.develop.soul, HX.halfLevel), shard: sum(HX.develop.shard, HX.halfLevel), essence: sum(HX.develop.essence, HX.halfLevel) };
+  // C.425 (GDD v6.014): 재료별 강화 트랙 3개 — 1~trackHalf강 합 / trackHalf+1~trackMax강 합 (트랙 = 재료)
+  const half = { soul: trackCostSum('soul', 0, HX.trackHalf), shard: trackCostSum('shard', 0, HX.trackHalf), essence: trackCostSum('essence', 0, HX.trackHalf) };
+  const full = { soul: trackCostSum('soul', HX.trackHalf, HX.trackMax), shard: trackCostSum('shard', HX.trackHalf, HX.trackMax), essence: trackCostSum('essence', HX.trackHalf, HX.trackMax) };
   const runs = campaignSaves.flatMap((x) => x.runLog.runs.filter((r) => !r.tutorial));
   const elites = campaignSaves.reduce((n, x) => n + x.runLog.battles.filter((b) => b.won && b.enemyClass === 'elite').length, 0);
   const battleSec = campaignSaves.reduce((n, x) => n + x.runLog.battles.reduce((m, b) => m + b.durationSeconds, 0), 0);
@@ -1592,7 +1593,7 @@ if (want('hogyoku')) {
     };
   };
   console.log(`
-붕옥 재료 공급 (C.414, GDD 244장 3·4, 참고 — 가드 없음) · 개발 1~${HX.halfLevel}단계 = 결정 ${half.soul} · 파편 ${half.shard} · 정수 ${half.essence} / ${HX.halfLevel + 1}~${HX.maxLevel}단계 = ${full.soul} · ${full.shard} · ${full.essence}`);
+붕옥 재료 공급 (C.414 → C.425 트랙, GDD 12-3, 참고 — 가드 없음) · 트랙 1~${HX.trackHalf}강 = 결정 ${half.soul} · 파편 ${half.shard} · 정수 ${half.essence} / ${HX.trackHalf + 1}~${HX.trackMax}강 = ${full.soul} · ${full.shard} · ${full.essence}`);
   console.log(`  봇 원정 1회: 강적 승리 ${elitePerRun.toFixed(2)}개(= 결정) · 약 ${minPerRun.toFixed(1)}분(전투 + 이동 ${BALANCE.expedition.secondsPerTile}초/칸) · 한 생 마지막 단계까지 원정 ${lifeRuns.toFixed(1)}회`);
   console.log(`  스토리 한 종족 = 화 ${eps}개 × ${HS.perEpisodeFirst} + 장 보스 ${STORY_CHAPTERS.length} × ${HS.perChapterBoss} = 파편 ${storyShards} · 탑 ${TOWER_ASSUMED}층 = 파편 ${towerShards} · 등급전 1위 = 승리 ${rankWins}번 × 결정 ${SC.perRankWin} · 진화 ${evoPerLife}번 × 정수 ${HE.perEvolution}`);
   let totalExps = 0;
