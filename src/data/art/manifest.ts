@@ -162,6 +162,12 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.hogyoku': {},
   'hogyoku.orb': {},
   'hogyoku.flame': {},
+  // 붕옥 창 그림 6단계 (C.423, 사용자 stages/): 0~19% 얼음 상자 · 20~39% 금 간 상자 · 40~59% 깨진 상자 (112×116, 상자 속 붕옥 = 칸 24·25) ·
+  // 60~79% 붕옥(hogyoku.orb) · 80~99% 붕옥 + 뒤 작은 불꽃(hogyoku.flame-calm 16프레임) · 100% 붕옥 + 뒤 큰 불꽃(hogyoku.flame)
+  'hogyoku.stage1': {},
+  'hogyoku.stage2': {},
+  'hogyoku.stage3': {},
+  'hogyoku.flame-calm': {},
   'prop.shop': {},
   // 온천 (GDD 123장 4, C.198): 방 물건·온천 화면 배경 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   'prop.spa': {},

@@ -5,7 +5,7 @@ import { BALANCE } from '../src/config/balance';
 import { ART_MANIFEST, artUrls } from '../src/data/art/manifest';
 import { findArtFile } from '../src/data/art/files';
 import { newSaveData } from '../src/game';
-import { HOGYOKU_MATERIALS, HOGYOKU_TABS, hogyokuFlameOn } from '../src/ui/hogyokuView';
+import { HOGYOKU_MATERIALS, hogyokuFlameOn } from '../src/ui/hogyokuView';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const png = (p: string) => {
@@ -45,18 +45,18 @@ describe('C.421 붕옥 그림', () => {
     expect(hogyokuFlameOn(s)).toBe(false);
   });
 
-  it('붕옥 창: 오른쪽 탭 4개 · 재료 3종 칸(얻는 곳) · 장비 탭과 같은 가로 끌기', () => {
-    expect(HOGYOKU_TABS.map((t) => t.label)).toEqual(['개발', '단계', '합체', '도감']);
+  it('붕옥 창: 재료 3종(얻는 곳) — 탭 배치는 C.423 사용자 스케치(상세 + 세로 목록)로 바뀜', () => {
     expect(HOGYOKU_MATERIALS.map((m) => m.id)).toEqual(['soul', 'shard', 'essence']);
     for (const m of HOGYOKU_MATERIALS) expect(m.from()).toMatch(/\S/);
     const v = read('src/ui/hogyokuView.ts');
-    for (const k of ['enableDragScroll(tabs', 'edgeCue(tabs', "'bha-hgorb__flame'", "artSrc('hogyoku.orb')", "artSrc('hogyoku.flame')"]) expect(v).toContain(k);
+    for (const k of ['bha-hgorb__flame', 'artSrc(look.art)', 'artSrc(look.flame)']) expect(v).toContain(k);
     expect(v).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
   });
 
   it('CSS: 픽셀 그대로 · 정수 배율 · 16프레임 steps 반복 · 토큰만', () => {
     const css = read('src/ui/bha/screens-lcd.css');
-    expect(css).toMatch(/\.bha-hgorb__img \{[^}]*calc\(64px \* var\(--hg-s\)\)[^}]*image-rendering: pixelated/);
+    expect(css).toMatch(/\.bha-hgorb__img \{[^}]*image-rendering: pixelated/);
+    expect(css).toMatch(/\.bha-hgorb__img\.is-orb \{[^}]*calc\(64px \* var\(--hg-s\)\)/);
     expect(css).toMatch(/\.bha-hgorb__flame \{[^}]*calc\(1536px \* var\(--hg-s\)\)[^}]*steps\(16\) infinite/);
     expect(css).toMatch(/\.bha-hogyoku-page \{ --hg-s: 2; \}/);
     const block = css.slice(css.indexOf('붕옥 창 배치 (C.421'), css.indexOf('.bha-articon'));
