@@ -7,7 +7,7 @@ import { TRANSCENDENTS, parseTranscendent } from '../src/data/transcendents';
 import { TITLES } from '../src/data/titles';
 import { applyEvolutionToParams, currentStats } from '../src/engine/evolution';
 import { createExpedition, restoreExpedition, serializeExpedition } from '../src/engine/expedition';
-import { conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from '../src/engine/transcend';
+import { conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, slotStatBonus, trackCostSum, type FusionInput } from '../src/engine/transcend';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import {
   activeTrackOf, allTracks, checkTrackOpen, developHogyoku, fusionGate, fusionPreview, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
@@ -74,12 +74,12 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
 }
 
-/** 붕옥 개발을 10단계까지 (재료를 넉넉히 채워 한 단계씩) */
+/** 붕옥 강화 세 트랙을 50강까지 (재료를 넉넉히 채워 한 강씩, C.425 트랙) */
 function developAll(s: SaveData): void {
   s.shared.soulCrystals += 1000;
   s.shared.hogyokuShards += 1000;
   s.shared.resonanceEssence += 1000;
-  while (developHogyoku(s, 3500)) { /* 10단계까지 */ }
+  for (const t of HOGYOKU_TRACK_IDS) while (developHogyoku(s, t, 3500)) { /* 50강까지 */ }
   s.shared.soulCrystals = 0;
   s.shared.hogyokuShards = 0;
   s.shared.resonanceEssence = 0;
@@ -117,7 +117,7 @@ describe('세이브 형식 23 마이그레이션 (트랙 1개짜리, 데이터 �
     }
     expect(m.meta.startPatch).toBe((before.meta as { startPatch: string }).startPatch);
     expect(m.otherTracks).toEqual([]);
-    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, appearedAt: null, level: 0, developed: 0, resonance: false, resonatedAt: null });
+    expect(m.hogyoku).toEqual({ tabOpen: false, tabNotice: false, appearedAt: null, tracks: { soul: 0, shard: 0, essence: 0 }, developed: 0, resonance: false, resonatedAt: null });
     expect(m.transcendentDex).toEqual([]);
     expect(m.slotLog).toEqual({ fusions: [], trackOpens: [], identities: [], hogyokuDev: [], hogyokuMaterials: [] }); // C.326 이름·성별 기록 · C.414 붕옥 개발·재료
   });
@@ -228,21 +228,21 @@ describe('붕옥 (탭·해방·보너스)', () => {
     expect(s.otherTracks).toHaveLength(1);
   });
 
-  it('붕옥 개발 10단계 + 공명 → 두 캐릭터 전 능력치 +10%, 개발 기록은 런 로그에 (GDD 244장 4·6)', () => {
+  it('붕옥 강화 세 트랙 50강 + 공명 → 두 캐릭터 전 능력치 +15%, 개발 기록은 런 로그에 (GDD 12-3 v6.014)', () => {
     const s = fusionReady();
-    expect(s.hogyoku.level).toBe(HX.maxLevel);
-    expect(s.hogyoku.developed).toBe(HX.maxLevel);
+    expect(s.hogyoku.tracks).toEqual({ soul: HX.trackMax, shard: HX.trackMax, essence: HX.trackMax });
+    expect(s.hogyoku.developed).toBe(HX.trackMax * 3);
     expect(s.hogyoku.resonance).toBe(true);
-    expect(statBonusOf(s).total).toBeCloseTo(0.1);
-    expect(s.slotLog.hogyokuDev.map((r) => r.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(statBonusOf(s).total).toBeCloseTo(0.15);
+    expect(s.slotLog.hogyokuDev.filter((r) => r.track === 'soul').map((r) => r.level)).toEqual(Array.from({ length: HX.trackMax }, (_, i) => i + 1));
     const t = newSaveData('hollow', 0);
     t.shared.soulCrystals = 999;
-    expect(developHogyoku(t)).toBeNull(); // 붕옥이 아직 없다
+    expect(developHogyoku(t, 'soul')).toBeNull(); // 붕옥이 아직 없다
   });
 
   it('보너스는 능력치·전투 파라미터·원정에 곱해지고(999 상한), 초월체 1종 +2% 최대 12%', () => {
     expect(slotStatBonus(0, 0).total).toBe(0);
-    expect(slotStatBonus(5, 3).total).toBeCloseTo(0.11);
+    expect(slotStatBonus(5, 3).total).toBeCloseTo(0.065); // C.425: 강마다 +0.1%
     expect(slotStatBonus(0, 9).transcendents).toBeCloseTo(0.12);
     const s = newSaveData('hollow', 0);
     toTier5(s);
@@ -269,7 +269,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(trackIsTopRank(s.otherTracks[0]!)).toBe(false);
     expect(fusionGate(s).missing).toEqual(['rank']);
     makeTop(s.otherTracks[0]!);
-    s.hogyoku.level = 9;
+    s.hogyoku.tracks.essence = HX.trackMax - 1;
     s.activeExpedition = {} as never;
     expect(fusionGate(s).missing).toEqual(['develop', 'expedition']);
     expect(performFusion(s).ok).toBe(false);
@@ -304,15 +304,15 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.shared.tradeCoins).toBe(77);
     expect(s.formDex).toEqual(['t4:fire:physical']);
     expect(s.titles.some((t) => t.titleId === 'rank-1')).toBe(true);
-    expect(s.hogyoku.level).toBe(HX.halfLevel); // 6~10단계 진행만 0 (GDD 244장 5)
-    expect(s.hogyoku.developed).toBe(HX.maxLevel); // 오른 능력치는 그대로
+    expect(s.hogyoku.tracks).toEqual({ soul: HX.trackHalf, shard: HX.trackHalf, essence: HX.trackHalf }); // 26~50강 진행만 0 (GDD 12-4 v6.014)
+    expect(s.hogyoku.developed).toBe(HX.trackMax * 3); // 오른 능력치는 그대로
     expect(s.hogyoku.resonance).toBe(true);
     expect(s.hogyoku.tabOpen).toBe(true);
     expect(s.transcendentDex).toEqual([{ id: r.def.id, at: 9000, fusionIndex: 1 }]);
-    expect(statBonusOf(s).total).toBeCloseTo(0.12);
+    expect(statBonusOf(s).total).toBeCloseTo(0.17);
     // 런 로그: 합체 기록 (두 캐릭터 요약·결과)
     const rec = s.slotLog.fusions[0]!;
-    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: HX.develop.soul.slice(HX.halfLevel).reduce((a, b) => a + b, 0), jade: HX.firstTranscendentJade });
+    expect(rec).toMatchObject({ index: 1, transcendentId: r.def.id, soulSpent: trackCostSum('soul', HX.trackHalf, HX.trackMax), jade: HX.firstTranscendentJade });
     expect(rec.characters.map((c) => c.factionId)).toEqual(['hollow', other('hollow')]);
     expect(rec.characters[0]).toMatchObject({ tierIndex: 3, formId: 't4:fire:physical', rank: 1, rebirths: 2 });
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
@@ -342,7 +342,7 @@ describe('합체 (GDD 22-3)', () => {
     expect(s.titles.some((t) => t.titleId === 'hogyoku-complete')).toBe(true);
     expect(fusionGate(s).missing).toContain('complete');
     expect(performFusion(s).ok).toBe(false);
-    expect(statBonusOf(s).total).toBeCloseTo(0.05 + 0.05 * 7 + 0.12); // 개발 10 + 합체마다 5단계씩 다시 (6번) = 40단계 + 초월체 6종
+    expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.075 * 6 + 0.12); // C.425: 세 트랙 150강 + 합체마다 75강씩 다시 (6번) = 600강 × 0.1% + 초월체 6종
   });
 });
 

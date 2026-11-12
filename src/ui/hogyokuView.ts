@@ -5,12 +5,12 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { HOGYOKU_SHARD_NAME, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, RESONANCE_ESSENCE_NAME, transcendentConditionText } from '../data/hogyoku';
-import { slotStatBonus, type HogyokuCost } from '../engine/transcend';
+import { HOGYOKU_TRACK_IDS, slotStatBonus, type HogyokuCost, type HogyokuTrackId } from '../engine/transcend';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
 import type { FusionRecord } from '../engine/runLog';
-import { allTracks, artSkinOf, artTierIndexOf, developGate, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
+import { allTracks, artSkinOf, artTierIndexOf, developAll, developGate, hogyokuPercent, fusionGate, fusionInputOf, fusionPreview, statBonusOf, trackIsTopRank, type DevelopBlock, type FusionBlock, type SaveData, type TrackKey } from '../game';
 import { rankOf } from '../engine/rank';
 import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { dexCard, dexGrid } from './bha/dexGrid';
@@ -28,7 +28,8 @@ import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
 
 const HX = BALANCE.provisional.hogyoku;
-const pct = (x: number) => `${Math.round(x * 100)}%`;
+/** 퍼센트 (강마다 +0.1% 라 소수 한 자리까지 — 끝의 .0 은 뺀다) */
+const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
 
 /** 받침이 있으면 '이', 없으면 '가' (한글이 아니면 '이(가)') */
 export function subjectParticle(word: string): string {
@@ -49,22 +50,21 @@ export function fusionBlockText(b: FusionBlock): string {
     case 'tab': return '붕옥이 아직 나타나지 않았다.';
     case 'resonance': return '붕옥이 공명해야 한다 — 두 종족의 스토리를 모두 끝내면.';
     case 'tracks': return '두 캐릭터가 모두 있어야 한다.';
-    case 'develop': return `붕옥 개발을 100%(${HX.maxLevel}단계)까지 채워야 한다.`;
+    case 'develop': return `붕옥 개발을 100%(세 강화 모두 ${HX.trackMax}강)까지 채워야 한다.`;
     case 'rank': return '두 캐릭터 모두 등급 1위여야 한다.';
     case 'expedition': return '진행 중인 모험이 있다. 모험을 끝내야 한다.';
     case 'complete': return '초월체 6종을 모두 모았다. 더는 합체할 수 없다.';
   }
 }
 
-/** 개발이 막힌 이유 한 줄 */
-export function developBlockText(b: DevelopBlock): string {
+/** 강화가 막힌 이유 한 줄 (트랙 하나) */
+export function developBlockText(b: DevelopBlock, track: HogyokuTrackId): string {
+  const m = HOGYOKU_MATERIALS.find((x) => x.id === track)!;
   switch (b) {
     case 'tab': return '붕옥이 아직 나타나지 않았다.';
-    case 'max': return '붕옥 개발 100% — 더 올릴 단계가 없다.';
-    case 'resonance': return `${HX.halfLevel * 10}%부터는 공명이 필요하다 — 다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다.`;
-    case 'soul': return `${SOUL_CRYSTAL_NAME}${subjectParticle(SOUL_CRYSTAL_NAME)} 모자라다 (강적 처치·등급전 승리·환생).`;
-    case 'shard': return `${HOGYOKU_SHARD_NAME}${subjectParticle(HOGYOKU_SHARD_NAME)} 모자라다 (스토리 화 첫 클리어·장 보스·탑 ${BALANCE.provisional.hogyokuShards.towerEvery}층마다).`;
-    case 'essence': return `${RESONANCE_ESSENCE_NAME}${subjectParticle(RESONANCE_ESSENCE_NAME)} 모자라다 (진화할 때마다·공명).`;
+    case 'max': return `${m.name} 강화 ${HX.trackMax}강 — 더 올릴 강이 없다.`;
+    case 'resonance': return `반각성 한계 ${HX.trackHalf}강 — ${HX.trackHalf + 1}강부터는 공명이 필요하다(다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다).`;
+    case 'short': return `${m.name}${subjectParticle(m.name)} 모자라다 (${m.from()}).`;
   }
 }
 
@@ -84,48 +84,38 @@ export function hogyokuStage(save: SaveData): keyof typeof HOGYOKU_STAGE_NAMES {
   return fusionGate(save).ok ? 'ready' : 'resonance';
 }
 
-/** 재료 3종 (GDD 12-3, C.421·C.423): 아이콘 · 이름 · 가진 수 · 얻는 곳(상세 칸). 재료 그림이 없어 스프라이트 아이콘으로 대신 */
-export const HOGYOKU_MATERIALS = [
-  { id: 'soul', icon: 'i-rare', name: SOUL_CRYSTAL_NAME, have: (s: SaveData) => s.shared.soulCrystals, from: () => { const c = BALANCE.provisional.soulCrystals; return `강적 처치 +${c.perElite} · 등급전 승리 +${c.perRankWin} · 환생 +${c.perRebirth}`; } },
-  { id: 'shard', icon: 'i-special', name: HOGYOKU_SHARD_NAME, have: (s: SaveData) => s.shared.hogyokuShards, from: () => `스토리 화 첫 클리어 · 장 보스 첫 처치 · 탑 ${BALANCE.provisional.hogyokuShards.towerEvery}층마다` },
-  { id: 'essence', icon: 'i-sp', name: RESONANCE_ESSENCE_NAME, have: (s: SaveData) => s.shared.resonanceEssence, from: () => '진화할 때마다 · 공명' },
-] as const;
+/** 재료 3종 = 강화 트랙 3개 (GDD 12-3 v6.014): 아이콘 · 이름 · 가진 수 · 얻는 곳. 재료 그림이 없어 스프라이트 아이콘으로 대신 */
+export const HOGYOKU_MATERIALS: readonly { id: HogyokuTrackId; icon: string; name: string; from: () => string }[] = [
+  { id: 'soul', icon: 'i-rare', name: SOUL_CRYSTAL_NAME, from: () => { const c = BALANCE.provisional.soulCrystals; return `강적 처치 +${c.perElite} · 등급전 승리 +${c.perRankWin} · 환생 +${c.perRebirth}`; } },
+  { id: 'shard', icon: 'i-special', name: HOGYOKU_SHARD_NAME, from: () => `스토리 화 첫 클리어 · 장 보스 첫 처치 · 탑 ${BALANCE.provisional.hogyokuShards.towerEvery}층마다` },
+  { id: 'essence', icon: 'i-sp', name: RESONANCE_ESSENCE_NAME, from: () => '진화할 때마다 · 공명' },
+];
 
 type Material = (typeof HOGYOKU_MATERIALS)[number];
-export type MaterialId = Material['id'];
+export type MaterialId = HogyokuTrackId;
 
-/** 다음 단계 강화 재료 줄 (상세 칸): 재료마다 아이콘 · 이름 · 가진 수 / 드는 수 (모자라면 빨강). 칸마다 한 덩어리로 줄바꿈 (C.425) */
-function costRow(save: SaveData, cost: HogyokuCost | null): HTMLElement {
-  const row = h('div', 'bha-hgcost');
-  row.setAttribute('aria-label', '다음 강화 재료');
-  row.dataset.materials = '';
-  for (const m of HOGYOKU_MATERIALS) {
-    const have = m.have(save);
-    const need = cost ? cost[m.id] : null;
-    const c = h('span', `bha-hgcost__item${need === null ? '' : have >= need ? ' is-ok' : ' is-short'}`);
-    c.dataset.material = m.id;
-    c.append(icon(m.icon, 'sm'), h('span', 'bha-hgcost__name', m.name), h('b', '', need === null ? `${have}` : `${have} / ${need}`));
-    row.append(c);
-  }
-  return row;
+/** 개발 % 단계 이름 (10% 구간, GDD 12-3 "단계 이름은 개발 % 10% 구간 이름으로 남긴다") — 0~9% = '개발 전' */
+export function stepNameOf(percent: number): string {
+  const i = Math.floor(Math.max(0, Math.min(100, percent)) / 10);
+  return i > 0 ? HOGYOKU_STEP_NAMES[i - 1] ?? '' : '개발 전';
 }
 
-/** 지금 얻는 총 효과 (GDD 12-2 C.425 "붕옥 개발 글씨 아래에 지금 얻는 총 효과"): 붕옥 개발 보너스 + 초월체 보너스 */
+/** 지금 얻는 총 효과 (GDD 12-2 "붕옥 개발 글씨 아래에 지금 얻는 총 효과"): 강화 트랙 합 + 초월체 보너스 */
 export function totalEffectText(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): { main: string; parts: string } {
   const b = statBonusOf(save);
-  const parts = [`붕옥 개발 +${pct(b.liberation)}`, `초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
+  const parts = [`붕옥 강화 ${save.hogyoku.developed}강 +${pct(b.liberation)}`, `초월체 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
   return { main: `두 캐릭터 전 능력치 +${pct(b.total)}`, parts };
 }
 
-/** 붕옥 창 선택 (C.425, GDD 12-2 "왼쪽에서 고른 것의 상세만"): 붕옥(강화) 또는 재료 칸 하나 */
-export type HogyokuSel = 'develop' | MaterialId;
-let hogyokuSel: HogyokuSel = 'develop';
+/** 붕옥 창 선택 (GDD 12-2 v6.014): 강화 트랙(재료 칸) 하나 또는 붕옥 그림(개발 % 요약). 처음 열면 첫 트랙 */
+export type HogyokuSel = 'orb' | HogyokuTrackId;
+let hogyokuSel: HogyokuSel = HOGYOKU_TRACK_IDS[0]!;
 
 /** 붕옥 그림 단계 (C.423, GDD 12-2 — 사용자 "종합 해방도에 따라 0~19, 20~39, 40~59, 60~79, 80~99, 100일때 모습"):
- *  개발 % 로 고른다. 0~59% = 상자 3종(hogyoku.stage1~3) · 60% 부터 드러난 붕옥 · 80~99% 작은 불꽃 · 100% 큰 불꽃 (불꽃은 붕옥 뒤) */
+ *  개발 %(0~100) 로 고른다. 0~59% = 상자 3종(hogyoku.stage1~3) · 60% 부터 드러난 붕옥 · 80~99% 작은 불꽃 · 100% 큰 불꽃 (불꽃은 붕옥 뒤) */
 export interface HogyokuLook { art: string; flame: 'hogyoku.flame-calm' | 'hogyoku.flame' | null; band: number }
-export function hogyokuLook(level: number): HogyokuLook {
-  const p = Math.max(0, Math.min(100, level * 10));
+export function hogyokuLook(percent: number): HogyokuLook {
+  const p = Math.max(0, Math.min(100, percent));
   if (p >= 100) return { art: 'hogyoku.orb', flame: 'hogyoku.flame', band: 5 };
   if (p >= 80) return { art: 'hogyoku.orb', flame: 'hogyoku.flame-calm', band: 4 };
   if (p >= 60) return { art: 'hogyoku.orb', flame: null, band: 3 };
@@ -134,20 +124,21 @@ export function hogyokuLook(level: number): HogyokuLook {
   return { art: 'hogyoku.stage1', flame: null, band: 0 };
 }
 
-/** 큰 불꽃이 켜지는가: 개발 100%(완전 각성)일 때만. 합체 뒤 5단계로 내려가면 꺼진다 */
+/** 큰 불꽃이 켜지는가: 개발 100%(세 트랙 모두 50강)일 때만. 합체 뒤 25강으로 내려가면 꺼진다 */
 export function hogyokuFlameOn(save: Pick<SaveData, 'hogyoku'>): boolean {
-  return hogyokuLook(save.hogyoku.level).flame === 'hogyoku.flame';
+  return hogyokuLook(hogyokuPercent(save.hogyoku)).flame === 'hogyoku.flame';
 }
 
 const absUrl = (src: string) => (typeof document === 'undefined' ? src : new URL(src, document.baseURI).href);
 
 /** 붕옥 그림 칸: 112×116 칸 하나에 상자 그림(112×116)·붕옥(64, 칸 안 24·25 = 상자 속 붕옥 자리)·불꽃(96, 칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24)을 같은 배율(1.5)로 겹친다.
- *  칸 전체가 버튼 — 누르면 붕옥(강화) 상세 (C.425) */
+ *  칸 전체가 버튼 — 누르면 개발 % 요약 */
 function orbArt(save: SaveData): HTMLButtonElement {
-  const look = hogyokuLook(save.hogyoku.level);
+  const per = hogyokuPercent(save.hogyoku);
+  const look = hogyokuLook(per);
   const box = h('button', 'bha-hgorb__art') as HTMLButtonElement;
   box.type = 'button';
-  box.setAttribute('aria-label', `붕옥 강화 ${save.hogyoku.level} / ${HX.maxLevel}`);
+  box.setAttribute('aria-label', `붕옥 개발 ${per}% 요약`);
   box.dataset.band = String(look.band);
   box.dataset.art = look.art;
   const flameSrc = look.flame ? artSrc(look.flame) : null;
@@ -169,12 +160,13 @@ function orbArt(save: SaveData): HTMLButtonElement {
   return box;
 }
 
-/** 왼쪽 판: 가운데 붕옥 그림(누르면 강화 상세) · 둘레 재료 3칸(누르면 재료 상세, 선으로 붕옥에 이어짐) · 아래 개발 % · 단계 이름 · 지금 얻는 총 효과 */
+/** 왼쪽 판: 가운데 붕옥 그림(누르면 개발 % 요약) · 둘레 재료 3칸 = 강화 트랙(n/50강, 누르면 그 트랙 상세) · 아래 개발 % · 단계 이름 · 지금 얻는 총 효과 */
 function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement {
   const hg = save.hogyoku;
+  const per = hogyokuPercent(hg);
   const board = h('div', 'bha-hgorb');
-  board.setAttribute('aria-label', `붕옥 개발 ${hg.level * 10}%`);
-  board.dataset.level = String(hg.level);
+  board.setAttribute('aria-label', `붕옥 개발 ${per}%`);
+  board.dataset.percent = String(per);
   if (hogyokuFlameOn(save)) board.classList.add('is-full');
   const field = h('div', 'bha-hgorb__field');
   const SVG = 'http://www.w3.org/2000/svg';
@@ -183,33 +175,33 @@ function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement 
   lines.setAttribute('viewBox', '0 0 100 100');
   lines.setAttribute('preserveAspectRatio', 'none');
   lines.setAttribute('aria-hidden', 'true');
-  const spots: Record<MaterialId, [number, number]> = { soul: [13, 14], shard: [87, 14], essence: [87, 86] };
-  for (const m of HOGYOKU_MATERIALS) {
+  const spots: [number, number][] = [[13, 14], [87, 14], [87, 86]];
+  HOGYOKU_MATERIALS.forEach((_, i) => {
     const ln = document.createElementNS(SVG, 'line');
-    const [x, y] = spots[m.id];
+    const [x, y] = spots[i] ?? [13, 86];
     ln.setAttribute('x1', String(x)); ln.setAttribute('y1', String(y)); ln.setAttribute('x2', '50'); ln.setAttribute('y2', '50');
     ln.setAttribute('vector-effect', 'non-scaling-stroke');
     lines.append(ln);
-  }
+  });
   const art = orbArt(save);
-  art.dataset.sel = 'develop';
-  art.onclick = () => pick('develop');
+  art.dataset.sel = 'orb';
+  art.onclick = () => pick('orb');
   field.append(lines, art);
-  const cost = developGate(save).cost;
   for (const m of HOGYOKU_MATERIALS) {
-    const have = m.have(save);
-    const need = cost ? cost[m.id] : null;
-    const b = h('button', `bha-hgmat bha-hgmat--${m.id}${need === null ? '' : have >= need ? ' is-ok' : ' is-short'}`) as HTMLButtonElement;
+    const lv = hg.tracks[m.id] ?? 0;
+    const g = developGate(save, m.id);
+    const b = h('button', `bha-hgmat bha-hgmat--${m.id}${g.ok ? ' is-ok' : lv >= HX.trackMax ? ' is-max' : ''}`) as HTMLButtonElement;
     b.type = 'button';
     b.dataset.material = m.id;
     b.dataset.sel = m.id;
-    b.setAttribute('aria-label', `${m.name} ${have}${need === null ? '' : ` / ${need}`}`);
-    b.append(icon(m.icon), h('b', 'bha-hgmat__n', need === null ? `${have}` : `${have}/${need}`));
+    b.dataset.level = String(lv);
+    b.setAttribute('aria-label', `${m.name} 강화 ${lv} / ${HX.trackMax}강`);
+    b.append(icon(m.icon), h('b', 'bha-hgmat__n', `${lv}/${HX.trackMax}강`));
     b.onclick = () => pick(m.id);
     field.append(b);
   }
   const who = h('div', 'bha-hgorb__who');
-  who.append(h('b', '', `붕옥 개발 ${hg.level * 10}%`), h('small', '', hg.level > 0 ? HOGYOKU_STEP_NAMES[hg.level - 1] ?? '' : '개발 전'));
+  who.append(h('b', '', `붕옥 개발 ${per}%`), h('small', '', stepNameOf(per)));
   const eff = totalEffectText(save);
   const total = h('p', 'bha-hgorb__total');
   total.setAttribute('aria-label', '지금 얻는 총 효과');
@@ -244,74 +236,76 @@ function hgRow(label: string, value: string | Node, mod?: 'good' | 'bad' | 'em')
   return r;
 }
 
-/** 상세: 붕옥 강화 — 지금 몇 강 · 상태 띠 · 막대 · 다음 강화 재료 · 이 강화로 얻는 것(이번 +1%, 강화 뒤 누적) · 막힌 이유 */
-function developDetail(save: SaveData): HTMLElement {
-  const hg = save.hogyoku;
-  const gate = developGate(save);
-  const max = hg.level >= HX.maxLevel;
-  const p = panel({ title: '붕옥 강화', aside: `${hg.level}강 / ${HX.maxLevel}` });
-  p.setAttribute('aria-label', '붕옥 강화 상세');
-  p.dataset.level = String(hg.level);
-  p.append(stageChips(hogyokuStage(save)));
-  const now = hg.level > 0 ? `${hg.level}강 · ${hg.level * 10}% ${HOGYOKU_STEP_NAMES[hg.level - 1] ?? ''}` : '0강 · 개발 전';
-  const b = statBonusOf(save);
+/** 상세: 트랙 하나 강화 — 지금 몇 강 · 다음 강 재료 수·보유 · 이 트랙으로 얻는 것(지금 누적 + 다음 1강) · 막힌 이유 · 얻는 곳 · 강당 비용 */
+function trackDetail(save: SaveData, m: Material): HTMLElement {
+  const lv = save.hogyoku.tracks[m.id] ?? 0;
+  const g = developGate(save, m.id);
+  const p = panel({ title: `${m.name} 강화`, aside: `${lv}강 / ${HX.trackMax}` });
+  p.setAttribute('aria-label', `${m.name} 강화 상세`);
+  p.dataset.material = m.id;
+  p.dataset.level = String(lv);
+  const top = h('div', 'bha-hgitem');
+  top.append(icon(m.icon, 'lg'), h('b', '', `보유 ${g.have}`), stageChips(hogyokuStage(save)));
   const rows = h('div', 'bha-hgrows');
-  rows.append(hgRow('지금', now));
-  if (max) {
-    rows.append(hgRow('다음 강화', '없음 — 붕옥 개발 100% (완전 각성)', 'good'));
-    p.append(rows);
-  } else {
-    const after = slotStatBonus(hg.developed + 1, save.transcendentDex.length);
+  rows.append(hgRow('지금', `${lv}강 — 이 강화로 전 능력치 +${pct(lv * HX.perStepBonus)}`));
+  if (g.cost === null) rows.append(hgRow('다음 강', `없음 — ${HX.trackMax}강 완료`, 'good'));
+  else {
+    const b = statBonusOf(save);
+    const after = slotStatBonus(save.hogyoku.developed + 1, save.transcendentDex.length);
     rows.append(
-      hgRow('다음 강화', `${gate.next}강 · ${gate.next * 10}% ${HOGYOKU_STEP_NAMES[gate.next - 1] ?? ''}`, 'em'),
-      hgRow('이 강화로 얻는 것', `두 캐릭터 전 능력치 +${pct(HX.perLevelBonus)} (영구)`),
-      hgRow('강화 뒤 누적', `전 능력치 +${pct(b.total)} → +${pct(after.total)}`, 'good'),
+      hgRow('다음 강', `${g.next}강`, 'em'),
+      hgRow('필요 재료 (보유 / 필요)', `${m.name} ${g.have} / ${g.cost}`, g.have >= g.cost ? 'good' : 'bad'),
+      hgRow('다음 1강으로 얻는 것', `두 캐릭터 전 능력치 +${pct(HX.perStepBonus)} (영구)`),
+      hgRow('강화 뒤 전체', `+${pct(b.total)} → +${pct(after.total)}`, 'good'),
     );
-    p.append(rows, h('p', 'bha-hgcap', '다음 강화 재료 (보유 / 필요)'), costRow(save, gate.cost));
   }
-  const blocks = gate.missing.filter((x) => x !== 'tab' && x !== 'max');
+  const c = HX.trackCost[m.id];
+  rows.append(hgRow('강당 재료', `1~${HX.trackHalf}강 ${c[0]}개 · ${HX.trackHalf + 1}~${HX.trackMax}강 ${c[1]}개`), hgRow('얻는 곳', m.from()));
+  p.append(top, rows);
+  const blocks = g.missing.filter((x) => x !== 'tab' && x !== 'max');
   if (blocks.length) {
     const why = h('div', 'bha-hgwhy');
     why.setAttribute('aria-label', '강화가 막힌 이유');
-    for (const m of blocks) why.append(h('p', 'bha-small', `· ${developBlockText(m)}`));
+    for (const x of blocks) why.append(h('p', 'bha-small', `· ${developBlockText(x, m.id)}`));
     p.append(why);
   }
-  p.append(h('p', 'bha-faint', `재료 3종을 바쳐 한 단계씩 강화한다(${HX.maxLevel}강 = 100%). ${HX.halfLevel * 10}%까지 = ${HOGYOKU_STAGE_NAMES.half}, 그 뒤 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%가 되면 합체할 수 있다. 합체하면 ${HX.halfLevel}강으로 돌아가지만 오른 능력치는 남는다.`));
   return p;
 }
 
-/** 상세: 재료 하나 — 가진 수 · 다음 단계에 드는 수 · 얻는 곳 · 쓰는 곳 */
-function materialDetail(save: SaveData, m: Material): HTMLElement {
-  const cost = developGate(save).cost;
-  const have = m.have(save);
-  const p = panel({ title: m.name, aside: provisionalTag('임시 수치') });
-  p.setAttribute('aria-label', `${m.name} 상세`);
-  p.dataset.material = m.id;
-  const top = h('div', 'bha-hgitem');
-  top.append(icon(m.icon, 'lg'), h('b', '', `보유 ${have}`));
+/** 상세: 붕옥 그림 = 개발 % 요약 — 세 트랙 강 수 · 평균 · 단계 이름 · 반각성/공명 안내 */
+function orbDetail(save: SaveData): HTMLElement {
+  const hg = save.hogyoku;
+  const per = hogyokuPercent(hg);
+  const p = panel({ title: '붕옥 개발', aside: `${per}%` });
+  p.setAttribute('aria-label', '붕옥 개발 요약');
+  p.dataset.percent = String(per);
   const rows = h('div', 'bha-hgrows');
-  rows.append(
-    hgRow('다음 강화에 드는 수', cost ? `${cost[m.id]}` : '없음 (개발 100%)', cost ? (have >= cost[m.id] ? 'good' : 'bad') : undefined),
-    hgRow('얻는 곳', m.from()),
-    hgRow('쓰는 곳', '붕옥 강화에만 쓴다 (두 캐릭터 공용, 팔 수 없음)'),
-  );
-  p.append(top, rows);
+  for (const m of HOGYOKU_MATERIALS) {
+    const lv = hg.tracks[m.id] ?? 0;
+    rows.append(hgRow(`${m.name} 강화`, `${lv} / ${HX.trackMax}강`, lv >= HX.trackMax ? 'good' : undefined));
+  }
+  const avg = HOGYOKU_MATERIALS.reduce((a, m) => a + (hg.tracks[m.id] ?? 0), 0) / HOGYOKU_MATERIALS.length;
+  rows.append(hgRow('평균', `${Math.round(avg * 10) / 10}강 → 개발 ${per}% · ${stepNameOf(per)}`, 'em'));
+  p.append(stageChips(hogyokuStage(save)), rows, h('p', 'bha-faint', `개발 % = 세 강화의 평균 ÷ ${HX.trackMax}. 강마다 두 캐릭터 전 능력치 +${pct(HX.perStepBonus)}(영구). 1~${HX.trackHalf}강 = ${HOGYOKU_STAGE_NAMES.half}, ${HX.trackHalf + 1}강부터 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%(세 강화 모두 ${HX.trackMax}강)면 합체할 수 있다. 합체하면 세 강화가 ${HX.trackHalf}강으로 돌아가지만 오른 능력치는 남는다.`));
   return p;
 }
 
 export interface HogyokuHandlers {
-  onDevelop: () => void;
+  /** [강화] = 고른 트랙 1강 */
+  onDevelop: (track: HogyokuTrackId) => void;
+  /** [일괄 강화] = 가진 재료로 세 트랙 모두 갈 수 있는 데까지 (확인 1번) */
+  onDevelopAll: () => void;
   /** 오른쪽 위 탭 [합체] — 붕옥이 안 보이는 별도 창 */
   onFusion: () => void;
   /** 오른쪽 위 탭 [초월체 도감] — 별도 창 */
   onDex: () => void;
 }
 
-/** 붕옥 화면 (GDD 12-2 C.425 사용자 재지시 "오른쪽 탭 다 지워"): 왼쪽 판 = 붕옥 그림 + 재료 3칸 + 개발 % + 지금 얻는 총 효과,
- *  오른쪽 판 = 고른 것(붕옥·재료)의 상세 하나 + 아래 고정 [강화]. 머리 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 */
+/** 붕옥 화면 (GDD 12-2 v6.014, C.425 사용자 재지시 "오른쪽 탭 다 지워" · "재료마다 따로 강화"): 왼쪽 판 = 붕옥 그림 + 강화 트랙 3칸 + 개발 % + 지금 얻는 총 효과,
+ *  오른쪽 판 = 고른 것(트랙·붕옥 요약)의 상세 하나 + 아래 고정 [강화][일괄 강화]. 머리 오른쪽 위 탭 [합체][초월체 도감] = 별도 창 */
 export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): void {
   const sub = h('span');
-  sub.append(`두 캐릭터가 재료를 같이 모은다 `, provisionalTag('임시 수치'));
+  sub.append(`재료마다 따로 강화한다 `, provisionalTag('임시 수치'));
   const fusionTab = button({ label: '합체', icon: 'i-evolve', size: 'small', onClick: hd.onFusion });
   fusionTab.dataset.sc = 'hogyoku-fusion';
   if (fusionGate(save).ok) fusionTab.classList.add('is-on');
@@ -321,12 +315,13 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
 
   const detail = h('div', 'bha-hgdetail');
   detail.setAttribute('aria-live', 'polite');
-  const gate = developGate(save);
-  const max = save.hogyoku.level >= HX.maxLevel;
-  const btn = button({ label: max ? '강화 완료 (100%)' : `강화 — ${gate.next}강 (${gate.next * 10}%)`, icon: 'i-plus', variant: 'primary', block: true, disabled: !gate.ok, onClick: hd.onDevelop });
-  btn.dataset.sc = 'hogyoku-develop';
+  const one = button({ label: '강화', icon: 'i-plus', variant: 'primary', block: true, onClick: () => { if (hogyokuSel !== 'orb') hd.onDevelop(hogyokuSel); } });
+  one.dataset.sc = 'hogyoku-develop';
+  const anyOk = HOGYOKU_TRACK_IDS.some((id) => developGate(save, id).ok);
+  const all = button({ label: '일괄 강화', icon: 'i-chain-3', block: true, disabled: !anyOk, onClick: hd.onDevelopAll });
+  all.dataset.sc = 'hogyoku-develop-all';
   const foot = h('div', 'bha-hgfoot');
-  foot.append(btn);
+  foot.append(one, all);
   let board: HTMLElement;
   const pick = (sel: HogyokuSel) => {
     hogyokuSel = sel;
@@ -335,9 +330,14 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
       b.setAttribute('aria-pressed', String(b.dataset.sel === sel));
     });
     const m = HOGYOKU_MATERIALS.find((x) => x.id === sel);
-    detail.replaceChildren(m ? materialDetail(save, m) : developDetail(save));
+    detail.replaceChildren(m ? trackDetail(save, m) : orbDetail(save));
     detail.dataset.sel = sel;
     detail.scrollTop = 0;
+    // [강화] = 고른 트랙 1강. 붕옥 요약을 보는 중이면 흐림 (재료 칸을 골라야 강화)
+    const g = m ? developGate(save, m.id) : null;
+    one.disabled = !g?.ok;
+    one.setAttribute('aria-label', m ? `${m.name} 강화` : '강화');
+    one.replaceChildren(icon('i-plus'), m ? (g!.cost === null ? `${HX.trackMax}강 완료` : `강화 → ${g!.next}강`) : '재료 칸을 골라 강화');
   };
   board = orbBoard(save, pick);
   pick(hogyokuSel);
@@ -346,9 +346,19 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
   lcdPage(dev.view, { cls: 'bha-hogyoku-page bha-hogyoku-main' }, head, [board], [right]);
 }
 
-/** 처음 열면 붕옥 선택 (C.425) — 붕옥 창을 새로 열 때 부른다 */
+/** 일괄 강화 미리 계산 (확인 창 문구): 세이브를 건드리지 않고 복사본으로 developAll */
+export function developAllPreview(save: SaveData): HogyokuCost {
+  return developAll(structuredClone(save)).gained;
+}
+
+/** 일괄 강화 결과 한 줄: '영혼 결정 +3강 · 붕옥 파편 +2강' (오른 것만) */
+export function gainedText(g: HogyokuCost): string {
+  return HOGYOKU_MATERIALS.filter((m) => g[m.id] > 0).map((m) => `${m.name} +${g[m.id]}강`).join(' · ') || '오른 강 없음';
+}
+
+/** 처음 열면 첫 트랙(영혼 결정) 선택 — 붕옥 창을 새로 열 때 부른다 */
 export function resetHogyokuSel(): void {
-  hogyokuSel = 'develop';
+  hogyokuSel = HOGYOKU_TRACK_IDS[0]!;
 }
 
 /** 슬롯의 두 캐릭터를 종족 설정 순서(FACTIONS 목록 순)로 (C.425 합체 창 "왼쪽 호로·오른쪽 사신" — 종족 id 분기 없이 설정 순서) */
@@ -400,7 +410,7 @@ function fusionConditions(save: SaveData): HTMLElement {
     r.dataset.ok = String(!bad);
     list.append(r);
   };
-  cond('develop', '붕옥 개발 100%', '완료', `지금 ${save.hogyoku.level * 10}%`);
+  cond('develop', '붕옥 개발 100%', '완료', `지금 ${hogyokuPercent(save.hogyoku)}% (${HOGYOKU_MATERIALS.map((m) => `${m.name} ${save.hogyoku.tracks[m.id] ?? 0}`).join(' · ')}강)`);
   cond('resonance', HOGYOKU_STAGE_NAMES.resonance, '완료', '두 종족의 스토리를 모두 끝내면');
   cond('rank', '두 캐릭터 모두 등급 1위', '완료', tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`).join(' · '));
   cond('expedition', '진행 중인 모험 없음', '없음', '모험을 끝내야 한다');
@@ -508,11 +518,11 @@ export function fusionLists(): { gone: string[]; keeps: string[] } {
     gone: [
       '지금 두 캐릭터 (초월체 도감에 전시된다)',
       '두 캐릭터의 능력치·노력치·진화·특성·걸음·등급·등급 이력·수련·환생 횟수 — 새 두 캐릭터는 1단계 완전 초기 (환생 계승 없음)',
-      `붕옥 개발 ${HX.halfLevel * 10 + 10}~100% 진행 (다음 합체를 위해 다시 개발)`,
+      `붕옥 강화 세 가지의 ${HX.trackHalf + 1}~${HX.trackMax}강 진행 (다음 합체를 위해 다시 강화)`,
     ],
     keeps: [
       '도감·칭호 기록, 초월체 도감',
-      `붕옥 개발 ${HX.halfLevel * 10}%까지·공명, 개발로 오른 능력치 (새 캐릭터에도)`,
+      `붕옥 강화 ${HX.trackHalf}강까지·공명, 강화로 오른 능력치 (새 캐릭터에도)`,
       `음식·가진 타일·${TRADE_CURRENCY_NAME}·${JADE_NAME}·남은 붕옥 재료`,
       '스토리 진행·보스 도감·입은 스킨',
     ],

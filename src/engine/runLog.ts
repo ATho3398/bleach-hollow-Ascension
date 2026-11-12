@@ -648,10 +648,12 @@ export interface FusionRecord {
   jade: number;
 }
 
-/** 붕옥 개발 기록 (GDD 244장 4·6, C.414 형식 79): 한 단계 올릴 때마다 — 오른 단계·바친 재료 3종·그때 트랙 종족(누른 쪽) */
+/** 붕옥 개발 기록 (GDD 12-3, C.414 형식 79 → C.425 형식 80): 한 강 올릴 때마다 — 트랙·오른 강·바친 재료 3종(그 트랙 재료만 0 아님)·그때 트랙 종족(누른 쪽) */
 export interface HogyokuDevRecord {
   at: number;
-  /** 올라간 단계 (1~10) */
+  /** 강화한 트랙 = 재료 id (형식 80). 없으면 옛 10단계 기록 */
+  track?: string;
+  /** 올라간 강 (트랙 1~50) — 옛 기록은 단계 (1~10) */
   level: number;
   soul: number;
   shard: number;

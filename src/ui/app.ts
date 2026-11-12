@@ -31,11 +31,11 @@ import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
-  canSwitchFaction, developHogyoku, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
+  canSwitchFaction, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
-import { fusionConfirmView, fusionFinalText, fusionPickView, fusionView, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
+import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, fusionView, gainedText, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingLockedText, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
@@ -1425,10 +1425,20 @@ export function startApp(host: HTMLElement): void {
   // ── 붕옥 (GDD 22-3 → 244장, C.414): 붕옥 개발 → 합체 미리보기(확인 1) → 최종 확인(확인 2) → 자동 백업 'fusion' → 합체 → 연출 → 새 1단계 방 ──
   function renderHogyoku(s: SaveData): void {
     hogyokuView(dev, s, {
-      onDevelop: () => {
-        // 붕옥 개발 한 단계 (GDD 244장 4): 재료를 바치고 단계 +1 — 화면이 새 단계로 다시 그려진다
-        if (developHogyoku(s)) persist();
+      onDevelop: (track) => {
+        // 붕옥 강화 1강 (GDD 12-3 v6.014): 고른 트랙 재료만 바치고 그 트랙 +1강 — 화면이 새 강으로 다시 그려진다
+        if (developHogyoku(s, track)) persist();
         nav.top?.render();
+      },
+      onDevelopAll: () => {
+        // 일괄 강화 (GDD 12-3 v6.014): 확인 1번(미리 계산한 결과) → 낮은 트랙부터 번갈아 갈 수 있는 데까지 → 결과 요약 알림
+        const pre = developAllPreview(s);
+        confirmDialog({ title: '일괄 강화', body: `가진 재료로 갈 수 있는 데까지 강화한다 (낮은 강화부터 번갈아): ${gainedText(pre)}. 재료는 되돌릴 수 없다.`, yes: '일괄 강화', no: '그만둔다', onYes: () => {
+          const r = developAll(s);
+          if (r.records.length) persist();
+          nav.top?.render();
+          showToast({ eyebrow: '붕옥 일괄 강화', title: gainedText(r.gained), meta: `붕옥 개발 ${hogyokuPercent(s.hogyoku)}%` });
+        } });
       },
       // 오른쪽 위 탭 2개 (C.425): 붕옥이 안 보이는 별도 창 — 뒤로 = 붕옥 창
       onFusion: () => open('hogyoku-fusion', () => fusionPickView(dev, s, { onPreview: () => open('fusion-confirm', () => renderFusionConfirm(s)) })),

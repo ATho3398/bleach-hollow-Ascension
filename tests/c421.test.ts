@@ -35,13 +35,13 @@ describe('C.421 붕옥 그림', () => {
     }
   });
 
-  it('불꽃 = 개발 100%에서만 (합체 뒤 5단계로 내려가면 꺼짐)', () => {
+  it('불꽃 = 개발 100%에서만 (합체 뒤 25강으로 내려가면 꺼짐, C.425 트랙)', () => {
     const s = newSaveData('hollow', 0);
-    s.hogyoku.level = HX.maxLevel - 1;
+    s.hogyoku.tracks = { soul: HX.trackMax, shard: HX.trackMax, essence: HX.trackMax - 1 };
     expect(hogyokuFlameOn(s)).toBe(false);
-    s.hogyoku.level = HX.maxLevel;
+    s.hogyoku.tracks.essence = HX.trackMax;
     expect(hogyokuFlameOn(s)).toBe(true);
-    s.hogyoku.level = HX.halfLevel;
+    s.hogyoku.tracks = { soul: HX.trackHalf, shard: HX.trackHalf, essence: HX.trackHalf };
     expect(hogyokuFlameOn(s)).toBe(false);
   });
 

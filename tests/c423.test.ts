@@ -11,14 +11,14 @@ const size = (p: string) => { const b = buf(p); return [b.readUInt32BE(16), b.re
 
 describe('C.423 붕옥 단계 그림·스케치 배치', () => {
   it('개발 % → 그림 6단계 (0~19·20~39·40~59 상자 / 60~79 붕옥 / 80~99 작은 불꽃 / 100 큰 불꽃)', () => {
-    const rows = Array.from({ length: 11 }, (_, lv) => { const l = hogyokuLook(lv); return `${lv * 10}:${l.art}:${l.flame ?? '-'}`; });
+    const rows = Array.from({ length: 11 }, (_, lv) => { const l = hogyokuLook(lv * 10); return `${lv * 10}:${l.art}:${l.flame ?? '-'}`; });
     expect(rows).toEqual([
       '0:hogyoku.stage1:-', '10:hogyoku.stage1:-', '20:hogyoku.stage2:-', '30:hogyoku.stage2:-', '40:hogyoku.stage3:-', '50:hogyoku.stage3:-',
       '60:hogyoku.orb:-', '70:hogyoku.orb:-', '80:hogyoku.orb:hogyoku.flame-calm', '90:hogyoku.orb:hogyoku.flame-calm', '100:hogyoku.orb:hogyoku.flame',
     ]);
     const s = newSaveData('hollow', 0);
-    s.hogyoku.level = 9; expect(hogyokuFlameOn(s)).toBe(false);
-    s.hogyoku.level = 10; expect(hogyokuFlameOn(s)).toBe(true);
+    s.hogyoku.tracks = { soul: 50, shard: 50, essence: 45 }; expect(hogyokuFlameOn(s)).toBe(false); // 평균 48.3 → 96%
+    s.hogyoku.tracks.essence = 50; expect(hogyokuFlameOn(s)).toBe(true);
   });
 
   it('그림 파일 = 사용자 원본 그대로 · 키가 매니페스트에 있다', () => {
@@ -45,7 +45,7 @@ describe('C.423 붕옥 단계 그림·스케치 배치', () => {
 
   it('스케치 배치: 왼쪽 = 붕옥 + 둘레 재료 3칸(선), 누르면 오른쪽 상세가 바뀐다 (오른쪽 세로 목록은 C.425 에 삭제)', () => {
     const v = read('src/ui/hogyokuView.ts');
-    for (const k of ["'bha-hgorb__lines'", "`bha-hgmat bha-hgmat--${m.id}", "b.onclick = () => pick(m.id)", "'bha-hgdetail'", 'materialDetail(save, m)']) expect(v).toContain(k);
+    for (const k of ["'bha-hgorb__lines'", "`bha-hgmat bha-hgmat--${m.id}", "b.onclick = () => pick(m.id)", "'bha-hgdetail'", 'trackDetail(save, m)']) expect(v).toContain(k);
     expect(read('src/ui/bha/screens-lcd.css')).toMatch(/\.bha-hgdetail \{[^}]*overflow-y: auto/);
   });
 });

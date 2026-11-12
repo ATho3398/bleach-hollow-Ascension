@@ -20,7 +20,7 @@ import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistor
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
-import { allTranscendentsOwned, conditionMet, decideTranscendent, developCost, developCostSum, slotStatBonus, type FusionInput, type HogyokuCost } from './engine/transcend';
+import { allTranscendentsOwned, conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
 import { buildBattleRecord, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
@@ -63,7 +63,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 79; // C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 80; // C.425 (GDD v6.014 12-3): 붕옥 개발 hogyoku.level(10단계) → hogyoku.tracks(재료별 강화 트랙 3개, 각 0~50강)·developed 단위 = 강, 런 로그 slotLog.hogyokuDev[].track — 79 → 80 변환 SAVE_MIGRATIONS[79](옛 n단계 → 세 트랙 n×5강, 오른 보너스 보존). C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -217,9 +217,10 @@ export interface HogyokuState {
   tabNotice: boolean;
   /** 등장한 시각(ms). 옛 세이브에서 이미 열린 것은 0, 아직이면 null */
   appearedAt: number | null;
-  /** 붕옥 개발 단계 (GDD 244장 4, 0~10 = 0~100%). 1~5 = 반각성(등장)부터, 6~10 = 공명부터. 합체하면 halfLevel(5)로 (6~10단계 진행만 0) */
-  level: number;
-  /** 지금까지 올린 단계 수 합 (영구 능력치 +1%씩 — 합체로 level 이 내려가도 줄지 않는다, 244장 5) */
+  /** 붕옥 강화 트랙 (GDD 12-3 v6.014, 형식 80): 재료 id → 지금 강(0~trackMax). 1~trackHalf강 = 반각성(등장)부터, 그 위 = 공명부터.
+   *  개발 % = 세 트랙 평균 ÷ trackMax. 합체하면 트랙마다 trackHalf 로 (26~50강 진행만 0) */
+  tracks: HogyokuCost;
+  /** 지금까지 올린 강 수 합 (영구 능력치 +0.1%씩 — 합체로 트랙이 내려가도 줄지 않는다). 형식 80 변환 = 옛 단계 1개 = 10강 몫(1%)으로 보존 */
   developed: number;
   /** 공명 (GDD 244장 2): 두 종족 스토리를 전부 깼다 — 6~10단계·합체가 열린다. 처음 한 번, 영구 */
   resonance: boolean;
@@ -234,8 +235,31 @@ export interface TranscendentEntry {
   fusionIndex: number;
 }
 
+/** 강화 트랙 빈 값 (트랙 id 는 balance 에서) */
+export function emptyHogyokuTracks(): HogyokuCost {
+  return Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, 0])) as HogyokuCost;
+}
+
+/** 붕옥 개발 %(0~100 정수, 내림) = 세 트랙 평균 ÷ trackMax (GDD 12-3 v6.014) */
+export function hogyokuPercent(h: Pick<HogyokuState, 'tracks'>): number {
+  return Math.floor(hogyokuProgress(h.tracks) * 100 + 1e-9);
+}
+
+/** 트랙 하나가 지금 가진 재료 수 */
+export function materialHave(save: Pick<SaveData, 'shared'>, track: HogyokuTrackId): number {
+  const sh = save.shared;
+  return track === HOGYOKU_TRACK_IDS[0] ? sh.soulCrystals : track === HOGYOKU_TRACK_IDS[1] ? sh.hogyokuShards : sh.resonanceEssence;
+}
+
+function spendMaterial(save: Pick<SaveData, 'shared'>, track: HogyokuTrackId, n: number): void {
+  const sh = save.shared;
+  if (track === HOGYOKU_TRACK_IDS[0]) sh.soulCrystals -= n;
+  else if (track === HOGYOKU_TRACK_IDS[1]) sh.hogyokuShards -= n;
+  else sh.resonanceEssence -= n;
+}
+
 export function newHogyokuState(): HogyokuState {
-  return { tabOpen: false, tabNotice: false, appearedAt: null, level: 0, developed: 0, resonance: false, resonatedAt: null };
+  return { tabOpen: false, tabNotice: false, appearedAt: null, tracks: emptyHogyokuTracks(), developed: 0, resonance: false, resonatedAt: null };
 }
 
 /** 한 트랙의 스토리 진행: 깬 화(키 "ch1/ep2" → 첫 클리어 시각·클리어 횟수), 장 클리어 보상을 받은 장 id */
@@ -964,39 +988,55 @@ export function statBonusOf(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>)
   return slotStatBonus(save.hogyoku.developed, save.transcendentDex.length);
 }
 
-/** 다음 단계 개발이 막힌 이유 (GDD 244장 2·4) */
-export type DevelopBlock = 'tab' | 'max' | 'resonance' | 'soul' | 'shard' | 'essence';
+/** 다음 강화가 막힌 이유 (GDD 12-3 v6.014): 붕옥 미등장 · 그 트랙 50강 · 26강부터 공명 필요 · 그 트랙 재료 부족('short') */
+export type DevelopBlock = 'tab' | 'max' | 'resonance' | 'short';
 
-/** 다음 단계(level + 1)를 개발할 수 있나: 붕옥 등장 · 10단계 미만 · 6단계부터는 공명 · 재료 3종이 모자라지 않음. 막힌 이유를 모두 */
-export function developGate(save: SaveData): { ok: boolean; next: number; cost: HogyokuCost | null; missing: DevelopBlock[] } {
+/** 트랙 track 을 1강 더 올릴 수 있나. next = 올라갈 강, cost = 그 트랙 재료 수(50강이면 null). 막힌 이유를 모두 */
+export function developGate(save: SaveData, track: HogyokuTrackId): { ok: boolean; next: number; cost: number | null; have: number; missing: DevelopBlock[] } {
   const HX = BALANCE.provisional.hogyoku;
   const h = save.hogyoku;
+  const cur = h.tracks[track] ?? 0;
+  const have = materialHave(save, track);
   const missing: DevelopBlock[] = [];
   if (!h.tabOpen) missing.push('tab');
-  if (h.level >= HX.maxLevel) return { ok: false, next: h.level, cost: null, missing: [...missing, 'max'] };
-  const next = h.level + 1;
-  const cost = developCost(next);
-  if (next > HX.halfLevel && !h.resonance) missing.push('resonance');
-  if (save.shared.soulCrystals < cost.soul) missing.push('soul');
-  if (save.shared.hogyokuShards < cost.shard) missing.push('shard');
-  if (save.shared.resonanceEssence < cost.essence) missing.push('essence');
-  return { ok: missing.length === 0, next, cost, missing };
+  if (cur >= HX.trackMax) return { ok: false, next: cur, cost: null, have, missing: [...missing, 'max'] };
+  const next = cur + 1;
+  const cost = trackStepCost(track, next);
+  if (next > HX.trackHalf && !h.resonance) missing.push('resonance');
+  if (have < cost) missing.push('short');
+  return { ok: missing.length === 0, next, cost, have, missing };
 }
 
-/** 붕옥 개발 한 단계 (GDD 244장 4): 재료 3종을 바치고 단계 +1 — 두 캐릭터 전 능력치 +1%(영구). 런 로그(slotLog.hogyokuDev)에 단계·쓴 재료.
+/** 붕옥 강화 1강 (GDD 12-3 v6.014): 그 트랙 재료만 바치고 그 트랙 +1강 — 두 캐릭터 전 능력치 +0.1%(영구). 런 로그(slotLog.hogyokuDev)에 트랙·강·쓴 재료.
  *  막혔으면 null */
-export function developHogyoku(save: SaveData, nowMs: number = Date.now()): HogyokuDevRecord | null {
-  const g = developGate(save);
-  if (!g.ok || !g.cost) return null;
+export function developHogyoku(save: SaveData, track: HogyokuTrackId, nowMs: number = Date.now()): HogyokuDevRecord | null {
+  const g = developGate(save, track);
+  if (!g.ok || g.cost === null) return null;
   const h = save.hogyoku;
-  save.shared.soulCrystals -= g.cost.soul;
-  save.shared.hogyokuShards -= g.cost.shard;
-  save.shared.resonanceEssence -= g.cost.essence;
-  h.level = g.next;
+  spendMaterial(save, track, g.cost);
+  h.tracks[track] = g.next;
   h.developed += 1;
-  const rec: HogyokuDevRecord = { at: nowMs, level: g.next, ...g.cost, factionId: save.factionId, cycle: save.slotLog.fusions.length + 1 };
+  const spent = { ...emptyHogyokuTracks(), [track]: g.cost } as HogyokuCost;
+  const rec: HogyokuDevRecord = { at: nowMs, track, level: g.next, ...spent, factionId: save.factionId, cycle: save.slotLog.fusions.length + 1 };
   (save.slotLog.hogyokuDev ??= []).push(rec);
   return rec;
+}
+
+/** 일괄 강화 (GDD 12-3 v6.014 [일괄 강화]): 가진 재료로 세 트랙 모두 갈 수 있는 데까지. 순서 = 지금 강이 가장 낮은 트랙부터 1강씩 번갈아
+ *  (같으면 트랙 목록 순서) — 한 트랙만 먼저 치솟지 않게. 오른 강 수를 트랙별로 돌려준다 */
+export function developAll(save: SaveData, nowMs: number = Date.now()): { gained: HogyokuCost; records: HogyokuDevRecord[] } {
+  const gained = emptyHogyokuTracks();
+  const records: HogyokuDevRecord[] = [];
+  for (;;) {
+    const open = HOGYOKU_TRACK_IDS.filter((id) => developGate(save, id).ok);
+    if (open.length === 0) break;
+    const pick = open.reduce((a, b) => ((save.hogyoku.tracks[b] ?? 0) < (save.hogyoku.tracks[a] ?? 0) ? b : a));
+    const rec = developHogyoku(save, pick, nowMs);
+    if (!rec) break;
+    gained[pick] += 1;
+    records.push(rec);
+  }
+  return { gained, records };
 }
 
 /** 이 트랙이 지금 등급 1위인가 (1위 번호는 등급 데이터의 맨 위 번호) */
@@ -1020,7 +1060,7 @@ export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[
   if (!h.tabOpen) missing.push('tab');
   if (!h.resonance) missing.push('resonance');
   if (tracks.length < BALANCE.provisional.twoTrack.maxTracks) missing.push('tracks');
-  if (h.level < BALANCE.provisional.hogyoku.maxLevel) missing.push('develop');
+  if (HOGYOKU_TRACK_IDS.some((id) => (h.tracks[id] ?? 0) < BALANCE.provisional.hogyoku.trackMax)) missing.push('develop');
   if (!tracks.every(trackIsTopRank)) missing.push('rank');
   if (tracks.some((t) => t.activeExpedition != null)) missing.push('expedition');
   if (allTranscendentsOwned(save.transcendentDex.map((x) => x.id))) missing.push('complete');
@@ -1063,12 +1103,12 @@ export function performFusion(save: SaveData, nowMs: number = Date.now()): Fusio
   const characters = tracks.map(summaryOf);
   const jade = save.transcendentDex.length === 0 ? HX.firstTranscendentJade : 0;
   const index = save.slotLog.fusions.length + 1;
-  const soulSpent = developCostSum(HX.halfLevel, HX.maxLevel).soul;
+  const soulSpent = trackCostSum(HOGYOKU_TRACK_IDS[0]!, HX.trackHalf, HX.trackMax);
   const record: FusionRecord = { at: nowMs, index, transcendentId: def.id, matched, characters, soulSpent, jade };
   save.slotLog.fusions.push(record);
   save.transcendentDex.push({ id: def.id, at: nowMs, fusionIndex: index });
-  // 6~10단계 진행만 0 으로 (GDD 244장 5): 1~5단계는 남고, 개발로 오른 능력치(developed)는 그대로
-  save.hogyoku.level = Math.min(save.hogyoku.level, HX.halfLevel);
+  // 세 트랙 26~50강 진행만 0 으로 (GDD 12-4 v6.014): 1~25강은 남고, 강화로 오른 능력치(developed)는 그대로
+  for (const id of HOGYOKU_TRACK_IDS) save.hogyoku.tracks[id] = Math.min(save.hogyoku.tracks[id] ?? 0, HX.trackHalf);
   save.shared.jade += jade;
   // 새 두 트랙: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다
   const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin, wear: { ...t.wear } });
@@ -2131,7 +2171,7 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
     if (isRec(save.slotLog)) Object.assign(save.slotLog as unknown as Record<string, unknown>, { hogyokuDev: [], hogyokuMaterials: [] });
     if (!isRec(h)) return;
     const o = h as Record<string, unknown>;
-    const HX = BALANCE.provisional.hogyoku;
+    const HX = { halfLevel: 5, maxLevel: 10 }; // 형식 79 의 옛 10단계 (C.425 형식 80 에서 트랙으로 바뀜 — 이 단계는 옛 값 그대로)
     const oldLiberate = 100; // 옛 provisional liberateCost (C.414 에서 삭제)
     const oldFusion = 300; // 옛 provisional fusionCost
     const fed = Math.min(oldLiberate, nonNegInt(o.fed));
@@ -2153,6 +2193,20 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
     delete o.liberated;
     delete o.liberatedAt;
     delete o.fusionFed;
+  },
+  // 형식 79 → 80 (C.425, GDD 12-3 v6.014): 붕옥 개발 10단계(level) → 재료별 강화 트랙 3개(tracks, 각 0~50강). 옛 n단계 → 세 트랙 각 n×5강(개발 % 그대로).
+  // 이미 오른 보너스(옛 developed 단계 × 1%)는 줄지 않게: developed(강) = 지금 트랙 강 합 + 합체로 깎였던 옛 단계 × 10강(= 1%) — 옛 n단계 몫 n% ≤ 새 1.5n%.
+  // 옛 개발 기록(slotLog.hogyokuDev)은 그대로(track 없음 = 옛 10단계 기록)
+  79: (save) => {
+    const h = (save as unknown as Record<string, unknown>).hogyoku;
+    if (!isRec(h)) return;
+    const o = h as Record<string, unknown>;
+    const level = Math.min(10, nonNegInt(o.level));
+    const oldDeveloped = Math.max(level, nonNegInt(o.developed));
+    const per = BALANCE.provisional.hogyoku.trackMax / 10;
+    o.tracks = Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, level * per]));
+    o.developed = level * per * HOGYOKU_TRACK_IDS.length + (oldDeveloped - level) * Math.round(0.01 / BALANCE.provisional.hogyoku.perStepBonus);
+    delete o.level;
   },
 };
 
@@ -2731,14 +2785,16 @@ export function sanitizeHogyoku(raw: unknown): HogyokuState {
   const HX = BALANCE.provisional.hogyoku;
   const tabOpen = r.tabOpen === true;
   const resonance = tabOpen && r.resonance === true;
-  // 공명 전에는 반각성 단계(halfLevel)까지만 — 옛 세이브에서 옮긴 6~10단계는 공명 전이라도 남긴다(형식 79 변환이 이미 정한 값, 진행만 막힘)
-  const level = tabOpen ? Math.min(HX.maxLevel, nonNegInt(r.level)) : 0;
+  // 트랙마다 0~trackMax. 옛 세이브에서 옮긴 26강 이상은 공명 전이라도 남긴다(형식 80 변환이 정한 값, 진행만 막힘)
+  const rt = isRec(r.tracks) ? (r.tracks as Record<string, unknown>) : {};
+  const tracks = Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, tabOpen ? Math.min(HX.trackMax, nonNegInt(rt[id])) : 0])) as HogyokuCost;
+  const sum = HOGYOKU_TRACK_IDS.reduce((a, id) => a + tracks[id], 0);
   return {
     tabOpen,
     tabNotice: r.tabNotice === true && tabOpen,
     appearedAt: tabOpen ? (typeof r.appearedAt === 'number' && Number.isFinite(r.appearedAt) && r.appearedAt >= 0 ? r.appearedAt : 0) : null,
-    level,
-    developed: Math.max(level, nonNegInt(r.developed)),
+    tracks,
+    developed: Math.max(sum, nonNegInt(r.developed)),
     resonance,
     resonatedAt: resonance ? (typeof r.resonatedAt === 'number' && Number.isFinite(r.resonatedAt) && r.resonatedAt >= 0 ? r.resonatedAt : 0) : null,
   };

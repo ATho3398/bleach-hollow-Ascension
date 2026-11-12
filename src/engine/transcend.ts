@@ -43,36 +43,37 @@ export function allTranscendentsOwned(owned: readonly string[], defs: readonly T
   return defs.every((d) => owned.includes(d.id));
 }
 
-/** 슬롯 보너스 (GDD 244장 4·5) = 붕옥 개발로 오른 단계 수 × 1% (영구 — 합체로 6~10단계 진행이 0 이 되어도 오른 몫은 남는다) + 초월체 1종마다 +2%(최대 종 수만큼).
- *  전 능력치에 곱하는 배율의 + 부분 (0.05 = +5%). liberation = 붕옥 개발 몫(옛 이름 그대로 — 5단계 = 옛 붕옥 해방 +5%) */
+/** 슬롯 보너스 (GDD 12-3·12-4 v6.014) = 붕옥 강화로 올린 강 수 합 × 0.1% (영구 — 합체로 26~50강 진행이 0 이 되어도 오른 몫은 남는다) + 초월체 1종마다 +2%(최대 종 수만큼).
+ *  전 능력치에 곱하는 배율의 + 부분 (0.05 = +5%). liberation = 붕옥 개발 몫(옛 이름 그대로) */
 export function slotStatBonus(developedSteps: number, transcendents: number, defs: readonly TranscendentDef[] = TRANSCENDENTS): { liberation: number; transcendents: number; total: number } {
-  const liberation = Math.max(0, Math.floor(developedSteps)) * HX.perLevelBonus;
+  const liberation = Math.round(Math.max(0, Math.floor(developedSteps)) * HX.perStepBonus * 1e6) / 1e6;
   const tr = Math.min(defs.length, Math.max(0, transcendents)) * HX.perTranscendentBonus;
-  return { liberation, transcendents: tr, total: liberation + tr };
+  return { liberation, transcendents: tr, total: Math.round((liberation + tr) * 1e6) / 1e6 };
 }
 
-/** 붕옥 개발 재료 3종 (GDD 244장 3) */
-export interface HogyokuCost {
-  soul: number;
-  shard: number;
-  essence: number;
+/** 붕옥 강화 트랙 id = 재료 id (balance hogyoku.trackCost 의 키 — 종족 무관) */
+export type HogyokuTrackId = keyof typeof HX.trackCost;
+export const HOGYOKU_TRACK_IDS = Object.keys(HX.trackCost) as HogyokuTrackId[];
+
+/** 붕옥 개발 재료 3종 (GDD 12-3) — 트랙마다 강 수, 재료마다 개수 등에 같이 쓴다 */
+export type HogyokuCost = Record<HogyokuTrackId, number>;
+
+/** 트랙 track 을 n강(1~trackMax)으로 올리는 데 드는 그 트랙 재료 수 */
+export function trackStepCost(track: HogyokuTrackId, n: number): number {
+  const c = HX.trackCost[track];
+  return Math.floor(n) <= HX.trackHalf ? c[0]! : c[1]!;
 }
 
-/** 단계 level(1~10)로 올리는 데 드는 재료 (balance hogyoku.develop 표) */
-export function developCost(level: number): HogyokuCost {
-  const d = HX.develop;
-  const i = Math.min(d.soul.length, Math.max(1, Math.floor(level))) - 1;
-  return { soul: d.soul[i]!, shard: d.shard[i]!, essence: d.essence[i]! };
+/** 트랙 track 의 from+1 ~ to 강 재료 합 */
+export function trackCostSum(track: HogyokuTrackId, from: number, to: number): number {
+  let sum = 0;
+  for (let n = Math.max(0, from) + 1; n <= Math.min(HX.trackMax, to); n++) sum += trackStepCost(track, n);
+  return sum;
 }
 
-/** from+1 ~ to 단계 재료 합 */
-export function developCostSum(from: number, to: number): HogyokuCost {
-  const out: HogyokuCost = { soul: 0, shard: 0, essence: 0 };
-  for (let l = from + 1; l <= to; l++) {
-    const c = developCost(l);
-    out.soul += c.soul;
-    out.shard += c.shard;
-    out.essence += c.essence;
-  }
-  return out;
+/** 개발 %(종합 해방도, 0~1) = 세 트랙 강 수 평균 ÷ trackMax */
+export function hogyokuProgress(tracks: Readonly<HogyokuCost>): number {
+  const ids = HOGYOKU_TRACK_IDS;
+  const avg = ids.reduce((a, id) => a + Math.min(HX.trackMax, Math.max(0, tracks[id] ?? 0)), 0) / ids.length;
+  return avg / HX.trackMax;
 }

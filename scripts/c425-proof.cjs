@@ -19,7 +19,7 @@ const body = (o) => `
   ${o.resonance ? "clear('shinigami'); g.checkTrackOpen(s, 1100);" : ''}
   const ot = s.otherTracks[0]; ot.evolution.tierIndex = 3; ot.evolution.formHistory = ['t2:base', 't3:water', 't4:water:special']; ot.evolution.formId = 't4:water:special';
   s.shared.soulCrystals = 999; s.shared.hogyokuShards = 999; s.shared.resonanceEssence = 999;
-  for (let i = 0; i < ${o.level}; i++) g.developHogyoku(s, 2000 + i);
+  for (const [t, n] of Object.entries(${JSON.stringify(o.tracks)})) for (let i = 0; i < n; i++) g.developHogyoku(s, t, 2000 + i);
   s.shared.soulCrystals = ${o.mat[0]}; s.shared.hogyokuShards = ${o.mat[1]}; s.shared.resonanceEssence = ${o.mat[2]};
   ${o.top ? "for (const t of g.allTracks(s)) { t.rank.ladder = ['player', ...t.rank.ladder.filter((x) => x !== 'player')]; t.rank.history.everRanked = true; }" : ''}
   for (const id of done) s.help.guides[id] = 'done';
@@ -61,24 +61,31 @@ async function boot(page, url, src) {
         // 한 글자씩 세로 깨짐 검사: 상세 줄 이름표 폭이 한 글자 폭보다 좁은 것
         const narrow = [...document.querySelectorAll('.bha-hgrow__label')].filter((e) => e.getBoundingClientRect().height > 30).map((e) => e.textContent);
         return {
-          detailSel: document.querySelector('.bha-hgdetail')?.dataset.sel ?? null, on: [...document.querySelectorAll('.is-on[data-sel]')].map((e) => e.dataset.sel),
+          detailSel: document.querySelector('.bha-hgdetail')?.dataset.sel ?? null, percent: document.querySelector('.bha-hgorb')?.dataset.percent ?? null, mats: [...document.querySelectorAll('.bha-hgmat')].map((b) => `${b.dataset.material}:${b.dataset.level}${b.classList.contains('is-on') ? '*' : ''}`), foot: [...document.querySelectorAll('.bha-hgfoot button')].map((b) => `${b.textContent.trim()}${b.disabled ? '(off)' : ''}`), on: [...document.querySelectorAll('.is-on[data-sel]')].map((e) => e.dataset.sel),
           list: document.querySelectorAll('.bha-hglist').length, total: txt('.bha-hgorb__total'), detail: txt('.bha-hgdetail'),
-          foot: r('.bha-hgfoot'), app: r('.bha-lcdpage__body'), tabs: [...document.querySelectorAll('.bha-lcdpage__aside button')].map((b) => b.textContent.trim()),
+          footRect: r('.bha-hgfoot'), app: r('.bha-lcdpage__body'), tabs: [...document.querySelectorAll('.bha-lcdpage__aside button')].map((b) => b.textContent.trim()),
           pair: [...document.querySelectorAll('.bha-hgpair__card')].map((c) => c.dataset.faction), cards: document.querySelectorAll('.bha-dexcard').length, narrowLabels: narrow,
           orb: document.querySelectorAll('.bha-hgorb').length,
         };
       });
-      await boot(page, server.url, body({ level: 7, mat: [12, 6, 2], resonance: true, top: false, dex: true }));
+      await boot(page, server.url, body({ tracks: { soul: 40, shard: 30, essence: 20 }, mat: [12, 6, 2], resonance: true, top: false, dex: true }));
       await page.locator('.bha-prop--hogyoku').first().click({ timeout: 5000 }); await page.waitForTimeout(900);
-      F[`${dk}-develop`] = await facts();
-      await shot(`${String(n++).padStart(2, '0')}-${dk}-hogyoku-develop`);
-      await page.locator('.bha-hgmat--shard').click(); await page.waitForTimeout(300);
-      F[`${dk}-material`] = await facts();
-      await shot(`${String(n++).padStart(2, '0')}-${dk}-hogyoku-material`);
+      F[`${dk}-track`] = await facts();
+      await shot(`${String(n++).padStart(2, '0')}-${dk}-hogyoku-track-soul`);
+      await page.locator('.bha-hgorb__art').click(); await page.waitForTimeout(300);
+      F[`${dk}-orb`] = await facts();
+      await shot(`${String(n++).padStart(2, '0')}-${dk}-hogyoku-orb-summary`);
+      if (dk === 'phone') {
+        await page.locator('[data-sc="hogyoku-develop-all"]').click(); await page.waitForTimeout(400);
+        F[`${dk}-developAllConfirm`] = await page.evaluate(() => document.querySelector('.bha-confirm')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
+        await shot(`${String(n++).padStart(2, '0')}-${dk}-develop-all-confirm`);
+        await page.locator('.bha-confirm button', { hasText: '일괄 강화' }).click(); await page.waitForTimeout(600);
+        F[`${dk}-afterAll`] = await page.evaluate(() => [...document.querySelectorAll('.bha-hgmat')].map((b) => `${b.dataset.material}:${b.dataset.level}`).join(' '));
+      }
       await page.locator('[data-sc="hogyoku-fusion"]').click(); await page.waitForTimeout(800);
       F[`${dk}-fusion`] = await facts();
       await shot(`${String(n++).padStart(2, '0')}-${dk}-fusion`);
-      if (dk === 'phone') {
+      if (dk === 'pc') {
         await page.locator('[data-sc="fusion-detail-1"]').click(); await page.waitForTimeout(500);
         F[`${dk}-fusion-detail`] = await page.evaluate(() => document.querySelector('.bha-itemdialog')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) ?? null);
         await shot(`${String(n++).padStart(2, '0')}-${dk}-fusion-detail`);
