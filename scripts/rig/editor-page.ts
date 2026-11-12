@@ -17,7 +17,8 @@ declare const claude: {
   use(name: 'comments'): Promise<Comments | null>;
   use(name: 'downloads'): Promise<{ save(r: { filename: string; data: Blob }): Promise<{ status: string }> } | null>;
 } | undefined;
-const K = 6;
+const K_FULL = 6;
+let K = K_FULL; // 미리보기 배율(화면 칸/캔버스 칸) — 넓은 몸이 한 줄에 안 들어가면 fitWrap 이 5·4 로 줄인다
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
@@ -174,7 +175,27 @@ function fitWrap() {
     y0 = Math.min(y0, l.at[1]);
     y1 = Math.max(y1, l.at[1] + l.size[1]);
   }
-  const m = 16; // 팔 휘두르는 여유(캔버스 칸)
+  // 팔 휘두르는 여유(캔버스 칸) = 16. 단, 몸이 넓은 외형(호로)은 미리보기가 넓어져 옆의 동작 단추 칸이 다음 줄로 밀린다
+  // (사용자 2026-11-12 10:3x "호로가 미리보기가 크니까, 옆에 모션 창이 다음줄로 밀린다고") → 한 줄에 들어갈 때까지 여유를 줄인다(가장 작게 2칸)
+  const row = wrap.closest<HTMLElement>('.stagerow');
+  const side = row?.querySelector<HTMLElement>('.side');
+  const tool = row?.querySelector<HTMLElement>('.toolcol');
+  const widthOf = (mm: number, k = K) => W * k + Math.max(140, (mm - x0) * k) + Math.max(60, (x1 - W + mm) * k);
+  let m = 16;
+  K = K_FULL;
+  if (row && side) {
+    const beside = row.clientWidth - side.offsetWidth - 8; // 미리보기 + 동작 칸만 한 줄(도구 칸은 윗줄)
+    const all = beside - (tool ? tool.offsetWidth + 8 : 0); // 도구 칸까지 한 줄
+    // 도구 칸 옆에 다 들어가는 가장 큰 배율(6 → 5 → 4), 그래도 안 되면(좁은 화면) 6배로 두고 미리보기 + 동작 칸이 같이 아랫줄로
+    const fit = [6, 5, 4].find((k) => widthOf(2, k) <= all);
+    K = fit ?? K_FULL;
+    const room = fit ? all : beside;
+    while (m > 2 && widthOf(m) > room) m--;
+  }
+  stage.style.width = `${W * K}px`;
+  stage.style.height = `${H * K}px`;
+  const pair = side?.parentElement;
+  if (pair && pair !== row) pair.style.flexWrap = window.innerWidth < 700 ? 'wrap' : 'nowrap'; // 휴대폰 너비에서는 가로로 넘치지 않게 동작 칸을 아래로
   const pl = Math.max(140, (m - x0) * K);
   const pr = Math.max(60, (x1 - W + m) * K);
   wrap.style.paddingLeft = `${pl}px`;
@@ -222,8 +243,19 @@ function fitSide() {
   const row = btn.offsetHeight + 6;
   side.style.gridTemplateRows = `repeat(${Math.max(4, Math.floor((wrap.offsetHeight + 6) / row))}, auto)`;
 }
+{
+  // 미리보기 칸(leftcol)과 동작 단추 칸(side)을 한 묶음으로: 화면이 좁아도 동작 칸만 따로 다음 줄로 밀리지 않는다(사용자 2026-11-12 10:3x)
+  const lc = document.querySelector<HTMLElement>('.leftcol');
+  const sd = document.querySelector<HTMLElement>('.side');
+  if (lc && sd && lc.parentElement === sd.parentElement) {
+    const pair = document.createElement('div');
+    pair.style.cssText = 'display:flex;flex-wrap:nowrap;gap:8px;align-items:flex-start;flex:0 0 auto;min-width:0';
+    lc.before(pair);
+    pair.append(lc, sd);
+  }
+}
 sizeStage();
-window.addEventListener('resize', fitSide);
+window.addEventListener('resize', () => { fitWrap(); fitSide(); });
 
 let dbTimer = 0;
 const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, bodySlots: c.rig.bodySlots ?? {}, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
