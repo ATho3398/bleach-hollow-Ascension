@@ -29,10 +29,12 @@ describe('137장 1 블록 타입(물리·혼합·특수, 물공) = 데이터 전
     const fams = getFaction('hollow').families.filter((x) => x.category === 'physical').map((x) => x.abbr).join('·');
     expect(formHint(ar, 'hollow')).toContain(`${fams} 계열 공격 블록`);
   });
-  it("특성 칸 '물공' 은 화면에서 '일반 공격' · 붕옥 합체 카드에 분류 없음 · 데이터 키는 그대로", () => {
+  it("특성 칸 '물공' 은 화면에서 '일반 공격' · 붕옥 합체 카드 분류는 쉬운 말(물리·특수·혼합 — GDD 12-4 v6.037 초월자 조합) · 데이터 키는 그대로", () => {
     expect(ABILITY_SLOT_LABEL['물공']).toBe('일반 공격');
     expect(read('src/ui/evolutionPanel.ts')).toContain('ABILITY_SLOT_LABEL[l.slot]');
-    expect(read('src/ui/hogyokuView.ts')).not.toContain('분류 ${');
+    // C.435: 초월자 = 분류 조합이라 합체 카드에 진화체 분류를 보인다 — 블록 이름이 아니라 쉬운 말(ATTACK_CATEGORY_WORDS)로만
+    expect(read('src/ui/hogyokuView.ts')).toContain('진화체 분류 ${ATTACK_CATEGORY_WORDS[inp.category]}');
+    expect(read('src/ui/hogyokuView.ts')).not.toMatch(/분류 \$\{inp\.category\}/);
     expect(read('src/data/elements/stats.json')).toContain('"physical"');
   });
 });

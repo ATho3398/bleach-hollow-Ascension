@@ -7,7 +7,7 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { trackRulesOf, artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { basisChoices, combatFactionIdOf, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -48,6 +48,8 @@ import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from 
 import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
+import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
+import { getFaction } from '../data/factions';
 import { STAT_IDS } from '../data/schema';
 import { STAT_USE, statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
@@ -232,10 +234,41 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const gear = gearShortcut(faction, save, hd.onGear);
   // 오른쪽 = 스크롤 칸(능력치 → 진화 정보) + 아래 고정 버튼 줄. 개발 정보·버전 문단은 뺐다 (183장 S15)
   const rightScroll = h('div', 'bha-care__scroll');
+  const basis = basisPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  if (basis) rightScroll.append(basis);
   rightScroll.append(stats, evoPanel);
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
   lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, skinPanel(faction, save, persist)], [rightScroll]);
+}
+
+/** 전투 기반 고르기 (GDD 12-4 v6.037 — 초월자 트랙만): [초월자][키웠던 호로][키웠던 사신] 세그먼트 + 지금 기반의 공격 분류·블록·특성 수.
+ *  능력치·외형은 그대로, 블록·특성·공격 분류만 바뀐다. 모험 중엔 잠김(추천안). '초월자' = 초월자 전용 스킬 [미정] 동안 합친 빌드(임시) */
+function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
+  const choices = basisChoices(save);
+  if (choices.length === 0) return null;
+  const p = panel({ title: '전투 기반', aside: provisionalTag('임시') });
+  p.setAttribute('aria-label', '전투 기반');
+  p.dataset.basis = choices.find((c) => c.current)?.key ?? '';
+  const locked = save.activeExpedition != null;
+  const cur0 = choices.find((c) => c.current)?.key ?? '';
+  const pick = seg(choices.map((c) => ({ id: c.key, label: c.label })), cur0, (id) => {
+    if (id !== cur0 && switchCombatBasis(save, id).ok) rerender();
+  }, { small: true });
+  pick.setAttribute('aria-label', '전투 기반 고르기');
+  for (const b of pick.querySelectorAll<HTMLButtonElement>('.bha-seg__item')) {
+    b.dataset.sc = `basis-${b.dataset.id}`;
+    b.disabled = locked && b.dataset.id !== cur0;
+  }
+  const cur = save.evolution.basis?.builds[save.evolution.basis.current];
+  const form = cur?.formId ? tryGetForm(cur.formId) : undefined;
+  const cat = form?.label.category ?? 'mixed';
+  const traits = save.build.slots.filter((x) => x !== null).length;
+  const abil = save.evolution.abilities ? Object.keys(save.evolution.abilities.owned).length : 0;
+  const info = h('p', 'bha-small');
+  info.append('공격 분류 ', h('b', '', ATTACK_CATEGORY_WORDS[cat]), ` · 장착 블록 ${traits} · 보유 블록 ${save.build.owned.length} · 특성 ${abil}`);
+  p.append(pick, info, h('p', 'bha-faint', locked ? '모험 중에는 바꿀 수 없다.' : '바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다.'));
+  return p;
 }
 
 /** 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 눌렀을 때·기기로 골랐을 때 예전 ⓘ 와 같은 창. 칸 글자는 그대로 읽힌다 */
@@ -401,7 +434,9 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       return;
     }
     if (chestUi.tab === 'slots') {
-      const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
+      // 초월자 전투 기반 (GDD 12-4 v6.037): 블록 이름·분류는 고른 기반의 종족 설정으로
+      const blockFaction = getFaction(combatFactionIdOf(save));
+      const [slotsPanel, ownedPanel] = traitsTab(blockFaction, save.build, chestUi.traits, () => {
         persist();
         fill();
       }, save.evolution.tierIndex);

@@ -7,7 +7,7 @@ import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, ty
 import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { SPECIAL_ELEMENT_IDS } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
@@ -22,7 +22,7 @@ import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
 import { DEFAULT_TRACK_KIND, getTrackKind, type TrackKindConfig } from './data/trackKinds';
 import { MOSAIC_LOOK_PREFIX } from './data/art/manifest';
-import { allTranscendentsOwned, conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
+import { allTranscendentsOwned, decideTranscendent, transcendentForPair, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
 import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
@@ -68,7 +68,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 82; // C.429 (GDD v6.028 12-4): 초월자 트랙 — 트랙 필드 transcendentId(null = 캐릭터)·진화 상태 final·런 로그 transcendence·합체 기록 baseFactionId — 81 → 82 변환 SAVE_MIGRATIONS[81](이미 얻은 초월자마다 지금 캐릭터 + 합체 기록으로 초월자 트랙).  C.427 (GDD v6.017 6-16): 특수던전 shared.special(주 시작·쓴 입장 수·최고 ★·이긴 수)·런 로그 specialRuns — 80 → 81 변환 SAVE_MIGRATIONS[80](이번 주 새로, 빈 기록). C.425 (GDD v6.014 12-3): 붕옥 개발 hogyoku.level(10단계) → hogyoku.tracks(재료별 강화 트랙 3개, 각 0~50강)·developed 단위 = 강, 런 로그 slotLog.hogyokuDev[].track — 79 → 80 변환 SAVE_MIGRATIONS[79](옛 n단계 → 세 트랙 n×5강, 오른 보너스 보존). C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 83; // C.435 (GDD v6.037 12-4): 초월자 전투 기반 evolution.basis(지금 기반·기반별 빌드 — 초월자/키웠던 캐릭터)·런 로그 basisChanges — 82 → 83 변환 SAVE_MIGRATIONS[82](이미 있는 초월자 트랙 = 지금 합친 빌드를 '초월자' 기반으로, 키웠던 캐릭터 기반은 합체 순간 빌드가 없어 합친 빌드 복사 + 합체 기록의 그때 진화체). C.429 (GDD v6.028 12-4): 초월자 트랙 — 트랙 필드 transcendentId(null = 캐릭터)·진화 상태 final·런 로그 transcendence·합체 기록 baseFactionId — 81 → 82 변환 SAVE_MIGRATIONS[81](이미 얻은 초월자마다 지금 캐릭터 + 합체 기록으로 초월자 트랙).  C.427 (GDD v6.017 6-16): 특수던전 shared.special(주 시작·쓴 입장 수·최고 ★·이긴 수)·런 로그 specialRuns — 80 → 81 변환 SAVE_MIGRATIONS[80](이번 주 새로, 빈 기록). C.425 (GDD v6.014 12-3): 붕옥 개발 hogyoku.level(10단계) → hogyoku.tracks(재료별 강화 트랙 3개, 각 0~50강)·developed 단위 = 강, 런 로그 slotLog.hogyokuDev[].track — 79 → 80 변환 SAVE_MIGRATIONS[79](옛 n단계 → 세 트랙 n×5강, 오른 보너스 보존). C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
@@ -1094,9 +1094,9 @@ export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth'>): Fusio
   return { rebirths: t.rebirth.count, hidden: form?.hidden === true, elements: playerElementsOf(t.evolution), category: form?.label.category ?? 'mixed' };
 }
 
-export type FusionBlock = 'tab' | 'resonance' | 'tracks' | 'develop' | 'rank' | 'expedition' | 'complete';
+export type FusionBlock = 'tab' | 'resonance' | 'tracks' | 'develop' | 'rank' | 'expedition' | 'owned';
 
-/** 합체할 수 있나 (GDD 244장 5): 공명 + 붕옥 개발 100%(10단계) + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 아직 못 모은 초월자. 막힌 이유를 모두 돌려준다 */
+/** 합체할 수 있나 (GDD 12-4): 공명 + 붕옥 개발 100% + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 두 캐릭터 분류 조합의 초월자 미보유. 막힌 이유를 모두 돌려준다 */
 export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[] } {
   const h = save.hogyoku;
   const tracks = characterTracks(save); // 초월자 트랙은 합체 재료가 아니다 (GDD 12-4 v6.028)
@@ -1107,16 +1107,17 @@ export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[
   if (HOGYOKU_TRACK_IDS.some((id) => (h.tracks[id] ?? 0) < BALANCE.provisional.hogyoku.trackMax)) missing.push('develop');
   if (!tracks.every(trackIsTopRank)) missing.push('rank');
   if (tracks.some((t) => t.activeExpedition != null)) missing.push('expedition');
-  if (allTranscendentsOwned(save.transcendentDex.map((x) => x.id))) missing.push('complete');
+  // 두 캐릭터 분류 조합의 초월자를 이미 가졌으면 막힘 (GDD 12-4 v6.037 — 다른 분류로 키워야 한다)
+  const def = transcendentForPair(tracks.map(fusionInputOf));
+  if (def && save.transcendentDex.some((x) => x.id === def.id)) missing.push('owned');
   return { ok: missing.length === 0, missing };
 }
 
-/** 합체 미리보기 (GDD 22-3 "이 조합이면 ○○"): 지금 두 캐릭터 상태로 정해질 초월자와 조건이 맞았는지. 다 모았으면 def null */
-export function fusionPreview(save: SaveData): { def: TranscendentDef | null; matched: boolean; inputs: FusionInput[] } {
+/** 합체 미리보기 (GDD 12-4 v6.037 "지금 두 캐릭터라면 → 「○○」"): 두 캐릭터 진화체 분류 조합의 초월자와 이미 가졌는지. 두 캐릭터가 없으면 def null */
+export function fusionPreview(save: SaveData): { def: TranscendentDef | null; owned: boolean; inputs: FusionInput[] } {
   const inputs = characterTracks(save).map(fusionInputOf);
-  const owned = save.transcendentDex.map((x) => x.id);
-  const def = decideTranscendent(inputs, owned);
-  return { def, matched: def !== null && conditionMet(def.condition, inputs), inputs };
+  const def = transcendentForPair(inputs);
+  return { def, owned: def !== null && save.transcendentDex.some((x) => x.id === def.id), inputs };
 }
 
 export type FusionResult =
@@ -1140,8 +1141,10 @@ function summaryOf(t: Pick<SaveData, TrackKey>): FusionCharacterSummary {
 export function performFusion(save: SaveData, nowMs: number = Date.now()): FusionResult {
   const gate = fusionGate(save);
   if (!gate.ok) return { ok: false, missing: gate.missing };
-  const { def, matched } = fusionPreview(save);
-  if (!def) return { ok: false, missing: ['complete'] };
+  const inputs = characterTracks(save).map(fusionInputOf);
+  const def = decideTranscendent(inputs, save.transcendentDex.map((x) => x.id));
+  if (!def) return { ok: false, missing: ['owned'] };
+  const matched = true; // 조합 = 결정 (GDD 12-4 v6.037) — 옛 '조건 안 맞아 아래쪽부터 채움'은 없다
   const HX = BALANCE.provisional.hogyoku;
   const tracks = characterTracks(save);
   const characters = tracks.map(summaryOf);
@@ -1220,6 +1223,8 @@ export function inheritTranscendentTrack(chars: readonly Pick<SaveData, TrackKey
     }
     for (const [el, n] of Object.entries(t.build.enhance ?? {})) (build.enhance ??= {})[el] = Math.max(build.enhance[el] ?? 0, n);
   }
+  // 전투 기반 (GDD 12-4 v6.037): 합체 순간 두 캐릭터의 빌드를 따로 저장 + 합친 빌드 = '초월자' 기반(초월자 전용 스킬 [미정] 동안 임시 — provisional). 처음 기반 = 초월자
+  evolution.basis = combatBasisFor(chars, { factionId: base.factionId, formId: evolution.formId, formHistory: evolution.formHistory, ascended: evolution.ascended, build, abilities: loadout });
   const rebirth = { ...jsonClone(base.rebirth), count: Math.max(...chars.map((t) => t.rebirth.count)) };
   const nest = { ...newNest(nowMs), bond: Math.max(...chars.map((t) => t.nest.bond)) };
   const runLog = emptyRunLog();
@@ -1235,6 +1240,59 @@ export function inheritTranscendentTrack(chars: readonly Pick<SaveData, TrackKey
     difficulty: { unlocked, last: Math.min(unlocked, tierStar), streak: { star: Math.min(unlocked, tierStar), count: 0 } },
     tower: { best: Math.max(...chars.map((t) => t.tower.best)) },
   };
+}
+
+/** 한 캐릭터의 지금 전투 빌드 (합체 순간 저장 — GDD 12-4 v6.037) */
+function basisBuildOf(t: Pick<SaveData, 'factionId' | 'build' | 'evolution'>): CombatBasisBuild {
+  const e = t.evolution;
+  return { factionId: t.factionId, formId: e.formId, formHistory: [...e.formHistory], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+}
+
+/** 초월자 전투 기반 상태: '초월자' = 합친 빌드, 키웠던 캐릭터마다(종족 id 키, 먼저 온 것) 그 캐릭터 빌드. 처음 고른 것 = 초월자 */
+function combatBasisFor(chars: readonly Pick<SaveData, 'factionId' | 'build' | 'evolution'>[], merged: CombatBasisBuild): CombatBasis {
+  const builds: Record<string, CombatBasisBuild> = { [TRANSCENDENT_BASIS]: cloneBasisBuild({ ...merged, formHistory: [...merged.formHistory] }) };
+  if (!merged.ascended) delete builds[TRANSCENDENT_BASIS]!.ascended;
+  for (const t of chars) if (!(t.factionId in builds)) builds[t.factionId] = basisBuildOf(t);
+  return { current: TRANSCENDENT_BASIS, builds };
+}
+
+/** 전투 기반 고르기 칸 (GDD 12-4 v6.037): 초월자 / 키웠던 <종족 이름>(종족 설정 순서). 초월자 트랙이 아니면 빈 목록 */
+export function basisChoices(save: Pick<SaveData, 'transcendentId' | 'evolution'>): { key: string; label: string; factionId: string | null; current: boolean }[] {
+  const b = save.transcendentId ? save.evolution.basis : undefined;
+  if (!b) return [];
+  const out: { key: string; label: string; factionId: string | null; current: boolean }[] = [];
+  if (b.builds[TRANSCENDENT_BASIS]) out.push({ key: TRANSCENDENT_BASIS, label: '초월자', factionId: null, current: b.current === TRANSCENDENT_BASIS });
+  for (const f of FACTIONS) if (b.builds[f.id]) out.push({ key: f.id, label: `키웠던 ${f.name}`, factionId: f.id, current: b.current === f.id });
+  return out;
+}
+
+/** 전투에 쓰는 종족 설정 id (블록 계열 이름·분류): 초월자 트랙이면 고른 전투 기반의 종족, 아니면 트랙 종족 (GDD 12-4 v6.037) */
+export function combatFactionIdOf(save: Pick<SaveData, 'factionId' | 'evolution'>): string {
+  const b = save.evolution.basis;
+  return b?.builds[b.current]?.factionId ?? save.factionId;
+}
+
+export type BasisSwitchResult = { ok: true; changed: boolean } | { ok: false; reason: 'not-transcendent' | 'unknown' | 'expedition' };
+
+/** 전투 기반 바꾸기 (GDD 12-4 v6.037): 지금 기반의 빌드·특성(편집한 것 포함)을 그 기반 자리에 넣어 두고, 고른 기반의 빌드·특성을 트랙에 꺼낸다(기반별 편집은 따로 유지).
+ *  능력치·외형은 그대로. 원정 중엔 못 바꾼다(추천안). 런 로그 basisChanges 에 남긴다 */
+export function switchCombatBasis(save: SaveData, key: string, nowMs: number = Date.now()): BasisSwitchResult {
+  const b = save.transcendentId ? save.evolution.basis : undefined;
+  if (!b) return { ok: false, reason: 'not-transcendent' };
+  const next = b.builds[key];
+  if (!next) return { ok: false, reason: 'unknown' };
+  if (save.activeExpedition != null) return { ok: false, reason: 'expedition' };
+  if (b.current === key) return { ok: true, changed: false };
+  const cur = b.builds[b.current];
+  if (cur) {
+    cur.build = cloneBuildOf(save.build);
+    cur.abilities = save.evolution.abilities ? cloneLoadout(save.evolution.abilities) : newAbilityLoadout();
+  }
+  save.build = cloneBuildOf(next.build);
+  save.evolution.abilities = cloneLoadout(next.abilities);
+  (save.runLog.basisChanges ??= []).push({ at: nowMs, from: b.current, to: key });
+  b.current = key;
+  return { ok: true, changed: true };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -2392,7 +2450,32 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
     });
   },
   81: (save) => migrateTranscendentTracks(save, Date.now()),
+  82: (save) => migrateCombatBasis(save),
 };
+
+/** 형식 82 → 83 (C.435, GDD 12-4 v6.037): 초월자 트랙마다 전투 기반을 만든다. 합체 순간 두 캐릭터 빌드가 저장돼 있지 않으므로 (마스터 추천안)
+ *  '초월자' = 지금 빌드(C.429 합친 빌드), 키웠던 캐릭터 기반 = 지금 빌드 복사 + 진화체는 슬롯 합체 기록의 그 캐릭터 진화체(있고 아는 것이면, 없으면 지금 진화체).
+ *  키웠던 종족 = 합체 기록 → 런 로그 transcendence.from → 바탕 종족 순서로 찾는다. 처음 기반 = 초월자. 초월자 id 는 조합과 안 맞아도 그대로 */
+export function migrateCombatBasis(save: SaveData): void {
+  const fusions = Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [];
+  forEachTrack(save, (t) => {
+    if (!isRec(t) || !isRec(t.evolution) || typeof t.transcendentId !== 'string' || !t.transcendentId || !isRec(t.build)) return;
+    const e = t.evolution;
+    const merged: CombatBasisBuild = { factionId: t.factionId, formId: e.formId ?? null, formHistory: Array.isArray(e.formHistory) ? [...e.formHistory] : [], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+    const rec = fusions.find((f) => isRec(f) && f.transcendentId === t.transcendentId);
+    const recChars = rec && Array.isArray(rec.characters) ? rec.characters.filter((c) => isRec(c) && typeof c.factionId === 'string') : [];
+    const from = recChars.length > 0 ? recChars.map((c) => c.factionId) : Array.isArray(t.runLog?.transcendence?.from) ? t.runLog.transcendence.from : [t.factionId];
+    const builds: Record<string, CombatBasisBuild> = { [TRANSCENDENT_BASIS]: merged };
+    for (const fid of from) {
+      if (typeof fid !== 'string' || fid in builds || !FACTIONS.some((f) => f.id === fid)) continue;
+      const form = recChars.find((c) => c.factionId === fid)?.formId;
+      const useForm = typeof form === 'string' && tryGetForm(form) ? form : null;
+      builds[fid] = { ...cloneBasisBuild(merged), factionId: fid, ...(useForm ? { formId: useForm, formHistory: [useForm] } : {}) };
+      if (useForm) delete builds[fid]!.ascended;
+    }
+    e.basis = { current: TRANSCENDENT_BASIS, builds };
+  });
+}
 
 /** 형식 81 → 82 (C.429, GDD 12-4 v6.028): 모든 트랙 transcendentId = null(캐릭터), 이미 얻은 초월자마다 초월자 트랙을 만든다 (쉬는 트랙으로, 지금 트랙은 그대로).
  *  합체 순간 두 캐릭터 데이터가 없으므로 (마스터 추천안) 지금 캐릭터들로 합체와 같은 이어받기를 하고, 슬롯 합체 기록(slotLog.fusions)의 그때 캐릭터가 더 높은 단계였으면
@@ -2938,6 +3021,7 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
   sanitizeCare(t);
   t.transcendentId = sanitizeTranscendentId(t.transcendentId);
   sanitizeEvolutionExtras(t.evolution, t.rebirth?.count);
+  sanitizeCombatBasis(t);
   // 진화 판정 끔 = 트랙 종류 설정 evolution: false (GDD 12-4 v6.028 — 초월자)
   if (!trackRulesOf(t).evolution) t.evolution.final = true;
   else delete t.evolution.final;
@@ -2974,7 +3058,12 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
     else delete e[k];
   }
   if (e.ascended !== true) delete e.ascended;
-  const raw = e.abilities as unknown;
+  e.abilities = sanitizeLoadout(e.abilities, e.tierIndex, rebirths);
+}
+
+/** 특성 보유·칸 보정 (지금 트랙과 전투 기반 빌드에 같이) */
+function sanitizeLoadout(raw: unknown, tierIndex: number, rebirths: unknown): AbilityLoadout {
+  const e = { tierIndex };
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof AbilityLoadout, unknown>>;
   const validId = (id: string) => /^(el4?:[a-z]+(\+[a-z]+)*|uniq:[a-z0-9]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>. C.226: 4단계 몫 el4:, uniq:fail4
   const ownedRaw = isRec(r.owned) ? r.owned : {};
@@ -2990,7 +3079,29 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
   const det = Array.isArray(r.detached) ? [...new Set(r.detached.filter((id): id is string => typeof id === 'string' && getDetachTrait(id) !== undefined))] : [];
   const room = Math.max(0, loadout.slots - Object.keys(ownedAb).length);
   if (det.length > 0 && room > 0) loadout.detached = det.slice(0, room);
-  e.abilities = loadout;
+  return loadout;
+}
+
+/** 전투 기반 보정 (GDD 12-4 v6.037, 형식 83): 캐릭터 트랙은 없음. 초월자 트랙은 아는 종족·진화체·특성 블록만인 기반만 남기고,
+ *  '초월자' 기반이 없거나 깨졌으면 지금 빌드로 다시 만든다. 지금 기반이 없으면 초월자 */
+function sanitizeCombatBasis(t: Pick<SaveData, TrackKey>): void {
+  const e = t.evolution;
+  if (!t.transcendentId) { delete e.basis; return; }
+  const raw: Record<string, unknown> = isRec(e.basis) ? e.basis : {};
+  const rb = isRec(raw.builds) ? raw.builds : {};
+  const builds: Record<string, CombatBasisBuild> = {};
+  for (const [k, v] of Object.entries(rb)) {
+    if (!isRec(v) || typeof v.factionId !== 'string' || !FACTIONS.some((f) => f.id === v.factionId)) continue;
+    if (k !== TRANSCENDENT_BASIS && k !== v.factionId) continue;
+    const formId = typeof v.formId === 'string' && tryGetForm(v.formId) ? v.formId : null;
+    const hist = Array.isArray(v.formHistory) ? v.formHistory.filter((x): x is string => typeof x === 'string' && tryGetForm(x) !== undefined) : [];
+    const b = v.build;
+    if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots) || !coreValuesValid(v.factionId, { ev: zeroStats(), tierIndex: 0 }, b)) continue;
+    builds[k] = { factionId: v.factionId, formId, formHistory: formId && !hist.includes(formId) ? [...hist, formId] : hist, ...(v.ascended === true ? { ascended: true } : {}), build: v.build as BuildState, abilities: sanitizeLoadout(v.abilities, e.tierIndex, t.rebirth?.count) };
+  }
+  if (!builds[TRANSCENDENT_BASIS]) builds[TRANSCENDENT_BASIS] = { factionId: t.factionId, formId: e.formId, formHistory: [...e.formHistory], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+  const current = typeof raw.current === 'string' && builds[raw.current] ? raw.current : TRANSCENDENT_BASIS;
+  e.basis = { current, builds };
 }
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

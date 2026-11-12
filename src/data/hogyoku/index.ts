@@ -1,7 +1,8 @@
 // 붕옥 개발 표시 데이터 (GDD 12-2·12-3 v6.015, C.425 provisional): 재료·강화 트랙·단계 이름. 두 종족 공통(슬롯 공유)이라 종족 설정이 아니라 여기 둔다.
 // 키 = 강화 트랙 id(BALANCE.provisional.hogyoku.trackCost 키). 세이브 키(shared.soulCrystals·hogyokuShards·resonanceEssence)는 옛 이름 그대로 — 이름만 여기서 바꾼다.
 // 수치는 BALANCE.provisional.hogyoku·hogyokuDrops — 이 파일은 이름만.
-import type { TranscendentCondition } from '../transcendents';
+import type { AttackCategory } from '../schema';
+import type { TranscendentCombo } from '../transcendents';
 import type { HogyokuTrackId } from '../../engine/transcend';
 
 /** 붕옥 재료 이름 (사용자 2026-11-12): soul 고순도 윤활제(세공용) · shard 혼백 여과기(정제용) · essence 영압 결정(주입용) */
@@ -20,13 +21,10 @@ export const HOGYOKU_STEP_NAMES: readonly string[] = [
 /** 붕옥 상태 이름 (GDD 244장 2, 안 B 단계 띠) */
 export const HOGYOKU_STAGE_NAMES = { half: '반각성', resonance: '공명', ready: '합체 가능' } as const;
 
-/** 초월자 조건 한 줄 (GDD 244장 5 '못 모은 초월자 조건 공개') — 공격 분류는 블록 이름 대신 쉬운 말로 (GDD 137장 1) */
-export function transcendentConditionText(c: TranscendentCondition): string {
-  switch (c.type) {
-    case 'rebirthSum': return `두 캐릭터의 환생 횟수 합 ${c.min}회 이상`;
-    case 'allHidden': return '두 캐릭터 모두 히든 진화체';
-    case 'sameElement': return '두 캐릭터가 같은 속성을 가짐';
-    case 'allCategory': return c.category === 'physical' ? '두 캐릭터 모두 물리 공격(맨몸·칼날) 진화체' : c.category === 'special' ? '두 캐릭터 모두 특수 공격(영압) 진화체' : '두 캐릭터 모두 혼합 공격 진화체';
-    case 'otherwise': return '위 조건에 하나도 맞지 않음';
-  }
+/** 진화체 공격 분류 쉬운 말 (GDD 137장 1 — 블록 이름 대신) */
+export const ATTACK_CATEGORY_WORDS: Readonly<Record<AttackCategory, string>> = { physical: '물리', special: '특수', mixed: '혼합' };
+
+/** 초월자 조합 한 줄 (GDD 12-4 v6.037): "두 캐릭터 진화체 분류 물리 + 특수" */
+export function transcendentComboText(c: TranscendentCombo): string {
+  return `두 캐릭터 진화체 분류 ${ATTACK_CATEGORY_WORDS[c[0]]} + ${ATTACK_CATEGORY_WORDS[c[1]]}`;
 }

@@ -1,11 +1,11 @@
 // 붕옥·초월자 (GDD 22-3·22-9): 종족 무관 공통 로직. 초월자 결정·보유 보너스·붕옥 게이지. 수치는 BALANCE.provisional.hogyoku.
 import { BALANCE } from '../config/balance';
 import type { AttackCategory } from '../data/schema';
-import { TRANSCENDENTS, type TranscendentCondition, type TranscendentDef } from '../data/transcendents';
+import { comboKey, TRANSCENDENTS, type TranscendentDef } from '../data/transcendents';
 
 const HX = BALANCE.provisional.hogyoku;
 
-/** 합체 판정에 쓰는 한 캐릭터의 상태 (속성·공격 분류·히든 진화체 여부·환생 횟수) */
+/** 합체 판정에 쓰는 한 캐릭터의 상태 (속성·공격 분류·히든 진화체 여부·환생 횟수 — 결정은 공격 분류만, 나머지는 기록·표시) */
 export interface FusionInput {
   rebirths: number;
   hidden: boolean;
@@ -13,29 +13,17 @@ export interface FusionInput {
   category: AttackCategory;
 }
 
-/** 조건 하나가 맞는가. otherwise 는 다른 조건(otherwise 제외)이 하나도 맞지 않을 때 */
-export function conditionMet(c: TranscendentCondition, chars: readonly FusionInput[], defs: readonly TranscendentDef[] = TRANSCENDENTS): boolean {
-  if (chars.length === 0) return false;
-  switch (c.type) {
-    case 'rebirthSum':
-      return chars.reduce((n, x) => n + x.rebirths, 0) >= c.min;
-    case 'allHidden':
-      return chars.every((x) => x.hidden);
-    case 'sameElement':
-      return chars[0]!.elements.some((e) => chars.every((x) => x.elements.includes(e)));
-    case 'allCategory':
-      return chars.every((x) => x.category === c.category);
-    case 'otherwise':
-      return !defs.some((d) => d.condition.type !== 'otherwise' && conditionMet(d.condition, chars, defs));
-  }
+/** 이 두 캐릭터 조합의 초월자 (GDD 12-4 v6.037): 진화체 분류 조합(순서 무관) 하나에 초월자 하나. 두 캐릭터가 아니면 null */
+export function transcendentForPair(chars: readonly Pick<FusionInput, 'category'>[], defs: readonly TranscendentDef[] = TRANSCENDENTS): TranscendentDef | null {
+  if (chars.length !== 2) return null;
+  const key = comboKey(chars[0]!.category, chars[1]!.category);
+  return defs.find((d) => comboKey(d.combo[0], d.combo[1]) === key) ?? null;
 }
 
-/** 이 조합이면 무엇이 되나 (GDD 22-3): 위에서부터 조건을 보고 이미 가진 것은 건너뛴다. 조건 맞는 미보유가 없으면 미보유 중 표 아래쪽부터.
- *  다 가졌으면 null (합체 막힘) */
-export function decideTranscendent(chars: readonly FusionInput[], owned: readonly string[], defs: readonly TranscendentDef[] = TRANSCENDENTS): TranscendentDef | null {
-  const left = defs.filter((d) => !owned.includes(d.id));
-  if (left.length === 0) return null;
-  return left.find((d) => conditionMet(d.condition, chars, defs)) ?? left[left.length - 1]!;
+/** 합체로 무엇이 되나: 그 조합의 초월자, 이미 가졌으면 null (합체 막힘 — 같은 초월자는 다시 안 나온다) */
+export function decideTranscendent(chars: readonly Pick<FusionInput, 'category'>[], owned: readonly string[], defs: readonly TranscendentDef[] = TRANSCENDENTS): TranscendentDef | null {
+  const def = transcendentForPair(chars, defs);
+  return def && !owned.includes(def.id) ? def : null;
 }
 
 /** 모든 초월자를 모았나 */

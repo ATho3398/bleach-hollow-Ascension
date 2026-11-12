@@ -452,9 +452,18 @@ export interface TranscendenceRecord {
   migrated?: boolean;
 }
 
+/** 전투 기반 바꾼 기록 (GDD 12-4 v6.037, 형식 83 — 초월자 트랙): 기반 키 = 'transcendent' 또는 키웠던 캐릭터의 종족 id */
+export interface BasisChangeRecord {
+  at: number;
+  from: string;
+  to: string;
+}
+
 export interface RunLog {
   /** 초월자 트랙이면 시작 기록 (GDD 12-4 v6.028, 형식 82). 캐릭터 트랙은 없음 */
   transcendence?: TranscendenceRecord;
+  /** 초월자 전투 기반 바꾼 기록 (GDD 12-4 v6.037, 형식 83). 캐릭터 트랙·바꾼 적 없으면 없음 */
+  basisChanges?: BasisChangeRecord[];
   absorbs: AbsorbRecord[];
   /** 속성 보너스 완성 기록 — 같은 속성 3개 보너스가 C.150 에 삭제돼 더 쌓이지 않는다 (GDD 94장 B 후속). 자리만 남김 */
   lineages: LineageRecord[];

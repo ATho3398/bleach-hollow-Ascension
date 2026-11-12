@@ -14,6 +14,7 @@ import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
 import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook } from '../skins';
 import { FACTIONS } from '../factions';
+import { tryGetTranscendent } from '../transcendents';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
 import { rigPackOfLook } from './rig/pose';
 
@@ -302,7 +303,11 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   const trLook = transcendentOfLook(skinId);
   if (trLook) return charArt(factionId, tierIndex, fallbackKey, base, manifest, files, trLook.art ?? `${MOSAIC_LOOK_PREFIX}${trLook.id}`, overrides, gender);
   // 조각 모델 (C.431, GDD 12-4 v6.029): 'mosaic:<초월자 id>' = 표시 주소 — 화면 관찰자(ui/bha/glitchMosaic)가 합성 그림으로 바꿔 끼운다
-  if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) return { src: mosaicSrc(skinId.slice(MOSAIC_LOOK_PREFIX.length)), frames: null, scale: 1, offsetY: 0 };
+  // 표시 배율 = 모델 데이터 scale (GDD 12-4 v6.037 '지금의 2/3') — 세로가 긴 그림은 칸 안에서 contain 이라 높이 기준, 그 위에 배율
+  if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) {
+    const id = skinId.slice(MOSAIC_LOOK_PREFIX.length);
+    return { src: mosaicSrc(id), frames: null, scale: tryGetTranscendent(id)?.model?.scale ?? 1, offsetY: 0 };
+  }
   // 그림 키를 직접 받은 외형 (C.430 — 초월자 데이터 art 'char.<이름>'): 그 키의 그림(프레임 애니 포함)이 있으면 그것. 없으면 아래 진화체 그림(자리 표시)
   if (skinId && skinId.startsWith('char.') && !getSkin(skinId)) {
     const own = tryKeys([skinId]);

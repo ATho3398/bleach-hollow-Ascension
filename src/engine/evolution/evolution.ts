@@ -10,7 +10,8 @@ import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
-import type { BuildState } from '../absorb/build';
+import { cloneBuild, familyCategory, familyTable, type BuildState } from '../absorb/build';
+import { resolveMaxChain } from '../faction';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, equippedAbilitiesOf, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
@@ -69,8 +70,51 @@ export interface EvolutionState {
   abilities?: AbilityLoadout;
   /** 아란칼화 / 참백도 구상화를 깼다 (C.220, GDD 126장 3): 이번 생의 레스렉시온/만해 해금 · 외형(종족 설정 ascension.lookChange). 환생하면 false */
   ascended?: boolean;
+  /** 전투 기반 (GDD 12-4 v6.037, C.435 — 초월자 트랙만): 합체 순간 저장한 기반별 빌드와 지금 고른 기반. 없으면 캐릭터(자기 진화체 그대로) */
+  basis?: CombatBasis;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
+}
+
+/** 전투 기반 키: 'transcendent'(초월자 — 합친 빌드) 또는 키웠던 캐릭터의 종족 id (GDD 12-4 v6.037) */
+export const TRANSCENDENT_BASIS = 'transcendent';
+
+/** 전투 기반 하나의 빌드 (GDD 12-4 v6.037): 공격 분류·속성을 정하는 진화체(종족·진화체·진화 기록·아란칼화) + 블록 빌드(보유·장착·속성 강화) + 특성. 능력치는 정하지 않는다(초월자 값 그대로) */
+export interface CombatBasisBuild {
+  factionId: string;
+  formId: string | null;
+  formHistory: string[];
+  ascended?: boolean;
+  build: BuildState;
+  abilities: AbilityLoadout;
+}
+
+/** 전투 기반 상태: 지금 고른 기반(current)의 빌드·특성은 트랙의 build·evolution.abilities 에 들어 있고(편집하면 거기에), builds[current] 는 바꿀 때 갱신한다 */
+export interface CombatBasis {
+  current: string;
+  builds: Record<string, CombatBasisBuild>;
+}
+
+export function cloneBasisBuild(b: CombatBasisBuild): CombatBasisBuild {
+  return { ...b, formHistory: [...b.formHistory], build: cloneBuild(b.build), abilities: cloneLoadout(b.abilities) };
+}
+
+export function cloneBasis(b: CombatBasis): CombatBasis {
+  return { current: b.current, builds: Object.fromEntries(Object.entries(b.builds).map(([k, v]) => [k, cloneBasisBuild(v)])) };
+}
+
+/** 지금 전투 기반 (없으면 null = 자기 진화체 그대로) */
+export function currentBasisOf(e: Pick<EvolutionState, 'basis'>): CombatBasisBuild | null {
+  return e.basis?.builds[e.basis.current] ?? null;
+}
+
+/** 전투에 쓰는 진화 상태: 능력치 밖의 것(공격 분류·속성·자기 속성 보정·콤보·특성·아란칼화)은 전투 기반의 진화체로 (GDD 12-4 v6.037) */
+export function combatEvolutionOf(e: EvolutionState): EvolutionState {
+  const b = currentBasisOf(e);
+  if (!b) return e;
+  const out: EvolutionState = { ...e, formId: b.formId, formHistory: b.formHistory };
+  if (b.ascended) out.ascended = true; else delete out.ascended;
+  return out;
 }
 
 export function zeroStats(): Stats {
@@ -85,7 +129,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -407,14 +451,24 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
  * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월자 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
-export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
+export function applyEvolutionToParams(params: Partial<CombatParams>, stat: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
+  // 전투 기반 (GDD 12-4 v6.037): 능력치는 이 트랙 값 그대로(stat), 나머지는 고른 기반의 진화체로(e). 기반 종족이 다르면 블록 계열 분류·체인 상한도 그 종족 설정으로
+  const e = combatEvolutionOf(stat);
+  const statFaction = factionId;
+  const basisFaction = currentBasisOf(stat)?.factionId;
+  if (basisFaction && basisFaction !== factionId) {
+    params.families = familyTable(basisFaction);
+    params.maxChain = resolveMaxChain(getFaction(basisFaction));
+    if (params.skills) params.skills = params.skills.map((sk) => (sk.family ? { ...sk, category: familyCategory(basisFaction, sk.family) } : sk));
+    factionId = basisFaction;
+  }
   params.combos = comboRulesOf(e);
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
   // 내 쪽 기준은 세계 기준(고정). 적 기준(refStat)은 원정 난이도가 정한다 (src/engine/difficulty.ts) — 여기서 내 단계로 덮어쓰지 않는다
   params.playerRefStat = worldRefStat();
-  params.playerStats = currentStats(e, factionId, statBonus);
+  params.playerStats = currentStats(stat, statFaction, statBonus);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);
   // 해방 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화를 깨면 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다

@@ -122,16 +122,18 @@ describe('합체 → 초월자 트랙 (GDD 12-4 v6.028)', () => {
   it('초월자 트랙은 합체 재료가 아니다 — 두 번째 합체도 캐릭터 두 명으로, 초월자 트랙은 늘어난다(최대 6)', () => {
     let s = fusionReady();
     for (let i = 0; i < TRANSCENDENTS.length; i++) {
+      const [a, b] = TRANSCENDENTS[i]!.combo; // 조합 하나에 초월자 하나 (GDD 12-4 v6.037)
+      for (const [j, t] of characterTracks(s).entries()) { toFinal(t, j === 0 ? `t4:fire:${a}` : `t4:water:${b}`, { hp: 1, atk: 1, int: 1, def: 1, spr: 1, spd: 1 }); makeTop(t); }
+      developAll(s);
       const r = performFusion(s, 10_000 + i);
       expect(r.ok).toBe(true);
-      for (const t of characterTracks(s)) { toFinal(t, 't4:fire:physical', { hp: 1, atk: 1, int: 1, def: 1, spr: 1, spd: 1 }); makeTop(t); }
-      developAll(s);
       s = migrateSave(JSON.parse(JSON.stringify(s)))!; // 저장·불러오기를 지나도 트랙이 남는다
     }
     expect(allTracks(s).filter((t) => t.transcendentId)).toHaveLength(TRANSCENDENTS.length);
     expect(new Set(allTracks(s).map(trackIdOf)).size).toBe(TRANSCENDENTS.length + 2);
     expect(characterTracks(s)).toHaveLength(BALANCE.provisional.twoTrack.maxTracks);
-    expect(fusionGate(s).missing).toContain('complete');
+    for (const t of characterTracks(s)) { toFinal(t, 't4:fire:physical', { hp: 1, atk: 1, int: 1, def: 1, spr: 1, spd: 1 }); makeTop(t); }
+    expect(fusionGate(s).missing).toContain('owned');
   });
 });
 
@@ -223,7 +225,7 @@ describe('초월자 규칙', () => {
 
 describe('세이브 형식 82 (81 → 82 마이그레이션)', () => {
   it('형식 82 · 모든 트랙 transcendentId null · 이미 얻은 초월자마다 초월자 트랙(지금 캐릭터 + 합체 기록으로 올림)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(82);
+    expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(82);
     const s = newSaveData('hollow', 1);
     clearStory(s);
     checkTrackOpen(s, 2);
@@ -238,7 +240,7 @@ describe('세이브 형식 82 (81 → 82 마이그레이션)', () => {
     delete raw.transcendentId;
     for (const t of raw.otherTracks) delete t.transcendentId;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(82);
+    expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
     expect(m.transcendentId).toBeNull(); // 지금 트랙은 그대로
     const tr = m.otherTracks.find((t) => t.transcendentId === TRANSCENDENTS[0]!.id)!;
     expect(tr).toBeDefined();

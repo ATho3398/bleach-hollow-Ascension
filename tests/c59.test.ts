@@ -2,12 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
-import { FORM_TABLE } from '../src/data/evolution';
+import { FORM_TABLE, tryGetForm } from '../src/data/evolution';
 import { TRANSCENDENTS, parseTranscendent } from '../src/data/transcendents';
 import { TITLES } from '../src/data/titles';
 import { applyEvolutionToParams, currentStats } from '../src/engine/evolution';
 import { createExpedition, restoreExpedition, serializeExpedition } from '../src/engine/expedition';
-import { conditionMet, decideTranscendent, HOGYOKU_TRACK_IDS, slotStatBonus, trackCostSum, type FusionInput } from '../src/engine/transcend';
+import { transcendentForPair, decideTranscendent, HOGYOKU_TRACK_IDS, slotStatBonus, trackCostSum, type FusionInput } from '../src/engine/transcend';
 import { RANK_HOLDERS } from '../src/data/ranks';
 import {
   activeTrackOf, allTracks, characterTracks, checkTrackOpen, developHogyoku, fusionGate, fusionPreview, loadSave, migrateSave, newSaveData, performFusion, SAVE_FORMAT_VERSION,
@@ -273,7 +273,7 @@ describe('합체 (GDD 22-3)', () => {
     s.activeExpedition = {} as never;
     expect(fusionGate(s).missing).toEqual(['develop', 'expedition']);
     expect(performFusion(s).ok).toBe(false);
-    for (const b of ['tab', 'resonance', 'tracks', 'develop', 'rank', 'expedition', 'complete'] as const) expect(fusionBlockText(b)).toMatch(/\./);
+    for (const b of ['tab', 'resonance', 'tracks', 'develop', 'rank', 'expedition', 'owned'] as const) expect(fusionBlockText(b)).toMatch(/\./);
   });
 
   it('두 캐릭터는 사라지고 같은 종족의 새 두 트랙이 1단계 완전 초기, 슬롯 자원·도감·칭호·해방은 남는다', () => {
@@ -324,25 +324,36 @@ describe('합체 (GDD 22-3)', () => {
     let s = fusionReady();
     const got: string[] = [];
     for (let i = 0; i < TRANSCENDENTS.length; i++) {
+      // 이번 합체 준비 (GDD 12-4 v6.037): 조합 i 의 분류로 두 캐릭터를 맞춘다
+      const [a, b] = TRANSCENDENTS[i]!.combo;
+      for (const [j, t] of characterTracks(s).entries()) {
+        toTier5(t, j === 0 ? `t4:fire:${a}` : `t4:water:${b}`);
+        makeTop(t);
+      }
+      developAll(s);
+      // 같은 조합을 한 번 더 하면 막힌다
+      if (i > 0) {
+        const [pa, pb] = TRANSCENDENTS[i - 1]!.combo;
+        const probe = JSON.parse(JSON.stringify(s)) as typeof s;
+        for (const [j, t] of characterTracks(probe).entries()) toTier5(t, j === 0 ? `t4:fire:${pa}` : `t4:water:${pb}`);
+        expect(fusionGate(probe).missing).toContain('owned');
+        expect(performFusion(probe).ok).toBe(false);
+      }
       const r = performFusion(s, 10_000 + i);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       got.push(r.def.id);
+      expect(r.def.id).toBe(TRANSCENDENTS[i]!.id);
       expect(r.jade).toBe(i === 0 ? HX.firstTranscendentJade : 0);
       expect(r.completed).toBe(i === TRANSCENDENTS.length - 1);
-      // 다음 합체 준비 (같은 진화체·같은 상태)
-      const keep = s;
-      for (const [j, t] of allTracks(keep).entries()) {
-        toTier5(t, j === 0 ? 't4:fire:physical' : 't4:water:special');
-        makeTop(t);
-      }
-      developAll(keep);
-      s = keep;
+      for (const t of characterTracks(s)) makeTop(t);
+      developAll(s);
     }
     expect(new Set(got).size).toBe(TRANSCENDENTS.length);
     expect(s.shared.jade).toBe(HX.firstTranscendentJade);
     expect(s.titles.some((t) => t.titleId === 'hogyoku-complete')).toBe(true);
-    expect(fusionGate(s).missing).toContain('complete');
+    for (const [j, t] of characterTracks(s).entries()) toTier5(t, j === 0 ? 't4:fire:physical' : 't4:water:special');
+    expect(fusionGate(s).missing).toContain('owned');
     expect(performFusion(s).ok).toBe(false);
     expect(statBonusOf(s).total).toBeCloseTo(0.15 + 0.06 * 6 + 0.12); // C.426: 세 트랙 150강 + 합체마다 60강씩 다시(30 → 50강, 6번) = 510강 × 0.1% + 초월자 6종
   });
@@ -356,35 +367,39 @@ describe('초월자 6종 결정 규칙', () => {
     expect(TRANSCENDENTS.map((t) => t.id)).toEqual(['yhwach', 'aizen', 'ichigo', 'iron-tyrant', 'zero-sage', 'rift-wanderer']); // 세이브 id 는 그대로
     expect(TRANSCENDENTS.filter((t) => t.original).length).toBe(2);
     expect(TRANSCENDENTS.every((t) => t.provisional === true)).toBe(true);
-    expect(() => parseTranscendent({ id: 'x', order: 1, name: 'x', concept: '', condition: { type: 'rebirthSum', min: 0 }, provisional: true })).toThrow();
+    expect(() => parseTranscendent({ id: 'x', order: 1, name: 'x', concept: '', combo: ['physical', 'fire'], trackKind: 'transcendent', provisional: true })).toThrow();
   });
 
-  it('위에서부터: 환생 합 3 → 유하바하, 모두 히든 → 아이젠, 속성 겹침 → 이치고, 모두 물리 → 영왕, 모두 특수 → 태초, 그 밖 → Unknown;03398', () => {
+  it('조합 6가지(순서 무관) → 초월자 하나씩 (GDD 12-4 v6.037): 물+물 이치고 · 특+특 아이젠 · 혼+혼 유하바하 · 물+특 영왕 · 물+혼 태초 · 특+혼 Unknown;03398', () => {
     const d = (a: FusionInput, b: FusionInput) => decideTranscendent([a, b], [])!.id;
-    expect(d(ch({ rebirths: 2, hidden: true }), ch({ rebirths: 1, hidden: true }))).toBe('yhwach');
-    expect(d(ch({ hidden: true }), ch({ hidden: true }))).toBe('aizen');
-    expect(d(ch({ elements: ['fire', 'water'] }), ch({ elements: ['water'] }))).toBe('ichigo');
-    expect(d(ch({ category: 'physical' }), ch({ elements: ['earth'], category: 'physical' }))).toBe('iron-tyrant');
-    expect(d(ch({ category: 'special' }), ch({ elements: ['earth'], category: 'special' }))).toBe('zero-sage');
-    expect(d(ch({ category: 'physical' }), ch({ elements: ['earth'], category: 'special' }))).toBe('rift-wanderer');
+    const P = ch({ category: 'physical' }), S = ch({ category: 'special' }), M = ch({ category: 'mixed' });
+    expect(d(P, P)).toBe('ichigo');
+    expect(d(S, S)).toBe('aizen');
+    expect(d(M, M)).toBe('yhwach');
+    expect([d(P, S), d(S, P)]).toEqual(['iron-tyrant', 'iron-tyrant']);
+    expect([d(P, M), d(M, P)]).toEqual(['zero-sage', 'zero-sage']);
+    expect([d(S, M), d(M, S)]).toEqual(['rift-wanderer', 'rift-wanderer']);
+    // 환생·히든·속성은 결정에 안 쓴다 (옛 조건 삭제)
+    expect(d(ch({ rebirths: 5, hidden: true, category: 'physical' }), ch({ rebirths: 5, hidden: true, category: 'physical' }))).toBe('ichigo');
   });
 
-  it('가진 것은 건너뛰고, 조건 맞는 미보유가 없으면 미보유 중 표 아래쪽부터. 다 가지면 null', () => {
+  it('이미 가진 조합이면 null (다른 초월자로 채우지 않는다). 두 캐릭터가 아니면 조합 없음', () => {
     const both = [ch({ category: 'physical' }), ch({ elements: ['earth'], category: 'physical' })];
-    expect(decideTranscendent(both, ['iron-tyrant'])!.id).toBe('rift-wanderer');
-    expect(decideTranscendent(both, ['iron-tyrant', 'rift-wanderer'])!.id).toBe('zero-sage');
-    expect(decideTranscendent(both, TRANSCENDENTS.map((t) => t.id))).toBeNull();
-    expect(conditionMet({ type: 'otherwise' }, both)).toBe(false);
+    expect(decideTranscendent(both, ['ichigo'])).toBeNull();
+    expect(decideTranscendent(both, ['iron-tyrant'])!.id).toBe('ichigo');
+    expect(transcendentForPair(both)!.id).toBe('ichigo');
+    expect(transcendentForPair([both[0]!])).toBeNull();
   });
 
-  it('실제 진화체로: 히든 둘이면 아이젠 미리보기, 조건이 맞았다고 표시', () => {
+  it('실제 진화체로: 같은 진화체 둘이면 그 분류 쌍의 초월자 미리보기', () => {
     const hidden5 = FORM_TABLE.filter((f) => f.tier === 4 && f.hidden && ['frenzy', 'restraint', 'hunter'].includes(f.label.kind)).map((f) => f.id);
     expect(hidden5.length).toBeGreaterThan(0);
     const s = fusionReady([hidden5[0]!, hidden5[0]!]);
     const pv = fusionPreview(s);
-    expect(pv.def!.id).toBe('aizen');
-    expect(pv.matched).toBe(true);
-    expect(fusionFinalText(pv.def!).body).toContain('아이젠');
+    const cat = tryGetForm(hidden5[0]!)!.label.category;
+    expect(pv.def!.combo).toEqual(TRANSCENDENTS.find((t) => t.combo[0] === cat && t.combo[1] === cat)!.combo);
+    expect(pv.owned).toBe(false);
+    expect(fusionFinalText(pv.def!).body).toContain(pv.def!.name);
     expect(fusionLists().keeps.join(' ')).toContain('초월자 도감');
   });
 

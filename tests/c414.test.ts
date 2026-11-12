@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
 import { GUIDES } from '../src/data/help';
-import { HOGYOKU_STEP_NAMES, transcendentConditionText } from '../src/data/hogyoku';
+import { HOGYOKU_STEP_NAMES, transcendentComboText } from '../src/data/hogyoku';
 import { chapterContent, STORY_CHAPTERS } from '../src/data/story';
 import { TRANSCENDENTS } from '../src/data/transcendents';
 import { HOGYOKU_TRACK_IDS, trackCostSum, trackStepCost } from '../src/engine/transcend';
@@ -138,8 +138,8 @@ describe('244장 5 합체 뒤 · 6 옛 세이브', () => {
 
   it('붕옥 화면: 단계 띠·강화 버튼·강화 상세·지금 두 캐릭터라면·못 모은 조건 공개 (개발 단계 목록은 C.425 사용자 지시로 삭제)', () => {
     const v = read('src/ui/hogyokuView.ts');
-    for (const k of ["'bha-hogyoku__stages'", "dataset.sc = 'hogyoku-develop'", "'붕옥 개발'", '`${m.track} — ${m.name}`', "'지금 두 캐릭터라면 → '", 'transcendentConditionText(d.condition)']) expect(v).toContain(k);
-    for (const d of TRANSCENDENTS) expect(transcendentConditionText(d.condition)).toMatch(/\S/);
+    for (const k of ["'bha-hogyoku__stages'", "dataset.sc = 'hogyoku-develop'", "'붕옥 개발'", '`${m.track} — ${m.name}`', "'지금 두 캐릭터라면 → '", 'transcendentComboText(d.combo)']) expect(v).toContain(k);
+    for (const d of TRANSCENDENTS) expect(transcendentComboText(d.combo)).toMatch(/\S/);
     expect(read('src/ui/bha/screens-lcd.css')).toMatch(/\.bha-hogyoku__stages \{[^}]*var\(--bha-sp-1\)/);
   });
 });

@@ -103,12 +103,12 @@ describe('세이브 형식 75 (74 → 75 마이그레이션): 옛 세이브는 �
     return migrateSave(raw)!;
   };
   it('형식 74, 단계 표에 73 이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(82); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
+    expect(SAVE_FORMAT_VERSION).toBe(83); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
     expect(SAVE_MIGRATIONS[73]).toBeTypeOf('function');
   });
   it('1단계 옛 세이브: 쓰던 장비·전투 소모품 칸·장신구 칸은 열린 채(안내 없음), 타일·펫은 안 받았으면 표대로 잠김', () => {
     const m = old74(() => undefined);
-    expect(m.meta.format).toBe(82);
+    expect(m.meta.format).toBe(83);
     expect(m.shared.unlocks).toEqual({ gear: 0, battleItem: 0, accessory: 0 });
     for (const g of ['unlock-gear', 'unlock-battle-item', 'unlock-accessory'] as const) expect(guidePending(m.help, g)).toBe(false);
   });
