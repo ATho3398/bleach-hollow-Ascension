@@ -79,7 +79,9 @@ describe('수련장 = 훈련 인형 통합 (GDD 85장 3, C.137)', () => {
   it('물건들이 서로 겹치지 않는다', () => {
     for (const f of FACTIONS) {
       const r = roomOf(f);
-      for (const p of ROOM_PROPS) for (const q of ROOM_PROPS) {
+      // rank(번호 쟁탈전·진급 시험)는 방에 안 선다 — 월드맵 장소 (GDD 241-C 3, C.403). 방 화면(roomView)이 그리는 물건끼리만 본다 (C.422)
+      const shown = ROOM_PROPS.filter((p) => p !== 'rank');
+      for (const p of shown) for (const q of shown) {
         if (p >= q) continue;
         expect(Math.hypot(r.layout[p].x - r.layout[q].x, r.layout[p].y - r.layout[q].y), `${f.id}: ${p}–${q}`).toBeGreaterThan(14);
       }

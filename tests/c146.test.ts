@@ -34,7 +34,8 @@ describe.each(['hollow', 'shinigami'])('C.146 방 물건 (%s)', (fid) => {
     const boxes = Object.fromEntries(ids.map((i) => [i, boxOf(i, L[i]!)]));
     const CHAR = charBox(roomOf(getFaction(fid!)).characterFoot);
     // C.263·C.268: 사용자 배치에서 책장 왼쪽 끝이 펫 자리(오른쪽 발치 40px)에 걸친다(C.268 약 20px) — 캐릭터 몸과는 안 겹침. 책장은 몸만 본다
-    for (const i of ids) expect(hit(boxes[i]!, { ...CHAR, r: CHAR.r + (i === 'book' ? 0 : 40) }), `${i} × 캐릭터`).toBe(false);
+    // C.422: 사용자 배치에서 책장이 캐릭터 상자(130px) 오른쪽 빈 끝에 약 14px 걸친다 — 그림 몸(가운데 ±45px)과는 안 겹침(캡처 c422). 책장은 몸만 본다
+    for (const i of ids) expect(hit(boxes[i]!, i === 'book' ? { ...CHAR, l: CHAR.l + 20, r: CHAR.r - 20 } : { ...CHAR, r: CHAR.r + 40 }), `${i} × 캐릭터`).toBe(false);
     // C.394 (GDD 241-C 3): 수련장 = 옛 진급 시험 자리(사용자 배치 C.268 — 책장 바로 아래라 칸 계산으로는 책장 이름표와 맞닿는다, 게임 화면은 그 자리 그대로)
     for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) if (!(ids[a] === 'book' && ids[b] === 'altar')) expect(hit(boxes[ids[a]!]!, boxes[ids[b]!]!), `${ids[a]} × ${ids[b]}`).toBe(false);
   });

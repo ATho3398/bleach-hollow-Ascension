@@ -177,12 +177,14 @@ describe('C.263 배치 도구 반영 — 두 종족 위치·크기 통일', () =
   const spot = (s: { x: number; y: number; scale?: number }) => ({ x: s.x, y: s.y, scale: s.scale });
   it('방: 두 종족 room.layout 이 같고 사용자가 잡은 값', () => {
     const [a, b] = FACTIONS.map((f) => roomOf(f).layout);
-    for (const k of ['book', 'chest', 'outside', 'rank'] as const) expect(spot(a![k])).toEqual(spot(b![k]));
+    for (const k of ['book', 'chest', 'outside', 'rank', 'altar', 'hogyoku'] as const) expect(spot(a![k])).toEqual(spot(b![k]));
     // C.268 (사용자 2026-11-04 00:58 "호로 기준으로 홈 진급시험 사이즈랑 위치 맞춰놨으니까, 사신도 똑같이 맞춰"): 책장·진급 시험 다시 잡음
-    expect(spot(a!.book)).toEqual({ x: 71.4, y: 68.8, scale: 0.91 });
+    // C.422 (사용자 2026-11-12 "붕옥 추가함. 사신, 호로 홈 맞춰", bha-layout-20261112-1337.json): 책장·수련장·가방·붕옥 다시 잡음, 두 종족 같게
+    expect(spot(a!.book)).toEqual({ x: 65.9, y: 64.4, scale: 0.91 });
     // y 91.7 → 91.2: 기준 장면 바닥 아래 끝(이름표 자리)에서 게임이 91.2 로 끌어 놓던 값을 그대로 적음 (보이는 자리 같음)
-    expect(spot(a!.chest)).toEqual({ x: 28.9, y: 91.2, scale: 0.86 }); // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
-    expect(spot(a!.altar)).toEqual({ x: 83.7, y: 87.1, scale: 1.03 }); // C.394 (GDD 241-C 3): 그 자리에 수련장
+    expect(spot(a!.chest)).toEqual({ x: 28.2, y: 91.2, scale: 0.86 }); // C.422: y 91.4 → 바닥 아래 끝 91.2 // C.269 (사용자 2026-11-04 01:13 "호로에 가방도 다시 올렸으니까 사신에도 적용"): ×0.8 → ×0.86 + 가방 그림 교체
+    expect(spot(a!.altar)).toEqual({ x: 91.1, y: 65.3, scale: 1.03 }); // C.422
+    expect(spot(a!.hogyoku)).toEqual({ x: 79.3, y: 88.2, scale: 0.77 }); // C.422: 붕옥 (그 전엔 기본값 37·58·0.6 provisional)
   });
   it('시장 공통 기본값(DEFAULT_MARKET) = C.263 값 — 두 종족은 C.335·C.336 부터 json 으로 따로', () => {
     const m = marketOf({});
