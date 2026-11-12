@@ -45,7 +45,14 @@ export interface TranscendentDef {
   room?: string;
   /** 만든 모델 (GDD 12-4 v6.029, C.431): glitchMosaic = 게임의 캐릭터·적 도트 그림에서 사각 조각을 잘라 모은 네모 도트 하나(시드 고정 기본 모습) + 조각 글리치.
    *  tile = 조각 한 변(64칸 기준 원본 화소), grid = [가로, 세로] 조각 수, scale = 화면 표시 배율(GDD 12-4 v6.037 '지금의 2/3', 없으면 1) */
-  model?: { kind: 'glitchMosaic'; seed: number; tile: number; grid: [number, number]; scale?: number };
+  model?: {
+    kind: 'glitchMosaic'; seed: number; tile: number; grid: [number, number]; scale?: number;
+    /** 조각 교체 (GDD 12-4 v6.043, C.437 — 사용자 '블록들이 랜덤하게 계속 바뀌게'): churnMs 다음 교체까지 [최소, 최대] ms · swap 한 번에 바뀌는 조각 수 [최소, 최대] */
+    churnMs: [number, number]; swap: [number, number];
+    /** 모노톤·흑백 ('가다가 모노톤이나 흑백도'): 교체 조각이 모노톤/흑백일 확률 · 몸 전체 흑백/모노톤 간격·지속 [최소, 최대] ms · 모노톤 색 = 디자인 토큰 이름 */
+    monoChance: number; fullMonoEveryMs: [number, number]; fullMonoHoldMs: [number, number]; monoTokens: string[];
+    provisional?: boolean;
+  };
   /** 이 초월자가 나오는 두 캐릭터 진화체 분류 조합 (GDD 12-4 v6.037, provisional 대응) */
   combo: TranscendentCombo;
   /** 합체 뒤 이 초월자 트랙의 종류 (GDD 12-4 v6.028 — src/data/trackKinds/<id>.json: 진화 없음·시간 감소 없음 등) */
@@ -71,7 +78,10 @@ export function parseTranscendent(r: unknown): TranscendentDef {
   const m = t.model as Partial<NonNullable<TranscendentDef['model']>> | undefined;
   if (m !== undefined && !(m.kind === 'glitchMosaic' && Number.isInteger(m.seed) && Number.isInteger(m.tile) && (m.tile as number) > 0
     && Array.isArray(m.grid) && m.grid.length === 2 && m.grid.every((v) => Number.isInteger(v) && v > 0)
-    && (m.scale === undefined || (typeof m.scale === 'number' && m.scale > 0 && m.scale <= 2)))) errors.push('model (glitchMosaic seed·tile·grid·scale)');
+    && (m.scale === undefined || (typeof m.scale === 'number' && m.scale > 0 && m.scale <= 2))
+    && [m.churnMs, m.swap, m.fullMonoEveryMs, m.fullMonoHoldMs].every((r) => Array.isArray(r) && r.length === 2 && r.every((v) => typeof v === 'number' && v > 0) && r[0]! <= r[1]!)
+    && typeof m.monoChance === 'number' && m.monoChance >= 0 && m.monoChance <= 1
+    && Array.isArray(m.monoTokens) && m.monoTokens.length > 0 && m.monoTokens.every((k) => typeof k === 'string' && k.startsWith('--bha-')))) errors.push('model (glitchMosaic seed·tile·grid·scale·churnMs·swap·monoChance·fullMonoEveryMs·fullMonoHoldMs·monoTokens)');
   const tr = t.trait as Partial<TranscendentTraitDef> | undefined;
   const fx = tr?.effect as Record<string, unknown> | undefined;
   const numOk = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));

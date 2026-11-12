@@ -1,0 +1,36 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-room-t0.png",
+    "02-pc-room-t1.png",
+    "03-pc-room-t2.png",
+    "04-pc-room-mono-pieces.png",
+    "05-pc-room-full-gray.png",
+    "06-pc-room-full-mono.png",
+    "07-pc-status.png",
+    "08-phone-room-t0.png"
+  ],
+  "facts": {
+    "pc": {
+      "changing": true,
+      "monoMoment": {
+        "full": "",
+        "mono": 7,
+        "src": "AAZJREFUAwCVrN7z15GVywAAAABJRU5ErkJggg=="
+      },
+      "full_gray": true,
+      "full_mono": true,
+      "statusMosaic": {
+        "full": "",
+        "mono": 6,
+        "src": "AAZJREFUAwAF3u03VcaryAAAAABJRU5ErkJggg=="
+      }
+    },
+    "phone": {
+      "changing": true
+    },
+    "reduced": {
+      "reducedSame": true
+    }
+  }
+}

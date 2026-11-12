@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ART_MANIFEST, charArt, MOSAIC_MARK, mosaicIdOf, mosaicSrc } from '../src/data/art/manifest';
 import { parseTranscendent, TRANSCENDENTS } from '../src/data/transcendents';
 import { artSkinOf, newSaveData } from '../src/game';
-import { MOSAIC_TIMING, mosaicGlitch, mosaicLayout, mosaicSourceFiles } from '../src/ui/bha/glitchMosaic';
+import { mosaicChurn, mosaicLayout, mosaicSourceFiles } from '../src/ui/bha/glitchMosaic';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const model = TRANSCENDENTS.find((d) => d.model)!.model!;
@@ -12,7 +12,7 @@ const model = TRANSCENDENTS.find((d) => d.model)!.model!;
 describe('조각 모델 데이터', () => {
   it('Unknown;03398 만 model glitchMosaic (시드 3398, 조각 8, 6×8 세로 직사각형 · 표시 2/3 — GDD 12-4 v6.037) · 검증', () => {
     expect(TRANSCENDENTS.filter((d) => d.model).map((d) => d.id)).toEqual(['rift-wanderer']);
-    expect(model).toEqual({ kind: 'glitchMosaic', seed: 3398, tile: 8, grid: [6, 8], scale: 0.67 });
+    expect(model).toMatchObject({ kind: 'glitchMosaic', seed: 3398, tile: 8, grid: [6, 8], scale: 0.67 }); // 움직임 수치는 c437
     expect(() => parseTranscendent({ ...TRANSCENDENTS[0], model: { kind: 'x', seed: 1, tile: 8, grid: [8, 8] } })).toThrow(/model/);
     expect(() => parseTranscendent({ ...TRANSCENDENTS[0], model: { kind: 'glitchMosaic', seed: 1, tile: 0, grid: [8, 8] } })).toThrow(/model/);
   });
@@ -44,17 +44,16 @@ describe('조각 배치·글리치 (순수 계산)', () => {
     const solid = mosaicLayout(model, 40, (_s, tx) => tx === 3);
     expect(solid.filter((c) => c.tx === 3).length).toBeGreaterThan(solid.length * 0.6); // 12번까지 다시 고른다
   });
-  it('한 번의 글리치 = 서로 다른 칸 1~4개 · 타이밍 1~3초 / 0.1~0.3초', () => {
+  it('한 번의 교체 = 서로 다른 칸 swap 범위(C.437 1~3개)', () => {
     let seed = 11;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let k = 0; k < 200; k++) {
-      const g = mosaicGlitch(model, 40, rnd);
+      const g = mosaicChurn(model, 40, rnd);
       expect(g.at.length).toBeGreaterThanOrEqual(1);
-      expect(g.at.length).toBeLessThanOrEqual(4);
+      expect(g.at.length).toBeLessThanOrEqual(3);
       expect(new Set(g.at).size).toBe(g.at.length);
       expect(g.cells).toHaveLength(g.at.length);
     }
-    expect(MOSAIC_TIMING).toMatchObject({ gapMin: 1000, gapMax: 3000, holdMin: 100, holdMax: 300 });
   });
 });
 
