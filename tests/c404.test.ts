@@ -47,7 +47,7 @@ describe('241-B 2·3·6·7: 화면 (CSS·DOM 연결)', () => {
   });
   it('진화 연출·결과: 새 진화체 그림(heroArtOf — 종이인형·스프라이트 그대로)을 넘긴다', () => {
     const app = read('src/ui/app.ts');
-    expect(app.match(/art: heroArtOf\(roomOf\(faction\), faction\.id, artTierIndexOf\(s\), artSkinOf\(s\)\) \}; \/\/ 새 진화체 그림/g)).toHaveLength(2);
+    expect(app.match(/art: evolvedArtOf\(roomOf\(faction\), s\) \}; \/\/ 새 진화체 그림/g)).toHaveLength(2); // GDD 246장 1: 바뀐 뒤 모습(evolvedArtOf)
     const ev = read('src/ui/evolutionPanel.ts');
     expect(ev).toContain("figOf('bha-evolve__fig--reveal')");
     expect(ev).toContain("figOf('bha-evolve__fig--result')");

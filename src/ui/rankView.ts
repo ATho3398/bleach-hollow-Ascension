@@ -21,6 +21,8 @@ import { ascensionUnlockText, battleLabels } from './labels';
 import { playCosmeticFx } from './bha/cosmeticFx';
 import { shownName } from './displayName';
 import { asBack } from './bha/screenBack';
+import { heroEl } from './bha/battle';
+import type { ArtUrls } from '../data/art/manifest';
 
 /** 번호(1~10, null = 무번호)의 종족별 표시 이름 */
 export function rankLabel(faction: FactionConfig, n: number | null): string {
@@ -142,13 +144,20 @@ export function rankResultView(root: HTMLElement, faction: FactionConfig, holder
 }
 
 /** 아란칼화 / 참백도 구상화 결과 (GDD 126장 3, C.220 — 지금은 보스전 임시): 머리글 + 결과 줄 + [수련장으로] */
-export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers, formId: string | null = null): void {
+export function ascensionResultView(root: HTMLElement, faction: FactionConfig, won: boolean, lines: readonly string[], h: RankResultHandlers, formId: string | null = null, art?: ArtUrls): void {
   const labels = battleLabels(faction);
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
   head.append(mark, el('span', 'bha-label', `${faction.ascension.name} · ${faction.ascension.foe}`), el('h1', 'bha-result__title', won ? '승리' : labels.defeatState));
   const body = panel({});
+  // 깬 뒤 모습 (GDD 246장 1): 진화 결과 창과 같은 그림 칸 — 아란칼화(호로) = 아란칼 모델(성별 -f), 참백도 구상화(사신) = 지금 모델
+  if (won && art && (art.src || art.frames?.length || art.rig)) {
+    const fig = el('div', 'bha-evolve__fig bha-evolve__fig--result');
+    fig.dataset.evolveFig = '';
+    fig.append(heroEl(art).root);
+    body.append(fig);
+  }
   for (const line of lines) body.append(el('p', 'bha-result__reason', line));
   if (won) body.append(el('p', 'bha-small', `이제 전투에서 ${ascensionUnlockText(faction, formId)}`)); // GDD 198장: 진화체 레스렉시온·만해 이름
   const dock = el('div', 'bha-dock');

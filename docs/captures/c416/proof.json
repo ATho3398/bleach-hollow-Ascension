@@ -1,0 +1,111 @@
+{
+  "errors": [],
+  "shots": [
+    "01-ascension-result-male.png",
+    "02-ascension-result-female.png",
+    "03-skin-list-no-raptor.png",
+    "04-room-bubble-land.png",
+    "05-room-bubble-port.png",
+    "06-room-bubble-pc.png"
+  ],
+  "facts": {
+    "ascension-male": {
+      "before": "spider-orange",
+      "after": "arrancar-base",
+      "look": "arrfirec",
+      "artTierIndex": 4
+    },
+    "ascension-female": {
+      "before": "spider-orange",
+      "after": "arrancar-base-f",
+      "look": "arrfirec",
+      "artTierIndex": 4
+    },
+    "skinList": {
+      "text": "스킨기본(진화체)그랜드피셔입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.",
+      "hasNewType": false
+    },
+    "bodyHasNewType": false,
+    "bubble-land": {
+      "text": "이 정도면 쓸 만하다. (교감 +1)",
+      "slot": true,
+      "bubble": {
+        "l": 192,
+        "t": 92,
+        "r": 372,
+        "b": 124
+      },
+      "status": {
+        "l": 249,
+        "t": 36,
+        "r": 347,
+        "b": 90
+      },
+      "char": {
+        "l": 229,
+        "t": 102,
+        "r": 367,
+        "b": 244
+      },
+      "belowStatus": true,
+      "overlapsProp": false,
+      "inScene": true,
+      "rotated": false,
+      "statusVisible": true
+    },
+    "bubble-port": {
+      "text": "흥, 나쁘지 않군. (교감 +1)",
+      "slot": true,
+      "bubble": {
+        "l": 243,
+        "t": 84,
+        "r": 401,
+        "b": 116
+      },
+      "status": {
+        "l": 273,
+        "t": 38,
+        "r": 371,
+        "b": 82
+      },
+      "char": {
+        "l": 253,
+        "t": 107,
+        "r": 391,
+        "b": 249
+      },
+      "belowStatus": true,
+      "overlapsProp": false,
+      "inScene": true,
+      "rotated": true,
+      "statusVisible": true
+    },
+    "bubble-pc": {
+      "text": "흥, 나쁘지 않군. (교감 +1)",
+      "slot": true,
+      "bubble": {
+        "l": 243,
+        "t": 99,
+        "r": 401,
+        "b": 131
+      },
+      "status": {
+        "l": 273,
+        "t": 43,
+        "r": 371,
+        "b": 97
+      },
+      "char": {
+        "l": 253,
+        "t": 107,
+        "r": 391,
+        "b": 249
+      },
+      "belowStatus": true,
+      "overlapsProp": false,
+      "inScene": true,
+      "rotated": false,
+      "statusVisible": true
+    }
+  }
+}

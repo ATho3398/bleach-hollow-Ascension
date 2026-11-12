@@ -19,6 +19,8 @@ export interface SkinDef {
   startOnly?: true;
   /** 단계 외형 (GDD 53, 종족 설정 tierLooks): 진화 때 정해져 자동으로 입혀진다. 상점·스킨 패널에는 안 나온다 */
   tierLook?: true;
+  /** 없앤 모델 (GDD 246장 2): 옛 세이브에 남은 id 를 읽을 때만 쓴다 — 고르는 목록·도감·편집기·상점 품목에는 안 나온다(이름은 대신 보이는 모델 이름) */
+  retired?: true;
 }
 
 // GDD 243장 9-7: 화면에 '(가칭)'이 보이던 시작 외형·스킨 이름 = 지금 이름을 정식으로(tentativeName false) — 그림·수치는 provisional 그대로
@@ -38,7 +40,8 @@ const BASE_SKINS: readonly SkinDef[] = [
   { id: 'panther', name: '속도형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
   { id: 'scorpion', name: '짐승형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
   { id: 'wraith', name: '부유형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
-  { id: 'raptor', name: '속도형(옛 새형)', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
+  // 옛 새형 (GDD 246장 2, 사용자 2026-11-12 "모델중에 옛 새형 이거 없애"): 목록에서 삭제. id 는 옛 세이브용으로 남아 불러오면 속도형(그림·이름 그대로 속도형)으로 보인다
+  { id: 'raptor', name: '속도형', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true, retired: true },
   // 길리안 외형 (GDD 219장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"): 2단계(길리안)에 닿으면 능력치와 상관없이 이 외형 — 종이인형 길리안(몸 hd)
   { id: 'gillian', name: '길리안', factionId: 'hollow', tentativeName: false, provisional: true, startOnly: true, tierLook: true },
   // 길리안 외눈형 (GDD 241-C 4, C.406): 숨은 모습 — 종족 설정 specialLooks 조건을 채우고 2단계로 진화하면 이 외형(종이인형 길리안 외눈 가면)
@@ -60,11 +63,14 @@ const AJUCHAS_ELEMENT_SKINS: readonly SkinDef[] = AJUCHAS_MODEL_SKINS.flatMap((i
   return AJUCHAS_ELEMENT_NAMES.map(([el, name]): SkinDef => ({ ...base, id: `${id}${el}`, name: `${base.name}(${name})` }));
 });
 
-export const SKINS: readonly SkinDef[] = [...BASE_SKINS, ...AJUCHAS_ELEMENT_SKINS, ...ARRANCAR_SKINS];
+/** 스킨 표 전부 (옛 세이브 읽기용 retired 포함 — getSkin 이 쓴다) */
+const ALL_SKINS: readonly SkinDef[] = [...BASE_SKINS, ...AJUCHAS_ELEMENT_SKINS, ...ARRANCAR_SKINS];
+/** 목록에 나오는 스킨 (없앤 모델 retired 제외 — GDD 246장 2) */
+export const SKINS: readonly SkinDef[] = ALL_SKINS.filter((s) => !s.retired);
 
 
 export function getSkin(id: string | null | undefined): SkinDef | undefined {
-  return id ? SKINS.find((s) => s.id === id) : undefined;
+  return id ? ALL_SKINS.find((s) => s.id === id) : undefined;
 }
 
 /** 이 종족이 입을 수 있는 스킨 (공용 포함) */

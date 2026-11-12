@@ -19,7 +19,8 @@ import { fullnessOf } from './bha/fullness';
 import { homeMaxHp } from '../home';
 import type { Device, SelectItem } from './bha/device';
 import { artTopRatio, changeChip, changeItems, changeNoteBox, drawnHeadY, horiz, loadArtTopRatio, noteLift, placeChangeNote, setChangeSay, showChangeNote, type ChangeItem } from './bha/changeNote';
-import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charHeadOffset, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry } from './bha/room';
+import { applyCarePose, bubbleClear, bubbleSpot, characterButton, charHeadOffset, charTopOffset, extraPropButtons, layoutOnFloor, lockProp, propButton, roomCharArt, sceneBox, type FloorEntry, type RectLike } from './bha/room';
+import { uiBox } from './bha/select';
 import { careTalkKey, idleTalkKey, moodOf, pickLine, statusChips, type Mood } from './bha/roomLogic';
 import { chipsAt, homeHpMeter, lerpShown, nestShown, paintStatusBox, rememberShown, riseFrom, shownBefore, statusInfoButton, statusNameTag, type GaugeShown } from './bha/statusBox';
 import { feedsLeft, foodEffectsNow, previewHomeHp, reviveEvLossOf } from '../engine/nest';
@@ -137,12 +138,51 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   /** 상태 값이 바뀌는 중(차오름 + 깜빡임)이 끝나는 시각 (GDD 208장 0·1): 이때까지는 말풍선이 떠도 상태창을 숨기지 않는다 */
   let statusBusyUntil = 0;
   const markStatusBusy = (ms: number) => (statusBusyUntil = Math.max(statusBusyUntil, Date.now() + ms + GAUGE_BLINK_PERIOD_MS * GAUGE_BLINK_AFTER));
+  /**
+   * 말풍선 고정 자리 (GDD 246장 3, 사용자 2026-11-12 "대화창도 그냥 상태창이랑 캐릭터 사이에 넣으면 될듯?"): 상태 박스 바로 아래 ~ 캐릭터 머리 위(바뀐 값 알림 줄과 같은 자리).
+   * 가로 = 캐릭터 가운데, 장면 끝·방 물건 버튼에 걸리면 옆으로 민다(--bubble-dx). 상태 박스는 숨기지 않는다. 박스가 캐릭터 옆으로 간 자세(빈사 등)거나 잴 수 없으면 false → 옛 자리 규칙
+   */
+  const placeBubbleSlot = (): boolean => {
+    if (!scene.isConnected || scene.clientWidth === 0 || chipRow.classList.contains('is-side') || statusBtn.offsetWidth === 0) return false;
+    // 장면 기준 자리(CSS px)로 잰다: 세로 폰 회전 출력(시계 방향 90도)·배율이 있어도 같은 값 (uiBox)
+    const sb = scene.getBoundingClientRect();
+    const rotated = scene.offsetWidth >= scene.offsetHeight !== sb.width >= sb.height;
+    const k = (rotated ? sb.height : sb.width) / scene.offsetWidth || 1;
+    const loc = (e: Element): RectLike => {
+      const b = uiBox(e.getBoundingClientRect(), sb, rotated);
+      return { left: (b.u - b.w / 2) / k, right: (b.u + b.w / 2) / k, top: (b.v - b.h / 2) / k, bottom: (b.v + b.h / 2) / k };
+    };
+    const area: RectLike = { left: 0, top: 0, right: scene.offsetWidth, bottom: scene.offsetHeight };
+    const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-1')) || 2;
+    bubble.classList.add('is-slot');
+    scene.style.setProperty('--bubble-top', `${Math.round(loc(statusBtn).bottom + gap)}px`);
+    const blockers = [...props.values(), ...extras, ...(reviveBtn ? [reviveBtn] : []), ...(resumeBtn && scene.contains(resumeBtn) ? [resumeBtn] : [])]
+      .filter((b) => b.isConnected && b.offsetWidth > 0).map(loc);
+    const r = loc(bubble);
+    const at = (d: number): RectLike => ({ left: r.left + d, right: r.right + d, top: r.top, bottom: r.bottom });
+    // 장면 안으로
+    let dx = Math.max(0, gap - r.left) - Math.max(0, r.right - (area.right - gap));
+    // 물건 버튼에 걸리면 걸린 것 바깥으로 (지금 자리에서 가까운 쪽 먼저)
+    if (!bubbleClear(at(dx), area, blockers)) {
+      const tries = blockers.flatMap((b) => [b.right + gap - r.left, b.left - gap - r.right]).sort((a, c) => Math.abs(a - dx) - Math.abs(c - dx));
+      const ok = tries.find((d) => bubbleClear(at(d), area, blockers));
+      if (ok === undefined) {
+        bubble.classList.remove('is-slot');
+        return false;
+      }
+      dx = ok;
+    }
+    scene.style.setProperty('--bubble-dx', `${Math.round(dx)}px`);
+    return true;
+  };
   /** 말풍선 자리 (C.194, GDD 120장 2 · 208장 2): 머리 위가 기본. 방 위 끝을 넘으면 캐릭터 옆(방 가운데 쪽).
    *  keep(상태 값이 바뀌는 순간 — 상태창을 숨기지 않음)이면 상태창(박스·ⓘ·이름표)·방 물건 버튼과 겹치지 않는 자리를 찾는다: 머리 위 → 옆(밀어내기) → 반대쪽 옆,
    *  다 막히면 말풍선을 생략한다(GDD 233장 5 — 알림 띠로 돌리지 않는다). 생략했으면 false */
   const placeBubble = (keep: boolean): boolean => {
-    bubble.classList.remove('is-side', 'is-left');
+    bubble.classList.remove('is-side', 'is-left', 'is-slot');
     scene.style.setProperty('--bubble-shift', '0px');
+    scene.style.setProperty('--bubble-dx', '0px');
+    if (placeBubbleSlot()) return true;
     scene.style.setProperty('--char-half', `${char.offsetWidth / 2}px`);
     // offsetTop·offsetLeft 는 transform 을 빼고 잰다: 말풍선 top = 아래 끝(translate −100%), 캐릭터 상자 left = 가운데(translate −50%)
     const first = bubbleSpot(bubble.offsetTop, bubble.offsetHeight, char.offsetLeft, scene.clientWidth);
@@ -190,17 +230,19 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     // 말풍선은 캐릭터 머리 위 가운데 (C.176, GDD 104장 1). 그냥 대화 동안 상태 칩은 잠깐 숨긴다(208장 0 정정 — 그대로).
     // 상태 값이 바뀔 때는 상태창을 숨기지 않고(208장 1) 말풍선을 상태창과 안 겹치는 자리로(208장 2)
     scene.classList.toggle('is-saying', !keepStatus);
-    dev.refresh(); // 말풍선 동안 숨은 상태 칩은 기기 초점에서 빠진다 (GDD 176장 4)
     bubble.hidden = false;
-    bubble.classList.remove('is-pop');
-    void bubble.offsetWidth;
-    bubble.classList.add('is-pop');
+    bubble.classList.remove('is-pop'); // 자리는 튀어나오는 연출(transform) 없이 잰다
     window.clearTimeout(bubbleTimer);
     if (!placeBubble(keepStatus)) {
       scene.classList.remove('is-saying');
       dev.refresh();
       return;
     }
+    void bubble.offsetWidth;
+    bubble.classList.add('is-pop');
+    // 상태 박스 아래 고정 자리(GDD 246장 3)면 박스를 숨기지 않는다 — 박스와 겹치지 않는다
+    if (bubble.classList.contains('is-slot')) scene.classList.remove('is-saying');
+    dev.refresh(); // 말풍선 동안 숨은 상태 칩은 기기 초점에서 빠진다 (GDD 176장 4)
     bubbleTimer = window.setTimeout(() => {
       bubble.hidden = true;
       scene.classList.remove('is-saying');
