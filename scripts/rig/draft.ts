@@ -10,6 +10,8 @@ import spiderRaw from '../../docs/design/rig-draft/spider.json';
 import spiderMotionsRaw from '../../docs/design/rig-draft/spider-motions.json';
 import wraithRaw from '../../docs/design/rig-draft/wraith.json';
 import wraithMotionsRaw from '../../docs/design/rig-draft/wraith-motions.json';
+import aizenRaw from '../../docs/design/rig-draft/aizen.json';
+import aizenMotionsRaw from '../../docs/design/rig-draft/aizen-motions.json';
 import { readMotions, type Motion, type MotionSets, type Rig } from '../../src/data/art/rig/pose';
 
 const humanoid = readMotions(motionsRaw);
@@ -27,10 +29,12 @@ const beast = readMotions(beastMotionsRaw);
 const serpent = readMotions(serpentMotionsRaw);
 const spider = readMotions(spiderMotionsRaw);
 const wraith = readMotions(wraithMotionsRaw);
+const aizen = readMotions(aizenMotionsRaw);
 export const DRAFT_RIGS: Record<string, DraftRig> = {
   humanoid: { rig: DRAFT, motions: DRAFT_MOTIONS, sets: DRAFT_MOTION_SETS },
   beast: { rig: beastRaw as unknown as Rig, motions: beast.motions, sets: beast.sets },
   serpent: { rig: serpentRaw as unknown as Rig, motions: serpent.motions, sets: serpent.sets },
   spider: { rig: spiderRaw as unknown as Rig, motions: spider.motions, sets: spider.sets }, // 거미형(GDD 115-A 106)
   wraith: { rig: wraithRaw as unknown as Rig, motions: wraith.motions, sets: wraith.sets }, // 부유형(GDD 115-A 114)
+  aizen: { rig: aizenRaw as unknown as Rig, motions: aizen.motions, sets: aizen.sets }, // 아이젠(대기만, GDD 115-A 124 — 작업본만)
 };

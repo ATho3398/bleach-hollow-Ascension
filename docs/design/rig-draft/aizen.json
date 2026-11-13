@@ -1,0 +1,297 @@
+{
+ "id": "aizen",
+ "note": "아이젠 종이인형(대기 동작만 — GDD 115-A 124, 사용자 2026-11-14 \"얘 아이젠 idle로 만들어줄래?\"). 사용자 그림(몸 한 덩어리 + 주먹 + 칼)을 scripts/rig/tools/aizen_rig.py 가 머리·윗몸·아랫몸으로 자르고 주먹·칼을 소매 끝에 놓음. 작업본만(게임 미사용).",
+ "canvas": [
+  74,
+  108
+ ],
+ "ground": 107,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    37,
+    107
+   ]
+  },
+  {
+   "id": "lower",
+   "parent": "root",
+   "pivot": [
+    37,
+    107
+   ]
+  },
+  {
+   "id": "upper",
+   "parent": "lower",
+   "pivot": [
+    38,
+    66
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "upper",
+   "pivot": [
+    42,
+    36
+   ]
+  },
+  {
+   "id": "hand",
+   "parent": "upper",
+   "pivot": [
+    18,
+    58
+   ]
+  },
+  {
+   "id": "sword",
+   "parent": "hand",
+   "pivot": [
+    17,
+    59
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "lower",
+   "bone": "lower"
+  },
+  {
+   "id": "upper",
+   "bone": "upper"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "sword",
+   "bone": "sword"
+  },
+  {
+   "id": "hand",
+   "bone": "hand"
+  }
+ ],
+ "bodies": {
+  "ref": {
+   "lower": {
+    "art": "ref/lower",
+    "at": [
+     10,
+     62
+    ],
+    "size": [
+     54,
+     45
+    ]
+   },
+   "upper": {
+    "art": "ref/upper",
+    "at": [
+     12,
+     34
+    ],
+    "size": [
+     45,
+     32
+    ]
+   },
+   "head": {
+    "art": "ref/head",
+    "at": [
+     18,
+     0
+    ],
+    "size": [
+     43,
+     36
+    ]
+   },
+   "sword": {
+    "art": "ref/sword",
+    "at": [
+     11,
+     51
+    ],
+    "size": [
+     36,
+     65
+    ]
+   },
+   "hand": {
+    "art": "ref/hand",
+    "at": [
+     11,
+     53
+    ],
+    "size": [
+     13,
+     12
+    ]
+   }
+  }
+ },
+ "looks": {
+  "aizen-base": {
+   "body": "ref"
+  }
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   74,
+   108
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "note": "그림 칸(정사각, 바닥 y 107 = 아래에서 약 8% 위) — 게임 미사용",
+  "rect": [
+   -23,
+   -22,
+   120,
+   140
+  ],
+  "clipY": 109
+ },
+ "edit": {
+  "names": {
+   "root": "전체",
+   "lower": "아랫몸(코트 자락·다리)",
+   "upper": "윗몸(소매)",
+   "head": "머리",
+   "hand": "오른손(앞손)",
+   "sword": "칼"
+  },
+  "groups": [
+   [
+    "전체",
+    [
+     "root"
+    ]
+   ],
+   [
+    "몸",
+    [
+     "head",
+     "upper",
+     "lower"
+    ]
+   ],
+   [
+    "오른손·칼",
+    [
+     "hand",
+     "sword"
+    ]
+   ]
+  ],
+  "follow": {
+   "lower": [
+    "upper",
+    "head",
+    "hand",
+    "sword"
+   ],
+   "upper": [
+    "head",
+    "hand",
+    "sword"
+   ],
+   "hand": [
+    "sword"
+   ]
+  }
+ },
+ "skeletons": {
+  "ref": {
+   "lower": [
+    {
+     "pts": [
+      [
+       37,
+       107
+      ],
+      [
+       38,
+       66
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "upper": [
+    {
+     "pts": [
+      [
+       38,
+       66
+      ],
+      [
+       42,
+       36
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "head": [
+    {
+     "pts": [
+      [
+       42,
+       36
+      ],
+      [
+       42,
+       8
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand": [
+    {
+     "pts": [
+      [
+       18,
+       58
+      ],
+      [
+       18,
+       58
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "sword": [
+    {
+     "pts": [
+      [
+       17,
+       59
+      ],
+      [
+       46,
+       115
+      ]
+     ],
+     "w": 3
+    }
+   ]
+  }
+ }
+}
