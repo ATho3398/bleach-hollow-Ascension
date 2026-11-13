@@ -506,7 +506,7 @@
    "hand": {
     "art": "parts/hand",
     "at": [
-     10,
+     12,
      54
     ],
     "size": [
@@ -528,7 +528,7 @@
    "thumb": {
     "art": "parts/thumb",
     "at": [
-     8,
+     12,
      56
     ],
     "size": [
@@ -983,11 +983,11 @@
      57
     ],
     "sword": [
-     18,
+     20,
      60
     ],
     "coat_tail": [
-     32,
+     34,
      63
     ],
     "coat_side1": [
@@ -1059,23 +1059,23 @@
    "thigh_a",
    "thigh_b",
    "coat_inner",
-   "coat_front",
    "head",
    "chest",
    "coat_side_top",
    "cuff",
    "hair_side",
    "collar_L",
+   "coat_lining",
+   "coat_front",
    "coat_front_top",
    "arm_sword",
-   "coat_lining",
    "coat_tail",
    "coat_side1",
+   "sword",
    "coat_side2",
    "collar_R",
-   "hand",
-   "sword",
    "thumb",
+   "hand",
    "forearm_sword"
   ]
  },
