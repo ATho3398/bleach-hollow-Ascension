@@ -13,7 +13,7 @@ import { combatKitOf, kitUpgradeCost, transcendShardsOfBattles } from '../src/en
 import { testGrantTranscendent } from '../src/engine/testMode';
 import { createExpedition } from '../src/engine/expedition';
 import { chooseAbsorb, chooseRelease } from '../src/engine/expedition/expedition';
-import { buildBattleRecord } from '../src/engine/combat';
+import { buildBattleRecord, voidChanceOf } from '../src/engine/combat';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, switchCombatBasis, upgradeTranscendentBlock, type SaveData } from '../src/game';
 import { useImmediateHits } from './helpers/hitDelay';
 import { useLegacyMigrations } from './helpers/legacyGate';
@@ -64,7 +64,7 @@ describe('초월자 기반 블록 풀', () => {
     expect(ids).toEqual([KIT_TRAIT_PREFIX + 'kyoka', KIT_TRAIT_PREFIX + 'kido', KIT_TRAIT_PREFIX + 'hogyoku']); // C.443: 붕옥 블록 = 허 자리
     const sk = t.entries.filter((e) => e.source && e.source.id !== KIT_TRAIT_PREFIX + 'hogyoku');
     const sum = sk.reduce((a, e) => a + e.chance, 0);
-    expect(sk[0]!.chance / sum).toBeCloseTo(0.1, 5); // 경화수월 10%
+    expect(sk[0]!.chance / sum).toBeCloseTo(voidChanceOf(p), 9); // C.452: 경화수월 = 허 공식 확률(붕옥이 안 걸린 몫 안에서)
     // 키웠던 호로 기반으로 바꾸면 그 빌드 그대로 (전용 블록 없음)
     expect(switchCombatBasis(s, 'hollow', 3000).ok).toBe(true);
     expect(kitActive(s.evolution)).toBe(false);
@@ -72,9 +72,10 @@ describe('초월자 기반 블록 풀', () => {
     expect(p2.kit).toBeNull();
     expect(s.evolution.basis?.current).not.toBe(TRANSCENDENT_BASIS);
   });
-  it('전투에서 실제로 나오는 블록 = 경화수월·귀도만(공허 제외), 경화수월 레일 최대 2', () => {
+  it('전투에서 실제로 나오는 블록 = 전용 블록만(공허 제외), 경화수월 레일 최대 2', () => {
     const s = mk();
-    s.params.voidChance = s.params.voidChanceBonus = 0;
+    s.params.voidChance = 0.1; // C.452 (v6.066): 경화수월 = 허 공식 확률 — 허 10% 로 고정
+    s.params.voidChanceBonus = 0;
     s.enemy.attackTimer = 1e9;
     s.enemy.actionTimer = 1e9;
     s.player.attackTimer = 1e9;

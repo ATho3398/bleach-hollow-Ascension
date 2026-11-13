@@ -51,7 +51,7 @@ const ids = (s: CombatState) => s.tray.map((b) => b.traitId);
 describe('수치·데이터 (provisional)', () => {
   it('감응도 시작 20·최소 20·융합 30 · 붕옥 블록 허 ×0.5·+10 · 프라고르 −3/블록(C.445) · 이름', () => {
     expect(RR).toEqual({ floor: 20, minRisk: 30 }); // C.444: 전투 전용 start 삭제
-    expect(K.blocks.hogyoku).toMatchObject({ voidSlot: { voidScale: 0.5, riskGain: 10 } });
+    expect(K.blocks.hogyoku).toMatchObject({ voidSlot: { voidScale: 1, riskGain: 10, order: 0 } }); // C.452 (v6.066): ×0.5 → ×1
     expect(K.blocks.fragor).toMatchObject({ riskCost: 3, weight: 0.35, tiers: [2.4, 3.6, 5.0] });
     const p = aizenParams();
     expect(p.kit?.liberationName).toBe('붕옥 융합');
@@ -65,17 +65,17 @@ describe('수치·데이터 (provisional)', () => {
 });
 
 describe('붕옥 블록', () => {
-  it('출현표: 융합 전 = 경화수월·귀도·붕옥(허 블록 대신, 확률 = 허 공식 × 0.5), 허 블록 없음', () => {
+  it('출현표: 융합 전 = 경화수월·귀도·붕옥(허 블록 대신, 확률 = 허 공식 그대로 — C.452), 허 블록 없음', () => {
     const s = mk();
     const t = spawnTableOf(s.params, false, 20);
     expect(t.entries.some((e) => e.kind === 'void')).toBe(false);
     expect(t.entries.map((e) => e.source?.id)).toEqual([id('kyoka'), id('kido'), id('hogyoku')]);
     const hg = t.entries.find((e) => e.source?.id === id('hogyoku'))!;
     expect(voidChanceOf(s.params)).toBeGreaterThan(0);
-    expect(hg.chance).toBeCloseTo(voidChanceOf(s.params) * 0.5, 9);
+    expect(hg.chance).toBeCloseTo(voidChanceOf(s.params), 9); // 먼저 굴림 (C.452)
     expect(t.entries.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1, 9);
     // 허 공식 가산(컨디션·환경 등)도 그대로 받는다
-    expect(spawnTableOf({ ...s.params, voidChanceBonus: 0.2 }, false, 20).entries.find((e) => e.source?.id === id('hogyoku'))!.chance).toBeCloseTo(voidChanceOf({ ...s.params, voidChanceBonus: 0.2 }) * 0.5, 9);
+    expect(spawnTableOf({ ...s.params, voidChanceBonus: 0.2 }, false, 20).entries.find((e) => e.source?.id === id('hogyoku'))!.chance).toBeCloseTo(voidChanceOf({ ...s.params, voidChanceBonus: 0.2 }), 9);
   });
   it('감응도 100이면 붕옥 블록이 안 나온다', () => {
     const s = mk();

@@ -102,6 +102,7 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
     stackName: def.stackName ?? '',
     blocks,
     evadeChance: def.evade ? num.evadeChance ?? 0 : 0,
+    ...(def.evade && num.evadeBuff ? { evadeBuff: { ...num.evadeBuff } } : {}),
     ...(def.riskRelease && num.riskRelease ? { riskRelease: { ...num.riskRelease, limit: BALANCE.provisional.risk.limit } } : {}),
     ...(def.releaseBare ? { releaseBare: true } : {}),
     ...(def.riskPenaltyFree ? { riskPenaltyFree: true } : {}),

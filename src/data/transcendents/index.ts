@@ -47,7 +47,7 @@ export interface TranscendentKitBlockDef {
   releaseSwap?: string;
   releaseOnly?: boolean;
   upgradeAs?: string;
-  /** 허(공허) 블록 자리 (GDD 12-4 v6.052 붕옥 블록): 등장 = 허 공식 × 수치, 쓰면 패널티 없이 게이지 + (수치 = balance blocks.<id>.voidSlot) */
+  /** 허 공식 몫 (GDD 12-4 v6.052 붕옥 블록 · v6.066 경화수월): 블록이 나올 때마다 허 공식 × 수치로 따로 굴림(순서 = order). 게이지를 올리는 블록(riskGain)은 허 블록 자리·쓰면 패널티 없이 게이지 + (수치 = balance blocks.<id>.voidSlot) */
   voidSlot?: boolean;
 }
 

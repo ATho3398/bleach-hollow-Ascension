@@ -270,6 +270,9 @@
 @keyframes bha-kitclone { 0% { opacity: 0; transform: translateX(0); } 20% { opacity: 0.55; } 70% { opacity: 0.45; transform: translateX(calc(-1 * var(--bha-sp-9) * 3)); } 100% { opacity: 0; transform: translateX(calc(-1 * var(--bha-sp-9) * 3.4)); } }
 /* 영창 스택 칩: 가득(흑관 준비)이면 강조색 */
 .bha-kitstack.is-full { color: var(--bha-accent-hi); box-shadow: 0 0 8px var(--bha-accent); }
+/* 회피 치명 버프 칩 (GDD 12-4 v6.066): 버프 동안만 보임 */
+.bha-unit__heads .bha-kitbuff { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); white-space: nowrap; z-index: 5; pointer-events: none; }
+.bha-kitbuff[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .bha-root .bha-block.bha-kitglow { animation: none; }
   .bha-kitline.is-on { animation: bha-libready-still 2200ms steps(1, end) both; }

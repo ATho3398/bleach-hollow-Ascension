@@ -1,0 +1,37 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-kyoka-hogyoku-spawned.png",
+    "02-pc-evade-crit-buff.png"
+  ],
+  "facts": {
+    "spawnScene": {
+      "ok": true,
+      "tray": [
+        "kit:kido",
+        "kit:hogyoku",
+        "kit:kido",
+        "kit:kido",
+        "kit:kyoka"
+      ],
+      "names": [
+        "경화수월",
+        "귀도",
+        "귀도",
+        "붕옥",
+        "귀도"
+      ],
+      "risk": 20
+    },
+    "buff": {
+      "evadeBuffs": 1,
+      "leftTicks": 23,
+      "chip": "치명 +20% 2.3초",
+      "hidden": false,
+      "title": "회피 성공 뒤 3초 동안 치명 확률 +20%p · 치명 피해 +30%"
+    },
+    "buffAfter3s": {
+      "hidden": true
+    }
+  }
+}

@@ -266,8 +266,9 @@ export interface CombatKitBlock {
   solo?: boolean;
   releaseOnly?: boolean;
   releaseSwap?: string;
-  /** 붕옥 블록 장치 (GDD 12-4 v6.052): 허(공허) 블록 자리 — 등장 = 허 공식 × voidScale(게이지 가득이면 안 나옴), 쓰면 패널티 없이 게이지 +riskGain */
-  voidSlot?: { voidScale: number; riskGain: number };
+  /** 허 공식 몫 장치 (GDD 12-4 v6.052 붕옥 → v6.066 경화수월도): 블록이 나올 때마다 허 공식 × voidScale 확률로 따로 굴린다(order 작은 것부터, 먼저 걸린 것이 나옴 — 다 안 걸리면 weight 블록).
+   *  riskGain 이 있으면(붕옥) 허 블록 자리(허 각인)·게이지 가득이면 안 나옴·쓰면 패널티 없이 게이지 +riskGain */
+  voidSlot?: { voidScale: number; riskGain?: number; order: number };
   /** 융합 중 쓰면 1블록마다 게이지 −riskCost (GDD 12-4 v6.052 프라고르) */
   riskCost?: number;
   counter?: { windowSeconds: number; damageMult: number; critBonus: number; healLostFraction: number; line: string };
@@ -281,6 +282,8 @@ export interface CombatKit {
   blocks: CombatKitBlock[];
   evadeChance: number;
   revive?: { hpFraction: number; line: string };
+  /** 회피 성공 뒤 치명 버프 (GDD 12-4 v6.066): seconds 동안 내 치명 확률 +critChance(평타·블록, 상한 그대로)·치명 피해 배율 +critDamage. 다시 회피하면 새로 셈 */
+  evadeBuff?: { seconds: number; critChance: number; critDamage: number };
   /** 해방 = 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합 · v6.054): 게이지(붕옥 감응도) = 원정 리스크 그 자체 — params.riskStart 로 시작, floor 밑으로 안 감, limit 최대,
    *  전투가 끝나면 원정이 끝 값으로 맞춘다. 게이지 ≥ minRisk 면 언제든 해방(지속 시간 없음), 해방 중 minRisk 밑으로 떨어지면 풀림. 게이지는 voidSlot 블록으로 오르고 riskCost 블록으로 깎인다 */
   riskRelease?: { floor: number; minRisk: number; limit: number };
@@ -315,12 +318,26 @@ export interface KitCombatState {
   modeEnters: number;
   modeExits: number;
   readyShown: boolean;
+  /** 회피 치명 버프가 끝나는 틱 (−1 = 없음, GDD 12-4 v6.066) · 버프가 붙은 횟수 */
+  evadeBuffUntil: number;
+  evadeBuffs: number;
 }
 
 /** 전투 시작 초월자 kit 상태 */
 function newKitState(p: CombatParams): KitCombatState {
   const rr = p.kit?.riskRelease;
-  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: rr ? Math.min(rr.limit, Math.max(rr.floor, p.riskStart ?? rr.floor)) : 0, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false };
+  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: rr ? Math.min(rr.limit, Math.max(rr.floor, p.riskStart ?? rr.floor)) : 0, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false, evadeBuffUntil: -1, evadeBuffs: 0 };
+}
+
+/** 회피 치명 버프가 켜져 있는가 (화면: 버프 칩) */
+export function kitEvadeBuffOn(s: Pick<CombatState, 'params' | 'kit' | 'tick'>): boolean {
+  return !!s.params.kit?.evadeBuff && !!s.kit && s.tick <= s.kit.evadeBuffUntil;
+}
+
+/** 회피 치명 버프 남은 초 (없으면 0) */
+export function kitEvadeBuffSecondsLeft(s: Pick<CombatState, 'params' | 'kit' | 'tick'>): number {
+  if (!kitEvadeBuffOn(s)) return 0;
+  return (s.kit!.evadeBuffUntil - s.tick) * s.params.tickSeconds;
 }
 
 /** 해방 중이라 기본 장치(회피·되살아나기·스택)가 꺼져 있는가 (GDD 12-4 v6.052 융합 중 — kit.releaseBare) */
@@ -1074,15 +1091,29 @@ export function spawnTableOf(p: CombatParams, releasing = false, kitRisk: number
  *  voidSlot 블록이 없으면 허 몫 그대로 */
 function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, kitRisk: number | null): { seconds: number; entries: SpawnEntry[] } {
   const seconds = spawnTableOf({ ...p, kit: null, skills: [], physBlock: null }).seconds;
-  const slot = kit.blocks.find((b) => b.voidSlot);
+  const slots = kit.blocks.filter((b) => b.voidSlot).sort((a, b) => a.voidSlot!.order - b.voidSlot!.order);
   const picks = releasing
     ? kit.blocks.filter((b) => !b.releaseSwap && !b.voidSlot)
     : kit.blocks.filter((b) => !b.releaseOnly && !b.voidSlot);
   const total = Math.max(1e-6, picks.reduce((a, b) => a + b.weight, 0));
   const full = kitRisk !== null && !!kit.riskRelease && kitRisk >= kit.riskRelease.limit;
-  const v = slot ? (releasing || full ? 0 : Math.min(1, Math.max(0, voidChanceOf(p)) * slot.voidSlot!.voidScale)) : Math.max(0, voidChanceOf(p));
-  const entries: SpawnEntry[] = picks.map((b) => ({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: (b.weight / total) * (1 - v) }));
-  if (v > 0) entries.push(slot ? { kind: 'skill', source: kitSkillOf(p, slot), family: null, chance: v } : { kind: 'void', source: null, family: null, chance: v });
+  const base = Math.max(0, voidChanceOf(p));
+  const entries: SpawnEntry[] = [];
+  let rest = 1;
+  if (!slots.length && base > 0) {
+    entries.push({ kind: 'void', source: null, family: null, chance: base });
+    rest = 1 - base;
+  }
+  // 허 공식 몫 블록마다 따로 굴림 (v6.066): 앞 블록이 안 걸린 몫(rest) × 이 블록 확률. 해방 중엔 없음, 게이지를 올리는 블록은 게이지 가득이면 없음
+  for (const b of slots) {
+    const v = releasing || (full && b.voidSlot!.riskGain) ? 0 : Math.min(1, base * b.voidSlot!.voidScale);
+    if (v <= 0) continue;
+    entries.push({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: rest * v });
+    rest *= 1 - v;
+  }
+  for (const b of picks) entries.push({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: (b.weight / total) * rest });
+  const at = (e: SpawnEntry): number => (e.source ? kit.blocks.findIndex((b) => KIT_TRAIT_PREFIX + b.id === e.source!.id) : -1);
+  entries.sort((x, y) => at(x) - at(y)); // 데이터 순서로 (뽑기 확률은 순서와 무관)
   return { seconds, entries };
 }
 
@@ -1489,6 +1520,7 @@ export function blockCritChanceOf(p: CombatParams): number {
 function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = false): boolean {
   if (s.script) return false; // 각본 전투는 난수 없이 (GDD 123장 5)
   const p = s.params;
+  if (who === 'player' && kitEvadeBuffOn(s)) bonus += p.kit!.evadeBuff!.critChance; // 회피 치명 버프 (GDD 12-4 v6.066)
   const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
     : block ? Math.min(p.blockCritChanceMax ?? p.critChanceMax, blockCritChanceOf(p) + bonus) : Math.min(p.critChanceMax, critChanceOf(p) + bonus);
   if (chance <= 0) return false;
@@ -1502,7 +1534,8 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
 function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
   if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
-  return { damage: damage * s.params.critMultiplier, crit: true };
+  const extra = kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0; // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066)
+  return { damage: damage * (s.params.critMultiplier + extra), crit: true };
 }
 
 // ── 진화체 특성 (C.89, GDD 39장): 효과 종류별 공통 처리. 수치는 params.abilityEffects ──
@@ -2230,7 +2263,7 @@ function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean
   }
   // 붕옥 블록 (GDD 12-4 v6.052): 패널티 없이 게이지 +riskGain (최대 limit)
   const rr = p.kit?.riskRelease;
-  if (kb.voidSlot && rr) {
+  if (kb.voidSlot?.riskGain && rr) {
     const before = k.risk;
     k.risk = Math.min(rr.limit, k.risk + kb.voidSlot.riskGain * chain);
     if (k.risk !== before) emit(s, { kind: 'kit-risk', spent: before - k.risk, risk: k.risk });
@@ -2578,6 +2611,12 @@ function evaded(s: CombatState): boolean {
   if (kitBare(s)) return false; // 융합 중 회피 없음 (GDD 12-4 v6.052)
   if (s.params.evadeChance <= 0 || nextFloat(s.rng) >= s.params.evadeChance) return false;
   s.evades = (s.evades ?? 0) + 1;
+  const eb = s.params.kit?.evadeBuff;
+  if (eb && s.kit) {
+    // 회피 치명 버프 (GDD 12-4 v6.066): 지금부터 seconds 동안 — 다시 회피하면 새로 셈
+    s.kit.evadeBuffUntil = s.tick + ticksOf(s.params, eb.seconds);
+    s.kit.evadeBuffs++;
+  }
   emit(s, { kind: 'evade' });
   return true;
 }

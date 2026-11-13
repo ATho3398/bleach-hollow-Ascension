@@ -13,7 +13,7 @@ import { absorbReasons } from '../engine/absorb';
 import {
   BASIC_SKILL_ID, blockEffect, blockElementOf, isBasicBlockId, canLiberate, chainGroupsOf, comboOf, sourceOf, drainCombatEvents, elapsedSeconds, LIBERATION_GAUGE_MAX, liberationActive, maxChain, runsOf, step, timeLeftSeconds,
   type Block, type CombatEvent, type HitCategory, type ElemHit, type CombatInput, type CombatParams, type CombatState,
-  canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf, kitBlockOf, kitCounterOpen,
+  canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf, kitBlockOf, kitCounterOpen, kitEvadeBuffSecondsLeft,
   scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
   kitRiskOf,
 } from '../engine/combat';
@@ -474,7 +474,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   legend.append(
     legendItem('var(--bha-atk)', labels.role.attack),
     // 붕옥 블록이 허 블록 자리를 받는 kit(GDD 12-4 v6.052)은 허 블록이 안 나온다
-    ...(p.kit?.blocks.some((b) => b.voidSlot) ? [] : [legendItem('var(--bha-void)', labels.voidBlock)]),
+    ...(p.kit?.blocks.some((b) => b.voidSlot?.riskGain) ? [] : [legendItem('var(--bha-void)', labels.voidBlock)]),
     ...(p.combos.length > 0 ? [legendItem('var(--bha-rare)', '콤보 블록')] : []),
   );
 
@@ -509,6 +509,17 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stackChip.append(p.kit!.stackName, ' ', stackChipValue);
   }
   let stackShown = -1;
+  // 회피 치명 버프 칩 (GDD 12-4 v6.066): 회피 뒤 버프 동안만 '치명 +20% n.n초' — 기존 rare 칩 모양
+  const evadeBuff = p.kit?.evadeBuff;
+  const buffChip = evadeBuff ? v2Chip('', 'rare', { icon: 'i-attack' }) : null;
+  const buffChipValue = el('span');
+  if (buffChip) {
+    buffChip.classList.add('bha-kitbuff');
+    buffChip.title = `회피 성공 뒤 ${evadeBuff!.seconds}초 동안 치명 확률 +${Math.round(evadeBuff!.critChance * 100)}%p · 치명 피해 +${Math.round(evadeBuff!.critDamage * 100)}%`;
+    buffChip.append(`치명 +${Math.round(evadeBuff!.critChance * 100)}%`, ' ', buffChipValue);
+    buffChip.hidden = true;
+  }
+  let buffShown = '';
   // 초월자 대사 띠 (GDD 12-4 v6.048): 반격 성공·되살아남 대사를 장면 가운데에 잠깐
   const kitLine = el('div', 'bha-kitline');
   kitLine.setAttribute('role', 'status');
@@ -565,6 +576,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend);
   if (stackChip) libChip.after(stackChip); // 영창 칩 (초월자 스택 장치만)
+  if (buffChip) meHeads.append(buffChip); // 회피 치명 버프 칩 (초월자 회피 버프 장치만): 내 머리 위 — 범례 줄은 이미 꽉 차 있다
   // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
@@ -1275,7 +1287,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const kb = kitBlockOf(s.params, b.traitId);
     if (kb) {
       const kk = kb.counter || kb.releaseOnly ? 'release' : 'combo';
-      if (kb.voidSlot) return v2BlockEl({ kind: 'void', path: V2_PATH.void, glyph: kb.short, label, uid: b.uid, weak: false }); // 붕옥 블록 = 허 블록 자리(허 각인)
+      if (kb.voidSlot?.riskGain) return v2BlockEl({ kind: 'void', path: V2_PATH.void, glyph: kb.short, label, uid: b.uid, weak: false }); // 붕옥 블록 = 허 블록 자리(허 각인)
       return v2BlockEl({ kind: kk, path: V2_PATH[kk], glyph: kb.short, label, uid: b.uid, weak: false });
     }
     // 블록 색 = 그 블록의 실제 속성 (C.131, GDD 77장 ⑦·79장): 기본 블록은 내 속성이 아니라 노말
@@ -1375,6 +1387,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       stackShown = s.kit.stack;
       setText(stackChipValue, `${stackShown}/${kitStack!.full}`);
       stackChip.classList.toggle('is-full', stackShown >= kitStack!.full);
+    }
+    if (buffChip) {
+      const left = kitEvadeBuffSecondsLeft(s);
+      const t = left > 0 ? `${left.toFixed(1)}초` : '';
+      if (t !== buffShown) {
+        buffShown = t;
+        setText(buffChipValue, t);
+        setHidden(buffChip, !t);
+      }
     }
     // 안내 줄: 봉인
     const sealed = s.sealTicks > 0;
