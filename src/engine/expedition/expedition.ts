@@ -33,6 +33,7 @@ import type { BossSetup } from '../combat';
 import { SORTIE_IDS, sortieMods } from '../sortie';
 import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
+import { kitRiskFloorOf } from '../transcendKit';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -500,8 +501,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     lootRng: createRng((setup.seed ^ LOOT_SEED_SALT) >>> 0),
     evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
     evStart: { ...(setup.evolution?.ev ?? newEvolution().ev) },
-    risk: setup.risk ?? 0,
-    riskPeak: setup.risk ?? 0,
+    risk: Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0), // 리스크 최솟값 (GDD 12-4 v6.054 아이젠 붕옥 감응도 20)
+    riskPeak: Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
     breakthrough: null,
     events: [],
     elapsedSeconds: 0,
@@ -853,6 +854,8 @@ function startBattleAt(
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(), liberationEnabled: exp.liberationEnabled !== false };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
+  // 게이지 모드 해방 (GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체): 전투는 지금 원정 리스크로 시작한다
+  if (params.kit?.riskRelease) params.riskStart = exp.risk;
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
@@ -1021,7 +1024,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
   // 해방이 끝나며 오른 리스크 (GDD 22-5)
   if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
-  // 붕옥 감응도(GDD 12-4 v6.052)는 전투마다 시작 값에서 — 원정 리스크와 따로라 돌려 쓰지 않는다 (C.443 추천안)
+  // 붕옥 감응도 = 원정 리스크 그 자체 (GDD 12-4 v6.054): 전투 중 변화(붕옥 블록 +10·프라고르 −5)를 끝 값으로 맞춘다
+  if (battle.kit && battle.params.kit?.riskRelease && battle.kit.risk !== exp.risk) changeRisk(exp, battle.kit.risk - exp.risk, 'kit-release');
   if (battle.status === 'lost') {
     exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');

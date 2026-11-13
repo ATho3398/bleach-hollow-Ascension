@@ -12,6 +12,7 @@ import { CARE_STATUS_NAMES, homeHpCap, homeHpOf } from './engine/nest';
 import { foodEffectText } from './foodText';
 import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
+import { kitRiskFloorOf } from './engine/transcendKit';
 import { guidePending } from './engine/tutorial';
 import { battleItemBrief, battleItemText, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
@@ -119,11 +120,11 @@ function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig,
   if (save.activeExpedition != null) return '모험 중인 캐릭터에는 못 쓴다';
   if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
   if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
-  const helpsRisk = e.risk > 0 && save.nest.risk > 0;
+  const helpsRisk = e.risk > 0 && save.nest.risk > kitRiskFloorOf(save.transcendentId);
   const helpsCond = e.condition > 0 && save.nest.condition < COND_MAX;
   const helpsCure = e.cure && save.nest.weakened;
   if (helpsRisk || helpsCond || helpsCure) return null;
-  return e.risk > 0 && e.condition === 0 ? `${faction.riskGaugeName} 이미 0` : e.condition > 0 && e.risk === 0 ? '컨디션 이미 가득' : '쓸 필요가 없다';
+  return e.risk > 0 && e.condition === 0 ? `${faction.riskGaugeName} 이미 ${kitRiskFloorOf(save.transcendentId)}` : e.condition > 0 && e.risk === 0 ? '컨디션 이미 가득' : '쓸 필요가 없다';
 }
 
 /** 보관함 목록 (카테고리 순서 = ITEM_CATEGORIES). 장비는 C.150 부터 (GDD 91장) */
@@ -229,7 +230,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     takeItem(save, id);
     return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림`, cured: curedNames(before, save) };
   }
-  save.nest.risk = Math.max(0, save.nest.risk - e.risk);
+  save.nest.risk = Math.max(kitRiskFloorOf(save.transcendentId), save.nest.risk - e.risk); // 정화제도 리스크 최솟값 밑으로 안 감 (GDD 12-4 v6.054 아이젠 20)
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);
   if (e.cure) save.nest.weakened = false;
   takeItem(save, id);

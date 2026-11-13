@@ -1,7 +1,7 @@
 // 리스크 게이지(호로 광기 / 사신 호로화, 이름은 종족 설정) 순수 로직 (GDD 5장, 4-1).
 // 폭주(호로화) = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션 하락, 게이지 60.
 
-import { kitRiskPenaltyFree } from '../transcendKit';
+import { kitRiskFloorOf, kitRiskPenaltyFree } from '../transcendKit';
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
 import type { StatId } from '../../data/schema';
@@ -46,7 +46,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 
 /** 리스크 변화. 한계값 이상이 되면 (원정당 1번) breakthrough 이벤트. 값은 한계값에서 멈춘다 */
 export function changeRisk(s: RiskState, delta: number, _cause: RiskCause): void {
-  s.risk = clamp(s.risk + delta, 0, RX.limit);
+  // 리스크 최솟값이 있는 초월자(아이젠 붕옥 감응도 20, GDD 12-4 v6.054 — 데이터 kit.riskFloor): 어떤 감소도 그 밑으로 안 간다
+  s.risk = clamp(s.risk + delta, kitRiskFloorOf(s.evolution?.kit?.id), RX.limit);
   s.riskPeak = Math.max(s.riskPeak, s.risk);
   // 리스크 패널티 없는 초월자(아이젠, GDD 12-4 v6.050): 게이지는 쌓이지만 폭주(돌파)는 없다
   if (s.risk >= RX.limit && s.breakthrough === null && !kitRiskPenaltyFree(s.evolution?.kit?.id)) {

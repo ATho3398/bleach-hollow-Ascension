@@ -167,6 +167,8 @@ export interface CombatParams {
   combos: ComboRule[];
   /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (BALANCE.provisional.risk.perVoidBlock) */
   riskPerVoidBlock: number;
+  /** 전투 시작 때 리스크 게이지 값 (원정 리스크 — 게이지 모드 해방 kit.riskRelease 만 쓴다, GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체. 없으면 floor) */
+  riskStart?: number;
   /** 장착 흡수 skill 특성 블록 생성원(슬롯 순서). 기본 블록 5종은 이것과 상관없이 늘 풀에 있다 (GDD 44장) */
   skills: CombatSkill[];
   /** passive: 기본 공격 위력·속도 배율 */
@@ -274,9 +276,9 @@ export interface CombatKit {
   blocks: CombatKitBlock[];
   evadeChance: number;
   revive?: { hpFraction: number; line: string };
-  /** 해방 = 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합): 전투 게이지(붕옥 감응도)는 start 에서 시작, floor 밑으로 안 감, limit 최대.
-   *  게이지 ≥ minRisk 면 언제든 해방(지속 시간 없음), 해방 중 minRisk 밑으로 떨어지면 풀림. 게이지는 voidSlot 블록으로 오르고 riskCost 블록으로 깎인다 */
-  riskRelease?: { start: number; floor: number; minRisk: number; limit: number };
+  /** 해방 = 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합 · v6.054): 게이지(붕옥 감응도) = 원정 리스크 그 자체 — params.riskStart 로 시작, floor 밑으로 안 감, limit 최대,
+   *  전투가 끝나면 원정이 끝 값으로 맞춘다. 게이지 ≥ minRisk 면 언제든 해방(지속 시간 없음), 해방 중 minRisk 밑으로 떨어지면 풀림. 게이지는 voidSlot 블록으로 오르고 riskCost 블록으로 깎인다 */
+  riskRelease?: { floor: number; minRisk: number; limit: number };
   /** 해방 중엔 기본 장치가 꺼진다 (GDD 12-4 v6.052 융합 중): 회피 0 · 되살아나기 없음 · 스택 없음(해방하면 0) */
   releaseBare?: boolean;
   /** 리스크 패널티 없음 (GDD 12-4 v6.050): 원정이 돌파(폭주)를 만들지 않는다 — 전투 엔진은 표시만 */
@@ -302,7 +304,7 @@ export interface KitCombatState {
   counters: number;
   finishers: number;
   revives: number;
-  /** 지금 게이지 (붕옥 감응도 — 시작 값 + 붕옥 블록 상승 − 프라고르 소모, floor~limit) · 해방 중 깎인 합 · 해방 진입·풀림(문턱 밑) 횟수 · 준비 알림을 띄웠나 (GDD 12-4 v6.052) */
+  /** 지금 게이지 (붕옥 감응도 — 원정 리스크로 시작 + 붕옥 블록 상승 − 프라고르 소모, floor~limit, v6.054) · 해방 중 깎인 합 · 해방 진입·풀림(문턱 밑) 횟수 · 준비 알림을 띄웠나 (GDD 12-4 v6.052) */
   risk: number;
   riskSpent: number;
   modeEnters: number;
@@ -313,7 +315,7 @@ export interface KitCombatState {
 /** 전투 시작 초월자 kit 상태 */
 function newKitState(p: CombatParams): KitCombatState {
   const rr = p.kit?.riskRelease;
-  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: rr ? Math.min(rr.limit, Math.max(rr.floor, rr.start)) : 0, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false };
+  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: rr ? Math.min(rr.limit, Math.max(rr.floor, p.riskStart ?? rr.floor)) : 0, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false };
 }
 
 /** 해방 중이라 기본 장치(회피·되살아나기·스택)가 꺼져 있는가 (GDD 12-4 v6.052 융합 중 — kit.releaseBare) */

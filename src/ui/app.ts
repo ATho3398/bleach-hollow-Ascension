@@ -36,6 +36,7 @@ import {
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf,
+  applyTrackRiskFloor,
 } from '../game';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
@@ -369,6 +370,7 @@ export function startApp(host: HTMLElement): void {
 
   const persist = () => {
     if (!save || slot === 0) return;
+    applyTrackRiskFloor(save); // 리스크 최솟값 (GDD 12-4 v6.054 아이젠 붕옥 감응도 20) — 둥지 행동·먹이 등 어떤 감소 뒤에도
     // 튜토리얼 보상 (GDD 23-3): 저장할 때마다 새로 이룬 목표를 판정해 바로 지급하고 토스트. 기존 세이브는 처음 저장 때 한꺼번에
     showTutorialToasts(claimTutorialGoals(save), trackFaction(save));
     // 도감 보상 (GDD 24-3): 같은 틀·같은 토스트. 기존 세이브는 처음 저장 때 이미 닿은 이정표를 한꺼번에
@@ -2404,6 +2406,7 @@ export function startApp(host: HTMLElement): void {
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
       params.petAttack = petAttackOf(carriedPet(save.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
       applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
+      if (params.kit?.riskRelease) params.riskStart = save.nest.risk; // 붕옥 감응도 = 리스크 그 자체 (GDD 12-4 v6.054): 연습도 지금 값으로 시작(연습이라 둥지 값은 안 바뀜)
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');

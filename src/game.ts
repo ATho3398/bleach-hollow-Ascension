@@ -9,7 +9,7 @@ import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, su
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
-import { transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
+import { kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { SPECIAL_ELEMENT_IDS } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
 import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
@@ -466,6 +466,7 @@ export function feedNest(save: SaveData, food: FoodId, nowMs: number = Date.now(
     return 'full';
   }
   const r = feedFood(save.nest, food, nowMs, foodReactionFor(save, food));
+  applyTrackRiskFloor(save); // 먹이 리스크 감소도 최솟값 밑으로 안 감 (GDD 12-4 v6.054)
   if (r === 'refused') {
     logVital(save, { at: nowMs, kind: 'refuse', food });
     return r;
@@ -565,6 +566,7 @@ export function careNest(save: SaveData, action: CareAction, nowMs: number = Dat
   if (save.nest.dead) return 'refused';
   tickCare(save, nowMs, rand);
   const out = respondCare(save.nest, action, nowMs, rand);
+  applyTrackRiskFloor(save); // 재우기·쓰다듬기 리스크 감소도 최솟값 밑으로 안 감 (GDD 12-4 v6.054)
   save.runLog.care[out][action]++;
   if (out === 'answered' && action === 'pet') recordEvolutionBondCare(save.evolution); // 숨은 모습 조건 (GDD 241-C 4)
   return out;
@@ -3049,6 +3051,13 @@ function sanitizeCare(t: Pick<SaveData, 'nest' | 'runLog'>): void {
   t.runLog.care = { answered: pair(c.answered), refused: pair(c.refused), missed: nonNegInt(c.missed) };
 }
 
+/** 리스크 최솟값 보정 (GDD 12-4 v6.054 — 아이젠 붕옥 감응도 20, 데이터 kit.riskFloor): 둥지 리스크가 그 트랙의 최솟값 밑이면 최솟값으로.
+ *  불러올 때(옛 세이브 포함 — 형식 그대로, 읽을 때 보정)·저장할 때·정화제 뒤에 부른다. 원정 안은 changeRisk 가 막는다 */
+export function applyTrackRiskFloor(t: Pick<SaveData, 'nest' | 'transcendentId'>): void {
+  const floor = kitRiskFloorOf(t.transcendentId);
+  if (t.nest && t.nest.risk < floor) t.nest.risk = floor;
+}
+
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
   sanitizeCare(t);
@@ -3057,6 +3066,7 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
   sanitizeCombatBasis(t);
   sanitizeTranscendentTraits(t);
   sanitizeKitState(t);
+  applyTrackRiskFloor(t);
   // 진화 판정 끔 = 트랙 종류 설정 evolution: false (GDD 12-4 v6.028 — 초월자)
   if (!trackRulesOf(t).evolution) t.evolution.final = true;
   else delete t.evolution.final;

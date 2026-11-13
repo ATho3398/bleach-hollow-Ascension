@@ -50,12 +50,12 @@ const ids = (s: CombatState) => s.tray.map((b) => b.traitId);
 
 describe('수치·데이터 (provisional)', () => {
   it('감응도 시작 20·최소 20·융합 30 · 붕옥 블록 허 ×0.5·+10 · 프라고르 −5/블록 · 이름', () => {
-    expect(RR).toEqual({ start: 20, floor: 20, minRisk: 30 });
+    expect(RR).toEqual({ floor: 20, minRisk: 30 }); // C.444: 전투 전용 start 삭제
     expect(K.blocks.hogyoku).toMatchObject({ voidSlot: { voidScale: 0.5, riskGain: 10 } });
     expect(K.blocks.fragor).toMatchObject({ riskCost: 5, weight: 0.35, tiers: [2.4, 3.6, 5.0] });
     const p = aizenParams();
     expect(p.kit?.liberationName).toBe('붕옥 융합');
-    expect(p.kit?.riskRelease).toEqual({ start: 20, floor: 20, minRisk: 30, limit: BALANCE.provisional.risk.limit });
+    expect(p.kit?.riskRelease).toEqual({ floor: 20, minRisk: 30, limit: BALANCE.provisional.risk.limit });
     expect(p.kit?.releaseBare).toBe(true);
     expect(kitRiskGaugeNameOf('aizen')).toBe('붕옥 감응도');
   });
@@ -233,27 +233,7 @@ describe('붕옥 융합', () => {
   });
 });
 
-describe('원정: 감응도는 전투마다 따로', () => {
-  it('원정 리스크와 상관없이 20 에서 시작, 전투가 끝나도 원정 리스크는 그대로', () => {
-    const s = aizenSave();
-    const exp = createExpedition({ seed: 3, factionId: s.factionId, build: s.build, evolution: s.evolution, hunger: 10, condition: 100, deck: DECK, risk: 70 });
-    for (let i = 0; i < 200 && exp.phase !== 'battle'; i++) advance(exp);
-    expect(exp.phase).toBe('battle');
-    const b = startBattle(exp);
-    expect(kitRiskOf(b)).toBe(20);
-    b.spawnTimer = 1e9;
-    b.enemy.attackTimer = b.enemy.actionTimer = 1e9;
-    b.tray = [blk(b, 'hogyoku')];
-    applyInput(b, { type: 'use', cell: 0 });
-    expect(kitRiskOf(b)).toBe(30);
-    b.enemy.hp = 0;
-    b.status = 'won';
-    b.finisher = { kind: 'basic-attack', traitId: null, element: null };
-    const r0 = exp.risk;
-    finishBattle(exp, b);
-    expect(exp.risk).toBe(r0);
-  });
-});
+// '원정: 감응도는 전투마다 따로'(전투 시작 20·원정 리스크와 따로)는 C.444(GDD v6.054)에서 뒤집혔다 → tests/c444.test.ts
 
 // ── 할 일 B: 초월자 인간형 스킨 (GDD 12-4 v6.052 '초월자 인간형 스킨') ──
 import { charArt } from '../src/data/art/manifest';

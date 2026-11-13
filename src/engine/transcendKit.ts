@@ -119,6 +119,13 @@ export function kitRiskPenaltyFree(transcendentId: string | null | undefined): b
   return kitDefOf(transcendentId)?.riskPenaltyFree === true;
 }
 
+/** 이 초월자 트랙 리스크 게이지의 최솟값 (GDD 12-4 v6.054 — 아이젠 붕옥 감응도 20): 데이터 kit.riskFloor + 수치 riskRelease.floor. 없으면 0.
+ *  원정(changeRisk)·둥지(applyTrackRiskFloor)·전투(시작 값·소모) 어디서 내려가도 이 밑으로 안 간다. 전투 기반과 상관없음 */
+export function kitRiskFloorOf(transcendentId: string | null | undefined): number {
+  if (!transcendentId || !kitDefOf(transcendentId)?.riskFloor) return 0;
+  return Math.max(0, BALANCE.provisional.transcendentKits[transcendentId]?.riskRelease?.floor ?? 0);
+}
+
 /** 종족 설정의 리스크 게이지 이름을 초월자 데이터로 덮은 사본 (덮을 게 없으면 그대로) — 화면이 트랙 종족 설정 대신 쓴다 */
 export function withKitRiskName<F extends { riskGaugeName: string }>(f: F, transcendentId: string | null | undefined): F {
   const name = kitRiskGaugeNameOf(transcendentId);

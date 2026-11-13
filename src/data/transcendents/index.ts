@@ -57,8 +57,10 @@ export interface TranscendentKitDef {
   liberationName: string;
   /** 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.052 — 아이젠 = '붕옥 감응도'): 이 초월자 트랙에선 기반·종족과 상관없이 이 이름 */
   riskGaugeName?: string;
-  /** 해방 = 전투 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합): 게이지 ≥ 문턱이면 언제든, 지속 시간 없음, 문턱 밑이면 풀림 (수치 = balance riskRelease — 시작·최소·문턱) */
+  /** 해방 = 전투 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합): 게이지 ≥ 문턱이면 언제든, 지속 시간 없음, 문턱 밑이면 풀림 (수치 = balance riskRelease — 최소·문턱, 게이지 = 트랙 리스크 그 자체 v6.054) */
   riskRelease?: boolean;
+  /** 리스크 게이지 최솟값 (GDD 12-4 v6.054 — 아이젠 붕옥 감응도 20): 이 트랙의 리스크는 원정·둥지·전투 어디서 내려가도 balance riskRelease.floor 밑으로 안 간다 */
+  riskFloor?: boolean;
   /** 해방 중엔 회피·되살아나기·스택이 꺼진다 (GDD 12-4 v6.052 융합 중) */
   releaseBare?: boolean;
   /** 리스크 패널티 없음 (GDD 12-4 v6.050): 게이지가 차도 폭주(돌파) 상태·피해·제약 없음 — 쌓이기만 한다 */
