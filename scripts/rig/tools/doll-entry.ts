@@ -8,7 +8,6 @@ const LOOKS: [string, string][] = [
   ['serpent', 'serpent-base'],
   ['spider', 'spider-base'],
   ['wraith', 'wraith-base'],
-  ['aizen', 'aizen-base'],
   ['aizen', 'aizen-parts'],
 ];
 // 주소 뒤 #look=<외형> 이면 그 외형 하나만 크게(캡처·확인용)

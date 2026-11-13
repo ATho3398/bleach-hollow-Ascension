@@ -21,7 +21,6 @@ python3 scripts/rig/bone_guide.py beast beast-base "$OUT/sheets/beast-base" >/de
 python3 scripts/rig/bone_guide.py serpent serpent-base "$OUT/sheets/serpent-base" >/dev/null
 python3 scripts/rig/bone_guide.py spider spider-base "$OUT/sheets/spider-base" >/dev/null
 python3 scripts/rig/bone_guide.py wraith wraith-base "$OUT/sheets/wraith-base" >/dev/null
-python3 scripts/rig/bone_guide.py aizen aizen-base "$OUT/sheets/aizen-base" >/dev/null
 python3 scripts/rig/bone_guide.py aizen aizen-parts "$OUT/sheets/aizen-parts" >/dev/null
 python3 -I - "$OUT" <<'PY'
 import base64, glob, json, os, sys

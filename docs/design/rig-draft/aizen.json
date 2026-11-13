@@ -1,6 +1,6 @@
 {
  "id": "aizen",
- "note": "아이젠 종이인형(대기 동작만 — GDD 115-A 124, 사용자 2026-11-14 \"얘 아이젠 idle로 만들어줄래?\"). 사용자 그림(몸 한 덩어리 + 주먹 + 칼)을 scripts/rig/tools/aizen_rig.py 가 머리·윗몸·아랫몸으로 자르고 주먹·칼을 소매 끝에 놓음. 작업본만(게임 미사용). 2026-11-14 04:0x: 앞머리(hair_side)·깃(collar_L·R) 따로 뼈 + 따라가기(살짝 휘날림), 코트 앞자락(아래)은 윗몸 뼈로, 코트 뒷자락 물결 2.8초(사용자 \"앞머리 살짝 휘날리기, 코트 프론트는 상체랑 같이 움직이기, 16번 움직임 좀 더 천천히, 7번 13번 살짝씩 휘날리듯\").",
+ "note": "아이젠 종이인형(GDD 115-A 124·125, 작업본만 — 게임 미사용). 사용자 부위 시트(docs/design/user-art/aizen-ref/parts-2026-11-14b.png)를 조립한 몸 parts·외형 aizen-parts. 처음 만든 세 토막 몸(ref·aizen-base)은 사용자 2026-11-14 \"아이젠 처음건 삭제\"로 지움. 동작 = 대기(idle). 자세한 내력 = GDD 115-A 124~126.",
  "canvas": [
   74,
   108
@@ -170,14 +170,6 @@
  ],
  "slots": [
   {
-   "id": "lower",
-   "bone": "lower"
-  },
-  {
-   "id": "upper",
-   "bone": "upper"
-  },
-  {
    "id": "head",
    "bone": "head"
   },
@@ -268,66 +260,17 @@
   {
    "id": "foot_b",
    "bone": "foot_b"
+  },
+  {
+   "id": "thumb",
+   "bone": "hand"
+  },
+  {
+   "id": "coat_lining",
+   "bone": "coat_tail"
   }
  ],
  "bodies": {
-  "ref": {
-   "lower": {
-    "art": "ref/lower",
-    "at": [
-     10,
-     62
-    ],
-    "size": [
-     54,
-     45
-    ]
-   },
-   "upper": {
-    "art": "ref/upper",
-    "at": [
-     12,
-     34
-    ],
-    "size": [
-     45,
-     32
-    ]
-   },
-   "head": {
-    "art": "ref/head",
-    "at": [
-     18,
-     0
-    ],
-    "size": [
-     43,
-     36
-    ]
-   },
-   "sword": {
-    "art": "ref/sword",
-    "at": [
-     11,
-     48
-    ],
-    "size": [
-     36,
-     65
-    ]
-   },
-   "hand": {
-    "art": "ref/hand",
-    "at": [
-     10,
-     54
-    ],
-    "size": [
-     12,
-     11
-    ]
-   }
-  },
   "parts": {
    "head": {
     "art": "parts/head",
@@ -563,12 +506,12 @@
    "hand": {
     "art": "parts/hand",
     "at": [
-     11,
+     10,
      54
     ],
     "size": [
-     12,
-     11
+     13,
+     12
     ]
    },
    "sword": {
@@ -581,13 +524,32 @@
      36,
      65
     ]
+   },
+   "thumb": {
+    "art": "parts/thumb",
+    "at": [
+     8,
+     56
+    ],
+    "size": [
+     3,
+     3
+    ]
+   },
+   "coat_lining": {
+    "art": "parts/coat_lining",
+    "at": [
+     13,
+     69
+    ],
+    "size": [
+     20,
+     16
+    ]
    }
   }
  },
  "looks": {
-  "aizen-base": {
-   "body": "ref"
-  },
   "aizen-parts": {
    "body": "parts"
   }
@@ -637,7 +599,9 @@
    "foot_b": "발 B",
    "hair_side": "앞머리",
    "collar_L": "깃 왼",
-   "collar_R": "깃 오른"
+   "collar_R": "깃 오른",
+   "thumb": "엄지",
+   "coat_lining": "코트 뒷자락 안감"
   },
   "groups": [
    [
@@ -732,114 +696,7 @@
   }
  },
  "skeletons": {
-  "ref": {
-   "lower": [
-    {
-     "pts": [
-      [
-       37,
-       107
-      ],
-      [
-       38,
-       66
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "upper": [
-    {
-     "pts": [
-      [
-       38,
-       66
-      ],
-      [
-       42,
-       36
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "head": [
-    {
-     "pts": [
-      [
-       42,
-       36
-      ],
-      [
-       42,
-       8
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "hand": [
-    {
-     "pts": [
-      [
-       18,
-       58
-      ],
-      [
-       18,
-       58
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "sword": [
-    {
-     "pts": [
-      [
-       17,
-       59
-      ],
-      [
-       46,
-       115
-      ]
-     ],
-     "w": 3
-    }
-   ]
-  },
   "parts": {
-   "lower": [
-    {
-     "pts": [
-      [
-       37,
-       107
-      ],
-      [
-       43,
-       59
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "upper": [
-    {
-     "pts": [
-      [
-       43,
-       59
-      ],
-      [
-       43,
-       59
-      ]
-     ],
-     "w": 3
-    }
-   ],
    "head": [
     {
      "pts": [
@@ -1049,21 +906,40 @@
      ],
      "w": 3
     }
+   ],
+   "chest": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       43,
+       59
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_inner": [
+    {
+     "pts": [
+      [
+       37,
+       107
+      ],
+      [
+       43,
+       59
+      ]
+     ],
+     "w": 3
+    }
    ]
   }
  },
  "bodyJoints": {
-  "ref": {
-   "pivots": {
-    "sword": [
-     20,
-     70
-    ]
-   },
-   "rot": {
-    "sword": -4
-   }
-  },
   "parts": {
    "pivots": {
     "lower": [
@@ -1172,18 +1048,18 @@
    "chest",
    "coat_side_top",
    "cuff",
-   "collar_R",
    "hair_side",
    "collar_L",
    "coat_front_top",
    "arm_sword",
+   "coat_lining",
    "coat_tail",
    "coat_side1",
    "coat_side2",
-   "lower",
-   "upper",
-   "sword",
+   "collar_R",
    "hand",
+   "sword",
+   "thumb",
    "forearm_sword"
   ]
  },
