@@ -341,7 +341,7 @@ describe('C.335 사신 시장 반영', () => {
     expect(m.layout.skinShop).toEqual({ x: 88.8, y: 57, scale: 0.91 });
     expect(m.layout.traitShop).toEqual({ x: 70.4, y: 40.9, scale: 0.97 });
     expect(m.layout.smith).toEqual({ x: 41.7, y: 35, scale: 1.01 });
-    expect(m.layout.wanderer).toEqual({ x: 50.3, y: 66.6, scale: 1.11 });
+    expect(m.layout.wanderer).toEqual({ x: 50.3, y: 66.6, scale: 0.7 }); // C.451: 우라하라 ×0.7 (호로에 맞춤)
     // 호로 시장은 C.336 에서 따로 반영 (아래 묶음)
   });
 });
@@ -362,7 +362,7 @@ describe('C.337 호로 시장 반영', () => {
     expect(m.layout.skinShop).toEqual({ x: 69, y: 42.7, scale: 0.92 });
     expect(m.layout.traitShop).toEqual({ x: 87.2, y: 72.4, scale: 1.09 });
     expect(m.layout.smith).toEqual({ x: 33.6, y: 40.4, scale: 0.96 });
-    expect(m.layout.wanderer).toEqual({ x: 49.1, y: 68.3, scale: 1.03 });
+    expect(m.layout.wanderer).toEqual({ x: 49.1, y: 68.3, scale: 0.7 }); // C.451 (사용자 2026-11-14 00:21 "호로에 시장 우라하라 맞춰놨으니까, 사신도 맞춰"): ×1.03 → ×0.7, 자리는 시장마다 그대로
     expect(marketOf(FACTIONS.find((f) => f.id === 'shinigami')!).sceneArt).toBe('scene.market.shinigami');
   });
 });

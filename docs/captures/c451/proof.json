@@ -1,0 +1,17 @@
+{
+  "shots": [
+    "1-market-hollow.png",
+    "2-market-shinigami.png"
+  ],
+  "errors": [],
+  "overlaps": {
+    "market.hollow": [
+      "gearShop×wanderer 237px²",
+      "smith×wanderer 207px²"
+    ],
+    "market.shinigami": [
+      "gearShop×skinShop 313px²",
+      "smith×wanderer 799px²"
+    ]
+  }
+}
