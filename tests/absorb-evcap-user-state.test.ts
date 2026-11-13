@@ -12,7 +12,7 @@ const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 
 
 function userSave() {
   const s = newSaveData('hollow', 1);
-  addEv(s.evolution, Object.fromEntries(STAT_IDS.map((k) => [k, 3]))); // 튜토리얼 +3 × 6
+  addEv(s.evolution, Object.fromEntries(STAT_IDS.map((k) => [k, 3]))); // 튜토리얼 +3 × 7 (C.446 능력치 7종)
   addEv(s.evolution, { atk: 4 }); // 능력치 포식 1번 (힘 2 × 2)
   return s;
 }
@@ -26,9 +26,9 @@ function realGain(exp: ExpeditionState, m: 'stat' | 'both'): number {
 }
 
 describe('R213 노력치 흐림 = 실제 지급 (사용자 상태)', () => {
-  it('사용자 상태 = 합 22 · 힘 7 · 1단계 상한 96/67', () => {
+  it('사용자 상태 = 합 25(C.446 능력치 7종, 옛 22) · 힘 7 · 1단계 상한 96/67', () => {
     const s = userSave();
-    expect(evTotal(s.evolution.ev)).toBe(22);
+    expect(evTotal(s.evolution.ev)).toBe(25);
     expect(s.evolution.ev.atk).toBe(7);
     expect(evCaps(s.evolution.tierIndex)).toEqual({ total: 96, perStat: 67 }); // GDD 207장 (202장 56/33 · 옛 36/18)
   });

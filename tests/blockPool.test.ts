@@ -180,10 +180,10 @@ describe('성향 특성 보정 (GDD 44장 4번, 44-1)', () => {
 
   it('속도 → 흡수 특성 타이머가 빨라져 흡수 블록 비율이 오른다 (0칸이면 변화 없음)', () => {
     const CX = BALANCE.provisional.combat;
-    const p = withDisp(['spd'], ['t-poison-c']);
-    expect(spawnSecondsOf(p, p.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds / BP.temperament.spd!.absorbedSpawn!);
+    const p = withDisp(['aspd'], ['t-poison-c']);
+    expect(spawnSecondsOf(p, p.skills[0]!)).toBeCloseTo(CX.blockSpawnSeconds / BP.temperament.aspd!.absorbedSpawn!);
     expect(spawnRatesOf(p).absorbedShare).toBeGreaterThan(spawnRatesOf(withDisp([], ['t-poison-c'])).absorbedShare);
-    expect(spawnRatesOf(withDisp(['spd'])).absorbedShare).toBe(0);
+    expect(spawnRatesOf(withDisp(['aspd'])).absorbedShare).toBe(0);
   });
 
   it('진화 상태의 성향이 전투 파라미터로 들어간다', () => {

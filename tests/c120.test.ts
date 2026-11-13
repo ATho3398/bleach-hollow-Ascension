@@ -16,6 +16,10 @@ import {
   firstRunPending, grantStarterTiles, loadSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, nextRunId, performEvolution, recordExpedition, SAVE_FORMAT_VERSION, tilesUnlocked, writeSave, type SaveData,
 } from '../src/game';
 import { buyShopItem, goldRows, rollTileDraw, tileDrawGroup, tileDrawOdds, TILES_LOCKED_TEXT } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const TD = BALANCE.provisional.tileDraw;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -48,7 +52,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(62); // C.326 에서 63 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
   it('첫 진화(1→2단계) 때 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 → 보관함·덱, 타일 안내 차례. 두 번째 진화엔 더 안 준다', () => {

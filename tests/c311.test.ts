@@ -7,6 +7,10 @@ import {
 } from '../src/engine/expedition';
 import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import { firstRunPending, migrateSave, newSaveData, readActiveExpedition, resumeWindowMs, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, type SaveData } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const MIN = 60_000;

@@ -51,7 +51,7 @@
       "category": "physical",
       "statBias": {
         "atk": 1.1,
-        "spd": 0.9
+        "aspd": 0.9
       },
       "ev": {
         "hp": 3,

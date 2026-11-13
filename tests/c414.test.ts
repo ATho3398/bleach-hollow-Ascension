@@ -11,6 +11,10 @@ import { HOGYOKU_TRACK_IDS, trackCostSum, trackStepCost } from '../src/engine/tr
 import { guidePending } from '../src/engine/tutorial';
 import { checkTrackOpen, developGate, developHogyoku, hogyokuPercent, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, settleStory, statBonusOf, type SaveData } from '../src/game';
 import { clearStory } from './helpers/storyClear';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const HX = BALANCE.provisional.hogyoku;
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');

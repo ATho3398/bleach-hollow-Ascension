@@ -13,7 +13,7 @@ import type { FormDef, Stats } from '../src/data/schema';
 
 const hollow = getFaction('hollow');
 const fb = hollow.room?.characterArt ?? '';
-const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, def: 0, [k]: 5 });
+const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, aspd: 0, bspd: 0, def: 0, [k]: 5 });
 
 describe('C.360 종이인형 뼈대 여럿 (GDD 219장 3)', () => {
   it('게임 뼈대 = 사람형·뱀형, 둘 다 검사 통과, 외형 id 는 뼈대끼리 안 겹치고 시험 외형(-test)은 없다', () => {
@@ -52,7 +52,7 @@ describe('C.360 길리안 = 호로 2단계 외형 (GDD 219장 1)', () => {
     expect(a.rig?.rigId).toBe('humanoid');
     expect(a.scale).toBe(GILLIAN_SCALE);
     const t2 = (forms as FormDef[]).find((f) => f.tier === 2)!;
-    for (const k of ['atk', 'int', 'hp', 'spr', 'spd', 'def'] as const) expect(pickTierLook(hollow, 2, ev(k), t2), k).toBe('gillian');
+    for (const k of ['atk', 'int', 'hp', 'spr', 'aspd', 'def'] as const) expect(pickTierLook(hollow, 2, ev(k), t2), k).toBe('gillian');
     expect(getSkin('gillian')).toMatchObject({ factionId: 'hollow', tierLook: true, startOnly: true });
     expect(charArt('hollow', 1, fb, '/', undefined, [], 'gillian', undefined, 'male').rig?.look).toBe('gillian-base');
     expect(ART_MANIFEST['skin.gillian']!.rig).toBe('gillian-base');

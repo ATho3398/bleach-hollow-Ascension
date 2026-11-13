@@ -151,7 +151,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
   const shown = statusStatDisplay(save); // 화면 값 (GDD 245장 4): 체력·속도·방어·정신력은 전투에서 쓰는 모양으로
-  const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry, { hp: shown.hp, spd: shown.spd, def: shown.def, spr: shown.spr });
+  const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry, { hp: shown.hp, aspd: shown.aspd, bspd: shown.bspd, def: shown.def, spr: shown.spr });
   // 능력치 칸 = 이름·값만 (GDD 189장 6): 칸마다 있던 ⓘ 를 빼고 칸 전체가 설명 단추 — 누르면(기기 버튼으로 골라도) 예전 ⓘ 와 같은 창.
   // 단추는 칸을 덮는 투명 ⓘ(cellTip) 라 글자 폭을 먹지 않는다. 전체 설명은 제목 옆 ⓘ 그대로
   [...statBox.children].forEach((row, i) => {

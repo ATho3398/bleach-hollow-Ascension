@@ -66,7 +66,7 @@ import { BUILD_ID, setUpdateHost } from '../pwa';
 import { CloudSync, deviceLabel, firstGateNote, markLoginGateDone, needsLoginGate, type ActiveDevice, type CloudConflict } from '../cloudSave';
 import { GATE_TEXT, loginGateDialog, otherDeviceDialog, showCloudConflict, type CloudUi } from './cloudView';
 import { isStandalone } from '../pwaInstall';
-import { allSlotSummaries, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
+import { allSlotSummaries, archiveOldSaves, SAVE_RESET_TEXT, saveResetNoticeActive, collectSlotChunks, deleteSlot, lastPlayedSlot, slotKey, stashSlot, touchSlot, writeSlotSave } from '../saveSlots';
 import { monoNow } from './bha/expClock';
 import { forgetConfirmedChunks, isChunkStorageKey } from '../saveCodec';
 import { backupFileName, exportRawSlot, needsMigration, recoverFromBackup } from '../saveBackup';
@@ -901,7 +901,10 @@ export function startApp(host: HTMLElement): void {
   }
 
   function renderTitle(note = ''): void {
+    // C.446 (GDD v6.055 8절): 옛 형식 세이브는 백업 키로 옮기고 새로 시작 — 안내 한 줄
+    archiveOldSaves(store);
     const sums = allSlotSummaries(store);
+    if (!note && saveResetNoticeActive(store, sums)) note = SAVE_RESET_TEXT;
     const last = lastPlayedSlot(sums);
     // 시작 화면의 테마: 가장 최근 슬롯의 종족, 없으면 등록된 첫 종족 (종족 id 로 분기하지 않는다)
     const lastSum = sums.find((x) => x.slot === last);

@@ -3,10 +3,11 @@
   "abilities": {
     "hp": { "name": { "*": "강인한 몸" }, "description": { "*": "최대 체력이 늘어난다." } },
     "atk": { "name": { "*": "괴력" }, "description": { "*": "일반 공격 피해가 늘어난다." } },
-    "int": { "name": { "*": "블록 가속" }, "description": { "*": "블록이 더 빨리 생긴다." } },
+    "int": { "name": { "*": "영력 집중" }, "description": { "*": "블록 피해가 늘어난다." } },
     "def": { "name": { "*": "단단한 껍질" }, "description": { "*": "적의 힘이 실린 공격을 덜 아프게 받는다." } },
     "spr": { "name": { "*": "흔들림 없는 마음" }, "description": { "*": "적의 지능이 실린 공격을 덜 아프게 받는다." } },
-    "spd": { "name": { "*": "일반 공격 가속" }, "description": { "*": "자동 공격이 더 빨라진다." } }
+    "aspd": { "name": { "*": "일반 공격 가속" }, "description": { "*": "자동 공격이 더 빨라진다." } },
+    "bspd": { "name": { "*": "블록 가속" }, "description": { "*": "블록이 더 빨리 생긴다." } }
   },
   "elementAbilities": {
     "normal": { "effect": "blockPower", "name": { "*": "균형" }, "name4": { "*": "조화" }, "description": { "*": "모든 블록 위력이 오른다." } },

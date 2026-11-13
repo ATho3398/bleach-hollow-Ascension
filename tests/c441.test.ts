@@ -16,6 +16,10 @@ import { chooseAbsorb, chooseRelease } from '../src/engine/expedition/expedition
 import { buildBattleRecord } from '../src/engine/combat';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, switchCombatBasis, upgradeTranscendentBlock, type SaveData } from '../src/game';
 import { useImmediateHits } from './helpers/hitDelay';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 useImmediateHits();
 
@@ -300,7 +304,7 @@ describe('초월자 성장 — 흡수 제한·초월 조각·강화', () => {
     expect(combatKitOf(s.evolution.kit)!.blocks.find((b) => b.id === 'fragor')!.mult).toBeCloseTo(1.8, 5);
   });
   it('형식 85: 옛 초월자 트랙에 kit(강화 0) · 조각 0', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     const s = aizenSave();
     const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { evolution: Record<string, unknown>; shared: Record<string, unknown> };
     delete raw.evolution.kit;

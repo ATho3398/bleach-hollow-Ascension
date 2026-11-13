@@ -6,6 +6,10 @@ import { grantGear, gearScore, autoEquipPlan, rollGear, type GearRoll } from '..
 import { migrateSave, newSaveData, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
 import { autoEquipGear, BATTLE_ITEM_IDS, bulkSellGear, bulkSellTargets, equipGearItem, setBattleItem } from '../src/inventory';
 import { compareLines, equipStats, sortGear, targetSlotOf } from '../src/ui/equipView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const H = getFaction('hollow');
@@ -33,7 +37,7 @@ describe('자동 착용 (108장 4번): 빈 칸과 더 센 것만', () => {
   });
   it('원정 중에는 0', () => {
     const s = newSaveData('hollow', 0);
-    give(s, { kind: 'shoes', grade: 'normal', stats: { spd: 2 } });
+    give(s, { kind: 'shoes', grade: 'normal', stats: { aspd: 2 } });
     s.activeExpedition = {} as SaveData['activeExpedition'];
     expect(autoEquipGear(s)).toBe(0);
   });
@@ -50,7 +54,7 @@ describe('일괄 판매 (108장 4번): 노말 · 안 낀 것', () => {
     const s = newSaveData('hollow', 0);
     const n1 = give(s, { kind: 'weapon', grade: 'normal', stats: { atk: 1 } });
     const n2 = give(s, { kind: 'armor', grade: 'normal', stats: { hp: 1 } });
-    give(s, { kind: 'shoes', grade: 'rare', stats: { spd: 1 } });
+    give(s, { kind: 'shoes', grade: 'rare', stats: { aspd: 1 } });
     equipGearItem(s, n1.uid, 'weapon');
     expect(bulkSellTargets(s).map((i) => i.uid)).toEqual([n2.uid]);
     const gold0 = s.shared.tradeCoins;
@@ -65,7 +69,7 @@ describe('일괄 판매 (108장 4번): 노말 · 안 낀 것', () => {
 describe('정렬·비교·미리 보기 (108장 2·4번)', () => {
   it('정렬 3가지, 낀 것은 늘 앞', () => {
     const s = newSaveData('hollow', 0);
-    const a = give(s, { kind: 'shoes', grade: 'normal', stats: { spd: 1 } }, 1);
+    const a = give(s, { kind: 'shoes', grade: 'normal', stats: { aspd: 1 } }, 1);
     const b = give(s, { kind: 'weapon', grade: 'legendary', stats: { atk: 1 } }, 2);
     const c = give(s, { kind: 'armor', grade: 'rare', stats: { hp: 1 } }, 3);
     c.plus = 4;
@@ -94,7 +98,7 @@ describe('정렬·비교·미리 보기 (108장 2·4번)', () => {
 
 describe('소모품 칸 세이브 (108장 3·6번)', () => {
   it('형식·문턱 48, 새 세이브 battleItem = null, 전투용이 아닌 품목은 못 넣고 깨진 값은 버린다', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([86, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([87, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
     const s = newSaveData('hollow', 0);
     expect(s.shared.battleItem).toBeNull();
     expect(setBattleItem(s, 'calm')).toBe(false); // 정화제 = 둥지용

@@ -4,7 +4,7 @@ import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { PHYS_ELEMENT_IDS } from '../src/data/evolution';
 import { buildCombatParams, gainTrait, newBuild } from '../src/engine/absorb';
-import { BASIC_SKILL_ID, createCombat, physSpawnSecondsOf, step, ticksOf, type CombatParams } from '../src/engine/combat';
+import { BASIC_SKILL_ID, blockSpeedFactorOf, createCombat, physSpawnSecondsOf, spawnSecondsNow, spawnTableOf, step, ticksOf, type CombatParams } from '../src/engine/combat';
 import { applyEvolutionToParams, newEvolution, physSpawnSecondsFor } from '../src/engine/evolution';
 
 const PB = BALANCE.provisional.physBlocks;
@@ -47,7 +47,14 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
     const blood = countIn('t4:blood:physical', 600);
     const earth = countIn('t4:earth:physical', 600);
     expect(blood).toBeGreaterThan(earth);
-    expect(Math.abs(blood - 600 / 1.8)).toBeLessThanOrEqual((600 / 1.8) * 0.12);
-    expect(Math.abs(earth - 600 / PB.spawnSeconds)).toBeLessThanOrEqual((600 / PB.spawnSeconds) * 0.12);
+    // C.446 (GDD v6.055 8절): 생성 타이머 간격 = 출현표 평균 간격 × 블록속도 배율 (50 ÷ 블록속도)^0.35 → 0.01초 반올림(틱 단위). 물공 몫 = 출현표 물공 칸 확률
+    const want = (formId: string) => {
+      const s = createCombat(5, { enemy: getEnemy('test-a'), params: { ...bodyOf(formId), timeLimitSeconds: 1e9 } });
+      const chance = spawnTableOf(s.params).entries.filter((e) => e.phys).reduce((a, e) => a + e.chance, 0);
+      return (600 / (ticksOf(s.params, spawnSecondsNow(s)) * s.params.tickSeconds)) * chance;
+    };
+    expect(blockSpeedFactorOf(bodyOf('t4:earth:physical'))).toBeLessThan(1);
+    expect(Math.abs(blood - want('t4:blood:physical'))).toBeLessThanOrEqual(want('t4:blood:physical') * 0.12);
+    expect(Math.abs(earth - want('t4:earth:physical'))).toBeLessThanOrEqual(want('t4:earth:physical') * 0.12);
   });
 });

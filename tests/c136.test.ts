@@ -16,6 +16,10 @@ import {
 import { createRng } from '../src/engine/rng';
 import { advance, chooseAbsorb, createExpedition, finishBattle, startBattle, type ExpeditionState } from '../src/engine/expedition';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 useImmediateHits(); // 타격 지연 0 (C.357, GDD 214장): 이 파일은 피해 수치·순서만 본다
 
 const CX = BALANCE.provisional.combat;
@@ -217,7 +221,7 @@ describe('84장 8번 같은 속성 반복 흡수 → 속성마다 강화 100', (
   });
 
   it('세이브: 강화 횟수가 저장·불러오기로 남고 깨진 값은 버린다. 형식 45(C.167)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) (C.188 52) (C.184 51) (C.177 50)
     const s = newSaveData('hollow', 1);
     expect(s.build.enhance).toEqual({});
     s.build.enhance = { earth: 120, fire: 3 };

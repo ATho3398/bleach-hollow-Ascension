@@ -136,6 +136,9 @@ export interface CombatParams {
   playerRefStat: number;
   /** 내 능력치 (종족값 + 노력치). 없으면 모두 playerRefStat (= 1단계 기준 몸) */
   playerStats?: Stats;
+  /** 속도 옵션 (GDD v6.055 8절 — 사용자 '공격속도 간격 0.1 감소 이런 식'): 아이템·특성의 '간격 −n초' 합. 곡선 값(0.01초 반올림) 뒤에 빼고 상한 아래로는 안 간다. 지금 이 옵션을 가진 데이터는 없다 */
+  attackSecondsCut?: number;
+  spawnSecondsCut?: number;
   /** 내 캐릭터 속성 (1단계 노멀, 융합은 2개). 적의 공격 상성과 내 기본 공격 상성, 자기 속성 보정에 쓴다 */
   playerElements: string[];
   /** 고유 특성·패시브: 블록 생성 속도 배율(클수록 빠름), 분류별 내 피해 배율, 분류별 받는 피해 배율 */
@@ -1057,17 +1060,37 @@ function drawSpawn(s: CombatState, entries: readonly SpawnEntry[]): SpawnEntry |
 
 /** 지금 생성 타이머 간격(초): 해방 중이면 해방 생성 배율로, 각성(전투 소모품) 중이면 그 배율로 줄인다 */
 function spawnIntervalOf(s: CombatState): number {
-  const sec = spawnTableOf(s.params).seconds;
   const it = s.params.battleItem;
   const haste = s.hasteTicks > 0 && it?.effect === 'haste' ? it.spawnMult : 1;
-  const out = sec / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
-  // 영창 스택 (GDD 12-4 v6.048 귀도): 스택만큼 주기를 줄인다 (아래로는 KIT_MIN_SPAWN_SECONDS)
-  const cut = kitSpawnCutOf(s);
-  return cut > 0 ? Math.max(KIT_MIN_SPAWN_SECONDS, out - cut) : out;
+  const curve = (spawnTableOf(s.params).seconds * blockSpeedFactorOf(s.params)) / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
+  // 영창 스택 (GDD 12-4 v6.048 귀도): 스택만큼 주기를 줄인다(빼기) + 속도 옵션(빼기). 상한 (GDD v6.055 7절): 다 합쳐도 블록 1초에 1개보다 빨리 돌지 않는다 (옛 영창 하한 0.3초 대체)
+  return speedSeconds(curve, kitSpawnCutOf(s) + (s.params.spawnSecondsCut ?? 0), CX.spawnSecondsMin);
 }
 
-/** 스택으로 줄어도 블록 생성 주기는 이 초 아래로 안 간다 (엔진 안전값) */
-const KIT_MIN_SPAWN_SECONDS = 0.3;
+/** 속도 간격 (GDD v6.055 8절, 사용자): [곡선 값을 0.01초 단위로 반올림] − 옵션 감소 합, 상한(min) 아래로는 안 간다 */
+export function speedSeconds(curve: number, cut: number, min: number): number {
+  return Math.max(min, Math.round(curve * 100) / 100 - Math.max(0, cut));
+}
+
+/** 속도 곡선 배율 (GDD v6.055 8절, 사용자 — 공격·블록 같은 모양): (세계 기준 50 ÷ 능력치)^speedExponent. 능력치 50 = 1, 100 = 0.785, 430 = 0.47 */
+export function speedFactorOf(ref: number, stat: number): number {
+  return Math.pow(ref / Math.max(1, stat), CX.speedExponent);
+}
+
+/** 블록속도 배율: 블록 생성 간격에 곱한다 (1 보다 작으면 블록이 빨리 생긴다). 상한은 spawnIntervalOf */
+export function blockSpeedFactorOf(p: Pick<CombatParams, 'playerStats' | 'playerRefStat'>): number {
+  return speedFactorOf(p.playerRefStat, playerStatsOf(p).bspd);
+}
+
+/** 평소(해방·가속·스택 없음) 블록 생성 간격(초): 출현표 평균 간격 × 블록속도 배율 → 0.01초 반올림 − 옵션, 상한 적용 (상태 화면 블록속도 값) */
+export function baseSpawnSecondsOf(p: CombatParams): number {
+  return speedSeconds(spawnTableOf(p).seconds * blockSpeedFactorOf(p), p.spawnSecondsCut ?? 0, CX.spawnSecondsMin);
+}
+
+/** 지금 블록 생성 타이머 간격(초) — 상한 적용 뒤 (화면·테스트) */
+export function spawnSecondsNow(s: CombatState): number {
+  return spawnIntervalOf(s);
+}
 
 /** 물공 블록의 계열: 종족 계열 표에서 하나를 고르게 뽑는다 (계열 표가 없으면 계열 없음) */
 function drawPhysFamily(s: CombatState): string | null {
@@ -1079,7 +1102,7 @@ function drawPhysFamily(s: CombatState): string | null {
 // ── 능력치·상성 (GDD 20-1~20-3) ──
 
 export function uniformStats(v: number): Stats {
-  return { hp: v, atk: v, int: v, def: v, spr: v, spd: v };
+  return { hp: v, atk: v, int: v, def: v, spr: v, aspd: v, bspd: v };
 }
 
 /** 내 능력치: 주어진 값, 없으면 모두 세계 기준 능력치 (1단계 기준 몸) */
@@ -1124,9 +1147,14 @@ export function enemyElements(def: EnemyDef): string[] {
   return [def.element];
 }
 
-/** 내 자동 기본 공격 간격(초): 기본 간격 ÷ 패시브 배율 × (세계 기준 능력치 ÷ 속도) (GDD 20-3 v3.6: 속도는 평타 간격만, 32-1: 기준은 고정) */
+/** 내 자동 기본 공격 간격(초) (GDD v6.055 8절 속도 곡선, 사용자): 기본 간격 × (세계 기준 50 ÷ 공격속도)^0.35 ÷ 배율 → 0.01초 반올림 − 옵션, 상한 0.3초. 해방·가속 중 값은 currentAttackSeconds */
 export function playerAttackSecondsOf(p: CombatParams): number {
-  return (p.playerAttackSeconds / p.attackSpeedMultiplier) * (p.playerRefStat / playerStatsOf(p).spd);
+  return speedSeconds(attackCurveOf(p), p.attackSecondsCut ?? 0, CX.attackSecondsMin);
+}
+
+/** 평타 곡선 값(반올림·옵션·상한 전) */
+function attackCurveOf(p: CombatParams): number {
+  return (p.playerAttackSeconds * speedFactorOf(p.playerRefStat, playerStatsOf(p).aspd)) / p.attackSpeedMultiplier;
 }
 
 // ── 해방 (GDD 83장: 영력 해방 · 레스렉시온/만해, 옛 저장형 필살기 게이지) ──
@@ -1166,7 +1194,19 @@ function uniqueActive(s: CombatState): boolean {
 /** 지금 내 평타 간격: 고유 효과 중이면 공격 속도 배율만큼 짧다 */
 function currentAttackSeconds(s: CombatState): number {
   const haste = s.basicHaste && s.basicHaste.ticks > 0 ? 1 - s.basicHaste.haste : 1;
-  return (playerAttackSecondsOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste;
+  // 상한 (GDD v6.055 7절): 공격속도·특성·장비·해방·가속을 다 합쳐도 평타 0.3초에 1번보다 빠르지 않다. 추가 평타(extraBasicAttack)는 무관
+  return speedSeconds((attackCurveOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste, s.params.attackSecondsCut ?? 0, CX.attackSecondsMin);
+}
+
+/** 지금 평타 타이머 간격(초) — 상한 적용 뒤 (화면·테스트) */
+export function attackSecondsNow(s: CombatState): number {
+  return currentAttackSeconds(s);
+}
+
+/** 추가 평타 (GDD v6.055 7절): 능력으로 '평타를 한 번 더' — 타이머를 거치지 않으므로 상한과 무관. 평타 타이머는 그대로 */
+export function extraBasicAttack(s: CombatState): void {
+  if (s.status !== 'playing') return;
+  basicAttack(s);
 }
 
 /** 해방 중 블록 생성 속도 배율: 생성 타이머(흡수·기본·물공)가 이 배율로 빨리 돈다. 고유 효과면 × 체인 속도 배율 */
@@ -1576,7 +1616,7 @@ function applyPhysBlock(s: CombatState): void {
     case 'shout':
       proc(s, 'shout');
       s.player.attackTimer = t(currentAttackSeconds(s));
-      basicAttack(s);
+      extraBasicAttack(s);
       break;
     case 'ember':
       break;
@@ -2262,14 +2302,26 @@ function liberate(s: CombatState): boolean {
  *  다음 생성은 해방 간격 한 번 뒤 */
 function grantLiberationBlocks(s: CombatState, n: number): void {
   if (s.script) return; // 각본 전투(GDD 241-B 1)는 난수 없이 — 해방 뒤 블록은 각본이 3개 놓는다
-  const entries = spawnTableOf(s.params, liberationActive(s)).entries.filter((e) => e.source);
-  if (entries.length === 0) return;
-  for (let k = 0; k < n; k++) {
-    if (s.tray.length >= s.params.trayCapacity) s.tray.splice(s.tray.length - 1, 1);
-    const e = drawSpawn(s, entries.map((x) => ({ ...x, chance: x.chance / entries.reduce((a, y) => a + y.chance, 0) })));
-    if (e?.source) spawn(s, 'skill', e.source.id, e.family);
-  }
+  grantExtraBlocks(s, n, true);
   s.spawnTimer = ticksOf(s.params, spawnIntervalOf(s));
+}
+
+/** 블록 추가 생성 (GDD v6.055 7절): 능력으로 '블록 n개를 추가로 생성' — 평소 출현표(공허 빼고)에서 n개를 바로 넣는다. 타이머를 거치지 않으므로 상한(1초)과 무관, 생성 타이머는 그대로.
+ *  push = 바가 차 있으면 맨 오른쪽 옛 블록을 밀어낸다(해방 순간 지급), 아니면 바가 차면 멈춘다. 넣은 개수를 돌려준다 */
+export function grantExtraBlocks(s: CombatState, n: number, push = false): number {
+  const entries = spawnTableOf(s.params, liberationActive(s)).entries.filter((e) => e.source);
+  if (entries.length === 0) return 0;
+  const total = entries.reduce((a, y) => a + y.chance, 0);
+  let made = 0;
+  for (let k = 0; k < n; k++) {
+    if (s.tray.length >= s.params.trayCapacity) {
+      if (!push) break;
+      s.tray.splice(s.tray.length - 1, 1);
+    }
+    const e = drawSpawn(s, entries.map((x) => ({ ...x, chance: x.chance / total })));
+    if (e?.source && spawn(s, 'skill', e.source.id, e.family)) made++;
+  }
+  return made;
 }
 
 /** 해방이 풀린다 (지속이 다 됐거나 전투가 끝났다): 능력치·최대 체력을 되돌리고 리스크 게이지가 오른다 (해방마다 한 번) */

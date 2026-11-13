@@ -8,6 +8,10 @@ import { doNestAction, newNest, respondCare, tickCareRequest } from '../src/engi
 import { emptyRunLog } from '../src/engine/runLog';
 import { careNest, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, tickCare } from '../src/game';
 import { careTalkKey } from '../src/ui/bha/roomLogic';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const CR = BALANCE.provisional.nest.careRequest;
 const MIN = 60_000;
@@ -106,7 +110,7 @@ describe('82장 런 로그·세이브', () => {
   });
   it('세이브 형식 38(이후 C.134 에 39) · 최소 형식 같이 올림 (61장, 마이그레이션 없음)', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(38);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
   it('요청 상태가 저장·불러오기로 남고, 깨진 값은 버린다', () => {
     const s = newSaveData('hollow', T0);

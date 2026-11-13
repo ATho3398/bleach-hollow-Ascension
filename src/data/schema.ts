@@ -98,8 +98,8 @@ export type EnemyPattern =
       counterInAttacks: number;
     });
 
-/** 능력치 6종 (GDD 20-3): 체력·힘·지능·방어·정신력·속도. 이름은 src/data/elements/stats.json */
-export const STAT_IDS = ['hp', 'atk', 'int', 'def', 'spr', 'spd'] as const;
+/** 능력치 7종 (GDD v6 8절, C.446 — 옛 6종의 속도를 공격속도·블록속도로 나눔): 체력·힘·지능·방어·정신력·공격속도·블록속도. 이름은 src/data/elements/stats.json */
+export const STAT_IDS = ['hp', 'atk', 'int', 'def', 'spr', 'aspd', 'bspd'] as const;
 export type StatId = (typeof STAT_IDS)[number];
 export type Stats = Record<StatId, number>;
 

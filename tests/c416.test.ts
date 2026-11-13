@@ -25,7 +25,7 @@ describe('진화 결과 그림 = 바뀐 뒤 모습 (GDD 246장 1)', () => {
         setActiveGender(gender);
         const s = newSaveData(fid, 1);
         s.gender = gender;
-        s.evolution.ev = { ...s.evolution.ev, spd: 30 };
+        s.evolution.ev = { ...s.evolution.ev, aspd: 30 };
         const seen: (string | null | undefined)[] = [lookOf(s)];
         for (let t = 0; t < 3; t++) {
           const r = testEvolveNext(s, 1000 + t);

@@ -233,7 +233,7 @@ export function equippedAbilitiesOf(form: FormDef | null, l: AbilityLoadout): Fo
   return out;
 }
 
-const zeroEv = (): Stats => ({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 });
+const zeroEv = (): Stats => ({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 });
 
 /** 노력치 순위 (동률이면 진화체 종족값 → STAT_IDS 순). abilityFor 와 같은 규칙 */
 export function rankedStats(ev: Stats, form: FormDef): StatId[] {

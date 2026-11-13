@@ -13,9 +13,10 @@
       "hp": 69,
       "atk": 66,
       "int": 63,
-      "def": 62,
+      "def": 63,
       "spr": 59,
-      "spd": 56
+      "aspd": 56,
+      "bspd": 62
     },
     "maxChain": 3,
     "provisional": true
@@ -38,7 +39,8 @@
       "int": 78,
       "def": 78,
       "spr": 78,
-      "spd": 78
+      "aspd": 78,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -61,7 +63,8 @@
       "int": 78,
       "def": 78,
       "spr": 90,
-      "spd": 67
+      "aspd": 67,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -84,7 +87,8 @@
       "int": 78,
       "def": 71,
       "spr": 67,
-      "spd": 86
+      "aspd": 86,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -107,7 +111,8 @@
       "int": 71,
       "def": 94,
       "spr": 78,
-      "spd": 63
+      "aspd": 63,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -130,7 +135,8 @@
       "int": 86,
       "def": 67,
       "spr": 78,
-      "spd": 94
+      "aspd": 94,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -154,7 +160,8 @@
       "int": 67,
       "def": 67,
       "spr": 67,
-      "spd": 67
+      "aspd": 67,
+      "bspd": 67
     },
     "maxChain": 3,
     "provisional": true
@@ -176,7 +183,8 @@
       "int": 78,
       "def": 78,
       "spr": 78,
-      "spd": 78
+      "aspd": 78,
+      "bspd": 78
     },
     "maxChain": 3,
     "provisional": true
@@ -197,10 +205,11 @@
     "stats": {
       "hp": 98,
       "atk": 117,
-      "int": 97,
+      "int": 98,
       "def": 88,
       "spr": 88,
-      "spd": 97
+      "aspd": 97,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -223,8 +232,9 @@
       "atk": 78,
       "int": 117,
       "def": 98,
-      "spr": 97,
-      "spd": 97
+      "spr": 98,
+      "aspd": 97,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -246,9 +256,10 @@
       "hp": 98,
       "atk": 98,
       "int": 98,
-      "def": 97,
+      "def": 98,
       "spr": 97,
-      "spd": 97
+      "aspd": 97,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -272,7 +283,8 @@
       "int": 98,
       "def": 88,
       "spr": 102,
-      "spd": 83
+      "aspd": 83,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -296,7 +308,8 @@
       "int": 117,
       "def": 98,
       "spr": 112,
-      "spd": 83
+      "aspd": 83,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -318,9 +331,10 @@
       "hp": 107,
       "atk": 88,
       "int": 98,
-      "def": 97,
+      "def": 98,
       "spr": 112,
-      "spd": 83
+      "aspd": 83,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -341,10 +355,11 @@
     "stats": {
       "hp": 98,
       "atk": 132,
-      "int": 97,
+      "int": 98,
       "def": 78,
       "spr": 73,
-      "spd": 107
+      "aspd": 107,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -363,12 +378,13 @@
       "fire"
     ],
     "stats": {
-      "hp": 97,
+      "hp": 98,
       "atk": 93,
       "int": 117,
       "def": 88,
       "spr": 83,
-      "spd": 107
+      "aspd": 107,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -389,10 +405,11 @@
     "stats": {
       "hp": 98,
       "atk": 112,
-      "int": 97,
+      "int": 98,
       "def": 88,
       "spr": 83,
-      "spd": 107
+      "aspd": 107,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -416,7 +433,8 @@
       "int": 88,
       "def": 107,
       "spr": 88,
-      "spd": 78
+      "aspd": 78,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -440,7 +458,8 @@
       "int": 107,
       "def": 117,
       "spr": 98,
-      "spd": 78
+      "aspd": 78,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -463,8 +482,9 @@
       "atk": 98,
       "int": 88,
       "def": 117,
-      "spr": 97,
-      "spd": 78
+      "spr": 98,
+      "aspd": 78,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -488,7 +508,8 @@
       "int": 107,
       "def": 73,
       "spr": 88,
-      "spd": 117
+      "aspd": 117,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -511,8 +532,9 @@
       "atk": 78,
       "int": 127,
       "def": 83,
-      "spr": 97,
-      "spd": 117
+      "spr": 98,
+      "aspd": 117,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -535,8 +557,9 @@
       "atk": 98,
       "int": 107,
       "def": 83,
-      "spr": 97,
-      "spd": 117
+      "spr": 98,
+      "aspd": 117,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -560,7 +583,8 @@
       "int": 83,
       "def": 88,
       "spr": 78,
-      "spd": 97
+      "aspd": 98,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -584,7 +608,8 @@
       "int": 132,
       "def": 98,
       "spr": 107,
-      "spd": 97
+      "aspd": 98,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -608,7 +633,8 @@
       "int": 112,
       "def": 88,
       "spr": 83,
-      "spd": 97
+      "aspd": 98,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -635,7 +661,8 @@
       "int": 90,
       "def": 112,
       "spr": 109,
-      "spd": 72
+      "aspd": 72,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -662,7 +689,8 @@
       "int": 105,
       "def": 79,
       "spr": 87,
-      "spd": 119
+      "aspd": 119,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -685,7 +713,8 @@
       "int": 105,
       "def": 105,
       "spr": 105,
-      "spd": 105
+      "aspd": 105,
+      "bspd": 105
     },
     "maxChain": 3,
     "provisional": true
@@ -710,7 +739,8 @@
       "int": 84,
       "def": 84,
       "spr": 84,
-      "spd": 84
+      "aspd": 84,
+      "bspd": 84
     },
     "maxChain": 3,
     "provisional": true
@@ -730,7 +760,8 @@
       "int": 97,
       "def": 97,
       "spr": 108,
-      "spd": 107
+      "aspd": 108,
+      "bspd": 102
     },
     "maxChain": 3,
     "provisional": true
@@ -750,7 +781,8 @@
       "int": 117,
       "def": 78,
       "spr": 78,
-      "spd": 97
+      "aspd": 98,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -770,7 +802,8 @@
       "int": 73,
       "def": 117,
       "spr": 117,
-      "spd": 98
+      "aspd": 98,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -791,9 +824,10 @@
       "hp": 98,
       "atk": 98,
       "int": 98,
-      "def": 97,
+      "def": 98,
       "spr": 97,
-      "spd": 97
+      "aspd": 97,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true
@@ -813,7 +847,8 @@
       "int": 83,
       "def": 88,
       "spr": 88,
-      "spd": 107
+      "aspd": 107,
+      "bspd": 98
     },
     "maxChain": 3,
     "provisional": true
@@ -838,9 +873,10 @@
       "hp": 98,
       "atk": 98,
       "int": 98,
-      "def": 97,
+      "def": 98,
       "spr": 97,
-      "spd": 97
+      "aspd": 97,
+      "bspd": 97
     },
     "maxChain": 3,
     "provisional": true

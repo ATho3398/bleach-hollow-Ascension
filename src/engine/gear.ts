@@ -13,7 +13,7 @@ import { refStatOf } from './evolution/evolution';
 const GX = BALANCE.provisional.gear;
 const STAR_MAX = BALANCE.provisional.stats.tierTotals.length;
 
-/** 장비 능력치 줄 키: 능력치 6종 + 치명(확률) */
+/** 장비 능력치 줄 키: 능력치 7종 + 치명(확률) */
 export type GearStat = StatId | 'crit';
 const GEAR_STATS: readonly GearStat[] = [...STAT_IDS, 'crit'];
 
@@ -297,7 +297,7 @@ export function referenceLoadout(tierIndex: number): GearCarry {
   const star = Math.min(STAR_MAX, tierIndex + 1);
   const grade = GX.refLoadout.grade as GearGrade;
   const mk = (kind: GearKind, stats: GearStat[]) => ({ stats: Object.fromEntries(stats.map((s) => [s, gearLineValue(kind, grade, star, s)])), plus: GX.refLoadout.plus, special: null });
-  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['spd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
+  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['aspd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
 }
 
 /** 장비 세기 점수 (GDD 108장 4번 자동 착용 비교, C.179 provisional): 능력치 줄을 '그 줄의 노말 ★1 값' 몇 배인지로 더한다(종류가 달라도 같은 눈금).

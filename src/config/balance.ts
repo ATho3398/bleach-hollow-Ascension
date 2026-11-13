@@ -3,7 +3,8 @@
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 137; // C.445 (GDD v6.057 12-4): 아이젠 프라고르 fragor.riskCost 5 → 3(1블록마다 감응도 −3, 3체인 −9 — 사용자). 이전 136: // C.444 (GDD v6.054 12-4): 아이젠 붕옥 감응도 = 트랙 리스크 게이지 그 자체 — transcendentKits.aizen.riskRelease.start(전투 전용 시작 20) 삭제, floor 20 은 원정·둥지에도. 이전 135: // C.443 (GDD v6.052 12-4): 아이젠 붕옥 감응도·붕옥 융합 — transcendentKits.aizen.riskRelease(start 20·floor 20·minRisk 30, 옛 minRisk 50·costPerUse 8 삭제), fragor.riskCost 5(1블록마다), 붕옥 블록 hogyoku(허 공식 ×0.5·감응도 +10·power 1) 신설. 이전 134: // C.442 (GDD v6.051 12-4): 아이젠 붕옥 해방 = 호로화 소모형 모드 transcendentKits.aizen.riskRelease(minRisk 50·costPerUse 8) 신설, 경화수월 반격 즉시 재생성 삭제. 133: C.441 (GDD v6.049 12-4): 초월자 전용 블록 provisional.transcendentKits(아이젠 경화수월·귀도·프라고르·회피 10%·되살아나기 30%)·transcendentGrowth(초월 조각 일반 1·강적 3·보스 8, 강화 10강·강마다 +8%·n강 10×n) 신설 — 캐릭터 전투 수치 그대로. 132: C.427 (GDD v6.017·v6.026 6-16): 특수던전 주간던전·보스전 provisional.specialDungeon(주 3회·주 1회·재료·골드) 신설. 131: C.426 (GDD v6.016·v6.017): 붕옥 강당 비용 n강 = n개(trackIds·costPerLevel 1 — 옛 trackCost 2/4·3/1·1/1 삭제)·합체 뒤 afterFusionLevel 30·드롭 normalChance 1·eliteCount 3·bossCount 8·비율 1:1:1·상인 묶음 20개 150골드. 130: C.425 (GDD v6.015 12-3): 붕옥 재료 = 사냥 드롭 hogyokuDrops(일반 0.3·강적 2·보스 5·비율 4:1.5:1)·떠돌이 상인 w-hg-* — 옛 soulCrystals·hogyokuShards·resonanceEssence 지급 삭제. 129 (GDD v6.014 12-3): 붕옥 개발 10단계 → 재료별 강화 트랙 3개(각 50강, trackCost·trackMax·trackHalf·perStepBonus — 옛 develop·perLevelBonus·halfLevel·maxLevel 삭제).
+export const BALANCE_VERSION = 138; // C.446 (GDD v6.055·v6.057 7·8절, provisional): 능력치 7종 — 속도 → 공격속도(aspd)·블록속도(bspd). tierTotals ×7/6(기준 능력치 그대로 50·62.5·78.3·97.5), 진화체 종족값 bspd = 단계 기준(성향 없음), 속도 곡선(사용자) = 기본 간격 × (50 ÷ 능력치)^combat.speedExponent 0.35 ÷ 배율 → 0.01초 반올림 → 상한 combat.attackSecondsMin 0.3·spawnSecondsMin 1.0, 고유 특성 int → 블록 피해 ×1.12·bspd → 블록 생성 ×1.2, 성향 bspd = int 와 같은 몫, 장비 신발 풀 aspd·bspd, 적 ev 특수 → bspd·혼합 반씩.
+// 이전: BALANCE_VERSION 137; // C.446 (GDD v6.057 12-4): 아이젠 프라고르 fragor.riskCost 5 → 3(1블록마다 감응도 −3, 3체인 −9 — 사용자). 이전 136: // C.444 (GDD v6.054 12-4): 아이젠 붕옥 감응도 = 트랙 리스크 게이지 그 자체 — transcendentKits.aizen.riskRelease.start(전투 전용 시작 20) 삭제, floor 20 은 원정·둥지에도. 이전 135: // C.443 (GDD v6.052 12-4): 아이젠 붕옥 감응도·붕옥 융합 — transcendentKits.aizen.riskRelease(start 20·floor 20·minRisk 30, 옛 minRisk 50·costPerUse 8 삭제), fragor.riskCost 5(1블록마다), 붕옥 블록 hogyoku(허 공식 ×0.5·감응도 +10·power 1) 신설. 이전 134: // C.442 (GDD v6.051 12-4): 아이젠 붕옥 해방 = 호로화 소모형 모드 transcendentKits.aizen.riskRelease(minRisk 50·costPerUse 8) 신설, 경화수월 반격 즉시 재생성 삭제. 133: C.441 (GDD v6.049 12-4): 초월자 전용 블록 provisional.transcendentKits(아이젠 경화수월·귀도·프라고르·회피 10%·되살아나기 30%)·transcendentGrowth(초월 조각 일반 1·강적 3·보스 8, 강화 10강·강마다 +8%·n강 10×n) 신설 — 캐릭터 전투 수치 그대로. 132: C.427 (GDD v6.017·v6.026 6-16): 특수던전 주간던전·보스전 provisional.specialDungeon(주 3회·주 1회·재료·골드) 신설. 131: C.426 (GDD v6.016·v6.017): 붕옥 강당 비용 n강 = n개(trackIds·costPerLevel 1 — 옛 trackCost 2/4·3/1·1/1 삭제)·합체 뒤 afterFusionLevel 30·드롭 normalChance 1·eliteCount 3·bossCount 8·비율 1:1:1·상인 묶음 20개 150골드. 130: C.425 (GDD v6.015 12-3): 붕옥 재료 = 사냥 드롭 hogyokuDrops(일반 0.3·강적 2·보스 5·비율 4:1.5:1)·떠돌이 상인 w-hg-* — 옛 soulCrystals·hogyokuShards·resonanceEssence 지급 삭제. 129 (GDD v6.014 12-3): 붕옥 개발 10단계 → 재료별 강화 트랙 3개(각 50강, trackCost·trackMax·trackHalf·perStepBonus — 옛 develop·perLevelBonus·halfLevel·maxLevel 삭제).
 // 이전: BALANCE_VERSION 128; // C.418 (GDD v6.005): 먹이 보관 상한 food.cap 9·넘침 골드 food.overflowGoldRate 0.2 삭제, 새 게임 시작 지급 startItems·food.start 비움 → tutorialRecover.cureReward(+반창고 3·붕대 2·회복약 1)·cureFood(간식 5) = 빈사 치료 뒤. 전투 수치 그대로. 그 전 127 — C.417 (GDD 245장): 새 게임 시작 지급에서 일반 먹이(food.start basic 3·startNormalFoods 3)·치료제 3종(startItems med-cure·med-iv·med-energy 각 3) 삭제 → 튜토리얼 첫 끼니 뒤 tutorialRecover.rewardEach 1 → 3 · 빈사 치료 뒤 tutorialRecover.cureReward 각 3, 튜토리얼 온천 tutorialRecover.spaTo 0.8 → 1(가득), 적 공격 분류 = 공격마다 데이터(적 attackCategory·pattern.heavyCategories, mixed 는 combat.mixedPhysicalShare 0.5 굴림 — provisional, 옛 두 능력치 평균 삭제), 강공격 판정 = 예고 끝 틱(hitDelay.heavy 는 빔 모션 앞당김 시간으로 뜻이 바뀜). 그 전 126 — C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.develop(10단계 재료 3종 표)·perLevelBonus 0.01·halfLevel 5·maxLevel 10, 재료 hogyokuShards(화 첫 클리어 5·장 보스 20·탑 10층마다 5)·resonanceEssence(진화 3·공명 30) 신설 — 옛 liberateCost 100·liberatedBonus 0.05·fusionCost 300 삭제(5단계 = +5%). 전투 수치 그대로. 그 전 125 — C.412 (GDD 243장 1): twoTrack.openTierIndex(4단계 도착 = 다른 종족 트랙) 삭제 — 두 번째 트랙·붕옥 탭은 스토리 전부 클리어 때. 전투 수치 그대로. 그 전 124 — C.411 (GDD 243장 7·8): 돌봄 요청 무작위 재우기 sleepWeight 삭제 · 줄어든 것만 있는 복귀 창 문턱 idle.lossOnlyMinMinutes 60(provisional). 옛 123 = C.406 (GDD 241-C 4~7): 쇠약 = 마지막으로 먹인 뒤 nest.care.weakAfterHours 24시간(옛 배부름 weakFullness 20 이하 삭제) · 눌러서 말 걸기 nest.bond.touch(4번째까지 +1 · 7번째부터 −1 · 3시간 주기) · 새 게임 시작 지급 startItems 링거 3·에너지 드링크 3 추가 + startNormalFoods 3(일반 먹이 종류마다) · 숨은 모습 보너스(종족 설정 specialLooks: 외눈형 모든 능력치 +5). 전투 수치 그대로. 그 전 122 — C.404 (GDD 241-B): tutorialScript.libReadySeconds 0.8·libHoldSeconds 1.2(각본 해방 안내), nest.homeHp.spaEnterSeconds 2.4(온천 다 앉은 뒤부터), 먹이 tutorial(첫 끼니 배부름 100)·sell food-tutorial 1, tutorialRecover.food 'basic' → 'tutorial'·rewardEach 1. 그 전 121 — C.403 (GDD 241-0 사용자 수정): 해금 표 provisional.unlocks 신설(타일 2단계 · 장비·전투 소모품 3단계 · 본능 수련·번호 쟁탈전 4단계 · 장신구 해방 클리어 · 펫·출정품 첫 환생) — 펫 첫 지급이 첫 진화 → 첫 환생, 해금 전 장비·펫 드롭 없음. 전투 수치 그대로. 그 전 120 — C.400 (GDD 241-D 5): 출정품 provisional.sortie(칸 2 · 공격 피해 +10% · 받는 피해 −10% · 드롭 +15% · 값 90·90·120 · 드롭 2%·8%·25%). 그 전 119 — C.397 (GDD 241-D 4): 펫 공격 pets.attack(3초·기본 공격 × 0.2 × 친밀도 배율, provisional), 장비 참고 줄 6칸. 그 전 118 — C.391 (GDD 239장): 일반 먹이 12 → 8·싸구려 6 → 4, 특식 득실 6종(대식·응축·살점·재생·정화·진상품), 영압 안정도 전면 삭제(risk.stabilityStart·stabilityMax·releaseStability·breakthroughStabilityLoss·nestActions.stability·care.stabilityPerHour·stabilityDoubleBelow), 해방 시작 게이지 = 고정 liberation.startGauge 25(옛 시작값 50/100 × 50 과 같음), 히든 폭주형 = 진화 순간 리스크 게이지 ≥ hidden.frenzyRiskAtLeast 90. 그 전 117 — C.388 (GDD 236장): 팔기 판매가 provisional.sell(상점 품목 = 산 값 × shopRate 0.5 내림·최소 1, 그 밖 = prices·떠돌이 등급·특성 절반·장비 gear.sellGold), 특식 relic 판매가를 foods 에서 sell.prices 로 옮김(값 600 그대로). 그 전 116 — C.387 (GDD 235장 · 234장 3): 먹이 3유형 개편 — 특식 4종(배부름 40 + 추가 효과)·일반 6종(배부름 12·교감 +1, 진화체 선호 ×2·비선호 ×0.5)·싸구려 2종(배부름 6·교감 −1), nest.foodTypes·foods·foodPref, homeHp.foodHeal 유형별, 드롭·보물·상인 표 새 먹이, 같은 먹이 10분 2개(feedLimit.sameMax). 234장 2(×2)는 이 개편으로 대체. 그 전 C.357 — C.357 (GDD 214장): 타격 지연 combat.hitDelay 신설(기본 0.3초 — 피해 적용만 모션 타격 순간으로 미룸, 주기·수치 그대로). 그 밖 수치 변경 없음. 114: // C.355 (GDD 210장, provisional): 휴식 칸(rest-a) 리스크 내림 restRelief 10 삭제, 회복 = 최대치 × expedition.restRecover(base 0.15·perLapDecay 0.8·min 0.03)^(바퀴−1) — 배부름·컨디션·체력 모두(옛 restHunger 25·restCondition 20·hpCarry.restHeal 0.35 삭제). 샘은 tiles.spring.riskRelief 20 절대값(옛 휴식 ×2 와 같은 값, 회복 없음 그대로). 바퀴 끝 임시 타일 tileVariants.draft: cards 3 → 1·chance 0.7 신설(고르기 없이 무작위 1장, 30% 없음). 다른 수치 그대로.
 // 113: // C.354 (GDD 216장, provisional): 수련권 = 원정·탑 강적 20%·보스 50% 무작위 1장(training.ticketDrop), 귀환 지급(ticketsPerReturn 1)·최대(ticketsMax 3) 삭제. 다른 수치 그대로. 옛 112: C.351 (GDD 211장): 먹이의 숨은 광기·안정 효과 삭제 — risk.nestActions.feed { risk −3, stability +2 } → { 0, 0 } (먹이 = 배부름·컨디션·체력·교감, 설명에 적힌 것만). 옛 111:  C.342 (GDD 207장, provisional): 노력치 상한 2차 — evCapTotal [56, 108, 168, 240] → [96, 204, 324, 472]·능력치 하나 비율 evCapPerStatRatio 0.6 → 0.7 — 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번(202장과 같은 계산: ★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev, 1단계는 튜토리얼 18 뺀 나머지). 가드 보정: 원정 ★3 강적 difficulty.eliteEase[3] 1.15 신설(바퀴 곡선 3단계 ★3 3바퀴 46 → 32%), 탑 tower.eliteScaleByBand[3] 1.3 → 1.15(겹침 되돌림). 다른 수치 그대로.
 // 110: // C.334 (GDD 202장, provisional): 노력치 상한 evCapTotal [36, 44, 70, 88] → [56, 108, 168, 240]·능력치 하나 비율 evCapPerStatRatio 0.5 → 0.6 — 각 단계에서 상한이 차기까지 '둘 다' 약 15번·'스탯만' 약 8번(★ 권장·연속 0·일반 75%/강적 25% 섞인 실제 적 ev 로 계산, 1단계는 튜토리얼 18 뺀 나머지). 다른 수치 그대로.
@@ -257,7 +258,7 @@ export const BALANCE = {
       /** 종목별 승리 보상·비용 (22-4 표). 비용은 이기든 지든. ev = 노력치(상한까지만) */
       games: {
         duel: { points: 5, ev: { spr: 4 }, condition: -10, hunger: 0, risk: 5 },
-        dodge: { points: 3, ev: { spd: 5 }, condition: -15, hunger: 0, risk: 0 },
+        dodge: { points: 3, ev: { aspd: 5 }, condition: -15, hunger: 0, risk: 0 },
         clash: { points: 4, ev: { atk: 5 }, condition: -5, hunger: 15, risk: 0 },
         chain: { points: 3, ev: { hp: 5 }, condition: 0, hunger: 0, risk: 10, winHunger: -20 },
       } as Record<string, { points: number; ev: Record<string, number>; condition: number; hunger: number; risk: number; winHunger?: number }>,
@@ -323,7 +324,7 @@ export const BALANCE = {
       /** 단계별 종족값 합계 (index 0 = 1단계). 기준 능력치 = 합계 ÷ 6.
        *  C.75 (GDD 32-1): 내 능력치는 절대값(세계 기준 = 1단계 기준 능력치 = tierTotals[0] ÷ 6 하나로 환산)이고, 적은 원정 난이도 ★n 의 기준 능력치(= n단계 기준)로 만든다.
        *  단계 간격을 +10% 에서 +25% 로 벌려 한 단계 위·아래가 체감되게 (옛 300/330/360/390/420; C.75 1차 +20% 300/360/430/520/620 은 한 단계 위 일반 처치 시간이 권장의 0.77배라 0.70배가 되는 +25% 로) */
-      tierTotals: [300, 375, 470, 585], // C.220 (GDD 126장 11 종족값 표 4칸): 마지막 칸(730) 삭제 — ★1~4 적 기준·1~3단계 몸은 그대로, 4단계(옛 5단계 모양)는 585
+      tierTotals: [350, 437.5, (470 * 7) / 6, 682.5], // C.446 (GDD v6.055 8절): 능력치 7종 — 옛 6종 합계 [300, 375, 470, 585] × 7/6, 기준 능력치(합계 ÷ 7)는 그대로 50·62.5·78.3·97.5. 옛 주석: C.220 (GDD 126장 11 종족값 표 4칸): 마지막 칸(730) 삭제 — ★1~4 적 기준·1~3단계 몸은 그대로, 4단계(옛 5단계 모양)는 585
       /** 노력치 단계 상한: 합계(index = 단계)와 능력치 하나의 상한(합계 상한 × 비율). 진화해도 유지되고 상한만 오른다 */
       evCapTotal: [96, 204, 324, 472], // C.342 (GDD 207장, provisional): 각 단계에서 상한이 차기까지 '둘 다' 약 30번·'스탯만' 약 16번 — 1단계 = 튜토리얼 18 + 78(★1 '둘 다' 평균 2.5 → 31.2번·'스탯만' 5.0 → 15.6번), 2단계 +108(★2 3.57 → 30.2·6.43 → 16.8), 3단계 +120(★3 3.93 → 30.5·7.5 → 16.0), 4단계 +148(★4 5.0 → 29.6·8.93 → 16.6). 평균 = 실제 적 ev(enemies.json)·absorbEvOf·scaleEv, 일반 75%(basic 3·swift 2·sturdy 2)/강적 25%(heavy-seal 3·stance 2·heavy-chain 2), 연속 0. 단계 합계 대비 32/54/69/81%. C.334 (GDD 202장): [56, 108, 168, 240] = '둘 다' 약 15번·'스탯만' 약 8번(단계 합계 대비 19/29/36/41%). 옛 [36, 44, 70, 88] = C.280 (GDD 182장 3): 1·2단계 24·32 → 36·44 (약 12%) — 튜토리얼 18 뒤 '둘 다' 5~9번. C.220: 4칸(마지막 110 삭제). C.108 (GDD 52): 약 15% → C.115 (GDD 59): 1·2단계 약 8% (dev-log C.115)
       evCapPerStatRatio: 0.7, // C.342 (GDD 207장, provisional): 0.6 → 0.7 — 한 능력치만 노리는 '스탯만' 흡수(★1 일반 4)도 1단계에서 약 16번(67 − 튜토리얼 3 = 64 ÷ 4)까지 능력치 하나 상한에 먼저 막히지 않게(0.6 이면 57 → 13.5번). 섞어 먹으면(가장 큰 체력 몫 약 20%) 비율은 닿지 않는다. C.334 (GDD 202장): 0.5 → 0.6(1단계 33 → 7.5번)
@@ -417,14 +418,15 @@ export const BALANCE = {
     } as Readonly<Record<string, { price: number; dealt?: number; taken?: number; maxHp?: number; blockCrit?: number }>>,
     /** 아란칼화 / 참백도 구상화 (GDD 126장 3, C.220): 미니게임이 정해질 때까지 보스전으로 임시 — 상대 보스·★ (provisional) */
     ascension: { bossId: 'forest-lord', difficulty: 4 },
-    /** 진화체 고유 특성 6종 (GDD 20-3·v4.0): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
+    /** 진화체 고유 특성 7종 (GDD 20-3·v4.0, C.446 능력치 7종): 진화 순간 노력치가 가장 높은 능력치 방향. 이름은 src/data/evolution/abilities.json */
     abilities: {
       hp: { maxHp: 1.12 },
       atk: { physicalPower: 1.12 },
-      int: { blockSpawn: 1.2 },
+      int: { blockDamage: 1.12 }, // C.446 (GDD v6.055 8절, provisional): 블록 피해 ×1.12 (힘과 대칭). 옛 블록 생성 ×1.2 는 bspd 로
       def: { physicalTaken: 0.85 },
       spr: { specialTaken: 0.85 },
-      spd: { attackSpeed: 1.18 },
+      aspd: { attackSpeed: 1.18 },
+      bspd: { blockSpawn: 1.2 },
       // ── C.89 (GDD 39장): 속성 특성 8종 (4단계 = 1배). 세기(scale)는 main 값에만 곱한다 — 효과 종류는 abilities.json ──
       element: {
         normal: { blockPower: 0.06 },
@@ -531,13 +533,13 @@ export const BALANCE = {
       weight: { normal: 1, max: 9, fullExcess: 0.5 },
       /** 진화체 데이터 자동 생성 (src/data/evolution/generate.ts): 종족값 분배 = 기준 능력치 × (1 + 성향). 성향 합은 0(합계 유지) */
       template: {
-        base: { 2: { hp: 0.1, atk: 0.05, def: 0, spr: -0.05, int: 0, spd: -0.1 }, 3: { hp: 0, atk: 0, def: -0.05, spr: 0, int: 0.05, spd: 0 } } as Record<number, Record<string, number>>,
+        base: { 2: { hp: 0.1, atk: 0.05, def: 0, spr: -0.05, int: 0, aspd: -0.1 }, 3: { hp: 0, atk: 0, def: -0.05, spr: 0, int: 0.05, aspd: 0 } } as Record<number, Record<string, number>>,
         element: {
           normal: {},
-          water: { spr: 0.15, hp: 0.1, atk: -0.1, spd: -0.15 },
-          fire: { atk: 0.15, spd: 0.1, def: -0.1, spr: -0.15 },
-          earth: { def: 0.2, hp: 0.1, spd: -0.2, int: -0.1 },
-          thunder: { spd: 0.2, int: 0.1, hp: -0.15, def: -0.15 },
+          water: { spr: 0.15, hp: 0.1, atk: -0.1, aspd: -0.15 },
+          fire: { atk: 0.15, aspd: 0.1, def: -0.1, spr: -0.15 },
+          earth: { def: 0.2, hp: 0.1, aspd: -0.2, int: -0.1 },
+          thunder: { aspd: 0.2, int: 0.1, hp: -0.15, def: -0.15 },
           blood: { hp: 0.15, atk: 0.1, spr: -0.1, int: -0.15 },
           poison: { int: 0.15, spr: 0.1, atk: -0.1, hp: -0.15 },
           kyo: { int: 0.15, atk: 0.1, def: -0.1, spr: -0.15 },
@@ -551,8 +553,8 @@ export const BALANCE = {
           // C.220 (GDD 126장): 옛 5단계 행동 히든을 4단계로 — limit → frenzy(폭주형), reborn → awakened(각성형). 안정형·허무형은 새로(성향 없음)
           frenzy: { atk: 0.2, int: 0.2, def: -0.2, spr: -0.2 },
           restraint: { def: 0.2, spr: 0.2, hp: 0.1, atk: -0.25, int: -0.25 },
-          hunter: { hp: 0.15, atk: 0.1, spd: 0.1, def: -0.1, spr: -0.1, int: -0.15 },
-          awakened: { hp: 0.05, spr: 0.05, spd: 0.05, def: -0.05, atk: -0.05, int: -0.05 },
+          hunter: { hp: 0.15, atk: 0.1, aspd: 0.1, def: -0.1, spr: -0.1, int: -0.15 },
+          awakened: { hp: 0.05, spr: 0.05, aspd: 0.05, def: -0.05, atk: -0.05, int: -0.05 },
           stable: {},
           void: {},
         } as Record<string, Record<string, number>>,
@@ -886,7 +888,8 @@ export const BALANCE = {
         def: { guard: 1.8 },
         hp: { heal: 1.8 },
         spr: { guard: 1.4, heal: 1.4 },
-        spd: { absorbedSpawn: 1.1 },
+        aspd: { absorbedSpawn: 1.1 },
+        bspd: { attack: 1.4 }, // C.446: 블록속도 1위 = 지능 1위와 같은 모양 (마스터 추천안)
       } as Record<string, { attack?: number; guard?: number; heal?: number; absorbedSpawn?: number }>,
     },
     // ── 전투 v2(P4, C.6) 임시값: 실시간 자동 전투 + 스킬 블록 체인 (GDD 3-5). 시간은 초, 엔진은 틱으로 환산한다 ──
@@ -898,6 +901,14 @@ export const BALANCE = {
       mixedPhysicalShare: 0.5,
       /** 자동 기본 공격 간격(초): 내 캐릭터 1.0, 적 1.5 (GDD 3-5) */
       playerAttackSeconds: 1.0,
+      /** 속도 상한 (GDD v6.055 7절, 사용자 2026-11-13): 일반 공격 간격 ≥ 이 초 — 능력치·특성·장비·해방·가속을 다 합친 평타 타이머 간격에 적용.
+       *  능력으로 생기는 추가 평타(연타·포효 등, 타이머 밖)는 무관 */
+      attackSecondsMin: 0.3,
+      /** 블록 생성 타이머 간격 ≥ 이 초 — 블록속도·특성·장비·해방·영창 스택·가속 소모품을 다 합친 결과에 적용. 능력으로 바로 생기는 블록(해방 순간 지급·충전·콤보 등)은 무관 */
+      spawnSecondsMin: 1.0,
+      /** 속도 곡선 (GDD v6.055 8절, 사용자 2026-11-13 — 공격·블록 같은 모양): 간격 = 기본 간격 × (세계 기준 50 ÷ 능력치)^이 값 ÷ 배율, 0.01초 반올림.
+       *  노력치를 다 채워도 상한에 못 닿게(평타 50 → 1.0·100 → 0.79·430 → 0.47초 / 블록 3.24 → 2.54 → 1.53초) */
+      speedExponent: 0.35,
       enemyAttackSeconds: 1.5,
       /** 플레이어 기본 공격 1회 피해. 적 체력·공격력은 이 값의 N회 분량이라 기준 단위일 뿐이다 */
       playerAttackDamage: 10,
@@ -1062,7 +1073,7 @@ export const BALANCE = {
       kinds: {
         weapon: { weight: 1, pool: ['atk', 'int'], lines: [1, 1] },
         armor: { weight: 0.8, pool: ['hp', 'def'], lines: [2, 2] },
-        shoes: { weight: 0.8, pool: ['spd'], lines: [1, 1] },
+        shoes: { weight: 0.8, pool: ['aspd', 'bspd'], lines: [1, 1] }, // C.446: 공격속도·블록속도
         accessory: { weight: 0.6, pool: ['crit', 'spr', 'hp', 'atk', 'int', 'def'], lines: [1, 2] },
       } as Record<string, { weight: number; pool: string[]; lines: [number, number] }>,
       critLine: { normal: 0.01, rare: 0.015, epic: 0.02, legendary: 0.03 } as Record<string, number>,

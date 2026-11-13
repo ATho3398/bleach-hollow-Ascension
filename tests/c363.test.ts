@@ -7,6 +7,10 @@ import { FACTIONS, getFaction } from '../src/data/factions';
 import { DEX_SORT_LABEL, ENEMY_DEX_SORTS, FORM_DEX_SORTS, nextDexSort, sanitizeDexSort, sortDex, type DexSortFacts } from '../src/engine/dexSort';
 import { newEvolution, formDisplayName } from '../src/engine/evolution';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -74,7 +78,7 @@ describe('220장 2: 정렬', () => {
     for (const k of [...FORM_DEX_SORTS, ...ENEMY_DEX_SORTS]) expect(DEX_SORT_LABEL[k].length).toBeGreaterThan(0);
   });
   it('세이브 형식 68: 새 세이브 기본 정렬, 67 → 68 마이그레이션, 저장·불러오기로 남고 깨진 값은 기본', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습
     expect(typeof SAVE_MIGRATIONS[67]).toBe('function');
     const s = newSaveData('hollow', 7);
     expect(s.dexSort).toEqual({ forms: 'default', enemies: 'default' });
@@ -82,7 +86,7 @@ describe('220장 2: 정렬', () => {
     delete old.dexSort;
     old.meta.format = 67;
     const m = migrateSave(old);
-    expect(m!.meta.format).toBe(86);
+    expect(m!.meta.format).toBe(87);
     expect(m!.dexSort).toEqual({ forms: 'default', enemies: 'default' });
     s.dexSort = { forms: 'name', enemies: 'kills' };
     expect(migrateSave(JSON.parse(JSON.stringify(s)))!.dexSort).toEqual({ forms: 'name', enemies: 'kills' });

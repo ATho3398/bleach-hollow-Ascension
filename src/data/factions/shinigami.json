@@ -82,7 +82,8 @@
     "int": 50,
     "def": 50,
     "spr": 50,
-    "spd": 50
+    "aspd": 50,
+    "bspd": 50
   },
   "matchupText": {
     "strong": "효과가 굉장하다!",

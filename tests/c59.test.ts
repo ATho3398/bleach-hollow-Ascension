@@ -29,7 +29,7 @@ function toTier5(t: Pick<SaveData, TrackKey>, formId = 't4:fire:physical'): void
   e.tierIndex = 3;
   e.formHistory = ['t2:base', 't3:fire', formId];
   e.formId = formId;
-  e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 };
+  e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
 }
 
 /** 플레이어를 No.1 로 */
@@ -42,14 +42,14 @@ function makeTop(t: Pick<SaveData, TrackKey>): void {
 function oldFormat22(): Record<string, unknown> {
   const s = newSaveData('hollow', 5000);
   // 형식 22 = 옛 5단계 트리 (형식 57 이 4단계로 옮긴다)
-  Object.assign(s.evolution, { tierIndex: 4, formHistory: ['t2:base', 't3:base', 't4:fire', 't5:fire:physical'], formId: 't5:fire:physical', ev: { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 } });
+  Object.assign(s.evolution, { tierIndex: 4, formHistory: ['t2:base', 't3:base', 't4:fire', 't5:fire:physical'], formId: 't5:fire:physical', ev: { hp: 20, atk: 20, int: 0, def: 0, spr: 0, aspd: 0 } });
   delete (s.evolution as { abilities?: unknown }).abilities;
   s.formDex = [...s.evolution.formHistory];
   s.shared.soulCrystals = 42;
   s.shared.jade = 9;
   s.shared.tradeCoins = 130;
   s.shared.food.snack = 4;
-  s.rebirth = { count: 1, carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, spd: 0 } };
+  s.rebirth = { count: 1, carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 } };
   s.training.completed = true;
   s.training.tickets = 2;
   s.nest.hunger = 33;
@@ -294,11 +294,11 @@ describe('합체 (GDD 22-3)', () => {
     expect(characterTracks(s).map((t) => t.factionId)).toEqual(['hollow', other('hollow')]);
     for (const t of characterTracks(s)) {
       expect(t.evolution.tierIndex).toBe(0);
-      expect(t.evolution.ev).toEqual({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 });
+      expect(t.evolution.ev).toEqual({ hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 });
       expect(t.build.owned).toEqual([]);
       expect(t.rank.history.everRanked).toBe(false);
       expect(t.training.completed).toBe(false);
-      expect(t.rebirth).toEqual({ count: 0, carry: { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 } });
+      expect(t.rebirth).toEqual({ count: 0, carry: { hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 } });
       expect(t.runLog.runs).toEqual([]);
     }
     expect(characterTracks(s)[0]!.evolution.stageSeed).not.toBe(characterTracks(s)[1]!.evolution.stageSeed);

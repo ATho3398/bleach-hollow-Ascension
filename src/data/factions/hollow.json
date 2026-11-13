@@ -93,10 +93,10 @@
   ],
   "tierLooks": {
     "2": {
-      "stat": { "atk": "gillian", "int": "gillian", "hp": "gillian", "spr": "gillian", "spd": "gillian", "def": "gillian" }
+      "stat": { "atk": "gillian", "int": "gillian", "hp": "gillian", "spr": "gillian", "aspd": "gillian", "bspd": "gillian", "def": "gillian" }
     },
     "3": {
-      "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "spd": "panther", "def": "scorpion" },
+      "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "aspd": "panther", "bspd": "stag", "def": "scorpion" },
       "forms": { "h3:fail": "wraith", "h3:passage": "wraith" },
       "elementSuffix": ["water", "fire", "earth", "thunder"]
     }
@@ -169,7 +169,8 @@
     "int": 50,
     "def": 50,
     "spr": 50,
-    "spd": 50
+    "aspd": 50,
+    "bspd": 50
   },
   "matchupText": {
     "strong": "효과가 굉장하다!",

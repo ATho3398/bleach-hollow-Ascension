@@ -10,6 +10,10 @@ import { guidePending, GUIDE_IDS } from '../src/engine/tutorial';
 import { applyUnlocks, FEATURE_IDS, featureName, featureUnlocked, ruleMet, sanitizeUnlocks, UNLOCK_GUIDES, unlockHintText, unlockRule, type FeatureId } from '../src/engine/unlocks';
 import { gateHint, gateOpen } from '../src/unlockGate';
 import { battleItemUnlocked, checkUnlocks, gearUnlocked, migrateSave, newSaveData, performEvolution, petsUnlocked, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, tilesUnlocked, unlockProgressOf } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const evolve = (s: ReturnType<typeof newSaveData>, at = 10) => {
@@ -103,12 +107,12 @@ describe('세이브 형식 75 (74 → 75 마이그레이션): 옛 세이브는 �
     return migrateSave(raw)!;
   };
   it('형식 74, 단계 표에 73 이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
     expect(SAVE_MIGRATIONS[73]).toBeTypeOf('function');
   });
   it('1단계 옛 세이브: 쓰던 장비·전투 소모품 칸·장신구 칸은 열린 채(안내 없음), 타일·펫은 안 받았으면 표대로 잠김', () => {
     const m = old74(() => undefined);
-    expect(m.meta.format).toBe(86);
+    expect(m.meta.format).toBe(87);
     expect(m.shared.unlocks).toEqual({ gear: 0, battleItem: 0, accessory: 0 });
     for (const g of ['unlock-gear', 'unlock-battle-item', 'unlock-accessory'] as const) expect(guidePending(m.help, g)).toBe(false);
   });

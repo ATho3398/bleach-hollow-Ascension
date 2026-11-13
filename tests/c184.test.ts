@@ -10,6 +10,10 @@ import { dominantElement, evolutionCandidates, judgeElementCounts, tier3Element 
 import { newEvolution } from '../src/engine/evolution';
 import { fillDefaultTraits, newTestSave, setTraitSlots } from '../src/engine/testMode';
 import { MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, migrateSave, newSaveData } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const NORMAL_SKILLS = TRAITS.filter((t) => t.kind === 'skill' && t.element === NORMAL_ELEMENT).map((t) => t.id);
@@ -132,7 +136,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([86, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([87, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');

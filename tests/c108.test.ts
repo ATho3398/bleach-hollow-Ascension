@@ -42,12 +42,12 @@ describe('C.108 흡수 4갈래 (GDD 52 표)', () => {
     expect(absorbRisk(30)).toBeCloseTo(base);
     expect(absorbRisk(30, 'trait')).toBeCloseTo(base * 0.7);
     expect(absorbRisk(30, 'stat')).toBeCloseTo(base * 0.5);
-    const offer = { ev: { atk: 2, spd: 1 } };
-    expect(absorbEvOf(offer, 'both', 1)).toEqual({ atk: 2, spd: 1 });
+    const offer = { ev: { atk: 2, aspd: 1 } };
+    expect(absorbEvOf(offer, 'both', 1)).toEqual({ atk: 2, aspd: 1 });
     expect(absorbEvOf(offer, 'trait', 1)).toEqual({});
-    expect(absorbEvOf(offer, 'stat', 1)).toEqual({ atk: 4, spd: 2 });
+    expect(absorbEvOf(offer, 'stat', 1)).toEqual({ atk: 4, aspd: 2 });
     // 난이도 보상 배율은 갈래 배율 뒤에 곱한다 (★3 = ×1.5)
-    expect(absorbEvOf(offer, 'stat', 3)).toEqual({ atk: 6, spd: 3 });
+    expect(absorbEvOf(offer, 'stat', 3)).toEqual({ atk: 6, aspd: 3 });
   });
 
   it('둘 다: 특성 장착 + 속성 카운트 + 노력치 ×1 + 리스크 그대로 + 배부름 그대로, 기록은 mode 없음(= both)', () => {
@@ -122,13 +122,13 @@ describe('C.108 노력치 상한·수련 보상', () => {
     });
     const e = newEvolution();
     expect(addEv(e, { atk: 99 })).toEqual({ atk: 67 });
-    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 29 });
+    expect(addEv(e, { hp: 99, aspd: 99 })).toEqual({ hp: 29 });
     expect(STAT_IDS.reduce((a, s) => a + e.ev[s], 0)).toBe(96);
   });
   it('수련 4종 노력치 +4~5', () => {
     const G = BALANCE.provisional.training.games;
     expect(G.duel!.ev).toEqual({ spr: 4 });
-    expect(G.dodge!.ev).toEqual({ spd: 5 });
+    expect(G.dodge!.ev).toEqual({ aspd: 5 });
     expect(G.clash!.ev).toEqual({ atk: 5 });
     expect(G.chain!.ev).toEqual({ hp: 5 });
   });

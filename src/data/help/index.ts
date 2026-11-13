@@ -139,6 +139,10 @@ export function helpVars(f: FactionConfig): Record<string, string> {
   vars.playerMaxHp = String(COMBAT.playerMaxHp);
   vars.playerHpScale = String(COMBAT.playerHpScale);
   vars.playerAttackSeconds = String(COMBAT.playerAttackSeconds);
+  // 속도 곡선·상한 (GDD v6.055 8절, C.446)
+  vars.speedExponent = String(COMBAT.speedExponent);
+  vars.attackSecondsMin = String(COMBAT.attackSecondsMin);
+  vars.spawnSecondsMin = String(COMBAT.spawnSecondsMin);
   vars.critChancePct = String(Math.round(COMBAT.critChance * 100));
   vars.critChanceMaxPct = String(Math.round(COMBAT.critChanceMax * 100));
   vars.critMultiplier = String(COMBAT.critMultiplier);

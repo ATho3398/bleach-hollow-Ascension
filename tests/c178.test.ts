@@ -6,6 +6,10 @@ import { FX_SETTINGS_KEY, loadCommonFxSettings, loadFxSettings, parseFxSettings,
 import { bgmBarOf, defaultBgmSettings, withBgmBar, withSlotBgm } from '../src/ui/bgm';
 import { KEY_HINTS_KEY, loadCommonKeyHints, loadKeyHints } from '../src/ui/keyHints';
 import { migrateSave, newSaveData, sanitizeSlotSettings, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 function store(init: Record<string, string> = {}) {
@@ -105,7 +109,7 @@ describe('설정 화면 (103장 1·2·4)', () => {
 
 describe('세이브 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 47, 새 세이브 settings = null, 저장·불러오기로 남고 깨진 값은 버린다', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([86, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([87, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181
     const s = newSaveData('hollow');
     expect(s.settings).toBeNull();
     s.settings = { shake: false, sfxVolume: 30 };

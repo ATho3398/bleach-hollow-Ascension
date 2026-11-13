@@ -8,7 +8,7 @@ import { GLOSSARY } from '../src/data/help';
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 describe('165장 2 능력치 ⓘ 문구', () => {
-  it('사신: 사용자 말투 그대로 11줄', () => {
+  it('사신: 사용자 말투 그대로 12줄(C.446 능력치 7종)', () => {
     const sh = FACTIONS.find((f) => f.id === 'shinigami')!;
     expect(statInfoLines(sh, { basic: '50%', block: '50%' })).toEqual([
       '체력 = 최대 체력',
@@ -16,7 +16,8 @@ describe('165장 2 능력치 ⓘ 문구', () => {
       '지능 = 블록 공격 피해 관련',
       '방어 = 받는 물리 피해 배율 — 적 힘 ÷ 내 방어. ×1.00 = 지금 단계 권장 적 기준, 두 배면 ×0.50', // GDD 245장 4
       '정신력 = 받는 특수 피해 배율 — 적 지능 ÷ 내 정신력. ×1.00 = 지금 단계 권장 적 기준, 두 배면 ×0.50',
-      '속도 = 일반 공격 간격 — 1.2초에 1번 = 1.2초마다 한 대',
+      '공격속도 = 일반 공격 간격 — 0.78초에 1번 = 0.78초마다 한 대, 가장 빨라도 0.3초에 1번',
+      '블록속도 = 블록 생성 간격 — 2.54초에 1개 = 2.54초마다 블록 하나, 가장 빨라도 1초에 1개',
       '일반 공격 치명 = 일반 공격이 치명타로 터질 확률 (최대 50%)',
       '블록 치명 = 블록 공격이 치명타로 터질 확률 (최대 50%)',
       '치명타 피해 = 치명타가 터지면 들어가는 피해 배율',
@@ -28,7 +29,7 @@ describe('165장 2 능력치 ⓘ 문구', () => {
     for (const f of FACTIONS) {
       const t = statInfoLines(f, { basic: '50%', block: '50%' }).join('\n');
       expect(t).not.toMatch(/기본 \d|맞선다|따라간다|콤보|기본 공격 블록/);
-      expect(t.split('\n')).toHaveLength(11);
+      expect(t.split('\n')).toHaveLength(12);
     }
   });
   it('상태 화면 ⓘ = statInfoLines 목록 하나(머리 줄 없음), 종족 분기 없음', () => {

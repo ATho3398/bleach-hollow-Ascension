@@ -11,7 +11,7 @@ describe('C.115 초반 노력치 상한 (GDD 59 → 182장 3 → 202장 → 207�
   it('상한 = [96, 204, 324, 472] (GDD 207장), 단계마다 오른다', () => {
     expect(SX.evCapTotal).toEqual([96, 204, 324, 472]); // GDD 207장 (C.342): 각 단계 상한까지 '둘 다' 약 30번·'스탯만' 약 16번. 202장 [56, 108, 168, 240] = 15·8번. 옛 [36, 44, 70, 88] = C.280 (182장 3)
     SX.evCapTotal.forEach((cap, i) => {
-      const ratio = cap / SX.tierTotals[i]!;
+      const ratio = cap / ((SX.tierTotals[i]! * 6) / 7); // C.446: 비율은 옛 6종 합계 기준(합계 × 7/6 이 되며 기준 능력치는 그대로)
       // 207장: 단계 합계 대비 약 32 / 54 / 69 / 81% (흡수 횟수 기준으로 잡아 비율은 결과값. 202장은 19 / 29 / 36 / 41%)
       expect(ratio).toBeGreaterThan(0.3);
       expect(ratio).toBeLessThan(0.82);
@@ -29,16 +29,16 @@ describe('C.115 초반 노력치 상한 (GDD 59 → 182장 3 → 202장 → 207�
   it('1단계 새 몸: 한 능력치 67 에서 멈추고 합계 96 에서 멈춘다', () => {
     const e = newEvolution();
     expect(addEv(e, { atk: 99 })).toEqual({ atk: 67 });
-    expect(addEv(e, { hp: 99, spd: 99 })).toEqual({ hp: 29 });
-    expect(addEv(e, { spd: 1 })).toEqual({});
+    expect(addEv(e, { hp: 99, aspd: 99 })).toEqual({ hp: 29 });
+    expect(addEv(e, { aspd: 1 })).toEqual({});
     expect(evTotal(e.ev)).toBe(96);
   });
   it('2단계: 합계 204 — 1단계에서 채운 96 위에 108 만 더 들어간다', () => {
     const e = newEvolution();
     addEv(e, { atk: 67, hp: 29 });
     e.tierIndex = 1;
-    expect(addEv(e, { spd: 99 })).toEqual({ spd: 99 });
-    expect(addEv(e, { spd: 99 })).toEqual({ spd: 9 });
+    expect(addEv(e, { aspd: 99 })).toEqual({ aspd: 99 });
+    expect(addEv(e, { aspd: 99 })).toEqual({ aspd: 9 });
     expect(evTotal(e.ev)).toBe(204);
     e.tierIndex = 2; // 3단계 324 (능력치 1개 226)
     expect(addEv(e, { spr: 99 })).toEqual({ spr: 99 });
@@ -50,9 +50,9 @@ describe('C.115 초반 노력치 상한 (GDD 59 → 182장 3 → 202장 → 207�
     const e = newEvolution();
     e.ev.atk = 50;
     e.ev.hp = 50;
-    e.ev.spd = 1;
+    e.ev.aspd = 1;
     expect(evTotal(e.ev)).toBe(101); // 1단계 상한 96 넘김
-    expect(addEv(e, { atk: 5, spd: 5, def: 5 })).toEqual({});
+    expect(addEv(e, { atk: 5, aspd: 5, def: 5 })).toEqual({});
     const base = getFaction('hollow').baseStats;
     const cur = currentStats(e, 'hollow');
     expect(cur.atk).toBe(base.atk + 50);

@@ -102,7 +102,7 @@ describe('수련 상태 (GDD 22-4·22-5)', () => {
     const cases: [string, number, Record<string, number>, { condition: number; hunger: number; risk: number }][] = [
       // C.108 (GDD 52): 노력치 +2~3 → +4~5
       ['duel', 5, { spr: 4 }, { condition: -10, hunger: 0, risk: 5 }],
-      ['dodge', 3, { spd: 5 }, { condition: -15, hunger: 0, risk: 0 }],
+      ['dodge', 3, { aspd: 5 }, { condition: -15, hunger: 0, risk: 0 }],
       ['clash', 4, { atk: 5 }, { condition: -5, hunger: 15, risk: 0 }],
       ['chain', 3, { hp: 5 }, { condition: 0, hunger: -20, risk: 10 }],
     ];

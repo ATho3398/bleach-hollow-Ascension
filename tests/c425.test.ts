@@ -8,6 +8,10 @@ import { checkTrackOpen, developAll, developGate, fusionGate, developHogyoku, ho
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../src/data/story';
 import { newStoryProgress } from '../src/game';
 import { totalEffectText, tracksInFactionOrder } from '../src/ui/hogyokuView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const HX = BALANCE.provisional.hogyoku;
@@ -70,7 +74,7 @@ describe('C.425 붕옥 재료별 강화 트랙 (GDD v6.014 12-3·12-4)', () => {
   });
 
   it('옛 세이브 형식 79 → 80: n단계 → 세 트랙 n×5강, 오른 보너스 보존', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     const raw = JSON.parse(JSON.stringify(newSaveData('hollow', 1))) as Record<string, unknown> & { meta: { format: number } };
     raw.meta.format = 79;
     raw.hogyoku = { tabOpen: true, tabNotice: false, appearedAt: 0, level: 5, developed: 15, resonance: true, resonatedAt: 0 }; // 합체 2번 뒤 5단계 (옛 +15%)

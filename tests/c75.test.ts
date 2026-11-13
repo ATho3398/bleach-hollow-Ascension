@@ -65,7 +65,7 @@ describe('버전·밸런스 (C.75)', () => {
   });
   it('종족값 합계 간격이 단계당 15% 이상 벌어졌다 (32-1 3번, 옛 +10%)', () => {
     for (let i = 1; i < SX.tierTotals.length; i++) expect(SX.tierTotals[i]! / SX.tierTotals[i - 1]!).toBeGreaterThanOrEqual(1.15);
-    expect(SX.tierTotals[0]).toBe(300);
+    expect(SX.tierTotals[0]).toBe(350); // C.446 능력치 7종: 옛 300 × 7/6 (기준 능력치 50 그대로)
   });
 });
 
@@ -92,7 +92,8 @@ describe('32-1 1번: 내 능력치는 절대값 (세계 기준 = 1단계 기준 
     expect(t1.hp).toBeCloseTo(base);
     expect(t5.hp).toBeCloseTo(base * (t5.st.hp / WORLD));
     expect(t5.hp).toBeGreaterThan(base * 1.5);
-    expect(t5.secs).toBeCloseTo(BALANCE.provisional.combat.playerAttackSeconds * (WORLD / t5.st.spd));
+    // C.446 (GDD v6.055 8절 속도 곡선): 기본 × (50 ÷ 공격속도)^0.35, 0.01초 반올림
+    expect(t5.secs).toBeCloseTo(Math.round(BALANCE.provisional.combat.playerAttackSeconds * Math.pow(WORLD / t5.st.aspd, BALANCE.provisional.combat.speedExponent) * 100) / 100, 9);
     expect(t5.secs).toBeLessThan(t1.secs);
   });
 });

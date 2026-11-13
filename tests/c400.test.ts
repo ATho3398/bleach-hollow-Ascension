@@ -10,6 +10,10 @@ import { inventoryOf } from '../src/inventory';
 import { buyShopItem, goldRows } from '../src/shop';
 import { sellRows } from '../src/sell';
 import { departSortie, setSortieSlot } from '../src/sortie';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const SX = BALANCE.provisional.sortie;
@@ -75,7 +79,7 @@ describe('241-D 5 상점·가방·팔기·세이브', () => {
     expect(sellRows(s, H).find((e) => e.key === 'sortie-courage')).toMatchObject({ count: 1, group: 'battle' });
   });
   it('세이브 형식 74: 73 → 74 = 빈 칸 2개, 저장·불러오기로 칸·개수가 남는다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', 0);
     s.shared.items['sortie-luck'] = 3;
     s.shared.sortie = ['sortie-luck', null];

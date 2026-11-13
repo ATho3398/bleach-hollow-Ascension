@@ -7,6 +7,10 @@ import { TRAITS, retiredRareElement, traitName } from '../src/data/traits';
 import { convertRetiredRareTraits, newBuild } from '../src/engine/absorb';
 import { createExpedition, restoreExpedition, serializeExpedition } from '../src/engine/expedition';
 import { loadSave, migrateSave, newSaveData, sanitizeDeck, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, writeSave, type SaveData } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 describe('136장 1: 희귀 특성 삭제', () => {
   it('희귀 특성·희귀 개체 데이터가 없다', () => {
@@ -49,7 +53,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {

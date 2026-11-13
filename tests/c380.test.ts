@@ -12,7 +12,7 @@ import type { FormDef, Stats } from '../src/data/schema';
 
 const hollow = getFaction('hollow');
 const fb = hollow.room?.characterArt ?? '';
-const ev = (o: Partial<Stats>): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, def: 0, ...o });
+const ev = (o: Partial<Stats>): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, aspd: 0, bspd: 0, def: 0, ...o });
 const t3 = (forms as FormDef[]).find((f) => f.tier === 3)!;
 const E = enemies as { id: string; class: string; grade?: string; category?: string }[];
 

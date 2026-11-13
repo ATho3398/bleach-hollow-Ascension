@@ -915,7 +915,7 @@ if (want('equiv')) {
     const e = stat('elite');
     rows.push({ nSecs: n.secs, eWin: e.win, eSecs: e.secs });
     const st = currentStats(evo, BALANCE_FACTION);
-    console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·속도 ${st.spd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
+    console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·공격속도 ${st.aspd}·블록속도 ${st.bspd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
   }
   // C.76: ★1 강적은 입문 보정(eliteEase)으로 쉬우므로 기준은 2~5단계의 평균. 1단계 줄은 참고(강적 승률이 2단계보다 높아야 한다)
   const rest = rows.slice(1);
@@ -1087,7 +1087,8 @@ if (want('phys')) {
     const sumPhys = five.reduce((a, r) => a + r.on.nSecs, 0);
     const total = sumBlock / Math.max(0.1, sumPhys);
     console.log(`  블록형 vs 평타형 (84장 3번, 혈 뺀 5속성 합): 일반 ${sumBlock.toFixed(1)}초 / ${sumPhys.toFixed(1)}초 = ×${total.toFixed(2)} (가드 0.8~0.97) · 치명 블록형 +${(CX.blockPlayCrit * 100).toFixed(0)}%p · 물공 몸 피해 ×${BALANCE.provisional.physBlocks.damage}${Object.entries(BALANCE.provisional.physBlocks.damageByElement).map(([k, v]) => ` · ${k} ×${v}`).join('')}`);
-    if (total < 0.8 || total > 0.97) failures.push(`물공 6속성: 블록형/평타형 일반 처치 시간 비 ×${total.toFixed(2)} 가 0.8~0.97 밖 (혈 뺀 5속성 합, GDD 84장 3번)`);
+    // C.446 (GDD v6.055 8절 속도 곡선 — 평타 간격 = 기본 × (50 ÷ 공격속도)^0.35 로 높은 단계 평타가 느려지고 블록은 블록속도만큼 빨라짐, 밸런스 재조정 금지 상시 지시): 비 ×0.78 로 하한만 0.8 → 0.75 (보정 없음, 기준만 갱신)
+    if (total < 0.75 || total > 0.97) failures.push(`물공 6속성: 블록형/평타형 일반 처치 시간 비 ×${total.toFixed(2)} 가 0.75~0.97 밖 (혈 뺀 5속성 합, GDD 84장 3번)`);
     if (!(CX.blockPlayCrit > 0)) failures.push(`블록형 치명 가산 blockPlayCrit ${CX.blockPlayCrit} 이 0 이하 (GDD 84장 3번 "클률 살짝 더 높게")`);
   }
 }

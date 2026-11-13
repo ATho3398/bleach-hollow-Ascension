@@ -176,7 +176,7 @@ export function combatAbilitiesOf(stat: EvolutionState): FormAbilities {
 }
 
 export function zeroStats(): Stats {
-  return { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 };
+  return { hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
 }
 
 export function newEvolution(stageSeed = 0): EvolutionState {
@@ -492,10 +492,12 @@ export function comboRulesOf(e: Pick<EvolutionState, 'tierIndex'>): ComboRule[] 
 /** 고유 특성 효과를 전투 파라미터에 (BALANCE.provisional.abilities) */
 function applyAbility(params: Partial<CombatParams>, ability: StatId | null): void {
   if (!ability) return;
-  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed', number>>;
+  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockDamage' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed', number>>;
   if (a.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * a.maxHp;
   if (a.blockSpawn) params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) * a.blockSpawn;
   if (a.attackSpeed) params.attackSpeedMultiplier = (params.attackSpeedMultiplier ?? 1) * a.attackSpeed;
+  // 지능 고유 특성 (GDD v6.055 8절, C.446): 블록 피해 배율 — 실패형 줄기 배율과 곱한다
+  if (a.blockDamage) params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * a.blockDamage;
   const power = { physical: 1, special: 1, mixed: 1, ...params.categoryPower };
   const taken = { physical: 1, special: 1, mixed: 1, ...params.categoryTaken };
   if (a.physicalPower) power.physical *= a.physicalPower;
@@ -549,7 +551,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   params.physBlockSpawnSeconds = physSpawnSecondsFor(params.physBlock?.element ?? null);
   params.elementDamage = elementDamageOf(e);
   // 실패형 줄기 (GDD 49-8 1번): 블록 관련 피해 배율
-  params.blockDamageMultiplier = isFailLine(e) ? EV.failLine.blockDamage : 1;
+  params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * (isFailLine(e) ? EV.failLine.blockDamage : 1);
   // 공허 블록 피해 (GDD 101장 3번): 히든 진화체(진화체 데이터 hidden) 몸이면 큰 피해, 아니면 기본 공격 1회분
   const CB = BALANCE.provisional.combat;
   params.voidPowerInAttacks = form?.hidden ? CB.voidPowerHiddenInAttacks : CB.voidPowerInAttacks;

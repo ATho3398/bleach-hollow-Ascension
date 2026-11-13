@@ -17,6 +17,10 @@ import {
 } from '../src/game';
 import { battleLabels, skillBlockLabel } from '../src/ui/labels';
 import { clearStory } from './helpers/storyClear';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -43,7 +47,7 @@ function developAll(s: SaveData): void {
 function ready(a = 't4:fire:physical', b = 't4:water:special'): SaveData {
   const s = newSaveData('hollow', 1000);
   toFinal(s, a);
-  s.evolution.ev = { hp: 40, atk: 10, int: 0, def: 5, spr: 0, spd: 0 };
+  s.evolution.ev = { hp: 40, atk: 10, int: 0, def: 5, spr: 0, aspd: 0, bspd: 0 };
   s.build.owned = ['t-fire-a', 't-water-b'];
   s.build.slots = ['t-fire-a', null, null];
   s.build.enhance = { fire: 30 };
@@ -52,7 +56,7 @@ function ready(a = 't4:fire:physical', b = 't4:water:special'): SaveData {
   checkTrackOpen(s, 2000);
   const o = s.otherTracks[0]!;
   toFinal(o, b);
-  o.evolution.ev = { hp: 5, atk: 30, int: 12, def: 0, spr: 0, spd: 8 };
+  o.evolution.ev = { hp: 5, atk: 30, int: 12, def: 0, spr: 0, aspd: 8, bspd: 0 };
   o.build.owned = ['t-water-a', 't-water-b'];
   o.build.slots = ['t-water-a', 't-water-b', null];
   o.build.enhance = { water: 50 };
@@ -174,7 +178,7 @@ describe('초월 특성 (GDD 12-4 v6.039)', () => {
   });
 
   it('형식 84: 83 → 84 = 이미 있는 초월자 트랙에 초월 특성 칸 (쉬는 트랙 포함), 캐릭터 트랙엔 없음', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     const s = ready();
     performFusion(s, 9000);
     testGrantTranscendent(s, 'zero-sage', 9500); // 두 번째 초월자 트랙 (지금 트랙이 됨)
@@ -182,7 +186,7 @@ describe('초월 특성 (GDD 12-4 v6.039)', () => {
     raw.meta.format = 83;
     for (const t of allTracks(raw)) delete t.evolution.transcendentTraits;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(86);
+    expect(m.meta.format).toBe(87);
     const tr = allTracks(m).filter((t) => t.transcendentId);
     expect(tr).toHaveLength(2);
     for (const t of tr) expect(t.evolution.transcendentTraits).toEqual([t.transcendentId]);

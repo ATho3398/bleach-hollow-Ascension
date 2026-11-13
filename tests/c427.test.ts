@@ -11,6 +11,10 @@ import { playCombatBot } from '../src/engine/combat/bot';
 import { enterSpecial, migrateSave, newSaveData, SAVE_FORMAT_VERSION, settleSpecialRun, specialState } from '../src/game';
 import type { CombatState } from '../src/engine/combat';
 import { enableDragScrollY } from '../src/ui/bha/dragScroll';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const SX = BALANCE.provisional.specialDungeon;
@@ -191,13 +195,13 @@ describe('C.427 이름·탭·세이브', () => {
   });
 
   it('세이브 형식 80 → 81: shared.special 새로·런 로그 specialRuns', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     const raw = JSON.parse(JSON.stringify(newSaveData('hollow', 1))) as Record<string, unknown> & { meta: { format: number }; shared: Record<string, unknown>; runLog: Record<string, unknown> };
     raw.meta.format = 80;
     delete raw.shared.special;
     delete raw.runLog.specialRuns;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(86);
+    expect(m.meta.format).toBe(87);
     expect(m.shared.special.used).toEqual({});
     expect(m.runLog.specialRuns).toEqual([]);
   });

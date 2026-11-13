@@ -8,6 +8,10 @@ import { DETACH_TRAITS } from '../src/engine/traitShop';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { foodSellPrice, itemSellPrice, sellEntry, sellNeedsConfirm, sellRows } from '../src/sell';
 import { shopBuyPrice } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const H = getFaction('hollow');
@@ -123,7 +127,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
 
 describe('세이브 형식 71', () => {
   it('70 → 71: 두 트랙 런 로그에 빈 sales', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.runLog.sales;
     s.meta.format = 70;
@@ -132,7 +136,7 @@ describe('세이브 형식 71', () => {
     delete s.runLog.sales;
     s.meta.format = 70;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(86);
+    expect(m.meta.format).toBe(87);
     expect(m.runLog.sales).toEqual([]);
   });
 });

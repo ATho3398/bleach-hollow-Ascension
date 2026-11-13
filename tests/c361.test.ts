@@ -7,6 +7,10 @@ import { advance, createExpedition, finishBattle, startBattle, tutorialAbsorb, t
 import type { CombatState } from '../src/engine/combat';
 import { migrateEvFree, migrateSave, newSaveData, nextRunId, performRevive, performRebirth, recordExpedition, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, type SaveData } from '../src/game';
 import { evGains } from '../src/ui/bha/evChips';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const TUT = BALANCE.provisional.tutorialRun;
 const all = (n: number) => Object.fromEntries(STAT_IDS.map((k) => [k, n]));
@@ -66,7 +70,7 @@ describe('217장 2: 튜토리얼 노력치는 상한 밖', () => {
     addEvFree(e, all(3));
     expect(cloneEvolution(e).evFree).toEqual(all(3));
     const s = newSaveData('hollow', 5);
-    s.evolution.ev = { hp: 13, atk: 3, int: 3, def: 3, spr: 3, spd: 3 };
+    s.evolution.ev = { hp: 13, atk: 3, int: 3, def: 3, spr: 3, aspd: 3, bspd: 3 };
     s.evolution.evFree = all(3) as SaveData['evolution']['ev'];
     s.nest.dead = true;
     s.nest.collapsed = true;
@@ -88,7 +92,7 @@ describe('217장 2: 튜토리얼 노력치는 상한 밖', () => {
 
 describe('세이브 형식 67 (217장 2)', () => {
   it('66 → 67: 튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로 (값 그대로)', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬
     expect(typeof SAVE_MIGRATIONS[66]).toBe('function');
     const s = newSaveData('hollow', 7);
     playTutorial(s);
@@ -97,7 +101,7 @@ describe('세이브 형식 67 (217장 2)', () => {
     s.meta.format = 66;
     const m = migrateSave(JSON.parse(JSON.stringify(s)));
     expect(m).not.toBeNull();
-    expect(m!.meta.format).toBe(86);
+    expect(m!.meta.format).toBe(87);
     expect(m!.evolution.evFree).toEqual(all(TUT.statEv));
     expect(m!.evolution.ev.atk).toBe(TUT.statEv + 10);
   });
@@ -124,9 +128,9 @@ describe('세이브 형식 67 (217장 2)', () => {
 
 describe('217장 3: 결과 노력치 칩', () => {
   it('오른 것만 칩(반올림 정수), 막혔으면 가득 · 하나도 못 오른 막힘은 따로', () => {
-    const r = evGains({ hp: 0, atk: 2, int: 5, def: 0, spr: 0, spd: 0 }, { hp: 3, atk: 2, int: 7.4, def: 0.2, spr: 0, spd: 0 }, { int: 1, spd: 2 });
+    const r = evGains({ hp: 0, atk: 2, int: 5, def: 0, spr: 0, aspd: 0, bspd: 0 }, { hp: 3, atk: 2, int: 7.4, def: 0.2, spr: 0, aspd: 0, bspd: 0 }, { int: 1, aspd: 2 });
     expect(r.gains).toEqual([{ stat: 'hp', amount: 3, full: false }, { stat: 'int', amount: 2, full: true }]);
-    expect(r.fullOnly).toEqual(['spd']);
+    expect(r.fullOnly).toEqual(['aspd']);
     expect(evGains(undefined, all(3) as SaveData['evolution']['ev'])).toEqual({ gains: [], fullOnly: [] });
   });
 

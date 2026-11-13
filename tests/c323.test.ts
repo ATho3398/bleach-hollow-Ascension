@@ -8,6 +8,10 @@ import {
 import { loadSave, newSaveData, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
 import { parseImport, serializeSave } from '../src/saveBackup';
 import { readBackupMeta, slotBackupKey, slotKey, touchSlot, writeSlotSave } from '../src/saveSlots';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -481,6 +485,6 @@ describe('C.323 구조·문구·배포', () => {
   });
   it('종족 분기 하드코딩 없음 · 세이브 형식 그대로', () => {
     for (const f of ['src/cloudSave.ts', 'src/cloudFirebase.ts', 'src/ui/cloudView.ts']) expect(src(f)).not.toMatch(/=== 'hollow'|=== 'shinigami'/);
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326
   });
 });

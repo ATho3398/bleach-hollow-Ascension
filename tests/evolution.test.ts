@@ -251,7 +251,7 @@ describe('노력치 (GDD 20-4)', () => {
     const cap = evCaps(0);
     for (let i = 0; i < 50; i++) recordEvolutionAbsorb(e, 'fire', { atk: 2 });
     expect(e.ev.atk).toBe(cap.perStat);
-    for (let i = 0; i < 50; i++) recordEvolutionAbsorb(e, 'fire', { def: 2, spd: 2 });
+    for (let i = 0; i < 50; i++) recordEvolutionAbsorb(e, 'fire', { def: 2, aspd: 2 });
     expect(evTotal(e.ev)).toBe(cap.total);
     expect(addEv(e, { hp: 5 })).toEqual({});
     expect(e.absorbs).toBe(100);
@@ -281,7 +281,7 @@ describe('노력치 (GDD 20-4)', () => {
   });
   it('전투 파라미터: 기준 능력치·내 능력치·속성·고유 특성 효과가 실린다', () => {
     const e = atTier(1);
-    e.ability = 'int';
+    e.ability = 'bspd';
     recordEvolutionAbsorb(e, 'fire', { atk: 2 });
     const p: Partial<CombatParams> = {};
     applyEvolutionToParams(p, e, 'hollow');
@@ -290,7 +290,11 @@ describe('노력치 (GDD 20-4)', () => {
     expect(p.refStat).toBeUndefined();
     expect(p.playerStats!.atk).toBe(getForm('t2:base').stats.atk + 2);
     expect(p.playerElements).toEqual(['normal']);
-    expect(p.blockSpawnMultiplier).toBeCloseTo(BALANCE.provisional.abilities.int.blockSpawn);
+    expect(p.blockSpawnMultiplier).toBeCloseTo(BALANCE.provisional.abilities.bspd.blockSpawn);
+    // C.446: 지능 고유 특성 = 블록 피해 배율
+    const r: Partial<CombatParams> = {};
+    applyEvolutionToParams(r, { ...e, ability: 'int' }, 'hollow');
+    expect(r.blockDamageMultiplier).toBeCloseTo(BALANCE.provisional.abilities.int.blockDamage);
     const q: Partial<CombatParams> = {};
     applyEvolutionToParams(q, { ...e, ability: 'def' }, 'hollow');
     expect(q.categoryTaken!.physical).toBeCloseTo(BALANCE.provisional.abilities.def.physicalTaken);

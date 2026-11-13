@@ -22,13 +22,13 @@ const evOf = (o: Partial<Record<StatId, number>>) => ({ ...zeroStats(), ...o });
 
 describe('C.109 아쥬커스 외형 = 노력치 1위 능력치 (GDD 53)', () => {
   it('능력치 6종이 모두 배정되고(1위 하나일 때) 각자 정해진 외형', () => {
-    const want: Record<StatId, string> = { atk: 'carapace', int: 'stag', hp: 'rhino', spr: 'wyrm', spd: 'panther', def: 'scorpion' };
+    const want: Record<StatId, string> = { atk: 'carapace', int: 'stag', hp: 'rhino', spr: 'wyrm', aspd: 'panther', bspd: 'stag', def: 'scorpion' };
     for (const s of STAT_IDS) expect(pickTierLook(hollow, 3, evOf({ [s]: 5 }), t3), s).toBe(want[s]);
   });
   it('속도+지능 쌍(옛 새형)은 표에서 빠졌다 — 1위 능력치대로 (C.392, GDD 240장)', () => {
-    expect(pickTierLook(hollow, 3, evOf({ spd: 6, int: 5 }), t3)).toBe('panther');
-    expect(pickTierLook(hollow, 3, evOf({ int: 6, spd: 5 }), t3)).toBe('stag');
-    expect(pickTierLook(hollow, 3, evOf({ spd: 6, int: 2, atk: 4 }), t3)).toBe('panther');
+    expect(pickTierLook(hollow, 3, evOf({ aspd: 6, int: 5 }), t3)).toBe('panther');
+    expect(pickTierLook(hollow, 3, evOf({ int: 6, aspd: 5 }), t3)).toBe('stag');
+    expect(pickTierLook(hollow, 3, evOf({ aspd: 6, int: 2, atk: 4 }), t3)).toBe('panther');
   });
   it('동률(모두 0 포함)은 기존 순위 규칙(진화체 종족값 → 능력치 순)을 따른다', () => {
     const l = pickTierLook(hollow, 3, zeroStats(), t3);
@@ -81,7 +81,7 @@ describe('C.109 진화 때 고정 · 시작 외형 덮어쓰기 · 스킨 선택
     // 이 진화는 돌봄 조건이 안 맞아 히든 진화체(h3:)로 간다 → 능력치와 상관없이 부유형 (C.392, GDD 240장 3)
     expect(s.evolution.formId?.startsWith('h3:')).toBe(true);
     expect(s.evolution.look).toBe('wraith');
-    s.evolution.ev = evOf({ spd: 40 });
+    s.evolution.ev = evOf({ aspd: 40 });
     expect(s.evolution.look).toBe('wraith');
     expect(artSkinOf(s)).toBe('wraith');
   });
@@ -115,7 +115,7 @@ describe('C.109 진화 때 고정 · 시작 외형 덮어쓰기 · 스킨 선택
   it('테스트 칸: 진화체·능력치를 고르면 외형이 같은 규칙으로 다시 정해진다', () => {
     const s = newSaveData('hollow', 1);
     expect(setForm(s, 't3:normal')).toBe(true);
-    setCustomStats(s, { spd: 200, int: 150 });
+    setCustomStats(s, { aspd: 200, int: 150 });
     expect(s.evolution.look).toBe('panther'); // 속도 1위 = 속도형(옛 새형 쌍은 빠짐)
     setCustomStats(s, { hp: 300 });
     expect(s.evolution.look).toBe('rhino');
@@ -129,7 +129,7 @@ describe('C.109 세이브 형식 33 마이그레이션', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(33);
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
     old.meta.format = 32;
-    Object.assign(old.evolution, { tierIndex: 2, formId: 't3:normal', formHistory: ['t2:base', 't3:normal'], ev: evOf({ int: 6, spd: 5 }) });
+    Object.assign(old.evolution, { tierIndex: 2, formId: 't3:normal', formHistory: ['t2:base', 't3:normal'], ev: evOf({ int: 6, aspd: 5 }) });
     old.formDex = ['t2:base', 't3:normal'];
     delete old.evolution.look;
     const s = migrateSave(old)!;

@@ -11,6 +11,10 @@ import { lapGainLine } from '../src/ui/bha/lapEnd';
 import { absorbWord, tileHint, variantModsText } from '../src/ui/labels';
 import { getTile } from '../src/data/tiles';
 import { getFaction } from '../src/data/factions';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const DECK = ['prey-nest-a', 'prey-nest-a', 'elite-den-a', 'env-fog', 'rest-a', 'prey-nest-b', 'env-ruin', 'elite-den-b'];
 const T0 = 1_700_000_000_000;
@@ -110,7 +114,7 @@ describe('222장 6: 원정 전투 도중 다시 켜면 그 전투를 들어가�
   });
 
   it('세이브 형식 69 · 68 → 69 마이그레이션 = 빈 battleRestarts', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', T0) as unknown as Record<string, unknown>;
     delete (s.runLog as Record<string, unknown>).battleRestarts;
     s.formatVersion = 68;

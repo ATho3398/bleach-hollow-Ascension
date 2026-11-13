@@ -15,6 +15,10 @@ import {
   switchTrack, tickCare, tickIdle, trackIdOf, trackRulesOf, writeSave, type SaveData, type TrackKey,
 } from '../src/game';
 import { clearStory } from './helpers/storyClear';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const other = (fid: string) => FACTIONS.find((f) => f.id !== fid)!.id;
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -44,7 +48,7 @@ function memStorage(): { getItem(k: string): string | null; setItem(k: string, v
 /** 두 캐릭터 모두 4단계·1위, 공명·개발 100% — 능력치·블록·특성·속성 강화가 서로 다른 세이브 */
 function fusionReady(): SaveData {
   const s = newSaveData('hollow', 1000);
-  toFinal(s, 't4:fire:physical', { hp: 40, atk: 10, int: 0, def: 5, spr: 0, spd: 0 });
+  toFinal(s, 't4:fire:physical', { hp: 40, atk: 10, int: 0, def: 5, spr: 0, aspd: 0, bspd: 0 });
   s.build.owned = ['t-fire-a', 't-water-b'];
   s.build.slots = ['t-fire-a', null, null];
   s.build.enhance = { fire: 30, water: 2 };
@@ -55,7 +59,7 @@ function fusionReady(): SaveData {
   clearStory(s);
   checkTrackOpen(s, 2000);
   const o = s.otherTracks[0]!;
-  toFinal(o, 't4:water:special', { hp: 5, atk: 30, int: 12, def: 0, spr: 0, spd: 8 });
+  toFinal(o, 't4:water:special', { hp: 5, atk: 30, int: 12, def: 0, spr: 0, aspd: 8, bspd: 0 });
   o.build.owned = ['t-water-a', 't-water-b'];
   o.build.slots = ['t-water-a', 't-water-b', null];
   o.build.enhance = { fire: 10, water: 50 };
@@ -106,7 +110,7 @@ describe('합체 → 초월자 트랙 (GDD 12-4 v6.028)', () => {
     expect(s.factionId).toBe('hollow'); // 바탕 = 단계가 같으면 지금 캐릭터
     expect(s.evolution.formId).toBe('t4:fire:physical');
     expect(s.evolution.tierIndex).toBe(3);
-    expect(s.evolution.ev).toEqual({ hp: 40, atk: 30, int: 12, def: 5, spr: 0, spd: 8 });
+    expect(s.evolution.ev).toEqual({ hp: 40, atk: 30, int: 12, def: 5, spr: 0, aspd: 8, bspd: 0 });
     expect(s.build.owned).toEqual(['t-fire-a', 't-water-b', 't-water-a']);
     expect(s.build.slots).toEqual(['t-fire-a', 't-water-a', 't-water-b']);
     expect(s.build.enhance).toEqual({ fire: 30, water: 50 });
@@ -123,7 +127,7 @@ describe('합체 → 초월자 트랙 (GDD 12-4 v6.028)', () => {
     let s = fusionReady();
     for (let i = 0; i < TRANSCENDENTS.length; i++) {
       const [a, b] = TRANSCENDENTS[i]!.combo; // 조합 하나에 초월자 하나 (GDD 12-4 v6.037)
-      for (const [j, t] of characterTracks(s).entries()) { toFinal(t, j === 0 ? `t4:fire:${a}` : `t4:water:${b}`, { hp: 1, atk: 1, int: 1, def: 1, spr: 1, spd: 1 }); makeTop(t); }
+      for (const [j, t] of characterTracks(s).entries()) { toFinal(t, j === 0 ? `t4:fire:${a}` : `t4:water:${b}`, { hp: 1, atk: 1, int: 1, def: 1, spr: 1, aspd: 1, bspd: 1 }); makeTop(t); }
       developAll(s);
       const r = performFusion(s, 10_000 + i);
       expect(r.ok).toBe(true);
@@ -132,7 +136,7 @@ describe('합체 → 초월자 트랙 (GDD 12-4 v6.028)', () => {
     expect(allTracks(s).filter((t) => t.transcendentId)).toHaveLength(TRANSCENDENTS.length);
     expect(new Set(allTracks(s).map(trackIdOf)).size).toBe(TRANSCENDENTS.length + 2);
     expect(characterTracks(s)).toHaveLength(BALANCE.provisional.twoTrack.maxTracks);
-    for (const t of characterTracks(s)) { toFinal(t, 't4:fire:physical', { hp: 1, atk: 1, int: 1, def: 1, spr: 1, spd: 1 }); makeTop(t); }
+    for (const t of characterTracks(s)) { toFinal(t, 't4:fire:physical', { hp: 1, atk: 1, int: 1, def: 1, spr: 1, aspd: 1, bspd: 1 }); makeTop(t); }
     expect(fusionGate(s).missing).toContain('owned');
   });
 });
@@ -147,7 +151,7 @@ describe('초월자 규칙', () => {
     s.evolution.steps = 999;
     expect(canEvolve(s.evolution)).toBe(false);
     const cap = evCaps(MAX_TIER_INDEX);
-    s.evolution.ev = { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 };
+    s.evolution.ev = { hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
     addEv(s.evolution, { hp: 9999 });
     expect(s.evolution.ev.hp).toBe(cap.perStat); // 상한에 닿으면 더 안 오른다
     addEv(s.evolution, { hp: 50 });
@@ -229,7 +233,7 @@ describe('세이브 형식 82 (81 → 82 마이그레이션)', () => {
     const s = newSaveData('hollow', 1);
     clearStory(s);
     checkTrackOpen(s, 2);
-    s.evolution.ev = { hp: 3, atk: 0, int: 0, def: 0, spr: 0, spd: 0 };
+    s.evolution.ev = { hp: 3, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
     s.transcendentDex = [{ id: TRANSCENDENTS[0]!.id, at: 5, fusionIndex: 1 }];
     s.slotLog.fusions = [{ at: 5, index: 1, transcendentId: TRANSCENDENTS[0]!.id, matched: true, soulSpent: 0, jade: 10, characters: [
       { factionId: other('hollow'), tierIndex: 3, formId: 't4:water:special', elements: ['water'], category: 'special', hidden: false, rebirths: 2, rank: 1, runs: 9, elitesDefeated: 1, evTotal: 120 },
@@ -246,7 +250,7 @@ describe('세이브 형식 82 (81 → 82 마이그레이션)', () => {
     expect(tr).toBeDefined();
     expect(tr.factionId).toBe(other('hollow'));
     expect(tr.evolution).toMatchObject({ tierIndex: 3, formId: 't4:water:special', final: true });
-    expect(tr.evolution.ev.hp).toBe(20); // 120 ÷ 6 = 20 (상한 안), 지금 캐릭터 3 보다 높은 쪽
+    expect(tr.evolution.ev.hp).toBe(17); // C.446: 120 ÷ 7 = 17 (옛 ÷ 6 = 20) (상한 안), 지금 캐릭터 3 보다 높은 쪽
     expect(tr.rebirth.count).toBe(2);
     expect(tr.difficulty.unlocked).toBe(MAX_DIFFICULTY);
     expect(tr.runLog.transcendence).toMatchObject({ migrated: true, transcendentId: TRANSCENDENTS[0]!.id, tierIndex: 3 });

@@ -81,14 +81,15 @@ describe('245장 4 능력치 표시', () => {
     const s = newSaveData('hollow', 1);
     const d = statusStatDisplay(s);
     expect(d.hp.value).toBeCloseTo(homeMaxHp(s), 6);
-    expect(d.spd.text).toMatch(/^\d+\.\d초에 1번$/);
+    expect(d.aspd.text).toMatch(/^\d+\.\d\d초에 1번$/); // C.446: 0.01초 표시
     expect(d.def.text).toMatch(/^×\d+\.\d\d$/);
-    const p = { ...defaultCombatParams(), playerStats: { hp: 10, atk: 10, int: 10, def: 20, spr: 5, spd: 10 } };
+    const p = { ...defaultCombatParams(), playerStats: { hp: 10, atk: 10, int: 10, def: 20, spr: 5, aspd: 10, bspd: 10 } };
     const v = statDisplay(p.playerStats, 10, p);
     expect(v.def.text).toBe('×0.50'); // 방어가 기준의 두 배 = 받는 피해 절반
     expect(v.spr.text).toBe('×2.00');
     expect(v.atk.text).toBe('10');
-    expect(v.spd.value).toBeCloseTo(playerAttackSecondsOf(p), 9);
+    expect(v.aspd.value).toBeCloseTo(playerAttackSecondsOf(p), 9);
+    expect(d.bspd.text).toMatch(/^\d+\.\d\d초에 1개$/); // C.446 블록속도 = 블록 생성 간격
   });
 });
 

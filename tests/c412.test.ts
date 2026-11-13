@@ -11,6 +11,10 @@ import { gearName } from '../src/inventory';
 import { goldGate, goldRows } from '../src/shop';
 import { getGoldItem } from '../src/data/shop';
 import { clearStory } from './helpers/storyClear';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 describe('243장 1 붕옥 등장 = 스토리 전부 클리어', () => {
   it('장 하나라도 덜 깼으면 아니다 · 다 깨면 붕옥 탭·등장 컷·두 번째 트랙이 한 번에 (두 종족)', () => {
@@ -47,7 +51,7 @@ describe('243장 1 붕옥 등장 = 스토리 전부 클리어', () => {
     const raw = JSON.parse(JSON.stringify(s)) as SaveData & { meta: { format: number } };
     raw.meta.format = 77;
     delete (raw.hogyoku as Partial<SaveData['hogyoku']>).appearedAt;
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     expect(typeof SAVE_MIGRATIONS[77]).toBe('function');
     const m = migrateSave(raw)!;
     expect(m.hogyoku.tabOpen).toBe(true);

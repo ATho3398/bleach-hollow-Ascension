@@ -56,7 +56,7 @@ describe('91장 장비 데이터 (가칭)', () => {
     expect(Object.keys(w.stats)).toEqual(['int']);
     expect(w.special).toBeNull();
     expect(Object.keys(rollGear({ kind: 'armor', grade: 'rare', star: 1 }, seq([0])).stats).sort()).toEqual(['def', 'hp']);
-    expect(Object.keys(rollGear({ kind: 'shoes', grade: 'rare', star: 1 }, seq([0])).stats)).toEqual(['spd']);
+    expect(Object.keys(rollGear({ kind: 'shoes', grade: 'rare', star: 1 }, seq([0])).stats)).toEqual(['aspd']);
     expect(Object.keys(rollGear({ kind: 'accessory', grade: 'rare', star: 1 }, seq([0])).stats)).toHaveLength(1);
     const two = rollGear({ kind: 'accessory', grade: 'legendary', star: 3 }, seq([0.99, 0]));
     expect(Object.keys(two.stats)).toHaveLength(2);
@@ -71,7 +71,7 @@ describe('91장 장비 데이터 (가칭)', () => {
     expect(gearLineValue('weapon', 'rare', 1, 'atk')).toBe(Math.round(refStatOf(0) * GX.lineFrac.rare!));
     expect(gearLineValue('weapon', 'rare', 5, 'atk')).toBeGreaterThan(gearLineValue('weapon', 'rare', 1, 'atk'));
     expect(gearLineValue('weapon', 'legendary', 3, 'atk')).toBeGreaterThan(gearLineValue('weapon', 'normal', 3, 'atk'));
-    expect(gearLineValue('shoes', 'normal', 9, 'spd')).toBe(gearLineValue('shoes', 'normal', 5, 'spd')); // ★ 상한
+    expect(gearLineValue('shoes', 'normal', 9, 'aspd')).toBe(gearLineValue('shoes', 'normal', 5, 'aspd')); // ★ 상한
   });
 });
 
@@ -118,12 +118,12 @@ describe('91장 강화·장착·판매 (보관함)', () => {
   it('보관함 장비 탭: 낀 것 먼저 · 이름 "등급 칸이름 +n" · 등급·낀 칸 정보', () => {
     const s = newSaveData('hollow', 0);
     const a = grantGear(s.shared.gear, weapon({ grade: 'normal' }), 1)!;
-    const b = grantGear(s.shared.gear, { kind: 'shoes', grade: 'legendary', star: 2, stats: { spd: 9 }, special: { id: 'sp-elite', value: 0.12 } }, 2)!;
+    const b = grantGear(s.shared.gear, { kind: 'shoes', grade: 'legendary', star: 2, stats: { aspd: 9 }, special: { id: 'sp-elite', value: 0.12 } }, 2)!;
     equipGearItem(s, a.uid);
     const rows = inventoryOf(s, H).filter((e) => e.category === 'equipment');
     expect(rows.map((e) => e.id)).toEqual([a.uid, b.uid]);
     expect(rows[0]).toMatchObject({ name: '노멀 무기', action: 'unequip', gear: { grade: 'normal', kind: 'weapon', slot: 'weapon' } });
-    expect(rows[1]).toMatchObject({ name: '전설 신발', action: 'equip', detail: '속도 +9 · 강적·보스에게 피해 +12%' });
+    expect(rows[1]).toMatchObject({ name: '전설 신발', action: 'equip', detail: '공격속도 +9 · 강적·보스에게 피해 +12%' });
   });
 });
 
@@ -140,7 +140,7 @@ describe('91장 전투 효과 (능력치·치명·특수 효과)', () => {
     const carry = carryOfItems([
       { stats: { atk: 10, crit: 0.02 }, plus: 0, special: { id: 'sp-family-a', value: 0.1 } },
       { stats: { hp: 6 }, plus: 1, special: { id: 'sp-elite', value: 0.08 } },
-      { stats: { spd: 4 }, plus: 0, special: { id: 'sp-crit-damage', value: 0.15 } },
+      { stats: { aspd: 4 }, plus: 0, special: { id: 'sp-crit-damage', value: 0.15 } },
       { stats: { spr: 3 }, plus: 0, special: { id: 'sp-shield', value: 0.03 } },
     ]);
     const p = base();
@@ -258,7 +258,7 @@ describe('91장 세이브·참고 줄', () => {
   it('balance:check 참고 줄 = 그 단계 평균 장비(6칸 레어 +2, ★ 권장 — 241-D 2 장신구 3) — 단계가 오를수록 크다', () => {
     const r1 = referenceLoadout(0);
     const r5 = referenceLoadout(4);
-    expect(Object.keys(r1.stats).sort()).toEqual(['atk', 'def', 'hp', 'spd', 'spr']);
+    expect(Object.keys(r1.stats).sort()).toEqual(['aspd', 'atk', 'def', 'hp', 'spr']);
     expect(r5.stats.atk!).toBeGreaterThan(r1.stats.atk!);
     expect(r1.crit).toBeCloseTo(3 * GX.critLine.rare! * 1.2);
     expect(read('scripts/balance.ts')).toContain('참고 — 그 단계 평균 장비');

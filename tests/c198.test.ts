@@ -16,6 +16,10 @@ import { grantFood, homeHp, homeMaxHp, HP_POTION_ID, spaEnter, spaLeave, spaSoak
 import { inventoryOf, useInventoryItem } from '../src/inventory';
 import { ScreenStack } from '../src/ui/bha/select';
 import { wandererEffect } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const HH = BALANCE.provisional.nest.homeHp;
 const MIN = 60_000;
@@ -344,8 +348,8 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(SAVE_FORMAT_VERSION).toBe(87); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();
   });
@@ -381,7 +385,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
   it('53 이하는 그대로 이전 버전(문턱), 미래 형식은 못 연다', () => {
     const r53 = v54();
     (r53.meta as { format: number }).format = 53;
-    expect(migrateSave(r53)).toBeNull();
+    expect(migrateSave(r53, 54)).toBeNull(); // C.446: 옛 문턱 54 로 시험 (게임 문턱은 87)
     const r56 = v54();
     (r56.meta as { format: number }).format = SAVE_FORMAT_VERSION + 1;
     expect(migrateSave(r56)).toBeNull();

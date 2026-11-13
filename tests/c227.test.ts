@@ -70,6 +70,10 @@ import { DETACH_TRAITS, detachEffectText, equipDetach, makeRoomForEvolution, une
 import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { buyTraitItem, equipTrait, traitItemId, traitRows, traitToggleLock, unequipTrait, TRAIT_LOCKED_IN_RUN } from '../src/shop';
 import { abilityGainRow } from '../src/ui/evolutionPanel';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const lo = (slots = 1): AbilityLoadout => ({ ...newAbilityLoadout(), slots });
 
@@ -170,7 +174,7 @@ describe('150장 4 전투에 실림', () => {
 describe('150장 6 세이브 형식 61', () => {
   it('형식 62(C.311) · 문턱 54 고정 · 60 → 61 마이그레이션', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(62); // C.326 에서 63
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[60]).toBe('function');
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 1000))) as Record<string, any>;
     old.meta.format = 60;

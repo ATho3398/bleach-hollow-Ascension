@@ -13,12 +13,12 @@ import type { Stats } from '../src/data/schema';
 
 const hollow = getFaction('hollow');
 const fb = hollow.room?.characterArt ?? '';
-const ev = (o: Partial<Stats>): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, def: 0, ...o });
+const ev = (o: Partial<Stats>): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, aspd: 0, bspd: 0, def: 0, ...o });
 const ELS = ['water', 'fire', 'earth', 'thunder'] as const;
 
 describe('C.392 아쥬커스 모델 = 능력치 1위 (GDD 240장 2)', () => {
   it('힘 가시형 · 지능 뱀형 · 체력 외팔형 · 정신력 거미형 · 속도 속도형 · 방어 짐승형 (스킨 id 는 옛 값 그대로, 이름·그림만)', () => {
-    const want = { atk: ['carapace', '가시형', 'spiky-base'], int: ['stag', '뱀형', 'serpent-purple'], hp: ['rhino', '외팔형', 'onearm-base'], spr: ['wyrm', '거미형', 'spider-base'], spd: ['panther', '속도형', 'speed-base'], def: ['scorpion', '짐승형', 'beast-purple'] } as const;
+    const want = { atk: ['carapace', '가시형', 'spiky-base'], int: ['stag', '뱀형', 'serpent-purple'], hp: ['rhino', '외팔형', 'onearm-base'], spr: ['wyrm', '거미형', 'spider-base'], aspd: ['panther', '속도형', 'speed-base'], def: ['scorpion', '짐승형', 'beast-purple'] } as const;
     const t3 = tryGetForm('t3:normal')!;
     for (const [stat, [id, name, look]] of Object.entries(want)) {
       expect(pickTierLook(hollow, 3, ev({ [stat]: 5 }), t3), stat).toBe(id);
@@ -29,7 +29,7 @@ describe('C.392 아쥬커스 모델 = 능력치 1위 (GDD 240장 2)', () => {
   it('히든 진화체(h3:fail·h3:passage) = 능력치와 상관없이 부유형', () => {
     for (const f of ['h3:fail', 'h3:passage']) {
       expect(pickTierLook(hollow, 3, ev({ atk: 9 }), tryGetForm(f)!), f).toBe('wraith');
-      expect(pickTierLook(hollow, 3, ev({ spd: 9 }), tryGetForm(f)!), f).toBe('wraith');
+      expect(pickTierLook(hollow, 3, ev({ aspd: 9 }), tryGetForm(f)!), f).toBe('wraith');
     }
     expect(getSkin('wraith')!.name).toBe('부유형');
     expect(charArt('hollow', 2, fb, '/', undefined, [], 'wraith', undefined, 'male').rig).toEqual({ look: 'wraith-base', partBase: '/art/rig/wraith/', rigId: 'wraith' });

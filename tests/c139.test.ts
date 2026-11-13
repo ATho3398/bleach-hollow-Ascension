@@ -137,7 +137,7 @@ describe('3 세이브 내부 값 최소 검증 → 실패면 백업 복구', () 
     expect(migrateSave(good())).not.toBeNull();
   });
   it('능력치 키 누락·NaN·문자열이면 거부', () => {
-    for (const bad of [{}, { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 'x' }]) {
+    for (const bad of [{}, { hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 'x' }]) {
       const s = good();
       s.evolution.ev = bad;
       expect(migrateSave(s)).toBeNull();

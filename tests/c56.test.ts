@@ -27,7 +27,7 @@ function tier5Save(factionId = 'hollow'): SaveData {
   e.formId = 't4:fire:physical';
   e.ability = 'atk';
   e.steps = 33;
-  e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, spd: 0 };
+  e.ev = { hp: 20, atk: 20, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
   s.build = newBuild();
   for (let i = 0; i < 4; i++) s.build.slots.push(null);
   for (const id of traitIds) gainTrait(s.build, id);
@@ -113,7 +113,7 @@ describe('환생 결과: 초기화와 남김 (22-7)', () => {
     const s = tier5Save();
     performRebirth(s, traitIds[0]!, 4242);
     expect(s.runLog.rebirths).toEqual([{
-      at: 4242, count: 1, factionId: 'hollow', prevFormId: 't4:fire:physical', prevTierIndex: 3, prevElements: ['fire'], keptTraitId: traitIds[0], carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, spd: 0 }, runsCompleted: 0,
+      at: 4242, count: 1, factionId: 'hollow', prevFormId: 't4:fire:physical', prevTierIndex: 3, prevElements: ['fire'], keptTraitId: traitIds[0], carry: { hp: 2, atk: 2, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 }, runsCompleted: 0,
     }]);
   });
 });
@@ -123,15 +123,15 @@ describe('노력치 계승 (22-7): 10% 누적, 상한 없음', () => {
     const s = tier5Save();
     performRebirth(s, null);
     expect(s.rebirth.carry.hp).toBeCloseTo(2);
-    expect(s.evolution.carry).toEqual({ hp: 2, atk: 2, int: 0, def: 0, spr: 0, spd: 0 });
+    expect(s.evolution.carry).toEqual({ hp: 2, atk: 2, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 });
     // 두 번째 생: 노력치 다시 20 → 누적 2 + (20 + 2) × 0.1 = 4.2
     s.evolution.tierIndex = 4;
-    s.evolution.ev = { hp: 20, atk: 0, int: 0, def: 0, spr: 0, spd: 5 };
+    s.evolution.ev = { hp: 20, atk: 0, int: 0, def: 0, spr: 0, aspd: 5, bspd: 0 };
     performRebirth(s, null);
     expect(s.rebirth.carry.hp).toBeCloseTo(4.2);
-    expect(s.rebirth.carry.spd).toBeCloseTo(0.5);
+    expect(s.rebirth.carry.aspd).toBeCloseTo(0.5);
     expect(s.evolution.carry!.hp).toBe(4);
-    expect(s.evolution.carry!.spd).toBe(0);
+    expect(s.evolution.carry!.aspd).toBe(0);
     expect(s.rebirth.count).toBe(2);
   });
   it('누적 상한이 없다 (큰 값도 그대로 쌓인다)', () => {
@@ -149,7 +149,7 @@ describe('노력치 계승 (22-7): 10% 누적, 상한 없음', () => {
   it('능력치 절대 상한 999 (6개 모두)', () => {
     expect(STAT_MAX).toBe(999);
     const e = newEvolution(1);
-    e.carry = { hp: 5000, atk: 5000, int: 5000, def: 5000, spr: 5000, spd: 5000 };
+    e.carry = { hp: 5000, atk: 5000, int: 5000, def: 5000, spr: 5000, aspd: 5000, bspd: 5000 };
     for (const k of STAT_IDS) expect(currentStats(e, 'hollow')[k]).toBe(999);
   });
 });

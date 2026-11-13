@@ -142,7 +142,7 @@ describe('전체 해금 (38-3)', () => {
 describe('테스트 패널 값 넣기 (38-4)', () => {
   it('능력치 입력이 전투 파라미터(원정·등급전·연습 공통)에 그대로 실린다', () => {
     const s = newTestSave(fid);
-    const want = { hp: 777, atk: 1, int: 250, def: 0, spr: 999, spd: 42 };
+    const want = { hp: 777, atk: 1, int: 250, def: 0, spr: 999, aspd: 42, bspd: 33 };
     setCustomStats(s, want);
     const params = buildCombatParams(s.build, fid);
     applyEvolutionToParams(params, s.evolution, fid, statBonusOf(s).total);
@@ -194,8 +194,8 @@ describe('테스트 패널 값 넣기 (38-4)', () => {
     expect(setTraitSlots(s, [b, null, a])).toEqual([b, null, a]);
     expect(s.build.owned).toEqual(expect.arrayContaining([a, b]));
     expect(s.build.equipOrder).toEqual([b, a]);
-    setAbility(s, 'spd');
-    expect(s.evolution.ability).toBe('spd');
+    setAbility(s, 'aspd');
+    expect(s.evolution.ability).toBe('aspd');
     setAbility(s, null);
     expect(s.evolution.ability).toBeNull();
   });

@@ -64,7 +64,7 @@ describe('C.110 아란칼 외형 표 (GDD 54 → C.220: 4단계 + 아란칼화)'
     expect([...seen].sort()).toEqual(['arrfirea', 'arrfired']);
   });
   it('pickLook 은 진화체 표가 먼저(호로는 아란칼화를 깬 뒤만), 없으면 단계(아쥬커스) 표로', () => {
-    const ev = { hp: 0, atk: 0, int: 0, def: 5, spr: 0, spd: 0 };
+    const ev = { hp: 0, atk: 0, int: 0, def: 5, spr: 0, aspd: 0, bspd: 0 };
     expect(pickLook(hollow, tryGetForm('t4:earth:mixed')!, ev, 7)).toBe('arrearthc');
     expect(pickLook(hollow, tryGetForm('t4:earth:mixed')!, ev, 7, false)).toBeNull();
     expect(pickLook(hollow, tryGetForm('t3:normal')!, ev, 7)).toBe('scorpion');

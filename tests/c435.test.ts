@@ -16,6 +16,10 @@ import {
 import { fusionBlockText } from '../src/ui/hogyokuView';
 import { charArt } from '../src/data/art/manifest';
 import { clearStory } from './helpers/storyClear';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const other = (fid: string) => FACTIONS.find((f) => f.id !== fid)!.id;
 
@@ -40,7 +44,7 @@ function developAll(s: SaveData): void {
 function ready(a = 't4:fire:physical', b = 't4:water:special'): SaveData {
   const s = newSaveData('hollow', 1000);
   toFinal(s, a);
-  s.evolution.ev = { hp: 40, atk: 10, int: 0, def: 5, spr: 0, spd: 0 };
+  s.evolution.ev = { hp: 40, atk: 10, int: 0, def: 5, spr: 0, aspd: 0, bspd: 0 };
   s.build.owned = ['t-fire-a', 't-water-b'];
   s.build.slots = ['t-fire-a', null, null];
   s.build.enhance = { fire: 30 };
@@ -49,7 +53,7 @@ function ready(a = 't4:fire:physical', b = 't4:water:special'): SaveData {
   checkTrackOpen(s, 2000);
   const o = s.otherTracks[0]!;
   toFinal(o, b);
-  o.evolution.ev = { hp: 5, atk: 30, int: 12, def: 0, spr: 0, spd: 8 };
+  o.evolution.ev = { hp: 5, atk: 30, int: 12, def: 0, spr: 0, aspd: 8, bspd: 0 };
   o.build.owned = ['t-water-a', 't-water-b'];
   o.build.slots = ['t-water-a', 't-water-b', null];
   o.build.enhance = { water: 50 };
@@ -172,7 +176,7 @@ describe('전투 기반 3택 (GDD 12-4 v6.037)', () => {
 
 describe('세이브 형식 83 (82 → 83)', () => {
   it('이미 있는 초월자 트랙: 지금 합친 빌드 = 초월자 기반, 키웠던 캐릭터 = 합친 빌드 복사 + 합체 기록의 진화체 · id 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(86);
+    expect(SAVE_FORMAT_VERSION).toBe(87);
     const s = ready();
     performFusion(s, 9000);
     const raw = JSON.parse(JSON.stringify(s)) as SaveData;
@@ -181,7 +185,7 @@ describe('세이브 형식 83 (82 → 83)', () => {
     raw.transcendentId = 'aizen'; // 조합과 안 맞는 옛 id 도 그대로
     raw.slotLog.fusions[0]!.transcendentId = 'aizen';
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(86);
+    expect(m.meta.format).toBe(87);
     expect(m.transcendentId).toBe('aizen');
     const b = m.evolution.basis!;
     expect(b.current).toBe(TRANSCENDENT_BASIS);
