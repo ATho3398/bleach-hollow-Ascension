@@ -166,6 +166,14 @@
     46,
     39
    ]
+  },
+  {
+   "id": "arm_back",
+   "parent": "upper",
+   "pivot": [
+    49,
+    40
+   ]
   }
  ],
  "slots": [
@@ -223,7 +231,7 @@
   },
   {
    "id": "coat_inner",
-   "bone": "lower"
+   "bone": "arm_back"
   },
   {
    "id": "coat_tail",
@@ -603,7 +611,8 @@
    "thumb": "엄지",
    "coat_lining": "코트 뒷자락 안감",
    "chest": "윗몸(가슴·띠)",
-   "coat_inner": "아랫몸(코트 안쪽)"
+   "coat_inner": "왼팔(뒷손)",
+   "arm_back": "왼팔(뒷손)"
   },
   "groups": [
    [
@@ -619,8 +628,7 @@
      "hair_side",
      "chest",
      "collar_L",
-     "collar_R",
-     "coat_inner"
+     "collar_R"
     ]
    ],
    [
@@ -632,6 +640,12 @@
      "hand",
      "thumb",
      "sword"
+    ]
+   ],
+   [
+    "왼팔(뒷손)",
+    [
+     "coat_inner"
     ]
    ],
    [
@@ -659,13 +673,6 @@
    ]
   ],
   "follow": {
-   "coat_inner": [
-    "chest",
-    "hand",
-    "head",
-    "sword",
-    "thumb"
-   ],
    "chest": [
     "arm_sword",
     "forearm_sword",
@@ -1037,6 +1044,10 @@
     "collar_R": [
      46,
      39
+    ],
+    "arm_back": [
+     49,
+     40
     ]
    },
    "rot": {
@@ -1112,10 +1123,10 @@
   },
   "hair_side": {
    "lag": 120,
-   "swing": 0.6,
+   "swing": 0.4,
    "hang": 0.1,
    "wave": [
-    4,
+    2,
     1900,
     200
    ]
@@ -1138,6 +1149,16 @@
     2.5,
     1700,
     450
+   ]
+  },
+  "arm_back": {
+   "lag": 140,
+   "swing": 0.5,
+   "hang": 0.1,
+   "wave": [
+    1.5,
+    2200,
+    500
    ]
   }
  }
