@@ -582,7 +582,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
   buildColors(); buildSwaps(); buildChips(); save(false); draw();
 });
-/** 외형 고르기 = 종족 탭(사신·아란칼·호로·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
+/** 외형 고르기 = 종족 탭(사신·아란칼·호로·초월자(아이젠 등 — 사용자 2026-11-14 "기타 말고 초월자로 따로 빼놔")·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
  *  "사신 아란칼 호로 탭 먼저 나누고 그 안에서 사신 여자 사신 남자 나누고 거기서 혼백, 영술원 학생, 사신 … 호로는 진화체들 정리해서 넣고, 진화체 선택하면 색상도 고르게").
  *  외형 단추는 묶음(data-group) 줄에 들어 있고, 탭·성별에 맞는 줄만 보인다. pick = 그 줄의 첫 외형을 고른다 */
 let tab = 'arrancar';
