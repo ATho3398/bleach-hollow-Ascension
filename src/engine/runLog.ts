@@ -142,7 +142,8 @@ export interface BattleRecord {
   itemUsed?: boolean;
   gearUses?: number;
   /** 초월자 전용 블록 기록 (GDD 12-4 v6.048, C.441 — 형식 85): 반격 성공(경화수월)·마무리 기술(흑관)·되살아남(깨져라, 경화수월) 횟수. 전용 블록 전투만 */
-  kit?: { id: string; counters: number; finishers: number; revives: number };
+  kit?: { id: string; counters: number; finishers: number; revives: number; modeEnters?: number; modeExits?: number; riskSpent?: number };
+  /** ↑ modeEnters·modeExits·riskSpent (C.442 — 형식 86, GDD 12-4 v6.050 붕옥 해방): 리스크 소모형 모드 진입·리스크 0 으로 끝남 횟수·모드가 깎은 리스크 합. 옛 기록은 없음(= 0) */
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */

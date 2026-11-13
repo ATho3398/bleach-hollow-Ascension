@@ -15,6 +15,7 @@ import {
   type Block, type CombatEvent, type HitCategory, type ElemHit, type CombatInput, type CombatParams, type CombatState,
   canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf, kitBlockOf, kitCounterOpen,
   scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
+  kitRiskOf,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -201,6 +202,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'combo':
       return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
     case 'liberation-ready':
+      // 리스크 소모형 해방 (GDD 12-4 v6.050): 게이지 옆 [해방 이름] 버튼으로도
+      if (s.params.kit?.riskRelease) return { role: 'chain', icon: 'i-special', text: `${labels.riskGauge} ${s.params.kit.riskRelease.minRisk} 이상 — ${labels.liberation.name} 가능` };
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 준비 — 캐릭터를 눌러라` }; // GDD 139장 3
     case 'heavy-cast':
       return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 버튼으로 막아라` };
@@ -241,12 +244,16 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
+      if (e.endless) return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} 모습이 바뀌었다 — 지속 시간 없음, 블록을 쓸 때마다 ${labels.riskGauge} −${s.params.kit?.riskRelease?.costPerUse ?? 0}` };
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 블록이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'item':
       return { role: 'heal', icon: 'i-heal', text: `${consumableName(e.id)}! ${e.effect === 'heal' ? `체력 +${n(e.heal)}` : `${battleItemText(e.id)}`}` };
     case 'gear':
       return { role: 'chain', icon: e.effect === 'shield' ? 'i-guard' : 'i-attack', text: e.effect === 'shield' ? `장비 발동! ${gearActiveText(s.params)}` : `장비 발동! ${n(e.damage)} 피해` };
+    case 'kit-risk':
+      return { role: 'void', icon: 'i-risk', text: `${labels.riskGauge} −${Math.round(e.spent * 10) / 10} (남은 ${Math.round(e.risk)})` };
     case 'liberation-end':
+      if (e.endless) return { role: 'void', icon: 'i-risk', text: `${labels.riskGauge}이(가) 바닥났다 — ${labels.liberation.name}이(가) 풀려 원래 모습으로` };
       return { role: 'void', icon: 'i-risk', text: e.risk > 0 ? `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` : labels.liberation.endText.split('.')[0] + '.' };
     case 'end':
       return e.status === 'won' ? { role: 'chain', icon: 'i-flag-win', text: `${shownName(pickFaction(s.enemy.def.name, factionId))}을(를) 쓰러뜨렸다!` } : null;
@@ -617,10 +624,24 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
   // 공허 수치 칩 (C.131, GDD 77장 ⑥): 원정 중 전투만. 값 = 원정 수치 + 이번 전투 공허 블록으로 오른 만큼 (실시간)
   let riskChipValue: HTMLElement | null = null;
-  if (opts.risk !== undefined) {
+  let riskChipRoot: HTMLElement | null = null;
+  // 리스크 소모형 해방 (GDD 12-4 v6.050 붕옥 해방): 게이지 옆 [해방 이름] 버튼 — 게이지가 문턱 이상이면 켜진다, 모드 중엔 '… 중'
+  const riskRel = p.kit?.riskRelease ?? null;
+  const kitRelBtn = riskRel ? v2Button({ label: labels.liberation.name, small: true, kind: 'danger', disabled: true }) : null;
+  if (kitRelBtn) {
+    kitRelBtn.classList.add('bha-kitrelease');
+    kitRelBtn.dataset.sc = 'kit-release';
+    kitRelBtn.title = `${labels.riskGauge} ${riskRel!.minRisk} 이상이면 ${labels.liberation.name} — 지속 시간 없이, 블록을 쓸 때마다 ${labels.riskGauge} −${riskRel!.costPerUse}, 0 이면 끝`;
+    kitRelBtn.addEventListener('click', () => {
+      if (app.isConnected && !stopped && canLiberate(s) && !halted()) queue.push({ type: 'liberate' });
+    });
+    bar.prepend(kitRelBtn);
+  }
+  if (opts.risk !== undefined || riskRel) {
     const rc = v2Chip('', 'danger', { icon: 'i-risk' });
+    riskChipRoot = rc;
     rc.classList.add('bha-riskchip');
-    riskChipValue = el('b', 'bha-num', String(Math.round(opts.risk)));
+    riskChipValue = el('b', 'bha-num', String(Math.round(kitRiskOf(s) ?? opts.risk ?? 0)));
     rc.append(labels.riskGauge, ' ', riskChipValue, infoTip(labels.riskGauge, () => statusInfo('risk', faction, Number(riskChipValue?.textContent ?? 0))));
     rc.setAttribute('aria-label', labels.riskGauge);
     bar.prepend(rc);
@@ -1165,6 +1186,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         break;
       case 'liberation-end':
         replayOnce(flashVoid, 'is-on', 900);
+        if (e.endless) flash('is-special', 600); // 모드 끝 = 원래 모습으로 (번쩍임)
+        break;
+      case 'kit-risk':
+        spawnFloat('void', `${labels.riskGauge} −${Math.round(e.spent)}`, { iconId: 'i-risk' });
         break;
       case 'enemy-attack':
         if (e.guarded) {
@@ -1385,7 +1410,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (meterCache.enemy !== eRatio) {
       meterCache.enemy = eRatio;
       setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
-      if (riskChipValue) {
+      if (riskChipValue && !riskRel) {
         const rv = String(Math.round((opts.risk ?? 0) + s.riskGained));
         if (riskChipValue.textContent !== rv) riskChipValue.textContent = rv;
       }
@@ -1498,7 +1523,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     setHidden(libChipRoot.root, !libActive);
     const tip = libActive ? hintDuring : hintFull;
     if (libBtn.title !== tip) libBtn.title = tip;
-    if (libActive) setText(libChipRoot.value, secondsText(s.liberation.ticksLeft * p.tickSeconds));
+    const endless = s.liberation.endless === true;
+    if (libActive) setText(libChipRoot.value, endless ? '중' : secondsText(s.liberation.ticksLeft * p.tickSeconds));
+    // 리스크 소모형 해방 (GDD 12-4 v6.050): 게이지 값은 매 프레임(블록마다 깎임), 모드 중엔 모습(색조) + 게이지 칩 강조 + 버튼 '… 중'
+    app.classList.toggle('is-kitmode', libActive && endless);
+    if (riskRel && riskChipValue) {
+      setText(riskChipValue, String(Math.round(kitRiskOf(s) ?? 0)));
+      riskChipRoot?.classList.toggle('is-focus', libActive && endless);
+    }
+    if (kitRelBtn) {
+      const ok = canLiberate(s);
+      kitRelBtn.disabled = !ok;
+      kitRelBtn.classList.toggle('is-disabled', !ok && !libActive);
+      kitRelBtn.classList.toggle('is-focus', libActive);
+      setText(kitRelBtn, libActive ? `${labels.liberation.name} 중` : labels.liberation.name);
+    }
     if (libOn) {
       const lb = s.liberation;
       const ready = canLiberate(s);
@@ -1512,8 +1551,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
       setAttr(libBtn, 'aria-disabled', String(!ready));
-      const libText = libActive ? `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}` : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
-      setText(libTime, libActive ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
+      const libText = libActive ? (endless ? `${labels.liberation.name} 중 — ${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}` : `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}`) : ready ? `${labels.liberation.name} 준비 — 캐릭터를 눌러라` : riskRel ? `${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}/${riskRel.minRisk}` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
+      setText(libTime, libActive && !endless ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
       setTitle(libBtn, libText);
       setAttr(libBtn, 'aria-label', `${labels.liberation.name}, ${libText}`);
     }

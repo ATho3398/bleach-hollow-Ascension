@@ -48,7 +48,7 @@ describe('초월자 기반 블록 풀', () => {
   it('아이젠 데이터 kit: 경화수월·귀도·프라고르, 나머지 5종은 블록 없음([미정])', () => {
     const aizen = TRANSCENDENTS.find((t) => t.id === 'aizen')!;
     expect(aizen.kit?.blocks.map((b) => b.id)).toEqual(['kyoka', 'kido', 'fragor']);
-    expect(aizen.kit?.liberationName).toBe('붕옥 융합');
+    expect(aizen.kit?.liberationName).toBe('붕옥 해방'); // C.442 (v6.050): 붕옥 융합 → 붕옥 해방
     expect(TRANSCENDENTS.filter((t) => t.kit).map((t) => t.id)).toEqual(['aizen']);
   });
   it('초월자 기반이면 일반 블록(기본·흡수) 없이 전용 블록만, 호로 기반이면 kit 없음', () => {
@@ -134,7 +134,7 @@ describe('경화수월 — 반격 창', () => {
     expect(ev && ev.kind === 'block' && ev.kitName).toBe('경화수월');
     expect(before - s.enemy.hp).toBeGreaterThan(0);
   });
-  it('적 공격을 받은 뒤 0.5초 창(발광) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 · 즉시 1개 생성', () => {
+  it('적 공격을 받은 뒤 0.5초 창(발광) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 (C.442: 즉시 1개 생성 삭제)', () => {
     const s = mk();
     quiet(s);
     s.params.critChance = s.params.blockCritChance = 0;
@@ -153,7 +153,7 @@ describe('경화수월 — 반격 창', () => {
     const evs = drainCombatEvents(s);
     expect(evs.find((e) => e.kind === 'kit-line')).toMatchObject({ text: '언제부터 경화수월을 쓰고 있다고 착각한 거지?', tone: 'counter' });
     expect(s.player.hp - hpBefore).toBeCloseTo(lost * 0.5, 5);
-    expect(s.tray.map((b) => b.traitId)).toEqual([KIT_TRAIT_PREFIX + 'kyoka']); // 즉시 1개
+    expect(s.tray.length).toBe(0); // C.442 (v6.050): 반격 뒤 즉시 재생성 없음
     expect(s.kit!.counters).toBe(1);
     // 피해 비교: 창 밖 같은 블록
     const t = mk();
@@ -238,16 +238,15 @@ describe('귀도 — 체인 이름·영창 스택·흑관', () => {
 });
 
 describe('붕옥 융합 · 깨져라 경화수월', () => {
-  it('해방 이름 = 붕옥 융합, 해방 수치 = 진화체 만해(고유 해방)와 같음', () => {
+  it('해방 이름 = 붕옥 해방(C.442), 해방 수치 = 진화체 만해(고유 해방)와 같음', () => {
     const p = aizenParams();
-    expect(p.kit?.liberationName).toBe('붕옥 융합');
+    expect(p.kit?.liberationName).toBe('붕옥 해방');
     expect(p.liberationUnique).toBe(true);
     expect(p.liberationStatMultiplier).toBe(BALANCE.provisional.liberation.uniqueStatMultiplier);
   });
   it('융합 중 경화수월 → 프라고르(바에 있던 것도), 프라고르 3체인 = 울트라 프라고르 ×5.0, 끝나면 되돌림', () => {
-    const s = mk();
+    const s = mk({ ...aizenParams(), riskStart: 100 }); // C.442: 해방 = 호로화 50 이상 (게이지 100 대신)
     quiet(s);
-    s.liberation.gauge = 100;
     s.tray = [kitBlk(s, 'kyoka'), kitBlk(s, 'kido')];
     expect(applyInput(s, { type: 'liberate' })).toBe(true);
     expect(s.tray[0]!.traitId).toBe(KIT_TRAIT_PREFIX + 'fragor');
@@ -260,7 +259,9 @@ describe('붕옥 융합 · 깨져라 경화수월', () => {
     const ev = drainCombatEvents(s).find((e) => e.kind === 'block');
     expect(ev && ev.kind === 'block' && ev.kitName).toBe('울트라 프라고르');
     s.tray = [kitBlk(s, 'fragor')];
-    for (let i = 0; i < ticksOf(s.params, 7); i++) step(s);
+    s.kit!.risk = 1; // C.442: 지속 시간 대신 호로화가 0 이 되면 끝 — 블록 한 번 더 쓰면 끝난다
+    s.tray.push(kitBlk(s, 'kido'));
+    applyInput(s, { type: 'use', cell: 1 });
     expect(s.tray[0]!.traitId).toBe(KIT_TRAIT_PREFIX + 'kyoka');
     expect(s.tray[0]!.solo).toBe(true);
   });
@@ -319,7 +320,7 @@ describe('초월자 성장 — 흡수 제한·초월 조각·강화', () => {
     expect(combatKitOf(s.evolution.kit)!.blocks.find((b) => b.id === 'fragor')!.mult).toBeCloseTo(1.8, 5);
   });
   it('형식 85: 옛 초월자 트랙에 kit(강화 0) · 조각 0', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(85);
+    expect(SAVE_FORMAT_VERSION).toBe(86);
     const s = aizenSave();
     const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { evolution: Record<string, unknown>; shared: Record<string, unknown> };
     delete raw.evolution.kit;

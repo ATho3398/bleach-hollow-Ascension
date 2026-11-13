@@ -344,7 +344,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(85); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

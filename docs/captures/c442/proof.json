@@ -1,0 +1,204 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-gauge-30-off.png",
+    "02-pc-gauge-56-ready.png",
+    "03-pc-mode-fragor.png",
+    "04-pc-block-minus8.png",
+    "05-pc-mode-end.png",
+    "06-phone-gauge-56-ready.png",
+    "07-phone-mode-fragor.png",
+    "08-phone-mode-end.png"
+  ],
+  "facts": {
+    "pc": {
+      "low": {
+        "risk": 30,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "호로화 30",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "ready": {
+        "risk": 56,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "호로화 56",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "mode": {
+        "risk": 56,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:fragor",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "호로화 56",
+        "chipFocus": true,
+        "btn": "붕옥 해방 중",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "afterBlock": {
+        "risk": 48,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 8,
+        "tray": [
+          "kit:kido"
+        ],
+        "chip": "호로화 48",
+        "chipFocus": true,
+        "btn": "붕옥 해방 중",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "end": {
+        "risk": 0,
+        "active": false,
+        "endless": false,
+        "enters": 1,
+        "exits": 1,
+        "spent": 16,
+        "tray": [
+          "kit:kyoka"
+        ],
+        "chip": "호로화 0",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      }
+    },
+    "phone": {
+      "low": {
+        "risk": 30,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "호로화 30",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "ready": {
+        "risk": 56,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "호로화 56",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "mode": {
+        "risk": 56,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:fragor",
+          "kit:kido",
+          "kit:kido",
+          "kit:fragor",
+          "kit:kido"
+        ],
+        "chip": "호로화 56",
+        "chipFocus": true,
+        "btn": "붕옥 해방 중",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 해방",
+        "log": []
+      },
+      "end": {
+        "risk": 0,
+        "active": false,
+        "endless": false,
+        "enters": 1,
+        "exits": 1,
+        "spent": 8,
+        "tray": [
+          "kit:kyoka",
+          "kit:kido"
+        ],
+        "chip": "호로화 0",
+        "chipFocus": false,
+        "btn": "붕옥 해방",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 해방",
+        "log": []
+      }
+    }
+  }
+}

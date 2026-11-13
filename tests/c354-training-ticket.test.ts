@@ -124,7 +124,7 @@ describe('개수 제한 없음 (216장 2)', () => {
 
 describe('세이브 형식 65 (216장 3)', () => {
   it('64 → 65: 두 트랙 런 로그에 빈 trainingTickets, 가진 수련권 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(85); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫
+    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫
     expect(typeof SAVE_MIGRATIONS[64]).toBe('function');
     const old = newSaveData('hollow', 1);
     old.meta.format = 64;
@@ -132,7 +132,7 @@ describe('세이브 형식 65 (216장 3)', () => {
     delete (old.runLog as unknown as Record<string, unknown>).trainingTickets;
     const m = migrateSave(JSON.parse(JSON.stringify(old)));
     expect(m).not.toBeNull();
-    expect(m!.meta.format).toBe(85); // C.361 에서 67 · C.356 에서 66 (모험 소모품 바퀴, 65 → 66 변환 없음);
+    expect(m!.meta.format).toBe(86); // C.361 에서 67 · C.356 에서 66 (모험 소모품 바퀴, 65 → 66 변환 없음);
     expect(m!.runLog.trainingTickets).toEqual([]);
     expect(m!.training.tickets).toBe(3);
   });

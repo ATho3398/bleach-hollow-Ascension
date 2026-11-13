@@ -853,6 +853,8 @@ function startBattleAt(
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(), liberationEnabled: exp.liberationEnabled !== false };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
+  // 리스크 소모형 해방 (GDD 12-4 v6.050 붕옥 해방): 전투가 지금 리스크 게이지 값을 안다
+  if (params.kit?.riskRelease) params.riskStart = exp.risk;
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
@@ -1021,6 +1023,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
   // 해방이 끝나며 오른 리스크 (GDD 22-5)
   if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
+  // 리스크 소모형 모드가 깎은 리스크 (GDD 12-4 v6.050): 전투가 끝난 값으로 맞춘다
+  if (battle.kit && battle.params.kit?.riskRelease && battle.kit.risk !== exp.risk) changeRisk(exp, battle.kit.risk - exp.risk, 'kit-release');
   if (battle.status === 'lost') {
     exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');

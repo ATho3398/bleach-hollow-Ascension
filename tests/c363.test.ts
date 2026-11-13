@@ -74,7 +74,7 @@ describe('220장 2: 정렬', () => {
     for (const k of [...FORM_DEX_SORTS, ...ENEMY_DEX_SORTS]) expect(DEX_SORT_LABEL[k].length).toBeGreaterThan(0);
   });
   it('세이브 형식 68: 새 세이브 기본 정렬, 67 → 68 마이그레이션, 저장·불러오기로 남고 깨진 값은 기본', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(85); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(86); // C.406 쇠약 시계·터치·숨은 모습
     expect(typeof SAVE_MIGRATIONS[67]).toBe('function');
     const s = newSaveData('hollow', 7);
     expect(s.dexSort).toEqual({ forms: 'default', enemies: 'default' });
@@ -82,7 +82,7 @@ describe('220장 2: 정렬', () => {
     delete old.dexSort;
     old.meta.format = 67;
     const m = migrateSave(old);
-    expect(m!.meta.format).toBe(85);
+    expect(m!.meta.format).toBe(86);
     expect(m!.dexSort).toEqual({ forms: 'default', enemies: 'default' });
     s.dexSort = { forms: 'name', enemies: 'kills' };
     expect(migrateSave(JSON.parse(JSON.stringify(s)))!.dexSort).toEqual({ forms: 'name', enemies: 'kills' });

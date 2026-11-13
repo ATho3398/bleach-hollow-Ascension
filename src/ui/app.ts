@@ -125,11 +125,17 @@ import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { combatEvolutionOf } from '../engine/evolution';
 
+/** 트랙의 종족 설정 (GDD 12-4 v6.050): 초월자 데이터가 리스크 게이지 이름을 덮으면(아이젠 '호로화') 그 이름으로 — 기반·종족과 상관없음 */
+function trackFaction(save: Pick<SaveData, 'factionId' | 'transcendentId'>): FactionConfig {
+  return withKitRiskName(getFaction(save.factionId), save.transcendentId);
+}
+
 /** 전투 화면 기반 표시 (GDD 12-4 v6.037, C.436): 블록·계열·해방 이름 = 고른 전투 기반의 종족 설정, 해방 컷인 진화체 = 기반 진화체 */
 function battleBasis(save: SaveData): { combatFaction: FactionConfig; formId: string | null } {
   return { combatFaction: getFaction(combatFactionIdOf(save)), formId: combatEvolutionOf(save.evolution).formId };
 }
 import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
+import { withKitRiskName } from '../engine/transcendKit';
 import { pickDialog } from './pickDialog';
 import { applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
@@ -193,7 +199,7 @@ export function startApp(host: HTMLElement): void {
   const tama = initTamago(dev, { persist: () => persist(), onKeyringTap: () => keyringTestTap() });
   const dress = (wear: WearState | null) => {
     applyCosmetics(wear);
-    tama.setContext(wear && save ? getFaction(save.factionId) : null, wear ? save : null);
+    tama.setContext(wear && save ? trackFaction(save) : null, wear ? save : null);
   };
   // 놀던 시간 (세이브 machine 기록, 화면에는 안 나옴): 슬롯을 열고 화면이 보이는 동안만 센다. 저장은 평소 저장 때 같이 된다
   let playTick = monoNow(); // C.139: 경과 시간은 단조 시계
@@ -364,9 +370,9 @@ export function startApp(host: HTMLElement): void {
   const persist = () => {
     if (!save || slot === 0) return;
     // 튜토리얼 보상 (GDD 23-3): 저장할 때마다 새로 이룬 목표를 판정해 바로 지급하고 토스트. 기존 세이브는 처음 저장 때 한꺼번에
-    showTutorialToasts(claimTutorialGoals(save), getFaction(save.factionId));
+    showTutorialToasts(claimTutorialGoals(save), trackFaction(save));
     // 도감 보상 (GDD 24-3): 같은 틀·같은 토스트. 기존 세이브는 처음 저장 때 이미 닿은 이정표를 한꺼번에
-    showDexToasts(claimDexRewards(save), getFaction(save.factionId));
+    showDexToasts(claimDexRewards(save), trackFaction(save));
     tickIdle(save); // 켜 둔 동안 대기 보상(95장 B1)을 쌓고 마지막 접속(정산) 시각을 지금으로 (GDD 24-1)
     // 마지막 화면 키 (GDD 19-3): 원정 흐름(배치 후 출발 ~ 결과 전) 안이면 원정, 아니면 방
     save.lastScreen = activeExp !== null && activeExp.phase !== 'ended' ? 'expedition' : 'room';
@@ -767,7 +773,7 @@ export function startApp(host: HTMLElement): void {
   };
 
   /** 도움말에 쓸 종족: 세이브가 있으면 그 종족, 없으면(시작 화면) 등록된 첫 종족 */
-  const helpFaction = (): FactionConfig => (save ? getFaction(save.factionId) : FACTIONS[0]!);
+  const helpFaction = (): FactionConfig => (save ? trackFaction(save) : FACTIONS[0]!);
 
   /** 첫 전투 직전 튜토리얼 (GDD 14-2): 아직 안 봤을 때만. 끝내거나 건너뛰면 본 것으로 저장한다 */
   const tutorialFor = () =>
@@ -781,7 +787,7 @@ export function startApp(host: HTMLElement): void {
     // canReplay 가 false 면(원정 화면: 시간이 흐르는 화면 위에서 체험 전투로 갈아타지 않는다) 다시 보기는 숨긴다
     // 첫 걸음 목표 (GDD 100장 #80): ··· 메뉴의 '튜토리얼' 대신 도움말 머리 [목표] — 세이브가 있고 화면을 바꿔도 되는 곳에서만
     const s = save;
-    const onGoals = canReplay && s ? () => open('tutorials', () => tutorialGoalsView(root, getFaction(s.factionId), s, () => tutorialDemo(getFaction(s.factionId)))) : undefined;
+    const onGoals = canReplay && s ? () => open('tutorials', () => tutorialGoalsView(root, trackFaction(s), s, () => tutorialDemo(trackFaction(s)))) : undefined;
     helpOverlay(faction, { screen, onClose, onReplayTutorial: canReplay ? () => tutorialDemo(faction) : undefined, replays: canReplay ? guideReplays(faction) : undefined, onGoals });
   }
 
@@ -1063,7 +1069,7 @@ export function startApp(host: HTMLElement): void {
     persist();
     const toRoom = () => {
       nestScreen();
-      if (active && active.reason !== 'none') showAbandonCard(active, getFaction(loaded.factionId));
+      if (active && active.reason !== 'none') showAbandonCard(active, trackFaction(loaded));
     };
     // 옛 세이브(이름 없음): 방에 들어가기 전에 한 번 이름·성별 창 (GDD 199장 8) — 뒤로 없음. 원정을 이어 하는 중이면 다음에 방으로 들어올 때
     if (needsIdentity(loaded)) {
@@ -1177,7 +1183,7 @@ export function startApp(host: HTMLElement): void {
     activeExp = null;
     nav.reset({ id: 'room', home: true, render: () => { renderRoom(); root.scrollTop = 0; } });
     // 온천에 있던 채로 껐다 켰으면 온천 화면으로 (GDD 123장 4: 앱을 꺼도 온천 유지)
-    if (save.nest.spa && !save.nest.dead) openSpa(getFaction(save.factionId), save, false);
+    if (save.nest.spa && !save.nest.dead) openSpa(trackFaction(save), save, false);
     showCloudConflictIfIdle();
   }
 
@@ -1314,7 +1320,7 @@ export function startApp(host: HTMLElement): void {
 
   function renderRoom(): void {
     if (!save) return titleScreen();
-    const faction = getFaction(save.factionId);
+    const faction = trackFaction(save);
     applyTheme(faction);
     const s = save;
     dress(s.wear); // 꾸밈 착용 (GDD 25-9): 지금 트랙 것
@@ -1497,7 +1503,7 @@ export function startApp(host: HTMLElement): void {
     const r = performFusion(s);
     if (!r.ok) return void nav.pop();
     persist();
-    const faction = getFaction(s.factionId);
+    const faction = trackFaction(s);
     nav.reset({ id: 'fusion-scene', locked: true, render: () => { setBgm('nest'); fusionView(root, faction, r.record, s, nestScreen); root.scrollTop = 0; } });
   }
 
@@ -2055,7 +2061,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 저장된 원정으로 돌아간다: 저장된 시점의 화면(전투 직전·흡수·둥지 칸 귀환 선택·이동 중)으로 복원 */
   function resumeExpedition(exp: ExpeditionState): void {
-    const faction = getFaction(exp.factionId);
+    const faction = withKitRiskName(getFaction(exp.factionId), exp.evolution.kit?.id);
     activeExp = exp;
     // 저장된 배속 값은 무시한다 (C.118, GDD 62장: 1배 고정)
     if (exp.phase === 'battle') {
@@ -2398,6 +2404,7 @@ export function startApp(host: HTMLElement): void {
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
       params.petAttack = petAttackOf(carriedPet(save.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
       applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
+      if (params.kit?.riskRelease) params.riskStart = save.nest.risk; // 붕옥 해방 (GDD 12-4 v6.050): 연습도 지금 호로화로 시작(둥지 값은 안 바뀜)
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');

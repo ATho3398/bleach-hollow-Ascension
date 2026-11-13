@@ -167,6 +167,8 @@ export interface CombatParams {
   combos: ComboRule[];
   /** 공허 블록 1개 사용 → 리스크 게이지 상승량 (BALANCE.provisional.risk.perVoidBlock) */
   riskPerVoidBlock: number;
+  /** 전투 시작 때 리스크 게이지 값 (원정 값 — 리스크 소모형 해방 kit.riskRelease 만 쓴다, 없으면 0) */
+  riskStart?: number;
   /** 장착 흡수 skill 특성 블록 생성원(슬롯 순서). 기본 블록 5종은 이것과 상관없이 늘 풀에 있다 (GDD 44장) */
   skills: CombatSkill[];
   /** passive: 기본 공격 위력·속도 배율 */
@@ -270,6 +272,10 @@ export interface CombatKit {
   blocks: CombatKitBlock[];
   evadeChance: number;
   revive?: { hpFraction: number; line: string };
+  /** 해방 = 리스크 소모형 모드 체인지 (GDD 12-4 v6.050 붕옥 해방): 리스크 ≥ minRisk 면 해방, 지속 시간 없음, 블록 1번 쓸 때마다 −costPerUse, 0 이면 끝. limit = 게이지 최대 */
+  riskRelease?: { minRisk: number; costPerUse: number; limit: number };
+  /** 리스크 패널티 없음 (GDD 12-4 v6.050): 원정이 돌파(폭주)를 만들지 않는다 — 전투 엔진은 표시만 */
+  riskPenaltyFree?: boolean;
 }
 
 /** 초월자 전용 블록의 바 블록 traitId 앞머리 (traitId = 'kit:<블록 id>') */
@@ -291,6 +297,23 @@ export interface KitCombatState {
   counters: number;
   finishers: number;
   revives: number;
+  /** 지금 리스크 게이지 (리스크 소모형 해방 — 시작 값 + 공허 상승 − 모드 소모, 0~limit) · 모드가 깎은 합 · 모드 진입·끝(0 이 되어) 횟수 · 준비 알림을 띄웠나 (GDD 12-4 v6.050) */
+  risk: number;
+  riskSpent: number;
+  modeEnters: number;
+  modeExits: number;
+  readyShown: boolean;
+}
+
+/** 전투 시작 초월자 kit 상태 */
+function newKitState(p: CombatParams): KitCombatState {
+  const lim = p.kit?.riskRelease?.limit ?? Infinity;
+  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: Math.min(lim, Math.max(0, p.riskStart ?? 0)), riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false };
+}
+
+/** 지금 리스크 게이지 값 (리스크 소모형 해방 kit 만 — 아니면 null) */
+export function kitRiskOf(s: Pick<CombatState, 'params' | 'kit'>): number | null {
+  return s.params.kit?.riskRelease && s.kit ? s.kit.risk : null;
 }
 
 /** 타격 지연(초) — 종족 무관, 숫자만. basic 내 평타 / block 블록 공격 기본값 / blockBy 계열·단계별(`계열:단계`)·'combo'·'liberation' / enemy 적 기본 공격 / heavy 강공격 착탄 / counter 반격 */
@@ -535,16 +558,18 @@ export type CombatEvent =
   /** 콤보 발동: 콤보 블록이 바 맨 오른쪽에 생겼다 (GDD 17-3) */
   | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
-  /** 해방 시작 (GDD 83장·106장 4): 지속 초, 고유 효과(레스렉시온/만해) 여부 */
-  | { kind: 'liberate'; seconds: number; unique: boolean }
+  /** 해방 시작 (GDD 83장·106장 4): 지속 초, 고유 효과(레스렉시온/만해) 여부. endless = 리스크 소모형 모드(지속 시간 없음, GDD 12-4 v6.050) */
+  | { kind: 'liberate'; seconds: number; unique: boolean; endless?: boolean }
+  /** 리스크 소모형 모드에서 블록을 써 리스크가 깎였다 (GDD 12-4 v6.050): 깎인 양 · 남은 값 */
+  | { kind: 'kit-risk'; spent: number; risk: number }
   /** 소모품 사용 (GDD 105장 수정 3): heal = 회복량, haste = 각성 초 */
   | { kind: 'item'; id: string; effect: BattleItemEffect['effect']; heal: number }
   /** 장비 발동 (GDD 105장 수정 4): shield = 방패 초, burst = 준 피해 */
   | { kind: 'gear'; id: string; effect: ActiveGearEffect['effect']; damage: number }
   /** 펫 공격 한 번 (GDD 241-D 4) */
   | { kind: 'pet-attack'; petId: string; damage: number }
-  /** 해방이 풀렸다: 리스크 게이지 상승량 */
-  | { kind: 'liberation-end'; risk: number }
+  /** 해방이 풀렸다: 리스크 게이지 상승량. endless = 리스크 소모형 모드가 끝났다 */
+  | { kind: 'liberation-end'; risk: number; endless?: boolean }
   /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
   | { kind: 'boss-phase'; phase: number }
   /** 진화체 특성 발동 (C.89, GDD 39장 5번): 연타·되갚기·다시 일어남·연쇄. damage = 그 발동이 준 피해(없으면 0) */
@@ -743,6 +768,8 @@ export interface LiberationState {
   risk: number;
   /** 각본 전투(튜토리얼)에서 켠 해방이면 true — 풀려도 리스크가 오르지 않는다 (GDD 241-B 1) */
   scripted?: boolean;
+  /** 리스크 소모형 모드 (GDD 12-4 v6.050 붕옥 해방): 지속 시간 없음 — 틱으로 줄지 않고 리스크가 0 이 되면 끝 (ticksLeft 는 1 로 둔다) */
+  endless?: boolean;
 }
 
 export interface Dot {
@@ -1101,7 +1128,11 @@ function scriptLocked(s: CombatState, type: CombatInput['type']): boolean {
 }
 
 export function canLiberate(s: CombatState): boolean {
-  return s.status === 'playing' && !scriptLocked(s, 'liberate') && s.params.liberationEnabled && !liberationActive(s) && s.liberation.gauge >= LIBERATION_GAUGE_MAX;
+  if (s.status !== 'playing' || scriptLocked(s, 'liberate') || !s.params.liberationEnabled || liberationActive(s)) return false;
+  // 리스크 소모형 해방 (GDD 12-4 v6.050 붕옥 해방): 해방 게이지 대신 리스크 게이지가 문턱 이상이면
+  const rr = s.params.kit?.riskRelease;
+  if (rr) return (kitRiskOf(s) ?? 0) >= rr.minRisk;
+  return s.liberation.gauge >= LIBERATION_GAUGE_MAX;
 }
 
 /** 해방을 처음 쓴 시각(초), 안 썼으면 null (런 로그) */
@@ -1197,7 +1228,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     inputs: [],
     events: [],
     ...(setup.script ? { script: { ...setup.script, allow: [...setup.script.allow] } } : {}),
-    ...(params.kit ? { kit: { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0 } } : {}),
+    ...(params.kit ? { kit: newKitState(params) } : {}),
   };
 }
 
@@ -1864,6 +1895,7 @@ function addGauge(s: CombatState, v: number): void {
   const lb = s.liberation;
   // 각본 전투는 해방 게이지가 차지 않는다 (C.199: 해방 버튼이 '준비됨'으로 빛나 체인 안내를 가리지 않게)
   if (s.script || !s.params.liberationEnabled || liberationActive(s) || lb.gauge >= LIBERATION_GAUGE_MAX) return;
+  if (s.params.kit?.riskRelease) return; // 리스크 소모형 해방은 해방 게이지를 쓰지 않는다 (GDD 12-4 v6.050)
   lb.gauge = Math.min(LIBERATION_GAUGE_MAX, lb.gauge + v);
   if (lb.gauge >= LIBERATION_GAUGE_MAX) emit(s, { kind: 'liberation-ready' });
 }
@@ -1911,6 +1943,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     s.voidUsed++;
     s.riskGained += p.riskPerVoidBlock;
+    if (s.kit && p.kit?.riskRelease) s.kit.risk = Math.min(p.kit.riskRelease.limit, s.kit.risk + p.riskPerVoidBlock);
     addGauge(s, p.liberationGaugePerBlock);
     // 경직 (GDD 101장 추가 결정 2번): 막기처럼 기본 공격·블록 생성이 멈춘다 (히든 진화체는 voidStunSeconds 0)
     if (p.voidStunSeconds > 0) s.stunTicks = Math.max(s.stunTicks ?? 0, ticksOf(p, p.voidStunSeconds));
@@ -1992,7 +2025,7 @@ function useBlock(s: CombatState, index: number): boolean {
 /** 초월자 전용 블록 쓰기 (GDD 12-4 v6.048, C.441): 체인(solo 면 혼자) → 반격(창 안이면 피해·치명 가산·손실 체력 회복·즉시 1개) / 스택(최대 체인마다 +1, 가득이면 마무리 기술 + 적 공격 불능) */
 function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean {
   const p = s.params;
-  const k = (s.kit ??= { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0 });
+  const k = (s.kit ??= newKitState(p));
   const group = kb.solo ? [index] : chainGroup(s.tray, index, Math.min(maxChain(p), kb.tiers.length));
   const chain = group.length;
   s.tray.splice(group[0]!, chain);
@@ -2028,8 +2061,7 @@ function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean
     emit(s, { kind: 'kit-stack', stack: k.stack, full: kb.stack.full });
   }
   strike(s, blockHitDelayOf(p, null), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage, weak: false, heal, guardSeconds: 0, bonus: null, crit, kitName: name, kitFx: kb.fx, kitCounter: counter, kitFinisher: finisher }, finisher: { kind: 'skill', traitId: id, element: null, family: null, weak: false, matchup: 'neutral' } });
-  // 반격 성공: 생성 주기와 상관없이 같은 블록 1개를 바로 (GDD 12-4 v6.048 경화수월)
-  if (counter && s.status === 'playing') spawn(s, 'skill', id);
+  // 반격 뒤 같은 블록 즉시 1개는 삭제 (GDD 12-4 v6.050 — 사용자 2026-11-13)
   updateCombos(s, null, 0);
   counterIfStance(s);
   return true;
@@ -2148,6 +2180,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
     ok = liberate(s);
   } else if (input.type === 'use') {
     ok = inTray(s.tray, input.cell) && !blockSealed(s.tray[input.cell]) && useBlock(s, input.cell);
+    if (ok) kitModeSpend(s);
   } else if (input.type === 'guard') {
     ok = useGuard(s);
   } else if (input.type === 'item') {
@@ -2169,7 +2202,14 @@ function liberate(s: CombatState): boolean {
   lb.uses++;
   lb.gauge = 0;
   if (s.script) lb.scripted = true;
-  lb.ticksLeft = ticksOf(p, p.liberationSeconds);
+  const rr = p.kit?.riskRelease;
+  // 리스크 소모형 모드 (GDD 12-4 v6.050 붕옥 해방): 지속 시간 없음 — 블록을 쓸 때마다 리스크가 깎이고 0 이면 끝
+  if (rr) {
+    lb.endless = true;
+    lb.ticksLeft = 1;
+    s.kit ??= newKitState(p);
+    s.kit.modeEnters++;
+  } else lb.ticksLeft = ticksOf(p, p.liberationSeconds);
   lb.spawnAcc = 0;
   lb.nextSlot = 0;
   if (p.liberationUnique) {
@@ -2181,7 +2221,7 @@ function liberate(s: CombatState): boolean {
     // 지금 기다리는 평타 간격도 공격 속도만큼 줄인다
     s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
   }
-  emit(s, { kind: 'liberate', seconds: p.liberationSeconds, unique: p.liberationUnique });
+  emit(s, { kind: 'liberate', seconds: rr ? 0 : p.liberationSeconds, unique: p.liberationUnique, ...(rr ? { endless: true } : {}) });
   kitSwapTray(s, true);
   grantLiberationBlocks(s, LB.instantBlocks);
   return true;
@@ -2213,11 +2253,28 @@ function endLiberation(s: CombatState): void {
   }
   lb.ticksLeft = 0;
   lb.gauge = 0;
+  const endless = lb.endless === true;
+  delete lb.endless;
   kitSwapTray(s, false);
-  // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다
-  const risk = lb.scripted ? 0 : s.params.liberationRisk;
+  // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다. 리스크 소모형 모드도 끝날 때 올리지 않는다(게이지를 쓰는 해방 — C.442 추천안)
+  const risk = lb.scripted || endless ? 0 : s.params.liberationRisk;
   lb.risk += risk;
-  s.events.push({ kind: 'liberation-end', risk });
+  s.events.push({ kind: 'liberation-end', risk, ...(endless ? { endless: true } : {}) });
+}
+
+/** 리스크 소모형 모드 중 블록 1번 사용 (GDD 12-4 v6.050 붕옥 해방): 리스크 −costPerUse(체인도 1번), 0 이 되면 모드가 끝난다 */
+function kitModeSpend(s: CombatState): void {
+  const rr = s.params.kit?.riskRelease;
+  const k = s.kit;
+  if (!rr || !k || !s.liberation.endless || !liberationActive(s)) return;
+  const spent = Math.min(rr.costPerUse, k.risk);
+  k.risk -= spent;
+  k.riskSpent += spent;
+  emit(s, { kind: 'kit-risk', spent, risk: k.risk });
+  if (k.risk <= 0) {
+    k.modeExits++;
+    endLiberation(s);
+  }
 }
 
 function shuffleTray(s: CombatState): void {
@@ -2391,8 +2448,16 @@ function advanceTick(s: CombatState): void {
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.stunTicks && s.stunTicks > 0) s.stunTicks--;
   chargeButtons(s);
-  if (s.liberation.ticksLeft === 1) endLiberation(s);
-  else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
+  if (!s.liberation.endless) {
+    if (s.liberation.ticksLeft === 1) endLiberation(s);
+    else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
+  }
+  // 리스크 소모형 해방 준비 알림 (GDD 12-4 v6.050): 문턱을 넘는 순간 한 번
+  if (s.kit && s.params.kit?.riskRelease) {
+    const ready = canLiberate(s);
+    if (ready && !s.kit.readyShown) emit(s, { kind: 'liberation-ready' });
+    s.kit.readyShown = ready;
+  }
   if (s.sealTicks > 0) s.sealTicks--;
   for (const b of s.tray) if (b.sealTicks && b.sealTicks > 0) b.sealTicks--;
   // 물공 블록 지속 효과 (GDD 49장): 바위 자세 · 평타 가속

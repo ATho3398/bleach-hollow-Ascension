@@ -172,7 +172,7 @@ describe('전투 기반 3택 (GDD 12-4 v6.037)', () => {
 
 describe('세이브 형식 83 (82 → 83)', () => {
   it('이미 있는 초월자 트랙: 지금 합친 빌드 = 초월자 기반, 키웠던 캐릭터 = 합친 빌드 복사 + 합체 기록의 진화체 · id 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(85);
+    expect(SAVE_FORMAT_VERSION).toBe(86);
     const s = ready();
     performFusion(s, 9000);
     const raw = JSON.parse(JSON.stringify(s)) as SaveData;
@@ -181,7 +181,7 @@ describe('세이브 형식 83 (82 → 83)', () => {
     raw.transcendentId = 'aizen'; // 조합과 안 맞는 옛 id 도 그대로
     raw.slotLog.fusions[0]!.transcendentId = 'aizen';
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(85);
+    expect(m.meta.format).toBe(86);
     expect(m.transcendentId).toBe('aizen');
     const b = m.evolution.basis!;
     expect(b.current).toBe(TRANSCENDENT_BASIS);

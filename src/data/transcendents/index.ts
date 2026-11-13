@@ -53,6 +53,12 @@ export interface TranscendentKitBlockDef {
 export interface TranscendentKitDef {
   /** 해방 이름 (해방 수치는 진화체 만해와 같음) */
   liberationName: string;
+  /** 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.050 — 아이젠 = '호로화'): 이 초월자 트랙에선 기반·종족과 상관없이 이 이름 */
+  riskGaugeName?: string;
+  /** 해방 = 리스크 게이지 소모형 모드 체인지 (GDD 12-4 v6.050 붕옥 해방): 리스크 ≥ 수치면 해방, 지속 시간 없음, 블록 1번마다 리스크 감소, 0 이면 끝 (수치 = balance riskRelease) */
+  riskRelease?: boolean;
+  /** 리스크 패널티 없음 (GDD 12-4 v6.050): 게이지가 차도 폭주(돌파) 상태·피해·제약 없음 — 쌓이기만 한다 */
+  riskPenaltyFree?: boolean;
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
   evade?: boolean;
   /** 쓰러지면 전투당 1회 되살아남 (수치 = balance revive) */
@@ -104,6 +110,7 @@ function kitErrors(k: unknown): boolean {
   const kit = k as Partial<TranscendentKitDef> | undefined;
   if (kit === undefined) return true;
   if (!kit || typeof kit.liberationName !== 'string' || !kit.liberationName || !Array.isArray(kit.blocks) || kit.blocks.length === 0 || kit.provisional !== true) return false;
+  if (kit.riskGaugeName !== undefined && (typeof kit.riskGaugeName !== 'string' || !kit.riskGaugeName)) return false;
   const ids = new Set(kit.blocks.map((b) => b?.id));
   if (ids.size !== kit.blocks.length) return false;
   return kit.blocks.every((b) => b && typeof b.id === 'string' && b.id && typeof b.name === 'string' && b.name && typeof b.short === 'string' && [...b.short].length === 1 && typeof b.fx === 'string'

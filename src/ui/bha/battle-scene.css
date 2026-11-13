@@ -189,6 +189,10 @@
 .bha-battle.is-liberated .bha-unit--me .bha-hero__body { filter: drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))); animation: bha-aura-shape 1.6s ease-in-out infinite alternate; }
 .bha-battle.is-unique .bha-unit--me .bha-hero__body { filter: saturate(1.5) drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 18px var(--bha-aura, var(--bha-accent-hi))); animation-duration: 0.8s; }
 @keyframes bha-aura-shape { from { opacity: 0.88; } to { opacity: 1; } }
+/* 리스크 소모형 모드 (GDD 12-4 v6.050 붕옥 해방, C.442): 모습이 바뀐다 — 그림 대기라 지금은 색조(옅은 톤 토큰) + 리스크 색 빛. 모드 중 리스크 칩 강조는 .is-focus */
+.bha-battle.is-kitmode .bha-unit--me .bha-hero__body { filter: var(--bha-cos-tint-pale) drop-shadow(0 0 2px var(--bha-risk)) drop-shadow(0 0 8px var(--bha-risk)) drop-shadow(0 0 18px var(--bha-risk)); }
+.bha-battle.is-kitmode { box-shadow: inset 0 0 0 2px var(--bha-risk); }
+.bha-riskchip.is-focus { box-shadow: var(--bha-glow-risk); }
 .bha-battle.is-liberated { box-shadow: inset 0 0 0 2px var(--bha-aura, var(--bha-accent-hi)); }
 @keyframes bha-aura { from { opacity: 0.55; transform: scale(0.96); } to { opacity: 1; transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-liberated .bha-unit--me .bha-hero__body { animation: none; } }

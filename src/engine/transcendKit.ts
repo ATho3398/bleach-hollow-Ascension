@@ -100,6 +100,24 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
     stackName: def.stackName ?? '',
     blocks,
     evadeChance: def.evade ? num.evadeChance ?? 0 : 0,
+    ...(def.riskRelease && num.riskRelease ? { riskRelease: { minRisk: num.riskRelease.minRisk, costPerUse: num.riskRelease.costPerUse, limit: BALANCE.provisional.risk.limit } } : {}),
+    ...(def.riskPenaltyFree ? { riskPenaltyFree: true } : {}),
     ...(def.revive && num.revive ? { revive: { hpFraction: num.revive.hpFraction, line: def.revive.line } } : {}),
   };
+}
+
+/** 이 초월자 트랙의 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.050 — 아이젠 '호로화'). 전투 기반·종족과 상관없음. 없으면 null */
+export function kitRiskGaugeNameOf(transcendentId: string | null | undefined): string | null {
+  return kitDefOf(transcendentId)?.riskGaugeName ?? null;
+}
+
+/** 이 초월자 트랙은 리스크 패널티(폭주 돌파·그 뒤 손해)를 받지 않는가 (GDD 12-4 v6.050 — 쌓이기만 한다). 전투 기반과 상관없음 */
+export function kitRiskPenaltyFree(transcendentId: string | null | undefined): boolean {
+  return kitDefOf(transcendentId)?.riskPenaltyFree === true;
+}
+
+/** 종족 설정의 리스크 게이지 이름을 초월자 데이터로 덮은 사본 (덮을 게 없으면 그대로) — 화면이 트랙 종족 설정 대신 쓴다 */
+export function withKitRiskName<F extends { riskGaugeName: string }>(f: F, transcendentId: string | null | undefined): F {
+  const name = kitRiskGaugeNameOf(transcendentId);
+  return name && name !== f.riskGaugeName ? { ...f, riskGaugeName: name } : f;
 }
