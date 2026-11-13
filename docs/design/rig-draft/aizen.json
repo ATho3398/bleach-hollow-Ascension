@@ -385,7 +385,7 @@
    "arm_sword": {
     "art": "parts/arm_sword",
     "at": [
-     21,
+     22,
      37
     ],
     "size": [
@@ -396,8 +396,8 @@
    "forearm_sword": {
     "art": "parts/forearm_sword",
     "at": [
-     14,
-     46
+     16,
+     45
     ],
     "size": [
      14,
@@ -407,8 +407,8 @@
    "cuff": {
     "art": "parts/cuff",
     "at": [
-     12,
-     54
+     10,
+     57
     ],
     "size": [
      10,
@@ -495,7 +495,7 @@
    "shin_a": {
     "art": "parts/shin_a",
     "at": [
-     22,
+     23,
      74
     ],
     "size": [
@@ -517,8 +517,8 @@
    "foot_a": {
     "art": "parts/foot_a",
     "at": [
-     27,
-     95
+     28,
+     94
     ],
     "size": [
      10,
@@ -529,7 +529,7 @@
     "art": "parts/foot_b",
     "at": [
      43,
-     95
+     94
     ],
     "size": [
      12,
@@ -539,7 +539,7 @@
    "hand": {
     "art": "parts/hand",
     "at": [
-     10,
+     11,
      54
     ],
     "size": [
@@ -550,7 +550,7 @@
    "sword": {
     "art": "parts/sword",
     "at": [
-     11,
+     12,
      48
     ],
     "size": [
@@ -1038,40 +1038,40 @@
      59
     ],
     "upper": [
-     43,
-     59
+     41,
+     44
     ],
     "head": [
-     35,
-     34
+     26,
+     14
     ],
     "arm_sword": [
      30,
      42
     ],
     "forearm_sword": [
-     24,
-     50
+     25,
+     49
     ],
     "hand": [
-     18,
-     58
+     20,
+     57
     ],
     "sword": [
-     20,
-     70
+     18,
+     60
     ],
     "coat_tail": [
-     29,
-     72
+     32,
+     63
     ],
     "coat_side1": [
-     57,
-     85
+     56,
+     71
     ],
     "coat_side2": [
-     55,
-     82
+     56,
+     73
     ],
     "thigh_a": [
      42,
@@ -1090,7 +1090,7 @@
      71
     ],
     "foot_a": [
-     33,
+     34,
      97
     ],
     "foot_b": [
@@ -1103,19 +1103,25 @@
     ]
    },
    "rot": {
-    "sword": -4
+    "sword": -7
+   },
+   "shift": {
+    "sword": [
+     -0.7,
+     0.21
+    ]
    }
   }
  },
  "bodySlots": {
   "parts": [
+   "foot_a",
+   "foot_b",
    "shin_b",
    "shin_a",
    "thigh_a",
    "thigh_b",
    "coat_inner",
-   "foot_b",
-   "foot_a",
    "coat_front",
    "head",
    "chest",
@@ -1126,12 +1132,14 @@
    "collar_L",
    "coat_front_top",
    "arm_sword",
-   "forearm_sword",
    "coat_tail",
    "coat_side1",
    "coat_side2",
+   "lower",
+   "upper",
    "sword",
-   "hand"
+   "hand",
+   "forearm_sword"
   ]
  },
  "sway": {
