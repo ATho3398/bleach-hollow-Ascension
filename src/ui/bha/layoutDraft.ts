@@ -189,13 +189,13 @@ export const LAYOUT_KINDS: readonly LayoutKind[] = [
     label: (f) => `시장 · ${marketOf(f).name}`,
     read: (f) => {
       const mk = marketOf(f);
-      // 시장 화면(marketView)과 같은 목록: 월드맵 물건(나가기) + 자리들(온천은 시장에 안 선다 — GDD 153장 1). 떠돌이 상인은 와 있을 때만 서지만 자리는 편집한다
+      // 시장 화면(marketView)과 같은 목록: 월드맵 물건(나가기) + 자리들(온천은 시장에 안 선다 — GDD 153장 1). 우라하라는 와 있을 때만 서지만 자리는 편집한다
       const items: BaseItem[] = [
         // 그림 = 지도(prop.worldmap)가 있으면 그것, 없으면 방과 같은 문 그림 — 시장 화면과 같게 (C.255)
         { key: 'outside', name: roomOf(f).props.outside, spot: mk.exit, artKey: hasFileArt('prop.worldmap') ? 'prop.worldmap' : 'prop.outside', fallbackArt: 'prop.door', nameNote: '방의 월드맵 물건과 같은 이름 — 방 장면에서 고친다', nameEditable: false },
         ...MARKET_SPOTS.filter((p) => p !== 'spa').map((p) => ({
           key: p, name: mk.props[p], spot: mk.layout[p], artKey: `prop.${p}`,
-          nameNote: p === 'wanderer' ? '종족 설정 market.props.wanderer — 떠돌이 상인은 와 있을 때만 선다' : `종족 설정 market.props.${p}`, nameEditable: true,
+          nameNote: p === 'wanderer' ? '종족 설정 market.props.wanderer — 우라하라는 와 있을 때만 선다' : `종족 설정 market.props.${p}`, nameEditable: true,
         })),
       ];
       return { shape: mk.shape, sceneArt: mk.sceneArt, floor: mk.floor, charFoot: { x: Math.min(96, mk.exit.x + 13), y: mk.exit.y + 4 }, items, extras: mk.extras ?? [] };

@@ -101,7 +101,7 @@ const FLOWS = {
     await wait(page, 2000);
     await page.locator('.bha-market [data-spot="wanderer"]').click();
     await wait(page, 900);
-    await shot('떠돌이상인');
+    await shot('우라하라');
   },
   async evolve(page, shot) {
     await testTab(page, '진화체');

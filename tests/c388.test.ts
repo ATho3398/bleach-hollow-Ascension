@@ -36,7 +36,7 @@ describe('236장 2: 값', () => {
     expect(itemSellPrice('reroll')).toBe(60);
     expect(itemSellPrice('heal-patch')).toBe(Math.max(1, Math.floor(shopBuyPrice('heal-patch')! / 2)));
   });
-  it('상점에 없는 물건 = 판매가 표: 특식 높게, 거금 특식(relic) 가장 높게, 일반 먹이 15, 떠돌이 상인 품목은 등급 값', () => {
+  it('상점에 없는 물건 = 판매가 표: 특식 높게, 거금 특식(relic) 가장 높게, 일반 먹이 15, 우라하라 품목은 등급 값', () => {
     expect(foodSellPrice('relic')).toBe(600);
     expect(foodSellPrice('elixir')).toBe(200);
     expect(foodSellPrice('sushi')).toBe(15);
@@ -116,7 +116,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
     expect(sellNeedsConfirm(e('gear:x', 40, 'equipment', 'rare'), 1)).toBe(true);
     expect(sellNeedsConfirm(e('gear:x', 15, 'equipment', 'normal'), 1)).toBe(false);
   });
-  it('판 뒤 알림 없음(233장) · 모든 상점·떠돌이 상인 탭 끝에 [팔기]', () => {
+  it('판 뒤 알림 없음(233장) · 모든 상점·우라하라 탭 끝에 [팔기]', () => {
     const v = read('src/ui/shopView.ts');
     expect(v).toContain("const tabIds: ShopTab[] = only ? ['wanderer', 'sell'] : [...kindTabs, 'sell'];");
     const i = v.indexOf('const doSell');

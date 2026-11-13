@@ -6,7 +6,7 @@ import raw from './goals.json';
 export const TUTORIAL_CHECKS = ['tutorialSeen', 'returned', 'absorbed', 'chain3', 'evolved', 'eliteWin', 'tier5', 'ranked', 'training', 'rebirth'] as const;
 export type TutorialCheck = (typeof TUTORIAL_CHECKS)[number];
 
-/** 보상 = 먹이 (없을 수 있음 — 목표마다 영옥 +1 은 따로). 옛 영혼 결정 보상은 C.425 에 삭제 (GDD 12-3 v6.015: 붕옥 재료는 사냥·떠돌이 상인뿐) */
+/** 보상 = 먹이 (없을 수 있음 — 목표마다 영옥 +1 은 따로). 옛 영혼 결정 보상은 C.425 에 삭제 (GDD 12-3 v6.015: 붕옥 재료는 사냥·우라하라뿐) */
 export interface TutorialReward {
   food?: Partial<Record<FoodId, number>>;
 }

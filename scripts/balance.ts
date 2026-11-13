@@ -1561,8 +1561,8 @@ if (want('tower')) {
 }
 
 // ── 붕옥 재료 공급 · 6번 합체 시간 (C.414 → C.425 → C.426, GDD 12-3 v6.016, 참고 지표 — 가드 없음) ──
-// 재료 = 사냥 드롭(모험 전투 승리마다, 귀환 정산) + 떠돌이 상인뿐. 캠페인 봇(흡수 봇, 4바퀴 원정)의 원정 1회 일반·강적 승리 수로 드롭 기댓값을 어림한다.
-// 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초. 필요한 원정 = 재료마다 (필요 ÷ 원정 1회 기댓값) 중 가장 큰 것(완전 개방 = 세 트랙 50강). 떠돌이 상인은 계산에서 뺀다(드문 방문 — 모자란 재료를 메우는 몫).
+// 재료 = 사냥 드롭(모험 전투 승리마다, 귀환 정산) + 우라하라뿐. 캠페인 봇(흡수 봇, 4바퀴 원정)의 원정 1회 일반·강적 승리 수로 드롭 기댓값을 어림한다.
+// 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초. 필요한 원정 = 재료마다 (필요 ÷ 원정 1회 기댓값) 중 가장 큰 것(완전 개방 = 세 트랙 50강). 우라하라는 계산에서 뺀다(드문 방문 — 모자란 재료를 메우는 몫).
 if (want('hogyoku')) {
   const HX = BALANCE.provisional.hogyoku;
   const D = BALANCE.provisional.hogyokuDrops;
@@ -1593,7 +1593,7 @@ if (want('hogyoku')) {
   console.log(`  봇 원정 1회: 일반 승리 ${normalPerRun.toFixed(2)} × ${D.normalChance} + 강적 승리 ${elitePerRun.toFixed(2)} × ${D.eliteCount} = 재료 ${dropsPerRun.toFixed(2)}개 (목표 약 10, ${ids.map((t) => `${name[t]} ${per[t].toFixed(2)}`).join(' · ')}) · 약 ${minPerRun.toFixed(1)}분/원정`);
   console.log(`  완전 개방까지 원정 ${first.runs.toFixed(0)}회 ≈ ${hrs(first.runs)}시간 · 합체 뒤 다시 완전 개방 ${later.runs.toFixed(0)}회 ≈ ${hrs(later.runs)}시간 (가장 늦는 재료 ${name[first.worst]})`);
   const total = first.runs + later.runs * (TRANSCENDENTS_COUNT - 1);
-  console.log(`    → 6번 합체까지 원정 약 ${total.toFixed(0)}회 ≈ ${hrs(total)}시간 (돌봄·등급전·탑 전투 시간 제외, 떠돌이 상인 빼고)`);
+  console.log(`    → 6번 합체까지 원정 약 ${total.toFixed(0)}회 ≈ ${hrs(total)}시간 (돌봄·등급전·탑 전투 시간 제외, 우라하라 빼고)`);
 }
 
 if (lateHeld.length > 0) console.warn(`\n후반 보류(45-6) — 4단계 이후 가드 ${lateHeld.length}건, 실패 대신 경고:\n- ${lateHeld.join('\n- ')}`);

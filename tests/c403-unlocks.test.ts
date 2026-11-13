@@ -237,7 +237,7 @@ describe('242장 2 홈 화면 붕옥 아이콘 자리', () => {
   });
 });
 
-describe('C.408 떠돌이 상인 펫 품목 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0)', () => {
+describe('C.408 우라하라 펫 품목 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0)', () => {
   it('해금 전: 새로 오는 상인 목록에 없고, 와 있던 상인의 펫 알도 목록에서 빠져 살 수 없다 — 해금 뒤에는 그대로 판다', async () => {
     const { rollWandererStock } = await import('../src/engine/wanderer');
     const { wandererRows, buyWandererItem } = await import('../src/shop');

@@ -1,4 +1,4 @@
-// 떠돌이 상인 (GDD 85장 5번, C.140): 원정 바퀴를 마칠 때마다 등장 확률이 쌓이는 드문 방문 상인. 종족 무관 —
+// 우라하라 (GDD 85장 5번, C.140): 원정 바퀴를 마칠 때마다 등장 확률이 쌓이는 드문 방문 상인. 종족 무관 —
 // 확률·티어·등급표·가격은 balance.ts provisional.wanderer, 품목(이름·등급·효과 종류)은 src/data/shop/wanderer.json.
 // 티어는 화면에 보이지 않는다(파는 품목 등급만 달라진다). 여기는 판정만 — 세이브·런 로그 기록은 game.ts·shop.ts 가 한다.
 import { BALANCE } from '../config/balance';

@@ -249,7 +249,7 @@ describe('123장 4 홈 회복', () => {
     doNestAction(n, 'feed', 'hearty', T0);
     expect(n.hpFraction).toBeCloseTo(0.5 + foodHpHeal('hearty'));
   });
-  it('치료제(옛 체력 포션, C.223 GDD 144장): 떠돌이 상인 영웅 품목 그대로 · 100% 회복 물건 — 방에서는 안 쓴다', () => {
+  it('치료제(옛 체력 포션, C.223 GDD 144장): 우라하라 영웅 품목 그대로 · 100% 회복 물건 — 방에서는 안 쓴다', () => {
     const w = getWandererItem(HP_POTION_ID)!;
     expect(w.grade).toBe('epic');
     expect(w.category).toBe('consumable');

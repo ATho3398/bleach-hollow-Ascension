@@ -14,7 +14,7 @@ import { logHomeHeal, logSpaEnd, statBonusOf, tickIdle, type SaveData } from './
 import { storeConsumable } from './shop';
 import { guidePending } from './engine/tutorial';
 
-/** 치료제(옛 체력 포션) 품목 id — 떠돌이 상인·상점 약 칸. C.223 부터 원정·전투 전용 회복 물건(100%, GDD 144장), 방에서는 안 쓴다 */
+/** 치료제(옛 체력 포션) 품목 id — 우라하라·상점 약 칸. C.223 부터 원정·전투 전용 회복 물건(100%, GDD 144장), 방에서는 안 쓴다 */
 export const HP_POTION_ID = 'w-hp-potion';
 
 /** 지금 홈 체력: 비율(0~상한)·상한(빈사 10%)·빈사·온천에 있나 */

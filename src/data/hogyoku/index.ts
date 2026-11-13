@@ -9,8 +9,8 @@ import type { HogyokuTrackId } from '../../engine/transcend';
 export const HOGYOKU_MATERIAL_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '고순도 윤활제', shard: '혼백 여과기', essence: '영압 결정' };
 /** 강화 트랙 이름 (사용자 2026-11-12): 세공 · 정제 · 주입 */
 export const HOGYOKU_TRACK_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '세공', shard: '정제', essence: '주입' };
-/** 얻는 곳 한 줄 (GDD 12-3 v6.015: 사냥 + 떠돌이 상인뿐) */
-export const HOGYOKU_MATERIAL_SOURCE = '사냥(모험 전투 승리 드롭 — 강적·보스는 확정) · 떠돌이 상인 · 특수던전(주간던전·보스전)';
+/** 얻는 곳 한 줄 (GDD 12-3 v6.015: 사냥 + 우라하라뿐) */
+export const HOGYOKU_MATERIAL_SOURCE = '사냥(모험 전투 승리 드롭 — 강적·보스는 확정) · 우라하라 · 특수던전(주간던전·보스전)';
 
 /** 개발 단계 이름 (i = 개발 % (i+1)×10% 구간). provisional */
 export const HOGYOKU_STEP_NAMES: readonly string[] = [

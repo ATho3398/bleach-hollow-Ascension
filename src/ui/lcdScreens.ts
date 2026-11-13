@@ -643,7 +643,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
   // 잠긴 칸 (GDD 243장 2): 전투 소모품 = 3단계 · 출정품 = 첫 환생 — 빈 칸이면 '상점에서 사면…' 대신 잠김 한 줄(자물쇠)만
   const gate = mode !== 'items' ? null : itemsUi.group === 'battle' ? 'battleItem' as const : itemsUi.group === 'sortie' ? 'sortie' as const : null;
   const lockedEmpty = gate !== null && !gateOpen(save, gate) && cards.length === 0;
-  const empty = lockedEmpty ? gateHint(faction, gate!) : mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  const empty = lockedEmpty ? gateHint(faction, gate!) : mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·우라하라에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (mode === 'items') box.append(tabs);
   if (mode === 'items' && itemsUi.group === 'sortie' && !lockedEmpty) box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)

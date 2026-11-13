@@ -283,7 +283,7 @@ export function shopVisible(c: CosmeticItemDef, owned: readonly string[], files:
   return deviceArt(c, files) !== null && (c.source === 'shop' || owned.includes(c.id));
 }
 
-// ── 떠돌이 상인 특별 품목 (GDD 85장 5번, C.140 provisional): 상인만 판다. 가격·효과량은 balance.ts provisional.wanderer.items ──
+// ── 우라하라 특별 품목 (GDD 85장 5번, C.140 provisional): 상인만 판다. 가격·효과량은 balance.ts provisional.wanderer.items ──
 export const WANDERER_GRADES = ['normal', 'rare', 'epic', 'legendary'] as const;
 export type WandererGrade = (typeof WANDERER_GRADES)[number];
 export const WANDERER_GRADE_NAMES: Record<WandererGrade, string> = { normal: '보통', rare: '희귀', epic: '영웅', legendary: '전설' };
@@ -312,7 +312,7 @@ function parseWanderer(r: unknown): WandererItemDef {
   if (w.kind === 'food' && !(FOOD_IDS as readonly unknown[]).includes(w.food)) errors.push('food');
   if (w.kind === 'hogyokuMat' && !(HOGYOKU_TRACK_IDS as readonly unknown[]).includes(w.material)) errors.push(`material: ${HOGYOKU_TRACK_IDS.join(' | ')}`);
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(w.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
-  if (errors.length) throw new Error(`떠돌이 상인 품목 데이터 오류 (${String(w.id ?? '?')}): ${errors.join(', ')}`);
+  if (errors.length) throw new Error(`우라하라 품목 데이터 오류 (${String(w.id ?? '?')}): ${errors.join(', ')}`);
   return { id: w.id as string, name: w.name as string, grade: w.grade as WandererGrade, kind: w.kind as WandererKind, ...(w.food ? { food: w.food as FoodId } : {}), ...(w.material ? { material: w.material as HogyokuTrackId } : {}), category: w.category as ItemCategory };
 }
 

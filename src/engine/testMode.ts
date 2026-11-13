@@ -508,7 +508,7 @@ export function testEvolveNext(save: SaveData, nowMs: number = Date.now()): Evol
 
 export const TEST_ITEM_KINDS = ['gear', 'wanderer', 'consumable', 'food', 'cosmetic', 'currency'] as const;
 export type TestItemKind = (typeof TEST_ITEM_KINDS)[number];
-export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '떠돌이 상인 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
+export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '우라하라 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
 /** 재화 id → 세이브 자리 (골드 = tradeCoins) */
 export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
 export type TestCurrency = (typeof TEST_CURRENCIES)[number];
@@ -584,7 +584,7 @@ function addCapped(sh: SaveData['shared'], key: 'rerollTickets', n: number, cap:
   return add;
 }
 
-// ── 장비 전부 (GDD 112장 3): 종류(gear.json kinds) × 특수 효과(specials) — 상점(노말 종류별)·떠돌이 상인(레어~전설 무작위 종류) 장비도 이 조합 안에 든다 ──
+// ── 장비 전부 (GDD 112장 3): 종류(gear.json kinds) × 특수 효과(specials) — 상점(노말 종류별)·우라하라(레어~전설 무작위 종류) 장비도 이 조합 안에 든다 ──
 
 /** 장비 품목 id: 종류만 = "weapon"(영웅·전설이면 특수 효과 무작위) · 특수 효과 지정 = "weapon:sp-shield" */
 export function testGearIds(): string[] {
@@ -629,7 +629,7 @@ export function createTestGearAll(save: SaveData, o: { grade: GearGrade; plus: n
   return made;
 }
 
-/** 떠돌이 상인 물건 하나를 공짜로: 그 물건 한 칸짜리 상인을 잠깐 세워 진짜 구매 효과(buyWandererItem)를 그대로 낸 뒤 상인·골드·구매 기록을 되돌린다 */
+/** 우라하라 물건 하나를 공짜로: 그 물건 한 칸짜리 상인을 잠깐 세워 진짜 구매 효과(buyWandererItem)를 그대로 낸 뒤 상인·골드·구매 기록을 되돌린다 */
 function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: () => number): boolean {
   if (!WANDERER_ITEMS.some((w) => w.id === itemId)) return false;
   const w = save.shared.wanderer;
@@ -642,12 +642,12 @@ function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: 
   return r.ok;
 }
 
-// ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다 — 떠돌이 상인 · 돌봄 요청 · 대기 보상 · 원정 이벤트 타일·바퀴 변이 ──
+// ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다 — 우라하라 · 돌봄 요청 · 대기 보상 · 원정 이벤트 타일·바퀴 변이 ──
 
-/** 떠돌이 상인 단계 수 (숨은 티어 1~n) */
+/** 우라하라 단계 수 (숨은 티어 1~n) */
 export const TEST_WANDERER_TIERS = BALANCE.provisional.wanderer.tierWeights.length;
 
-/** 떠돌이 상인을 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
+/** 우라하라를 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
 export function testCallWanderer(save: SaveData, tier: number, nowMs: number = Date.now(), rand: () => number = Math.random): WandererVisit {
   const w = save.shared.wanderer;
   const t = Math.max(1, Math.min(TEST_WANDERER_TIERS, Math.floor(tier) || 1));

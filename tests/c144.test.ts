@@ -128,7 +128,7 @@ describe('90장 효과 (원정)', () => {
     expect(shieldOf({ id: 'pet-guard', level: 5 })).toBeCloseTo(0.08);
   });
 
-  it('pet-seek: 떠돌이 상인 바퀴 확률 ×1.25, 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
+  it('pet-seek: 우라하라 바퀴 확률 ×1.25, 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
     const roll = (mult: number) => {
       const w = newWandererState();
       w.lapsSince = 99;
@@ -201,7 +201,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'get', source: 'rebirth' });
   });
 
-  it('떠돌이 상인 전설 품목 w-pet-egg: 안 가진 펫 1마리, 다 가졌으면 못 삼', () => {
+  it('우라하라 전설 품목 w-pet-egg: 안 가진 펫 1마리, 다 가졌으면 못 삼', () => {
     expect(getWandererItem('w-pet-egg')).toMatchObject({ grade: 'legendary', kind: 'pet', category: 'pet' });
     const s = newSaveData('shinigami', 1);
     s.shared.tradeCoins = 5000;

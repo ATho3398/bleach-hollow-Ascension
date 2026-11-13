@@ -392,8 +392,8 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     return card;
   });
   const empty = ui.tab === 'pet'
-    ? (petOpen ? '아직 펫이 없다. 모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : gateHint(faction, 'pet'))
-    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
+    ? (petOpen ? '아직 펫이 없다. 모험 바퀴 끝 보상·우라하라에게서 얻는다.' : gateHint(faction, 'pet'))
+    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·우라하라에게서 얻는다.';
   const grid = itemGrid(gearCards, empty);
   grid.classList.add('bha-itemgrid--equip');
 

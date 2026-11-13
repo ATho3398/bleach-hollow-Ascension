@@ -1,4 +1,4 @@
-// C.288 proof (GDD 183장 화면 E, 코딩203): 리디자인 v2 — 가방(탭 7개·장비)·상점 4곳·떠돌이 상인·상세 창·걷기 가방(회복 물건) 두 종족 캡처.
+// C.288 proof (GDD 183장 화면 E, 코딩203): 리디자인 v2 — 가방(탭 7개·장비)·상점 4곳·우라하라·상세 창·걷기 가방(회복 물건) 두 종족 캡처.
 // 화면마다 LCD 안 글자 넘침(가로 잘림) 개수와 상점 카드 열 수·장비 칸 크기·글자 최소 크기도 잰다. 테스트 모드(?test=1, 튜토리얼 없음).
 // 캡처 1배 844×390 docs/captures/c288/ (C288_OUT 로 바꿈). 실행: node scripts/c288-proof.cjs (C288_URL=<주소>, C288_FACTIONS=0,1)
 const { spawn } = require('node:child_process');
@@ -90,8 +90,8 @@ const measure = () => {
       await wait(300);
       await page.getByRole('button', { name: '시작', exact: true }).click();
       await wait(2500);
-      // 떠돌이 상인 부르기 (테스트 패널 불러오기)
-      await step('떠돌이 상인 부르기', async () => {
+      // 우라하라 부르기 (테스트 패널 불러오기)
+      await step('우라하라 부르기', async () => {
         await page.getByRole('button', { name: '더보기' }).first().click();
         await wait(300);
         await page.locator('.bha-homedock__tray').getByRole('button', { name: '테스트' }).first().click();
@@ -104,7 +104,7 @@ const measure = () => {
         await wait(600);
         await toRoom();
       });
-      // ── 상점 4곳 + 떠돌이 상인 ──
+      // ── 상점 4곳 + 우라하라 ──
       const toMarket = async () => {
         await page.locator('.bha-prop--outside').first().click();
         await wait(900);

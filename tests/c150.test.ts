@@ -173,7 +173,7 @@ describe('91장 전투 효과 (능력치·치명·특수 효과)', () => {
   });
 });
 
-describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', () => {
+describe('91장 얻는 법 (원정 드롭·기본 상점·우라하라)', () => {
   const run = (seed: number, gearDrops: boolean) => {
     const e = createExpedition({ factionId: 'hollow', seed, hunger: 0, condition: 80, deck: ['prey-nest-a', 'elite-den-a', 'prey-nest-a'], gearDrops });
     walkLap(e);
@@ -217,7 +217,7 @@ describe('91장 얻는 법 (원정 드롭·기본 상점·떠돌이 상인)', ()
     expect(save.shared.tradeCoins - coins).toBeGreaterThanOrEqual(GX.sellGold.epic!);
   });
 
-  it('기본 상점 장비 탭 = 노말 종류별 4개(★ = 권장) · 떠돌이 상인 = 레어·영웅·전설', () => {
+  it('기본 상점 장비 탭 = 노말 종류별 4개(★ = 권장) · 우라하라 = 레어·영웅·전설', () => {
     const s = newSaveData('hollow', 0);
     const rows = goldRows(s, H).filter((r) => getGoldItem(r.id)?.kind === 'gear');
     expect(rows.map((r) => [r.name, r.price])).toEqual([['노멀 무기', GX.shopPrice], ['노멀 방어구', GX.shopPrice], ['노멀 신발', GX.shopPrice], ['노멀 장신구', GX.shopPrice]]);

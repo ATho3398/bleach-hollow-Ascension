@@ -149,7 +149,7 @@ describe('C.425 붕옥 용어·얻는 곳 (GDD v6.015)', () => {
     expect(rollHogyokuDrops([], 1, 2).soul).toBe(2); // 폭풍 강적 추가분 = 첫 재료
   });
 
-  it('떠돌이 상인: 재료 묶음 3종을 골드로 판다 → 보유 + 런 로그 wanderer', async () => {
+  it('우라하라: 재료 묶음 3종을 골드로 판다 → 보유 + 런 로그 wanderer', async () => {
     const { buyWandererItem } = await import('../src/shop');
     const { WANDERER_ITEMS } = await import('../src/data/shop');
     expect(WANDERER_ITEMS.filter((w) => w.kind === 'hogyokuMat').map((w) => w.material)).toEqual(['soul', 'shard', 'essence']);

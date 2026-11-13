@@ -1,6 +1,6 @@
 // 상점 (GDD 25-9, S-16 C.60): 시장 안 상점 4곳(GDD 150장 1·2, C.227 — 소모품·장비·스킨·특성, 이름은 종족 설정 market.props). 각 상점은 자기 탭만. 머리 = 가진 골드·영옥 + [골드]/[영옥] 탭. 줄마다 이름·효과 한 줄·가격·[사기]
 // (모자라면 잠김 + "골드 n 부족"). 영옥 품목과 배치 칸만 확인 창 1번, 나머지는 바로 산다. C.140 (GDD 86장 4번): 산 꾸밈·스킨은 보관함에서 착용(여기선 "보유").
-// 떠돌이 상인(GDD 85장 5번)은 장터의 따로 된 창(mode 'wanderer', C.201 GDD 127장 2) — 같은 카드 모양, 티어는 숨김(품목 등급만).
+// 우라하라(GDD 85장 5번)은 장터의 따로 된 창(mode 'wanderer', C.201 GDD 127장 2) — 같은 카드 모양, 티어는 숨김(품목 등급만).
 // 판정·구매·착용은 src/shop.ts, 화면은 그 결과만 그린다 (종족 분기 없음 — 이름은 종족 설정·데이터).
 import { detachEffectText, getDetachTrait } from '../engine/traitShop';
 import { equipInventoryItem, petNoticeOf, unequipInventoryItem } from '../inventory';
@@ -27,8 +27,8 @@ import { showGuide, tileDrawCard } from './guideView';
 import { markGuideDone } from '../engine/tutorial';
 import { SELL_GROUPS, SELL_GROUP_NAMES, sellEntry, sellNeedsConfirm, sellRows, type SellEntry, type SellGroup } from '../sell';
 
-/** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 특성(GDD 150장 3) + 떠돌이 상인 */
-export type ShopTab = ShopTabId | 'wanderer' | 'sell'; // 'sell' = 팔기 탭 (GDD 236장 1, 모든 상점·떠돌이 상인)
+/** 상점 탭: 아이템 분류 + 약(GDD 102-4: '음식' 옆 칸, 보관함에서는 소모품) + 특성(GDD 150장 3) + 우라하라 */
+export type ShopTab = ShopTabId | 'wanderer' | 'sell'; // 'sell' = 팔기 탭 (GDD 236장 1, 모든 상점·우라하라)
 /** 상점 → 시장 자리 (이름 = 종족 설정 market.props, GDD 150장 2) */
 export const SHOP_SPOT: Record<ShopKind, MarketSpot> = { consumable: 'shop', gear: 'gearShop', skin: 'skinShop', trait: 'traitShop' };
 /** 상점 이름 (종족 설정) */
@@ -63,7 +63,7 @@ export interface ShopHandlers {
   persist: () => void;
   /** 착용이 바뀌었을 때 (옛 호출 호환 — C.140 부터 착용은 보관함) */
   onWear?: () => void;
-  /** 'wanderer' = 장터의 떠돌이 상인 창 (GDD 127장 2, C.201): 떠돌이 상인 품목만, 탭 없음. 없으면 보통 상점(떠돌이 상인 탭은 장터로 옮겨 없음) */
+  /** 'wanderer' = 장터의 우라하라 창 (GDD 127장 2, C.201): 우라하라 품목만, 탭 없음. 없으면 보통 상점(우라하라 탭은 장터로 옮겨 없음) */
   mode?: 'wanderer';
   /** 어느 상점 (GDD 150장 1). 없으면 소모품 상점 */
   kind?: ShopKind;
@@ -186,7 +186,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       return swatchArt(cos.category, color, cos.category === 'tint' ? `var(${cosmeticToken(cos)})` : undefined);
     }
     const gold = getGoldItem(row.id);
-    // 장비 (GDD 91장): 기본 상점 = 그 종류 아이콘(노말), 떠돌이 상인 = 종류 무작위라 물음표 + 등급 색
+    // 장비 (GDD 91장): 기본 상점 = 그 종류 아이콘(노말), 우라하라 = 종류 무작위라 물음표 + 등급 색
     if (gold?.kind === 'gear') return gradeArt(iconArt(GEAR_KIND_ICONS[gold.gearKind!]), 'normal');
     const wi = getWandererItem(row.id);
     if (wi?.kind === 'gear') return gradeArt(iconArt('i-unknown'), wi.grade);
@@ -248,7 +248,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const full = !owned && !row.canBuy && /가득/.test(row.lock ?? '');
     const soldOut = !owned && row.lock === SOLD_OUT_TODAY; // 회복 물건 하루 판매 수 (GDD 145장 4)
     // 목록 = 그림·이름·한 줄(+가격), 수치는 상세 창 (GDD 158장 8)
-    // 남은 구매 수가 정해진 품목은 한 줄 = 'n/m개 구매 가능' (GDD 159장 3·33: 떠돌이 상인 칸마다 1개 · 회복 물건 하루 판매 수)
+    // 남은 구매 수가 정해진 품목은 한 줄 = 'n/m개 구매 가능' (GDD 159장 3·33: 우라하라 칸마다 1개 · 회복 물건 하루 판매 수)
     const daily = shopDailyLeft(save, row.id);
     const left = shopUi.tab === 'wanderer' ? `${(row as { sold?: boolean }).sold ? 0 : 1}/1개 구매 가능` : daily !== null ? `오늘 ${daily}/${healDaily(row.id)}개 구매 가능` : null;
     // 해금 전 품목 (GDD 243장 2): 배지 '잠김' + 한 줄 = 열리는 때 (unlockHintText)
@@ -264,7 +264,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       onClick: () => (owned ? toggleWear(row) : openDetail(row)),
     });
     if (row.grade) c.dataset.grade = row.grade;
-    // 떠돌이 상인 (GDD 189장 엑셀 20): 카드가 4장뿐이라 아래가 비었다 — 큰 카드에 무엇인지 한 줄을 더 보인다
+    // 우라하라 (GDD 189장 엑셀 20): 카드가 4장뿐이라 아래가 비었다 — 큰 카드에 무엇인지 한 줄을 더 보인다
     if (shopUi.tab === 'wanderer') {
       const blurb = shopBlurb(row, faction);
       if (blurb) c.querySelector('.bha-itemcard__name')?.after(h('small', 'bha-card-line bha-itemcard__blurb', blurb));
@@ -361,7 +361,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
         : [...goldRows(save, faction), ...jadeRows(save, faction)].filter((r) => shopTabOf(r.id) === shopUi.tab);
     // 이 상점의 탭만 (GDD 150장 1): 탭이 하나뿐인 상점(장비·스킨·특성)은 탭 줄 없음
     const tabLabel = (id: ShopTab): string => (id === 'sell' ? '팔기' : id === 'wanderer' ? '사기' : id === 'medicine' ? MEDICINE_NAME : id === 'trait' ? '특성' : id === 'consumable' ? BATTLE_ITEMS_NAME : ITEM_CATEGORY_NAMES[id]);
-    // [팔기] 탭은 모든 상점 끝에 (GDD 236장 1) — 탭이 하나뿐이던 상점(장비·스킨·특성)·떠돌이 상인도 이제 탭 줄이 생긴다
+    // [팔기] 탭은 모든 상점 끝에 (GDD 236장 1) — 탭이 하나뿐이던 상점(장비·스킨·특성)·우라하라도 이제 탭 줄이 생긴다
     const tabIds: ShopTab[] = only ? ['wanderer', 'sell'] : [...kindTabs, 'sell'];
     const cats = tabIds.map((id) => ({ id, icon: id === 'sell' ? CUR_ICON.gold : id === 'wanderer' ? undefined : TAB_ICON[id], label: tabLabel(id) }));
     const tabs = categoryTabs(cats, shopUi.tab, (id) => {
@@ -383,19 +383,19 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
       }, '스킨 종류', true)
       : null;
     const shown = shopUi.tab === 'skin' ? skinRows.filter((r) => skinSubOf(r.category) === shopUi.skinSub) : rows;
-    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '떠돌이 상인이 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
+    const empty = shopUi.tab === 'equipment' ? '지금 파는 장비가 없다.' : shopUi.tab === 'wanderer' ? (save.shared.wanderer.visit ? '오늘은 더 살 것이 없다.' : '우라하라가 떠났다.') : shopUi.tab === 'skin' ? SKIN_SUB_EMPTY : shopUi.tab === 'trait' ? '지금 파는 특성이 없다.' : '지금 파는 물건이 없다.';
     const sellParts = shopUi.tab === 'sell' ? sellBody() : null;
     const grid = sellParts ? sellParts[2]! : itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [(() => {
-        const p = h('p', 'bha-shop__note', '특별한 물건은 떠돌이 상인만 판다. 다음 모험에서 돌아오면 떠난다.');
+        const p = h('p', 'bha-shop__note', '특별한 물건은 우라하라만 판다. 다음 모험에서 돌아오면 떠난다.');
         if (WANDERER_PROVISIONAL) p.append(' ', provisionalTag('임시 품목'));
         return p;
       })()]
       : shopUi.tab === 'trait'
         ? [traitNote()]
         : sellParts ? sellParts.slice(0, 2) : [];
-    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '떠돌이 상인' : shopName(faction, kind), aside: [wallet] }), [tabs, ...(subTabs ? [subTabs] : []), ...note, grid], []);
+    const page = lcdPage(root, { cls: 'bha-shop bha-shop--cards', cols: 'minmax(0, 1fr)' }, lcdHead({ title: only ? '우라하라' : shopName(faction, kind), aside: [wallet] }), [tabs, ...(subTabs ? [subTabs] : []), ...note, grid], []);
     page.app.dataset.tab = shopUi.tab;
     page.app.dataset.shop = only ? 'wanderer' : kind;
     grid.scrollTop = lastScroll;

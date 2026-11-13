@@ -54,7 +54,7 @@
 .bha-shop__wallet .bha-chip--jade .bha-icon { color: var(--bha-tint-violet); }
 .bha-shop__wallet .bha-num { color: var(--bha-text-1); }
 .bha-shop .bha-itemgrid { grid-auto-rows: minmax(122px, auto); }
-/* 떠돌이 상인 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
+/* 우라하라 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
 .bha-shop[data-shop="wanderer"] .bha-itemgrid { grid-auto-rows: minmax(186px, auto); }
 .bha-shop[data-shop="wanderer"] .bha-itemcard { gap: var(--bha-sp-2); }
 .bha-shop[data-shop="wanderer"] .bha-itemcard__art { width: 64px; height: 64px; }

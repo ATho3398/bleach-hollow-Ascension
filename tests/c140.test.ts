@@ -1,4 +1,4 @@
-// C.140 (GDD 85장 4·5·6·11번, 86장 4·5번, 88장 7번): 에스파다 1~10 칭호 · 떠돌이 상인 · 대기 모드 · 배치 프리셋(덱 삭제) · 보관함
+// C.140 (GDD 85장 4·5·6·11번, 86장 4·5번, 88장 7번): 에스파다 1~10 칭호 · 우라하라 · 대기 모드 · 배치 프리셋(덱 삭제) · 보관함
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
@@ -45,7 +45,7 @@ describe('85장 4번 칭호 도감 에스파다 No.1~10', () => {
   });
 });
 
-describe('85장 5번 떠돌이 상인', () => {
+describe('85장 5번 우라하라', () => {
   it('바퀴마다 가중: 앞 바퀴는 거의 0, 평균 30~50바퀴, 30바퀴 안에 올 확률은 절반 미만', () => {
     expect(wandererChance(1)).toBeLessThan(0.002);
     expect(wandererChance(10)).toBeCloseTo(WX.perLap * 10);

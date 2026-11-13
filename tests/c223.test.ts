@@ -25,7 +25,7 @@ describe('144장 1: 회복 물건 4종', () => {
     expect(HEAL_ITEM_IDS.map((id) => getGoldItem(id)?.name)).toEqual(['반창고', '붕대', '회복약', '치료제']);
     const BI = BALANCE.provisional.battleItems;
     expect(HEAL_ITEM_IDS.map((id) => { const b = BI[id]!; return b.effect === 'heal' ? [b.fraction, b.price, b.daily] : null; })).toEqual([[0.1, 20, 5], [0.25, 50, 3], [0.5, 110, 2], [1, 320, 1]]);
-    expect(getWandererItem('w-hp-potion')?.name).toBe('치료제'); // 떠돌이 상인도 그대로 판다
+    expect(getWandererItem('w-hp-potion')?.name).toBe('치료제'); // 우라하라도 그대로 판다
   });
   it("'체력 포션' 이름이 화면·도움말·튜토리얼에 없다", () => {
     for (const p of ['src/data/shop/items.json', 'src/data/shop/wanderer.json', 'src/data/help/tutorial.json', 'src/data/help/glossary.json', 'src/shop.ts', 'src/inventory.ts']) expect(read(p), p).not.toContain('체력 포션');

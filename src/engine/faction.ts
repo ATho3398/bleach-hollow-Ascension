@@ -155,8 +155,8 @@ export interface SpecialLookDef {
 
 export const WORLD_PLACES = ['home', 'market', 'rank', 'adventure', 'tower', 'spa'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
-/** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
-/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
+/** 장터 안 자리 (GDD 127장 2): 온천·상점 + 우라하라(와 있을 때만 서 있다) */
+/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 우라하라(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
 export const MARKET_SPOTS = ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer'] as const;
 export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
@@ -351,14 +351,14 @@ export const DEFAULT_MARKET: MarketConfig = {
   shopsLabel: '상점',
   shape: 'market',
   sceneArt: 'scene.market',
-  props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
+  props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '우라하라' },
   // 바닥 = 장면 30% 아래 전부 (GDD 155장 1 — 화면 전체를 쓰게 옛 50% 에서 올림)
   floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
   // 방처럼 장면 곳곳에 (GDD 158장 3): 뒤(위)는 작게, 앞(아래)은 크게 — 앞뒤 깊이로 화면 전체를 쓴다. 왼쪽 앞 = 월드맵 물건(exit, 방과 같은 자리).
-  // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 떠돌이 상인은 와 있을 때만 가운데
+  // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 우라하라는 와 있을 때만 가운데
   layout: {
     shop: { x: 40.3, y: 79, scale: 0.9 }, gearShop: { x: 54.7, y: 39.5, scale: 0.88 }, skinShop: { x: 80.8, y: 41.6, scale: 1.01 },
-    // 사용자 2026-11-03: 특성 상점 ×0.8 · 떠돌이 상인 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
+    // 사용자 2026-11-03: 특성 상점 ×0.8 · 우라하라 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
     traitShop: { x: 88.2, y: 85.2, scale: 1.15 }, smith: { x: 64.9, y: 84.1, scale: 1.23 },
     spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 19.8, y: 45.5, scale: 1.05 }, // 자리·크기 = 사용자가 UI 배치 도구로 호로 기준 잡은 값, 두 종족 공통 (2026-11-03 11:02, C.263)
   },

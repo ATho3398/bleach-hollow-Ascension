@@ -1,6 +1,6 @@
 // 테스트 패널 (GDD 38-4, C.88): 독 [더보기] → [테스트] (테스트 모드에서만). 탭 = 진화체 · 진화 · 능력치 · 특성 · 아이템 · 스킨 · 바로 전투 · 둥지·시간.
 // C.181 (GDD 109장 7): 진화(다음 진화 바로 + 연출)·아이템 생성·스킨 끼워보기 탭, 시간 앞당기기 +10분·+1시간·+1일.
-// C.186 (GDD 112장): '불러오기' 탭(떠돌이 상인·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이), 아이템 생성 = 장비 종류 × 특수 효과 전부·떠돌이 상인 물건, 오른쪽 [테스트 모드 끄기](확인 창).
+// C.186 (GDD 112장): '불러오기' 탭(우라하라·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이), 아이템 생성 = 장비 종류 × 특수 효과 전부·우라하라 물건, 오른쪽 [테스트 모드 끄기](확인 창).
 // 목록(종족·진화체·특성·적·보스·★·탑 층)은 모두 데이터에서 읽는다. 값을 바꾸면 persist 로 테스트 칸에만 저장된다.
 import { FACTIONS } from '../data/factions';
 import { formName, FORM_TABLE, abilityName } from '../data/evolution';
@@ -161,9 +161,9 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '리스크·허기·컨디션', value: [save.nest.risk, save.nest.hunger, save.nest.condition].map((v) => Math.round(v)).join(' · ') }, // 소수 꼬리(20.00001…) 대신 정수 (C.182 UI 검수)
     { label: '속도', value: `×${testSpeed()}` },
   ]));
-  // 떠돌이 상인 물건 (GDD 112장 2): 길이가 바뀌는 글이라 오른쪽 맨 아래 따로 (버튼 없는 칸 — 불러오기 탭 버튼이 안 움직이게)
+  // 우라하라 물건 (GDD 112장 2): 길이가 바뀌는 글이라 오른쪽 맨 아래 따로 (버튼 없는 칸 — 불러오기 탭 버튼이 안 움직이게)
   const visitNow = save.shared.wanderer.visit;
-  const stockPanel = visitNow ? [panel({ title: '떠돌이 상인 물건', aside: `${visitNow.tier}단계` }, note(visitNow.stock.map((st) => `${getWandererItem(st.itemId)?.name ?? st.itemId}${st.sold ? ' (팔림)' : ''}`).join(' · ')))] : [];
+  const stockPanel = visitNow ? [panel({ title: '우라하라 물건', aside: `${visitNow.tier}단계` }, note(visitNow.stock.map((st) => `${getWandererItem(st.itemId)?.name ?? st.itemId}${st.sold ? ' (팔림)' : ''}`).join(' · ')))] : [];
 
   let body: Node[];
   if (tab === 'form') body = formTab();
@@ -365,8 +365,8 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [panel({ title: '아이템 생성', aside: TEST_ITEM_KIND_NAMES[kindSel.value as TestItemKind] }, g, row(make, all),
-      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 떠돌이 상인 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
-      note('떠돌이 상인 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·붕옥 재료는 상한이 없다.'))];
+      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 우라하라 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
+      note('우라하라 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·붕옥 재료는 상한이 없다.'))];
   }
 
   // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족 스킨·꾸밈 전부 착용·해제 ──
@@ -496,19 +496,19 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       showToast({ eyebrow: '테스트', title: msg, meta }, 0, 1800);
       redraw();
     };
-    // 떠돌이 상인 (GDD 85장 5번): 숨은 단계 1~n → 그 단계 등급표로 물건을 뽑는다
+    // 우라하라 (GDD 85장 5번): 숨은 단계 1~n → 그 단계 등급표로 물건을 뽑는다
     const visit = save.shared.wanderer.visit;
     const tierSel = select(Array.from({ length: TEST_WANDERER_TIERS }, (_, i) => ({ value: String(i + 1), label: `${i + 1}단계` })), String(visit?.tier ?? lastCall.tier), '상인 단계');
     const callW = button({ label: '지금 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       lastCall = { ...lastCall, tier: Number(tierSel.value) };
       testCallWanderer(save, lastCall.tier);
-      done('떠돌이 상인을 불렀다', '밖으로 → 시장 → [떠돌이 상인]에서 산다. 다음 모험에서 돌아오면 떠난다.');
+      done('우라하라를 불렀다', '밖으로 → 시장 → [우라하라]에서 산다. 다음 모험에서 돌아오면 떠난다.');
     } });
     const rerollW = button({ label: '물건 다시 뽑기', icon: 'i-loop', disabled: !visit, onClick: () => {
       if (testRerollWanderer(save)) done('물건을 다시 뽑았다', '팔린 칸도 새로 채운다.');
     } });
     const sendW = button({ label: '보내기', icon: 'i-quit', disabled: !visit, onClick: () => {
-      if (testSendWanderer(save)) done('떠돌이 상인을 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
+      if (testSendWanderer(save)) done('우라하라를 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
     } });
     // 돌봄 요청 (GDD 82장)
     const care = save.nest.careRequest;
@@ -544,7 +544,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     const forced = [force.eventTile ? tileName(force.eventTile, fid) : null, force.mutation ? mutationName(force.mutation, fid) : null].filter(Boolean).join(' · ');
     return [
-      panel({ title: '떠돌이 상인', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel.el]]), row(callW, rerollW, sendW),
+      panel({ title: '우라하라', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel.el]]), row(callW, rerollW, sendW),
         note('단계가 높을수록 영웅·전설 물건이 잘 나온다. 와 있으면 새 상인으로 바꾼다. 물건 목록은 오른쪽 맨 아래에 보인다.')),
       panel({ title: '돌봄 요청', aside: care ? `${faction.nestActions[care.action]} 요청 중` : '없음' }, grid([['요청', careSel.el]]), row(callC, clearC),
         note(save.nest.dead ? '사망 상태에서는 요청이 오지 않는다.' : '방 아래 독 버튼에 요청 표시가 붙는다.')),

@@ -1,6 +1,6 @@
 // C.284 proof (GDD 183장 화면 A, 코딩199): 리디자인 v2 — 방 · 월드맵 · 시장 · 온천 두 종족 캡처.
 // 방(첫 초점) · 방 책장 초점 · 방 더보기 펼침 · 뼈 껍데기 꾸미기 방 · 월드맵 · 시장 · 온천(가득) +
-// 세이브를 고쳐(떠돌이 상인 와 있음 · 체력 50%) 월드맵 '상인' 배지 · 시장 '왔다' 배지 · 온천(차오르는 중) · 빈사 방(상태이상 칩) · 사망 방([부활]).
+// 세이브를 고쳐(우라하라 와 있음 · 체력 50%) 월드맵 '상인' 배지 · 시장 '왔다' 배지 · 온천(차오르는 중) · 빈사 방(상태이상 칩) · 사망 방([부활]).
 // 화면마다 LCD 안 글자 넘침 개수도 센다. 캡처 1배 844×390 docs/captures/c284/
 // 실행: node scripts/c284-proof.cjs (C284_URL=<주소>, C284_FACTIONS=0,1)
 const { spawn } = require('node:child_process');
@@ -135,7 +135,7 @@ const sizeAudit = () => {
         await wait(1200);
         await shot('5-spa-full');
       });
-      // 떠돌이 상인 와 있음 · 체력 50% (온천에서 차오르는 중)
+      // 우라하라 와 있음 · 체력 50% (온천에서 차오르는 중)
       await step('상인·체력 50%', async () => {
         await toRoom();
         await editSave(`s.shared.wanderer.visit = { at: Date.now(), runId: 0, tier: 1, stock: [{ itemId: 'w-snack-crate', price: 10, sold: false }] }; s.nest.hpFraction = 0.5; s.nest.hpAt = Date.now();`);

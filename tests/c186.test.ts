@@ -1,4 +1,4 @@
-// C.186 (GDD 112장): 테스트 모드 불러오기 — 떠돌이 상인·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이, 장비 종류 × 특수 효과 전부·떠돌이 상인 물건
+// C.186 (GDD 112장): 테스트 모드 불러오기 — 우라하라·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이, 장비 종류 × 특수 효과 전부·우라하라 물건
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { GEAR_KINDS, GEAR_SPECIALS } from '../src/data/gear';
@@ -49,7 +49,7 @@ describe('112장 3 장비 전부', () => {
   });
 });
 
-describe('112장 3 떠돌이 상인 물건', () => {
+describe('112장 3 우라하라 물건', () => {
   it('품목 = 상인 물건 전부, 공짜로 효과만 (상인·골드·구매 기록 그대로)', () => {
     expect(testItemIds('wanderer')).toEqual(WANDERER_ITEMS.map((w) => w.id));
     const s = newTestSave(fid);
@@ -66,7 +66,7 @@ describe('112장 3 떠돌이 상인 물건', () => {
 });
 
 describe('112장 2 불러오기', () => {
-  it('떠돌이 상인: 단계 고르기 → 부르기 · 다시 뽑기 · 보내기 (런 로그 arrive·leave)', () => {
+  it('우라하라: 단계 고르기 → 부르기 · 다시 뽑기 · 보내기 (런 로그 arrive·leave)', () => {
     const s = newTestSave(fid);
     expect(testRerollWanderer(s)).toBe(false);
     expect(testSendWanderer(s)).toBe(false);

@@ -53,7 +53,7 @@ function restoreRooms(): void {
   });
 }
 
-/** 보기용 세이브 (종족마다 하나): 새 세이브 + 떠돌이 상인이 와 있는 상태(시장에 자리가 보이게) */
+/** 보기용 세이브 (종족마다 하나): 새 세이브 + 우라하라가 와 있는 상태(시장에 자리가 보이게) */
 const sampleSaves = new Map<string, SaveData>();
 function sampleSave(factionId: string): SaveData {
   let s = sampleSaves.get(factionId);

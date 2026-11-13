@@ -1,5 +1,5 @@
 // C.239 (GDD 159장): UI 검수 1차 반영 — 원정 → 모험 문구 통일, 가방 소모품 탭(음식·약·전투 소모품)·스킨 위 탭, 상점 약/전투 소모품 탭,
-// 목록 한 줄 효과, 떠돌이 상인 n/1개 구매 가능, 설정 공통/슬롯 나누기 삭제, 방 상태 창 한 줄, 쟁탈전 목록, 탑 배율 ⓘ
+// 목록 한 줄 효과, 우라하라 n/1개 구매 가능, 설정 공통/슬롯 나누기 삭제, 방 상태 창 한 줄, 쟁탈전 목록, 탑 배율 ⓘ
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -104,7 +104,7 @@ describe('159장 3·28·31~35: 상점 · 전투 소모품 상세', () => {
     s.shared.unlocks.tiles = 0;
     expect(goldRows(s, H).find((r) => r.id === 'deck-slot')!.lock).toBe('가득');
   });
-  it('떠돌이 상인: 칸 한 줄 n/1개 구매 가능, 칸마다 하나씩 문구 없음, 장비 이름에 (레어) 없음', () => {
+  it('우라하라: 칸 한 줄 n/1개 구매 가능, 칸마다 하나씩 문구 없음, 장비 이름에 (레어) 없음', () => {
     const v = read('src/ui/shopView.ts');
     expect(v).toContain('개 구매 가능');
     expect(v).not.toContain('칸마다 하나씩');

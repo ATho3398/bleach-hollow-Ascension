@@ -1,7 +1,7 @@
 // 상점 1차 (GDD 25-9, S-16 C.60): 줄 상태(가격·잠김 이유·보유·착용)·구매·꾸밈 착용·다시 뽑기권 사용. 종족 무관 —
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts shop(확정), 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // C.140 (GDD 86장 4번): 산 것은 보관함으로 — 먹이 = 먹이 개수 +1, 정화제·각성제 = 보관함 소모품 +1(보관함에서 씀, inventory.ts), 수련권 = 지금 트랙 +1, 타일 = 보관함 +1,
-// 꾸밈·스킨 = 보유만(끼기는 보관함). 떠돌이 상인(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
+// 꾸밈·스킨 = 보유만(끼기는 보관함). 우라하라(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
 import { sortieEffectText, sortiePrice } from './engine/sortie';
 import { gateHint, gateOpen, type GateId } from './unlockGate';
@@ -430,7 +430,7 @@ export function useRerollTicket(save: SaveData): boolean {
   return true;
 }
 
-// ── 떠돌이 상인 (GDD 85장 5번, C.140): 와 있는 동안 품목 칸마다 한 개씩, 골드로. 티어는 보이지 않는다(품목 등급만) ──
+// ── 우라하라 (GDD 85장 5번, C.140): 와 있는 동안 품목 칸마다 한 개씩, 골드로. 티어는 보이지 않는다(품목 등급만) ──
 
 /** 상인 품목 효과 한 줄 */
 export function wandererEffect(itemId: string, faction: FactionConfig): string {
@@ -486,10 +486,10 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   const v = save.shared.wanderer.visit;
   const st = v?.stock.find((x) => x.itemId === itemId);
   const w = getWandererItem(itemId);
-  if (!v || !st || !w) return { ok: false, reason: '상인이 팔지 않는 품목이다' };
+  if (!v || !st || !w) return { ok: false, reason: '우라하라가 팔지 않는 품목이다' };
   if (st.sold) return { ok: false, reason: '이미 팔렸다' };
   const row = wandererRows(save, faction).find((r) => r.id === itemId);
-  if (!row) return { ok: false, reason: '상인이 팔지 않는 품목이다' }; // 아직 안 열린 품목(펫 해금 전 펫 알)
+  if (!row) return { ok: false, reason: '우라하라가 팔지 않는 품목이다' }; // 아직 안 열린 품목(펫 해금 전 펫 알)
   if (!row.canBuy) return { ok: false, reason: row.lock ?? '살 수 없다' };
   const n = wandererAmount(itemId);
   let detail = '';
@@ -538,7 +538,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   return { ok: true, id: itemId, price: st.price, currency: 'gold', detail, ...(tile ? { tile } : {}) };
 }
 
-// ── 장비 (GDD 91장 2번, C.150): 기본 상점 '장비' 탭 = 노말 종류별 1개씩, 떠돌이 상인 = 레어·영웅·전설 (품목 등급 = 장비 등급) ──
+// ── 장비 (GDD 91장 2번, C.150): 기본 상점 '장비' 탭 = 노말 종류별 1개씩, 우라하라 = 레어·영웅·전설 (품목 등급 = 장비 등급) ──
 
 /** 종류별 주 능력치 안내 (GDD 91장 4번) */
 const GEAR_STAT_HINT: Record<string, string> = { weapon: '힘 또는 지능 1줄', armor: '체력·방어 2줄', shoes: '속도 1줄', accessory: '치명·정신력 등 1~2줄' };

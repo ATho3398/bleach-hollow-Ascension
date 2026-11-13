@@ -1,4 +1,4 @@
-// C.204 (GDD 130장): 방 [밖으로] → 월드맵(홈·시장·모험) → 시장(온천·상점·떠돌이 상인). C.215 (137장 3): 스위치·옛 경로 폐기, 이걸로 고정
+// C.204 (GDD 130장): 방 [밖으로] → 월드맵(홈·시장·모험) → 시장(온천·상점·우라하라). C.215 (137장 3): 스위치·옛 경로 폐기, 이걸로 고정
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FACTIONS, getFaction } from '../src/data/factions';
@@ -73,7 +73,7 @@ describe('130장 화면 연결 (app.ts·worldMapView)', () => {
     expect(app).not.toContain("backLabel: '월드맵으로',");
     expect(read('src/ui/marketView.ts')).toContain("propButton({ prop: 'outside', name: room.props.outside, ...mk.exit");
   });
-  it('기기 버튼: ▲▼ = 홈 → 시장 → 모험 → 탑, 첫 선택 = 모험, 떠돌이 상인 배지·사망 잠김은 지도 위', () => {
+  it('기기 버튼: ▲▼ = 홈 → 시장 → 모험 → 탑, 첫 선택 = 모험, 우라하라 배지·사망 잠김은 지도 위', () => {
     expect(wm).toContain('WORLD_PLACES.map((p) => ({ el: btns.get(p)! }))');
     expect(wm).toContain('btns.get(hd.focus ?? at)?.focus('); // C.208 (GDD 132장 2): 첫 선택 = 지금 있던 장소
     expect(wm).toContain("if (p === 'market' && here)");

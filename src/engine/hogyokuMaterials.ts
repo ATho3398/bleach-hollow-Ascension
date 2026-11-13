@@ -17,7 +17,7 @@ export function spendMaterial(save: { shared: Shared }, track: HogyokuTrackId, n
   save.shared[KEY[track]] = (save.shared[KEY[track]] ?? 0) - n;
 }
 
-/** 붕옥 재료를 얻는다 (GDD 12-3 v6.015: 사냥 드롭 'hunt' · 떠돌이 상인 'wanderer'): 붕옥 등장 전에도 쌓인다. 런 로그(slotLog.hogyokuMaterials)에 남긴다 */
+/** 붕옥 재료를 얻는다 (GDD 12-3 v6.015: 사냥 드롭 'hunt' · 우라하라 'wanderer'): 붕옥 등장 전에도 쌓인다. 런 로그(slotLog.hogyokuMaterials)에 남긴다 */
 export function gainHogyokuMaterial(save: Pick<SaveData, 'shared' | 'slotLog' | 'factionId'>, kind: HogyokuTrackId, amount: number, source: HogyokuMaterialRecord['source'], nowMs: number = Date.now()): number {
   const n = Math.max(0, Math.floor(amount));
   if (n <= 0 || !HOGYOKU_TRACK_IDS.includes(kind)) return 0;

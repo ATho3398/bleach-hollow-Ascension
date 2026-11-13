@@ -126,7 +126,7 @@ describe('요청 만들기', () => {
 });
 
 describe('이미 정한 것 빼기', () => {
-  const prior: PriorItem[] = [{ no: 3, screen: '떠돌이 상인', faction: '둘 다', viewpoint: '개발자 말·숫자', problem: "'○ 임시 품목' 점선 표시가 상품 목록 위에 그대로 보인다", mark: 'o' }, { no: 50, screen: '월드맵', faction: '둘 다', viewpoint: '배치', problem: '월드맵 아래쪽에 큰 빈칸이 남아 화면을 다 쓰지 않는다', mark: '' }];
+  const prior: PriorItem[] = [{ no: 3, screen: '우라하라', faction: '둘 다', viewpoint: '개발자 말·숫자', problem: "'○ 임시 품목' 점선 표시가 상품 목록 위에 그대로 보인다", mark: 'o' }, { no: 50, screen: '월드맵', faction: '둘 다', viewpoint: '배치', problem: '월드맵 아래쪽에 큰 빈칸이 남아 화면을 다 쓰지 않는다', mark: '' }];
   it('제외 규칙: 테스트·임시 표시·그림 없음·기기 크기', () => {
     expect(excludedReason(f({ screen: '테스트 패널' }))).toBe('테스트 화면');
     expect(excludedReason(f({ problem: "'임시' 표시가 붙어 있다" }))).toContain('임시');

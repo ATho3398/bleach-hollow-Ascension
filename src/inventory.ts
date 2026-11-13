@@ -361,7 +361,7 @@ export function petEffectText(id: string, level: number): string {
     case 'gold': return `모험 골드 +${pct(petBonus(carry, 'gold'))}`;
     case 'belly': return `모험 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
     case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
-    case 'seek': return `떠돌이 상인 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
+    case 'seek': return `우라하라 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';
   }
 }
@@ -389,7 +389,7 @@ export function choosePet(save: SaveData, id: string | null, nowMs: number = Dat
 export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = petName(rec.petId, faction);
   switch (rec.kind) {
-    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'rebirth' ? '첫 환생 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '모험 바퀴 끝 보상'} · 가방 장비 탭 펫에서 데리고 간다` };
+    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'rebirth' ? '첫 환생 선물' : rec.source === 'wanderer' ? '우라하라' : '모험 바퀴 끝 보상'} · 가방 장비 탭 펫에서 데리고 간다` };
     case 'level': return { eyebrow: '펫', title: `${name} 친밀도 ${rec.level}/${PET_MAX_LEVEL}`, meta: petEffectText(rec.petId, rec.level ?? 1) };
     case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
     default: return null;
@@ -510,7 +510,7 @@ export function sellGearEntry(save: SaveData, uid: string, nowMs: number = Date.
 /** 장비 런 로그 → 알림 문구 (얻음·자동 판매만) */
 export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gearSlotNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = gearName({ grade: rec.grade as GearGrade, kind: rec.gearKind as GearKind }, faction);
-  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '모험 드롭';
+  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '우라하라' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '모험 드롭';
   if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 가방 장비 탭에서 착용` };
   if (rec.kind === 'autoSell') return { eyebrow: '장비', title: `가방 가득 → ${name} 판매`, meta: `골드 +${rec.gold ?? 0}` };
   return null;

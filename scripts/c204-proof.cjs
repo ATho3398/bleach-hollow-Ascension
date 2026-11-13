@@ -1,4 +1,4 @@
-// C.204 (GDD 130장) proof: 방 [밖으로] → 월드맵(홈·시장·모험) → 시장(온천·상점·떠돌이 상인), 기기 버튼·뒤로. 캡처 docs/captures/c204/
+// C.204 (GDD 130장) proof: 방 [밖으로] → 월드맵(홈·시장·모험) → 시장(온천·상점·우라하라), 기기 버튼·뒤로. 캡처 docs/captures/c204/
 // 실행: node scripts/c204-proof.cjs (vite 를 띄운다, C204_URL=<주소> 면 그 주소)
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');

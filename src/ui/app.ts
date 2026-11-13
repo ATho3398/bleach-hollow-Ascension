@@ -417,9 +417,9 @@ export function startApp(host: HTMLElement): void {
   let absence: AbsenceReport | null = null;
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
-  /** 떠돌이 상인 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
+  /** 우라하라 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
   let wandererAnnounced = -1;
-  /** 방에 띄운 떠돌이 상인 도착 알림 — 장터에 들어가면 걷는다 (GDD 127장 3: 장터 안에서는 안 뜨게) */
+  /** 방에 띄운 우라하라 도착 알림 — 장터에 들어가면 걷는다 (GDD 127장 3: 장터 안에서는 안 뜨게) */
   let wandererToast: HTMLElement | null = null;
   /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
   let holdRoomGuides = false;
@@ -1263,7 +1263,7 @@ export function startApp(host: HTMLElement): void {
     window.setTimeout(() => window.clearInterval(timer), 30_000);
   }
 
-  /** 장터 (GDD 127장 2, C.201): 상점·온천·떠돌이 상인이 있는 따로 된 공간. 뒤로 = 방 */
+  /** 장터 (GDD 127장 2, C.201): 상점·온천·우라하라가 있는 따로 된 공간. 뒤로 = 방 */
   function openMarket(faction: FactionConfig, s: SaveData): void {
     const visit = s.shared.wanderer.visit;
     if (visit) wandererAnnounced = visit.at; // 장터에서 이미 봤다 — 방 알림을 다시 띄우지 않는다
@@ -1376,7 +1376,7 @@ export function startApp(host: HTMLElement): void {
       if (!appearCut) notes.push({ eyebrow: '붕옥', title: '붕옥이 나타났다', meta: '방의 붕옥을 누르면 붕옥 화면이 열린다.' });
       s.hogyoku.tabNotice = false;
     }
-    // 떠돌이 상인 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
+    // 우라하라 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
     const visit = s.shared.wanderer.visit;
     if (visit && visit.at !== wandererAnnounced) {
       const mk = marketOf(faction);

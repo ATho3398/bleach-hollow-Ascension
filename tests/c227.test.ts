@@ -27,7 +27,7 @@ describe('150장 1 상점 4개', () => {
 });
 
 describe('150장 2 들어가는 곳', () => {
-  it('시장 자리 = 상점 4곳 + 온천 + 떠돌이 상인, 상점마다 자리 하나', () => {
+  it('시장 자리 = 상점 4곳 + 온천 + 우라하라, 상점마다 자리 하나', () => {
     for (const k of SHOP_KINDS) expect(MARKET_SPOTS as readonly string[]).toContain(SHOP_SPOT[k]);
     expect(new Set(Object.values(SHOP_SPOT)).size).toBe(4);
   });

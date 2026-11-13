@@ -1,4 +1,4 @@
-// C.201 (GDD 127장 2·3·4): 장터(→ 130장 시장) — 온천·상점·떠돌이 상인, 떠돌이 상인 도착 알림(방에서만). C.215: 방 장터 물건 폐기 (137장 3)
+// C.201 (GDD 127장 2·3·4): 장터(→ 130장 시장) — 온천·상점·우라하라, 우라하라 도착 알림(방에서만). C.215: 방 장터 물건 폐기 (137장 3)
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FACTIONS, getFaction } from '../src/data/factions';
@@ -8,7 +8,7 @@ import { marketSpots } from '../src/ui/marketView';
 import { slotLine, slotTitle } from '../src/ui/startView';
 
 describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 137장 3)', () => {
-  it('방에는 장터·상점·온천 물건이 없고, 시장 안 자리 = 온천·상점·떠돌이 상인', () => {
+  it('방에는 장터·상점·온천 물건이 없고, 시장 안 자리 = 온천·상점·우라하라', () => {
     for (const k of ['market', 'shop', 'spa']) expect(ROOM_PROPS as readonly string[]).not.toContain(k);
     expect([...MARKET_SPOTS]).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer']); // GDD 150장 2: 상점 4곳
   });
@@ -21,7 +21,7 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
       expect(['scene.market', `scene.market.${f.id}`]).toContain(marketOf(f).sceneArt);
     }
   });
-  it('떠돌이 상인은 와 있을 때만 시장에 서 있다', () => {
+  it('우라하라는 와 있을 때만 시장에 서 있다', () => {
     const s = newSaveData('hollow');
     expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith']); // 온천은 월드맵 (GDD 153장 1)
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 1, stock: [] };
@@ -36,19 +36,19 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
   });
   it('그림 키 자리: scene.market·prop.market(월드맵 시장)·prop.wanderer (비어 있음 = 임시 배경)', () => {
     const m = readFileSync('src/data/art/manifest.ts', 'utf8');
-    // 2026-11-03 사용자 그림: 월드맵 시장 = prop-market.png, 수레 그림 = 떠돌이 상인(prop-wanderer.webp) — 둘 다 파일 규칙(목록은 빈 칸)
+    // 2026-11-03 사용자 그림: 월드맵 시장 = prop-market.png, 수레 그림 = 우라하라(prop-wanderer.webp) — 둘 다 파일 규칙(목록은 빈 칸)
     for (const k of ['scene.market', 'prop.wanderer', 'prop.market']) expect(m).toContain(`'${k}': {}`);
   });
 });
 
 describe('127장 2·3 화면 연결 (app.ts)', () => {
   const app = readFileSync('src/ui/app.ts', 'utf8');
-  it('월드맵 시장 → 시장 화면, 안의 온천·상점·떠돌이 상인 창 (C.215: 방 장터 물건 폐기)', () => {
+  it('월드맵 시장 → 시장 화면, 안의 온천·상점·우라하라 창 (C.215: 방 장터 물건 폐기)', () => {
     expect(app).toContain("onMarket: () => { worldAt = 'market'; openMarket(faction, s); }");
     expect(app).toContain("open('market', () => marketView(");
     expect(app).toContain("mode: 'wanderer'");
   });
-  it('떠돌이 상인 도착 알림은 방에서만, 장터에 먼저 들어가면 본 것으로', () => {
+  it('우라하라 도착 알림은 방에서만, 장터에 먼저 들어가면 본 것으로', () => {
     expect(app).toContain("if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;");
     expect(app).toMatch(/function openMarket[\s\S]*?if \(visit\) wandererAnnounced = visit\.at;/);
   });
@@ -56,7 +56,7 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
     expect(app).toContain("if (!backLabel) return nestScreen();");
     expect(app).toContain("spaLeaving = true; // 이미 나온 뒤라");
   });
-  it('떠돌이 상인 배지 = 월드맵 시장 (방에는 없음)', () => {
+  it('우라하라 배지 = 월드맵 시장 (방에는 없음)', () => {
     expect(readFileSync('src/ui/worldMapView.ts', 'utf8')).toContain("if (p === 'market' && here)");
     expect(readFileSync('src/ui/roomView.ts', 'utf8')).not.toContain("p === 'market'");
   });

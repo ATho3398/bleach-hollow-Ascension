@@ -511,7 +511,7 @@ export interface RunLog {
   care: CareRecord;
   /** 돌봄 상태 기록 (C.175, 세이브 형식 46, GDD 102장·9장 — 히든 조건용): 쓰러짐(미접속·원정 패배)·사망·부활·약 */
   vitals: VitalRecord[];
-  /** 떠돌이 상인 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
+  /** 우라하라 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
   wanderer: WandererRecord[];
   /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
   idle: IdleRecord[];
@@ -582,7 +582,7 @@ export interface HomeHealRecord {
   tutorial?: boolean;
 }
 
-/** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
+/** 우라하라 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
 export interface WandererRecord {
   at: number;
   factionId: string;
@@ -605,7 +605,7 @@ export interface FeatureUnlockRecord {
   rebirths: number;
 }
 
-/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 옛 첫 진화 선물 · rebirth 첫 환생 선물, GDD 241-0),
+/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 우라하라 · evolution 옛 첫 진화 선물 · rebirth 첫 환생 선물, GDD 241-0),
  *  take = 데리고 감, leave = 두고 감, level = 친밀도 오름(level = 오른 뒤 값), dupGold = 바퀴 끝 보상이 이미 가진 펫이라 골드로 바뀜 */
 export interface PetRecord {
   at: number;
@@ -618,7 +618,7 @@ export interface PetRecord {
   gold?: number;
 }
 
-/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인 · idle 대기 보상 · unlock 장비 해금 때 낡은 장비(GDD 243장 3), from = 드롭한 상대 등급),
+/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 우라하라 · idle 대기 보상 · unlock 장비 해금 때 낡은 장비(GDD 243장 3), from = 드롭한 상대 등급),
  *  equip/unequip = 장착·해제(slot), enhance = 강화(plus = 오른 뒤 단계, gold = 쓴 골드), sell = 판매, autoSell = 보관함이 가득 차 얻자마자 골드로 */
 export interface GearRecord {
   at: number;
@@ -733,7 +733,7 @@ export interface HogyokuMaterialRecord {
   /** 재료 = 강화 트랙 id (soul 고순도 윤활제 · shard 혼백 여과기 · essence 영압 결정). 'soul' 은 C.425 부터 */
   kind: 'soul' | 'shard' | 'essence';
   amount: number;
-  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 떠돌이 상인 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
+  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 우라하라 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
   source: 'hunt' | 'wanderer' | 'weekly' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
   factionId: string;
 }

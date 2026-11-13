@@ -47,7 +47,7 @@ export function foodSellPrice(food: FoodId): number {
   return halfOfShop(`food-${food}`) ?? SL.prices[`food-${food}`] ?? Math.max(1, Math.floor(BALANCE.provisional.nest.foodTypes[foodTypeOf(food)].hunger / 2));
 }
 
-/** 소모품 한 개 판매가: 상점 품목 = 절반, 떠돌이 상인 품목 = 등급 값, 표에 있으면 표 */
+/** 소모품 한 개 판매가: 상점 품목 = 절반, 우라하라 품목 = 등급 값, 표에 있으면 표 */
 export function itemSellPrice(id: string): number {
   const shop = halfOfShop(id);
   if (shop !== null) return shop;
