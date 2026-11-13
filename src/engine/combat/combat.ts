@@ -240,6 +240,8 @@ export interface CombatParams {
   physBlockSpawnSeconds: number;
   /** 타격 지연 (GDD 214장, C.357): 공격 주기는 그대로, 피해만 이 초 뒤 틱에 들어간다 = 그 공격 모션이 닿는 순간. 기본값 balance, 화면이 실제 동작 데이터로 바꾼다 */
   hitDelay: HitDelayParams;
+  /** 몸동작 길이 (GDD 7-2 '빠른 간격의 모션'·'모션 중엔 평타 없음'·'블록 연속 사용 = 절충안', C.448): 없으면 옛 동작(평타 타이머는 블록 모션과 무관·빨리 감기 없음) */
+  motion?: MotionParams;
   /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441): 있으면 일반 블록(기본·흡수·물공) 대신 이 블록만 나온다. 없으면(null) 보통 블록 */
   kit?: CombatKit | null;
 }
@@ -339,6 +341,51 @@ export interface HitDelayParams {
   enemy: number;
   heavy: number;
   counter: number;
+}
+
+/** 한 몸동작의 길이 (GDD 7-2, C.448): 1배 초. 몸동작만(이펙트 시간줄은 따로 — '모션과 이펙트는 따로 계산'). total = 전체, hit = 첫 타격 시각(앞 자르기는 여기까지 = 준비 동작) */
+export interface MotionSpec {
+  total: number;
+  hit: number;
+}
+
+/** 몸동작 표 (GDD 7-2, C.448) — 종족 무관, 숫자만. fastMax 최대 빨리 감기 배율 · basic 일반 공격 · block 블록 기본값 · blockBy 블록 키(blockHitKey·'combo'·'liberation')별.
+ *  기본값은 balance(화면 없을 때 — 봇·시뮬), 화면이 실제 동작 데이터로 바꿔 넣는다(attackFx motionsOf) */
+export interface MotionParams {
+  fastMax: number;
+  basic: MotionSpec;
+  block: MotionSpec;
+  blockBy?: Record<string, MotionSpec>;
+}
+
+/** 간격에 맞춘 몸동작 (GDD 7-2 '빠른 간격의 모션'): rate 재생 배율 · trim 앞에서 자른 길이(1배 초) · length 실제 재생 길이(초) · hitIn 시작부터 타격까지(초) */
+export interface MotionFit {
+  rate: number;
+  trim: number;
+  length: number;
+  hitIn: number;
+}
+
+/**
+ * 간격(interval 초)이 모션보다 짧으면 최대 fastMax 배속까지 빨리 감고, 그래도 넘치면 넘치는 만큼 앞부분(준비 동작 = 첫 타격 전)을 자른다 (GDD 7-2, 모든 몸·모든 모션 공통).
+ * 예: 0.6초 모션 → 1.5배속 0.4초 → 간격 0.3초면 앞 0.1초(재생 시간) 자름. 타격 프레임은 자르지 않는다 — 준비 동작을 다 잘라도 넘치면 타격부터 끝까지 재생(그만큼 다음 동작이 덮는다).
+ * interval 이 null(뒤에 기다리는 것 없음)이면 원래 속도
+ */
+export function fitMotion(m: MotionSpec, interval: number | null, fastMax: number): MotionFit {
+  const total = Math.max(0, m.total);
+  const hit = Math.min(total, Math.max(0, m.hit));
+  if (interval === null || interval >= total || total <= 0) return { rate: 1, trim: 0, length: total, hitIn: hit };
+  const rate = Math.max(1, Math.min(fastMax, total / Math.max(1e-6, interval)));
+  const scaled = total / rate;
+  const cut = Math.min(Math.max(0, scaled - interval), hit / rate);
+  return { rate, trim: cut * rate, length: scaled - cut, hitIn: hit / rate - cut };
+}
+
+/** 블록 키의 몸동작 (없으면 기본값). params.motion 이 없으면 null */
+export function motionSpecOf(p: Pick<CombatParams, 'motion'>, key: string | null): MotionSpec | null {
+  const m = p.motion;
+  if (!m) return null;
+  return (key ? m.blockBy?.[key] : undefined) ?? m.block;
 }
 
 /** 타격 지연 틱 수 (0 이면 바로). 올림 (GDD 224장 3, C.367): 반올림이면 모션 타격 프레임보다 최대 반 틱(50ms) 먼저 들어갈 수 있다 — 화면은 늦은 쪽에 모션을 맞춘다 */
@@ -542,11 +589,17 @@ const shownCat = (c: AttackCategory): HitCategory | undefined => (c === 'mixed' 
 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean }
+  /** rate = 간격이 모션보다 짧아 빨리 감은 배율 (GDD 7-2 '빠른 간격의 모션', C.448 — 없으면 1. 앞 자르기는 swing.atTick 이 정한 타격 시각으로 화면이 맞춘다) */
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number }
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean; motionId?: number }
+  /** 블록 몸동작 시작 (GDD 7-2 '블록 연속 사용 = 절충안'·'모션과 이펙트는 따로 계산', C.448): id = 그 블록 사건의 motionId. 누른 순서대로 줄을 서서 앞 모션이 끝나면 시작.
+   *  rate 재생 배율 · trim 앞에서 자른 길이(1배 초). 이펙트·피해는 블록을 쓴 순간의 시간줄 그대로(이 사건과 무관) */
+  | { kind: 'block-motion'; id: number; rate: number; trim: number }
+  /** 재생 중인 블록 몸동작 뒤에 블록이 줄을 섰다: 남은 부분을 rate 배속으로 (GDD 7-2 절충안) */
+  | { kind: 'motion-hasten'; id: number; rate: number }
   /** 초월자 반격 창이 열렸다 (GDD 12-4 v6.048 경화수월): seconds 동안 반격 블록 테두리 발광 */
   | { kind: 'kit-window'; seconds: number }
   /** 초월자 대사 띠 (반격 성공·되살아남 등) */
@@ -738,6 +791,8 @@ export interface CombatState {
   liberation: LiberationState;
   /** 예약된 피해 (GDD 214장, C.357): 틱 시작에 atTick 이 된 것부터 순서대로 넣는다. 전투가 끝나면 남은 것은 버린다. 옛 상태(없음) = 빈 목록 */
   pendingHits?: PendingHit[];
+  /** 블록 몸동작 줄 (GDD 7-2, C.448): 재생 중(끝 틱·배율) + 기다리는 것(누른 틱·키). 재생 중이거나 기다리는 게 있으면 평타 타이머가 멈춘다. 옛 상태(없음) = 빈 줄 */
+  motion?: { cur: { id: number; endTick: number; rate: number } | null; queue: { id: number; key: string | null; pressTick: number }[]; seq: number };
   /** 보스전이면 페이즈·기믹 상태 (GDD 25-3), 일반 전투는 없음 */
   boss?: BossState;
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
@@ -1541,6 +1596,70 @@ export function basicPowerOf(s: CombatState): number {
   return m;
 }
 
+/** 평타 피해 시각(초)·재생 배율 (GDD 7-2 '빠른 간격의 모션', C.448): 지금 평타 간격이 모션보다 짧으면 빨리 감고 앞을 잘라 남은 모션의 타격 프레임에 */
+function basicHitDelayOf(s: CombatState): { delay: number; rate: number } {
+  const p = s.params;
+  const m = p.motion;
+  if (!m || s.script) return { delay: p.hitDelay.basic, rate: 1 };
+  const hit = p.hitDelay.basic;
+  const fit = fitMotion({ total: Math.max(m.basic.total, hit), hit }, currentAttackSeconds(s), m.fastMax);
+  return { delay: fit.hitIn, rate: fit.rate };
+}
+
+/** 블록 몸동작 시작 (GDD 7-2 절충안): 뒤에 기다리는 블록이 있으면 '빠른 간격' 규칙(간격 = 이 블록과 다음 블록을 누른 틱 차), 없으면 원래 속도 */
+function startBlockMotion(s: CombatState, item: { id: number; key: string | null; pressTick: number }, now: number): void {
+  const p = s.params;
+  const m = s.motion!;
+  const spec = motionSpecOf(p, item.key)!;
+  const next = m.queue[0];
+  const fit = fitMotion(spec, next ? (next.pressTick - item.pressTick) * p.tickSeconds : null, p.motion!.fastMax);
+  m.cur = { id: item.id, endTick: now + Math.max(1, Math.ceil(fit.length / p.tickSeconds - 1e-6)), rate: fit.rate };
+  emit(s, { kind: 'block-motion', id: item.id, rate: fit.rate, trim: fit.trim });
+}
+
+/** 블록을 썼다: 몸동작 줄에 세운다 (GDD 7-2 절충안). 줄이 비었으면 바로 시작, 아니면 기다리고 — 재생 중인 모션은 남은 부분을 최대 배속으로. 각본 전투·motion 없는 params 는 안 함 */
+function queueBlockMotion(s: CombatState, key: string | null): number | null {
+  const fm = s.params.motion?.fastMax;
+  if (s.script || fm === undefined) return null;
+  const m = (s.motion ??= { cur: null, queue: [], seq: 0 });
+  const now = s.tick + inputTickLead;
+  const id = ++m.seq;
+  if (m.cur && now >= m.cur.endTick) m.cur = null;
+  const item = { id, key, pressTick: now };
+  if (!m.cur && m.queue.length === 0) {
+    startBlockMotion(s, item, now);
+    return id;
+  }
+  m.queue.push(item);
+  if (m.cur && m.cur.rate < fm) {
+    const left = m.cur.endTick - now;
+    m.cur.endTick = now + Math.max(1, Math.ceil((left * m.cur.rate) / fm - 1e-6));
+    m.cur.rate = fm;
+    emit(s, { kind: 'motion-hasten', id: m.cur.id, rate: fm });
+  }
+  return id;
+}
+
+/** 틱마다: 끝난 모션을 내리고 줄 맨 앞을 시작한다 */
+function advanceBlockMotion(s: CombatState): void {
+  const m = s.motion;
+  if (!m) return;
+  if (m.cur && s.tick >= m.cur.endTick) m.cur = null;
+  if (!m.cur && m.queue.length > 0) startBlockMotion(s, m.queue.shift()!, s.tick);
+}
+
+/** 블록 몸동작이 재생 중이거나 기다리는가 (GDD 7-2 '모션 중엔 평타 없음' — 모션 시간만, 이펙트 무관) */
+export function blockMotionBusy(s: Pick<CombatState, 'motion'>): boolean {
+  return !!s.motion && (!!s.motion.cur || s.motion.queue.length > 0);
+}
+
+/** 블록 사건 → 몸동작 키 (타격 지연 키와 같음): 콤보·해방 블록·공격 계열(계열:단계), 그 밖 null(기본값) */
+function motionKeyOf(e: Extract<CombatEvent, { kind: 'block' }>): string | null {
+  if (e.block === 'combo') return 'combo';
+  if (e.block === 'liberation') return 'liberation';
+  return blockHitKey(e.role === 'attack' ? e.family : null, e.chain);
+}
+
 /** 평타 한 번 (자동 공격 또는 기합으로 바로): 물공 배율·두 번 때림 → 피해 → 버프 소모 → 물살·충전 → 연타 */
 function basicAttack(s: CombatState): void {
   const p = s.params;
@@ -1550,11 +1669,12 @@ function basicAttack(s: CombatState): void {
   const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
+  const bd = basicHitDelayOf(s);
   let last = 0;
   for (let k = 0; k < flash.n; k++) {
     const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
     last = damage;
-    strike(s, p.hitDelay.basic, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
+    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
     if (s.status !== 'playing') return;
   }
   // 버프 소모: 다음 평타 n회 버프는 1회씩, 바위 자세 쌓임은 한 번에, 두 번 때림은 1회
@@ -1576,7 +1696,7 @@ function basicAttack(s: CombatState): void {
   const dh = a.doubleHit;
   if (dh && nextFloat((s.abilityRng ??= createRng((s.seed ^ ABILITY_SEED_SALT) >>> 0))) < dh) {
     proc(s, 'doubleHit', last);
-    strike(s, p.hitDelay.basic, { target: 'enemy', amount: last, event: { kind: 'player-attack', damage: last, matchup: hit.matchup }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
+    strike(s, bd.delay, { target: 'enemy', amount: last, event: { kind: 'player-attack', damage: last, matchup: hit.matchup, ...(bd.rate !== 1 ? { rate: bd.rate } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
   }
 }
 
@@ -2247,7 +2367,19 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
   if (input.type === 'liberate') {
     ok = liberate(s);
   } else if (input.type === 'use') {
+    const from = s.events.length;
     ok = inTray(s.tray, input.cell) && !blockSealed(s.tray[input.cell]) && useBlock(s, input.cell);
+    if (ok) {
+      // 블록 몸동작 줄 (GDD 7-2, C.448): 이번 사용의 블록 사건(공허 제외)에 id 를 달고 줄에 세운다
+      for (let i = from; i < s.events.length; i++) {
+        const ev = s.events[i]!;
+        const b = ev.kind === 'block' ? ev : ev.kind === 'swing' && ev.hit.kind === 'block' ? ev.hit : null;
+        if (!b || b.block === 'void') continue;
+        const id = queueBlockMotion(s, motionKeyOf(b));
+        if (id !== null) b.motionId = id;
+        break;
+      }
+    }
   } else if (input.type === 'guard') {
     ok = useGuard(s);
   } else if (input.type === 'item') {
@@ -2581,7 +2713,9 @@ function advanceTick(s: CombatState): void {
   if (s.boss) bossGimmick(s, s.boss);
   // 내 자동 기본 공격: 막기 중(GDD 84장 2번)에는 멈춘다
   // 각본 마무리 체인이 날아가는 동안(피해를 맡겨 둔 동안)도 멈춘다 (GDD 146장)
-  if (!halted(s) && !s.script?.held && --s.player.attackTimer <= 0) {
+  // 블록 몸동작 (GDD 7-2 '모션 중엔 평타 없음', C.448): 블록 모션이 재생 중이거나 줄을 서 있으면 평타 타이머가 멈추고, 끝나면 다시 돈다
+  advanceBlockMotion(s);
+  if (!halted(s) && !s.script?.held && !blockMotionBusy(s) && --s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
     basicAttack(s);
     if (s.status !== 'playing') return;

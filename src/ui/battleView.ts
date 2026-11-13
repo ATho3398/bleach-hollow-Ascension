@@ -60,7 +60,7 @@ import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
-import { attackFx, fxModeOf, hitDelaysOf, type FamilyFxSpec } from './attackFx';
+import { attackFx, fxModeOf, hitDelaysOf, motionsOf, type FamilyFxSpec } from './attackFx';
 import { familyStagesFor, type PixelBodySlot } from './pixelAttack';
 import { eliteHeavyFor, ELITE_HEAVY_ELEMENT, FX_REACH_FIELD } from './attackFxConfig';
 import { rigPackOfLook } from '../data/art/rig/pose';
@@ -1040,6 +1040,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const heavyPixel = (enemy.class === 'elite' || scripted) && !(opts.boss || s.boss) ? eliteHeavyFor(foeBodyKey) : null;
   if (heavyPixel) for (const L of heavyPixel.layers) void loadPixelFx(fxSheetName(L.fx, L.color === 'element' ? ELITE_HEAVY_ELEMENT : null));
   if (s.tick === 0) s.params.hitDelay = hitDelaysOf({ player: heroAnim, enemy: foeAnim, slot: bodySlot(), familyIds: bf.families.map((f) => f.id), familyFx, fallback: s.params.hitDelay, bodyWindup: !!s.script, heavyPixel });
+  // 몸동작 표 (GDD 7-2 '빠른 간격의 모션'·'모션 중엔 평타 없음', C.448): 실제 동작 데이터의 몸동작 길이(이펙트 제외) — 종족 무관, 숫자만
+  if (s.tick === 0 && s.params.motion) s.params.motion = motionsOf({ player: heroAnim, slot: bodySlot(), familyIds: bf.families.map((f) => f.id), familyFx, fallback: s.params.motion });
   /** 공격 연출 (GDD 17-4): 사건이 난 뒤 연출만 얹는다. 모션 줄이기·화면 흔들림 끔이면 돌진 없이 번쩍임만 */
   const attack = attackFx({
     // C.216 (GDD 138장): 나 = 오른쪽(왼쪽으로 공격), 적 = 왼쪽(오른쪽으로 공격)
@@ -1121,6 +1123,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), ...(s.script ? { bodyWindup: true } : {}) });
       return;
     }
+    // 블록 몸동작 줄 (GDD 7-2 절충안, C.448): 엔진이 정한 순서·배율·앞 자르기로 연결 동작만 (이펙트는 블록을 쓴 순간 이미 시작)
+    if (e.kind === 'block-motion') return void attack.blockMotion(e.id, e.rate, e.trim);
+    if (e.kind === 'motion-hasten') return void attack.hastenMotion(e.id, e.rate);
     // 강공격 빔 발사 준비 (GDD 245장 3): 예고가 끝나는 틱(atTick)에 빔이 닿게 지금 모션을 시작한다. 피해 숫자·막기 표시는 그 틱의 heavy-hit(landed) 때 — 같은 프레임
     if (e.kind === 'heavy-windup') {
       heavyGuarded = null;

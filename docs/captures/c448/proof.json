@@ -1,0 +1,239 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-blocks3-effects.png",
+    "02-pc-blocks3-later.png",
+    "03-pc-fast-basic.png",
+    "04-pc-fast-basic-2.png",
+    "05-phone-status-top.png",
+    "06-phone-status-ev-line.png"
+  ],
+  "facts": {
+    "pc": {
+      "trayBefore": [
+        "1:skill:family-c",
+        "2:skill:family-a",
+        "3:skill:family-b",
+        "4:skill:family-c",
+        "5:skill:family-c"
+      ],
+      "uids": [
+        9001,
+        9002,
+        9003
+      ],
+      "fxTrace": {
+        "max": 4,
+        "seen": [
+          "melee-claw-swipe-normal",
+          "custom-bite-normal",
+          "projectiles-bullet-tracer-normal",
+          "impacts-hit-spark-normal"
+        ],
+        "at": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "motionEvents": [
+        {
+          "t": 22237,
+          "tick": 125,
+          "stage": null,
+          "kind": "block-motion",
+          "landed": false,
+          "type": "event"
+        },
+        {
+          "t": 22241.100000000093,
+          "tick": 125,
+          "stage": null,
+          "kind": "motion-hasten",
+          "landed": false,
+          "type": "event"
+        },
+        {
+          "t": 22429.5,
+          "tick": 127,
+          "stage": null,
+          "kind": "block-motion",
+          "landed": false,
+          "type": "event"
+        },
+        {
+          "t": 22627.100000000093,
+          "tick": 129,
+          "stage": null,
+          "kind": "block-motion",
+          "landed": false,
+          "type": "event"
+        }
+      ],
+      "fxAfter3": 4,
+      "motionState": {
+        "cur": {
+          "id": 3,
+          "endTick": 139,
+          "rate": 1
+        },
+        "queue": 0,
+        "seq": 3
+      },
+      "fxSides": [
+        "melee-claw-swipe-normal",
+        "custom-bite-normal",
+        "projectiles-bullet-tracer-normal",
+        "impacts-hit-spark-normal"
+      ],
+      "motionTable": {
+        "fastMax": 1.5,
+        "basic": {
+          "total": 0.433,
+          "hit": 0.213
+        },
+        "block": {
+          "total": 0.433,
+          "hit": 0.213
+        },
+        "blockBy": {
+          "family-a:1": {
+            "total": 0.22,
+            "hit": 0
+          },
+          "family-a:2": {
+            "total": 0.22,
+            "hit": 0
+          },
+          "family-a:3": {
+            "total": 0.2,
+            "hit": 0
+          },
+          "family-b:1": {
+            "total": 0.4,
+            "hit": 0.2
+          },
+          "family-b:2": {
+            "total": 0.4,
+            "hit": 0.2
+          },
+          "family-b:3": {
+            "total": 0.2,
+            "hit": 0
+          },
+          "family-c:1": {
+            "total": 0.933,
+            "hit": 0.533
+          },
+          "family-c:2": {
+            "total": 0.933,
+            "hit": 0.533
+          },
+          "family-c:3": {
+            "total": 0.933,
+            "hit": 0.533
+          },
+          "combo": {
+            "total": 0.933,
+            "hit": 0.533
+          },
+          "liberation": {
+            "total": 0.433,
+            "hit": 0.213
+          }
+        }
+      },
+      "fxLater": 0,
+      "fastBasic": {
+        "seconds": 2.9,
+        "basicAttacks": 10,
+        "perSecond": 3.45,
+        "basicMotion": {
+          "total": 0.433,
+          "hit": 0.213
+        },
+        "basicHit": 0.213,
+        "expectRate": 1.443
+      }
+    },
+    "phone": {
+      "status": {
+        "scroll": {
+          "top": 66,
+          "bottom": 306,
+          "left": 360,
+          "right": 692
+        },
+        "cols": [
+          {
+            "top": 66,
+            "bottom": 310,
+            "left": 104,
+            "right": 368
+          },
+          {
+            "top": 66,
+            "bottom": 310,
+            "left": 360,
+            "right": 692
+          }
+        ],
+        "ev": {
+          "top": 286,
+          "bottom": 344,
+          "left": 381,
+          "right": 671
+        },
+        "foot": {
+          "top": 316,
+          "bottom": 360,
+          "left": 112,
+          "right": 684
+        },
+        "scrollH": 693,
+        "clientH": 240
+      },
+      "statusEv": {
+        "scroll": {
+          "top": 66,
+          "bottom": 306,
+          "left": 360,
+          "right": 692
+        },
+        "cols": [
+          {
+            "top": 66,
+            "bottom": 310,
+            "left": 104,
+            "right": 368
+          },
+          {
+            "top": 66,
+            "bottom": 310,
+            "left": 360,
+            "right": 692
+          }
+        ],
+        "ev": {
+          "top": 248,
+          "bottom": 306,
+          "left": 381,
+          "right": 671
+        },
+        "foot": {
+          "top": 316,
+          "bottom": 360,
+          "left": 112,
+          "right": 684
+        },
+        "scrollH": 693,
+        "clientH": 240
+      }
+    }
+  }
+}
