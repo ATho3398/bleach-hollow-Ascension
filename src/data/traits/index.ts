@@ -37,9 +37,10 @@ export function parseTrait(r: unknown): TraitDef {
   }
   if (t.kind === 'passive') {
     const p = (t.passive ?? {}) as Record<string, unknown>;
-    if (!(PASSIVE_STATS as readonly unknown[]).includes(p.stat) || typeof p.multiplier !== 'number' || p.multiplier <= 0) {
-      errors.push(`passive: { stat: ${PASSIVE_STATS.join(' | ')}, multiplier: 양수 }`);
-    }
+    const speed = p.stat === 'attackSpeed' || p.stat === 'blockSpawn';
+    if (!(PASSIVE_STATS as readonly unknown[]).includes(p.stat)) errors.push(`passive: { stat: ${PASSIVE_STATS.join(' | ')} }`);
+    else if (speed && !(typeof p.secondsCut === 'number' && p.secondsCut > 0 && p.multiplier === undefined)) errors.push('passive 속도: { secondsCut: 양수(간격 −초) } — 배율 없음 (C.447)');
+    else if (!speed && !(typeof p.multiplier === 'number' && p.multiplier > 0)) errors.push('passive: { multiplier: 양수 }');
   }
   if (t.critChance !== undefined && !(typeof t.critChance === 'number' && t.critChance > 0 && t.critChance <= 1)) errors.push('critChance: 0 초과 1 이하');
   if (errors.length > 0) throw new Error(`특성 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);

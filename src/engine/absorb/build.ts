@@ -228,9 +228,22 @@ export function passiveMultipliers(b: BuildState): Record<PassiveStat, number> {
   for (const id of b.slots) {
     if (!id) continue;
     const t = getTrait(id);
-    if (t.kind === 'passive' && t.passive) m[t.passive.stat] *= t.passive.multiplier;
+    if (t.kind === 'passive' && t.passive?.multiplier !== undefined) m[t.passive.stat] *= t.passive.multiplier;
   }
   return m;
+}
+
+/** passive 속도 옵션 (GDD v6.055 8절, C.447): 간격 −n초 합 — attackSpeed = 평타, blockSpawn = 블록 생성 */
+export function passiveSecondsCuts(b: BuildState): { attack: number; spawn: number } {
+  const out = { attack: 0, spawn: 0 };
+  for (const id of b.slots) {
+    if (!id) continue;
+    const p = getTrait(id).passive;
+    if (!p?.secondsCut) continue;
+    if (p.stat === 'attackSpeed') out.attack += p.secondsCut;
+    else if (p.stat === 'blockSpawn') out.spawn += p.secondsCut;
+  }
+  return out;
 }
 
 /** 장착 특성의 치명타 확률 가산 합 (C.63 `critChance` 효과 키) */
@@ -257,6 +270,8 @@ export function buildCombatParams(b: BuildState, factionId?: string): Partial<Co
     attackSpeedMultiplier: pm.attackSpeed,
     damageTakenMultiplier: pm.damageTaken,
     blockSpawnMultiplier: pm.blockSpawn,
+    attackSecondsCut: passiveSecondsCuts(b).attack,
+    spawnSecondsCut: passiveSecondsCuts(b).spawn,
     critChance: BALANCE.provisional.combat.critChance + critChanceBonus(b),
     blockCritChance: BALANCE.provisional.combat.blockCritChance + critChanceBonus(b),
     guardHealEnhance: enhanceGuardHealMultiplier(b),

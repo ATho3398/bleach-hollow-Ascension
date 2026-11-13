@@ -492,10 +492,13 @@ export function comboRulesOf(e: Pick<EvolutionState, 'tierIndex'>): ComboRule[] 
 /** 고유 특성 효과를 전투 파라미터에 (BALANCE.provisional.abilities) */
 function applyAbility(params: Partial<CombatParams>, ability: StatId | null): void {
   if (!ability) return;
-  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockDamage' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed', number>>;
+  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockDamage' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed' | 'attackSecondsCut' | 'spawnSecondsCut', number>>;
   if (a.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * a.maxHp;
   if (a.blockSpawn) params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) * a.blockSpawn;
   if (a.attackSpeed) params.attackSpeedMultiplier = (params.attackSpeedMultiplier ?? 1) * a.attackSpeed;
+  // 속도 옵션 = 간격 −n초 (GDD v6.055 8절, C.447)
+  if (a.attackSecondsCut) params.attackSecondsCut = (params.attackSecondsCut ?? 0) + a.attackSecondsCut;
+  if (a.spawnSecondsCut) params.spawnSecondsCut = (params.spawnSecondsCut ?? 0) + a.spawnSecondsCut;
   // 지능 고유 특성 (GDD v6.055 8절, C.446): 블록 피해 배율 — 실패형 줄기 배율과 곱한다
   if (a.blockDamage) params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * a.blockDamage;
   const power = { physical: 1, special: 1, mixed: 1, ...params.categoryPower };

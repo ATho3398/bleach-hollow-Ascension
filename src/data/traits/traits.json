@@ -492,7 +492,7 @@
     },
     "passive": {
       "stat": "attackSpeed",
-      "multiplier": 1.15
+      "secondsCut": 0.13
     },
     "provisional": true
   },
@@ -596,7 +596,7 @@
     },
     "passive": {
       "stat": "attackSpeed",
-      "multiplier": 1.1
+      "secondsCut": 0.09
     },
     "provisional": true
   },
@@ -699,7 +699,7 @@
     },
     "passive": {
       "stat": "blockSpawn",
-      "multiplier": 1.15
+      "secondsCut": 0.42
     },
     "provisional": true
   },
@@ -802,7 +802,7 @@
     },
     "passive": {
       "stat": "blockSpawn",
-      "multiplier": 1.12
+      "secondsCut": 0.35
     },
     "provisional": true
   },

@@ -47,7 +47,8 @@ export function traitDiffLine(faction: TraitDiffFaction, id: string, o: { short?
     }
   } else if (t.kind === 'passive' && t.passive) {
     // 받는 피해는 배율이 1 아래일 때가 좋은 쪽(준다), 나머지는 1 위가 오르는 쪽
-    const good = t.passive.stat === 'damageTaken' ? t.passive.multiplier < 1 : t.passive.multiplier > 1;
+    const m = t.passive.multiplier ?? 1;
+    const good = t.passive.secondsCut !== undefined ? t.passive.secondsCut > 0 : t.passive.stat === 'damageTaken' ? m < 1 : m > 1;
     const verb = t.passive.stat === 'damageTaken' ? (good ? '준다' : '늘어난다') : good ? '오른다' : '떨어진다';
     parts.push(`${PASSIVE_STAT_TEXT[t.passive.stat]}이(가) ${verb}`);
   } else if (t.kind === 'part') parts.push('외형만 바뀐다');

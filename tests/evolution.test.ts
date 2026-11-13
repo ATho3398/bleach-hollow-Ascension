@@ -290,7 +290,7 @@ describe('노력치 (GDD 20-4)', () => {
     expect(p.refStat).toBeUndefined();
     expect(p.playerStats!.atk).toBe(getForm('t2:base').stats.atk + 2);
     expect(p.playerElements).toEqual(['normal']);
-    expect(p.blockSpawnMultiplier).toBeCloseTo(BALANCE.provisional.abilities.bspd.blockSpawn);
+    expect(p.spawnSecondsCut).toBeCloseTo(BALANCE.provisional.abilities.bspd.spawnSecondsCut); // C.447 간격 −n초
     // C.446: 지능 고유 특성 = 블록 피해 배율
     const r: Partial<CombatParams> = {};
     applyEvolutionToParams(r, { ...e, ability: 'int' }, 'hollow');

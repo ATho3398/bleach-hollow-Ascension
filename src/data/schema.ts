@@ -166,7 +166,8 @@ export interface TraitDef {
   /** skill 막기·회복: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개. 공격은 계열 단계 기술(종족 설정)이 정하므로 없다 */
   chainBonus?: ChainBonus;
   /** passive: 자동 적용 배율 (기본 공격 위력·속도, 받는 피해, 블록 생성 속도) */
-  passive?: { stat: PassiveStat; multiplier: number };
+  /** C.447 (GDD v6.055 8절 사용자 '옵션 = 간격 −n초'): 속도(attackSpeed·blockSpawn)는 multiplier 대신 secondsCut(간격 −초, 0.01 단위) */
+  passive?: { stat: PassiveStat; multiplier?: number; secondsCut?: number };
   /** 치명타 확률 가산 (C.63 `critChance` 효과 키, 0~1): 슬롯에 장착하면 내 치명타 확률에 더한다(종류 무관, 여럿이면 합) */
   critChance?: number;
   provisional?: boolean;

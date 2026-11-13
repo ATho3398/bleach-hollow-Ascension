@@ -55,10 +55,11 @@ describe('8절 능력치 7종', () => {
     expect(getEnemy('normal-swift').ev).toEqual({ bspd: 2 });
     expect(getEnemy('water-swift').ev).toEqual({ aspd: 1, bspd: 1 });
   });
-  it('고유 특성: 공격속도 = 평타 가속, 블록속도 = 블록 생성 ×1.2(옛 지능 몫), 지능 = 블록 피해 ×1.12', () => {
+  it('고유 특성: 공격속도 = 평타 간격 −0.15초, 블록속도 = 블록 간격 −0.54초(옛 지능 몫), 지능 = 블록 피해 ×1.12', () => {
     const AB = BALANCE.provisional.abilities;
-    expect(AB.aspd).toEqual({ attackSpeed: 1.18 });
-    expect(AB.bspd).toEqual({ blockSpawn: 1.2 });
+    // C.447 (사용자 '옵션 = 간격 −n초'): 옛 ×1.18 → −0.15초, ×1.2 → −0.54초
+    expect(AB.aspd).toEqual({ attackSecondsCut: 0.15 });
+    expect(AB.bspd).toEqual({ spawnSecondsCut: 0.54 });
     expect(AB.int).toEqual({ blockDamage: 1.12 });
     // 성향 표: 블록속도 1위 = 지능 1위와 같은 모양
     const T = BALANCE.provisional.blockPool.temperament;
