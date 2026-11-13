@@ -54,6 +54,94 @@
     17,
     59
    ]
+  },
+  {
+   "id": "arm_sword",
+   "parent": "upper",
+   "pivot": [
+    30,
+    42
+   ]
+  },
+  {
+   "id": "forearm_sword",
+   "parent": "arm_sword",
+   "pivot": [
+    24,
+    50
+   ]
+  },
+  {
+   "id": "coat_tail",
+   "parent": "lower",
+   "pivot": [
+    29,
+    72
+   ]
+  },
+  {
+   "id": "coat_side1",
+   "parent": "lower",
+   "pivot": [
+    57,
+    85
+   ]
+  },
+  {
+   "id": "coat_side2",
+   "parent": "lower",
+   "pivot": [
+    55,
+    82
+   ]
+  },
+  {
+   "id": "thigh_a",
+   "parent": "lower",
+   "pivot": [
+    42,
+    68
+   ]
+  },
+  {
+   "id": "thigh_b",
+   "parent": "lower",
+   "pivot": [
+    45,
+    57
+   ]
+  },
+  {
+   "id": "shin_a",
+   "parent": "thigh_a",
+   "pivot": [
+    38,
+    81
+   ]
+  },
+  {
+   "id": "shin_b",
+   "parent": "thigh_b",
+   "pivot": [
+    47,
+    71
+   ]
+  },
+  {
+   "id": "foot_a",
+   "parent": "shin_a",
+   "pivot": [
+    33,
+    97
+   ]
+  },
+  {
+   "id": "foot_b",
+   "parent": "shin_b",
+   "pivot": [
+    46,
+    97
+   ]
   }
  ],
  "slots": [
@@ -76,6 +164,86 @@
   {
    "id": "hand",
    "bone": "hand"
+  },
+  {
+   "id": "hair_side",
+   "bone": "head"
+  },
+  {
+   "id": "chest",
+   "bone": "upper"
+  },
+  {
+   "id": "collar_L",
+   "bone": "upper"
+  },
+  {
+   "id": "collar_R",
+   "bone": "upper"
+  },
+  {
+   "id": "coat_front_top",
+   "bone": "upper"
+  },
+  {
+   "id": "coat_side_top",
+   "bone": "upper"
+  },
+  {
+   "id": "arm_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "forearm_sword",
+   "bone": "forearm_sword"
+  },
+  {
+   "id": "cuff",
+   "bone": "forearm_sword"
+  },
+  {
+   "id": "coat_front",
+   "bone": "lower"
+  },
+  {
+   "id": "coat_inner",
+   "bone": "lower"
+  },
+  {
+   "id": "coat_tail",
+   "bone": "coat_tail"
+  },
+  {
+   "id": "coat_side1",
+   "bone": "coat_side1"
+  },
+  {
+   "id": "coat_side2",
+   "bone": "coat_side2"
+  },
+  {
+   "id": "thigh_a",
+   "bone": "thigh_a"
+  },
+  {
+   "id": "thigh_b",
+   "bone": "thigh_b"
+  },
+  {
+   "id": "shin_a",
+   "bone": "shin_a"
+  },
+  {
+   "id": "shin_b",
+   "bone": "shin_b"
+  },
+  {
+   "id": "foot_a",
+   "bone": "foot_a"
+  },
+  {
+   "id": "foot_b",
+   "bone": "foot_b"
   }
  ],
  "bodies": {
@@ -135,11 +303,269 @@
      11
     ]
    }
+  },
+  "parts": {
+   "head": {
+    "art": "parts/head",
+    "at": [
+     18,
+     0
+    ],
+    "size": [
+     43,
+     36
+    ]
+   },
+   "hair_side": {
+    "art": "parts/hair_side",
+    "at": [
+     25,
+     11
+    ],
+    "size": [
+     4,
+     16
+    ]
+   },
+   "chest": {
+    "art": "parts/chest",
+    "at": [
+     32,
+     36
+    ],
+    "size": [
+     19,
+     25
+    ]
+   },
+   "collar_L": {
+    "art": "parts/collar_L",
+    "at": [
+     28,
+     32
+    ],
+    "size": [
+     13,
+     10
+    ]
+   },
+   "collar_R": {
+    "art": "parts/collar_R",
+    "at": [
+     44,
+     34
+    ],
+    "size": [
+     6,
+     6
+    ]
+   },
+   "coat_front_top": {
+    "art": "parts/coat_front_top",
+    "at": [
+     20,
+     35
+    ],
+    "size": [
+     19,
+     43
+    ]
+   },
+   "coat_side_top": {
+    "art": "parts/coat_side_top",
+    "at": [
+     46,
+     37
+    ],
+    "size": [
+     12,
+     35
+    ]
+   },
+   "arm_sword": {
+    "art": "parts/arm_sword",
+    "at": [
+     21,
+     37
+    ],
+    "size": [
+     13,
+     18
+    ]
+   },
+   "forearm_sword": {
+    "art": "parts/forearm_sword",
+    "at": [
+     14,
+     46
+    ],
+    "size": [
+     14,
+     17
+    ]
+   },
+   "cuff": {
+    "art": "parts/cuff",
+    "at": [
+     12,
+     54
+    ],
+    "size": [
+     10,
+     12
+    ]
+   },
+   "coat_front": {
+    "art": "parts/coat_front",
+    "at": [
+     22,
+     55
+    ],
+    "size": [
+     37,
+     39
+    ]
+   },
+   "coat_inner": {
+    "art": "parts/coat_inner",
+    "at": [
+     47,
+     40
+    ],
+    "size": [
+     10,
+     29
+    ]
+   },
+   "coat_tail": {
+    "art": "parts/coat_tail",
+    "at": [
+     10,
+     58
+    ],
+    "size": [
+     25,
+     37
+    ]
+   },
+   "coat_side1": {
+    "art": "parts/coat_side1",
+    "at": [
+     54,
+     69
+    ],
+    "size": [
+     10,
+     21
+    ]
+   },
+   "coat_side2": {
+    "art": "parts/coat_side2",
+    "at": [
+     49,
+     69
+    ],
+    "size": [
+     11,
+     24
+    ]
+   },
+   "thigh_a": {
+    "art": "parts/thigh_a",
+    "at": [
+     32,
+     60
+    ],
+    "size": [
+     20,
+     28
+    ]
+   },
+   "thigh_b": {
+    "art": "parts/thigh_b",
+    "at": [
+     27,
+     37
+    ],
+    "size": [
+     26,
+     35
+    ]
+   },
+   "shin_a": {
+    "art": "parts/shin_a",
+    "at": [
+     22,
+     74
+    ],
+    "size": [
+     20,
+     26
+    ]
+   },
+   "shin_b": {
+    "art": "parts/shin_b",
+    "at": [
+     36,
+     69
+    ],
+    "size": [
+     21,
+     31
+    ]
+   },
+   "foot_a": {
+    "art": "parts/foot_a",
+    "at": [
+     27,
+     95
+    ],
+    "size": [
+     10,
+     12
+    ]
+   },
+   "foot_b": {
+    "art": "parts/foot_b",
+    "at": [
+     43,
+     95
+    ],
+    "size": [
+     12,
+     12
+    ]
+   },
+   "hand": {
+    "art": "parts/hand",
+    "at": [
+     10,
+     54
+    ],
+    "size": [
+     12,
+     11
+    ]
+   },
+   "sword": {
+    "art": "parts/sword",
+    "at": [
+     11,
+     48
+    ],
+    "size": [
+     36,
+     65
+    ]
+   }
   }
  },
  "looks": {
   "aizen-base": {
    "body": "ref"
+  },
+  "aizen-parts": {
+   "body": "parts"
   }
  },
  "hairFrame": {
@@ -169,11 +595,22 @@
  "edit": {
   "names": {
    "root": "전체",
-   "lower": "아랫몸(코트 자락·다리)",
-   "upper": "윗몸(소매)",
+   "lower": "아랫몸(허리·코트 아래)",
+   "upper": "윗몸",
    "head": "머리",
    "hand": "오른손(앞손)",
-   "sword": "칼"
+   "sword": "칼",
+   "arm_sword": "오른 위팔(앞)",
+   "forearm_sword": "오른 아래팔(앞)",
+   "coat_tail": "코트 뒷자락",
+   "coat_side1": "코트 오른쪽 자락 1",
+   "coat_side2": "코트 오른쪽 자락 2",
+   "thigh_a": "허벅지 A(하카마)",
+   "thigh_b": "허벅지 B(하카마)",
+   "shin_a": "정강이 A",
+   "shin_b": "정강이 B",
+   "foot_a": "발 A",
+   "foot_b": "발 B"
   },
   "groups": [
    [
@@ -191,10 +628,31 @@
     ]
    ],
    [
-    "오른손·칼",
+    "오른팔(앞손)·칼",
     [
+     "arm_sword",
+     "forearm_sword",
      "hand",
      "sword"
+    ]
+   ],
+   [
+    "코트 자락",
+    [
+     "coat_tail",
+     "coat_side1",
+     "coat_side2"
+    ]
+   ],
+   [
+    "다리",
+    [
+     "thigh_a",
+     "shin_a",
+     "foot_a",
+     "thigh_b",
+     "shin_b",
+     "foot_b"
     ]
    ]
   ],
@@ -206,12 +664,37 @@
     "sword"
    ],
    "upper": [
-    "head",
+    "arm_sword",
+    "forearm_sword",
     "hand",
+    "head",
     "sword"
    ],
    "hand": [
     "sword"
+   ],
+   "arm_sword": [
+    "forearm_sword",
+    "hand",
+    "sword"
+   ],
+   "forearm_sword": [
+    "hand",
+    "sword"
+   ],
+   "thigh_a": [
+    "shin_a",
+    "foot_a"
+   ],
+   "shin_a": [
+    "foot_a"
+   ],
+   "thigh_b": [
+    "shin_b",
+    "foot_b"
+   ],
+   "shin_b": [
+    "foot_b"
    ]
   }
  },
@@ -292,6 +775,248 @@
      "w": 3
     }
    ]
+  },
+  "parts": {
+   "lower": [
+    {
+     "pts": [
+      [
+       37,
+       107
+      ],
+      [
+       43,
+       59
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "upper": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       43,
+       59
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "head": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       35,
+       34
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_sword": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       30,
+       42
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "forearm_sword": [
+    {
+     "pts": [
+      [
+       30,
+       42
+      ],
+      [
+       24,
+       50
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand": [
+    {
+     "pts": [
+      [
+       24,
+       50
+      ],
+      [
+       18,
+       58
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "sword": [
+    {
+     "pts": [
+      [
+       18,
+       58
+      ],
+      [
+       20,
+       70
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_tail": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       29,
+       72
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_side1": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       57,
+       85
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_side2": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       55,
+       82
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "thigh_a": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       42,
+       68
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "thigh_b": [
+    {
+     "pts": [
+      [
+       43,
+       59
+      ],
+      [
+       45,
+       57
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "shin_a": [
+    {
+     "pts": [
+      [
+       42,
+       68
+      ],
+      [
+       38,
+       81
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "shin_b": [
+    {
+     "pts": [
+      [
+       45,
+       57
+      ],
+      [
+       47,
+       71
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "foot_a": [
+    {
+     "pts": [
+      [
+       38,
+       81
+      ],
+      [
+       33,
+       97
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "foot_b": [
+    {
+     "pts": [
+      [
+       47,
+       71
+      ],
+      [
+       46,
+       97
+      ]
+     ],
+     "w": 3
+    }
+   ]
   }
  },
  "bodyJoints": {
@@ -305,6 +1030,140 @@
    "rot": {
     "sword": -4
    }
+  },
+  "parts": {
+   "pivots": {
+    "lower": [
+     43,
+     59
+    ],
+    "upper": [
+     43,
+     59
+    ],
+    "head": [
+     35,
+     34
+    ],
+    "arm_sword": [
+     30,
+     42
+    ],
+    "forearm_sword": [
+     24,
+     50
+    ],
+    "hand": [
+     18,
+     58
+    ],
+    "sword": [
+     20,
+     70
+    ],
+    "coat_tail": [
+     29,
+     72
+    ],
+    "coat_side1": [
+     57,
+     85
+    ],
+    "coat_side2": [
+     55,
+     82
+    ],
+    "thigh_a": [
+     42,
+     68
+    ],
+    "thigh_b": [
+     45,
+     57
+    ],
+    "shin_a": [
+     38,
+     81
+    ],
+    "shin_b": [
+     47,
+     71
+    ],
+    "foot_a": [
+     33,
+     97
+    ],
+    "foot_b": [
+     46,
+     97
+    ],
+    "root": [
+     37,
+     107
+    ]
+   },
+   "rot": {
+    "sword": -4
+   }
+  }
+ },
+ "bodySlots": {
+  "parts": [
+   "shin_b",
+   "shin_a",
+   "thigh_a",
+   "thigh_b",
+   "coat_inner",
+   "foot_b",
+   "foot_a",
+   "coat_front",
+   "head",
+   "chest",
+   "coat_side_top",
+   "cuff",
+   "collar_R",
+   "hair_side",
+   "collar_L",
+   "coat_front_top",
+   "arm_sword",
+   "forearm_sword",
+   "coat_tail",
+   "coat_side1",
+   "coat_side2",
+   "sword",
+   "hand"
+  ]
+ },
+ "sway": {
+  "coat_tail": {
+   "lag": 120,
+   "swing": 0.6,
+   "hang": 0.15,
+   "wave": [
+    3,
+    1700,
+    0
+   ]
+  },
+  "coat_side1": {
+   "lag": 120,
+   "swing": 0.5,
+   "hang": 0.15,
+   "wave": [
+    1.5,
+    1900,
+    300
+   ]
+  },
+  "coat_side2": {
+   "lag": 120,
+   "swing": 0.5,
+   "hang": 0.15,
+   "wave": [
+    2,
+    1600,
+    600
+   ]
   }
  }
 }
