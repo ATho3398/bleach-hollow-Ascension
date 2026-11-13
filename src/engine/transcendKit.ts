@@ -89,6 +89,8 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
       ...(b.solo ? { solo: true } : {}),
       ...(b.releaseOnly ? { releaseOnly: true } : {}),
       ...(b.releaseSwap ? { releaseSwap: b.releaseSwap } : {}),
+      ...(b.voidSlot && n.voidSlot ? { voidSlot: { ...n.voidSlot } } : {}),
+      ...(n.riskCost ? { riskCost: n.riskCost } : {}),
       ...(b.counter && n.counter ? { counter: { ...n.counter, line: b.counter.line } } : {}),
       ...(b.stack && n.stack && n.finisher ? { stack: { ...n.stack, finisherName: b.stack.finisherName, finisherPower: n.finisher.power, enemyStunSeconds: n.finisher.enemyStunSeconds } } : {}),
     });
@@ -100,13 +102,14 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
     stackName: def.stackName ?? '',
     blocks,
     evadeChance: def.evade ? num.evadeChance ?? 0 : 0,
-    ...(def.riskRelease && num.riskRelease ? { riskRelease: { minRisk: num.riskRelease.minRisk, costPerUse: num.riskRelease.costPerUse, limit: BALANCE.provisional.risk.limit } } : {}),
+    ...(def.riskRelease && num.riskRelease ? { riskRelease: { ...num.riskRelease, limit: BALANCE.provisional.risk.limit } } : {}),
+    ...(def.releaseBare ? { releaseBare: true } : {}),
     ...(def.riskPenaltyFree ? { riskPenaltyFree: true } : {}),
     ...(def.revive && num.revive ? { revive: { hpFraction: num.revive.hpFraction, line: def.revive.line } } : {}),
   };
 }
 
-/** 이 초월자 트랙의 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.050 — 아이젠 '호로화'). 전투 기반·종족과 상관없음. 없으면 null */
+/** 이 초월자 트랙의 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.052 — 아이젠 '붕옥 감응도'). 전투 기반·종족과 상관없음. 없으면 null */
 export function kitRiskGaugeNameOf(transcendentId: string | null | undefined): string | null {
   return kitDefOf(transcendentId)?.riskGaugeName ?? null;
 }

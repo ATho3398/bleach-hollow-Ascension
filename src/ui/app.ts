@@ -125,7 +125,7 @@ import { accruePlay } from './bha/tamagoLogic';
 import type { WearState } from '../game';
 import { combatEvolutionOf } from '../engine/evolution';
 
-/** 트랙의 종족 설정 (GDD 12-4 v6.050): 초월자 데이터가 리스크 게이지 이름을 덮으면(아이젠 '호로화') 그 이름으로 — 기반·종족과 상관없음 */
+/** 트랙의 종족 설정 (GDD 12-4 v6.050): 초월자 데이터가 리스크 게이지 이름을 덮으면(아이젠 '붕옥 감응도' v6.052) 그 이름으로 — 기반·종족과 상관없음 */
 function trackFaction(save: Pick<SaveData, 'factionId' | 'transcendentId'>): FactionConfig {
   return withKitRiskName(getFaction(save.factionId), save.transcendentId);
 }
@@ -2404,7 +2404,6 @@ export function startApp(host: HTMLElement): void {
       applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
       params.petAttack = petAttackOf(carriedPet(save.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
       applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
-      if (params.kit?.riskRelease) params.riskStart = save.nest.risk; // 붕옥 해방 (GDD 12-4 v6.050): 연습도 지금 호로화로 시작(둥지 값은 안 바뀜)
     }
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
     setBgm(enemy.class === 'elite' ? 'elite' : 'battle');

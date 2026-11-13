@@ -12,7 +12,7 @@
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
 import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
-import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook } from '../skins';
+import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook, transcendentSkinOfLook } from '../skins';
 import { FACTIONS } from '../factions';
 import { tryGetTranscendent } from '../transcendents';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
@@ -302,6 +302,15 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   if (tierLook) return charArt(factionId, tierLook.tier - 1, fallbackKey, base, manifest, files, null, overrides, tierLook.gender ?? gender);
   const trLook = transcendentOfLook(skinId);
   if (trLook) return charArt(factionId, tierIndex, fallbackKey, base, manifest, files, trLook.art ?? `${MOSAIC_LOOK_PREFIX}${trLook.id}`, overrides, gender);
+  // 초월자 인간형 스킨 (GDD 12-4 v6.052, C.443): 그림 키의 파일이 있으면 그 그림, 없으면 자리 표시 = 기존 인간형 종이인형(데이터 placeholder 키의 rig) — '그림 대기'
+  const trSkin = transcendentSkinOfLook(skinId);
+  if (trSkin) {
+    const own = tryKeys([trSkin.skin.art]);
+    if (own) return own;
+    const ph = manifest[trSkin.skin.placeholder];
+    if (ph?.rig && rigPackOfLook(ph.rig)) return rigArt(ph.rig, ph, base);
+    return artUrls(trSkin.skin.placeholder, base, manifest, files);
+  }
   // 조각 모델 (C.431, GDD 12-4 v6.029): 'mosaic:<초월자 id>' = 표시 주소 — 화면 관찰자(ui/bha/glitchMosaic)가 합성 그림으로 바꿔 끼운다
   // 표시 배율 = 모델 데이터 scale (GDD 12-4 v6.037 '지금의 2/3') — 세로가 긴 그림은 칸 안에서 contain 이라 높이 기준, 그 위에 배율
   if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) {
@@ -346,6 +355,12 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
 
 /** 스킨에 자기 그림이 있나 (C.434, GDD 17절 v6.036): 목록의 종이인형(rig) 또는 `skin-<id>` 한 장·폴더(여성 `-f` 포함).
  *  없으면 charArt 가 지금 진화체 그림으로 대신 보여서 목록에서는 [그림 대기]로 뺀다(예 아란칼 진화체별 그림 skin-arr* 36칸) */
+/** 초월자 인간형 스킨의 그림 파일이 왔는가 (없으면 자리 표시 + '그림 대기', GDD 12-4 v6.052) */
+export function transcendentSkinHasArt(lookId: string, files: readonly string[] = ART_FILES): boolean {
+  const k = transcendentSkinOfLook(lookId)?.skin.art;
+  return !!k && (findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
+}
+
 export function skinHasArt(skinId: string, manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): boolean {
   const key = skinArtKey(skinId);
   const rig = manifest[key]?.rig;

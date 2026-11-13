@@ -376,7 +376,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const skinSel = select([{ value: '', label: '— 기본(진화체) —' }, ...skins.map((k) => {
       const def = k.group === 'skin' ? getSkin(k.id) : undefined;
       const group = k.group === 'skin' ? (def?.tierLook ? '단계 외형' : def?.startOnly ? '시작 외형' : '스킨') : MODEL_LOOK_GROUP_NAMES[k.group];
-      return { value: k.id, label: `${k.label}${save.skin === k.id ? ' (착용 중)' : ''}`, group };
+      return { value: k.id, label: `${k.label}${k.waiting ? ' (그림 대기)' : ''}${save.skin === k.id ? ' (착용 중)' : ''}`, group };
     })], save.skin ?? '', '스킨');
     const wearSkin = button({ label: '착용', icon: 'i-check', variant: 'primary', onClick: () => {
       if (!testWearSkin(save, skinSel.value || null)) return;

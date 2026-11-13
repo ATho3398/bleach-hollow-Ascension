@@ -43,7 +43,7 @@ import { DEFAULT_GROUND_ID } from './data/grounds';
 import { DEFAULT_GENDER, parseGender, type Gender } from './engine/gender';
 import { checkName, parseName } from './engine/playerName';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
-import { canWear, getSkin, transcendentOfLook, validModelLook, validTierLook } from './data/skins';
+import { canWear, getSkin, transcendentOfAnyLook, validModelLook, validTierLook } from './data/skins';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, rollTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { newDexSortState, sanitizeDexSort, type DexSortState } from './engine/dexSort';
@@ -3248,6 +3248,8 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
   // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
   const def = s.transcendentId ? tryGetTranscendent(s.transcendentId) : undefined;
+  // 초월자 트랙에서도 초월자 외형·인간형 스킨(GDD 12-4 v6.052 현현·디버깅)을 입었으면 그것 (C.443)
+  if (def && transcendentOfAnyLook(s.skin)) return s.skin!;
   if (def?.art) return def.art;
   if (def?.model) return `${MOSAIC_LOOK_PREFIX}${def.id}`; // 조각 모델 (C.431, GDD 12-4 v6.029)
   return s.skin ?? s.evolution.look ?? null;
@@ -3260,7 +3262,7 @@ export function roomKeyOf(s: Partial<Pick<SaveData, 'transcendentId'>>): string 
 
 /** 스킨 입기. 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델(tier:)은 테스트 모드에서만, 초월자 외형(transcendent:)은 이 슬롯이 그 초월자를 얻었거나 테스트 모드 */
 export function equipSkin(save: SaveData, skinId: string | null, opts: { test?: boolean } = {}): boolean {
-  const tr = transcendentOfLook(skinId);
+  const tr = transcendentOfAnyLook(skinId); // 초월자 외형·인간형 스킨 (GDD 12-4 v6.052) — 그 초월자를 얻었거나 테스트 모드
   if (skinId !== null && validTierLook(save.factionId, skinId)) {
     if (!opts.test) return false;
   } else if (skinId !== null && tr) {

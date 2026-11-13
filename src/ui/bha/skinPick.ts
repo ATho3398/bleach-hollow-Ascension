@@ -67,6 +67,7 @@ export function openSkinDetail(faction: FactionConfig, save: SaveData, e: SkinEn
   });
   const content: Node[] = [];
   if (e.variants.length > 1) content.push(el('b', 'bha-small', e.variants.every((v) => v.gender) ? '모습 고르기' : '색 고르기'), chips);
+  if (e.waiting) content.push(el('p', 'bha-faint', '그림 대기 — 지금은 자리 표시 모습이다. 그림이 오면 바뀐다.'));
   content.push(note, el('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 능력치는 그대로.'));
   const close = itemDialog({
     id: `skin:${e.key}`, heading: '캐릭터 스킨', name: e.name, desc: '', art, hero: true, content,
@@ -108,7 +109,7 @@ export function characterSkinTab(faction: FactionConfig, save: SaveData, test: b
     const src = previewSrc(faction, save, v.id);
     return itemCard({
       id: e.key, name: e.name, art: src ? imageArt(src) : iconArt('i-rare'),
-      detail: e.variants.length < 2 ? '' : e.variants.every((v) => v.gender) ? '남·여' : `색 ${e.variants.length}`,
+      detail: e.waiting ? '그림 대기' : e.variants.length < 2 ? '' : e.variants.every((v) => v.gender) ? '남·여' : `색 ${e.variants.length}`,
       badge: w >= 0 ? '착용 중' : undefined, state: w >= 0 ? 'worn' : undefined,
       foot: w >= 0 ? (e.variants.length > 1 ? '색·해제' : '해제') : '장착',
       onClick: () => openSkinDetail(faction, save, e, test, changed),

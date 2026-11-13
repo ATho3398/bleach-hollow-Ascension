@@ -3,7 +3,7 @@
 // 성별 (GDD 114장, C.188): 여성 그림은 같은 키 뒤에 `-f` — 스킨 `skin-<id>-f.png`(폴더면 `skin-<id>-f/`), 진화체 `char-<종족>-<단계>-f.png`. 남성 = 지금 이름 그대로.
 //   여성이고 종족 설정 genderLookFromTier 단계 이상일 때만 `-f` 를 먼저 찾고, 없으면 지금 그림(남성)으로 보인다. 그 전 단계는 남녀 같은 그림(`-f` 를 넣어도 안 쓴다).
 import { getFaction } from '../factions'; // 히든 '폭주' 외형 이름 = 종족 설정 frenzyName (C.213, GDD 136장 2 — 옛 이름 폐기)
-import { TRANSCENDENTS, type TranscendentDef } from '../transcendents';
+import { TRANSCENDENTS, type TranscendentDef, type TranscendentHumanSkinDef } from '../transcendents';
 
 export interface SkinDef {
   /** 파일 이름에 쓰는 고정 id (영문 소문자) */
@@ -114,6 +114,8 @@ export function skinArtKey(id: string): string {
 
 export const TIER_LOOK_PREFIX = 'tier:';
 export const TRANSCENDENT_LOOK_PREFIX = 'transcendent:';
+/** 초월자 인간형 모델 스킨 (GDD 12-4 v6.052, C.443): 'trskin:<초월자 id>:<스킨 id>' */
+export const TRANSCENDENT_SKIN_PREFIX = 'trskin:';
 
 /** 단계 모델 id (gender 를 주면 그 성별 그림으로 고정) */
 export function tierLookId(tier: number, gender?: 'male' | 'female'): string {
@@ -159,7 +161,25 @@ export function transcendentOfLook(id: string | null | undefined): TranscendentD
   return transcendentLooks().find((t) => t.id === tid);
 }
 
-/** 모델 고르기 전용 외형(단계 모델·초월자)으로 올바른 id 인가 — 세이브 읽기 정리에 쓴다(보유 확인은 입힐 때) */
+export function transcendentSkinLookId(transcendentId: string, skinId: string): string {
+  return `${TRANSCENDENT_SKIN_PREFIX}${transcendentId}:${skinId}`;
+}
+
+/** 초월자 인간형 스킨 id → 초월자 + 스킨 (아니면 undefined) */
+export function transcendentSkinOfLook(id: string | null | undefined): { t: TranscendentDef; skin: TranscendentHumanSkinDef } | undefined {
+  if (typeof id !== 'string' || !id.startsWith(TRANSCENDENT_SKIN_PREFIX)) return undefined;
+  const [tid, sid] = id.slice(TRANSCENDENT_SKIN_PREFIX.length).split(':');
+  const t = TRANSCENDENTS.find((x) => x.id === tid);
+  const skin = t?.humanSkins?.find((x) => x.id === sid);
+  return t && skin ? { t, skin } : undefined;
+}
+
+/** 초월자에 딸린 외형(기본 그림·조각 모델 또는 인간형 스킨)이면 그 초월자 (보유 확인·초월자 트랙 표시용) */
+export function transcendentOfAnyLook(id: string | null | undefined): TranscendentDef | undefined {
+  return transcendentOfLook(id) ?? transcendentSkinOfLook(id)?.t;
+}
+
+/** 모델 고르기 전용 외형(단계 모델·초월자·초월자 인간형 스킨)으로 올바른 id 인가 — 세이브 읽기 정리에 쓴다(보유 확인은 입힐 때) */
 export function validModelLook(factionId: string, id: string | null | undefined): boolean {
-  return validTierLook(factionId, id) || transcendentOfLook(id) !== undefined;
+  return validTierLook(factionId, id) || transcendentOfAnyLook(id) !== undefined;
 }

@@ -45,10 +45,10 @@ const quiet = (s: CombatState) => {
 };
 
 describe('초월자 기반 블록 풀', () => {
-  it('아이젠 데이터 kit: 경화수월·귀도·프라고르, 나머지 5종은 블록 없음([미정])', () => {
+  it('아이젠 데이터 kit: 경화수월·귀도·붕옥·프라고르, 나머지 5종은 블록 없음([미정])', () => {
     const aizen = TRANSCENDENTS.find((t) => t.id === 'aizen')!;
-    expect(aizen.kit?.blocks.map((b) => b.id)).toEqual(['kyoka', 'kido', 'fragor']);
-    expect(aizen.kit?.liberationName).toBe('붕옥 해방'); // C.442 (v6.050): 붕옥 융합 → 붕옥 해방
+    expect(aizen.kit?.blocks.map((b) => b.id)).toEqual(['kyoka', 'kido', 'hogyoku', 'fragor']); // C.443 (v6.052): 붕옥 블록
+    expect(aizen.kit?.liberationName).toBe('붕옥 융합'); // C.443 (v6.052): 다시 '붕옥 융합' 담백하게
     expect(TRANSCENDENTS.filter((t) => t.kit).map((t) => t.id)).toEqual(['aizen']);
   });
   it('초월자 기반이면 일반 블록(기본·흡수) 없이 전용 블록만, 호로 기반이면 kit 없음', () => {
@@ -57,8 +57,8 @@ describe('초월자 기반 블록 풀', () => {
     const p = mk(aizenParams(s)).params;
     const t = spawnTableOf(p);
     const ids = t.entries.filter((e) => e.source).map((e) => e.source!.id);
-    expect(ids).toEqual([KIT_TRAIT_PREFIX + 'kyoka', KIT_TRAIT_PREFIX + 'kido']);
-    const sk = t.entries.filter((e) => e.source);
+    expect(ids).toEqual([KIT_TRAIT_PREFIX + 'kyoka', KIT_TRAIT_PREFIX + 'kido', KIT_TRAIT_PREFIX + 'hogyoku']); // C.443: 붕옥 블록 = 허 자리
+    const sk = t.entries.filter((e) => e.source && e.source.id !== KIT_TRAIT_PREFIX + 'hogyoku');
     const sum = sk.reduce((a, e) => a + e.chance, 0);
     expect(sk[0]!.chance / sum).toBeCloseTo(0.1, 5); // 경화수월 10%
     // 키웠던 호로 기반으로 바꾸면 그 빌드 그대로 (전용 블록 없음)
@@ -238,33 +238,13 @@ describe('귀도 — 체인 이름·영창 스택·흑관', () => {
 });
 
 describe('붕옥 융합 · 깨져라 경화수월', () => {
-  it('해방 이름 = 붕옥 해방(C.442), 해방 수치 = 진화체 만해(고유 해방)와 같음', () => {
+  it('해방 이름 = 붕옥 융합(C.443), 해방 수치 = 진화체 만해(고유 해방)와 같음', () => {
     const p = aizenParams();
-    expect(p.kit?.liberationName).toBe('붕옥 해방');
+    expect(p.kit?.liberationName).toBe('붕옥 융합');
     expect(p.liberationUnique).toBe(true);
     expect(p.liberationStatMultiplier).toBe(BALANCE.provisional.liberation.uniqueStatMultiplier);
   });
-  it('융합 중 경화수월 → 프라고르(바에 있던 것도), 프라고르 3체인 = 울트라 프라고르 ×5.0, 끝나면 되돌림', () => {
-    const s = mk({ ...aizenParams(), riskStart: 100 }); // C.442: 해방 = 호로화 50 이상 (게이지 100 대신)
-    quiet(s);
-    s.tray = [kitBlk(s, 'kyoka'), kitBlk(s, 'kido')];
-    expect(applyInput(s, { type: 'liberate' })).toBe(true);
-    expect(s.tray[0]!.traitId).toBe(KIT_TRAIT_PREFIX + 'fragor');
-    expect(s.tray[0]!.solo).toBeUndefined();
-    const ids = spawnTableOf(s.params, true).entries.filter((e) => e.source).map((e) => e.source!.id);
-    expect(ids).toEqual([KIT_TRAIT_PREFIX + 'fragor', KIT_TRAIT_PREFIX + 'kido']);
-    s.tray = [kitBlk(s, 'fragor'), kitBlk(s, 'fragor'), kitBlk(s, 'fragor')];
-    drainCombatEvents(s);
-    applyInput(s, { type: 'use', cell: 0 });
-    const ev = drainCombatEvents(s).find((e) => e.kind === 'block');
-    expect(ev && ev.kind === 'block' && ev.kitName).toBe('울트라 프라고르');
-    s.tray = [kitBlk(s, 'fragor')];
-    s.kit!.risk = 1; // C.442: 지속 시간 대신 호로화가 0 이 되면 끝 — 블록 한 번 더 쓰면 끝난다
-    s.tray.push(kitBlk(s, 'kido'));
-    applyInput(s, { type: 'use', cell: 1 });
-    expect(s.tray[0]!.traitId).toBe(KIT_TRAIT_PREFIX + 'kyoka');
-    expect(s.tray[0]!.solo).toBe(true);
-  });
+  // 융합 중 블록 바뀜·끝나면 되돌림은 C.443(v6.052)에서 바뀜 — tests/c443.test.ts
   it('쓰러지면 한 번만 체력 30%로 되살아남 + 대사', () => {
     const s = mk();
     quiet(s);
@@ -310,13 +290,13 @@ describe('초월자 성장 — 흡수 제한·초월 조각·강화', () => {
     expect(upgradeTranscendentBlock(s, 'kido', 1)).toMatchObject({ ok: true, level: 1, cost: 10 });
     expect(upgradeTranscendentBlock(s, 'kido', 2)).toMatchObject({ ok: false });
     expect(s.shared.transcendShards).toBe(15);
-    expect(upgradeTranscendentBlock(s, 'fragor', 3).ok).toBe(false); // 프라고르는 경화수월 단계를 같이 씀
+    expect(upgradeTranscendentBlock(s, 'fragor', 3).ok).toBe(false); // 프라고르는 붕옥 블록 단계를 같이 씀 (C.443)
     expect(s.runLog.kitShards).toEqual([{ at: 1, kind: 'upgrade', blockId: 'kido', level: 1, cost: 10 }]);
     const kit = combatKitOf(s.evolution.kit)!;
     expect(kit.blocks.find((b) => b.id === 'kido')!.mult).toBeCloseTo(1.08, 5);
     s.shared.transcendShards = 10_000;
-    for (let i = 0; i < 20; i++) upgradeTranscendentBlock(s, 'kyoka', 10);
-    expect(s.evolution.kit!.levels.kyoka).toBe(10);
+    for (let i = 0; i < 20; i++) upgradeTranscendentBlock(s, 'hogyoku', 10);
+    expect(s.evolution.kit!.levels.hogyoku).toBe(10);
     expect(combatKitOf(s.evolution.kit)!.blocks.find((b) => b.id === 'fragor')!.mult).toBeCloseTo(1.8, 5);
   });
   it('형식 85: 옛 초월자 트랙에 kit(강화 0) · 조각 0', () => {

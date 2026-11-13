@@ -47,16 +47,20 @@ export interface TranscendentKitBlockDef {
   releaseSwap?: string;
   releaseOnly?: boolean;
   upgradeAs?: string;
+  /** 허(공허) 블록 자리 (GDD 12-4 v6.052 붕옥 블록): 등장 = 허 공식 × 수치, 쓰면 패널티 없이 게이지 + (수치 = balance blocks.<id>.voidSlot) */
+  voidSlot?: boolean;
 }
 
 /** 초월자 전용 블록 묶음 (GDD 12-4 v6.048): 있으면 '초월자' 전투 기반에서 일반 블록 대신 이 블록만 나온다. 없으면(나머지 5종 — 블록 [미정]) 합체 순간 이어받은 빌드 그대로 */
 export interface TranscendentKitDef {
   /** 해방 이름 (해방 수치는 진화체 만해와 같음) */
   liberationName: string;
-  /** 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.050 — 아이젠 = '호로화'): 이 초월자 트랙에선 기반·종족과 상관없이 이 이름 */
+  /** 리스크 게이지 이름 덮어쓰기 (GDD 12-4 v6.052 — 아이젠 = '붕옥 감응도'): 이 초월자 트랙에선 기반·종족과 상관없이 이 이름 */
   riskGaugeName?: string;
-  /** 해방 = 리스크 게이지 소모형 모드 체인지 (GDD 12-4 v6.050 붕옥 해방): 리스크 ≥ 수치면 해방, 지속 시간 없음, 블록 1번마다 리스크 감소, 0 이면 끝 (수치 = balance riskRelease) */
+  /** 해방 = 전투 게이지 모드 체인지 (GDD 12-4 v6.052 붕옥 융합): 게이지 ≥ 문턱이면 언제든, 지속 시간 없음, 문턱 밑이면 풀림 (수치 = balance riskRelease — 시작·최소·문턱) */
   riskRelease?: boolean;
+  /** 해방 중엔 회피·되살아나기·스택이 꺼진다 (GDD 12-4 v6.052 융합 중) */
+  releaseBare?: boolean;
   /** 리스크 패널티 없음 (GDD 12-4 v6.050): 게이지가 차도 폭주(돌파) 상태·피해·제약 없음 — 쌓이기만 한다 */
   riskPenaltyFree?: boolean;
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
@@ -103,7 +107,26 @@ export interface TranscendentDef {
   trait: TranscendentTraitDef;
   /** 전용 블록 (GDD 12-4 v6.048, C.441) — 아이젠만 */
   kit?: TranscendentKitDef;
+  /** 인간형 모델 스킨 (GDD 12-4 v6.052 '초월자 인간형 스킨', C.443): 기본 모델이 인간형이 아닌 초월자(태초·Unknown)에게 하나씩 더.
+   *  그 초월자를 얻으면 가방 > 스킨 > 진화체 > 초월자에 열림. art = 그림 키(파일이 오면 그 그림), 없으면 placeholder(그림 목록 키 — 기존 인간형 종이인형) + '그림 대기' */
+  humanSkins?: TranscendentHumanSkinDef[];
   provisional: true;
+}
+
+export interface TranscendentHumanSkinDef {
+  id: string;
+  name: string;
+  art: string;
+  placeholder: string;
+  provisional?: boolean;
+}
+
+function humanSkinsOk(v: unknown): boolean {
+  if (v === undefined) return true;
+  if (!Array.isArray(v) || v.length === 0) return false;
+  const ids = new Set<string>();
+  return v.every((x: Partial<TranscendentHumanSkinDef>) => !!x && typeof x.id === 'string' && /^[a-z0-9-]+$/.test(x.id) && !ids.has(x.id) && (ids.add(x.id), true)
+    && typeof x.name === 'string' && !!x.name && typeof x.art === 'string' && x.art.startsWith('char.') && typeof x.placeholder === 'string' && x.placeholder.startsWith('char.'));
 }
 
 function kitErrors(k: unknown): boolean {
@@ -117,6 +140,7 @@ function kitErrors(k: unknown): boolean {
     && (b.tierNames === undefined || (Array.isArray(b.tierNames) && b.tierNames.every((n) => typeof n === 'string' && n)))
     && (b.releaseSwap === undefined || (ids.has(b.releaseSwap) && b.releaseSwap !== b.id))
     && (b.upgradeAs === undefined || ids.has(b.upgradeAs))
+    && (b.voidSlot === undefined || typeof b.voidSlot === 'boolean')
     && (b.counter === undefined || typeof b.counter.line === 'string')
     && (b.stack === undefined || typeof b.stack.finisherName === 'string'))
     && kit.blocks.some((b) => !b.releaseOnly);
@@ -150,6 +174,7 @@ export function parseTranscendent(r: unknown): TranscendentDef {
     && ['dealt', 'taken', 'maxHp', 'blockCrit'].every((k) => numOk(fx[k]))
     && (fx.abilities === undefined || (typeof fx.abilities === 'object' && fx.abilities !== null && Object.entries(fx.abilities).every(([k, v]) => /^(el|el4|uniq|phys|disp):.+/.test(k) && typeof v === 'number')))
     && Object.keys(fx).every((k) => ['abilities', 'dealt', 'taken', 'maxHp', 'blockCrit'].includes(k)))) errors.push('trait (name·description·effect)');
+  if (!humanSkinsOk(t.humanSkins)) errors.push('humanSkins (id·name·art char.·placeholder char.)');
   if (!kitErrors(t.kit)) errors.push('kit (liberationName·blocks id·name·short·fx·releaseSwap·upgradeAs)');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);

@@ -63,7 +63,7 @@ describe('초월자 외형 스킨', () => {
     expect(equipSkin(s, transcendentLookId('zero-sage'))).toBe(false);
     expect(equipSkin(s, 'tier:1')).toBe(false);
     s.transcendentDex.push({ id: 'zero-sage', at: 1, fusionIndex: 1 });
-    expect(modelLookOptions('shinigami', { test: false, owned: [], dex: ['zero-sage'] }).map((o) => o.id)).toEqual([transcendentLookId('zero-sage')]);
+    expect(modelLookOptions('shinigami', { test: false, owned: [], dex: ['zero-sage'] }).map((o) => o.id)).toEqual([transcendentLookId('zero-sage'), 'trskin:zero-sage:manifest']); // C.443: 인간형 스킨 현현
     expect(equipSkin(s, transcendentLookId('zero-sage'))).toBe(true);
     expect(equipSkin(s, 'tier:1', { test: true })).toBe(true);
     expect(equipSkin(s, transcendentLookId('rift-wanderer'), { test: true })).toBe(true);

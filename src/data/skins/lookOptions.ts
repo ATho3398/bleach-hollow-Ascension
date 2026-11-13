@@ -1,8 +1,9 @@
 // 모델 고르기 목록 (GDD 17절 '테스트 모드 보강' v6.036, C.434): 상태 화면 스킨 칸·테스트 패널 스킨 탭이 같이 쓴다.
 // 순서 = 단계 모델(테스트 모드) → 초월자 외형(얻은 것 / 테스트 모드 전부) → 스킨(가진 것, 그림 있는 것). 그림 없는 스킨은 [그림 대기]로 따로.
 // 단계 이름은 종족 설정(tierNames·ascension.lookName), 초월자 목록은 transcendents.json — 종족·초월자 id 로 나누지 않는다.
-import { charArt, skinHasArt } from '../art/manifest';
-import { getSkin, LIMITED_SUBS, SKIN_CLASSES, skinLabel, skinsFor, tierLookId, tierLookTiers, transcendentLookId, transcendentLooks, type LimitedSub, type SkinClass } from './index';
+import { charArt, skinHasArt, transcendentSkinHasArt } from '../art/manifest';
+import { getSkin, LIMITED_SUBS, SKIN_CLASSES, skinLabel, skinsFor, tierLookId, tierLookTiers, transcendentLookId, transcendentLooks, transcendentSkinLookId, type LimitedSub, type SkinClass } from './index';
+import { TRANSCENDENTS } from '../transcendents';
 import { getFaction } from '../factions';
 import { skinItemId } from '../shop';
 
@@ -14,6 +15,8 @@ export interface ModelLookOption {
   group: ModelLookGroup;
   /** 단계 모델의 단계 번호 (1부터) */
   tier?: number;
+  /** 그림 대기 (초월자 인간형 스킨 — 그림 파일이 아직 없어 자리 표시 종이인형, GDD 12-4 v6.052) */
+  waiting?: boolean;
 }
 
 export const MODEL_LOOK_GROUP_NAMES: Record<ModelLookGroup, string> = { tier: '단계 모델', transcendent: '초월자', skin: '스킨', waiting: '그림 대기' };
@@ -39,7 +42,16 @@ export function tierLookOptions(factionId: string): ModelLookOption[] {
 export function modelLookOptions(factionId: string, o: { test: boolean; owned: readonly string[]; dex: readonly string[]; waiting?: boolean }): ModelLookOption[] {
   const out: ModelLookOption[] = [];
   if (o.test) out.push(...tierLookOptions(factionId));
-  for (const t of transcendentLooks()) if (o.test || o.dex.includes(t.id)) out.push({ id: transcendentLookId(t.id), label: t.name, group: 'transcendent' });
+  // 초월자 외형 + 인간형 스킨 (GDD 12-4 v6.052 — 태초 '현현'·Unknown '디버깅', 기본 모델 바로 뒤): 그 초월자를 얻으면(테스트 모드 = 전부). 그림이 없으면 자리 표시 + 그림 대기
+  const looks = new Set(transcendentLooks().map((t) => t.id));
+  for (const t of TRANSCENDENTS) {
+    if (!(o.test || o.dex.includes(t.id))) continue;
+    if (looks.has(t.id)) out.push({ id: transcendentLookId(t.id), label: t.name, group: 'transcendent' });
+    for (const sk of t.humanSkins ?? []) {
+      const id = transcendentSkinLookId(t.id, sk.id);
+      out.push({ id, label: sk.name, group: 'transcendent', ...(transcendentSkinHasArt(id) ? {} : { waiting: true }) });
+    }
+  }
   for (const sk of skinsFor(factionId)) {
     if (!o.test && !o.owned.includes(skinItemId(sk.id))) continue;
     if (skinHasArt(sk.id)) out.push({ id: sk.id, label: skinLabel(sk), group: 'skin' });
@@ -89,6 +101,8 @@ export interface SkinEntry {
   sub: string;
   group: ModelLookGroup;
   variants: SkinVariant[];
+  /** 그림 대기 (자리 표시 그림) */
+  waiting?: boolean;
 }
 
 /** 캐릭터 스킨 목록 (분류 붙임). 옵션은 modelLookOptions 와 같다 */
@@ -113,7 +127,7 @@ export function characterSkinEntries(factionId: string, o: { test: boolean; owne
       push(`tier:${p}`, () => ({ key: `tier:${p}`, name: `${p}단계 ${t?.name ?? ''}`.trim(), cls: 'form', sub: groupOfTier(p), group: 'tier', variants: [] }),
         { id: opt.id, ...(opt.id.endsWith(':f') ? { gender: 'female' as const } : opt.id.endsWith(':m') ? { gender: 'male' as const } : {}) });
     } else if (opt.group === 'transcendent') {
-      push(opt.id, () => ({ key: opt.id, name: opt.label, cls: 'form', sub: TRANSCENDENT_SKIN_GROUP, group: 'transcendent', variants: [] }), { id: opt.id });
+      push(opt.id, () => ({ key: opt.id, name: opt.label, cls: 'form', sub: TRANSCENDENT_SKIN_GROUP, group: 'transcendent', variants: [], ...(opt.waiting ? { waiting: true } : {}) }), { id: opt.id });
     } else {
       const d = getSkin(opt.id);
       if (!d) continue;
