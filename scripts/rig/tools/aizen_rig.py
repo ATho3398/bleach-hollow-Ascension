@@ -21,6 +21,7 @@ OX, OY = 213, 147  # 원본 → 캔버스(몸 왼쪽 위가 캔버스 (10, 0))
 CUT_HEAD, CUT_MID = 183, 213  # 원본 y: 머리 | 윗몸 | 아랫몸
 FIST = (29, 6)  # 주먹 조각을 소매 구멍으로 옮기는 양(원본 칸)
 SWORD = (68, 14)  # 칼자루가 주먹 안에 오게 옮기는 양
+SHRINK = {'hand': 1}  # 손을 조금 작게(사용자 2026-11-14 "손 크기만 5%정도 줄일 수 있슴?" — 13×12 → 12×11, 도트 1칸 ≈ 8%)
 
 
 def blob(alpha, x, y):
@@ -59,8 +60,19 @@ def main():
         x0, y0, x1, y1 = xx.min(), yy.min(), xx.max() + 1, yy.max() + 1
         img = src[y0:y1, x0:x1].copy()
         img[~m[y0:y1, x0:x1]] = 0
-        Image.fromarray(img).save(os.path.join(out, slot + '.png'))
-        parts[slot] = {'art': 'ref/' + slot, 'at': [int(x0 + dx - OX), int(y0 + dy - OY)], 'size': [int(x1 - x0), int(y1 - y0)]}
+        im = Image.fromarray(img)
+        ax, ay = int(x0 + dx - OX), int(y0 + dy - OY)
+        if slot in SHRINK:  # 한 칸 줄이기(가운데 그대로) — 도트라 1칸이 가장 작은 단위
+            # 이웃 줄과 가장 비슷한 세로줄·가로줄을 하나씩 뺀다(외곽선이 덜 망가지게 — 그냥 줄이면 선이 끊김)
+            arr = np.array(im).astype(int)
+            for _ in range(SHRINK[slot]):
+                c = min(range(1, arr.shape[1] - 1), key=lambda i: np.abs(arr[:, i] - arr[:, i + 1]).sum() + np.abs(arr[:, i] - arr[:, i - 1]).sum())
+                arr = np.delete(arr, c, axis=1)
+                r = min(range(1, arr.shape[0] - 1), key=lambda i: np.abs(arr[i] - arr[i + 1]).sum() + np.abs(arr[i] - arr[i - 1]).sum())
+                arr = np.delete(arr, r, axis=0)
+            im = Image.fromarray(arr.astype(np.uint8))
+        im.save(os.path.join(out, slot + '.png'))
+        parts[slot] = {'art': 'ref/' + slot, 'at': [ax, ay], 'size': [im.width, im.height]}
     W, H = 74, 108
     piv = {'root': [37, 107], 'lower': [37, 107], 'upper': [38, CUT_MID - OY], 'head': [42, CUT_HEAD - OY],
            'hand': [parts['hand']['at'][0] + 7, parts['hand']['at'][1] + 5], 'sword': [parts['hand']['at'][0] + 6, parts['hand']['at'][1] + 6]}
