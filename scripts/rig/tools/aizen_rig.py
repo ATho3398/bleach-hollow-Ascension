@@ -5,6 +5,7 @@
 겹침: 윗몸은 머리 아래로 2줄, 아랫몸은 윗몸 아래로 4줄 더 가져간다(쉬는 자세는 원본 그대로 — 위에 그려지는 조각이 가림). 숨 쉴 때 틈이 안 보이게.
 뼈: 전체 → 아랫몸 → 윗몸 → 머리, 윗몸 → 손 → 칼. 동작 = 대기(idle) 하나: 윗몸이 1칸 내려앉았다 올라오고(숨), 머리가 살짝 끄덕, 손·칼이 조금 흔들림.
 사용: python3 scripts/rig/tools/aizen_rig.py  → docs/design/rig-draft/aizen.json · aizen-motions.json · aizen/ref/*.png
+주의: 2026-11-14 02:51 사용자가 편집기에서 고정함(손·칼 자리, 칼 관절·기본 각도) — 이제 작업본(aizen.json)이 기준. 이 도구를 다시 돌리면 그 값이 처음 값으로 덮인다(그림만 다시 뽑을 때도 aizen.json 은 되돌릴 것).
 """
 import json
 import os
