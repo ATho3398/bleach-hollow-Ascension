@@ -1,6 +1,6 @@
 {
  "id": "aizen",
- "note": "아이젠 종이인형(대기 동작만 — GDD 115-A 124, 사용자 2026-11-14 \"얘 아이젠 idle로 만들어줄래?\"). 사용자 그림(몸 한 덩어리 + 주먹 + 칼)을 scripts/rig/tools/aizen_rig.py 가 머리·윗몸·아랫몸으로 자르고 주먹·칼을 소매 끝에 놓음. 작업본만(게임 미사용).",
+ "note": "아이젠 종이인형(대기 동작만 — GDD 115-A 124, 사용자 2026-11-14 \"얘 아이젠 idle로 만들어줄래?\"). 사용자 그림(몸 한 덩어리 + 주먹 + 칼)을 scripts/rig/tools/aizen_rig.py 가 머리·윗몸·아랫몸으로 자르고 주먹·칼을 소매 끝에 놓음. 작업본만(게임 미사용). 2026-11-14 04:0x: 앞머리(hair_side)·깃(collar_L·R) 따로 뼈 + 따라가기(살짝 휘날림), 코트 앞자락(아래)은 윗몸 뼈로, 코트 뒷자락 물결 2.8초(사용자 \"앞머리 살짝 휘날리기, 코트 프론트는 상체랑 같이 움직이기, 16번 움직임 좀 더 천천히, 7번 13번 살짝씩 휘날리듯\").",
  "canvas": [
   74,
   108
@@ -142,6 +142,30 @@
     46,
     97
    ]
+  },
+  {
+   "id": "hair_side",
+   "parent": "head",
+   "pivot": [
+    26,
+    11
+   ]
+  },
+  {
+   "id": "collar_L",
+   "parent": "upper",
+   "pivot": [
+    35,
+    41
+   ]
+  },
+  {
+   "id": "collar_R",
+   "parent": "upper",
+   "pivot": [
+    46,
+    39
+   ]
   }
  ],
  "slots": [
@@ -167,7 +191,7 @@
   },
   {
    "id": "hair_side",
-   "bone": "head"
+   "bone": "hair_side"
   },
   {
    "id": "chest",
@@ -175,11 +199,11 @@
   },
   {
    "id": "collar_L",
-   "bone": "upper"
+   "bone": "collar_L"
   },
   {
    "id": "collar_R",
-   "bone": "upper"
+   "bone": "collar_R"
   },
   {
    "id": "coat_front_top",
@@ -203,7 +227,7 @@
   },
   {
    "id": "coat_front",
-   "bone": "lower"
+   "bone": "upper"
   },
   {
    "id": "coat_inner",
@@ -610,7 +634,10 @@
    "shin_a": "정강이 A",
    "shin_b": "정강이 B",
    "foot_a": "발 A",
-   "foot_b": "발 B"
+   "foot_b": "발 B",
+   "hair_side": "앞머리",
+   "collar_L": "깃 왼",
+   "collar_R": "깃 오른"
   },
   "groups": [
    [
@@ -623,7 +650,10 @@
     "몸",
     [
      "head",
+     "hair_side",
      "upper",
+     "collar_L",
+     "collar_R",
      "lower"
     ]
    ],
@@ -695,6 +725,9 @@
    ],
    "shin_b": [
     "foot_b"
+   ],
+   "head": [
+    "hair_side"
    ]
   }
  },
@@ -1100,6 +1133,18 @@
     "root": [
      37,
      107
+    ],
+    "hair_side": [
+     26,
+     11
+    ],
+    "collar_L": [
+     35,
+     41
+    ],
+    "collar_R": [
+     46,
+     39
     ]
    },
    "rot": {
@@ -1144,12 +1189,12 @@
  },
  "sway": {
   "coat_tail": {
-   "lag": 120,
-   "swing": 0.6,
+   "lag": 200,
+   "swing": 0.5,
    "hang": 0.15,
    "wave": [
     3,
-    1700,
+    2800,
     0
    ]
   },
@@ -1171,6 +1216,36 @@
     2,
     1600,
     600
+   ]
+  },
+  "hair_side": {
+   "lag": 120,
+   "swing": 0.6,
+   "hang": 0.1,
+   "wave": [
+    4,
+    1900,
+    200
+   ]
+  },
+  "collar_L": {
+   "lag": 100,
+   "swing": 0.4,
+   "hang": 0.05,
+   "wave": [
+    2.5,
+    1500,
+    0
+   ]
+  },
+  "collar_R": {
+   "lag": 100,
+   "swing": 0.4,
+   "hang": 0.05,
+   "wave": [
+    2.5,
+    1700,
+    450
    ]
   }
  }
