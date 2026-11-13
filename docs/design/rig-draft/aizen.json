@@ -361,7 +361,7 @@
     "art": "parts/arm_sword",
     "at": [
      22,
-     37
+     36
     ],
     "size": [
      13,
@@ -372,7 +372,7 @@
     "art": "parts/forearm_sword",
     "at": [
      16,
-     45
+     44
     ],
     "size": [
      14,
@@ -515,7 +515,7 @@
     "art": "parts/hand",
     "at": [
      12,
-     54
+     52
     ],
     "size": [
      13,
@@ -526,7 +526,7 @@
     "art": "parts/sword",
     "at": [
      12,
-     48
+     46
     ],
     "size": [
      34,
@@ -537,7 +537,7 @@
     "art": "parts/thumb",
     "at": [
      12,
-     56
+     54
     ],
     "size": [
      3,
@@ -983,19 +983,19 @@
     ],
     "forearm_sword": [
      25,
-     49
+     48
     ],
     "hand": [
      20,
-     57
+     56
     ],
     "sword": [
      20,
-     60
+     58
     ],
     "coat_tail": [
      34,
-     63
+     64
     ],
     "coat_side1": [
      56,
@@ -1070,14 +1070,14 @@
    "thigh_a",
    "thigh_b",
    "coat_inner",
+   "coat_lining",
    "head",
+   "coat_front",
    "chest",
    "coat_side_top",
    "cuff",
    "hair_side",
    "collar_L",
-   "coat_lining",
-   "coat_front",
    "coat_front_top",
    "arm_sword",
    "coat_tail",
