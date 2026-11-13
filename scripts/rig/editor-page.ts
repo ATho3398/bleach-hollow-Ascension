@@ -104,13 +104,14 @@ const isCreature = () => {
   const r = rig as unknown as { cuts?: Record<string, unknown>; assembled?: Record<string, unknown> };
   return !!(r.cuts?.[curBody()] || r.assembled?.[curBody()]);
 };
-const CREATURE_NAMES: Record<string, string> = { arm_L: '뒤 위팔', forearm_L: '뒤 아래팔', arm_R: '앞 위팔', forearm_R: '앞 아래팔', leg_L: '뒷다리 허벅지', shin_L: '뒷다리 정강이', foot_L: '뒷발', leg_R: '앞다리 허벅지', shin_R: '앞다리 정강이', foot_R: '앞발' };
-const CREATURE_GROUPS: Record<string, string> = { '왼팔(칼)': '뒤 팔', '오른팔': '앞 팔' };
+// 팔·다리 이름은 모든 몸이 같다(사용자 2026-11-13 "부위별 이름 싹 다 통일시켜 — 칼 든 손 = 오른손(앞손), 칼 안든 손 = 왼손(뒷손)", 115-A 123):
+// 예전의 호로 전용 이름(뒤 위팔·앞 위팔·뒷다리 허벅지…)은 없앰. 팔이 한 조각인 몸(아래팔 그림 없음)만 '오른팔(앞손)'·'왼팔(뒷손)'
+const CREATURE_GROUPS: Record<string, string> = {};
 const NAMES = (): Record<string, string> => {
   const base = rig.edit?.names ?? {};
   if (!rig.looks[look] || !isCreature()) return base;
   const body = rig.bodies[curBody()] ?? {};
-  return { ...base, ...CREATURE_NAMES, ...(body.forearm_R ? {} : { arm_L: '뒤 팔', arm_R: '앞 팔' }), ...(body.fold1 ? { cape: '로브 아랫단' } : {}) };
+  return { ...base, ...(body.forearm_R ? {} : { arm_L: '오른팔(앞손)', arm_R: '왼팔(뒷손)' }), ...(body.fold1 ? { cape: '로브 아랫단' } : {}), ...(curBody() === 'hv' ? { cape: '꼬리', cape2: '꼬리 2', cape3: '꼬리 끝' } : {}) }; // 속도형은 망토 마디가 꼬리
 };
 /** 지금 몸이 쓰는 동작(역관절 몸은 동작 묶음을 덮은 것) */
 const motionsNow = (): Record<string, Motion> => {

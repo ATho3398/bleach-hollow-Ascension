@@ -19,6 +19,7 @@ ArtifactData get `rig/fixed`(뱀 = `rig/fixed-serpent`, 짐승 = `rig/fixed-beas
 
 ## 3. 작업본 vs 게임 / 배포
 - 모든 수정은 작업본 `docs/design/rig-draft/`(humanoid.json·motions.json·serpent.json·serpent-motions.json·beast.json·beast-motions.json·그림 폴더). 게임은 사용자가 "게임 넣어/게임에 반영/게임에 적용"이라고 할 때만: `python3 scripts/rig/promote.py`(사람형·뱀형 — 짐승형은 아직 게임에 없음, `-test` 외형 제외) → 패치 C.xxx(dev-log 소절, `src/version.ts` PATCH_LABEL, 기획이 바뀌면 GDD 장·버전) → `npm run typecheck`·`npx vitest run`·`npm run build`·`npm run balance:check`.
+- **2026-11-12 부터 마스터 = 마스터AM**(session_01YVaigL3CXmHKgGoxWgP99u — 사용자 확인 2026-11-13 "am맞음"). 아래 '마스터AL' 은 마스터AM 으로 읽는다.
 - **main 합치기·배포 = 마스터AL**(session_01YVaigHqv5N8mzeitzKf2jg): 작업 브랜치 푸시 → `send_message` 로 브랜치·HEAD·내용·검증 결과·"배포 끝나면 알려 달라" → 마스터가 fast-forward·배포 확인 후 알려 주면 사용자에게 전한다. 패치 번호·GDD 장 번호는 main 최신을 먼저 보고 다음 빈 번호(다른 세션과 겹치면 옮긴다).
 - 커밋 꼬리: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` + `Claude-Session: <이 세션 주소>`. 커밋·코드에 모델 이름 금지.
 
