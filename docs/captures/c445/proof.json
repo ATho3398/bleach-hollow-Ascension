@@ -1,0 +1,35 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-kyoka-glow-pressed-150ms.png",
+    "02-pc-fragor-minus3.png"
+  ],
+  "facts": {
+    "kyokaFrames": [
+      "0ms op 1.00 bha-kitglow",
+      "41ms op 1.00 bha-kitglow",
+      "97ms op 1.00 bha-fire",
+      "141ms op 0.49 bha-fire",
+      "192ms op 0.21 bha-fire",
+      "241ms op 0.10 bha-fire",
+      "293ms op 0.05 bha-fire",
+      "341ms op 0.02 bha-fire",
+      "401ms op 0.01 bha-fire",
+      "442ms op 0.00 bha-fire",
+      "492ms 없음",
+      "541ms 없음",
+      "592ms 없음",
+      "641ms 없음",
+      "692ms 없음",
+      "741ms 없음",
+      "792ms 없음",
+      "841ms 없음",
+      "892ms 없음"
+    ],
+    "kyokaGoneMs": 480,
+    "afterFragor": {
+      "risk": 57,
+      "chip": "붕옥 감응도 57"
+    }
+  }
+}

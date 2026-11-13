@@ -49,10 +49,10 @@ const blk = (s: CombatState, b: string) => ({ uid: s.nextUid++, kind: 'skill' as
 const ids = (s: CombatState) => s.tray.map((b) => b.traitId);
 
 describe('수치·데이터 (provisional)', () => {
-  it('감응도 시작 20·최소 20·융합 30 · 붕옥 블록 허 ×0.5·+10 · 프라고르 −5/블록 · 이름', () => {
+  it('감응도 시작 20·최소 20·융합 30 · 붕옥 블록 허 ×0.5·+10 · 프라고르 −3/블록(C.445) · 이름', () => {
     expect(RR).toEqual({ floor: 20, minRisk: 30 }); // C.444: 전투 전용 start 삭제
     expect(K.blocks.hogyoku).toMatchObject({ voidSlot: { voidScale: 0.5, riskGain: 10 } });
-    expect(K.blocks.fragor).toMatchObject({ riskCost: 5, weight: 0.35, tiers: [2.4, 3.6, 5.0] });
+    expect(K.blocks.fragor).toMatchObject({ riskCost: 3, weight: 0.35, tiers: [2.4, 3.6, 5.0] });
     const p = aizenParams();
     expect(p.kit?.liberationName).toBe('붕옥 융합');
     expect(p.kit?.riskRelease).toEqual({ floor: 20, minRisk: 30, limit: BALANCE.provisional.risk.limit });
@@ -147,7 +147,7 @@ describe('붕옥 융합', () => {
     }
     expect([...seen].sort()).toEqual([id('fragor'), id('kido')].sort());
   });
-  it('프라고르 1블록마다 −5 (3체인 = −15), 귀도는 안 깎임', () => {
+  it('프라고르 1블록마다 −3 (3체인 = −9, C.445), 귀도는 안 깎임', () => {
     const s = mk(100);
     applyInput(s, { type: 'liberate' });
     s.tray = [blk(s, 'kido'), blk(s, 'kido'), blk(s, 'kido')];
@@ -156,39 +156,40 @@ describe('붕옥 융합', () => {
     s.tray = [blk(s, 'fragor')];
     drainCombatEvents(s);
     applyInput(s, { type: 'use', cell: 0 });
-    expect(kitRiskOf(s)).toBe(95);
-    expect(drainCombatEvents(s).find((e) => e.kind === 'kit-risk')).toMatchObject({ spent: 5, risk: 95 });
+    expect(kitRiskOf(s)).toBe(97);
+    expect(drainCombatEvents(s).find((e) => e.kind === 'kit-risk')).toMatchObject({ spent: 3, risk: 97 });
     s.tray = [blk(s, 'fragor'), blk(s, 'fragor'), blk(s, 'fragor')];
     drainCombatEvents(s);
     applyInput(s, { type: 'use', cell: 0 });
     const ev = drainCombatEvents(s).find((e) => e.kind === 'block');
     expect(ev && ev.kind === 'block' && ev.kitName).toBe('울트라 프라고르');
-    expect(kitRiskOf(s)).toBe(80);
-    expect(s.kit!.riskSpent).toBe(20);
+    expect(kitRiskOf(s)).toBe(88);
+    expect(s.kit!.riskSpent).toBe(12);
   });
   it('30 밑으로 떨어지면 풀림 (프라고르 → 붕옥, 귀도는 그대로) · 최소 20 밑으로 안 감 · 런 로그', () => {
     const s = mk(32);
     applyInput(s, { type: 'liberate' });
+    s.kit!.risk = 22; // 융합 뒤 22 로 (C.445: −3 이라 32 에서 3체인 −9 = 23 → 하한 확인용)
     s.tray = [blk(s, 'fragor'), blk(s, 'fragor'), blk(s, 'fragor'), blk(s, 'kido'), blk(s, 'fragor')];
     drainCombatEvents(s);
-    applyInput(s, { type: 'use', cell: 0 }); // 3체인 −15 → 17 이 아니라 최소 20
+    applyInput(s, { type: 'use', cell: 0 }); // 3체인 −9 → 13 이 아니라 최소 20 (C.445: 32 → 22 시작)
     expect(kitRiskOf(s)).toBe(20);
     expect(liberationActive(s)).toBe(false);
     expect(drainCombatEvents(s).find((e) => e.kind === 'liberation-end')).toMatchObject({ endless: true, risk: 0 });
     expect(ids(s)).toEqual([id('kido'), id('hogyoku')]);
     expect(s.kit!.modeExits).toBe(1);
-    expect(s.kit!.riskSpent).toBe(12);
+    expect(s.kit!.riskSpent).toBe(2);
     expect(canLiberate(s)).toBe(false);
     s.status = 'won';
     const rec = buildBattleRecord(s, { factionId: 'hollow', runId: 1, lap: 1, tierIndex: 0 });
-    expect(rec.kit).toMatchObject({ id: 'aizen', modeEnters: 1, modeExits: 1, riskSpent: 12 });
+    expect(rec.kit).toMatchObject({ id: 'aizen', modeEnters: 1, modeExits: 1, riskSpent: 2 });
   });
-  it('30 에서 프라고르 한 번 = 25 → 풀림', () => {
+  it('30 에서 프라고르 한 번 = 27 → 풀림', () => {
     const s = mk(30);
     applyInput(s, { type: 'liberate' });
     s.tray = [blk(s, 'fragor')];
     applyInput(s, { type: 'use', cell: 0 });
-    expect(kitRiskOf(s)).toBe(25);
+    expect(kitRiskOf(s)).toBe(27);
     expect(liberationActive(s)).toBe(false);
   });
   it('융합 중 회피 0 (융합 전엔 회피)', () => {

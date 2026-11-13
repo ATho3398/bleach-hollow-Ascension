@@ -1,5 +1,5 @@
 // C.444 (GDD v6.054 12-4): 아이젠 붕옥 감응도 = 트랙 리스크 게이지 그 자체 (사용자 2026-11-13 "새 게이지 만들지 마").
-// 전투는 원정 리스크로 시작 · 전투 중 변화(붕옥 +10 · 프라고르 −5)가 끝나면 원정에 반영 · 어디서 내려가도 20 밑으로 안 감 · 리스크 패널티(폭주) 없음.
+// 전투는 원정 리스크로 시작 · 전투 중 변화(붕옥 +10 · 프라고르 −3, C.445)가 끝나면 원정에 반영 · 어디서 내려가도 20 밑으로 안 감 · 리스크 패널티(폭주) 없음.
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
@@ -66,7 +66,7 @@ describe('전투 시작 값 = 원정 리스크, 끝나면 원정에 반영', () 
     finishBattle(exp, b);
     expect(exp.risk).toBe(57);
   });
-  it('융합 중 프라고르 3체인 −15 → 원정에도 −15', () => {
+  it('융합 중 프라고르 3체인 −9 → 원정에도 −9', () => {
     const s = aizenSave();
     const exp = expAt(s, 60);
     const b = startBattle(exp);
@@ -74,10 +74,10 @@ describe('전투 시작 값 = 원정 리스크, 끝나면 원정에 반영', () 
     applyInput(b, { type: 'liberate' });
     b.tray = [blk(b, 'fragor'), blk(b, 'fragor'), blk(b, 'fragor')];
     applyInput(b, { type: 'use', cell: 0 });
-    expect(kitRiskOf(b)).toBe(45);
+    expect(kitRiskOf(b)).toBe(51);
     win(b);
     finishBattle(exp, b);
-    expect(exp.risk).toBe(45);
+    expect(exp.risk).toBe(51);
   });
   it('원정 리스크 100 이면 전투도 100 (붕옥 블록 안 나옴)', () => {
     const s = aizenSave();

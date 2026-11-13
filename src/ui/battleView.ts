@@ -1287,7 +1287,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const fireAway = (node: HTMLElement) => {
     const g = elementLocalRect(tray.grid);
     const r = elementLocalRect(node);
-    node.classList.remove('is-pressed', 'is-popin', 'is-cue');
+    // 반격 창 발광(bha-kitglow)도 뗀다 — 그 무한 애니메이션이 is-fire 를 덮어 블록이 0.7초 공중에 떠 있었다 (C.445 사용자 '경화수월 렉')
+    node.classList.remove('is-pressed', 'is-popin', 'is-cue', 'bha-kitglow');
     node.style.cssText = `position:absolute;left:${r.left - g.left}px;top:${r.top - g.top}px;width:${r.width}px;height:${r.height}px;z-index:5;margin:0`;
     tray.grid.append(node);
     node.classList.add('is-fire');
