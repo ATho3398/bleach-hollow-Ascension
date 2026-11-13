@@ -53,7 +53,7 @@ describe('모델 고르기 목록 — 단계 이름·아란칼 기본', () => {
 
 describe('초월자 외형 스킨', () => {
   it('그림/모델 있는 초월자만 (데이터) — 태초 그림·Unknown;03398 조각 모델', () => {
-    expect(transcendentLooks().map((t) => t.id)).toEqual(['zero-sage', 'rift-wanderer']);
+    expect(transcendentLooks().map((t) => t.id)).toEqual(['aizen', 'zero-sage', 'rift-wanderer']); // C.450: 아이젠 그림
     expect(look('hollow', 3, transcendentLookId('zero-sage')).src).toMatch(/char-transcendent-zero-sage/);
     expect(look('shinigami', 2, transcendentLookId('rift-wanderer')).src).toMatch(/#mosaic=rift-wanderer/);
   });
@@ -79,7 +79,7 @@ describe('초월자 외형 스킨', () => {
     s.skin = transcendentLookId('rift-wanderer');
     writeSave(st, s);
     expect(loadSave(st)!.skin).toBe(transcendentLookId('rift-wanderer'));
-    s.skin = 'transcendent:aizen'; // 그림 없는 초월자
+    s.skin = 'transcendent:yhwach'; // 그림 없는 초월자
     writeSave(st, s);
     expect(loadSave(st)!.skin).toBeNull();
   });

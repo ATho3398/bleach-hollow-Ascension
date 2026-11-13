@@ -131,6 +131,8 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'char.hollow': { rig: 'brute-base', scale: HOLLOW_BRUTE_SCALE },
   // 초월자 그림 (C.430, GDD 12-4): 초월자 데이터 art 키. 128×128 후광 프레임 가운데 64 구슬 — 종족 기본 배율(호로 덩치)을 물려받지 않게 1
   'char.transcendent-zero-sage': { scale: 1 },
+  // 아이젠 (C.450, 사용자 2026-11-13 "우라하라랑 아이젠만 넣어놔"): 128×128 칸에 57×108 도트 한 장(초안). 배율 = 사신 종이인형과 도트 크기가 같게(1.78·1.33 × 128/152)
+  'char.transcendent-aizen': { scale: 1.5, fieldScale: 1.12 },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
@@ -194,7 +196,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 수레 그림은 우라하라(prop-wanderer.webp)으로 옮김 — 시장 안 소모품 상점 칸(prop.shop)은 그림 대기(아이콘)
   'prop.market': {},
   'scene.market': {},
-  'prop.wanderer': {},
+  'prop.wanderer': { scale: 1.7 }, // 우라하라 도트(52×112 ×3, prop-wanderer.png — C.450). 사람 키라 가게 그림보다 크게
   // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)
   'prop.gearShop': { scale: 1.2 }, // 장비 상점 그림 ×1.2 (GDD 160장 3)
   'prop.skinShop': {},

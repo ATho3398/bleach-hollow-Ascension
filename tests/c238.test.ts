@@ -23,7 +23,7 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
   // 2026-11-03 사용자 그림으로 바뀜: 월드맵 시장 = 상점 그림(prop-market.png), 수레 그림은 우라하라로 옮김
   it("월드맵 '시장' 장소 = prop-market 그림, 수레 그림 = 우라하라", () => {
     expect(artUrls('prop.market').src).toBe('/art/prop-market.png');
-    expect(artUrls('prop.wanderer').src).toBe('/art/prop-wanderer.webp');
+    expect(artUrls('prop.wanderer').src).toBe('/art/prop-wanderer.png'); // C.450: 수레 → 우라하라 도트
   });
 });
 

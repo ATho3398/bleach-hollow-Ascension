@@ -29,7 +29,7 @@ describe('C.440 캐릭터 스킨 분류', () => {
     expect(aj[0]!.variants.map((v) => v.id)).toEqual(['carapace', 'carapacewater', 'carapacefire', 'carapaceearth', 'carapacethunder']);
     expect(e.find((x) => x.key === 'tier:5')?.variants.map((v) => v.gender)).toEqual(['male', 'female']);
     expect(e.find((x) => x.key === 'tier:4')?.sub).toBe('tier4');
-    expect(e.filter((x) => x.sub === 'transcendent').map((x) => x.name)).toEqual(['태초', '현현', 'Unknown;03398', '디버깅']); // C.443: 인간형 스킨 현현·디버깅
+    expect(e.filter((x) => x.sub === 'transcendent').map((x) => x.name)).toEqual(['아이젠', '태초', '현현', 'Unknown;03398', '디버깅']); // C.443: 인간형 스킨 현현·디버깅
     const sh = characterSkinEntries('shinigami', { test: true, owned: [], dex: [] });
     expect(sh.filter((x) => x.sub === 'shinigami').map((x) => x.key)).toEqual(['tier:1', 'tier:2', 'tier:3', 'tier:4']);
   });

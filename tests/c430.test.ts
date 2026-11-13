@@ -12,7 +12,7 @@ const FRAMES = Array.from({ length: 32 }, (_, i) => `char-transcendent-zero-sage
 
 describe('태초 그림 (데이터 art 키)', () => {
   it('태초만 그림 키, Unknown;03398 만 이름 글리치 — 데이터 표시로', () => {
-    expect(TRANSCENDENTS.filter((d) => d.art).map((d) => [d.id, d.art])).toEqual([['zero-sage', KEY]]);
+    expect(TRANSCENDENTS.filter((d) => d.art).map((d) => [d.id, d.art])).toEqual([['aizen', 'char.transcendent-aizen'], ['zero-sage', KEY]]); // C.450: 아이젠 도트 초안
     expect(glitchNames()).toEqual(['Unknown;03398']);
     expect(() => parseTranscendent({ ...TRANSCENDENTS[0], art: 'bad' })).toThrow(/art/);
     expect(() => parseTranscendent({ ...TRANSCENDENTS[0], nameGlitch: 'y' })).toThrow(/nameGlitch/);
@@ -33,7 +33,7 @@ describe('태초 그림 (데이터 art 키)', () => {
     expect(artSkinOf(s)).toBeNull();
     s.transcendentId = 'zero-sage';
     expect(artSkinOf(s)).toBe(KEY);
-    s.transcendentId = 'aizen';
+    s.transcendentId = 'yhwach';
     expect(artSkinOf(s)).toBeNull(); // 그림 없는 초월자 = 이어받은 진화체 그림
   });
 });

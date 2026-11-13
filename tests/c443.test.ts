@@ -270,7 +270,7 @@ describe('초월자 인간형 스킨 — 태초 현현 · Unknown 디버깅', ()
     const got = characterSkinEntries('hollow', { test: false, owned: [], dex: ['zero-sage'] }).filter((e) => e.sub === 'transcendent');
     expect(got.map((e) => [e.name, e.cls, e.waiting])).toEqual([['태초', 'form', undefined], ['현현', 'form', true]]);
     const all = characterSkinEntries('shinigami', { test: true, owned: [], dex: [] }).filter((e) => e.sub === 'transcendent').map((e) => e.name);
-    expect(all).toEqual(['태초', '현현', 'Unknown;03398', '디버깅']);
+    expect(all).toEqual(['아이젠', '태초', '현현', 'Unknown;03398', '디버깅']); // C.450
   });
   it('입기: 얻은 초월자만(테스트 모드는 전부), 초월자 트랙에서도 스킨 그림 · 저장·읽기 유지', () => {
     const s = newSaveData('hollow', 1000);
