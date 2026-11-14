@@ -254,6 +254,52 @@ export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
   return { root, body };
 }
 
+/**
+ * 바꿔 입는 몸 그림 (C.456 무월 — 초월자 데이터 kit.mastery.releaseArt): 몸 뒤 레이어 · 몸 한 장 · 몸 앞 레이어를 같은 칸에 겹친다(README 순서 그대로).
+ * 레이어마다 자기 프레임 수만큼 art.layers.ms 간격으로 반복(길이가 달라도 각자). set(true) 면 내 몸(.bha-hero__body)의 원래 그림을 가리고 이것을 보인다.
+ * 몸통박치기·피격·오오라는 원래대로 root·body 가 맡으니 같이 움직인다
+ */
+export function heroAltEl(body: HTMLElement, art: ArtUrls): { set(on: boolean): void; stop(): void } {
+  const root = el('span', 'bha-hero__alt');
+  root.hidden = true;
+  const scale = String(art.fieldScale ?? art.scale);
+  const layer = (url: string): HTMLImageElement => {
+    const img = artImg(art, url, 'bha-hero__img');
+    img.style.setProperty('--art-scale', scale);
+    root.append(img);
+    return img;
+  };
+  const back = art.layers?.back ?? [];
+  const front = art.layers?.front ?? [];
+  const backImg = back.length ? layer(back[0]!) : null;
+  layer(art.src!);
+  const frontImg = front.length ? layer(front[0]!) : null;
+  body.append(root);
+  const hadArt = body.classList.contains('has-art');
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let n = 0;
+  let preloaded = false;
+  const stop = (): void => { if (timer !== null) clearInterval(timer); timer = null; };
+  return {
+    set(on) {
+      if (on === !root.hidden) return;
+      root.hidden = !on;
+      body.classList.toggle('is-alt', on);
+      if (!hadArt) body.classList.toggle('has-art', on);
+      stop();
+      if (!on || (!back.length && !front.length)) return;
+      if (!preloaded) { preloaded = true; for (const u of [...back, ...front]) new Image().src = u; } // 첫 바퀴 깜빡임 방지
+      timer = setInterval(() => {
+        if (!root.isConnected) { stop(); return; }
+        n++;
+        if (backImg) backImg.src = back[n % back.length]!;
+        if (frontImg) frontImg.src = front[n % front.length]!;
+      }, art.layers?.ms ?? 120);
+    },
+    stop,
+  };
+}
+
 export interface HeadGaugeState {
   /** false 면 감춘다 (idle 표시가 있는 게이지는 흐리게 남긴다) */
   on: boolean;

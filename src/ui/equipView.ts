@@ -10,7 +10,7 @@ import { statName } from '../data/elements';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName } from '../engine/evolution';
 import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearStatsOf, sellGold, type GearItem } from '../engine/gear';
-import { artSkinOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, noEvolutionLabel, statBonusOf, type SaveData, artTierIndexOf } from '../game';
 import {
   autoEquipGear, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
   choosePet, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
@@ -350,7 +350,9 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     figure.append(img);
   } else figure.append(icon('i-nest'));
   const who = h('div', 'bha-eqfigure__who');
-  who.append(h('b', '', shownName(formDisplayName(save.evolution, faction.id))), h('small', '', `${save.evolution.tierIndex + 1}단계 ${faction.tierNames[save.evolution.tierIndex] ?? ''}`));
+  const own = noEvolutionLabel(save); // 초월자 = 초월자 이름 · '초월자' (진화 단계·진화체 없음 — 사용자 2026-11-15, GDD 12-4)
+  if (own) who.append(h('b', '', own.name), h('small', '', own.kind));
+  else who.append(h('b', '', shownName(formDisplayName(save.evolution, faction.id))), h('small', '', `${save.evolution.tierIndex + 1}단계 ${faction.tierNames[save.evolution.tierIndex] ?? ''}`));
   figure.append(who);
   const doll = h('div', 'bha-eqdoll');
   doll.append(colL, figure, colR);

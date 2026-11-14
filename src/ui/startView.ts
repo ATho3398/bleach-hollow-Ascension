@@ -25,6 +25,7 @@ export const INCOMPATIBLE_TEXT = {
 
 /** 슬롯 제목 (GDD 129장 1): 등급 이름만(단계 숫자·종족·원정 횟수 없음 — 종족은 왼쪽 로고). 번호 쟁탈전·진급 시험 칭호가 있으면 칭호, 환생했으면 옆에 '+환생 n회' */
 export function slotTitle(sum: Extract<SlotSummary, { state: 'ok' }>, f: FactionConfig | undefined): string {
+  if (sum.ownTitle) return sum.ownTitle; // 초월자 = 단계·등급 대신 '초월자 이름' (사용자 2026-11-15, GDD 12-4)
   const grade = (sum.rank ? f?.rankNames[sum.rank - 1] : undefined) ?? f?.tierNames[sum.tierIndex] ?? `${sum.tierIndex + 1}단계`;
   const n = sum.rebirths ?? 0;
   return n > 0 ? `${grade} +${f?.rebirth.name ?? '환생'} ${n}회` : grade;

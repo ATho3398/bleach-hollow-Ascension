@@ -40,14 +40,15 @@ import { animOf } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import { onAppAway } from './bha/appAway';
 import {
-  blockEl, blockVisual, heroEl, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
+  blockEl, blockVisual, heroEl, heroAltEl, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
 import { categoryName, ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
-import { isFemaleRigLook } from '../data/art/manifest';
+import { isFemaleRigLook, layeredArt } from '../data/art/manifest';
+import { tryGetTranscendent } from '../data/transcendents';
 import { elementLocalRect, pointerLocal } from './bha/viewport';
 import { battleLabels, comboBlockLabel, familyAbbr, familySkillName, liberationBlockLabel, liberationHint, skillBlockLabel, type BattleLabels } from './labels';
 import { helpOverlay } from './helpView';
@@ -397,6 +398,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0, opts.skinId);
   const hero = heroEl(heroArt);
   const heroAnim = animOf(hero.root); // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출
+  // 두 번째 해방 중 몸 그림 (C.456 무월 — 초월자 데이터 kit.mastery.releaseArt, 몸 뒤·몸 앞 불꽃 레이어). 데이터·그림 파일이 없으면 null(그림 그대로)
+  const secondArtKey = s.params.kit ? tryGetTranscendent(s.params.kit.id)?.kit?.mastery?.releaseArt : undefined;
+  const secondArt = secondArtKey ? layeredArt(secondArtKey, (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/') : null;
+  const heroSecond = secondArt ? heroAltEl(hero.body, secondArt) : null;
   const foeAnim = animOf(foe);
 
   // 체력 바 (핸드오프 게이지 hp·foe + 숫자 "78 / 108" — 숫자는 막대 안, GDD 127장 1): 값만 제자리에서 바꾼다
@@ -635,6 +640,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let unaway = (): void => undefined;
   const stop = (): void => {
     stopped = true;
+    heroSecond?.stop();
     unhold();
     unaway();
   };
@@ -1618,6 +1624,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);
+    heroSecond?.set(kitSecondOn(s)); // 무월 그림 (C.456)
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     setHidden(libChipRoot.root, !libActive || (s.liberation.endless === true && !!kitRelBtn));

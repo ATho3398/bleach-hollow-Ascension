@@ -79,7 +79,7 @@ describe('데이터·수치 (provisional)', () => {
     expect(t.kit?.blocks.map((b) => [b.id, b.short, b.chargeShot, b.noMotion])).toEqual([['getsuga', '월', true, true]]); // C.455: 몸동작 없음 = 데이터 표시
     expect(t.kit?.liberationName).toBe('각호고');
     expect(t.kit?.riskGaugeName).toBe('호로화');
-    expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충' });
+    expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충', releaseArt: 'char.transcendent-ichigo-mugetsu' }); // C.456 무월 그림
     expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic']); // 천년혈전 [미정]
     // GDD v6.070~v6.074 추천안
     expect(K.blocks.getsuga).toMatchObject({ chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] });

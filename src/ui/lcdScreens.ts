@@ -8,7 +8,7 @@ import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { kitLevelMultiplier, kitLevelOf, kitUpgradeCost, upgradableBlocks } from '../engine/transcendKit';
-import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, noEvolutionLabel, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -216,10 +216,13 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const tt = transcendentTraitBlock(evo);
   if (tt) stats.append(tt);
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
-  const evoPanel = panel({ title: '진화 정보' });
-  evoPanel.setAttribute('aria-label', '진화 정보');
+  // 진화 없는 트랙(초월자)은 진화 단계·진화체 대신 초월자 이름·'초월자' (사용자 2026-11-15, GDD 12-4)
+  const own = noEvolutionLabel(save);
+  const evoTitle = own ? `${own.kind} 정보` : '진화 정보';
+  const evoPanel = panel({ title: evoTitle });
+  evoPanel.setAttribute('aria-label', evoTitle);
   evoPanel.dataset.evolution = '';
-  const cols = evolutionColumns(faction, evo);
+  const cols = evolutionColumns(faction, evo, own);
   const evoMark = rebirthMark(save.rebirth.count);
   if (evoMark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', evoMark);
   // 이름 줄 전체 폭 (GDD 189장 16): 임시 칩은 이름 줄에서 빼 아래 '단계 · 속성' 줄 앞으로

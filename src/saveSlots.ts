@@ -1,7 +1,7 @@
 // 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
-import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
+import { migrateSave, noEvolutionLabel, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
 import { rankOf } from './engine/rank/rank';
 
@@ -36,6 +36,8 @@ export type SlotSummary =
       rank?: number | null;
       /** 환생 횟수 — 1 이상일 때만 슬롯 제목 옆 '+환생 n회' (GDD 129장 1) */
       rebirths?: number;
+      /** 진화 없는 트랙(초월자)이 지금 트랙이면 슬롯 제목 = '초월자 이치고' — 단계 이름 대신 (사용자 2026-11-15, GDD 12-4) */
+      ownTitle?: string;
     };
 
 interface SlotsMeta {
@@ -108,6 +110,7 @@ export function slotSummary(storage: StorageLike, slot: number, min: number = sa
     inExpedition: save.activeExpedition != null,
     rank: (() => { try { return save.rank ? rankOf(save.rank) : null; } catch { return null; } })(),
     rebirths: save.rebirth?.count ?? 0,
+    ...(() => { try { const own = noEvolutionLabel(save); return own ? { ownTitle: `${own.kind} ${own.name}` } : {}; } catch { return {}; } })(),
   };
 }
 

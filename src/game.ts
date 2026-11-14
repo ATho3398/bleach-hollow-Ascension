@@ -944,6 +944,15 @@ export function trackNameOf(t: Pick<SaveData, 'factionId'> & Partial<Pick<SaveDa
   return def?.name ?? getFaction(t.factionId).name;
 }
 
+/** 진화 단계·진화체 이름 대신 보일 이름 (사용자 2026-11-15 "초월자에 진화 단계나 진화체 왜 나옴. 그냥 초월자만 써 놔", GDD 12-4):
+ *  진화가 없는 트랙(트랙 종류 evolution false — 초월자)이면 { 이름 = 트랙 이름(초월자 이름), 종류 = 트랙 종류 이름('초월자') }, 아니면 null(진화체 그대로).
+ *  종족·초월자 id 로 가르지 않고 트랙 종류 설정만 본다 */
+export function noEvolutionLabel(t: Pick<SaveData, 'factionId'> & Partial<Pick<SaveData, 'transcendentId'>>): { name: string; kind: string } | null {
+  const rules = trackRulesOf(t);
+  if (rules.evolution) return null;
+  return { name: trackNameOf(t), kind: rules.label };
+}
+
 /** 이 종족의 스토리를 전부 깼나 (GDD 243장 1): 장 목록(STORY_CHAPTERS)의 모든 장에 그 종족 내용이 있고, 모두 장 완주 기록(story[종족].chapters)에 있다.
  *  내용이 아직 없는 장(준비 중)이 하나라도 있으면 아직 아니다. 종족 id 분기 없음 — 스토리 데이터만 본다 */
 export function storyAllCleared(save: Pick<SaveData, 'story'>, factionId: string): boolean {

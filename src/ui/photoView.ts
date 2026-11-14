@@ -5,7 +5,7 @@ import { formName, tryGetForm } from '../data/evolution';
 import { getCosmetic } from '../data/shop';
 import { marketOf, roomOf, type FactionConfig } from '../engine/faction';
 import { formDisplayName, playerElementsOf } from '../engine/evolution';
-import { roomKeyOf, artSkinOf, type SaveData, artTierIndexOf } from '../game';
+import { roomKeyOf, noEvolutionLabel, artSkinOf, type SaveData, artTierIndexOf } from '../game';
 import { button, el, seg } from './bha/dom';
 import type { Device } from './bha/device';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -23,6 +23,7 @@ export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: st
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : undefined;
   const look = (id: string | undefined): string | undefined => getCosmetic(id)?.look;
   const frame = frameChoices(save.shared.cosmetics).find((f) => f.id === frameId) ?? frameChoices([])[0]!;
+  const own = noEvolutionLabel(save);
   return {
     charSrc: art.src,
     charScale: art.scale,
@@ -30,8 +31,9 @@ export function photoSceneOf(faction: FactionConfig, save: SaveData, frameId: st
     sceneSrc: artUrls(room.sceneArt, BASE).src,
     look: { aura: look(save.wear.aura), tint: look(save.wear.tint), room: look(save.wear.room), plate: look(save.wear.plate) },
     // 캐릭터 이름이 있으면 이름표 = 이름, 아래 글에 진화체 이름 (GDD 199장 7, C.326)
-    name: save.name ?? shownName(formDisplayName(save.evolution, faction.id)),
-    stage: save.name ? `${shownName(formDisplayName(save.evolution, faction.id))} · ${save.evolution.tierIndex + 1}단계` : `${save.evolution.tierIndex + 1}단계`,
+    // 초월자 = 이름표 초월자 이름, 아래 글 '초월자' (진화 단계·진화체 없음 — 사용자 2026-11-15, GDD 12-4)
+    name: own ? own.name : save.name ?? shownName(formDisplayName(save.evolution, faction.id)),
+    stage: own ? own.kind : save.name ? `${shownName(formDisplayName(save.evolution, faction.id))} · ${save.evolution.tierIndex + 1}단계` : `${save.evolution.tierIndex + 1}단계`,
     date,
     frame,
   };

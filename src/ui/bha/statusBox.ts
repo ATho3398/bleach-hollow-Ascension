@@ -68,10 +68,10 @@ export function statusInfoButton(chipsNow: () => StatusChip[], faction: FactionC
 export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null; transcendentId?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
   const stars = rebirthMark(save.rebirth.count);
   const form = shownName(formDisplayName(save.evolution, faction.id));
-  // 초월자 (GDD 12-4 v6.028): 이름 = 초월자 이름, 작게 '초월자 · 진화체'(종류 이름 = 트랙 종류 설정 label)
+  // 초월자 (GDD 12-4 v6.028): 이름 = 초월자 이름, 작게 '초월자'(종류 이름 = 트랙 종류 설정 label). 진화체 이름은 안 보인다(사용자 2026-11-15 "그냥 초월자만 써 놔")
   if (save.transcendentId) {
     const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
-    const kind = `${trackRulesOf(save).label} · ${form}`;
+    const kind = trackRulesOf(save).label;
     const own = el('b', 'bha-room__nameown');
     const def = tryGetTranscendent(save.transcendentId);
     own.append(def ? transcendentNameNode(def) : trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })); // 이름 글리치 (C.430)

@@ -73,7 +73,7 @@ export interface TranscendentKitDef {
    *  해방 = 보통 해방 게이지, 지속 시간 없음, 해방 중엔 충전 평타마다 소모·0 이면 풀림 (수치 = balance riskDrain) */
   riskDrain?: boolean;
   /** 게이지를 다 쓰면 수련 게이지 → 두 번째 해방 (GDD 12-4 v6.069 무월수련·무월·최후의 월아천충, 수치 = balance riskDrain.mastery·final): 이름만 */
-  mastery?: { gaugeName: string; releaseName: string; finisherName: string };
+  mastery?: { gaugeName: string; releaseName: string; finisherName: string; /** 두 번째 해방 중 몸 그림 키 (C.456 무월 — 그림 목록 layers 로 불꽃 앞뒤). 없으면 그림 그대로 */ releaseArt?: string };
   /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 v6.069 이치고 = 기본 / 천년혈전 [미정]): 지금은 자리만 — 엔진·화면은 첫 모드(기본)만 쓴다, 선택 화면 없음 */
   modes?: { id: string; name: string; provisional?: boolean }[];
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
@@ -148,7 +148,7 @@ function kitErrors(k: unknown): boolean {
   if (!kit || typeof kit.liberationName !== 'string' || !kit.liberationName || !Array.isArray(kit.blocks) || kit.blocks.length === 0 || kit.provisional !== true) return false;
   if (kit.riskGaugeName !== undefined && (typeof kit.riskGaugeName !== 'string' || !kit.riskGaugeName)) return false;
   const nm = (v: unknown) => typeof v === 'string' && v.length > 0;
-  if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName))) return false;
+  if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName) && (kit.mastery.releaseArt === undefined || nm(kit.mastery.releaseArt)))) return false;
   if (kit.modes !== undefined && !(Array.isArray(kit.modes) && kit.modes.length > 0 && kit.modes.every((m) => m && nm(m.id) && nm(m.name)))) return false;
   const ids = new Set(kit.blocks.map((b) => b?.id));
   if (ids.size !== kit.blocks.length) return false;

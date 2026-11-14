@@ -10,7 +10,7 @@
 // enemy-<적id>.png, char-<종족>-<단계번호>.png, char-<종족>.png)으로 넣으면 이 목록을 고치지 않아도 인식한다(`files.ts`).
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
-import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
+import { charArtKeys, findArtFile, ART_ANIMS, ART_EXTS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
 import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook, transcendentSkinOfLook } from '../skins';
 import { FACTIONS } from '../factions';
@@ -53,6 +53,9 @@ export interface ArtEntry {
   offsetY?: number;
   /** 종이인형 외형 id(GDD 96장 30, src/data/art/rig/humanoid.json 의 looks). 있으면 단계별 파일이 없는 한 종족 공통 그림 대신 종이인형이 움직인다 */
   rig?: string;
+  /** 몸 뒤·몸 앞 불꽃 같은 프레임 레이어 (C.456 무월 — docs/art-samples/mugetsu-flame '1. 간단'): `public/art/<키 폴더>/<back>-n.png`·`<front>-n.png` 를
+   *  몸 그림과 같은 칸 크기로 겹쳐, 레이어마다 자기 프레임 수만큼 ms 간격으로 반복한다(길이가 달라도 각자) */
+  layers?: { back?: string; front?: string; ms: number };
 }
 
 /** 화면이 쓰는 그림 정보 */
@@ -69,6 +72,8 @@ export interface ArtUrls {
   rig?: { look: string; partBase: string; rigId?: string };
   /** 그림 위에서 머리 윗변까지 (그림 높이 대비 0~1, 없으면 0 = 그림 윗변). 종이인형은 칸이 칼 자리까지 넓어 머리 위가 비어 있다 — 머리 위 상태 칩 높이용 (C.190) */
   headTop?: number;
+  /** 프레임 레이어 (ArtEntry.layers): 몸 뒤·몸 앞 프레임 주소(재생 순서) · 프레임당 ms */
+  layers?: { back: string[]; front: string[]; ms: number };
 }
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
@@ -132,7 +137,12 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 초월자 그림 (C.430, GDD 12-4): 초월자 데이터 art 키. 128×128 후광 프레임 가운데 64 구슬 — 종족 기본 배율(호로 덩치)을 물려받지 않게 1
   'char.transcendent-zero-sage': { scale: 1 },
   // 아이젠 (C.450, 사용자 2026-11-13 "우라하라랑 아이젠만 넣어놔"): 128×128 칸에 57×108 도트 한 장(초안). 배율 = 사신 종이인형과 도트 크기가 같게(1.78·1.33 × 128/152)
-  'char.transcendent-aizen': { scale: 1.5, fieldScale: 1.12 },
+  // C.456 (사용자 2026-11-15 "아이젠 너무 크다. 사이즈 살짝 줄여라"): 방·전투·필드 모두 × 0.85 (provisional) — 1.5 → 1.28 · 1.12 → 0.95
+  'char.transcendent-aizen': { scale: 1.28, fieldScale: 0.95 },
+  // 무월 이치고 (C.456, docs/art-samples/mugetsu-flame — 사용자 완성 몸 56×114 + 몸 뒤 불꽃 16프레임 · 몸 앞 불꽃 40프레임, 120ms). 초월자 데이터 kit.mastery.releaseArt 가 가리킨다.
+  // 144×144 칸(불꽃 칸 118×124 를 (0,15)에, 몸 = (44,25), 발 아래 여백 5 = 아이젠 칸과 같게). 배율 = 아이젠 원래 도트 크기(사신 종이인형과 같은 도트) × 144/128.
+  // 앞뒤 순서 = README 그대로(몸 뒤 → 몸 → 몸 앞). 팔 앞뒤·동작마다 불 세기는 사용자 확인 전이라 정하지 않음 — 실시간 불꽃(live.py)은 아직 아님
+  'char.transcendent-ichigo-mugetsu': { scale: 1.6875, fieldScale: 1.26, layers: { back: 'back', front: 'front', ms: 120 } },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
@@ -255,6 +265,28 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
 }
 
 const joinBase = (base: string, p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+
+/** 프레임 레이어 한 줄의 파일들 (`<키 폴더>/<이름>-n.확장자`, 1번부터 끊기는 곳 앞까지 — anim.frameFiles 와 같은 규칙) */
+export function layerFiles(key: string, name: string, files: readonly string[] = ART_FILES): string[] {
+  const dir = key.replace(/\./g, '-');
+  const out: string[] = [];
+  for (let n = 1; ; n++) {
+    const hit = ART_EXTS.map((ext) => `${dir}/${name}-${n}.${ext}`).find((f) => files.includes(f));
+    if (!hit) break;
+    out.push(hit);
+  }
+  return out;
+}
+
+/** 레이어가 있는 그림 (C.456 무월): 몸 한 장(artUrls) + 몸 뒤·몸 앞 프레임. 레이어 정의가 없으면 그냥 artUrls. 몸 그림 파일이 없으면 null */
+export function layeredArt(key: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls | null {
+  const a = artUrls(key, base, manifest, files);
+  if (!a.src) return null;
+  const l = manifest[key]?.layers;
+  if (!l) return a;
+  const list = (name?: string) => (name ? layerFiles(key, name, files).map((f) => joinBase(base, `art/${f}`)) : []);
+  return { ...a, layers: { back: list(l.back), front: list(l.front), ms: l.ms } };
+}
 const withAnims = (a: ArtUrls, anims: AnimSet): ArtUrls => (hasAnims(anims) ? { ...a, anims } : a);
 
 /** 적 그림: `enemy-<적id>` 한 장짜리 파일이나 `idle` 애니가 있을 때만 값을 돌려준다(없으면 null = 기존 실루엣). 목록에 scale·offsetY 만 적어도 된다 */

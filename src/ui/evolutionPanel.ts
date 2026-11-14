@@ -94,8 +94,16 @@ export function abilityProcText(effect: string, factionId: string): string {
 
 /**
  * 진화 제단 화면의 두 열: 왼쪽 = 단계·진화체 이름·속성·고유 특성 / 오른쪽 = 진화 안내(타이밍은 비밀) 또는 마지막 단계 안내.
+ * own = 진화가 없는 트랙(초월자 — game.noEvolutionLabel)의 이름·종류: 진화체 이름·단계 대신 '초월자 이름 / 초월자 · 속성', 마지막 단계 안내 없음 (사용자 2026-11-15, GDD 12-4)
  */
-export function evolutionColumns(faction: FactionConfig, evo: EvolutionState): { left: HTMLElement[]; right: HTMLElement[] } {
+export function evolutionColumns(faction: FactionConfig, evo: EvolutionState, own: { name: string; kind: string } | null = null): { left: HTMLElement[]; right: HTMLElement[] } {
+  if (own) {
+    const form = h('div', 'bha-evo__form');
+    const els = h('span', 'bha-dim');
+    els.append(`${own.kind} · 속성 `, elementsMark(playerElementsOf(evo), faction.id));
+    form.append(h('span', 'bha-evo__formname', own.name), els);
+    return { left: [form], right: [] };
+  }
   // 실패형 줄기는 단계 이름·진화체 이름 모두 1단계 이름 (GDD 49-8 2번)
   const tierName = tierDisplayName(evo, faction.id);
   const current = evo.formId ? tryGetForm(evo.formId) : undefined;
