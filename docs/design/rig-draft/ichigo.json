@@ -156,8 +156,8 @@
    "shoulder_sword": {
     "art": "parts/shoulder_sword",
     "at": [
-     28,
-     40
+     30,
+     39
     ],
     "size": [
      12,
@@ -189,8 +189,8 @@
    "coat_front": {
     "art": "parts/coat_front",
     "at": [
-     30,
-     41
+     31,
+     39
     ],
     "size": [
      17,
@@ -200,8 +200,8 @@
    "collar": {
     "art": "parts/collar",
     "at": [
-     24,
-     47
+     26,
+     46
     ],
     "size": [
      10,
@@ -211,8 +211,8 @@
    "arm_sword": {
     "art": "parts/arm_sword",
     "at": [
-     24,
-     50
+     26,
+     49
     ],
     "size": [
      13,
@@ -222,8 +222,8 @@
    "sword": {
     "art": "parts/sword",
     "at": [
-     9,
-     57
+     11,
+     56
     ],
     "size": [
      26,
@@ -233,7 +233,7 @@
    "arm_back": {
     "art": "parts/arm_back",
     "at": [
-     49,
+     50,
      40
     ],
     "size": [
@@ -244,7 +244,7 @@
    "hand_back_bit": {
     "art": "parts/hand_back_bit",
     "at": [
-     57,
+     58,
      58
     ],
     "size": [
@@ -266,8 +266,8 @@
    "foot_a": {
     "art": "parts/foot_a",
     "at": [
-     32,
-     91
+     34,
+     88
     ],
     "size": [
      10,
@@ -277,8 +277,8 @@
    "foot_b": {
     "art": "parts/foot_b",
     "at": [
-     46,
-     91
+     47,
+     87
     ],
     "size": [
      14,
@@ -288,8 +288,8 @@
    "thumb": {
     "art": "parts/thumb",
     "at": [
-     27,
-     68
+     29,
+     67
     ],
     "size": [
      4,
@@ -717,29 +717,43 @@
   "parts": {
    "pivots": {
     "sword": [
-     28,
-     71
+     30,
+     70
     ],
     "arm_sword": [
      38,
      42
     ],
     "torso": [
-     44,
-     56
+     41,
+     44
     ],
     "coat_panel_R": [
      50,
-     42
+     50
     ],
     "arm_back": [
-     50,
+     51,
      42
+    ],
+    "root": [
+     48,
+     96
+    ],
+    "head": [
+     44,
+     39
     ]
    },
    "rot": {
     "sword": 19,
     "coat_panel_R": -2
+   },
+   "shift": {
+    "coat_panel_R": [
+     0.24,
+     0
+    ]
    }
   }
  }
