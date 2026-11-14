@@ -2,6 +2,7 @@
 import { DRAFT_RIGS, type DraftRig } from './draft';
 import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
+import { createFlame, type FlameLayer } from './flame';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
@@ -181,24 +182,42 @@ function fitWrap() {
   const row = wrap.closest<HTMLElement>('.stagerow');
   const side = row?.querySelector<HTMLElement>('.side');
   const tool = row?.querySelector<HTMLElement>('.toolcol');
-  const widthOf = (mm: number, k = K) => W * k + Math.max(140, (mm - x0) * k) + Math.max(60, (x1 - W + mm) * k);
+  let minL = 140, minR = 60; // 좌우 여유의 가장 작은 값(px) — 그래도 안 들어가면 80·40 까지 줄인다(115-A 135)
+  const widthOf = (mm: number, k = K) => W * k + Math.max(minL, (mm - x0) * k) + Math.max(minR, (x1 - W + mm) * k);
   let m = 16;
   K = K_FULL;
   if (row && side) {
-    const beside = row.clientWidth - side.offsetWidth - 8; // 미리보기 + 동작 칸만 한 줄(도구 칸은 윗줄)
-    const all = beside - (tool ? tool.offsetWidth + 8 : 0); // 도구 칸까지 한 줄
+    // 동작 칸 너비는 배율마다 다르다: 미리보기가 낮아지면 단추가 옆으로 새 줄을 만든다(fitSide) — 그 너비까지 넣어 잰다
+    // (사용자 2026-11-14 "무월 툴 ui 다 망가졋잖아": 3배에서 단추 칸이 두 줄이 돼 미리보기가 도구 칸 아래로 밀렸음, GDD 115-A 135)
+    // 보일 단추 수: 단추 숨김(syncMotionButtons)이 이 뒤에 돌 수도 있어 지금 몸의 동작으로 직접 센다(처음 그릴 때는 아직 못 세면 보이는 것만)
+    let ms: Record<string, unknown> | null = null;
+    try { ms = motionsNow(); } catch { ms = null; }
+    const nSide = [...side.children].filter((c) => {
+      const mm = (c as HTMLElement).dataset.m;
+      return ms && mm ? mm === 'stop' || !!ms[mm] : !(c as HTMLElement).hidden;
+    }).length;
+    const rowH = (side.querySelector('button')?.offsetHeight || 30) + 6;
+    const sideW = (k: number) => {
+      const hh = H * k + Math.max(14, (2 - y0) * k) + Math.max(14, (y1 - H + 4) * k);
+      const cols = Math.ceil(nSide / Math.max(4, Math.floor((hh + 6) / rowH)));
+      return cols * 76 + (cols - 1) * 6;
+    };
+    const toolW = tool ? tool.offsetWidth + 8 : 0;
     // 도구 칸 옆에 다 들어가는 가장 큰 배율(6 → 5 → 4), 그래도 안 되면(좁은 화면) 6배로 두고 미리보기 + 동작 칸이 같이 아랫줄로
-    const fit = [6, 5, 4].find((k) => widthOf(2, k) <= all);
+    // 3배까지(사용자 2026-11-14 "무월 툴 ui 다 망가졋잖아": 캔버스가 넓은 무월(105칸)은 4배로도 안 들어가 도구 칸 아래로 밀렸음, GDD 115-A 135)
+    const fits = (k: number) => widthOf(2, k) + sideW(k) + 8 + toolW <= row.clientWidth;
+    let fit = [6, 5, 4, 3].find(fits);
+    if (!fit) { minL = 80; minR = 40; fit = [4, 3].find(fits); if (!fit) { minL = 140; minR = 60; } }
     K = fit ?? K_FULL;
-    const room = fit ? all : beside;
+    const room = row.clientWidth - sideW(K) - 8 - (fit ? toolW : 0);
     while (m > 2 && widthOf(m) > room) m--;
   }
   stage.style.width = `${W * K}px`;
   stage.style.height = `${H * K}px`;
   const pair = side?.parentElement;
   if (pair && pair !== row) pair.style.flexWrap = window.innerWidth < 700 ? 'wrap' : 'nowrap'; // 휴대폰 너비에서는 가로로 넘치지 않게 동작 칸을 아래로
-  const pl = Math.max(140, (m - x0) * K);
-  const pr = Math.max(60, (x1 - W + m) * K);
+  const pl = Math.max(minL, (m - x0) * K);
+  const pr = Math.max(minR, (x1 - W + m) * K);
   wrap.style.paddingLeft = `${pl}px`;
   wrap.style.paddingRight = `${pr}px`;
   wrap.style.paddingTop = `${Math.max(14, (m - y0) * K)}px`;
@@ -216,13 +235,15 @@ function syncMotionButtons() {
     b.hidden = m !== 'stop' && !ms[m];
     const name = attackName(m);
     if (name) b.textContent = name;
+    // 긴 이름은 두 줄·작은 글씨로(단추 밖으로 넘쳐 화면이 가로로 밀리지 않게 — 편집기 점검 editor-check.cjs, 115-A 135). 단추 높이는 그대로
+    if (m !== 'stop') { const long = (b.textContent ?? '').length > 7; b.classList.toggle('long', long); if (long) b.style.height = `${(document.querySelector<HTMLElement>('.side button:not(.long)')?.offsetHeight || 34)}px`; else b.style.height = ''; }
   });
 }
 /** 공격 동작 이름 (사용자 2026-11-12 04:1x "용어를 기본 공격, 박치기, 무기 공격, 특수 공격으로 나누자 — 호로는 무기가 없으니까 무기공격은 없겠지? 이래야 이펙트 먹이기 편할듯"):
  *  무기를 든 외형(무기 그림이 있는 몸 — 사신·아란칼·혼백)의 공격1·2 = 무기 공격 1·2, 무기 없는 몸(호로 전부·알몸)의 공격1·2·3 = 기본 공격 1·2·3,
  *  맨손 치기(스트레이트·오른손 치기·어퍼컷) = 기본 공격(이름), 박치기 = 박치기(부유형 공격3 도 박치기), 특수1·2 = 특수 공격 1·2. 동작 id 는 그대로(이름표만) */
 function attackName(m: string): string | null {
-  const armed = lookLayers(C.rig, look).some((l) => l.slot === 'weapon');
+  const armed = lookLayers(C.rig, look).some((l) => l.slot === 'weapon' || l.slot === 'sword'); // 초월자 인형은 칼 부위 이름이 sword
   const kind = armed ? '무기 공격' : '기본 공격';
   if (m === 'attack') return `${kind} 1`;
   if (m === 'attack2') return `${kind} 2`;
@@ -740,8 +761,27 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
   draw();
 });
 
+/** 불꽃 층(GDD 115-A 135): 지금 외형에 불꽃이 있으면 미리보기 위에 얹는다. 조각 그림은 그릴 때마다 새로 만들므로 자르기용 그림은 따로 간직 */
+const flames = new Map<string, ReturnType<typeof createFlame>>();
+const flameImgs = new Map<string, HTMLImageElement>();
+function stepFlame(dt: number) {
+  const spec = C.src.flame;
+  const on = spec && spec.look === look ? C.id : null;
+  for (const [id, f] of flames) { const show = id === on; f.back.hidden = !show; f.front.hidden = !show; }
+  if (!spec || !on) return;
+  let f = flames.get(on);
+  if (!f) { f = createFlame(spec, rig.canvas); flames.set(on, f); stage.prepend(f.back); stage.append(f.front); }
+  f.place(K);
+  const layers: FlameLayer[] = drawn.map((d) => {
+    let img = flameImgs.get(d.img.src);
+    if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }
+    return { slot: d.slot, m: d.m, img };
+  });
+  f.step(dt, layers);
+}
 let last = 0;
 function tick(now: number) {
+  if (last) stepFlame(now - last);
   if (motion) {
     if (last) mt += Math.min(100, now - last) * motionSpeedOf(rig, motion); // 게임과 같은 재생 속도(GDD 225장, 대기·홈 대기는 1배 — 115-A 103)
     const m = motionsNow()[motion];

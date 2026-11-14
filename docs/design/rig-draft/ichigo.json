@@ -318,8 +318,8 @@
   "parts": [
    "foot_a",
    "foot_b",
-   "hakama",
    "torso",
+   "hakama",
    "hand_back_bit",
    "arm_back",
    "collar",
@@ -743,6 +743,10 @@
     "head": [
      44,
      39
+    ],
+    "hakama": [
+     48,
+     61
     ]
    },
    "rot": {

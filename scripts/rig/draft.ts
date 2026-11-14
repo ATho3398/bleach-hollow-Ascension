@@ -16,6 +16,8 @@ import ichigoRaw from '../../docs/design/rig-draft/ichigo.json';
 import ichigoMotionsRaw from '../../docs/design/rig-draft/ichigo-motions.json';
 import mugetsuRaw from '../../docs/design/rig-draft/mugetsu.json';
 import mugetsuMotionsRaw from '../../docs/design/rig-draft/mugetsu-motions.json';
+import mugetsuFlameRaw from '../../docs/design/rig-draft/mugetsu-flame.json';
+import type { FlameSpec } from './flame';
 import { readMotions, type Motion, type MotionSets, type Rig } from '../../src/data/art/rig/pose';
 
 const humanoid = readMotions(motionsRaw);
@@ -28,6 +30,8 @@ export interface DraftRig {
   rig: Rig;
   motions: Record<string, Motion>;
   sets: MotionSets;
+  /** 인형 위에 얹는 불꽃 층(작업본 전용, GDD 115-A 135) */
+  flame?: FlameSpec;
 }
 const beast = readMotions(beastMotionsRaw);
 const serpent = readMotions(serpentMotionsRaw);
@@ -44,5 +48,5 @@ export const DRAFT_RIGS: Record<string, DraftRig> = {
   wraith: { rig: wraithRaw as unknown as Rig, motions: wraith.motions, sets: wraith.sets }, // 부유형(GDD 115-A 114)
   aizen: { rig: aizenRaw as unknown as Rig, motions: aizen.motions, sets: aizen.sets }, // 아이젠(대기만, GDD 115-A 124 — 작업본만)
   ichigo: { rig: ichigoRaw as unknown as Rig, motions: ichigo.motions, sets: ichigo.sets }, // 이치고(혈쇄, 대기만, GDD 115-A 128 — 작업본만)
-  mugetsu: { rig: mugetsuRaw as unknown as Rig, motions: mugetsu.motions, sets: mugetsu.sets }, // 이치고(무월 — 이름 추정, 대기만, GDD 115-A 129 — 작업본만)
+  mugetsu: { rig: mugetsuRaw as unknown as Rig, motions: mugetsu.motions, sets: mugetsu.sets, flame: mugetsuFlameRaw as unknown as FlameSpec }, // 이치고(무월 — 이름 추정, 대기만, GDD 115-A 129 — 작업본만)
 };
