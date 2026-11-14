@@ -87,6 +87,7 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
       id: b.id, name: b.name, short: b.short, fx: b.fx, tierNames, weight: n.weight, power: n.power, tiers: [...n.tiers], mult,
       ...(n.maxOnRail !== undefined ? { maxOnRail: n.maxOnRail } : {}),
       ...(b.solo ? { solo: true } : {}),
+      ...(b.noMotion ? { noMotion: true } : {}),
       ...(b.releaseOnly ? { releaseOnly: true } : {}),
       ...(b.releaseSwap ? { releaseSwap: b.releaseSwap } : {}),
       ...(b.voidSlot && n.voidSlot ? { voidSlot: { ...n.voidSlot } } : {}),

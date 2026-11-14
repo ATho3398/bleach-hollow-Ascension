@@ -691,12 +691,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 게이지 소모형 (GDD 12-4 v6.069 이치고): 호로화 칩 — 0 이 되면 같은 칩이 무월수련(이름·값)으로 바뀐다. 범례 줄
   const riskDrn = p.kit?.riskDrain ?? null;
   const riskChipName = el('span', '', labels.riskGauge);
+  const riskChipExtra = el('span');
   if (opts.risk !== undefined || riskRel || riskDrn) {
     const rc = v2Chip('', 'danger', { icon: 'i-risk' });
     riskChipRoot = rc;
     rc.classList.add('bha-riskchip');
     riskChipValue = el('b', 'bha-num', String(Math.round(kitRiskOf(s) ?? opts.risk ?? 0)));
-    rc.append(riskChipName, ' ', riskChipValue, infoTip(labels.riskGauge, () => statusInfo('risk', faction, Number(riskChipValue?.textContent ?? 0))));
+    rc.append(riskChipName, ' ', riskChipValue, riskChipExtra, infoTip(labels.riskGauge, () => statusInfo('risk', faction, Number(riskChipValue?.textContent ?? 0))));
     rc.setAttribute('aria-label', labels.riskGauge);
     if (kitRelBtn) kitRelBtn.before(rc);
     else if (riskDrn) legend.before(rc);
@@ -1217,6 +1218,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       case 'block': {
         // 튜토리얼 마무리 체인 (GDD 146장): 피해 숫자·번쩍임은 연출이 닿을 때(script-impact)
         if (heldBlock !== e && e.kitCharge === undefined) blockFloats(e); // 충전 블록(피해 없음)은 숫자 없이 이름만
+        // 충전 블록 (GDD 12-4 v6.073): 몸 모션 없이 내 캐릭터 쪽 '담김' 표시만 — 기존 해방 준비 팝(.is-ready-pop) 재사용, 새 색 없음
+        if (e.kitCharge !== undefined && !e.landed) replayOnce(libBtn, 'is-ready-pop', 700);
         // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름을 크게. 분신(clone) = 몸 그림 반투명 사본이 앞으로 나가 때린다(새 도트 이펙트 없음)
         if (e.kitName) {
           spawnFloat('chain', `${e.kitName}!`, { chain3: e.chain >= top || !!e.kitFinisher || !!e.kitCounter });
@@ -1633,6 +1636,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (riskDrn && riskChipValue) {
       const mOn = kitMasteryOn(s);
       setText(riskChipName, mOn && p.kit?.mastery ? p.kit.mastery.name : labels.riskGauge);
+      setText(riskChipExtra, mOn && p.kit?.mastery && p.kit.mastery.damageMult !== 1 ? `· 피해 ×${p.kit.mastery.damageMult}` : ''); // 무월수련 동안 주는 피해 (GDD 12-4 v6.074)
       setText(riskChipValue, String(Math.round(mOn ? s.kit?.mastery ?? 0 : kitRiskOf(s) ?? 0)));
       riskChipRoot?.classList.toggle('is-focus', (libActive && endless) || (mOn && canLiberate(s)));
       if (riskChipRoot) setHidden(riskChipRoot, kitSecondOn(s)); // 무월 중엔 수련 게이지가 쓰이지 않는다 — 그 자리를 최후의 월아천충 칩이 쓴다(범례 줄이 넘침, c454/04)

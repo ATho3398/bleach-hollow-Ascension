@@ -76,7 +76,7 @@ function swing(s: CombatState): Extract<CombatEvent, { kind: 'player-attack' }> 
 describe('데이터·수치 (provisional)', () => {
   it('이치고 kit = 월아천충 블록 하나 · 각호고 · 호로화 · 무월수련/무월/최후의 월아천충 · 모드 자리(기본만)', () => {
     const t = TRANSCENDENTS.find((x) => x.id === 'ichigo')!;
-    expect(t.kit?.blocks.map((b) => [b.id, b.short, b.chargeShot])).toEqual([['getsuga', '월', true]]);
+    expect(t.kit?.blocks.map((b) => [b.id, b.short, b.chargeShot, b.noMotion])).toEqual([['getsuga', '월', true, true]]); // C.455: 몸동작 없음 = 데이터 표시
     expect(t.kit?.liberationName).toBe('각호고');
     expect(t.kit?.riskGaugeName).toBe('호로화');
     expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충' });
@@ -246,6 +246,43 @@ describe('순환 전체: 참월 → 각호고 → 무월수련 → 무월 → �
     expect(liberationActive(s)).toBe(false);
     expect(kitRiskOf(s)).toBe(0);
     expect(n * s.params.tickSeconds).toBeCloseTo(8, 1);
+  });
+});
+
+describe('시간 검증 (C.455 — 블록 초당 약 0.7개, 평타 0.7초, 1블록씩)', () => {
+  /** sec 초 동안 블록이 1/0.7초마다 하나 나와 바로 쓰고, 평타는 0.7초마다. 조건이 되면 그 시각(초) */
+  function run(s: CombatState, until: (s: CombatState) => boolean, maxSec = 60): number {
+    const blockEvery = ticksOf(s.params, 1 / 0.7);
+    const swingEvery = ticksOf(s.params, 0.7);
+    for (let t = 1; t <= ticksOf(s.params, maxSec); t++) {
+      if (t % blockEvery === 0) use(s, 1);
+      s.player.attackTimer = t % swingEvery === 0 ? 1 : 1e9;
+      step(s);
+      if (until(s)) return t * s.params.tickSeconds;
+    }
+    throw new Error('시간 안에 안 됨');
+  }
+  it('참월 → 각호고 준비까지 약 20초 (만해 게이지 시작값에서, 블록 1개 +6)', () => {
+    const s = mk();
+    s.params.kit = { ...s.params.kit!, bonusBlockEvery: 0 };
+    s.liberation.gauge = BALANCE.provisional.liberation.startGauge;
+    const sec = run(s, (x) => canLiberate(x));
+    // 블록 몫만이면 13개 × 1.4초 = 18.2초, 평타가 준 피해로 차는 공통 몫(gaugePerDealt)이 더해져 시험 적(test-a) 기준 약 15초
+    expect(sec).toBeGreaterThan(13);
+    expect(sec).toBeLessThan(22);
+    expect(kitRiskOf(s)).toBeGreaterThan(30); // 각호고에 들어가는 호로화 (블록 11~13개 −55~−65 → 35~45)
+  });
+  it('호로화 30 에서 각호고 → 1초 −4 + 월아천충 평타 −5 로 약 4초에 풀린다', () => {
+    const s = mk();
+    s.params.kit = { ...s.params.kit!, bonusBlockEvery: 0 };
+    s.kit!.risk = 30;
+    s.liberation.gauge = 100;
+    expect(applyInput(s, { type: 'liberate' })).toBe(true);
+    s.tray = [];
+    const sec = run(s, (x) => !liberationActive(x));
+    expect(kitRiskOf(s)).toBe(0);
+    expect(sec).toBeGreaterThan(3.3);
+    expect(sec).toBeLessThan(4.7);
   });
 });
 

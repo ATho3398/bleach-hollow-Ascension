@@ -275,6 +275,8 @@ export interface CombatKitBlock {
   riskCost?: number;
   /** 충전 평타 장치 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 '다음 평타 = 충전 평타' 를 체인 수만큼 쌓는다. 충전 평타 = 기본 공격 × power, 이름 name */
   chargeShot?: { power: number; name: string };
+  /** 몸동작 없음 (GDD 12-4 v6.073 월아천충): 블록 몸동작 줄(C.448)에 서지 않는다 — 모션 길이 0, 평타가 안 멈춘다 */
+  noMotion?: boolean;
   /** 체인별 게이지 소모 (GDD 12-4 v6.069 — 1·2·3체인 −10/−15/−19): 해방 밖에서 쓰면 리스크 게이지(kit.riskDrain) −[체인−1]. 해방 중엔 안 깎인다 */
   chainRiskCost?: number[];
   /** 체인별 해방 게이지 (GDD 12-4 v6.069 — +12/18/23): 블록 1개당 기본 적립(gaugePerBlock·체인 보너스) 대신 이 값 */
@@ -2474,7 +2476,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
       for (let i = from; i < s.events.length; i++) {
         const ev = s.events[i]!;
         const b = ev.kind === 'block' ? ev : ev.kind === 'swing' && ev.hit.kind === 'block' ? ev.hit : null;
-        if (!b || b.block === 'void' || (b.block === 'skill' && b.kitCharge !== undefined)) continue; // 충전 블록(월아천충)은 몸동작 없음 — 평타가 안 멈춘다 (GDD 12-4 v6.073)
+        if (!b || b.block === 'void' || (b.block === 'skill' && kitBlockOf(s.params, b.traitId)?.noMotion)) continue; // 몸동작 없는 전용 블록(월아천충)은 줄에 안 섬 — 평타가 안 멈춘다 (GDD 12-4 v6.073)
         const id = queueBlockMotion(s, motionKeyOf(b));
         if (id !== null) b.motionId = id;
         break;

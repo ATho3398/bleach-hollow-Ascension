@@ -49,6 +49,8 @@ export interface TranscendentKitBlockDef {
   upgradeAs?: string;
   /** 충전 평타 블록 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 다음 평타 충전(체인 수만큼) — 충전 평타 이름 = 블록 이름, 수치 = balance blocks.<id>.chargeShot·chainRiskCost·chainGauge */
   chargeShot?: boolean;
+  /** 몸동작 없음 (GDD 12-4 v6.073 월아천충): 쓰면 몸 모션 없이 담김 표시만 — 평타가 안 멈춘다 */
+  noMotion?: boolean;
   /** 허 공식 몫 (GDD 12-4 v6.052 붕옥 블록 · v6.066 경화수월): 블록이 나올 때마다 허 공식 × 수치로 따로 굴림(순서 = order). 게이지를 올리는 블록(riskGain)은 허 블록 자리·쓰면 패널티 없이 게이지 + (수치 = balance blocks.<id>.voidSlot) */
   voidSlot?: boolean;
 }
@@ -156,6 +158,7 @@ function kitErrors(k: unknown): boolean {
     && (b.upgradeAs === undefined || ids.has(b.upgradeAs))
     && (b.voidSlot === undefined || typeof b.voidSlot === 'boolean')
     && (b.chargeShot === undefined || typeof b.chargeShot === 'boolean')
+    && (b.noMotion === undefined || typeof b.noMotion === 'boolean')
     && (b.counter === undefined || typeof b.counter.line === 'string')
     && (b.stack === undefined || typeof b.stack.finisherName === 'string'))
     && kit.blocks.some((b) => !b.releaseOnly);
