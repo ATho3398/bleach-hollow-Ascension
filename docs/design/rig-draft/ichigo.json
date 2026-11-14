@@ -102,35 +102,15 @@
    ]
   },
   {
-   "id": "coat_tail_R",
-   "parent": "torso",
-   "pivot": [
-    39,
-    83
-   ]
-  },
-  {
    "id": "coat_panel_R",
    "parent": "torso",
    "pivot": [
     50,
     57
    ]
-  },
-  {
-   "id": "coat_tail_L",
-   "parent": "torso",
-   "pivot": [
-    41,
-    73
-   ]
   }
  ],
  "slots": [
-  {
-   "id": "coat_tail_R",
-   "bone": "coat_tail_R"
-  },
   {
    "id": "chain_ear",
    "bone": "chain_ear"
@@ -170,10 +150,6 @@
   {
    "id": "chain_arm",
    "bone": "chain_arm"
-  },
-  {
-   "id": "coat_tail_L",
-   "bone": "coat_tail_L"
   },
   {
    "id": "sword",
@@ -287,12 +263,12 @@
    "torso": {
     "art": "parts/torso",
     "at": [
-     28,
-     39
+     31,
+     37
     ],
     "size": [
-     36,
-     62
+     33,
+     63
     ]
    },
    "coat_front": {
@@ -394,17 +370,6 @@
      5
     ]
    },
-   "coat_tail_R": {
-    "art": "parts/coat_tail_R",
-    "at": [
-     49,
-     60
-    ],
-    "size": [
-     14,
-     18
-    ]
-   },
    "coat_panel_R": {
     "art": "parts/coat_panel_R",
     "at": [
@@ -414,17 +379,6 @@
     "size": [
      11,
      33
-    ]
-   },
-   "coat_tail_L": {
-    "art": "parts/coat_tail_L",
-    "at": [
-     24,
-     57
-    ],
-    "size": [
-     26,
-     37
     ]
    },
    "foot_a": {
@@ -479,8 +433,6 @@
    "arm_back",
    "collar",
    "chain_arm",
-   "coat_tail_L",
-   "coat_tail_R",
    "face_bit",
    "head",
    "arm_sword",
@@ -530,9 +482,7 @@
    "sword": "칼",
    "hakama_flap": "바지 옷깃",
    "arm_back": "왼팔(뒷손)",
-   "coat_tail_R": "코트 자락(오른쪽 뒤)",
    "coat_panel_R": "코트 자락(오른쪽)",
-   "coat_tail_L": "코트 자락(왼쪽)",
    "shoulder_sword": "오른 어깨(앞손)",
    "face_bit": "얼굴 조각",
    "scarf": "목 사슬(앞)",
@@ -589,8 +539,6 @@
    [
     "코트 자락·옷깃",
     [
-     "coat_tail_L",
-     "coat_tail_R",
      "coat_panel_R",
      "hakama_flap"
     ]
@@ -642,8 +590,6 @@
     "arm_back",
     "hand_back_bit",
     "chain_ear",
-    "coat_tail_L",
-    "coat_tail_R",
     "coat_panel_R",
     "hakama_flap"
    ]
@@ -891,21 +837,6 @@
      "w": 3
     }
    ],
-   "coat_tail_R": [
-    {
-     "pts": [
-      [
-       39,
-       83
-      ],
-      [
-       39,
-       83
-      ]
-     ],
-     "w": 3
-    }
-   ],
    "coat_panel_R": [
     {
      "pts": [
@@ -916,21 +847,6 @@
       [
        50,
        57
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "coat_tail_L": [
-    {
-     "pts": [
-      [
-       41,
-       73
-      ],
-      [
-       41,
-       73
       ]
      ],
      "w": 3
@@ -1024,26 +940,6 @@
     800
    ]
   },
-  "coat_tail_L": {
-   "lag": 160,
-   "swing": 0.3,
-   "hang": 0.15,
-   "wave": [
-    1.2,
-    2600,
-    0
-   ]
-  },
-  "coat_tail_R": {
-   "lag": 160,
-   "swing": 0.5,
-   "hang": 0.15,
-   "wave": [
-    2.5,
-    2400,
-    400
-   ]
-  },
   "coat_panel_R": {
    "lag": 160,
    "swing": 0.4,
@@ -1078,10 +974,6 @@
  "bodyJoints": {
   "parts": {
    "pivots": {
-    "coat_tail_L": [
-     43,
-     68
-    ],
     "chain_arm": [
      27,
      58
@@ -1109,10 +1001,6 @@
     "chain_ear": [
      60,
      57
-    ],
-    "coat_tail_R": [
-     53,
-     66
     ],
     "arm_back": [
      50,
