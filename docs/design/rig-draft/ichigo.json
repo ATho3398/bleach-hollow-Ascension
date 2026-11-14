@@ -232,8 +232,8 @@
    "shoulder_sword": {
     "art": "parts/shoulder_sword",
     "at": [
-     29,
-     39
+     28,
+     40
     ],
     "size": [
      12,
@@ -254,8 +254,8 @@
    "chain_ear": {
     "art": "parts/chain_ear",
     "at": [
-     49,
-     24
+     55,
+     51
     ],
     "size": [
      9,
@@ -298,8 +298,8 @@
    "coat_front": {
     "art": "parts/coat_front",
     "at": [
-     29,
-     40
+     30,
+     41
     ],
     "size": [
      17,
@@ -309,7 +309,7 @@
    "collar": {
     "art": "parts/collar",
     "at": [
-     23,
+     24,
      47
     ],
     "size": [
@@ -320,8 +320,8 @@
    "arm_sword": {
     "art": "parts/arm_sword",
     "at": [
-     25,
-     49
+     24,
+     50
     ],
     "size": [
      13,
@@ -332,7 +332,7 @@
     "art": "parts/hakama_flap",
     "at": [
      29,
-     72
+     58
     ],
     "size": [
      14,
@@ -342,8 +342,8 @@
    "chain_arm": {
     "art": "parts/chain_arm",
     "at": [
-     20,
-     45
+     19,
+     46
     ],
     "size": [
      10,
@@ -353,8 +353,8 @@
    "chain_hand": {
     "art": "parts/chain_hand",
     "at": [
-     20,
-     59
+     19,
+     60
     ],
     "size": [
      9,
@@ -364,8 +364,8 @@
    "sword": {
     "art": "parts/sword",
     "at": [
-     10,
-     56
+     9,
+     57
     ],
     "size": [
      26,
@@ -375,8 +375,8 @@
    "arm_back": {
     "art": "parts/arm_back",
     "at": [
-     48,
-     41
+     49,
+     40
     ],
     "size": [
      14,
@@ -386,8 +386,8 @@
    "hand_back_bit": {
     "art": "parts/hand_back_bit",
     "at": [
-     54,
-     51
+     57,
+     58
     ],
     "size": [
      8,
@@ -397,8 +397,8 @@
    "coat_tail_R": {
     "art": "parts/coat_tail_R",
     "at": [
-     32,
-     72
+     49,
+     60
     ],
     "size": [
      14,
@@ -408,7 +408,7 @@
    "coat_panel_R": {
     "art": "parts/coat_panel_R",
     "at": [
-     46,
+     47,
      39
     ],
     "size": [
@@ -452,8 +452,8 @@
    "thumb": {
     "art": "parts/thumb",
     "at": [
-     28,
-     65
+     27,
+     68
     ],
     "size": [
      4,
@@ -469,27 +469,27 @@
  },
  "bodySlots": {
   "parts": [
-   "coat_tail_R",
    "chain_ear",
    "chain_hand",
    "chain_neck",
-   "hakama_flap",
    "foot_a",
    "foot_b",
    "torso",
-   "shoulder_sword",
+   "hand_back_bit",
    "arm_back",
    "collar",
    "chain_arm",
    "coat_tail_L",
-   "sword",
+   "coat_tail_R",
    "face_bit",
-   "hand_back_bit",
    "head",
    "arm_sword",
+   "sword",
    "thumb",
+   "hakama_flap",
    "coat_panel_R",
    "coat_front",
+   "shoulder_sword",
    "scarf"
   ]
  },
@@ -1050,6 +1050,60 @@
     2500,
     300
    ]
+  }
+ },
+ "bodyJoints": {
+  "parts": {
+   "pivots": {
+    "coat_tail_L": [
+     43,
+     68
+    ],
+    "chain_arm": [
+     27,
+     58
+    ],
+    "chain_hand": [
+     26,
+     62
+    ],
+    "sword": [
+     28,
+     71
+    ],
+    "arm_sword": [
+     38,
+     42
+    ],
+    "torso": [
+     30,
+     48
+    ],
+    "coat_panel_R": [
+     50,
+     42
+    ],
+    "chain_ear": [
+     60,
+     57
+    ],
+    "coat_tail_R": [
+     53,
+     66
+    ],
+    "arm_back": [
+     50,
+     42
+    ],
+    "hakama_flap": [
+     42,
+     65
+    ]
+   },
+   "rot": {
+    "sword": 19,
+    "coat_panel_R": -2
+   }
   }
  }
 }
