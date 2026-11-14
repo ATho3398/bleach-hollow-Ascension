@@ -67,9 +67,9 @@ def walk():
     rig = json.load(open(os.path.join(DRAFT_DIR, 'mugetsu.json'), encoding='utf-8'))
     piv = {b['id']: b['pivot'] for b in rig['bones']}
     piv.update((rig.get('bodyJoints') or {}).get('parts', {}).get('pivots', {}))
-    N, D, STEP, LIFT = 8, 640, 5.0, 2.5
+    N, D, STEP, LIFT = 12, 760, 8.0, 4.0  # 2026-11-14 17:5x "실제 걷는것처럼 교차해서 … 모션도 더 디테일": 보폭·들림 키우고 키 12개
     times = [round(D * i / N) for i in range(N + 1)]
-    bob = [0.8 * math.cos(4 * math.pi * i / N) for i in range(N + 1)]  # 두 발이 벌어졌을 때 낮고, 지나갈 때 높음
+    bob = [1.2 * math.cos(4 * math.pi * i / N) for i in range(N + 1)]  # 두 발이 벌어졌을 때 낮고, 지나갈 때 높음
     tr = {'root': [[t, 0, 0, round(bob[i], 2)] for i, t in enumerate(times)]}
     for leg, ph0 in (('f', 0.0), ('b', 0.5)):
         H, K, A = piv['thigh_' + leg], piv['shin_' + leg], piv['foot_' + leg]
@@ -97,12 +97,21 @@ def walk():
                     best = (turn, a1, a2)
             w1 = (math.degrees(best[1] - r1) + 180) % 360 - 180
             w2 = (math.degrees(best[2] - r2) + 180) % 360 - 180
-            th.append(round(w1, 1)); sh.append(round(w2 - w1, 1)); ft.append(round(-w2 + (6 * math.sin(math.pi * (ph - 0.5) / 0.5) if ph >= 0.5 else 0), 1))
+            th.append(round(w1, 1)); sh.append(round(w2 - w1, 1)); # 발 굴림: 디딜 때 발끝이 들려 뒤꿈치부터(−), 디딤 끝에 뒤꿈치가 들려 발끝으로 밀고(+), 뗀 동안은 발끝이 처졌다가 앞에서 다시 들림
+            if ph < 0.5:
+                u = ph / 0.5
+                pitch = -10 * max(0, 1 - u / 0.25) + 14 * max(0, (u - 0.7) / 0.3)
+            else:
+                u = (ph - 0.5) / 0.5
+                pitch = 14 * (1 - u) * (1 - u) + 6 * math.sin(math.pi * u) - 10 * u * u
+            ft.append(round(-w2 + pitch, 1))
         for bone, v in (('thigh_', th), ('shin_', sh), ('foot_', ft)):
             tr[bone + leg] = [[t, a, 0, 0] for t, a in zip(times, v)]
     sw = lambda amp, off=0.0: [round(amp * math.cos(2 * math.pi * (i / N + off)), 1) for i in range(N + 1)]  # noqa: E731
-    for bone, v in (('upper', [round(-3 + 0.8 * math.cos(4 * math.pi * i / N), 1) for i in range(N + 1)]), ('head', [round(1.5 - 0.6 * math.cos(4 * math.pi * i / N), 1) for i in range(N + 1)]),
-                    ('arm_sword', sw(3, 0.5)), ('forearm_sword', sw(2, 0.5)), ('arm_back', sw(5))):
+    # 몸: 앞으로 숙이고 걸음마다 살짝 끄덕, 어깨는 다리와 반대로 틀림. 팔은 다리와 엇갈려(오른 다리가 앞이면 왼팔이 앞) 흔들고 아래팔이 조금 늦게 따라옴
+    two = lambda base, amp: [round(base + amp * math.cos(4 * math.pi * i / N), 1) for i in range(N + 1)]  # noqa: E731
+    for bone, v in (('upper', [round(a + b, 1) for a, b in zip(two(-4, 1.0), sw(1.5, 0.5))]), ('lower', sw(1.2)), ('head', [round(a + b, 1) for a, b in zip(two(2.5, -0.8), sw(-1.0, 0.5))]),
+                    ('arm_sword', sw(6, 0.0)), ('forearm_sword', sw(4, 0.08)), ('sword', sw(3, 0.16)), ('arm_back', sw(11, 0.5)), ('forearm_back', sw(7, 0.58))):
         tr[bone] = [[t, a, 0, 0] for t, a in zip(times, v)]
     return {'duration': D, 'loop': True, 'tracks': tr}
 
