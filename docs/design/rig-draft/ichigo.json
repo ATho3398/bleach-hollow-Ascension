@@ -1,6 +1,6 @@
 {
  "id": "ichigo",
- "note": "이치고(혈쇄) 종이인형(GDD 115-A 128, 작업본만 — 게임 미사용). 사용자 부위 시트를 scripts/rig/tools/fit_parts.py + ichigo_parts.py 로 조립. 조각 → 부위는 추정(? 표시 = 확인 대기).",
+ "note": "이치고(혈쇄) 종이인형(GDD 115-A 128, 작업본만 — 게임 미사용). 사용자 부위 시트를 scripts/rig/tools/fit_parts.py + ichigo_parts.py 로 조립. 조각 → 부위는 추정(? 표시 = 확인 대기). 2026-11-14 13:5x: 사용자가 편집기에서 잡은 자리(고정 13:44) 기준으로 이름·묶음·같이 옮기기 다시 — 4번 사슬 = 왼팔 사슬(왼팔 뼈에), 12번 = 오른 소매 조각(칼 든 팔 뼈에), 13번 = 왼손. 이제 이 파일이 기준(ichigo_parts.py 다시 돌리지 말 것).",
  "motionSpeed": 1.5,
  "motionSpeedExcept": [
   "idle",
@@ -39,7 +39,7 @@
   },
   {
    "id": "chain_ear",
-   "parent": "head",
+   "parent": "arm_back",
    "pivot": [
     53,
     28
@@ -165,7 +165,7 @@
   },
   {
    "id": "collar",
-   "bone": "torso"
+   "bone": "arm_sword"
   },
   {
    "id": "chain_arm",
@@ -522,7 +522,7 @@
    "root": "전체",
    "torso": "몸통(가슴·하카마)",
    "head": "머리",
-   "chain_ear": "귀 옆 사슬",
+   "chain_ear": "왼팔 사슬",
    "chain_neck": "목 사슬(왼쪽)",
    "arm_sword": "오른팔(앞손)",
    "chain_arm": "오른팔 사슬",
@@ -530,15 +530,15 @@
    "sword": "칼",
    "hakama_flap": "바지 옷깃",
    "arm_back": "왼팔(뒷손)",
-   "coat_tail_R": "코트 자락(오른쪽 아래)",
+   "coat_tail_R": "코트 자락(오른쪽 뒤)",
    "coat_panel_R": "코트 자락(오른쪽)",
-   "coat_tail_L": "코트 자락(왼쪽 아래)",
+   "coat_tail_L": "코트 자락(왼쪽)",
    "shoulder_sword": "오른 어깨(앞손)",
-   "face_bit": "얼굴 조각?",
+   "face_bit": "얼굴 조각",
    "scarf": "목 사슬(앞)",
    "coat_front": "코트 앞자락",
-   "collar": "깃?",
-   "hand_back_bit": "왼손 조각?",
+   "collar": "오른 소매 조각",
+   "hand_back_bit": "왼손(뒷손)",
    "foot_a": "발 A",
    "foot_b": "발 B",
    "thumb": "엄지(오른손)"
@@ -554,8 +554,7 @@
     "머리",
     [
      "head",
-     "face_bit",
-     "chain_ear"
+     "face_bit"
     ]
    ],
    [
@@ -563,7 +562,6 @@
     [
      "torso",
      "coat_front",
-     "collar",
      "scarf",
      "chain_neck"
     ]
@@ -573,6 +571,7 @@
     [
      "shoulder_sword",
      "arm_sword",
+     "collar",
      "thumb",
      "chain_arm",
      "chain_hand",
@@ -583,7 +582,8 @@
     "왼팔(뒷손)",
     [
      "arm_back",
-     "hand_back_bit"
+     "hand_back_bit",
+     "chain_ear"
     ]
    ],
    [
@@ -606,23 +606,46 @@
   "follow": {
    "shoulder_sword": [
     "arm_sword",
+    "collar",
+    "thumb",
     "chain_arm",
     "chain_hand",
-    "sword",
-    "thumb"
+    "sword"
    ],
    "arm_sword": [
+    "collar",
+    "thumb",
+    "chain_arm",
+    "chain_hand",
+    "sword"
+   ],
+   "head": [
+    "face_bit"
+   ],
+   "arm_back": [
+    "hand_back_bit",
+    "chain_ear"
+   ],
+   "torso": [
+    "coat_front",
+    "scarf",
+    "chain_neck",
+    "head",
+    "face_bit",
+    "shoulder_sword",
+    "arm_sword",
+    "collar",
+    "thumb",
     "chain_arm",
     "chain_hand",
     "sword",
-    "thumb"
-   ],
-   "head": [
-    "face_bit",
-    "chain_ear"
-   ],
-   "arm_back": [
-    "hand_back_bit"
+    "arm_back",
+    "hand_back_bit",
+    "chain_ear",
+    "coat_tail_L",
+    "coat_tail_R",
+    "coat_panel_R",
+    "hakama_flap"
    ]
   }
  },
@@ -1003,10 +1026,10 @@
   },
   "coat_tail_L": {
    "lag": 160,
-   "swing": 0.5,
+   "swing": 0.3,
    "hang": 0.15,
    "wave": [
-    2.5,
+    1.2,
     2600,
     0
    ]
