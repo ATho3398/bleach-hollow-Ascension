@@ -22,13 +22,14 @@ python3 scripts/rig/bone_guide.py serpent serpent-base "$OUT/sheets/serpent-base
 python3 scripts/rig/bone_guide.py spider spider-base "$OUT/sheets/spider-base" >/dev/null
 python3 scripts/rig/bone_guide.py wraith wraith-base "$OUT/sheets/wraith-base" >/dev/null
 python3 scripts/rig/bone_guide.py aizen aizen-parts "$OUT/sheets/aizen-parts" >/dev/null
+python3 scripts/rig/bone_guide.py ichigo ichigo-bloody "$OUT/sheets/ichigo-bloody" >/dev/null
 python3 -I - "$OUT" <<'PY'
 import base64, glob, json, os, sys
 out = sys.argv[1]
 b64 = lambda f: 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
 sheets = {os.path.basename(d): {'x1': b64(d + '/guide.png'), 'x8': b64(d + '/guide-x8.png')} for d in glob.glob(out + '/sheets/*') if os.path.exists(d + '/guide-x8.png')}
 m = {}
-for rid in ('humanoid', 'beast', 'serpent', 'spider', 'wraith', 'aizen'):
+for rid in ('humanoid', 'beast', 'serpent', 'spider', 'wraith', 'aizen', 'ichigo'):
     root = 'docs/design/rig-draft/' + rid + '/'
     m.update({'art/rig/' + rid + '/' + f[len(root):]: 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode() for f in glob.glob(root + '**/*.png', recursive=True)})
 for page, js in (('rig-editor', 'editor.js'), ('paperdoll-test', 'bundle.js')):

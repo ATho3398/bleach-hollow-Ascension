@@ -1,0 +1,1032 @@
+{
+ "id": "ichigo",
+ "note": "이치고(혈쇄) 종이인형(GDD 115-A 128, 작업본만 — 게임 미사용). 사용자 부위 시트를 scripts/rig/tools/fit_parts.py + ichigo_parts.py 로 조립. 조각 → 부위는 추정(? 표시 = 확인 대기).",
+ "motionSpeed": 1.5,
+ "motionSpeedExcept": [
+  "idle",
+  "homeIdle",
+  "move"
+ ],
+ "canvas": [
+  81,
+  112
+ ],
+ "ground": 111,
+ "bones": [
+  {
+   "id": "root",
+   "parent": null,
+   "pivot": [
+    40,
+    111
+   ]
+  },
+  {
+   "id": "torso",
+   "parent": "root",
+   "pivot": [
+    45,
+    80
+   ]
+  },
+  {
+   "id": "head",
+   "parent": "torso",
+   "pivot": [
+    44,
+    38
+   ]
+  },
+  {
+   "id": "chain_ear",
+   "parent": "head",
+   "pivot": [
+    53,
+    28
+   ]
+  },
+  {
+   "id": "chain_neck",
+   "parent": "torso",
+   "pivot": [
+    34,
+    40
+   ]
+  },
+  {
+   "id": "arm_sword",
+   "parent": "torso",
+   "pivot": [
+    36,
+    62
+   ]
+  },
+  {
+   "id": "chain_arm",
+   "parent": "arm_sword",
+   "pivot": [
+    28,
+    57
+   ]
+  },
+  {
+   "id": "chain_hand",
+   "parent": "arm_sword",
+   "pivot": [
+    27,
+    61
+   ]
+  },
+  {
+   "id": "sword",
+   "parent": "arm_sword",
+   "pivot": [
+    30,
+    65
+   ]
+  },
+  {
+   "id": "arm_back",
+   "parent": "torso",
+   "pivot": [
+    51,
+    55
+   ]
+  },
+  {
+   "id": "coat_tail_R",
+   "parent": "torso",
+   "pivot": [
+    39,
+    83
+   ]
+  },
+  {
+   "id": "coat_panel_R",
+   "parent": "torso",
+   "pivot": [
+    50,
+    57
+   ]
+  },
+  {
+   "id": "coat_tail_L",
+   "parent": "torso",
+   "pivot": [
+    41,
+    73
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "coat_tail_R",
+   "bone": "coat_tail_R"
+  },
+  {
+   "id": "chain_ear",
+   "bone": "chain_ear"
+  },
+  {
+   "id": "chain_hand",
+   "bone": "chain_hand"
+  },
+  {
+   "id": "chain_neck",
+   "bone": "chain_neck"
+  },
+  {
+   "id": "hair_back",
+   "bone": "head"
+  },
+  {
+   "id": "sleeve_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "foot_a",
+   "bone": "root"
+  },
+  {
+   "id": "foot_b",
+   "bone": "root"
+  },
+  {
+   "id": "torso",
+   "bone": "torso"
+  },
+  {
+   "id": "arm_back",
+   "bone": "arm_back"
+  },
+  {
+   "id": "collar",
+   "bone": "torso"
+  },
+  {
+   "id": "chain_arm",
+   "bone": "chain_arm"
+  },
+  {
+   "id": "coat_tail_L",
+   "bone": "coat_tail_L"
+  },
+  {
+   "id": "sword",
+   "bone": "sword"
+  },
+  {
+   "id": "face_bit",
+   "bone": "head"
+  },
+  {
+   "id": "hand_back_bit",
+   "bone": "arm_back"
+  },
+  {
+   "id": "finger_back",
+   "bone": "arm_back"
+  },
+  {
+   "id": "head",
+   "bone": "head"
+  },
+  {
+   "id": "arm_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "coat_panel_R",
+   "bone": "coat_panel_R"
+  },
+  {
+   "id": "coat_front",
+   "bone": "torso"
+  },
+  {
+   "id": "scarf",
+   "bone": "torso"
+  }
+ ],
+ "bodies": {
+  "parts": {
+   "head": {
+    "art": "parts/head",
+    "at": [
+     22,
+     0
+    ],
+    "size": [
+     49,
+     41
+    ]
+   },
+   "hair_back": {
+    "art": "parts/hair_back",
+    "at": [
+     41,
+     13
+    ],
+    "size": [
+     12,
+     17
+    ]
+   },
+   "face_bit": {
+    "art": "parts/face_bit",
+    "at": [
+     36,
+     20
+    ],
+    "size": [
+     9,
+     6
+    ]
+   },
+   "chain_ear": {
+    "art": "parts/chain_ear",
+    "at": [
+     49,
+     24
+    ],
+    "size": [
+     9,
+     10
+    ]
+   },
+   "chain_neck": {
+    "art": "parts/chain_neck",
+    "at": [
+     19,
+     26
+    ],
+    "size": [
+     17,
+     15
+    ]
+   },
+   "scarf": {
+    "art": "parts/scarf",
+    "at": [
+     28,
+     35
+    ],
+    "size": [
+     24,
+     11
+    ]
+   },
+   "torso": {
+    "art": "parts/torso",
+    "at": [
+     28,
+     39
+    ],
+    "size": [
+     36,
+     62
+    ]
+   },
+   "coat_front": {
+    "art": "parts/coat_front",
+    "at": [
+     29,
+     40
+    ],
+    "size": [
+     17,
+     31
+    ]
+   },
+   "collar": {
+    "art": "parts/collar",
+    "at": [
+     23,
+     47
+    ],
+    "size": [
+     10,
+     7
+    ]
+   },
+   "arm_sword": {
+    "art": "parts/arm_sword",
+    "at": [
+     25,
+     49
+    ],
+    "size": [
+     13,
+     23
+    ]
+   },
+   "sleeve_sword": {
+    "art": "parts/sleeve_sword",
+    "at": [
+     26,
+     64
+    ],
+    "size": [
+     14,
+     23
+    ]
+   },
+   "chain_arm": {
+    "art": "parts/chain_arm",
+    "at": [
+     20,
+     45
+    ],
+    "size": [
+     10,
+     17
+    ]
+   },
+   "chain_hand": {
+    "art": "parts/chain_hand",
+    "at": [
+     20,
+     59
+    ],
+    "size": [
+     9,
+     8
+    ]
+   },
+   "sword": {
+    "art": "parts/sword",
+    "at": [
+     10,
+     56
+    ],
+    "size": [
+     26,
+     53
+    ]
+   },
+   "arm_back": {
+    "art": "parts/arm_back",
+    "at": [
+     48,
+     41
+    ],
+    "size": [
+     14,
+     32
+    ]
+   },
+   "hand_back_bit": {
+    "art": "parts/hand_back_bit",
+    "at": [
+     54,
+     51
+    ],
+    "size": [
+     8,
+     5
+    ]
+   },
+   "finger_back": {
+    "art": "parts/finger_back",
+    "at": [
+     53,
+     42
+    ],
+    "size": [
+     4,
+     5
+    ]
+   },
+   "coat_tail_R": {
+    "art": "parts/coat_tail_R",
+    "at": [
+     32,
+     72
+    ],
+    "size": [
+     14,
+     18
+    ]
+   },
+   "coat_panel_R": {
+    "art": "parts/coat_panel_R",
+    "at": [
+     46,
+     39
+    ],
+    "size": [
+     11,
+     33
+    ]
+   },
+   "coat_tail_L": {
+    "art": "parts/coat_tail_L",
+    "at": [
+     24,
+     57
+    ],
+    "size": [
+     26,
+     37
+    ]
+   },
+   "foot_a": {
+    "art": "parts/foot_a",
+    "at": [
+     25,
+     91
+    ],
+    "size": [
+     17,
+     20
+    ]
+   },
+   "foot_b": {
+    "art": "parts/foot_b",
+    "at": [
+     46,
+     91
+    ],
+    "size": [
+     14,
+     19
+    ]
+   }
+  }
+ },
+ "looks": {
+  "ichigo-bloody": {
+   "body": "parts"
+  }
+ },
+ "bodySlots": {
+  "parts": [
+   "coat_tail_R",
+   "chain_ear",
+   "chain_hand",
+   "chain_neck",
+   "hair_back",
+   "sleeve_sword",
+   "foot_a",
+   "foot_b",
+   "torso",
+   "arm_back",
+   "collar",
+   "chain_arm",
+   "coat_tail_L",
+   "sword",
+   "face_bit",
+   "hand_back_bit",
+   "finger_back",
+   "head",
+   "arm_sword",
+   "coat_panel_R",
+   "coat_front",
+   "scarf"
+  ]
+ },
+ "hairFrame": {
+  "rect": [
+   0,
+   0,
+   81,
+   112
+  ],
+  "keepOut": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "view": {
+  "note": "그림 칸 — 게임 미사용",
+  "rect": [
+   -20,
+   -24,
+   120,
+   140
+  ],
+  "clipY": 113
+ },
+ "edit": {
+  "names": {
+   "root": "전체",
+   "torso": "몸통(가슴·하카마)",
+   "head": "머리",
+   "chain_ear": "귀 옆 사슬",
+   "chain_neck": "목 사슬(왼쪽)",
+   "arm_sword": "오른팔(앞손)",
+   "chain_arm": "오른팔 사슬",
+   "chain_hand": "오른손 사슬",
+   "sword": "칼",
+   "arm_back": "왼팔(뒷손)",
+   "coat_tail_R": "코트 자락(오른쪽 아래)",
+   "coat_panel_R": "코트 자락(오른쪽)",
+   "coat_tail_L": "코트 자락(왼쪽 아래)",
+   "hair_back": "뒷머리?",
+   "face_bit": "얼굴 조각?",
+   "scarf": "목 사슬(앞)",
+   "coat_front": "코트 앞자락",
+   "collar": "깃?",
+   "sleeve_sword": "오른 소매",
+   "hand_back_bit": "왼손 조각?",
+   "finger_back": "왼손가락?",
+   "foot_a": "발 A",
+   "foot_b": "발 B"
+  },
+  "groups": [
+   [
+    "전체",
+    [
+     "root"
+    ]
+   ],
+   [
+    "머리",
+    [
+     "head",
+     "hair_back",
+     "face_bit",
+     "chain_ear"
+    ]
+   ],
+   [
+    "몸통",
+    [
+     "torso",
+     "coat_front",
+     "collar",
+     "scarf",
+     "chain_neck"
+    ]
+   ],
+   [
+    "오른팔(앞손)·칼",
+    [
+     "arm_sword",
+     "sleeve_sword",
+     "chain_arm",
+     "chain_hand",
+     "sword"
+    ]
+   ],
+   [
+    "왼팔(뒷손)",
+    [
+     "arm_back",
+     "hand_back_bit",
+     "finger_back"
+    ]
+   ],
+   [
+    "코트 자락",
+    [
+     "coat_tail_L",
+     "coat_tail_R",
+     "coat_panel_R"
+    ]
+   ],
+   [
+    "발",
+    [
+     "foot_a",
+     "foot_b"
+    ]
+   ]
+  ],
+  "follow": {
+   "arm_sword": [
+    "sleeve_sword",
+    "chain_arm",
+    "chain_hand",
+    "sword"
+   ],
+   "head": [
+    "hair_back",
+    "face_bit",
+    "chain_ear"
+   ],
+   "arm_back": [
+    "hand_back_bit",
+    "finger_back"
+   ]
+  }
+ },
+ "skeletons": {
+  "parts": {
+   "head": [
+    {
+     "pts": [
+      [
+       44,
+       38
+      ],
+      [
+       44,
+       38
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hair_back": [
+    {
+     "pts": [
+      [
+       44,
+       38
+      ],
+      [
+       44,
+       38
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "face_bit": [
+    {
+     "pts": [
+      [
+       44,
+       38
+      ],
+      [
+       44,
+       38
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "chain_ear": [
+    {
+     "pts": [
+      [
+       53,
+       28
+      ],
+      [
+       53,
+       28
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "chain_neck": [
+    {
+     "pts": [
+      [
+       34,
+       40
+      ],
+      [
+       34,
+       40
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "scarf": [
+    {
+     "pts": [
+      [
+       45,
+       80
+      ],
+      [
+       45,
+       80
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "torso": [
+    {
+     "pts": [
+      [
+       45,
+       80
+      ],
+      [
+       45,
+       80
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_front": [
+    {
+     "pts": [
+      [
+       45,
+       80
+      ],
+      [
+       45,
+       80
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "collar": [
+    {
+     "pts": [
+      [
+       45,
+       80
+      ],
+      [
+       45,
+       80
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_sword": [
+    {
+     "pts": [
+      [
+       36,
+       62
+      ],
+      [
+       36,
+       62
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "sleeve_sword": [
+    {
+     "pts": [
+      [
+       36,
+       62
+      ],
+      [
+       36,
+       62
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "chain_arm": [
+    {
+     "pts": [
+      [
+       28,
+       57
+      ],
+      [
+       28,
+       57
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "chain_hand": [
+    {
+     "pts": [
+      [
+       27,
+       61
+      ],
+      [
+       27,
+       61
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "sword": [
+    {
+     "pts": [
+      [
+       30,
+       65
+      ],
+      [
+       30,
+       65
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_back": [
+    {
+     "pts": [
+      [
+       51,
+       55
+      ],
+      [
+       51,
+       55
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "hand_back_bit": [
+    {
+     "pts": [
+      [
+       51,
+       55
+      ],
+      [
+       51,
+       55
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "finger_back": [
+    {
+     "pts": [
+      [
+       51,
+       55
+      ],
+      [
+       51,
+       55
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_tail_R": [
+    {
+     "pts": [
+      [
+       39,
+       83
+      ],
+      [
+       39,
+       83
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_panel_R": [
+    {
+     "pts": [
+      [
+       50,
+       57
+      ],
+      [
+       50,
+       57
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "coat_tail_L": [
+    {
+     "pts": [
+      [
+       41,
+       73
+      ],
+      [
+       41,
+       73
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "foot_a": [
+    {
+     "pts": [
+      [
+       40,
+       111
+      ],
+      [
+       40,
+       111
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "foot_b": [
+    {
+     "pts": [
+      [
+       40,
+       111
+      ],
+      [
+       40,
+       111
+      ]
+     ],
+     "w": 3
+    }
+   ]
+  }
+ },
+ "sway": {
+  "chain_neck": {
+   "lag": 140,
+   "swing": 0.6,
+   "hang": 0.1,
+   "wave": [
+    4,
+    2100,
+    0
+   ]
+  },
+  "chain_ear": {
+   "lag": 120,
+   "swing": 0.5,
+   "hang": 0.1,
+   "wave": [
+    3,
+    1800,
+    300
+   ]
+  },
+  "chain_arm": {
+   "lag": 140,
+   "swing": 0.6,
+   "hang": 0.1,
+   "wave": [
+    4,
+    2300,
+    500
+   ]
+  },
+  "chain_hand": {
+   "lag": 140,
+   "swing": 0.6,
+   "hang": 0.1,
+   "wave": [
+    5,
+    1900,
+    800
+   ]
+  },
+  "coat_tail_L": {
+   "lag": 160,
+   "swing": 0.5,
+   "hang": 0.15,
+   "wave": [
+    2.5,
+    2600,
+    0
+   ]
+  },
+  "coat_tail_R": {
+   "lag": 160,
+   "swing": 0.5,
+   "hang": 0.15,
+   "wave": [
+    2.5,
+    2400,
+    400
+   ]
+  },
+  "coat_panel_R": {
+   "lag": 160,
+   "swing": 0.4,
+   "hang": 0.1,
+   "wave": [
+    1.5,
+    2800,
+    700
+   ]
+  },
+  "arm_back": {
+   "lag": 140,
+   "swing": 0.4,
+   "hang": 0.05,
+   "wave": [
+    1.5,
+    2200,
+    500
+   ]
+  }
+ }
+}
