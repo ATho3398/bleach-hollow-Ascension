@@ -38,43 +38,11 @@
    ]
   },
   {
-   "id": "chain_ear",
-   "parent": "arm_back",
-   "pivot": [
-    53,
-    28
-   ]
-  },
-  {
-   "id": "chain_neck",
-   "parent": "torso",
-   "pivot": [
-    34,
-    40
-   ]
-  },
-  {
    "id": "arm_sword",
    "parent": "torso",
    "pivot": [
     35,
     48
-   ]
-  },
-  {
-   "id": "chain_arm",
-   "parent": "arm_sword",
-   "pivot": [
-    28,
-    57
-   ]
-  },
-  {
-   "id": "chain_hand",
-   "parent": "arm_sword",
-   "pivot": [
-    27,
-    61
    ]
   },
   {
@@ -112,18 +80,6 @@
  ],
  "slots": [
   {
-   "id": "chain_ear",
-   "bone": "chain_ear"
-  },
-  {
-   "id": "chain_hand",
-   "bone": "chain_hand"
-  },
-  {
-   "id": "chain_neck",
-   "bone": "chain_neck"
-  },
-  {
    "id": "hakama_flap",
    "bone": "hakama_flap"
   },
@@ -146,10 +102,6 @@
   {
    "id": "collar",
    "bone": "arm_sword"
-  },
-  {
-   "id": "chain_arm",
-   "bone": "chain_arm"
   },
   {
    "id": "sword",
@@ -227,28 +179,6 @@
      6
     ]
    },
-   "chain_ear": {
-    "art": "parts/chain_ear",
-    "at": [
-     55,
-     51
-    ],
-    "size": [
-     9,
-     10
-    ]
-   },
-   "chain_neck": {
-    "art": "parts/chain_neck",
-    "at": [
-     19,
-     26
-    ],
-    "size": [
-     17,
-     15
-    ]
-   },
    "scarf": {
     "art": "parts/scarf",
     "at": [
@@ -315,28 +245,6 @@
      23
     ]
    },
-   "chain_arm": {
-    "art": "parts/chain_arm",
-    "at": [
-     19,
-     46
-    ],
-    "size": [
-     10,
-     17
-    ]
-   },
-   "chain_hand": {
-    "art": "parts/chain_hand",
-    "at": [
-     19,
-     60
-    ],
-    "size": [
-     9,
-     8
-    ]
-   },
    "sword": {
     "art": "parts/sword",
     "at": [
@@ -384,11 +292,11 @@
    "foot_a": {
     "art": "parts/foot_a",
     "at": [
-     25,
+     32,
      91
     ],
     "size": [
-     17,
+     10,
      20
     ]
    },
@@ -423,16 +331,12 @@
  },
  "bodySlots": {
   "parts": [
-   "chain_ear",
-   "chain_hand",
-   "chain_neck",
    "foot_a",
    "foot_b",
    "torso",
    "hand_back_bit",
    "arm_back",
    "collar",
-   "chain_arm",
    "face_bit",
    "head",
    "arm_sword",
@@ -474,11 +378,7 @@
    "root": "전체",
    "torso": "몸통(가슴·하카마)",
    "head": "머리",
-   "chain_ear": "왼팔 사슬",
-   "chain_neck": "목 사슬(왼쪽)",
    "arm_sword": "오른팔(앞손)",
-   "chain_arm": "오른팔 사슬",
-   "chain_hand": "오른손 사슬",
    "sword": "칼",
    "hakama_flap": "바지 옷깃",
    "arm_back": "왼팔(뒷손)",
@@ -512,8 +412,7 @@
     [
      "torso",
      "coat_front",
-     "scarf",
-     "chain_neck"
+     "scarf"
     ]
    ],
    [
@@ -523,8 +422,6 @@
      "arm_sword",
      "collar",
      "thumb",
-     "chain_arm",
-     "chain_hand",
      "sword"
     ]
    ],
@@ -532,8 +429,7 @@
     "왼팔(뒷손)",
     [
      "arm_back",
-     "hand_back_bit",
-     "chain_ear"
+     "hand_back_bit"
     ]
    ],
    [
@@ -556,40 +452,31 @@
     "arm_sword",
     "collar",
     "thumb",
-    "chain_arm",
-    "chain_hand",
     "sword"
    ],
    "arm_sword": [
     "collar",
     "thumb",
-    "chain_arm",
-    "chain_hand",
     "sword"
    ],
    "head": [
     "face_bit"
    ],
    "arm_back": [
-    "hand_back_bit",
-    "chain_ear"
+    "hand_back_bit"
    ],
    "torso": [
     "coat_front",
     "scarf",
-    "chain_neck",
     "head",
     "face_bit",
     "shoulder_sword",
     "arm_sword",
     "collar",
     "thumb",
-    "chain_arm",
-    "chain_hand",
     "sword",
     "arm_back",
     "hand_back_bit",
-    "chain_ear",
     "coat_panel_R",
     "hakama_flap"
    ]
@@ -637,36 +524,6 @@
       [
        44,
        38
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "chain_ear": [
-    {
-     "pts": [
-      [
-       53,
-       28
-      ],
-      [
-       53,
-       28
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "chain_neck": [
-    {
-     "pts": [
-      [
-       34,
-       40
-      ],
-      [
-       34,
-       40
       ]
      ],
      "w": 3
@@ -757,36 +614,6 @@
       [
        37,
        84
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "chain_arm": [
-    {
-     "pts": [
-      [
-       28,
-       57
-      ],
-      [
-       28,
-       57
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "chain_hand": [
-    {
-     "pts": [
-      [
-       27,
-       61
-      ],
-      [
-       27,
-       61
       ]
      ],
      "w": 3
@@ -900,46 +727,6 @@
   }
  },
  "sway": {
-  "chain_neck": {
-   "lag": 140,
-   "swing": 0.6,
-   "hang": 0.1,
-   "wave": [
-    4,
-    2100,
-    0
-   ]
-  },
-  "chain_ear": {
-   "lag": 120,
-   "swing": 0.5,
-   "hang": 0.1,
-   "wave": [
-    3,
-    1800,
-    300
-   ]
-  },
-  "chain_arm": {
-   "lag": 140,
-   "swing": 0.6,
-   "hang": 0.1,
-   "wave": [
-    4,
-    2300,
-    500
-   ]
-  },
-  "chain_hand": {
-   "lag": 140,
-   "swing": 0.6,
-   "hang": 0.1,
-   "wave": [
-    5,
-    1900,
-    800
-   ]
-  },
   "coat_panel_R": {
    "lag": 160,
    "swing": 0.4,
@@ -974,14 +761,6 @@
  "bodyJoints": {
   "parts": {
    "pivots": {
-    "chain_arm": [
-     27,
-     58
-    ],
-    "chain_hand": [
-     26,
-     62
-    ],
     "sword": [
      28,
      71
@@ -997,10 +776,6 @@
     "coat_panel_R": [
      50,
      42
-    ],
-    "chain_ear": [
-     60,
-     57
     ],
     "arm_back": [
      50,
