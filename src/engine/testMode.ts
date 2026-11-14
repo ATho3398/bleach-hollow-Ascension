@@ -490,39 +490,52 @@ export function testBattleEnemy(c: TestBattleChoice): { enemy: EnemyDef; star: n
 
 // ── 적 설정 창 (GDD 17-4 v6.083, C.457): 바로 전투 = 적 없이 들어가 창에서 적·수치를 정하고 [확인]으로 등장, 쓰러뜨리면 다시 창 ──
 
-/** 적 설정 창 값: 바로 전투 고르기(적·★·연속·탑 층) + 체력·공격력 배율(%)·공격 여부·무적 */
+/** 적 설정 창 값 (C.457 마스터 2026-11-15 '적 수치도 화면 표시 단위로'): 바로 전투 고르기(적·★·연속·탑 층) + 적 체력·공격력 = '내 기본 공격 n회 분량'(hpInAttacks·attackInAttacks),
+ *  공격 간격 = 초 — null 이면 그 적의 값(★·연속/탑 층 배율 반영) 그대로. 공격 여부·무적 */
 export interface TestArenaChoice extends TestBattleChoice {
-  /** 체력 배율 % (100 = 그대로) */
-  hpPct: number;
-  /** 공격력 배율 % (100 = 그대로) */
-  attackPct: number;
+  hpAttacks: number | null;
+  attackAttacks: number | null;
+  attackSeconds: number | null;
   /** false = 적이 공격하지 않는다 (일반 공격·특수 행동·졸개) */
   attacks: boolean;
   /** true = 적이 쓰러지지 않는다 (0 에 닿으면 체력 가득) */
   immortal: boolean;
 }
 
-/** 배율 입력 범위 % */
-export const TEST_ARENA_PCT_MIN = 1;
-export const TEST_ARENA_PCT_MAX = 10000;
 /** 적 설정 창의 전투 시간 상한(초): 무적 허수아비·연속 전투가 시간 제한으로 끝나지 않게 */
 export const TEST_ARENA_SECONDS = 3600;
+/** 입력 범위: n회 분량 0.1~10000, 공격 간격 0.1~60초 */
+export const TEST_ARENA_ATTACKS_MAX = 10000;
+export const TEST_ARENA_SECONDS_RANGE: readonly [number, number] = [0.1, 60];
 
-const pctOf = (v: number): number => Math.min(TEST_ARENA_PCT_MAX, Math.max(TEST_ARENA_PCT_MIN, Math.round(Number.isFinite(v) ? v : 100)));
+const clampTo = (v: number | null, lo: number, hi: number): number | null => (v === null || !Number.isFinite(v) || v <= 0 ? null : Math.min(hi, Math.max(lo, v)));
 
-/** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음에 체력·공격력 배율). 없는 적이면 null */
+/** 그 적의 기본 수치 (창의 처음 값): ★·연속/탑 층을 입힌 적의 체력·공격력(내 기본 공격 n회 분량)·일반 공격 간격(초, 패턴 값 또는 전투 기본값). 없는 적이면 null */
+export function testArenaDefaults(c: TestBattleChoice): { hpAttacks: number; attackAttacks: number; attackSeconds: number } | null {
+  const b = testBattleEnemy(c);
+  if (!b) return null;
+  const pat = b.enemy.pattern;
+  const sec = pat && 'attackSeconds' in pat ? pat.attackSeconds : BALANCE.provisional.combat.enemyAttackSeconds;
+  return { hpAttacks: b.enemy.hpInAttacks, attackAttacks: b.enemy.attackInAttacks, attackSeconds: sec };
+}
+
+/** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음, 넣은 체력·공격력 n회 분량으로 바꿈). 없는 적이면 null */
 export function testArenaEnemy(c: TestArenaChoice): { enemy: EnemyDef; star: number; bossId: string | null } | null {
   const base = testBattleEnemy(c);
   if (!base) return null;
-  const hp = pctOf(c.hpPct) / 100;
-  const attack = pctOf(c.attackPct) / 100;
-  return { ...base, enemy: hp === 1 && attack === 1 ? base.enemy : scaleEnemy(base.enemy, { hp, attack }) };
+  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  if (hp === null && atk === null) return base;
+  return { ...base, enemy: scaleEnemy(base.enemy, { hp: hp === null ? 1 : hp / base.enemy.hpInAttacks, attack: atk === null ? 1 : atk / base.enemy.attackInAttacks }) };
 }
 
-/** 적 설정 창의 공격 여부·무적·시간을 전투 파라미터에 (엔진은 이 두 칸만 본다) */
-export function applyTestArenaParams(params: Partial<CombatParams>, c: Pick<TestArenaChoice, 'attacks' | 'immortal'>): void {
+/** 적 설정 창의 공격 여부·무적·공격 간격·시간을 전투 파라미터에 (엔진은 이 칸만 본다) */
+export function applyTestArenaParams(params: Partial<CombatParams>, c: Pick<TestArenaChoice, 'attacks' | 'immortal'> & Partial<Pick<TestArenaChoice, 'attackSeconds'>>): void {
   params.enemyPassive = !c.attacks;
   params.enemyImmortal = c.immortal;
+  const sec = clampTo(c.attackSeconds ?? null, TEST_ARENA_SECONDS_RANGE[0], TEST_ARENA_SECONDS_RANGE[1]);
+  if (sec !== null) params.enemyAttackSecondsFixed = sec;
+  else delete params.enemyAttackSecondsFixed;
   params.timeLimitSeconds = TEST_ARENA_SECONDS;
 }
 

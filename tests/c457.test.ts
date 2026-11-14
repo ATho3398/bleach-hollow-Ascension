@@ -5,11 +5,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
 import { BOSSES } from '../src/data/bosses';
-import { createCombat, step } from '../src/engine/combat';
+import { createCombat, enemyAttackSecondsOf, step, type CombatParams } from '../src/engine/combat';
 import { materialHave } from '../src/engine/hogyokuMaterials';
 import { entriesLeft } from '../src/engine/specialDungeon';
 import {
-  applyTestArenaParams, createTestItem, newTestSave, testAddHogyokuMaterials, testArenaEnemy, testRefillSpecial,
+  applyTestArenaParams, createTestItem, newTestSave, testAddHogyokuMaterials, testArenaDefaults, testArenaEnemy, testRefillSpecial,
   TEST_ARENA_SECONDS, TEST_CURRENCIES, TEST_HOGYOKU_MATERIAL_STEP, TEST_WEALTH, type TestArenaChoice,
 } from '../src/engine/testMode';
 import { enterSpecial } from '../src/game';
@@ -62,13 +62,25 @@ describe('C.457 ③ 붕옥 재료', () => {
 });
 
 describe('C.457 ② 적 설정 창', () => {
-  const base: TestArenaChoice = { foeId: 'test-a', star: 1, streak: 0, floor: null, hpPct: 100, attackPct: 100, attacks: true, immortal: false };
-  it('체력·공격력 배율 % 가 적에 실린다', () => {
+  const base: TestArenaChoice = { foeId: 'test-a', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false };
+  it('적 수치 = 내 기본 공격 n회 분량 (기본값 = 그 적, 넣으면 그 값)', () => {
+    const d = testArenaDefaults(base)!;
     const a = testArenaEnemy(base)!;
-    const b = testArenaEnemy({ ...base, hpPct: 300, attackPct: 50 })!;
-    expect(b.enemy.hpInAttacks).toBeCloseTo(a.enemy.hpInAttacks * 3);
-    expect(b.enemy.attackInAttacks).toBeCloseTo(a.enemy.attackInAttacks * 0.5);
+    expect(a.enemy.hpInAttacks).toBeCloseTo(d.hpAttacks);
+    expect(a.enemy.attackInAttacks).toBeCloseTo(d.attackAttacks);
+    const b = testArenaEnemy({ ...base, hpAttacks: 30, attackAttacks: 0.5 })!;
+    expect(b.enemy.hpInAttacks).toBeCloseTo(30);
+    expect(b.enemy.attackInAttacks).toBeCloseTo(0.5);
     expect(testArenaEnemy({ ...base, foeId: 'nope' })).toBeNull();
+  });
+  it('공격 간격(초)을 넣으면 그 간격으로 친다', () => {
+    const params: Partial<CombatParams> = {};
+    applyTestArenaParams(params, { attacks: true, immortal: true, attackSeconds: 0.5 });
+    expect(params.enemyAttackSecondsFixed).toBe(0.5);
+    const s = createCombat(5, { enemy: getEnemy('test-a'), params });
+    expect(enemyAttackSecondsOf(s.params, s.enemy.def.pattern)).toBe(0.5);
+    applyTestArenaParams(params, { attacks: true, immortal: true, attackSeconds: null });
+    expect(params.enemyAttackSecondsFixed).toBeUndefined();
   });
   it('공격 안 함 = 내 체력이 줄지 않는다 / 공격함 = 준다', () => {
     const run = (attacks: boolean) => {
@@ -98,3 +110,4 @@ describe('C.457 ② 적 설정 창', () => {
     expect(s.status).toBe('won');
   });
 });
+

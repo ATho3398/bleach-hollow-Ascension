@@ -9,7 +9,7 @@ import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { kitLevelMultiplier, kitLevelOf, kitUpgradeCost, upgradableBlocks } from '../engine/transcendKit';
 import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, noEvolutionLabel, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
-import { homeHp, homeMaxHp, statusStatDisplay } from '../home';
+import { homeHp, homeMaxHp, statusStatDisplay, statusStatSteps } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
 import { changedKeys } from './bha/gaugeBlink';
@@ -51,7 +51,7 @@ import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
 import { getFaction } from '../data/factions';
-import { STAT_IDS } from '../data/schema';
+import { STAT_IDS, type StatId } from '../data/schema';
 import { STAT_USE, statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
@@ -156,7 +156,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 단추는 칸을 덮는 투명 ⓘ(cellTip) 라 글자 폭을 먹지 않는다. 전체 설명은 제목 옆 ⓘ 그대로
   [...statBox.children].forEach((row, i) => {
     const id = STAT_IDS[i];
-    if (id) cellTip(row as HTMLElement, statName(id, faction.id), () => STAT_USE[id]);
+    if (id) cellTip(row as HTMLElement, statName(id, faction.id), () => statStepLines(save, id));
   });
   stats.append(statBox);
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
@@ -318,13 +318,33 @@ function kitPanel(save: SaveData, rerender: () => void): HTMLElement | null {
 }
 
 /** 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 눌렀을 때·기기로 골랐을 때 예전 ⓘ 와 같은 창. 칸 글자는 그대로 읽힌다 */
+/** 능력치 칸 상세 보기 (GDD v6.081 8절, C.457 마스터 추천안·provisional): 하는 일 한 줄 + 지금 실제 값 + '노력치 10 더 넣으면 → 실제 값' + 구간 예시(+20·+50·+100).
+ *  속도 곡선은 갈수록 덜 오르므로 지금 값 기준으로 그때그때 셈한다(statusStatSteps = 원정 전투와 같은 식) */
+export function statStepLines(save: SaveData, id: StatId): string[] {
+  const steps = statusStatSteps(save, id, [0, 10, 20, 50, 100]);
+  const real = (t: { shown: { text: string } }) => (id === 'hp' ? Number(t.shown.text).toLocaleString('ko-KR') : t.shown.text);
+  const diff = (a: { shown: { value: number } }, b: { shown: { value: number } }): string => {
+    const d = b.shown.value - a.shown.value;
+    if (id === 'aspd' || id === 'bspd') return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}초`;
+    if (id === 'def' || id === 'spr') return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}`;
+    return `+${Math.round(d)}`;
+  };
+  const [now, ten, ...more] = steps;
+  return [
+    STAT_USE[id],
+    `지금 능력치 ${Math.round(now!.stat)} → ${real(now!)}`,
+    `노력치 10 더 넣으면 → ${real(ten!)} (${diff(now!, ten!)})`,
+    `구간 예시: ${more.map((m) => `+${m.delta} → ${real(m)}`).join(' · ')}`,
+  ];
+}
+
 function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
   const tip = infoTip(label, body);
   tip.classList.add('bha-care__celltip');
   tip.setAttribute('aria-label', `${row.getAttribute('aria-label') ?? (row.textContent ?? '').replace(/\s+/g, ' ').trim()} — 설명`);
   row.classList.add('has-celltip');
   // 값 + 노력치(+n·계승)를 한 덩어리로: 칸이 좁으면(폰·글자 확대) 이름 아래 줄 오른쪽으로 통째 내려간다 — 자르거나 칸 밖으로 안 나간다
-  const parts = [...row.querySelectorAll(':scope > .bha-statrow__value, :scope > .bha-ev')];
+  const parts = [...row.querySelectorAll(':scope > .bha-statrow__value, :scope > .bha-ev, :scope > .bha-statrow__real')];
   if (parts.length) {
     const val = h('span', 'bha-care__val');
     parts[0]!.before(val);

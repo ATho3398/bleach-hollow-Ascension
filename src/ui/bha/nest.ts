@@ -93,10 +93,17 @@ export function statsBlock(factionId: string, stats: Stats, ev: Stats, _ref: num
     // 능력치 절대 상한 (GDD 22-1): 닿으면 '상한' 표시
     const capped = v >= STAT_MAX ? ' 상한' : '';
     // 화면 값 (GDD 245장 4): 체력 = 최대 체력 · 속도 = 'n.n초에 1번' · 방어·정신력 = 받는 피해 배율. 힘·지능은 능력치 그대로
-    const note = shown?.[k] ? STAT_DISPLAY_NOTE[k] : undefined;
-    const row = statRow(statName(k, factionId), shown?.[k] ? `${note ? `${note} ` : ''}${shown[k]!.text}${capped}` : `${v}${capped}`);
+    // 능력치 칸 = 능력치 숫자(노력치 몫 포함) + 실제 값 함께 (GDD v6.081 8절, C.457): '212 +12 · 최대 체력 1,240' — 유저가 노력치를 계산할 수 있게
+    const row = statRow(statName(k, factionId), `${v}${capped}`);
     row.dataset.stat = k;
     if (extra) row.append(evText(extra));
+    const real = shown?.[k];
+    if (real) {
+      const note = STAT_DISPLAY_NOTE[k];
+      const r = el('span', 'bha-statrow__real', `· ${note ? `${note} ` : ''}${k === 'hp' ? Number(real.text).toLocaleString('ko-KR') : real.text}`);
+      r.dataset.real = k;
+      row.append(r);
+    }
     if (capped) row.dataset.capped = 'true';
     root.append(row);
   }

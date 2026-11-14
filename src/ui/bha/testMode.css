@@ -31,3 +31,4 @@
 .bha-testarena .bha-test__grid { grid-template-columns: auto 1fr auto 1fr; }
 .bha-testarena .bha-test__note { margin: 0; }
 .bha-lcd .bha-testarena ~ .bha-pick__list { z-index: calc(var(--bha-z-tutorial) + 2); } /* 창 안 고르기 목록은 창 위에 (목록은 오버레이 자리에 창 뒤로 붙는다) */
+.bha-test__grid--3 { grid-template-columns: auto 1fr 1fr; } /* 능력치 입력: 이름 | 능력치 | 실제 값 (C.457) */

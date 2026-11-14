@@ -10,7 +10,7 @@ import { TRAITS, traitName } from '../data/traits';
 import { isBasicBlockTrait } from '../engine/absorb';
 import { bossName } from '../data/bosses';
 import { BALANCE } from '../config/balance';
-import { currentStats, elementDamageOf } from '../engine/evolution';
+import { baseStatsOf, capTierOf, currentStats, elementDamageOf, evCaps } from '../engine/evolution';
 import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { pickList, type PickList, type PickOption } from './bha/pickList';
 import { elementDamageAbbr, elementDamagePct } from './bha/element';
@@ -42,6 +42,7 @@ import { showToast } from './bha/nest';
 import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
 import { shownName } from './displayName';
+import { shownAtStat, statForShown } from '../home';
 import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
 import { HOGYOKU_TRACK_IDS } from '../engine/transcend';
 import { materialHave } from '../engine/hogyokuMaterials';
@@ -215,15 +216,46 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       note('종족을 바꾸면 테스트 칸을 그 종족으로 새로 만든다(전체 해금). 능력치는 그 진화체의 종족값 + 지금 노력치·입력값이다.'))];
   }
 
+  // ── 능력치 (C.457, GDD v6.081 8절 · 사용자 2026-11-15 "스탯 수치 표기 바꾸라니까 왜 아직 999로 기준"): 능력치 숫자 ↔ 실제 값 둘 다로 넣는다 —
+  //    한쪽을 넣으면 다른 쪽이 바로 바뀐다(실제 값 → 능력치는 이분 탐색). 원값 999 기준 대신 프리셋 [이 단계 최대]·[속도 상한]
   function statsTab(): Node[] {
     const max = BALANCE.provisional.stats.statMax;
-    const inputs = STAT_IDS.map((s) => [s, numInput(stats[s], 0, max, statName(s, fid))] as const);
-    // 속성 피해 5종 % (GDD 48장 5번)
+    const raw = currentStats(save.evolution, fid); // 입력 칸 = 붕옥·초월자 배율 전 숫자 (setCustomStats 와 같은 기준)
+    const REAL: Partial<Record<StatId, { unit: string; step: string; digits: number }>> = {
+      hp: { unit: '최대 체력', step: '1', digits: 0 },
+      aspd: { unit: '초에 1번', step: '0.01', digits: 2 },
+      bspd: { unit: '초에 1개', step: '0.01', digits: 2 },
+      def: { unit: '받는 피해 ×', step: '0.01', digits: 2 },
+      spr: { unit: '받는 피해 ×', step: '0.01', digits: 2 },
+    };
+    const realOf = (k: StatId, v: number) => shownAtStat(save, k, v).value;
+    const fmt = (k: StatId, x: number) => (REAL[k]!.digits === 0 ? String(Math.ceil(x - 1e-6)) : x.toFixed(REAL[k]!.digits));
+    const rows = STAT_IDS.map((k) => {
+      const num = numInput(raw[k], 0, max, statName(k, fid));
+      const r = REAL[k];
+      let realIn: HTMLInputElement | null = null;
+      if (r) {
+        realIn = el('input', 'bha-test__input');
+        realIn.type = 'number';
+        realIn.inputMode = 'decimal';
+        realIn.step = r.step;
+        realIn.min = '0';
+        realIn.value = fmt(k, realOf(k, raw[k]));
+        realIn.setAttribute('aria-label', `${statName(k, fid)} 실제 값 (${r.unit})`);
+        const ri = realIn;
+        num.oninput = () => { ri.value = fmt(k, realOf(k, Number(num.value) || 0)); };
+        ri.onchange = () => {
+          const v = statForShown(save, k, Number(ri.value));
+          num.value = String(v);
+          ri.value = fmt(k, realOf(k, v)); // 닿을 수 있는 값으로 맞춘다 (상한·정수 능력치)
+        };
+      }
+      return { k, num, real: realIn };
+    });
     const elemInputs = ELEMENT_DAMAGE_IDS.map((id) => [id, numInput(elemDmg[id] ?? 0, 0, TEST_ELEMENT_DAMAGE_MAX, `${elementDamageAbbr(id, fid)} 피해 %`)] as const);
+    const want = (): Partial<Record<StatId, number>> => Object.fromEntries(rows.map((r) => [r.k, Number(r.num.value)]));
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {
-      const want: Partial<Record<StatId, number>> = {};
-      for (const [s, i] of inputs) want[s] = Number(i.value);
-      setCustomStats(save, want);
+      setCustomStats(save, want());
       setElementDamage(save, Object.fromEntries(elemInputs.map(([id, i]) => [id, Number(i.value)])));
       saved('능력치를 넣었다');
       redraw();
@@ -233,8 +265,30 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       saved('진화체 기본값으로 되돌렸다');
       redraw();
     } });
-    return [panel({ title: '능력치 직접 입력', aside: `0~${max}` }, grid([...inputs.map(([s, i]) => [statName(s, fid), i] as [string, Node]), ...elemInputs.map(([id, i]) => [`${elementDamageAbbr(id, fid)} 피해 %`, i] as [string, Node])]), row(apply, reset),
-      note('입력값은 모험·등급전·연습·바로 전투 모두에 그대로 쓰인다(노력치는 0으로).'))];
+    // 프리셋: 이 단계 최대 = 종족값 + 능력치 하나 노력치 상한(각 능력치를 따로 끝까지 — 합계 상한은 무시) · 속도 상한 = 공격 0.3초·블록 1초에 닿는 가장 작은 능력치
+    const top = button({ label: '이 단계 최대', icon: 'i-rare', size: 'small', onClick: () => {
+      const base = baseStatsOf(save.evolution, fid);
+      const per = evCaps(capTierOf(save.evolution)).perStat;
+      for (const r of rows) {
+        r.num.value = String(Math.min(max, base[r.k] + per));
+        r.num.oninput?.(new Event('input'));
+      }
+    } });
+    const capBtn = button({ label: '속도 상한', icon: 'i-timer', size: 'small', onClick: () => {
+      const C = BALANCE.provisional.combat;
+      for (const r of rows) {
+        if (r.k !== 'aspd' && r.k !== 'bspd') continue;
+        r.num.value = String(statForShown(save, r.k, r.k === 'aspd' ? C.attackSecondsMin : C.spawnSecondsMin));
+        r.num.oninput?.(new Event('input'));
+      }
+    } });
+    const g = el('div', 'bha-test__grid bha-test__grid--3');
+    g.append(el('span', 'bha-test__label', ''), el('span', 'bha-test__label', '능력치'), el('span', 'bha-test__label', '실제 값'));
+    for (const r of rows) g.append(el('span', 'bha-test__label', statName(r.k, fid)), r.num, r.real ?? el('span', 'bha-test__label', '= 능력치'));
+    for (const [id, i] of elemInputs) g.append(el('span', 'bha-test__label', `${elementDamageAbbr(id, fid)} 피해 %`), i, el('span'));
+    return [panel({ title: '능력치 직접 입력', aside: '능력치 ↔ 실제 값' }, g, row(apply, reset), row(top, capBtn),
+      note('능력치 숫자나 실제 값(최대 체력·공격 간격·블록 간격·받는 피해 ×) 중 하나를 넣으면 다른 쪽이 따라 바뀐다. [적용]해야 들어간다. 붕옥·초월자 보너스는 그 위에 더 붙는다.'),
+      note('이 단계 최대 = 종족값 + 능력치 하나 노력치 상한(능력치마다 따로 끝까지). 속도 상한 = 공격 0.3초·블록 1초에 닿는 가장 작은 능력치(능력치 상한으로도 못 닿으면 상한값). 입력값은 모험·등급전·연습·바로 전투 모두에 쓰인다(노력치는 0으로).'))];
   }
 
   function traitsTab(): Node[] {

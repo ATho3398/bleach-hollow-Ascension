@@ -2,8 +2,9 @@
 // 수치는 balance.ts provisional.nest.homeHp. 런 로그 homeHeals(온천, 옛 기록은 포션도)를 여기서 남긴다. 종족 무관 — 온천 이름은 종족 설정 spaName.
 // 튜토리얼(C.199 회복 안내)도 이 함수들을 부른다: spaEnter → spaSoak(분) → spaLeave, grantFood → feedNest.
 import { buildCombatParams } from './engine/absorb';
+import { BALANCE } from './config/balance';
 import { defaultCombatParams, playerStatsOf, type CombatParams } from './engine/combat';
-import { applyEvolutionToParams, refStatOf } from './engine/evolution';
+import { applyEvolutionToParams, currentStats, refStatOf } from './engine/evolution';
 import type { StatId } from './data/schema';
 import { statDisplay, type StatDisplay } from './statDisplay';
 import { addFood } from './engine/food';
@@ -47,6 +48,43 @@ function expeditionParamsOf(save: SaveData): CombatParams {
 export function statusStatDisplay(save: SaveData): Record<StatId, StatDisplay> {
   const p = expeditionParamsOf(save);
   return statDisplay(playerStatsOf(p), refStatOf(save.evolution.tierIndex), p);
+}
+
+/** 능력치 칸 상세 보기 (GDD v6.081 8절 '능력치 칸 = 숫자 + 실제 값 + 상세 보기', C.457): 능력치 하나에 노력치 delta 를 더하면 실제 값이 어떻게 되는가.
+ *  전투 능력치(붕옥·초월자 배율 포함)에 그 배율 그대로 더한다 — 원정 전투와 같은 식. steps = 더할 노력치들(0 = 지금) */
+export function statusStatSteps(save: SaveData, k: StatId, steps: readonly number[]): { delta: number; stat: number; shown: StatDisplay }[] {
+  const p = expeditionParamsOf(save);
+  const base = playerStatsOf(p);
+  const ref = refStatOf(save.evolution.tierIndex);
+  const mul = 1 + statBonusOf(save).total;
+  return steps.map((delta) => {
+    const stats = { ...base, [k]: base[k] + delta * mul };
+    return { delta, stat: stats[k], shown: statDisplay(stats, ref, { ...p, playerStats: stats })[k] };
+  });
+}
+
+/** 능력치 v(종족값 + 노력치·계승 — 붕옥·초월자 배율 전, 테스트 패널 입력 칸과 같은 숫자)일 때 실제 값 (GDD v6.081 8절, 테스트 패널 양방향 입력 C.457) */
+export function shownAtStat(save: SaveData, k: StatId, v: number): StatDisplay {
+  const cur = currentStats(save.evolution, save.factionId)[k];
+  return statusStatSteps(save, k, [v - cur])[0]!.shown;
+}
+
+/** 실제 값 target 이 되는 능력치 숫자 (0~상한 정수, 이분 탐색 — 체력은 오를수록 커지고 속도·받는 피해는 작아진다). 힘·지능은 그대로 */
+export function statForShown(save: SaveData, k: StatId, target: number): number {
+  if (!Number.isFinite(target)) return 0;
+  const max: number = BALANCE.provisional.stats.statMax;
+  const f = (v: number) => shownAtStat(save, k, v).value;
+  const rising = f(max) >= f(0);
+  let lo = 0;
+  let hi: number = max;
+  // rising: f(v) >= target 인 가장 작은 v / falling: f(v) <= target 인 가장 작은 v (상한에 닿으면 그 값)
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const ok = rising ? f(mid) >= target - 1e-9 : f(mid) <= target + 1e-9;
+    if (ok) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo;
 }
 
 /** 온천 들어가기를 막는 이유 (화면 문구) */

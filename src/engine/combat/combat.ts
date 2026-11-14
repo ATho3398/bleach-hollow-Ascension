@@ -248,6 +248,8 @@ export interface CombatParams {
   kit?: CombatKit | null;
   /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 일반 공격·특수 행동·졸개 공격을 하지 않는다. 진짜 게임은 늘 없음 */
   enemyPassive?: boolean;
+  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 적 일반 공격 간격(초)을 이 값으로 고정 (패턴·배율 무시). 진짜 게임은 늘 없음 */
+  enemyAttackSecondsFixed?: number;
   /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 쓰러지지 않는다 — 체력이 0 에 닿으면 가득으로 되돌린다(허수아비). 진짜 게임은 늘 없음 */
   enemyImmortal?: boolean;
 }
@@ -1554,6 +1556,7 @@ export function stanceMultiplier(s: CombatState): number {
 
 /** 이 적의 기본 공격 간격(초): 패턴이 정하면(속공·단단) 그 값, 아니면 공통 값. 기본 공격 묶음(enemyHitPacing)만큼 늘어난다 */
 export function enemyAttackSecondsOf(p: CombatParams, pattern: EnemyPattern | undefined): number {
+  if (p.enemyAttackSecondsFixed) return p.enemyAttackSecondsFixed; // 테스트 모드 적 설정 창 (C.457): 적 공격 간격을 초로 정함
   return (pattern && 'attackSeconds' in pattern ? pattern.attackSeconds : p.enemyAttackSeconds) * (p.enemyHitPacing ?? 1);
 }
 

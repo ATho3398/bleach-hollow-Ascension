@@ -166,6 +166,7 @@
 .bha-care-page .bha-stats .bha-statrow__name { white-space: nowrap; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); color: var(--bha-text-2); }
 .bha-care-page .bha-stats .bha-statrow__value { text-align: right; font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); color: var(--bha-text-1); }
 .bha-care-page .bha-stats .bha-ev { font-size: var(--bha-fs-sm); color: var(--bha-good); }
+.bha-care-page .bha-stats .bha-statrow__real { font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-medium); color: var(--bha-text-2); } /* 실제 값 (GDD v6.081 8절, C.457): 숫자 옆 작게 */
 /* 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 아이콘은 안 보이고, 고르면(.bha-sel)·누르면 칸 테두리만 밝아진다 */
 .bha-care-page .bha-statrow > .bha-care__celltip { position: absolute; inset: 0; width: auto; height: auto; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: inherit; background: none; box-shadow: none; opacity: 1; }
 .bha-care-page .bha-statrow > .bha-care__celltip > .bha-icon, .bha-care-page .bha-statrow > .bha-care__celltip::before { display: none; }

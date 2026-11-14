@@ -3,10 +3,9 @@ import { ENEMIES, enemyPatternKind } from '../data/enemies';
 import { ELEMENT_IDS, elementAbbr, elementName } from '../data/elements';
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
-import { absorbReasons } from '../engine/absorb';
 import { BASIC_SKILL_ID, comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
-import { absorbRuleText, weaknessText } from './absorbView';
+import { weaknessText } from './absorbView';
 import { button, el, icon, panel, tag } from './bha/dom';
 import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
@@ -126,7 +125,6 @@ export interface PracticeResultHandlers {
 export function practiceResultView(root: HTMLElement, faction: FactionConfig, enemy: EnemyDef, s: CombatState, h: PracticeResultHandlers): void {
   const labels = battleLabels(faction);
   const won = s.status === 'won';
-  const reasons = absorbReasons(s);
   const fin = s.finisher;
   // 마무리 일격 이름 (GDD 20장 v5.4): 스킬 = 계열 약어·막기·회복(84장 4번), 콤보 = `콤보_계열`
   const finSkill = () => {
@@ -162,7 +160,6 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     { label: s.params.kit?.liberationName ?? labels.liberation.name, icon: 'i-special', mod: 'em', value: `${s.liberation.uses}회 사용 (해방 중 ${labels.chain} ${s.liberation.chains}회)` },
     { label: `${labels.voidBlock} (${labels.riskGauge} 상승)`, icon: 'i-void', value: val(`${s.voidUsed}회`, `(+${s.riskGained})`) },
     { label: '마무리 일격', icon: 'i-attack', value: finText },
-    { label: faction.absorbActionName, icon: 'i-absorb', mod: reasons.length > 0 ? 'good' : undefined, value: `${reasons.length > 0 ? '가능' : '불가'} (연습에서는 쓰지 않음)` },
   ];
 
   const seed = el('p', 'bha-faint bha-center bha-num bha-seedline');
@@ -175,5 +172,5 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     asBack(button({ label: '연습 메뉴로', size: 'lg', onClick: h.onMenu })),
   );
   dock.append(two);
-  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows)), el('p', 'bha-faint bha-center', absorbRuleText(faction, enemy))]);
+  splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, seed, dock], [panel({}, iconInfo(rows))]); // 수련장은 흡수가 없다 — 흡수 규칙 안내 줄 삭제 (C.457)
 }

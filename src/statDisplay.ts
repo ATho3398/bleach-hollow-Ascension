@@ -45,6 +45,7 @@ export function statDisplay(stats: Stats, enemyRef: number, params: Partial<Comb
 
 /** 표시 값 이름 (방어·정신력은 '받는 물리 피해'·'받는 특수 피해' 를 능력치 이름 옆 작은 글자로) */
 export const STAT_DISPLAY_NOTE: Readonly<Partial<Record<StatId, string>>> = {
-  def: '받는 물리 피해',
-  spr: '받는 특수 피해',
+  hp: '최대 체력',
+  def: '받는 피해',
+  spr: '받는 피해',
 };

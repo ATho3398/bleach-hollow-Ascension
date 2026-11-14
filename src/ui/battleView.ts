@@ -122,6 +122,8 @@ export interface BattleViewOptions {
   hold?: { on: boolean };
   /** true = 끝나면 결과 창 없이 바로 onEnd (테스트 모드 연속 전투, C.457) */
   autoEnd?: boolean;
+  /** true = 이기면 흡수 화면으로 간다(원정 전투만) — 승리 창 버튼 '포식하러 가기'. 없으면 '계속' (C.457: 수련장·탑·특수던전·등급전도 '포식하러 가기'가 떠서 눌러도 흡수가 없었다) */
+  absorb?: boolean;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -1815,7 +1817,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const inner = el('div', s.status === 'won' ? 'bha-battle-ov bha-battle-ov--win' : 'bha-battle-ov bha-battle-ov--lose');
     const actions = el('div', 'bha-battle-ov__actions');
     if (s.status === 'won') {
-      const canAbsorb = absorbReasons(s).length > 0;
+      const canAbsorb = opts.absorb === true && absorbReasons(s).length > 0;
       // 버튼 글자는 상태가 아니라 행동으로 (GDD 100장 #42)
       const go = button({ label: canAbsorb ? `${faction.absorbActionName}하러 가기` : '계속', variant: 'primary', size: 'lg', icon: canAbsorb ? 'i-absorb' : undefined, onClick: finish });
       go.append(icon('i-chevron-right'));

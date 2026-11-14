@@ -417,7 +417,7 @@ export function startApp(host: HTMLElement): void {
   /** 다시 열 때 꺼 둔 동안 (GDD 102-7): 방이 그려진 뒤 알림 띠 한 번 */
   let absence: AbsenceReport | null = null;
   /** 테스트 모드 적 설정 창의 지난 값 (C.457, 이 실행 동안) */
-  let lastArena: TestArenaChoice = { foeId: '', star: 1, streak: 0, floor: null, hpPct: 100, attackPct: 100, attacks: true, immortal: false };
+  let lastArena: TestArenaChoice = { foeId: '', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false };
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
   /** 우라하라 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
@@ -2121,6 +2121,7 @@ export function startApp(host: HTMLElement): void {
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       risk: exp.risk,
+      absorb: true, // 이기면 흡수 화면 (원정 전투만, C.457)
       tutorial: tutorialFor(),
       // 수련권 드롭 (GDD 216장 1): 이 전투를 이기면 나올지 시드로 미리 안다 → 승리 창 보상 칸
       ...(ticketDropOf(exp) ? { winRewards: ['수련권 +1'] } : {}),
@@ -2385,7 +2386,9 @@ export function startApp(host: HTMLElement): void {
    *  지면 체력을 채워 다시 창. 기록은 테스트 칸 런 로그에만. c = 패널의 지난 고르기(창의 처음 값) */
   function testBattle(faction: FactionConfig, c: TestBattleChoice): void {
     if (!save) return;
-    let pick: TestArenaChoice = { ...lastArena, ...c };
+    // 패널에서 적·★·연속·탑 층을 바꿨으면 창의 수치는 그 적의 기본값부터 (C.457)
+    const same = lastArena.foeId === c.foeId && lastArena.star === c.star && lastArena.streak === c.streak && (lastArena.floor ?? null) === (c.floor ?? null);
+    let pick: TestArenaChoice = { ...lastArena, ...c, ...(same ? {} : { hpAttacks: null, attackAttacks: null, attackSeconds: null }) };
     let hpFrac = 1;
     let kills = 0;
     let note = '적을 정하고 [확인]을 누르면 나온다. 쓰러뜨리면 이 창이 다시 뜬다.';

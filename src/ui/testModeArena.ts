@@ -3,10 +3,9 @@
 // [창 닫기] = 빈 적 자리에 [적 설정] 버튼만 남김, [나가기] = 테스트 패널로. 목록은 데이터(testFoes)에서 — 종족 분기 없음.
 import { bossName } from '../data/bosses';
 import { pickFaction } from '../data/schema';
-import { BALANCE } from '../config/balance';
 import { MAX_DIFFICULTY } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
-import { testFoes, TOWER_FLOORS, TEST_ARENA_PCT_MAX, TEST_ARENA_PCT_MIN, type TestArenaChoice } from '../engine/testMode';
+import { testArenaDefaults, testFoes, TEST_ARENA_ATTACKS_MAX, TEST_ARENA_SECONDS_RANGE, type TestArenaChoice } from '../engine/testMode';
 import { pickList } from './bha/pickList';
 import { button, el, seg } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
@@ -42,10 +41,29 @@ export function testArenaDialog(faction: FactionConfig, prev: TestArenaChoice, n
     group: f.kind === 'boss' ? '보스' : f.def.class === 'elite' ? '강적' : '일반',
   })), prev.foeId, '적 종류', 'bha-test__select');
   const starSel = pickList(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(prev.star), '난이도', 'bha-test__select');
-  const floorSel = pickList([{ value: '', label: '탑 아님' }, ...Array.from({ length: TOWER_FLOORS }, (_, i) => ({ value: String(i + 1), label: `${i + 1}층` }))], prev.floor ? String(prev.floor) : '', '탑 층', 'bha-test__select');
-  const streak = numInput(prev.streak, 0, BALANCE.provisional.difficulty.streak.maxClears, '연속 클리어');
-  const hp = numInput(prev.hpPct, TEST_ARENA_PCT_MIN, TEST_ARENA_PCT_MAX, '체력 배율 %');
-  const atk = numInput(prev.attackPct, TEST_ARENA_PCT_MIN, TEST_ARENA_PCT_MAX, '공격력 배율 %');
+  // 적 수치 = 화면 표시 단위 (C.457 마스터 2026-11-15): 체력·공격력 = '내 기본 공격 n회 분량'(hpInAttacks·attackInAttacks — ★ 권장 단계 플레이어 기준), 공격 간격 = 초
+  const dec = (v: number, aria: string, step: string, max: number): HTMLInputElement => {
+    const i = numInput(v, 0, max, aria);
+    i.step = step;
+    i.inputMode = 'decimal';
+    return i;
+  };
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  const def0 = testArenaDefaults({ ...prev, foeId: foeSel.value, star: Number(starSel.value) });
+  const hp = dec(r1(prev.hpAttacks ?? def0?.hpAttacks ?? 10), '체력 (내 기본 공격 n회)', '0.1', TEST_ARENA_ATTACKS_MAX);
+  const atk = dec(r2(prev.attackAttacks ?? def0?.attackAttacks ?? 1), '공격력 (내 기본 공격 n회 분량)', '0.01', TEST_ARENA_ATTACKS_MAX);
+  const sec = dec(r2(prev.attackSeconds ?? def0?.attackSeconds ?? 1.5), '공격 간격 (초)', '0.1', TEST_ARENA_SECONDS_RANGE[1]);
+  /** 적·★를 바꾸면 그 적의 기본 수치로 다시 채운다 */
+  const refill = (): void => {
+    const d = testArenaDefaults({ ...prev, foeId: foeSel.value, star: Number(starSel.value) });
+    if (!d) return;
+    hp.value = String(r1(d.hpAttacks));
+    atk.value = String(r2(d.attackAttacks));
+    sec.value = String(r2(d.attackSeconds));
+  };
+  foeSel.onchange = refill;
+  starSel.onchange = refill;
   let attacks = prev.attacks;
   let immortal = prev.immortal;
   const atkSeg = seg([{ id: 'on', label: '공격함' }, { id: 'off', label: '안 함' }], attacks ? 'on' : 'off', (id) => { attacks = id === 'on'; }, { small: true });
@@ -55,12 +73,12 @@ export function testArenaDialog(faction: FactionConfig, prev: TestArenaChoice, n
   const cell = (label: string, node: Node) => grid.append(el('span', 'bha-test__label', label), node);
   cell('적 종류', foeSel.el);
   cell('★', starSel.el);
-  cell('체력 %', hp);
-  cell('공격력 %', atk);
-  cell('연속', streak);
-  cell('탑 층', floorSel.el);
+  cell('체력 (평타 n회)', hp);
+  cell('공격력 (평타 n회분)', atk);
+  cell('공격 간격 (초)', sec);
   cell('공격', atkSeg);
   cell('죽음', immSeg);
+  cell('', button({ label: '적 기본값', icon: 'i-loop', size: 'small', onClick: refill }));
   const content = el('div', 'bha-testarena__body');
   content.append(grid);
   if (note) content.append(el('p', 'bha-test__note', note));
@@ -76,10 +94,11 @@ export function testArenaDialog(faction: FactionConfig, prev: TestArenaChoice, n
     onYes: () => h.onPick({
       foeId: foeSel.value,
       star: Number(starSel.value),
-      streak: Number(streak.value) || 0,
-      floor: floorSel.value ? Number(floorSel.value) : null,
-      hpPct: Number(hp.value) || 100,
-      attackPct: Number(atk.value) || 100,
+      streak: prev.streak,
+      floor: prev.floor ?? null,
+      hpAttacks: Number(hp.value) > 0 ? Number(hp.value) : null,
+      attackAttacks: Number(atk.value) > 0 ? Number(atk.value) : null,
+      attackSeconds: Number(sec.value) > 0 ? Number(sec.value) : null,
       attacks,
       immortal,
     }),
