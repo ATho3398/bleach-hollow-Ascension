@@ -91,6 +91,9 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
       ...(b.releaseSwap ? { releaseSwap: b.releaseSwap } : {}),
       ...(b.voidSlot && n.voidSlot ? { voidSlot: { ...n.voidSlot } } : {}),
       ...(n.riskCost ? { riskCost: n.riskCost } : {}),
+      ...(b.chargeShot && n.chargeShot ? { chargeShot: { power: n.chargeShot, name: b.name } } : {}),
+      ...(n.chainRiskCost ? { chainRiskCost: [...n.chainRiskCost] } : {}),
+      ...(n.chainGauge ? { chainGauge: [...n.chainGauge] } : {}),
       ...(b.counter && n.counter ? { counter: { ...n.counter, line: b.counter.line } } : {}),
       ...(b.stack && n.stack && n.finisher ? { stack: { ...n.stack, finisherName: b.stack.finisherName, finisherPower: n.finisher.power, enemyStunSeconds: n.finisher.enemyStunSeconds } } : {}),
     });
@@ -106,6 +109,13 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
     ...(def.riskRelease && num.riskRelease ? { riskRelease: { ...num.riskRelease, limit: BALANCE.provisional.risk.limit } } : {}),
     ...(def.releaseBare ? { releaseBare: true } : {}),
     ...(def.riskPenaltyFree ? { riskPenaltyFree: true } : {}),
+    ...(def.riskDrain && num.riskDrain ? { riskDrain: { limit: BALANCE.provisional.risk.limit, shotCost: num.riskDrain.shotCost, tickSeconds: num.riskDrain.tickSeconds, tickCost: num.riskDrain.tickCost } } : {}),
+    ...(def.riskDrain && num.riskDrain?.bonusBlockEvery ? { bonusBlockEvery: num.riskDrain.bonusBlockEvery } : {}),
+    ...(def.riskDrain && def.mastery && num.riskDrain ? { mastery: {
+      name: def.mastery.gaugeName, releaseName: def.mastery.releaseName, finisherName: def.mastery.finisherName,
+      perBasic: num.riskDrain.mastery.perBasic, perBlock: num.riskDrain.mastery.perBlock, full: num.riskDrain.mastery.full, damageMult: num.riskDrain.mastery.damageMult,
+      stacks: num.riskDrain.final.stacks, finisherPower: num.riskDrain.final.power, finisherPerBlock: num.riskDrain.final.perBlock,
+    } } : {}),
     ...(def.revive && num.revive ? { revive: { hpFraction: num.revive.hpFraction, line: def.revive.line } } : {}),
   };
 }
@@ -125,6 +135,11 @@ export function kitRiskPenaltyFree(transcendentId: string | null | undefined): b
 export function kitRiskFloorOf(transcendentId: string | null | undefined): number {
   if (!transcendentId || !kitDefOf(transcendentId)?.riskFloor) return 0;
   return Math.max(0, BALANCE.provisional.transcendentKits[transcendentId]?.riskRelease?.floor ?? 0);
+}
+
+/** 이 초월자 트랙의 리스크 게이지가 소모형인가 (GDD 12-4 v6.069 이치고 호로화): 모험 출발·보스전 시작 때 가득, 깎이기만 한다(오르는 길 없음). 전투 기반과 상관없음 */
+export function kitRiskDrainOf(transcendentId: string | null | undefined): boolean {
+  return kitDefOf(transcendentId)?.riskDrain === true && !!BALANCE.provisional.transcendentKits[transcendentId!]?.riskDrain;
 }
 
 /** 종족 설정의 리스크 게이지 이름을 초월자 데이터로 덮은 사본 (덮을 게 없으면 그대로) — 화면이 트랙 종족 설정 대신 쓴다 */

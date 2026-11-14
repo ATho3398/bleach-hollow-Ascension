@@ -160,6 +160,8 @@ function validShape(e: unknown): e is ExpeditionState {
   if (e.lapItems !== undefined && !(Array.isArray(e.lapItems) && e.lapItems.every((u) => isObj(u) && isInt(u.lap, 1) && typeof u.itemId === 'string' && (u.where === 'walk' || u.where === 'battle')))) return false;
   // 출정품 (GDD 241-D 5): 없으면 없음
   if (e.sortie !== undefined && !isStrArr(e.sortie)) return false;
+  // 수련 게이지 (GDD 12-4 v6.069 이치고 무월수련, C.454): 없으면 0
+  if (e.kitMastery !== undefined && !(isNum(e.kitMastery) && (e.kitMastery as number) >= 0)) return false;
   if (e.sortieFinds !== undefined && !(Array.isArray(e.sortieFinds) && e.sortieFinds.every((f) => isObj(f) && typeof f.id === 'string' && isInt(f.lap, 1)))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;
   if (!Array.isArray(e.battlesByLap) || e.battlesByLap.length < (e.lap as number) || !e.battlesByLap.every((n) => isInt(n))) return false;

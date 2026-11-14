@@ -47,6 +47,8 @@ export interface TranscendentKitBlockDef {
   releaseSwap?: string;
   releaseOnly?: boolean;
   upgradeAs?: string;
+  /** 충전 평타 블록 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 다음 평타 충전(체인 수만큼) — 충전 평타 이름 = 블록 이름, 수치 = balance blocks.<id>.chargeShot·chainRiskCost·chainGauge */
+  chargeShot?: boolean;
   /** 허 공식 몫 (GDD 12-4 v6.052 붕옥 블록 · v6.066 경화수월): 블록이 나올 때마다 허 공식 × 수치로 따로 굴림(순서 = order). 게이지를 올리는 블록(riskGain)은 허 블록 자리·쓰면 패널티 없이 게이지 + (수치 = balance blocks.<id>.voidSlot) */
   voidSlot?: boolean;
 }
@@ -65,6 +67,13 @@ export interface TranscendentKitDef {
   releaseBare?: boolean;
   /** 리스크 패널티 없음 (GDD 12-4 v6.050): 게이지가 차도 폭주(돌파) 상태·피해·제약 없음 — 쌓이기만 한다 */
   riskPenaltyFree?: boolean;
+  /** 게이지 소모형 리스크 (GDD 12-4 v6.069 이치고 호로화): 리스크 게이지가 모험 출발·보스전 시작 때 가득(risk.limit)으로 시작하고 깎이기만 한다(타일·먹이·공허 블록으로 안 오름).
+   *  해방 = 보통 해방 게이지, 지속 시간 없음, 해방 중엔 충전 평타마다 소모·0 이면 풀림 (수치 = balance riskDrain) */
+  riskDrain?: boolean;
+  /** 게이지를 다 쓰면 수련 게이지 → 두 번째 해방 (GDD 12-4 v6.069 무월수련·무월·최후의 월아천충, 수치 = balance riskDrain.mastery·final): 이름만 */
+  mastery?: { gaugeName: string; releaseName: string; finisherName: string };
+  /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 v6.069 이치고 = 기본 / 천년혈전 [미정]): 지금은 자리만 — 엔진·화면은 첫 모드(기본)만 쓴다, 선택 화면 없음 */
+  modes?: { id: string; name: string; provisional?: boolean }[];
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
   evade?: boolean;
   /** 쓰러지면 전투당 1회 되살아남 (수치 = balance revive) */
@@ -136,6 +145,9 @@ function kitErrors(k: unknown): boolean {
   if (kit === undefined) return true;
   if (!kit || typeof kit.liberationName !== 'string' || !kit.liberationName || !Array.isArray(kit.blocks) || kit.blocks.length === 0 || kit.provisional !== true) return false;
   if (kit.riskGaugeName !== undefined && (typeof kit.riskGaugeName !== 'string' || !kit.riskGaugeName)) return false;
+  const nm = (v: unknown) => typeof v === 'string' && v.length > 0;
+  if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName))) return false;
+  if (kit.modes !== undefined && !(Array.isArray(kit.modes) && kit.modes.length > 0 && kit.modes.every((m) => m && nm(m.id) && nm(m.name)))) return false;
   const ids = new Set(kit.blocks.map((b) => b?.id));
   if (ids.size !== kit.blocks.length) return false;
   return kit.blocks.every((b) => b && typeof b.id === 'string' && b.id && typeof b.name === 'string' && b.name && typeof b.short === 'string' && [...b.short].length === 1 && typeof b.fx === 'string'
@@ -143,6 +155,7 @@ function kitErrors(k: unknown): boolean {
     && (b.releaseSwap === undefined || (ids.has(b.releaseSwap) && b.releaseSwap !== b.id))
     && (b.upgradeAs === undefined || ids.has(b.upgradeAs))
     && (b.voidSlot === undefined || typeof b.voidSlot === 'boolean')
+    && (b.chargeShot === undefined || typeof b.chargeShot === 'boolean')
     && (b.counter === undefined || typeof b.counter.line === 'string')
     && (b.stack === undefined || typeof b.stack.finisherName === 'string'))
     && kit.blocks.some((b) => !b.releaseOnly);

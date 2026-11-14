@@ -16,6 +16,9 @@ import {
   canGuard, canUseGear, canUseItem, halted as combatHalted, spawnGaugeOf, voidChanceOf, kitBlockOf, kitCounterOpen, kitEvadeBuffSecondsLeft,
   scriptAck, scriptLand, scriptPrompt, scriptStep, scriptWaitOf, SCRIPT_STAGES,
   kitRiskOf,
+  kitMasteryOn,
+  kitSecondOn,
+  kitNextReleaseIsSecond,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -171,6 +174,10 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
   switch (e.kind) {
     case 'block': {
       // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름(체인 단계·마무리 기술) + 반격 성공
+      if (e.kitName && e.kitCharge !== undefined) {
+        // 충전 블록 (GDD 12-4 v6.069 월아천충): 피해 없이 다음 평타 충전
+        return { role: e.chain > 1 ? 'chain' : 'attack', icon: e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''} — 다음 평타 ${e.kitName} ${e.kitCharge}번` };
+      }
       if (e.kitName) {
         const kitText = `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}${e.kitCounter ? ' · 반격' : ''}${e.heal > 0 ? ` · 회복 +${n(e.heal)}` : ''}${e.kitFinisher ? ' · 적 공격 불능' : ''}`;
         return { role: e.chain > 1 || e.kitCounter || e.kitFinisher ? 'chain' : 'attack', icon: e.kitFinisher || e.kitCounter ? 'i-special' : e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: kitText };
@@ -201,7 +208,13 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     }
     case 'combo':
       return { role: 'chain', icon: 'i-special', text: `콤보! ${comboBlockLabel(labels, comboOf(s.params, e.comboId)?.family)} 블록이 생겼다 (${comboName(e.comboId, factionId)})` };
+    case 'player-attack':
+      // 충전 평타·마무리 평타 (GDD 12-4 v6.069 월아천충·최후의 월아천충): 맞는 순간 한 줄 (보통 평타는 줄 없음)
+      if (e.kitShot && e.landed) return { role: e.kitFinisher ? 'chain' : 'attack', icon: e.kitFinisher ? 'i-special' : LOG_ICON.attack, text: `${e.kitShot}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}` };
+      return null;
     case 'liberation-ready':
+      // 게이지 소모형 (GDD 12-4 v6.069): 수련 게이지가 가득이면 두 번째 해방(무월)
+      if (s.params.kit?.mastery && kitMasteryOn(s)) return { role: 'chain', icon: 'i-special', text: `${s.params.kit.mastery.name} 가득 — ${s.params.kit.mastery.releaseName} 준비, 캐릭터를 눌러라` };
       // 리스크 소모형 해방 (GDD 12-4 v6.050): 게이지 옆 [해방 이름] 버튼으로도
       if (s.params.kit?.riskRelease) return { role: 'chain', icon: 'i-special', text: `${labels.riskGauge} ${s.params.kit.riskRelease.minRisk} — ${labels.liberation.name}` };
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 준비 — 캐릭터를 눌러라` }; // GDD 139장 3
@@ -244,7 +257,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
-      if (e.endless) return { role: 'chain', icon: 'i-special', text: labels.liberation.name };
+      if (e.endless) return { role: 'chain', icon: 'i-special', text: e.name ?? labels.liberation.name };
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 블록이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
     case 'item':
       return { role: 'heal', icon: 'i-heal', text: `${consumableName(e.id)}! ${e.effect === 'heal' ? `체력 +${n(e.heal)}` : `${battleItemText(e.id)}`}` };
@@ -253,6 +266,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'kit-risk':
       return { role: 'void', icon: 'i-risk', text: `${labels.riskGauge} ${e.spent < 0 ? '+' : '−'}${Math.round(Math.abs(e.spent) * 10) / 10} (${Math.round(e.risk)})` };
     case 'liberation-end':
+      // 게이지 소모형 (GDD 12-4 v6.069): 호로화 0 → 각호고 풀림·무월수련 / 최후의 월아천충 → 무월 풀림·호로화 가득
+      if (e.endless && s.params.kit?.riskDrain) return { role: 'void', icon: 'i-risk', text: (kitRiskOf(s) ?? 0) > 0 ? `${s.params.kit.mastery?.releaseName ?? labels.liberation.name} 풀림 — ${labels.riskGauge} ${s.params.kit.riskDrain.limit}` : `${labels.liberation.name} 풀림 — ${labels.riskGauge} 0${s.params.kit.mastery ? ` · ${s.params.kit.mastery.name} 시작` : ''}` };
       if (e.endless) return { role: 'void', icon: 'i-risk', text: `${labels.liberation.name} 풀림 — ${labels.riskGauge} ${s.params.kit?.riskRelease?.minRisk ?? 0} 밑` };
       return { role: 'void', icon: 'i-risk', text: e.risk > 0 ? `${labels.liberation.endText} ${labels.riskGauge} +${Math.round(e.risk * 10) / 10}` : labels.liberation.endText.split('.')[0] + '.' };
     case 'end':
@@ -300,7 +315,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     riskGauge: faction.riskGaugeName, defeatState: faction.defeatStateName, huntingGround: faction.huntingGroundName, factionName: faction.name,
   };
   // 초월자 해방 이름 (GDD 12-4 v6.048 — 아이젠 = 붕옥 융합): 초월자 데이터 kit.liberationName
-  if (s.params.kit) labels.liberation = { ...labels.liberation, name: s.params.kit.liberationName, cutin: s.params.kit.riskRelease ? s.params.kit.liberationName : `${s.params.kit.liberationName}!` };
+  if (s.params.kit) labels.liberation = { ...labels.liberation, name: s.params.kit.liberationName, cutin: s.params.kit.riskRelease || s.params.kit.riskDrain ? s.params.kit.liberationName : `${s.params.kit.liberationName}!` };
   const p = s.params;
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
@@ -474,7 +489,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   legend.append(
     legendItem('var(--bha-atk)', labels.role.attack),
     // 붕옥 블록이 허 블록 자리를 받는 kit(GDD 12-4 v6.052)은 허 블록이 안 나온다
-    ...(p.kit?.blocks.some((b) => b.voidSlot?.riskGain) ? [] : [legendItem('var(--bha-void)', labels.voidBlock)]),
+    ...(p.kit?.blocks.some((b) => b.voidSlot?.riskGain) || p.kit?.riskDrain ? [] : [legendItem('var(--bha-void)', labels.voidBlock)]), // 게이지 소모형(v6.069)도 공허 블록 없음
     ...(p.combos.length > 0 ? [legendItem('var(--bha-rare)', '콤보 블록')] : []),
   );
 
@@ -497,7 +512,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libChip = v2Chip('', 'default', { icon: 'i-special' });
   libChip.classList.add('bha-v2libchip');
   const libChipValue = el('span');
-  libChip.append(labels.liberation.name, ' ', libChipValue);
+  const libChipName = el('span', '', labels.liberation.name);
+  libChip.append(libChipName, ' ', libChipValue);
   libChip.hidden = true;
   const libChipRoot = { root: libChip, value: libChipValue };
   // 초월자 스택 칩 (GDD 12-4 v6.048 영창): 스택 장치 블록이 있을 때만 — '영창 n/5'
@@ -509,6 +525,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stackChip.append(p.kit!.stackName, ' ', stackChipValue);
   }
   let stackShown = -1;
+  // 충전 평타 칩 (GDD 12-4 v6.069 '월아천충 n') · 마무리 스택 칩 ('최후의 월아천충 n/10', 두 번째 해방 중만) — 영창 칩과 같은 모양
+  const chargeName = p.kit?.blocks.find((b) => b.chargeShot)?.chargeShot?.name ?? null;
+  const chargeChip = chargeName ? v2Chip('', 'default', { icon: 'i-attack' }) : null;
+  const chargeChipValue = el('b', 'bha-num');
+  if (chargeChip) {
+    chargeChip.classList.add('bha-kitstack');
+    chargeChip.title = `다음 평타 ${chargeName} 남은 수`;
+    chargeChip.append(chargeName!, ' ', chargeChipValue);
+  }
+  const finalMs = p.kit?.mastery ?? null;
+  const finalChip = finalMs ? v2Chip('', 'default', { icon: 'i-special' }) : null;
+  const finalChipValue = el('b', 'bha-num');
+  if (finalChip) {
+    finalChip.classList.add('bha-kitstack');
+    finalChip.title = `${finalMs!.releaseName} 중 평타 1대마다 +1 — ${finalMs!.stacks}이면 다음 평타가 ${finalMs!.finisherName}`;
+    finalChip.append(finalMs!.finisherName, ' ', finalChipValue);
+    finalChip.hidden = true;
+  }
+  let chargeShown = '';
   // 회피 치명 버프 칩 (GDD 12-4 v6.066): 회피 뒤 버프 동안만 '치명 +20% n.n초' — 기존 rare 칩 모양
   const evadeBuff = p.kit?.evadeBuff;
   const buffChip = evadeBuff ? v2Chip('', 'rare', { icon: 'i-attack' }) : null;
@@ -576,6 +611,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend);
   if (stackChip) libChip.after(stackChip); // 영창 칩 (초월자 스택 장치만)
+  if (finalChip) libChip.after(finalChip); // 최후의 월아천충 칩 (GDD 12-4 v6.069)
+  if (chargeChip) libChip.after(chargeChip); // 월아천충 충전 칩
   if (buffChip) meHeads.append(buffChip); // 회피 치명 버프 칩 (초월자 회피 버프 장치만): 내 머리 위 — 범례 줄은 이미 꽉 차 있다
   // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
@@ -651,14 +688,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     });
     legend.before(kitRelBtn);
   }
-  if (opts.risk !== undefined || riskRel) {
+  // 게이지 소모형 (GDD 12-4 v6.069 이치고): 호로화 칩 — 0 이 되면 같은 칩이 무월수련(이름·값)으로 바뀐다. 범례 줄
+  const riskDrn = p.kit?.riskDrain ?? null;
+  const riskChipName = el('span', '', labels.riskGauge);
+  if (opts.risk !== undefined || riskRel || riskDrn) {
     const rc = v2Chip('', 'danger', { icon: 'i-risk' });
     riskChipRoot = rc;
     rc.classList.add('bha-riskchip');
     riskChipValue = el('b', 'bha-num', String(Math.round(kitRiskOf(s) ?? opts.risk ?? 0)));
-    rc.append(labels.riskGauge, ' ', riskChipValue, infoTip(labels.riskGauge, () => statusInfo('risk', faction, Number(riskChipValue?.textContent ?? 0))));
+    rc.append(riskChipName, ' ', riskChipValue, infoTip(labels.riskGauge, () => statusInfo('risk', faction, Number(riskChipValue?.textContent ?? 0))));
     rc.setAttribute('aria-label', labels.riskGauge);
     if (kitRelBtn) kitRelBtn.before(rc);
+    else if (riskDrn) legend.before(rc);
     else bar.prepend(rc);
   }
 
@@ -1162,12 +1203,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         spawnFloat('attack', `${shownName(petName(e.petId, faction))} −${n0(e.damage)}`);
         break;
       case 'player-attack':
+        // 충전 평타·마무리 평타 (GDD 12-4 v6.069 월아천충): 기술 이름 + 숫자를 크게 (맞는 순간)
+        if (e.kitShot) {
+          if (!e.landed) break;
+          if (!e.kitFinisher) spawnFloat('chain', `${e.kitShot}!`); // 마무리 평타 이름은 대사 띠(kit-line)가 크게
+          spawnFloat('attack', `−${n0(e.damage)}`, { size: damageTier(e.damage, myUnit, { chain: e.kitFinisher ? 3 : 1, ult: !!e.kitFinisher }), critical: !!e.crit });
+          if (e.kitFinisher) { flash('is-special', 700); shake(); }
+          break;
+        }
         // 기본 공격 숫자는 평소 띄우지 않는다(화면이 붐빈다). 치명타만 크게
         if (e.crit) spawnFloat('attack', `−${n0(e.damage)}`, { critical: true });
         break;
       case 'block': {
         // 튜토리얼 마무리 체인 (GDD 146장): 피해 숫자·번쩍임은 연출이 닿을 때(script-impact)
-        if (heldBlock !== e) blockFloats(e);
+        if (heldBlock !== e && e.kitCharge === undefined) blockFloats(e); // 충전 블록(피해 없음)은 숫자 없이 이름만
         // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름을 크게. 분신(clone) = 몸 그림 반투명 사본이 앞으로 나가 때린다(새 도트 이펙트 없음)
         if (e.kitName) {
           spawnFloat('chain', `${e.kitName}!`, { chain3: e.chain >= top || !!e.kitFinisher || !!e.kitCounter });
@@ -1199,6 +1248,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         flash('is-special', 600);
         break;
       case 'liberate':
+        setText(libCut.firstElementChild as HTMLElement, e.name ?? labels.liberation.cutin); // 두 번째 해방(무월, GDD 12-4 v6.069)은 그 이름
         // 해방 변신 애니(release)가 있으면 그것이 변신 연출이다 — 공통 컷인은 없을 때만 (GDD 26-3)
         if (!heroAnim?.play('release', { onEnd: () => heroAnim.stop() })) replayOnce(libCut, 'is-on', 1400);
         flash('is-special', 700);
@@ -1388,6 +1438,22 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setText(stackChipValue, `${stackShown}/${kitStack!.full}`);
       stackChip.classList.toggle('is-full', stackShown >= kitStack!.full);
     }
+    if ((chargeChip || finalChip) && s.kit) {
+      const second = kitSecondOn(s);
+      const key = `${s.kit.charges}|${second ? s.kit.finalStack : -1}`;
+      if (key !== chargeShown) {
+        chargeShown = key;
+        if (chargeChip) {
+          setText(chargeChipValue, String(s.kit.charges));
+          chargeChip.classList.toggle('is-full', s.kit.charges > 0);
+        }
+        if (finalChip && finalMs) {
+          setHidden(finalChip, !second);
+          setText(finalChipValue, `${s.kit.finalStack}/${finalMs.stacks}`);
+          finalChip.classList.toggle('is-full', s.kit.finalStack >= finalMs.stacks);
+        }
+      }
+    }
     if (buffChip) {
       const left = kitEvadeBuffSecondsLeft(s);
       const t = left > 0 ? `${left.toFixed(1)}초` : '';
@@ -1562,6 +1628,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setText(riskChipValue, String(Math.round(kitRiskOf(s) ?? 0)));
       riskChipRoot?.classList.toggle('is-focus', libActive && endless);
     }
+    // 게이지 소모형 (GDD 12-4 v6.069): 호로화 ↔ 무월수련, 해방 이름 각호고 ↔ 무월
+    const releaseName = p.kit?.mastery && kitNextReleaseIsSecond(s) ? p.kit.mastery.releaseName : labels.liberation.name;
+    if (riskDrn && riskChipValue) {
+      const mOn = kitMasteryOn(s);
+      setText(riskChipName, mOn && p.kit?.mastery ? p.kit.mastery.name : labels.riskGauge);
+      setText(riskChipValue, String(Math.round(mOn ? s.kit?.mastery ?? 0 : kitRiskOf(s) ?? 0)));
+      riskChipRoot?.classList.toggle('is-focus', (libActive && endless) || (mOn && canLiberate(s)));
+      if (riskChipRoot) setHidden(riskChipRoot, kitSecondOn(s)); // 무월 중엔 수련 게이지가 쓰이지 않는다 — 그 자리를 최후의 월아천충 칩이 쓴다(범례 줄이 넘침, c454/04)
+      setText(libChipName, releaseName);
+    }
     if (kitRelBtn) {
       const ok = canLiberate(s);
       kitRelBtn.disabled = !ok;
@@ -1575,17 +1651,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       libBtn.classList.toggle('is-ready', ready);
       app.classList.toggle('is-lib-ready', ready);
       if (libReadyRose(ready)) {
-        setText(libReadyNotice.firstElementChild as HTMLElement, riskRel ? labels.liberation.name : libReadyText(labels.liberation.name));
+        setText(libReadyNotice.firstElementChild as HTMLElement, riskRel ? labels.liberation.name : libReadyText(releaseName));
         replayOnce(libReadyNotice, 'is-on', 1200);
         replayOnce(libBtn, 'is-ready-pop', 700);
       }
       libBtn.classList.toggle('is-disabled', !ready);
       libBtn.classList.toggle('is-on', libActive);
       setAttr(libBtn, 'aria-disabled', String(!ready));
-      const libText = libActive ? (endless ? `${labels.liberation.name} — ${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}` : `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}`) : ready ? (riskRel ? labels.liberation.name : `${labels.liberation.name} 준비 — 캐릭터를 눌러라`) : riskRel ? `${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}/${riskRel.minRisk}` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`;
+      const drainText = !riskDrn || !s.kit ? null : kitSecondOn(s) && p.kit?.mastery ? `${releaseName} — ${p.kit.mastery.finisherName} ${s.kit.finalStack}/${p.kit.mastery.stacks}`
+        : kitMasteryOn(s) && p.kit?.mastery ? (ready ? `${releaseName} 준비 — 캐릭터를 눌러라` : `${p.kit.mastery.name} ${Math.round(s.kit.mastery)}/${p.kit.mastery.full}`) : null;
+      const libText = drainText ?? (libActive ? (endless ? `${labels.liberation.name} — ${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}` : `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}`) : ready ? (riskRel ? labels.liberation.name : `${labels.liberation.name} 준비 — 캐릭터를 눌러라`) : riskRel ? `${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}/${riskRel.minRisk}` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`);
       setText(libTime, libActive && !endless ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
       setTitle(libBtn, libText);
-      setAttr(libBtn, 'aria-label', `${labels.liberation.name}, ${libText}`);
+      setAttr(libBtn, 'aria-label', `${releaseName}, ${libText}`);
     }
   };
 

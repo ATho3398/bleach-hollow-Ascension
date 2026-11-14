@@ -52,7 +52,8 @@ describe('리스크 게이지 이름 (C.443: 호로화 → 붕옥 감응도)', (
     expect(withKitRiskName(getFaction('hollow'), 'aizen').riskGaugeName).toBe('붕옥 감응도');
     expect(withKitRiskName(getFaction('shinigami'), 'aizen').riskGaugeName).toBe('붕옥 감응도');
     expect(withKitRiskName(getFaction('hollow'), null).riskGaugeName).toBe('광기');
-    expect(withKitRiskName(getFaction('hollow'), 'ichigo').riskGaugeName).toBe('광기'); // kit 없는 초월자
+    expect(withKitRiskName(getFaction('hollow'), 'ichigo').riskGaugeName).toBe('호로화'); // C.454 (v6.069): 이치고 kit = 호로화
+    expect(withKitRiskName(getFaction('hollow'), 'yhwach').riskGaugeName).toBe('광기'); // kit 없는 초월자
   });
 });
 

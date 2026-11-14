@@ -149,9 +149,9 @@ describe('7절 능력으로 생기는 추가분은 상한 무관 (타이머 밖)
 });
 
 describe('세이브: 옛 형식은 이어 쓰지 않는다 (사용자 "세이브 걍 날려")', () => {
-  it('형식 87 · 문턱 = 형식', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(87);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(SAVE_FORMAT_VERSION);
+  it('문턱 87 · 형식 88(C.454, 87 → 88 은 마이그레이션)', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(88);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
   it('옛 형식 슬롯은 백업 키로 옮기고 비운다 → 새로 시작 · 안내 한 줄, 새 형식 슬롯은 그대로', () => {
     const st = memStore();

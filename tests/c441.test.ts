@@ -53,7 +53,7 @@ describe('초월자 기반 블록 풀', () => {
     const aizen = TRANSCENDENTS.find((t) => t.id === 'aizen')!;
     expect(aizen.kit?.blocks.map((b) => b.id)).toEqual(['kyoka', 'kido', 'hogyoku', 'fragor']); // C.443 (v6.052): 붕옥 블록
     expect(aizen.kit?.liberationName).toBe('붕옥 융합'); // C.443 (v6.052): 다시 '붕옥 융합' 담백하게
-    expect(TRANSCENDENTS.filter((t) => t.kit).map((t) => t.id)).toEqual(['aizen']);
+    expect(TRANSCENDENTS.filter((t) => t.kit).map((t) => t.id)).toEqual(['aizen', 'ichigo']); // C.454 (v6.069): 이치고 기본 모드
   });
   it('초월자 기반이면 일반 블록(기본·흡수) 없이 전용 블록만, 호로 기반이면 kit 없음', () => {
     const s = aizenSave();
@@ -305,7 +305,7 @@ describe('초월자 성장 — 흡수 제한·초월 조각·강화', () => {
     expect(combatKitOf(s.evolution.kit)!.blocks.find((b) => b.id === 'fragor')!.mult).toBeCloseTo(1.8, 5);
   });
   it('형식 85: 옛 초월자 트랙에 kit(강화 0) · 조각 0', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(87);
+    expect(SAVE_FORMAT_VERSION).toBe(88);
     const s = aizenSave();
     const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { evolution: Record<string, unknown>; shared: Record<string, unknown> };
     delete raw.evolution.kit;

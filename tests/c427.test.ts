@@ -195,13 +195,13 @@ describe('C.427 이름·탭·세이브', () => {
   });
 
   it('세이브 형식 80 → 81: shared.special 새로·런 로그 specialRuns', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(87);
+    expect(SAVE_FORMAT_VERSION).toBe(88);
     const raw = JSON.parse(JSON.stringify(newSaveData('hollow', 1))) as Record<string, unknown> & { meta: { format: number }; shared: Record<string, unknown>; runLog: Record<string, unknown> };
     raw.meta.format = 80;
     delete raw.shared.special;
     delete raw.runLog.specialRuns;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(87);
+    expect(m.meta.format).toBe(88);
     expect(m.shared.special.used).toEqual({});
     expect(m.runLog.specialRuns).toEqual([]);
   });

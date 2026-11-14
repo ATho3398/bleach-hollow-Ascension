@@ -33,7 +33,7 @@ import type { BossSetup } from '../combat';
 import { SORTIE_IDS, sortieMods } from '../sortie';
 import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
-import { kitRiskFloorOf } from '../transcendKit';
+import { kitRiskDrainOf, kitRiskFloorOf } from '../transcendKit';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -357,6 +357,8 @@ export interface ExpeditionState extends RiskState {
   /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
    *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
   lapItems?: LapItemUse[];
+  /** 수련 게이지 (GDD 12-4 v6.069 이치고 무월수련, C.454): 게이지 소모형 kit 트랙에서 리스크(호로화)가 0 일 때 차는 값 — 전투가 끝나면 이어지고, 보스전 시작·최후의 월아천충 때 0. 옛 중간 저장엔 없음(= 0) */
+  kitMastery?: number;
   /** 이번 원정에 쓴 출정품 (GDD 241-D 5, 세이브 형식 74): 출발 때 칸마다 1개 소모한 품목 id. 효과 = sortieMods (공격 피해·받는 피해·드롭). 런 로그 원정 기록 sortie 로 간다. 옛 중간 저장에는 없다(= 없음) */
   sortie?: string[];
   /** 이 원정에서 나온 출정품 (GDD 241-D 5): 귀환 때 game.ts 가 가방에 (가득이면 버림) */
@@ -501,8 +503,9 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     lootRng: createRng((setup.seed ^ LOOT_SEED_SALT) >>> 0),
     evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
     evStart: { ...(setup.evolution?.ev ?? newEvolution().ev) },
-    risk: Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0), // 리스크 최솟값 (GDD 12-4 v6.054 아이젠 붕옥 감응도 20)
-    riskPeak: Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
+    // 리스크 최솟값 (GDD 12-4 v6.054 아이젠 붕옥 감응도 20) · 게이지 소모형은 모험 출발 때 가득 (GDD 12-4 v6.069 이치고 호로화 100)
+    risk: kitRiskDrainOf(setup.evolution?.kit?.id) ? RX.limit : Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
+    riskPeak: kitRiskDrainOf(setup.evolution?.kit?.id) ? RX.limit : Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
     breakthrough: null,
     events: [],
     elapsedSeconds: 0,
@@ -856,6 +859,15 @@ function startBattleAt(
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
   // 게이지 모드 해방 (GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체): 전투는 지금 원정 리스크로 시작한다
   if (params.kit?.riskRelease) params.riskStart = exp.risk;
+  // 게이지 소모형 (GDD 12-4 v6.069 이치고 호로화): 보스전 시작 때 호로화 가득 · 무월수련 0, 아니면 원정 값 그대로 이어서
+  if (params.kit?.riskDrain) {
+    if (bossId) {
+      exp.risk = params.kit.riskDrain.limit;
+      exp.kitMastery = 0;
+    }
+    params.riskStart = exp.risk;
+    params.masteryStart = exp.kitMastery ?? 0;
+  }
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
@@ -1026,6 +1038,12 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
   // 붕옥 감응도 = 원정 리스크 그 자체 (GDD 12-4 v6.054): 전투 중 변화(붕옥 블록 +10·프라고르 −5)를 끝 값으로 맞춘다
   if (battle.kit && battle.params.kit?.riskRelease && battle.kit.risk !== exp.risk) changeRisk(exp, battle.kit.risk - exp.risk, 'kit-release');
+  // 호로화·무월수련 = 원정 값 (GDD 12-4 v6.069): 끝 값을 그대로 (최후의 월아천충으로 다시 가득이 된 것도 — changeRisk 는 소모형의 상승을 막으므로 직접)
+  if (battle.kit && battle.params.kit?.riskDrain) {
+    exp.risk = battle.kit.risk;
+    exp.riskPeak = Math.max(exp.riskPeak, exp.risk);
+    exp.kitMastery = battle.kit.mastery;
+  }
   if (battle.status === 'lost') {
     exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');

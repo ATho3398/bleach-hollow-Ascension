@@ -172,6 +172,8 @@ export interface CombatParams {
   riskPerVoidBlock: number;
   /** 전투 시작 때 리스크 게이지 값 (원정 리스크 — 게이지 모드 해방 kit.riskRelease 만 쓴다, GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체. 없으면 floor) */
   riskStart?: number;
+  /** 전투 시작 때 수련 게이지 값 (게이지 소모형 kit.riskDrain + mastery 만 — GDD 12-4 v6.069 이치고 무월수련, 원정 값이 이어진다. 없으면 0) */
+  masteryStart?: number;
   /** 장착 흡수 skill 특성 블록 생성원(슬롯 순서). 기본 블록 5종은 이것과 상관없이 늘 풀에 있다 (GDD 44장) */
   skills: CombatSkill[];
   /** passive: 기본 공격 위력·속도 배율 */
@@ -271,6 +273,12 @@ export interface CombatKitBlock {
   voidSlot?: { voidScale: number; riskGain?: number; order: number };
   /** 융합 중 쓰면 1블록마다 게이지 −riskCost (GDD 12-4 v6.052 프라고르) */
   riskCost?: number;
+  /** 충전 평타 장치 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 '다음 평타 = 충전 평타' 를 체인 수만큼 쌓는다. 충전 평타 = 기본 공격 × power, 이름 name */
+  chargeShot?: { power: number; name: string };
+  /** 체인별 게이지 소모 (GDD 12-4 v6.069 — 1·2·3체인 −10/−15/−19): 해방 밖에서 쓰면 리스크 게이지(kit.riskDrain) −[체인−1]. 해방 중엔 안 깎인다 */
+  chainRiskCost?: number[];
+  /** 체인별 해방 게이지 (GDD 12-4 v6.069 — +12/18/23): 블록 1개당 기본 적립(gaugePerBlock·체인 보너스) 대신 이 값 */
+  chainGauge?: number[];
   counter?: { windowSeconds: number; damageMult: number; critBonus: number; healLostFraction: number; line: string };
   stack?: { cutPerStack: number; maxCut: number; full: number; finisherName: string; finisherPower: number; enemyStunSeconds: number };
 }
@@ -291,6 +299,16 @@ export interface CombatKit {
   releaseBare?: boolean;
   /** 리스크 패널티 없음 (GDD 12-4 v6.050): 원정이 돌파(폭주)를 만들지 않는다 — 전투 엔진은 표시만 */
   riskPenaltyFree?: boolean;
+  /** 게이지 소모형 리스크 (GDD 12-4 v6.069 이치고 호로화): 게이지 = 원정 리스크(params.riskStart, 원정이 출발·보스전마다 limit 로 채움), 전투 안에서는 깎이기만 한다.
+   *  공허 블록 없음. 해방 = 보통 해방 게이지로(지속 시간 없음) — 해방 중엔 블록이 게이지를 안 깎고 충전 평타마다 −shotCost, 게이지 0 이면 해방이 풀린다 */
+  riskDrain?: { limit: number; shotCost: number; tickSeconds: number; tickCost: number };
+  /** 평타 n대마다 전용 블록 1개 추가 생성 (GDD 12-4 v6.070 이치고 — 출현표에서, 생성 타이머·주기와 무관, 바가 가득이면 없음) */
+  bonusBlockEvery?: number;
+  /** 수련 → 두 번째 해방 (GDD 12-4 v6.069 이치고 무월수련·무월, riskDrain 과 같이): 게이지가 0 이면 수련 게이지(평타 +perBasic · 블록 1개 +perBlock, full 이면 가득)로 바뀐다.
+   *  가득이면 해방 버튼이 releaseName — 수동 해방(만해 수치, 지속 시간 없음). 그 동안 평타 1대마다 스택 +1, stacks 면 다음 평타 = finisherName
+   *  (기본 공격 × finisherPower + 바의 충전 블록 1개당 × finisherPerBlock, 그 블록들 소모) → 해방이 풀리고 게이지 limit · 수련 0.
+   *  수련 게이지 모드 동안(두 번째 해방 전) 주는 피해 × damageMult (v6.074). 첫 해방 중엔 tickSeconds 마다 게이지 −tickCost (v6.070) */
+  mastery?: { name: string; releaseName: string; finisherName: string; perBasic: number; perBlock: number; full: number; damageMult: number; stacks: number; finisherPower: number; finisherPerBlock: number };
 }
 
 /** 초월자 전용 블록의 바 블록 traitId 앞머리 (traitId = 'kit:<블록 id>') */
@@ -321,12 +339,25 @@ export interface KitCombatState {
   /** 회피 치명 버프가 끝나는 틱 (−1 = 없음, GDD 12-4 v6.066) · 버프가 붙은 횟수 */
   evadeBuffUntil: number;
   evadeBuffs: number;
+  /** 게이지 소모형 (GDD 12-4 v6.069 이치고): 남은 충전 평타 · 수련 게이지 · 두 번째 해방(무월) 중인가 · 그 스택 · 기록(두 번째 해방 진입·마무리 평타) */
+  charges: number;
+  mastery: number;
+  second: boolean;
+  /** 첫 해방 중 주기 소모까지 남은 틱 · 평타 수(추가 생성 주기) */
+  drainTimer: number;
+  basics: number;
+  finalStack: number;
+  secondEnters: number;
+  finals: number;
 }
 
 /** 전투 시작 초월자 kit 상태 */
 function newKitState(p: CombatParams): KitCombatState {
   const rr = p.kit?.riskRelease;
-  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk: rr ? Math.min(rr.limit, Math.max(rr.floor, p.riskStart ?? rr.floor)) : 0, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false, evadeBuffUntil: -1, evadeBuffs: 0 };
+  const rd = p.kit?.riskDrain;
+  const risk = rr ? Math.min(rr.limit, Math.max(rr.floor, p.riskStart ?? rr.floor)) : rd ? Math.min(rd.limit, Math.max(0, p.riskStart ?? rd.limit)) : 0;
+  const mastery = rd && p.kit?.mastery && risk <= 0 ? Math.min(p.kit.mastery.full, Math.max(0, p.masteryStart ?? 0)) : 0;
+  return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false, evadeBuffUntil: -1, evadeBuffs: 0, charges: 0, mastery, second: false, drainTimer: 0, basics: 0, finalStack: 0, secondEnters: 0, finals: 0 };
 }
 
 /** 회피 치명 버프가 켜져 있는가 (화면: 버프 칩) */
@@ -347,7 +378,22 @@ export function kitBare(s: Pick<CombatState, 'params' | 'liberation'>): boolean 
 
 /** 지금 게이지 값 (게이지 모드 해방 kit 만 — 붕옥 감응도, 아니면 null) */
 export function kitRiskOf(s: Pick<CombatState, 'params' | 'kit'>): number | null {
-  return s.params.kit?.riskRelease && s.kit ? s.kit.risk : null;
+  return (s.params.kit?.riskRelease || s.params.kit?.riskDrain) && s.kit ? s.kit.risk : null;
+}
+
+/** 게이지 소모형이 수련 게이지로 바뀌었는가 (GDD 12-4 v6.069 — 호로화 0 → 무월수련). 화면: 게이지 칩 이름·값 */
+export function kitMasteryOn(s: Pick<CombatState, 'params' | 'kit'>): boolean {
+  return !!s.params.kit?.riskDrain && !!s.params.kit.mastery && !!s.kit && s.kit.risk <= 0;
+}
+
+/** 두 번째 해방(무월) 중인가 (GDD 12-4 v6.069) */
+export function kitSecondOn(s: Pick<CombatState, 'params' | 'kit'>): boolean {
+  return !!s.params.kit?.mastery && !!s.kit?.second;
+}
+
+/** 다음 해방이 두 번째 해방(무월)인가: 수련 게이지 모드면 (가득 여부와 상관없이 — 버튼 이름) */
+export function kitNextReleaseIsSecond(s: Pick<CombatState, 'params' | 'kit'>): boolean {
+  return kitMasteryOn(s) || kitSecondOn(s);
 }
 
 /** 타격 지연(초) — 종족 무관, 숫자만. basic 내 평타 / block 블록 공격 기본값 / blockBy 계열·단계별(`계열:단계`)·'combo'·'liberation' / enemy 적 기본 공격 / heavy 강공격 착탄 / counter 반격 */
@@ -607,11 +653,11 @@ const shownCat = (c: AttackCategory): HitCategory | undefined => (c === 'mixed' 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
   /** rate = 간격이 모션보다 짧아 빨리 감은 배율 (GDD 7-2 '빠른 간격의 모션', C.448 — 없으면 1. 앞 자르기는 swing.atTick 이 정한 타격 시각으로 화면이 맞춘다) */
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number; kitShot?: string; kitFinisher?: boolean }
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean; motionId?: number }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean; kitCharge?: number; motionId?: number }
   /** 블록 몸동작 시작 (GDD 7-2 '블록 연속 사용 = 절충안'·'모션과 이펙트는 따로 계산', C.448): id = 그 블록 사건의 motionId. 누른 순서대로 줄을 서서 앞 모션이 끝나면 시작.
    *  rate 재생 배율 · trim 앞에서 자른 길이(1배 초). 이펙트·피해는 블록을 쓴 순간의 시간줄 그대로(이 사건과 무관) */
   | { kind: 'block-motion'; id: number; rate: number; trim: number }
@@ -644,7 +690,7 @@ export type CombatEvent =
   | { kind: 'combo'; comboId: string }
   | { kind: 'shuffle' }
   /** 해방 시작 (GDD 83장·106장 4): 지속 초, 고유 효과(레스렉시온/만해) 여부. endless = 리스크 소모형 모드(지속 시간 없음, GDD 12-4 v6.050) */
-  | { kind: 'liberate'; seconds: number; unique: boolean; endless?: boolean }
+  | { kind: 'liberate'; seconds: number; unique: boolean; endless?: boolean; name?: string }
   /** 리스크 소모형 모드에서 블록을 써 리스크가 깎였다 (GDD 12-4 v6.050): 깎인 양 · 남은 값 */
   | { kind: 'kit-risk'; spent: number; risk: number }
   /** 소모품 사용 (GDD 105장 수정 3): heal = 회복량, haste = 각성 초 */
@@ -1100,7 +1146,8 @@ function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, ki
   const base = Math.max(0, voidChanceOf(p));
   const entries: SpawnEntry[] = [];
   let rest = 1;
-  if (!slots.length && base > 0) {
+  // 게이지 소모형(GDD 12-4 v6.069 이치고): 전용 블록만 — 공허 블록 없음(게이지가 오르지 않는다)
+  if (!slots.length && base > 0 && !kit.riskDrain) {
     entries.push({ kind: 'void', source: null, family: null, chance: base });
     rest = 1 - base;
   }
@@ -1264,6 +1311,9 @@ export function canLiberate(s: CombatState): boolean {
   // 게이지 모드 해방 (GDD 12-4 v6.052 붕옥 융합): 해방 게이지 대신 붕옥 감응도가 문턱 이상이면 언제든
   const rr = s.params.kit?.riskRelease;
   if (rr) return (kitRiskOf(s) ?? 0) >= rr.minRisk;
+  // 게이지 소모형 (GDD 12-4 v6.069): 게이지 0 이면 해방 게이지 대신 수련 게이지가 가득일 때 두 번째 해방(무월)
+  const ms = s.params.kit?.mastery;
+  if (s.params.kit?.riskDrain && s.kit && s.kit.risk <= 0) return !!ms && s.kit.mastery >= ms.full;
   return s.liberation.gauge >= LIBERATION_GAUGE_MAX;
 }
 
@@ -1575,7 +1625,9 @@ function playerHit(s: CombatState, damage: number, block: boolean, elements: rea
   const blockPlay = block && !p.physBlock;
   const blockMult = block ? (p.blockDamageMultiplier ?? 1) * (blockPlay ? (p.blockPlayDamage ?? 1) : 1) : 1;
   const physMult = p.physBlock?.damage ?? 1;
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block);
+  // 무월수련 동안 주는 피해 × (GDD 12-4 v6.074 — 수련 게이지 모드, 두 번째 해방 전)
+  const masteryMult = p.kit?.mastery && kitMasteryOn(s) && !s.kit?.second ? p.kit.mastery.damageMult : 1;
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * masteryMult * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block);
   return elem ? { ...hit, elem } : hit;
 }
 
@@ -1699,7 +1751,9 @@ function basicAttack(s: CombatState): void {
   const a = p.abilityEffects;
   // 평타 = 공격력 ÷ 적 방어, 내 캐릭터 속성 (GDD 20-3 v3.6, 141장 1)
   const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY);
-  const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s);
+  // 충전 평타·마무리 평타 (GDD 12-4 v6.069 이치고 월아천충·최후의 월아천충): 배율과 이름 — 게이지·스택 처리는 kitAfterBasic
+  const shot = kitBasicShot(s);
+  const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s) * (shot?.power ?? 1);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
   const bd = basicHitDelayOf(s);
@@ -1707,9 +1761,10 @@ function basicAttack(s: CombatState): void {
   for (let k = 0; k < flash.n; k++) {
     const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
     last = damage;
-    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
+    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
     if (s.status !== 'playing') return;
   }
+  kitAfterBasic(s, shot);
   // 버프 소모: 다음 평타 n회 버프는 1회씩, 바위 자세 쌓임은 한 번에, 두 번 때림은 1회
   if (s.basicBuffs) {
     for (const b of s.basicBuffs) b.hits--;
@@ -2244,8 +2299,20 @@ function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean
   s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + chain;
   s.blocksByChain[chain - 1]!++;
   if (chain >= p.chainMultipliers.length) s.chain3Count++;
-  addGauge(s, p.liberationGaugePerBlock * chain + (p.liberationChainBonus[chain - 1] ?? 0));
+  addGauge(s, kb.chainGauge ? kb.chainGauge[Math.min(kb.chainGauge.length, chain) - 1] ?? 0 : p.liberationGaugePerBlock * chain + (p.liberationChainBonus[chain - 1] ?? 0));
   if (liberationActive(s)) s.liberation.chains++;
+  // 충전 블록 (GDD 12-4 v6.069 월아천충): 피해 없이 다음 평타 충전 + 체인 수, 해방 밖이면 게이지 −체인별 값, 수련 모드면 수련 + 블록 1개당
+  if (kb.chargeShot) {
+    k.charges += chain;
+    const ms = p.kit?.mastery;
+    if (p.kit?.riskDrain && k.risk <= 0) {
+      if (ms) kitMasteryGain(s, ms.perBlock * chain);
+    } else if (p.kit?.riskDrain && kb.chainRiskCost && !liberationActive(s)) kitDrainSpend(s, kb.chainRiskCost[Math.min(kb.chainRiskCost.length, chain) - 1] ?? 0);
+    emit(s, { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage: 0, weak: false, heal: 0, guardSeconds: 0, bonus: null, kitName: kb.name, kitFx: kb.fx, kitCharge: k.charges });
+    updateCombos(s, null, 0);
+    counterIfStance(s);
+    return true;
+  }
   const counter = !!kb.counter && kitCounterOpen(s);
   const finisher = kitWillFinish(s, kb, chain);
   const name = kitMoveName(s, kb, chain);
@@ -2407,7 +2474,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
       for (let i = from; i < s.events.length; i++) {
         const ev = s.events[i]!;
         const b = ev.kind === 'block' ? ev : ev.kind === 'swing' && ev.hit.kind === 'block' ? ev.hit : null;
-        if (!b || b.block === 'void') continue;
+        if (!b || b.block === 'void' || (b.block === 'skill' && b.kitCharge !== undefined)) continue; // 충전 블록(월아천충)은 몸동작 없음 — 평타가 안 멈춘다 (GDD 12-4 v6.073)
         const id = queueBlockMotion(s, motionKeyOf(b));
         if (id !== null) b.motionId = id;
         break;
@@ -2445,6 +2512,19 @@ function liberate(s: CombatState): boolean {
       s.kit.stack = 0;
       s.kit.counterUntil = -1;
     }
+  } else if (p.kit?.riskDrain) {
+    // 게이지 소모형 (GDD 12-4 v6.069): 지속 시간 없음. 게이지 0(수련 가득)이면 두 번째 해방(무월), 아니면 첫 해방(각호고)
+    lb.endless = true;
+    lb.ticksLeft = 1;
+    const k = (s.kit ??= newKitState(p));
+    if (k.risk <= 0 && p.kit.mastery) {
+      k.second = true;
+      k.finalStack = 0;
+      k.secondEnters++;
+    } else {
+      k.modeEnters++;
+      k.drainTimer = ticksOf(p, p.kit.riskDrain.tickSeconds);
+    }
   } else lb.ticksLeft = ticksOf(p, p.liberationSeconds);
   lb.spawnAcc = 0;
   lb.nextSlot = 0;
@@ -2457,7 +2537,8 @@ function liberate(s: CombatState): boolean {
     // 지금 기다리는 평타 간격도 공격 속도만큼 줄인다
     s.player.attackTimer = Math.max(1, Math.round(s.player.attackTimer / p.liberationAttackSpeed));
   }
-  emit(s, { kind: 'liberate', seconds: rr ? 0 : p.liberationSeconds, unique: p.liberationUnique, ...(rr ? { endless: true } : {}) });
+  const endlessLib = !!rr || !!p.kit?.riskDrain;
+  emit(s, { kind: 'liberate', seconds: endlessLib ? 0 : p.liberationSeconds, unique: p.liberationUnique, ...(endlessLib ? { endless: true } : {}), ...(s.kit?.second ? { name: p.kit!.mastery!.releaseName } : {}) });
   kitSwapTray(s, true);
   grantLiberationBlocks(s, LB.instantBlocks);
   return true;
@@ -2503,6 +2584,10 @@ function endLiberation(s: CombatState): void {
   lb.gauge = 0;
   const endless = lb.endless === true;
   delete lb.endless;
+  if (s.kit?.second) {
+    s.kit.second = false;
+    s.kit.finalStack = 0;
+  }
   kitSwapTray(s, false);
   // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다. 리스크 소모형 모드도 끝날 때 올리지 않는다(게이지를 쓰는 해방 — C.442 추천안)
   const risk = lb.scripted || endless ? 0 : s.params.liberationRisk;
@@ -2524,6 +2609,92 @@ function kitModeSpend(s: CombatState, cost: number): void {
     k.modeExits++;
     endLiberation(s);
   }
+}
+
+// ── 게이지 소모형 (GDD 12-4 v6.069 이치고 — 호로화·월아천충·각호고·무월수련·무월). 엔진은 장치(riskDrain·mastery·chargeShot·chainRiskCost·chainGauge)만 본다 ──
+
+/** 이번 평타가 충전 평타·마무리 평타인가 (부작용 없음 — 소모는 kitAfterBasic). 마무리 = 두 번째 해방 중 스택 가득: 기본 공격 × (finisherPower + 바의 충전 블록 수 × finisherPerBlock) */
+export function kitBasicShot(s: CombatState): { power: number; name: string; final: boolean } | null {
+  const kit = s.params.kit;
+  const k = s.kit;
+  if (!kit || !k) return null;
+  const ms = kit.mastery;
+  if (ms && k.second && k.finalStack >= ms.stacks) {
+    const n = s.tray.filter((b) => !!kitBlockOf(s.params, b.traitId)?.chargeShot).length;
+    return { power: ms.finisherPower + n * ms.finisherPerBlock, name: ms.finisherName, final: true };
+  }
+  if (k.charges > 0) {
+    const cs = kit.blocks.find((b) => b.chargeShot)?.chargeShot;
+    if (cs) return { power: cs.power, name: cs.name, final: false };
+  }
+  return null;
+}
+
+/** 평타 뒤 (GDD 12-4 v6.069): 충전 1 소모 · 첫 해방(각호고) 중이면 충전 평타마다 게이지 −shotCost · 수련 모드면 수련 +perBasic · 두 번째 해방 중이면 스택 +1 · 마무리를 쐈으면 정리 */
+function kitAfterBasic(s: CombatState, shot: { final: boolean } | null): void {
+  const kit = s.params.kit;
+  const k = s.kit;
+  if (!kit || !k) return;
+  kitDrainAfterBasic(s, kit, k, shot);
+  // 평타 n대마다 전용 블록 1개 추가 (GDD 12-4 v6.070): 출현표에서, 생성 타이머와 무관 (마무리 평타가 바를 비운 뒤)
+  if (kit.bonusBlockEvery && kit.bonusBlockEvery > 0 && ++k.basics % kit.bonusBlockEvery === 0 && s.sealTicks === 0 && s.status === 'playing') grantExtraBlocks(s, 1);
+}
+
+function kitDrainAfterBasic(s: CombatState, kit: CombatKit, k: KitCombatState, shot: { final: boolean } | null): void {
+  if (!kit.riskDrain) return;
+  const ms = kit.mastery;
+  if (shot?.final && ms) {
+    // 최후의 월아천충: 바의 충전 블록 소모 → 두 번째 해방이 풀리고 게이지 limit · 수련 0
+    s.tray = s.tray.filter((b) => !kitBlockOf(s.params, b.traitId)?.chargeShot);
+    k.finals++;
+    k.finalStack = 0;
+    emit(s, { kind: 'kit-line', text: `${ms.finisherName}!`, tone: 'finisher' });
+    endLiberation(s);
+    k.risk = kit.riskDrain.limit;
+    k.mastery = 0;
+    k.charges = 0;
+    emit(s, { kind: 'kit-risk', spent: -kit.riskDrain.limit, risk: k.risk });
+    return;
+  }
+  const wasEmpty = k.risk <= 0; // 게이지를 0 으로 만든 평타는 수련에 안 친다 (그 다음부터)
+  if (shot) {
+    k.charges = Math.max(0, k.charges - 1);
+    if (liberationActive(s) && s.liberation.endless && !k.second) kitDrainSpend(s, kit.riskDrain.shotCost);
+  }
+  if (!ms) return;
+  if (k.second) {
+    if (k.finalStack < ms.stacks) {
+      k.finalStack++;
+      emit(s, { kind: 'kit-stack', stack: k.finalStack, full: ms.stacks });
+    }
+  } else if (wasEmpty) kitMasteryGain(s, ms.perBasic);
+}
+
+/** 게이지 소모 (0 밑으로 안 감): 0 이 되면 첫 해방이 풀리고(해방 중이면) 수련 게이지로 바뀐다 */
+function kitDrainSpend(s: CombatState, cost: number): void {
+  const k = s.kit;
+  if (!k || cost <= 0 || k.risk <= 0) return;
+  const next = Math.max(0, k.risk - cost);
+  const spent = k.risk - next;
+  k.risk = next;
+  k.riskSpent += spent;
+  emit(s, { kind: 'kit-risk', spent, risk: k.risk });
+  if (k.risk <= 0) {
+    k.mastery = 0;
+    if (liberationActive(s) && s.liberation.endless && !k.second) {
+      k.modeExits++;
+      endLiberation(s);
+    }
+  }
+}
+
+/** 수련 게이지 + (가득에서 멈춤, 가득이 되는 순간 해방 준비 알림) */
+function kitMasteryGain(s: CombatState, v: number): void {
+  const ms = s.params.kit?.mastery;
+  const k = s.kit;
+  if (!ms || !k || k.second || k.risk > 0 || k.mastery >= ms.full || v <= 0) return;
+  k.mastery = Math.min(ms.full, k.mastery + v);
+  if (k.mastery >= ms.full && s.status === 'playing') emit(s, { kind: 'liberation-ready' });
 }
 
 function shuffleTray(s: CombatState): void {
@@ -2707,6 +2878,13 @@ function advanceTick(s: CombatState): void {
   if (!s.liberation.endless) {
     if (s.liberation.ticksLeft === 1) endLiberation(s);
     else if (s.liberation.ticksLeft > 1) s.liberation.ticksLeft--;
+  }
+  // 게이지 소모형 첫 해방(각호고, GDD 12-4 v6.070): 주기마다 게이지 −tickCost — 0 이면 풀림
+  const rdr = p.kit?.riskDrain;
+  if (rdr && s.kit && !s.kit.second && s.liberation.endless && liberationActive(s) && rdr.tickCost > 0 && --s.kit.drainTimer <= 0) {
+    s.kit.drainTimer = t(rdr.tickSeconds);
+    kitDrainSpend(s, rdr.tickCost);
+    if (s.status !== 'playing') return;
   }
   // 리스크 소모형 해방 준비 알림 (GDD 12-4 v6.050): 문턱을 넘는 순간 한 번
   if (s.kit && s.params.kit?.riskRelease) {

@@ -1,0 +1,219 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-zangetsu-charge.png",
+    "02-pc-kagoko.png",
+    "03-pc-mugetsu-training.png",
+    "04-pc-mugetsu-10stack.png",
+    "05-pc-final-getsuga.png"
+  ],
+  "facts": {
+    "zangetsu": {
+      "risk": 87,
+      "mastery": 0,
+      "charges": 3,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 55,
+      "tray": [],
+      "riskChip": [
+        "호로화 87"
+      ],
+      "kitChips": [
+        "월아천충 3"
+      ],
+      "libChip": [],
+      "libBtn": "각호고, 게이지 55%",
+      "cut": "각호고",
+      "blocks": [],
+      "log": []
+    },
+    "afterShot": {
+      "risk": 87,
+      "mastery": 0,
+      "charges": 1,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 55.02807882510763,
+      "tray": [],
+      "riskChip": [
+        "호로화 87"
+      ],
+      "kitChips": [
+        "월아천충 1"
+      ],
+      "libChip": [],
+      "libBtn": "각호고, 게이지 55%",
+      "cut": "각호고",
+      "blocks": [],
+      "log": []
+    },
+    "kago": {
+      "risk": 87,
+      "mastery": 0,
+      "charges": 1,
+      "second": false,
+      "finalStack": 0,
+      "lib": true,
+      "gauge": 0,
+      "tray": [
+        "kit:getsuga"
+      ],
+      "riskChip": [
+        "호로화 87"
+      ],
+      "kitChips": [
+        "월아천충 1"
+      ],
+      "libChip": [
+        "각호고 중"
+      ],
+      "libBtn": "각호고, 각호고 — 호로화 87",
+      "cut": "각호고",
+      "blocks": [
+        "월아천충"
+      ],
+      "log": []
+    },
+    "kagoEnd": {
+      "risk": 0,
+      "mastery": 0,
+      "charges": 0,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 0,
+      "tray": [],
+      "riskChip": [
+        "무월수련 0"
+      ],
+      "kitChips": [
+        "월아천충 0"
+      ],
+      "libChip": [],
+      "libBtn": "무월, 무월수련 0/100",
+      "cut": "각호고",
+      "blocks": [
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충"
+      ],
+      "log": []
+    },
+    "mugetsuTraining": {
+      "risk": 0,
+      "mastery": 46,
+      "charges": 0,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 6.00842364753229,
+      "tray": [
+        "kit:getsuga"
+      ],
+      "riskChip": [
+        "무월수련 46"
+      ],
+      "kitChips": [
+        "월아천충 1"
+      ],
+      "libChip": [],
+      "libBtn": "무월, 무월수련 46/100",
+      "cut": "각호고",
+      "blocks": [
+        "월아천충"
+      ],
+      "log": []
+    },
+    "mugetsuReady": {
+      "risk": 0,
+      "mastery": 100,
+      "charges": 0,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 6.00842364753229,
+      "tray": [
+        "kit:getsuga"
+      ],
+      "riskChip": [
+        "무월수련 100"
+      ],
+      "kitChips": [
+        "월아천충 0"
+      ],
+      "libChip": [],
+      "libBtn": "무월, 무월 준비 — 캐릭터를 눌러라",
+      "cut": "각호고",
+      "blocks": [
+        "월아천충"
+      ],
+      "log": []
+    },
+    "mugetsu10": {
+      "risk": 0,
+      "mastery": 100,
+      "charges": 0,
+      "second": true,
+      "finalStack": 10,
+      "lib": true,
+      "gauge": 0,
+      "tray": [
+        "kit:getsuga",
+        "kit:getsuga",
+        "kit:getsuga",
+        "kit:getsuga"
+      ],
+      "riskChip": [],
+      "kitChips": [
+        "월아천충 0",
+        "최후의 월아천충 10/10"
+      ],
+      "libChip": [
+        "무월 중"
+      ],
+      "libBtn": "무월, 무월 — 최후의 월아천충 10/10",
+      "cut": "무월",
+      "blocks": [
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충"
+      ],
+      "log": []
+    },
+    "final": {
+      "risk": 100,
+      "mastery": 0,
+      "charges": 0,
+      "second": false,
+      "finalStack": 0,
+      "lib": false,
+      "gauge": 0.3874877864853105,
+      "tray": [],
+      "riskChip": [
+        "호로화 100"
+      ],
+      "kitChips": [
+        "월아천충 0"
+      ],
+      "libChip": [],
+      "libBtn": "각호고, 게이지 0%",
+      "cut": "무월",
+      "blocks": [
+        "월아천충",
+        "월아천충",
+        "월아천충",
+        "월아천충"
+      ],
+      "log": []
+    }
+  }
+}
