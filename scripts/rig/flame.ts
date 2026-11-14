@@ -67,8 +67,8 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
         let p: number;
         if (e.inner) { const q = ((((bt / TICK - (e.order ?? 0) * 4) % 40) + 40) % 40) / 8; p = q < 1 ? Math.sin(Math.PI * q) ** 0.6 : 0; } // 안쪽 불: 한 번에 2개만
         else p = Math.max(0, Math.sin(2 * Math.PI * ((bt / TICK + e.beat) / (PER / e.licks)))) ** 0.6;
-        const [qx, qy] = path(a);
-        if (p > 0.15) puffs.push({ b: bt, x: qx, y: qy, th: Math.max(thin < 0.7 ? 1.4 : 0, e.size * p * Math.max(0.55, Math.sqrt(thin))), // 휘두른 줄이 점선으로 끊기지 않게 가장 가늘어도 1.4 e, lk: Math.max(0.3, thin), a0: 0, t0: bt, rate: 1 });
+        const [qx, qy] = path(a); // 굵기: 휘두른 줄이 점선으로 끊기지 않게 빠를 때는 가장 가늘어도 1.4
+        if (p > 0.15) puffs.push({ b: bt, x: qx, y: qy, th: Math.max(thin < 0.7 ? 1.4 : 0, e.size * p * Math.max(0.55, Math.sqrt(thin))), e, lk: Math.max(0.3, thin), a0: 0, t0: bt, rate: 1 });
       };
       s.t += dtF;
       let n = 0;
