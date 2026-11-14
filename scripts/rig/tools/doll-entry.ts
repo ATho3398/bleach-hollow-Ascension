@@ -35,6 +35,11 @@ const mk = (rid: string, look: string) => {
     d.el.append(fl.back, fl.front);
     const adv = d.advance.bind(d);
     d.advance = (dt: number) => { adv(dt); fl.step(dt, dollLayers(d.el, k)); };
+    // 새 동작이 시작되면 그 전 불은 빨리 꺼뜨린다
+    const play = d.play.bind(d), setLoop = d.setLoop.bind(d);
+    d.play = (id, o) => { fl.quench(); return play(id, o); };
+    let cur: string | null = null;
+    d.setLoop = (id) => { if (id !== cur) fl.quench(); cur = id; setLoop(id); };
     if (!hp.get('manual')) {
       let last = 0;
       const tick = (now: number) => { if (d.el.isConnected || !last) { if (last) fl.step(now - last, dollLayers(d.el, k)); last = now; requestAnimationFrame(tick); } };

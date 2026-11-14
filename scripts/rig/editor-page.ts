@@ -764,6 +764,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 /** 불꽃 층(GDD 115-A 135): 지금 외형에 불꽃이 있으면 미리보기 위에 얹는다. 조각 그림은 그릴 때마다 새로 만들므로 자르기용 그림은 따로 간직 */
 const flames = new Map<string, ReturnType<typeof createFlame>>();
 const flameImgs = new Map<string, HTMLImageElement>();
+let flameMotion: string | null = null;
 function stepFlame(dt: number) {
   const spec = C.src.flame;
   const on = spec && spec.look === look ? C.id : null;
@@ -772,6 +773,7 @@ function stepFlame(dt: number) {
   let f = flames.get(on);
   if (!f) { f = createFlame(spec, rig.canvas); flames.set(on, f); stage.prepend(f.back); stage.append(f.front); }
   f.place(K);
+  if (motion !== flameMotion) { flameMotion = motion; f.quench(); } // 새 동작이 시작되면 그 전 불은 빨리 꺼뜨린다
   const layers: FlameLayer[] = drawn.map((d) => {
     let img = flameImgs.get(d.img.src);
     if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }

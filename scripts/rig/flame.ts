@@ -13,7 +13,13 @@ export interface FlameLayer { slot: string; m: number[]; img: HTMLImageElement }
 
 const DT = 60, TICK = 2, LIFE = 26, RISE = 0.62, PER = 16;
 const C0 = [0, 0, 0], C2 = [54, 48, 63];
-interface Puff { b: number; x: number; y: number; th: number; e: FlameEmitter }
+/** 불 덩이 하나: b = 태어난 때(박자), lk = 수명 배수(빨리 움직일 때 난 불은 짧게), a0·t0·rate = 나이 = a0 + (지금 − t0) × rate (새 동작이 시작되면 rate 를 올려 빨리 꺼뜨린다) */
+interface Puff { b: number; x: number; y: number; th: number; e: FlameEmitter; lk: number; a0: number; t0: number; rate: number }
+/** 불 자리마다: 앞 자리, 지나온 거리·시간(불 낼 차례 세기), 빠르기(박자당 칸, 고르게 한 값) */
+interface Em { x: number; y: number; px: number; py: number; d: number; t: number; v: number }
+const SPACE = 2;      // 움직일 때 불을 내는 간격(칸) — 1칸마다 내면 휘두를 때 불이 너무 많다
+const QUENCH = 3;     // 새 동작이 시작되면 그 전 불은 이 배수로 빨리 꺼진다
+const MAX_PUFFS = 700;
 
 export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   const [pl, pt, pr, pb] = spec.pad;
@@ -28,32 +34,56 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   const maskC = document.createElement('canvas');
   maskC.width = W; maskC.height = H;
   const bctx = back.getContext('2d')!, fctx = front.getContext('2d')!, mctx = maskC.getContext('2d')!;
+  let pos = new Map<string, number[]>();
   let puffs: Puff[] = [];
-  let fr = 0, acc = 0;
-  const prev = new Map<FlameEmitter, [number, number]>();
+  let fr = 0; // 지금(박자, 소수) — 60ms 에 1
+  const ems = new Map<FlameEmitter, Em>();
   const f0 = new Uint8Array(W * H), f1 = new Uint8Array(W * H);
+  const ageOf = (p: Puff) => p.a0 + (fr - p.t0) * p.rate;
 
-  const emit = (pos: Map<string, number[]>) => {
+  /** 불 내기 — 화면 한 장마다 부른다(dtF = 지난 박자). 자리가 지나온 길을 따라 SPACE 칸마다, 서 있으면 박자마다 하나.
+   *  (전에는 60ms 박자마다 앞 자리와 직선으로 이어 내서 휘두르면 궤적이 각졌다 — 사용자 2026-11-15 "막 각져서 나오고") */
+  const emit = (dtF: number) => {
     for (const e of spec.emitters) {
       const m = pos.get(e.slot);
       if (!m) continue;
       const wx = m[0]! * e.x + m[2]! * e.y + m[4]! + pl, wy = m[1]! * e.x + m[3]! * e.y + m[5]! + pt;
-      let [px, py] = prev.get(e) ?? [wx, wy];
-      if (Math.hypot(wx - px, wy - py) > 40) { px = wx; py = wy; }
-      prev.set(e, [wx, wy]);
-      const k = Math.max(1, Math.ceil(Math.hypot(wx - px, wy - py))); // 빨리 움직이면 사이를 메워 낸다(한 칸에 하나)
-      for (let j = 0; j < k; j++) {
-        const a = (j + 1) / k, bt = fr - 1 + a;
+      let s = ems.get(e);
+      if (!s || Math.hypot(wx - s.x, wy - s.y) > 40) { s = { x: wx, y: wy, px: wx, py: wy, d: 0, t: 1, v: 0 }; ems.set(e, s); }
+      const dist = Math.hypot(wx - s.x, wy - s.y);
+      s.v = 0.6 * s.v + 0.4 * (dist / Math.max(dtF, 0.05));
+      // 빨리 움직일수록 가늘고 짧게: 휘두를 때는 긴 연기 대신 짧은 꼬리만 남는다
+      const thin = 1 / (1 + Math.max(0, s.v - 2) / 4);
+      // 앞 자리 → 지금 자리를 직선이 아니라 지나온 방향을 살린 곡선으로 잇는다(휘두른 호가 각지지 않게): 앞 자리의 기울기 = (지금 − 그 앞) / 2, 지금 자리의 기울기 = 지금 − 앞
+      const t0x = (wx - s.px) / 2, t0y = (wy - s.py) / 2, t1x = wx - s.x, t1y = wy - s.y;
+      const sx0 = s.x, sy0 = s.y;
+      const path = (a: number): [number, number] => {
+        const h00 = 2 * a ** 3 - 3 * a ** 2 + 1, h10 = a ** 3 - 2 * a ** 2 + a, h01 = -2 * a ** 3 + 3 * a ** 2, h11 = a ** 3 - a ** 2;
+        return [h00 * sx0 + h10 * t0x + h01 * wx + h11 * t1x, h00 * sy0 + h10 * t0y + h01 * wy + h11 * t1y];
+      };
+      const spawn = (a: number) => {
+        if (thin < 0.5 && e.size < 3.5 && !e.inner) return; // 빨리 휘두를 때는 큰 불 자리만(줄이 너무 많아 지저분하지 않게)
+        const bt = fr - dtF * (1 - a);
         let p: number;
         if (e.inner) { const q = ((((bt / TICK - (e.order ?? 0) * 4) % 40) + 40) % 40) / 8; p = q < 1 ? Math.sin(Math.PI * q) ** 0.6 : 0; } // 안쪽 불: 한 번에 2개만
         else p = Math.max(0, Math.sin(2 * Math.PI * ((bt / TICK + e.beat) / (PER / e.licks)))) ** 0.6;
-        if (p > 0.15) puffs.push({ b: bt, x: px + (wx - px) * a, y: py + (wy - py) * a, th: e.size * p, e });
+        const [qx, qy] = path(a);
+        if (p > 0.15) puffs.push({ b: bt, x: qx, y: qy, th: Math.max(thin < 0.7 ? 1.4 : 0, e.size * p * Math.max(0.55, Math.sqrt(thin))), // 휘두른 줄이 점선으로 끊기지 않게 가장 가늘어도 1.4 e, lk: Math.max(0.3, thin), a0: 0, t0: bt, rate: 1 });
+      };
+      s.t += dtF;
+      let n = 0;
+      if (dist > 0) {
+        for (let at = SPACE - s.d; at <= dist; at += SPACE) { spawn(at / dist); n++; }
+        s.d = n ? (dist - (SPACE - s.d)) % SPACE : s.d + dist;
       }
+      if (n) s.t = 0;
+      else if (s.t >= 1) { spawn(1); s.t = 0; }
+      s.px = s.x; s.py = s.y; s.x = wx; s.y = wy;
     }
-    puffs = puffs.filter((p) => fr - p.b < LIFE * 2);
+    puffs = puffs.filter((p) => ageOf(p) < LIFE * 2);
+    if (puffs.length > MAX_PUFFS) puffs = puffs.slice(puffs.length - MAX_PUFFS);
   };
   /** 불 덩이들을 칸에 채운다(shrink 만큼 줄인 모양 = 속) */
-  let pos = new Map<string, number[]>();
   const field = (buf: Uint8Array, shrink: number, pick: (p: Puff) => boolean, arm = false) => {
     buf.fill(0);
     if (arm) for (const [slot, lx, ly, a, sp] of spec.trail ?? []) {
@@ -67,13 +97,13 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
     }
     for (const p of puffs) {
       if (!pick(p)) continue;
-      const e = p.e, age = fr - p.b, life = (LIFE * e.rise) / 20;
+      const e = p.e, age = ageOf(p), life = ((LIFE * e.rise) / 20) * p.lk;
       if (age < 0 || age >= life) continue;
       const l = age / life;
       let r = p.th * (1 - l) ** (0.9 + 0.5 * e.taper) - shrink; // 끝으로 갈수록 빨리 가늘어져 뾰족하게
       if (r < 0.3) continue;
       r = Math.max(r, 0.5);
-      const ry = r * (1.25 + 1.6 * l), u = RISE * age; // 끝은 세로로 길쭉한 바늘 모양
+      const ry = r * (1.25 + 1.6 * l), u = RISE * (fr - p.b); // 끝은 세로로 길쭉한 바늘 모양. 올라간 높이는 실제 지난 시간으로(빨리 꺼져도 위로 튀지 않게)
       const cx = p.x + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5);
       const cy = p.y - u;
       const x1 = Math.max(0, Math.floor(cx - r - 1)), x2 = Math.min(W, Math.floor(cx + r + 2));
@@ -128,13 +158,18 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
     place(k: number) {
       for (const c of [back, front]) { c.style.left = `${-pl * k}px`; c.style.top = `${-pt * k}px`; c.style.width = `${W * k}px`; c.style.height = `${H * k}px`; }
     },
-    /** 시간을 흘린다: 60ms 마다 한 박자(불 내기 → 그리기). layers = 지금 그려진 조각(뒤 → 앞) */
+    /** 시간을 흘린다: 화면 한 장마다 불 내기 → 그리기. layers = 지금 그려진 조각(뒤 → 앞) */
     step(dtMs: number, layers: FlameLayer[]) {
-      acc += Math.min(dtMs, 500);
-      if (acc < DT) return;
+      const dtF = Math.min(dtMs, 250) / DT;
+      if (dtF <= 0) return;
+      fr += dtF;
       pos = new Map(layers.map((l) => [l.slot, l.m]));
-      while (acc >= DT) { acc -= DT; fr++; emit(pos); }
+      emit(dtF);
       render(layers);
+    },
+    /** 새 동작이 시작됨: 지금까지 난 불은 QUENCH 배로 빨리 꺼진다(사용자 2026-11-15 "새 모션 나올 땐, 전에 있던 불꽃이 더 빨리 사라지는 식으로") */
+    quench() {
+      for (const p of puffs) { p.a0 = ageOf(p); p.t0 = fr; p.rate = QUENCH; }
     },
   };
 }
