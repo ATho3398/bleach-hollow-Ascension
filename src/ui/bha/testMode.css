@@ -22,3 +22,12 @@
 .bha-test__select:focus-visible { outline: 2px solid var(--bha-focus); outline-offset: -2px; } /* 테두리 위에 겹쳐 한 겹 (C.327) */
 .bha-test__row { display: flex; flex-wrap: wrap; gap: var(--bha-sp-2); align-items: center; margin-top: var(--bha-sp-2); }
 .bha-test__note { color: var(--bha-text-3); font-size: var(--bha-fs-xs); margin: var(--bha-sp-1) 0 0; }
+
+/* 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 빈 적 자리 + 적 설정 창 (4칸 격자 — 폰 가로 390 높이에 잘리지 않게) */
+.bha-unit--foe.is-empty > :not(.bha-testarena__slot) { visibility: hidden; }
+.bha-unit--foe.is-empty { position: relative; }
+.bha-testarena__slot { position: absolute; inset: 0; margin: auto; width: max-content; height: max-content; z-index: var(--bha-z-float); pointer-events: auto; } /* 전투 칸의 그림 층은 누름을 안 받아 버튼만 받게 */
+.bha-lcd .bha-confirm.bha-testarena .bha-modal { width: min(720px, 96%); overflow: auto; }
+.bha-testarena .bha-test__grid { grid-template-columns: auto 1fr auto 1fr; }
+.bha-testarena .bha-test__note { margin: 0; }
+.bha-lcd .bha-testarena ~ .bha-pick__list { z-index: calc(var(--bha-z-tutorial) + 2); } /* 창 안 고르기 목록은 창 위에 (목록은 오버레이 자리에 창 뒤로 붙는다) */

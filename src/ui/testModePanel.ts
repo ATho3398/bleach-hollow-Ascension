@@ -17,7 +17,7 @@ import { elementDamageAbbr, elementDamagePct } from './bha/element';
 import { MAX_DIFFICULTY, recommendedDifficulty } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
 import {
-  advanceTestTime, createTestItem, testGrantTranscendent, testTrackIds, testTranscendents, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
+  advanceTestTime, createTestItem, testAddHogyokuMaterials, TEST_HOGYOKU_MATERIAL_STEP, testGrantTranscendent, testTrackIds, testTranscendents, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
   createTestGearAll, getTestExpeditionForce, parseTestGearId, setTestExpeditionForce, testCallCare, testCallIdle, testCallWanderer, testClearCare, testClearIdle,
   testEventTiles, testGearGrade, testMutations, testRerollWanderer, testSendWanderer, TEST_IDLE_HOURS, TEST_WANDERER_TIERS,
   TEST_CURRENCY_NAMES, TEST_ITEM_KINDS, TEST_ITEM_KIND_NAMES, TEST_ITEM_MAX, TEST_TIME_STEPS, type TestCurrency, type TestItemKind,
@@ -42,6 +42,9 @@ import { showToast } from './bha/nest';
 import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
 import { shownName } from './displayName';
+import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
+import { HOGYOKU_TRACK_IDS } from '../engine/transcend';
+import { materialHave } from '../engine/hogyokuMaterials';
 
 export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call' | 'transcend';
 const TABS: { id: TestTab; label: string }[] = [
@@ -159,7 +162,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '블록', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
     { label: '고유 특성', value: save.evolution.ability ? abilityName(save.evolution.ability, fid) : '없음' },
     { label: '리스크·허기·컨디션', value: [save.nest.risk, save.nest.hunger, save.nest.condition].map((v) => Math.round(v)).join(' · ') }, // 소수 꼬리(20.00001…) 대신 정수 (C.182 UI 검수)
-    { label: '속도', value: `×${testSpeed()}` },
+    { label: '테스트 배속', value: `×${testSpeed()}` }, // 능력치 공격속도·블록속도(C.446)와 헷갈리지 않게 (C.457)
   ]));
   // 우라하라 물건 (GDD 112장 2): 길이가 바뀌는 글이라 오른쪽 맨 아래 따로 (버튼 없는 칸 — 불러오기 탭 버튼이 안 움직이게)
   const visitNow = save.shared.wanderer.visit;
@@ -246,7 +249,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '블록 고르기', aside: `${TRAITS.length}종` },
       grid([...sels.map((s, i) => [`칸 ${i + 1}`, s.el] as [string, Node]), ['고유 특성', abil.el]]), row(apply),
-      note('같은 블록은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
+      note(`같은 블록은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 ${STAT_IDS.length}종).`))];
   }
 
   function battleTab(): Node[] {
@@ -260,12 +263,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const starSel = select(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(prev?.star ?? recommendedDifficulty(save.evolution.tierIndex)), '난이도');
     const streak = numInput(prev?.streak ?? 0, 0, BALANCE.provisional.difficulty.streak.maxClears, '연속 클리어');
     const floorSel = select([{ value: '', label: '탑 아님' }, ...Array.from({ length: TOWER_FLOORS }, (_, i) => ({ value: String(i + 1), label: `${i + 1}층` }))], prev?.floor ? String(prev.floor) : '', '탑 층');
-    const go = button({ label: '전투 시작', icon: 'i-attack', variant: 'primary', onClick: () => {
+    const go = button({ label: '전투 들어가기', icon: 'i-attack', variant: 'primary', onClick: () => {
       lastBattle = { foeId: foeSel.value, star: Number(starSel.value), streak: Number(streak.value) || 0, floor: floorSel.value ? Number(floorSel.value) : null };
       hd.onBattle(lastBattle);
     } });
     return [panel({ title: '바로 전투', aside: `${foes.length}종` },
       grid([['상대', foeSel.el], ['★', starSel.el], ['연속', streak], ['탑 층', floorSel.el]]), row(go),
+      note('들어가면 적 없이 [적 설정] 창이 뜬다 — 여기 값이 창의 처음 값이다. 창에서 적 종류·★·체력/공격력 배율·공격 여부·무적을 정하고 [확인]하면 적이 나오고, 쓰러뜨리면 창이 다시 뜬다(내 체력은 이어짐).'),
       note('탑 층을 고르면 ★·배율은 층 규칙(★ = ⌈층/10⌉, 구간 안 층마다 +4%, 50층 +20%). 결과는 테스트 칸 런 로그에만 남는다.'))];
   }
 
@@ -366,7 +370,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '아이템 생성', aside: TEST_ITEM_KIND_NAMES[kindSel.value as TestItemKind] }, g, row(make, all),
       note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 우라하라 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
-      note('우라하라 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·붕옥 재료는 상한이 없다.'))];
+      note('우라하라 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·붕옥 재료 3종·초월 조각은 상한이 없다.'))];
   }
 
   // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족 스킨·꾸밈 전부 착용·해제 ──
@@ -481,10 +485,19 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       showToast({ eyebrow: '테스트', title: `초월 조각 ${save.shared.transcendShards}`, meta: '상태 화면 「전용 블록 강화」에서 쓴다.' }, 0, 1800);
       redraw();
     } });
+    // 붕옥 재료 3종 (C.457 사용자 2026-11-15 '붕옥 재료들 없어서 강화를 못 해봄'): 붕옥 > 개발의 강화 트랙 3개 재료
+    const matLine = () => HOGYOKU_TRACK_IDS.map((t) => `${HOGYOKU_MATERIAL_NAMES[t]} ${materialHave(save, t)}`).join(' · ');
+    const mats = button({ label: `재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, icon: 'i-rare', size: 'small', variant: 'primary', onClick: () => {
+      testAddHogyokuMaterials(save);
+      hd.persist();
+      showToast({ eyebrow: '테스트', title: `붕옥 재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, meta: matLine() }, 0, 1800);
+      redraw();
+    } });
     return [
+      panel({ title: '붕옥 재료', aside: `각 +${TEST_HOGYOKU_MATERIAL_STEP}` }, row(mats), note(`${matLine()} — 붕옥 > 개발에서 강화 트랙 3개(재료별)를 올린다.`)),
       panel({ title: '초월자 얻기', aside: `${owned.size}/${testTranscendents().length}` }, row(...grants),
         note('누르면 그 초월자 트랙을 만들어 바로 간다(이미 있으면 그 트랙으로). 진짜 합체(개발 100%·1위 조건·두 캐릭터 초기화)는 거치지 않는다.')),
-      panel({ title: '초월 조각', aside: String(save.shared.transcendShards) }, row(shards), note('아이젠 전용 블록(경화수월·귀도) 강화 재료. 진짜 게임에선 초월자로 이긴 전투마다 나온다.')),
+      panel({ title: '초월 조각', aside: String(save.shared.transcendShards) }, row(shards), note('초월자 전용 블록(아이젠·이치고 등 kit 블록) 강화 재료 — 상태 화면 「전용 블록 강화」. 진짜 게임에선 초월자로 이긴 전투마다 나온다.')),
       panel({ title: '초월자 트랙 전환', aside: `${tracks.length}개` }, grid([['트랙', trackSel.el]]), row(go),
         note(`붕옥 ${h.tabOpen ? '등장' : '닫힘'} · ${h.resonance ? '공명' : '공명 전'} — 테스트 칸은 늘 켜 둔다. 방 더보기의 트랙 전환과 같다.`)),
     ];

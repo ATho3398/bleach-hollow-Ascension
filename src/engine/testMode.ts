@@ -36,6 +36,10 @@ import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from 
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
 import { dropBasicBlockTraits, isBasicBlockTrait } from './absorb/build';
 import { FOOD_IDS, type FoodId } from './faction';
+import { materialHave, spendMaterial } from './hogyokuMaterials';
+import { HOGYOKU_TRACK_IDS, type HogyokuTrackId } from './transcend';
+import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
+import type { CombatParams } from './combat/combat';
 
 /** 테스트 칸 저장 키 (38-2). 진짜 세이브 키 `SAVE_KEY…` 는 모두 이 앞부분으로 바뀐다 (슬롯 1 = 이 키 그대로) */
 export const TEST_SAVE_KEY = 'bha-save-test';
@@ -213,7 +217,9 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   const sh = save.shared;
   sh.tradeCoins = TEST_WEALTH;
   sh.jade = TEST_WEALTH;
-  sh.soulCrystals = TEST_WEALTH;
+  // 붕옥 재료 3종(강화 트랙 soul·shard·essence)·초월 조각 (C.457 — 옛 채우기는 soul 한 가지만이라 다른 두 트랙을 못 올렸다)
+  for (const t of HOGYOKU_TRACK_IDS) spendMaterial(save, t, -(TEST_WEALTH - materialHave(save, t)));
+  sh.transcendShards = Math.max(sh.transcendShards ?? 0, TEST_WEALTH);
   for (const id of FOOD_IDS) sh.food[id] = Math.max(sh.food[id], 9); // 먹이는 보관 상한이 없다(GDD v6.005) — 테스트 채우기는 옛 상한 9개씩
   sh.rerollTickets = BALANCE.shop.rerollMax;
   sh.deckSlots = BALANCE.shop.deckSlotPrices.length;
@@ -482,6 +488,66 @@ export function testBattleEnemy(c: TestBattleChoice): { enemy: EnemyDef; star: n
   return { enemy: k === 1 ? atStar : scaleEnemy(atStar, { hp: k, attack: k }), star, bossId: foe.kind === 'boss' ? foe.id : null };
 }
 
+// ── 적 설정 창 (GDD 17-4 v6.083, C.457): 바로 전투 = 적 없이 들어가 창에서 적·수치를 정하고 [확인]으로 등장, 쓰러뜨리면 다시 창 ──
+
+/** 적 설정 창 값: 바로 전투 고르기(적·★·연속·탑 층) + 체력·공격력 배율(%)·공격 여부·무적 */
+export interface TestArenaChoice extends TestBattleChoice {
+  /** 체력 배율 % (100 = 그대로) */
+  hpPct: number;
+  /** 공격력 배율 % (100 = 그대로) */
+  attackPct: number;
+  /** false = 적이 공격하지 않는다 (일반 공격·특수 행동·졸개) */
+  attacks: boolean;
+  /** true = 적이 쓰러지지 않는다 (0 에 닿으면 체력 가득) */
+  immortal: boolean;
+}
+
+/** 배율 입력 범위 % */
+export const TEST_ARENA_PCT_MIN = 1;
+export const TEST_ARENA_PCT_MAX = 10000;
+/** 적 설정 창의 전투 시간 상한(초): 무적 허수아비·연속 전투가 시간 제한으로 끝나지 않게 */
+export const TEST_ARENA_SECONDS = 3600;
+
+const pctOf = (v: number): number => Math.min(TEST_ARENA_PCT_MAX, Math.max(TEST_ARENA_PCT_MIN, Math.round(Number.isFinite(v) ? v : 100)));
+
+/** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음에 체력·공격력 배율). 없는 적이면 null */
+export function testArenaEnemy(c: TestArenaChoice): { enemy: EnemyDef; star: number; bossId: string | null } | null {
+  const base = testBattleEnemy(c);
+  if (!base) return null;
+  const hp = pctOf(c.hpPct) / 100;
+  const attack = pctOf(c.attackPct) / 100;
+  return { ...base, enemy: hp === 1 && attack === 1 ? base.enemy : scaleEnemy(base.enemy, { hp, attack }) };
+}
+
+/** 적 설정 창의 공격 여부·무적·시간을 전투 파라미터에 (엔진은 이 두 칸만 본다) */
+export function applyTestArenaParams(params: Partial<CombatParams>, c: Pick<TestArenaChoice, 'attacks' | 'immortal'>): void {
+  params.enemyPassive = !c.attacks;
+  params.enemyImmortal = c.immortal;
+  params.timeLimitSeconds = TEST_ARENA_SECONDS;
+}
+
+// ── 특수던전 횟수 (C.457 사용자 2026-11-15 '레이드 클리어하면 진행이 안 됨'): 테스트 칸은 주간 입장 횟수를 쓰지 않는다 ──
+
+/** 이번 주 쓴 입장 수를 비운다 (테스트 칸에서 입장할 때마다 — 깨고 나와도 [입장]이 잠기지 않게) */
+export function testRefillSpecial(save: SaveData): void {
+  save.shared.special.used = {};
+}
+
+// ── 붕옥 재료 (C.457 사용자 2026-11-15 '붕옥 재료들 없어서 강화를 못 해봄') ──
+
+/** [재료 각 +n] 한 번에 넣는 수 */
+export const TEST_HOGYOKU_MATERIAL_STEP = 100;
+
+/** 붕옥 강화 재료 3종(soul·shard·essence)을 각 n 개씩 더한다. 런 로그(획득 기록)에는 남기지 않는다 */
+export function testAddHogyokuMaterials(save: SaveData, n: number = TEST_HOGYOKU_MATERIAL_STEP): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of HOGYOKU_TRACK_IDS) {
+    spendMaterial(save, t, -Math.max(0, Math.floor(n)));
+    out[t] = materialHave(save, t);
+  }
+  return out;
+}
+
 // ── 키링 3번 (GDD 109장 7, C.181): 다마고치 모드 키링을 1초 안에 3번 누르면 테스트 모드 (이스터에그) ──
 
 /** 키링 누르기 횟수·시간 창 */
@@ -510,9 +576,15 @@ export const TEST_ITEM_KINDS = ['gear', 'wanderer', 'consumable', 'food', 'cosme
 export type TestItemKind = (typeof TEST_ITEM_KINDS)[number];
 export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '우라하라 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
 /** 재화 id → 세이브 자리 (골드 = tradeCoins) */
-export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
+export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'hogyokuShards', 'resonanceEssence', 'transcendShards', 'rerollTickets', 'trainingTickets'] as const;
 export type TestCurrency = (typeof TEST_CURRENCIES)[number];
-export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = { gold: '골드', jade: '영옥', soulCrystals: '고순도 윤활제', rerollTickets: '다시 뽑기권', trainingTickets: '수련권' };
+/** 붕옥 재료 3종 이름은 데이터(HOGYOKU_MATERIAL_NAMES)에서 — 세이브 키 soulCrystals·hogyokuShards·resonanceEssence = 트랙 soul·shard·essence (C.457: shard·essence 가 빠져 있었다) */
+export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = {
+  gold: '골드', jade: '영옥',
+  soulCrystals: HOGYOKU_MATERIAL_NAMES.soul, hogyokuShards: HOGYOKU_MATERIAL_NAMES.shard, resonanceEssence: HOGYOKU_MATERIAL_NAMES.essence,
+  transcendShards: '초월 조각', rerollTickets: '다시 뽑기권', trainingTickets: '수련권',
+};
+const MATERIAL_TRACK: Partial<Record<TestCurrency, HogyokuTrackId>> = { soulCrystals: 'soul', hogyokuShards: 'shard', resonanceEssence: 'essence' };
 /** 한 번에 만들 수 있는 최대 개수 */
 export const TEST_ITEM_MAX = 99999;
 
@@ -568,7 +640,8 @@ export function createTestItem(save: SaveData, c: TestItemChoice, nowMs: number 
   const cur = c.id as TestCurrency;
   if (cur === 'gold') sh.tradeCoins += n;
   else if (cur === 'jade') sh.jade += n;
-  else if (cur === 'soulCrystals') sh.soulCrystals += n;
+  else if (MATERIAL_TRACK[cur]) spendMaterial(save, MATERIAL_TRACK[cur]!, -n);
+  else if (cur === 'transcendShards') sh.transcendShards += n;
   else if (cur === 'rerollTickets') return addCapped(sh, 'rerollTickets', n, BALANCE.shop.rerollMax);
   else if (cur === 'trainingTickets') {
     const add = Math.max(0, Math.floor(n)); // 수련권 개수 제한 없음 (GDD 216장 2)

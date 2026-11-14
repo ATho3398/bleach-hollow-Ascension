@@ -22,13 +22,15 @@ export interface ConfirmOptions {
   alt?: { label: string; onClick: () => void };
   /** 입력해야 열리는 확인 (GDD 241-A 4 슬롯 삭제): 입력 칸에 word 를 그대로 쳐야 [예]가 켜진다. hint = 입력 칸 위 안내 */
   typeToConfirm?: { word: string; hint: string };
+  /** 레이어에 덧붙일 클래스 (창 크기 등 — 테스트 모드 적 설정 창, C.457) */
+  cls?: string;
   onYes: () => void;
   onNo?: () => void;
 }
 
 /** 확인창을 연다. 돌려주는 함수는 선택 없이 닫는다 */
 export function confirmDialog(o: ConfirmOptions): () => void {
-  const layer = el('div', 'bha-overlay bha-overlay--in-app bha-confirm');
+  const layer = el('div', `bha-overlay bha-overlay--in-app bha-confirm${o.cls ? ` ${o.cls}` : ''}`);
   layer.setAttribute('role', 'alertdialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', o.title);

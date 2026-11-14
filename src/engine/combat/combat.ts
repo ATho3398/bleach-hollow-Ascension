@@ -246,6 +246,10 @@ export interface CombatParams {
   motion?: MotionParams;
   /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441): 있으면 일반 블록(기본·흡수·물공) 대신 이 블록만 나온다. 없으면(null) 보통 블록 */
   kit?: CombatKit | null;
+  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 일반 공격·특수 행동·졸개 공격을 하지 않는다. 진짜 게임은 늘 없음 */
+  enemyPassive?: boolean;
+  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 쓰러지지 않는다 — 체력이 0 에 닿으면 가득으로 되돌린다(허수아비). 진짜 게임은 늘 없음 */
+  enemyImmortal?: boolean;
 }
 
 /** 초월자 전용 블록 하나 (GDD 12-4 v6.048, C.441 — src/engine/transcendKit.ts 가 데이터 + 수치 + 강화로 만든다). 엔진은 장치만 본다:
@@ -1929,6 +1933,7 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
   }
   // 각본 전투: 마무리 단계(lethal) 전에는 적이 쓰러지지 않는다
   s.enemy.hp = Math.max(s.script && !s.script.lethal ? Math.min(s.enemy.hp, 1) : 0, s.enemy.hp - amount);
+  if (s.enemy.hp <= 0 && s.params.enemyImmortal) s.enemy.hp = s.enemy.maxHp; // 테스트 모드 무적 (C.457): 허수아비처럼 다시 가득
   if (s.enemy.hp <= 0) {
     s.status = 'won';
     s.finisher = finisher;
@@ -1983,7 +1988,7 @@ function bossSummon(s: CombatState, b: BossState): void {
   const sm = b.setup.summon;
   if (!sm) return;
   const m = b.minion;
-  if (m && --m.attackTimer <= 0) {
+  if (m && !s.params.enemyPassive && --m.attackTimer <= 0) {
     m.attackTimer = ticksOf(s.params, sm.attackSeconds);
     if (!evaded(s)) {
       const raw = enemyDamage(s, sm.attackInAttacks);
@@ -2978,8 +2983,8 @@ function advanceTick(s: CombatState): void {
         if (hasSpecialActions(pattern)) e.actionTimer = t(pattern.everySeconds);
       }
     } else heavyWindup(s);
-  } else if (!s.script) {
-    // 각본 전투는 적 일반 공격·특수 행동이 없다 — 강공격은 각본이 시전시킨다 (GDD 123장 5)
+  } else if (!s.script && !p.enemyPassive) {
+    // 각본 전투는 적 일반 공격·특수 행동이 없다 (테스트 모드 '공격 안 함'도 같다, C.457) — 강공격은 각본이 시전시킨다 (GDD 123장 5)
     if (--e.attackTimer <= 0) {
       e.attackTimer = attackTicks;
       if (!evaded(s)) {

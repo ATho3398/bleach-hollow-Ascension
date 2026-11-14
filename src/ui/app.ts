@@ -5,7 +5,7 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { DEFAULT_GENDER, setActiveGender, type Gender } from '../engine/gender';
 import type { EnemyDef } from '../data/schema';
 import { mutationName, synergyName, tileName } from '../data/tiles';
-import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../engine/combat';
+import { buildBattleRecord, createCombat, elapsedSeconds, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../engine/combat';
 import { buildCombatParams } from '../engine/absorb';
 import { homeHp, setHomeHpOf, SPA_BLOCK_TEXT, spaEnter, spaLeave } from '../home';
 import { GUIDES, guideVars, HOME_INTRO, RECOVER_SCENES, type TutorialScene } from '../data/help';
@@ -138,7 +138,8 @@ function battleBasis(save: SaveData): { combatFaction: FactionConfig; formId: st
 import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
 import { withKitRiskName } from '../engine/transcendKit';
 import { pickDialog } from './pickDialog';
-import { applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testBattleEnemy, testStorage, type FullStorage, type TestBattleChoice } from '../engine/testMode';
+import { applyTestArenaParams, applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testArenaEnemy, testRefillSpecial, testStorage, type FullStorage, type TestArenaChoice, type TestBattleChoice } from '../engine/testMode';
+import { testArenaDialog, testArenaSlot } from './testModeArena';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
 import { shownName } from './displayName';
@@ -415,6 +416,8 @@ export function startApp(host: HTMLElement): void {
   let hungryGreet = false;
   /** 다시 열 때 꺼 둔 동안 (GDD 102-7): 방이 그려진 뒤 알림 띠 한 번 */
   let absence: AbsenceReport | null = null;
+  /** 테스트 모드 적 설정 창의 지난 값 (C.457, 이 실행 동안) */
+  let lastArena: TestArenaChoice = { foeId: '', star: 1, streak: 0, floor: null, hpPct: 100, attackPct: 100, attacks: true, immortal: false };
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
   /** 우라하라 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
@@ -1779,6 +1782,7 @@ export function startApp(host: HTMLElement): void {
         towerView(root, faction, save!, { onChallenge: (f) => towerBattle(faction, f), onHelp: hd.onHelp }, specialHead(faction, 'tower', hd));
       } else {
         specialState(save!); // 주가 바뀌었으면 횟수 비움
+        if (testOn) testRefillSpecial(save!); // 테스트 칸: 이미 다 쓴 옛 테스트 칸도 다시 열린다 (C.457)
         specialDungeonView(root, faction, save!, specialTab, {
           ...hd,
           onWeekly: (track, star) => startSpecialRun(faction, { mode: 'weekly', target: track, star }),
@@ -1798,6 +1802,7 @@ export function startApp(host: HTMLElement): void {
       showToast({ eyebrow: specialDungeonLabels(faction).name, title: '이번 주 횟수를 다 썼다', meta: '월요일 05:00 에 초기화' }, 0, 1800);
       return;
     }
+    if (testOn) testRefillSpecial(s0); // 테스트 칸은 주간 횟수를 쓰지 않는다 (C.457: 깨고 나오면 [이번 주 끝]으로 잠겨 진행이 막혔다)
     persist();
     const enemies = run.mode === 'weekly' ? weeklyEnemies(run.target as HogyokuTrackId, run.star, s0.shared.special.weekStart) : [bossRushEnemy(run.entry!, run.star)];
     const bossId = run.mode === 'boss' ? run.entry!.bossId : undefined;
@@ -2376,11 +2381,75 @@ export function startApp(host: HTMLElement): void {
     }, tab);
   }
 
-  /** 바로 전투 (38-4): 고른 적·★·연속(또는 탑 층)으로 한 판. 기록은 테스트 칸 런 로그에만 */
+  /** 바로 전투 = 적 설정 창 (GDD 17-4 v6.083, C.457): 적 없이 들어가 창에서 적·수치를 정하면 등장, 쓰러뜨리면 다시 창 — 전투(내 체력)는 이어진다.
+   *  지면 체력을 채워 다시 창. 기록은 테스트 칸 런 로그에만. c = 패널의 지난 고르기(창의 처음 값) */
   function testBattle(faction: FactionConfig, c: TestBattleChoice): void {
-    const pick = testBattleEnemy(c);
-    if (!pick) return;
-    open('test-battle', () => runPractice(faction, pick.enemy, pick.star, pick.bossId, c.floor ? `테스트 · 탑 ${c.floor}층 · ★${pick.star}` : `테스트 · ★${pick.star}${c.streak > 0 ? ` · 연속 ${c.streak}` : ''}`), true);
+    if (!save) return;
+    let pick: TestArenaChoice = { ...lastArena, ...c };
+    let hpFrac = 1;
+    let kills = 0;
+    let note = '적을 정하고 [확인]을 누르면 나온다. 쓰러뜨리면 이 창이 다시 뜬다.';
+    /** 빈 적 자리(창) 또는 고른 적과의 전투 한 판을 그린다 */
+    const round = (foe: TestArenaChoice | null): void => {
+      const e = { id: 'test-battle', locked: true, render: () => { arenaRound(foe); root.scrollTop = 0; } };
+      if (nav.top?.id === 'test-battle') nav.replace(e);
+      else nav.push(e);
+    };
+    const arenaRound = (foe: TestArenaChoice | null): void => {
+      const s0 = save!;
+      const enemyPick = testArenaEnemy(foe ?? pick);
+      if (!enemyPick) return void nav.pop();
+      const params = buildCombatParams(s0.build, faction.id);
+      applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
+      applyDifficultyToParams(params, enemyPick.star);
+      params.liberationStartGauge = liberationStartGaugeOf();
+      applyGearToParams(params, gearCarry(s0.shared.gear), enemyPick.enemy.class === 'elite' || enemyPick.bossId !== null);
+      params.petAttack = petAttackOf(carriedPet(s0.shared.pets));
+      applyCareToParams(params, battleCareOf(s0));
+      if (params.kit?.riskRelease) params.riskStart = s0.nest.risk; // 붕옥 감응도 = 리스크 (GDD 12-4 v6.054)
+      params.playerStartHpFraction = hpFrac;
+      applyTestArenaParams(params, foe ?? pick);
+      const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyPick.enemy, params, ...(enemyPick.bossId ? { boss: bossSetupOf(enemyPick.bossId) } : {}) });
+      s.params.timeLimitSeconds = params.timeLimitSeconds!; // 보스 시간 제한도 덮는다 (연속 전투가 시간으로 끝나지 않게)
+      const hold = { on: foe === null };
+      let closeDialog: (() => void) | null = null;
+      const openDialog = (): void => {
+        hold.on = true;
+        closeDialog = testArenaDialog(faction, pick, note, {
+          onPick: (ch) => { pick = ch; lastArena = ch; round(ch); },
+          onClose: () => { closeDialog = null; },
+          onExit: () => nav.pop(),
+        });
+      };
+      setBgm(enemyPick.enemy.class === 'elite' ? 'elite' : 'battle');
+      battleView(root, faction, s, {
+        ...battleItemOpts(s0, s),
+        tierIndex: artTierIndexOf(s0),
+        ...battleBasis(s0),
+        skinId: artSkinOf(s0),
+        notice: foe ? `★${enemyPick.star}${foe.attacks ? '' : ' · 공격 안 함'}${foe.immortal ? ' · 무적' : ''} · 처치 ${kills}` : `적 설정 · 처치 ${kills}`,
+        ...(foe ? {} : { emptyFoe: { slot: testArenaSlot(openDialog) } }),
+        hold,
+        autoEnd: true,
+        onQuit: () => { closeDialog?.(); nav.pop(); },
+        onEnd: (done) => {
+          recordBattle(s0, buildBattleRecord(done, { factionId: faction.id, tierIndex: s0.evolution.tierIndex }));
+          settleLiberationRisk(s0, done);
+          persist();
+          if (done.status === 'won') {
+            kills++;
+            hpFrac = Math.max(0.01, done.player.hp / done.player.maxHp);
+            note = `쓰러뜨렸다 (${Math.round(elapsedSeconds(done))}초). 내 체력 ${Math.round(hpFrac * 100)}% 그대로 이어진다.`;
+          } else {
+            hpFrac = 1;
+            note = '졌다 — 내 체력을 채워 다시 시작한다.';
+          }
+          round(null);
+        },
+      });
+      if (!foe) openDialog();
+    };
+    round(null);
   }
 
   // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──

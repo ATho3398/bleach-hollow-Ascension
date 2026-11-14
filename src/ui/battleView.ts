@@ -116,6 +116,12 @@ export interface BattleViewOptions {
   pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
   /** 모험 전투 (GDD 212장 1·2): 소모품은 칸에 끼운 1개를 바퀴당 1번(걷기에서 썼어도). spentId = 이번 바퀴에 이미 쓴 끼운 소모품 id(버튼 흐림 '씀'), 문구는 '바퀴당 1번'. 없으면 전투당 1번(탑·등급전 등) */
   lapItem?: { spentId: string | null };
+  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 적 자리를 비워 둔다(적 그림·체력 숨김, 시간 정지). slot = 빈 적 자리에 놓을 버튼([적 설정]). 쓴 쪽이 hold 로 멈춤을 쥔다 */
+  emptyFoe?: { slot?: HTMLElement };
+  /** 바깥이 시간을 멈춘다 (on 인 동안 엔진·입력 정지 — 테스트 모드 적 설정 창) */
+  hold?: { on: boolean };
+  /** true = 끝나면 결과 창 없이 바로 onEnd (테스트 모드 연속 전투, C.457) */
+  autoEnd?: boolean;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -432,7 +438,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return u;
   };
   const units = el('div', 'bha-v2units');
-  units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root), unit('bha-unit--foe', foeHeads, foe, enemyHp.root));
+  const foeUnit = unit('bha-unit--foe', foeHeads, foe, enemyHp.root);
+  units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root), foeUnit);
+  // 테스트 모드 적 설정 (C.457): 적 자리를 비우고 그 자리에 [적 설정] 버튼
+  if (opts.emptyFoe) {
+    foeUnit.classList.add('is-empty');
+    if (opts.emptyFoe.slot) foeUnit.append(opts.emptyFoe.slot);
+  }
   // 펫 (GDD 241-D 4): 데리고 간 펫이 내 옆에서 같이 때린다 — 공격 때 앞으로 튀는 연출 + 피해 숫자
   const petId = s.params.petAttack?.petId ?? null;
   const petEl = petBuddy(petId, petName(petId ?? '', faction));
@@ -644,7 +656,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     unhold();
     unaway();
   };
-  const halted = () => paused || overlayOpen;
+  const halted = () => paused || overlayOpen || !!opts.hold?.on;
 
   const pauseBtn = v2IconButton({ label: '일시정지', icon: 'i-pause' });
   const helpBtn = v2IconButton({ label: '도움말', icon: 'i-help' });
@@ -1923,6 +1935,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       }
       if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
       endPress();
+      if (opts.autoEnd) {
+        // 테스트 모드 연속 전투 (C.457): 결과 창 없이 — 적이 사라진 뒤 바로 다음(적 설정 창)
+        if (s.status === 'won') {
+          app.classList.add('is-tutkill'); // 각본 처치와 같은 사라짐 (짧게)
+          app.style.setProperty('--bha-tutkill', '0.6s');
+          foe.classList.add('is-vanish');
+        }
+        window.setTimeout(() => opts.onEnd(s), 800);
+        return;
+      }
       if (tutorialOpen) tutorial?.close(); // 직접 해 보기 중에 끝나면 튜토리얼도 마무리
       window.setTimeout(showResult, 700);
       return;
