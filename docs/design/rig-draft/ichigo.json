@@ -57,8 +57,8 @@
    "id": "arm_sword",
    "parent": "torso",
    "pivot": [
-    36,
-    62
+    35,
+    48
    ]
   },
   {
@@ -81,8 +81,8 @@
    "id": "sword",
    "parent": "arm_sword",
    "pivot": [
-    30,
-    65
+    31,
+    64
    ]
   },
   {
@@ -91,6 +91,14 @@
    "pivot": [
     51,
     55
+   ]
+  },
+  {
+   "id": "hakama_flap",
+   "parent": "torso",
+   "pivot": [
+    37,
+    84
    ]
   },
   {
@@ -136,12 +144,8 @@
    "bone": "chain_neck"
   },
   {
-   "id": "hair_back",
-   "bone": "head"
-  },
-  {
-   "id": "sleeve_sword",
-   "bone": "arm_sword"
+   "id": "hakama_flap",
+   "bone": "hakama_flap"
   },
   {
    "id": "foot_a",
@@ -192,6 +196,10 @@
    "bone": "head"
   },
   {
+   "id": "shoulder_sword",
+   "bone": "arm_sword"
+  },
+  {
    "id": "arm_sword",
    "bone": "arm_sword"
   },
@@ -221,11 +229,11 @@
      41
     ]
    },
-   "hair_back": {
-    "art": "parts/hair_back",
+   "shoulder_sword": {
+    "art": "parts/shoulder_sword",
     "at": [
-     41,
-     13
+     29,
+     39
     ],
     "size": [
      12,
@@ -320,11 +328,11 @@
      23
     ]
    },
-   "sleeve_sword": {
-    "art": "parts/sleeve_sword",
+   "hakama_flap": {
+    "art": "parts/hakama_flap",
     "at": [
-     26,
-     64
+     29,
+     72
     ],
     "size": [
      14,
@@ -465,11 +473,11 @@
    "chain_ear",
    "chain_hand",
    "chain_neck",
-   "hair_back",
-   "sleeve_sword",
+   "hakama_flap",
    "foot_a",
    "foot_b",
    "torso",
+   "shoulder_sword",
    "arm_back",
    "collar",
    "chain_arm",
@@ -520,16 +528,16 @@
    "chain_arm": "오른팔 사슬",
    "chain_hand": "오른손 사슬",
    "sword": "칼",
+   "hakama_flap": "바지 옷깃",
    "arm_back": "왼팔(뒷손)",
    "coat_tail_R": "코트 자락(오른쪽 아래)",
    "coat_panel_R": "코트 자락(오른쪽)",
    "coat_tail_L": "코트 자락(왼쪽 아래)",
-   "hair_back": "뒷머리?",
+   "shoulder_sword": "오른 어깨(앞손)",
    "face_bit": "얼굴 조각?",
    "scarf": "목 사슬(앞)",
    "coat_front": "코트 앞자락",
    "collar": "깃?",
-   "sleeve_sword": "오른 소매",
    "hand_back_bit": "왼손 조각?",
    "finger_back": "왼손가락?",
    "foot_a": "발 A",
@@ -546,7 +554,6 @@
     "머리",
     [
      "head",
-     "hair_back",
      "face_bit",
      "chain_ear"
     ]
@@ -564,8 +571,8 @@
    [
     "오른팔(앞손)·칼",
     [
+     "shoulder_sword",
      "arm_sword",
-     "sleeve_sword",
      "chain_arm",
      "chain_hand",
      "sword"
@@ -580,11 +587,12 @@
     ]
    ],
    [
-    "코트 자락",
+    "코트 자락·옷깃",
     [
      "coat_tail_L",
      "coat_tail_R",
-     "coat_panel_R"
+     "coat_panel_R",
+     "hakama_flap"
     ]
    ],
    [
@@ -596,14 +604,18 @@
    ]
   ],
   "follow": {
+   "shoulder_sword": [
+    "arm_sword",
+    "chain_arm",
+    "chain_hand",
+    "sword"
+   ],
    "arm_sword": [
-    "sleeve_sword",
     "chain_arm",
     "chain_hand",
     "sword"
    ],
    "head": [
-    "hair_back",
     "face_bit",
     "chain_ear"
    ],
@@ -630,16 +642,16 @@
      "w": 3
     }
    ],
-   "hair_back": [
+   "shoulder_sword": [
     {
      "pts": [
       [
-       44,
-       38
+       35,
+       48
       ],
       [
-       44,
-       38
+       35,
+       48
       ]
      ],
      "w": 3
@@ -754,27 +766,27 @@
     {
      "pts": [
       [
-       36,
-       62
+       35,
+       48
       ],
       [
-       36,
-       62
+       35,
+       48
       ]
      ],
      "w": 3
     }
    ],
-   "sleeve_sword": [
+   "hakama_flap": [
     {
      "pts": [
       [
-       36,
-       62
+       37,
+       84
       ],
       [
-       36,
-       62
+       37,
+       84
       ]
      ],
      "w": 3
@@ -814,12 +826,12 @@
     {
      "pts": [
       [
-       30,
-       65
+       31,
+       64
       ],
       [
-       30,
-       65
+       31,
+       64
       ]
      ],
      "w": 3
@@ -1026,6 +1038,16 @@
     1.5,
     2200,
     500
+   ]
+  },
+  "hakama_flap": {
+   "lag": 150,
+   "swing": 0.4,
+   "hang": 0.1,
+   "wave": [
+    1.5,
+    2500,
+    300
    ]
   }
  }
