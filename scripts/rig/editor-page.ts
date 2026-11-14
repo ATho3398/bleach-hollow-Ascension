@@ -480,14 +480,15 @@ function nudge(dx: number, dy: number) {
   if (mode === 'pivot') { moveJoint(boneOfSel(), dx, dy); save(); draw(); return; }
   if (scope === 'motion' && motion) { shiftMotion(boneOfSel(), 0, dx, dy); return; }
   // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
-  const moves = followMove(rig, look, sel);
+  const moves = followMove(rig, look, sel, (document.getElementById('sub') as HTMLInputElement | null)?.checked ?? true);
   if (!moves) return;
   for (const m of moves.parts) {
     const next: PartArt = { ...m.part, at: [m.part.at[0] + dx, m.part.at[1] + dy] };
     if ((m.slot === 'hair' || m.slot === 'hair_back') && !insideFrame(rig, next, m.slot)) { $('info').textContent = '머리카락이 틀 밖으로 나가서 못 옮김'; return; }
   }
   for (const m of moves.parts) m.part.at = [m.part.at[0] + dx, m.part.at[1] + dy];
-  for (const id of moves.bones) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
+  // 고른 부위의 관절도 같이(115-A 132) — 쉬는 자세 그림이 안 밀리게 관절 자리만 그대로 옮긴다
+  for (const id of [...(moves.lead ? [moves.lead] : []), ...moves.bones]) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
   save(); draw();
 }
 

@@ -22,6 +22,14 @@
    ]
   },
   {
+   "id": "hakama",
+   "parent": "root",
+   "pivot": [
+    45,
+    59
+   ]
+  },
+  {
    "id": "torso",
    "parent": "root",
    "pivot": [
@@ -62,14 +70,6 @@
    ]
   },
   {
-   "id": "hakama_flap",
-   "parent": "torso",
-   "pivot": [
-    37,
-    84
-   ]
-  },
-  {
    "id": "coat_panel_R",
    "parent": "torso",
    "pivot": [
@@ -80,16 +80,16 @@
  ],
  "slots": [
   {
-   "id": "hakama_flap",
-   "bone": "hakama_flap"
-  },
-  {
    "id": "foot_a",
    "bone": "root"
   },
   {
    "id": "foot_b",
    "bone": "root"
+  },
+  {
+   "id": "hakama",
+   "bone": "hakama"
   },
   {
    "id": "torso",
@@ -138,10 +138,6 @@
   {
    "id": "coat_front",
    "bone": "torso"
-  },
-  {
-   "id": "scarf",
-   "bone": "torso"
   }
  ],
  "bodies": {
@@ -179,26 +175,15 @@
      6
     ]
    },
-   "scarf": {
-    "art": "parts/scarf",
-    "at": [
-     28,
-     35
-    ],
-    "size": [
-     24,
-     11
-    ]
-   },
    "torso": {
     "art": "parts/torso",
     "at": [
-     31,
-     37
+     36,
+     39
     ],
     "size": [
-     33,
-     63
+     17,
+     19
     ]
    },
    "coat_front": {
@@ -231,17 +216,6 @@
     ],
     "size": [
      13,
-     23
-    ]
-   },
-   "hakama_flap": {
-    "art": "parts/hakama_flap",
-    "at": [
-     29,
-     58
-    ],
-    "size": [
-     14,
      23
     ]
    },
@@ -321,6 +295,17 @@
      4,
      5
     ]
+   },
+   "hakama": {
+    "art": "parts/hakama",
+    "at": [
+     29,
+     57
+    ],
+    "size": [
+     33,
+     43
+    ]
    }
   }
  },
@@ -333,6 +318,7 @@
   "parts": [
    "foot_a",
    "foot_b",
+   "hakama",
    "torso",
    "hand_back_bit",
    "arm_back",
@@ -342,11 +328,9 @@
    "arm_sword",
    "sword",
    "thumb",
-   "hakama_flap",
    "coat_panel_R",
    "coat_front",
-   "shoulder_sword",
-   "scarf"
+   "shoulder_sword"
   ]
  },
  "hairFrame": {
@@ -376,22 +360,21 @@
  "edit": {
   "names": {
    "root": "전체",
-   "torso": "몸통(가슴·하카마)",
+   "torso": "가슴",
    "head": "머리",
    "arm_sword": "오른팔(앞손)",
    "sword": "칼",
-   "hakama_flap": "바지 옷깃",
    "arm_back": "왼팔(뒷손)",
    "coat_panel_R": "코트 자락(오른쪽)",
    "shoulder_sword": "오른 어깨(앞손)",
    "face_bit": "얼굴 조각",
-   "scarf": "목 사슬(앞)",
    "coat_front": "코트 앞자락",
    "collar": "오른 소매 조각",
    "hand_back_bit": "왼손(뒷손)",
    "foot_a": "발 A",
    "foot_b": "발 B",
-   "thumb": "엄지(오른손)"
+   "thumb": "엄지(오른손)",
+   "hakama": "하카마"
   },
   "groups": [
    [
@@ -411,8 +394,8 @@
     "몸통",
     [
      "torso",
-     "coat_front",
-     "scarf"
+     "hakama",
+     "coat_front"
     ]
    ],
    [
@@ -435,8 +418,7 @@
    [
     "코트 자락·옷깃",
     [
-     "coat_panel_R",
-     "hakama_flap"
+     "coat_panel_R"
     ]
    ],
    [
@@ -467,7 +449,6 @@
    ],
    "torso": [
     "coat_front",
-    "scarf",
     "head",
     "face_bit",
     "shoulder_sword",
@@ -477,8 +458,7 @@
     "sword",
     "arm_back",
     "hand_back_bit",
-    "coat_panel_R",
-    "hakama_flap"
+    "coat_panel_R"
    ]
   }
  },
@@ -524,21 +504,6 @@
       [
        44,
        38
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "scarf": [
-    {
-     "pts": [
-      [
-       45,
-       80
-      ],
-      [
-       45,
-       80
       ]
      ],
      "w": 3
@@ -599,21 +564,6 @@
       [
        35,
        48
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "hakama_flap": [
-    {
-     "pts": [
-      [
-       37,
-       84
-      ],
-      [
-       37,
-       84
       ]
      ],
      "w": 3
@@ -723,6 +673,21 @@
      ],
      "w": 3
     }
+   ],
+   "hakama": [
+    {
+     "pts": [
+      [
+       45,
+       59
+      ],
+      [
+       45,
+       59
+      ]
+     ],
+     "w": 3
+    }
    ]
   }
  },
@@ -746,16 +711,6 @@
     2200,
     500
    ]
-  },
-  "hakama_flap": {
-   "lag": 150,
-   "swing": 0.4,
-   "hang": 0.1,
-   "wave": [
-    1.5,
-    2500,
-    300
-   ]
   }
  },
  "bodyJoints": {
@@ -770,8 +725,8 @@
      42
     ],
     "torso": [
-     30,
-     48
+     44,
+     56
     ],
     "coat_panel_R": [
      50,
@@ -780,10 +735,6 @@
     "arm_back": [
      50,
      42
-    ],
-    "hakama_flap": [
-     42,
-     65
     ]
    },
    "rot": {

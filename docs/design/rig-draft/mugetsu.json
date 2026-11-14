@@ -1,6 +1,6 @@
 {
  "id": "mugetsu",
- "note": "이치고(무월 — 이름 추정) 종이인형(GDD 115-A 129, 작업본만 — 게임 미사용). 사용자 부위 시트를 scripts/rig/tools/fit_parts.py + mugetsu_parts.py 로 조립. 조각 → 부위는 추정(확인 대기).",
+ "note": "이치고(무월 — 이름 추정) 종이인형(GDD 115-A 129, 작업본만 — 게임 미사용). 사용자 부위 시트를 scripts/rig/tools/fit_parts.py + mugetsu_parts.py 로 조립. 사용자 2026-11-14 17:10: 5번 = 뒷머리 베이스, 오른 하카마 위·아래 맞바꿈, 편집기에서 잡은 자리 반영. 이 파일이 기준(mugetsu_parts.py 다시 돌리지 말 것).",
  "motionSpeed": 1.5,
  "motionSpeedExcept": [
   "idle",
@@ -41,8 +41,16 @@
    "id": "head",
    "parent": "upper",
    "pivot": [
-    61,
-    39
+    54,
+    19
+   ]
+  },
+  {
+   "id": "hair_base",
+   "parent": "head",
+   "pivot": [
+    68,
+    18
    ]
   },
   {
@@ -57,24 +65,24 @@
    "id": "hair_b",
    "parent": "head",
    "pivot": [
-    68,
-    31
+    71,
+    28
    ]
   },
   {
    "id": "hair_c",
    "parent": "head",
    "pivot": [
-    70,
-    42
+    72,
+    37
    ]
   },
   {
    "id": "hair_d",
    "parent": "head",
    "pivot": [
-    70,
-    44
+    80,
+    40
    ]
   },
   {
@@ -153,7 +161,7 @@
    "id": "shin_b",
    "parent": "thigh_b",
    "pivot": [
-    65,
+    71,
     78
    ]
   },
@@ -161,15 +169,27 @@
    "id": "foot_b",
    "parent": "shin_b",
    "pivot": [
-    74,
-    99
+    75,
+    94
    ]
   }
  ],
  "slots": [
   {
-   "id": "body_base",
-   "bone": "lower"
+   "id": "arm_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "hair_base",
+   "bone": "hair_base"
+  },
+  {
+   "id": "hair_b",
+   "bone": "hair_b"
+  },
+  {
+   "id": "hair_a",
+   "bone": "hair_a"
   },
   {
    "id": "thigh_b",
@@ -180,20 +200,16 @@
    "bone": "head"
   },
   {
+   "id": "forearm_sword",
+   "bone": "forearm_sword"
+  },
+  {
    "id": "hair_d",
    "bone": "hair_d"
   },
   {
    "id": "foot_b",
    "bone": "foot_b"
-  },
-  {
-   "id": "hair_a",
-   "bone": "hair_a"
-  },
-  {
-   "id": "hair_b",
-   "bone": "hair_b"
   },
   {
    "id": "belly",
@@ -206,6 +222,10 @@
   {
    "id": "hair_c",
    "bone": "hair_c"
+  },
+  {
+   "id": "sword",
+   "bone": "sword"
   },
   {
    "id": "shin_f",
@@ -230,18 +250,6 @@
   {
    "id": "forearm_back",
    "bone": "forearm_back"
-  },
-  {
-   "id": "sword",
-   "bone": "sword"
-  },
-  {
-   "id": "forearm_sword",
-   "bone": "forearm_sword"
-  },
-  {
-   "id": "arm_sword",
-   "bone": "arm_sword"
   }
  ],
  "bodies": {
@@ -260,8 +268,8 @@
    "hair_a": {
     "art": "parts/hair_a",
     "at": [
-     75,
-     15
+     72,
+     14
     ],
     "size": [
      13,
@@ -271,8 +279,8 @@
    "hair_b": {
     "art": "parts/hair_b",
     "at": [
-     69,
-     29
+     65,
+     23
     ],
     "size": [
      26,
@@ -282,8 +290,8 @@
    "hair_c": {
     "art": "parts/hair_c",
     "at": [
-     76,
-     46
+     69,
+     34
     ],
     "size": [
      18,
@@ -293,23 +301,12 @@
    "hair_d": {
     "art": "parts/hair_d",
     "at": [
-     76,
-     48
+     79,
+     39
     ],
     "size": [
      7,
      28
-    ]
-   },
-   "body_base": {
-    "art": "parts/body_base",
-    "at": [
-     51,
-     38
-    ],
-    "size": [
-     24,
-     64
     ]
    },
    "chest": {
@@ -392,23 +389,23 @@
    "thigh_f": {
     "art": "parts/thigh_f",
     "at": [
-     46,
+     45,
      64
     ],
     "size": [
-     22,
-     30
+     23,
+     33
     ]
    },
    "shin_f": {
     "art": "parts/shin_f",
     "at": [
-     44,
+     45,
      74
     ],
     "size": [
-     23,
-     33
+     22,
+     30
     ]
    },
    "foot_f": {
@@ -425,7 +422,7 @@
    "thigh_b": {
     "art": "parts/thigh_b",
     "at": [
-     51,
+     55,
      55
     ],
     "size": [
@@ -436,8 +433,8 @@
    "shin_b": {
     "art": "parts/shin_b",
     "at": [
-     59,
-     74
+     60,
+     69
     ],
     "size": [
      23,
@@ -447,12 +444,23 @@
    "foot_b": {
     "art": "parts/foot_b",
     "at": [
-     71,
-     96
+     72,
+     91
     ],
     "size": [
      10,
      17
+    ]
+   },
+   "hair_base": {
+    "art": "parts/hair_base",
+    "at": [
+     59,
+     10
+    ],
+    "size": [
+     24,
+     64
     ]
    }
   }
@@ -464,25 +472,25 @@
  },
  "bodySlots": {
   "parts": [
-   "body_base",
+   "arm_sword",
+   "hair_base",
+   "hair_b",
+   "hair_a",
    "thigh_b",
    "head",
+   "forearm_sword",
    "hair_d",
    "foot_b",
-   "hair_a",
-   "hair_b",
    "belly",
    "foot_f",
    "hair_c",
+   "sword",
    "shin_f",
    "shin_b",
    "thigh_f",
    "chest",
    "arm_back",
-   "forearm_back",
-   "sword",
-   "forearm_sword",
-   "arm_sword"
+   "forearm_back"
   ]
  },
  "hairFrame": {
@@ -519,7 +527,6 @@
    "hair_b": "뒷머리 가닥 2",
    "hair_c": "뒷머리 가닥 3",
    "hair_d": "뒷머리 가닥 4(안쪽)",
-   "body_base": "몸 바탕(검정)",
    "chest": "가슴",
    "belly": "배",
    "arm_sword": "오른 위팔(앞)",
@@ -532,7 +539,8 @@
    "foot_f": "오른발",
    "thigh_b": "왼 하카마 위",
    "shin_b": "왼 하카마 아래",
-   "foot_b": "왼발"
+   "foot_b": "왼발",
+   "hair_base": "뒷머리 베이스"
   },
   "groups": [
    [
@@ -545,6 +553,7 @@
     "머리",
     [
      "head",
+     "hair_base",
      "hair_a",
      "hair_b",
      "hair_c",
@@ -557,8 +566,7 @@
      "upper",
      "chest",
      "lower",
-     "belly",
-     "body_base"
+     "belly"
     ]
    ],
    [
@@ -595,6 +603,7 @@
   ],
   "follow": {
    "head": [
+    "hair_base",
     "hair_a",
     "hair_b",
     "hair_c",
@@ -698,21 +707,6 @@
       [
        70,
        44
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "body_base": [
-    {
-     "pts": [
-      [
-       60,
-       61
-      ],
-      [
-       60,
-       61
       ]
      ],
      "w": 3
@@ -912,6 +906,21 @@
      ],
      "w": 3
     }
+   ],
+   "hair_base": [
+    {
+     "pts": [
+      [
+       68,
+       18
+      ],
+      [
+       68,
+       18
+      ]
+     ],
+     "w": 3
+    }
    ]
   }
  },
@@ -964,6 +973,16 @@
     1,
     2200,
     500
+   ]
+  },
+  "hair_base": {
+   "lag": 170,
+   "swing": 0.3,
+   "hang": 0.1,
+   "wave": [
+    1,
+    3000,
+    600
    ]
   }
  }
