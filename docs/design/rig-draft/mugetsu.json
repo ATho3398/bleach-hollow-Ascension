@@ -334,7 +334,7 @@
    "arm_sword": {
     "art": "parts/arm_sword",
     "at": [
-     50,
+     51,
      41
     ],
     "size": [
@@ -345,8 +345,8 @@
    "forearm_sword": {
     "art": "parts/forearm_sword",
     "at": [
-     46,
-     54
+     48,
+     56
     ],
     "size": [
      10,
@@ -356,8 +356,8 @@
    "sword": {
     "art": "parts/sword",
     "at": [
-     10,
-     65
+     12,
+     67
     ],
     "size": [
      43,
@@ -379,7 +379,7 @@
     "art": "parts/forearm_back",
     "at": [
      70,
-     52
+     54
     ],
     "size": [
      9,
@@ -389,8 +389,8 @@
    "thigh_f": {
     "art": "parts/thigh_f",
     "at": [
-     45,
-     64
+     49,
+     60
     ],
     "size": [
      23,
@@ -401,7 +401,7 @@
     "art": "parts/shin_f",
     "at": [
      45,
-     74
+     70
     ],
     "size": [
      22,
@@ -411,8 +411,8 @@
    "foot_f": {
     "art": "parts/foot_f",
     "at": [
-     46,
-     96
+     48,
+     91
     ],
     "size": [
      15,
@@ -984,6 +984,40 @@
     3000,
     600
    ]
+  }
+ },
+ "bodyJoints": {
+  "parts": {
+   "pivots": {
+    "shin_f": [
+     56,
+     80
+    ],
+    "arm_sword": [
+     56,
+     45
+    ],
+    "forearm_sword": [
+     54,
+     60
+    ],
+    "forearm_back": [
+     74,
+     56
+    ],
+    "sword": [
+     50,
+     70
+    ],
+    "thigh_f": [
+     62,
+     63
+    ],
+    "foot_f": [
+     58,
+     93
+    ]
+   }
   }
  }
 }

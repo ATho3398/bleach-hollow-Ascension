@@ -82,6 +82,75 @@
      "thumb"
     ]
    ]
+  },
+  "mugetsu": {
+   "joints": [
+    [
+     "parts",
+     "pivots",
+     "arm_sword"
+    ],
+    [
+     "parts",
+     "pivots",
+     "foot_f"
+    ],
+    [
+     "parts",
+     "pivots",
+     "forearm_back"
+    ],
+    [
+     "parts",
+     "pivots",
+     "forearm_sword"
+    ],
+    [
+     "parts",
+     "pivots",
+     "shin_f"
+    ],
+    [
+     "parts",
+     "pivots",
+     "sword"
+    ],
+    [
+     "parts",
+     "pivots",
+     "thigh_f"
+    ]
+   ],
+   "at": [
+    [
+     "parts",
+     "arm_sword"
+    ],
+    [
+     "parts",
+     "foot_f"
+    ],
+    [
+     "parts",
+     "forearm_back"
+    ],
+    [
+     "parts",
+     "forearm_sword"
+    ],
+    [
+     "parts",
+     "shin_f"
+    ],
+    [
+     "parts",
+     "sword"
+    ],
+    [
+     "parts",
+     "thigh_f"
+    ]
+   ]
   }
  }
 }
