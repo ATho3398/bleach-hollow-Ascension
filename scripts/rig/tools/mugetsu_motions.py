@@ -30,12 +30,6 @@ def m(duration, times, root, bones, loop=False, hit=None):
 
 Z = (0, 0, 0)
 SPEC = {
-    # 이동: 하카마 두 다리가 엇갈리고 몸은 살짝 앞으로, 칼 든 팔은 뒤로 끌 듯 조금만
-    'move': m(640, [0, 160, 320, 480, 640], [(0, 0, 0), (0, 0, -1), (0, 0, 0), (0, 0, -1), (0, 0, 0)],
-              {'upper': [-4, -5, -4, -5, -4], 'head': [2, 3, 2, 3, 2],
-               'thigh_f': [14, 2, -12, 2, 14], 'shin_f': [-4, 6, 10, -6, -4], 'foot_f': [-8, -4, 6, 8, -8],
-               'thigh_b': [-12, 2, 14, 2, -12], 'shin_b': [10, -6, -4, 6, 10], 'foot_b': [6, 8, -8, -4, 6],
-               'arm_sword': [-6, -3, 2, -3, -6], 'forearm_sword': [-4, -2, 0, -2, -4], 'arm_back': [8, 0, -8, 0, 8]}, loop=True),
     # 무기 공격 1 — 내려베기: 칼을 머리 위로 들었다가 앞으로 내려벰
     'attack': m(600, [0, 180, 300, 420, 600], [Z, (0, 2, 0), (0, -5, 1), (0, -4, 1), Z],
                 {'upper': [0, 5, -9, -7, 0], 'head': [0, -3, 4, 3, 0],
@@ -66,10 +60,58 @@ SPEC = {
 }
 
 
+def walk():
+    """이동(사용자 2026-11-14 17:46 "무월 걷기 왤케 어색하냐. 좀 더 고쳐봐"): 다리를 흔들기만 하면 발이 원을 그리며 미끄러진다 →
+    발목이 갈 자리를 먼저 정하고(디딘 발은 땅에 붙어 뒤로 밀리고, 뗀 발은 살짝 들려 앞으로) 허벅지·정강이 각도를 거꾸로 풀어 맞춘다. 발은 늘 땅과 나란히."""
+    import math
+    rig = json.load(open(os.path.join(DRAFT_DIR, 'mugetsu.json'), encoding='utf-8'))
+    piv = {b['id']: b['pivot'] for b in rig['bones']}
+    piv.update((rig.get('bodyJoints') or {}).get('parts', {}).get('pivots', {}))
+    N, D, STEP, LIFT = 8, 640, 5.0, 2.5
+    times = [round(D * i / N) for i in range(N + 1)]
+    bob = [0.8 * math.cos(4 * math.pi * i / N) for i in range(N + 1)]  # 두 발이 벌어졌을 때 낮고, 지나갈 때 높음
+    tr = {'root': [[t, 0, 0, round(bob[i], 2)] for i, t in enumerate(times)]}
+    for leg, ph0 in (('f', 0.0), ('b', 0.5)):
+        H, K, A = piv['thigh_' + leg], piv['shin_' + leg], piv['foot_' + leg]
+        l1, l2 = math.dist(H, K), math.dist(K, A)
+        r1, r2 = math.atan2(K[1] - H[1], K[0] - H[0]), math.atan2(A[1] - K[1], A[0] - K[0])
+        th, sh, ft = [], [], []
+        for i in range(N + 1):
+            ph = (i / N + ph0) % 1
+            if ph < 0.5:  # 디딤: 앞(왼쪽, −x) → 뒤
+                dx, dy = -STEP + 2 * STEP * (ph / 0.5), 0.0
+            else:         # 뗌: 뒤 → 앞, 가운데서 가장 높이
+                u = (ph - 0.5) / 0.5
+                dx, dy = STEP - 2 * STEP * u, -LIFT * math.sin(math.pi * u)
+            tx, ty = A[0] + dx - H[0], A[1] + dy - bob[i] - H[1]
+            d = min(math.hypot(tx, ty), l1 + l2 - 0.01)
+            base = math.atan2(ty, tx)
+            c = max(-1, min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)))
+            best = None
+            for sgn in (1, -1):  # 무릎은 쉬는 자세와 같은 쪽으로(가장 덜 도는 풀이)
+                a1 = base + sgn * math.acos(c)
+                kx, ky = l1 * math.cos(a1), l1 * math.sin(a1)
+                a2 = math.atan2(ty * d / math.hypot(tx, ty) - ky, tx * d / math.hypot(tx, ty) - kx)
+                turn = abs((math.degrees(a1 - r1) + 180) % 360 - 180) + abs((math.degrees(a2 - r2) + 180) % 360 - 180)
+                if best is None or turn < best[0]:
+                    best = (turn, a1, a2)
+            w1 = (math.degrees(best[1] - r1) + 180) % 360 - 180
+            w2 = (math.degrees(best[2] - r2) + 180) % 360 - 180
+            th.append(round(w1, 1)); sh.append(round(w2 - w1, 1)); ft.append(round(-w2 + (6 * math.sin(math.pi * (ph - 0.5) / 0.5) if ph >= 0.5 else 0), 1))
+        for bone, v in (('thigh_', th), ('shin_', sh), ('foot_', ft)):
+            tr[bone + leg] = [[t, a, 0, 0] for t, a in zip(times, v)]
+    sw = lambda amp, off=0.0: [round(amp * math.cos(2 * math.pi * (i / N + off)), 1) for i in range(N + 1)]  # noqa: E731
+    for bone, v in (('upper', [round(-3 + 0.8 * math.cos(4 * math.pi * i / N), 1) for i in range(N + 1)]), ('head', [round(1.5 - 0.6 * math.cos(4 * math.pi * i / N), 1) for i in range(N + 1)]),
+                    ('arm_sword', sw(3, 0.5)), ('forearm_sword', sw(2, 0.5)), ('arm_back', sw(5))):
+        tr[bone] = [[t, a, 0, 0] for t, a in zip(times, v)]
+    return {'duration': D, 'loop': True, 'tracks': tr}
+
+
 def main():
+    SPEC['move'] = walk()
     cur = json.load(open(OUT, encoding='utf-8'))
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
-          'idle': cur['idle'], **SPEC}
+          'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     open(OUT, 'w', encoding='utf-8').write(json.dumps(mo, ensure_ascii=False, indent=1) + '\n')
     print('mugetsu 동작', [k for k in mo if k != 'note'])
 
