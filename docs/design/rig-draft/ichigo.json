@@ -188,8 +188,8 @@
    "bone": "arm_back"
   },
   {
-   "id": "finger_back",
-   "bone": "arm_back"
+   "id": "thumb",
+   "bone": "arm_sword"
   },
   {
    "id": "head",
@@ -394,17 +394,6 @@
      5
     ]
    },
-   "finger_back": {
-    "art": "parts/finger_back",
-    "at": [
-     53,
-     42
-    ],
-    "size": [
-     4,
-     5
-    ]
-   },
    "coat_tail_R": {
     "art": "parts/coat_tail_R",
     "at": [
@@ -459,6 +448,17 @@
      14,
      19
     ]
+   },
+   "thumb": {
+    "art": "parts/thumb",
+    "at": [
+     28,
+     65
+    ],
+    "size": [
+     4,
+     5
+    ]
    }
   }
  },
@@ -485,9 +485,9 @@
    "sword",
    "face_bit",
    "hand_back_bit",
-   "finger_back",
    "head",
    "arm_sword",
+   "thumb",
    "coat_panel_R",
    "coat_front",
    "scarf"
@@ -539,9 +539,9 @@
    "coat_front": "코트 앞자락",
    "collar": "깃?",
    "hand_back_bit": "왼손 조각?",
-   "finger_back": "왼손가락?",
    "foot_a": "발 A",
-   "foot_b": "발 B"
+   "foot_b": "발 B",
+   "thumb": "엄지(오른손)"
   },
   "groups": [
    [
@@ -573,6 +573,7 @@
     [
      "shoulder_sword",
      "arm_sword",
+     "thumb",
      "chain_arm",
      "chain_hand",
      "sword"
@@ -582,8 +583,7 @@
     "왼팔(뒷손)",
     [
      "arm_back",
-     "hand_back_bit",
-     "finger_back"
+     "hand_back_bit"
     ]
    ],
    [
@@ -608,20 +608,21 @@
     "arm_sword",
     "chain_arm",
     "chain_hand",
-    "sword"
+    "sword",
+    "thumb"
    ],
    "arm_sword": [
     "chain_arm",
     "chain_hand",
-    "sword"
+    "sword",
+    "thumb"
    ],
    "head": [
     "face_bit",
     "chain_ear"
    ],
    "arm_back": [
-    "hand_back_bit",
-    "finger_back"
+    "hand_back_bit"
    ]
   }
  },
@@ -867,21 +868,6 @@
      "w": 3
     }
    ],
-   "finger_back": [
-    {
-     "pts": [
-      [
-       51,
-       55
-      ],
-      [
-       51,
-       55
-      ]
-     ],
-     "w": 3
-    }
-   ],
    "coat_tail_R": [
     {
      "pts": [
@@ -952,6 +938,21 @@
       [
        40,
        111
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "thumb": [
+    {
+     "pts": [
+      [
+       51,
+       55
+      ],
+      [
+       51,
+       55
       ]
      ],
      "w": 3

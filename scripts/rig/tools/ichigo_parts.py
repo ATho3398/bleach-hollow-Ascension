@@ -27,7 +27,7 @@ PIECES = {
     6: ('torso', 'torso', '몸통(가슴·하카마)'), 19: ('coat_front', 'torso', '코트 앞자락'), 12: ('collar', 'torso', '깃?'),
     9: ('arm_sword', 'arm_sword', '오른팔(앞손)'), 11: ('hakama_flap', 'hakama_flap', '바지 옷깃'), 14: ('chain_arm', 'chain_arm', '오른팔 사슬'),
     17: ('chain_hand', 'chain_hand', '오른손 사슬'), 18: ('sword', 'sword', '칼'),
-    8: ('arm_back', 'arm_back', '왼팔(뒷손)'), 13: ('hand_back_bit', 'arm_back', '왼손 조각?'), 16: ('finger_back', 'arm_back', '왼손가락?'),
+    8: ('arm_back', 'arm_back', '왼팔(뒷손)'), 13: ('hand_back_bit', 'arm_back', '왼손 조각?'), 16: ('thumb', 'arm_sword', '엄지(오른손)'),  # 사용자 "내가 엄지 만들어놨는데 어디감?" — 칼 든 손 위(칼자루 앞), 자리는 ichigo.json 에서 28·65
     15: ('coat_tail_R', 'coat_tail_R', '코트 자락(오른쪽 아래)'), 20: ('coat_panel_R', 'coat_panel_R', '코트 자락(오른쪽)'), 21: ('coat_tail_L', 'coat_tail_L', '코트 자락(왼쪽 아래)'),
     22: ('foot_a', 'root', '발 A'), 23: ('foot_b', 'root', '발 B'),
 }
@@ -114,9 +114,9 @@ def main():
         'view': {'note': '그림 칸 — 게임 미사용', 'rect': [-20, -24, 120, 140], 'clipY': H + 1},
         'edit': {'names': {**BONE_NAMES, **{s: n for s, _, n in PIECES.values()}},
                  'groups': [['전체', ['root']], ['머리', ['head', 'face_bit', 'chain_ear']], ['몸통', ['torso', 'coat_front', 'collar', 'scarf', 'chain_neck']],
-                            ['오른팔(앞손)·칼', ['shoulder_sword', 'arm_sword', 'chain_arm', 'chain_hand', 'sword']], ['왼팔(뒷손)', ['arm_back', 'hand_back_bit', 'finger_back']],
+                            ['오른팔(앞손)·칼', ['shoulder_sword', 'arm_sword', 'chain_arm', 'chain_hand', 'sword']], ['왼팔(뒷손)', ['arm_back', 'hand_back_bit']],
                             ['코트 자락·옷깃', ['coat_tail_L', 'coat_tail_R', 'coat_panel_R', 'hakama_flap']], ['발', ['foot_a', 'foot_b']]],
-                 'follow': {'shoulder_sword': ['arm_sword', 'chain_arm', 'chain_hand', 'sword'], 'arm_sword': ['chain_arm', 'chain_hand', 'sword'], 'head': ['face_bit', 'chain_ear'], 'arm_back': ['hand_back_bit', 'finger_back']}},
+                 'follow': {'shoulder_sword': ['arm_sword', 'chain_arm', 'chain_hand', 'sword'], 'arm_sword': ['chain_arm', 'chain_hand', 'sword'], 'head': ['face_bit', 'chain_ear'], 'arm_back': ['hand_back_bit']}},
         'skeletons': {'parts': {PIECES[i][0]: [{'pts': [piv[PIECES[i][1]], piv[PIECES[i][1]]], 'w': 3}] for i in PIECES}},
         'sway': {'chain_neck': {'lag': 140, 'swing': 0.6, 'hang': 0.1, 'wave': [4, 2100, 0]}, 'chain_ear': {'lag': 120, 'swing': 0.5, 'hang': 0.1, 'wave': [3, 1800, 300]},
                  'chain_arm': {'lag': 140, 'swing': 0.6, 'hang': 0.1, 'wave': [4, 2300, 500]}, 'chain_hand': {'lag': 140, 'swing': 0.6, 'hang': 0.1, 'wave': [5, 1900, 800]},
