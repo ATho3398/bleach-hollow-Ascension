@@ -1,0 +1,149 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-status-no-skin.png",
+    "02-pc-bag-form-ajuchas.png",
+    "03-pc-detail-color-pick.png",
+    "04-pc-bag-form-arrancar.png",
+    "05-pc-bag-special.png",
+    "06-pc-bag-limited-empty.png",
+    "07-pc-bag-form-shinigami.png",
+    "08-phone-bag-form-ajuchas.png",
+    "09-phone-detail-color-pick.png",
+    "10-phone-bag-limited-empty.png"
+  ],
+  "facts": {
+    "pc": {
+      "statusSkinPanel": 0,
+      "hollowCls": [
+        "진화체17",
+        "특수0",
+        "한정0"
+      ],
+      "hollowSub": [
+        "호로4",
+        "길리안2",
+        "아쥬커스7",
+        "바스트로데1",
+        "아란칼1",
+        "초월자2"
+      ],
+      "hollowCards": {
+        "tier1": [
+          "1단계 호로장착",
+          "거구장착",
+          "망령장착",
+          "속박자장착"
+        ],
+        "tier2": [
+          "길리안장착",
+          "길리안 외눈형장착"
+        ],
+        "tier3": [
+          "가시형색 5장착",
+          "뱀형색 5장착",
+          "외팔형색 5장착",
+          "거미형색 5장착",
+          "속도형색 5장착",
+          "짐승형색 5장착",
+          "부유형색 5장착"
+        ],
+        "tier4": [
+          "4단계 바스트로데장착"
+        ],
+        "tier5": [
+          "5단계 아란칼남·여장착"
+        ],
+        "transcendent": [
+          "태초장착",
+          "Unknown;03398장착"
+        ]
+      },
+      "chips": [
+        "carapace",
+        "carapacewater",
+        "carapacefire*",
+        "carapaceearth",
+        "carapacethunder"
+      ],
+      "wornAfterEquip": "carapacefire",
+      "special": [],
+      "limitedSub": [
+        "세트0",
+        "헤어0",
+        "복장0"
+      ],
+      "shinigamiSub": [
+        "사신4",
+        "참백도0",
+        "초월자2"
+      ],
+      "shinigamiCards": [
+        "1단계 혼백남·여장착",
+        "2단계 영술원 학생남·여장착",
+        "3단계 평대원장착",
+        "4단계 수석 대원장착"
+      ]
+    },
+    "phone": {
+      "hollowCls": [
+        "진화체17",
+        "특수0",
+        "한정0"
+      ],
+      "hollowSub": [
+        "호로4",
+        "길리안2",
+        "아쥬커스7",
+        "바스트로데1",
+        "아란칼1",
+        "초월자2"
+      ],
+      "hollowCards": {
+        "tier1": [
+          "1단계 호로장착",
+          "거구장착",
+          "망령장착",
+          "속박자장착"
+        ],
+        "tier2": [
+          "길리안장착",
+          "길리안 외눈형장착"
+        ],
+        "tier3": [
+          "가시형색 5장착",
+          "뱀형색 5장착",
+          "외팔형색 5장착",
+          "거미형색 5장착",
+          "속도형색 5장착",
+          "짐승형색 5장착",
+          "부유형색 5장착"
+        ],
+        "tier4": [
+          "4단계 바스트로데장착"
+        ],
+        "tier5": [
+          "5단계 아란칼남·여장착"
+        ],
+        "transcendent": [
+          "태초장착",
+          "Unknown;03398장착"
+        ]
+      },
+      "chips": [
+        "carapace",
+        "carapacewater",
+        "carapacefire*",
+        "carapaceearth",
+        "carapacethunder"
+      ],
+      "wornAfterEquip": "carapacefire",
+      "special": [],
+      "limitedSub": [
+        "세트0",
+        "헤어0",
+        "복장0"
+      ]
+    }
+  }
+}

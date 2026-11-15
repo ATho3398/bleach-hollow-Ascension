@@ -19,7 +19,7 @@ describe('164장 1: 평소 온천 약 20초', () => {
     expect(HH.spa.fullnessPerSecond * 20).toBeCloseTo(10, 9);
     expect(HH.tutorialSpa).toEqual({ hpPerSecond: 0.1, fullnessPerSecond: 1, conditionPerSecond: 10 });
   });
-  it('0 → 10초에 절반, 20초에 가득 → 저절로 방으로', () => {
+  it('0 → 10초에 절반, 20초에 가득 → 그대로 머묾(GDD v6.005)', () => {
     const n = newNest(0);
     n.hpFraction = 0;
     n.condition = 0;
@@ -29,7 +29,8 @@ describe('164장 1: 평소 온천 약 20초', () => {
     expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(0.5, 6);
     const f = passNestTime(n, 10.5 / 3600, false, 20_500);
-    expect(f.spaEnded?.reason).toBe('full');
+    expect(f.spaEnded).toBeNull(); // 가득 차도 저절로 나가지 않는다 (GDD v6.005)
+    expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(1, 6);
     expect(n.hunger).toBeGreaterThanOrEqual(10 - 1e-6); // 배부름 −10 (허기 +10)
   });

@@ -13,7 +13,7 @@ import { refStatOf } from './evolution/evolution';
 const GX = BALANCE.provisional.gear;
 const STAR_MAX = BALANCE.provisional.stats.tierTotals.length;
 
-/** 장비 능력치 줄 키: 능력치 6종 + 치명(확률) */
+/** 장비 능력치 줄 키: 능력치 7종 + 치명(확률) */
 export type GearStat = StatId | 'crit';
 const GEAR_STATS: readonly GearStat[] = [...STAT_IDS, 'crit'];
 
@@ -30,6 +30,8 @@ export interface GearItem {
   special: { id: string; value: number } | null;
   plus: number;
   gotAt: number;
+  /** 고정 이름 (낡은 장비 등, GDD 243장 3). 없으면 '등급 + 종류 이름' */
+  name?: string;
 }
 
 /** 슬롯 공유 장비 상태 (세이브 shared.gear, 형식 44) */
@@ -79,7 +81,7 @@ export function sanitizeGear(raw: unknown): GearState {
     const sp = isRec(v.special) && typeof v.special.id === 'string' && getGearSpecial(v.special.id) && typeof v.special.value === 'number' && Number.isFinite(v.special.value)
       ? { id: v.special.id, value: v.special.value } : null;
     seen.add(v.uid);
-    out.items.push({ uid: v.uid, kind: v.kind, grade: v.grade, star: clampStar(v.star), stats, special: sp, plus: Math.min(GX.maxPlus, nonNeg(v.plus)), gotAt: nonNeg(v.gotAt) });
+    out.items.push({ uid: v.uid, kind: v.kind, grade: v.grade, star: clampStar(v.star), stats, special: sp, plus: Math.min(GX.maxPlus, nonNeg(v.plus)), gotAt: nonNeg(v.gotAt), ...(typeof v.name === 'string' && v.name.length > 0 ? { name: v.name.slice(0, 20) } : {}) });
     if (out.items.length >= GX.cap) break;
   }
   const eq = isRec(r.equipped) ? r.equipped : {};
@@ -295,7 +297,7 @@ export function referenceLoadout(tierIndex: number): GearCarry {
   const star = Math.min(STAR_MAX, tierIndex + 1);
   const grade = GX.refLoadout.grade as GearGrade;
   const mk = (kind: GearKind, stats: GearStat[]) => ({ stats: Object.fromEntries(stats.map((s) => [s, gearLineValue(kind, grade, star, s)])), plus: GX.refLoadout.plus, special: null });
-  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['spd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
+  return carryOfItems([mk('weapon', ['atk']), mk('armor', ['hp', 'def']), mk('shoes', ['aspd']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit']), mk('accessory', ['spr', 'crit'])]);
 }
 
 /** 장비 세기 점수 (GDD 108장 4번 자동 착용 비교, C.179 provisional): 능력치 줄을 '그 줄의 노말 ★1 값' 몇 배인지로 더한다(종류가 달라도 같은 눈금).

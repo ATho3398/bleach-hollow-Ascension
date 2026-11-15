@@ -3,26 +3,28 @@
 import { STAT_IDS, type StatId } from '../schema';
 import { statName } from '../elements';
 
-/** 능력치 6종 '이름 = 하는 일' (GDD 165장 2) */
+/** 능력치 7종 '이름 = 하는 일' (GDD 165장 2, C.446 v6.055) */
 export const STAT_USE: Readonly<Record<StatId, string>> = {
+  // GDD 245장 4: 화면 값 = 최대 체력 · 'n.n초에 1번' · 받는 피해 배율 (엔진 수치는 그대로)
   hp: '최대 체력',
   atk: '일반 공격 피해 관련',
   int: '블록 공격 피해 관련',
-  def: '받는 일반 공격 피해 관련',
-  spr: '받는 블록 공격 피해 관련',
-  spd: '일반 공격 빠르기 관련',
+  def: '받는 물리 피해 배율 — 적 힘 ÷ 내 방어. ×1.00 = 지금 단계 권장 적 기준, 두 배면 ×0.50',
+  spr: '받는 특수 피해 배율 — 적 지능 ÷ 내 정신력. ×1.00 = 지금 단계 권장 적 기준, 두 배면 ×0.50',
+  aspd: '일반 공격 간격 — 0.78초에 1번 = 0.78초마다 한 대, 가장 빨라도 0.3초에 1번',
+  bspd: '블록 생성 간격 — 2.54초에 1개 = 2.54초마다 블록 하나, 가장 빨라도 1초에 1개',
 };
 
-/** 능력치 6줄 '이름 = 하는 일' */
+/** 능력치 7줄 '이름 = 하는 일' */
 export function statUseLines(f: { id: string }): string[] {
   return STAT_IDS.map((id) => `${statName(id, f.id)} = ${STAT_USE[id]}`);
 }
 
-/** 능력치 ⓘ 창 전체 (GDD 165장 2): 6종 + 치명 둘(최대만) + 치명타 피해 + 속성 피해 + 노력치. 머리 줄·'기본 n%'·괄호 부연 없음 */
+/** 능력치 ⓘ 창 전체 (GDD 165장 2): 7종 + 치명 둘(최대만) + 치명타 피해 + 속성 피해 + 노력치. 머리 줄·'기본 n%'·괄호 부연 없음 */
 export function statInfoLines(f: { id: string }, critMax: { basic: string; block: string }): string[] {
   return [
     ...statUseLines(f),
-    `평타 치명 = 일반 공격이 치명타로 터질 확률 (최대 ${critMax.basic})`,
+    `일반 공격 치명 = 일반 공격이 치명타로 터질 확률 (최대 ${critMax.basic})`,
     `블록 치명 = 블록 공격이 치명타로 터질 확률 (최대 ${critMax.block})`,
     '치명타 피해 = 치명타가 터지면 들어가는 피해 배율',
     '속성 피해 = 그 속성 공격 피해 관련',

@@ -12,14 +12,15 @@ import { statusInfo } from '../src/ui/bha/statusInfo';
 import { recoverCure, recoverGrantBag, CURE_ITEM_ID } from '../src/recoverTutorial';
 import hollowRaw from '../src/data/factions/hollow.json';
 
-const START = BALANCE.provisional.startItems[CURE_ITEM_ID]!;
+const START = BALANCE.provisional.startItems[CURE_ITEM_ID] ?? 0;
+const REWARD = BALANCE.provisional.tutorialRecover.cureReward;
 
-describe('134장 1: 새 세이브 = 가방에 구급상자 3개, 안내용 구급상자는 따로', () => {
-  it('시작 수는 balance provisional 3개', () => {
-    expect(START).toBe(3);
-    for (const f of FACTIONS) expect(newSaveData(f.id, 1000).shared.items[CURE_ITEM_ID]).toBe(START);
+describe('134장 1 → GDD 245장 9: 새 세이브 구급상자 없음, 안내용 1개 + 빈사 치료 뒤 치료제 3종', () => {
+  it('시작 수 0 (치료제는 튜토리얼 빈사 치료 뒤)', () => {
+    expect(START).toBe(0);
+    for (const f of FACTIONS) expect(newSaveData(f.id, 1000).shared.items[CURE_ITEM_ID]).toBeUndefined();
   });
-  it('튜토리얼 원정 → 회복 안내 구급상자 사용 뒤에도 3개 남는다', () => {
+  it('튜토리얼 원정 → 회복 안내 구급상자 사용 뒤 치료제 3종 각 3개', () => {
     for (const f of FACTIONS) {
       const save = newSaveData(f.id, 1000);
       const exp = createExpedition({
@@ -30,10 +31,10 @@ describe('134장 1: 새 세이브 = 가방에 구급상자 3개, 안내용 구�
       recordExpedition(save, exp, 2000);
       expect(save.nest.collapsed).toBe(true);
       recoverGrantBag(save);
-      expect(save.shared.items[CURE_ITEM_ID]).toBe(START + 1);
+      expect(save.shared.items[CURE_ITEM_ID]).toBe(1);
       expect(recoverCure(save, 3000)).toBe(true);
       recoverGrantBag(save); // 빈사가 풀린 뒤에는 더 넣지 않는다
-      expect(save.shared.items[CURE_ITEM_ID]).toBe(START);
+      for (const [id, n] of Object.entries(REWARD)) expect(save.shared.items[id], id).toBe(n);
     }
   });
   it('진행 중 세이브(시작 구급상자 없음)에는 소급하지 않는다: 안내용 1개만', () => {
@@ -145,7 +146,7 @@ describe('135장: 배부르면 컨디션이 저절로 참 · 온천 컨디션', 
     expect(r2.ended?.reason).toBe('full');
     expect(n.condition).toBe(100);
     expect(n.spa).toBeNull();
-    expect(enterSpa(n, 0)).toBe('full');
+    expect(enterSpa(n, 0, true)).toBe('full'); // 튜토리얼 온천만 '가득' 막힘 (GDD v6.005 — 평소 온천은 가득이어도 들어감)
     n.condition = 80;
     n.hunger = 0;
     expect(enterSpa(n, 0)).toBeNull(); // 체력 가득이어도 컨디션이 덜 차면 들어간다

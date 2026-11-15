@@ -10,6 +10,10 @@ import { testEvolveNext } from '../src/engine/testMode';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { battleItemEffectOf, HEAL_ITEM_IDS, HEAL_ROOM_LOCK, inventoryOf, useHealItemOnWalk, useInventoryItem } from '../src/inventory';
 import { buyShopItem, goldRows, shopDailyLeft, SOLD_OUT_TODAY } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const H = getFaction('hollow');
 const T0 = new Date(2026, 9, 30, 12, 0, 0).getTime();
@@ -21,7 +25,7 @@ describe('144장 1: 회복 물건 4종', () => {
     expect(HEAL_ITEM_IDS.map((id) => getGoldItem(id)?.name)).toEqual(['반창고', '붕대', '회복약', '치료제']);
     const BI = BALANCE.provisional.battleItems;
     expect(HEAL_ITEM_IDS.map((id) => { const b = BI[id]!; return b.effect === 'heal' ? [b.fraction, b.price, b.daily] : null; })).toEqual([[0.1, 20, 5], [0.25, 50, 3], [0.5, 110, 2], [1, 320, 1]]);
-    expect(getWandererItem('w-hp-potion')?.name).toBe('치료제'); // 떠돌이 상인도 그대로 판다
+    expect(getWandererItem('w-hp-potion')?.name).toBe('치료제'); // 우라하라도 그대로 판다
   });
   it("'체력 포션' 이름이 화면·도움말·튜토리얼에 없다", () => {
     for (const p of ['src/data/shop/items.json', 'src/data/shop/wanderer.json', 'src/data/help/tutorial.json', 'src/data/help/glossary.json', 'src/shop.ts', 'src/inventory.ts']) expect(read(p), p).not.toContain('체력 포션');
@@ -70,8 +74,8 @@ describe('144장 4·145장 3: 튜토리얼 회복 안내 · 시작 가방', () =
     expect(RECOVER_SCENES.map((s) => s.id)).toEqual(['dying', 'cure', 'to-spa', 'fullness', 'feed']); // GDD 241-B 5: 먹이 앞 배부름 카드 // 193장 8 (C.304): 빈사+가방 · 온천(쉬기 합침) · 먹이(회복 끝 합침) — 옛 7장
     expect(RECOVER_SCENES.length).toBeLessThanOrEqual(5); // 241-B 5 배부름 카드 +1
   });
-  it('새 세이브 가방 = 구급상자 3 + 반창고 3·붕대 2·회복약 1', () => {
-    expect(newSaveData('hollow', T0).shared.items).toEqual({ 'med-cure': 3, 'med-iv': 3, 'med-energy': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 }); // C.406 (GDD 241-C 5): 치료제 각 3개
+  it('새 세이브 가방 = 빈 채 (옛 시작 물건 전부 GDD v6.005 — 튜토리얼 빈사 치료 뒤)', () => {
+    expect(newSaveData('hollow', T0).shared.items).toEqual({});
   });
   it('첫 모험 회복 물건 안내 노란 알림은 161장에서 뺐다 (소모품은 알리지 않는다)', () => {
     expect(read('src/ui/app.ts')).not.toContain("title: '모험·전투 중에 체력이 모자라면 회복 물건을 쓴다'");
@@ -88,7 +92,8 @@ describe('145장 1 → 164장 1: 온천 = 약 20초(옛 5분), 튜토리얼 온�
     passNestTime(n, 19 / 3600, false, 19_000);
     expect(n.spa).not.toBeNull();
     const f = passNestTime(n, 2 / 3600, false, 21_000);
-    expect(f.spaEnded?.reason).toBe('full');
+    expect(f.spaEnded).toBeNull(); // 가득 차도 머문다 (GDD v6.005)
+    expect(n.spa).not.toBeNull();
     expect(n.hpFraction).toBeCloseTo(1, 6);
     expect(100 - n.hunger).toBeGreaterThan(89); // 온천 −10 (가득까지 배부름 총량 그대로)
   });
@@ -138,7 +143,7 @@ describe('145장 4: 상점 약 칸 — 하루 판매 수', () => {
 
 describe('세이브 형식 57 (56 → 57 마이그레이션)', () => {
   it('하루 판매 기록이 빈 것으로 생기고, 가방 개수(옛 id)는 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(88); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[56]).toBe('function');
     const s = newSaveData('hollow', T0);
     s.shared.items = { 'battle-potion': 4, 'w-hp-potion': 1 };

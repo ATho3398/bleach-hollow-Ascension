@@ -7,7 +7,7 @@ import type { FormDef } from '../data/schema';
 import { FORM_DEX_SORTS, nextDexSort, sortDex, type DexSortFacts } from '../engine/dexSort';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { newDexSortState } from '../engine/dexSort';
-import type { SaveData } from '../game';
+import { noEvolutionLabel, type SaveData } from '../game';
 import { h, icon, provisionalTag } from './bha/dom';
 import { dexCaption, dexCard, dexGrid, dexSortButton } from './bha/dexGrid';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -98,7 +98,7 @@ export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveDat
         const all = formsOfTier(f.tier);
         nodes.push(dexCaption(`${faction.tierNames[f.tier - 1]!} ${all.filter((x) => unlocked.has(x.id)).length}/${all.length}`));
       }
-      nodes.push(formCardOf(faction, f, unlocked, save.evolution.formId));
+      nodes.push(formCardOf(faction, f, unlocked, noEvolutionLabel(save) ? null : save.evolution.formId)); // 초월자는 '지금' 진화체 없음 (사용자 2026-11-15)
     }
     grid.replaceChildren(...nodes);
     grid.scrollTop = 0;

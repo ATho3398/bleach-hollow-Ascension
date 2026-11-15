@@ -32,7 +32,7 @@ describe('C.170 방·독', () => {
   const room = read('src/ui/roomView.ts');
   it('방 위 이름+트랙 줄 삭제 → 트랙 전환은 더보기 칸 "○○ 트랙", 이름은 상태 칩 위', () => {
     expect(room).not.toContain("sw.dataset.sc = 'track-switch'");
-    expect(room).toContain('label: `${getFaction(t.factionId).name} 트랙`');
+    expect(room).toContain(': `${getFaction(t.factionId).name} 트랙`'); // C.429: 초월자는 '초월자 ○○'
     expect(room).toContain("paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ')"); // C.318: 공용 부품 statusBox
     expect(read('src/ui/bha/statusBox.ts')).toContain('if (nameTag) box.prepend(nameTag);');
   });

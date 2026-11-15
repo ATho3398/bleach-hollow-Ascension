@@ -1,6 +1,6 @@
 // 테스트 패널 (GDD 38-4, C.88): 독 [더보기] → [테스트] (테스트 모드에서만). 탭 = 진화체 · 진화 · 능력치 · 특성 · 아이템 · 스킨 · 바로 전투 · 둥지·시간.
 // C.181 (GDD 109장 7): 진화(다음 진화 바로 + 연출)·아이템 생성·스킨 끼워보기 탭, 시간 앞당기기 +10분·+1시간·+1일.
-// C.186 (GDD 112장): '불러오기' 탭(떠돌이 상인·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이), 아이템 생성 = 장비 종류 × 특수 효과 전부·떠돌이 상인 물건, 오른쪽 [테스트 모드 끄기](확인 창).
+// C.186 (GDD 112장): '불러오기' 탭(우라하라·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이), 아이템 생성 = 장비 종류 × 특수 효과 전부·우라하라 물건, 오른쪽 [테스트 모드 끄기](확인 창).
 // 목록(종족·진화체·특성·적·보스·★·탑 층)은 모두 데이터에서 읽는다. 값을 바꾸면 persist 로 테스트 칸에만 저장된다.
 import { FACTIONS } from '../data/factions';
 import { formName, FORM_TABLE, abilityName } from '../data/evolution';
@@ -10,20 +10,20 @@ import { TRAITS, traitName } from '../data/traits';
 import { isBasicBlockTrait } from '../engine/absorb';
 import { bossName } from '../data/bosses';
 import { BALANCE } from '../config/balance';
-import { currentStats, elementDamageOf } from '../engine/evolution';
+import { baseStatsOf, capTierOf, currentStats, elementDamageOf, evCaps } from '../engine/evolution';
 import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
 import { pickList, type PickList, type PickOption } from './bha/pickList';
 import { elementDamageAbbr, elementDamagePct } from './bha/element';
 import { MAX_DIFFICULTY, recommendedDifficulty } from '../engine/difficulty';
 import type { FactionConfig } from '../engine/faction';
 import {
-  advanceTestTime, createTestItem, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
+  advanceTestTime, createTestItem, testAddHogyokuMaterials, TEST_HOGYOKU_MATERIAL_STEP, testGrantTranscendent, testTrackIds, testTranscendents, testEvolveNext, testItemIds, testSkins, testUnwearAll, testWearCosmetic, testWearSkin,
   createTestGearAll, getTestExpeditionForce, parseTestGearId, setTestExpeditionForce, testCallCare, testCallIdle, testCallWanderer, testClearCare, testClearIdle,
   testEventTiles, testGearGrade, testMutations, testRerollWanderer, testSendWanderer, TEST_IDLE_HOURS, TEST_WANDERER_TIERS,
   TEST_CURRENCY_NAMES, TEST_ITEM_KINDS, TEST_ITEM_KIND_NAMES, TEST_ITEM_MAX, TEST_TIME_STEPS, type TestCurrency, type TestItemKind,
   resetStats, setAbility, setCustomStats, setElementDamage, TEST_ELEMENT_DAMAGE_MAX, setForm, setNestValues, setTraitSlots, testFoes, TEST_SPEEDS, TOWER_FLOORS, type TestBattleChoice,
 } from '../engine/testMode';
-import { statBonusOf, type SaveData } from '../game';
+import { statBonusOf, switchTrack, type SaveData } from '../game';
 import type { FoodId } from '../engine/faction';
 import type { EvolveResult } from '../engine/evolution/evolution';
 import { consumableName, gearKindName } from '../inventory';
@@ -31,7 +31,8 @@ import { categoryName, cosmeticName, getCosmetic, getWandererItem, COSMETIC_ITEM
 import { CARE_ACTIONS, homeHpOf, type CareAction } from '../engine/nest';
 import { mutationName, tileName } from '../data/tiles';
 import { confirmDialog } from './confirmDialog';
-import { skinLabel } from '../data/skins';
+import { getSkin } from '../data/skins';
+import { MODEL_LOOK_GROUP_NAMES } from '../data/skins/lookOptions';
 import { GEAR_GRADES, GEAR_GRADE_NAMES, GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, type GearGrade } from '../data/gear';
 import { isWorn } from '../shop';
 import { button, el, info, panel, seg } from './bha/dom';
@@ -41,8 +42,12 @@ import { showToast } from './bha/nest';
 import { disableTestMode, setTestSpeed, testSpeed } from './testMode';
 import { setSpeed as setExpSpeed } from './expeditionView';
 import { shownName } from './displayName';
+import { shownAtStat, statForShown } from '../home';
+import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
+import { HOGYOKU_TRACK_IDS } from '../engine/transcend';
+import { materialHave } from '../engine/hogyokuMaterials';
 
-export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call';
+export type TestTab = 'form' | 'evolve' | 'stats' | 'traits' | 'items' | 'skins' | 'battle' | 'nest' | 'call' | 'transcend';
 const TABS: { id: TestTab; label: string }[] = [
   { id: 'form', label: '진화체' },
   { id: 'evolve', label: '진화' },
@@ -53,6 +58,7 @@ const TABS: { id: TestTab; label: string }[] = [
   { id: 'battle', label: '바로 전투' },
   { id: 'nest', label: '둥지·시간' },
   { id: 'call', label: '불러오기' },
+  { id: 'transcend', label: '붕옥·초월자' },
 ];
 
 export interface TestPanelHandlers {
@@ -69,6 +75,8 @@ export interface TestPanelHandlers {
   onReset: () => void;
   /** 진화체·종족이 바뀌어 방을 다시 그려야 할 때 (테마·그림) */
   onBodyChanged: () => void;
+  /** 초월자 얻기·트랙 전환으로 지금 트랙이 바뀌었다 (C.434) — 방을 그 트랙으로 */
+  onTrackChanged?: () => void;
 }
 
 /** 패널을 그린다. tab = 처음 보일 탭. 마지막 바로 전투 선택은 다음에 열 때 그대로 */
@@ -155,11 +163,11 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     { label: '블록', value: save.build.slots.map((id) => (id ? traitName(id, fid) : '—')).join(' · ') },
     { label: '고유 특성', value: save.evolution.ability ? abilityName(save.evolution.ability, fid) : '없음' },
     { label: '리스크·허기·컨디션', value: [save.nest.risk, save.nest.hunger, save.nest.condition].map((v) => Math.round(v)).join(' · ') }, // 소수 꼬리(20.00001…) 대신 정수 (C.182 UI 검수)
-    { label: '속도', value: `×${testSpeed()}` },
+    { label: '테스트 배속', value: `×${testSpeed()}` }, // 능력치 공격속도·블록속도(C.446)와 헷갈리지 않게 (C.457)
   ]));
-  // 떠돌이 상인 물건 (GDD 112장 2): 길이가 바뀌는 글이라 오른쪽 맨 아래 따로 (버튼 없는 칸 — 불러오기 탭 버튼이 안 움직이게)
+  // 우라하라 물건 (GDD 112장 2): 길이가 바뀌는 글이라 오른쪽 맨 아래 따로 (버튼 없는 칸 — 불러오기 탭 버튼이 안 움직이게)
   const visitNow = save.shared.wanderer.visit;
-  const stockPanel = visitNow ? [panel({ title: '떠돌이 상인 물건', aside: `${visitNow.tier}단계` }, note(visitNow.stock.map((st) => `${getWandererItem(st.itemId)?.name ?? st.itemId}${st.sold ? ' (팔림)' : ''}`).join(' · ')))] : [];
+  const stockPanel = visitNow ? [panel({ title: '우라하라 물건', aside: `${visitNow.tier}단계` }, note(visitNow.stock.map((st) => `${getWandererItem(st.itemId)?.name ?? st.itemId}${st.sold ? ' (팔림)' : ''}`).join(' · ')))] : [];
 
   let body: Node[];
   if (tab === 'form') body = formTab();
@@ -170,13 +178,14 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   else if (tab === 'items') body = itemsTab();
   else if (tab === 'skins') body = skinsTab();
   else if (tab === 'call') body = callTab();
+  else if (tab === 'transcend') body = transcendTab();
   else body = nestTab();
 
   // 테스트 모드 끄기 (GDD 112장 1): 어느 탭에서나 왼쪽 맨 아래 — 확인 창 뒤 끈다 (설정 > [정보] 줄과 같은 동작)
   const quit = panel({ title: '테스트 모드' }, row(button({ label: '테스트 모드 끄기', icon: 'i-quit', variant: 'danger', onClick: () => confirmDialog({
     title: '테스트 모드 끄기',
     body: '진짜 세이브로 돌아가 처음부터 다시 연다. 테스트 칸은 지우지 않고 남는다. 다시 켜려면 설정 > [정보] 버전 줄을 7번 누른다.',
-    yes: '끄기', no: '아니오', danger: true,
+    yes: '끄기', no: '아니요', danger: true,
     onYes: disableTestMode,
   }) })), note('끄는 법: 여기, 또는 설정 > [정보] > [테스트 모드 끄기], 또는 주소에 ?test=0.'));
 
@@ -207,15 +216,46 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       note('종족을 바꾸면 테스트 칸을 그 종족으로 새로 만든다(전체 해금). 능력치는 그 진화체의 종족값 + 지금 노력치·입력값이다.'))];
   }
 
+  // ── 능력치 (C.457, GDD v6.081 8절 · 사용자 2026-11-15 "스탯 수치 표기 바꾸라니까 왜 아직 999로 기준"): 능력치 숫자 ↔ 실제 값 둘 다로 넣는다 —
+  //    한쪽을 넣으면 다른 쪽이 바로 바뀐다(실제 값 → 능력치는 이분 탐색). 원값 999 기준 대신 프리셋 [이 단계 최대]·[속도 상한]
   function statsTab(): Node[] {
     const max = BALANCE.provisional.stats.statMax;
-    const inputs = STAT_IDS.map((s) => [s, numInput(stats[s], 0, max, statName(s, fid))] as const);
-    // 속성 피해 5종 % (GDD 48장 5번)
+    const raw = currentStats(save.evolution, fid); // 입력 칸 = 붕옥·초월자 배율 전 숫자 (setCustomStats 와 같은 기준)
+    const REAL: Partial<Record<StatId, { unit: string; step: string; digits: number }>> = {
+      hp: { unit: '최대 체력', step: '1', digits: 0 },
+      aspd: { unit: '초에 1번', step: '0.01', digits: 2 },
+      bspd: { unit: '초에 1개', step: '0.01', digits: 2 },
+      def: { unit: '받는 피해 ×', step: '0.01', digits: 2 },
+      spr: { unit: '받는 피해 ×', step: '0.01', digits: 2 },
+    };
+    const realOf = (k: StatId, v: number) => shownAtStat(save, k, v).value;
+    const fmt = (k: StatId, x: number) => (REAL[k]!.digits === 0 ? String(Math.ceil(x - 1e-6)) : x.toFixed(REAL[k]!.digits));
+    const rows = STAT_IDS.map((k) => {
+      const num = numInput(raw[k], 0, max, statName(k, fid));
+      const r = REAL[k];
+      let realIn: HTMLInputElement | null = null;
+      if (r) {
+        realIn = el('input', 'bha-test__input');
+        realIn.type = 'number';
+        realIn.inputMode = 'decimal';
+        realIn.step = r.step;
+        realIn.min = '0';
+        realIn.value = fmt(k, realOf(k, raw[k]));
+        realIn.setAttribute('aria-label', `${statName(k, fid)} 실제 값 (${r.unit})`);
+        const ri = realIn;
+        num.oninput = () => { ri.value = fmt(k, realOf(k, Number(num.value) || 0)); };
+        ri.onchange = () => {
+          const v = statForShown(save, k, Number(ri.value));
+          num.value = String(v);
+          ri.value = fmt(k, realOf(k, v)); // 닿을 수 있는 값으로 맞춘다 (상한·정수 능력치)
+        };
+      }
+      return { k, num, real: realIn };
+    });
     const elemInputs = ELEMENT_DAMAGE_IDS.map((id) => [id, numInput(elemDmg[id] ?? 0, 0, TEST_ELEMENT_DAMAGE_MAX, `${elementDamageAbbr(id, fid)} 피해 %`)] as const);
+    const want = (): Partial<Record<StatId, number>> => Object.fromEntries(rows.map((r) => [r.k, Number(r.num.value)]));
     const apply = button({ label: '적용', icon: 'i-check', variant: 'primary', onClick: () => {
-      const want: Partial<Record<StatId, number>> = {};
-      for (const [s, i] of inputs) want[s] = Number(i.value);
-      setCustomStats(save, want);
+      setCustomStats(save, want());
       setElementDamage(save, Object.fromEntries(elemInputs.map(([id, i]) => [id, Number(i.value)])));
       saved('능력치를 넣었다');
       redraw();
@@ -225,8 +265,30 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       saved('진화체 기본값으로 되돌렸다');
       redraw();
     } });
-    return [panel({ title: '능력치 직접 입력', aside: `0~${max}` }, grid([...inputs.map(([s, i]) => [statName(s, fid), i] as [string, Node]), ...elemInputs.map(([id, i]) => [`${elementDamageAbbr(id, fid)} 피해 %`, i] as [string, Node])]), row(apply, reset),
-      note('입력값은 모험·등급전·연습·바로 전투 모두에 그대로 쓰인다(노력치는 0으로).'))];
+    // 프리셋: 이 단계 최대 = 종족값 + 능력치 하나 노력치 상한(각 능력치를 따로 끝까지 — 합계 상한은 무시) · 속도 상한 = 공격 0.3초·블록 1초에 닿는 가장 작은 능력치
+    const top = button({ label: '이 단계 최대', icon: 'i-rare', size: 'small', onClick: () => {
+      const base = baseStatsOf(save.evolution, fid);
+      const per = evCaps(capTierOf(save.evolution)).perStat;
+      for (const r of rows) {
+        r.num.value = String(Math.min(max, base[r.k] + per));
+        r.num.oninput?.(new Event('input'));
+      }
+    } });
+    const capBtn = button({ label: '속도 상한', icon: 'i-timer', size: 'small', onClick: () => {
+      const C = BALANCE.provisional.combat;
+      for (const r of rows) {
+        if (r.k !== 'aspd' && r.k !== 'bspd') continue;
+        r.num.value = String(statForShown(save, r.k, r.k === 'aspd' ? C.attackSecondsMin : C.spawnSecondsMin));
+        r.num.oninput?.(new Event('input'));
+      }
+    } });
+    const g = el('div', 'bha-test__grid bha-test__grid--3');
+    g.append(el('span', 'bha-test__label', ''), el('span', 'bha-test__label', '능력치'), el('span', 'bha-test__label', '실제 값'));
+    for (const r of rows) g.append(el('span', 'bha-test__label', statName(r.k, fid)), r.num, r.real ?? el('span', 'bha-test__label', '= 능력치'));
+    for (const [id, i] of elemInputs) g.append(el('span', 'bha-test__label', `${elementDamageAbbr(id, fid)} 피해 %`), i, el('span'));
+    return [panel({ title: '능력치 직접 입력', aside: '능력치 ↔ 실제 값' }, g, row(apply, reset), row(top, capBtn),
+      note('능력치 숫자나 실제 값(최대 체력·공격 간격·블록 간격·받는 피해 ×) 중 하나를 넣으면 다른 쪽이 따라 바뀐다. [적용]해야 들어간다. 붕옥·초월자 보너스는 그 위에 더 붙는다.'),
+      note('이 단계 최대 = 종족값 + 능력치 하나 노력치 상한(능력치마다 따로 끝까지). 속도 상한 = 공격 0.3초·블록 1초에 닿는 가장 작은 능력치(능력치 상한으로도 못 닿으면 상한값). 입력값은 모험·등급전·연습·바로 전투 모두에 쓰인다(노력치는 0으로).'))];
   }
 
   function traitsTab(): Node[] {
@@ -241,7 +303,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [panel({ title: '블록 고르기', aside: `${TRAITS.length}종` },
       grid([...sels.map((s, i) => [`칸 ${i + 1}`, s.el] as [string, Node]), ['고유 특성', abil.el]]), row(apply),
-      note('같은 블록은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 6종).'))];
+      note(`같은 블록은 한 칸에만 넣는다. 고유 특성 = 진화 순간 노력치 방향(능력치 ${STAT_IDS.length}종).`))];
   }
 
   function battleTab(): Node[] {
@@ -255,12 +317,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const starSel = select(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(prev?.star ?? recommendedDifficulty(save.evolution.tierIndex)), '난이도');
     const streak = numInput(prev?.streak ?? 0, 0, BALANCE.provisional.difficulty.streak.maxClears, '연속 클리어');
     const floorSel = select([{ value: '', label: '탑 아님' }, ...Array.from({ length: TOWER_FLOORS }, (_, i) => ({ value: String(i + 1), label: `${i + 1}층` }))], prev?.floor ? String(prev.floor) : '', '탑 층');
-    const go = button({ label: '전투 시작', icon: 'i-attack', variant: 'primary', onClick: () => {
+    const go = button({ label: '전투 들어가기', icon: 'i-attack', variant: 'primary', onClick: () => {
       lastBattle = { foeId: foeSel.value, star: Number(starSel.value), streak: Number(streak.value) || 0, floor: floorSel.value ? Number(floorSel.value) : null };
       hd.onBattle(lastBattle);
     } });
     return [panel({ title: '바로 전투', aside: `${foes.length}종` },
       grid([['상대', foeSel.el], ['★', starSel.el], ['연속', streak], ['탑 층', floorSel.el]]), row(go),
+      note('들어가면 적 없이 [적 설정] 창이 뜬다 — 여기 값이 창의 처음 값이다. 창에서 적 종류·★·체력/공격력 배율·공격 여부·무적을 정하고 [확인]하면 적이 나오고, 쓰러뜨리면 창이 다시 뜬다(내 체력은 이어짐).'),
       note('탑 층을 고르면 ★·배율은 층 규칙(★ = ⌈층/10⌉, 구간 안 층마다 +4%, 50층 +20%). 결과는 테스트 칸 런 로그에만 남는다.'))];
   }
 
@@ -360,14 +423,19 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       redraw();
     } });
     return [panel({ title: '아이템 생성', aside: TEST_ITEM_KIND_NAMES[kindSel.value as TestItemKind] }, g, row(make, all),
-      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 떠돌이 상인 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
-      note('떠돌이 상인 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·영혼 결정은 상한이 없다.'))];
+      note('장비는 종류 × 특수 효과 전부를 고른다(상점 장비 = 노멀 종류, 우라하라 장비 = 레어~전설 종류와 같다). 특수 효과는 영웅·전설에만 붙어서, 노멀·레어를 고르면 영웅으로 만든다.'),
+      note('우라하라 물건은 사는 것과 같은 효과를 공짜로 낸다. 먹이·소모품·뽑기권은 보관 상한까지(수련권은 제한 없음), 장비는 보관함이 차면 멈춘다. 꾸밈은 1개(보유)다. 골드·영옥·붕옥 재료 3종·초월 조각은 상한이 없다.'))];
   }
 
   // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족 스킨·꾸밈 전부 착용·해제 ──
   function skinsTab(): Node[] {
+    // 모델 고르기 (C.434, GDD 17절 v6.036): 단계 모델(종족 설정 단계 이름) · 초월자 외형 · 스킨(단계·시작 외형 포함) · 그림 대기(자기 그림 없음 — 지금 진화체 그림으로 보임)
     const skins = testSkins(fid);
-    const skinSel = select([{ value: '', label: '— 기본(진화체) —' }, ...skins.map((k) => ({ value: k.id, label: `${skinLabel(k)}${save.skin === k.id ? ' (착용 중)' : ''}`, group: k.tierLook ? '단계 외형' : k.startOnly ? '시작 외형' : '스킨' }))], save.skin ?? '', '스킨');
+    const skinSel = select([{ value: '', label: '— 기본(진화체) —' }, ...skins.map((k) => {
+      const def = k.group === 'skin' ? getSkin(k.id) : undefined;
+      const group = k.group === 'skin' ? (def?.tierLook ? '단계 외형' : def?.startOnly ? '시작 외형' : '스킨') : MODEL_LOOK_GROUP_NAMES[k.group];
+      return { value: k.id, label: `${k.label}${k.waiting ? ' (그림 대기)' : ''}${save.skin === k.id ? ' (착용 중)' : ''}`, group };
+    })], save.skin ?? '', '스킨');
     const wearSkin = button({ label: '착용', icon: 'i-check', variant: 'primary', onClick: () => {
       if (!testWearSkin(save, skinSel.value || null)) return;
       saved(skinSel.value ? '스킨을 입혔다' : '스킨을 벗겼다');
@@ -406,7 +474,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     return [
       panel({ title: '스킨', aside: `${skins.length}종` }, grid([['스킨', skinSel.el]]), row(wearSkin, offSkin),
-        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 스킨 전부를 보인다(상점에 안 나오는 단계·아란칼 외형 포함).' : '이 종족은 스킨 데이터가 없다.')),
+        note(skins.length ? '가진 것 상관없이 이 종족이 입을 수 있는 모델·스킨 전부를 보인다(단계 모델·초월자 외형·상점에 안 나오는 단계 외형 포함). 그림 대기 = 자기 그림이 아직 없어 지금 진화체 그림으로 보인다.' : '이 종족은 스킨 데이터가 없다.')),
       panel({ title: '꾸밈', aside: `${wearables.length}종` }, grid([['꾸밈', cosSel.el]]), row(wearCos, offCos), row(offAll),
         note('안 가진 꾸밈은 입힐 때 테스트 칸에 보유로 넣는다.')),
     ];
@@ -442,25 +510,72 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
   }
 
   // ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다. 줄마다 고르기 → [지금 부르기] · 걷기 ──
+  // ── 붕옥·초월자 (C.434, GDD 17절 v6.036): 테스트 칸은 붕옥 등장·공명 + 두 캐릭터가 켜진 채. 초월자 6종 바로 얻기(추천안 = 합체 흐름 대신 바로 지급) · 트랙 전환 ──
+  function transcendTab(): Node[] {
+    const owned = new Set(save.transcendentDex.map((x) => x.id));
+    const grants = testTranscendents().map((t) => button({
+      label: `${t.name}${owned.has(t.id) ? ' ✓' : ''}`, icon: 'i-evolve', size: 'small', variant: owned.has(t.id) ? undefined : 'primary',
+      onClick: () => {
+        const r = testGrantTranscendent(save, t.id);
+        if (!r) return;
+        hd.persist();
+        showToast({ eyebrow: '테스트', title: r === 'added' ? `초월자 ${t.name} 얻음` : `초월자 ${t.name} 트랙으로`, meta: '지금 캐릭터들을 이어받은 초월자 트랙(합체와 같은 이어받기). 두 캐릭터는 그대로 남는다.' }, 0, 1800);
+        hd.onTrackChanged?.();
+      },
+    }));
+    const tracks = testTrackIds(save);
+    const nameOf = (t: (typeof tracks)[number]) => (t.transcendentId ? `초월자 ${testTranscendents().find((x) => x.id === t.transcendentId)?.name ?? t.transcendentId}` : `${FACTIONS.find((f) => f.id === t.factionId)?.name ?? t.factionId} 트랙`);
+    const trackSel = select(tracks.map((t) => ({ value: t.id, label: `${nameOf(t)}${t.current ? ' (지금)' : ''}`, group: t.transcendentId ? '초월자' : '캐릭터' })), tracks.find((t) => !t.current)?.id ?? tracks[0]?.id ?? '', '트랙');
+    const go = button({ label: '이 트랙으로', icon: 'i-swap', variant: 'primary', onClick: () => {
+      if (!switchTrack(save, trackSel.value)) return;
+      hd.persist();
+      hd.onTrackChanged?.();
+    } });
+    const h = save.hogyoku;
+    // 초월 조각 (GDD 12-4 v6.048, C.441): 전용 블록 강화 시험용
+    const shards = button({ label: '초월 조각 +100', icon: 'i-rare', size: 'small', onClick: () => {
+      save.shared.transcendShards += 100;
+      hd.persist();
+      showToast({ eyebrow: '테스트', title: `초월 조각 ${save.shared.transcendShards}`, meta: '상태 화면 「전용 블록 강화」에서 쓴다.' }, 0, 1800);
+      redraw();
+    } });
+    // 붕옥 재료 3종 (C.457 사용자 2026-11-15 '붕옥 재료들 없어서 강화를 못 해봄'): 붕옥 > 개발의 강화 트랙 3개 재료
+    const matLine = () => HOGYOKU_TRACK_IDS.map((t) => `${HOGYOKU_MATERIAL_NAMES[t]} ${materialHave(save, t)}`).join(' · ');
+    const mats = button({ label: `재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, icon: 'i-rare', size: 'small', variant: 'primary', onClick: () => {
+      testAddHogyokuMaterials(save);
+      hd.persist();
+      showToast({ eyebrow: '테스트', title: `붕옥 재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, meta: matLine() }, 0, 1800);
+      redraw();
+    } });
+    return [
+      panel({ title: '붕옥 재료', aside: `각 +${TEST_HOGYOKU_MATERIAL_STEP}` }, row(mats), note(`${matLine()} — 붕옥 > 개발에서 강화 트랙 3개(재료별)를 올린다.`)),
+      panel({ title: '초월자 얻기', aside: `${owned.size}/${testTranscendents().length}` }, row(...grants),
+        note('누르면 그 초월자 트랙을 만들어 바로 간다(이미 있으면 그 트랙으로). 진짜 합체(개발 100%·1위 조건·두 캐릭터 초기화)는 거치지 않는다.')),
+      panel({ title: '초월 조각', aside: String(save.shared.transcendShards) }, row(shards), note('초월자 전용 블록(아이젠·이치고 등 kit 블록) 강화 재료 — 상태 화면 「전용 블록 강화」. 진짜 게임에선 초월자로 이긴 전투마다 나온다.')),
+      panel({ title: '초월자 트랙 전환', aside: `${tracks.length}개` }, grid([['트랙', trackSel.el]]), row(go),
+        note(`붕옥 ${h.tabOpen ? '등장' : '닫힘'} · ${h.resonance ? '공명' : '공명 전'} — 테스트 칸은 늘 켜 둔다. 방 더보기의 트랙 전환과 같다.`)),
+    ];
+  }
+
   function callTab(): Node[] {
     const done = (msg: string, meta: string) => {
       hd.persist();
       showToast({ eyebrow: '테스트', title: msg, meta }, 0, 1800);
       redraw();
     };
-    // 떠돌이 상인 (GDD 85장 5번): 숨은 단계 1~n → 그 단계 등급표로 물건을 뽑는다
+    // 우라하라 (GDD 85장 5번): 숨은 단계 1~n → 그 단계 등급표로 물건을 뽑는다
     const visit = save.shared.wanderer.visit;
     const tierSel = select(Array.from({ length: TEST_WANDERER_TIERS }, (_, i) => ({ value: String(i + 1), label: `${i + 1}단계` })), String(visit?.tier ?? lastCall.tier), '상인 단계');
     const callW = button({ label: '지금 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       lastCall = { ...lastCall, tier: Number(tierSel.value) };
       testCallWanderer(save, lastCall.tier);
-      done('떠돌이 상인을 불렀다', '밖으로 → 시장 → [떠돌이 상인]에서 산다. 다음 모험에서 돌아오면 떠난다.');
+      done('우라하라를 불렀다', '밖으로 → 시장 → [우라하라]에서 산다. 다음 모험에서 돌아오면 떠난다.');
     } });
     const rerollW = button({ label: '물건 다시 뽑기', icon: 'i-loop', disabled: !visit, onClick: () => {
       if (testRerollWanderer(save)) done('물건을 다시 뽑았다', '팔린 칸도 새로 채운다.');
     } });
     const sendW = button({ label: '보내기', icon: 'i-quit', disabled: !visit, onClick: () => {
-      if (testSendWanderer(save)) done('떠돌이 상인을 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
+      if (testSendWanderer(save)) done('우라하라를 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
     } });
     // 돌봄 요청 (GDD 82장)
     const care = save.nest.careRequest;
@@ -496,7 +611,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     } });
     const forced = [force.eventTile ? tileName(force.eventTile, fid) : null, force.mutation ? mutationName(force.mutation, fid) : null].filter(Boolean).join(' · ');
     return [
-      panel({ title: '떠돌이 상인', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel.el]]), row(callW, rerollW, sendW),
+      panel({ title: '우라하라', aside: visit ? `와 있음 · ${visit.tier}단계` : '없음' }, grid([['단계', tierSel.el]]), row(callW, rerollW, sendW),
         note('단계가 높을수록 영웅·전설 물건이 잘 나온다. 와 있으면 새 상인으로 바꾼다. 물건 목록은 오른쪽 맨 아래에 보인다.')),
       panel({ title: '돌봄 요청', aside: care ? `${faction.nestActions[care.action]} 요청 중` : '없음' }, grid([['요청', careSel.el]]), row(callC, clearC),
         note(save.nest.dead ? '사망 상태에서는 요청이 오지 않는다.' : '방 아래 독 버튼에 요청 표시가 붙는다.')),

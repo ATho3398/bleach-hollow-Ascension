@@ -13,6 +13,9 @@
     { "id": "w-hp-potion", "name": "치료제", "grade": "epic", "kind": "hpPotion", "category": "consumable" },
     { "id": "w-gear-rare", "name": "떠돌이 장비", "grade": "rare", "kind": "gear", "category": "equipment" },
     { "id": "w-gear-epic", "name": "떠돌이 장비", "grade": "epic", "kind": "gear", "category": "equipment" },
-    { "id": "w-gear-legend", "name": "떠돌이 장비", "grade": "legendary", "kind": "gear", "category": "equipment" }
+    { "id": "w-gear-legend", "name": "떠돌이 장비", "grade": "legendary", "kind": "gear", "category": "equipment" },
+    { "id": "w-hg-soul", "name": "고순도 윤활제 묶음", "grade": "normal", "kind": "hogyokuMat", "material": "soul", "category": "etc" },
+    { "id": "w-hg-shard", "name": "혼백 여과기 묶음", "grade": "rare", "kind": "hogyokuMat", "material": "shard", "category": "etc" },
+    { "id": "w-hg-essence", "name": "영압 결정 묶음", "grade": "rare", "kind": "hogyokuMat", "material": "essence", "category": "etc" }
   ]
 }

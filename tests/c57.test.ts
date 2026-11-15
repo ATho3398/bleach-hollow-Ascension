@@ -16,7 +16,7 @@ import {
 import { createRng } from '../src/engine/rng';
 import { gainTrait } from '../src/engine/absorb';
 import { TRAITS } from '../src/data/traits';
-import { canSynthesize, migrateSave, newSaveData, recordExpedition, sanitizeDeck, SAVE_FORMAT_VERSION, synthesizeTile } from '../src/game';
+import { canSynthesize, migrateSave, newSaveData, recordExpedition, rollHogyokuDrops, sanitizeDeck, SAVE_FORMAT_VERSION, synthesizeTile } from '../src/game';
 import { roadSynergies } from '../src/ui/bha/road';
 import { eventHint, tileHint, variantModsText } from '../src/ui/labels';
 import { useLegacyMigrations } from './helpers/legacyGate';
@@ -433,7 +433,7 @@ describe('골드·런 로그·세이브', () => {
     const soul0 = s.shared.soulCrystals;
     recordExpedition(s, e, 5);
     expect(s.shared.tradeCoins).toBe(10 + BALANCE.provisional.gold.normal);
-    expect(s.shared.soulCrystals).toBe(soul0 + 2);
+    expect(s.shared.soulCrystals).toBe(soul0 + rollHogyokuDrops(e.battles, e.runId, 2).soul); // C.425: 폭풍 추가분 2 = 첫 재료(윤활제) + 사냥 드롭
     const run = s.runLog.runs[0]!;
     expect(run.synergies).toEqual(['pack']);
     expect(run.events).toEqual([{ event: 'trap', choice: 'armed', lap: 1 }]);

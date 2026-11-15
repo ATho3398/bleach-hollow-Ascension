@@ -8,8 +8,8 @@ import { familyOf, type FactionConfig } from '../engine/faction';
 
 /** 패시브가 건드리는 능력치 이름 (데이터 passive.stat → 플레이어 말) */
 export const PASSIVE_STAT_TEXT: Record<PassiveStat, string> = {
-  attackPower: '기본 공격 위력',
-  attackSpeed: '기본 공격 속도',
+  attackPower: '일반 공격 위력',
+  attackSpeed: '일반 공격 속도',
   damageTaken: '받는 피해',
   blockSpawn: '블록 생성 속도',
 };
@@ -47,7 +47,8 @@ export function traitDiffLine(faction: TraitDiffFaction, id: string, o: { short?
     }
   } else if (t.kind === 'passive' && t.passive) {
     // 받는 피해는 배율이 1 아래일 때가 좋은 쪽(준다), 나머지는 1 위가 오르는 쪽
-    const good = t.passive.stat === 'damageTaken' ? t.passive.multiplier < 1 : t.passive.multiplier > 1;
+    const m = t.passive.multiplier ?? 1;
+    const good = t.passive.secondsCut !== undefined ? t.passive.secondsCut > 0 : t.passive.stat === 'damageTaken' ? m < 1 : m > 1;
     const verb = t.passive.stat === 'damageTaken' ? (good ? '준다' : '늘어난다') : good ? '오른다' : '떨어진다';
     parts.push(`${PASSIVE_STAT_TEXT[t.passive.stat]}이(가) ${verb}`);
   } else if (t.kind === 'part') parts.push('외형만 바뀐다');

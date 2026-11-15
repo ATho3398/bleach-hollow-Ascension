@@ -42,7 +42,10 @@ async function newGame(page, url, fi) {
   await page.waitForTimeout(300);
   await page.locator('.bha-species__card').nth(fi).click();
   await page.waitForTimeout(300);
-  await page.getByRole('button', { name: '시작', exact: true }).click();
+  // 종족 고르기 확인 (지금 빌드 = [네] 확인 창, 옛 빌드 = [시작])
+  const yes = page.getByRole('button', { name: '네', exact: true });
+  if (await yes.count()) await yes.first().click();
+  else await page.getByRole('button', { name: '시작', exact: true }).click();
   await passIdentity(page);
 }
 
@@ -52,8 +55,8 @@ async function passIdentity(page, name = '시험', gender = 0) {
   const input = page.locator('[data-ident="name"]');
   if (!(await input.count())) return;
   await input.fill(name);
-  await page.locator('[data-ident="next"]').click();
-  await page.waitForTimeout(200);
+  const next = page.locator('[data-ident="next"]'); // 옛 빌드 = 이름 → [다음] → 성별 (지금은 한 화면, GDD 241-A 3)
+  if (await next.count()) { await next.click(); await page.waitForTimeout(200); }
   await page.locator('.bha-ident__gender').nth(gender).click();
   await page.locator('[data-ident="done"]').click();
 }

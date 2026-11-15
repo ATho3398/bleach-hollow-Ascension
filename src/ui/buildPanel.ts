@@ -91,12 +91,12 @@ export function traitNumberLines(faction: FactionConfig, build: Pick<BuildState,
   const pct = (x: number) => `+${(x * 100).toFixed(1).replace(/\.0$/, '')}%`;
   const lines: string[] = [];
   if (t.kind === 'skill' && t.role === 'attack' && t.powerInAttacks !== undefined && !isBasicBlockTrait(id)) {
-    lines.push(numLine('위력', `기본 공격 ${t.powerInAttacks}회분`));
+    lines.push(numLine('위력', `일반 공격 ${t.powerInAttacks}회분`));
     lines.push(numLine(faction.chainName, '같은 속성·같은 계열 블록이 붙으면 함께 발동'));
   }
   // 속성 강화: 노멀 = 기본 공격 블록 배율(빈 칸 몫 포함, C.184 GDD 111장 3), 그 밖 = 그 속성 공격 블록
   const bonus = t.element === NORMAL_ELEMENT ? basicAttackMultiplier(build) - 1 : enhanceAttackBonus(lv);
-  lines.push(numLine('속성 강화', `${lv}/${max}`, `${t.element === NORMAL_ELEMENT ? '기본 공격 블록' : '공격 블록'} ${pct(bonus)}`));
+  lines.push(numLine('속성 강화', `${lv}/${max}`, `${t.element === NORMAL_ELEMENT ? '일반 공격 블록' : '공격 블록'} ${pct(bonus)}`));
   return lines;
 }
 

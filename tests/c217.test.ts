@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FACTIONS } from '../src/data/factions';
-import { towerLabels, worldMapOf, WORLD_PLACES } from '../src/engine/faction';
+import { specialDungeonLabels, towerLabels, worldMapOf, WORLD_PLACES } from '../src/engine/faction';
 import { standFoot } from '../src/ui/worldMapView';
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -10,7 +10,8 @@ const read = (p: string) => readFileSync(p, 'utf8');
 describe('139장 1 탑 → 월드맵', () => {
   it('장소 순서 = 홈 → 시장 → 모험 → 탑, 탑 이름 = 종족 설정 towerLabels', () => {
     expect([...WORLD_PLACES]).toEqual(['home', 'market', 'rank', 'adventure', 'tower', 'spa']); // C.394 (GDD 241-C 3): 수련장 자리 = 번호 쟁탈전·진급 시험 // 온천 = C.228 (GDD 153장 1), 수련장 = C.236 (158장 1)
-    for (const f of FACTIONS) expect(worldMapOf(f).places.tower).toBe(towerLabels(f).name);
+    for (const f of FACTIONS) expect(worldMapOf(f).places.tower).toBe(specialDungeonLabels(f).name); // C.427 (GDD 6-16 v6.017): 탑 자리 = 특수던전(안의 [탑] 탭 = 도전의 탑)
+    for (const f of FACTIONS) expect(towerLabels(f).name).toBe('도전의 탑');
   });
   it('지도 위 탑 자리가 다른 장소와 겹치지 않는다 (발 기준 거리)', () => {
     for (const f of FACTIONS) {
@@ -32,7 +33,7 @@ describe('139장 1 탑 → 월드맵', () => {
   });
   it('탑 화면은 월드맵 위에 쌓인다 (뒤로 = 월드맵), 사망이면 막힘', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toMatch(/function towerScreen[\s\S]{0,80}nav\.push\(\{\s*id: 'tower'/);
+    expect(app).toMatch(/function towerScreen[\s\S]{0,1600}nav\.push\(\{ id: 'tower', locked: false, render \}\)/); // C.427: 특수던전 탭 화면
     expect(app).toContain("onTower: () => { if (careBlocked(s)) return; worldAt = 'tower'; towerScreen(faction); },");
     expect(read('src/ui/worldMapView.ts')).toContain("if ((p === 'adventure' || p === 'tower' || p === 'rank') && save.nest.dead)");
   });

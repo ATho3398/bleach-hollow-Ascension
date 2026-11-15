@@ -43,11 +43,11 @@ export const CHARACTERS: readonly ToolChar[] = [
   // 강적 몸 (GDD 227장, 사용자 2026-11-10 "강적 강공격 … 세로" + "위치 파악해서 반영"): 강적 강공격 세로를 몸마다 맞춘다 — 게임 적 그림 그대로(enemyArt)
   { id: 'elite-brute', kind: 'monster', label: '덩치', rig: 'brute-orange', enemy: 'fire-heavy-seal' },
   { id: 'elite-gillian', kind: 'monster', label: '외눈 길리안', rig: 'gillian-cyclops', enemy: 'normal-heavy-seal' },
-  { id: 'elite-serpent', kind: 'monster', label: '뱀', rig: 'serpent-green', enemy: 'poison-heavy-chain' },
+  { id: 'elite-serpent', kind: 'monster', label: '뱀형', rig: 'serpent-green', enemy: 'poison-heavy-chain' },
   // 짐승형 (C.374 게임 넣기, 사용자 "짐승형 fx에도 반영시켜"): 강적 스톰후프(thunder-heavy-chain) = beast-yellow
-  { id: 'elite-beast', kind: 'monster', label: '짐승', rig: 'beast-yellow', enemy: 'thunder-heavy-chain' },
-  { id: 'elite-onearm', kind: 'monster', label: '외팔이', rig: 'onearm-brown', enemy: 'earth-heavy-seal' },
-  { id: 'elite-spider', kind: 'monster', label: '거미', rig: 'spider-blue', enemy: 'water-heavy-seal' },
+  { id: 'elite-beast', kind: 'monster', label: '짐승형', rig: 'beast-yellow', enemy: 'thunder-heavy-chain' },
+  { id: 'elite-onearm', kind: 'monster', label: '외팔형', rig: 'onearm-brown', enemy: 'earth-heavy-seal' },
+  { id: 'elite-spider', kind: 'monster', label: '거미형', rig: 'spider-blue', enemy: 'water-heavy-seal' },
   // 가시형·속도형·부유형 강적 (C.392, GDD 240장 4)
   { id: 'elite-spiky', kind: 'monster', label: '가시형', rig: 'spiky-base', enemy: 'normal-heavy-chain' },
   { id: 'elite-speed', kind: 'monster', label: '속도형', rig: 'speed-base', enemy: 'normal-stance' },

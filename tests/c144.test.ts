@@ -10,6 +10,10 @@ import { advanceWanderer, newWandererState } from '../src/engine/wanderer';
 import { checkUnlocks, migrateSave, newSaveData, performEvolution, recordExpedition, settleIdle, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT, type SaveData } from '../src/game';
 import { buyWandererItem, wandererRows } from '../src/shop';
 import { choosePet, inventoryOf, petEffectText, petNoticeOf } from '../src/inventory';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
@@ -124,7 +128,7 @@ describe('90장 효과 (원정)', () => {
     expect(shieldOf({ id: 'pet-guard', level: 5 })).toBeCloseTo(0.08);
   });
 
-  it('pet-seek: 떠돌이 상인 바퀴 확률 ×1.25, 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
+  it('pet-seek: 우라하라 바퀴 확률 ×1.25, 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
     const roll = (mult: number) => {
       const w = newWandererState();
       w.lapsSince = 99;
@@ -197,7 +201,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'get', source: 'rebirth' });
   });
 
-  it('떠돌이 상인 전설 품목 w-pet-egg: 안 가진 펫 1마리, 다 가졌으면 못 삼', () => {
+  it('우라하라 전설 품목 w-pet-egg: 안 가진 펫 1마리, 다 가졌으면 못 삼', () => {
     expect(getWandererItem('w-pet-egg')).toMatchObject({ grade: 'legendary', kind: 'pet', category: 'pet' });
     const s = newSaveData('shinigami', 1);
     s.shared.tradeCoins = 5000;
@@ -229,7 +233,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([77, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([88, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);

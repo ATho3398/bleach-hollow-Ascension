@@ -12,6 +12,10 @@ import {
 import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, performRebirth, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { abilityGainRow } from '../src/ui/evolutionPanel';
 import { rebirthFinalText, rebirthLists } from '../src/ui/rebirthView';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const f = getForm;
 const loadout = (slots = 1): AbilityLoadout => ({ ...newAbilityLoadout(), slots });
@@ -102,7 +106,7 @@ describe("환생 화면 '가지고 갈 블록 1개' (GDD 148장 6)", () => {
 describe('세이브 형식 58 → 59 → 60 (GDD 148장 7·149장 7, 123장 6)', () => {
   it('문턱 54 고정 · 단계 표에 58', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(59);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[58]).toBe('function');
   });
   const old58 = (history: string[], owned: Record<string, number>, rebirths = 0) => {

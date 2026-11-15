@@ -1,0 +1,127 @@
+{
+  "errors": [],
+  "shots": [
+    "01-half-awake.png",
+    "02-develop-steps.png",
+    "03-half-max-needs-resonance.png",
+    "04-resonance-cut.png",
+    "05-resonance.png",
+    "06-ready-100.png",
+    "07-dex-conditions.png",
+    "08-fusion-preview.png",
+    "09-pc-resonance.png"
+  ],
+  "facts": {
+    "half": {
+      "stage": "half",
+      "title": [
+        "붕옥 개발 20%",
+        "개발 단계",
+        "초월체 합체",
+        "초월체 도감"
+      ],
+      "materials": [
+        "영혼 결정43 / 10",
+        "붕옥 파편30 / 16",
+        "공명의 정수6 / 3"
+      ],
+      "developDisabled": false,
+      "blocks": [
+        "· 붕옥이 공명해야 한다 — 두 종족의 스토리를 모두 끝내면.",
+        "· 붕옥 개발을 100%(10단계)까지 채워야 한다."
+      ],
+      "preview": "지금 두 캐릭터라면 → 「균열 방랑자」",
+      "previewDisabled": true,
+      "stepsDone": 2
+    },
+    "afterDevelop": {
+      "stage": "half",
+      "title": [
+        "붕옥 개발 30%",
+        "개발 단계",
+        "초월체 합체",
+        "초월체 도감"
+      ],
+      "materials": [
+        "영혼 결정33 / 12",
+        "붕옥 파편14 / 20",
+        "공명의 정수3 / 3"
+      ],
+      "developDisabled": true,
+      "blocks": [
+        "· 붕옥 파편이 모자라다 (스토리 화 첫 클리어·장 보스·탑 10층마다).",
+        "· 붕옥이 공명해야 한다 — 두 종족의 스토리를 모두 끝내면.",
+        "· 붕옥 개발을 100%(10단계)까지 채워야 한다."
+      ],
+      "preview": "지금 두 캐릭터라면 → 「균열 방랑자」",
+      "previewDisabled": true,
+      "stepsDone": 3
+    },
+    "halfMax": {
+      "stage": "half",
+      "title": [
+        "붕옥 개발 50%",
+        "개발 단계",
+        "초월체 합체",
+        "초월체 도감"
+      ],
+      "materials": [
+        "영혼 결정203 / 12",
+        "붕옥 파편200 / 4",
+        "공명의 정수200 / 3"
+      ],
+      "developDisabled": true,
+      "blocks": [
+        "· 50%부터는 공명이 필요하다 — 다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다.",
+        "· 붕옥 개발을 100%(10단계)까지 채워야 한다."
+      ],
+      "preview": "지금 두 캐릭터라면 → 「균열 방랑자」",
+      "previewDisabled": true,
+      "stepsDone": 5
+    },
+    "cut": "1 / 1건너뛰기알겠어요붕옥이 공명한다두 이야기가 모두 끝나자, 두 영압에 붕옥이 답한다.붕옥 개발 50~100%가 열렸다 — 100%에 두 캐릭터 모두 등급 1위면 합체할 수 있다.",
+    "resonance": {
+      "stage": "resonance",
+      "title": [
+        "붕옥 개발 70%",
+        "개발 단계",
+        "초월체 합체",
+        "초월체 도감"
+      ],
+      "materials": [
+        "영혼 결정63 / 18",
+        "붕옥 파편20 / 6",
+        "공명의 정수40 / 5"
+      ],
+      "developDisabled": false,
+      "blocks": [
+        "· 붕옥 개발을 100%(10단계)까지 채워야 한다."
+      ],
+      "preview": "지금 두 캐릭터라면 → 「균열 방랑자」",
+      "previewDisabled": true,
+      "stepsDone": 7
+    },
+    "ready": {
+      "stage": "ready",
+      "title": [
+        "붕옥 개발 100%",
+        "개발 단계",
+        "초월체 합체",
+        "초월체 도감"
+      ],
+      "materials": [
+        "영혼 결정9",
+        "붕옥 파편50",
+        "공명의 정수9"
+      ],
+      "developDisabled": null,
+      "blocks": [
+        "· 붕옥 개발 100% — 더 올릴 단계가 없다."
+      ],
+      "preview": "지금 두 캐릭터라면 → 「균열 방랑자」",
+      "previewDisabled": false,
+      "stepsDone": 10
+    },
+    "confirm": "이 조합이면임시 조건「균열 방랑자」가 된다두 세계의 틈을 떠도는, 어느 쪽도 아닌 자두 캐릭터의 상태가 이 초월체의 조건에 맞았다.첫 초월체 보상: 영옥 +10"
+  }
+}

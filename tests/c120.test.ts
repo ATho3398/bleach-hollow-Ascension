@@ -16,6 +16,10 @@ import {
   firstRunPending, grantStarterTiles, loadSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, nextRunId, performEvolution, recordExpedition, SAVE_FORMAT_VERSION, tilesUnlocked, writeSave, type SaveData,
 } from '../src/game';
 import { buyShopItem, goldRows, rollTileDraw, tileDrawGroup, tileDrawOdds, TILES_LOCKED_TEXT } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const TD = BALANCE.provisional.tileDraw;
 const TUT = BALANCE.provisional.tutorialRun;
@@ -48,7 +52,7 @@ describe('64장 1번: 시작 타일 0장 · 첫 진화 3장', () => {
     expect(s.tiles).toEqual({ collection: {}, presets: [], unlocked: false, draws: 0 });
     expect(tilesUnlocked(s)).toBe(false);
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(62); // C.326 에서 63 // C.227 · C.226 · C.225 · C.220 · C.223 (C.213 56) (C.198 55) (C.195 54) (C.193 53) C.188 (C.184 51) (C.177 50)
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
 
   it('첫 진화(1→2단계) 때 먹잇감 둥지 A·강적 소굴 A·휴식 1장씩 → 보관함·덱, 타일 안내 차례. 두 번째 진화엔 더 안 준다', () => {
@@ -94,15 +98,18 @@ describe('64장 2번: 상점 타일 뽑기', () => {
   it('첫 진화 전에는 잠김("첫 진화 후 열림"), 열리면 가격 = balance', () => {
     const s = rich();
     const row = goldRows(s, H).find((r) => r.id === 'tile-draw')!;
-    expect(row).toMatchObject({ canBuy: false, lock: TILES_LOCKED_TEXT, price: TD.price });
+    expect(row).toMatchObject({ canBuy: false, lock: '길리안이 되면 지형 타일이 열린다', price: TD.price }); // GDD 243장 2: 해금 판정(featureUnlocked) 잠김 한 줄
     expect(buyShopItem(s, H, 'tile-draw').ok).toBe(false);
+    expect(TILES_LOCKED_TEXT).toBeTruthy();
     grantStarterTiles(s);
+    s.shared.unlocks.tiles = 0; // 진화 때 checkUnlocks 가 함께 연다
     expect(goldRows(s, H).find((r) => r.id === 'tile-draw')!.canBuy).toBe(true);
   });
 
   it('첫 뽑기는 환경 타일 확정, 중복은 장수 +1, 구매 기록에 결과', () => {
     const s = rich();
     grantStarterTiles(s);
+    s.shared.unlocks.tiles = 0;
     const r = buyShopItem(s, H, 'tile-draw', 5, () => 0.99);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -267,8 +274,9 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     }
     expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(H), ...guideVars(H) })).toContain('오아시스');
     expect(renderHelpText(GUIDES['tile-plan'][3]!.body, { ...helpVars(S), ...guideVars(S) })).toContain('샘터');
-    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'practice']); // GDD 157장 3: 3장 → 2장, 연습·노력치 설명 삭제
-    expect(renderHelpText(GUIDES['first-absorb'][1]!.body, { ...helpVars(H), ...guideVars(H) })).toBe(renderHelpText('갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자.', helpVars(H))); // GDD 172장 4: 고르기 → 설명 → 설명 아래 [흡수] 버튼
+    // GDD 245장 5: 첫 장 → 갈래 버튼 4개 하나씩 강조 → 마지막 장이 [흡수] 버튼을 가리킨다
+    expect(GUIDES['first-absorb'].map((x) => x.id)).toEqual(['absorb', 'mode-both', 'mode-trait', 'mode-stat', 'mode-none', 'practice']);
+    expect(GUIDES['first-absorb'].at(-1)!.targets).toEqual(['@.bha-absorb__go']);
   });
 
   it('안내는 1회성: 본 것으로 저장하면 다시 차례가 아니고, 저장 값은 보정된다', () => {
@@ -281,6 +289,6 @@ describe('안내 (GDD 64장 3번 · 67장 2·4번)', () => {
     markGuideDone(s.help, 'tile-intro');
     expect(guidePending(s.help, 'tile-intro')).toBe(false);
     expect(sanitizeHelpState(JSON.parse(JSON.stringify(s.help)))).toEqual(s.help);
-    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'home-intro', 'recover', 'recover-cure', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
+    expect([...GUIDE_IDS].sort()).toEqual(['birth', 'first-run', 'first-run-room', 'hogyoku-appear', 'hogyoku-resonance', 'home-intro', 'recover', 'recover-cure', 'recover-cure-reward', 'tile-draw', 'tile-intro', 'tile-plan', 'unlock-accessory', 'unlock-battle-item', 'unlock-gear', 'unlock-instinct', 'unlock-pet', 'unlock-rank', 'unlock-sortie']); // GDD 245장 9 'recover-cure-reward'(빈사 치료 뒤 치료제 보상) · C.414 'hogyoku-resonance'(공명 컷, GDD 244장 2) · C.399 해금 안내 7종 (GDD 241-0) // C.211 'recover-cure'(회복 안내 구급상자 지급 표시, GDD 134장 1) · C.207 'home-intro'(홈 안내, GDD 131장) · C.199 'recover'(회복 안내) · C.126: 'birth'(탄생 연출, GDD 74장) 추가
   });
 });

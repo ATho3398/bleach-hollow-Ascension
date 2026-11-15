@@ -258,11 +258,12 @@ describe('C.103 불 — 잔불(약한 불 블록) · 불씨 모으기', () => {
 });
 
 describe('C.103 물 — 물결 가르기(평타 가속) · 물살', () => {
-  const water = () => mk({ playerElements: ['water'], physBlock: physOf('t4:water:physical')!, abilityEffects: fxOf('t4:water:physical') });
+  // C.448: 블록 모션 중 평타 멈춤(GDD 7-2)은 끈다 — 물결 가르기 간격 효과만 본다
+  const water = () => mk({ playerElements: ['water'], physBlock: physOf('t4:water:physical')!, abilityEffects: fxOf('t4:water:physical'), motion: undefined });
   const WV = PB.wave;
   it('쓰면 n초 동안 평타 간격 −haste: 그동안 평타가 더 많이 나간다', () => {
     const a = water();
-    const b = mk({ playerElements: ['water'] });
+    const b = mk({ playerElements: ['water'], motion: undefined });
     a.tray.push(blk(BASIC_SKILL_ID));
     const { evs } = use(a);
     expect(evs.some((e) => e.kind === 'ability' && e.effect === 'wave')).toBe(true);

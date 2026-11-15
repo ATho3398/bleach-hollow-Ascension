@@ -41,6 +41,8 @@
     "attackInAttacks": 0.24,
     "element": "earth",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.5,
     "ev": {
       "atk": 1,
       "int": 1
@@ -127,7 +129,7 @@
       "spr": 1.05
     },
     "ev": {
-      "spd": 2
+      "bspd": 2
     },
     "provisional": true,
     "pattern": {
@@ -146,6 +148,7 @@
     "attackInAttacks": 0.34,
     "element": "normal",
     "category": "mixed",
+    "attackCategory": "physical",
     "statBias": {
       "def": 1.25,
       "spr": 0.8
@@ -234,6 +237,7 @@
     "attackInAttacks": 0.412,
     "element": "normal",
     "category": "mixed",
+    "attackCategory": "special",
     "statBias": {
       "def": 1.1,
       "spr": 0.9
@@ -282,12 +286,15 @@
     "attackInAttacks": 0.13,
     "element": "water",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.5,
     "statBias": {
       "def": 1.05,
       "spr": 0.95
     },
     "ev": {
-      "spd": 2
+      "aspd": 1,
+      "bspd": 1
     },
     "provisional": true,
     "pattern": {
@@ -364,6 +371,7 @@
     "attackInAttacks": 0.227,
     "element": "water",
     "category": "mixed",
+    "attackCategory": "physical",
     "statBias": {
       "def": 0.8,
       "spr": 1.25
@@ -381,7 +389,12 @@
       "heavyInAttacks": 0.7,
       "hits": 3,
       "followCastSeconds": 1.2,
-      "provisional": true
+      "provisional": true,
+      "heavyCategories": [
+        "physical",
+        "special",
+        "physical"
+      ]
     }
   },
   {
@@ -424,6 +437,7 @@
     "attackInAttacks": 0.24,
     "element": "fire",
     "category": "mixed",
+    "attackCategory": "special",
     "statBias": {
       "def": 0.9,
       "spr": 1.1
@@ -449,7 +463,7 @@
       "spr": 1.05
     },
     "ev": {
-      "spd": 2
+      "aspd": 2
     },
     "provisional": true,
     "pattern": {
@@ -493,6 +507,8 @@
     "attackInAttacks": 0.227,
     "element": "fire",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.5,
     "statBias": {
       "def": 0.8,
       "spr": 1.25
@@ -512,7 +528,10 @@
       "castSeconds": 2,
       "heavyInAttacks": 1.6,
       "sealSeconds": 4,
-      "provisional": true
+      "provisional": true,
+      "heavyCategories": [
+        "special"
+      ]
     }
   },
   {
@@ -609,7 +628,7 @@
       "spr": 0.95
     },
     "ev": {
-      "spd": 2
+      "bspd": 2
     },
     "provisional": true,
     "pattern": {
@@ -628,6 +647,8 @@
     "attackInAttacks": 0.34,
     "element": "earth",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.7,
     "statBias": {
       "def": 0.8,
       "spr": 1.25
@@ -716,6 +737,7 @@
     "attackInAttacks": 0.412,
     "element": "earth",
     "category": "mixed",
+    "attackCategory": "physical",
     "statBias": {
       "def": 0.9,
       "spr": 1.1
@@ -764,12 +786,14 @@
     "attackInAttacks": 0.13,
     "element": "thunder",
     "category": "mixed",
+    "attackCategory": "special",
     "statBias": {
       "def": 0.95,
       "spr": 1.05
     },
     "ev": {
-      "spd": 2
+      "aspd": 1,
+      "bspd": 1
     },
     "provisional": true,
     "pattern": {
@@ -846,6 +870,7 @@
     "attackInAttacks": 0.227,
     "element": "thunder",
     "category": "mixed",
+    "attackCategory": "special",
     "statBias": {
       "def": 1.25,
       "spr": 0.8
@@ -863,7 +888,12 @@
       "heavyInAttacks": 0.7,
       "hits": 3,
       "followCastSeconds": 1.2,
-      "provisional": true
+      "provisional": true,
+      "heavyCategories": [
+        "special",
+        "special",
+        "physical"
+      ]
     }
   },
   {
@@ -906,6 +936,8 @@
     "attackInAttacks": 0.24,
     "element": "blood",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.3,
     "statBias": {
       "def": 1.1,
       "spr": 0.9
@@ -931,7 +963,7 @@
       "spr": 0.95
     },
     "ev": {
-      "spd": 2
+      "aspd": 2
     },
     "provisional": true,
     "pattern": {
@@ -975,6 +1007,7 @@
     "attackInAttacks": 0.227,
     "element": "blood",
     "category": "mixed",
+    "attackCategory": "physical",
     "statBias": {
       "def": 1.25,
       "spr": 0.8
@@ -994,7 +1027,10 @@
       "castSeconds": 2,
       "heavyInAttacks": 1.6,
       "sealSeconds": 4,
-      "provisional": true
+      "provisional": true,
+      "heavyCategories": [
+        "physical"
+      ]
     }
   },
   {
@@ -1091,7 +1127,7 @@
       "spr": 1.05
     },
     "ev": {
-      "spd": 2
+      "bspd": 2
     },
     "provisional": true,
     "pattern": {
@@ -1110,6 +1146,7 @@
     "attackInAttacks": 0.34,
     "element": "poison",
     "category": "mixed",
+    "attackCategory": "special",
     "statBias": {
       "def": 1.25,
       "spr": 0.8
@@ -1198,6 +1235,8 @@
     "attackInAttacks": 0.412,
     "element": "poison",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.5,
     "statBias": {
       "def": 1.1,
       "spr": 0.9
@@ -1246,12 +1285,14 @@
     "attackInAttacks": 0.13,
     "element": "kyo",
     "category": "mixed",
+    "attackCategory": "physical",
     "statBias": {
       "def": 1.05,
       "spr": 0.95
     },
     "ev": {
-      "spd": 2
+      "aspd": 1,
+      "bspd": 1
     },
     "provisional": true,
     "pattern": {
@@ -1328,6 +1369,8 @@
     "attackInAttacks": 0.227,
     "element": "kyo",
     "category": "mixed",
+    "attackCategory": "mixed",
+    "physicalShare": 0.5,
     "statBias": {
       "def": 0.8,
       "spr": 1.25
@@ -1345,7 +1388,12 @@
       "heavyInAttacks": 0.7,
       "hits": 3,
       "followCastSeconds": 1.2,
-      "provisional": true
+      "provisional": true,
+      "heavyCategories": [
+        "physical",
+        "physical",
+        "physical"
+      ]
     }
   },
   {

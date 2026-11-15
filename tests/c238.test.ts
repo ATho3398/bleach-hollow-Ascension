@@ -20,10 +20,10 @@ describe('160장 1~3 그림 크기·시장 그림', () => {
     expect(room).toContain("const s = (o.scale ?? 1) * artUrls(key, BASE).scale;"); // C.255: key = o.artKey ?? prop.<물건>
     expect(read('src/ui/marketView.ts')).toContain("propButton({ prop: 'outside'");
   });
-  // 2026-11-03 사용자 그림으로 바뀜: 월드맵 시장 = 상점 그림(prop-market.png), 수레 그림은 떠돌이 상인으로 옮김
-  it("월드맵 '시장' 장소 = prop-market 그림, 수레 그림 = 떠돌이 상인", () => {
+  // 2026-11-03 사용자 그림으로 바뀜: 월드맵 시장 = 상점 그림(prop-market.png), 수레 그림은 우라하라로 옮김
+  it("월드맵 '시장' 장소 = prop-market 그림, 수레 그림 = 우라하라", () => {
     expect(artUrls('prop.market').src).toBe('/art/prop-market.png');
-    expect(artUrls('prop.wanderer').src).toBe('/art/prop-wanderer.webp');
+    expect(artUrls('prop.wanderer').src).toBe('/art/prop-wanderer.png'); // C.450: 수레 → 우라하라 도트
   });
 });
 
@@ -49,7 +49,7 @@ describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 �
     expect(app).not.toContain('onAltar');
     // C.394 (GDD 241-C 2·3): 수련장은 방에서 연다 — 기본 = 훈련 인형. 월드맵 그 자리는 번호 쟁탈전·진급 시험
     expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },");
-    expect(app).toContain("onRank: () => { if (careBlocked(s)) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },");
+    expect(app).toContain("onRank: () => { if (careBlocked(s) || !trackRulesOf(s).rank) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },");
   });
   it('월드맵 수련장 그림이 비면 짚인형 그림', () => {
     const wm = read('src/ui/worldMapView.ts');
@@ -63,7 +63,7 @@ describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 �
 describe('160장 5~7 상태 화면', () => {
   const lcd = read('src/ui/lcdScreens.ts');
   it('상태이상 칸이 능력치 칸 위, 없으면 숨김', () => {
-    expect(lcd).toContain('[weakSlot, status, gear,'); // C.28x (183장 S15): 상태이상이 왼쪽 맨 위
+    expect(lcd).toContain('[weakSlot, status, gear]'); // C.28x (183장 S15): 상태이상이 왼쪽 맨 위
     expect(lcd).toContain('rightScroll.append(stats, evoPanel);');
     expect(lcd).toContain('weakSlot.hidden = states.length === 0;');
   });
@@ -79,7 +79,7 @@ describe('160장 5~7 상태 화면', () => {
     expect(nest).not.toContain('is-tip');
     expect(nest).not.toContain('bha-statrow__tip');
     expect(read('src/ui/bha/components/components.css')).not.toContain('.bha-statrow__tip');
-    expect(lcd).toContain("statRow('평타 치명', pctText(cc.basic));");
+    expect(lcd).toContain("statRow('일반 공격 치명', pctText(cc.basic));");
     expect(lcd).toContain('statInfoLines(faction,');
     expect(lcd).not.toContain('기본 ${');
   });

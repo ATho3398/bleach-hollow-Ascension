@@ -45,12 +45,12 @@ const storage = () => {
 };
 
 describe('먹이 = 전리품 (GDD 23-1)', () => {
-  it('시작 지급 간식 5·보통 3, 상한 9, 모르는 값 정리', () => {
+  it('새 먹이 보유 = 빈 칸(간식 5도 빈사 치료 뒤 — GDD v6.005), 상한 없음, 모르는 값 정리', () => {
     const s = newFoodStock();
-    expect(s).toEqual({ ...emptyFoodStock(), snack: 5, basic: 3 });
-    expect(addFood(s, 'snack', 10)).toBe(FX.cap - 5);
-    expect(s.snack).toBe(FX.cap);
-    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: FX.cap, hearty: 2 });
+    expect(s).toEqual(emptyFoodStock());
+    expect(addFood(s, 'snack', 10)).toBe(10);
+    expect(s.snack).toBe(10);
+    expect(sanitizeFoodStock({ snack: 99, basic: -3, hearty: 2.7, bogus: 4 })).toEqual({ ...emptyFoodStock(), snack: 99, hearty: 2 });
   });
 
   it('드롭 표: 일반 적은 약 50% 1개(일반 6종), 강적은 확정 1개 + 약 30% 1개 더(일반 6종 + 특식 6종, GDD 235장 · 239장)', () => {
@@ -107,7 +107,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     recordExpedition(save, exp, 1);
     const kept = summarize(exp).keptFood;
     expect(exp.foodSettled?.gained).toEqual(kept);
-    for (const id of FOOD_IDS) expect(save.shared.food[id]).toBe(Math.min(FX.cap, before[id] + kept.filter((x) => x === id).length));
+    for (const id of FOOD_IDS) expect(save.shared.food[id]).toBe(before[id] + kept.filter((x) => x === id).length); // 보관 상한 없음 (GDD v6.005)
     const lost = mk({ seed: 3 });
     lost.foodLoot = [{ food: 'hearty', lap: 1 }, { food: 'snack', lap: 2 }];
     lost.lap = 2;
@@ -132,6 +132,7 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
 
   it('둥지 먹이 주기는 하나를 쓰고, 0개면 먹이지 못한다', () => {
     const save = newSaveData('hollow', 0);
+    save.shared.food.snack = 5; // 새 게임 간식은 빈사 치료 뒤 (GDD v6.005)
     save.nest.hunger = 80;
     expect(feedNest(save, 'snack')).toBe('ate');
     expect(save.shared.food.snack).toBe(4);
@@ -220,7 +221,7 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     for (const f of FACTIONS) for (const g of TUTORIAL_GOALS) for (const k of placeholdersOf(g.text)) expect(helpVars(f)[k], `${g.id} {${k}}`).toBeTruthy();
     expect(TUTORIAL_GOALS.filter((g) => !g.available).map((g) => g.check)).toEqual([]); // 환생은 C.56 에서 켬
     expect(() => parseTutorialGoal({ id: 'x', check: 'nope', text: 'a', reward: { soulCrystals: 1 } })).toThrow();
-    expect(() => parseTutorialGoal({ id: 'x', check: 'returned', text: 'a', reward: {} })).toThrow();
+    expect(() => parseTutorialGoal({ id: 'x', check: 'returned', text: 'a', reward: { soulCrystals: 1 } })).toThrow(); // C.425: 영혼 결정 보상 삭제
   });
 
   it('비활성 목표는 판정하지 않는다', () => {
@@ -229,21 +230,21 @@ describe('튜토리얼 보상 (GDD 23-3)', () => {
     expect(goalAchieved({ check: 'tier5', available: true }, v)).toBe(true);
   });
 
-  it('자동 판정·지급: 이룬 목표만 한 번씩, 먹이는 상한까지, 영혼 결정은 더한다', () => {
+  it('자동 판정·지급: 이룬 목표만 한 번씩, 먹이는 상한까지 (붕옥 재료 보상은 C.425 에 삭제)', () => {
     const save = newSaveData('hollow', 0);
     expect(claimTutorialGoals(save, 1)).toEqual([]);
     save.help.tutorialSeen = true;
     save.shared.food.basic = 8;
     const g = claimTutorialGoals(save, 2);
     expect(g.map((x) => x.goal.id)).toEqual(['tutorial']);
-    expect(g[0]!.food).toEqual([['basic', 1]]); // 3 중 상한까지 1 (C.387: 튜토리얼 보상 간식 → 일반 먹이)
-    expect(save.shared.food.basic).toBe(FX.cap);
+    expect(g[0]!.food).toEqual([['basic', 3]]); // 보관 상한 없음 — 다 받는다 (GDD v6.005)
+    expect(save.shared.food.basic).toBe(11);
     expect(claimTutorialGoals(save, 3)).toEqual([]);
     save.evolution.tierIndex = 4;
     save.rank.history.everRanked = true;
     const g2 = claimTutorialGoals(save, 4);
     expect(g2.map((x) => x.goal.id)).toEqual(['first-evolution', 'tier5', 'first-rank']);
-    expect(save.shared.soulCrystals).toBe(6);
+    expect(save.shared.soulCrystals).toBe(0);
     expect(save.shared.tutorials.hollow!.map((c) => c.goalId)).toEqual(['tutorial', 'first-evolution', 'tier5', 'first-rank']);
   });
 
@@ -282,7 +283,7 @@ describe('세이브 형식 16 (먹이·영전·튜토리얼 기록)', () => {
     old.shared = { soulCrystals: 4 };
     const m = migrateSave(old)!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.shared).toEqual({ soulCrystals: 4, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: ['keyring-orb', 'device-badge', 'device-zaraki'], items: {}, wanderer: { lapsSince: 0, visit: null }, pets: { owned: {}, active: null, gifted: false }, gear: { items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null, acc3: null }, nextId: 1 }, battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: [null, null], unlocks: { gear: 0, battleItem: 0, accessory: 0 }, specialLooks: [] }); // C.403 (GDD 241-0): 옛 세이브는 쓰던 장비·전투 소모품·장신구 칸이 열린 채로 · // 기본 키링 (C.64)·기본 기기 (C.65)
+    expect(m.shared).toEqual({ soulCrystals: 4, hogyokuShards: 0, resonanceEssence: 0, transcendShards: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: ['keyring-orb', 'device-badge', 'device-zaraki'], items: {}, wanderer: { lapsSince: 0, visit: null }, pets: { owned: {}, active: null, gifted: false }, gear: { items: [], equipped: { weapon: null, armor: null, shoes: null, acc1: null, acc2: null, acc3: null }, nextId: 1 }, battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: [null, null], unlocks: { gear: 0, battleItem: 0, accessory: 0 }, specialLooks: [], special: { weekStart: 0, used: {}, best: {}, clears: {} } }); // C.427 형식 81 (80 → 81 변환은 주 시작 0) // C.403 (GDD 241-0): 옛 세이브는 쓰던 장비·전투 소모품·장신구 칸이 열린 채로 · // 기본 키링 (C.64)·기본 기기 (C.65)
   });
 
   it('새 세이브: 영전 0 자리, 저장·불러오기 왕복', () => {

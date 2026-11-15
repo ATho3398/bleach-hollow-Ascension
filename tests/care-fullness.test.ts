@@ -64,7 +64,7 @@ describe('돌보기 배부름 감소 (GDD 170장 1)', () => {
   it.each(FACTIONS)('%s: 결과 말풍선에 배부름 −1 이 보인다(종족 이름)', (id) => {
     const f = getFaction(id);
     for (const action of CARE_ACTIONS) {
-      const s = newSaveData(id, 0);
+      const s = newSaveData(id, 0); s.help.guides = {}; // 튜토리얼이 끝난 세이브 — 튜토리얼 중엔 돌봄 요청이 없다 (GDD 245장 8)
       s.nest.hunger = 30;
       s.nest.condition = 50;
       s.nest.careRequest = { action, until: Date.now() + 600_000 };

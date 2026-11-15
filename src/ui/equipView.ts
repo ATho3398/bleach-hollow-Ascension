@@ -10,7 +10,7 @@ import { statName } from '../data/elements';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName } from '../engine/evolution';
 import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearStatsOf, sellGold, type GearItem } from '../engine/gear';
-import { artSkinOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, noEvolutionLabel, statBonusOf, type SaveData, artTierIndexOf } from '../game';
 import {
   autoEquipGear, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
   choosePet, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
@@ -19,7 +19,7 @@ import { affinityOf } from '../engine/pet';
 import { petArtSrc, petIconId } from './bha/pet';
 import { imageArt } from './bha/itemUi';
 import { gateHint, gateOpen } from '../unlockGate';
-import { enableDragScroll } from './bha/dragScroll';
+import { edgeCue, enableDragScroll } from './bha/dragScroll';
 import { battleItemBrief } from '../shop';
 import { pickDialog } from './pickDialog';
 import { shownName } from './displayName';
@@ -350,7 +350,9 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     figure.append(img);
   } else figure.append(icon('i-nest'));
   const who = h('div', 'bha-eqfigure__who');
-  who.append(h('b', '', shownName(formDisplayName(save.evolution, faction.id))), h('small', '', `${save.evolution.tierIndex + 1}단계 ${faction.tierNames[save.evolution.tierIndex] ?? ''}`));
+  const own = noEvolutionLabel(save); // 초월자 = 초월자 이름 · '초월자' (진화 단계·진화체 없음 — 사용자 2026-11-15, GDD 12-4)
+  if (own) who.append(h('b', '', own.name), h('small', '', own.kind));
+  else who.append(h('b', '', shownName(formDisplayName(save.evolution, faction.id))), h('small', '', `${save.evolution.tierIndex + 1}단계 ${faction.tierNames[save.evolution.tierIndex] ?? ''}`));
   figure.append(who);
   const doll = h('div', 'bha-eqdoll');
   doll.append(colL, figure, colR);
@@ -368,6 +370,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     redraw(null);
   }, '장비 분류');
   enableDragScroll(tabs, hd.signal); // 탭은 좁히지 않고 가로로 끌어 본다 (GDD 241-D 3)
+  edgeCue(tabs, tabs.querySelector<HTMLElement>('.is-on'), hd.signal); // 넘친 쪽 끝 흐림 + 고른 탭이 보이게 (GDD 243장 4)
   // 펫 탭 (GDD 241-D 3 — 가방 위 '펫' 탭을 이리로): 가진 펫 카드, 누르면 데리고 가기/두고 가기. 첫 환생 전에는 잠김 한 줄
   const petCards = ui.tab !== 'pet' || !petOpen ? [] : inventoryOf(save, faction).filter((e) => e.category === 'pet').map((e) => {
     const on = save.shared.pets.active === e.id;
@@ -391,8 +394,8 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     return card;
   });
   const empty = ui.tab === 'pet'
-    ? (petOpen ? '아직 펫이 없다. 모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : gateHint(faction, 'pet'))
-    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·떠돌이 상인에게서 얻는다.';
+    ? (petOpen ? '아직 펫이 없다. 모험 바퀴 끝 보상·우라하라에게서 얻는다.' : gateHint(faction, 'pet'))
+    : '장비가 없다. 모험 드롭(강적·보스에게서 잘 나온다)·장비 상점·우라하라에게서 얻는다.';
   const grid = itemGrid(gearCards, empty);
   grid.classList.add('bha-itemgrid--equip');
 
@@ -413,7 +416,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   };
   const autoBtn = button({ label: '자동 착용', icon: 'i-check', size: 'small', variant: 'primary', onClick: () => {
     confirmDialog({
-      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 장착한 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니오',
+      title: '자동 착용', body: `빈 칸에는 가장 센 장비를, 장착한 칸은 더 센 것이 있을 때만 바꾼다. ${slotName} 칸이 비었으면 가진 회복 물건을 넣는다.`, yes: '자동 착용', no: '아니요',
       onYes: () => {
         const n = autoEquipGear(save);
         // 바꾼 칸 알림은 뺐다 (GDD 233장 5) — 능력치 줄에 반영된다. 바꿀 게 없을 때 이유만 남긴다 (233장 6)
@@ -428,7 +431,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const sellBtn = button({ label: '일괄 판매', icon: 'i-rare', size: 'small', variant: 'danger', onClick: () => {
     const gold = sellTargets.reduce((a, it) => a + sellGold(it), 0);
     confirmDialog({
-      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 장착하지 않은 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니오', danger: true,
+      title: '일괄 판매', body: `${GEAR_GRADE_NAMES.normal} 등급 · 장착하지 않은 장비 ${sellTargets.length}개를 판다. 골드 +${gold}. 되돌릴 수 없다.`, yes: '판매', no: '아니요', danger: true,
       onYes: () => {
         const r = bulkSellGear(save); // 판매 알림은 뺐다 (GDD 233장 5) — 골드·목록이 바뀐다
         if (r.count > 0) changedAt('act:bulk-sell')();

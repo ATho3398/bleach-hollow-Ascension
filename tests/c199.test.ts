@@ -196,14 +196,14 @@ describe('123장 5 수정(v5.280): 튜토리얼 원정 뒤 회복 안내', () =>
       expect(recoverStep(s)).toBe('dying');
       expect(guidePending(s.help, 'first-run-room')).toBe(false);
       expect(s.runLog.vitals?.some((v) => v.kind === 'collapse' && v.cause === 'tutorial')).toBe(true);
-      const start = BALANCE.provisional.startItems[CURE_ITEM_ID]!; // 시작 구급상자 (GDD 134장 1, C.211) + 안내용 1개 따로
+      const start = BALANCE.provisional.startItems[CURE_ITEM_ID] ?? 0; // 시작 구급상자는 GDD 245장 9 에서 삭제(0) + 안내용 1개 따로
       recoverGrantBag(s);
       recoverGrantBag(s); // 다시 열어도 한 번만
       expect(s.shared.items[CURE_ITEM_ID]).toBe(start + 1);
       expect(s.shared.items[HP_POTION_ID]).toBeUndefined(); // 방 포션 지급·단계 삭제 (C.223, GDD 144장 4)
       expect(recoverCure(s, 3000)).toBe(true);
       expect(s.nest.collapsed).toBe(false);
-      expect(s.shared.items[CURE_ITEM_ID]).toBe(start);
+      expect(s.shared.items[CURE_ITEM_ID]).toBe(start + TR.cureReward[CURE_ITEM_ID]!); // 빈사 치료 뒤 치료제 보상 (GDD 245장 9)
       expect(recoverStep(s)).toBe('spa');
       const full0 = 100 - s.nest.hunger;
       expect(recoverSpa(s, 3200)).toBe(true);

@@ -1,0 +1,118 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-enemy-setup.png",
+    "03-pc-enemy-appeared.png",
+    "04-pc-dialog-again-after-kill.png",
+    "05-pc-hogyoku-material-button.png",
+    "06-pc-hogyoku-develop.png",
+    "02-phone-enemy-setup.png"
+  ],
+  "facts": {
+    "pc.dialog": {
+      "modal": [
+        38,
+        352,
+        313
+      ],
+      "lcd": [
+        15,
+        375
+      ],
+      "inside": true,
+      "scroll": false,
+      "buttons": [
+        "창 닫기",
+        "나가기",
+        "확인"
+      ]
+    },
+    "pc.emptyFoe": true,
+    "pickOpen": 56,
+    "pickedFoe": "일반 · 테스트 적 B",
+    "appeared": {
+      "enemy": "test-b",
+      "hp": 261,
+      "passive": true,
+      "immortal": false,
+      "empty": false,
+      "dialog": false,
+      "notice": " ★4 · 공격 안 함 · 처치 0"
+    },
+    "playerHpUnchanged": true,
+    "afterKill": {
+      "dialog": true,
+      "empty": true,
+      "note": "쓰러뜨렸다 (5초). 내 체력 100% 그대로 이어진다.",
+      "notice": " 적 설정 · 처치 1"
+    },
+    "slotShown": true,
+    "slotHit": {
+      "rect": [
+        209,
+        206,
+        96,
+        44
+      ],
+      "top": "BUTTON.bha-btn bha-btn--primary bha-testarena__slot",
+      "inert": false
+    },
+    "reopened": 1,
+    "exitedToPanel": 1,
+    "matBefore": "고순도 윤활제 99999 · 혼백 여과기 99999 · 영압 결정 99999 — 붕옥 > 개발에서 강화 트랙 3개(재료별)를 올린다.",
+    "matAfter": "고순도 윤활제 100099 · 혼백 여과기 100099 · 영압 결정 100099 — 붕옥 > 개발에서 강화 트랙 3개(재료별)를 올린다.",
+    "afterReopen": {
+      "props": [
+        "bha-art bha-prop bha-prop--altar",
+        "bha-art bha-prop bha-prop--book",
+        "bha-art bha-prop bha-prop--chest",
+        "bha-art bha-prop bha-prop--outside bha-sel",
+        "bha-art bha-prop bha-prop--hogyoku"
+      ],
+      "btns": [
+        "수련장",
+        "책장",
+        "가방",
+        "월드맵",
+        "붕옥",
+        "권영마르티요80800",
+        "먹이3/3",
+        "재우기",
+        "교감",
+        "소모품"
+      ]
+    },
+    "devBefore": "정제0/50강",
+    "devAfter": "정제1/50강",
+    "devDetail": "정제 — 혼백 여과기1강 / 50보유 100098반각성공명합체 가능지금1강 — 전 능력치 +0.1% (이 트랙 몫)다음 강2강필요 재료 (보유 / 필요)혼백 여과기 100098 / 2다음 1강으로 얻는 것두 캐릭터 전 능력치 +0.1% (영구)강화 뒤 전체+0.1% → +0.2%강당 재료n강 = 혼백 여과기 n개 (1강 1개 ~ 50강 50개)얻는 곳사냥(",
+    "special": [
+      [
+        "이번 주 남은 횟수 1/1 · 1일 2시간 뒤 초기화(월요일 05:00)",
+        "입장"
+      ],
+      [
+        "이번 주 남은 횟수 1/1 · 1일 2시간 뒤 초기화(월요일 05:00)",
+        "입장"
+      ]
+    ],
+    "phone.dialog": {
+      "modal": [
+        35,
+        349,
+        313
+      ],
+      "lcd": [
+        15,
+        369
+      ],
+      "inside": true,
+      "scroll": false,
+      "buttons": [
+        "창 닫기",
+        "나가기",
+        "확인"
+      ]
+    },
+    "phone.emptyFoe": true
+  }
+}

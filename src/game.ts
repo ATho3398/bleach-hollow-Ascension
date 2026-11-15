@@ -4,24 +4,27 @@ import { getDetachTrait } from './engine/traitShop';
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
 import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
-import { applyAbsenceTime, applyExpeditionEnd, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
+import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { addEv, canEvolve, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
+import { kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { SPECIAL_ELEMENT_IDS } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
 import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
 import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
+import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
-import { allTranscendentsOwned, conditionMet, decideTranscendent, slotStatBonus, type FusionInput } from './engine/transcend';
-import { buildBattleRecord, type CombatState } from './engine/combat';
+import { DEFAULT_TRACK_KIND, getTrackKind, type TrackKindConfig } from './data/trackKinds';
+import { MOSAIC_LOOK_PREFIX } from './data/art/manifest';
+import { allTranscendentsOwned, decideTranscendent, transcendentForPair, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
+import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
 import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
@@ -30,7 +33,7 @@ import { STAT_IDS, type StatId, type Stats, type TitleDef } from './data/schema'
 import { retiredRareElement, TRAITS } from './data/traits';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
-import { addFood, foodOverflowGold, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
+import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
 import { foodReactionOf, type FoodReaction } from './engine/foodPref';
 import { TUTORIAL_GOALS, type TutorialGoalDef } from './data/tutorials';
@@ -40,7 +43,7 @@ import { DEFAULT_GROUND_ID } from './data/grounds';
 import { DEFAULT_GENDER, parseGender, type Gender } from './engine/gender';
 import { checkName, parseName } from './engine/playerName';
 import { clampDifficulty, clampStreak, MAX_DIFFICULTY, recommendedDifficulty, unlockedByTier } from './engine/difficulty';
-import { canWear, getSkin } from './data/skins';
+import { canWear, getSkin, transcendentOfAnyLook, validModelLook, validTierLook } from './data/skins';
 import { canRebirth, inheritableTraits, newRebirthState, nextCarry, sanitizeRebirth, startingCarry, type RebirthState } from './engine/rebirth';
 import { addTrainingTicket, rollTrainingTicket, applyTraining, newTrainingState, sanitizeTraining, type TrainingGameId, type TrainingOutcome, type TrainingState } from './engine/training';
 import { newDexSortState, sanitizeDexSort, type DexSortState } from './engine/dexSort';
@@ -48,12 +51,16 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
+import { bossKey, bossRushReward, newSpecialState, rollWeek, sanitizeSpecial, spendEntry, weeklyKey, weeklyReward, type SpecialDungeonState } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
+import { gainHogyokuMaterial, materialHave, spendMaterial } from './engine/hogyokuMaterials';
+export { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
 import { newSortieSlots, sanitizeSortie, SORTIE_IDS } from './engine/sortie';
 import { grantGear, newGearState, rollGear, rollGrade, sanitizeGear, sellGold, type GearState } from './engine/gear';
+import { STARTER_GEAR } from './data/gear';
 import { applyUnlocks, featureUnlocked, newUnlockState, sanitizeUnlocks, UNLOCK_GUIDES, type FeatureId, type UnlockProgress, type UnlockState } from './engine/unlocks';
 import { addPetLaps, carriedPet, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
@@ -62,11 +69,15 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 77; // C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·떠돌이 상인(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
+export const SAVE_FORMAT_VERSION = 88; // C.454 (GDD v6.069 12-4 이치고): 런 로그 전투 기록 kit 에 secondEnters(무월 진입)·finals(최후의 월아천충) 선택 필드, 원정 중간 저장 kitMastery(무월수련, 선택) — 87 → 88 변환 SAVE_MIGRATIONS[87](구조 보정 없음, 옛 기록·저장은 0).
+// 이전: SAVE_FORMAT_VERSION = 87; // C.446 (GDD v6.055 8절): 능력치 7종 — 모든 능력치 칸(노력치·계승·장비 줄·런 로그)의 속도 spd → 공격속도 aspd + 블록속도 bspd. **옛 세이브는 이어 쓰지 않는다**(사용자 2026-11-13 '세이브 걍 날려') — MIN_LOADABLE_SAVE_FORMAT 도 87. SAVE_MIGRATIONS[86] 은 옛 마이그레이션 시험(legacyGate)만 쓰는 능력치 키 변환. SAVE_FORMAT_VERSION = 86; // C.442 (GDD v6.050 12-4): 런 로그 전투 기록 kit 에 붕옥 해방 모드 modeEnters·modeExits·riskSpent(선택 필드) — 85 → 86 변환 SAVE_MIGRATIONS[85](구조 보정 없음, 옛 기록은 0). C.441 (GDD v6.049 12-4): 초월자 전용 블록 evolution.kit(초월자 id·블록 강화 단계)·초월 조각 shared.transcendShards·런 로그 kitShards(얻음·강화)·전투 기록 kit(반격·흑관·되살아남) — 84 → 85 변환 SAVE_MIGRATIONS[84](이미 있는 초월자 트랙에 강화 0 kit, 조각 0). C.436 (GDD v6.039 12-4): 초월 특성 evolution.transcendentTraits(가진 초월 특성의 초월자 id — 전투 기반과 상관없이 늘 붙음) — 83 → 84 변환 SAVE_MIGRATIONS[83](이미 있는 초월자 트랙에 그 초월자의 초월 특성 칸). C.435 (GDD v6.037 12-4): 초월자 전투 기반 evolution.basis(지금 기반·기반별 빌드 — 초월자/키웠던 캐릭터)·런 로그 basisChanges — 82 → 83 변환 SAVE_MIGRATIONS[82](이미 있는 초월자 트랙 = 지금 합친 빌드를 '초월자' 기반으로, 키웠던 캐릭터 기반은 합체 순간 빌드가 없어 합친 빌드 복사 + 합체 기록의 그때 진화체). C.429 (GDD v6.028 12-4): 초월자 트랙 — 트랙 필드 transcendentId(null = 캐릭터)·진화 상태 final·런 로그 transcendence·합체 기록 baseFactionId — 81 → 82 변환 SAVE_MIGRATIONS[81](이미 얻은 초월자마다 지금 캐릭터 + 합체 기록으로 초월자 트랙).  C.427 (GDD v6.017 6-16): 특수던전 shared.special(주 시작·쓴 입장 수·최고 ★·이긴 수)·런 로그 specialRuns — 80 → 81 변환 SAVE_MIGRATIONS[80](이번 주 새로, 빈 기록). C.425 (GDD v6.014 12-3): 붕옥 개발 hogyoku.level(10단계) → hogyoku.tracks(재료별 강화 트랙 3개, 각 0~50강)·developed 단위 = 강, 런 로그 slotLog.hogyokuDev[].track — 79 → 80 변환 SAVE_MIGRATIONS[79](옛 n단계 → 세 트랙 n×5강, 오른 보너스 보존). C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·우라하라(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
 
 /** 이 형식보다 옛 세이브는 열지 않는다("이전 버전 세이브라 이어서 할 수 없다. 새로 시작한다.").
  *  C.120(형식 37)~C.195(형식 54)는 마이그레이션 없이 형식과 같이 올렸다(GDD 61장). **C.198 부터 54 로 고정** — 형식이 오르면 SAVE_MIGRATIONS 가 54 세이브부터 한 단계씩 올린다 (GDD 123장 6) */
-export const MIN_LOADABLE_SAVE_FORMAT = 54; // C.198: 54 고정(이후 형식은 마이그레이션, GDD 123장 6). C.195: 형식 54 와 같이 올림. C.193: 형식 53 과 같이 올림. C.188: 형식 52 와 같이 올림. C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
+export const MIN_LOADABLE_SAVE_FORMAT = 87; // C.446 (2026-11-13 사용자 지시 '세이브 걍 날려, 새로 하는 거에만 적용'): 형식 87 부터 새로 시작 — 86 이하 세이브는 열지 않고 saveSlots.archiveOldSaves 가 백업 키로 옮긴다. 옛 54 고정 규칙(C.198)의 예외.
+/** 옛 마이그레이션 코드(형식 54 → 지금)가 시작하는 형식. 게임 문턱(MIN_LOADABLE_SAVE_FORMAT)과 별개 — 시험(legacyGate)이 문턱을 내렸을 때만 쓴다 */
+export const LEGACY_MIGRATION_FLOOR = 54;
+// 이전: MIN_LOADABLE_SAVE_FORMAT = 54; // C.198: 54 고정(이후 형식은 마이그레이션, GDD 123장 6). C.195: 형식 54 와 같이 올림. C.193: 형식 53 과 같이 올림. C.188: 형식 52 와 같이 올림. C.184: 형식 51 과 같이 올림. C.177: 형식 50 과 같이 올림. C.181: 형식 49 와 같이 올림. C.179: 형식 48 과 같이 올림. C.178: 형식 47 과 같이 올림. C.175: 형식 46 과 같이 올림. C.167: 형식 45 와 같이 올림. C.150: 형식 44 와 같이 올림 (C.147: 43, C.144: 42, C.140: 41) (GDD 61장, 마이그레이션 없음)
 
 /** 실제로 쓰는 문턱. 게임은 늘 MIN_LOADABLE_SAVE_FORMAT 이고, 남겨 둔 옛 마이그레이션 코드(형식 1~36)를 시험할 때만 테스트가 1 로 내린다(tests/helpers/legacyGate.ts, C.120) */
 export const saveFormatGate = { min: MIN_LOADABLE_SAVE_FORMAT };
@@ -101,6 +112,8 @@ export interface SaveData {
   meta: SaveMeta;
   /** 선택한 종족 id (src/data/factions). 게임 시작 때 고른다 (GDD 12장) */
   factionId: string;
+  /** 초월자 트랙이면 그 초월자 id, 호로·사신 같은 캐릭터 트랙이면 null (GDD 12-4 v6.028, 형식 82). 트랙이 무엇을 하는지는 trackRulesOf(트랙 종류 설정)로만 읽는다 */
+  transcendentId: string | null;
   /** 둥지 상태: 허기·컨디션 (GDD 7장) */
   nest: NestState;
   /** 흡수 빌드: 가진 특성과 슬롯·장착 순서 (GDD 4장). 속성·특성은 임시 데이터 */
@@ -155,14 +168,14 @@ export interface SaveData {
   enemyDex: EnemyDex;
   /** 도감 정렬 기준 (GDD 220장 2, C.363, 형식 68): 진화체 도감·적 도감 정렬 버튼에서 고른 기준. 슬롯 하나에 하나. 구조 = engine/dexSort.ts */
   dexSort: DexSortState;
-  /** 지금 키우지 않는 캐릭터 트랙 (GDD 22-3, 형식 23). 슬롯 = 캐릭터 트랙 최대 2(지금 트랙은 위 평평한 필드 TRACK_KEYS, 나머지는 여기) + 공유 + 붕옥 + 초월체 도감.
+  /** 지금 키우지 않는 캐릭터 트랙 (GDD 22-3, 형식 23). 슬롯 = 캐릭터 트랙 최대 2(지금 트랙은 위 평평한 필드 TRACK_KEYS, 나머지는 여기) + 공유 + 붕옥 + 초월자 도감.
    *  트랙 전환은 둘을 맞바꾼다(switchTrack). 형식을 올릴 때 트랙 필드를 바꾸면 여기 트랙도 같이 올린다(forEachTrack) */
   otherTracks: TrackData[];
   /** 투트랙 개방 알림 (형식 23): 새로 열린 트랙 종족 id — 방에 들어가면 한 번 알리고 비운다 */
   trackNotice: string | null;
   /** 붕옥 (GDD 22-3, 형식 23): 탭 개방·1단계 게이지·해방·2단계 게이지 */
   hogyoku: HogyokuState;
-  /** 초월체 도감 (GDD 22-3, 형식 23): 합체로 얻은 초월체(전시). 슬롯 단위, 합체해도 남는다 */
+  /** 초월자 도감 (GDD 22-3, 형식 23): 합체로 얻은 초월자(전시). 슬롯 단위, 합체해도 남는다 */
   transcendentDex: TranscendentEntry[];
   /** 슬롯 단위 런 로그 (GDD 9장·22-3, 형식 23): 합체·트랙 개방 기록 */
   slotLog: SlotLog;
@@ -202,7 +215,7 @@ export interface MachineRecord {
 export type WearState = Partial<Record<WearCategory, string>>;
 
 /** 캐릭터 트랙 하나가 가진 것 (GDD 22-3): 키우기(진화·특성·등급·환생·원정·수련)는 각자. 나머지 SaveData 필드는 슬롯 공유 */
-export const TRACK_KEYS = ['factionId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear', 'difficulty', 'tower'] as const;
+export const TRACK_KEYS = ['factionId', 'transcendentId', 'nest', 'build', 'evolution', 'runLog', 'activeExpedition', 'lastScreen', 'rank', 'training', 'skin', 'rebirth', 'wear', 'difficulty', 'tower'] as const;
 export type TrackKey = (typeof TRACK_KEYS)[number];
 export type TrackData = Pick<SaveData, TrackKey> & {
   /** 이 트랙에서 떠난 시각(ms): 돌아오면 그동안의 허기가 오른다 (GDD 24-1 과 같은 계산) */
@@ -210,16 +223,21 @@ export type TrackData = Pick<SaveData, TrackKey> & {
 };
 
 export interface HogyokuState {
-  /** 붕옥 탭이 열렸나 (모든 트랙이 5단계에 한 번씩 닿으면, 영구) */
+  /** 붕옥이 등장했나 = 붕옥 탭·방 붕옥 아이콘이 열렸나 (GDD 243장 1: 어느 종족이든 스토리를 전부 깨면, 영구) */
   tabOpen: boolean;
-  /** 탭이 열렸다는 알림을 아직 안 보였나 */
+  /** 등장했다는 알림을 아직 안 보였나 (등장 컷은 안내 카드 hogyoku-appear) */
   tabNotice: boolean;
-  /** 1단계에 먹인 영혼 결정 (liberateCost 가 차면 해방할 수 있다) */
-  fed: number;
-  liberated: boolean;
-  liberatedAt: number | null;
-  /** 2단계(합체)에 먹인 영혼 결정. 합체하면 0 */
-  fusionFed: number;
+  /** 등장한 시각(ms). 옛 세이브에서 이미 열린 것은 0, 아직이면 null */
+  appearedAt: number | null;
+  /** 붕옥 강화 트랙 (GDD 12-3 v6.014, 형식 80): 재료 id → 지금 강(0~trackMax). 1~trackHalf강 = 반각성(등장)부터, 그 위 = 공명부터.
+   *  개발 % = 세 트랙 평균 ÷ trackMax. 합체하면 트랙마다 afterFusionLevel(30강)로 (31~50강 진행만 0, GDD 12-4 v6.017) */
+  tracks: HogyokuCost;
+  /** 지금까지 올린 강 수 합 (영구 능력치 +0.1%씩 — 합체로 트랙이 내려가도 줄지 않는다). 형식 80 변환 = 옛 단계 1개 = 10강 몫(1%)으로 보존 */
+  developed: number;
+  /** 공명 (GDD 244장 2): 두 종족 스토리를 전부 깼다 — 6~10단계·합체가 열린다. 처음 한 번, 영구 */
+  resonance: boolean;
+  /** 공명한 시각. 옛 세이브에서 이미 공명한 것으로 친 경우 0, 아직이면 null */
+  resonatedAt: number | null;
 }
 
 export interface TranscendentEntry {
@@ -229,8 +247,18 @@ export interface TranscendentEntry {
   fusionIndex: number;
 }
 
+/** 강화 트랙 빈 값 (트랙 id 는 balance 에서) */
+export function emptyHogyokuTracks(): HogyokuCost {
+  return Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, 0])) as HogyokuCost;
+}
+
+/** 붕옥 개발 %(0~100 정수, 내림) = 세 트랙 평균 ÷ trackMax (GDD 12-3 v6.014) */
+export function hogyokuPercent(h: Pick<HogyokuState, 'tracks'>): number {
+  return Math.floor(hogyokuProgress(h.tracks) * 100 + 1e-9);
+}
+
 export function newHogyokuState(): HogyokuState {
-  return { tabOpen: false, tabNotice: false, fed: 0, liberated: false, liberatedAt: null, fusionFed: 0 };
+  return { tabOpen: false, tabNotice: false, appearedAt: null, tracks: emptyHogyokuTracks(), developed: 0, resonance: false, resonatedAt: null };
 }
 
 /** 한 트랙의 스토리 진행: 깬 화(키 "ch1/ep2" → 첫 클리어 시각·클리어 횟수), 장 클리어 보상을 받은 장 id */
@@ -306,8 +334,14 @@ export interface TutorialClaim {
 }
 
 export interface SharedState {
-  /** 영혼 결정: 강적 처치 +1, 등급전 승리 +3, 환생 +10. 수치 provisional */
+  /** 고순도 윤활제(세공 재료, 옛 키 이름 = 영혼 결정). 사냥 드롭·우라하라 (GDD 12-3 v6.015). 슬롯 공유 */
   soulCrystals: number;
+  /** 혼백 여과기(정제 재료, 옛 키 이름 = 붕옥 파편). 사냥 드롭·우라하라. 슬롯 공유 */
+  hogyokuShards: number;
+  /** 영압 결정(주입 재료, 옛 키 이름 = 공명의 정수). 사냥 드롭·우라하라. 슬롯 공유 */
+  resonanceEssence: number;
+  /** 초월 조각 (GDD 12-4 v6.048, C.441 — 형식 85): 초월자 트랙이 이긴 전투마다 얻는 재료(일반 1·강적 3·보스 8, provisional). 초월자 전용 블록 강화에 쓴다. 슬롯 공유 */
+  transcendShards: number;
   /** 먹이 종류별 보유 개수 (GDD 23-1, 형식 16). 상한 9, 시작 간식 5·보통 3 */
   food: FoodStock;
   /** 일반 재화 '골드' (GDD 23-4, 형식 16, v5.11 옛 이름 영전 — 키는 그대로): 원정 전투 승리·보물·갈림길로 얻고 원정 상인에게 쓴다(C.57, GDD 25-5). 상점은 준비 중 */
@@ -326,7 +360,7 @@ export interface SharedState {
   cosmetics: string[];
   /** 보관함 소모품 (GDD 86장 4번, 형식 41): 품목 id → 개수. 상점 정화제·각성제와 상인 소모품은 사면 여기 쌓이고 보관함에서 쓴다(inventory.ts) */
   items: Record<string, number>;
-  /** 떠돌이 상인 (GDD 85장 5번, 형식 41): 지난 방문 뒤 바퀴 수·지금 와 있는 상인(숨은 티어·품목). 슬롯 공유 */
+  /** 우라하라 (GDD 85장 5번, 형식 41): 지난 방문 뒤 바퀴 수·지금 와 있는 상인(숨은 티어·품목). 슬롯 공유 */
   wanderer: WandererState;
   /** 펫 (GDD 90장, 형식 42): 가진 펫·친밀도 바퀴·데리고 다니는 펫·첫 진화 선물. 슬롯 공유(진화·환생·트랙 바꿈에도 그대로) */
   pets: PetState;
@@ -344,6 +378,8 @@ export interface SharedState {
   specialLooks: string[];
   /** 기능 해금 (GDD 241-0, 형식 75): 열린 기능 → 열린 시각. 슬롯 공유·한 번 열리면 영구. 판정은 engine/unlocks */
   unlocks: UnlockState;
+  /** 특수던전 주간던전·보스전 (GDD 6-16 v6.017, C.427, 형식 81): 이번 주 시작·쓴 입장 수·이긴 최고 ★·이긴 수. 슬롯 공유(재료·골드가 슬롯 공유라 한 주 한도도 슬롯 하나) */
+  special: SpecialDungeonState;
 }
 
 export interface ShopDaily {
@@ -362,7 +398,7 @@ export function defaultWear(): WearState {
 }
 
 export function newSharedState(): SharedState {
-  return { soulCrystals: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: newSortieSlots(), unlocks: newUnlockState(), specialLooks: [] };
+  return { soulCrystals: 0, hogyokuShards: 0, resonanceEssence: 0, transcendShards: 0, food: newFoodStock(), tradeCoins: 0, jade: 0, tutorials: {}, dexRewards: [], rerollTickets: 0, deckSlots: 0, cosmetics: freeCosmeticIds(), items: {}, wanderer: newWandererState(), pets: newPetState(), gear: newGearState(), battleItem: null, shopDaily: { day: '', bought: {} }, traits: [], sortie: newSortieSlots(), unlocks: newUnlockState(), specialLooks: [], special: newSpecialState() };
 }
 
 const nonNegInt = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -381,7 +417,7 @@ export function sanitizeShared(raw: unknown): SharedState {
   // 기본으로 주는 꾸밈은 늘 보유 (GDD 29장)
   const cosmetics = [...new Set([...freeCosmeticIds(), ...(Array.isArray(r.cosmetics) ? r.cosmetics.filter((id): id is string => typeof id === 'string' && getCosmetic(id) !== undefined) : [])])];
   return {
-    soulCrystals: nonNegInt(r.soulCrystals), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
+    soulCrystals: nonNegInt(r.soulCrystals), hogyokuShards: nonNegInt(r.hogyokuShards), resonanceEssence: nonNegInt(r.resonanceEssence), transcendShards: nonNegInt(r.transcendShards), food: sanitizeFoodStock(r.food), tradeCoins: nonNegInt(r.tradeCoins), jade: nonNegInt(r.jade), tutorials, dexRewards,
     rerollTickets: Math.min(SX.rerollMax, nonNegInt(r.rerollTickets)), deckSlots: Math.min(SX.deckSlotPrices.length, nonNegInt(r.deckSlots)), cosmetics,
     items: sanitizeItems(r.items), wanderer: sanitizeWanderer(r.wanderer), pets: sanitizePets(r.pets), gear: sanitizeGear(r.gear),
     battleItem: typeof r.battleItem === 'string' && getGoldItem(r.battleItem)?.battle ? r.battleItem : null,
@@ -390,6 +426,7 @@ export function sanitizeShared(raw: unknown): SharedState {
     sortie: sanitizeSortie(r.sortie),
     unlocks: sanitizeUnlocks(r.unlocks),
     specialLooks: Array.isArray(r.specialLooks) ? [...new Set(r.specialLooks.filter((x): x is string => typeof x === 'string'))] : [],
+    special: sanitizeSpecial(r.special),
   };
 }
 
@@ -422,26 +459,39 @@ export function foodReactionFor(save: Pick<SaveData, 'evolution'>, food: FoodId)
 }
 
 /** 둥지에서 먹이 주기 (GDD 23-1): 그 먹이가 있어야 먹일 수 있고, 하나 쓴다. 없으면 null (아무것도 바뀌지 않는다).
- *  C.181 (GDD 109장 6): 10분에 3개 — 넘으면 'spat'(먹이는 없어지고 효과 없음, 런 로그 vitals 'spit').
- *  C.387 (GDD 234장 3): 같은 종류 10분에 2개 — 넘으면 'refused'(먹이 그대로·효과 없음, 런 로그 vitals 'refuse') */
-export function feedNest(save: SaveData, food: FoodId, nowMs: number = Date.now()): 'ate' | 'spat' | 'refused' | null {
+ *  C.181 (GDD 109장 6): 10분에 3개 — 넘으면 'spat'(효과 없음 — C.411 부터 먹이도 그대로, 런 로그 vitals 'spit').
+ *  C.387 (GDD 234장 3): 같은 종류 10분에 2개 — 넘으면 'refused'(먹이 그대로·효과 없음, 런 로그 vitals 'refuse')
+ *  C.411 (GDD 243장 6): 배부름 가득(화면 100)이면 'full' — 먹이 그대로·효과 없음(런 로그 vitals 'full'). 뱉음('spat')도 먹이를 소모하지 않는다 */
+export function feedNest(save: SaveData, food: FoodId, nowMs: number = Date.now()): 'ate' | 'spat' | 'refused' | 'full' | null {
   if (save.nest.dead) return null;
   if ((save.shared.food[food] ?? 0) <= 0) return null;
+  if (isFullyFed(save.nest)) {
+    logVital(save, { at: nowMs, kind: 'full', food });
+    return 'full';
+  }
   const r = feedFood(save.nest, food, nowMs, foodReactionFor(save, food));
+  applyTrackRiskFloor(save); // 먹이 리스크 감소도 최솟값 밑으로 안 감 (GDD 12-4 v6.054)
   if (r === 'refused') {
     logVital(save, { at: nowMs, kind: 'refuse', food });
     return r;
   }
+  if (r === 'spat') {
+    logVital(save, { at: nowMs, kind: 'spit', food });
+    return r;
+  }
   takeFood(save.shared.food, food);
-  if (r === 'spat') logVital(save, { at: nowMs, kind: 'spit', food });
   return r;
+}
+
+/** 배부름이 가득인가 (GDD 243장 6): 화면 배부름(100 − 허기, 반올림)이 100 — 더 먹여도 넘치기만 한다 */
+export function isFullyFed(nest: Pick<NestState, 'hunger'>): boolean {
+  return Math.round(100 - nest.hunger) >= 100;
 }
 
 /** 튜토리얼 보상 1건의 실제 지급량 (먹이는 상한까지만) */
 export interface TutorialGrant {
   goal: TutorialGoalDef;
   food: [FoodId, number][];
-  soulCrystals: number;
   /** 영옥 (GDD 25-9: 목표마다 +1) */
   jade: number;
 }
@@ -457,12 +507,10 @@ export function claimTutorialGoals(save: SaveData, nowMs: number = Date.now(), d
     claims.push({ goalId: goal.id, at: nowMs });
     const food: [FoodId, number][] = [];
     for (const [id, n] of Object.entries(goal.reward.food ?? {}) as [FoodId, number][]) food.push([id, addFood(save.shared.food, id, n)]);
-    const soulCrystals = goal.reward.soulCrystals ?? 0;
-    save.shared.soulCrystals += soulCrystals;
     // 영옥 (GDD 25-9): 목표 하나마다 +1 (기존 보상은 그대로)
     const jade = BALANCE.shop.tutorialJade;
     save.shared.jade += jade;
-    return { goal, food, soulCrystals, jade };
+    return { goal, food, jade };
   });
 }
 
@@ -492,8 +540,26 @@ export function claimDexRewards(save: SaveData, nowMs: number = Date.now(), defs
   });
 }
 
+/** 튜토리얼 안내가 아직 남았다 (GDD 245장 8): 홈 안내·첫 모험·회복 안내·'다음 할 일' 중 하나라도 띄울 차례 */
+export function tutorialInProgress(save: Pick<SaveData, 'help'>): boolean {
+  return TUTORIAL_FLOW_GUIDES.some((id) => guidePending(save.help, id));
+}
+const TUTORIAL_FLOW_GUIDES = ['home-intro', 'first-run', 'recover', 'first-run-room'] as const;
+
 /** 돌봄 요청 시계 (GDD 82장): 방을 열 때·방에 있는 동안 부른다. 놓친 요청은 런 로그 care.missed 에 센다. 새 요청이 막 생겼으면 true */
 export function tickCare(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): boolean {
+  // 돌봄 요청이 없는 트랙 (트랙 종류 careRequests: false — 초월자, GDD 12-4 v6.028): 배지를 만들지 않는다
+  if (!trackRulesOf(save).careRequests) {
+    save.nest.careRequest = null;
+    save.nest.nextCareAt = nowMs + BALANCE.provisional.nest.careRequest.firstDelayMinutes * 60_000;
+    return false;
+  }
+  // 튜토리얼 중에는 돌봄 요청(쓰다듬기·재우기 배지)을 만들지 않는다 — 끝난 뒤부터 첫 요청 시계(firstDelayMinutes)가 간다 (GDD 245장 8)
+  if (tutorialInProgress(save)) {
+    save.nest.careRequest = null;
+    save.nest.nextCareAt = nowMs + BALANCE.provisional.nest.careRequest.firstDelayMinutes * 60_000;
+    return false;
+  }
   const r = tickCareRequest(save.nest, nowMs, rand);
   if (r.missed) save.runLog.care.missed++;
   return r.created;
@@ -504,6 +570,7 @@ export function careNest(save: SaveData, action: CareAction, nowMs: number = Dat
   if (save.nest.dead) return 'refused';
   tickCare(save, nowMs, rand);
   const out = respondCare(save.nest, action, nowMs, rand);
+  applyTrackRiskFloor(save); // 재우기·쓰다듬기 리스크 감소도 최솟값 밑으로 안 감 (GDD 12-4 v6.054)
   save.runLog.care[out][action]++;
   if (out === 'answered' && action === 'pet') recordEvolutionBondCare(save.evolution); // 숨은 모습 조건 (GDD 241-C 4)
   return out;
@@ -528,7 +595,7 @@ function holdTutorialDying(save: SaveData, nowMs: number): void {
  *  쓰러짐·사망은 런 로그 vitals 에 남긴다(9장). 결과를 돌려주고 접속 시각을 지금으로(되돌린 시계면 그대로) */
 export function absenceOf(save: SaveData, nowMs: number = Date.now()): AbsenceReport {
   holdTutorialDying(save, nowMs);
-  const r = applyAbsenceTime(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null);
+  const r = applyAbsenceTime(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null, trackRulesOf(save).timeDecay);
   const at = (h: number) => Math.round(save.lastSeenAt + h * 3_600_000);
   if (r.collapsed) logVital(save, { at: at(BALANCE.provisional.nest.care.collapseHours), kind: 'collapse', cause: 'absence', hours: r2(r.hours) });
   // 안정형 조건 (GDD 126장 7, C.220): 24시간 넘게 꺼 둔 수 — 원정 중간 저장이 있어도 실제로 꺼 둔 시간으로 센다
@@ -610,7 +677,9 @@ export function performRevive(save: SaveData, nowMs: number = Date.now()): Reviv
   if (!save.nest.dead || save.activeExpedition != null) return { ok: false };
   const prev = save.evolution;
   const evLoss = reviveEvLossOf(save.nest.bond);
-  const evolution = newEvolution(nextStageSeed(prev.stageSeed, 200 + save.runLog.vitals.length));
+  // 퇴화 없는 트랙 (트랙 종류 devolution: false — 초월자, GDD 12-4 v6.028): 진화체·단계는 그대로, 노력치 손실만
+  const evolution = trackRulesOf(save).devolution ? newEvolution(nextStageSeed(prev.stageSeed, 200 + save.runLog.vitals.length)) : { ...cloneEvolution(prev), ev: zeroStats() };
+  delete evolution.evFree;
   for (const id of STAT_IDS) evolution.ev[id] = Math.floor(prev.ev[id] * (1 - evLoss));
   // 상한 밖 몫(튜토리얼 보상, GDD 217장 2)도 같은 비율로 — 일반 노력치처럼 따라간다
   if (prev.evFree) {
@@ -623,7 +692,7 @@ export function performRevive(save: SaveData, nowMs: number = Date.now()): Reviv
   save.evolution = evolution;
   const fresh = newNest(nowMs);
   save.nest = { ...fresh, bond: save.nest.bond, bondDay: save.nest.bondDay, bondToday: save.nest.bondToday, careRequest: null };
-  save.skin = save.skin && canWear(save.factionId, save.skin) && !getSkin(save.skin)?.tierLook ? save.skin : null;
+  save.skin = save.skin && ((canWear(save.factionId, save.skin) && !getSkin(save.skin)?.tierLook) || validModelLook(save.factionId, save.skin)) ? save.skin : null;
   save.lastScreen = 'room';
   logVital(save, { at: nowMs, kind: 'revive', evLoss, tierIndex: prev.tierIndex, formId: prev.formId });
   return { ok: true, evLoss, prevTierIndex: prev.tierIndex, prevFormId: prev.formId };
@@ -685,17 +754,9 @@ export function firstRunPending(save: Pick<SaveData, 'help' | 'runLog'>): boolea
   return guidePending(save.help, 'first-run') && save.runLog.runs.length === 0;
 }
 
-/** 새 게임 시작 먹이 (GDD 241-C 5): 기본 지급 + 일반 먹이 종류마다 startNormalFoods 개 */
-function startFoodStock(): FoodStock {
-  const s = newFoodStock();
-  const n = BALANCE.provisional.startNormalFoods;
-  for (const [id, def] of Object.entries(BALANCE.provisional.nest.foods)) if (def.type === 'normal') s[id as keyof FoodStock] = Math.max(s[id as keyof FoodStock] ?? 0, n);
-  return s;
-}
-
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
-    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: startFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약·일반 먹이 (241-C 5)
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: newFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약 (241-C 5). 일반 먹이는 튜토리얼 첫 끼니 뒤 (245장 2)
     lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {}, enemyDex: {}, dexSort: newDexSortState(),
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
     settings: null, gender: DEFAULT_GENDER, name: null,
@@ -750,9 +811,23 @@ export function checkUnlocks(save: SaveData, nowMs: number = Date.now()): Featur
     if (id === 'tiles') grantStarterTiles(save);
     else queueGuide(save.help, UNLOCK_GUIDES[id]);
     if (id === 'pet') giftFirstPet(save, nowMs);
+    if (id === 'gear') giftStarterGear(save, nowMs);
     (save.runLog.unlocks ??= []).push({ at: nowMs, factionId: save.factionId, featureId: id, tierIndex: save.evolution.tierIndex, rebirths: p.rebirths });
   }
   return fresh;
+}
+
+/** 장비 해금 선물 (GDD 243장 3): 낡은 무기·낡은 방어구·낡은 신발 노멀 1개씩(★1, 종족 공통 이름 — data/gear starter). 해금 순간 한 번(checkUnlocks).
+ *  착용은 장비 안내 카드에서 직접 끼워 본다. 보관함이 가득이면 그 장비는 주지 않는다 */
+function giftStarterGear(save: SaveData, nowMs: number): void {
+  const rng = createRng((nowMs ^ 0x1b873593) >>> 0);
+  for (const s of STARTER_GEAR) {
+    const roll = rollGear({ kind: s.kind, grade: 'normal', star: 1 }, () => nextFloat(rng));
+    const it = grantGear(save.shared.gear, roll, nowMs);
+    if (!it) continue;
+    it.name = s.name;
+    save.runLog.gear.push({ at: nowMs, factionId: save.factionId, kind: 'get', uid: it.uid, gearKind: it.kind, grade: it.grade, star: it.star, source: 'unlock' });
+  }
 }
 
 /** 펫 해금 선물 (GDD 90장 4번 ③ → 241-0): 슬롯에서 한 번, 안 가진 펫 무작위 1마리. 열린 시각으로 굴린다 */
@@ -772,7 +847,7 @@ export const battleItemUnlocked = (save: Pick<SaveData, 'shared'>): boolean => f
 
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
-    factionId, nest: newNest(nowMs), build: newBuild(), evolution: { ...newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), abilities: newAbilityLoadout() }, runLog: emptyRunLog(), activeExpedition: null,
+    factionId, transcendentId: null, nest: newNest(nowMs), build: newBuild(), evolution: { ...newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), abilities: newAbilityLoadout() }, runLog: emptyRunLog(), activeExpedition: null,
     lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } }, tower: { best: 0 },
   };
 }
@@ -786,9 +861,10 @@ export function maxTierReached(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebir
 }
 
 /** 난이도 상태 보정: 연 ★ 는 최고 도달 단계 이상, 마지막 선택은 1~연 ★ 안 (없거나 깨졌으면 권장 ★) */
-export function sanitizeDifficulty(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'> & { difficulty?: unknown }): DifficultyState {
+export function sanitizeDifficulty(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'> & Partial<Pick<SaveData, 'transcendentId'>> & { difficulty?: unknown }): DifficultyState {
   const d = (typeof t.difficulty === 'object' && t.difficulty !== null ? t.difficulty : {}) as Partial<DifficultyState>;
-  const unlocked = Math.max(unlockedByTier(maxTierReached(t)), typeof d.unlocked === 'number' && Number.isFinite(d.unlocked) ? clampDifficulty(d.unlocked) : 1);
+  // 원정 난이도 ★ 전부 열림 = 트랙 종류 allDifficulties (GDD 12-4 v6.028 — 초월자)
+  const unlocked = trackRulesOf(t).allDifficulties ? MAX_DIFFICULTY : Math.max(unlockedByTier(maxTierReached(t)), typeof d.unlocked === 'number' && Number.isFinite(d.unlocked) ? clampDifficulty(d.unlocked) : 1);
   const want = typeof d.last === 'number' && Number.isFinite(d.last) ? clampDifficulty(d.last) : recommendedDifficulty(t.evolution?.tierIndex ?? 0);
   const st = (typeof d.streak === 'object' && d.streak !== null ? d.streak : {}) as Partial<{ star: number; count: number }>;
   const streak = { star: typeof st.star === 'number' ? clampDifficulty(st.star) : 1, count: typeof st.count === 'number' ? clampStreak(st.count) : 0 };
@@ -843,83 +919,186 @@ export function forEachTrack(save: SaveData, fn: (t: Pick<SaveData, TrackKey>) =
   for (const t of allTracks(save)) fn(t);
 }
 
-/** 이 트랙이 투트랙 개방 단계(5단계)에 한 번이라도 닿았나: 지금 단계·진화 기록·환생(5단계에서만 한다) */
-export function trackReachedOpenTier(t: Pick<SaveData, 'evolution' | 'runLog' | 'rebirth'>): boolean {
-  const at = BALANCE.provisional.twoTrack.openTierIndex;
-  return t.evolution.tierIndex >= at || t.rebirth.count > 0 || t.runLog.tiers.evolutions.some((e) => e.toTier >= at);
+// ── 트랙 종류 (GDD 12-4 v6.028, C.429): 호로·사신 = 캐릭터, 합체로 얻은 초월자 = 초월자 트랙(최대 초월자 종 수). 무엇을 하고 안 하는지는 트랙 종류 설정(src/data/trackKinds)만 본다 ──
+
+/** 트랙을 가리키는 키 (전환 메뉴·알림): 캐릭터 = 종족 id, 초월자 = 'tr:' + 초월자 id */
+export const TRANSCENDENT_TRACK_PREFIX = 'tr:';
+export function trackIdOf(t: Pick<SaveData, 'factionId'> & Partial<Pick<SaveData, 'transcendentId'>>): string {
+  return t.transcendentId ? `${TRANSCENDENT_TRACK_PREFIX}${t.transcendentId}` : t.factionId;
 }
 
-/** 투트랙·붕옥 탭 개방 판정 (GDD 22-3): 어떤 트랙이 5단계에 닿았고 트랙 칸이 남았으면 아직 없는 종족(종족 데이터 순서에서 첫 번째) 트랙을 연다.
- *  모든 트랙(최대 수만큼)이 한 번씩 닿았으면 붕옥 탭을 연다(영구). 새로 연 트랙의 종족 id 를 돌려준다 (없으면 null) */
+/** 이 트랙의 종류 설정: 초월자면 그 초월자 데이터의 trackKind, 아니면 기본(캐릭터) */
+export function trackRulesOf(t: Partial<Pick<SaveData, 'transcendentId'>>): TrackKindConfig {
+  const def = t.transcendentId ? tryGetTranscendent(t.transcendentId) : undefined;
+  return getTrackKind(def?.trackKind ?? DEFAULT_TRACK_KIND);
+}
+
+/** 합체 재료·두 번째 캐릭터 개방 셈에 드는 트랙 (= 트랙 종류 fusion) — 지금 트랙 먼저 */
+export function characterTracks(save: SaveData): Pick<SaveData, TrackKey>[] {
+  return allTracks(save).filter((t) => trackRulesOf(t).fusion);
+}
+
+/** 트랙 이름 (전환 메뉴·이름표): 초월자 = 초월자 이름, 캐릭터 = 종족 이름 */
+export function trackNameOf(t: Pick<SaveData, 'factionId'> & Partial<Pick<SaveData, 'transcendentId'>>): string {
+  const def = t.transcendentId ? tryGetTranscendent(t.transcendentId) : undefined;
+  return def?.name ?? getFaction(t.factionId).name;
+}
+
+/** 진화 단계·진화체 이름 대신 보일 이름 (사용자 2026-11-15 "초월자에 진화 단계나 진화체 왜 나옴. 그냥 초월자만 써 놔", GDD 12-4):
+ *  진화가 없는 트랙(트랙 종류 evolution false — 초월자)이면 { 이름 = 트랙 이름(초월자 이름), 종류 = 트랙 종류 이름('초월자') }, 아니면 null(진화체 그대로).
+ *  종족·초월자 id 로 가르지 않고 트랙 종류 설정만 본다 */
+export function noEvolutionLabel(t: Pick<SaveData, 'factionId'> & Partial<Pick<SaveData, 'transcendentId'>>): { name: string; kind: string } | null {
+  const rules = trackRulesOf(t);
+  if (rules.evolution) return null;
+  return { name: trackNameOf(t), kind: rules.label };
+}
+
+/** 이 종족의 스토리를 전부 깼나 (GDD 243장 1): 장 목록(STORY_CHAPTERS)의 모든 장에 그 종족 내용이 있고, 모두 장 완주 기록(story[종족].chapters)에 있다.
+ *  내용이 아직 없는 장(준비 중)이 하나라도 있으면 아직 아니다. 종족 id 분기 없음 — 스토리 데이터만 본다 */
+export function storyAllCleared(save: Pick<SaveData, 'story'>, factionId: string): boolean {
+  const done = save.story[factionId]?.chapters ?? [];
+  return STORY_CHAPTERS.length > 0 && STORY_CHAPTERS.every((c) => chapterContent(factionId, c.id) !== null && done.includes(c.id));
+}
+
+/** 붕옥 등장 (GDD 243장 1 · 242장 1): 어느 종족이든 스토리를 전부 깨면 같은 순간 한 번 — 붕옥 탭·방 붕옥 아이콘(hogyoku.tabOpen) + 등장 컷(안내 카드 hogyoku-appear)
+ *  + 두 번째 트랙(종족 데이터 순서에서 아직 없는 첫 종족, 트랙 칸이 남았으면). 옛 '5단계에 닿으면 트랙'(twoTrack.openTierIndex)은 폐기 — 옛 세이브에서 이미 열린 트랙·탭은 닫지 않는다.
+ *  새로 연 트랙의 종족 id 를 돌려준다 (없으면 null) */
 export function checkTrackOpen(save: SaveData, nowMs: number = Date.now(), factions: readonly { id: string }[] = FACTIONS): string | null {
-  const TT = BALANCE.provisional.twoTrack;
-  let opened: string | null = null;
-  const tracks = allTracks(save);
-  if (tracks.length < TT.maxTracks) {
-    const by = tracks.find(trackReachedOpenTier);
-    const next = factions.find((f) => !tracks.some((t) => t.factionId === f.id));
-    if (by && next) {
-      save.otherTracks.push({ ...newTrack(next.id, nowMs, 1), parkedAt: nowMs });
-      save.slotLog.trackOpens.push({ at: nowMs, factionId: next.id, byFactionId: by.factionId });
-      save.trackNotice = next.id;
-      opened = next.id;
-    }
-  }
-  const all = allTracks(save);
-  if (!save.hogyoku.tabOpen && all.length >= TT.maxTracks && all.every(trackReachedOpenTier)) {
+  const by = factions.find((f) => storyAllCleared(save, f.id));
+  if (!by) return null;
+  if (!save.hogyoku.tabOpen) {
     save.hogyoku.tabOpen = true;
     save.hogyoku.tabNotice = true;
+    save.hogyoku.appearedAt = nowMs;
+    queueGuide(save.help, 'hogyoku-appear');
   }
-  return opened;
+  checkResonance(save, nowMs, factions);
+  const tracks = characterTracks(save);
+  if (tracks.length >= BALANCE.provisional.twoTrack.maxTracks) return null;
+  const next = factions.find((f) => !tracks.some((t) => t.factionId === f.id));
+  if (!next) return null;
+  save.otherTracks.push({ ...newTrack(next.id, nowMs, 1), parkedAt: nowMs });
+  save.slotLog.trackOpens.push({ at: nowMs, factionId: next.id, byFactionId: by.id });
+  save.trackNotice = next.id;
+  return next.id;
 }
 
-/** 다른 종족으로 갈 수 있나 (C.63, GDD 22-3·28장 7번): 다른 트랙이 열렸을 때만 — 트랙은 어떤 트랙이 5단계에 닿아야 checkTrackOpen 이 연다.
- *  5단계 전에는 어떤 길로도 종족을 바꿀 수 없다(종족 id 분기 없음, 열린 트랙 수만 본다) */
+/** 다른 종족으로 갈 수 있나 (C.63, GDD 22-3·28장 7번 → 243장 1): 다른 트랙이 열렸을 때만 — 트랙은 스토리를 전부 깨 붕옥이 등장해야 checkTrackOpen 이 연다.
+ *  그 전에는 어떤 길로도 종족을 바꿀 수 없다(종족 id 분기 없음, 열린 트랙 수만 본다) */
 export function canSwitchFaction(save: Pick<SaveData, 'otherTracks'>): boolean {
   return save.otherTracks.length > 0;
 }
 
 /** 트랙 전환 (GDD 22-3): 지금 트랙을 쉬게 하고 그 종족 트랙을 꺼낸다. 쉬는 동안의 허기는 돌아올 때 오른다(원정 중간 저장이 있으면 오르지 않음).
  *  원정 중간 저장은 트랙마다 따로 남는다. 그 종족 트랙이 없으면 false */
-export function switchTrack(save: SaveData, factionId: string, nowMs: number = Date.now()): boolean {
-  const i = save.otherTracks.findIndex((t) => t.factionId === factionId);
-  if (!canSwitchFaction(save) || i < 0 || factionId === save.factionId) return false;
+export function switchTrack(save: SaveData, trackId: string, nowMs: number = Date.now()): boolean {
+  const i = save.otherTracks.findIndex((t) => trackIdOf(t) === trackId);
+  if (!canSwitchFaction(save) || i < 0 || trackId === trackIdOf(save)) return false;
   const next = save.otherTracks[i]!;
   const parked = activeTrackOf(save, nowMs);
   const { parkedAt, ...track } = next;
-  // 쉬던 트랙의 시간 흐름 (GDD 102-1): 수치·쇠약·피곤만 — 쓰러짐·사망은 실제 미접속에만 (그동안 다른 트랙으로 접속해 있었다, 코드 판단)
-  if (track.activeExpedition == null && Number.isFinite(parkedAt) && nowMs > parkedAt) logSpaEnd(track, passNestTime(track.nest, (nowMs - parkedAt) / 3_600_000, true, nowMs).spaEnded);
+  // 쉬던 트랙의 시간 흐름 (GDD 102-1): 수치·쇠약·피곤만 — 쓰러짐·사망은 실제 미접속에만 (그동안 다른 트랙으로 접속해 있었다, 코드 판단).
+  // 수치가 안 닳는 트랙(트랙 종류 timeDecay: false — 초월자, GDD 12-4 v6.028)은 시계만 멈춘 채 홈 체력만 흐른다
+  if (track.activeExpedition == null && Number.isFinite(parkedAt) && nowMs > parkedAt) {
+    const hours = (nowMs - parkedAt) / 3_600_000;
+    logSpaEnd(track, (trackRulesOf(track).timeDecay ? passNestTime(track.nest, hours, true, nowMs) : passNestFrozen(track.nest, hours, nowMs)).spaEnded);
+  }
   track.nest.lastTickMs = nowMs;
   putActiveTrack(save, track);
   save.otherTracks.splice(i, 1, parked);
   return true;
 }
 
-/** 슬롯 보너스 (GDD 22-3): 붕옥 해방 +5% + 초월체 1종마다 +2%. 지금 캐릭터 둘 모두에 */
-export function statBonusOf(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): ReturnType<typeof slotStatBonus> {
-  return slotStatBonus(save.hogyoku.liberated, save.transcendentDex.length);
+/** 공명 (GDD 244장 2): 스토리를 전부 깬 종족 수가 트랙 수(twoTrack.maxTracks)에 닿으면 처음 한 번 — 6~10단계 개발·합체가 열리고 공명의 정수 +30, 짧은 컷(안내 카드 hogyoku-resonance).
+ *  종족 id 분기 없음 — 종족 데이터와 스토리 기록만 본다. 이번에 공명했으면 true */
+export function checkResonance(save: SaveData, nowMs: number = Date.now(), factions: readonly { id: string }[] = FACTIONS): boolean {
+  const h = save.hogyoku;
+  if (!h.tabOpen || h.resonance) return false;
+  const cleared = factions.filter((f) => storyAllCleared(save, f.id)).length;
+  if (cleared < Math.min(factions.length, BALANCE.provisional.twoTrack.maxTracks)) return false;
+  h.resonance = true;
+  h.resonatedAt = nowMs;
+  queueGuide(save.help, 'hogyoku-resonance');
+  return true;
 }
 
-/** 붕옥에 영혼 결정을 먹인다 (GDD 22-3): 해방 전에는 1단계, 해방 뒤에는 2단계 게이지에 — 모자란 만큼만(가진 만큼). 먹인 수를 돌려준다 */
-export function feedHogyoku(save: SaveData): number {
+
+/** 사냥 드롭 (GDD 12-3 v6.015): 모험에서 이긴 전투마다 — 일반 = 확률로 1개, 강적·보스 = 확정 여러 개(+ 바퀴 변이 폭풍의 강적 추가분 = 첫 재료). 재료는 weights 비율.
+ *  난수 = 그 원정 runId 로 고정 (같은 원정 = 같은 드롭). 재료별 개수를 돌려준다 */
+export function rollHogyokuDrops(battles: readonly Pick<BattleRecord, 'won' | 'enemyClass'>[], runId: number, bonus = 0): HogyokuCost {
+  const D = BALANCE.provisional.hogyokuDrops;
+  const rng = createRng(((runId >>> 0) * 2654435761 + 0x5bd1e995) >>> 0);
+  const ids = HOGYOKU_TRACK_IDS;
+  const total = ids.reduce((a, id) => a + Math.max(0, D.weights[id] ?? 0), 0);
+  const pick = (): HogyokuTrackId => {
+    let r = nextFloat(rng) * total;
+    for (const id of ids) { r -= Math.max(0, D.weights[id] ?? 0); if (r < 0) return id; }
+    return ids[ids.length - 1]!;
+  };
+  const out = emptyHogyokuTracks();
+  for (const b of battles) {
+    if (!b.won) continue;
+    const n = b.enemyClass === 'boss' ? D.bossCount : b.enemyClass === 'elite' ? D.eliteCount : nextFloat(rng) < D.normalChance ? 1 : 0;
+    for (let k = 0; k < n; k++) out[pick()] += 1;
+  }
+  if (bonus > 0) out[ids[0]!] += Math.floor(bonus);
+  return out;
+}
+
+/** 슬롯 보너스 (GDD 244장 4·22-3): 붕옥 개발 단계마다 +1%(오른 몫은 영구) + 초월자 1종마다 +2%. 지금 캐릭터 둘 모두에 */
+export function statBonusOf(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): ReturnType<typeof slotStatBonus> {
+  return slotStatBonus(save.hogyoku.developed, save.transcendentDex.length);
+}
+
+/** 다음 강화가 막힌 이유 (GDD 12-3 v6.014): 붕옥 미등장 · 그 트랙 50강 · 26강부터 공명 필요 · 그 트랙 재료 부족('short') */
+export type DevelopBlock = 'tab' | 'max' | 'resonance' | 'short';
+
+/** 트랙 track 을 1강 더 올릴 수 있나. next = 올라갈 강, cost = 그 트랙 재료 수(50강이면 null). 막힌 이유를 모두 */
+export function developGate(save: SaveData, track: HogyokuTrackId): { ok: boolean; next: number; cost: number | null; have: number; missing: DevelopBlock[] } {
   const HX = BALANCE.provisional.hogyoku;
   const h = save.hogyoku;
-  if (!h.tabOpen) return 0;
-  const key = h.liberated ? 'fusionFed' : 'fed';
-  const cost = h.liberated ? HX.fusionCost : HX.liberateCost;
-  const n = Math.max(0, Math.min(save.shared.soulCrystals, cost - h[key]));
-  h[key] += n;
-  save.shared.soulCrystals -= n;
-  return n;
+  const cur = h.tracks[track] ?? 0;
+  const have = materialHave(save, track);
+  const missing: DevelopBlock[] = [];
+  if (!h.tabOpen) missing.push('tab');
+  if (cur >= HX.trackMax) return { ok: false, next: cur, cost: null, have, missing: [...missing, 'max'] };
+  const next = cur + 1;
+  const cost = trackStepCost(track, next);
+  if (next > HX.trackHalf && !h.resonance) missing.push('resonance');
+  if (have < cost) missing.push('short');
+  return { ok: missing.length === 0, next, cost, have, missing };
 }
 
-/** 붕옥 해방 (GDD 22-3): 1단계 게이지가 차면. 영구 */
-export function liberateHogyoku(save: SaveData, nowMs: number = Date.now()): boolean {
+/** 붕옥 강화 1강 (GDD 12-3 v6.014): 그 트랙 재료만 바치고 그 트랙 +1강 — 두 캐릭터 전 능력치 +0.1%(영구). 런 로그(slotLog.hogyokuDev)에 트랙·강·쓴 재료.
+ *  막혔으면 null */
+export function developHogyoku(save: SaveData, track: HogyokuTrackId, nowMs: number = Date.now()): HogyokuDevRecord | null {
+  const g = developGate(save, track);
+  if (!g.ok || g.cost === null) return null;
   const h = save.hogyoku;
-  if (!h.tabOpen || h.liberated || h.fed < BALANCE.provisional.hogyoku.liberateCost) return false;
-  h.liberated = true;
-  h.liberatedAt = nowMs;
-  return true;
+  spendMaterial(save, track, g.cost);
+  h.tracks[track] = g.next;
+  h.developed += 1;
+  const spent = { ...emptyHogyokuTracks(), [track]: g.cost } as HogyokuCost;
+  const rec: HogyokuDevRecord = { at: nowMs, track, level: g.next, ...spent, factionId: save.factionId, cycle: save.slotLog.fusions.length + 1 };
+  (save.slotLog.hogyokuDev ??= []).push(rec);
+  return rec;
+}
+
+/** 일괄 강화 (GDD 12-3 v6.014 [일괄 강화]): 가진 재료로 세 트랙 모두 갈 수 있는 데까지. 순서 = 지금 강이 가장 낮은 트랙부터 1강씩 번갈아
+ *  (같으면 트랙 목록 순서) — 한 트랙만 먼저 치솟지 않게. 오른 강 수를 트랙별로 돌려준다 */
+export function developAll(save: SaveData, nowMs: number = Date.now()): { gained: HogyokuCost; records: HogyokuDevRecord[] } {
+  const gained = emptyHogyokuTracks();
+  const records: HogyokuDevRecord[] = [];
+  for (;;) {
+    const open = HOGYOKU_TRACK_IDS.filter((id) => developGate(save, id).ok);
+    if (open.length === 0) break;
+    const pick = open.reduce((a, b) => ((save.hogyoku.tracks[b] ?? 0) < (save.hogyoku.tracks[a] ?? 0) ? b : a));
+    const rec = developHogyoku(save, pick, nowMs);
+    if (!rec) break;
+    gained[pick] += 1;
+    records.push(rec);
+  }
+  return { gained, records };
 }
 
 /** 이 트랙이 지금 등급 1위인가 (1위 번호는 등급 데이터의 맨 위 번호) */
@@ -933,29 +1112,30 @@ export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth'>): Fusio
   return { rebirths: t.rebirth.count, hidden: form?.hidden === true, elements: playerElementsOf(t.evolution), category: form?.label.category ?? 'mixed' };
 }
 
-export type FusionBlock = 'tab' | 'liberation' | 'tracks' | 'gauge' | 'rank' | 'expedition' | 'complete';
+export type FusionBlock = 'tab' | 'resonance' | 'tracks' | 'develop' | 'rank' | 'expedition' | 'owned';
 
-/** 합체할 수 있나 (GDD 22-3): 붕옥 해방 + 2단계 게이지 가득 + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 아직 못 모은 초월체. 막힌 이유를 모두 돌려준다 */
+/** 합체할 수 있나 (GDD 12-4): 공명 + 붕옥 개발 100% + 모든 트랙 등급 1위 + 원정 중간 저장 없음 + 두 캐릭터 분류 조합의 초월자 미보유. 막힌 이유를 모두 돌려준다 */
 export function fusionGate(save: SaveData): { ok: boolean; missing: FusionBlock[] } {
   const h = save.hogyoku;
-  const tracks = allTracks(save);
+  const tracks = characterTracks(save); // 초월자 트랙은 합체 재료가 아니다 (GDD 12-4 v6.028)
   const missing: FusionBlock[] = [];
   if (!h.tabOpen) missing.push('tab');
-  if (!h.liberated) missing.push('liberation');
+  if (!h.resonance) missing.push('resonance');
   if (tracks.length < BALANCE.provisional.twoTrack.maxTracks) missing.push('tracks');
-  if (h.fusionFed < BALANCE.provisional.hogyoku.fusionCost) missing.push('gauge');
+  if (HOGYOKU_TRACK_IDS.some((id) => (h.tracks[id] ?? 0) < BALANCE.provisional.hogyoku.trackMax)) missing.push('develop');
   if (!tracks.every(trackIsTopRank)) missing.push('rank');
   if (tracks.some((t) => t.activeExpedition != null)) missing.push('expedition');
-  if (allTranscendentsOwned(save.transcendentDex.map((x) => x.id))) missing.push('complete');
+  // 두 캐릭터 분류 조합의 초월자를 이미 가졌으면 막힘 (GDD 12-4 v6.037 — 다른 분류로 키워야 한다)
+  const def = transcendentForPair(tracks.map(fusionInputOf));
+  if (def && save.transcendentDex.some((x) => x.id === def.id)) missing.push('owned');
   return { ok: missing.length === 0, missing };
 }
 
-/** 합체 미리보기 (GDD 22-3 "이 조합이면 ○○"): 지금 두 캐릭터 상태로 정해질 초월체와 조건이 맞았는지. 다 모았으면 def null */
-export function fusionPreview(save: SaveData): { def: TranscendentDef | null; matched: boolean; inputs: FusionInput[] } {
-  const inputs = allTracks(save).map(fusionInputOf);
-  const owned = save.transcendentDex.map((x) => x.id);
-  const def = decideTranscendent(inputs, owned);
-  return { def, matched: def !== null && conditionMet(def.condition, inputs), inputs };
+/** 합체 미리보기 (GDD 12-4 v6.037 "지금 두 캐릭터라면 → 「○○」"): 두 캐릭터 진화체 분류 조합의 초월자와 이미 가졌는지. 두 캐릭터가 없으면 def null */
+export function fusionPreview(save: SaveData): { def: TranscendentDef | null; owned: boolean; inputs: FusionInput[] } {
+  const inputs = characterTracks(save).map(fusionInputOf);
+  const def = transcendentForPair(inputs);
+  return { def, owned: def !== null && save.transcendentDex.some((x) => x.id === def.id), inputs };
 }
 
 export type FusionResult =
@@ -973,31 +1153,168 @@ function summaryOf(t: Pick<SaveData, TrackKey>): FusionCharacterSummary {
 }
 
 /** 합체 (GDD 22-3): 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'fusion')은 부르는 쪽(화면)이 먼저 한다.
- *  두 캐릭터는 초월체가 되어 사라지고(초월체 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
- *  남김(슬롯): 도감·칭호, 초월체 도감, 붕옥 해방, 먹이·타일·골드·영옥·남은 영혼 결정, 스토리·보스 도감, 스킨·꾸밈 착용과 보유. 붕옥 2단계 게이지는 0.
- *  첫 초월체는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
+ *  두 캐릭터는 초월자가 되어 사라지고(초월자 도감에 보관), 같은 종족들의 새 트랙이 1단계 완전 초기 상태로 열린다(환생 계승 없음).
+ *  남김(슬롯): 도감·칭호, 초월자 도감, 붕옥 1~5단계·공명·개발로 오른 능력치, 먹이·타일·골드·영옥·남은 붕옥 재료, 스토리·보스 도감, 스킨·꾸밈 착용과 보유. 붕옥 6~10단계 진행은 0 (GDD 244장 5).
+ *  첫 초월자는 영옥 10. 6종을 다 모으면 칭호 "붕옥 완성"(칭호 평가) */
 export function performFusion(save: SaveData, nowMs: number = Date.now()): FusionResult {
   const gate = fusionGate(save);
   if (!gate.ok) return { ok: false, missing: gate.missing };
-  const { def, matched } = fusionPreview(save);
-  if (!def) return { ok: false, missing: ['complete'] };
+  const inputs = characterTracks(save).map(fusionInputOf);
+  const def = decideTranscendent(inputs, save.transcendentDex.map((x) => x.id));
+  if (!def) return { ok: false, missing: ['owned'] };
+  const matched = true; // 조합 = 결정 (GDD 12-4 v6.037) — 옛 '조건 안 맞아 아래쪽부터 채움'은 없다
   const HX = BALANCE.provisional.hogyoku;
-  const tracks = allTracks(save);
+  const tracks = characterTracks(save);
   const characters = tracks.map(summaryOf);
   const jade = save.transcendentDex.length === 0 ? HX.firstTranscendentJade : 0;
   const index = save.slotLog.fusions.length + 1;
-  const record: FusionRecord = { at: nowMs, index, transcendentId: def.id, matched, characters, soulSpent: save.hogyoku.fusionFed, jade };
+  const soulSpent = trackCostSum(HOGYOKU_TRACK_IDS[0]!, HX.afterFusionLevel, HX.trackMax);
+  // 초월자 트랙 (GDD 12-4 v6.028): 두 캐릭터가 해금·진행한 것을 그대로 이어받아 새 트랙으로 — 두 캐릭터를 새로 시작하기 전에 만든다
+  const transcendent = inheritTranscendentTrack(tracks, def, index, nowMs);
+  const record: FusionRecord = { at: nowMs, index, transcendentId: def.id, matched, characters, soulSpent, jade, baseFactionId: transcendent.factionId };
   save.slotLog.fusions.push(record);
   save.transcendentDex.push({ id: def.id, at: nowMs, fusionIndex: index });
-  save.hogyoku.fusionFed = 0;
+  // 세 트랙 31~50강 진행만 0 으로 (GDD 12-4 v6.017, 돌아갈 강 = afterFusionLevel 30 = 개발 60%): 강화로 오른 능력치(developed)는 그대로
+  for (const id of HOGYOKU_TRACK_IDS) save.hogyoku.tracks[id] = Math.min(save.hogyoku.tracks[id] ?? 0, HX.afterFusionLevel);
   save.shared.jade += jade;
-  // 새 두 트랙: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다
+  // 새 두 캐릭터: 같은 종족들, 1단계 완전 초기. 스킨(꾸밈)만 그대로 입는다. 이미 있던 초월자 트랙은 그대로
   const fresh = (t: Pick<SaveData, TrackKey>, salt: number) => ({ ...newTrack(t.factionId, nowMs, salt), skin: t.skin, wear: { ...t.wear } });
-  const others = save.otherTracks.map((t, i) => ({ ...fresh(t, i + 1), parkedAt: nowMs }));
-  putActiveTrack(save, fresh(save, 0));
-  save.otherTracks = others;
+  const parked: TrackData[] = [activeTrackOf(save, nowMs), ...save.otherTracks].map((t, i) => (trackRulesOf(t).fusion ? { ...fresh(t, i), parkedAt: nowMs } : t));
+  // 합체 직후 = 새 초월자의 방 (지금 트랙 = 초월자, 두 캐릭터는 쉬는 트랙으로)
+  putActiveTrack(save, transcendent);
+  save.otherTracks = parked;
+  save.trackNotice = trackIdOf(transcendent);
   checkTitles(save, 'fusion', nowMs);
   return { ok: true, def, record, jade, completed: allTranscendentsOwned(save.transcendentDex.map((x) => x.id)) };
+}
+
+const jsonClone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+/** 초월자 트랙 만들기 (GDD 12-4 v6.028 — 세부는 마스터 추천안·provisional): 합체 순간 캐릭터들이 해금·진행한 것을 그대로 잇는다.
+ *  바탕 = 단계가 가장 높은 캐릭터(같으면 앞 = 지금 캐릭터): 종족 설정·진화체·외형·꾸밈·수련.
+ *  노력치(상한 밖 몫·환생 계승 포함) = 능력치마다 높은 쪽 · 특성 블록 보유 = 합침(칸 수는 바탕 칸, 빈 칸은 다른 캐릭터 장착 블록으로) · 속성 강화 = 속성마다 높은 쪽 ·
+ *  진화 특성 = 합침(세기는 높은 쪽) · 환생 횟수 = 높은 쪽(특성 칸 수) · 탑 = 높은 쪽 · 교감 = 높은 쪽. 등급은 없음(새 상태), 원정 난이도는 트랙 종류 allDifficulties 면 ★ 전부.
+ *  진화 판정 끔(evolution.final)은 트랙 종류 evolution 에서. 장비·펫·가방은 슬롯 공유라 그대로 같이 쓴다. 초월자 보너스 = 슬롯 보유 보너스(초월자 1종마다 전 능력치 +2%) */
+export function inheritTranscendentTrack(chars: readonly Pick<SaveData, TrackKey>[], def: TranscendentDef, fusionIndex: number, nowMs: number, migrated = false): Omit<TrackData, 'parkedAt'> {
+  if (chars.length === 0) throw new Error('이어받을 캐릭터가 없다');
+  const rules = getTrackKind(def.trackKind);
+  const base = chars.reduce((best, t) => (t.evolution.tierIndex > best.evolution.tierIndex ? t : best), chars[0]!);
+  const others = chars.filter((t) => t !== base);
+  const maxStats = (pick: (e: EvolutionState) => Stats | undefined): Stats | undefined => {
+    if (!chars.some((t) => pick(t.evolution))) return undefined;
+    const out = zeroStats();
+    for (const k of STAT_IDS) out[k] = Math.max(0, ...chars.map((t) => pick(t.evolution)?.[k] ?? 0));
+    return out;
+  };
+  const evolution = cloneEvolution(base.evolution);
+  evolution.ev = maxStats((e) => e.ev)!;
+  const free = maxStats((e) => e.evFree);
+  if (free) evolution.evFree = free; else delete evolution.evFree;
+  const carry = maxStats((e) => e.carry);
+  if (carry) evolution.carry = carry; else delete evolution.carry;
+  evolution.steps = 0;
+  evolution.alerts = 0;
+  if (!rules.evolution) evolution.final = true;
+  evolution.ascended = chars.some((t) => t.evolution.ascended === true) || undefined;
+  if (!evolution.ascended) delete evolution.ascended;
+  // 진화 특성: 보유 합침(세기 높은 쪽), 4단계 칸은 누가 한 번이라도 했으면
+  const loadout = evolution.abilities ? cloneLoadout(evolution.abilities) : newAbilityLoadout();
+  for (const t of others) {
+    const ab = t.evolution.abilities;
+    if (!ab) continue;
+    for (const [id, v] of Object.entries(ab.owned)) loadout.owned[id] = Math.max(loadout.owned[id] ?? 0, v);
+    loadout.tier4Ever = loadout.tier4Ever || ab.tier4Ever;
+  }
+  loadout.equipped = Object.keys(loadout.owned);
+  delete loadout.pending;
+  evolution.abilities = loadout;
+  // 특성 블록: 바탕 장착 그대로, 빈 칸은 다른 캐릭터의 장착 블록(앞 칸부터)으로, 나머지는 보유로
+  const build = cloneBuildOf(base.build);
+  for (const t of others) {
+    for (const id of t.build.owned) if (!build.owned.includes(id)) build.owned.push(id);
+    for (const id of t.build.slots) {
+      if (id === null || build.slots.includes(id)) continue;
+      const i = build.slots.indexOf(null);
+      if (i < 0) break;
+      build.slots[i] = id;
+      (build.equipOrder ??= []).push(id);
+    }
+    for (const [el, n] of Object.entries(t.build.enhance ?? {})) (build.enhance ??= {})[el] = Math.max(build.enhance[el] ?? 0, n);
+  }
+  // 전투 기반 (GDD 12-4 v6.037): 합체 순간 두 캐릭터의 빌드를 따로 저장 + 합친 빌드 = '초월자' 기반(초월자 전용 스킬 [미정] 동안 임시 — provisional). 처음 기반 = 초월자
+  // 초월 특성 (GDD 12-4 v6.039, C.436): 이 초월자의 초월 특성 1개 — 전투 기반과 상관없이 영구
+  evolution.transcendentTraits = [def.id];
+  // 초월자 전용 블록 (GDD 12-4 v6.048, C.441): 강화 0 — 데이터에 블록이 없는 초월자도 자리는 둔다(블록이 정해지면 그대로 쓰임)
+  evolution.kit = { id: def.id, levels: {} };
+  evolution.basis = combatBasisFor(chars, { factionId: base.factionId, formId: evolution.formId, formHistory: evolution.formHistory, ascended: evolution.ascended, build, abilities: loadout });
+  const rebirth = { ...jsonClone(base.rebirth), count: Math.max(...chars.map((t) => t.rebirth.count)) };
+  const nest = { ...newNest(nowMs), bond: Math.max(...chars.map((t) => t.nest.bond)) };
+  const runLog = emptyRunLog();
+  runLog.transcendence = {
+    at: nowMs, transcendentId: def.id, fusionIndex, baseFactionId: base.factionId, from: chars.map((t) => t.factionId), tierIndex: evolution.tierIndex, formId: evolution.formId,
+    evTotal: evTotal(evolution.ev), traits: build.owned.length, abilities: Object.keys(loadout.owned).length, ...(migrated ? { migrated: true } : {}),
+  };
+  const tierStar = recommendedDifficulty(evolution.tierIndex);
+  const unlocked = rules.allDifficulties ? MAX_DIFFICULTY : Math.max(...chars.map((t) => t.difficulty.unlocked));
+  return {
+    factionId: base.factionId, transcendentId: def.id, nest, build, evolution, runLog, activeExpedition: null, lastScreen: 'room',
+    rank: newRankState(), training: jsonClone(base.training), skin: base.skin, rebirth, wear: { ...base.wear },
+    difficulty: { unlocked, last: Math.min(unlocked, tierStar), streak: { star: Math.min(unlocked, tierStar), count: 0 } },
+    tower: { best: Math.max(...chars.map((t) => t.tower.best)) },
+  };
+}
+
+/** 한 캐릭터의 지금 전투 빌드 (합체 순간 저장 — GDD 12-4 v6.037) */
+function basisBuildOf(t: Pick<SaveData, 'factionId' | 'build' | 'evolution'>): CombatBasisBuild {
+  const e = t.evolution;
+  return { factionId: t.factionId, formId: e.formId, formHistory: [...e.formHistory], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+}
+
+/** 초월자 전투 기반 상태: '초월자' = 합친 빌드, 키웠던 캐릭터마다(종족 id 키, 먼저 온 것) 그 캐릭터 빌드. 처음 고른 것 = 초월자 */
+function combatBasisFor(chars: readonly Pick<SaveData, 'factionId' | 'build' | 'evolution'>[], merged: CombatBasisBuild): CombatBasis {
+  const builds: Record<string, CombatBasisBuild> = { [TRANSCENDENT_BASIS]: cloneBasisBuild({ ...merged, formHistory: [...merged.formHistory] }) };
+  if (!merged.ascended) delete builds[TRANSCENDENT_BASIS]!.ascended;
+  for (const t of chars) if (!(t.factionId in builds)) builds[t.factionId] = basisBuildOf(t);
+  return { current: TRANSCENDENT_BASIS, builds };
+}
+
+/** 전투 기반 고르기 칸 (GDD 12-4 v6.037): 초월자 / 키웠던 <종족 이름>(종족 설정 순서). 초월자 트랙이 아니면 빈 목록 */
+export function basisChoices(save: Pick<SaveData, 'transcendentId' | 'evolution'>): { key: string; label: string; factionId: string | null; current: boolean }[] {
+  const b = save.transcendentId ? save.evolution.basis : undefined;
+  if (!b) return [];
+  const out: { key: string; label: string; factionId: string | null; current: boolean }[] = [];
+  if (b.builds[TRANSCENDENT_BASIS]) out.push({ key: TRANSCENDENT_BASIS, label: '초월자', factionId: null, current: b.current === TRANSCENDENT_BASIS });
+  for (const f of FACTIONS) if (b.builds[f.id]) out.push({ key: f.id, label: `키웠던 ${f.name}`, factionId: f.id, current: b.current === f.id });
+  return out;
+}
+
+/** 전투에 쓰는 종족 설정 id (블록 계열 이름·분류): 초월자 트랙이면 고른 전투 기반의 종족, 아니면 트랙 종족 (GDD 12-4 v6.037) */
+export function combatFactionIdOf(save: Pick<SaveData, 'factionId' | 'evolution'>): string {
+  const b = save.evolution.basis;
+  return b?.builds[b.current]?.factionId ?? save.factionId;
+}
+
+export type BasisSwitchResult = { ok: true; changed: boolean } | { ok: false; reason: 'not-transcendent' | 'unknown' | 'expedition' };
+
+/** 전투 기반 바꾸기 (GDD 12-4 v6.037): 지금 기반의 빌드·특성(편집한 것 포함)을 그 기반 자리에 넣어 두고, 고른 기반의 빌드·특성을 트랙에 꺼낸다(기반별 편집은 따로 유지).
+ *  능력치·외형은 그대로. 원정 중엔 못 바꾼다(추천안). 런 로그 basisChanges 에 남긴다 */
+export function switchCombatBasis(save: SaveData, key: string, nowMs: number = Date.now()): BasisSwitchResult {
+  const b = save.transcendentId ? save.evolution.basis : undefined;
+  if (!b) return { ok: false, reason: 'not-transcendent' };
+  const next = b.builds[key];
+  if (!next) return { ok: false, reason: 'unknown' };
+  if (save.activeExpedition != null) return { ok: false, reason: 'expedition' };
+  if (b.current === key) return { ok: true, changed: false };
+  const cur = b.builds[b.current];
+  if (cur) {
+    cur.build = cloneBuildOf(save.build);
+    cur.abilities = save.evolution.abilities ? cloneLoadout(save.evolution.abilities) : newAbilityLoadout();
+  }
+  save.build = cloneBuildOf(next.build);
+  save.evolution.abilities = cloneLoadout(next.abilities);
+  (save.runLog.basisChanges ??= []).push({ at: nowMs, from: b.current, to: key });
+  b.current = key;
+  return { ok: true, changed: true };
 }
 
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
@@ -1023,13 +1340,21 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
     if (exp.outcome === 'returned') log.risk.survivedBreakthroughs++;
   }
   // 속성 보너스 완성 기록(runLog.lineages)은 C.150 에 멈춤 — 같은 속성 3개 보너스 삭제 (GDD 94장 B 후속). 옛 기록 자리는 그대로 둔다
-  // 영혼 결정 (GDD 22-3): 이 원정에서 이긴 강적 수만큼 (+ 바퀴 변이 폭풍의 추가분, GDD 25-5)
-  save.shared.soulCrystals += exp.battles.filter((b) => b.won && b.enemyClass === 'elite').length * BALANCE.provisional.soulCrystals.perElite + (exp.bonusSoul ?? 0);
-  // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(상한 9), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
+  // 붕옥 재료 사냥 드롭 (GDD 12-3 v6.015): 이 원정에서 이긴 전투마다 (+ 바퀴 변이 폭풍의 강적 추가분, GDD 25-5). 런 로그 slotLog.hogyokuMaterials 'hunt'
+  const drops = rollHogyokuDrops(exp.battles, exp.runId, exp.bonusSoul ?? 0);
+  for (const id of HOGYOKU_TRACK_IDS) gainHogyokuMaterial(save, id, drops[id], 'hunt', nowMs);
+  // 초월 조각 (GDD 12-4 v6.048, C.441): 초월자 트랙이 이긴 전투마다 일반 1·강적 3·보스 8 (승패 무관 — 이긴 전투만 셈). 런 로그 kitShards 'gain'
+  if (save.transcendentId && exp.evolution.kit) {
+    const shards = transcendShardsOfBattles(exp.battles.map((b) => ({ won: b.won, enemyClass: b.enemyClass, boss: isBossId(b.enemyId) })));
+    if (shards > 0) {
+      save.shared.transcendShards += shards;
+      (save.runLog.kitShards ??= []).push({ at: nowMs, kind: 'gain', runId: exp.runId, amount: shards });
+    }
+    exp.transcendShards = shards;
+  }
+  // 먹이 전리품 (GDD 23-1): 지킨 먹이를 보유에 넣고(보관 상한 없음 — GDD v6.005), 그래도 하나도 없으면 간식 2개 (막힘 방지). 결과 화면이 exp.foodSettled 를 읽는다
   const sum = summarize(exp);
   exp.foodSettled = settleFood(save.shared.food, sum.keptFood, sum.lostFood);
-  // 보관 한도를 넘친 먹이는 골드로 (GDD 42장 4번)
-  save.shared.tradeCoins += exp.foodSettled.overflowGold ?? 0;
   // 골드 (C.57): 번 것 − 상인에게 쓴 것 (패배하면 마지막 바퀴에 번 것은 잃는다)
   save.shared.tradeCoins = Math.max(0, save.shared.tradeCoins + sum.keptGold);
   save.build = cloneBuildOf(exp.build);
@@ -1066,6 +1391,8 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   settleStreak(save, exp);
   // 스토리 화·보스 (GDD 25-3·25-4): 기록·보상. 칭호(보스 첫 처치·장 클리어)는 바로 아래 칭호 평가가 런 로그를 읽어 준다
   if (exp.story) exp.storySettled = settleStory(save, exp, nowMs);
+  // 스토리를 전부 깼으면 붕옥 등장 + 두 번째 트랙 (GDD 243장 1)
+  if (exp.story) checkTrackOpen(save, nowMs);
   // 자유 원정 보스 (GDD 37장): 도감 처치 수·런 로그 (골드·잔치는 원정 전리품으로 이미 들어왔다, 첫 처치 영옥·칭호 없음)
   settleFreeBoss(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
@@ -1081,7 +1408,7 @@ function settleTrainingTickets(save: SaveData, exp: ExpeditionState, nowMs: numb
   }
 }
 
-/** 떠돌이 상인 (GDD 85장 5번): 원정 귀환 때 — 와 있던 상인은 떠나고(런 로그 leave), 이번 원정에서 마친 바퀴마다 가중 확률로 굴린다(오면 arrive).
+/** 우라하라 (GDD 85장 5번): 원정 귀환 때 — 와 있던 상인은 떠나고(런 로그 leave), 이번 원정에서 마친 바퀴마다 가중 확률로 굴린다(오면 arrive).
  *  굴림은 원정 시드로(같은 원정 = 같은 결과). 첫 원정 튜토리얼은 세지 않는다 */
 function settleWanderer(save: SaveData, exp: ExpeditionState, nowMs: number): void {
   const w = save.shared.wanderer;
@@ -1211,7 +1538,7 @@ export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
   // 켜 둔 동안 시간 흐름 (GDD 102-1): 허기·컨디션 — 원정 중이면 원정이 자기 수치를 쓴다
   const alive = !save.nest.dead;
   holdTutorialDying(save, nowMs);
-  logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null)?.spaEnded);
+  logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null, trackRulesOf(save).timeDecay)?.spaEnded);
   if (alive && save.nest.dead) logVital(save, { at: nowMs, kind: 'death' }); // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정)
   const r = accrueIdle(save, nowMs, true);
   markSeen(save, nowMs);
@@ -1312,12 +1639,8 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
     prog.cleared[key] = { firstAt: had?.firstAt ?? nowMs, clears: (had?.clears ?? 0) + 1 };
     out.gold = SX.episodeGold;
     out.food = [SX.episodeFood as FoodId, addFood(save.shared.food, SX.episodeFood as FoodId, 1)];
-    // 화 보상 먹이가 보관 한도에 막히면 골드로 (GDD 42장 4번, 원정 전리품과 같은 규칙)
-    if (out.food[1] === 0) {
-      out.overflowGold = foodOverflowGold(out.food[0]);
-      out.gold += out.overflowGold;
-    }
     save.shared.tradeCoins += out.gold;
+    // 붕옥 재료는 스토리에서 주지 않는다 (GDD 12-3 v6.015 — 사냥 드롭·우라하라뿐, 옛 화 첫 클리어·장 보스 파편 삭제)
     if (out.firstClear) out.jade += SX.firstClearJade;
     const eps = chapterContent(save.factionId, st.chapterId)?.episodes ?? [];
     if (!prog.chapters.includes(st.chapterId) && eps.length > 0 && eps.every((e) => prog.cleared[episodeKey(st.chapterId, e.id)])) {
@@ -1511,8 +1834,6 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     // 단계 외형이 정해지면 시작 외형(시작 전용 스킨)은 그 외형에 덮인다 (GDD 53). 상점에서 산 스킨은 그대로. 스킨 패널에서 다시 고를 수 있다
     if (save.evolution.look && getSkin(save.skin)?.startOnly) save.skin = null;
     checkTitles(save, 'evolution', nowMs);
-    // 5단계에 닿으면 다른 종족 트랙이 열리고, 모든 트랙이 닿으면 붕옥 탭이 열린다 (GDD 22-3)
-    checkTrackOpen(save, nowMs);
   }
   return r;
 }
@@ -1631,7 +1952,6 @@ export function recordRankBattle(save: SaveData, s: CombatState, nowMs: number =
     difficulty: RANK_HOLDERS.find((h) => h.id === r.opponentId)?.difficulty,
   };
   save.runLog.rankBattles.push(rec);
-  if (won) save.shared.soulCrystals += BALANCE.provisional.soulCrystals.perRankWin;
   dieIfDyingLost(save, won, nowMs, 'rank');
   checkTitles(save, 'rank', nowMs);
   return r;
@@ -1696,6 +2016,8 @@ export interface TowerOutcome {
   ticket: boolean;
   /** 다음 도전 층 (꼭대기를 깼으면 null) */
   next: number | null;
+  /** 붕옥 파편 (GDD 244장 3): 10층마다 첫 클리어 */
+  shards?: number;
 }
 
 /** 탑 전투 결과를 세이브에 반영한다 (GDD 36장 6~10번): 런 로그(towerBattles·전투 기록 enemyClass 'tower'), 이기면 최고 층·첫 클리어 보상·보스 도감, 칭호 평가.
@@ -1736,6 +2058,75 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
   return out;
 }
 
+// ── 특수던전 주간던전·보스전 (GDD 6-16 v6.017, C.427) ──
+
+/** 특수던전 상태 (주가 바뀌었으면 여기서 비운다) */
+export function specialState(save: SaveData, nowMs: number = Date.now()): SpecialDungeonState {
+  save.shared.special ??= newSpecialState(nowMs);
+  rollWeek(save.shared.special, nowMs);
+  return save.shared.special;
+}
+
+/** 입장: 이번 주 횟수 1 차감 (남은 게 없으면 false). 실패·중간 나가기도 돌려주지 않는다 */
+export function enterSpecial(save: SaveData, mode: 'weekly' | 'boss', target: string, nowMs: number = Date.now()): boolean {
+  const key = mode === 'weekly' ? weeklyKey(target as HogyokuTrackId) : bossKey(target);
+  return spendEntry(specialState(save, nowMs), key, nowMs);
+}
+
+/** 특수던전 전투 한 판을 런 로그·적 도감에 남긴다 (리스크·배부름·컨디션은 그대로 — 탑과 같다) */
+export function recordSpecialBattle(save: SaveData, s: CombatState, nowMs: number = Date.now()): void {
+  const battle = buildBattleRecord(s, { factionId: save.factionId, tierIndex: save.evolution.tierIndex });
+  battle.enemyClass = 'tower'; // 강적 처치 수(칭호·히든)에 섞이지 않게 (탑과 같은 분류)
+  save.runLog.battles.push(battle);
+  noteEnemyBattle((save.enemyDex ??= {}), s.boss?.setup.id ?? s.enemy.def.id, s.status === 'won', WHERE_TOWER, nowMs);
+}
+
+export interface SpecialOutcome {
+  won: boolean;
+  gold: number;
+  /** 받은 재료 (트랙 id → 개수) */
+  materials: Partial<Record<HogyokuTrackId, number>>;
+}
+
+/** 한 입장을 끝낸다: 다 이기면 보상(주간던전 = 테마 재료 + 골드, 보스전 = 재료 세 종 + 골드)·최고 ★·이긴 수, 보스전은 보스 도감 처치 +1(첫 처치 보상·칭호·특성 없음).
+ *  런 로그 specialRuns 에 입장·판마다 결과·보상. 빈사로 지면 탑처럼 사망 규칙 */
+export function settleSpecialRun(
+  save: SaveData,
+  run: { mode: 'weekly' | 'boss'; target: string; bossId?: string; star: number; battles: CombatState[]; total: number; quit: boolean },
+  nowMs: number = Date.now(),
+): SpecialOutcome {
+  const st = specialState(save, nowMs);
+  const won = !run.quit && run.battles.length >= run.total && run.battles.every((b) => b.status === 'won');
+  const out: SpecialOutcome = { won, gold: 0, materials: {} };
+  const half = save.nest.collapsed ? BALANCE.provisional.nest.care.dying.rewardMult : 1; // 빈사 골드 절반 (탑과 같다)
+  if (won) {
+    const key = run.mode === 'weekly' ? weeklyKey(run.target as HogyokuTrackId) : bossKey(run.target);
+    st.best[key] = Math.max(st.best[key] ?? 0, run.star);
+    st.clears[key] = (st.clears[key] ?? 0) + 1;
+    if (run.mode === 'weekly') {
+      const r = weeklyReward(run.target as HogyokuTrackId, run.star);
+      out.gold = Math.floor(r.gold * half);
+      out.materials[r.track] = gainHogyokuMaterial(save, r.track, r.material, 'weekly', nowMs);
+    } else {
+      const r = bossRushReward(run.star);
+      out.gold = Math.floor(r.gold * half);
+      for (const t of HOGYOKU_TRACK_IDS) out.materials[t] = gainHogyokuMaterial(save, t, r.each, 'bossRush', nowMs);
+      if (run.bossId) {
+        const dex = save.bossDex[run.bossId];
+        save.bossDex[run.bossId] = { kills: (dex?.kills ?? 0) + 1, firstAt: dex?.firstAt ?? nowMs };
+      }
+    }
+    save.shared.tradeCoins += out.gold;
+  }
+  save.runLog.specialRuns.push({
+    at: nowMs, factionId: save.factionId, mode: run.mode, target: run.target, star: run.star, won, quit: run.quit,
+    battles: run.battles.map((b) => ({ enemyId: b.boss?.setup.id ?? b.enemy.def.id, won: b.status === 'won', durationSeconds: Math.round(elapsedSeconds(b) * 10) / 10, startHp: Math.round(b.params.playerStartHpFraction * 1000) / 1000 })),
+    gold: out.gold, materials: { ...out.materials } as Record<string, number>, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId,
+  });
+  if (!won && !run.quit) dieIfDyingLost(save, false, nowMs, 'tower');
+  return out;
+}
+
 /** 해방 (GDD 83장, C.134): 22-2 의 해금 조건(수련 완료·등급 이력)은 폐기 — 1단계부터 영력 해방, 5단계부터 레스렉시온/만해(고유 효과).
  *  trained = 수련 완료(22-4) → 고유 효과 강화 (applyEvolutionToParams 의 trained) */
 export function liberationAccess(save: Pick<SaveData, 'training'>): { usable: true; trained: boolean } {
@@ -1757,13 +2148,13 @@ export function recordTraining(save: SaveData, game: TrainingGameId, won: boolea
 
 /** 환생 결과 (화면이 연출·안내에 쓴다) */
 export type RebirthResult =
-  | { ok: true; record: RebirthRecord; soulCrystals: number; jade: number }
+  | { ok: true; record: RebirthRecord; jade: number }
   | { ok: false; reason: 'tier' | 'expedition' | 'trait' };
 
 /** 환생 (GDD 22-1·22-7): 5단계 이상에서 둥지로부터. 되돌릴 수 없다 — 자동 백업(24-5 stashSlot 'rebirth')은 부르는 쪽(화면)이 먼저 한다.
  *  초기화: 단계·진화체·경로·장착 특성(계승 1개 제외)·걸음·등급 사다리(번호·전적)·노력치(10% 누적 계승)·리스크 0·허기·컨디션 기본값·원정 중간 저장.
  *  남김: 도감·칭호, 등급 이력, 수련(완료·수련치·수련권), 공유 자원(먹이·골드·영옥·영혼 결정), 타일, 스킨, 런 로그.
- *  보상: 영혼 결정 +10, 첫 환생만 영옥 10 (튜토리얼 first-rebirth 는 다음 저장 때 claimTutorialGoals 가 준다) */
+ *  보상: 첫 환생만 영옥 10 (튜토리얼 first-rebirth 는 다음 저장 때 claimTutorialGoals 가 준다) */
 export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs: number = Date.now()): RebirthResult {
   if (!canRebirth(save.evolution)) return { ok: false, reason: 'tier' };
   if (save.activeExpedition != null) return { ok: false, reason: 'expedition' };
@@ -1791,16 +2182,14 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
   save.activeExpedition = null;
   save.lastScreen = 'room';
   const RB = BALANCE.provisional.rebirth;
-  const soulCrystals = BALANCE.provisional.soulCrystals.perRebirth;
-  const jade = count === 1 ? RB.firstJade : 0;
-  save.shared.soulCrystals += soulCrystals;
+  const jade = count === 1 ? RB.firstJade : 0; // 붕옥 재료는 주지 않는다 (GDD 12-3 v6.015)
   save.shared.jade += jade;
   const record: RebirthRecord = {
     at: nowMs, count, factionId: save.factionId, prevFormId: prev.formId, prevTierIndex: prev.tierIndex, prevElements: playerElementsOf(prev),
     keptTraitId: keepTraitId, carry: { ...evolution.carry }, runsCompleted: runsCompleted(save),
   };
   save.runLog.rebirths.push(record);
-  return { ok: true, record, soulCrystals, jade };
+  return { ok: true, record, jade };
 }
 
 /** 실패형(망한 진화체 포함)을 거친 적 있는 계보 (각성형 ①, GDD 126장 협의 답): 이 슬롯 런 로그의 진화 기록·지금 진화 경로 */
@@ -2028,7 +2417,177 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
     }
     if (isRec(save.shared) && !Array.isArray((save.shared as unknown as Record<string, unknown>).specialLooks)) save.shared.specialLooks = [];
   },
+  // 형식 77 → 78 (C.412, GDD 243장 1·3): 붕옥 등장 시각 — 이미 열린 붕옥 탭은 0(언제인지 모름, 닫지 않는다), 아직이면 null. 장비 고정 이름(name)은 없음 그대로(노멀·레어… 이름)
+  77: (save) => {
+    const h = (save as unknown as Record<string, unknown>).hogyoku;
+    if (isRec(h)) (h as Record<string, unknown>).appearedAt = (h as Record<string, unknown>).tabOpen === true ? 0 : null;
+  },
+  // 형식 78 → 79 (C.414, GDD 244장 6): 붕옥 게이지 → 붕옥 개발. 이미 해방했으면 5단계, 2단계 게이지(영혼 결정 fusionFed / 300)는 같은 비율로 6~10단계에 옮기고(내림),
+  // 단계에 못 미친 나머지 결정은 돌려준다. 해방 전 1단계 게이지(fed)는 결정으로 돌려준다. 이미 합체한 적이 있으면 공명한 것으로(합체 조건을 이미 지났다).
+  // 붕옥 파편·공명의 정수는 0 부터, 개발·재료 기록은 빈 목록
+  78: (save) => {
+    const h = (save as unknown as Record<string, unknown>).hogyoku;
+    const sh = (save as unknown as Record<string, unknown>).shared;
+    if (isRec(sh)) {
+      const r = sh as Record<string, unknown>;
+      if (typeof r.hogyokuShards !== 'number') r.hogyokuShards = 0;
+      if (typeof r.resonanceEssence !== 'number') r.resonanceEssence = 0;
+    }
+    if (isRec(save.slotLog)) Object.assign(save.slotLog as unknown as Record<string, unknown>, { hogyokuDev: [], hogyokuMaterials: [] });
+    if (!isRec(h)) return;
+    const o = h as Record<string, unknown>;
+    const HX = { halfLevel: 5, maxLevel: 10 }; // 형식 79 의 옛 10단계 (C.425 형식 80 에서 트랙으로 바뀜 — 이 단계는 옛 값 그대로)
+    const oldLiberate = 100; // 옛 provisional liberateCost (C.414 에서 삭제)
+    const oldFusion = 300; // 옛 provisional fusionCost
+    const fed = Math.min(oldLiberate, nonNegInt(o.fed));
+    const fusionFed = Math.min(oldFusion, nonNegInt(o.fusionFed));
+    let refund = 0;
+    let level = 0;
+    if (o.liberated === true) {
+      const extra = Math.floor((fusionFed / oldFusion) * (HX.maxLevel - HX.halfLevel));
+      level = HX.halfLevel + extra;
+      refund = Math.max(0, fusionFed - Math.round((extra * oldFusion) / (HX.maxLevel - HX.halfLevel)));
+    } else refund = fed;
+    if (isRec(sh)) (sh as Record<string, unknown>).soulCrystals = nonNegInt((sh as Record<string, unknown>).soulCrystals) + refund;
+    const fused = isRec(save.slotLog) && Array.isArray((save.slotLog as unknown as Record<string, unknown>).fusions) && ((save.slotLog as unknown as Record<string, unknown>).fusions as unknown[]).length > 0;
+    o.level = o.tabOpen === true ? level : 0;
+    o.developed = o.level;
+    o.resonance = o.tabOpen === true && fused;
+    o.resonatedAt = o.resonance ? 0 : null;
+    delete o.fed;
+    delete o.liberated;
+    delete o.liberatedAt;
+    delete o.fusionFed;
+  },
+  // 형식 79 → 80 (C.425, GDD 12-3 v6.014): 붕옥 개발 10단계(level) → 재료별 강화 트랙 3개(tracks, 각 0~50강). 옛 n단계 → 세 트랙 각 n×5강(개발 % 그대로).
+  // 이미 오른 보너스(옛 developed 단계 × 1%)는 줄지 않게: developed(강) = 지금 트랙 강 합 + 합체로 깎였던 옛 단계 × 10강(= 1%) — 옛 n단계 몫 n% ≤ 새 1.5n%.
+  // 옛 개발 기록(slotLog.hogyokuDev)은 그대로(track 없음 = 옛 10단계 기록)
+  79: (save) => {
+    const h = (save as unknown as Record<string, unknown>).hogyoku;
+    if (!isRec(h)) return;
+    const o = h as Record<string, unknown>;
+    const level = Math.min(10, nonNegInt(o.level));
+    const oldDeveloped = Math.max(level, nonNegInt(o.developed));
+    const per = BALANCE.provisional.hogyoku.trackMax / 10;
+    o.tracks = Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, level * per]));
+    o.developed = level * per * HOGYOKU_TRACK_IDS.length + (oldDeveloped - level) * Math.round(0.01 / BALANCE.provisional.hogyoku.perStepBonus);
+    delete o.level;
+  },
+  // 형식 80 → 81 (C.427, GDD 6-16 v6.017): 특수던전 주간던전·보스전 — shared.special(주 시작 0 → 처음 쓸 때 이번 주로, 쓴 횟수 0) · 트랙마다 런 로그 specialRuns 빈 목록
+  80: (save) => {
+    if (isRec(save.shared)) (save.shared as unknown as Record<string, unknown>).special = newSpecialState(); // 주 시작 0 = 처음 열 때 이번 주로
+    forEachTrack(save, (t) => {
+      if (isRec(t.runLog)) (t.runLog as unknown as Record<string, unknown>).specialRuns = [];
+    });
+  },
+  81: (save) => migrateTranscendentTracks(save, Date.now()),
+  82: (save) => migrateCombatBasis(save),
+  // 형식 83 → 84 (C.436, GDD 12-4 v6.039): 이미 있는 초월자 트랙에 그 초월자의 초월 특성 칸
+  83: (save) => {
+    forEachTrack(save, (t) => {
+      const tid: unknown = isRec(t) ? t.transcendentId : null;
+      if (isRec(t) && isRec(t.evolution) && typeof tid === 'string' && tid) t.evolution.transcendentTraits = [tid];
+    });
+  },
+  // 형식 84 → 85 (C.441, GDD 12-4 v6.048): 이미 있는 초월자 트랙에 전용 블록 상태(강화 0), 초월 조각 0
+  84: (save) => {
+    forEachTrack(save, (t) => {
+      const tid: unknown = isRec(t) ? t.transcendentId : null;
+      if (isRec(t) && isRec(t.evolution) && typeof tid === 'string' && tid) t.evolution.kit = { id: tid, levels: {} };
+    });
+    if (isRec(save.shared)) (save.shared as unknown as Record<string, unknown>).transcendShards = 0;
+  },
+  // 형식 85 → 86 (C.442, GDD 12-4 v6.050): 전투 기록 kit 의 모드 필드는 선택(없으면 0) — 구조 보정 없음
+  85: () => {},
+  // 86 → 87 (C.446, GDD v6.055 8절): 능력치 속도 spd → 공격속도 aspd, 블록속도 bspd 0. **게임은 형식 86 이하를 열지 않는다**(MIN_LOADABLE_SAVE_FORMAT 87, 사용자 '세이브 걍 날려') —
+  //   이 칸은 옛 마이그레이션 시험(tests/helpers/legacyGate.ts)이 끝까지 올라가도록 키만 바꾼다
+  86: (save) => renameSpeedStat(save),
+  // 87 → 88 (C.454, GDD 12-4 v6.069 이치고): 전투 기록 kit 의 secondEnters·finals 와 원정 중간 저장 kitMastery 는 선택(없으면 0) — 구조 보정 없음
+  87: () => {},
 };
+
+/** 형식 86 → 87 시험용 변환: 세이브 안의 모든 능력치 칸에서 숫자 spd → aspd, 능력치 7칸 꼴(hp·atk 숫자)이면 빠진 bspd = 0 */
+function renameSpeedStat(node: unknown, depth = 0): void {
+  if (depth > 40 || node === null || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (const x of node) renameSpeedStat(x, depth + 1);
+    return;
+  }
+  const o = node as Record<string, unknown>;
+  if (typeof o.spd === 'number' && o.aspd === undefined) {
+    o.aspd = o.spd;
+    delete o.spd;
+  }
+  if (typeof o.hp === 'number' && typeof o.atk === 'number' && typeof o.aspd === 'number' && o.bspd === undefined) o.bspd = 0;
+  for (const v of Object.values(o)) renameSpeedStat(v, depth + 1);
+}
+
+/** 형식 82 → 83 (C.435, GDD 12-4 v6.037): 초월자 트랙마다 전투 기반을 만든다. 합체 순간 두 캐릭터 빌드가 저장돼 있지 않으므로 (마스터 추천안)
+ *  '초월자' = 지금 빌드(C.429 합친 빌드), 키웠던 캐릭터 기반 = 지금 빌드 복사 + 진화체는 슬롯 합체 기록의 그 캐릭터 진화체(있고 아는 것이면, 없으면 지금 진화체).
+ *  키웠던 종족 = 합체 기록 → 런 로그 transcendence.from → 바탕 종족 순서로 찾는다. 처음 기반 = 초월자. 초월자 id 는 조합과 안 맞아도 그대로 */
+export function migrateCombatBasis(save: SaveData): void {
+  const fusions = Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [];
+  forEachTrack(save, (t) => {
+    if (!isRec(t) || !isRec(t.evolution) || typeof t.transcendentId !== 'string' || !t.transcendentId || !isRec(t.build)) return;
+    const e = t.evolution;
+    const merged: CombatBasisBuild = { factionId: t.factionId, formId: e.formId ?? null, formHistory: Array.isArray(e.formHistory) ? [...e.formHistory] : [], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+    const rec = fusions.find((f) => isRec(f) && f.transcendentId === t.transcendentId);
+    const recChars = rec && Array.isArray(rec.characters) ? rec.characters.filter((c) => isRec(c) && typeof c.factionId === 'string') : [];
+    const from = recChars.length > 0 ? recChars.map((c) => c.factionId) : Array.isArray(t.runLog?.transcendence?.from) ? t.runLog.transcendence.from : [t.factionId];
+    const builds: Record<string, CombatBasisBuild> = { [TRANSCENDENT_BASIS]: merged };
+    for (const fid of from) {
+      if (typeof fid !== 'string' || fid in builds || !FACTIONS.some((f) => f.id === fid)) continue;
+      const form = recChars.find((c) => c.factionId === fid)?.formId;
+      const useForm = typeof form === 'string' && tryGetForm(form) ? form : null;
+      builds[fid] = { ...cloneBasisBuild(merged), factionId: fid, ...(useForm ? { formId: useForm, formHistory: [useForm] } : {}) };
+      if (useForm) delete builds[fid]!.ascended;
+    }
+    e.basis = { current: TRANSCENDENT_BASIS, builds };
+  });
+}
+
+/** 형식 81 → 82 (C.429, GDD 12-4 v6.028): 모든 트랙 transcendentId = null(캐릭터), 이미 얻은 초월자마다 초월자 트랙을 만든다 (쉬는 트랙으로, 지금 트랙은 그대로).
+ *  합체 순간 두 캐릭터 데이터가 없으므로 (마스터 추천안) 지금 캐릭터들로 합체와 같은 이어받기를 하고, 슬롯 합체 기록(slotLog.fusions)의 그때 캐릭터가 더 높은 단계였으면
+ *  그 진화체·단계·노력치 합(능력치마다 고르게, 상한 안)·환생 수로 올린다. 런 로그 transcendence.migrated = true. 만들 수 없는 트랙(깨진 데이터)은 건너뛴다 */
+export function migrateTranscendentTracks(save: SaveData, nowMs: number): void {
+  if (!Array.isArray(save.otherTracks)) save.otherTracks = [];
+  forEachTrack(save, (t) => { if (isRec(t)) (t as { transcendentId: string | null }).transcendentId = null; });
+  const dex = Array.isArray(save.transcendentDex) ? save.transcendentDex : [];
+  const fusions = Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [];
+  for (const entry of dex) {
+    const def = isRec(entry) && typeof entry.id === 'string' ? tryGetTranscendent(entry.id) : undefined;
+    if (!def) continue;
+    try {
+      const chars = allTracks(save).filter((t) => isTrackShape(t) && t.transcendentId === null);
+      const track = inheritTranscendentTrack(chars, def, entry.fusionIndex, nowMs, true);
+      const rec = fusions.find((f) => isRec(f) && f.transcendentId === def.id);
+      if (rec) raiseFromFusionRecord(track, rec);
+      save.otherTracks.push({ ...track, parkedAt: nowMs });
+    } catch {
+      // 깨진 트랙 데이터 — 이 초월자 트랙은 만들지 않는다 (도감·보너스는 그대로)
+    }
+  }
+}
+
+/** 형식 82 변환 보조: 합체 기록의 그때 캐릭터가 지금 이어받은 것보다 높은 단계였으면 그 진화체·단계·노력치 합·환생 수로 올린다 */
+function raiseFromFusionRecord(track: Omit<TrackData, 'parkedAt'>, rec: FusionRecord): void {
+  const chars = Array.isArray(rec.characters) ? rec.characters.filter((c) => isRec(c)) : [];
+  if (chars.length === 0) return;
+  const best = chars.reduce((a, c) => ((c.tierIndex ?? 0) > (a.tierIndex ?? 0) ? c : a), chars[0]!);
+  const e = track.evolution;
+  if ((best.tierIndex ?? 0) > e.tierIndex && typeof best.formId === 'string' && tryGetForm(best.formId) && FACTIONS.some((f) => f.id === best.factionId)) {
+    track.factionId = best.factionId;
+    e.tierIndex = best.tierIndex;
+    e.formId = best.formId;
+    e.formHistory = [best.formId];
+    delete e.look;
+  }
+  const cap = evCaps(capTierOf(e));
+  const even = Math.floor(Math.min(cap.total, Math.max(0, ...chars.map((c) => c.evTotal ?? 0))) / STAT_IDS.length);
+  for (const k of STAT_IDS) e.ev[k] = Math.max(e.ev[k], Math.min(cap.perStat, even));
+  track.rebirth.count = Math.max(track.rebirth.count, ...chars.map((c) => c.rebirths ?? 0));
+  if (track.runLog.transcendence) Object.assign(track.runLog.transcendence, { baseFactionId: track.factionId, tierIndex: e.tierIndex, formId: e.formId, evTotal: evTotal(e.ev) });
+}
 
 /** 옛 안정 수치 필드를 버린다 (GDD 239장 4, 형식 72 · 불러올 때도 한 번 더) */
 function stripStability(t: Record<string, unknown>): void {
@@ -2264,7 +2823,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   }
   if (save.meta.format < 23) {
     // 형식 22 → 23 (C.59, GDD 22-3 투트랙·붕옥): 지금 세이브 = 트랙 1개(위 평평한 필드 그대로 — 데이터 손실 없음), 쉬는 트랙 없음, 붕옥 처음 상태,
-    // 초월체 도감·합체 기록 빈 값. 이미 5단계에 닿은 세이브는 로드 때 checkTrackOpen 이 다른 종족 트랙을 연다
+    // 초월자 도감·합체 기록 빈 값. 이미 5단계에 닿은 세이브는 로드 때 checkTrackOpen 이 다른 종족 트랙을 연다
     save.otherTracks = [];
     save.trackNotice = null;
     save.hogyoku = newHogyokuState();
@@ -2365,17 +2924,27 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   }
   // 형식 37~54 (C.120~C.195) 는 마이그레이션을 만들지 않았다 (GDD 61장): 게임은 54 미만을 위 문턱에서 이미 거절한다.
   // 테스트가 옛 마이그레이션 코드를 시험하려고 문턱을 내렸을 때만 끝까지 올라간 옛 세이브를 54 로 찍는다(그사이 새 필드는 아래 보정의 기본값)
-  if (min < MIN_LOADABLE_SAVE_FORMAT && save.meta.format < MIN_LOADABLE_SAVE_FORMAT) save.meta.format = MIN_LOADABLE_SAVE_FORMAT;
+  if (min < LEGACY_MIGRATION_FLOOR && save.meta.format < LEGACY_MIGRATION_FLOOR) save.meta.format = LEGACY_MIGRATION_FLOOR;
   // 형식 54 부터는 한 단계씩 (GDD 123장 6, C.198)
   if (!runSaveMigrations(save)) return null;
   if (!repairCore(save)) return null;
-  save.otherTracks = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t) && t.factionId !== save.factionId).slice(0, BALANCE.provisional.twoTrack.maxTracks - 1);
-  if (new Set(save.otherTracks.map((t) => t.factionId)).size !== save.otherTracks.length) save.otherTracks = save.otherTracks.filter((t, i, a) => a.findIndex((x) => x.factionId === t.factionId) === i);
+  // 트랙 = 캐릭터 최대 twoTrack.maxTracks + 초월자 최대 초월자 종 수 (GDD 12-4 v6.028). 모르는 초월자 id 는 캐릭터 트랙으로 읽힌다(겹치면 버림)
+  save.transcendentId = sanitizeTranscendentId(save.transcendentId);
+  const activeId = trackIdOf(save);
+  const tracksIn = (Array.isArray(save.otherTracks) ? save.otherTracks : []).filter((t): t is TrackData => isTrackShape(t));
+  for (const t of tracksIn) t.transcendentId = sanitizeTranscendentId(t.transcendentId);
+  const uniq = tracksIn.filter((t, i, a) => trackIdOf(t) !== activeId && a.findIndex((x) => trackIdOf(x) === trackIdOf(t)) === i);
+  const charRoom = BALANCE.provisional.twoTrack.maxTracks - (trackRulesOf(save).fusion ? 1 : 0);
+  const trRoom = TRANSCENDENTS.length - (trackRulesOf(save).fusion ? 0 : 1);
+  save.otherTracks = [...uniq.filter((t) => trackRulesOf(t).fusion).slice(0, charRoom), ...uniq.filter((t) => !trackRulesOf(t).fusion).slice(0, trRoom)];
   for (const t of save.otherTracks) if (typeof t.parkedAt !== 'number' || !Number.isFinite(t.parkedAt)) t.parkedAt = Date.now();
-  save.trackNotice = typeof save.trackNotice === 'string' && save.otherTracks.some((t) => t.factionId === save.trackNotice) ? save.trackNotice : null;
+  save.trackNotice = typeof save.trackNotice === 'string' && allTracks(save).some((t) => trackIdOf(t) === save.trackNotice) ? save.trackNotice : null;
   save.hogyoku = sanitizeHogyoku(save.hogyoku);
   save.transcendentDex = sanitizeTranscendentDex(save.transcendentDex);
-  save.slotLog = { fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [], identities: sanitizeIdentities(save.slotLog?.identities) };
+  save.slotLog = {
+    fusions: Array.isArray(save.slotLog?.fusions) ? save.slotLog.fusions : [], trackOpens: Array.isArray(save.slotLog?.trackOpens) ? save.slotLog.trackOpens : [], identities: sanitizeIdentities(save.slotLog?.identities),
+    hogyokuDev: Array.isArray(save.slotLog?.hogyokuDev) ? save.slotLog.hogyokuDev : [], hogyokuMaterials: Array.isArray(save.slotLog?.hogyokuMaterials) ? save.slotLog.hogyokuMaterials : [],
+  };
   save.shared = sanitizeShared(save.shared);
   // 처음 시작한 날이 멀쩡하면 런 로그 전체를 훑는 earliestStamp 를 건너뛴다 (C.72: 1000판 세이브 로드가 CPU 4배 감속에서 수백 ms 걸렸다)
   const mc = (isRec(save.machine) ? save.machine.createdAt : undefined) as unknown;
@@ -2516,10 +3085,25 @@ function sanitizeCare(t: Pick<SaveData, 'nest' | 'runLog'>): void {
   t.runLog.care = { answered: pair(c.answered), refused: pair(c.refused), missed: nonNegInt(c.missed) };
 }
 
+/** 리스크 최솟값 보정 (GDD 12-4 v6.054 — 아이젠 붕옥 감응도 20, 데이터 kit.riskFloor): 둥지 리스크가 그 트랙의 최솟값 밑이면 최솟값으로.
+ *  불러올 때(옛 세이브 포함 — 형식 그대로, 읽을 때 보정)·저장할 때·정화제 뒤에 부른다. 원정 안은 changeRisk 가 막는다 */
+export function applyTrackRiskFloor(t: Pick<SaveData, 'nest' | 'transcendentId'>): void {
+  const floor = kitRiskFloorOf(t.transcendentId);
+  if (t.nest && t.nest.risk < floor) t.nest.risk = floor;
+}
+
 /** 트랙 필드 보정 (깨진 값·없는 기록). 지금 트랙과 쉬는 트랙에 똑같이 */
 function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string[]): void {
   sanitizeCare(t);
+  t.transcendentId = sanitizeTranscendentId(t.transcendentId);
   sanitizeEvolutionExtras(t.evolution, t.rebirth?.count);
+  sanitizeCombatBasis(t);
+  sanitizeTranscendentTraits(t);
+  sanitizeKitState(t);
+  applyTrackRiskFloor(t);
+  // 진화 판정 끔 = 트랙 종류 설정 evolution: false (GDD 12-4 v6.028 — 초월자)
+  if (!trackRulesOf(t).evolution) t.evolution.final = true;
+  else delete t.evolution.final;
   t.runLog.shopPurchases = Array.isArray(t.runLog.shopPurchases) ? t.runLog.shopPurchases : [];
   t.runLog.sales = Array.isArray(t.runLog.sales) ? t.runLog.sales : []; // 팔기 기록 (GDD 236장 5, 형식 71)
   t.runLog.tutorialRewards = Array.isArray(t.runLog.tutorialRewards) ? t.runLog.tutorialRewards : [];
@@ -2531,7 +3115,7 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
   t.runLog.storyRuns = Array.isArray(t.runLog.storyRuns) ? t.runLog.storyRuns : [];
   t.rebirth = sanitizeRebirth(t.rebirth);
   t.runLog.rebirths = Array.isArray(t.runLog.rebirths) ? t.runLog.rebirths : [];
-  t.skin = canWear(t.factionId, t.skin) && owned.includes(skinItemId(t.skin!)) ? t.skin : null;
+  t.skin = (canWear(t.factionId, t.skin) && owned.includes(skinItemId(t.skin!))) || validModelLook(t.factionId, t.skin) ? t.skin : null; // 모델 고르기 전용 외형은 올바른 id 만 (보유 확인은 입힐 때, C.434)
   t.training = sanitizeTraining(t.training);
   t.runLog.trainings = Array.isArray(t.runLog.trainings) ? t.runLog.trainings : [];
   t.runLog.trainingTickets = Array.isArray(t.runLog.trainingTickets) ? t.runLog.trainingTickets : [];
@@ -2553,7 +3137,12 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
     else delete e[k];
   }
   if (e.ascended !== true) delete e.ascended;
-  const raw = e.abilities as unknown;
+  e.abilities = sanitizeLoadout(e.abilities, e.tierIndex, rebirths);
+}
+
+/** 특성 보유·칸 보정 (지금 트랙과 전투 기반 빌드에 같이) */
+function sanitizeLoadout(raw: unknown, tierIndex: number, rebirths: unknown): AbilityLoadout {
+  const e = { tierIndex };
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof AbilityLoadout, unknown>>;
   const validId = (id: string) => /^(el4?:[a-z]+(\+[a-z]+)*|uniq:[a-z0-9]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>. C.226: 4단계 몫 el4:, uniq:fail4
   const ownedRaw = isRec(r.owned) ? r.owned : {};
@@ -2569,10 +3158,73 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
   const det = Array.isArray(r.detached) ? [...new Set(r.detached.filter((id): id is string => typeof id === 'string' && getDetachTrait(id) !== undefined))] : [];
   const room = Math.max(0, loadout.slots - Object.keys(ownedAb).length);
   if (det.length > 0 && room > 0) loadout.detached = det.slice(0, room);
-  e.abilities = loadout;
+  return loadout;
+}
+
+/** 초월 특성 보정 (GDD 12-4 v6.039, 형식 84): 캐릭터 트랙은 없음. 초월자 트랙은 아는 초월자 id 만(겹침 없이) + 자기 초월자의 초월 특성은 늘 있다 */
+function sanitizeTranscendentTraits(t: Pick<SaveData, TrackKey>): void {
+  const e = t.evolution;
+  if (!t.transcendentId) { delete e.transcendentTraits; return; }
+  const raw: unknown[] = Array.isArray(e.transcendentTraits) ? e.transcendentTraits : [];
+  const ids = [...new Set(raw.filter((x): x is string => typeof x === 'string' && tryGetTranscendent(x) !== undefined))];
+  if (!ids.includes(t.transcendentId)) ids.unshift(t.transcendentId);
+  e.transcendentTraits = ids;
+}
+
+/** 초월자 전용 블록 상태 보정 (GDD 12-4 v6.048, 형식 85): 캐릭터 트랙은 없음. 초월자 트랙은 자기 초월자 id + 강화할 수 있는 블록의 0~최대 강만 */
+function sanitizeKitState(t: Pick<SaveData, TrackKey>): void {
+  const e = t.evolution;
+  if (!t.transcendentId) { delete e.kit; return; }
+  const raw: Record<string, unknown> = isRec(e.kit) && isRec(e.kit.levels) ? e.kit.levels : {};
+  const levels: Record<string, number> = {};
+  const max = BALANCE.provisional.transcendentGrowth.maxLevel;
+  for (const b of upgradableBlocks(t.transcendentId)) {
+    const v = raw[b.id];
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) levels[b.id] = Math.min(max, Math.floor(v));
+  }
+  e.kit = { id: t.transcendentId, levels };
+}
+
+/** 초월자 전용 블록 1강 올리기 (GDD 12-4 v6.048, C.441): 지금 트랙이 초월자이고 그 초월자에 전용 블록이 있어야. 초월 조각(슬롯 공유)을 쓰고 런 로그 kitShards 'upgrade' */
+export function upgradeTranscendentBlock(save: SaveData, blockId: string, nowMs: number = Date.now()): KitUpgradeResult {
+  const k = save.evolution.kit;
+  if (!save.transcendentId || !k) return { ok: false, reason: '초월자만 강화할 수 있다' };
+  if (save.activeExpedition) return { ok: false, reason: '모험 중에는 강화할 수 없다' };
+  const r = upgradeKitBlock(k, blockId, save.shared.transcendShards);
+  if (!r.ok) return r;
+  save.shared.transcendShards -= r.cost;
+  (save.runLog.kitShards ??= []).push({ at: nowMs, kind: 'upgrade', blockId, level: r.level, cost: r.cost });
+  return r;
+}
+
+/** 전투 기반 보정 (GDD 12-4 v6.037, 형식 83): 캐릭터 트랙은 없음. 초월자 트랙은 아는 종족·진화체·특성 블록만인 기반만 남기고,
+ *  '초월자' 기반이 없거나 깨졌으면 지금 빌드로 다시 만든다. 지금 기반이 없으면 초월자 */
+function sanitizeCombatBasis(t: Pick<SaveData, TrackKey>): void {
+  const e = t.evolution;
+  if (!t.transcendentId) { delete e.basis; return; }
+  const raw: Record<string, unknown> = isRec(e.basis) ? e.basis : {};
+  const rb = isRec(raw.builds) ? raw.builds : {};
+  const builds: Record<string, CombatBasisBuild> = {};
+  for (const [k, v] of Object.entries(rb)) {
+    if (!isRec(v) || typeof v.factionId !== 'string' || !FACTIONS.some((f) => f.id === v.factionId)) continue;
+    if (k !== TRANSCENDENT_BASIS && k !== v.factionId) continue;
+    const formId = typeof v.formId === 'string' && tryGetForm(v.formId) ? v.formId : null;
+    const hist = Array.isArray(v.formHistory) ? v.formHistory.filter((x): x is string => typeof x === 'string' && tryGetForm(x) !== undefined) : [];
+    const b = v.build;
+    if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots) || !coreValuesValid(v.factionId, { ev: zeroStats(), tierIndex: 0 }, b)) continue;
+    builds[k] = { factionId: v.factionId, formId, formHistory: formId && !hist.includes(formId) ? [...hist, formId] : hist, ...(v.ascended === true ? { ascended: true } : {}), build: v.build as BuildState, abilities: sanitizeLoadout(v.abilities, e.tierIndex, t.rebirth?.count) };
+  }
+  if (!builds[TRANSCENDENT_BASIS]) builds[TRANSCENDENT_BASIS] = { factionId: t.factionId, formId: e.formId, formHistory: [...e.formHistory], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
+  const current = typeof raw.current === 'string' && builds[raw.current] ? raw.current : TRANSCENDENT_BASIS;
+  e.basis = { current, builds };
 }
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** 초월자 트랙 id 보정: 아는 초월자 id 만, 아니면 null(캐릭터 트랙) */
+function sanitizeTranscendentId(v: unknown): string | null {
+  return typeof v === 'string' && tryGetTranscendent(v) ? v : null;
+}
 
 /** 쉬는 트랙의 뼈대 검사: 화면·엔진이 바로 읽는 구조가 있어야 쓴다 (없으면 그 트랙은 버린다) */
 function isTrackShape(t: unknown): boolean {
@@ -2600,14 +3252,20 @@ function coreValuesValid(factionId: string, evo: Record<string, unknown>, b: Rec
 export function sanitizeHogyoku(raw: unknown): HogyokuState {
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof HogyokuState, unknown>>;
   const HX = BALANCE.provisional.hogyoku;
-  const liberated = r.liberated === true;
+  const tabOpen = r.tabOpen === true;
+  const resonance = tabOpen && r.resonance === true;
+  // 트랙마다 0~trackMax. 옛 세이브에서 옮긴 26강 이상은 공명 전이라도 남긴다(형식 80 변환이 정한 값, 진행만 막힘)
+  const rt = isRec(r.tracks) ? (r.tracks as Record<string, unknown>) : {};
+  const tracks = Object.fromEntries(HOGYOKU_TRACK_IDS.map((id) => [id, tabOpen ? Math.min(HX.trackMax, nonNegInt(rt[id])) : 0])) as HogyokuCost;
+  const sum = HOGYOKU_TRACK_IDS.reduce((a, id) => a + tracks[id], 0);
   return {
-    tabOpen: r.tabOpen === true,
-    tabNotice: r.tabNotice === true && r.tabOpen === true,
-    fed: liberated ? HX.liberateCost : Math.min(HX.liberateCost, nonNegInt(r.fed)),
-    liberated,
-    liberatedAt: liberated && typeof r.liberatedAt === 'number' ? r.liberatedAt : null,
-    fusionFed: liberated ? Math.min(HX.fusionCost, nonNegInt(r.fusionFed)) : 0,
+    tabOpen,
+    tabNotice: r.tabNotice === true && tabOpen,
+    appearedAt: tabOpen ? (typeof r.appearedAt === 'number' && Number.isFinite(r.appearedAt) && r.appearedAt >= 0 ? r.appearedAt : 0) : null,
+    tracks,
+    developed: Math.max(sum, nonNegInt(r.developed)),
+    resonance,
+    resonatedAt: resonance ? (typeof r.resonatedAt === 'number' && Number.isFinite(r.resonatedAt) && r.resonatedAt >= 0 ? r.resonatedAt : 0) : null,
   };
 }
 
@@ -2631,12 +3289,29 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 
 /** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
 /** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
-export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'>): string | null {
+export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
+  // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
+  const def = s.transcendentId ? tryGetTranscendent(s.transcendentId) : undefined;
+  // 초월자 트랙에서도 초월자 외형·인간형 스킨(GDD 12-4 v6.052 현현·디버깅)을 입었으면 그것 (C.443)
+  if (def && transcendentOfAnyLook(s.skin)) return s.skin!;
+  if (def?.art) return def.art;
+  if (def?.model) return `${MOSAIC_LOOK_PREFIX}${def.id}`; // 조각 모델 (C.431, GDD 12-4 v6.029)
   return s.skin ?? s.evolution.look ?? null;
 }
 
-export function equipSkin(save: SaveData, skinId: string | null): boolean {
-  if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
+/** 지금 트랙의 방 키 (GDD 12-4 v6.032, C.432): 초월자 데이터 room — 없으면 null(종족 방) */
+export function roomKeyOf(s: Partial<Pick<SaveData, 'transcendentId'>>): string | null {
+  return (s.transcendentId ? tryGetTranscendent(s.transcendentId)?.room : undefined) ?? null;
+}
+
+/** 스킨 입기. 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델(tier:)은 테스트 모드에서만, 초월자 외형(transcendent:)은 이 슬롯이 그 초월자를 얻었거나 테스트 모드 */
+export function equipSkin(save: SaveData, skinId: string | null, opts: { test?: boolean } = {}): boolean {
+  const tr = transcendentOfAnyLook(skinId); // 초월자 외형·인간형 스킨 (GDD 12-4 v6.052) — 그 초월자를 얻었거나 테스트 모드
+  if (skinId !== null && validTierLook(save.factionId, skinId)) {
+    if (!opts.test) return false;
+  } else if (skinId !== null && tr) {
+    if (!opts.test && !save.transcendentDex.some((x) => x.id === tr.id)) return false;
+  } else if (skinId !== null && (!canWear(save.factionId, skinId) || !save.shared.cosmetics.includes(skinItemId(skinId)))) return false;
   save.skin = skinId;
   return true;
 }
@@ -2663,7 +3338,7 @@ export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData
     const save = text ? migrateSave(parseSaveText(text, false, storage)) : null;
     if (save) {
       checkTitles(save, 'load');
-      checkTrackOpen(save); // 이미 5단계에 닿은 옛 세이브는 여기서 다른 종족 트랙이 열린다 (GDD 22-3)
+      checkTrackOpen(save); // 이미 스토리를 전부 깬 옛 세이브는 여기서 붕옥이 등장하고 두 번째 트랙이 열린다 (GDD 243장 1)
     }
     return save;
   } catch {

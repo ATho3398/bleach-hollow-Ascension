@@ -108,7 +108,7 @@ export function mountGallery(host: HTMLElement, themeParam: string): void {
   const card = v2Panel('default', '배지 예');
   card.style.cssText = 'position:relative;padding:14px 8px';
   card.append(v2Badge('보유 3/9'));
-  const modalBtn = v2Button({ label: '모달 열기', kind: 'accent', onClick: () => { v2Modal(root, { title: '프리셋 삭제', body: '이 프리셋을 지운다. 되돌릴 수 없다.', closable: true, actions: [{ label: '아니오', kind: 'ghost' }, { label: '삭제', kind: 'danger' }] }); } });
+  const modalBtn = v2Button({ label: '모달 열기', kind: 'accent', onClick: () => { v2Modal(root, { title: '프리셋 삭제', body: '이 프리셋을 지운다. 되돌릴 수 없다.', closable: true, actions: [{ label: '아니요', kind: 'ghost' }, { label: '삭제', kind: 'danger' }] }); } });
   const toastBtn = v2Button({ label: '토스트', onClick: () => { v2Toast(root, '현재 배치를 프리셋으로 저장했다'); } });
   right.append(
     section('패널 3종', row(panel, sunk, flat, card)),

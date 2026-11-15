@@ -8,6 +8,10 @@
   "genderLookFromTier": 1,
   "startLooks": [],
   "specialLooks": [],
+  "skinGroups": [
+    { "id": "shinigami", "name": "사신", "tiers": [1, 2, 3, 4] },
+    { "id": "zanpakuto", "name": "참백도", "tiers": [] }
+  ],
   "tierLooks": {},
   "formLooks": {},
   "tierNames": [
@@ -50,6 +54,7 @@
   "defeatStateName": "영력 고갈",
   "basicSkillName": "시해",
   "tower": { "starGrounds": { "1": "outskirts", "2": "outskirts", "3": "canyon", "4": "forest" }, "name": "도전의 탑", "floor": "{n}층", "finalBossName": "코로나도", "locked": "스토리 1장 클리어 후 열린다", "desc": "한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다." },
+  "specialDungeon": { "name": "특수던전", "desc": "탑을 오르고, 주마다 열리는 던전과 보스에 도전한다.", "tabs": { "tower": "탑", "weekly": "주간던전", "boss": "보스전" }, "weekly": { "soul": { "name": "세공의 마을", "art": "karakura" }, "shard": { "name": "정제의 밤거리", "art": "karakura-night" }, "essence": { "name": "주입의 틈새", "art": "dangai" } }, "bossArt": { "sand-maw": "forest", "canyon-king": "karakura", "forest-lord": "desert", "tower-owner": "dangai" } },
   "difficulty": { "name": "난이도", "star": "★", "recommended": "권장", "locked": "{tier}단계에 열린다" },
   "huntingGroundName": "카라쿠라 마을 / 루콘가 외곽",
   "arenaBg": "seireitei",
@@ -77,7 +82,8 @@
     "int": 50,
     "def": 50,
     "spr": 50,
-    "spd": 50
+    "aspd": 50,
+    "bspd": 50
   },
   "matchupText": {
     "strong": "효과가 굉장하다!",
@@ -227,7 +233,7 @@
   "market": {
     "name": "시장", "sceneArt": "scene.market.shinigami",
     "floor": { "aspect": 2, "poly": [[0, 0.3], [1, 0.3], [1, 1], [0, 1]], "view": { "zoom": 1.14, "x": 50, "y": 50 } },
-    "layout": { "shop": { "x": 38.4, "y": 88.8, "scale": 0.9 }, "gearShop": { "x": 76.3, "y": 84.9, "scale": 0.92 }, "skinShop": { "x": 88.8, "y": 57, "scale": 0.91 }, "traitShop": { "x": 70.4, "y": 40.9, "scale": 0.97 }, "smith": { "x": 41.7, "y": 35, "scale": 1.01 }, "wanderer": { "x": 50.3, "y": 66.6, "scale": 1.11 } },
+    "layout": { "shop": { "x": 38.4, "y": 88.8, "scale": 0.9 }, "gearShop": { "x": 76.3, "y": 84.9, "scale": 0.92 }, "skinShop": { "x": 88.8, "y": 57, "scale": 0.91 }, "traitShop": { "x": 70.4, "y": 40.9, "scale": 0.97 }, "smith": { "x": 41.7, "y": 35, "scale": 1.01 }, "wanderer": { "x": 50.3, "y": 66.6, "scale": 0.7 } },
     "exit": { "x": 10.9, "y": 71.8, "scale": 0.64 }
   },
   "worldmap": {
@@ -251,11 +257,12 @@
       "poly": [[0, 0.46], [1, 0.46], [1, 1], [0, 1]]
     },
     "layout": {
-      "book": { "x": 71.4, "y": 68.8, "scale": 0.91 },
-      "altar": { "x": 83.7, "y": 87.1, "scale": 1.03 },
-      "chest": { "x": 28.9, "y": 91.2, "scale": 0.86 },
+      "book": { "x": 65.9, "y": 64.4, "scale": 0.91 },
+      "altar": { "x": 91.1, "y": 65.3, "scale": 1.03 },
+      "chest": { "x": 28.2, "y": 91.2, "scale": 0.86 },
       "outside": { "x": 9, "y": 78, "scale": 1 },
-      "rank": { "x": 90, "y": 70, "scale": 0.68 }
+      "rank": { "x": 90, "y": 70, "scale": 0.68 },
+      "hogyoku": { "x": 79.3, "y": 88.2, "scale": 0.77 }
     },
     "characterFoot": { "x": 50, "y": 80 },
     "talk": {
@@ -306,6 +313,10 @@
       "picky": [
         "같은 걸 연달아 먹지는 않겠다.",
         "방금 먹은 것이다. 다른 걸 부탁한다."
+      ],
+      "full": [
+        "배부르다. 더는 못 먹겠다.",
+        "지금은 배가 가득하다. 나중에 먹겠다."
       ],
       "foodLike": [
         "오, 이건 좋아하는 거다!",
@@ -394,10 +405,10 @@
   "ascension": { "name": "참백도 구상화", "desc": "참백도의 정령을 눈앞에 불러내 굴복시킨다. 클리어 후 만해를 쓸 수 있다.", "foe": "참백도의 정령", "cutin": "정령을 불러낸다 — 참백도 구상화!", "completeText": ["참백도의 정령을 눈앞에 불러내 굴복시켰다.", "진명을 알아내 만해에 닿았다."], "lookChange": false },
   "liberation": {
     "baseName": "한정 해제",
-    "baseCutin": "영압을 묶은 봉인을 푼다 — 한정 해제!",
+    "baseCutin": "한정 해제!",
     "baseEndText": "봉인이 다시 걸렸다. 내면의 호로가 꿈틀거린다…",
     "name": "만해",
-    "cutin": "참백도의 진명을 부른다 — 만해!",
+    "cutin": "만해!",
     "endText": "만해가 풀렸다. 내면의 호로가 꿈틀거린다…",
     "formKey": "final",
     "formCutin": "만해 — {final}!",

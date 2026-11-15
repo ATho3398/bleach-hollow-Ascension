@@ -1,0 +1,147 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-start-reset-notice.png",
+    "02-pc-status-7stats.png",
+    "03-pc-test-stats-inputs.png",
+    "04-pc-status-capped.png",
+    "05-pc-battle-capped.png",
+    "06-phone-start-reset-notice.png",
+    "07-phone-status-7stats.png",
+    "08-phone-battle-capped.png"
+  ],
+  "facts": {
+    "pc": {
+      "reset": {
+        "keys": [
+          "bleach-hollow-ascension.save.archive-f86",
+          "bleach-hollow-ascension.save.slots",
+          "bleach-hollow-ascension.save.resetNotice"
+        ],
+        "notice": [
+          "새 버전 — 세이브가 초기화되었습니다. 옛 세이브는 이 기기에 백업으로 남겨 두었습니다."
+        ],
+        "slot1": null
+      },
+      "status": [
+        "체력212",
+        "힘117",
+        "지능98",
+        "방어받는 물리 피해 ×1.11",
+        "정신력받는 특수 피해 ×1.11",
+        "공격속도0.79초에 1번",
+        "블록속도2.58초에 1개",
+        "일반 공격 치명5%",
+        "블록 치명5%",
+        "치명타 피해×1.5",
+        "노 노멀 피해+0%",
+        "물 물 피해+0%",
+        "불 불 피해+0%",
+        "흙 흙 피해+0%",
+        "뇌 뇌 피해+0%"
+      ],
+      "testLabels": [
+        "체력",
+        "힘",
+        "지능",
+        "방어",
+        "정신력",
+        "공격속도",
+        "블록속도",
+        "노 피해 %"
+      ],
+      "statusCapped": [
+        "체력212",
+        "힘117",
+        "지능98",
+        "방어받는 물리 피해 ×1.11",
+        "정신력받는 특수 피해 ×1.11",
+        "공격속도0.35초에 1번 상한계승 +902",
+        "블록속도1.14초에 1개 상한계승 +902",
+        "일반 공격 치명5%",
+        "블록 치명5%",
+        "치명타 피해×1.5",
+        "노 노멀 피해+0%",
+        "물 물 피해+0%",
+        "불 불 피해+0%",
+        "흙 흙 피해+0%",
+        "뇌 뇌 피해+0%"
+      ],
+      "battle": {
+        "seconds": 5,
+        "basicAttacks": 17,
+        "perSecond": 3.4,
+        "trayBefore": 0,
+        "trayAfter": 5,
+        "aspd": 999,
+        "bspd": 999
+      }
+    },
+    "phone": {
+      "reset": {
+        "keys": [
+          "bleach-hollow-ascension.save.archive-f86",
+          "bleach-hollow-ascension.save.slots",
+          "bleach-hollow-ascension.save.resetNotice"
+        ],
+        "notice": [
+          "새 버전 — 세이브가 초기화되었습니다. 옛 세이브는 이 기기에 백업으로 남겨 두었습니다."
+        ],
+        "slot1": null
+      },
+      "status": [
+        "체력212",
+        "힘117",
+        "지능98",
+        "방어받는 물리 피해 ×1.11",
+        "정신력받는 특수 피해 ×1.11",
+        "공격속도0.79초에 1번",
+        "블록속도2.58초에 1개",
+        "일반 공격 치명5%",
+        "블록 치명5%",
+        "치명타 피해×1.5",
+        "노 노멀 피해+0%",
+        "물 물 피해+0%",
+        "불 불 피해+0%",
+        "흙 흙 피해+0%",
+        "뇌 뇌 피해+0%"
+      ],
+      "testLabels": [
+        "체력",
+        "힘",
+        "지능",
+        "방어",
+        "정신력",
+        "공격속도",
+        "블록속도",
+        "노 피해 %"
+      ],
+      "statusCapped": [
+        "체력212",
+        "힘117",
+        "지능98",
+        "방어받는 물리 피해 ×1.11",
+        "정신력받는 특수 피해 ×1.11",
+        "공격속도0.35초에 1번 상한계승 +902",
+        "블록속도1.14초에 1개 상한계승 +902",
+        "일반 공격 치명5%",
+        "블록 치명5%",
+        "치명타 피해×1.5",
+        "노 노멀 피해+0%",
+        "물 물 피해+0%",
+        "불 불 피해+0%",
+        "흙 흙 피해+0%",
+        "뇌 뇌 피해+0%"
+      ],
+      "battle": {
+        "seconds": 5,
+        "basicAttacks": 17,
+        "perSecond": 3.4,
+        "trayBefore": 0,
+        "trayAfter": 5,
+        "aspd": 999,
+        "bspd": 999
+      }
+    }
+  }
+}

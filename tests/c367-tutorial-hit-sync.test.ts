@@ -56,20 +56,19 @@ describe("224장 1: '일반 공격은 자동' 카드", () => {
 });
 
 describe('224장 2: 튜토리얼 전투 피해 = 모션 타격 순간', () => {
-  it('막아 낸 강공격(피해 0)도 바로 넣지 않고 예약 → 지연 뒤 landed. 막기 성공 카드는 그 뒤(맞음 모션이 끝난 뒤)', () => {
+  it('막아 낸 강공격(피해 0): 빔 발사 준비(heavy-windup)가 예고 중에 먼저 나오고, 예고가 끝나는 틱에 바로 landed (GDD 245장 3 — 옛 지연 뒤 착탄 대체). 막기 성공 카드는 그 뒤', () => {
     const s = scripted({ hitDelay: HD(0.3, { heavy: 0.8 }) });
     const log: CombatEvent[] = [];
     expect(until(s, 'guard-now', log)).toBe(true);
+    const wu = log.find((e) => e.kind === 'heavy-windup'); // 0.8초 = 8틱 > 멈춤 지점(남은 2틱) → 멈추기 전에 이미 나왔다(화면 연출도 같이 멈춘다)
+    expect(wu).toBeTruthy();
     scriptStep(s, { type: 'guard' });
     log.length = 0;
     expect(until(s, 'guard-ok', log)).toBe(true);
-    const sw = log.find((e) => e.kind === 'swing' && e.hit.kind === 'heavy-hit');
-    const landed = log.findIndex((e) => e.kind === 'heavy-hit');
-    expect(sw && sw.kind === 'swing' && sw.hit.kind === 'heavy-hit' ? sw.hit.guarded && sw.hit.damage === 0 : false).toBe(true);
-    expect(log[landed]).toMatchObject({ kind: 'heavy-hit', guarded: true, landed: true });
-    expect(log.indexOf(sw!)).toBeLessThan(landed);
-    // 카드는 착탄 + hurtHoldSeconds 뒤: 착탄 틱보다 늦게
-    expect(s.tick).toBeGreaterThan(sw && sw.kind === 'swing' ? sw.atTick : Infinity);
+    expect(log.some((e) => e.kind === 'swing' && e.hit.kind === 'heavy-hit')).toBe(false); // 강공격은 더 이상 지연 예약이 아니다
+    const landed = log.find((e) => e.kind === 'heavy-hit');
+    expect(landed).toMatchObject({ kind: 'heavy-hit', guarded: true, damage: 0, landed: true });
+    expect(s.tick).toBeGreaterThan(wu && wu.kind === 'heavy-windup' ? wu.atTick : Infinity);
     expect((s.pendingHits ?? []).some((h) => h.event.kind === 'heavy-hit')).toBe(false);
   });
   it('못 막는 강공격: 위기 카드(블록 1개)는 강공격이 실제로 맞은 뒤에 — 기다릴 때 예약된 강공격이 없다', () => {

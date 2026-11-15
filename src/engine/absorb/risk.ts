@@ -1,6 +1,7 @@
 // 리스크 게이지(호로 광기 / 사신 호로화, 이름은 종족 설정) 순수 로직 (GDD 5장, 4-1).
 // 폭주(호로화) = 폭주 (GDD 23-2, 원정당 1회): 남은 원정 주는·받는 피해 증가(expedition applyFrenzy), 공허 생성 증가, 귀환 때 컨디션 하락, 게이지 60.
 
+import { kitRiskDrainOf, kitRiskFloorOf, kitRiskPenaltyFree } from '../transcendKit';
 import { BALANCE } from '../../config/balance';
 import type { NestAction } from '../faction';
 import type { StatId } from '../../data/schema';
@@ -16,7 +17,7 @@ export function absorbModeRule(mode: AbsorbMode): { ev: number; risk: number } {
   return AX.modes[mode];
 }
 
-export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action' | 'liberation' | 'synergy' | 'altar';
+export type RiskCause = 'void-block' | 'absorb' | 'late-lap' | 'release' | 'rest' | 'nest-action' | 'liberation' | 'synergy' | 'altar' | 'kit-release';
 
 /** 엔진 공통 이벤트. 화면이 비워 가며(drainEvents) 연출한다 */
 export type EngineEvent =
@@ -37,15 +38,21 @@ export interface RiskState {
   /** 이번 원정에서 폭주(호로화)가 일어났는가 → 남은 동안 임시 페널티 */
   breakthrough: { lap: number; cell: number } | null;
   events: EngineEvent[];
+  /** 초월자 전용 블록 상태 (원정 진화 상태) — 그 초월자 데이터가 riskPenaltyFree 면 돌파(폭주)가 일어나지 않는다 (GDD 12-4 v6.050) */
+  evolution?: { kit?: { id: string } | null };
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 /** 리스크 변화. 한계값 이상이 되면 (원정당 1번) breakthrough 이벤트. 값은 한계값에서 멈춘다 */
 export function changeRisk(s: RiskState, delta: number, _cause: RiskCause): void {
-  s.risk = clamp(s.risk + delta, 0, RX.limit);
+  // 게이지 소모형 초월자(이치고 호로화, GDD 12-4 v6.069 — 데이터 kit.riskDrain): 깎이기만 한다 — 타일·흡수·공허 등 어떤 상승도 없음
+  if (delta > 0 && kitRiskDrainOf(s.evolution?.kit?.id)) return;
+  // 리스크 최솟값이 있는 초월자(아이젠 붕옥 감응도 20, GDD 12-4 v6.054 — 데이터 kit.riskFloor): 어떤 감소도 그 밑으로 안 간다
+  s.risk = clamp(s.risk + delta, kitRiskFloorOf(s.evolution?.kit?.id), RX.limit);
   s.riskPeak = Math.max(s.riskPeak, s.risk);
-  if (s.risk >= RX.limit && s.breakthrough === null) {
+  // 리스크 패널티 없는 초월자(아이젠, GDD 12-4 v6.050): 게이지는 쌓이지만 폭주(돌파)는 없다
+  if (s.risk >= RX.limit && s.breakthrough === null && !kitRiskPenaltyFree(s.evolution?.kit?.id)) {
     s.breakthrough = { lap: s.lap, cell: s.pos };
     s.events.push({ kind: 'breakthrough', lap: s.lap, cell: s.pos, risk: s.risk });
   }

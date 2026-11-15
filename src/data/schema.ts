@@ -23,6 +23,10 @@ export interface EnemyDef {
   element: string;
   /** 공격 분류 (GDD 20-1): 적의 공격(기본·강공격·반격)이 내 방어(물리)·정신력(특수)·둘의 평균(혼합) 중 무엇에 막히는가 */
   category: AttackCategory;
+  /** 일반 공격(·반격)의 분류 (GDD v6 7-10, 임시·provisional): 없으면 category 를 물려받는다. mixed = 공격마다 physicalShare 비율로 물리/특수를 굴림 */
+  attackCategory?: AttackCategory;
+  /** 굴림(mixed)일 때 물리로 나갈 비율 0~1 (없으면 balance combat.mixedPhysicalShare). 나머지는 특수 */
+  physicalShare?: number;
   /** 능력치 성향 (GDD 20-3): 그 단계 기준 능력치에 곱하는 배율. 없는 능력치는 1. 방어·정신력 차이가 내 공격 분류 선택을 의미 있게 한다. 임시 */
   statBias?: Partial<Record<StatId, number>>;
   /** 흡수하면 오르는 노력치 (GDD 20-4, 임시): 능력치 → 점수 */
@@ -56,6 +60,8 @@ export type EnemyPattern =
   | (PatternBase & { kind: 'sturdy'; attackSeconds: number })
   | (PatternBase & {
       kind: 'heavy-seal';
+      /** 강공격 순번(한 주기 안 1번째·2번째…)별 분류 (GDD v6 7-10, 임시·provisional). 없거나 모자라면 그 적 category, mixed = 굴림 */
+      heavyCategories?: AttackCategory[];
       /** 특수 행동 간격(초): 직전 행동이 끝난 뒤 이만큼 지나면 다음 행동 */
       everySeconds: number;
       /** 행동 순서 (끝나면 처음부터 반복) */
@@ -69,6 +75,8 @@ export type EnemyPattern =
     })
   | (PatternBase & {
       kind: 'heavy-chain';
+      /** 강공격 순번(한 주기 안 1번째·2번째…)별 분류 (GDD v6 7-10, 임시·provisional). 없거나 모자라면 그 적 category, mixed = 굴림 */
+      heavyCategories?: AttackCategory[];
       everySeconds: number;
       /** 첫 강공격 시전 시간(초) */
       castSeconds: number;
@@ -90,8 +98,8 @@ export type EnemyPattern =
       counterInAttacks: number;
     });
 
-/** 능력치 6종 (GDD 20-3): 체력·힘·지능·방어·정신력·속도. 이름은 src/data/elements/stats.json */
-export const STAT_IDS = ['hp', 'atk', 'int', 'def', 'spr', 'spd'] as const;
+/** 능력치 7종 (GDD v6 8절, C.446 — 옛 6종의 속도를 공격속도·블록속도로 나눔): 체력·힘·지능·방어·정신력·공격속도·블록속도. 이름은 src/data/elements/stats.json */
+export const STAT_IDS = ['hp', 'atk', 'int', 'def', 'spr', 'aspd', 'bspd'] as const;
 export type StatId = (typeof STAT_IDS)[number];
 export type Stats = Record<StatId, number>;
 
@@ -158,7 +166,8 @@ export interface TraitDef {
   /** skill 막기·회복: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개. 공격은 계열 단계 기술(종족 설정)이 정하므로 없다 */
   chainBonus?: ChainBonus;
   /** passive: 자동 적용 배율 (기본 공격 위력·속도, 받는 피해, 블록 생성 속도) */
-  passive?: { stat: PassiveStat; multiplier: number };
+  /** C.447 (GDD v6.055 8절 사용자 '옵션 = 간격 −n초'): 속도(attackSpeed·blockSpawn)는 multiplier 대신 secondsCut(간격 −초, 0.01 단위) */
+  passive?: { stat: PassiveStat; multiplier?: number; secondsCut?: number };
   /** 치명타 확률 가산 (C.63 `critChance` 효과 키, 0~1): 슬롯에 장착하면 내 치명타 확률에 더한다(종류 무관, 여럿이면 합) */
   critChance?: number;
   provisional?: boolean;
@@ -237,7 +246,7 @@ export type TitleCondition =
   | { type: 'storyChapterCleared'; chapterId: string }
   /** 도전의 탑 이 층(이상)을 깬 적이 있다 (GDD 36장, C.85) */
   | { type: 'towerFloorCleared'; floor: number }
-  /** 초월체를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
+  /** 초월자를 이만큼 모았다 (GDD 22-3, C.59 — 슬롯 단위 합체 기록) */
   | { type: 'transcendentsCollected'; min: number }
   /** 진화 줄기 능력치 (GDD 49-8 3번, C.106): 거친 진화체 중 label.kind 가 lineageKind 인 것이 있고(그 줄기), 지금 단계가 minTier(1부터) 이상이며,
    *  지금 능력치 6종 합계(종족값+노력치+계승, 슬롯 보너스 포함)가 tierTotals[totalOfTier − 1] 이상. 런 로그가 아니라 지금 상태를 읽는다 */

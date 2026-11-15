@@ -9,7 +9,7 @@
 // - 다른 기기에서 로그인했는데 기기·클라우드가 다르면 [이 기기 / 클라우드] 고르는 창(기본 = 더 최근). 고르지 않은 쪽은 그 슬롯 백업에 한 벌(BackupReason 'cloud').
 // - Firebase SDK 는 여기서 직접 import 하지 않는다 — CloudBackend 인터페이스 뒤에 두고(host.loadBackend, 동적 import), 테스트는 가짜 백엔드를 끼운다.
 //   엔진·세이브 구조는 건드리지 않는다(SAVE_FORMAT_VERSION 그대로). 종족 분기 없음.
-import { migrateSave, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
+import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, type SaveData, type StorageLike } from './game';
 import { parseSaveText } from './saveCodec';
 import { parseImport, serializeSave } from './saveBackup';
 import { allSlotSummaries, lastPlayedSlot, slotBackupKey, slotKey, slotSummary, stashSlot, touchSlot, writeBackupMeta } from './saveSlots';
@@ -23,7 +23,7 @@ export interface CloudSummary {
 
 /** Firestore 문서 한 벌. 세이브 원문(text)은 serializeSave 결과 그대로(압축 덩어리는 글로 품는다) */
 export interface CloudDoc {
-  /** 세이브 형식 (meta.format 과 같다 — 옛 형식이면 기존 마이그레이션으로 연다, 더 새 형식이면 열지 않는다) */
+  /** 세이브 형식 (meta.format 과 같다 — 문턱(MIN_LOADABLE_SAVE_FORMAT)보다 옛 형식이면 없는 것으로 본다(C.446), 더 새 형식이면 열지 않는다) */
   format: number;
   /** 올린 시각(ms, 올린 기기 시계) */
   savedAt: number;
@@ -255,6 +255,8 @@ export interface LocalInfo {
 export function decideReconcile(
   cloud: CloudDoc | null, local: LocalInfo, synced: SyncRecord | null, device: string, open: boolean, format: number = SAVE_FORMAT_VERSION,
 ): Reconcile {
+  // C.446 (GDD v6.055 8절): 문턱보다 옛 형식 클라우드 판은 없는 것으로 — 내려받지 않고, 기기 세이브가 있으면 덮어 올린다(기기 세이브와 같은 '새로 시작' 규칙)
+  if (cloud && cloud.format < saveFormatGate.min) cloud = null;
   if (!cloud) return local.exists ? { kind: 'upload', slot: local.slot } : { kind: 'none' };
   if (cloud.format > format) return { kind: 'blocked' };
   if (!local.exists) return { kind: 'download', slot: cloud.slot };

@@ -78,10 +78,10 @@ describe('202장 1·2 → 207장: 노력치 상한 = 흡수 횟수 기준', () =
     const e = newEvolution();
     for (const k of STAT_IDS) addEv(e, { [k]: TUT.statEv }); // 튜토리얼
     let n = 0;
-    while ((addEv(e, { spd: 4 }).spd ?? 0) >= 4) n++;
+    while ((addEv(e, { aspd: 4 }).aspd ?? 0) >= 4) n++;
     expect(n).toBeGreaterThanOrEqual(15);
     expect(n).toBeLessThanOrEqual(17);
-    expect(e.ev.spd).toBeLessThanOrEqual(evCaps(0).perStat);
+    expect(e.ev.aspd).toBeLessThanOrEqual(evCaps(0).perStat);
     expect(evTotal(e.ev)).toBeLessThan(evCaps(0).total); // 합계가 아니라 능력치 하나 상한이 막은 것
   });
   it('섞어 먹으면(튜토리얼 뒤 둘 다 흡수 약 30번, 능력치 6개 번갈아) 능력치 하나 상한에 닿지 않고 합계가 먼저 찬다', () => {

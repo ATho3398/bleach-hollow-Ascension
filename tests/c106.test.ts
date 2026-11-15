@@ -56,7 +56,7 @@ describe('49-8 1·2번 실패형 줄기 (C.220: 3단계 망한 진화체부터)'
     const fail4 = evo(['t2:base', 'h3:fail', 't4:normal:physical']);
     const norm4 = evo(['t2:base', 't3:normal', 't4:normal:physical']);
     expect(sum(baseStatsOf(fail4, 'hollow'))).toBe(t4);
-    expect(sum(baseStatsOf(norm4, 'hollow'))).toBe(SX.tierTotals[3]);
+    expect(sum(baseStatsOf(norm4, 'hollow'))).toBe(Math.round(SX.tierTotals[3]!)); // C.446: 682.5 → 진화체 표 683
     // 비율(쏠림)은 그대로: 물리형은 힘 > 지능
     const s = baseStatsOf(fail4, 'hollow');
     expect(s.atk).toBeGreaterThan(s.int);

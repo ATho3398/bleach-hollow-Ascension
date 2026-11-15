@@ -42,7 +42,7 @@ export interface VariantMods {
   hungerMult?: number;
   /** 이 속성 적이 사냥터 주 속성처럼 자주 나온다 */
   elementBias?: string;
-  /** 강적을 이기면 영혼 결정 +n */
+  /** 강적을 이기면 붕옥 재료(고순도 윤활제) +n */
   eliteSoulBonus?: number;
   /** 환경 타일 효과 크기 배율 (상위 타일) */
   envMult?: number;

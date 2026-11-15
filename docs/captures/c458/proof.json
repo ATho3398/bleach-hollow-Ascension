@@ -1,0 +1,191 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-status-stats.png",
+    "03-pc-stat-detail.png",
+    "04-pc-test-stats-two-way.png",
+    "05-pc-enemy-setup-units.png",
+    "06-pc-practice-win-continue.png",
+    "02-phone-status-stats.png"
+  ],
+  "facts": {
+    "pc.stats": [
+      {
+        "stat": "hp",
+        "text": "체력98· 최대 체력 212",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "atk",
+        "text": "힘117",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": null
+      },
+      {
+        "stat": "int",
+        "text": "지능98",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": null
+      },
+      {
+        "stat": "def",
+        "text": "방어88· 받는 피해 ×1.11",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "spr",
+        "text": "정신력88· 받는 피해 ×1.11",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "aspd",
+        "text": "공격속도97· 0.79초에 1번",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "bspd",
+        "text": "블록속도97· 2.58초에 1개",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      }
+    ],
+    "detail": "공격속도일반 공격 간격 — 0.78초에 1번 = 0.78초마다 한 대, 가장 빨라도 0.3초에 1번지금 능력치 97 → 0.79초에 1번노력치 10 더 넣으면 → 0.77초에 1번 (−0.02초)구간 예시: +20 → 0.74초에 1번 · +50 → 0.69초에 1번 · +100 → 0.62초에 1번▼ 더 있음",
+    "before": {
+      "num": "98",
+      "aspdReal": "0.79"
+    },
+    "afterRealToNum": [
+      "체력=98",
+      "체력 실제 값 (최대 체력)=212",
+      "힘=117",
+      "지능=98",
+      "방어=88",
+      "방어 실제 값 (받는 피해 ×)=1.11",
+      "정신력=88",
+      "정신력 실제 값 (받는 피해 ×)=1.11",
+      "공격속도=353",
+      "공격속도 실제 값 (초에 1번)=0.50",
+      "블록속도=97",
+      "블록속도 실제 값 (초에 1개)=2.58",
+      "노 피해 %=0",
+      "물 피해 %=0",
+      "불 피해 %=0",
+      "흙 피해 %=0",
+      "뇌 피해 %=0"
+    ],
+    "afterTop": [
+      "체력=428",
+      "체력 실제 값 (최대 체력)=923",
+      "힘=447",
+      "지능=428",
+      "방어=418",
+      "방어 실제 값 (받는 피해 ×)=0.23",
+      "정신력=418",
+      "정신력 실제 값 (받는 피해 ×)=0.23",
+      "공격속도=427",
+      "공격속도 실제 값 (초에 1번)=0.47",
+      "블록속도=427",
+      "블록속도 실제 값 (초에 1개)=1.54"
+    ],
+    "dialog": {
+      "inside": true,
+      "scroll": false,
+      "inputs": [
+        "체력 (내 기본 공격 n회)=42.8",
+        "공격력 (내 기본 공격 n회 분량)=0.39",
+        "공격 간격 (초)=1.5"
+      ]
+    },
+    "arena": {
+      "hpInAttacks": 5,
+      "fixed": 0.5
+    },
+    "practiceWinButton": [
+      "계속"
+    ],
+    "practiceResult": {
+      "buttons": [
+        "같은 상대와 다시",
+        "연습 메뉴로"
+      ],
+      "absorbRow": false
+    },
+    "backToPractice": true,
+    "phone.stats": [
+      {
+        "stat": "hp",
+        "text": "체력98· 최대 체력 212",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "atk",
+        "text": "힘117",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": null
+      },
+      {
+        "stat": "int",
+        "text": "지능98",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": null
+      },
+      {
+        "stat": "def",
+        "text": "방어88· 받는 피해 ×1.11",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "spr",
+        "text": "정신력88· 받는 피해 ×1.11",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "aspd",
+        "text": "공격속도97· 0.79초에 1번",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      },
+      {
+        "stat": "bspd",
+        "text": "블록속도97· 2.58초에 1개",
+        "h": 42,
+        "over": false,
+        "fsValue": "14px",
+        "fsReal": "12px"
+      }
+    ]
+  }
+}

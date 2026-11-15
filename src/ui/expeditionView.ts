@@ -775,7 +775,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     return [el('div', 'bha-sheet__scrim'), sheet];
   }
 
-  // 뒤로 (GDD 128장 4, C.202 — 잠긴 원정 화면도 뒤로가 무언가 한다): 바퀴 끝 창 = 귀환 확인(기본 아니오) · 이벤트 창 = 지나가기 · 걷기 = 일시정지/재개
+  // 뒤로 (GDD 128장 4, C.202 — 잠긴 원정 화면도 뒤로가 무언가 한다): 바퀴 끝 창 = 귀환 확인(기본 아니요) · 이벤트 창 = 지나가기 · 걷기 = 일시정지/재개
   onScreenBack({
     alive: () => !dead,
     mine: () => main.isConnected && !away,

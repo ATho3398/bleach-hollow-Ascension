@@ -13,9 +13,11 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
-import { SAVE_KEY, fastForward, newSaveData, performEvolution, storyProgressOf, type SaveData, type StorageLike } from '../game';
+import { SAVE_KEY, allTracks, characterTracks, fastForward, inheritTranscendentTrack, newSaveData, newTrack, performEvolution, storyProgressOf, switchTrack, trackIdOf, type SaveData, type StorageLike } from '../game';
+import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
-import { canWear, skinsFor, type SkinDef } from '../data/skins';
+import { canWear, validModelLook } from '../data/skins';
+import { modelLookOptions, type ModelLookOption } from '../data/skins/lookOptions';
 import { GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, isGearGrade, isGearKind, type GearGrade, type GearKind } from '../data/gear';
 import { CONSUMABLE_IDS } from '../inventory';
 import { buyWandererItem, storeConsumable, wearCosmetic } from '../shop';
@@ -34,6 +36,10 @@ import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from 
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
 import { dropBasicBlockTraits, isBasicBlockTrait } from './absorb/build';
 import { FOOD_IDS, type FoodId } from './faction';
+import { materialHave, spendMaterial } from './hogyokuMaterials';
+import { HOGYOKU_TRACK_IDS, type HogyokuTrackId } from './transcend';
+import { HOGYOKU_MATERIAL_NAMES } from '../data/hogyoku';
+import type { CombatParams } from './combat/combat';
 
 /** 테스트 칸 저장 키 (38-2). 진짜 세이브 키 `SAVE_KEY…` 는 모두 이 앞부분으로 바뀐다 (슬롯 1 = 이 키 그대로) */
 export const TEST_SAVE_KEY = 'bha-save-test';
@@ -211,8 +217,10 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   const sh = save.shared;
   sh.tradeCoins = TEST_WEALTH;
   sh.jade = TEST_WEALTH;
-  sh.soulCrystals = TEST_WEALTH;
-  for (const id of FOOD_IDS) sh.food[id] = BALANCE.provisional.food.cap;
+  // 붕옥 재료 3종(강화 트랙 soul·shard·essence)·초월 조각 (C.457 — 옛 채우기는 soul 한 가지만이라 다른 두 트랙을 못 올렸다)
+  for (const t of HOGYOKU_TRACK_IDS) spendMaterial(save, t, -(TEST_WEALTH - materialHave(save, t)));
+  sh.transcendShards = Math.max(sh.transcendShards ?? 0, TEST_WEALTH);
+  for (const id of FOOD_IDS) sh.food[id] = Math.max(sh.food[id], 9); // 먹이는 보관 상한이 없다(GDD v6.005) — 테스트 채우기는 옛 상한 9개씩
   sh.rerollTickets = BALANCE.shop.rerollMax;
   sh.deckSlots = BALANCE.shop.deckSlotPrices.length;
   sh.cosmetics = [...new Set([...sh.cosmetics, ...COSMETIC_ITEMS.map((c) => c.id)])];
@@ -251,9 +259,75 @@ function unlockTower(save: { tower?: unknown }): void {
   if (t && typeof t === 'object' && typeof t.best === 'number') t.best = Math.max(t.best, TOWER_FLOORS - 1);
 }
 
-/** 테스트 칸 새 세이브: 종족을 골라 전체 해금으로 */
+/** 테스트 칸 새 세이브: 종족을 골라 전체 해금으로 (+ 붕옥·두 번째 캐릭터 켜기, C.434) */
 export function newTestSave(factionId: string, nowMs: number = Date.now()): SaveData {
-  return fillAllUnlocked(newSaveData(factionId, nowMs), nowMs);
+  const save = fillAllUnlocked(newSaveData(factionId, nowMs), nowMs);
+  openTestHogyoku(save, nowMs);
+  return save;
+}
+
+// ── 붕옥·초월자 켜기 (GDD 17절 '테스트 모드 보강' v6.036, C.434): 테스트 칸에서만 — 일반 세이브는 이 길을 타지 않는다 ──
+
+/** 붕옥 등장·공명 상태로 열고(등장·공명 컷·알림 없이), 캐릭터 트랙이 모자라면 종족 데이터 순서로 다음 종족 트랙을 전체 해금으로 연다.
+ *  새 테스트 칸과 테스트 모드로 슬롯을 열 때마다 부른다(이미 켜져 있으면 그대로). 연 트랙의 종족 id (없으면 null) */
+export function openTestHogyoku(save: SaveData, nowMs: number = Date.now()): string | null {
+  const h = save.hogyoku;
+  if (!h.tabOpen) {
+    h.tabOpen = true;
+    h.appearedAt = nowMs;
+  }
+  h.tabNotice = false;
+  if (!h.resonance) {
+    h.resonance = true;
+    h.resonatedAt = nowMs;
+  }
+  const chars = characterTracks(save);
+  if (chars.length >= BALANCE.provisional.twoTrack.maxTracks) return null;
+  const next = FACTIONS.find((f) => !chars.some((t) => t.factionId === f.id));
+  if (!next) return null;
+  const home = trackIdOf(save);
+  save.otherTracks.push({ ...newTrack(next.id, nowMs, 1), parkedAt: nowMs });
+  save.slotLog.trackOpens.push({ at: nowMs, factionId: next.id, byFactionId: save.factionId });
+  // 새 트랙도 전체 해금(최고 단계 몸·★ 전부·기본 블록) — 잠깐 꺼내 채우고 돌아온다
+  if (switchTrack(save, next.id, nowMs)) {
+    unlockTrack(save, nowMs);
+    fillDefaultTraits(save);
+    switchTrack(save, home, nowMs);
+  }
+  save.trackNotice = null;
+  return next.id;
+}
+
+/** 테스트 초월자 목록 (데이터 순서) */
+export function testTranscendents(): { id: string; name: string }[] {
+  return TRANSCENDENTS.map((t) => ({ id: t.id, name: t.name }));
+}
+
+/** 초월자 바로 얻기 (추천안 = 합체 흐름 대신 바로 지급): 지금 캐릭터들을 이어받은 초월자 트랙(합체와 같은 inheritTranscendentTrack)을 만들어 초월자 도감에 넣고 그 트랙으로 간다.
+ *  두 캐릭터는 그대로 남는다(테스트 — 여러 초월자를 차례로 보려고). 합체 기록(slotLog.fusions)은 남기지 않는다(진짜 합체가 아니다).
+ *  이미 있으면 그 트랙으로만 간다. 'added' | 'owned' | false(모르는 id·캐릭터 없음) */
+export function testGrantTranscendent(save: SaveData, id: string, nowMs: number = Date.now()): 'added' | 'owned' | false {
+  const def = tryGetTranscendent(id);
+  if (!def) return false;
+  const existing = allTracks(save).find((t) => t.transcendentId === id);
+  if (existing) {
+    if (trackIdOf(existing) !== trackIdOf(save)) switchTrack(save, trackIdOf(existing), nowMs);
+    return 'owned';
+  }
+  const chars = characterTracks(save);
+  if (chars.length === 0) return false;
+  const index = save.transcendentDex.length + 1;
+  const track = inheritTranscendentTrack(chars, def, index, nowMs);
+  if (!save.transcendentDex.some((x) => x.id === id)) save.transcendentDex.push({ id, at: nowMs, fusionIndex: index });
+  save.otherTracks.push({ ...track, parkedAt: nowMs });
+  switchTrack(save, trackIdOf(track), nowMs);
+  return 'added';
+}
+
+/** 트랙 목록 (전환 칸): 트랙 id 와 지금 트랙인가 */
+export function testTrackIds(save: SaveData): { id: string; transcendentId: string | null; factionId: string; current: boolean }[] {
+  const cur = trackIdOf(save);
+  return allTracks(save).map((t) => ({ id: trackIdOf(t), transcendentId: t.transcendentId ?? null, factionId: t.factionId, current: trackIdOf(t) === cur }));
 }
 
 // ── 테스트 패널: 진화체·능력치·특성·둥지 값 (38-4) ──
@@ -286,7 +360,7 @@ export function setForm(save: SaveData, formId: string | null): boolean {
 }
 
 /** 능력치 직접 입력: 노력치는 0, 계승분(carry, 성장 상한이 없는 자리)에 "원하는 값 − 진화체 기본값"을 넣는다 → 모든 전투(원정·등급전·연습)에 그대로 실린다.
- *  값은 0~STAT_MAX 정수. 슬롯 보너스(붕옥·초월체)가 있으면 그만큼 더 붙는다 */
+ *  값은 0~STAT_MAX 정수. 슬롯 보너스(붕옥·초월자)가 있으면 그만큼 더 붙는다 */
 export function setCustomStats(save: SaveData, want: Partial<Stats>): Stats {
   const e = save.evolution;
   const base = baseStatsOf(e, save.factionId);
@@ -414,6 +488,79 @@ export function testBattleEnemy(c: TestBattleChoice): { enemy: EnemyDef; star: n
   return { enemy: k === 1 ? atStar : scaleEnemy(atStar, { hp: k, attack: k }), star, bossId: foe.kind === 'boss' ? foe.id : null };
 }
 
+// ── 적 설정 창 (GDD 17-4 v6.083, C.457): 바로 전투 = 적 없이 들어가 창에서 적·수치를 정하고 [확인]으로 등장, 쓰러뜨리면 다시 창 ──
+
+/** 적 설정 창 값 (C.457 마스터 2026-11-15 '적 수치도 화면 표시 단위로'): 바로 전투 고르기(적·★·연속·탑 층) + 적 체력·공격력 = '내 기본 공격 n회 분량'(hpInAttacks·attackInAttacks),
+ *  공격 간격 = 초 — null 이면 그 적의 값(★·연속/탑 층 배율 반영) 그대로. 공격 여부·무적 */
+export interface TestArenaChoice extends TestBattleChoice {
+  hpAttacks: number | null;
+  attackAttacks: number | null;
+  attackSeconds: number | null;
+  /** false = 적이 공격하지 않는다 (일반 공격·특수 행동·졸개) */
+  attacks: boolean;
+  /** true = 적이 쓰러지지 않는다 (0 에 닿으면 체력 가득) */
+  immortal: boolean;
+}
+
+/** 적 설정 창의 전투 시간 상한(초): 무적 허수아비·연속 전투가 시간 제한으로 끝나지 않게 */
+export const TEST_ARENA_SECONDS = 3600;
+/** 입력 범위: n회 분량 0.1~10000, 공격 간격 0.1~60초 */
+export const TEST_ARENA_ATTACKS_MAX = 10000;
+export const TEST_ARENA_SECONDS_RANGE: readonly [number, number] = [0.1, 60];
+
+const clampTo = (v: number | null, lo: number, hi: number): number | null => (v === null || !Number.isFinite(v) || v <= 0 ? null : Math.min(hi, Math.max(lo, v)));
+
+/** 그 적의 기본 수치 (창의 처음 값): ★·연속/탑 층을 입힌 적의 체력·공격력(내 기본 공격 n회 분량)·일반 공격 간격(초, 패턴 값 또는 전투 기본값). 없는 적이면 null */
+export function testArenaDefaults(c: TestBattleChoice): { hpAttacks: number; attackAttacks: number; attackSeconds: number } | null {
+  const b = testBattleEnemy(c);
+  if (!b) return null;
+  const pat = b.enemy.pattern;
+  const sec = pat && 'attackSeconds' in pat ? pat.attackSeconds : BALANCE.provisional.combat.enemyAttackSeconds;
+  return { hpAttacks: b.enemy.hpInAttacks, attackAttacks: b.enemy.attackInAttacks, attackSeconds: sec };
+}
+
+/** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음, 넣은 체력·공격력 n회 분량으로 바꿈). 없는 적이면 null */
+export function testArenaEnemy(c: TestArenaChoice): { enemy: EnemyDef; star: number; bossId: string | null } | null {
+  const base = testBattleEnemy(c);
+  if (!base) return null;
+  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  if (hp === null && atk === null) return base;
+  return { ...base, enemy: scaleEnemy(base.enemy, { hp: hp === null ? 1 : hp / base.enemy.hpInAttacks, attack: atk === null ? 1 : atk / base.enemy.attackInAttacks }) };
+}
+
+/** 적 설정 창의 공격 여부·무적·공격 간격·시간을 전투 파라미터에 (엔진은 이 칸만 본다) */
+export function applyTestArenaParams(params: Partial<CombatParams>, c: Pick<TestArenaChoice, 'attacks' | 'immortal'> & Partial<Pick<TestArenaChoice, 'attackSeconds'>>): void {
+  params.enemyPassive = !c.attacks;
+  params.enemyImmortal = c.immortal;
+  const sec = clampTo(c.attackSeconds ?? null, TEST_ARENA_SECONDS_RANGE[0], TEST_ARENA_SECONDS_RANGE[1]);
+  if (sec !== null) params.enemyAttackSecondsFixed = sec;
+  else delete params.enemyAttackSecondsFixed;
+  params.timeLimitSeconds = TEST_ARENA_SECONDS;
+}
+
+// ── 특수던전 횟수 (C.457 사용자 2026-11-15 '레이드 클리어하면 진행이 안 됨'): 테스트 칸은 주간 입장 횟수를 쓰지 않는다 ──
+
+/** 이번 주 쓴 입장 수를 비운다 (테스트 칸에서 입장할 때마다 — 깨고 나와도 [입장]이 잠기지 않게) */
+export function testRefillSpecial(save: SaveData): void {
+  save.shared.special.used = {};
+}
+
+// ── 붕옥 재료 (C.457 사용자 2026-11-15 '붕옥 재료들 없어서 강화를 못 해봄') ──
+
+/** [재료 각 +n] 한 번에 넣는 수 */
+export const TEST_HOGYOKU_MATERIAL_STEP = 100;
+
+/** 붕옥 강화 재료 3종(soul·shard·essence)을 각 n 개씩 더한다. 런 로그(획득 기록)에는 남기지 않는다 */
+export function testAddHogyokuMaterials(save: SaveData, n: number = TEST_HOGYOKU_MATERIAL_STEP): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const t of HOGYOKU_TRACK_IDS) {
+    spendMaterial(save, t, -Math.max(0, Math.floor(n)));
+    out[t] = materialHave(save, t);
+  }
+  return out;
+}
+
 // ── 키링 3번 (GDD 109장 7, C.181): 다마고치 모드 키링을 1초 안에 3번 누르면 테스트 모드 (이스터에그) ──
 
 /** 키링 누르기 횟수·시간 창 */
@@ -440,11 +587,17 @@ export function testEvolveNext(save: SaveData, nowMs: number = Date.now()): Evol
 
 export const TEST_ITEM_KINDS = ['gear', 'wanderer', 'consumable', 'food', 'cosmetic', 'currency'] as const;
 export type TestItemKind = (typeof TEST_ITEM_KINDS)[number];
-export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '떠돌이 상인 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
+export const TEST_ITEM_KIND_NAMES: Record<TestItemKind, string> = { gear: '장비', wanderer: '우라하라 물건', consumable: '소모품', food: '먹이', cosmetic: '꾸밈', currency: '재화' };
 /** 재화 id → 세이브 자리 (골드 = tradeCoins) */
-export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'rerollTickets', 'trainingTickets'] as const;
+export const TEST_CURRENCIES = ['gold', 'jade', 'soulCrystals', 'hogyokuShards', 'resonanceEssence', 'transcendShards', 'rerollTickets', 'trainingTickets'] as const;
 export type TestCurrency = (typeof TEST_CURRENCIES)[number];
-export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = { gold: '골드', jade: '영옥', soulCrystals: '영혼 결정', rerollTickets: '다시 뽑기권', trainingTickets: '수련권' };
+/** 붕옥 재료 3종 이름은 데이터(HOGYOKU_MATERIAL_NAMES)에서 — 세이브 키 soulCrystals·hogyokuShards·resonanceEssence = 트랙 soul·shard·essence (C.457: shard·essence 가 빠져 있었다) */
+export const TEST_CURRENCY_NAMES: Record<TestCurrency, string> = {
+  gold: '골드', jade: '영옥',
+  soulCrystals: HOGYOKU_MATERIAL_NAMES.soul, hogyokuShards: HOGYOKU_MATERIAL_NAMES.shard, resonanceEssence: HOGYOKU_MATERIAL_NAMES.essence,
+  transcendShards: '초월 조각', rerollTickets: '다시 뽑기권', trainingTickets: '수련권',
+};
+const MATERIAL_TRACK: Partial<Record<TestCurrency, HogyokuTrackId>> = { soulCrystals: 'soul', hogyokuShards: 'shard', resonanceEssence: 'essence' };
 /** 한 번에 만들 수 있는 최대 개수 */
 export const TEST_ITEM_MAX = 99999;
 
@@ -500,7 +653,8 @@ export function createTestItem(save: SaveData, c: TestItemChoice, nowMs: number 
   const cur = c.id as TestCurrency;
   if (cur === 'gold') sh.tradeCoins += n;
   else if (cur === 'jade') sh.jade += n;
-  else if (cur === 'soulCrystals') sh.soulCrystals += n;
+  else if (MATERIAL_TRACK[cur]) spendMaterial(save, MATERIAL_TRACK[cur]!, -n);
+  else if (cur === 'transcendShards') sh.transcendShards += n;
   else if (cur === 'rerollTickets') return addCapped(sh, 'rerollTickets', n, BALANCE.shop.rerollMax);
   else if (cur === 'trainingTickets') {
     const add = Math.max(0, Math.floor(n)); // 수련권 개수 제한 없음 (GDD 216장 2)
@@ -516,7 +670,7 @@ function addCapped(sh: SaveData['shared'], key: 'rerollTickets', n: number, cap:
   return add;
 }
 
-// ── 장비 전부 (GDD 112장 3): 종류(gear.json kinds) × 특수 효과(specials) — 상점(노말 종류별)·떠돌이 상인(레어~전설 무작위 종류) 장비도 이 조합 안에 든다 ──
+// ── 장비 전부 (GDD 112장 3): 종류(gear.json kinds) × 특수 효과(specials) — 상점(노말 종류별)·우라하라(레어~전설 무작위 종류) 장비도 이 조합 안에 든다 ──
 
 /** 장비 품목 id: 종류만 = "weapon"(영웅·전설이면 특수 효과 무작위) · 특수 효과 지정 = "weapon:sp-shield" */
 export function testGearIds(): string[] {
@@ -561,7 +715,7 @@ export function createTestGearAll(save: SaveData, o: { grade: GearGrade; plus: n
   return made;
 }
 
-/** 떠돌이 상인 물건 하나를 공짜로: 그 물건 한 칸짜리 상인을 잠깐 세워 진짜 구매 효과(buyWandererItem)를 그대로 낸 뒤 상인·골드·구매 기록을 되돌린다 */
+/** 우라하라 물건 하나를 공짜로: 그 물건 한 칸짜리 상인을 잠깐 세워 진짜 구매 효과(buyWandererItem)를 그대로 낸 뒤 상인·골드·구매 기록을 되돌린다 */
 function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: () => number): boolean {
   if (!WANDERER_ITEMS.some((w) => w.id === itemId)) return false;
   const w = save.shared.wanderer;
@@ -574,12 +728,12 @@ function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: 
   return r.ok;
 }
 
-// ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다 — 떠돌이 상인 · 돌봄 요청 · 대기 보상 · 원정 이벤트 타일·바퀴 변이 ──
+// ── 불러오기 (GDD 112장 2): 무작위로 뜨는 것을 바로 부른다 — 우라하라 · 돌봄 요청 · 대기 보상 · 원정 이벤트 타일·바퀴 변이 ──
 
-/** 떠돌이 상인 단계 수 (숨은 티어 1~n) */
+/** 우라하라 단계 수 (숨은 티어 1~n) */
 export const TEST_WANDERER_TIERS = BALANCE.provisional.wanderer.tierWeights.length;
 
-/** 떠돌이 상인을 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
+/** 우라하라를 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
 export function testCallWanderer(save: SaveData, tier: number, nowMs: number = Date.now(), rand: () => number = Math.random): WandererVisit {
   const w = save.shared.wanderer;
   const t = Math.max(1, Math.min(TEST_WANDERER_TIERS, Math.floor(tier) || 1));
@@ -690,9 +844,9 @@ export function applyTestExpeditionForce(exp: ExpeditionState): { eventTile: str
 
 // ── 스킨 끼워보기 (GDD 109장 7): 가진 것 상관없이 이 종족이 입을 수 있는 스킨·꾸밈 전부 ──
 
-/** 이 종족이 입을 수 있는 스킨 전부 (단계 외형·아란칼 외형 포함 — 상점에 안 나오는 것도) */
-export function testSkins(factionId: string): SkinDef[] {
-  return skinsFor(factionId);
+/** 이 종족이 입을 수 있는 모델·스킨 전부 (C.434, GDD 17절 v6.036): 단계 모델·초월자 외형 전부 + 스킨(단계 외형 포함 — 상점에 안 나오는 것도) + 그림 대기 */
+export function testSkins(factionId: string): ModelLookOption[] {
+  return modelLookOptions(factionId, { test: true, owned: [], dex: [], waiting: true });
 }
 
 /** 스킨을 입힌다 (null = 벗기). 이 종족이 못 입는 스킨이면 false */
@@ -701,7 +855,7 @@ export function testWearSkin(save: SaveData, skinId: string | null): boolean {
     save.skin = null;
     return true;
   }
-  if (!canWear(save.factionId, skinId)) return false;
+  if (!canWear(save.factionId, skinId) && !validModelLook(save.factionId, skinId)) return false;
   save.skin = skinId;
   return true;
 }

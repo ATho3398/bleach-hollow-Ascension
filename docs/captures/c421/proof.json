@@ -1,0 +1,133 @@
+{
+  "errors": [],
+  "shots": [
+    "01-room-hogyoku-icon.png",
+    "02-menu-hogyoku-icon.png",
+    "03-hogyoku-0.png",
+    "04-material-info.png",
+    "05-hogyoku-50.png",
+    "06-tab-steps.png",
+    "07-hogyoku-100-flame-a.png",
+    "08-hogyoku-100-flame-b-fusion.png",
+    "09-pc-100-flame.png"
+  ],
+  "facts": {
+    "roomProp": {
+      "src": "/art/prop-hogyoku.png",
+      "w": 64,
+      "h": 64
+    },
+    "menuIcon": "/art/prop-hogyoku.png",
+    "p0": {
+      "level": "0",
+      "who": "붕옥 개발 0%개발 전",
+      "stage": "half",
+      "orb": {
+        "src": "/art/hogyoku-orb.png",
+        "w": 128,
+        "h": 128,
+        "natural": 64,
+        "render": "pixelated"
+      },
+      "flame": null,
+      "tabs": [
+        "개발*",
+        "단계",
+        "합체",
+        "도감"
+      ],
+      "materials": [
+        "영혼 결정10 / 5",
+        "붕옥 파편30 / 8",
+        "공명의 정수2 / 2"
+      ],
+      "developDisabled": false
+    },
+    "toast": "얻는 곳 붕옥 파편",
+    "p50": {
+      "level": "5",
+      "who": "붕옥 개발 50%반쪽의 각성",
+      "stage": "half",
+      "orb": {
+        "src": "/art/hogyoku-orb.png",
+        "w": 128,
+        "h": 128,
+        "natural": 64,
+        "render": "pixelated"
+      },
+      "flame": null,
+      "tabs": [
+        "개발*",
+        "단계",
+        "합체",
+        "도감"
+      ],
+      "materials": [
+        "영혼 결정43 / 12",
+        "붕옥 파편30 / 4",
+        "공명의 정수6 / 3"
+      ],
+      "developDisabled": true
+    },
+    "p100": {
+      "level": "10",
+      "who": "붕옥 개발 100%완전 각성",
+      "stage": "ready",
+      "orb": {
+        "src": "/art/hogyoku-orb.png",
+        "w": 128,
+        "h": 128,
+        "natural": 64,
+        "render": "pixelated"
+      },
+      "flame": {
+        "size": "3072px 192px",
+        "anim": "bha-hg-flame",
+        "dur": "1.333s",
+        "pos": "-1920px 0px"
+      },
+      "tabs": [
+        "개발*",
+        "단계",
+        "합체",
+        "도감"
+      ],
+      "materials": [
+        "영혼 결정9",
+        "붕옥 파편50",
+        "공명의 정수9"
+      ],
+      "developDisabled": null
+    },
+    "pc": {
+      "level": "10",
+      "who": "붕옥 개발 100%완전 각성",
+      "stage": "ready",
+      "orb": {
+        "src": "/art/hogyoku-orb.png",
+        "w": 128,
+        "h": 128,
+        "natural": 64,
+        "render": "pixelated"
+      },
+      "flame": {
+        "size": "3072px 192px",
+        "anim": "bha-hg-flame",
+        "dur": "1.333s",
+        "pos": "-2112px 0px"
+      },
+      "tabs": [
+        "개발*",
+        "단계",
+        "합체",
+        "도감"
+      ],
+      "materials": [
+        "영혼 결정9",
+        "붕옥 파편50",
+        "공명의 정수9"
+      ],
+      "developDisabled": null
+    }
+  }
+}

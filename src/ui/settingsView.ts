@@ -742,7 +742,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     confirmDialog({
       title: `${host.label} 설정 지우기`,
       body: '이 캐릭터만 쓰던 값을 지우고 다른 캐릭터와 같은 설정을 쓴다.',
-      yes: '지우기', no: '아니오', danger: true,
+      yes: '지우기', no: '아니요', danger: true,
       onYes: () => {
         host.write(null);
         setActiveSlotSettings(null);

@@ -1,10 +1,10 @@
 // 상점 1차 (GDD 25-9, S-16 C.60): 줄 상태(가격·잠김 이유·보유·착용)·구매·꾸밈 착용·다시 뽑기권 사용. 종족 무관 —
 // 품목은 src/data/shop, 가격·상한·효과량은 balance.ts shop(확정), 문구의 종족 이름(먹이·리스크 게이지)은 종족 설정에서 읽는다.
 // C.140 (GDD 86장 4번): 산 것은 보관함으로 — 먹이 = 먹이 개수 +1, 정화제·각성제 = 보관함 소모품 +1(보관함에서 씀, inventory.ts), 수련권 = 지금 트랙 +1, 타일 = 보관함 +1,
-// 꾸밈·스킨 = 보유만(끼기는 보관함). 떠돌이 상인(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
+// 꾸밈·스킨 = 보유만(끼기는 보관함). 우라하라(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
 import { sortieEffectText, sortiePrice } from './engine/sortie';
-import { gateHint, gateOpen } from './unlockGate';
+import { gateHint, gateOpen, type GateId } from './unlockGate';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type MedicineCure, type WandererGrade, type WearCategory } from './data/shop';
 import { wandererAmount } from './engine/wanderer';
 import { canWear } from './data/skins';
@@ -19,10 +19,11 @@ import { gearFull, grantGear, rollGear, type GearRoll } from './engine/gear';
 import { recommendedDifficulty } from './engine/difficulty';
 import { GEAR_GRADE_NAMES, type GearGrade } from './data/gear';
 import type { SaveData } from './game';
+import { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
+import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from './data/hogyoku';
 import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 
 const SX = BALANCE.shop;
-const FOOD_MAX = BALANCE.provisional.food.cap;
 /** 보관함 소모품 종류별 상한 (GDD 86장 4번) */
 export const CONSUMABLE_CAP = BALANCE.provisional.inventory.consumableCap;
 
@@ -186,7 +187,7 @@ function goldName(item: GoldItemDef, faction: FactionConfig): string {
 function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
   switch (item.kind) {
     case 'food': {
-      // 효과 한 줄 (GDD 100장 #62 · 211장): 보관함 카드와 같은 글 — 먹이 효과 전부. 보관 한도는 '보유 n/9' 배지가 말한다
+      // 효과 한 줄 (GDD 100장 #62 · 211장): 보관함 카드와 같은 글 — 먹이 효과 전부. 보유 수는 '보유 n' 배지가 말한다(보관 상한 없음, GDD v6.005)
       return foodEffectText(item.food!, faction);
     }
     case 'calm': return `${faction.riskGaugeName} −${SX.calmRisk} (0 아래로는 안 내려간다) · 가방에 쌓이고 가방에서 쓴다`;
@@ -226,7 +227,7 @@ export function shopBuyPrice(id: string): number | null {
 /** 품목 효과로 막힌 이유 (돈과 별개). 없으면 null */
 function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()): string | null {
   switch (item.kind) {
-    case 'food': return save.shared.food[item.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
+    case 'food': return null; // 먹이 보관 상한 없음 (GDD v6.005)
     case 'calm':
     case 'wake':
     case 'medicine':
@@ -245,7 +246,7 @@ function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()
 
 function goldHave(save: SaveData, item: GoldItemDef): string | null {
   switch (item.kind) {
-    case 'food': return `보유 ${save.shared.food[item.food!]}/${FOOD_MAX}`;
+    case 'food': return `보유 ${save.shared.food[item.food!]}`;
     case 'trainingTicket': return `보유 ${save.training.tickets}`;
     case 'reroll': return `보유 ${save.shared.rerollTickets}/${SX.rerollMax}`;
     // 배지는 가진 수 '보유 n' 하나로 (GDD 159장 33·35: 긴 배지가 그림을 덮었다). 하루 판매 수는 칸 한 줄 'n/m개 구매 가능'(shopDailyLeft)
@@ -263,12 +264,25 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
   }
 }
 
+/** 품목이 따르는 해금 (GDD 241-0 · 243장 2). 없으면 늘 열림 */
+export function goldGate(it: Pick<GoldItemDef, 'id' | 'kind' | 'gearKind'>): GateId | null {
+  switch (it.kind) {
+    case 'gear': return it.gearKind === 'accessory' ? 'accessory' : 'gear';
+    case 'sortie': return 'sortie';
+    case 'tileDraw':
+    case 'rareTile':
+    case 'deckSlot': return 'tiles';
+    case 'battle': return consumableGroupOf(it.id) === 'battle' ? 'battleItem' : null; // 회복 물건(반창고·구급약 등, 가방 '약' 칸)은 처음부터 — 전투 전용만 3단계
+    default: return null;
+  }
+}
+
 /** 골드 탭 줄 (GDD 25-9 표 순서). 수련권은 수련이 열린 트랙(5단계 이상)에서만 보인다 */
 export function goldRows(save: SaveData, faction: FactionConfig, nowMs: number = Date.now()): ShopRow[] {
   return GOLD_ITEMS.filter((it) => it.kind !== 'trainingTicket' || trainingOpen(save)).map((it) => {
     const price = goldPrice(save, it);
-    // 해금 전 품목 (GDD 241-0 수정): 장비 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
-    const gate = it.kind === 'gear' ? (it.gearKind === 'accessory' ? 'accessory' : 'gear') : it.kind === 'sortie' ? 'sortie' : null;
+    // 해금 전 품목 (GDD 241-0 수정 · 243장 2): 타일 뽑기·희귀 타일·타일 배치 칸 = 2단계 · 장비·전투 소모품 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
+    const gate = goldGate(it);
     const block = (gate && !gateOpen(save, gate) ? gateHint(faction, gate) : null) ?? goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
     const effect = goldEffect(it, faction) + (it.kind === 'tileDraw' && save.tiles.unlocked ? ` · 뽑은 횟수 ${save.tiles.draws}` : '');
     return { id: it.id, currency: 'gold', name: goldName(it, faction), effect, price, canBuy: block === null && price !== null, lock: block, have: goldHave(save, it), confirm: it.kind === 'deckSlot' };
@@ -313,7 +327,7 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
     switch (gold.kind) {
       case 'food':
         addFood(save.shared.food, gold.food!, 1);
-        detail = `${faction.foodNames[gold.food!]} ${save.shared.food[gold.food!]}/${FOOD_MAX}`;
+        detail = `${faction.foodNames[gold.food!]} 보유 ${save.shared.food[gold.food!]}`;
         break;
       case 'calm':
       case 'wake':
@@ -416,7 +430,7 @@ export function useRerollTicket(save: SaveData): boolean {
   return true;
 }
 
-// ── 떠돌이 상인 (GDD 85장 5번, C.140): 와 있는 동안 품목 칸마다 한 개씩, 골드로. 티어는 보이지 않는다(품목 등급만) ──
+// ── 우라하라 (GDD 85장 5번, C.140): 와 있는 동안 품목 칸마다 한 개씩, 골드로. 티어는 보이지 않는다(품목 등급만) ──
 
 /** 상인 품목 효과 한 줄 */
 export function wandererEffect(itemId: string, faction: FactionConfig): string {
@@ -424,7 +438,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
   if (!w) return '';
   const n = wandererAmount(itemId);
   switch (w.kind) {
-    case 'food': return `${faction.foodNames[w.food!]} +${n} (종류별 보관 ${FOOD_MAX}개까지)`;
+    case 'food': return `${faction.foodNames[w.food!]} +${n}`;
     case 'reroll': return `다시 뽑기권 +${n} (보유 ${SX.rerollMax}장까지)`;
     case 'calm': return `${faction.riskGaugeName} −${n} · 가방에 쌓이고 가방에서 쓴다`;
     case 'wake': return `컨디션 +${n} · 가방에 쌓이고 가방에서 쓴다`;
@@ -433,6 +447,7 @@ export function wandererEffect(itemId: string, faction: FactionConfig): string {
     case 'elixir': return `${faction.riskGaugeName} −${n} · 컨디션 가득 · 쇠약 해소 · 가방에서 쓴다`;
     case 'pet': return '아직 없는 펫 무작위 1마리 → 가방 장비 탭 펫';
     case 'hpPotion': return `${battleItemText(itemId)} · 모험 걷기 중 [가방]·전투 [소모품]에서 쓴다`;
+    case 'hogyokuMat': return `붕옥 재료 ${HOGYOKU_MATERIAL_NAMES[w.material!]} +${n} (${HOGYOKU_TRACK_NAMES[w.material!]} 강화에 쓴다)`;
     case 'gear': return `${GEAR_GRADE_NAMES[w.grade as GearGrade]} 장비 1개 (종류·능력치 무작위${w.grade === 'epic' || w.grade === 'legendary' ? ' · 특수 효과 1줄' : ''} · ★ = 지금 단계 권장) → 가방 장비 탭`;
   }
 }
@@ -442,12 +457,13 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
   const w = getWandererItem(itemId);
   if (!w) return '모르는 품목이다';
   switch (w.kind) {
-    case 'food': return save.shared.food[w.food!] >= FOOD_MAX ? `보관 가득 (${FOOD_MAX}/${FOOD_MAX})` : null;
+    case 'food': return null; // 먹이 보관 상한 없음 (GDD v6.005)
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'trainingTicket': return null; // 수련권 개수 제한 없음 (GDD 216장 2)
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
     case 'pet': return pickNewPet(save.shared.pets, () => 0) === null ? '펫을 다 가졌다' : null;
     case 'gear': return gearFullText(save);
+    case 'hogyokuMat': return null; // 붕옥 재료 상한 없음
     default: return canStoreConsumable(save, itemId) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
   }
 }
@@ -470,10 +486,10 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   const v = save.shared.wanderer.visit;
   const st = v?.stock.find((x) => x.itemId === itemId);
   const w = getWandererItem(itemId);
-  if (!v || !st || !w) return { ok: false, reason: '상인이 팔지 않는 품목이다' };
+  if (!v || !st || !w) return { ok: false, reason: '우라하라가 팔지 않는 품목이다' };
   if (st.sold) return { ok: false, reason: '이미 팔렸다' };
   const row = wandererRows(save, faction).find((r) => r.id === itemId);
-  if (!row) return { ok: false, reason: '상인이 팔지 않는 품목이다' }; // 아직 안 열린 품목(펫 해금 전 펫 알)
+  if (!row) return { ok: false, reason: '우라하라가 팔지 않는 품목이다' }; // 아직 안 열린 품목(펫 해금 전 펫 알)
   if (!row.canBuy) return { ok: false, reason: row.lock ?? '살 수 없다' };
   const n = wandererAmount(itemId);
   let detail = '';
@@ -481,7 +497,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   switch (w.kind) {
     case 'food':
       addFood(save.shared.food, w.food!, n);
-      detail = `${faction.foodNames[w.food!]} ${save.shared.food[w.food!]}/${FOOD_MAX}`;
+      detail = `${faction.foodNames[w.food!]} 보유 ${save.shared.food[w.food!]}`;
       break;
     case 'reroll':
       save.shared.rerollTickets = Math.min(SX.rerollMax, save.shared.rerollTickets + n);
@@ -505,6 +521,10 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       detail = `${faction.petNames[id] ?? id} → 가방 장비 탭 펫`;
       break;
     }
+    case 'hogyokuMat':
+      gainHogyokuMaterial(save, w.material!, n, 'wanderer', nowMs);
+      detail = `${HOGYOKU_MATERIAL_NAMES[w.material!]} 보유 ${materialHave(save, w.material!)}`;
+      break;
     case 'gear':
       detail = giveGear(save, faction, rollGear({ grade: w.grade as GearGrade, star: gearStarOf(save) }, rand), 'wanderer', nowMs);
       break;
@@ -518,7 +538,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
   return { ok: true, id: itemId, price: st.price, currency: 'gold', detail, ...(tile ? { tile } : {}) };
 }
 
-// ── 장비 (GDD 91장 2번, C.150): 기본 상점 '장비' 탭 = 노말 종류별 1개씩, 떠돌이 상인 = 레어·영웅·전설 (품목 등급 = 장비 등급) ──
+// ── 장비 (GDD 91장 2번, C.150): 기본 상점 '장비' 탭 = 노말 종류별 1개씩, 우라하라 = 레어·영웅·전설 (품목 등급 = 장비 등급) ──
 
 /** 종류별 주 능력치 안내 (GDD 91장 4번) */
 const GEAR_STAT_HINT: Record<string, string> = { weapon: '힘 또는 지능 1줄', armor: '체력·방어 2줄', shoes: '속도 1줄', accessory: '치명·정신력 등 1~2줄' };

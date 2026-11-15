@@ -1,0 +1,267 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-kit-upgrade.png",
+    "02-pc-rail-glow.png",
+    "03-pc-counter-line.png",
+    "04-pc-stack-full.png",
+    "05-pc-heukkan.png",
+    "06-pc-fragor-ultra.png",
+    "07-pc-revive.png",
+    "08-pc-absorb-stat-only.png",
+    "09-phone-kit-upgrade.png",
+    "10-phone-rail-glow.png",
+    "11-phone-counter-line.png"
+  ],
+  "facts": {
+    "pc": {
+      "upgrade": "전용 블록 강화임시초월 조각 90 · 강마다 그 블록 피해 +8% · 최대 10강경화수월 0강 (+0%)강화 · 조각 10귀도 1강 (+8%)강화 · 조각 20초월 조각은 초월자로 이긴 전투마다 나온다 (일반 1 · 강적 3 · 보스 8).",
+      "rail": {
+        "tray": [
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka"
+        ],
+        "stack": 0,
+        "counters": 0,
+        "finishers": 0,
+        "revives": 0,
+        "glow": 2,
+        "line": "",
+        "lineOn": false,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "경화수월",
+          "귀도",
+          "귀도",
+          "귀도",
+          "경화수월",
+          "귀도",
+          "귀도"
+        ],
+        "log": []
+      },
+      "counter": {
+        "tray": [
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kyoka"
+        ],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 0,
+        "revives": 0,
+        "glow": 1,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": true,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "경화수월",
+          "경화수월",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "경화수월"
+        ],
+        "log": []
+      },
+      "stack": {
+        "tray": [
+          "kit:kyoka"
+        ],
+        "stack": 5,
+        "counters": 1,
+        "finishers": 0,
+        "revives": 0,
+        "glow": 0,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": false,
+        "stackChip": "영창 5/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "경화수월"
+        ],
+        "log": []
+      },
+      "heukkan": {
+        "tray": [],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 1,
+        "revives": 0,
+        "glow": 0,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": false,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [],
+        "log": []
+      },
+      "knockback": 25,
+      "release": {
+        "tray": [
+          "kit:fragor",
+          "kit:kido",
+          "kit:kido",
+          "kit:fragor"
+        ],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 1,
+        "revives": 0,
+        "glow": 0,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": false,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "프라고르",
+          "귀도",
+          "귀도",
+          "프라고르"
+        ],
+        "log": []
+      },
+      "fragor": {
+        "tray": [
+          "kit:kido"
+        ],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 1,
+        "revives": 0,
+        "glow": 0,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": false,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "귀도",
+          "프라고르",
+          "프라고르",
+          "프라고르"
+        ],
+        "log": []
+      },
+      "revive": {
+        "tray": [
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido"
+        ],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 1,
+        "revives": 1,
+        "glow": 2,
+        "line": "깨져라, 경화수월",
+        "lineOn": true,
+        "stackChip": "영창 0/5",
+        "evade": 0,
+        "libName": "붕옥 융합",
+        "labels": [
+          "귀도",
+          "경화수월",
+          "귀도",
+          "경화수월",
+          "귀도"
+        ],
+        "log": []
+      },
+      "status": "playing",
+      "absorb": {
+        "modes": [
+          "stat",
+          "none"
+        ],
+        "text": "능력치 포식광기 +1놓아주기 "
+      }
+    },
+    "phone": {
+      "upgrade": "전용 블록 강화임시초월 조각 90 · 강마다 그 블록 피해 +8% · 최대 10강경화수월 0강 (+0%)강화 · 조각 10귀도 1강 (+8%)강화 · 조각 20초월 조각은 초월자로 이긴 전투마다 나온다 (일반 1 · 강적 3 · 보스 8).",
+      "rail": {
+        "tray": [
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka"
+        ],
+        "stack": 0,
+        "counters": 0,
+        "finishers": 0,
+        "revives": 0,
+        "glow": 2,
+        "line": "",
+        "lineOn": false,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "경화수월",
+          "귀도",
+          "귀도",
+          "귀도",
+          "경화수월",
+          "귀도",
+          "귀도"
+        ],
+        "log": []
+      },
+      "counter": {
+        "tray": [
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kyoka",
+          "kit:kyoka"
+        ],
+        "stack": 0,
+        "counters": 1,
+        "finishers": 0,
+        "revives": 0,
+        "glow": 1,
+        "line": "언제부터 경화수월을 쓰고 있다고 착각한 거지?",
+        "lineOn": true,
+        "stackChip": "영창 0/5",
+        "evade": 0.1,
+        "libName": "붕옥 융합",
+        "labels": [
+          "경화수월",
+          "경화수월",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "경화수월"
+        ],
+        "log": []
+      }
+    }
+  }
+}

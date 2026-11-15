@@ -1,6 +1,7 @@
 // 종족 설정(faction config) 타입과 검증. 종족 차이는 전부 이 설정에서 읽는다 (CLAUDE.md 규칙 2).
 // 3번째 종족은 src/data/factions/<id>.json 하나로 추가된다.
 
+import { tryGetRoom } from '../data/rooms';
 import { ATTACK_CATEGORIES, STAT_IDS, type AttackCategory, type StatId, type Stats } from '../data/schema';
 import foodNamesRaw from '../data/foods/names.json';
 import { RANK_COUNT as RANK_NAME_COUNT } from '../data/ranks';
@@ -154,14 +155,14 @@ export interface SpecialLookDef {
 
 export const WORLD_PLACES = ['home', 'market', 'rank', 'adventure', 'tower', 'spa'] as const;
 export type WorldPlace = (typeof WORLD_PLACES)[number];
-/** 장터 안 자리 (GDD 127장 2): 온천·상점 + 떠돌이 상인(와 있을 때만 서 있다) */
-/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 떠돌이 상인(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
+/** 장터 안 자리 (GDD 127장 2): 온천·상점 + 우라하라(와 있을 때만 서 있다) */
+/** 시장 자리 (GDD 127장 2·150장 2·153장 2): 상점 4곳(shop = 소모품 상점)·대장장이(뒷줄 왼 → 오) · 우라하라(앞줄) — 순서 = 기기 ▲▼ 순서. spa 는 이름(props.spa)만 — 온천은 월드맵 장소 (153장 1) */
 export const MARKET_SPOTS = ['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'spa', 'wanderer'] as const;
 export type MarketSpot = (typeof MARKET_SPOTS)[number];
 /** hungry = 꺼 둔 동안 배고파졌을 때 다시 열면 한 번 하는 말 (GDD 24-1) */
 /** 방 말풍선 키. askPet·askSleep = 돌봄 요청, refusePet·refuseSleep = 요청 없이 눌렀을 때 거절 (GDD 82장, C.133) */
 /** 방 말풍선 키. collapsed = 쓰러짐, bondShy·bondClose·bondBest = 교감 단계 대사 (GDD 102-6 ④, C.175) */
-export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit', 'picky', 'foodLike', 'foodDislike', 'foodCheap'] as const;
+export const ROOM_TALK = ['idle', 'tired', 'risk', 'weak', 'collapsed', 'happy', 'hungry', 'bondShy', 'bondClose', 'bondBest', 'askPet', 'askSleep', 'refusePet', 'refuseSleep', 'spit', 'picky', 'full', 'foodLike', 'foodDislike', 'foodCheap'] as const;
 export type RoomTalk = (typeof ROOM_TALK)[number];
 
 /** 해방 수련 종목 id (GDD 22-4, engine/training 의 TRAINING_GAMES 와 같은 순서) */
@@ -201,6 +202,8 @@ export interface AscensionConfig {
   completeText: [string, string];
   lookChange: boolean;
   artTier?: number;
+  /** 깬 뒤 그림 단계(artTier)의 단계 이름 (GDD 15절·17절 v6.036: 호로 5단계 = '아란칼') — 모델 고르기 목록의 'n단계 이름'. 없으면 ascension.name */
+  lookName?: string;
   /** 깬 뒤 진화체 표시 이름을 진화체 release 의 이 칸으로 (GDD 198장: 호로 = 'name' 레스렉시온 이름). 없으면 표시 이름 그대로 */
   formNameKey?: 'name' | 'final';
 }
@@ -297,13 +300,17 @@ export const DEFAULT_ROOM: RoomConfig = {
     askPet: ['교감하고 싶어.'], askSleep: ['졸려…'], refusePet: ['건드리지 마.'], refuseSleep: ['자고 싶지 않다.'],
     spit: ['더는 못 먹어…', '퉤! …더는 못 먹어.'], // 먹이 뱉음 (GDD 109장 6, C.181)
     picky: ['같은 건 연달아 안 먹어.', '또 그거야? …다른 걸 줘.'], // 같은 먹이 거절 (GDD 234장 3, C.387)
+    full: ['배부르다. 더는 안 들어가.', '지금은 배가 가득해.'], // 배부름 가득 — 먹이 그대로 (GDD 243장 6, C.411)
     foodLike: ['이거 좋아!', '맛있다!'], foodDislike: ['…이건 별로야.', '으, 싫은 맛이다.'], foodCheap: ['맛없어… 배고프니까 먹는 거야.', '…억지로 삼켰다.'], // 먹이 반응 (GDD 235장 2·3, C.387)
   },
 };
 
 /** 종족 설정의 room 에 빠진 값을 기본값으로 채운다. talkPack = 입은 말풍선 팩 id(GDD 25-11): 팩이 가진 키만 혼잣말 문구를 덮고, 없는 키는 기본 문구 */
-export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null): RoomConfig {
-  const r = f.room ?? {};
+export function roomOf(f: Pick<FactionConfig, 'room'> & Partial<Pick<FactionConfig, 'cosmetics' | 'rankBattleName'>>, talkPack?: string | null, roomKey?: string | null): RoomConfig {
+  // 방 키 (GDD 12-4 v6.032, C.432 — 초월자마다 자기 방): 방 목록(src/data/rooms)의 배경·자리가 종족 방 위에 덮인다. 빈 칸은 종족 방 그대로
+  const own = tryGetRoom(roomKey);
+  const fr = f.room ?? {};
+  const r = own ? { ...fr, sceneArt: own.sceneArt, ...(own.shape ? { shape: own.shape } : {}), layout: { ...fr.layout, ...own.layout }, ...(own.floor ? { floor: own.floor } : {}), ...(own.characterFoot ? { characterFoot: own.characterFoot } : {}), ...(own.extras ? { extras: own.extras } : {}) } : fr;
   const pack = talkPack ? f.cosmetics?.talkPacks?.[talkPack] : undefined;
   return {
     ...DEFAULT_ROOM,
@@ -344,14 +351,14 @@ export const DEFAULT_MARKET: MarketConfig = {
   shopsLabel: '상점',
   shape: 'market',
   sceneArt: 'scene.market',
-  props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '떠돌이 상인' },
+  props: { spa: '온천', shop: '소모품 상점', gearShop: '장비 상점', skinShop: '스킨 상점', traitShop: '특성 상점', smith: '대장장이', wanderer: '우라하라' },
   // 바닥 = 장면 30% 아래 전부 (GDD 155장 1 — 화면 전체를 쓰게 옛 50% 에서 올림)
   floor: { aspect: 2, poly: [[0, 0.3], [1, 0.3], [1, 1], [0, 1]] },
   // 방처럼 장면 곳곳에 (GDD 158장 3): 뒤(위)는 작게, 앞(아래)은 크게 — 앞뒤 깊이로 화면 전체를 쓴다. 왼쪽 앞 = 월드맵 물건(exit, 방과 같은 자리).
-  // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 떠돌이 상인은 와 있을 때만 가운데
+  // 온천(spa)은 장터에 안 서고 이름만 쓴다 (153장 1). 우라하라는 와 있을 때만 가운데
   layout: {
     shop: { x: 40.3, y: 79, scale: 0.9 }, gearShop: { x: 54.7, y: 39.5, scale: 0.88 }, skinShop: { x: 80.8, y: 41.6, scale: 1.01 },
-    // 사용자 2026-11-03: 특성 상점 ×0.8 · 떠돌이 상인 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
+    // 사용자 2026-11-03: 특성 상점 ×0.8 · 우라하라 ×1.2 · 대장장이 '너무 왼쪽' → 가운데쯤 (C.254)
     traitShop: { x: 88.2, y: 85.2, scale: 1.15 }, smith: { x: 64.9, y: 84.1, scale: 1.23 },
     spa: { x: 22, y: 92, scale: 0.7 }, wanderer: { x: 19.8, y: 45.5, scale: 1.05 }, // 자리·크기 = 사용자가 UI 배치 도구로 호로 기준 잡은 값, 두 종족 공통 (2026-11-03 11:02, C.263)
   },
@@ -409,8 +416,8 @@ export const DEFAULT_WORLDMAP: WorldMapConfig = {
   spaName: '온천',
 };
 
-/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 번호 쟁탈전·진급 시험 = room.props.rank(rankBattleName), 모험 = worldmap.adventureName, 탑 = 탑 이름 towerLabels, 온천 = worldmap.spaName) */
-export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
+/** 종족 설정의 worldmap 에 빠진 값을 기본값으로 + 장소 이름 (홈 = nestName, 시장 = 시장 이름, 번호 쟁탈전·진급 시험 = room.props.rank(rankBattleName), 모험 = worldmap.adventureName, 탑 자리 = 특수던전 이름 specialDungeonLabels(GDD 6-16 v6.017), 온천 = worldmap.spaName) */
+export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestName' | 'tower' | 'room' | 'specialDungeon'>): WorldMapConfig & { places: Record<WorldPlace, string> } {
   const w = f.worldmap ?? {};
   return {
     ...DEFAULT_WORLDMAP,
@@ -418,7 +425,7 @@ export function worldMapOf(f: Pick<FactionConfig, 'market' | 'worldmap' | 'nestN
     floor: w.floor ?? DEFAULT_WORLDMAP.floor,
     layout: { ...DEFAULT_WORLDMAP.layout, ...w.layout },
     characterFoot: w.characterFoot ?? DEFAULT_WORLDMAP.characterFoot,
-    places: { home: f.nestName, market: marketOf(f).name, rank: roomOf(f).props.rank, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: towerLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
+    places: { home: f.nestName, market: marketOf(f).name, rank: roomOf(f).props.rank, adventure: w.adventureName ?? DEFAULT_WORLDMAP.adventureName, tower: specialDungeonLabels(f).name, spa: w.spaName ?? DEFAULT_WORLDMAP.spaName },
   };
 }
 
@@ -462,6 +469,9 @@ export interface FactionConfig {
   /** forms = 진화체 id → 외형(능력치보다 먼저 — 히든 진화체), elementSuffix = 이 속성의 진화체는 외형 id 뒤에 속성 id 를 붙인다(속성 색, GDD 240장 — 예 wyrmwater) */
   /** 숨은 모습 (GDD 241-C 4, C.406): 그 단계로 진화하는 순간 조건을 채웠으면 단계 외형 대신 이 외형 + 보너스(세이브 전체에서 처음 1번만). 없는 종족은 비운다 — 엔진에 종족 분기 없음 */
   specialLooks?: SpecialLookDef[];
+  /** 캐릭터 스킨 진화체 중분류 (GDD 5절 '캐릭터 스킨 분류' v6.044): 이름 + 묶는 단계(1부터). 없으면 단계 이름(tierNames + 깬 뒤 그림 단계 ascension.lookName)마다 한 칸.
+   *  진화체별로 외형이 같은 종족(사신)은 여기에 적는다. 초월자 칸은 엔진이 끝에 붙인다 */
+  skinGroups?: { id: string; name: string; tiers: number[] }[];
   tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[] }>;
   /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
   tierNames: [string, string, string, string];
@@ -517,6 +527,8 @@ export interface FactionConfig {
   difficulty?: { name?: string; star?: string; recommended?: string; locked?: string };
   /** 도전의 탑 문구 (GDD 36장, C.85): 이름·층 표시({n})·꼭대기 보스 이름·잠김 문구·한 줄 설명. 없으면 기본 문구 (towerLabels) */
   tower?: Partial<TowerLabels> & { starGrounds?: Record<string, string> };
+  /** 특수던전 (GDD 6-16 v6.017, C.427): 월드맵 장소 이름·한 줄 설명·탭 이름·주간던전(트랙 id → 이름·그림 장면 id)·보스전 그림(보스 칸 id → 장면 id). 없으면 기본 (specialDungeonLabels) */
+  specialDungeon?: Partial<Omit<SpecialDungeonLabels, 'tabs' | 'weekly' | 'bossArt'>> & { tabs?: Partial<SpecialDungeonLabels['tabs']>; weekly?: Record<string, { name?: string; art?: string }>; bossArt?: Record<string, string> };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
@@ -657,6 +669,17 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (sg !== undefined && (typeof sg !== 'object' || sg === null || Array.isArray(sg) || Object.values(sg).some((v) => !isString(v)))) errors.push('tower.starGrounds: { ★: 사냥터 id }');
     }
   }
+  if (r.specialDungeon !== undefined) {
+    const t = r.specialDungeon as Record<string, unknown>;
+    if (typeof t !== 'object' || t === null || Array.isArray(t)) errors.push('specialDungeon: { name?, desc?, tabs?, weekly?, bossArt? }');
+    else {
+      for (const k of ['name', 'desc']) if (t[k] !== undefined && !isString(t[k])) errors.push(`specialDungeon.${k}: 비어 있지 않은 문자열`);
+      const isMap = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+      if (t.tabs !== undefined && (!isMap(t.tabs) || Object.values(t.tabs).some((v) => !isString(v)))) errors.push('specialDungeon.tabs: { tower?, weekly?, boss? } 문자열');
+      if (t.bossArt !== undefined && (!isMap(t.bossArt) || Object.values(t.bossArt).some((v) => !isString(v)))) errors.push('specialDungeon.bossArt: { 보스 칸 id: 장면 id }');
+      if (t.weekly !== undefined && (!isMap(t.weekly) || Object.values(t.weekly).some((v) => !isMap(v) || (v.name !== undefined && !isString(v.name)) || (v.art !== undefined && !isString(v.art))))) errors.push('specialDungeon.weekly: { 트랙 id: { name?, art? } }');
+    }
+  }
   if (r.huntingGrounds !== undefined) {
     const hg = r.huntingGrounds as Record<string, unknown>;
     if (typeof hg !== 'object' || hg === null || Array.isArray(hg)) errors.push('huntingGrounds: { 사냥터 id: { name, desc? } }');
@@ -747,6 +770,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const ok = (v: unknown) => isRec(v) && isString(v.id) && isString(v.name) && isString(v.look) && [v.toTierIndex, v.minBondCare, v.bonusEv].every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 0);
     if (!Array.isArray(r.specialLooks) || !r.specialLooks.every(ok)) errors.push('specialLooks: [{ id, name, toTierIndex, minBondCare, look, bonusEv }] (숫자는 0 이상 정수)');
   }
+  if (r.skinGroups !== undefined && !(Array.isArray(r.skinGroups) && r.skinGroups.length > 0 && r.skinGroups.every((g) => isRec(g) && isString(g.id) && isString(g.name) && Array.isArray(g.tiers) && g.tiers.every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 1)))) errors.push('skinGroups: [{ id, name, tiers: [단계 번호(1부터)] }] (비어 있지 않게)');
   if (r.tierLooks !== undefined) {
     const tl = r.tierLooks;
     const okLook = (v: unknown) => isString(v);
@@ -820,6 +844,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (!isStringTuple(asc.completeText, 2)) errors.push('ascension.completeText: 문자열 2개여야 한다');
   if (typeof asc.lookChange !== 'boolean') errors.push('ascension.lookChange: boolean');
   if (asc.artTier !== undefined && !(Number.isInteger(asc.artTier) && (asc.artTier as number) >= 1)) errors.push('ascension.artTier: 1 이상 정수');
+  if (asc.lookName !== undefined && !isString(asc.lookName)) errors.push('ascension.lookName: 비어 있지 않은 문자열');
   const lb = (r.liberation ?? {}) as Record<string, unknown>;
   for (const k of ['baseName', 'baseCutin', 'baseEndText', 'name', 'cutin', 'endText']) if (!isString(lb[k])) errors.push(`liberation.${k}: 비어 있지 않은 문자열이어야 한다`);
   const RELEASE_KEYS = ['name', 'final'];
@@ -888,6 +913,30 @@ export function towerLabels(f: Pick<FactionConfig, 'tower'>): TowerLabels {
   return {
     name: t.name ?? '도전의 탑', floor: t.floor ?? '{n}층', finalBossName: t.finalBossName ?? '탑의 주인',
     locked: t.locked ?? '스토리 1장 클리어 후 열린다', desc: t.desc ?? '한 층이 한 판이다. 체력 가득으로 시작하고 져도 잃는 것이 없다.',
+  };
+}
+
+/** 특수던전 문구 (GDD 6-16 v6.017, C.427) */
+export interface SpecialDungeonLabels {
+  /** 월드맵 장소 이름 ("특수던전") */
+  name: string;
+  desc: string;
+  tabs: { tower: string; weekly: string; boss: string };
+  /** 주간던전: 트랙 id → 이름·그림(장면 id — 그림 파일이 오면 이 키만 바꾼다) */
+  weekly: Record<string, { name: string; art?: string }>;
+  /** 보스전 그림: 보스 칸 id → 장면 id (없으면 arenaBg) */
+  bossArt: Record<string, string>;
+}
+
+/** 특수던전 문구: 종족 설정 specialDungeon, 빈 곳은 기본 (주간던전 이름 기본 = '<트랙 이름> 던전'은 화면이 채운다) */
+export function specialDungeonLabels(f: Pick<FactionConfig, 'specialDungeon'>): SpecialDungeonLabels {
+  const t = f.specialDungeon ?? {};
+  const weekly: SpecialDungeonLabels['weekly'] = {};
+  for (const [k, v] of Object.entries(t.weekly ?? {})) if (v.name) weekly[k] = { name: v.name, ...(v.art ? { art: v.art } : {}) };
+  return {
+    name: t.name ?? '특수던전', desc: t.desc ?? '탑을 오르고, 주마다 열리는 던전과 보스에 도전한다.',
+    tabs: { tower: t.tabs?.tower ?? '탑', weekly: t.tabs?.weekly ?? '주간던전', boss: t.tabs?.boss ?? '보스전' },
+    weekly, bossArt: { ...(t.bossArt ?? {}) },
   };
 }
 

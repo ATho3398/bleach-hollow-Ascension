@@ -1,7 +1,7 @@
 // 세이브 슬롯 (Q-3, C.31): 슬롯 3개, 슬롯별 localStorage 키. 슬롯 1 = 기존 키 그대로라 옛 세이브는 마이그레이션 없이 슬롯 1이 된다.
 // 슬롯 밖 정보(마지막 플레이 시각)는 별도 키 하나에 둔다 → SaveData 구조와 SAVE_FORMAT_VERSION 은 그대로.
 // 입력 설정(bha-input-settings)·전투 효과 설정(bha-fx-settings)은 기기별이라 슬롯과 무관하다.
-import { migrateSave, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
+import { migrateSave, noEvolutionLabel, saveFormatGate, SAVE_FORMAT_VERSION, SAVE_KEY, saveFormatStatus, writeSave, type SaveData, type StorageLike } from './game';
 import { collectChunks, parseSaveText } from './saveCodec';
 import { rankOf } from './engine/rank/rank';
 
@@ -36,6 +36,8 @@ export type SlotSummary =
       rank?: number | null;
       /** 환생 횟수 — 1 이상일 때만 슬롯 제목 옆 '+환생 n회' (GDD 129장 1) */
       rebirths?: number;
+      /** 진화 없는 트랙(초월자)이 지금 트랙이면 슬롯 제목 = '초월자 이치고' — 단계 이름 대신 (사용자 2026-11-15, GDD 12-4) */
+      ownTitle?: string;
     };
 
 interface SlotsMeta {
@@ -108,6 +110,7 @@ export function slotSummary(storage: StorageLike, slot: number, min: number = sa
     inExpedition: save.activeExpedition != null,
     rank: (() => { try { return save.rank ? rankOf(save.rank) : null; } catch { return null; } })(),
     rebirths: save.rebirth?.count ?? 0,
+    ...(() => { try { const own = noEvolutionLabel(save); return own ? { ownTitle: `${own.kind} ${own.name}` } : {}; } catch { return {}; } })(),
   };
 }
 
@@ -223,6 +226,83 @@ export function collectSlotChunks(storage: StorageLike): number {
   } catch {
     return 0;
   }
+}
+
+/** 옛 형식 세이브 보관 키 (C.446, GDD v6.055 8절): 슬롯 키 + 형식 번호. 게임은 읽지 않는다(백업 보관만) */
+export const archiveKey = (slot: number, format: number): string => `${slotKey(slot)}.archive-f${format}`;
+/** 세이브 초기화 안내 표시 키 (시작 화면 한 줄). 값 = { slots, at } */
+export const SAVE_RESET_NOTICE_KEY = `${SAVE_KEY}.resetNotice`;
+/** 시작 화면 한 줄 안내 (마스터 추천안 문구) */
+export const SAVE_RESET_TEXT = '새 버전 — 세이브가 초기화되었습니다. 옛 세이브는 이 기기에 백업으로 남겨 두었습니다.';
+
+/**
+ * 옛 세이브 초기화 (C.446, 사용자 2026-11-13 '세이브 걍 날려, 새로 하는 거에만 적용'): 형식이 문턱(MIN_LOADABLE_SAVE_FORMAT)보다 옛 슬롯은
+ * 원문(압축 덩어리를 풀어 한 덩어리로, 못 풀면 원문 그대로)을 archiveKey 에 옮기고 슬롯을 비운다 → 새로 시작. 옮긴 슬롯이 있으면 안내 키를 남긴다.
+ * 백업 쓰기가 막히면 그 슬롯은 건드리지 않는다(예전처럼 '이전 버전 세이브'로 남아 내보내기만 된다). 옮긴 슬롯 번호를 돌려준다
+ */
+export function archiveOldSaves(storage: StorageLike, min: number = saveFormatGate.min, nowMs: number = Date.now()): number[] {
+  const moved: number[] = [];
+  for (const slot of slotNumbers()) {
+    let text: string | null;
+    try {
+      text = storage.getItem(slotKey(slot));
+    } catch {
+      continue;
+    }
+    const format = rawSaveFormat(text);
+    if (!text || format === null || saveFormatStatus(format, min) !== 'old') continue;
+    let full = text;
+    try {
+      full = JSON.stringify(parseSaveText(text, false, storage));
+    } catch {
+      full = text;
+    }
+    try {
+      storage.setItem(archiveKey(slot, format), full);
+    } catch {
+      try {
+        storage.setItem(archiveKey(slot, format), text);
+      } catch {
+        continue;
+      }
+    }
+    try {
+      storage.removeItem?.(slotKey(slot));
+      const meta = readMeta(storage);
+      delete meta.played[String(slot)];
+      storage.setItem(SLOTS_META_KEY, JSON.stringify(meta));
+    } catch {
+      continue;
+    }
+    moved.push(slot);
+  }
+  if (moved.length > 0) {
+    try {
+      storage.setItem(SAVE_RESET_NOTICE_KEY, JSON.stringify({ slots: moved, at: nowMs }));
+    } catch {
+      // 안내만 못 남긴다
+    }
+    collectSlotChunks(storage);
+  }
+  return moved;
+}
+
+/** 세이브 초기화 안내를 띄울까: 안내 키가 있고 아직 새 세이브가 없을 때 */
+export function saveResetNoticeActive(storage: StorageLike, summaries: readonly SlotSummary[]): boolean {
+  try {
+    if (storage.getItem(SAVE_RESET_NOTICE_KEY) === null) return false;
+  } catch {
+    return false;
+  }
+  if (summaries.some((x) => x.state === 'ok')) {
+    try {
+      storage.removeItem?.(SAVE_RESET_NOTICE_KEY);
+    } catch {
+      // 다음에 다시 지운다
+    }
+    return false;
+  }
+  return true;
 }
 
 /** "10/18 23:10" 꼴 (기기 시간대) */

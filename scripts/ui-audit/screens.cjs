@@ -449,7 +449,7 @@ const SCREENS = [
     },
   },
   {
-    // C.201 (GDD 127장 2·3): 장터 — 떠돌이 상인 없음 / 있음(테스트 불러오기로 부름) · 떠돌이 상인 창 · 뒤로 = 방
+    // C.201 (GDD 127장 2·3): 장터 — 우라하라 없음 / 있음(테스트 불러오기로 부름) · 우라하라 창 · 뒤로 = 방
     // C.204 (GDD 130장): 월드맵 켬 = 시장(밖으로 → 지도 → 시장), 배지는 지도 위 시장에
     name: '장터',
     async run(h, n) {
@@ -463,13 +463,13 @@ const SCREENS = [
       await h.closeLayers();
       await h.back();
       await h.click('.bha-prop--outside', { ms: 700 });
-      if (!(await h.has('.bha-worldmap [data-place="market"].has-visitor'))) throw new Error('떠돌이 상인이 왔는데 지도 위 시장에 배지가 없음');
+      if (!(await h.has('.bha-worldmap [data-place="market"].has-visitor'))) throw new Error('우라하라가 왔는데 지도 위 시장에 배지가 없음');
       await h.explore(`${n}/월드맵 상인 배지`, { tabs: false });
       await h.click('.bha-worldmap [data-place="market"]', { ms: 2000 });
-      if (!(await h.has('.bha-market [data-spot="wanderer"]'))) throw new Error('떠돌이 상인이 왔는데 장터에 없음');
+      if (!(await h.has('.bha-market [data-spot="wanderer"]'))) throw new Error('우라하라가 왔는데 장터에 없음');
       await h.explore(`${n}/상인 있음`, { tabs: false });
       await h.click('.bha-market [data-spot="wanderer"]', { ms: 700 });
-      await h.explore(`${n}/떠돌이 상인`, { pick: '.bha-lcd .bha-itemcard' });
+      await h.explore(`${n}/우라하라`, { pick: '.bha-lcd .bha-itemcard' });
       await h.back();
       await marketBackToRoom(h);
     },

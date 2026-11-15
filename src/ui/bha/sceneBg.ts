@@ -39,3 +39,8 @@ export function sceneBgEl(bg: SceneBg, moving: boolean): HTMLElement {
 export function towerSceneBg(faction: Parameters<typeof towerBgId>[0], floor: { star: number; kind: string }): SceneBg | null {
   return sceneBg(towerBgId(faction, floor), ART_BASE);
 }
+
+/** 특수던전 그림·전투 배경 (GDD 6-16 v6.017, C.427): 종족 설정 specialDungeon 의 장면 키 (없으면 null) */
+export function specialSceneBg(sceneId: string | undefined): SceneBg | null {
+  return sceneBg(sceneId, ART_BASE);
+}

@@ -10,10 +10,11 @@
 // enemy-<적id>.png, char-<종족>-<단계번호>.png, char-<종족>.png)으로 넣으면 이 목록을 고치지 않아도 인식한다(`files.ts`).
 // 이 목록의 src·frames 는 파일 규칙에 맞지 않는 이름을 쓰고 싶을 때의 직접 지정이고, scale·offsetY 는 어느 쪽이든 쓴다.
 // 우선순위: 캐릭터 = 단계별 파일 > 종족 공통 파일 > 이 목록의 src/frames > 자리표시 도형 / 그 밖 = 이 목록의 직접 지정 > 파일 규칙 > 자리표시.
-import { charArtKeys, findArtFile, ART_ANIMS, ART_FILES } from './files';
+import { charArtKeys, findArtFile, ART_ANIMS, ART_EXTS, ART_FILES } from './files';
 import { frameFiles, hasAnims, resolveAnims, type AnimOverrides, type AnimSet } from './anim';
-import { getSkin, skinArtKey } from '../skins';
+import { getSkin, parseTierLookId, skinArtKey, transcendentOfLook, transcendentSkinOfLook } from '../skins';
 import { FACTIONS } from '../factions';
+import { tryGetTranscendent } from '../transcendents';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
 import { rigPackOfLook } from './rig/pose';
 
@@ -23,6 +24,20 @@ export const RIG_FEMALE_SUFFIX = '-f';
  *  블록 도트 연출 몸동작 칸(남·여)을 고를 때 쓴다 */
 export function isFemaleRigLook(look: string): boolean {
   return look.endsWith(RIG_FEMALE_SUFFIX) || look.includes(`${RIG_FEMALE_SUFFIX}-`);
+}
+
+// ── 조각 모델 표시 주소 (C.431, GDD 12-4 v6.029) ──
+/** 외형 id 앞머리: 'mosaic:<초월자 id>' (artSkinOf 가 돌려준다) */
+export const MOSAIC_LOOK_PREFIX = 'mosaic:';
+const MOSAIC_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+export const MOSAIC_MARK = '#mosaic=';
+/** 몸 그림 표시 주소: 1×1 투명 그림 + 표시. 화면 관찰자가 이 주소를 단 그림을 찾아 합성 그림으로 바꾼다 */
+export function mosaicSrc(transcendentId: string): string {
+  return `${MOSAIC_BLANK}${MOSAIC_MARK}${transcendentId}`;
+}
+export function mosaicIdOf(src: string | null): string | null {
+  const i = src ? src.indexOf(MOSAIC_MARK) : -1;
+  return i >= 0 ? src!.slice(i + MOSAIC_MARK.length) : null;
 }
 
 export interface ArtEntry {
@@ -38,6 +53,9 @@ export interface ArtEntry {
   offsetY?: number;
   /** 종이인형 외형 id(GDD 96장 30, src/data/art/rig/humanoid.json 의 looks). 있으면 단계별 파일이 없는 한 종족 공통 그림 대신 종이인형이 움직인다 */
   rig?: string;
+  /** 몸 뒤·몸 앞 불꽃 같은 프레임 레이어 (C.456 무월 — docs/art-samples/mugetsu-flame '1. 간단'): `public/art/<키 폴더>/<back>-n.png`·`<front>-n.png` 를
+   *  몸 그림과 같은 칸 크기로 겹쳐, 레이어마다 자기 프레임 수만큼 ms 간격으로 반복한다(길이가 달라도 각자) */
+  layers?: { back?: string; front?: string; ms: number };
 }
 
 /** 화면이 쓰는 그림 정보 */
@@ -54,6 +72,8 @@ export interface ArtUrls {
   rig?: { look: string; partBase: string; rigId?: string };
   /** 그림 위에서 머리 윗변까지 (그림 높이 대비 0~1, 없으면 0 = 그림 윗변). 종이인형은 칸이 칼 자리까지 넓어 머리 위가 비어 있다 — 머리 위 상태 칩 높이용 (C.190) */
   headTop?: number;
+  /** 프레임 레이어 (ArtEntry.layers): 몸 뒤·몸 앞 프레임 주소(재생 순서) · 프레임당 ms */
+  layers?: { back: string[]; front: string[]; ms: number };
 }
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
@@ -114,6 +134,15 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 호로 기본 그림 = 덩치 종이인형 원래 색(보라) (GDD 206장 보충 C.345, 사용자 "호로 기본 이미지를 덩치로해야지"). 단계별 그림·종이인형·스킨 그림이 있으면 그쪽이 먼저.
   // 배율 = HOLLOW_BRUTE_SCALE (덩치 스킨·적 덩치와 같은 값 — 전투에서 적·내 덩치 키·도트 크기가 같게)
   'char.hollow': { rig: 'brute-base', scale: HOLLOW_BRUTE_SCALE },
+  // 초월자 그림 (C.430, GDD 12-4): 초월자 데이터 art 키. 128×128 후광 프레임 가운데 64 구슬 — 종족 기본 배율(호로 덩치)을 물려받지 않게 1
+  'char.transcendent-zero-sage': { scale: 1 },
+  // 아이젠 (C.450, 사용자 2026-11-13 "우라하라랑 아이젠만 넣어놔"): 128×128 칸에 57×108 도트 한 장(초안). 배율 = 사신 종이인형과 도트 크기가 같게(1.78·1.33 × 128/152)
+  // C.456 (사용자 2026-11-15 "아이젠 너무 크다. 사이즈 살짝 줄여라"): 방·전투·필드 모두 × 0.85 (provisional) — 1.5 → 1.28 · 1.12 → 0.95
+  'char.transcendent-aizen': { scale: 1.28, fieldScale: 0.95 },
+  // 무월 이치고 (C.456, docs/art-samples/mugetsu-flame — 사용자 완성 몸 56×114 + 몸 뒤 불꽃 16프레임 · 몸 앞 불꽃 40프레임, 120ms). 초월자 데이터 kit.mastery.releaseArt 가 가리킨다.
+  // 144×144 칸(불꽃 칸 118×124 를 (0,15)에, 몸 = (44,25), 발 아래 여백 5 = 아이젠 칸과 같게). 배율 = 아이젠 원래 도트 크기(사신 종이인형과 같은 도트) × 144/128.
+  // 앞뒤 순서 = README 그대로(몸 뒤 → 몸 → 몸 앞). 팔 앞뒤·동작마다 불 세기는 사용자 확인 전이라 정하지 않음 — 실시간 불꽃(live.py)은 아직 아님
+  'char.transcendent-ichigo-mugetsu': { scale: 1.6875, fieldScale: 1.26, layers: { back: 'back', front: 'front', ms: 120 } },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
@@ -157,16 +186,27 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'prop.altar': {},
   'prop.book': {},
   'prop.chest': {},
+  // 붕옥 (GDD 12-2·15-1, C.421 사용자 그림 hogyoku-1112): 방 물건·메뉴 아이콘 = prop-hogyoku.png(32×32, 반각성/공명 한 모양) ·
+  // 붕옥 창 왼쪽 큰 그림 = hogyoku-orb.png(64×64) · 개발 100% 뒤 불꽃 = hogyoku-flame.png(96×96 × 16프레임 가로 시트). 모두 픽셀 그대로·정수 배율
+  'prop.hogyoku': {},
+  'hogyoku.orb': {},
+  'hogyoku.flame': {},
+  // 붕옥 창 그림 6단계 (C.423, 사용자 stages/): 0~19% 얼음 상자 · 20~39% 금 간 상자 · 40~59% 깨진 상자 (112×116, 상자 속 붕옥 = 칸 24·25) ·
+  // 60~79% 붕옥(hogyoku.orb) · 80~99% 붕옥 + 뒤 작은 불꽃(hogyoku.flame-calm 16프레임) · 100% 붕옥 + 뒤 큰 불꽃(hogyoku.flame)
+  'hogyoku.stage1': {},
+  'hogyoku.stage2': {},
+  'hogyoku.stage3': {},
+  'hogyoku.flame-calm': {},
   'prop.shop': {},
   // 온천 (GDD 123장 4, C.198): 방 물건·온천 화면 배경 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   'prop.spa': {},
   'scene.spa': {},
-  // 장터 (GDD 127장 2, C.201): 방 물건(장터 문)·장터 배경·떠돌이 상인 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
+  // 장터 (GDD 127장 2, C.201): 방 물건(장터 문)·장터 배경·우라하라 그림 자리 — 사용자 그림 대기(비어 있으면 아이콘·임시 배경)
   // 월드맵 '시장' 장소 그림 = prop-market.png (사용자 2026-11-03 "시장 … 아이콘으로 넣고", 옛 160장 2 수레 그림 지정 해제).
-  // 수레 그림은 떠돌이 상인(prop-wanderer.webp)으로 옮김 — 시장 안 소모품 상점 칸(prop.shop)은 그림 대기(아이콘)
+  // 수레 그림은 우라하라(prop-wanderer.webp)으로 옮김 — 시장 안 소모품 상점 칸(prop.shop)은 그림 대기(아이콘)
   'prop.market': {},
   'scene.market': {},
-  'prop.wanderer': {},
+  'prop.wanderer': { scale: 1.7 }, // 우라하라 도트(52×112 ×3, prop-wanderer.png — C.450). 사람 키라 가게 그림보다 크게
   // 상점 4곳 (GDD 150장 2, C.227): 소모품 상점 = prop.shop, 나머지 3곳 — 사용자 그림 대기(비어 있으면 아이콘)
   'prop.gearShop': { scale: 1.2 }, // 장비 상점 그림 ×1.2 (GDD 160장 3)
   'prop.skinShop': {},
@@ -225,6 +265,28 @@ export function artUrls(key: string, base = '/', manifest: Readonly<Record<strin
 }
 
 const joinBase = (base: string, p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+
+/** 프레임 레이어 한 줄의 파일들 (`<키 폴더>/<이름>-n.확장자`, 1번부터 끊기는 곳 앞까지 — anim.frameFiles 와 같은 규칙) */
+export function layerFiles(key: string, name: string, files: readonly string[] = ART_FILES): string[] {
+  const dir = key.replace(/\./g, '-');
+  const out: string[] = [];
+  for (let n = 1; ; n++) {
+    const hit = ART_EXTS.map((ext) => `${dir}/${name}-${n}.${ext}`).find((f) => files.includes(f));
+    if (!hit) break;
+    out.push(hit);
+  }
+  return out;
+}
+
+/** 레이어가 있는 그림 (C.456 무월): 몸 한 장(artUrls) + 몸 뒤·몸 앞 프레임. 레이어 정의가 없으면 그냥 artUrls. 몸 그림 파일이 없으면 null */
+export function layeredArt(key: string, base = '/', manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): ArtUrls | null {
+  const a = artUrls(key, base, manifest, files);
+  if (!a.src) return null;
+  const l = manifest[key]?.layers;
+  if (!l) return a;
+  const list = (name?: string) => (name ? layerFiles(key, name, files).map((f) => joinBase(base, `art/${f}`)) : []);
+  return { ...a, layers: { back: list(l.back), front: list(l.front), ms: l.ms } };
+}
 const withAnims = (a: ArtUrls, anims: AnimSet): ArtUrls => (hasAnims(anims) ? { ...a, anims } : a);
 
 /** 적 그림: `enemy-<적id>` 한 장짜리 파일이나 `idle` 애니가 있을 때만 값을 돌려준다(없으면 null = 기존 실루엣). 목록에 scale·offsetY 만 적어도 된다 */
@@ -269,6 +331,31 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     }
     return null;
   };
+  // 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델 = 그 단계 기본 그림(스킨 없이, :m/:f 면 그 성별 고정) · 초월자 외형 = 초월자 데이터의 그림 키/조각 모델
+  const tierLook = parseTierLookId(skinId);
+  if (tierLook) return charArt(factionId, tierLook.tier - 1, fallbackKey, base, manifest, files, null, overrides, tierLook.gender ?? gender);
+  const trLook = transcendentOfLook(skinId);
+  if (trLook) return charArt(factionId, tierIndex, fallbackKey, base, manifest, files, trLook.art ?? `${MOSAIC_LOOK_PREFIX}${trLook.id}`, overrides, gender);
+  // 초월자 인간형 스킨 (GDD 12-4 v6.052, C.443): 그림 키의 파일이 있으면 그 그림, 없으면 자리 표시 = 기존 인간형 종이인형(데이터 placeholder 키의 rig) — '그림 대기'
+  const trSkin = transcendentSkinOfLook(skinId);
+  if (trSkin) {
+    const own = tryKeys([trSkin.skin.art]);
+    if (own) return own;
+    const ph = manifest[trSkin.skin.placeholder];
+    if (ph?.rig && rigPackOfLook(ph.rig)) return rigArt(ph.rig, ph, base);
+    return artUrls(trSkin.skin.placeholder, base, manifest, files);
+  }
+  // 조각 모델 (C.431, GDD 12-4 v6.029): 'mosaic:<초월자 id>' = 표시 주소 — 화면 관찰자(ui/bha/glitchMosaic)가 합성 그림으로 바꿔 끼운다
+  // 표시 배율 = 모델 데이터 scale (GDD 12-4 v6.037 '지금의 2/3') — 세로가 긴 그림은 칸 안에서 contain 이라 높이 기준, 그 위에 배율
+  if (skinId && skinId.startsWith(MOSAIC_LOOK_PREFIX)) {
+    const id = skinId.slice(MOSAIC_LOOK_PREFIX.length);
+    return { src: mosaicSrc(id), frames: null, scale: tryGetTranscendent(id)?.model?.scale ?? 1, offsetY: 0 };
+  }
+  // 그림 키를 직접 받은 외형 (C.430 — 초월자 데이터 art 'char.<이름>'): 그 키의 그림(프레임 애니 포함)이 있으면 그것. 없으면 아래 진화체 그림(자리 표시)
+  if (skinId && skinId.startsWith('char.') && !getSkin(skinId)) {
+    const own = tryKeys([skinId]);
+    if (own) return own;
+  }
   if (skinId && getSkin(skinId)) {
     // 종이인형 스킨 (GDD 206장 3): 목록의 skin.<id> 에 rig 가 있으면 그 외형이 움직인다(적 덩치와 같은 길). 여성 외형(-f)이 있으면 그쪽
     const skinRig = manifest[skinArtKey(skinId)]?.rig;
@@ -298,4 +385,19 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
   const common = !fallbackKey ? manifest[keys[1]!]?.rig : undefined;
   if (common && rigPackOfLook(common)) return rigOf(common, keys[1]!);
   return artUrls(fallbackKey, base, manifest, files);
+}
+
+/** 스킨에 자기 그림이 있나 (C.434, GDD 17절 v6.036): 목록의 종이인형(rig) 또는 `skin-<id>` 한 장·폴더(여성 `-f` 포함).
+ *  없으면 charArt 가 지금 진화체 그림으로 대신 보여서 목록에서는 [그림 대기]로 뺀다(예 아란칼 진화체별 그림 skin-arr* 36칸) */
+/** 초월자 인간형 스킨의 그림 파일이 왔는가 (없으면 자리 표시 + '그림 대기', GDD 12-4 v6.052) */
+export function transcendentSkinHasArt(lookId: string, files: readonly string[] = ART_FILES): boolean {
+  const k = transcendentSkinOfLook(lookId)?.skin.art;
+  return !!k && (findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
+}
+
+export function skinHasArt(skinId: string, manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): boolean {
+  const key = skinArtKey(skinId);
+  const rig = manifest[key]?.rig;
+  if (rig && rigPackOfLook(rig)) return true;
+  return [key, key + FEMALE_KEY_SUFFIX].some((k) => findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
 }

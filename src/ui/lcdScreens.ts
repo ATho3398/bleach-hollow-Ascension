@@ -7,8 +7,9 @@ import { critChanceBonus } from '../engine/absorb/build';
 import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
-import { artSkinOf, canSynthesize, equipSkin, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
-import { homeHp, homeMaxHp } from '../home';
+import { kitLevelMultiplier, kitLevelOf, kitUpgradeCost, upgradableBlocks } from '../engine/transcendKit';
+import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, noEvolutionLabel, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { homeHp, homeMaxHp, statusStatDisplay, statusStatSteps } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
 import { changedKeys } from './bha/gaugeBlink';
@@ -32,20 +33,25 @@ import { MATERIAL_DESC, MATERIALS_EMPTY, ownedMaterials } from '../data/material
 import { unlockHintText } from '../engine/unlocks';
 import { consumableGroupOf, equipTrait, TILES_LOCKED_TEXT, TRAIT_LOCKED_IN_RUN, unequipTrait } from '../shop';
 import { bonusLine } from './hogyokuView';
-import { skinsFor, skinLabel } from '../data/skins';
+import { characterSkinEntries } from '../data/skins/lookOptions';
+import { characterSkinTab } from './bha/skinPick';
+import { isTestMode } from './testMode';
+import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
 import { traitsTab, type TraitsTabState } from './buildPanel';
-import { abilityParagraph, evolutionAbilityLines, evolutionColumns } from './evolutionPanel';
+import { abilityParagraph, evolutionAbilityLines, evolutionColumns, transcendentTraitBlock } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
-import { JADE_NAME, SOUL_CRYSTAL_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
+import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { abilityEffectsOf, abilityIdLine, currentStats, equippedAbilitiesOf, elementDamageOf, evCaps, evCounted, evTotal, formAbilitiesOf, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { kitActive, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
-import { STAT_IDS } from '../data/schema';
+import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
+import { getFaction } from '../data/factions';
+import { STAT_IDS, type StatId } from '../data/schema';
 import { STAT_USE, statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
@@ -64,12 +70,12 @@ import type { VariantMods } from '../engine/expedition';
  *  블록 치명은 블록형 몸(물공 블록이 없는 몸)만 블록 보정(blockPlayCrit)을 더한다 — 전투와 같은 규칙 */
 export function critChances(build: SaveData['build'], evo?: SaveData['evolution'], gearCrit = 0): { basic: number; block: number; basicMax: number; blockMax: number; bonus: number; blockPlay: number } {
   const CX = BALANCE.provisional.combat;
-  const form = evo?.formId ? tryGetForm(evo.formId) : undefined;
-  const fa = evo ? (evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability)) : null;
+  // 전투와 같은 특성 묶음 (C.436): 전투 기반 진화체 + 초월 특성
+  const fa = evo ? combatAbilitiesOf(evo) : null;
   const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
   const bonus = critChanceBonus(build) + fromForm + gearCrit;
   const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
-  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit; // 탈착 특성 '집중' (GDD 150장 4): 블록 치명만, 상한도 같이
+  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit + (evo ? transcendentTraitEffects(evo).totals.blockCrit : 0); // 탈착 특성 '집중' (GDD 150장 4)·초월 특성: 블록 치명만, 상한도 같이
   const basicMax = CX.critChanceMax + fromForm;
   const blockMax = CX.blockCritChanceMax + fromForm + detach;
   return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay + detach), basicMax, blockMax, bonus, blockPlay };
@@ -115,18 +121,22 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
         value: n.bond, max: BALANCE.provisional.nest.bond.max, stage: BOND_STAGE_NAMES[bondStage(n.bond)],
       },
     }));
-    /** 돌봄 상태 한 줄: 아이콘 · 이름(· 남은 시간) · ⓘ(풀리는 법·효과) */
+    /** 돌봄 상태 블록 (GDD 3-2, v6.004): 모든 블록 같은 폭 — [아이콘 | 윗줄 '이름 · 푸는 법' / 아랫줄 '남은 시간'(있는 것만) | ⓘ 오른쪽 끝] */
     const fix = careStatusShort(n, { feedName: faction.nestActionsShort?.feed ?? faction.nestActions.feed });
-    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string) => {
-      const row = h('p', `bha-small bha-nest__state bha-nest__state--${kind}`);
-      // 푸는 법 짧게 (GDD 193장 15) — 이름 뒤 흐린 글. 자세한 것은 ⓘ
-      row.append(icon(iconId), ' ', h('b', '', title), ' ', h('span', 'bha-faint', `· ${short}`), infoTip(title.split(' · ')[0]!, () => statusInfo(info, faction)));
+    const stateRow = (kind: 'danger' | 'warn', iconId: string, title: string, info: StatusInfoKind, short: string, left?: string) => {
+      const row = h('div', `bha-small bha-nest__state bha-nest__state--${kind}`);
+      const text = h('span', 'bha-nest__statetext');
+      const top = h('span', 'bha-nest__stateline');
+      top.append(h('b', '', title), ' ', h('span', 'bha-faint', `· ${short}`));
+      text.append(top);
+      if (left) text.append(h('span', 'bha-nest__stateleft', left));
+      row.append(icon(iconId), text, infoTip(title, () => statusInfo(info, faction)));
       return row;
     };
     // C.185 (GDD 111장 4): 설명은 상태 ⓘ 창과 같은 문구 (손해 → 풀리는 법)
     const states = [
       ...(n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.dead, 'dead', fix.dead)] : []),
-      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', `${CARE_STATUS_NAMES.collapsed} · 남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`, 'collapsed', fix.collapsed)] : []),
+      ...(n.collapsed && !n.dead ? [stateRow('danger', 'i-broken', CARE_STATUS_NAMES.collapsed, 'collapsed', fix.collapsed, `남은 시간 ${dyingClock(dyingLeftMs(n, Date.now()) ?? 0)}`)] : []),
       ...(n.weakened ? [stateRow('warn', 'i-hunger', CARE_STATUS_NAMES.weak, 'weak', fix.weak)] : []),
       ...(n.tired ? [stateRow('warn', 'i-cond', CARE_STATUS_NAMES.tired, 'tired', fix.tired)] : []),
     ];
@@ -140,12 +150,13 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const stats = panel({ title: '능력치', aside: elementsMark(playerElementsOf(evo), faction.id) });
   stats.setAttribute('aria-label', '능력치');
   // 막대 기준 = 마지막 단계 기준 능력치 (고정, GDD 32-1): 내 단계로 나누지 않아 진화·노력치가 막대로 보인다
-  const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry);
+  const shown = statusStatDisplay(save); // 화면 값 (GDD 245장 4): 체력·속도·방어·정신력은 전투에서 쓰는 모양으로
+  const statBox = statsBlock(faction.id, currentStats(evo, faction.id, statBonusOf(save).total), evo.ev, refStatOf(BALANCE.provisional.stats.tierTotals.length - 1), evo.carry, { hp: shown.hp, aspd: shown.aspd, bspd: shown.bspd, def: shown.def, spr: shown.spr });
   // 능력치 칸 = 이름·값만 (GDD 189장 6): 칸마다 있던 ⓘ 를 빼고 칸 전체가 설명 단추 — 누르면(기기 버튼으로 골라도) 예전 ⓘ 와 같은 창.
   // 단추는 칸을 덮는 투명 ⓘ(cellTip) 라 글자 폭을 먹지 않는다. 전체 설명은 제목 옆 ⓘ 그대로
   [...statBox.children].forEach((row, i) => {
     const id = STAT_IDS[i];
-    if (id) cellTip(row as HTMLElement, statName(id, faction.id), () => STAT_USE[id]);
+    if (id) cellTip(row as HTMLElement, statName(id, faction.id), () => statStepLines(save, id));
   });
   stats.append(statBox);
   // 치명타 (C.63, GDD 28장 5번 · C.131 77장 ②③): 속도 밑에 다른 능력치처럼 한 줄에 하나. 확률 줄에 마우스를 올리면(폰은 터치) 최대치
@@ -153,7 +164,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const gc = gearCarry(save.shared.gear);
   // 치명 두 줄 (GDD 126-1 확정 ②, C.220): 평타 치명 / 블록 치명. 설명은 능력치 ⓘ 창 (GDD 160장 7·165장 2 — 최대만, '기본 n%' 없음)
   const cc = critChances(save.build, save.evolution, gc?.crit ?? 0);
-  const critRows = statRow('평타 치명', pctText(cc.basic));
+  const critRows = statRow('일반 공격 치명', pctText(cc.basic));
   critRows.dataset.crit = 'basic';
   const blockCritRow = statRow('블록 치명', pctText(cc.block));
   blockCritRow.dataset.crit = 'block';
@@ -168,25 +179,26 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   // 노력치 합계 줄은 능력치 6칸 바로 아래 (GDD 189장: 첫 화면에 보이게). 치명·속성 피해 칸은 그 아래 따로 두 열
   const extraBox = h('div', 'bha-stack bha-stats bha-care__stats2');
   extraBox.append(...rows);
-  // 붕옥 해방·초월체 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
+  // 붕옥 해방·초월자 보유 보너스 (GDD 22-3): 능력치에 이미 곱해져 있다
   const bonus = bonusLine(save);
   if (bonus) {
     const line = h('p', 'bha-small');
     line.dataset.bonus = String(statBonusOf(save).total);
-    line.append('붕옥·초월체 보너스: ', h('b', '', bonus));
+    line.append('붕옥·초월자 보너스: ', h('b', '', bonus));
     stats.append(line);
   }
   // 노력치 합계 / 이 단계 상한 (GDD 182장 3): '노력치가 가득 찼다'가 왜인지 보이게
-  const cap = evCaps(evo.tierIndex);
+  const cap = evCaps(capTierOf(evo));
   const evLineP = h('p', 'bha-faint');
   evLineP.dataset.evTotal = String(evTotal(evo.ev));
   // 튜토리얼 보상(상한 밖, GDD 217장 2)은 상한 숫자에 세지 않고 따로 적는다
   const counted = evTotal(evCounted(evo));
   const free = evo.evFree ? evTotal(evo.evFree) : 0;
-  evLineP.append('노력치 ', evText(`${Math.round(counted * 100) / 100} / ${cap.total}`), ` (이 단계 상한 · 능력치 하나 ${cap.perStat})`);
-  if (free > 0) evLineP.append(` · 튜토리얼 +${Math.round(free * 100) / 100} 상한 밖`);
+  // GDD 243장 9-6: 한 번에 읽히게 — '모은 양 / 이 단계 최대'와 따로 받은 튜토리얼 몫을 나눠 쓴다
+  evLineP.append('노력치 ', evText(`${Math.round(counted * 100) / 100} / ${cap.total}`), ` — 이 단계에서 모을 수 있는 최대 (능력치 하나는 ${cap.perStat}까지)`);
+  if (free > 0) evLineP.append(h('br'), `튜토리얼 보상 +${Math.round(free * 100) / 100} — 최대치에 세지 않는다`);
   // '초록 +n' 뜻 = 표 아래 작은 줄 (GDD 189장 5: 제목 줄에서 내림)
-  evLineP.append(h('br'), h('span', 'bha-care__evhint', `초록 +n = 노력치(와 ${faction.rebirth.name} 계승)`));
+  evLineP.append(h('br'), h('span', 'bha-care__evhint', `능력치 옆 초록 +숫자 = 노력치로 오른 몫(${faction.rebirth.name} 계승 포함)`));
   statBox.after(evLineP);
   evLineP.after(extraBox);
   const mark = rebirthMark(save.rebirth.count);
@@ -200,11 +212,17 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
+  // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 기반 특성 칸 아래 따로 — 기반을 바꿔도 그대로
+  const tt = transcendentTraitBlock(evo);
+  if (tt) stats.append(tt);
   // 진화 정보 (옛 제단 화면, C.137 85장 7): 능력치 아래로 내려 보인다
-  const evoPanel = panel({ title: '진화 정보' });
-  evoPanel.setAttribute('aria-label', '진화 정보');
+  // 진화 없는 트랙(초월자)은 진화 단계·진화체 대신 초월자 이름·'초월자' (사용자 2026-11-15, GDD 12-4)
+  const own = noEvolutionLabel(save);
+  const evoTitle = own ? `${own.kind} 정보` : '진화 정보';
+  const evoPanel = panel({ title: evoTitle });
+  evoPanel.setAttribute('aria-label', evoTitle);
   evoPanel.dataset.evolution = '';
-  const cols = evolutionColumns(faction, evo);
+  const cols = evolutionColumns(faction, evo, own);
   const evoMark = rebirthMark(save.rebirth.count);
   if (evoMark) cols.left[0]?.querySelector('.bha-evo__formname')?.append(' ', evoMark);
   // 이름 줄 전체 폭 (GDD 189장 16): 임시 칩은 이름 줄에서 빼 아래 '단계 · 속성' 줄 앞으로
@@ -212,7 +230,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const formTag = formEl?.querySelector('.bha-evo__formname > .bha-tag');
   if (formTag) formEl?.querySelector('.bha-evo__formname + .bha-dim')?.prepend(formTag, ' ');
   evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
-  const rebirthOk = canRebirth(evo);
+  const rebirthOk = canRebirth(evo) && trackRulesOf(save).rebirth; // 환생 없는 트랙 (초월자, GDD 12-4 v6.028)
   if (rebirthOk) evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`));
   // 아래 고정 버튼 줄 (183장 S15): [진화체 도감][도움말][환생] — 환생을 못 할 때도 흐리게 자리 유지 (PROMPT 5절 1)
   const rb = button({ label: faction.rebirth.name, icon: 'i-evolve', variant: 'danger', disabled: !rebirthOk, onClick: hd.onRebirth });
@@ -223,20 +241,110 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const gear = gearShortcut(faction, save, hd.onGear);
   // 오른쪽 = 스크롤 칸(능력치 → 진화 정보) + 아래 고정 버튼 줄. 개발 정보·버전 문단은 뺐다 (183장 S15)
   const rightScroll = h('div', 'bha-care__scroll');
+  const basis = basisPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  if (basis) rightScroll.append(basis);
+  const kitP = kitPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  if (kitP) rightScroll.append(kitP);
   rightScroll.append(stats, evoPanel);
   // 루트에 아직 bha-v2 를 달지 않는다. 옛 dl.bha-info 는 .bha-infotable 로 바뀌어(C.296) 이름 겹침은 없지만, v2 .bha-info(ⓘ 36 칸·여백 −8)가 능력치 줄 ⓘ 자리를 바꾸므로 달 때는 화면 쪽에서 ⓘ 자리를 같이 본다
   // [진화체 도감][도움말][환생] = 두 열 아래 전체 폭 띠 (GDD 189장 7: 오른쪽 열 아래에 붙어 표를 덮고 판 밖으로 튀어나오던 것). 두 열은 그 위에서 각자 스크롤
-  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear, skinPanel(faction, save, persist)], [rightScroll]);
+  lcdPage(dev.view, { cls: 'bha-care-page', foot: [evoBtns] }, lcdHead({ title, sub, logo: logoMark(faction, 'bha-logo--md') ?? undefined }), [weakSlot, status, gear], [rightScroll]);
+}
+
+/** 전투 기반 고르기 (GDD 12-4 v6.037 — 초월자 트랙만): [초월자][키웠던 호로][키웠던 사신] 세그먼트 + 지금 기반의 공격 분류·블록·특성 수.
+ *  능력치·외형은 그대로, 블록·특성·공격 분류만 바뀐다. 모험 중엔 잠김(추천안). '초월자' = 초월자 전용 스킬 [미정] 동안 합친 빌드(임시) */
+function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
+  const choices = basisChoices(save);
+  if (choices.length === 0) return null;
+  const p = panel({ title: '전투 기반', aside: provisionalTag('임시') });
+  p.setAttribute('aria-label', '전투 기반');
+  p.dataset.basis = choices.find((c) => c.current)?.key ?? '';
+  const locked = save.activeExpedition != null;
+  const cur0 = choices.find((c) => c.current)?.key ?? '';
+  const pick = seg(choices.map((c) => ({ id: c.key, label: c.label })), cur0, (id) => {
+    if (id !== cur0 && switchCombatBasis(save, id).ok) rerender();
+  }, { small: true });
+  pick.setAttribute('aria-label', '전투 기반 고르기');
+  for (const b of pick.querySelectorAll<HTMLButtonElement>('.bha-seg__item')) {
+    b.dataset.sc = `basis-${b.dataset.id}`;
+    b.disabled = locked && b.dataset.id !== cur0;
+  }
+  const cur = save.evolution.basis?.builds[save.evolution.basis.current];
+  const form = cur?.formId ? tryGetForm(cur.formId) : undefined;
+  const cat = form?.label.category ?? 'mixed';
+  const traits = save.build.slots.filter((x) => x !== null).length;
+  const abil = save.evolution.abilities ? Object.keys(save.evolution.abilities.owned).length : 0;
+  const info = h('p', 'bha-small');
+  info.append('공격 분류 ', h('b', '', ATTACK_CATEGORY_WORDS[cat]), ` · 장착 블록 ${traits} · 보유 블록 ${save.build.owned.length} · 특성 ${abil}`);
+  p.append(pick, info, h('p', 'bha-faint', locked ? '모험 중에는 바꿀 수 없다.' : '바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다.'));
+  return p;
+}
+
+/** 전용 블록 강화 (GDD 12-4 v6.048, C.441 — 초월자 트랙 + 전용 블록이 있는 초월자만): 초월 조각(슬롯 공유)으로 블록마다 1~10강.
+ *  강마다 그 블록 피해·회복 +8%, n강 비용 = 10×n 조각 (provisional). 모험 중엔 잠김 */
+function kitPanel(save: SaveData, rerender: () => void): HTMLElement | null {
+  const k = save.evolution.kit;
+  if (!save.transcendentId || !k) return null;
+  const blocks = upgradableBlocks(save.transcendentId);
+  if (blocks.length === 0) return null;
+  const G = BALANCE.provisional.transcendentGrowth;
+  const p = panel({ title: '전용 블록 강화', aside: provisionalTag('임시') });
+  p.setAttribute('aria-label', '전용 블록 강화');
+  p.dataset.kitPanel = '';
+  const locked = save.activeExpedition != null;
+  const have = save.shared.transcendShards;
+  const head = h('p', 'bha-small');
+  head.append('초월 조각 ', h('b', '', String(have)), ` · 강마다 그 블록 피해 +${Math.round(G.perLevel * 100)}% · 최대 ${G.maxLevel}강`);
+  p.append(head);
+  const list = h('div', 'bha-stack bha-stack--tight');
+  for (const b of blocks) {
+    const lv = kitLevelOf(k, b.id);
+    const cost = kitUpgradeCost(k, b.id);
+    const row = h('div', 'bha-row');
+    row.dataset.kitBlock = b.id;
+    const name = h('span', 'bha-small');
+    name.append(h('b', '', b.name), ` ${lv}강 (+${Math.round((kitLevelMultiplier(lv) - 1) * 100)}%)`);
+    const btn = button({
+      label: cost === null ? '최대' : `강화 · 조각 ${cost}`, size: 'small', icon: 'i-evolve',
+      disabled: locked || cost === null || have < cost,
+      onClick: () => { if (upgradeTranscendentBlock(save, b.id).ok) rerender(); },
+    });
+    btn.dataset.sc = `kit-up-${b.id}`;
+    row.append(name, btn);
+    list.append(row);
+  }
+  p.append(list, h('p', 'bha-faint', locked ? '모험 중에는 강화할 수 없다.' : kitActive(save.evolution) ? '초월 조각은 초월자로 이긴 전투마다 나온다 (일반 1 · 강적 3 · 보스 8).' : '전용 블록은 전투 기반이 초월자일 때만 나온다.'));
+  return p;
 }
 
 /** 칸 전체 설명 단추 (GDD 189장 6): 칸을 덮는 투명 ⓘ — 눌렀을 때·기기로 골랐을 때 예전 ⓘ 와 같은 창. 칸 글자는 그대로 읽힌다 */
+/** 능력치 칸 상세 보기 (GDD v6.081 8절, C.457 마스터 추천안·provisional): 하는 일 한 줄 + 지금 실제 값 + '노력치 10 더 넣으면 → 실제 값' + 구간 예시(+20·+50·+100).
+ *  속도 곡선은 갈수록 덜 오르므로 지금 값 기준으로 그때그때 셈한다(statusStatSteps = 원정 전투와 같은 식) */
+export function statStepLines(save: SaveData, id: StatId): string[] {
+  const steps = statusStatSteps(save, id, [0, 10, 20, 50, 100]);
+  const real = (t: { shown: { text: string } }) => (id === 'hp' ? Number(t.shown.text).toLocaleString('ko-KR') : t.shown.text);
+  const diff = (a: { shown: { value: number } }, b: { shown: { value: number } }): string => {
+    const d = b.shown.value - a.shown.value;
+    if (id === 'aspd' || id === 'bspd') return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}초`;
+    if (id === 'def' || id === 'spr') return `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}`;
+    return `+${Math.round(d)}`;
+  };
+  const [now, ten, ...more] = steps;
+  return [
+    STAT_USE[id],
+    `지금 능력치 ${Math.round(now!.stat)} → ${real(now!)}`,
+    `노력치 10 더 넣으면 → ${real(ten!)} (${diff(now!, ten!)})`,
+    `구간 예시: ${more.map((m) => `+${m.delta} → ${real(m)}`).join(' · ')}`,
+  ];
+}
+
 function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
   const tip = infoTip(label, body);
   tip.classList.add('bha-care__celltip');
   tip.setAttribute('aria-label', `${row.getAttribute('aria-label') ?? (row.textContent ?? '').replace(/\s+/g, ' ').trim()} — 설명`);
   row.classList.add('has-celltip');
   // 값 + 노력치(+n·계승)를 한 덩어리로: 칸이 좁으면(폰·글자 확대) 이름 아래 줄 오른쪽으로 통째 내려간다 — 자르거나 칸 밖으로 안 나간다
-  const parts = [...row.querySelectorAll(':scope > .bha-statrow__value, :scope > .bha-ev')];
+  const parts = [...row.querySelectorAll(':scope > .bha-statrow__value, :scope > .bha-ev, :scope > .bha-statrow__real')];
   if (parts.length) {
     const val = h('span', 'bha-care__val');
     parts[0]!.before(val);
@@ -245,50 +353,6 @@ function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
   row.append(tip);
 }
 
-/** 스킨 고르기 (GDD 25-1·26-5·25-9): [기본(진화체)]와 이 종족이 입을 수 있고 **보유한**(상점 영옥 탭에서 산) 스킨. 고르면 바로 입고 저장하며 목록은 그 자리에서 표시만 바뀐다.
- *  종족이 다른 스킨·안 산 스킨은 목록에 안 보인다. 보유한 스킨이 없으면 상점 안내만 */
-function skinPanel(faction: FactionConfig, save: SaveData, persist: () => void): HTMLElement {
-  const skins = skinsFor(faction.id).filter((sk) => save.shared.cosmetics.includes(skinItemId(sk.id)));
-  const p = panel({ title: '스킨' });
-  p.setAttribute('aria-label', '스킨');
-  p.dataset.skins = String(skins.length);
-  if (skins.length === 0) {
-    p.append(h('p', 'bha-faint', skinsFor(faction.id).length > 0 ? `가진 스킨이 없다. ${marketOf(faction).name}의 ${marketOf(faction).props.skinShop}에서 산다.` : '이 종족이 입을 수 있는 스킨은 아직 없다.'));
-    return p;
-  }
-  const list = h('div', 'bha-stack bha-stack--tight');
-  const rows: { id: string | null; btn: HTMLButtonElement }[] = [];
-  const mark = () => {
-    for (const r of rows) {
-      const on = (save.skin ?? null) === r.id;
-      r.btn.classList.toggle('is-on', on);
-      r.btn.setAttribute('aria-pressed', String(on));
-    }
-  };
-  const add = (id: string | null, label: string, thumb: string | null) => {
-    const btn = button({ label, block: true, onClick: () => {
-      if (!equipSkin(save, id)) return;
-      persist();
-      mark();
-    } });
-    if (thumb) {
-      const img = h('img', 'bha-skinthumb') as HTMLImageElement;
-      img.src = thumb;
-      img.alt = '';
-      img.draggable = false;
-      btn.prepend(img);
-    }
-    btn.dataset.skin = id ?? '';
-    rows.push({ id, btn });
-    list.append(btn);
-  };
-  const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-  add(null, '기본(진화체)', charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, save.evolution.look).src);
-  for (const sk of skins) add(sk.id, skinLabel(sk), charArt(faction.id, artTierIndexOf(save), '', base, undefined, undefined, sk.id).src);
-  mark();
-  p.append(list, h('p', 'bha-faint', '입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 스킨에 없는 동작은 기본 움직임을 쓴다.'));
-  return p;
-}
 
 /** 가방 머리 재화 칩 (GDD 241-D 6): 골드·영옥 — 상점 머리와 같은 칩 */
 export function bagWallet(save: Pick<SaveData, 'shared'>): HTMLElement {
@@ -388,10 +452,15 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       return;
     }
     if (chestUi.tab === 'slots') {
-      const [slotsPanel, ownedPanel] = traitsTab(faction, save.build, chestUi.traits, () => {
+      // 초월자 전투 기반 (GDD 12-4 v6.037): 블록 이름·분류는 고른 기반의 종족 설정으로
+      const blockFaction = getFaction(combatFactionIdOf(save));
+      const [slotsPanel, ownedPanel] = traitsTab(blockFaction, save.build, chestUi.traits, () => {
         persist();
         fill();
       }, save.evolution.tierIndex);
+      // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 빌드 탭에도 — 기반과 상관없이 늘 붙는다
+      const tt = transcendentTraitBlock(save.evolution);
+      if (tt) slotsPanel!.append(tt);
       page.left.replaceChildren(slotsPanel!);
       page.right.replaceChildren(ownedPanel!);
       return;
@@ -594,16 +663,26 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => (e.sortie ? openSortie(save, e.id, changed) : openItem(faction, save, e, artOf(e), changed)),
   }));
-  const empty = mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·떠돌이 상인에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
+  // 잠긴 칸 (GDD 243장 2): 전투 소모품 = 3단계 · 출정품 = 첫 환생 — 빈 칸이면 '상점에서 사면…' 대신 잠김 한 줄(자물쇠)만
+  const gate = mode !== 'items' ? null : itemsUi.group === 'battle' ? 'battleItem' as const : itemsUi.group === 'sortie' ? 'sortie' as const : null;
+  const lockedEmpty = gate !== null && !gateOpen(save, gate) && cards.length === 0;
+  const empty = lockedEmpty ? gateHint(faction, gate!) : mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·우라하라에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';
   const box = h('div', 'bha-stack bha-itembox');
   if (mode === 'items') box.append(tabs);
-  if (mode === 'items' && itemsUi.group === 'sortie') box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
+  if (mode === 'items' && itemsUi.group === 'sortie' && !lockedEmpty) box.append(sortieSlotsRow(faction, save, changed)); // 출정품 칸 2개 (GDD 241-D 5)
   if (mode === 'skin') {
-    // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분
+    // 스킨 하위 탭 (C.153, GDD 95장 A3): 상점과 같은 구분. 캐릭터 = 분류된 스킨 목록(C.440, GDD 5절 v6.044 — 가진 것·얻은 초월자, 테스트 모드 전부)
     const skins = all.filter((e) => e.category === 'skin' && listed(e));
-    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    const test = isTestMode();
+    const charCount = characterSkinEntries(faction.id, { test, owned: save.shared.cosmetics, dex: save.transcendentDex.map((x) => x.id) }).length;
+    box.append(categoryTabs(SKIN_SUBTABS.map(([id, label]) => ({ id, label, count: id === 'device' ? deviceEntries(save, faction).length : id === 'character' ? charCount : skins.filter((e) => skinSubOf(e.cosmeticCategory) === id).length })), itemsUi.skinSub, (id) => { itemsUi.skinSub = id as SkinSubTab; changed(); }, '스킨 종류', true));
+    if (itemsUi.skinSub === 'character') {
+      box.classList.add('bha-skinpick');
+      box.append(...characterSkinTab(faction, save, test, changed));
+      return [box, h('div')];
+    }
   }
-  box.append(itemGrid(cards, empty));
+  box.append(itemGrid(cards, empty, lockedEmpty ? 'i-lock' : undefined));
   return [box, h('div')];
 }
 
@@ -638,7 +717,9 @@ function gearShortcut(faction: FactionConfig, save: SaveData, onGear: () => void
   row.dataset.gear = '';
   const btn = button({ label: `${roomOf(faction).props.chest} · ${equipTitle(faction)}`, icon: 'i-attack', size: 'small', onClick: onGear });
   btn.dataset.act = 'gear-screen';
-  row.append(btn, h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '장착한 장비가 없다.'));
+  // 장비 해금 전에는 '장착한 장비가 없다' 줄을 숨긴다 (GDD 243장 4 보충) — 버튼은 그대로(누르면 가방 장비 탭의 잠김 안내)
+  row.append(btn);
+  if (sum || gateOpen(save, 'gear')) row.append(h('span', 'bha-small', sum ? `장비 합계: ${sum}` : '장착한 장비가 없다.'));
   return row;
 }
 
@@ -739,7 +820,7 @@ function abilitySlotsBlock(faction: FactionConfig, save: SaveData, changed: () =
     const id = l.equipped[i];
     const dId = id ? undefined : det[i - l.equipped.length];
     if (id) {
-      const line = abilityIdLine(id, l.owned[id] ?? 1, faction.id);
+      const line = abilityIdLine(id, l.owned[id] ?? 1, combatFactionIdOf(save)); // 특성 이름 = 전투 기반 종족 표기 (C.436)
       if (line) p.append(h('b', '', `${i + 1}칸 · ${line.name}`), ` — ${line.description}`, id === l.pending ? ' · 4단계 진화 때 바뀐다' : '');
       else p.append(`${i + 1}칸 · 비어 있음`);
     } else if (dId) {

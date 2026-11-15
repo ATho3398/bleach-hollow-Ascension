@@ -11,6 +11,10 @@ import { careNest, migrateSave, newSaveData, performEvolution, SAVE_FORMAT_VERSI
 import { STAT_IDS } from '../src/data/schema';
 import { TITLE_TABS } from '../src/ui/titleDexView';
 import releases from '../src/data/evolution/releases.json';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const H = 3_600_000;
@@ -70,7 +74,7 @@ describe('241-C 4 길리안 외눈형 (숨은 모습 — 종족 설정 specialLo
     expect(r.ok && r.record.specialLook).toEqual({ id: 'cyclops', bondCare: 3, bonus: false });
   });
   it('쓰다듬기 요청에 응답한 것도 교감으로 센다', () => {
-    const s = newSaveData('hollow', 1);
+    const s = newSaveData('hollow', 1); s.help.guides = {}; // 튜토리얼이 끝난 세이브 — 튜토리얼 중엔 돌봄 요청이 없다 (GDD 245장 8)
     s.nest.careRequest = { action: 'pet', until: 10_000 };
     expect(careNest(s, 'pet', 5000, () => 0.5)).toBe('answered');
     expect(s.evolution.bondCare).toBe(1);
@@ -83,14 +87,14 @@ describe('241-C 4 길리안 외눈형 (숨은 모습 — 종족 설정 specialLo
 });
 
 describe('241-C 5 새 게임 시작 지급', () => {
-  it('상태이상 치료제 각 3개 · 일반 먹이 종류마다 3개 (싸구려·특식은 그대로)', () => {
+  it('상태이상 치료제 각 3개 · 일반 먹이는 시작 지급 없음 (GDD 245장 2 — 첫 끼니 뒤 보상으로) · 싸구려는 그대로', () => {
     const s = newSaveData('hollow', 1);
-    for (const id of ['med-cure', 'med-iv', 'med-energy']) expect(s.shared.items[id], id).toBe(3);
+    for (const id of ['med-cure', 'med-iv', 'med-energy']) expect(s.shared.items[id], id).toBeUndefined(); // GDD 245장 9: 빈사 치료 뒤 지급
     for (const [id, def] of Object.entries(NX.foods)) {
-      if (def.type === 'normal') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(3);
+      if (def.type === 'normal') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
       if (def.type === 'special') expect(s.shared.food[id as keyof typeof s.shared.food], id).toBe(0);
     }
-    expect(s.shared.food.snack).toBe(BALANCE.provisional.food.start.snack);
+    expect(s.shared.food.snack).toBe(0); // 싸구려 간식도 빈사 치료 뒤 (GDD v6.005)
   });
 });
 
@@ -124,7 +128,7 @@ describe('241-C 6 쇠약 = 마지막으로 먹인 뒤 24시간', () => {
     expect(n.cureOnReturn.weak).toBe(true);
   });
   it('세이브 형식 77: 76 → 77 = 쇠약 시계는 지금부터, 터치 빈 기록, 숨은 모습 보너스 빈 목록', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(88); // C.406 쇠약 시계·터치·숨은 모습
     expect(SAVE_MIGRATIONS[76]).toBeTypeOf('function');
     const s = newSaveData('hollow', 1);
     const raw = JSON.parse(JSON.stringify(s));
@@ -135,7 +139,7 @@ describe('241-C 6 쇠약 = 마지막으로 먹인 뒤 24시간', () => {
     raw.lastSeenAt = Date.now() - 40 * H; // 40시간 비운 옛 세이브
     const before = Date.now();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(77);
+    expect(m.meta.format).toBe(88);
     expect(m.nest.lastMealAt).toBeGreaterThanOrEqual(before);
     expect(m.nest.touch).toEqual({ count: 0, at: 0 });
     expect(m.shared.specialLooks).toEqual([]);

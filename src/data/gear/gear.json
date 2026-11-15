@@ -14,6 +14,11 @@
     { "id": "acc2", "kind": "accessory" },
     { "id": "acc3", "kind": "accessory" }
   ],
+  "starter": [
+    { "kind": "weapon", "name": "낡은 무기" },
+    { "kind": "armor", "name": "낡은 방어구" },
+    { "kind": "shoes", "name": "낡은 신발" }
+  ],
   "specials": [
     { "id": "sp-family-a", "effect": "family", "family": "family-a" },
     { "id": "sp-family-b", "effect": "family", "family": "family-b" },

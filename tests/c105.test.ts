@@ -145,12 +145,13 @@ describe('C.105 흙 버티기 · 혈 속도 (GDD 49-9)', () => {
     for (let i = 0; i < PB.knockback.hits; i++) nextBasic(a);
     expect(basicPowerOf(a)).toBeCloseTo(1);
     expect(PB.knockback.hits).toBeGreaterThanOrEqual(20);
+    // C.448: 블록 모션 중 평타 멈춤(GDD 7-2)은 끈다 — 피 튀기기 버프 메커니즘만 본다 (모션 규칙 켠 값은 npm run balance)
     // 사람형 봇: 물공 켠 혈이 뗀 혈보다 빠르다 — 메커니즘 시험이라 옛 전투 길이(hpScale·playerHpScale 1)·시드 6판 평균으로 본다 (C.118: 짧아진 전투에서 혈 우위가 줄어든 것은 balance 후반 보류 경고로 기록)
     let onSum = 0;
     let offSum = 0;
     for (let seed = 1; seed <= 6; seed++) {
-      const onEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical'), hpScale: 1, playerHpScale: 1 }, seed));
-      const offEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], hpScale: 1, playerHpScale: 1 }, seed));
+      const onEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], physBlock: physOf('t4:blood:physical')!, abilityEffects: fxOf('t4:blood:physical'), hpScale: 1, playerHpScale: 1, motion: undefined }, seed));
+      const offEnd = playCombatHuman(mk({ ...build6(), playerElements: ['blood'], hpScale: 1, playerHpScale: 1, motion: undefined }, seed));
       expect(onEnd.status).toBe('won');
       expect(offEnd.status).toBe('won');
       onSum += elapsedSeconds(onEnd);

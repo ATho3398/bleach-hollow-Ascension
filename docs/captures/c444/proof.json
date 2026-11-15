@@ -1,0 +1,27 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-room-gauge-47.png",
+    "02-pc-battle-start-47.png",
+    "03-pc-battle-hogyoku-57.png"
+  ],
+  "facts": {
+    "inputLabel": 1,
+    "roomAfter5": {
+      "risk": 20,
+      "note": null
+    },
+    "room": {
+      "risk": 47,
+      "note": [
+        "붕옥 감응도"
+      ]
+    },
+    "battleStart": 47,
+    "chip": "붕옥 감응도 47",
+    "afterHogyoku": {
+      "risk": 57,
+      "chip": "붕옥 감응도 57"
+    }
+  }
+}

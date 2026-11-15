@@ -84,3 +84,36 @@
 .bha-tower__row.is-boss { color: var(--bha-text-2); }
 .bha-tower__row.is-cleared { color: var(--bha-good); }
 .bha-tower__row.is-next { border-color: var(--bha-accent); background: var(--bha-bg-2); color: var(--bha-text-1); font-weight: var(--bha-fw-bold); }
+
+/* 특수던전 (GDD 6-16 v6.017, C.427): 머리 = 이름 + 위 탭 [탑][주간던전][보스전]. 주간던전·보스전 = 사용자 스케치 — 왼쪽 세로 버튼 목록(위아래 끌기), 오른쪽 큰 그림 칸 + 정보·[입장]. 기존 토큰만 */
+.bha-sdg__head { display: flex; align-items: center; gap: var(--bha-sp-3); }
+.bha-sdg__head > .bha-plan__title { flex: none; margin: 0; }
+.bha-sdg__tabs { flex: 1 1 auto; min-width: 0; max-width: 360px; }
+.bha-sdg__head > .bha-btn { margin-left: auto; }
+.bha-sdg__list { display: flex; flex-direction: column; gap: var(--bha-sp-2); overflow-y: auto; min-height: 0; height: 100%; padding: 2px; overscroll-behavior: contain; user-select: none; scrollbar-width: thin; }
+.bha-sdg__item { flex: none; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: var(--bha-sp-2); min-height: 56px; padding: var(--bha-sp-2) var(--bha-sp-3); border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-md); background: var(--bha-bg-1); color: var(--bha-text-2); font: inherit; text-align: left; cursor: pointer; box-shadow: inset 0 1px 0 var(--bha-hi); }
+.bha-sdg__item .bha-icon { width: 16px; height: 16px; color: var(--bha-rare); }
+.bha-sdg__item.is-selected { border-color: var(--bha-accent); background: var(--bha-bg-3); color: var(--bha-text-1); box-shadow: inset 3px 0 0 var(--bha-accent); }
+.bha-sdg__item.is-locked { color: var(--bha-text-3); border-style: dashed; }
+.bha-sdg__item.is-locked .bha-icon { color: var(--bha-text-3); }
+.bha-sdg__itemname { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bha-sdg__itemname > b { font-size: var(--bha-fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bha-sdg__itemname > small { font-size: var(--bha-fs-xs); }
+.bha-sdg__count { font-size: var(--bha-fs-xs); color: var(--bha-good); }
+.bha-sdg__count.is-empty { color: var(--bha-text-3); }
+.bha-sdg__stage { display: flex; flex-direction: column; gap: var(--bha-sp-2); height: 100%; min-height: 0; }
+.bha-sdg__art { position: relative; flex: 1 1 auto; min-height: 96px; overflow: hidden; border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-0); }
+.bha-sdg__art > .bha-scenebg { position: absolute; inset: 0; }
+.bha-sdg__cap { position: absolute; left: var(--bha-sp-3); bottom: var(--bha-sp-2); display: flex; flex-direction: column; gap: 2px; text-shadow: 0 1px 2px var(--bha-bg-0); }
+.bha-sdg__title { font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-heavy); color: var(--bha-accent-hi); }
+.bha-sdg__lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-2); background: var(--bha-plate-bg-soft); color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-sdg__lock .bha-icon { width: 18px; height: 18px; }
+.bha-sdg__info { flex: none; display: flex; flex-direction: column; gap: var(--bha-sp-1); }
+.bha-sdg__info p { margin: 0; font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); }
+.bha-sdg__reward, .bha-sdg__left { display: flex; align-items: center; gap: var(--bha-sp-1); }
+.bha-sdg__reward { color: var(--bha-text-1); }
+.bha-sdg__reward .bha-icon { flex: none; width: 14px; height: 14px; color: var(--bha-rare); }
+.bha-sdg__left .bha-icon { flex: none; width: 14px; height: 14px; }
+.bha-sdg__go { display: flex; align-items: center; gap: var(--bha-sp-2); }
+.bha-sdg__stars { flex: 1 1 auto; min-width: 0; }
+.bha-sdg__go > .bha-btn { flex: none; min-width: 120px; }

@@ -5,6 +5,10 @@ import { checkName, nameMax, nameWidth, NAME_RULE, parseName } from '../src/engi
 import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, needsIdentity, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, setIdentity } from '../src/game';
 import { getFaction } from '../src/data/factions';
 import { FACTIONS } from '../src/data/factions';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
@@ -46,7 +50,7 @@ describe('이름 규칙 (199장 6)', () => {
 describe('세이브 (199장 8)', () => {
   it('형식 63 · 문턱 54 고정 · 62 → 63: 이름 null(이어할 때 창) · 이름 기록 빈 목록', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(63);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[62]).toBe('function');
     const old = clone(newSaveData('hollow', 1000)) as unknown as Record<string, any>;
     old.meta.format = 62;

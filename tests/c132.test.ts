@@ -31,7 +31,7 @@ describe('78장 시작 외형 = 그림만, 능력치 편향 없음', () => {
   });
   it('옛 세이브(C.108~C.131)의 bias 는 형식 그대로 불러올 때 버린다', () => {
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 0)));
-    old.evolution.bias = { hp: -2, atk: -2, int: -2, def: -2, spr: -2, spd: 10 };
+    old.evolution.bias = { hp: -2, atk: -2, int: -2, def: -2, spr: -2, aspd: 10 };
     const m = migrateSave(old)!;
     expect(m).not.toBeNull();
     expect('bias' in m.evolution).toBe(false);

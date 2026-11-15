@@ -48,6 +48,6 @@ describe('더보기 아이콘 (GDD 43장 4번)', () => {
     expect(room).toContain("{ label: '다마고치', icon: 'i-nest'"); // C.170: 4열 칸이라 짧게 (GDD 100장 #17)
   });
   it('더보기 칸은 아이콘 아래 이름 글자(span) 형식', () => {
-    expect(read('src/ui/bha/dock.ts')).toContain("b.append(icon(m.icon), el('span', '', m.label))");
+    expect(read('src/ui/bha/dock.ts')).toContain("b.append(m.art ? artIcon(m.art, m.icon) : icon(m.icon), el('span', '', m.label))"); // C.420: 그림 아이콘(붕옥)도 같은 칸
   });
 });

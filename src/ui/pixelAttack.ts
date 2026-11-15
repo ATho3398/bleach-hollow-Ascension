@@ -2,6 +2,9 @@
 // 한 블록(체인 단계) 설정 → 타격 시각 · 이펙트 조각(타격마다 바꾼 값 반영, 시작 시각, 날아감) · 맞음 반응 시각(투사체면 도착) · 몸동작 시작.
 // 도구(scripts/pixelfx/tool/fx-tool.ts)와 같은 규칙: 시각은 첫 타격 = 0ms, 간격·늦춤·비행 시간은 시전 속도(speed)로 나눈다.
 // 0ms 보다 앞서는 것(음수 늦춤·몸동작 미리 시작)이 있으면 전체를 그만큼 뒤로 민다(shift). 표시만 — 피해·규칙은 엔진 그대로.
+// 모션과 이펙트는 따로 계산 (GDD 7-2, C.448): insts·hitAt·reactAt = 이펙트 시간줄(블록을 쓴 순간부터 끝까지, 겹쳐도 됨, 피해·맞음 반응 = reactAt),
+// body = 몸동작 시간줄(body.at = 줄을 서지 않았을 때 이펙트 시간줄 기준 시작 시각). 줄 세우기·빨리 감기·앞 자르기는 몸동작에만(bodyMotionSpec·bodyStartPlan).
+// 이펙트 배치 도구는 지금처럼 한 화면에서 같이 맞춘다 — 나누는 건 게임 계산뿐.
 import type { FamilyPixelFx, PixelFxBody, PixelFxLayer, PixelFxStage } from '../engine/faction';
 
 export type PixelBodySlot = 'male' | 'female' | 'frames';
@@ -69,6 +72,43 @@ export function pixelPlan(stage: PixelFxStage, slot: PixelBodySlot): PixelPlan {
     insts: raw.map(({ t, ...r }) => ({ ...r, start: t + shift })),
     body: body ? { ...body, at: bodyAt + shift, speed: sp } : null,
   };
+}
+
+/** 연결 동작 한 동작의 1배 길이·타격 시각(ms) — 재생기 peek 값 (없으면 null) */
+export interface BodyStepTiming {
+  durationMs: number;
+  hitAtMs: number;
+}
+
+/**
+ * 몸동작 시간줄의 길이·첫 타격 시각(ms, 1배, 이펙트 시간줄 0 기준이 아니라 몸 시작 = body.at 앞 기다림 포함) (GDD 7-2, C.448):
+ * total = body.at + 동작 길이 합 / hit = body.at + 첫 동작 타격. 동작마다 ÷ 빠르기(동작 rate × 시전 속도), 첫 동작이 '타격 프레임부터'면 타격 뒤만. 엔진 몸동작 표(motion.blockBy)에 넘긴다
+ */
+export function bodyMotionSpec(body: PixelPlan['body'], steps: readonly (BodyStepTiming | null)[]): { totalMs: number; hitMs: number } | null {
+  if (!body || !body.chain.length || steps.length < body.chain.length) return null;
+  let t = 0;
+  let hit = 0;
+  for (const [i, st] of body.chain.entries()) {
+    const r = steps[i];
+    if (!r) return null;
+    const k = (st.rate > 0 ? st.rate : 1) * body.speed;
+    const skip = i === 0 && body.bodyFromHit ? r.hitAtMs : 0;
+    if (i === 0) hit = (r.hitAtMs - skip) / k;
+    t += (r.durationMs - skip) / k;
+  }
+  const at = Math.max(0, body.at);
+  return { totalMs: at + t, hitMs: at + hit };
+}
+
+/**
+ * 엔진이 몸동작을 시작시킬 때(block-motion: 배율 rate·앞 자르기 trimMs 1배) 화면 계획 (GDD 7-2 절충안): atMs = 줄을 안 섰을 때 몸 시작 시각(앞 기다림).
+ * 자르기는 기다림부터 먹고, 남으면 첫 동작 앞부분(skipMs, 1배)을 건너뛴다. waitMs = 실제 기다림(배율 반영)
+ */
+export function bodyStartPlan(atMs: number, rate: number, trimMs: number): { waitMs: number; skipMs: number } {
+  const r = rate > 0 ? rate : 1;
+  const at = Math.max(0, atMs);
+  const trim = Math.max(0, trimMs);
+  return { waitMs: Math.max(0, at - trim) / r, skipMs: Math.max(0, trim - at) };
 }
 
 /** 그 블록에 도트 연출이 있나 (이펙트나 그 칸 몸동작이 하나라도) */

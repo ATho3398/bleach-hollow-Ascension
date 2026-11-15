@@ -70,6 +70,12 @@ export function gearKindAllowed(kind: GearKind, factionId: string): boolean {
 }
 export const GEAR_SPECIALS: readonly GearSpecialDef[] = P.specials;
 
+/** 장비 해금 때 주는 낡은 장비 (GDD 243장 3, provisional): 종류마다 노멀 1개 · 종족 공통 이름 */
+export const STARTER_GEAR: readonly { kind: GearKind; name: string }[] = ((raw as { starter?: unknown }).starter as { kind?: unknown; name?: unknown }[] | undefined ?? []).map((r) => {
+  if (!isIn(GEAR_KINDS, r.kind) || typeof r.name !== 'string' || !r.name) throw new Error(`장비 데이터 오류: starter ${String(r.kind)}`);
+  return { kind: r.kind, name: r.name };
+});
+
 export function getGearSpecial(id: string): GearSpecialDef | undefined {
   return GEAR_SPECIALS.find((s) => s.id === id);
 }

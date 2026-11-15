@@ -8,6 +8,10 @@ import { doNestAction, newNest, respondCare, tickCareRequest } from '../src/engi
 import { emptyRunLog } from '../src/engine/runLog';
 import { careNest, migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, tickCare } from '../src/game';
 import { careTalkKey } from '../src/ui/bha/roomLogic';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const CR = BALANCE.provisional.nest.careRequest;
 const MIN = 60_000;
@@ -43,7 +47,7 @@ describe('82장 요청 시계', () => {
     expect(n.careRequest!.until).toBe(later + CR.holdMinutes * MIN);
     expect(tickCareRequest(n, later + 1).created).toBe(false);
   });
-  it('피곤이거나 컨디션이 낮으면 재우기를 청한다, 아니면 sleepWeight 로 고른다', () => {
+  it('피곤이거나 컨디션이 낮을 때만 재우기를 청한다, 아니면 쓰다듬기 (GDD 243장 7)', () => {
     const weak = { ...newNest(T0), tired: true }; // C.175: 피곤(GDD 102-2)이면 재우기
     tickCareRequest(weak, weak.nextCareAt, () => 0.99);
     expect(weak.careRequest!.action).toBe('sleep');
@@ -51,8 +55,8 @@ describe('82장 요청 시계', () => {
     tickCareRequest(tired, tired.nextCareAt, () => 0.99);
     expect(tired.careRequest!.action).toBe('sleep');
     const ok = newNest(T0);
-    tickCareRequest(ok, ok.nextCareAt, () => CR.sleepWeight - 0.01);
-    expect(ok.careRequest!.action).toBe('sleep');
+    tickCareRequest(ok, ok.nextCareAt, () => 0);
+    expect(ok.careRequest!.action).toBe('pet');
   });
 });
 
@@ -94,7 +98,7 @@ describe('82장 응답·거절', () => {
 describe('82장 런 로그·세이브', () => {
   it('런 로그 care 에 응답·거절·놓침을 센다', () => {
     expect(emptyRunLog().care).toEqual({ answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 });
-    const s = newSaveData('hollow', T0);
+    const s = newSaveData('hollow', T0); s.help.guides = {}; // 튜토리얼이 끝난 세이브 — 튜토리얼 중엔 돌봄 요청이 없다 (GDD 245장 8)
     expect(careNest(s, 'pet', T0)).toBe('refused');
     tickCare(s, s.nest.nextCareAt, () => 0.9); // pet 요청
     expect(careNest(s, 'sleep', s.nest.nextCareAt)).toBe('refused');
@@ -106,7 +110,7 @@ describe('82장 런 로그·세이브', () => {
   });
   it('세이브 형식 38(이후 C.134 에 39) · 최소 형식 같이 올림 (61장, 마이그레이션 없음)', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(38);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87); // C.198: 문턱 54 고정, 형식은 마이그레이션으로 (GDD 123장 6)
   });
   it('요청 상태가 저장·불러오기로 남고, 깨진 값은 버린다', () => {
     const s = newSaveData('hollow', T0);

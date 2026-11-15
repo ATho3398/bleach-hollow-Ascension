@@ -22,9 +22,11 @@ describe('241-B 1: 각본 전투 해방 안내 카드', () => {
     expect(now.targets).toEqual(['battle.liberation']);
     expect(ex.targets).toEqual(['battle.tray']);
     expect(now.body).toContain('{libName}');
-    expect(ex.body).toContain('블록이 빨리 나오고 공격 속도도 빨라진다');
-    expect(ex.body).toContain('진화체에 따라 특수 효과');
-    expect(read('src/ui/battleView.ts')).toContain("libName: labels.liberation.name");
+    // GDD 243장 9 보충(C.411): 영력 해방은 블록만 빨라진다 — 공격 속도는 진화 뒤 해방({libFullName})부터
+    expect(ex.body).toContain('{libName}하면 블록이 빨리 나온다.');
+    expect(ex.body).not.toContain('공격 속도도 빨라진다');
+    expect(ex.body).toContain('{libFullName}이(가) 되면 공격 속도와 진화체만의 효과도 붙는다');
+    expect(read('src/ui/battleView.ts')).toContain("libName: labels.liberation.name, libFullName: bf.liberation.name");
   });
 });
 
@@ -45,7 +47,7 @@ describe('241-B 2·3·6·7: 화면 (CSS·DOM 연결)', () => {
   });
   it('진화 연출·결과: 새 진화체 그림(heroArtOf — 종이인형·스프라이트 그대로)을 넘긴다', () => {
     const app = read('src/ui/app.ts');
-    expect(app.match(/art: heroArtOf\(roomOf\(faction\), faction\.id, artTierIndexOf\(s\), artSkinOf\(s\)\) \}; \/\/ 새 진화체 그림/g)).toHaveLength(2);
+    expect(app.match(/art: evolvedArtOf\(roomOf\(faction\), s\) \}; \/\/ 새 진화체 그림/g)).toHaveLength(2); // GDD 246장 1: 바뀐 뒤 모습(evolvedArtOf)
     const ev = read('src/ui/evolutionPanel.ts');
     expect(ev).toContain("figOf('bha-evolve__fig--reveal')");
     expect(ev).toContain("figOf('bha-evolve__fig--result')");
@@ -79,9 +81,10 @@ describe('241-B 4: 온천은 탕에 다 앉은 뒤부터 찬다', () => {
     expect(v).toContain('export const SPA_STEP_MS = 300;');
     expect(HH.spaEnterSeconds).toBe(2.4);
   });
-  it("튜토리얼 온천 카드: spaTo(80%)에서 '가득 찼다' 대신 그 값", () => {
+  it("튜토리얼 온천 카드: 체력 가득까지 쉬고 '가득 찼다' (GDD 245장 7 — 241-B 4 의 80% 되돌림)", () => {
     const sc = RECOVER_SCENES.find((x) => x.id === 'to-spa')!;
-    expect(sc.done).toBe('체력이 {spaToPct}%까지 찼다!');
+    expect(sc.done).toBe('체력이 가득 찼다!');
+    expect(BALANCE.provisional.tutorialRecover.spaTo).toBe(1);
   });
 });
 

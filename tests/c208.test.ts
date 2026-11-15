@@ -46,7 +46,7 @@ describe('132장 1 카드가 누를 때마다 다음 대상으로', () => {
   it('tutorialOverlay: 강조·문구·자리·기기 초점(data-dev-only) = 지금 단계, 카드는 대상·열린 창을 피한다', () => {
     const o = read('src/ui/tutorialOverlay.ts');
     expect(o).toContain('const rect = targetRect(stageOf(scene)?.targets ?? scene.targets, host);');
-    expect(o).toContain("const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--more'];");
+    expect(o).toContain("const OPEN_WINDOWS = ['@.bha-itemdialog .bha-itemmodal', '@.bha-actfx', '@.bha-homedock__tray--food', '@.bha-homedock__tray--items', '@.bha-homedock__tray--more'];");
     expect(o).toContain('layer.dataset.stage = String(i);');
     expect(read('src/ui/bha/itemUi.ts')).toContain('if (s.id) layer.dataset.itemDialog = s.id;');
   });

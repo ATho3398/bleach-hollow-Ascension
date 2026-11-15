@@ -9,6 +9,10 @@ import {
 } from '../src/engine/evolution';
 import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { abilityGainRow, gainExtra } from '../src/ui/evolutionPanel';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const f = getForm;
 const loadout = (slots = 1): AbilityLoadout => ({ ...newAbilityLoadout(), slots });
@@ -137,7 +141,7 @@ describe('같은 특성 두 번 없음 (GDD 149장 5)', () => {
 describe('세이브 형식 59 → 60 (GDD 149장 7, 123장 6)', () => {
   it('형식 60 · 문턱 54 고정 · 단계 표에 59', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(60); // C.227 에서 61
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[59]).toBe('function');
   });
   const old59 = (history: string[], abilities: Record<string, unknown>) => {

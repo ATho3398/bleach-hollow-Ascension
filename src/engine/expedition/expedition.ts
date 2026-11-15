@@ -17,7 +17,7 @@ import {
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
-  addEv, addEvFree, applyEvolutionToParams, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  addEv, addEvFree, applyEvolutionToParams, kitActive, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -33,6 +33,7 @@ import type { BossSetup } from '../combat';
 import { SORTIE_IDS, sortieMods } from '../sortie';
 import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
+import { kitRiskDrainOf, kitRiskFloorOf } from '../transcendKit';
 
 const EX = BALANCE.expedition;
 const PX = BALANCE.provisional.expedition;
@@ -162,6 +163,8 @@ export interface StorySettlement {
   jade: number;
   chapterCleared: boolean;
   bossFirstKill: string | null;
+  /** 옛 붕옥 파편 (C.414~C.424, 화 첫 클리어 + 장 보스). C.425 부터 주지 않는다 (GDD 12-3 v6.015) */
+  shards?: number;
 }
 
 /** 보스전 한 판의 결과 (런 로그 bossBattles 재료, GDD 25-3) */
@@ -215,7 +218,7 @@ export interface AcquiredTrait {
 }
 
 export interface ExpeditionState extends RiskState {
-  /** 붕옥·초월체 패시브 (GDD 22-3, C.59). 옛 원정 중간 저장에는 없다(= 0) */
+  /** 붕옥·초월자 패시브 (GDD 22-3, C.59). 옛 원정 중간 저장에는 없다(= 0) */
   statBonus?: number;
   runId: number;
   factionId: string;
@@ -316,8 +319,10 @@ export interface ExpeditionState extends RiskState {
   restSpring?: boolean;
   /** 바로 앞 칸에서 효과가 난 타일 (메아리, C.124): 이벤트 타일은 밟으면 사라지므로 밟은 순간의 id 를 둔다. 메아리 칸·보스 칸·빈 칸이면 null */
   lastTile?: { cell: number; tileId: string } | null;
-  /** 바퀴 변이(폭풍)로 더 받는 영혼 결정 */
+  /** 바퀴 변이(폭풍)로 더 받는 붕옥 재료(고순도 윤활제, 옛 영혼 결정) */
   bonusSoul: number;
+  /** 이 원정에서 얻은 초월 조각 (GDD 12-4 v6.048, C.441): 정산(recordExpedition) 때 채운다 — 결과 화면 표시용. 초월자 트랙만 */
+  transcendShards?: number;
   variantLog: VariantLog;
   /** 스토리 화 진행 (GDD 25-4). 자유 원정은 null. 스토리에서는 드래프트·바퀴 변이를 끄고 인접 시너지는 고정 길대로 발동한다 */
   story: StoryRun | null;
@@ -352,6 +357,8 @@ export interface ExpeditionState extends RiskState {
   /** 모험 소모품 사용 기록 (GDD 212장 2·5, 세이브 형식 66): 소모품 칸에 끼운 것을 쓴 바퀴·품목·쓴 곳. 지금 바퀴 번호가 있으면 이번 바퀴는 '사용함'(걷기·전투 어디서든 바퀴당 1번).
    *  런 로그 원정 기록 lapItems 로 그대로 간다. 옛 중간 저장에는 없다(= 아직 안 씀) */
   lapItems?: LapItemUse[];
+  /** 수련 게이지 (GDD 12-4 v6.069 이치고 무월수련, C.454): 게이지 소모형 kit 트랙에서 리스크(호로화)가 0 일 때 차는 값 — 전투가 끝나면 이어지고, 보스전 시작·최후의 월아천충 때 0. 옛 중간 저장엔 없음(= 0) */
+  kitMastery?: number;
   /** 이번 원정에 쓴 출정품 (GDD 241-D 5, 세이브 형식 74): 출발 때 칸마다 1개 소모한 품목 id. 효과 = sortieMods (공격 피해·받는 피해·드롭). 런 로그 원정 기록 sortie 로 간다. 옛 중간 저장에는 없다(= 없음) */
   sortie?: string[];
   /** 이 원정에서 나온 출정품 (GDD 241-D 5): 귀환 때 game.ts 가 가방에 (가득이면 버림) */
@@ -432,7 +439,7 @@ export interface ExpeditionSetup {
   gold?: number;
   /** 스토리 화 (GDD 25-4): 그 화의 고정 길·사냥터·최대 바퀴를 쓴다 (groundId·maxLaps 는 무시) */
   story?: { chapterId: string; episodeId: string };
-  /** 붕옥 해방·초월체 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
+  /** 붕옥 해방·초월자 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
   statBonus?: number;
   /** 스토리에서 한 번 이긴 보스 id (GDD 37장, 세이브 보스 도감). 자유 원정에서 그 사냥터 장 보스가 4바퀴째부터 나올 수 있다. 스토리 화는 무시 */
   bossesBeaten?: string[];
@@ -496,8 +503,9 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     lootRng: createRng((setup.seed ^ LOOT_SEED_SALT) >>> 0),
     evolution: setup.evolution ? cloneEvolution(setup.evolution) : newEvolution(),
     evStart: { ...(setup.evolution?.ev ?? newEvolution().ev) },
-    risk: setup.risk ?? 0,
-    riskPeak: setup.risk ?? 0,
+    // 리스크 최솟값 (GDD 12-4 v6.054 아이젠 붕옥 감응도 20) · 게이지 소모형은 모험 출발 때 가득 (GDD 12-4 v6.069 이치고 호로화 100)
+    risk: kitRiskDrainOf(setup.evolution?.kit?.id) ? RX.limit : Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
+    riskPeak: kitRiskDrainOf(setup.evolution?.kit?.id) ? RX.limit : Math.max(kitRiskFloorOf(setup.evolution?.kit?.id), setup.risk ?? 0),
     breakthrough: null,
     events: [],
     elapsedSeconds: 0,
@@ -849,6 +857,17 @@ function startBattleAt(
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(), liberationEnabled: exp.liberationEnabled !== false };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
+  // 게이지 모드 해방 (GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체): 전투는 지금 원정 리스크로 시작한다
+  if (params.kit?.riskRelease) params.riskStart = exp.risk;
+  // 게이지 소모형 (GDD 12-4 v6.069 이치고 호로화): 보스전 시작 때 호로화 가득 · 무월수련 0, 아니면 원정 값 그대로 이어서
+  if (params.kit?.riskDrain) {
+    if (bossId) {
+      exp.risk = params.kit.riskDrain.limit;
+      exp.kitMastery = 0;
+    }
+    params.riskStart = exp.risk;
+    params.masteryStart = exp.kitMastery ?? 0;
+  }
   // 적 기준 능력치 = 원정 난이도 ★ (GDD 32-1). 내 쪽은 위에서 세계 기준으로 실렸다
   applyDifficultyToParams(params, exp.difficulty);
   applyTraitBoosts(params, exp.build, exp.traitBoosts ?? {});
@@ -1017,6 +1036,14 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
   // 해방이 끝나며 오른 리스크 (GDD 22-5)
   if (battle.liberation.risk > 0) changeRisk(exp, battle.liberation.risk, 'liberation');
+  // 붕옥 감응도 = 원정 리스크 그 자체 (GDD 12-4 v6.054): 전투 중 변화(붕옥 블록 +10·프라고르 −5)를 끝 값으로 맞춘다
+  if (battle.kit && battle.params.kit?.riskRelease && battle.kit.risk !== exp.risk) changeRisk(exp, battle.kit.risk - exp.risk, 'kit-release');
+  // 호로화·무월수련 = 원정 값 (GDD 12-4 v6.069): 끝 값을 그대로 (최후의 월아천충으로 다시 가득이 된 것도 — changeRisk 는 소모형의 상승을 막으므로 직접)
+  if (battle.kit && battle.params.kit?.riskDrain) {
+    exp.risk = battle.kit.risk;
+    exp.riskPeak = Math.max(exp.riskPeak, exp.risk);
+    exp.kitMastery = battle.kit.mastery;
+  }
   if (battle.status === 'lost') {
     exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');
@@ -1056,6 +1083,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.victoriesThisLap++;
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, 1, offerElementsOf(pending.boss, pending.enemy.element));
     markSpecialGates(exp, exp.absorbOffer, elite, true);
+    limitKitAbsorb(exp, exp.absorbOffer);
     exp.phase = 'absorb';
     return record;
   }
@@ -1072,12 +1100,20 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 이기면 언제나 흡수 화면 (C.125, GDD 71장: 흡수 조건 삭제 — 흡수 / 놓아줌 네 갈래). 첫 원정 튜토리얼(67장)은 tutorialAbsorb 로 끝난다
   exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, null, mods.absorbMult ?? 1);
   markSpecialGates(exp, exp.absorbOffer, elite);
+  limitKitAbsorb(exp, exp.absorbOffer);
   if (exp.tutorial) exp.absorbOffer.reasons = ['tutorial'];
   exp.phase = 'absorb';
   return record;
 }
 
 export type AbsorbResult = { ok: true } | { ok: false; reason: string };
+
+/** 초월자 전용 블록 몸 (GDD 12-4 v6.048): 흡수 화면 = 노력치 흡수·놓아주기만 — 특성 후보 없음, statOnly 표시 */
+function limitKitAbsorb(exp: ExpeditionState, offer: AbsorbOffer): void {
+  if (!kitActive(exp.evolution)) return;
+  offer.candidates = [];
+  offer.statOnly = true;
+}
 
 /** 뼈 표식/수련 말뚝 (C.124, GDD 65장): 그 적의 노력치(ev)가 가장 큰 능력치 하나에 n (단계 상한 안 — 넘으면 0). 오른 양을 엔진 이벤트로 */
 function trainingTileEv(exp: ExpeditionState, enemy: EnemyDef, n: number): void {
@@ -1130,6 +1166,7 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (offer.rerolled) return { ok: false, reason: '이 흡수에서는 이미 다시 뽑았다' };
+  if (offer.statOnly) return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
   if (offer.candidates.length === 0) return { ok: false, reason: '다시 뽑을 후보가 없다' };
   const rng = createRng((exp.seed ^ REROLL_SEED_SALT ^ Math.imul(exp.absorbRecords.length + 1, 2654435761)) >>> 0);
   const boss = isBossId(offer.enemyId) ? offer.enemyId : null;
@@ -1168,6 +1205,7 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   const offer = exp.absorbOffer;
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' };
+  if (offer.statOnly && mode !== 'stat') return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 블록이다' };

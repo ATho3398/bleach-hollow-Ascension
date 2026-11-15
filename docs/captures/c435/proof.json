@@ -1,0 +1,73 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-fusion-combo-owned.png",
+    "02-pc-unknown-room.png",
+    "03-pc-status-basis.png",
+    "04-pc-status-basis-shinigami.png",
+    "05-pc-build-after-basis.png",
+    "06-pc-unknown-battle.png",
+    "07-phone-fusion-combo-owned.png",
+    "08-phone-unknown-room.png",
+    "09-phone-status-basis.png",
+    "10-phone-build-after-basis.png"
+  ],
+  "facts": {
+    "pc": {
+      "comboName": "이치고",
+      "fusion": {
+        "preview": "지금 두 캐릭터라면 → 「이치고」 (이미 있음)",
+        "owned": "true",
+        "cond": "✗ 이 조합의 초월자를 아직 안 가짐두 캐릭터 진화체 분류 물리 + 물리 → 이치고 — 이 조합의 초월자는 이미 있다 — 다른 분류로 키워라."
+      },
+      "mosaic": [
+        {
+          "w": 87,
+          "h": 94,
+          "nat": [
+            192,
+            256
+          ],
+          "scale": "0.67"
+        }
+      ],
+      "basis": [
+        "초월자:true",
+        "키웠던 호로:false",
+        "키웠던 사신:false"
+      ],
+      "basisAfter": "전투 기반임시초월자키웠던 호로키웠던 사신공격 분류 물리 · 장착 블록 2 · 보유 블록 2 · 특성 0바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다.",
+      "battleMosaic": [
+        [
+          101,
+          101
+        ]
+      ]
+    },
+    "phone": {
+      "comboName": "이치고",
+      "fusion": {
+        "preview": "지금 두 캐릭터라면 → 「이치고」 (이미 있음)",
+        "owned": "true",
+        "cond": "✗ 이 조합의 초월자를 아직 안 가짐두 캐릭터 진화체 분류 물리 + 물리 → 이치고 — 이 조합의 초월자는 이미 있다 — 다른 분류로 키워라."
+      },
+      "mosaic": [
+        {
+          "w": 87,
+          "h": 94,
+          "nat": [
+            192,
+            256
+          ],
+          "scale": "0.67"
+        }
+      ],
+      "basis": [
+        "초월자:true",
+        "키웠던 호로:false",
+        "키웠던 사신:false"
+      ],
+      "basisAfter": "전투 기반임시초월자키웠던 호로키웠던 사신공격 분류 물리 · 장착 블록 2 · 보유 블록 2 · 특성 0바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다."
+    }
+  }
+}

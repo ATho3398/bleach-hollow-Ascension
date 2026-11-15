@@ -8,6 +8,10 @@ import { DETACH_TRAITS } from '../src/engine/traitShop';
 import { migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS } from '../src/game';
 import { foodSellPrice, itemSellPrice, sellEntry, sellNeedsConfirm, sellRows } from '../src/sell';
 import { shopBuyPrice } from '../src/shop';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const H = getFaction('hollow');
@@ -32,7 +36,7 @@ describe('236장 2: 값', () => {
     expect(itemSellPrice('reroll')).toBe(60);
     expect(itemSellPrice('heal-patch')).toBe(Math.max(1, Math.floor(shopBuyPrice('heal-patch')! / 2)));
   });
-  it('상점에 없는 물건 = 판매가 표: 특식 높게, 거금 특식(relic) 가장 높게, 일반 먹이 15, 떠돌이 상인 품목은 등급 값', () => {
+  it('상점에 없는 물건 = 판매가 표: 특식 높게, 거금 특식(relic) 가장 높게, 일반 먹이 15, 우라하라 품목은 등급 값', () => {
     expect(foodSellPrice('relic')).toBe(600);
     expect(foodSellPrice('elixir')).toBe(200);
     expect(foodSellPrice('sushi')).toBe(15);
@@ -112,7 +116,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
     expect(sellNeedsConfirm(e('gear:x', 40, 'equipment', 'rare'), 1)).toBe(true);
     expect(sellNeedsConfirm(e('gear:x', 15, 'equipment', 'normal'), 1)).toBe(false);
   });
-  it('판 뒤 알림 없음(233장) · 모든 상점·떠돌이 상인 탭 끝에 [팔기]', () => {
+  it('판 뒤 알림 없음(233장) · 모든 상점·우라하라 탭 끝에 [팔기]', () => {
     const v = read('src/ui/shopView.ts');
     expect(v).toContain("const tabIds: ShopTab[] = only ? ['wanderer', 'sell'] : [...kindTabs, 'sell'];");
     const i = v.indexOf('const doSell');
@@ -123,7 +127,7 @@ describe('236장 4·5: 팔기 · 런 로그', () => {
 
 describe('세이브 형식 71', () => {
   it('70 → 71: 두 트랙 런 로그에 빈 sales', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(88); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.runLog.sales;
     s.meta.format = 70;
@@ -132,7 +136,7 @@ describe('세이브 형식 71', () => {
     delete s.runLog.sales;
     s.meta.format = 70;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(77);
+    expect(m.meta.format).toBe(88);
     expect(m.runLog.sales).toEqual([]);
   });
 });

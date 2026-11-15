@@ -12,6 +12,7 @@ import { CARE_STATUS_NAMES, homeHpCap, homeHpOf } from './engine/nest';
 import { foodEffectText } from './foodText';
 import { cureNest, feedNest, logHomeHeal } from './game';
 import { wandererAmount } from './engine/wanderer';
+import { kitRiskFloorOf } from './engine/transcendKit';
 import { guidePending } from './engine/tutorial';
 import { battleItemBrief, battleItemText, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
@@ -119,11 +120,11 @@ function consumableLock(save: SaveData, id: string, faction: Pick<FactionConfig,
   if (save.activeExpedition != null) return '모험 중인 캐릭터에는 못 쓴다';
   if (save.nest.dead) return `${CARE_STATUS_NAMES.dead} — 부활만 할 수 있다`;
   if (e.medicine) return medicineNeeded(save, e.medicine) ? null : `${medicineStatusName(e.medicine)} 상태가 아니다`;
-  const helpsRisk = e.risk > 0 && save.nest.risk > 0;
+  const helpsRisk = e.risk > 0 && save.nest.risk > kitRiskFloorOf(save.transcendentId);
   const helpsCond = e.condition > 0 && save.nest.condition < COND_MAX;
   const helpsCure = e.cure && save.nest.weakened;
   if (helpsRisk || helpsCond || helpsCure) return null;
-  return e.risk > 0 && e.condition === 0 ? `${faction.riskGaugeName} 이미 0` : e.condition > 0 && e.risk === 0 ? '컨디션 이미 가득' : '쓸 필요가 없다';
+  return e.risk > 0 && e.condition === 0 ? `${faction.riskGaugeName} 이미 ${kitRiskFloorOf(save.transcendentId)}` : e.condition > 0 && e.risk === 0 ? '컨디션 이미 가득' : '쓸 필요가 없다';
 }
 
 /** 보관함 목록 (카테고리 순서 = ITEM_CATEGORIES). 장비는 C.150 부터 (GDD 91장) */
@@ -201,6 +202,8 @@ function curedNames(before: (keyof typeof CARE_STATUS_NAMES)[], save: Pick<SaveD
 
 /** 같은 먹이 거절 이유 (GDD 234장 3) */
 export const SAME_FOOD_REFUSED = '같은 걸 연달아 먹지 않는다 — 10분 뒤에 다시';
+/** 배부름 가득 (GDD 243장 6): 먹이 그대로 */
+export const FULLY_FED = '배부르다 — 더는 못 먹는다';
 
 /** 보관함에서 쓴다: 먹이(`food-<종류>`) = 먹이 주기, 소모품 = 효과를 지금 캐릭터에 바로. 실패하면 아무것도 바뀌지 않는다 */
 export function useInventoryItem(save: SaveData, faction: FactionConfig, id: string): InventoryResult {
@@ -213,7 +216,8 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     const fed = feedNest(save, f);
     if (!fed) return { ok: false, reason: '먹을 것이 없다' };
     if (fed === 'refused') return { ok: false, reason: SAME_FOOD_REFUSED }; // 같은 먹이 10분 2개 (GDD 234장 3): 먹이 그대로
-    if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다', spat: true };
+    if (fed === 'full') return { ok: false, reason: FULLY_FED }; // 배부름 가득 (GDD 243장 6): 먹이 그대로
+    if (fed === 'spat') return { ok: true, detail: '더는 못 먹어 — 뱉었다(먹이는 그대로)', spat: true }; // C.411: 뱉어도 먹이는 안 줄어든다
     return { ok: true, detail: `${faction.fullnessName} ${Math.max(0, 100 - Math.round(save.nest.hunger))}`, cured: curedNames(before, save) }; // 화면은 배부름 = 100 − 허기 (C.63, GDD 100장 #58)
   }
   const e = consumableEffect(id);
@@ -226,7 +230,7 @@ export function useInventoryItem(save: SaveData, faction: FactionConfig, id: str
     takeItem(save, id);
     return { ok: true, detail: `${medicineStatusName(e.medicine)} 풀림`, cured: curedNames(before, save) };
   }
-  save.nest.risk = Math.max(0, save.nest.risk - e.risk);
+  save.nest.risk = Math.max(kitRiskFloorOf(save.transcendentId), save.nest.risk - e.risk); // 정화제도 리스크 최솟값 밑으로 안 감 (GDD 12-4 v6.054 아이젠 20)
   save.nest.condition = Math.min(COND_MAX, save.nest.condition + e.condition);
   if (e.cure) save.nest.weakened = false;
   takeItem(save, id);
@@ -357,7 +361,7 @@ export function petEffectText(id: string, level: number): string {
     case 'gold': return `모험 골드 +${pct(petBonus(carry, 'gold'))}`;
     case 'belly': return `모험 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
     case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
-    case 'seek': return `떠돌이 상인 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
+    case 'seek': return `우라하라 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';
   }
 }
@@ -385,7 +389,7 @@ export function choosePet(save: SaveData, id: string | null, nowMs: number = Dat
 export function petNoticeOf(rec: PetRecord, faction: Pick<FactionConfig, 'petNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = petName(rec.petId, faction);
   switch (rec.kind) {
-    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'rebirth' ? '첫 환생 선물' : rec.source === 'wanderer' ? '떠돌이 상인' : '모험 바퀴 끝 보상'} · 가방 장비 탭 펫에서 데리고 간다` };
+    case 'get': return { eyebrow: '펫', title: `새 펫: ${name}`, meta: `${rec.source === 'evolution' ? '첫 진화 선물' : rec.source === 'rebirth' ? '첫 환생 선물' : rec.source === 'wanderer' ? '우라하라' : '모험 바퀴 끝 보상'} · 가방 장비 탭 펫에서 데리고 간다` };
     case 'level': return { eyebrow: '펫', title: `${name} 친밀도 ${rec.level}/${PET_MAX_LEVEL}`, meta: petEffectText(rec.petId, rec.level ?? 1) };
     case 'dupGold': return { eyebrow: '펫', title: `이미 있는 ${name} → 골드 +${rec.gold ?? 0}` };
     default: return null;
@@ -416,9 +420,9 @@ export function gearKindName(kind: GearKind, faction: Pick<FactionConfig, 'gearS
   return faction.gearSlotNames[slotsForKind(kind)[0]!];
 }
 
-/** 장비 이름: "레어 송곳니 +2" */
-export function gearName(it: Pick<GearItem, 'grade' | 'kind'> & { plus?: number }, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
-  return `${GEAR_GRADE_NAMES[it.grade]} ${gearKindName(it.kind, faction)}${it.plus ? ` +${it.plus}` : ''}`;
+/** 장비 이름: "레어 송곳니 +2" · 고정 이름이면 "낡은 무기 +1" */
+export function gearName(it: Pick<GearItem, 'grade' | 'kind'> & { plus?: number; name?: string }, faction: Pick<FactionConfig, 'gearSlotNames'>): string {
+  return `${it.name ?? `${GEAR_GRADE_NAMES[it.grade]} ${gearKindName(it.kind, faction)}`}${it.plus ? ` +${it.plus}` : ''}`; // 고정 이름(낡은 장비, GDD 243장 3)이 있으면 그것
 }
 
 const statLabel = (s: GearStat, factionId: string): string => (s === 'crit' ? '치명' : statName(s, factionId));
@@ -440,7 +444,7 @@ export function gearSpecialText(it: Pick<GearItem, 'special'>, faction: Pick<Fac
     case 'critDamage': return `치명 피해 +${Math.round(v * 100) / 100}배`;
     case 'shield': return `전투 시작 보호막 (최대 체력 ${pct(v)})`;
     case 'activeShield': return `발동 ${def.name ?? ''}: ${BALANCE.provisional.gear.activeShieldSeconds}초 받는 피해 −${pct(v)} (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
-    case 'activeBurst': return `발동 ${def.name ?? ''}: 기본 공격 ${v}회분 피해 (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
+    case 'activeBurst': return `발동 ${def.name ?? ''}: 일반 공격 ${v}회분 피해 (전투 [장비], ${BALANCE.provisional.combat.gearCooldownSeconds}초마다)`;
   }
 }
 
@@ -506,7 +510,7 @@ export function sellGearEntry(save: SaveData, uid: string, nowMs: number = Date.
 /** 장비 런 로그 → 알림 문구 (얻음·자동 판매만) */
 export function gearNoticeOf(rec: GearRecord, faction: Pick<FactionConfig, 'gearSlotNames'>): { eyebrow: string; title: string; meta?: string } | null {
   const name = gearName({ grade: rec.grade as GearGrade, kind: rec.gearKind as GearKind }, faction);
-  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '떠돌이 상인' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '모험 드롭';
+  const where = rec.source === 'shop' ? '상점' : rec.source === 'wanderer' ? '우라하라' : rec.from === 'boss' ? '보스 드롭' : rec.from === 'elite' ? '강적 드롭' : '모험 드롭';
   if (rec.kind === 'get') return { eyebrow: '장비', title: `새 장비: ${name}`, meta: `${where} · ★${rec.star ?? 1} · 가방 장비 탭에서 착용` };
   if (rec.kind === 'autoSell') return { eyebrow: '장비', title: `가방 가득 → ${name} 판매`, meta: `골드 +${rec.gold ?? 0}` };
   return null;

@@ -1,4 +1,4 @@
-// C.239 proof (GDD 159장 UI 검수 1차): 가방 소모품·스킨 탭 · 상점 약/전투 소모품 탭 · 떠돌이 상인 n/1개 구매 가능 · 탑 다음 층 ⓘ ·
+// C.239 proof (GDD 159장 UI 검수 1차): 가방 소모품·스킨 탭 · 상점 약/전투 소모품 탭 · 우라하라 n/1개 구매 가능 · 탑 다음 층 ⓘ ·
 // 번호 쟁탈전 목록 · 방 상태 ⓘ 창 · 설정 화면 탭 · 모험 출발 화면. 테스트 모드(?test=1) 사신 세이브, 1배 844×390.
 // 실행: node scripts/c239-proof.cjs (C239_URL=<이미 떠 있는 주소>, C239_OUT=<폴더>) — 캡처 docs/captures/c239/
 const { spawn } = require('node:child_process');
@@ -79,7 +79,7 @@ async function startServer() {
     await shot('04-상점-전투소모품.png');
     await toRoom();
 
-    // ⑤ 떠돌이 상인 (테스트 패널 불러오기 → 지금 부르기)
+    // ⑤ 우라하라 (테스트 패널 불러오기 → 지금 부르기)
     await btn('더보기', 500);
     await btn('테스트', 800, '.bha-homedock__tray');
     await click('.bha-lcd .bha-viewtitle__btn', 400);
@@ -90,7 +90,7 @@ async function startServer() {
     await click('.bha-prop--outside', 1500);
     await click('.bha-worldmap [data-place="market"]', 2500);
     await click('.bha-market [data-spot="wanderer"]', 1000);
-    await shot('05-떠돌이상인.png');
+    await shot('05-우라하라.png');
     await toRoom();
 
     // ⑥ 도전의 탑 다음 층 카드 + ⓘ

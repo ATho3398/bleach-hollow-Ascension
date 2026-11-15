@@ -1,5 +1,5 @@
 // 온천 화면 (GDD 123장 4, C.198): 월드맵 [온천](GDD 153장 1 — 옛 장터 안 칸)으로 들어오는 따로 된 공간. 들어와 있는 동안 1초에 체력 +10%·컨디션 +10·배부름 −1 (GDD 139장 2) (앱을 꺼도 유지),
-// 체력 상한(빈사면 10%)이나 배부름 0 이면 저절로 방으로. 뒤로·[방으로 돌아가기] = 나오기.
+// 평소 온천은 가득 차도 머문다(GDD v6.005 — 가득 뒤엔 방과 같은 속도로 배가 꺼짐), 튜토리얼 온천만 가득 차면 저절로 나온다. 뒤로·[방으로 돌아가기] = 나오기.
 // C.201 (GDD 128장 6): 화면 전체가 온천 장면, 캐릭터가 걸어 들어와 탕에 앉는다, [방으로 돌아가기]·ⓘ(쉬는 중 설명) = 왼쪽 위 작게, 체력·배부름 = 방처럼 머리 위 상태 창.
 // 배경 그림 키 scene.spa·온천 모션은 사용자 그림 대기 — 없으면 임시 배경(탕 도형)과 CSS 임시 연출(몸 아래쪽을 물이 가림). 이름은 종족 설정 worldmap.spaName(월드맵 장소, GDD 153장 1).
 import { BALANCE } from '../config/balance';
@@ -302,7 +302,9 @@ export function spaView(root: HTMLElement, faction: FactionConfig, save: SaveDat
     lead: `${name}에서 쉬는 중이다.`,
     groups: [
       { title: '쉬는 동안', lines: spaRateLines(spaRateOf(n.spa), faction.fullnessName) },
-      { title: '저절로 나올 때', lines: [fixParticles(`체력과 컨디션이 둘 다 다 차거나 ${faction.fullnessName}이(가) 0 이 되면 방으로 돌아간다`)] },
+      n.spa?.fast
+        ? { title: '저절로 나올 때', lines: ['체력과 컨디션이 둘 다 다 차면 바로 나간다'] }
+        : { title: '다 찬 뒤', lines: [fixParticles(`체력과 컨디션이 다 차도 그대로 쉴 수 있다 — 그 뒤엔 방에 있을 때처럼 ${faction.fullnessName}만 천천히 줄어든다`), fixParticles(`${faction.fullnessName}이(가) 0 이면 회복이 멈춘다`), '[돌아가기]로 나간다'] },
       ...(n.collapsed ? [{ title: '빈사', lines: [`체력은 ${dyingPct}% 까지만 찬다`, '구급상자로 풀어야 더 찬다'] }] : []),
     ],
   }));

@@ -12,7 +12,7 @@ import type { FormDef, Stats } from '../src/data/schema';
 
 const hollow = getFaction('hollow');
 const fb = hollow.room?.characterArt ?? '';
-const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, spd: 0, def: 0, [k]: 5 });
+const ev = (k: keyof Stats): Stats => ({ atk: 0, int: 0, hp: 0, spr: 0, aspd: 0, bspd: 0, def: 0, [k]: 5 });
 
 describe('C.374 짐승형 (GDD 228장 2)', () => {
   it('게임 뼈대 beast: 검사 통과, 색 외형 4 = 청록(원래)·노랑·주황·보라, 몸·관절·동작은 하나, 그림 파일 있음', () => {

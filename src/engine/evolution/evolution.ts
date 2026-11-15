@@ -2,6 +2,7 @@
 // 진화 타이밍 = 그 단계에서 원정으로 걸은 칸 수(숨김). 흡수는 진화 결과(속성·노력치·히든)만 정한다. 어떤 진화체로 가는지는 judge.ts.
 // 사망·퇴화·단계 스킵은 없다. 진화는 둥지로 돌아올 때 자동으로 일어난다(원정 중에는 일어나지 않는다).
 
+import { combatKitOf, type KitState } from '../transcendKit';
 import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formHasUniqueRelease, formName, formRelease, getForm, tryGetForm } from '../../data/evolution';
@@ -10,9 +11,11 @@ import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
-import type { BuildState } from '../absorb/build';
+import { cloneBuild, familyCategory, familyTable, type BuildState } from '../absorb/build';
+import { resolveMaxChain } from '../faction';
+import { tryGetTranscendent } from '../../data/transcendents';
 import type { EvolutionRecord } from '../runLog';
-import { abilityEffectsOf, equippedAbilitiesOf, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
+import { abilityEffectsOf, equippedAbilitiesOf, type FormAbilities, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
 
@@ -62,16 +65,118 @@ export interface EvolutionState {
   bondCare?: number;
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
+  /** 마지막 모습으로 굳었다 (GDD 12-4 v6.028, C.429 — 초월자 트랙): 진화 판정·걸음 수·임박 알림 없음, 노력치 상한 = 마지막 단계 상한.
+   *  트랙 종류 설정(evolution: false)에서 정해 넣는다 — 엔진은 이 표시만 본다. 없으면 false */
+  final?: boolean;
   /** 특성 보유·장착 (C.220, GDD 126-1 수정): 진화할 때 얻고 환생해도 넘긴다. 없으면(점검 도구가 만든 옛 모양) 지금 진화체 특성을 전부 쓴다 */
   abilities?: AbilityLoadout;
   /** 아란칼화 / 참백도 구상화를 깼다 (C.220, GDD 126장 3): 이번 생의 레스렉시온/만해 해금 · 외형(종족 설정 ascension.lookChange). 환생하면 false */
   ascended?: boolean;
+  /** 전투 기반 (GDD 12-4 v6.037, C.435 — 초월자 트랙만): 합체 순간 저장한 기반별 빌드와 지금 고른 기반. 없으면 캐릭터(자기 진화체 그대로) */
+  basis?: CombatBasis;
+  /** 초월 특성 (GDD 12-4 v6.039, C.436 — 형식 84): 가진 초월 특성의 초월자 id. 전투 기반과 상관없이 늘 붙는다(기반을 바꿔도 그대로, 기반 특성 칸과 별도).
+   *  효과는 초월자 데이터 trait.effect 에서 읽는다. 없으면 빈 목록 */
+  transcendentTraits?: string[];
+  /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441 — 형식 85): 초월자 트랙만 — 초월자 id·블록 강화 단계. '초월자' 전투 기반이고 그 초월자 데이터에 kit 이 있으면
+   *  일반 블록 대신 전용 블록만 나온다(블록 [미정] 초월자는 이어받은 빌드 그대로). 없으면 캐릭터 */
+  kit?: KitState;
   /** 테스트 모드(GDD 38장·48장 5번) 속성 피해 입력 %: 속성 id → %. 진짜 게임에는 없다(출처가 생기면 elementDamageOf 에 더한다) */
   testElementDamage?: Record<string, number>;
 }
 
+/** 전투 기반 키: 'transcendent'(초월자 — 합친 빌드) 또는 키웠던 캐릭터의 종족 id (GDD 12-4 v6.037) */
+export const TRANSCENDENT_BASIS = 'transcendent';
+
+/** 전투 기반 하나의 빌드 (GDD 12-4 v6.037): 공격 분류·속성을 정하는 진화체(종족·진화체·진화 기록·아란칼화) + 블록 빌드(보유·장착·속성 강화) + 특성. 능력치는 정하지 않는다(초월자 값 그대로) */
+export interface CombatBasisBuild {
+  factionId: string;
+  formId: string | null;
+  formHistory: string[];
+  ascended?: boolean;
+  build: BuildState;
+  abilities: AbilityLoadout;
+}
+
+/** 전투 기반 상태: 지금 고른 기반(current)의 빌드·특성은 트랙의 build·evolution.abilities 에 들어 있고(편집하면 거기에), builds[current] 는 바꿀 때 갱신한다 */
+export interface CombatBasis {
+  current: string;
+  builds: Record<string, CombatBasisBuild>;
+}
+
+export function cloneBasisBuild(b: CombatBasisBuild): CombatBasisBuild {
+  return { ...b, formHistory: [...b.formHistory], build: cloneBuild(b.build), abilities: cloneLoadout(b.abilities) };
+}
+
+export function cloneBasis(b: CombatBasis): CombatBasis {
+  return { current: b.current, builds: Object.fromEntries(Object.entries(b.builds).map(([k, v]) => [k, cloneBasisBuild(v)])) };
+}
+
+/** 지금 전투 기반 (없으면 null = 자기 진화체 그대로) */
+export function currentBasisOf(e: Pick<EvolutionState, 'basis'>): CombatBasisBuild | null {
+  return e.basis?.builds[e.basis.current] ?? null;
+}
+
+/** 전투에 쓰는 진화 상태: 능력치 밖의 것(공격 분류·속성·자기 속성 보정·콤보·특성·아란칼화)은 전투 기반의 진화체로 (GDD 12-4 v6.037) */
+export function combatEvolutionOf(e: EvolutionState): EvolutionState {
+  const b = currentBasisOf(e);
+  if (!b) return e;
+  const out: EvolutionState = { ...e, formId: b.formId, formHistory: b.formHistory };
+  if (b.ascended) out.ascended = true; else delete out.ascended;
+  return out;
+}
+
+/** 지금 전투에 초월자 전용 블록이 실리는가 (GDD 12-4 v6.048): 초월자 트랙 + '초월자' 전투 기반 + 그 초월자 데이터에 kit. 흡수 화면 제한(노력치·놓아주기만)도 이 조건 */
+export function kitActive(e: Pick<EvolutionState, 'kit' | 'basis'>): boolean {
+  if (!e.kit || (e.basis?.current ?? TRANSCENDENT_BASIS) !== TRANSCENDENT_BASIS) return false;
+  return combatKitOf(e.kit) !== null;
+}
+
+/** 초월 특성 칸 (GDD 12-4 v6.039, C.436): 가진 초월 특성(초월자 id 순서) — 데이터에 없는 id 는 뺀다 */
+export function transcendentTraitsOf(e: Pick<EvolutionState, 'transcendentTraits'>): { id: string; name: string; description: string; provisional: boolean; empty: boolean }[] {
+  return (e.transcendentTraits ?? []).flatMap((id) => {
+    const t = tryGetTranscendent(id)?.trait;
+    if (!t) return [];
+    const fx = t.effect;
+    const empty = Object.keys(fx.abilities ?? {}).length === 0 && !fx.dealt && !fx.taken && !fx.maxHp && !fx.blockCrit;
+    return [{ id, name: t.name, description: t.description, provisional: t.provisional === true, empty }];
+  });
+}
+
+/** 초월 특성 효과 합 (데이터 trait.effect): 진화 특성 id → 세기(겹치면 더함) + 탈착 특성 모양 수치 */
+export function transcendentTraitEffects(e: Pick<EvolutionState, 'transcendentTraits'>): { abilities: Record<string, number>; totals: { dealt: number; taken: number; maxHp: number; blockCrit: number } } {
+  const abilities: Record<string, number> = {};
+  const totals = { dealt: 0, taken: 0, maxHp: 0, blockCrit: 0 };
+  for (const id of e.transcendentTraits ?? []) {
+    const fx = tryGetTranscendent(id)?.trait.effect;
+    if (!fx) continue;
+    for (const [k, v] of Object.entries(fx.abilities ?? {})) abilities[k] = (abilities[k] ?? 0) + v;
+    totals.dealt += fx.dealt ?? 0;
+    totals.taken += fx.taken ?? 0;
+    totals.maxHp += fx.maxHp ?? 0;
+    totals.blockCrit += fx.blockCrit ?? 0;
+  }
+  return { abilities, totals };
+}
+
+/** 전투에 실리는 특성 묶음 (C.436): 전투 기반 진화체의 칸에 낀 특성(옛 모양이면 진화체 특성 전부) + 초월 특성(기반 무관). 전투·상태 화면 치명 계산이 같이 쓴다 */
+export function combatAbilitiesOf(stat: EvolutionState): FormAbilities {
+  const e = combatEvolutionOf(stat);
+  const form = e.formId ? tryGetForm(e.formId) : undefined;
+  const fa = e.abilities ? equippedAbilitiesOf(form ?? null, e.abilities) : formAbilitiesOf(form ?? null, e.ev, e.ability);
+  const extra = transcendentTraitEffects(stat).abilities;
+  const ids = Object.keys(extra);
+  if (ids.length > 0) {
+    const x = equippedAbilitiesOf(form ?? null, { owned: extra, equipped: ids, slots: ids.length, tier4Ever: false });
+    fa.dispositions.push(...x.dispositions);
+    fa.elements.push(...x.elements);
+    fa.uniques.push(...x.uniques);
+    fa.physAbilities.push(...x.physAbilities.filter((p) => !fa.physAbilities.includes(p)));
+  }
+  return fa;
+}
+
 export function zeroStats(): Stats {
-  return { hp: 0, atk: 0, int: 0, def: 0, spr: 0, spd: 0 };
+  return { hp: 0, atk: 0, int: 0, def: 0, spr: 0, aspd: 0, bspd: 0 };
 }
 
 export function newEvolution(stageSeed = 0): EvolutionState {
@@ -82,7 +187,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -91,6 +196,11 @@ export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
 
 export function isMaxTier(e: EvolutionState): boolean {
   return e.tierIndex >= MAX_TIER_INDEX;
+}
+
+/** 노력치 상한을 정하는 단계: 마지막 모습으로 굳은 몸(final)은 마지막 단계 상한 (GDD 12-4 v6.028) */
+export function capTierOf(e: Pick<EvolutionState, 'tierIndex' | 'final'>): number {
+  return e.final ? MAX_TIER_INDEX : e.tierIndex;
 }
 
 /** 노력치 상한 (그 단계): 합계와 능력치 하나 */
@@ -125,7 +235,7 @@ export function addEvFree(e: EvolutionState, gain: Partial<Record<StatId, number
 
 /** 노력치를 더한다 (상한까지만 — 상한 밖 몫 evFree 는 세지 않는다). 실제로 오른 양을 돌려준다 */
 export function addEv(e: EvolutionState, gain: Partial<Record<StatId, number>>, blocked?: Partial<Record<StatId, number>>): Partial<Record<StatId, number>> {
-  const cap = evCaps(e.tierIndex);
+  const cap = evCaps(capTierOf(e));
   const out: Partial<Record<StatId, number>> = {};
   const mult = evGainMultOf(e.abilities); // 허우적·마구잡이 (GDD 149장 3·4)
   const counted = evCounted(e);
@@ -191,7 +301,7 @@ export function recordEvolutionPractice(e: EvolutionState): void {
 
 /** 다음 진화까지 필요한 걸음 수 (마지막 단계면 null). 화면에는 보이지 않는다 */
 export function stepsNeeded(e: EvolutionState): number | null {
-  return isMaxTier(e) ? null : (EV.stepsNeeded[e.tierIndex] ?? null);
+  return isMaxTier(e) || e.final ? null : (EV.stepsNeeded[e.tierIndex] ?? null);
 }
 
 export function canEvolve(e: EvolutionState): boolean {
@@ -279,7 +389,7 @@ export function tierDisplayName(e: Pick<EvolutionState, 'formHistory' | 'tierInd
 export const STAT_MAX: number = SX.statMax;
 
 /** 지금 능력치 = (종족값 + 노력치 + 환생 계승) × (1 + 슬롯 보너스) (GDD 20-4·22-7·22-3·52), 능력치마다 STAT_MAX 에서 멈춘다.
- *  statBonus = 붕옥 해방·초월체 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
+ *  statBonus = 붕옥 해방·초월자 보유 패시브 (0.05 = +5%, 반올림). 0 이면 예전과 같은 값 */
 export function currentStats(e: EvolutionState, factionId: string, statBonus = 0): Stats {
   const base = baseStatsOf(e, factionId);
   for (const s of STAT_IDS) {
@@ -382,10 +492,15 @@ export function comboRulesOf(e: Pick<EvolutionState, 'tierIndex'>): ComboRule[] 
 /** 고유 특성 효과를 전투 파라미터에 (BALANCE.provisional.abilities) */
 function applyAbility(params: Partial<CombatParams>, ability: StatId | null): void {
   if (!ability) return;
-  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed', number>>;
+  const a = BALANCE.provisional.abilities[ability] as Partial<Record<'maxHp' | 'physicalPower' | 'blockDamage' | 'blockSpawn' | 'physicalTaken' | 'specialTaken' | 'attackSpeed' | 'attackSecondsCut' | 'spawnSecondsCut', number>>;
   if (a.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * a.maxHp;
   if (a.blockSpawn) params.blockSpawnMultiplier = (params.blockSpawnMultiplier ?? 1) * a.blockSpawn;
   if (a.attackSpeed) params.attackSpeedMultiplier = (params.attackSpeedMultiplier ?? 1) * a.attackSpeed;
+  // 속도 옵션 = 간격 −n초 (GDD v6.055 8절, C.447)
+  if (a.attackSecondsCut) params.attackSecondsCut = (params.attackSecondsCut ?? 0) + a.attackSecondsCut;
+  if (a.spawnSecondsCut) params.spawnSecondsCut = (params.spawnSecondsCut ?? 0) + a.spawnSecondsCut;
+  // 지능 고유 특성 (GDD v6.055 8절, C.446): 블록 피해 배율 — 실패형 줄기 배율과 곱한다
+  if (a.blockDamage) params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * a.blockDamage;
   const power = { physical: 1, special: 1, mixed: 1, ...params.categoryPower };
   const taken = { physical: 1, special: 1, mixed: 1, ...params.categoryTaken };
   if (a.physicalPower) power.physical *= a.physicalPower;
@@ -396,17 +511,27 @@ function applyAbility(params: Partial<CombatParams>, ability: StatId | null): vo
 }
 
 /**
- * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월체 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
+ * 진화 상태를 전투 파라미터에 싣는다: 세계 기준 능력치·내 능력치(종족값+노력치, 붕옥·초월자 보너스 statBonus)·내 속성·자기 속성 보정·고유 특성·콤보·체인 상한.
  * 전투 엔진은 종족을 모르고 이 값만 쓴다. buildCombatParams(빌드) 뒤에 부른다
  */
-export function applyEvolutionToParams(params: Partial<CombatParams>, e: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
+export function applyEvolutionToParams(params: Partial<CombatParams>, stat: EvolutionState, factionId: string, statBonus = 0, trained = false): void {
+  // 전투 기반 (GDD 12-4 v6.037): 능력치는 이 트랙 값 그대로(stat), 나머지는 고른 기반의 진화체로(e). 기반 종족이 다르면 블록 계열 분류·체인 상한도 그 종족 설정으로
+  const e = combatEvolutionOf(stat);
+  const statFaction = factionId;
+  const basisFaction = currentBasisOf(stat)?.factionId;
+  if (basisFaction && basisFaction !== factionId) {
+    params.families = familyTable(basisFaction);
+    params.maxChain = resolveMaxChain(getFaction(basisFaction));
+    if (params.skills) params.skills = params.skills.map((sk) => (sk.family ? { ...sk, category: familyCategory(basisFaction, sk.family) } : sk));
+    factionId = basisFaction;
+  }
   params.combos = comboRulesOf(e);
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
   // 내 쪽 기준은 세계 기준(고정). 적 기준(refStat)은 원정 난이도가 정한다 (src/engine/difficulty.ts) — 여기서 내 단계로 덮어쓰지 않는다
   params.playerRefStat = worldRefStat();
-  params.playerStats = currentStats(e, factionId, statBonus);
+  params.playerStats = currentStats(stat, statFaction, statBonus);
   params.playerElements = playerElementsOf(e);
   params.stabMultiplier = stabOf(e);
   // 해방 (GDD 83장 → 126장 3, C.220): 아란칼화 / 참백도 구상화를 깨면 고유 효과(레스렉시온/만해). 수련 완료(22-4)면 능력치 배율이 더 크다
@@ -417,7 +542,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.liberationChainSpeed = unique ? LB.uniqueChainSpeed : 1;
   params.liberationStatMultiplier = unique ? (trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier) : 1;
   // 특성 (GDD 39장 → 126-1 수정): 칸에 낀 것만. 보유·장착이 없는 옛 모양(점검 도구)이면 지금 진화체 특성 전부
-  const fa = e.abilities ? equippedAbilitiesOf(form ?? null, e.abilities) : formAbilitiesOf(form ?? null, e.ev, e.ability);
+  // 초월 특성 (GDD 12-4 v6.039, C.436): 기반과 상관없이 같이 실린다(combatAbilitiesOf)
+  const fa = combatAbilitiesOf(stat);
   for (const d of fa.dispositions) applyAbility(params, d);
   // 블록 풀 성향 보정 (GDD 44장 4번)
   params.dispositions = [...fa.dispositions];
@@ -428,7 +554,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
   params.physBlockSpawnSeconds = physSpawnSecondsFor(params.physBlock?.element ?? null);
   params.elementDamage = elementDamageOf(e);
   // 실패형 줄기 (GDD 49-8 1번): 블록 관련 피해 배율
-  params.blockDamageMultiplier = isFailLine(e) ? EV.failLine.blockDamage : 1;
+  params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * (isFailLine(e) ? EV.failLine.blockDamage : 1);
   // 공허 블록 피해 (GDD 101장 3번): 히든 진화체(진화체 데이터 hidden) 몸이면 큰 피해, 아니면 기본 공격 1회분
   const CB = BALANCE.provisional.combat;
   params.voidPowerInAttacks = form?.hidden ? CB.voidPowerHiddenInAttacks : CB.voidPowerInAttacks;
@@ -442,12 +568,30 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, e: Evoluti
     params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
   }
   applyDetachedTraits(params, detachedOf(e.abilities));
+  applyTraitTotals(params, transcendentTraitEffects(stat).totals);
+  // 초월자 전용 블록 (GDD 12-4 v6.048, C.441): '초월자' 기반이면 일반 블록(기본·흡수·물공·콤보) 대신 전용 블록만 + 기본 회피율 + 해방 수치 = 진화체 만해와 같음
+  const kit = kitActive(stat) ? combatKitOf(stat.kit) : null;
+  params.kit = kit;
+  if (kit) {
+    params.skills = [];
+    params.physBlock = null;
+    params.combos = [];
+    if (kit.evadeChance > 0) params.evadeChance = Math.max(params.evadeChance ?? 0, kit.evadeChance);
+    params.liberationUnique = true;
+    params.liberationAttackSpeed = LB.uniqueAttackSpeed;
+    params.liberationChainSpeed = LB.uniqueChainSpeed;
+    params.liberationStatMultiplier = trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier;
+  }
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
 export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly string[]): void {
   if (ids.length === 0) return;
-  const t = detachTotals(ids);
+  applyTraitTotals(params, detachTotals(ids));
+}
+
+/** 탈착 특성 모양 수치를 전투 파라미터에 (탈착 특성·초월 특성 공용): 주는/받는 피해(변이의 기운 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
+export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: number; taken: number; maxHp: number; blockCrit: number }): void {
   if (t.dealt || t.taken) {
     const fx = { ...(params.abilityEffects ?? {}) };
     fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + t.dealt, taken: (fx.mutation?.taken ?? 0) + t.taken };

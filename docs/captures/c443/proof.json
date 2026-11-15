@@ -1,0 +1,493 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-gauge-20-hogyoku.png",
+    "02-pc-gauge-100-no-hogyoku.png",
+    "03-pc-gauge-34-ready.png",
+    "04-pc-fusion-kido-fragor.png",
+    "05-pc-fragor-minus5.png",
+    "06-pc-below30-release.png",
+    "07-pc-bag-skin-transcendent.png",
+    "08-pc-skin-hyeonhyeon-detail.png",
+    "09-phone-gauge-34-ready.png",
+    "10-phone-fusion-kido-fragor.png",
+    "11-phone-below30-release.png",
+    "12-phone-bag-skin-transcendent.png"
+  ],
+  "facts": {
+    "pc": {
+      "start": 20,
+      "low": {
+        "risk": 20,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:hogyoku",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 20",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월",
+          "붕옥"
+        ],
+        "log": []
+      },
+      "afterHogyoku": {
+        "risk": 30,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 30",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월"
+        ],
+        "log": []
+      },
+      "full": {
+        "risk": 100,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 100",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "귀도"
+        ],
+        "log": []
+      },
+      "fullSeen": [
+        "kit:kido",
+        "kit:kido"
+      ],
+      "ready": {
+        "risk": 34,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:hogyoku",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 34",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월",
+          "붕옥"
+        ],
+        "log": []
+      },
+      "mode": {
+        "risk": 34,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:fragor",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 34",
+        "chipFocus": true,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 0/5",
+        "stackHidden": true,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "프라고르"
+        ],
+        "log": []
+      },
+      "afterFragor": {
+        "risk": 55,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 5,
+        "tray": [
+          "kit:kido",
+          "kit:fragor",
+          "kit:fragor",
+          "kit:fragor"
+        ],
+        "chip": "붕옥 감응도 55",
+        "chipFocus": true,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 0/5",
+        "stackHidden": true,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "프라고르",
+          "프라고르",
+          "프라고르",
+          "귀도"
+        ],
+        "log": []
+      },
+      "end": {
+        "risk": 28,
+        "active": false,
+        "endless": false,
+        "enters": 1,
+        "exits": 1,
+        "spent": 10,
+        "tray": [
+          "kit:kido",
+          "kit:hogyoku",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 28",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 0/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 204,
+          "sw": 204,
+          "cw": 204
+        },
+        "blockNames": [
+          "귀도",
+          "붕옥",
+          "귀도"
+        ],
+        "log": []
+      },
+      "skinCards": [
+        "태초장착",
+        "현현그림 대기장착",
+        "Unknown;03398장착",
+        "디버깅그림 대기장착"
+      ],
+      "detail": "캐릭터 스킨현현그림 대기 — 지금은 자리 표시 모습이다. 그림이 오면 바뀐다.입으면 단계와 상관없이 방·모험·전투 모두 스킨 그림으로 바뀐다. 능력치는 그대로.더 있음닫기장착"
+    },
+    "phone": {
+      "start": 20,
+      "low": {
+        "risk": 20,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:hogyoku",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 20",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월",
+          "붕옥"
+        ],
+        "log": []
+      },
+      "afterHogyoku": {
+        "risk": 30,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 30",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월"
+        ],
+        "log": []
+      },
+      "full": {
+        "risk": 100,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 100",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "귀도",
+          "귀도"
+        ],
+        "log": []
+      },
+      "fullSeen": [
+        "kit:kido",
+        "kit:kido"
+      ],
+      "ready": {
+        "risk": 34,
+        "active": false,
+        "endless": false,
+        "enters": 0,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:hogyoku",
+          "kit:kyoka",
+          "kit:kido",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 34",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": false,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 2/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "귀도",
+          "귀도",
+          "경화수월",
+          "붕옥"
+        ],
+        "log": []
+      },
+      "mode": {
+        "risk": 34,
+        "active": true,
+        "endless": true,
+        "enters": 1,
+        "exits": 0,
+        "spent": 0,
+        "tray": [
+          "kit:fragor",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:kido",
+          "kit:fragor"
+        ],
+        "chip": "붕옥 감응도 34",
+        "chipFocus": true,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": true,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 0/5",
+        "stackHidden": true,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "프라고르",
+          "귀도",
+          "귀도",
+          "귀도",
+          "귀도",
+          "프라고르"
+        ],
+        "log": []
+      },
+      "end": {
+        "risk": 28,
+        "active": false,
+        "endless": false,
+        "enters": 1,
+        "exits": 1,
+        "spent": 5,
+        "tray": [
+          "kit:kido",
+          "kit:hogyoku",
+          "kit:kido"
+        ],
+        "chip": "붕옥 감응도 28",
+        "chipFocus": false,
+        "btn": "붕옥 융합",
+        "btnDisabled": true,
+        "mode": false,
+        "libName": "붕옥 융합",
+        "stackChip": "영창 0/5",
+        "stackHidden": false,
+        "foe": {
+          "text": "테스트 적 A",
+          "w": 186,
+          "sw": 200,
+          "cw": 200
+        },
+        "blockNames": [
+          "귀도",
+          "붕옥",
+          "귀도"
+        ],
+        "log": []
+      },
+      "skinCards": [
+        "태초장착",
+        "현현그림 대기장착",
+        "Unknown;03398장착",
+        "디버깅그림 대기장착"
+      ]
+    }
+  }
+}

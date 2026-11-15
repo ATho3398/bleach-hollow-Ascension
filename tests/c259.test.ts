@@ -103,8 +103,9 @@ describe('176장 빈사 칩 · 177장 방 위 띠 삭제', () => {
     expect(room).toContain('statusInfoButton(() => statusChips(n, faction), faction, n)'); // C.318: 공용 부품 statusBox
     expect(read('src/ui/bha/statusBox.ts')).toContain('lines: [`남은 시간 ${dyingClock(dyingLeftMs(nest, Date.now()) ?? 0)}`, CARE_STATUS_HINTS.collapsed]');
   });
-  it('빈사·쓰러짐 자세에서 머리 위 자리가 없으면 칩을 옆 위로', () => {
-    expect(room).toContain("chipRow.classList.add('is-side'"); // C.284 (GDD 183장 화면 A, v2 S01~S05): 칩 줄 한 묶음
-    expect(read('src/ui/bha/room.css')).toContain('.bha-room__chips.is-side {');
+  it('v6.004 3-2: 상태이상이 생겨도 칩은 옆으로 가지 않고 이름표 아래 같은 자리 (옛 .is-side 삭제, 상태이상 줄은 --state-h 만큼 아래로)', () => {
+    expect(room).not.toContain("chipRow.classList.add('is-side'");
+    expect(read('src/ui/bha/room.css')).not.toContain('.bha-room__chips.is-side {');
+    expect(read('src/ui/bha/room.css')).toContain('transform: translate(-50%, calc(-100% + var(--state-h, 0px)));');
   });
 });

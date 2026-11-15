@@ -16,6 +16,10 @@ import {
 } from '../src/game';
 import { remapOldFormId } from '../src/saveTier4';
 import { critChances } from '../src/ui/lcdScreens';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const wonBattle = (won = true) => {
   const c = createCombat(1, { enemy: getEnemy('test-a'), params: {} });
@@ -28,7 +32,7 @@ function old56(o: { tierIndex: number; history: string[]; slots?: number; factio
   const s = JSON.parse(JSON.stringify(newSaveData(o.factionId ?? 'hollow', 1000))) as Record<string, any>;
   s.meta.format = 56;
   delete s.evolution.abilities;
-  Object.assign(s.evolution, { tierIndex: o.tierIndex, formHistory: o.history, formId: o.history[o.history.length - 1] ?? null, ability: 'atk', ev: { hp: 5, atk: 9, int: 2, def: 0, spr: 0, spd: 0 } });
+  Object.assign(s.evolution, { tierIndex: o.tierIndex, formHistory: o.history, formId: o.history[o.history.length - 1] ?? null, ability: 'atk', ev: { hp: 5, atk: 9, int: 2, def: 0, spr: 0, aspd: 0 } });
   s.formDex = [...o.history];
   const b = newBuild();
   while (b.slots.length < (o.slots ?? 3)) b.slots.push(null);
@@ -164,7 +168,7 @@ describe('치명 두 값 (GDD 126-1 확정 ②, 142장 7)', () => {
 describe('세이브 형식 57 → 58 (GDD 142장 9, 123장 6 — C.223 이 57 을 먼저 씀)', () => {
   it('형식 58 이상 · 문턱 54 고정 · 단계 표에 57 이 있다', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(58);
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54);
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[57]).toBe('function');
   });
   it('옛 5단계 → 같은 속성·타입 4단계 + 아란칼화를 깬 것으로(외형 유지), 옛 특성 → 보유 목록, 칸 = 새 규칙, 흡수 칸 최대 6', () => {

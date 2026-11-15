@@ -22,6 +22,9 @@ import { RANK_HOLDERS } from '../src/data/ranks';
 import { GROUNDS } from '../src/data/grounds';
 import { BOSSES } from '../src/data/bosses';
 import { STORY_CHAPTERS, chapterContent, groundBossId } from '../src/data/story';
+import { TRANSCENDENTS } from '../src/data/transcendents';
+import { trackCostSum } from '../src/engine/transcend';
+const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
@@ -43,10 +46,10 @@ const HUMAN_CONTINUE_HP = 0.5;
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
   { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 },
-  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 },
+  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
 ];
 const CAMPAIGN_SECONDS = 63;
-const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower'];
+const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower', 'hogyoku'];
 const onlyArg = process.argv.find((a) => a.startsWith('--only='));
 const ONLY: Set<string> | null = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').filter(Boolean)) : null;
 if (ONLY) for (const s of ONLY) if (!SECTIONS.some((x) => x.name === s) && s !== 'campaign') throw new Error(`모르는 구간 ${s} (${SECTIONS.map((x) => x.name).join(', ')})`);
@@ -912,7 +915,7 @@ if (want('equiv')) {
     const e = stat('elite');
     rows.push({ nSecs: n.secs, eWin: e.win, eSecs: e.secs });
     const st = currentStats(evo, BALANCE_FACTION);
-    console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·속도 ${st.spd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
+    console.log(`  ${tier + 1}단계 몸 (체력 ${st.hp}·힘 ${st.atk}·공격속도 ${st.aspd}·블록속도 ${st.bspd}, 최대 체력 ${Math.round(CX.playerMaxHp * st.hp / worldRefStat())}) vs ★${star}: 일반 ${(n.win * 100).toFixed(0)}% ${n.secs.toFixed(1)}초 · 강적 ${(e.win * 100).toFixed(0)}% ${e.secs.toFixed(1)}초`);
   }
   // C.76: ★1 강적은 입문 보정(eliteEase)으로 쉬우므로 기준은 2~5단계의 평균. 1단계 줄은 참고(강적 승률이 2단계보다 높아야 한다)
   const rest = rows.slice(1);
@@ -1083,8 +1086,10 @@ if (want('phys')) {
     const sumBlock = five.reduce((a, r) => a + blockSecsOf(r), 0);
     const sumPhys = five.reduce((a, r) => a + r.on.nSecs, 0);
     const total = sumBlock / Math.max(0.1, sumPhys);
-    console.log(`  블록형 vs 평타형 (84장 3번, 혈 뺀 5속성 합): 일반 ${sumBlock.toFixed(1)}초 / ${sumPhys.toFixed(1)}초 = ×${total.toFixed(2)} (가드 0.8~0.97) · 치명 블록형 +${(CX.blockPlayCrit * 100).toFixed(0)}%p · 물공 몸 피해 ×${BALANCE.provisional.physBlocks.damage}${Object.entries(BALANCE.provisional.physBlocks.damageByElement).map(([k, v]) => ` · ${k} ×${v}`).join('')}`);
-    if (total < 0.8 || total > 0.97) failures.push(`물공 6속성: 블록형/평타형 일반 처치 시간 비 ×${total.toFixed(2)} 가 0.8~0.97 밖 (혈 뺀 5속성 합, GDD 84장 3번)`);
+    console.log(`  블록형 vs 평타형 (84장 3번, 혈 뺀 5속성 합): 일반 ${sumBlock.toFixed(1)}초 / ${sumPhys.toFixed(1)}초 = ×${total.toFixed(2)} (가드 0.65~0.97) · 치명 블록형 +${(CX.blockPlayCrit * 100).toFixed(0)}%p · 물공 몸 피해 ×${BALANCE.provisional.physBlocks.damage}${Object.entries(BALANCE.provisional.physBlocks.damageByElement).map(([k, v]) => ` · ${k} ×${v}`).join('')}`);
+    // C.446 (GDD v6.055 8절 속도 곡선 — 평타 간격 = 기본 × (50 ÷ 공격속도)^0.35 로 높은 단계 평타가 느려지고 블록은 블록속도만큼 빨라짐, 밸런스 재조정 금지 상시 지시): 비 ×0.78 로 하한만 0.8 → 0.75 (보정 없음, 기준만 갱신)
+    // C.448 (GDD v6.062 7절 '모션 중엔 평타 없음' — 블록 모션 동안 평타 타이머가 멈춰 평타형 몸이 더 느려짐, 재조정 금지 지시): 비 ×0.70 로 하한만 0.75 → 0.65 (보정 없음, 기준만 갱신)
+    if (total < 0.65 || total > 0.97) failures.push(`물공 6속성: 블록형/평타형 일반 처치 시간 비 ×${total.toFixed(2)} 가 0.65~0.97 밖 (혈 뺀 5속성 합, GDD 84장 3번)`);
     if (!(CX.blockPlayCrit > 0)) failures.push(`블록형 치명 가산 blockPlayCrit ${CX.blockPlayCrit} 이 0 이하 (GDD 84장 3번 "클률 살짝 더 높게")`);
   }
 }
@@ -1553,6 +1558,42 @@ if (want('tower')) {
   console.log(`  ${TT.floors}층 (${towerFloor(TT.floors).bossId} 강화판): 키운 5단계 몸 ${grown.length}명 ${pct(top.rate)} ${top.secs.toFixed(1)}초 · 갓 5단계 몸 ${pct(top5.rate)} (참고)`);
   if (grown.length < CAMPAIGNS * 0.8) lateFail(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
   if (top.rate < 0.15 || top.rate > 0.75) lateFail(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
+}
+
+// ── 붕옥 재료 공급 · 6번 합체 시간 (C.414 → C.425 → C.426, GDD 12-3 v6.016, 참고 지표 — 가드 없음) ──
+// 재료 = 사냥 드롭(모험 전투 승리마다, 귀환 정산) + 우라하라뿐. 캠페인 봇(흡수 봇, 4바퀴 원정)의 원정 1회 일반·강적 승리 수로 드롭 기댓값을 어림한다.
+// 원정 1회 시간 = 전투 시간 합 + 바퀴 × 칸 × 칸 이동 초. 필요한 원정 = 재료마다 (필요 ÷ 원정 1회 기댓값) 중 가장 큰 것(완전 개방 = 세 트랙 50강). 우라하라는 계산에서 뺀다(드문 방문 — 모자란 재료를 메우는 몫).
+if (want('hogyoku')) {
+  const HX = BALANCE.provisional.hogyoku;
+  const D = BALANCE.provisional.hogyokuDrops;
+  const ids = ['soul', 'shard', 'essence'] as const;
+  const name = { soul: '윤활제', shard: '여과기', essence: '영압 결정' } as const;
+  const full = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, 0, HX.trackMax)])) as Record<(typeof ids)[number], number>;
+  const reopen = Object.fromEntries(ids.map((t) => [t, trackCostSum(t, HX.afterFusionLevel, HX.trackMax)])) as Record<(typeof ids)[number], number>;
+  const runs = campaignSaves.flatMap((x) => x.runLog.runs.filter((r) => !r.tutorial));
+  const won = (cls: string) => campaignSaves.reduce((n, x) => n + x.runLog.battles.filter((b) => b.won && (cls === 'normal' ? b.enemyClass !== 'elite' && b.enemyClass !== 'boss' : b.enemyClass === cls)).length, 0);
+  const battleSec = campaignSaves.reduce((n, x) => n + x.runLog.battles.reduce((m, b) => m + b.durationSeconds, 0), 0);
+  const walkSec = runs.reduce((n, r) => n + r.laps * BALANCE.expedition.loopTiles * BALANCE.expedition.secondsPerTile, 0);
+  const R = Math.max(1, runs.length);
+  const normalPerRun = won('normal') / R;
+  const elitePerRun = won('elite') / R;
+  const minPerRun = (battleSec + walkSec) / R / 60;
+  const dropsPerRun = normalPerRun * D.normalChance + elitePerRun * D.eliteCount;
+  const wSum = ids.reduce((x, t) => x + D.weights[t], 0);
+  const per = Object.fromEntries(ids.map((t) => [t, (dropsPerRun * D.weights[t]) / wSum])) as Record<(typeof ids)[number], number>;
+  const runsFor = (need: Record<(typeof ids)[number], number>) => {
+    const each = ids.map((t) => need[t] / Math.max(1e-9, per[t]));
+    return { runs: Math.max(...each), worst: ids[each.indexOf(Math.max(...each))]!, each };
+  };
+  const first = runsFor(full);
+  const later = runsFor(reopen);
+  const hrs = (n: number) => ((n * minPerRun) / 60).toFixed(1);
+  console.log(`
+붕옥 재료 공급 (C.426, GDD 12-3 v6.016 — 비용 n강 = n개, 참고·가드 없음) · 트랙 하나 0→${HX.trackMax}강 = ${full.soul}개 · 합체 뒤 ${HX.afterFusionLevel}→${HX.trackMax}강 = ${reopen.soul}개 (세 트랙 같음)`);
+  console.log(`  봇 원정 1회: 일반 승리 ${normalPerRun.toFixed(2)} × ${D.normalChance} + 강적 승리 ${elitePerRun.toFixed(2)} × ${D.eliteCount} = 재료 ${dropsPerRun.toFixed(2)}개 (목표 약 10, ${ids.map((t) => `${name[t]} ${per[t].toFixed(2)}`).join(' · ')}) · 약 ${minPerRun.toFixed(1)}분/원정`);
+  console.log(`  완전 개방까지 원정 ${first.runs.toFixed(0)}회 ≈ ${hrs(first.runs)}시간 · 합체 뒤 다시 완전 개방 ${later.runs.toFixed(0)}회 ≈ ${hrs(later.runs)}시간 (가장 늦는 재료 ${name[first.worst]})`);
+  const total = first.runs + later.runs * (TRANSCENDENTS_COUNT - 1);
+  console.log(`    → 6번 합체까지 원정 약 ${total.toFixed(0)}회 ≈ ${hrs(total)}시간 (돌봄·등급전·탑 전투 시간 제외, 우라하라 빼고)`);
 }
 
 if (lateHeld.length > 0) console.warn(`\n후반 보류(45-6) — 4단계 이후 가드 ${lateHeld.length}건, 실패 대신 경고:\n- ${lateHeld.join('\n- ')}`);

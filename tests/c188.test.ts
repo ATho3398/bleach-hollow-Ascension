@@ -8,6 +8,10 @@ import { getFaction } from '../src/data/factions';
 import { parseFactionConfig } from '../src/engine/faction';
 import { migrateSave, newSaveData, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION } from '../src/game';
 import { shownName } from '../src/ui/displayName';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -84,7 +88,7 @@ describe('그림 연결 (114장 3): 여성 키 -f 가 있으면 그걸, 없으�
 describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   it('형식·문턱 52, 새 세이브 남성, 저장·불러오기로 남고 깨진 값은 남성', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(63); // C.326 이름
-    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(54); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195
+    expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87); // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195
     const s = newSaveData('hollow');
     expect(s.gender).toBe('male');
     s.gender = 'female';

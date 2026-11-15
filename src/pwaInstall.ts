@@ -53,7 +53,7 @@ export function saveInstallPrefs(storage: Pick<Storage, 'setItem'> | null, p: In
   }
 }
 
-/** 열 때 저절로 안내창을 띄울까: 이미 앱(standalone)이거나 설치했거나 [나중에] 를 다 썼거나 안내할 것이 없으면 아니오 */
+/** 열 때 저절로 안내창을 띄울까: 이미 앱(standalone)이거나 설치했거나 [나중에] 를 다 썼거나 안내할 것이 없으면 아니요 */
 export function shouldAutoShow(prefs: InstallPrefs, standalone: boolean, mode: InstallMode): boolean {
   if (standalone || prefs.installed || prefs.later >= MAX_LATER) return false;
   return mode !== 'none';

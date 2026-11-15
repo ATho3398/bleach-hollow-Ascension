@@ -123,9 +123,9 @@ describe('화면 (GDD 163장 1·3·4)', () => {
     expect(a).toContain('let sel: AbsorbChoice = ABSORB_MODES[0];');
     expect(a).toContain('first = picker.first;');
   });
-  it('첫 흡수 연습도 같은 갈래 버튼·설명 칸, 안내 2장은 갈래 줄을 가리킨다', () => {
+  it('첫 흡수 연습도 같은 갈래 버튼·설명 칸, 안내는 갈래 버튼을 하나씩 가리킨다 (GDD 245장 5)', () => {
     expect(read('src/ui/guideView.ts')).toContain('absorbModePicker(faction, exp');
     const g = JSON.parse(read('src/data/help/guides.json')).guides['first-absorb'][1];
-    expect(g.targets).toEqual(['@.bha-absorb__pick']);
+    expect(g.targets).toEqual(['@.bha-absorb__actions [data-mode="both"]']);
   });
 });

@@ -1,0 +1,79 @@
+{
+  "shots": [
+    "1-room-hollow-hogyoku.png",
+    "2-update-button.png"
+  ],
+  "errors": [],
+  "scenes": {
+    "room.hollow": {
+      "list": 5,
+      "drawn": [
+        "altar",
+        "book",
+        "chest",
+        "outside",
+        "hogyoku"
+      ]
+    },
+    "room.shinigami": {
+      "list": 5,
+      "drawn": [
+        "altar",
+        "book",
+        "chest",
+        "outside",
+        "hogyoku"
+      ]
+    },
+    "worldmap.hollow": {
+      "list": 6,
+      "drawn": [
+        "home",
+        "market",
+        "rank",
+        "adventure",
+        "tower",
+        "spa"
+      ]
+    },
+    "worldmap.shinigami": {
+      "list": 6,
+      "drawn": [
+        "home",
+        "market",
+        "rank",
+        "adventure",
+        "tower",
+        "spa"
+      ]
+    },
+    "market.hollow": {
+      "list": 7,
+      "drawn": [
+        "outside",
+        "shop",
+        "gearShop",
+        "skinShop",
+        "traitShop",
+        "smith",
+        "wanderer"
+      ]
+    },
+    "market.shinigami": {
+      "list": 7,
+      "drawn": [
+        "outside",
+        "shop",
+        "gearShop",
+        "skinShop",
+        "traitShop",
+        "smith",
+        "wanderer"
+      ]
+    }
+  },
+  "update": {
+    "button": 1,
+    "status": "새 버전이 나왔다 — 위 [새 버전 — 다시 열기] 를 누르면 최신 도구로 다시 열린다 (편집본은 그대로)"
+  }
+}

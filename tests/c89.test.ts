@@ -35,7 +35,7 @@ describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
     expect(validateAbilities()).toEqual([]);
     expect(FORM_TABLE).toHaveLength(36);
     for (const f of FORM_TABLE) {
-      const fa = formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, spd: 0 }, 'atk');
+      const fa = formAbilitiesOf(f, { hp: 0, atk: 5, int: 3, def: 0, spr: 0, aspd: 0, bspd: 0 }, 'atk');
       const lines = abilityLines(fa, 'hollow');
       // C.103 (GDD 49장): 5단계 물리 단일 속성 6종은 물공 칸 1줄이 더 있다
       const want = f.tier <= 2 || f.label.kind === 'passage' ? 1 : fa.phys ? 3 : 2;
@@ -55,7 +55,7 @@ describe('C.89 특성 매핑 (label → 특성, 39장 1·3·4번)', () => {
     expect(formAbilitiesOf(getForm('t2:base'), zeroStats(), 'atk').elements).toEqual([]);
   });
   it('실패형 = 성향 2개(노력치 1·2위), 속성 특성 없음 · 전용 5종은 속성 특성 대신', () => {
-    const fa = formAbilitiesOf(getForm('h4:fail'), { hp: 1, atk: 9, int: 7, def: 0, spr: 0, spd: 0 }, 'atk');
+    const fa = formAbilitiesOf(getForm('h4:fail'), { hp: 1, atk: 9, int: 7, def: 0, spr: 0, aspd: 0, bspd: 0 }, 'atk');
     expect(fa.dispositions).toEqual(['atk', 'int']);
     expect(fa.elements).toEqual([]);
     expect(fx('h4:complete').effects.noWeak).toBe(true);

@@ -285,14 +285,17 @@ describe('속성 보너스와 특성 효과', () => {
     const partId = A.find((id) => getTrait(id).kind === 'part')!;
     const only = build([passiveId, partId]);
     expect(getTrait(passiveId).passive!.stat).toBe('attackPower');
-    expect(passiveMultipliers(only).attackPower).toBeCloseTo(getTrait(passiveId).passive!.multiplier);
+    expect(passiveMultipliers(only).attackPower).toBeCloseTo(getTrait(passiveId).passive!.multiplier!);
     expect(passiveMultipliers(build([partId]))).toEqual({ attackPower: 1, attackSpeed: 1, damageTaken: 1, blockSpawn: 1 });
-    expect(buildCombatParams(build(['t-poison-passive'])).blockSpawnMultiplier).toBeGreaterThan(1);
+    // C.447: 속도 패시브 = 간격 −n초 (배율 아님)
+    expect(buildCombatParams(build(['t-poison-passive'])).blockSpawnMultiplier).toBe(1);
+    expect(buildCombatParams(build(['t-poison-passive'])).spawnSecondsCut).toBeCloseTo(0.42);
+    expect(buildCombatParams(build(['t-thunder-passive'])).attackSecondsCut).toBeCloseTo(0.13);
     expect(equippedSkills(only)).toEqual([]);
     const p = buildCombatParams(only);
     expect(p.attackPowerMultiplier).toBeGreaterThan(1);
     expect(buildCombatParams(build(['t-earth-passive'])).damageTakenMultiplier).toBeLessThan(1);
-    expect(buildCombatParams(build(['t-thunder-passive'])).attackSpeedMultiplier).toBeGreaterThan(1);
+    expect(buildCombatParams(build(['t-thunder-passive'])).attackSpeedMultiplier).toBe(1); // C.447: 속도는 간격 −n초
   });
 });
 

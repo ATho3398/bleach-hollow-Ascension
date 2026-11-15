@@ -33,7 +33,7 @@ export function presetSummary(cells: readonly (string | null)[], tileName: (id: 
 }
 
 /** 프리셋 패널 (C.176, GDD 104장 8 개편): 위 = 제목·안내 한 줄 / 프리셋 칸 가로 칩(고른 것 = 테두리, 빈 칸 = '+') / 고른 프리셋 미리보기 한 줄 /
- *  버튼 4개 한 줄(불러오기·저장·이름·삭제). 빈 '+' 칩을 고르고 [저장] = 지금 배치를 새 프리셋으로, 있는 프리셋을 고르고 [저장] = 덮어쓰기. 삭제는 확인 창(기본 아니오) */
+ *  버튼 4개 한 줄(불러오기·저장·이름·삭제). 빈 '+' 칩을 고르고 [저장] = 지금 배치를 새 프리셋으로, 있는 프리셋을 고르고 [저장] = 덮어쓰기. 삭제는 확인 창(기본 아니요) */
 export function presetPanel(h: PresetHandlers, tileName: (id: string) => string, limitText: string): HTMLElement {
   const root = el('section', 'bha-presets');
   root.dataset.presets = '';
@@ -144,7 +144,7 @@ export function presetPanel(h: PresetHandlers, tileName: (id: string) => string,
     ren.dataset.presetRename = String(sel);
     const del = button({ label: '삭제', icon: 'i-close', size: 'small', variant: 'ghost', disabled: !cur, onClick: () => {
       if (!cur) return;
-      confirmDialog({ title: `${cur.preset.name} 삭제`, body: '이 프리셋을 지운다. 되돌릴 수 없다.', yes: '삭제', no: '아니오', danger: true, onYes: () => {
+      confirmDialog({ title: `${cur.preset.name} 삭제`, body: '이 프리셋을 지운다. 되돌릴 수 없다.', yes: '삭제', no: '아니요', danger: true, onYes: () => {
         if (h.remove(cur.index)) note.textContent = '지움';
         renaming = false;
         draw();

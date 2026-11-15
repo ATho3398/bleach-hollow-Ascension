@@ -1,5 +1,5 @@
 // 월드맵 (GDD 130장 2, C.204): 방 물건 [월드맵]으로 나오는 하이앵글 지도 한 장. 이름은 종족 설정(worldmap.name — 호로 '웨코문도' / 사신 '소울 소사이어티').
-// 장소 6개 = 홈(방, 이름 nestName) · 시장(상점·떠돌이 상인) · 번호 쟁탈전·진급 시험(GDD 241-C 3 — 옛 수련장 자리, 수련장은 방으로) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
+// 장소 6개 = 홈(방, 이름 nestName) · 시장(상점·우라하라) · 번호 쟁탈전·진급 시험(GDD 241-C 3 — 옛 수련장 자리, 수련장은 방으로) · 모험(출발 준비 화면) · 탑(도전의 탑 화면, GDD 139장 1) · 온천(온천 화면, GDD 153장 1).
 // 고르면(✓) 캐릭터가 그쪽으로 한두 걸음 출발하는 모습(약 0.4초)과 함께 바로 화면이 어두워지고(페이드아웃) 그 화면이 밝아진다(페이드인) — GDD 153장 3(137장 '끝까지 걷기' 대체).
 // 출발하는 동안 입력 잠금, 뒤로 = 취소하고 제자리.
 // 캐릭터는 방 그림 그대로 지금 있던 장소 위에 서 있다(보기만, GDD 132장 2). 배경 그림 키 scene.worldmap 은 사용자 그림 대기 — 없으면 임시 지도 배경.
@@ -122,7 +122,7 @@ export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData
       b.title = reason;
       b.setAttribute('aria-description', reason);
     }
-    // 떠돌이 상인이 와 있으면 시장에 배지 (GDD 130장 2 — 옛 방 장터 물건 배지 자리를 옮김)
+    // 우라하라가 와 있으면 시장에 배지 (GDD 130장 2 — 옛 방 장터 물건 배지 자리를 옮김)
     if (p === 'market' && here) {
       b.classList.add('has-visitor');
       b.querySelector('.bha-prop__tag')?.append(el('span', 'bha-badge bha-badge--brass bha-prop__badge', '상인')); // v2 S02: 이름표 안 황동 배지

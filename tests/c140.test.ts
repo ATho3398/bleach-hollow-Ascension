@@ -1,4 +1,4 @@
-// C.140 (GDD 85장 4·5·6·11번, 86장 4·5번, 88장 7번): 에스파다 1~10 칭호 · 떠돌이 상인 · 대기 모드 · 배치 프리셋(덱 삭제) · 보관함
+// C.140 (GDD 85장 4·5·6·11번, 86장 4·5번, 88장 7번): 에스파다 1~10 칭호 · 우라하라 · 대기 모드 · 배치 프리셋(덱 삭제) · 보관함
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
@@ -12,6 +12,10 @@ import { migrateSave, newSaveData, recordExpedition, settleIdle, MIN_LOADABLE_SA
 import { buyShopItem, buyWandererItem, wandererRows } from '../src/shop';
 import { equipInventoryItem, inventoryOf, unequipInventoryItem, useInventoryItem } from '../src/inventory';
 import { applyTilePreset, cellsOfPlan, deleteTilePreset, ownedTileList, placementLimitOf, sanitizeTilePresets, saveTilePreset, tilePresetsFor } from '../src/tilePresets';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const H = getFaction('hollow');
 const S = getFaction('shinigami');
@@ -41,7 +45,7 @@ describe('85장 4번 칭호 도감 에스파다 No.1~10', () => {
   });
 });
 
-describe('85장 5번 떠돌이 상인', () => {
+describe('85장 5번 우라하라', () => {
   it('바퀴마다 가중: 앞 바퀴는 거의 0, 평균 30~50바퀴, 30바퀴 안에 올 확률은 절반 미만', () => {
     expect(wandererChance(1)).toBeLessThan(0.002);
     expect(wandererChance(10)).toBeCloseTo(WX.perLap * 10);
@@ -284,6 +288,7 @@ describe('86장 보관함', () => {
   it('보관함 목록: 먹이·소모품·타일·수련권이 카테고리 순서로, 먹이는 보관함에서 먹인다', () => {
     const s = newSaveData('hollow', 1);
     s.shared.items = { wake: 2 };
+    s.shared.food.snack = 5; // 새 게임 간식은 빈사 치료 뒤 (GDD v6.005)
     s.tiles.collection = { 'rest-a': 2 };
     s.training.tickets = 1;
     const inv = inventoryOf(s, H);
@@ -303,7 +308,7 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([77, 54]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([88, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);
@@ -324,6 +329,6 @@ describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
     expect(m2.runLog.idle).toEqual([]);
     const old = JSON.parse(JSON.stringify(s));
     old.meta.format = 40;
-    expect(migrateSave(old)).toBeNull();
+    expect(migrateSave(old, 54)).toBeNull(); // C.446: 옛 문턱 54 로 시험 (게임 문턱은 87)
   });
 });

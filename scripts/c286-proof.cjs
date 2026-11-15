@@ -126,7 +126,7 @@ const sizeIssues = () => {
         await page.evaluate(async () => {
           const { showToast } = await import('/src/ui/bha/nest.ts');
           showToast({ eyebrow: '도감 목표', title: '4개 달성 · 영옥 +11' }, 0, 6000);
-          showToast({ eyebrow: '떠돌이 상인', title: '시장에 왔다' }, 1, 6000);
+          showToast({ eyebrow: '우라하라', title: '시장에 왔다' }, 1, 6000);
           showToast({ eyebrow: '새 장소', title: '도전의 탑이 열렸다' }, 2, 6000);
         });
         await wait(600);

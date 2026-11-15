@@ -1,5 +1,5 @@
 // 시장 화면 (GDD 130장 3, 옛 127장 장터): 월드맵 [시장]으로 들어오는 따로 된 공간. 이름은 종족 설정 market.name (두 종족 모두 "시장").
-// 방(홈)과 같은 틀 (GDD 158장 3): 상점 4곳(150장 2)·대장장이(153장 2)·떠돌이 상인(와 있을 때만)을 장면 곳곳에 앞뒤 깊이로 놓고 화면 전체를 쓴다.
+// 방(홈)과 같은 틀 (GDD 158장 3): 상점 4곳(150장 2)·대장장이(153장 2)·우라하라(와 있을 때만)을 장면 곳곳에 앞뒤 깊이로 놓고 화면 전체를 쓴다.
 // 나가기 = 방과 같은 월드맵 물건(이름 room.props.outside) — 위 [월드맵으로] 버튼은 없앴다. 뒤로 = 월드맵. 캐릭터는 월드맵 물건 옆에 서 있다(보기만).
 // 배경 그림 키 scene.market·자리 그림(prop.shop·prop.gearShop·prop.skinShop·prop.traitShop·prop.smith·prop.wanderer)은 사용자 그림 대기 — 없으면 임시 배경(좌판 줄)과 아이콘.
 import { artUrls } from '../data/art/manifest';
@@ -16,7 +16,7 @@ export interface MarketHandlers {
   onShop: (kind: ShopKind) => void;
   /** 대장장이 (GDD 153장 2): 기능은 사용자가 나중에 정한다 — 지금은 안내 한 줄 */
   onSmith: () => void;
-  /** 떠돌이 상인 창 (와 있을 때만 불린다) */
+  /** 우라하라 창 (와 있을 때만 불린다) */
   onWanderer: () => void;
   /** 아직 안 열린 자리와 그 이유 (GDD 241-0: 장비 상점 = 장비 해금 뒤). 흐린 잠김 + 자물쇠, 누르면 onLocked */
   lockReasons?: Partial<Record<MarketSpot, string>>;
@@ -28,7 +28,7 @@ export interface MarketHandlers {
 /** 캐릭터 발 자리: 월드맵 물건 오른쪽 옆 (방에서 막 들어온 모습) */
 export const MARKET_CHAR_DX = 13;
 
-/** 지금 장터에 서 있는 자리: 떠돌이 상인은 와 있을 때만 (GDD 127장 2). 온천은 월드맵 장소로 옮겨 장터에 없다 (GDD 153장 1 — 이름 market.props.spa 만 남김) */
+/** 지금 장터에 서 있는 자리: 우라하라는 와 있을 때만 (GDD 127장 2). 온천은 월드맵 장소로 옮겨 장터에 없다 (GDD 153장 1 — 이름 market.props.spa 만 남김) */
 export function marketSpots(save: Pick<SaveData, 'shared'>): MarketSpot[] {
   return MARKET_SPOTS.filter((p) => p !== 'spa' && (p !== 'wanderer' || save.shared.wanderer.visit !== null));
 }
@@ -38,7 +38,7 @@ export function marketView(dev: Device, faction: FactionConfig, save: SaveData, 
   const room = roomOf(faction);
   const here = save.shared.wanderer.visit !== null;
 
-  // ── 위: 왼쪽 위 작은 이름 판만 (v2 S03 — 제목·설명 문단 띠 없음, 장면이 화면 전체). 떠돌이 상인 소식은 와 있으면 그 이름표 안 '왔다' 배지, 문장은 판 툴팁
+  // ── 위: 왼쪽 위 작은 이름 판만 (v2 S03 — 제목·설명 문단 띠 없음, 장면이 화면 전체). 우라하라 소식은 와 있으면 그 이름표 안 '왔다' 배지, 문장은 판 툴팁
   //    (나가기는 장면 안 월드맵 물건 — GDD 158장 3) ──
   const hud = el('header', 'bha-room__hud bha-market__hud');
   const title = el('h1', 'bha-plate bha-market__title', mk.name);

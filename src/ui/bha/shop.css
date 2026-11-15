@@ -54,7 +54,7 @@
 .bha-shop__wallet .bha-chip--jade .bha-icon { color: var(--bha-tint-violet); }
 .bha-shop__wallet .bha-num { color: var(--bha-text-1); }
 .bha-shop .bha-itemgrid { grid-auto-rows: minmax(122px, auto); }
-/* 떠돌이 상인 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
+/* 우라하라 (GDD 189장 엑셀 20): 카드 4장 아래가 반쯤 비었다 → 카드를 세로로 키우고 무엇인지 한 줄(.bha-itemcard__blurb, 2줄까지) */
 .bha-shop[data-shop="wanderer"] .bha-itemgrid { grid-auto-rows: minmax(186px, auto); }
 .bha-shop[data-shop="wanderer"] .bha-itemcard { gap: var(--bha-sp-2); }
 .bha-shop[data-shop="wanderer"] .bha-itemcard__art { width: 64px; height: 64px; }
@@ -142,6 +142,10 @@
 .bha-equip-page .bha-eqright .bha-itemtab { flex: 0 0 auto; flex-direction: column; justify-content: center; gap: 0; min-width: 52px; height: var(--bha-btn-h-sm); padding: 0 var(--bha-sp-3); font-size: var(--bha-fs-xs); line-height: 1.1; }
 /* 241-D 3: 탭을 좁히지 않는다 — 넘치면 가로로 끌어 본다 (dragScroll.ts) */
 .bha-equip-page .bha-eqright .bha-itemtabs { touch-action: pan-x; user-select: none; -webkit-user-select: none; }
+/* 243장 4: 넘친 쪽 끝에 강조 세로줄 — 옆으로 끌면 더 있다는 표시 (edgeCue). 끝까지 넘기면 그 쪽 줄은 사라진다 (v2: 그라데이션 없이 토큰 색만) */
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-right { box-shadow: inset -3px 0 0 var(--bha-accent); }
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-left { box-shadow: inset 3px 0 0 var(--bha-accent); }
+.bha-equip-page .bha-eqright .bha-itemtabs.is-more-left.is-more-right { box-shadow: inset 3px 0 0 var(--bha-accent), inset -3px 0 0 var(--bha-accent); }
 .bha-equip-page .bha-eqright .bha-itemtab__count { margin-left: 0; }
 .bha-itemgrid--equip { grid-auto-rows: 84px; gap: var(--bha-sp-3); }
 .bha-itemgrid--equip .bha-itemcard { justify-content: center; padding: var(--bha-sp-3) var(--bha-sp-1) var(--bha-sp-2); gap: var(--bha-sp-1); }
@@ -168,3 +172,13 @@
 .bha-sortie.is-locked { color: var(--bha-text-2); }
 .bha-sortie.is-locked .bha-icon { width: 16px; height: 16px; }
 .bha-sortie__note { flex: 1 1 160px; margin: 0; color: var(--bha-text-2); }
+
+/* ═════ 가방 > 스킨 > 캐릭터 (C.440, GDD 5절 '캐릭터 스킨 분류' v6.044): 대분류·중분류 탭 한 줄(카드 격자 두 줄이 보이게), 상세 창 색 칩 ═════ */
+.bha-skinpick { gap: var(--bha-sp-2); }
+.bha-skinpick__chips { flex-wrap: wrap; gap: var(--bha-sp-2); }
+.bha-skinpick__chip { min-height: var(--bha-touch); cursor: pointer; font: inherit; font-size: var(--bha-fs-sm); }
+.bha-skinpick__chip.is-on { border-color: var(--bha-accent); background: var(--bha-bg-3); box-shadow: inset 0 -2px 0 var(--bha-accent); }
+.bha-skinpick__note:empty { display: none; }
+.bha-skinpick__bar { flex: none; flex-wrap: nowrap; gap: var(--bha-sp-3); min-width: 0; max-width: 100%; }
+.bha-skinpick__bar > .bha-skinpick__cls { flex: none; padding-right: var(--bha-sp-3); box-shadow: 1px 0 0 var(--bha-line-2); border-radius: 0; }
+.bha-skinpick__bar > .bha-skinpick__sub { flex: 1 1 auto; min-width: 0; }

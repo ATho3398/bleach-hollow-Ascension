@@ -141,6 +141,11 @@ export interface BattleRecord {
   startHp?: number;
   itemUsed?: boolean;
   gearUses?: number;
+  /** 초월자 전용 블록 기록 (GDD 12-4 v6.048, C.441 — 형식 85): 반격 성공(경화수월)·마무리 기술(흑관)·되살아남(깨져라, 경화수월) 횟수. 전용 블록 전투만 */
+  kit?: { id: string; counters: number; finishers: number; revives: number; modeEnters?: number; modeExits?: number; riskSpent?: number; secondEnters?: number; finals?: number };
+  /** ↑ (C.454 — 형식 88, GDD 12-4 v6.069 이치고): 게이지 소모형 kit 은 modeEnters = 첫 해방(각호고) 진입·modeExits = 게이지 0 으로 풀림·riskSpent = 깎은 게이지 합,
+   *  secondEnters = 두 번째 해방(무월) 진입 · finals = 마무리 평타(최후의 월아천충) 횟수. 옛 기록은 없음(= 0) */
+  /** ↑ modeEnters·modeExits·riskSpent (C.442 — 형식 86, GDD 12-4 v6.050 붕옥 해방): 리스크 소모형 모드 진입·리스크 0 으로 끝남 횟수·모드가 깎은 리스크 합. 옛 기록은 없음(= 0) */
 }
 
 /** 수련 한 판 기록 (GDD 22-5, 세이브 형식 18): 히든·태그 조건이 나중에 읽는다 */
@@ -184,7 +189,7 @@ export interface TrainingRecord {
   completedNow: boolean;
 }
 
-/** 환생 1회 기록 (GDD 22-1·22-7, 세이브 형식 20): 환생 히든·초월체(22-3 유하바하)·태그 조건이 읽는다 */
+/** 환생 1회 기록 (GDD 22-1·22-7, 세이브 형식 20): 환생 히든·초월자(22-3 유하바하)·태그 조건이 읽는다 */
 export interface RebirthRecord {
   /** 시각(ms) */
   at: number;
@@ -401,6 +406,25 @@ export interface TowerBattleRecord {
   firstClear: boolean;
 }
 
+/** 특수던전 주간던전·보스전 한 입장 (GDD 6-16 v6.017, C.427, 형식 81): 입장 시각·종류·대상·★·판마다 결과·받은 보상. 끝까지 못 가고 나가면 won false·quit true */
+export interface SpecialRunRecord {
+  at: number;
+  factionId: string;
+  mode: 'weekly' | 'boss';
+  /** 주간던전 = 붕옥 트랙 id, 보스전 = 보스 칸 id (스토리 보스 id 또는 'tower-owner') */
+  target: string;
+  star: number;
+  won: boolean;
+  /** 전투 중 [나가기]로 끝냄 */
+  quit: boolean;
+  battles: { enemyId: string; won: boolean; durationSeconds: number; startHp: number }[];
+  gold: number;
+  /** 받은 붕옥 재료 (트랙 id → 개수) */
+  materials: Record<string, number>;
+  tierIndex: number;
+  formId: string | null;
+}
+
 /** 칭호 해금 1건 (C.106, GDD 9장): 어느 트랙·어느 몸으로 받았나 */
 export interface TitleUnlockRecord {
   at: number;
@@ -413,7 +437,45 @@ export interface TitleUnlockRecord {
   statTotal: number;
 }
 
+/** 초월자 트랙 시작 기록 (GDD 12-4 v6.028·16-2, C.429 형식 82): 합체 순간 두 캐릭터에게서 무엇을 이어받았나. 그 트랙 런 로그 맨 앞에 하나 */
+export interface TranscendenceRecord {
+  at: number;
+  transcendentId: string;
+  /** 몇 번째 합체 (슬롯 기록 fusions 의 index) */
+  fusionIndex: number;
+  /** 바탕이 된 캐릭터의 종족 id (종족 설정·진화체·외형을 이 캐릭터에게서) */
+  baseFactionId: string;
+  /** 이어받은 캐릭터들의 종족 id (지금 캐릭터 먼저) */
+  from: string[];
+  tierIndex: number;
+  formId: string | null;
+  /** 이어받은 노력치 합 · 특성 블록 보유 수 · 진화 특성 보유 수 */
+  evTotal: number;
+  traits: number;
+  abilities: number;
+  /** 형식 82 변환으로 만든 트랙 (합체 순간 데이터가 없어 그때의 두 캐릭터 기록·지금 캐릭터로 채움) */
+  migrated?: boolean;
+}
+
+/** 전투 기반 바꾼 기록 (GDD 12-4 v6.037, 형식 83 — 초월자 트랙): 기반 키 = 'transcendent' 또는 키웠던 캐릭터의 종족 id */
+export interface BasisChangeRecord {
+  at: number;
+  from: string;
+  to: string;
+}
+
+/** 초월 조각 기록 (GDD 12-4 v6.048, C.441 — 형식 85, 초월자 트랙): 원정에서 얻음(gain) · 전용 블록 강화(upgrade: 블록·오른 강·쓴 조각) */
+export type KitShardRecord =
+  | { at: number; kind: 'gain'; runId: number; amount: number }
+  | { at: number; kind: 'upgrade'; blockId: string; level: number; cost: number };
+
 export interface RunLog {
+  /** 초월 조각 얻음·전용 블록 강화 기록 (GDD 12-4 v6.048, 형식 85). 캐릭터 트랙·없으면 없음 */
+  kitShards?: KitShardRecord[];
+  /** 초월자 트랙이면 시작 기록 (GDD 12-4 v6.028, 형식 82). 캐릭터 트랙은 없음 */
+  transcendence?: TranscendenceRecord;
+  /** 초월자 전투 기반 바꾼 기록 (GDD 12-4 v6.037, 형식 83). 캐릭터 트랙·바꾼 적 없으면 없음 */
+  basisChanges?: BasisChangeRecord[];
   absorbs: AbsorbRecord[];
   /** 속성 보너스 완성 기록 — 같은 속성 3개 보너스가 C.150 에 삭제돼 더 쌓이지 않는다 (GDD 94장 B 후속). 자리만 남김 */
   lineages: LineageRecord[];
@@ -443,13 +505,15 @@ export interface RunLog {
   sales: SaleRecord[];
   /** 도전의 탑 전투 기록 (C.85, 세이브 형식 30, GDD 36장) */
   towerBattles: TowerBattleRecord[];
+  /** C.427 (형식 81): 특수던전 주간던전·보스전 입장 기록. 형식 81 이전 세이브는 빈 목록 */
+  specialRuns: SpecialRunRecord[];
   /** 튜토리얼 보상 기록 (C.120, 세이브 형식 37, GDD 67장): 첫 원정 튜토리얼의 흡수(시스템상 흡수 아님) */
   tutorialRewards: TutorialRewardRecord[];
   /** 돌봄 요청 기록 (C.133, 세이브 형식 38, GDD 82장): 쓰다듬기·재우기 요청에 응답·거절(요청 없이 누름)·놓침 횟수 */
   care: CareRecord;
   /** 돌봄 상태 기록 (C.175, 세이브 형식 46, GDD 102장·9장 — 히든 조건용): 쓰러짐(미접속·원정 패배)·사망·부활·약 */
   vitals: VitalRecord[];
-  /** 떠돌이 상인 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
+  /** 우라하라 기록 (C.140, 세이브 형식 41, GDD 85장 5번): 옴(숨은 티어·기다린 바퀴)·삼·떠남 */
   wanderer: WandererRecord[];
   /** 대기 모드 기록 (C.140, 세이브 형식 41, GDD 85장 6번·88장 7번): 돌아올 때마다 요약 1건 — 바퀴·전투를 낱낱이 남기지 않는다 */
   idle: IdleRecord[];
@@ -478,12 +542,12 @@ export interface CareRecord {
 
 /** 돌봄 상태 1건 (GDD 102장·9장, C.175): collapse = 빈사(cause: absence 미접속 · defeat 원정 패배), death = 사망(빈사 시간이 다 됨, cause defeat = 빈사로 짐),
  *  revive = 부활(evLoss = 노력치 손실 비율, 그 전 단계·진화체), cure = 약으로 상태 풀림(status), recover = 원정을 마치고 쇠약·피곤 풀림(status).
- *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6). refuse = 같은 먹이 10분 한도로 거절(먹이는 그대로, C.387 GDD 234장 3).
+ *  spit = 10분 한도를 넘겨 먹이를 뱉음(food = 먹이 종류, C.181 GDD 109장 6). refuse = 같은 먹이 10분 한도로 거절(먹이는 그대로, C.387 GDD 234장 3). full = 배부름 가득이라 안 먹음(먹이 그대로, C.411 GDD 243장 6).
  *  bond = 그 순간 교감, hours = 비운 시간(미접속 쓰러짐·사망) */
 export interface VitalRecord {
   at: number;
   factionId: string;
-  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit' | 'refuse';
+  kind: 'collapse' | 'death' | 'revive' | 'cure' | 'recover' | 'spit' | 'refuse' | 'full';
   /** spit·refuse: 뱉은·거절한 먹이 종류 */
   food?: string;
   /** tutorial = 튜토리얼 원정 뒤 회복 안내의 빈사 복귀 (GDD 123장 5 수정, C.199) */
@@ -520,7 +584,7 @@ export interface HomeHealRecord {
   tutorial?: boolean;
 }
 
-/** 떠돌이 상인 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
+/** 우라하라 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
 export interface WandererRecord {
   at: number;
   factionId: string;
@@ -543,7 +607,7 @@ export interface FeatureUnlockRecord {
   rebirths: number;
 }
 
-/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 떠돌이 상인 · evolution 옛 첫 진화 선물 · rebirth 첫 환생 선물, GDD 241-0),
+/** 펫 기록 1건 (GDD 90장 7번·9장, C.144): get = 얻음(source: lap 바퀴 끝 보상 · wanderer 우라하라 · evolution 옛 첫 진화 선물 · rebirth 첫 환생 선물, GDD 241-0),
  *  take = 데리고 감, leave = 두고 감, level = 친밀도 오름(level = 오른 뒤 값), dupGold = 바퀴 끝 보상이 이미 가진 펫이라 골드로 바뀜 */
 export interface PetRecord {
   at: number;
@@ -556,7 +620,7 @@ export interface PetRecord {
   gold?: number;
 }
 
-/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 떠돌이 상인, from = 드롭한 상대 등급),
+/** 장비 기록 1건 (GDD 91장 8번·9장, C.150): get = 얻음(source: drop 원정 드롭 · shop 기본 상점 · wanderer 우라하라 · idle 대기 보상 · unlock 장비 해금 때 낡은 장비(GDD 243장 3), from = 드롭한 상대 등급),
  *  equip/unequip = 장착·해제(slot), enhance = 강화(plus = 오른 뒤 단계, gold = 쓴 골드), sell = 판매, autoSell = 보관함이 가득 차 얻자마자 골드로 */
 export interface GearRecord {
   at: number;
@@ -566,7 +630,7 @@ export interface GearRecord {
   gearKind: string;
   grade: string;
   star?: number;
-  source?: 'drop' | 'shop' | 'wanderer' | 'idle';
+  source?: 'drop' | 'shop' | 'wanderer' | 'idle' | 'unlock';
   from?: 'normal' | 'elite' | 'boss';
   slot?: string;
   plus?: number;
@@ -643,8 +707,37 @@ export interface FusionRecord {
   /** 조건이 맞아서 정해졌나 (false = 조건 맞는 미보유가 없어 표 아래쪽부터 채움) */
   matched: boolean;
   characters: FusionCharacterSummary[];
+  /** 이번 합체까지 6~10단계 개발에 쓴 영혼 결정 (C.414 전: 2단계 게이지에 먹인 수) */
   soulSpent: number;
   jade: number;
+  /** 초월자 트랙의 바탕 캐릭터 종족 (GDD 12-4 v6.028, 형식 82). 그 전 기록은 없음 */
+  baseFactionId?: string;
+}
+
+/** 붕옥 개발 기록 (GDD 12-3, C.414 형식 79 → C.425 형식 80): 한 강 올릴 때마다 — 트랙·오른 강·바친 재료 3종(그 트랙 재료만 0 아님)·그때 트랙 종족(누른 쪽) */
+export interface HogyokuDevRecord {
+  at: number;
+  /** 강화한 트랙 = 재료 id (형식 80). 없으면 옛 10단계 기록 */
+  track?: string;
+  /** 올라간 강 (트랙 1~50) — 옛 기록은 단계 (1~10) */
+  level: number;
+  soul: number;
+  shard: number;
+  essence: number;
+  factionId: string;
+  /** 몇 번째 합체를 향한 개발인가 (지금까지 합체 수 + 1) */
+  cycle: number;
+}
+
+/** 붕옥 재료를 얻은 기록 (GDD 12-3, C.414 형식 79 → C.425): 재료 3종 모두 (C.425 전에는 파편·정수만) */
+export interface HogyokuMaterialRecord {
+  at: number;
+  /** 재료 = 강화 트랙 id (soul 고순도 윤활제 · shard 혼백 여과기 · essence 영압 결정). 'soul' 은 C.425 부터 */
+  kind: 'soul' | 'shard' | 'essence';
+  amount: number;
+  /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 우라하라 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
+  source: 'hunt' | 'wanderer' | 'weekly' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  factionId: string;
 }
 
 /** 다른 종족 트랙이 열린 기록 (GDD 22-3, 형식 23) */
@@ -673,10 +766,14 @@ export interface SlotLog {
   trackOpens: TrackOpenRecord[];
   /** C.326 (형식 63): 이름·성별 기록. 형식 63 이전 세이브는 빈 목록 */
   identities: IdentityRecord[];
+  /** C.414 (형식 79, GDD 244장 6): 붕옥 개발 단계·쓴 재료. 형식 79 이전 세이브는 빈 목록 */
+  hogyokuDev: HogyokuDevRecord[];
+  /** C.414 (형식 79, GDD 244장 3): 붕옥 파편·공명의 정수를 얻은 기록 */
+  hogyokuMaterials: HogyokuMaterialRecord[];
 }
 
 export function emptySlotLog(): SlotLog {
-  return { fusions: [], trackOpens: [], identities: [] };
+  return { fusions: [], trackOpens: [], identities: [], hogyokuDev: [], hogyokuMaterials: [] };
 }
 
 export function emptyRunLog(): RunLog {
@@ -698,6 +795,7 @@ export function emptyRunLog(): RunLog {
     sales: [],
     storyRuns: [],
     towerBattles: [],
+    specialRuns: [],
     tutorialRewards: [],
     care: { answered: { pet: 0, sleep: 0 }, refused: { pet: 0, sleep: 0 }, missed: 0 },
     vitals: [],

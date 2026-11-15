@@ -43,7 +43,8 @@ export function towerRewardText(faction: FactionConfig, r: TowerReward): string 
   return parts.join(' · ');
 }
 
-export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: TowerViewHandlers): void {
+/** head = 특수던전 머리(이름·위 탭, GDD 6-16 v6.017) — 주면 탑 자체 머리 대신 쓴다 */
+export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveData, h: TowerViewHandlers, specialHead?: HTMLElement): void {
   const L = towerLabels(faction);
   const best = save.tower.best;
   const open = towerOpen(save.runLog, faction.id, best);
@@ -106,7 +107,7 @@ export function towerView(root: HTMLElement, faction: FactionConfig, save: SaveD
     );
     list.append(row);
   }
-  const { app } = lcdPage(root, { cls: 'bha-tower', cols: '2fr 3fr' }, head, left, [list]);
+  const { app } = lcdPage(root, { cls: 'bha-tower', cols: '2fr 3fr' }, specialHead ?? head, left, [list]);
   app.dataset.screen = 'tower';
   // 다음 층이 보이게 목록을 그 자리로 (페이지 전체가 움직이지 않게 스크롤 칸만)
   requestAnimationFrame(() => {

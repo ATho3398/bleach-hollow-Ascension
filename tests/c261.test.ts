@@ -30,7 +30,7 @@ describe('블록 생성 게이지 = 엔진의 실제 생성 타이머 (178장 1)
     const base = spawnGaugeOf(s).intervalSeconds;
     step(s, { type: 'item' });
     expect(s.hasteTicks).toBeGreaterThan(0);
-    expect(spawnGaugeOf(s).intervalSeconds).toBeCloseTo(base / 2, 5);
+    expect(spawnGaugeOf(s).intervalSeconds).toBeCloseTo(base / 2, 1); // C.446: 간격은 0.01초 반올림 뒤 값
     // 생성 속도 배율(장비·특성·피곤·빈사 등이 모이는 값)이 바뀌면 간격도 바로 바뀐다
     expect(spawnGaugeOf(quiet({ blockSpawnMultiplier: 2 })).intervalSeconds).toBeLessThan(base);
   });

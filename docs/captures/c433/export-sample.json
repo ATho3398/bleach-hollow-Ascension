@@ -1,0 +1,94 @@
+{
+ "format": "bha-layout",
+ "version": 1,
+ "patch": "C.432",
+ "exportedAt": "2026-11-12T11:01:58.426Z",
+ "resolved": {},
+ "rooms": {
+  "room-1": {
+   "id": "room-1",
+   "label": "연습 방",
+   "base": "hollow",
+   "sceneArt": "scene.room-ichigo",
+   "floor": {
+    "aspect": 2,
+    "poly": [
+     [
+      0,
+      0.46
+     ],
+     [
+      1,
+      0.46
+     ],
+     [
+      1,
+      1
+     ],
+     [
+      0,
+      1
+     ]
+    ]
+   },
+   "layout": {
+    "altar": {
+     "x": 91.1,
+     "y": 65.3,
+     "scale": 1.03,
+     "hidden": true
+    },
+    "book": {
+     "x": 53.5,
+     "y": 67.7,
+     "scale": 0.91
+    },
+    "chest": {
+     "x": 28.2,
+     "y": 91.2,
+     "scale": 0.86
+    },
+    "outside": {
+     "x": 9,
+     "y": 78,
+     "scale": 1
+    },
+    "hogyoku": {
+     "x": 79.3,
+     "y": 88.2,
+     "scale": 0.77,
+     "hidden": true
+    }
+   },
+   "extras": []
+  }
+ },
+ "draft": {
+  "v": 1,
+  "preview": false,
+  "scenes": {
+   "newroom.room-1": {
+    "items": {
+     "book": {
+      "x": 53.5,
+      "y": 67.7
+     }
+    },
+    "extras": []
+   }
+  },
+  "looks": {},
+  "rooms": {
+   "room-1": {
+    "name": "연습 방",
+    "base": "hollow",
+    "sceneArt": "scene.room-ichigo",
+    "props": [
+     "outside",
+     "chest",
+     "book"
+    ]
+   }
+  }
+ }
+}

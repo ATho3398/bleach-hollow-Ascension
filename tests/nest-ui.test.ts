@@ -136,9 +136,9 @@ describe('진화 후 달라진 점 행', () => {
     expect(rows[1]!.value).toBe('가득 회복');
     expect(String(rows[2]!.value)).not.toMatch(/\d/);
   });
-  it('종족값 한 줄은 능력치 6개를 이름과 함께 적는다', () => {
+  it('종족값 한 줄은 능력치 7개를 이름과 함께 적는다', () => {
     const line = statsLine(faction.id, form.stats);
-    expect(line.split(' · ')).toHaveLength(6);
+    expect(line.split(' · ')).toHaveLength(7);
     expect(line).toContain(`체력 ${form.stats.hp}`);
   });
   it('칸 수를 모르면 +N칸만 보인다', () => {

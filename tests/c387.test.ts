@@ -7,10 +7,13 @@ import { FOOD_IDS } from '../src/engine/faction';
 import { FOOD_PREFS, foodReactionOf, foodTypeOf, NORMAL_FOODS } from '../src/engine/foodPref';
 import { ELEMENTAL_IDS, ELEMENT_IDS, weaknessesOf } from '../src/data/elements';
 import { doNestAction, feedFood, foodEffect, newNest, sameFoodLeft } from '../src/engine/nest';
-import { foodOverflowGold } from '../src/engine/food';
 import { feedNest, foodReactionFor, migrateSave, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, MIN_LOADABLE_SAVE_FORMAT } from '../src/game';
 import { SAME_FOOD_REFUSED, useInventoryItem } from '../src/inventory';
 import { grantRecoverFood } from '../src/recoverTutorial';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const MIN = 60_000;
@@ -102,7 +105,6 @@ describe('235장: 먹이 3유형', () => {
     const bond = n.bond;
     doNestAction(n, 'feed', 'purify', T); // 배부름 5, 리스크 −15, 교감 −1
     expect([n.hunger, n.risk, n.bond]).toEqual([17, 15, bond - 1]);
-    expect(foodOverflowGold('relic')).toBe(BALANCE.provisional.sell.prices['food-relic']);
     expect(foodEffect('relic')).toMatchObject({ hunger: 10, condition: 0, risk: 0 });
     expect(NX.foods.feast).toMatchObject({ hunger: 40, condition: -15 });
     expect(NX.foods.tonic).toMatchObject({ hunger: 8, condition: 25 });
@@ -188,7 +190,7 @@ describe('235장: 먹이 3유형', () => {
 
 describe('세이브 형식 70', () => {
   it('형식 70 · 문턱 54, 69 → 70 = 빈 foodStreak·dislikeRun 0, 옛 먹이 개수 그대로 + 새 종류 0', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([77, 54]); // C.406 쇠약 시계·터치·숨은 모습
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([88, 87]); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.nest.foodStreak;
     delete s.nest.dislikeRun;
@@ -198,7 +200,7 @@ describe('세이브 형식 70', () => {
     expect([s.nest.foodStreak, s.nest.dislikeRun]).toEqual([{}, 0]);
     s.meta.format = 69;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(77);
+    expect(m.meta.format).toBe(88);
     expect(m.shared.food).toMatchObject({ snack: 4, basic: 2, hearty: 1, tonic: 3, feast: 1, sushi: 0, elixir: 0, relic: 0, scrap: 0 });
     expect(m.nest.foodStreak).toEqual({});
   });

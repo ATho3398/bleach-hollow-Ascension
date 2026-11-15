@@ -160,7 +160,7 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
     s.evolution.tierIndex = 3;
     s.evolution.formId = 'x';
     s.evolution.formHistory = ['a', 'b', 'c'];
-    s.evolution.ev = { hp: 41, atk: 30, def: 0, spr: 9, int: 10, spd: 3 } as SaveData['evolution']['ev'];
+    s.evolution.ev = { hp: 41, atk: 30, def: 0, spr: 9, int: 10, aspd: 3 } as SaveData['evolution']['ev'];
     s.shared.tradeCoins = 777;
     Object.assign(s.nest, { dead: true, collapsed: true, weakened: true, tired: true, hunger: 100, condition: 0, bond: 0 });
     expect(performRevive(s, 5).ok).toBe(true);

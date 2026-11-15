@@ -1,0 +1,120 @@
+{
+  "errors": [],
+  "shots": [
+    "pc-room-zero-sage",
+    "pc-status-no-toast",
+    "pc-dex-glitch",
+    "pc-dex-detail-glitch",
+    "pc-dex-detail-zero-sage",
+    "phone-room-zero-sage",
+    "phone-dex-glitch",
+    "pc-fusion-glitch"
+  ],
+  "facts": {
+    "pc-fusion": {
+      "ok": true,
+      "missing": null,
+      "def": "Unknown;03398",
+      "tracks": [
+        "tr:zero-sage",
+        "hollow",
+        "shinigami"
+      ],
+      "ev": {
+        "hp": 60,
+        "atk": 70,
+        "int": 40,
+        "def": 30,
+        "spr": 20,
+        "spd": 30
+      },
+      "owned": [
+        "t-fire-a",
+        "t-water-b",
+        "t-water-a"
+      ],
+      "slots": [
+        "t-fire-a",
+        "t-water-a",
+        null
+      ],
+      "enhance": {
+        "fire": 40,
+        "water": 60
+      },
+      "star": 4
+    },
+    "pc-room": {
+      "name": "태초초월자 · 소로",
+      "img": "/art/char-transcendent-zero-sage/idle-6.png",
+      "toast": ""
+    },
+    "status": 0,
+    "pc-dex": [
+      "yhwach:??? fit=true w=22/22 h=18",
+      "aizen:??? fit=true w=22/22 h=18",
+      "ichigo:??? fit=true w=22/22 h=18",
+      "iron-tyrant:??? fit=true w=22/22 h=18",
+      "zero-sage:태초 fit=true w=22/22[art] h=18",
+      "rift-wanderer:Unknown;03398 fit=true w=74/74[glitch] h=13"
+    ],
+    "detail": {
+      "glitch": 1,
+      "label": "Unknown;03398"
+    },
+    "phone-fusion": {
+      "ok": true,
+      "missing": null,
+      "def": "Unknown;03398",
+      "tracks": [
+        "tr:zero-sage",
+        "hollow",
+        "shinigami"
+      ],
+      "ev": {
+        "hp": 60,
+        "atk": 70,
+        "int": 40,
+        "def": 30,
+        "spr": 20,
+        "spd": 30
+      },
+      "owned": [
+        "t-fire-a",
+        "t-water-b",
+        "t-water-a"
+      ],
+      "slots": [
+        "t-fire-a",
+        "t-water-a",
+        null
+      ],
+      "enhance": {
+        "fire": 40,
+        "water": 60
+      },
+      "star": 4
+    },
+    "phone-room": {
+      "name": "태초초월자 · 소로",
+      "img": "/art/char-transcendent-zero-sage/idle-6.png",
+      "toast": ""
+    },
+    "phone-dex": [
+      "yhwach:??? fit=true w=22/22 h=18",
+      "aizen:??? fit=true w=22/22 h=18",
+      "ichigo:??? fit=true w=22/22 h=18",
+      "iron-tyrant:??? fit=true w=22/22 h=18",
+      "zero-sage:태초 fit=true w=22/22[art] h=18",
+      "rift-wanderer:Unknown;03398 fit=true w=74/74[glitch] h=13"
+    ],
+    "ready": {
+      "ready": true,
+      "preview": "Unknown;03398"
+    },
+    "fusionPanel": {
+      "glitch": 1,
+      "preview": "지금 두 캐릭터라면 → 「Unknown;03398」"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+ "format": "bha-layout",
+ "version": 1,
+ "patch": "C.431",
+ "exportedAt": "2026-11-12T10:56:52.692Z",
+ "resolved": {},
+ "rooms": {
+  "room-1": {
+   "name": "이치고의 방",
+   "base": "hollow",
+   "sceneArt": "scene.room",
+   "floor": {
+    "aspect": 2,
+    "poly": [
+     [
+      0,
+      0.46
+     ],
+     [
+      1,
+      0.46
+     ],
+     [
+      1,
+      1
+     ],
+     [
+      0,
+      1
+     ]
+    ]
+   },
+   "layout": {
+    "chest": {
+     "x": 46.8,
+     "y": 87.9,
+     "scale": 0.86
+    },
+    "outside": {
+     "x": 9,
+     "y": 78,
+     "scale": 1
+    },
+    "hogyoku": {
+     "x": 79.3,
+     "y": 88.2,
+     "scale": 0.77
+    }
+   },
+   "extras": []
+  }
+ },
+ "draft": {
+  "v": 1,
+  "preview": false,
+  "scenes": {
+   "newroom.room-1": {
+    "items": {
+     "chest": {
+      "x": 46.8,
+      "y": 87.9
+     }
+    },
+    "extras": []
+   }
+  },
+  "looks": {},
+  "rooms": {
+   "room-1": {
+    "name": "이치고의 방",
+    "base": "hollow",
+    "sceneArt": "scene.room",
+    "props": [
+     "outside",
+     "chest",
+     "hogyoku"
+    ]
+   }
+  }
+ }
+}

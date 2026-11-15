@@ -15,15 +15,47 @@
         "id": "absorb",
         "targets": [],
         "title": "{absorbActionName}",
-        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n**{absorbModeNames.both}**: 블록과 능력치를 함께 얻는다\n**{absorbModeNames.trait}**: 블록만 얻고 그 속성 쪽으로 자란다\n**{absorbModeNames.stat}**: 능력치를 두 배로 얻는다\n**{absorbModeNames.none}**: 얻지 않고 놓아준다"
+        "body": "적을 쓰러뜨리면 {absorbActionName}해서 성장할 수 있다.\n{absorbActionName}에는 갈래가 네 가지 있다.\n하나씩 보자."
+      },
+      {
+        "id": "mode-both",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"both\"]"
+        ],
+        "title": "{absorbModeNames.both}",
+        "body": "블록과 능력치를 함께 얻는다."
+      },
+      {
+        "id": "mode-trait",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"trait\"]"
+        ],
+        "title": "{absorbModeNames.trait}",
+        "body": "블록만 얻고, 그 속성 쪽으로 자란다."
+      },
+      {
+        "id": "mode-stat",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"stat\"]"
+        ],
+        "title": "{absorbModeNames.stat}",
+        "body": "블록 없이 능력치를 두 배로 얻는다."
+      },
+      {
+        "id": "mode-none",
+        "targets": [
+          "@.bha-absorb__actions [data-mode=\"none\"]"
+        ],
+        "title": "{absorbModeNames.none}",
+        "body": "얻지 않고 놓아준다."
       },
       {
         "id": "practice",
         "targets": [
-          "@.bha-absorb__pick"
+          "@.bha-absorb__go"
         ],
         "title": "첫 {absorbActionName}",
-        "body": "갈래를 고르면 아래에 설명이 나온다.\n설명 아래 버튼을 눌러 {absorbActionName}해 보자."
+        "body": "갈래를 누르면 위 칸에 자세한 설명이 나온다.\n하나 골라 이 버튼을 눌러 {absorbActionName}해 보자."
       }
     ],
     "first-run-room": [
@@ -127,13 +159,16 @@
           "@.bha-prop--chest"
         ],
         "title": "장비가 열렸다",
-        "body": "{tier3}이(가) 되어 장비를 쓸 수 있다.\n{room.props.chest}의 [{gearTitle}] 탭에서 가진 장비를 본다."
+        "body": "{tier3}이(가) 되어 낡은 무기·방어구·신발을 하나씩 받았다.\n{room.props.chest}을(를) 눌러 [{gearTitle}] 탭을 열어 보자."
       },
       {
         "id": "wear",
-        "targets": [],
+        "targets": [
+          "@.bha-equip-page .bha-eqright .bha-itemcard",
+          "@.bha-itemdialog [data-act^=\"equip-\"]"
+        ],
         "title": "착용",
-        "body": "무기·방어구·신발 칸에 하나씩 착용한다.\n장비는 모험에서 떨어지고, {market.name}의 장비 상점에서도 산다."
+        "body": "장비를 눌러 [착용] — 낡은 무기·낡은 방어구·낡은 신발을 하나씩 끼워 보자.\n장비는 모험에서 떨어지고, {market.name}의 장비 상점에서도 산다."
       },
       {
         "id": "enhance",
@@ -236,6 +271,40 @@
         "targets": [],
         "title": "끼우기",
         "body": "{room.props.chest}에서 출정품 칸에 끼워 둔다.\n모험을 떠날 때 1개씩 저절로 쓰이고, 그 모험 동안 효과가 이어진다."
+      }
+    ],
+    "hogyoku-appear": [
+      {
+        "id": "appear",
+        "targets": [
+          "@.bha-prop--hogyoku"
+        ],
+        "title": "붕옥이 나타났다",
+        "body": "이야기가 끝난 자리에 작은 구슬 하나가 남았다.\n\"…두 갈래의 힘을 하나로 잇는 구슬, 붕옥.\""
+      },
+      {
+        "id": "track",
+        "targets": [],
+        "title": "두 번째 트랙",
+        "body": "붕옥이 다른 종족의 길을 열었다 — 같은 슬롯에서 새 캐릭터를 1단계부터 키운다.\n이름표 옆 버튼으로 두 캐릭터를 바꾼다."
+      },
+      {
+        "id": "tab",
+        "targets": [
+          "@.bha-prop--hogyoku"
+        ],
+        "title": "붕옥",
+        "body": "방의 붕옥을 누르면 붕옥 화면이 열린다.\n지금은 반쯤 깨어난 채다 — 사냥과 우라하라에게서 얻는 고순도 윤활제·혼백 여과기·영압 결정으로 세공·정제·주입을 25강씩(개발 50%)까지 강화할 수 있다."
+      }
+    ],
+    "hogyoku-resonance": [
+      {
+        "id": "resonance",
+        "targets": [
+          "@.bha-prop--hogyoku"
+        ],
+        "title": "붕옥이 공명한다",
+        "body": "두 이야기가 모두 끝나자, 두 영압에 붕옥이 답한다.\n붕옥 개발 50~100%가 열렸다 — 100%에 두 캐릭터 모두 등급 1위면 합체할 수 있다."
       }
     ]
   },

@@ -7,7 +7,9 @@ import { hpNumbers } from './battle';
 import { infoTip, type InfoBody } from './infoTip';
 import { roomStatusInfo } from './statusInfo';
 import { CARE_STATUS_HINTS, dyingClock, statusChips, type StatusChip } from './roomLogic';
-import type { SaveData } from '../../game';
+import { trackNameOf, trackRulesOf, type SaveData } from '../../game';
+import { tryGetTranscendent } from '../../data/transcendents';
+import { transcendentNameNode } from './glitchName';
 import { formDisplayName } from '../../engine/evolution';
 import { rebirthMark } from '../rebirthView';
 import { shownName } from '../displayName';
@@ -17,7 +19,7 @@ import { fullnessOf } from './fullness';
 import { changeNoteBox, showChangeNote, type ChangeItem } from './changeNote';
 import { applyBlink, blinkGauges, changedKeys, GAUGE_BLINK_AFTER, GAUGE_BLINK_PERIOD_MS, tagGauge, type GaugeKey } from './gaugeBlink';
 
-/** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름(+ 푸는 법 짧게) */
+/** 상태 박스 줄 (C.281 모양): 한 줄씩 [아이콘 | 둥근 막대 | 숫자]. 상태이상(쇠약·피곤·빈사)은 맨 앞 줄, 막대 가득 + 숫자 자리에 이름 */
 export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
   const ordered = [...chips.filter((c) => c.value === null), ...chips.filter((c) => c.value !== null)];
   return ordered.map((c) => {
@@ -27,8 +29,7 @@ export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
     fill.style.width = `${c.value === null ? 100 : Math.max(0, Math.min(100, c.value))}%`;
     track.append(fill);
     row.append(icon(c.icon), track, el('span', 'bha-room__gaugenum bha-num', c.value === null ? c.label : String(Math.round(c.value))));
-    // 상태이상 줄 아래 푸는 법 짧게 (GDD 193장 15: '모험 1번' 류) — 자세한 것은 툴팁·ⓘ
-    if (c.short) row.append(el('span', 'bha-room__gaugehint', c.short));
+    // 푸는 법 줄은 두지 않는다 (GDD v6.004 3-2 — 박스가 줄마다 같은 폭·같은 자리). 푸는 법은 툴팁·ⓘ·상태 화면
     if (c.hint) row.title = c.hint;
     if (c.value !== null) row.dataset.gauge = c.kind; // 바뀌는 값 깜빡임 대상 (GDD 208장 3, gaugeBlink)
     return row;
@@ -37,7 +38,8 @@ export function statusGaugeRows(chips: readonly StatusChip[]): HTMLElement[] {
 
 /** 상태 박스(.bha-room__status) 안을 다시 그린다: 줄 + 이름표(있으면 박스 위 가운데) + 읽기 글·툴팁. ariaLead = 읽기 글 앞 (방 = '상태 보기: ') */
 export function paintStatusBox(box: HTMLElement, chips: readonly StatusChip[], nameTag: HTMLElement | null, ariaLead = ''): void {
-  box.setAttribute('aria-label', `${ariaLead}${chips.map((c) => (c.value === null ? c.label : `${c.label} ${c.value}`)).join(', ')}`);
+  // 값은 정수로 (GDD 243장 9-9: 차오르는 연출 중 '배부름 99.98394…' 소수가 읽기 글에 나오던 것)
+  box.setAttribute('aria-label', `${ariaLead}${chips.map((c) => (c.value === null ? c.label : `${c.label} ${Math.round(c.value)}`)).join(', ')}`);
   // 상태 칩(쇠약·피곤·쓰러짐) 풀리는 법 한 줄 툴팁 (GDD 102-7)
   box.title = chips.filter((c) => c.hint).map((c) => `${c.label}: ${c.hint}`).join('\n');
   box.replaceChildren(...statusGaugeRows(chips));
@@ -63,9 +65,22 @@ export function statusInfoButton(chipsNow: () => StatusChip[], faction: FactionC
  * 이름이 없으면(옛 세이브 — 이어할 때 정함) 예전처럼 이름표 테 꾸밈을 입었거나 환생(★)·투트랙일 때만 진화체 이름, 아니면 null(이름표 없음).
  * tracks = 트랙 전환을 쓸 수 있는 화면인지 (방 = 전환 손잡이가 있을 때만)
  */
-export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
+export function statusNameTag(save: Pick<SaveData, 'rebirth' | 'otherTracks' | 'wear' | 'evolution'> & { name?: string | null; transcendentId?: string | null }, faction: FactionConfig, tracks = true): HTMLElement | null {
   const stars = rebirthMark(save.rebirth.count);
   const form = shownName(formDisplayName(save.evolution, faction.id));
+  // 초월자 (GDD 12-4 v6.028): 이름 = 초월자 이름, 작게 '초월자'(종류 이름 = 트랙 종류 설정 label). 진화체 이름은 안 보인다(사용자 2026-11-15 "그냥 초월자만 써 놔")
+  if (save.transcendentId) {
+    const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
+    const kind = trackRulesOf(save).label;
+    const own = el('b', 'bha-room__nameown');
+    const def = tryGetTranscendent(save.transcendentId);
+    own.append(def ? transcendentNameNode(def) : trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })); // 이름 글리치 (C.430)
+    tag.append(own, el('span', 'bha-room__nameform', kind));
+    if (stars) tag.append(stars);
+    tag.title = `${trackNameOf({ factionId: faction.id, transcendentId: save.transcendentId })} · ${kind}`;
+    tag.dataset.transcendent = save.transcendentId;
+    return tag;
+  }
   if (save.name) {
     const tag = el('span', 'bha-small bha-room__name bha-room__name--own');
     tag.append(el('b', 'bha-room__nameown', save.name), el('span', 'bha-room__nameform', form));

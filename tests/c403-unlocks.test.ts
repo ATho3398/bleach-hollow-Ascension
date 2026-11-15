@@ -10,6 +10,10 @@ import { guidePending, GUIDE_IDS } from '../src/engine/tutorial';
 import { applyUnlocks, FEATURE_IDS, featureName, featureUnlocked, ruleMet, sanitizeUnlocks, UNLOCK_GUIDES, unlockHintText, unlockRule, type FeatureId } from '../src/engine/unlocks';
 import { gateHint, gateOpen } from '../src/unlockGate';
 import { battleItemUnlocked, checkUnlocks, gearUnlocked, migrateSave, newSaveData, performEvolution, petsUnlocked, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, tilesUnlocked, unlockProgressOf } from '../src/game';
+import { useLegacyMigrations } from './helpers/legacyGate';
+
+// C.446: 게임은 형식 87 미만을 열지 않는다(MIN_LOADABLE_SAVE_FORMAT 87) — 이 파일의 옛 형식 마이그레이션 시험 동안만 문턱을 내린다
+useLegacyMigrations();
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const evolve = (s: ReturnType<typeof newSaveData>, at = 10) => {
@@ -103,12 +107,12 @@ describe('세이브 형식 75 (74 → 75 마이그레이션): 옛 세이브는 �
     return migrateSave(raw)!;
   };
   it('형식 74, 단계 표에 73 이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(77); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
+    expect(SAVE_FORMAT_VERSION).toBe(88); // C.406 쇠약 시계·터치·숨은 모습 // C.403 기능 해금
     expect(SAVE_MIGRATIONS[73]).toBeTypeOf('function');
   });
   it('1단계 옛 세이브: 쓰던 장비·전투 소모품 칸·장신구 칸은 열린 채(안내 없음), 타일·펫은 안 받았으면 표대로 잠김', () => {
     const m = old74(() => undefined);
-    expect(m.meta.format).toBe(77);
+    expect(m.meta.format).toBe(88);
     expect(m.shared.unlocks).toEqual({ gear: 0, battleItem: 0, accessory: 0 });
     for (const g of ['unlock-gear', 'unlock-battle-item', 'unlock-accessory'] as const) expect(guidePending(m.help, g)).toBe(false);
   });
@@ -188,7 +192,7 @@ describe('241-C 1 해금 안내 카드', () => {
   });
   it('방에 돌아오면 표 순서로 하나씩 이어서 뜬다 · 도움말에서 다시 본다', () => {
     const app = read('src/ui/app.ts');
-    expect(app).toContain('const UNLOCK_GUIDE_ORDER = FEATURE_IDS.map((id) => UNLOCK_GUIDES[id]);');
+    expect(app).toContain("const UNLOCK_GUIDE_ORDER: TextGuideId[] = ['hogyoku-appear', 'hogyoku-resonance', ...FEATURE_IDS.map((id) => UNLOCK_GUIDES[id])];"); // GDD 243장 1: 붕옥 등장 컷이 먼저
     expect(app).toContain("if (!runGuide('first-run-room', faction)) runUnlockGuides(faction);");
     expect(app).toContain('out.push({ label: `${featureName(faction, id)} 안내`, run: chain([g]) });');
   });
@@ -233,7 +237,7 @@ describe('242장 2 홈 화면 붕옥 아이콘 자리', () => {
   });
 });
 
-describe('C.408 떠돌이 상인 펫 품목 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0)', () => {
+describe('C.408 우라하라 펫 품목 = 펫 해금(첫 환생) 뒤에만 (GDD 241-0)', () => {
   it('해금 전: 새로 오는 상인 목록에 없고, 와 있던 상인의 펫 알도 목록에서 빠져 살 수 없다 — 해금 뒤에는 그대로 판다', async () => {
     const { rollWandererStock } = await import('../src/engine/wanderer');
     const { wandererRows, buyWandererItem } = await import('../src/shop');

@@ -83,7 +83,7 @@ describe('198장 쓰는 곳', () => {
     expect(formReleaseCutin(f, 'shinigami')).toBe('만해 — 천단백련!');
     expect(liberationLabels(getFaction('hollow'), true, formReleaseCutin(f, 'hollow')).cutin).toBe('내리찍어라, 마르티요!');
     expect(battleLabels(getFaction('shinigami'), 3, true, formReleaseCutin(f, 'shinigami')).liberation).toMatchObject({ name: '만해', cutin: '만해 — 천단백련!' });
-    expect(liberationLabels(getFaction('shinigami'), false).cutin).toBe('영압을 묶은 봉인을 푼다 — 한정 해제!');
+    expect(liberationLabels(getFaction('shinigami'), false).cutin).toBe('한정 해제!'); // GDD 245장 6: 컷인은 해방 이름만
     // 진화체를 모르면 종족 기본 컷인
     expect(liberationLabels(getFaction('hollow'), true).cutin).toBe(getFaction('hollow').liberation.cutin);
     // 둔도는 만해 이름이 없어 컷인 틀을 못 채운다
