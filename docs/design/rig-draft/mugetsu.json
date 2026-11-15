@@ -176,6 +176,14 @@
  ],
  "slots": [
   {
+   "id": "foot_f",
+   "bone": "foot_f"
+  },
+  {
+   "id": "shin_f",
+   "bone": "shin_f"
+  },
+  {
    "id": "arm_sword",
    "bone": "arm_sword"
   },
@@ -220,20 +228,12 @@
    "bone": "lower"
   },
   {
-   "id": "foot_f",
-   "bone": "foot_f"
-  },
-  {
    "id": "hair_c",
    "bone": "hair_c"
   },
   {
    "id": "sword",
    "bone": "sword"
-  },
-  {
-   "id": "shin_f",
-   "bone": "shin_f"
   },
   {
    "id": "shin_b",
@@ -487,6 +487,8 @@
  },
  "bodySlots": {
   "parts": [
+   "foot_f",
+   "shin_f",
    "arm_sword",
    "hair_base",
    "hair_b",
@@ -497,11 +499,9 @@
    "hair_d",
    "foot_b",
    "foot_b_walk",
-   "foot_f",
    "belly",
    "hair_c",
    "sword",
-   "shin_f",
    "shin_b",
    "thigh_f",
    "chest",
@@ -1068,7 +1068,7 @@
      104
     ],
     "shin_b": [
-     72,
+     68,
      80
     ]
    }
