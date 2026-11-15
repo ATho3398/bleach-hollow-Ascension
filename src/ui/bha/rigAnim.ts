@@ -23,6 +23,8 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   dying: ['dying'],
   bath: ['bath'],
   lose: ['down'],
+  // 해방 순간 = 해방1 동작 (C.461, 사용자 2026-11-15 "도트랑 모션들 최신화시켜서 게임에 적용" — 해방1 이 있는 몸만, 없으면 공통 연출 그대로). 외형 바꿔치기는 아직 없음
+  release: ['release1'],
 };
 
 /** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 219장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */

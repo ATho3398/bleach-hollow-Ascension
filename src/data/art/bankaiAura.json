@@ -1,0 +1,10 @@
+{
+  "_comment": "만해 오라 (GDD 15-6 v6.089, C.461): 해방이 열린 동안(게이지가 차서 해방 버튼을 누를 수 있을 때) 내 캐릭터 몸 뒤에 까는 pixelfx 시트. 시트 이름 = <id 의 / 를 -로>-<속성>. ready = 해방 열림, active = 해방 중 — 사용자가 해방 중 이펙트를 따로 주면 active 만 그 id 로 바꾼다(지금은 임시로 같은 오라). bodyUnits = 시트를 만들 때 맞춘 몸 키(시트 픽셀, custom/bankai-aura 머리말 '키 110칸 안팎'), bodyWidthUnits = 몸 너비가 이 값(시트 픽셀)을 넘는 넓은 몸(덩치·짐승형 등)은 너비에 맞춰 키운다(임시·provisional, C.461 추천안), fallbackBodyFrac = 그림이 없는 몸의 몸 키(그림 칸 대비).",
+  "ready": "custom/bankai-aura",
+  "active": "custom/bankai-aura",
+  "elements": ["normal", "water", "fire", "earth", "thunder", "poison", "blood", "kyo"],
+  "fallbackElement": "normal",
+  "bodyUnits": 110,
+  "bodyWidthUnits": 140,
+  "fallbackBodyFrac": 0.67
+}

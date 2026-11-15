@@ -55,7 +55,8 @@ export interface ArtEntry {
   rig?: string;
   /** 몸 뒤·몸 앞 불꽃 같은 프레임 레이어 (C.456 무월 — docs/art-samples/mugetsu-flame '1. 간단'): `public/art/<키 폴더>/<back>-n.png`·`<front>-n.png` 를
    *  몸 그림과 같은 칸 크기로 겹쳐, 레이어마다 자기 프레임 수만큼 ms 간격으로 반복한다(길이가 달라도 각자) */
-  layers?: { back?: string; front?: string; ms: number };
+  /** live = 몸 뒤를 실시간 불꽃(src/data/art/flames/<id>.json, C.461)으로 — back 프레임은 동작 줄이기 때 대신 */
+  layers?: { back?: string; front?: string; ms: number; live?: string };
 }
 
 /** 화면이 쓰는 그림 정보 */
@@ -73,7 +74,7 @@ export interface ArtUrls {
   /** 그림 위에서 머리 윗변까지 (그림 높이 대비 0~1, 없으면 0 = 그림 윗변). 종이인형은 칸이 칼 자리까지 넓어 머리 위가 비어 있다 — 머리 위 상태 칩 높이용 (C.190) */
   headTop?: number;
   /** 프레임 레이어 (ArtEntry.layers): 몸 뒤·몸 앞 프레임 주소(재생 순서) · 프레임당 ms */
-  layers?: { back: string[]; front: string[]; ms: number };
+  layers?: { back: string[]; front: string[]; ms: number; live?: string };
 }
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
@@ -142,7 +143,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 무월 이치고 (C.456, docs/art-samples/mugetsu-flame — 사용자 완성 몸 56×114 + 몸 뒤 불꽃 16프레임 · 몸 앞 불꽃 40프레임, 120ms). 초월자 데이터 kit.mastery.releaseArt 가 가리킨다.
   // 144×144 칸(불꽃 칸 118×124 를 (0,15)에, 몸 = (44,25), 발 아래 여백 5 = 아이젠 칸과 같게). 배율 = 아이젠 원래 도트 크기(사신 종이인형과 같은 도트) × 144/128.
   // 앞뒤 순서 = README 그대로(몸 뒤 → 몸 → 몸 앞). 팔 앞뒤·동작마다 불 세기는 사용자 확인 전이라 정하지 않음 — 실시간 불꽃(live.py)은 아직 아님
-  'char.transcendent-ichigo-mugetsu': { scale: 1.6875, fieldScale: 1.26, layers: { back: 'back', front: 'front', ms: 120 } },
+  'char.transcendent-ichigo-mugetsu': { scale: 1.6875, fieldScale: 1.26, layers: { back: 'back', front: 'front', ms: 120, live: 'mugetsu' } },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
@@ -285,7 +286,7 @@ export function layeredArt(key: string, base = '/', manifest: Readonly<Record<st
   const l = manifest[key]?.layers;
   if (!l) return a;
   const list = (name?: string) => (name ? layerFiles(key, name, files).map((f) => joinBase(base, `art/${f}`)) : []);
-  return { ...a, layers: { back: list(l.back), front: list(l.front), ms: l.ms } };
+  return { ...a, layers: { back: list(l.back), front: list(l.front), ms: l.ms, ...(l.live ? { live: l.live } : {}) } };
 }
 const withAnims = (a: ArtUrls, anims: AnimSet): ArtUrls => (hasAnims(anims) ? { ...a, anims } : a);
 

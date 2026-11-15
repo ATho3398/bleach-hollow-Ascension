@@ -37,7 +37,7 @@ describe('무월 이치고 그림', () => {
     for (const f of FILES) expect(existsSync(`public/art/${f}`)).toBe(true);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/back-17.png')).toBe(false);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/front-41.png')).toBe(false);
-    expect(ART_MANIFEST[KEY]?.layers).toEqual({ back: 'back', front: 'front', ms: 120 });
+    expect(ART_MANIFEST[KEY]?.layers).toEqual({ back: 'back', front: 'front', ms: 120, live: 'mugetsu' });
   });
   it('layeredArt = 몸 + 레이어마다 자기 길이', () => {
     expect(layerFiles(KEY, 'back', FILES)).toHaveLength(16);
@@ -52,7 +52,7 @@ describe('무월 이치고 그림', () => {
   it('전투: 두 번째 해방 중에만 바꿔 입는다 (데이터 키로, id 분기 없음)', () => {
     const src = read('src/ui/battleView.ts');
     expect(src).toContain('tryGetTranscendent(s.params.kit.id)?.kit?.mastery?.releaseArt');
-    expect(src).toContain('heroSecond?.set(kitSecondOn(s))');
+    expect(src).toContain('heroSecond?.set(secondOn)'); expect(src).toContain('const secondOn = kitSecondOn(s);'); // C.461: 실시간 불꽃과 같이 켬
   });
 });
 

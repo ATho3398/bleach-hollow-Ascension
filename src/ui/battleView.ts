@@ -58,6 +58,8 @@ import { confirmDialog } from './confirmDialog';
 import { pickDialog } from './pickDialog';
 import { showToast } from './bha/nest';
 import { libAuraEl, libReadyEdge, libReadyNoticeEl, libReadyText } from './bha/libReady';
+import { bankaiAuraPhase, mountBankaiAura } from './bha/bankaiAura';
+import { LIVE_FLAMES, mountLiveFlame } from './bha/liveFlame';
 import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
@@ -420,6 +422,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const secondArtKey = s.params.kit ? tryGetTranscendent(s.params.kit.id)?.kit?.mastery?.releaseArt : undefined;
   const secondArt = secondArtKey ? layeredArt(secondArtKey, (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/') : null;
   const heroSecond = secondArt ? heroAltEl(hero.body, secondArt) : null;
+  // 실시간 불꽃 (C.461, 도트 세션 live.py): 그림 데이터 layers.live 가 있으면 몸 뒤를 캔버스로 — 불이 장면에 남아 돌진하면 뒤로 끌린다. 동작 줄이기면 PNG 레이어 그대로
+  const liveData = secondArt?.layers?.live ? LIVE_FLAMES[secondArt.layers.live] ?? null : null;
+  const liveFlame = liveData && secondArt && hero.body.parentElement && !prefersReducedMotion()
+    ? mountLiveFlame(hero.body.parentElement, hero.body, liveData, {
+      scale: secondArt.fieldScale ?? secondArt.scale,
+      dyPct: secondArt.offsetY,
+      dashOf: () => {
+        const t = getComputedStyle(hero.root).transform;
+        if (!t || t === 'none') return [0, 0];
+        const m = new DOMMatrixReadOnly(t);
+        return [m.e, m.f];
+      },
+    })
+    : null;
   const foeAnim = animOf(foe);
 
   // 체력 바 (핸드오프 게이지 hp·foe + 숫자 "78 / 108" — 숫자는 막대 안, GDD 127장 1): 값만 제자리에서 바꾼다
@@ -624,6 +640,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const libReadyNotice = libReadyNoticeEl();
   const libReadyRose = libReadyEdge();
   if (libOn) hero.root.prepend(libAuraEl());
+  // 만해 오라 (GDD 15-6 v6.089, C.461): 해방이 열린 동안(+ 해방 중, 임시) 몸 뒤 pixelfx 시트 — 색 = 내 속성, 크기 = 몸 키 비례. 모든 몸 같은 장치
+  const bankaiAura = libOn && hero.body.parentElement
+    ? mountBankaiAura(hero.body.parentElement, heroArt, auraEl, { reduced: prefersReducedMotion(), onShown: (on) => app.classList.toggle('has-bankai-aura', on) })
+    : null;
   // 막기 방어막 (GDD 241-B 2): 막는 동안 몸 둘레 반구 막(색 = --bha-guard 토큰). 보이는 것은 CSS(.is-guarding)
   const guardShield = el('span', 'bha-guardshield');
   guardShield.setAttribute('aria-hidden', 'true');
@@ -1358,8 +1378,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         break;
       case 'liberate':
         setText(libCut.firstElementChild as HTMLElement, e.name ?? labels.liberation.cutin); // 두 번째 해방(무월, GDD 12-4 v6.069)은 그 이름
-        // 해방 변신 애니(release)가 있으면 그것이 변신 연출이다 — 공통 컷인은 없을 때만 (GDD 26-3)
-        if (!heroAnim?.play('release', { onEnd: () => heroAnim.stop() })) replayOnce(libCut, 'is-on', 1400);
+        // 해방 변신 애니(release)가 있으면 그것이 변신 연출이다 — 공통 컷인은 없을 때만 (GDD 26-3).
+        // 종이인형 몸의 해방1 동작(C.461)은 몸동작일 뿐이라 해방 이름 컷인은 그대로 띄운다
+        if (!heroAnim?.play('release', { onEnd: () => heroAnim.stop() }) || heroArt.rig) replayOnce(libCut, 'is-on', 1400);
         flash('is-special', 700);
         shake();
         break;
@@ -1766,7 +1787,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
 
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);
-    heroSecond?.set(kitSecondOn(s)); // 무월 그림 (C.456)
+    const secondOn = kitSecondOn(s);
+    heroSecond?.set(secondOn); // 무월 그림 (C.456)
+    if (liveFlame && liveFlame.on !== secondOn) {
+      liveFlame.set(secondOn);
+      hero.body.classList.toggle('has-liveflame', secondOn);
+    }
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);
     setHidden(libChipRoot.root, !libActive || (s.liberation.endless === true && !!kitRelBtn));
@@ -1803,6 +1829,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const lb = s.liberation;
       const ready = canLiberate(s);
       libBtn.classList.toggle('is-ready', ready);
+      bankaiAura?.set(bankaiAuraPhase(libOn, ready, libActive));
       app.classList.toggle('is-lib-ready', ready);
       if (libReadyRose(ready)) {
         setText(libReadyNotice.firstElementChild as HTMLElement, riskRel ? labels.liberation.name : libReadyText(releaseName));

@@ -272,6 +272,7 @@ export function heroAltEl(body: HTMLElement, art: ArtUrls): { set(on: boolean): 
   const back = art.layers?.back ?? [];
   const front = art.layers?.front ?? [];
   const backImg = back.length ? layer(back[0]!) : null;
+  backImg?.classList.add('bha-hero__altback'); // 실시간 불꽃(C.461)이 켜지면 숨긴다
   layer(art.src!);
   const frontImg = front.length ? layer(front[0]!) : null;
   body.append(root);
