@@ -2,7 +2,7 @@
 import math, json, numpy as np
 from PIL import Image
 spr=np.array(Image.open('mug4/mugetsu.png').convert('RGBA')); SH,SW=spr.shape[:2]
-EM=json.load(open('mug4/emitters.json')); INN=[e for e in EM if e.get('inner')]
+EM=json.load(open('mug4/emitters.json')); INN=[e for e in EM if e.get('inner')]; ARM_E=[e for e in EM if e.get('arm') is not None]
 blk=(spr[...,3]>0)&(spr[...,:3].astype(int).sum(2)==0); pants=np.zeros((SH,SW),bool); pants[72:108]=blk[72:108]
 W,H=262,134; GROUND=H-4; DT=60; TICK=2            # 60ms 프레임, 불꽃 박자는 2프레임(120ms)에 한 칸
 # 움직임 대본: (프레임 수, 프레임당 x 이동, 걷는 중인가)
@@ -31,6 +31,7 @@ def emit(fr):
     for j in range(k):
         a=(j+1)/k; cx=px+(sx-px)*a; oy=GROUND-SH-bob; bt=fr-1+a
         for i,e in enumerate(EM):
+            if e.get('arm') is not None: continue      # 칼날 불은 날리지 않고 붙여 그린다 (render)
             if e.get('inner'):
                 q=((bt/TICK-e['slot']*4)%40)/8          # 안쪽 불: 한 번에 2개만
                 p=math.sin(math.pi*q)**0.6 if q<1 else 0.0
@@ -54,6 +55,19 @@ def render(fr):
             x1,y1=max(0,x1),max(0,y1); x2,y2=min(W,x2),min(H,y2)
             if x1>=x2 or y1>=y2: continue
             f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/r)**2+((Y[y1:y2,x1:x2]-cy)/ry)**2<=1
+        for e in ([] if inner else ARM_E):               # 칼날에 붙어 타는 불
+            for k in range(e['licks']):
+                l_=((fr/TICK+e['beat']+k*PER/e['licks'])%PER)/PER
+                amp=0.5-0.5*math.cos(2*math.pi*l_); h=e['rise']*0.6*(0.35+0.65*amp); thick=e['size']*(0.6+0.4*amp)-shrink
+                if thick<=0.4: continue
+                u=0.0
+                while u<=h:
+                    r=thick*(1-u/(h+1e-6))**e['taper']
+                    if r>0.3:
+                        r=max(r,0.5); cx=sx+e['x']+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=oy+e['y']-u
+                        x1,x2=max(0,int(cx-r-1)),min(W,int(cx+r+2)); y1,y2=max(0,int(cy-r*1.25-1)),min(H,int(cy+r*1.25+2))
+                        if x1<x2 and y1<y2: f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/r)**2+((Y[y1:y2,x1:x2]-cy)/(r*1.25))**2<=1
+                    u+=0.6
         for (ax,ay,sp) in ([] if inner else ARMS):
             r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-fr/(PER*TICK)))-shrink*0.8
             if r>0.35:

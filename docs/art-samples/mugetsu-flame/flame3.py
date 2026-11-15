@@ -55,7 +55,8 @@ def arm_samples():
     return out,s
 ARMS,ARML=arm_samples()
 for i,sp in enumerate(np.arange(ARML*0.22,ARML-1,5.2)):
-    x,y,_=min(ARMS,key=lambda p:abs(p[2]-sp)); e=mk(x,y-1,-0.35,'SMSBSMSMSSBS'[i%12],(i*7+3)%FR); e['arm']=round(float(sp),1); EM.append(e)
+    x,y,_=min(ARMS,key=lambda p:abs(p[2]-sp)); e=mk(x,y-1,-0.35,'SMSMSMSMSSMS'[i%12],(i*7+3)%FR); e['arm']=round(float(sp),1)
+    if sp<ARML*0.86: EM.append(e)     # 칼날 맨 끝 자리는 뺀다(끝의 큰 덩어리 삭제). 큰 불(B)도 칼날에는 쓰지 않는다
 print('emitters',len(EM))
 Y,X=np.mgrid[0:H,0:W]
 C0,C2=(0,0,0,255),(54,48,63,255)
@@ -65,9 +66,12 @@ def field(t,shrink=0.0,ems=None):
         ex,ey,side,r0,ph,rise=e['x'],e['y'],e['out'],e['size'],e['beat'],e['rise']
         for k in range(e['licks']):
             l=((t+ph+k*FR/e['licks'])%FR)/FR
-            h=rise*l**0.9
-            st=rise*(max(0.0,(l-0.42)/0.58))**1.15*0.97
-            thick=r0*min(l/0.15,1)*(1-0.6*l)-shrink
+            if e.get('arm') is not None:                     # 칼날(팔)의 불: 떨어져 날아가지 않고 칼에 붙은 채로 길어졌다 짧아졌다 한다 (붕옥 불꽃처럼)
+                amp=0.5-0.5*math.cos(2*math.pi*l); h=rise*0.6*(0.35+0.65*amp); st=0.0; thick=r0*(0.6+0.4*amp)-shrink
+            else:
+                h=rise*l**0.9
+                st=rise*(max(0.0,(l-0.42)/0.58))**1.15*0.97      # 42% 뒤부터 밑동이 떨어져 따라 올라감
+                thick=r0*min(l/0.15,1)*(1-0.6*l)-shrink
             if thick<=0.4 or h-st<0.3: continue
             u=st
             while u<=h:
