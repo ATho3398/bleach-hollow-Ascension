@@ -1,0 +1,391 @@
+{
+ "frames": [
+  {
+   "filename": "bankai-aura 0",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 1",
+   "frame": {
+    "x": 168,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 2",
+   "frame": {
+    "x": 336,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 3",
+   "frame": {
+    "x": 504,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 4",
+   "frame": {
+    "x": 672,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 5",
+   "frame": {
+    "x": 0,
+    "y": 232,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 6",
+   "frame": {
+    "x": 168,
+    "y": 232,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 7",
+   "frame": {
+    "x": 336,
+    "y": 232,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 8",
+   "frame": {
+    "x": 504,
+    "y": 232,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 9",
+   "frame": {
+    "x": 672,
+    "y": 232,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 10",
+   "frame": {
+    "x": 0,
+    "y": 464,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 11",
+   "frame": {
+    "x": 168,
+    "y": 464,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 12",
+   "frame": {
+    "x": 336,
+    "y": 464,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 13",
+   "frame": {
+    "x": 504,
+    "y": 464,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 14",
+   "frame": {
+    "x": 672,
+    "y": 464,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  },
+  {
+   "filename": "bankai-aura 15",
+   "frame": {
+    "x": 0,
+    "y": 696,
+    "w": 168,
+    "h": 232
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 168,
+    "h": 232
+   },
+   "sourceSize": {
+    "w": 168,
+    "h": 232
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "https://github.com/patch-gg/pixelfx",
+  "version": "1",
+  "image": "bankai-aura.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 840,
+   "h": 928
+  },
+  "scale": "1",
+  "frameTags": [
+   {
+    "name": "bankai-aura",
+    "from": 0,
+    "to": 15,
+    "direction": "forward"
+   }
+  ],
+  "pixelfx": {
+   "id": "custom/bankai-aura",
+   "name": "만해 오라",
+   "fps": 12,
+   "loop": true,
+   "frames": 16,
+   "frameSize": [
+    168,
+    232
+   ],
+   "pivot": [
+    84,
+    218
+   ],
+   "columns": 5
+  }
+ }
+}
