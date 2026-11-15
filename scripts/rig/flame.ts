@@ -5,6 +5,8 @@ export interface FlameEmitter {
   slot: string; x: number; y: number;
   out: number; size: number; rise: number; licks: number; taper: number; sway: number; wl: number; lean: number; beat: number;
   inner?: boolean; order?: number;
+  /** 붙어서 타는 불(칼날): 불 덩이를 날리지 않고 그 자리에 붙여 그린다 — 높이·굵기만 맥박처럼 변한다 */
+  stick?: boolean;
 }
 /** trail = 불꽃 팔: [조각, 조각 안 x, y, 어깨에서부터 거리 0~1, 거리(칸)] — 그 자리마다 일렁이는 검은 덩이(어깨 쪽이 굵다) */
 /** alias = 그 조각이 숨겨진 동작에서는 대신 이 조각 자리를 쓴다(같은 뼈·같은 자리의 바꿔 끼운 그림 — 칼 날 위 등) */
@@ -46,6 +48,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
    *  (전에는 60ms 박자마다 앞 자리와 직선으로 이어 내서 휘두르면 궤적이 각졌다 — 사용자 2026-11-15 "막 각져서 나오고") */
   const emit = (dtF: number) => {
     for (const e of spec.emitters) {
+      if (e.stick) continue; // 붙어서 타는 불은 그릴 때 지금 자리에 그린다
       const m = pos.get(e.slot);
       if (!m) continue;
       const wx = m[0]! * e.x + m[2]! * e.y + m[4]! + pl, wy = m[1]! * e.x + m[3]! * e.y + m[5]! + pt;
@@ -96,6 +99,25 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const cx = m[0]! * lx + m[2]! * ly + m[4]! + pl, cy = m[1]! * lx + m[3]! * ly + m[5]! + pt;
       for (let y = Math.max(0, Math.floor(cy - r - 1)); y < Math.min(H, Math.floor(cy + r + 2)); y++) for (let x = Math.max(0, Math.floor(cx - r - 1)); x < Math.min(W, Math.floor(cx + r + 2)); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) buf[y * W + x] = 1;
     }
+    // 붙어서 타는 불(칼날): 지금 조각 자리에서 위로 뾰족하게 — 높이 = rise × 0.6 × (0.35 + 0.65 × 맥박), 굵기 = size × (0.6 + 0.4 × 맥박) (live.py 그대로)
+    if (arm) for (const e of spec.emitters) {
+      if (!e.stick) continue;
+      const m = pos.get(e.slot);
+      if (!m) continue;
+      const bx = m[0]! * e.x + m[2]! * e.y + m[4]! + pl, by = m[1]! * e.x + m[3]! * e.y + m[5]! + pt;
+      for (let k = 0; k < e.licks; k++) {
+        const l = ((((fr / TICK + e.beat + (k * PER) / e.licks) % PER) + PER) % PER) / PER;
+        const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.6 * (0.35 + 0.65 * amp), thick = e.size * (0.6 + 0.4 * amp) - shrink;
+        if (thick <= 0.4) continue;
+        for (let u = 0; u <= h; u += 0.6) {
+          let r = thick * (1 - u / (h + 1e-6)) ** e.taper;
+          if (r <= 0.3) continue;
+          r = Math.max(r, 0.5);
+          const cx = bx + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5), cy = by - u, ry = r * 1.25;
+          for (let y = Math.max(0, Math.floor(cy - ry - 1)); y < Math.min(H, Math.floor(cy + ry + 2)); y++) for (let x = Math.max(0, Math.floor(cx - r - 1)); x < Math.min(W, Math.floor(cx + r + 2)); x++) if (((x - cx) / r) ** 2 + ((y - cy) / ry) ** 2 <= 1) buf[y * W + x] = 1;
+        }
+      }
+    }
     for (const p of puffs) {
       if (!pick(p)) continue;
       const e = p.e, age = ageOf(p), life = ((LIFE * e.rise) / 20) * p.lk;
@@ -115,6 +137,14 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   const render = (layers: FlameLayer[]) => {
     // 몸 뒤: 바깥 불 — 테두리 한 칸 보라, 속 검정
     field(f0, 0, (p) => !p.e.inner, true); field(f1, 1.1, (p) => !p.e.inner, true);
+    // 발에서는 불이 나지 않는다(사용자 2026-11-16 "다리에서만 나오게"): 하카마 밑단(자르기용 조각 중 가장 아래) 밑으로는 몸 뒤 불을 안 그린다
+    let hem = -1;
+    for (const l of layers) {
+      if (!spec.mask.includes(l.slot)) continue;
+      const w = l.img.naturalWidth || 0, h = l.img.naturalHeight || 0;
+      for (const [x, y] of [[0, 0], [w, 0], [0, h], [w, h]] as const) hem = Math.max(hem, l.m[1]! * x + l.m[3]! * y + l.m[5]! + pt);
+    }
+    if (hem >= 0) { const from = Math.min(H, Math.ceil(hem)) * W; f0.fill(0, from); f1.fill(0, from); }
     const bi = bctx.createImageData(W, H);
     for (let i = 0; i < W * H; i++) if (f0[i]) { const c = f1[i] ? C0 : C2; bi.data.set([c[0]!, c[1]!, c[2]!, 255], i * 4); }
     bctx.putImageData(bi, 0, 0);

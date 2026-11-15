@@ -38,6 +38,8 @@ def main():
         r = {'slot': slot, 'x': round(cx - at[0], 1), 'y': round(cy - at[1], 1)}
         for k in ('out', 'size', 'rise', 'licks', 'taper', 'sway', 'wl', 'lean', 'beat'):
             r[k] = round(e[k], 3)
+        if 'arm' in e:  # 칼날(불꽃 팔)의 불 = 날아가지 않고 붙어서 탄다(도트 세션 2026-11-16 갱신, 사용자 "칼에 붙은상태로 타야해. 붕옥처럼")
+            r['stick'] = True
         if e.get('inner'):
             r['inner'] = True
             r['order'] = e['slot']

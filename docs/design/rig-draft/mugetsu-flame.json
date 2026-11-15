@@ -1000,62 +1000,6 @@
    "beat": 6
   },
   {
-   "slot": "shin_f",
-   "x": 13.0,
-   "y": 37,
-   "out": -0.4,
-   "size": 2.3,
-   "rise": 10.745,
-   "licks": 2,
-   "taper": 1.05,
-   "sway": 0.498,
-   "wl": 7.228,
-   "lean": 0.235,
-   "beat": 2
-  },
-  {
-   "slot": "shin_f",
-   "x": 18.0,
-   "y": 37,
-   "out": 0.4,
-   "size": 2.223,
-   "rise": 8.121,
-   "licks": 2,
-   "taper": 1.05,
-   "sway": 0.731,
-   "wl": 6.773,
-   "lean": 0.153,
-   "beat": 12
-  },
-  {
-   "slot": "shin_b",
-   "x": 8.0,
-   "y": 37,
-   "out": 0.4,
-   "size": 2.359,
-   "rise": 8.185,
-   "licks": 2,
-   "taper": 1.05,
-   "sway": 0.597,
-   "wl": 6.322,
-   "lean": 0.092,
-   "beat": 5
-  },
-  {
-   "slot": "shin_b",
-   "x": 14.0,
-   "y": 37,
-   "out": -0.4,
-   "size": 2.498,
-   "rise": 9.278,
-   "licks": 2,
-   "taper": 1.05,
-   "sway": 0.663,
-   "wl": 8.74,
-   "lean": 0.225,
-   "beat": 9
-  },
-  {
    "slot": "thigh_b",
    "x": 19.0,
    "y": 19,
@@ -1109,7 +1053,8 @@
    "sway": 0.697,
    "wl": 7.943,
    "lean": 0.148,
-   "beat": 3
+   "beat": 3,
+   "stick": true
   },
   {
    "slot": "forearm_sword",
@@ -1123,7 +1068,8 @@
    "sway": 0.92,
    "wl": 11.635,
    "lean": 0.154,
-   "beat": 10
+   "beat": 10,
+   "stick": true
   },
   {
    "slot": "forearm_sword",
@@ -1137,21 +1083,23 @@
    "sway": 0.611,
    "wl": 6.719,
    "lean": 0.188,
-   "beat": 1
+   "beat": 1,
+   "stick": true
   },
   {
    "slot": "sword",
    "x": 32.5,
    "y": 3,
    "out": -0.35,
-   "size": 5.885,
-   "rise": 33.346,
-   "licks": 1,
-   "taper": 1.6,
-   "sway": 2.132,
-   "wl": 14.357,
-   "lean": 0.152,
-   "beat": 8
+   "size": 3.828,
+   "rise": 20.788,
+   "licks": 2,
+   "taper": 1.3,
+   "sway": 1.232,
+   "wl": 10.357,
+   "lean": 0.19,
+   "beat": 8,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1165,7 +1113,8 @@
    "sway": 0.388,
    "wl": 8.762,
    "lean": 0.118,
-   "beat": 15
+   "beat": 15,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1179,7 +1128,8 @@
    "sway": 1.056,
    "wl": 10.505,
    "lean": 0.177,
-   "beat": 6
+   "beat": 6,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1193,7 +1143,8 @@
    "sway": 0.379,
    "wl": 6.192,
    "lean": 0.137,
-   "beat": 13
+   "beat": 13,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1207,7 +1158,8 @@
    "sway": 0.954,
    "wl": 10.089,
    "lean": 0.154,
-   "beat": 4
+   "beat": 4,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1221,7 +1173,8 @@
    "sway": 0.327,
    "wl": 6.174,
    "lean": 0.164,
-   "beat": 11
+   "beat": 11,
+   "stick": true
   },
   {
    "slot": "sword",
@@ -1235,35 +1188,8 @@
    "sway": 0.783,
    "wl": 6.458,
    "lean": 0.156,
-   "beat": 2
-  },
-  {
-   "slot": "sword",
-   "x": 6.9,
-   "y": 29,
-   "out": -0.35,
-   "size": 6.008,
-   "rise": 35.382,
-   "licks": 1,
-   "taper": 1.6,
-   "sway": 2.192,
-   "wl": 15.306,
-   "lean": 0.119,
-   "beat": 9
-  },
-  {
-   "slot": "sword",
-   "x": 3.5,
-   "y": 33,
-   "out": -0.35,
-   "size": 2.111,
-   "rise": 10.861,
-   "licks": 2,
-   "taper": 1.05,
-   "sway": 0.548,
-   "wl": 7.573,
-   "lean": 0.247,
-   "beat": 0
+   "beat": 2,
+   "stick": true
   },
   {
    "slot": "shin_f",
