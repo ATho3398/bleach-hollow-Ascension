@@ -62,6 +62,7 @@ def render(fr):
         base=np.zeros((H,W),bool)
         if shrink==0 and not inner:
             for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
+        hem=np.where(pm.any(1))[0].max(); f[hem+1:]=False      # 발 쪽으로는 불이 내려가지 않는다
         return (f&pm) if inner else ((f|base)&~pm)
     f=fld(0); core=fld(1.1)
     lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0; lay[f&~core&np.roll(pm,-1,0)]=C0

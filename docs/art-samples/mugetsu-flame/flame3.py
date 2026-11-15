@@ -34,7 +34,7 @@ for side in (-1,1):
     for i,y in enumerate(np.linspace(top+6,bot-1,7).astype(int)):
         x=(L[y] if side<0 else Rr[y]); EM.append(mk(x+side,y,side,PAT[side][i],(i*5+(0 if side<0 else 8)+rng.randint(3))%FR))
 for j,x in enumerate(np.linspace(L[bot-2]+3,Rr[bot-2]-3,4).astype(int)):
-    EM.append(mk(x,bot-1,rng.choice([-1,1])*0.4,'S',rng.randint(FR)))
+    mk(x,bot-1,rng.choice([-1,1])*0.4,'S',rng.randint(FR))   # 밑단(발 위) 자리는 뺀다 — 불은 다리(바지)에서만. 다른 자리의 모양이 안 바뀌게 난수만 그대로 쓴다
 # 엉덩이 쪽(뒷손 뒤, 바지 오른쪽 위 가장자리): 머리카락 밖으로 보이게 바깥으로 더 기울인 불 3자리
 for j,(yy,kind) in enumerate(((top+2,'M'),(top+7,'B'),(top+13,'M'))):
     e=mk(Rr[yy]+1,yy,1,kind,(j*6+2)%FR); e['lean']=0.34+0.05*j; e['hip']=True; EM.append(e)
@@ -81,6 +81,7 @@ def field(t,shrink=0.0,ems=None):
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
     base=np.zeros((H,W),bool)                # 바지 둘레에 늘 붙어 있는 얇은 불 띠
     for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
+    f=f&(Y<=bot)                                  # 바지 밑단 아래(발)로는 불이 내려가지 않는다
     return ((f|base)&~pm) if ems is None else (f&pm)
 def back(t):
     f=field(t); core=field(t,1.1)
