@@ -80,7 +80,7 @@ describe('데이터·수치 (provisional)', () => {
     expect(t.kit?.liberationName).toBe('각호고');
     expect(t.kit?.riskGaugeName).toBe('호로화');
     expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충', releaseArt: 'char.transcendent-ichigo-mugetsu' }); // C.456 무월 그림
-    expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic', 'tybw']); // C.459: 천년혈전 구현 (tests/c459)
+    expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic', 'tybw']); // C.460: 천년혈전 구현 (tests/c460)
     // GDD v6.070~v6.074 추천안
     expect(K.blocks.getsuga).toMatchObject({ chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] });
     expect(RD).toEqual({ shotCost: 5, tickSeconds: 1, tickCost: 4, mastery: { perBasic: 2, perBlock: 4, full: 100, damageMult: 1.5 }, final: { stacks: 10, power: 30, perBlock: 4 }, bonusBlockEvery: 5 });

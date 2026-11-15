@@ -15,7 +15,7 @@ export interface Block {
   sealTicks?: number;
   /** 체인으로 묶이지 않는 블록 (GDD 12-4 v6.048, C.441 — 초월자 전용 블록 장치 solo: 경화수월). 없음 = 묶임 */
   solo?: boolean;
-  /** 천쇄참월 불 켠 블록 (GDD 12-4 천년혈전, C.459 — 자세 장치 lanterns): 만해 중 회색 블록을 눌러 켠다. 패링·피격 뒤 꺼짐 */
+  /** 천쇄참월 불 켠 블록 (GDD 12-4 천년혈전, C.460 — 자세 장치 lanterns): 만해 중 회색 블록을 눌러 켠다. 패링·피격 뒤 꺼짐 */
   lit?: boolean;
 }
 

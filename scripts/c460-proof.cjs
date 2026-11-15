@@ -1,10 +1,10 @@
-// C.459 proof (GDD v6.087 12-4): 이치고 천년혈전 — 상태 화면 전투 모드 · 소도 자세(스택 칩) · 대도 발도 충전 중 · 혈쇄참월 분신 2명 · 천쇄참월 회색 블록 불 켜짐 · 폰 1장. PC 844×390 · 폰 796×384 1배. 실행: node scripts/c459-proof.cjs [저장 폴더]
+// C.460 proof (GDD v6.088 12-4): 이치고 천년혈전 — 상태 화면 전투 모드 · 소도 자세(스택 칩) · 대도 발도 충전 중 · 혈쇄참월 분신 2명 · 천쇄참월 회색 블록 불 켜짐 · 폰 1장. PC 844×390 · 폰 796×384 1배. 실행: node scripts/c460-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
 
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c459'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c460'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 const PH = { viewport: { width: 796, height: 384 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -55,7 +55,7 @@ export interface TranscendentKitBlockDef {
   voidSlot?: boolean;
 }
 
-/** 자세 하나 (GDD 12-4 천년혈전, C.459): 이름·장치만 — 수치는 balance transcendentKits.<id>.modes.<모드>.
+/** 자세 하나 (GDD 12-4 천년혈전, C.460): 이름·장치만 — 수치는 balance transcendentKits.<id>.modes.<모드>.
  *  block = 이 자세에서만 나오는 블록 · releaseName = 이 자세 스택으로 여는 만해 · speed 스택 1당 공격속도 · power 스택 1당 평타 피해 · clones 만해 중 체인당 분신 ·
  *  fixed 평타 간격 고정(초과 공속 = 추가 피해) · hold 유지 보너스 · draw 블록을 누르고 있다 떼면 발도 충전 · parry 막기 버튼 = 패링 · lanterns 만해 중 블록 = 회색·불 켜기 */
 export interface TranscendentStanceDef {
@@ -77,7 +77,7 @@ export interface TranscendentStanceDef {
   lanterns?: boolean;
 }
 
-/** 전투 모드 하나 (GDD 12-4, C.459) */
+/** 전투 모드 하나 (GDD 12-4, C.460) */
 export interface TranscendentKitModeDef {
   id: string;
   name: string;
@@ -107,7 +107,7 @@ export interface TranscendentKitDef {
   riskDrain?: boolean;
   /** 게이지를 다 쓰면 수련 게이지 → 두 번째 해방 (GDD 12-4 v6.069 무월수련·무월·최후의 월아천충, 수치 = balance riskDrain.mastery·final): 이름만 */
   mastery?: { gaugeName: string; releaseName: string; finisherName: string; /** 두 번째 해방 중 몸 그림 키 (C.456 무월 — 그림 목록 layers 로 불꽃 앞뒤). 없으면 그림 그대로 */ releaseArt?: string };
-  /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 이치고 = 기본 / 천년혈전, C.459): 첫 모드 = 이 kit 그대로(blocks·riskDrain·mastery).
+  /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 이치고 = 기본 / 천년혈전, C.460): 첫 모드 = 이 kit 그대로(blocks·riskDrain·mastery).
    *  자세 모드(stances 가 있는 모드)는 kit 블록·게이지 소모형 대신 그 모드의 blocks + 자세 장치 — 고르는 곳 = 상태 화면 '전투 모드'(진화 상태 kit.mode) */
   modes?: TranscendentKitModeDef[];
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
@@ -176,7 +176,7 @@ function humanSkinsOk(v: unknown): boolean {
     && typeof x.name === 'string' && !!x.name && typeof x.art === 'string' && x.art.startsWith('char.') && typeof x.placeholder === 'string' && x.placeholder.startsWith('char.'));
 }
 
-/** 모드 검증 (C.459): 첫 모드는 자세 없음(kit 그대로), 자세 모드 = 자세 2개 이상 · 자세 block 이 그 모드 blocks 에 있음 */
+/** 모드 검증 (C.460): 첫 모드는 자세 없음(kit 그대로), 자세 모드 = 자세 2개 이상 · 자세 block 이 그 모드 blocks 에 있음 */
 function modeOk(m: TranscendentKitModeDef, index: number): boolean {
   if (m.stances === undefined) return m.blocks === undefined;
   if (index === 0 || !Array.isArray(m.stances) || m.stances.length < 2 || !Array.isArray(m.blocks) || m.blocks.length === 0) return false;

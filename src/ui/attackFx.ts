@@ -78,7 +78,7 @@ export function chainTier(chain: number, top: number): AttackTier {
 export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: string, stage: number) => FamilyFxSpec | null | undefined, heavyPixel?: PixelFxStage | null): AttackCue | null {
   switch (e.kind) {
     case 'player-attack':
-      // 혈쇄참월 분신 한 대 (C.459): 내 몸 모션 없음 — 화면이 몸 그림 반투명 사본만 낸다
+      // 혈쇄참월 분신 한 대 (C.460): 내 몸 모션 없음 — 화면이 몸 그림 반투명 사본만 낸다
       if (e.kitClone) return null;
       return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}) } : null;
     case 'block': {

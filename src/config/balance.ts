@@ -2,7 +2,7 @@
 // 모든 수치는 이 파일에 둔다. 이 파일만 고치면 게임에 반영된다.
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
-/** 자세 모드 수치 (GDD 12-4 천년혈전, C.459 provisional) — 아래 transcendentKits.<초월자>.modes.<모드> */
+/** 자세 모드 수치 (GDD 12-4 천년혈전, C.460 provisional) — 아래 transcendentKits.<초월자>.modes.<모드> */
 export interface TybwModeNumbers {
   stance: { switchSeconds: number; stackSeconds: number; stackMax: number; releaseAt: number };
   speedPerStack: number;
@@ -17,7 +17,7 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 143; // C.459 (GDD v6.087 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
+export const BALANCE_VERSION = 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
 // 이전: BALANCE_VERSION 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
 // 이전: BALANCE_VERSION 141; // C.452 (GDD v6.066 12-4, 사용자 2026-11-14): 아이젠 hogyoku.voidSlot.voidScale 0.5 → 1(order 0), kyoka weight 0.1 삭제 → voidSlot { voidScale 1, order 1 }(허 공식으로 따로 굴림), evadeBuff { seconds 3 · critChance 0.2 · critDamage 0.3 provisional } 신설. 그 전 140 — C.448 (GDD v6.062 7절, 사용자): combat.motion 신설 — fastMax 1.5 · basic 0.6/0.3초 · block 1.4/0.8초(화면 없을 때 기본값). 블록 모션 중 평타 타이머 멈춤(처치 시간 늘어남, 재조정 안 함). 그 전 139 — C.447 (GDD v6.061 8절, 사용자 '옵션 = 간격 −n초'): abilities.aspd { attackSpeed 1.18 } → { attackSecondsCut 0.15 }, bspd { blockSpawn 1.2 } → { spawnSecondsCut 0.54 } (흡수 패시브 속도 값은 traits.json secondsCut).
 // 이전: BALANCE_VERSION 138; // C.446 (GDD v6.055·v6.057 7·8절, provisional): 능력치 7종 — 속도 → 공격속도(aspd)·블록속도(bspd). tierTotals ×7/6(기준 능력치 그대로 50·62.5·78.3·97.5), 진화체 종족값 bspd = 단계 기준(성향 없음), 속도 곡선(사용자) = 기본 간격 × (50 ÷ 능력치)^combat.speedExponent 0.35 ÷ 배율 → 0.01초 반올림 → 상한 combat.attackSecondsMin 0.3·spawnSecondsMin 1.0, 고유 특성 int → 블록 피해 ×1.12·bspd → 블록 생성 ×1.2, 성향 bspd = int 와 같은 몫, 장비 신발 풀 aspd·bspd, 적 ev 특수 → bspd·혼합 반씩.
@@ -233,7 +233,7 @@ export const BALANCE = {
            *  몸동작 없음(v6.073 — 평타가 안 멈춘다) */
           getsuga: { weight: 1, power: 0, tiers: [1, 1, 1], chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] },
         },
-        /** 천년혈전 모드 (GDD 12-4 v6.075~v6.087, C.459 — 수치 전부 provisional): 자세 소도/대도, 스택으로 만해(혈쇄참월·천쇄참월). 데이터 kit.modes[천년혈전] 의 자세 장치마다 */
+        /** 천년혈전 모드 (GDD 12-4 v6.075~v6.088, C.460 — 수치 전부 provisional): 자세 소도/대도, 스택으로 만해(혈쇄참월·천쇄참월). 데이터 kit.modes[천년혈전] 의 자세 장치마다 */
         modes: {
           tybw: {
             /** 자세: [자세] 재사용 대기 switchSeconds 1초 · 스택 지속 stackSeconds 5초(그 자세로 때릴 때마다 갱신) · 상한 stackMax 30 · 만해 가능 releaseAt 20 */

@@ -8,4 +8,4 @@
 - 만든 코드: `scripts/pixelfx/custom/custom/bankai-aura.js` (pixelfx 커스텀 이펙트 `custom/bankai-aura`).
   - 색 바꾸기: `--opts '{"palette":["어두움", …, "밝음"]}'` (8단), 크기: `height`(기본 148)·`width`(기본 41).
   - 다시 뽑기: `npm run fx:fetch` → `vendor/pixelfx` 에서 `node tools/render.mjs custom/bankai-aura --sheet --gif`
-- 게임에는 속성 8색 시트로 들어감(C.460): `public/fx/custom-bankai-aura-<속성>.png`. 화면 연결은 아직(켜는 때·자리 미정).
+- 게임에는 속성 8색 시트로 들어감(C.459): `public/fx/custom-bankai-aura-<속성>.png`. 화면 연결은 아직(켜는 때·자리 미정).
