@@ -133,6 +133,11 @@ def walk():
     zero = lambda t: 0.0  # noqa: E731
     fns = {'root': (zero, zero, bob)}
 
+    # 발 굴림(사용자 2026-11-16 02:0x "발을 뒤로 할 땐, 발 각도를 뒤쪽으로 살짝 틀어야하고, 다시 앞으로 가져올 땐 발 앞을 살짝 들어야 걷는 느낌"):
+    # + = 발끝이 들림, − = 뒤꿈치가 들림(발끝은 땅). 디딤(0~0.5): 딛는 순간 발끝 살짝 들림(+4) → 평평 → 뒤로 밀려 갈수록 뒤꿈치가 들려 뒤쪽으로 틀어짐(−12)
+    # 뗌(0.5~1): 뒤에서 떼어 앞으로 가져오며 발끝이 들림(+10) → 딛기 직전 +4
+    roll = curve([0, 0.075, 0.275, 0.5, 0.675, 0.825, 1.0], [4, 0, 0, -12, 3, 10, 4], True, 1.0)
+
     def leg(name, ph0):
         H, K, A = piv['thigh_' + name], piv['shin_' + name], piv['foot_' + name]
         l1, l2 = math.dist(H, K), math.dist(K, A)
@@ -143,12 +148,13 @@ def walk():
             if ph < 0.5:  # 디딤: 앞(왼쪽, −x) → 뒤, 땅에 붙어 같은 빠르기로
                 u = ph / 0.5
                 fx, fy = mid - STRIDE + 2 * STRIDE * u, 0.0
-                pitch = 0.0  # 디딘 발은 땅과 나란히(사용자 2026-11-16 "걷기에서 오른발 뒤로갈 때 앞으로 꺾이거든? 그거 없에" — 디딤 끝에 발끝이 들리던 굴림을 뺌)
+                pass
             else:         # 뗌: 뒤 → 앞(처음·끝은 느리게), 가운데서 가장 높이
                 u = (ph - 0.5) / 0.5
                 e = (1 - math.cos(math.pi * u)) / 2
                 fx, fy = mid + STRIDE - 2 * STRIDE * e, -LIFT * math.sin(math.pi * u)
-                pitch = -4 * math.sin(math.pi * u)  # 뗀 발은 가운데서 발끝만 살짝 처짐(뒤에서 앞으로 꺾이는 굴림 없음)
+                pass
+            pitch = roll(ph)
             tx, ty = fx - H[0], A[1] + fy - bob(t) - H[1]
             d0 = math.hypot(tx, ty)
             d = min(d0, l1 + l2 - 0.05)
