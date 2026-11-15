@@ -143,12 +143,12 @@ def walk():
             if ph < 0.5:  # 디딤: 앞(왼쪽, −x) → 뒤, 땅에 붙어 같은 빠르기로
                 u = ph / 0.5
                 fx, fy = mid - STRIDE + 2 * STRIDE * u, 0.0
-                pitch = -9 * max(0, 1 - u / 0.2) ** 2 + 13 * max(0, (u - 0.72) / 0.28) ** 2
+                pitch = 0.0  # 디딘 발은 땅과 나란히(사용자 2026-11-16 "걷기에서 오른발 뒤로갈 때 앞으로 꺾이거든? 그거 없에" — 디딤 끝에 발끝이 들리던 굴림을 뺌)
             else:         # 뗌: 뒤 → 앞(처음·끝은 느리게), 가운데서 가장 높이
                 u = (ph - 0.5) / 0.5
                 e = (1 - math.cos(math.pi * u)) / 2
                 fx, fy = mid + STRIDE - 2 * STRIDE * e, -LIFT * math.sin(math.pi * u)
-                pitch = 13 * (1 - e) - 9 * e + 5 * math.sin(math.pi * u)
+                pitch = -4 * math.sin(math.pi * u)  # 뗀 발은 가운데서 발끝만 살짝 처짐(뒤에서 앞으로 꺾이는 굴림 없음)
             tx, ty = fx - H[0], A[1] + fy - bob(t) - H[1]
             d0 = math.hypot(tx, ty)
             d = min(d0, l1 + l2 - 0.05)

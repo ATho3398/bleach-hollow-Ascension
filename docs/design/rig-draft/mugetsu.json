@@ -481,8 +481,8 @@
    "forearm_sword",
    "hair_d",
    "foot_b",
-   "belly",
    "foot_f",
+   "belly",
    "hair_c",
    "sword",
    "shin_f",
@@ -1014,12 +1014,24 @@
      66
     ],
     "foot_f": [
-     56,
+     57,
      92
     ],
     "thigh_b": [
      67,
      62
+    ],
+    "head": [
+     62,
+     37
+    ],
+    "root": [
+     66,
+     104
+    ],
+    "shin_b": [
+     72,
+     80
     ]
    }
   }
