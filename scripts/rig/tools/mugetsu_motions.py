@@ -185,6 +185,11 @@ def walk():
 def main():
     SPEC['move'] = walk()
     cur = json.load(open(OUT, encoding='utf-8'))
+    # 걷기용 왼발(사용자 2026-11-16 "이거 발 하나 추가한거는, 걸을 때 왼발로 넣어"): 왼발 뼈에 그림 두 장(foot_b = 서 있을 때, foot_b_walk = 걸을 때)을 달고
+    # 동작마다 하나를 숨긴다 — 걷기는 foot_b 를, 나머지 동작은 foot_b_walk 를. (동작 없이 멈춘 화면·편집기 기본 자세에서는 둘 다 보인다 — 자리 잡기용)
+    cur['idle']['hide'] = ['foot_b_walk']
+    for k, v in SPEC.items():
+        v['hide'] = ['foot_b'] if k == 'move' else ['foot_b_walk']
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
           'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     # 키가 많아(16ms 마다) 뼈 하나의 키를 한 줄에 쓴다

@@ -363,7 +363,7 @@ function slotAt(x: number, y: number): string | null {
 }
 
 function draw() {
-  stage.querySelectorAll('img, .dot').forEach((n) => n.remove());
+  stage.querySelectorAll('img, .dot, .tintpart').forEach((n) => n.remove());
   let pose: Pose = {};
   const MOTIONS = motionsNow();
   if (motion && !MOTIONS[motion]) motion = null;
@@ -381,6 +381,13 @@ function draw() {
     const m = layerMatrix(rig, mats, l, motion ? MOTIONS[motion] : undefined);
     img.style.transform = `matrix(${m[0]},${m[1]},${m[2]},${m[3]},${m[4] * K},${m[5] * K})`;
     stage.append(img);
+    // 부위별 색(사용자 2026-11-16 "지금무월이 검정색이라 잘 안보이거든? 무월에 일단 부위별로 색깔 다르게 보는 기능 추가"): 그림 모양 그대로(마스크) 부위마다 다른 색을 덧씌운다
+    if (tintOn()) {
+      const tp = document.createElement('div');
+      tp.className = 'tintpart';
+      tp.style.cssText = `width:${l.size[0] * K}px;height:${l.size[1] * K}px;transform:${img.style.transform};background:${tintOf(l.slot)};-webkit-mask-image:url(${img.src});mask-image:url(${img.src})`;
+      stage.append(tp);
+    }
     drawn.push({ slot: l.slot, m, img, size: l.size });
   }
   if (cm?.fx) {
@@ -444,6 +451,9 @@ function layerPos(): string {
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
 const CHIP_GROUPS = (): [string, string[]][] => (rig.edit?.groups ?? []).map(([label, ids]) => [isCreature() ? CREATURE_GROUPS[label] ?? label : label, ids]);
 function pick(id: string) { sel = id; buildChips(); draw(); }
+/** 부위별 색 보기: 켜면 부위마다 다른 색(슬롯 차례 × 황금각 — 이웃 부위끼리 색이 멀다), 부위 단추에도 같은 색 띠 */
+const tintOn = () => (document.getElementById('tint') as HTMLInputElement | null)?.checked ?? false;
+const tintOf = (slot: string) => `hsl(${Math.round((Math.max(0, rig.slots.findIndex((s) => s.id === slot)) * 137.5) % 360)} 85% 55%)`;
 function buildChips() {
   const box = $('parts');
   box.innerHTML = '';
@@ -464,6 +474,7 @@ function buildChips() {
       b.textContent = NAMES()[id] ?? id;
       b.className = id === sel ? 'on' : '';
       b.onclick = () => pick(id);
+      if (tintOn() && id !== 'root') b.style.boxShadow = `inset 5px 0 0 ${tintOf(id)}`;
       g.append(b);
     }
     box.append(g);
@@ -781,6 +792,7 @@ function stepFlame(dt: number) {
   });
   f.step(dt, layers);
 }
+document.getElementById('tint')?.addEventListener('change', () => { buildChips(); draw(); });
 let last = 0;
 function tick(now: number) {
   if (last) stepFlame(now - last);

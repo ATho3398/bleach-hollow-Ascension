@@ -212,6 +212,10 @@
    "bone": "foot_b"
   },
   {
+   "id": "foot_b_walk",
+   "bone": "foot_b"
+  },
+  {
    "id": "belly",
    "bone": "lower"
   },
@@ -462,6 +466,17 @@
      24,
      64
     ]
+   },
+   "foot_b_walk": {
+    "art": "parts/foot_b_walk",
+    "at": [
+     64,
+     91
+    ],
+    "size": [
+     15,
+     17
+    ]
    }
   }
  },
@@ -481,6 +496,7 @@
    "forearm_sword",
    "hair_d",
    "foot_b",
+   "foot_b_walk",
    "foot_f",
    "belly",
    "hair_c",
@@ -540,7 +556,8 @@
    "thigh_b": "왼 하카마 위",
    "shin_b": "왼 하카마 아래",
    "foot_b": "왼발",
-   "hair_base": "뒷머리 베이스"
+   "hair_base": "뒷머리 베이스",
+   "foot_b_walk": "왼발(걷기용)"
   },
   "groups": [
    [
@@ -597,7 +614,8 @@
     [
      "thigh_b",
      "shin_b",
-     "foot_b"
+     "foot_b",
+     "foot_b_walk"
     ]
    ]
   ],
@@ -628,10 +646,15 @@
    ],
    "thigh_b": [
     "shin_b",
-    "foot_b"
+    "foot_b",
+    "foot_b_walk"
    ],
    "shin_b": [
-    "foot_b"
+    "foot_b",
+    "foot_b_walk"
+   ],
+   "foot_b": [
+    "foot_b_walk"
    ]
   }
  },
@@ -917,6 +940,21 @@
       [
        68,
        18
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "foot_b_walk": [
+    {
+     "pts": [
+      [
+       74,
+       99
+      ],
+      [
+       74,
+       99
       ]
      ],
      "w": 3
