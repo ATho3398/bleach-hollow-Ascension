@@ -1,7 +1,7 @@
 // 만해 오라 (블리치 할로우 어센션 커스텀, GDD 115-A 138): 몸 둘레로 타오르는 영압 기둥. 16프레임 반복(12fps).
 // 사용자 2026-11-15 "캐릭별로 만해 오라 찍어야되거든?? 몸 주변에 아우라같은거 나오게하고, 캐릭별로 도트가 다 다르잖아. 캐릭 도트만큼 비우지 말고, 오라 16프레임 도트 애니 만들어줘"
 // → 캐릭터 모양을 파내지 않은 통짜 오라(어느 캐릭터 뒤에나 깐다). 색은 palette 로 캐릭터마다 바꾼다(어두움 → 밝음 8단).
-// 크기는 이 게임 인형(키 110칸 안팎)에 맞춤: 발 = (0, 0), 폭 약 ±46(발치) , 높이 125~200(머리 위로 늘 올라옴).
+// 크기는 이 게임 인형(키 110칸 안팎)에 맞춤: 발 = (0, 0), 폭 약 ±41(발치), 높이 115~180(머리 위로 늘 올라옴). 2026-11-15 19:17 "좋은데 사이즈만 10%정도 줄이자" — 높이 165→148, 폭 46→41.
 import { fit, clamp, tileFbm, cycle, TAU } from "../../core/index.js";
 
 const FRAMES = 16, FPS = 12;
@@ -9,13 +9,13 @@ export const meta = {
   name: "만해 오라",
   desc: "Bankai aura (custom): a column of spirit pressure burning up round the body, licking tongues, rising streaks, sparks. Not cut out for a character: goes behind any sprite.",
   tags: ["custom", "aura", "power", "flame", "loop"],
-  size: [168, 232],
-  origin: [84, 218],
+  size: [152, 210],
+  origin: [76, 197],
   duration: FRAMES / FPS,
   loop: true,
   fps: FPS,
   bg: "dark",
-  options: { palette: ["#0b1030", "#17245e", "#2446a0", "#3b78d8", "#6fb4f4", "#b4e2ff", "#e6f7ff", "#ffffff"], seed: 3, height: 165, width: 46 },
+  options: { palette: ["#0b1030", "#17245e", "#2446a0", "#3b78d8", "#6fb4f4", "#b4e2ff", "#e6f7ff", "#ffffff"], seed: 3, height: 148, width: 41 },
 };
 const D = meta.duration;
 
@@ -28,9 +28,9 @@ function half(h, H, W) {
 
 export function drawBack(p, t, o) {
   const C = fit(o.palette, 8), S = o.seed, H = o.height, W = o.width, ph = t / D;
-  p.glow(0, -H * 0.42, 70, C[3], 0.28);
+  p.glow(0, -H * 0.42, 62, C[3], 0.28);
   p.glow(0, -6, W * 1.5, C[4], 0.3);
-  p.shade(-82, -(H + 50), 82, 8, (x, y, out) => {
+  p.shade(-74, -(H + 48), 74, 8, (x, y, out) => {
     const h = -y;
     if (Math.abs(x) > W * 1.25 + 14) return;
     // 위로 흐르는 무늬 두 겹(한 바퀴에 정확히 한 주기·두 주기 올라가 이음매 없음)

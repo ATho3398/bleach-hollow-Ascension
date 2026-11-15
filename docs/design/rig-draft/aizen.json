@@ -1,6 +1,12 @@
 {
  "id": "aizen",
  "note": "아이젠 종이인형(GDD 115-A 124·125, 작업본만 — 게임 미사용). 사용자 부위 시트(docs/design/user-art/aizen-ref/parts-2026-11-14b.png)를 조립한 몸 parts·외형 aizen-parts. 처음 만든 세 토막 몸(ref·aizen-base)은 사용자 2026-11-14 \"아이젠 처음건 삭제\"로 지움. 동작 = 대기(idle). 자세한 내력 = GDD 115-A 124~126.",
+ "motionSpeed": 1.5,
+ "motionSpeedExcept": [
+  "idle",
+  "homeIdle",
+  "move"
+ ],
  "canvas": [
   74,
   108
