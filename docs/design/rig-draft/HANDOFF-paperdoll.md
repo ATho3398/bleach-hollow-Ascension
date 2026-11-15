@@ -42,3 +42,4 @@ ArtifactData get `rig/fixed`(뱀 = `rig/fixed-serpent`, 짐승 = `rig/fixed-beas
 
 - (2026-11-14) **편집기를 올리기 전에 `node scripts/rig/tools/editor-check.cjs $PWD/.rig-pages` 를 꼭 돌린다**(사용자 "툴 망가지는거 없나 체크해") — 실패하면 고친 뒤 올린다. 새 인형·동작을 넣었으면 `editor-shot.cjs` 로 그 외형 화면도 눈으로 본다.
 - (2026-11-14) 대화 중간에 온 그림이 images 폴더에 안 떨어지면 대화 기록(.jsonl)의 base64 에서 꺼낸다 — 사용자에게 다시 보내 달라고 하지 않는다.
+- (2026-11-15) **GIF·미리보기 그림은 무조건 "도트 움직임 보기" 아티팩트(https://claude.ai/artifact/LEHraSHpkzcpCSfvfxyP4f)에 올려 보여 준다**(사용자 "앞으로 gif면 무조건 내가 볼 수 있게 아티팩트에 넣어서 띄워"): `python3 scripts/rig/tools/gif_page.py "<묶음 제목>" "<설명>=<파일>" …` → `.rig-pages/gif-viewer.html` 을 그 주소(url)로 다시 올린다. 파일로만 보내지 않는다.
