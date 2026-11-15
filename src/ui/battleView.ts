@@ -19,6 +19,7 @@ import {
   kitMasteryOn,
   kitSecondOn,
   kitNextReleaseIsSecond,
+  stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
 } from '../engine/combat';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -247,6 +248,15 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'chain', icon: 'i-chain-3', text: '졸개를 쓰러뜨렸다!' };
     case 'kit-line':
       return { role: 'chain', icon: 'i-special', text: `「${e.text}」` };
+    // 자세 모드 (GDD 12-4 천년혈전, C.459)
+    case 'kit-stance':
+      return { role: 'chain', icon: 'i-swap', text: `자세 — ${e.name}` };
+    case 'kit-parry':
+      return e.ok ? { role: 'guard', icon: 'i-guard', text: `${stanceOf(s)?.parry?.name ?? labels.role.guard} 성공! 적 자세가 무너졌다` } : { role: 'guard', icon: 'i-guard', text: `${stanceOf(s)?.parry?.name ?? labels.role.guard} 빗나감` };
+    case 'kit-break': {
+      const bt = s.params.kit?.stance?.stances.find((x) => x.draw)?.draw?.breakTaken ?? 0;
+      return { role: 'void', icon: 'i-warn', text: `자세 무너짐! 평타 취소 · ${e.seconds}초 동안 받는 피해 +${Math.round(bt * 100)}%` };
+    }
     case 'kit-stack':
       return { role: 'chain', icon: 'i-special', text: `${s.params.kit?.stackName ?? '스택'} ${e.stack}/${e.full}` };
     case 'evade':
@@ -574,6 +584,33 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     buffChip.hidden = true;
   }
   let buffShown = '';
+  // 자세 모드 (GDD 12-4 천년혈전, C.459): 자세마다 스택 칩 '소도 n/30'·'대도 n/30'(기존 .bha-kitstack — 지금 자세는 is-full, 만해 가능도) + [자세] 버튼 + 내 머리 위 상태 칩(유지 보너스·자세 무너짐·발도 충전 — 기존 .bha-kitbuff)
+  const stanceKit = p.kit?.stance ?? null;
+  const stanceChips = (stanceKit?.stances ?? []).map((st) => {
+    const c = v2Chip('', 'default', { icon: st.parry ? 'i-guard' : 'i-attack' });
+    c.classList.add('bha-kitstack');
+    c.dataset.sc = `stance-${st.id}`;
+    const v = el('b', 'bha-num');
+    c.append(st.name, ' ', v);
+    c.title = `${st.name} 자세로 때릴 때마다 +1 (${stanceKit!.stackSeconds}초 지속·갱신, 다른 자세 스택은 효과·갱신 없음) — ${stanceKit!.releaseAt} 이상이면 ${st.releaseName}`;
+    return { root: c, value: v };
+  });
+  const stanceBtn = stanceKit ? v2Button({ label: '자세', small: true, disabled: true }) : null;
+  if (stanceBtn) {
+    stanceBtn.classList.add('bha-kitrelease');
+    stanceBtn.dataset.sc = 'stance';
+    stanceBtn.title = `자세 바꾸기 (대기 ${stanceKit!.switchSeconds}초 · 만해 중엔 못 바꿈)`;
+    stanceBtn.style.flexShrink = '0'; // 범례 줄에서 글자가 세로로 접히지 않게 (C.459 캡처 02)
+    stanceBtn.style.whiteSpace = 'nowrap';
+  }
+  const stanceBuff = stanceKit ? v2Chip('', 'rare', { icon: 'i-attack' }) : null;
+  const stanceBuffValue = el('span');
+  if (stanceBuff) {
+    stanceBuff.classList.add('bha-kitbuff');
+    stanceBuff.append(stanceBuffValue);
+    stanceBuff.hidden = true;
+  }
+  let stanceShown = '';
   // 초월자 대사 띠 (GDD 12-4 v6.048): 반격 성공·되살아남 대사를 장면 가운데에 잠깐
   const kitLine = el('div', 'bha-kitline');
   kitLine.setAttribute('role', 'status');
@@ -603,6 +640,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return { root: b, meta };
   };
   const guardBtn = actBtn('guard', 'i-guard', labels.role.guard);
+  const guardNameEl = guardBtn.root.querySelector<HTMLElement>('.bha-v2role__name')!;
   guardBtn.root.dataset.help = 'battle.guard'; // 각본 전투 카드 대상 (C.199)
   // 막기 게이지 (0 → 100%): 다 차야 누를 수 있다
   const guardBar = el('span', 'bha-v2role__bar');
@@ -633,6 +671,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   if (finalChip) libChip.after(finalChip); // 최후의 월아천충 칩 (GDD 12-4 v6.069)
   if (chargeChip) libChip.after(chargeChip); // 월아천충 충전 칩
   if (buffChip) meHeads.append(buffChip); // 회피 치명 버프 칩 (초월자 회피 버프 장치만): 내 머리 위 — 범례 줄은 이미 꽉 차 있다
+  for (const c of [...stanceChips].reverse()) libChip.after(c.root); // 자세 스택 칩 (C.459)
+  if (stanceBtn) libChip.before(stanceBtn);
+  if (stanceBuff) meHeads.append(stanceBuff);
   // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
@@ -1171,14 +1212,35 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (e.block === 'combo') flash('is-special', 600);
   };
   /** 경화수월 분신 (GDD 12-4 v6.048): 내 몸 그림을 반투명으로 복제해 적 쪽으로 미끄러지게 — 0.6초 뒤 지운다 */
-  const kitClone = () => {
+  const kitClone = (delayMs = 0) => {
     if (prefersReducedMotion()) return;
-    const ghost = hero.root.cloneNode(true) as HTMLElement;
-    ghost.classList.add('bha-kitclone');
-    ghost.removeAttribute('data-help');
-    ghost.setAttribute('aria-hidden', 'true');
-    hero.root.parentElement?.append(ghost);
-    window.setTimeout(() => ghost.remove(), 650);
+    const go = () => {
+      const ghost = hero.root.cloneNode(true) as HTMLElement;
+      // 캔버스로 그리는 몸(움직이는 도트 그림)은 복제해도 그림이 비어 있다 — 지금 프레임을 옮겨 그린다 (C.459 캡처 04)
+      const from = hero.root.querySelectorAll('canvas');
+      ghost.querySelectorAll('canvas').forEach((c, i) => {
+        const src = from[i];
+        if (!src || src.width === 0 || src.height === 0) return;
+        c.width = src.width;
+        c.height = src.height;
+        try { c.getContext('2d')?.drawImage(src, 0, 0); } catch { /* 그릴 수 없는 캔버스면 빈 채로 */ }
+      });
+      ghost.classList.add('bha-kitclone');
+      ghost.removeAttribute('data-help');
+      ghost.setAttribute('aria-hidden', 'true');
+      hero.root.parentElement?.append(ghost);
+      window.setTimeout(() => ghost.remove(), 650);
+    };
+    if (delayMs > 0) window.setTimeout(go, delayMs); else go();
+  };
+  /** 혈쇄참월 분신 (C.459): 같은 평타의 분신 둘은 겹치지 않게 0.2초 차이로 */
+  let cloneSeq = 0;
+  let cloneSeqTimer = 0;
+  const stanceClone = () => {
+    kitClone(cloneSeq * 200);
+    cloneSeq++;
+    window.clearTimeout(cloneSeqTimer);
+    cloneSeqTimer = window.setTimeout(() => { cloneSeq = 0; }, 60);
   };
   /** 이번 강공격 판정 결과 막았나 (GDD 245장 3): 빔 모션은 판정 전에 시작하고, 빔이 닿는 프레임에 이 값(아직 판정 전이면 지금 막기 중인가)을 읽는다 */
   let heavyGuarded: boolean | null = null;
@@ -1194,6 +1256,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       note('swing', { kind: e.hit.kind, atTick: e.atTick, damage: e.hit.damage });
       // 남은 ms = 남은 틱 × 틱 길이 − 이번 프레임에 이미 쌓인 시간(acc): 다음 틱은 acc 만큼 일찍 온다 (GDD 224장 3, C.367 — 빼지 않으면 최대 한 프레임 일찍 맞음)
       if (e.hit.kind === 'block' && e.hit.kitFx === 'clone') kitClone(); // 경화수월 분신은 휘두르는 순간
+      if (e.hit.kind === 'player-attack' && e.hit.kitClone) {
+        stanceClone(); // 혈쇄참월 분신 (C.459): 몸 그림 반투명 사본이 같이 한 대 — 내 몸 모션은 평타 한 번만
+        return;
+      }
       attack.react(e.hit, { hitInMs: Math.max(0, (e.atTick - s.tick) * p.tickSeconds * 1000 - acc), ...(s.script ? { bodyWindup: true } : {}) });
       return;
     }
@@ -1224,6 +1290,12 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         spawnFloat('attack', `${shownName(petName(e.petId, faction))} −${n0(e.damage)}`);
         break;
       case 'player-attack':
+        // 혈쇄참월 분신 한 대 (C.459): 숫자만 (분신 그림은 휘두를 때 냈다)
+        if (e.kitClone) {
+          if (!e.landed) stanceClone(); // 지연 없이 바로 맞은 타격 — 지연이 있으면 휘두를 때(swing) 이미 냈다
+          spawnFloat('attack', `−${n0(e.damage)}`, { critical: !!e.crit });
+          break;
+        }
         // 충전 평타·마무리 평타 (GDD 12-4 v6.069 월아천충): 기술 이름 + 숫자를 크게 (맞는 순간)
         if (e.kitShot) {
           if (!e.landed) break;
@@ -1252,6 +1324,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         setText(kitLine.firstElementChild as HTMLElement, e.text);
         replayOnce(kitLine, 'is-on', 2200);
         if (e.tone === 'revive') flash('is-special', 700);
+        break;
+      // 자세 모드 (GDD 12-4 천년혈전, C.459): 자세 이름·패링·자세 무너짐 — 기존 떠오르는 글자·번쩍임만
+      case 'kit-stance':
+        spawnFloat('chain', e.name);
+        break;
+      case 'kit-parry':
+        if (e.ok) {
+          spawnFloat('chain', `${stanceOf(s)?.parry?.name ?? labels.role.guard}!`, { chain3: true });
+          flash('is-guard', 600);
+        } else spawnFloat('guard', '빗나감');
+        break;
+      case 'kit-break':
+        spawnFloat('void', '자세 무너짐');
+        flash('is-cast', 500);
         break;
       case 'script-impact':
         if (heldBlock) {
@@ -1429,6 +1515,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     // 칸마다 블록 배치 + 상태 클래스
     const casting = s.enemy.cast !== null;
     const counterOpen = kitCounterOpen(s);
+    const lanternOn = !!stanceOf(s)?.lanterns && liberationActive(s);
+    const drawUid = s.kit?.draw?.uid ?? null;
     tray.cells.forEach((cell, i) => {
       const b = s.tray[i];
       if (!b) {
@@ -1452,8 +1540,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       node.setAttribute('aria-disabled', String(locked));
       cell.toggleAttribute('data-dev-off', locked);
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
-      // 반격 창 (GDD 12-4 v6.048 경화수월): 적 공격을 받은 뒤 창 동안 반격 블록 테두리 발광
-      node.classList.toggle('bha-kitglow', counterOpen && !!kitBlockOf(p, b.traitId)?.counter);
+      // 반격 창 (GDD 12-4 v6.048 경화수월): 적 공격을 받은 뒤 창 동안 반격 블록 테두리 발광 · 천쇄참월 불 켠 블록도 같은 발광 (C.459)
+      node.classList.toggle('bha-kitglow', (counterOpen && !!kitBlockOf(p, b.traitId)?.counter) || !!b.lit);
+      // 천쇄참월 (C.459): 블록은 회색(기존 봉인 회색 .is-sealed) — 누르면 불이 켜진다
+      node.classList.toggle('is-sealed', lanternOn && !b.lit);
+      if (drawUid !== null) node.classList.toggle('is-pressed', b.uid === drawUid);
     });
     seeded = true;
     if (stackChip && s.kit && s.kit.stack !== stackShown) {
@@ -1484,6 +1575,39 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         buffShown = t;
         setText(buffChipValue, t);
         setHidden(buffChip, !t);
+      }
+    }
+    // 자세 모드 (C.459): 스택 칩 · [자세] 대기 · 머리 위 상태(발도 충전 > 자세 무너짐 > 대도 유지)
+    if (stanceKit && s.kit) {
+      const k = s.kit;
+      const wait = stanceSwitchWaitOf(s);
+      const draw = stanceDrawPreviewOf(s);
+      const broken = stanceBreakTakenOf(s);
+      const hold = stanceHoldBonusOf(s);
+      const st = stanceOf(s);
+      const status = draw !== null ? `${st?.draw?.name ?? ''} ×${draw.toFixed(2)}`
+        : broken > 0 ? `자세 무너짐 · 받는 피해 +${Math.round(broken * 100)}% ${((k.brokenUntil - s.tick) * p.tickSeconds).toFixed(1)}초`
+        : hold > 0 ? `${st?.name ?? ''} 유지 +${Math.round(hold * 100)}%` : '';
+      const key = `${k.stance}|${k.stanceStacks.join(',')}|${wait > 0 ? wait.toFixed(1) : ''}|${liberationActive(s)}|${status}`;
+      if (key !== stanceShown) {
+        stanceShown = key;
+        stanceChips.forEach((c, i) => {
+          const n = k.stanceStacks[i] ?? 0;
+          setText(c.value, `${n}/${stanceKit.stackMax}`);
+          c.root.classList.toggle('is-full', i === k.stance);
+          c.root.classList.toggle('is-focus', i === k.stance && n >= stanceKit.releaseAt);
+        });
+        if (stanceBtn) {
+          const ok = canSwitchStance(s);
+          stanceBtn.disabled = !ok;
+          stanceBtn.classList.toggle('is-disabled', !ok);
+          setText(stanceBtn, wait > 0 ? `자세 ${wait.toFixed(1)}` : `→ ${stanceKit.stances[(k.stance + 1) % stanceKit.stances.length]!.name}`);
+          stanceBtn.setAttribute('aria-label', `자세 바꾸기 — ${stanceKit.stances[(k.stance + 1) % stanceKit.stances.length]!.name}${wait > 0 ? ` (${wait.toFixed(1)}초 뒤)` : ''}`);
+        }
+        if (stanceBuff) {
+          setText(stanceBuffValue, status);
+          setHidden(stanceBuff, !status);
+        }
       }
     }
     // 안내 줄: 봉인
@@ -1618,7 +1742,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     const gPct = Math.round(Math.min(1, s.guardGauge) * 100);
     guardFill.style.width = `${gPct}%`;
     guardBtn.root.classList.toggle('is-full', s.guardGauge >= 1);
-    setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${labels.role.guard} 중` : s.guardGauge >= 1 ? `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기` : `${labels.role.guard} 게이지 ${gPct}%`);
+    // 패링 (GDD 12-4 천년혈전 대도, C.459): 막기 버튼 이름·설명이 패링으로
+    const parry = stanceOf(s)?.parry;
+    const guardName = parry?.name ?? labels.role.guard;
+    if (guardNameEl.textContent !== guardName) guardNameEl.textContent = guardName;
+    setAct(guardBtn, canGuard(s), s.guard.ticks > 0 ? `${guardName} 중` : s.guardGauge >= 1 ? (parry ? `${guardName} 준비됨 — 강공격이 닿기 직전 ${parry.windowSeconds}초 안에 누르면 성공` : `${labels.role.guard} 준비됨 — 눌러 ${p.guardSeconds}초 강공격 막기`) : `${guardName} 게이지 ${gPct}%`);
     const it = p.battleItem;
     const itemLeft = armedItem && it ? armedItem.count - (s.itemUsed ? 1 : 0) : 0;
     // 모험 전투 (GDD 212장 2): 이번 바퀴에 이미 쓴 칸 = 싣지 않고 '씀' 흐림 + 이유 한 줄(title)
@@ -1653,7 +1781,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       riskChipRoot?.classList.toggle('is-focus', libActive && endless);
     }
     // 게이지 소모형 (GDD 12-4 v6.069): 호로화 ↔ 무월수련, 해방 이름 각호고 ↔ 무월
-    const releaseName = p.kit?.mastery && kitNextReleaseIsSecond(s) ? p.kit.mastery.releaseName : labels.liberation.name;
+    const releaseName = p.kit?.mastery && kitNextReleaseIsSecond(s) ? p.kit.mastery.releaseName : stanceOf(s)?.releaseName ?? labels.liberation.name;
     if (riskDrn && riskChipValue) {
       const mOn = kitMasteryOn(s);
       setText(riskChipName, mOn && p.kit?.mastery ? p.kit.mastery.name : labels.riskGauge);
@@ -1663,6 +1791,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (riskChipRoot) setHidden(riskChipRoot, kitSecondOn(s)); // 무월 중엔 수련 게이지가 쓰이지 않는다 — 그 자리를 최후의 월아천충 칩이 쓴다(범례 줄이 넘침, c454/04)
       setText(libChipName, releaseName);
     }
+    if (stanceKit) setText(libChipName, releaseName);
     if (kitRelBtn) {
       const ok = canLiberate(s);
       kitRelBtn.disabled = !ok;
@@ -1685,7 +1814,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       setAttr(libBtn, 'aria-disabled', String(!ready));
       const drainText = !riskDrn || !s.kit ? null : kitSecondOn(s) && p.kit?.mastery ? `${releaseName} — ${p.kit.mastery.finisherName} ${s.kit.finalStack}/${p.kit.mastery.stacks}`
         : kitMasteryOn(s) && p.kit?.mastery ? (ready ? `${releaseName} 준비 — 캐릭터를 눌러라` : `${p.kit.mastery.name} ${Math.round(s.kit.mastery)}/${p.kit.mastery.full}`) : null;
-      const libText = drainText ?? (libActive ? (endless ? `${labels.liberation.name} — ${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}` : `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}`) : ready ? (riskRel ? labels.liberation.name : `${labels.liberation.name} 준비 — 캐릭터를 눌러라`) : riskRel ? `${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}/${riskRel.minRisk}` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`);
+      // 자세 모드 (C.459): 지금 자세 스택으로 그 자세의 만해 — 만해 중엔 남은 스택
+      const stNow = stanceKit ? stanceOf(s) : null;
+      const stanceText = !stNow ? null : libActive ? `${releaseName} — ${stNow.name} ${kitStanceStackOf(s)}${stNow.clones ? ` · 분신 ${stanceCloneCountOf(s)}` : ''}${stNow.lanterns ? ` · 불 ${stanceLitCountOf(s)}/${stNow.lanterns.max}` : ''}`
+        : ready ? `${releaseName} 준비 — 캐릭터를 눌러라` : `${stNow.name} 스택 ${kitStanceStackOf(s)}/${stanceKit!.releaseAt}`;
+      const libText = drainText ?? stanceText ?? (libActive ? (endless ? `${labels.liberation.name} — ${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}` : `해방 중 ${secondsText(lb.ticksLeft * p.tickSeconds)}`) : ready ? (riskRel ? labels.liberation.name : `${labels.liberation.name} 준비 — 캐릭터를 눌러라`) : riskRel ? `${labels.riskGauge} ${Math.round(kitRiskOf(s) ?? 0)}/${riskRel.minRisk}` : `게이지 ${Math.floor((lb.gauge / LIBERATION_GAUGE_MAX) * 100)}%`);
       setText(libTime, libActive && !endless ? secondsText(lb.ticksLeft * p.tickSeconds) : '');
       setTitle(libBtn, libText);
       setAttr(libBtn, 'aria-label', `${releaseName}, ${libText}`);
@@ -1733,6 +1866,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return true;
   };
   for (const [kind, btn] of [['guard', guardBtn], ['item', itemBtn], ['gear', gearBtn]] as const) btn.root.addEventListener('click', () => void (pressAct(kind) || (kind === 'item' && pickItem())));
+  // [자세] (GDD 12-4 천년혈전, C.459): 엔진이 대기·만해 중 잠김을 판정
+  stanceBtn?.addEventListener('click', () => {
+    if (app.isConnected && !stopped && s.status === 'playing' && canSwitchStance(s)) queue.push({ type: 'stance' });
+  });
   /** 빈 소모품 칸 고르기 (GDD 193장 6): 칸이 비었을 때 [소모품]을 누르면 고르기 창 — 열려 있는 동안 전투가 멈춘다(도움말과 같이). 버튼 모양은 그대로(C.302 C.281) */
   function pickItem(): boolean {
     const pk = opts.pickBattleItem;
@@ -1755,16 +1892,40 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     down = null;
     drawTray();
   };
+  // 발도 충전 (GDD 12-4 천년혈전 대도, C.459): 지금 자세 블록을 누르는 순간 충전 시작, 떼면(어디서든) 쓰인다 — 엔진이 평타 시각을 넘겼는지 판정
+  let drawPtr: number | null = null;
+  const isDrawBlock = (b: Block | undefined): boolean => {
+    const st = stanceOf(s);
+    return !!b && !!st?.draw && !liberationActive(s) && kitBlockOf(p, b.traitId)?.id === st.block;
+  };
+  const endDraw = () => {
+    if (drawPtr === null) return;
+    drawPtr = null;
+    if (s.kit?.draw) queue.push({ type: 'draw-release' });
+  };
   tray.root.addEventListener('pointerdown', (e) => {
-    if (down || s.status !== 'playing' || halted() || combatHalted(s)) return;
-    const b = s.tray[slotOf(e)];
+    if (down || drawPtr !== null || s.status !== 'playing' || halted() || combatHalted(s)) return;
+    const cell = slotOf(e);
+    const b = s.tray[cell];
     if (!b) return;
     tray.root.setPointerCapture(e.pointerId);
+    if (isDrawBlock(b)) {
+      drawPtr = e.pointerId;
+      queue.push({ type: 'draw', cell });
+      return;
+    }
     down = { uid: b.uid, id: e.pointerId };
     drawTray();
   });
-  tray.root.addEventListener('pointercancel', endPress);
+  tray.root.addEventListener('pointercancel', () => {
+    endDraw();
+    endPress();
+  });
   tray.root.addEventListener('pointerup', (e) => {
+    if (drawPtr !== null && e.pointerId === drawPtr) {
+      endDraw();
+      return;
+    }
     if (!down || e.pointerId !== down.id) return;
     const input = releaseUse(down.uid, slotOf(e), s.tray);
     if (input && s.status === 'playing' && !halted()) queue.push(input);

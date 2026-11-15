@@ -3,8 +3,8 @@
 // 엔진은 장치(반격 창·스택·해방 치환·되살아나기·회피)만 보고 초월자·블록 id 로 분기하지 않는다.
 
 import { BALANCE } from '../config/balance';
-import { tryGetTranscendent, type TranscendentKitDef } from '../data/transcendents';
-import type { CombatKit, CombatKitBlock } from './combat/combat';
+import { tryGetTranscendent, type TranscendentKitDef, type TranscendentKitModeDef } from '../data/transcendents';
+import type { CombatKit, CombatKitBlock, CombatStance } from './combat/combat';
 
 const GROW = BALANCE.provisional.transcendentGrowth;
 
@@ -12,6 +12,20 @@ const GROW = BALANCE.provisional.transcendentGrowth;
 export interface KitState {
   id: string;
   levels: Record<string, number>;
+  /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.459 — 형식 89): 데이터 kit.modes 의 id. 모드가 없는 초월자는 없음, 없거나 모르는 id = 첫 모드 */
+  mode?: string;
+}
+
+/** 이 초월자의 전투 모드 목록 (없으면 빈 배열 — 모드 체인지 캐릭터만, GDD 12-4) */
+export function kitModesOf(transcendentId: string | null | undefined): { id: string; name: string }[] {
+  return (kitDefOf(transcendentId)?.modes ?? []).map((m) => ({ id: m.id, name: m.name }));
+}
+
+/** 지금 전투 모드 정의 (모드가 없으면 null, 모르는 id = 첫 모드) */
+export function kitModeDefOf(k: Pick<KitState, 'id' | 'mode'> | null | undefined): TranscendentKitModeDef | null {
+  const modes = k ? kitDefOf(k.id)?.modes : undefined;
+  if (!modes || modes.length === 0) return null;
+  return modes.find((m) => m.id === k!.mode) ?? modes[0]!;
 }
 
 /** 이 초월자의 전용 블록 데이터 (없으면 null — 블록 [미정]인 초월자) */
@@ -77,6 +91,8 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
   const def = kitDefOf(k.id);
   const num = BALANCE.provisional.transcendentKits[k.id];
   if (!def || !num) return null;
+  const mode = kitModeDefOf(k);
+  if (mode?.stances) return stanceKitOf(k, def, mode);
   const blocks: CombatKitBlock[] = [];
   for (const b of def.blocks) {
     const n = num.blocks[b.id];
@@ -118,6 +134,46 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
       stacks: num.riskDrain.final.stacks, finisherPower: num.riskDrain.final.power, finisherPerBlock: num.riskDrain.final.perBlock,
     } } : {}),
     ...(def.revive && num.revive ? { revive: { hpFraction: num.revive.hpFraction, line: def.revive.line } } : {}),
+    ...(mode ? { mode: mode.id } : {}),
+  };
+}
+
+/** 자세 모드 전투 kit (GDD 12-4 천년혈전, C.459): 그 모드의 블록 + 자세 장치(데이터 표시 → 수치 transcendentKits.<id>.modes.<모드>).
+ *  게이지 소모형·수련·충전 평타는 없다(호로화·무월수련·월아천충 없음), 리스크 패널티 없음은 데이터 그대로 */
+function stanceKitOf(k: KitState, def: TranscendentKitDef, mode: TranscendentKitModeDef): CombatKit | null {
+  const n = BALANCE.provisional.transcendentKits[k.id]?.modes?.[mode.id];
+  if (!n || !mode.stances || !mode.blocks) return null;
+  const blocks: CombatKitBlock[] = [];
+  for (const b of mode.blocks) {
+    const bn = n.blocks[b.id];
+    if (!bn) continue;
+    blocks.push({
+      id: b.id, name: b.name, short: b.short, fx: b.fx, tierNames: bn.tiers.map((_, i) => b.tierNames?.[i] ?? b.name), weight: bn.weight, power: bn.power, tiers: [...bn.tiers], mult: 1,
+      ...(b.solo ? { solo: true } : {}),
+      ...(b.noMotion ? { noMotion: true } : {}),
+    });
+  }
+  const stances: CombatStance[] = mode.stances.map((x) => ({
+    id: x.id, name: x.name, block: x.block, releaseName: x.releaseName,
+    ...(x.speed ? { speedPerStack: n.speedPerStack } : {}),
+    ...(x.power ? { powerPerStack: n.powerPerStack } : {}),
+    ...(x.clones ? { clones: { ...n.clones } } : {}),
+    ...(x.fixed ? { fixed: { ...n.fixed } } : {}),
+    ...(x.hold ? { hold: { ...n.hold } } : {}),
+    ...(x.draw ? { draw: { name: x.drawName ?? x.name, ...n.draw } } : {}),
+    ...(x.parry ? { parry: { name: x.parryName ?? x.name, ...n.parry } } : {}),
+    ...(x.lanterns ? { lanterns: { ...n.lanterns } } : {}),
+  }));
+  if (!stances.every((x) => blocks.some((b) => b.id === x.block))) return null;
+  return {
+    id: k.id,
+    mode: mode.id,
+    liberationName: stances[0]!.releaseName,
+    stackName: '',
+    blocks,
+    evadeChance: 0,
+    ...(def.riskPenaltyFree ? { riskPenaltyFree: true } : {}),
+    stance: { stances, ...n.stance },
   };
 }
 

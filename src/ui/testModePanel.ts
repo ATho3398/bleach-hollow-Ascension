@@ -23,7 +23,8 @@ import {
   TEST_CURRENCY_NAMES, TEST_ITEM_KINDS, TEST_ITEM_KIND_NAMES, TEST_ITEM_MAX, TEST_TIME_STEPS, type TestCurrency, type TestItemKind,
   resetStats, setAbility, setCustomStats, setElementDamage, TEST_ELEMENT_DAMAGE_MAX, setForm, setNestValues, setTraitSlots, testFoes, TEST_SPEEDS, TOWER_FLOORS, type TestBattleChoice,
 } from '../engine/testMode';
-import { statBonusOf, switchTrack, type SaveData } from '../game';
+import { kitModeChoices, statBonusOf, switchKitMode, switchTrack, type SaveData } from '../game';
+import { kitModesOf } from '../engine/transcendKit';
 import type { FoodId } from '../engine/faction';
 import type { EvolveResult } from '../engine/evolution/evolution';
 import { consumableName, gearKindName } from '../inventory';
@@ -547,7 +548,19 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       showToast({ eyebrow: '테스트', title: `붕옥 재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, meta: matLine() }, 0, 1800);
       redraw();
     } });
+    // 전투 모드 (GDD 12-4 이치고 천년혈전, C.459): 모드 체인지 초월자를 그 모드로 바로 — 트랙이 없으면 얻고(위 '초월자 얻기'와 같음) 모드를 고른 뒤 그 트랙으로. 모험 중에도 바꿈(테스트)
+    const modeBtns = testTranscendents().flatMap((t) => kitModesOf(t.id).length < 2 ? [] : kitModesOf(t.id).map((m) => button({
+      label: `${t.name} · ${m.name}${save.transcendentId === t.id && kitModeChoices(save).find((c) => c.current)?.id === m.id ? ' ✓' : ''}`, icon: 'i-swap', size: 'small',
+      onClick: () => {
+        if (save.transcendentId !== t.id && !testGrantTranscendent(save, t.id)) return;
+        switchKitMode(save, m.id, true);
+        hd.persist();
+        showToast({ eyebrow: '테스트', title: `${t.name} 전투 모드 ${m.name}`, meta: '상태 화면 「전투 모드」와 같다. 연습 전투·모험에서 바로 본다.' }, 0, 1800);
+        hd.onTrackChanged?.();
+      },
+    })));
     return [
+      ...(modeBtns.length ? [panel({ title: '전투 모드 (초월자)' }, row(...modeBtns), note('모드 체인지 초월자(이치고 기본/천년혈전)를 그 모드로 바로 간다. 없으면 얻고 간다.'))] : []),
       panel({ title: '붕옥 재료', aside: `각 +${TEST_HOGYOKU_MATERIAL_STEP}` }, row(mats), note(`${matLine()} — 붕옥 > 개발에서 강화 트랙 3개(재료별)를 올린다.`)),
       panel({ title: '초월자 얻기', aside: `${owned.size}/${testTranscendents().length}` }, row(...grants),
         note('누르면 그 초월자 트랙을 만들어 바로 간다(이미 있으면 그 트랙으로). 진짜 합체(개발 100%·1위 조건·두 캐릭터 초기화)는 거치지 않는다.')),

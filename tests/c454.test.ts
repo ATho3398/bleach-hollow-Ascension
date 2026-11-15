@@ -74,13 +74,13 @@ function swing(s: CombatState): Extract<CombatEvent, { kind: 'player-attack' }> 
 }
 
 describe('데이터·수치 (provisional)', () => {
-  it('이치고 kit = 월아천충 블록 하나 · 각호고 · 호로화 · 무월수련/무월/최후의 월아천충 · 모드 자리(기본만)', () => {
+  it('이치고 kit = 월아천충 블록 하나 · 각호고 · 호로화 · 무월수련/무월/최후의 월아천충 · 모드 기본/천년혈전', () => {
     const t = TRANSCENDENTS.find((x) => x.id === 'ichigo')!;
     expect(t.kit?.blocks.map((b) => [b.id, b.short, b.chargeShot, b.noMotion])).toEqual([['getsuga', '월', true, true]]); // C.455: 몸동작 없음 = 데이터 표시
     expect(t.kit?.liberationName).toBe('각호고');
     expect(t.kit?.riskGaugeName).toBe('호로화');
     expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충', releaseArt: 'char.transcendent-ichigo-mugetsu' }); // C.456 무월 그림
-    expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic']); // 천년혈전 [미정]
+    expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic', 'tybw']); // C.459: 천년혈전 구현 (tests/c459)
     // GDD v6.070~v6.074 추천안
     expect(K.blocks.getsuga).toMatchObject({ chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] });
     expect(RD).toEqual({ shotCost: 5, tickSeconds: 1, tickCost: 4, mastery: { perBasic: 2, perBlock: 4, full: 100, damageMult: 1.5 }, final: { stacks: 10, power: 30, perBlock: 4 }, bonusBlockEvery: 5 });
@@ -345,9 +345,9 @@ describe('원정: 호로화 = 리스크 게이지', () => {
 describe('세이브 형식 88', () => {
   it('87 → 88 은 구조 보정 없이 올라간다', () => {
     const s = newSaveData('hollow', 1000);
-    expect(SAVE_FORMAT_VERSION).toBe(88);
+    expect(SAVE_FORMAT_VERSION).toBe(89);
     const old = JSON.parse(JSON.stringify(s));
     old.meta.format = 87;
-    expect(migrateSave(old)?.meta.format).toBe(88);
+    expect(migrateSave(old)?.meta.format).toBe(89);
   });
 });

@@ -2,8 +2,23 @@
 // 모든 수치는 이 파일에 둔다. 이 파일만 고치면 게임에 반영된다.
 // 세이브 필드 구조를 바꾸는 변경은 src/game.ts 의 SAVE_FORMAT_VERSION 을 올린다.
 
+/** 자세 모드 수치 (GDD 12-4 천년혈전, C.459 provisional) — 아래 transcendentKits.<초월자>.modes.<모드> */
+export interface TybwModeNumbers {
+  stance: { switchSeconds: number; stackSeconds: number; stackMax: number; releaseAt: number };
+  speedPerStack: number;
+  powerPerStack: number;
+  clones: { perChain: number; max: number };
+  fixed: { attackSeconds: number; releaseAttackSeconds: number };
+  hold: { perSecond: number; max: number };
+  draw: { maxPower: number; fullSeconds: number; stackEverySeconds: number; stacks: number; breakSeconds: number; breakTaken: number };
+  parry: { windowSeconds: number; stacks: number; power: number; ignoreDefense: number; stunSeconds: number };
+  lanterns: { basicPower: number; max: number; perStacks: number; perPower: number; perStun: number; perTaken: number };
+  blocks: Record<string, { weight: number; power: number; tiers: readonly number[] }>;
+}
+
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
+export const BALANCE_VERSION = 143; // C.459 (GDD v6.087 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
+// 이전: BALANCE_VERSION 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
 // 이전: BALANCE_VERSION 141; // C.452 (GDD v6.066 12-4, 사용자 2026-11-14): 아이젠 hogyoku.voidSlot.voidScale 0.5 → 1(order 0), kyoka weight 0.1 삭제 → voidSlot { voidScale 1, order 1 }(허 공식으로 따로 굴림), evadeBuff { seconds 3 · critChance 0.2 · critDamage 0.3 provisional } 신설. 그 전 140 — C.448 (GDD v6.062 7절, 사용자): combat.motion 신설 — fastMax 1.5 · basic 0.6/0.3초 · block 1.4/0.8초(화면 없을 때 기본값). 블록 모션 중 평타 타이머 멈춤(처치 시간 늘어남, 재조정 안 함). 그 전 139 — C.447 (GDD v6.061 8절, 사용자 '옵션 = 간격 −n초'): abilities.aspd { attackSpeed 1.18 } → { attackSecondsCut 0.15 }, bspd { blockSpawn 1.2 } → { spawnSecondsCut 0.54 } (흡수 패시브 속도 값은 traits.json secondsCut).
 // 이전: BALANCE_VERSION 138; // C.446 (GDD v6.055·v6.057 7·8절, provisional): 능력치 7종 — 속도 → 공격속도(aspd)·블록속도(bspd). tierTotals ×7/6(기준 능력치 그대로 50·62.5·78.3·97.5), 진화체 종족값 bspd = 단계 기준(성향 없음), 속도 곡선(사용자) = 기본 간격 × (50 ÷ 능력치)^combat.speedExponent 0.35 ÷ 배율 → 0.01초 반올림 → 상한 combat.attackSecondsMin 0.3·spawnSecondsMin 1.0, 고유 특성 int → 블록 피해 ×1.12·bspd → 블록 생성 ×1.2, 성향 bspd = int 와 같은 몫, 장비 신발 풀 aspd·bspd, 적 ev 특수 → bspd·혼합 반씩.
 // 이전: BALANCE_VERSION 137; // C.446 (GDD v6.057 12-4): 아이젠 프라고르 fragor.riskCost 5 → 3(1블록마다 감응도 −3, 3체인 −9 — 사용자). 이전 136: // C.444 (GDD v6.054 12-4): 아이젠 붕옥 감응도 = 트랙 리스크 게이지 그 자체 — transcendentKits.aizen.riskRelease.start(전투 전용 시작 20) 삭제, floor 20 은 원정·둥지에도. 이전 135: // C.443 (GDD v6.052 12-4): 아이젠 붕옥 감응도·붕옥 융합 — transcendentKits.aizen.riskRelease(start 20·floor 20·minRisk 30, 옛 minRisk 50·costPerUse 8 삭제), fragor.riskCost 5(1블록마다), 붕옥 블록 hogyoku(허 공식 ×0.5·감응도 +10·power 1) 신설. 이전 134: // C.442 (GDD v6.051 12-4): 아이젠 붕옥 해방 = 호로화 소모형 모드 transcendentKits.aizen.riskRelease(minRisk 50·costPerUse 8) 신설, 경화수월 반격 즉시 재생성 삭제. 133: C.441 (GDD v6.049 12-4): 초월자 전용 블록 provisional.transcendentKits(아이젠 경화수월·귀도·프라고르·회피 10%·되살아나기 30%)·transcendentGrowth(초월 조각 일반 1·강적 3·보스 8, 강화 10강·강마다 +8%·n강 10×n) 신설 — 캐릭터 전투 수치 그대로. 132: C.427 (GDD v6.017·v6.026 6-16): 특수던전 주간던전·보스전 provisional.specialDungeon(주 3회·주 1회·재료·골드) 신설. 131: C.426 (GDD v6.016·v6.017): 붕옥 강당 비용 n강 = n개(trackIds·costPerLevel 1 — 옛 trackCost 2/4·3/1·1/1 삭제)·합체 뒤 afterFusionLevel 30·드롭 normalChance 1·eliteCount 3·bossCount 8·비율 1:1:1·상인 묶음 20개 150골드. 130: C.425 (GDD v6.015 12-3): 붕옥 재료 = 사냥 드롭 hogyokuDrops(일반 0.3·강적 2·보스 5·비율 4:1.5:1)·우라하라 w-hg-* — 옛 soulCrystals·hogyokuShards·resonanceEssence 지급 삭제. 129 (GDD v6.014 12-3): 붕옥 개발 10단계 → 재료별 강화 트랙 3개(각 50강, trackCost·trackMax·trackHalf·perStepBonus — 옛 develop·perLevelBonus·halfLevel·maxLevel 삭제).
@@ -218,6 +233,36 @@ export const BALANCE = {
            *  몸동작 없음(v6.073 — 평타가 안 멈춘다) */
           getsuga: { weight: 1, power: 0, tiers: [1, 1, 1], chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] },
         },
+        /** 천년혈전 모드 (GDD 12-4 v6.075~v6.087, C.459 — 수치 전부 provisional): 자세 소도/대도, 스택으로 만해(혈쇄참월·천쇄참월). 데이터 kit.modes[천년혈전] 의 자세 장치마다 */
+        modes: {
+          tybw: {
+            /** 자세: [자세] 재사용 대기 switchSeconds 1초 · 스택 지속 stackSeconds 5초(그 자세로 때릴 때마다 갱신) · 상한 stackMax 30 · 만해 가능 releaseAt 20 */
+            stance: { switchSeconds: 1, stackSeconds: 5, stackMax: 30, releaseAt: 20 },
+            /** 스택 효과 (v6.086 '임의로'): 소도 1스택 공격속도 +speedPerStack 1% · 대도 1스택 평타 피해 +powerPerStack 1% */
+            speedPerStack: 0.01,
+            powerPerStack: 0.01,
+            /** 혈쇄참월 분신: 바의 소도 블록 perChain 3개(3체인)마다 1명, 최대 max 2명 — 평타마다 같은 피해로 한 대씩 (블록 소모 없음) */
+            clones: { perChain: 3, max: 2 },
+            /** 대도 평타 간격 고정 attackSeconds 1초 · 천쇄참월 중 releaseAttackSeconds 0.8초 — 더 빠른 공속 몫은 (고정 간격 ÷ 원래 간격) 배 추가 피해 */
+            fixed: { attackSeconds: 1, releaseAttackSeconds: 0.8 },
+            /** 대도 유지 보너스: 대도 자세 유지 1초마다 물리 공격력 +perSecond 2%, 최대 +max 30% — 자세를 바꾸면 0 */
+            hold: { perSecond: 0.02, max: 0.3 },
+            /** 발도 충전: 대도 블록을 누르고 있다 평타 전에 떼면 다음 평타 × (1 + (maxPower 2.5 − 1) × 누른 시간 ÷ fullSeconds 0.9초) · stackEverySeconds 0.3초마다 대도 스택 +stacks 3.
+             *  평타 시각을 넘기면 자세 무너짐 = 그 평타 취소 + breakSeconds 3초 동안 받는 피해 +breakTaken 30% */
+            draw: { maxPower: 2.5, fullSeconds: 0.9, stackEverySeconds: 0.3, stacks: 3, breakSeconds: 3, breakTaken: 0.3 },
+            /** 패링 (대도 자세의 막기 버튼): 판정 창 windowSeconds 0.35초 — 강공격이 이 창에 닿으면 성공: 피해 0 · 대도 스택 +stacks 5 · 적 자세 무너짐 stunSeconds 1초(적 행동 정지) ·
+             *  방어 무시 피해 = 기본 공격 × power 2 (적 방어 ignoreDefense 50% 무시 — 100% 면 나눗셈이 0) · 막기 게이지 다시 가득 */
+            parry: { windowSeconds: 0.35, stacks: 5, power: 2, ignoreDefense: 0.5, stunSeconds: 1 },
+            /** 천쇄참월: 평타 강화 기본 × basicPower 2.5(발도 최대와 같음) · 블록 = 회색(못 씀), 누르면 불 켜기 최대 max 5 ·
+             *  패링 성공 때 켠 블록 1개당 대도 스택 +perStacks 1 · 방무 피해 +perPower 20% · 적 자세 무너짐 +perStun 0.3초 / 강공격 피격 때 1개당 받는 피해 +perTaken 15% · 패링·피격 뒤 모두 꺼짐 */
+            lanterns: { basicPower: 2.5, max: 5, perStacks: 1, perPower: 0.2, perStun: 0.3, perTaken: 0.15 },
+            /** 블록: 소도 = 보통 물리 블록(체인 ×1.2/2.0/3.2, 혈쇄참월 분신 수를 정함) · 대도 = 발도 충전(피해 없음, 체인 안 됨) */
+            blocks: {
+              kodachi: { weight: 1, power: 1, tiers: [1.2, 2.0, 3.2] },
+              odachi: { weight: 1, power: 0, tiers: [1] },
+            },
+          },
+        },
       },
     } as Record<string, { evadeChance?: number; evadeBuff?: { seconds: number; critChance: number; critDamage: number }; revive?: { hpFraction: number }; riskRelease?: { floor: number; minRisk: number };
       riskDrain?: { shotCost: number; tickSeconds: number; tickCost: number; mastery: { perBasic: number; perBlock: number; full: number; damageMult: number }; final: { stacks: number; power: number; perBlock: number }; bonusBlockEvery?: number };
@@ -227,7 +272,8 @@ export const BALANCE = {
       counter?: { windowSeconds: number; damageMult: number; critBonus: number; healLostFraction: number };
       stack?: { cutPerStack: number; maxCut: number; full: number };
       finisher?: { power: number; enemyStunSeconds: number };
-    }> }>,
+    }>;
+      modes?: Record<string, TybwModeNumbers> }>,
     /** 초월자 성장 (GDD 12-4 v6.048, C.441 provisional): 초월자 트랙은 이긴 전투마다 '초월 조각'(슬롯 공유) — 일반 1·강적 3·보스 8. 전용 블록 강화 1~maxLevel 강, 강마다 그 블록 피해·회복 +perLevel, n강 비용 = costPerLevel × n 조각 */
     transcendentGrowth: { drops: { normal: 1, elite: 3, boss: 8 }, maxLevel: 10, perLevel: 0.08, costPerLevel: 10 },
     // ── 환생 (GDD 22-1·22-7, 수치 provisional) ──
