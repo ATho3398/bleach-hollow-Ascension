@@ -174,8 +174,9 @@ def walk():
     two = lambda base, amp: (lambda t: base + amp * math.cos(4 * math.pi * t / D))  # noqa: E731
     add = lambda f, g: (lambda t: f(t) + g(t))  # noqa: E731
     # 몸: 앞으로 숙이고 걸음마다 살짝 끄덕, 어깨는 다리와 반대로 틀림. 팔은 다리와 엇갈려 흔들고 아래팔·칼이 늦게 따라옴(LATE)
+    # 팔은 반대쪽 다리와 같이 나간다(사용자 2026-11-16 "지금 왼손, 왼발 같이 나가거든?? 왼손-오른발로 나가게수정해"): 오른발(f, 위상 0)이 앞일 때 왼팔(arm_back)이 앞, 왼발이 앞일 때 오른팔(arm_sword)이 앞
     for bone, f in (('upper', add(two(-4, 0.8), sw(1.2, 0.5))), ('lower', sw(1.0)), ('head', add(two(2.5, -0.6), sw(-0.8, 0.5))),
-                    ('arm_sword', sw(5, 0.0)), ('forearm_sword', sw(3, 0.0)), ('sword', sw(2, 0.0)), ('arm_back', sw(10, 0.5)), ('forearm_back', sw(6, 0.5))):
+                    ('arm_sword', sw(5, 0.5)), ('forearm_sword', sw(3, 0.5)), ('sword', sw(2, 0.5)), ('arm_back', sw(10, 0.0)), ('forearm_back', sw(6, 0.0))):
         fns[bone] = (f, zero, zero)
     LATE.pop('shin_f', None); LATE.pop('shin_b', None)  # 다리는 계산한 그대로(늦추면 발이 땅에서 뜬다)
     tr = dense(D, fns, True)
