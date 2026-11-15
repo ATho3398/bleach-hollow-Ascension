@@ -2,6 +2,7 @@
 import { DRAFT_RIGS, type DraftRig } from './draft';
 import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
+import { createFlame, type FlameLayer } from './flame';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
@@ -17,7 +18,8 @@ declare const claude: {
   use(name: 'comments'): Promise<Comments | null>;
   use(name: 'downloads'): Promise<{ save(r: { filename: string; data: Blob }): Promise<{ status: string }> } | null>;
 } | undefined;
-const K = 6;
+const K_FULL = 6;
+let K = K_FULL; // 미리보기 배율(화면 칸/캔버스 칸) — 넓은 몸이 한 줄에 안 들어가면 fitWrap 이 5·4 로 줄인다
 // 저장 칸 이름은 바꾸지 않는다(바꾸면 사용자가 맞춘 값이 사라진다). 옛 이름(v1~v3)에 남은 값도 읽어 온다
 const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
@@ -103,13 +105,14 @@ const isCreature = () => {
   const r = rig as unknown as { cuts?: Record<string, unknown>; assembled?: Record<string, unknown> };
   return !!(r.cuts?.[curBody()] || r.assembled?.[curBody()]);
 };
-const CREATURE_NAMES: Record<string, string> = { arm_L: '뒤 위팔', forearm_L: '뒤 아래팔', arm_R: '앞 위팔', forearm_R: '앞 아래팔', leg_L: '뒷다리 허벅지', shin_L: '뒷다리 정강이', foot_L: '뒷발', leg_R: '앞다리 허벅지', shin_R: '앞다리 정강이', foot_R: '앞발' };
-const CREATURE_GROUPS: Record<string, string> = { '왼팔(칼)': '뒤 팔', '오른팔': '앞 팔' };
+// 팔·다리 이름은 모든 몸이 같다(사용자 2026-11-13 "부위별 이름 싹 다 통일시켜 — 칼 든 손 = 오른손(앞손), 칼 안든 손 = 왼손(뒷손)", 115-A 123):
+// 예전의 호로 전용 이름(뒤 위팔·앞 위팔·뒷다리 허벅지…)은 없앰. 팔이 한 조각인 몸(아래팔 그림 없음)만 '오른팔(앞손)'·'왼팔(뒷손)'
+const CREATURE_GROUPS: Record<string, string> = {};
 const NAMES = (): Record<string, string> => {
   const base = rig.edit?.names ?? {};
   if (!rig.looks[look] || !isCreature()) return base;
   const body = rig.bodies[curBody()] ?? {};
-  return { ...base, ...CREATURE_NAMES, ...(body.forearm_R ? {} : { arm_L: '뒤 팔', arm_R: '앞 팔' }), ...(body.fold1 ? { cape: '로브 아랫단' } : {}) };
+  return { ...base, ...(body.forearm_R ? {} : { arm_L: '오른팔(앞손)', arm_R: '왼팔(뒷손)' }), ...(body.fold1 ? { cape: '로브 아랫단' } : {}), ...(curBody() === 'hv' ? { cape: '꼬리', cape2: '꼬리 2', cape3: '꼬리 끝' } : {}) }; // 속도형은 망토 마디가 꼬리
 };
 /** 지금 몸이 쓰는 동작(역관절 몸은 동작 묶음을 덮은 것) */
 const motionsNow = (): Record<string, Motion> => {
@@ -174,9 +177,47 @@ function fitWrap() {
     y0 = Math.min(y0, l.at[1]);
     y1 = Math.max(y1, l.at[1] + l.size[1]);
   }
-  const m = 16; // 팔 휘두르는 여유(캔버스 칸)
-  const pl = Math.max(140, (m - x0) * K);
-  const pr = Math.max(60, (x1 - W + m) * K);
+  // 팔 휘두르는 여유(캔버스 칸) = 16. 단, 몸이 넓은 외형(호로)은 미리보기가 넓어져 옆의 동작 단추 칸이 다음 줄로 밀린다
+  // (사용자 2026-11-12 10:3x "호로가 미리보기가 크니까, 옆에 모션 창이 다음줄로 밀린다고") → 한 줄에 들어갈 때까지 여유를 줄인다(가장 작게 2칸)
+  const row = wrap.closest<HTMLElement>('.stagerow');
+  const side = row?.querySelector<HTMLElement>('.side');
+  const tool = row?.querySelector<HTMLElement>('.toolcol');
+  let minL = 140, minR = 60; // 좌우 여유의 가장 작은 값(px) — 그래도 안 들어가면 80·40 까지 줄인다(115-A 135)
+  const widthOf = (mm: number, k = K) => W * k + Math.max(minL, (mm - x0) * k) + Math.max(minR, (x1 - W + mm) * k);
+  let m = 16;
+  K = K_FULL;
+  if (row && side) {
+    // 동작 칸 너비는 배율마다 다르다: 미리보기가 낮아지면 단추가 옆으로 새 줄을 만든다(fitSide) — 그 너비까지 넣어 잰다
+    // (사용자 2026-11-14 "무월 툴 ui 다 망가졋잖아": 3배에서 단추 칸이 두 줄이 돼 미리보기가 도구 칸 아래로 밀렸음, GDD 115-A 135)
+    // 보일 단추 수: 단추 숨김(syncMotionButtons)이 이 뒤에 돌 수도 있어 지금 몸의 동작으로 직접 센다(처음 그릴 때는 아직 못 세면 보이는 것만)
+    let ms: Record<string, unknown> | null = null;
+    try { ms = motionsNow(); } catch { ms = null; }
+    const nSide = [...side.children].filter((c) => {
+      const mm = (c as HTMLElement).dataset.m;
+      return ms && mm ? mm === 'stop' || !!ms[mm] : !(c as HTMLElement).hidden;
+    }).length;
+    const rowH = (side.querySelector('button')?.offsetHeight || 30) + 6;
+    const sideW = (k: number) => {
+      const hh = H * k + Math.max(14, (2 - y0) * k) + Math.max(14, (y1 - H + 4) * k);
+      const cols = Math.ceil(nSide / Math.max(4, Math.floor((hh + 6) / rowH)));
+      return cols * 76 + (cols - 1) * 6;
+    };
+    const toolW = tool ? tool.offsetWidth + 8 : 0;
+    // 도구 칸 옆에 다 들어가는 가장 큰 배율(6 → 5 → 4), 그래도 안 되면(좁은 화면) 6배로 두고 미리보기 + 동작 칸이 같이 아랫줄로
+    // 3배까지(사용자 2026-11-14 "무월 툴 ui 다 망가졋잖아": 캔버스가 넓은 무월(105칸)은 4배로도 안 들어가 도구 칸 아래로 밀렸음, GDD 115-A 135)
+    const fits = (k: number) => widthOf(2, k) + sideW(k) + 8 + toolW <= row.clientWidth;
+    let fit = [6, 5, 4, 3].find(fits);
+    if (!fit) { minL = 80; minR = 40; fit = [4, 3].find(fits); if (!fit) { minL = 140; minR = 60; } }
+    K = fit ?? K_FULL;
+    const room = row.clientWidth - sideW(K) - 8 - (fit ? toolW : 0);
+    while (m > 2 && widthOf(m) > room) m--;
+  }
+  stage.style.width = `${W * K}px`;
+  stage.style.height = `${H * K}px`;
+  const pair = side?.parentElement;
+  if (pair && pair !== row) pair.style.flexWrap = window.innerWidth < 700 ? 'wrap' : 'nowrap'; // 휴대폰 너비에서는 가로로 넘치지 않게 동작 칸을 아래로
+  const pl = Math.max(minL, (m - x0) * K);
+  const pr = Math.max(minR, (x1 - W + m) * K);
   wrap.style.paddingLeft = `${pl}px`;
   wrap.style.paddingRight = `${pr}px`;
   wrap.style.paddingTop = `${Math.max(14, (m - y0) * K)}px`;
@@ -194,13 +235,15 @@ function syncMotionButtons() {
     b.hidden = m !== 'stop' && !ms[m];
     const name = attackName(m);
     if (name) b.textContent = name;
+    // 긴 이름은 두 줄·작은 글씨로(단추 밖으로 넘쳐 화면이 가로로 밀리지 않게 — 편집기 점검 editor-check.cjs, 115-A 135). 단추 높이는 그대로
+    if (m !== 'stop') { const long = (b.textContent ?? '').length > 7; b.classList.toggle('long', long); if (long) b.style.height = `${(document.querySelector<HTMLElement>('.side button:not(.long)')?.offsetHeight || 34)}px`; else b.style.height = ''; }
   });
 }
 /** 공격 동작 이름 (사용자 2026-11-12 04:1x "용어를 기본 공격, 박치기, 무기 공격, 특수 공격으로 나누자 — 호로는 무기가 없으니까 무기공격은 없겠지? 이래야 이펙트 먹이기 편할듯"):
  *  무기를 든 외형(무기 그림이 있는 몸 — 사신·아란칼·혼백)의 공격1·2 = 무기 공격 1·2, 무기 없는 몸(호로 전부·알몸)의 공격1·2·3 = 기본 공격 1·2·3,
  *  맨손 치기(스트레이트·오른손 치기·어퍼컷) = 기본 공격(이름), 박치기 = 박치기(부유형 공격3 도 박치기), 특수1·2 = 특수 공격 1·2. 동작 id 는 그대로(이름표만) */
 function attackName(m: string): string | null {
-  const armed = lookLayers(C.rig, look).some((l) => l.slot === 'weapon');
+  const armed = lookLayers(C.rig, look).some((l) => l.slot === 'weapon' || l.slot === 'sword'); // 초월자 인형은 칼 부위 이름이 sword
   const kind = armed ? '무기 공격' : '기본 공격';
   if (m === 'attack') return `${kind} 1`;
   if (m === 'attack2') return `${kind} 2`;
@@ -222,8 +265,19 @@ function fitSide() {
   const row = btn.offsetHeight + 6;
   side.style.gridTemplateRows = `repeat(${Math.max(4, Math.floor((wrap.offsetHeight + 6) / row))}, auto)`;
 }
+{
+  // 미리보기 칸(leftcol)과 동작 단추 칸(side)을 한 묶음으로: 화면이 좁아도 동작 칸만 따로 다음 줄로 밀리지 않는다(사용자 2026-11-12 10:3x)
+  const lc = document.querySelector<HTMLElement>('.leftcol');
+  const sd = document.querySelector<HTMLElement>('.side');
+  if (lc && sd && lc.parentElement === sd.parentElement) {
+    const pair = document.createElement('div');
+    pair.style.cssText = 'display:flex;flex-wrap:nowrap;gap:8px;align-items:flex-start;flex:0 0 auto;min-width:0';
+    lc.before(pair);
+    pair.append(lc, sd);
+  }
+}
 sizeStage();
-window.addEventListener('resize', fitSide);
+window.addEventListener('resize', () => { fitWrap(); fitSide(); });
 
 let dbTimer = 0;
 const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, bodySlots: c.rig.bodySlots ?? {}, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
@@ -447,14 +501,15 @@ function nudge(dx: number, dy: number) {
   if (mode === 'pivot') { moveJoint(boneOfSel(), dx, dy); save(); draw(); return; }
   if (scope === 'motion' && motion) { shiftMotion(boneOfSel(), 0, dx, dy); return; }
   // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
-  const moves = followMove(rig, look, sel);
+  const moves = followMove(rig, look, sel, (document.getElementById('sub') as HTMLInputElement | null)?.checked ?? true);
   if (!moves) return;
   for (const m of moves.parts) {
     const next: PartArt = { ...m.part, at: [m.part.at[0] + dx, m.part.at[1] + dy] };
     if ((m.slot === 'hair' || m.slot === 'hair_back') && !insideFrame(rig, next, m.slot)) { $('info').textContent = '머리카락이 틀 밖으로 나가서 못 옮김'; return; }
   }
   for (const m of moves.parts) m.part.at = [m.part.at[0] + dx, m.part.at[1] + dy];
-  for (const id of moves.bones) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
+  // 고른 부위의 관절도 같이(115-A 132) — 쉬는 자세 그림이 안 밀리게 관절 자리만 그대로 옮긴다
+  for (const id of [...(moves.lead ? [moves.lead] : []), ...moves.bones]) { const b = bone(id); setPivot(id, [b.pivot[0] + dx, b.pivot[1] + dy]); }
   save(); draw();
 }
 
@@ -549,7 +604,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-look]').forEach((b) => b.onc
   document.querySelectorAll('[data-look]').forEach((x) => x.classList.toggle('on', x === b));
   buildColors(); buildSwaps(); buildChips(); save(false); draw();
 });
-/** 외형 고르기 = 종족 탭(사신·아란칼·호로·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
+/** 외형 고르기 = 종족 탭(사신·아란칼·호로·초월자(아이젠 등 — 사용자 2026-11-14 "기타 말고 초월자로 따로 빼놔")·기타) → 성별(사신·아란칼만) → 단계/진화체 → 색(buildColors) (GDD 115-A 110, 사용자 2026-11-11
  *  "사신 아란칼 호로 탭 먼저 나누고 그 안에서 사신 여자 사신 남자 나누고 거기서 혼백, 영술원 학생, 사신 … 호로는 진화체들 정리해서 넣고, 진화체 선택하면 색상도 고르게").
  *  외형 단추는 묶음(data-group) 줄에 들어 있고, 탭·성별에 맞는 줄만 보인다. pick = 그 줄의 첫 외형을 고른다 */
 let tab = 'arrancar';
@@ -706,8 +761,29 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
   draw();
 });
 
+/** 불꽃 층(GDD 115-A 135): 지금 외형에 불꽃이 있으면 미리보기 위에 얹는다. 조각 그림은 그릴 때마다 새로 만들므로 자르기용 그림은 따로 간직 */
+const flames = new Map<string, ReturnType<typeof createFlame>>();
+const flameImgs = new Map<string, HTMLImageElement>();
+let flameMotion: string | null = null;
+function stepFlame(dt: number) {
+  const spec = C.src.flame;
+  const on = spec && spec.look === look ? C.id : null;
+  for (const [id, f] of flames) { const show = id === on; f.back.hidden = !show; f.front.hidden = !show; }
+  if (!spec || !on) return;
+  let f = flames.get(on);
+  if (!f) { f = createFlame(spec, rig.canvas); flames.set(on, f); stage.prepend(f.back); stage.append(f.front); }
+  f.place(K);
+  if (motion !== flameMotion) { flameMotion = motion; f.quench(); } // 새 동작이 시작되면 그 전 불은 빨리 꺼뜨린다
+  const layers: FlameLayer[] = drawn.map((d) => {
+    let img = flameImgs.get(d.img.src);
+    if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }
+    return { slot: d.slot, m: d.m, img };
+  });
+  f.step(dt, layers);
+}
 let last = 0;
 function tick(now: number) {
+  if (last) stepFlame(now - last);
   if (motion) {
     if (last) mt += Math.min(100, now - last) * motionSpeedOf(rig, motion); // 게임과 같은 재생 속도(GDD 225장, 대기·홈 대기는 1배 — 115-A 103)
     const m = motionsNow()[motion];

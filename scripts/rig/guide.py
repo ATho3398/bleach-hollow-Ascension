@@ -112,16 +112,7 @@ def main():
                 if x <= X < x + w and TOP_ <= Y < TOP_ + h:
                     img[Y, X] = (*pa[yy, xx, :3], alpha)
         # 칸 테두리(칸 바로 바깥 1줄 — 위·아래만, 양옆은 칸 사이 GAP 가운데)
-        img[TOP_ - 1, x - 1:x + w + 1] = LINE
-        if TOP_ + h < H:
-            img[TOP_ + h, x - 1:x + w + 1] = LINE
-        img[TOP_ - 1:TOP_ + h + 1, x - 1] = LINE
-        img[TOP_ - 1:TOP_ + h + 1, min(W - 1, x + w)] = LINE
-        # 사용자가 칸 안에 그은 선(marks.json, 캔버스 좌표) — 빈 칸에만(그림을 덮지 않게)
-        for mx, my in MARKS.get(b['slot'], []):
-            X, Y = mx - cx + x, my - cy + TOP_
-            if x <= X < x + w and TOP_ <= Y < TOP_ + h and img[Y, X, 3] == 0:
-                img[Y, X] = LINE
+        # 칸 테두리·사용자 표시 선(marks.json)은 1배 시트에 안 그림(사용자 2026-11-14 "시트에 저 가이드 선 다 빼자 그냥. 필요 없네") — 칸 자리는 guide.json
         # 관절점: 이 슬롯의 뼈와 그 자식 뼈 관절 중 칸 안에 있는 것
         bone = slot_bone[b['slot']]
         pts = []

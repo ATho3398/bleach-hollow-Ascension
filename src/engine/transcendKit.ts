@@ -12,7 +12,7 @@ const GROW = BALANCE.provisional.transcendentGrowth;
 export interface KitState {
   id: string;
   levels: Record<string, number>;
-  /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.459 — 형식 89): 데이터 kit.modes 의 id. 모드가 없는 초월자는 없음, 없거나 모르는 id = 첫 모드 */
+  /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.460 — 형식 89): 데이터 kit.modes 의 id. 모드가 없는 초월자는 없음, 없거나 모르는 id = 첫 모드 */
   mode?: string;
 }
 
@@ -138,7 +138,7 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
   };
 }
 
-/** 자세 모드 전투 kit (GDD 12-4 천년혈전, C.459): 그 모드의 블록 + 자세 장치(데이터 표시 → 수치 transcendentKits.<id>.modes.<모드>).
+/** 자세 모드 전투 kit (GDD 12-4 천년혈전, C.460): 그 모드의 블록 + 자세 장치(데이터 표시 → 수치 transcendentKits.<id>.modes.<모드>).
  *  게이지 소모형·수련·충전 평타는 없다(호로화·무월수련·월아천충 없음), 리스크 패널티 없음은 데이터 그대로 */
 function stanceKitOf(k: KitState, def: TranscendentKitDef, mode: TranscendentKitModeDef): CombatKit | null {
   const n = BALANCE.provisional.transcendentKits[k.id]?.modes?.[mode.id];

@@ -65,10 +65,11 @@ def main(rig_id, look_id, out):
     order += [s['id'] for s in rig['slots'] if s['id'] not in order]
     boxes = []
     for slot in order:
-        if slot not in skel:
+        # 그림이 있는 부위는 다 칸 하나씩(사용자 2026-11-14 "시트 다운 받을 때 이상하거든? 부위별로 다 나오게") — 뼈대 선만 있는 부위도
+        if slot not in skel and slot not in art:
             continue
         xs, ys = [], []
-        for st in skel[slot]:
+        for st in ([] if slot in art else skel.get(slot, [])):  # 그림이 있으면 칸 = 그림 자리만(뼈대 선 길이로 칸이 커지지 않게)
             r = st['w'] / 2
             for x, y in st['pts']:
                 xs += [x - r, x + r]
@@ -81,7 +82,7 @@ def main(rig_id, look_id, out):
         x1, y1 = int(np.ceil(max(xs))) + PAD, int(np.ceil(max(ys))) + PAD
         bone = slot_bone[slot]
         # 이 칸의 관절: 이 슬롯 뼈 + 그 자식 뼈(이 몸 뼈대에 있는 부위의 뼈만) 중 칸 안에 있는 것
-        used = {slot_bone[s] for s in skel}
+        used = {slot_bone[s] for s in skel if s in slot_bone} | {slot_bone[s] for s in art if s in slot_bone}
         joints = [b for b in piv if b in used and (b == bone or parent[b] == bone) and x0 <= piv[b][0] < x1 and y0 <= piv[b][1] < y1]
         boxes.append({'slot': slot, 'canvas': [x0, y0], 'size': [x1 - x0, y1 - y0], 'pivots': joints})
     area = sum((b['size'][0] + GAP) * (b['size'][1] + ROWGAP) for b in boxes)
@@ -101,11 +102,7 @@ def main(rig_id, look_id, out):
         sx, sy = b['sheet']
         cx, cy = b['canvas']
         w, h = b['size']
-        img[sy - 1, sx - 1:sx + w + 1] = BOX
-        if sy + h < H:
-            img[sy + h, sx - 1:sx + w + 1] = BOX
-        img[sy - 1:sy + h + 1, sx - 1] = BOX
-        img[sy - 1:sy + h + 1, min(W - 1, sx + w)] = BOX
+        # 칸 테두리·뼈대 선·관절 점은 1배 시트에 안 그림(사용자 2026-11-14 "시트에 저 가이드 선 다 빼자 그냥. 필요 없네") — 칸 자리는 guide.json, 관절은 8배 확인용에만
         # 지금 그림이 있으면 칸 안 제자리에 불투명으로(그 위에 고쳐 그림 — 사용자 2026-11-10 "짐승이랑 뱀 시트 보내줘"). 뼈대 선·관절 점은 그림 없는 칸에만
         if b['slot'] in art:
             a = np.array(Image.open(os.path.join(DRAFT_DIR, rig_id, art[b['slot']]['art'] + '.png')).convert('RGBA'))
@@ -116,15 +113,6 @@ def main(rig_id, look_id, out):
                         X, Y = ax - cx + sx + xx, ay - cy + sy + yy
                         if sx <= X < sx + w and sy <= Y < sy + h:
                             img[Y, X] = a[yy, xx]
-        for st in skel[b['slot']]:
-            for p0, p1 in zip(st['pts'], st['pts'][1:]):
-                for px, py in line_px((p0[0] - cx + sx, p0[1] - cy + sy), (p1[0] - cx + sx, p1[1] - cy + sy)):
-                    if sx <= px < sx + w and sy <= py < sy + h and img[py, px, 3] != 255:
-                        img[py, px] = BONE
-        for j in b['pivots']:
-            px, py = piv[j][0] - cx + sx, piv[j][1] - cy + sy
-            if img[py, px, 3] != 255:
-                img[py, px] = JOINT
     os.makedirs(out, exist_ok=True)
     Image.fromarray(img).save(os.path.join(out, 'guide.png'))
     json.dump({'note': '뼈대 가이드 칸(GDD 115-A 47): sheet(시트 왼쪽 위) → canvas(캔버스 왼쪽 위), size = 칸 크기. 칸 안 반투명 선 = 뼈대(가져올 때 무시), 불투명 칸만 그 슬롯 그림',
@@ -146,14 +134,11 @@ def main(rig_id, look_id, out):
         cx, cy = b['canvas']
         d.rectangle([sx * K, (sy - ROWGAP) * K + 2, sx * K + b['size'][0] * K, sy * K - 10], fill=(40, 44, 48, 255))
         d.text((sx * K + 4, (sy - ROWGAP) * K + 4), names.get(b['slot'], b['slot']), fill=(255, 255, 255, 255), font=f)
-        for st in skel[b['slot']]:
-            pts = [((px - cx + sx + .5) * K, (py - cy + sy + .5) * K) for px, py in st['pts']]
-            d.line(pts, fill=(255, 70, 70, 255), width=3)
         for j in b['pivots']:
             px, py = (piv[j][0] - cx + sx) * K, (piv[j][1] - cy + sy) * K
             d.rectangle([px + 1, py + 1, px + K - 2, py + K - 2], outline=(255, 210, 0, 255), width=2)
             d.text((px + K + 2, py - 6), names.get(j, j), fill=(255, 220, 80, 255), font=fs)
-    d.text((8, H * K + 6), '칸 안 빨간 선 = 뼈대(길이·각도), 노란 네모 = 관절. 선에 맞춰 부위를 그리면 된다(선·테두리는 반투명이라 가져올 때 빠짐)', fill=(220, 220, 220, 255), font=fs)
+    d.text((8, H * K + 6), '부위 시트(1배 = 그리기용, 선 없음). 노란 네모 = 관절(이 확인용에만)', fill=(220, 220, 220, 255), font=fs)
     bg.save(os.path.join(out, 'guide-x8.png'))
     print(f'{rig_id}/{look_id}: 가이드 {W}×{H}, 칸 {len(boxes)}개 → {out}')
 

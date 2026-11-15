@@ -548,7 +548,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
       showToast({ eyebrow: '테스트', title: `붕옥 재료 각 +${TEST_HOGYOKU_MATERIAL_STEP}`, meta: matLine() }, 0, 1800);
       redraw();
     } });
-    // 전투 모드 (GDD 12-4 이치고 천년혈전, C.459): 모드 체인지 초월자를 그 모드로 바로 — 트랙이 없으면 얻고(위 '초월자 얻기'와 같음) 모드를 고른 뒤 그 트랙으로. 모험 중에도 바꿈(테스트)
+    // 전투 모드 (GDD 12-4 이치고 천년혈전, C.460): 모드 체인지 초월자를 그 모드로 바로 — 트랙이 없으면 얻고(위 '초월자 얻기'와 같음) 모드를 고른 뒤 그 트랙으로. 모험 중에도 바꿈(테스트)
     const modeBtns = testTranscendents().flatMap((t) => kitModesOf(t.id).length < 2 ? [] : kitModesOf(t.id).map((m) => button({
       label: `${t.name} · ${m.name}${save.transcendentId === t.id && kitModeChoices(save).find((c) => c.current)?.id === m.id ? ' ✓' : ''}`, icon: 'i-swap', size: 'small',
       onClick: () => {

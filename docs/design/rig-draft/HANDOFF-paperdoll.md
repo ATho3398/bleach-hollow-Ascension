@@ -19,6 +19,7 @@ ArtifactData get `rig/fixed`(뱀 = `rig/fixed-serpent`, 짐승 = `rig/fixed-beas
 
 ## 3. 작업본 vs 게임 / 배포
 - 모든 수정은 작업본 `docs/design/rig-draft/`(humanoid.json·motions.json·serpent.json·serpent-motions.json·beast.json·beast-motions.json·그림 폴더). 게임은 사용자가 "게임 넣어/게임에 반영/게임에 적용"이라고 할 때만: `python3 scripts/rig/promote.py`(사람형·뱀형 — 짐승형은 아직 게임에 없음, `-test` 외형 제외) → 패치 C.xxx(dev-log 소절, `src/version.ts` PATCH_LABEL, 기획이 바뀌면 GDD 장·버전) → `npm run typecheck`·`npx vitest run`·`npm run build`·`npm run balance:check`.
+- **2026-11-12 부터 마스터 = 마스터AM**(session_01YVaigL3CXmHKgGoxWgP99u — 사용자 확인 2026-11-13 "am맞음"). 아래 '마스터AL' 은 마스터AM 으로 읽는다.
 - **main 합치기·배포 = 마스터AL**(session_01YVaigHqv5N8mzeitzKf2jg): 작업 브랜치 푸시 → `send_message` 로 브랜치·HEAD·내용·검증 결과·"배포 끝나면 알려 달라" → 마스터가 fast-forward·배포 확인 후 알려 주면 사용자에게 전한다. 패치 번호·GDD 장 번호는 main 최신을 먼저 보고 다음 빈 번호(다른 세션과 겹치면 옮긴다).
 - 커밋 꼬리: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` + `Claude-Session: <이 세션 주소>`. 커밋·코드에 모델 이름 금지.
 
@@ -38,3 +39,7 @@ ArtifactData get `rig/fixed`(뱀 = `rig/fixed-serpent`, 짐승 = `rig/fixed-beas
 - 작업본에만: 115-A 102 짐승형 새 조각(브랜치 ccr-14d5b05b-vt28rc, 편집기·시험 페이지엔 올라가 있음 — 사용자가 위치 잡는 중). 115-A 101 가면 시도 4개(`docs/design/user-art/hood-ref/mask-trials-2026-11-10/`).
 - 기획서 기록: 작업본 항목 = GDD 115-A(지금 102까지), 게임 패치 = 장(219·225·227 등), dev-log 작업본 줄은 'C.151 종이인형' 묶음 근처, 패치는 맨 끝 소절.
 - 열린 것: 보스 강공격도 세로로 할지(미확인 — 지금은 강적만), 짐승형 위치 고정 대기, 짐승형은 게임 미사용.
+
+- (2026-11-14) **편집기를 올리기 전에 `node scripts/rig/tools/editor-check.cjs $PWD/.rig-pages` 를 꼭 돌린다**(사용자 "툴 망가지는거 없나 체크해") — 실패하면 고친 뒤 올린다. 새 인형·동작을 넣었으면 `editor-shot.cjs` 로 그 외형 화면도 눈으로 본다.
+- (2026-11-14) 대화 중간에 온 그림이 images 폴더에 안 떨어지면 대화 기록(.jsonl)의 base64 에서 꺼낸다 — 사용자에게 다시 보내 달라고 하지 않는다.
+- (2026-11-15) **GIF·미리보기 그림은 무조건 "도트 움직임 보기" 아티팩트(https://claude.ai/artifact/LEHraSHpkzcpCSfvfxyP4f)에 올려 보여 준다**(사용자 "앞으로 gif면 무조건 내가 볼 수 있게 아티팩트에 넣어서 띄워"): `python3 scripts/rig/tools/gif_page.py "<묶음 제목>" "<설명>=<파일>" …` → `.rig-pages/gif-viewer.html` 을 그 주소(url)로 다시 올린다. 파일로만 보내지 않는다.

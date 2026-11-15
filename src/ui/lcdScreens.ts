@@ -282,7 +282,7 @@ function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
   return p;
 }
 
-/** 전투 모드 (GDD 12-4 이치고 기본/천년혈전, C.459 — 모드 체인지 초월자 트랙만): [기본][천년혈전] 세그먼트. 모험 중엔 잠김(추천안) */
+/** 전투 모드 (GDD 12-4 이치고 기본/천년혈전, C.460 — 모드 체인지 초월자 트랙만): [기본][천년혈전] 세그먼트. 모험 중엔 잠김(추천안) */
 function kitModePanel(save: SaveData, rerender: () => void): HTMLElement | null {
   const choices = kitModeChoices(save);
   if (choices.length < 2) return null;

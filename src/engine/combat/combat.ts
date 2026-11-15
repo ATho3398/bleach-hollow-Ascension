@@ -317,13 +317,13 @@ export interface CombatKit {
    *  (기본 공격 × finisherPower + 바의 충전 블록 1개당 × finisherPerBlock, 그 블록들 소모) → 해방이 풀리고 게이지 limit · 수련 0.
    *  수련 게이지 모드 동안(두 번째 해방 전) 주는 피해 × damageMult (v6.074). 첫 해방 중엔 tickSeconds 마다 게이지 −tickCost (v6.070) */
   mastery?: { name: string; releaseName: string; finisherName: string; perBasic: number; perBlock: number; full: number; damageMult: number; stacks: number; finisherPower: number; finisherPerBlock: number };
-  /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.459 — 런 로그). 모드가 없는 kit 은 없음 */
+  /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.460 — 런 로그). 모드가 없는 kit 은 없음 */
   mode?: string;
-  /** 자세 모드 (GDD 12-4 천년혈전, C.459): 있으면 해방 = 지금 자세 스택으로 그 자세의 만해, 출현 = 지금 자세 블록만 */
+  /** 자세 모드 (GDD 12-4 천년혈전, C.460): 있으면 해방 = 지금 자세 스택으로 그 자세의 만해, 출현 = 지금 자세 블록만 */
   stance?: CombatStanceKit;
 }
 
-/** 자세 하나 (C.459): 장치만 — 엔진은 자세·블록 id 로 분기하지 않는다.
+/** 자세 하나 (C.460): 장치만 — 엔진은 자세·블록 id 로 분기하지 않는다.
  *  block 이 자세에서만 나오는 블록 · speedPerStack 스택 1당 공격속도 · powerPerStack 스택 1당 평타 피해 · clones 만해 중 바의 이 자세 블록 perChain 개마다 분신(평타마다 같은 피해) ·
  *  fixed 평타 간격 고정(만해 중 releaseAttackSeconds — 빠른 몫 = 추가 피해) · hold 유지 1초마다 평타 피해 + · draw 블록 누르기 → 떼면 발도 충전, 넘기면 자세 무너짐 ·
  *  parry 막기 버튼 = 패링 · lanterns 만해 중 블록 = 회색(불 켜기) */
@@ -342,7 +342,7 @@ export interface CombatStance {
   lanterns?: { basicPower: number; max: number; perStacks: number; perPower: number; perStun: number; perTaken: number };
 }
 
-/** 자세 모드 공통 (C.459): 재사용 대기 · 스택 지속 · 상한 · 만해 가능 스택 */
+/** 자세 모드 공통 (C.460): 재사용 대기 · 스택 지속 · 상한 · 만해 가능 스택 */
 export interface CombatStanceKit {
   stances: CombatStance[];
   switchSeconds: number;
@@ -389,7 +389,7 @@ export interface KitCombatState {
   finalStack: number;
   secondEnters: number;
   finals: number;
-  /** 자세 모드 (GDD 12-4 천년혈전, C.459): 지금 자세 번호 · 자세마다 스택·스택이 사라지는 틱 · [자세]를 다시 누를 수 있는 틱 · 유지 틱(hold) ·
+  /** 자세 모드 (GDD 12-4 천년혈전, C.460): 지금 자세 번호 · 자세마다 스택·스택이 사라지는 틱 · [자세]를 다시 누를 수 있는 틱 · 유지 틱(hold) ·
    *  발도 충전 중(누른 블록 uid·시작 틱) · 다음 평타 발도 배율(1 = 없음) · 자세 무너짐 끝 틱 · 패링 창이 열렸나 · 기록(자세 변경·패링 성공/실패·자세 무너짐) */
   stance: number;
   stanceStacks: number[];
@@ -687,9 +687,9 @@ export type CombatInput =
   /** 소모품 칸의 전투용 소모품 (전투당 1회) · 장비 발동 (쿨다운) — GDD 105장 수정 3·4 */
   | { type: 'item' }
   | { type: 'gear' }
-  /** 자세 바꾸기 (GDD 12-4 천년혈전, C.459 — kit.stance 만): [자세] 버튼, 재사용 대기 switchSeconds */
+  /** 자세 바꾸기 (GDD 12-4 천년혈전, C.460 — kit.stance 만): [자세] 버튼, 재사용 대기 switchSeconds */
   | { type: 'stance' }
-  /** 발도 충전 (C.459 — draw 자세): 바의 cell 번째 지금 자세 블록을 누르기 시작 · 떼기(그 블록이 쓰이며 다음 평타 강화) */
+  /** 발도 충전 (C.460 — draw 자세): 바의 cell 번째 지금 자세 블록을 누르기 시작 · 떼기(그 블록이 쓰이며 다음 평타 강화) */
   | { type: 'draw'; cell: number }
   | { type: 'draw-release' };
 
@@ -729,7 +729,7 @@ export type CombatEvent =
   | { kind: 'kit-window'; seconds: number }
   /** 초월자 대사 띠 (반격 성공·되살아남 등) */
   | { kind: 'kit-line'; text: string; tone: 'counter' | 'revive' | 'finisher' | 'stance' }
-  /** 자세 모드 (GDD 12-4 천년혈전, C.459): 자세가 바뀜 · 패링 성공/실패 · 자세 무너짐(받는 피해 + seconds 초) · 천쇄참월 불 켠 블록 수 */
+  /** 자세 모드 (GDD 12-4 천년혈전, C.460): 자세가 바뀜 · 패링 성공/실패 · 자세 무너짐(받는 피해 + seconds 초) · 천쇄참월 불 켠 블록 수 */
   | { kind: 'kit-stance'; stance: string; name: string }
   | { kind: 'kit-parry'; ok: boolean }
   | { kind: 'kit-break'; seconds: number }
@@ -1204,7 +1204,7 @@ export function spawnTableOf(p: CombatParams, releasing = false, kitRisk: number
  *  voidSlot 블록이 없으면 허 몫 그대로 */
 function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, kitRisk: number | null, stanceBlock: string | null): { seconds: number; entries: SpawnEntry[] } {
   const seconds = spawnTableOf({ ...p, kit: null, skills: [], physBlock: null }).seconds;
-  // 자세 모드 (GDD 12-4 천년혈전, C.459): 지금 자세의 블록만, 공허 블록 없음 (리스크 패널티 없음)
+  // 자세 모드 (GDD 12-4 천년혈전, C.460): 지금 자세의 블록만, 공허 블록 없음 (리스크 패널티 없음)
   if (kit.stance) {
     const id = stanceBlock ?? kit.stance.stances[0]!.block;
     const b = kit.blocks.find((x) => x.id === id);
@@ -1384,7 +1384,7 @@ export function canLiberate(s: CombatState): boolean {
   // 게이지 모드 해방 (GDD 12-4 v6.052 붕옥 융합): 해방 게이지 대신 붕옥 감응도가 문턱 이상이면 언제든
   const rr = s.params.kit?.riskRelease;
   if (rr) return (kitRiskOf(s) ?? 0) >= rr.minRisk;
-  // 자세 모드 (GDD 12-4 천년혈전, C.459): 지금 자세 스택이 releaseAt 이상이면 그 자세의 만해 (해방 게이지 없음)
+  // 자세 모드 (GDD 12-4 천년혈전, C.460): 지금 자세 스택이 releaseAt 이상이면 그 자세의 만해 (해방 게이지 없음)
   const sk = s.params.kit?.stance;
   if (sk) return !!s.kit && (s.kit.stanceStacks[s.kit.stance] ?? 0) >= sk.releaseAt;
   // 게이지 소모형 (GDD 12-4 v6.069): 게이지 0 이면 해방 게이지 대신 수련 게이지가 가득일 때 두 번째 해방(무월)
@@ -1405,7 +1405,7 @@ function uniqueActive(s: CombatState): boolean {
 
 /** 지금 내 평타 간격: 고유 효과 중이면 공격 속도 배율만큼 짧다 */
 function currentAttackSeconds(s: CombatState): number {
-  // 자세 평타 간격 고정 (GDD 12-4 천년혈전 대도 1초·천쇄참월 0.8초, C.459) — 빠른 몫은 stanceFixedExcess 가 추가 피해로
+  // 자세 평타 간격 고정 (GDD 12-4 천년혈전 대도 1초·천쇄참월 0.8초, C.460) — 빠른 몫은 stanceFixedExcess 가 추가 피해로
   const fx = stanceFixedSecondsOf(s);
   return fx ?? freeAttackSeconds(s);
 }
@@ -1413,7 +1413,7 @@ function currentAttackSeconds(s: CombatState): number {
 /** 고정 간격을 빼고 본 평타 간격 (공격속도·해방·가속·소도 스택, 상한 적용) */
 function freeAttackSeconds(s: CombatState): number {
   const haste = s.basicHaste && s.basicHaste.ticks > 0 ? 1 - s.basicHaste.haste : 1;
-  // 소도 스택 (GDD 12-4 천년혈전 v6.086, C.459): 1스택 공격속도 +speedPerStack — 지금 자세 스택만
+  // 소도 스택 (GDD 12-4 천년혈전 v6.086, C.460): 1스택 공격속도 +speedPerStack — 지금 자세 스택만
   const sp = 1 + stanceSpeedBonusOf(s);
   // 상한 (GDD v6.055 7절): 공격속도·특성·장비·해방·가속을 다 합쳐도 평타 0.3초에 1번보다 빠르지 않다. 추가 평타(extraBasicAttack)는 무관
   return speedSeconds((attackCurveOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste / sp, s.params.attackSecondsCut ?? 0, CX.attackSecondsMin);
@@ -1839,7 +1839,7 @@ function basicAttack(s: CombatState): void {
   const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY);
   // 충전 평타·마무리 평타 (GDD 12-4 v6.069 이치고 월아천충·최후의 월아천충): 배율과 이름 — 게이지·스택 처리는 kitAfterBasic
   const shot = kitBasicShot(s) ?? stanceBasicShot(s);
-  // 자세 평타 배율 (C.459): 대도 스택·유지 보너스·고정 간격 초과 공속 · 발도(shot) / 천쇄참월 기본 강화(shot)
+  // 자세 평타 배율 (C.460): 대도 스택·유지 보너스·고정 간격 초과 공속 · 발도(shot) / 천쇄참월 기본 강화(shot)
   const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s) * (shot?.power ?? 1) * stanceBasicPowerOf(s);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
@@ -1851,7 +1851,7 @@ function basicAttack(s: CombatState): void {
     strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot?.name ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
     if (s.status !== 'playing') return;
   }
-  // 혈쇄참월 분신 (C.459): 같은 피해로 한 대씩 같이 친다
+  // 혈쇄참월 분신 (C.460): 같은 피해로 한 대씩 같이 친다
   stanceClones(s, last, bd.delay, hit.matchup);
   if (s.status !== 'playing') return;
   kitAfterBasic(s, shot);
@@ -2136,7 +2136,7 @@ function takeDamage(s: CombatState, amount: number): void {
       amount *= 1 - pb.takenReduction;
       st.stacked = Math.min(pb.max, st.stacked + pb.perHit);
     }
-    // 자세 무너짐 (GDD 12-4 천년혈전 발도, C.459): 그 동안 받는 피해 +breakTaken
+    // 자세 무너짐 (GDD 12-4 천년혈전 발도, C.460): 그 동안 받는 피해 +breakTaken
     const bt = stanceBreakTakenOf(s);
     if (bt > 0) amount *= 1 + bt;
     // 장비 발동 방패 (GDD 105장 수정 4)
@@ -2387,7 +2387,7 @@ function useBlock(s: CombatState, index: number): boolean {
 function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean {
   const p = s.params;
   const k = (s.kit ??= newKitState(p));
-  // 자세 모드 (C.459): 천쇄참월 회색 블록 = 불 켜기/끄기 · 발도 블록 = 누르지 않고 바로 뗀 발도(누른 시간 0)
+  // 자세 모드 (C.460): 천쇄참월 회색 블록 = 불 켜기/끄기 · 발도 블록 = 누르지 않고 바로 뗀 발도(누른 시간 0)
   const st = stanceOf(s);
   if (st && kb.id === st.block) {
     if (st.lanterns && liberationActive(s)) return toggleLantern(s, index, st.lanterns.max);
@@ -2453,7 +2453,7 @@ function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean
   // 반격 뒤 같은 블록 즉시 1개는 삭제 (GDD 12-4 v6.050 — 사용자 2026-11-13)
   // 프라고르 (GDD 12-4 v6.052): 해방 중 1블록마다 게이지 −riskCost (최소 floor), 문턱 밑으로 떨어지면 풀린다
   if (kb.riskCost && rr && liberationActive(s) && s.liberation.endless) kitModeSpend(s, kb.riskCost * chain);
-  if (st && kb.id === st.block) stanceHit(s); // 자세 블록 공격도 그 자세로 때린 것 (C.459)
+  if (st && kb.id === st.block) stanceHit(s); // 자세 블록 공격도 그 자세로 때린 것 (C.460)
   updateCombos(s, null, 0);
   counterIfStance(s);
   return true;
@@ -2513,7 +2513,7 @@ function useGuard(s: CombatState): boolean {
   if (!canGuard(s)) return false;
   const p = s.params;
   s.guardGauge = 0;
-  // 패링 (GDD 12-4 천년혈전, C.459 — 자세 장치 parry): 막기 버튼 = 판정 창 windowSeconds 만 연다. 그 창에 강공격이 닿으면 패링 성공
+  // 패링 (GDD 12-4 천년혈전, C.460 — 자세 장치 parry): 막기 버튼 = 판정 창 windowSeconds 만 연다. 그 창에 강공격이 닿으면 패링 성공
   const pr = stanceOf(s)?.parry;
   const seconds = pr ? pr.windowSeconds : p.guardSeconds;
   s.guard.ticks = ticksOf(p, seconds);
@@ -2629,7 +2629,7 @@ function liberate(s: CombatState): boolean {
       s.kit.counterUntil = -1;
     }
   } else if (p.kit?.stance) {
-    // 자세 모드 (C.459): 지속 시간 없음 — 때릴 때마다 지금 자세 스택 −1, 0 이면 풀림
+    // 자세 모드 (C.460): 지속 시간 없음 — 때릴 때마다 지금 자세 스택 −1, 0 이면 풀림
     lb.endless = true;
     lb.ticksLeft = 1;
     const k = (s.kit ??= newKitState(p));
@@ -2714,7 +2714,7 @@ function endLiberation(s: CombatState): void {
     s.kit.second = false;
     s.kit.finalStack = 0;
   }
-  for (const b of s.tray) delete b.lit; // 천쇄참월 불 켠 블록 (C.459)
+  for (const b of s.tray) delete b.lit; // 천쇄참월 불 켠 블록 (C.460)
   kitSwapTray(s, false);
   // 각본 전투(튜토리얼 해방 안내, GDD 241-B 1)는 리스크를 올리지 않는다. 리스크 소모형 모드도 끝날 때 올리지 않는다(게이지를 쓰는 해방 — C.442 추천안)
   const risk = lb.scripted || endless ? 0 : s.params.liberationRisk;
@@ -2824,7 +2824,7 @@ function kitMasteryGain(s: CombatState, v: number): void {
   if (k.mastery >= ms.full && s.status === 'playing') emit(s, { kind: 'liberation-ready' });
 }
 
-// ── 자세 모드 (GDD 12-4 이치고 천년혈전, C.459). 엔진은 장치(stance·speedPerStack·powerPerStack·clones·fixed·hold·draw·parry·lanterns)만 본다 — 초월자·자세 id 분기 없음 ──
+// ── 자세 모드 (GDD 12-4 이치고 천년혈전, C.460). 엔진은 장치(stance·speedPerStack·powerPerStack·clones·fixed·hold·draw·parry·lanterns)만 본다 — 초월자·자세 id 분기 없음 ──
 
 /** 지금 자세 (자세 모드가 아니면 null) */
 export function stanceOf(s: Pick<CombatState, 'params' | 'kit'>): CombatStance | null {
@@ -3232,14 +3232,14 @@ function resolveHeavy(s: CombatState, wound = false, chainLeft = 0): void {
   const cat = enemyAttackCat(s, heavyOrderOf(s, chainLeft));
   let damage = enemyDamage(s, pattern.heavyInAttacks * (pattern.kind === 'heavy-chain' ? s.params.heavyChainHitMultiplier : s.params.heavyHitMultiplier), cat) * (crit ? s.params.critMultiplier : 1);
   const guarded = s.guard.ticks > 0;
-  // 패링 성공 (GDD 12-4 천년혈전, C.459): 피해 0 · 스택 · 적 자세 무너짐 · 방무 피해
+  // 패링 성공 (GDD 12-4 천년혈전, C.460): 피해 0 · 스택 · 적 자세 무너짐 · 방무 피해
   if (guarded && s.kit?.parryOpen) {
     strike(s, 0, { target: 'player', amount: 0, event: { kind: 'heavy-hit', damage: 0, guarded: true, reflected: 0, matchup: enemyMatchup(s), crit, cat: shownCat(cat), ...(wound ? { landed: true } : {}) }, elements: enemyElements(s.enemy.def) });
     s.guardSuccesses++;
     parrySuccess(s);
     return;
   }
-  // 천쇄참월 불 켠 블록 (C.459): 강공격에 맞으면 1개당 받는 피해 + (막기로 막아도 맞은 몫에) — 뒤에 모두 꺼짐
+  // 천쇄참월 불 켠 블록 (C.460): 강공격에 맞으면 1개당 받는 피해 + (막기로 막아도 맞은 몫에) — 뒤에 모두 꺼짐
   if (!guarded) damage *= lanternTakenOf(s);
   let reflected = 0;
   if (guarded) {
@@ -3366,7 +3366,7 @@ function advanceTick(s: CombatState): void {
   advanceBlockMotion(s);
   if (!halted(s) && !s.script?.held && !blockMotionBusy(s) && --s.player.attackTimer <= 0) {
     s.player.attackTimer = t(currentAttackSeconds(s));
-    // 발도 충전 중 평타 시각을 넘김 = 자세 무너짐 (C.459): 이 평타 취소
+    // 발도 충전 중 평타 시각을 넘김 = 자세 무너짐 (C.460): 이 평타 취소
     if (!drawOverheld(s)) basicAttack(s);
     if (s.status !== 'playing') return;
   }
