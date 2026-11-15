@@ -109,7 +109,7 @@ SPEC = {
              {'upper': [0, 9, 4, 0], 'head': [0, 8, 3, 0], 'arm_sword': [0, -12, -5, 0], 'arm_back': [0, -10, -4, 0]}),
     # 빈사: 몸을 숙이고 칼을 늘어뜨린 채 가쁘게 숨쉼
     'dying': m(2400, [0, 1200, 2400], [(0, 0, 2), (0, 0, 3), (0, 0, 2)],
-               {'upper': [-13, -16, -13], 'head': [-9, -12, -9], 'arm_sword': [-8, -6, -8], 'forearm_sword': [-6, -4, -6],
+               {'upper': [-13, -16, -13], 'head': [-9, -12, -9], 'arm_sword': [-8, -6, -8], 'forearm_sword': [-6, -4, -6], 'sword': [36, 36, 36],  # 칼 36° = 편집기 고정 2026-11-16 01:48('이 동작에만')
                 'arm_back': [10, 13, 10], 'thigh_f': [6, 7, 6], 'thigh_b': [-5, -6, -5]}, loop=True),
     # 쓰러짐: 무릎이 꺾이며 뒤로 넘어가 눕는다(발 관절로 돌리므로 몸이 칸 가운데·땅 위에 오게 x·y 를 같이 옮김)
     'down': m(900, [0, 250, 550, 720, 900], [Z, (8, 0, 1), (55, -34, -20), (88, -64, -40), (86, -64, -39)],
@@ -189,9 +189,10 @@ def main():
     cur = json.load(open(OUT, encoding='utf-8'))
     # 걷기용 왼발(사용자 2026-11-16 "이거 발 하나 추가한거는, 걸을 때 왼발로 넣어"): 왼발 뼈에 그림 두 장(foot_b = 서 있을 때, foot_b_walk = 걸을 때)을 달고
     # 동작마다 하나를 숨긴다 — 걷기는 foot_b 를, 나머지 동작은 foot_b_walk 를. (동작 없이 멈춘 화면·편집기 기본 자세에서는 둘 다 보인다 — 자리 잡기용)
-    cur['idle']['hide'] = ['foot_b_walk']
+    # 칼도 두 장(사용자 2026-11-16 "무월 공격2는 칼날이 반대여야지. 위를 봐야지?"): sword = 날이 아래, sword_up = 칼 축으로 뒤집어 날이 위 — 올려베기(attack2)만 sword_up
+    cur['idle']['hide'] = ['foot_b_walk', 'sword_up']
     for k, v in SPEC.items():
-        v['hide'] = ['foot_b'] if k == 'move' else ['foot_b_walk']
+        v['hide'] = [('foot_b' if k == 'move' else 'foot_b_walk'), ('sword' if k == 'attack2' else 'sword_up')]
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
           'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     # 키가 많아(16ms 마다) 뼈 하나의 키를 한 줄에 쓴다

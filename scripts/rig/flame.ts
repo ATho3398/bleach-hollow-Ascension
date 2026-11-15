@@ -7,7 +7,8 @@ export interface FlameEmitter {
   inner?: boolean; order?: number;
 }
 /** trail = 불꽃 팔: [조각, 조각 안 x, y, 어깨에서부터 거리 0~1, 거리(칸)] — 그 자리마다 일렁이는 검은 덩이(어깨 쪽이 굵다) */
-export interface FlameSpec { look: string; pad: [number, number, number, number]; mask: string[]; trail?: [string, number, number, number, number][]; emitters: FlameEmitter[] }
+/** alias = 그 조각이 숨겨진 동작에서는 대신 이 조각 자리를 쓴다(같은 뼈·같은 자리의 바꿔 끼운 그림 — 칼 날 위 등) */
+export interface FlameSpec { alias?: Record<string, string>; look: string; pad: [number, number, number, number]; mask: string[]; trail?: [string, number, number, number, number][]; emitters: FlameEmitter[] }
 /** 그 순간 그려진 조각 하나(앞뒤 순서대로): m = 조각 그림 → 캔버스 행렬(도트 단위) */
 export interface FlameLayer { slot: string; m: number[]; img: HTMLImageElement }
 
@@ -164,6 +165,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       if (dtF <= 0) return;
       fr += dtF;
       pos = new Map(layers.map((l) => [l.slot, l.m]));
+      for (const [from, to] of Object.entries(spec.alias ?? {})) if (!pos.has(from) && pos.has(to)) pos.set(from, pos.get(to)!);
       emit(dtF);
       render(layers);
     },

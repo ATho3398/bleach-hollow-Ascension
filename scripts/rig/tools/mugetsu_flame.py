@@ -60,7 +60,7 @@ def main():
         trail.append([slot, round(float(nx) - at[0], 1), round(float(ny) - at[1], 1), round(sp / s, 3), round(sp, 1)])
     spec = {'note': '무월 검은 불꽃(GDD 115-A 135, 작업본만) — scripts/rig/tools/mugetsu_flame.py 가 만듦. emitters = 조각(slot) 안 좌표 x·y 에 붙은 불 나오는 자리, 값은 도트 세션 live.py 그대로. '
                     'mask = 안쪽 불이 보이는 조각(하카마). 앞뒤 순서(바깥 불 = 몸 뒤, 안쪽 불 = 하카마 위)·동작별 불 세기는 임시(사용자 미정).',
-            'look': 'ichigo-mugetsu', 'pad': [40, 44, 30, 4], 'mask': PANTS, 'trail': trail, 'emitters': out}
+            'look': 'ichigo-mugetsu', 'pad': [40, 44, 30, 4], 'mask': PANTS, 'alias': {'sword': 'sword_up'}, 'trail': trail, 'emitters': out}
     open(os.path.join(DRAFT_DIR, 'mugetsu-flame.json'), 'w', encoding='utf-8').write(json.dumps(spec, ensure_ascii=False, indent=1) + '\n')
     from collections import Counter
     print('불 자리', len(out), Counter(r['slot'] for r in out))
