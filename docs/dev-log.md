@@ -3969,7 +3969,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c458.test.ts` 7건(수련장 회귀 소스 검사 2 · 상세 증가분 · 칸 모양 · 양방향 왕복 · 속도 상한 · 패널 프리셋), `c457` 적 설정 창 테스트를 n회 분량·공격 간격으로 교체(12건). 전체 통과.
 - 캡처 `docs/captures/c458/`(1배, `scripts/c458-proof.cjs`, 오류 0): 01 PC 상태 화면 능력치 칸 · 02 폰 796×384 같은 칸 · 03 공격속도 상세 · 04 테스트 능력치 양방향([이 단계 최대] 뒤) · 05 적 설정 창(체력 5회·간격 0.5초) · 06 수련장 강적 처치 = [계속] → 수련장 결과 → [연습 메뉴로] = 수련장(확인만).
 
-## C.459 — 만해 오라 도트 시트(속성 8색) 게임에 추가 (GDD v6.085 15-6, S-23, 종이인형 담당)
+## C.459 — 만해 오라 도트 시트(속성 8색) 게임에 추가 (GDD v6.086 15-6, S-23, 종이인형 담당)
 - 사용자 2026-11-15: "캐릭별로 만해 오라 찍어야되거든?? 몸 주변에 아우라같은거 나오게하고, 캐릭별로 도트가 다 다르잖아. 캐릭 도트만큼 비우지 말고, 오라 16프레임 도트 애니 만들어줘" → "좋은데 사이즈만 10%정도 줄이자. 속성별로 색 만들어서 게임에 넣어."
 - pixelfx 커스텀 이펙트 `scripts/pixelfx/custom/custom/bankai-aura.js`(id `custom/bankai-aura`): 가장자리 불길 혀·속에서 오르는 줄기·뜯겨 올라가는 불티·발치 테. 캐릭터 모양을 안 파낸 통짜. 크기 10% 줄임(높이 165→148, 폭 46→41, 한 칸 152×210, 기준점 76·197).
 - 속성 8색(`scripts/pixelfx/tool/palettes.mjs` 의 팔레트 그대로)으로 `npm run fx -- add custom/bankai-aura --name custom-bankai-aura-<속성>` → `public/fx/custom-bankai-aura-{normal,water,fire,earth,thunder,poison,blood,kyo}.png` + `.json`, `public/fx/index.json`.
