@@ -8,7 +8,7 @@ import { marketOf, roomOf } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { baseTilesFor, deckTilesFor, getTile, tileName, upgradeIdOf } from '../data/tiles';
 import { kitLevelMultiplier, kitLevelOf, kitUpgradeCost, upgradableBlocks } from '../engine/transcendKit';
-import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, trackRulesOf, noEvolutionLabel, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
+import { basisChoices, combatFactionIdOf, upgradeTranscendentBlock, switchCombatBasis, kitModeChoices, switchKitMode, trackRulesOf, noEvolutionLabel, artSkinOf, canSynthesize, statBonusOf, synthesizeTile, type SaveData, artTierIndexOf } from '../game';
 import { homeHp, homeMaxHp, statusStatDisplay, statusStatSteps } from '../home';
 import { nestShown, riseFrom, statusFillFx, type GaugeShown } from './bha/statusBox';
 import { changeItems } from './bha/changeNote';
@@ -243,6 +243,8 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const rightScroll = h('div', 'bha-care__scroll');
   const basis = basisPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
   if (basis) rightScroll.append(basis);
+  const modeP = kitModePanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
+  if (modeP) rightScroll.append(modeP);
   const kitP = kitPanel(save, () => { persist(); careView(dev, faction, save, title, persist, hd); });
   if (kitP) rightScroll.append(kitP);
   rightScroll.append(stats, evoPanel);
@@ -277,6 +279,27 @@ function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
   const info = h('p', 'bha-small');
   info.append('공격 분류 ', h('b', '', ATTACK_CATEGORY_WORDS[cat]), ` · 장착 블록 ${traits} · 보유 블록 ${save.build.owned.length} · 특성 ${abil}`);
   p.append(pick, info, h('p', 'bha-faint', locked ? '모험 중에는 바꿀 수 없다.' : '바꾸면 공격 분류·나오는 블록·특성·속성 블록이 그 기반으로 바뀐다. 능력치·외형은 그대로. 기반마다 빌드 편집은 따로 남는다.'));
+  return p;
+}
+
+/** 전투 모드 (GDD 12-4 이치고 기본/천년혈전, C.459 — 모드 체인지 초월자 트랙만): [기본][천년혈전] 세그먼트. 모험 중엔 잠김(추천안) */
+function kitModePanel(save: SaveData, rerender: () => void): HTMLElement | null {
+  const choices = kitModeChoices(save);
+  if (choices.length < 2) return null;
+  const p = panel({ title: '전투 모드', aside: provisionalTag('임시') });
+  p.setAttribute('aria-label', '전투 모드');
+  const cur = choices.find((c) => c.current)?.id ?? choices[0]!.id;
+  p.dataset.kitMode = cur;
+  const locked = save.activeExpedition != null;
+  const pick = seg(choices.map((c) => ({ id: c.id, label: c.name })), cur, (id) => {
+    if (id !== cur && switchKitMode(save, id).ok) rerender();
+  }, { small: true });
+  pick.setAttribute('aria-label', '전투 모드 고르기');
+  for (const b of pick.querySelectorAll<HTMLButtonElement>('.bha-seg__item')) {
+    b.dataset.sc = `kit-mode-${b.dataset.id}`;
+    b.disabled = locked && b.dataset.id !== cur;
+  }
+  p.append(pick, h('p', 'bha-faint', locked ? '모험 중에는 바꿀 수 없다.' : '모험에 나가기 전에 고른다. 두 모드는 나오는 블록·해방이 다르다.'));
   return p;
 }
 

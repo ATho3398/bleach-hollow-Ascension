@@ -55,6 +55,39 @@ export interface TranscendentKitBlockDef {
   voidSlot?: boolean;
 }
 
+/** 자세 하나 (GDD 12-4 천년혈전, C.459): 이름·장치만 — 수치는 balance transcendentKits.<id>.modes.<모드>.
+ *  block = 이 자세에서만 나오는 블록 · releaseName = 이 자세 스택으로 여는 만해 · speed 스택 1당 공격속도 · power 스택 1당 평타 피해 · clones 만해 중 체인당 분신 ·
+ *  fixed 평타 간격 고정(초과 공속 = 추가 피해) · hold 유지 보너스 · draw 블록을 누르고 있다 떼면 발도 충전 · parry 막기 버튼 = 패링 · lanterns 만해 중 블록 = 회색·불 켜기 */
+export interface TranscendentStanceDef {
+  id: string;
+  name: string;
+  block: string;
+  releaseName: string;
+  speed?: boolean;
+  power?: boolean;
+  clones?: boolean;
+  fixed?: boolean;
+  hold?: boolean;
+  draw?: boolean;
+  /** 발도 충전 평타 이름 (draw 와 같이) */
+  drawName?: string;
+  parry?: boolean;
+  /** 패링 성공 피해 이름 (parry 와 같이) */
+  parryName?: string;
+  lanterns?: boolean;
+}
+
+/** 전투 모드 하나 (GDD 12-4, C.459) */
+export interface TranscendentKitModeDef {
+  id: string;
+  name: string;
+  provisional?: boolean;
+  /** 자세 모드 (천년혈전): 자세 2개 이상 */
+  stances?: TranscendentStanceDef[];
+  /** 자세 모드의 블록 (자세마다 block 이 가리킴) */
+  blocks?: TranscendentKitBlockDef[];
+}
+
 /** 초월자 전용 블록 묶음 (GDD 12-4 v6.048): 있으면 '초월자' 전투 기반에서 일반 블록 대신 이 블록만 나온다. 없으면(나머지 5종 — 블록 [미정]) 합체 순간 이어받은 빌드 그대로 */
 export interface TranscendentKitDef {
   /** 해방 이름 (해방 수치는 진화체 만해와 같음) */
@@ -74,8 +107,9 @@ export interface TranscendentKitDef {
   riskDrain?: boolean;
   /** 게이지를 다 쓰면 수련 게이지 → 두 번째 해방 (GDD 12-4 v6.069 무월수련·무월·최후의 월아천충, 수치 = balance riskDrain.mastery·final): 이름만 */
   mastery?: { gaugeName: string; releaseName: string; finisherName: string; /** 두 번째 해방 중 몸 그림 키 (C.456 무월 — 그림 목록 layers 로 불꽃 앞뒤). 없으면 그림 그대로 */ releaseArt?: string };
-  /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 v6.069 이치고 = 기본 / 천년혈전 [미정]): 지금은 자리만 — 엔진·화면은 첫 모드(기본)만 쓴다, 선택 화면 없음 */
-  modes?: { id: string; name: string; provisional?: boolean }[];
+  /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 이치고 = 기본 / 천년혈전, C.459): 첫 모드 = 이 kit 그대로(blocks·riskDrain·mastery).
+   *  자세 모드(stances 가 있는 모드)는 kit 블록·게이지 소모형 대신 그 모드의 blocks + 자세 장치 — 고르는 곳 = 상태 화면 '전투 모드'(진화 상태 kit.mode) */
+  modes?: TranscendentKitModeDef[];
   /** 기본 회피율을 쓴다 (수치 = balance evadeChance) */
   evade?: boolean;
   /** 쓰러지면 전투당 1회 되살아남 (수치 = balance revive) */
@@ -142,6 +176,18 @@ function humanSkinsOk(v: unknown): boolean {
     && typeof x.name === 'string' && !!x.name && typeof x.art === 'string' && x.art.startsWith('char.') && typeof x.placeholder === 'string' && x.placeholder.startsWith('char.'));
 }
 
+/** 모드 검증 (C.459): 첫 모드는 자세 없음(kit 그대로), 자세 모드 = 자세 2개 이상 · 자세 block 이 그 모드 blocks 에 있음 */
+function modeOk(m: TranscendentKitModeDef, index: number): boolean {
+  if (m.stances === undefined) return m.blocks === undefined;
+  if (index === 0 || !Array.isArray(m.stances) || m.stances.length < 2 || !Array.isArray(m.blocks) || m.blocks.length === 0) return false;
+  const ids = new Set(m.blocks.map((b) => b?.id));
+  if (ids.size !== m.blocks.length || !m.blocks.every((b) => b && typeof b.id === 'string' && b.id && typeof b.name === 'string' && b.name && typeof b.short === 'string' && [...b.short].length === 1 && typeof b.fx === 'string')) return false;
+  const flags = ['speed', 'power', 'clones', 'fixed', 'hold', 'draw', 'parry', 'lanterns'] as const;
+  return new Set(m.stances.map((x) => x?.id)).size === m.stances.length && m.stances.every((x) => x && typeof x.id === 'string' && x.id && typeof x.name === 'string' && x.name
+    && typeof x.releaseName === 'string' && x.releaseName && ids.has(x.block) && flags.every((f) => x[f] === undefined || typeof x[f] === 'boolean')
+    && (!x.draw || (typeof x.drawName === 'string' && !!x.drawName)) && (!x.parry || (typeof x.parryName === 'string' && !!x.parryName)));
+}
+
 function kitErrors(k: unknown): boolean {
   const kit = k as Partial<TranscendentKitDef> | undefined;
   if (kit === undefined) return true;
@@ -149,7 +195,7 @@ function kitErrors(k: unknown): boolean {
   if (kit.riskGaugeName !== undefined && (typeof kit.riskGaugeName !== 'string' || !kit.riskGaugeName)) return false;
   const nm = (v: unknown) => typeof v === 'string' && v.length > 0;
   if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName) && (kit.mastery.releaseArt === undefined || nm(kit.mastery.releaseArt)))) return false;
-  if (kit.modes !== undefined && !(Array.isArray(kit.modes) && kit.modes.length > 0 && kit.modes.every((m) => m && nm(m.id) && nm(m.name)))) return false;
+  if (kit.modes !== undefined && !(Array.isArray(kit.modes) && kit.modes.length > 0 && new Set(kit.modes.map((m) => m?.id)).size === kit.modes.length && kit.modes.every((m, i) => m && nm(m.id) && nm(m.name) && modeOk(m, i)))) return false;
   const ids = new Set(kit.blocks.map((b) => b?.id));
   if (ids.size !== kit.blocks.length) return false;
   return kit.blocks.every((b) => b && typeof b.id === 'string' && b.id && typeof b.name === 'string' && b.name && typeof b.short === 'string' && [...b.short].length === 1 && typeof b.fx === 'string'

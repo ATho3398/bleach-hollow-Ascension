@@ -142,7 +142,10 @@ export interface BattleRecord {
   itemUsed?: boolean;
   gearUses?: number;
   /** 초월자 전용 블록 기록 (GDD 12-4 v6.048, C.441 — 형식 85): 반격 성공(경화수월)·마무리 기술(흑관)·되살아남(깨져라, 경화수월) 횟수. 전용 블록 전투만 */
-  kit?: { id: string; counters: number; finishers: number; revives: number; modeEnters?: number; modeExits?: number; riskSpent?: number; secondEnters?: number; finals?: number };
+  kit?: { id: string; counters: number; finishers: number; revives: number; modeEnters?: number; modeExits?: number; riskSpent?: number; secondEnters?: number; finals?: number;
+    mode?: string; stanceSwitches?: number; parries?: number; parryFails?: number; breaks?: number };
+  /** ↑ (C.459 — 형식 89, GDD 12-4 이치고 천년혈전): mode = 전투 모드 id(모드 체인지 kit 만) · 자세 모드면 stanceSwitches 자세 변경 · modeEnters 만해 진입(혈쇄참월·천쇄참월) ·
+   *  modeExits 스택 0 으로 풀림 · parries 패링 성공 · parryFails 패링 실패(창 안에 강공격 없음) · breaks 자세 무너짐(발도 충전 넘김). 옛 기록은 없음(= 0) */
   /** ↑ (C.454 — 형식 88, GDD 12-4 v6.069 이치고): 게이지 소모형 kit 은 modeEnters = 첫 해방(각호고) 진입·modeExits = 게이지 0 으로 풀림·riskSpent = 깎은 게이지 합,
    *  secondEnters = 두 번째 해방(무월) 진입 · finals = 마무리 평타(최후의 월아천충) 횟수. 옛 기록은 없음(= 0) */
   /** ↑ modeEnters·modeExits·riskSpent (C.442 — 형식 86, GDD 12-4 v6.050 붕옥 해방): 리스크 소모형 모드 진입·리스크 0 으로 끝남 횟수·모드가 깎은 리스크 합. 옛 기록은 없음(= 0) */
