@@ -194,8 +194,66 @@ def walk():
     return {'duration': D, 'loop': True, 'tracks': tr}
 
 
+def kneel():
+    """쓰러짐 = 한쪽 무릎 꿇기 (사용자 2026-11-16 21:0x "쓰러짐이 존나 빈티나거든?? 무릎 한쪽만 굽히고 꿇어앉은 자세로 하자. 뒤로 넘어가는건 좀 그래"):
+    몸이 내려앉으며 뒷다리(왼, thigh_b) 무릎이 땅에 닿고 정강이는 뒤로 눕고 발끝으로 땅을 짚음, 앞다리(오른, thigh_f)는 발을 그 자리에 둔 채 무릎을 세움.
+    윗몸은 앞으로 숙이고 고개를 떨굼, 칼 든 팔은 늘어뜨리고 뒷손은 앞 무릎 위에. 무릎이 닿을 때 살짝 튕긴 뒤 끝 자세로 멈춤(hold).
+    다리 각도는 걷기와 같은 방식(발목 자리 → 허벅지·정강이 각도를 거꾸로 풂)."""
+    import math
+    rig = json.load(open(os.path.join(DRAFT_DIR, 'mugetsu.json'), encoding='utf-8'))
+    piv = {b['id']: b['pivot'] for b in rig['bones']}
+    piv.update((rig.get('bodyJoints') or {}).get('parts', {}).get('pivots', {}))
+    ground = max(piv['foot_f'][1], piv['foot_b'][1]) + 4
+
+    def ik(name, ax, ay, drop):
+        H, K, A = piv['thigh_' + name], piv['shin_' + name], piv['foot_' + name]
+        l1, l2 = math.dist(H, K), math.dist(K, A)
+        r1, r2 = math.atan2(K[1] - H[1], K[0] - H[0]), math.atan2(A[1] - K[1], A[0] - K[0])
+        tx, ty = ax - H[0], ay - drop - H[1]
+        d0 = math.hypot(tx, ty)
+        d = min(d0, l1 + l2 - 0.05)
+        base = math.atan2(ty, tx)
+        c = max(-1, min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)))
+        best = None
+        for sgn in (1, -1):  # 무릎은 앞(왼쪽)으로
+            a1 = base + sgn * math.acos(c)
+            kx, ky = l1 * math.cos(a1), l1 * math.sin(a1)
+            a2 = math.atan2(ty * d / d0 - ky, tx * d / d0 - kx)
+            if best is None or kx < best[0]:
+                best = (kx, a1, a2)
+        w1 = (math.degrees(best[1] - r1) + 180) % 360 - 180
+        w2 = (math.degrees(best[2] - r2) + 180) % 360 - 180
+        return w1, w2 - w1, -w2
+
+    # 끝 자세: 뒷무릎이 땅(ground − 1)에 닿을 만큼 몸을 내림. 뒷정강이는 뒤(오른쪽)로 눕고 살짝 들림
+    Hb, Kb, Ab = piv['thigh_b'], piv['shin_b'], piv['foot_b']
+    l1b, l2b = math.dist(Hb, Kb), math.dist(Kb, Ab)
+    knee = (Hb[0] - 3, ground - 2)
+    drop = (knee[1] - Hb[1]) - math.sqrt(max(1.0, l1b * l1b - 9))
+    back_ankle = (knee[0] + l2b * math.cos(math.radians(-12)), knee[1] + l2b * math.sin(math.radians(-12)))
+    times = [0, 220, 420, 520, 640, 900]
+    frac = [0, 0.4, 0.92, 1.04, 0.98, 1.0]   # 내려앉는 정도(1 = 무릎이 땅) — 520 에 살짝 튕김
+    reach = [0, 0.25, 0.85, 1.0, 1.0, 1.0]   # 뒷발이 끝 자리로 간 정도
+    legs = {k: [] for k in ('thigh_f', 'shin_f', 'foot_f', 'thigh_b', 'shin_b', 'foot_b')}
+    for fr_, rc in zip(frac, reach):
+        dr = drop * fr_
+        a, b, c = ik('f', piv['foot_f'][0], piv['foot_f'][1], dr)   # 앞발은 제자리, 발바닥 평평
+        legs['thigh_f'].append(round(a, 1)); legs['shin_f'].append(round(b, 1)); legs['foot_f'].append(round(c, 1))
+        bx = Ab[0] + (back_ankle[0] - Ab[0]) * rc
+        by = Ab[1] + (back_ankle[1] - Ab[1]) * rc - 3 * math.sin(math.pi * rc)  # 들려서 뒤로 감
+        a, b, c = ik('b', bx, by + dr, dr)
+        legs['thigh_b'].append(round(a, 1)); legs['shin_b'].append(round(b, 1)); legs['foot_b'].append(round(c - 55 * rc, 1))  # 발끝으로 땅을 짚음
+    root = [(0, 0, round(drop * f_, 2)) for f_ in frac]
+    bones = {**legs,
+             'upper': [0, -4, -14, -18, -15, -16], 'lower': [0, -2, -6, -7, -6, -6], 'head': [0, 2, 10, 14, 12, 13],
+             'arm_sword': [0, -6, -14, -10, -12, -12], 'forearm_sword': [0, -4, -10, -6, -8, -8], 'sword': [0, -4, -14, -12, -12, -12],
+             'arm_back': [0, 10, 28, 34, 30, 32], 'forearm_back': [0, 6, 20, 26, 22, 24]}
+    return m(900, times, root, bones, hold=True)
+
+
 def main():
     SPEC['move'] = walk()
+    SPEC['down'] = kneel()
     cur = json.load(open(OUT, encoding='utf-8'))
     # 걷기용 왼발(사용자 2026-11-16 "이거 발 하나 추가한거는, 걸을 때 왼발로 넣어"): 왼발 뼈에 그림 두 장(foot_b = 서 있을 때, foot_b_walk = 걸을 때)을 달고
     # 동작마다 하나를 숨긴다 — 걷기는 foot_b 를, 나머지 동작은 foot_b_walk 를. (동작 없이 멈춘 화면·편집기 기본 자세에서는 둘 다 보인다 — 자리 잡기용)
