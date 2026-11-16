@@ -146,6 +146,7 @@ function motionKeyOf(id: string): string {
 
 let look = 'arrancar-base';
 let sel = 'arm_L';
+const chains = new Map<string, ReturnType<typeof createChain>>();
 let mode: 'pivot' | 'part' | 'chain' = 'pivot';
 let motion: string | null = null;
 let mt = 0;
@@ -342,7 +343,7 @@ function baseRot(id: string) { return (rig.bodyJoints?.[curBody()] as BodyJoints
 function boneOfSel() { return rig.slots.find((s) => s.id === sel)?.bone ?? sel; }
 
 /** 지금 그려진 층(앞뒤 순서대로) — 미리보기를 눌러 부위 고르기용 */
-let drawn: { slot: string; m: number[]; img: HTMLImageElement; size: [number, number] }[] = [];
+let drawn: { slot: string; m: number[]; img: HTMLImageElement; size: [number, number]; src: string }[] = [];
 const alphaCache = new Map<string, ImageData>();
 /** 캔버스 좌표 (x, y) 에서 가장 앞에 보이는 부위(투명 칸은 지나침) */
 function slotAt(x: number, y: number): string | null {
@@ -378,7 +379,12 @@ function draw() {
   const cm = motion ? MOTIONS[motion] : undefined;
   for (const l of orderLayers(lookLayers(rig, motionLook(rig, look, cm, mt)), cm)) {
     const img = document.createElement('img');
-    img.src = ART_MAP[`art/rig/${rig.id}/${l.art}.png`] ?? '';
+    img.style.zIndex = String(drawn.length + 1); // 사슬 층을 조각 사이에 끼우려고 앞뒤를 z 로도 적는다
+    const src = ART_MAP[`art/rig/${rig.id}/${l.art}.png`] ?? '';
+    // 그림을 뺀 조각(<이름>_none, 예: 무월 칼 = 불 덩어리)은 편집기에서만 원래 그림을 반투명 안내로 보여 고르고 옮길 수 있게(사용자 2026-11-17 "칼 어디감...도트로 찍은거야도 툴에서 위치같은거 수정 가능하게 해줘")
+    const guide = l.art.endsWith('_none') ? ART_MAP[`art/rig/${rig.id}/${l.art.slice(0, -5)}.png`] : undefined;
+    img.src = guide ?? src;
+    if (guide) img.style.opacity = '0.4';
     img.className = 'part' + (l.slot === sel ? ' sel' : '');
     img.style.width = `${l.size[0] * K}px`;
     img.style.height = `${l.size[1] * K}px`;
@@ -389,10 +395,10 @@ function draw() {
     if (tintOn()) {
       const tp = document.createElement('div');
       tp.className = 'tintpart';
-      tp.style.cssText = `width:${l.size[0] * K}px;height:${l.size[1] * K}px;transform:${img.style.transform};background:${tintOf(l.slot)};-webkit-mask-image:url(${img.src});mask-image:url(${img.src})`;
+      tp.style.cssText = `z-index:${img.style.zIndex};width:${l.size[0] * K}px;height:${l.size[1] * K}px;transform:${img.style.transform};background:${tintOf(l.slot)};-webkit-mask-image:url(${img.src});mask-image:url(${img.src})`;
       stage.append(tp);
     }
-    drawn.push({ slot: l.slot, m, img, size: l.size });
+    drawn.push({ slot: l.slot, m, img, size: l.size, src });
   }
   if (cm?.fx) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -457,6 +463,7 @@ function draw() {
   if (bs) bs.textContent = editingMotion ? `(이 몸의 ${motion} 동작에만 — 동작 내내 더함)` : '(이 몸에만 저장)';
   const mtv = document.getElementById('mtv');
   if (mtv) mtv.textContent = motion ?? '—';
+  chains.get(C.id)?.raise(); // 조각 사이 사슬 층을 다시 붙인 그림들 뒤로(같은 z 에서 앞에)
 }
 
 /** 고른 부위의 앞뒤 자리: '이 동작에만'이면 그 동작 순서로 */
@@ -554,6 +561,35 @@ function buildChainUi() {
   const ctl = document.getElementById('chaintail')!;
   ctl.hidden = !tl;
   if (tl) document.getElementById('chaintailv')!.textContent = `방향 ${Math.round(tl.ang)}° · 길이 ${tl.L}`;
+  const ci = chainItem(), zv = document.getElementById('chainzv');
+  if (zv) zv.textContent = ci ? `${ci.it.name ?? ''} ${ci.tail ? '풀린 끝' : '띠'} 앞뒤: ${chainZName(ci.it.z, ci.tail)} — '뒤로/앞으로 보내기'로 바꾼다` : '';
+}
+/** 사슬 앞뒤(사용자 2026-11-17 "혈쇄고 사실 위치만 조정되고 레이어 위치 조정 안되니 설마?"): 고른 띠(점을 골랐을 때)나 풀린 끝의 앞뒤 자리.
+ *  자리 목록 = 맨 뒤 → (그 조각 바로 앞)… → 맨 앞. 띠 기본 = 맨 앞, 풀린 끝 기본 = 맨 뒤 */
+function chainItem(): { it: { z?: string; name?: string }; tail: boolean } | null {
+  const ch = C.chain;
+  if (!ch) return null;
+  const bm = /^b(\d+):/.exec(chainSel), tm = /^t(\d+)$/.exec(chainSel);
+  if (bm && ch.bands[Number(bm[1])]) return { it: ch.bands[Number(bm[1])]!, tail: false };
+  if (tm && ch.tails[Number(tm[1])]) return { it: ch.tails[Number(tm[1])]!, tail: true };
+  return null;
+}
+function chainZList(): string[] { return ['@back', ...drawn.slice(0, -1).map((d) => d.slot), '@front']; }
+function chainZName(z: string | undefined, tail: boolean): string {
+  const zz = z ?? (tail ? '@back' : '@front');
+  return zz === '@front' ? '맨 앞' : zz === '@back' ? '맨 뒤' : `${NAMES()[zz] ?? zz} 바로 앞`;
+}
+function moveChainLayer(step: 1 | -1) {
+  const c = chainItem();
+  if (!c) return;
+  const list = chainZList();
+  const cur = c.it.z ?? (c.tail ? '@back' : '@front');
+  let i = list.indexOf(cur);
+  if (i < 0) i = list.length - 1;
+  const j = Math.max(0, Math.min(list.length - 1, i + step));
+  const nz = list[j]!;
+  if (nz === (c.tail ? '@back' : '@front')) delete c.it.z; else c.it.z = nz;
+  save(); draw(); buildChainUi();
 }
 function chainTail(dAng: number, dL: number) {
   const tm = /^t(\d+)$/.exec(chainSel);
@@ -821,6 +857,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
 function bodyOrder(): string[] { return slotsOf(rig, curBody()).map((s) => s.id); }
 /** 앞·뒤로 보내기: '이 동작에만'이면 지금 동작의 앞뒤 순서만(GDD 115-A 62), 아니면 지금 몸의 기본 순서만(몸별 bodySlots, 115-A 74 — 다른 몸은 그대로) */
 function moveLayer(step: 1 | -1) {
+  if (mode === 'chain') { moveChainLayer(step); return; }
   const base = bodyOrder();
   if (scope === 'motion' && motion) {
     const key = motionKeyOf(motion);
@@ -893,7 +930,6 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 const flames = new Map<string, ReturnType<typeof createFlame>>();
 const flameImgs = new Map<string, HTMLImageElement>();
 let flameMotion: string | null = null;
-const chains = new Map<string, ReturnType<typeof createChain>>();
 function stepFlame(dt: number) {
   stepChain(dt);
   const spec = C.src.flame;
@@ -905,8 +941,8 @@ function stepFlame(dt: number) {
   f.place(K);
   if (motion !== flameMotion) { flameMotion = motion; f.quench(); } // 새 동작이 시작되면 그 전 불은 빨리 꺼뜨린다
   const layers: FlameLayer[] = drawn.map((d) => {
-    let img = flameImgs.get(d.img.src);
-    if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }
+    let img = flameImgs.get(d.src);
+    if (!img) { img = new Image(); img.src = d.src; flameImgs.set(d.src, img); }
     return { slot: d.slot, m: d.m, img };
   });
   f.step(dt, layers);
@@ -915,15 +951,15 @@ function stepFlame(dt: number) {
 function stepChain(dt: number) {
   const spec = C.chain;
   const on = spec && spec.look === look ? C.id : null;
-  for (const [id, c] of chains) { const show = id === on; c.back.hidden = !show; c.front.hidden = !show; }
+  for (const [id, c] of chains) c.setHidden(id !== on);
   if (!spec || !on) return;
   let c = chains.get(on);
-  if (!c) { c = createChain(spec, rig.canvas); chains.set(on, c); stage.prepend(c.back); stage.append(c.front); }
+  if (!c) { c = createChain(spec, rig.canvas); chains.set(on, c); stage.prepend(c.back); stage.append(c.front); c.mount(stage); }
   c.place(K);
-  c.step(dt, drawn.map((d) => {
-    let img = flameImgs.get(d.img.src);
-    if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }
-    return { slot: d.slot, m: d.m, img };
+  c.step(dt, drawn.map((d, i) => {
+    let img = flameImgs.get(d.src);
+    if (!img) { img = new Image(); img.src = d.src; flameImgs.set(d.src, img); }
+    return { slot: d.slot, m: d.m, img, z: i + 1 };
   }));
 }
 document.getElementById('tint')?.addEventListener('change', () => { buildChips(); draw(); });

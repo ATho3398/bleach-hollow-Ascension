@@ -53,6 +53,7 @@ const mk = (rid: string, look: string) => {
     const ch = createChain(d0.chain, d0.rig.canvas);
     ch.place(k);
     d.el.append(ch.back, ch.front);
+    ch.mount(d.el);
     const adv = d.advance.bind(d);
     d.advance = (dt: number) => { adv(dt); ch.step(dt, dollLayers(d.el, k)); };
     if (!hp.get('manual')) {

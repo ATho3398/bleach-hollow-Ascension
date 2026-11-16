@@ -203,6 +203,8 @@ def kneel():
     rig = json.load(open(os.path.join(DRAFT_DIR, 'mugetsu.json'), encoding='utf-8'))
     piv = {b['id']: b['pivot'] for b in rig['bones']}
     piv.update((rig.get('bodyJoints') or {}).get('parts', {}).get('pivots', {}))
+    # 사용자가 쓰러짐을 맞춘(2026-11-17 01:1x '고정') 때의 다리 각도는 뒷무릎 관절이 (69, 78)일 때 푼 값 — 같은 고정에서 관절을 (67, 72)로 옮겼어도 각도는 그대로 둔다
+    piv['shin_b'] = [69, 78]
     ground = max(piv['foot_f'][1], piv['foot_b'][1]) + 4
 
     def ik(name, ax, ay, drop):
@@ -248,7 +250,18 @@ def kneel():
              'upper': [0, -4, -14, -18, -15, -16], 'lower': [0, -2, -6, -7, -6, -6], 'head': [0, 2, 10, 14, 12, 13],
              'arm_sword': [0, -6, -14, -10, -12, -12], 'forearm_sword': [0, -4, -10, -6, -8, -8], 'sword': [0, -4, -14, -12, -12, -12],
              'arm_back': [0, 10, 28, 34, 30, 32], 'forearm_back': [0, 6, 20, 26, 22, 24]}
-    return m(900, times, root, bones, hold=True)
+    # 편집기 '고정'(사용자 2026-11-17 01:1x, 쓰러짐 '이 동작에만'): 뒷정강이 −43°·(−7, +7), 칼 든 팔 +93°·(+6, −10), 칼 든 아래팔 +10° — 끝 자세 값, 내려앉는 만큼 들어간다
+    prog = [0, 0.4, 0.9, 1.0, 1.0, 1.0]
+    fix = {'shin_b': (-43, -7, 7), 'arm_sword': (93, 6, -10), 'forearm_sword': (10, 0, 0)}
+    for b, (dr, _, _) in fix.items():
+        bones[b] = [round(v + dr * p_, 1) for v, p_ in zip(bones[b], prog)]
+    out = m(900, times, root, bones, hold=True)
+    pc = curve(times, prog, False, 900)
+    for b, (_, dx, dy) in fix.items():
+        if dx or dy:
+            for k in out['tracks'][b]:
+                k[2] = round(k[2] + dx * pc(k[0]), 2); k[3] = round(k[3] + dy * pc(k[0]), 2)
+    return out
 
 
 def main():
