@@ -159,7 +159,7 @@ describe('C.465 혈쇄 이치고·무월 종이인형 (종이인형 작업본 �
     const mu = layeredArt('char.transcendent-ichigo-mugetsu')!;
     expect(mu.rig?.look).toBe('ichigo-mugetsu');
     expect(mu.layers).toBeUndefined();
-    expect(mu.fieldScale).toBe(0.96); // C.467
+    expect(mu.fieldScale).toBe(1.26);
   });
 
   it('이펙트 층: 무월 불꽃·혈쇄 사슬이 그 외형에 붙는다 (작업본 2026-11-17 값)', () => {

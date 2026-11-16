@@ -79,10 +79,6 @@ export interface ArtUrls {
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
 export const HOLLOW_BRUTE_SCALE = 2.1;
-/** 사람형(사신·아란칼) 배율 (C.467, GDD 15-5 v6.095, 사용자 2026-11-17 "인간형들은 호로보다 좀 작았으면 좋겠음. 보이는 사이즈가. 거미형이나 체력형이 제일 크고. 원작도 호로가 크니까" · "홈화면도 줄여야지"):
- *  방(홈) 1.78 → 1.30(보이는 키 칸의 0.95 → 0.69), 걷기·전투 1.33 → 1.16(0.71 → 0.62) — 서 있는 호로(0.76~)보다 작게. 초월자도 같은 비율로 줄임(아래 목록) */
-export const HUMAN_SCALE = 1.3;
-export const HUMAN_FIELD_SCALE = 1.16;
 /** 적 덩치 배율 = 내 덩치와 같은 값 (C.345, GDD 206장 보충 "적 사이즈 나랑 맞춰"): 전투 적 칸·내 칸은 같은 크기라(실측) 배율이 같으면 키·도트 한 칸이 같다. 옛 값 1.78 은 0.85배로 작았다 */
 export const BRUTE_FOE_SCALE = HOLLOW_BRUTE_SCALE;
 /** 덩치 몸 적의 속성 색 (GDD 205장 3, 지금 적 그림 색 그대로) */
@@ -91,7 +87,7 @@ export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'bru
 export const BRUTE_ENEMY_KINDS = ['basic', 'sturdy', 'heavy-chain', 'heavy-seal', 'stance'] as const;
 const BRUTE_ENEMIES: Record<string, ArtEntry> = Object.fromEntries(Object.entries(BRUTE_ELEMENT_LOOKS).flatMap(([el, look]) => BRUTE_ENEMY_KINDS.map((k) => [`enemy.${el}-${k}`, { rig: look, scale: BRUTE_FOE_SCALE }])));
 /** 길리안(2단계 외형, 몸 hd) 배율 (GDD 219장 1): 정지 그림 키(칸의 0.37) × 2.3 ≈ 0.85 — 1단계 덩치(0.8)보다 조금 크게 */
-export const GILLIAN_SCALE = 2.4; // C.467: 2.3 → 2.4 (보이는 키 0.85 → 0.88)
+export const GILLIAN_SCALE = 2.3;
 /** 뱀형(뼈대 serpent) 배율 (GDD 219장 2): 그림 칸 72(사람형 152) · 정지 그림 키(칸의 0.52) × 1.6 ≈ 0.83 — 덩치(0.8)와 비슷한 키(도트는 덩치보다 굵다) */
 export const SERPENT_SCALE = 1.6;
 /** 뱀형 강적 (GDD 219장 2, 사용자 "아쥬커스 등급 강적에 2개"): 아쥬커스 등급 강적 중 뱀에 어울리는 둘 — 롯팽(독) = 초록, 마레하다(물) = 파랑. 덩치 적 목록을 덮는다 */
@@ -101,11 +97,11 @@ export const BEAST_SCALE = 1.5;
 /** 짐승형 강적 (GDD 228장 2, 사용자 2026-11-11 "짐승형도 배색 4개정도 추가해서, 아쥬커스 강적에 3개정도 추가하고"): 아쥬커스 등급 강적 중 셋 — 스톰후프(번개) = 노랑, 브라세로(불) = 주황, 나이트램(허) = 보라. 덩치 적 목록을 덮는다 */
 export const BEAST_ENEMIES: Readonly<Record<string, string>> = { 'thunder-heavy-chain': 'beast-yellow', 'fire-heavy-chain': 'beast-orange', 'kyo-heavy-chain': 'beast-violet' };
 /** 외팔이(사람형 뼈대, 몸 ho) 배율 (GDD 231장 2): 1배 도트(키 56칸 = 칸의 0.37) × 2.2 ≈ 0.81 — 덩치(0.8)와 비슷한 키 */
-export const ONEARM_SCALE = 2.6; // C.467 (체력형 = 거미형과 함께 가장 크게): 2.2 → 2.6 (보이는 키 0.81 → 0.96)
+export const ONEARM_SCALE = 2.2;
 /** 외팔이 강적 (GDD 231장 2, 사용자 2026-11-11 "외팔이는 무조건 물리로만 … 각각 아쥬커스 등급 강적으로도 몇개"): 아쥬커스 등급·물리 강적 셋 — 샌드트랩(땅) = 갈색, 셸그레이브(물) = 파랑, 파라라요스(번개) = 황토. 덩치 적 목록을 덮는다 */
 export const ONEARM_ENEMIES: Readonly<Record<string, string>> = { 'earth-heavy-seal': 'onearm-brown', 'water-stance': 'onearm-blue', 'thunder-stance': 'onearm-yellow' };
 /** 거미형(뼈대 spider) 배율 (GDD 231장 3): 그림 칸 120 · 정지 그림 키(칸의 0.68) × 1.2 ≈ 0.81 */
-export const SPIDER_SCALE = 1.4; // C.467 (거미형 = 체력형과 함께 가장 크게): 1.2 → 1.4 (보이는 키 0.82 → 0.96)
+export const SPIDER_SCALE = 1.2;
 /** 거미형 강적 (GDD 231장 3, 사용자 "거미는 혼합이랑 특공으로"): 아쥬커스 등급·특수/혼합 강적 셋 — 잉크베일(물·특수) = 파랑, 숨비도(번개·특수) = 황토, 듄워든(땅·혼합) = 갈색. 덩치 적 목록을 덮는다 */
 export const SPIDER_ENEMIES: Readonly<Record<string, string>> = { 'water-heavy-seal': 'spider-blue', 'thunder-heavy-seal': 'spider-yellow', 'earth-stance': 'spider-brown' };
 /** 가시형(사람형 뼈대, 몸 hk)·속도형(몸 hv) 배율 (GDD 240장): 1배 도트(키 77·74칸 = 칸의 0.5) × 1.65 ≈ 0.82 — 덩치와 비슷한 키 */
@@ -143,24 +139,22 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'char.transcendent-zero-sage': { scale: 1 },
   // 아이젠 (C.450, 사용자 2026-11-13 "우라하라랑 아이젠만 넣어놔"): 128×128 칸에 57×108 도트 한 장(초안). 배율 = 사신 종이인형과 도트 크기가 같게(1.78·1.33 × 128/152)
   // C.456 (사용자 2026-11-15 "아이젠 너무 크다. 사이즈 살짝 줄여라"): 방·전투·필드 모두 × 0.85 (provisional) — 1.5 → 1.28 · 1.12 → 0.95
-  // C.467 (사람형은 호로보다 작게): 방 1.28 → 0.9 · 필드 0.95 → 0.82 (보이는 키 필드 0.82 → 0.70)
-  'char.transcendent-aizen': { scale: 0.9, fieldScale: 0.82 },
+  'char.transcendent-aizen': { scale: 1.28, fieldScale: 0.95 },
   // 무월 이치고 (C.456, docs/art-samples/mugetsu-flame — 사용자 완성 몸 56×114 + 몸 뒤 불꽃 16프레임 · 몸 앞 불꽃 40프레임, 120ms). 초월자 데이터 kit.mastery.releaseArt 가 가리킨다.
   // 144×144 칸(불꽃 칸 118×124 를 (0,15)에, 몸 = (44,25), 발 아래 여백 5 = 아이젠 칸과 같게). 배율 = 아이젠 원래 도트 크기(사신 종이인형과 같은 도트) × 144/128.
   // 앞뒤 순서 = README 그대로(몸 뒤 → 몸 → 몸 앞). 팔 앞뒤·동작마다 불 세기는 사용자 확인 전이라 정하지 않음 — 실시간 불꽃(live.py)은 아직 아님
   // C.465: 무월 = 종이인형 작업본(편집기 고정 — 머리 관절·쓰러짐 칼 짚기·걷기 왼발) + 인형 불꽃 층(rigEffects, 칼에서 나는 불·날 끝·120ms). 옛 한 장 그림·PNG 불꽃 레이어(C.456~463)는 파일만 남김
-  // C.467 (사람형은 호로보다 작게): 방 1.6875 → 1.0 · 필드 1.26 → 0.96 (보이는 키 필드 0.95 → 0.72) — 혈쇄와 같은 값(도트 크기 같게)
-  'char.transcendent-ichigo-mugetsu': { rig: 'ichigo-mugetsu', scale: 1.0, fieldScale: 0.96 },
+  'char.transcendent-ichigo-mugetsu': { rig: 'ichigo-mugetsu', scale: 1.6875, fieldScale: 1.26 },
   // 혈쇄 이치고 (C.465, 이치고 천년혈전 모드 모델 — 초월자 데이터 humanSkins 'bloodchain'): 종이인형 작업본 + 사슬 이펙트 층(rigEffects). 1도트 크기 = 무월·사신과 같게
-  'char.transcendent-ichigo-bloodchain': { rig: 'ichigo-bloody', scale: 1.0, fieldScale: 0.96 },
+  'char.transcendent-ichigo-bloodchain': { rig: 'ichigo-bloody', scale: 1.6875, fieldScale: 1.26 },
   // 사신 기본형은 종이인형으로 움직인다 (GDD 96장 30, 사용자 2026-10-28 "사신은 모션은 게임에도 적용시켜"). 단계별 파일(char-shinigami-<n>)이 있으면 그쪽이 먼저
   // 정지 그림 칸(view)은 옛 한 장 그림 규격(정사각·발 가운데·발 아래 8% 위)이라 위치 보정 없음. 칸이 칼 휘두를 자리까지 넓어(152도트) 키운다 —
   // C.189 의 키(1.32 × 152/113 ≈ 1.78)에서 사용자 2026-10-29 "캐릭터 크기 1/4정도 줄이고" → ×0.75 ≈ 1.33 (C.190, GDD 116장 1·4).
   // 방(홈)은 다시 C.189 키 1.78, 걷기·전투 필드만 1.33 (C.192, GDD 118장 1: "홈에서 사신, 아란칼 크기는 원래가 좋아. 모험이랑 전투할 떄 사이즈는 지금이 딱 좋음")
-  'char.shinigami': { rig: 'shinigami-base', scale: HUMAN_SCALE, fieldScale: HUMAN_FIELD_SCALE, offsetY: 0 },
+  'char.shinigami': { rig: 'shinigami-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 사신 1단계(혼백) = 혼백 모델(누더기 옷·나뭇가지, 칼집 없음 — GDD 241-F 1, 115-A 작업본. 옛 학생복은 폐기), 2단계(학생) = 진앙영술원 학생복(GDD 116장 2). 3단계부터 종족 공통(사신복)
-  'char.shinigami.1': { rig: 'shinigami-soul', scale: HUMAN_SCALE, fieldScale: HUMAN_FIELD_SCALE, offsetY: 0 },
-  'char.shinigami.2': { rig: 'shinigami-student', scale: HUMAN_SCALE, fieldScale: HUMAN_FIELD_SCALE, offsetY: 0 },
+  'char.shinigami.1': { rig: 'shinigami-soul', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
+  'char.shinigami.2': { rig: 'shinigami-student', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 길리안(2단계) = 종이인형 길리안 (GDD 219장 1, 사용자 2026-11-10 "길리안은, 길리안 단계 진화체로 게임에 넣고"). 옛 한 장 그림 배율(2배·필드 1.5배, C.137·C.176)은 폐기.
   // 시작 외형(거구 등)을 입었어도 2단계에 닿으면 단계 외형 gillian(종족 설정 tierLooks "2")이 덮는다 — 그 그림은 skin.gillian
   'char.hollow.2': { rig: 'gillian-base', scale: GILLIAN_SCALE },
@@ -171,7 +165,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   'skin.raptor': { rig: 'speed-base', scale: SPEED_SCALE },
   // 아란칼(5단계) 진화체 자리 전부 = 아란칼 기본형 종이인형 (GDD 115장 2, C.189). 속성·칸별 스킨 그림(skin-arr*.png)이 오면 그쪽이 먼저(charArt 스킨 순서 그대로).
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
-  'char.hollow.5': { rig: 'arrancar-base', scale: HUMAN_SCALE, fieldScale: HUMAN_FIELD_SCALE, offsetY: 0 },
+  'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 적 덩치 (GDD 115-A 85 · 206장 2): 덩치 몸 적 = <속성>-basic·sturdy·heavy-chain·heavy-seal·stance (8 × 5 = 40) 전부 종이인형 덩치(몸 hb, 동작 묶음 brute 하나 — 모션 통일)를
   // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. 날쌘형 swift(마른 몸)는 한 장 그림 그대로. 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
   ...BRUTE_ENEMIES,
