@@ -188,10 +188,6 @@
    "bone": "sword"
   },
   {
-   "id": "sword_up",
-   "bone": "sword"
-  },
-  {
    "id": "foot_f",
    "bone": "foot_f"
   },
@@ -362,7 +358,7 @@
     ]
    },
    "sword": {
-    "art": "parts/sword",
+    "art": "parts/sword_none",
     "at": [
      12,
      67
@@ -481,17 +477,6 @@
      15,
      17
     ]
-   },
-   "sword_up": {
-    "art": "parts/sword_up",
-    "at": [
-     12,
-     67
-    ],
-    "size": [
-     43,
-     43
-    ]
    }
   }
  },
@@ -505,7 +490,6 @@
    "arm_sword",
    "forearm_sword",
    "sword",
-   "sword_up",
    "foot_f",
    "shin_f",
    "hair_base",
@@ -563,7 +547,7 @@
    "belly": "배",
    "arm_sword": "오른 위팔(앞)",
    "forearm_sword": "오른 아래팔(앞)",
-   "sword": "칼",
+   "sword": "칼(그림 없음 — 불 덩어리가 칼)",
    "arm_back": "왼 위팔(뒤)",
    "forearm_back": "왼 아래팔·왼손(뒷손)",
    "thigh_f": "오른 하카마 위",
@@ -573,8 +557,7 @@
    "shin_b": "왼 하카마 아래",
    "foot_b": "왼발",
    "hair_base": "뒷머리 베이스",
-   "foot_b_walk": "왼발(걷기용)",
-   "sword_up": "칼(날 위 — 무기 공격 2용)"
+   "foot_b_walk": "왼발(걷기용)"
   },
   "groups": [
    [
@@ -608,8 +591,7 @@
     [
      "arm_sword",
      "forearm_sword",
-     "sword",
-     "sword_up"
+     "sword"
     ]
    ],
    [
@@ -647,12 +629,10 @@
    ],
    "arm_sword": [
     "forearm_sword",
-    "sword",
-    "sword_up"
+    "sword"
    ],
    "forearm_sword": [
-    "sword",
-    "sword_up"
+    "sword"
    ],
    "arm_back": [
     "forearm_back"
@@ -675,9 +655,6 @@
    ],
    "foot_b": [
     "foot_b_walk"
-   ],
-   "sword": [
-    "sword_up"
    ]
   }
  },
@@ -978,21 +955,6 @@
       [
        74,
        99
-      ]
-     ],
-     "w": 3
-    }
-   ],
-   "sword_up": [
-    {
-     "pts": [
-      [
-       48,
-       68
-      ],
-      [
-       48,
-       68
       ]
      ],
      "w": 3

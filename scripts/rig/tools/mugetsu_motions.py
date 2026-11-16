@@ -195,10 +195,12 @@ def main():
     cur = json.load(open(OUT, encoding='utf-8'))
     # 걷기용 왼발(사용자 2026-11-16 "이거 발 하나 추가한거는, 걸을 때 왼발로 넣어"): 왼발 뼈에 그림 두 장(foot_b = 서 있을 때, foot_b_walk = 걸을 때)을 달고
     # 동작마다 하나를 숨긴다 — 걷기는 foot_b 를, 나머지 동작은 foot_b_walk 를. (동작 없이 멈춘 화면·편집기 기본 자세에서는 둘 다 보인다 — 자리 잡기용)
-    # 칼도 두 장(사용자 2026-11-16 "무월 공격2는 칼날이 반대여야지. 위를 봐야지?"): sword = 날이 아래, sword_up = 칼 축으로 뒤집어 날이 위 — 올려베기(attack2)만 sword_up
-    cur['idle']['hide'] = ['foot_b_walk', 'sword_up']
+    # 칼은 그림 없이 불 덩어리가 칼(사용자 2026-11-16 "도트로 찍은칼은 없애고 … 불만 남기는게 더 이쁜거같음" · "무월 칼은 없애라했는데") — 칼 뼈만 남아 불꽃이 따라간다.
+    # (같은 날 앞서 넣은 날 위 칼 sword_up 은 칼 그림이 없어져 뺐다)
+    cur['idle']['hide'] = ['foot_b_walk']
+    cur['idle'].pop('front', None)
     for k, v in SPEC.items():
-        v['hide'] = [('foot_b' if k == 'move' else 'foot_b_walk'), ('sword' if k == 'attack2' else 'sword_up')]
+        v['hide'] = ['foot_b' if k == 'move' else 'foot_b_walk']
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
           'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     # 키가 많아(16ms 마다) 뼈 하나의 키를 한 줄에 쓴다
