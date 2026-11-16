@@ -263,13 +263,18 @@ function sampleTrack(keys: Key[], t: number): BonePose {
 
 /** 동작의 t(ms) 순간 자세. 반복 동작은 길이로 감고, 한 번 동작은 끝에서 멈춘다. 키 없는 뼈는 0 */
 export function samplePose(rig: Rig, motion: Motion, tMs: number, clockMs?: number): Pose {
-  return swayPose(rig, motion, tMs, 0, clockMs);
+  return swayPose(rig, motion, tMs, 0, clockMs, new Map());
 }
 
 /** 늘어진 마디 따라가기(GDD 115-A 88)까지 넣은 자세. depth = 늦은 시각을 다시 계산한 횟수(마디 수만큼만 — 끝없이 거슬러 가지 않게) */
 /** clockMs = 재생기가 흘려보낸 시간(동작이 바뀌어도 이어지는 시계, GDD 115-A 116): 주면 물결(wave)이 동작 시각 대신 이 시계로 흘러, 동작이 바뀌거나
  *  한 번 동작이 처음부터 다시 돌아도 자락이 튀지 않고 이어진다. 안 주면(정지 그림·시험) 예전처럼 동작 시각으로 */
-function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number, clockMs?: number): Pose {
+/** memo = 이 한 번의 자세 계산 안에서 (깊이, 시각)별로 이미 구한 늦은 자세. 마디마다 늦음(lag)이 달라 같은 시각을 여러 길로 다시 구하면
+ *  계산이 늦음 가짓수의 4제곱으로 불어난다(사람형 = 한 자세에 341번, C.472 — 전체 테스트가 가끔 시간 초과로 깨진 원인). 결과는 같다 */
+function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number, clockMs: number | undefined, memo: Map<string, Pose>): Pose {
+  const key = `${depth}:${tMs}`;
+  const hit = memo.get(key);
+  if (hit) return hit;
   const t = motion.loop ? ((tMs % motion.duration) + motion.duration) % motion.duration : Math.min(Math.max(0, tMs), motion.duration);
   const pose: Pose = {};
   for (const b of rig.bones) {
@@ -277,6 +282,7 @@ function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number, clockMs?
     pose[b.id] = keys ? sampleTrack(keys, t) : { rot: 0, x: 0, y: 0 };
   }
   const sway = rig.sway;
+  memo.set(key, pose);
   if (!sway || depth > 3) return pose;
   const parent = new Map(rig.bones.map((b) => [b.id, b.parent] as const));
   // 몸 전체 회전(root — 쓰러짐 등)은 빼고 잰다: 통째로 넘어질 때 마디마다 거꾸로 늘어지며 조각나지 않게(115-A 92)
@@ -290,7 +296,7 @@ function swayPose(rig: Rig, motion: Motion, tMs: number, depth: number, clockMs?
     const sw = sway[b.id];
     if (!sw || !b.parent) continue;
     let before = late.get(sw.lag);
-    if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1, clockMs === undefined ? undefined : clockMs - sw.lag)));
+    if (!before) late.set(sw.lag, (before = swayPose(rig, motion, tMs - sw.lag, depth + 1, clockMs === undefined ? undefined : clockMs - sw.lag, memo)));
     const now = worldRot(pose, b.parent);
     let wave = 0;
     if (sw.wave) {

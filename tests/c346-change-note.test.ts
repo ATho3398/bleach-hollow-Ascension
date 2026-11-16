@@ -41,7 +41,8 @@ const sayLine = (box: FakeEl) => box.children[0]!;
 const doc = { createElement: (t: string) => new FakeEl(t), createElementNS: (_: string, t: string) => new FakeEl(t) };
 beforeEach(() => {
   vi.stubGlobal('document', doc);
-  vi.useFakeTimers();
+  // performance 도 가짜로(C.472): changeNote·gaugeBlink 는 performance.now 로 시각을 재는데 기본 가짜 타이머는 그걸 안 바꿔 실제 시간과 섞였다
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'performance'] });
 });
 afterEach(() => {
   vi.useRealTimers();
