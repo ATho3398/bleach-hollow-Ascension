@@ -562,7 +562,7 @@ function buildChainUi() {
   ctl.hidden = !tl;
   if (tl) document.getElementById('chaintailv')!.textContent = `방향 ${Math.round(tl.ang)}° · 길이 ${tl.L}`;
   const ci = chainItem(), zv = document.getElementById('chainzv');
-  if (zv) zv.textContent = ci ? `${ci.it.name ?? ''} ${ci.tail ? '풀린 끝' : '띠'} 앞뒤: ${chainZName(ci.it.z, ci.tail)} — '뒤로/앞으로 보내기'로 바꾼다` : '';
+  if (zv) zv.textContent = ci ? `${ci.it.name ?? ''} ${ci.tail ? '풀린 끝' : '띠'} 앞뒤: ${chainZName(ci.it.z, ci.tail)} — '뒤로·앞으로 보내기'(맨 뒤·맨 앞도)로 바꾼다` : '';
 }
 /** 사슬 앞뒤(사용자 2026-11-17 "혈쇄고 사실 위치만 조정되고 레이어 위치 조정 안되니 설마?"): 고른 띠(점을 골랐을 때)나 풀린 끝의 앞뒤 자리.
  *  자리 목록 = 맨 뒤 → (그 조각 바로 앞)… → 맨 앞. 띠 기본 = 맨 앞, 풀린 끝 기본 = 맨 뒤 */
@@ -579,7 +579,7 @@ function chainZName(z: string | undefined, tail: boolean): string {
   const zz = z ?? (tail ? '@back' : '@front');
   return zz === '@front' ? '맨 앞' : zz === '@back' ? '맨 뒤' : `${NAMES()[zz] ?? zz} 바로 앞`;
 }
-function moveChainLayer(step: 1 | -1) {
+function moveChainLayer(step: number) {
   const c = chainItem();
   if (!c) return;
   const list = chainZList();
@@ -856,27 +856,29 @@ document.querySelectorAll<HTMLButtonElement>('[data-m]').forEach((b) => b.onclic
 /** 지금 몸의 기본 앞뒤 순서(몸별 순서가 없으면 공통 slots) */
 function bodyOrder(): string[] { return slotsOf(rig, curBody()).map((s) => s.id); }
 /** 앞·뒤로 보내기: '이 동작에만'이면 지금 동작의 앞뒤 순서만(GDD 115-A 62), 아니면 지금 몸의 기본 순서만(몸별 bodySlots, 115-A 74 — 다른 몸은 그대로) */
-function moveLayer(step: 1 | -1) {
+/** step: ±1 = 한 칸, ±99 = 맨 앞·맨 뒤(사용자 2026-11-17 "앞으로 보내기 맨 앞으로 보내기 / 뒤로 보내기 맨 뒤로보내기") */
+function shiftIn(cur: string[], i: number, step: number): boolean {
+  const j = Math.max(0, Math.min(cur.length - 1, i + step));
+  if (i < 0 || j === i) return false;
+  const [x] = cur.splice(i, 1);
+  cur.splice(j, 0, x!);
+  return true;
+}
+function moveLayer(step: number) {
   if (mode === 'chain') { moveChainLayer(step); return; }
   const base = bodyOrder();
   if (scope === 'motion' && motion) {
     const key = motionKeyOf(motion);
     const cur = [...(motionsNow()[motion]?.order ?? base)];
     for (const id of base) if (!cur.includes(id)) cur.push(id);
-    const i = cur.indexOf(sel);
-    const j = i + step;
-    if (i < 0 || j < 0 || j >= cur.length) return;
-    [cur[i], cur[j]] = [cur[j]!, cur[i]!];
+    if (!shiftIn(cur, cur.indexOf(sel), step)) return;
     if (cur.join() === base.join() && !motionOrderInData(motion)) delete C.morder[key];
     else C.morder[key] = cur;
     save(); draw();
     return;
   }
   const cur = [...base];
-  const i = cur.indexOf(sel);
-  const j = i + step;
-  if (i < 0 || j < 0 || j >= cur.length) return;
-  [cur[i], cur[j]] = [cur[j]!, cur[i]!];
+  if (!shiftIn(cur, cur.indexOf(sel), step)) return;
   rig.bodySlots ??= {};
   if (cur.join() === rig.slots.map((s) => s.id).join()) delete rig.bodySlots[curBody()];
   else rig.bodySlots[curBody()] = cur;
@@ -888,6 +890,8 @@ function motionOrderInData(id: string): boolean {
 }
 $('front').onclick = () => moveLayer(1);
 $('back').onclick = () => moveLayer(-1);
+$('frontmost').onclick = () => moveLayer(99);
+$('backmost').onclick = () => moveLayer(-99);
 $('reset').onclick = () => {
   resetRig(C);
   try { for (const k of [C.store, ...(C.id === 'humanoid' ? LEGACY : [])]) localStorage.removeItem(k); } catch { /* 무시 */ }
