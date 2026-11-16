@@ -1,6 +1,6 @@
 // 실시간 불꽃 (C.461, GDD 15-6·12-4 무월): 도트 세션 작업본 docs/art-samples/mugetsu-flame/live.py 의 emit·render 를 canvas 로 옮긴 것.
 // 불 나오는 자리를 몸에 붙여 두고, 나온 불은 화면(그림 칸 바깥 격자)에 남아 위로 올라간다 — 돌진하면 불이 뒤로 끌린다.
-// 칼날(arm) 자리의 불은 날리지 않고 지금 칼 자리에 붙여 그리고, 바지 밑단 아래로는 불을 그리지 않는다(사용자 2026-11-16).
+// 칼(불꽃 팔) = 불 덩어리(두께 2배)이고 칼의 불은 칼에 붙어 탄다 — 빨리 움직일 때만 짧은 잔상. 밑단 아래는 자르지 않는다(작업본이 자리·물방울 모양으로 안 냄, 사용자 2026-11-16).
 // 바지 안쪽(inner) 불은 바지 밖으로 안 나가 몸과 같이 움직이므로 몸 앞 PNG 레이어가 그대로 맡는다(여기선 몸 뒤 한 장만).
 // 위쪽(LiveFlameSim)은 DOM 없는 순수 계산이라 단위 테스트한다 (tests/c461.test.ts). 데이터 = src/data/art/flames/<id>.json
 import mugetsu from '../../data/art/flames/mugetsu.json';
@@ -13,8 +13,6 @@ export interface LiveFlameData {
   cell: number;
   /** 몸 그림(1배)의 왼쪽 위가 그림 칸 안 어디인지 */
   body: [number, number];
-  /** 바지 밑단 줄(몸 그림 y) — 이 아래로는 불이 없다 */
-  hem: number;
   frameMs: number;
   tick: number;
   life: number;
@@ -33,6 +31,10 @@ export interface LiveFlameData {
 export const LIVE_FLAMES: Readonly<Record<string, LiveFlameData>> = { mugetsu: mugetsu as unknown as LiveFlameData };
 
 interface Puff { b: number; x: number; y: number; th: number; e: FlameEmitter }
+/** 칼 잔상 줄기 (live.py emit_blade): 거의 안 올라가고 짧게 사라진다 */
+const BLADE_TRAIL: FlameEmitter = { x: 0, y: 0, out: 0, kind: 'S', size: 0, rise: 5, licks: 1, taper: 1, sway: 0, wl: 10, lean: 0, beat: 0 };
+/** 프레임당 이보다 빨리 움직이면 칼·칼의 불이 잔상을 남긴다 (칸) */
+const TRAIL_SPEED = 0.8;
 
 /** 0 = 빈칸, 1 = 테두리, 2 = 속 */
 export type FlameGrid = Uint8Array;
@@ -45,6 +47,7 @@ export class LiveFlameSim {
   private readonly armLen: number;
   private readonly outer: FlameEmitter[];
   private readonly armE: FlameEmitter[];
+  private readonly armTrail: Map<FlameEmitter, FlameEmitter>;
   constructor(d: LiveFlameData) {
     this.d = d;
     let s = 0;
@@ -59,6 +62,7 @@ export class LiveFlameSim {
     this.armLen = s || 1;
     this.outer = d.emitters.filter((e) => e.arm === undefined && !e.inner);
     this.armE = d.emitters.filter((e) => e.arm !== undefined);
+    this.armTrail = new Map(this.armE.map((e) => [e, { ...e, rise: 6, licks: 1 }]));
   }
   get count(): number { return this.puffs.length; }
   /** 위치가 크게 튀면(장면 바뀜) 끌린 불을 지우고 새로 */
@@ -69,7 +73,9 @@ export class LiveFlameSim {
     let [px, py] = this.last ?? [ox, oy];
     if (Math.abs(ox - px) > 40 || Math.abs(oy - py) > 40) { px = ox; py = oy; }
     this.last = [ox, oy];
-    const k = Math.max(1, Math.ceil(Math.max(Math.abs(ox - px), Math.abs(oy - py))));
+    const dist = Math.max(Math.abs(ox - px), Math.abs(oy - py));
+    const fast = dist > TRAIL_SPEED;
+    const k = Math.max(1, Math.ceil(dist));
     for (let j = 0; j < k; j++) {
       const a = (j + 1) / k;
       const cx = px + (ox - px) * a;
@@ -79,6 +85,23 @@ export class LiveFlameSim {
         const p = Math.max(0, Math.sin(2 * Math.PI * ((bt / d.tick + e.beat) / (d.per / e.licks)))) ** 0.6;
         if (p > 0.15) this.puffs.push({ b: bt, x: cx + e.x, y: cy + e.y, th: e.size * p * d.strength, e });
       }
+      // 칼의 불: 평소엔 render 가 칼에 붙여 그리고, 빨리 움직일 때만 짧은 잔상
+      if (fast) for (const e of this.armE) this.puffs.push({ b: bt, x: cx + e.x, y: cy + e.y, th: e.size * 1.1 * d.strength, e: this.armTrail.get(e)! });
+    }
+    // 칼 몸통 잔상 (live.py emit_blade): 2칸에 하나씩, 팔 점 5개마다
+    if (fast) {
+      const kb = Math.max(1, Math.ceil(dist / 2));
+      for (let j = 0; j < kb; j++) {
+        const a = (j + 1) / kb;
+        const cx = px + (ox - px) * a;
+        const cy = py + (oy - py) * a;
+        const bt = fr - 1 + a;
+        for (let i = 0; i < this.arms.length; i += 5) {
+          const [ax, ay, sp] = this.arms[i]!;
+          const r = 2 * (2.9 - 2.7 * (sp / this.armLen));
+          if (r > 0.6) this.puffs.push({ b: bt, x: cx + ax, y: cy + ay, th: r, e: BLADE_TRAIL });
+        }
+      }
     }
     const keep = d.life * 2;
     this.puffs = this.puffs.filter((q) => fr - q.b < keep);
@@ -87,10 +110,8 @@ export class LiveFlameSim {
   render(fr: number, ox: number, oy: number, cols: number, rows: number, out?: FlameGrid): FlameGrid {
     const g = out && out.length === cols * rows ? out : new Uint8Array(cols * rows);
     g.fill(0);
-    const hemRow = Math.round(oy) + this.d.hem;
     this.field(fr, ox, oy, cols, rows, 0, g, 1);
     this.field(fr, ox, oy, cols, rows, this.d.rimShrink, g, 2);
-    for (let y = Math.max(0, hemRow + 1); y < rows; y++) g.fill(0, y * cols, (y + 1) * cols);
     return g;
   }
   private field(fr: number, ox: number, oy: number, cols: number, rows: number, shrink: number, g: FlameGrid, v: number): void {
@@ -114,21 +135,21 @@ export class LiveFlameSim {
       const life = (d.life * e.rise) / 20;
       if (age < 0 || age >= life) continue;
       const l = age / life;
-      let r = q.th * (1 - l) ** (0.9 + 0.5 * e.taper) - shrink;
+      const u = d.rise * age;
+      let r = q.th * (1 - l) ** (0.9 + 0.5 * e.taper) * Math.min(1, (u + 0.7) / Math.max(1, 0.9 * q.th)) - shrink; // 갓 나온 불은 가늘게 시작(물방울), 끝은 뾰족
       if (r < 0.3) continue;
       r = Math.max(r, 0.5);
-      const u = d.rise * age;
       blob(q.x + e.out * (0.6 + e.lean * u) + sway(e, u), q.y - u, r, r * (1.25 + 1.6 * l));
     }
     for (const e of this.armE) {
       for (let k = 0; k < e.licks; k++) {
         const l = (((fr / d.tick + e.beat + (k * d.per) / e.licks) % d.per) + d.per) % d.per / d.per;
         const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l);
-        const h = e.rise * 0.6 * (0.35 + 0.65 * amp);
-        const thick = e.size * (0.6 + 0.4 * amp) * d.strength - shrink;
+        const h = e.rise * 0.75 * (0.35 + 0.65 * amp);
+        const thick = 1.25 * e.size * (0.6 + 0.4 * amp) * d.strength - shrink;
         if (thick <= 0.4) continue;
         for (let u = 0; u <= h; u += 0.6) {
-          let r = thick * (1 - u / (h + 1e-6)) ** e.taper;
+          let r = thick * (1 - u / (h + 1e-6)) ** e.taper * Math.min(1, (u + 0.7) / Math.max(1, 0.9 * thick));
           if (r <= 0.3) continue;
           r = Math.max(r, 0.5);
           blob(ox + e.x + e.out * (0.6 + e.lean * u) + sway(e, u), oy + e.y - u, r, r * 1.25);
@@ -136,7 +157,8 @@ export class LiveFlameSim {
       }
     }
     for (const [ax, ay, sp] of this.arms) {
-      let r = 2.9 - 2.1 * (sp / this.armLen) + 0.5 * Math.sin(2 * Math.PI * (sp / 9 - fr / PT)) - shrink * 0.8;
+      const t = sp / this.armLen;
+      let r = 2 * (2.9 - 2.7 * t) + 0.9 * (1 - 0.85 * t) * Math.sin(2 * Math.PI * (sp / 9 - fr / PT)) - shrink * 0.8; // 칼 = 불 덩어리, 두께 2배
       if (r <= 0.35) continue;
       r = Math.max(r, 0.5);
       blob(ox + ax, oy + ay, r, r);

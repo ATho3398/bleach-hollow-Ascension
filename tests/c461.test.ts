@@ -134,16 +134,21 @@ describe('무월 실시간 불꽃 (도트 세션 live.py → canvas)', () => {
     expect(d.emitters).toHaveLength(work.length);
     expect(d.emitters.map((e) => [e.x, e.y])).toEqual(work.map((e) => [e.x, e.y]));
     expect(ART_MANIFEST['char.transcendent-ichigo-mugetsu']?.layers?.live).toBe('mugetsu');
-    expect(d.armBehind).toBe(true); // README [미정] — 지금 기본값(몸 뒤), 임시
+    expect(d.armBehind).toBe(true); // 불꽃 팔 = 작업본에 잡아 둔 자리·순서 그대로(몸 뒤, 사용자 2026-11-16)
   });
-  it('제자리에서 불이 나고, 밑단 아래(발)로는 불이 없다', () => {
+  it('제자리에서 불이 나고, 밑단(몸 그림 101줄) 아래 다리 칸엔 불이 없다 — 자르지 않고 자리·모양으로 (칼끝은 105줄까지 내려감)', () => {
     const sim = new LiveFlameSim(d);
     const W = 200, H = 140, ox = 80, oy = 20;
     for (let f = 1; f <= 60; f++) sim.emit(f, ox, oy);
     const g = sim.render(60, ox, oy, W, H);
     expect(g.some((v) => v === 2)).toBe(true);
     expect(g.some((v) => v === 1)).toBe(true);
-    for (let y = oy + d.hem + 1; y < H; y++) for (let x = 0; x < W; x++) expect(g[y * W + x]).toBe(0);
+    for (let f = 61; f <= 120; f++) {
+      sim.emit(f, ox, oy);
+      const gf = sim.render(f, ox, oy, W, H);
+      for (let y = oy + 102; y < H; y++) for (let x = ox; x < ox + 56; x++) expect(gf[y * W + x]).toBe(0);
+    }
+    expect(src('src/ui/bha/liveFlame.ts')).not.toMatch(/hemRow/); // 밑단 자르기 삭제 (작업본 bd6869a)
   });
   it('돌진하면 지나온 자리에 불이 남는다(끌림), 칼날 불은 지금 칼 자리에 붙는다', () => {
     const still = new LiveFlameSim(d);
@@ -159,6 +164,18 @@ describe('무월 실시간 불꽃 (도트 세션 live.py → canvas)', () => {
     const near = (g: Uint8Array, cx: number, cy: number) => { for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) if (g[y * W + x]) return true; return false; };
     expect(near(a, 200 + ax, oy + ay)).toBe(true);
     expect(near(b, 110 + ax, oy + ay)).toBe(true);
+  });
+  it('칼 잔상: 제자리엔 없고, 프레임당 0.8칸보다 빨리 움직이면 지나온 자리에 짧게 남는다', () => {
+    const W = 300, H = 140, oy = 20;
+    const still = new LiveFlameSim(d);
+    const dash = new LiveFlameSim(d);
+    for (let f = 1; f <= 40; f++) { still.emit(f, 150, oy); dash.emit(f, f <= 36 ? 150 : 150 - (f - 36) * 6, oy); }
+    expect(dash.count).toBeGreaterThan(still.count);
+    const g = dash.render(40, 126, oy, W, H);
+    const [ax, ay] = d.arm[1]!;
+    let trail = false;
+    for (let x = 126 + ax + 6; x <= 150 + ax; x++) if (g[(oy + ay) * W + x]) trail = true; // 옛 칼 자리 쪽
+    expect(trail).toBe(true);
   });
   it('몸 그림 자리(격자) = 그림 칸 반전 + 배율 + 돌진', () => {
     const base = { W: 144, H: 144, unit: 1, gridRight: 144, gridTop: 0, dashX: 0, dashY: 0 };
