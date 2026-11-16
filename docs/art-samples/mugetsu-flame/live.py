@@ -2,7 +2,10 @@
 import math, json, numpy as np
 from PIL import Image
 spr=np.array(Image.open('mug4/mugetsu.png').convert('RGBA')); SH,SW=spr.shape[:2]
-EM=json.load(open('mug4/emitters.json')); INN=[e for e in EM if e.get('inner')]; ARM_E=[e for e in EM if e.get('arm') is not None]
+EM=json.load(open('mug4/emitters.json'))
+for e in EM:                                  # 원작 느낌 시안과 같은 크기 (flame3.py field 의 ×1.7 · ×1.4)
+    if not e.get('inner') and e.get('arm') is None: e['size']*=1.7; e['rise']*=1.4
+INN=[e for e in EM if e.get('inner')]; ARM_E=[e for e in EM if e.get('arm') is not None]
 blk=(spr[...,3]>0)&(spr[...,:3].astype(int).sum(2)==0); pants=np.zeros((SH,SW),bool); pants[72:108]=blk[72:108]
 wd=pants.sum(1); pants[int(np.where(wd>=0.5*wd.max())[0].max())+1:]=False       # 발목 외곽선은 바지가 아니다
 W,H=262,134; GROUND=H-4; DT=60; TICK=2            # 60ms 프레임, 불꽃 박자는 2프레임(120ms)에 한 칸
@@ -39,7 +42,9 @@ def emit(fr):
                 q=((bt/TICK-e['slot']*4)%40)/8          # 안쪽 불: 한 번에 2개만
                 p=math.sin(math.pi*q)**0.6 if q<1 else 0.0
             else: p=max(0.0,math.sin(2*math.pi*((bt/TICK+e['beat'])/(PER/e['licks']))))**0.6
-            if p>0.15: puffs.append((bt,cx+e['x'],oy+e['y'],e['size']*p,e))
+            thin=1/(1+0.22*abs(sx-px))                 # 빨리 움직일수록 남기는 불을 가늘게 (큰 덩어리가 끌려 뭉치지 않게)
+            if p>0.15: puffs.append((bt,cx+e['x'],oy+e['y'],e['size']*p*thin,e if thin>0.7 else dict(e,rise=e['rise']*max(0.45,thin))))
+            if p>0.15 and thin>0.7 and not e.get('inner') and e['size']>2.7: puffs.append((bt,cx+e['x'],oy+e['y'],e['size']*p*0.55,dict(e,rise=e['rise']*0.5,barb=True)))      # 옆 가시
 def emit_blade(fr):
     sx,bob=pos[fr%N]; px,pb=pos[(fr-1)%N]
     if abs(sx-px)<=0.8 or abs(sx-px)>40: return
@@ -63,6 +68,8 @@ def render(fr):
             if r<0.3: continue
             r=max(r,0.5); ry=r*(1.25+1.6*l)                              # 끝은 세로로 길쭉한 바늘 모양
             u=RISE*age; cx=x0+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=y0-u
+            if not e.get('inner') and not e.get('trail'):                      # 끝이 갈고리처럼 휘어 넘어간다 (가시는 반대쪽)
+                hk=(1 if e['beat']%2 else -1)*(-1.6 if e.get('barb') else 1.0); cx+=hk*0.34*e['rise']*l**2.6; cy+=0.10*e['rise']*l**4
             x1,x2=int(cx-r-1),int(cx+r+2); y1,y2=int(cy-ry-1),int(cy+ry+2)
             x1,y1=max(0,x1),max(0,y1); x2,y2=min(W,x2),min(H,y2)
             if x1>=x2 or y1>=y2: continue
@@ -70,13 +77,13 @@ def render(fr):
         for e in ([] if (inner or only_blade) else ARM_E):               # 칼날에 붙어 타는 불
             for k in range(e['licks']):
                 l_=((fr/TICK+e['beat']+k*PER/e['licks'])%PER)/PER
-                amp=0.5-0.5*math.cos(2*math.pi*l_); h=e['rise']*0.75*(0.35+0.65*amp); thick=1.25*e['size']*(0.6+0.4*amp)-shrink
+                amp=0.5-0.5*math.cos(2*math.pi*l_); h=e['rise']*0.75*(0.35+0.65*amp); thick=1.55*e['size']*(0.6+0.4*amp)-shrink
                 if thick<=0.4: continue
                 u=0.0
                 while u<=h:
                     r=thick*(1-u/(h+1e-6))**e['taper']*min(1.0,(u+0.7)/max(1.0,0.9*thick))
                     if r>0.3:
-                        r=max(r,0.5); cx=sx+e['x']+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=oy+e['y']-u
+                        r=max(r,0.5); cx=sx+e['x']+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=oy+e['y']-u; cx+=(1 if (e['beat']+k)%2 else -1)*0.34*h*(u/(h+1e-6))**2.6
                         x1,x2=max(0,int(cx-r-1)),min(W,int(cx+r+2)); y1,y2=max(0,int(cy-r*1.25-1)),min(H,int(cy+r*1.25+2))
                         if x1<x2 and y1<y2: f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/r)**2+((Y[y1:y2,x1:x2]-cy)/(r*1.25))**2<=1
                     u+=0.6

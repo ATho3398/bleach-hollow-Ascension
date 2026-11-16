@@ -59,36 +59,66 @@ for i,sp in enumerate(np.arange(ARML*0.22,ARML-1,5.2)):
     x,y,_=min(ARMS,key=lambda p:abs(p[2]-sp)); e=mk(x,y-1,-0.35,'SMSMSMSMSSMS'[i%12],(i*7+3)%FR); e['arm']=round(float(sp),1)
     k_=1-0.72*sp/ARML; e['size']*=k_; e['rise']*=k_          # 칼끝으로 갈수록 불이 작아진다
     if sp<ARML*0.86: EM.append(e)     # 칼날 맨 끝 자리는 뺀다(끝의 큰 덩어리 삭제). 큰 불(B)도 칼날에는 쓰지 않는다
+# 원작의 큰 불기둥 느낌: 바지 양옆에서 바깥으로 크게 휘어 솟는 큰 불 3자리 (다른 자리의 값이 안 바뀌게 맨 뒤에서 만든다)
+for j,(side,yy,sz,rs,ln) in enumerate(((-1,top+13,7.0,30.0,0.46),(1,top+19,7.5,32.0,0.50),(-1,bot-11,6.0,24.0,0.40))):
+    e=mk((L[yy] if side<0 else Rr[yy])+side,yy,side,'B',(j*6+4)%FR); e.update(size=sz,rise=rs,lean=ln,licks=2,plume=True); EM.append(e)
 print('emitters',len(EM))
 Y,X=np.mgrid[0:H,0:W]
 C0,C2=(0,0,0,255),(54,48,63,255)
 def field(t,shrink=0.0,ems=None):
-    f=np.zeros((H,W),bool)
+    f=np.zeros((H,W),bool); holes=np.zeros((H,W),bool)
     for e in (EM if ems is None else ems):
         ex,ey,side,r0,ph,rise=e['x'],e['y'],e['out'],e['size'],e['beat'],e['rise']
         for k in range(e['licks']):
             l=((t+ph+k*FR/e['licks'])%FR)/FR
             if e.get('arm') is not None:                     # 칼날(팔)의 불: 떨어져 날아가지 않고 칼에 붙은 채로 길어졌다 짧아졌다 한다 (붕옥 불꽃처럼)
-                amp=0.5-0.5*math.cos(2*math.pi*l); h=rise*0.75*(0.35+0.65*amp); st=0.0; thick=1.25*r0*(0.6+0.4*amp)-shrink
+                amp=0.5-0.5*math.cos(2*math.pi*l); h=rise*0.75*(0.35+0.65*amp); st=0.0; thick=1.55*r0*(0.6+0.4*amp)-shrink
             else:
+                if not e.get('inner'): r0=e['size']*1.7; rise=e['rise']*1.4      # 원작처럼 덩어리를 크게
                 h=rise*l**0.9
                 st=rise*(max(0.0,(l-0.42)/0.58))**1.15*0.97      # 42% 뒤부터 밑동이 떨어져 따라 올라감
                 thick=r0*min(l/0.15,1)*(1-0.6*l)-shrink
             if thick<=0.4 or h-st<0.3: continue
-            u=st
+            hk=(1 if (e['beat']+k)%2 else -1)                 # 갈고리 방향 (자리마다 번갈아)
+            span=h-st+1e-6; inner=e.get('inner'); u=st
             while u<=h:
-                q_=(u-st)/(h-st+1e-6); r=thick*(1-q_)**e['taper']*min(1.0,(u-st+0.7)/max(1.0,0.9*thick))      # 밑동은 가늘게 시작해 부풀었다가 끝으로 뾰족 (물방울 모양) — 밑이 뭉툭하게 튀어나오지 않는다
+                q_=(u-st)/span; r=thick*(1-q_)**e['taper']*min(1.0,(u-st+0.7)/max(1.0,0.9*thick))
                 if r>0.3:
-                    cy=ey-u; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)
-                    f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.6))**2<=1      # 세로로 길쭉하게 = 더 날카롭게
+                    # 원작 느낌: 끝이 갈고리처럼 휘어 넘어간다 (끝으로 갈수록 급하게)
+                    cy=ey-u+0.10*span*q_**4; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)+hk*0.34*span*q_**2.6
+                    f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.35))**2<=1
+                    if not inner and e['kind']=='B' and thick>4.5 and 0.24<q_<0.42:   # 큰 불 속의 가는 틈 하나 (빛이 새는 자리)
+                        hr=0.20*r*math.sin(math.pi*(q_-0.24)/0.18)
+                        if hr>0.55: holes[:]|=((X-cx-hk*0.3*r)/hr)**2+((Y-cy)/(hr*1.8))**2<=1
                 u+=0.6
+            if not inner and thick>1.6 and span>6:              # 옆으로 뻗는 가시 (갈고리 반대쪽)
+                q0=0.38; u0=st+span*q0; r0_=thick*(1-q0)**e['taper']
+                bx=ex+side*(0.6+e['lean']*u0)+e['sway']*math.sin(2*math.pi*(u0/e['wl']-t/FR+ph/FR))*min(1,u0/5)+hk*0.34*span*q0**2.6; by=ey-u0+0.10*span*q0**4
+                bl_=0.42*span; v=0.0
+                while v<bl_:
+                    qq=v/bl_; rr=r0_*0.75*(1-qq)**1.4
+                    if rr>0.3: f|=((X-(bx-hk*(0.55*v+0.25*bl_*qq*qq)))/max(rr,0.5))**2+((Y-(by-0.85*v))/(max(rr,0.5)*1.3))**2<=1
+                    v+=0.6
     if ems is None: f|=blade(t,shrink*0.8)        # 칼 = 따로 찍은 칼 없이 불 덩어리 그 자체 (불꽃과 한 몸)
     for (ax,ay,sp) in []:                     # 팔 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
         r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-t/FR))-shrink*0.8
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
     base=np.zeros((H,W),bool)                # 바지 둘레에 늘 붙어 있는 얇은 불 띠
     for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
+    if ems is None: holes|=blade_holes(t)
+    f&=~holes
     return ((f|base)&~pm) if ems is None else (f&pm)
+def blade_holes(t):
+    hm=np.zeros((H,W),bool)                  # 칼 덩어리 속의 뚫린 틈: 칼을 따라 띄엄띄엄, 천천히 흘러간다
+    for k in range(2):
+        sp0=(ARML*0.10+k*ARML*0.3+ARML*0.3*t/FR)%(ARML*0.6)
+        j=min(range(len(ARMS)),key=lambda i:abs(ARMS[i][2]-sp0)); ax,ay,sp=ARMS[j]
+        r=2.0*(2.9-2.7*(sp/ARML)); hr=0.26*r
+        if hr<0.6: continue
+        j2=min(len(ARMS)-1,j+4); dx=ARMS[j2][0]-ax; dy=ARMS[j2][1]-ay; d=math.hypot(dx,dy)+1e-6; dx/=d; dy/=d
+        al=(X-ax)*dx+(Y-ay)*dy; pe=-(X-ax)*dy+(Y-ay)*dx
+        hm|=(al/(hr*2.6))**2+(pe/hr)**2<=1
+    return hm
 def blade(t,shrink=0.0):
     f=np.zeros((H,W),bool)                  # 칼(불꽃 팔) 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
     for (ax,ay,sp) in ARMS:
