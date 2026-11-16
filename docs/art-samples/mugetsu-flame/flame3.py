@@ -80,16 +80,29 @@ def field(t,shrink=0.0,ems=None):
                     cy=ey-u; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)
                     f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.25))**2<=1
                 u+=0.6
-    for (ax,ay,sp) in (ARMS if ems is None else []):                     # 팔 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
+    for (ax,ay,sp) in []:   # (칼 몸통은 불꽃과 따로 그린다 — 아래 blade)
+        pass
+    for (ax,ay,sp) in []:                     # 팔 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
         r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-t/FR))-shrink*0.8
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
     base=np.zeros((H,W),bool)                # 바지 둘레에 늘 붙어 있는 얇은 불 띠
     for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
     f=f&(Y<=bot)                                  # 바지 밑단 아래(발)로는 불이 내려가지 않는다
     return ((f|base)&~pm) if ems is None else (f&pm)
+def blade(t,shrink=0.0):
+    f=np.zeros((H,W),bool)                  # 칼(불꽃 팔) 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
+    for (ax,ay,sp) in ARMS:
+        r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-t/FR))-shrink
+        if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
+    return f
 def back(t):
     f=field(t); core=field(t,1.1)
-    lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0; return Image.fromarray(lay)
+    lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0
+    bf=blade(t); bc=blade(t,0.9)            # 칼은 불꽃 앞에: 불은 칼 뒤에서 솟는다 (칼 자체가 타는 것)
+    bl=np.zeros((H,W,4),np.uint8); bl[bf]=C2; bl[bc]=C0; blades.append(Image.fromarray(bl))
+    lay[bf]=C2; lay[bc]=C0
+    return Image.fromarray(lay)
+blades=[]
 def front(t):
     fr_=np.zeros((H,W,4),np.uint8)
     for e in INNER:                       # 켜진 불만: 속은 검정, 테두리는 왼쪽 30%만 지우고 끝(사라지는 쪽)은 살린다
@@ -115,6 +128,8 @@ os.makedirs('mug4/front',exist_ok=True)
 import glob
 for f in glob.glob('mug4/front/*.png')+glob.glob('mug4/full/*.png'): os.remove(f)
 for i,o in enumerate(only,1): o.save(f'mug4/flame/flame-{i:02d}.png')
+os.makedirs('mug4/blade',exist_ok=True)
+for i,o in enumerate(blades[:FR],1): o.save(f'mug4/blade/blade-{i:02d}.png')
 for i,fz in enumerate(fronts,1): fz.save(f'mug4/front/front-{i:02d}.png')
 for i,c in enumerate(frames,1): c.save(f'mug4/full/full-{i:02d}.png')
 sheet=Image.new('RGBA',(W*8,H*2),(0,0,0,0))

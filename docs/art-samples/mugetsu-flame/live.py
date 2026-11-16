@@ -40,9 +40,9 @@ def emit(fr):
 def render(fr):
     sx,bob=pos[fr%N]; ox=int(round(sx)); oy=GROUND-SH-bob
     pm=np.zeros((H,W),bool); pm[oy:oy+SH,ox:ox+SW]=pants
-    def fld(shrink,inner=False,sel=None):
+    def fld(shrink,inner=False,sel=None,blade=False,only_blade=False):
         f=np.zeros((H,W),bool)
-        for (b,x0,y0,th,e) in puffs:
+        for (b,x0,y0,th,e) in ([] if only_blade else puffs):
             if bool(e.get('inner'))!=inner: continue
             if sel is not None and e is not sel: continue
             age=fr-b; life=LIFE*e['rise']/20
@@ -55,7 +55,7 @@ def render(fr):
             x1,y1=max(0,x1),max(0,y1); x2,y2=min(W,x2),min(H,y2)
             if x1>=x2 or y1>=y2: continue
             f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/r)**2+((Y[y1:y2,x1:x2]-cy)/ry)**2<=1
-        for e in ([] if inner else ARM_E):               # 칼날에 붙어 타는 불
+        for e in ([] if (inner or only_blade) else ARM_E):               # 칼날에 붙어 타는 불
             for k in range(e['licks']):
                 l_=((fr/TICK+e['beat']+k*PER/e['licks'])%PER)/PER
                 amp=0.5-0.5*math.cos(2*math.pi*l_); h=e['rise']*0.6*(0.35+0.65*amp); thick=e['size']*(0.6+0.4*amp)-shrink
@@ -68,18 +68,19 @@ def render(fr):
                         x1,x2=max(0,int(cx-r-1)),min(W,int(cx+r+2)); y1,y2=max(0,int(cy-r*1.25-1)),min(H,int(cy+r*1.25+2))
                         if x1<x2 and y1<y2: f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/r)**2+((Y[y1:y2,x1:x2]-cy)/(r*1.25))**2<=1
                     u+=0.6
-        for (ax,ay,sp) in ([] if inner else ARMS):
+        for (ax,ay,sp) in ([] if (inner or not blade) else ARMS):
             r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-fr/(PER*TICK)))-shrink*0.8
             if r>0.35:
                 r=max(r,0.5); cx=sx+ax; cy=oy+ay; x1,x2=max(0,int(cx-r-1)),min(W,int(cx+r+2)); y1,y2=max(0,int(cy-r-1)),min(H,int(cy+r+2))
                 if x1<x2 and y1<y2: f[y1:y2,x1:x2]|=(X[y1:y2,x1:x2]-cx)**2+(Y[y1:y2,x1:x2]-cy)**2<=r*r
         base=np.zeros((H,W),bool)
-        if shrink==0 and not inner:
+        if shrink==0 and not inner and not only_blade:
             for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
         hem=np.where(pm.any(1))[0].max(); f[hem+1:]=False      # 발 쪽으로는 불이 내려가지 않는다
         return (f&pm) if inner else ((f|base)&~pm)
     f=fld(0); core=fld(1.1)
     lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0; lay[f&~core&np.roll(pm,-1,0)]=C0
+    bf=fld(0,blade=True,only_blade=True); bc=fld(1.1,blade=True,only_blade=True); lay[bf]=C2; lay[bc]=C0      # 칼은 불꽃 앞에
     c=Image.new('RGBA',(W,H),(70,84,74,255)); c.alpha_composite(Image.fromarray(lay)); c.alpha_composite(Image.fromarray(spr),(ox,oy))
     fz=np.zeros((H,W,4),np.uint8)
     for e in INN:
