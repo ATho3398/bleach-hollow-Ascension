@@ -11,6 +11,10 @@ import spiderRaw from './spider.json';
 import spiderMotionsRaw from './spider-motions.json';
 import wraithRaw from './wraith.json';
 import wraithMotionsRaw from './wraith-motions.json';
+import ichigoRaw from './ichigo.json';
+import ichigoMotionsRaw from './ichigo-motions.json';
+import mugetsuRaw from './mugetsu.json';
+import mugetsuMotionsRaw from './mugetsu-motions.json';
 
 export type Vec2 = [number, number];
 /** CSS matrix(a, b, c, d, e, f) 순서: x' = a·x + c·y + e, y' = b·x + d·y + f */
@@ -208,6 +212,8 @@ const serpentMotions = readMotions(serpentMotionsRaw);
 const beastMotions = readMotions(beastMotionsRaw);
 const spiderMotions = readMotions(spiderMotionsRaw);
 const wraithMotions = readMotions(wraithMotionsRaw);
+const ichigoMotions = readMotions(ichigoMotionsRaw);
+const mugetsuMotions = readMotions(mugetsuMotionsRaw);
 /** 게임 뼈대 목록: 사람형(사신·아란칼·덩치·길리안 …) + 뱀형 + 짐승형(GDD 228장). 외형 id 는 뼈대끼리 겹치지 않는다(테스트가 막음) */
 export const RIG_PACKS: readonly RigPack[] = [
   { id: 'humanoid', rig: HUMANOID, motions: MOTIONS, sets: MOTION_SETS },
@@ -215,6 +221,9 @@ export const RIG_PACKS: readonly RigPack[] = [
   { id: 'beast', rig: beastRaw as unknown as Rig, motions: beastMotions.motions, sets: beastMotions.sets },
   { id: 'spider', rig: spiderRaw as unknown as Rig, motions: spiderMotions.motions, sets: spiderMotions.sets }, // 거미형(GDD 231장)
   { id: 'wraith', rig: wraithRaw as unknown as Rig, motions: wraithMotions.motions, sets: wraithMotions.sets }, // 부유형(GDD 240장)
+  // 초월자 이치고 (C.465, 종이인형 작업본 그대로 — 사용자 2026-11-17 "종이인형 세션에서 최신화 된것들 가져와서 게임에 넣고"): 혈쇄(천년혈전 모드 모델, 대기만)·무월(두 번째 해방)
+  { id: 'ichigo', rig: ichigoRaw as unknown as Rig, motions: ichigoMotions.motions, sets: ichigoMotions.sets },
+  { id: 'mugetsu', rig: mugetsuRaw as unknown as Rig, motions: mugetsuMotions.motions, sets: mugetsuMotions.sets },
 ];
 /** 외형 id → 그 외형이 있는 뼈대. 없으면 undefined */
 export function rigPackOfLook(look: string): RigPack | undefined {

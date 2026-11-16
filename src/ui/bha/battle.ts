@@ -4,7 +4,7 @@
 import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
-import { bindAnim } from './animPlayer';
+import { bindAnim, type AnimPlayer } from './animPlayer';
 import { el, icon } from './dom';
 import { elementColor } from './element';
 
@@ -259,10 +259,31 @@ export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
  * 레이어마다 자기 프레임 수만큼 art.layers.ms 간격으로 반복(길이가 달라도 각자). set(true) 면 내 몸(.bha-hero__body)의 원래 그림을 가리고 이것을 보인다.
  * 몸통박치기·피격·오오라는 원래대로 root·body 가 맡으니 같이 움직인다
  */
-export function heroAltEl(body: HTMLElement, art: ArtUrls): { set(on: boolean): void; stop(): void } {
+export function heroAltEl(body: HTMLElement, art: ArtUrls): { set(on: boolean): void; stop(): void; readonly on: boolean; anim: AnimPlayer | null } {
   const root = el('span', 'bha-hero__alt');
   root.hidden = true;
   const scale = String(art.fieldScale ?? art.scale);
+  // 종이인형 몸 (C.465 — 무월 = 작업본 인형 + 불꽃 층): 같은 칸에 한 장, 동작은 이 재생기가 받는다(전투가 해방 중에만 넘김 — switchAnim)
+  if (art.rig) {
+    const img = artImg(art, art.src!, 'bha-hero__img');
+    img.style.setProperty('--art-scale', scale);
+    root.append(img);
+    body.append(root);
+    const anim = bindAnim(root, img, art);
+    anim?.setLoop('idle');
+    const hadArt0 = body.classList.contains('has-art');
+    return {
+      set(on) {
+        if (on === !root.hidden) return;
+        root.hidden = !on;
+        body.classList.toggle('is-alt', on);
+        if (!hadArt0) body.classList.toggle('has-art', on);
+      },
+      stop() {},
+      get on() { return !root.hidden; },
+      anim,
+    };
+  }
   const layer = (url: string): HTMLImageElement => {
     const img = artImg(art, url, 'bha-hero__img');
     img.style.setProperty('--art-scale', scale);
@@ -298,6 +319,8 @@ export function heroAltEl(body: HTMLElement, art: ArtUrls): { set(on: boolean): 
       }, art.layers?.ms ?? 120);
     },
     stop,
+    get on() { return !root.hidden; },
+    anim: null,
   };
 }
 

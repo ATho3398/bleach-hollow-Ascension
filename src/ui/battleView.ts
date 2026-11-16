@@ -37,7 +37,7 @@ import { mountV2Root } from './bha/v2/root';
 import { keepOldIcons } from './bha/iconMap';
 import { setV2Gauge, v2Button, v2Chip, v2Gauge, v2IconButton, v2Notice, v2Svg, v2TempChip } from './bha/v2/components';
 import { V2_GLYPH, V2_PATH, setHpBar, setV2Locked, v2AttackKind, v2BlockEl, v2ChainEl, v2CutEl, v2FamilyPath, v2StatusChip, v2TrayEl, type HpBar } from './bha/v2/battle';
-import { animOf } from './bha/animPlayer';
+import { animOf, switchAnim } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import { onAppAway } from './bha/appAway';
 import {
@@ -417,11 +417,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 내 그림 한 장 (몸통박치기 연출 대상, GDD 17-4). 그림 파일이 없으면 자리표시 도형
   const heroArt = heroArtOf(roomOf(faction), faction.id, opts.tierIndex ?? 0, opts.skinId);
   const hero = heroEl(heroArt);
-  const heroAnim = animOf(hero.root); // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출
   // 두 번째 해방 중 몸 그림 (C.456 무월 — 초월자 데이터 kit.mastery.releaseArt, 몸 뒤·몸 앞 불꽃 레이어). 데이터·그림 파일이 없으면 null(그림 그대로)
   const secondArtKey = s.params.kit ? tryGetTranscendent(s.params.kit.id)?.kit?.mastery?.releaseArt : undefined;
   const secondArt = secondArtKey ? layeredArt(secondArtKey, (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/') : null;
   const heroSecond = secondArt ? heroAltEl(hero.body, secondArt) : null;
+  // 프레임 애니 (GDD 26장): 있는 동작만. 없으면 null / 없는 동작은 기존 연출. 해방 중 바꿔 입은 몸이 종이인형이면(C.465 무월) 그동안 그 몸이 동작을 받는다
+  const heroAnimBase = animOf(hero.root);
+  const heroAnim = heroSecond?.anim ? switchAnim(heroAnimBase, heroSecond.anim, () => heroSecond.on) : heroAnimBase;
   // 실시간 불꽃 (C.461, 도트 세션 live.py): 그림 데이터 layers.live 가 있으면 몸 뒤를 캔버스로 — 불이 장면에 남아 돌진하면 뒤로 끌린다. 동작 줄이기면 PNG 레이어 그대로
   const liveData = secondArt?.layers?.live ? LIVE_FLAMES[secondArt.layers.live] ?? null : null;
   const liveFlame = liveData && secondArt && hero.body.parentElement && !prefersReducedMotion()

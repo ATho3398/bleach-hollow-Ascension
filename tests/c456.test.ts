@@ -37,17 +37,18 @@ describe('무월 이치고 그림', () => {
     for (const f of FILES) expect(existsSync(`public/art/${f}`)).toBe(true);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/back-17.png')).toBe(false);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/front-41.png')).toBe(false);
-    expect(ART_MANIFEST[KEY]?.layers).toEqual({ back: 'back', front: 'front', ms: 120, live: 'mugetsu' });
+    expect(ART_MANIFEST[KEY]).toMatchObject({ rig: 'ichigo-mugetsu', fieldScale: 1.26 }); // C.465: 무월 = 종이인형 작업본 + 인형 불꽃 층 (옛 한 장 그림·레이어 파일은 남김)
   });
   it('layeredArt = 몸 + 레이어마다 자기 길이', () => {
     expect(layerFiles(KEY, 'back', FILES)).toHaveLength(16);
-    const a = layeredArt(KEY, '/', ART_MANIFEST, FILES)!;
+    const OLD = { ...ART_MANIFEST, [KEY]: { scale: 1.6875, fieldScale: 1.26, layers: { back: 'back', front: 'front', ms: 120 } } }; // C.465 전 목록 — 레이어 그림 길은 그대로 있다
+    const a = layeredArt(KEY, '/', OLD, FILES)!;
     expect(a.src).toBe('/art/char-transcendent-ichigo-mugetsu.png');
     expect(a.layers!.back).toHaveLength(16);
     expect(a.layers!.front).toHaveLength(40);
     expect(a.layers!.front[39]).toBe('/art/char-transcendent-ichigo-mugetsu/front-40.png');
     expect(a.layers!.ms).toBe(120);
-    expect(layeredArt(KEY, '/', ART_MANIFEST, [])).toBeNull(); // 몸 그림 파일이 없으면 그림 그대로
+    expect(layeredArt(KEY, '/', OLD, [])).toBeNull(); // 몸 그림 파일이 없으면 그림 그대로
   });
   it('전투: 두 번째 해방 중에만 바꿔 입는다 (데이터 키로, id 분기 없음)', () => {
     const src = read('src/ui/battleView.ts');

@@ -248,7 +248,7 @@ describe('초월자 인간형 스킨 — 태초 현현 · Unknown 디버깅', ()
   const DEBUG = transcendentSkinLookId('rift-wanderer', 'debug');
   const look = (skin: string | null) => charArt('hollow', 2, 'char.hollow', '/', undefined, undefined, skin, undefined, 'male');
   it('데이터: 태초 = 현현, Unknown;03398 = 디버깅 (그림 키 + 자리 표시 키), 나머지 초월자는 없음', () => {
-    expect(TRANSCENDENTS.filter((t) => t.humanSkins).map((t) => [t.id, t.humanSkins!.map((x) => x.name)])).toEqual([['zero-sage', ['현현']], ['rift-wanderer', ['디버깅']]]);
+    expect(TRANSCENDENTS.filter((t) => t.humanSkins).map((t) => [t.id, t.humanSkins!.map((x) => x.name)])).toEqual([['ichigo', ['혈쇄']], ['zero-sage', ['현현']], ['rift-wanderer', ['디버깅']]]); // C.465: 이치고 혈쇄(천년혈전 모드 모델)
     expect(transcendentSkinOfLook(HYEON)?.skin).toMatchObject({ art: 'char.transcendent-zero-sage-human', placeholder: 'char.shinigami' });
     expect(transcendentSkinOfLook(DEBUG)?.skin).toMatchObject({ art: 'char.transcendent-rift-wanderer-human', placeholder: 'char.hollow.5' });
     expect(validModelLook('hollow', HYEON)).toBe(true);
@@ -262,7 +262,7 @@ describe('초월자 인간형 스킨 — 태초 현현 · Unknown 디버깅', ()
     expect(look('transcendent:zero-sage').src).toMatch(/char-transcendent-zero-sage/);
     expect(look('transcendent:rift-wanderer').src).toMatch(/#mosaic=rift-wanderer/);
     const opts = modelLookOptions('hollow', { test: true, owned: [], dex: [] });
-    expect(opts.filter((o) => o.id.startsWith('trskin:')).map((o) => [o.label, o.waiting])).toEqual([['현현', true], ['디버깅', true]]);
+    expect(opts.filter((o) => o.id.startsWith('trskin:')).map((o) => [o.label, o.waiting])).toEqual([['혈쇄', undefined], ['현현', true], ['디버깅', true]]); // C.465: 혈쇄는 종이인형 그림이 있다
   });
   it('가방 > 스킨 > 진화체 > 초월자: 그 초월자를 얻으면 열림 (테스트 모드 = 전부)', () => {
     const none = characterSkinEntries('hollow', { test: false, owned: [], dex: [] });
@@ -270,7 +270,7 @@ describe('초월자 인간형 스킨 — 태초 현현 · Unknown 디버깅', ()
     const got = characterSkinEntries('hollow', { test: false, owned: [], dex: ['zero-sage'] }).filter((e) => e.sub === 'transcendent');
     expect(got.map((e) => [e.name, e.cls, e.waiting])).toEqual([['태초', 'form', undefined], ['현현', 'form', true]]);
     const all = characterSkinEntries('shinigami', { test: true, owned: [], dex: [] }).filter((e) => e.sub === 'transcendent').map((e) => e.name);
-    expect(all).toEqual(['아이젠', '태초', '현현', 'Unknown;03398', '디버깅']); // C.450
+    expect(all).toEqual(['아이젠', '혈쇄', '태초', '현현', 'Unknown;03398', '디버깅']); // C.450
   });
   it('입기: 얻은 초월자만(테스트 모드는 전부), 초월자 트랙에서도 스킨 그림 · 저장·읽기 유지', () => {
     const s = newSaveData('hollow', 1000);

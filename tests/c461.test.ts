@@ -133,7 +133,7 @@ describe('무월 실시간 불꽃 (도트 세션 live.py → canvas)', () => {
     const work = JSON.parse(src('docs/art-samples/mugetsu-flame/emitters.json')) as { x: number; y: number }[];
     expect(d.emitters).toHaveLength(work.length);
     expect(d.emitters.map((e) => [e.x, e.y])).toEqual(work.map((e) => [e.x, e.y]));
-    expect(ART_MANIFEST['char.transcendent-ichigo-mugetsu']?.layers?.live).toBe('mugetsu');
+    expect(ART_MANIFEST['char.transcendent-ichigo-mugetsu']?.rig).toBe('ichigo-mugetsu'); // C.465: 무월 = 종이인형 + 인형 불꽃 층(rigEffects). 이 계산은 그림 목록 layers.live 가 있는 그림만
     expect(d.armBehind).toBe(true); // 불꽃 팔 = 작업본에 잡아 둔 자리·순서 그대로(몸 뒤, 사용자 2026-11-16)
   });
   it('제자리에서 불이 나고, 밑단(몸 그림 101줄) 아래 다리 칸엔 불이 없다 — 자르지 않고 자리·모양으로 (칼끝은 105줄까지 내려감)', () => {

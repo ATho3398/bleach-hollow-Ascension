@@ -216,3 +216,28 @@ export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls
   for (const a of Object.keys(art.anims)) owner.classList.add(`has-anim-${a}`);
   return player;
 }
+
+/**
+ * 두 몸 재생기를 하나로 (C.465 — 해방 중 바꿔 입는 종이인형 몸, 무월): useAlt() 가 참이면 alt 가 동작을 받고 아니면 base.
+ * 쉬는 동작·멈춤·속도는 둘 다에 걸어 바꿔 입는 순간 같은 쉬는 동작으로 이어진다. base 가 없으면(그림 없는 몸) 꺼져 있는 동안 '동작 없음'
+ */
+export function switchAnim(base: AnimPlayer | null, alt: AnimPlayer, useAlt: () => boolean): AnimPlayer {
+  const cur = (): AnimPlayer | null => (useAlt() ? alt : base);
+  const both = (f: (p: AnimPlayer) => void): void => {
+    if (base) f(base);
+    f(alt);
+  };
+  return {
+    has: (a) => cur()?.has(a) ?? false,
+    clip: (a) => cur()?.clip(a),
+    setLoop: (a) => both((p) => p.setLoop(a)),
+    play: (a, o) => cur()?.play(a, o) ?? null,
+    peek: (a, o) => cur()?.peek(a, o) ?? null,
+    stop: () => both((p) => p.stop()),
+    setRate: (r) => both((p) => p.setRate(r)),
+    setPaused: (on) => both((p) => p.setPaused(on)),
+    advance: (dt) => cur()?.advance(dt),
+    get playing() { return cur()?.playing ?? null; },
+    get active() { return (base?.active ?? false) || alt.active; },
+  };
+}
