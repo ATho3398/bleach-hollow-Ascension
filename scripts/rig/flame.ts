@@ -93,13 +93,14 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
     if (arm) for (const [slot, lx, ly, a, sp] of spec.trail ?? []) {
       const m = pos.get(slot);
       if (!m) continue;
-      let r = 2.9 - 2.1 * a + 0.5 * Math.sin(2 * Math.PI * (sp / 9 - fr / (PER * TICK))) - shrink * 0.8;
+      // 칼 = 불 덩어리(도트 세션 2026-11-16 갱신 3, 사용자 "도트로 찍은칼은 없애고 … 불만 남기는게 더 이쁜거같음. 두께만 2배로"): 굵기 2배, 끝은 뾰족하게
+      let r = 2 * (2.9 - 2.7 * a) + 0.9 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - fr / (PER * TICK))) - shrink * 0.8;
       if (r <= 0.35) continue;
       r = Math.max(r, 0.5);
       const cx = m[0]! * lx + m[2]! * ly + m[4]! + pl, cy = m[1]! * lx + m[3]! * ly + m[5]! + pt;
       for (let y = Math.max(0, Math.floor(cy - r - 1)); y < Math.min(H, Math.floor(cy + r + 2)); y++) for (let x = Math.max(0, Math.floor(cx - r - 1)); x < Math.min(W, Math.floor(cx + r + 2)); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) buf[y * W + x] = 1;
     }
-    // 붙어서 타는 불(칼날): 지금 조각 자리에서 위로 뾰족하게 — 높이 = rise × 0.6 × (0.35 + 0.65 × 맥박), 굵기 = size × (0.6 + 0.4 × 맥박) (live.py 그대로)
+    // 붙어서 타는 불(칼날): 지금 조각 자리에서 위로 뾰족하게 — 높이 = rise × 0.75 × (0.35 + 0.65 × 맥박), 굵기 = 1.25 × size × (0.6 + 0.4 × 맥박) (live.py 그대로)
     if (arm) for (const e of spec.emitters) {
       if (!e.stick) continue;
       const m = pos.get(e.slot);
@@ -107,7 +108,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const bx = m[0]! * e.x + m[2]! * e.y + m[4]! + pl, by = m[1]! * e.x + m[3]! * e.y + m[5]! + pt;
       for (let k = 0; k < e.licks; k++) {
         const l = ((((fr / TICK + e.beat + (k * PER) / e.licks) % PER) + PER) % PER) / PER;
-        const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.6 * (0.35 + 0.65 * amp), thick = e.size * (0.6 + 0.4 * amp) - shrink;
+        const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.75 * (0.35 + 0.65 * amp), thick = 1.25 * e.size * (0.6 + 0.4 * amp) - shrink;
         if (thick <= 0.4) continue;
         for (let u = 0; u <= h; u += 0.6) {
           let r = thick * (1 - u / (h + 1e-6)) ** e.taper;
