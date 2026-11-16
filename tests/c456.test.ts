@@ -37,7 +37,7 @@ describe('무월 이치고 그림', () => {
     for (const f of FILES) expect(existsSync(`public/art/${f}`)).toBe(true);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/back-17.png')).toBe(false);
     expect(existsSync('public/art/char-transcendent-ichigo-mugetsu/front-41.png')).toBe(false);
-    expect(ART_MANIFEST[KEY]).toMatchObject({ rig: 'ichigo-mugetsu', fieldScale: 1.26 }); // C.465: 무월 = 종이인형 작업본 + 인형 불꽃 층 (옛 한 장 그림·레이어 파일은 남김)
+    expect(ART_MANIFEST[KEY]).toMatchObject({ rig: 'ichigo-mugetsu', fieldScale: 0.96 }); // C.467: 1.26 → 0.96 · C.465: 무월 = 종이인형 작업본 + 인형 불꽃 층 (옛 한 장 그림·레이어 파일은 남김)
   });
   it('layeredArt = 몸 + 레이어마다 자기 길이', () => {
     expect(layerFiles(KEY, 'back', FILES)).toHaveLength(16);
@@ -59,6 +59,6 @@ describe('무월 이치고 그림', () => {
 
 describe('아이젠 크기 ×0.85 (provisional)', () => {
   it('방 1.5 → 1.28 · 필드 1.12 → 0.95', () => {
-    expect(ART_MANIFEST['char.transcendent-aizen']).toEqual({ scale: 1.28, fieldScale: 0.95 });
+    expect(ART_MANIFEST['char.transcendent-aizen']).toEqual({ scale: 0.9, fieldScale: 0.82 }); // C.467: 사람형은 호로보다 작게
   });
 });
