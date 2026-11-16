@@ -92,7 +92,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
         let bi = 0, bd = 1e9;
         for (let i = 0; i < bladeW.length; i++) { const d = (bladeW[i]![0] - w[0]) ** 2 + (bladeW[i]![1] - w[1]) ** 2; if (d < bd) { bd = d; bi = i; } }
         const ba = (spec.trail ?? [])[bi]?.[3] ?? 0;
-        w[0] = bladeW[bi]![0]; w[1] = bladeW[bi]![1] - 0.7 * 2 * (2.9 - 2.1 * Math.min(ba, 0.86)); // 칼 윗면 바로 안쪽에서 솟는다
+        w[0] = bladeW[bi]![0]; w[1] = bladeW[bi]![1] - 0.7 * (2.9 - 2.1 * Math.min(ba, 0.86)); // 칼 윗면 바로 안쪽에서 솟는다
       }
       const r0 = e.size * (arm || inner ? 1 : 0.6), rise = e.rise * (arm || inner ? 1 : 0.75); // 바지 둘레 불만 굵기 0.6배·높이 0.75배(같은 지시, 임시값)
       for (let k = 0; k < (inner ? 1 : e.licks); k++) {
@@ -130,33 +130,17 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
     const pts: ([number, number] | null)[] = TR.map((tp) => world(tp[0], tp[1], tp[2]));
     // 칼 굵기: 대부분은 완만하게 줄고, 끝 14% 는 한쪽 면만 깎여 날 끝처럼 보인다(송곳처럼 고르게 뾰족해지지 않게)
     const TIP = 0.86;
-    const rad = (a: number, sp: number) => (a < TIP ? 2 * (2.9 - 2.1 * a) : 2 * (2.9 - 2.1 * TIP) * (1 - (a - TIP) / (1 - TIP)) ** 0.8 + 0.25) + 0.9 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - t / PER)) * (a < TIP ? 1 : 0.2);
+    const rad = (a: number, sp: number) => (a < TIP ? 2.9 - 2.1 * a : (2.9 - 2.1 * TIP) * (1 - (a - TIP) / (1 - TIP)) ** 0.8 + 0.25) + 0.45 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - t / PER)) * (a < TIP ? 1 : 0.2);
     TR.forEach((tp, i) => {
       const a = tp[3], sp = tp[4], w = pts[i];
       if (!w) return;
       let r = rad(a, sp), cx = w[0], cy = w[1];
       if (a >= TIP) { // 날 끝: 중심을 칼등 반대쪽(날 쪽)으로 밀어 한 면은 곧게, 다른 면만 비스듬히
         const p0 = pts[Math.max(0, i - 4)], p1 = pts[Math.min(TR.length - 1, i + 4)];
-        if (p0 && p1) { const dx = p1[0] - p0[0], dy = p1[1] - p0[1], d = Math.hypot(dx, dy) || 1, full = 2 * (2.9 - 2.1 * TIP); cx += (-dy / d) * (full - r); cy += (dx / d) * (full - r); }
+        if (p0 && p1) { const dx = p1[0] - p0[0], dy = p1[1] - p0[1], d = Math.hypot(dx, dy) || 1, full = 2.9 - 2.1 * TIP; cx += (-dy / d) * (full - r); cy += (dx / d) * (full - r); }
       }
       r -= shrink * 0.8;
       if (r > 0.35) disc(buf, cx, cy, Math.max(r, 0.5), Math.max(r, 0.5));
-      // 휘두른 궤적: 지난 1.6박자 동안(칼 바깥쪽 절반만) 이 칼 점이 지나온 길을 1.2칸 간격으로 빈틈없이 메운다(오래된 자리일수록 가늘게). 칼은 곧은 채로 불만 궤적을 따라 남는다
-      if (a > 0.5 && i % 2 === 0) {
-        let px = w[0], py = w[1];
-        for (let dly = 0.2; dly <= 1.6; dly += 0.2) {
-          const [gx, gy] = at(tp, w[0], w[1], dly, 999);
-          const seg = Math.hypot(gx - px, gy - py);
-          if (seg > 40) break; // 동작이 바뀌며 튄 자리는 잇지 않는다
-          const n = Math.max(1, Math.ceil(seg / 1.2));
-          for (let j = 1; j <= n; j++) {
-            const q = j / n, d = dly - 0.2 + 0.2 * q;
-            const gr = rad(a, sp) * 0.7 * (1 - d / 1.7) ** 1.3 - shrink * 0.8;
-            if (gr > 0.35 && Math.hypot(px + (gx - px) * q - w[0], py + (gy - py) * q - w[1]) > 1) disc(buf, px + (gx - px) * q, py + (gy - py) * q, Math.max(gr, 0.5), Math.max(gr, 0.5));
-          }
-          px = gx; py = gy;
-        }
-      }
     });
   };
   const render = (layers: FlameLayer[]) => {
