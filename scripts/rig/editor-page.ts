@@ -3,6 +3,7 @@ import { DRAFT_RIGS, type DraftRig } from './draft';
 import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
 import { createFlame, type FlameLayer } from './flame';
+import { createChain } from './chain';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
@@ -776,7 +777,9 @@ document.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) => b.on
 const flames = new Map<string, ReturnType<typeof createFlame>>();
 const flameImgs = new Map<string, HTMLImageElement>();
 let flameMotion: string | null = null;
+const chains = new Map<string, ReturnType<typeof createChain>>();
 function stepFlame(dt: number) {
+  stepChain(dt);
   const spec = C.src.flame;
   const on = spec && spec.look === look ? C.id : null;
   for (const [id, f] of flames) { const show = id === on; f.back.hidden = !show; f.front.hidden = !show; }
@@ -791,6 +794,21 @@ function stepFlame(dt: number) {
     return { slot: d.slot, m: d.m, img };
   });
   f.step(dt, layers);
+}
+/** 사슬 이펙트 층(GDD 115-A 149): 지금 외형에 사슬이 있으면 미리보기 위에 얹는다 */
+function stepChain(dt: number) {
+  const spec = C.src.chain;
+  const on = spec && spec.look === look ? C.id : null;
+  for (const [id, c] of chains) { const show = id === on; c.back.hidden = !show; c.front.hidden = !show; }
+  if (!spec || !on) return;
+  let c = chains.get(on);
+  if (!c) { c = createChain(spec, rig.canvas); chains.set(on, c); stage.prepend(c.back); stage.append(c.front); }
+  c.place(K);
+  c.step(dt, drawn.map((d) => {
+    let img = flameImgs.get(d.img.src);
+    if (!img) { img = new Image(); img.src = d.img.src; flameImgs.set(d.img.src, img); }
+    return { slot: d.slot, m: d.m, img };
+  }));
 }
 document.getElementById('tint')?.addEventListener('change', () => { buildChips(); draw(); });
 let last = 0;

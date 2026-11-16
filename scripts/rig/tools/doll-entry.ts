@@ -1,6 +1,7 @@
 import { DRAFT_RIGS } from '../draft';
 import { createPaperdoll } from '../../../src/ui/bha/paperdoll';
 import { createFlame, dollLayers } from '../flame';
+import { createChain } from '../chain';
 declare const ART_MAP: Record<string, string>;
 const stage = document.getElementById('stage')!;
 const LOOKS: [string, string][] = [
@@ -43,6 +44,20 @@ const mk = (rid: string, look: string) => {
     if (!hp.get('manual')) {
       let last = 0;
       const tick = (now: number) => { if (d.el.isConnected || !last) { if (last) fl.step(now - last, dollLayers(d.el, k)); last = now; requestAnimationFrame(tick); } };
+      requestAnimationFrame(tick);
+    }
+  }
+  // 사슬 이펙트 층(GDD 115-A 149): 그 외형일 때만
+  if (d0.chain && d0.chain.look === look) {
+    const k = only ? 4 : 3;
+    const ch = createChain(d0.chain, d0.rig.canvas);
+    ch.place(k);
+    d.el.append(ch.back, ch.front);
+    const adv = d.advance.bind(d);
+    d.advance = (dt: number) => { adv(dt); ch.step(dt, dollLayers(d.el, k)); };
+    if (!hp.get('manual')) {
+      let last = 0;
+      const tick = (now: number) => { if (d.el.isConnected || !last) { if (last) ch.step(now - last, dollLayers(d.el, k)); last = now; requestAnimationFrame(tick); } };
       requestAnimationFrame(tick);
     }
   }

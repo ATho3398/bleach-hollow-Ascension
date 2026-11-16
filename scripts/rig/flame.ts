@@ -7,6 +7,10 @@ export interface FlameEmitter {
   inner?: boolean; order?: number;
   /** 붙어서 타는 불(칼날): 불 덩이를 날리지 않고 그 자리에 붙여 그린다 — 높이·굵기만 맥박처럼 변한다 */
   stick?: boolean;
+  /** 옆 가시(갈고리 반대쪽 가는 가지) — 내부용 */
+  barb?: boolean;
+  /** 큰 불기둥 */
+  plume?: boolean;
 }
 /** trail = 불꽃 팔: [조각, 조각 안 x, y, 어깨에서부터 거리 0~1, 거리(칸)] — 그 자리마다 일렁이는 검은 덩이(어깨 쪽이 굵다) */
 /** alias = 그 조각이 숨겨진 동작에서는 대신 이 조각 자리를 쓴다(같은 뼈·같은 자리의 바꿔 끼운 그림 — 칼 날 위 등) */
@@ -42,6 +46,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   let fr = 0; // 지금(박자, 소수) — 60ms 에 1
   const ems = new Map<FlameEmitter, Em>();
   const ghostOf = new Map<FlameEmitter, FlameEmitter>();
+  const barbOf = new Map<FlameEmitter, FlameEmitter>();
   const BLADE_GHOST: FlameEmitter = { slot: '', x: 0, y: 0, out: 0, size: 0, rise: 5, licks: 1, taper: 1, sway: 0, wl: 10, lean: 0, beat: 0 };
   const f0 = new Uint8Array(W * H), f1 = new Uint8Array(W * H);
   const ageOf = (p: Puff) => p.a0 + (fr - p.t0) * p.rate;
@@ -75,6 +80,12 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
         else p = Math.max(0, Math.sin(2 * Math.PI * ((bt / TICK + e.beat) / (PER / e.licks)))) ** 0.6;
         const [qx, qy] = path(a); // 굵기: 휘두른 줄이 점선으로 끊기지 않게 빠를 때는 가장 가늘어도 1.4
         if (p > 0.15) puffs.push({ b: bt, x: qx, y: qy, th: Math.max(thin < 0.7 ? 1.4 : 0, e.size * p * Math.max(0.55, Math.sqrt(thin))), e, lk: Math.max(0.3, thin), a0: 0, t0: bt, rate: 1 });
+        // 옆 가시(원작 불꽃 느낌, 도트 세션 2026-11-16 df2591f): 천천히 움직일 때 큰 줄기에 반대쪽으로 짧은 가지 하나
+        if (p > 0.15 && thin > 0.7 && !e.inner && e.size > 2.7) {
+          let bb = barbOf.get(e);
+          if (!bb) { bb = { ...e, rise: e.rise * 0.5, barb: true }; barbOf.set(e, bb); }
+          puffs.push({ b: bt, x: qx, y: qy, th: e.size * p * 0.55, e: bb, lk: Math.max(0.3, thin), a0: 0, t0: bt, rate: 1 });
+        }
       };
       s.t += dtF;
       let n = 0;
@@ -137,7 +148,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const cx = m[0]! * lx + m[2]! * ly + m[4]! + pl, cy = m[1]! * lx + m[3]! * ly + m[5]! + pt;
       for (let y = Math.max(0, Math.floor(cy - r - 1)); y < Math.min(H, Math.floor(cy + r + 2)); y++) for (let x = Math.max(0, Math.floor(cx - r - 1)); x < Math.min(W, Math.floor(cx + r + 2)); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) buf[y * W + x] = 1;
     }
-    // 붙어서 타는 불(칼날): 지금 조각 자리에서 위로 뾰족하게 — 높이 = rise × 0.75 × (0.35 + 0.65 × 맥박), 굵기 = 1.25 × size × (0.6 + 0.4 × 맥박) (live.py 그대로)
+    // 붙어서 타는 불(칼날): 지금 조각 자리에서 위로 뾰족하게 — 높이 = rise × 0.75 × (0.35 + 0.65 × 맥박), 굵기 = 1.55 × size × (0.6 + 0.4 × 맥박), 끝은 갈고리 (live.py 그대로)
     if (arm) for (const e of spec.emitters) {
       if (!e.stick) continue;
       const m = pos.get(e.slot);
@@ -145,13 +156,13 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const bx = m[0]! * e.x + m[2]! * e.y + m[4]! + pl, by = m[1]! * e.x + m[3]! * e.y + m[5]! + pt;
       for (let k = 0; k < e.licks; k++) {
         const l = ((((fr / TICK + e.beat + (k * PER) / e.licks) % PER) + PER) % PER) / PER;
-        const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.75 * (0.35 + 0.65 * amp), thick = 1.25 * e.size * (0.6 + 0.4 * amp) - shrink;
+        const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.75 * (0.35 + 0.65 * amp), thick = 1.55 * e.size * (0.6 + 0.4 * amp) - shrink;
         if (thick <= 0.4) continue;
         for (let u = 0; u <= h; u += 0.6) {
           let r = thick * (1 - u / (h + 1e-6)) ** e.taper * Math.min(1, (u + 0.7) / Math.max(1, 0.9 * thick));
           if (r <= 0.3) continue;
           r = Math.max(r, 0.5);
-          const cx = bx + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5), cy = by - u, ry = r * 1.25;
+          const cx = bx + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5) + ((e.beat + k) % 2 ? 1 : -1) * 0.34 * h * (u / (h + 1e-6)) ** 2.6, cy = by - u, ry = r * 1.25; // 끝이 갈고리처럼 휨
           for (let y = Math.max(0, Math.floor(cy - ry - 1)); y < Math.min(H, Math.floor(cy + ry + 2)); y++) for (let x = Math.max(0, Math.floor(cx - r - 1)); x < Math.min(W, Math.floor(cx + r + 2)); x++) if (((x - cx) / r) ** 2 + ((y - cy) / ry) ** 2 <= 1) buf[y * W + x] = 1;
         }
       }
@@ -166,8 +177,14 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       if (r < 0.3) continue;
       r = Math.max(r, 0.5);
       const ry = r * (1.25 + 1.6 * l), u = RISE * (fr - p.b); // 끝은 세로로 길쭉한 바늘 모양. 올라간 높이는 실제 지난 시간으로(빨리 꺼져도 위로 튀지 않게)
-      const cx = p.x + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5);
-      const cy = p.y - u;
+      let cx = p.x + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5);
+      let cy = p.y - u;
+      // 갈고리 끝(원작 불꽃 느낌): 끝으로 갈수록 옆으로 휘어 넘어가고 살짝 처진다. 가시는 반대쪽으로 더 크게. 바지 안쪽 불·잔상은 곧게
+      if (!e.inner && !p.ghost) {
+        const hk = (e.beat % 2 ? 1 : -1) * (e.barb ? -1.6 : 1);
+        cx += hk * 0.34 * e.rise * l ** 2.6;
+        cy += 0.1 * e.rise * l ** 4;
+      }
       const x1 = Math.max(0, Math.floor(cx - r - 1)), x2 = Math.min(W, Math.floor(cx + r + 2));
       const y1 = Math.max(0, Math.floor(cy - ry - 1)), y2 = Math.min(H, Math.floor(cy + ry + 2));
       for (let y = y1; y < y2; y++) for (let x = x1; x < x2; x++) if (((x - cx) / r) ** 2 + ((y - cy) / ry) ** 2 <= 1) buf[y * W + x] = 1;
