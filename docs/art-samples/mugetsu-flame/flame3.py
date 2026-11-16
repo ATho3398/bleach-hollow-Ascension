@@ -67,7 +67,7 @@ def field(t,shrink=0.0,ems=None):
         for k in range(e['licks']):
             l=((t+ph+k*FR/e['licks'])%FR)/FR
             if e.get('arm') is not None:                     # 칼날(팔)의 불: 떨어져 날아가지 않고 칼에 붙은 채로 길어졌다 짧아졌다 한다 (붕옥 불꽃처럼)
-                amp=0.5-0.5*math.cos(2*math.pi*l); h=rise*0.6*(0.35+0.65*amp); st=0.0; thick=r0*(0.6+0.4*amp)-shrink
+                amp=0.5-0.5*math.cos(2*math.pi*l); h=rise*0.75*(0.35+0.65*amp); st=0.0; thick=1.25*r0*(0.6+0.4*amp)-shrink
             else:
                 h=rise*l**0.9
                 st=rise*(max(0.0,(l-0.42)/0.58))**1.15*0.97      # 42% 뒤부터 밑동이 떨어져 따라 올라감
@@ -80,8 +80,7 @@ def field(t,shrink=0.0,ems=None):
                     cy=ey-u; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)
                     f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.25))**2<=1
                 u+=0.6
-    for (ax,ay,sp) in []:   # (칼 몸통은 불꽃과 따로 그린다 — 아래 blade)
-        pass
+    if ems is None: f|=blade(t,shrink*0.8)        # 칼 = 따로 찍은 칼 없이 불 덩어리 그 자체 (불꽃과 한 몸)
     for (ax,ay,sp) in []:                     # 팔 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
         r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-t/FR))-shrink*0.8
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
@@ -92,15 +91,12 @@ def field(t,shrink=0.0,ems=None):
 def blade(t,shrink=0.0):
     f=np.zeros((H,W),bool)                  # 칼(불꽃 팔) 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임
     for (ax,ay,sp) in ARMS:
-        r=(2.9-2.1*(sp/ARML))+0.5*math.sin(2*math.pi*(sp/9-t/FR))-shrink
+        r=2.0*(2.9-2.7*(sp/ARML))+0.9*(1-0.85*sp/ARML)*math.sin(2*math.pi*(sp/9-t/FR))-shrink      # 두께 2배 (사용자 2026-11-16)
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
     return f
 def back(t):
     f=field(t); core=field(t,1.1)
     lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0
-    bf=blade(t); bc=blade(t,0.9)            # 칼은 불꽃 앞에: 불은 칼 뒤에서 솟는다 (칼 자체가 타는 것)
-    bl=np.zeros((H,W,4),np.uint8); bl[bf]=C2; bl[bc]=C0; blades.append(Image.fromarray(bl))
-    lay[bf]=C2; lay[bc]=C0
     return Image.fromarray(lay)
 blades=[]
 def front(t):
@@ -128,8 +124,7 @@ os.makedirs('mug4/front',exist_ok=True)
 import glob
 for f in glob.glob('mug4/front/*.png')+glob.glob('mug4/full/*.png'): os.remove(f)
 for i,o in enumerate(only,1): o.save(f'mug4/flame/flame-{i:02d}.png')
-os.makedirs('mug4/blade',exist_ok=True)
-for i,o in enumerate(blades[:FR],1): o.save(f'mug4/blade/blade-{i:02d}.png')
+
 for i,fz in enumerate(fronts,1): fz.save(f'mug4/front/front-{i:02d}.png')
 for i,c in enumerate(frames,1): c.save(f'mug4/full/full-{i:02d}.png')
 sheet=Image.new('RGBA',(W*8,H*2),(0,0,0,0))
