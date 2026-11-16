@@ -426,7 +426,7 @@
    "thigh_b": {
     "art": "parts/thigh_b",
     "at": [
-     55,
+     57,
      55
     ],
     "size": [
@@ -437,7 +437,7 @@
    "shin_b": {
     "art": "parts/shin_b",
     "at": [
-     59,
+     61,
      69
     ],
     "size": [
@@ -448,7 +448,7 @@
    "foot_b": {
     "art": "parts/foot_b",
     "at": [
-     71,
+     73,
      91
     ],
     "size": [
@@ -470,7 +470,7 @@
    "foot_b_walk": {
     "art": "parts/foot_b_walk",
     "at": [
-     63,
+     65,
      91
     ],
     "size": [
@@ -494,12 +494,12 @@
    "shin_f",
    "hair_base",
    "hair_b",
+   "thigh_b",
    "thigh_f",
    "hair_a",
    "foot_b_walk",
    "foot_b",
    "shin_b",
-   "thigh_b",
    "head",
    "hair_d",
    "belly",
@@ -1056,7 +1056,7 @@
      92
     ],
     "thigh_b": [
-     67,
+     65,
      62
     ],
     "head": [
@@ -1068,11 +1068,11 @@
      104
     ],
     "shin_b": [
-     67,
+     69,
      78
     ],
     "foot_b": [
-     74,
+     76,
      94
     ]
    }

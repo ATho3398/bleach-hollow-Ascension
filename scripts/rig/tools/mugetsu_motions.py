@@ -170,9 +170,12 @@ def walk():
             w1 = (math.degrees(best[1] - r1) + 180) % 360 - 180
             w2 = (math.degrees(best[2] - r2) + 180) % 360 - 180
             return w1, w2 - w1, -w2 + pitch
-        fns['thigh_' + name] = (lambda t: solve(t)[0], zero, zero)
-        # 편집기 고정(2026-11-16 01:27, '이 동작에만'): 걷기 동안 왼 하카마 아래를 오른쪽으로 3칸
-        fns['shin_' + name] = (lambda t: solve(t)[1], (lambda t: 3.0) if name == 'b' else zero, zero)
+        # 편집기 고정('이 동작에만', 걷기 동안 계속 같은 옮김): 01:27 왼 하카마 아래 → 오른쪽 3칸 / 19:36 오른 하카마 위 → 오른쪽 3·위 5칸, 오른 하카마 아래 → 아래 6칸
+        shift = {'thigh_f': (3.0, -5.0), 'shin_f': (0.0, 6.0), 'shin_b': (3.0, 0.0)}
+        sx, sy = shift.get('thigh_' + name, (0.0, 0.0))
+        fns['thigh_' + name] = (lambda t: solve(t)[0], lambda t: sx, lambda t: sy)
+        sx2, sy2 = shift.get('shin_' + name, (0.0, 0.0))
+        fns['shin_' + name] = (lambda t: solve(t)[1], lambda t: sx2, lambda t: sy2)
         fns['foot_' + name] = (lambda t: solve(t)[2], zero, zero)
     leg('f', 0.0)
     leg('b', 0.5)
