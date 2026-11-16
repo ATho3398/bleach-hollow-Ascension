@@ -19,13 +19,14 @@ for y in range(SH):
             if len(pts)>len(best): best=pts
 pm=np.zeros((H,W),bool)
 for y,x in best: pm[y+PADT,x+PADX]=1
-rows=sorted(set(np.where(pm)[0])); top,bot=rows[0],rows[-1]
+wd=pm.sum(1); hemrow=int(np.where(wd>=0.5*wd.max())[0].max()); pm[hemrow+1:]=False     # 바지 밑단 = 폭이 절반 넘는 마지막 줄. 그 아래 검정은 발목 외곽선이라 바지가 아니다
+rows=sorted(set(np.where(pm)[0])); top,bot=rows[0],rows[-1]; print('바지 줄',top-PADT,'~',bot-PADT)
 L={y:int(np.where(pm[y])[0].min()) for y in rows}; Rr={y:int(np.where(pm[y])[0].max()) for y in rows}
 rng=np.random.RandomState(11)
 EM=[]   # 불 나오는 자리: 크기·높이·뾰족함·흔들림이 자리마다 다르다 (큰 불 B · 중간 M · 잔불 S)
-KIND={'B':dict(size=(5.6,6.6),rise=(30,36),licks=1,taper=1.6,sway=(1.6,2.4),wl=(13,16),lean=(0.10,0.16)),
-      'M':dict(size=(3.6,4.4),rise=(18,23),licks=2,taper=1.3,sway=(0.9,1.4),wl=(9,12),lean=(0.12,0.2)),
-      'S':dict(size=(2.0,2.7),rise=(8,13),licks=2,taper=1.05,sway=(0.3,0.8),wl=(6,9),lean=(0.05,0.25))}
+KIND={'B':dict(size=(5.6,6.6),rise=(30,36),licks=1,taper=2.3,sway=(1.6,2.4),wl=(13,16),lean=(0.10,0.16)),
+      'M':dict(size=(3.6,4.4),rise=(18,23),licks=2,taper=1.9,sway=(0.9,1.4),wl=(9,12),lean=(0.12,0.2)),
+      'S':dict(size=(2.0,2.7),rise=(8,13),licks=2,taper=1.6,sway=(0.3,0.8),wl=(6,9),lean=(0.05,0.25))}
 def mk(x,y,side,kind,beat):
     k=KIND[kind]; u=lambda r: float(r[0]+rng.rand()*(r[1]-r[0]))
     return dict(x=float(x),y=int(y),out=float(side),kind=kind,size=u(k['size']),rise=u(k['rise']),licks=k['licks'],taper=k['taper'],sway=u(k['sway']),wl=u(k['wl']),lean=u(k['lean']),beat=int(beat))
@@ -56,6 +57,7 @@ def arm_samples():
 ARMS,ARML=arm_samples()
 for i,sp in enumerate(np.arange(ARML*0.22,ARML-1,5.2)):
     x,y,_=min(ARMS,key=lambda p:abs(p[2]-sp)); e=mk(x,y-1,-0.35,'SMSMSMSMSSMS'[i%12],(i*7+3)%FR); e['arm']=round(float(sp),1)
+    k_=1-0.72*sp/ARML; e['size']*=k_; e['rise']*=k_          # 칼끝으로 갈수록 불이 작아진다
     if sp<ARML*0.86: EM.append(e)     # 칼날 맨 끝 자리는 뺀다(끝의 큰 덩어리 삭제). 큰 불(B)도 칼날에는 쓰지 않는다
 print('emitters',len(EM))
 Y,X=np.mgrid[0:H,0:W]
@@ -75,10 +77,10 @@ def field(t,shrink=0.0,ems=None):
             if thick<=0.4 or h-st<0.3: continue
             u=st
             while u<=h:
-                r=thick*(1-(u-st)/(h-st+1e-6))**e['taper']
+                q_=(u-st)/(h-st+1e-6); r=thick*(1-q_)**e['taper']*(min(1.0,q_/0.25+0.25) if st>0 else 1.0)
                 if r>0.3:
                     cy=ey-u; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)
-                    f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.25))**2<=1
+                    f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.6))**2<=1      # 세로로 길쭉하게 = 더 날카롭게
                 u+=0.6
     if ems is None: f|=blade(t,shrink*0.8)        # 칼 = 따로 찍은 칼 없이 불 덩어리 그 자체 (불꽃과 한 몸)
     for (ax,ay,sp) in []:                     # 팔 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임

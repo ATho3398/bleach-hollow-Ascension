@@ -4,6 +4,7 @@ from PIL import Image
 spr=np.array(Image.open('mug4/mugetsu.png').convert('RGBA')); SH,SW=spr.shape[:2]
 EM=json.load(open('mug4/emitters.json')); INN=[e for e in EM if e.get('inner')]; ARM_E=[e for e in EM if e.get('arm') is not None]
 blk=(spr[...,3]>0)&(spr[...,:3].astype(int).sum(2)==0); pants=np.zeros((SH,SW),bool); pants[72:108]=blk[72:108]
+wd=pants.sum(1); pants[int(np.where(wd>=0.5*wd.max())[0].max())+1:]=False       # 발목 외곽선은 바지가 아니다
 W,H=262,134; GROUND=H-4; DT=60; TICK=2            # 60ms 프레임, 불꽃 박자는 2프레임(120ms)에 한 칸
 # 움직임 대본: (프레임 수, 프레임당 x 이동, 걷는 중인가)
 SCRIPT=[(14,0,0),(44,2.0,1),(16,0,0),(9,-9.0,0),(20,0,0),(26,-0.27,1),(15,0,0)]
@@ -31,12 +32,23 @@ def emit(fr):
     for j in range(k):
         a=(j+1)/k; cx=px+(sx-px)*a; oy=GROUND-SH-bob; bt=fr-1+a
         for i,e in enumerate(EM):
-            if e.get('arm') is not None: continue      # 칼날 불은 날리지 않고 붙여 그린다 (render)
+            if e.get('arm') is not None:               # 칼날 불은 붙여 그린다(render). 빨리 움직일 때만 짧은 잔상을 남긴다
+                if abs(sx-px)>0.8: puffs.append((bt,cx+e['x'],oy+e['y'],e['size']*1.1,dict(e,rise=6.0,licks=1,trail=True)))
+                continue
             if e.get('inner'):
                 q=((bt/TICK-e['slot']*4)%40)/8          # 안쪽 불: 한 번에 2개만
                 p=math.sin(math.pi*q)**0.6 if q<1 else 0.0
             else: p=max(0.0,math.sin(2*math.pi*((bt/TICK+e['beat'])/(PER/e['licks']))))**0.6
             if p>0.15: puffs.append((bt,cx+e['x'],oy+e['y'],e['size']*p,e))
+def emit_blade(fr):
+    sx,bob=pos[fr%N]; px,pb=pos[(fr-1)%N]
+    if abs(sx-px)<=0.8 or abs(sx-px)>40: return
+    k=max(1,int(math.ceil(abs(sx-px)/2.0)))
+    for j in range(k):
+        a=(j+1)/k; cx=px+(sx-px)*a; oy=GROUND-SH-bob; bt=fr-1+a
+        for (ax,ay,sp) in ARMS[::5]:
+            r=2.0*(2.9-2.7*(sp/ARML))
+            if r>0.6: puffs.append((bt,cx+ax,oy+ay,r,dict(out=0,lean=0,sway=0,wl=10,beat=0,rise=5.0,taper=1.0,licks=1,trail=True)))
 def render(fr):
     sx,bob=pos[fr%N]; ox=int(round(sx)); oy=GROUND-SH-bob
     pm=np.zeros((H,W),bool); pm[oy:oy+SH,ox:ox+SW]=pants
@@ -94,10 +106,10 @@ def render(fr):
         fz[rim&keep]=C2
     c.alpha_composite(Image.fromarray(fz)); return c
 # 한 바퀴 미리 돌려 불을 채운 뒤 두 번째 바퀴를 찍는다 (처음과 끝이 이어지게)
-for fr in range(N): emit(fr)
+for fr in range(N): emit(fr); emit_blade(fr)
 out=[]
 for fr in range(N,2*N):
-    emit(fr); puffs=[p for p in puffs if fr-p[0]<LIFE*2]; out.append(render(fr))
+    emit(fr); emit_blade(fr); puffs=[p for p in puffs if fr-p[0]<LIFE*2]; out.append(render(fr))
 S=3; g=[c.convert('RGB').resize((W*S,H*S),0).quantize(colors=64,dither=Image.Dither.NONE) for c in out]
 g[0].save('mug4/live-demo_x3.gif',save_all=True,append_images=g[1:],duration=DT,loop=0,disposal=2)
 pick=[20,40,60,76,80,84,100,125]
