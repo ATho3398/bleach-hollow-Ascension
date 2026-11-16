@@ -41,6 +41,8 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   let puffs: Puff[] = [];
   let fr = 0; // 지금(박자, 소수) — 60ms 에 1
   const ems = new Map<FlameEmitter, Em>();
+  const ghostOf = new Map<FlameEmitter, FlameEmitter>();
+  const BLADE_GHOST: FlameEmitter = { slot: '', x: 0, y: 0, out: 0, size: 0, rise: 5, licks: 1, taper: 1, sway: 0, wl: 10, lean: 0, beat: 0 };
   const f0 = new Uint8Array(W * H), f1 = new Uint8Array(W * H);
   const ageOf = (p: Puff) => p.a0 + (fr - p.t0) * p.rate;
 
@@ -84,6 +86,41 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       else if (s.t >= 1) { spawn(1); s.t = 0; }
       s.px = s.x; s.py = s.y; s.x = wx; s.y = wy;
     }
+    // 칼 잔상(도트 세션 2026-11-16 갱신 4, 사용자 "검 휘두를 때 따라오던 불꽃 잔상 사라졌던데"): 칼의 불·칼 몸통은 평소엔 붙어서 타고,
+    // 박자당 0.8칸보다 빨리 움직일 때만 지나온 길에 짧은 잔상을 남긴다(붙은 불 = 굵기 × 1.1·높이 6, 몸통 = 다섯 점에 하나·높이 5)
+    const ghost = (key: object, wx: number, wy: number, th: number, e: FlameEmitter) => {
+      let s = ems.get(key as FlameEmitter);
+      if (!s || Math.hypot(wx - s.x, wy - s.y) > 40) { s = { x: wx, y: wy, px: wx, py: wy, d: 0, t: 0, v: 0 }; ems.set(key as FlameEmitter, s); }
+      const dist = Math.hypot(wx - s.x, wy - s.y);
+      const v = dist / Math.max(dtF, 0.05);
+      // 빠를수록 잔상을 짧게(휘두르는 호 전체가 검은 부채로 남지 않게 — 사용자 2026-11-15 "불꽃이 너무 심하게 나와서 지저분"): 수명 배수 1 → 0.1
+      const lk = Math.max(0.1, 1 / (1 + Math.max(0, v - 0.8) / 1.5));
+      if (v > 0.8) {
+        const t0x = (wx - s.px) / 2, t0y = (wy - s.py) / 2, t1x = wx - s.x, t1y = wy - s.y;
+        const k = Math.max(1, Math.ceil(dist / 2));
+        for (let j = 0; j < k; j++) {
+          const a = (j + 1) / k, h00 = 2 * a ** 3 - 3 * a ** 2 + 1, h10 = a ** 3 - 2 * a ** 2 + a, h01 = -2 * a ** 3 + 3 * a ** 2, h11 = a ** 3 - a ** 2;
+          const bt = fr - dtF * (1 - a);
+          puffs.push({ b: bt, x: h00 * s.x + h10 * t0x + h01 * wx + h11 * t1x, y: h00 * s.y + h10 * t0y + h01 * wy + h11 * t1y, th, e, lk, a0: 0, t0: bt, rate: 1 });
+        }
+      }
+      s.px = s.x; s.py = s.y; s.x = wx; s.y = wy;
+    };
+    for (const e of spec.emitters) {
+      if (!e.stick) continue;
+      const m = pos.get(e.slot);
+      if (!m) continue;
+      let g = ghostOf.get(e);
+      if (!g) { g = { ...e, rise: 6, licks: 1, stick: false }; ghostOf.set(e, g); }
+      ghost(e, m[0]! * e.x + m[2]! * e.y + m[4]! + pl, m[1]! * e.x + m[3]! * e.y + m[5]! + pt, e.size * 1.1, g);
+    }
+    (spec.trail ?? []).forEach((tp, i) => {
+      if (i % 5) return;
+      const [slot, lx, ly, a] = tp;
+      const m = pos.get(slot), r = 2 * (2.9 - 2.7 * a);
+      if (!m || r <= 0.6) return;
+      ghost(tp, m[0]! * lx + m[2]! * ly + m[4]! + pl, m[1]! * lx + m[3]! * ly + m[5]! + pt, r, BLADE_GHOST);
+    });
     puffs = puffs.filter((p) => ageOf(p) < LIFE * 2);
     if (puffs.length > MAX_PUFFS) puffs = puffs.slice(puffs.length - MAX_PUFFS);
   };
