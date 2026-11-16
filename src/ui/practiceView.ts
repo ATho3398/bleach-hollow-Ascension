@@ -1,16 +1,12 @@
-// 전투 연습 (U-4): 상대 목록(속성·종류 필터) + 연습 결과. 연습 전투 화면 자체는 battleView.
-import { ENEMIES, enemyPatternKind } from '../data/enemies';
-import { ELEMENT_IDS, elementAbbr, elementName } from '../data/elements';
+// 전투 연습 (U-4): 수련장 훈련 인형 입구(C.471 — [전투 들어가기], 상대는 전투 안 적 설정 창) + 연습 결과 화면. 연습 전투 화면 자체는 battleView.
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
-import { BASIC_SKILL_ID, comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
+import { comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
-import { weaknessText } from './absorbView';
-import { button, el, icon, panel, tag } from './bha/dom';
+import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
 import { lcdHead, lcdPage } from './bha/lcdpage';
-import { ALL, filterFoes, iconInfo, val, type IconInfoRow, type PracticeFilter } from './bha/expedition';
-import { elementDot, elementMark, paintElement } from './bha/element';
+import { iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { battleLabels, comboBlockLabel, liberationBlockLabel, skillBlockLabel } from './labels';
 import { devText, shownName } from './displayName';
 import { asBack } from './bha/screenBack';
@@ -19,102 +15,32 @@ import { asBack } from './bha/screenBack';
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
   basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격',
 };
-const PATTERN_ICON: Record<EnemyPatternKind, string> = {
-  basic: 'i-basic', swift: 'i-pattern-fast', sturdy: 'i-pattern-tough', 'heavy-seal': 'i-pattern-heavy', 'heavy-chain': 'i-pattern-heavy', stance: 'i-guard',
-};
-const RANKS: readonly { id: string; label: string }[] = [{ id: ALL, label: '전체' }, { id: 'normal', label: '일반' }, { id: 'elite', label: '강적' }];
-
-export interface PracticeListHandlers {
-  onPick: (enemy: EnemyDef) => void;
+export interface PracticeEntryHandlers {
+  /** [전투 들어가기]: 빈 적 자리 + 적 설정 창 전투로 (GDD 8-9, C.471) */
+  onEnter: () => void;
   /** 머리 제목 (수련장 토글, GDD 99장 2). 없으면 글자 제목 */
   title?: Node;
 }
 
-/** 필터는 화면 상태만 (저장하지 않는다). 연습 메뉴로 돌아와도 처음부터 */
-export function practiceListView(root: HTMLElement, faction: FactionConfig, recordCount: number, h: PracticeListHandlers): void {
+/** 수련장 훈련 인형 입구 (GDD 8-9, C.471 사용자 2026-11-17 "전투 들어간 뒤에 훈련장 설정 있고 그 창에서 설정해서 나오는 식"):
+ *  상대 목록 대신 [전투 들어가기] 하나 — 들어가면 빈 적 자리 + 적 설정 창(테스트 전투와 같은 창, 적 = 훈련 인형 + 도감에서 본 적) */
+export function practiceEntryView(root: HTMLElement, faction: FactionConfig, recordCount: number, h: PracticeEntryHandlers): void {
   const labels = battleLabels(faction);
-  const filter: PracticeFilter = { element: ALL, rank: ALL };
-
   const sub = el('span');
-  sub.append('상대를 고르면 바로 전투가 시작된다 · 기록 ', el('b', '', String(recordCount)), '판');
-
-  const segOf = (label: string, items: HTMLElement[]) => {
-    const s = el('div', 'bha-seg bha-seg--sm');
-    s.setAttribute('role', 'radiogroup');
-    s.setAttribute('aria-label', label);
-    s.append(...items);
-    return s;
-  };
-  const choice = (cls: string): HTMLButtonElement => {
-    const b = el('button', cls);
-    b.type = 'button';
-    b.setAttribute('role', 'radio');
-    return b;
-  };
-  const linBtns = [{ id: ALL, label: '전체' }, ...ELEMENT_IDS.map((id) => ({ id, label: '' }))].map((it) => {
-    const b = choice('bha-seg__item');
-    if (it.id === ALL) b.append(it.label);
-    else {
-      b.append(elementMark(it.id, faction.id, elementAbbr(it.id, faction.id)));
-      b.setAttribute('aria-label', elementName(it.id, faction.id));
-    }
-    b.onclick = () => {
-      filter.element = it.id;
-      refresh();
-    };
-    return { id: it.id, b };
-  });
-  const rankBtns = RANKS.map((r) => {
-    const b = choice('bha-seg__item');
-    b.append(r.label);
-    b.onclick = () => {
-      filter.rank = r.id;
-      refresh();
-    };
-    return { id: r.id, b };
-  });
-  const count = el('span', 'bha-faint bha-num');
-  const rankSeg = segOf('종류', rankBtns.map((x) => x.b));
-  const rankRow = el('div', 'bha-row');
-  rankRow.append(rankSeg, count);
-  const filters = el('div', 'bha-practice__filters');
-  filters.append(segOf('적 속성', linBtns.map((x) => x.b)), rankRow);
-
-  const listEl = el('div', 'bha-foelist');
-
-  function refresh(): void {
-    for (const x of linBtns) {
-      x.b.classList.toggle('is-active', x.id === filter.element);
-      x.b.setAttribute('aria-checked', String(x.id === filter.element));
-    }
-    for (const x of rankBtns) {
-      x.b.classList.toggle('is-active', x.id === filter.rank);
-      x.b.setAttribute('aria-checked', String(x.id === filter.rank));
-    }
-    const foes = filterFoes(ENEMIES.filter((e) => !e.testOnly || devText()), filter); // 테스트 적은 테스트 모드에서만 (GDD 100장 #70)
-    count.textContent = `${foes.length}명`;
-    listEl.replaceChildren();
-    for (const enemy of foes) {
-      const pat = enemyPatternKind(enemy);
-      const row = paintElement(el('button', 'bha-foerow'), enemy.element);
-      row.type = 'button';
-      const mark = el('span', 'bha-foerow__mark');
-      mark.append(elementDot(enemy.element, faction.id));
-      const name = el('span', 'bha-foerow__name', shownName(pickFaction(enemy.name, faction.id)));
-      name.append(' ', tag(enemy.class === 'elite' ? '강적' : '일반', enemy.class));
-      const meta = el('span', 'bha-foerow__meta');
-      const weak = weaknessText(enemy, faction.id);
-      meta.append(icon(PATTERN_ICON[pat]), `${PATTERN_LABEL[pat]} · ${elementName(enemy.element, faction.id)}${weak ? ` · 약점 ${weak}` : ''}`);
-      const body = el('span');
-      body.append(name, meta);
-      row.append(mark, body, icon('i-chevron-right'));
-      row.onclick = () => h.onPick(enemy);
-      listEl.append(row);
-    }
-  }
-  refresh();
-  // 가로 LCD (T-3): 머리 = 제목, 왼쪽 = 필터(좁게), 오른쪽 = 상대 목록(넓게, GDD 100장 #70) (목록만 그 열 안에서 스크롤). 돌아가기는 취소 버튼
-  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 0.6fr) minmax(0, 1.4fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [filters], [listEl]);
+  sub.append('들어가서 창에서 상대를 정한다 · 기록 ', el('b', '', String(recordCount)), '판');
+  const rules = el('ul', 'bha-practice__rules');
+  for (const t of [
+    '상대 = 기본 훈련 인형 + 적 도감에서 만난 적',
+    '★ = 연 난이도까지 · 체력·공격력 = 내 기본 공격 n회 분량',
+    '쓰러뜨리면 결과 창 없이 다시 설정 창이 뜬다',
+    '보상·사망 없음 · 펫도 같이 싸운다',
+  ]) rules.append(el('li', '', t));
+  const enter = button({ label: '전투 들어가기', icon: 'i-attack', variant: 'primary', size: 'lg', onClick: h.onEnter });
+  enter.dataset.sc = 'practice-enter';
+  const right = el('div', 'bha-practice__enter');
+  right.append(enter);
+  // 가로 LCD (T-3): 머리 = 제목(수련장 토글), 왼쪽 = 규칙, 오른쪽 = [전투 들어가기]. 돌아가기는 취소 버튼
+  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 1.2fr) minmax(0, 0.8fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [rules], [right]);
 }
 
 export interface PracticeResultHandlers {

@@ -18,6 +18,7 @@ import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, equippedAbilitiesOf, type FormAbilities, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
 import { judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
+import { lookUnitName } from './lookDex';
 
 const EV = BALANCE.provisional.evolution;
 const SX = BALANCE.provisional.stats;
@@ -376,6 +377,9 @@ export function formDisplayName(e: EvolutionState, factionId: string): string {
     if (released) return released;
   }
   if (isFailLine(e)) return fac.tierNames[0]!;
+  // 모델 단위 진화체 (GDD 8-5 v6.096, C.469): 종족 설정 tierLooks[단계].lookUnit 단계는 외형 모델 이름(예 '거미형 아쥬커스')
+  const byLook = form ? lookUnitName(fac, form, e.look) : null;
+  if (byLook) return byLook;
   return form ? formName(form, factionId, playerElementsOf(e)) : fac.tierNames[e.tierIndex]!;
 }
 

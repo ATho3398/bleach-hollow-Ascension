@@ -99,14 +99,14 @@ describe('C.465 초월자 전투 방식 = 스킨 잠금 (GDD 12-4 v6.093)', () =
   });
 
   it('세이브 형식 90: 89 → 90 마이그레이션 = 묶음 밖 스킨이면 첫 모델, 안이면 그대로, 키웠던 기반은 손대지 않음', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(90);
+    expect(SAVE_FORMAT_VERSION).toBe(91);
     const s = ichigoSave();
     switchKitMode(s, 'tybw');
     const raw = JSON.parse(JSON.stringify(s));
     raw.skin = null; // 옛 세이브: 천년혈전인데 기본 모델
     raw.meta.format = 89;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(90);
+    expect(m.meta.format).toBe(91);
     expect(m.skin).toBe(BLOOD);
     const r = riftSave();
     const raw2 = JSON.parse(JSON.stringify(r));
@@ -159,7 +159,7 @@ describe('C.465 혈쇄 이치고·무월 종이인형 (종이인형 작업본 �
     const mu = layeredArt('char.transcendent-ichigo-mugetsu')!;
     expect(mu.rig?.look).toBe('ichigo-mugetsu');
     expect(mu.layers).toBeUndefined();
-    expect(mu.fieldScale).toBe(0.96); // C.467
+    expect(mu.fieldScale).toBe(1.26);
   });
 
   it('이펙트 층: 무월 불꽃·혈쇄 사슬이 그 외형에 붙는다 (작업본 2026-11-17 값)', () => {
@@ -167,7 +167,7 @@ describe('C.465 혈쇄 이치고·무월 종이인형 (종이인형 작업본 �
     expect(mugetsuFlame.look).toBe('ichigo-mugetsu');
     expect(ichigoChain.look).toBe('ichigo-bloody');
     expect(ichigoChain.bands.map((b) => b.name)).toEqual(['목', '칼 든 손목', '뒷손 손목', '왼발목', '오른발목']);
-    expect(ichigoChain.bands[0]!.z).toBe('sword'); // 편집기 고정 115-A 160: 목 사슬 띠 = 칼 바로 앞
+    expect(ichigoChain.bands[0]!.z).toBe('coat_front'); // 편집기 고정 115-A 160 → 162(C.469): 목 사슬 띠 = 코트 앞자락 바로 앞
   });
 
   it('해방 몸 재생기 전환(switchAnim): 해방 중엔 바꿔 입은 몸이 동작을 받고, 쉬는 동작은 둘 다', () => {

@@ -91,6 +91,7 @@
 .bha-dexmodal .bha-itemmodal__art .bha-dexart { width: 104px; height: 104px; }
 .bha-dexmodal .bha-edex__art--hero { width: 96px; height: 96px; }
 .bha-dexmodal .bha-dexart.is-silhouette .bha-itemart--img { filter: brightness(0); opacity: 0.55; }
+.bha-dexdetail__chips .bha-skinpick__chip:disabled { color: var(--bha-text-3); cursor: default; }
 .bha-itemmodal__rich { display: flex; flex-direction: column; gap: var(--bha-sp-3); white-space: normal; font-size: var(--bha-fs-sm); }
 .bha-itemmodal__rich > * { flex: none; margin: 0; }
 
@@ -288,6 +289,9 @@
 .bha-practicepage .bha-practice__filters .bha-row { flex-wrap: wrap; row-gap: var(--bha-sp-2); }
 .bha-practicepage .bha-foelist { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-practicepage .bha-foerow { flex: none; min-height: var(--bha-touch); }
+/* 훈련 인형 입구 (GDD 8-9, C.471): 왼쪽 규칙 줄, 오른쪽 [전투 들어가기] 가운데 */
+.bha-practicepage .bha-practice__rules { margin: 0; padding-left: var(--bha-sp-6); display: flex; flex-direction: column; gap: var(--bha-sp-3); color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-practicepage .bha-practice__enter { height: 100%; display: flex; align-items: center; justify-content: center; }
 
 /* ═════ 원정 결과·연습 결과 (T-2 에서 남은 스크롤 줄이기): 왼쪽을 좁히고 오른쪽 요약 표를 두 줄 칸으로 ═════ */
 .bha-lcd .bha-app.bha-split.bha-resultpage { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr); }

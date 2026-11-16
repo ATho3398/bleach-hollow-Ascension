@@ -4,6 +4,7 @@ import { isElement } from '../elements';
 import raw from './enemies.json';
 import poolRaw from './pools.json';
 import gradesRaw from './grades.json';
+import practiceRaw from './practice.json';
 
 /** 적 등급 표 (GDD 198장): 강적·보스 고정 등급, 도감 전용 표시 */
 export const ENEMY_GRADES = gradesRaw as { order: string[]; names: Record<string, string>; menos: string[]; menosName: string };
@@ -73,6 +74,9 @@ export function parseEnemy(r: unknown): EnemyDef {
 }
 
 export const ENEMIES: readonly EnemyDef[] = (raw as unknown[]).map(parseEnemy);
+
+/** 기본 훈련 인형 (GDD 8-9, C.471): 수련장 적 설정 창 전용 — ENEMIES·출현표·도감에 들어가지 않는다 */
+export const PRACTICE_DUMMY: EnemyDef = parseEnemy(practiceRaw.dummy);
 
 export function getEnemy(id: string): EnemyDef {
   const e = ENEMIES.find((x) => x.id === id);

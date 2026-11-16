@@ -18,9 +18,10 @@ describe('C.458 수련장 보스·강적 처치 → 흡수 없이 수련장 (사
     expect(app.match(/absorb: true/g)?.length).toBe(1);
     const begin = app.slice(app.indexOf('function beginBattle'), app.indexOf('function beginBattle') + 4000);
     expect(begin).toContain('absorb: true');
-    const practice = app.slice(app.indexOf('function runPractice'), app.indexOf('function practiceResult('));
+    // C.471 (GDD 8-9): 수련장 훈련 인형 = 적 설정 창 전투(arenaBattle) — 결과 창 없이 다시 창, 흡수 없음
+    const practice = app.slice(app.indexOf('function arenaBattle'), app.indexOf('// ── 등급전 (GDD 21장'));
     expect(practice).not.toContain('absorb');
-    expect(practice).toContain('practiceResult(faction, enemy, done)'); // 이기면 수련장 결과 → [연습 메뉴로] = 수련장
+    expect(practice).toContain('autoEnd: true');
   });
   it('수련장 결과 화면에 포식 줄·흡수 규칙 안내가 없다', () => {
     const pv = readFileSync('src/ui/practiceView.ts', 'utf8');

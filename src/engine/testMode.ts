@@ -31,6 +31,7 @@ import { recommendedDifficulty } from './difficulty';
 import { stepsNeeded, type EvolveResult } from './evolution/evolution';
 import type { AbsenceReport } from './nest';
 import { pickLook } from './evolution/tierLook';
+import { lookCells, lookDexKey, recordLookDex } from './evolution/lookDex';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
@@ -203,6 +204,8 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   for (const g of GUIDE_IDS) save.help.guides[g] = 'done';
   fillDefaultTraits(save);
   save.formDex = [...new Set([...save.formDex, ...FORM_TABLE.map((f) => f.id)])];
+  // 모델 단위 진화체 도감 (GDD 8-5 v6.096, C.470): 종족 설정 tierLooks[단계].lookUnit 단계의 모든 모델 × 색
+  save.lookDex = [...new Set([...(save.lookDex ?? []), ...FACTIONS.flatMap((f) => Object.keys(f.tierLooks ?? {}).flatMap((t) => lookCells(f, Number(t)).flatMap((c) => c.forms.map((x) => lookDexKey(c.model, x.id)))))])];
   // 스토리: 모든 종족·장·화 클리어 + 장 보상 받음 (내용이 있는 장만)
   for (const f of FACTIONS) {
     const prog = storyProgressOf({ story: save.story, factionId: f.id });
@@ -337,6 +340,7 @@ function refreshLook(save: SaveData): void {
   const e = save.evolution;
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   e.look = form ? pickLook(getFaction(save.factionId), form, currentStats(e, save.factionId), e.stageSeed, e.ascended === true) : null;
+  if (form) recordLookDex(save, getFaction(save.factionId), form, e.look); // 모델 단위 진화체 도감 (GDD 8-5 v6.096): 테스트로 고른 모델·색도 발견
 }
 
 /** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */
@@ -514,19 +518,30 @@ const clampTo = (v: number | null, lo: number, hi: number): number | null => (v 
 export function testArenaDefaults(c: TestBattleChoice): { hpAttacks: number; attackAttacks: number; attackSeconds: number } | null {
   const b = testBattleEnemy(c);
   if (!b) return null;
-  const pat = b.enemy.pattern;
+  return arenaStatsOf(b.enemy);
+}
+
+/** 적 정의 → 창 단위 수치 (체력·공격력 = 내 기본 공격 n회 분량, 일반 공격 간격 = 패턴 값 또는 전투 기본값). 수련장 훈련 인형도 같이 쓴다 (C.471) */
+export function arenaStatsOf(enemy: EnemyDef): { hpAttacks: number; attackAttacks: number; attackSeconds: number } {
+  const pat = enemy.pattern;
   const sec = pat && 'attackSeconds' in pat ? pat.attackSeconds : BALANCE.provisional.combat.enemyAttackSeconds;
-  return { hpAttacks: b.enemy.hpInAttacks, attackAttacks: b.enemy.attackInAttacks, attackSeconds: sec };
+  return { hpAttacks: enemy.hpInAttacks, attackAttacks: enemy.attackInAttacks, attackSeconds: sec };
+}
+
+/** 창에 넣은 체력·공격력(n회 분량)으로 적을 바꾼다 (null = 그 적 값 그대로). 수련장 훈련 인형도 같이 쓴다 (C.471) */
+export function withArenaStats(enemy: EnemyDef, c: Pick<TestArenaChoice, 'hpAttacks' | 'attackAttacks'>): EnemyDef {
+  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  if (hp === null && atk === null) return enemy;
+  return scaleEnemy(enemy, { hp: hp === null ? 1 : hp / enemy.hpInAttacks, attack: atk === null ? 1 : atk / enemy.attackInAttacks });
 }
 
 /** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음, 넣은 체력·공격력 n회 분량으로 바꿈). 없는 적이면 null */
 export function testArenaEnemy(c: TestArenaChoice): { enemy: EnemyDef; star: number; bossId: string | null } | null {
   const base = testBattleEnemy(c);
   if (!base) return null;
-  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
-  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
-  if (hp === null && atk === null) return base;
-  return { ...base, enemy: scaleEnemy(base.enemy, { hp: hp === null ? 1 : hp / base.enemy.hpInAttacks, attack: atk === null ? 1 : atk / base.enemy.attackInAttacks }) };
+  const enemy = withArenaStats(base.enemy, c);
+  return enemy === base.enemy ? base : { ...base, enemy };
 }
 
 /** 적 설정 창의 공격 여부·무적·공격 간격·시간을 전투 파라미터에 (엔진은 이 칸만 본다) */

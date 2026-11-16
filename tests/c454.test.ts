@@ -345,9 +345,9 @@ describe('원정: 호로화 = 리스크 게이지', () => {
 describe('세이브 형식 88', () => {
   it('87 → 88 은 구조 보정 없이 올라간다', () => {
     const s = newSaveData('hollow', 1000);
-    expect(SAVE_FORMAT_VERSION).toBe(90);
+    expect(SAVE_FORMAT_VERSION).toBe(91);
     const old = JSON.parse(JSON.stringify(s));
     old.meta.format = 87;
-    expect(migrateSave(old)?.meta.format).toBe(90);
+    expect(migrateSave(old)?.meta.format).toBe(91);
   });
 });

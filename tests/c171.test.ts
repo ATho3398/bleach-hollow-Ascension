@@ -147,7 +147,9 @@ describe('훈련장·책장·상태 (#67~75·83·84)', () => {
   it('수련 카드 보상·비용은 칩, 테두리는 선택 전용 (#67·68), 테스트 적은 테스트 모드만 (#70)', () => {
     expect(read('src/ui/trainingView.ts')).toContain("chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));"); // C.239 (GDD 159장 44): 대표 효과 칩 하나
     expect(read('src/ui/bha/training.css')).not.toContain(':hover, .bha-train__card.bha-sel');
-    expect(read('src/ui/practiceView.ts')).toContain('!e.testOnly || devText()');
+    // C.471: 훈련 인형 적 목록 = 기본 훈련 인형 + 도감 본 적, 테스트 적은 테스트 모드(devText)만
+    expect(read('src/engine/practiceArena.ts')).toContain('e.testOnly ? includeTest');
+    expect(read('src/ui/app.ts')).toContain('practiceArenaSource(faction, s0.enemyDex, maxStar, devText())');
   });
   it('제목 토글 아래 설명줄 4px (#69·74), 진화체 도감은 한 목록 + 단계 머리줄 (#73)', () => {
     expect(read('src/ui/bha/screens-lcd.css')).toContain('.bha-lcdpage__title:has(.bha-viewtitle) + .bha-lcdpage__sub { margin-top: var(--bha-sp-2); }');

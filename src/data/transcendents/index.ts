@@ -75,6 +75,8 @@ export interface TranscendentStanceDef {
   /** 패링 성공 피해 이름 (parry 와 같이) */
   parryName?: string;
   lanterns?: boolean;
+  /** 스택 표시 아이콘 (GDD 7-13 스택 표시, C.471 — 스프라이트 id, 체력 막대 위 작은 네모). 없으면 statusMarks.json stance 기본 */
+  icon?: string;
 }
 
 /** 전투 모드 하나 (GDD 12-4, C.460) */
@@ -188,7 +190,7 @@ function modeOk(m: TranscendentKitModeDef, index: number): boolean {
   const flags = ['speed', 'power', 'clones', 'fixed', 'hold', 'draw', 'parry', 'lanterns'] as const;
   return new Set(m.stances.map((x) => x?.id)).size === m.stances.length && m.stances.every((x) => x && typeof x.id === 'string' && x.id && typeof x.name === 'string' && x.name
     && typeof x.releaseName === 'string' && x.releaseName && ids.has(x.block) && flags.every((f) => x[f] === undefined || typeof x[f] === 'boolean')
-    && (!x.draw || (typeof x.drawName === 'string' && !!x.drawName)) && (!x.parry || (typeof x.parryName === 'string' && !!x.parryName)));
+    && (!x.draw || (typeof x.drawName === 'string' && !!x.drawName)) && (!x.parry || (typeof x.parryName === 'string' && !!x.parryName)) && (x.icon === undefined || (typeof x.icon === 'string' && x.icon.startsWith('i-'))));
 }
 
 function kitErrors(k: unknown): boolean {

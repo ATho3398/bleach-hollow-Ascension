@@ -1,0 +1,39 @@
+{
+  "errors": [],
+  "shots": [
+    "01-room-bloodchain.png",
+    "04-battle-bloodchain.png",
+    "02-room-aizen.png",
+    "03-room-hollow4.png"
+  ],
+  "heights": {
+    "roomBloodchain": {
+      "h": 175,
+      "box": [
+        219,
+        236
+      ]
+    },
+    "battleBloodchain": {
+      "h": 140,
+      "box": [
+        189,
+        189
+      ]
+    },
+    "roomAizen": {
+      "h": 154,
+      "box": [
+        166,
+        179
+      ]
+    },
+    "roomHollow4": {
+      "h": 110,
+      "box": [
+        273,
+        294
+      ]
+    }
+  }
+}

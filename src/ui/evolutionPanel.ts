@@ -1,6 +1,7 @@
 // 진화 제단·진화 연출 (GDD 20-5). 문구는 종족 설정(tierNames, slotName, appearanceChange)·진화 데이터에서 읽는다.
 // 진화 타이밍(걸음 수)·후보는 숨긴다(v4.1): 제단은 지금 진화체·속성·고유 특성만 보이고, 진화는 둥지에 돌아오면 저절로 일어난다.
 import { abilityNameByEffect, formName, physProcText, tryGetForm } from '../data/evolution';
+import { lookUnitName } from '../engine/evolution/lookDex';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../data/schema';
 import { statName } from '../data/elements';
 import { normalSlotNote } from '../data/help/textFormat';
@@ -131,6 +132,8 @@ export interface EvolutionExtra {
   ev?: Stats;
   /** 실패형 줄기 (GDD 49-8 2번): 단계·진화체 이름을 1단계 이름으로 */
   failLine?: boolean;
+  /** 진화 뒤 외형 id (evolution.look — 모델 단위 진화체 이름, GDD 8-5 v6.096). 없으면 진화체 이름 */
+  look?: string | null;
   /** 실제 종족값 (실패형 줄기 낮춤 반영). 없으면 진화체 값 */
   stats?: Stats;
   /** 이 진화로 특성 받은 결과 (GDD 148·149장, C.225·C.226)와 받은 뒤 그 특성 세기. 있으면 특성 행은 이 한 줄 */
@@ -266,7 +269,7 @@ export function evolutionView(
   if (reason) reason.dataset.evolveReason = '';
   const created = h('div', 'bha-evolve__new');
   for (const e of extra?.elements ?? form.elements ?? []) created.append(elementDot(e, faction.id));
-  created.append(` 새 진화체: ${shownName(failLine ? shownTo : formName(form, faction.id, extra?.elements ?? []))}`);
+  created.append(` 새 진화체: ${shownName(failLine ? shownTo : lookUnitName(faction, form, extra?.look) ?? formName(form, faction.id, extra?.elements ?? []))}`);
   if (form.hidden) created.append(' ', h('span', 'bha-chip bha-chip--rare', '히든'));
   if (form.provisional) created.append(' ', provisionalTag());
 

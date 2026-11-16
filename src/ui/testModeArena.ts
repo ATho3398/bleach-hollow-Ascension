@@ -1,14 +1,49 @@
-// 테스트 모드 적 설정 창 (GDD 17-4 v6.083, C.457 사용자 2026-11-15 '테스트 전투 방식 개편'): 바로 전투에 들어가면 적 없이 이 창이 뜬다.
-// 적(몹 목록)·★·연속·탑 층·체력/공격력 배율·공격 여부·무적을 정하고 [확인] = 적 등장. 적을 쓰러뜨리면 다시 이 창(전투는 이어짐).
-// [창 닫기] = 빈 적 자리에 [적 설정] 버튼만 남김, [나가기] = 테스트 패널로. 목록은 데이터(testFoes)에서 — 종족 분기 없음.
+// 적 설정 창 (GDD 17-4 v6.083, C.457 사용자 2026-11-15 '테스트 전투 방식 개편'): 바로 전투에 들어가면 적 없이 이 창이 뜬다.
+// 적(몹 목록)·★·체력/공격력(내 기본 공격 n회 분량)·공격 간격·공격 여부·무적을 정하고 [확인] = 적 등장. 적을 쓰러뜨리면 다시 이 창(전투는 이어짐).
+// [창 닫기] = 빈 적 자리에 [적 설정] 버튼만 남김, [나가기] = 나온 곳으로. 목록은 데이터에서 — 종족 분기 없음.
+// C.471 (GDD 8-9): 수련장 훈련 인형도 같은 창 — 적 목록·★ 범위·기본값만 '창 출처'(ArenaSource)로 바꾼다(테스트 = testFoes·모든 ★, 수련장 = 훈련 인형 + 도감 본 적·연 ★).
 import { bossName } from '../data/bosses';
 import { pickFaction } from '../data/schema';
 import { MAX_DIFFICULTY } from '../engine/difficulty';
+import type { EnemyDex } from '../engine/enemyDex';
 import type { FactionConfig } from '../engine/faction';
+import { practiceArenaDefaults, practiceFoes, practiceStar } from '../engine/practiceArena';
 import { testArenaDefaults, testFoes, TEST_ARENA_ATTACKS_MAX, TEST_ARENA_SECONDS_RANGE, type TestArenaChoice } from '../engine/testMode';
+import type { PickOption } from './bha/pickList';
 import { pickList } from './bha/pickList';
 import { button, el, seg } from './bha/dom';
 import { confirmDialog } from './confirmDialog';
+
+/** 창 출처: 적 목록·★ 최대·적·★ 의 기본 수치 */
+export interface ArenaSource {
+  foes: PickOption[];
+  maxStar: number;
+  defaults: (foeId: string, star: number) => { hpAttacks: number; attackAttacks: number; attackSeconds: number } | null;
+}
+
+/** 테스트 모드 출처 (C.457 그대로): 적·보스 전부, ★ 전부, 기본값 = 패널의 연속·탑 층 배율 포함 */
+export function testArenaSource(faction: FactionConfig, prev: TestArenaChoice): ArenaSource {
+  const fid = faction.id;
+  return {
+    foes: testFoes().map((f) => ({
+      value: f.id,
+      label: f.kind === 'boss' ? bossName(f.id, fid) : pickFaction(f.def.name, fid),
+      group: f.kind === 'boss' ? '보스' : f.def.class === 'elite' ? '강적' : '일반',
+    })),
+    maxStar: MAX_DIFFICULTY,
+    defaults: (foeId, star) => testArenaDefaults({ ...prev, foeId, star }),
+  };
+}
+
+/** 수련장 훈련 인형 출처 (GDD 8-9, C.471): 기본 훈련 인형 + 적 도감에서 본 적(테스트 모드면 테스트 적도), ★ = 연 난이도까지 */
+export function practiceArenaSource(faction: FactionConfig, dex: Readonly<EnemyDex> | null | undefined, maxStar: number, includeTest: boolean): ArenaSource {
+  const foes = practiceFoes(dex, includeTest);
+  return {
+    foes: foes.map((f, i) => ({ value: f.id, label: pickFaction(f.name, faction.id), group: i === 0 ? '기본' : f.class === 'elite' ? '강적' : '일반' })),
+    maxStar: practiceStar(maxStar, maxStar),
+    defaults: (foeId, star) => practiceArenaDefaults(foes, foeId, star, maxStar),
+  };
+}
 
 export interface TestArenaDialogHandlers {
   /** [확인]: 고른 값으로 적을 내보낸다 */
@@ -31,16 +66,17 @@ function numInput(value: number, min: number, max: number, aria: string): HTMLIn
   return i;
 }
 
-/** 적 설정 창을 연다. prev = 지난 값(처음이면 기본값), note = 창 위 한 줄(직전 결과 등) */
+/** 테스트 모드 적 설정 창 (C.457 그대로) */
 export function testArenaDialog(faction: FactionConfig, prev: TestArenaChoice, note: string, h: TestArenaDialogHandlers): () => void {
-  const fid = faction.id;
-  const foes = testFoes();
-  const foeSel = pickList(foes.map((f) => ({
-    value: f.id,
-    label: f.kind === 'boss' ? bossName(f.id, fid) : pickFaction(f.def.name, fid),
-    group: f.kind === 'boss' ? '보스' : f.def.class === 'elite' ? '강적' : '일반',
-  })), prev.foeId, '적 종류', 'bha-test__select');
-  const starSel = pickList(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(prev.star), '난이도', 'bha-test__select');
+  return arenaDialog(testArenaSource(faction, prev), prev, note, h);
+}
+
+/** 적 설정 창을 연다. src = 적 목록·★ 범위·기본값, prev = 지난 값(처음이면 기본값), note = 창 위 한 줄(직전 결과 등) */
+export function arenaDialog(src: ArenaSource, prev: TestArenaChoice, note: string, h: TestArenaDialogHandlers): () => void {
+  const foeId0 = src.foes.some((f) => f.value === prev.foeId) ? prev.foeId : src.foes[0]?.value ?? '';
+  const foeSel = pickList(src.foes, foeId0, '적 종류', 'bha-test__select');
+  const star0 = Math.min(src.maxStar, Math.max(1, prev.star));
+  const starSel = pickList(Array.from({ length: src.maxStar }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(star0), '난이도', 'bha-test__select');
   // 적 수치 = 화면 표시 단위 (C.457 마스터 2026-11-15): 체력·공격력 = '내 기본 공격 n회 분량'(hpInAttacks·attackInAttacks — ★ 권장 단계 플레이어 기준), 공격 간격 = 초
   const dec = (v: number, aria: string, step: string, max: number): HTMLInputElement => {
     const i = numInput(v, 0, max, aria);
@@ -50,13 +86,13 @@ export function testArenaDialog(faction: FactionConfig, prev: TestArenaChoice, n
   };
   const r1 = (x: number) => Math.round(x * 10) / 10;
   const r2 = (x: number) => Math.round(x * 100) / 100;
-  const def0 = testArenaDefaults({ ...prev, foeId: foeSel.value, star: Number(starSel.value) });
+  const def0 = src.defaults(foeSel.value, Number(starSel.value));
   const hp = dec(r1(prev.hpAttacks ?? def0?.hpAttacks ?? 10), '체력 (내 기본 공격 n회)', '0.1', TEST_ARENA_ATTACKS_MAX);
   const atk = dec(r2(prev.attackAttacks ?? def0?.attackAttacks ?? 1), '공격력 (내 기본 공격 n회 분량)', '0.01', TEST_ARENA_ATTACKS_MAX);
   const sec = dec(r2(prev.attackSeconds ?? def0?.attackSeconds ?? 1.5), '공격 간격 (초)', '0.1', TEST_ARENA_SECONDS_RANGE[1]);
   /** 적·★를 바꾸면 그 적의 기본 수치로 다시 채운다 */
   const refill = (): void => {
-    const d = testArenaDefaults({ ...prev, foeId: foeSel.value, star: Number(starSel.value) });
+    const d = src.defaults(foeSel.value, Number(starSel.value));
     if (!d) return;
     hp.value = String(r1(d.hpAttacks));
     atk.value = String(r2(d.attackAttacks));

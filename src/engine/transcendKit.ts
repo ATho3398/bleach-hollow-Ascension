@@ -155,6 +155,7 @@ function stanceKitOf(k: KitState, def: TranscendentKitDef, mode: TranscendentKit
   }
   const stances: CombatStance[] = mode.stances.map((x) => ({
     id: x.id, name: x.name, block: x.block, releaseName: x.releaseName,
+    ...(x.icon ? { icon: x.icon } : {}),
     ...(x.speed ? { speedPerStack: n.speedPerStack } : {}),
     ...(x.power ? { powerPerStack: n.powerPerStack } : {}),
     ...(x.clones ? { clones: { ...n.clones } } : {}),

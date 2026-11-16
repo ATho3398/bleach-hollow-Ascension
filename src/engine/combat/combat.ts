@@ -332,6 +332,8 @@ export interface CombatStance {
   name: string;
   block: string;
   releaseName: string;
+  /** 스택 표시 아이콘 (GDD 7-13, C.471 — 데이터 stances[].icon, 화면만 읽음) */
+  icon?: string;
   speedPerStack?: number;
   powerPerStack?: number;
   clones?: { perChain: number; max: number };

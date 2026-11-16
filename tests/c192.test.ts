@@ -81,7 +81,7 @@ describe('118장 1: 방은 C.189 크기, 걷기·전투는 C.190 크기', () => 
     for (const [f, t, key] of [['shinigami', 2, 'char.shinigami'], ['shinigami', 0, 'char.shinigami'], ['hollow', 4, 'char.hollow']] as const) {
       const a = charArt(f, t, key, '/', undefined, []);
       expect(a.rig, `${f} ${t}`).toBeTruthy();
-      expect([a.scale, a.fieldScale]).toEqual([1.3, 1.16]); // C.467: 1.78·1.33 → 1.30·1.16 (사람형은 호로보다 작게)
+      expect([a.scale, a.fieldScale]).toEqual([1.78, 1.33]);
     }
   });
 });

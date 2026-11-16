@@ -77,7 +77,7 @@ import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
 import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
-import { practiceListView, practiceResultView } from './practiceView';
+import { practiceEntryView } from './practiceView';
 import { abortSummaryLine, resultView } from './resultView';
 import { evChipRow, evGains } from './bha/evChips';
 import { expeditionView, setSpeed } from './expeditionView';
@@ -139,10 +139,11 @@ import { battleItemBrief, battleItemText, useRerollTicket } from '../shop';
 import { withKitRiskName } from '../engine/transcendKit';
 import { pickDialog } from './pickDialog';
 import { applyTestArenaParams, applyTestExpeditionForce, clearTestSlot, newTestSave, openTestHogyoku, testArenaEnemy, testRefillSpecial, testStorage, type FullStorage, type TestArenaChoice, type TestBattleChoice } from '../engine/testMode';
-import { testArenaDialog, testArenaSlot } from './testModeArena';
+import { arenaDialog, practiceArenaSource, testArenaSlot, testArenaSource, type ArenaSource } from './testModeArena';
+import { PRACTICE_DUMMY_ID, practiceArenaEnemy, practiceFoes } from '../engine/practiceArena';
 import { initTestMode, keyringTestTap, testSpeed } from './testMode';
 import { testPanelView, type TestTab } from './testModePanel';
-import { shownName } from './displayName';
+import { devText, shownName } from './displayName';
 
 /** 칭호 id → 종족별 표기 이름 */
 function titleLabel(id: string, factionId: string): string {
@@ -417,6 +418,8 @@ export function startApp(host: HTMLElement): void {
   /** 다시 열 때 꺼 둔 동안 (GDD 102-7): 방이 그려진 뒤 알림 띠 한 번 */
   let absence: AbsenceReport | null = null;
   /** 테스트 모드 적 설정 창의 지난 값 (C.457, 이 실행 동안) */
+  /** 수련장 훈련 인형 창의 지난 고르기 (C.471 — 화면 상태만, 저장 안 함) */
+  let lastPractice: TestArenaChoice | null = null;
   let lastArena: TestArenaChoice = { foeId: '', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false };
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
@@ -2281,7 +2284,7 @@ export function startApp(host: HTMLElement): void {
       };
       if (evo?.ok) {
         const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
         afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
           holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
           nav.pop();
@@ -2374,7 +2377,7 @@ export function startApp(host: HTMLElement): void {
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
       onEvolved: (fromTier, r) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);
@@ -2388,28 +2391,50 @@ export function startApp(host: HTMLElement): void {
     if (!save) return;
     // 패널에서 적·★·연속·탑 층을 바꿨으면 창의 수치는 그 적의 기본값부터 (C.457)
     const same = lastArena.foeId === c.foeId && lastArena.star === c.star && lastArena.streak === c.streak && (lastArena.floor ?? null) === (c.floor ?? null);
-    let pick: TestArenaChoice = { ...lastArena, ...c, ...(same ? {} : { hpAttacks: null, attackAttacks: null, attackSeconds: null }) };
+    arenaBattle(faction, {
+      navId: 'test-battle',
+      pick: { ...lastArena, ...c, ...(same ? {} : { hpAttacks: null, attackAttacks: null, attackSeconds: null }) },
+      source: (pick) => testArenaSource(faction, pick),
+      enemyOf: (pick) => testArenaEnemy(pick),
+      onPicked: (pick) => { lastArena = pick; },
+      onRoundEnd: () => undefined,
+    });
+  }
+
+  /** 적 설정 창 전투 (테스트 전투 C.457 · 수련장 훈련 인형 C.471 공용, GDD 17-4·8-9): 빈 적 자리 + 창 → [확인] = 그 적 등장 → 끝나면 결과 창 없이 다시 창.
+   *  이기면 내 체력 비율 이어감, 지면 가득. [창 닫기](뒤로·Esc) = 빈 자리 [적 설정], [나가기]·그만두기 = 나온 곳(nav.pop). 보상 없음 */
+  function arenaBattle(faction: FactionConfig, run: {
+    navId: string;
+    pick: TestArenaChoice;
+    source: (pick: TestArenaChoice) => ArenaSource;
+    enemyOf: (pick: TestArenaChoice) => { enemy: EnemyDef; star: number; bossId: string | null } | null;
+    onPicked: (pick: TestArenaChoice) => void;
+    /** 한 판이 끝날 때 (전투 기록 다음, 저장 전) — 수련장 = 이번 생 훈련 인형 전투 수 */
+    onRoundEnd: (s0: SaveData, done: CombatState) => void;
+    tutorial?: boolean;
+  }): void {
+    let pick = run.pick;
     let hpFrac = 1;
     let kills = 0;
     let note = '적을 정하고 [확인]을 누르면 나온다. 쓰러뜨리면 이 창이 다시 뜬다.';
     /** 빈 적 자리(창) 또는 고른 적과의 전투 한 판을 그린다 */
     const round = (foe: TestArenaChoice | null): void => {
-      const e = { id: 'test-battle', locked: true, render: () => { arenaRound(foe); root.scrollTop = 0; } };
-      if (nav.top?.id === 'test-battle') nav.replace(e);
+      const e = { id: run.navId, locked: true, render: () => { arenaRound(foe); root.scrollTop = 0; } };
+      if (nav.top?.id === run.navId) nav.replace(e);
       else nav.push(e);
     };
     const arenaRound = (foe: TestArenaChoice | null): void => {
       const s0 = save!;
-      const enemyPick = testArenaEnemy(foe ?? pick);
+      const enemyPick = run.enemyOf(foe ?? pick);
       if (!enemyPick) return void nav.pop();
       const params = buildCombatParams(s0.build, faction.id);
       applyEvolutionToParams(params, s0.evolution, faction.id, statBonusOf(s0).total, s0.training.completed);
       applyDifficultyToParams(params, enemyPick.star);
       params.liberationStartGauge = liberationStartGaugeOf();
-      applyGearToParams(params, gearCarry(s0.shared.gear), enemyPick.enemy.class === 'elite' || enemyPick.bossId !== null);
-      params.petAttack = petAttackOf(carriedPet(s0.shared.pets));
-      applyCareToParams(params, battleCareOf(s0));
-      if (params.kit?.riskRelease) params.riskStart = s0.nest.risk; // 붕옥 감응도 = 리스크 (GDD 12-4 v6.054)
+      applyGearToParams(params, gearCarry(s0.shared.gear), enemyPick.enemy.class === 'elite' || enemyPick.bossId !== null); // 장비 (GDD 91장): 연습도 낀 장비 그대로
+      params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
+      applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정) — 져도 잃는 것이 없어 사망은 없다
+      if (params.kit?.riskRelease) params.riskStart = s0.nest.risk; // 붕옥 감응도 = 리스크 (GDD 12-4 v6.054): 지금 값으로 시작(둥지 값은 안 바뀜)
       params.playerStartHpFraction = hpFrac;
       applyTestArenaParams(params, foe ?? pick);
       const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyPick.enemy, params, ...(enemyPick.bossId ? { boss: bossSetupOf(enemyPick.bossId) } : {}) });
@@ -2418,13 +2443,14 @@ export function startApp(host: HTMLElement): void {
       let closeDialog: (() => void) | null = null;
       const openDialog = (): void => {
         hold.on = true;
-        closeDialog = testArenaDialog(faction, pick, note, {
-          onPick: (ch) => { pick = ch; lastArena = ch; round(ch); },
+        closeDialog = arenaDialog(run.source(pick), pick, note, {
+          onPick: (ch) => { pick = ch; run.onPicked(ch); round(ch); },
           onClose: () => { closeDialog = null; },
           onExit: () => nav.pop(),
         });
       };
       setBgm(enemyPick.enemy.class === 'elite' ? 'elite' : 'battle');
+      const tutorial = run.tutorial && foe ? tutorialFor() : undefined;
       battleView(root, faction, s, {
         ...battleItemOpts(s0, s),
         tierIndex: artTierIndexOf(s0),
@@ -2432,11 +2458,13 @@ export function startApp(host: HTMLElement): void {
         skinId: artSkinOf(s0),
         notice: foe ? `★${enemyPick.star}${foe.attacks ? '' : ' · 공격 안 함'}${foe.immortal ? ' · 무적' : ''} · 처치 ${kills}` : `적 설정 · 처치 ${kills}`,
         ...(foe ? {} : { emptyFoe: { slot: testArenaSlot(openDialog) } }),
+        ...(tutorial ? { tutorial } : {}),
         hold,
         autoEnd: true,
         onQuit: () => { closeDialog?.(); nav.pop(); },
         onEnd: (done) => {
           recordBattle(s0, buildBattleRecord(done, { factionId: faction.id, tierIndex: s0.evolution.tierIndex }));
+          run.onRoundEnd(s0, done);
           settleLiberationRisk(s0, done);
           persist();
           if (done.status === 'won') {
@@ -2455,59 +2483,26 @@ export function startApp(host: HTMLElement): void {
     round(null);
   }
 
-  // ── 전투 연습 (C.6: 새 전투 화면, 둥지 빌드 그대로) ──
+  // ── 수련장 훈련 인형 (GDD 8-9, C.471): [전투 들어가기] → 적 설정 창 전투(테스트 전투와 같은 흐름). 둥지 빌드 그대로, 보상·사망·수련권 없음 ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceListView(root, faction, save?.runLog.battles.length ?? 0, { onPick: (enemy) => practiceBattle(faction, enemy), title: trainingHead(faction, 'practice') });
+    practiceEntryView(root, faction, save?.runLog.battles.length ?? 0, { onEnter: () => practiceArena(faction), title: trainingHead(faction, 'practice') });
   }
 
-  /** 연습 전투: 결과 화면에서 [다시]로 올 때는 같은 자리를 바꿔 끼운다 */
-  function practiceBattle(faction: FactionConfig, enemy: EnemyDef, again = false): void {
-    if (save && careBlocked(save)) return;
-    const e = { id: 'practice-battle', locked: true, render: () => { runPractice(faction, enemy); root.scrollTop = 0; } };
-    if (again) nav.replace(e);
-    else nav.push(e);
-  }
-
-  /** fixedStar·notice 는 테스트 모드 바로 전투(38-4): 적은 이미 ★·배율을 입혀 넘긴다 */
-  function runPractice(faction: FactionConfig, enemy: EnemyDef, fixedStar?: number, bossId: string | null = null, notice?: string): void {
-    // 연습 상대 = 내 단계의 권장 난이도 ★ (GDD 32-1): 훈련 인형은 DPS 측정용이라 권장 세기로 고정
-    const star = fixedStar ?? recommendedDifficulty(save?.evolution.tierIndex ?? 0);
-    const params = save ? buildCombatParams(save.build, faction.id) : undefined;
-    if (save && params) {
-      applyEvolutionToParams(params, save.evolution, faction.id, statBonusOf(save).total, save.training.completed);
-      applyDifficultyToParams(params, star);
-      params.liberationStartGauge = liberationStartGaugeOf();
-      // 장비 (GDD 91장): 연습도 낀 장비 그대로 (훈련 인형 DPS 측정)
-      applyGearToParams(params, gearCarry(save.shared.gear), enemy.class === 'elite' || bossId !== null);
-      params.petAttack = petAttackOf(carriedPet(save.shared.pets)); // 펫도 같이 공격 (GDD 241-D 4)
-      applyCareToParams(params, battleCareOf(save)); // 빈사 (GDD 102장 수정) — 연습은 져도 잃는 것이 없어 사망은 없다
-      if (params.kit?.riskRelease) params.riskStart = save.nest.risk; // 붕옥 감응도 = 리스크 그 자체 (GDD 12-4 v6.054): 연습도 지금 값으로 시작(연습이라 둥지 값은 안 바뀜)
-    }
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: fixedStar === undefined ? enemyAtDifficulty(enemy, star) : enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
-    setBgm(enemy.class === 'elite' ? 'elite' : 'battle');
-    battleView(root, faction, s, {
-      ...(save ? battleItemOpts(save, s) : {}),
-      tierIndex: save ? artTierIndexOf(save) : undefined,
-      ...(save ? battleBasis(save) : {}),
-      skinId: save ? artSkinOf(save) : undefined,
-      notice,
-      tutorial: tutorialFor(),
-      onQuit: () => nav.pop(),
-      onEnd: (done) => {
-        if (save) {
-          recordBattle(save, buildBattleRecord(done, { factionId: faction.id, tierIndex: save.evolution.tierIndex }));
-          if (fixedStar === undefined) recordEvolutionPractice(save.evolution); // 각성형 조건 (GDD 126장 협의 답, C.220): 이번 생 훈련 인형 전투 수
-          settleLiberationRisk(save, done);
-          persist();
-        }
-        if (fixedStar === undefined) practiceResult(faction, enemy, done);
-        else practiceResultView(root, faction, enemy, done, { onAgain: () => nav.replace({ id: 'test-battle', locked: true, render: () => { runPractice(faction, enemy, fixedStar, bossId, notice); root.scrollTop = 0; } }), onMenu: () => nav.pop() });
-      },
+  /** 훈련 인형 적 설정 창 전투: 적 = 기본 훈련 인형 + 적 도감에서 본 적, ★ = 연 난이도까지(처음 = 권장 ★). 한 판 끝날 때마다 이번 생 훈련 인형 전투 수 +1 (각성형 조건) */
+  function practiceArena(faction: FactionConfig): void {
+    if (!save || careBlocked(save)) return;
+    const s0 = save;
+    const maxStar = s0.difficulty.unlocked;
+    const star = lastPractice?.star ?? recommendedDifficulty(s0.evolution.tierIndex);
+    arenaBattle(faction, {
+      navId: 'practice-battle',
+      pick: lastPractice ? { ...lastPractice, star: Math.min(maxStar, lastPractice.star) } : { foeId: PRACTICE_DUMMY_ID, star: Math.min(maxStar, star), streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false },
+      source: () => practiceArenaSource(faction, s0.enemyDex, maxStar, devText()),
+      enemyOf: (pick) => practiceArenaEnemy(practiceFoes(s0.enemyDex, devText()), pick, maxStar),
+      onPicked: (pick) => { lastPractice = pick; },
+      onRoundEnd: (sv) => recordEvolutionPractice(sv.evolution), // 각성형 조건 (GDD 126장 협의 답, C.220): 이번 생 훈련 인형 전투 수 = 한 판(적 하나와 싸움)마다 1
+      tutorial: true,
     });
-  }
-
-  function practiceResult(faction: FactionConfig, enemy: EnemyDef, s: CombatState): void {
-    practiceResultView(root, faction, enemy, s, { onAgain: () => practiceBattle(faction, enemy, true), onMenu: () => nav.pop() });
   }
 
   // ── 등급전 (GDD 21장, C.49): 둥지 빌드 그대로 일반 블록 전투. 결과는 세이브(사다리·등급 이력·런 로그·영혼 결정)에 바로 반영 ──

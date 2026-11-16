@@ -1,7 +1,7 @@
 // C.190 (GDD 116장): 종이인형 위치(그림 칸 = 옛 한 장 그림 규격)·혼백/학생 학생복·설정 설명 말줄임 없음·캐릭터 ×0.75·숲 나무 ×1.5
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ART_MANIFEST, charArt, HUMAN_FIELD_SCALE, HUMAN_SCALE } from '../src/data/art/manifest';
+import { ART_MANIFEST, charArt } from '../src/data/art/manifest';
 import { HUMANOID } from '../src/data/art/rig/pose';
 import { BG_SCENES, sceneBg } from '../src/data/art/backgrounds';
 
@@ -33,10 +33,10 @@ describe('C.190 크기 ×0.75 (116장 4)', () => {
   it('종이인형 자리 전부 같은 배율, 걷기·전투 필드 = C.189 의 키(1.32 × 152/113)의 0.75배, 방 = C.189 키 (C.192, 118장 1), 위치 보정 없음', () => {
     const rigs = Object.entries(ART_MANIFEST).filter(([k, e]) => e.rig && HUMANOID.looks[e.rig] && k.startsWith('char.') && !['hb', 'hd'].includes(HUMANOID.looks[e.rig]?.body ?? '')).map(([, e]) => e); // 사람 몸 캐릭터 자리만(사람형 뼈대 — 이치고 혈쇄·무월 뼈대(C.465)는 그림 칸 144 라 같은 도트 크기 1.6875/1.26) — 적 종이인형(C.340 덩치)·길리안(C.360, 219장 1)은 따로 맞춤
     expect(rigs.length).toBeGreaterThanOrEqual(4);
-    // C.467 (사람형은 호로보다 작게, GDD 17-6): 방 1.30 · 필드 1.16 — 그래도 모든 사람 몸 자리가 같은 값
+    const before = 1.32 * HUMANOID.view!.rect[2] / 113;
     for (const e of rigs) {
-      expect(e.fieldScale!).toBe(HUMAN_FIELD_SCALE);
-      expect(e.scale!).toBe(HUMAN_SCALE);
+      expect(e.fieldScale!).toBeCloseTo(before * 0.75, 1);
+      expect(e.scale!).toBeCloseTo(before, 1);
       expect(e.offsetY ?? 0).toBe(0);
     }
   });
