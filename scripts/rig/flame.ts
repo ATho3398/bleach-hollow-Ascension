@@ -17,7 +17,7 @@ export interface FlameLayer { slot: string; m: number[]; img: HTMLImageElement }
 const DT = 60, TICK = 2, LIFE = 26, RISE = 0.62, PER = 16;
 const C0 = [0, 0, 0], C2 = [54, 48, 63];
 /** 불 덩이 하나: b = 태어난 때(박자), lk = 수명 배수(빨리 움직일 때 난 불은 짧게), a0·t0·rate = 나이 = a0 + (지금 − t0) × rate (새 동작이 시작되면 rate 를 올려 빨리 꺼뜨린다) */
-interface Puff { b: number; x: number; y: number; th: number; e: FlameEmitter; lk: number; a0: number; t0: number; rate: number }
+interface Puff { b: number; x: number; y: number; th: number; e: FlameEmitter; lk: number; a0: number; t0: number; rate: number; ghost?: boolean }
 /** 불 자리마다: 앞 자리, 지나온 거리·시간(불 낼 차례 세기), 빠르기(박자당 칸, 고르게 한 값) */
 interface Em { x: number; y: number; px: number; py: number; d: number; t: number; v: number }
 const SPACE = 2;      // 움직일 때 불을 내는 간격(칸) — 1칸마다 내면 휘두를 때 불이 너무 많다
@@ -101,7 +101,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
         for (let j = 0; j < k; j++) {
           const a = (j + 1) / k, h00 = 2 * a ** 3 - 3 * a ** 2 + 1, h10 = a ** 3 - 2 * a ** 2 + a, h01 = -2 * a ** 3 + 3 * a ** 2, h11 = a ** 3 - a ** 2;
           const bt = fr - dtF * (1 - a);
-          puffs.push({ b: bt, x: h00 * s.x + h10 * t0x + h01 * wx + h11 * t1x, y: h00 * s.y + h10 * t0y + h01 * wy + h11 * t1y, th, e, lk, a0: 0, t0: bt, rate: 1 });
+          puffs.push({ b: bt, x: h00 * s.x + h10 * t0x + h01 * wx + h11 * t1x, y: h00 * s.y + h10 * t0y + h01 * wy + h11 * t1y, th, e, lk, a0: 0, t0: bt, rate: 1, ghost: true });
         }
       }
       s.px = s.x; s.py = s.y; s.x = wx; s.y = wy;
@@ -148,7 +148,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
         const amp = 0.5 - 0.5 * Math.cos(2 * Math.PI * l), h = e.rise * 0.75 * (0.35 + 0.65 * amp), thick = 1.25 * e.size * (0.6 + 0.4 * amp) - shrink;
         if (thick <= 0.4) continue;
         for (let u = 0; u <= h; u += 0.6) {
-          let r = thick * (1 - u / (h + 1e-6)) ** e.taper;
+          let r = thick * (1 - u / (h + 1e-6)) ** e.taper * Math.min(1, (u + 0.7) / Math.max(1, 0.9 * thick));
           if (r <= 0.3) continue;
           r = Math.max(r, 0.5);
           const cx = bx + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - fr / (PER * TICK) + e.beat / PER)) * Math.min(1, u / 5), cy = by - u, ry = r * 1.25;
@@ -161,7 +161,8 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const e = p.e, age = ageOf(p), life = ((LIFE * e.rise) / 20) * p.lk;
       if (age < 0 || age >= life) continue;
       const l = age / life;
-      let r = p.th * (1 - l) ** (0.9 + 0.5 * e.taper) - shrink; // 끝으로 갈수록 빨리 가늘어져 뾰족하게
+      // 갓 나온 불은 가늘게 시작(밑이 뭉툭하지 않게 — 물방울 모양), 끝으로 갈수록 뾰족
+      let r = p.th * (1 - l) ** (0.9 + 0.5 * e.taper) * (p.ghost ? 1 : Math.min(1, (RISE * (fr - p.b) + 0.7) / Math.max(1, 0.9 * p.th))) - shrink; // 잔상은 처음부터 제 굵기(가늘게 시작하면 점선이 된다)
       if (r < 0.3) continue;
       r = Math.max(r, 0.5);
       const ry = r * (1.25 + 1.6 * l), u = RISE * (fr - p.b); // 끝은 세로로 길쭉한 바늘 모양. 올라간 높이는 실제 지난 시간으로(빨리 꺼져도 위로 튀지 않게)
@@ -175,14 +176,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   const render = (layers: FlameLayer[]) => {
     // 몸 뒤: 바깥 불 — 테두리 한 칸 보라, 속 검정
     field(f0, 0, (p) => !p.e.inner, true); field(f1, 1.1, (p) => !p.e.inner, true);
-    // 발에서는 불이 나지 않는다(사용자 2026-11-16 "다리에서만 나오게"): 하카마 밑단(자르기용 조각 중 가장 아래) 밑으로는 몸 뒤 불을 안 그린다
-    let hem = -1;
-    for (const l of layers) {
-      if (!spec.mask.includes(l.slot)) continue;
-      const w = l.img.naturalWidth || 0, h = l.img.naturalHeight || 0;
-      for (const [x, y] of [[0, 0], [w, 0], [0, h], [w, h]] as const) hem = Math.max(hem, l.m[1]! * x + l.m[3]! * y + l.m[5]! + pt);
-    }
-    if (hem >= 0) { const from = Math.min(H, Math.ceil(hem)) * W; f0.fill(0, from); f1.fill(0, from); }
+    // 밑단에서 불을 '자르지' 않는다(도트 세션 2026-11-16 갱신 5, 사용자 "덩그러니 불꽃 아래를 툭 자르면 어캐;; 안나오게 해야지"): 자르기는 없앴고, 불 자리를 밑단에서 띄우고 줄기 밑동을 가늘게 시작해 밑단 아래로 안 간다
     const bi = bctx.createImageData(W, H);
     for (let i = 0; i < W * H; i++) if (f0[i]) { const c = f1[i] ? C0 : C2; bi.data.set([c[0]!, c[1]!, c[2]!, 255], i * 4); }
     bctx.putImageData(bi, 0, 0);
