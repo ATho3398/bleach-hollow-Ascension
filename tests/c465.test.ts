@@ -167,7 +167,7 @@ describe('C.465 혈쇄 이치고·무월 종이인형 (종이인형 작업본 �
     expect(mugetsuFlame.look).toBe('ichigo-mugetsu');
     expect(ichigoChain.look).toBe('ichigo-bloody');
     expect(ichigoChain.bands.map((b) => b.name)).toEqual(['목', '칼 든 손목', '뒷손 손목', '왼발목', '오른발목']);
-    expect(ichigoChain.bands[0]!.z).toBe('sword'); // 편집기 고정 115-A 160: 목 사슬 띠 = 칼 바로 앞
+    expect(ichigoChain.bands[0]!.z).toBe('coat_front'); // 편집기 고정 115-A 160 → 162(C.469): 목 사슬 띠 = 코트 앞자락 바로 앞
   });
 
   it('해방 몸 재생기 전환(switchAnim): 해방 중엔 바꿔 입은 몸이 동작을 받고, 쉬는 동작은 둘 다', () => {
