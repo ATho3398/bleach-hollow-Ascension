@@ -88,12 +88,16 @@
    "bone": "root"
   },
   {
+   "id": "torso",
+   "bone": "torso"
+  },
+  {
    "id": "hakama",
    "bone": "hakama"
   },
   {
-   "id": "torso",
-   "bone": "torso"
+   "id": "hand_back_bit",
+   "bone": "arm_back"
   },
   {
    "id": "arm_back",
@@ -104,31 +108,31 @@
    "bone": "arm_sword"
   },
   {
-   "id": "sword",
-   "bone": "sword"
-  },
-  {
    "id": "face_bit",
    "bone": "head"
-  },
-  {
-   "id": "hand_back_bit",
-   "bone": "arm_back"
-  },
-  {
-   "id": "thumb",
-   "bone": "arm_sword"
   },
   {
    "id": "head",
    "bone": "head"
   },
   {
-   "id": "shoulder_sword",
+   "id": "forearm_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "arm_sword_band",
    "bone": "arm_sword"
   },
   {
    "id": "arm_sword",
+   "bone": "arm_sword"
+  },
+  {
+   "id": "sword",
+   "bone": "sword"
+  },
+  {
+   "id": "thumb",
    "bone": "arm_sword"
   },
   {
@@ -138,6 +142,10 @@
   {
    "id": "coat_front",
    "bone": "torso"
+  },
+  {
+   "id": "shoulder_sword",
+   "bone": "arm_sword"
   }
  ],
  "bodies": {
@@ -145,11 +153,11 @@
    "head": {
     "art": "parts/head",
     "at": [
-     22,
-     0
+     19,
+     1
     ],
     "size": [
-     49,
+     45,
      41
     ]
    },
@@ -168,7 +176,7 @@
     "art": "parts/face_bit",
     "at": [
      36,
-     20
+     21
     ],
     "size": [
      9,
@@ -211,12 +219,12 @@
    "arm_sword": {
     "art": "parts/arm_sword",
     "at": [
-     26,
+     27,
      49
     ],
     "size": [
-     13,
-     23
+     12,
+     9
     ]
    },
    "sword": {
@@ -237,7 +245,7 @@
      40
     ],
     "size": [
-     14,
+     13,
      32
     ]
    },
@@ -255,34 +263,34 @@
    "coat_panel_R": {
     "art": "parts/coat_panel_R",
     "at": [
-     47,
+     46,
      39
     ],
     "size": [
-     11,
+     12,
      32
     ]
    },
    "foot_a": {
     "art": "parts/foot_a",
     "at": [
-     34,
-     88
+     32,
+     91
     ],
     "size": [
      10,
-     20
+     17
     ]
    },
    "foot_b": {
     "art": "parts/foot_b",
     "at": [
-     47,
-     87
+     49,
+     89
     ],
     "size": [
-     14,
-     19
+     15,
+     17
     ]
    },
    "thumb": {
@@ -306,6 +314,28 @@
      33,
      41
     ]
+   },
+   "arm_sword_band": {
+    "art": "parts/arm_sword_band",
+    "at": [
+     29,
+     52
+    ],
+    "size": [
+     9,
+     6
+    ]
+   },
+   "forearm_sword": {
+    "art": "parts/forearm_sword",
+    "at": [
+     26,
+     54
+    ],
+    "size": [
+     9,
+     18
+    ]
    }
   }
  },
@@ -318,14 +348,16 @@
   "parts": [
    "foot_a",
    "foot_b",
-   "torso",
    "hakama",
+   "torso",
    "hand_back_bit",
    "arm_back",
    "collar",
    "face_bit",
-   "head",
+   "forearm_sword",
+   "arm_sword_band",
    "arm_sword",
+   "head",
    "sword",
    "thumb",
    "coat_panel_R",
@@ -362,7 +394,7 @@
    "root": "전체",
    "torso": "가슴",
    "head": "머리",
-   "arm_sword": "오른팔(앞손)",
+   "arm_sword": "오른팔(앞손) 위(소매)",
    "sword": "칼",
    "arm_back": "왼팔(뒷손)",
    "coat_panel_R": "코트 자락(오른쪽)",
@@ -374,7 +406,9 @@
    "foot_a": "발 A",
    "foot_b": "발 B",
    "thumb": "엄지(오른손)",
-   "hakama": "하카마"
+   "hakama": "하카마",
+   "arm_sword_band": "오른팔 검은 띠",
+   "forearm_sword": "오른 아래팔·손(앞손)"
   },
   "groups": [
    [
@@ -403,6 +437,8 @@
     [
      "shoulder_sword",
      "arm_sword",
+     "arm_sword_band",
+     "forearm_sword",
      "collar",
      "thumb",
      "sword"
@@ -434,12 +470,16 @@
     "arm_sword",
     "collar",
     "thumb",
-    "sword"
+    "sword",
+    "arm_sword_band",
+    "forearm_sword"
    ],
    "arm_sword": [
     "collar",
     "thumb",
-    "sword"
+    "sword",
+    "arm_sword_band",
+    "forearm_sword"
    ],
    "head": [
     "face_bit"
@@ -458,7 +498,9 @@
     "sword",
     "arm_back",
     "hand_back_bit",
-    "coat_panel_R"
+    "coat_panel_R",
+    "arm_sword_band",
+    "forearm_sword"
    ]
   }
  },
@@ -688,6 +730,36 @@
      ],
      "w": 3
     }
+   ],
+   "forearm_sword": [
+    {
+     "pts": [
+      [
+       35,
+       48
+      ],
+      [
+       35,
+       48
+      ]
+     ],
+     "w": 3
+    }
+   ],
+   "arm_sword_band": [
+    {
+     "pts": [
+      [
+       35,
+       48
+      ],
+      [
+       35,
+       48
+      ]
+     ],
+     "w": 3
+    }
    ]
   }
  },
@@ -742,7 +814,7 @@
     ],
     "head": [
      44,
-     39
+     40
     ],
     "hakama": [
      48,

@@ -180,6 +180,22 @@
    "bone": "arm_sword"
   },
   {
+   "id": "forearm_sword",
+   "bone": "forearm_sword"
+  },
+  {
+   "id": "sword",
+   "bone": "sword"
+  },
+  {
+   "id": "foot_f",
+   "bone": "foot_f"
+  },
+  {
+   "id": "shin_f",
+   "bone": "shin_f"
+  },
+  {
    "id": "hair_base",
    "bone": "hair_base"
   },
@@ -188,8 +204,24 @@
    "bone": "hair_b"
   },
   {
+   "id": "thigh_f",
+   "bone": "thigh_f"
+  },
+  {
    "id": "hair_a",
    "bone": "hair_a"
+  },
+  {
+   "id": "foot_b_walk",
+   "bone": "foot_b"
+  },
+  {
+   "id": "foot_b",
+   "bone": "foot_b"
+  },
+  {
+   "id": "shin_b",
+   "bone": "shin_b"
   },
   {
    "id": "thigh_b",
@@ -200,44 +232,16 @@
    "bone": "head"
   },
   {
-   "id": "forearm_sword",
-   "bone": "forearm_sword"
-  },
-  {
    "id": "hair_d",
    "bone": "hair_d"
-  },
-  {
-   "id": "foot_b",
-   "bone": "foot_b"
   },
   {
    "id": "belly",
    "bone": "lower"
   },
   {
-   "id": "foot_f",
-   "bone": "foot_f"
-  },
-  {
    "id": "hair_c",
    "bone": "hair_c"
-  },
-  {
-   "id": "sword",
-   "bone": "sword"
-  },
-  {
-   "id": "shin_f",
-   "bone": "shin_f"
-  },
-  {
-   "id": "shin_b",
-   "bone": "shin_b"
-  },
-  {
-   "id": "thigh_f",
-   "bone": "thigh_f"
   },
   {
    "id": "chest",
@@ -354,7 +358,7 @@
     ]
    },
    "sword": {
-    "art": "parts/sword",
+    "art": "parts/sword_none",
     "at": [
      12,
      67
@@ -411,7 +415,7 @@
    "foot_f": {
     "art": "parts/foot_f",
     "at": [
-     46,
+     44,
      90
     ],
     "size": [
@@ -422,7 +426,7 @@
    "thigh_b": {
     "art": "parts/thigh_b",
     "at": [
-     55,
+     57,
      55
     ],
     "size": [
@@ -433,7 +437,7 @@
    "shin_b": {
     "art": "parts/shin_b",
     "at": [
-     60,
+     61,
      69
     ],
     "size": [
@@ -444,7 +448,7 @@
    "foot_b": {
     "art": "parts/foot_b",
     "at": [
-     72,
+     73,
      91
     ],
     "size": [
@@ -462,6 +466,17 @@
      24,
      64
     ]
+   },
+   "foot_b_walk": {
+    "art": "parts/foot_b_walk",
+    "at": [
+     65,
+     91
+    ],
+    "size": [
+     15,
+     17
+    ]
    }
   }
  },
@@ -473,21 +488,22 @@
  "bodySlots": {
   "parts": [
    "arm_sword",
+   "forearm_sword",
+   "sword",
+   "foot_f",
+   "shin_f",
    "hair_base",
    "hair_b",
-   "hair_a",
    "thigh_b",
-   "head",
-   "forearm_sword",
-   "hair_d",
-   "foot_b",
-   "belly",
-   "foot_f",
-   "hair_c",
-   "sword",
-   "shin_f",
-   "shin_b",
    "thigh_f",
+   "hair_a",
+   "foot_b_walk",
+   "foot_b",
+   "shin_b",
+   "head",
+   "hair_d",
+   "belly",
+   "hair_c",
    "chest",
    "arm_back",
    "forearm_back"
@@ -531,7 +547,7 @@
    "belly": "배",
    "arm_sword": "오른 위팔(앞)",
    "forearm_sword": "오른 아래팔(앞)",
-   "sword": "칼",
+   "sword": "칼(그림 없음 — 불 덩어리가 칼)",
    "arm_back": "왼 위팔(뒤)",
    "forearm_back": "왼 아래팔·왼손(뒷손)",
    "thigh_f": "오른 하카마 위",
@@ -540,7 +556,8 @@
    "thigh_b": "왼 하카마 위",
    "shin_b": "왼 하카마 아래",
    "foot_b": "왼발",
-   "hair_base": "뒷머리 베이스"
+   "hair_base": "뒷머리 베이스",
+   "foot_b_walk": "왼발(걷기용)"
   },
   "groups": [
    [
@@ -597,7 +614,8 @@
     [
      "thigh_b",
      "shin_b",
-     "foot_b"
+     "foot_b",
+     "foot_b_walk"
     ]
    ]
   ],
@@ -628,10 +646,15 @@
    ],
    "thigh_b": [
     "shin_b",
-    "foot_b"
+    "foot_b",
+    "foot_b_walk"
    ],
    "shin_b": [
-    "foot_b"
+    "foot_b",
+    "foot_b_walk"
+   ],
+   "foot_b": [
+    "foot_b_walk"
    ]
   }
  },
@@ -921,6 +944,21 @@
      ],
      "w": 3
     }
+   ],
+   "foot_b_walk": [
+    {
+     "pts": [
+      [
+       74,
+       99
+      ],
+      [
+       74,
+       99
+      ]
+     ],
+     "w": 3
+    }
    ]
   }
  },
@@ -994,8 +1032,8 @@
      77
     ],
     "arm_sword": [
-     56,
-     45
+     53,
+     46
     ],
     "forearm_sword": [
      54,
@@ -1014,12 +1052,28 @@
      66
     ],
     "foot_f": [
-     56,
+     55,
      92
     ],
     "thigh_b": [
-     67,
+     65,
      62
+    ],
+    "head": [
+     63,
+     34
+    ],
+    "root": [
+     66,
+     104
+    ],
+    "shin_b": [
+     67,
+     72
+    ],
+    "foot_b": [
+     76,
+     94
     ]
    }
   }

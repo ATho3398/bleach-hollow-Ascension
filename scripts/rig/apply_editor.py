@@ -179,6 +179,15 @@ if 'bodies' in data:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from feet_weapon import dump  # noqa: E402
         dump(rig)
+    # 사슬 자리(GDD 115-A 153, 편집기 '사슬 자리 옮기기'): 띠·풀린 끝의 조각·점·방향·길이를 <뼈대>-chain.json 에
+    ch = data.get('chain')
+    cp = os.path.join(DRAFT_DIR, f'{RIG_ID}-chain.json')
+    if isinstance(ch, dict) and os.path.exists(cp):
+        cur = json.load(open(cp, encoding='utf-8'))
+        if cur.get('bands') != ch.get('bands') or cur.get('tails') != ch.get('tails'):
+            cur['bands'], cur['tails'] = ch['bands'], ch['tails']
+            open(cp, 'w', encoding='utf-8').write(json.dumps(cur, ensure_ascii=False, indent=1) + '\n')
+            print('사슬 자리 고정 →', os.path.relpath(cp, ROOT))
     # 동작 키 고친 것(GDD 115-A 55, 편집기 '이 동작에만'): '<묶음>/<동작>' → 뼈 → 키 목록 — 그 뼈 트랙을 통째로 바꾼다.
     # 앞 고정에서 넣었는데 지금 편집기에 없는 뼈 트랙 = 편집기에서 되돌린 것 → 페이지를 만든 데이터의 트랙으로(GDD 115-A 61)
     medits = data.get('motionEdits') or {}
