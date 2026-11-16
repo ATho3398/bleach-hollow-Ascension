@@ -22,6 +22,7 @@ import type { SaveData } from './game';
 import { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from './data/hogyoku';
 import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
+import { skinAllowedNow } from './engine/skinLock';
 
 const SX = BALANCE.shop;
 /** 보관함 소모품 종류별 상한 (GDD 86장 4번) */
@@ -401,7 +402,7 @@ export function wearCosmetic(save: SaveData, id: string): boolean {
   if (!c || !save.shared.cosmetics.includes(id)) return false;
   if (c.category === 'skin') {
     const skin = skinIdOfItem(id);
-    if (!skin || !canWear(save.factionId, skin)) return false;
+    if (!skin || !canWear(save.factionId, skin) || !skinAllowedNow(save, skin)) return false; // 초월자 전투 방식 스킨 잠금 (GDD 12-4 v6.093, C.465)
     save.skin = skin;
   } else save.wear[c.category as WearCategory] = id;
   return true;
@@ -409,7 +410,7 @@ export function wearCosmetic(save: SaveData, id: string): boolean {
 
 /** 그 분류를 [기본]으로 (벗기) */
 export function unwearCategory(save: SaveData, category: CosmeticCategory): void {
-  if (category === 'skin') save.skin = null;
+  if (category === 'skin') { if (skinAllowedNow(save, null)) save.skin = null; } // 잠금 묶음에 기본 모델이 없으면 못 벗는다 (C.465)
   else delete save.wear[category as WearCategory];
 }
 

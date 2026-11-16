@@ -28,6 +28,9 @@
 .bha-hero__alt { position: absolute; inset: 0; pointer-events: none; } /* 바꿔 입는 몸 그림 (C.456 무월): 몸 뒤 · 몸 · 몸 앞 레이어를 같은 칸에 겹친다 */
 .bha-hero__alt > .bha-hero__img { position: absolute; inset: 0; image-rendering: pixelated; }
 .bha-hero__body.is-alt > :not(.bha-hero__alt) { visibility: hidden; }
+/* 실시간 불꽃 (C.461, src/ui/bha/liveFlame.ts — 무월 몸 뒤): 몸 상자 안 몸 바로 뒤 격자 캔버스(좌우 반전 격자). 켜진 동안 몸 뒤 PNG 레이어는 숨긴다 */
+.bha-liveflame { position: absolute; pointer-events: none; image-rendering: pixelated; transform: scaleX(-1); }
+.bha-hero__body.has-liveflame .bha-hero__altback { visibility: hidden; }
 .bha-hero__eye { position: absolute; top: 38%; right: 20%; width: 8px; height: 12px; border-radius: var(--bha-r-pill); background: var(--bha-bg-0); }
 .bha-hero__eye:nth-of-type(1) { right: 40%; }
 .bha-ghost { pointer-events: none; }
@@ -222,6 +225,10 @@
 @keyframes bha-libaura-pulse { from { opacity: 0.55; transform: scaleX(0.85); } to { opacity: 1; transform: scaleX(1.12); } }
 @keyframes bha-libaura-rise { 0% { opacity: 0; transform: translate(-50%, 0) scale(1, 0.5); } 20% { opacity: 1; } 65% { opacity: 0.85; } 100% { opacity: 0; transform: translate(-50%, -24%) scale(0.5, 1.15); } }
 @keyframes bha-libaura-spark { 0% { opacity: 0; top: 92%; transform: translateX(0); } 15% { opacity: 1; } 60% { transform: translateX(var(--dx)); } 100% { opacity: 0; top: 0; transform: translateX(calc(var(--dx) * -1)); } }
+/* 만해 오라 (GDD 15-6 v6.089, C.461, src/ui/bha/bankaiAura.ts): 해방 열림·해방 중 몸 상자(.bha-hero__lift) 맨 앞 = 몸 뒤. 크기·자리·시트는 인라인(몸 키 비례, 발 = 기준점).
+   내 그림처럼 오른쪽을 보게 뒤집는다. 시트가 보이는 동안은 옛 CSS 발밑 기운을 숨긴다(시트를 못 받으면 옛 기운이 그대로 남는다) */
+.bha-bankaiaura { position: absolute; pointer-events: none; background-repeat: no-repeat; image-rendering: pixelated; transform: scaleX(-1); }
+.bha-root.bha-battle.is-lib-ready.has-bankai-aura .bha-unit--me .bha-libaura { display: none; }
 /* 가득 찬 순간 한 번 강조 (해방 버튼 = 캐릭터 칸): 기운이 크게 터지고 몸이 한 번 번쩍 */
 .bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-libaura { animation: bha-libaura-pop 0.7s var(--bha-ease-out); }
 .bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-hero__body { animation: bha-libready-flash 0.7s var(--bha-ease-out); }

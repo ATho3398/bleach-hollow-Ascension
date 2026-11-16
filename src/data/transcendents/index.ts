@@ -86,6 +86,9 @@ export interface TranscendentKitModeDef {
   stances?: TranscendentStanceDef[];
   /** 자세 모드의 블록 (자세마다 block 이 가리킴) */
   blocks?: TranscendentKitBlockDef[];
+  /** 이 전투 모드의 모델 묶음 (GDD 12-4 v6.093 '초월자 전투 방식 = 스킨 잠금', C.465): 'base' = 기본 모델, 그 밖 = 이 초월자 humanSkins id. 첫 칸 = 모드를 바꾸면 입는 모델.
+   *  없으면 기본 모델 + 인간형 스킨 전부 */
+  skins?: string[];
 }
 
 /** 초월자 전용 블록 묶음 (GDD 12-4 v6.048): 있으면 '초월자' 전투 기반에서 일반 블록 대신 이 블록만 나온다. 없으면(나머지 5종 — 블록 [미정]) 합체 순간 이어받은 빌드 그대로 */
@@ -154,7 +157,7 @@ export interface TranscendentDef {
   trait: TranscendentTraitDef;
   /** 전용 블록 (GDD 12-4 v6.048, C.441) — 아이젠만 */
   kit?: TranscendentKitDef;
-  /** 인간형 모델 스킨 (GDD 12-4 v6.052 '초월자 인간형 스킨', C.443): 기본 모델이 인간형이 아닌 초월자(태초·Unknown)에게 하나씩 더.
+  /** 인간형 모델 스킨 (GDD 12-4 v6.052 '초월자 인간형 스킨', C.443): 기본 모델이 인간형이 아닌 초월자(태초·Unknown)에게 하나씩 더. 이치고 '혈쇄'(천년혈전 모드 모델, C.465)도 같은 칸.
    *  그 초월자를 얻으면 가방 > 스킨 > 진화체 > 초월자에 열림. art = 그림 키(파일이 오면 그 그림), 없으면 placeholder(그림 목록 키 — 기존 인간형 종이인형) + '그림 대기' */
   humanSkins?: TranscendentHumanSkinDef[];
   provisional: true;
@@ -240,6 +243,10 @@ export function parseTranscendent(r: unknown): TranscendentDef {
     && Object.keys(fx).every((k) => ['abilities', 'dealt', 'taken', 'maxHp', 'blockCrit'].includes(k)))) errors.push('trait (name·description·effect)');
   if (!humanSkinsOk(t.humanSkins)) errors.push('humanSkins (id·name·art char.·placeholder char.)');
   if (!kitErrors(t.kit)) errors.push('kit (liberationName·blocks id·name·short·fx·releaseSwap·upgradeAs)');
+  // 모드 모델 묶음 (C.465): 'base' 나 이 초월자 인간형 스킨 id 만, 겹침 없이 하나 이상
+  const skinIds = new Set(['base', ...((t.humanSkins as TranscendentHumanSkinDef[] | undefined) ?? []).map((x) => x.id)]);
+  const modes = (t.kit as Partial<TranscendentKitDef> | undefined)?.modes ?? [];
+  if (!modes.every((m) => m.skins === undefined || (Array.isArray(m.skins) && m.skins.length > 0 && new Set(m.skins).size === m.skins.length && m.skins.every((x) => typeof x === 'string' && skinIds.has(x))))) errors.push('kit.modes[].skins (base·인간형 스킨 id)');
   if (t.provisional !== true) errors.push('provisional (22-3 수치·이름 provisional)');
   if (errors.length > 0) throw new Error(`초월자 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return t as TranscendentDef;

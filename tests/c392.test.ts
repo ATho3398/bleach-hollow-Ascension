@@ -71,7 +71,7 @@ describe('C.392 속성 색 (GDD 240장 3)', () => {
 
 describe('C.392 새 모델 (GDD 240장 1)', () => {
   it('게임 뼈대 5(사람형·뱀형·짐승형·거미형·부유형) 모두 검사 통과', () => {
-    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent', 'beast', 'spider', 'wraith']);
+    expect(RIG_PACKS.map((p) => p.id)).toEqual(['humanoid', 'serpent', 'beast', 'spider', 'wraith', 'ichigo', 'mugetsu']); // 이치고 혈쇄·무월(C.465)
     for (const p of RIG_PACKS) expect(validateRig(p.rig, p.motions, p.sets), p.id).toEqual([]);
   });
   it('가시형(hk)·속도형(hv) = 사람형 뼈대의 새 몸(손 따로, 속도형은 골반·꼬리 3마디), 동작 묶음이 돈다', () => {

@@ -9,6 +9,7 @@ import type { AnimAction } from '../../data/art/anim';
 import type { FamilyMotionKind } from '../../engine/faction';
 import { boneMatrices, fxAt, layerMatrix, lookLayers, motionSpeedOf, orderLayers, resolveMotions, samplePose, type Motion, type MotionSets, type Pose, type Rig } from '../../data/art/rig/pose';
 import { drawFxCanvas } from './rigFx';
+import { rigFxOf, type FxLayer } from './rigEffects';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
 
 /** 게임 동작 → 종이인형 동작(여럿이면 무작위, pickVariant) */
@@ -23,6 +24,8 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   dying: ['dying'],
   bath: ['bath'],
   lose: ['down'],
+  // 해방 순간 = 해방1 동작 (C.461, 사용자 2026-11-15 "도트랑 모션들 최신화시켜서 게임에 적용" — 해방1 이 있는 몸만, 없으면 공통 연출 그대로). 외형 바꿔치기는 아직 없음
+  release: ['release1'],
 };
 
 /** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 219장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */
@@ -231,10 +234,29 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
   let raf = 0;
   let last = 0;
   let lastDraw = -Infinity;
+  // 이펙트 층 (C.465 — 무월 불꽃·혈쇄 사슬, 데이터 spec.look 이 이 외형일 때만): 조각 자리를 받아 다시 그리고 같은 캔버스에 겹친다
+  const fxMake = typeof document !== 'undefined' ? rigFxOf(lookId) : undefined;
+  const fx = fxMake ? fxMake(rig.canvas) : null;
+  /** 동작 줄이기: 이펙트 층은 첫 장만 (흘리지 않음) */
+  const fxStill = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let fxLast = 0;
+  const drawFxLayer = (c: HTMLCanvasElement) => {
+    if (!ctx || !fx) return;
+    ctx.setTransform(K, 0, 0, K, (-fx.pad[0] - vx) * K, (-fx.pad[1] - vy) * K);
+    ctx.drawImage(c, 0, 0);
+  };
   const draw = () => {
     if (!ctx || layers.some((l) => !l.im.complete || !l.im.naturalWidth)) return false;
     const { pose, motion, t } = player.pose();
     const mats = boneMatrices(rig, pose, body);
+    const shown = orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion).map((l) => ({ ...l, m: layerMatrix(rig, mats, l.layer, motion) }));
+    if (fx) {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const dt = fxLast ? Math.min(250, Math.max(0, now - fxLast)) : 60;
+      if (!fxStill || !fxLast) fx.step(dt, shown.map((l): FxLayer => ({ slot: l.slot, m: l.m, img: l.im })));
+      fxLast = now;
+    }
+    const mids = fx?.mids() ?? [];
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
@@ -242,10 +264,16 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     ctx.rect(0, 0, canvas.width, clipH * K);
     ctx.clip();
     ctx.imageSmoothingEnabled = false;
-    for (const { layer, im } of orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion)) {
-      const m = layerMatrix(rig, mats, layer, motion);
+    if (fx) drawFxLayer(fx.back);
+    for (const { im, m, slot } of shown) {
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
       ctx.drawImage(im, 0, 0);
+      for (const [at, c] of mids) if (at === slot) drawFxLayer(c);
+    }
+    if (fx) {
+      // 그 조각이 이 동작에서 안 보이면 사이 층은 맨 앞 (작업본 chain.ts 와 같다)
+      for (const [at, c] of mids) if (!shown.some((l) => l.slot === at)) drawFxLayer(c);
+      drawFxLayer(fx.front);
     }
     // 이펙트(GDD 115-A 48): 그림 층 위(바닥 밑은 같이 잘림)
     drawFxCanvas(ctx, fxAt(motion, t, mats), (p) => [(p[0] - vx) * K, (p[1] - vy) * K], K);
@@ -279,7 +307,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     last = now;
     player.advance(dt);
     if (now - lastDraw >= MIN_FRAME_MS && draw()) lastDraw = now;
-    if (player.active) raf = requestAnimationFrame(tick);
+    if (player.active || (fx && !fxStill)) raf = requestAnimationFrame(tick); // 이펙트 층은 가만히 있어도 탄다
   };
   const wake = () => {
     if (raf || typeof requestAnimationFrame === 'undefined') return;
@@ -297,6 +325,6 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     return r;
   };
   // 부위 그림이 다 오면 한 번 그린다(그 전엔 정지 그림 src 그대로)
-  for (const { im } of layers) im.addEventListener('load', () => { if (!raf) draw(); }, { once: true });
+  for (const { im } of layers) im.addEventListener('load', () => { if (!raf) draw(); if (fx && !fxStill) wake(); }, { once: true });
   return player;
 }

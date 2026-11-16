@@ -9,6 +9,8 @@ import { SKIN_SUB_EMPTY } from '../../data/shop';
 import { artTierIndexOf, equipSkin, type SaveData } from '../../game';
 import type { FactionConfig } from '../../engine/faction';
 import { categoryTabs, iconArt, imageArt, itemCard, itemDialog, itemGrid } from './itemUi';
+import { skinAllowedNow, skinLockOf, skinLockReason } from '../../engine/skinLock';
+import { showToast } from './nest';
 import { elementDot } from './element';
 import { el } from './dom';
 
@@ -75,7 +77,11 @@ export function openSkinDetail(faction: FactionConfig, save: SaveData, e: SkinEn
       key: 'skin-equip', label: () => (save.skin === e.variants[pick]!.id ? '해제' : '장착'),
       onClick: () => {
         const id = e.variants[pick]!.id;
-        if (!equipSkin(save, save.skin === id ? null : id, { test })) return;
+        const next = save.skin === id ? null : id;
+        // 초월자 전투 방식 스킨 잠금 (GDD 12-4 v6.093, C.465): 묶음 밖이면 안내만 (지금 모드 모델은 벗을 수 없다)
+        const lock = skinLockOf(save);
+        if (lock && !skinAllowedNow(save, next)) { showToast({ eyebrow: '스킨 잠김', title: next === null ? `${skinLockReason(lock)} — 벗을 수 없다` : skinLockReason(lock) }, 0, 2600); return; }
+        if (!equipSkin(save, next, { test })) return;
         close();
         changed();
       },
@@ -103,16 +109,24 @@ export function characterSkinTab(faction: FactionConfig, save: SaveData, test: b
     bar.append(subTabs);
     rows = rows.filter((x) => x.sub === cur);
   }
+  // 초월자 전투 방식 = 스킨 잠금 (GDD 12-4 v6.093, C.465): 묶음 밖 칸은 잠김 표시, 누르면 안내
+  const lock = skinLockOf(save);
+  if (lock) {
+    const n = el('p', 'bha-faint bha-small bha-skinpick__lock', `${skinLockReason(lock)} 고를 수 있다 (전투 기반을 바꾸면 모든 스킨).`);
+    n.setAttribute('role', 'note');
+    out.push(n);
+  }
   const cards = rows.map((e) => {
     const w = wornIndex(e, save);
     const v = e.variants[Math.max(0, w)]!;
     const src = previewSrc(faction, save, v.id);
+    const locked = !!lock && w < 0 && !e.variants.some((x) => lock.looks.includes(x.id));
     return itemCard({
       id: e.key, name: e.name, art: src ? imageArt(src) : iconArt('i-rare'),
       detail: e.waiting ? '그림 대기' : e.variants.length < 2 ? '' : e.variants.every((v) => v.gender) ? '남·여' : `색 ${e.variants.length}`,
-      badge: w >= 0 ? '착용 중' : undefined, state: w >= 0 ? 'worn' : undefined,
-      foot: w >= 0 ? (e.variants.length > 1 ? '색·해제' : '해제') : '장착',
-      onClick: () => openSkinDetail(faction, save, e, test, changed),
+      badge: w >= 0 ? '착용 중' : locked ? '잠김' : undefined, state: w >= 0 ? 'worn' : locked ? 'locked' : undefined,
+      foot: w >= 0 ? (lock && !lock.looks.includes(null) ? (e.variants.length > 1 ? '색' : '착용 중') : e.variants.length > 1 ? '색·해제' : '해제') : locked ? '잠김' : '장착',
+      onClick: locked ? () => { showToast({ eyebrow: '스킨 잠김', title: skinLockReason(lock!) }, 0, 2600); } : () => openSkinDetail(faction, save, e, test, changed),
     });
   });
   out.push(itemGrid(cards, SKIN_SUB_EMPTY));
