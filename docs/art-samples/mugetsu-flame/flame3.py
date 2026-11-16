@@ -32,7 +32,7 @@ def mk(x,y,side,kind,beat):
     return dict(x=float(x),y=int(y),out=float(side),kind=kind,size=u(k['size']),rise=u(k['rise']),licks=k['licks'],taper=k['taper'],sway=u(k['sway']),wl=u(k['wl']),lean=u(k['lean']),beat=int(beat))
 PAT={-1:'MSBSMSS',1:'SBSMSMB'}
 for side in (-1,1):
-    for i,y in enumerate(np.linspace(top+6,bot-1,7).astype(int)):
+    for i,y in enumerate(np.linspace(top+6,bot-7,7).astype(int)):
         x=(L[y] if side<0 else Rr[y]); EM.append(mk(x+side,y,side,PAT[side][i],(i*5+(0 if side<0 else 8)+rng.randint(3))%FR))
 for j,x in enumerate(np.linspace(L[bot-2]+3,Rr[bot-2]-3,4).astype(int)):
     mk(x,bot-1,rng.choice([-1,1])*0.4,'S',rng.randint(FR))   # 밑단(발 위) 자리는 뺀다 — 불은 다리(바지)에서만. 다른 자리의 모양이 안 바뀌게 난수만 그대로 쓴다
@@ -42,7 +42,7 @@ for j,(yy,kind) in enumerate(((top+2,'M'),(top+7,'B'),(top+13,'M'))):
 # 바지 안쪽(검정 위에 그리는 앞 레이어) 3자리
 INNER=[]   # 바지 안쪽 불 10곳 (가로 위치 비율, 종류, 밑단에서 위로 몇 칸). 한 번에 2개만 켜진다: j번째는 4프레임씩 늦게 시작해 8프레임 동안 타고, 40프레임마다 되풀이
 ICYC,ILIFE,ISTEP=40,8,4
-for j,(fx,kind,up) in enumerate(((0.22,'B',4),(0.72,'M',22),(0.45,'M',11),(0.82,'M',5),(0.30,'M',25),(0.60,'B',16),(0.16,'M',13),(0.52,'M',29),(0.76,'M',12),(0.38,'M',19))):
+for j,(fx,kind,up) in enumerate(((0.22,'B',8),(0.72,'M',22),(0.45,'M',11),(0.82,'M',9),(0.30,'M',25),(0.60,'B',16),(0.16,'M',13),(0.52,'M',29),(0.76,'M',12),(0.38,'M',19))):
     yy=bot-up; xx=L[yy]+(Rr[yy]-L[yy])*fx; e=mk(xx,yy,(-1 if j%2 else 1)*0.25,kind,0); e['licks']=1
     e['rise']=float(min(e['rise']*0.5,max(5,yy-top-3))); e['inner']=True; e['slot']=j; INNER.append(e)
 # 반대쪽 팔 = 검은 불로 된 팔 (어깨 → 팔꿈치 → 칼끝처럼 길게). 좌표는 몸 그림 기준
@@ -77,7 +77,7 @@ def field(t,shrink=0.0,ems=None):
             if thick<=0.4 or h-st<0.3: continue
             u=st
             while u<=h:
-                q_=(u-st)/(h-st+1e-6); r=thick*(1-q_)**e['taper']*(min(1.0,q_/0.25+0.25) if st>0 else 1.0)
+                q_=(u-st)/(h-st+1e-6); r=thick*(1-q_)**e['taper']*min(1.0,(u-st+0.7)/max(1.0,0.9*thick))      # 밑동은 가늘게 시작해 부풀었다가 끝으로 뾰족 (물방울 모양) — 밑이 뭉툭하게 튀어나오지 않는다
                 if r>0.3:
                     cy=ey-u; cx=ex+side*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-t/FR+ph/FR))*min(1,u/5)
                     f|=((X-cx)/max(r,0.5))**2+((Y-cy)/(max(r,0.5)*1.6))**2<=1      # 세로로 길쭉하게 = 더 날카롭게
@@ -88,7 +88,6 @@ def field(t,shrink=0.0,ems=None):
         if r>0.35: f|=(X-ax)**2+(Y-ay)**2<=max(r,0.5)**2
     base=np.zeros((H,W),bool)                # 바지 둘레에 늘 붙어 있는 얇은 불 띠
     for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
-    f=f&(Y<=bot)                                  # 바지 밑단 아래(발)로는 불이 내려가지 않는다
     return ((f|base)&~pm) if ems is None else (f&pm)
 def blade(t,shrink=0.0):
     f=np.zeros((H,W),bool)                  # 칼(불꽃 팔) 몸통: 어깨 쪽이 굵고 끝으로 갈수록 가늘다, 굵기가 물결치며 일렁임

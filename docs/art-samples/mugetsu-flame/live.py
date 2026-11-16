@@ -59,7 +59,7 @@ def render(fr):
             if sel is not None and e is not sel: continue
             age=fr-b; life=LIFE*e['rise']/20
             if age<0 or age>=life: continue
-            l=age/life; r=th*(1-l)**(0.9+0.5*e['taper'])-shrink      # 끝으로 갈수록 빨리 가늘어져 뾰족하게
+            l=age/life; r=th*(1-l)**(0.9+0.5*e['taper'])*min(1.0,(RISE*age+0.7)/max(1.0,0.9*th))-shrink      # 갓 나온 불은 가늘게 시작(밑이 뭉툭하지 않게), 끝으로 갈수록 뾰족
             if r<0.3: continue
             r=max(r,0.5); ry=r*(1.25+1.6*l)                              # 끝은 세로로 길쭉한 바늘 모양
             u=RISE*age; cx=x0+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=y0-u
@@ -74,7 +74,7 @@ def render(fr):
                 if thick<=0.4: continue
                 u=0.0
                 while u<=h:
-                    r=thick*(1-u/(h+1e-6))**e['taper']
+                    r=thick*(1-u/(h+1e-6))**e['taper']*min(1.0,(u+0.7)/max(1.0,0.9*thick))
                     if r>0.3:
                         r=max(r,0.5); cx=sx+e['x']+e['out']*(0.6+e['lean']*u)+e['sway']*math.sin(2*math.pi*(u/e['wl']-fr/(PER*TICK)+e['beat']/PER))*min(1,u/5); cy=oy+e['y']-u
                         x1,x2=max(0,int(cx-r-1)),min(W,int(cx+r+2)); y1,y2=max(0,int(cy-r*1.25-1)),min(H,int(cy+r*1.25+2))
@@ -88,7 +88,6 @@ def render(fr):
         base=np.zeros((H,W),bool)
         if shrink==0 and not inner and not only_blade:
             for dy,dx in((-1,0),): base|=np.roll(np.roll(pm,dy,0),dx,1)
-        hem=np.where(pm.any(1))[0].max(); f[hem+1:]=False      # 발 쪽으로는 불이 내려가지 않는다
         return (f&pm) if inner else ((f|base)&~pm)
     f=fld(0); core=fld(1.1)
     lay=np.zeros((H,W,4),np.uint8); lay[f]=C2; lay[f&core]=C0; lay[f&~core&np.roll(pm,-1,0)]=C0
