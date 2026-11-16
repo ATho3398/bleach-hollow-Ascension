@@ -3,7 +3,7 @@ import { DRAFT_RIGS, type DraftRig } from './draft';
 import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveShift, layerMatrix, lookLayers, motionLook, motionSpeedOf, orderLayers, resolveMotions, samplePose, slotsOf, type BodyJoints, type Key, type Motion, type PartArt, type Pose, type Rig } from '../../src/data/art/rig/pose';
 import { followMove } from './follow';
 import { createFlame, type FlameLayer } from './flame';
-import { createChain } from './chain';
+import { createChain, type ChainSpec } from './chain';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
@@ -26,7 +26,7 @@ const LEGACY = ['bha-rig-editor-v3', 'bha-rig-editor-v2', 'bha-rig-editor-v1'];
 /** 저장 = 절대값(관절·부위 자리·외형 층 자리·앞뒤 순서) + 그때의 게임 데이터 표시(dataStamp).
  * 게임 데이터가 바뀌었으면(Claude 가 사용자 값을 넣었거나 새 시트) 이 기기에 남은 옛 저장은 버리고 데이터 값을 쓴다 —
  * 서버 저장은 Claude 가 데이터를 바꿀 때마다 같이 맞춘다 */
-type Saved = Partial<Rig> & { dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits; motionOrder?: MotionOrder; bodySlots?: Record<string, string[]> };
+type Saved = Partial<Rig> & { chain?: ChainSpec; dataStamp?: string; slotsEdited?: boolean; motionEdits?: MotionEdits; motionOrder?: MotionOrder; bodySlots?: Record<string, string[]> };
 /** 동작에만 쓰는 그림 앞뒤 순서(GDD 115-A 62, 사용자 2026-11-01 "부위별 레이어도, 동작에서만이 작동 되야지"): '<동작 묶음>/<동작 id>' → 슬롯 id 목록(뒤 → 앞) */
 type MotionOrder = Record<string, string[]>;
 /** 동작 키 고친 것(사용자 2026-10-31 "이 모션에만 값 저장하기"): '<동작 묶음>/<동작 id>' → 뼈 → 키 목록(그 뼈 트랙 통째). 묶음이 없으면 '/<동작 id>' */
@@ -38,10 +38,10 @@ const stampOf = (r: unknown) => {
   return (h >>> 0).toString(36);
 };
 /** 뼈대마다(사람형·짐승형 — GDD 96장 41) 따로 고친 값·저장 자리. 사람형 저장 자리 이름은 예전 그대로 */
-interface Ctx { id: string; src: DraftRig; rig: Rig; stamp: string; store: string; db: string; fix: string; slotsEdited: boolean; dbRef: DocRef | null; medits: MotionEdits; morder: MotionOrder }
+interface Ctx { chain: ChainSpec | null; id: string; src: DraftRig; rig: Rig; stamp: string; store: string; db: string; fix: string; slotsEdited: boolean; dbRef: DocRef | null; medits: MotionEdits; morder: MotionOrder }
 const CTX: Record<string, Ctx> = Object.fromEntries(Object.entries(DRAFT_RIGS).map(([id, src]) => {
   const tail = id === 'humanoid' ? '' : `-${id}`;
-  return [id, { id, src, rig: JSON.parse(JSON.stringify(src.rig)) as Rig, stamp: stampOf({ rig: src.rig, motions: src.motions, sets: src.sets }), store: `bha-rig-editor${tail}`, db: `rig/editor${tail}`, fix: `rig/fixed${tail}`, slotsEdited: false, dbRef: null, medits: {}, morder: {} }];
+  return [id, { chain: src.chain ? (JSON.parse(JSON.stringify(src.chain)) as ChainSpec) : null, id, src, rig: JSON.parse(JSON.stringify(src.rig)) as Rig, stamp: stampOf({ rig: src.rig, motions: src.motions, sets: src.sets, chain: src.chain }), store: `bha-rig-editor${tail}`, db: `rig/editor${tail}`, fix: `rig/fixed${tail}`, slotsEdited: false, dbRef: null, medits: {}, morder: {} }];
 }));
 let C: Ctx = CTX.humanoid!;
 let rig: Rig = C.rig;
@@ -53,6 +53,8 @@ const lookParts = (lk: Rig['looks'][string]) => Object.keys(lk).filter((k) => ty
 function merge(c: Ctx, s: Saved): boolean {
   const rig = c.rig;
   if (s.dataStamp !== c.stamp) return false;
+  // 사슬 자리(GDD 115-A 153): 그 뼈대에 사슬이 있을 때만, 띠·끝의 조각·점·방향·길이
+  if (c.chain && s.chain) { c.chain.bands = JSON.parse(JSON.stringify(s.chain.bands)); c.chain.tails = JSON.parse(JSON.stringify(s.chain.tails)); }
   c.medits = JSON.parse(JSON.stringify(s.motionEdits ?? {})) as MotionEdits;
   c.morder = JSON.parse(JSON.stringify(s.motionOrder ?? {})) as MotionOrder;
   if (s.bones) for (const b of rig.bones) {
@@ -94,6 +96,7 @@ function resetRig(c: Ctx) {
   const fresh: Rig = JSON.parse(JSON.stringify(c.src.rig));
   const r = c.rig;
   r.bones = fresh.bones; r.slots = fresh.slots; r.bodies = fresh.bodies; r.looks = fresh.looks; r.bodyJoints = fresh.bodyJoints; r.bodySlots = fresh.bodySlots; c.slotsEdited = false; c.medits = {}; c.morder = {};
+  if (c.chain && c.src.chain) { c.chain.bands = JSON.parse(JSON.stringify(c.src.chain.bands)); c.chain.tails = JSON.parse(JSON.stringify(c.src.chain.tails)); }
 }
 for (const c of Object.values(CTX)) {
   try {
@@ -143,7 +146,7 @@ function motionKeyOf(id: string): string {
 
 let look = 'arrancar-base';
 let sel = 'arm_L';
-let mode: 'pivot' | 'part' = 'pivot';
+let mode: 'pivot' | 'part' | 'chain' = 'pivot';
 let motion: string | null = null;
 let mt = 0;
 /** 저장 범위: 기본 자세(이 몸) / 이 동작에만(그 동작 내내 더해지는 각도·위치) — 사용자 2026-10-31. 고치는 동안 동작은 멈추지 않는다 */
@@ -281,7 +284,7 @@ sizeStage();
 window.addEventListener('resize', () => { fitWrap(); fitSide(); });
 
 let dbTimer = 0;
-const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, bodySlots: c.rig.bodySlots ?? {}, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder });
+const state = (c: Ctx = C) => JSON.stringify({ id: c.id, bones: c.rig.bones, slots: c.rig.slots, bodies: c.rig.bodies, looks: c.rig.looks, bodyJoints: c.rig.bodyJoints, bodySlots: c.rig.bodySlots ?? {}, dataStamp: c.stamp, slotsEdited: c.slotsEdited, motionEdits: c.medits, motionOrder: c.morder, ...(c.chain ? { chain: c.chain } : {}) });
 function save(user = true) {
   const st = state();
   try { localStorage.setItem(C.store, st); } catch { /* 무시 */ }
@@ -413,6 +416,19 @@ function draw() {
       stage.append(f);
     }
   }
+  if (mode === 'chain' && C.chain && C.chain.look === look) {
+    // 사슬 자리 점(GDD 115-A 153): 띠 꺾은선 점 = 네모, 풀린 끝 시작 = 세모(◆). 고른 것은 강조
+    for (const p of chainPoints()) {
+      const m = drawn.find((d) => d.slot === p.slot)?.m;
+      if (!m) continue;
+      const d = document.createElement('div');
+      d.className = 'dot chainpt' + (p.key === chainSel ? ' on' : '') + (p.tail ? ' tail' : '');
+      d.style.left = `${(m[0]! * p.x + m[2]! * p.y + m[4]!) * K}px`;
+      d.style.top = `${(m[1]! * p.x + m[3]! * p.y + m[5]!) * K}px`;
+      d.title = p.label;
+      stage.append(d);
+    }
+  }
   {
     // 관절 점 = 이 뼈가 지금 실제로 도는 자리(보정 이동 포함) — 동작 중에도 그 순간 자리에(사용자 2026-11-01 "동작에선 왜 관절 위치가 안떠", GDD 115-A 64)
     for (const b of bodyBones(rig, curBody())) {
@@ -452,10 +468,107 @@ function layerPos(): string {
 /** 부위 버튼 묶음(사용자 2026-10-29 "머리부터 왼팔 오른팔 순서대로", 뼈대 데이터 edit.groups) — 이 외형에 있는 것만 */
 const CHIP_GROUPS = (): [string, string[]][] => (rig.edit?.groups ?? []).map(([label, ids]) => [isCreature() ? CREATURE_GROUPS[label] ?? label : label, ids]);
 function pick(id: string) { sel = id; buildChips(); draw(); }
+/** 사슬 자리 옮기기 (사용자 2026-11-17 도트 세션 경유 "혈쇄 이치고는 내가 사슬 위치 정할테니까 … 사슬 위치 조작 가능하게", GDD 115-A 153):
+ *  사슬 띠의 꺾은선 점과 풀린 끝의 시작점을 골라 방향 단추로 1도트씩 옮기고, 끝의 방향·길이, 띠가 붙는 조각을 바꾼다. 점은 조각 안 좌표라 조각이 움직이면 같이 간다. '고정'하면 <뼈대>-chain.json 에 들어간다 */
+let chainSel = 'b0:1';
+interface ChainPt { key: string; label: string; slot: string; x: number; y: number; tail: boolean }
+function chainPoints(): ChainPt[] {
+  const ch = C.chain;
+  if (!ch) return [];
+  const out: ChainPt[] = [];
+  ch.bands.forEach((b, i) => b.pts.forEach((p, j) => out.push({ key: `b${i}:${j}`, label: `${b.name ?? `띠 ${i + 1}`} 점 ${j + 1}`, slot: b.slot, x: p[0], y: p[1], tail: false })));
+  ch.tails.forEach((tl, i) => out.push({ key: `t${i}`, label: `${tl.name ?? `끝 ${i + 1}`} 풀린 끝`, slot: tl.slot, x: tl.x, y: tl.y, tail: true }));
+  return out;
+}
+/** 화면에서 (dx, dy) 도트 → 그 조각 안 좌표로(조각이 돌아가 있어도 화면 방향 그대로 움직이게) */
+function screenToLocal(slot: string, dx: number, dy: number): [number, number] {
+  const m = drawn.find((d) => d.slot === slot)?.m;
+  if (!m) return [dx, dy];
+  const det = m[0]! * m[3]! - m[1]! * m[2]!;
+  if (Math.abs(det) < 1e-6) return [dx, dy];
+  return [(m[3]! * dx - m[2]! * dy) / det, (-m[1]! * dx + m[0]! * dy) / det];
+}
+const r1 = (v: number) => Math.round(v * 10) / 10;
+function moveChainPoint(dx: number, dy: number) {
+  const ch = C.chain;
+  if (!ch) return;
+  const mt_ = /^b(\d+):(\d+)$/.exec(chainSel), tt = /^t(\d+)$/.exec(chainSel);
+  if (mt_) {
+    const b = ch.bands[Number(mt_[1])]!, p = b.pts[Number(mt_[2])]!;
+    const [lx, ly] = screenToLocal(b.slot, dx, dy);
+    p[0] = r1(p[0] + lx); p[1] = r1(p[1] + ly);
+  } else if (tt) {
+    const tl = ch.tails[Number(tt[1])]!;
+    const [lx, ly] = screenToLocal(tl.slot, dx, dy);
+    tl.x = r1(tl.x + lx); tl.y = r1(tl.y + ly);
+  }
+  save(); draw(); buildChainUi();
+}
+/** 띠(와 같은 번호의 풀린 끝)를 다른 조각에 붙인다 — 화면 자리는 그대로 두고 그 조각 안 좌표로 바꿔 적는다 */
+function moveChainToSlot(i: number, slot: string) {
+  const ch = C.chain;
+  if (!ch) return;
+  const from = (s: string) => drawn.find((d) => d.slot === s)?.m;
+  const conv = (s0: string, x: number, y: number): [number, number] => {
+    const a = from(s0), b = from(slot);
+    if (!a || !b) return [x, y];
+    const wx = a[0]! * x + a[2]! * y + a[4]!, wy = a[1]! * x + a[3]! * y + a[5]!;
+    const det = b[0]! * b[3]! - b[1]! * b[2]!, ux = wx - b[4]!, uy = wy - b[5]!;
+    return [r1((b[3]! * ux - b[2]! * uy) / det), r1((-b[1]! * ux + b[0]! * uy) / det)];
+  };
+  const band = ch.bands[i];
+  if (band) { band.pts = band.pts.map(([x, y]) => conv(band.slot, x, y)); band.slot = slot; }
+  const tl = ch.tails[i];
+  if (tl) { [tl.x, tl.y] = conv(tl.slot, tl.x, tl.y); tl.slot = slot; }
+  save(); draw(); buildChainUi();
+}
+function buildChainUi() {
+  const sec = document.getElementById('chainsec');
+  const btn = document.querySelector<HTMLElement>('[data-mode="chain"]');
+  const has = !!C.chain && C.chain.look === look;
+  if (btn) btn.hidden = !has;
+  if (!sec) return;
+  sec.hidden = !has || mode !== 'chain';
+  if (sec.hidden || !C.chain) return;
+  const ch = C.chain;
+  const box = document.getElementById('chainpts')!;
+  box.replaceChildren(...ch.bands.map((b, i) => {
+    const g = document.createElement('div');
+    g.className = 'chipgroup';
+    const lb = document.createElement('span');
+    lb.className = 'chiplabel';
+    lb.textContent = b.name ?? `띠 ${i + 1}`;
+    g.append(lb);
+    const mk = (key: string, text: string) => { const x = document.createElement('button'); x.textContent = text; x.className = key === chainSel ? 'on' : ''; x.onclick = () => { chainSel = key; buildChainUi(); draw(); }; return x; };
+    b.pts.forEach((_, j) => g.append(mk(`b${i}:${j}`, `점${j + 1}`)));
+    if (ch.tails[i]) g.append(mk(`t${i}`, '풀린 끝'));
+    const sel = document.createElement('select');
+    sel.setAttribute('aria-label', `${b.name ?? `띠 ${i + 1}`} 붙는 조각`);
+    for (const s of lookLayers(rig, look).map((l) => l.slot)) sel.append(new Option(NAMES()[s] ?? s, s, false, s === b.slot));
+    sel.onchange = () => moveChainToSlot(i, sel.value);
+    g.append(sel);
+    return g;
+  }));
+  const tm = /^t(\d+)$/.exec(chainSel);
+  const tl = tm ? ch.tails[Number(tm[1])] : undefined;
+  const ctl = document.getElementById('chaintail')!;
+  ctl.hidden = !tl;
+  if (tl) document.getElementById('chaintailv')!.textContent = `방향 ${Math.round(tl.ang)}° · 길이 ${tl.L}`;
+}
+function chainTail(dAng: number, dL: number) {
+  const tm = /^t(\d+)$/.exec(chainSel);
+  const tl = tm && C.chain ? C.chain.tails[Number(tm[1])] : undefined;
+  if (!tl) return;
+  tl.ang = (tl.ang + dAng + 360) % 360;
+  tl.L = Math.max(2, Math.min(14, tl.L + dL));
+  save(); draw(); buildChainUi();
+}
+document.querySelectorAll<HTMLButtonElement>('[data-ctail]').forEach((b) => b.onclick = () => { const [a, l] = b.dataset.ctail!.split(',').map(Number) as [number, number]; chainTail(a, l); });
 /** 부위별 색 보기: 켜면 부위마다 다른 색(슬롯 차례 × 황금각 — 이웃 부위끼리 색이 멀다), 부위 단추에도 같은 색 띠 */
 const tintOn = () => (document.getElementById('tint') as HTMLInputElement | null)?.checked ?? false;
 const tintOf = (slot: string) => `hsl(${Math.round((Math.max(0, rig.slots.findIndex((s) => s.id === slot)) * 137.5) % 360)} 85% 55%)`;
 function buildChips() {
+  buildChainUi();
   const box = $('parts');
   box.innerHTML = '';
   const has = new Set(['root', ...lookLayers(rig, look).map((l) => l.slot)]);
@@ -510,6 +623,7 @@ function shiftMotion(boneId: string, drot: number, dx: number, dy: number) {
 
 function nudge(dx: number, dy: number) {
   // 관절 옮기기 = 언제나 관절만(그림은 제자리). '이 동작에만'에서 그 동작만 부위를 옮기려면 '부위 그림 옮기기'
+  if (mode === 'chain') { moveChainPoint(dx, dy); return; }
   if (mode === 'pivot') { moveJoint(boneOfSel(), dx, dy); save(); draw(); return; }
   if (scope === 'motion' && motion) { shiftMotion(boneOfSel(), 0, dx, dy); return; }
   // 부위를 옮기면 딸린 부위(머리 → 머리카락·뒷머리, 왼팔 → 엄지, 오른 위팔 → 아래팔, 다리 → 정강이·발)와 그 관절도 같이(사용자 2026-10-29)
@@ -652,7 +766,9 @@ document.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => b.oncl
 document.querySelectorAll<HTMLButtonElement>('[data-sub]').forEach((b) => b.onclick = () => { sub = b.dataset.sub!; showTabs(true); });
 setTimeout(() => { syncTabs(); buildSwaps(); }, 0);
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.onclick = () => {
-  mode = b.dataset.mode as 'pivot' | 'part';
+  mode = b.dataset.mode as 'pivot' | 'part' | 'chain';
+  buildChainUi();
+  draw();
   document.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
 });
 // 방향 단추를 꾹 누르면 주르륵(사용자 2026-11-10 "관절옮기기랑 부위그림은 방향키 꾹누르고 있으면 주루루룩"): 누르면 한 칸, 0.35초 뒤부터 0.06초마다 한 칸. 키보드 방향키도
@@ -797,7 +913,7 @@ function stepFlame(dt: number) {
 }
 /** 사슬 이펙트 층(GDD 115-A 149): 지금 외형에 사슬이 있으면 미리보기 위에 얹는다 */
 function stepChain(dt: number) {
-  const spec = C.src.chain;
+  const spec = C.chain;
   const on = spec && spec.look === look ? C.id : null;
   for (const [id, c] of chains) { const show = id === on; c.back.hidden = !show; c.front.hidden = !show; }
   if (!spec || !on) return;

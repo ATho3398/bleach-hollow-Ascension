@@ -3,8 +3,8 @@
 // 띠·끝 자리는 조각(slot) 안 좌표라 조각이 움직이면 같이 간다. 16장(120ms) 한 바퀴 — 시간은 이어지게 흘린다. 검정 외곽선 없음, 머리·얼굴 위에는 빛을 안 그린다.
 import type { FlameLayer } from './flame';
 
-export interface ChainBand { slot: string; pts: [number, number][] }
-export interface ChainTail { slot: string; x: number; y: number; ang: number; L: number; w: number; curl: number; ph: number; sw?: number }
+export interface ChainBand { name?: string; slot: string; pts: [number, number][] }
+export interface ChainTail { name?: string; slot: string; x: number; y: number; ang: number; L: number; w: number; curl: number; ph: number; sw?: number }
 export interface ChainSpec { look: string; pad: [number, number, number, number]; noGlow?: string[]; bands: ChainBand[]; tails: ChainTail[] }
 
 const FR = 16, MS = 120;
