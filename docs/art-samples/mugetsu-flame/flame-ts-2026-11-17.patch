@@ -1,0 +1,107 @@
+diff --git a/scripts/rig/flame.ts b/scripts/rig/flame.ts
+index 5b17a83f..2881b6e7 100644
+--- a/scripts/rig/flame.ts
++++ b/scripts/rig/flame.ts
+@@ -51,7 +51,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+     while (h.t.length > 2 && h.t[1]! < fr - KEEP) { h.t.shift(); h.x.shift(); h.y.shift(); }
+   };
+   /** delay 박자 전 자리(사이는 선형), 지금 자리에서 MAXLAG 칸 넘게는 안 끌림 */
+-  const at = (key: unknown, cx: number, cy: number, delay: number): [number, number] => {
++  const at = (key: unknown, cx: number, cy: number, delay: number, maxLag = MAXLAG): [number, number] => {
+     const h = hist.get(key);
+     if (!h || !h.t.length || delay <= 0) return [cx, cy];
+     const tt = fr - delay;
+@@ -63,7 +63,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+       x += (h.x[i + 1]! - x) * a; y += (h.y[i + 1]! - y) * a;
+     }
+     const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy);
+-    return d > MAXLAG ? [cx + (dx * MAXLAG) / d, cy + (dy * MAXLAG) / d] : [x, y];
++    return d > maxLag ? [cx + (dx * maxLag) / d, cy + (dy * maxLag) / d] : [x, y];
+   };
+   const disc = (buf: Uint8Array, cx: number, cy: number, rx: number, ry: number) => {
+     const x1 = Math.max(0, Math.floor(cx - rx - 1)), x2 = Math.min(W, Math.floor(cx + rx + 2));
+@@ -75,8 +75,11 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+     return m ? [m[0]! * lx + m[2]! * ly + m[4]! + pl, m[1]! * lx + m[3]! * ly + m[5]! + pt] : null;
+   };
+   /** 불 줄기 모양(flame3.py field · live2.py) — inner = 바지 안쪽 불만, 아니면 바깥 불 + 칼(불꽃 팔) */
++  let bladeW: [number, number][] = [];
+   const field = (buf: Uint8Array, shrink: number, inner: boolean) => {
+     buf.fill(0);
++    bladeW = [];
++    for (const tp of spec.trail ?? []) { const bw = world(tp[0], tp[1], tp[2]); if (bw) bladeW.push(bw); }
+     // 불꽃 모양의 시간은 120ms(2박자) 단위로 끊는다 — 사용자 2026-11-17 "불꽃 도트 속도 오히려 좀 느린게 도트겜느낌나서 좋거든? 프레임당 120ms로" (줄기가 몸을 따라가는 지연은 끊지 않음)
+     const t = Math.floor(fr / TICK);
+     for (const e of spec.emitters) {
+@@ -85,6 +88,12 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+       if (!w) continue;
+       if (e.plume) continue; // 큰 불기둥은 인형에서 뺌(몸을 가림 — 사용자 2026-11-17 "실제 모션 보면 불이 너무많이 나서 뭐 아무것도 안보이더라")
+       const arm = !!e.stick, ph = e.beat;
++      if (arm && bladeW.length) { // 칼의 불은 허공이 아니라 칼 몸통에서 나온다: 가장 가까운 칼 점으로 붙인다
++        let bi = 0, bd = 1e9;
++        for (let i = 0; i < bladeW.length; i++) { const d = (bladeW[i]![0] - w[0]) ** 2 + (bladeW[i]![1] - w[1]) ** 2; if (d < bd) { bd = d; bi = i; } }
++        const ba = (spec.trail ?? [])[bi]?.[3] ?? 0;
++        w[0] = bladeW[bi]![0]; w[1] = bladeW[bi]![1] - 0.7 * 2 * (2.9 - 2.1 * Math.min(ba, 0.86)); // 칼 윗면 바로 안쪽에서 솟는다
++      }
+       const r0 = e.size * (arm || inner ? 1 : 0.6), rise = e.rise * (arm || inner ? 1 : 0.75); // 바지 둘레 불만 굵기 0.6배·높이 0.75배(같은 지시, 임시값)
+       for (let k = 0; k < (inner ? 1 : e.licks); k++) {
+         let l: number;
+@@ -98,12 +107,12 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+         const P = (u: number): [number, number, number] => {
+           const q = (u - st) / span;
+           const [sx, sy] = at(e, w[0], w[1], arm ? 0 : Math.min(MAXDELAY, u / LAG));
+-          const cx = sx + e.out * (0.6 + e.lean * u) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - t / PER + ph / PER)) * Math.min(1, u / 5) + hk * 0.34 * span * q ** 2.6;
++          const cx = sx + (arm ? 0 : e.out * (0.6 + e.lean * u)) + e.sway * Math.sin(2 * Math.PI * (u / e.wl - t / PER + ph / PER)) * Math.min(1, u / 5) + hk * 0.34 * span * q ** 2.6;
+           return [cx, sy - u + 0.1 * span * q ** 4, q];
+         };
+         for (let u = st; u <= h; u += 0.6) {
+           const [cx, cy, q] = P(u);
+-          const r = thick * (1 - q) ** e.taper * Math.min(1, (u - st + 0.7) / Math.max(1, 0.9 * thick));
++          const r = thick * (1 - q) ** e.taper * (arm ? 1 : Math.min(1, (u - st + 0.7) / Math.max(1, 0.9 * thick)));
+           if (r > 0.3) disc(buf, cx, cy, Math.max(r, 0.5), Math.max(r, 0.5) * 1.35);
+         }
+         if (!inner && thick > 1.6 && span > 6) { // 옆 가시: 38% 지점에서 갈고리 반대쪽으로 길이의 42%
+@@ -117,14 +126,37 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
+     }
+     if (inner) return;
+     // 칼(불꽃 팔) = 불 덩어리: 칼끝이 3~6박자 늦게 따라온다
+-    (spec.trail ?? []).forEach((tp, i) => {
+-      const [slot, lx, ly, a, sp] = tp;
+-      const w = world(slot, lx, ly);
++    const TR = spec.trail ?? [];
++    const pts: ([number, number] | null)[] = TR.map((tp) => world(tp[0], tp[1], tp[2]));
++    // 칼 굵기: 대부분은 완만하게 줄고, 끝 14% 는 한쪽 면만 깎여 날 끝처럼 보인다(송곳처럼 고르게 뾰족해지지 않게)
++    const TIP = 0.86;
++    const rad = (a: number, sp: number) => (a < TIP ? 2 * (2.9 - 2.1 * a) : 2 * (2.9 - 2.1 * TIP) * (1 - (a - TIP) / (1 - TIP)) ** 0.8 + 0.25) + 0.9 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - t / PER)) * (a < TIP ? 1 : 0.2);
++    TR.forEach((tp, i) => {
++      const a = tp[3], sp = tp[4], w = pts[i];
+       if (!w) return;
+-      const [sx, sy] = [w[0], w[1]]; // 지연 없음(사용자 2026-11-17 "휘두르면 채찍처럼 끝나. 이거 수정" — 칼끝 지연이 채찍처럼 휘게 했음)
+-      const r = 2 * (2.9 - 2.7 * a) + 0.9 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - t / PER)) - shrink * 0.8;
+-      if (r > 0.35) disc(buf, sx, sy, Math.max(r, 0.5), Math.max(r, 0.5));
+-      void i;
++      let r = rad(a, sp), cx = w[0], cy = w[1];
++      if (a >= TIP) { // 날 끝: 중심을 칼등 반대쪽(날 쪽)으로 밀어 한 면은 곧게, 다른 면만 비스듬히
++        const p0 = pts[Math.max(0, i - 4)], p1 = pts[Math.min(TR.length - 1, i + 4)];
++        if (p0 && p1) { const dx = p1[0] - p0[0], dy = p1[1] - p0[1], d = Math.hypot(dx, dy) || 1, full = 2 * (2.9 - 2.1 * TIP); cx += (-dy / d) * (full - r); cy += (dx / d) * (full - r); }
++      }
++      r -= shrink * 0.8;
++      if (r > 0.35) disc(buf, cx, cy, Math.max(r, 0.5), Math.max(r, 0.5));
++      // 휘두른 궤적: 지난 1.6박자 동안(칼 바깥쪽 절반만) 이 칼 점이 지나온 길을 1.2칸 간격으로 빈틈없이 메운다(오래된 자리일수록 가늘게). 칼은 곧은 채로 불만 궤적을 따라 남는다
++      if (a > 0.5 && i % 2 === 0) {
++        let px = w[0], py = w[1];
++        for (let dly = 0.2; dly <= 1.6; dly += 0.2) {
++          const [gx, gy] = at(tp, w[0], w[1], dly, 999);
++          const seg = Math.hypot(gx - px, gy - py);
++          if (seg > 40) break; // 동작이 바뀌며 튄 자리는 잇지 않는다
++          const n = Math.max(1, Math.ceil(seg / 1.2));
++          for (let j = 1; j <= n; j++) {
++            const q = j / n, d = dly - 0.2 + 0.2 * q;
++            const gr = rad(a, sp) * 0.7 * (1 - d / 1.7) ** 1.3 - shrink * 0.8;
++            if (gr > 0.35 && Math.hypot(px + (gx - px) * q - w[0], py + (gy - py) * q - w[1]) > 1) disc(buf, px + (gx - px) * q, py + (gy - py) * q, Math.max(gr, 0.5), Math.max(gr, 0.5));
++          }
++          px = gx; py = gy;
++        }
++      }
+     });
+   };
+   const render = (layers: FlameLayer[]) => {
