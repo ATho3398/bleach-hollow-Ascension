@@ -119,12 +119,12 @@ export function createChain(spec: ChainSpec, canvas: [number, number]) {
         acc += d;
       }
     }
-    const fi = tctx.createImageData(W, H);
+    const fi = tctx.createImageData(W, H), ri = tctx.createImageData(W, H); // fi = 빛무리(머리 위는 지움), ri = 띠 고리(안 지움 — 앞뒤 자리대로 머리 위에도 덮인다)
     dil(cb, d1, 1); dil(cb, d2, 2);
     for (let i = 0; i < N; i++) {
       if (cb[i]) {
         const wave = Math.sin(2 * Math.PI * (cs[i]! / 9 - t / FR));
-        put(fi, i, wave > 0.88 ? HOT : wave > 0.45 ? ORG : Math.floor(cs[i]! / 2.2) % 2 ? DARK : RED);
+        put(ri, i, wave > 0.88 ? HOT : wave > 0.45 ? ORG : Math.floor(cs[i]! / 2.2) % 2 ? DARK : RED);
       } else if (d1[i]) put(fi, i, GLOW, Math.round(55 + 55 * pulse));
       else if (d2[i]) put(fi, i, GLOW, Math.round(22 + 28 * pulse));
     }
@@ -141,6 +141,7 @@ export function createChain(spec: ChainSpec, canvas: [number, number]) {
     tctx.drawImage(cut, 0, 0);
     tctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(tmp, 0, 0);
+    blit(ctx, ri);
   };
   const drawTails = (ctx: CanvasRenderingContext2D, tails: ChainTail[], pos: Map<string, number[]>, t: number, pulse: number) => {
     // 몸 뒤: 풀린 끝 + 날아가는 조각 + 빛무리
