@@ -1,6 +1,6 @@
 // 편집기 화면 점검 (사용자 2026-11-14 "앞으로 뭐 추가하거나 툴에 모션 추가하고 하면, 툴 망가지는거 없나 체크해. 무월 툴 ui 다 망가졋잖아", GDD 115-A 135)
 // 편집기를 올리기 전에 꼭 돌린다: 외형 단추를 전부 눌러 보고 너비 1000·1300 에서
-//  - 스크립트 오류가 없는지 - 도구 칸·미리보기·동작 단추 칸이 한 줄에 있는지(다음 줄로 안 밀림) - 가로로 안 넘치는지 - 미리보기가 3배보다 작지 않은지
+//  - 스크립트 오류가 없는지 - 도구 칸·미리보기·동작 단추 칸이 한 줄에 있는지(다음 줄로 안 밀림) - 가로로 안 넘치는지 - 미리보기가 3배보다 작지 않은지 - 방향 단추가 보이는지
 // 사용: node scripts/rig/tools/editor-check.cjs <.rig-pages 절대경로>   (문제가 있으면 줄마다 적고 종료 코드 1)
 const { chromium } = require('playwright');
 (async () => {
@@ -27,13 +27,15 @@ const { chromium } = require('playwright');
         const y = (s) => Math.round(r.querySelector(s).getBoundingClientRect().y);
         const st = document.getElementById('stage');
         const canvasW = st.querySelectorAll('img.part').length;
-        return { tool: y('.toolcol'), left: y('.leftcol'), side: y('.side'), sw: document.documentElement.scrollWidth, parts: canvasW, stage: st.getBoundingClientRect().width };
+        const pr = document.querySelector('.pad')?.getBoundingClientRect();
+        return { pad: !!pr && pr.width > 0 && pr.height > 0, tool: y('.toolcol'), left: y('.leftcol'), side: y('.side'), sw: document.documentElement.scrollWidth, parts: canvasW, stage: st.getBoundingClientRect().width };
       });
       n++;
       const why = [];
       if (d.left !== d.tool || d.side !== d.left) why.push('미리보기·동작 칸이 다음 줄로 밀림');
       if (d.sw > w) why.push(`가로로 넘침(${d.sw})`);
       if (!d.parts) why.push('그림이 안 그려짐');
+      if (!d.pad) why.push('방향 단추(옮기기)가 안 보임'); // 사용자 2026-11-17 "툴에서 이동키 자체가 사라짐" — 닫히지 않은 칸 안에 숨겨졌던 것
       if (why.length) { bad++; console.log(`✗ ${l} @${w}: ${why.join(', ')}`); }
     }
     if (errs.length) { bad++; console.log(`✗ 스크립트 오류 @${w}:`, [...new Set(errs)].join(' | ')); }

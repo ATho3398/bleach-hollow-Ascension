@@ -262,7 +262,7 @@ def main():
     cur['idle']['hide'] = ['foot_b_walk']
     cur['idle'].pop('front', None)
     for k, v in SPEC.items():
-        v['hide'] = ['foot_b' if k == 'move' else 'foot_b_walk']
+        v['hide'] = ['foot_b' if k in ('move', 'down') else 'foot_b_walk']  # 쓰러짐도 걷기용 왼발(사용자 2026-11-17 "쓰러짐때는, 왼발을 걷기용으로 바꿔야지")
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
           'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     # 키가 많아(16ms 마다) 뼈 하나의 키를 한 줄에 쓴다
