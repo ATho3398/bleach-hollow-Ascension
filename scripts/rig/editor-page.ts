@@ -963,6 +963,8 @@ function stepChain(dt: number) {
   }));
 }
 document.getElementById('tint')?.addEventListener('change', () => { buildChips(); draw(); });
+// 점 숨기기(사용자 2026-11-17 "툴에 점 안보이게 기능 추가좀. 점때문에 도트가 안보임"): 관절 점·사슬 점·틀을 감춘다(무대 클래스 하나 — 그릴 때마다 다시 붙여도 그대로)
+document.getElementById('nodots')?.addEventListener('change', (e) => stage.classList.toggle('nodots', (e.target as HTMLInputElement).checked));
 let last = 0;
 function tick(now: number) {
   if (last) stepFlame(now - last);
