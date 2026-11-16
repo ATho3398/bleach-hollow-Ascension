@@ -20,7 +20,9 @@ import {
   kitSecondOn,
   kitNextReleaseIsSecond,
   stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
+  statusMarksOf,
 } from '../engine/combat';
+import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
 import { riskText } from '../data/help/riskText';
@@ -458,18 +460,21 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   hero.root.dataset.help = 'battle.hero'; // 각본 전투 '일반 공격은 자동' 카드 대상 (GDD 224장 1)
   setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
   setHpBar(playerHp, s.player.hp, s.player.maxHp);
-  const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement): HTMLElement => {
+  // 스택 네모 줄 (GDD 7-13, C.471): 체력 막대 바로 위 — 내 것 = 내 막대, 적에게 건 것 = 적 막대
+  const meMarks = statusMarkRow('self');
+  const foeMarks = statusMarkRow('foe');
+  const unit = (cls: string, headsEl: HTMLElement, fig: HTMLElement, hp: HTMLElement, markRow: HTMLElement): HTMLElement => {
     const u = el('div', `bha-unit ${cls}`);
     const figBox = el('div', 'bha-unit__fig');
     figBox.append(fig);
     const hpBox = el('div', 'bha-unit__hp');
-    hpBox.append(hp);
+    hpBox.append(markRow, hp);
     u.append(headsEl, figBox, hpBox);
     return u;
   };
   const units = el('div', 'bha-v2units');
-  const foeUnit = unit('bha-unit--foe', foeHeads, foe, enemyHp.root);
-  units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root), foeUnit);
+  const foeUnit = unit('bha-unit--foe', foeHeads, foe, enemyHp.root, foeMarks);
+  units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root, meMarks), foeUnit);
   // 테스트 모드 적 설정 (C.457): 적 자리를 비우고 그 자리에 [적 설정] 버튼
   if (opts.emptyFoe) {
     foeUnit.classList.add('is-empty');
@@ -563,56 +568,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   libChip.append(libChipName, ' ', libChipValue);
   libChip.hidden = true;
   const libChipRoot = { root: libChip, value: libChipValue };
-  // 초월자 스택 칩 (GDD 12-4 v6.048 영창): 스택 장치 블록이 있을 때만 — '영창 n/5'
-  const kitStack = p.kit?.blocks.find((b) => b.stack)?.stack;
-  const stackChip = kitStack ? v2Chip('', 'default', { icon: 'i-special' }) : null;
-  const stackChipValue = el('span');
-  if (stackChip) {
-    stackChip.classList.add('bha-kitstack');
-    stackChip.append(p.kit!.stackName, ' ', stackChipValue);
-  }
-  let stackShown = -1;
-  // 충전 평타 칩 (GDD 12-4 v6.069 '월아천충 n') · 마무리 스택 칩 ('최후의 월아천충 n/10', 두 번째 해방 중만) — 영창 칩과 같은 모양
-  const chargeName = p.kit?.blocks.find((b) => b.chargeShot)?.chargeShot?.name ?? null;
-  const chargeChip = chargeName ? v2Chip('', 'default', { icon: 'i-attack' }) : null;
-  const chargeChipValue = el('b', 'bha-num');
-  if (chargeChip) {
-    chargeChip.classList.add('bha-kitstack');
-    chargeChip.title = `다음 평타 ${chargeName} 남은 수`;
-    chargeChip.append(chargeName!, ' ', chargeChipValue);
-  }
-  const finalMs = p.kit?.mastery ?? null;
-  const finalChip = finalMs ? v2Chip('', 'default', { icon: 'i-special' }) : null;
-  const finalChipValue = el('b', 'bha-num');
-  if (finalChip) {
-    finalChip.classList.add('bha-kitstack');
-    finalChip.title = `${finalMs!.releaseName} 중 평타 1대마다 +1 — ${finalMs!.stacks}이면 다음 평타가 ${finalMs!.finisherName}`;
-    finalChip.append(finalMs!.finisherName, ' ', finalChipValue);
-    finalChip.hidden = true;
-  }
-  let chargeShown = '';
-  // 회피 치명 버프 칩 (GDD 12-4 v6.066): 회피 뒤 버프 동안만 '치명 +20% n.n초' — 기존 rare 칩 모양
-  const evadeBuff = p.kit?.evadeBuff;
-  const buffChip = evadeBuff ? v2Chip('', 'rare', { icon: 'i-attack' }) : null;
-  const buffChipValue = el('span');
-  if (buffChip) {
-    buffChip.classList.add('bha-kitbuff');
-    buffChip.title = `회피 성공 뒤 ${evadeBuff!.seconds}초 동안 치명 확률 +${Math.round(evadeBuff!.critChance * 100)}%p · 치명 피해 +${Math.round(evadeBuff!.critDamage * 100)}%`;
-    buffChip.append(`치명 +${Math.round(evadeBuff!.critChance * 100)}%`, ' ', buffChipValue);
-    buffChip.hidden = true;
-  }
-  let buffShown = '';
-  // 자세 모드 (GDD 12-4 천년혈전, C.460): 자세마다 스택 칩 '소도 n/30'·'대도 n/30'(기존 .bha-kitstack — 지금 자세는 is-full, 만해 가능도) + [자세] 버튼 + 내 머리 위 상태 칩(유지 보너스·자세 무너짐·발도 충전 — 기존 .bha-kitbuff)
+  // 스택 표시 (GDD 7-13 스택 표시, C.471 사용자 2026-11-17 "적한테 걸리는거면 적 체력바 위에, 나한테 쌓이는거면 내 체력바 위에. 작은 네모 아이콘으로"):
+  // 영창·월아천충·최후의 월아천충·자세 스택·발도·자세 무너짐·유지·치명 버프·물공 버프·지속 피해·넉백 = 엔진 statusMarksOf(걸린 쪽·아이콘 = 데이터) → 걸린 쪽 체력 막대 바로 위 네모 줄(statusMarkRows)
+  const marks = statusMarkRows(meMarks, foeMarks);
+  // 자세 모드 (GDD 12-4 천년혈전, C.460): [자세] 버튼(범례 줄) — 자세 스택·발도·자세 무너짐·유지는 체력 막대 위 네모(C.471)
   const stanceKit = p.kit?.stance ?? null;
-  const stanceChips = (stanceKit?.stances ?? []).map((st) => {
-    const c = v2Chip('', 'default', { icon: st.parry ? 'i-guard' : 'i-attack' });
-    c.classList.add('bha-kitstack');
-    c.dataset.sc = `stance-${st.id}`;
-    const v = el('b', 'bha-num');
-    c.append(st.name, ' ', v);
-    c.title = `${st.name} 자세로 때릴 때마다 +1 (${stanceKit!.stackSeconds}초 지속·갱신, 다른 자세 스택은 효과·갱신 없음) — ${stanceKit!.releaseAt} 이상이면 ${st.releaseName}`;
-    return { root: c, value: v };
-  });
   const stanceBtn = stanceKit ? v2Button({ label: '자세', small: true, disabled: true }) : null;
   if (stanceBtn) {
     stanceBtn.classList.add('bha-kitrelease');
@@ -620,13 +580,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stanceBtn.title = `자세 바꾸기 (대기 ${stanceKit!.switchSeconds}초 · 만해 중엔 못 바꿈)`;
     stanceBtn.style.flexShrink = '0'; // 범례 줄에서 글자가 세로로 접히지 않게 (C.460 캡처 02)
     stanceBtn.style.whiteSpace = 'nowrap';
-  }
-  const stanceBuff = stanceKit ? v2Chip('', 'rare', { icon: 'i-attack' }) : null;
-  const stanceBuffValue = el('span');
-  if (stanceBuff) {
-    stanceBuff.classList.add('bha-kitbuff');
-    stanceBuff.append(stanceBuffValue);
-    stanceBuff.hidden = true;
   }
   let stanceShown = '';
   // 초월자 대사 띠 (GDD 12-4 v6.048): 반격 성공·되살아남 대사를 장면 가운데에 잠깐
@@ -689,13 +642,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 스킬창 (핸드오프 `.bha-skillpanel`, 아래 130px): 맨 윗줄 범례(+해방 중 표시) → 블록 바 8칸(왼쪽) → 해방 카드(오른쪽)
   const legendRow = el('div', 'bha-v2legendrow');
   legendRow.append(libChip, legend);
-  if (stackChip) libChip.after(stackChip); // 영창 칩 (초월자 스택 장치만)
-  if (finalChip) libChip.after(finalChip); // 최후의 월아천충 칩 (GDD 12-4 v6.069)
-  if (chargeChip) libChip.after(chargeChip); // 월아천충 충전 칩
-  if (buffChip) meHeads.append(buffChip); // 회피 치명 버프 칩 (초월자 회피 버프 장치만): 내 머리 위 — 범례 줄은 이미 꽉 차 있다
-  for (const c of [...stanceChips].reverse()) libChip.after(c.root); // 자세 스택 칩 (C.460)
   if (stanceBtn) libChip.before(stanceBtn);
-  if (stanceBuff) meHeads.append(stanceBuff);
   // 범례·칩은 줄어들지 않게
   for (const n of [libChip, legend]) n.style.flexShrink = '0';
   const controls = el('section', 'bha-skillpanel');
@@ -1570,67 +1517,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (drawUid !== null) node.classList.toggle('is-pressed', b.uid === drawUid);
     });
     seeded = true;
-    if (stackChip && s.kit && s.kit.stack !== stackShown) {
-      stackShown = s.kit.stack;
-      setText(stackChipValue, `${stackShown}/${kitStack!.full}`);
-      stackChip.classList.toggle('is-full', stackShown >= kitStack!.full);
-    }
-    if ((chargeChip || finalChip) && s.kit) {
-      const second = kitSecondOn(s);
-      const key = `${s.kit.charges}|${second ? s.kit.finalStack : -1}`;
-      if (key !== chargeShown) {
-        chargeShown = key;
-        if (chargeChip) {
-          setText(chargeChipValue, String(s.kit.charges));
-          chargeChip.classList.toggle('is-full', s.kit.charges > 0);
-        }
-        if (finalChip && finalMs) {
-          setHidden(finalChip, !second);
-          setText(finalChipValue, `${s.kit.finalStack}/${finalMs.stacks}`);
-          finalChip.classList.toggle('is-full', s.kit.finalStack >= finalMs.stacks);
-        }
-      }
-    }
-    if (buffChip) {
-      const left = kitEvadeBuffSecondsLeft(s);
-      const t = left > 0 ? `${left.toFixed(1)}초` : '';
-      if (t !== buffShown) {
-        buffShown = t;
-        setText(buffChipValue, t);
-        setHidden(buffChip, !t);
-      }
-    }
-    // 자세 모드 (C.460): 스택 칩 · [자세] 대기 · 머리 위 상태(발도 충전 > 자세 무너짐 > 대도 유지)
-    if (stanceKit && s.kit) {
-      const k = s.kit;
+    marks.update(statusMarksOf(s)); // 스택 네모 (C.471)
+    // 자세 모드 (C.460): [자세] 대기 (스택·상태는 체력 막대 위 네모, C.471)
+    if (stanceKit && s.kit && stanceBtn) {
       const wait = stanceSwitchWaitOf(s);
-      const draw = stanceDrawPreviewOf(s);
-      const broken = stanceBreakTakenOf(s);
-      const hold = stanceHoldBonusOf(s);
-      const st = stanceOf(s);
-      const status = draw !== null ? `${st?.draw?.name ?? ''} ×${draw.toFixed(2)}`
-        : broken > 0 ? `자세 무너짐 · 받는 피해 +${Math.round(broken * 100)}% ${((k.brokenUntil - s.tick) * p.tickSeconds).toFixed(1)}초`
-        : hold > 0 ? `${st?.name ?? ''} 유지 +${Math.round(hold * 100)}%` : '';
-      const key = `${k.stance}|${k.stanceStacks.join(',')}|${wait > 0 ? wait.toFixed(1) : ''}|${liberationActive(s)}|${status}`;
+      const key = `${s.kit.stance}|${wait > 0 ? wait.toFixed(1) : ''}|${liberationActive(s)}`;
       if (key !== stanceShown) {
         stanceShown = key;
-        stanceChips.forEach((c, i) => {
-          const n = k.stanceStacks[i] ?? 0;
-          setText(c.value, `${n}/${stanceKit.stackMax}`);
-          c.root.classList.toggle('is-full', i === k.stance);
-          c.root.classList.toggle('is-focus', i === k.stance && n >= stanceKit.releaseAt);
-        });
-        if (stanceBtn) {
-          const ok = canSwitchStance(s);
-          stanceBtn.disabled = !ok;
-          stanceBtn.classList.toggle('is-disabled', !ok);
-          setText(stanceBtn, wait > 0 ? `자세 ${wait.toFixed(1)}` : `→ ${stanceKit.stances[(k.stance + 1) % stanceKit.stances.length]!.name}`);
-          stanceBtn.setAttribute('aria-label', `자세 바꾸기 — ${stanceKit.stances[(k.stance + 1) % stanceKit.stances.length]!.name}${wait > 0 ? ` (${wait.toFixed(1)}초 뒤)` : ''}`);
-        }
-        if (stanceBuff) {
-          setText(stanceBuffValue, status);
-          setHidden(stanceBuff, !status);
-        }
+        const ok = canSwitchStance(s);
+        const next = stanceKit.stances[(s.kit.stance + 1) % stanceKit.stances.length]!.name;
+        stanceBtn.disabled = !ok;
+        stanceBtn.classList.toggle('is-disabled', !ok);
+        setText(stanceBtn, wait > 0 ? `자세 ${wait.toFixed(1)}` : `→ ${next}`);
+        stanceBtn.setAttribute('aria-label', `자세 바꾸기 — ${next}${wait > 0 ? ` (${wait.toFixed(1)}초 뒤)` : ''}`);
       }
     }
     // 안내 줄: 봉인
@@ -1825,7 +1724,6 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       kitRelBtn.disabled = !ok;
       kitRelBtn.classList.toggle('is-disabled', !ok && !libActive);
       kitRelBtn.classList.toggle('is-focus', libActive);
-      if (stackChip) setHidden(stackChip, libActive && !!p.kit?.releaseBare); // 융합 중 영창 스택 없음 (GDD 12-4 v6.052)
     }
     if (libOn) {
       const lb = s.liberation;

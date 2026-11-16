@@ -3,3 +3,4 @@ export * from './combat';
 export * from './record';
 export * from './bot';
 export * from './script';
+export * from './statusMarks';

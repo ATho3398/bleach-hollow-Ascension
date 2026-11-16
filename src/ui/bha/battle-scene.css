@@ -278,11 +278,18 @@
 /* 경화수월 분신: 몸 그림 반투명 사본이 적 쪽(왼쪽)으로 미끄러져 사라진다 */
 .bha-kitclone { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; z-index: 4; animation: bha-kitclone 0.6s var(--bha-ease-out) both; }
 @keyframes bha-kitclone { 0% { opacity: 0; transform: translateX(0); } 20% { opacity: 0.55; } 70% { opacity: 0.45; transform: translateX(calc(-1 * var(--bha-sp-9) * 3)); } 100% { opacity: 0; transform: translateX(calc(-1 * var(--bha-sp-9) * 3.4)); } }
-/* 영창 스택 칩: 가득(흑관 준비)이면 강조색 */
-.bha-kitstack.is-full { color: var(--bha-accent-hi); box-shadow: 0 0 8px var(--bha-accent); }
-/* 회피 치명 버프 칩 (GDD 12-4 v6.066): 버프 동안만 보임 */
-.bha-unit__heads .bha-kitbuff { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); white-space: nowrap; z-index: 5; pointer-events: none; }
-.bha-kitbuff[hidden] { display: none; }
+/* 스택 네모 (GDD 7-13 스택 표시, C.471): 걸린 쪽 체력 막대 바로 위 — 작은 네모 아이콘 + 숫자, 여러 개면 가로로. 줄은 자리를 차지하지 않는다(막대·그림 자리 그대로).
+   이름은 네모를 누르거나 마우스를 올리면 ⓘ 설명 창 */
+.bha-root .bha-v2units .bha-unit__hp { position: relative; }
+.bha-marks { position: absolute; left: 0; right: 0; bottom: calc(100% - var(--bha-sp-2)); display: flex; flex-wrap: wrap-reverse; justify-content: center; gap: var(--bha-sp-1) var(--bha-sp-2); pointer-events: none; z-index: 5; }
+.bha-marks:empty { display: none; }
+.bha-root button.bha-mark { pointer-events: auto; position: relative; display: inline-flex; align-items: center; gap: 1px; margin: 0; padding: 0; width: auto; height: 14px; border: 0; background: none; color: var(--bha-text-1); cursor: help; }
+.bha-root .bha-mark > .bha-icon { box-sizing: border-box; width: 14px; height: 14px; padding: 1px; background: var(--bha-bg-0); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-xs); }
+.bha-marks[data-side="foe"] .bha-mark > .bha-icon { border-color: var(--bha-danger); }
+.bha-mark__n { font-size: var(--bha-fs-xs); line-height: 1; color: var(--bha-text-1); text-shadow: 0 1px 0 var(--bha-bg-0), 0 0 3px var(--bha-bg-0); }
+.bha-mark.is-full > .bha-icon { border-color: var(--bha-accent-hi); color: var(--bha-accent-hi); }
+.bha-mark.is-focus > .bha-icon { box-shadow: 0 0 6px var(--bha-accent); }
+.bha-mark.is-focus .bha-mark__n { color: var(--bha-accent-hi); }
 @media (prefers-reduced-motion: reduce) {
   .bha-root .bha-block.bha-kitglow { animation: none; }
   .bha-kitline.is-on { animation: bha-libready-still 2200ms steps(1, end) both; }

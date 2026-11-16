@@ -1,0 +1,14 @@
+{
+  "_comment": "기본 훈련 인형 (GDD 8-9 훈련 인형 = 전투 안 설정 창, C.471): 수련장 적 설정 창 맨 위 칸. 적 도감에 안 들어가고 모험 출현표·도감 목록에 없다. 체력·공격력 = 내 기본 공격 n회 분량(★ 권장 단계 기준) — 창에서 바꿀 수 있다",
+  "dummy": {
+    "id": "training-dummy",
+    "name": { "*": "훈련 인형" },
+    "class": "normal",
+    "hpInAttacks": 30,
+    "attackInAttacks": 0.2,
+    "element": "normal",
+    "category": "physical",
+    "ev": {},
+    "provisional": true
+  }
+}

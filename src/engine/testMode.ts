@@ -518,19 +518,30 @@ const clampTo = (v: number | null, lo: number, hi: number): number | null => (v 
 export function testArenaDefaults(c: TestBattleChoice): { hpAttacks: number; attackAttacks: number; attackSeconds: number } | null {
   const b = testBattleEnemy(c);
   if (!b) return null;
-  const pat = b.enemy.pattern;
+  return arenaStatsOf(b.enemy);
+}
+
+/** 적 정의 → 창 단위 수치 (체력·공격력 = 내 기본 공격 n회 분량, 일반 공격 간격 = 패턴 값 또는 전투 기본값). 수련장 훈련 인형도 같이 쓴다 (C.471) */
+export function arenaStatsOf(enemy: EnemyDef): { hpAttacks: number; attackAttacks: number; attackSeconds: number } {
+  const pat = enemy.pattern;
   const sec = pat && 'attackSeconds' in pat ? pat.attackSeconds : BALANCE.provisional.combat.enemyAttackSeconds;
-  return { hpAttacks: b.enemy.hpInAttacks, attackAttacks: b.enemy.attackInAttacks, attackSeconds: sec };
+  return { hpAttacks: enemy.hpInAttacks, attackAttacks: enemy.attackInAttacks, attackSeconds: sec };
+}
+
+/** 창에 넣은 체력·공격력(n회 분량)으로 적을 바꾼다 (null = 그 적 값 그대로). 수련장 훈련 인형도 같이 쓴다 (C.471) */
+export function withArenaStats(enemy: EnemyDef, c: Pick<TestArenaChoice, 'hpAttacks' | 'attackAttacks'>): EnemyDef {
+  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
+  if (hp === null && atk === null) return enemy;
+  return scaleEnemy(enemy, { hp: hp === null ? 1 : hp / enemy.hpInAttacks, attack: atk === null ? 1 : atk / enemy.attackInAttacks });
 }
 
 /** 적 설정 창 값 → 적 정의(★·연속/탑 층 배율 다음, 넣은 체력·공격력 n회 분량으로 바꿈). 없는 적이면 null */
 export function testArenaEnemy(c: TestArenaChoice): { enemy: EnemyDef; star: number; bossId: string | null } | null {
   const base = testBattleEnemy(c);
   if (!base) return null;
-  const hp = clampTo(c.hpAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
-  const atk = clampTo(c.attackAttacks, 0.1, TEST_ARENA_ATTACKS_MAX);
-  if (hp === null && atk === null) return base;
-  return { ...base, enemy: scaleEnemy(base.enemy, { hp: hp === null ? 1 : hp / base.enemy.hpInAttacks, attack: atk === null ? 1 : atk / base.enemy.attackInAttacks }) };
+  const enemy = withArenaStats(base.enemy, c);
+  return enemy === base.enemy ? base : { ...base, enemy };
 }
 
 /** 적 설정 창의 공격 여부·무적·공격 간격·시간을 전투 파라미터에 (엔진은 이 칸만 본다) */
