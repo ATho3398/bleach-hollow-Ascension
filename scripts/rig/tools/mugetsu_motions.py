@@ -170,13 +170,14 @@ def walk():
             w1 = (math.degrees(best[1] - r1) + 180) % 360 - 180
             w2 = (math.degrees(best[2] - r2) + 180) % 360 - 180
             return w1, w2 - w1, -w2 + pitch
-        # 편집기 고정('이 동작에만', 걷기 동안 계속 같은 옮김): 01:27 왼 하카마 아래 → 오른쪽 3칸 / 19:36 오른 하카마 위 → 오른쪽 3·위 5칸, 오른 하카마 아래 → 아래 6칸
-        shift = {'thigh_f': (3.0, -5.0), 'shin_f': (0.0, 6.0), 'shin_b': (3.0, 0.0)}
+        # 편집기 고정('이 동작에만', 걷기 동안 계속 같은 옮김): 01:27 왼 하카마 아래 → 오른쪽 3칸 / 19:36 오른 하카마 위 → 오른쪽 3·위 5칸, 오른 하카마 아래 → 아래 6칸 / 21:06 오른발 → 왼쪽 4칸
+        shift = {'thigh_f': (3.0, -5.0), 'shin_f': (0.0, 6.0), 'shin_b': (3.0, 0.0), 'foot_f': (-4.0, 0.0)}  # 21:06 오른발 → 왼쪽 4칸
         sx, sy = shift.get('thigh_' + name, (0.0, 0.0))
         fns['thigh_' + name] = (lambda t: solve(t)[0], lambda t: sx, lambda t: sy)
         sx2, sy2 = shift.get('shin_' + name, (0.0, 0.0))
         fns['shin_' + name] = (lambda t: solve(t)[1], lambda t: sx2, lambda t: sy2)
-        fns['foot_' + name] = (lambda t: solve(t)[2], zero, zero)
+        fx3, fy3 = shift.get('foot_' + name, (0.0, 0.0))
+        fns['foot_' + name] = (lambda t: solve(t)[2], lambda t: fx3, lambda t: fy3)
     leg('f', 0.0)
     leg('b', 0.5)
     sw = lambda amp, off=0.0: (lambda t: amp * math.cos(2 * math.pi * (t / D + off)))  # noqa: E731
