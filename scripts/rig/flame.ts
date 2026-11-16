@@ -77,7 +77,8 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
   /** 불 줄기 모양(flame3.py field · live2.py) — inner = 바지 안쪽 불만, 아니면 바깥 불 + 칼(불꽃 팔) */
   const field = (buf: Uint8Array, shrink: number, inner: boolean) => {
     buf.fill(0);
-    const t = fr / TICK;
+    // 불꽃 모양의 시간은 120ms(2박자) 단위로 끊는다 — 사용자 2026-11-17 "불꽃 도트 속도 오히려 좀 느린게 도트겜느낌나서 좋거든? 프레임당 120ms로" (줄기가 몸을 따라가는 지연은 끊지 않음)
+    const t = Math.floor(fr / TICK);
     for (const e of spec.emitters) {
       if (!!e.inner !== inner) continue;
       const w = world(e.slot, e.x, e.y);

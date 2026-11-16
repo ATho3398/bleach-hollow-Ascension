@@ -54,7 +54,8 @@ export function createChain(spec: ChainSpec, canvas: [number, number]) {
     }
     return out;
   };
-  const render = (layers: FlameLayer[]) => {
+  const render = (layers: FlameLayer[], tt: number) => {
+    const t = Math.floor(tt); // 120ms 마다 한 장(사용자 2026-11-17 "프레임당 120ms로")
     const pos = new Map(layers.map((l) => [l.slot, l.m]));
     const pulse = 0.5 + 0.5 * Math.sin((2 * Math.PI * t) / FR);
     // 몸 앞: 띠 칸과 띠를 따라 잰 거리
@@ -151,7 +152,7 @@ export function createChain(spec: ChainSpec, canvas: [number, number]) {
     },
     step(dtMs: number, layers: FlameLayer[]) {
       t = (t + Math.min(dtMs, 500) / MS) % FR;
-      render(layers);
+      render(layers, t);
     },
   };
 }
