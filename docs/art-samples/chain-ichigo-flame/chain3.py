@@ -2,42 +2,14 @@
 # 레이어: back(몸 뒤: 사슬 끝 + 조각 + 빛무리) → body.png(밖으로 나온 촉수를 지운 몸) → front(몸 앞: 몸에 두른 사슬의 빛무리·달아오른 점)
 import math, numpy as np
 from PIL import Image
-src=np.array(Image.open('each/3tone/03_ichigo_hollow.png').convert('RGBA')); SH,SW=src.shape[:2]
-def strip(a):
-    r,g,b=[a[...,i].astype(int) for i in range(3)]; op=a[...,3]>0
-    red=op&(r>g+35)&(r>b+30)&(g<110); red[:26]=False          # 26줄 위(머리카락·눈)는 건드리지 않는다
-    blk=op&((r+g+b)<30); solid=op&~red&~blk
-    inside=np.ones(a.shape[:2],bool)                          # 네 방향 6칸 안에 몸 색이 다 있으면 몸 안쪽
-    for dy,dx in((1,0),(-1,0),(0,1),(0,-1)):
-        hit=np.zeros(a.shape[:2],bool)
-        for k in range(1,7): hit|=np.roll(np.roll(solid,dy*k,0),dx*k,1)
-        inside&=hit
-    out=a.copy(); fill=red&inside; gone=red&~inside
-    nb=lambda m:(np.roll(m,1,0)|np.roll(m,-1,0)|np.roll(m,1,1)|np.roll(m,-1,1))
-    near_solid=np.zeros(a.shape[:2],bool); near_gone=np.zeros(a.shape[:2],bool)
-    for dy in(-1,0,1):
-        for dx in(-1,0,1): near_solid|=np.roll(np.roll(solid|fill,dy,0),dx,1); near_gone|=np.roll(np.roll(gone,dy,0),dx,1)
-    gone|=blk&near_gone&~near_solid
-    out[gone]=0
-    todo=fill.copy(); known=solid.copy()
-    for _ in range(12):                                       # 가까운 몸 색으로 번져 메운다
-        if not todo.any(): break
-        for dy,dx in((0,1),(0,-1),(1,0),(-1,0)):
-            srcm=np.roll(np.roll(known,dy,0),dx,1)&todo
-            ys,xs=np.where(srcm); out[ys,xs]=out[(ys-dy)%a.shape[0],(xs-dx)%a.shape[1]]; known[ys,xs]=True; todo[ys,xs]=False
-    return out,int(fill.sum()),int(gone.sum())
-body,nf,ng=strip(src); print('메운 칸',nf,'지운 칸',ng)
+body=np.array(Image.open('chain3/body.png').convert('RGBA')); SH,SW=body.shape[:2]      # 사용자 새 조각 시트(2026-11-16)를 종이인형 쉬는 자세 자리대로 조립한 몸
 PADX,PADT=18,10; W,H=SW+PADX*2,SH+PADT; FR,MS=16,120
 Y,X=np.mgrid[0:H,0:W]
 DARK,RED,ORG,HOT,GLOW=(95,20,30),(172,49,59),(236,110,60),(255,190,90),(225,40,45)
 # 사슬 띠(몸 앞 이펙트): 목 · 두 손목 · 두 발목. 몸 그림 좌표의 꺾은선
-BANDS=[[(28,40),(31,41),(34,41),(37,40)],[(13,62),(16,64),(20,63)],[(45,62),(48,64),(51,62)],[(19,100),(24,102),(29,100)],[(37,100),(41,102),(45,100)]]
+BANDS=[[(np.float64(25.5), np.float64(40.5)), (np.float64(31.5), np.float64(42.0)), (np.float64(37.5), np.float64(40.5))], [(np.float64(16.5), np.float64(63.5)), (np.float64(19.5), np.float64(65.0)), (np.float64(22.5), np.float64(63.5))], [(np.float64(44.5), np.float64(61.5)), (np.float64(47.0), np.float64(63.0)), (np.float64(49.5), np.float64(61.5))], [(np.float64(24.5), np.float64(97.5)), (np.float64(28.0), np.float64(99.0)), (np.float64(31.5), np.float64(97.5))], [(np.float64(38.5), np.float64(95.5)), (np.float64(42.0), np.float64(97.0)), (np.float64(45.5), np.float64(95.5))]]
 # 풀린 끝(몸 뒤 이펙트): 띠마다 한 줄기, 짧게 나부끼다 조각·불티로 흩어진다
-T=[dict(x=37,y=40,ang=12,L=6,w=1.2,curl=+2.0,ph=0.0,sw=0.25),
-   dict(x=13,y=62,ang=170,L=6,w=1.2,curl=-4.0,ph=0.35),
-   dict(x=51,y=62,ang=15,L=6,w=1.2,curl=+4.0,ph=0.6),
-   dict(x=19,y=100,ang=160,L=5,w=1.1,curl=-4.0,ph=0.15),
-   dict(x=45,y=100,ang=20,L=5,w=1.1,curl=+4.0,ph=0.8)]
+T=[{'x': np.float64(37.5), 'y': np.float64(40.5), 'ang': 12, 'L': 6, 'w': 1.2, 'curl': 2.0, 'ph': 0.0, 'sw': 0.25}, {'x': np.float64(16.5), 'y': np.float64(63.5), 'ang': 170, 'L': 6, 'w': 1.2, 'curl': -4.0, 'ph': 0.35}, {'x': np.float64(49.5), 'y': np.float64(61.5), 'ang': 15, 'L': 6, 'w': 1.2, 'curl': 4.0, 'ph': 0.6}, {'x': np.float64(24.5), 'y': np.float64(97.5), 'ang': 160, 'L': 5, 'w': 1.1, 'curl': -4.0, 'ph': 0.15}, {'x': np.float64(45.5), 'y': np.float64(95.5), 'ang': 20, 'L': 5, 'w': 1.1, 'curl': 4.0, 'ph': 0.8}]
 def path(tn,t):
     x,y=tn['x']+PADX,tn['y']+PADT; pts=[]; s=0.0; ds=0.5; L=tn['L']
     while s<L:
@@ -105,18 +77,18 @@ for t in range(FR):
     backs.append(Image.fromarray(back)); fronts.append(Image.fromarray(front))
     c=Image.fromarray(back.copy()); c.alpha_composite(Image.fromarray(body),(PADX,PADT)); c.alpha_composite(fronts[-1]); frames.append(c)
 import os
-for d in ('back','front'): os.makedirs('chain2/'+d,exist_ok=True)
-for i,(bk,fz) in enumerate(zip(backs,fronts),1): bk.save(f'chain2/back/back-{i:02d}.png'); fz.save(f'chain2/front/front-{i:02d}.png')
-Image.fromarray(body).save('chain2/body.png')
+for d in ('back','front'): os.makedirs('chain3/'+d,exist_ok=True)
+for i,(bk,fz) in enumerate(zip(backs,fronts),1): bk.save(f'chain3/back/back-{i:02d}.png'); fz.save(f'chain3/front/front-{i:02d}.png')
+Image.fromarray(body).save('chain3/body.png')
 S=4
 def gif(seq,path,bg):
     g=[]
     for c in seq:
         b_=Image.new('RGBA',(W,H),bg); b_.alpha_composite(c); g.append(b_.convert('RGB').resize((W*S,H*S),0).quantize(colors=128,dither=Image.Dither.NONE))
     g[0].save(path,save_all=True,append_images=g[1:],duration=MS,loop=0,disposal=2)
-gif(frames,'chain2/chain-ichigo-dark_x4.gif',(18,14,20,255)); gif(frames,'chain2/chain-ichigo_x4.gif',(70,84,74,255))
+gif(frames,'chain3/chain-ichigo-dark_x4.gif',(18,14,20,255)); gif(frames,'chain3/chain-ichigo_x4.gif',(70,84,74,255))
 c=Image.new('RGBA',(W*4,H*2),(18,14,20,255))
 for i,k in enumerate((0,4,8,12)): c.alpha_composite(frames[k],(i*W,0))
 c2=Image.new('RGBA',(W*4,H),(70,84,74,255))
 for i,k in enumerate((0,4,8,12)): c2.alpha_composite(frames[k],(i*W,0))
-c.alpha_composite(c2,(0,H)); c.resize((W*4*3,H*2*3),0).save('chain2/eight_x3.png'); print('canvas',W,H)
+c.alpha_composite(c2,(0,H)); c.resize((W*4*3,H*2*3),0).save('chain3/eight_x3.png'); print('canvas',W,H)
