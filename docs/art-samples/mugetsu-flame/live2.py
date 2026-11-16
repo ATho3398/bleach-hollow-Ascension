@@ -31,7 +31,7 @@ def disc(f,cx,cy,rx,ry):
     x1,x2=max(0,int(cx-rx-1)),min(W,int(cx+rx+2)); y1,y2=max(0,int(cy-ry-1)),min(H,int(cy+ry+2))
     if x1<x2 and y1<y2: f[y1:y2,x1:x2]|=((X[y1:y2,x1:x2]-cx)/rx)**2+((Y[y1:y2,x1:x2]-cy)/ry)**2<=1
 def field(fr,shrink,inner):
-    t=fr/TICK; f=np.zeros((H,W),bool)
+    t=fr//TICK; f=np.zeros((H,W),bool)            # 불꽃 모양은 120ms(2프레임)마다 한 번만 바뀐다 — 도트 게임 느낌
     for e in EM:
         if bool(e.get('inner'))!=inner: continue
         arm=e.get('arm') is not None; r0,rise,ph=e['size'],e['rise'],e['beat']
@@ -63,7 +63,7 @@ def field(fr,shrink,inner):
                     v+=0.6
     return f
 def blade(fr,shrink):
-    f=np.zeros((H,W),bool); t=fr/TICK
+    f=np.zeros((H,W),bool); t=fr//TICK
     for i,(ax,ay,sp) in enumerate(ARMS):
         sx,oy=at(fr,min(6,3.0*sp/ARML))                    # 칼끝이 살짝 늦게 따라온다
         r=2.0*(2.9-2.7*(sp/ARML))+0.9*(1-0.85*sp/ARML)*math.sin(2*math.pi*(sp/9-t/FR))-shrink*0.8
