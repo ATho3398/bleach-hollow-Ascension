@@ -71,6 +71,9 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
   });
   it('모든 동작에서 부위가 게임 그림 칸(view) 안에 있다(칼은 칼끝, 바닥 밑은 땅에 가려져 잘려도 된다)', () => {
     const [vx, vy, vw, vh] = HUMANOID.view!.rect;
+    // 같은 몸·동작·시각의 뼈 행렬은 외형이 달라도 같다 → 몸별로 한 번만 구한다(외형 38개를 다 다시 구하면 전체 테스트가 가끔 60초를 넘겼다, C.472)
+    const matCache = new Map<string, ReturnType<typeof boneMatrices>>();
+    const bad: string[] = [];
     for (const look of Object.keys(HUMANOID.looks)) {
       const layers = lookLayers(HUMANOID, look);
       // 게임이 실제로 트는 동작만(연결표 RIG_ACTIONS·FAMILY_RIG_MOTIONS) — 필살기·박치기처럼 아직 게임 연결이 없는 동작은 빼고
@@ -79,17 +82,20 @@ describe('종이인형 → 게임 캐릭터 재생기 (GDD 96장 30)', () => {
       const body = HUMANOID.looks[look]!.body;
       for (const [mid, m] of Object.entries(resolveMotions(HUMANOID, MOTIONS, MOTION_SETS, body)).filter(([id]) => used.has(id))) {
         for (let t = 0; t <= m.duration; t += 20) {
-          const mats = boneMatrices(HUMANOID, samplePose(HUMANOID, m, t), body);
+          const ck = `${body}|${mid}|${t}`;
+          let mats = matCache.get(ck);
+          if (!mats) matCache.set(ck, (mats = boneMatrices(HUMANOID, samplePose(HUMANOID, m, t), body)));
           for (const l of layers) {
             const mm = layerMatrix(HUMANOID, mats, l, m);
             const pts = l.slot === 'weapon' ? [HUMANOID.swordAxis!.tip, [1, 0]] : [[0, 0], [l.size[0], 0], [0, l.size[1]], [l.size[0], l.size[1]]];
             for (const c of pts as [number, number][]) {
               const [x, y] = apply(mm, c);
-              expect(x >= vx - 1 && x <= vx + vw + 1 && y >= vy - 1, `${look} ${mid} ${t} ${l.slot} (${x.toFixed(1)},${y.toFixed(1)})`).toBe(true);
+              if (!(x >= vx - 1 && x <= vx + vw + 1 && y >= vy - 1)) bad.push(`${look} ${mid} ${t} ${l.slot} (${x.toFixed(1)},${y.toFixed(1)})`);
             }
           }
         }
       }
     }
+    expect(bad.slice(0, 20)).toEqual([]);
   });
 });

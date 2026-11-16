@@ -30,7 +30,8 @@ class FakeHost {
 const on = (h: FakeHost) => h.rows.filter((r) => r.classes.has(BLINK_CLASS)).map((r) => r.dataset.gauge);
 
 describe('208장 3 바뀌는 값만 깜빡임 (gaugeBlink)', () => {
-  beforeEach(() => vi.useFakeTimers());
+  // performance 도 가짜로(C.472): 기본 가짜 타이머는 performance.now 를 안 바꿔, 박자(--blink-delay)가 실제 흐른 시간(0.5ms 밑이면 '0ms')에 따라 가끔 깨졌다
+  beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'Date', 'performance'] }));
   afterEach(() => vi.useRealTimers());
 
   it('changedKeys: 오름·내림 모두, 반올림해 같은 숫자는 아님, 체력은 %', () => {
@@ -50,7 +51,7 @@ describe('208장 3 바뀌는 값만 깜빡임 (gaugeBlink)', () => {
     expect(on(h)).toEqual([]);
     applyBlink(h as unknown as HTMLElement);
     expect(on(h)).toEqual(['hunger', 'hp']);
-    expect(h.rows[0]!.props.get('--blink-delay')).toMatch(/^-\d+ms$/);
+    expect(h.rows[0]!.props.get('--blink-delay')).toBe('-300ms'); // 처음 깜빡인 때부터 300ms 지남 → 박자가 이어진다
     expect(h.rows[1]!.props.has('--blink-delay')).toBe(false);
   });
 
