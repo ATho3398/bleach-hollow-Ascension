@@ -83,7 +83,9 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       if (!!e.inner !== inner) continue;
       const w = world(e.slot, e.x, e.y);
       if (!w) continue;
-      const arm = !!e.stick, ph = e.beat, r0 = e.size, rise = e.rise;
+      if (e.plume) continue; // 큰 불기둥은 인형에서 뺌(몸을 가림 — 사용자 2026-11-17 "실제 모션 보면 불이 너무많이 나서 뭐 아무것도 안보이더라")
+      const arm = !!e.stick, ph = e.beat;
+      const r0 = e.size * (arm || inner ? 1 : 0.6), rise = e.rise * (arm || inner ? 1 : 0.75); // 바지 둘레 불만 굵기 0.6배·높이 0.75배(같은 지시, 임시값)
       for (let k = 0; k < (inner ? 1 : e.licks); k++) {
         let l: number;
         if (inner) { const q = (((t - (e.order ?? 0) * 4) % 40) + 40) % 40; if (q >= 8) continue; l = q / 8; } // 한 번에 2개만
@@ -119,7 +121,7 @@ export function createFlame(spec: FlameSpec, canvas: [number, number]) {
       const [slot, lx, ly, a, sp] = tp;
       const w = world(slot, lx, ly);
       if (!w) return;
-      const [sx, sy] = at(tp, w[0], w[1], Math.min(6, 3 * a));
+      const [sx, sy] = [w[0], w[1]]; // 지연 없음(사용자 2026-11-17 "휘두르면 채찍처럼 끝나. 이거 수정" — 칼끝 지연이 채찍처럼 휘게 했음)
       const r = 2 * (2.9 - 2.7 * a) + 0.9 * (1 - 0.85 * a) * Math.sin(2 * Math.PI * (sp / 9 - t / PER)) - shrink * 0.8;
       if (r > 0.35) disc(buf, sx, sy, Math.max(r, 0.5), Math.max(r, 0.5));
       void i;
