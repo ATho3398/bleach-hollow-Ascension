@@ -99,14 +99,14 @@ describe('C.465 초월자 전투 방식 = 스킨 잠금 (GDD 12-4 v6.093)', () =
   });
 
   it('세이브 형식 90: 89 → 90 마이그레이션 = 묶음 밖 스킨이면 첫 모델, 안이면 그대로, 키웠던 기반은 손대지 않음', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(90);
+    expect(SAVE_FORMAT_VERSION).toBe(91);
     const s = ichigoSave();
     switchKitMode(s, 'tybw');
     const raw = JSON.parse(JSON.stringify(s));
     raw.skin = null; // 옛 세이브: 천년혈전인데 기본 모델
     raw.meta.format = 89;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(90);
+    expect(m.meta.format).toBe(91);
     expect(m.skin).toBe(BLOOD);
     const r = riftSave();
     const raw2 = JSON.parse(JSON.stringify(r));

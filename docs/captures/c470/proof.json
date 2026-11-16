@@ -1,0 +1,197 @@
+{
+  "hollowSave": {
+    "formDex": [
+      "t2:base",
+      "t4:fire:physical",
+      "t4:water:special",
+      "h4:frenzy",
+      "h3:fail",
+      "t3:earth",
+      "t3:fire",
+      "t3:normal",
+      "t3:water"
+    ],
+    "lookDex": [
+      "scorpion@t3:earth",
+      "wyrm@t3:earth",
+      "wyrm@t3:fire",
+      "wyrm@t3:normal",
+      "wyrm@t3:water",
+      "wraith@h3:fail"
+    ],
+    "look": "wyrmwater",
+    "formId": "t3:water"
+  },
+  "hollowDex": {
+    "sub": "발견 7 / 37",
+    "caps": [
+      "길리안 1/1",
+      "아쥬커스 3/8",
+      "바스트로데 3/28"
+    ],
+    "models": [
+      {
+        "name": "거미형 아쥬커스",
+        "model": "wyrm",
+        "badge": "지금",
+        "img": "/art/rig/spider/still/spider-blue.png",
+        "look": "wyrmwater"
+      },
+      {
+        "name": "짐승형 아쥬커스",
+        "model": "scorpion",
+        "badge": null,
+        "img": "/art/rig/beast/still/beast-brown.png",
+        "look": "scorpionearth"
+      },
+      {
+        "name": "호로",
+        "model": "wraith",
+        "badge": "히든",
+        "img": "/art/rig/wraith/still/wraith-base.png",
+        "look": "wraith"
+      },
+      {
+        "name": "???",
+        "model": null,
+        "badge": null,
+        "img": "/art/rig/humanoid/still/spiky-base.png",
+        "look": "carapace"
+      },
+      {
+        "name": "???",
+        "model": null,
+        "badge": null,
+        "img": "/art/rig/serpent/still/serpent-purple.png",
+        "look": "stag"
+      },
+      {
+        "name": "???",
+        "model": null,
+        "badge": null,
+        "img": "/art/rig/humanoid/still/onearm-base.png",
+        "look": "rhino"
+      },
+      {
+        "name": "???",
+        "model": null,
+        "badge": null,
+        "img": "/art/rig/humanoid/still/speed-base.png",
+        "look": "panther"
+      },
+      {
+        "name": "???",
+        "model": null,
+        "badge": "히든",
+        "img": "/art/rig/wraith/still/wraith-base.png",
+        "look": "wraith"
+      }
+    ],
+    "firstCards": [
+      {
+        "name": "길리안",
+        "img": "/art/rig/humanoid/still/gillian-base.png",
+        "look": "gillian"
+      },
+      {
+        "name": "니에블라",
+        "img": "/art/rig/humanoid/still/brute-base.png",
+        "look": ""
+      },
+      {
+        "name": "소로",
+        "img": "/art/rig/humanoid/still/brute-base.png",
+        "look": ""
+      },
+      {
+        "name": "프레네시",
+        "img": "/art/rig/humanoid/still/brute-base.png",
+        "look": ""
+      }
+    ]
+  },
+  "detailChips": [
+    {
+      "form": "t3:normal",
+      "text": "노노멀",
+      "disabled": false,
+      "on": false
+    },
+    {
+      "form": "t3:water",
+      "text": "물물",
+      "disabled": false,
+      "on": true
+    },
+    {
+      "form": "t3:fire",
+      "text": "불불",
+      "disabled": false,
+      "on": false
+    },
+    {
+      "form": "t3:earth",
+      "text": "흙흙",
+      "disabled": false,
+      "on": false
+    },
+    {
+      "form": "t3:thunder",
+      "text": "?",
+      "disabled": true,
+      "on": false
+    }
+  ],
+  "detailName": "거미형 아쥬커스",
+  "detailFireArt": "wyrmfire",
+  "statusText": "거미형 아쥬커스",
+  "shinSave": {
+    "formDex": [
+      "t2:base",
+      "t4:fire:physical",
+      "t4:water:special",
+      "h4:frenzy",
+      "h3:fail",
+      "t3:earth",
+      "t3:fire",
+      "t3:normal",
+      "t3:water"
+    ],
+    "lookDex": [],
+    "look": null,
+    "formId": "t3:water"
+  },
+  "shinDex": {
+    "sub": "발견 9 / 36",
+    "caps": [
+      "영술원 학생 1/1",
+      "평대원 5/7",
+      "수석 대원 3/28"
+    ],
+    "models": [],
+    "firstCards": [
+      {
+        "name": "영술원 학생",
+        "img": "/art/rig/humanoid/still/shinigami-student.png",
+        "look": ""
+      },
+      {
+        "name": "평대원 노멀",
+        "img": "/art/rig/humanoid/still/shinigami-base.png",
+        "look": ""
+      },
+      {
+        "name": "평대원 물",
+        "img": "/art/rig/humanoid/still/shinigami-base.png",
+        "look": ""
+      },
+      {
+        "name": "평대원 불",
+        "img": "/art/rig/humanoid/still/shinigami-base.png",
+        "look": ""
+      }
+    ]
+  },
+  "evolveNew": "노 새 진화체: 외팔형 아쥬커스 임시",
+  "roomStatusName": "권영\n거미형 아쥬커스\n80\n80\n0"
+}

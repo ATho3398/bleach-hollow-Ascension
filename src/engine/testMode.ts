@@ -31,6 +31,7 @@ import { recommendedDifficulty } from './difficulty';
 import { stepsNeeded, type EvolveResult } from './evolution/evolution';
 import type { AbsenceReport } from './nest';
 import { pickLook } from './evolution/tierLook';
+import { lookCells, lookDexKey, recordLookDex } from './evolution/lookDex';
 import { clampDifficulty, clampStreak, enemyAtDifficulty, MAX_DIFFICULTY, streakEnemyFactor } from './difficulty';
 import { baseStatsOf, currentStats, elementDamageOf, STAT_MAX, zeroStats } from './evolution';
 import { ELEMENT_DAMAGE_IDS } from './combat/combat';
@@ -203,6 +204,8 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   for (const g of GUIDE_IDS) save.help.guides[g] = 'done';
   fillDefaultTraits(save);
   save.formDex = [...new Set([...save.formDex, ...FORM_TABLE.map((f) => f.id)])];
+  // 모델 단위 진화체 도감 (GDD 8-5 v6.096, C.470): 종족 설정 tierLooks[단계].lookUnit 단계의 모든 모델 × 색
+  save.lookDex = [...new Set([...(save.lookDex ?? []), ...FACTIONS.flatMap((f) => Object.keys(f.tierLooks ?? {}).flatMap((t) => lookCells(f, Number(t)).flatMap((c) => c.forms.map((x) => lookDexKey(c.model, x.id)))))])];
   // 스토리: 모든 종족·장·화 클리어 + 장 보상 받음 (내용이 있는 장만)
   for (const f of FACTIONS) {
     const prog = storyProgressOf({ story: save.story, factionId: f.id });
@@ -337,6 +340,7 @@ function refreshLook(save: SaveData): void {
   const e = save.evolution;
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   e.look = form ? pickLook(getFaction(save.factionId), form, currentStats(e, save.factionId), e.stageSeed, e.ascended === true) : null;
+  if (form) recordLookDex(save, getFaction(save.factionId), form, e.look); // 모델 단위 진화체 도감 (GDD 8-5 v6.096): 테스트로 고른 모델·색도 발견
 }
 
 /** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */

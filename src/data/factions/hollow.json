@@ -98,7 +98,7 @@
     "3": {
       "stat": { "atk": "carapace", "int": "stag", "hp": "rhino", "spr": "wyrm", "aspd": "panther", "bspd": "stag", "def": "scorpion" },
       "forms": { "h3:fail": "wraith", "h3:passage": "wraith" },
-      "elementSuffix": ["water", "fire", "earth", "thunder"]
+      "elementSuffix": ["water", "fire", "earth", "thunder"], "lookUnit": { "name": "{model} {tier}" }
     }
   },
   "tierNames": [

@@ -472,7 +472,9 @@ export interface FactionConfig {
   /** 캐릭터 스킨 진화체 중분류 (GDD 5절 '캐릭터 스킨 분류' v6.044): 이름 + 묶는 단계(1부터). 없으면 단계 이름(tierNames + 깬 뒤 그림 단계 ascension.lookName)마다 한 칸.
    *  진화체별로 외형이 같은 종족(사신)은 여기에 적는다. 초월자 칸은 엔진이 끝에 붙인다 */
   skinGroups?: { id: string; name: string; tiers: number[] }[];
-  tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[] }>;
+  /** lookUnit (GDD 8-5 v6.096, C.470) = 이 단계 진화체의 정체성·도감 칸 = 외형 모델(속성은 그 모델의 색 변형). name = 이름 틀({model} 모델 이름 · {tier} 단계 이름).
+   *  능력치 모델 칸(stat·pairs)에만 이름 틀을 쓰고, forms 로 정한 칸(히든)은 진화체 이름 그대로. 없으면 지금처럼 진화체 id 단위 */
+  tierLooks?: Record<string, { stat: Partial<Record<StatId, string>>; pairs?: { stats: [StatId, StatId]; look: string }[]; forms?: Record<string, string>; elementSuffix?: string[]; lookUnit?: { name: string } }>;
   /** 육성 4단계 이름 (GDD 126장 확정 1, C.220) */
   tierNames: [string, string, string, string];
   /** 등급 번호 1~10 의 표시 이름 (GDD 21-1, [0] = 1번). 엔진은 번호만 다룬다 */
@@ -782,10 +784,12 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       const suffix = (t as Record<string, unknown>).elementSuffix;
       if (forms !== undefined && !(isRec(forms) && Object.values(forms).every((v) => okLook(v)))) return false;
       if (suffix !== undefined && !(Array.isArray(suffix) && suffix.every((x) => isString(x)))) return false;
+      const unit = (t as Record<string, unknown>).lookUnit;
+      if (unit !== undefined && !(isRec(unit) && isString((unit as Record<string, unknown>).name))) return false;
       return isRec(st) && Object.entries(st).every(([k, v]) => (STAT_IDS as readonly string[]).includes(k) && okLook(v))
         && (pairs === undefined || (Array.isArray(pairs) && pairs.every((p) => isRec(p) && Array.isArray((p as Record<string, unknown>).stats) && ((p as Record<string, unknown>).stats as unknown[]).length === 2 && ((p as Record<string, unknown>).stats as unknown[]).every((s) => (STAT_IDS as readonly string[]).includes(String(s))) && okLook((p as Record<string, unknown>).look))));
     };
-    if (!isRec(tl) || !Object.entries(tl).every(([k, v]) => /^[1-9]\d*$/.test(k) && okTier(v))) errors.push('tierLooks: { 단계번호: { stat: {능력치: 스킨 id}, pairs?: [{ stats: [a, b], look }], forms?: {진화체 id: 스킨 id}, elementSuffix?: [속성 id] } }');
+    if (!isRec(tl) || !Object.entries(tl).every(([k, v]) => /^[1-9]\d*$/.test(k) && okTier(v))) errors.push('tierLooks: { 단계번호: { stat: {능력치: 스킨 id}, pairs?: [{ stats: [a, b], look }], forms?: {진화체 id: 스킨 id}, elementSuffix?: [속성 id], lookUnit?: { name } } }');
   }
   if (r.walkAnim !== undefined && !isString(r.walkAnim)) errors.push('walkAnim: 비어 있지 않은 문자열이어야 한다');
   if (r.room !== undefined) {

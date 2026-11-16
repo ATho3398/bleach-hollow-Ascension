@@ -16,6 +16,7 @@ import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, typ
 import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
 import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
+import { lookCellOfSkin, lookCells, lookDexKey, lookSkinOf, lookUnitTable, recordLookDex } from './engine/evolution/lookDex';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
@@ -70,7 +71,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 90; // C.465 (GDD v6.094 12-4 초월자 전투 방식 = 스킨 잠금): 필드 모양은 그대로, 값 규칙 — 초월자 트랙의 전투 기반이 '초월자'면 save.skin 은 그 초월자·그 전투 모드 모델 묶음 안. 89 → 90 변환 SAVE_MIGRATIONS[89](묶음 밖 스킨 → 묶음 첫 모델). 이후 게임 안에서는 입기·기반·모드 바꾸기가 지킨다(테스트 패널 모델 바꾸기는 자유).
+export const SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
+// 이전: SAVE_FORMAT_VERSION = 90; // C.465 (GDD v6.094 12-4 초월자 전투 방식 = 스킨 잠금): 필드 모양은 그대로, 값 규칙 — 초월자 트랙의 전투 기반이 '초월자'면 save.skin 은 그 초월자·그 전투 모드 모델 묶음 안. 89 → 90 변환 SAVE_MIGRATIONS[89](묶음 밖 스킨 → 묶음 첫 모델). 이후 게임 안에서는 입기·기반·모드 바꾸기가 지킨다(테스트 패널 모델 바꾸기는 자유).
 // 이전: SAVE_FORMAT_VERSION = 89; // C.460 (GDD v6.088 12-4 이치고 천년혈전): 진화 상태 kit.mode(전투 모드 id — 상태 화면 '전투 모드')·런 로그 전투 기록 kit 의 mode·stanceSwitches·parries·parryFails·breaks(선택 필드) — 88 → 89 변환 SAVE_MIGRATIONS[88](모드가 있는 초월자 트랙의 kit 에 첫 모드 = 기본).
 // 이전: SAVE_FORMAT_VERSION = 88; // C.454 (GDD v6.069 12-4 이치고): 런 로그 전투 기록 kit 에 secondEnters(무월 진입)·finals(최후의 월아천충) 선택 필드, 원정 중간 저장 kitMastery(무월수련, 선택) — 87 → 88 변환 SAVE_MIGRATIONS[87](구조 보정 없음, 옛 기록·저장은 0).
 // 이전: SAVE_FORMAT_VERSION = 87; // C.446 (GDD v6.055 8절): 능력치 7종 — 모든 능력치 칸(노력치·계승·장비 줄·런 로그)의 속도 spd → 공격속도 aspd + 블록속도 bspd. **옛 세이브는 이어 쓰지 않는다**(사용자 2026-11-13 '세이브 걍 날려') — MIN_LOADABLE_SAVE_FORMAT 도 87. SAVE_MIGRATIONS[86] 은 옛 마이그레이션 시험(legacyGate)만 쓰는 능력치 키 변환. SAVE_FORMAT_VERSION = 86; // C.442 (GDD v6.050 12-4): 런 로그 전투 기록 kit 에 붕옥 해방 모드 modeEnters·modeExits·riskSpent(선택 필드) — 85 → 86 변환 SAVE_MIGRATIONS[85](구조 보정 없음, 옛 기록은 0). C.441 (GDD v6.049 12-4): 초월자 전용 블록 evolution.kit(초월자 id·블록 강화 단계)·초월 조각 shared.transcendShards·런 로그 kitShards(얻음·강화)·전투 기록 kit(반격·흑관·되살아남) — 84 → 85 변환 SAVE_MIGRATIONS[84](이미 있는 초월자 트랙에 강화 0 kit, 조각 0). C.436 (GDD v6.039 12-4): 초월 특성 evolution.transcendentTraits(가진 초월 특성의 초월자 id — 전투 기반과 상관없이 늘 붙음) — 83 → 84 변환 SAVE_MIGRATIONS[83](이미 있는 초월자 트랙에 그 초월자의 초월 특성 칸). C.435 (GDD v6.037 12-4): 초월자 전투 기반 evolution.basis(지금 기반·기반별 빌드 — 초월자/키웠던 캐릭터)·런 로그 basisChanges — 82 → 83 변환 SAVE_MIGRATIONS[82](이미 있는 초월자 트랙 = 지금 합친 빌드를 '초월자' 기반으로, 키웠던 캐릭터 기반은 합체 순간 빌드가 없어 합친 빌드 복사 + 합체 기록의 그때 진화체). C.429 (GDD v6.028 12-4): 초월자 트랙 — 트랙 필드 transcendentId(null = 캐릭터)·진화 상태 final·런 로그 transcendence·합체 기록 baseFactionId — 81 → 82 변환 SAVE_MIGRATIONS[81](이미 얻은 초월자마다 지금 캐릭터 + 합체 기록으로 초월자 트랙).  C.427 (GDD v6.017 6-16): 특수던전 shared.special(주 시작·쓴 입장 수·최고 ★·이긴 수)·런 로그 specialRuns — 80 → 81 변환 SAVE_MIGRATIONS[80](이번 주 새로, 빈 기록). C.425 (GDD v6.014 12-3): 붕옥 개발 hogyoku.level(10단계) → hogyoku.tracks(재료별 강화 트랙 3개, 각 0~50강)·developed 단위 = 강, 런 로그 slotLog.hogyokuDev[].track — 79 → 80 변환 SAVE_MIGRATIONS[79](옛 n단계 → 세 트랙 n×5강, 오른 보너스 보존). C.414 (GDD 244장 2~6): 붕옥 개발 hogyoku.level·developed·resonance·resonatedAt(옛 fed·liberated·liberatedAt·fusionFed 대체)·재료 shared.hogyokuShards·resonanceEssence·런 로그 slotLog.hogyokuDev·hogyokuMaterials — 78 → 79 변환 SAVE_MIGRATIONS[78](해방 = 5단계, 2단계 게이지 비율 → 6~10단계, 남은 결정 돌려줌). C.412 (GDD 243장 1·3): 붕옥 등장 시각 hogyoku.appearedAt·장비 고정 이름 shared.gear.items[].name(낡은 장비) — 77 → 78 변환 SAVE_MIGRATIONS[77](이미 열린 붕옥은 0 = 언제인지 모름, 장비 이름 없음).  C.406 (GDD 241-C 4·6·7): 쇠약 시계 nest.lastMealAt·터치 nest.touch·숨은 모습 보너스 shared.specialLooks — 76 → 77 변환 SAVE_MIGRATIONS[76](쇠약 시계는 지금부터). C.404: 튜토리얼 전용 먹이 shared.food.tutorial(첫 끼니)·온천 nest.spa.soakAt(걸어 들어가 다 앉는 시각) (GDD 241-B 5·4) — 75 → 76 변환 SAVE_MIGRATIONS[75]. C.403 (GDD 241-0): shared.unlocks(기능 해금 — 타일·장비·전투 소모품·본능 수련·번호 쟁탈전·장신구·펫·출정품) 추가 — 74 → 75 변환 SAVE_MIGRATIONS[74](옛 세이브는 이미 쓰던 장비·전투 소모품·장신구·펫·타일·출정품을 열린 채로). C.400: 출정품 칸 shared.sortie·가방 출정품 개수 shared.items·원정 중간 저장 sortie/sortieFinds·런 로그 원정 기록 sortie (GDD 241-D 5) — 73 → 74 변환 SAVE_MIGRATIONS[73](빈 칸 2개). C.397: 장신구 3번째 칸 shared.gear.equipped.acc3 (GDD 241-D 2) — 72 → 73 변환 SAVE_MIGRATIONS[72](빈 칸 null). C.391: 영압 안정도 삭제 — nest.stability·원정 중간 저장 stability·런 로그 진화 기록 stability 지움, 먹이 특식 2종(flesh·purify) 0 (GDD 239장) — 71 → 72 변환 SAVE_MIGRATIONS[71]. C.388: C.388: 런 로그 팔기 기록 sales (GDD 236장 5) — 70 → 71 변환 SAVE_MIGRATIONS[70](빈 목록). C.387: C.387: 같은 먹이 한도 nest.foodStreak(종류별 개수·마지막 시각)·런 로그 vitals 'refuse'(같은 먹이 거절) (GDD 234장 3)·먹이 3유형 12종(shared.food 새 7종 0, 옛 id 그대로)·비선호 연속 nest.dislikeRun (GDD 235장) — 69 → 70 변환 SAVE_MIGRATIONS[69](빈 기록). C.365: C.365: 전투 재시작 — 원정 중간 저장 battleEntry(전투 직전 소모품)·런 로그 battleRestarts (GDD 222장 6) — 68 → 69 변환 SAVE_MIGRATIONS[68](빈 목록). C.363: 도감 정렬 기준 dexSort(진화체 도감·적 도감, GDD 220장 2) — 67 → 68 변환 SAVE_MIGRATIONS[67](기본 정렬). C.361: 노력치 상한 밖 몫 evolution.evFree(튜토리얼 보상, GDD 217장 2) — 66 → 67 변환 SAVE_MIGRATIONS[66](튜토리얼 끝난 이번 생 트랙은 받은 튜토리얼 노력치를 상한 밖으로). C.356: 모험 소모품 바퀴당 1번 — 원정 중간 저장 activeExpedition.lapItems(이번 바퀴 사용함)·런 로그 원정 기록 lapItems (GDD 212장 2·5) — 65 → 66 변환 SAVE_MIGRATIONS[65](구조 보정 없음). C.354: 런 로그 수련권 획득 기록 trainingTickets (GDD 216장 3) — 64 → 65 변환 SAVE_MIGRATIONS[64](빈 목록). C.330: 적 도감 enemyDex(슬롯 하나에 하나, 적 id → { seen, kills, where, firstAt })·런 로그 원정 기록 kills (GDD 200장 4~6) — 63 → 64 변환 SAVE_MIGRATIONS[63](런 로그에서 채움). C.326: 캐릭터 이름(name, null = 아직 안 정함 → 이어할 때 한 번 이름·성별 창)·슬롯 기록 slotLog.identities·런 로그 원정 기록 name (GDD 199장 6~8) — 62 → 63 변환 SAVE_MIGRATIONS[62]. C.311: 이어 하지 못한 원정 실패 정산 — 런 로그 runs endReason 'abandoned'·abandoned 이유, 원정 중간 저장 leftAtMs(나간 시각) (GDD 192장 1) — 61 → 62 변환 SAVE_MIGRATIONS[61](구조 보정 없음). C.227: 특성 상점 탈착 특성 — 보유 shared.traits · 끼운 칸 evolution.abilities.detached (GDD 150장 3·6) — 60 → 61 변환 SAVE_MIGRATIONS[60]. C.226: 4단계 진화 = 3단계 특성 → 4단계 특성(el4:·evolution.abilities.pending, enhanced 폐기)·히든 통로/망한 진화체/실패형 특성 (GDD 149장) — 59 → 60 변환 SAVE_MIGRATIONS[59]. C.225: 특성 = 3·4단계 진화 때만 1개·같은 루트 강화(evolution.abilities.enhanced)·받으면 영구(칸 = 보유 전부) (GDD 147·148장) — 58 → 59 변환 SAVE_MIGRATIONS[58]. C.220: 진화 5단계 → 4단계 (GDD 142장 9·126장) — 옛 5단계 → 같은 속성·타입 4단계 + 아란칼화/참백도 구상화 깬 것으로, 옛 4단계 히든 → 가장 가까운 새 4단계, 특성 보유·칸(evolution.abilities), 단계 기록 faints·longAbsences·hunterRuns·practices·ascended — 57 → 58 변환 SAVE_MIGRATIONS[57]. C.223: 상점 회복 물건 하루 판매 기록(shared.shopDaily, GDD 145장 4)·튜토리얼 온천 표시(nest.spa.fast, 145장 1)·런 로그 homeHeals kind 'evolution'·'item'(145장 2·144장 3) — 56 → 57 변환 SAVE_MIGRATIONS[56]. C.213: 희귀 특성 삭제 — 가진 희귀 특성(t-<속성>-rare)은 같은 속성 강화 1단계로 (GDD 136장 1) — 55 → 56 변환 SAVE_MIGRATIONS[55]. C.198: 홈 체력 nest.hpFraction·온천 nest.spa·런 로그 homeHeals (GDD 123장 2·4) — 54 → 55 변환 SAVE_MIGRATIONS[54]. C.195: 원정 임시 타일(activeExpedition.tempHand·tempCells·tempLog)·영구 타일 굴림(permTile)·런 로그 continueRun (GDD 121장 4·5). C.193: 대기 보상 장비 — 런 로그 idle.gear·장비 기록 source 'idle' (GDD 119장 5). C.188: 슬롯 성별(gender)·런 로그 원정 기록 gender (GDD 114장). C.184: 노멀 skill 특성(노멀 조·탄·교) 보유·슬롯에서 정리 — 기본 블록이 그 역할 (GDD 111장 2). C.177: 원정 이어 오는 체력(activeExpedition.hpFraction, GDD 107장)·장비 합계 발동 효과(gear.active)·런 로그 전투 startHp·itemUsed·gearUses (GDD 105장 수정·107장). C.181: 둥지 먹이 한도 feedCount·lastFedAt, 런 로그 vitals 'spit' (GDD 109장 6). C.179: 장비 화면 소모품 칸(shared.battleItem, GDD 108장 3번). C.178: 슬롯 설정(settings, GDD 103장 5). C.175: 둥지 tired·collapsed·dead·cureOnReturn·bond·bondDay·bondToday, 런 로그 vitals, weakened 뜻 바뀜(패배 쇠약 → 배부름 쇠약) (GDD 102장). C.167: 해방 블록 슬롯(build.liberation) 폐지 (GDD 98장 B). C.150: 장비(shared.gear)·런 로그 gear (GDD 91장). C.147: 대기 모드 받을 보상(idlePending, GDD 92장)·같은 속성 흡수 = 강화만(94장 B — 중복 노멀 특성 정리). C.144: 펫(shared.pets)·런 로그 pets (GDD 90장). C.140: 타일 덱 삭제 → 배치 프리셋(tiles.presets)·보관함 소모품(shared.items)·우라하라(shared.wanderer)·런 로그 wanderer·idle (GDD 85장 5·6·11번, 86장). C.136(40): 빌드 속성 강화 횟수(build.enhance)·런 로그 흡수 enhance, 막기·회복 속성 특성 삭제 (GDD 84장 7·8번). C.134(39): 빌드 해방 블록 슬롯(build.liberation)·런 로그 전투 liberationUses·liberationChains (GDD 83장). C.133(38): 둥지 돌봄 요청(careRequest·nextCareAt)·런 로그 care (GDD 82장). C.120(37): 타일 보관·도움말 안내·런 로그 tutorialRewards·구매 기록 result
@@ -125,6 +127,8 @@ export interface SaveData {
   evolution: EvolutionState;
   /** 진화체 도감 해금 목록 (진화체 id). 한 번 진화한 진화체가 해금된다 (C.11) */
   formDex: string[];
+  /** 모델 단위 진화체 도감 발견 (GDD 8-5 v6.096, C.470 — 형식 91): '<모델 id>@<진화체 id>'(예 'wyrm@t3:water' = 거미형 물 색). 종족 설정 tierLooks[단계].lookUnit 단계만. 옛 세이브엔 없음 = [] */
+  lookDex?: string[];
   /** 보유 타일 수량과 원정에 가져갈 덱 (GDD 6장). 시작 구성은 임시 */
   tiles: TileStock;
   /** 히든 조건용 영구 기록 */
@@ -759,7 +763,7 @@ export function firstRunPending(save: Pick<SaveData, 'help' | 'runLog'>): boolea
 
 export function newSaveData(factionId: string, nowMs: number = Date.now()): SaveData {
   return {
-    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: newFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약 (241-C 5). 일반 먹이는 튜토리얼 첫 끼니 뒤 (245장 2)
+    meta: newSaveMeta(), ...newTrack(factionId, nowMs), formDex: [], lookDex: [], tiles: newTileStock(), titles: [], help: { ...newHelpState(), guides: { 'first-run': 'pending', 'home-intro': 'pending' } }, shared: { ...newSharedState(), food: newFoodStock(), items: { ...BALANCE.provisional.startItems } }, // 시작 구급상자 (GDD 134장 1) · 시작 약 (241-C 5). 일반 먹이는 튜토리얼 첫 끼니 뒤 (245장 2)
     lastSeenAt: nowMs, idlePending: null, story: {}, bossDex: {}, enemyDex: {}, dexSort: newDexSortState(),
     otherTracks: [], trackNotice: null, hogyoku: newHogyokuState(), transcendentDex: [], slotLog: emptySlotLog(), machine: { createdAt: nowMs, playMs: 0 },
     settings: null, gender: DEFAULT_GENDER, name: null,
@@ -1838,6 +1842,9 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);
     if (!save.formDex.includes(r.form.id)) save.formDex.push(r.form.id);
+    // 모델 단위 진화체 (GDD 8-5 v6.096, C.470): 외형 모델·색 발견 기록과 런 로그 진화 기록의 외형 id (숨은 모습까지 정해진 뒤)
+    r.record.look = save.evolution.look ?? null;
+    recordLookDex(save, getFaction(save.factionId), r.form, save.evolution.look);
     // 단계 외형이 정해지면 시작 외형(시작 전용 스킨)은 그 외형에 덮인다 (GDD 53). 상점에서 산 스킨은 그대로. 스킨 패널에서 다시 고를 수 있다
     if (save.evolution.look && getSkin(save.skin)?.startOnly) save.skin = null;
     checkTitles(save, 'evolution', nowMs);
@@ -2528,7 +2535,34 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
       if (fitSkinToLock(view as SkinLockSave)) t.skin = view.skin;
     });
   },
+  // 90 → 91 (C.470, GDD 8-5 v6.096 아쥬커스 진화체 = 능력치별 모델): 모델 단위 도감 발견 lookDex 를 만든다
+  90: (save) => migrateLookDex(save),
 };
+
+/** 형식 90 → 91 (C.470): lookDex 복원. ① 진화체로 정한 칸(히든 — 모델이 진화체로 정해짐)은 formDex 에 있으면 발견 ② 모델 칸은 트랙마다 지금 외형(evolution.look, 예 wyrmwater)과
+ *  지금 진화체로 (모델, 색) 복원. 지난 진화의 외형은 남아 있지 않아(런 로그 진화 기록에 외형이 없었다) 복원 못 하면 formDex(속성)만 남고 모델은 미발견. 종족 분기 없음 — 종족 설정 tierLooks 만 본다 */
+export function migrateLookDex(save: SaveData): void {
+  const dex = Array.isArray(save.lookDex) ? save.lookDex.filter((x): x is string => typeof x === 'string') : [];
+  save.lookDex = dex;
+  const formDex = Array.isArray(save.formDex) ? save.formDex : [];
+  for (const fac of FACTIONS) {
+    for (const tier of Object.keys(fac.tierLooks ?? {}).map(Number)) {
+      for (const cell of lookCells(fac, tier)) if (cell.fixed && formDex.includes(cell.key)) {
+        const k = lookDexKey(cell.model, cell.key);
+        if (!dex.includes(k)) dex.push(k);
+      }
+    }
+  }
+  forEachTrack(save, (t) => {
+    if (!isRec(t) || !isRec(t.evolution) || typeof t.evolution.formId !== 'string') return;
+    const form = tryGetForm(t.evolution.formId);
+    const fac = FACTIONS.find((f) => f.id === t.factionId);
+    if (!form || !fac) return;
+    const look = typeof t.evolution.look === 'string' ? t.evolution.look : null;
+    const cell = lookCellOfSkin(fac, form.tier, look);
+    if (cell && cell.forms.some((f) => f.id === form.id) && lookSkinOf(lookUnitTable(fac, form.tier)!, cell.model, form) === look) recordLookDex(save, fac, form, look);
+  });
+}
 
 /** 형식 86 → 87 시험용 변환: 세이브 안의 모든 능력치 칸에서 숫자 spd → aspd, 능력치 7칸 꼴(hp·atk 숫자)이면 빠진 bspd = 0 */
 function renameSpeedStat(node: unknown, depth = 0): void {

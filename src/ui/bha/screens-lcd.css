@@ -91,6 +91,7 @@
 .bha-dexmodal .bha-itemmodal__art .bha-dexart { width: 104px; height: 104px; }
 .bha-dexmodal .bha-edex__art--hero { width: 96px; height: 96px; }
 .bha-dexmodal .bha-dexart.is-silhouette .bha-itemart--img { filter: brightness(0); opacity: 0.55; }
+.bha-dexdetail__chips .bha-skinpick__chip:disabled { color: var(--bha-text-3); cursor: default; }
 .bha-itemmodal__rich { display: flex; flex-direction: column; gap: var(--bha-sp-3); white-space: normal; font-size: var(--bha-fs-sm); }
 .bha-itemmodal__rich > * { flex: none; margin: 0; }
 
