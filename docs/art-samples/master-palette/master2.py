@@ -5,7 +5,7 @@ import sys, numpy as np
 from PIL import Image
 from collections import deque, Counter
 MASTER={ # 재질: (기본색, 음영색)
- 'mask':((252,236,207),(203,171,149)),     # 가면·흰 몸 (게임 적 가면과 같은 색)
+ 'mask':((247,230,220),(167,146,156)),     # 가면·흰 몸·흰 옷 (붕옥젠 흰색 — 사용자 2026-11-17 "하얀게 더 좋은데. 기존 붕옥젠 색으로 화이트 색상 통일")
  'skin':((250,198,154),(201,130,99)),      # 사람 살
  'orange':((251,129,28),(178,77,13)),      # 주황 머리
  'brown':((175,84,62),(98,44,41)),         # 붉은 갈색 머리
@@ -28,7 +28,7 @@ def classify(a):
     take('red',(r>g+55)&(g<0.36*r)&(b<0.45*r)&(sat>0.55))
     take('brown',(r>g+25)&(g<0.62*r)&(sat>0.35)&(lum<150))
     take('orange',(r>150)&(g>=0.38*r)&(g<0.80*r)&(b<0.40*r)&(sat>0.6)&(lum>=95))
-    take('skin',(r>180)&(r-b>70)&(g>0.6*r)&(g<0.86*r)&(sat>0.28))
+    take('skin',(r>180)&(r-b>40)&(g>0.6*r)&(g<0.9*r)&(sat>0.16))
     take('navy',(b>r+12)&(b>g+6)&(sat>0.22))
     take('green',(g>r+6)&(g>b+14)&(sat>0.15))
     take('mask',(lum>=135))
@@ -72,7 +72,8 @@ def run(src,dst,swap):
             if hi.all() or (~hi).all(): break
             c0,c1=L[~hi].mean(),L[hi].mean()
         hi=np.abs(L-c1)<np.abs(L-c0)
-        if abs(c1-c0)<14: hi=np.ones(len(L),bool) if (name!='dark') else (L>75)
+        if name=='dark': hi=L>75   # 검은 옷은 절대 밝기로(밝은 쪽 = 주름 빛만)
+        elif abs(c1-c0)<14: hi=np.ones(len(L),bool) if (name!='dark') else (L>75)
         ys,xs=np.where(m); out[ys[hi],xs[hi]]=(*base,255); out[ys[~hi],xs[~hi]]=(*shade,255)
     # 외곽 닫기: 투명과 맞닿은 비검정 칸은 그대로 둔다(원본 선 유지)
     Image.fromarray(out).save(dst)
