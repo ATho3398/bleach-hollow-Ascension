@@ -252,7 +252,8 @@ def kneel():
              'arm_back': [0, 10, 28, 34, 30, 32], 'forearm_back': [0, 6, 20, 26, 22, 24]}
     # 편집기 '고정'(사용자 2026-11-17 01:1x, 쓰러짐 '이 동작에만'): 뒷정강이 −43°·(−7, +7), 칼 든 팔 +93°·(+6, −10), 칼 든 아래팔 +10° — 끝 자세 값, 내려앉는 만큼 들어간다
     prog = [0, 0.4, 0.9, 1.0, 1.0, 1.0]
-    fix = {'shin_b': (-43, -7, 7), 'arm_sword': (93, 6, -10), 'forearm_sword': (10, 0, 0)}
+    # 두 번째 고정(2026-11-17 03:5x): 칼 든 팔 +17°, 칼 든 아래팔 +3°, 칼 −115° 더
+    fix = {'shin_b': (-43, -7, 7), 'arm_sword': (93 + 17, 6, -10), 'forearm_sword': (10 + 3, 0, 0), 'sword': (-115, 0, 0)}
     for b, (dr, _, _) in fix.items():
         bones[b] = [round(v + dr * p_, 1) for v, p_ in zip(bones[b], prog)]
     out = m(900, times, root, bones, hold=True)
