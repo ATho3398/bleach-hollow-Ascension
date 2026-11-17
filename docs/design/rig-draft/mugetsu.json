@@ -5,7 +5,9 @@
  "motionSpeedExcept": [
   "idle",
   "homeIdle",
-  "move"
+  "move",
+  "skill",
+  "downIdle"
  ],
  "canvas": [
   105,
