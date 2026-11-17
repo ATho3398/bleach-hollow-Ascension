@@ -1,0 +1,518 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-charged-shot-name-number.png",
+    "02-pc-final-slash-big-number.png",
+    "03-phone-final-slash-big-number.png",
+    "06-evolve-gillian.png",
+    "04-evolve-rhino.png",
+    "05-evolve-spider.png",
+    "07-evolve-t4.png",
+    "08-phone-evolve-rhino.png",
+    "09-pc-chain3-skill-name-number.png"
+  ],
+  "facts": {
+    "01-pc-charged-shot-name-number": {
+      "all": [
+        {
+          "text": "월아천충!",
+          "kind": "bha-float--chain",
+          "x": 254,
+          "y": 108,
+          "w": 61,
+          "h": 16,
+          "big": false
+        },
+        {
+          "text": "−98",
+          "kind": "bha-float--attack",
+          "x": 253,
+          "y": 129,
+          "w": 76,
+          "h": 44,
+          "big": true
+        }
+      ],
+      "overlapPx": 0
+    },
+    "02-pc-final-slash-big-number": {
+      "all": [
+        {
+          "text": "최후의 월아천충!",
+          "kind": "bha-float--chain",
+          "x": 279,
+          "y": 130,
+          "w": 152,
+          "h": 23,
+          "big": false
+        },
+        {
+          "text": "−439",
+          "kind": "bha-float--attack",
+          "x": 280,
+          "y": 153,
+          "w": 115,
+          "h": 53,
+          "big": true
+        }
+      ],
+      "overlapPx": 0
+    },
+    "03-phone-final-slash-big-number": {
+      "all": [
+        {
+          "text": "최후의 월아천충!",
+          "kind": "bha-float--chain",
+          "x": 237,
+          "y": 117,
+          "w": 141,
+          "h": 21,
+          "big": false
+        },
+        {
+          "text": "−439",
+          "kind": "bha-float--attack",
+          "x": 238,
+          "y": 139,
+          "w": 107,
+          "h": 49,
+          "big": true
+        }
+      ],
+      "overlapPx": 0
+    },
+    "evolve-pc": [
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -40,
+          "bottom": 181,
+          "left": 110,
+          "right": 330
+        },
+        "drawn": {
+          "top": 80,
+          "bottom": 162
+        },
+        "scale": "2.3",
+        "scrollTop": 0,
+        "scrollH": 259,
+        "clientH": 246,
+        "key": "t2-gillian",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 18,
+          "bottom": 176,
+          "left": 141,
+          "right": 299
+        },
+        "drawn": {
+          "top": 85,
+          "bottom": 163
+        },
+        "scale": "1.65",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-carapace",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 22,
+          "bottom": 176,
+          "left": 143,
+          "right": 297
+        },
+        "drawn": {
+          "top": 85,
+          "bottom": 165
+        },
+        "scale": "1.6",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-stag",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -31,
+          "bottom": 180,
+          "left": 114,
+          "right": 326
+        },
+        "drawn": {
+          "top": 86,
+          "bottom": 164
+        },
+        "scale": "2.2",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-rhino",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 57,
+          "bottom": 173,
+          "left": 162,
+          "right": 278
+        },
+        "drawn": {
+          "top": 85,
+          "bottom": 164
+        },
+        "scale": "1.2",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-wyrm",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 18,
+          "bottom": 176,
+          "left": 141,
+          "right": 299
+        },
+        "drawn": {
+          "top": 91,
+          "bottom": 163
+        },
+        "scale": "1.65",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-panther",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 31,
+          "bottom": 175,
+          "left": 148,
+          "right": 292
+        },
+        "drawn": {
+          "top": 106,
+          "bottom": 164
+        },
+        "scale": "1.5",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-scorpion",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 62,
+          "bottom": 172,
+          "left": 165,
+          "right": 275
+        },
+        "drawn": {
+          "top": 82,
+          "bottom": 155
+        },
+        "scale": "1.15",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t3-wraith",
+        "drawnInFig": true,
+        "figInPanel": true
+      },
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -22,
+          "bottom": 179,
+          "left": 119,
+          "right": 321
+        },
+        "drawn": {
+          "top": 87,
+          "bottom": 164
+        },
+        "scale": "2.1",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 246,
+        "key": "t4-fire",
+        "drawnInFig": true,
+        "figInPanel": true
+      }
+    ],
+    "evolve-phone": [
+      {
+        "tag": "CANVAS",
+        "fig": {
+          "top": 75,
+          "bottom": 171,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -31,
+          "bottom": 180,
+          "left": 114,
+          "right": 326
+        },
+        "drawn": {
+          "top": 86,
+          "bottom": 164
+        },
+        "scale": "2.2",
+        "scrollTop": 0,
+        "scrollH": 285,
+        "clientH": 240,
+        "key": "t3-rhino",
+        "drawnInFig": true,
+        "figInPanel": true
+      }
+    ],
+    "afxNameVsSpots": {
+      "layer": "bha-afx-layer",
+      "name": {
+        "l": 306,
+        "t": 104,
+        "r": 538,
+        "b": 147
+      },
+      "overlapPx": [
+        1829,
+        1189,
+        1484,
+        817,
+        177
+      ]
+    },
+    "09-pc-chain3-skill-name-number": {
+      "samples": [
+        {
+          "name": "맹조 난무",
+          "nameBox": [
+            350,
+            102,
+            501,
+            145
+          ],
+          "nums": [
+            {
+              "text": "−73",
+              "big": true,
+              "box": [
+                251,
+                170,
+                338,
+                220
+              ],
+              "overlapPx": 0
+            }
+          ]
+        },
+        {
+          "name": "맹조 난무",
+          "nameBox": [
+            347,
+            104,
+            497,
+            147
+          ],
+          "nums": [
+            {
+              "text": "−73",
+              "big": true,
+              "box": [
+                253,
+                175,
+                329,
+                218
+              ],
+              "overlapPx": 0
+            }
+          ]
+        },
+        {
+          "name": "맹조 난무",
+          "nameBox": [
+            347,
+            104,
+            497,
+            147
+          ],
+          "nums": [
+            {
+              "text": "−73",
+              "big": true,
+              "box": [
+                253,
+                175,
+                329,
+                218
+              ],
+              "overlapPx": 0
+            }
+          ]
+        },
+        {
+          "name": "맹조 난무",
+          "nameBox": [
+            349,
+            99,
+            495,
+            141
+          ],
+          "nums": [
+            {
+              "text": "−73",
+              "big": true,
+              "box": [
+                253,
+                175,
+                329,
+                218
+              ],
+              "overlapPx": 0
+            }
+          ]
+        }
+      ],
+      "maxOverlapPx": 0
+    }
+  }
+}
