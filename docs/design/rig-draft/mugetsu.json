@@ -385,7 +385,7 @@
     "art": "parts/forearm_back",
     "at": [
      70,
-     54
+     57
     ],
     "size": [
      9,
@@ -501,8 +501,8 @@
    "hair_a",
    "foot_b_walk",
    "foot_b",
-   "shin_b",
    "head",
+   "shin_b",
    "hair_d",
    "belly",
    "hair_c",
@@ -1034,7 +1034,7 @@
      77
     ],
     "arm_sword": [
-     53,
+     56,
      46
     ],
     "forearm_sword": [
@@ -1043,7 +1043,7 @@
     ],
     "forearm_back": [
      74,
-     56
+     59
     ],
     "sword": [
      50,
