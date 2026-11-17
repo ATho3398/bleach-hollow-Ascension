@@ -108,9 +108,11 @@
         },
         "scale": "2.3",
         "scrollTop": 0,
-        "scrollH": 259,
+        "scrollH": 285,
         "clientH": 246,
         "key": "t2-gillian",
+        "newLine": "노 새 진화체: 길리안 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -140,9 +142,11 @@
         },
         "scale": "1.65",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 246,
         "key": "t3-carapace",
+        "newLine": "노 새 진화체: 가시형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -172,9 +176,11 @@
         },
         "scale": "1.6",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 309,
         "clientH": 246,
         "key": "t3-stag",
+        "newLine": "노 새 진화체: 뱀형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -204,9 +210,11 @@
         },
         "scale": "2.2",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 246,
         "key": "t3-rhino",
+        "newLine": "노 새 진화체: 외팔형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -236,9 +244,11 @@
         },
         "scale": "1.2",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 246,
         "key": "t3-wyrm",
+        "newLine": "노 새 진화체: 거미형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -268,9 +278,11 @@
         },
         "scale": "1.65",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 246,
         "key": "t3-panther",
+        "newLine": "노 새 진화체: 속도형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -300,9 +312,11 @@
         },
         "scale": "1.5",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 246,
         "key": "t3-scorpion",
+        "newLine": "노 새 진화체: 짐승형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -332,9 +346,11 @@
         },
         "scale": "1.15",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 315,
         "clientH": 246,
         "key": "t3-wraith",
+        "newLine": "노 새 진화체: 아쥬커스 히든 히든 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       },
@@ -364,9 +380,11 @@
         },
         "scale": "2.1",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 311,
         "clientH": 246,
-        "key": "t4-fire",
+        "key": "t4",
+        "newLine": "노 새 진화체: 마르티요 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       }
@@ -398,9 +416,11 @@
         },
         "scale": "2.2",
         "scrollTop": 0,
-        "scrollH": 285,
+        "scrollH": 332,
         "clientH": 240,
         "key": "t3-rhino",
+        "newLine": "노 새 진화체: 외팔형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
         "drawnInFig": true,
         "figInPanel": true
       }
@@ -513,6 +533,90 @@
         }
       ],
       "maxOverlapPx": 0
-    }
+    },
+    "evolve-pc-state": [
+      {
+        "key": "t2-gillian",
+        "form": "t2:base",
+        "look": "gillian",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-carapace",
+        "form": "t3:normal",
+        "look": "carapace",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-stag",
+        "form": "t3:normal",
+        "look": "stag",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-rhino",
+        "form": "t3:normal",
+        "look": "rhino",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-wyrm",
+        "form": "t3:normal",
+        "look": "wyrm",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-panther",
+        "form": "t3:normal",
+        "look": "panther",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-scorpion",
+        "form": "t3:normal",
+        "look": "scorpion",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-wraith",
+        "form": "h3:passage",
+        "look": "wraith",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t4",
+        "form": "t4:normal:physical",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      }
+    ],
+    "evolve-phone-state": [
+      {
+        "key": "t3-rhino",
+        "form": "t3:normal",
+        "look": "rhino",
+        "elements": [
+          "normal"
+        ]
+      }
+    ]
   }
 }

@@ -102,9 +102,15 @@ describe('진화 결과 그림 (C.474)', () => {
   it('실측(docs/captures/c474/proof.json): 길리안·아쥬커스 모델 7종·4단계 — 칠해진 그림 = 그림 칸 안, 그림 칸 = 판 안 (PC·폰)', () => {
     const pf = 'docs/captures/c474/proof.json';
     expect(existsSync(pf)).toBe(true);
-    const facts = JSON.parse(read(pf)).facts as Record<string, { key: string; drawnInFig: boolean; figInPanel: boolean; scrollTop: number }[]>;
+    const facts = JSON.parse(read(pf)).facts as Record<string, { key: string; drawnInFig: boolean; figInPanel: boolean; scrollTop: number; newLine: string; elementRow: string }[]>;
     const pc = facts['evolve-pc']!;
-    expect(pc.map((m) => m.key)).toEqual(['t2-gillian', 't3-carapace', 't3-stag', 't3-rhino', 't3-wyrm', 't3-panther', 't3-scorpion', 't3-wraith', 't4-fire']);
+    expect(pc.map((m) => m.key)).toEqual(['t2-gillian', 't3-carapace', 't3-stag', 't3-rhino', 't3-wyrm', 't3-panther', 't3-scorpion', 't3-wraith', 't4']);
+    // 진짜 진화 판정(testEvolveNext)으로 만든 몸 — 모델 이름·속성 줄이 게임과 같다 (착시 캡처 방지)
+    const names: Record<string, string> = { 't2-gillian': '길리안', 't3-carapace': '가시형 아쥬커스', 't3-stag': '뱀형 아쥬커스', 't3-rhino': '외팔형 아쥬커스', 't3-wyrm': '거미형 아쥬커스', 't3-panther': '속도형 아쥬커스', 't3-scorpion': '짐승형 아쥬커스' };
+    for (const m of pc) {
+      if (names[m.key]) expect(m.newLine, m.key).toContain(`새 진화체: ${names[m.key]}`);
+      expect(m.elementRow, m.key).toContain('노멀');
+    }
     for (const m of [...pc, ...facts['evolve-phone']!]) {
       expect(m.drawnInFig, m.key).toBe(true);
       expect(m.figInPanel, m.key).toBe(true);

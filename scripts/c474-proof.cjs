@@ -197,12 +197,15 @@ async function finalSlash(page, proof, name) {
       await ctx.close();
     }
     // ── 진화 결과 화면: 모델마다 결과 창을 바로 띄워 그림 상자를 잰다 ──
+    // 진짜 진화 판정(testEvolveNext = 테스트 패널 [다음 진화]·귀환 진화와 같은 performEvolution)으로 만든 몸 → 결과 창 데이터는 app.ts onEvolved 와 같은 구성.
+    // 3단계 모델 = 그 단계 노력치 1위(종족 설정 tierLooks: hp 외팔형·spr 거미형 …), 부유형 = 히든 진화체(h3:passage)는 테스트 진화체 고르기(setForm)
     const LOOKS = [
-      { key: 't2-gillian', from: 0, to: 1, form: 't2:base', tier: 1, skin: null },
-      ...['carapace', 'stag', 'rhino', 'wyrm', 'panther', 'scorpion', 'wraith'].map((skin) => ({ key: `t3-${skin}`, from: 1, to: 2, form: 't3:normal', tier: 2, skin })),
-      { key: 't4-fire', from: 2, to: 3, form: 't4:fire:physical', tier: 3, skin: null },
+      { key: 't2-gillian', start: null, ev: null },
+      ...[['carapace', 'atk'], ['stag', 'int'], ['rhino', 'hp'], ['wyrm', 'spr'], ['panther', 'aspd'], ['scorpion', 'def']].map(([skin, stat]) => ({ key: `t3-${skin}`, start: 't2:base', ev: stat })),
+      { key: 't3-wraith', start: 't2:base', pick: 'h3:passage' },
+      { key: 't4', start: 't3:normal', ev: 'hp' },
     ];
-    const SHOT = { 't3-rhino': '04-evolve-rhino', 't3-wyrm': '05-evolve-spider', 't2-gillian': '06-evolve-gillian', 't4-fire': '07-evolve-t4' };
+    const SHOT = { 't3-rhino': '04-evolve-rhino', 't3-wyrm': '05-evolve-spider', 't2-gillian': '06-evolve-gillian', 't4': '07-evolve-t4' };
     for (const [vpName, vp] of [['pc', PC], ['phone', PH]]) {
       const ctx = await browser.newContext(vp);
       const page = await ctx.newPage();
@@ -213,17 +216,41 @@ async function finalSlash(page, proof, name) {
       for (const L of LOOKS) {
         if (vpName === 'phone' && L.key !== 't3-rhino') continue;
         await step(`evolve ${L.key}`, async () => {
-          await page.evaluate(async (L) => {
+          proof.facts[`evolve-${vpName}-state`] ??= [];
+          const st = await page.evaluate(async (L) => {
             const fac = await import('/src/data/factions/index.ts');
-            const evo = await import('/src/data/evolution/index.ts');
+            const g = await import('/src/game.ts');
+            const tm = await import('/src/engine/testMode.ts');
+            const ev = await import('/src/engine/evolution/index.ts');
             const fx = await import('/src/engine/faction.ts');
-            const bt = await import('/src/ui/bha/battle.ts');
+            const ea = await import('/src/ui/evolvedArt.ts');
             const ep = await import('/src/ui/evolutionPanel.ts');
             const f = fac.getFaction('hollow');
-            const art = bt.heroArtOf(fx.roomOf(f), 'hollow', L.tier, L.skin);
+            const s = g.newSaveData('hollow', Date.now());
+            // 진짜 판정이 망한 진화체로 가지 않게(C.470 과 같은 조건): 블록 1칸 장착 · 허기 30 · 컨디션 90
+            const tr = await import('/src/data/traits/index.ts');
+            const t0 = tr.TRAITS.find((t) => t.element === 'normal') ?? tr.TRAITS[0];
+            s.build.slots[0] = t0.id;
+            s.nest.hunger = 30; s.nest.condition = 90;
+            if (L.start) tm.setForm(s, L.start);
+            const from = s.evolution.tierIndex;
+            let r;
+            if (L.pick) {
+              tm.setForm(s, L.pick);
+              r = { ok: true, form: (await import('/src/data/evolution/index.ts')).getForm(L.pick), abilityGain: { kind: 'none' }, abilitySlotsAdded: 0 };
+            } else {
+              if (L.ev) s.evolution.ev = { ...s.evolution.ev, [L.ev]: 120 };
+              r = tm.testEvolveNext(s);
+            }
+            if (!r.ok) return { err: r.reason };
+            const e = s.evolution;
+            const extra = { elements: ev.playerElementsOf(e), ability: e.ability, ev: { ...e.ev }, failLine: ev.isFailLine(e), look: e.look ?? null, stats: ev.baseStatsOf(e, f.id), ...ep.gainExtra(e, r.abilityGain, r.abilitySlotsAdded), art: ea.evolvedArtOf(fx.roomOf(f), s) };
             const root = document.querySelector('.bha-stage')?.parentElement ?? document.getElementById('app');
-            ep.evolutionView(root, f, L.from, L.to, evo.getForm(L.form), () => {}, 2, { elements: [], art });
+            ep.evolutionView(root, f, from, e.tierIndex, r.form, () => {}, s.build.slots.length, extra);
+            return { form: e.formId, look: e.look, elements: extra.elements };
           }, L);
+          proof.facts[`evolve-${vpName}-state`].push({ key: L.key, ...st });
+          if (st.err) throw new Error(st.err);
           await wait(300);
           await page.getByRole('button', { name: '건너뛰기' }).first().click({ timeout: 3000 });
           await wait(1200);
@@ -248,6 +275,8 @@ async function finalSlash(page, proof, name) {
             return { tag: img && img.tagName, fig: fig && r(fig), panel: panel && r(panel), img: img && r(img), drawn, scale: img && getComputedStyle(img).getPropertyValue('--art-scale'), scrollTop: panel?.scrollTop, scrollH: panel?.scrollHeight, clientH: panel?.clientHeight };
           });
           m.key = L.key;
+          m.newLine = await page.locator('.bha-evolve__new').first().textContent();
+          m.elementRow = await page.locator('.bha-evolve__info .bha-info__row').nth(2).textContent();
           m.drawnInFig = !!(m.drawn && m.fig && m.drawn.top >= m.fig.top && m.drawn.bottom <= m.fig.bottom);
           m.figInPanel = !!(m.fig && m.panel && m.fig.top >= m.panel.top);
           proof.facts[`evolve-${vpName}`].push(m);
