@@ -28,6 +28,12 @@ export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
   release: ['release1'],
 };
 
+/** 끝 자세로 멈추는 동작(hold) 뒤에 이어 반복할 동작 (GDD 115-A 167, C.473 — 사용자 2026-11-17 "전투에 져서 쓰러지면 계속 쓰고 있어야지"):
+ *  패배 = 쓰러짐(down) 한 번 → 그 몸에 '쓰러짐 숨'(downIdle)이 있으면 그것을 반복(결과 화면 동안). 없는 몸은 끝 자세에서 멈춤 그대로. 마을 빈사는 dying 그대로 */
+export const RIG_HOLD_THEN: Readonly<Record<string, string>> = {
+  down: 'downIdle',
+};
+
 /** 게임 동작에 맞는 종이인형 동작이 하나도 없는 몸이 대신 쓰는 동작 (GDD 219장 1): 공격1·2가 없는 몸(길리안)의 공격 = 박치기 */
 export const RIG_ACTION_FALLBACK: Partial<Record<AnimAction, readonly string[]>> = {
   attack: ['headbutt'],
@@ -95,7 +101,8 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
   };
   const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
-  let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean } | null = null;
+  /** loop = 끝 자세 뒤 이어 붙인 반복 동작(RIG_HOLD_THEN) — 끝나지 않고 돈다 */
+  let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean; loop?: boolean } | null = null;
   /** 동작 재생 속도 (GDD 225장): t 는 동작 시각(ms), 밖으로 알려 주는 길이·타격 시각은 실제 ms = 동작 시각 ÷ speed */
   const speedOf = (id?: string | null) => motionSpeedOf(rig, id);
   let t = 0;
@@ -175,6 +182,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       t += dt * rate * speedOf(curId());
       if (!once) return;
       const m = motions[once.id]!;
+      if (once.loop) return; // 이어 붙인 반복 동작 (쓰러짐 숨): 자세는 samplePose 가 길이로 되감는다
       if (!once.hitFired && m.hit !== undefined && t >= m.hit) {
         once.hitFired = true;
         once.opts.onHit?.();
@@ -182,9 +190,15 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       if (t >= m.duration) {
         const end = once.opts.onEnd;
         if (m.hold) {
-          // 마지막 자세로 멈춤(쓰러짐) — 다음 play 가 올 때까지
-          t = m.duration;
-          once.opts = {};
+          // 마지막 자세로 멈춤(쓰러짐) — 다음 play 가 올 때까지. 이어 반복할 동작(쓰러짐 숨)이 이 몸에 있으면 그것으로 (C.473)
+          const next = RIG_HOLD_THEN[once.id];
+          if (next && motions[next]) {
+            once = { action: once.action, id: next, opts: {}, hitFired: true, loop: true };
+            t = 0;
+          } else {
+            t = m.duration;
+            once.opts = {};
+          }
           end?.();
           return;
         }

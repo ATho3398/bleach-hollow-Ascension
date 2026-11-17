@@ -1,5 +1,6 @@
 // 만해 오라 (GDD 15-6 v6.089, C.461): 해방이 열린 동안 내 캐릭터 몸 뒤에 까는 pixelfx 시트(custom/bankai-aura, 속성 8색, 통짜).
-// 사용자 2026-11-15 "만해 오라는, 해방 열렸을 때 켜는거지" · "만해 쓰고 나면 이펙트 바꿀거임" — 해방 중 이펙트는 데이터 키 하나(active)로 바꿔 끼운다.
+// 사용자 2026-11-15 "만해 오라는, 해방 열렸을 때 켜는거지" · "만해 쓰고 나면 이펙트 바꿀거임" · 2026-11-17 "해방한 다음엔 해방오라 쓰지 말라니까" (C.473, GDD 15-6 v6.102):
+// 해방 중엔 오라를 끈다 — 해방 중 이펙트는 데이터 키 하나(active, 지금 null = 없음)로, 사용자가 주면 끼운다.
 // 모든 몸이 같은 장치: 종족·몸 id 분기 없이 그림의 몸 크기(정지 그림의 안 투명한 상자 × 배율 — 키, 넓은 몸은 너비)에 비례해 키우고, 발(그림 칸 아래 8%)을 시트 기준점에 맞춘다.
 // 위쪽은 DOM 없는 순수 함수라 단위 테스트한다 (tests/c461.test.ts).
 import cfgRaw from '../../data/art/bankaiAura.json';
@@ -8,7 +9,7 @@ import { fxSheetName, loadPixelFx, type PixelFxSheet } from './pixelFx';
 export interface BankaiAuraConfig {
   /** 해방 열림 때 시트 (pixelfx id) */
   ready: string;
-  /** 해방 중 시트 (pixelfx id) — 사용자가 새 이펙트를 주면 이것만 바꾼다. 없으면 ready */
+  /** 해방 중 시트 (pixelfx id) — 사용자가 새 이펙트를 주면 이것만 바꾼다. null = 해방 중엔 아무것도 없음(만해 오라를 끈다, C.473) */
   active: string | null;
   elements: string[];
   fallbackElement: string;
@@ -41,8 +42,8 @@ export function bankaiAuraElement(element: string | null | undefined, c: BankaiA
 /** 단계·속성에 맞는 시트 이름 (public/fx/<이름>.json). 꺼짐이면 null */
 export function bankaiAuraSheetName(phase: BankaiAuraPhase, element: string | null | undefined, c: BankaiAuraConfig = BANKAI_AURA): string | null {
   if (phase === 'off') return null;
-  const id = phase === 'active' ? c.active ?? c.ready : c.ready;
-  return fxSheetName(id, bankaiAuraElement(element, c));
+  const id = phase === 'active' ? c.active : c.ready;
+  return id ? fxSheetName(id, bankaiAuraElement(element, c)) : null;
 }
 
 /** 몸 키 (그림 칸 높이 대비): (발 − 머리 윗변) × 배율. 머리 윗변을 못 읽었으면(그림 없음·아직 안 읽음) fallback */
@@ -123,14 +124,14 @@ export interface BankaiAura {
   /** 매 화면 갱신마다 부른다. 바뀔 때만 DOM 을 건드린다 */
   set(phase: BankaiAuraPhase): void;
   readonly phase: BankaiAuraPhase;
-  /** 시트를 받아 몸 위에 깔았는지 (못 받았으면 옛 CSS 발밑 기운이 남는다) */
+  /** 시트를 받아 몸 위에 깔았는지 (못 받았으면 아무것도 없다 — 옛 CSS 발밑 기운은 C.473 삭제) */
   readonly shown: boolean;
   stop(): void;
 }
 
 /**
  * 오라 요소를 몸 상자(.bha-hero__lift) 맨 앞(몸 뒤)에 넣는다. art = 내 그림(머리 윗변·배율·세로 보정), element = 내 속성.
- * reduced = 동작 줄이기면 첫 프레임 정지. onShown = 시트가 보이기 시작/끝날 때(옛 CSS 기운 숨기기용)
+ * reduced = 동작 줄이기면 첫 프레임 정지. onShown = 시트가 보이기 시작/끝날 때
  */
 export function mountBankaiAura(
   lift: HTMLElement,
@@ -147,6 +148,9 @@ export function mountBankaiAura(
   let box: ArtBox | null = null;
   let topRead = !art.src;
   if (art.src) void (o.measure ?? loadArtBox)(art.src).then((r) => { box = r; topRead = true; render(); });
+  // 해방 가능 시트를 미리 받아 둔다 (C.473): 게이지가 차는 순간 바로 보이게 — 옛 CSS 기운이 먼저 보이던 틈(사용자 '처음에 옛날 임시 모션그래픽')이 없게
+  const readyName = bankaiAuraSheetName('ready', element);
+  if (readyName) void loadPixelFx(readyName);
   let phase: BankaiAuraPhase = 'off';
   let want: string | null = null;
   let sheetOn: PixelFxSheet | null = null;

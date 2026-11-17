@@ -53,7 +53,7 @@ describe('무월 이치고 그림', () => {
   it('전투: 두 번째 해방 중에만 바꿔 입는다 (데이터 키로, id 분기 없음)', () => {
     const src = read('src/ui/battleView.ts');
     expect(src).toContain('tryGetTranscendent(s.params.kit.id)?.kit?.mastery?.releaseArt');
-    expect(src).toContain('heroSecond?.set(secondOn)'); expect(src).toContain('const secondOn = kitSecondOn(s);'); // C.461: 실시간 불꽃과 같이 켬
+    expect(src).toContain('heroSecond?.set(secondShown)'); expect(src).toContain("const secondShown = s.status === 'playing' ? secondOn : !!heroSecond?.on;"); // C.473: 끝난 뒤엔 그 몸 유지 expect(src).toContain('const secondOn = kitSecondOn(s);'); // C.461: 실시간 불꽃과 같이 켬
   });
 });
 

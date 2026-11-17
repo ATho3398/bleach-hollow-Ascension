@@ -80,7 +80,8 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
     case 'player-attack':
       // 혈쇄참월 분신 한 대 (C.460): 내 몸 모션 없음 — 화면이 몸 그림 반투명 사본만 낸다
       if (e.kitClone) return null;
-      return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}) } : null;
+      // 마무리 평타 연출 (C.473, GDD 12-4 v6.102): 종이인형 몸은 데이터 동작(kitMotion — 무월 '특수1' 4.1초)을 제 속도로, 그림 없는 몸은 기존 공격 연출(타격 시각만 맞춤)
+      return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}), ...(e.kitMotion ? { rigMotion: e.kitMotion } : {}) } : null;
     case 'block': {
       if (e.damage <= 0 || e.block === 'void') return null;
       if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true, instant: true };

@@ -132,6 +132,7 @@ export function combatKitOf(k: KitState | null | undefined): CombatKit | null {
       name: def.mastery.gaugeName, releaseName: def.mastery.releaseName, finisherName: def.mastery.finisherName,
       perBasic: num.riskDrain.mastery.perBasic, perBlock: num.riskDrain.mastery.perBlock, full: num.riskDrain.mastery.full, damageMult: num.riskDrain.mastery.damageMult,
       stacks: num.riskDrain.final.stacks, finisherPower: num.riskDrain.final.power, finisherPerBlock: num.riskDrain.final.perBlock,
+      ...(def.mastery.finisherCine ? { cine: { ...def.mastery.finisherCine, captions: def.mastery.finisherCine.captions.map(([at, text]) => [at, text] as [number, string]) } } : {}),
     } } : {}),
     ...(def.revive && num.revive ? { revive: { hpFraction: num.revive.hpFraction, line: def.revive.line } } : {}),
     ...(mode ? { mode: mode.id } : {}),

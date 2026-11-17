@@ -79,7 +79,8 @@ describe('데이터·수치 (provisional)', () => {
     expect(t.kit?.blocks.map((b) => [b.id, b.short, b.chargeShot, b.noMotion])).toEqual([['getsuga', '월', true, true]]); // C.455: 몸동작 없음 = 데이터 표시
     expect(t.kit?.liberationName).toBe('각호고');
     expect(t.kit?.riskGaugeName).toBe('호로화');
-    expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충', releaseArt: 'char.transcendent-ichigo-mugetsu' }); // C.456 무월 그림
+    expect(t.kit?.mastery).toEqual({ gaugeName: '무월수련', releaseName: '무월', finisherName: '최후의 월아천충', releaseArt: 'char.transcendent-ichigo-mugetsu', // C.456 무월 그림
+      finisherCine: { motion: 'skill', seconds: 4.1, hitSeconds: 3.08, captions: [[0.15, '최후의 월아천충은, 나 자신이 월아가 되는 것이다.'], [2.9, '무월—']] } }); // C.473 연출 (tests/c473)
     expect(t.kit?.modes?.map((m) => m.id)).toEqual(['basic', 'tybw']); // C.460: 천년혈전 구현 (tests/c460)
     // GDD v6.070~v6.074 추천안
     expect(K.blocks.getsuga).toMatchObject({ chargeShot: 2.0, chainRiskCost: [5, 8, 10], chainGauge: [6, 9, 11] });
@@ -217,6 +218,8 @@ describe('순환 전체: 참월 → 각호고 → 무월수련 → 무월 → �
     expect(fin).toMatchObject({ kitShot: '최후의 월아천충', kitFinisher: true });
     expect(fin.damage).toBeCloseTo(plain * 42, 6);
     expect(s.tray.length).toBe(0);
+    expect(kitSecondOn(s)).toBe(true); // C.473: 연출(무월 동작)이 끝날 때까지 무월 — 몸 그림이 동작 도중 안 바뀌게
+    while (s.kit!.cine) step(s);
     expect(liberationActive(s)).toBe(false);
     expect(kitSecondOn(s)).toBe(false);
     expect(kitRiskOf(s)).toBe(100);

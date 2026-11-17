@@ -68,9 +68,9 @@ describe('강조는 그림 모양대로 (178장 3)', () => {
   it('해방 오오라·해방 준비 = 몸 그림 drop-shadow, 그림 칸 타원 빛·고리 없음', () => {
     const all = css('battle-scene.css') + css('v2/bha.css');
     expect(all).not.toMatch(/is-(liberated|unique|lib-ready) \.bha-unit--me \.bha-unit__fig(::before|::after)?\s*\{/);
-    expect(all).toMatch(/is-liberated \.bha-unit--me \.bha-hero__body \{ filter: drop-shadow/);
-    // 해방 준비는 GDD 215장(C.353)에서 몸 테두리 빛 → 발밑에서 솟구치는 기운(.bha-libaura)으로 바뀜 (기기 초점과 구분)
-    expect(all).toMatch(/is-lib-ready \.bha-unit--me \.bha-libaura \{ display: block; \}/);
+    // C.473 (GDD 15-6 v6.102, 사용자 "해방한 다음엔 해방오라 쓰지 말라니까"): 해방 중 몸 빛(drop-shadow) 삭제 · 옛 발밑 기운(.bha-libaura, C.353) 삭제
+    expect(all).not.toMatch(/is-(liberated|unique|kitmode) \.bha-unit--me \.bha-hero__body[^{]*\{[^}]*drop-shadow/);
+    expect(all).not.toMatch(/\.bha-libaura/);
     // 투명 해방 버튼(그림 칸 네모)은 눌림·초점 상자를 그리지 않는다
     expect(css('v2/bha.css')).toMatch(/\.bha-v2herolib\.bha-sel[^{]*\{outline:0;box-shadow:none;background:none\}/);
   });

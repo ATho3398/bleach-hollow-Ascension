@@ -3,10 +3,10 @@
 import type { CombatEvent } from '../engine/combat';
 import { SFX_LEGACY_VOLUME, type FxSettings } from './fxSettings';
 
-export type FxCue = 'block' | 'chain2' | 'chain3' | 'guard' | 'hurt' | 'cast' | 'heavyhit' | 'special' | 'win' | 'lose';
+export type FxCue = 'block' | 'chain2' | 'chain3' | 'guard' | 'hurt' | 'cast' | 'heavyhit' | 'special' | 'win' | 'lose' | 'rumble' | 'slash';
 
 /** 센 순서 (뒤로 갈수록 우선) */
-export const CUE_PRIORITY: readonly FxCue[] = ['block', 'chain2', 'hurt', 'cast', 'guard', 'chain3', 'heavyhit', 'special', 'lose', 'win'];
+export const CUE_PRIORITY: readonly FxCue[] = ['block', 'chain2', 'hurt', 'cast', 'guard', 'chain3', 'heavyhit', 'special', 'rumble', 'slash', 'lose', 'win'];
 
 /** 사건 하나 → 신호. 효과가 없는 사건은 null. top = 체인 최대 단계 */
 export function cueOf(e: CombatEvent, top: number): FxCue | null {
@@ -27,6 +27,11 @@ export function cueOf(e: CombatEvent, top: number): FxCue | null {
       return 'cast';
     case 'heavy-hit':
       return e.guarded ? 'guard' : 'heavyhit';
+    // 마무리 평타 연출 (C.473, GDD 12-4 v6.102 최후의 월아천충 — 추천안, 녹음 음성은 사용자 확인 대기): 팔을 올리는 동안 낮은 울림, 내려 베는 순간 베기음
+    case 'kit-cine':
+      return 'rumble';
+    case 'player-attack':
+      return e.kitFinisher && e.landed ? 'slash' : null;
     case 'end':
       return e.status === 'won' ? 'win' : e.status === 'lost' ? 'lose' : null;
     default:
@@ -60,6 +65,8 @@ export const VIBRATION: Record<FxCue, number[]> = {
   special: [30, 30, 30, 30, 60],
   win: [20, 50, 20, 50, 80],
   lose: [140],
+  rumble: [60, 200, 60, 200, 60, 200, 60],
+  slash: [90, 40, 60],
 };
 
 export interface Tone {
@@ -97,6 +104,10 @@ export const TONES: Record<FxCue, Tone[]> = {
     { f: 784, at: 0.2, dur: 0.1, type: 'triangle', vol: 0.6 }, { f: 1047, at: 0.3, dur: 0.24, type: 'triangle', vol: 0.65 },
   ],
   lose: [{ f: 330, at: 0, dur: 0.14, type: 'triangle', vol: 0.55 }, { f: 262, at: 0.14, dur: 0.14, type: 'triangle', vol: 0.55 }, { f: 196, at: 0.28, dur: 0.3, type: 'triangle', vol: 0.55 }],
+  // 마무리 평타 연출 (C.473): 팔을 천천히 올리는 동안(약 2.8초) 낮게 차오르는 울림 두 겹 — 추천안
+  rumble: [{ f: 55, to: 70, at: 0, dur: 2.8, type: 'sawtooth', vol: 0.55 }, { f: 82, to: 110, at: 0.4, dur: 2.4, type: 'triangle', vol: 0.45 }],
+  // 내려 베는 순간: 높은 데서 확 떨어지는 바람 소리 + 낮은 충격
+  slash: [{ f: 2200, to: 180, at: 0, dur: 0.16, type: 'sawtooth', vol: 0.7 }, { f: 120, to: 40, at: 0.04, dur: 0.45, type: 'square', vol: 0.75 }],
 };
 
 /** 전체 음량(0~1). 낮게 */

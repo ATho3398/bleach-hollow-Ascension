@@ -43,12 +43,13 @@ describe('C.368 종이인형 동작 재생 속도 (GDD 225장)', () => {
   });
   it('대기·홈 대기·이동은 재생 속도 예외 (GDD 115-A 103 · 228장 1): 작업본·게임 뼈대 motionSpeedExcept → 1배', () => {
     for (const [id, d] of Object.entries(DRAFT_RIGS)) {
-      expect(d.rig.motionSpeedExcept, id).toEqual(['idle', 'homeIdle', 'move']);
+      expect(d.rig.motionSpeedExcept, id).toEqual(id === 'mugetsu' ? ['idle', 'homeIdle', 'move', 'skill', 'downIdle'] : ['idle', 'homeIdle', 'move']);
     }
     for (const p of RIG_PACKS) {
-      expect(p.rig.motionSpeedExcept, p.id).toEqual(['idle', 'homeIdle', 'move']);
+      // 무월은 최후의 월아천충 연출(skill)·쓰러짐 숨(downIdle)도 제 속도 (C.473, 115-A 166·168)
+      expect(p.rig.motionSpeedExcept, p.id).toEqual(p.id === 'mugetsu' ? ['idle', 'homeIdle', 'move', 'skill', 'downIdle'] : ['idle', 'homeIdle', 'move']);
       for (const m of ['idle', 'homeIdle', 'move']) expect(motionSpeedOf(p.rig, m), `${p.id} ${m}`).toBe(1);
-      for (const m of ['attack', 'attack2', 'skill', 'hit']) expect(motionSpeedOf(p.rig, m), `${p.id} ${m}`).toBe(1.5);
+      for (const m of ['attack', 'attack2', 'skill', 'hit']) expect(motionSpeedOf(p.rig, m), `${p.id} ${m}`).toBe(p.id === 'mugetsu' && m === 'skill' ? 1 : 1.5);
     }
     expect(motionSpeedOf({ ...HUMANOID, motionSpeedExcept: undefined }, 'idle')).toBe(1.5); // 예외 없는 뼈대는 전부 motionSpeed
   });

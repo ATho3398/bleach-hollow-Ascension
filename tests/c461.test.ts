@@ -1,4 +1,4 @@
-// C.461 (GDD 15-6 v6.089): 만해 오라 = 해방이 열린 동안 몸 뒤 pixelfx 시트(속성 색, 몸 키 비례, 발 = 기준점). 해방 중엔 데이터 키 active(지금 같은 오라, 임시)
+// C.461 (GDD 15-6 v6.089): 만해 오라 = 해방이 열린 동안 몸 뒤 pixelfx 시트(속성 색, 몸 키 비례, 발 = 기준점). 해방 중엔 데이터 키 active(C.473 부터 null = 오라 없음)
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
@@ -65,12 +65,12 @@ describe('시트·색', () => {
     expect(bankaiAuraElement('없는속성')).toBe('normal');
     expect(bankaiAuraSheetName('off', 'fire')).toBeNull();
   });
-  it('해방 중 시트는 데이터 키 active 하나로 바꿔 끼운다 (지금은 같은 오라, 임시)', () => {
-    expect(BANKAI_AURA.active).toBe(BANKAI_AURA.ready);
+  it('해방 중엔 만해 오라 없음 (C.473, GDD 15-6 v6.102 — 사용자 "해방한 다음엔 해방오라 쓰지 말라니까"): active = null, 사용자가 이펙트를 주면 그 키만 바꿔 끼운다', () => {
+    expect(BANKAI_AURA.active).toBeNull();
+    for (const el of [...BANKAI_AURA.elements, null]) expect(bankaiAuraSheetName('active', el)).toBeNull();
     const swapped = { ...BANKAI_AURA, active: 'custom/other-aura' };
     expect(bankaiAuraSheetName('active', 'water', swapped)).toBe('custom-other-aura-water');
     expect(bankaiAuraSheetName('ready', 'water', swapped)).toBe('custom-bankai-aura-water');
-    expect(bankaiAuraSheetName('active', 'water', { ...BANKAI_AURA, active: null })).toBe('custom-bankai-aura-water');
   });
 });
 
@@ -122,8 +122,10 @@ describe('전투 화면 연결 (종족·몸 분기 없음)', () => {
   it('코드에 종족·초월자 id 분기가 없다', () => {
     expect(mod).not.toMatch(/hollow|shinigami|ichigo|aizen|faction/);
   });
-  it('시트가 보이는 동안 옛 CSS 발밑 기운을 숨긴다 (못 받으면 옛 기운 유지)', () => {
-    expect(src('src/ui/bha/battle-scene.css')).toMatch(/is-lib-ready\.has-bankai-aura \.bha-unit--me \.bha-libaura \{ display: none; \}/);
+  it('옛 CSS 발밑 기운(.bha-libaura)은 삭제 — 시트를 받기 전에 먼저 보이던 임시 그래픽 (C.473). 시트는 전투 시작 때 미리 받는다', () => {
+    expect(src('src/ui/bha/battle-scene.css')).not.toMatch(/\.bha-libaura/);
+    expect(view).not.toMatch(/libAuraEl/);
+    expect(mod).toMatch(/void loadPixelFx\(readyName\)/);
   });
 });
 
@@ -190,7 +192,7 @@ describe('무월 실시간 불꽃 (도트 세션 live.py → canvas)', () => {
   });
   it('전투: 무월 중에만 켜고 몸 뒤 PNG 를 숨긴다, 동작 줄이기면 PNG 그대로', () => {
     const view = src('src/ui/battleView.ts');
-    expect(view).toMatch(/liveFlame\.set\(secondOn\)/);
+    expect(view).toMatch(/liveFlame\.set\(secondShown\)/); // C.473: 전투가 끝나면 그 몸 그대로
     expect(view).toMatch(/!prefersReducedMotion\(\)\s*\n?\s*\? mountLiveFlame/);
     expect(src('src/ui/bha/battle-scene.css')).toMatch(/has-liveflame \.bha-hero__altback \{ visibility: hidden; \}/);
   });

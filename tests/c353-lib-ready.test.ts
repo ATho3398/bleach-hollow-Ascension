@@ -31,9 +31,9 @@ describe("해방 가능! 알림 (GDD 215장, C.353)", () => {
       expect(src).not.toContain(f.liberation.baseName);
     }
   });
-  it('오라는 테두리형 빛(몸 drop-shadow)을 쓰지 않는다 — 기기 초점과 구분', () => {
+  it('오라는 테두리형 빛(몸 drop-shadow)을 쓰지 않는다 — 기기 초점과 구분. 옛 발밑 기운(.bha-libaura)은 C.473 삭제(준비 표시 = 만해 오라 시트)', () => {
     const css = readFileSync('src/ui/bha/v2/bha.css', 'utf8') + readFileSync('src/ui/bha/battle-scene.css', 'utf8');
     expect(css).not.toMatch(/is-lib-ready[^{]*\.bha-hero__body\s*\{/);
-    expect(css).toMatch(/is-lib-ready[^{]*\.bha-libaura\s*\{/);
+    expect(css).not.toMatch(/\.bha-libaura[^{]*\{/);
   });
 });

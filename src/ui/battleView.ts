@@ -59,7 +59,8 @@ import { settingsOverlay } from './settingsView';
 import { confirmDialog } from './confirmDialog';
 import { pickDialog } from './pickDialog';
 import { showToast } from './bha/nest';
-import { libAuraEl, libReadyEdge, libReadyNoticeEl, libReadyText } from './bha/libReady';
+import { libReadyEdge, libReadyNoticeEl, libReadyText } from './bha/libReady';
+import { cineCaptionAt } from './bha/finisherCine';
 import { bankaiAuraPhase, mountBankaiAura } from './bha/bankaiAura';
 import { LIVE_FLAMES, mountLiveFlame } from './bha/liveFlame';
 import { coverTutorials, registerLayer } from './bha/overlayHost';
@@ -587,17 +588,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   kitLine.setAttribute('role', 'status');
   kitLine.setAttribute('aria-live', 'polite');
   kitLine.append(el('span', 'bha-kitline__text'));
+  /** 마무리 평타 연출 자막 (C.473, GDD 12-4 v6.102): 지금 띄운 자막 번호 (−1 = 없음) · 자막 끄기 타이머(앞 자막 타이머가 다음 자막을 끄지 않게 하나만) */
+  let cineCaption = -1;
+  let cineCapTimer = 0;
   // 해방 컷인 (공통 연출 하나, 11-5 변주는 미정): 장면 위에 한 줄
   const libCut = el('div', 'bha-libcut');
   libCut.setAttribute('aria-hidden', 'true');
   libCut.append(el('span', 'bha-libcut__text', labels.liberation.cutin));
-  // 해방 준비 (GDD 215장, C.353): 발밑에서 솟구치는 기운 + 가득 차는 순간 '<해방 이름> 가능!' 알림 (이름 = 종족 설정)
+  // 해방 준비 (GDD 215장, C.353): 가득 차는 순간 '<해방 이름> 가능!' 알림 (이름 = 종족 설정). 옛 발밑 기운(.bha-libaura, 임시)은 C.473 삭제 — 준비 표시 = 만해 오라
   const libReadyNotice = libReadyNoticeEl();
   const libReadyRose = libReadyEdge();
-  if (libOn) hero.root.prepend(libAuraEl());
-  // 만해 오라 (GDD 15-6 v6.089, C.461): 해방이 열린 동안(+ 해방 중, 임시) 몸 뒤 pixelfx 시트 — 색 = 내 속성, 크기 = 몸 키 비례. 모든 몸 같은 장치
+  // 만해 오라 (GDD 15-6, C.461·C.473): 해방이 열린 동안만 몸 뒤 pixelfx 시트(해방 중엔 끔) — 색 = 내 속성, 크기 = 몸 키 비례. 모든 몸 같은 장치. 시트는 전투 시작 때 미리 받는다
   const bankaiAura = libOn && hero.body.parentElement
-    ? mountBankaiAura(hero.body.parentElement, heroArt, auraEl, { reduced: prefersReducedMotion(), onShown: (on) => app.classList.toggle('has-bankai-aura', on) })
+    ? mountBankaiAura(hero.body.parentElement, heroArt, auraEl, { reduced: prefersReducedMotion() })
     : null;
   // 막기 방어막 (GDD 241-B 2): 막는 동안 몸 둘레 반구 막(색 = --bha-guard 토큰). 보이는 것은 CSS(.is-guarding)
   const guardShield = el('span', 'bha-guardshield');
@@ -1268,7 +1271,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         // 충전 평타·마무리 평타 (GDD 12-4 v6.069 월아천충): 기술 이름 + 숫자를 크게 (맞는 순간)
         if (e.kitShot) {
           if (!e.landed) break;
-          if (!e.kitFinisher) spawnFloat('chain', `${e.kitShot}!`); // 마무리 평타 이름은 대사 띠(kit-line)가 크게
+          if (!e.kitFinisher || e.kitMotion) spawnFloat('chain', `${e.kitShot}!`, { chain3: !!e.kitFinisher }); // 마무리 평타 이름은 대사 띠(kit-line)가 크게 — 연출(C.473)이 있으면 대사 띠는 자막이 쓰므로 이름은 여기서
           spawnFloat('attack', `−${n0(e.damage)}`, { size: damageTier(e.damage, myUnit, { chain: e.kitFinisher ? 3 : 1, ult: !!e.kitFinisher }), critical: !!e.crit });
           if (e.kitFinisher) { flash('is-special', 700); shake(); }
           break;
@@ -1291,6 +1294,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       }
       case 'kit-line':
         setText(kitLine.firstElementChild as HTMLElement, e.text);
+        kitLine.style.removeProperty('--bha-kitline-ms'); // 연출 자막(C.473)이 바꾼 길이 되돌리기
         replayOnce(kitLine, 'is-on', 2200);
         if (e.tone === 'revive') flash('is-special', 700);
         break;
@@ -1689,10 +1693,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     // 해방 (GDD 83장): 버튼 = 게이지(해방 중에는 남은 시간), 장면 = 오오라
     const libActive = liberationActive(s);
     const secondOn = kitSecondOn(s);
-    heroSecond?.set(secondOn); // 무월 그림 (C.456)
-    if (liveFlame && liveFlame.on !== secondOn) {
-      liveFlame.set(secondOn);
-      hero.body.classList.toggle('has-liveflame', secondOn);
+    // 마무리 평타 연출 자막 (C.473, GDD 12-4 v6.102 최후의 월아천충): 엔진 연출 시작 틱부터 데이터 captions 시각에 대사 띠(.bha-kitline)로, 다음 자막까지 보인다
+    const cineData = p.kit?.mastery?.cine;
+    const cap = s.kit?.cine && cineData ? cineCaptionAt(cineData.captions, cineData.seconds, (s.tick - s.kit.cine.start) * p.tickSeconds) : null;
+    if (cap && cap.index !== cineCaption) {
+      cineCaption = cap.index;
+      setText(kitLine.firstElementChild as HTMLElement, cap.text);
+      kitLine.style.setProperty('--bha-kitline-ms', `${cap.holdMs}ms`);
+      window.clearTimeout(cineCapTimer);
+      // 다시 틀기: 이미 켜져 있으면 CSS 애니를 처음으로(매 프레임 HUD 에서 레이아웃을 읽지 않게 — GDD 186장 1), 아니면 클래스를 붙인다
+      if (kitLine.classList.contains('is-on')) for (const a of kitLine.getAnimations?.() ?? []) { a.currentTime = 0; a.play(); }
+      else kitLine.classList.add('is-on');
+      cineCapTimer = window.setTimeout(() => kitLine.classList.remove('is-on'), cap.holdMs);
+    } else if (!s.kit?.cine) cineCaption = -1;
+    // 무월 그림 (C.456). 전투가 끝나면(엔진이 해방을 푼 뒤에도) 그 몸 그대로 — 무월로 지면 무월 인형이 쓰러지고 쓰러짐 숨을 이어 간다 (C.473, 115-A 167)
+    const secondShown = s.status === 'playing' ? secondOn : !!heroSecond?.on;
+    heroSecond?.set(secondShown);
+    if (liveFlame && liveFlame.on !== secondShown) {
+      liveFlame.set(secondShown);
+      hero.body.classList.toggle('has-liveflame', secondShown);
     }
     app.classList.toggle('is-liberated', libActive);
     app.classList.toggle('is-unique', libActive && labels.liberation.unique);

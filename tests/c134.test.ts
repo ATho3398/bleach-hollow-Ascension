@@ -281,7 +281,8 @@ describe('83장 5번 화면·문구', () => {
     expect(v).toContain("app.style.setProperty('--bha-aura', elementColor(");
     expect(v).not.toMatch(/faction(\.id)? === '(hollow|shinigami)'/);
     const css = src('src/ui/bha/battle-scene.css');
-    expect(css).toMatch(/\.bha-battle\.is-unique/);
+    // C.473 (GDD 15-6 v6.102, 사용자 "해방한 다음엔 해방오라 쓰지 말라니까"): 레스렉시온/만해 진한 몸 빛(.is-unique) 삭제 — 장면 테두리만 속성 색
+    expect(css).not.toMatch(/\.bha-battle\.is-unique/);
     expect(css).toMatch(/var\(--bha-aura/);
   });
 

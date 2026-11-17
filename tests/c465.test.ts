@@ -145,7 +145,7 @@ describe('C.465 혈쇄 이치고·무월 종이인형 (종이인형 작업본 �
     expect(rigPackOfLook('ichigo-mugetsu')!.id).toBe('mugetsu');
     // 무월 동작: 대기·걷기·공격1·2·특수·맞음·빈사·쓰러짐(끝 자세 유지) — 걷기 때만 걷기용 왼발
     const m = rigPack('mugetsu').motions;
-    expect(Object.keys(m).sort()).toEqual(['attack', 'attack2', 'down', 'dying', 'hit', 'idle', 'move', 'skill']);
+    expect(Object.keys(m).sort()).toEqual(['attack', 'attack2', 'down', 'downIdle', 'dying', 'hit', 'idle', 'move', 'skill']); // C.473 쓰러짐 숨
     expect(m.down!.hold).toBe(true);
     expect(m.move!.hide).toEqual(['foot_b']);
     expect(m.idle!.hide).toEqual(['foot_b_walk']);

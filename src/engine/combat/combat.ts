@@ -316,7 +316,7 @@ export interface CombatKit {
    *  가득이면 해방 버튼이 releaseName — 수동 해방(만해 수치, 지속 시간 없음). 그 동안 평타 1대마다 스택 +1, stacks 면 다음 평타 = finisherName
    *  (기본 공격 × finisherPower + 바의 충전 블록 1개당 × finisherPerBlock, 그 블록들 소모) → 해방이 풀리고 게이지 limit · 수련 0.
    *  수련 게이지 모드 동안(두 번째 해방 전) 주는 피해 × damageMult (v6.074). 첫 해방 중엔 tickSeconds 마다 게이지 −tickCost (v6.070) */
-  mastery?: { name: string; releaseName: string; finisherName: string; perBasic: number; perBlock: number; full: number; damageMult: number; stacks: number; finisherPower: number; finisherPerBlock: number };
+  mastery?: { name: string; releaseName: string; finisherName: string; perBasic: number; perBlock: number; full: number; damageMult: number; stacks: number; finisherPower: number; finisherPerBlock: number; cine?: KitFinisherCine };
   /** 전투 모드 id (GDD 12-4 이치고 기본/천년혈전, C.460 — 런 로그). 모드가 없는 kit 은 없음 */
   mode?: string;
   /** 자세 모드 (GDD 12-4 천년혈전, C.460): 있으면 해방 = 지금 자세 스택으로 그 자세의 만해, 출현 = 지금 자세 블록만 */
@@ -406,6 +406,20 @@ export interface KitCombatState {
   parries: number;
   parryFails: number;
   breaks: number;
+  /** 마무리 평타 연출 중 (C.473): 시작·타격·끝 틱. 없으면 null */
+  cine: { start: number; hit: number; end: number } | null;
+}
+
+/**
+ * 마무리 평타 연출 (GDD 12-4 v6.102 최후의 월아천충 연출, C.473 — 데이터 kit.mastery.finisherCine): 쏘는 순간부터 seconds 동안 내 캐릭터 무적(받는 피해 0)·
+ * 적 행동·내 평타·블록 생성·블록 사용이 멈추고, 피해는 hitSeconds 뒤(몸 동작 motion 의 타격 시각)에 들어간다. 연출이 끝나야 두 번째 해방이 풀린다.
+ * captions = [초, 자막] — 화면이 이 시각에 자막 띠를 띄운다(엔진은 안 씀)
+ */
+export interface KitFinisherCine {
+  motion: string;
+  seconds: number;
+  hitSeconds: number;
+  captions: [number, string][];
 }
 
 /** 전투 시작 초월자 kit 상태 */
@@ -416,7 +430,7 @@ function newKitState(p: CombatParams): KitCombatState {
   const mastery = rd && p.kit?.mastery && risk <= 0 ? Math.min(p.kit.mastery.full, Math.max(0, p.masteryStart ?? 0)) : 0;
   const n = p.kit?.stance?.stances.length ?? 0;
   return { counterUntil: -1, counterLost: 0, stack: 0, revived: false, counters: 0, finishers: 0, revives: 0, risk, riskSpent: 0, modeEnters: 0, modeExits: 0, readyShown: false, evadeBuffUntil: -1, evadeBuffs: 0, charges: 0, mastery, second: false, drainTimer: 0, basics: 0, finalStack: 0, secondEnters: 0, finals: 0,
-    stance: 0, stanceStacks: Array.from({ length: n }, () => 0), stanceUntil: Array.from({ length: n }, () => -1), stanceReadyAt: 0, holdTicks: 0, draw: null, drawPower: 1, brokenUntil: -1, parryOpen: false, switches: 0, parries: 0, parryFails: 0, breaks: 0 };
+    stance: 0, stanceStacks: Array.from({ length: n }, () => 0), stanceUntil: Array.from({ length: n }, () => -1), stanceReadyAt: 0, holdTicks: 0, draw: null, drawPower: 1, brokenUntil: -1, parryOpen: false, switches: 0, parries: 0, parryFails: 0, breaks: 0, cine: null };
 }
 
 /** 회피 치명 버프가 켜져 있는가 (화면: 버프 칩) */
@@ -717,7 +731,7 @@ const shownCat = (c: AttackCategory): HitCategory | undefined => (c === 'mixed' 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
   /** rate = 간격이 모션보다 짧아 빨리 감은 배율 (GDD 7-2 '빠른 간격의 모션', C.448 — 없으면 1. 앞 자르기는 swing.atTick 이 정한 타격 시각으로 화면이 맞춘다) */
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number; kitShot?: string; kitFinisher?: boolean; kitClone?: boolean }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number; kitShot?: string; kitFinisher?: boolean; kitClone?: boolean; kitMotion?: string }
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
@@ -731,6 +745,8 @@ export type CombatEvent =
   | { kind: 'kit-window'; seconds: number }
   /** 초월자 대사 띠 (반격 성공·되살아남 등) */
   | { kind: 'kit-line'; text: string; tone: 'counter' | 'revive' | 'finisher' | 'stance' }
+  /** 마무리 평타 연출 시작 (C.473, GDD 12-4 v6.102): 무적·정지 seconds, 피해는 hitSeconds 뒤 */
+  | { kind: 'kit-cine'; seconds: number; hitSeconds: number }
   /** 자세 모드 (GDD 12-4 천년혈전, C.460): 자세가 바뀜 · 패링 성공/실패 · 자세 무너짐(받는 피해 + seconds 초) · 천쇄참월 불 켠 블록 수 */
   | { kind: 'kit-stance'; stance: string; name: string }
   | { kind: 'kit-parry'; ok: boolean }
@@ -1845,12 +1861,18 @@ function basicAttack(s: CombatState): void {
   const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s) * (shot?.power ?? 1) * stanceBasicPowerOf(s);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
-  const bd = basicHitDelayOf(s);
+  // 마무리 평타 연출 (C.473, GDD 12-4 v6.102 최후의 월아천충): 피해는 몸 동작의 타격 시각에, 그동안 무적·정지 (빨리 감기 없음)
+  const cine = shot?.final ? p.kit?.mastery?.cine : undefined;
+  const bd = cine ? { delay: cine.hitSeconds, rate: 1 } : basicHitDelayOf(s);
+  if (cine && s.kit) {
+    s.kit.cine = { start: s.tick, hit: s.tick + hitDelayTicks(p, cine.hitSeconds) + inputTickLead, end: s.tick + Math.max(hitDelayTicks(p, cine.hitSeconds), ticksOf(p, cine.seconds)) + inputTickLead };
+    emit(s, { kind: 'kit-cine', seconds: cine.seconds, hitSeconds: cine.hitSeconds });
+  }
   let last = 0;
   for (let k = 0; k < flash.n; k++) {
     const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
     last = damage;
-    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot?.name ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
+    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot?.name ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}), ...(cine ? { kitMotion: cine.motion } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
     if (s.status !== 'playing') return;
   }
   // 혈쇄참월 분신 (C.460): 같은 피해로 한 대씩 같이 친다
@@ -1932,6 +1954,8 @@ function emit(s: CombatState, e: CombatEvent): void {
 /** 예약된 피해를 넣는다 (GDD 214장): 사건을 landed 로 다시 내고 피해·맞힌 뒤 효과. 이미 끝난 전투면 버린다 */
 function landHit(s: CombatState, h: PendingHit): void {
   if (s.status !== 'playing') return;
+  // 마무리 평타 연출 중 무적 (C.473): 이미 날아오던 적 공격도 피해 0
+  if (h.target === 'player' && kitCineOn(s)) h = { ...h, amount: 0, reflected: 0, event: 'damage' in h.event ? ({ ...h.event, damage: 0 } as SwingHit) : h.event };
   emit(s, { ...h.event, landed: true });
   if (h.target === 'enemy') {
     dealDamage(s, h.amount, h.finisher ?? { kind: 'basic-attack', traitId: null, element: null });
@@ -2130,6 +2154,7 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
 
 function takeDamage(s: CombatState, amount: number): void {
   if (s.status !== 'playing') return;
+  if (kitCineOn(s)) return; // 마무리 평타 연출 중 무적 (C.473, GDD 12-4 v6.102)
   if (amount > 0) {
     // 바위 자세 (GDD 49장 흙 블록): 받는 피해 감소 + 맞을 때마다 다음 평타 보너스 쌓기
     const st = s.stoneStance;
@@ -2777,8 +2802,11 @@ function kitDrainAfterBasic(s: CombatState, kit: CombatKit, k: KitCombatState, s
     s.tray = s.tray.filter((b) => !kitBlockOf(s.params, b.traitId)?.chargeShot);
     k.finals++;
     k.finalStack = 0;
-    emit(s, { kind: 'kit-line', text: `${ms.finisherName}!`, tone: 'finisher' });
-    endLiberation(s);
+    // 연출이 있으면(C.473) 자막은 화면이 연출 시각에 띄우고, 두 번째 해방은 연출이 끝날 때 풀린다(advanceTick) — 몸 그림이 동작 도중 바뀌지 않게
+    if (!ms.cine) {
+      emit(s, { kind: 'kit-line', text: `${ms.finisherName}!`, tone: 'finisher' });
+      endLiberation(s);
+    }
     k.risk = kit.riskDrain.limit;
     k.mastery = 0;
     k.charges = 0;
@@ -3196,7 +3224,12 @@ export function spawnGaugeOf(s: CombatState): SpawnGaugeView {
 
 /** 막기·경직 중인가: 내 자동 공격·블록 생성·블록 사용이 멈춘다 (GDD 84장 2번·101장 추가 결정 2번·105장 1번) */
 export function halted(s: CombatState): boolean {
-  return s.guard.ticks > 0 || (s.stunTicks ?? 0) > 0;
+  return s.guard.ticks > 0 || (s.stunTicks ?? 0) > 0 || kitCineOn(s);
+}
+
+/** 마무리 평타 연출 중인가 (C.473, GDD 12-4 v6.102): 무적·적 정지·내 평타·블록 생성·사용 멈춤 */
+export function kitCineOn(s: CombatState): boolean {
+  return !!s.kit?.cine && s.status === 'playing';
 }
 
 /** 회피 (GDD 101장 4번, 폭주): 적 공격 한 번을 통째로 피했는가. 피했으면 'evade' 이벤트 (확률 0 이면 난수를 쓰지 않는다) */
@@ -3304,6 +3337,13 @@ function advanceTick(s: CombatState): void {
   // 예약된 피해 (GDD 214장): 발동 뒤 타격 지연이 지난 공격이 지금 맞는다
   landDueHits(s);
   if (s.status !== 'playing') return;
+  // 마무리 평타 연출 끝 (C.473, GDD 12-4 v6.102): 동작이 끝나면 두 번째 해방이 풀린다
+  if (s.kit?.cine && s.tick >= s.kit.cine.end) {
+    s.kit.cine = null;
+    endLiberation(s);
+  }
+  /** 연출 중이면 적·펫·보스 기믹이 멈춘다 (내 쪽은 halted) */
+  const cineHold = kitCineOn(s);
   if (s.guard.ticks > 0 && --s.guard.ticks === 0) s.guard.reflect = 0;
   if (s.stunTicks && s.stunTicks > 0) s.stunTicks--;
   stanceTick(s);
@@ -3361,7 +3401,7 @@ function advanceTick(s: CombatState): void {
       if (spawn(s, 'skill', BASIC_SKILL_ID, drawPhysFamily(s))) s.physSpawned = (s.physSpawned ?? 0) + 1;
     } else if (e?.source) spawn(s, 'skill', e.source.id, e.family);
   }
-  if (s.boss) bossGimmick(s, s.boss);
+  if (s.boss && !cineHold) bossGimmick(s, s.boss);
   // 내 자동 기본 공격: 막기 중(GDD 84장 2번)에는 멈춘다
   // 각본 마무리 체인이 날아가는 동안(피해를 맡겨 둔 동안)도 멈춘다 (GDD 146장)
   // 블록 몸동작 (GDD 7-2 '모션 중엔 평타 없음', C.448): 블록 모션이 재생 중이거나 줄을 서 있으면 평타 타이머가 멈추고, 끝나면 다시 돈다
@@ -3374,7 +3414,7 @@ function advanceTick(s: CombatState): void {
   }
   // 펫 공격 (GDD 241-D 4): 내 막기·기절과 상관없이 제 간격으로. 각본(튜토리얼) 전투는 쉼
   const pa = p.petAttack;
-  if (pa && !s.script) {
+  if (pa && !s.script && !cineHold) {
     s.petTimer ??= t(pa.seconds);
     if (--s.petTimer <= 0) {
       s.petTimer = t(pa.seconds);
@@ -3386,13 +3426,15 @@ function advanceTick(s: CombatState): void {
   const e = s.enemy;
   const pattern = e.def.pattern;
   const attackTicks = t(enemyAttackSecondsOf(p, pattern) * (s.boss?.attackMult ?? 1));
-  if (e.stance && --e.stance.ticks <= 0) {
+  if (!cineHold && e.stance && --e.stance.ticks <= 0) {
     e.stance = null;
     emit(s, { kind: 'stance-end' });
   }
   // 넉백 (GDD 49장 혈 블록): 적의 공격·시전·특수 행동 타이머가 모두 멈춘다
   // 빔이 이미 나가는 중(heavy-windup 뒤)이면 넉백도 강공격 판정을 늦추지 않는다 — 빔이 닿는 순간 = 판정 (GDD 245장 3)
-  if ((s.knockbackTicks ?? 0) > 0 && !e.cast?.windup) {
+  if (cineHold) {
+    // 마무리 평타 연출 (C.473): 적의 모든 타이머가 멈춘다 (무적이라 결과는 같고, 연출 뒤 적이 몰아치지 않게)
+  } else if ((s.knockbackTicks ?? 0) > 0 && !e.cast?.windup) {
     s.knockbackTicks!--;
   } else if (e.cast) {
     if ((s.knockbackTicks ?? 0) > 0) s.knockbackTicks!--;

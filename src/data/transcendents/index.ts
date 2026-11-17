@@ -111,7 +111,11 @@ export interface TranscendentKitDef {
    *  해방 = 보통 해방 게이지, 지속 시간 없음, 해방 중엔 충전 평타마다 소모·0 이면 풀림 (수치 = balance riskDrain) */
   riskDrain?: boolean;
   /** 게이지를 다 쓰면 수련 게이지 → 두 번째 해방 (GDD 12-4 v6.069 무월수련·무월·최후의 월아천충, 수치 = balance riskDrain.mastery·final): 이름만 */
-  mastery?: { gaugeName: string; releaseName: string; finisherName: string; /** 두 번째 해방 중 몸 그림 키 (C.456 무월 — 그림 목록 layers 로 불꽃 앞뒤). 없으면 그림 그대로 */ releaseArt?: string };
+  mastery?: {
+    gaugeName: string; releaseName: string; finisherName: string; /** 두 번째 해방 중 몸 그림 키 (C.456 무월 — 그림 목록 layers 로 불꽃 앞뒤). 없으면 그림 그대로 */ releaseArt?: string;
+    /** 마무리 평타 연출 (GDD 12-4 v6.102 최후의 월아천충 연출, C.473): 몸 동작 id(종이인형 동작 — 시각은 그 동작 파일과 같게, 테스트로 고정)·길이·타격 시각(초)·자막 [초, 글]. 그동안 무적·정지 */
+    finisherCine?: { motion: string; seconds: number; hitSeconds: number; captions: [number, string][] };
+  };
   /** 모드 체인지 캐릭터의 모드 목록 (GDD 12-4 이치고 = 기본 / 천년혈전, C.460): 첫 모드 = 이 kit 그대로(blocks·riskDrain·mastery).
    *  자세 모드(stances 가 있는 모드)는 kit 블록·게이지 소모형 대신 그 모드의 blocks + 자세 장치 — 고르는 곳 = 상태 화면 '전투 모드'(진화 상태 kit.mode) */
   modes?: TranscendentKitModeDef[];
@@ -193,13 +197,22 @@ function modeOk(m: TranscendentKitModeDef, index: number): boolean {
     && (!x.draw || (typeof x.drawName === 'string' && !!x.drawName)) && (!x.parry || (typeof x.parryName === 'string' && !!x.parryName)) && (x.icon === undefined || (typeof x.icon === 'string' && x.icon.startsWith('i-'))));
 }
 
+/** 마무리 평타 연출 데이터 (C.473): 없거나, 동작 id·0 < 타격 ≤ 길이·자막 시각 오름차순(길이 안) */
+function cineOk(c: unknown): boolean {
+  if (c === undefined) return true;
+  const v = c as { motion?: unknown; seconds?: unknown; hitSeconds?: unknown; captions?: unknown };
+  if (!v || typeof v.motion !== 'string' || !v.motion || typeof v.seconds !== 'number' || typeof v.hitSeconds !== 'number' || !(v.hitSeconds > 0 && v.hitSeconds <= v.seconds) || !Array.isArray(v.captions)) return false;
+  let at = -1;
+  return v.captions.every((x: unknown) => Array.isArray(x) && x.length === 2 && typeof x[0] === 'number' && x[0] > at && x[0] < (v.seconds as number) && typeof x[1] === 'string' && x[1].length > 0 && ((at = x[0]), true));
+}
+
 function kitErrors(k: unknown): boolean {
   const kit = k as Partial<TranscendentKitDef> | undefined;
   if (kit === undefined) return true;
   if (!kit || typeof kit.liberationName !== 'string' || !kit.liberationName || !Array.isArray(kit.blocks) || kit.blocks.length === 0 || kit.provisional !== true) return false;
   if (kit.riskGaugeName !== undefined && (typeof kit.riskGaugeName !== 'string' || !kit.riskGaugeName)) return false;
   const nm = (v: unknown) => typeof v === 'string' && v.length > 0;
-  if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName) && (kit.mastery.releaseArt === undefined || nm(kit.mastery.releaseArt)))) return false;
+  if (kit.mastery !== undefined && !(kit.riskDrain === true && nm(kit.mastery.gaugeName) && nm(kit.mastery.releaseName) && nm(kit.mastery.finisherName) && (kit.mastery.releaseArt === undefined || nm(kit.mastery.releaseArt)) && cineOk(kit.mastery.finisherCine))) return false;
   if (kit.modes !== undefined && !(Array.isArray(kit.modes) && kit.modes.length > 0 && new Set(kit.modes.map((m) => m?.id)).size === kit.modes.length && kit.modes.every((m, i) => m && nm(m.id) && nm(m.name) && modeOk(m, i)))) return false;
   const ids = new Set(kit.blocks.map((b) => b?.id));
   if (ids.size !== kit.blocks.length) return false;

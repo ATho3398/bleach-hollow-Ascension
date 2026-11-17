@@ -189,19 +189,13 @@
 .bha-lcd .bha-battle__controls .bha-stored--liberation .bha-stored__meta { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; line-height: 1.2; }
 .bha-chip--liberation { border-color: var(--bha-risk); color: var(--bha-risk); }
 .bha-chip--liberation[hidden] { display: none; }
-/* 해방 오오라 (GDD 83장 5번): 몸 주변 빛 = 내 속성 색(--bha-aura, battleView 가 속성 토큰으로 칠함). 영력 해방 = 옅게, 레스렉시온/만해(.is-unique) = 진하게·빠르게 */
-/* GDD 178장 3 (C.261): 오오라는 그림의 불투명한 부분 모양대로만 — 그림 칸(.bha-unit__fig: 해방 버튼·남은 초 포함) 이 아니라 몸(.bha-hero__body)에 drop-shadow 를 겹친다.
-   옛 타원 빛 덩어리(::before)·그림 칸 필터는 삭제 (그림 칸 전체가 네모로 빛났다) */
-.bha-battle.is-liberated .bha-unit--me .bha-hero__body { filter: drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))); animation: bha-aura-shape 1.6s ease-in-out infinite alternate; }
-.bha-battle.is-unique .bha-unit--me .bha-hero__body { filter: saturate(1.5) drop-shadow(0 0 1px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 4px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 10px var(--bha-aura, var(--bha-accent-hi))) drop-shadow(0 0 18px var(--bha-aura, var(--bha-accent-hi))); animation-duration: 0.8s; }
-@keyframes bha-aura-shape { from { opacity: 0.88; } to { opacity: 1; } }
-/* 리스크 소모형 모드 (GDD 12-4 v6.050 붕옥 해방, C.442): 모습이 바뀐다 — 그림 대기라 지금은 색조(옅은 톤 토큰) + 리스크 색 빛. 모드 중 리스크 칩 강조는 .is-focus */
-.bha-battle.is-kitmode .bha-unit--me .bha-hero__body { filter: var(--bha-cos-tint-pale) drop-shadow(0 0 2px var(--bha-risk)) drop-shadow(0 0 8px var(--bha-risk)) drop-shadow(0 0 18px var(--bha-risk)); }
+/* 해방 오오라 (옛 GDD 83장 5번 몸 주변 빛 drop-shadow)·레스렉시온/만해 진한 빛은 C.473 에서 삭제 — 사용자 2026-11-17 "해방한 다음엔 해방오라 쓰지 말라니까" (GDD 15-6 v6.102: 해방 중 이펙트는 사용자가 줄 때까지 없음). 장면 테두리(inset)만 남김 */
+/* 리스크 소모형 모드 (GDD 12-4 v6.050 붕옥 해방, C.442): 모습이 바뀐다 — 그림 대기라 지금은 색조(옅은 톤 토큰). 바꿔 입은 몸 그림(.is-alt, 무월)은 제 모습 그대로. 옛 리스크 색 몸 빛은 C.473 삭제(해방 오라 금지). 모드 중 리스크 칩 강조는 .is-focus */
+.bha-battle.is-kitmode .bha-unit--me .bha-hero__body:not(.is-alt) { filter: var(--bha-cos-tint-pale); }
 .bha-battle.is-kitmode { box-shadow: inset 0 0 0 2px var(--bha-risk); }
 .bha-riskchip.is-focus { box-shadow: var(--bha-glow-risk); }
 .bha-battle.is-liberated { box-shadow: inset 0 0 0 2px var(--bha-aura, var(--bha-accent-hi)); }
 @keyframes bha-aura { from { opacity: 0.55; transform: scale(0.96); } to { opacity: 1; transform: scale(1.06); } }
-@media (prefers-reduced-motion: reduce) { .bha-battle.is-liberated .bha-unit--me .bha-hero__body { animation: none; } }
 .bha-libcut { position: absolute; inset: 0; z-index: var(--bha-z-float); display: grid; place-items: center; pointer-events: none; opacity: 0; }
 .bha-libcut.is-on { animation: bha-libcut 1400ms var(--bha-ease-out) both; }
 .bha-libcut__text {
@@ -215,36 +209,19 @@
 .bha-battle.is-tutkill .is-vanish { transition: opacity var(--bha-tutkill, 1.6s) ease-in, filter var(--bha-tutkill, 1.6s) ease-in, transform var(--bha-tutkill, 1.6s) ease-in; opacity: 0; filter: brightness(1.8); transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) { .bha-battle.is-tutkill .is-vanish { transition-duration: 0.3s; } }
 
-/* 해방 준비 오라 (GDD 215장, C.353): 캐릭터 발밑에서 위로 솟구치는 기운 — 위로 흐르는 줄기 + 떠오르는 입자 + 맥동하는 발밑 빛.
-   둘레 테두리형 빛은 쓰지 않는다(기기 초점 .bha-sel = 몸 둘레 초점색 테두리와 구분). 색 = 종족 테마의 강조색 토큰(호로 붉은색 / 사신 푸른색) */
-.bha-libaura { position: absolute; left: 50%; bottom: 0; width: 80%; height: 100%; transform: translateX(-50%); z-index: 0; pointer-events: none; display: none; }
-.bha-root.bha-battle.is-lib-ready .bha-unit--me .bha-libaura { display: block; }
-.bha-libaura__base { position: absolute; left: 6%; right: 6%; bottom: 0; height: 18%; border-radius: 50%; background: radial-gradient(closest-side, var(--bha-accent-hi), var(--bha-accent) 50%, transparent); animation: bha-libaura-pulse 0.8s ease-in-out infinite alternate; }
-.bha-libaura__flame { position: absolute; bottom: 4%; left: var(--x); width: 30%; height: var(--h); transform-origin: 50% 100%; border-radius: 50% 50% 40% 40% / 85% 85% 15% 15%; background: linear-gradient(to top, var(--bha-accent-hi), var(--bha-accent) 45%, transparent); opacity: 0; animation: bha-libaura-rise 1.05s ease-out infinite; animation-delay: calc(var(--i) * -0.37s); }
-.bha-libaura__spark { position: absolute; left: var(--x); top: 92%; width: 5px; height: 5px; background: var(--bha-accent-hi); box-shadow: 0 0 6px var(--bha-accent-hi); opacity: 0; animation: bha-libaura-spark 1.3s linear infinite; animation-delay: calc(var(--i) * -0.29s); }
-@keyframes bha-libaura-pulse { from { opacity: 0.55; transform: scaleX(0.85); } to { opacity: 1; transform: scaleX(1.12); } }
-@keyframes bha-libaura-rise { 0% { opacity: 0; transform: translate(-50%, 0) scale(1, 0.5); } 20% { opacity: 1; } 65% { opacity: 0.85; } 100% { opacity: 0; transform: translate(-50%, -24%) scale(0.5, 1.15); } }
-@keyframes bha-libaura-spark { 0% { opacity: 0; top: 92%; transform: translateX(0); } 15% { opacity: 1; } 60% { transform: translateX(var(--dx)); } 100% { opacity: 0; top: 0; transform: translateX(calc(var(--dx) * -1)); } }
-/* 만해 오라 (GDD 15-6 v6.089, C.461, src/ui/bha/bankaiAura.ts): 해방 열림·해방 중 몸 상자(.bha-hero__lift) 맨 앞 = 몸 뒤. 크기·자리·시트는 인라인(몸 키 비례, 발 = 기준점).
-   내 그림처럼 오른쪽을 보게 뒤집는다. 시트가 보이는 동안은 옛 CSS 발밑 기운을 숨긴다(시트를 못 받으면 옛 기운이 그대로 남는다) */
+/* 만해 오라 (GDD 15-6, C.461·C.473, src/ui/bha/bankaiAura.ts): 해방 가능일 때만 몸 상자(.bha-hero__lift) 맨 앞 = 몸 뒤. 크기·자리·시트는 인라인(몸 키 비례, 발 = 기준점).
+   내 그림처럼 오른쪽을 보게 뒤집는다. 옛 CSS 발밑 기운(libaura, C.353 임시 — 시트를 받기 전에 먼저 보였다)은 C.473 에서 삭제 */
 .bha-bankaiaura { position: absolute; pointer-events: none; background-repeat: no-repeat; image-rendering: pixelated; transform: scaleX(-1); }
-.bha-root.bha-battle.is-lib-ready.has-bankai-aura .bha-unit--me .bha-libaura { display: none; }
-/* 가득 찬 순간 한 번 강조 (해방 버튼 = 캐릭터 칸): 기운이 크게 터지고 몸이 한 번 번쩍 */
-.bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-libaura { animation: bha-libaura-pop 0.7s var(--bha-ease-out); }
+/* 가득 찬 순간 한 번 강조 (해방 버튼 = 캐릭터 칸): 몸이 한 번 번쩍 (옛 기운 터짐은 발밑 기운과 같이 삭제, C.473) */
 .bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-hero__body { animation: bha-libready-flash 0.7s var(--bha-ease-out); }
-@keyframes bha-libaura-pop { 0% { transform: translateX(-50%) scale(1.45); filter: brightness(1.6); } 100% { transform: translateX(-50%) scale(1); filter: none; } }
 @keyframes bha-libready-flash { 0% { filter: brightness(1.9); } 100% { filter: none; } }
 /* '<해방 이름> 가능!' 알림: 장면 가운데 위쪽, 약 1.2초, 누름 통과 */
 .bha-libready { position: absolute; left: 0; right: 0; top: 16%; z-index: var(--bha-z-float); display: flex; justify-content: center; pointer-events: none; opacity: 0; }
 .bha-libready.is-on { animation: bha-libready 1200ms var(--bha-ease-out) both; }
 .bha-libready__text { padding: var(--bha-sp-1) var(--bha-sp-4); border-radius: var(--bha-r-pill); background: linear-gradient(90deg, transparent, var(--bha-accent-soft) 15%, var(--bha-accent-soft) 85%, transparent); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-xl); color: var(--bha-text-1); white-space: nowrap; text-shadow: 0 0 6px var(--bha-accent-hi), 0 2px 4px var(--bha-bg-0); }
 @keyframes bha-libready { 0% { opacity: 0; transform: translateY(8px) scale(0.85); } 14% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
-/* 동작 줄이기: 기운은 멈춘 모양으로, 가득 찬 순간 한 번 번쩍만 */
+/* 동작 줄이기: 알림은 멈춘 모양으로 */
 @media (prefers-reduced-motion: reduce) {
-  .bha-libaura__base { animation: none; opacity: 0.85; }
-  .bha-libaura__flame { animation: none; opacity: 0.7; transform: translate(-50%, 0) scale(0.8, 0.85); }
-  .bha-libaura__spark { display: none; }
-  .bha-root .bha-unit__fig:has(.bha-v2herolib.is-ready-pop) .bha-libaura { animation: bha-libready-flash 0.5s linear; }
   .bha-libready.is-on { animation: bha-libready-still 1200ms steps(1, end) both; }
 }
 @keyframes bha-libready-still { 0% { opacity: 1; } 100% { opacity: 0; } }
@@ -272,7 +249,7 @@
 @keyframes bha-kitglow { from { outline-color: var(--bha-accent-hi); box-shadow: 0 0 6px var(--bha-warn), 0 0 12px var(--bha-accent-hi); } to { outline-color: var(--bha-warn); box-shadow: 0 0 12px var(--bha-warn), 0 0 26px var(--bha-accent-hi); } }
 /* 대사 띠 ('언제부터 경화수월을 쓰고 있다고 착각한 거지?' · '깨져라, 경화수월'): 해방 가능 알림과 같은 띠 모양, 조금 아래에 오래 */
 .bha-kitline { position: absolute; left: 0; right: 0; top: 34%; z-index: var(--bha-z-float); display: flex; justify-content: center; pointer-events: none; opacity: 0; padding: 0 var(--bha-sp-4); }
-.bha-kitline.is-on { animation: bha-kitline 2200ms var(--bha-ease-out) both; }
+.bha-kitline.is-on { animation: bha-kitline var(--bha-kitline-ms, 2200ms) var(--bha-ease-out) both; } /* 길이 = 마무리 연출 자막(C.473)이면 다음 자막까지 */
 .bha-kitline__text { max-width: 100%; padding: var(--bha-sp-1) var(--bha-sp-4); border-radius: var(--bha-r-pill); background: linear-gradient(90deg, transparent, var(--bha-bg-0) 10%, var(--bha-bg-0) 90%, transparent); font-family: var(--bha-font-display); font-weight: var(--bha-fw-heavy); font-size: var(--bha-fs-lg); color: var(--bha-text-1); text-align: center; text-shadow: 0 0 6px var(--bha-special-a), 0 2px 4px var(--bha-bg-0); }
 @keyframes bha-kitline { 0% { opacity: 0; transform: scale(0.9); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
 /* 경화수월 분신: 몸 그림 반투명 사본이 적 쪽(왼쪽)으로 미끄러져 사라진다 */
@@ -292,5 +269,5 @@
 .bha-mark.is-focus .bha-mark__n { color: var(--bha-accent-hi); }
 @media (prefers-reduced-motion: reduce) {
   .bha-root .bha-block.bha-kitglow { animation: none; }
-  .bha-kitline.is-on { animation: bha-libready-still 2200ms steps(1, end) both; }
+  .bha-kitline.is-on { animation: bha-libready-still var(--bha-kitline-ms, 2200ms) steps(1, end) both; }
 }
