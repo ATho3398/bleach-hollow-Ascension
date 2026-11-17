@@ -204,8 +204,11 @@ async function finalSlash(page, proof, name) {
       ...[['carapace', 'atk'], ['stag', 'int'], ['rhino', 'hp'], ['wyrm', 'spr'], ['panther', 'aspd'], ['scorpion', 'def']].map(([skin, stat]) => ({ key: `t3-${skin}`, start: 't2:base', ev: stat })),
       { key: 't3-wraith', start: 't2:base', pick: 'h3:passage' },
       { key: 't4', start: 't3:normal', ev: 'hp' },
+      { key: 's-t2', fid: 'shinigami', start: null, ev: null },
+      { key: 's-t3', fid: 'shinigami', start: 't2:base', ev: 'hp' },
+      { key: 's-t4', fid: 'shinigami', start: 't3:normal', ev: 'hp' },
     ];
-    const SHOT = { 't3-rhino': '04-evolve-rhino', 't3-wyrm': '05-evolve-spider', 't2-gillian': '06-evolve-gillian', 't4': '07-evolve-t4' };
+    const SHOT = { 't3-rhino': '04-evolve-rhino', 't3-wyrm': '05-evolve-spider', 't2-gillian': '06-evolve-gillian', 't4': '07-evolve-t4', 's-t3': '10-evolve-shinigami-t3' };
     for (const [vpName, vp] of [['pc', PC], ['phone', PH]]) {
       const ctx = await browser.newContext(vp);
       const page = await ctx.newPage();
@@ -214,7 +217,7 @@ async function finalSlash(page, proof, name) {
       await wait(1500);
       proof.facts[`evolve-${vpName}`] = [];
       for (const L of LOOKS) {
-        if (vpName === 'phone' && L.key !== 't3-rhino') continue;
+        if (vpName === 'phone' && !['t3-rhino', 't2-gillian', 't3-wyrm', 't4', 's-t3'].includes(L.key)) continue;
         await step(`evolve ${L.key}`, async () => {
           proof.facts[`evolve-${vpName}-state`] ??= [];
           const st = await page.evaluate(async (L) => {
@@ -225,8 +228,8 @@ async function finalSlash(page, proof, name) {
             const fx = await import('/src/engine/faction.ts');
             const ea = await import('/src/ui/evolvedArt.ts');
             const ep = await import('/src/ui/evolutionPanel.ts');
-            const f = fac.getFaction('hollow');
-            const s = g.newSaveData('hollow', Date.now());
+            const f = fac.getFaction(L.fid ?? 'hollow');
+            const s = g.newSaveData(f.id, Date.now());
             // 진짜 판정이 망한 진화체로 가지 않게(C.470 과 같은 조건): 블록 1칸 장착 · 허기 30 · 컨디션 90
             const tr = await import('/src/data/traits/index.ts');
             const t0 = tr.TRAITS.find((t) => t.element === 'normal') ?? tr.TRAITS[0];
@@ -272,15 +275,18 @@ async function finalSlash(page, proof, name) {
               const b = img.getBoundingClientRect();
               drawn = { top: Math.round(b.top + (top / c.height) * b.height), bottom: Math.round(b.top + ((bot + 1) / c.height) * b.height) };
             }
-            return { tag: img && img.tagName, fig: fig && r(fig), panel: panel && r(panel), img: img && r(img), drawn, scale: img && getComputedStyle(img).getPropertyValue('--art-scale'), scrollTop: panel?.scrollTop, scrollH: panel?.scrollHeight, clientH: panel?.clientHeight };
+            const nb = document.querySelector('.bha-evolve__new')?.getBoundingClientRect();
+            return { newBox: nb && { top: Math.round(nb.top), bottom: Math.round(nb.bottom) }, tag: img && img.tagName, fig: fig && r(fig), panel: panel && r(panel), img: img && r(img), drawn, scale: img && getComputedStyle(img).getPropertyValue('--art-scale'), scrollTop: panel?.scrollTop, scrollH: panel?.scrollHeight, clientH: panel?.clientHeight };
           });
           m.key = L.key;
           m.newLine = await page.locator('.bha-evolve__new').first().textContent();
           m.elementRow = await page.locator('.bha-evolve__info .bha-info__row').nth(2).textContent();
           m.drawnInFig = !!(m.drawn && m.fig && m.drawn.top >= m.fig.top && m.drawn.bottom <= m.fig.bottom);
           m.figInPanel = !!(m.fig && m.panel && m.fig.top >= m.panel.top);
+          m.newInPanel = !!(m.newBox && m.panel && m.newBox.bottom <= m.panel.bottom && m.newBox.top >= m.panel.top);
+          m.noScroll = m.scrollH <= m.clientH;
           proof.facts[`evolve-${vpName}`].push(m);
-          const nm = vpName === 'phone' ? '08-phone-evolve-rhino' : SHOT[L.key];
+          const nm = vpName === 'phone' ? (L.key === 't3-rhino' ? '08-phone-evolve-rhino' : null) : SHOT[L.key];
           if (nm) { await page.screenshot({ path: path.join(OUT, `${nm}.png`) }); proof.shots.push(`${nm}.png`); }
         });
       }
