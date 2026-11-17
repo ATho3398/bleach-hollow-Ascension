@@ -1,0 +1,837 @@
+{
+  "errors": [],
+  "shots": [
+    "06-evolve-gillian.png",
+    "04-evolve-rhino.png",
+    "05-evolve-spider.png",
+    "07-evolve-t4.png",
+    "10-evolve-shinigami-t3.png",
+    "08-phone-evolve-rhino.png"
+  ],
+  "facts": {
+    "evolve-pc": [
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -42,
+          "bottom": 179,
+          "left": 110,
+          "right": 330
+        },
+        "drawn": {
+          "top": 78,
+          "bottom": 159
+        },
+        "scale": "2.3",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t2-gillian",
+        "newLine": "노 새 진화체: 길리안 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 15,
+          "bottom": 174,
+          "left": 141,
+          "right": 299
+        },
+        "drawn": {
+          "top": 83,
+          "bottom": 161
+        },
+        "scale": "1.65",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-carapace",
+        "newLine": "노 새 진화체: 가시형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 20,
+          "bottom": 173,
+          "left": 143,
+          "right": 297
+        },
+        "drawn": {
+          "top": 83,
+          "bottom": 163
+        },
+        "scale": "1.6",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-stag",
+        "newLine": "노 새 진화체: 뱀형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -33,
+          "bottom": 178,
+          "left": 114,
+          "right": 326
+        },
+        "drawn": {
+          "top": 83,
+          "bottom": 161
+        },
+        "scale": "2.2",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-rhino",
+        "newLine": "노 새 진화체: 외팔형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 55,
+          "bottom": 170,
+          "left": 162,
+          "right": 278
+        },
+        "drawn": {
+          "top": 83,
+          "bottom": 162
+        },
+        "scale": "1.2",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-wyrm",
+        "newLine": "노 새 진화체: 거미형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 15,
+          "bottom": 174,
+          "left": 141,
+          "right": 299
+        },
+        "drawn": {
+          "top": 88,
+          "bottom": 161
+        },
+        "scale": "1.65",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-panther",
+        "newLine": "노 새 진화체: 속도형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 28,
+          "bottom": 172,
+          "left": 148,
+          "right": 292
+        },
+        "drawn": {
+          "top": 104,
+          "bottom": 162
+        },
+        "scale": "1.5",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-scorpion",
+        "newLine": "노 새 진화체: 짐승형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 245,
+          "bottom": 301
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 167,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 58,
+          "bottom": 168,
+          "left": 165,
+          "right": 275
+        },
+        "drawn": {
+          "top": 78,
+          "bottom": 151
+        },
+        "scale": "1.15",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t3-wraith",
+        "newLine": "노 새 진화체: 아쥬커스 히든 히든 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 248,
+          "bottom": 301
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 143,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -2,
+          "bottom": 150,
+          "left": 144,
+          "right": 296
+        },
+        "drawn": {
+          "top": 80,
+          "bottom": 138
+        },
+        "scale": "2.1",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "t4",
+        "newLine": "노 새 진화체: 마르티요 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 43,
+          "bottom": 171,
+          "left": 156,
+          "right": 284
+        },
+        "drawn": {
+          "top": 94,
+          "bottom": 162
+        },
+        "scale": "1.33",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "s-t2",
+        "newLine": "노 새 진화체: 영술원 학생 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 248,
+          "bottom": 301
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 159,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 44,
+          "bottom": 161,
+          "left": 161,
+          "right": 279
+        },
+        "drawn": {
+          "top": 91,
+          "bottom": 153
+        },
+        "scale": "1.33",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "s-t3",
+        "newLine": "노 새 진화체: 평대원 노멀 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 246,
+          "bottom": 299
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 73,
+          "bottom": 169,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 310,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 43,
+          "bottom": 171,
+          "left": 156,
+          "right": 284
+        },
+        "drawn": {
+          "top": 94,
+          "bottom": 162
+        },
+        "scale": "1.33",
+        "scrollTop": 0,
+        "scrollH": 246,
+        "clientH": 246,
+        "key": "s-t4",
+        "newLine": "노 새 진화체: 천평환 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      }
+    ],
+    "evolve-pc-state": [
+      {
+        "key": "t2-gillian",
+        "form": "t2:base",
+        "look": "gillian",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-carapace",
+        "form": "t3:normal",
+        "look": "carapace",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-stag",
+        "form": "t3:normal",
+        "look": "stag",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-rhino",
+        "form": "t3:normal",
+        "look": "rhino",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-wyrm",
+        "form": "t3:normal",
+        "look": "wyrm",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-panther",
+        "form": "t3:normal",
+        "look": "panther",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-scorpion",
+        "form": "t3:normal",
+        "look": "scorpion",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-wraith",
+        "form": "h3:passage",
+        "look": "wraith",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t4",
+        "form": "t4:normal:physical",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "s-t2",
+        "form": "t2:base",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "s-t3",
+        "form": "t3:normal",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "s-t4",
+        "form": "t4:normal:mixed",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      }
+    ],
+    "evolve-phone": [
+      {
+        "newBox": {
+          "top": 242,
+          "bottom": 295
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 164,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -41,
+          "bottom": 174,
+          "left": 113,
+          "right": 327
+        },
+        "drawn": {
+          "top": 76,
+          "bottom": 155
+        },
+        "scale": "2.3",
+        "scrollTop": 0,
+        "scrollH": 240,
+        "clientH": 240,
+        "key": "t2-gillian",
+        "newLine": "노 새 진화체: 길리안 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 242,
+          "bottom": 295
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 164,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": -32,
+          "bottom": 173,
+          "left": 117,
+          "right": 323
+        },
+        "drawn": {
+          "top": 81,
+          "bottom": 157
+        },
+        "scale": "2.2",
+        "scrollTop": 0,
+        "scrollH": 240,
+        "clientH": 240,
+        "key": "t3-rhino",
+        "newLine": "노 새 진화체: 외팔형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 242,
+          "bottom": 295
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 164,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 54,
+          "bottom": 166,
+          "left": 164,
+          "right": 276
+        },
+        "drawn": {
+          "top": 81,
+          "bottom": 157
+        },
+        "scale": "1.2",
+        "scrollTop": 0,
+        "scrollH": 240,
+        "clientH": 240,
+        "key": "t3-wyrm",
+        "newLine": "노 새 진화체: 거미형 아쥬커스 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 242,
+          "bottom": 295
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 137,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 4,
+          "bottom": 143,
+          "left": 150,
+          "right": 290
+        },
+        "drawn": {
+          "top": 79,
+          "bottom": 132
+        },
+        "scale": "2.1",
+        "scrollTop": 0,
+        "scrollH": 240,
+        "clientH": 240,
+        "key": "t4",
+        "newLine": "노 새 진화체: 마르티요 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      },
+      {
+        "newBox": {
+          "top": 242,
+          "bottom": 295
+        },
+        "tag": "CANVAS",
+        "fig": {
+          "top": 71,
+          "bottom": 153,
+          "left": 123,
+          "right": 317
+        },
+        "panel": {
+          "top": 62,
+          "bottom": 304,
+          "left": 110,
+          "right": 330
+        },
+        "img": {
+          "top": 46,
+          "bottom": 155,
+          "left": 165,
+          "right": 275
+        },
+        "drawn": {
+          "top": 90,
+          "bottom": 147
+        },
+        "scale": "1.33",
+        "scrollTop": 0,
+        "scrollH": 240,
+        "clientH": 240,
+        "key": "s-t3",
+        "newLine": "노 새 진화체: 평대원 노멀 임시",
+        "elementRow": "속성노노멀",
+        "drawnInFig": true,
+        "figInPanel": true,
+        "newInPanel": true,
+        "noScroll": true
+      }
+    ],
+    "evolve-phone-state": [
+      {
+        "key": "t2-gillian",
+        "form": "t2:base",
+        "look": "gillian",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-rhino",
+        "form": "t3:normal",
+        "look": "rhino",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t3-wyrm",
+        "form": "t3:normal",
+        "look": "wyrm",
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "t4",
+        "form": "t4:normal:physical",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      },
+      {
+        "key": "s-t3",
+        "form": "t3:normal",
+        "look": null,
+        "elements": [
+          "normal"
+        ]
+      }
+    ]
+  }
+}

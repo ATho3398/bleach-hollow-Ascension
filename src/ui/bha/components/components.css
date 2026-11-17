@@ -613,6 +613,9 @@ button.bha-slot:active { transform: scale(0.98); }
 @keyframes bha-ping { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
 @keyframes bha-run-fire { 0% { transform: scale(1); } 40% { transform: scale(1.06); box-shadow: 0 0 22px var(--bha-chain2); } 100% { transform: scale(1); } }
 @keyframes bha-float-up { 0% { opacity: 0; translate: 0 6px; scale: 0.6; } 15% { opacity: 1; translate: 0 -6px; scale: 1.15; } 30% { scale: 1; } 100% { opacity: 0; translate: 0 -46px; } }
+/* 장면 가운데 큰 기술 이름 아래로 내린 묶음 (C.474): 위로 떠오르면 그 이름에 닿으므로 제자리에서 커졌다 사라진다 */
+.bha-float.is-under-name { animation-name: bha-float-stay; }
+@keyframes bha-float-stay { 0% { opacity: 0; scale: 0.6; } 15% { opacity: 1; scale: 1.15; } 30% { scale: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes bha-fx-flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes bha-log-in { from { opacity: 0; transform: translateY(100%); } }
 @keyframes bha-hit { 0% { filter: brightness(3) drop-shadow(0 0 12px #fff); transform: translateX(0); } 30% { transform: translateX(-6px); } 60% { transform: translateX(4px); } 100% { transform: translateX(0); } }
@@ -639,7 +642,7 @@ button.bha-slot:active { transform: scale(0.98); }
   .bha-cast { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hot) 35%, transparent); }
   .bha-road__cell.is-can { box-shadow: 0 0 0 3px rgb(108 196 255 / 0.35); animation: none; }
   .bha-slot.is-target { box-shadow: 0 0 0 4px var(--bha-accent-soft); }
-  .bha-float { animation: none; opacity: 1; }
+  .bha-float, .bha-float.is-under-name { animation: none; opacity: 1; }
   .bha-fxflash, .bha-battle__arena.is-shake { animation: none; }
 }
 

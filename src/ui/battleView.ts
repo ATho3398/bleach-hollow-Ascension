@@ -43,7 +43,7 @@ import { animOf, switchAnim } from './bha/animPlayer';
 import { onHold } from './bha/hold';
 import { onAppAway } from './bha/appAway';
 import {
-  blockEl, blockVisual, heroEl, heroAltEl, cutEl, floatPool, groupCuts, floatSpot, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
+  blockEl, blockVisual, heroEl, heroAltEl, cutEl, floatPool, groupCuts, floatSpot, isFloatLabel, stackFloatGroup, afxNameBottomPct, foeArtOf, foeEl, heroArtOf, HURT_SPOTS, logLineEl, LOG_ICON, PATTERN_VIEW, pickAbbr, ABBR_LINE_CHARS,
   playOnce, replayOnce, runEl, runSpecs, secondsText, setHidden, setText, trayEl, gaugeFill, gaugeSlots, headGaugeEl, trackTotal, type HeadGauge,
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
@@ -1072,6 +1072,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   let floatCount = 0;
   let hurtCount = 0;
+  let floatGroup: { tick: number; spot: { left: number; top: number }; below: boolean; number: HTMLElement | null; labels: HTMLElement[] } | null = null;
   const pool = floatPool(floats);
   /** 피해 숫자(내가 준 것·받은 것·공허)는 설정에서 끌 수 있다. 막기·회복·체인 표시는 그대로 */
   // 실측 기록 (GDD 224장, C.367): 테스트 모드(?test=1)에서만 — 피해 숫자 등장·타격 프레임·엔진 사건 시각. 평소에는 없음
@@ -1081,7 +1082,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     note('float', { kind, text });
     if (!fx.damageNumbers && (kind === 'attack' || kind === 'hurt' || kind === 'void')) return;
     const onMe = kind === 'hurt' || kind === 'void' || kind === 'guard' || kind === 'heal'; // 맞은 쪽 머리 위 (GDD 100장 #38)
-    pool.show(kind, text, onMe ? HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]! : floatSpot(floatCount++), opt);
+    if (onMe) return void pool.show(kind, text, HURT_SPOTS[hurtCount++ % HURT_SPOTS.length]!, opt);
+    // 같은 틱의 피해 숫자 + 이름 글자(기술 이름·체인·상성)는 한 자리에 — 이름은 숫자 위로 쌓아 겹치지 않게 (C.474). 숫자가 둘이면 새 자리
+    const label = isFloatLabel(kind);
+    if (!floatGroup || floatGroup.tick !== s.tick || (!label && floatGroup.number)) {
+      // 장면 가운데 큰 기술 이름(체인 기술·콤보)이 떠 있으면 그 아래로 내린다 — 같은 높이의 숫자 자리 5곳이 모두 그 이름과 겹쳤다 (C.474 실측)
+      const spot = floatSpot(floatCount++);
+      const clear = afxNameBottomPct(fxLayer, floats);
+      const below = clear !== null && clear > spot.top;
+      floatGroup = { tick: s.tick, spot: below ? { left: spot.left, top: clear } : spot, below, number: null, labels: [] };
+    }
+    const node = pool.show(kind, text, floatGroup.spot, opt);
+    if (label) floatGroup.labels.push(node);
+    else floatGroup.number = node;
+    stackFloatGroup(floatGroup.number, floatGroup.labels, floatGroup.below);
   };
   /** 번쩍임: 한 번에 한 종류만 */
   const FLASH_CLASSES = ['is-chain2', 'is-chain3', 'is-guard', 'is-cast', 'is-special', 'is-win', 'is-lose'];

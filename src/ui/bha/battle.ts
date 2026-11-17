@@ -536,6 +536,7 @@ function fillFloat(f: HTMLElement, kind: FloatKind, text: string, spot: { left: 
   f.className = cls.join(' ');
   f.style.left = `${spot.left}%`;
   f.style.top = `${spot.top}%`;
+  f.style.marginTop = ''; // 이름 쌓기(stackFloatGroup)가 올린 자리를 재사용 때 되돌린다
   if (opts.element) f.style.setProperty('--bha-lin-color', elementColor(opts.element));
   else f.style.removeProperty('--bha-lin-color');
   f.replaceChildren();
@@ -556,7 +557,7 @@ export const HURT_SPOTS: readonly { left: number; top: number }[] = [{ left: 70,
 
 /** 플로팅 숫자 풀: 요소를 최대 max 개만 만들어 돌려 쓴다 (가장 오래된 것부터 재사용 = 동시 표시 개수 제한). 이벤트 때만 쓰이고 틱마다 만들지 않는다 */
 export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
-  show(kind: FloatKind, text: string, spot: { left: number; top: number }, opts?: FloatOpts): void;
+  show(kind: FloatKind, text: string, spot: { left: number; top: number }, opts?: FloatOpts): HTMLElement;
   readonly size: number;
 } {
   const nodes: { node: HTMLElement; timer: number }[] = [];
@@ -582,11 +583,51 @@ export function floatPool(container: HTMLElement, max = 6, showMs = 1100): {
       slot.timer = window.setTimeout(() => {
         node.hidden = true;
       }, showMs);
+      return node;
     },
     get size() {
       return nodes.length;
     },
   };
+}
+
+/** 이름 글자(체인·기술 이름·상성 문구)인가 — 같은 사건의 피해 숫자와 한 묶음으로 위아래로 나눠 놓는다 (C.474) */
+export const isFloatLabel = (kind: FloatKind): boolean => kind === 'chain' || kind === 'strong' || kind === 'dull';
+
+/** 숫자가 -6° 기울어(.bha-float--attack) 오른쪽 위 모서리가 올라오는 몫 = 폭의 절반 × sin 6° */
+const FLOAT_TILT = Math.sin((6 * Math.PI) / 180) / 2;
+/** 나타날 때 1.15배(@keyframes bha-float-up 15%) — 가운데 기준이라 위·아래로 키의 7.5%씩 번진다 */
+const FLOAT_POP = 0.15 / 2;
+
+/** 한 사건의 떠오르는 글자 묶음 (C.474): 윗변 = 받은 자리, 이름 글자를 먼저 위에서부터 쌓고 피해 숫자는 그 아래(이름 아래 끝 + 번지는 틈).
+ *  예전에는 이름과 숫자가 자리 목록(FLOAT_SPOTS)의 이웃 칸을 받아, 큰 숫자(4xl)가 이름 글자를 덮었다(최후의 월아천충 −439).
+ *  윗변을 자리 그대로 두므로 이름을 숫자 위로 올려 필드 윗변·위 칩에 닿지 않는다. 묶음은 같이 떠오른다.
+ *  below = 장면 가운데 큰 기술 이름(.bha-afx-name) 아래로 내린 묶음 — 떠오르면 그 이름에 다시 닿으므로 제자리(.is-under-name), 윗변에도 틈 */
+export function stackFloatGroup(number: HTMLElement | null, labels: readonly HTMLElement[], below = false): void {
+  const pop = (f: HTMLElement): number => f.offsetHeight * FLOAT_POP;
+  const numSlack = number ? Math.ceil(number.offsetWidth * FLOAT_TILT + pop(number)) : 0;
+  for (const f of [number, ...labels]) f?.classList.toggle('is-under-name', below);
+  const first = labels[0] ?? number;
+  let y = below && first ? 1 + (first === number ? numSlack : Math.ceil(pop(first))) : 0; // +1 = 소수점 반올림 몫
+  labels.forEach((l, i) => {
+    if (i > 0) y += Math.ceil(pop(l)); // 앞 이름은 아래로, 이 이름은 위로 번진다
+    l.style.marginTop = `${y}px`;
+    y += l.offsetHeight + Math.ceil(pop(l));
+  });
+  if (number) number.style.marginTop = `${labels.length ? y + numSlack : y}px`;
+}
+
+/** 장면 가운데 큰 기술 이름(.bha-afx-name, GDD 19-2 체인 기술 이름)이 떠 있으면 그 아래 끝 = 글자 상자(container) 높이 대비 % — 없으면 null.
+ *  이름은 left/top 50%·46% 에 translate(-50%,-50%) 로 놓이므로 변형 전 상자(offset) 기준(커졌다 줄어드는 애니메이션과 무관) */
+export function afxNameBottomPct(layer: HTMLElement, container: HTMLElement): number | null {
+  const names = layer.querySelectorAll<HTMLElement>('.bha-afx-name');
+  if (!names.length) return null;
+  const host = container.getBoundingClientRect();
+  if (host.height <= 0) return null;
+  const base = layer.getBoundingClientRect().top - host.top;
+  let max = 0;
+  for (const n of names) max = Math.max(max, base + n.offsetTop + n.offsetHeight / 2);
+  return (max / host.height) * 100;
 }
 
 /** 전투 배속 기억(C.63 `bha-battle-speed`)은 C.118 에 삭제 — 전투는 1배 고정 (GDD 62장). 브라우저에 남은 옛 값은 읽지 않는다 */
