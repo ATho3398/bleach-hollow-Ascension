@@ -1,0 +1,3218 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-adjuchas-3chain-mid.png",
+    "02-pc-shinigami-3chain-mid.png",
+    "03-pc-aizen-fusion-rail.png",
+    "04-phone-aizen-kyoka-window-glow.png"
+  ],
+  "facts": {
+    "adjuchas": {
+      "look": null,
+      "chains": [
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 1,
+          "tick": 6,
+          "motionTicks": 8,
+          "engineSeconds": 0.8,
+          "naturalSeconds": 0.467,
+          "pace": 0.58375,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 2,
+          "tick": 19,
+          "motionTicks": 10,
+          "engineSeconds": 1,
+          "naturalSeconds": 0.467,
+          "pace": 0.467,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 3,
+          "tick": 34,
+          "motionTicks": 12,
+          "engineSeconds": 1.2,
+          "naturalSeconds": 0.467,
+          "pace": 0.3891666666666667,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 3,
+          "tick": 51,
+          "motionTicks": 12,
+          "engineSeconds": 1.2,
+          "naturalSeconds": 0.467,
+          "pace": 0.3891666666666667,
+          "hitDelay": 0,
+          "motionTier": 2,
+          "shot": "01-pc-adjuchas-3chain-mid"
+        }
+      ]
+    },
+    "shinigami": {
+      "look": null,
+      "chains": [
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 1,
+          "tick": 6,
+          "motionTicks": 8,
+          "engineSeconds": 0.8,
+          "naturalSeconds": 0.2,
+          "pace": 0.25,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 2,
+          "tick": 19,
+          "motionTicks": 10,
+          "engineSeconds": 1,
+          "naturalSeconds": 0.456,
+          "pace": 0.456,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 3,
+          "tick": 34,
+          "motionTicks": 12,
+          "engineSeconds": 1.2,
+          "naturalSeconds": 0.975,
+          "pace": 0.8125,
+          "hitDelay": 0,
+          "motionTier": 2
+        },
+        {
+          "ok": true,
+          "family": "family-a",
+          "chain": 3,
+          "tick": 51,
+          "motionTicks": 12,
+          "engineSeconds": 1.2,
+          "naturalSeconds": 0.975,
+          "pace": 0.8125,
+          "hitDelay": 0,
+          "motionTier": 2,
+          "shot": "02-pc-shinigami-3chain-mid"
+        }
+      ]
+    },
+    "aizen-pc": {
+      "motion": {
+        "block": {
+          "total": 0,
+          "hit": 0
+        },
+        "blockMotion": null,
+        "tier": 3,
+        "fragorWeight": 0.6,
+        "counterWindow": 0.8
+      },
+      "rail": {
+        "fused": true,
+        "tray": [
+          "kido",
+          "fragor",
+          "kido",
+          "fragor",
+          "kido"
+        ],
+        "risk": 90
+      }
+    },
+    "aizen-phone": {
+      "motion": {
+        "block": {
+          "total": 0,
+          "hit": 0
+        },
+        "blockMotion": null,
+        "tier": 3,
+        "fragorWeight": 0.6,
+        "counterWindow": 0.8
+      },
+      "counter": {
+        "open": true,
+        "ticksLeft": 8,
+        "glow": 1,
+        "closedAfterSecondsFromShot": 0.7000000000000001
+      }
+    }
+  },
+  "table": [
+    {
+      "look": "shinigami-base",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-base",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-base",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "arrancar-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        180,
+        180,
+        164
+      ],
+      "afterMs": [
+        801,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "arrancar-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        434,
+        434,
+        214
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "arrancar-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "bare-base",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "bare-base",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "bare-base",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "female-base",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "female-base",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "female-base",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "shinigami-student",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-student",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-student",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "shinigami-student-f",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-student-f",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-student-f",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "shinigami-soul-f",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-soul-f",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-soul-f",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "shinigami-soul",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-soul",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-soul",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "shinigami-base-f",
+      "faction": "shinigami",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        456,
+        976
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-base-f",
+      "faction": "shinigami",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        334,
+        446,
+        755
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1202
+      ]
+    },
+    {
+      "look": "shinigami-base-f",
+      "faction": "shinigami",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "arrancar-base-f",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        200,
+        307
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "arrancar-base-f",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        434,
+        434,
+        214
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "arrancar-base-f",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "arrancar-base-f-released",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        200,
+        200,
+        307
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "arrancar-base-f-released",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        434,
+        434,
+        214
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "arrancar-base-f-released",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-red",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-red",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-red",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-gray",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-gray",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-gray",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-tan",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-tan",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-tan",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-teal",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-teal",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-teal",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-green",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-green",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-green",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        201
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "brute-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "brute-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "gillian-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        734,
+        734,
+        667
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "gillian-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        434,
+        434,
+        234
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "gillian-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        1067,
+        1067,
+        1067
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "gillian-cyclops",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        734,
+        734,
+        667
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1200
+      ]
+    },
+    {
+      "look": "gillian-cyclops",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        434,
+        434,
+        234
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "gillian-cyclops",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        1067,
+        1067,
+        1067
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "onearm-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        467,
+        467,
+        467
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        467,
+        467,
+        467
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        467,
+        467,
+        467
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        467,
+        467,
+        467
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        467,
+        467,
+        467
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "onearm-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "spiky-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "spiky-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "spiky-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "spiky-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "spiky-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spiky-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "speed-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "speed-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "speed-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "speed-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        434,
+        434,
+        434
+      ],
+      "afterMs": [
+        800,
+        1001,
+        1201
+      ]
+    },
+    {
+      "look": "speed-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        200
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "speed-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        934,
+        934,
+        934
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-green",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-green",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-green",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-purple",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-purple",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-purple",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "serpent-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        214,
+        214,
+        214
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "serpent-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-violet",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-violet",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-violet",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-purple",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-purple",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-purple",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        400,
+        400,
+        400
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        334
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "beast-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        800,
+        800,
+        800
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-teal",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-teal",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-teal",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        667,
+        667,
+        667
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "spider-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        234,
+        234,
+        234
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "spider-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "chain",
+      "beforeMs": [
+        334,
+        334,
+        741
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "wraith-base",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        237,
+        237,
+        237
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-base",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        220
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-base",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        834,
+        834,
+        834
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "wraith-blue",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        237,
+        237,
+        237
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-blue",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        220
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-blue",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        834,
+        834,
+        834
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "wraith-orange",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        237,
+        237,
+        237
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-orange",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        220
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-orange",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        834,
+        834,
+        834
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "wraith-brown",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        237,
+        237,
+        237
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-brown",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        220
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-brown",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        834,
+        834,
+        834
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "wraith-yellow",
+      "faction": "hollow",
+      "family": "family-a",
+      "kind": "chain",
+      "beforeMs": [
+        237,
+        237,
+        237
+      ],
+      "afterMs": [
+        801,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-yellow",
+      "faction": "hollow",
+      "family": "family-b",
+      "kind": "chain",
+      "beforeMs": [
+        220,
+        220,
+        220
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    },
+    {
+      "look": "wraith-yellow",
+      "faction": "hollow",
+      "family": "family-c",
+      "kind": "clip",
+      "beforeMs": [
+        834,
+        834,
+        834
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "ichigo-bloody",
+      "faction": "hollow",
+      "family": null,
+      "kind": "lunge",
+      "beforeMs": [
+        435,
+        450,
+        465
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1200
+      ]
+    },
+    {
+      "look": "ichigo-mugetsu",
+      "faction": "hollow",
+      "family": null,
+      "kind": "clip",
+      "beforeMs": [
+        400,
+        400,
+        367
+      ],
+      "afterMs": [
+        800,
+        1000,
+        1201
+      ]
+    }
+  ]
+}

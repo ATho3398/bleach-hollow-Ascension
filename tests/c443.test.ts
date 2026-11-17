@@ -52,7 +52,7 @@ describe('수치·데이터 (provisional)', () => {
   it('감응도 시작 20·최소 20·융합 30 · 붕옥 블록 허 ×0.5·+10 · 프라고르 −3/블록(C.445) · 이름', () => {
     expect(RR).toEqual({ floor: 20, minRisk: 30 }); // C.444: 전투 전용 start 삭제
     expect(K.blocks.hogyoku).toMatchObject({ voidSlot: { voidScale: 1, riskGain: 10, order: 0 } }); // C.452 (v6.066): ×0.5 → ×1
-    expect(K.blocks.fragor).toMatchObject({ riskCost: 3, weight: 0.35, tiers: [2.4, 3.6, 5.0] });
+    expect(K.blocks.fragor).toMatchObject({ riskCost: 3, weight: 0.6, tiers: [2.4, 3.6, 5.0] }); // C.476 (v6.106): 0.35 → 0.6
     const p = aizenParams();
     expect(p.kit?.liberationName).toBe('붕옥 융합');
     expect(p.kit?.riskRelease).toEqual({ floor: 20, minRisk: 30, limit: BALANCE.provisional.risk.limit });
@@ -119,7 +119,7 @@ describe('붕옥 융합', () => {
     applyInput(s, { type: 'use', cell: 0 });
     expect(canLiberate(s)).toBe(true);
   });
-  it('융합: 지속 시간 없음 · 붕옥 → 프라고르 · 경화수월 → 귀도 · 출현표 = 귀도·프라고르만(몫 0.9 : 0.35)', () => {
+  it('융합: 지속 시간 없음 · 붕옥 → 프라고르 · 경화수월 → 귀도 · 출현표 = 귀도·프라고르만(몫 0.9 : 0.6 — C.476)', () => {
     const s = mk(30);
     s.tray = [blk(s, 'kyoka'), blk(s, 'hogyoku'), blk(s, 'kido')];
     const atk0 = s.player.stats.atk;
@@ -129,7 +129,7 @@ describe('붕옥 융합', () => {
     expect(s.player.stats.atk).toBeCloseTo(atk0 * s.params.liberationStatMultiplier, 6);
     const t = spawnTableOf(s.params, true, 30);
     expect(t.entries.map((e) => e.source?.id)).toEqual([id('kido'), id('fragor')]);
-    expect(t.entries[1]!.chance).toBeCloseTo(0.35 / 1.25, 9);
+    expect(t.entries[1]!.chance).toBeCloseTo(0.6 / 1.5, 9);
     for (let i = 0; i < 600; i++) step(s);
     expect(liberationActive(s)).toBe(true);
     expect(kitRiskOf(s)).toBe(30);

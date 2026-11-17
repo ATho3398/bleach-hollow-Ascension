@@ -139,7 +139,7 @@ describe('경화수월 — 반격 창', () => {
     expect(ev && ev.kind === 'block' && ev.kitName).toBe('경화수월');
     expect(before - s.enemy.hp).toBeGreaterThan(0);
   });
-  it('적 공격을 받은 뒤 0.5초 창(발광) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 (C.442: 즉시 1개 생성 삭제)', () => {
+  it('적 공격을 받은 뒤 0.8초 창(발광 — C.476, 옛 0.5) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 (C.442: 즉시 1개 생성 삭제)', () => {
     const s = mk();
     quiet(s);
     s.params.critChance = s.params.blockCritChance = 0;
@@ -151,7 +151,7 @@ describe('경화수월 — 반격 창', () => {
     const lost = hp0 - s.player.hp;
     expect(lost).toBeGreaterThan(0);
     expect(kitCounterOpen(s)).toBe(true);
-    expect(drainCombatEvents(s).some((e) => e.kind === 'kit-window' && e.seconds === 0.5)).toBe(true);
+    expect(drainCombatEvents(s).some((e) => e.kind === 'kit-window' && e.seconds === 0.8)).toBe(true);
     const hpBefore = s.player.hp;
     const enemyBefore = s.enemy.hp;
     expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
@@ -169,13 +169,13 @@ describe('경화수월 — 반격 창', () => {
     applyInput(t, { type: 'use', cell: 0 });
     expect((enemyBefore - s.enemy.hp) / (e0 - t.enemy.hp)).toBeCloseTo(1.5, 5);
   });
-  it('창은 0.5초 — 지나면 보통 경화수월 (회복·즉시 생성 없음), 치명 +30%p 가산', () => {
+  it('창은 0.8초(C.476) — 지나면 보통 경화수월 (회복·즉시 생성 없음), 치명 +30%p 가산', () => {
     const s = mk();
     quiet(s);
     s.tray = [kitBlk(s, 'kyoka')];
     hitMe(s);
-    for (let i = 0; i < ticksOf(s.params, 0.5); i++) step(s);
-    expect(kitCounterOpen(s)).toBe(true); // 0.5초 끝 틱까지
+    for (let i = 0; i < ticksOf(s.params, 0.8); i++) step(s);
+    expect(kitCounterOpen(s)).toBe(true); // 0.8초 끝 틱까지
     step(s);
     expect(kitCounterOpen(s)).toBe(false);
     drainCombatEvents(s);

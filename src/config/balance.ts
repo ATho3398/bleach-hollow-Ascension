@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
+export const BALANCE_VERSION = 144; // C.476 (GDD v6.106 7절·12-4, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안 provisional): 블록 모션 기준 길이 combat.motion.blockLength { default [0.8, 1.0, 1.2]초(1/2/3체인), byTier {} } 신설 — 모든 몸의 블록 몸동작을 이 길이로(타격 시각 같은 배율), 아이젠 fragor.weight 0.35 → 0.6 · kyoka.counter.windowSeconds 0.5 → 0.8. 적 수치 그대로.
+// 이전: BALANCE_VERSION 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
 // 이전: BALANCE_VERSION 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
 // 이전: BALANCE_VERSION 141; // C.452 (GDD v6.066 12-4, 사용자 2026-11-14): 아이젠 hogyoku.voidSlot.voidScale 0.5 → 1(order 0), kyoka weight 0.1 삭제 → voidSlot { voidScale 1, order 1 }(허 공식으로 따로 굴림), evadeBuff { seconds 3 · critChance 0.2 · critDamage 0.3 provisional } 신설. 그 전 140 — C.448 (GDD v6.062 7절, 사용자): combat.motion 신설 — fastMax 1.5 · basic 0.6/0.3초 · block 1.4/0.8초(화면 없을 때 기본값). 블록 모션 중 평타 타이머 멈춤(처치 시간 늘어남, 재조정 안 함). 그 전 139 — C.447 (GDD v6.061 8절, 사용자 '옵션 = 간격 −n초'): abilities.aspd { attackSpeed 1.18 } → { attackSecondsCut 0.15 }, bspd { blockSpawn 1.2 } → { spawnSecondsCut 0.54 } (흡수 패시브 속도 값은 traits.json secondsCut).
 // 이전: BALANCE_VERSION 138; // C.446 (GDD v6.055·v6.057 7·8절, provisional): 능력치 7종 — 속도 → 공격속도(aspd)·블록속도(bspd). tierTotals ×7/6(기준 능력치 그대로 50·62.5·78.3·97.5), 진화체 종족값 bspd = 단계 기준(성향 없음), 속도 곡선(사용자) = 기본 간격 × (50 ÷ 능력치)^combat.speedExponent 0.35 ÷ 배율 → 0.01초 반올림 → 상한 combat.attackSecondsMin 0.3·spawnSecondsMin 1.0, 고유 특성 int → 블록 피해 ×1.12·bspd → 블록 생성 ×1.2, 성향 bspd = int 와 같은 몫, 장비 신발 풀 aspd·bspd, 적 ev 특수 → bspd·혼합 반씩.
@@ -201,12 +202,12 @@ export const BALANCE = {
         evadeBuff: { seconds: 3, critChance: 0.2, critDamage: 0.3 },
         blocks: {
           /** 경화수월: 등장 = 허 블록 공식(voidChanceOf) × voidScale 1 — 블록마다 따로 굴림, 붕옥(order 0) 다음(order 1), 둘 다 안 걸리면 귀도 (v6.066 사용자 2026-11-14, 옛 고정 몫 weight 0.1 삭제)
-           *  · 레일 최대 2 · 기본 공격 ×1.6 · 반격 창 0.5초(피해 ×1.5 · 치명 +30%p · 그 공격 손실 체력 50% 회복 — 즉시 재생성은 v6.050 삭제) */
-          kyoka: { weight: 0, voidSlot: { voidScale: 1, order: 1 }, maxOnRail: 2, power: 1.6, tiers: [1], counter: { windowSeconds: 0.5, damageMult: 1.5, critBonus: 0.3, healLostFraction: 0.5 } },
+           *  · 레일 최대 2 · 기본 공격 ×1.6 · 반격 창 0.8초(C.476 v6.106 사용자 "ㅇㅇ 해" — 마스터 추천안 provisional, 옛 0.5초)(피해 ×1.5 · 치명 +30%p · 그 공격 손실 체력 50% 회복 — 즉시 재생성은 v6.050 삭제) */
+          kyoka: { weight: 0, voidSlot: { voidScale: 1, order: 1 }, maxOnRail: 2, power: 1.6, tiers: [1], counter: { windowSeconds: 0.8, damageMult: 1.5, critBonus: 0.3, healLostFraction: 0.5 } },
           /** 귀도: 1체인 ×1.2 · 2체인 ×2.0 · 3체인 ×3.2. 3체인마다 영창 +1, 스택당 생성 주기 −0.2초(최대 −1.0초), 5스택 → 다음 3체인 흑관 ×4.5 + 적 3초 공격 불능 */
           kido: { weight: 0.9, power: 1, tiers: [1.2, 2.0, 3.2], stack: { cutPerStack: 0.2, maxCut: 1.0, full: 5 }, finisher: { power: 4.5, enemyStunSeconds: 3 } },
-          /** 프라고르(붕옥 융합 중 붕옥 블록 자리, v6.052): 1체인 ×2.4 · 2체인 ×3.6 · 3체인 울트라 프라고르 ×5.0. 융합 중 몫 35%(귀도 0.9 와 나눔 — 추천안). 쓰면 1블록마다 감응도 −riskCost 3(C.445, 옛 5) */
-          fragor: { weight: 0.35, power: 1, tiers: [2.4, 3.6, 5.0], riskCost: 3 }, // C.445 사용자: 5 → 3 (3체인 −9)
+          /** 프라고르(붕옥 융합 중 붕옥 블록 자리, v6.052): 1체인 ×2.4 · 2체인 ×3.6 · 3체인 울트라 프라고르 ×5.0. 융합 중 몫 0.6(귀도 0.9 와 나눔 — C.476 v6.106 사용자 "ㅇㅇ 해" 마스터 추천안 provisional, 옛 0.35 — 울트라 프라고르가 실제로 나오게). 쓰면 1블록마다 감응도 −riskCost 3(C.445, 옛 5) */
+          fragor: { weight: 0.6, power: 1, tiers: [2.4, 3.6, 5.0], riskCost: 3 }, // C.445 사용자: 5 → 3 (3체인 −9) · C.476: 몫 0.35 → 0.6
           /** 붕옥 블록(허 블록 자리, v6.052): 등장 = 허 블록 공식(voidChanceOf) × voidScale 1 = 허 블록과 똑같이(v6.066 사용자 2026-11-14, 옛 ×0.5 삭제), 먼저 굴림(order 0),
            *  감응도 100 이면 안 나옴(riskGain 이 있는 블록). 쓰면 패널티 없이 감응도 +riskGain 10. 피해 = 허 블록과 같은 기본 공격 1회분(power 1, 경직 없음 — 추천안). 융합 중엔 프라고르로 바뀐다 */
           hogyoku: { weight: 0, power: 1, tiers: [1], voidSlot: { voidScale: 1, riskGain: 10, order: 0 } },
@@ -1072,7 +1073,10 @@ export const BALANCE = {
       /** 몸동작 길이(1배 초, GDD 7-2 '빠른 간격의 모션'·'모션 중엔 평타 없음'·'블록 연속 사용 = 절충안', C.448): 몸동작만(이펙트 제외), hit = 첫 타격(앞 자르기 한도).
        *  fastMax 1.5 = 최대 빨리 감기(사용자 2026-11-13). basic·block 은 화면이 없을 때(봇·시뮬)의 기본값 = 사람형 종이인형 attack 600/300ms · skill 1400/800ms(motions.json).
        *  화면은 실제 동작 데이터로 바꿔 넣는다(attackFx motionsOf). 블록 모션이 재생 중이거나 줄을 서 있으면 평타 타이머가 멈춘다 */
-      motion: { fastMax: 1.5, basic: { total: 0.6, hit: 0.3 }, block: { total: 1.4, hit: 0.8 } } as { fastMax: number; basic: { total: number; hit: number }; block: { total: number; hit: number }; blockBy?: Record<string, { total: number; hit: number }> },
+      /** blockLength (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일', 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안, provisional, C.476):
+       *  블록 몸동작 총 길이(1배 초) = [1체인, 2체인, 3체인]. 모든 진화 단계·호로/사신 공통 default, 단계(tierIndex)별로 따로 둘 때 byTier['n'].
+       *  그림은 그대로 재생 배율만 바꾸고(실제 동작 길이 ÷ 기준 길이), 타격 시각도 같은 배율 — 엔진(평타 멈춤·타격 틱)과 화면(동작·이펙트 재생)이 같은 값. 몸 그림이 없는 몸·noMotion 블록은 0 그대로 */
+      motion: { fastMax: 1.5, basic: { total: 0.6, hit: 0.3 }, block: { total: 1.4, hit: 0.8 }, blockLength: { default: [0.8, 1.0, 1.2], byTier: {} } } as { fastMax: number; basic: { total: number; hit: number }; block: { total: number; hit: number }; blockBy?: Record<string, { total: number; hit: number }>; blockLength?: { default: readonly number[]; byTier?: Record<string, readonly number[]> }; tier?: number },
     },
     /** 우라하라 (GDD 85장 5번, C.140 provisional — 사용자 "1바퀴 돌 떄마다 우라하라 뜰 확률 가중 … 한 3~50바퀴 돌아야 뜨게", 수치는 코드 판단).
      *  원정 바퀴를 마칠 때마다 '지난 방문 뒤 바퀴 수 k' 가 1 오르고 그 바퀴에 올 확률 = min(1, perLap × k) (선형 가중 — 앞 바퀴는 거의 0).

@@ -21,6 +21,7 @@ import {
   kitNextReleaseIsSecond,
   stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
   statusMarksOf,
+  blockMotionTarget,
 } from '../engine/combat';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
 import { getGearSpecial } from '../data/gear';
@@ -1168,6 +1169,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     shake,
     onHitFrame: probe ? (side, guarded, tier) => note('hit-frame', { side, guarded, tier }) : undefined,
     onSwingFrame: probe ? (side, tier) => note('swing-frame', { side, tier }) : undefined,
+    // 블록 모션 기준 길이 (GDD 7절 v6.106, C.476): 엔진과 같은 표 — 화면은 블록마다 실제 동작 길이 ÷ 이 값으로 재생
+    blockLength: (chain) => blockMotionTarget(s.params.motion, chain),
   });
   if (testSpeedMul() !== 1) attack.setSpeed(testSpeedMul());
   const n0 = (v: number) => String(Math.round(v));
