@@ -50,3 +50,4 @@ ArtifactData get `rig/fixed`(뱀 = `rig/fixed-serpent`, 짐승 = `rig/fixed-beas
   - 동작마다 그림을 바꿔 끼울 때는 같은 뼈에 그림 두 장 + 동작의 `hide`(걷기용 발, 날 위 칼).
 - (2026-11-16) **무월 불꽃·그림은 도트 세션(session_01KpWyHvBBn8A5gZku3YJCXb)과 같이 맞춘다**: 사용자가 도트 세션에 준 무월 지시(`docs/art-samples/mugetsu-flame/README.md`)는 인형 작업본(`scripts/rig/flame.ts`·`mugetsu.json`)에도 그대로 반영한다 — "도트 쪽 그림만 바뀐 것"으로 넘기지 말 것(사용자 "무월 칼은 없애라했는데 도트세션에서 명령 못받음?"). 반영하면 도트 세션에 send_message 로 알린다.
 - (2026-11-17) **사슬 앞뒤 = 띠·끝마다 `z`**(`<뼈대>-chain.json`, '@front'·'@back'·조각 id). 편집기 사슬 모드의 '뒤로/앞으로 보내기'. 그림을 뺀 조각(`_none`)은 편집기에서만 원래 그림을 반투명 안내로 보여 준다(115-A 156). 편집기 조각 그림은 z-index = 그리는 차례(1부터), `.dot` 650·사슬점 700.
+- (2026-11-17) **패배 동작 흐름**: 쓰러짐(down) 한 번 → '쓰러짐 숨'(downIdle) 반복(결과 화면 동안) → 마을에선 빈사(dying). 게임 연결은 아직(115-A 167) — 게임 넣을 때 `src/ui/bha/rigAnim.ts` lose 끝에 downIdle 이어 붙이기.
