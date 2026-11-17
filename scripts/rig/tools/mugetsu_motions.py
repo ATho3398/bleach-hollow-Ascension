@@ -258,7 +258,9 @@ def kneel():
     # 편집기 '고정'(사용자 2026-11-17 01:1x, 쓰러짐 '이 동작에만'): 뒷정강이 −43°·(−7, +7), 칼 든 팔 +93°·(+6, −10), 칼 든 아래팔 +10° — 끝 자세 값, 내려앉는 만큼 들어간다
     prog = [0, 0.4, 0.9, 1.0, 1.0, 1.0]
     # 두 번째 고정(2026-11-17 03:5x): 칼 든 팔 +17°, 칼 든 아래팔 +3°, 칼 −115° 더
-    fix = {'shin_b': (-43, -7, 7), 'arm_sword': (93 + 17, 6, -10), 'forearm_sword': (10 + 3, 0, 0), 'sword': (-115, 0, 0)}
+    # 세 번째 고정(2026-11-17 17:2x): 뒷허벅지 +39°·(0, +6), 뒷정강이 −46°·(+6, +5) 더, 앞정강이 (+5, +10)
+    fix = {'shin_b': (-43 - 46, -7 + 6, 7 + 5), 'thigh_b': (39, 0, 6), 'shin_f': (0, 5, 10),
+           'arm_sword': (93 + 17, 6, -10), 'forearm_sword': (10 + 3, 0, 0), 'sword': (-115, 0, 0)}
     for b, (dr, _, _) in fix.items():
         bones[b] = [round(v + dr * p_, 1) for v, p_ in zip(bones[b], prog)]
     out = m(900, times, root, bones, hold=True)
@@ -270,9 +272,28 @@ def kneel():
     return out
 
 
+def kneel_breath(down):
+    """쓰러진 채 숨 헐떡이기(사용자 2026-11-17 17:2x "쓰러짐을 행하는 모션이랑, 이미 쓰러져서 무릎앉아 있는 상태에서 숨만 헐떡거려 위아래로 호흡하는 모션도 필요해"):
+    쓰러짐(down) 끝 자세 그대로 멈춘 채, 빠른 숨(한 번 = 640ms)에 맞춰 윗몸이 위아래로 오르내리고(들숨에 어깨가 올라감) 고개·팔이 살짝 따라간다. 다리·칼은 그대로(땅에 붙음). 반복(loop)."""
+    import math
+    D = 1280  # 숨 두 번
+    end = {b: ks[-1] for b, ks in down['tracks'].items()}
+    breath = lambda t: 0.5 - 0.5 * math.cos(4 * math.pi * t / D)  # noqa: E731 — 0 = 내쉼, 1 = 들숨 끝
+    osc = {  # 뼈: (각도, x, y) × 들숨 정도
+        'upper': (-2.0, 0.0, -1.2), 'lower': (-0.6, 0.0, -0.4), 'head': (1.6, 0.0, 0.0),
+        'arm_sword': (1.0, 0.0, 0.0), 'arm_back': (-2.0, 0.0, 0.0), 'forearm_back': (-1.5, 0.0, 0.0),
+    }
+    fns = {}
+    for b, k in end.items():
+        a, x, y = osc.get(b, (0.0, 0.0, 0.0))
+        fns[b] = ((lambda k, a: lambda t: k[1] + a * breath(t))(k, a), (lambda k, x: lambda t: k[2] + x * breath(t))(k, x), (lambda k, y: lambda t: k[3] + y * breath(t))(k, y))
+    return {'duration': D, 'loop': True, 'tracks': dense(D, fns, True)}
+
+
 def main():
     SPEC['move'] = walk()
     SPEC['down'] = kneel()
+    SPEC['downIdle'] = kneel_breath(SPEC['down'])
     cur = json.load(open(OUT, encoding='utf-8'))
     # 걷기용 왼발(사용자 2026-11-16 "이거 발 하나 추가한거는, 걸을 때 왼발로 넣어"): 왼발 뼈에 그림 두 장(foot_b = 서 있을 때, foot_b_walk = 걸을 때)을 달고
     # 동작마다 하나를 숨긴다 — 걷기는 foot_b 를, 나머지 동작은 foot_b_walk 를. (동작 없이 멈춘 화면·편집기 기본 자세에서는 둘 다 보인다 — 자리 잡기용)
@@ -281,7 +302,7 @@ def main():
     cur['idle']['hide'] = ['foot_b_walk']
     cur['idle'].pop('front', None)
     for k, v in SPEC.items():
-        v['hide'] = ['foot_b' if k in ('move', 'down') else 'foot_b_walk']  # 쓰러짐도 걷기용 왼발(사용자 2026-11-17 "쓰러짐때는, 왼발을 걷기용으로 바꿔야지")
+        v['hide'] = ['foot_b' if k in ('move', 'down', 'downIdle') else 'foot_b_walk']  # 쓰러짐도 걷기용 왼발(사용자 2026-11-17 "쓰러짐때는, 왼발을 걷기용으로 바꿔야지")
     mo = {'note': '이치고(무월) 동작(GDD 115-A 129·133). 키 = [t, 각도(+=시계), x, y]. 뒷머리·왼 아래팔은 따라가기(sway). 대기 말고는 scripts/rig/tools/mugetsu_motions.py 로 만듦.',
           'idle': cur['idle'], 'move': SPEC['move'], **{k: v for k, v in SPEC.items() if k != 'move'}}
     # 키가 많아(16ms 마다) 뼈 하나의 키를 한 줄에 쓴다
