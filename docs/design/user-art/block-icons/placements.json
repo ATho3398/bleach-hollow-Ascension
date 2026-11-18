@@ -1,0 +1,11 @@
+{
+  "_설명": "배치 도구에서 사용자가 [값 복사]로 준 확정 값. 62×62 블록 안에서 아이콘의 크기(px, 한 변)와 왼쪽·위 자리(px). chain 1 = 블록 1개, 2·3 = 체인 단계.",
+  "hollow-jo-basic": {
+    "confirmedAt": "2026-11-19 04:4x KST",
+    "chain": {
+      "1": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 },
+      "2": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 },
+      "3": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 }
+    }
+  }
+}
