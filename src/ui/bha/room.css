@@ -362,7 +362,7 @@
   background: var(--bha-bg-3); border: 2px solid var(--bha-line-2); color: var(--bha-text-1);
   box-shadow: var(--bha-shadow-1); pointer-events: none;
 }
-.bha-pet.has-art { width: var(--bha-sp-10); height: var(--bha-sp-10); border-radius: 0; background: none; border: 0; box-shadow: none; } /* 그림 펫 = 48칸 그림을 1배로 (C.483, 사용자 "저리작아? 1배로 넣자 걍" — C.481 의 0.7배 되돌림) */
+.bha-pet.has-art { width: calc(var(--bha-sp-10) * 1.7); height: calc(var(--bha-sp-10) * 1.7); border-radius: 0; background: none; border: 0; box-shadow: none; } /* 그림 펫 = 48칸 그림을 1.7배로 (C.484, 사용자 "1.7배로 해봐" — 캐릭터 도트 굵기 1.78 과 비슷) */
 .bha-pet__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .bha-pet--buddy { position: absolute; right: calc(-1 * var(--bha-sp-6)); bottom: var(--bha-sp-5); }
 .bha-pet--buddy.has-art { right: calc(-1 * var(--bha-sp-9)); z-index: 1; } /* 그림 펫은 몸 밖으로 더 빼고 몸 앞에 (C.478 — 덩치 팔에 가려짐) */
