@@ -4332,7 +4332,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
   - per: chain·consumed·amount·damage·bar·bar:<속성>·lostHpPct·shieldPct·risk·stack:·buff:·charge:·chargeValue:. stat: basicPower·blockPower·dealt·attackSpeed·interval·intervalCut·crit·critDmg·blockCrit·petPower·execLine·execBlockLine·ignoreDef·offenseBasic/offenseBlock(1 높은 쪽·2 평균).
   - 능력 칸: chainMultipliers[1·2·3체인](이 진화체 체인 배율 덮어쓰기, 공격 블록) · specials{ name, short, description, fixed(바 맨 앞 고정 n칸, 섞이지 않음)·keep(써도 남음)·usable execBlock·maxOnBar } · spawnRule voidOnly · releaseSeconds · releaseHpFloor · 진화체 칸 release 'none'(해방 버튼·아란칼화/구상화 도전 숨김) · extraPetSlots(훅 자리 `evoExtraPetSlots` — 펫 쪽 연결은 314).
   - 4단계 한 줄 특성 효과: attackSpeed·crit·blockCrit·chainPower(chain)·offenseMax·execute — id `evo:<키>`, 진화체 × 종족 데이터에 trait 가 있으면 4단계 대표 특성(el4:)을 대신(`representativeAbility(form, 종족)`), 받으면 영구·세이브 검사 통과(`evo:` id 허용).
-- 마스터AP 추가(11-19, 니에블라 v6.131 사용자 안): ① 같은 체인 수 연달아 n번 = `on block, chain [2], streak {count 2}` ② 바 끝 지정 속성·계열 블록 n개 = `spawn make` ③ 체인 배율 덮어쓰기 = `chainMultipliers` ④ '급류 ≥1 이면 3체인만 치명·치명 피해 +, 쓰면 −1' = `blockPre chain [3] need stack atLeast 1 → blockCrit·blockCritDmg` + `block chain [3] when normal → consume 1`(테스트로 확인).
+- 마스터AP 추가(11-19, 사신 연우 '장마' 사용자 안 — v6.132 에서 니에블라 → 연우로 정정): ① 같은 체인 수 연달아 n번 = `on block, chain [2], streak {count 2}` ② 바 끝 지정 속성·계열 블록 n개 = `spawn make` ③ 체인 배율 덮어쓰기 = `chainMultipliers` ④ '장마 ≥1 이면 3체인만 치명·치명 피해 +, 쓰면 −1' = `blockPre chain [3] need stack atLeast 1 → blockCrit·blockCritDmg` + `block chain [3] when normal → consume 1`(테스트로 확인).
 - **처형 '소멸선'(두 종족 공용, 공화·나다의 대표 특성)**: 처형선 아래 평타 = 처형('처형!' 작은 글자, 런 로그 evo:처형!), 강적·보스는 그 아래 모든 피해 ×1.5. 허무형이 아닌 진화체가 가지면 5%·×1.3. 적 체력 막대에 세로선 두 개 = 평타선(흰 선 `--bha-text-1`) · 블록선(공허 색 `--bha-void`, execBlockLine). 처형 특수 블록(usable execBlock)은 블록선 아래 + 강적·보스 아님일 때만 켜짐(아니면 잠긴 모습).
 - **견본**: 사신 백련(특성 공속 +10% · 허 말고 저절로 안 생김 · 평타 4대 → 블록 1 · 바 블록 1개당 공속·평타 +3% · 만해 2대), 사신 노도(특성 치명 +6%p · 수 블록 → 5초 치명 +4%p ×5 스택마다 따로 · 평타 6회 → 「노도 연격」 평타 3회 즉시 +30% · 만해 8초·+6%p·치명 피해 +5%). 화면: 상태 화면 고유 능력·특수 블록·만해 줄, 전투 작은 글자(evo-proc)·스택 네모(GDD 7-13)·특수 블록 각인, 봇은 켜진 특수 블록을 바로 씀.
 - 판단(기획서 값 / 실제 값 / 이유):
@@ -4343,4 +4343,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
   - 특수 블록 사용 / 해방 게이지 블록 1개분 / 콤보 블록과 같게. 원정 유지 스택 / `activeExpedition.evoCarry`(선택 칸, 형식 그대로) / 공화 '스택 원정 동안 유지'용.
 - 밸런스: `npm run balance:check` 회귀 가드 통과(전 워커, 145초) · 후반 보류(45-6) 경고는 기존 것 그대로(4단계 이후 이어하기·바퀴 곡선·물공 6속성·보스·등급전·탑, 실패 대신 경고). 보정 없음 — 데이터가 사신 백련·노도·허무형 특성뿐.
 - 검증: typecheck · npm test 343파일 3847건 통과(main·마스터 브랜치 합친 뒤) · build 통과.
-- 테스트: 새 `tests/c499.test.ts` 43개(데이터 검사·특성·처형·견본 2종·효과 종류마다·니에블라형 추가 장치·세이브·화면·봇) + c471 소스 문구 기준 1곳(`statusMarksOf(s, bf.id)`). 캡처 `docs/captures/c499/`(1배 PC 844×390, `scripts/c499-proof.cjs`): 01 백련 전투(블록 5 · 고유 능력 네모 +15 · '백련!') · 02 노도 전투(노도 3 스택 네모 · 「노도 연격」 블록 · '노도!') · 03 상태 화면 고유 능력·특수 블록·만해 줄 · 04 소멸선 처형선 두 개(8% 흰 선 · 20% 공허 색, 테스트 주입) + 처형 블록 켜짐 · proof.json.
+- 테스트: 새 `tests/c499.test.ts` 43개(데이터 검사·특성·처형·견본 2종·효과 종류마다·연우형 추가 장치·세이브·화면·봇) + c471 소스 문구 기준 1곳(`statusMarksOf(s, bf.id)`). 캡처 `docs/captures/c499/`(1배 PC 844×390, `scripts/c499-proof.cjs`): 01 백련 전투(블록 5 · 고유 능력 네모 +15 · '백련!') · 02 노도 전투(노도 3 스택 네모 · 「노도 연격」 블록 · '노도!') · 03 상태 화면 고유 능력·특수 블록·만해 줄 · 04 소멸선 처형선 두 개(8% 흰 선 · 20% 공허 색, 테스트 주입) + 처형 블록 켜짐 · proof.json.
+
+## C.500 — 진화체 '피해 없는 블록'(강화만) 장치 (GDD v6.134 8-7, S-23, 코딩312)
+사용 모델: Opus 5.5. 세이브 형식·BALANCE 그대로(147).
+- 근거: GDD v6.133 사용자 원칙(마스터AP 전달) — 진화체 블록 3종 ① 강화만(피해 없음) ② 피해 + 강화 ③ 피해만. 지금 고른 진화체엔 ①이 없어 장치·테스트만.
+- 장치: 규칙 `on blockPre` 의 효과 `noDamage` — 그 블록은 피해 0 · 치명 판정 없음 · 피해 숫자·'n 피해' 로그 없음(이름만), 같은 블록의 `block` 규칙 효과(버프·스택 등)는 그대로. 거르기(element·chain·kind 등)로 어떤 블록이 ①인지 고른다. 블록 사건에 `noDamage: true`.
+- C.499 dev-log 예시 이름 정정: '급류'(니에블라) → '장마'(사신 연우, t4:water:special) — 장치는 그대로.
+- 검증: typecheck · npm test(`tests/c499.test.ts` +1 = 44개) · balance:check 회귀 가드 통과 · build.
