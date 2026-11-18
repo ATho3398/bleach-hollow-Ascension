@@ -5,7 +5,7 @@ import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
 import { bindAnim, type AnimPlayer } from './animPlayer';
-import { el, icon } from './dom';
+import { el, emptyArtMark, icon } from './dom';
 import { elementColor } from './element';
 
 // ───────────────────────── 순수 함수 ─────────────────────────
@@ -244,6 +244,9 @@ export function heroEl(art: ArtUrls): { root: HTMLElement; body: HTMLElement } {
     img.style.setProperty('--art-scale', String(art.fieldScale ?? art.scale)); // 전투 필드 배율 (C.176, GDD 106장 3: 메노스 그란데)
     body.append(img);
     bindAnim(root, img, art)?.setLoop('idle');
+  } else if (art.empty) {
+    body.classList.add('is-empty'); // 그림 없는 초월자 (C.505): 빈 자리 표시
+    body.append(emptyArtMark());
   } else {
     body.append(el('span', 'bha-hero__eye'), el('span', 'bha-hero__eye'));
   }

@@ -25,7 +25,7 @@ import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
 import { DEFAULT_TRACK_KIND, getTrackKind, type TrackKindConfig } from './data/trackKinds';
-import { MOSAIC_LOOK_PREFIX } from './data/art/manifest';
+import { EMPTY_LOOK, lookHasOwnArt, MOSAIC_LOOK_PREFIX } from './data/art/manifest';
 import { allTranscendentsOwned, decideTranscendent, transcendentForPair, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
 import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
@@ -72,7 +72,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 93; // C.505 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
+export const SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
 // 이전: SAVE_FORMAT_VERSION = 92; // C.497 (GDD 8-5 진화 미루기·8-8 허무형): 진화 상태 deferrals(그 단계에서 진화를 미룬 수)·런 로그 tiers.deferrals(미루기 기록)·진화 기록 deferrals·스냅샷 deferrals/collapsed(선택) — 91 → 92 변환 SAVE_MIGRATIONS[91](모든 트랙 미루기 0회, 빈 미루기 기록).
 // 이전: SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
 // 이전: SAVE_FORMAT_VERSION = 90; // C.465 (GDD v6.094 12-4 초월자 전투 방식 = 스킨 잠금): 필드 모양은 그대로, 값 규칙 — 초월자 트랙의 전투 기반이 '초월자'면 save.skin 은 그 초월자·그 전투 모드 모델 묶음 안. 89 → 90 변환 SAVE_MIGRATIONS[89](묶음 밖 스킨 → 묶음 첫 모델). 이후 게임 안에서는 입기·기반·모드 바꾸기가 지킨다(테스트 패널 모델 바꾸기는 자유).
@@ -853,7 +853,7 @@ function giftFirstPet(save: SaveData, nowMs: number): void {
 /** 펫을 데려갈 수 있나 · 장비가 열렸나 · 전투 소모품 칸이 열렸나 (GDD 241-0): 원정 출발 때 펫 동행·펫 드롭·장비 드롭·소모품 버튼을 이것으로 정한다 */
 export const petsUnlocked = (save: Pick<SaveData, 'shared'>): boolean => featureUnlocked(save, 'pet');
 
-/** 펫 칸 수 (GDD 8-7 1차 추성, C.505): 1 + 지금 진화체의 펫 칸 +(진화체 × 종족 데이터 extraPetSlots — 종족 분기 없음) */
+/** 펫 칸 수 (GDD 8-7 1차 추성, C.506): 1 + 지금 진화체의 펫 칸 +(진화체 × 종족 데이터 extraPetSlots — 종족 분기 없음) */
 export function petSlotsOf(save: Pick<SaveData, 'factionId' | 'evolution'>): number {
   return 1 + (save.factionId ? evoExtraPetSlots(save.evolution.formId, save.factionId) : 0);
 }
@@ -866,7 +866,7 @@ export function carriedPetsOf(save: Pick<SaveData, 'shared' | 'factionId' | 'evo
   return { pet: carriedPet(ps), pet2 };
 }
 
-/** 진화체가 바뀌어 펫 칸이 줄면 2번째 칸 펫은 보유 목록으로 (C.505). 런 로그 pets leave. 내렸으면 true */
+/** 진화체가 바뀌어 펫 칸이 줄면 2번째 칸 펫은 보유 목록으로 (C.506). 런 로그 pets leave. 내렸으면 true */
 export function syncPetSlots(save: SaveData, nowMs: number = Date.now()): boolean {
   const ps = save.shared.pets;
   if (!ps.active2 || petSlotsOf(save) >= 2) return false;
@@ -1039,7 +1039,7 @@ export function switchTrack(save: SaveData, trackId: string, nowMs: number = Dat
   track.nest.lastTickMs = nowMs;
   putActiveTrack(save, track);
   save.otherTracks.splice(i, 1, parked);
-  syncPetSlots(save, nowMs); // 펫은 슬롯 공유 — 새 트랙 진화체에 2번째 칸이 없으면 보유 목록으로 (C.505)
+  syncPetSlots(save, nowMs); // 펫은 슬롯 공유 — 새 트랙 진화체에 2번째 칸이 없으면 보유 목록으로 (C.506)
   return true;
 }
 
@@ -1512,7 +1512,7 @@ function settlePets(save: SaveData, exp: ExpeditionState, nowMs: number): void {
     }
   }
   if (exp.pet) petLaps(save, exp.pet.id, exp.lapsCompleted, nowMs, exp.runId);
-  if (exp.pet2) petLaps(save, exp.pet2.id, exp.lapsCompleted, nowMs, exp.runId); // 2번째 칸 펫도 친밀도 (C.505)
+  if (exp.pet2) petLaps(save, exp.pet2.id, exp.lapsCompleted, nowMs, exp.runId); // 2번째 칸 펫도 친밀도 (C.506)
 }
 
 /** 출정품 드롭 정산 (GDD 241-D 5): 원정에서 나온 출정품을 가방에(가득이면 버림). 지고 와도 받는다(장비와 같이) */
@@ -1678,7 +1678,7 @@ export function claimIdle(save: SaveData, nowMs: number = Date.now(), rand: () =
   const pet = carriedPet(save.shared.pets);
   const pet2 = carriedPetsOf(save).pet2;
   if (pet) petLaps(save, pet.id, y.laps, nowMs);
-  if (pet2) petLaps(save, pet2.id, y.laps, nowMs); // 2번째 칸 펫 (C.505)
+  if (pet2) petLaps(save, pet2.id, y.laps, nowMs); // 2번째 칸 펫 (C.506)
   const rec: IdleRecord = { at: nowMs, factionId: save.factionId, from: p.from, hours: r2(p.hours), activeHours: r2(p.activeHours), share: IX.share, laps: y.laps, steps, gold: y.gold, ev, tiles, food, gear: gearN };
   save.runLog.idle.push(rec);
   return rec;
@@ -1915,7 +1915,7 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     if (save.evolution.look && getSkin(save.skin)?.startOnly) save.skin = null;
     checkTitles(save, 'evolution', nowMs);
   }
-  syncPetSlots(save, nowMs); // 펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.505)
+  syncPetSlots(save, nowMs); // 펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.506)
   return r;
 }
 
@@ -2272,7 +2272,7 @@ export function performRebirth(save: SaveData, keepTraitId: string | null, nowMs
     keptTraitId: keepTraitId, carry: { ...evolution.carry }, runsCompleted: runsCompleted(save),
   };
   save.runLog.rebirths.push(record);
-  syncPetSlots(save, nowMs); // 펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.505)
+  syncPetSlots(save, nowMs); // 펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.506)
   return { ok: true, record, jade };
 }
 
@@ -2614,7 +2614,7 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
       if (isRec(t.runLog) && isRec(t.runLog.tiers) && !Array.isArray(t.runLog.tiers.deferrals)) t.runLog.tiers.deferrals = [];
     });
   },
-  // 92 → 93 (C.505, GDD 8-7 1차 추성 펫 칸 +1): 2번째 펫 칸 — 빈 칸
+  // 92 → 93 (C.506, GDD 8-7 1차 추성 펫 칸 +1): 2번째 펫 칸 — 빈 칸
   92: (save) => {
     const sh = save.shared as unknown;
     if (isRec(sh) && isRec(sh.pets)) sh.pets.active2 = null;
@@ -3454,12 +3454,13 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 /** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
 /** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
 export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
-  // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
+  // 초월자 트랙 (GDD 12-4, C.430·C.505): 진화체 그림을 빌리지 않는다 — 지금 입은 초월자 외형·인간형 스킨(v6.052 현현·디버깅, C.443)이 실제 그림으로 풀리면 그것,
+  // 아니면 초월자 데이터 그림 키(art)·조각 모델(C.431), 그것도 그림이 없으면 빈 자리(EMPTY_LOOK = 카드 창과 같은 자리 표시)
   const def = s.transcendentId ? tryGetTranscendent(s.transcendentId) : undefined;
-  // 초월자 트랙에서도 초월자 외형·인간형 스킨(GDD 12-4 v6.052 현현·디버깅)을 입었으면 그것 (C.443)
-  if (def && transcendentOfAnyLook(s.skin)) return s.skin!;
-  if (def?.art) return def.art;
-  if (def?.model) return `${MOSAIC_LOOK_PREFIX}${def.id}`; // 조각 모델 (C.431, GDD 12-4 v6.029)
+  if (def) {
+    const own = [transcendentOfAnyLook(s.skin) ? s.skin! : null, def.art ?? null, def.model ? `${MOSAIC_LOOK_PREFIX}${def.id}` : null];
+    return own.find((k): k is string => !!k && lookHasOwnArt(k)) ?? EMPTY_LOOK;
+  }
   return s.skin ?? s.evolution.look ?? null;
 }
 

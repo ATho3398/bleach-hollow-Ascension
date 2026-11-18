@@ -519,7 +519,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     petEl.classList.add('bha-pet--battle');
     units.querySelector('.bha-unit--me .bha-unit__fig')?.append(petEl);
   }
-  // 2번째 칸 펫 (GDD 8-7 1차 추성 펫 칸 +1, C.505): 1번째 펫 오른쪽
+  // 2번째 칸 펫 (GDD 8-7 1차 추성 펫 칸 +1, C.506): 1번째 펫 오른쪽
   const pet2Id = s.params.petAttack2?.petId ?? null;
   const pet2El = petBuddy(pet2Id, petName(pet2Id ?? '', faction), faction);
   if (pet2El) {

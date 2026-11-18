@@ -3,7 +3,7 @@
 import { artUrls, charArt, type ArtUrls } from '../../data/art/manifest';
 import type { ExtraProp, MarketSpot, RoomConfig, RoomFloorConfig, RoomProp, WorldPlace } from '../../engine/faction';
 import { animOf, bindAnim } from './animPlayer';
-import { button, el, icon } from './dom';
+import { button, el, emptyArtMark, icon } from './dom';
 import { bgBox, footOnFloor, REF_LIFT, REF_SCENE } from './roomFloor';
 import { showToast } from './nest';
 
@@ -152,6 +152,9 @@ export function characterButton(art: ArtUrls, label: string): HTMLButtonElement 
       body.append(img);
     });
     body.classList.add('has-art');
+  } else if (art.empty) {
+    body.classList.add('is-empty'); // 그림 없는 초월자 (C.505): 빈 자리 표시
+    body.append(emptyArtMark());
   } else {
     body.append(el('span', 'bha-char__eye'), el('span', 'bha-char__eye'));
   }

@@ -17,7 +17,7 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 149; // C.505 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
+export const BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 148; // C.503 (GDD v6.137 8-7 1차 호로 10종, docs/drafts/evo-impl-1119.md 2·3절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 호로 마르티요·라나·소로·에스카라바호·콜리브리·에스칼레라·니에블라·루시에르나가·나다 수치(표 그대로). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 147; // C.499 (GDD v6.132 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
@@ -634,7 +634,7 @@ export const BALANCE = {
           /** 호로 나다 (C.503, 히든 허무형 — 해방 = 기본 강화만): 블록 → seconds 초 평타 피해 +체인 수×perChain(갱신). 바 bar 칸 가득인 동안 every 초마다 평타 처형선 +perLine(전투 동안, 최대 maxLine) */
           hollow: { seconds: 5, perChain: 0.1, bar: 8, every: 3, perLine: 0.01, maxLine: 0.25, maxStacks: 25 },
         },
-        // ── C.505 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
+        // ── C.506 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
         /** 사신 주홍장: 잃은 체력 1%당 평타 +perLostPower·간격 −perLostInterval, 혈 블록 → 다음 평타 피해의 체인 수×healPerChain 회복. 만해 = 지속 releaseSeconds 초·체력 하한 hpFloor·만해 중 혈 블록 1개당 치명 +critPerBlood·치명 피해 +critDmgPerBlood */
         't4:blood:physical': { shinigami: { perLostPower: 0.006, perLostInterval: 0.003, healPerChain: 0.1, releaseSeconds: 2, hpFloor: 1, critPerBlood: 0.05, critDmgPerBlood: 0.1 } },
         /** 사신 백랑파: 블록 치명 → 다음 평타 hits 회 치명 확정. 만해 = 4회 */

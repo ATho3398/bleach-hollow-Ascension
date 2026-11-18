@@ -20,7 +20,7 @@ export interface PetState {
   owned: Record<string, OwnedPet>;
   /** 데리고 다니는 펫 (없으면 null) */
   active: string | null;
-  /** 2번째 펫 칸 (진화체 펫 칸 +1 — GDD 8-7 1차 추성, C.505 형식 93). 칸이 없는 진화체면 null (game.ts syncPetSlots) */
+  /** 2번째 펫 칸 (진화체 펫 칸 +1 — GDD 8-7 1차 추성, C.506 형식 93). 칸이 없는 진화체면 null (game.ts syncPetSlots) */
   active2: string | null;
   /** 첫 진화 선물을 받았나 */
   gifted: boolean;
