@@ -4180,3 +4180,5 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 ## C.480 — 지옥나비 펫 = 사용자가 고친 도트 (S-23)
 - 사용자 2026-11-18 "나비 수정"(48×48 한 장): `docs/design/user-art/pets/hell-butterfly-2026-11-18.png` 을 그대로 쓰고, 날갯짓은 새 도구 `scripts/pixelfx/pet-flap.py`(몸통 세로축 기준으로 양 날개를 가로로 접었다 폄 — 박자·뜨기는 `custom/hell-butterfly` 와 같음)로 입혀 `public/art/pet-hell-butterfly.webp`(48장 · 67ms) 교체.
 - 이제 나비 펫 그림의 원본은 위 한 장이다(픽셀FX `custom/hell-butterfly` 는 이펙트로만 남음). 수치·세이브·기획 변경 없음.
+- 날갯짓 느리게(사용자 "나비 도트 너무빨라서 볼수가 없음. 원래속도로"): 1초 6.3번 → 3.5번, 한 장 67ms → 100ms(32장).
+- 요루이치 앉은 그림 = 사용자가 고친 도트(`docs/design/user-art/pets/yoruichi-cat-2026-11-18.png`): 새 도구 `scripts/pixelfx/pet-sit.py`(한 장을 잘라 꼬리 살랑·머리 끄덕 1칸·깜빡임) → `public/art/pet-yoruichi-cat.webp`. 아직 게임 미연결(효과 결정 대기).
