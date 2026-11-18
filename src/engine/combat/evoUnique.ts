@@ -288,7 +288,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         break;
       }
       case 'buff': {
-        const until = s.tick + api().ticksOf(s.params, v(a.seconds));
+        const until = s.tick + api().ticksOf(s.params, v(a.seconds) * perValue(s, a.secondsPer, ctx));
         const cur = ev.buffs[a.buff!];
         const live = cur && cur.until > s.tick ? cur.value : 0;
         const nv = a.refresh === 'max' ? Math.max(live, val()) : a.refresh === 'add' ? live + val() : val();
@@ -375,7 +375,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         if (i >= 0) useEvoSpecial(s, i, true);
         break;
       }
-      case 'timer': ev.timers[a.timer!] = s.tick + Math.max(1, api().ticksOf(s.params, v(a.seconds))); break;
+      case 'timer': ev.timers[a.timer!] = s.tick + Math.max(1, api().ticksOf(s.params, v(a.seconds) * perValue(s, a.secondsPer, ctx))); break;
       case 'timerCut': {
         const t = ev.timers[a.timer!];
         if (t !== undefined) ev.timers[a.timer!] = Math.max(s.tick + 1, t - api().ticksOf(s.params, v(a.seconds)));

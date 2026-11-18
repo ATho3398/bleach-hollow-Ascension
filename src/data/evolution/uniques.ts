@@ -75,6 +75,8 @@ export interface EvoAction {
   value?: EvoNum;
   per?: EvoSource | EvoSource[];
   seconds?: EvoNum;
+  /** buff·timer: 시간(초)에 곱하는 출처 (C.503 — 루시에르나가 '불빛 1개당 화상 +3초' = secondsPer consumed 처럼) */
+  secondsPer?: EvoSource | EvoSource[];
   max?: EvoNum;
   cap?: EvoNum;
   amount?: EvoNum;
@@ -426,6 +428,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
           src(x.per);
           src(x.amountPer);
+          src(x.secondsPer);
         }
       }
       for (const [i, p] of (a.passives ?? []).entries()) {
