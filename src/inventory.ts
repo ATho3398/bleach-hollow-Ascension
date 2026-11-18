@@ -10,14 +10,14 @@ import { deckTilesFor, tileName } from './data/tiles';
 import { FOOD_IDS, type FactionConfig, type FoodId } from './engine/faction';
 import { CARE_STATUS_NAMES, homeHpCap, homeHpOf } from './engine/nest';
 import { foodEffectText } from './foodText';
-import { cureNest, feedNest, logHomeHeal } from './game';
+import { cureNest, feedNest, logHomeHeal, petSlotsOf } from './game';
 import { wandererAmount } from './engine/wanderer';
 import { kitRiskFloorOf } from './engine/transcendKit';
 import { guidePending } from './engine/tutorial';
 import { battleItemBrief, battleItemText, CONSUMABLE_CAP, isWorn, medicineText, unwearCategory, wearCosmetic } from './shop';
 import type { SaveData } from './game';
 import { getPet, PET_IDS } from './data/pets';
-import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet } from './engine/pet';
+import { affinityOf, nextAffinityLaps, petBonus, PET_MAX_LEVEL, setActivePet, setActivePet2 } from './engine/pet';
 import type { GearRecord, PetRecord } from './engine/runLog';
 import { GEAR_GRADE_NAMES, GEAR_SLOTS, getGearSpecial, slotsForKind, type GearGrade, type GearKind, type GearSlot } from './data/gear';
 import { autoEquipPlan, enhanceCost, enhanceGear, equipGear, equippedSlotOf, findGear, gearStatsOf, sellGearItem, unequipGear, type GearItem, type GearRoll, type GearStat } from './engine/gear';
@@ -166,7 +166,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   for (const id of PET_IDS) {
     const o = save.shared.pets.owned[id];
     if (!o) continue;
-    const on = save.shared.pets.active === id;
+    const on = save.shared.pets.active === id || save.shared.pets.active2 === id; // 2번째 칸 (C.506)
     out.push({ id, category: 'pet', name: petName(id, faction), count: 1, detail: `${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, action: on ? 'leave' : 'take', lock: save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null });
   }
   // 스킨·꾸밈: 가진 것 (이 종족이 입을 수 있는 스킨만), 끼기·빼기
@@ -376,14 +376,35 @@ export function petAffinityText(save: Pick<SaveData, 'shared'>, id: string): str
   return `친밀도 ${lv}/${PET_MAX_LEVEL}${next === null ? ' · 최대' : ` · 다음까지 ${next - o.laps}바퀴 (${o.laps}/${next})`}`;
 }
 
-/** 데리고 가기(id) / 두고 가기(null). 원정 중에는 못 바꾼다. 런 로그 pets take/leave */
+/** 데리고 가기(id) / 두고 가기(null). 원정 중에는 못 바꾼다. 런 로그 pets take/leave.
+ *  펫 칸이 2개(진화체 펫 칸 +1, GDD 8-7 1차 추성 C.506)이고 1번째 칸이 차 있으면 빈 2번째 칸에 넣는다. 두고 가기(null)는 1번째 칸 */
 export function choosePet(save: SaveData, id: string | null, nowMs: number = Date.now()): boolean {
   if (save.activeExpedition != null) return false;
-  const prev = save.shared.pets.active;
-  if (!setActivePet(save.shared.pets, id)) return false;
-  if (prev) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: prev });
+  const ps = save.shared.pets;
+  if (id !== null && ps.active !== null && ps.active !== id && ps.active2 === null && petSlotsOf(save) >= 2) return choosePet2(save, id, nowMs);
+  const prev = ps.active;
+  if (!setActivePet(ps, id)) return false;
+  if (prev && prev !== ps.active2) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: prev });
   if (id) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'take', petId: id });
   return true;
+}
+
+/** 2번째 펫 칸 데리고 가기(id) / 두고 가기(null) (C.506). 칸이 없으면 false */
+export function choosePet2(save: SaveData, id: string | null, nowMs: number = Date.now()): boolean {
+  if (save.activeExpedition != null) return false;
+  if (id !== null && petSlotsOf(save) < 2) return false;
+  const ps = save.shared.pets;
+  const prev = ps.active2;
+  if (!setActivePet2(ps, id)) return false;
+  if (prev && prev !== ps.active) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: prev });
+  if (id) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'take', petId: id });
+  return true;
+}
+
+/** 이 펫이 든 칸 (1·2, 안 데리고 다니면 0) */
+export function petSlotOf(save: Pick<SaveData, 'shared'>, id: string): 0 | 1 | 2 {
+  const ps = save.shared.pets;
+  return ps.active === id ? 1 : ps.active2 === id ? 2 : 0;
 }
 
 /** 펫 런 로그 한 건 → 알림 문구 (얻음·친밀도 오름·골드로 바뀜만, 데리고 감·두고 감은 null) */

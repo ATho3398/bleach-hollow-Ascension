@@ -519,6 +519,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     petEl.classList.add('bha-pet--battle');
     units.querySelector('.bha-unit--me .bha-unit__fig')?.append(petEl);
   }
+  // 2번째 칸 펫 (GDD 8-7 1차 추성 펫 칸 +1, C.506): 1번째 펫 오른쪽
+  const pet2Id = s.params.petAttack2?.petId ?? null;
+  const pet2El = petBuddy(pet2Id, petName(pet2Id ?? '', faction), faction);
+  if (pet2El) {
+    pet2El.classList.add('bha-pet--battle', 'bha-pet--second');
+    units.querySelector('.bha-unit--me .bha-unit__fig')?.append(pet2El);
+  }
 
   const floats = el('div', 'bha-battle__floats');
   // 사건 로그 (C.63, GDD 28장 3번): 가운데 실시간 안내 대신 [로그] 버튼으로 여는 목록. 닫혀 있으면 안 보인다(일시정지 없이 겹쳐 본다)
@@ -1309,7 +1316,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (e.kind === 'block' || e.kind === 'liberate') tutorial?.blockUsed();
     switch (e.kind) {
       case 'pet-attack':
-        if (petEl) replayOnce(petEl, 'is-pounce', 420);
+        if (e.second ? pet2El : petEl) replayOnce((e.second ? pet2El : petEl)!, 'is-pounce', 420);
         spawnFloat('attack', `${shownName(petName(e.petId, faction))} −${n0(e.damage)}`);
         break;
       case 'player-attack':

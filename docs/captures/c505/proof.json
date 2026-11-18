@@ -1,0 +1,48 @@
+{
+  "shots": [
+    "01-yhwach-room.png",
+    "02-yhwach-battle.png",
+    "03-ichigo-basic-room.png",
+    "04-aizen-room.png"
+  ],
+  "errors": [],
+  "checks": {
+    "01-yhwach-room": {
+      "tr": "yhwach",
+      "skin": null,
+      "artSkin": "empty:",
+      "body": {
+        "cls": "bha-char__body bha-art-img is-empty",
+        "empty": true,
+        "img": null
+      }
+    },
+    "02-yhwach-battle": {
+      "body": {
+        "cls": "bha-hero__body is-empty",
+        "empty": true,
+        "img": null
+      }
+    },
+    "03-ichigo-basic-room": {
+      "tr": "ichigo",
+      "skin": null,
+      "artSkin": "empty:",
+      "body": {
+        "cls": "bha-char__body bha-art-img is-empty",
+        "empty": true,
+        "img": null
+      }
+    },
+    "04-aizen-room": {
+      "tr": "aizen",
+      "skin": null,
+      "artSkin": "char.transcendent-aizen",
+      "body": {
+        "cls": "bha-char__body bha-art-img has-art",
+        "empty": false,
+        "img": "/art/char-transcendent-aizen.png"
+      }
+    }
+  }
+}

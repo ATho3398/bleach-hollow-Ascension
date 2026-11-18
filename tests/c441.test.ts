@@ -306,7 +306,7 @@ describe('초월자 성장 — 흡수 제한·초월 조각·강화', () => {
     expect(combatKitOf(s.evolution.kit)!.blocks.find((b) => b.id === 'fragor')!.mult).toBeCloseTo(1.8, 5);
   });
   it('형식 85: 옛 초월자 트랙에 kit(강화 0) · 조각 0', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(92);
+    expect(SAVE_FORMAT_VERSION).toBe(93);
     const s = aizenSave();
     const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown> & { evolution: Record<string, unknown>; shared: Record<string, unknown> };
     delete raw.evolution.kit;

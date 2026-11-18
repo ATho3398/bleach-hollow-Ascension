@@ -22,7 +22,7 @@ describe('태초 그림 (데이터 art 키)', () => {
     expect(JSON.parse(read('public/art/char-transcendent-zero-sage/anim.json'))).toEqual({ idle: { ms: 100 } });
     expect(ART_MANIFEST[KEY]?.scale).toBe(1); // 호로 덩치 배율을 물려받지 않는다
   });
-  it('초월자 트랙의 그림 = 그림 키 (프레임 애니) · 그림 파일이 없으면 진화체 그림(자리 표시)', () => {
+  it('초월자 트랙의 그림 = 그림 키 (프레임 애니) · 그림이 없으면 빈 자리 (C.505)', () => {
     const a = charArt('hollow', 3, 'char.hollow', '/', ART_MANIFEST, FRAMES, KEY, { [KEY.replace(/\./g, '-')]: { idle: { ms: 100 } } } as never, 'male');
     expect(a.src).toContain('char-transcendent-zero-sage/idle-1.png');
     expect(a.scale).toBe(1);
@@ -34,7 +34,7 @@ describe('태초 그림 (데이터 art 키)', () => {
     s.transcendentId = 'zero-sage';
     expect(artSkinOf(s)).toBe(KEY);
     s.transcendentId = 'yhwach';
-    expect(artSkinOf(s)).toBeNull(); // 그림 없는 초월자 = 이어받은 진화체 그림
+    expect(artSkinOf(s)).toBe('empty:'); // 그림 없는 초월자 = 빈 자리 (C.505 — 옛 '이어받은 진화체 그림' 폐기)
   });
 });
 

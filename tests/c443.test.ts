@@ -280,7 +280,8 @@ describe('초월자 인간형 스킨 — 태초 현현 · Unknown 디버깅', ()
     expect(testGrantTranscendent(s, 'rift-wanderer', 2000)).toBe('added');
     expect(artSkinOf(s)).toBe('mosaic:rift-wanderer');
     expect(equipSkin(s, DEBUG)).toBe(true);
-    expect(artSkinOf(s)).toBe(DEBUG);
+    expect(artSkinOf(s)).toBe('mosaic:rift-wanderer'); // 디버깅 그림 파일이 아직 없음 → 자리 표시 인형 대신 그 초월자 자기 모델 (C.505)
+    expect(s.skin).toBe(DEBUG);
     const m = new Map<string, string>();
     const st = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) };
     writeSave(st, s);

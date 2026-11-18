@@ -340,6 +340,8 @@ export interface ExpeditionState extends RiskState {
   evBlocked?: Partial<Record<StatId, number>>;
   /** 데리고 간 펫 (GDD 90장, C.144): 출발 때 친밀도까지 복사. 없으면 펫 효과 없음 */
   pet?: PetCarry | null;
+  /** 2번째 칸 펫 (GDD 8-7 1차 추성 펫 칸 +1, C.506): 전투에서 같이 공격만(피해 × power), 바퀴는 친밀도로 센다. 다른 펫 효과(골드·배부름·보호막·찾기)는 1번째 칸만 */
+  pet2?: PetCarry | null;
   /** 바퀴 끝 펫 굴림을 하나 (게임만 켬 — 점검 봇·테스트는 끔) */
   petDrops?: boolean;
   /** 이 원정 바퀴 끝 보상으로 나온 펫 (귀환 때 game.ts 가 보관함에 넣거나, 이미 가졌으면 골드로) */
@@ -451,6 +453,8 @@ export interface ExpeditionSetup {
   tilesLocked?: boolean;
   /** 데리고 가는 펫 (GDD 90장): 없으면 효과 없음 (balance:check 기준 봇은 펫 없음) */
   pet?: PetCarry | null;
+  /** 2번째 칸 펫 (C.506 추성) */
+  pet2?: PetCarry | null;
   /** 바퀴 끝 보상에서 펫이 나올 수 있나 (게임만 true) */
   petDrops?: boolean;
   /** 낀 장비 합계 (GDD 91장 7번): 없으면 효과 없음 (balance:check 기준 봇은 장비 없음) */
@@ -537,6 +541,7 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     ...(setup.tutorial ? { tutorial: true, tutorialReward: null } : {}),
     ...(setup.tilesLocked ? { tilesLocked: true } : {}),
     ...(setup.pet && !setup.tutorial ? { pet: { id: setup.pet.id, level: setup.pet.level } } : {}),
+    ...(setup.pet2 && !setup.tutorial ? { pet2: { id: setup.pet2.id, level: setup.pet2.level, power: setup.pet2.power ?? 1 } } : {}),
     ...(setup.petDrops && !setup.tutorial ? { petDrops: true, petFinds: [] } : {}),
     ...(setup.gear ? { gear: structuredClone(setup.gear) } : {}),
     ...(setup.gearDrops && !setup.tutorial ? { gearDrops: true, gearFinds: [] } : {}),
@@ -909,6 +914,7 @@ function startBattleAt(
   if (so.guard > 0) params.damageTakenMultiplier = (params.damageTakenMultiplier ?? 1) * Math.max(0, 1 - so.guard);
   // 펫 공격 (GDD 241-D 4): 데리고 간 펫이 전투에서 같이 때린다 (튜토리얼 원정은 펫을 싣지 않는다)
   params.petAttack = petAttackOf(exp.pet);
+  params.petAttack2 = petAttackOf(exp.pet2); // 2번째 칸 펫 (C.506 추성)
   // 장비 (GDD 91장 4번): 능력치·치명·계열 블록 피해·치명 피해·시작 보호막, 강적·보스면 강적 피해
   applyGearToParams(params, exp.gear, cls === 'elite' || bossId !== null);
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서

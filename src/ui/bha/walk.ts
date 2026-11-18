@@ -3,7 +3,7 @@
 import type { ExpeditionPhase } from '../../engine/expedition';
 import type { ArtUrls } from '../../data/art/manifest';
 import { bindAnim, type AnimPlayer } from './animPlayer';
-import { el, icon } from './dom';
+import { el, emptyArtMark, icon } from './dom';
 import { sceneBgEl } from './sceneBg';
 import type { SceneBg } from '../../data/art/backgrounds';
 
@@ -55,6 +55,9 @@ export function walkScene(walkAnim: string | undefined, label: string, art: ArtU
     body.append(img);
     anim = bindAnim(walker, img, art);
     anim?.setLoop('idle');
+  } else if (art?.empty) {
+    walker.classList.add('is-empty'); // 그림 없는 초월자 (C.505): 빈 자리 표시
+    body.append(emptyArtMark());
   } else body.append(el('span', 'bha-walker__eye'), el('span', 'bha-walker__foot bha-walker__foot--back'), el('span', 'bha-walker__foot bha-walker__foot--front'));
   // 발밑·잔상 꾸밈 자리 (GDD 25-9): 입었을 때만 cosmetics.css 가 보인다. 그림자는 몸보다 먼저(아래 층) — 캐릭터를 덮지 않게 (C.190, GDD 117장 5)
   walker.append(el('span', 'bha-walker__trail'), el('span', 'bha-walker__shadow'), body);
