@@ -5,3 +5,11 @@
 | 파일 | 크기 | 쓰임 | 확정 | 만든 법 |
 |---|---|---|---|---|
 | `hollow-jo-basic.png` | 48×48 | 호로 '조' 기본 블록 이펙트 (발톱 세 줄 상처) | 2026-11-19 04:1x "1번가고 십자가 빼" | pixelfx `custom/icon-claw`(`scripts/pixelfx/custom/custom/icon-claw.js`) 프레임 6, 색 손질 없음 |
+
+## 아이콘 배치 도구
+
+62×62 블록 사각형 안에서 아이콘 크기·자리를 맞추는 도구(사용자 2026-11-19 "아이콘 사이즈랑 위치 조정할 수 있는 아이콘 배치 툴을 만들어"): https://claude.ai/artifact/H6gv6opJ5fjwwDzP1DEHvT — 원본 `tool/block-icon-place.html`(그림은 data URI 로 박혀 있다. 아이콘·사각형이 늘면 FRAMES·ICONS 목록에 더해 같은 주소로 다시 올린다). 사용자가 [값 복사]로 준 값이 확정 값.
+
+## 후보 (아직 확정 아님)
+
+`candidates/frame62r20-*.png` — 블록 기본 사각형 62×62, 모서리 반지름 20, 테 3줄. d1 = 이중선(흰 줄·빈 줄·음영 줄), d2 = 입체 테(흰 두 줄 + 음영 한 줄, 네 변 가운데 작은 세모). fill = 안을 (55,47,56) 으로 채움, line = 테만.

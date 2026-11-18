@@ -1,0 +1,93 @@
+<title>블록 아이콘 배치 도구</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 배치: 왼쪽 큰 확대 미리보기(끌어서 옮김), 오른쪽 조절 칸. 폰 폭에서는 위아래로 쌓인다. 게임 도구라 어두운 한 가지 모습만 쓴다. */
+:root{--bg:#141012;--panel:#1f191c;--line:#3b3035;--fg:#efe7da;--dim:#a8998f;--accent:#ff8a2a;--accent-ink:#1a1110;
+  --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:20px;margin:0;font-weight:800}
+.sub{color:var(--dim);margin:0;font-size:13px}
+.cols{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.stage{flex:0 1 372px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.panel{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+#big{width:100%;max-width:372px;aspect-ratio:1/1;image-rendering:pixelated;touch-action:none;cursor:grab;border:1px solid var(--line);border-radius:6px;
+  background:repeating-conic-gradient(#221b1e 0 25%,#1a1517 0 50%) 0 0/24px 24px}
+.small{display:flex;gap:14px;align-items:flex-end;color:var(--dim);font-size:12px}
+.small canvas{image-rendering:pixelated;display:block}
+.small div{display:flex;flex-direction:column;gap:4px;align-items:center}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--dim)}
+.row{display:flex;gap:8px;align-items:center}
+.row input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.row input[type=number]{width:64px;font:14px var(--mono);font-variant-numeric:tabular-nums;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px}
+select,button,input[type=file]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;max-width:100%}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+#out{font:13px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;white-space:pre-wrap;word-break:break-all;user-select:all;margin:0}
+#msg{color:var(--accent);font-size:13px;min-height:1.5em}
+</style>
+<div class="wrap">
+  <h1>블록 아이콘 배치 도구</h1>
+  <p class="sub">62×62 블록 사각형 안에서 아이콘의 크기와 자리를 맞춥니다. 큰 그림을 끌어서 옮기고, 다 맞추면 값을 복사해 Claude에게 붙여 주세요.</p>
+  <div class="cols">
+    <div class="stage">
+      <canvas id="big" width="62" height="62" aria-label="확대 미리보기, 끌어서 아이콘 옮기기"></canvas>
+      <div class="small">
+        <div><canvas id="c1" width="62" height="62" style="width:62px;height:62px"></canvas>1배</div>
+        <div><canvas id="c2" width="62" height="62" style="width:124px;height:124px"></canvas>2배</div>
+      </div>
+    </div>
+    <div class="panel">
+      <label>사각형<select id="frame"></select></label>
+      <label>아이콘<select id="icon"></select></label>
+      <label>내 PNG로 바꿔 보기 (이 화면에서만)<input type="file" id="file" accept="image/png"></label>
+      <label>크기 (px, 아이콘 한 변)<span class="row"><input type="range" id="sizeR" min="8" max="62" step="1"><input type="number" id="size" min="8" max="62" step="1"></span></label>
+      <label>가로 자리 (가운데에서 오른쪽 +)<span class="row"><input type="range" id="xR" min="-31" max="31" step="1"><input type="number" id="x" min="-31" max="31" step="1"></span></label>
+      <label>세로 자리 (가운데에서 아래 +)<span class="row"><input type="range" id="yR" min="-31" max="31" step="1"><input type="number" id="y" min="-31" max="31" step="1"></span></label>
+      <div class="btns"><button id="center" type="button">가운데로</button><button id="orig" type="button">원래 크기</button><button id="copy" type="button" class="primary">값 복사</button></div>
+      <pre id="out"></pre>
+      <div id="msg" role="status"></div>
+    </div>
+  </div>
+</div>
+<script>
+const FRAMES=[{"id": "d1-fill", "name": "이중선 · 채움", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAA+CAYAAABzwahEAAABuElEQVR4nO2bMXKDMBBFFyYNV6DmIGlzh3T2AXyUHCDpuAMtB3HtK7h0imSVz1oikuUZkHZfCTbs098RmgE1lMn1cr7lXuMRun5ocv7/kvoHKfr69p5z/4eRdaQORLQ43ghlT4djyv2eBtYwT6OrL3YAosT5onwzlP34+owu9plgDVwXD0CM/OoPQsJbyYaQdc3TSETr6QdPoPRehSVY53/yre9gidJEfzWeDkfXpaGnzt1oSOkShH1w7aHkvYmXLk30kz4mL1mIXy/nG7Z3DbC8bHknLk+UnDYjHdBxkXgNLS4JtXxLtN16ewvY1SVeY9qML3XvrK4BteINPsJqbHMEFzVqEzdxbZi4NkxcGyauDRPXholrw8S1YeLaMHFtmLg2TFwbJq4NE9eGiWuj7fqhmafRvTyvFXxT2vVDozfxrQvYCidec7vLrxyJfsVzv/YvCXZdtHqNqfvSJgJxmXoN8tIBHVt5glOvBXyE4XHvrF5Dy4danPFOaqV+qE8Uv0vBmzj/ENu+hPRTtmbYZpw19r79KkWYiV647G3DHQ44TmCxi7HkFdtetljK2Tp19Zm9VC11U+03cCUeSnfp+W0AAAAASUVORK5CYII="}, {"id": "d1-line", "name": "이중선 · 테만", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAA+CAYAAABzwahEAAABXElEQVR4nO2bMRaCMAyGC8+FKzB7KXdnD8PMzqWYuQIjLoYXA/TRFl4hf75NsTRfE2UwKVwi49BPqfeIoaqfRcr64MVSNDWAWFLjeMRsxDfpmjZ7xsehnyi+vQewS1zelMu+Pu8sGecxUFx0AMlVyE+SNsuVYR8yLhl3EHzxVYUlPM4o+TtKE9HyUvrEGE8lWF6DNMHl5bWSv6BfRA3SRNe0U1U/Cyk/i8sLuR5TRyIdVkteU4lL1kq+lG9o589Vc7YJmfXS/3G9wIpDlDnByx024yaOhomjYeJomDgaJo6GiaNh4miYOBomjoaJo2HiaJg4GiaOholDgvCPqTUG/IAVd87p6WbcYq3LsXQuX7N9DhauWrO+1dM6f8flSWiQlw7eytaUdV8T7wItJX9Iz/qdDgBySiFZmtA8jLPr+X318SuKIWT2bHfQVxu44we+FZsP2BHL5KDvOlT7BQtHuYpNO/ZJAAAAAElFTkSuQmCC"}, {"id": "d2-fill", "name": "입체 테 · 채움", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAA+CAYAAABzwahEAAAB3ElEQVR4nO2bMXbDIAxAZV6XXCFzDuI1W4aM3ewD+Cg9QLtl7NCtaw6SOVfImA6t+mSBKDa4Dog/Aib5SM/EMWogktv1co+dYw6b7a6JuX7yxWuJ/sXUhQgeLAl/vJ+nfF4yDsfW2R66AE8hg7g0lX15ew2ZYsT582S1tfvnyfMgdBFu18s9RN47QBKeI8uh8jHSAABD1wOAnQW+BRA7qHRKYcrQ9UnndC2AJO9s/A/ppQiVtxq4dC7CnKHrvfJGujBnaYDvDPXtOCNxjPZaW9QSoAu/Uf+K846co41wB+popXruKc6RUt4APO7P0CVA11HES4s24oq6eFcvHbXiDd3CSkxzCv1RozbiVVwbVVwbVVwbVVwbVVwbasT5Swzj6ywFl5cV8dLk8X92jjPVpcE5Ij1qO8VLey53vZuzxGNf4D0q3Mv4OktGzXbGqeLaqOLaqOLaqOLaqOLaMHgM6nBsi3oc5dA3pZvtrtEb8bW/wFqMxEtNd37KEeBHPPa0f06gq5XqpUXdFW0AIs6jXoI8d6COxtUhlT3kCN3CaLt4V8895aUUR9Qe1HdGnA7ECVJHf4lsii7NQJYqxklZiAOQuBiHkrL8KlXpFc2YKcKI2oK7WmI5l1yLar8AAiLubX8y2x8AAAAASUVORK5CYII="}, {"id": "d2-line", "name": "입체 테 · 테만", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAA+CAYAAABzwahEAAABvUlEQVR4nO2bPXaDMAyAFV6XXqFzD9IjZOjSvXMPw8zOkqFHyEGYuQIjHVrzhCJhjE0TJH3vZUj8k3y2/AjGOkEmQ9+NuX1s4fnl9ZTTPrnxvURjpA7E6sqS8PflmvJ9xTi/v7Gfrx2ApzWVqDSW/fj6LBI1qTPWQjP1gQdh6LtxTV+LFSThLbJLfeeu17b+HQQaBUv9igX4h5UUxrR1M5bskxsASZ798D+k9yJFfsbQd2N4hU6OSFs3I3aJNtAgHcDytKzCb0KFe12i9iC4UPlJnBYcZU0vQR3YkNcU4hQu5CuAx/0bugczV82zHaCzXsUaaMWsuIkwD+BwNzvjLm4NF7eGi1vDxa3h4tYwIy5uPXGFWohuNkqVjox018mGuqZbVGnTlBXXsMOK4Z6k3IjnPsB7VKhXtVSoGTOXM4qLW8PFreHi1nBxa7i4SSw8MfWDAX+YFQcAPacZJbhTjhWArfvwG1etsy6daZ3WOB0JDfLUATuyW09S2sMRCS7R5awl5GPHts0e1Gev47hi6KD07O8RTdmpGYG9knFKJuIAFE7GwZRMvyqRegUwj5gU4YDZhDtPsdzKUZNqfwBIeaHyqnOzzQAAAABJRU5ErkJggg=="}], ICONS=[{"id": "hollow-jo-basic", "name": "호로 조 기본 (발톱 세 줄)", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAKXElEQVR4nO2Zy49cVxHGf1Xn3O55GUdxnKcnbTsBibFYsEACPGNPEuI3JAsWLLCNhEBCAkVCSkD5A0A4BMEGISGhxGHBgkXIY2wnQBw8I1lIoACKkSCvsWMeMsHEsScz3fecYnHuvd3T093jMSCBxJHabbdP3VuPr6q+Uwf+x5f8C4KVrIEN3Jc2i0iSMcMMrBDsK3s1y69VoFSkVKxTIbMeyggoqIiICiogUYjRLPaVWcPSa1FeBfVOfM1JLVPJnIorleslg4AKuvTbzy+Vxvfa+583QBAVUa/iMyfZsNfhmpOaV7wiWkWmY1VQsfQ9v7PxbhWxPvARkpNUUKc4J/R10JoMKB9eYvqtlz73VlJa2nDqUsoMixCbR97fZMtBbtw7QsSiWW/4CIgo4lRczUut5rRW81LzKl5lpb5rygEzzMTMTOyNHbdf4tgseSSPWByUi/M7G5F7J+GVoxAhREK/vSKIV/E1lVrmJPOKjyZxKbelJWOpNP7aDACLRiQa1+8ZhWjkwfJoFqMR+yXk+L7Rq36HCuoFX/NSG8lkpO6lvpSzFGIILaUlAemM8pohFI34+s5Gi3u3QzDyaHkwQjRiL0yfnW5cdZUpMS6COMFlTrKxuhurOWqq8u/JAYBNe0eTqgaDlIfC+7snYeuhVZ9bPsMMC0ZoBWu9dP7Fl5qBZozW8x1r7gNnpxvG7kkAzs1c6btPBX3zrkZASW56/Sg8NztQBlKEQ0zKnzsycY7XHmOhFRfySB7jSketyYCz0w2r8HxidqDyTnG3HBiDPZPgFZxC3eFWibkZlpvlBODuj0LTWGzFxTySB7PQnWdXDSEBuZpkFBJ+/3z35iZeoO7gvZ+F64f40TsbqHllUBMzsBiJi19//yKNgzDzC1rBWnm0vFeRWDUCZfet4LB7ciB7KZvdhgNj4AQygQtPwFDGp8bfYf2p+fUIA59hYOyahAgEyCN5vxwbGIGyI1ZwcJI+mghO4+T8CnkBWXxkYhEB9k2BA0KEpRaIMexlOFOyQe+1IxNJ2deOtg3qswYbUPCeP929uYkT+MQOGFZ4YQ60s/+21/x0I8eKJ3uBWw9DK8DTL0IGNSc1Rfq+145M2NVWLbgKCKmI3rB/LCkz5OCFOX58+iL3XMiSAV2+uW3vaGI5u6bgZ3PAHOz4CCwGwpPvcHkpXm6ZtbrfU9FtYU00b1UInZ1uJDjsmQQM7tnOJ3dsqPTuTMiqaRkQDA5/D3Z+BJoGi5G/L+RcWoyXuqmECOIUF765LbBvqoLo1RgyMALz0438xn2JMpAbvBvhuVOQw60/mx/qPpBUVWrXJLQMzvwg/fvYLBjc9NN57cazgHjBeyceLynSWw7BK4/D83O4r5xxg3QcGAGz4o97J5NHWxGWjAtPXSaYhZjqBNCDMmw5BDnpE6Hb2EoBQZ2KW3h02wIHpqCmqXL58iQ0WMe+ETg73bBN+0rKYEmJE3OAkSfusIy8Vd4vunS1iobXrwOX8EklV2H8cLK2qHblOaBfJVq9E5f1WIBonJ+5wvgLy6Fwrtv7Ww9VJbBct5+c73laE5DLRyYus3uypHJw/ujyXQOaRk8DllGGch1PnoxdUFBBNx0o9u4pmlyp6ireN7DmkYkmVjx400EgQh7h2CxjD748ZmYD2ewKA4rmlVYXHM7NXFnmSRX0/F2NUFUNVybg0WUVpJf3O62ocixEeP2J9ByviKpEC32ZLnQlsYD85WOb4233r0uJ1OXJHobqzQeKHrF/RyJt80+kpz43CzKYsdqRCau83ziUKpcBL57mJws3MlT3Q6r9m94KA1TRuhMYdfzw9MVEA4rV7X0E3ryr0UIF9k4lg+/8TFE9ig+reB/a3Coa/PHx9C3KfV/6EM6rQwaLVxASkHPTjXz9/lHII5/+2n2wlOr+CuWL/TftG6PqnFokn0jqFcCfVvN+ubYeqg5IPHMKhj0bb/zWxsWlsBhi7Ht+ho4IiCAikh5yT4HJE7NVqehe8zsbIfWI7clr4wdTx505BRH++uwVxk/OD2xCy3KsrFrRcF/8jfvHpaV/LLzbWoix3Wt6rWVJfPP+0VRJBDg+BwJ/PbZAo4ci7R4BNA7CHx5L/xEMorHphTeybv5e8p3wyEQof2BLB2k7UVW6GIMNVHyFAWenG6FSqGhef5+5wvjJN2rdQlXX3TVZYLeoOicSZcgefDnrPicLqWE5ldS0Suwr8Gq77stDZ9Y0sasgdNu+UdhdwOHZU1x85gq3/Xx+uNcAalmP2HwoycycgmCcf+YyIaaDftmoBMQ7fOYkW3x02yKZpq77vsOpahXGr1V5KCJQHdQNOD7LhZkrjJ+cH4oxzXtKDxZ7U2hLzv7a0WUN6/aT89I5AC7/7kV83UmdTGD/FNx+GIip5h+fveZJqV/m0eOz/PnYFRon52vlTBPAKa40YNOB0QQdYxld6Kl88a2KOofzjsQ468Wo4vwT8OJpqCnZA78beErra0Dl/ROzuIfOuO7JsVe8E3Gq6NnpxuVEsmjnyvHZlcoLUo7UyyGVE3EXHtl2gT1TcNNheOsoXFeDW0Z46g/D1L2r5yHkazZg/Du7k/IF7y4TTwRx4NIkmsw78dffN9Zu+9FgJsmZYd3Kq6RpdTllFjFh9/ZUbs89BmMZ/OrXcOAAX9v26Iedk8Elt8/Scw+cQB860+4HHaF3issc2ZDXoQu7tlzg4ztT8jmF5+aof/VMvS1UwKVQXrUYjas4p+IuHtl2ESuYZYzw7Cl2ffnMLmjy9uXm23ke1+x9AF+GvvpFCp6j6aDhVF3NSY371kFd4OlZmk++ww3Pv/GeBBNErD3TLGGjgjoR5xSnIsqeqZT0rz4OJ+a49eHf3zpcz4Y33/KNzW9far292IqLg3j/wFV6XQX1iveKr3vq62qybuOIbrT77zCzX5o9/kHben229eYxd/P6IV0/5GUo5Ui6hPCKrzupj2Qysq6u664b1utuGHU32Hc/YGanzV79gm0cdRs3jOiG9UO6fl1d143UdCRTMiftQrGmCEDCvViaCJhhIkh5ixKNyLd3c8eG7XcoaB6sGPFZdcMiHZceZR4ktirqBMfeKfj+5xl/8My4ChpNIhjRLMZIrM4sqwy8+ji/HQVoz4JEkEwly5Ss5rVW89QU0Va0VjO3ZjNYsxVoRSsuHKQciyfYeBXvVfzfHp34Gyrc+fDv72wFazUDzTxY3oppXBgiIZiFaAy8Y1jVgNKIqpJISsZMybyKd4ITRUIk5NHyPFDcC1gsvZcSPxngRJx34kt5VTQaMQ+W55E8j5YvMyASI2s3YMWJrLOBRYitmLxcFhrDLKSzU0wo65CRRMTEEoRCtIAJ0SxKFDEzC0YI0UJJNyLESuW1p2/va9FOHBcsu+cldfd9VeoBRf1X1CEu/dC+YYxGjJEYsGAx5Vjnpd9aq1BPA0o4tA1afiIwrCJ4nd5vc592Ke18Xrm3LA5JaauuXK/l0rtv2apKWocxy4zoNKCH8d2O6CVfyl6L51c1oGtTVwQGv2xV4zvy7FoV///6b1n/BFz5/nLCCNSDAAAAAElFTkSuQmCC"}];
+const $=(id)=>document.getElementById(id);
+const imgs={};
+const load=(src)=>new Promise((res)=>{const i=new Image();i.onload=()=>res(i);i.src=src;});
+const KEY='block-icon-place-v1';
+let store={}; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+let st={size:48,x:0,y:0}, custom=null, native=48;
+const save=()=>{store[$('icon').value]={...st};store._frame=$('frame').value;try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};
+function pos(){return {left:Math.round((62-st.size)/2)+st.x, top:Math.round((62-st.size)/2)+st.y};}
+function draw(){
+  const f=imgs['f:'+$('frame').value], ic=custom||imgs['i:'+$('icon').value]; if(!f||!ic) return;
+  const p=pos();
+  for(const id of ['big','c1','c2']){const c=$(id),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,62,62);g.drawImage(f,0,0);g.drawImage(ic,p.left,p.top,st.size,st.size);}
+  for(const k of ['size','x','y']){$(k).value=st[k];$(k+'R').value=st[k];}
+  $('out').textContent=`아이콘: ${custom?'(올린 PNG)':$('icon').value}\n사각형: ${$('frame').value}\n크기: ${st.size}px (원본 ${native}px)\n자리: 왼쪽 ${p.left}px, 위 ${p.top}px (가운데 기준 x ${st.x}, y ${st.y})`;
+}
+function set(k,v){v=Math.round(Number(v));if(Number.isNaN(v))return;const lim=k==='size'?[8,62]:[-31,31];st[k]=Math.max(lim[0],Math.min(lim[1],v));save();draw();}
+for(const k of ['size','x','y']){$(k).addEventListener('input',e=>set(k,e.target.value));$(k+'R').addEventListener('input',e=>set(k,e.target.value));}
+$('center').onclick=()=>{st.x=0;st.y=0;save();draw();};
+$('orig').onclick=()=>{set('size',native);};
+function pickIcon(){custom=null;const ic=imgs['i:'+$('icon').value];native=ic?ic.naturalWidth:48;st=store[$('icon').value]?{...store[$('icon').value]}:{size:native,x:0,y:0};draw();}
+$('icon').onchange=pickIcon;
+$('frame').onchange=()=>{save();draw();};
+$('file').onchange=(e)=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{custom=await load(r.result);native=custom.naturalWidth;st={size:Math.min(62,native),x:0,y:0};draw();};r.readAsDataURL(f);};
+let drag=null;const big=$('big');
+big.addEventListener('pointerdown',e=>{big.setPointerCapture(e.pointerId);drag={px:e.clientX,py:e.clientY,x:st.x,y:st.y};});
+big.addEventListener('pointermove',e=>{if(!drag)return;const s=big.getBoundingClientRect().width/62;st.x=Math.max(-31,Math.min(31,drag.x+Math.round((e.clientX-drag.px)/s)));st.y=Math.max(-31,Math.min(31,drag.y+Math.round((e.clientY-drag.py)/s)));draw();});
+const end=()=>{if(drag){drag=null;save();}};big.addEventListener('pointerup',end);big.addEventListener('pointercancel',end);
+$('copy').onclick=async()=>{const t=$('out').textContent;try{await navigator.clipboard.writeText(t);$('msg').textContent='복사했습니다. Claude에게 붙여 주세요.';}catch(e){const r=document.createRange();r.selectNodeContents($('out'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('msg').textContent='자동 복사가 막혔습니다. 선택된 글자를 직접 복사해 주세요.';}};
+(async()=>{
+  for(const f of FRAMES){$('frame').add(new Option(f.name,f.id));imgs['f:'+f.id]=await load(f.src);}
+  for(const i of ICONS){$('icon').add(new Option(i.name,i.id));imgs['i:'+i.id]=await load(i.src);}
+  if(store._frame&&imgs['f:'+store._frame])$('frame').value=store._frame;
+  pickIcon();
+})();
+</script>
