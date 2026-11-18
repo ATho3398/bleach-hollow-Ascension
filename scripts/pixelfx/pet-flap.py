@@ -7,20 +7,29 @@ a = np.array(Image.open(src).convert('RGBA')); a[a[..., 3] < 128] = 0; a[..., 3]
 ys, xs = np.where(a[..., 3] > 0)
 a = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]; H, W = a.shape[:2]
 cx = W / 2                                   # 몸통 축 (그림 가운데)
-# 픽셀FX critters/butterfly 와 같은 움직임 (사용자 2026-11-18 "픽셀fx에있는 나비 기반으로 움직여야지"): 3.2초 반복, 128×88 칸 안을 8자 비슷하게 돌아다니고
-# 0~0.95초·1.5~2.55초에 빠른 날갯짓(1초 6.3번)으로 떠오르고 나머지는 편 채 활공. 30fps 중 3장에 1장(한 장 100ms) — 처음 보여 준 GIF 와 같은 박자.
-CW, CH, D, BURSTS, FPS, STEP, BEATS = 128, 88, 3.2, [(0, 0.95), (1.5, 2.55)], 30, 3, 6.3
-assert W + 72 <= CW and H + 30 <= CH + 12, (W, H)
+# 움직임 (사용자 2026-11-18 17:1x "나비 너무 날라다닌다. 위치 옮기면서 나는거는 2초에 1번씩. 안그럴땐 좁은 위치에서 천천히 왔다갔다"):
+# 8초 반복 = 2초 × 4자리. 자리마다 1.4초 머물며 좁게(좌우 ±3칸·위아래 ±1.5칸) 천천히 흔들리고 날개는 느리게 여닫다가,
+# 0.6초 동안 빠른 날갯짓(1초 6.3번, 픽셀FX 나비 박자)으로 다음 자리로 옮겨 간다. 한 장 100ms.
+SPOTS = [(-14, -4), (12, -9), (15, 6), (-10, 8)]
+SEG, MOVE, D, FPS, STEP, BEATS = 2.0, 0.6, 8.0, 30, 3, 6.3
+RX = max(abs(x) for x, _ in SPOTS) + 3; RY = max(abs(y) for _, y in SPOTS) + 2 + 3
+CW, CH = W + 2 * RX + 4, H + 2 * RY + 2; CW += CW % 2; CH += CH % 2
+def phase(t):
+    i = int(t // SEG) % len(SPOTS); u = t % SEG
+    return i, u, (u - (SEG - MOVE)) / MOVE          # 마지막 값 ≥ 0 이면 옮겨 가는 중
 def fold(t):
-    for s, e in BURSTS:
-        if s <= t < e:
-            n = round((e - s) * BEATS); ph = (t - s) / (e - s) * n
-            return 0.14 + 0.86 * (0.5 + 0.5 * math.cos(ph * 2 * math.pi))
-    return 1.0
+    i, u, m = phase(t)
+    if m >= 0:
+        n = round(MOVE * BEATS)
+        return 0.14 + 0.86 * (0.5 + 0.5 * math.cos(m * n * 2 * math.pi))
+    return 0.78 + 0.22 * math.cos(u / (SEG - MOVE) * 2 * math.pi * 2)   # 머무는 동안 느리게 여닫음(1.4초에 두 번)
 def at(t):
+    i, u, m = phase(t); x0, y0 = SPOTS[i]; x1, y1 = SPOTS[(i + 1) % len(SPOTS)]
     A = t / D * 2 * math.pi
-    lift = sum(-3 * math.sin(math.pi * min(1, max(0, (t - s) / (e - s)))) for s, e in BURSTS)
-    return 30 * math.sin(A) + 6 * math.sin(3 * A), 12 * math.sin(2 * A + 0.4) + lift
+    sx, sy = 3 * math.sin(A * 3), 1.5 * math.sin(A * 5 + 0.7)            # 좁게 천천히 왔다갔다 (8초에 3번·5번이라 이음매 없음)
+    if m < 0: return x0 + sx, y0 + sy
+    k = m * m * (3 - 2 * m)
+    return x0 + (x1 - x0) * k + sx, y0 + (y1 - y0) * k + sy - 3 * math.sin(math.pi * m)
 SUB = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]
 frames = []
 for i in range(0, int(D * FPS), STEP):
@@ -42,6 +51,6 @@ for i in range(0, int(D * FPS), STEP):
             if 0 <= sx < W and a[y, sx, 3] and 0 <= ox + X < CW: f[oy + y, ox + X] = a[y, sx]
     frames.append(Image.fromarray(f))
 frames[0].save(out, save_all=True, append_images=frames[1:], duration=round(1000 * STEP / FPS), loop=0, lossless=True)
-c = Image.new('RGBA', (CW * 2 * 4, CH * 2 * 2), (96, 110, 128, 255))
-for i in range(8): c.alpha_composite(frames[i * len(frames) // 8].resize((CW * 2, CH * 2), 0), ((i % 4) * CW * 2, (i // 4) * CH * 2))
+c = Image.new('RGBA', (CW * 2 * 8, CH * 2 * 2), (96, 110, 128, 255))
+for i in range(16): c.alpha_composite(frames[i * len(frames) // 16].resize((CW * 2, CH * 2), 0), ((i % 8) * CW * 2, (i // 8) * CH * 2))
 c.save(out.replace('.webp', '') + '-preview.png'); print(out, W, H, (CW, CH), len(frames), '장')
