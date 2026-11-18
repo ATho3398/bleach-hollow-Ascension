@@ -4,7 +4,7 @@ import { apply, bodyBones, boneMatrices, fxAt, hairRect, insideFrame, jointMoveS
 import { followMove } from './follow';
 import { createFlame, type FlameLayer } from './flame';
 import { createChain, type ChainSpec } from './chain';
-import { encodeGif } from './gifEncode';
+import { encodeGif, zipStore } from './gifEncode';
 import { fxSvg } from '../../src/ui/bha/rigFx';
 
 declare const ART_MAP: Record<string, string>;
@@ -1027,21 +1027,12 @@ async function saveSheet(kind: 'x1' | 'x8') {
 // 지금 외형·지금 동작(안 골랐으면 대기)을 게임과 같은 재생 속도로 한 바퀴(반복 아닌 동작은 끝 자세 0.4초 더) 40ms 마다 찍어 GIF 로 저장.
 // 미리보기에 보이는 그대로(부위·불꽃·사슬, 앞뒤 순서 = z·DOM 순서) — 관절 점·부위 색은 빼고, 배경 = 무대 색, 1도트 = 3픽셀, 그림이 있는 곳만 잘라 냄
 const GIF_STEP = 40, GIF_DOT = 3;
-async function saveGif() {
-  if (recording) return;
-  const dl = typeof claude !== 'undefined' ? await claude.use('downloads').catch(() => null) : null;
-  if (!dl) return setSync('이 화면에서는 GIF 를 받을 수 없음');
-  const ms = motionsNow();
-  const id = motion && ms[motion] ? motion : ms.idle ? 'idle' : null;
-  if (!id) return setSync('동작을 먼저 골라 주세요');
-  const m = ms[id]!;
+/** 동작 하나를 GIF 로(미리보기를 그 동작으로 돌려 찍는다 — 부르는 쪽이 recording·되돌리기를 맡음) */
+async function makeGif(id: string, tag: string): Promise<{ name: string; bin: Uint8Array; n: number; real: number }> {
+  const m = motionsNow()[id]!;
   const speed = motionSpeedOf(rig, id);
   const real = m.duration / speed + (m.loop ? 0 : 400);
   const n = Math.max(2, Math.round(real / GIF_STEP));
-  const btn = $<HTMLButtonElement>('gifbtn');
-  btn.disabled = true;
-  recording = true;
-  const keepMotion = motion, keepMt = mt;
   motion = id;
   const bg = getComputedStyle(stage.parentElement!).backgroundColor || '#9bb094';
   const sw = stage.offsetWidth / K, sh = stage.offsetHeight / K; // 캔버스 칸(도트)
@@ -1053,62 +1044,85 @@ async function saveGif() {
   const imgs = new Map<string, HTMLImageElement>();
   const imgOf = async (src: string) => { let im = imgs.get(src); if (!im) { im = new Image(); im.src = src; imgs.set(src, im); await im.decode().catch(() => undefined); } return im; };
   const frames: Uint8ClampedArray[] = [];
-  try {
-    for (let i = 0; i < n; i++) {
-      setSync(`GIF 만드는 중… ${i + 1}/${n}`);
-      mt = Math.min(m.duration, i * GIF_STEP * speed);
-      draw();
-      stepFlame(i ? GIF_STEP : 0);
-      cx.setTransform(1, 0, 0, 1, 0, 0);
-      cx.fillStyle = bg; cx.fillRect(0, 0, cw, ch);
-      const els = [...stage.children].filter((e): e is HTMLElement => (e instanceof HTMLImageElement && e.classList.contains('part')) || (e instanceof HTMLCanvasElement && !e.hidden));
-      const z = (e: HTMLElement) => { const v = parseInt(e.style.zIndex || getComputedStyle(e).zIndex, 10); return Number.isFinite(v) ? v : 0; };
-      const order = els.map((e, k) => ({ e, k, z: z(e) })).sort((a, b) => a.z - b.z || a.k - b.k);
-      for (const { e } of order) {
-        if (e instanceof HTMLImageElement) {
-          const v = /matrix\(([^)]+)\)/.exec(e.style.transform)?.[1]?.split(',').map(Number);
-          if (!v || v.length !== 6 || !e.src) continue;
-          const im = await imgOf(e.src);
-          if (!im.naturalWidth) continue;
-          cx.setTransform(v[0]! * GIF_DOT, v[1]! * GIF_DOT, v[2]! * GIF_DOT, v[3]! * GIF_DOT, (v[4]! / K + mx) * GIF_DOT, (v[5]! / K + my) * GIF_DOT);
-          cx.globalAlpha = e.style.opacity ? Number(e.style.opacity) : 1;
-          if (cx.globalAlpha < 1) continue; // 편집기 전용 반투명 안내 그림(그림 없는 칼 등)은 빼고
-          cx.drawImage(im, 0, 0);
-        } else {
-          const c = e as HTMLCanvasElement;
-          const px = (s: string) => parseFloat(s) || 0;
-          cx.setTransform(1, 0, 0, 1, 0, 0);
-          cx.globalAlpha = 1;
-          cx.drawImage(c, (px(c.style.left) / K + mx) * GIF_DOT, (px(c.style.top) / K + my) * GIF_DOT, (px(c.style.width) / K) * GIF_DOT, (px(c.style.height) / K) * GIF_DOT);
-        }
+  for (let i = 0; i < n; i++) {
+    setSync(`${tag}GIF 만드는 중… ${id} ${i + 1}/${n}`);
+    mt = Math.min(m.duration, i * GIF_STEP * speed);
+    draw();
+    stepFlame(i ? GIF_STEP : 0);
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.globalAlpha = 1;
+    cx.fillStyle = bg; cx.fillRect(0, 0, cw, ch);
+    const els = [...stage.children].filter((e): e is HTMLElement => (e instanceof HTMLImageElement && e.classList.contains('part')) || (e instanceof HTMLCanvasElement && !e.hidden));
+    const z = (e: HTMLElement) => { const v = parseInt(e.style.zIndex || getComputedStyle(e).zIndex, 10); return Number.isFinite(v) ? v : 0; };
+    const order = els.map((e, k) => ({ e, k, z: z(e) })).sort((a, b) => a.z - b.z || a.k - b.k);
+    for (const { e } of order) {
+      if (e instanceof HTMLImageElement) {
+        const v = /matrix\(([^)]+)\)/.exec(e.style.transform)?.[1]?.split(',').map(Number);
+        if (!v || v.length !== 6 || !e.src) continue;
+        if (e.style.opacity && Number(e.style.opacity) < 1) continue; // 편집기 전용 반투명 안내 그림(그림 없는 칼 등)은 빼고
+        const im = await imgOf(e.src);
+        if (!im.naturalWidth) continue;
+        cx.setTransform(v[0]! * GIF_DOT, v[1]! * GIF_DOT, v[2]! * GIF_DOT, v[3]! * GIF_DOT, (v[4]! / K + mx) * GIF_DOT, (v[5]! / K + my) * GIF_DOT);
+        cx.drawImage(im, 0, 0);
+      } else {
+        const c = e as HTMLCanvasElement;
+        const px = (q: string) => parseFloat(q) || 0;
+        cx.setTransform(1, 0, 0, 1, 0, 0);
+        cx.drawImage(c, (px(c.style.left) / K + mx) * GIF_DOT, (px(c.style.top) / K + my) * GIF_DOT, (px(c.style.width) / K) * GIF_DOT, (px(c.style.height) / K) * GIF_DOT);
       }
-      cx.globalAlpha = 1;
-      frames.push(cx.getImageData(0, 0, cw, ch).data);
-      if (i % 5 === 4) await new Promise((r) => setTimeout(r, 0));
     }
-    // 그림이 있는 곳(배경과 다른 칸)만 잘라 냄 + 여백 2도트
-    const b0 = frames[0]!; let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
-    for (const f of frames) for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
-      const o = (y * cw + x) * 4;
-      if (f[o] !== b0[0] || f[o + 1] !== b0[1] || f[o + 2] !== b0[2]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    frames.push(cx.getImageData(0, 0, cw, ch).data);
+    if (i % 5 === 4) await new Promise((r) => setTimeout(r, 0));
+  }
+  // 그림이 있는 곳(배경과 다른 칸)만 잘라 냄 + 여백 2도트
+  const b0 = frames[0]!; let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+  for (const f of frames) for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const o = (y * cw + x) * 4;
+    if (f[o] !== b0[0] || f[o + 1] !== b0[1] || f[o + 2] !== b0[2]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) { x0 = 0; y0 = 0; x1 = cw - 1; y1 = ch - 1; }
+  const pad = GIF_DOT * 2;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(cw - 1, x1 + pad); y1 = Math.min(ch - 1, y1 + pad);
+  const gw = x1 - x0 + 1, gh = y1 - y0 + 1;
+  const cut = frames.map((f) => { const d = new Uint8ClampedArray(gw * gh * 4); for (let y = 0; y < gh; y++) d.set(f.subarray(((y + y0) * cw + x0) * 4, ((y + y0) * cw + x0 + gw) * 4), y * gw * 4); return { data: d, delayCs: GIF_STEP / 10 }; });
+  setSync(`${tag}GIF 묶는 중… ${id}`);
+  await new Promise((r) => setTimeout(r, 0));
+  return { name: `${look}-${id}.gif`, bin: encodeGif(gw, gh, cut), n, real };
+}
+/** all = 이 캐릭터(지금 외형)의 모든 동작을 각각 GIF 로 만들어 ZIP 하나로(사용자 2026-11-19 "이거랑, 이 캐릭터 모든 gif받기도 만들어") */
+async function saveGif(all = false) {
+  if (recording) return;
+  const dl = typeof claude !== 'undefined' ? await claude.use('downloads').catch(() => null) : null;
+  if (!dl) return setSync('이 화면에서는 GIF 를 받을 수 없음');
+  const ms = motionsNow();
+  const ids = all ? Object.keys(ms) : [motion && ms[motion] ? motion : ms.idle ? 'idle' : ''].filter(Boolean);
+  if (!ids.length) return setSync('동작을 먼저 골라 주세요');
+  const btns = [$<HTMLButtonElement>('gifbtn'), $<HTMLButtonElement>('gifall')];
+  btns.forEach((b) => (b.disabled = true));
+  recording = true;
+  const keepMotion = motion, keepMt = mt;
+  try {
+    const out: { name: string; bin: Uint8Array; n: number; real: number }[] = [];
+    for (const [k, id] of ids.entries()) out.push(await makeGif(id, all ? `(${k + 1}/${ids.length}) ` : ''));
+    if (all) {
+      setSync('ZIP 저장 중…');
+      const zip = zipStore(out.map((g) => ({ name: g.name, data: g.bin })));
+      await dl.save({ filename: `${look}-gifs.zip`, data: new Blob([zip as Uint8Array<ArrayBuffer>], { type: 'application/zip' }) });
+      setSync(`${look}-gifs.zip 저장함 (동작 ${out.length}개: ${ids.join(', ')})`);
+    } else {
+      const g = out[0]!;
+      setSync('GIF 저장 중…');
+      await dl.save({ filename: g.name, data: new Blob([g.bin as Uint8Array<ArrayBuffer>], { type: 'image/gif' }) });
+      setSync(`${g.name} 저장함 (${g.n}장 · ${(g.real / 1000).toFixed(1)}초)`);
     }
-    if (x1 < 0) { x0 = 0; y0 = 0; x1 = cw - 1; y1 = ch - 1; }
-    const pad = GIF_DOT * 2;
-    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(cw - 1, x1 + pad); y1 = Math.min(ch - 1, y1 + pad);
-    const gw = x1 - x0 + 1, gh = y1 - y0 + 1;
-    const cut = frames.map((f) => { const d = new Uint8ClampedArray(gw * gh * 4); for (let y = 0; y < gh; y++) d.set(f.subarray(((y + y0) * cw + x0) * 4, ((y + y0) * cw + x0 + gw) * 4), y * gw * 4); return { data: d, delayCs: GIF_STEP / 10 }; });
-    setSync('GIF 저장 중…');
-    const bin = encodeGif(gw, gh, cut);
-    const name = `${look}-${id}.gif`;
-    await dl.save({ filename: name, data: new Blob([bin as Uint8Array<ArrayBuffer>], { type: "image/gif" }) });
-    setSync(`${name} 저장함 (${n}장 · ${(real / 1000).toFixed(1)}초)`);
   } catch (e) {
     const code = (e as { code?: string }).code;
     setSync(code === 'declined' ? 'GIF 저장 안 함' : code === 'rate_limited' ? '저장 창이 이미 떠 있음 — 잠시 뒤 다시' : 'GIF 만들기 실패');
   } finally {
-    motion = keepMotion; mt = keepMt; recording = false; btn.disabled = false; draw();
+    motion = keepMotion; mt = keepMt; recording = false; btns.forEach((b) => (b.disabled = false)); draw();
   }
 }
+$('gifall').onclick = () => void saveGif(true);
 $('gifbtn').onclick = () => void saveGif();
 $('sheet1').onclick = () => void saveSheet('x1');
 $('sheet8').onclick = () => void saveSheet('x8');
