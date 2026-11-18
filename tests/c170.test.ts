@@ -32,7 +32,8 @@ describe('C.170 방·독', () => {
   const room = read('src/ui/roomView.ts');
   it('방 위 이름+트랙 줄 삭제 → 트랙 전환은 더보기 칸 "○○ 트랙", 이름은 상태 칩 위', () => {
     expect(room).not.toContain("sw.dataset.sc = 'track-switch'");
-    expect(room).toContain(': `${getFaction(t.factionId).name} 트랙`'); // C.429: 초월자는 '초월자 ○○'
+    // C.498 (GDD 12-1 v6.129): 더보기의 캐릭터마다 칸 → [캐릭터 변경] 한 칸 + 카드 창 (전환은 여전히 더보기에서, 방 위 줄 없음)
+    expect(room).toContain("{ label: CHARACTER_PICK_LABEL, icon: 'i-swap', onClick: hd.onCharacters }");
     expect(room).toContain("paintStatusBox(statusBtn, chips, nameTag, '상태 보기: ')"); // C.318: 공용 부품 statusBox
     expect(read('src/ui/bha/statusBox.ts')).toContain('if (nameTag) box.prepend(nameTag);');
   });

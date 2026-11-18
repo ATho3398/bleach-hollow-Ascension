@@ -39,7 +39,7 @@ const RENDER: Record<string, (dev: Device, f: FactionConfig, save: SaveData) => 
 function roomHandlers(): RoomHandlers {
   return {
     // 붕옥(onHogyoku)은 게임에선 등장 뒤에만 서지만 도구에선 늘 보여 자리를 잡게 한다 (C.419)
-    onBook: noop, onChest: noop, onStatus: noop, onSwitchTrack: null, onHogyoku: noop, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
+    onBook: noop, onChest: noop, onStatus: noop, onCharacters: noop, onSwitchTrack: null, onHogyoku: noop, onSettings: noop, onHelp: noop, onShop: noop, onPhoto: noop,
     onTamago: noop, onBackup: null, onTest: null, onTitle: noop, persist: noop, resume: null, resumeNote: '', onOutside: noop, onTraining: noop,
   };
 }
