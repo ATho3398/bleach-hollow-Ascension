@@ -144,3 +144,15 @@ describe('C.501 방 먹이 줄 종류 (GDD 4-4 v6.130)', () => {
     expect(dock).not.toMatch(/=== '(hollow|shinigami)'/);
   });
 });
+
+describe('C.502 캐릭터 카드 초월자 그림', () => {
+  it('초월자 카드는 그 초월자 진짜 그림만(transcendentArt) — 진화체 그림을 빌리지 않는다', () => {
+    const picker = read('src/ui/characterPicker.ts');
+    expect(picker).toContain('if (!t.transcendentId) return trackArt(t);');
+    expect(picker).toContain('return transcendentArt(true, tryGetTranscendent(t.transcendentId));');
+    // transcendentArt = 데이터 art 키 그림·조각 모델일 때만 그림, 아니면 아이콘 자리 표시
+    const hv = read('src/ui/hogyokuView.ts');
+    expect(hv).toMatch(/if \(art\?\.src && \(art\.src\.includes\(MOSAIC_MARK\) \|\| \(def\?\.art && art\.src\.includes/);
+    expect(TRANSCENDENTS.some((d) => !d.art && !d.model)).toBe(true); // 그림 없는 초월자가 아직 있다 (유하바하 등) — 그 카드는 자리 표시
+  });
+});

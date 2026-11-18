@@ -5,14 +5,14 @@
 // 플레이어 문구에는 '트랙'을 쓰지 않는다 (12-1).
 import { BALANCE } from '../config/balance';
 import { FACTIONS, getFaction } from '../data/factions';
-import { TRANSCENDENTS } from '../data/transcendents';
+import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { allTracks, characterTracks, noEvolutionLabel, trackIdOf, trackNameOf, trackRulesOf, type SaveData, type TrackKey } from '../game';
 import { button, el, icon } from './bha/dom';
 import { dexCard } from './bha/dexGrid';
 import { edgeCue, enableDragScrollX, revealInRow } from './bha/dragScroll';
 import { trapModalFocus } from './bha/modalFocus';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
-import { trackArt } from './hogyokuView';
+import { trackArt, transcendentArt } from './hogyokuView';
 
 type Track = Pick<SaveData, TrackKey>;
 
@@ -101,7 +101,7 @@ export function characterPickerDialog(save: SaveData, onSwitch: (trackId: string
   note.setAttribute('role', 'status');
   const btns = cards.map((c) => {
     const marks = el('span', 'bha-charpick__sub', c.sub);
-    const art = c.track ? trackArt(c.track) : lockArt();
+    const art = c.track ? cardArt(c.track) : lockArt();
     const b = dexCard({
       name: c.name,
       art,
@@ -165,4 +165,11 @@ function lockArt(): HTMLElement {
   const box = el('span', 'bha-dexart is-silhouette');
   box.append(icon('i-lock'));
   return box;
+}
+
+/** 카드 그림 (C.502 마스터 확인): 캐릭터 = 지금 진화 외형·스킨(합체 창과 같은 trackArt).
+ *  초월자 = 그 초월자의 진짜 그림(데이터 art·조각 모델)만 — 없으면 자리 표시 아이콘. 진화체 그림을 빌려 보이지 않는다(초월자 도감 transcendentArt 와 같은 규칙) */
+function cardArt(t: Track): HTMLElement {
+  if (!t.transcendentId) return trackArt(t);
+  return transcendentArt(true, tryGetTranscendent(t.transcendentId));
 }
