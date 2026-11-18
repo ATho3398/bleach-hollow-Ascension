@@ -10,6 +10,7 @@
 | `block-frame-fill.png` · `block-frame-line.png` | 62×62 | 블록 기본 사각형 (모서리 반지름 20, 테 3줄 = 흰 두 줄 + 음영 한 줄, 장식 없음). fill = 안을 (55,47,56) 으로 채움, line = 테만 | 2026-11-19 04:1x "b안으로 하는데 세모장식은 빼" — 채움/테만 중 어느 쪽인지는 아직 안 정함 | 코드로 그림 |
 | `hollow-fangs.png` | 48×48 | 호로 이빨 위아래 — 사용자 말은 "이빨은 호로 조"(발톱도 '호로 조 기본'이라 조/교 중 어느 블록인지 확인 필요) | 2026-11-19 04:4x | pixelfx `custom/icon-fangs`(= `custom/bite` 좁은 배치) 프레임 6 |
 | `shinigami-gwi-basic.png` | 48×48 | 사신 '귀' 기본 블록 — 하늘색 에너지볼(번개무늬 없음, 사선) | 2026-11-19 04:4x "번개무늬 지우고 하늘색 디자인을, 사신 귀로 넣어" | pixelfx `custom/icon-orb`(= `projectiles/plasma-shot` 에서 번개무늬를 뺀 `custom/_plasma-plain`, 45°) 프레임 2 |
+| `shinigami-cham-basic.png` | 48×48 | 사신 '참' 기본 블록 — 날에 베인 자국 한 줄(얇게) | 2026-11-19 05:1x "날에 베인 자국 … 그걸 사신 참으로 넣어" | pixelfx `custom/icon-cut`(= `melee/claw-swipe` 의 상처 한 줄, 두께 5.5) 프레임 5 |
 
 ## 아이콘 배치 도구
 
@@ -21,7 +22,7 @@
 
 `candidates/chain2-plate.png`(134×68, 금색) · `chain3-plate.png`(200×68, 주황) — 체인으로 이어진 블록 2·3개 뒤에 까는 한 덩어리 판(사용자 2026-11-19 "블록끼리 연결되는 식으로"). 블록 간격 4px·판이 블록보다 3px 넓다는 가정으로 그림(간격은 미정). `chain-row-1x.png` = 1개·체인2·체인3 을 나란히 놓은 모습.
 
-`candidates/basic/*.png` — 아직 확정 아닌 기본 블록 아이콘 후보 48×48: katana = 기본 캐릭터의 칼 `core/rig.js WEAPONS.sword` 를 얇게(`custom/icon-katana`, 프레임 0) · cut = `melee/claw-swipe` 의 상처 한 줄(`custom/icon-cut`, 프레임 5) · fist = `fire/fireball` 불덩이 머리에 쥔 주먹 스프라이트(`custom/icon-fist`, 프레임 10 — 사용자 참고 그림 "이런거 그리라고": 불꽃 꼬리를 끄는 주먹). **확정 안 된 그림은 배치 도구에 넣지 않는다**(사용자 "확정 안난거 니맘대로 툴에 넣지마").
+`candidates/basic/*.png` — 아직 확정 아닌 아이콘 후보 48×48: fist = `fire/fireball` 불덩이 머리에 쥔 주먹 스프라이트(`custom/icon-fist`, 프레임 10 — 사용자 참고 그림: 불꽃 꼬리를 끄는 주먹) · cero-green = `custom/cero`(일반 세로)를 검정 빔 + 초록 테두리로, 왼쪽 아래 한 점에서 오른쪽 위로 45°(`custom/icon-cero`, 프레임 7 — 사용자 "검정에 초록 테두리로 한 점에서 시작하는 사선 줄 하나"). 일본도 후보는 뺐다(사용자 "일본도 말고 날에 베인 자국"). **확정 안 된 그림은 배치 도구에 넣지 않는다**(사용자 "확정 안난거 니맘대로 툴에 넣지마").
 
 `candidates/elements/*.png` — 속성 색별 블록 사각형 `frame-<속성>.png`(62×62)과 체인 판 `chain2-`·`chain3-<속성>.png`(사용자 "속성에 맞는 색깔별 블록도 만들어봐"). 색 = 지금 게임의 속성 색(`--bha-attr-*`), 허는 임시 보라. 그리는 코드 `scripts/block-icons/frames.py`.
 

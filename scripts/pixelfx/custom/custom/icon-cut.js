@@ -1,4 +1,4 @@
-// 블록 아이콘 — 칼로 벤 상처 (사용자 2026-11-19 "칼로 벤듯한 상처가 난 아이콘"). 정지 그림 = 프레임 5(상처가 다 열리고 식기 시작).
+// 블록 아이콘 — 칼로 벤 상처 = 사신 "참" 기본 블록 (사용자 2026-11-19 "칼로 벤듯한 상처가 난 아이콘" → 05:1x "날에 베인 자국 … 두께 더 얇게 … 사신 참으로 넣어", 두께 9.5 → 5.5). 정지 그림 = 프레임 5(상처가 다 열리고 식기 시작).
 // 호로 조 기본(custom/icon-claw)과 같은 상처 그리기(melee/claw-swipe 의 렌즈) — 긴 한 줄, 발톱과 반대 방향(왼쪽 위 → 오른쪽 아래), 피가 흘러내린다.
 // The shaded smear and dotted trace follow Sprite Fusion's open-source slash (MIT, Copyright (c) 2026 Hugo Duprez), via melee/claw-swipe.
 import { Particles, Bits, Lights, P, B, Rng, fit, clamp, smooth, ease } from "../../core/index.js";
@@ -6,7 +6,7 @@ import { through, onSwing, travel, smear, trace, glowAlong } from "../melee/_lib
 export const meta = { name: "Icon: blade cut", desc: "One long clean cut across a 48px square, white-hot cooling to red, bleeding.", tags: ["icon", "cut", "slash", "wound"],
   size: [48, 48], origin: [24, 24], duration: 0.9, loop: false, fps: 30, bg: "none",
   options: { palette: ["#2a0808", "#5c0f12", "#a51d1d", "#e2401f", "#ff8a2a", "#ffd166", "#fff3c4", "#ffffff"], sparks: ["#fff3c4", "#ffd166", "#ff8a2a", "#c42a1a"], seed: 3 } };
-const RAKE = 0.05, CLOSE0 = 0.22, CLOSE = 0.3, W = 9.5;
+const RAKE = 0.05, CLOSE0 = 0.22, CLOSE = 0.3, W = 5.5;
 export function create(o) {
   const C = fit(o.palette, 8), n = C.length, Rg = new Rng(o.seed), floor = () => 999;
   const ps = new Particles({ rng: Rg, ground: floor, sparks: o.sparks }), drips = new Bits({ ground: floor }), lights = new Lights();
