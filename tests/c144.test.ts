@@ -89,7 +89,7 @@ describe('90장 펫 데이터 (가칭)', () => {
     expect(addPetLaps(st, 'pet-gold', 25)).toEqual({ from: 1, to: 3 });
     expect(carriedPet(st)).toEqual({ id: 'pet-gold', level: 3 });
     expect(pickNewPet(st, () => 0)).toBe('pet-belly');
-    expect(sanitizePets({ owned: { 'pet-gold': { laps: -3, gotAt: 'x' }, bad: { laps: 1 } }, active: 'pet-seek', gifted: 1 })).toEqual({ owned: { 'pet-gold': { laps: 0, gotAt: 0 } }, active: null, gifted: false });
+    expect(sanitizePets({ owned: { 'pet-gold': { laps: -3, gotAt: 'x' }, bad: { laps: 1 } }, active: 'pet-seek', gifted: 1 })).toEqual({ owned: { 'pet-gold': { laps: 0, gotAt: 0 } }, active: null, active2: null, gifted: false });
   });
 });
 
@@ -235,14 +235,14 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([92, 87]); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([93, 87]); // C.500 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);
     addPetLaps(s.shared.pets, 'pet-guard', 31);
     const raw = JSON.parse(JSON.stringify(s));
     const m = migrateSave(raw)!;
-    expect(m.shared.pets).toEqual({ owned: { 'pet-guard': { laps: 31, gotAt: 1 } }, active: 'pet-guard', gifted: false });
+    expect(m.shared.pets).toEqual({ owned: { 'pet-guard': { laps: 31, gotAt: 1 } }, active: 'pet-guard', active2: null, gifted: false });
     expect(m.runLog.pets).toHaveLength(1);
     raw.shared.pets = { owned: { 'pet-x': {} }, active: 'pet-x' };
     expect(migrateSave(JSON.parse(JSON.stringify(raw)))!.shared.pets).toEqual(newPetState());

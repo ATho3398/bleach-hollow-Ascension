@@ -10,10 +10,11 @@ import { statName } from '../data/elements';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName } from '../engine/evolution';
 import { carryOfItems, enhanceCost, equippedSlotOf, findGear, gearScore, gearStatsOf, sellGold, type GearItem } from '../engine/gear';
-import { artSkinOf, noEvolutionLabel, statBonusOf, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, noEvolutionLabel, petSlotsOf, statBonusOf, type SaveData, artTierIndexOf } from '../game';
+import { evoExtraPetPower } from '../data/evolution/uniques';
 import {
   autoEquipGear, bulkSellGear, bulkSellTargets, consumableName, enhanceGearItem, equipGearItem, gearKindName, gearName, gearSlotName, gearSpecialText, gearStatText,
-  choosePet, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
+  choosePet, choosePet2, petSlotOf, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
 } from '../inventory';
 import { affinityOf } from '../engine/pet';
 import { petArtSrc, petIconId, type PetArtFaction } from './bha/pet';
@@ -225,15 +226,18 @@ export function petCardArt(id: string, faction?: PetArtFaction): HTMLElement {
 export function openPet(faction: FactionConfig, save: SaveData, id: string, changed: () => void): void {
   const o = save.shared.pets.owned[id];
   if (!o) return;
-  const on = save.shared.pets.active === id;
+  const slot = petSlotOf(save, id);
+  const on = slot !== 0;
   const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
+  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.500): 같이 공격만(피해 배율), 다른 효과는 1번째 칸만
+  const second = slot === 2 ? `2번째 칸 — 같이 공격만 한다(피해 ${Math.round(evoExtraPetPower(save.evolution.formId, save.factionId ?? '') * 100)}%).` : '전투에서 같이 공격한다.';
   let close: () => void = () => {};
   close = itemDialog({
     heading: '펫', name: petName(id, faction), art: petCardArt(id, faction), lock: locked,
-    desc: [`${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, '전투에서 같이 공격한다.', petAffinityText(save, id)].join('\n'),
+    desc: [`${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, second, petAffinityText(save, id)].join('\n'),
     actions: [{
       key: on ? 'leave' : 'take', label: () => (on ? '두고 가기' : '데리고 가기'), variant: on ? 'ghost' : 'primary', disabled: locked !== null,
-      onClick: () => { close(); if (choosePet(save, on ? null : id)) changed(); },
+      onClick: () => { close(); if (slot === 2 ? choosePet2(save, null) : choosePet(save, on ? null : id)) changed(); },
     }],
   });
 }
@@ -336,8 +340,24 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     ui.tab = 'pet';
     redraw('slot:pet');
   };
+  // 2번째 펫 칸 (GDD 8-7 1차 추성 펫 칸 +1, C.500): 진화체에 칸이 있을 때만 보인다
+  const pet2Btn = petOpen && petSlotsOf(save) >= 2 ? (() => {
+    const pid2 = save.shared.pets.active2;
+    const b = h('button', `bha-eqslot bha-eqslot--pet${pid2 ? '' : ' is-empty'}`);
+    b.type = 'button';
+    b.dataset.slot = 'pet2';
+    b.dataset.drag = 'slot';
+    b.append(pid2 ? petCardArt(pid2, faction) : icon('i-care-pet'), h('span', 'bha-eqslot__name', pid2 ? shownName(petName(pid2, faction)) : '펫 2'));
+    b.setAttribute('aria-label', `펫 2: ${pid2 ? petName(pid2, faction) : '비어 있음'}`);
+    b.onclick = () => {
+      if (pid2) return openPet(faction, save, pid2, changedAt('slot:pet2'));
+      ui.tab = 'pet';
+      redraw('slot:pet2');
+    };
+    return b;
+  })() : null;
   const colL = h('div', 'bha-eqcol');
-  colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn);
+  colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn, ...(pet2Btn ? [pet2Btn] : []));
   const colR = h('div', 'bha-eqcol');
   colR.append(...(['acc1', 'acc2', 'acc3'] as GearSlot[]).map(slotBtn), battleBtn);
   const figure = h('div', 'bha-eqfigure');
@@ -373,7 +393,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   edgeCue(tabs, tabs.querySelector<HTMLElement>('.is-on'), hd.signal); // 넘친 쪽 끝 흐림 + 고른 탭이 보이게 (GDD 243장 4)
   // 펫 탭 (GDD 241-D 3 — 가방 위 '펫' 탭을 이리로): 가진 펫 카드, 누르면 데리고 가기/두고 가기. 첫 환생 전에는 잠김 한 줄
   const petCards = ui.tab !== 'pet' || !petOpen ? [] : inventoryOf(save, faction).filter((e) => e.category === 'pet').map((e) => {
-    const on = save.shared.pets.active === e.id;
+    const on = petSlotOf(save, e.id) !== 0;
     const card = itemCard({
       id: e.id, name: e.name, detail: petEffectText(e.id, affinityOf(save.shared.pets.owned[e.id]?.laps ?? 0)), art: petCardArt(e.id, faction),
       badge: on ? '동행 중' : undefined, state: on ? 'worn' : undefined,
@@ -470,6 +490,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
         const s = n.dataset.slot;
         if (s === 'battle') return save.shared.battleItem ? { kind: 'slot', id: s } : null;
         if (s === 'pet') return save.shared.pets.active ? { kind: 'slot', id: s } : null;
+        if (s === 'pet2') return save.shared.pets.active2 ? { kind: 'slot', id: s } : null;
         return g.equipped[s as GearSlot] ? { kind: 'slot', id: s } : null;
       }
       return null;
@@ -479,13 +500,15 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       const to = target?.dataset.slot;
       let ok = false;
       if (src.kind === 'pet' && to === 'pet') ok = choosePet(save, src.id);
-      else if (src.kind === 'gear' && to && to !== 'battle' && to !== 'pet') {
+      else if (src.kind === 'pet' && to === 'pet2') ok = choosePet2(save, src.id);
+      else if (src.kind === 'gear' && to && to !== 'battle' && to !== 'pet' && to !== 'pet2') {
         const it = findGear(g, src.id);
         if (it && GEAR_SLOT_KIND[to as GearSlot] === it.kind) ok = equipGearItem(save, src.id, to as GearSlot) !== null;
       } else if (src.kind === 'battle' && to === 'battle' && battleOpen) ok = setBattleItem(save, src.id);
       else if (src.kind === 'slot' && target?.classList.contains('bha-eqright')) {
         if (src.id === 'battle') ok = setBattleItem(save, null);
         else if (src.id === 'pet') ok = choosePet(save, null);
+        else if (src.id === 'pet2') ok = choosePet2(save, null);
         else {
           const uid = g.equipped[src.id as GearSlot];
           ok = !!uid && unequipGearItem(save, uid);

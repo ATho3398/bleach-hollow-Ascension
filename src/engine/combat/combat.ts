@@ -158,6 +158,8 @@ export interface CombatParams {
   activeGear: ActiveGearEffect | null;
   /** 펫 공격 (GDD 241-D 4, C.397 provisional): 데리고 간 펫이 seconds 마다 기본 공격 1회 × fraction 피해. 없으면 펫 공격 없음 (튜토리얼·각본 전투는 쉼) */
   petAttack?: { petId: string; seconds: number; fraction: number } | null;
+  /** 2번째 칸 펫 공격 (GDD 8-7 1차 추성 펫 칸 +1, C.500): 같은 방식, fraction 에 그 칸 피해 배율(70%)이 이미 곱해져 있다 */
+  petAttack2?: { petId: string; seconds: number; fraction: number } | null;
   gearCooldownSeconds: number;
   gearStartCooldown: number;
   /** 강공격 배율: heavyInAttacks × 이 값 (101장 추가 결정 5번). 연속 강공격은 한 타마다 heavyChainHitMultiplier */
@@ -835,7 +837,7 @@ export type CombatEvent =
   /** 장비 발동 (GDD 105장 수정 4): shield = 방패 초, burst = 준 피해 */
   | { kind: 'gear'; id: string; effect: ActiveGearEffect['effect']; damage: number }
   /** 펫 공격 한 번 (GDD 241-D 4) */
-  | { kind: 'pet-attack'; petId: string; damage: number }
+  | { kind: 'pet-attack'; petId: string; damage: number; second?: boolean }
   /** 해방이 풀렸다: 리스크 게이지 상승량. endless = 리스크 소모형 모드가 끝났다 */
   | { kind: 'liberation-end'; risk: number; endless?: boolean }
   /** 보스 페이즈가 바뀌었다 (GDD 25-3): 새 페이즈 번호(2부터) */
@@ -945,6 +947,8 @@ export interface CombatState {
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   /** 다음 펫 공격까지 남은 틱 (params.petAttack 이 있을 때만, GDD 241-D 4) */
   petTimer?: number;
+  /** 2번째 칸 펫 다음 공격까지 남은 틱 (C.500) */
+  petTimer2?: number;
   tray: Tray;
   nextUid: number;
   /** 다음 블록 생성까지 남은 틱 (GDD 84장 6번, C.136): 생성 타이머는 하나, 나올 때마다 출현표(spawnTableOf)에서 뽑는다 */
@@ -2001,10 +2005,10 @@ function basicAttack(s: CombatState): void {
 }
 
 /** 펫 공격 한 번 (GDD 241-D 4): 기본 공격 1회 × fraction, 속성 없는 상성(방어만). 치명·물공 버프 없음 */
-function petAttack(s: CombatState, pa: NonNullable<CombatParams['petAttack']>): void {
+function petAttack(s: CombatState, pa: NonNullable<CombatParams['petAttack']>, second = false): void {
   const damage = unitDamage(s.params) * pa.fraction * plainHitMultiplier(s) * (s.params.evo ? 1 + evoStat(s, 'petPower') : 1);
   if (damage <= 0) return;
-  emit(s, { kind: 'pet-attack', petId: pa.petId, damage });
+  emit(s, { kind: 'pet-attack', petId: pa.petId, damage, ...(second ? { second: true } : {}) });
   dealDamage(s, damage, { kind: 'pet', traitId: null, element: null });
 }
 
@@ -3601,6 +3605,16 @@ function advanceTick(s: CombatState): void {
       if (s.status !== 'playing') return;
     }
   }
+  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.500): 제 간격으로 같이 공격 — 첫 공격은 반 간격 늦게(두 마리가 겹쳐 치지 않게)
+  const pa2 = p.petAttack2;
+  if (pa2 && !s.script && !cineHold) {
+    s.petTimer2 ??= t(pa2.seconds * 1.5);
+    if (--s.petTimer2 <= 0) {
+      s.petTimer2 = t(pa2.seconds);
+      petAttack(s, pa2, true);
+      if (s.status !== 'playing') return;
+    }
+  }
   // 적: 시전 중이면 강공격 대기, 아니면 기본 공격 + 패턴의 특수 행동(강공격 예고 / 봉인 / 방어 자세)
   const e = s.enemy;
   const pattern = e.def.pattern;
@@ -3706,8 +3720,9 @@ registerEvoApi({
     const els = element ? [element] : [];
     return p.basicBlockPowerInAttacks * unitDamage(p) * playerHitMultiplier(s, els, PLAYER_BLOCK_CATEGORY, ignore).mult;
   },
-  strike(s, amount, text, element) {
-    const { damage } = playerHit(s, amount, false, element ? [element] : []);
+  strike(s, amount, text, element, exact) {
+    // exact (C.500): 이미 정해진 피해(막은 양·방금 평타 피해 비율) — 치명·특성 배율을 다시 붙이지 않는다 (섬뢰각 분신 '같은 피해')
+    const damage = exact ? amount : playerHit(s, amount, false, element ? [element] : []).damage;
     if (text) emit(s, { kind: 'evo-proc', text, damage });
     dealDamage(s, damage, { kind: 'special', traitId: null, element });
   },

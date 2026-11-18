@@ -64,7 +64,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     }
   });
   it('세이브 형식 73: 72 → 73 = 옛 장비·낀 칸 그대로 + 3번째 장신구 칸 null', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(92); // C.406 쇠약 시계·터치·숨은 모습
+    expect(SAVE_FORMAT_VERSION).toBe(93); // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', 0);
     s.shared.gear.items.push({ uid: 'g1', kind: 'accessory', grade: 'rare', star: 1, stats: { spr: 3 }, special: null, plus: 1, gotAt: 1 });
     s.shared.gear.equipped.acc2 = 'g1';
@@ -74,7 +74,7 @@ describe('241-D 1·2 장비 통일 · 장신구 3칸', () => {
     SAVE_MIGRATIONS[72]!(raw);
     expect(raw.shared.gear.equipped.acc3).toBeNull();
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(92);
+    expect(m.meta.format).toBe(93);
     expect(m.shared.gear.items.map((i) => i.uid)).toEqual(['g1']);
     expect(m.shared.gear.equipped).toMatchObject({ acc2: 'g1', acc3: null });
   });
@@ -84,7 +84,7 @@ describe('241-D 3·6·8 화면', () => {
   it('펫 = 장비 탭 안 분류·칸 (가방 위 펫 탭 없음), 탭은 좁히지 않고 가로 드래그', () => {
     const eq = read('src/ui/equipView.ts');
     expect(eq).toContain("const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'pet'];");
-    expect(eq).toContain("colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn);");
+    expect(eq).toContain("colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn, ...(pet2Btn ? [pet2Btn] : []));"); // C.500 2번째 펫 칸(추성)
     expect(eq).toContain("colR.append(...(['acc1', 'acc2', 'acc3'] as GearSlot[]).map(slotBtn), battleBtn);");
     expect(eq).toContain('enableDragScroll(tabs, hd.signal);');
     expect(read('src/ui/lcdScreens.ts')).not.toContain("{ id: 'pet', label: '펫'");

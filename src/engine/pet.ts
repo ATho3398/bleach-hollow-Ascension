@@ -20,6 +20,8 @@ export interface PetState {
   owned: Record<string, OwnedPet>;
   /** 데리고 다니는 펫 (없으면 null) */
   active: string | null;
+  /** 2번째 펫 칸 (진화체 펫 칸 +1 — GDD 8-7 1차 추성, C.500 형식 93). 칸이 없는 진화체면 null (game.ts syncPetSlots) */
+  active2: string | null;
   /** 첫 진화 선물을 받았나 */
   gifted: boolean;
 }
@@ -28,10 +30,12 @@ export interface PetState {
 export interface PetCarry {
   id: string;
   level: number;
+  /** 피해 배율 (2번째 칸 펫 — 진화체 extraPetPower, 없으면 1) */
+  power?: number;
 }
 
 export function newPetState(): PetState {
-  return { owned: {}, active: null, gifted: false };
+  return { owned: {}, active: null, active2: null, gifted: false };
 }
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -43,7 +47,8 @@ export function sanitizePets(raw: unknown): PetState {
   const owned: Record<string, OwnedPet> = {};
   if (isRec(r.owned)) for (const [id, v] of Object.entries(r.owned)) if (isPetId(id) && isRec(v)) owned[id] = { laps: nonNeg(v.laps), gotAt: nonNeg(v.gotAt) };
   const active = typeof r.active === 'string' && owned[r.active] ? r.active : null;
-  return { owned, active, gifted: r.gifted === true };
+  const active2 = typeof r.active2 === 'string' && owned[r.active2] && r.active2 !== active ? r.active2 : null;
+  return { owned, active, active2, gifted: r.gifted === true };
 }
 
 /** 바퀴 누계 → 친밀도 1~5 */
@@ -79,7 +84,7 @@ export function petBonus(pet: PetCarry | null | undefined, key: PetBonusKey): nu
 /** 펫 공격 값 (GDD 241-D 4, C.397 provisional): 간격 attack.seconds, 피해 = 기본 공격 × attack.fraction × 친밀도 배율. 펫이 없으면 null */
 export function petAttackOf(pet: PetCarry | null | undefined): { petId: string; seconds: number; fraction: number } | null {
   if (!pet || !getPet(pet.id)) return null;
-  return { petId: pet.id, seconds: PX.attack.seconds, fraction: PX.attack.fraction * affinityMult(pet.level) };
+  return { petId: pet.id, seconds: PX.attack.seconds, fraction: PX.attack.fraction * affinityMult(pet.level) * (pet.power ?? 1) };
 }
 
 /** 지금 데리고 다니는 펫 (원정 출발 때 복사) */
@@ -87,6 +92,13 @@ export function carriedPet(state: PetState): PetCarry | null {
   const id = state.active;
   const o = id ? state.owned[id] : undefined;
   return id && o ? { id, level: affinityOf(o.laps) } : null;
+}
+
+/** 2번째 칸 펫 (power = 그 칸 피해 배율). 칸이 열렸는지는 부르는 쪽(game.ts carriedPetsOf)이 본다 */
+export function carriedPet2(state: PetState, power = 1): PetCarry | null {
+  const id = state.active2;
+  const o = id ? state.owned[id] : undefined;
+  return id && o ? { id, level: affinityOf(o.laps), power } : null;
 }
 
 /** 펫을 얻는다. 이미 있으면 false */
@@ -100,7 +112,17 @@ export function grantPet(state: PetState, id: string, at: number): boolean {
 export function setActivePet(state: PetState, id: string | null): boolean {
   if (id !== null && !state.owned[id]) return false;
   if (state.active === id) return false;
+  if (id !== null && state.active2 === id) state.active2 = state.active; // 2번째 칸 펫을 1번째로 = 서로 바꾼다
   state.active = id;
+  return true;
+}
+
+/** 2번째 칸 데리고 가기(id) / 두고 가기(null). 1번째 칸 펫이면 서로 바꾼다 */
+export function setActivePet2(state: PetState, id: string | null): boolean {
+  if (id !== null && !state.owned[id]) return false;
+  if (state.active2 === id) return false;
+  if (id !== null && state.active === id) state.active = state.active2;
+  state.active2 = id;
   return true;
 }
 

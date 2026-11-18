@@ -15,7 +15,7 @@ import { changeItems } from './bha/changeNote';
 import { changedKeys } from './bha/gaugeBlink';
 import { roomCharArt } from './bha/room';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
-import { choosePet, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
+import { choosePet, choosePet2, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
 import { battleSlotName, equipTab, equipTitle, gearArt, openGear } from './equipView';
@@ -791,7 +791,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: on ? 'take' : 'leave', label: () => (on ? '데리고 가기' : '두고 가기'), variant: on ? 'primary' : 'ghost', disabled: e.lock !== null,
       onClick: () => {
         close();
-        if (choosePet(save, on ? e.id : null)) changed(); // 데리고 다님·두고 감 알림은 뺐다 (GDD 233장 5)
+        if (!on && save.shared.pets.active2 === e.id ? choosePet2(save, null) : choosePet(save, on ? e.id : null)) changed(); // 데리고 다님·두고 감 알림은 뺐다 (GDD 233장 5) · 2번째 칸(C.500)
       },
     });
   } else if (e.action === 'equip' || e.action === 'unequip') {

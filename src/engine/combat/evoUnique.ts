@@ -88,8 +88,8 @@ export interface EvoApi {
   extraBasic(s: CombatState): void;
   /** 추가 피해 1단위: basic = 평타 1회 · block = 기본 블록 1단계 · void = 공허 블록 1개 (element 속성, ignore 방어 무시) */
   unitOf(s: CombatState, basis: 'basic' | 'block' | 'void', element: string | null, ignore: number): number;
-  /** 추가 피해를 넣는다 (치명·특성 배율 포함, 화면 사건) */
-  strike(s: CombatState, damage: number, text: string, element: string | null): void;
+  /** 추가 피해를 넣는다 (치명·특성 배율 포함, 화면 사건). exact = 이미 정해진 피해 그대로(치명·배율 다시 안 붙임 — raw·last) */
+  strike(s: CombatState, damage: number, text: string, element: string | null, exact?: boolean): void;
   /** 바의 index 블록이 지금 무슨 속성인가 (허 = void) */
   elementOf(s: CombatState, b: Block): string | null;
   /** 처형 (강적·보스 제외는 부르는 쪽이 본다) */
@@ -272,7 +272,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
   for (const a of rule.do) {
     if (s.status !== 'playing') return;
     const v = (x: EvoNum | undefined, d = 0) => evoNum(s, x, d);
-    const val = () => v(a.value, 1) * perValue(s, a.per, ctx);
+    const val = () => v(a.value, 1) * perValue(s, a.per, ctx) * (a.grow ? 1 + v(a.grow.value) * perValue(s, a.grow.per, ctx) : 1);
     switch (a.act) {
       case 'add': addStack(s, a.stack!, val()); break;
       case 'mul': setStack(s, a.stack!, (ev.stacks[a.stack!]?.n ?? 0) * v(a.value, 1)); break;
@@ -306,7 +306,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         for (let k = 0; k < n; k++) {
           if (a.block === 'draw') api().spawnDraw(s);
           else if (a.block === 'make') api().spawnMade(s, a.element ?? null, a.family ?? null);
-          else spawnSpecial(s, a.block!);
+          else spawnSpecial(s, a.block!, !!a.force);
         }
         break;
       }
@@ -328,7 +328,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
       case 'hit': {
         const basis = a.basis ?? 'basic';
         const amount = basis === 'raw' ? val() : basis === 'last' ? ctx.damage * val() : api().unitOf(s, basis, a.element ?? null, v(a.ignoreDef)) * val();
-        if (amount > 0) api().strike(s, amount, rule.proc ?? '', a.element ?? null);
+        if (amount > 0) api().strike(s, amount, rule.proc ?? '', a.element ?? null, basis === 'raw' || basis === 'last');
         break;
       }
       case 'basics': {
@@ -365,6 +365,17 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         if (!b) break;
         const i = s.tray.findIndex((x) => x.uid === b.uid);
         if (i >= 0) s.tray.splice(i, 1);
+        break;
+      }
+      case 'absorbBar': {
+        let n = 0;
+        for (let i = s.tray.length - 1; i >= 0; i--) {
+          const x = s.tray[i]!;
+          if (x.fixed || api().elementOf(s, x) !== a.element) continue;
+          s.tray.splice(i, 1);
+          n++;
+        }
+        ctx.consumed = n;
         break;
       }
       case 'useSpecial': {
@@ -599,7 +610,9 @@ export function evoStat(s: CombatState, stat: EvoStat): number {
 }
 
 function passiveValue(s: CombatState, p: EvoPassive, ctx: EvoCtx): number {
-  const raw = evoNum(s, p.value) * perValue(s, p.per, ctx);
+  const step = p.step !== undefined ? evoNum(s, p.step, 1) : 0;
+  const per = perValue(s, p.per, ctx);
+  const raw = evoNum(s, p.value) * (step > 0 ? Math.floor(per / step + 1e-9) : per);
   return p.max !== undefined ? Math.min(evoNum(s, p.max), raw) : raw;
 }
 
@@ -643,11 +656,18 @@ export function evoSpecialUsable(s: CombatState, b: Block | undefined): boolean 
   return true;
 }
 
-/** 특수 블록 놓기 (maxOnBar 를 넘으면 안 놓음) */
-function spawnSpecial(s: CombatState, id: string): boolean {
+/** 특수 블록 놓기 (maxOnBar 를 넘으면 안 놓음). force = 바가 가득이면 맨 오른쪽 옛 블록(고정 칸 아님)을 밀어낸다 */
+function spawnSpecial(s: CombatState, id: string, force = false): boolean {
   const d = s.params.evo?.ability.specials?.[id];
   if (!d) return false;
   if (d.maxOnBar !== undefined && s.tray.filter((b) => specialIdOf(b) === id).length >= evoNum(s, d.maxOnBar, Infinity)) return false;
+  if (force && s.tray.length >= s.params.trayCapacity) {
+    for (let i = s.tray.length - 1; i >= 0; i--) {
+      if (s.tray[i]!.fixed) continue;
+      s.tray.splice(i, 1);
+      break;
+    }
+  }
   return api().place(s, { kind: 'skill', traitId: EVO_TRAIT_PREFIX + id, family: null, element: null, solo: true }) !== null;
 }
 
