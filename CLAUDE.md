@@ -44,7 +44,6 @@ src/version.ts       PATCH_LABEL / STAGE_LABEL
 
 # 작업 규칙
 
-- 모든 답변 맨 끝에 `명령 시각 / 답변 시각 / 걸린 시간`을 KST로 적는다(`TZ=Asia/Seoul date`, 턴 시작 직후와 답변 직전에 잰다). 세션 간 메시지에도 붙인다.
 - **사용량 절약(2026-10-20)**: `docs/GDD.md`·`docs/dev-log.md` 전체를 읽지 않는다 — 지시된 절만 grep으로 찾아 부분 읽기(`docs/GDD-archive-v5.md` 는 옛 장을 꼭 확인해야 할 때만). 옛 패치 기록은 `docs/dev-log-archive.md`. 캡처는 1배·10장 이내, 테스트는 작업 중 관련 파일만. 자세한 규칙은 `docs/automation.md` 6장.
 - 세션 운영·모델 선택(코딩 세션 기본 Opus)·막혔을 때 규칙은 `docs/automation.md`를 따른다.
 - **기획서 19절 로드맵에서 사용자가 시작하라고 하지 않은 새 시스템은 구현하지 않는다.**
