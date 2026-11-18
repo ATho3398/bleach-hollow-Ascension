@@ -1,11 +1,11 @@
-// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 제비나비 실루엣(긴 앞날개·꼬리 달린 뒷날개)·새까만 날개·흰 날개맥·자주색 띠로 바꿈(2026-11-18 "명암만 빼. 검은 부분 싹다 시커매도 돼 … 날개 내부 선을 흰색으로").
-// 사용자 2026-11-18 "그 나비 블리치의 지옥나비처럼 검정으로" · "제비나비 계열 … 실루엣 변경" · 무늬 참고 그림 2장. 게임에는 아직 안 붙임(색·모양 시안).
+// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 그대로 두고 색만 검정·보라로, 뒷날개에 꼬리만 달았다.
+// 사용자 2026-11-18 "그 나비 블리치의 지옥나비처럼 검정으로" → "원래거에서 날개 꼬리 모양만 바꾸자"(제비나비 실루엣·흰 날개맥 판은 버림). 게임에는 아직 안 붙임.
 import { fit, mix, clamp, wrap, lerp, cycle, sparkle, TAU } from "../../core/index.js";
 import { Grid, shift } from "../critters/_lib.js";
 
 export const meta = {
   name: "Hell Butterfly",
-  desc: "A black swallowtail (hell butterfly): long swept forewings, scalloped hindwings with tails, red crescents and a pale patch, wandering a loop in bursts of wingbeats and glides.",
+  desc: "An iridescent butterfly wanders a loop in bursts of quick wingbeats and open-winged glides, its veined, spotted wings shedding a twinkling trail of glowing dust.",
   tags: ["custom", "critter", "butterfly", "swallowtail", "black", "insect", "flying", "magic", "glow", "loop"],
   size: [128, 88],
   origin: [64, 44],
@@ -14,17 +14,17 @@ export const meta = {
   fps: 30,
   bg: "sky",
   options: {
-    palette: ["#000000", "#000000", "#000000", "#000000", "#000000", "#6a6876", "#f4f0f4"],
-    spots: ["#3a0828", "#9a1860", "#d8308a", "#ffc0e0"],
+    palette: ["#050308", "#120c18", "#1b1424", "#241a30", "#2e223c", "#6a4690", "#d9bcff"],
+    spots: ["#200818", "#5a1e52", "#9a48a0", "#e8c8ff"],
     seed: 1,
   },
 };
 
-const D = meta.duration, GRID = new Grid(-28, -22, 56, 47);
+const D = meta.duration, GRID = new Grid(-22, -20, 44, 46);
 // the right wings, unfolded, in px from the wing root (y forward is negative)
-const FORE = [[0, -1], [4, -8], [10, -13.5], [17, -16], [22, -15], [22.5, -11], [19, -5], [11, 0], [3, 1.5]];
-// scalloped edge, then a tail hanging from the middle of the hindwing
-const HIND = [[0, 1], [6, 1], [11, 2.5], [13, 5.5], [11.5, 7], [12.5, 9.5], [10.5, 10.5], [10.5, 13], [8.8, 13.3], [9, 19], [7.4, 20.5], [6, 19], [6.4, 14], [4.2, 13.5], [3.4, 11], [1, 8]];
+const FORE = [[0, -1], [3, -6], [8, -11], [13, -12.5], [16.5, -10.5], [16.5, -6], [13, -1.5], [7, 1], [2, 1.5]];
+// 뒷날개: 원래 모양 + 아래로 뻗은 꼬리(제비나비)
+const HIND = [[0, 1], [6, 1.5], [11, 4], [12.5, 8.5], [10.5, 12.5], [9.2, 13.4], [9.4, 19], [7.8, 20.5], [6.4, 19], [6.6, 13.6], [3, 11], [0.5, 6]];
 
 // flight: bursts of wingbeats (rising) and glides (sinking), wandering round a loop
 const BURSTS = [[0, 0.95], [1.5, 2.55]];
@@ -69,21 +69,29 @@ function edgeDist(pts, x, y) {
   return m;
 }
 
-// a wing's pattern: black all over, faint lighter streaks fanning to the forewing's edge, dark veins,
-// red crescents inside the hindwing's scallops and a pale patch at its leading edge
+// a wing's pattern at an unfolded point: dark at the root, iridescent blue brightest along the leading edge,
+// thin dark veins, a black apex dotted white on the forewing, a gold eyespot on the hindwing
+const FSPOTS = [[13.2, -10.2], [15.2, -8.4], [14.6, -5.6], [11.6, -11.4]];
 function wingColor(C, Sp, hind, u, v) {
   const pts = hind ? HIND : FORE, e = edgeDist(pts, u, v), r = Math.hypot(u, v), ang = Math.atan2(v, u);
   if (e < 1) return C[0];
   if (!hind) {
-    // flat black, white veins fanning from the root
-    if (r > 5 && e > 1.6 && Math.abs(Math.sin(ang * 11 + 0.4)) > 0.93) return C[6];
-    return C[0];
+    if (u + v * -0.45 > 14.2 || (r > 12.5 && v < -4)) {
+      for (const [sx, sy] of FSPOTS) if (Math.hypot(u - sx, v - sy) < 0.9) return C[6];
+      return C[0];
+    }
+  } else {
+    if (e < 2 && r > 8) return Math.sin(ang * 10) > 0.5 ? C[5] : C[1];
+    const d = Math.hypot(u - 7.6, v - 9.4);
+    if (d < 0.7) return C[6];
+    if (d < 1.4) return C[0];
+    if (d < 2.2) return Sp[2];
   }
-  if (v > 13.6) return C[0]; // the tail
-  // a magenta band along the outer margin
-  if (e < 2.8 && r > 8.5 && v > 3.5 && u > 6.5) return e < 1.9 ? Sp[2] : Sp[1];
-  for (const va of [0.5, 1.0, 1.45]) if (Math.abs(ang - va) * r < 0.45 && r > 3.5 && e > 1.6) return C[6];
-  return C[0];
+  for (const va of hind ? [0.5, 1.0, 1.45] : [-1.2, -0.75, -0.3]) if (Math.abs(ang - va) * r < 0.45 && r > 3.5) return C[1];
+  if (r < 3) return C[2];
+  if (r < 6) return C[3];
+  if (!hind && e < 2.4 && v < -3) return C[5];
+  return C[4];
 }
 
 function butterfly(g, C, Sp, w, t) {
@@ -91,7 +99,7 @@ function butterfly(g, C, Sp, w, t) {
   for (const s of [-1, 1])
     for (const hind of [true, false]) {
       const pts = hind ? HIND : FORE;
-      g.shade(-26, -18, 26, 23, (x, y) => {
+      g.shade(-20, -15, 20, 23, (x, y) => {
         if (Math.sign(x + 0.001) !== s) return 0;
         const u = (Math.abs(x) - 1) / w, v = y;
         if (u < 0 || !inPoly(pts, u, v)) return 0;
@@ -116,7 +124,7 @@ function butterfly(g, C, Sp, w, t) {
 export function draw(p, time, o) {
   const t = shift(time, D, o.seed), C = fit(o.palette, 7), Sp = fit(o.spots, 4), S = at(t), w = fold(t);
   // a trail of glowing dust shaken off the wings, drifting down and twinkling out
-  cycle(t, D, 22, o.seed * 7 + 1, (r) => r.range(1, 1.8), (age, L, r, i) => {
+  cycle(t, D, 56, o.seed * 7 + 1, (r) => r.range(1, 1.8), (age, L, r, i) => {
     const born = wrap(t - age, D), B = at(born), k = age / L;
     if (!flapping(born) && r.chance(0.45)) return;
     const x = B.x + r.range(-9, 9) + Math.sin(age * 3 + i) * 1.5, y = B.y + r.range(-4, 8) + 7 * age + 3 * age * age;
@@ -128,4 +136,7 @@ export function draw(p, time, o) {
   const g = GRID;
   butterfly(g, C, Sp, w, t);
   g.draw(p, 1, S.x, S.y);
+  // the wings shine: a soft blue light round it, brighter when they open
+  p.glow(S.x, S.y, 38, C[4], 0.16 + 0.14 * w);
+  p.glow(S.x, S.y, 12, C[5], 0.12 + 0.1 * w);
 }
