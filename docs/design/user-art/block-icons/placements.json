@@ -1,11 +1,24 @@
 {
-  "_설명": "배치 도구에서 사용자가 [값 복사]로 준 확정 값. 62×62 블록 안에서 아이콘의 크기(px, 한 변)와 왼쪽·위 자리(px). chain 1 = 블록 1개, 2·3 = 체인 단계.",
-  "hollow-jo-basic": {
-    "confirmedAt": "2026-11-19 04:4x KST",
-    "chain": {
-      "1": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 },
-      "2": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 },
-      "3": { "icon": "hollow-jo-basic", "size": 48, "left": 10, "top": 9 }
+  "_설명": "배치 도구 [저장] 값(db placements/current)을 옮겨 적은 것. 62×62 블록 안에서 그림마다 크기(px, 한 변)·회전(도)·가운데에서의 자리 x,y(px). 왼쪽 = (62-size)/2 + x, 위 = (62-size)/2 + y. 최신 값은 도구 db 가 기준.",
+  "savedAt": "2026-11-19 05:11 KST",
+  "place": {
+    "hollow-jo-basic": {
+      "size": 48,
+      "rot": 0,
+      "x": 3,
+      "y": 2
+    },
+    "hollow-gyo-basic": {
+      "size": 48,
+      "rot": 0,
+      "x": 0,
+      "y": 1
+    },
+    "shinigami-gwi-basic": {
+      "size": 48,
+      "rot": 0,
+      "x": 4,
+      "y": -4
     }
   }
 }
