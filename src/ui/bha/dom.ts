@@ -49,6 +49,13 @@ export function icon(id: string, size?: IconSize, extraCls = ''): SVGSVGElement 
   return svg;
 }
 
+/** 빈 자리 표시 (GDD 12-4, C.505): 그림 없는 초월자의 몸 자리 — 카드 창(bha-dexart + 진화 아이콘)과 같은 표시. 진화체 그림을 빌리지 않는다 */
+export function emptyArtMark(): HTMLElement {
+  const box = el('span', 'bha-dexart bha-emptyart');
+  box.append(icon('i-evolve', 'lg'));
+  return box;
+}
+
 export interface ButtonOpts {
   label?: string;
   variant?: 'primary' | 'danger' | 'ghost';

@@ -31,6 +31,8 @@ export function isFemaleRigLook(look: string): boolean {
 export const MOSAIC_LOOK_PREFIX = 'mosaic:';
 const MOSAIC_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 export const MOSAIC_MARK = '#mosaic=';
+/** 빈 자리 외형 (GDD 12-4, C.505): 그림 없는 초월자 — 진화체 그림을 빌리지 않고 자리 표시(ArtUrls.empty). artSkinOf 가 돌려준다 */
+export const EMPTY_LOOK = 'empty:';
 /** 몸 그림 표시 주소: 1×1 투명 그림 + 표시. 화면 관찰자가 이 주소를 단 그림을 찾아 합성 그림으로 바꾼다 */
 export function mosaicSrc(transcendentId: string): string {
   return `${MOSAIC_BLANK}${MOSAIC_MARK}${transcendentId}`;
@@ -75,6 +77,8 @@ export interface ArtUrls {
   headTop?: number;
   /** 프레임 레이어 (ArtEntry.layers): 몸 뒤·몸 앞 프레임 주소(재생 순서) · 프레임당 ms */
   layers?: { back: string[]; front: string[]; ms: number; live?: string };
+  /** 빈 자리 (EMPTY_LOOK, C.505): 그림 없는 초월자 — 화면은 카드 창과 같은 자리 표시(아이콘 칸)를 그린다 */
+  empty?: true;
 }
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
@@ -338,6 +342,7 @@ export function charArt(factionId: string, tierIndex: number, fallbackKey: strin
     return null;
   };
   // 모델 고르기 전용 외형 (C.434, GDD 17절 v6.036): 단계 모델 = 그 단계 기본 그림(스킨 없이, :m/:f 면 그 성별 고정) · 초월자 외형 = 초월자 데이터의 그림 키/조각 모델
+  if (skinId === EMPTY_LOOK) return { src: null, frames: null, scale: 1, offsetY: 0, empty: true };
   const tierLook = parseTierLookId(skinId);
   if (tierLook) return charArt(factionId, tierLook.tier - 1, fallbackKey, base, manifest, files, null, overrides, tierLook.gender ?? gender);
   const trLook = transcendentOfLook(skinId);
@@ -405,6 +410,18 @@ export function transcendentSkinHasArt(lookId: string, files: readonly string[] 
   const rig = k ? manifest[k]?.rig : undefined;
   if (rig && rigPackOfLook(rig)) return true; // 종이인형 모델 (C.465)
   return !!k && (findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
+}
+
+/** 외형이 자기 그림으로 풀리나 (C.505, GDD 12-4): 조각 모델 · 인간형 스킨 파일/종이인형 · 초월자 외형 · 그림 키(종이인형·한 장·idle 폴더, 여성 키 포함).
+ *  false 면 charArt 가 진화체 그림·자리 표시 인형으로 떨어지는 외형 — 초월자 트랙은 대신 EMPTY_LOOK */
+export function lookHasOwnArt(look: string, files: readonly string[] = ART_FILES, manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST): boolean {
+  if (look.startsWith(MOSAIC_LOOK_PREFIX)) return !!tryGetTranscendent(look.slice(MOSAIC_LOOK_PREFIX.length))?.model;
+  if (transcendentSkinOfLook(look)) return transcendentSkinHasArt(look, files, manifest);
+  const tr = transcendentOfLook(look);
+  if (tr) return lookHasOwnArt(tr.art ?? `${MOSAIC_LOOK_PREFIX}${tr.id}`, files, manifest);
+  const rig = manifest[look]?.rig;
+  if (rig && rigPackOfLook(rig)) return true;
+  return [look, look + FEMALE_KEY_SUFFIX].some((k) => findArtFile(k, files) !== null || frameFiles(k, 'idle', files).length > 0);
 }
 
 export function skinHasArt(skinId: string, manifest: Readonly<Record<string, ArtEntry>> = ART_MANIFEST, files: readonly string[] = ART_FILES): boolean {

@@ -25,7 +25,7 @@ import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from './data/transcendents';
 import { DEFAULT_TRACK_KIND, getTrackKind, type TrackKindConfig } from './data/trackKinds';
-import { MOSAIC_LOOK_PREFIX } from './data/art/manifest';
+import { EMPTY_LOOK, lookHasOwnArt, MOSAIC_LOOK_PREFIX } from './data/art/manifest';
 import { allTranscendentsOwned, decideTranscendent, transcendentForPair, HOGYOKU_TRACK_IDS, hogyokuProgress, slotStatBonus, trackCostSum, trackStepCost, type FusionInput, type HogyokuCost, type HogyokuTrackId } from './engine/transcend';
 import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
@@ -3419,12 +3419,13 @@ export function sanitizeWear(raw: unknown, owned: readonly string[]): WearState 
 /** 스킨 입기/벗기 (GDD 26-5·25-9). 이 종족이 입을 수 없거나 보유(상점에서 산 것)하지 않은 스킨이면 false(바뀌지 않는다). null = 기본(진화체)으로 되돌리기 */
 /** 그림에 쓰는 스킨 id: 입은 스킨이 먼저, 없으면 진화 때 정해진 단계 외형 (GDD 53) */
 export function artSkinOf(s: Pick<SaveData, 'skin' | 'evolution'> & Partial<Pick<SaveData, 'transcendentId'>>): string | null {
-  // 초월자 트랙 (GDD 12-4, C.430): 초월자 데이터의 그림 키가 있으면 그 그림 (그림 파일이 없으면 charArt 가 진화체 그림으로 — 자리 표시)
+  // 초월자 트랙 (GDD 12-4, C.430·C.505): 진화체 그림을 빌리지 않는다 — 지금 입은 초월자 외형·인간형 스킨(v6.052 현현·디버깅, C.443)이 실제 그림으로 풀리면 그것,
+  // 아니면 초월자 데이터 그림 키(art)·조각 모델(C.431), 그것도 그림이 없으면 빈 자리(EMPTY_LOOK = 카드 창과 같은 자리 표시)
   const def = s.transcendentId ? tryGetTranscendent(s.transcendentId) : undefined;
-  // 초월자 트랙에서도 초월자 외형·인간형 스킨(GDD 12-4 v6.052 현현·디버깅)을 입었으면 그것 (C.443)
-  if (def && transcendentOfAnyLook(s.skin)) return s.skin!;
-  if (def?.art) return def.art;
-  if (def?.model) return `${MOSAIC_LOOK_PREFIX}${def.id}`; // 조각 모델 (C.431, GDD 12-4 v6.029)
+  if (def) {
+    const own = [transcendentOfAnyLook(s.skin) ? s.skin! : null, def.art ?? null, def.model ? `${MOSAIC_LOOK_PREFIX}${def.id}` : null];
+    return own.find((k): k is string => !!k && lookHasOwnArt(k)) ?? EMPTY_LOOK;
+  }
   return s.skin ?? s.evolution.look ?? null;
 }
 
