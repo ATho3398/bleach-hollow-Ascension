@@ -361,6 +361,7 @@ export function petEffectText(id: string, level: number): string {
     case 'gold': return `모험 골드 +${pct(petBonus(carry, 'gold'))}`;
     case 'belly': return `모험 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
     case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
+    case 'none': return '효과 준비 중';
     case 'seek': return `우라하라 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';
   }

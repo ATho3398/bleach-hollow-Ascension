@@ -18,6 +18,8 @@ import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
 import { canWear, validModelLook } from '../data/skins';
 import { modelLookOptions, type ModelLookOption } from '../data/skins/lookOptions';
+import { PET_IDS } from '../data/pets';
+import { grantPet } from './pet';
 import { GEAR_KINDS, GEAR_SPECIALS, getGearSpecial, isGearGrade, isGearKind, type GearGrade, type GearKind } from '../data/gear';
 import { CONSUMABLE_IDS } from '../inventory';
 import { buyWandererItem, storeConsumable, wearCosmetic } from '../shop';
@@ -227,8 +229,16 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
   sh.rerollTickets = BALANCE.shop.rerollMax;
   sh.deckSlots = BALANCE.shop.deckSlotPrices.length;
   sh.cosmetics = [...new Set([...sh.cosmetics, ...COSMETIC_ITEMS.map((c) => c.id)])];
+  fillAllPets(save, nowMs);
   unlockTower(save as SaveData & { tower?: unknown });
   return save;
+}
+
+/** 모든 펫 해금 (GDD 17-4 v6.112, C.482 — 사용자 "테스트 모드에서 모든 펫 해금돼 있게"): 얻는 길에 없는 펫(효과 미정)까지 전부. 이미 가진 펫은 그대로. 더한 수 */
+export function fillAllPets(save: SaveData, nowMs: number = Date.now()): number {
+  let n = 0;
+  for (const id of PET_IDS) if (grantPet(save.shared.pets, id, nowMs)) n++;
+  return n;
 }
 
 /** 기본 특성 (GDD 42장 2번): 장착 특성 칸이 모두 비어 있으면 그 몸 속성(없으면 노멀)의 공격 특성을 채운다(C.136: 막기·회복 속성 특성 삭제). 남는 칸은 같은 속성 공격 → 노멀 공격.
@@ -274,6 +284,7 @@ export function newTestSave(factionId: string, nowMs: number = Date.now()): Save
 /** 붕옥 등장·공명 상태로 열고(등장·공명 컷·알림 없이), 캐릭터 트랙이 모자라면 종족 데이터 순서로 다음 종족 트랙을 전체 해금으로 연다.
  *  새 테스트 칸과 테스트 모드로 슬롯을 열 때마다 부른다(이미 켜져 있으면 그대로). 연 트랙의 종족 id (없으면 null) */
 export function openTestHogyoku(save: SaveData, nowMs: number = Date.now()): string | null {
+  fillAllPets(save, nowMs); // 옛 테스트 칸도 열 때마다 모든 펫 (C.482)
   const h = save.hogyoku;
   if (!h.tabOpen) {
     h.tabOpen = true;

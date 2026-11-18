@@ -4,6 +4,13 @@
     { "id": "pet-gold", "effect": "gold", "art": "pet.pet-gold" },
     { "id": "pet-belly", "effect": "belly", "art": "pet.pet-belly" },
     { "id": "pet-guard", "effect": "guard", "art": "pet.pet-guard" },
-    { "id": "pet-seek", "effect": "seek", "art": "pet.pet-seek" }
+    { "id": "pet-seek", "effect": "seek", "art": "pet.pet-seek" },
+    { "id": "pet-soul", "effect": "none", "art": "pet.lost-soul", "pool": false },
+    { "id": "pet-solita", "effect": "none", "art": "pet.solita-vista", "pool": false },
+    { "id": "pet-kukkapuro", "effect": "none", "art": "pet.kukkapuro", "pool": false },
+    { "id": "pet-yoruichi", "effect": "none", "art": "pet.yoruichi-cat", "pool": false },
+    { "id": "pet-chappy", "effect": "none", "art": "pet.chappy", "pool": false },
+    { "id": "pet-kon", "effect": "none", "art": "pet.kon", "pool": false },
+    { "id": "pet-wakame", "effect": "none", "art": "pet.wakame", "pool": false }
   ]
 }
