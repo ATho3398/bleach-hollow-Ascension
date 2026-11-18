@@ -4176,3 +4176,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 지옥나비 꼬리 모양(사용자 "얇다가 끝으로 갈수록 두껍고 뭉툭해져야지"): 가는 자루(1칸) → 끝이 둥글고 굵은 모양. 접힌 컷에서 자루가 끊기지 않게 한 칸 안을 8번 본다.
 - 추가 그림(사용자 "펫으로 얘도 추가" — 미역대사): `custom/wakame` → `public/art/pet-wakame.webp`(울퉁불퉁한 초록 몸·흰 머리띠·허리에 손). 다른 새 펫과 같이 효과 결정 대기라 게임에는 아직 안 나옴.
 - 걷는 그림(사용자 "고양이랑 강아지는 걷는 모션 있음?"): `custom/kukkapuro-walk` · `custom/yoruichi-cat-walk` → `public/art/pet-kukkapuro-walk.webp` · `pet-yoruichi-cat-walk.webp`(옆모습 제자리 걸음, 0.6초에 한 걸음). 앉은 그림과 바꿔 끼우는 코드는 아직 없음(새 펫 연결 때 같이).
+
+## C.480 — 지옥나비 펫 = 사용자가 고친 도트 (S-23)
+- 사용자 2026-11-18 "나비 수정"(48×48 한 장): `docs/design/user-art/pets/hell-butterfly-2026-11-18.png` 을 그대로 쓰고, 날갯짓은 새 도구 `scripts/pixelfx/pet-flap.py`(몸통 세로축 기준으로 양 날개를 가로로 접었다 폄 — 박자·뜨기는 `custom/hell-butterfly` 와 같음)로 입혀 `public/art/pet-hell-butterfly.webp`(48장 · 67ms) 교체.
+- 이제 나비 펫 그림의 원본은 위 한 장이다(픽셀FX `custom/hell-butterfly` 는 이펙트로만 남음). 수치·세이브·기획 변경 없음.
