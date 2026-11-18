@@ -1,0 +1,19 @@
+{
+  "errors": [],
+  "facts": {
+    "shinigami": {
+      "hasArt": true,
+      "src": "/art/pet-wakame.webp",
+      "title": "미역대사",
+      "w": 48,
+      "h": 48
+    },
+    "hollow": {
+      "hasArt": true,
+      "src": "/art/pet-kon.webp",
+      "title": "콘",
+      "w": 48,
+      "h": 48
+    }
+  }
+}

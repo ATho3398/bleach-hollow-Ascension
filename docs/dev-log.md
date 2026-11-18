@@ -4196,3 +4196,7 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트 모드: `fillAllPets` — 새 테스트 칸(`fillAllUnlocked`)과 테스트 모드로 슬롯을 열 때(`openTestHogyoku`) 모든 펫을 채움. 일반 세이브는 건드리지 않는다.
 - 그림: 콘·차피·미역대사 = 사용자 그림을 40칸으로 찍은 한 장(`docs/design/user-art/pets/*-40-2026-11-18.png`) + 새 도구 `scripts/pixelfx/pet-float.py`(위아래 2칸 둥실, 2.4초). 혼백·솔리타 바스타·쿠카푸로·요루이치는 앞 패치 그림 그대로.
 - 테스트 `tests/c482.test.ts` 4건, `tests/c144.test.ts` 갱신. 세이브 형식·수치 변경 없음(모르는 펫 id 는 원래 버리던 정리 그대로).
+
+## C.483 — 그림 펫 1배 표시로 되돌림 (GDD v6.113 9-4, S-23)
+- 사용자 2026-11-18 "저리작아? 1배로 넣자 걍": 그림 펫 상자 33.6px → 48px(`--bha-sp-10`), `image-rendering: pixelated` 다시(1칸 = 1픽셀). C.481 의 0.7배를 되돌림.
+- 캡처 `docs/captures/c483/` 01 사신 방(미역대사) · 02 호로 방(콘). 수치·세이브 변경 없음.
