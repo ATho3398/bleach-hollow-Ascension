@@ -89,7 +89,7 @@ export function enableDragScrollY(root: HTMLElement, signal?: AbortSignal): void
   }, { capture: true, signal });
 }
 
-/** 가로 끌어서 넘기기 — 모든 포인터 (C.497 캐릭터 변경 카드 줄, GDD 12-1): enableDragScrollY 의 가로판. 세로 폰은 화면을 90° 돌려 보여 주므로(GDD 14절)
+/** 가로 끌어서 넘기기 — 모든 포인터 (C.498 캐릭터 변경 카드 줄, GDD 12-1): enableDragScrollY 의 가로판. 세로 폰은 화면을 90° 돌려 보여 주므로(GDD 14절)
  *  브라우저 기본 스크롤 대신 기기 안 좌표(pointerLocal)로 잰다. 6px 넘게 끌면 그 뒤 클릭(카드 누름)을 한 번 먹는다. PC 휠(세로 굴림) = 가로로 넘김 */
 export function enableDragScrollX(root: HTMLElement, signal?: AbortSignal): void {
   root.style.touchAction = 'none';

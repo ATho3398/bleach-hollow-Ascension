@@ -253,7 +253,7 @@ describe('9 공용 모달 초점', () => {
   });
   it('확인창: 붙인 뒤 초점 가둠, 닫을 때 풀기(배경 inert 해제·초점 복귀) — 기기 등록은 그대로', () => {
     const c = read('src/ui/confirmDialog.ts');
-    expect(c.indexOf('untrap = trapModalFocus(layer)')).toBeLessThan(c.indexOf('unregister = registerLayer(layer, no)'));
+    expect(c.indexOf('untrap = trapModalFocus(layer)')).toBeLessThan(c.indexOf('unregister = registerLayer(layer, ')); // C.497: 취소 = no (noCancel 창은 빈 함수)
     expect(c).toContain('untrap();');
     const m = read('src/ui/bha/modalFocus.ts');
     expect(m).toContain("setAttribute('inert', '')");

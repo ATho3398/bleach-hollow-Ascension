@@ -13,10 +13,10 @@ import { fixParticles } from '../engine/josa';
 import { grantCureReward, grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
 import { spaExitFx, spaView } from './spaView';
-import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
+import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice, type EvolveResult } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
-import type { GrowthInput } from './bha/growthLogic';
+import { EVOLVE_HINT, type GrowthInput } from './bha/growthLogic';
 import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, ticketDropOf, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
@@ -37,7 +37,9 @@ import {
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf,
   applyTrackRiskFloor,
+  evolutionChoicePending, evolveAfterReturn, deferEvolution,
 } from '../game';
+import { evolveChoiceDialog } from './evolveChoice';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
 import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, fusionView, gainedText, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
@@ -1453,11 +1455,11 @@ export function startApp(host: HTMLElement): void {
       onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
       // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리). 잠금 표시 없이 기본 = 훈련 인형, 본능 수련은 머리 제목 목록에서(4단계 전이면 자물쇠)
-      // 훈련 인형을 누르면 바로 설정 창 (GDD 8-9 v6.129, C.497): 수련장 화면을 밑에 깔고 곧장 전투 + 적 설정 창 — 나가기 = 수련장(머리 제목 목록 그대로)
+      // 훈련 인형을 누르면 바로 설정 창 (GDD 8-9 v6.129, C.498): 수련장 화면을 밑에 깔고 곧장 전투 + 적 설정 창 — 나가기 = 수련장(머리 제목 목록 그대로)
       onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); }); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? switchTo : null,
-      // 더보기 [캐릭터 변경] → 캐릭터 카드 창 (GDD 12-1 v6.129, C.497): 카드를 누르면 아래 전환 흐름 그대로
+      // 더보기 [캐릭터 변경] → 캐릭터 카드 창 (GDD 12-1 v6.129, C.498): 카드를 누르면 아래 전환 흐름 그대로
       onCharacters: () => characterPickerDialog(s, switchTo),
       onHogyoku: s.hogyoku.tabOpen ? () => { resetHogyokuSel(); open('hogyoku', () => renderHogyoku(s)); } : null,
       onSettings: settingsOpener(true),
@@ -2275,7 +2277,9 @@ export function startApp(host: HTMLElement): void {
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
       const petLog0 = save.runLog.pets.length;
       const gearLog0 = save.runLog.gear.length;
-      const evo = recordExpedition(save, exp);
+      // 진화 미루기 (GDD 8-5, C.497): 진화 기준에 닿았으면 결과 화면 뒤 진화 연출 전에 [진화] [미루기]를 묻는다 — 튜토리얼 중이면 묻지 않고 바로 진화(evo)
+      const evo = recordExpedition(save, exp, Date.now(), { holdEvolution: true });
+      const askEvolve = evo === null && evolutionChoicePending(save);
       persist();
       // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
@@ -2285,19 +2289,40 @@ export function startApp(host: HTMLElement): void {
       petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '가방 장비 탭에서 착용' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : null,
+        evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : askEvolve ? EVOLVE_HINT : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
-      if (evo?.ok) {
-        const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
-        afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
-          holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
-          nav.pop();
-          const later = afterEvolve;
-          afterEvolve = null;
-          later?.();
+      const s = save;
+      /** 진화(또는 미루기)가 끝나 방으로 돌아온 뒤: 첫 진화 타일 안내(GDD 64장)를 풀고 미뤄 둔 알림을 띄운다 */
+      const afterEvolveDone = () => {
+        holdRoomGuides = false;
+        const later = afterEvolve;
+        afterEvolve = null;
+        later?.();
+      };
+      const playEvolve = (r: Extract<EvolveResult, { ok: true }>) => {
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+        open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
+          nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
+          afterEvolveDone();
         }, s.build.slots.length, extra), true);
+      };
+      if (evo?.ok) afterResult = () => playEvolve(evo);
+      else if (askEvolve) {
+        afterResult = () => evolveChoiceDialog({
+          onEvolve: () => {
+            const r = evolveAfterReturn(s, exp);
+            persist();
+            if (r.ok) playEvolve(r);
+            else afterEvolveDone();
+          },
+          onDefer: () => {
+            deferEvolution(s, Date.now(), exp.runId); // 그 단계에 머문다 — 다음 귀환 때 다시 묻는다
+            persist();
+            if (nav.top?.id === 'room') renderRoom();
+            afterEvolveDone();
+          },
+        });
       }
     }
     const showResult = () => {
@@ -2490,7 +2515,7 @@ export function startApp(host: HTMLElement): void {
   }
 
   // ── 수련장 훈련 인형 (GDD 8-9, C.471): [전투 들어가기] → 적 설정 창 전투(테스트 전투와 같은 흐름). 둥지 빌드 그대로, 보상·사망·수련권 없음.
-  //    방 물건(훈련 인형)으로 들어오면 이 화면은 밑에만 깔리고 곧장 전투 + 창 (C.497) — 이 화면은 나가기·본능 수련 제목 토글로 올 때 보인다 ──
+  //    방 물건(훈련 인형)으로 들어오면 이 화면은 밑에만 깔리고 곧장 전투 + 창 (C.498) — 이 화면은 나가기·본능 수련 제목 토글로 올 때 보인다 ──
   function practiceScreen(faction: FactionConfig): void {
     practiceEntryView(root, faction, save?.runLog.battles.length ?? 0, { onEnter: () => practiceArena(faction), title: trainingHead(faction, 'practice') });
   }

@@ -269,7 +269,7 @@ describe('세이브 형식 82 (81 → 82 마이그레이션)', () => {
 
 describe('화면 (초월자 트랙)', () => {
   it('트랙 전환 메뉴에 초월자 이름 · 등급전 자물쇠 + 이유 · 스토리 탭 없음 · 환생 버튼 흐림', () => {
-    // C.497: 더보기의 캐릭터마다 줄 → [캐릭터 변경] 카드 창. 초월자 카드 = 이름(초월자 이름) + 단계 줄 대신 트랙 종류 이름('초월자')
+    // C.498: 더보기의 캐릭터마다 줄 → [캐릭터 변경] 카드 창. 초월자 카드 = 이름(초월자 이름) + 단계 줄 대신 트랙 종류 이름('초월자')
     const picker = read('src/ui/characterPicker.ts');
     expect(picker).toContain('name: trackNameOf(t)');
     expect(picker).toContain('if (nl) return nl.kind;');

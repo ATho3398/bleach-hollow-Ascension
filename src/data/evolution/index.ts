@@ -3,7 +3,7 @@
 import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
 import { normalSlotNote } from '../help/textFormat';
 import { getFaction } from '../factions';
-import { FORM_KINDS, STAT_IDS, pickFaction, type FormDef, type FormKind, type FormRelease } from '../schema';
+import { ATTACK_CATEGORIES, FORM_KINDS, STAT_IDS, formCategoryOf, pickFaction, type FormDef, type FormKind, type FormRelease } from '../schema';
 import { generateFormTable } from './build';
 import { generateForms } from './generate';
 import raw from './forms.json';
@@ -35,6 +35,7 @@ export function validateFormTable(table: readonly FormDef[]): string[] {
       for (const k of ['command', 'final'] as const) if (r?.[k] !== undefined && (typeof r[k] !== 'string' || !r[k])) errors.push(`${f.id}: release.${fac}.${k} 비어 있지 않은 문자열`);
     }
     if (f.maxChain !== undefined && !(Number.isInteger(f.maxChain) && f.maxChain >= 1)) errors.push(`${f.id}: maxChain 은 1 이상 정수`);
+    for (const [fac, c] of Object.entries(f.categoryByFaction ?? {})) if (!(ATTACK_CATEGORIES as readonly string[]).includes(c)) errors.push(`${f.id}: categoryByFaction.${fac} 가 ${ATTACK_CATEGORIES.join(' | ')} 가 아니다`);
   }
   for (let tier = FORM_MIN_TIER; tier <= FORM_MAX_TIER; tier++) {
     if (!table.some((f) => f.tier === tier && !f.hidden)) errors.push(`${tier}단계에 일반 진화체가 없다`);
@@ -77,7 +78,7 @@ export function placeholderName(form: FormDef, factionId: string, inherited: rea
   if (form.label.kind === 'fail') return fac.tierNames[0]!;
   const tierName = fac.tierNames[form.tier - 1] ?? `${form.tier}단계`;
   const els = form.label.elements.map((e) => elementName(e, factionId));
-  const cat = form.label.category;
+  const cat = formCategoryOf(form, factionId); // 종족별 타입 (GDD 8-8, C.497)
   const catName = cat ? (fac.families.find((f) => f.category === cat)?.abbr ?? categoryName(cat, factionId)) : '';
   const heir = inherited.map((e) => elementName(e, factionId)).join('');
   const parts: Record<FormKind, string[]> = {
@@ -154,7 +155,7 @@ export function formHint(form: FormDef, factionId: string): string {
     base: '정해진 걸음을 걸으면 진화',
     element: `${els[0]} 블록을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
     // 공격 분류(물리·특수·혼합)는 화면에 안 보인다 (GDD 137장 1): 그 분류에 드는 블록 계열 이름으로 말한다
-    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(form.label.category, factionId)} 공격 블록을 가장 많이 장착하고 진화`,
+    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(formCategoryOf(form, factionId), factionId)} 공격 블록을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
     fail: '블록 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',
@@ -164,7 +165,7 @@ export function formHint(form: FormDef, factionId: string): string {
     restraint: '놓아준 수가 더 많고, 배를 채우지 않은 채 진화',
     stable: '깊이 교감하며 한 번도 무너지지 않은 채 진화',
     hunter: '먼 바퀴에서 강적을 여러 번 쓰러뜨린 채 진화',
-    void: '다시 태어난 끝에 세 가지 특수한 적을 고루',
+    void: '한 번도 진화를 미루지 않고, 빈사 상태로 돌아와 진화', // C.497 (GDD 8-8 v6.120)
   };
   return byKind[form.label.kind];
 }

@@ -48,7 +48,8 @@ describe('160장 4 → 165장 1 방 수련장 다시 삭제 (C.241), 월드맵 �
     const app = read('src/ui/app.ts');
     expect(app).not.toContain('onAltar');
     // C.394 (GDD 241-C 2·3): 수련장은 방에서 연다 — 기본 = 훈련 인형. 월드맵 그 자리는 번호 쟁탈전·진급 시험
-    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },");
+    // C.498 (GDD 8-9 v6.129): 훈련 인형을 누르면 수련장 화면을 밑에 깔고 곧장 적 설정 창 전투
+    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); }); },");
     expect(app).toContain("onRank: () => { if (careBlocked(s) || !trackRulesOf(s).rank) return; worldAt = 'rank'; open('rank', () => rankScreen(faction)); },");
   });
   it('월드맵 수련장 그림이 비면 짚인형 그림', () => {
