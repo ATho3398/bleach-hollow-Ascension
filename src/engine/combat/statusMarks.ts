@@ -115,14 +115,14 @@ export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
     const left = secs(s.knockbackTicks!, ts);
     out.push(mark('knockback', String(Math.ceil(left)), `${STATUS_MARK_DEFS.knockback.name} (${left.toFixed(1)}초)`));
   }
-  // 진화체 고유 능력 스택·버프·충전 (GDD 8-7 1차, C.498): 데이터 mark 가 있는 것만 — 걸린 쪽·아이콘·이름 = uniques.json
+  // 진화체 고유 능력 스택·버프·충전 (GDD 8-7 1차, C.499): 데이터 mark 가 있는 것만 — 걸린 쪽·아이콘·이름 = uniques.json
   for (const m of evoMarksOf(s)) {
     const name = evoText(m.name, factionId);
     const v = Math.round(m.value * 100) / 100;
     const shown = v > 0 && v < 1 ? `${Math.round(v * 100)}` : String(v);
     out.push(mark(m.on === 'foe' ? 'evoFoe' : 'evoSelf', shown, `${name} ${shown}${m.seconds !== null ? ` (${Math.max(0, m.seconds).toFixed(1)}초)` : ''}`, { key: m.key, name, icon: m.icon }));
   }
-  // 진화체 고유 능력 늘 붙는 효과 요약 (C.498 — 백련처럼 바 블록 수에 따라 오르는 값): 평타 피해 +% 가 0 보다 크면 한 칸
+  // 진화체 고유 능력 늘 붙는 효과 요약 (C.499 — 백련처럼 바 블록 수에 따라 오르는 값): 평타 피해 +% 가 0 보다 크면 한 칸
   if (s.params.evo) {
     const bp = evoStat(s, 'basicPower');
     const as = evoStat(s, 'attackSpeed');

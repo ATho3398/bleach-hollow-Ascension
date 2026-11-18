@@ -2,7 +2,7 @@
 // 01 사신 백련 전투 중(바에 쌓인 블록 · 고유 능력 네모 · '백련!' 글자) · 02 사신 노도 전투 중(노도 스택 네모 · 노도 연격 특수 블록 · '노도!' 글자)
 // 03 상태 화면 고유 능력·특수 블록·만해 줄(노도) · 04 소멸선 처형선 두 개(평타선 8% · 블록선 20%, 테스트용 상태 주입) + 처형 블록 켜짐.
 // 세이브는 Vite 개발 서버의 게임 모듈로 만든다(튜토리얼 끝남 · 4단계 진화체 · 4단계 특성) → 이어하기 → 테스트 모드 '바로 전투'.
-// 실행: node scripts/c498-proof.cjs [저장 폴더]
+// 실행: node scripts/c499-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');

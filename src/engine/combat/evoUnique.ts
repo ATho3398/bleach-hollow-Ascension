@@ -1,4 +1,4 @@
-// 진화체 고유 능력 장치 (GDD 8-7 1차 구현, C.498 — docs/drafts/evo-impl-1119.md): 4단계 진화체의 고유 능력·특수 블록·해방(레스렉시온/만해) 변형을
+// 진화체 고유 능력 장치 (GDD 8-7 1차 구현, C.499 — docs/drafts/evo-impl-1119.md): 4단계 진화체의 고유 능력·특수 블록·해방(레스렉시온/만해) 변형을
 // 규칙(언제 + 거르기 + 효과)과 늘 붙는 효과(passive)로 돌린다. 데이터 = src/data/evolution/uniques.json(진화체 id × 종족), 수치 = balance provisional.evoUniques.
 // 엔진은 진화체·종족 id 를 모른다 — params.evo 에 실린 규칙만 본다(코드 분기 없음). 전투 엔진(combat.ts)이 시점마다 아래 훅을 부르고,
 // 피해·블록 생성처럼 엔진 안쪽이 필요한 일은 combat.ts 가 등록한 EvoApi 로 한다(순환 import 없이).
