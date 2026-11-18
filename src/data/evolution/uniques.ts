@@ -41,12 +41,13 @@ export const EVO_ACTIONS = [
   'consume', // 스택에서 value(×per)만큼(없으면 전부) 빼고 그 수를 consumed 로
   'buff', // 버프 seconds 동안 value(×per). refresh replace(기본)·max(큰 값)·add(더함)
   'charge', // 다음 평타 value(×per)회 충전 (max), amount(×amountPer) = 충전 값(chargeValue)
-  'spawn', // 블록 value 개: block 'draw'(평소 출현표, 허 제외) 또는 특수 블록 id
+  'spawn', // 블록 value 개: block 'draw'(평소 출현표, 허 제외) · 'make'(바 끝 빈 칸에 element 속성('self' = 내 속성)·family 계열 블록 — 그 속성·계열 생성원이 없으면 안 생김) · 특수 블록 id
   'shield', // 보호막 +최대 체력 × value(×per), 합 상한 cap
   'shieldCut', // 보호막 −최대 체력 × value(×per) (피해 아님)
   'blockMult', // (blockPre) 이 블록 피해 +value(×per)
   'blockFlat', // (blockPre) 이 블록에 평타 value(×per)회분 피해를 더함
   'blockCrit', // (blockPre) 이 블록 치명 확률 +value(×per)
+  'blockCritDmg', // (blockPre) 이 블록 치명 피해 +value(×per)
   'basicMult', // (basicPre) 이 평타 피해 +value(×per)
   'forceCrit', // (basicPre) 이 평타 치명 확정
   'ignoreDef', // (basicPre) 이 평타 방어 무시 value
@@ -80,6 +81,8 @@ export interface EvoAction {
   refresh?: 'replace' | 'max' | 'add';
   basis?: 'basic' | 'block' | 'last' | 'raw' | 'void';
   element?: string;
+  /** spawn make: 블록 계열 id (없으면 평소 출현표에서 고른 계열) */
+  family?: string;
   ignoreDef?: EvoNum;
   bonus?: EvoNum;
   of?: 'damage' | 'maxHp';
@@ -121,8 +124,8 @@ export interface EvoRule {
   crit?: boolean;
   /** block: 잔상 블록이었다(true)/아니었다(false) */
   echo?: boolean;
-  /** block: withinSeconds 안에 이 거르기를 통과한 사용이 count 번 이어지면 (그 뒤 0 부터) */
-  streak?: { count: EvoNum; withinSeconds: EvoNum };
+  /** block: 이 거르기를 통과한 사용이 count 번 연달아 이어지면 (사이에 거르기를 못 넘는 블록을 쓰면 끊김, withinSeconds 가 있으면 그 시간 안에서만 — 없으면 시간 제한 없음). 그 뒤 0 부터 */
+  streak?: { count: EvoNum; withinSeconds?: EvoNum };
   /** basicPre·basic: 이번 평타가 이 충전을 썼다 */
   charge?: string;
   special?: string;
@@ -219,6 +222,8 @@ export interface EvoAbilityDef {
   specials?: Record<string, EvoSpecialDef>;
   rules?: EvoRule[];
   passives?: EvoPassive[];
+  /** 이 진화체의 체인 배율 덮어쓰기 (1·2·3체인, 공격 블록만 — 계열 단계 배율 대신) */
+  chainMultipliers?: EvoNum[];
   /** 레스렉시온/만해 지속(초) 예외 */
   releaseSeconds?: EvoNum;
   /** 레스렉시온/만해 중 체력이 이 값 아래로 안 떨어짐 */
@@ -340,7 +345,7 @@ export function evoReleaseNums(n: EvoNums): Record<string, number> {
 function numKeysOfRule(r: EvoRule): EvoNum[] {
   const out: EvoNum[] = [];
   for (const k of ['every', 'seconds', 'minChain'] as const) if (r[k] !== undefined) out.push(r[k]!);
-  if (r.streak) out.push(r.streak.count, r.streak.withinSeconds);
+  if (r.streak) out.push(r.streak.count, ...(r.streak.withinSeconds !== undefined ? [r.streak.withinSeconds] : []));
   for (const n of r.need ?? []) for (const k of ['atLeast', 'below'] as const) if (n[k] !== undefined) out.push(n[k]!);
   for (const a of r.do) for (const k of ['value', 'seconds', 'max', 'cap', 'amount', 'ignoreDef', 'bonus'] as const) if (a[k] !== undefined) out.push(a[k]!);
   return out;
@@ -367,6 +372,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       if (!a) continue;
       if (!a.description) errors.push(`${where}: 설명 없음`);
       for (const k of ['releaseSeconds', 'releaseHpFloor'] as const) if (!has(a[k])) errors.push(`${where}: ${k} 수치 키 없음`);
+      for (const v of a.chainMultipliers ?? []) if (!has(v)) errors.push(`${where}: chainMultipliers 수치 키 없음`);
       const stacks = a.stacks ?? {};
       const buffs = a.buffs ?? {};
       const charges = a.charges ?? {};
@@ -409,12 +415,13 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (x.act === 'buff' && !(x.buff && x.buff in buffs)) errors.push(`${at}: 버프 ${x.buff} 없음`);
           if (x.act === 'buff' && x.seconds === undefined) errors.push(`${at}: 버프는 seconds`);
           if (x.act === 'charge' && !(x.charge && x.charge in charges)) errors.push(`${at}: 충전 ${x.charge} 없음`);
-          if (x.act === 'spawn' && !(x.block === 'draw' || (x.block && x.block in specials))) errors.push(`${at}: spawn block 은 draw 또는 특수 블록 id`);
+          if (x.act === 'spawn' && !(x.block === 'draw' || x.block === 'make' || (x.block && x.block in specials))) errors.push(`${at}: spawn block 은 draw·make 또는 특수 블록 id`);
+          if (x.act === 'spawn' && x.block === 'make' && !x.element && !x.family) errors.push(`${at}: spawn make 는 element 또는 family`);
           if (x.act === 'useSpecial' && !(x.special && x.special in specials)) errors.push(`${at}: useSpecial 블록 없음`);
           if ((x.act === 'timer' || x.act === 'timerCut') && (!x.timer || x.seconds === undefined)) errors.push(`${at}: timer 는 이름·seconds`);
           if (x.act === 'shield' && x.cap === undefined) errors.push(`${at}: shield 는 cap`);
           if (x.act === 'hit' && !x.basis) errors.push(`${at}: hit 는 basis`);
-          if (['blockMult', 'blockFlat', 'blockCrit'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
+          if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
           if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
           src(x.per);
           src(x.amountPer);

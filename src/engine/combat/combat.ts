@@ -12,7 +12,7 @@ import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { chainGroup, inTray, type Block, type Tray } from './tray';
 import {
-  EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
+  EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoChainMultOf, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
   evoSpecialOf, evoStart, evoStat, evoTick, evoVoidOnly, newEvoState, registerEvoApi, useEvoSpecial, type EvoParams, type EvoState,
 } from './evoUnique';
 
@@ -1669,7 +1669,9 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
   const skill = src.id === BASIC_SKILL_ID && b.family && !src.family ? { ...src, family: b.family } : src;
   const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], PLAYER_BLOCK_CATEGORY);
   const stab = skill.element !== null && s.params.playerElements.includes(skill.element);
-  const mult = skill.powerMultiplier * tierEffect(s.params, skill, chain).multiplier * hit.mult * (stab ? s.params.stabMultiplier : 1);
+  // 진화체 체인 배율 덮어쓰기 (GDD 8-7 1차 니에블라, C.498): 공격 블록만
+  const chainMult = (s.params.evo && skill.role === 'attack' ? evoChainMultOf(s, chain) : null) ?? tierEffect(s.params, skill, chain).multiplier;
+  const mult = skill.powerMultiplier * chainMult * hit.mult * (stab ? s.params.stabMultiplier : 1);
   return { skill, mult, weak: isEffective(s, skill), matchup: hit.matchup, stab };
 }
 
@@ -1771,7 +1773,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
 function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
   if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
-  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') : 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.498)
+  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') + (block ? s.evo?.critDmgNow ?? 0 : 0) : 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.498)
   return { damage: damage * (s.params.critMultiplier + extra), crit: true };
 }
 
@@ -2553,7 +2555,9 @@ function useBlock(s: CombatState, index: number): boolean {
   // 진화체 고유 능력 블록 직전 (GDD 8-7 1차, C.498): 이 블록 피해 +·평타 n회분 더하기·치명 + / 4단계 특성 n체인 위력 +
   const evo = evoBlockPre(s, { kind: 'skill', element: blockElementOf(p, b), chain, block: b, echo: usedEcho });
   const raw = blockDamage(s, b, chain) * evoBlockMultOf(s, chain, evo) + (evo?.flat ?? 0) * evoBasicUnitOf(s);
+  if (s.evo) s.evo.critDmgNow = evo?.critDmg ?? 0;
   const { damage, crit, elem } = playerHit(s, raw, true, skill.element ? [skill.element] : [], evo?.critBonus ?? 0);
+  if (s.evo) s.evo.critDmgNow = 0;
   const family = skill.family ?? null;
   // 피해는 모션이 닿는 순간에 (GDD 214장): 계열·단계별 타격 지연. 피해 0(막기 블록 등)은 바로
   strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain), chain), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
@@ -3683,6 +3687,16 @@ export function replayCombat(seed: number, setup: CombatSetup, inputs: { tick: n
 // 진화체 고유 능력 장치가 쓰는 엔진 안쪽 동작 (GDD 8-7 1차, C.498 — evoUnique.ts 는 combat.ts 를 import 하지 않는다)
 registerEvoApi({
   spawnDraw: spawnEvoDraw,
+  spawnMade(s, element, family) {
+    // 그 속성·계열 블록 (GDD 8-7 1차 니에블라 '물·탄 블록 3개'): 흡수 생성원 중 맞는 것 → 없으면 기본 블록(내 속성이 맞을 때). 계열이 없으면 평소 출현표에서 고른 계열
+    const p = s.params;
+    const want = element === 'self' ? p.playerElements[0] ?? null : element;
+    const fam = family ?? spawnTableOf(p).entries.find((e) => e.kind === 'skill' && e.family)?.family ?? null;
+    const own = p.skills.find((x) => x.role === 'attack' && (want === null || x.element === want) && (family === null || x.family === family));
+    if (own) return spawn(s, 'skill', own.id, own.family ?? fam);
+    if (want !== null && want !== (p.playerElements[0] ?? null)) return false;
+    return spawn(s, 'skill', BASIC_SKILL_ID, fam);
+  },
   place: placeEvoBlock,
   extraBasic: extraBasicAttack,
   unitOf(s, basis, element, ignore) {

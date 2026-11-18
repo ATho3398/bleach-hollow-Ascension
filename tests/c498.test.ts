@@ -595,3 +595,62 @@ describe('세이브·화면·봇', () => {
     expect(botInput(s)).toEqual({ type: 'use', cell: 1 });
   });
 });
+
+describe('추가 장치 (마스터AP 11-19 — 니에블라 사용자 안 v6.131)', () => {
+  const nieblaLike = (): EvoAbilityDef => ({
+    description: 'd',
+    chainMultipliers: ['c1', 'c2', 'c3'],
+    stacks: { rapid: { max: 'max' } },
+    rules: [
+      { on: 'block', chain: [2], streak: { count: 2 }, do: [{ act: 'spawn', block: 'make', element: 'self', family: 'family-b', value: 3 }, { act: 'add', stack: 'rapid', value: 1 }] },
+      { on: 'blockPre', chain: [3], need: [{ stack: 'rapid', atLeast: 1 }], do: [{ act: 'blockCrit', value: 'crit' }, { act: 'blockCritDmg', value: 'critDmg' }] },
+      { on: 'block', chain: [3], when: 'normal', need: [{ stack: 'rapid', atLeast: 1 }], do: [{ act: 'consume', stack: 'rapid', value: 1 }] },
+    ],
+  });
+  const nums = { c1: 0.8, c2: 1.8, c3: 4.4, max: 3, crit: 0.25, critDmg: 0.4 };
+  it('같은 체인 수 블록을 연달아 n번(시간 제한 없음, 사이 다른 블록이면 끊김) → 바 끝에 지정 속성·계열 블록 여러 개', () => {
+    const s = mk({ playerElements: ['water'], evo: evoOf(nieblaLike(), nums) });
+    s.tray.push(blk(), blk());
+    use(s, 0);
+    tick(s, ticksOf(s.params, 10)); // 시간 제한 없음
+    s.tray.length = 0;
+    s.tray.push(blk({ family: 'family-c' }), blk({ family: 'family-c' }));
+    use(s, 0);
+    expect(s.tray.filter((b) => b.family === 'family-b').length).toBe(3);
+    expect(s.evo!.stacks.rapid!.n).toBe(1);
+    // 사이에 1체인 → 끊김
+    s.tray.length = 0;
+    s.tray.push(blk(), blk());
+    use(s, 0);
+    s.tray.push(blk({ family: 'family-c' }));
+    use(s, 0);
+    s.tray.push(blk(), blk());
+    use(s, 0);
+    expect(s.evo!.stacks.rapid!.n).toBe(1);
+  });
+  it('진화체 체인 배율 덮어쓰기 ×0.8/×1.8/×4.4', () => {
+    const s = mk({ evo: evoOf(nieblaLike(), nums) });
+    const plain = mk({});
+    const d = (x: CombatState, n: number) => {
+      x.tray.length = 0;
+      for (let k = 0; k < n; k++) x.tray.push(blk({ family: 'family-z' }));
+      return (use(x, 0).evs.find((e) => e.kind === 'block') as { damage: number }).damage;
+    };
+    const base1 = d(plain, 1);
+    expect(d(s, 1) / base1).toBeCloseTo(0.8, 5);
+    expect(d(s, 3) / base1).toBeCloseTo(4.4, 5);
+  });
+  it('스택 ≥1 이면 3체인만 치명 +·치명 피해 +, 3체인 쓰면 스택 −1 (해방 중엔 안 줄임)', () => {
+    const s = mk({ evo: evoOf(nieblaLike(), nums), blockCritChance: 0.8, blockCritChanceMax: 1 });
+    s.evo!.stacks.rapid!.n = 2;
+    s.tray.push(blk(), blk(), blk());
+    const r = use(s, 0);
+    const b = r.evs.find((e) => e.kind === 'block') as { crit?: boolean; damage: number };
+    expect(b.crit).toBe(true); // 0.8 + 0.25
+    expect(s.evo!.stacks.rapid!.n).toBe(1);
+    const noStack = mk({ evo: evoOf(nieblaLike(), nums), blockCritChance: 1, blockCritChanceMax: 1 });
+    noStack.tray.push(blk(), blk(), blk());
+    const d0 = (use(noStack, 0).evs.find((e) => e.kind === 'block') as { damage: number }).damage;
+    expect(b.damage / d0).toBeCloseTo((BALANCE.provisional.combat.critMultiplier + 0.4) / BALANCE.provisional.combat.critMultiplier, 5);
+  });
+});

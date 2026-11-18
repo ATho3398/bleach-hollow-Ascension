@@ -47,6 +47,8 @@ export interface EvoState {
   fromEvo: boolean;
   /** 이번 평타 치명 확정 (basicPre forceCrit) */
   forceCrit: boolean;
+  /** 지금 쓰는 블록의 치명 피해 + (blockPre blockCritDmg — 그 블록 피해 계산 동안만) */
+  critDmgNow?: number;
   /** 처형한 수 */
   executes: number;
 }
@@ -65,6 +67,7 @@ export interface EvoCtx {
   mult: number;
   flat: number;
   critBonus: number;
+  critDmg: number;
   forceCrit: boolean;
   ignore: number;
   chargeValues: Record<string, number>;
@@ -77,6 +80,8 @@ export interface EvoCtx {
 export interface EvoApi {
   /** 평소 출현표에서 블록 1개 (허 제외). 넣었으면 true */
   spawnDraw(s: CombatState): boolean;
+  /** 그 속성('self' = 내 속성)·계열 블록 1개 (그 생성원이 없으면 false) */
+  spawnMade(s: CombatState, element: string | null, family: string | null): boolean;
   /** 바에 블록을 놓고 spawn 사건·spawn 규칙 (front = 맨 앞) */
   place(s: CombatState, b: Omit<Block, 'uid'>, front?: boolean): Block | null;
   /** 추가 평타 1회 (타이머 그대로) */
@@ -141,7 +146,7 @@ export function evoNum(s: Pick<CombatState, 'params' | 'liberation'>, v: EvoNum 
 const isElite = (s: CombatState): boolean => s.enemy.def.class === 'elite' || !!s.boss;
 
 function emptyCtx(): EvoCtx {
-  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, forceCrit: false, ignore: 0, chargeValues: {} };
+  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, forceCrit: false, ignore: 0, chargeValues: {} };
 }
 
 function specialIdOf(b: Block | undefined): string | null {
@@ -300,6 +305,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         const n = Math.max(1, Math.round(v(a.value, 1)));
         for (let k = 0; k < n; k++) {
           if (a.block === 'draw') api().spawnDraw(s);
+          else if (a.block === 'make') api().spawnMade(s, a.element ?? null, a.family ?? null);
           else spawnSpecial(s, a.block!);
         }
         break;
@@ -315,6 +321,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
       case 'blockMult': ctx.mult += val(); break;
       case 'blockFlat': ctx.flat += val(); break;
       case 'blockCrit': ctx.critBonus += val(); break;
+      case 'blockCritDmg': ctx.critDmg += val(); break;
       case 'basicMult': ctx.mult += val(); break;
       case 'forceCrit': ctx.forceCrit = true; break;
       case 'ignoreDef': ctx.ignore = Math.max(ctx.ignore, val()); break;
@@ -415,7 +422,7 @@ function fire(s: CombatState, on: EvoTrigger, ctx: EvoCtx): void {
       continue;
     }
     if (r.streak) {
-      const within = api().ticksOf(s.params, evoNum(s, r.streak.withinSeconds));
+      const within = r.streak.withinSeconds === undefined ? Infinity : api().ticksOf(s.params, evoNum(s, r.streak.withinSeconds));
       const list = (st.streaks[i] ??= []).filter((t) => s.tick - t <= within);
       list.push(s.tick);
       if (list.length < evoNum(s, r.streak.count, 1)) {
@@ -559,6 +566,12 @@ export function evoOnShield(s: CombatState, absorbed: number, broke: boolean): v
     st.shieldAbsorbed = 0;
     fire(s, 'shieldBreak', { ...emptyCtx(), amount: total });
   }
+}
+
+/** 이 진화체의 체인 배율 덮어쓰기 (공격 블록, chain 1~): 없으면 null */
+export function evoChainMultOf(s: CombatState, chain: number): number | null {
+  const v = s.params.evo?.ability.chainMultipliers?.[chain - 1];
+  return v === undefined ? null : evoNum(s, v);
 }
 
 /** 해방 중 체력 하한 (0 = 없음) */
