@@ -48,6 +48,7 @@ export const EVO_ACTIONS = [
   'blockFlat', // (blockPre) 이 블록에 평타 value(×per)회분 피해를 더함
   'blockCrit', // (blockPre) 이 블록 치명 확률 +value(×per)
   'blockCritDmg', // (blockPre) 이 블록 치명 피해 +value(×per)
+  'noDamage', // (blockPre) 이 블록은 피해 없음 — 효과(규칙)만, 피해 0·치명 판정·피해 글자 없음 (GDD v6.133 '강화만' 블록)
   'basicMult', // (basicPre) 이 평타 피해 +value(×per)
   'forceCrit', // (basicPre) 이 평타 치명 확정
   'ignoreDef', // (basicPre) 이 평타 방어 무시 value
@@ -421,7 +422,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if ((x.act === 'timer' || x.act === 'timerCut') && (!x.timer || x.seconds === undefined)) errors.push(`${at}: timer 는 이름·seconds`);
           if (x.act === 'shield' && x.cap === undefined) errors.push(`${at}: shield 는 cap`);
           if (x.act === 'hit' && !x.basis) errors.push(`${at}: hit 는 basis`);
-          if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
+          if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg', 'noDamage'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
           if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
           src(x.per);
           src(x.amountPer);

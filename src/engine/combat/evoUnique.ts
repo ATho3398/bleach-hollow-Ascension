@@ -68,6 +68,8 @@ export interface EvoCtx {
   flat: number;
   critBonus: number;
   critDmg: number;
+  /** 이 블록은 피해 없음 (blockPre noDamage) */
+  noDamage: boolean;
   forceCrit: boolean;
   ignore: number;
   chargeValues: Record<string, number>;
@@ -146,7 +148,7 @@ export function evoNum(s: Pick<CombatState, 'params' | 'liberation'>, v: EvoNum 
 const isElite = (s: CombatState): boolean => s.enemy.def.class === 'elite' || !!s.boss;
 
 function emptyCtx(): EvoCtx {
-  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, forceCrit: false, ignore: 0, chargeValues: {} };
+  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, noDamage: false, forceCrit: false, ignore: 0, chargeValues: {} };
 }
 
 function specialIdOf(b: Block | undefined): string | null {
@@ -322,6 +324,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
       case 'blockFlat': ctx.flat += val(); break;
       case 'blockCrit': ctx.critBonus += val(); break;
       case 'blockCritDmg': ctx.critDmg += val(); break;
+      case 'noDamage': ctx.noDamage = true; break;
       case 'basicMult': ctx.mult += val(); break;
       case 'forceCrit': ctx.forceCrit = true; break;
       case 'ignoreDef': ctx.ignore = Math.max(ctx.ignore, val()); break;

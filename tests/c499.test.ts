@@ -654,3 +654,29 @@ describe('추가 장치 (마스터AP 11-19 — 니에블라 사용자 안 v6.131
     expect(b.damage / d0).toBeCloseTo((BALANCE.provisional.combat.critMultiplier + 0.4) / BALANCE.provisional.combat.critMultiplier, 5);
   });
 });
+
+describe('피해 없는 블록 (GDD v6.133 — 강화만)', () => {
+  it('blockPre noDamage: 피해 0·치명 없음, 효과(규칙)는 그대로', () => {
+    const ability: EvoAbilityDef = {
+      description: 'd',
+      buffs: { up: {} },
+      rules: [
+        { on: 'blockPre', element: ['water'], do: [{ act: 'noDamage' }] },
+        { on: 'block', element: ['water'], do: [{ act: 'buff', buff: 'up', seconds: 5, value: 0.2 }] },
+      ],
+      passives: [{ stat: 'basicPower', value: 1, per: 'buff:up' }],
+    };
+    const s = mk({ playerElements: ['water'], evo: evoOf(ability), blockCritChance: 1, blockCritChanceMax: 1 });
+    const hp0 = s.enemy.hp;
+    s.tray.push(blk(), blk());
+    const r = use(s, 0);
+    const b = r.evs.find((e) => e.kind === 'block') as { damage: number; crit?: boolean; noDamage?: boolean };
+    expect(b).toMatchObject({ damage: 0, crit: false, noDamage: true });
+    expect(s.enemy.hp).toBe(hp0);
+    expect(evoStat(s, 'basicPower')).toBeCloseTo(0.2);
+    // 다른 속성 블록은 평소대로 피해
+    const f = mk({ playerElements: ['fire'], evo: evoOf(ability) });
+    f.tray.push(blk());
+    expect((use(f, 0).evs.find((e) => e.kind === 'block') as { damage: number }).damage).toBeGreaterThan(0);
+  });
+});
