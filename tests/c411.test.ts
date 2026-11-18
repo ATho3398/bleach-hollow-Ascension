@@ -61,7 +61,8 @@ describe('243장 6 먹이', () => {
   it('먹인 뒤 목록 유지(독) · 가득이면 말풍선 full (두 종족 설정)', () => {
     const dock = read('src/ui/bha/dock.ts');
     expect(dock).not.toContain("setPanel(CLOSED, careBtns.get('feed')!); // 먹인 뒤 초점");
-    expect(dock).toContain('fillTray();\n          o.onItemsChange(trayBtns.find((x) => x.dataset.food === id)');
+    // C.501: 먹이 줄이 종류별 가로 한 줄이 되며 넘겨 둔 자리를 되살리는 줄이 사이에 들어감 — 목록 유지·같은 먹이 초점은 그대로
+    expect(dock).toMatch(/fillTray\(\);\n\s+tray\.querySelector\('\.bha-homedock__foodrow'\)!\.scrollLeft = left;[^\n]*\n\s+o\.onItemsChange\(trayBtns\.find\(\(x\) => x\.dataset\.food === id\)/);
     expect(read('src/ui/roomView.ts')).toContain("say(pickLine(room.talk, 'full'))");
     for (const id of ['hollow', 'shinigami']) expect(getFaction(id).room?.talk?.full?.length).toBeGreaterThan(0);
   });

@@ -789,7 +789,7 @@ export type CombatEvent =
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
-  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean; kitCharge?: number; motionId?: number }
+  | { kind: 'block'; block: Block['kind']; traitId: string | null; family: string | null; element: string | null; matchup: Matchup; role: SkillRole | null; chain: number; damage: number; weak: boolean; heal: number; guardSeconds: number; bonus: ChainBonusKind | null; crit?: boolean; elem?: ElemHit; landed?: boolean; noDamage?: boolean; kitName?: string; kitFx?: string; kitCounter?: boolean; kitFinisher?: boolean; kitCharge?: number; motionId?: number }
   /** 블록 몸동작 시작 (GDD 7-2 '블록 연속 사용 = 절충안'·'모션과 이펙트는 따로 계산', C.448): id = 그 블록 사건의 motionId. 누른 순서대로 줄을 서서 앞 모션이 끝나면 시작.
    *  rate 재생 배율 · trim 앞에서 자른 길이(1배 초). 이펙트·피해는 블록을 쓴 순간의 시간줄 그대로(이 사건과 무관) */
   | { kind: 'block-motion'; id: number; rate: number; trim: number }
@@ -2560,11 +2560,13 @@ function useBlock(s: CombatState, index: number): boolean {
   const evo = evoBlockPre(s, { kind: 'skill', element: blockElementOf(p, b), chain, block: b, echo: usedEcho });
   const raw = blockDamage(s, b, chain) * evoBlockMultOf(s, chain, evo) + (evo?.flat ?? 0) * evoBasicUnitOf(s);
   if (s.evo) s.evo.critDmgNow = evo?.critDmg ?? 0;
-  const { damage, crit, elem } = playerHit(s, raw, true, skill.element ? [skill.element] : [], evo?.critBonus ?? 0);
+  // 피해 없는 블록 (GDD v6.133 '강화만', C.499): 효과(규칙)만 — 치명 판정도 없음
+  const noDamage = !!evo?.noDamage;
+  const { damage, crit, elem } = noDamage ? { damage: 0, crit: false, elem: undefined } : playerHit(s, raw, true, skill.element ? [skill.element] : [], evo?.critBonus ?? 0);
   if (s.evo) s.evo.critDmgNow = 0;
   const family = skill.family ?? null;
   // 피해는 모션이 닿는 순간에 (GDD 214장): 계열·단계별 타격 지연. 피해 0(막기 블록 등)은 바로
-  strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain), chain), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
+  strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain), chain), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem, ...(noDamage ? { noDamage: true } : {}) }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
   // 단련 (GDD 49장 노멀 특성): 스킬 블록 1개마다 이번 전투 평타 +
   if (p.abilityEffects.tempering) s.temperingBlocks = (s.temperingBlocks ?? 0) + chain;
   // 물공 블록 효과 (GDD 49장): 기본 공격 블록이 물공 블록인 몸에서 그 블록을 썼을 때

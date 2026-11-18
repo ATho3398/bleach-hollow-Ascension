@@ -209,6 +209,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
         : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
+      // 피해 없는 진화체 블록 (GDD v6.133, C.499): 이름만
+      if (e.noDamage) return { role: e.chain > 1 ? 'chain' : 'attack', icon: e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: `${name}!` };
       const parts = [`${name}! ${n(e.damage)} 피해${elemText(e.elem, factionId)}${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) {
@@ -1223,6 +1225,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
     } else if (e.block === 'skill' && e.role === 'heal') {
       spawnFloat('heal', n0(e.heal));
+    } else if (e.noDamage) {
+      // 피해 없는 진화체 블록 (GDD v6.133, C.499): 피해 숫자 없음
     } else {
       const ult = e.block === 'combo' || e.block === 'liberation';
       spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });

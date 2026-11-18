@@ -1,4 +1,4 @@
-import { pointerLocal } from './viewport';
+import { elementLocalRect, pointerLocal } from './viewport';
 // 가로 끌어서 넘기기 (GDD 241-D 3 장비 분류 탭: 좁히지 않고 가로 드래그로 본다). 손가락은 브라우저 기본 가로 스크롤, 마우스·펜은 여기서 끈다.
 // 5px 넘게 끌면 그 뒤 클릭(탭 바꾸기)을 한 번 먹는다 — 끄는 것과 누르는 것을 가린다.
 export function enableDragScroll(root: HTMLElement, signal?: AbortSignal): void {
@@ -130,4 +130,12 @@ export function enableDragScrollX(root: HTMLElement, signal?: AbortSignal): void
     root.scrollLeft += e.deltaY;
     e.preventDefault();
   }, { passive: false, signal });
+}
+
+/** 가로 줄 안 칸이 다 보이게 가로 스크롤만 민다 (C.501 — 기기 안 좌표라 세로 폰 90° 돌림에도 맞음. scrollIntoView 는 기기 틀까지 밀 수 있어 쓰지 않는다) */
+export function revealInRow(row: HTMLElement, item: HTMLElement): void {
+  const r = elementLocalRect(item);
+  const box = elementLocalRect(row);
+  if (r.left + r.width > box.left + box.width) row.scrollLeft += r.left + r.width - (box.left + box.width);
+  else if (r.left < box.left) row.scrollLeft -= box.left - r.left;
 }
