@@ -74,7 +74,9 @@ describe('전투 화면 연결 (GDD 122장 2~4)', () => {
     expect(dev).toContain("back.classList.toggle('is-off', layers.length === 0 && !opts.canCancel() && !battle);");
   });
   it('뒤로 = 일시정지 그대로', () => {
-    expect(bv).toContain('if (top || paused || overlayOpen || s.status !== \'playing\') return false;\n    setPaused(true);');
+    // C.489: 처리기 = screenBack battleBackHook (busy = 일시정지·연출·끝난 전투 → 처리 안 함, 아니면 pause = 일시정지)
+    expect(bv).toContain("busy: () => paused || overlayOpen || s.status !== 'playing',\n    pause: () => setPaused(true),");
+    expect(read('src/ui/bha/screenBack.ts')).toContain('if (top || o.busy()) return false;\n    o.pause();');
   });
   it('튜토리얼 직접 해 보기 중에도 블록을 커서로 고른다', () => {
     expect(read('src/ui/tutorialOverlay.ts')).toContain("layer.toggleAttribute('data-dev-pass', on);");

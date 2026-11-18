@@ -125,7 +125,7 @@
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "voidBlockName": "공허 블록",
+  "voidBlockName": "폭주 블록",
   "chainName": "체인",
   "roleNames": {
     "attack": "공격",
@@ -302,8 +302,16 @@
     "pet-gold": "뼈 까마귀",
     "pet-belly": "모래 벌레",
     "pet-guard": "껍질 게",
-    "pet-seek": "그림자 박쥐"
+    "pet-seek": "그림자 박쥐",
+    "pet-soul": "길 잃은 혼백",
+    "pet-solita": "솔리타 바스타",
+    "pet-kukkapuro": "쿠카푸로",
+    "pet-yoruichi": "요루이치",
+    "pet-chappy": "차피",
+    "pet-kon": "콘",
+    "pet-wakame": "미역대사"
   },
+  "petArt": { "pet-gold": "pet.bone-crow", "pet-seek": "pet.shadow-bat" },
   "fullnessName": "배부름",
   "slotName": "본체 슬롯",
   "lineageBonusName": "계열 기술 강화",

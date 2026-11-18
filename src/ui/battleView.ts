@@ -21,6 +21,7 @@ import {
   kitNextReleaseIsSecond,
   stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
   statusMarksOf,
+  blockMotionTarget,
 } from '../engine/combat';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
 import { getGearSpecial } from '../data/gear';
@@ -67,6 +68,7 @@ import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
+import { battleBackHook } from './bha/screenBack';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
@@ -483,7 +485,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   }
   // 펫 (GDD 241-D 4): 데리고 간 펫이 내 옆에서 같이 때린다 — 공격 때 앞으로 튀는 연출 + 피해 숫자
   const petId = s.params.petAttack?.petId ?? null;
-  const petEl = petBuddy(petId, petName(petId ?? '', faction));
+  const petEl = petBuddy(petId, petName(petId ?? '', faction), faction);
   if (petEl) {
     petEl.classList.add('bha-pet--battle');
     units.querySelector('.bha-unit--me .bha-unit__fig')?.append(petEl);
@@ -1020,12 +1022,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   pauseBtn.onclick = () => setPaused(!paused);
   // 뒤로(◀·Esc·폰 뒤로) = 일시정지 (C.176, GDD 104장 7: 잠긴 화면에서 처음 화면 확인 대신). 일시정지 창이 열리면 그 창의 뒤로 = 계속
-  registerCancelHook((top) => {
-    if (stopped) return 'gone';
-    if (top || paused || overlayOpen || s.status !== 'playing') return false;
-    setPaused(true);
-    return true;
-  }, { button: true });
+  // C.489: 화면을 떠난 전투(stop 없이 바꿔 끼움)는 멈추고 등록을 지운다 — 옛 코드는 뒤로를 계속 삼켜 수련장 입구에서 다시 못 나갔다
+  registerCancelHook(battleBackHook({
+    connected: () => app.isConnected,
+    stopped: () => stopped,
+    stop,
+    busy: () => paused || overlayOpen || s.status !== 'playing',
+    pause: () => setPaused(true),
+  }), { button: true });
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니요로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;
   unhold = onHold((sig) => {
@@ -1168,6 +1172,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     shake,
     onHitFrame: probe ? (side, guarded, tier) => note('hit-frame', { side, guarded, tier }) : undefined,
     onSwingFrame: probe ? (side, tier) => note('swing-frame', { side, tier }) : undefined,
+    // 블록 모션 기준 길이 (GDD 7절 v6.106, C.476): 엔진과 같은 표 — 화면은 블록마다 실제 동작 길이 ÷ 이 값으로 재생
+    blockLength: (chain) => blockMotionTarget(s.params.motion, chain),
   });
   if (testSpeedMul() !== 1) attack.setSpeed(testSpeedMul());
   const n0 = (v: number) => String(Math.round(v));
@@ -1987,6 +1993,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let fxHalted = false;
   let last = performance.now();
   const frame = (now: number) => {
+    if (!app.isConnected) stop(); // 화면을 떠난 전투는 루프도 멈춘다 (C.489 — 떠난 뒤에도 돌던 루프)
     if (stopped) return;
     const dt = Math.min(250, now - last);
     last = now;

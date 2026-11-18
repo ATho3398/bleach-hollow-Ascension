@@ -16,7 +16,7 @@ import {
   choosePet, inventoryOf, ownedBattleItems, petAffinityText, petEffectText, petName, sellGearEntry, setBattleItem, sortedGear, unequipGearItem,
 } from '../inventory';
 import { affinityOf } from '../engine/pet';
-import { petArtSrc, petIconId } from './bha/pet';
+import { petArtSrc, petIconId, type PetArtFaction } from './bha/pet';
 import { imageArt } from './bha/itemUi';
 import { gateHint, gateOpen } from '../unlockGate';
 import { edgeCue, enableDragScroll } from './bha/dragScroll';
@@ -216,8 +216,8 @@ export function pickBattleItem(faction: Pick<FactionConfig, 'gearScreen'>, save:
 }
 
 /** 펫 그림 (그림 파일이 없으면 효과 아이콘) */
-export function petCardArt(id: string): HTMLElement {
-  const src = petArtSrc(id);
+export function petCardArt(id: string, faction?: PetArtFaction): HTMLElement {
+  const src = petArtSrc(id, faction);
   return src ? imageArt(src) : iconArt(petIconId(id));
 }
 
@@ -229,7 +229,7 @@ export function openPet(faction: FactionConfig, save: SaveData, id: string, chan
   const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
   let close: () => void = () => {};
   close = itemDialog({
-    heading: '펫', name: petName(id, faction), art: petCardArt(id), lock: locked,
+    heading: '펫', name: petName(id, faction), art: petCardArt(id, faction), lock: locked,
     desc: [`${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, '전투에서 같이 공격한다.', petAffinityText(save, id)].join('\n'),
     actions: [{
       key: on ? 'leave' : 'take', label: () => (on ? '두고 가기' : '데리고 가기'), variant: on ? 'ghost' : 'primary', disabled: locked !== null,
@@ -328,7 +328,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   petBtn.type = 'button';
   petBtn.dataset.slot = 'pet';
   petBtn.dataset.drag = 'slot';
-  petBtn.append(petOpen ? (pid ? petCardArt(pid) : icon('i-care-pet')) : icon('i-lock'), h('span', 'bha-eqslot__name', pid ? shownName(petName(pid, faction)) : '펫'));
+  petBtn.append(petOpen ? (pid ? petCardArt(pid, faction) : icon('i-care-pet')) : icon('i-lock'), h('span', 'bha-eqslot__name', pid ? shownName(petName(pid, faction)) : '펫'));
   petBtn.setAttribute('aria-label', `펫: ${!petOpen ? '잠김' : pid ? petName(pid, faction) : '비어 있음'}`);
   petBtn.onclick = () => {
     if (!petOpen) return showToast({ eyebrow: '펫', title: '잠겨 있다', meta: gateHint(faction, 'pet') }, 0, 2400);
@@ -375,7 +375,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const petCards = ui.tab !== 'pet' || !petOpen ? [] : inventoryOf(save, faction).filter((e) => e.category === 'pet').map((e) => {
     const on = save.shared.pets.active === e.id;
     const card = itemCard({
-      id: e.id, name: e.name, detail: petEffectText(e.id, affinityOf(save.shared.pets.owned[e.id]?.laps ?? 0)), art: petCardArt(e.id),
+      id: e.id, name: e.name, detail: petEffectText(e.id, affinityOf(save.shared.pets.owned[e.id]?.laps ?? 0)), art: petCardArt(e.id, faction),
       badge: on ? '동행 중' : undefined, state: on ? 'worn' : undefined,
       onClick: () => openPet(faction, save, e.id, changedAt(`item:${e.id}`)),
     });

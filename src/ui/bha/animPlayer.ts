@@ -25,6 +25,9 @@ export interface PlayOptions {
   motion?: FamilyMotionKind;
   /** 종이인형 동작 고정 (GDD 181장, 종족 설정 tiers[].rigMotion): 그 동작이 있으면 그것만(motion 묶음·action 대신). 프레임 그림은 무시 */
   rigMotion?: string;
+  /** 이 길이(ms, 1배)로 늘이거나 줄여 재생 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 고른 동작(변형 포함)의 전체 길이가 이 값이 되게 재생 빠르기만 바꾼다 — 그림·타격 비율 그대로.
+   *  hitInMs·돌려주는 길이·타격 시각도 이 맞춘 시간 기준. 없으면 동작 길이 그대로 */
+  lengthMs?: number;
 }
 
 export interface AnimPlayer {
@@ -35,7 +38,7 @@ export interface AnimPlayer {
   /** 한 번 재생(sleep 같은 반복 동작은 stop 할 때까지). 없는 동작이면 null — 호출하는 쪽이 기존 연출을 쓴다. 1배속 기준 길이·타격 시각(ms)을 돌려준다 */
   play(action: AnimAction, o?: PlayOptions): { durationMs: number; hitAtMs: number } | null;
   /** 재생하지 않고 그 동작의 길이·타격 시각(ms, 1배)만 (GDD 214장: 엔진 타격 지연을 실제 동작 데이터로). 변형이 여럿이면 타격이 가장 늦은 것. 없는 동작이면 null */
-  peek(action: AnimAction, o?: Pick<PlayOptions, 'motion' | 'rigMotion'>): { durationMs: number; hitAtMs: number } | null;
+  peek(action: AnimAction, o?: Pick<PlayOptions, 'motion' | 'rigMotion' | 'lengthMs'>): { durationMs: number; hitAtMs: number } | null;
   /** 재생 중인 동작을 끝내고 쉬는 동작으로 돌아간다 */
   stop(): void;
   setRate(rate: number): void;
@@ -59,6 +62,8 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
   /** 이긴/진 뒤에는 늦게 도착한 맞음·공격 애니가 마지막 장면을 덮지 않는다 (stop() 으로 풀린다) */
   let locked = false;
   let rate = 1;
+  /** 길이 맞춤 빠르기 (lengthMs — 동작 길이 ÷ 맞출 길이), 쉬는 동작은 1 */
+  let fit = 1;
   let paused = false;
   let shown = '';
 
@@ -73,6 +78,7 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
     cur = loopAction ? anims[loopAction] ?? null : null;
     phase = 'rest';
     curOpts = {};
+    fit = 1;
     elapsed = 0;
     hitFired = true;
     show(cur ? cur.frames[0] : still);
@@ -97,18 +103,23 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       phase = 'once';
       curOpts = o;
       const hitAt = clipHitMs(c);
+      const dur = clipDurationMs(c);
+      fit = o.lengthMs && o.lengthMs > 0 && dur > 0 ? dur / o.lengthMs : 1;
       // 시작 위치 (GDD 214장): hitInMs 가 있으면 타격이 그때 오게(음수 = 기다림), fromHit 은 타격부터
-      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) : o.fromHit ? hitAt : 0;
+      const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) * fit : o.fromHit ? hitAt : 0;
       elapsed = start;
       hitFired = start >= hitAt;
       show(c.frames[frameAt(c, elapsed).index]);
       if (hitFired) o.onHit?.();
       wake();
-      return { durationMs: clipDurationMs(c) - start, hitAtMs: hitAt - start };
+      return { durationMs: (dur - start) / fit, hitAtMs: (hitAt - start) / fit };
     },
-    peek(action) {
+    peek(action, o = {}) {
       const c = anims[action];
-      return c ? { durationMs: clipDurationMs(c), hitAtMs: clipHitMs(c) } : null;
+      if (!c) return null;
+      const dur = clipDurationMs(c);
+      const f = o.lengthMs && o.lengthMs > 0 && dur > 0 ? dur / o.lengthMs : 1;
+      return { durationMs: dur / f, hitAtMs: clipHitMs(c) / f };
     },
     stop() {
       locked = false;
@@ -124,7 +135,7 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
     },
     advance(dtMs) {
       if (paused || !cur || phase === 'held') return;
-      elapsed += dtMs * rate;
+      elapsed += dtMs * rate * (phase === 'once' ? fit : 1);
       const f = frameAt(cur, elapsed);
       show(cur.frames[f.index]);
       if (!hitFired && elapsed >= 0 && f.index >= cur.hitFrame) {

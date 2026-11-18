@@ -31,8 +31,8 @@ export interface PixelPlan {
   /** 맞는 쪽 반응 시각(ms, shift 반영): 그 타격에 투사체가 있으면 도착 순간 */
   reactAt: number[];
   insts: PixelInst[];
-  /** 몸동작 (없으면 null = 옛 계열 몸동작) */
-  body: (PixelFxBody & { at: number; speed: number }) | null;
+  /** 몸동작 (없으면 null = 옛 계열 몸동작). fit = 동작마다 변형 길이를 재기 값(peek, 가장 긴 변형)에 맞춰 재생 (블록 모션 길이 통일, C.476) */
+  body: (PixelFxBody & { at: number; speed: number; fit?: boolean }) | null;
 }
 
 /** 그 타격에 쓰는 값 */
@@ -40,9 +40,10 @@ export function layerAtHit(L: PixelFxLayer, hi: number): PixelFxLayer {
   return { ...L, ...(L.perHit?.[String(hi)] ?? {}) };
 }
 
-/** 블록 계획. slot = 치는 쪽 몸동작 칸(남·여 종이인형 / 프레임 그림) */
-export function pixelPlan(stage: PixelFxStage, slot: PixelBodySlot): PixelPlan {
-  const sp = stage.speed > 0 ? stage.speed : 1;
+/** 블록 계획. slot = 치는 쪽 몸동작 칸(남·여 종이인형 / 프레임 그림).
+ *  pace = 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이 ÷ 기준 길이 — 이펙트·맞음 반응·몸동작 시간줄 전체를 같은 배율로(시전 속도에 곱한다). 기본 1 */
+export function pixelPlan(stage: PixelFxStage, slot: PixelBodySlot, pace = 1): PixelPlan {
+  const sp = (stage.speed > 0 ? stage.speed : 1) * (pace > 0 ? pace : 1);
   const hits = [0];
   for (let i = 1; i < stage.hits; i++) hits.push(hits[i - 1]! + (stage.gaps[i - 1] ?? 0) / sp);
   // 이 블록 첫 투사체: 타격마다 도착 시각

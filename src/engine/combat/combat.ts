@@ -276,7 +276,7 @@ export interface CombatKitBlock {
   releaseSwap?: string;
   /** 허 공식 몫 장치 (GDD 12-4 v6.052 붕옥 → v6.066 경화수월도): 블록이 나올 때마다 허 공식 × voidScale 확률로 따로 굴린다(order 작은 것부터, 먼저 걸린 것이 나옴 — 다 안 걸리면 weight 블록).
    *  riskGain 이 있으면(붕옥) 허 블록 자리(허 각인)·게이지 가득이면 안 나옴·쓰면 패널티 없이 게이지 +riskGain */
-  voidSlot?: { voidScale: number; riskGain?: number; order: number };
+  voidSlot?: { base?: number; voidScale: number; riskGain?: number; order: number };
   /** 융합 중 쓰면 1블록마다 게이지 −riskCost (GDD 12-4 v6.052 프라고르) */
   riskCost?: number;
   /** 충전 평타 장치 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 '다음 평타 = 충전 평타' 를 체인 수만큼 쌓는다. 충전 평타 = 기본 공격 × power, 이름 name */
@@ -492,6 +492,38 @@ export interface MotionParams {
   basic: MotionSpec;
   block: MotionSpec;
   blockBy?: Record<string, MotionSpec>;
+  /** 블록 모션 기준 길이 (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일', C.476): default = [1체인, 2체인, 3체인] 초, byTier = 진화 단계(tierIndex) 키별로 따로 둘 때.
+   *  있으면 블록 몸동작(위 표의 실제 동작 길이)을 이 길이로 늘이거나 줄인다 — 타격 시각은 같은 배율. 없으면 실제 동작 길이 그대로(옛 동작) */
+  blockLength?: { default: readonly number[]; byTier?: Readonly<Record<string, readonly number[]>> };
+  /** 이 몸의 진화 단계 (blockLength.byTier 키 — applyEvolutionToParams 가 넣는다) */
+  tier?: number;
+}
+
+/** 블록 모션 기준 길이(초) (GDD 7절 v6.106, C.476): 진화 단계 키 → default, 체인 1~3(넘으면 마지막 값). 표가 없으면 null */
+export function blockMotionTarget(m: Pick<MotionParams, 'blockLength' | 'tier'> | undefined, chain: number): number | null {
+  const t = m?.blockLength;
+  if (!t) return null;
+  const row = (m!.tier !== undefined ? t.byTier?.[String(m!.tier)] : undefined) ?? t.default;
+  if (!row.length) return null;
+  const v = row[Math.max(1, Math.min(row.length, Math.floor(chain) || 1)) - 1]!;
+  return v > 0 ? v : null;
+}
+
+/** 블록 키 → 체인 수 ('계열:단계' 의 단계, 그 밖 1) */
+function chainOfKey(key: string | null): number {
+  const n = key ? Number(key.slice(key.lastIndexOf(':') + 1)) : NaN;
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+/** 기준 길이에 맞춘 블록 몸동작 (GDD 7절 v6.106, C.476): total = 기준 길이, hit = 실제 타격 시각 × 같은 배율, rate = 실제 길이 ÷ 기준 길이(화면 재생 배율).
+ *  몸동작이 없으면(실제 길이 0 — 그림 없는 몸) null = 줄에 안 섬. 기준 길이 표가 없으면 실제 길이 그대로(rate 1) */
+export function blockMotionOf(p: Pick<CombatParams, 'motion'>, key: string | null, chain = chainOfKey(key)): (MotionSpec & { rate: number }) | null {
+  const n = motionSpecOf(p, key);
+  if (!n || !(n.total > 0)) return null;
+  const target = blockMotionTarget(p.motion, chain);
+  if (target === null) return { total: n.total, hit: n.hit, rate: 1 };
+  const k = n.total / target;
+  return { total: target, hit: Math.min(target, Math.max(0, n.hit) / k), rate: k };
 }
 
 /** 간격에 맞춘 몸동작 (GDD 7-2 '빠른 간격의 모션'): rate 재생 배율 · trim 앞에서 자른 길이(1배 초) · length 실제 재생 길이(초) · hitIn 시작부터 타격까지(초) */
@@ -529,9 +561,11 @@ export function hitDelayTicks(p: Pick<CombatParams, 'tickSeconds'>, seconds: num
   return Math.max(0, Math.ceil((seconds > 0 ? seconds : 0) / p.tickSeconds - 1e-6));
 }
 
-/** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값 */
-export function blockHitDelayOf(p: Pick<CombatParams, 'hitDelay'>, key: string | null): number {
-  return (key ? p.hitDelay.blockBy?.[key] : undefined) ?? p.hitDelay.block;
+/** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값. 블록 모션 기준 길이(GDD 7절 v6.106, C.476)가 있으면 그 배율로 — 화면도 이펙트·동작을 같은 배율로 재생 */
+export function blockHitDelayOf(p: Pick<CombatParams, 'hitDelay' | 'motion'>, key: string | null, chain = chainOfKey(key)): number {
+  const d = (key ? p.hitDelay.blockBy?.[key] : undefined) ?? p.hitDelay.block;
+  const m = blockMotionOf(p, key, chain);
+  return m && m.rate > 0 ? d / m.rate : d;
 }
 
 /** 블록 공격 타격 지연 키: 계열 공격 = `계열:단계(1~3)`, 콤보 'combo', 해방 블록 'liberation', 그 밖(계열 없는 기본 블록) null */
@@ -940,7 +974,7 @@ export interface CombatState {
   /** 예약된 피해 (GDD 214장, C.357): 틱 시작에 atTick 이 된 것부터 순서대로 넣는다. 전투가 끝나면 남은 것은 버린다. 옛 상태(없음) = 빈 목록 */
   pendingHits?: PendingHit[];
   /** 블록 몸동작 줄 (GDD 7-2, C.448): 재생 중(끝 틱·배율) + 기다리는 것(누른 틱·키). 재생 중이거나 기다리는 게 있으면 평타 타이머가 멈춘다. 옛 상태(없음) = 빈 줄 */
-  motion?: { cur: { id: number; endTick: number; rate: number } | null; queue: { id: number; key: string | null; pressTick: number }[]; seq: number };
+  motion?: { cur: { id: number; endTick: number; rate: number } | null; queue: { id: number; key: string | null; chain: number; pressTick: number }[]; seq: number };
   /** 보스전이면 페이즈·기믹 상태 (GDD 25-3), 일반 전투는 없음 */
   boss?: BossState;
   /** 받아들여진 입력 기록 (같은 시드로 다시 돌리면 같은 결과) */
@@ -1218,7 +1252,7 @@ export function spawnTableOf(p: CombatParams, releasing = false, kitRisk: number
 
 /** 초월자 전용 블록 출현표 (GDD 12-4 v6.048, C.441 → v6.052 C.443): 일반 블록(기본·흡수·물공)이 없고 전용 블록만. 간격 = 흡수 0칸 몸의 기본 간격(같은 가속 보정).
  *  해방 밖 = releaseOnly·voidSlot 아닌 블록끼리 weight 로 나눔, 해방 중 = releaseSwap 가 없는 블록(바뀌어 사라지는 블록 빼고 releaseOnly 포함)끼리.
- *  voidSlot 블록(붕옥)이 있으면 허 블록 자리를 그 블록이 받는다: 확률 = 허 공식 × voidScale, 게이지(kitRisk)가 가득이면 0, 해방 중엔 없음(바뀐 블록이 weight 로 나옴).
+ *  voidSlot 블록(붕옥)이 있으면 폭주 블록 자리를 그 블록이 받는다: 확률 = 고정 기본 몫 base + 폭주 블록 공식 × voidScale(C.489), 게이지(kitRisk)가 가득이면 0, 해방 중엔 없음(바뀐 블록이 weight 로 나옴).
  *  voidSlot 블록이 없으면 허 몫 그대로 */
 function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, kitRisk: number | null, stanceBlock: string | null): { seconds: number; entries: SpawnEntry[] } {
   const seconds = spawnTableOf({ ...p, kit: null, skills: [], physBlock: null }).seconds;
@@ -1244,7 +1278,8 @@ function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, ki
   }
   // 허 공식 몫 블록마다 따로 굴림 (v6.066): 앞 블록이 안 걸린 몫(rest) × 이 블록 확률. 해방 중엔 없음, 게이지를 올리는 블록은 게이지 가득이면 없음
   for (const b of slots) {
-    const v = releasing || (full && b.voidSlot!.riskGain) ? 0 : Math.min(1, base * b.voidSlot!.voidScale);
+    // 확률 = 고정 기본 몫 base + 폭주 블록 공식 × voidScale (C.489 GDD v6.121 — 공식만이면 기본 2%라 거의 안 나옴)
+    const v = releasing || (full && b.voidSlot!.riskGain) ? 0 : Math.min(1, (b.voidSlot!.base ?? 0) + base * b.voidSlot!.voidScale);
     if (v <= 0) continue;
     entries.push({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: rest * v });
     rest *= 1 - v;
@@ -1796,10 +1831,10 @@ function basicHitDelayOf(s: CombatState): { delay: number; rate: number } {
 }
 
 /** 블록 몸동작 시작 (GDD 7-2 절충안): 뒤에 기다리는 블록이 있으면 '빠른 간격' 규칙(간격 = 이 블록과 다음 블록을 누른 틱 차), 없으면 원래 속도 */
-function startBlockMotion(s: CombatState, item: { id: number; key: string | null; pressTick: number }, now: number): void {
+function startBlockMotion(s: CombatState, item: { id: number; key: string | null; chain: number; pressTick: number }, now: number): void {
   const p = s.params;
   const m = s.motion!;
-  const spec = motionSpecOf(p, item.key)!;
+  const spec = blockMotionOf(p, item.key, item.chain) ?? { total: 0, hit: 0 };
   const next = m.queue[0];
   const fit = fitMotion(spec, next ? (next.pressTick - item.pressTick) * p.tickSeconds : null, p.motion!.fastMax);
   m.cur = { id: item.id, endTick: now + Math.max(1, Math.ceil(fit.length / p.tickSeconds - 1e-6)), rate: fit.rate };
@@ -1807,14 +1842,15 @@ function startBlockMotion(s: CombatState, item: { id: number; key: string | null
 }
 
 /** 블록을 썼다: 몸동작 줄에 세운다 (GDD 7-2 절충안). 줄이 비었으면 바로 시작, 아니면 기다리고 — 재생 중인 모션은 남은 부분을 최대 배속으로. 각본 전투·motion 없는 params 는 안 함 */
-function queueBlockMotion(s: CombatState, key: string | null): number | null {
+function queueBlockMotion(s: CombatState, key: string | null, chain: number): number | null {
   const fm = s.params.motion?.fastMax;
   if (s.script || fm === undefined) return null;
+  if (!blockMotionOf(s.params, key, chain)) return null; // 몸동작 없는 몸(그림 한 장 — 길이 0): 줄에 안 섬 (GDD 7절 v6.106)
   const m = (s.motion ??= { cur: null, queue: [], seq: 0 });
   const now = s.tick + inputTickLead;
   const id = ++m.seq;
   if (m.cur && now >= m.cur.endTick) m.cur = null;
-  const item = { id, key, pressTick: now };
+  const item = { id, key, chain, pressTick: now };
   if (!m.cur && m.queue.length === 0) {
     startBlockMotion(s, item, now);
     return id;
@@ -2399,7 +2435,7 @@ function useBlock(s: CombatState, index: number): boolean {
   const { damage, crit, elem } = playerHit(s, blockDamage(s, b, chain), true, skill.element ? [skill.element] : []);
   const family = skill.family ?? null;
   // 피해는 모션이 닿는 순간에 (GDD 214장): 계열·단계별 타격 지연. 피해 0(막기 블록 등)은 바로
-  strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain)), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
+  strike(s, blockHitDelayOf(p, blockHitKey(skill.role === 'attack' ? family : null, chain), chain), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family, element: skill.element, matchup: m, role: skill.role, chain, damage, weak, heal, guardSeconds, bonus: bonus?.kind ?? null, crit, elem }, finisher: { kind: 'skill', traitId: id, element: skill.element, family, weak, matchup: m }, ...(skill.element ? { elements: [skill.element] } : {}) });
   // 단련 (GDD 49장 노멀 특성): 스킬 블록 1개마다 이번 전투 평타 +
   if (p.abilityEffects.tempering) s.temperingBlocks = (s.temperingBlocks ?? 0) + chain;
   // 물공 블록 효과 (GDD 49장): 기본 공격 블록이 물공 블록인 몸에서 그 블록을 썼을 때
@@ -2476,7 +2512,7 @@ function useKitBlock(s: CombatState, index: number, kb: CombatKitBlock): boolean
     } else k.stack = Math.min(kb.stack.full, k.stack + 1);
     emit(s, { kind: 'kit-stack', stack: k.stack, full: kb.stack.full });
   }
-  strike(s, blockHitDelayOf(p, null), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage, weak: false, heal, guardSeconds: 0, bonus: null, crit, kitName: name, kitFx: kb.fx, kitCounter: counter, kitFinisher: finisher }, finisher: { kind: 'skill', traitId: id, element: null, family: null, weak: false, matchup: 'neutral' } });
+  strike(s, blockHitDelayOf(p, null, chain), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'skill', traitId: id, family: null, element: null, matchup: 'neutral', role: 'attack', chain, damage, weak: false, heal, guardSeconds: 0, bonus: null, crit, kitName: name, kitFx: kb.fx, kitCounter: counter, kitFinisher: finisher }, finisher: { kind: 'skill', traitId: id, element: null, family: null, weak: false, matchup: 'neutral' } });
   // 반격 뒤 같은 블록 즉시 1개는 삭제 (GDD 12-4 v6.050 — 사용자 2026-11-13)
   // 프라고르 (GDD 12-4 v6.052): 해방 중 1블록마다 게이지 −riskCost (최소 floor), 문턱 밑으로 떨어지면 풀린다
   if (kb.riskCost && rr && liberationActive(s) && s.liberation.endless) kitModeSpend(s, kb.riskCost * chain);
@@ -2612,7 +2648,7 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
         const ev = s.events[i]!;
         const b = ev.kind === 'block' ? ev : ev.kind === 'swing' && ev.hit.kind === 'block' ? ev.hit : null;
         if (!b || b.block === 'void' || (b.block === 'skill' && kitBlockOf(s.params, b.traitId)?.noMotion)) continue; // 몸동작 없는 전용 블록(월아천충)은 줄에 안 섬 — 평타가 안 멈춘다 (GDD 12-4 v6.073)
-        const id = queueBlockMotion(s, motionKeyOf(b));
+        const id = queueBlockMotion(s, motionKeyOf(b), b.chain);
         if (id !== null) b.motionId = id;
         break;
       }

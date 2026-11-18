@@ -139,7 +139,7 @@ export function tileHint(t: TerrainTileDef, factionId = ''): string {
       reshuffle: '전투 중 블록 바의 순서가 주기적으로 섞인다',
       power: '전투 공격 위력 ×1.3',
       shield: '전투에서 받는 피해 ↓',
-      void: '전투 공허 블록 ↑',
+      void: '전투 폭주 블록 ↑',
       training: `약한 적 · 이기면 노력치 +${T.training.ev} (그 적의 능력치 하나, 상한 안)`,
     }[e.preset];
   }
@@ -172,8 +172,8 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
   if (m.enemyAttackMult !== undefined) out.push(`적 공격 ${pct(m.enemyAttackMult)}`);
   if (m.enemyHpMult !== undefined) out.push(`적 체력 ${pct(m.enemyHpMult)}`);
   if (m.eliteHpMult !== undefined) out.push(`강적 체력 ${pct(m.eliteHpMult)}`);
-  if (m.voidMult !== undefined) out.push(`공허 블록 ×${m.voidMult}`);
-  if (m.voidBonus) out.push('공허 블록 ↑');
+  if (m.voidMult !== undefined) out.push(`폭주 블록 ×${m.voidMult}`);
+  if (m.voidBonus) out.push('폭주 블록 ↑');
   if (m.elementBias) out.push(`${elementName(m.elementBias, factionId)} 속성 적 ↑`);
   if (m.absorbBonus) out.push(`${absorbWord(factionId)} 후보 +${m.absorbBonus}`);
   if (m.restMult !== undefined) out.push(`휴식 회복 ×${m.restMult}`);

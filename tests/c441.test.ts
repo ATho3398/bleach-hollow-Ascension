@@ -64,7 +64,7 @@ describe('초월자 기반 블록 풀', () => {
     expect(ids).toEqual([KIT_TRAIT_PREFIX + 'kyoka', KIT_TRAIT_PREFIX + 'kido', KIT_TRAIT_PREFIX + 'hogyoku']); // C.443: 붕옥 블록 = 허 자리
     const sk = t.entries.filter((e) => e.source && e.source.id !== KIT_TRAIT_PREFIX + 'hogyoku');
     const sum = sk.reduce((a, e) => a + e.chance, 0);
-    expect(sk[0]!.chance / sum).toBeCloseTo(voidChanceOf(p), 9); // C.452: 경화수월 = 허 공식 확률(붕옥이 안 걸린 몫 안에서)
+    expect(sk[0]!.chance / sum).toBeCloseTo(0.12 + voidChanceOf(p), 9); // C.452: 경화수월 = 허 공식 확률(붕옥이 안 걸린 몫 안에서) · C.489: + 고정 몫 0.12
     // 키웠던 호로 기반으로 바꾸면 그 빌드 그대로 (전용 블록 없음)
     expect(switchCombatBasis(s, 'hollow', 3000).ok).toBe(true);
     expect(kitActive(s.evolution)).toBe(false);
@@ -94,8 +94,9 @@ describe('초월자 기반 블록 풀', () => {
       if (s.tray.length >= s.params.trayCapacity) s.tray.splice(0, 4); // 계속 생성되게 비운다
     }
     expect(total).toBeGreaterThan(200);
-    expect(kyoka / total).toBeGreaterThan(0.05);
-    expect(kyoka / total).toBeLessThan(0.15);
+    // C.489: 경화수월 = (1 − (0.15 + 0.1)) × (0.12 + 0.1) = 0.165 (레일 상한 2로 조금 줄 수 있음)
+    expect(kyoka / total).toBeGreaterThan(0.1);
+    expect(kyoka / total).toBeLessThan(0.22);
     expect(kyokaMax).toBeLessThanOrEqual(2);
   });
   it('기본 회피율 10% (적 공격을 통째로 피함)', () => {
@@ -139,7 +140,7 @@ describe('경화수월 — 반격 창', () => {
     expect(ev && ev.kind === 'block' && ev.kitName).toBe('경화수월');
     expect(before - s.enemy.hp).toBeGreaterThan(0);
   });
-  it('적 공격을 받은 뒤 0.5초 창(발광) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 (C.442: 즉시 1개 생성 삭제)', () => {
+  it('적 공격을 받은 뒤 0.8초 창(발광 — C.476, 옛 0.5) 안에 쓰면 반격: 대사 · 피해 ×1.5 · 손실 체력 50% 회복 (C.442: 즉시 1개 생성 삭제)', () => {
     const s = mk();
     quiet(s);
     s.params.critChance = s.params.blockCritChance = 0;
@@ -151,7 +152,7 @@ describe('경화수월 — 반격 창', () => {
     const lost = hp0 - s.player.hp;
     expect(lost).toBeGreaterThan(0);
     expect(kitCounterOpen(s)).toBe(true);
-    expect(drainCombatEvents(s).some((e) => e.kind === 'kit-window' && e.seconds === 0.5)).toBe(true);
+    expect(drainCombatEvents(s).some((e) => e.kind === 'kit-window' && e.seconds === 0.8)).toBe(true);
     const hpBefore = s.player.hp;
     const enemyBefore = s.enemy.hp;
     expect(applyInput(s, { type: 'use', cell: 0 })).toBe(true);
@@ -169,13 +170,13 @@ describe('경화수월 — 반격 창', () => {
     applyInput(t, { type: 'use', cell: 0 });
     expect((enemyBefore - s.enemy.hp) / (e0 - t.enemy.hp)).toBeCloseTo(1.5, 5);
   });
-  it('창은 0.5초 — 지나면 보통 경화수월 (회복·즉시 생성 없음), 치명 +30%p 가산', () => {
+  it('창은 0.8초(C.476) — 지나면 보통 경화수월 (회복·즉시 생성 없음), 치명 +30%p 가산', () => {
     const s = mk();
     quiet(s);
     s.tray = [kitBlk(s, 'kyoka')];
     hitMe(s);
-    for (let i = 0; i < ticksOf(s.params, 0.5); i++) step(s);
-    expect(kitCounterOpen(s)).toBe(true); // 0.5초 끝 틱까지
+    for (let i = 0; i < ticksOf(s.params, 0.8); i++) step(s);
+    expect(kitCounterOpen(s)).toBe(true); // 0.8초 끝 틱까지
     step(s);
     expect(kitCounterOpen(s)).toBe(false);
     drainCombatEvents(s);

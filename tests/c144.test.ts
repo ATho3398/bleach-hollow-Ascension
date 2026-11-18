@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getFaction } from '../src/data/factions';
-import { PET_IDS, PETS, getPet } from '../src/data/pets';
+import { PET_IDS, PET_POOL_IDS, PETS, getPet } from '../src/data/pets';
 import { ITEM_CATEGORIES, getWandererItem } from '../src/data/shop';
 import { advance, chooseRelease, createExpedition, finishBattle, finishRest, playExpedition, startBattle, type ExpeditionState, type StepEvent } from '../src/engine/expedition';
 import { addPetLaps, affinityMult, affinityOf, carriedPet, grantPet, newPetState, nextAffinityLaps, petBonus, pickNewPet, sanitizePets, setActivePet } from '../src/engine/pet';
@@ -51,11 +51,13 @@ function ended(save: SaveData, laps: number, extra: Partial<ExpeditionState> = {
 
 describe('90장 펫 데이터 (가칭)', () => {
   it('4종 · 효과 하나씩 · 그림 키 · 종족마다 이름만 다름(faction json)', () => {
-    expect(PET_IDS).toEqual(['pet-gold', 'pet-belly', 'pet-guard', 'pet-seek']);
-    expect(PETS.map((p) => p.effect)).toEqual(['gold', 'belly', 'guard', 'seek']);
+    // C.482: 효과 미정 펫 7종이 뒤에 붙었다(pool false) — 얻는 길에 든 펫은 그대로 4종
+    expect(PET_POOL_IDS).toEqual(['pet-gold', 'pet-belly', 'pet-guard', 'pet-seek']);
+    expect(PET_IDS.slice(0, 4)).toEqual(PET_POOL_IDS);
+    expect(PETS.filter((p) => p.pool).map((p) => p.effect)).toEqual(['gold', 'belly', 'guard', 'seek']);
     expect(getPet('pet-gold')!.art).toBe('pet.pet-gold');
-    expect(PET_IDS.map((id) => H.petNames[id])).toEqual(['뼈 까마귀', '모래 벌레', '껍질 게', '그림자 박쥐']);
-    expect(PET_IDS.map((id) => S.petNames[id])).toEqual(['지옥나비', '꼬마 쥐', '수호 거북', '길잡이 까마귀']);
+    expect(PET_POOL_IDS.map((id) => H.petNames[id])).toEqual(['뼈 까마귀', '모래 벌레', '껍질 게', '그림자 박쥐']);
+    expect(PET_POOL_IDS.map((id) => S.petNames[id])).toEqual(['지옥나비', '꼬마 쥐', '수호 거북', '길잡이 까마귀']);
     expect(ITEM_CATEGORIES).toContain('pet');
   });
 

@@ -13,7 +13,7 @@ import {
   abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent,
 } from '../engine/expedition';
-import { eventHint, tileHint, variantModsText } from './labels';
+import { BLOCK_WORDS, eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
 import { GROUNDS } from '../data/grounds';
@@ -337,7 +337,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   healFx.hidden = true;
   walk.walker.append(healFx);
   // 데리고 간 펫 (GDD 90장): 걷는 캐릭터 뒤에 작게
-  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
+  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction), faction);
   if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
   // 걷는 앞쪽 (GDD 128장 2·3): 조우한 적·휴식 장소가 서는 길. 캐릭터보다 아래 층
@@ -490,7 +490,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       tagGauge(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }), 'hunger'),
       tagGauge(meter({
         kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true,
-        valueText: `${condNow}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`,
+        valueText: `${condNow}${bonus > 0 ? ` · ${BLOCK_WORDS.void} 블록 +${Math.round(bonus * 100)}%` : ''}`,
       }), 'cond'),
       tagGauge(meter({
         kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
@@ -517,8 +517,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     fullChip.set(full / PX.hungerMax, String(full), hungerDanger);
     condChip.set(exp.condition / PX.conditionMax, String(Math.round(exp.condition)), false);
     riskChip.set(exp.risk / RX.limit, exp.breakthrough ? `${Math.round(exp.risk)}` : String(Math.round(exp.risk)), Boolean(exp.breakthrough) || exp.risk >= 60,
-      exp.breakthrough ? `${faction.frenzyName}!` : bonus > 0 ? `공허 +${Math.round(bonus * 100)}%` : '',
-      exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}${bonus > 0 ? ` · 공허 +${Math.round(bonus * 100)}%` : ''}`);
+      exp.breakthrough ? `${faction.frenzyName}!` : bonus > 0 ? `${BLOCK_WORDS.void} 블록 +${Math.round(bonus * 100)}%` : '',
+      exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}${bonus > 0 ? ` · ${BLOCK_WORDS.void} 블록 +${Math.round(bonus * 100)}%` : ''}`);
     // 폭주·다음 칸 강적 칩 (C.281 그대로 — 배부름·컨디션·광기 위험은 판 막대 위험 색으로 보인다)
     frenzyChip.hidden = !inFrenzy(exp);
     aheadChip.hidden = !nextElite();

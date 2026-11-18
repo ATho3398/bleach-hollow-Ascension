@@ -57,6 +57,11 @@ export interface AttackCue {
   motionId?: number;
   /** 일반 공격 빨리 감기 배율 (GDD 7-2 '빠른 간격의 모션', C.448 — 엔진 player-attack 의 rate). 앞 자르기는 hitInMs 로 */
   motionRate?: number;
+  /** 블록 체인 수 (엔진 block 사건의 chain): 블록 모션 기준 길이를 고른다 (GDD 7절 v6.106, C.476) */
+  chain?: number;
+  /** 블록 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이(blockBodyMs) ÷ 기준 길이. 몸동작·이펙트·맞음 반응을 모두 이 배율로 —
+   *  엔진 몸동작 표·타격 지연(blockMotionOf·blockHitDelayOf)도 같은 배율. 없으면 1 */
+  pace?: number;
 }
 
 /** 계열 연출 조회 결과: 종류만, 또는 종류 + 단계 고유 모양 (C.63) */
@@ -84,8 +89,8 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}), ...(e.kitMotion ? { rigMotion: e.kitMotion } : {}) } : null;
     case 'block': {
       if (e.damage <= 0 || e.block === 'void') return null;
-      if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true, instant: true };
-      const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false, instant: true };
+      if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true, instant: true, chain: e.chain };
+      const cue: AttackCue = { side: 'player', tier: e.matchup === 'strong' ? 'weak' : chainTier(e.chain, top), guarded: false, instant: true, chain: e.chain };
       const stage = familyStage(e.chain);
       if (e.family && e.role === 'attack') applyFamilySpec(cue, e.family, stage, familyFx?.(e.family, stage), e.element);
       if (e.motionId !== undefined) cue.motionId = e.motionId;
@@ -216,8 +221,30 @@ export function hitDelaysOf(o: {
 const peekStep = (anim: AnimTiming, id: string) => ('pose' in anim ? anim.peek('skill', { rigMotion: id }) : anim.peek(id as AnimAction));
 
 /**
+ * 블록 몸동작의 실제 길이·첫 타격(ms, 1배) (GDD 7-2·7절 v6.106, C.448·C.476) — 엔진 몸동작 표(motionsOf)와 화면 재생 배율(cue.pace)이 같은 값을 쓴다.
+ * 몸동작만 잰다(이펙트 시간줄 제외 — '모션과 이펙트는 따로 계산'): 도트 연결 동작이 있으면 그 시간줄(bodyMotionSpec), 아니면 스킬·공격 동작(변형 중 가장 긴 것),
+ * 동작 그림이 없으면 대신 쓰는 몸통박치기·발사 움직임. 몸 그림이 없으면(재생기 없음 — 그림 한 장) null = 몸동작 없음(길이 0)
+ */
+export function blockBodyMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion'>, anim: AnimTiming | null, slot: PixelBodySlot): { totalMs: number; hitMs: number } | null {
+  if (!anim) return null;
+  const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, slot) ? pixelPlan(cue.pixel.stage, slot) : null;
+  const body = pplan?.body ? bodyMotionSpec(pplan.body, pplan.body.chain.map((st) => peekStep(anim, st.id))) : null;
+  if (body) return body;
+  const act = animActionOf(cue, (a) => anim.has(a));
+  const r = act ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion }) : null;
+  if (r) return { totalMs: r.durationMs, hitMs: r.hitAtMs };
+  const level = ATTACK_FX[cue.tier];
+  const motion = cue.fx ? familyMotion(cue.fx) : null;
+  if (motion?.move === 'cast') {
+    const wind = Math.max(60, level.backMs);
+    return { totalMs: wind + Math.max(motion.travelMs, 120) + level.returnMs, hitMs: wind + motion.travelMs };
+  }
+  return { totalMs: level.backMs + level.lungeMs + level.holdMs + level.returnMs, hitMs: level.backMs + level.lungeMs };
+}
+
+/**
  * 엔진 몸동작 표(초) (GDD 7-2 '빠른 간격의 모션'·'모션 중엔 평타 없음', C.448): 실제 동작 데이터로 — 내 평타·블록(계열:단계·콤보·해방).
- * 몸동작만 잰다(이펙트 시간줄 제외 — '모션과 이펙트는 따로 계산'): 도트 연결 동작이 있으면 그 시간줄(bodyMotionSpec), 아니면 동작 길이·타격. 모르면 fallback 값
+ * 블록은 blockBodyMs(실제 몸동작 길이) — 엔진이 기준 길이(blockLength)로 늘이거나 줄인다(C.476). 몸 그림이 없으면 블록 몸동작 0(줄에 안 섬). 평타를 모르면 fallback 값
  */
 export function motionsOf(o: {
   player: AnimTiming | null;
@@ -232,24 +259,26 @@ export function motionsOf(o: {
     const r = act && o.player ? o.player.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion }) : null;
     return r ? { total: sec(r.durationMs), hit: sec(r.hitAtMs) } : null;
   };
+  // 몸 그림이 없는 몸(그림 한 장 — 재생기 없음): 블록 몸동작 길이 0 = 줄에 안 섬, 평타가 안 멈춘다 (GDD 7절 v6.106)
+  if (!o.player) return { ...o.fallback, block: { total: 0, hit: 0 }, blockBy: {} };
+  const spec = (cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion'>): MotionSpec | null => {
+    const r = blockBodyMs(cue, o.player, o.slot);
+    return r ? { total: sec(r.totalMs), hit: sec(r.hitMs) } : null;
+  };
   const blockBy: Record<string, MotionSpec> = { ...(o.fallback.blockBy ?? {}) };
   for (const id of o.familyIds) {
     for (let stage = 1; stage <= FAMILY_STAGE_FX.length; stage++) {
       const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true };
       applyFamilySpec(cue, id, stage, o.familyFx?.(id, stage), null);
-      const key = blockHitKey(id, stage)!;
-      const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, o.slot) ? pixelPlan(cue.pixel.stage, o.slot) : null;
-      const anim = o.player;
-      const body = pplan?.body && anim ? bodyMotionSpec(pplan.body, pplan.body.chain.map((st) => peekStep(anim, st.id))) : null;
-      const spec = body ? { total: sec(body.totalMs), hit: sec(body.hitMs) } : clipSpec(cue);
-      if (spec) blockBy[key] = spec;
+      const v = spec(cue);
+      if (v) blockBy[blockHitKey(id, stage)!] = v;
     }
   }
-  const combo = clipSpec({ tier: 'special', ult: true });
+  const combo = spec({ tier: 'special', ult: true });
   if (combo) blockBy.combo = combo;
-  const lib = clipSpec({ tier: 'chain1' });
+  const lib = spec({ tier: 'chain1' });
   if (lib) blockBy.liberation = lib;
-  return { fastMax: o.fallback.fastMax, basic: clipSpec({ tier: 'basic' }) ?? o.fallback.basic, block: clipSpec({ tier: 'chain1' }) ?? o.fallback.block, blockBy };
+  return { ...o.fallback, basic: clipSpec({ tier: 'basic' }) ?? o.fallback.basic, block: spec({ tier: 'chain1' }) ?? o.fallback.block, blockBy };
 }
 
 /** 체인 수 → 계열 연출 단계 (1~3) */
@@ -565,6 +594,8 @@ export interface AttackFxOptions {
   onHitFrame?: (side: Side, guarded: boolean, tier: string) => void;
   /** 치는 쪽 동작이 타격 프레임에 닿은 순간 알림 — 테스트 모드 실측용(GDD 224장, C.367). 평소 없음 */
   onSwingFrame?: (side: Side, tier: string) => void;
+  /** 블록 모션 기준 길이(초) (GDD 7절 v6.106, C.476 — 엔진 blockMotionTarget): 체인 수 → 초. 없거나 null 이면 실제 동작 길이 그대로 */
+  blockLength?: (chain: number) => number | null;
 }
 
 const SVG_OPEN = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">';
@@ -609,7 +640,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
   /** 이펙트만 먼저 재생하고 엔진 block-motion 을 기다리는 블록 연결 동작 (GDD 7-2 '모션과 이펙트는 따로 계산', C.448): 줄 번호 → 재생 정보 */
   type PendingBody =
     | { kind: 'chain'; anim: AnimPlayer; body: NonNullable<PixelPlan['body']>; startAt: number; probe?: { side: Side; tier: string }; host: HTMLElement }
-    | { kind: 'clip'; anim: AnimPlayer; act: 'attack' | 'skill'; motion?: FamilyMotionKind; rigMotion?: string; onHit?: () => void };
+    | { kind: 'clip'; anim: AnimPlayer; act: 'attack' | 'skill'; motion?: FamilyMotionKind; rigMotion?: string; lengthMs?: number; onHit?: () => void };
   const pendingBodies = new Map<number, PendingBody>();
   /** 지금 재생 중(또는 시작 대기 중)인 블록 연결 동작: 줄 번호 · 지금 동작 빠르기 · 빨리 감기 배율 */
   let chainNow: { id: number; anim: AnimPlayer; stepRate: number; boost: number } | null = null;
@@ -905,7 +936,9 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       // 앞 자르기 (GDD 7-2): 첫 동작을 skipMs(1배 몸 시간) × 빠르기만큼 앞에서 건너뛴다 — 타격 프레임은 넘지 않는다
       const skip = first && motion && motion.skipMs > 0 ? motion.skipMs * stepRate : 0;
       const peekHit = skip > 0 ? (isRig ? anim.peek('skill', { rigMotion: st.id }) : anim.peek(st.id as AnimAction))?.hitAtMs ?? null : null;
-      const o = peekHit !== null ? { hitInMs: Math.max(0, (fromHit ? 0 : peekHit) - skip), onEnd: next, onHit } : { fromHit, onEnd: next, onHit };
+      // 블록 모션 길이 통일 (C.476): 고른 변형을 재기 값(가장 긴 변형) 길이에 맞춘다 — 시간줄 전체 배율은 body.speed 에 이미 있다
+      const fitLen = body.fit ? peekStep(anim, st.id)?.durationMs : undefined;
+      const o = { ...(peekHit !== null ? { hitInMs: Math.max(0, (fromHit ? 0 : peekHit) - skip), onEnd: next, onHit } : { fromHit, onEnd: next, onHit }), ...(fitLen ? { lengthMs: fitLen } : {}) };
       const r = isRig ? anim.play('skill', { ...o, rigMotion: st.id }) : anim.play(st.id as AnimAction, o);
       if (!r) {
         if (first) onFirstHit?.();
@@ -954,8 +987,10 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 몸동작 칸: 내 공격 = 내 칸(남·여·프레임), 적 공격 = 적 칸(종이인형이면 남, 아니면 프레임 — 강적 강공격 연결 동작, GDD 227장 보충 4)
     const slot = cue.side === 'player' ? opts.bodySlot?.() ?? 'male' : from.anim && 'pose' in from.anim ? 'male' : 'frames';
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
-    const pplan = px ? pixelPlan(px.stage, slot) : null;
-    const chainBody = pplan?.body && from.anim ? pplan.body : null;
+    // 블록 모션 길이 통일 (GDD 7절 v6.106, C.476): 이펙트·맞음 반응·몸동작 시간줄 전체를 같은 배율(pace)로 — 엔진 타격 지연도 같은 배율
+    const pace = cue.pace && cue.pace > 0 ? cue.pace : 1;
+    const pplan = px ? pixelPlan(px.stage, slot, pace) : null;
+    const chainBody = pplan?.body && from.anim ? (cue.pace ? { ...pplan.body, fit: true } : pplan.body) : null;
     // 연결 동작을 처음부터 (GDD 224장 2): 첫 동작 휘두르기 길이만큼 이펙트·맞음 반응을 뒤로 — 몸의 타격 프레임 = 첫 맞음 반응
     const bodySwing = chainBody && (cue.bodyWindup || cue.windup) ? bodySwingMs(chainBody, from.anim ?? null) : 0;
     const bodyLead = chainBody ? Math.max(0, bodySwing - chainBody.at) : 0;
@@ -969,10 +1004,12 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const mr = cue.motionRate && cue.motionRate > 0 ? cue.motionRate : 1;
     // 모션과 이펙트는 따로 (GDD 7-2, C.448): 엔진 줄 번호가 있는 블록은 동작(연결 동작·스킬 동작)을 엔진 block-motion 때 — 이펙트는 지금
     const deferred = defersBody(cue);
+    // 스킬·공격 동작 하나 (블록 모션 길이 통일, C.476): 재기 값(가장 긴 변형) ÷ pace 길이로 — 고른 변형도 이 길이에 맞춘다
+    const clipLen = cue.pace && act && !chainBody ? (from.anim!.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.durationMs ?? 0) / pace : 0;
     if (deferred && act && !chainBody && cue.motionId !== undefined)
-      pendingBodies.set(cue.motionId, { kind: 'clip', anim: from.anim!, act, motion: cue.motion, rigMotion: cue.rigMotion, ...(opts.onSwingFrame ? { onHit: () => opts.onSwingFrame?.(cue.side, cue.tier) } : {}) });
+      pendingBodies.set(cue.motionId, { kind: 'clip', anim: from.anim!, act, motion: cue.motion, rigMotion: cue.rigMotion, ...(clipLen > 0 ? { lengthMs: clipLen } : {}), ...(opts.onSwingFrame ? { onHit: () => opts.onSwingFrame?.(cue.side, cue.tier) } : {}) });
     if (act && !chainBody && !deferred) from.anim!.setRate(rate * mr);
-    const clipRaw = act && !chainBody && !deferred ? from.anim!.play(act, { hitInMs: clipHitIn === undefined ? undefined : clipHitIn * mr, motion: cue.motion, rigMotion: cue.rigMotion, ...(mr !== 1 ? { onEnd: () => from.anim?.setRate(rate) } : {}), ...(opts.onSwingFrame ? { onHit: () => opts.onSwingFrame?.(cue.side, cue.tier) } : {}) }) : null;
+    const clipRaw = act && !chainBody && !deferred ? from.anim!.play(act, { hitInMs: clipHitIn === undefined ? undefined : clipHitIn * mr, motion: cue.motion, rigMotion: cue.rigMotion, ...(clipLen > 0 ? { lengthMs: clipLen } : {}), ...(mr !== 1 ? { onEnd: () => from.anim?.setRate(rate) } : {}), ...(opts.onSwingFrame ? { onHit: () => opts.onSwingFrame?.(cue.side, cue.tier) } : {}) }) : null;
     const clipPlay = clipRaw ? { durationMs: clipRaw.durationMs / mr, hitAtMs: clipRaw.hitAtMs / mr } : null;
     if (mode === 'flash') {
       // 돌진 없이 맞는 쪽만 번쩍인다 (애니가 있으면 타격 프레임에 맞춰, 아니면 엔진 착탄에)
@@ -984,15 +1021,16 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       window.setTimeout(done, ms / rate + FX_SAFETY_MS); // 안전장치
       return;
     }
-    const lv = scaled(level, unit());
+    const lv = paced(scaled(level, unit()), pace);
     const motion = cue.fx ? familyMotion(cue.fx) : null;
+    const travel = motion ? motion.travelMs / pace : 0; // 발사 비행 시간도 같은 배율 (C.476)
     const plan: LungePlan = chainBody || deferred
       ? { keyframes: [], durationMs: 1, hitAtMs: clipHitIn ?? 0, ghosts: 0 }
       : clipPlay
       ? { keyframes: [], durationMs: clipPlay.durationMs, hitAtMs: clipPlay.hitAtMs, ghosts: 0 }
       : alignPlan(
         motion?.move === 'cast'
-          ? castPlan(lv, from.dir, motion.travelMs)
+          ? castPlan(lv, from.dir, travel)
           : lungePlan(lv, from.dir, Math.min(reachOf(gapOf(from, to)), opts.maxReach?.() ?? Infinity) * (motion?.reach ?? 1)),
         clipHitIn,
       );
@@ -1078,7 +1116,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         const src = boxIn(layer, from.body);
         if (motion.move === 'cast') {
           const castScale = hits[hits.length - 1]!.scale;
-          for (const [i, h] of hits.entries()) missile(layer, cue.fx, famId, src, tgt, Math.max(0, h.atMs - motion.travelMs), motion.travelMs, i === hits.length - 1 ? castScale : 1);
+          for (const [i, h] of hits.entries()) missile(layer, cue.fx, famId, src, tgt, Math.max(0, h.atMs - travel), travel, i === hits.length - 1 ? castScale : 1);
         }
         for (const [i, h] of hits.entries()) mark(layer, cue.fx, famId, tgt, h.scale, h.atMs, from.dir, motion.markMs, i);
       }
@@ -1122,6 +1160,12 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
         cue.name = nm.name;
         if (nm.ult) cue.ult = true;
       }
+      // 블록 모션 길이 통일 (GDD 7절 v6.106, C.476): 내 블록이면 실제 몸동작 길이 ÷ 기준 길이 = 재생 배율. 몸 그림이 없으면 그대로(길이 0 — 엔진도 줄에 안 세움)
+      if (cue.side === 'player' && cue.chain !== undefined && opts.blockLength) {
+        const target = opts.blockLength(cue.chain);
+        const nat = target ? blockBodyMs(cue, opts.player.anim ?? null, opts.bodySlot?.() ?? 'male') : null;
+        if (target && nat && nat.totalMs > 0) cue.pace = nat.totalMs / (target * 1000);
+      }
       // 블록 이펙트는 대기열 없이 바로 (GDD 7-2 '모션과 이펙트는 따로 계산', C.448): 몰아 써도 이펙트는 전부 보이고 겹쳐도 된다. 몸동작은 엔진 block-motion 때
       if (defersBody(cue)) {
         run(cue, () => {});
@@ -1139,11 +1183,11 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       if (p.kind === 'clip') {
         // 스킬 동작 하나: 앞 trim 을 건너뛰고(타격 프레임은 남김) rate 배속
         const cs = (chainNow = { id, anim: p.anim, stepRate: 1, boost: motionRate });
-        const pk = p.anim.peek(p.act, { motion: p.motion, rigMotion: p.rigMotion });
+        const pk = p.anim.peek(p.act, { motion: p.motion, rigMotion: p.rigMotion, lengthMs: p.lengthMs });
         p.anim.setRate(rate * motionRate);
         p.anim.play(p.act, {
           ...(pk ? { hitInMs: Math.max(0, pk.hitAtMs - trimSec * 1000) } : {}),
-          motion: p.motion, rigMotion: p.rigMotion,
+          motion: p.motion, rigMotion: p.rigMotion, ...(p.lengthMs ? { lengthMs: p.lengthMs } : {}),
           ...(p.onHit ? { onHit: p.onHit } : {}),
           onEnd: () => {
             if (chainNow !== cs) return;
@@ -1197,4 +1241,9 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
 /** 길이 값(px)에 화면 배율을 곱한 단계 값 */
 export function scaled(level: AttackFxLevel, unit: number): AttackFxLevel {
   return unit === 1 ? level : { ...level, backPx: level.backPx * unit, knockPx: level.knockPx * unit };
+}
+
+/** 몸통박치기·발사 움직임 시간을 재생 배율로 (블록 모션 길이 통일, GDD 7절 v6.106, C.476): 물러남·돌진·머묾·복귀 ÷ pace. 맞음 반응(hitMs)은 그대로 */
+export function paced(level: AttackFxLevel, pace: number): AttackFxLevel {
+  return pace === 1 || !(pace > 0) ? level : { ...level, backMs: level.backMs / pace, lungeMs: level.lungeMs / pace, holdMs: level.holdMs / pace, returnMs: level.returnMs / pace };
 }

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
 import {
-  createCombat, drainCombatEvents, hitDelayTicks, newCombatScript, playScriptedCombat, scriptAck, scriptPrompt, scriptStep, step,
+  blockHitDelayOf, createCombat, drainCombatEvents, hitDelayTicks, newCombatScript, playScriptedCombat, scriptAck, scriptPrompt, scriptStep, step,
   type CombatEvent, type CombatParams, type CombatState, type HitDelayParams,
 } from '../src/engine/combat';
 import { bodyLastHitMs, bodyLeadMs, bodySwingMs, cueHitMs, type AnimTiming } from '../src/ui/attackFx';
@@ -80,7 +80,7 @@ describe('224장 2: 튜토리얼 전투 피해 = 모션 타격 순간', () => {
     expect(hits.map((e) => e.kind === 'heavy-hit' && e.guarded)).toEqual([true, false]);
     expect(hits.every((e) => 'landed' in e && e.landed)).toBe(true);
   });
-  it('블록 1개(위기 카드에서 사용): 예약 → 지연 뒤 피해, 좋아! 카드는 착탄 뒤. 지연 0.3초 = 3틱 그대로(대기 단계 입력은 틱 없이)', () => {
+  it('블록 1개(위기 카드에서 사용): 예약 → 지연 뒤 피해, 좋아! 카드는 착탄 뒤. 지연 0.3초 × 모션 배율(C.476)(대기 단계 입력은 틱 없이)', () => {
     const s = scripted({ hitDelay: HD(0.3, { heavy: 0.8 }) });
     const log: CombatEvent[] = [];
     expect(until(s, 'hurt', log)).toBe(true);
@@ -88,7 +88,9 @@ describe('224장 2: 튜토리얼 전투 피해 = 모션 타격 순간', () => {
     const hp = s.enemy.hp;
     scriptStep(s, { type: 'use', cell: 0 });
     const sw = drainCombatEvents(s).find((e) => e.kind === 'swing');
-    expect(sw && sw.kind === 'swing' ? [sw.hit.kind, sw.atTick] : null).toEqual(['block', t + 3]);
+    // C.476 (GDD 7절 v6.106): 블록 타격 지연도 블록 모션 기준 길이 배율 — 0.3초 × (기준 0.8 ÷ 실제 1.4) (각본 전투 포함)
+    expect(blockHitDelayOf(s.params, null, 1)).toBeCloseTo(0.3 * (0.8 / 1.4), 9);
+    expect(sw && sw.kind === 'swing' ? [sw.hit.kind, sw.atTick] : null).toEqual(['block', t + hitDelayTicks(s.params, blockHitDelayOf(s.params, null, 1))]);
     expect(s.enemy.hp).toBe(hp);
     log.length = 0;
     expect(until(s, 'nice', log)).toBe(true);

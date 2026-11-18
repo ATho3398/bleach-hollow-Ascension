@@ -530,6 +530,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
     factionId = basisFaction;
   }
   params.combos = comboRulesOf(e);
+  // 블록 모션 기준 길이의 진화 단계 키 (GDD 7절 v6.106, C.476): balance motion.blockLength.byTier[단계] → 없으면 default
+  params.motion = { ...(params.motion ?? BALANCE.provisional.combat.motion), tier: e.tierIndex };
   // 체인 묶음 상한 (GDD 19-2): 지금 진화체 값이 있으면 종족 기본값(buildCombatParams)보다 우선
   const form = e.formId ? tryGetForm(e.formId) : undefined;
   if (form?.maxChain !== undefined) params.maxChain = form.maxChain;
