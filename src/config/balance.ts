@@ -17,7 +17,7 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 148; // C.500 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
+export const BALANCE_VERSION = 148; // C.502 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 147; // C.499 (GDD v6.132 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
 // 이전: BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
@@ -587,9 +587,9 @@ export const BALANCE = {
         't4:normal:physical': { shinigami: { every: 4, perBlock: 0.03, release: { every: 2 } } },
         /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
         't4:water:physical': { shinigami: { perStack: 0.04, seconds: 5, max: 5, every: 6, hits: 3, bonus: 0.3, critDmgPerStack: 0, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.05 } } },
-        // ── C.500 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
-        /** 사신 봉수대: 평타 every 대마다 봉화 1(봉화당 평타 +perBeacon), 봉화 need 개 → 다음 평타 '봉수 폭렬' = 평타 burst 회분 방어 무시 추가 피해 × (1 + perFire × 바의 불 블록). 만해 = 필요 4·봉화당 +7.5% */
-        't4:fire:physical': { shinigami: { every: 3, perBeacon: 0.06, need: 5, burst: 0.5, perFire: 0.1, release: { need: 4, perBeacon: 0.075 } } },
+        // ── C.502 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
+        /** 사신 봉수대: 평타 every 대마다 봉화 1(봉화당 평타 추가 피해 +perBeacon), 봉화 need 개 → 다음 평타 '봉수 폭렬' = 적 방어 pierce 무시(막기 반격과 같은 50% — 100% 면 나눗셈이 0) + 바의 불 블록 1개당 +perFire, 그 뒤 봉화 0. 만해 = 필요 4·봉화당 +7.5% */
+        't4:fire:physical': { shinigami: { every: 3, perBeacon: 0.06, need: 5, pierce: 0.5, perFire: 0.1, release: { need: 4, perBeacon: 0.075 } } },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
         't4:earth:physical': { shinigami: { slow: 1.15, slowCut: -0.15, perSpawn: 0.04, cap: 0.3, perShield: 0.015, cutPerChain: 0.05, storedMult: 1 } },
         /** 사신 주홍장: 잃은 체력 1%당 평타 +perLostPower·간격 −perLostInterval, 혈 블록 → 다음 평타 피해의 체인 수×healPerChain 회복. 만해 = 지속 releaseSeconds 초·체력 하한 hpFloor·만해 중 혈 블록 1개당 치명 +critPerBlood·치명 피해 +critDmgPerBlood */

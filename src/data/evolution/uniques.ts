@@ -57,7 +57,7 @@ export const EVO_ACTIONS = [
   'heal', // 회복 value(×per) × of(damage 이번 피해 · maxHp 최대 체력)
   'echo', // (block) 쓴 블록의 잔상(같은 블록 1체인)을 바 끝에 — 잔상은 echo 규칙을 다시 부르지 않는다
   'absorb', // (spawn) 방금 생긴 블록을 바에서 지운다 (흡수 스택은 add 로 따로)
-  'absorbBar', // 바에 있는 element 속성(void = 허 블록) 블록을 전부 지우고 그 수를 consumed 로 (C.500 흑귀 '바의 허 블록 전부 흡수')
+  'absorbBar', // 바에 있는 element 속성(void = 허 블록) 블록을 전부 지우고 그 수를 consumed 로 (C.502 흑귀 '바의 허 블록 전부 흡수')
   'useSpecial', // 바의 특수 블록 special 을 바로 쓴다 (없으면 아무것도 안 함)
   'timer', // 시계 timer 를 seconds 로 맞춘다 → 다 되면 on 'timer'
   'timerCut', // 시계 timer 를 seconds 만큼 당긴다 (돌고 있을 때만)
@@ -85,9 +85,9 @@ export interface EvoAction {
   element?: string;
   /** spawn make: 블록 계열 id (없으면 평소 출현표에서 고른 계열) */
   family?: string;
-  /** spawn 특수 블록: 바가 가득이면 맨 오른쪽 옛 블록을 밀어내고 놓는다 (해방 순간 지급과 같은 방식, C.500 흑귀) */
+  /** spawn 특수 블록: 바가 가득이면 맨 오른쪽 옛 블록을 밀어내고 놓는다 (해방 순간 지급과 같은 방식, C.502 흑귀) */
   force?: boolean;
-  /** 값에 (1 + grow.value × grow.per) 를 곱한다 (C.500 봉수대 '바의 불 블록 1개당 +10%') */
+  /** 값에 (1 + grow.value × grow.per) 를 곱한다 (C.502 봉수대 '바의 불 블록 1개당 +10%') */
   grow?: { value: EvoNum; per: EvoSource | EvoSource[] };
   ignoreDef?: EvoNum;
   bonus?: EvoNum;
@@ -167,7 +167,7 @@ export interface EvoPassive {
   value: EvoNum;
   per?: EvoSource | EvoSource[];
   max?: EvoNum;
-  /** per 를 step 단위로 내림해 센다 (2 = 2스택당 한 번, C.500 공화 '2스택당 +1%') */
+  /** per 를 step 단위로 내림해 센다 (2 = 2스택당 한 번, C.502 공화 '2스택당 +1%') */
   step?: EvoNum;
   when?: 'release' | 'normal';
   need?: EvoNeed[];
@@ -264,9 +264,9 @@ export interface EvoFormEntry {
   ability?: EvoAbilityDef;
   /** none = 해방 없음(레스렉시온/만해·기본 해방 모두 막음, 해방 버튼·도전 숨김) */
   release?: 'none';
-  /** 펫 칸 + (C.500: 칸이 있으면 2번째 펫을 데리고 가 같이 공격한다 — shared.pets.active2) */
+  /** 펫 칸 + (C.502: 칸이 있으면 2번째 펫을 데리고 가 같이 공격한다 — shared.pets.active2) */
   extraPetSlots?: EvoNum;
-  /** 더 늘어난 칸 펫의 피해 배율 (C.500 추성 '2번째 펫 피해 70%', 없으면 1) */
+  /** 더 늘어난 칸 펫의 피해 배율 (C.502 추성 '2번째 펫 피해 70%', 없으면 1) */
   extraPetPower?: EvoNum;
 }
 
@@ -315,7 +315,7 @@ export function evoReleaseBlocked(formId: string | null | undefined, factionId: 
   return evoFormEntry(formId, factionId)?.release === 'none';
 }
 
-/** 펫 칸 + (C.500 — game.ts petSlotsOf·syncPetSlots 가 쓴다) */
+/** 펫 칸 + (C.502 — game.ts petSlotsOf·syncPetSlots 가 쓴다) */
 export function evoExtraPetSlots(formId: string | null | undefined, factionId: string): number {
   const e = evoFormEntry(formId, factionId);
   if (!e?.extraPetSlots || !formId) return 0;

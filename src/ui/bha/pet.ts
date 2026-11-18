@@ -99,10 +99,18 @@ export function opaqueSpanX(art: HTMLCanvasElement | HTMLImageElement): { left: 
 export function fitPetToBody(buddy: HTMLElement): boolean {
   const host = buddy.parentElement;
   if (!host || !buddy.isConnected) return false;
-  const art = [...host.querySelectorAll<HTMLCanvasElement | HTMLImageElement>('canvas.bha-rigcanvas, img')].find((e) => !buddy.contains(e));
+  const dx = Number(buddy.dataset.dx ?? 0), dy = Number(buddy.dataset.dy ?? 0);
+  // 2번째 칸 펫 (C.502 추성): 1번째 펫 바로 오른쪽
+  const lead = buddy.classList.contains('bha-pet--second') ? host.querySelector<HTMLElement>('.bha-pet:not(.bha-pet--second)') : null;
+  if (lead) {
+    buddy.style.translate = 'none';
+    const shift = lead.getBoundingClientRect().right + PET_BODY_GAP - buddy.getBoundingClientRect().left;
+    buddy.style.translate = `${Math.round(shift)}px ${dy}px`;
+    return true;
+  }
+  const art = [...host.querySelectorAll<HTMLCanvasElement | HTMLImageElement>('canvas.bha-rigcanvas, img')].find((e) => !e.closest('.bha-pet'));
   const span = art ? opaqueSpanX(art) : null;
   if (!art || !span) return false;
-  const dx = Number(buddy.dataset.dx ?? 0), dy = Number(buddy.dataset.dy ?? 0);
   const ar = art.getBoundingClientRect();
   if (!ar.width) return false;
   const mirrored = new DOMMatrixReadOnly(getComputedStyle(art).transform).a < 0;

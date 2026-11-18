@@ -1,4 +1,4 @@
-// C.500 진화체 고유 능력 1차 — 사신 13종 (GDD 8-7, docs/drafts/evo-impl-1119.md 1절): 데이터·수치 + 작은 장치(grow·absorbBar·force·step·정확 피해) + 추성 2번째 펫 칸(세이브 형식 93)
+// C.502 진화체 고유 능력 1차 — 사신 13종 (GDD 8-7, docs/drafts/evo-impl-1119.md 1절): 데이터·수치 + 작은 장치(grow·absorbBar·force·step·정확 피해) + 추성 2번째 펫 칸(세이브 형식 93)
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
@@ -78,7 +78,7 @@ describe('데이터 (사신 13종)', () => {
   });
 });
 
-describe('작은 장치 (C.500)', () => {
+describe('작은 장치 (C.502)', () => {
   it('grow: 값 × (1 + value × per) · step: 2스택당 한 번 · absorbBar: 바의 그 속성 블록 전부 흡수 → consumed', () => {
     const ability: EvoAbilityDef = {
       description: 'd',
@@ -109,7 +109,7 @@ describe('작은 장치 (C.500)', () => {
 
 describe('사신 봉수대 (t4:fire:physical)', () => {
   const n = N('t4:fire:physical');
-  it('평타 3대마다 봉화 1, 봉화당 평타 +6%, 봉화 5 → 다음 평타 「봉수 폭렬」(평타 50% 방어 무시 × 불 블록 1개당 +10%) 뒤 0', () => {
+  it('평타 3대마다 봉화 1, 봉화당 평타 +6%, 봉화 5 → 다음 평타 「봉수 폭렬」(방어 50% 무시 · 불 블록 1개당 +10%) 뒤 0', () => {
     const s = mk({ playerElements: ['fire'], evo: evo('t4:fire:physical') });
     basics(s, n.every! * n.need!);
     expect(s.evo!.stacks.beacon!.n).toBe(n.need);
@@ -118,16 +118,19 @@ describe('사신 봉수대 (t4:fire:physical)', () => {
     s.params.trayCapacity = 2;
     s.tray.push(blk(), blk({ family: 'family-b' }));
     const evs = basics(s, 1);
-    const burst = procs(evs, '봉수 폭렬!');
-    expect(burst.length).toBe(1);
+    expect(procs(evs, '봉수 폭렬!').length).toBe(1);
     expect(s.evo!.stacks.beacon!.n).toBe(0);
+    const d1 = attacks(evs)[0]!.damage;
     // 같은 조건에서 불 블록 없음과 비교: × (1 + 0.1 × 2)
     const t = mk({ playerElements: ['fire'], evo: evo('t4:fire:physical') });
     basics(t, n.every! * n.need!);
     t.tray.length = 0;
     t.params.trayCapacity = 0;
-    const b0 = procs(basics(t, 1), '봉수 폭렬!')[0]!.damage;
-    expect(burst[0]!.damage / b0).toBeCloseTo(1 + n.perFire! * 2, 5);
+    const d0 = attacks(basics(t, 1))[0]!.damage;
+    expect(d1 / d0).toBeCloseTo(1 + n.perFire! * 2, 5);
+    // 방어 50% 무시: 봉화 없는 평타(같은 봉화 보너스 빼고)보다 세다 — 다음 평타는 보통 평타
+    const plain = attacks(basics(t, 1))[0]!.damage;
+    expect(d0 / plain).toBeGreaterThan(1 + n.perBeacon! * n.need!);
   });
   it('만해: 필요 봉화 4 · 봉화당 +7.5% (최대 합 30% 유지)', () => {
     expect(n.release!.need! * n.release!.perBeacon!).toBeCloseTo(n.need! * n.perBeacon!, 9);

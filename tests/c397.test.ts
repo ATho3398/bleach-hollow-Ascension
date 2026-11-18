@@ -84,7 +84,7 @@ describe('241-D 3·6·8 화면', () => {
   it('펫 = 장비 탭 안 분류·칸 (가방 위 펫 탭 없음), 탭은 좁히지 않고 가로 드래그', () => {
     const eq = read('src/ui/equipView.ts');
     expect(eq).toContain("const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'pet'];");
-    expect(eq).toContain("colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn, ...(pet2Btn ? [pet2Btn] : []));"); // C.500 2번째 펫 칸(추성)
+    expect(eq).toContain("colL.append(...(['weapon', 'armor', 'shoes'] as GearSlot[]).map(slotBtn), petBtn, ...(pet2Btn ? [pet2Btn] : []));"); // C.502 2번째 펫 칸(추성)
     expect(eq).toContain("colR.append(...(['acc1', 'acc2', 'acc3'] as GearSlot[]).map(slotBtn), battleBtn);");
     expect(eq).toContain('enableDragScroll(tabs, hd.signal);');
     expect(read('src/ui/lcdScreens.ts')).not.toContain("{ id: 'pet', label: '펫'");

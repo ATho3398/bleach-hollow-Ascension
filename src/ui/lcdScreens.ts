@@ -791,7 +791,7 @@ function openItem(faction: FactionConfig, save: SaveData, e: InventoryEntry, art
       key: on ? 'take' : 'leave', label: () => (on ? '데리고 가기' : '두고 가기'), variant: on ? 'primary' : 'ghost', disabled: e.lock !== null,
       onClick: () => {
         close();
-        if (!on && save.shared.pets.active2 === e.id ? choosePet2(save, null) : choosePet(save, on ? e.id : null)) changed(); // 데리고 다님·두고 감 알림은 뺐다 (GDD 233장 5) · 2번째 칸(C.500)
+        if (!on && save.shared.pets.active2 === e.id ? choosePet2(save, null) : choosePet(save, on ? e.id : null)) changed(); // 데리고 다님·두고 감 알림은 뺐다 (GDD 233장 5) · 2번째 칸(C.502)
       },
     });
   } else if (e.action === 'equip' || e.action === 'unequip') {

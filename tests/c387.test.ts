@@ -190,7 +190,7 @@ describe('235장: 먹이 3유형', () => {
 
 describe('세이브 형식 70', () => {
   it('형식 70 · 문턱 54, 69 → 70 = 빈 foodStreak·dislikeRun 0, 옛 먹이 개수 그대로 + 새 종류 0', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([93, 87]); // C.500 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([93, 87]); // C.502 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습
     const s = newSaveData('hollow', T) as unknown as Record<string, any>;
     delete s.nest.foodStreak;
     delete s.nest.dislikeRun;

@@ -54,13 +54,14 @@
     "t4:fire:physical": {
       "shinigami": {
         "ability": {
-          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 일반 공격 {burst%}분 방어 무시 추가 피해(바의 불 블록 1개당 +{perFire%}), 그 뒤 봉화 0" },
+          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}, 그 뒤 봉화 0" },
           "releaseDescription": { "*": "폭렬에 필요한 봉화 {need}개 · 봉화당 +{perBeacon%}" },
           "stacks": {
             "beacon": { "max": "need", "mark": { "icon": "i-attack", "name": { "*": "봉화" } } }
           },
           "rules": [
-            { "on": "basic", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "hit", "basis": "basic", "value": "burst", "ignoreDef": 1, "grow": { "value": "perFire", "per": "bar:fire" } }, { "act": "clear", "stack": "beacon" }], "proc": "봉수 폭렬!" },
+            { "on": "basicPre", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "ignoreDef", "value": "pierce" }, { "act": "basicMult", "value": "perFire", "per": "bar:fire" }] },
+            { "on": "basic", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "clear", "stack": "beacon" }], "proc": "봉수 폭렬!" },
             { "on": "basic", "every": "every", "do": [{ "act": "add", "stack": "beacon", "value": 1 }] }
           ],
           "passives": [
