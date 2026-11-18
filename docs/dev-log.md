@@ -4204,3 +4204,9 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 ## C.484 — 그림 펫 1.7배 표시 (GDD v6.114 9-4, S-23)
 - 사용자 2026-11-18 "존나작네..1.7배로 해봐": 그림 펫 상자 48px → 81.6px(`--bha-sp-10` × 1.7), 도트 그대로 키움(pixelated).
 - 캡처 `docs/captures/c484/` 01 사신 방(미역대사) · 02 호로 방(콘). 수치·세이브 변경 없음.
+
+## C.485 — 그림 펫 자리 값 + 이펙트 배치 도구 '펫' 탭 (GDD v6.115 9-4, S-23)
+- 사용자 2026-11-18 "사이즈 좋다. 이펙트 배치도구에다가 펫 추가해서 펫 위치 조정 가능하게 ㄱㄱ".
+- 게임: `src/data/pets/place.json`(그림 키 → dx·dy, 지금 빈 값 = 전부 기본 자리) · `petPlace()` · `petBuddy` 가 그림 펫에 CSS `translate` 로 적용(방·원정·전투 같은 값, 전투 튀는 동작 transform 과 안 겹침).
+- 도구: `scripts/pixelfx/tool/pet-tool.ts`('펫' 칩 → 방 캡처 위에서 끌기·버튼·숫자, db `fx/pets-editor`·`fx/pets-fixed`) · `pet-capture.cjs`(무대 캡처) · `apply-pets.mjs`(확정 값 → place.json) · build.mjs 펫 데이터 · README '펫 탭'. 아티팩트 같은 주소에 다시 올림(이펙트 쪽 저장 값·stamp v3 그대로).
+- 확인: 도구를 PC 900·폰 412 폭으로 열어 펫 탭 켜기·펫 고르기·끌기·▶·다른 탭 복귀, 오류 0·가로 넘침 없음. 테스트 `tests/c485.test.ts`.

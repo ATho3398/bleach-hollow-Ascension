@@ -66,6 +66,18 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 #status { color: var(--ok); font-size: 13px; min-height: 1.4em; }
 .two { display: grid; gap: 10px; grid-template-columns: 1fr; }
 @media (min-width: 760px) { .two { grid-template-columns: 1fr 1fr; } }
+/* 펫 탭 (C.485): 켜면 이펙트 편집 칸을 숨기고 펫 자리 편집만 */
+#petmode { display: none; flex-direction: column; gap: 10px; }
+body.petmode #petmode { display: flex; }
+body.petmode main > :not(header):not(#modes):not(#petmode) { display: none; }
+#petstage { position: relative; width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; touch-action: none; cursor: grab; background: #000; user-select: none; -webkit-user-select: none; }
+#petworld { position: absolute; left: 0; top: 0; width: 844px; height: 390px; transform-origin: 0 0; }
+#petworld img { position: absolute; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; }
+#petbg { left: 0; top: 0; width: 844px; height: 390px; }
+#petbase { position: absolute; border: 1px dashed var(--mark-a); opacity: .6; pointer-events: none; }
+#petnudge { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; }
+#petnudge button { height: 40px; }
+.petnum { width: 84px; }
 </style>
 <main>
   <header>
@@ -135,6 +147,34 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
       <label class="row"><input id="altflip" type="checkbox"> 연타 짝수 번째 위아래 뒤집기</label>
     </section>
   </div>
+  <section id="petmode" aria-label="펫 자리">
+    <p class="dim" style="margin:0">방 화면 위에서 펫을 끌거나 버튼으로 옮긴다. 파란 점선 = 게임 기본 자리. 값은 방·원정·전투에 똑같이 들어간다.</p>
+    <div class="row"><span class="dim">배경</span><div class="row" id="petrooms"></div></div>
+    <div id="petstage" aria-label="방 화면. 끌어서 펫 자리를 옮긴다"><div id="petworld"><img id="petbg" alt="방 화면 (1배 캡처)" draggable="false"><div id="petbase"></div><img id="petimg" alt="펫" draggable="false"></div></div>
+    <div class="row" id="petlist" aria-label="펫"></div>
+    <section class="panel">
+      <h2 id="petval"></h2>
+      <div class="row">
+        <div id="petnudge">
+          <span></span><button class="btn" type="button" data-dy="-1" aria-label="위로 1">▲</button><span></span>
+          <button class="btn" type="button" data-dx="-1" aria-label="왼쪽으로 1">◀</button><button class="btn" type="button" data-dy="1" aria-label="아래로 1">▼</button><button class="btn" type="button" data-dx="1" aria-label="오른쪽으로 1">▶</button>
+        </div>
+        <label class="row">오른쪽 <input class="chip petnum" id="petdx" type="number" step="1"></label>
+        <label class="row">아래 <input class="chip petnum" id="petdy" type="number" step="1"></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="petall" type="button">이 값을 모든 펫에</button>
+        <button class="btn" id="petzero" type="button">이 펫 0,0</button>
+        <button class="btn" id="petreset" type="button">전부 게임 값으로</button>
+      </div>
+    </section>
+    <pre id="petsummary" class="dim" style="margin:0;white-space:pre-wrap"></pre>
+    <div class="row">
+      <button class="btn primary" id="petfix" type="button">확정</button>
+      <button class="btn" id="petcopy" type="button">값 복사</button>
+    </div>
+    <div id="petstatus" role="status" style="color:var(--ok);font-size:13px;min-height:1.4em"></div>
+  </section>
   <pre id="summary"></pre>
   <div class="row">
     <button class="btn primary" id="fix" type="button">확정</button>

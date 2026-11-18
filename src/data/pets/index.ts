@@ -1,6 +1,7 @@
 // 펫 (GDD 90장, C.144 가칭·provisional): 하나 데리고 다니는 작은 보조. 종류 4종(효과 하나씩).
 // 이름은 종족 설정(faction json petNames), 효과 수치는 balance.ts provisional.pets, 그림 키(art)는 여기 — 그림 파일이 없으면 화면은 임시 아이콘 원.
 import petsRaw from './pets.json';
+import placeRaw from './place.json';
 
 /** 'none' = 효과 미정(기획 [미정], GDD 9-4 v6.112) — 따라다니고 같이 공격만 한다 */
 export const PET_EFFECTS = ['gold', 'belly', 'guard', 'seek', 'none'] as const;
@@ -38,4 +39,20 @@ export function getPet(id: string): PetDef | undefined {
 
 export function isPetId(id: unknown): id is string {
   return typeof id === 'string' && PET_IDS.includes(id);
+}
+
+/** 그림 펫 자리 (C.485): 그림 키 → 기본 자리에서 옮긴 칸(CSS px, dx 오른쪽 +, dy 아래 +). 없으면 0,0 */
+export interface PetPlace { dx: number; dy: number }
+function parsePlaces(raw: unknown): Record<string, PetPlace> {
+  const out: Record<string, PetPlace> = {};
+  for (const [k, v] of Object.entries((raw ?? {}) as Record<string, unknown>)) {
+    const p = (v ?? {}) as Record<string, unknown>;
+    if (typeof p.dx !== 'number' || typeof p.dy !== 'number' || !Number.isFinite(p.dx) || !Number.isFinite(p.dy)) throw new Error(`펫 자리 오류 (${k}): { dx, dy } 숫자`);
+    out[k] = { dx: p.dx, dy: p.dy };
+  }
+  return out;
+}
+export const PET_PLACES: Readonly<Record<string, PetPlace>> = parsePlaces(placeRaw.places);
+export function petPlace(artKey: string): PetPlace {
+  return PET_PLACES[artKey] ?? { dx: 0, dy: 0 };
 }

@@ -1,6 +1,6 @@
 // 펫 표시 (GDD 90장, C.144 임시): 방·원정에서 캐릭터 옆에 작게. 그림 키(펫 데이터 art)에 파일이 있으면 그림, 없으면 효과 아이콘이 든 원.
 import { artUrls } from '../../data/art/manifest';
-import { getPet, type PetEffect } from '../../data/pets';
+import { getPet, petPlace, type PetEffect } from '../../data/pets';
 import type { FactionConfig } from '../../engine/faction';
 
 /** 종족 설정에서 펫 그림 키만 읽는다 (GDD 9-4, C.477) */
@@ -43,6 +43,10 @@ export function petArt(petId: string, cls = 'bha-pet', faction?: PetArtFaction):
 export function petBuddy(petId: string | null, label: string, faction?: PetArtFaction): HTMLElement | null {
   if (!petId) return null;
   const b = petArt(petId, 'bha-pet bha-pet--buddy', faction);
+  // 그림 펫 자리 (C.485): 그림 키마다 맞춘 값만큼 옮긴다 (transform 과 따로 도는 translate — 전투의 튀는 동작과 안 겹침)
+  const def = getPet(petId);
+  const pl = def && b.classList.contains('has-art') ? petPlace(faction?.petArt?.[petId] ?? def.art) : null;
+  if (pl && (pl.dx || pl.dy)) b.style.translate = `${pl.dx}px ${pl.dy}px`;
   b.setAttribute('aria-label', `펫: ${label}`);
   b.title = label;
   return b;
