@@ -32,6 +32,8 @@ export function create(o) {
   const C = fit(o.palette, 8), R = new Rng(o.seed);
   const ps = new Particles({ rng: R, ground: () => 999, sparks: [WHITE, C[7], C[6], C[5]] });
   let t = 0, hit = false;
+  // 이빨 배치를 옵션으로 바꿀 수 있다(블록 아이콘 custom/icon-fangs 가 48칸에 맞는 좁은 배치를 준다). 없으면 기본 배치
+  const UP = o.upper ?? UPPER, LO = o.lower ?? LOWER;
 
   // 이빨 끝 사이 틈: 벌림 → 닫힘(가속) → 갈림 → 벌어짐
   const gap = () => {
@@ -78,8 +80,8 @@ export function create(o) {
       const g = gap(), a = vis();
       if (a > 0) {
         // 위턱: 이빨 끝이 -g/2 에 오도록 뿌리를 올린다 / 아래턱: 반대로
-        jaw(p, -1, -g / 2 - 17, UPPER, a);
-        jaw(p, 1, g / 2 + 12, LOWER, a);
+        jaw(p, -1, -g / 2 - 17, UP, a);
+        jaw(p, 1, g / 2 + 12, LO, a);
       }
       // 맞는 순간 빛과 충격선
       if (t >= SHUT && t < SHUT + 0.16) {
