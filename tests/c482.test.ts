@@ -21,7 +21,8 @@ describe('C.482 새 펫 7종 (효과 미정)', () => {
       const file = p.art.replace(/\./g, '-') + '.webp';
       expect(findArtFile(p.art, [file])).toBe('art/' + file);
       expect(existsSync('public/art/' + file)).toBe(true);
-      expect(readFileSync('public/art/' + file).includes(Buffer.from('ANIM'))).toBe(true);
+      // 콘은 가만히 선 그림(C.486 — 둥실거림 없앰), 나머지는 움직이는 webp
+      expect(readFileSync('public/art/' + file).includes(Buffer.from('ANIM'))).toBe(id !== 'pet-kon');
     }
     expect(NEW.map((id) => getFaction('hollow').petNames[id])).toEqual(['길 잃은 혼백', '솔리타 바스타', '쿠카푸로', '요루이치', '차피', '콘', '미역대사']);
   });

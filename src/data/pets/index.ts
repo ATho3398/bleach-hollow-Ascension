@@ -42,13 +42,17 @@ export function isPetId(id: unknown): id is string {
 }
 
 /** 그림 펫 자리 (C.485): 그림 키 → 기본 자리에서 옮긴 칸(CSS px, dx 오른쪽 +, dy 아래 +). 없으면 0,0 */
-export interface PetPlace { dx: number; dy: number }
+/** 그림 펫 기본 표시 배율 (GDD 9-4 v6.114): 그림 1칸 = 화면 1.7px */
+export const PET_ART_SCALE = 1.7;
+export interface PetPlace { dx: number; dy: number; /** 표시 배율 (없으면 PET_ART_SCALE) */ scale?: number; /** 좌우 반전 */ flip?: boolean }
 function parsePlaces(raw: unknown): Record<string, PetPlace> {
   const out: Record<string, PetPlace> = {};
   for (const [k, v] of Object.entries((raw ?? {}) as Record<string, unknown>)) {
     const p = (v ?? {}) as Record<string, unknown>;
     if (typeof p.dx !== 'number' || typeof p.dy !== 'number' || !Number.isFinite(p.dx) || !Number.isFinite(p.dy)) throw new Error(`펫 자리 오류 (${k}): { dx, dy } 숫자`);
-    out[k] = { dx: p.dx, dy: p.dy };
+    if (p.scale !== undefined && (typeof p.scale !== 'number' || !(p.scale >= 0.3 && p.scale <= 5))) throw new Error(`펫 자리 오류 (${k}): scale 0.3~5`);
+    if (p.flip !== undefined && typeof p.flip !== 'boolean') throw new Error(`펫 자리 오류 (${k}): flip true | false`);
+    out[k] = { dx: p.dx, dy: p.dy, ...(p.scale !== undefined ? { scale: p.scale as number } : {}), ...(p.flip ? { flip: true } : {}) };
   }
   return out;
 }

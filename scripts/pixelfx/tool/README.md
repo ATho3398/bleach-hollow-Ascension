@@ -65,6 +65,6 @@ v2 (사용자 2026-11-04 01:5x "연타 넣을거면 연타 타이밍 조정도 �
 - 맨 위 줄 '펫' 칩(캐릭터·몬스터 옆) — 누르면 이펙트 편집 칸을 숨기고 펫 자리 편집만 보인다(`pet-tool.ts`, fx-tool.ts 와는 칩 하나로만 이어짐).
 - 무대 = 방 화면 1배 캡처(종족마다, 펫 숨김 — `node scripts/pixelfx/tool/pet-capture.cjs` → `pet-room-<종족>.png` · `pet-stage.json` 펫 상자 기본 자리). 캐릭터 둘레(240,70 420×240)만 크게.
 - 펫 목록 = 그림이 있는 펫을 **그림 키마다 한 줄**(종족 설정 `petArt` 가 덮는 펫은 종족마다 다른 그림이라 따로 — 지옥나비·뼈 까마귀). 끌기 · ▲▼◀▶ 1칸 · 숫자 칸 · [이 값을 모든 펫에] · [이 펫 0,0] · [전부 게임 값으로].
-- 값 = 그림 키 → `{ dx, dy }`(CSS px, 오른쪽·아래 +, 기본 자리에서 옮긴 칸). **방·원정·전투에 같은 값**(게임 `petBuddy` 가 CSS `translate` 로 옮김). 저장 = db `fx/pets-editor`(편집 중)·`fx/pets-fixed`(확정), 문서 필드 `json` = `{ stamp: "p1", places, at }`.
+- 값 = 그림 키 → `{ dx, dy, scale, flip }`(dx·dy = CSS px 오른쪽·아래 +, 기본 자리에서 옮긴 칸 · scale = 표시 배율, 기본 1.7 · flip = 좌우 반전 — C.486 사용자 "툴에서 펫 사이즈 조절할 수 있게" · "좌우반전도 만들고"). 게임 상자 = 그림 칸 수 × 배율, 기본 상자(48칸 × 1.7)의 오른쪽·아래 끝에 맞춘다(48칸보다 큰 그림 — 돌아다니는 나비 128×88 — 은 왼쪽·위로 커진다). **방·원정·전투에 같은 값**(게임 `petBuddy` 가 CSS `translate` 로 옮김). 저장 = db `fx/pets-editor`(편집 중)·`fx/pets-fixed`(확정), 문서 필드 `json` = `{ stamp: "p2", places, at }`(p1 = 크기·반전 칸 없던 옛 값도 읽음).
 - **확정 처리**(사용자 "ㅇㅋ"): ArtifactData get `fx/pets-fixed` → 파일로 저장 → `node scripts/pixelfx/tool/apply-pets.mjs <그 파일>` → `src/data/pets/place.json` → 테스트·캡처 → main. 도구를 다시 올리면 처음 값 = 게임 값.
 - 펫 표시 배율(1.7)·기본 자리(CSS)를 바꾸면 `pet-capture.cjs` 를 다시 돌리고 도구를 다시 만든다.

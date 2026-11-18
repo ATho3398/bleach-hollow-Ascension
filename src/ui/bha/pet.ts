@@ -1,6 +1,6 @@
 // 펫 표시 (GDD 90장, C.144 임시): 방·원정에서 캐릭터 옆에 작게. 그림 키(펫 데이터 art)에 파일이 있으면 그림, 없으면 효과 아이콘이 든 원.
 import { artUrls } from '../../data/art/manifest';
-import { getPet, petPlace, type PetEffect } from '../../data/pets';
+import { getPet, petPlace, PET_ART_SCALE, type PetEffect } from '../../data/pets';
 import type { FactionConfig } from '../../engine/faction';
 
 /** 종족 설정에서 펫 그림 키만 읽는다 (GDD 9-4, C.477) */
@@ -33,6 +33,13 @@ export function petArt(petId: string, cls = 'bha-pet', faction?: PetArtFaction):
     img.src = src;
     img.alt = '';
     img.draggable = false;
+    // 상자 = 그림 크기 × 배율 (C.486): 그림마다 칸 수가 달라도(돌아다니는 나비 128×88) 1칸 = 같은 굵기. 그림이 뜨기 전에는 CSS 기본(48칸 × 1.7)
+    const key = faction?.petArt?.[petId] ?? getPet(petId)?.art ?? '';
+    const scale = petPlace(key).scale ?? PET_ART_SCALE;
+    if (petPlace(key).flip) img.style.transform = 'scaleX(-1)'; // 좌우 반전 (C.486)
+    const size = () => { if (img.naturalWidth > 0) { box.style.width = `${img.naturalWidth * scale}px`; box.style.height = `${img.naturalHeight * scale}px`; } };
+    img.addEventListener('load', size);
+    size();
     box.append(img);
     box.classList.add('has-art');
   } else box.append(icon(petIconId(petId)));

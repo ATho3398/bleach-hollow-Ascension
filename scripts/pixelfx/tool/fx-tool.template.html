@@ -163,8 +163,16 @@ body.petmode main > :not(header):not(#modes):not(#petmode) { display: none; }
         <label class="row">아래 <input class="chip petnum" id="petdy" type="number" step="1"></label>
       </div>
       <div class="row">
-        <button class="btn" id="petall" type="button">이 값을 모든 펫에</button>
-        <button class="btn" id="petzero" type="button">이 펫 0,0</button>
+        <span class="dim">크기</span>
+        <button class="btn" id="petsmaller" type="button" aria-label="작게 0.1">−</button>
+        <label class="row"><input class="chip petnum" id="petscale" type="number" step="0.1" min="0.5" max="4"> 배</label>
+        <button class="btn" id="petbigger" type="button" aria-label="크게 0.1">＋</button>
+        <button class="btn" id="petallsize" type="button">이 크기를 모든 펫에</button>
+        <label class="row"><input id="petflip" type="checkbox"> 좌우 반전</label>
+      </div>
+      <div class="row">
+        <button class="btn" id="petall" type="button">이 자리를 모든 펫에</button>
+        <button class="btn" id="petzero" type="button">이 펫 처음으로</button>
         <button class="btn" id="petreset" type="button">전부 게임 값으로</button>
       </div>
     </section>

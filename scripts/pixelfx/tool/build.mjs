@@ -85,7 +85,7 @@ const data = {
     r.factions.push(f.id); rows.set(key, r);
   }
   data.pets = {
-    stamp: 'p1',
+    stamp: 'p2', // p2 = 크기(scale) 칸 추가. 도구는 p1 값도 읽는다
     scale: 1.7,
     rooms: Object.fromEntries(facs.map((f) => [f.id, { name: f.name, bg: dataUri(`scripts/pixelfx/tool/pet-room-${f.id}.png`, 'image/png'), x: st[f.id].x, y: st[f.id].y, w: st[f.id].w, h: st[f.id].h }])),
     pets: [...rows.values()].map((r) => ({ key: r.key, label: r.names.join(' / '), art: r.art, factions: r.factions })),

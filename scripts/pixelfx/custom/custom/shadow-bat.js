@@ -15,7 +15,8 @@ export const meta = {
   options: { palette: ["#000000", "#120e18", "#221a2c", "#352a42", "#4c3d5c", "#6e5c80", "#c8b8d8"], still: false, eyes: ["#8a1020", "#ff3b30", "#ffb04a", "#fff0c0"], seed: 1 },
 };
 
-const D = meta.duration, FLAPS = 6, GRID = new Grid(-24, -22, 48, 40);
+const D = meta.duration, FLAPS = 3, // 날갯짓 2배 느리게 (사용자 2026-11-18)
+   GRID = new Grid(-24, -22, 48, 40);
 // the four wing frames for the right wing: arm angle and length, three fingers' angles and lengths, the lift
 const FRAMES = [
   { arm: -58, al: 8, f: [-112, -76, -38], fl: [9, 11, 9], lift: 1 },
