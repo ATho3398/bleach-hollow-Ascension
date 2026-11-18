@@ -25,13 +25,17 @@ def put(f, src_img, mask, hip, ph, dy):
         dx = round(c['stride'] * math.sin(ph) * k)
         lift = 1 if (math.cos(ph) > 0.5 and y >= bottom - 1) else 0   # 앞으로 내딛는 발끝은 살짝 든다
         for x in np.where(mask[y])[0]:
-            ty, tx = y + dy - lift, x + dx + PAD
+            ty, tx = y - lift, x + dx + PAD
             if 0 <= ty < H and 0 <= tx < W + 2 * PAD: f[ty, tx] = src_img[y, x]
+            # 몸이 들썩여 올라간 만큼 다리 맨 윗줄을 위로 이어 붙인다 (C.490 — 몸과 다리 사이가 한 줄 끊겨 보이던 것)
+            if y == hip + 1:
+                for g in range(1, -dy + 1):
+                    if 0 <= ty - g < H and 0 <= tx < W + 2 * PAD: f[ty - g, tx] = src_img[y, x]
 for i in range(N):
     t = i * FRAME / 1000; ph = t / STEPT * 2 * math.pi
     bob = -1 if math.sin(ph * 2) > 0.3 else 0
     f = np.zeros((H, W + 2 * PAD, 4), np.uint8)
-    for j, (m, (x0, x1, hip)) in enumerate(zip(legs, c['legs'])): put(f, far, m, hip, ph + math.pi * (j + 1), 0)      # 뒤쪽 다리(먼저)
+    for j, (m, (x0, x1, hip)) in enumerate(zip(legs, c['legs'])): put(f, far, m, hip, ph + math.pi * (j + 1), bob)      # 뒤쪽 다리(먼저)
     sw = math.sin(t / D * 2 * math.pi * 2)
     for y in range(H):                                        # 꼬리
         k = max(0, min(1, (T['base'] - y) / (T['base'] - T['top']))); dx = round(sw * T['amp'] * k ** 1.3)
@@ -39,7 +43,7 @@ for i in range(N):
             if 0 <= y + bob < H: f[y + bob, x + dx + PAD] = a[y, x]
     ys, xs = np.where(body[..., 3] > 0)
     f[ys + bob, xs + PAD] = body[ys, xs]                      # 몸
-    for j, (m, (x0, x1, hip)) in enumerate(zip(legs, c['legs'])): put(f, a, m, hip, ph + math.pi * j, 0)            # 앞쪽 다리
+    for j, (m, (x0, x1, hip)) in enumerate(zip(legs, c['legs'])): put(f, a, m, hip, ph + math.pi * j, bob)            # 앞쪽 다리
     frames.append(Image.fromarray(f))
 frames[0].save(out, save_all=True, append_images=frames[1:], duration=FRAME, loop=0, lossless=True)
 FW = W + 2 * PAD
