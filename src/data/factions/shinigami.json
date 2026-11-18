@@ -220,6 +220,7 @@
     "pet-guard": "수호 거북",
     "pet-seek": "길잡이 까마귀"
   },
+  "petArt": { "pet-gold": "pet.hell-butterfly" },
   "fullnessName": "배부름",
   "slotName": "참백도 슬롯",
   "lineageBonusName": "참백도 속성 확정",

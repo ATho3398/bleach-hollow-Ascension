@@ -657,7 +657,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
     if (e.sortie) return sortieArt(e.id);
     if (e.category === 'tile') return iconArt(tileIconId(tileCss(getTile(e.id).kind)));
     if (e.category === 'pet') {
-      const src = petArtSrc(e.id);
+      const src = petArtSrc(e.id, faction);
       return src ? imageArt(src) : iconArt(petIconId(e.id));
     }
     if (e.category === 'skin') {

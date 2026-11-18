@@ -484,7 +484,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   }
   // 펫 (GDD 241-D 4): 데리고 간 펫이 내 옆에서 같이 때린다 — 공격 때 앞으로 튀는 연출 + 피해 숫자
   const petId = s.params.petAttack?.petId ?? null;
-  const petEl = petBuddy(petId, petName(petId ?? '', faction));
+  const petEl = petBuddy(petId, petName(petId ?? '', faction), faction);
   if (petEl) {
     petEl.classList.add('bha-pet--battle');
     units.querySelector('.bha-unit--me .bha-unit__fig')?.append(petEl);

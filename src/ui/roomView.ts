@@ -284,7 +284,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const char = characterButton(charArtUrls, '캐릭터');
   applyCarePose(char, n, { home: true }); // 돌봄 상태 자세 (GDD 171장): 종이인형 = 빈사·쇠약·피곤 → 빈사 자세, 사망 → 쓰러짐, 평소 → 홈 대기. 아니면 눕히고 흐리게(GDD 102-7)
   // 데리고 다니는 펫 (GDD 90장): 캐릭터 옆 발치에 작게 (그림이 없으면 아이콘 원)
-  const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction));
+  const buddy = petBuddy(save.shared.pets.active, petName(save.shared.pets.active ?? '', faction), faction);
   if (buddy) char.append(buddy);
   const charAnim = animOf(char);
   /** 프레임 애니가 있는 동작이면 재생하고 true (GDD 26-3). 끝나면(hold·반복은 잠시 뒤) 대기로 돌아간다. 없으면 false = 기존 뛰는 반응 */

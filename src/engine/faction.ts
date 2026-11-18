@@ -563,6 +563,8 @@ export interface FactionConfig {
   foodNames: Record<FoodId, string>;
   /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */
   petNames: Record<string, string>;
+  /** 펫 그림 키 바꿔치기 (GDD 9-4, C.477): 펫 id → 그림 키. 없으면 펫 데이터의 art. 같은 펫이 종족마다 다른 동물이라 그림도 종족 설정에서 정한다 */
+  petArt?: Record<string, string>;
   /** 장비 칸 이름 (GDD 91장 1번, 가칭): 무기·방어구·신발·장신구 1·2 → 이름. 장비 종류 이름은 그 종류의 첫 칸 이름 */
   gearSlotNames: Record<GearSlot, string>;
   /** 장비 화면 문구 (GDD 108장 6번): 화면·방 버튼 이름(title), 소모품 칸 이름(battleSlot). 없으면 '장비'·'소모품' */
@@ -652,6 +654,11 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
     const gs = r.gearScreen as Record<string, unknown>;
     if (typeof gs !== 'object' || gs === null || Array.isArray(gs)) errors.push('gearScreen: { title?, battleSlot? }');
     else for (const k of ['title', 'battleSlot']) if (gs[k] !== undefined && !isString(gs[k])) errors.push(`gearScreen.${k}: 비어 있지 않은 문자열`);
+  }
+  if (r.petArt !== undefined) {
+    const pa = r.petArt as Record<string, unknown>;
+    if (typeof pa !== 'object' || pa === null || Array.isArray(pa)) errors.push('petArt: { 펫 id: 그림 키 }');
+    else for (const [id, k] of Object.entries(pa)) if (!PET_IDS.includes(id) || !isString(k)) errors.push(`petArt.${id}: 있는 펫 id → 비어 있지 않은 그림 키`);
   }
   const pn = (r.petNames ?? {}) as Record<string, unknown>;
   for (const id of PET_IDS) {

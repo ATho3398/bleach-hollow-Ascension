@@ -17,6 +17,8 @@ export const meta = {
     palette: ["#050308", "#120c18", "#1b1424", "#241a30", "#2e223c", "#6a4690", "#d9bcff"],
     spots: ["#3a0828", "#9a1860", "#d8308a", "#ffc0e0"],
     seed: 1,
+    still: false, // true = 제자리 날갯짓(펫 그림용): 돌아다니지 않고 위아래로만 살짝 뜬다
+    dust: true, // false = 가루 없음
   },
 };
 
@@ -120,9 +122,9 @@ function butterfly(g, C, Sp, w, t) {
 }
 
 export function draw(p, time, o) {
-  const t = shift(time, D, o.seed), C = fit(o.palette, 7), Sp = fit(o.spots, 4), S = at(t), w = fold(t);
+  const t = shift(time, D, o.seed), C = fit(o.palette, 7), Sp = fit(o.spots, 4), S0 = at(t), S = o.still ? { x: 0, y: S0.y - 12 * Math.sin(2 * ((wrap(t, D) / D) * TAU) + 0.4) } : S0, w = fold(t);
   // a trail of glowing dust shaken off the wings, drifting down and twinkling out
-  cycle(t, D, 56, o.seed * 7 + 1, (r) => r.range(1, 1.8), (age, L, r, i) => {
+  if (o.dust !== false) cycle(t, D, 56, o.seed * 7 + 1, (r) => r.range(1, 1.8), (age, L, r, i) => {
     const born = wrap(t - age, D), B = at(born), k = age / L;
     if (!flapping(born) && r.chance(0.45)) return;
     const x = B.x + r.range(-9, 9) + Math.sin(age * 3 + i) * 1.5, y = B.y + r.range(-4, 8) + 7 * age + 3 * age * age;

@@ -337,7 +337,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   healFx.hidden = true;
   walk.walker.append(healFx);
   // 데리고 간 펫 (GDD 90장): 걷는 캐릭터 뒤에 작게
-  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction));
+  const buddy = petBuddy(exp.pet?.id ?? null, petName(exp.pet?.id ?? '', faction), faction);
   if (buddy) walk.walker.append(buddy);
   if (takeEnterFx()) window.setTimeout(() => playCosmeticFx('enter', walk.walker), 0); // 등장 연출 (GDD 25-11): 출발 직후 한 번
   // 걷는 앞쪽 (GDD 128장 2·3): 조우한 적·휴식 장소가 서는 길. 캐릭터보다 아래 층
