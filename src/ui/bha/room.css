@@ -83,8 +83,19 @@
 .bha-homedock__food .bha-num { color: var(--bha-hunger); font-weight: 400; }
 /* 먹이 줄 (GDD 189장 17): 카드 한 줄 + 아래 줄 임시 배지(오른쪽 끝) — 카드 위로 튀어나오지 않는다. 이름·설명 한 줄(말줄임 없이 들어가게 설명은 수치 하나) */
 .bha-homedock__tray--food { flex-wrap: wrap; }
-/* 먹이 12종 (GDD 235장, C.387): 가진 것만, 한 줄 6칸까지 — 넘으면 다음 줄 (이름이 겹치지 않게) */
-.bha-homedock__tray--food .bha-homedock__food { flex: 0 1 calc((100% - 5 * var(--bha-sp-2)) / 6); }
+/* 먹이 줄 (GDD 4-4 v6.130, C.499 — 옛 '한 줄 6칸·넘으면 다음 줄' 대체): 맨 왼쪽 [종류] 고정 + 그 종류 먹이 가로 한 줄(끌기·휠로 넘김, 칸 폭 = 줄의 1/5.5) */
+.bha-homedock__foodkind {
+  flex: none; min-width: 64px; min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1);
+  padding: var(--bha-sp-2) var(--bha-sp-3); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-3);
+  box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi);
+  color: var(--bha-text-1); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-bold); white-space: nowrap; touch-action: manipulation;
+}
+.bha-homedock__foodkind .bha-icon { width: 14px; height: 14px; color: var(--bha-text-2); }
+.bha-homedock__foodkind:active { background: var(--bha-bg-2); }
+.bha-homedock__foodrow { flex: 1 1 0; min-width: 0; display: flex; align-items: stretch; gap: var(--bha-sp-2); overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; }
+.bha-homedock__foodrow::-webkit-scrollbar { display: none; }
+.bha-homedock__foodrow .bha-homedock__food { flex: 0 0 calc((100% - 5 * var(--bha-sp-2)) / 5.5); } /* 5칸 반 — 넘치면 다음 칸이 반쯤 보여 옆으로 넘긴다는 신호 */
+.bha-homedock__foodrow > .bha-homedock__traynote { flex: 1 1 auto; align-items: center; justify-content: flex-start; padding-left: var(--bha-sp-3); }
 /* 소모품 줄 (GDD 14-3, v6.004): 먹이 줄과 같은 칸 모양·한 줄 6칸, 아랫면 = 회복 색. 못 쓰는 것(전투 전용 등)은 흐리게 + 이유 한 줄 */
 .bha-homedock__tray--items { flex-wrap: wrap; }
 .bha-homedock__tray--items .bha-homedock__item { flex: 0 1 calc((100% - 5 * var(--bha-sp-2)) / 6); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 1px 0 var(--bha-hi), inset 0 -3px 0 var(--bha-heal); }

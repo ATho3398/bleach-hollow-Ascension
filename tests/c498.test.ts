@@ -1,4 +1,5 @@
 // C.498 (GDD 12-1·8-9 v6.129, 사용자 2026-11-19): ① 방 ··· 더보기 = [캐릭터 변경] 한 칸 → 캐릭터 카드 창(호로·사신·연 초월자, 데이터 순서)
+// ③ (C.499) 방 먹이 줄 (4-4 v6.130) = 맨 왼쪽 [종류](특식 → 일반 → 보급) + 그 종류 먹이 가로 한 줄, 닫을 때 종류 기억
 // ② 수련장 훈련 인형을 누르면 [전투 들어가기] 중간 화면 없이 곧장 전투 + 적 설정 창 (나가기 = 수련장 — 화면은 밑에 깔림)
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -7,6 +8,10 @@ import { TRANSCENDENTS } from '../src/data/transcendents';
 import { testGrantTranscendent } from '../src/engine/testMode';
 import { newSaveData, newTrack, switchTrack, trackIdOf } from '../src/game';
 import { CHARACTER_LOCK_TEXT, CHARACTER_PICK_LABEL, characterCards } from '../src/ui/characterPicker';
+import { BALANCE } from '../src/config/balance';
+import { FOOD_IDS } from '../src/engine/faction';
+import { foodTypeOf } from '../src/engine/foodPref';
+import { FOOD_KIND_KEY, FOOD_KIND_START, FOOD_KINDS, foodKindOf, foodKindOfFood, loadFoodKind, nextFoodKind, saveFoodKind } from '../src/ui/bha/foodRows';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const [F0, F1] = [FACTIONS[0]!, FACTIONS[1]!];
@@ -92,5 +97,50 @@ describe('C.498 화면 연결', () => {
     expect(app).toContain("askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); })");
     // 수련장 화면의 [전투 들어가기]·머리 제목 목록은 그대로 (나가기·본능 수련 토글로 올 때)
     expect(app).toContain("practiceEntryView(root, faction, save?.runLog.battles.length ?? 0, { onEnter: () => practiceArena(faction), title: trainingHead(faction, 'practice') })");
+  });
+});
+
+describe('C.499 방 먹이 줄 종류 (GDD 4-4 v6.130)', () => {
+  it('종류 = 특식 → 일반 → 보급 (데이터 순서), 이름 두 종족 공통, 처음 = 일반', () => {
+    expect(FOOD_KINDS.map((k) => k.name)).toEqual(['특식', '일반', '보급']);
+    expect(foodKindOf(FOOD_KIND_START).name).toBe('일반');
+  });
+  it('모든 먹이는 정확히 한 종류에 — 보급 = 싸구려, 특식 = 특식(첫 끼니 빼고), 일반 = 일반 + 첫 끼니', () => {
+    const all = FOOD_KINDS.flatMap((k) => k.foods);
+    expect([...all].sort()).toEqual([...FOOD_IDS].sort());
+    expect(new Set(all).size).toBe(all.length);
+    const tut = BALANCE.provisional.tutorialRecover.food;
+    for (const id of FOOD_IDS) {
+      const want = id === tut ? 'normal' : foodTypeOf(id);
+      expect(foodKindOfFood(id)!.id, id).toBe(want);
+    }
+  });
+  it('[종류]를 누르면 다음 종류, 끝이면 처음으로 돈다', () => {
+    expect(nextFoodKind('special').id).toBe('normal');
+    expect(nextFoodKind('normal').id).toBe('cheap');
+    expect(nextFoodKind('cheap').id).toBe('special');
+  });
+  it('기억 = 기기 저장 키, 없거나 모르는 값·막힌 저장소면 처음 종류', () => {
+    const m = new Map<string, string>();
+    const store = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) };
+    expect(loadFoodKind(store)).toBe(FOOD_KIND_START);
+    saveFoodKind('cheap', store);
+    expect(m.get(FOOD_KIND_KEY)).toBe('cheap');
+    expect(loadFoodKind(store)).toBe('cheap');
+    m.set(FOOD_KIND_KEY, 'nope');
+    expect(loadFoodKind(store)).toBe(FOOD_KIND_START);
+    const broken = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
+    expect(loadFoodKind(broken)).toBe(FOOD_KIND_START);
+    expect(() => saveFoodKind('special', broken)).not.toThrow();
+  });
+  it('독: [종류] 버튼이 펼친 줄 첫 칸(기기 초점 순서 맨 앞), 먹이 칸은 가로 넘김 줄, 닫을 때 기억, 안내 먹이가 있으면 그 종류로', () => {
+    const dock = read('src/ui/bha/dock.ts');
+    expect(dock).toContain('trayBtns.push(kindBtn);');
+    expect(dock).toContain('enableDragScrollX(row);');
+    expect(dock).toContain("if (was === 'food' && next !== 'food') saveFoodKind(foodKind);");
+    expect(dock).toContain("if (next === 'food' && was !== 'food' && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;");
+    // 튜토리얼 안내가 짚는 칸 = 먹이 줄 안의 그 먹이 칸 (선택자 그대로)
+    expect(read('src/data/help/tutorial.json')).toContain('@.bha-homedock__tray--food .bha-homedock__food[data-food=\\"{foodId}\\"]');
+    expect(dock).not.toMatch(/=== '(hollow|shinigami)'/);
   });
 });

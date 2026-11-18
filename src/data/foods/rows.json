@@ -1,0 +1,9 @@
+{
+  "_comment": "GDD 4-4 방 먹이 줄 (v6.130, C.499): 맨 왼쪽 [종류] 버튼이 이 순서로 돈다(특식 → 일반 → 보급 → 특식). 종류 이름 = 두 종족 공통. foods = 그 종류 줄에 놓는 먹이(이 순서), 모든 먹이 id 는 정확히 한 종류에. start = 처음(기억이 없을 때) 종류. 마스터 추천안: 보급 = 싸구려 2종, 일반 = 일반 6종 + 첫 끼니(tutorial).",
+  "start": "normal",
+  "kinds": [
+    { "id": "special", "name": "특식", "foods": ["feast", "tonic", "flesh", "elixir", "purify", "relic"] },
+    { "id": "normal", "name": "일반", "foods": ["tutorial", "basic", "sushi", "roast", "hearty", "fizz", "mushroom"] },
+    { "id": "cheap", "name": "보급", "foods": ["snack", "scrap"] }
+  ]
+}

@@ -1,5 +1,6 @@
 // 홈 하단 독 (GDD 18-2, 18-9 · 14-3 v6.004): 돌보기 3개(먹이·재우기·교감, 효과 있는 버튼) + [소모품] 빠른 사용 + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
+// 먹이 줄 = 맨 왼쪽 [종류](특식 → 일반 → 보급, 데이터 rows.json) + 그 종류 먹이 가로 한 줄 (GDD 4-4 v6.130, C.499).
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
 import { foodEffectList, type FoodFx } from '../../engine/nest';
@@ -9,6 +10,9 @@ import { artIcon } from './artIcon';
 import { CLOSED, togglePanel, type DockPanel } from './dockLogic';
 import { registerCancelHook } from './shortcuts';
 import { fixParticles } from '../../engine/josa';
+import { BALANCE } from '../../config/balance';
+import { enableDragScrollX, revealInRow } from './dragScroll';
+import { foodKindOf, foodKindOfFood, loadFoodKind, nextFoodKind, saveFoodKind } from './foodRows';
 
 export interface DockMenuItem {
   label: string;
@@ -169,6 +173,9 @@ export function createDock(o: DockOpts): Dock {
   root.append(tray, bar);
 
   let trayBtns: HTMLElement[] = [];
+  // 먹이 줄 종류 (GDD 4-4 v6.130, C.499): 열 때 = 기억한 종류(기기 저장), 닫을 때 기억. 튜토리얼 안내 먹이를 가졌으면 그 종류로 연다(안내가 그 칸을 짚는다)
+  let foodKind = loadFoodKind();
+  const guideFood = BALANCE.provisional.tutorialRecover.food;
   function fillTray(): void {
     tray.replaceChildren();
     trayBtns = [];
@@ -177,9 +184,29 @@ export function createDock(o: DockOpts): Dock {
     if (panel === 'food') {
       tray.setAttribute('aria-label', `${faction.nestActionsShort?.feed ?? faction.nestActions.feed} 고르기`);
       tray.dataset.scList = '';
-      // 먹이 12종 (GDD 235장): 가진 것만 칸으로 — 없는 종류까지 다 늘어놓으면 줄이 넘친다. 하나도 없으면 빈 줄 안내
-      const owned = FOOD_IDS.filter((id) => o.foodCount(id) > 0);
-      if (owned.length === 0) tray.append(el('p', 'bha-homedock__traynote bha-faint', fixParticles(`${faction.foodGroupName}이(가) 없다`)));
+      // 먹이 줄 (GDD 4-4 v6.130, C.499): 맨 왼쪽 [종류] 버튼(누르면 다음 종류 — 데이터 순서로 돈다) + 그 종류의 가진 먹이 한 줄(가로로 끌어·휠로 넘김).
+      // 가진 것만 칸으로, 그 종류에 하나도 없으면 '없다' 한 줄 (종류는 순환에 그대로)
+      const kind = foodKindOf(foodKind);
+      const kindBtn = el('button', 'bha-homedock__foodkind');
+      kindBtn.type = 'button';
+      kindBtn.dataset.foodKind = kind.id;
+      kindBtn.append(el('b', '', kind.name), icon('i-swap'));
+      kindBtn.setAttribute('aria-label', `${faction.foodGroupName} 종류 ${kind.name} — 누르면 ${nextFoodKind(kind.id).name}`);
+      kindBtn.title = `다음: ${nextFoodKind(kind.id).name}`;
+      kindBtn.onclick = () => {
+        if (panel !== 'food') return;
+        foodKind = nextFoodKind(foodKind).id;
+        fillTray();
+        o.onItemsChange(trayBtns[0] ?? careBtns.get('feed')!); // 초점 = 새 [종류] 버튼 (자리 그대로)
+      };
+      trayBtns.push(kindBtn);
+      const row = el('div', 'bha-homedock__foodrow');
+      row.setAttribute('role', 'group');
+      row.setAttribute('aria-label', kind.name);
+      enableDragScrollX(row);
+      tray.append(kindBtn, row);
+      const owned = kind.foods.filter((id) => o.foodCount(id) > 0);
+      if (owned.length === 0) row.append(el('p', 'bha-homedock__traynote bha-faint', fixParticles(`${kind.name} ${faction.foodGroupName}이(가) 없다`)));
       for (const id of owned) {
         const b = el('button', 'bha-homedock__food');
         b.type = 'button';
@@ -197,11 +224,17 @@ export function createDock(o: DockOpts): Dock {
           o.onCare('feed', id);
           // 먹인 뒤에도 목록은 열어 둔다 (GDD 243장 6 — 176장 4 '먹인 뒤 닫힘' 대체): 개수·효과만 새로, 초점은 같은 먹이(다 떨어졌으면 첫 칸, 없으면 [먹이])
           if (panel !== 'food' || !root.isConnected) return;
+          const left = row.scrollLeft;
           fillTray();
-          o.onItemsChange(trayBtns.find((x) => x.dataset.food === id) ?? trayBtns[0] ?? careBtns.get('feed')!);
+          tray.querySelector('.bha-homedock__foodrow')!.scrollLeft = left; // 넘겨 둔 자리 그대로
+          o.onItemsChange(trayBtns.find((x) => x.dataset.food === id) ?? trayBtns[1] ?? trayBtns[0] ?? careBtns.get('feed')!);
         };
+        // 기기 ▲▼ 하이라이트·키 초점이 줄 밖 칸으로 가면 그 칸이 보이게 민다
+        const show = () => revealInRow(row, b);
+        b.addEventListener('bha-select', show);
+        b.addEventListener('focus', show);
         trayBtns.push(b);
-        tray.append(b);
+        row.append(b);
       }
       // 임시 배지 = 카드 아래 줄 (GDD 189장 17: 카드 위에 얹혀 ×n 과 겹치던 것)
       const note = el('div', 'bha-homedock__traynote');
@@ -258,6 +291,8 @@ export function createDock(o: DockOpts): Dock {
   /** opener = 이 펼침을 바꾼 버튼. 줄이 닫히면 거기에 기기 초점을 둔다(열리면 펼친 줄 첫 칸) */
   function setPanel(next: DockPanel, opener: HTMLElement | null = null): void {
     const was = panel;
+    if (was === 'food' && next !== 'food') saveFoodKind(foodKind); // 닫을 때 보던 종류 기억 (GDD 4-4)
+    if (next === 'food' && was !== 'food' && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;
     panel = next;
     tray.hidden = panel === CLOSED;
     root.classList.toggle('is-open', panel !== CLOSED);

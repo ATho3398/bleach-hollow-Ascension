@@ -1,4 +1,5 @@
-// C.498 proof (GDD 12-1·8-9 v6.129): ① 방 ··· 더보기 [캐릭터 변경] 한 칸 ② 캐릭터 카드 창(호로·사신·초월자) ③ 안 열린 종족 카드 ④ 훈련 인형 누른 직후 설정 창.
+// C.498 proof (GDD 12-1·8-9·4-4 v6.130): ① 방 ··· 더보기 [캐릭터 변경] 한 칸 ② 캐릭터 카드 창(호로·사신·초월자) ③ 안 열린 종족 카드 ④ 훈련 인형 누른 직후 설정 창
+// ⑤~⑧ 먹이 줄 일반 · [종류] 눌러 특식 · 보급(PC = 없음) · 가로로 넘긴 상태 (06~09 파일 — C.499, docs/captures/c499 로 옮겨 둠).
 // PC 844×390 + 폰 796×384 터치 두 벌, 1배. 흐름 점검: 카드 눌러 전환 · 가로 넘김(휠·끌기·←→) · 훈련 인형 4단계 전/후 · 나가기 = 수련장.
 // 실행: node scripts/c498-proof.cjs [저장 폴더]
 const fs = require('node:fs');
@@ -25,7 +26,7 @@ async function closeNotes(page) {
   for (const b of ['닫기', '확인', '나중에']) { const x = page.getByRole('button', { name: b, exact: true }).filter({ visible: true }); if (await x.count()) await x.first().click({ timeout: 1500 }).catch(() => {}); }
   await wait(300);
 }
-/** 상태 주입 (다른 캡처 스크립트와 같은 newSaveData + writeSave): open2 = 두 번째 종족 열림, tr = 얻은 초월자 수(지금 캐릭터는 첫 종족으로 되돌림), tier = 진화 단계(그 단계 첫 일반 진화체) */
+/** 상태 주입 (다른 캡처 스크립트와 같은 newSaveData + writeSave): food = 먹이 개수, open2 = 두 번째 종족 열림, tr = 얻은 초월자 수(지금 캐릭터는 첫 종족으로 되돌림), tier = 진화 단계(그 단계 첫 일반 진화체) */
 async function newGame(page, url, o = {}) {
   await page.goto(url);
   await wait(600);
@@ -36,6 +37,7 @@ async function newGame(page, url, o = {}) {
     const TR = await import('/src/data/transcendents/index.ts');
     const F = await import('/src/data/factions/index.ts');
     const EV = await import('/src/data/evolution/index.ts');
+    const H = await import('/src/home.ts');
     const now = Date.now();
     const first = F.FACTIONS[0].id;
     const s = g.newSaveData(first, now);
@@ -46,6 +48,7 @@ async function newGame(page, url, o = {}) {
     if (o.tier) { const f = EV.FORM_TABLE.find((x) => x.tier === o.tier && !x.hidden); T.setForm(s, f.id); }
     for (const d of TR.TRANSCENDENTS.slice(0, o.tr ?? 0)) T.testGrantTranscendent(s, d.id, now);
     if (o.tr) g.switchTrack(s, first, now);
+    for (const [id, n] of Object.entries(o.food ?? {})) H.grantFood(s, id, n);
     g.writeSave(localStorage, s);
   }, o);
   await page.goto(url);
@@ -176,6 +179,65 @@ const arenaFacts = (page) => page.evaluate(() => ({
       F.xClosed = !(await page.locator('.bha-charpick').count());
       await page.close();
 
+      // ⑤~⑧ 먹이 줄 (GDD 4-4 v6.130): [종류] + 그 종류 먹이 가로 한 줄 · 순환 · 닫을 때 기억 · 가로 넘김
+      page = await ctx.newPage();
+      page.on('pageerror', (e) => proof.errors.push(`${tag}: ${e.message.slice(0, 200)}`));
+      const food = { basic: 3, sushi: 2, roast: 4, hearty: 1, fizz: 2, mushroom: 5, feast: 1, tonic: 2, flesh: 1, elixir: 1, purify: 1, relic: 1, ...(tag === 'phone' ? { snack: 3 } : {}) };
+      await newGame(page, server.url, { food });
+      const foodFacts = () => page.evaluate(() => {
+        const row = document.querySelector('.bha-homedock__foodrow');
+        return { kind: document.querySelector('.bha-homedock__foodkind')?.textContent ?? null, foods: [...document.querySelectorAll('.bha-homedock__foodrow .bha-homedock__food')].map((b) => b.dataset.food), empty: document.querySelector('.bha-homedock__foodrow .bha-homedock__traynote')?.textContent ?? null, overflow: row ? row.scrollWidth > row.clientWidth : null, scrollLeft: row?.scrollLeft ?? null, stored: localStorage.getItem('bha-food-kind') };
+      });
+      const feedBtn = page.locator('.bha-homedock__carebtn--feed').first();
+      await feedBtn.click(); await wait(400);
+      F.foodNormal = await foodFacts();
+      await shot(page, `06-${tag}-food-normal`);
+      const kindBtn = () => page.locator('.bha-homedock__foodkind').first();
+      // 순환 = 데이터 순서 특식 → 일반 → 보급 → 특식: 일반에서 누르면 보급, 한 번 더 = 특식, 한 번 더 = 일반
+      await kindBtn().click(); await wait(300);
+      F.foodCheap = await foodFacts();
+      F.focusAfterKind = await page.evaluate(() => document.querySelector('.bha-sel')?.className ?? null);
+      await shot(page, `08-${tag}-food-cheap`);
+      await kindBtn().click(); await wait(300);
+      F.foodSpecial = await foodFacts();
+      await shot(page, `07-${tag}-food-special`);
+      await kindBtn().click(); await wait(300);
+      F.foodCycle = (await foodFacts()).kind;
+      F.beforeScroll = await foodFacts();
+      const rbox = await page.locator('.bha-homedock__foodrow').boundingBox();
+      if (tag === 'pc') {
+        await page.mouse.move(rbox.x + rbox.width / 2, rbox.y + rbox.height / 2);
+        await page.mouse.wheel(0, 400); await wait(300);
+      } else {
+        const cdp = await ctx.newCDPSession(page);
+        const y = rbox.y + rbox.height / 2;
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: rbox.x + rbox.width - 20, y }] });
+        for (const x of [rbox.x + rbox.width - 80, rbox.x + rbox.width - 200, rbox.x + 40]) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await wait(50); }
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await wait(300);
+      }
+      F.scrolled = await foodFacts();
+      await shot(page, `09-${tag}-food-scrolled`);
+      // 먹인 뒤: 줄 그대로, 같은 먹이 초점, 넘긴 자리 그대로
+      const last = page.locator('.bha-homedock__foodrow .bha-homedock__food').last();
+      const lastId = await last.getAttribute('data-food');
+      await last.click(); await wait(1600);
+      F.afterFeed = { ...(await foodFacts()), sel: await page.evaluate(() => document.querySelector('.bha-sel')?.dataset?.food ?? null), lastId };
+      // 닫을 때 기억 → 다시 열면 그 종류 (닫기 전에 보급으로 바꿔 둔다)
+      await kindBtn().click(); await wait(300);
+      F.beforeClose = (await foodFacts()).kind;
+      await feedBtn.click(); await wait(300);
+      F.storedAfterClose = await page.evaluate(() => localStorage.getItem('bha-food-kind'));
+      await feedBtn.click(); await wait(300);
+      F.reopened = (await foodFacts()).kind;
+      await page.close();
+      // 튜토리얼 안내 먹이(첫 끼니)를 가졌으면 기억(보급)과 상관없이 그 종류로 열림 — 안내가 그 칸을 짚는다
+      page = await ctx.newPage();
+      page.on('pageerror', (e) => proof.errors.push(`${tag}: ${e.message.slice(0, 200)}`));
+      await newGame(page, server.url, { food: { tutorial: 1 } });
+      await page.evaluate(() => localStorage.setItem('bha-food-kind', 'cheap'));
+      await page.locator('.bha-homedock__carebtn--feed').first().click(); await wait(400);
+      F.tutorialFood = await page.evaluate(() => ({ kind: document.querySelector('.bha-homedock__foodkind')?.textContent ?? null, first: document.querySelector('.bha-homedock__foodrow .bha-homedock__food')?.dataset.food ?? null, sel: document.querySelector('.bha-sel')?.className ?? null }));
+      await page.close();
       // ④ 훈련 인형: 테스트 칸 새로(1단계) → 방 수련장 물건 → 곧장 전투 + 설정 창
       page = await ctx.newPage();
       page.on('pageerror', (e) => proof.errors.push(`${tag}: ${e.message.slice(0, 200)}`));

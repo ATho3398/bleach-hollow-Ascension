@@ -9,10 +9,9 @@ import { TRANSCENDENTS } from '../data/transcendents';
 import { allTracks, characterTracks, noEvolutionLabel, trackIdOf, trackNameOf, trackRulesOf, type SaveData, type TrackKey } from '../game';
 import { button, el, icon } from './bha/dom';
 import { dexCard } from './bha/dexGrid';
-import { enableDragScrollX } from './bha/dragScroll';
+import { edgeCue, enableDragScrollX, revealInRow } from './bha/dragScroll';
 import { trapModalFocus } from './bha/modalFocus';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
-import { elementLocalRect } from './bha/viewport';
 import { trackArt } from './hogyokuView';
 
 type Track = Pick<SaveData, TrackKey>;
@@ -120,6 +119,7 @@ export function characterPickerDialog(save: SaveData, onSwitch: (trackId: string
       },
     });
     b.dataset.char = c.key;
+    b.addEventListener('bha-select', () => revealInRow(strip, b)); // 기기 ▲▼ 하이라이트가 줄 밖 카드로 가면 보이게
     if (c.locked) b.setAttribute('aria-disabled', 'true');
     if (c.current) b.dataset.current = ''; // aria-current 는 기기 선택 표시가 쓴다
     return b;
@@ -137,6 +137,7 @@ export function characterPickerDialog(save: SaveData, onSwitch: (trackId: string
   layer.addEventListener('click', (e) => { if (e.target === layer) close(); });
   // 가로 넘김: 손가락·마우스 끌기(기기 안 좌표 — 세로 폰 90° 돌림에도 맞게)·PC 휠, ←→ 키 = 옆 카드로 초점. 초점이 간 카드는 보이게 민다
   enableDragScrollX(strip);
+  edgeCue(strip); // 넘친 쪽 끝 띠
   strip.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const i = btns.indexOf(document.activeElement as HTMLButtonElement);
@@ -147,7 +148,7 @@ export function characterPickerDialog(save: SaveData, onSwitch: (trackId: string
   });
   strip.addEventListener('focusin', (e) => {
     const card = (e.target as HTMLElement).closest?.('.bha-charpick__card') as HTMLElement | null;
-    if (card) revealInStrip(strip, card);
+    if (card) revealInRow(strip, card);
   });
   getOverlayHost().append(layer);
   untrap = trapModalFocus(layer);
@@ -155,7 +156,7 @@ export function characterPickerDialog(save: SaveData, onSwitch: (trackId: string
   // 새 창은 시작 칸에 초점 (GDD 14-4) — 지금 캐릭터 카드
   const start = btns[cards.findIndex((c) => c.current)] ?? btns[0];
   start?.focus({ preventScroll: true });
-  if (start) requestAnimationFrame(() => { if (start.isConnected) revealInStrip(strip, start); });
+  if (start) requestAnimationFrame(() => { if (start.isConnected) revealInRow(strip, start); });
   return close;
 }
 
@@ -164,12 +165,4 @@ function lockArt(): HTMLElement {
   const box = el('span', 'bha-dexart is-silhouette');
   box.append(icon('i-lock'));
   return box;
-}
-
-/** 카드가 줄 안에 다 보이게 가로 스크롤만 민다 (scrollIntoView 는 기기 틀까지 밀 수 있어 쓰지 않는다) */
-function revealInStrip(strip: HTMLElement, card: HTMLElement): void {
-  const r = elementLocalRect(card); // 기기 안 좌표 — 세로 폰(90° 돌림)에서도 가로 = 카드 줄 방향
-  const box = elementLocalRect(strip);
-  if (r.left + r.width > box.left + box.width) strip.scrollLeft += r.left + r.width - (box.left + box.width);
-  else if (r.left < box.left) strip.scrollLeft -= box.left - r.left;
 }

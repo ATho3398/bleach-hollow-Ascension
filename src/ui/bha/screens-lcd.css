@@ -742,6 +742,9 @@ button.bha-slot { cursor: pointer; }
 .bha-itemmodal.bha-charpick__win { width: min(600px, 96%); }
 .bha-charpick__body { display: flex; flex-direction: column; gap: var(--bha-sp-3); }
 .bha-charpick__strip { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: var(--bha-sp-4); overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: thin; padding: var(--bha-sp-2); }
+.bha-charpick__strip.is-more-left { box-shadow: inset 3px 0 0 var(--bha-accent); }
+.bha-charpick__strip.is-more-right { box-shadow: inset -3px 0 0 var(--bha-accent); }
+.bha-charpick__strip.is-more-left.is-more-right { box-shadow: inset 3px 0 0 var(--bha-accent), inset -3px 0 0 var(--bha-accent); }
 .bha-charpick__card { flex: 0 0 120px; justify-content: flex-start; }
 .bha-charpick__card .bha-dexcard__art { width: 64px; height: 64px; }
 .bha-charpick__card .bha-dexcard__name { font-size: var(--bha-fs-sm); }
