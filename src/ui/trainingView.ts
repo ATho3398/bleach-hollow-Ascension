@@ -153,7 +153,9 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
     };
     cards.append(card);
   }
-  const right = [cards, ascensionPanel(faction, save, hd)];
+  // 해방 없음 진화체 (GDD 8-7 프레네시, C.495): 아란칼화/구상화 도전 칸을 숨긴다
+  const access = ascensionAccess(save);
+  const right = !access.ok && access.reason === 'none' ? [cards] : [cards, ascensionPanel(faction, save, hd)];
   lcdPage(dev.view, { cls: 'bha-train-page', cols: '0.9fr 1.1fr' }, head, left, right);
 }
 

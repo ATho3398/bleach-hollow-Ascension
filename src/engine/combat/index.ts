@@ -4,3 +4,4 @@ export * from './record';
 export * from './bot';
 export * from './script';
 export * from './statusMarks';
+export * from './evoUnique';

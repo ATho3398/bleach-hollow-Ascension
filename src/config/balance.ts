@@ -567,6 +567,25 @@ export const BALANCE = {
       /** 노멀 특성 '단련': 블록(스킬 블록) 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) */
       tempering: { per: 0.08, max: 0.8 },
     },
+    // ── C.495 (GDD 8-7 1차 구현, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성.
+    //    장치·규칙은 src/data/evolution/uniques.json(진화체 id × 종족), 수치는 여기. forms[진화체 id][종족] = { 수치 키: 값, release: { 키: 레스렉시온/만해 중 값 } } ──
+    evoUniques: {
+      /** 4단계 한 줄 특성: 받으면 영구(환생해도), 해방해도 그대로 (GDD 8-6). obliteration '소멸선' = 허무형 대표 특성(그 밖 진화체가 가지면 weak 값) */
+      traits: {
+        aspd10: { value: 0.1 },
+        crit6: { value: 0.06 },
+        blockCrit6: { value: 0.06 },
+        chain3Power: { value: 0.1 },
+        offenseMax: {},
+        obliteration: { line: 0.08, eliteMult: 1.5, weakLine: 0.05, weakEliteMult: 1.3 },
+      } as Record<string, Record<string, number>>,
+      forms: {
+        /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 2 */
+        't4:normal:physical': { shinigami: { every: 4, perBlock: 0.03, release: { every: 2 } } },
+        /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
+        't4:water:physical': { shinigami: { perStack: 0.04, seconds: 5, max: 5, every: 6, hits: 3, bonus: 0.3, critDmgPerStack: 0, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.05 } } },
+      } as Record<string, Record<string, Record<string, unknown>>>,
+    },
     // ── 진화 (GDD 20-5 v3.7~v4.2): 트리·타이밍·히든. 수치 provisional ──
     evolution: {
       /** 진화 타이밍 = 그 단계에서 원정으로 이동한 칸 수 (숨김, v4.1): index 0 = 1→2 … index 3 = 4→5 */

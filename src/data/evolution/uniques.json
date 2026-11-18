@@ -1,0 +1,59 @@
+{
+  "provisional": true,
+  "_comment": "GDD 8-7 1차 구현(C.495, docs/drafts/evo-impl-1119.md): 4단계 진화체 고유 능력·특수 블록·해방(레스렉시온/만해) 변형·4단계 한 줄 특성. forms[진화체 id][종족] — 규칙(on·거르기·do)·늘 붙는 효과(passives)·스택/버프/충전/특수 블록 정의. 숫자 자리의 문자열 = balance.ts provisional.evoUniques.forms 같은 칸의 수치 키(해방 중이면 release 값). 장치 목록·쓰는 법 = src/data/evolution/uniques.ts 주석 + dev-log C.495",
+  "traits": {
+    "aspd10": { "effect": "attackSpeed", "name": { "*": "공격 속도 강화" }, "description": { "*": "공격 속도가 오른다." } },
+    "crit6": { "effect": "crit", "name": { "*": "치명 강화" }, "description": { "*": "일반 공격 치명타 확률이 오른다." } },
+    "blockCrit6": { "effect": "blockCrit", "name": { "*": "블록 치명 강화" }, "description": { "*": "블록 치명타 확률이 오른다." } },
+    "chain3Power": { "effect": "chainPower", "chain": 3, "name": { "*": "3체인 강화" }, "description": { "*": "3체인 블록 위력이 오른다." } },
+    "offenseMax": { "effect": "offenseMax", "name": { "*": "치우치지 않는 힘" }, "description": { "*": "피해를 공격력·지능 중 높은 쪽으로 계산한다." } },
+    "obliteration": { "effect": "execute", "name": { "*": "소멸선" }, "description": { "*": "적 체력이 처형선 아래면 일반 공격이 처형한다. 강적·보스는 처형 대신 그 아래에서 주는 피해가 커진다." } }
+  },
+  "forms": {
+    "t4:normal:physical": {
+      "shinigami": {
+        "trait": "aspd10",
+        "ability": {
+          "description": { "*": "허 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(허 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}" },
+          "releaseDescription": { "*": "일반 공격 {every}대마다 블록 1개" },
+          "spawnRule": "voidOnly",
+          "rules": [
+            { "on": "basic", "every": "every", "do": [{ "act": "spawn", "block": "draw" }], "proc": "백련!" }
+          ],
+          "passives": [
+            { "stat": "attackSpeed", "value": "perBlock", "per": "bar" },
+            { "stat": "basicPower", "value": "perBlock", "per": "bar" }
+          ]
+        }
+      }
+    },
+    "t4:water:physical": {
+      "shinigami": {
+        "trait": "crit6",
+        "ability": {
+          "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
+          "releaseDescription": { "*": "스택 지속 {seconds}초 · 스택당 치명 확률 +{perStack%}p · 치명 피해 +{critDmgPerStack%}" },
+          "stacks": {
+            "surge": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-rare", "name": { "*": "노도" } } }
+          },
+          "specials": {
+            "rush": { "name": { "*": "노도 연격" }, "short": "연", "description": { "*": "누르면 일반 공격 {hits}회가 바로 나간다(각 +{bonus%})" } }
+          },
+          "rules": [
+            { "on": "block", "element": ["water"], "do": [{ "act": "add", "stack": "surge", "value": 1 }], "proc": "노도!" },
+            { "on": "basic", "every": "every", "do": [{ "act": "spawn", "block": "rush" }] },
+            { "on": "special", "special": "rush", "do": [{ "act": "basics", "value": "hits", "bonus": "bonus" }], "proc": "노도 연격!" }
+          ],
+          "passives": [
+            { "stat": "crit", "value": "perStack", "per": "stack:surge" },
+            { "stat": "critDmg", "value": "critDmgPerStack", "per": "stack:surge" }
+          ]
+        }
+      }
+    },
+    "h4:void": {
+      "hollow": { "trait": "obliteration" },
+      "shinigami": { "trait": "obliteration" }
+    }
+  }
+}

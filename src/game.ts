@@ -9,6 +9,7 @@ import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, su
 export type { StorySettlement } from './engine/expedition';
 import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
+import { evoReleaseBlocked } from './data/evolution/uniques';
 import { kitModeDefOf, kitModesOf, kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { fitSkinToLock, skinAllowedNow, skinLockOf, type SkinLockSave } from './engine/skinLock';
 import { SPECIAL_ELEMENT_IDS } from './data/elements';
@@ -1978,8 +1979,10 @@ export function artTierIndexOf(t: Pick<SaveData, 'evolution' | 'factionId'>): nu
 }
 
 /** 아란칼화 / 참백도 구상화 도전 가능 여부 (GDD 126장 3): 4단계(liberation.minTierIndex)부터, 이번 생에 아직 안 깼고, 사망이 아님 */
-export function ascensionAccess(save: Pick<SaveData, 'evolution' | 'nest'>): { ok: true } | { ok: false; reason: 'tier' | 'done' | 'dead' } {
+export function ascensionAccess(save: Pick<SaveData, 'evolution' | 'nest'> & Partial<Pick<SaveData, 'factionId'>>): { ok: true } | { ok: false; reason: 'tier' | 'done' | 'dead' | 'none' } {
   if (save.evolution.ascended) return { ok: false, reason: 'done' };
+  // 해방 없음 진화체 (GDD 8-7 프레네시, C.495): 도전 자체가 없다(칸을 숨긴다)
+  if (save.factionId && evoReleaseBlocked(save.evolution.formId, save.factionId)) return { ok: false, reason: 'none' };
   if (save.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex) return { ok: false, reason: 'tier' };
   if (careBlock(save)) return { ok: false, reason: 'dead' };
   return { ok: true };

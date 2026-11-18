@@ -2,6 +2,8 @@
 // 쌓이는 값·버프/디버프를 장치마다 { 걸린 쪽, 아이콘, 숫자, 이름 } 한 줄로 낸다. 걸린 쪽·아이콘은 데이터(src/data/statusMarks.json, 자세는 초월자 데이터 stances[].icon) —
 // 엔진은 장치(kit.stack·chargeShot·mastery·stance·evadeBuff, 물공 블록 상태, 지속 피해, 넉백)만 보고 초월자·종족 id 로 분기하지 않는다. 화면은 이 목록만 그린다.
 import MARKS_JSON from '../../data/statusMarks.json';
+import { evoText } from '../../data/evolution/uniques';
+import { evoMarksOf, evoStat } from './evoUnique';
 import {
   kitBare, kitEvadeBuffSecondsLeft, kitSecondOn, stanceBreakTakenOf, stanceDrawPreviewOf, stanceHoldBonusOf, stanceOf,
   type CombatState,
@@ -11,7 +13,7 @@ import {
 export type StatusMarkSide = 'self' | 'foe';
 
 /** 장치 종류 (데이터 표의 키) */
-export type StatusMarkKind = 'kitStack' | 'charge' | 'final' | 'stance' | 'draw' | 'broken' | 'hold' | 'evadeBuff' | 'basicBuff' | 'flash' | 'stone' | 'haste' | 'selfDot' | 'foeDot' | 'knockback';
+export type StatusMarkKind = 'kitStack' | 'charge' | 'final' | 'stance' | 'draw' | 'broken' | 'hold' | 'evadeBuff' | 'basicBuff' | 'flash' | 'stone' | 'haste' | 'selfDot' | 'foeDot' | 'knockback' | 'evoSelf' | 'evoFoe';
 
 export interface StatusMarkDef {
   on: StatusMarkSide;
@@ -43,7 +45,7 @@ function mark(kind: StatusMarkKind, value: string, title: string, o: { key?: str
 }
 
 /** 지금 보여 줄 스택·버프/디버프 (0·끝난 것은 빠진다. 자세 스택은 지금 자세면 0 이어도 보인다) */
-export function statusMarksOf(s: CombatState): StatusMark[] {
+export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
   const p = s.params;
   const out: StatusMark[] = [];
   const k = s.kit;
@@ -112,6 +114,22 @@ export function statusMarksOf(s: CombatState): StatusMark[] {
   if ((s.knockbackTicks ?? 0) > 0) {
     const left = secs(s.knockbackTicks!, ts);
     out.push(mark('knockback', String(Math.ceil(left)), `${STATUS_MARK_DEFS.knockback.name} (${left.toFixed(1)}초)`));
+  }
+  // 진화체 고유 능력 스택·버프·충전 (GDD 8-7 1차, C.495): 데이터 mark 가 있는 것만 — 걸린 쪽·아이콘·이름 = uniques.json
+  for (const m of evoMarksOf(s)) {
+    const name = evoText(m.name, factionId);
+    const v = Math.round(m.value * 100) / 100;
+    const shown = v > 0 && v < 1 ? `${Math.round(v * 100)}` : String(v);
+    out.push(mark(m.on === 'foe' ? 'evoFoe' : 'evoSelf', shown, `${name} ${shown}${m.seconds !== null ? ` (${Math.max(0, m.seconds).toFixed(1)}초)` : ''}`, { key: m.key, name, icon: m.icon }));
+  }
+  // 진화체 고유 능력 늘 붙는 효과 요약 (C.495 — 백련처럼 바 블록 수에 따라 오르는 값): 평타 피해 +% 가 0 보다 크면 한 칸
+  if (s.params.evo) {
+    const bp = evoStat(s, 'basicPower');
+    const as = evoStat(s, 'attackSpeed');
+    if (bp > 0 || as > 0) {
+      const parts = [as > 0 ? `공격 속도 +${pct(as)}%` : '', bp > 0 ? `일반 공격 피해 +${pct(bp)}%` : ''].filter(Boolean).join(' · ');
+      out.push(mark('evoSelf', `+${pct(Math.max(bp, as))}`, parts, { key: 'evo-passive', name: '고유 능력', icon: 'i-special' }));
+    }
   }
   return out;
 }

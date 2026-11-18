@@ -128,3 +128,5 @@
 :where(.bha-root) .bha-block__lock > .bha-icon{width: 22px; height: 22px;}
 :where(.bha-root) .bha-block.is-locked{outline: 2px solid var(--bha-seal); outline-offset: -2px; cursor: not-allowed;}
 :where(.bha-root) .bha-block.is-locked > .bha-block__lock{display: grid;}
+:where(.bha-root) .bha-execline{position: absolute; top: 0; bottom: 0; width: 2px; z-index: 1; pointer-events: none; background: var(--bha-danger);}
+:where(.bha-root) .bha-execline--block{background: var(--bha-void);}

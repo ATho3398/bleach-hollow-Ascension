@@ -11,6 +11,8 @@ import { NORMAL_ELEMENT } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
+import type { EvoParams } from '../combat/evoUnique';
+import { evoFormEntry, evoNumsOf, evoReleaseBlocked, evoReleaseNums } from '../../data/evolution/uniques';
 import { cloneBuild, familyCategory, familyTable, type BuildState } from '../absorb/build';
 import { resolveMaxChain } from '../faction';
 import { tryGetTranscendent } from '../../data/transcendents';
@@ -172,6 +174,7 @@ export function combatAbilitiesOf(stat: EvolutionState): FormAbilities {
     fa.elements.push(...x.elements);
     fa.uniques.push(...x.uniques);
     fa.physAbilities.push(...x.physAbilities.filter((p) => !fa.physAbilities.includes(p)));
+    if (x.evoTraits?.length) (fa.evoTraits ??= []).push(...x.evoTraits);
   }
   return fa;
 }
@@ -477,7 +480,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음
   const loadout = (e.abilities ??= newAbilityLoadout());
   const abilitySlotsBefore = loadout.slots;
-  const abilityGain = gainEvolutionAbility(loadout, form, prevForm);
+  const abilityGain = gainEvolutionAbility(loadout, form, prevForm, ctx.factionId);
   return {
     ok: true,
     form,
@@ -573,6 +576,15 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
     params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + critChance;
     params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
   }
+  // 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.495): 진화체 × 종족(전투 기반) 데이터. 해방 없음 진화체는 해방 자체를 막는다
+  params.evo = evoParamsOf(form, factionId);
+  if (evoReleaseBlocked(form?.id, factionId)) {
+    params.liberationEnabled = false;
+    params.liberationUnique = false;
+    params.liberationAttackSpeed = 1;
+    params.liberationChainSpeed = 1;
+    params.liberationStatMultiplier = 1;
+  }
   applyDetachedTraits(params, detachedOf(e.abilities));
   applyTraitTotals(params, transcendentTraitEffects(stat).totals);
   // 초월자 전용 블록 (GDD 12-4 v6.048, C.441): '초월자' 기반이면 일반 블록(기본·흡수·물공·콤보) 대신 전용 블록만 + 기본 회피율 + 해방 수치 = 진화체 만해와 같음
@@ -587,7 +599,18 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
     params.liberationAttackSpeed = LB.uniqueAttackSpeed;
     params.liberationChainSpeed = LB.uniqueChainSpeed;
     params.liberationStatMultiplier = trained ? LB.trainedStatMultiplier : LB.uniqueStatMultiplier;
+    params.evo = null; // 초월자 전용 블록 몸은 진화체 고유 능력 없음
   }
+}
+
+/** 진화체 × 종족 고유 능력 전투 재료 (GDD 8-7 1차, C.495): 4단계 진화체 데이터(uniques.json)에 ability 가 있을 때만. 수치 = balance evoUniques.forms */
+export function evoParamsOf(form: FormDef | undefined | null, factionId: string): EvoParams | null {
+  if (!form || form.tier < 4) return null;
+  const ability = evoFormEntry(form.id, factionId)?.ability;
+  if (!ability) return null;
+  const n = evoNumsOf(form.id, factionId);
+  const { release: _r, ...base } = n;
+  return { formId: form.id, ability, nums: base as Record<string, number>, relNums: evoReleaseNums(n) };
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
@@ -613,6 +636,8 @@ export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: numb
 /** 레스렉시온/만해(고유 해방)를 쓸 수 있는가 (GDD 126장 3): 아란칼화 / 참백도 구상화를 깬 생 */
 export function hasUniqueLiberation(e: Pick<EvolutionState, 'ascended' | 'formId'>, factionId?: string): boolean {
   if (e.ascended !== true) return false;
+  // 해방 없음 진화체 (GDD 8-7 프레네시, C.495)
+  if (factionId && evoReleaseBlocked(e.formId, factionId)) return false;
   // GDD 198장: 종족 설정 liberation.formKey 칸이 없는 진화체는 깨도 고유 해방 없음(사신 둔도 — 한정 해제 그대로)
   if (!factionId) return true;
   return formHasUniqueRelease(e.formId ? tryGetForm(e.formId) : undefined, factionId);
