@@ -26,7 +26,12 @@ describe('방 목록 · 초월자 자기 방', () => {
     const f = getFaction('hollow');
     const base = roomOf(f), own = roomOf(f, null, 'transcendent-ichigo');
     expect(own.sceneArt).toBe('scene.room-ichigo');
-    expect(own.layout).toEqual(base.layout);
+    // C.494 (사용자 2026-11-19 "이치고 방 체크 ㄱㄱ", 배치 도구): 이치고의 방 물건 자리 = 방 목록 값, 안 적은 칸(rank 등)은 종족 방 그대로
+    const ich = ROOMS.find((r) => r.id === 'transcendent-ichigo')!.layout!;
+    expect(own.layout).toEqual({ ...base.layout, ...ich });
+    expect(own.layout.book).toEqual({ x: 9.9, y: 91.2, scale: 0.91 });
+    expect(own.layout.outside).toEqual({ x: 88.9, y: 91.2, scale: 1 });
+    expect(own.layout.rank).toEqual(base.layout.rank);
     expect(own.props).toEqual(base.props);
     expect(roomOf(f, null, 'nope').sceneArt).toBe(base.sceneArt);
     const room = ROOMS.find((r) => r.id === 'transcendent-ichigo')!;

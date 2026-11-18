@@ -1,5 +1,12 @@
 {
   "id": "transcendent-ichigo",
   "label": "이치고의 방",
-  "sceneArt": "scene.room-ichigo"
+  "sceneArt": "scene.room-ichigo",
+  "layout": {
+    "book": { "x": 9.9, "y": 91.2, "scale": 0.91 },
+    "hogyoku": { "x": 34.1, "y": 91.2, "scale": 0.77 },
+    "altar": { "x": 25, "y": 74.6, "scale": 1.03 },
+    "chest": { "x": 72.1, "y": 72.9, "scale": 0.86 },
+    "outside": { "x": 88.9, "y": 91.2, "scale": 1 }
+  }
 }
