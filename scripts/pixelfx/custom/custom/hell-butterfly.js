@@ -1,5 +1,5 @@
-// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 그대로 두고 색만 검정·보라로, 뒷날개에 꼬리만 달았다.
-// 사용자 2026-11-18 "그 나비 블리치의 지옥나비처럼 검정으로" → "원래거에서 날개 꼬리 모양만 바꾸자"(제비나비 실루엣·흰 날개맥 판은 버림). 게임에는 아직 안 붙임.
+// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 그대로 두고 색만 검정·보라로, 뒷날개를 제비나비 모양(물결 가장자리 + 꼬리)으로 바꾸고 자주색 띠를 넣었다(앞날개는 원본 그대로).
+// 사용자 2026-11-18 "그 나비 블리치의 지옥나비처럼 검정으로" → "원래거에서 날개 꼬리 모양만 바꾸자" → "아랫날개 모양 자체를 바꿔야지. 저 자주색 무늬까지만 넣어줘"(제비나비 실루엣·흰 날개맥 판은 버림). 게임에는 아직 안 붙임.
 import { fit, mix, clamp, wrap, lerp, cycle, sparkle, TAU } from "../../core/index.js";
 import { Grid, shift } from "../critters/_lib.js";
 
@@ -15,16 +15,16 @@ export const meta = {
   bg: "sky",
   options: {
     palette: ["#050308", "#120c18", "#1b1424", "#241a30", "#2e223c", "#6a4690", "#d9bcff"],
-    spots: ["#200818", "#5a1e52", "#9a48a0", "#e8c8ff"],
+    spots: ["#3a0828", "#9a1860", "#d8308a", "#ffc0e0"],
     seed: 1,
   },
 };
 
-const D = meta.duration, GRID = new Grid(-22, -20, 44, 46);
+const D = meta.duration, GRID = new Grid(-22, -20, 44, 47);
 // the right wings, unfolded, in px from the wing root (y forward is negative)
 const FORE = [[0, -1], [3, -6], [8, -11], [13, -12.5], [16.5, -10.5], [16.5, -6], [13, -1.5], [7, 1], [2, 1.5]];
-// 뒷날개: 원래 모양 + 아래로 뻗은 꼬리(제비나비)
-const HIND = [[0, 1], [6, 1.5], [11, 4], [12.5, 8.5], [10.5, 12.5], [9.2, 13.4], [9.4, 19], [7.8, 20.5], [6.4, 19], [6.6, 13.6], [3, 11], [0.5, 6]];
+// 뒷날개: 제비나비 — 물결진 바깥 가장자리 + 아래로 뻗은 꼬리
+const HIND = [[0, 1], [6, 1.5], [10.5, 3], [12.6, 6], [11.3, 7.4], [12.7, 9.8], [11, 11.2], [11.6, 13.6], [9.7, 14.4], [9.9, 20], [8.3, 21.5], [6.9, 20], [7.1, 15.2], [4.6, 14.8], [3.3, 12], [1, 8]];
 
 // flight: bursts of wingbeats (rising) and glides (sinking), wandering round a loop
 const BURSTS = [[0, 0.95], [1.5, 2.55]];
@@ -81,11 +81,9 @@ function wingColor(C, Sp, hind, u, v) {
       return C[0];
     }
   } else {
-    if (e < 2 && r > 8) return Math.sin(ang * 10) > 0.5 ? C[5] : C[1];
-    const d = Math.hypot(u - 7.6, v - 9.4);
-    if (d < 0.7) return C[6];
-    if (d < 1.4) return C[0];
-    if (d < 2.2) return Sp[2];
+    if (v > 14.6) return C[1]; // 꼬리
+    // 바깥 가장자리를 따라가는 자주색 물결 띠
+    if (e < 2.7 && u > 6.5 && v > 2.6) return e < 1.9 ? Sp[2] : Sp[1];
   }
   for (const va of hind ? [0.5, 1.0, 1.45] : [-1.2, -0.75, -0.3]) if (Math.abs(ang - va) * r < 0.45 && r > 3.5) return C[1];
   if (r < 3) return C[2];
@@ -99,7 +97,7 @@ function butterfly(g, C, Sp, w, t) {
   for (const s of [-1, 1])
     for (const hind of [true, false]) {
       const pts = hind ? HIND : FORE;
-      g.shade(-20, -15, 20, 23, (x, y) => {
+      g.shade(-20, -15, 20, 24, (x, y) => {
         if (Math.sign(x + 0.001) !== s) return 0;
         const u = (Math.abs(x) - 1) / w, v = y;
         if (u < 0 || !inPoly(pts, u, v)) return 0;
