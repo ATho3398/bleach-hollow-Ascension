@@ -54,7 +54,7 @@ describe('블록 약어 선택 (GDD 15-2 결정 2)', () => {
       // 생성원 두 묶음을 합친 전투 값 (이름만 본다)
       const p = { ...p0, skills: [...p0.skills, ...createCombat(1, { enemy, params: buildCombatParams(b1, f.id) }).params.skills] };
       const name = (blk: Block) => blockName(blk, labels, f.id, p);
-      expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('공허');
+      expect(name({ uid: 2, kind: 'void', traitId: null })).toBe('폭주') // C.489: 옛 '공허';
       expect(name({ uid: 3, kind: 'skill', traitId: 't-fire-a', family: 'family-a' })).toBe(a);
       expect(name({ uid: 4, kind: 'skill', traitId: 't-kyo-b', family: 'family-b' })).toBe(b);
       expect(name({ uid: 5, kind: 'skill', traitId: 'basic-guard', family: null })).toBe('막기');

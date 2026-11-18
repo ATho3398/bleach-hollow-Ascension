@@ -20,8 +20,8 @@ describe('C.152 전투 v2', () => {
     expect(v2FamilyPath('nope')).toBe(V2_PATH.claw);
     expect(v2FamilyPath(undefined)).toBe(V2_PATH.claw);
   });
-  it('역할 글자는 README 규칙 그대로 (방·회·허·콤·해·봉)', () => {
-    expect(V2_GLYPH).toEqual({ guard: '방', heal: '회', void: '허', combo: '콤', release: '해', seal: '봉' });
+  it('역할 글자는 README 규칙 그대로 (방·회·폭·콤·해·봉 — C.489 폭주 블록 = 폭, 옛 허)', () => {
+    expect(V2_GLYPH).toEqual({ guard: '방', heal: '회', void: '폭', combo: '콤', release: '해', seal: '봉' });
   });
   it('마크업 순서 face → icon → glyph → name, 이름은 aria-label 로만 (체인 원 pips 는 GDD 137장 4 로 삭제)', () => {
     const order = ['bha-block__face', 'bha-block__icon', 'bha-block__glyph', 'bha-block__name'];

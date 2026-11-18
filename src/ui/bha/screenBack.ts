@@ -19,3 +19,18 @@ export function asBack<T extends HTMLElement>(b: T): T {
   b.dataset.back = '';
   return b;
 }
+
+/**
+ * 전투 화면의 뒤로 처리기 (C.176 뒤로 = 일시정지 · C.489 떠난 전투 정리). 열린 창(top)·일시정지·연출 중·끝난 전투면 처리 안 함.
+ * 화면이 바뀌어 전투가 떠났으면(connected false — stop 없이 바꿔 끼운 훈련 인형 빈 적 자리 등) 전투를 멈추고 등록을 지운다:
+ * 옛 코드는 떠난 전투가 '진행 중'이면 뒤로를 계속 삼켜(보이지 않는 일시정지) 수련장 입구에서 다시 못 나갔다 (사용자 2026-11-18 "훈련장 한번 누르면 다시 못나감")
+ */
+export function battleBackHook(o: { connected: () => boolean; stopped: () => boolean; stop: () => void; busy: () => boolean; pause: () => void }): (top: Element | null) => boolean | 'gone' {
+  return (top) => {
+    if (!o.connected()) o.stop();
+    if (o.stopped()) return 'gone';
+    if (top || o.busy()) return false;
+    o.pause();
+    return true;
+  };
+}

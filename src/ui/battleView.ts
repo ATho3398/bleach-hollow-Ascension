@@ -68,6 +68,7 @@ import { coverTutorials, registerLayer } from './bha/overlayHost';
 import { tutorialOverlay, type TutorialHandle } from './tutorialOverlay';
 import { releaseUse, slotAt } from './pointer';
 import { registerCancelHook, registerShortcutHandlers } from './bha/shortcuts';
+import { battleBackHook } from './bha/screenBack';
 import { currentViewState } from './viewScale';
 import { cueOf, emitFeedback, hookAudioUnlock, strongestCue, type FxCue } from './fx';
 import { loadFxSettings, prefersReducedMotion } from './fxSettings';
@@ -1021,12 +1022,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   pauseBtn.onclick = () => setPaused(!paused);
   // 뒤로(◀·Esc·폰 뒤로) = 일시정지 (C.176, GDD 104장 7: 잠긴 화면에서 처음 화면 확인 대신). 일시정지 창이 열리면 그 창의 뒤로 = 계속
-  registerCancelHook((top) => {
-    if (stopped) return 'gone';
-    if (top || paused || overlayOpen || s.status !== 'playing') return false;
-    setPaused(true);
-    return true;
-  }, { button: true });
+  // C.489: 화면을 떠난 전투(stop 없이 바꿔 끼움)는 멈추고 등록을 지운다 — 옛 코드는 뒤로를 계속 삼켜 수련장 입구에서 다시 못 나갔다
+  registerCancelHook(battleBackHook({
+    connected: () => app.isConnected,
+    stopped: () => stopped,
+    stop,
+    busy: () => paused || overlayOpen || s.status !== 'playing',
+    pause: () => setPaused(true),
+  }), { button: true });
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니요로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;
   unhold = onHold((sig) => {
@@ -1990,6 +1993,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   let fxHalted = false;
   let last = performance.now();
   const frame = (now: number) => {
+    if (!app.isConnected) stop(); // 화면을 떠난 전투는 루프도 멈춘다 (C.489 — 떠난 뒤에도 돌던 루프)
     if (stopped) return;
     const dt = Math.min(250, now - last);
     last = now;

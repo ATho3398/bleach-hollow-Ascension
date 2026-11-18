@@ -41,8 +41,8 @@ const chanceOf = (entries: ReturnType<typeof tableAt>, b: string) => entries.fin
 
 describe('수치·데이터', () => {
   it('붕옥 voidScale 1(먼저), 경화수월 = 허 공식 몫(다음)·고정 몫 없음, 회피 버프 3초·+20%p·+30%', () => {
-    expect(K.blocks.hogyoku!.voidSlot).toEqual({ voidScale: 1, riskGain: 10, order: 0 });
-    expect(K.blocks.kyoka!.voidSlot).toEqual({ voidScale: 1, order: 1 });
+    expect(K.blocks.hogyoku!.voidSlot).toEqual({ base: 0.15, voidScale: 1, riskGain: 10, order: 0 }); // C.489: 고정 몫 0.15
+    expect(K.blocks.kyoka!.voidSlot).toEqual({ base: 0.12, voidScale: 1, order: 1 }); // C.489: 고정 몫 0.12
     expect(K.blocks.kyoka!.weight).toBe(0);
     expect(K.blocks.kyoka!.maxOnRail).toBe(2);
     expect(K.evadeBuff).toEqual({ seconds: 3, critChance: 0.2, critDamage: 0.3 });
@@ -51,23 +51,25 @@ describe('수치·데이터', () => {
 });
 
 describe('출현표 (허 공식으로 따로 굴림)', () => {
-  it('붕옥 = v, 경화수월 = (1 − v) × v, 귀도 = 나머지 · 합 1 · 허 블록 없음', () => {
+  // C.489: 붕옥 h = 0.15 + v, 경화수월 k = 0.12 + v (고정 기본 몫 + 폭주 블록 공식)
+  it('붕옥 = h, 경화수월 = (1 − h) × k, 귀도 = 나머지 · 합 1 · 폭주 블록 없음', () => {
     const s = mk();
     for (const v of [0.02, 0.095, 0.215]) {
       const t = tableAt(s, v);
+      const h = 0.15 + v, k = 0.12 + v;
       expect(t.some((e) => e.kind === 'void')).toBe(false);
-      expect(chanceOf(t, 'hogyoku')).toBeCloseTo(v, 12);
-      expect(chanceOf(t, 'kyoka')).toBeCloseTo((1 - v) * v, 12);
-      expect(chanceOf(t, 'kido')).toBeCloseTo((1 - v) * (1 - v), 12);
+      expect(chanceOf(t, 'hogyoku')).toBeCloseTo(h, 12);
+      expect(chanceOf(t, 'kyoka')).toBeCloseTo((1 - h) * k, 12);
+      expect(chanceOf(t, 'kido')).toBeCloseTo((1 - h) * (1 - k), 12);
       expect(t.reduce((a, e) => a + e.chance, 0)).toBeCloseTo(1, 12);
     }
   });
-  it('감응도 100: 붕옥 없음 → 경화수월 = v, 귀도 = 1 − v', () => {
+  it('감응도 100: 붕옥 없음 → 경화수월 = 0.12 + v, 귀도 = 나머지', () => {
     const s = mk();
     const t = tableAt(s, 0.095, 100);
     expect(chanceOf(t, 'hogyoku')).toBe(0);
-    expect(chanceOf(t, 'kyoka')).toBeCloseTo(0.095, 12);
-    expect(chanceOf(t, 'kido')).toBeCloseTo(0.905, 12);
+    expect(chanceOf(t, 'kyoka')).toBeCloseTo(0.215, 12);
+    expect(chanceOf(t, 'kido')).toBeCloseTo(0.785, 12);
   });
   it('융합 중: 경화수월·붕옥 굴림 없음 (귀도·프라고르만)', () => {
     const s = mk();
@@ -104,13 +106,12 @@ describe('출현표 (허 공식으로 따로 굴림)', () => {
       expect((n.hogyoku / total) * N).toBeCloseTo(hg, 1);
       expect((n.kyoka / total) * N).toBeCloseTo(ky, 1);
     }
-    // 보고용 값 (붕옥 19v · 경화수월 19(1−v)v)
-    expect(expected[0.02]!.hogyoku).toBeCloseTo(0.38, 6);
-    expect(expected[0.02]!.kyoka).toBeCloseTo(0.3724, 6);
-    expect(expected[0.095]!.hogyoku).toBeCloseTo(1.805, 6);
-    expect(expected[0.095]!.kyoka).toBeCloseTo(1.633525, 6);
-    expect(expected[0.215]!.hogyoku).toBeCloseTo(4.085, 6);
-    expect(expected[0.215]!.kyoka).toBeCloseTo(3.206725, 6);
+    // 보고용 값 (붕옥 19h · 경화수월 19(1−h)k, C.489 고정 몫 반영)
+    for (const v of [0.02, 0.095, 0.215]) {
+      const h = 0.15 + v, k = 0.12 + v;
+      expect(expected[v]!.hogyoku).toBeCloseTo(N * h, 6);
+      expect(expected[v]!.kyoka).toBeCloseTo(N * (1 - h) * k, 6);
+    }
   });
 });
 

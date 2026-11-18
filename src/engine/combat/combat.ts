@@ -276,7 +276,7 @@ export interface CombatKitBlock {
   releaseSwap?: string;
   /** 허 공식 몫 장치 (GDD 12-4 v6.052 붕옥 → v6.066 경화수월도): 블록이 나올 때마다 허 공식 × voidScale 확률로 따로 굴린다(order 작은 것부터, 먼저 걸린 것이 나옴 — 다 안 걸리면 weight 블록).
    *  riskGain 이 있으면(붕옥) 허 블록 자리(허 각인)·게이지 가득이면 안 나옴·쓰면 패널티 없이 게이지 +riskGain */
-  voidSlot?: { voidScale: number; riskGain?: number; order: number };
+  voidSlot?: { base?: number; voidScale: number; riskGain?: number; order: number };
   /** 융합 중 쓰면 1블록마다 게이지 −riskCost (GDD 12-4 v6.052 프라고르) */
   riskCost?: number;
   /** 충전 평타 장치 (GDD 12-4 v6.069 이치고 월아천충): 쓰면 피해 없이 '다음 평타 = 충전 평타' 를 체인 수만큼 쌓는다. 충전 평타 = 기본 공격 × power, 이름 name */
@@ -1252,7 +1252,7 @@ export function spawnTableOf(p: CombatParams, releasing = false, kitRisk: number
 
 /** 초월자 전용 블록 출현표 (GDD 12-4 v6.048, C.441 → v6.052 C.443): 일반 블록(기본·흡수·물공)이 없고 전용 블록만. 간격 = 흡수 0칸 몸의 기본 간격(같은 가속 보정).
  *  해방 밖 = releaseOnly·voidSlot 아닌 블록끼리 weight 로 나눔, 해방 중 = releaseSwap 가 없는 블록(바뀌어 사라지는 블록 빼고 releaseOnly 포함)끼리.
- *  voidSlot 블록(붕옥)이 있으면 허 블록 자리를 그 블록이 받는다: 확률 = 허 공식 × voidScale, 게이지(kitRisk)가 가득이면 0, 해방 중엔 없음(바뀐 블록이 weight 로 나옴).
+ *  voidSlot 블록(붕옥)이 있으면 폭주 블록 자리를 그 블록이 받는다: 확률 = 고정 기본 몫 base + 폭주 블록 공식 × voidScale(C.489), 게이지(kitRisk)가 가득이면 0, 해방 중엔 없음(바뀐 블록이 weight 로 나옴).
  *  voidSlot 블록이 없으면 허 몫 그대로 */
 function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, kitRisk: number | null, stanceBlock: string | null): { seconds: number; entries: SpawnEntry[] } {
   const seconds = spawnTableOf({ ...p, kit: null, skills: [], physBlock: null }).seconds;
@@ -1278,7 +1278,8 @@ function kitSpawnTableOf(p: CombatParams, kit: CombatKit, releasing: boolean, ki
   }
   // 허 공식 몫 블록마다 따로 굴림 (v6.066): 앞 블록이 안 걸린 몫(rest) × 이 블록 확률. 해방 중엔 없음, 게이지를 올리는 블록은 게이지 가득이면 없음
   for (const b of slots) {
-    const v = releasing || (full && b.voidSlot!.riskGain) ? 0 : Math.min(1, base * b.voidSlot!.voidScale);
+    // 확률 = 고정 기본 몫 base + 폭주 블록 공식 × voidScale (C.489 GDD v6.121 — 공식만이면 기본 2%라 거의 안 나옴)
+    const v = releasing || (full && b.voidSlot!.riskGain) ? 0 : Math.min(1, (b.voidSlot!.base ?? 0) + base * b.voidSlot!.voidScale);
     if (v <= 0) continue;
     entries.push({ kind: 'skill', source: kitSkillOf(p, b), family: null, chance: rest * v });
     rest *= 1 - v;

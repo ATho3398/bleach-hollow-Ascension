@@ -700,7 +700,7 @@ describe('종족 설정만 바꿔도 이름이 바뀐다 (코드 분기 없음)'
     const l = battleLabels(quincy);
     expect(l.role.guard).toBe('블루트');
     expect(l.chain).toBe('연결');
-    expect(l.voidBlock).toBe('공허');
+    expect(l.voidBlock).toBe('폭주'); // C.489: 옛 '공허'
     expect(pickFaction(getEnemy('test-a').name, 'quincy')).toBe('테스트 적 A');
     expect(FACTIONS.length).toBe(2);
   });
