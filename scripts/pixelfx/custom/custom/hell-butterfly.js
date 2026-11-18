@@ -22,11 +22,12 @@ export const meta = {
   },
 };
 
-const D = meta.duration, GRID = new Grid(-22, -20, 44, 47);
+const SUB = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+const D = meta.duration, GRID = new Grid(-22, -20, 44, 54);
 // the right wings, unfolded, in px from the wing root (y forward is negative)
 const FORE = [[0, -1], [3, -6], [8, -11], [13, -12.5], [16.5, -10.5], [16.5, -6], [13, -1.5], [7, 1], [2, 1.5]];
-// 뒷날개: 제비나비 — 물결진 바깥 가장자리 + 아래로 뻗은 꼬리
-const HIND = [[0, 1], [6, 1.5], [10.5, 3], [12.6, 6], [11.3, 7.4], [12.7, 9.8], [11, 11.2], [11.6, 13.6], [9.7, 14.4], [9.9, 20], [8.3, 21.5], [6.9, 20], [7.1, 15.2], [4.6, 14.8], [3.3, 12], [1, 8]];
+// 뒷날개: 제비나비 — 물결진 바깥 가장자리 + 아래로 뻗은 꼬리(가는 자루 → 끝이 굵고 뭉툭, 사용자 2026-11-18)
+const HIND = [[0, 1], [6, 1.5], [10.5, 3], [12.6, 6], [11.3, 7.4], [12.7, 9.8], [11, 11.2], [11.6, 13.6], [9.3, 14.4], [8.95, 16.5], [8.95, 21.5], [10.9, 23.5], [10.9, 26.2], [8.7, 28], [6.5, 26.2], [6.5, 23.5], [8.05, 21.5], [8.05, 16.5], [7.5, 15.2], [4.6, 14.8], [3.3, 12], [1, 8]];
 
 // flight: bursts of wingbeats (rising) and glides (sinking), wandering round a loop
 const BURSTS = [[0, 0.95], [1.5, 2.55]];
@@ -99,10 +100,13 @@ function butterfly(g, C, Sp, w, t) {
   for (const s of [-1, 1])
     for (const hind of [true, false]) {
       const pts = hind ? HIND : FORE;
-      g.shade(-20, -15, 20, 24, (x, y) => {
+      g.shade(-20, -15, 20, 31, (x, y) => {
         if (Math.sign(x + 0.001) !== s) return 0;
-        const u = (Math.abs(x) - 1) / w, v = y;
-        if (u < 0 || !inPoly(pts, u, v)) return 0;
+        // 접혔을 때 가는 꼬리가 칸 사이로 빠지지 않게 한 칸 안을 여러 번 본다
+        const u0 = (Math.abs(x) - 1) / w, v = y;
+        if (u0 < 0) return 0;
+        const u = SUB.map((k) => u0 + k / w).find((q) => inPoly(pts, q, v));
+        if (u === undefined) return 0;
         let c = wingColor(C, Sp, hind, u, v);
         // folding up, the far side of each wing turns away from the light
         if (w < 0.5 && c !== C[0]) c = mix(c, C[1], (0.5 - w) * 1.6);

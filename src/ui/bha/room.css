@@ -362,9 +362,10 @@
   background: var(--bha-bg-3); border: 2px solid var(--bha-line-2); color: var(--bha-text-1);
   box-shadow: var(--bha-shadow-1); pointer-events: none;
 }
-.bha-pet.has-art { width: var(--bha-sp-10); height: var(--bha-sp-10); border-radius: 0; background: none; border: 0; box-shadow: none; } /* 그림 펫 = 48칸 그림을 1배로 (C.477) */
-.bha-pet__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.bha-pet.has-art { width: calc(var(--bha-sp-10) * 0.7); height: calc(var(--bha-sp-10) * 0.7); border-radius: 0; background: none; border: 0; box-shadow: none; } /* 그림 펫 = 48칸 그림을 0.7배로 (C.481, 사용자 "한 0.7배로 넣음 되지뭐") */
+.bha-pet__img { width: 100%; height: 100%; object-fit: contain; }
 .bha-pet--buddy { position: absolute; right: calc(-1 * var(--bha-sp-6)); bottom: var(--bha-sp-5); }
+.bha-pet--buddy.has-art { right: calc(-1 * var(--bha-sp-9)); z-index: 1; } /* 그림 펫은 몸 밖으로 더 빼고 몸 앞에 (C.478 — 덩치 팔에 가려짐) */
 .bha-walker > .bha-pet--buddy { right: calc(-1 * var(--bha-sp-9)); bottom: 0; }
 /* 대기 보상 (GDD 92장, C.147): 방 위 줄 아이콘의 쌓인 시간 배지 · 창의 보상 목록 */
 .bha-room__idlebadge { margin-left: var(--bha-sp-2); padding: 0 var(--bha-sp-2); border-radius: var(--bha-r-pill); background: var(--bha-accent); color: var(--bha-bg-0); font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }

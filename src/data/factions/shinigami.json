@@ -218,7 +218,14 @@
     "pet-gold": "지옥나비",
     "pet-belly": "꼬마 쥐",
     "pet-guard": "수호 거북",
-    "pet-seek": "길잡이 까마귀"
+    "pet-seek": "길잡이 까마귀",
+    "pet-soul": "길 잃은 혼백",
+    "pet-solita": "솔리타 바스타",
+    "pet-kukkapuro": "쿠카푸로",
+    "pet-yoruichi": "요루이치",
+    "pet-chappy": "차피",
+    "pet-kon": "콘",
+    "pet-wakame": "미역대사"
   },
   "petArt": { "pet-gold": "pet.hell-butterfly" },
   "fullnessName": "배부름",

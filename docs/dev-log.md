@@ -4159,3 +4159,40 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - '지옥나비'는 사신 쪽 골드 펫 이름이라(호로는 뼈 까마귀) 그림도 종족 설정으로: `petArt`(펫 id → 그림 키, 선택) 추가 — `shinigami.json` `"pet-gold": "pet.hell-butterfly"`. `petArtSrc`·`petArt`·`petBuddy`·`petCardArt` 가 종족 설정을 받는다(방·원정·전투·가방·장비 화면). 호로와 다른 펫은 그대로 아이콘 원.
 - 그림 펫은 48px(`--bha-sp-10`) 1배·`image-rendering: pixelated`(아이콘 원은 28px 그대로).
 - 테스트 `tests/c477.test.ts` 3건. 캡처 `docs/captures/c477/` 01 사신 방(지옥나비) · 02 호로 방(뼈 까마귀 아이콘 그대로). 수치·세이브 변경 없음.
+
+## C.478 — 뼈 까마귀 펫 그림 · 지옥나비 꼬리 길게 (GDD v6.109 9-4, S-23)
+- 사용자 2026-11-18 "나비 꼬리만 더 길게 빼고, 호로 뼈 까마귀도 ㄱㄱ".
+- 지옥나비: 뒷날개 꼬리 길이 +5칸(그림 키 36×43칸). 날개를 접은 컷에서 가는 꼬리가 끊기던 것 고침(한 칸 안을 세 번 봄).
+- 뼈 까마귀: 픽셀FX 새(critters/bird)를 검은 몸 + 뼈 가면 머리·긴 뼈 부리·붉은 눈으로 바꾼 `custom/bone-crow`(제자리 날갯짓 2.4초) → `public/art/pet-bone-crow.webp`(48×48, 36장 · 67ms). `hollow.json` `petArt` `"pet-gold": "pet.bone-crow"`.
+- 펫 그림 뽑는 도구 `scripts/pixelfx/pet-art.py`(시트 → 불투명 도트만 → 48×48 움직이는 webp).
+- 테스트 `tests/c477.test.ts` 갱신. 캡처 `docs/captures/c478/` 01 사신 방 · 02 호로 방. 수치·세이브 변경 없음.
+
+## C.479 — 그림자 박쥐 펫 그림 · 새 펫 그림 6종 준비 (GDD v6.110 9-4, S-23)
+- 사용자 2026-11-18 "박쥐, 길잃은 혼백(도깨비불 이미지), 눈알 ㄱㄱ(이름은 솔리타 바스타로 …) · 강아지 … 쿠카푸로 · 고양이 … 요루이치 · 토끼 대가리 … 차피 · 사자인형 … 콘".
+- 게임에 연결한 것: 호로 pet-seek(그림자 박쥐) = `custom/shadow-bat`(픽셀FX 박쥐, 어두운 색 · 제자리 날갯짓) → `public/art/pet-shadow-bat.webp`, `hollow.json` `petArt`.
+- 그림만 준비한 것(펫 데이터·효과가 아직 없어 게임에는 안 나옴 — 효과·얻는 법은 사용자 결정 대기): 길 잃은 혼백 `pet-lost-soul` · 솔리타 바스타 `pet-solita-vista`(초록 눈동자) · 쿠카푸로 `pet-kukkapuro` · 요루이치 `pet-yoruichi-cat` · 차피 `pet-chappy` · 콘 `pet-kon` (모두 `public/art/*.webp` 48×48, 이펙트 `scripts/pixelfx/custom/custom/`). 뒤 넷은 도형으로 새로 그린 것(`_petkit.js`).
+- `scripts/pixelfx/pet-art.py`: 본체만 남기기(작은 덩어리 = 날리는 가루·불티 제거, 기준 칸 수 인자).
+- 테스트 `tests/c477.test.ts` 갱신. 수치·세이브 변경 없음.
+- 지옥나비 꼬리 모양(사용자 "얇다가 끝으로 갈수록 두껍고 뭉툭해져야지"): 가는 자루(1칸) → 끝이 둥글고 굵은 모양. 접힌 컷에서 자루가 끊기지 않게 한 칸 안을 8번 본다.
+- 추가 그림(사용자 "펫으로 얘도 추가" — 미역대사): `custom/wakame` → `public/art/pet-wakame.webp`(울퉁불퉁한 초록 몸·흰 머리띠·허리에 손). 다른 새 펫과 같이 효과 결정 대기라 게임에는 아직 안 나옴.
+- 걷는 그림(사용자 "고양이랑 강아지는 걷는 모션 있음?"): `custom/kukkapuro-walk` · `custom/yoruichi-cat-walk` → `public/art/pet-kukkapuro-walk.webp` · `pet-yoruichi-cat-walk.webp`(옆모습 제자리 걸음, 0.6초에 한 걸음). 앉은 그림과 바꿔 끼우는 코드는 아직 없음(새 펫 연결 때 같이).
+
+## C.480 — 지옥나비 펫 = 사용자가 고친 도트 (S-23)
+- 사용자 2026-11-18 "나비 수정"(48×48 한 장): `docs/design/user-art/pets/hell-butterfly-2026-11-18.png` 을 그대로 쓰고, 날갯짓은 새 도구 `scripts/pixelfx/pet-flap.py`(몸통 세로축 기준으로 양 날개를 가로로 접었다 폄 — 박자·뜨기는 `custom/hell-butterfly` 와 같음)로 입혀 `public/art/pet-hell-butterfly.webp`(48장 · 67ms) 교체.
+- 이제 나비 펫 그림의 원본은 위 한 장이다(픽셀FX `custom/hell-butterfly` 는 이펙트로만 남음). 수치·세이브·기획 변경 없음.
+- 날갯짓 느리게(사용자 "나비 도트 너무빨라서 볼수가 없음. 원래속도로"): 1초 6.3번 → 3.5번, 한 장 67ms → 100ms(32장).
+- 요루이치 앉은 그림 = 사용자가 고친 도트(`docs/design/user-art/pets/yoruichi-cat-2026-11-18.png`): 새 도구 `scripts/pixelfx/pet-sit.py`(한 장을 잘라 꼬리 살랑·머리 끄덕 1칸·깜빡임) → `public/art/pet-yoruichi-cat.webp`. 아직 게임 미연결(효과 결정 대기).
+- 요루이치 꼬리 느리게(사용자 "꼬리 너무빨라 엄청 느리게"): 1.2초 왕복 → 4.8초 왕복, 한 장 100ms(48장).
+
+## C.481 — 그림 펫 0.7배 표시 (GDD v6.111 9-4, S-23)
+- 사용자 2026-11-18 "아 40픽셀로 가자 그럼. 나비는 유지하고. 그다음 한 0.7배로 넣음 되지뭐": 그림 펫 상자 48px → 33.6px(`--bha-sp-10` × 0.7), 줄여 그리므로 `image-rendering: pixelated` 뺌(가는 선이 빠지지 않게 부드럽게 줄임).
+- 펫 도트 기준 크기 = 40칸 안팎(나비 40×42 유지). 콘·차피·미역대사는 사용자가 준 그림을 40칸으로 다시 찍어 전달(게임 미연결).
+- 캡처 `docs/captures/c481/` 01 사신 방 · 02 호로 방. 수치·세이브 변경 없음.
+
+## C.482 — 새 펫 7종(효과 미정) · 테스트 모드 모든 펫 해금 (GDD v6.112 9-4·17-4, S-23)
+- 사용자 2026-11-18 "이거 찍고 게임에 싹 다 넣은 다음에 테스트 모드에서 모든 펫 해금돼 있게 처리해놔".
+- 펫 데이터 7종 추가(`pets.json`): pet-soul 길 잃은 혼백 · pet-solita 솔리타 바스타 · pet-kukkapuro 쿠카푸로 · pet-yoruichi 요루이치 · pet-chappy 차피 · pet-kon 콘 · pet-wakame 미역대사. 양쪽 종족 같은 이름(`petNames`)·같은 그림(펫 데이터 art).
+- **효과는 정하지 않았다**(사용자가 직접 정하기로 함): `effect: "none"`(보너스 0, 효과 문구 "효과 준비 중", 같이 공격은 함) · `pool: false`(바퀴 끝 굴림·펫 알·첫 선물은 예전 4종 그대로 — `PET_POOL_IDS`, 난수 소비·결과 불변).
+- 테스트 모드: `fillAllPets` — 새 테스트 칸(`fillAllUnlocked`)과 테스트 모드로 슬롯을 열 때(`openTestHogyoku`) 모든 펫을 채움. 일반 세이브는 건드리지 않는다.
+- 그림: 콘·차피·미역대사 = 사용자 그림을 40칸으로 찍은 한 장(`docs/design/user-art/pets/*-40-2026-11-18.png`) + 새 도구 `scripts/pixelfx/pet-float.py`(위아래 2칸 둥실, 2.4초). 혼백·솔리타 바스타·쿠카푸로·요루이치는 앞 패치 그림 그대로.
+- 테스트 `tests/c482.test.ts` 4건, `tests/c144.test.ts` 갱신. 세이브 형식·수치 변경 없음(모르는 펫 id 는 원래 버리던 정리 그대로).
