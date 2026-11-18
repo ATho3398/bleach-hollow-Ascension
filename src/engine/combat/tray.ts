@@ -17,6 +17,10 @@ export interface Block {
   solo?: boolean;
   /** 천쇄참월 불 켠 블록 (GDD 12-4 천년혈전, C.460 — 자세 장치 lanterns): 만해 중 회색 블록을 눌러 켠다. 패링·피격 뒤 꺼짐 */
   lit?: boolean;
+  /** 진화체 고정 특수 블록 (GDD 8-7 1차, C.499 — 공화 공허 블록): 바 맨 앞에 고정, 섞이지 않음 */
+  fixed?: boolean;
+  /** 진화체 잔상 블록 (GDD 8-7 1차, C.499 — 니에블라): 잔상은 다시 잔상을 남기지 않는다 */
+  echo?: boolean;
 }
 
 /** 블록 바. 길이 = 지금 놓인 블록 수 (최대 BALANCE trayCapacity), 빈 칸이 없다 */

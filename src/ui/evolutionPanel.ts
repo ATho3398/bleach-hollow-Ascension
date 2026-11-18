@@ -11,6 +11,7 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { getDetachTrait } from '../engine/traitShop';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
+import { evoFormEntry, evoNumsOf, evoReleaseNums, evoText, fillEvoText } from '../data/evolution/uniques';
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
@@ -44,6 +45,41 @@ export function evolutionAbilityLines(stat: EvolutionState, factionId: string): 
   const evo = combatEvolutionOf(stat);
   const form = evo.formId ? tryGetForm(evo.formId) : undefined;
   return abilityLines(evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
+}
+
+/** 4단계 진화체 고유 능력 줄 (GDD 8-7 1차, C.499): 고유 능력 · 특수 블록(있으면) · 해방(레스렉시온/만해) 변형 · 해방 없음. 데이터가 없는 진화체면 빈 목록 */
+export function evoUniqueLines(formId: string | null | undefined, factionId: string, releaseName: string): { label: string; text: string }[] {
+  const entry = evoFormEntry(formId, factionId);
+  if (!entry || !formId) return [];
+  const out: { label: string; text: string }[] = [];
+  const n = evoNumsOf(formId, factionId);
+  const base = Object.fromEntries(Object.entries(n).filter(([k]) => k !== 'release')) as Record<string, number>;
+  const a = entry.ability;
+  if (a) {
+    const name = evoText(a.name, factionId);
+    out.push({ label: '고유 능력', text: `${name ? `${name} — ` : ''}${fillEvoText(evoText(a.description, factionId), base)}` });
+    for (const sp of Object.values(a.specials ?? {})) {
+      const d = evoText(sp.description, factionId);
+      out.push({ label: '특수 블록', text: `「${evoText(sp.name, factionId)}」${d ? ` — ${fillEvoText(d, base)}` : ''}` });
+    }
+    if (a.releaseDescription) out.push({ label: releaseName, text: fillEvoText(evoText(a.releaseDescription, factionId), evoReleaseNums(n)) });
+  }
+  if (entry.release === 'none') out.push({ label: releaseName, text: '없음 — 해방하지 않는다' });
+  return out;
+}
+
+/** 상태 화면 고유 능력 문단 (C.499): 줄마다 "고유 능력 — 설명". 없으면 null */
+export function evoUniqueParagraph(stat: EvolutionState, faction: FactionConfig, cls = 'bha-faint'): HTMLElement | null {
+  const evo = combatEvolutionOf(stat);
+  const lines = evoUniqueLines(evo.formId, faction.id, faction.liberation.name);
+  if (lines.length === 0) return null;
+  const p = h('p', cls);
+  p.dataset.evoUnique = String(lines.length);
+  lines.forEach((l, i) => {
+    if (i > 0) p.append(h('br'));
+    p.append(h('b', '', l.label), ` ${l.text}`);
+  });
+  return p;
 }
 
 /** 도감용 특성 줄: 성향은 진화 순간 노력치로 정해지므로 규칙만, 속성·전용은 진화체 label 로 */

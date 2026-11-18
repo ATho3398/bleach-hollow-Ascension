@@ -4322,12 +4322,42 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 테스트: 새 `tests/c498.test.ts` 8개(카드 순서·잠금·초월자 줄·카드 키로 전환·칸이 다 차면 잠금 없음·더보기 한 칸·창 닫기 규칙·훈련 인형 연결). 기대값 바꾼 것: c170 "트랙 전환은 더보기 칸 ○○ 트랙"(지키던 결정 = 전환은 방 위 줄이 아니라 더보기에서) → 더보기 [캐릭터 변경] 한 칸 · c238 방 수련장 물건 연결(지키던 결정 = 방에서 수련장, 빈사 확인·사망 막힘) → 같은 확인 뒤 수련장 + 곧장 설정 창 · c429 '트랙 전환 메뉴에 초월자 이름'(지키던 결정 = 전환 메뉴에서 초월자를 이름으로 알아봄) → 카드 창의 이름 = 초월자 이름 · 단계 줄 = '초월자' 로 옮김.
 - 캡처 `docs/captures/c498/`(1배, `scripts/c498-proof.cjs`, 상태 주입): 01 더보기 메뉴 · 02 카드 창(호로·사신·초월자 6 / 폰 3) · 03 안 열린 종족 카드 · 04 훈련 인형 누른 직후 설정 창 — PC 844×390 + 폰 796×384 터치, 05 = 4단계 진화체로 같은 흐름(PC). proof.json: PC 휠 300px·←→ 초점 이동, 폰 터치 끌기 123px(창 그대로), 카드 눌러 호로 → 사신 전환·다시 열면 사신에 '지금', ✕·뒤로 닫힘, 훈련 인형 1단계·4단계 둘 다 중간 화면 없음, 처치 뒤 다시 창, 나가기 = '수련장 · 훈련 인형'(4단계면 본능 수련 안 잠김).
 
-## C.499 — 방 먹이 줄 = [종류] 버튼(특식 → 일반 → 보급) + 가로 넘김 한 줄 · 닫을 때 종류 기억 (GDD v6.133 4-4, S-23, 코딩316)
+## C.499 — 진화체 고유 능력 공용 장치 · 4단계 한 줄 특성 · 처형 '소멸선' · 견본 백련·노도 (GDD v6.132 8-7·8-8, S-23, 코딩312)
+사용 모델: Opus 5.5. 세이브 형식 그대로(92), BALANCE 146 → 147. (C.498 번호는 병렬 세션(코딩316)이 먼저 써서 C.499, GDD v6.132)
+- 사용자 원문(11-19): "일단 지금 진화체 정한것들은 먼저 구현해. 나머지도 저쪽 세션에서 정해서 넘겨줄게". 지시 근거 `docs/drafts/evo-impl-1119.md` 4절 '코딩312'.
+- **데이터 = 진화체 id × 종족** `src/data/evolution/uniques.json`(forms[id][종족] = { trait, ability, release, extraPetSlots }), **수치** `balance.ts provisional.evoUniques`(forms[id][종족] = { 키: 값, release: { 키: 레스렉시온/만해 중 값 } }, traits[키]). 숫자 자리의 문자열 = 수치 키. 엔진 `src/engine/combat/evoUnique.ts` 는 규칙만 본다(종족·진화체 분기 없음), 데이터 검사 `validateEvoUniques`(로드 때 + 테스트).
+- **장치 목록(다음 세션 314·315 는 데이터·수치만)** — 규칙 = `{ on, 거르기, do[], proc }`, 늘 붙는 효과 = `passives[{ stat, value, per, max, when, need }]`:
+  - on: start · basicPre · basic(every = 평타 n대) · blockPre · block(crit·echo·chain·minChain·element·kind·streak{count, withinSeconds 없으면 시간 제한 없음 — 사이에 다른 블록이면 끊김}) · spawn(element void = 허 블록) · every(seconds, need 가 참인 동안만 시계가 감) · timer · releaseStart · releaseEnd · shieldHit · shieldBreak · special · kill. when release/normal, need[{stack|buff|charge|special, atLeast/below, barFull, shield, elite}].
+  - do: add·mul·clear·consume(스택, 정의 max·seconds(스택마다 따로)·on self/foe·overflow cap/reset·carry 원정 유지·mark 네모) · buff(seconds, refresh replace/max/add) · charge(다음 평타 n회, amount = chargeValue) · spawn(draw = 평소 출현표 허 제외 / make = 바 끝 빈 칸에 element('self' = 내 속성)·family 블록 value 개 / 특수 블록 id) · shield(cap)·shieldCut · blockMult·blockFlat(평타 n회분)·blockCrit·blockCritDmg · basicMult·forceCrit·ignoreDef · hit(basis basic/block/last/raw/void, element) · basics(평타 n회 즉시 +bonus, 카운터 안 셈) · heal(of damage/maxHp) · echo(잔상, 잔상은 안 남김) · absorb · useSpecial · timer·timerCut · execute.
+  - per: chain·consumed·amount·damage·bar·bar:<속성>·lostHpPct·shieldPct·risk·stack:·buff:·charge:·chargeValue:. stat: basicPower·blockPower·dealt·attackSpeed·interval·intervalCut·crit·critDmg·blockCrit·petPower·execLine·execBlockLine·ignoreDef·offenseBasic/offenseBlock(1 높은 쪽·2 평균).
+  - 능력 칸: chainMultipliers[1·2·3체인](이 진화체 체인 배율 덮어쓰기, 공격 블록) · specials{ name, short, description, fixed(바 맨 앞 고정 n칸, 섞이지 않음)·keep(써도 남음)·usable execBlock·maxOnBar } · spawnRule voidOnly · releaseSeconds · releaseHpFloor · 진화체 칸 release 'none'(해방 버튼·아란칼화/구상화 도전 숨김) · extraPetSlots(훅 자리 `evoExtraPetSlots` — 펫 쪽 연결은 314).
+  - 4단계 한 줄 특성 효과: attackSpeed·crit·blockCrit·chainPower(chain)·offenseMax·execute — id `evo:<키>`, 진화체 × 종족 데이터에 trait 가 있으면 4단계 대표 특성(el4:)을 대신(`representativeAbility(form, 종족)`), 받으면 영구·세이브 검사 통과(`evo:` id 허용).
+- 마스터AP 추가(11-19, 사신 연우 '장마' 사용자 안 — v6.132 에서 니에블라 → 연우로 정정): ① 같은 체인 수 연달아 n번 = `on block, chain [2], streak {count 2}` ② 바 끝 지정 속성·계열 블록 n개 = `spawn make` ③ 체인 배율 덮어쓰기 = `chainMultipliers` ④ '장마 ≥1 이면 3체인만 치명·치명 피해 +, 쓰면 −1' = `blockPre chain [3] need stack atLeast 1 → blockCrit·blockCritDmg` + `block chain [3] when normal → consume 1`(테스트로 확인).
+- **처형 '소멸선'(두 종족 공용, 공화·나다의 대표 특성)**: 처형선 아래 평타 = 처형('처형!' 작은 글자, 런 로그 evo:처형!), 강적·보스는 그 아래 모든 피해 ×1.5. 허무형이 아닌 진화체가 가지면 5%·×1.3. 적 체력 막대에 세로선 두 개 = 평타선(흰 선 `--bha-text-1`) · 블록선(공허 색 `--bha-void`, execBlockLine). 처형 특수 블록(usable execBlock)은 블록선 아래 + 강적·보스 아님일 때만 켜짐(아니면 잠긴 모습).
+- **견본**: 사신 백련(특성 공속 +10% · 허 말고 저절로 안 생김 · 평타 4대 → 블록 1 · 바 블록 1개당 공속·평타 +3% · 만해 2대), 사신 노도(특성 치명 +6%p · 수 블록 → 5초 치명 +4%p ×5 스택마다 따로 · 평타 6회 → 「노도 연격」 평타 3회 즉시 +30% · 만해 8초·+6%p·치명 피해 +5%). 화면: 상태 화면 고유 능력·특수 블록·만해 줄, 전투 작은 글자(evo-proc)·스택 네모(GDD 7-13)·특수 블록 각인, 봇은 켜진 특수 블록을 바로 씀.
+- 판단(기획서 값 / 실제 값 / 이유):
+  - 노도 '치명 확률 +6%p' / 평타 치명만(블록 치명은 따로 blockCrit) / 니에블라가 '블록 치명'을 따로 적어 둘을 나눔. 고유 능력·특성 치명 + 는 상한도 같이 오름(45장 1번 치명 특성 규칙) — 주홍장 '상한 무시'가 저절로 맞음.
+  - 백련 '저절로 안 생김' / 생성 타이머 + 해방 순간 지급(3개) 둘 다 없음 / '평타가 블록을 만든다'는 몸이라. '바에 쌓인 블록 1개당' / 고정 특수 블록만 빼고 허 포함 전부.
+  - 노도 '평타 6회 적중' / 평타를 칠 때 셈, 연격 평타 3회는 안 셈 / 연격이 연격을 부르는 고리(실제 2배) 방지.
+  - 4단계 한 줄 특성 / 이번 패치 뒤 4단계 진화부터(이미 4단계인 세이브의 el4 는 그대로) / 세이브 형식을 올리지 않음(지시).
+  - 특수 블록 사용 / 해방 게이지 블록 1개분 / 콤보 블록과 같게. 원정 유지 스택 / `activeExpedition.evoCarry`(선택 칸, 형식 그대로) / 공화 '스택 원정 동안 유지'용.
+- 밸런스: `npm run balance:check` 회귀 가드 통과(전 워커, 145초) · 후반 보류(45-6) 경고는 기존 것 그대로(4단계 이후 이어하기·바퀴 곡선·물공 6속성·보스·등급전·탑, 실패 대신 경고). 보정 없음 — 데이터가 사신 백련·노도·허무형 특성뿐.
+- 검증: typecheck · npm test 343파일 3847건 통과(main·마스터 브랜치 합친 뒤) · build 통과.
+- 테스트: 새 `tests/c499.test.ts` 43개(데이터 검사·특성·처형·견본 2종·효과 종류마다·연우형 추가 장치·세이브·화면·봇) + c471 소스 문구 기준 1곳(`statusMarksOf(s, bf.id)`). 캡처 `docs/captures/c499/`(1배 PC 844×390, `scripts/c499-proof.cjs`): 01 백련 전투(블록 5 · 고유 능력 네모 +15 · '백련!') · 02 노도 전투(노도 3 스택 네모 · 「노도 연격」 블록 · '노도!') · 03 상태 화면 고유 능력·특수 블록·만해 줄 · 04 소멸선 처형선 두 개(8% 흰 선 · 20% 공허 색, 테스트 주입) + 처형 블록 켜짐 · proof.json.
+
+## C.500 — 진화체 '피해 없는 블록'(강화만) 장치 (GDD v6.134 8-7, S-23, 코딩312)
+사용 모델: Opus 5.5. 세이브 형식·BALANCE 그대로(147).
+- 근거: GDD v6.133 사용자 원칙(마스터AP 전달) — 진화체 블록 3종 ① 강화만(피해 없음) ② 피해 + 강화 ③ 피해만. 지금 고른 진화체엔 ①이 없어 장치·테스트만.
+- 장치: 규칙 `on blockPre` 의 효과 `noDamage` — 그 블록은 피해 0 · 치명 판정 없음 · 피해 숫자·'n 피해' 로그 없음(이름만), 같은 블록의 `block` 규칙 효과(버프·스택 등)는 그대로. 거르기(element·chain·kind 등)로 어떤 블록이 ①인지 고른다. 블록 사건에 `noDamage: true`.
+- C.499 dev-log 예시 이름 정정: '급류'(니에블라) → '장마'(사신 연우, t4:water:special) — 장치는 그대로.
+- 검증: typecheck · npm test(`tests/c499.test.ts` +1 = 44개) · balance:check 회귀 가드 통과 · build.
+
+## C.501 — 방 먹이 줄 = [종류] 버튼(특식 → 일반 → 보급) + 가로 넘김 한 줄 · 닫을 때 종류 기억 (GDD v6.135 4-4, S-23, 코딩316)
 사용 모델: Opus 5.5. 세이브·밸런스 변경 없음(종류 기억 = 기기 저장).
 - 사용자 원문(11-19): "먹이 누르면 모든 먹이종류 쫙뜨면 너무 지저분해...맨 왼쪽에 버튼엔 음식 종류버튼 만들고(특식, 일반 먹이, 보급 먹이) 그 왼쪽으로 그냥 버튼 행으로 나열. 드래그해서 옆으로 넘길 수 있게하고. … 음식 종류 버튼 누르면 다음 거 뜨는거임. 특식->일반->보급 이렇게. 먹이 탭 끌 때 떠있던 종류 기억해둿다가 다음 먹이탭 킬 때 그 종류로 뜨게하고"
 - 새 데이터 `src/data/foods/rows.json`(종류 순서·이름·먹이 배정·처음 종류 — 두 종족 공통, 코드 분기 없음) + `src/ui/bha/foodRows.ts`(다음 종류·기억 읽기/쓰기, 저장소 막혀도 처음 종류). 마스터 추천안대로 보급 = 싸구려 2종, 일반 = 일반 6종 + 첫 끼니, 특식 = 특식 6종, 처음 = 일반.
 - 독(`dock.ts`) 먹이 줄: 맨 왼쪽 [종류] 버튼(종류 이름 + 바꿈 아이콘, 펼친 줄 첫 칸 = 기기 초점 순서 맨 앞, 누르면 다음 종류·초점 그대로) + `.bha-homedock__foodrow` 가로 한 줄(`enableDragScrollX` 끌기·휠, 칸 폭 = 줄의 1/5.5 라 다음 칸이 반쯤 보임). 가진 것이 없는 종류도 순환에 넣고 '○○ 먹이가 없다' 한 줄. 기기 ▲▼ 하이라이트(`bha-select`)·키 초점이 줄 밖 칸으로 가면 보이게 밂(새 `revealInRow`, 캐릭터 카드 창도 같이 씀).
 - 먹인 뒤: 줄 그대로·같은 먹이 초점(옛 규칙) + 넘겨 둔 자리 그대로. 줄을 닫을 때(먹이 버튼·뒤로·다른 줄) 보던 종류를 `bha-food-kind` 에 기억 → 다음에 열면 그 종류.
 - 판단(기획서 값 / 실제 값 / 이유): 원문 '그 왼쪽으로' / 오른쪽 / 마스터 해석(종류 버튼이 맨 왼쪽). 튜토리얼 — 정해진 것 없음 / 첫 끼니를 가졌으면 기억과 상관없이 그 종류(일반)로 연다 / 기억이 특식·보급이면 안내가 짚는 칸(`data-food="tutorial"`)이 줄에 없어 막힘. 넘친 쪽 띠(edgeCue)는 칸이 가려 안 보여 대신 칸 폭 1/5.5.
-- 테스트: `tests/c498.test.ts` 에 C.499 묶음 5개(종류 순서·이름, 먹이마다 정확히 한 종류·유형과 일치(첫 끼니만 일반), 순환, 기억·막힌 저장소, 독 연결·튜토리얼 선택자). 기대값 바꾼 것: c411 "먹인 뒤 목록 유지·같은 먹이 초점"(지키던 결정 그대로 — 넘긴 자리 되살리는 줄이 사이에 들어가 문자열만 정규식으로). c208·c245·c279 그대로.
-- 캡처 `docs/captures/c499/`(1배, `scripts/c498-proof.cjs` 가 C.498 과 같이 찍음): 06 일반 · 07 특식 · 08 보급(PC = 없음, 폰 = 건빵) · 09 가로로 넘긴 상태 — PC 844×390·폰 796×384 터치. proof.json: 순환 일반 → 보급 → 특식 → 일반, [종류] 누른 뒤 하이라이트 = [종류], PC 휠 48px·폰 터치 끌기 44px, 먹인 뒤 같은 먹이 하이라이트·자리 그대로, 보급에서 닫고 다시 열면 보급(저장 'cheap'), 첫 끼니가 있으면 기억(보급)이어도 일반 줄 첫 칸 = 첫 끼니.
+- 테스트: `tests/c498.test.ts` 에 C.501 묶음 5개(종류 순서·이름, 먹이마다 정확히 한 종류·유형과 일치(첫 끼니만 일반), 순환, 기억·막힌 저장소, 독 연결·튜토리얼 선택자). 기대값 바꾼 것: c411 "먹인 뒤 목록 유지·같은 먹이 초점"(지키던 결정 그대로 — 넘긴 자리 되살리는 줄이 사이에 들어가 문자열만 정규식으로). c208·c245·c279 그대로.
+- 캡처 `docs/captures/c501/`(1배, `scripts/c498-proof.cjs` 가 C.498 과 같이 찍음): 06 일반 · 07 특식 · 08 보급(PC = 없음, 폰 = 건빵) · 09 가로로 넘긴 상태 — PC 844×390·폰 796×384 터치. proof.json: 순환 일반 → 보급 → 특식 → 일반, [종류] 누른 뒤 하이라이트 = [종류], PC 휠 48px·폰 터치 끌기 44px, 먹인 뒤 같은 먹이 하이라이트·자리 그대로, 보급에서 닫고 다시 열면 보급(저장 'cheap'), 첫 끼니가 있으면 기억(보급)이어도 일반 줄 첫 칸 = 첫 끼니.

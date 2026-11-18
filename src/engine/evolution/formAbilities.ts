@@ -9,6 +9,7 @@ import { abilityDescription, abilityName, abilityTextName, elementAbility, eleme
 import { pickFaction, STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import type { AbilityEffects, PhysBlock } from '../combat/combat';
 import { makeRoomForEvolution, trimDetached, usedAbilitySlots } from '../traitShop';
+import { evoFormEntry, evoTraitDef, evoTraitIsHome, evoTraitNums } from '../../data/evolution/uniques';
 
 const AB = BALANCE.provisional.abilities;
 const PB = BALANCE.provisional.physBlocks;
@@ -24,6 +25,8 @@ export interface FormAbilities {
   phys: { element: string; def: PhysElementDef } | null;
   /** 물공 특성 (그 블록과 짝인 특성): 진화체가 줄 때는 phys 의 속성, 장착 칸에서는 낀 것만 */
   physAbilities: string[];
+  /** 4단계 한 줄 특성 (GDD 8-7 1차, C.499 — uniques.json traits 키, id evo:<키>). home = 지금 진화체가 이 특성을 대표로 주는 진화체(처형 특성 센 값) */
+  evoTraits?: { key: string; home: boolean }[];
 }
 
 /** 특성 보유 (GDD 126-1 수정 → 147·148장, C.225): EvolutionState.abilities. 받으면 영구(빼기·바꿔 끼기 없음), 환생해도 그대로 넘긴다(slots 만 다시 센다) */
@@ -69,7 +72,10 @@ const elPrefix = (tier: number) => (tier >= 4 ? 'el4' : 'el');
  * 진화체가 주는 대표 특성 1개 (GDD 148장 1 → 149장, provisional — 진화체 초안이 오면 표로): kindSlots.ability(히든 통로·망한 진화체·실패형) → 전용 → 속성
  * (융합·허무형은 속성 여럿을 한 특성으로, 4단계는 el4). 성향 특성은 받지 않는다. 없으면 null
  */
-export function representativeAbility(form: FormDef): { id: string; scale: number } | null {
+export function representativeAbility(form: FormDef, factionId?: string): { id: string; scale: number } | null {
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.499): 진화체 × 종족 데이터에 특성이 있으면 그것이 4단계 대표 특성(el4:)을 대신한다
+  const evoTrait = factionId ? evoFormEntry(form.id, factionId)?.trait : undefined;
+  if (evoTrait && evoTraitDef(evoTrait)) return { id: `evo:${evoTrait}`, scale: 1 };
   const key = kindSlot(form.label.kind).ability?.[String(form.tier)];
   if (key) return { id: `uniq:${key}`, scale: 1 };
   const fa = formAbilitiesOf(form, zeroEv(), null);
@@ -136,7 +142,7 @@ function uniqueDef(id: string): ReturnType<typeof uniqueAbility> | null {
  *   가졌으면 그 자리에 들어가고 3단계 특성은 그냥 사라진다. 4단계 특성을 이미 가졌으면 사라질 것만 사라진다.
  * 칸이 꽉 차면 못 받는다(교체는 칸을 더 쓰지 않아 된다). prev 는 예전 인자(지금 규칙은 pending 만 본다)
  */
-export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, _prev?: FormDef): AbilityGain {
+export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, _prev?: FormDef, factionId?: string): AbilityGain {
   const AG = BALANCE.provisional.abilityGain;
   if (!AG.tiers.includes(form.tier)) return { kind: 'none' };
   const isThird = form.tier < Math.max(...AG.tiers);
@@ -147,7 +153,7 @@ export function gainEvolutionAbility(l: AbilityLoadout, form: FormDef, _prev?: F
   }
   const pend = l.pending !== undefined && l.pending in l.owned ? l.pending : undefined;
   if (l.pending !== undefined && pend === undefined) delete l.pending;
-  const got = representativeAbility(form);
+  const got = representativeAbility(form, factionId);
   if (!got) {
     if (!isThird && pend) {
       dropOwned(l, pend);
@@ -229,6 +235,7 @@ export function equippedAbilitiesOf(form: FormDef | null, l: AbilityLoadout): Fo
     else if (kind === 'el' || kind === 'el4') for (const element of key.split('+')) out.elements.push({ element, scale, ...(kind === 'el4' ? { tier4: true } : {}) });
     else if (kind === 'uniq') out.uniques.push(key);
     else if (kind === 'phys' && physElementOf(key)) out.physAbilities.push(key);
+    else if (kind === 'evo' && evoTraitDef(key)) (out.evoTraits ??= []).push({ key, home: evoTraitIsHome(form?.id, key) });
   }
   return out;
 }
@@ -303,6 +310,26 @@ export function abilityEffectsOf(fa: FormAbilities): { effects: AbilityEffects; 
       case 'mutation': fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + v.dealtBonus!, taken: (fx.mutation?.taken ?? 0) + v.takenReduction! }; break;
     }
   }
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.499): 효과 종류는 uniques.json, 수치는 balance evoUniques.traits
+  for (const { key, home } of fa.evoTraits ?? []) {
+    const def = evoTraitDef(key);
+    if (!def) continue;
+    const v = evoTraitNums(key);
+    switch (def.effect) {
+      case 'attackSpeed': fx.evoAttackSpeed = (fx.evoAttackSpeed ?? 0) + (v.value ?? 0); break;
+      case 'crit': fx.evoCrit = (fx.evoCrit ?? 0) + (v.value ?? 0); break;
+      case 'blockCrit': fx.evoBlockCrit = (fx.evoBlockCrit ?? 0) + (v.value ?? 0); break;
+      case 'chainPower': (fx.chainPower ??= []).push({ chain: def.chain ?? 3, bonus: v.value ?? 0 }); break;
+      case 'offenseMax': fx.offenseMax = true; break;
+      case 'execute': {
+        // 허무형(이 특성을 대표로 주는 진화체)이면 센 값, 다른 진화체가 가진 것(환생 뒤 영구)이면 약한 값 (GDD 8-8)
+        const line = home ? v.line ?? 0 : v.weakLine ?? 0;
+        const eliteMult = home ? v.eliteMult ?? 1 : v.weakEliteMult ?? 1;
+        if (!fx.execute || line > fx.execute.line) fx.execute = { line, eliteMult };
+        break;
+      }
+    }
+  }
   return { effects: fx, critChance };
 }
 
@@ -373,6 +400,12 @@ function effectSummary(fx: AbilityEffects, critChance: number): string {
   if (fx.current) parts.push(`일반 공격이 연속으로 맞을 때마다 +${pct(fx.current.per)} (최대 +${pct(fx.current.max)}, 맞으면 0)`);
   if (fx.charge) parts.push(`일반 공격 ${fx.charge}회마다 블록 1개`);
   if (fx.tempering) parts.push(`블록 1개 쓸 때마다 일반 공격 +${pct(fx.tempering.per)} (최대 +${pct(fx.tempering.max)})`);
+  if (fx.evoAttackSpeed) parts.push(`공격 속도 +${pct(fx.evoAttackSpeed)}`);
+  if (fx.evoCrit) parts.push(`일반 공격 치명 확률 +${pct(fx.evoCrit)}p`);
+  if (fx.evoBlockCrit) parts.push(`블록 치명 확률 +${pct(fx.evoBlockCrit)}p`);
+  for (const c of fx.chainPower ?? []) parts.push(`${c.chain}체인 블록 위력 +${pct(c.bonus)}`);
+  if (fx.offenseMax) parts.push('피해 계산 = 공격력·지능 중 높은 쪽');
+  if (fx.execute) parts.push(`적 체력 ${pct(fx.execute.line)} 이하에서 일반 공격 = 처형 · 강적·보스는 그 아래에서 피해 ×${fx.execute.eliteMult}`);
   return parts.join(' · ');
 }
 
@@ -396,6 +429,13 @@ export function abilityLines(fa: FormAbilities, factionId: string): AbilityLine[
   if (fa.elements.length > 0) {
     const { effects, critChance } = abilityEffectsOf({ ...none, elements: fa.elements });
     lines.push({ slot: '속성', name: fa.elements.map((x) => elementAbilityName(x.element, factionId, x.tier4)).join('·'), description: effectSummary(effects, critChance) });
+  }
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.499): 전용 칸 줄로
+  for (const t of fa.evoTraits ?? []) {
+    const def = evoTraitDef(t.key);
+    if (!def) continue;
+    const { effects } = abilityEffectsOf({ ...none, evoTraits: [t] });
+    lines.push({ slot: '전용', name: pickFaction(def.name, factionId), description: effectSummary(effects, 0) });
   }
   // 물공 칸 (GDD 49장): 특성 이름 — 특성 효과 · 블록 「이름」: 블록 효과 (블록은 몸에 붙어 있을 때만)
   for (const element of fa.physAbilities) {

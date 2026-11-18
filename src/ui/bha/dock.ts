@@ -1,6 +1,6 @@
 // 홈 하단 독 (GDD 18-2, 18-9 · 14-3 v6.004): 돌보기 3개(먹이·재우기·교감, 효과 있는 버튼) + [소모품] 빠른 사용 + [더보기 ⋯] 하나. 메뉴는 전부 더보기 안 아이콘+이름 격자.
 // 먹이·더보기를 누르면 독 바로 위에 칸이 펼쳐진다(장면 위에 겹침, 장면 크기는 그대로). 먹이 종류를 하나 고르면 바로 먹는다.
-// 먹이 줄 = 맨 왼쪽 [종류](특식 → 일반 → 보급, 데이터 rows.json) + 그 종류 먹이 가로 한 줄 (GDD 4-4 v6.130, C.499).
+// 먹이 줄 = 맨 왼쪽 [종류](특식 → 일반 → 보급, 데이터 rows.json) + 그 종류 먹이 가로 한 줄 (GDD 4-4 v6.130, C.501).
 // 먹이는 개수제(GDD 23-1): 칸마다 보유 개수, 0개는 비활성.
 import { FOOD_IDS, NEST_ACTIONS, type FactionConfig, type FoodId, type NestAction } from '../../engine/faction';
 import { foodEffectList, type FoodFx } from '../../engine/nest';
@@ -173,7 +173,7 @@ export function createDock(o: DockOpts): Dock {
   root.append(tray, bar);
 
   let trayBtns: HTMLElement[] = [];
-  // 먹이 줄 종류 (GDD 4-4 v6.130, C.499): 열 때 = 기억한 종류(기기 저장), 닫을 때 기억. 튜토리얼 안내 먹이를 가졌으면 그 종류로 연다(안내가 그 칸을 짚는다)
+  // 먹이 줄 종류 (GDD 4-4 v6.130, C.501): 열 때 = 기억한 종류(기기 저장), 닫을 때 기억. 튜토리얼 안내 먹이를 가졌으면 그 종류로 연다(안내가 그 칸을 짚는다)
   let foodKind = loadFoodKind();
   const guideFood = BALANCE.provisional.tutorialRecover.food;
   function fillTray(): void {
@@ -184,7 +184,7 @@ export function createDock(o: DockOpts): Dock {
     if (panel === 'food') {
       tray.setAttribute('aria-label', `${faction.nestActionsShort?.feed ?? faction.nestActions.feed} 고르기`);
       tray.dataset.scList = '';
-      // 먹이 줄 (GDD 4-4 v6.130, C.499): 맨 왼쪽 [종류] 버튼(누르면 다음 종류 — 데이터 순서로 돈다) + 그 종류의 가진 먹이 한 줄(가로로 끌어·휠로 넘김).
+      // 먹이 줄 (GDD 4-4 v6.130, C.501): 맨 왼쪽 [종류] 버튼(누르면 다음 종류 — 데이터 순서로 돈다) + 그 종류의 가진 먹이 한 줄(가로로 끌어·휠로 넘김).
       // 가진 것만 칸으로, 그 종류에 하나도 없으면 '없다' 한 줄 (종류는 순환에 그대로)
       const kind = foodKindOf(foodKind);
       const kindBtn = el('button', 'bha-homedock__foodkind');

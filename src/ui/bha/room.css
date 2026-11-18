@@ -83,7 +83,7 @@
 .bha-homedock__food .bha-num { color: var(--bha-hunger); font-weight: 400; }
 /* 먹이 줄 (GDD 189장 17): 카드 한 줄 + 아래 줄 임시 배지(오른쪽 끝) — 카드 위로 튀어나오지 않는다. 이름·설명 한 줄(말줄임 없이 들어가게 설명은 수치 하나) */
 .bha-homedock__tray--food { flex-wrap: wrap; }
-/* 먹이 줄 (GDD 4-4 v6.130, C.499 — 옛 '한 줄 6칸·넘으면 다음 줄' 대체): 맨 왼쪽 [종류] 고정 + 그 종류 먹이 가로 한 줄(끌기·휠로 넘김, 칸 폭 = 줄의 1/5.5) */
+/* 먹이 줄 (GDD 4-4 v6.130, C.501 — 옛 '한 줄 6칸·넘으면 다음 줄' 대체): 맨 왼쪽 [종류] 고정 + 그 종류 먹이 가로 한 줄(끌기·휠로 넘김, 칸 폭 = 줄의 1/5.5) */
 .bha-homedock__foodkind {
   flex: none; min-width: 64px; min-height: var(--bha-touch); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--bha-sp-1);
   padding: var(--bha-sp-2) var(--bha-sp-3); border: 0; border-radius: var(--bha-r-sm); background: var(--bha-bg-3);

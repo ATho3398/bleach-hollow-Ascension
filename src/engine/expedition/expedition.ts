@@ -8,7 +8,7 @@ import { DEFAULT_GROUND_ID, getGround, isGroundId } from '../../data/grounds';
 import { enemyPool, gateSpecialEnemies, pickFromPool, specialEnemyGate } from '../enemyPool';
 import { STAT_IDS, type EnemyDef, type EnvironmentPreset, type StatId } from '../../data/schema';
 import { deckTilesFor, getTile } from '../../data/tiles';
-import { buildBattleRecord, createCombat, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../combat';
+import { buildBattleRecord, createCombat, evoCarryOut, liberationStartGaugeOf, newCombatScript, type CombatParams, type CombatState } from '../combat';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { rollTrainingTicket } from '../training/training';
 import { getTrait } from '../../data/traits';
@@ -359,6 +359,8 @@ export interface ExpeditionState extends RiskState {
   lapItems?: LapItemUse[];
   /** 수련 게이지 (GDD 12-4 v6.069 이치고 무월수련, C.454): 게이지 소모형 kit 트랙에서 리스크(호로화)가 0 일 때 차는 값 — 전투가 끝나면 이어지고, 보스전 시작·최후의 월아천충 때 0. 옛 중간 저장엔 없음(= 0) */
   kitMastery?: number;
+  /** 진화체 고유 능력의 원정 동안 잇는 스택 (GDD 8-7 1차, C.499 — 스택 정의 carry): 스택 이름 → 값. 전투가 끝나면 끝 값을 다음 전투 시작 값으로. 옛 중간 저장엔 없음(= 0) */
+  evoCarry?: Record<string, number>;
   /** 이번 원정에 쓴 출정품 (GDD 241-D 5, 세이브 형식 74): 출발 때 칸마다 1개 소모한 품목 id. 효과 = sortieMods (공격 피해·받는 피해·드롭). 런 로그 원정 기록 sortie 로 간다. 옛 중간 저장에는 없다(= 없음) */
   sortie?: string[];
   /** 이 원정에서 나온 출정품 (GDD 241-D 5): 귀환 때 game.ts 가 가방에 (가득이면 버림) */
@@ -857,6 +859,11 @@ function startBattleAt(
   // 장착한 특성(skill → 스킬 블록, passive → 자동 배율)이 전투 파라미터가 된다. 환경 타일 효과는 그 위에 더하거나 곱한다
   const params: Partial<CombatParams> = { ...buildCombatParams(exp.build, exp.factionId), voidChanceBonus: riskBonus(exp), liberationStartGauge: liberationStartGaugeOf(), liberationEnabled: exp.liberationEnabled !== false };
   applyEvolutionToParams(params, exp.evolution, exp.factionId, exp.statBonus ?? 0, exp.liberationTrained === true);
+  // 진화체 고유 능력 (GDD 8-7 1차, C.499): 원정 동안 잇는 스택(carry) 시작 값 · 호로화(리스크) 게이지 비례 효과의 기준 = 지금 원정 리스크
+  if (params.evo) {
+    params.evo = { ...params.evo, carry: { ...(exp.evoCarry ?? {}) } };
+    params.riskStart ??= exp.risk;
+  }
   // 게이지 모드 해방 (GDD 12-4 v6.054 붕옥 감응도 = 리스크 그 자체): 전투는 지금 원정 리스크로 시작한다
   if (params.kit?.riskRelease) params.riskStart = exp.risk;
   // 게이지 소모형 (GDD 12-4 v6.069 이치고 호로화): 보스전 시작 때 호로화 가득 · 무월수련 0, 아니면 원정 값 그대로 이어서
@@ -1044,6 +1051,9 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.riskPeak = Math.max(exp.riskPeak, exp.risk);
     exp.kitMastery = battle.kit.mastery;
   }
+  // 진화체 고유 능력 원정 스택 (GDD 8-7 1차, C.499): 끝 값을 다음 전투로
+  const carry = evoCarryOut(battle);
+  if (carry) exp.evoCarry = carry;
   if (battle.status === 'lost') {
     exp.hpFraction = 0;
     endExpedition(exp, 'defeated', 'battle-lost');

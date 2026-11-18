@@ -2,6 +2,7 @@
 import { canAbsorb } from '../absorb/offer';
 import { emptyLegacyMatches, type BattleRecord } from '../runLog';
 import { elapsedSeconds, liberationUsedAt, zeroElementDamage, type CombatState } from './combat';
+import { evoProcsOf } from './evoUnique';
 
 export interface BattleContext {
   factionId: string;
@@ -49,7 +50,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     liberationChains: s.liberation.chains,
     crits: s.crits ?? 0,
     enemyCrits: s.enemyCrits ?? 0,
-    abilityProcs: { ...s.abilityProcs },
+    abilityProcs: { ...s.abilityProcs, ...evoProcsOf(s) }, // 진화체 고유 능력 발동 = evo:<글자> (GDD 8-7 1차, C.499)
     elementDamage: { ...zeroElementDamage(), ...s.params.elementDamage },
     startHp: Math.round(Math.min(1, Math.max(0, s.params.playerStartHpFraction)) * 1000) / 1000,
     itemUsed: s.itemUsed,

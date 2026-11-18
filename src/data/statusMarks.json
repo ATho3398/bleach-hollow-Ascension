@@ -15,6 +15,8 @@
     "haste": { "on": "self", "icon": "i-speed", "name": "평타 빨라짐" },
     "selfDot": { "on": "self", "icon": "i-weak", "name": "지속 피해" },
     "foeDot": { "on": "foe", "icon": "i-weak", "name": "지속 피해" },
-    "knockback": { "on": "foe", "icon": "i-pause", "name": "넉백 — 행동 못 함" }
+    "knockback": { "on": "foe", "icon": "i-pause", "name": "넉백 — 행동 못 함" },
+    "evoSelf": { "on": "self", "icon": "i-special", "name": "고유 능력" },
+    "evoFoe": { "on": "foe", "icon": "i-weak", "name": "고유 능력" }
   }
 }

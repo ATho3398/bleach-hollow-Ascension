@@ -132,7 +132,7 @@ export function enableDragScrollX(root: HTMLElement, signal?: AbortSignal): void
   }, { passive: false, signal });
 }
 
-/** 가로 줄 안 칸이 다 보이게 가로 스크롤만 민다 (C.499 — 기기 안 좌표라 세로 폰 90° 돌림에도 맞음. scrollIntoView 는 기기 틀까지 밀 수 있어 쓰지 않는다) */
+/** 가로 줄 안 칸이 다 보이게 가로 스크롤만 민다 (C.501 — 기기 안 좌표라 세로 폰 90° 돌림에도 맞음. scrollIntoView 는 기기 틀까지 밀 수 있어 쓰지 않는다) */
 export function revealInRow(row: HTMLElement, item: HTMLElement): void {
   const r = elementLocalRect(item);
   const box = elementLocalRect(row);

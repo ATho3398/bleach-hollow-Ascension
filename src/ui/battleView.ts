@@ -22,7 +22,9 @@ import {
   stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
   statusMarksOf,
   blockMotionTarget,
+  evoSpecialOf, evoSpecialUsable, evoExecLinesOf,
 } from '../engine/combat';
+import { evoText } from '../data/evolution/uniques';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -152,6 +154,9 @@ export function blockName(b: Block, labels: BattleLabels, factionId: string, p: 
   // 초월자 전용 블록 (GDD 12-4 v6.048): 데이터의 블록 이름 (경화수월·귀도·프라고르)
   const kb = kitBlockOf(p, b.traitId);
   if (kb) return kb.name;
+  // 진화체 특수 블록 (GDD 8-7 1차, C.499): 데이터 이름 (노도 연격 등)
+  const es = evoSpecialOf(p, b.traitId);
+  if (es) return evoText(es.name, factionId);
   const src = sourceOf(p, b.traitId);
   // 물공 특수 블록 (GDD 49장): 기본 공격 블록이 물공 블록인 몸은 표의 이름(종족별 데이터)
   if (p.physBlock && isBasicBlockId(src?.id) && src?.role === 'attack') return physBlockName(p.physBlock.element, factionId) ?? labels.skillBlock;
@@ -204,6 +209,8 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
         : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
+      // 피해 없는 진화체 블록 (GDD v6.133, C.499): 이름만
+      if (e.noDamage) return { role: e.chain > 1 ? 'chain' : 'attack', icon: e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: `${name}!` };
       const parts = [`${name}! ${n(e.damage)} 피해${elemText(e.elem, factionId)}${e.crit ? ' (치명!)' : ''}${e.matchup === 'strong' ? ` (${labels.matchupText.strong})` : e.matchup === 'weak' ? ` (${labels.matchupText.weak})` : ''}`];
       if (e.heal > 0) parts.push(`${labels.role.heal} +${n(e.heal)}`);
       if (e.guardSeconds > 0) {
@@ -282,6 +289,9 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
     case 'ability':
       // 진화체 특성 발동 (C.89, GDD 39장 5번)
       return { role: 'chain', icon: 'i-rare', text: `${abilityProcText(e.effect, factionId)}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
+    case 'evo-proc':
+      // 진화체 고유 능력 발동 (GDD 8-7 1차, C.499): 데이터 글자
+      return { role: 'chain', icon: 'i-special', text: `${e.text}${e.damage > 0 ? ` ${n(e.damage)} 피해` : ''}` };
     case 'liberate':
       if (e.endless) return { role: 'chain', icon: 'i-special', text: e.name ?? labels.liberation.name };
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.cutin} ${e.seconds}초 동안 블록이 빠르게 나온다${e.unique ? ' · 공격 속도·체인 속도 ↑' : ''}` };
@@ -463,6 +473,25 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   hero.root.dataset.help = 'battle.hero'; // 각본 전투 '일반 공격은 자동' 카드 대상 (GDD 224장 1)
   setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
   setHpBar(playerHp, s.player.hp, s.player.maxHp);
+  // 처형선 (GDD 8-8, C.499 — 사용자 "블록용 처형 선은 다른 색으로"): 적 체력 막대 위 세로선 두 개 — 평타선(처형 특성)·블록선(처형 특수 블록)
+  const execLines = { basic: el('span', 'bha-execline'), block: el('span', 'bha-execline bha-execline--block') };
+  execLines.basic.hidden = true;
+  execLines.block.hidden = true;
+  enemyHp.gauge.append(execLines.basic, execLines.block);
+  let execShown = '';
+  const drawExecLines = (): void => {
+    const L = s.evo || s.params.abilityEffects.execute ? evoExecLinesOf(s) : { basic: 0, block: 0 };
+    const key = `${L.basic}|${L.block}`;
+    if (key === execShown) return;
+    execShown = key;
+    for (const k of ['basic', 'block'] as const) {
+      const node = execLines[k];
+      node.hidden = !(L[k] > 0);
+      node.style.left = `${Math.round(L[k] * 1000) / 10}%`;
+      node.title = `${k === 'basic' ? '처형선(일반 공격)' : '처형선(블록)'} ${Math.round(L[k] * 1000) / 10}%`;
+    }
+  };
+  drawExecLines();
   // 스택 네모 줄 (GDD 7-13, C.471): 체력 막대 바로 위 — 내 것 = 내 막대, 적에게 건 것 = 적 막대
   const meMarks = statusMarkRow('self');
   const foeMarks = statusMarkRow('foe');
@@ -1189,6 +1218,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       spawnFloat('guard', secondsText(e.guardSeconds), { iconId: 'i-guard' });
     } else if (e.block === 'skill' && e.role === 'heal') {
       spawnFloat('heal', n0(e.heal));
+    } else if (e.noDamage) {
+      // 피해 없는 진화체 블록 (GDD v6.133, C.499): 피해 숫자 없음
     } else {
       const ult = e.block === 'combo' || e.block === 'liberation';
       spawnFloat('attack', `−${n0(e.damage)}`, { weak: e.matchup === 'strong', chained: e.chain > 1, size: damageTier(e.damage, myUnit, { chain: e.chain, ult }), critical: !!e.crit, element: e.element });
@@ -1345,6 +1376,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         spawnFloat('chain', abilityProcText(e.effect, bf.id), { chain3: e.effect !== 'chainHaste' });
         if (e.effect === 'thorns') spawnFloat('attack', `−${n0(e.damage)}`, { size: 'big' });
         break;
+      case 'evo-proc':
+        // 진화체 고유 능력 발동 작은 글자 (GDD 8-7 1차, C.499): 백련! / 노도! / 처형! — 추가 피해가 있으면 숫자도
+        spawnFloat('chain', e.text);
+        if (e.damage > 0) spawnFloat('attack', `−${n0(e.damage)}`);
+        break;
       case 'combo':
         spawnFloat('chain', `콤보! ${comboName(e.comboId, bf.id)}`, { chain3: true });
         flash('is-special', 600);
@@ -1436,6 +1472,9 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (visual === 'void') return v2BlockEl({ kind: 'void', path: V2_PATH.void, glyph: V2_GLYPH.void, label, uid: b.uid, weak });
     if (b.kind === 'liberation') return v2BlockEl({ kind: 'release', path: V2_PATH.release, glyph: V2_GLYPH.release, label, uid: b.uid, weak });
     if (b.kind === 'combo') return v2BlockEl({ kind: 'combo', path: V2_PATH.combo, glyph: V2_GLYPH.combo, label, uid: b.uid, weak });
+    // 진화체 특수 블록 (GDD 8-7 1차, C.499): 해방 각인 + 데이터의 한 글자 (처형 블록 = 허 각인)
+    const es = evoSpecialOf(s.params, b.traitId);
+    if (es) return v2BlockEl({ kind: es.usable === 'execBlock' ? 'void' : 'release', path: es.usable === 'execBlock' ? V2_PATH.void : V2_PATH.release, glyph: es.short, label, uid: b.uid, weak: false });
     // 초월자 전용 블록 (GDD 12-4 v6.048): 반격·해방 블록(경화수월·프라고르) = 해방 각인, 그 밖(귀도) = 콤보 각인 + 데이터의 한 글자
     const kb = kitBlockOf(s.params, b.traitId);
     if (kb) {
@@ -1529,7 +1568,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       node.classList.toggle('is-cue', casting && node.dataset.kind === 'guard');
       // 보스 기믹 칸 봉인 (GDD 25-3): 글자가 '봉'으로 바뀌고 회색, 누를 수 없다
       // 막기·공허 경직 중(공격 불가)에는 블록을 쓸 수 없다 (GDD 105장 1번): 같은 잠금 표시
-      const locked = (b.sealTicks ?? 0) > 0 || combatHalted(s);
+      // 진화체 특수 블록이 지금 꺼져 있으면(처형 블록 = 블록 처형선 위·강적·보스, GDD 8-8) 잠긴 모습 (C.499)
+      const locked = (b.sealTicks ?? 0) > 0 || combatHalted(s) || (!!evoSpecialOf(p, b.traitId) && !evoSpecialUsable(s, b));
       setV2Locked(node, locked);
       node.setAttribute('aria-disabled', String(locked));
       cell.toggleAttribute('data-dev-off', locked);
@@ -1541,7 +1581,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (drawUid !== null) node.classList.toggle('is-pressed', b.uid === drawUid);
     });
     seeded = true;
-    marks.update(statusMarksOf(s)); // 스택 네모 (C.471)
+    marks.update(statusMarksOf(s, bf.id)); // 스택 네모 (C.471) · 진화체 고유 능력 (C.499)
+    drawExecLines(); // 처형선 (C.499): 스택으로 블록선이 오를 때도
     // 자세 모드 (C.460): [자세] 대기 (스택·상태는 체력 막대 위 네모, C.471)
     if (stanceKit && s.kit && stanceBtn) {
       const wait = stanceSwitchWaitOf(s);
@@ -1600,6 +1641,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (meterCache.enemy !== eRatio) {
       meterCache.enemy = eRatio;
       setHpBar(enemyHp, s.enemy.hp, s.enemy.maxHp);
+      drawExecLines();
       if (riskChipValue && !riskRel) {
         const rv = String(Math.round((opts.risk ?? 0) + s.riskGained));
         if (riskChipValue.textContent !== rv) riskChipValue.textContent = rv;
