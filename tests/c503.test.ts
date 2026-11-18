@@ -130,7 +130,7 @@ describe('라나 (물·조) — 물 스택', () => {
 describe('소로 (불·조) — 여우불·화상', () => {
   const n = N('t4:fire:physical');
   const F: Partial<CombatParams> = { playerElements: ['fire'], playerAttackSeconds: 0.25 };
-  it('평타마다 여우불 1(2초) → 5개 이상일 때 불 블록 = 적 화상(6초, 걸린 적이 받는 피해 +10%)', () => {
+  it('평타마다 여우불 1(2.5초 — C.507) → 5개 이상일 때 불 블록 = 적 화상(6초, 걸린 적이 받는 피해 +10%)', () => {
     const s = mk({ ...F, evo: evo('t4:fire:physical') });
     basics(s, 6);
     expect(s.evo!.stacks.fox!.n).toBeGreaterThanOrEqual(n.need!);
@@ -141,8 +141,8 @@ describe('소로 (불·조) — 여우불·화상', () => {
     tick(s, ticksOf(s.params, n.burnSeconds! + 0.1));
     expect(evoStat(s, 'dealt')).toBe(0);
   });
-  it('여우불이 5개 미만이면 화상 없음 · 여우불은 2초 뒤 하나씩 사라짐', () => {
-    const s = mk({ playerElements: ['fire'], evo: evo('t4:fire:physical') }); // 평타 1초 간격 → 2개 남짓
+  it('여우불이 5개 미만이면 화상 없음 · 여우불은 2.5초 뒤 하나씩 사라짐', () => {
+    const s = mk({ playerElements: ['fire'], evo: evo('t4:fire:physical') }); // 평타 1초 간격 → 2~3개
     basics(s, 4);
     expect(s.evo!.stacks.fox!.n).toBeLessThan(n.need!);
     expect(procOf(useChain(s, 1).evs, '화상!')).toBe(false);
