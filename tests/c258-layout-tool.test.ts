@@ -460,3 +460,16 @@ describe('C.432 새 방 만들기', () => {
     for (const s of ["label: '새 방'", "label: '이름 바꾸기'", "label: '복제'", "label: '방 삭제'", "setAttribute('aria-label', '보기 종족')", "setAttribute('aria-label', '배경 그림')", 'b.dataset.roomProp = p;']) expect(tool).toContain(s);
   });
 });
+
+// C.496: 새 방 배경을 방 목록의 방 배경(이치고의 방)으로 고르면 그 방 바닥
+describe('C.496 새 방 바닥 = 방 목록 방 바닥', () => {
+  it('scene.room-ichigo 를 고른 새 방 = 이치고의 방 바닥', async () => {
+    const { addRoom, customSceneId } = await import('../src/ui/bha/layoutDraft');
+    const d = emptyDraft();
+    const k = addRoom(d, '연습', 'hollow', 'scene.room-ichigo');
+    const def = layoutScenes(FACTIONS, d).find((s) => s.id === customSceneId(k))!;
+    const f = clone().find((x) => x.id === 'hollow')!;
+    applySceneEdit(def, f, undefined);
+    expect(roomOf(f).floor).toEqual(ROOMS.find((r) => r.id === 'transcendent-ichigo')!.floor);
+  });
+});
