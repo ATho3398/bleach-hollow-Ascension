@@ -1,4 +1,4 @@
-// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 제비나비 실루엣(긴 앞날개·꼬리 달린 뒷날개)·회색빛 검정·자주색 띠로 바꿈.
+// 지옥나비 (블리치 할로우 어센션 커스텀): pixelfx critters/butterfly(MIT) 를 제비나비 실루엣(긴 앞날개·꼬리 달린 뒷날개)·새까만 날개·흰 날개맥·자주색 띠로 바꿈(2026-11-18 "명암만 빼. 검은 부분 싹다 시커매도 돼 … 날개 내부 선을 흰색으로").
 // 사용자 2026-11-18 "그 나비 블리치의 지옥나비처럼 검정으로" · "제비나비 계열 … 실루엣 변경" · 무늬 참고 그림 2장. 게임에는 아직 안 붙임(색·모양 시안).
 import { fit, mix, clamp, wrap, lerp, cycle, sparkle, TAU } from "../../core/index.js";
 import { Grid, shift } from "../critters/_lib.js";
@@ -14,7 +14,7 @@ export const meta = {
   fps: 30,
   bg: "sky",
   options: {
-    palette: ["#000000", "#16151b", "#2a2930", "#3b3a43", "#4a4954", "#6a6876", "#e8e4ec"],
+    palette: ["#000000", "#000000", "#000000", "#000000", "#000000", "#6a6876", "#f4f0f4"],
     spots: ["#3a0828", "#9a1860", "#d8308a", "#ffc0e0"],
     seed: 1,
   },
@@ -75,16 +75,15 @@ function wingColor(C, Sp, hind, u, v) {
   const pts = hind ? HIND : FORE, e = edgeDist(pts, u, v), r = Math.hypot(u, v), ang = Math.atan2(v, u);
   if (e < 1) return C[0];
   if (!hind) {
-    // charcoal wing, dark veins fanning from the root, a darker cell near the body
-    if (r > 5 && Math.abs(Math.sin(ang * 11 + 0.4)) > 0.93) return C[1];
-    if (r < 4.5) return C[2];
-    return e < 2 && r > 12 ? C[2] : C[3];
+    // flat black, white veins fanning from the root
+    if (r > 5 && e > 1.6 && Math.abs(Math.sin(ang * 11 + 0.4)) > 0.93) return C[6];
+    return C[0];
   }
-  if (v > 13.6) return C[1]; // the tail
-  // a magenta band scalloped along the outer margin
+  if (v > 13.6) return C[0]; // the tail
+  // a magenta band along the outer margin
   if (e < 2.8 && r > 8.5 && v > 3.5 && u > 6.5) return e < 1.9 ? Sp[2] : Sp[1];
-  for (const va of [0.5, 1.0, 1.45]) if (Math.abs(ang - va) * r < 0.45 && r > 3.5) return C[1];
-  return r < 5 ? C[2] : C[3];
+  for (const va of [0.5, 1.0, 1.45]) if (Math.abs(ang - va) * r < 0.45 && r > 3.5 && e > 1.6) return C[6];
+  return C[0];
 }
 
 function butterfly(g, C, Sp, w, t) {
@@ -129,7 +128,4 @@ export function draw(p, time, o) {
   const g = GRID;
   butterfly(g, C, Sp, w, t);
   g.draw(p, 1, S.x, S.y);
-  // the wings shine: a soft blue light round it, brighter when they open
-  p.glow(S.x, S.y, 38, C[4], 0.16 + 0.14 * w);
-  p.glow(S.x, S.y, 12, C[5], 0.12 + 0.1 * w);
 }
