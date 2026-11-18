@@ -156,3 +156,12 @@ describe('C.502 캐릭터 카드 초월자 그림', () => {
     expect(TRANSCENDENTS.some((d) => !d.art && !d.model)).toBe(true); // 그림 없는 초월자가 아직 있다 (유하바하 등) — 그 카드는 자리 표시
   });
 });
+
+describe('C.503 이치고 카드 = 입은 초월자 모델의 진짜 그림', () => {
+  it('입은 인간형 스킨·초월자 외형 그림 키가 실제로 풀리면(종이인형 = 그 인형) 방과 같은 그림, 자리 표시로 떨어지면 transcendentArt', () => {
+    const picker = read('src/ui/characterPicker.ts');
+    expect(picker).toContain('if (wornLookIsReal(t)) return trackArt(t);');
+    expect(picker).toContain('transcendentSkinOfLook(t.skin)?.skin.art ?? transcendentOfLook(t.skin)?.art');
+    expect(picker).toContain('if (rig) return art.rig?.look === rig && !!art.src;');
+  });
+});

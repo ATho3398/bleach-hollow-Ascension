@@ -6,12 +6,16 @@
 import { BALANCE } from '../config/balance';
 import { FACTIONS, getFaction } from '../data/factions';
 import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
-import { allTracks, characterTracks, noEvolutionLabel, trackIdOf, trackNameOf, trackRulesOf, type SaveData, type TrackKey } from '../game';
+import { ART_MANIFEST } from '../data/art/manifest';
+import { transcendentOfLook, transcendentSkinOfLook } from '../data/skins';
+import { roomOf } from '../engine/faction';
+import { allTracks, artSkinOf, artTierIndexOf, characterTracks, noEvolutionLabel, trackIdOf, trackNameOf, trackRulesOf, type SaveData, type TrackKey } from '../game';
 import { button, el, icon } from './bha/dom';
 import { dexCard } from './bha/dexGrid';
 import { edgeCue, enableDragScrollX, revealInRow } from './bha/dragScroll';
 import { trapModalFocus } from './bha/modalFocus';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
+import { heroArtOf } from './bha/battle';
 import { trackArt, transcendentArt } from './hogyokuView';
 
 type Track = Pick<SaveData, TrackKey>;
@@ -167,9 +171,22 @@ function lockArt(): HTMLElement {
   return box;
 }
 
-/** 카드 그림 (C.502 마스터 확인): 캐릭터 = 지금 진화 외형·스킨(합체 창과 같은 trackArt).
- *  초월자 = 그 초월자의 진짜 그림(데이터 art·조각 모델)만 — 없으면 자리 표시 아이콘. 진화체 그림을 빌려 보이지 않는다(초월자 도감 transcendentArt 와 같은 규칙) */
+/** 카드 그림 (C.502·C.503 마스터 확인): 캐릭터 = 지금 진화 외형·스킨(합체 창과 같은 trackArt).
+ *  초월자 = 그 초월자 자기 그림만 — 지금 입은 초월자 모델(인간형 스킨·초월자 외형, 예 이치고 천년혈전 '혈쇄' 종이인형 = 방과 같은 정지 그림)에 진짜 그림이 있으면 그것,
+ *  아니면 데이터 art·조각 모델(transcendentArt), 그것도 없으면 자리 표시 아이콘. 진화체 그림을 빌려 보이지 않는다 */
 function cardArt(t: Track): HTMLElement {
   if (!t.transcendentId) return trackArt(t);
+  if (wornLookIsReal(t)) return trackArt(t);
   return transcendentArt(true, tryGetTranscendent(t.transcendentId));
+}
+
+/** 지금 입은 초월자 모델의 그림 키(인간형 스킨 art · 초월자 외형 art)가 실제로 그 그림으로 풀리나 — 종이인형이면 그 인형, 아니면 그 키의 파일.
+ *  자리 표시(placeholder 인형·진화체 그림)로 떨어졌으면 false */
+function wornLookIsReal(t: Track): boolean {
+  const key = transcendentSkinOfLook(t.skin)?.skin.art ?? transcendentOfLook(t.skin)?.art ?? null;
+  if (!key) return false;
+  const art = heroArtOf(roomOf(getFaction(t.factionId)), t.factionId, artTierIndexOf(t), artSkinOf(t));
+  const rig = ART_MANIFEST[key]?.rig;
+  if (rig) return art.rig?.look === rig && !!art.src;
+  return !!art.src && art.src.includes(key.replace(/\./g, '-'));
 }
