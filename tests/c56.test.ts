@@ -176,35 +176,37 @@ describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 
     for (const el of ['blood', 'poison', 'kyo', 'blood', 'poison', 'kyo']) { e.absorbs++; e.elementAbsorbs[el] = (e.elementAbsorbs[el] ?? 0) + 1; }
     return e;
   };
-  it('데이터: 4단계 히든 각성형(혼합)·허무형(혼합) 하나씩', () => {
+  it('데이터: 4단계 히든 각성형(혼합)·허무형 하나씩', () => {
     const f = getForm('h4:awakened');
     expect([f.tier, f.hidden, f.label.kind, f.elements, f.label.category]).toEqual([4, true, 'awakened', undefined, 'mixed']);
     expect(formName(f, 'hollow', ['fire'])).toBe('아르바'); // 220장 3: 레스렉시온 이름
     expect(formName(getForm('h4:void'), 'shinigami')).toBe('공화'); // 참백도 이름
   });
-  it('허무형은 환생 1회 이상일 때만 후보 (혈·독·허 각 20%↑)', () => {
-    expect(evolutionCandidates(t3(), ctxOf(0)).hidden.map((c) => c.formId)).not.toContain('h4:void');
-    expect(evolutionCandidates(t3(), ctxOf(1)).hidden.map((c) => c.formId)).toContain('h4:void');
+  // C.497 (GDD 8-8 v6.120): 허무형 = 그 단계 미루기 0회 + 빈사로 귀환 (옛 '혈·독·허 각 20% + 환생 1회' 폐기 — 환생 무관)
+  it('허무형은 빈사로 귀환했을 때만 후보 — 환생 횟수와 무관', () => {
+    expect(evolutionCandidates(t3(), ctxOf(1)).hidden.map((c) => c.formId)).not.toContain('h4:void');
+    expect(evolutionCandidates(t3(), { ...ctxOf(0), collapsed: true }).hidden.map((c) => c.formId)).toContain('h4:void');
     // 3단계 진화에는 나오지 않는다 (통로 없이 직접)
     const e2 = t3();
     e2.tierIndex = 1;
-    expect(evolutionCandidates(e2, ctxOf(9)).hidden.map((c) => c.formId)).not.toContain('h4:void');
+    expect(evolutionCandidates(e2, { ...ctxOf(9), collapsed: true }).hidden.map((c) => c.formId)).not.toContain('h4:void');
   });
   it('조건을 채운 히든이 있으면 일반보다 우선 — 실제로 진화한다', () => {
     const e = t3();
-    const r = evolve(e, ctxOf(1).build, ctxOf(1), 0);
+    const r = evolve(e, ctxOf(0).build, { ...ctxOf(0), collapsed: true }, 0);
     expect(r.ok && r.form.id).toBe('h4:void');
   });
-  it('performEvolution 이 세이브의 환생 횟수를 판정에 넘긴다', async () => {
+  it('performEvolution 이 둥지 빈사를 판정에 넘긴다', async () => {
     const { performEvolution } = await import('../src/game');
     const s = newSaveData('hollow', 3);
     s.evolution = t3();
     s.build = ctxOf(0).build;
-    s.rebirth.count = 2;
     s.nest.hunger = 20;
     s.nest.condition = 80;
+    s.nest.collapsed = true;
     const r = performEvolution(s, 0);
     expect(r.ok && r.record.snapshot!.candidates.map((c) => c.formId)).toContain('h4:void');
+    expect(r.ok && r.record.snapshot!.collapsed).toBe(true);
   });
 });
 

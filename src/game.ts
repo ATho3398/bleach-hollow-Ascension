@@ -7,7 +7,7 @@ import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, ty
 import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionDeferral, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { kitModeDefOf, kitModesOf, kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { fitSkinToLock, skinAllowedNow, skinLockOf, type SkinLockSave } from './engine/skinLock';
@@ -18,7 +18,7 @@ import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { lookCellOfSkin, lookCells, lookDexKey, lookSkinOf, lookUnitTable, recordLookDex } from './engine/evolution/lookDex';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
+import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionDeferralRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -31,7 +31,7 @@ import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
 import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
-import { STAT_IDS, type StatId, type Stats, type TitleDef } from './data/schema';
+import { STAT_IDS, formCategoryOf, type StatId, type Stats, type TitleDef } from './data/schema';
 import { retiredRareElement, TRAITS } from './data/traits';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
@@ -71,7 +71,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
+export const SAVE_FORMAT_VERSION = 92; // C.497 (GDD 8-5 진화 미루기·8-8 허무형): 진화 상태 deferrals(그 단계에서 진화를 미룬 수)·런 로그 tiers.deferrals(미루기 기록)·진화 기록 deferrals·스냅샷 deferrals/collapsed(선택) — 91 → 92 변환 SAVE_MIGRATIONS[91](모든 트랙 미루기 0회, 빈 미루기 기록).
+// 이전: SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
 // 이전: SAVE_FORMAT_VERSION = 90; // C.465 (GDD v6.094 12-4 초월자 전투 방식 = 스킨 잠금): 필드 모양은 그대로, 값 규칙 — 초월자 트랙의 전투 기반이 '초월자'면 save.skin 은 그 초월자·그 전투 모드 모델 묶음 안. 89 → 90 변환 SAVE_MIGRATIONS[89](묶음 밖 스킨 → 묶음 첫 모델). 이후 게임 안에서는 입기·기반·모드 바꾸기가 지킨다(테스트 패널 모델 바꾸기는 자유).
 // 이전: SAVE_FORMAT_VERSION = 89; // C.460 (GDD v6.088 12-4 이치고 천년혈전): 진화 상태 kit.mode(전투 모드 id — 상태 화면 '전투 모드')·런 로그 전투 기록 kit 의 mode·stanceSwitches·parries·parryFails·breaks(선택 필드) — 88 → 89 변환 SAVE_MIGRATIONS[88](모드가 있는 초월자 트랙의 kit 에 첫 모드 = 기본).
 // 이전: SAVE_FORMAT_VERSION = 88; // C.454 (GDD v6.069 12-4 이치고): 런 로그 전투 기록 kit 에 secondEnters(무월 진입)·finals(최후의 월아천충) 선택 필드, 원정 중간 저장 kitMastery(무월수련, 선택) — 87 → 88 변환 SAVE_MIGRATIONS[87](구조 보정 없음, 옛 기록·저장은 0).
@@ -1114,9 +1115,9 @@ export function trackIsTopRank(t: Pick<SaveData, 'rank'>): boolean {
 }
 
 /** 합체 판정에 쓰는 한 캐릭터의 상태 */
-export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth'>): FusionInput {
+export function fusionInputOf(t: Pick<SaveData, 'evolution' | 'rebirth' | 'factionId'>): FusionInput {
   const form = t.evolution.formId ? tryGetForm(t.evolution.formId) : undefined;
-  return { rebirths: t.rebirth.count, hidden: form?.hidden === true, elements: playerElementsOf(t.evolution), category: form?.label.category ?? 'mixed' };
+  return { rebirths: t.rebirth.count, hidden: form?.hidden === true, elements: playerElementsOf(t.evolution), category: (form ? formCategoryOf(form, t.factionId) : undefined) ?? 'mixed' };
 }
 
 export type FusionBlock = 'tab' | 'resonance' | 'tracks' | 'develop' | 'rank' | 'expedition' | 'owned';
@@ -1328,9 +1329,16 @@ export function switchCombatBasis(save: SaveData, key: string, nowMs: number = D
   return { ok: true, changed: true };
 }
 
+/** 귀환 정산 선택 (C.497): holdEvolution = 진화 기준에 닿았어도 여기서 진화하지 않는다 — 화면이 [진화] [미루기]를 물은 뒤 evolveAfterReturn / deferEvolution 을 부른다
+ *  (GDD 8-5 진화 미루기). 튜토리얼 중(evolutionChoiceAllowed 가 false)이면 묻지 않고 예전처럼 바로 진화한다 */
+export interface RecordExpeditionOptions {
+  holdEvolution?: boolean;
+}
+
 /** 끝난 원정을 세이브에 반영: 전투 기록·런 기록, 보존된 타일을 보유에 더함, 둥지 상태 갱신.
- *  진화 타이밍(걸음 수)에 닿았으면 둥지에 돌아온 그 순간 상태로 자동 진화한다 (GDD 20-5 v4.1, 패배로 돌아와도). 진화했으면 그 결과를 돌려준다(화면이 연출) */
-export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now()): EvolveResult | null {
+ *  진화 타이밍(걸음 수)에 닿았으면 둥지에 돌아온 그 순간 상태로 자동 진화한다 (GDD 20-5 v4.1, 패배로 돌아와도). 진화했으면 그 결과를 돌려준다(화면이 연출).
+ *  opts.holdEvolution 이고 물어도 되는 때면(GDD 8-5) 진화하지 않고 null — evolutionChoicePending 이 true 가 된다 */
+export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: number = Date.now(), opts: RecordExpeditionOptions = {}): EvolveResult | null {
   const log = save.runLog;
   log.battles.push(...exp.battles);
   log.runs.push({ ...buildRunRecord(exp), gender: save.gender, ...(save.name ? { name: save.name } : {}) });
@@ -1407,8 +1415,36 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   // 자유 원정 보스 (GDD 37장): 도감 처치 수·런 로그 (골드·잔치는 원정 전리품으로 이미 들어왔다, 첫 처치 영옥·칭호 없음)
   settleFreeBoss(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
-  // 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것)
-  return canEvolve(save.evolution) ? performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition }) : null;
+  if (!canEvolve(save.evolution)) return null;
+  // 진화 미루기 (GDD 8-5, C.497): 화면이 묻는다 — 여기서는 진화하지 않는다. 튜토리얼 중이면 묻지 않고 바로 진화
+  if (opts.holdEvolution && evolutionChoiceAllowed(save, exp)) return null;
+  return evolveAfterReturn(save, exp, nowMs);
+}
+
+/** 진화 미루기 창을 띄워도 되는가 (GDD 8-5, C.497): 튜토리얼 원정·튜토리얼 안내 중이 아니면. 튜토리얼 흐름은 창 없이 바로 진화(추천안) */
+export function evolutionChoiceAllowed(save: SaveData, exp?: Pick<ExpeditionState, 'tutorial'>): boolean {
+  return !exp?.tutorial && !tutorialInProgress(save);
+}
+
+/** 진화를 물어야 하는 상태 (GDD 8-5): 진화 기준(걸음 수)에 닿았는데 아직 진화하지 않았다 — 귀환 때 [진화] [미루기] 창 */
+export function evolutionChoicePending(save: SaveData): boolean {
+  return canEvolve(save.evolution);
+}
+
+/** 귀환 뒤 [진화] (GDD 8-5): 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것).
+ *  허무형 빈사 판정은 둥지 상태(귀환 정산 뒤 — 패배면 빈사) */
+export function evolveAfterReturn(save: SaveData, exp: Pick<ExpeditionState, 'hunger' | 'condition'>, nowMs: number = Date.now()): EvolveResult {
+  return performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition });
+}
+
+/** 귀환 뒤 [미루기] (GDD 8-5, C.497): 그 단계에 머문다(걸음·흡수·노력치는 그대로 쌓임, 다음 귀환 때 다시 묻는다). 상한 없음.
+ *  진화 상태 deferrals +1 · 런 로그 tiers.deferrals 1건. 진화 기준에 안 닿았으면 아무것도 안 하고 null */
+export function deferEvolution(save: SaveData, nowMs: number = Date.now(), runId?: number): EvolutionDeferralRecord | null {
+  if (!canEvolve(save.evolution)) return null;
+  const count = recordEvolutionDeferral(save.evolution);
+  const rec: EvolutionDeferralRecord = { at: nowMs, tier: save.evolution.tierIndex, count, formId: save.evolution.formId, steps: save.evolution.steps, ...(runId !== undefined ? { runId } : {}) };
+  (save.runLog.tiers.deferrals ??= []).push(rec);
+  return rec;
 }
 
 /** 원정에서 나온 수련권 정산 (GDD 216장 1·3): 수련권 + 런 로그 trainingTickets */
@@ -1773,7 +1809,8 @@ export function readActiveExpedition(save: SaveData, nowMs: number = Date.now())
     return { ok: false, reason: why, settled: false, exp: null };
   }
   failExpedition(r.exp, why);
-  recordExpedition(save, r.exp, nowMs); // activeExpedition 을 비우고 lastScreen 을 방으로
+  // activeExpedition 을 비우고 lastScreen 을 방으로. 진화 기준에 닿았어도 여기선 연출·선택 창이 없어 진화하지 않는다 — 다음 귀환 때 [진화] [미루기]를 묻는다 (GDD 8-5, C.497)
+  recordExpedition(save, r.exp, nowMs, { holdEvolution: true });
   return { ok: false, reason: why, settled: true, exp: r.exp };
 }
 
@@ -1827,7 +1864,7 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
   const bondCare = save.evolution.bondCare ?? 0; // 이 단계 동안 교감한 수 — 진화하면 지워지므로 먼저 읽는다 (GDD 241-C 4)
   const r = evolve(save.evolution, save.build, {
     factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count,
-    risk: save.nest.risk, bond: save.nest.bond, failLineage: failLineageOf(save),
+    risk: save.nest.risk, bond: save.nest.bond, failLineage: failLineageOf(save), collapsed: save.nest.collapsed === true, // 허무형 (GDD 8-8, C.497): 빈사로 귀환
     statTotal: STAT_IDS.reduce((a, k) => a + currentStats(save.evolution, save.factionId, statBonusOf(save).total)[k], 0),
   }, nowMs);
   if (r.ok) {
@@ -2537,6 +2574,13 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   },
   // 90 → 91 (C.470, GDD 8-5 v6.096 아쥬커스 진화체 = 능력치별 모델): 모델 단위 도감 발견 lookDex 를 만든다
   90: (save) => migrateLookDex(save),
+  // 91 → 92 (C.497, GDD 8-5 진화 미루기): 모든 트랙의 진화 상태에 미루기 0회, 런 로그에 빈 미루기 기록
+  91: (save) => {
+    forEachTrack(save, (t) => {
+      if (isRec(t.evolution)) (t.evolution as EvolutionState).deferrals = 0;
+      if (isRec(t.runLog) && isRec(t.runLog.tiers) && !Array.isArray(t.runLog.tiers.deferrals)) t.runLog.tiers.deferrals = [];
+    });
+  },
 };
 
 /** 형식 90 → 91 (C.470): lookDex 복원. ① 진화체로 정한 칸(히든 — 모델이 진화체로 정해짐)은 formDex 에 있으면 발견 ② 모델 칸은 트랙마다 지금 외형(evolution.look, 예 wyrmwater)과
@@ -3076,6 +3120,7 @@ function repairRunLog(log: RunLog): void {
     else if (!isRec(l[k])) l[k] = v;
   }
   if (!Array.isArray(log.tiers.evolutions)) log.tiers.evolutions = [];
+  if (!Array.isArray(log.tiers.deferrals)) log.tiers.deferrals = []; // C.497 (형식 92)
 }
 
 /** 지금 트랙의 핵심 구조 보정 (C.70). 둥지·빌드·타일·도감 같은 빠진 영역은 처음 값으로 채우고, 진화 상태가 없으면 고칠 수 없으므로 false(→ 백업 복구).
@@ -3194,6 +3239,7 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
     if (v > 0) e[k] = v;
     else delete e[k];
   }
+  e.deferrals = nonNegInt(e.deferrals); // C.497 진화 미루기 (형식 92): 없거나 이상하면 0
   if (e.ascended !== true) delete e.ascended;
   e.abilities = sanitizeLoadout(e.abilities, e.tierIndex, rebirths);
 }

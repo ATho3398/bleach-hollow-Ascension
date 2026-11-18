@@ -13,10 +13,10 @@ import { fixParticles } from '../engine/josa';
 import { grantCureReward, grantRecoverFood, recoverFeedDone, recoverGrantBag, recoverStep } from '../recoverTutorial';
 import { tutorialOverlay, type TutorialAct } from './tutorialOverlay';
 import { spaExitFx, spaView } from './spaView';
-import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice } from '../engine/evolution';
+import { applyEvolutionToParams, baseStatsOf, formDisplayName, isFailLine, playerElementsOf, recordEvolutionPractice, type EvolveResult } from '../engine/evolution';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../engine/difficulty';
 import { TITLES, titleName } from '../data/titles';
-import type { GrowthInput } from './bha/growthLogic';
+import { EVOLVE_HINT, type GrowthInput } from './bha/growthLogic';
 import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonReason, applyCareToParams, bossSetupOf, canAbortBattle, createExpedition, rerollAbsorb, drainEvents, finishBattle, hpFractionOf, inFrenzy, serializeExpedition, startBattle, storyEpisodeOf, summarize, takeStoryCue, ticketDropOf, type ExpeditionState } from '../engine/expedition';
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
@@ -37,7 +37,9 @@ import {
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf,
   applyTrackRiskFloor,
+  evolutionChoicePending, evolveAfterReturn, deferEvolution,
 } from '../game';
+import { evolveChoiceDialog } from './evolveChoice';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
 import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, fusionView, gainedText, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
@@ -2269,7 +2271,9 @@ export function startApp(host: HTMLElement): void {
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
       const petLog0 = save.runLog.pets.length;
       const gearLog0 = save.runLog.gear.length;
-      const evo = recordExpedition(save, exp);
+      // 진화 미루기 (GDD 8-5, C.497): 진화 기준에 닿았으면 결과 화면 뒤 진화 연출 전에 [진화] [미루기]를 묻는다 — 튜토리얼 중이면 묻지 않고 바로 진화(evo)
+      const evo = recordExpedition(save, exp, Date.now(), { holdEvolution: true });
+      const askEvolve = evo === null && evolutionChoicePending(save);
       persist();
       // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
@@ -2279,19 +2283,40 @@ export function startApp(host: HTMLElement): void {
       petNotes.push(...(gearNotes.length > 4 ? [{ eyebrow: '장비', title: `장비 ${gearNotes.length}개를 가지고 돌아왔다`, meta: '가방 장비 탭에서 착용' }] : gearNotes));
       growth = {
         newTraits: summarize(exp).keptTraits.length,
-        evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : null,
+        evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : askEvolve ? EVOLVE_HINT : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
       };
-      if (evo?.ok) {
-        const s = save;
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, evo.abilityGain, evo.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
-        afterResult = () => open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, evo.form, () => {
-          holdRoomGuides = false; // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
-          nav.pop();
-          const later = afterEvolve;
-          afterEvolve = null;
-          later?.();
+      const s = save;
+      /** 진화(또는 미루기)가 끝나 방으로 돌아온 뒤: 첫 진화 타일 안내(GDD 64장)를 풀고 미뤄 둔 알림을 띄운다 */
+      const afterEvolveDone = () => {
+        holdRoomGuides = false;
+        const later = afterEvolve;
+        afterEvolve = null;
+        later?.();
+      };
+      const playEvolve = (r: Extract<EvolveResult, { ok: true }>) => {
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+        open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
+          nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
+          afterEvolveDone();
         }, s.build.slots.length, extra), true);
+      };
+      if (evo?.ok) afterResult = () => playEvolve(evo);
+      else if (askEvolve) {
+        afterResult = () => evolveChoiceDialog({
+          onEvolve: () => {
+            const r = evolveAfterReturn(s, exp);
+            persist();
+            if (r.ok) playEvolve(r);
+            else afterEvolveDone();
+          },
+          onDefer: () => {
+            deferEvolution(s, Date.now(), exp.runId); // 그 단계에 머문다 — 다음 귀환 때 다시 묻는다
+            persist();
+            if (nav.top?.id === 'room') renderRoom();
+            afterEvolveDone();
+          },
+        });
       }
     }
     const showResult = () => {

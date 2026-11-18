@@ -150,15 +150,19 @@ describe('트리 판정 (GDD 126장, C.220)', () => {
     expect(ids(absorbs(atTier(1), { water: 5 }), { bond: 60 })).toEqual(['h3:passage']);
   });
 
-  it('4단계 히든 후보: 융합(각 40%)·4속성형(각 15%)·허무형(혈독허 각 20% + 환생)·폭주형·절제형·안정형·사냥꾼·각성형', () => {
+  it('4단계 히든 후보: 융합(각 40%)·4속성형(각 15%)·허무형(미루기 0회 + 빈사 귀환, C.497)·폭주형·절제형·안정형·사냥꾼·각성형', () => {
     const b = buildWith('t-water-a');
     const ids = (e: EvolutionState, o: Record<string, unknown> = {}) => evolutionCandidates(e, { ...ctxOf(b), ...o }).hidden.map((c) => c.formId).sort();
     expect(ids(absorbs(atTier(2), { water: 5, earth: 5 }))).toEqual(['h4:fusion:water+earth']);
     expect(ids(absorbs(atTier(2), { fire: 5, thunder: 5 }))).toEqual(['h4:fusion:fire+thunder']);
     expect(ids(absorbs(atTier(2), { water: 5, fire: 5 }))).toEqual([]); // 상성 관계인 쌍은 융합 없음
     expect(ids(absorbs(atTier(2), { water: 2, fire: 2, earth: 2, thunder: 2, normal: 2 }))).toEqual(['h4:complete', 'h4:fail']); // 30% 미만이면 실패형 후보도
-    expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }))).toEqual([]); // 환생 전엔 없음
-    expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }), { rebirths: 1 })).toEqual(['h4:void']);
+    // C.497 (GDD 8-8 v6.120): 옛 '혈·독·허 각 20% + 환생' 폐기 → 그 단계 미루기 0회 + 빈사로 귀환
+    expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }), { rebirths: 1 })).toEqual([]);
+    expect(ids(atTier(2), { collapsed: true })).toEqual(['h4:void']);
+    const deferred = atTier(2);
+    deferred.deferrals = 1;
+    expect(ids(deferred, { collapsed: true })).toEqual([]);
     const fr = atTier(2);
     fr.breakthroughs = H.breakthroughs;
     expect(ids(fr, { risk: H.frenzyRiskAtLeast })).toEqual(['h4:frenzy']); // C.391 (GDD 239장): 진화 순간 리스크 게이지 ≥ 90

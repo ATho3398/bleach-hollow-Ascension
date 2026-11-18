@@ -328,7 +328,14 @@ export interface FormDef {
   /** 해방 이름 (GDD 198장, 4단계만): 종족별 { name: 레스렉시온·참백도 이름, command: 언령, final: 만해 이름 }.
    *  어느 칸을 쓰는지는 종족 설정(ascension.formNameKey · liberation.formKey · liberation.formCutin)이 정한다 */
   release?: PerFaction<FormRelease>;
+  /** 종족마다 다른 공격 타입 (GDD 8-8 허무형 사신 특수·호로 물리, C.497 — factionCategories.json 에서 로더가 붙인다). 그 종족 키가 없으면 label.category */
+  categoryByFaction?: PerFaction<AttackCategory>;
   provisional?: boolean;
+}
+
+/** 이 종족에서 진화체의 공격 타입 (GDD 8-8): categoryByFaction → label.category → 없으면 undefined (종족 분기 없음 — 데이터만 본다) */
+export function formCategoryOf(form: Pick<FormDef, 'label' | 'categoryByFaction'>, factionId: string): AttackCategory | undefined {
+  return form.categoryByFaction?.[factionId] ?? form.label.category;
 }
 
 /** 진화체 해방 이름 한 종족 몫 (GDD 198장). final 이 없으면 그 종족 설정이 final 을 쓰는 경우 고유 해방이 없다(사신 둔도) */

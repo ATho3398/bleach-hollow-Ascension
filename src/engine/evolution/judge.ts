@@ -22,7 +22,7 @@ export interface JudgeContext {
   /** 진화 순간 돌보기 상태 (둥지 귀환 직후). hunger 0 = 배부름 100 */
   hunger: number;
   condition: number;
-  /** 지금까지 환생한 횟수 (허무형·각성형). 없으면 0 */
+  /** 지금까지 환생한 횟수 (각성형). 없으면 0 */
   rebirths?: number;
   /** 진화 순간 리스크 게이지(폭주형, C.391 GDD 239장 4 — 옛 안정 수치 대신). 없으면 조건을 못 채운 것으로 본다 */
   risk?: number;
@@ -32,6 +32,8 @@ export interface JudgeContext {
   failLineage?: boolean;
   /** 진화 순간 능력치 합계 (각성형 — 4단계 종족값 합계와 비교). 없으면 0 */
   statTotal?: number;
+  /** 진화 순간 빈사 (GDD 8-8 허무형, C.497 — 둥지 빈사 상태로 귀환). 없으면 false */
+  collapsed?: boolean;
 }
 
 export interface EvolutionCandidate {
@@ -62,6 +64,9 @@ export interface EvolutionSnapshot {
   roll: number;
   /** 정해진 고유 특성 방향 */
   ability: StatId;
+  /** C.497 (GDD 8-5 진화 미루기): 그 단계에서 미룬 횟수 · 진화 순간 빈사. 옛 기록엔 없음 */
+  deferrals?: number;
+  collapsed?: boolean;
 }
 
 /** 진화 판정용 장착 속성 개수 (GDD 111장 후속 결정 ②, C.184 후속): 장착 특성 개수 + 노멀 강화 1↑이면 빈 본체 칸 하나를 노멀 1개로 센다
@@ -149,6 +154,8 @@ export function isCareFailure(ctx: JudgeContext): boolean {
 const faintsOf = (e: EvolutionState): number => e.faints ?? 0;
 const longAbsencesOf = (e: EvolutionState): number => e.longAbsences ?? 0;
 const hunterRunsOf = (e: EvolutionState): number => e.hunterRuns ?? 0;
+/** 이 단계에서 진화를 미룬 수 (C.497, GDD 8-5 — 옛 세이브엔 없음 = 0) */
+export const deferralsOf = (e: Pick<EvolutionState, 'deferrals'>): number => e.deferrals ?? 0;
 
 /** 노력치가 고른가 (각성형 ③): 가장 낮은 값 ≥ 가장 높은 값 × awakenedEvBalance. 노력치가 전부 0 이면 아니다 */
 export function evBalanced(e: Pick<EvolutionState, 'ev'>): boolean {
@@ -168,14 +175,14 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
     }
     const elementalMin = Math.min(...ELEMENTAL_IDS.map((el) => shareOf(e, el)));
     if (elementalMin >= H.completeShare) out.push(hidden('h4:complete', elementalMin / H.completeShare - 1));
-    const voidMin = Math.min(...SPECIAL_ELEMENT_IDS.map((el) => shareOf(e, el)));
-    if (rebirths >= H.voidRebirths && voidMin >= H.voidShare) out.push(hidden('h4:void', voidMin / H.voidShare - 1));
     if (isScattered(e)) out.push(hidden('h4:fail', H.failTopShare / Math.max(0.01, topShare(e)) - 1));
   }
   if (e.breakthroughs >= H.breakthroughs && ctx.risk !== undefined && ctx.risk >= H.frenzyRiskAtLeast) out.push(hidden('h4:frenzy', e.breakthroughs / H.breakthroughs - 1));
   if (e.releases > e.absorbs && 100 - ctx.hunger <= H.restraintFullnessMax) out.push(hidden('h4:restraint', e.releases / Math.max(1, e.absorbs) - 1));
   if ((ctx.bond ?? 0) >= H.stableBond && faintsOf(e) === 0 && e.breakthroughs === 0 && longAbsencesOf(e) === 0) out.push(hidden('h4:stable', 0));
   if (hunterRunsOf(e) >= H.hunterRuns) out.push(hidden('h4:hunter', hunterRunsOf(e) / H.hunterRuns - 1));
+  // 허무형 (GDD 8-8 v6.120, C.497): 그 단계(3단계) 진화 미루기 voidMaxDeferrals 회 이하(= 한 번도 안 함) + 빈사 상태로 귀환해 진화. 리스크·흡수 무관
+  if (deferralsOf(e) <= H.voidMaxDeferrals && ctx.collapsed === true) out.push(hidden('h4:void', 0));
   const tier4Total = BALANCE.provisional.stats.tierTotals[3] ?? Infinity;
   if (ctx.failLineage && rebirths >= H.awakenedRebirths && (e.practices ?? 0) >= H.awakenedPractices && evBalanced(e) && (ctx.statTotal ?? 0) >= tier4Total) {
     out.push(hidden('h4:awakened', (e.practices ?? 0) / H.awakenedPractices - 1));
@@ -184,7 +191,7 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
 }
 
 /** 3단계 히든 통로 후보 (협의 답 — 2단계 동안 4단계 조건의 약 60%): 문턱 하나라도 넘으면 h3:passage 하나, 초과량은 가장 크게 넘은 것.
- *  실패형·각성형·허무형(환생 조건형)은 통로 없이 4단계에서 직접 */
+ *  실패형·각성형·허무형(미루기 0회 + 빈사 귀환, C.497)은 통로 없이 4단계에서 직접 */
 export function passageCandidates(e: EvolutionState, ctx: JudgeContext): EvolutionCandidate[] {
   const P = H.passage;
   const excess: number[] = [];
@@ -282,6 +289,8 @@ export function judgeEvolution(e: EvolutionState, ctx: JudgeContext, table: read
       forced: forced !== null,
       roll,
       ability: abilityFor(e.ev, form),
+      deferrals: deferralsOf(e),
+      collapsed: ctx.collapsed === true,
     },
   };
 }
