@@ -212,7 +212,7 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
-  // 4단계 진화체 고유 능력·특수 블록·해방 변형 한 줄씩 (GDD 8-7 1차, C.495)
+  // 4단계 진화체 고유 능력·특수 블록·해방 변형 한 줄씩 (GDD 8-7 1차, C.498)
   const uniq = evoUniqueParagraph(evo, faction);
   if (uniq) stats.append(uniq);
   // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 기반 특성 칸 아래 따로 — 기반을 바꿔도 그대로

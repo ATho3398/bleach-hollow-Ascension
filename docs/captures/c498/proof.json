@@ -1,0 +1,48 @@
+{
+  "shots": [
+    "01-baekryeon-battle.png",
+    "03-status-unique-lines.png",
+    "02-nodo-battle-stacks.png",
+    "04-obliteration-exec-lines.png"
+  ],
+  "errors": [],
+  "checks": {
+    "baekryeon": {
+      "evo": true,
+      "voidOnly": "voidOnly",
+      "aspdTrait": 0.1,
+      "tray": 5
+    },
+    "baekryeonMarks": [
+      "evo-passive:+15"
+    ],
+    "statusLines": "고유 능력 수 블록을 쓸 때마다 5초 동안 일반 공격 치명 확률 +4%p(최대 5스택, 스택마다 따로). 일반 공격 6회마다 특수 블록 「노도 연격」\n특수 블록 「노도 연격」 — 누르면 일반 공격 3회가 바로 나간다(각 +30%)\n만해 스택 지속 8초 · 스택당 치명 확률 +6%p · 치명 피해 +5%",
+    "nodo": {
+      "crit": 0.06,
+      "special": true
+    },
+    "nodoMarks": [
+      "evo-s-surge:3"
+    ],
+    "oblit": {
+      "execute": {
+        "line": 0.08,
+        "eliteMult": 1.5
+      }
+    },
+    "execLines": [
+      {
+        "cls": "bha-execline",
+        "hidden": false,
+        "left": "8%",
+        "title": "처형선(일반 공격) 8%"
+      },
+      {
+        "cls": "bha-execline bha-execline--block",
+        "hidden": false,
+        "left": "20%",
+        "title": "처형선(블록) 20%"
+      }
+    ]
+  }
+}

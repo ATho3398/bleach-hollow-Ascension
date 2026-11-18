@@ -256,7 +256,7 @@ export interface CombatParams {
   enemyAttackSecondsFixed?: number;
   /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 쓰러지지 않는다 — 체력이 0 에 닿으면 가득으로 되돌린다(허수아비). 진짜 게임은 늘 없음 */
   enemyImmortal?: boolean;
-  /** 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.495): 규칙 데이터(evoUnique.ts). 없으면 없음 */
+  /** 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.498): 규칙 데이터(evoUnique.ts). 없으면 없음 */
   evo?: EvoParams | null;
 }
 
@@ -668,7 +668,7 @@ export interface AbilityEffects {
   charge?: number;
   /** 스킬 블록 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) (노멀 '단련') */
   tempering?: { per: number; max: number };
-  // ── 4단계 한 줄 특성 (GDD 8-7 1차, C.495 — uniques.json traits) ──
+  // ── 4단계 한 줄 특성 (GDD 8-7 1차, C.498 — uniques.json traits) ──
   /** 공격 속도 + (평타 간격 ÷ (1 + 값)) */
   evoAttackSpeed?: number;
   /** 평타 치명 확률 +(상한도 같이) · 블록 치명 확률 +(상한도 같이) */
@@ -842,7 +842,7 @@ export type CombatEvent =
   | { kind: 'boss-phase'; phase: number }
   /** 진화체 특성 발동 (C.89, GDD 39장 5번): 연타·되갚기·다시 일어남·연쇄. damage = 그 발동이 준 피해(없으면 0) */
   | { kind: 'ability'; effect: AbilityProc; damage: number }
-  /** 진화체 고유 능력 발동 작은 글자 (GDD 8-7 1차, C.495 — 데이터 proc 글자, 처형!). damage = 그 발동이 준 피해(없으면 0) */
+  /** 진화체 고유 능력 발동 작은 글자 (GDD 8-7 1차, C.498 — 데이터 proc 글자, 처형!). damage = 그 발동이 준 피해(없으면 0) */
   | { kind: 'evo-proc'; text: string; damage: number }
   /** 보스 기믹 칸 봉인: 봉인된 블록 uid 와 시간 */
   | { kind: 'cell-seal'; uid: number; seconds: number }
@@ -939,7 +939,7 @@ export interface CombatState {
   };
   /** 초월자 전용 블록 상태 (GDD 12-4 v6.048, C.441) — params.kit 이 있을 때만 */
   kit?: KitCombatState;
-  /** 진화체 고유 능력 상태 (GDD 8-7 1차, C.495) — params.evo 또는 처형 특성이 있을 때만. 저장하지 않는다 */
+  /** 진화체 고유 능력 상태 (GDD 8-7 1차, C.498) — params.evo 또는 처형 특성이 있을 때만. 저장하지 않는다 */
   evo?: EvoState;
   /** shield: 남은 보호막 (GDD 25-5 성역·갈림길, 없으면 0) */
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
@@ -1490,7 +1490,7 @@ function freeAttackSeconds(s: CombatState): number {
   const haste = s.basicHaste && s.basicHaste.ticks > 0 ? 1 - s.basicHaste.haste : 1;
   // 소도 스택 (GDD 12-4 천년혈전 v6.086, C.460): 1스택 공격속도 +speedPerStack — 지금 자세 스택만
   const sp = 1 + stanceSpeedBonusOf(s);
-  // 진화체 고유 능력 (GDD 8-7 1차, C.495): 공격 속도 +(÷) · 간격 −비율(×) · 간격 −초
+  // 진화체 고유 능력 (GDD 8-7 1차, C.498): 공격 속도 +(÷) · 간격 −비율(×) · 간격 −초
   const evoMul = s.params.evo ? Math.max(0.05, 1 - evoStat(s, 'interval')) / (1 + evoStat(s, 'attackSpeed')) : 1;
   const evoCut = s.params.evo ? evoStat(s, 'intervalCut') : 0;
   // 상한 (GDD v6.055 7절): 공격속도·특성·장비·해방·가속을 다 합쳐도 평타 0.3초에 1번보다 빠르지 않다. 추가 평타(extraBasicAttack)는 무관
@@ -1589,7 +1589,7 @@ export function createCombat(seed: number, setup: CombatSetup): CombatState {
     ...(params.kit ? { kit: newKitState(params) } : {}),
     ...(evo ? { evo } : {}),
   };
-  // 진화체 고유 능력 (GDD 8-7 1차, C.495): 고정 특수 블록(바 맨 앞)·전투 시작 규칙
+  // 진화체 고유 능력 (GDD 8-7 1차, C.498): 고정 특수 블록(바 맨 앞)·전투 시작 규칙
   if (evo) evoStart(state);
   return state;
 }
@@ -1641,7 +1641,7 @@ function playerHitMultiplier(s: CombatState, elements: readonly string[], cat: A
   return { mult: statRatio(attackerStatsOf(s, cat), s.enemy.stats, cat, Math.max(ignore, p.abilityEffects.ignoreDefense ?? 0)) * mm * p.categoryPower[cat], matchup: m };
 }
 
-/** 내 공격 능력치 (GDD 8-7 1차, C.495 천평환): 진화체 고유 능력 offenseBasic/offenseBlock(1 = 공격력·지능 중 높은 쪽, 2 = 평균)이 특성 offenseMax 보다 우선. 없으면 그대로 */
+/** 내 공격 능력치 (GDD 8-7 1차, C.498 천평환): 진화체 고유 능력 offenseBasic/offenseBlock(1 = 공격력·지능 중 높은 쪽, 2 = 평균)이 특성 offenseMax 보다 우선. 없으면 그대로 */
 function attackerStatsOf(s: CombatState, cat: AttackCategory): Stats {
   const st = s.player.stats;
   if (cat === 'mixed') return st;
@@ -1756,7 +1756,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
     s.crits = (s.crits ?? 0) + 1;
     return true;
   }
-  // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.495): 상한도 같이 오른다(치명 특성과 같은 규칙 — 45장 1번)
+  // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.498): 상한도 같이 오른다(치명 특성과 같은 규칙 — 45장 1번)
   const evoUp = who === 'player' ? (block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') : 0)) : 0;
   const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
     : block ? Math.min((p.blockCritChanceMax ?? p.critChanceMax) + evoUp, blockCritChanceOf(p) + bonus + evoUp) : Math.min(p.critChanceMax + evoUp, critChanceOf(p) + bonus + evoUp);
@@ -1771,7 +1771,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
 function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
   if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
-  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') : 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.495)
+  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') : 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.498)
   return { damage: damage * (s.params.critMultiplier + extra), crit: true };
 }
 
@@ -1814,7 +1814,7 @@ function playerHit(s: CombatState, damage: number, block: boolean, elements: rea
   const physMult = p.physBlock?.damage ?? 1;
   // 무월수련 동안 주는 피해 × (GDD 12-4 v6.074 — 수련 게이지 모드, 두 번째 해방 전)
   const masteryMult = p.kit?.mastery && kitMasteryOn(s) && !s.kit?.second ? p.kit.mastery.damageMult : 1;
-  // 진화체 고유 능력 주는 피해 + (GDD 8-7 1차, C.495: 화상·호로화 게이지 비례 등)
+  // 진화체 고유 능력 주는 피해 + (GDD 8-7 1차, C.498: 화상·호로화 게이지 비례 등)
   const evoDealt = p.evo ? 1 + evoStat(s, 'dealt') : 1;
   const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * masteryMult * evoDealt * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block);
   return elem ? { ...hit, elem } : hit;
@@ -1867,7 +1867,7 @@ export function basicPowerOf(s: CombatState): number {
   if (a.current) m *= 1 + Math.min(a.current.max, a.current.per * (s.currentHits ?? 0));
   if (a.tempering) m *= 1 + Math.min(a.tempering.max, a.tempering.per * (s.temperingBlocks ?? 0));
   if (a.emberStack) m *= 1 + Math.min(a.emberStack.max, a.emberStack.per * stackedAttackBlocks(s, a.emberStack.element));
-  // 진화체 고유 능력 평타 피해 + (GDD 8-7 1차, C.495)
+  // 진화체 고유 능력 평타 피해 + (GDD 8-7 1차, C.498)
   if (s.params.evo) m *= 1 + evoStat(s, 'basicPower');
   return m;
 }
@@ -1941,7 +1941,7 @@ function motionKeyOf(e: Extract<CombatEvent, { kind: 'block' }>): string | null 
 function basicAttack(s: CombatState): void {
   const p = s.params;
   const a = p.abilityEffects;
-  // 진화체 고유 능력 평타 직전 (GDD 8-7 1차, C.495): 충전 쓰기·이번 평타 배율·치명 확정·방어 무시
+  // 진화체 고유 능력 평타 직전 (GDD 8-7 1차, C.498): 충전 쓰기·이번 평타 배율·치명 확정·방어 무시
   const evo = evoBasicPre(s);
   // 평타 = 공격력 ÷ 적 방어, 내 캐릭터 속성 (GDD 20-3 v3.6, 141장 1)
   const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY, evo?.ignore ?? 0);
@@ -1969,7 +1969,7 @@ function basicAttack(s: CombatState): void {
   // 혈쇄참월 분신 (C.460): 같은 피해로 한 대씩 같이 친다
   stanceClones(s, last, bd.delay, hit.matchup);
   if (s.status !== 'playing') return;
-  // 진화체 고유 능력 평타 뒤 (GDD 8-7 1차, C.495): 평타 n대 카운터·분신·불칼·회복 등
+  // 진화체 고유 능력 평타 뒤 (GDD 8-7 1차, C.498): 평타 n대 카운터·분신·불칼·회복 등
   evoBasicPost(s, evo, last);
   if (s.status !== 'playing') return;
   kitAfterBasic(s, shot);
@@ -2122,7 +2122,7 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     s.script.held = { amount: (h?.amount ?? 0) + amount, finisher };
     return;
   }
-  // 처형 '소멸선' (GDD 8-8, C.495): 처형선 아래 평타 = 처형, 강적·보스는 그 아래에서 모든 피해 ×배율
+  // 처형 '소멸선' (GDD 8-8, C.498): 처형선 아래 평타 = 처형, 강적·보스는 그 아래에서 모든 피해 ×배율
   if (s.params.abilityEffects.execute) amount = evoDamageAdjust(s, amount, finisher.kind === 'basic-attack');
   // 해방 게이지 (95장 B2): 실제로 깎은 체력(졸개 몫 포함, 넘친 피해 제외) ÷ 적 최대 체력
   if (amount > 0 && s.enemy.maxHp > 0) addGauge(s, (Math.min(amount, s.enemy.hp + (s.boss?.minion?.hp ?? 0)) / s.enemy.maxHp) * s.params.liberationGaugePerDealt);
@@ -2275,13 +2275,13 @@ function takeDamage(s: CombatState, amount: number): void {
     const absorbed = Math.min(s.player.shield, amount);
     s.player.shield -= absorbed;
     amount -= absorbed;
-    // 진화체 고유 능력 보호막 (GDD 8-7 1차, C.495): 막은 양·깨짐 규칙
+    // 진화체 고유 능력 보호막 (GDD 8-7 1차, C.498): 막은 양·깨짐 규칙
     if (s.evo) {
       evoOnShield(s, absorbed, s.player.shield <= 0);
       if (s.status !== 'playing') return;
     }
   }
-  // 각본 전투는 지지 않는다 (체력 1 아래로 안 내려감) · 진화체 해방 중 체력 하한 (GDD 8-7 1차 주홍장, C.495)
+  // 각본 전투는 지지 않는다 (체력 1 아래로 안 내려감) · 진화체 해방 중 체력 하한 (GDD 8-7 1차 주홍장, C.498)
   const evoFloor = s.evo ? evoHpFloor(s) : 0;
   s.player.hp = Math.max(s.script ? Math.min(s.player.hp, 1) : evoFloor > 0 ? Math.min(s.player.hp, evoFloor) : 0, s.player.hp - amount);
   const last = s.params.abilityEffects.lastStand;
@@ -2335,12 +2335,12 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   const element = kind === 'skill' ? (sourceOf(s.params, traitId)?.element ?? null) : null;
   s.tray.push({ uid: s.nextUid++, kind, traitId, family, element });
   emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
-  // 진화체 고유 능력 블록 생김 규칙 (GDD 8-7 1차, C.495)
+  // 진화체 고유 능력 블록 생김 규칙 (GDD 8-7 1차, C.498)
   if (s.evo) evoOnSpawn(s, s.tray[s.tray.length - 1]!);
   return true;
 }
 
-/** 진화체 고유 능력이 블록을 놓는다 (특수 블록·잔상, C.495): 바가 차 있으면 null. front = 맨 앞(고정 특수 블록) */
+/** 진화체 고유 능력이 블록을 놓는다 (특수 블록·잔상, C.498): 바가 차 있으면 null. front = 맨 앞(고정 특수 블록) */
 function placeEvoBlock(s: CombatState, b: Omit<Block, 'uid'>, front = false): Block | null {
   if (s.tray.length >= s.params.trayCapacity) return null;
   const block: Block = { uid: s.nextUid++, ...b };
@@ -2454,7 +2454,7 @@ function updateCombos(s: CombatState, family: string | null, chain: number): voi
   }
 }
 
-/** 진화체 블록 피해 배율 (GDD 8-7 1차, C.495): 1 + 고유 능력 blockPower + 이 블록 blockMult + 4단계 특성 n체인 위력 */
+/** 진화체 블록 피해 배율 (GDD 8-7 1차, C.498): 1 + 고유 능력 blockPower + 이 블록 blockMult + 4단계 특성 n체인 위력 */
 function evoBlockMultOf(s: CombatState, chain: number, ctx: { mult: number } | null): number {
   const cp = s.params.abilityEffects.chainPower?.filter((x) => x.chain === chain).reduce((a, x) => a + x.bonus, 0) ?? 0;
   return 1 + (s.params.evo ? evoStat(s, 'blockPower') : 0) + (ctx?.mult ?? 0) + cp;
@@ -2514,7 +2514,7 @@ function useBlock(s: CombatState, index: number): boolean {
     counterIfStance(s);
     return true;
   }
-  // 진화체 특수 블록 (GDD 8-7 1차, C.495): 데이터 규칙(special)
+  // 진화체 특수 블록 (GDD 8-7 1차, C.498): 데이터 규칙(special)
   if (b.kind === 'skill' && evoSpecialOf(p, b.traitId)) return useEvoSpecial(s, index);
   const kb = b.kind === 'skill' ? kitBlockOf(p, b.traitId) : undefined;
   if (kb) return useKitBlock(s, index, kb);
@@ -2550,7 +2550,7 @@ function useBlock(s: CombatState, index: number): boolean {
   }
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
-  // 진화체 고유 능력 블록 직전 (GDD 8-7 1차, C.495): 이 블록 피해 +·평타 n회분 더하기·치명 + / 4단계 특성 n체인 위력 +
+  // 진화체 고유 능력 블록 직전 (GDD 8-7 1차, C.498): 이 블록 피해 +·평타 n회분 더하기·치명 + / 4단계 특성 n체인 위력 +
   const evo = evoBlockPre(s, { kind: 'skill', element: blockElementOf(p, b), chain, block: b, echo: usedEcho });
   const raw = blockDamage(s, b, chain) * evoBlockMultOf(s, chain, evo) + (evo?.flat ?? 0) * evoBasicUnitOf(s);
   const { damage, crit, elem } = playerHit(s, raw, true, skill.element ? [skill.element] : [], evo?.critBonus ?? 0);
@@ -2837,7 +2837,7 @@ function liberate(s: CombatState): boolean {
       k.modeEnters++;
       k.drainTimer = ticksOf(p, p.kit.riskDrain.tickSeconds);
     }
-  } else lb.ticksLeft = ticksOf(p, (p.liberationUnique ? evoReleaseSecondsOf(p) : null) ?? p.liberationSeconds); // 진화체 해방 지속 예외 (GDD 8-7 1차 주홍장, C.495)
+  } else lb.ticksLeft = ticksOf(p, (p.liberationUnique ? evoReleaseSecondsOf(p) : null) ?? p.liberationSeconds); // 진화체 해방 지속 예외 (GDD 8-7 1차 주홍장, C.498)
   lb.spawnAcc = 0;
   lb.nextSlot = 0;
   if (p.liberationUnique) {
@@ -2854,7 +2854,7 @@ function liberate(s: CombatState): boolean {
   emit(s, { kind: 'liberate', seconds: endlessLib ? 0 : p.liberationSeconds, unique: p.liberationUnique, ...(endlessLib ? { endless: true } : {}), ...(relName ? { name: relName } : {}) });
   kitSwapTray(s, true);
   grantLiberationBlocks(s, LB.instantBlocks);
-  // 진화체 레스렉시온/만해 시작 규칙 (GDD 8-7 1차, C.495)
+  // 진화체 레스렉시온/만해 시작 규칙 (GDD 8-7 1차, C.498)
   if (s.evo && p.liberationUnique) evoReleaseStart(s);
   return true;
 }
@@ -2863,7 +2863,7 @@ function liberate(s: CombatState): boolean {
  *  다음 생성은 해방 간격 한 번 뒤 */
 function grantLiberationBlocks(s: CombatState, n: number): void {
   if (s.script) return; // 각본 전투(GDD 241-B 1)는 난수 없이 — 해방 뒤 블록은 각본이 3개 놓는다
-  if (evoVoidOnly(s.params)) return; // 진화체 '저절로 안 생김' (GDD 8-7 1차 백련, C.495): 해방 순간 지급도 없음
+  if (evoVoidOnly(s.params)) return; // 진화체 '저절로 안 생김' (GDD 8-7 1차 백련, C.498): 해방 순간 지급도 없음
   grantExtraBlocks(s, n, true);
   s.spawnTimer = ticksOf(s.params, spawnIntervalOf(s));
 }
@@ -2890,7 +2890,7 @@ export function grantExtraBlocks(s: CombatState, n: number, push = false): numbe
 function endLiberation(s: CombatState): void {
   const lb = s.liberation;
   if (!liberationActive(s) && lb.base === null) return;
-  // 진화체 레스렉시온/만해 끝 규칙 (GDD 8-7 1차, C.495): 아직 해방 중 값으로 (끝날 때 피해·자동 사용 등)
+  // 진화체 레스렉시온/만해 끝 규칙 (GDD 8-7 1차, C.498): 아직 해방 중 값으로 (끝날 때 피해·자동 사용 등)
   if (s.evo && s.params.liberationUnique && liberationActive(s) && s.status === 'playing') evoReleaseEnd(s);
   if (lb.base) {
     s.player.stats = lb.base.stats;
@@ -3314,7 +3314,7 @@ function parrySuccess(s: CombatState): void {
 
 function shuffleTray(s: CombatState): void {
   const t = s.tray;
-  // 고정 특수 블록 (GDD 8-7 1차 공화 공허 블록, C.495)은 제자리 — 나머지 칸끼리만 섞는다 (고정이 없으면 옛 순서 그대로)
+  // 고정 특수 블록 (GDD 8-7 1차 공화 공허 블록, C.498)은 제자리 — 나머지 칸끼리만 섞는다 (고정이 없으면 옛 순서 그대로)
   const free = t.map((b, i) => (b.fixed ? -1 : i)).filter((i) => i >= 0);
   for (let k = free.length - 1; k > 0; k--) {
     const i = free[k]!;
@@ -3536,7 +3536,7 @@ function advanceTick(s: CombatState): void {
   }
   if (s.sealTicks > 0) s.sealTicks--;
   for (const b of s.tray) if (b.sealTicks && b.sealTicks > 0) b.sealTicks--;
-  // 진화체 고유 능력 시간 (GDD 8-7 1차, C.495): 시간 스택·버프 끝, every·timer 규칙
+  // 진화체 고유 능력 시간 (GDD 8-7 1차, C.498): 시간 스택·버프 끝, every·timer 규칙
   if (s.evo) {
     evoTick(s);
     if (s.status !== 'playing') return;
@@ -3570,7 +3570,7 @@ function advanceTick(s: CombatState): void {
     const e = drawSpawn(s, spawnTableOf(p, liberationActive(s), kitRiskOf(s), kitStanceBlockOf(s)).entries);
     if (e?.kind === 'void') spawn(s, 'void', null);
     else if (evoVoidOnly(p)) {
-      // 진화체 '허 블록 말고는 저절로 안 생김' (GDD 8-7 1차 백련, C.495): 허가 아니면 이번 생성은 없다
+      // 진화체 '허 블록 말고는 저절로 안 생김' (GDD 8-7 1차 백련, C.498): 허가 아니면 이번 생성은 없다
     } else if (e?.phys) {
       // 물공 생성원 (GDD 49-11): 그 속성 물공 블록(기본 공격 블록) 1개, 계열은 종족 계열 표에서 고르게
       if (spawn(s, 'skill', BASIC_SKILL_ID, drawPhysFamily(s))) s.physSpawned = (s.physSpawned ?? 0) + 1;
@@ -3680,7 +3680,7 @@ export function replayCombat(seed: number, setup: CombatSetup, inputs: { tick: n
   return s;
 }
 
-// 진화체 고유 능력 장치가 쓰는 엔진 안쪽 동작 (GDD 8-7 1차, C.495 — evoUnique.ts 는 combat.ts 를 import 하지 않는다)
+// 진화체 고유 능력 장치가 쓰는 엔진 안쪽 동작 (GDD 8-7 1차, C.498 — evoUnique.ts 는 combat.ts 를 import 하지 않는다)
 registerEvoApi({
   spawnDraw: spawnEvoDraw,
   place: placeEvoBlock,

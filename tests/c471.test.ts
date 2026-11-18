@@ -86,7 +86,7 @@ describe('C.471 스택 = 걸린 쪽 체력 막대 위 작은 네모 (GDD 7-13)',
     expect(bv).toContain('hpBox.append(markRow, hp);');
     expect(bv).toContain("unit('bha-unit--foe', foeHeads, foe, enemyHp.root, foeMarks)");
     expect(bv).toContain("unit('bha-unit--me', meHeads, hero.root, playerHp.root, meMarks)");
-    expect(bv).toContain('marks.update(statusMarksOf(s));');
+    expect(bv).toContain('marks.update(statusMarksOf(s, bf.id));'); // C.498: 진화체 고유 능력 네모 이름 = 기반 종족 표기
     expect(bv).not.toContain('bha-kitstack');
     expect(bv).not.toContain('bha-kitbuff');
     // 화면은 걸린 쪽을 엔진 값(m.on)으로만 고른다 — 장치·초월자 id 분기 없음

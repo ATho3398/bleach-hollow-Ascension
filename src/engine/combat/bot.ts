@@ -72,7 +72,7 @@ function joinUse(s: CombatState, top: number): CombatInput | null {
   let best: { i: number; run: number } | null = null;
   for (const c of cells(s)) {
     if (c.b.kind === 'combo' || c.b.kind === 'liberation') continue;
-    if (evoSpecialOf(s.params, c.b.traitId)) continue; // 진화체 특수 블록은 붙이려고 쓰지 않는다 (C.495)
+    if (evoSpecialOf(s.params, c.b.traitId)) continue; // 진화체 특수 블록은 붙이려고 쓰지 않는다 (C.498)
     // 낭비가 큰 블록은 붙이려고 쓰지 않는다: 막기는 강적(강공격)이 없을 때만, 회복은 다쳤을 때만
     const role = c.b.kind === 'skill' ? roleOf(s, c.b) : null;
     if (role === 'guard' && hasPattern) continue;
@@ -118,7 +118,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   // 2. 콤보 블록·해방 블록은 바로
   const special = all.find((c) => c.b.kind === 'combo' || c.b.kind === 'liberation');
   if (special) return use(special);
-  // 2.5 진화체 특수 블록 (GDD 8-7 1차, C.495): 켜져 있으면 바로 (처형 블록은 블록 처형선 아래에서만 켜진다)
+  // 2.5 진화체 특수 블록 (GDD 8-7 1차, C.498): 켜져 있으면 바로 (처형 블록은 블록 처형선 아래에서만 켜진다)
   const evoSp = all.find((c) => evoSpecialOf(p, c.b.traitId) && evoSpecialUsable(s, c.b));
   if (evoSp) return use(evoSp);
   // 3. 소모품 (GDD 105장 수정 3): 회복약은 체력이 40% 아래면, 각성은 바로. 장비 발동(4): 쿨다운이 끝나면 바로

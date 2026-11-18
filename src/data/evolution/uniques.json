@@ -1,6 +1,6 @@
 {
   "provisional": true,
-  "_comment": "GDD 8-7 1차 구현(C.495, docs/drafts/evo-impl-1119.md): 4단계 진화체 고유 능력·특수 블록·해방(레스렉시온/만해) 변형·4단계 한 줄 특성. forms[진화체 id][종족] — 규칙(on·거르기·do)·늘 붙는 효과(passives)·스택/버프/충전/특수 블록 정의. 숫자 자리의 문자열 = balance.ts provisional.evoUniques.forms 같은 칸의 수치 키(해방 중이면 release 값). 장치 목록·쓰는 법 = src/data/evolution/uniques.ts 주석 + dev-log C.495",
+  "_comment": "GDD 8-7 1차 구현(C.498, docs/drafts/evo-impl-1119.md): 4단계 진화체 고유 능력·특수 블록·해방(레스렉시온/만해) 변형·4단계 한 줄 특성. forms[진화체 id][종족] — 규칙(on·거르기·do)·늘 붙는 효과(passives)·스택/버프/충전/특수 블록 정의. 숫자 자리의 문자열 = balance.ts provisional.evoUniques.forms 같은 칸의 수치 키(해방 중이면 release 값). 장치 목록·쓰는 법 = src/data/evolution/uniques.ts 주석 + dev-log C.498",
   "traits": {
     "aspd10": { "effect": "attackSpeed", "name": { "*": "공격 속도 강화" }, "description": { "*": "공격 속도가 오른다." } },
     "crit6": { "effect": "crit", "name": { "*": "치명 강화" }, "description": { "*": "일반 공격 치명타 확률이 오른다." } },

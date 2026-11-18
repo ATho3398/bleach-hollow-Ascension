@@ -2018,7 +2018,7 @@ export function artTierIndexOf(t: Pick<SaveData, 'evolution' | 'factionId'>): nu
 /** 아란칼화 / 참백도 구상화 도전 가능 여부 (GDD 126장 3): 4단계(liberation.minTierIndex)부터, 이번 생에 아직 안 깼고, 사망이 아님 */
 export function ascensionAccess(save: Pick<SaveData, 'evolution' | 'nest'> & Partial<Pick<SaveData, 'factionId'>>): { ok: true } | { ok: false; reason: 'tier' | 'done' | 'dead' | 'none' } {
   if (save.evolution.ascended) return { ok: false, reason: 'done' };
-  // 해방 없음 진화체 (GDD 8-7 프레네시, C.495): 도전 자체가 없다(칸을 숨긴다)
+  // 해방 없음 진화체 (GDD 8-7 프레네시, C.498): 도전 자체가 없다(칸을 숨긴다)
   if (save.factionId && evoReleaseBlocked(save.evolution.formId, save.factionId)) return { ok: false, reason: 'none' };
   if (save.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex) return { ok: false, reason: 'tier' };
   if (careBlock(save)) return { ok: false, reason: 'dead' };
@@ -3251,7 +3251,7 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
 function sanitizeLoadout(raw: unknown, tierIndex: number, rebirths: unknown): AbilityLoadout {
   const e = { tierIndex };
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof AbilityLoadout, unknown>>;
-  const validId = (id: string) => /^(el4?:[a-z]+(\+[a-z]+)*|uniq:[a-z0-9]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>. C.226: 4단계 몫 el4:, uniq:fail4
+  const validId = (id: string) => /^(el4?:[a-z]+(\+[a-z]+)*|uniq:[a-z0-9]+|evo:[A-Za-z0-9]+)$/.test(id); // C.225: 성향·물공 특성 없음, 융합은 el:<속성>+<속성>. C.226: 4단계 몫 el4:, uniq:fail4. C.498: 4단계 한 줄 특성 evo:<키> (GDD 8-7 1차 — 새 id 종류, 구조 그대로)
   const ownedRaw = isRec(r.owned) ? r.owned : {};
   const ownedAb = Object.fromEntries(Object.entries(ownedRaw).filter(([id, v]) => validId(id) && typeof v === 'number' && Number.isFinite(v) && v > 0)) as Record<string, number>;
   const tier4Ever = r.tier4Ever === true || e.tierIndex >= 3; // GDD 151장 2: 4단계 진화를 한 번이라도 했다(칸 +1)

@@ -1,4 +1,4 @@
-// C.495 진화체 고유 능력 1차 (GDD 8-7, docs/drafts/evo-impl-1119.md): 공용 장치(규칙·조건·효과 종류) · 4단계 한 줄 특성 · 처형 '소멸선' · 견본 백련·노도
+// C.498 진화체 고유 능력 1차 (GDD 8-7, docs/drafts/evo-impl-1119.md): 공용 장치(규칙·조건·효과 종류) · 4단계 한 줄 특성 · 처형 '소멸선' · 견본 백련·노도
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
@@ -563,5 +563,35 @@ describe('공용 장치 (다음 세션용 — 효과 종류마다)', () => {
     expect(d(mx) / d(plain)).toBeCloseTo(2, 5);
     const avg = mk({ playerStats: stats, evo: evoOf({ description: 'd', passives: [{ stat: 'offenseBasic', value: 2 }] }) });
     expect(d(avg) / d(mk({ playerStats: stats }))).toBeCloseTo(1.5, 5);
+  });
+});
+
+describe('세이브·화면·봇', () => {
+  it('4단계 한 줄 특성 id(evo:) 는 저장·불러오기로 남는다 (구조 그대로, 형식 그대로)', async () => {
+    const { newSaveData, writeSave, loadSave } = await import('../src/game');
+    const mem = new Map<string, string>();
+    const st = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) };
+    const s = newSaveData('shinigami', 1);
+    s.evolution.tierIndex = 3;
+    s.evolution.formHistory = ['t2:base', 't3:normal', 't4:normal:physical'];
+    s.evolution.formId = 't4:normal:physical';
+    s.evolution.abilities = { owned: { 'evo:aspd10': 1 }, equipped: ['evo:aspd10'], slots: 2, tier4Ever: true };
+    expect(writeSave(st, s)).toBe(true);
+    expect(loadSave(st)?.evolution.abilities?.owned).toEqual({ 'evo:aspd10': 1 });
+  });
+  it('상태 화면 줄: 고유 능력·특수 블록·만해 (수치는 balance 로 채움)', async () => {
+    const { evoUniqueLines } = await import('../src/ui/evolutionPanel');
+    const lines = evoUniqueLines('t4:water:physical', 'shinigami', '만해');
+    expect(lines.map((l) => l.label)).toEqual(['고유 능력', '특수 블록', '만해']);
+    expect(lines[0]!.text).toContain('+4%p');
+    expect(lines[1]!.text).toContain('「노도 연격」');
+    expect(lines[2]!.text).toContain('8초');
+    expect(evoUniqueLines('t4:normal:physical', 'hollow', '레스렉시온')).toEqual([]);
+  });
+  it('봇은 켜진 특수 블록을 바로 쓴다', async () => {
+    const { botInput } = await import('../src/engine/combat');
+    const s = mk({ evo: evoParamsOf(getForm('t4:water:physical'), 'shinigami')! });
+    s.tray.push(blk(), { uid: uid++, kind: 'skill', traitId: 'evo:rush', family: null, element: null, solo: true });
+    expect(botInput(s)).toEqual({ type: 'use', cell: 1 });
   });
 });

@@ -587,7 +587,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
     params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + critChance;
     params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + critChance;
   }
-  // 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.495): 진화체 × 종족(전투 기반) 데이터. 해방 없음 진화체는 해방 자체를 막는다
+  // 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.498): 진화체 × 종족(전투 기반) 데이터. 해방 없음 진화체는 해방 자체를 막는다
   params.evo = evoParamsOf(form, factionId);
   if (evoReleaseBlocked(form?.id, factionId)) {
     params.liberationEnabled = false;
@@ -614,7 +614,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   }
 }
 
-/** 진화체 × 종족 고유 능력 전투 재료 (GDD 8-7 1차, C.495): 4단계 진화체 데이터(uniques.json)에 ability 가 있을 때만. 수치 = balance evoUniques.forms */
+/** 진화체 × 종족 고유 능력 전투 재료 (GDD 8-7 1차, C.498): 4단계 진화체 데이터(uniques.json)에 ability 가 있을 때만. 수치 = balance evoUniques.forms */
 export function evoParamsOf(form: FormDef | undefined | null, factionId: string): EvoParams | null {
   if (!form || form.tier < 4) return null;
   const ability = evoFormEntry(form.id, factionId)?.ability;
@@ -647,7 +647,7 @@ export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: numb
 /** 레스렉시온/만해(고유 해방)를 쓸 수 있는가 (GDD 126장 3): 아란칼화 / 참백도 구상화를 깬 생 */
 export function hasUniqueLiberation(e: Pick<EvolutionState, 'ascended' | 'formId'>, factionId?: string): boolean {
   if (e.ascended !== true) return false;
-  // 해방 없음 진화체 (GDD 8-7 프레네시, C.495)
+  // 해방 없음 진화체 (GDD 8-7 프레네시, C.498)
   if (factionId && evoReleaseBlocked(e.formId, factionId)) return false;
   // GDD 198장: 종족 설정 liberation.formKey 칸이 없는 진화체는 깨도 고유 해방 없음(사신 둔도 — 한정 해제 그대로)
   if (!factionId) return true;

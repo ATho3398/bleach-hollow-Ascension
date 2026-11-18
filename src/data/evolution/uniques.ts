@@ -1,7 +1,7 @@
-// 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성 (GDD 8-7 1차 구현, C.495 — docs/drafts/evo-impl-1119.md).
+// 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성 (GDD 8-7 1차 구현, C.498 — docs/drafts/evo-impl-1119.md).
 // 데이터 = uniques.json(진화체 id × 종족: 규칙·조건·효과 종류), 수치 = BALANCE.provisional.evoUniques(같은 키 — 해방 중 값은 release). 엔진(src/engine/combat/evoUnique.ts)은
 // 장치(규칙·조건·효과 종류)만 알고 진화체·종족 id 로 분기하지 않는다. 3번째 종족은 forms[id] 에 그 종족 칸을 더하면 된다.
-// 쓰는 법(다음 세션): docs/dev-log.md C.495 소절 '장치 목록'. 새 진화체 = forms 에 칸 하나 + balance forms 에 수치 하나.
+// 쓰는 법(다음 세션): docs/dev-log.md C.498 소절 '장치 목록'. 새 진화체 = forms 에 칸 하나 + balance forms 에 수치 하나.
 import { BALANCE } from '../../config/balance';
 import { pickFaction, type PerFaction } from '../schema';
 import raw from './uniques.json';

@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
+export const BALANCE_VERSION = 147; // C.498 (GDD v6.130 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
+// 이전: BALANCE_VERSION 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
 // 이전: BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
 // 이전: BALANCE_VERSION 144; // C.476 (GDD v6.106 7절·12-4, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안 provisional): 블록 모션 기준 길이 combat.motion.blockLength { default [0.8, 1.0, 1.2]초(1/2/3체인), byTier {} } 신설 — 모든 몸의 블록 몸동작을 이 길이로(타격 시각 같은 배율), 아이젠 fragor.weight 0.35 → 0.6 · kyoka.counter.windowSeconds 0.5 → 0.8. 적 수치 그대로.
 // 이전: BALANCE_VERSION 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
@@ -568,7 +569,7 @@ export const BALANCE = {
       /** 노멀 특성 '단련': 블록(스킬 블록) 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) */
       tempering: { per: 0.08, max: 0.8 },
     },
-    // ── C.495 (GDD 8-7 1차 구현, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성.
+    // ── C.498 (GDD 8-7 1차 구현, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성.
     //    장치·규칙은 src/data/evolution/uniques.json(진화체 id × 종족), 수치는 여기. forms[진화체 id][종족] = { 수치 키: 값, release: { 키: 레스렉시온/만해 중 값 } } ──
     evoUniques: {
       /** 4단계 한 줄 특성: 받으면 영구(환생해도), 해방해도 그대로 (GDD 8-6). obliteration '소멸선' = 허무형 대표 특성(그 밖 진화체가 가지면 weak 값) */

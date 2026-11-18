@@ -25,7 +25,7 @@ export interface FormAbilities {
   phys: { element: string; def: PhysElementDef } | null;
   /** 물공 특성 (그 블록과 짝인 특성): 진화체가 줄 때는 phys 의 속성, 장착 칸에서는 낀 것만 */
   physAbilities: string[];
-  /** 4단계 한 줄 특성 (GDD 8-7 1차, C.495 — uniques.json traits 키, id evo:<키>). home = 지금 진화체가 이 특성을 대표로 주는 진화체(처형 특성 센 값) */
+  /** 4단계 한 줄 특성 (GDD 8-7 1차, C.498 — uniques.json traits 키, id evo:<키>). home = 지금 진화체가 이 특성을 대표로 주는 진화체(처형 특성 센 값) */
   evoTraits?: { key: string; home: boolean }[];
 }
 
@@ -73,7 +73,7 @@ const elPrefix = (tier: number) => (tier >= 4 ? 'el4' : 'el');
  * (융합·허무형은 속성 여럿을 한 특성으로, 4단계는 el4). 성향 특성은 받지 않는다. 없으면 null
  */
 export function representativeAbility(form: FormDef, factionId?: string): { id: string; scale: number } | null {
-  // 4단계 한 줄 특성 (GDD 8-7 1차, C.495): 진화체 × 종족 데이터에 특성이 있으면 그것이 4단계 대표 특성(el4:)을 대신한다
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.498): 진화체 × 종족 데이터에 특성이 있으면 그것이 4단계 대표 특성(el4:)을 대신한다
   const evoTrait = factionId ? evoFormEntry(form.id, factionId)?.trait : undefined;
   if (evoTrait && evoTraitDef(evoTrait)) return { id: `evo:${evoTrait}`, scale: 1 };
   const key = kindSlot(form.label.kind).ability?.[String(form.tier)];
@@ -310,7 +310,7 @@ export function abilityEffectsOf(fa: FormAbilities): { effects: AbilityEffects; 
       case 'mutation': fx.mutation = { dealt: (fx.mutation?.dealt ?? 0) + v.dealtBonus!, taken: (fx.mutation?.taken ?? 0) + v.takenReduction! }; break;
     }
   }
-  // 4단계 한 줄 특성 (GDD 8-7 1차, C.495): 효과 종류는 uniques.json, 수치는 balance evoUniques.traits
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.498): 효과 종류는 uniques.json, 수치는 balance evoUniques.traits
   for (const { key, home } of fa.evoTraits ?? []) {
     const def = evoTraitDef(key);
     if (!def) continue;
@@ -430,7 +430,7 @@ export function abilityLines(fa: FormAbilities, factionId: string): AbilityLine[
     const { effects, critChance } = abilityEffectsOf({ ...none, elements: fa.elements });
     lines.push({ slot: '속성', name: fa.elements.map((x) => elementAbilityName(x.element, factionId, x.tier4)).join('·'), description: effectSummary(effects, critChance) });
   }
-  // 4단계 한 줄 특성 (GDD 8-7 1차, C.495): 전용 칸 줄로
+  // 4단계 한 줄 특성 (GDD 8-7 1차, C.498): 전용 칸 줄로
   for (const t of fa.evoTraits ?? []) {
     const def = evoTraitDef(t.key);
     if (!def) continue;

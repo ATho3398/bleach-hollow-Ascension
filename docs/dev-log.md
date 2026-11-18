@@ -4307,3 +4307,24 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
   | 안 뽑히는 진화체 | 없음 | 없음 |
   - 봇은 구급상자를 쓰지 않아 한 번 지면 빈사가 풀리지 않고, 미루기도 안 해서 4단계 진화 때 나다가 잦다(사람은 빈사를 치료) — 보고만, 조정 없음(진화체 밸런스는 구성이 다 끝난 뒤, 8-7).
 - 테스트: 새 `tests/c497.test.ts` 14개 + 옛 허무형 테스트(c56·evolution) 새 조건으로. 캡처 `docs/captures/c497/`(1배, `scripts/c497-proof.cjs`): 01 창 PC 844×390 · 02 창 폰 796×384 · 03 미루기 뒤 둥지 · 04 다음 귀환 때 다시 묻는 창 · proof.json(Esc 로 안 닫힘·미루기 뒤 단계 2·미루기 1·로그 1).
+
+## C.498 — 진화체 고유 능력 공용 장치 · 4단계 한 줄 특성 · 처형 '소멸선' · 견본 백련·노도 (GDD v6.130 8-7·8-8, S-23, 코딩312)
+사용 모델: Opus 5.5. 세이브 형식 그대로(92), BALANCE 146 → 147.
+- 사용자 원문(11-19): "일단 지금 진화체 정한것들은 먼저 구현해. 나머지도 저쪽 세션에서 정해서 넘겨줄게". 지시 근거 `docs/drafts/evo-impl-1119.md` 4절 '코딩312'.
+- **데이터 = 진화체 id × 종족** `src/data/evolution/uniques.json`(forms[id][종족] = { trait, ability, release, extraPetSlots }), **수치** `balance.ts provisional.evoUniques`(forms[id][종족] = { 키: 값, release: { 키: 레스렉시온/만해 중 값 } }, traits[키]). 숫자 자리의 문자열 = 수치 키. 엔진 `src/engine/combat/evoUnique.ts` 는 규칙만 본다(종족·진화체 분기 없음), 데이터 검사 `validateEvoUniques`(로드 때 + 테스트).
+- **장치 목록(다음 세션 314·315 는 데이터·수치만)** — 규칙 = `{ on, 거르기, do[], proc }`, 늘 붙는 효과 = `passives[{ stat, value, per, max, when, need }]`:
+  - on: start · basicPre · basic(every = 평타 n대) · blockPre · block(crit·echo·chain·minChain·element·kind·streak{count,withinSeconds}) · spawn(element void = 허 블록) · every(seconds, need 가 참인 동안만 시계가 감) · timer · releaseStart · releaseEnd · shieldHit · shieldBreak · special · kill. when release/normal, need[{stack|buff|charge|special, atLeast/below, barFull, shield, elite}].
+  - do: add·mul·clear·consume(스택, 정의 max·seconds(스택마다 따로)·on self/foe·overflow cap/reset·carry 원정 유지·mark 네모) · buff(seconds, refresh replace/max/add) · charge(다음 평타 n회, amount = chargeValue) · spawn(draw = 평소 출현표 허 제외 / 특수 블록 id) · shield(cap)·shieldCut · blockMult·blockFlat(평타 n회분)·blockCrit · basicMult·forceCrit·ignoreDef · hit(basis basic/block/last/raw/void, element) · basics(평타 n회 즉시 +bonus, 카운터 안 셈) · heal(of damage/maxHp) · echo(잔상, 잔상은 안 남김) · absorb · useSpecial · timer·timerCut · execute.
+  - per: chain·consumed·amount·damage·bar·bar:<속성>·lostHpPct·shieldPct·risk·stack:·buff:·charge:·chargeValue:. stat: basicPower·blockPower·dealt·attackSpeed·interval·intervalCut·crit·critDmg·blockCrit·petPower·execLine·execBlockLine·ignoreDef·offenseBasic/offenseBlock(1 높은 쪽·2 평균).
+  - 능력 칸: specials{ name, short, description, fixed(바 맨 앞 고정 n칸, 섞이지 않음)·keep(써도 남음)·usable execBlock·maxOnBar } · spawnRule voidOnly · releaseSeconds · releaseHpFloor · 진화체 칸 release 'none'(해방 버튼·아란칼화/구상화 도전 숨김) · extraPetSlots(훅 자리 `evoExtraPetSlots` — 펫 쪽 연결은 314).
+  - 4단계 한 줄 특성 효과: attackSpeed·crit·blockCrit·chainPower(chain)·offenseMax·execute — id `evo:<키>`, 진화체 × 종족 데이터에 trait 가 있으면 4단계 대표 특성(el4:)을 대신(`representativeAbility(form, 종족)`), 받으면 영구·세이브 검사 통과(`evo:` id 허용).
+- **처형 '소멸선'(두 종족 공용, 공화·나다의 대표 특성)**: 처형선 아래 평타 = 처형('처형!' 작은 글자, 런 로그 evo:처형!), 강적·보스는 그 아래 모든 피해 ×1.5. 허무형이 아닌 진화체가 가지면 5%·×1.3. 적 체력 막대에 세로선 두 개 = 평타선(흰 선 `--bha-text-1`) · 블록선(공허 색 `--bha-void`, execBlockLine). 처형 특수 블록(usable execBlock)은 블록선 아래 + 강적·보스 아님일 때만 켜짐(아니면 잠긴 모습).
+- **견본**: 사신 백련(특성 공속 +10% · 허 말고 저절로 안 생김 · 평타 4대 → 블록 1 · 바 블록 1개당 공속·평타 +3% · 만해 2대), 사신 노도(특성 치명 +6%p · 수 블록 → 5초 치명 +4%p ×5 스택마다 따로 · 평타 6회 → 「노도 연격」 평타 3회 즉시 +30% · 만해 8초·+6%p·치명 피해 +5%). 화면: 상태 화면 고유 능력·특수 블록·만해 줄, 전투 작은 글자(evo-proc)·스택 네모(GDD 7-13)·특수 블록 각인, 봇은 켜진 특수 블록을 바로 씀.
+- 판단(기획서 값 / 실제 값 / 이유):
+  - 노도 '치명 확률 +6%p' / 평타 치명만(블록 치명은 따로 blockCrit) / 니에블라가 '블록 치명'을 따로 적어 둘을 나눔. 고유 능력·특성 치명 + 는 상한도 같이 오름(45장 1번 치명 특성 규칙) — 주홍장 '상한 무시'가 저절로 맞음.
+  - 백련 '저절로 안 생김' / 생성 타이머 + 해방 순간 지급(3개) 둘 다 없음 / '평타가 블록을 만든다'는 몸이라. '바에 쌓인 블록 1개당' / 고정 특수 블록만 빼고 허 포함 전부.
+  - 노도 '평타 6회 적중' / 평타를 칠 때 셈, 연격 평타 3회는 안 셈 / 연격이 연격을 부르는 고리(실제 2배) 방지.
+  - 4단계 한 줄 특성 / 이번 패치 뒤 4단계 진화부터(이미 4단계인 세이브의 el4 는 그대로) / 세이브 형식을 올리지 않음(지시).
+  - 특수 블록 사용 / 해방 게이지 블록 1개분 / 콤보 블록과 같게. 원정 유지 스택 / `activeExpedition.evoCarry`(선택 칸, 형식 그대로) / 공화 '스택 원정 동안 유지'용.
+- 밸런스: `npm run balance:check` — (아래 결과 줄). 진화체 데이터가 백련·노도뿐이라 봇 전투 몸에는 영향 없음, 보정 없음.
+- 테스트: 새 `tests/c498.test.ts` 41개(데이터 검사·특성·처형·견본 2종·효과 종류마다·세이브·화면·봇) + c471 소스 문구 기준 1곳(`statusMarksOf(s, bf.id)`). 캡처 `docs/captures/c498/`(1배 PC 844×390, `scripts/c498-proof.cjs`): 01 백련 전투(블록 5 · 고유 능력 네모 +15 · '백련!') · 02 노도 전투(노도 3 스택 네모 · 「노도 연격」 블록 · '노도!') · 03 상태 화면 고유 능력·특수 블록·만해 줄 · 04 소멸선 처형선 두 개(8% 흰 선 · 20% 공허 색, 테스트 주입) + 처형 블록 켜짐 · proof.json.

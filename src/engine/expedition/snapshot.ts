@@ -162,7 +162,7 @@ function validShape(e: unknown): e is ExpeditionState {
   if (e.sortie !== undefined && !isStrArr(e.sortie)) return false;
   // 수련 게이지 (GDD 12-4 v6.069 이치고 무월수련, C.454): 없으면 0
   if (e.kitMastery !== undefined && !(isNum(e.kitMastery) && (e.kitMastery as number) >= 0)) return false;
-  // 진화체 고유 능력 원정 스택 (GDD 8-7 1차, C.495): 없으면 0
+  // 진화체 고유 능력 원정 스택 (GDD 8-7 1차, C.498): 없으면 0
   if (e.evoCarry !== undefined && !(isObj(e.evoCarry) && Object.values(e.evoCarry).every((v) => isNum(v) && (v as number) >= 0))) return false;
   if (e.sortieFinds !== undefined && !(Array.isArray(e.sortieFinds) && e.sortieFinds.every((f) => isObj(f) && typeof f.id === 'string' && isInt(f.lap, 1)))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;
