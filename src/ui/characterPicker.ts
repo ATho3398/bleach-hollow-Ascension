@@ -171,7 +171,7 @@ function lockArt(): HTMLElement {
   return box;
 }
 
-/** 카드 그림 (C.502·C.503 마스터 확인): 캐릭터 = 지금 진화 외형·스킨(합체 창과 같은 trackArt).
+/** 카드 그림 (C.502·C.504 마스터 확인): 캐릭터 = 지금 진화 외형·스킨(합체 창과 같은 trackArt).
  *  초월자 = 그 초월자 자기 그림만 — 지금 입은 초월자 모델(인간형 스킨·초월자 외형, 예 이치고 천년혈전 '혈쇄' 종이인형 = 방과 같은 정지 그림)에 진짜 그림이 있으면 그것,
  *  아니면 데이터 art·조각 모델(transcendentArt), 그것도 없으면 자리 표시 아이콘. 진화체 그림을 빌려 보이지 않는다 */
 function cardArt(t: Track): HTMLElement {
