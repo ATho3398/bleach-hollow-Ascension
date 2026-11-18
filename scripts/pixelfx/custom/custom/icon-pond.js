@@ -7,9 +7,9 @@ import { mist } from "./icon-mist.js";
 import { ICON } from "./_icon.js";
 export const meta = { name: "Icon: misty pond", desc: "A little night scene filling a 48px square: moon, far bank, a pond with ripples, mist lying over the water.", tags: ["icon", "pond", "mist", "water", "scene"], ...ICON, fps: 2, duration: 12, loop: true,
   options: { palette: ["#070b18", "#0e1a30", "#16304a", "#22506e", "#357a96", "#5aa6bc", "#c8eef2", "#f2ffff"], seed: 5, drops: 0 } };
-const HZ = -3; // 물가(수평선) 높이
+const HZ = 10; // 물가(수평선) 높이 — 05:2x "연못 비중 반으로 줄이고 밤하늘 늘려. 늘어난 하늘 부분에 안개를 그려" (−3 → 10: 연못 27칸 → 14칸)
 export function create(o) {
-  const C = fit(o.palette, 8), S = o.seed, rp = chain([{ fx: ripples, x: -5, y: 13, palette: o.palette }])(o);
+  const C = fit(o.palette, 8), S = o.seed, rp = chain([{ fx: ripples, x: -5, y: 19, palette: o.palette }])(o);
   let t = 0;
   const shore = (x) => HZ - 2 - Math.round(2.5 * rand(S, Math.floor((x + 24) / 3), 7) + 1.5 * rand(S, Math.floor((x + 24) / 7), 8));
   return {
@@ -27,10 +27,10 @@ export function create(o) {
         if (k > 0.55 && (Math.floor(x + ph) % 11) < 2 + k * 5 && d > 0.08) return d < 0.5 ? C[4] : C[3];
         return d + (bayer(x, y) - 0.5) * 0.18 < 0.28 ? C[3] : d < 0.7 ? C[2] : C[1];
       });
-      for (let y = HZ + 2; y < 22; y += 2) { const w = 1 + rand(S, y, 30) * 2.4; p.line(13 - w, y, 13 + w, y, y < 6 ? C[6] : C[5], 0.8); } // 물에 비친 달빛
+      for (let y = HZ + 2; y < 23; y += 2) { const w = 1 + rand(S, y, 30) * 2.4; p.line(13 - w, y, 13 + w, y, y < HZ + 6 ? C[6] : C[5], 0.8); } // 물에 비친 달빛
       rp.draw(p);
-      // 물 위에 깔린 안개
-      mist(p, t, o, { wide: true, dy: -8, alpha: 0.68, drops: 0 });
+      // 늘어난 하늘과 물가에 걸쳐 깔린 안개
+      mist(p, t, o, { wide: true, dy: -3, alpha: 0.68, drops: 0 });
     },
   };
 }
