@@ -88,3 +88,46 @@ export function enableDragScrollY(root: HTMLElement, signal?: AbortSignal): void
     e.preventDefault();
   }, { capture: true, signal });
 }
+
+/** 가로 끌어서 넘기기 — 모든 포인터 (C.498 캐릭터 변경 카드 줄, GDD 12-1): enableDragScrollY 의 가로판. 세로 폰은 화면을 90° 돌려 보여 주므로(GDD 14절)
+ *  브라우저 기본 스크롤 대신 기기 안 좌표(pointerLocal)로 잰다. 6px 넘게 끌면 그 뒤 클릭(카드 누름)을 한 번 먹는다. PC 휠(세로 굴림) = 가로로 넘김 */
+export function enableDragScrollX(root: HTMLElement, signal?: AbortSignal): void {
+  root.style.touchAction = 'none';
+  let start: { x: number; left: number; id: number } | null = null;
+  let moved = false;
+  root.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    start = { x: pointerLocal(e).x, left: root.scrollLeft, id: e.pointerId };
+    moved = false;
+  }, { signal });
+  root.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const dx = pointerLocal(e).x - start.x;
+    if (!moved && Math.abs(dx) < 6) return;
+    if (!moved) {
+      try {
+        root.setPointerCapture?.(e.pointerId);
+      } catch {
+        /* 잡기 실패해도 move 는 온다 */
+      }
+    }
+    moved = true;
+    root.scrollLeft = start.left - dx;
+  }, { signal });
+  const end = (e: PointerEvent) => {
+    if (start && e.pointerId === start.id) start = null;
+  };
+  root.addEventListener('pointerup', end, { signal });
+  root.addEventListener('pointercancel', end, { signal });
+  root.addEventListener('click', (e) => {
+    if (!moved) return;
+    moved = false;
+    e.stopPropagation();
+    e.preventDefault();
+  }, { capture: true, signal });
+  root.addEventListener('wheel', (e) => {
+    if (root.scrollWidth <= root.clientWidth || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    root.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false, signal });
+}

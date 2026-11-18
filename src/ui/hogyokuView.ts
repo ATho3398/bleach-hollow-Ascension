@@ -378,7 +378,7 @@ export function tracksInFactionOrder(save: SaveData): Pick<SaveData, TrackKey>[]
 }
 
 /** 캐릭터 그림 (방 그림과 같은 규칙 — 진화 외형·스킨 포함). 그림이 없으면 아이콘 */
-function trackArt(t: Pick<SaveData, TrackKey>): HTMLElement {
+export function trackArt(t: Pick<SaveData, TrackKey>): HTMLElement {
   const f = getFaction(t.factionId);
   const art = heroArtOf(roomOf(f), t.factionId, artTierIndexOf(t), artSkinOf(t));
   const box = h('span', 'bha-dexart');
