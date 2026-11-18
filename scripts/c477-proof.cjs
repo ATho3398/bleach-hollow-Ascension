@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c477'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c478'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });

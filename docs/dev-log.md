@@ -4159,3 +4159,10 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - '지옥나비'는 사신 쪽 골드 펫 이름이라(호로는 뼈 까마귀) 그림도 종족 설정으로: `petArt`(펫 id → 그림 키, 선택) 추가 — `shinigami.json` `"pet-gold": "pet.hell-butterfly"`. `petArtSrc`·`petArt`·`petBuddy`·`petCardArt` 가 종족 설정을 받는다(방·원정·전투·가방·장비 화면). 호로와 다른 펫은 그대로 아이콘 원.
 - 그림 펫은 48px(`--bha-sp-10`) 1배·`image-rendering: pixelated`(아이콘 원은 28px 그대로).
 - 테스트 `tests/c477.test.ts` 3건. 캡처 `docs/captures/c477/` 01 사신 방(지옥나비) · 02 호로 방(뼈 까마귀 아이콘 그대로). 수치·세이브 변경 없음.
+
+## C.478 — 뼈 까마귀 펫 그림 · 지옥나비 꼬리 길게 (GDD v6.109 9-4, S-23)
+- 사용자 2026-11-18 "나비 꼬리만 더 길게 빼고, 호로 뼈 까마귀도 ㄱㄱ".
+- 지옥나비: 뒷날개 꼬리 길이 +5칸(그림 키 36×43칸). 날개를 접은 컷에서 가는 꼬리가 끊기던 것 고침(한 칸 안을 세 번 봄).
+- 뼈 까마귀: 픽셀FX 새(critters/bird)를 검은 몸 + 뼈 가면 머리·긴 뼈 부리·붉은 눈으로 바꾼 `custom/bone-crow`(제자리 날갯짓 2.4초) → `public/art/pet-bone-crow.webp`(48×48, 36장 · 67ms). `hollow.json` `petArt` `"pet-gold": "pet.bone-crow"`.
+- 펫 그림 뽑는 도구 `scripts/pixelfx/pet-art.py`(시트 → 불투명 도트만 → 48×48 움직이는 webp).
+- 테스트 `tests/c477.test.ts` 갱신. 캡처 `docs/captures/c478/` 01 사신 방 · 02 호로 방. 수치·세이브 변경 없음.
