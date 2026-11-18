@@ -63,7 +63,7 @@ function mountBlockSheet(root: HTMLElement, faction: (typeof FACTIONS)[number]):
       { chain: [make(v2AttackKind('fire'), b.path, b.abbr, b.abbr, { pips: 2 }), make(v2AttackKind('fire'), b.path, b.abbr, b.abbr, { pips: 2 })], level: 2 },
       { block: make(v2AttackKind('thunder'), c.path, c.abbr, c.abbr, { weak: true }) },
       { block: make('heal', V2_PATH.heal, V2_GLYPH.heal, '회복') },
-      { block: make('void', V2_PATH.void, V2_GLYPH.void, '공허') },
+      { block: make('void', V2_PATH.void, V2_GLYPH.void, '폭주') },
     ]),
     bar('속성', [
       ...(['normal', 'fire', 'thunder', 'water', 'earth', 'poison', 'blood', 'kyo'] as const).slice(0, 8).map((e) => ({ block: make(v2AttackKind(e), a.path, a.abbr, e) })),

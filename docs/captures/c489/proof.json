@@ -1,0 +1,70 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-aizen-rail-hogyoku-kyoka.png",
+    "02-pc-training-out-nest.png",
+    "03-phone-training-out-nest.png",
+    "04-phone-void-block-frenzy.png"
+  ],
+  "facts": {
+    "aizen": {
+      "table": [
+        [
+          "kyoka",
+          0.1162
+        ],
+        [
+          "kido",
+          0.7138
+        ],
+        [
+          "hogyoku",
+          0.17
+        ]
+      ],
+      "tray": [
+        "kido",
+        "kido",
+        "hogyoku",
+        "kido",
+        "kyoka"
+      ],
+      "uidsUsed": 6,
+      "legend": "붕옥 융합 붕옥 감응도 20붕옥 융합공격"
+    },
+    "training-pc": [
+      "시작: bha-room.bha-room--home",
+      "수련장: bha-lcdpage.bha-practicepage",
+      "전투 들어가기(적 설정 창): none",
+      "창 [나가기]: bha-lcdpage.bha-practicepage",
+      "뒤로: bha-room.bha-room--home",
+      "수련장(2번째): bha-lcdpage.bha-practicepage",
+      "적 [확인] = 싸움: none",
+      "뒤로(일시정지): none",
+      "[그만두기]: bha-lcdpage.bha-practicepage",
+      "뒤로: bha-room.bha-room--home"
+    ],
+    "training-phone": [
+      "시작: bha-room.bha-room--home",
+      "수련장: bha-lcdpage.bha-practicepage",
+      "전투 들어가기(적 설정 창): none",
+      "창 [나가기]: bha-lcdpage.bha-practicepage",
+      "뒤로: bha-room.bha-room--home",
+      "수련장(2번째): bha-lcdpage.bha-practicepage",
+      "적 [확인] = 싸움: none",
+      "뒤로(일시정지): none",
+      "[그만두기]: bha-lcdpage.bha-practicepage",
+      "뒤로: bha-room.bha-room--home"
+    ],
+    "void": {
+      "legend": [
+        "폭주",
+        "폭주"
+      ],
+      "voidBlocks": [
+        "폭주|폭폭주",
+        "폭주|폭폭주"
+      ]
+    }
+  }
+}

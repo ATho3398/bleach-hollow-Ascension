@@ -41,7 +41,7 @@ function frenzyFight(): string[] {
     `받는 피해 ${multPct(RX.frenzyDamageTaken)}`,
     `적 공격 ${pct(RX.frenzyEvadeChance)} 회피`,
     '회복 물건 사용 불가',
-    `공허 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
+    `폭주 블록 확률 +${pct(RX.breakthroughSpawnBonus)}p`,
   ];
 }
 function frenzyReturn(f: Names): string[] {
@@ -66,7 +66,7 @@ export function riskText(f: Names): RiskText {
       fixParticles(`${RX.limit}이(가) 되면 그 모험 끝까지 ${f.frenzyName} 상태다(모험당 1번)`),
     ],
     riskUp: [
-      numLine('공허 블록 1개 사용', signed(RX.perVoidBlock)),
+      numLine('폭주 블록 1개 사용', signed(RX.perVoidBlock)),
       // 계산식 대신 쉬운 말 + 대표 값 (GDD 168장 3): 뜻은 absorbRisk·lateLapRisk 그대로
       numLine(`적 ${f.absorbActionName}`, '강한 적일수록 많이 오른다', `일반 적 약 ${signed(absorbAt(CX.enemyHpInAttacks.normal))}`, `강적 약 ${signed(absorbAt(CX.enemyHpInAttacks.elite))}`),
       numLine(`일부만 ${f.absorbActionName}`, `블록만 그${pct(m.trait.risk)}`, `능력치만 그 ${pct(m.stat.risk)}`),

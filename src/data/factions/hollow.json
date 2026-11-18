@@ -125,7 +125,7 @@
   "rankWinText": "{rank}의 번호를 빼앗았다!",
   "rankLoseText": "패배… 번호가 한 칸 내려갔다.",
   "skillBlockName": "기술 블록",
-  "voidBlockName": "공허 블록",
+  "voidBlockName": "폭주 블록",
   "chainName": "체인",
   "roleNames": {
     "attack": "공격",

@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 144; // C.476 (GDD v6.106 7절·12-4, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안 provisional): 블록 모션 기준 길이 combat.motion.blockLength { default [0.8, 1.0, 1.2]초(1/2/3체인), byTier {} } 신설 — 모든 몸의 블록 몸동작을 이 길이로(타격 시각 같은 배율), 아이젠 fragor.weight 0.35 → 0.6 · kyoka.counter.windowSeconds 0.5 → 0.8. 적 수치 그대로.
+export const BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
+// 이전: BALANCE_VERSION 144; // C.476 (GDD v6.106 7절·12-4, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안 provisional): 블록 모션 기준 길이 combat.motion.blockLength { default [0.8, 1.0, 1.2]초(1/2/3체인), byTier {} } 신설 — 모든 몸의 블록 몸동작을 이 길이로(타격 시각 같은 배율), 아이젠 fragor.weight 0.35 → 0.6 · kyoka.counter.windowSeconds 0.5 → 0.8. 적 수치 그대로.
 // 이전: BALANCE_VERSION 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
 // 이전: BALANCE_VERSION 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
 // 이전: BALANCE_VERSION 141; // C.452 (GDD v6.066 12-4, 사용자 2026-11-14): 아이젠 hogyoku.voidSlot.voidScale 0.5 → 1(order 0), kyoka weight 0.1 삭제 → voidSlot { voidScale 1, order 1 }(허 공식으로 따로 굴림), evadeBuff { seconds 3 · critChance 0.2 · critDamage 0.3 provisional } 신설. 그 전 140 — C.448 (GDD v6.062 7절, 사용자): combat.motion 신설 — fastMax 1.5 · basic 0.6/0.3초 · block 1.4/0.8초(화면 없을 때 기본값). 블록 모션 중 평타 타이머 멈춤(처치 시간 늘어남, 재조정 안 함). 그 전 139 — C.447 (GDD v6.061 8절, 사용자 '옵션 = 간격 −n초'): abilities.aspd { attackSpeed 1.18 } → { attackSecondsCut 0.15 }, bspd { blockSpawn 1.2 } → { spawnSecondsCut 0.54 } (흡수 패시브 속도 값은 traits.json secondsCut).
@@ -201,16 +202,17 @@ export const BALANCE = {
          *  다시 회피하면 3초를 새로 셈. 융합 중엔 회피가 없어 안 붙음. critDamage 0.3 = 마스터 추천안 provisional */
         evadeBuff: { seconds: 3, critChance: 0.2, critDamage: 0.3 },
         blocks: {
-          /** 경화수월: 등장 = 허 블록 공식(voidChanceOf) × voidScale 1 — 블록마다 따로 굴림, 붕옥(order 0) 다음(order 1), 둘 다 안 걸리면 귀도 (v6.066 사용자 2026-11-14, 옛 고정 몫 weight 0.1 삭제)
+          /** 경화수월: 등장 = 고정 기본 몫 base 0.12 + 폭주 블록 공식(voidChanceOf) × voidScale 1 (C.489 GDD v6.121 사용자 2026-11-18 "경화수월 안나옴" — 12%는 마스터 추천안 provisional, 옛 공식만 = 기본 2%)
+           *  — 블록마다 따로 굴림, 붕옥(order 0) 다음(order 1), 둘 다 안 걸리면 귀도 (v6.066 사용자 2026-11-14, 옛 고정 몫 weight 0.1 삭제)
            *  · 레일 최대 2 · 기본 공격 ×1.6 · 반격 창 0.8초(C.476 v6.106 사용자 "ㅇㅇ 해" — 마스터 추천안 provisional, 옛 0.5초)(피해 ×1.5 · 치명 +30%p · 그 공격 손실 체력 50% 회복 — 즉시 재생성은 v6.050 삭제) */
-          kyoka: { weight: 0, voidSlot: { voidScale: 1, order: 1 }, maxOnRail: 2, power: 1.6, tiers: [1], counter: { windowSeconds: 0.8, damageMult: 1.5, critBonus: 0.3, healLostFraction: 0.5 } },
+          kyoka: { weight: 0, voidSlot: { base: 0.12, voidScale: 1, order: 1 }, maxOnRail: 2, power: 1.6, tiers: [1], counter: { windowSeconds: 0.8, damageMult: 1.5, critBonus: 0.3, healLostFraction: 0.5 } },
           /** 귀도: 1체인 ×1.2 · 2체인 ×2.0 · 3체인 ×3.2. 3체인마다 영창 +1, 스택당 생성 주기 −0.2초(최대 −1.0초), 5스택 → 다음 3체인 흑관 ×4.5 + 적 3초 공격 불능 */
           kido: { weight: 0.9, power: 1, tiers: [1.2, 2.0, 3.2], stack: { cutPerStack: 0.2, maxCut: 1.0, full: 5 }, finisher: { power: 4.5, enemyStunSeconds: 3 } },
           /** 프라고르(붕옥 융합 중 붕옥 블록 자리, v6.052): 1체인 ×2.4 · 2체인 ×3.6 · 3체인 울트라 프라고르 ×5.0. 융합 중 몫 0.6(귀도 0.9 와 나눔 — C.476 v6.106 사용자 "ㅇㅇ 해" 마스터 추천안 provisional, 옛 0.35 — 울트라 프라고르가 실제로 나오게). 쓰면 1블록마다 감응도 −riskCost 3(C.445, 옛 5) */
           fragor: { weight: 0.6, power: 1, tiers: [2.4, 3.6, 5.0], riskCost: 3 }, // C.445 사용자: 5 → 3 (3체인 −9) · C.476: 몫 0.35 → 0.6
-          /** 붕옥 블록(허 블록 자리, v6.052): 등장 = 허 블록 공식(voidChanceOf) × voidScale 1 = 허 블록과 똑같이(v6.066 사용자 2026-11-14, 옛 ×0.5 삭제), 먼저 굴림(order 0),
+          /** 붕옥 블록(폭주 블록 자리, v6.052): 등장 = 고정 기본 몫 base 0.15 + 폭주 블록 공식(voidChanceOf) × voidScale 1 (C.489 GDD v6.121 사용자 2026-11-18 "붕옥 존나 안나옴" — 15%는 마스터 추천안 provisional, 옛 v6.066 공식만), 먼저 굴림(order 0),
            *  감응도 100 이면 안 나옴(riskGain 이 있는 블록). 쓰면 패널티 없이 감응도 +riskGain 10. 피해 = 허 블록과 같은 기본 공격 1회분(power 1, 경직 없음 — 추천안). 융합 중엔 프라고르로 바뀐다 */
-          hogyoku: { weight: 0, power: 1, tiers: [1], voidSlot: { voidScale: 1, riskGain: 10, order: 0 } },
+          hogyoku: { weight: 0, power: 1, tiers: [1], voidSlot: { base: 0.15, voidScale: 1, riskGain: 10, order: 0 } },
         },
       },
       // 이치고 기본 모드 (GDD 12-4 v6.069, C.454 — 사용자 2026-11-14 설계, 수치 전부 마스터 추천안 provisional). 천년혈전 모드 [미정] — 수치 없음
@@ -268,7 +270,7 @@ export const BALANCE = {
     } as Record<string, { evadeChance?: number; evadeBuff?: { seconds: number; critChance: number; critDamage: number }; revive?: { hpFraction: number }; riskRelease?: { floor: number; minRisk: number };
       riskDrain?: { shotCost: number; tickSeconds: number; tickCost: number; mastery: { perBasic: number; perBlock: number; full: number; damageMult: number }; final: { stacks: number; power: number; perBlock: number }; bonusBlockEvery?: number };
       blocks: Record<string, {
-      weight: number; maxOnRail?: number; power: number; tiers: readonly number[]; riskCost?: number; voidSlot?: { voidScale: number; riskGain?: number; order: number };
+      weight: number; maxOnRail?: number; power: number; tiers: readonly number[]; riskCost?: number; voidSlot?: { base?: number; voidScale: number; riskGain?: number; order: number };
       chargeShot?: number; chainRiskCost?: readonly number[]; chainGauge?: readonly number[];
       counter?: { windowSeconds: number; damageMult: number; critBonus: number; healLostFraction: number };
       stack?: { cutPerStack: number; maxCut: number; full: number };

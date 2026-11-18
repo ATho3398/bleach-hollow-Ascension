@@ -66,7 +66,7 @@ export function statusBlock(faction: FactionConfig, s: StatusOpts): HTMLElement 
     withTip(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: Math.round(fullnessOf(s.hunger)), max: 100 }), 'hunger', faction.fullnessName, fullnessOf(s.hunger)), // 지금 구간 ◀ (GDD 159장 22)
     withTip(meter({
       kind: 'cond', label: '컨디션', icon: 'i-cond', value: Math.round(s.condition), max: 100,
-      danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 공허 블록 ↑' : undefined,
+      danger: s.condition < s.condWarn, note: s.condition < s.condWarn ? '나쁨: 전투에 폭주 블록 ↑' : undefined,
     }), 'cond', '컨디션', s.condition),
     withTip(meter({
       kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(s.risk), max: s.riskLimit,

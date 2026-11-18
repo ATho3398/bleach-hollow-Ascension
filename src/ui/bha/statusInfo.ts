@@ -80,13 +80,13 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       const cuts = [...new Set([0, max * 0.25, max * 0.5, max * 0.75, CP.tiredCondition + 1, max + 1].map(Math.round))].sort((x, y) => x - y);
       const zones: Zone[] = cuts.slice(0, -1).map((from, i) => {
         const to = cuts[i + 1]! - 1;
-        const fx = [`공허 블록 확률 +${range(voidAt(to), voidAt(from))}%p`];
+        const fx = [`폭주 블록 확률 +${range(voidAt(to), voidAt(from))}%p`];
         if (to <= CP.tiredCondition) fx.push(CARE_NAMES.tired);
         return { from, to, text: fx.join(' · ') };
       });
       return gaugeDoc(
-        `${a.sleep}(으)로 오르고, 낮을수록 전투에 공허 블록이 자주 나온다`,
-        [`모험 전투의 공허 블록 확률을 정한다(최대 +${pct(PX.conditionRiskBonusMax)}p)`],
+        `${a.sleep}(으)로 오르고, 낮을수록 전투에 폭주 블록이 자주 나온다`,
+        [`모험 전투의 폭주 블록 확률을 정한다(최대 +${pct(PX.conditionRiskBonusMax)}p)`],
         zones, value,
         [
           numLine(a.sleep, signed(NX.sleepCondition)),
