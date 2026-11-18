@@ -8,7 +8,7 @@ import { consumableGroupOf } from '../shop';
 import { gateOpen } from '../unlockGate';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { roomKeyOf, trackIdOf, trackNameOf, trackRulesOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { roomKeyOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
 import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -29,7 +29,7 @@ import { feedsLeft, foodEffectsNow, previewHomeHp, reviveEvLossOf } from '../eng
 import { confirmDialog } from './confirmDialog';
 import { createDock } from './bha/dock';
 import { careFeedback } from './bha/dockLogic';
-import { getFaction } from '../data/factions';
+import { CHARACTER_PICK_LABEL } from './characterPicker';
 import { playerElementsOf } from '../engine/evolution';
 
 export interface RoomHandlers {
@@ -40,6 +40,8 @@ export interface RoomHandlers {
   onStatus: () => void;
   /** 트랙 전환 (GDD 22-3): 쉬는 트랙 종족 id 로. 다른 트랙이 아직 안 열렸으면(5단계 전) null — 다른 종족으로 가는 유일한 길 (C.63) */
   onSwitchTrack: ((factionId: string) => void) | null;
+  /** ··· 더보기 [캐릭터 변경] 한 칸 (GDD 12-1 v6.129, C.497): 캐릭터 카드 창(호로·사신·연 초월자)을 연다. 늘 있다 — 아직 안 열린 종족은 창에서 자물쇠 카드 */
+  onCharacters: () => void;
   /** 붕옥 탭 (GDD 22-3): 열렸을 때만 독 더보기에 */
   onHogyoku: (() => void) | null;
   onSettings: () => void;
@@ -100,8 +102,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const items: SelectItem[] = [];
   let resumeBtn: HTMLButtonElement | null = null;
   // 환생 표시 (GDD 22-7): 환생했으면 이름(진화체 또는 단계 이름) 옆에 ★.
-  // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 한 칸('호로 트랙'/'사신 트랙', #9)
-  const others = hd.onSwitchTrack ? save.otherTracks : [];
+  // C.170 (GDD 100장 #8): 방 위 이름+[트랙 전환] 줄은 없앴다 — 이름은 상태 칩 위 작은 이름표, 트랙 전환은 ··· 더보기의 [캐릭터 변경] 한 칸 → 카드 창 (C.497, GDD 12-1)
   // 이름표 테 꾸밈(GDD 25-9)을 입었거나 환생·투트랙이면 이름표를 보인다 (공용 statusBox — 온천도 같은 것)
   const nameTag = statusNameTag(save, faction, !!hd.onSwitchTrack);
   // 빈사·사망 (GDD 177장 — 102-3·102-7 의 방 위 큰 안내 띠는 삭제): 상태는 머리 위 칩으로만, 남은 시간·푸는 법은 칩 ⓘ. 방 장면은 늘 같은 크기.
@@ -610,9 +611,8 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
       { label: '도움말', icon: 'i-help', onClick: hd.onHelp },
       { label: '사진', icon: 'i-frame', onClick: hd.onPhoto },
       { label: '다마고치', icon: 'i-nest', onClick: hd.onTamago },
-      // 트랙 전환 (GDD 22-3·100장 #8·#9): '사신 트랙'처럼 조사 없이 (종족 이름은 설정 파일)
-      // 초월자 (GDD 12-4 v6.028): '초월자 유하바하'처럼 종류 이름 + 초월자 이름 (트랙 종류 설정 label)
-      ...others.map((t) => ({ label: t.transcendentId ? `${trackRulesOf(t).label} ${trackNameOf(t)}` : `${getFaction(t.factionId).name} 트랙`, icon: 'i-swap', onClick: () => hd.onSwitchTrack!(trackIdOf(t)) })),
+      // 캐릭터 변경 (GDD 12-1 v6.129, C.497 사용자 "더보기에는 트랙 변경만 만들고"): 옛 '캐릭터마다 한 줄'(사신 트랙·초월자 ○○) 대신 한 칸 → 카드 창
+      { label: CHARACTER_PICK_LABEL, icon: 'i-swap', onClick: hd.onCharacters },
       // 붕옥 줄은 뺐다 (GDD 12-2 v6.016 사용자 "더보기에 붕옥 지워", C.426) — 들어가는 길 = 방 물건 붕옥뿐
       ...(hd.onTest ? [{ label: '테스트', icon: 'i-settings', onClick: hd.onTest }] : []),
       ...(hd.onBackup ? [{ label: '백업·불러오기', icon: 'i-deck', onClick: hd.onBackup }] : []),

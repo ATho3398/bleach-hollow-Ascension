@@ -118,6 +118,7 @@ import { battleItemEffectOf, consumableName, departFillBattleSlot, fillBattleSlo
 import { healBag } from './bha/healBag';
 import { toward } from './bha/nestLogic';
 import { shopPicker, shopView } from './shopView';
+import { characterPickerDialog } from './characterPicker';
 import { idleBadge, refreshIdleBadge, showAbsenceReturn, showIdlePanel, showIdleReturn } from './idleView';
 import { deleteTilePreset, ownedTileList, placementLimitOf, renameTilePreset, saveTilePreset, tilePresetsFor } from '../tilePresets';
 import { applyCosmetics } from './bha/cosmetics';
@@ -1425,6 +1426,12 @@ export function startApp(host: HTMLElement): void {
       // GDD 243장 8: 보상 없이 줄어든 것만이면 lossOnlyMinMinutes(1시간) 이상 비웠을 때만 — 10분마다 '배부름 −1' 창이 뜨지 않게
       afterTutorials(() => showAbsenceReturn(away.hours, loss), () => save === s && nav.top?.id === 'room');
     }
+    /** 캐릭터 전환 (GDD 12-1): 지금 캐릭터를 쉬게 하고 그 캐릭터로 — 방이 그 캐릭터로 바뀐다 */
+    const switchTo = (fid: string): void => {
+      if (!canSwitchFaction(s) || !switchTrack(s, fid)) return;
+      persist();
+      nestScreen(); // 트랙 전환 알림은 뺐다 (GDD 233장 5) — 방이 그 트랙으로 바뀐다
+    };
     roomView(dev, faction, s, {
       greet: greet ? 'hungry' : null,
       resume: active.ok
@@ -1446,13 +1453,12 @@ export function startApp(host: HTMLElement): void {
       onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
       // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리). 잠금 표시 없이 기본 = 훈련 인형, 본능 수련은 머리 제목 목록에서(4단계 전이면 자물쇠)
-      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },
+      // 훈련 인형을 누르면 바로 설정 창 (GDD 8-9 v6.129, C.497): 수련장 화면을 밑에 깔고 곧장 전투 + 적 설정 창 — 나가기 = 수련장(머리 제목 목록 그대로)
+      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); }); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
-      onSwitchTrack: canSwitchFaction(s) ? (fid) => {
-        if (!switchTrack(s, fid)) return;
-        persist();
-        nestScreen(); // 트랙 전환 알림은 뺐다 (GDD 233장 5) — 방이 그 트랙으로 바뀐다
-      } : null,
+      onSwitchTrack: canSwitchFaction(s) ? switchTo : null,
+      // 더보기 [캐릭터 변경] → 캐릭터 카드 창 (GDD 12-1 v6.129, C.497): 카드를 누르면 아래 전환 흐름 그대로
+      onCharacters: () => characterPickerDialog(s, switchTo),
       onHogyoku: s.hogyoku.tabOpen ? () => { resetHogyokuSel(); open('hogyoku', () => renderHogyoku(s)); } : null,
       onSettings: settingsOpener(true),
       onHelp: () => openHelp('nest', true),
@@ -2483,7 +2489,8 @@ export function startApp(host: HTMLElement): void {
     round(null);
   }
 
-  // ── 수련장 훈련 인형 (GDD 8-9, C.471): [전투 들어가기] → 적 설정 창 전투(테스트 전투와 같은 흐름). 둥지 빌드 그대로, 보상·사망·수련권 없음 ──
+  // ── 수련장 훈련 인형 (GDD 8-9, C.471): [전투 들어가기] → 적 설정 창 전투(테스트 전투와 같은 흐름). 둥지 빌드 그대로, 보상·사망·수련권 없음.
+  //    방 물건(훈련 인형)으로 들어오면 이 화면은 밑에만 깔리고 곧장 전투 + 창 (C.497) — 이 화면은 나가기·본능 수련 제목 토글로 올 때 보인다 ──
   function practiceScreen(faction: FactionConfig): void {
     practiceEntryView(root, faction, save?.runLog.battles.length ?? 0, { onEnter: () => practiceArena(faction), title: trainingHead(faction, 'practice') });
   }
