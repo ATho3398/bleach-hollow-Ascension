@@ -71,8 +71,14 @@ const mix=(a,b,k)=>a.map((v,i)=>Math.round(v*(1-k)+b[i]*k));
 function rr(x,y,x0,y0,n,r){x-=x0;y-=y0;if(!(x>=0&&x<n&&y>=0&&y<n))return false;const cx=Math.min(Math.max(x+.5,r),n-r),cy=Math.min(Math.max(y+.5,r),n-r);return (x+.5-cx)**2+(y+.5-cy)**2<=r*r;}
 function canvasOf(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),d=g.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const col=fn(x,y);if(col){const i=(y*w+x)*4;d.data[i]=col[0];d.data[i+1]=col[1];d.data[i+2]=col[2];d.data[i+3]=255;}}g.putImageData(d,0,0);return c;}
 function colorsOf(id){const e=ELS.find(v=>v[0]===id),c=rgb(e[2]);return id==='white'?{base:c,shade:[167,146,156],fill:[55,47,56]}:{base:c,shade:mix(c,DARK,.42),fill:mix(c,DARK,.8)};}
-function frameOf(id){const k='f'+id;if(cache[k])return cache[k];const C=colorsOf(id);
-  return cache[k]=canvasOf(N,N,(x,y)=>{if(!rr(x,y,0,0,N,R))return null;let l=3;for(const i of [1,2,3])if(!rr(x,y,i,i,N-2*i,R-i)){l=i-1;break;}return l===3?C.fill:l===2?C.shade:C.base;});}
+/* 블록 한 칸 = 바탕(둥근 사각형) → 그림(둥근 사각형 밖은 잘라 냄) → 테두리 3줄(맨 위). 그림은 테두리 뒤로 들어간다 */
+function layerOf(id,kind){const k=kind+id;if(cache[k])return cache[k];const C=colorsOf(id);
+  return cache[k]=canvasOf(N,N,(x,y)=>{if(!rr(x,y,0,0,N,R))return null;let l=3;for(const i of [1,2,3])if(!rr(x,y,i,i,N-2*i,R-i)){l=i-1;break;}
+    if(kind==='fill')return C.fill;if(kind==='mask')return [0,0,0];return l===3?null:l===2?C.shade:C.base;});}
+const scratch=document.createElement('canvas');scratch.width=scratch.height=N;
+function blockOf(el,ic,s){const g=scratch.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.clearRect(0,0,N,N);g.imageSmoothingEnabled=false;
+  g.drawImage(layerOf(el,'fill'),0,0);g.save();g.translate(N/2+s.x,N/2+s.y);g.rotate(s.rot*Math.PI/180);g.drawImage(ic,-s.size/2,-s.size/2,s.size,s.size);g.restore();
+  g.globalCompositeOperation='destination-in';g.drawImage(layerOf(el,'mask'),0,0);g.globalCompositeOperation='source-over';g.drawImage(layerOf(el,'border'),0,0);return scratch;}
 function plateOf(id,n){const k='p'+id+n;if(cache[k])return cache[k];const C=colorsOf(id),w=n*N+(n-1)*GAP+2*M,h=N+2*M;
   const U=[];for(let y=0;y<h;y++){U.push([]);for(let x=0;x<w;x++){let v=false;for(let i=0;i<n&&!v;i++)v=rr(x,y,i*(N+GAP),0,N+2*M,R+M);U[y].push(v);}}
   const disc=[];for(let dx=-CR;dx<=CR;dx++)for(let dy=-CR;dy<=CR;dy++)if(dx*dx+dy*dy<=CR*CR+1)disc.push([dx,dy]);
@@ -99,7 +105,7 @@ function draw(){
   for(const [id,z] of [['big',0],['c1',1],['c2',2]]){const c=$(id);c.width=w;c.height=h;c.style.width=(z?w*z:Math.min(w*6,760))+'px';
     const g=c.getContext('2d');g.imageSmoothingEnabled=false;
     if(chain>1)g.drawImage(plateOf(el,chain),0,0);
-    for(let i=0;i<chain;i++){const bx=M+i*(N+GAP);g.drawImage(frameOf(el),bx,M);g.save();g.beginPath();g.rect(bx,M,N,N);g.clip();g.translate(bx+N/2+s.x,M+N/2+s.y);g.rotate(s.rot*Math.PI/180);g.drawImage(ic,-s.size/2,-s.size/2,s.size,s.size);g.restore();}}
+    for(let i=0;i<chain;i++)g.drawImage(blockOf(el,ic,s),M+i*(N+GAP),M);}
   for(const k of ['size','x','y','rot']){$(k).value=s[k];$(k+'R').value=s[k];}
   $('icon').value=state.steps[chain];$('el').value=el;
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.chain)===chain)));
