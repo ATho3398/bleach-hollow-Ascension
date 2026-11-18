@@ -21,9 +21,12 @@ const HERE = __dirname;
         g.writeSave(localStorage, s);
       }, fid);
       await page.goto(server.url); await page.waitForTimeout(1200);
-      await page.getByRole('button', { name: /이어하기/ }).first().click({ timeout: 5000 }).catch(() => {}); await page.waitForTimeout(2500);
+      await page.getByRole('button', { name: /이어하기/ }).first().click({ timeout: 5000 }).catch(() => {}); await page.waitForTimeout(4000);
       out[fid] = await page.evaluate(() => {
-        const p = document.querySelector('.bha-pet--buddy'); p.style.translate = 'none';
+        // 자리 값을 뺀 기본 자리 = 몸 너비에 맞춘 자리(C.487 fitPetToBody) — 왼쪽 끝이 기준
+        const p = document.querySelector('.bha-pet--buddy');
+        const t = (p.style.translate || '0px 0px').split(' ').map((v) => parseFloat(v) || 0);
+        p.style.translate = `${t[0] - Number(p.dataset.dx || 0)}px 0px`;
         const r = p.getBoundingClientRect(); p.style.visibility = 'hidden';
         const c = p.parentElement.getBoundingClientRect();
         return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100, char: { x: Math.round(c.left), y: Math.round(c.top), w: Math.round(c.width), h: Math.round(c.height) } };

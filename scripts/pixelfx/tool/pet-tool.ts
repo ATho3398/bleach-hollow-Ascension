@@ -45,9 +45,9 @@ export function mountPetTool(P: PetToolData): void {
     const r = P.rooms[room]!, pl = places[cur]!, pet = P.pets.find((p) => p.key === cur)!;
     if (bg.dataset.room !== room) { bg.src = r.bg; bg.dataset.room = room; }
     if (img.dataset.key !== cur) { img.src = pet.art; img.dataset.key = cur; }
-    // 게임과 같은 식: 상자 = 그림 칸 수 × 배율, 기본 상자(48칸 × 기본 배율)의 오른쪽·아래 끝에 맞춰 놓고 dx·dy 만큼 옮긴다
-    const nw = img.naturalWidth || 48, nh = img.naturalHeight || 48, R = r.x + r.w, B = r.y + r.h;
-    for (const [el, dx, dy, sc] of [[img, pl.dx, pl.dy, pl.scale], [base, 0, 0, P.scale]] as [HTMLElement, number, number, number][]) { el.style.left = `${R - nw * sc + dx}px`; el.style.top = `${B - nh * sc + dy}px`; el.style.width = `${nw * sc}px`; el.style.height = `${nh * sc}px`; }
+    // 게임과 같은 식 (C.487): 상자 = 그림 칸 수 × 배율, 상자 왼쪽 끝 = 몸 그림 오른쪽 끝 + 틈(캡처 때 잰 r.x), 아래 끝 = 기본 자리 — 거기서 dx·dy 만큼 옮긴다
+    const nw = img.naturalWidth || 48, nh = img.naturalHeight || 48, B = r.y + r.h;
+    for (const [el, dx, dy, sc] of [[img, pl.dx, pl.dy, pl.scale], [base, 0, 0, P.scale]] as [HTMLElement, number, number, number][]) { el.style.left = `${r.x + dx}px`; el.style.top = `${B - nh * sc + dy}px`; el.style.width = `${nw * sc}px`; el.style.height = `${nh * sc}px`; }
     $('petval').textContent = `${pet.label}: 오른쪽 ${pl.dx} · 아래 ${pl.dy} · 크기 ${pl.scale}배${pl.flip ? ' · 좌우 반전' : ''} (그림 ${nw}×${nh}칸)`;
     ($('petscale') as HTMLInputElement).value = String(pl.scale);
     img.style.transform = pl.flip ? 'scaleX(-1)' : '';

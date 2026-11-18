@@ -37,11 +37,11 @@ X0, X1 = min(x for x, _ in PTS) - W / 2 - 10, max(x for x, _ in PTS) + W / 2 + 1
 Y0, Y1 = min(y for _, y in PTS) - H / 2 - 2, max(y for _, y in PTS) + H / 2 + 26
 CW, CH = int(math.ceil(X1 - X0)), int(math.ceil(Y1 - Y0)); CW += CW % 2; CH += CH % 2
 OX, OY = -X0, -Y0                               # 나비 가운데(0,0)의 틀 안 자리
-# 가루: 반복마다 같은 알갱이(이음매 없음). 대부분 8자 비행 중에, 조금은 제자리에서도
+# 가루: 반복마다 같은 알갱이(이음매 없음). 8자 비행 중에도 제자리에서도
 rnd = random.Random(7)
 DUST = []
-for i in range(46):
-    born = (HOVER + rnd.random() * FLY) if i % 5 else rnd.random() * HOVER
+for i in range(64):
+    born = (HOVER + rnd.random() * FLY) if i % 2 else rnd.random() * HOVER   # 절반은 제자리에서 (사용자 "가만히 날 때도 가루 날리게")
     bx, by = at(born)
     DUST.append(dict(born=born, life=rnd.uniform(1.0, 1.8), x=bx + rnd.uniform(-9, 9), y=by + rnd.uniform(-4, 8), ph=rnd.uniform(0, 6.28), kind=rnd.random()))
 COLS = [(255, 255, 255), (232, 200, 255), (216, 48, 138)]   # 흰 반짝 · 연보라 · 자주 (나비 무늬 색)

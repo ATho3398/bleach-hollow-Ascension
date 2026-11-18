@@ -24,7 +24,7 @@ const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
         g.writeSave(localStorage, s);
       }, fid);
       await page.goto(server.url); await page.waitForTimeout(1200);
-      await page.getByRole('button', { name: /이어하기/ }).first().click({ timeout: 5000 }).catch(() => {}); await page.waitForTimeout(2500);
+      await page.getByRole('button', { name: /이어하기/ }).first().click({ timeout: 5000 }).catch(() => {}); await page.waitForTimeout(4000);
       proof.facts[fid] = await page.evaluate(() => { const p = document.querySelector('.bha-pet--buddy'); const r = p?.getBoundingClientRect(); return p ? { hasArt: p.classList.contains('has-art'), src: p.querySelector('img')?.getAttribute('src') ?? null, title: p.title, w: r.width, h: r.height } : null; });
       await page.screenshot({ path: path.join(OUT, `0${fid === 'shinigami' ? 1 : 2}-room-${fid}.png`) });
       await page.close();
