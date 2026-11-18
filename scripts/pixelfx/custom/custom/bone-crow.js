@@ -32,7 +32,13 @@ const POSE = {
 };
 const mixPose = (a, b, u) => a.map(([x, y], i) => [lerp(x, b[i][0], u), lerp(y, b[i][1], u)]);
 // flapping until GLIDE, then a glide on spread wings
-const FLAPS = 4, GLIDE = 1.5;
+const FLAPS = 2, GLIDE = 0.75; // 날갯짓 두 번 뒤 길게 활공 (사용자 2026-11-18 "날개짓 2번하고 슈웅~")
+// 앞뒤 흐름: 날갯짓하는 동안 뒤로 밀리며 떠오르고, 활공하면서 앞으로 미끄러져 나간다 (칸)
+function drift(t) {
+  t = wrap(t, D);
+  if (t < GLIDE) return lerp(8, -8, smooth(0, 1, t / GLIDE));
+  return lerp(-8, 8, ease.outCubic((t - GLIDE) / (D - GLIDE)));
+}
 function wing(t) {
   t = wrap(t, D);
   if (t < GLIDE) {
@@ -112,10 +118,10 @@ export function draw(p, time, o) {
     g.clear();
     g.poly(wingPts(ws, false), C[4]);
     g.a.fill(0.42);
-    g.draw(p, 1, 0, Math.round(lift(s)));
+    g.draw(p, 1, Math.round(drift(s)), Math.round(lift(s)));
   }
   bird(g, C, Br, t, w);
-  g.draw(p, 1, 0, Math.round(y));
+  g.draw(p, 1, Math.round(drift(t)), Math.round(y));
   // a loose feather drifts off and rocks down out of sight
   const fa = wrap(t - 0.45, D);
   if (o.feather !== false && fa < 1.8) {

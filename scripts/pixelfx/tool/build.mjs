@@ -71,6 +71,28 @@ const data = {
   built: `게임 ${execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD']).toString().trim()}`,
 };
 
+// '펫' 탭 (C.485): 그림이 있는 펫을 그림 키마다 한 줄 — 종족 설정 petArt 가 덮는 펫은 종족마다 다른 그림이라 따로. 무대 = 방 캡처(pet-capture.cjs)
+{
+  const pets = json('src/data/pets/pets.json').pets, place = json('src/data/pets/place.json').places, st = json('scripts/pixelfx/tool/pet-stage.json');
+  const facs = ['shinigami', 'hollow'].map((id) => json(`src/data/factions/${id}.json`));
+  const fileOf = (key) => ['webp', 'png'].map((e) => `public/art/${key.replace(/\./g, '-')}.${e}`).find((f) => existsSync(join(ROOT, f)));
+  const rows = new Map();
+  for (const p of pets) for (const f of facs) {
+    const key = f.petArt?.[p.id] ?? p.art, file = fileOf(key);
+    if (!file) continue;
+    const r = rows.get(key) ?? { key, names: [], art: dataUri(file, file.endsWith('.webp') ? 'image/webp' : 'image/png'), factions: [] };
+    if (!r.names.includes(f.petNames[p.id])) r.names.push(f.petNames[p.id]);
+    r.factions.push(f.id); rows.set(key, r);
+  }
+  data.pets = {
+    stamp: 'p2', // p2 = 크기(scale) 칸 추가. 도구는 p1 값도 읽는다
+    scale: 1.7,
+    rooms: Object.fromEntries(facs.map((f) => [f.id, { name: f.name, bg: dataUri(`scripts/pixelfx/tool/pet-room-${f.id}.png`, 'image/png'), x: st[f.id].x, y: st[f.id].y, w: st[f.id].w, h: st[f.id].h }])),
+    pets: [...rows.values()].map((r) => ({ key: r.key, label: r.names.join(' / '), art: r.art, factions: r.factions })),
+    defaults: Object.fromEntries([...rows.keys()].map((k) => [k, place[k] ?? { dx: 0, dy: 0 }])),
+  };
+}
+
 // 직접 만든 이펙트(scripts/pixelfx/custom/custom/…, 예 custom/cero-oscuras 세로 오스큐라스)를 vendor 에 겹쳐 넣고 목록(src/fx/index.js)을 다시 만든다
 const VENDOR = join(ROOT, 'vendor/pixelfx');
 if (existsSync(join(ROOT, 'scripts/pixelfx/custom'))) cpSync(join(ROOT, 'scripts/pixelfx/custom'), join(VENDOR, 'src/fx'), { recursive: true });

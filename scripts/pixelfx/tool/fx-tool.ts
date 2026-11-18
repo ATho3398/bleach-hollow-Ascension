@@ -4,6 +4,7 @@
 // pixelfx 는 npm run fx:fetch 로 받는 JS(형 정보 없음, CI 에는 없음) — 형 검사에서 뺀다
 // @ts-ignore
 import { effects, categories } from '../../../vendor/pixelfx/src/fx/index.js';
+import { mountPetTool, type PetToolData } from './pet-tool';
 // @ts-ignore
 import { clearFrame, composite, createFrame, createFx } from '../../../vendor/pixelfx/src/core/index.js';
 import { pixelFxTransform } from '../../../src/ui/bha/pixelFx';
@@ -107,7 +108,7 @@ interface ToolData {
   /** 캐릭터 그림 (상대 주소 → data URI) */
   art: Record<string, string>;
 }
-declare const FX_DATA: ToolData;
+declare const FX_DATA: ToolData & { pets?: PetToolData };
 type DocRef = { get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(d: Record<string, unknown>): Promise<void> };
 declare const claude: { use(name: 'db'): Promise<{ doc(path: string): DocRef } | null> } | undefined;
 
@@ -1360,6 +1361,7 @@ try {
   /* 저장소 없음 */
 }
 $('built').textContent = `${D.built} · pixelfx ${ids.length}개 · 분류 ${Object.keys(categories as object).length}개`;
+if (D.pets?.pets.length) mountPetTool(D.pets); // '펫' 탭 (C.485)
 refresh();
 fit();
 void (async () => {

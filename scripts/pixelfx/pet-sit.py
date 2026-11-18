@@ -5,6 +5,7 @@ from PIL import Image
 CFG = {
     # tail: x ≤ xmax 이고 y < base 인 칸 = 꼬리(뿌리 base 줄은 고정, 위로 갈수록 많이 흔들림 — 최대 amp 칸)
     # head: x ≥ xmin 이고 y ≤ ymax 인 칸 = 머리(1칸 내려 끄덕). eye: 눈 색(이 색 칸을 lid 색으로 바꾸면 감은 눈)
+    'kukkapuro': dict(tail=dict(xmax=12, base=30, top=23, amp=2, cycles=6), head=dict(xmin=21, ymax=22), eye=None, eye_tol=0, blink_at=0),   # 강아지: 꼬리를 빨리 흔든다, 눈구멍은 안 감는다
     'yoruichi-cat': dict(tail=dict(xmax=19, base=34, top=19, amp=2), head=dict(xmin=23, ymax=24), eye=(255, 210, 60), eye_tol=70, blink_at=1.3),
 }
 name, src, out = sys.argv[1], sys.argv[2], sys.argv[3]; c = CFG[name]
@@ -13,21 +14,22 @@ N = 48; assert a.shape[:2] == (N, N)
 yy, xx = np.mgrid[0:N, 0:N]; op = a[..., 3] > 0
 tail = op & (xx <= c['tail']['xmax']) & (yy < c['tail']['base'])
 head = op & (xx >= c['head']['xmin']) & (yy <= c['head']['ymax'])
-eye = head & (np.abs(a[..., :3].astype(int) - c['eye']).sum(2) < c['eye_tol'])
+eye = head & (np.abs(a[..., :3].astype(int) - c['eye']).sum(2) < c['eye_tol']) if c['eye'] else np.zeros_like(head)
 # 감은 눈 색 = 머리에서 가장 많은 색(털)
 cols, cnt = np.unique(a[head & ~eye][:, :3], axis=0, return_counts=True); lid = cols[cnt.argmax()]
+CYC = c['tail'].get('cycles', 1)
 body = a.copy(); body[tail | head] = 0
 D, FPS, STEP = 4.8, 30, 3; frames = []   # 4.8초 반복, 한 장 100ms
 for i in range(0, int(D * FPS), STEP):
     t = i / FPS; f = body.copy()
-    sw = math.sin(t / D * 2 * math.pi)       # 꼬리는 4.8초에 한 번 왕복 (사용자 2026-11-18 "꼬리 너무빨라 엄청 느리게")
+    sw = math.sin(t / D * 2 * math.pi * CYC)       # 꼬리는 4.8초에 한 번 왕복 (사용자 2026-11-18 "꼬리 너무빨라 엄청 느리게")
     T = c['tail']
     for y in range(N):                       # 꼬리: 줄마다 옆으로
         k = (T['base'] - y) / (T['base'] - T['top']); dx = round(sw * T['amp'] * max(0, min(1, k)) ** 1.3)
         for x in range(N):
             if tail[y, x] and 0 <= x + dx < N: f[y, x + dx] = a[y, x]
     h = a.copy()
-    if (t - c['blink_at']) % (D / 2) < 0.14: h[eye, :3] = lid
+    if eye.any() and (t - c['blink_at']) % (D / 2) < 0.14: h[eye, :3] = lid
     dy = 1 if math.sin(t / D * 2 * math.pi * 2) > 0.6 else 0   # 머리 끄덕
     for y in range(N - 1, -1, -1):
         for x in range(N):

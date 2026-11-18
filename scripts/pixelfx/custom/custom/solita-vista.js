@@ -16,7 +16,9 @@ export const meta = {
     palette: ["#2a1420", "#6a3040", "#b07078", "#dcbcb4", "#f4e9de", "#ffffff"],
     flesh: ["#1e0c16", "#4a1a2c", "#7c2c40", "#b04a58", "#e07a80"],
     iris: ["#10300c", "#2f7a1e", "#62b02e", "#a6dc50", "#eaffb0"],
-    nerve: 20, // 시신경 길이(칸),
+    nerve: 20, // 시신경 길이(칸)
+    plain: false, // true = 눈알만: 시신경·위아래 살(눈꺼풀)·둘레를 도는 번개 같은 빛줄기 없음 (사용자 2026-11-18)
+    watch: false, // true = 왼쪽을 보고 있다가 반복마다 한 번 두리번거린다,
     hover: 48,
     seed: 1,
   },
@@ -25,7 +27,10 @@ export const meta = {
 const D = meta.duration, GRID = new Grid(-18, -18, 36, 38), NERVE = new Grid(-20, -70, 40, 64), R = 13, VEIN = hex("#c42a3a");
 // where it looks: snaps between targets with a little overshoot, holds, snaps on
 const LOOKS = [[0, 0, 0], [0.55, 4.2, -1.2], [1.15, -4.4, 0.8], [1.95, 1.2, 3.4], [2.5, -2, -3.4], [3.0, 0, 0]];
+const WATCH = [[0, -4.6, 0.4], [2.25, 4.2, -0.8], [2.55, 0.5, 2.8], [2.85, -4.6, 0.4]];
+let LK = LOOKS;
 function look(t) {
+  const LOOKS = LK;
   let i = LOOKS.length - 1;
   while (i > 0 && t < LOOKS[i][0]) i--;
   const [t0, x1, y1] = LOOKS[i], [, x0, y0] = LOOKS[(i + LOOKS.length - 1) % LOOKS.length], u = ease.outBack(clamp((t - t0) / 0.08), 2.2);
@@ -54,9 +59,9 @@ function veins(seed) {
   return out;
 }
 
-function eye(g, C, Fl, I, t, seed) {
+function eye(g, C, Fl, I, t, seed, plain) {
   g.clear();
-  const [lx, ly] = look(t), L = lid(t), V = veins(seed);
+  const [lx, ly] = look(t), L = plain ? 0 : lid(t), V = veins(seed);
   const lit = (x, y, k) => Math.hypot(-4 + (x + 4) / k, -4.5 + (y + 4.5) / k) <= R;
   // the sclera: a wet sphere lit from the top-left, pinker in its shadow
   g.shade(-R, -R, R, R, (x, y) => {
@@ -86,6 +91,7 @@ function eye(g, C, Fl, I, t, seed) {
   });
   // a fixed glint from the light, whichever way it looks
   if (L < 0.5) g.set(-4, -5, C[5]), g.set(-3, -5, C[5]), g.set(-4, -4, C[5]), g.set(1, -2, C[5]);
+  if (plain) return g.outline(C[0]);
   // the lids: fleshy shells over the top and bottom, lit like the ball they wrap, the upper one sweeping down to blink
   const up = lerp(-R + 3, R * 0.42, L), dn = lerp(R - 2.2, R * 0.42, L);
   const flit = (x, y, k) => Math.hypot(-4 + (x + 4) / k, -5 + (y + 5) / k) <= R + 0.6;
@@ -105,7 +111,8 @@ export function draw(p, time, o) {
   const t = shift(time, D, o.seed), C = fit(o.palette, 6), Fl = fit(o.flesh, 5), I = fit(o.iris, 5), S = at(t, o.hover);
   // the optic nerve hangs from the back, trailing the bob a beat behind: one tube, lit down its left side
   const ng = NERVE.clear();
-  const NL = o.nerve ?? 20;
+  LK = o.watch ? WATCH : LOOKS;
+  const NL = o.plain ? -1 : (o.nerve ?? 20);
   for (let s = 0; s <= NL; s += 0.5) {
     const B = at(t - s * 0.035, o.hover), sw = 2.6 * (s / 20) ** 1.3 * Math.sin((t / D) * TAU * 2 - s * 0.16), r = lerp(2, 0.6, s / NL);
     const cx = B.x + 1 + sw, cy = B.y + R - 2 + s;
@@ -118,16 +125,16 @@ export function draw(p, time, o) {
   ng.outline(Fl[0]);
   ng.draw(p);
   const g = GRID;
-  eye(g, C, Fl, I, t, o.seed);
+  eye(g, C, Fl, I, t, o.seed, !!o.plain);
   g.draw(p, 1, S.x, S.y);
   // the iris glows, an eerie halo round the whole eye, motes circling it
-  const [lx, ly] = look(t), snap = Math.max(...LOOKS.map(([t0]) => Math.max(0, 1 - Math.abs(wrap(t - t0 + D / 2, D) - D / 2) / 0.2)));
+  const [lx, ly] = look(t), snap = Math.max(...LK.map(([t0]) => Math.max(0, 1 - Math.abs(wrap(t - t0 + D / 2, D) - D / 2) / 0.2)));
   const open = 1 - lid(t);
   p.glow(S.x + lx, S.y + ly, 15, I[3], (0.5 + 0.3 * snap) * open);
   p.glow(S.x + lx, S.y + ly, 5, I[4], 0.4 * open);
   p.glow(S.x, S.y, 50, I[1], 0.3);
   // motes of green light wheel round it on a tilted orbit, trailing short streaks
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < (o.plain ? 0 : 8); i++) {
     const sp = (i % 2 ? 1 : -1) * (i % 3 ? 1 : 2), a0 = (i * TAU) / 8, rr = 19 + (i % 3) * 2;
     let prev = null;
     for (let k = 5; k >= 0; k--) {
