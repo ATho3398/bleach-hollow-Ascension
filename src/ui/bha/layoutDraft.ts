@@ -241,8 +241,11 @@ export const customSceneId = (key: string): string => `${CUSTOM_SCENE_PREFIX}${k
 /** 방에 놓을 수 있는 물건 = 방 화면이 그리는 물건 (rank 는 월드맵 장소) */
 export const ROOM_ITEM_PROPS: readonly string[] = ROOM_PROPS.filter((p) => p !== 'rank');
 
-/** 새 방 바닥: 배경 그림을 쓰는 종족 방이 있으면 그 방 바닥(그림 위 땅 모양), 아니면 기본 방 바닥 */
+/** 새 방 바닥: 배경 그림을 쓰는 방(방 목록 → 종족 방)이 있으면 그 방 바닥(그림 위 땅 모양), 아니면 기본 방 바닥 */
 function customFloor(cr: CustomRoom, factions: readonly FactionConfig[]): RoomFloorConfig {
+  // 방 목록(src/data/rooms)의 방이 그 배경과 바닥을 갖고 있으면 그것 (C.496: 이치고의 방 새 도트 배경 바닥)
+  const listed = ROOMS.find((r) => r.sceneArt === cr.sceneArt && r.floor);
+  if (listed?.floor) return listed.floor;
   const owner = factions.find((f) => roomOf(f).sceneArt === cr.sceneArt);
   return owner ? roomOf(owner).floor : DEFAULT_ROOM.floor;
 }
