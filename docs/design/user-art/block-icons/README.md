@@ -1,5 +1,7 @@
 # 블록 아이콘 — 사용자가 확정한 그림 모음
 
+**규칙 (사용자 2026-11-19 "여기선 무조건 픽셀 fx기반으로 뽑아")**: 블록 아이콘은 전부 pixelfx 이펙트(`scripts/pixelfx/custom/custom/icon-*.js`)로 짜서 `vendor/pixelfx` 에서 `node tools/render.mjs custom/icon-<이름> --bg none --sheet` 로 뽑은 한 프레임이다. 파이썬 등으로 따로 그리지 않는다. 애니메이션은 만들지 않는다(정지 그림 한 장).
+
 사용자 2026-11-19 "내가 픽스하는것들 한군데 모아뒀다가 달라그러면 줘" — 확정된 블록 안 이펙트 도트를 여기에 모은다(1배 PNG, 투명 배경). 게임에 넣는 것은 사용자가 넣으라고 할 때만.
 
 | 파일 | 크기 | 쓰임 | 확정 | 만든 법 |
@@ -17,7 +19,7 @@
 
 `candidates/chain2-plate.png`(134×68, 금색) · `chain3-plate.png`(200×68, 주황) — 체인으로 이어진 블록 2·3개 뒤에 까는 한 덩어리 판(사용자 2026-11-19 "블록끼리 연결되는 식으로"). 블록 간격 4px·판이 블록보다 3px 넓다는 가정으로 그림(간격은 미정). `chain-row-1x.png` = 1개·체인2·체인3 을 나란히 놓은 모습.
 
-`candidates/basic/*.png` — 기본 블록 아이콘 후보 48×48(사용자 2026-11-19 "일본도, 칼로 벤듯한 상처, 이빨 위아래, 마법 에너지볼(사선), 피스트"): katana · cut · fangs · orb-red / orb-blue · fist. 그리는 코드 = `scripts/block-icons/draw.py`(정지 그림만, 애니메이션 없음 — 사용자 "애니로 만드느라 한도 쓰지마").
+`candidates/basic/*.png` — 기본 블록 아이콘 후보 48×48(사용자 2026-11-19 "일본도, 칼로 벤듯한 상처, 이빨 위아래, 마법 에너지볼(사선), 피스트"): katana · cut · fangs · orb-red / orb-blue · fist. 전부 pixelfx 이펙트의 한 프레임 — `scripts/pixelfx/custom/custom/icon-katana.js`·`icon-cut.js`(프레임 5)·`icon-fangs.js`·`icon-orb.js`(파랑은 `--opts` 팔레트만 바꿈)·`icon-fist.js`, 공용 `_icon.js`. 나머지는 프레임 0.
 
 ## 사용자가 정한 방향 (2026-11-19, 아직 게임·기획서에 반영 안 함)
 
