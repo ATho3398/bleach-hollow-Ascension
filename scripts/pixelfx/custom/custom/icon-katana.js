@@ -3,7 +3,7 @@ import { sparkle, hex } from "../../core/index.js";
 import { WEAPONS } from "../../core/rig.js";
 import { ICON } from "./_icon.js";
 export const meta = { name: "Icon: katana", desc: "The stock character's sword (rig WEAPONS.sword) laid diagonally across a 48px square, slightly curved.", tags: ["icon", "sword", "katana"], ...ICON, duration: 0.2, loop: true,
-  options: { scale: 1.7, width: 0.62, curve: 0.0022, seed: 1 } };
+  options: { scale: 1.7, width: 0.4, curve: 0.0022, seed: 1 } };
 export function draw(p, t, o) {
   const S = o.scale, D = 0.7071, bx = -19.5, by = 19.5;
   // 칼 그림의 한 점(i = 자루에서 칼끝 쪽 거리, k = 옆 거리)을 사선 위 자리로
