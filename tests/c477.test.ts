@@ -9,10 +9,11 @@ import { parseFactionConfig } from '../src/engine/faction';
 describe('C.477 펫 그림 = 종족 설정 petArt', () => {
   it('골드 펫 그림: 사신 = 지옥나비, 호로 = 뼈 까마귀(C.478)', () => {
     expect(getFaction('hollow').petNames['pet-gold']).toBe('뼈 까마귀');
-    for (const f of ['pet-hell-butterfly.webp', 'pet-bone-crow.webp']) expect(readFileSync(`public/art/${f}`).includes(Buffer.from('ANIM'))).toBe(true);
+    for (const f of ['pet-hell-butterfly.webp', 'pet-bone-crow.webp', 'pet-shadow-bat.webp']) expect(readFileSync(`public/art/${f}`).includes(Buffer.from('ANIM'))).toBe(true);
     expect(getFaction('shinigami').petNames['pet-gold']).toBe('지옥나비');
     expect(getFaction('shinigami').petArt).toEqual({ 'pet-gold': 'pet.hell-butterfly' });
-    expect(getFaction('hollow').petArt).toEqual({ 'pet-gold': 'pet.bone-crow' }); // C.478 뼈 까마귀
+    expect(getFaction('hollow').petArt).toEqual({ 'pet-gold': 'pet.bone-crow', 'pet-seek': 'pet.shadow-bat' }); // C.478 뼈 까마귀 · C.479 그림자 박쥐
+    expect(getFaction('hollow').petNames['pet-seek']).toBe('그림자 박쥐');
   });
   it('그림 파일이 있고(움직이는 webp), 펫 데이터의 기본 키에는 파일이 없다', () => {
     expect(existsSync('public/art/pet-hell-butterfly.webp')).toBe(true);

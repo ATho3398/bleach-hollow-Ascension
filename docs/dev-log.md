@@ -4166,3 +4166,11 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 뼈 까마귀: 픽셀FX 새(critters/bird)를 검은 몸 + 뼈 가면 머리·긴 뼈 부리·붉은 눈으로 바꾼 `custom/bone-crow`(제자리 날갯짓 2.4초) → `public/art/pet-bone-crow.webp`(48×48, 36장 · 67ms). `hollow.json` `petArt` `"pet-gold": "pet.bone-crow"`.
 - 펫 그림 뽑는 도구 `scripts/pixelfx/pet-art.py`(시트 → 불투명 도트만 → 48×48 움직이는 webp).
 - 테스트 `tests/c477.test.ts` 갱신. 캡처 `docs/captures/c478/` 01 사신 방 · 02 호로 방. 수치·세이브 변경 없음.
+
+## C.479 — 그림자 박쥐 펫 그림 · 새 펫 그림 6종 준비 (GDD v6.110 9-4, S-23)
+- 사용자 2026-11-18 "박쥐, 길잃은 혼백(도깨비불 이미지), 눈알 ㄱㄱ(이름은 솔리타 바스타로 …) · 강아지 … 쿠카푸로 · 고양이 … 요루이치 · 토끼 대가리 … 차피 · 사자인형 … 콘".
+- 게임에 연결한 것: 호로 pet-seek(그림자 박쥐) = `custom/shadow-bat`(픽셀FX 박쥐, 어두운 색 · 제자리 날갯짓) → `public/art/pet-shadow-bat.webp`, `hollow.json` `petArt`.
+- 그림만 준비한 것(펫 데이터·효과가 아직 없어 게임에는 안 나옴 — 효과·얻는 법은 사용자 결정 대기): 길 잃은 혼백 `pet-lost-soul` · 솔리타 바스타 `pet-solita-vista`(초록 눈동자) · 쿠카푸로 `pet-kukkapuro` · 요루이치 `pet-yoruichi-cat` · 차피 `pet-chappy` · 콘 `pet-kon` (모두 `public/art/*.webp` 48×48, 이펙트 `scripts/pixelfx/custom/custom/`). 뒤 넷은 도형으로 새로 그린 것(`_petkit.js`).
+- `scripts/pixelfx/pet-art.py`: 본체만 남기기(작은 덩어리 = 날리는 가루·불티 제거, 기준 칸 수 인자).
+- 테스트 `tests/c477.test.ts` 갱신. 수치·세이브 변경 없음.
+- 지옥나비 꼬리 모양(사용자 "얇다가 끝으로 갈수록 두껍고 뭉툭해져야지"): 가는 자루(1칸) → 끝이 둥글고 굵은 모양. 접힌 컷에서 자루가 끊기지 않게 한 칸 안을 8번 본다.
