@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
+export const BALANCE_VERSION = 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
+// 이전: BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
 // 이전: BALANCE_VERSION 144; // C.476 (GDD v6.106 7절·12-4, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안 provisional): 블록 모션 기준 길이 combat.motion.blockLength { default [0.8, 1.0, 1.2]초(1/2/3체인), byTier {} } 신설 — 모든 몸의 블록 몸동작을 이 길이로(타격 시각 같은 배율), 아이젠 fragor.weight 0.35 → 0.6 · kyoka.counter.windowSeconds 0.5 → 0.8. 적 수치 그대로.
 // 이전: BALANCE_VERSION 143; // C.460 (GDD v6.088 12-4, 사용자 2026-11-15 '일단 구현'): 이치고 천년혈전 transcendentKits.ichigo.modes.tybw 신설(전부 provisional) — 자세 대기 1초·스택 5초·상한 30·만해 20, 소도 1스택 공속 +1%·대도 1스택 평타 +1%, 분신 3체인당 1명 최대 2, 대도 1초·천쇄 0.8초 고정, 유지 1초 +2% 최대 30%, 발도 최대 ×2.5·0.9초·0.3초당 스택 3, 무너짐 3초 +30%, 패링 0.35초·스택 5·×2 방무 50%·적 1초, 천쇄 ×2.5·불 5개·1개당 스택 1·+20%·+0.3초·피격 +15%, 블록 소도 ×1.2/2.0/3.2·대도 0. 기존 수치 그대로.
 // 이전: BALANCE_VERSION 142; // C.454 (GDD v6.069 12-4, 사용자 2026-11-14 설계·수치 마스터 추천안 provisional): 이치고 기본 모드 transcendentKits.ichigo 신설(GDD v6.070~v6.074 수치) — riskDrain(각호고 월아천충 평타마다 −5·1초마다 −4, 무월수련 평타 +2·블록 +4·100·주는 피해 ×1.5, 최후의 월아천충 10스택·×30·남은 블록당 ×4, 평타 5대마다 블록 +1), getsuga(충전 평타 ×2.0, 1·2·3체인 호로화 −5/8/10·만해 게이지 +6/9/11).
@@ -598,14 +599,14 @@ export const BALANCE = {
         hunterLap: 5,
         hunterElites: 2,
         hunterRuns: 3,
-        /** 허무형: 혈·독·허 각각 이 비율 이상 + 환생 voidRebirths 회 이상 */
-        voidShare: 0.2,
-        voidRebirths: 1,
+        /** 허무형 (GDD 8-8 v6.120 [초안], C.497): 그 단계 진화 미루기 이 횟수 이하(0 = 한 번도 안 함) + 빈사 상태로 귀환해 진화. 리스크·흡수 무관.
+         *  옛 '혈·독·허 각 voidShare(0.2) 이상 + 환생 voidRebirths(1) 이상' 폐기 */
+        voidMaxDeferrals: 0,
         /** 각성형: 실패형을 거친 계보 + 환생 1회↑ + 이번 생 훈련(훈련 인형) 누적 이상 + 노력치 고르게(최저 ≥ 최고 × 비율) + 능력치 합계 ≥ 4단계 종족값 합계 */
         awakenedRebirths: 1,
         awakenedPractices: 20,
         awakenedEvBalance: 0.7,
-        /** 그 단계에 흡수가 이만큼은 있어야 속성 분포 조건(융합·4속성·허무·망함)을 본다 */
+        /** 그 단계에 흡수가 이만큼은 있어야 속성 분포 조건(융합·4속성·망함)을 본다 */
         minAbsorbs: 5,
         /** 3단계 히든 통로 문턱 (협의 답 — 2단계 동안 4단계 조건의 약 60%, 구현 뒤 빈도 측정해 조정) */
         passage: { fusionShare: 0.25, completeShare: 0.09, breakthroughs: 2, restraintRatio: 0.6, stableBond: 60, hunterRuns: 2 },

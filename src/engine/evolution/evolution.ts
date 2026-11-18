@@ -64,6 +64,9 @@ export interface EvolutionState {
   hunterRuns?: number;
   /** 이 단계 동안 교감한 수 (GDD 241-C 4, C.406 — 숨은 모습 조건): 쓰다듬기 요청에 응답 + 눌러서 말 걸기(좋아함). 진화하면 0, 옛 세이브엔 없음 = 0 */
   bondCare?: number;
+  /** 이 단계에서 진화를 미룬 수 (GDD 8-5 진화 미루기, C.497 — 형식 92): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 수. 상한 없음, 진화하면 0.
+   *  허무형 판정(그 단계 0회, 8-8)이 읽는다. 단계별 기록은 런 로그 tiers.deferrals·진화 기록 deferrals */
+  deferrals?: number;
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
   /** 마지막 모습으로 굳었다 (GDD 12-4 v6.028, C.429 — 초월자 트랙): 진화 판정·걸음 수·임박 알림 없음, 노력치 상한 = 마지막 단계 상한.
@@ -183,7 +186,7 @@ export function zeroStats(): Stats {
 export function newEvolution(stageSeed = 0): EvolutionState {
   return {
     tierIndex: 0, formId: null, formHistory: [], steps: 0, alerts: 0, stageSeed: stageSeed >>> 0,
-    absorbs: 0, releases: 0, elementAbsorbs: {}, breakthroughs: 0, elitesDefeated: 0, ev: zeroStats(), ability: null,
+    absorbs: 0, releases: 0, elementAbsorbs: {}, breakthroughs: 0, elitesDefeated: 0, ev: zeroStats(), ability: null, deferrals: 0,
   };
 }
 
@@ -298,6 +301,12 @@ export function recordEvolutionHunterRun(e: EvolutionState): void {
 /** 훈련 인형 전투 1판 (각성형 조건, 이번 생 누적) */
 export function recordEvolutionPractice(e: EvolutionState): void {
   e.practices = (e.practices ?? 0) + 1;
+}
+
+/** 진화를 미뤘다 (GDD 8-5, C.497): 그 단계에 머물고 다음 귀환 때 다시 묻는다. 걸음·흡수·노력치는 그대로 쌓인다. 이 단계 미룬 수를 돌려준다 */
+export function recordEvolutionDeferral(e: EvolutionState): number {
+  e.deferrals = (e.deferrals ?? 0) + 1;
+  return e.deferrals;
 }
 
 /** 다음 진화까지 필요한 걸음 수 (마지막 단계면 null). 화면에는 보이지 않는다 */
@@ -472,6 +481,8 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.longAbsences;
   delete e.hunterRuns;
   delete e.bondCare;
+  const deferrals = e.deferrals ?? 0;
+  e.deferrals = 0;
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
   // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음
@@ -481,7 +492,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   return {
     ok: true,
     form,
-    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
+    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, deferrals, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
     slotsAdded: EV.slotsPerEvolution,
     abilityGain,
     abilitySlotsAdded: loadout.slots - abilitySlotsBefore,

@@ -51,7 +51,7 @@ import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
 import { getFaction } from '../data/factions';
-import { STAT_IDS, type StatId } from '../data/schema';
+import { STAT_IDS, formCategoryOf, type StatId } from '../data/schema';
 import { STAT_USE, statInfoLines } from '../data/help/statText';
 import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
@@ -273,7 +273,7 @@ function basisPanel(save: SaveData, rerender: () => void): HTMLElement | null {
   }
   const cur = save.evolution.basis?.builds[save.evolution.basis.current];
   const form = cur?.formId ? tryGetForm(cur.formId) : undefined;
-  const cat = form?.label.category ?? 'mixed';
+  const cat = (form && cur ? formCategoryOf(form, cur.factionId) : undefined) ?? 'mixed'; // 종족별 타입 (GDD 8-8, C.497)
   const traits = save.build.slots.filter((x) => x !== null).length;
   const abil = save.evolution.abilities ? Object.keys(save.evolution.abilities.owned).length : 0;
   const info = h('p', 'bha-small');

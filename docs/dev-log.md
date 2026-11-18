@@ -4280,3 +4280,23 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 사용자 2026-11-19 "이치고 방 배경 보면 가운데 책꽃이 … 캐릭이랑 겹쳐서 보기 어려우니까 뒤에 그냥 방 벽이랑 같은 색으로 날린 그림으로" → "그 이치고 방이나 도트로 다시찍어라" → "73색짜지로 방배경 교체".
 - `public/art/scene-room-ichigo.webp`: 원본(`docs/design/user-art/transcendent-rooms/ichigo-room.png` 1846×852)에서 가운데 철제 선반과 그 그림자를 벽 색으로 지우고(`ichigo-room-noshelf.png`), 281×130칸으로 다시 찍어 73색으로 줄인 판(`ichigo-room-dot-281x130.png`)을 6배(1686×780)로 키워 넣음 — 화면에서 한 칸 약 3px.
 - 방 물건 자리·바닥 범위(`src/data/rooms/transcendent-ichigo.json`)는 그대로(그림 비율 거의 같음: 2.167 → 2.162). 수치·세이브·기획 변경 없음.
+
+## C.497 — 진화 미루기 · 허무형 조건 = 미루기 0회 + 빈사 귀환 · 허무형 종족별 타입 (GDD v6.129 8-5·8-8·16-2, S-23, 코딩313)
+사용 모델: Opus 5.5. 세이브 형식 91 → 92(문턱 87 그대로), BALANCE 145 → 146.
+- 사용자 원문: (11-18) "진화 미루기 기능 새로 만들기" · 허무형 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ" · (11-19) "일단 지금 진화체 정한것들은 먼저 구현해. 나머지도 저쪽 세션에서 정해서 넘겨줄게". 지시 근거 `docs/drafts/evo-impl-1119.md` 3절.
+- **진화 미루기(8-5 [초안] 추천안)**: 진화 기준(걸음)에 닿아 귀환하면 결과 화면 뒤, 진화 연출 전에 `src/ui/evolveChoice.ts` 창 [미루기] [진화](기본 초점 = 진화, `confirmDialog` 재사용 — bha 클래스·토큰만). 미루면 그 단계에 머물고 다음 귀환 때 다시 묻는다. 모든 단계·상한 없음·미루는 동안 걸음·흡수·노력치 정상, 판정은 실제 진화 순간.
+  - 엔진: `recordExpedition(..., { holdEvolution })`(화면만 씀 — 봇·옛 호출은 예전처럼 바로 진화) · `evolutionChoiceAllowed`(튜토리얼 원정·안내 중엔 창 없이 바로 진화) · `evolutionChoicePending` · `evolveAfterReturn` · `deferEvolution`(진화 상태 `deferrals` +1, 런 로그 `tiers.deferrals` 1건 {at·tier·count·formId·steps·runId}). 진화하면 `deferrals` 0, 진화 기록 `deferrals`·스냅샷 `deferrals`/`collapsed`.
+  - 판단(기획서 값 / 실제 값 / 이유): 창 닫기 — 정해진 것 없음 / 기기 취소·Esc 로 안 닫힘(`confirmDialog` `noCancel` 새 옵션) / 실수로 미루기가 세어지면 허무형 조건이 깨진다. 이어 하지 못한 원정 실패 정산(`readActiveExpedition`) — 예전엔 연출 없이 조용히 진화 / 진화하지 않고 다음 귀환 때 물음 / 창을 띄울 곳이 없어 선택권을 남김. 창을 띄운 채 앱을 끄면 미루기로 안 세고 다음 귀환 때 다시 물음.
+- **허무형 조건 교체(8-8)**: 옛 '혈·독·허 각 20%↑ + 환생 1회↑'(`hidden.voidShare`·`voidRebirths`) 삭제 → `hidden.voidMaxDeferrals` 0(provisional 구역) + 진화 순간 둥지 빈사(`JudgeContext.collapsed`, `performEvolution` 이 `nest.collapsed` 를 넘김). 리스크·흡수 무관, 가중치 1. 도감 힌트 "한 번도 진화를 미루지 않고, 빈사 상태로 돌아와 진화". 진화 트리 점검(`analysis.ts`)에 미루기 수·빈사 무작위 추가.
+- **허무형 타입(8-8 첫 줄)**: 사신 공화 = 특수 · 호로 나다 = 물리 — 새 데이터 `src/data/evolution/factionCategories.json`(진화체 id → 종족 → 타입), 로더·생성기가 `categoryByFaction` 으로 붙임(`withReleases`), 읽기는 `formCategoryOf(form, factionId)`(schema, 종족 분기 없음). 쓰는 곳: 이름 자리 표시·도감 힌트·전투 기반 정보·합체 입력. forms.json `label.category`(혼합)는 표에 없는 종족 기본값으로 둠. 전투 능력(처형·공허 블록)은 코딩312·314 몫이라 안 건드림.
+- 세이브: SAVE_MIGRATIONS[91] = 모든 트랙 `evolution.deferrals` 0 · `runLog.tiers.deferrals` [] (`repairRunLog`·`sanitizeEvolutionExtras` 도 보정). 형식 번호 테스트 47곳 91 → 92, c139 의 confirmDialog 소스 문구 기준 갱신.
+- 밸런스(회귀 가드 통과, 보정 없음). main(전) → 이번(후), 같은 봇:
+  | 항목 | 전 | 후 |
+  |---|---|---|
+  | 진화 봇 4단계 진화체 | 아라포 26·기타 4 | 아라포 16·나다 13·아르코이리스 1 |
+  | 진화 봇 히든 | 46/90 | 49/90 |
+  | 정책 봇(물·흙 / 불·뇌 / 혈+불 / 놓아줌) 나다 | 0 | 20 / 23 / 29 / 24 |
+  | 무작위 트리 4단계 히든 | 56.6% | 61.3% |
+  | 안 뽑히는 진화체 | 없음 | 없음 |
+  - 봇은 구급상자를 쓰지 않아 한 번 지면 빈사가 풀리지 않고, 미루기도 안 해서 4단계 진화 때 나다가 잦다(사람은 빈사를 치료) — 보고만, 조정 없음(진화체 밸런스는 구성이 다 끝난 뒤, 8-7).
+- 테스트: 새 `tests/c497.test.ts` 14개 + 옛 허무형 테스트(c56·evolution) 새 조건으로. 캡처 `docs/captures/c497/`(1배, `scripts/c497-proof.cjs`): 01 창 PC 844×390 · 02 창 폰 796×384 · 03 미루기 뒤 둥지 · 04 다음 귀환 때 다시 묻는 창 · proof.json(Esc 로 안 닫힘·미루기 뒤 단계 2·미루기 1·로그 1).

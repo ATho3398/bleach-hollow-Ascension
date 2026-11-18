@@ -1,0 +1,9 @@
+{
+  "about": "GDD 8-8: 종족마다 공격 타입이 다른 진화체 (진화체 id → 종족 id → physical | special | mixed). 여기 없는 진화체·종족은 forms.json label.category 그대로. 로더·생성기가 진화체에 categoryByFaction 으로 붙인다 (C.497, 허무형 사신 공화 특수·호로 나다 물리 — 사용자 2026-11-18 \"혼합말고 마법으로\")",
+  "forms": {
+    "h4:void": {
+      "shinigami": "special",
+      "hollow": "physical"
+    }
+  }
+}
