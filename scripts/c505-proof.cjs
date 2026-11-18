@@ -1,4 +1,4 @@
-// C.502 proof (GDD 8-7 1차 — 사신 13종 진화체 고유 능력): PC 844×390, 1배.
+// C.505 proof (GDD 8-7 1차 — 사신 13종 진화체 고유 능력): PC 844×390, 1배.
 // 01 봉수대 '봉수 폭렬'(봉화 5 → 다음 평타) · 02 반석 방어막(흙 블록 생김 → 방어막) · 03 공화 공허 블록 켜짐 + 처형선 두 개 · 04 연우 장마(2체인 2번 → 바 끝 블록 3개)
 // 05 추성 펫 2마리 · 06 상태 화면 고유 능력 줄(봉수대). 진화체 상태는 실제 규칙으로 돌리고, 시간이 드는 쌓기만 테스트용 주입.
 // 세이브는 Vite 개발 서버의 게임 모듈로 만든다(튜토리얼 끝남 · 4단계 진화체 · 4단계 특성) → 이어하기 → 테스트 모드 '바로 전투'.
@@ -8,7 +8,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
 
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c502'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c505'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

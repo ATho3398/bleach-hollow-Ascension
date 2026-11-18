@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 148; // C.502 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
+export const BALANCE_VERSION = 149; // C.505 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
+// 이전: BALANCE_VERSION = 148; // C.503 (GDD v6.137 8-7 1차 호로 10종, docs/drafts/evo-impl-1119.md 2·3절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 호로 마르티요·라나·소로·에스카라바호·콜리브리·에스칼레라·니에블라·루시에르나가·나다 수치(표 그대로). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 147; // C.499 (GDD v6.132 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
 // 이전: BALANCE_VERSION = 145; // C.489 (GDD v6.121 12-4, 사용자 2026-11-18 "붕옥 존나 안나옴, 경화수월 안나옴" — 마스터 추천안 provisional): 아이젠 voidSlot 에 고정 기본 몫 base 신설 — hogyoku base 0.15 · kyoka base 0.12 (확률 = base + 폭주 블록 공식 × voidScale). 적 수치 그대로.
@@ -584,22 +585,58 @@ export const BALANCE = {
       } as Record<string, Record<string, number>>,
       forms: {
         /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 2 */
-        't4:normal:physical': { shinigami: { every: 4, perBlock: 0.03, release: { every: 2 } } },
+        't4:normal:physical': {
+          shinigami: { every: 4, perBlock: 0.03, release: { every: 2 } },
+          /** 호로 마르티요 (C.503): 평타 every 대마다 적 찢김 +1(최대 max), 1당 평타 피해 +perStack. 블록 → 체인 수만큼 소모, 1당 그 블록 + 평타 flatPer 회분. 레스렉시온 = 2대마다·최대 8 */
+          hollow: { every: 3, max: 5, perStack: 0.04, flatPer: 0.3, release: { every: 2, max: 8 } },
+        },
         /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
-        't4:water:physical': { shinigami: { perStack: 0.04, seconds: 5, max: 5, every: 6, hits: 3, bonus: 0.3, critDmgPerStack: 0, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.05 } } },
-        // ── C.502 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
+        't4:water:physical': {
+          shinigami: { perStack: 0.04, seconds: 5, max: 5, every: 6, hits: 3, bonus: 0.3, critDmgPerStack: 0, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.05 } },
+          /** 호로 라나 (C.503): 블록 1번 = 물 스택 1(seconds 초, 스택마다 따로), 스택당 평타 치명 +perStack(최대 max). 레스렉시온 = 8초·최대 8 */
+          hollow: { perStack: 0.04, seconds: 5, max: 6, release: { seconds: 8, max: 8 } },
+        },
         /** 사신 봉수대: 평타 every 대마다 봉화 1(봉화당 평타 추가 피해 +perBeacon), 봉화 need 개 → 다음 평타 '봉수 폭렬' = 적 방어 pierce 무시(막기 반격과 같은 50% — 100% 면 나눗셈이 0) + 바의 불 블록 1개당 +perFire, 그 뒤 봉화 0. 만해 = 필요 4·봉화당 +7.5% */
-        't4:fire:physical': { shinigami: { every: 3, perBeacon: 0.06, need: 5, pierce: 0.5, perFire: 0.1, release: { need: 4, perBeacon: 0.075 } } },
+        't4:fire:physical': {
+          shinigami: { every: 3, perBeacon: 0.06, need: 5, pierce: 0.5, perFire: 0.1, release: { need: 4, perBeacon: 0.075 } },
+          /** 호로 소로 (C.503): 평타마다 여우불 1(seconds 초), 여우불 need 개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +burn, 다시 걸면 시간 새로·% 큰 쪽). 레스렉시온 = 여우불 3초·화상 +15% */
+          hollow: { seconds: 2, need: 5, burn: 0.1, burnSeconds: 6, release: { seconds: 3, burn: 0.15 } },
+        },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
-        't4:earth:physical': { shinigami: { slow: 1.15, slowCut: -0.15, perSpawn: 0.04, cap: 0.3, perShield: 0.015, cutPerChain: 0.05, storedMult: 1 } },
+        't4:earth:physical': {
+          shinigami: { slow: 1.15, slowCut: -0.15, perSpawn: 0.04, cap: 0.3, perShield: 0.015, cutPerChain: 0.05, storedMult: 1 },
+          /** 호로 에스카라바호 (C.503, evo-picks 그대로): 전투 시작 보호막 최대 체력 shield, 있는 동안 평타 +basicBonus, 깨지면 regrow 초 뒤 다시(평타마다 cut 초 당김). 레스렉시온 = 보호막 20%(시작 때 남아 있으면 20% 로 채움)·깨질 때 깨진 양만큼 적에게 */
+          hollow: { shield: 0.12, basicBonus: 0.15, regrow: 12, cut: 0.5, release: { shield: 0.2 } },
+        },
+        /** 사신 섬뢰각: 뇌 블록 → 다음 평타 체인 수×perChain 대 분신(같은 피해). 만해 = ×5 */
+        't4:thunder:physical': {
+          shinigami: { perChain: 3, release: { perChain: 5 } },
+          /** 호로 콜리브리 (C.503): 평타마다 날갯짓 +1, 1당 평타 간격 −perStack(최대 −maxCut, 스택 상한 maxStacks), 블록 쓰면 절반. 레스렉시온 = 안 줄어듦·최대 −45% */
+          hollow: { perStack: 0.02, maxStacks: 15, maxCut: 0.3, release: { maxStacks: 23, maxCut: 0.45 } },
+        },
+        /** 사신 천평환: 특성 offenseMax(평타·블록 = 공격력·지능 중 높은 쪽) + 블록은 평균(blockAverage 2 = 평균). 만해 = 기본 해방 강화만 */
+        't4:normal:mixed': {
+          shinigami: { blockAverage: 2 },
+          /** 호로 에스칼레라 (C.503, v6.133 블록 피해 증가 없음): 블록 → seconds 초 평타 피해 +체인 수×perChain(큰 쪽 갱신). 레스렉시온 = 6초·×12% */
+          hollow: { seconds: 4, perChain: 0.08, release: { seconds: 6, perChain: 0.12 } },
+        },
+        /** 사신 연우: 2체인 streak 번 연달아 → 물·귀 블록 made 개 + 장마 +1(최대 max), 장마 ≥1 이면 3체인 치명 +crit·치명 피해 +critDmg, 3체인 → 장마 −1. 체인 배율 c1/c2/c3. 만해 = 3체인이 안 줄임·최대 5 */
+        't4:water:special': {
+          shinigami: { streak: 2, made: 3, max: 3, crit: 0.25, critDmg: 0.4, c1: 0.8, c2: 1.8, c3: 4.4, release: { max: 5 } },
+          /** 호로 니에블라 '물안개 잔상' (C.503): 체인 2 블록 치명 +crit2·체인 3 +crit3, 치명 블록 → 잔상(1체인) 바 끝. 레스렉시온 = 보너스 2배 */
+          hollow: { crit2: 0.1, crit3: 0.2, release: { crit2: 0.2, crit3: 0.4 } },
+        },
+        /** 호로 루시에르나가 '꾀는 불빛' (C.503): 1체인 → 불빛 +1(최대 max, 영구), 3체인 → 불빛 전부 소모, 1개당 위력 +perGlow·화상 burnPerGlow 초(+burn). 레스렉시온 = 최대 5·2체인도 소모 */
+        't4:fire:special': { hollow: { max: 3, perGlow: 0.25, burnPerGlow: 3, burn: 0.12, release: { max: 5 } } },
+        /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 공허 블록, 3체인 within 초 안 streak 번 → 공허 +1(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
+        'h4:void': {
+          shinigami: { fixed: 2, streak: 2, within: 1, stackMax: 60, perTwo: 0.01, lineMax: 0.3 },
+          /** 호로 나다 (C.503, 히든 허무형 — 해방 = 기본 강화만): 블록 → seconds 초 평타 피해 +체인 수×perChain(갱신). 바 bar 칸 가득인 동안 every 초마다 평타 처형선 +perLine(전투 동안, 최대 maxLine) */
+          hollow: { seconds: 5, perChain: 0.1, bar: 8, every: 3, perLine: 0.01, maxLine: 0.25, maxStacks: 25 },
+        },
+        // ── C.505 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
         /** 사신 주홍장: 잃은 체력 1%당 평타 +perLostPower·간격 −perLostInterval, 혈 블록 → 다음 평타 피해의 체인 수×healPerChain 회복. 만해 = 지속 releaseSeconds 초·체력 하한 hpFloor·만해 중 혈 블록 1개당 치명 +critPerBlood·치명 피해 +critDmgPerBlood */
         't4:blood:physical': { shinigami: { perLostPower: 0.006, perLostInterval: 0.003, healPerChain: 0.1, releaseSeconds: 2, hpFloor: 1, critPerBlood: 0.05, critDmgPerBlood: 0.1 } },
-        /** 사신 섬뢰각: 뇌 블록 → 다음 평타 체인 수×perChain 대 분신(같은 피해). 만해 = ×5 */
-        't4:thunder:physical': { shinigami: { perChain: 3, release: { perChain: 5 } } },
-        /** 사신 천평환: 특성 offenseMax(평타·블록 = 공격력·지능 중 높은 쪽) + 블록은 평균(blockAverage 2 = 평균). 만해 = 기본 해방 강화만 */
-        't4:normal:mixed': { shinigami: { blockAverage: 2 } },
-        /** 사신 연우: 2체인 streak 번 연달아 → 물·귀 블록 made 개 + 장마 +1(최대 max), 장마 ≥1 이면 3체인 치명 +crit·치명 피해 +critDmg, 3체인 → 장마 −1. 체인 배율 c1/c2/c3. 만해 = 3체인이 안 줄임·최대 5 */
-        't4:water:special': { shinigami: { streak: 2, made: 3, max: 3, crit: 0.25, critDmg: 0.4, c1: 0.8, c2: 1.8, c3: 4.4, release: { max: 5 } } },
         /** 사신 백랑파: 블록 치명 → 다음 평타 hits 회 치명 확정. 만해 = 4회 */
         't4:water:mixed': { shinigami: { hits: 2, release: { hits: 4 } } },
         /** 사신 천일야장도: 불 블록 → 다음 평타 체인 수×perChain 대 불칼(블록 1단계 피해 × bladePower 불), 최대 maxBlades. 만해 = 불칼 평타 화상(burnSeconds 초, 받는 피해 +burnPct)·최대 20 */
@@ -612,8 +649,6 @@ export const BALANCE = {
         'h4:frenzy': { shinigami: { perRisk: 0.003, perVoid: 1 } },
         /** 사신 추성(히든 사냥꾼): 펫 칸 +petSlots(그 칸 펫 피해 × pet2Power), 평타마다 표식 +1(최대 maxMarks, 다 차면 다음 공격에 0), 표식당 펫 공격력 +perMark. 만해 = 표식당 내 치명 피해 +critPerMark·최대 12 */
         'h4:hunter': { shinigami: { petSlots: 1, pet2Power: 0.7, maxMarks: 10, perMark: 0.05, critPerMark: 0, release: { maxMarks: 12, critPerMark: 0.04 } } },
-        /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 공허 블록, 3체인 within 초 안 streak 번 → 공허 +1(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
-        'h4:void': { shinigami: { fixed: 2, streak: 2, within: 1, stackMax: 60, perTwo: 0.01, lineMax: 0.3 } },
       } as Record<string, Record<string, Record<string, unknown>>>,
     },
     // ── 진화 (GDD 20-5 v3.7~v4.2): 트리·타이밍·히든. 수치 provisional ──

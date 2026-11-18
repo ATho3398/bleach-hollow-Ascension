@@ -1663,7 +1663,7 @@ export function startApp(host: HTMLElement): void {
       tilesLocked: !tilesUnlocked(save),
       // 펫 (GDD 90장): 데리고 다니는 펫(친밀도까지) · 바퀴 끝 보상 펫
       pet: petsUnlocked(save) ? carriedPet(save.shared.pets) : null, // 펫 = 첫 환생 뒤 (GDD 241-0)
-      pet2: carriedPetsOf(save).pet2, // 2번째 칸 펫 (GDD 8-7 1차 추성, C.502)
+      pet2: carriedPetsOf(save).pet2, // 2번째 칸 펫 (GDD 8-7 1차 추성, C.505)
       petDrops: petsUnlocked(save),
       gear: gearCarry(save.shared.gear),
       gearDrops: gearUnlocked(save), // 장비 = 2단계부터 (GDD 241-0)
@@ -1882,7 +1882,7 @@ export function startApp(host: HTMLElement): void {
     applyEvolutionToParams(params, s0.evolution, s0.factionId, statBonusOf(s0).total, s0.training.completed);
     params.liberationStartGauge = liberationStartGaugeOf();
     applyGearToParams(params, gearCarry(s0.shared.gear), strong);
-    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.502)
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.505)
     applyCareToParams(params, battleCareOf(s0)); // 빈사: 체력 10%·속도 절반 (GDD 102장 수정)
     return params;
   }
@@ -2039,7 +2039,7 @@ export function startApp(host: HTMLElement): void {
       story: { chapterId, episodeId },
       tilesLocked: !tilesUnlocked(save),
       pet: petsUnlocked(save) ? carriedPet(save.shared.pets) : null, // 펫 = 첫 환생 뒤 (GDD 241-0)
-      pet2: carriedPetsOf(save).pet2, // 2번째 칸 펫 (GDD 8-7 1차 추성, C.502)
+      pet2: carriedPetsOf(save).pet2, // 2번째 칸 펫 (GDD 8-7 1차 추성, C.505)
       petDrops: petsUnlocked(save),
       gear: gearCarry(save.shared.gear),
       gearDrops: gearUnlocked(save), // 장비 = 2단계부터 (GDD 241-0)
@@ -2465,7 +2465,7 @@ export function startApp(host: HTMLElement): void {
       applyDifficultyToParams(params, enemyPick.star);
       params.liberationStartGauge = liberationStartGaugeOf();
       applyGearToParams(params, gearCarry(s0.shared.gear), enemyPick.enemy.class === 'elite' || enemyPick.bossId !== null); // 장비 (GDD 91장): 연습도 낀 장비 그대로
-      params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.502)
+      params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.505)
       applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정) — 져도 잃는 것이 없어 사망은 없다
       if (params.kit?.riskRelease) params.riskStart = s0.nest.risk; // 붕옥 감응도 = 리스크 (GDD 12-4 v6.054): 지금 값으로 시작(둥지 값은 안 바뀜)
       params.playerStartHpFraction = hpFrac;
@@ -2568,7 +2568,7 @@ export function startApp(host: HTMLElement): void {
     params.liberationStartGauge = liberationStartGaugeOf();
     // 장비 (GDD 91장): 등급전 상대는 강적으로 본다
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
-    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.502)
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.505)
     applyCareToParams(params, battleCareOf(s0)); // 빈사 (GDD 102장 수정): 지면 사망
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: enemyAtDifficulty(holder, holder.difficulty), params });
     battleView(root, faction, s, {
@@ -2605,7 +2605,7 @@ export function startApp(host: HTMLElement): void {
     applyDifficultyToParams(params, AX.difficulty);
     params.liberationStartGauge = liberationStartGaugeOf();
     applyGearToParams(params, gearCarry(s0.shared.gear), true);
-    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.502)
+    params.petAttack = petAttackOf(carriedPet(s0.shared.pets)); params.petAttack2 = petAttackOf(carriedPetsOf(s0).pet2); // 펫도 같이 공격 (GDD 241-D 4) · 2번째 칸 펫 (C.505)
     applyCareToParams(params, battleCareOf(s0));
     const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy: { ...enemyAtDifficulty(boss.enemy, AX.difficulty), name: { '*': faction.ascension.foe } }, params, boss: bossSetupOf(boss.id) });
     battleView(root, faction, s, {

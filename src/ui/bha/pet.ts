@@ -100,7 +100,7 @@ export function fitPetToBody(buddy: HTMLElement): boolean {
   const host = buddy.parentElement;
   if (!host || !buddy.isConnected) return false;
   const dx = Number(buddy.dataset.dx ?? 0), dy = Number(buddy.dataset.dy ?? 0);
-  // 2번째 칸 펫 (C.502 추성): 1번째 펫 바로 오른쪽
+  // 2번째 칸 펫 (C.505 추성): 1번째 펫 바로 오른쪽
   const lead = buddy.classList.contains('bha-pet--second') ? host.querySelector<HTMLElement>('.bha-pet:not(.bha-pet--second)') : null;
   if (lead) {
     buddy.style.translate = 'none';

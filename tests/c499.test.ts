@@ -74,10 +74,10 @@ describe('데이터·장치 목록', () => {
     expect(errs.some((e) => e.includes('모르는 효과 zap'))).toBe(true);
     expect(errs.some((e) => e.includes('모르는 능력치 speed'))).toBe(true);
   });
-  it('데이터는 진화체 id × 종족 — 백련·노도는 사신만, 마르티요(호로)는 아직 없음', () => {
+  it('데이터는 진화체 id × 종족 — 백련·노도는 사신, 부오(호로)는 아직 없음 (C.503: 마르티요는 호로 1차에 들어감)', () => {
     expect(evoFormEntry('t4:normal:physical', 'shinigami')?.ability).toBeTruthy();
-    expect(evoFormEntry('t4:normal:physical', 'hollow')).toBeNull();
-    expect(evoParamsOf(getForm('t4:normal:physical'), 'hollow')).toBeNull();
+    expect(evoFormEntry('t4:normal:special', 'hollow')).toBeNull();
+    expect(evoParamsOf(getForm('t4:normal:special'), 'hollow')).toBeNull();
     expect(evoParamsOf(getForm('t4:water:physical'), 'shinigami')?.ability.specials?.rush).toBeTruthy();
     expect(evoReleaseBlocked('t4:normal:physical', 'shinigami')).toBe(false);
   });
@@ -586,7 +586,7 @@ describe('세이브·화면·봇', () => {
     expect(lines[0]!.text).toContain('+4%p');
     expect(lines[1]!.text).toContain('「노도 연격」');
     expect(lines[2]!.text).toContain('8초');
-    expect(evoUniqueLines('t4:normal:physical', 'hollow', '레스렉시온')).toEqual([]);
+    expect(evoUniqueLines('t4:normal:special', 'hollow', '레스렉시온')).toEqual([]); // C.503: 마르티요 → 아직 없는 부오
   });
   it('봇은 켜진 특수 블록을 바로 쓴다', async () => {
     const { botInput } = await import('../src/engine/combat');

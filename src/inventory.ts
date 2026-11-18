@@ -166,7 +166,7 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
   for (const id of PET_IDS) {
     const o = save.shared.pets.owned[id];
     if (!o) continue;
-    const on = save.shared.pets.active === id || save.shared.pets.active2 === id; // 2번째 칸 (C.502)
+    const on = save.shared.pets.active === id || save.shared.pets.active2 === id; // 2번째 칸 (C.505)
     out.push({ id, category: 'pet', name: petName(id, faction), count: 1, detail: `${on ? '데리고 다니는 중 · ' : ''}${petEffectText(id, affinityOf(o.laps))}`, action: on ? 'leave' : 'take', lock: save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null });
   }
   // 스킨·꾸밈: 가진 것 (이 종족이 입을 수 있는 스킨만), 끼기·빼기
@@ -377,7 +377,7 @@ export function petAffinityText(save: Pick<SaveData, 'shared'>, id: string): str
 }
 
 /** 데리고 가기(id) / 두고 가기(null). 원정 중에는 못 바꾼다. 런 로그 pets take/leave.
- *  펫 칸이 2개(진화체 펫 칸 +1, GDD 8-7 1차 추성 C.502)이고 1번째 칸이 차 있으면 빈 2번째 칸에 넣는다. 두고 가기(null)는 1번째 칸 */
+ *  펫 칸이 2개(진화체 펫 칸 +1, GDD 8-7 1차 추성 C.505)이고 1번째 칸이 차 있으면 빈 2번째 칸에 넣는다. 두고 가기(null)는 1번째 칸 */
 export function choosePet(save: SaveData, id: string | null, nowMs: number = Date.now()): boolean {
   if (save.activeExpedition != null) return false;
   const ps = save.shared.pets;
@@ -389,7 +389,7 @@ export function choosePet(save: SaveData, id: string | null, nowMs: number = Dat
   return true;
 }
 
-/** 2번째 펫 칸 데리고 가기(id) / 두고 가기(null) (C.502). 칸이 없으면 false */
+/** 2번째 펫 칸 데리고 가기(id) / 두고 가기(null) (C.505). 칸이 없으면 false */
 export function choosePet2(save: SaveData, id: string | null, nowMs: number = Date.now()): boolean {
   if (save.activeExpedition != null) return false;
   if (id !== null && petSlotsOf(save) < 2) return false;

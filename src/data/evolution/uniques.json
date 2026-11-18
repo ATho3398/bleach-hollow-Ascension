@@ -11,6 +11,22 @@
   },
   "forms": {
     "t4:normal:physical": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "일반 공격 {every}대마다 적에게 찢김 +1(최대 {max}), 찢김 1당 그 적이 받는 일반 공격 피해 +{perStack%}. 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 {flatPer}회분 피해를 더한다" },
+          "releaseDescription": { "*": "일반 공격 {every}대마다 찢김 +1(최대 {max})" },
+          "stacks": {
+            "rend": { "max": "max", "on": "foe", "mark": { "icon": "i-fx-claw", "name": { "*": "찢김" } } }
+          },
+          "rules": [
+            { "on": "basic", "every": "every", "do": [{ "act": "add", "stack": "rend", "value": 1 }], "proc": "찢김!" },
+            { "on": "blockPre", "need": [{ "stack": "rend" }], "do": [{ "act": "consume", "stack": "rend", "value": 1, "per": "chain" }, { "act": "blockFlat", "value": "flatPer", "per": "consumed" }], "proc": "찢어발기기!" }
+          ],
+          "passives": [
+            { "stat": "basicPower", "value": "perStack", "per": "stack:rend" }
+          ]
+        }
+      },
       "shinigami": {
         "trait": "aspd10",
         "ability": {
@@ -28,6 +44,21 @@
       }
     },
     "t4:water:physical": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "블록을 쓸 때마다(체인·개수 무관) 물 스택 1({seconds}초, 스택마다 따로), 스택당 일반 공격 치명 확률 +{perStack%}p(최대 {max}스택)" },
+          "releaseDescription": { "*": "스택 지속 {seconds}초 · 최대 {max}스택" },
+          "stacks": {
+            "wet": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-rare", "name": { "*": "물" } } }
+          },
+          "rules": [
+            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "add", "stack": "wet", "value": 1 }], "proc": "물!" }
+          ],
+          "passives": [
+            { "stat": "crit", "value": "perStack", "per": "stack:wet" }
+          ]
+        }
+      },
       "shinigami": {
         "trait": "crit6",
         "ability": {
@@ -52,6 +83,25 @@
       }
     },
     "t4:fire:physical": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%})" },
+          "releaseDescription": { "*": "여우불 {seconds}초 · 화상 피해 +{burn%}" },
+          "stacks": {
+            "fox": { "seconds": "seconds", "mark": { "icon": "i-cast", "name": { "*": "여우불" } } }
+          },
+          "buffs": {
+            "burn": { "on": "foe", "mark": { "icon": "i-weak", "name": { "*": "화상" } } }
+          },
+          "rules": [
+            { "on": "basic", "do": [{ "act": "add", "stack": "fox", "value": 1 }] },
+            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnSeconds", "refresh": "max" }], "proc": "화상!" }
+          ],
+          "passives": [
+            { "stat": "dealt", "value": 1, "per": "buff:burn" }
+          ]
+        }
+      },
       "shinigami": {
         "ability": {
           "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}, 그 뒤 봉화 0" },
@@ -71,6 +121,23 @@
       }
     },
     "t4:earth:physical": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "전투를 시작할 때 갑각 보호막(최대 체력 {shield%}). 갑각이 남아 있는 동안 일반 공격 피해 +{basicBonus%}. 깨지면 {regrow}초 뒤 다시 돋고, 일반 공격 1대마다 그 시간이 {cut}초 줄어든다" },
+          "releaseDescription": { "*": "갑각 {shield%} · 깨질 때 깨진 양만큼 적에게 되돌린다" },
+          "rules": [
+            { "on": "start", "do": [{ "act": "shield", "value": "shield", "cap": "shield" }] },
+            { "on": "releaseStart", "need": [{ "shield": true }], "do": [{ "act": "shield", "value": "shield", "cap": "shield" }] },
+            { "on": "shieldBreak", "do": [{ "act": "timer", "timer": "regrow", "seconds": "regrow" }] },
+            { "on": "shieldBreak", "when": "release", "do": [{ "act": "hit", "basis": "raw", "value": 1, "per": "amount" }], "proc": "갑각 반격!" },
+            { "on": "basic", "do": [{ "act": "timerCut", "timer": "regrow", "seconds": "cut" }] },
+            { "on": "timer", "timer": "regrow", "do": [{ "act": "shield", "value": "shield", "cap": "shield" }], "proc": "갑각!" }
+          ],
+          "passives": [
+            { "stat": "basicPower", "value": "basicBonus", "need": [{ "shield": true }] }
+          ]
+        }
+      },
       "shinigami": {
         "ability": {
           "description": { "*": "일반 공격 간격 ×{slow}. 흙 블록이 생길 때마다 방어막 +최대 체력 {perSpawn%}(최대 {cap%}). 방어막 1%당 일반 공격 피해 +{perShield%}. 흙 블록을 쓰면 방어막 체인 수×{cutPerChain%}p 삭제" },
@@ -87,6 +154,183 @@
           "passives": [
             { "stat": "interval", "value": "slowCut" },
             { "stat": "basicPower", "value": "perShield", "per": "shieldPct" }
+          ]
+        }
+      }
+    },
+    "t4:thunder:physical": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "일반 공격마다 날갯짓 +1 — 1개당 일반 공격 간격 −{perStack%}(최대 −{maxCut%}). 블록을 쓰면 날갯짓이 절반으로" },
+          "releaseDescription": { "*": "블록을 써도 안 줄어듦 · 최대 −{maxCut%}" },
+          "stacks": {
+            "wing": { "max": "maxStacks", "mark": { "icon": "i-speed", "name": { "*": "날갯짓" } } }
+          },
+          "rules": [
+            { "on": "basic", "do": [{ "act": "add", "stack": "wing", "value": 1 }] },
+            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "when": "normal", "do": [{ "act": "mul", "stack": "wing", "value": 0.5 }] }
+          ],
+          "passives": [
+            { "stat": "interval", "value": "perStack", "per": "stack:wing", "max": "maxCut" }
+          ]
+        }
+      },
+      "shinigami": {
+        "ability": {
+          "description": { "*": "뇌 블록을 쓰면 다음 일반 공격 체인 수×{perChain}대 동안 분신이 1번 더 친다(같은 피해, 남은 것에 더함)" },
+          "releaseDescription": { "*": "체인 수×{perChain}대" },
+          "charges": {
+            "clone": { "mark": { "icon": "i-speed", "name": { "*": "분신" } } }
+          },
+          "rules": [
+            { "on": "block", "element": ["thunder"], "do": [{ "act": "charge", "charge": "clone", "value": "perChain", "per": "chain" }] },
+            { "on": "basic", "charge": "clone", "do": [{ "act": "hit", "basis": "last", "value": 1 }], "proc": "분신!" }
+          ]
+        }
+      }
+    },
+    "t4:normal:mixed": {
+      "hollow": {
+        "ability": {
+          "description": { "*": "블록은 원래 피해 그대로, 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(다시 쓰면 큰 쪽으로 갱신)" },
+          "releaseDescription": { "*": "{seconds}초 동안 체인 수×{perChain%}" },
+          "buffs": {
+            "step": { "mark": { "icon": "i-basic", "name": { "*": "계단" } } }
+          },
+          "rules": [
+            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "buff", "buff": "step", "value": "perChain", "per": "chain", "seconds": "seconds", "refresh": "max" }], "proc": "계단!" }
+          ],
+          "passives": [
+            { "stat": "basicPower", "value": 1, "per": "buff:step" }
+          ]
+        }
+      },
+      "shinigami": {
+        "trait": "offenseMax",
+        "ability": {
+          "description": { "*": "블록 피해는 공격력·지능의 평균으로 계산한다" },
+          "passives": [
+            { "stat": "offenseBlock", "value": "blockAverage" }
+          ]
+        }
+      }
+    },
+    "t4:water:special": {
+      "hollow": {
+        "trait": "blockCrit6",
+        "ability": {
+          "description": { "*": "체인 2 블록 치명 확률 +{crit2%}p · 체인 3 +{crit3%}p. 치명이 난 블록은 잔상 1개(같은 블록 1체인)를 바 끝에 남긴다(잔상은 잔상을 남기지 않음)" },
+          "releaseDescription": { "*": "체인 치명 보너스 2배(+{crit2%}p · +{crit3%}p)" },
+          "rules": [
+            { "on": "blockPre", "chain": [2], "do": [{ "act": "blockCrit", "value": "crit2" }] },
+            { "on": "blockPre", "chain": [3], "do": [{ "act": "blockCrit", "value": "crit3" }] },
+            { "on": "block", "crit": true, "echo": false, "do": [{ "act": "echo" }], "proc": "잔상!" }
+          ]
+        }
+      },
+      "shinigami": {
+        "trait": "blockCrit6",
+        "ability": {
+          "description": { "*": "2체인을 {streak}번 연달아 쓰면 바 끝 빈 칸에 물·귀 블록 {made}개가 생기고 장마 +1(최대 {max}). 장마가 있으면 3체인만 치명 확률 +{crit%}p·치명 피해 +{critDmg%}, 3체인을 쓰면 장마 −1. 체인 배율 ×{c1}/×{c2}/×{c3}" },
+          "releaseDescription": { "*": "3체인이 장마를 줄이지 않음 · 장마 최대 {max}" },
+          "chainMultipliers": ["c1", "c2", "c3"],
+          "stacks": {
+            "rain": { "max": "max", "mark": { "icon": "i-rare", "name": { "*": "장마" } } }
+          },
+          "rules": [
+            { "on": "block", "chain": [2], "streak": { "count": "streak" }, "do": [{ "act": "spawn", "block": "make", "element": "water", "family": "family-c", "value": "made" }, { "act": "add", "stack": "rain", "value": 1 }], "proc": "장마!" },
+            { "on": "blockPre", "chain": [3], "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "blockCrit", "value": "crit" }, { "act": "blockCritDmg", "value": "critDmg" }] },
+            { "on": "block", "chain": [3], "when": "normal", "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "consume", "stack": "rain", "value": 1 }] }
+          ]
+        }
+      }
+    },
+    "t4:fire:special": {
+      "hollow": {
+        "trait": "chain3Power",
+        "ability": {
+          "description": { "*": "1체인 블록을 쓰면 불빛 +1(최대 {max}, 안 사라짐). 3체인을 쓰면 불빛을 모두 써서 1개당 위력 +{perGlow%}·화상 +{burnPerGlow}초(걸린 적을 때리면 피해 +{burn%})" },
+          "releaseDescription": { "*": "불빛 최대 {max} · 2체인도 불빛을 쓴다" },
+          "stacks": {
+            "glow": { "max": "max", "mark": { "icon": "i-sp", "name": { "*": "불빛" } } },
+            "lit": {}
+          },
+          "buffs": {
+            "burn": { "on": "foe", "mark": { "icon": "i-weak", "name": { "*": "화상" } } }
+          },
+          "rules": [
+            { "on": "block", "chain": [1], "do": [{ "act": "add", "stack": "glow", "value": 1 }] },
+            { "on": "blockPre", "chain": [3], "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed" }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
+            { "on": "blockPre", "chain": [2], "when": "release", "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed" }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
+            { "on": "block", "need": [{ "stack": "lit" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnPerGlow", "secondsPer": "stack:lit", "refresh": "max" }, { "act": "clear", "stack": "lit" }] }
+          ],
+          "passives": [
+            { "stat": "dealt", "value": 1, "per": "buff:burn" }
+          ]
+        }
+      }
+    },
+    "h4:frenzy": {
+      "hollow": { "release": "none" },
+      "shinigami": {
+        "ability": {
+          "description": { "*": "호로화 게이지 1당 주는 피해 +{perRisk%}" },
+          "releaseDescription": { "*": "만해 순간 특수 블록 「흑귀」가 생겨 바의 허 블록과 새 허 블록을 흡수(1개당 허 블록 피해 {perVoid%}), 누르면 쌓인 만큼 피해 — 만해가 끝날 때까지 안 쓰면 자동 사용" },
+          "stacks": {
+            "maw": { "mark": { "icon": "i-void", "name": { "*": "흑귀" } } }
+          },
+          "specials": {
+            "maw": { "name": { "*": "흑귀" }, "short": "흑", "description": { "*": "흡수한 허 블록만큼 피해" }, "maxOnBar": 1 }
+          },
+          "rules": [
+            { "on": "releaseStart", "do": [{ "act": "absorbBar", "element": "void" }, { "act": "add", "stack": "maw", "value": 1, "per": "consumed" }, { "act": "spawn", "block": "maw", "force": true }] },
+            { "on": "spawn", "kind": ["void"], "when": "release", "need": [{ "special": "maw" }], "do": [{ "act": "absorb" }, { "act": "add", "stack": "maw", "value": 1 }] },
+            { "on": "special", "special": "maw", "do": [{ "act": "hit", "basis": "void", "value": "perVoid", "per": "stack:maw" }, { "act": "clear", "stack": "maw" }], "proc": "흑귀!" },
+            { "on": "releaseEnd", "do": [{ "act": "useSpecial", "special": "maw" }] }
+          ],
+          "passives": [
+            { "stat": "dealt", "value": "perRisk", "per": "risk" }
+          ]
+        }
+      }
+    },
+    "h4:void": {
+      "hollow": {
+        "trait": "obliteration",
+        "ability": {
+          "description": { "*": "블록을 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(새로 쓰면 갱신). 바 {bar}칸이 가득 찬 동안 {every}초마다 일반 공격 처형선 +{perLine%}p(전투 동안 유지, 최대 +{maxLine%}p)" },
+          "buffs": {
+            "hollow": { "mark": { "icon": "i-basic", "name": { "*": "허무" } } }
+          },
+          "stacks": {
+            "edge": { "max": "maxStacks", "mark": { "icon": "i-target", "name": { "*": "처형선" } } }
+          },
+          "rules": [
+            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "buff", "buff": "hollow", "value": "perChain", "per": "chain", "seconds": "seconds" }] },
+            { "on": "every", "seconds": "every", "need": [{ "barFull": true }], "do": [{ "act": "add", "stack": "edge", "value": 1 }], "proc": "소멸선 +" }
+          ],
+          "passives": [
+            { "stat": "basicPower", "value": 1, "per": "buff:hollow" },
+            { "stat": "execLine", "value": "perLine", "per": "stack:edge", "max": "maxLine" }
+          ]
+        }
+      },
+      "shinigami": {
+        "trait": "obliteration",
+        "ability": {
+          "description": { "*": "바 맨 앞 {fixed}칸 = 공허 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 공허 +1(모험 동안 유지), 공허 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 공허 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
+          "stacks": {
+            "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "공허" } } }
+          },
+          "specials": {
+            "nil": { "name": { "*": "공허 블록" }, "short": "공", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock" }
+          },
+          "rules": [
+            { "on": "block", "chain": [3], "streak": { "count": "streak", "withinSeconds": "within" }, "do": [{ "act": "add", "stack": "hollow", "value": 1 }], "proc": "공허!" },
+            { "on": "special", "special": "nil", "do": [{ "act": "execute" }] }
+          ],
+          "passives": [
+            { "stat": "execBlockLine", "value": "perTwo", "per": "stack:hollow", "step": 2, "max": "lineMax" }
           ]
         }
       }
@@ -115,50 +359,6 @@
             { "stat": "interval", "value": "perLostInterval", "per": "lostHpPct" },
             { "stat": "crit", "value": "critPerBlood", "per": "stack:blood", "when": "release" },
             { "stat": "critDmg", "value": "critDmgPerBlood", "per": "stack:blood", "when": "release" }
-          ]
-        }
-      }
-    },
-    "t4:thunder:physical": {
-      "shinigami": {
-        "ability": {
-          "description": { "*": "뇌 블록을 쓰면 다음 일반 공격 체인 수×{perChain}대 동안 분신이 1번 더 친다(같은 피해, 남은 것에 더함)" },
-          "releaseDescription": { "*": "체인 수×{perChain}대" },
-          "charges": {
-            "clone": { "mark": { "icon": "i-speed", "name": { "*": "분신" } } }
-          },
-          "rules": [
-            { "on": "block", "element": ["thunder"], "do": [{ "act": "charge", "charge": "clone", "value": "perChain", "per": "chain" }] },
-            { "on": "basic", "charge": "clone", "do": [{ "act": "hit", "basis": "last", "value": 1 }], "proc": "분신!" }
-          ]
-        }
-      }
-    },
-    "t4:normal:mixed": {
-      "shinigami": {
-        "trait": "offenseMax",
-        "ability": {
-          "description": { "*": "블록 피해는 공격력·지능의 평균으로 계산한다" },
-          "passives": [
-            { "stat": "offenseBlock", "value": "blockAverage" }
-          ]
-        }
-      }
-    },
-    "t4:water:special": {
-      "shinigami": {
-        "trait": "blockCrit6",
-        "ability": {
-          "description": { "*": "2체인을 {streak}번 연달아 쓰면 바 끝 빈 칸에 물·귀 블록 {made}개가 생기고 장마 +1(최대 {max}). 장마가 있으면 3체인만 치명 확률 +{crit%}p·치명 피해 +{critDmg%}, 3체인을 쓰면 장마 −1. 체인 배율 ×{c1}/×{c2}/×{c3}" },
-          "releaseDescription": { "*": "3체인이 장마를 줄이지 않음 · 장마 최대 {max}" },
-          "chainMultipliers": ["c1", "c2", "c3"],
-          "stacks": {
-            "rain": { "max": "max", "mark": { "icon": "i-rare", "name": { "*": "장마" } } }
-          },
-          "rules": [
-            { "on": "block", "chain": [2], "streak": { "count": "streak" }, "do": [{ "act": "spawn", "block": "make", "element": "water", "family": "family-c", "value": "made" }, { "act": "add", "stack": "rain", "value": 1 }], "proc": "장마!" },
-            { "on": "blockPre", "chain": [3], "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "blockCrit", "value": "crit" }, { "act": "blockCritDmg", "value": "critDmg" }] },
-            { "on": "block", "chain": [3], "when": "normal", "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "consume", "stack": "rain", "value": 1 }] }
           ]
         }
       }
@@ -229,29 +429,6 @@
         }
       }
     },
-    "h4:frenzy": {
-      "shinigami": {
-        "ability": {
-          "description": { "*": "호로화 게이지 1당 주는 피해 +{perRisk%}" },
-          "releaseDescription": { "*": "만해 순간 특수 블록 「흑귀」가 생겨 바의 허 블록과 새 허 블록을 흡수(1개당 허 블록 피해 {perVoid%}), 누르면 쌓인 만큼 피해 — 만해가 끝날 때까지 안 쓰면 자동 사용" },
-          "stacks": {
-            "maw": { "mark": { "icon": "i-void", "name": { "*": "흑귀" } } }
-          },
-          "specials": {
-            "maw": { "name": { "*": "흑귀" }, "short": "흑", "description": { "*": "흡수한 허 블록만큼 피해" }, "maxOnBar": 1 }
-          },
-          "rules": [
-            { "on": "releaseStart", "do": [{ "act": "absorbBar", "element": "void" }, { "act": "add", "stack": "maw", "value": 1, "per": "consumed" }, { "act": "spawn", "block": "maw", "force": true }] },
-            { "on": "spawn", "kind": ["void"], "when": "release", "need": [{ "special": "maw" }], "do": [{ "act": "absorb" }, { "act": "add", "stack": "maw", "value": 1 }] },
-            { "on": "special", "special": "maw", "do": [{ "act": "hit", "basis": "void", "value": "perVoid", "per": "stack:maw" }, { "act": "clear", "stack": "maw" }], "proc": "흑귀!" },
-            { "on": "releaseEnd", "do": [{ "act": "useSpecial", "special": "maw" }] }
-          ],
-          "passives": [
-            { "stat": "dealt", "value": "perRisk", "per": "risk" }
-          ]
-        }
-      }
-    },
     "h4:hunter": {
       "shinigami": {
         "extraPetSlots": "petSlots",
@@ -268,28 +445,6 @@
           "passives": [
             { "stat": "petPower", "value": "perMark", "per": "stack:mark" },
             { "stat": "critDmg", "value": "critPerMark", "per": "stack:mark", "when": "release" }
-          ]
-        }
-      }
-    },
-    "h4:void": {
-      "hollow": { "trait": "obliteration" },
-      "shinigami": {
-        "trait": "obliteration",
-        "ability": {
-          "description": { "*": "바 맨 앞 {fixed}칸 = 공허 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 공허 +1(모험 동안 유지), 공허 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 공허 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
-          "stacks": {
-            "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "공허" } } }
-          },
-          "specials": {
-            "nil": { "name": { "*": "공허 블록" }, "short": "공", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock" }
-          },
-          "rules": [
-            { "on": "block", "chain": [3], "streak": { "count": "streak", "withinSeconds": "within" }, "do": [{ "act": "add", "stack": "hollow", "value": 1 }], "proc": "공허!" },
-            { "on": "special", "special": "nil", "do": [{ "act": "execute" }] }
-          ],
-          "passives": [
-            { "stat": "execBlockLine", "value": "perTwo", "per": "stack:hollow", "step": 2, "max": "lineMax" }
           ]
         }
       }

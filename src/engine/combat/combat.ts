@@ -158,7 +158,7 @@ export interface CombatParams {
   activeGear: ActiveGearEffect | null;
   /** 펫 공격 (GDD 241-D 4, C.397 provisional): 데리고 간 펫이 seconds 마다 기본 공격 1회 × fraction 피해. 없으면 펫 공격 없음 (튜토리얼·각본 전투는 쉼) */
   petAttack?: { petId: string; seconds: number; fraction: number } | null;
-  /** 2번째 칸 펫 공격 (GDD 8-7 1차 추성 펫 칸 +1, C.502): 같은 방식, fraction 에 그 칸 피해 배율(70%)이 이미 곱해져 있다 */
+  /** 2번째 칸 펫 공격 (GDD 8-7 1차 추성 펫 칸 +1, C.505): 같은 방식, fraction 에 그 칸 피해 배율(70%)이 이미 곱해져 있다 */
   petAttack2?: { petId: string; seconds: number; fraction: number } | null;
   gearCooldownSeconds: number;
   gearStartCooldown: number;
@@ -947,7 +947,7 @@ export interface CombatState {
   player: { hp: number; maxHp: number; attackTimer: number; stats: Stats; dot: Dot | null; drained?: number; shield?: number };
   /** 다음 펫 공격까지 남은 틱 (params.petAttack 이 있을 때만, GDD 241-D 4) */
   petTimer?: number;
-  /** 2번째 칸 펫 다음 공격까지 남은 틱 (C.502) */
+  /** 2번째 칸 펫 다음 공격까지 남은 틱 (C.505) */
   petTimer2?: number;
   tray: Tray;
   nextUid: number;
@@ -3607,7 +3607,7 @@ function advanceTick(s: CombatState): void {
       if (s.status !== 'playing') return;
     }
   }
-  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.502): 제 간격으로 같이 공격 — 첫 공격은 반 간격 늦게(두 마리가 겹쳐 치지 않게)
+  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.505): 제 간격으로 같이 공격 — 첫 공격은 반 간격 늦게(두 마리가 겹쳐 치지 않게)
   const pa2 = p.petAttack2;
   if (pa2 && !s.script && !cineHold) {
     s.petTimer2 ??= t(pa2.seconds * 1.5);
@@ -3723,7 +3723,7 @@ registerEvoApi({
     return p.basicBlockPowerInAttacks * unitDamage(p) * playerHitMultiplier(s, els, PLAYER_BLOCK_CATEGORY, ignore).mult;
   },
   strike(s, amount, text, element, exact) {
-    // exact (C.502): 이미 정해진 피해(막은 양·방금 평타 피해 비율) — 치명·특성 배율을 다시 붙이지 않는다 (섬뢰각 분신 '같은 피해')
+    // exact (C.505): 이미 정해진 피해(막은 양·방금 평타 피해 비율) — 치명·특성 배율을 다시 붙이지 않는다 (섬뢰각 분신 '같은 피해')
     const damage = exact ? amount : playerHit(s, amount, false, element ? [element] : []).damage;
     if (text) emit(s, { kind: 'evo-proc', text, damage });
     dealDamage(s, damage, { kind: 'special', traitId: null, element });

@@ -229,7 +229,7 @@ export function openPet(faction: FactionConfig, save: SaveData, id: string, chan
   const slot = petSlotOf(save, id);
   const on = slot !== 0;
   const locked = save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null;
-  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.502): 같이 공격만(피해 배율), 다른 효과는 1번째 칸만
+  // 2번째 칸 펫 (GDD 8-7 1차 추성, C.505): 같이 공격만(피해 배율), 다른 효과는 1번째 칸만
   const second = slot === 2 ? `2번째 칸 — 같이 공격만 한다(피해 ${Math.round(evoExtraPetPower(save.evolution.formId, save.factionId ?? '') * 100)}%).` : '전투에서 같이 공격한다.';
   let close: () => void = () => {};
   close = itemDialog({
@@ -340,7 +340,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     ui.tab = 'pet';
     redraw('slot:pet');
   };
-  // 2번째 펫 칸 (GDD 8-7 1차 추성 펫 칸 +1, C.502): 진화체에 칸이 있을 때만 보인다
+  // 2번째 펫 칸 (GDD 8-7 1차 추성 펫 칸 +1, C.505): 진화체에 칸이 있을 때만 보인다
   const pet2Btn = petOpen && petSlotsOf(save) >= 2 ? (() => {
     const pid2 = save.shared.pets.active2;
     const b = h('button', `bha-eqslot bha-eqslot--pet${pid2 ? '' : ' is-empty'}`);

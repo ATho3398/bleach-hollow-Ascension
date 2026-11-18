@@ -1,4 +1,4 @@
-// C.502 진화체 고유 능력 1차 — 사신 13종 (GDD 8-7, docs/drafts/evo-impl-1119.md 1절): 데이터·수치 + 작은 장치(grow·absorbBar·force·step·정확 피해) + 추성 2번째 펫 칸(세이브 형식 93)
+// C.505 진화체 고유 능력 1차 — 사신 13종 (GDD 8-7, docs/drafts/evo-impl-1119.md 1절): 데이터·수치 + 작은 장치(grow·absorbBar·force·step·정확 피해) + 추성 2번째 펫 칸(세이브 형식 93)
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
@@ -78,7 +78,7 @@ describe('데이터 (사신 13종)', () => {
   });
 });
 
-describe('작은 장치 (C.502)', () => {
+describe('작은 장치 (C.505)', () => {
   it('grow: 값 × (1 + value × per) · step: 2스택당 한 번 · absorbBar: 바의 그 속성 블록 전부 흡수 → consumed', () => {
     const ability: EvoAbilityDef = {
       description: 'd',

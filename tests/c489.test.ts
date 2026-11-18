@@ -216,7 +216,7 @@ describe('③ 폭주 블록 문구 (옛 공허 블록)', () => {
         if (!line.includes('공허')) return;
         if (/^\s*(\/\/|\*|\/\*)/.test(line)) return; // 주석 줄
         const code = line.replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, '');
-        // 사신 공화(GDD 8-8 v6.124 이후 기획서 용어)의 특수 블록 '공허 블록'·스택 '공허'는 허 블록과 다른 새 이름 — 진화체 고유 능력 데이터에서만 (C.502)
+        // 사신 공화(GDD 8-8 v6.124 이후 기획서 용어)의 특수 블록 '공허 블록'·스택 '공허'는 허 블록과 다른 새 이름 — 진화체 고유 능력 데이터에서만 (C.505)
         if (f.endsWith('uniques.json')) return;
         const t = code.replaceAll('공허의 밤', '').replaceAll('공허가 몰려든다', '');
         if (t.includes('공허') && !/^\s*--bha-void:/.test(line)) left.push(`${f}:${i + 1}`);
