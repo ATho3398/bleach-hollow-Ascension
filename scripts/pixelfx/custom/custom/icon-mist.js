@@ -12,10 +12,14 @@ const D = 12, W = 48, T = [0.3, 0.5, 0.7], BW = 0.06;
 // 안개 둑: 위쪽이 옅어지는 구간(top..base), 아래 끝(bot), 무늬 크기, 진하기, 색 단계
 const B = { top: -6, base: 12, bot: 22, sx: 1.5, sy: 3.0, alpha: 0.62, tone: [3, 4, 5], crest: 6, warp: 10, crestFrom: 1 };
 const P1 = new Float32Array(W), P2 = new Float32Array(W), WARP = new Float32Array(W), BR = new Float32Array(W);
-const side = (x, a, b) => 1 - smooth(a, b, Math.abs(x)); // 양옆으로 옅어진다
 
-export function draw(p, t, o) {
-  const S = o.seed, C = fit(o.palette, 8);
+export const draw = (p, t, o) => mist(p, t, o);
+
+/** 안개를 그린다. opt.wide = 양옆으로 옅어지지 않고 칸 전체 폭(풍경 그림용), opt.dy = 아래로 옮김, opt.alpha = 진하기 배율, opt.drops = 물방울 수 */
+export function mist(p, t, o, opt = {}) {
+  const S = o.seed, C = fit(o.palette, 8), wide = !!opt.wide, AK = opt.alpha ?? 1, ty0 = p.ty;
+  const side = (x, a, b) => (wide ? 1 : 1 - smooth(a, b, Math.abs(x)));
+  p.ty += opt.dy ?? 0;
   const F = field(S * 7 + 2, 256, 128), G = field(S * 7 + 11, 256, 128, [4, 8, 16]);
   const drift = (256 * t) / D, boil = (128 * t) / D, tones = B.tone.map((i) => C[i]), crest = mix(C[B.crest], WHITE, 0.3);
   P1.fill(0); P2.fill(0);
@@ -31,8 +35,8 @@ export function draw(p, t, o) {
       P2[i] = P1[i]; P1[i] = f;
       if (f <= T[0]) continue;
       const th = bayer(i, y) * BW, band = f > T[2] + th ? 2 : f > T[1] + th ? 1 : 0, solid = f > T[2] ? 2 : f > T[1] ? 1 : 0;
-      if (solid >= B.crestFrom && above < T[solid]) { R.c[i] = crest; R.a[i] = B.alpha * 0.95; R.l[i] = C[6]; R.k[i] = 0.1; }
-      else { R.c[i] = tones[band]; R.a[i] = B.alpha * (0.55 + 0.22 * band); if (band === 2) (R.l[i] = C[5]), (R.k[i] = 0.06); }
+      if (solid >= B.crestFrom && above < T[solid]) { R.c[i] = crest; R.a[i] = B.alpha * 0.95 * AK; R.l[i] = C[6]; R.k[i] = 0.1; }
+      else { R.c[i] = tones[band]; R.a[i] = B.alpha * (0.55 + 0.22 * band) * AK; if (band === 2) (R.l[i] = C[5]), (R.k[i] = 0.06); }
       R.b[i] = 1;
     }
   });
@@ -43,14 +47,15 @@ export function draw(p, t, o) {
     for (let i = 0; i < W; i++) {
       const x = i - 24 + 0.5, s = (sample(F2, x * 0.9 + drift * 1.3, y * 5.2 + 30) - 0.5) * 3.0 * env * side(x, 10, 24);
       if (s <= 0.06) continue;
-      R.c[i] = s > 0.35 ? C[7] : C[6]; R.a[i] = Math.min(0.7, s + 0.2); R.b[i] = 1; R.l[i] = C[5]; R.k[i] = s * 0.08;
+      R.c[i] = s > 0.35 ? C[7] : C[6]; R.a[i] = Math.min(0.7, s + 0.2) * AK; R.b[i] = 1; R.l[i] = C[5]; R.k[i] = s * 0.08;
     }
   });
   // 안개 속 작은 물방울
-  for (let i = 0; i < o.drops; i++) {
+  for (let i = 0; i < (opt.drops ?? o.drops); i++) {
     const x = -14 + rand(S, i, 1) * 28, y = 0 + rand(S, i, 2) * 15, big = i % 2 === 0;
     p.disc(x, y, big ? 1.5 : 0.9, C[6], 0.5);
     p.blend(x - 0.5, y - 0.5, WHITE, big ? 0.85 : 0.55);
     p.glow(x, y, 3, C[5], 0.2);
   }
+  p.ty = ty0;
 }
