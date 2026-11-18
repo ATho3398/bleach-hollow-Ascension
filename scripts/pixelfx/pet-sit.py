@@ -17,24 +17,24 @@ eye = head & (np.abs(a[..., :3].astype(int) - c['eye']).sum(2) < c['eye_tol'])
 # 감은 눈 색 = 머리에서 가장 많은 색(털)
 cols, cnt = np.unique(a[head & ~eye][:, :3], axis=0, return_counts=True); lid = cols[cnt.argmax()]
 body = a.copy(); body[tail | head] = 0
-D, FPS, STEP = 2.4, 30, 2; frames = []
+D, FPS, STEP = 4.8, 30, 3; frames = []   # 4.8초 반복, 한 장 100ms
 for i in range(0, int(D * FPS), STEP):
     t = i / FPS; f = body.copy()
-    sw = math.sin(t / D * 2 * math.pi * 2)
+    sw = math.sin(t / D * 2 * math.pi)       # 꼬리는 4.8초에 한 번 왕복 (사용자 2026-11-18 "꼬리 너무빨라 엄청 느리게")
     T = c['tail']
     for y in range(N):                       # 꼬리: 줄마다 옆으로
         k = (T['base'] - y) / (T['base'] - T['top']); dx = round(sw * T['amp'] * max(0, min(1, k)) ** 1.3)
         for x in range(N):
             if tail[y, x] and 0 <= x + dx < N: f[y, x + dx] = a[y, x]
     h = a.copy()
-    if (t - c['blink_at']) % D < 0.14: h[eye, :3] = lid
-    dy = 1 if math.sin(t / D * 2 * math.pi) > 0.6 else 0   # 머리 끄덕
+    if (t - c['blink_at']) % (D / 2) < 0.14: h[eye, :3] = lid
+    dy = 1 if math.sin(t / D * 2 * math.pi * 2) > 0.6 else 0   # 머리 끄덕
     for y in range(N - 1, -1, -1):
         for x in range(N):
             if head[y, x] and y + dy < N: f[y + dy, x] = h[y, x]
     frames.append(Image.fromarray(f))
 frames[0].save(out, save_all=True, append_images=frames[1:], duration=round(1000 * STEP / FPS), loop=0, lossless=True)
 cs = Image.new('RGBA', (N * 4 * 8, N * 4), (96, 110, 128, 255))
-pick = [0, 4, 9, 13, 18, 20, 27, 31]
+pick = [0, 6, 12, 13, 18, 24, 30, 42]
 for i, k in enumerate(pick): cs.alpha_composite(frames[k].resize((N * 4, N * 4), 0), (i * N * 4, 0))
 cs.save(out.replace('.webp', '') + '-preview.png'); print(out, len(frames), '장', 'tail', int(tail.sum()), 'head', int(head.sum()), 'eye', int(eye.sum()))
