@@ -4,7 +4,7 @@
 
 - **기획서: `docs/GDD.md` (현재 버전은 첫 줄).** 이 문서가 기준이다. 지금 게임의 최종 규칙만 담는다(v6, 주제별 20절). 20절에 변경 이력이 있다.
 - **기획이 바뀌면 코드만 고치지 말고 기획서도 같이 수정하고 버전을 올린다**(v6.000 → v6.001, 20절에 한 줄). 장을 뒤에 덧붙이지 않고 **해당 절의 규칙을 그 자리에서 고친다**.
-- 개발 순서(로드맵)는 기획서 19절, 패치 기록은 `docs/dev-log.md`(C.0~C.120은 `docs/dev-log-archive.md`). 기획 문서는 `docs/GDD.md` 하나뿐이다(옛 기획서 v5 전문 246장은 `docs/GDD-archive-v5.md`, 옛 변경 이력·인수인계 줄은 `docs/GDD-history.md` — 읽지 않아도 됨). 코드 주석·dev-log 의 옛 번호 "GDD n장"은 보관본 장 번호다(새 절은 기획서 부록 A 대응표로 찾는다).
+- 개발 순서(로드맵)는 기획서 19절, 패치 기록은 `docs/dev-log.md`(최신 = 파일 끝, C.0~C.450은 `docs/dev-log-archive.md`). 기획 문서는 `docs/GDD.md` 하나뿐이다(옛 기획서 v5 전문 246장은 `docs/GDD-archive-v5.md`, 옛 변경 이력(20절 최근 30줄 앞)·인수인계 줄은 `docs/GDD-history.md` — 읽지 않아도 됨). 코드 주석·dev-log 의 옛 번호 "GDD n장"은 보관본 장 번호다(새 절은 기획서 부록 A 대응표로 찾는다).
 
 ## 반드시 지킬 것
 
@@ -27,7 +27,7 @@
 ```
 docs/GDD.md          기획서 (유일한 기획 문서, 로드맵 포함)
 docs/dev-log.md      패치 기록
-docs/automation.md   세션 운영·모델 선택 규칙
+docs/automation.md   운영 규칙(현재 규칙만, 날짜별 원문은 automation-history.md)
 src/engine/          루프, 전투(combat/, 고정 틱), 흡수, 리스크, 진화 판정, 런 로그 — 종족 무관 공통 로직
 src/data/
   factions/          hollow.json, shinigami.json (티어명, 블록·역할 표시명, 리스크 게이지명, 슬롯 위치, 외형 변화, 등급 방식)
@@ -35,6 +35,7 @@ src/data/
   traits/            흡수 특성 (표현 텍스트만 종족별 분리)
   tiles/             지형 타일 (종족별 스킨)
   titles/            등급·히든 등급·특별 태그 정의 + 조건 슬롯(조건은 미정, 구조만)
+  그 밖 폴더         evolution·transcendents·hogyoku·pets·rooms 등 — 종족 무관 데이터
 src/ui/bha/          디자인 시스템(토큰·테마·컴포넌트 CSS·아이콘 스프라이트·글꼴)과 공용 DOM 헬퍼 — 화면 전용 헬퍼는 src/ui/bha/<영역>.ts
 docs/design/bha-design/  디자인 패키지 원본 (수정 금지, HANDOFF.md 부터 읽는다)
 src/config/balance.ts  밸런스 수치 전부 (임시값은 provisional 구역)
@@ -44,10 +45,10 @@ src/version.ts       PATCH_LABEL / STAGE_LABEL
 
 # 작업 규칙
 
-- **사용량 절약(2026-10-20)**: `docs/GDD.md`·`docs/dev-log.md` 전체를 읽지 않는다 — 지시된 절만 grep으로 찾아 부분 읽기(`docs/GDD-archive-v5.md` 는 옛 장을 꼭 확인해야 할 때만). 옛 패치 기록은 `docs/dev-log-archive.md`. 캡처는 1배·10장 이내, 테스트는 작업 중 관련 파일만. 자세한 규칙은 `docs/automation.md` 6장.
+- **사용량 절약(2026-10-20)**: `docs/GDD.md`·`docs/dev-log.md` 전체를 읽지 않는다 — 지시된 절만 grep으로 찾아 부분 읽기(`docs/GDD-archive-v5.md` 는 옛 장을 꼭 확인해야 할 때만). 옛 패치 기록은 `docs/dev-log-archive.md`, dev-log 는 끝(최신)에서 1~2소절만. 캡처는 1배·10장 이내, 테스트는 작업 중 관련 파일만. 자세한 규칙은 `docs/automation.md` 5장.
 - 세션 운영·모델 선택(코딩 세션 기본 Opus)·막혔을 때 규칙은 `docs/automation.md`를 따른다.
 - **기획서 19절 로드맵에서 사용자가 시작하라고 하지 않은 새 시스템은 구현하지 않는다.**
 - 패치할 때마다 배포까지 한다: 커밋·푸시 후 main 에 푸시하면 GitHub Actions(`.github/workflows/pages.yml`)가 타입체크·테스트·밸런스 점검·빌드 후 배포한다.
-- 푸시 전에 `npm run typecheck`, `npm test` 를 통과시킨다. 밸런스 수치를 바꿨으면 `npm run balance` 결과도 보고한다.
+- 푸시 전에 CI 와 같은 순서로 `npm run typecheck` → `npm test` → `npm run balance:check` → `npm run build` 를 통과시킨다(문서만 바뀐 커밋은 생략). 밸런스 수치를 바꿨으면 `npm run balance` 결과도 보고한다.
 - 패치마다 `PATCH_LABEL`(`src/version.ts`)을 `docs/dev-log.md`의 최신 소절 번호로, `STAGE_LABEL`을 기획서 19절 로드맵 표의 단계(예 `S-23`)로 갱신한다.
 - 밸런스 수치는 모두 `src/config/balance.ts` 에 둔다. 수치를 바꾸면 `BALANCE_VERSION` 을 올린다. 세이브 구조를 바꾸면 `src/game.ts` 의 `SAVE_FORMAT_VERSION` 을 올린다. 형식을 올리면 **옛 세이브를 이어 쓰는 마이그레이션을 같이 만든다**(기획서 16-3). `MIN_LOADABLE_SAVE_FORMAT` 은 2026-11-13 사용자 지시로 형식 87부터 새로 시작(MIN_LOADABLE = 87, 옛 '54 고정'의 예외 — 기획서 16-3).
