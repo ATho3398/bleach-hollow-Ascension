@@ -19,7 +19,7 @@ describe('v6.004 3-2 방 상태 박스', () => {
     expect(css).toContain('transform: translate(-50%, calc(-100% + var(--state-h, 0px)));');
   });
   it('머리 높이는 정지 그림으로 잰다 (움직이는 프레임마다 박스가 몇 px 흔들리던 것)', () => {
-    expect(room).toContain('const drawnTop = ar.top + ratio * ar.height;');
+    expect(room).toContain('drawnTop = ar.top + ratio * ar.height;');
     expect(room).not.toContain('const drawnTop = drawnHeadY(char)');
   });
 });

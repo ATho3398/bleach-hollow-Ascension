@@ -4,6 +4,7 @@
 import MARKS_JSON from '../../data/statusMarks.json';
 import { evoText } from '../../data/evolution/uniques';
 import { evoMarksOf, evoStat } from './evoUnique';
+import type { EvoStat } from '../../data/evolution/uniques';
 import {
   kitBare, kitEvadeBuffSecondsLeft, kitSecondOn, stanceBreakTakenOf, stanceDrawPreviewOf, stanceHoldBonusOf, stanceOf,
   type CombatState,
@@ -37,6 +38,22 @@ export interface StatusMark {
 }
 
 const pct = (x: number) => Math.round(x * 100);
+
+/** 진화체 늘 붙는 효과 이름 (네모 설명 창, C.508): 능력 이름 + 값 단위 */
+const EVO_STAT_TEXT: Record<EvoStat, [string, 'pct' | 'pctp' | 'sec' | 'flag']> = {
+  basicPower: ['일반 공격 피해', 'pct'], blockPower: ['블록 피해', 'pct'], dealt: ['주는 피해', 'pct'], attackSpeed: ['공격 속도', 'pct'],
+  interval: ['일반 공격 간격 −', 'pct'], intervalCut: ['일반 공격 간격 −', 'sec'], crit: ['치명 확률', 'pctp'], critDmg: ['치명 피해', 'pct'],
+  blockCrit: ['블록 치명 확률', 'pctp'], petPower: ['펫 피해', 'pct'], execLine: ['처형선', 'pctp'], execBlockLine: ['블록 처형선', 'pctp'],
+  ignoreDef: ['방어 무시', 'pct'], offenseBasic: ['일반 공격 능력치', 'flag'], offenseBlock: ['블록 능력치', 'flag'],
+};
+
+export function evoStatText(stat: EvoStat, value: number): string {
+  const [label, unit] = EVO_STAT_TEXT[stat];
+  const signed = (n: string) => (label.endsWith('−') ? `${label}${n}` : `${label} ${value < 0 ? '' : '+'}${n}`);
+  if (unit === 'sec') return signed(`${Math.round(value * 100) / 100}초`);
+  if (unit === 'flag') return label;
+  return signed(`${pct(value)}%${unit === 'pctp' ? 'p' : ''}`);
+}
 const secs = (ticks: number, tickSeconds: number) => Math.max(0, ticks) * tickSeconds;
 
 function mark(kind: StatusMarkKind, value: string, title: string, o: { key?: string; name?: string; icon?: string; full?: boolean; focus?: boolean } = {}): StatusMark {
@@ -116,19 +133,24 @@ export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
     out.push(mark('knockback', String(Math.ceil(left)), `${STATUS_MARK_DEFS.knockback.name} (${left.toFixed(1)}초)`));
   }
   // 진화체 고유 능력 스택·버프·충전 (GDD 8-7 1차, C.499): 데이터 mark 가 있는 것만 — 걸린 쪽·아이콘·이름 = uniques.json
+  // 설명 창(네모 누르기·마우스) = 이름 · 몇 개/몇 %/몇 회(상한) · 그 스택으로 지금 붙은 효과 (C.508 점검C 7 — 네모 크기는 그대로, 숫자만이던 설명에 단위·뜻)
   for (const m of evoMarksOf(s)) {
     const name = evoText(m.name, factionId);
     const v = Math.round(m.value * 100) / 100;
-    const shown = v > 0 && v < 1 ? `${Math.round(v * 100)}` : String(v);
-    out.push(mark(m.on === 'foe' ? 'evoFoe' : 'evoSelf', shown, `${name} ${shown}${m.seconds !== null ? ` (${Math.max(0, m.seconds).toFixed(1)}초)` : ''}`, { key: m.key, name, icon: m.icon }));
+    const ratio = m.type === 'buff' && v > 0 && v < 1;
+    const shown = ratio ? `${Math.round(v * 100)}` : String(v);
+    const amount = ratio ? `+${shown}%` : `${shown}${m.max !== null ? `/${m.max}` : ''}${m.type === 'charge' ? '회' : m.type === 'stack' ? '개' : ''}`;
+    const fx = m.effects.map((e) => evoStatText(e.stat, e.value)).join(' · ');
+    const left = m.seconds !== null ? ` (${Math.max(0, m.seconds).toFixed(1)}초)` : '';
+    out.push(mark(m.on === 'foe' ? 'evoFoe' : 'evoSelf', shown, `${name} ${amount}${fx ? ` — ${fx}` : ''}${left}`, { key: m.key, name, icon: m.icon }));
   }
   // 진화체 고유 능력 늘 붙는 효과 요약 (C.499 — 백련처럼 바 블록 수에 따라 오르는 값): 평타 피해 +% 가 0 보다 크면 한 칸
   if (s.params.evo) {
     const bp = evoStat(s, 'basicPower');
     const as = evoStat(s, 'attackSpeed');
     if (bp > 0 || as > 0) {
-      const parts = [as > 0 ? `공격 속도 +${pct(as)}%` : '', bp > 0 ? `일반 공격 피해 +${pct(bp)}%` : ''].filter(Boolean).join(' · ');
-      out.push(mark('evoSelf', `+${pct(Math.max(bp, as))}`, parts, { key: 'evo-passive', name: '고유 능력', icon: 'i-special' }));
+      const parts = [as > 0 ? evoStatText('attackSpeed', as) : '', bp > 0 ? evoStatText('basicPower', bp) : ''].filter(Boolean).join(' · ');
+      out.push(mark('evoSelf', `+${pct(Math.max(bp, as))}`, `진화체 고유 능력으로 지금 붙은 효과: ${parts} (네모 숫자 = %)`, { key: 'evo-passive', name: '고유 능력', icon: 'i-special' }));
     }
   }
   return out;

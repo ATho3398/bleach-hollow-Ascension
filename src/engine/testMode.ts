@@ -13,7 +13,7 @@ import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
 import { TRAITS } from '../data/traits';
-import { SAVE_KEY, allTracks, characterTracks, fastForward, inheritTranscendentTrack, newSaveData, newTrack, performEvolution, storyProgressOf, switchTrack, trackIdOf, type SaveData, type StorageLike } from '../game';
+import { SAVE_KEY, syncPetSlots, allTracks, characterTracks, fastForward, inheritTranscendentTrack, newSaveData, newTrack, performEvolution, storyProgressOf, switchTrack, trackIdOf, type SaveData, type StorageLike } from '../game';
 import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
 import { canWear, validModelLook } from '../data/skins';
@@ -31,6 +31,7 @@ import type { ExpeditionState } from './expedition';
 import { addFood } from './food';
 import { recommendedDifficulty } from './difficulty';
 import { stepsNeeded, type EvolveResult } from './evolution/evolution';
+import { abilitySlotCount, newAbilityLoadout, representativeAbility } from './evolution/formAbilities';
 import type { AbsenceReport } from './nest';
 import { pickLook } from './evolution/tierLook';
 import { lookCells, lookDexKey, recordLookDex } from './evolution/lookDex';
@@ -354,24 +355,42 @@ function refreshLook(save: SaveData): void {
   if (form) recordLookDex(save, getFaction(save.factionId), form, e.look); // 모델 단위 진화체 도감 (GDD 8-5 v6.096): 테스트로 고른 모델·색도 발견
 }
 
-/** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다) */
-export function setForm(save: SaveData, formId: string | null): boolean {
+/** 진화체 고르기: null = 1단계(진화 전). 단계·도감·이력도 맞춘다. 고유 특성은 그대로(따로 고른다).
+ *  4단계 한 줄 특성(evo:, GDD 8-7 1차)은 진화체를 따라간다 (C.508 점검C 3): 이전 진화체의 것은 빼고 새 진화체의 것을 넣는다 — 진짜 진화처럼.
+ *  펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.508 점검B 2) */
+export function setForm(save: SaveData, formId: string | null, nowMs: number = Date.now()): boolean {
   const e = save.evolution;
-  if (formId === null) {
+  const form = formId === null ? null : tryGetForm(formId);
+  if (formId !== null && !form) return false;
+  if (!form) {
     e.tierIndex = 0;
     e.formId = null;
     e.formHistory = [];
     e.look = null;
-    return true;
+  } else {
+    e.tierIndex = form.tier - 1;
+    e.formId = form.id;
+    e.formHistory = [form.id];
+    if (!save.formDex.includes(form.id)) save.formDex.push(form.id);
+    refreshLook(save);
   }
-  const form = tryGetForm(formId);
-  if (!form) return false;
-  e.tierIndex = form.tier - 1;
-  e.formId = form.id;
-  e.formHistory = [form.id];
-  if (!save.formDex.includes(form.id)) save.formDex.push(form.id);
-  refreshLook(save);
+  syncEvoTrait(save, form ?? null);
+  syncPetSlots(save, nowMs);
   return true;
+}
+
+/** 테스트 진화체의 4단계 한 줄 특성 맞추기: evo: 특성을 다 빼고, 새 진화체가 대표로 주는 evo: 특성이 있으면 넣는다(4단계면 특성 칸 +1 도 진짜 진화처럼) */
+function syncEvoTrait(save: SaveData, form: FormDef | null): void {
+  const l = (save.evolution.abilities ??= newAbilityLoadout());
+  l.owned = Object.fromEntries(Object.entries(l.owned).filter(([id]) => !id.startsWith('evo:')));
+  if (l.pending?.startsWith('evo:')) delete l.pending;
+  const got = form ? representativeAbility(form, save.factionId) : null;
+  if (form && got?.id.startsWith('evo:')) {
+    if (!l.tier4Ever) l.tier4Ever = true;
+    l.slots = Math.max(l.slots, abilitySlotCount(save.rebirth.count, true));
+    l.owned[got.id] = got.scale;
+  }
+  l.equipped = Object.keys(l.owned);
 }
 
 /** 능력치 직접 입력: 노력치는 0, 계승분(carry, 성장 상한이 없는 자리)에 "원하는 값 − 진화체 기본값"을 넣는다 → 모든 전투(원정·등급전·연습)에 그대로 실린다.

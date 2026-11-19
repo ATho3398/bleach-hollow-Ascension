@@ -4445,3 +4445,18 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 사용 모델: Opus 5.5. 세이브 그대로, BALANCE 149 → 150.
 - 소로 여우불(마스터AP 추가 지시, 사용자 "2.5초에 5스텍 ㄱㄱ"): `provisional.evoUniques.forms['t4:fire:physical'].hollow.seconds` 2 → 2.5(필요 5개·레스렉시온 3초 그대로). c503 소로 테스트 이름 갱신. GDD 8-7 은 초 수가 없어 20절 줄만.
 - 검증: typecheck · npm test 346파일 3913건 통과(main C.506 합친 뒤) · balance:check 회귀 가드 통과(후반 경고 그대로) · build 통과.
+
+## C.508 — 점검 1119 게임 버그 수정 (GDD v6.144 8-5, S-23, 코딩321)
+사용 모델: Opus 5.5. 세이브 형식 93 → 94(진화 상태 `choice`, 마이그레이션 93 → 94 = 묻는 중 아님, 문턱 87 그대로), BALANCE 그대로.
+- 사용자 원문(11-19): "지금 문제점 분석 함 싹 돌려봐. 게임 외적으로 기획서라던가, 코드라던가 이런거까지" → 점검C(play)·점검B(code) 중 게임 버그를 추천안대로(GDD 19-4).
+- C1 결과 화면에서 껐다 켜면 진화 창이 사라지던 것(공짜 미루기): 귀환 정산이 묻는 중 표시 `evolution.choice`(그 원정 배부름·컨디션·runId)를 남기고, [진화](performEvolution)·[미루기](deferEvolution)만 지운다. 이어하기로 방에 들어오면 `resumeEvolveChoice` 가 창을 다시 띄운다(방 안내는 고른 뒤). 실패 정산(이어 하지 못한 원정)도 같은 표시라 방에서 묻는다 — 기획서 값: "다음 귀환 때 물음" / 실제: 방에 들어오면 물음 / 이유: 표시 하나로 모든 귀환 길이 같아지고 공짜 미루기가 남지 않음.
+- C3 테스트 [진화체 → 이 몸으로](testMode.setForm): evo: 4단계 한 줄 특성을 모두 빼고 새 진화체 것을 넣는다(4단계 특성 칸 +1 도). 따로 고른 특성은 그대로.
+- B2 performRevive·testMode.setForm 끝에 `syncPetSlots` — 펫 칸이 줄면 2번째 펫은 보유 목록으로(런 로그 leave).
+- C5 첫 끼니: 이미 1개 이상이면 안 줌(카드가 다시 떠도 한 번만). C6 먹이 줄 첫 끼니 종류 강제 = 회복 안내(recover)가 남은 동안만(dock `guideFoodActive`), 그 밖엔 기억한 종류.
+- C7 진화체 스택 네모 설명 창: "봉화 3/5개 — 일반 공격 피해 +18%"처럼 이름·개수/%/회·상한·그 스택으로 붙은 효과(evoMarksOf type·max·effects). 고유 능력 요약 칸은 "(네모 숫자 = %)". 칸 크기·숫자 그대로.
+- C8 공화 공허 블록: 꺼진 특수 블록은 회색만, 글자는 데이터 short('공') 그대로('봉'은 봉인만). 꺼진 이유(엔진 evoSpecialOffReason: 처형선 0·강적·선 위) — 누르면 알림 한 줄·PC 마우스 설명, 처형선 0 문구 = 데이터 `offNote`(상태 화면 특수 블록 줄 끝에도).
+- B4 해방 지속 예외(주홍장)의 liberate 사건 seconds = 실제 지속(evoReleaseSecondsOf).
+- C9 그림 없는 초월자 빈 자리: 상태창 자리를 점선 칸 윗변 기준으로(겹침 0). C10 첫 포식 6/6 카드: 장면 데이터 `keepClear`(갈래 버튼·설명 칸·적 카드 = 보호 영역) → 카드가 위쪽으로. 진화 창 바탕: `.bha-evolve-choice .bha-modal` 배경 bg-1·투명도 없는 떠오름(bha-rise-solid).
+- 손대지 않음: C2(패배 무르기 — 사용자 결정 대기), C4 소로(사용자 확정 수치), 밸런스.
+- 검증: typecheck · npm test 347파일 3935건 통과(새 tests/c508 21건, 형식 94 반영 다수·c420·c498 글자 확인 갱신) · balance:check 회귀 가드 통과(후반 경고 그대로) · build 통과.
+- 캡처 `docs/captures/c508/`(1배, PC 844×390 + 폰 796×384): 01 다시 켠 뒤 다시 뜬 미루기 창(pc·phone, [미루기] 뒤 deferrals 1·다시 켜도 안 뜸) · 02 봉화 칩 설명 · 03 공허 블록 '공'·꺼짐 알림(pc·phone) · 04 영왕 빈 자리 + 상태창(pc·phone, 겹침 없음) · 05 첫 포식 카드(갈래·적 카드 안 가림). 수치는 proof.json, 스크립트 scripts/c508-proof.cjs.

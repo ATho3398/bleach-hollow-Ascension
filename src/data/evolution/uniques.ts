@@ -214,6 +214,8 @@ export interface EvoSpecialDef {
   keep?: boolean;
   /** always(기본) · execBlock = 적 체력이 블록 처형선 아래이고 강적·보스가 아닐 때만 켜짐 */
   usable?: 'always' | 'execBlock';
+  /** 꺼져 있는 이유·켜는 법 한 줄 (C.508 점검C 8 — {키} 수치 틀): 블록이 꺼진 동안 누르면 알림·설명 창, 상태 화면 특수 블록 줄 끝 */
+  offNote?: PerFaction<string> | string;
   /** 바에 한 번에 최대 몇 개 (기본 제한 없음) */
   maxOnBar?: EvoNum;
 }

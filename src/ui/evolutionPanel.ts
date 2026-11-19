@@ -60,7 +60,8 @@ export function evoUniqueLines(formId: string | null | undefined, factionId: str
     out.push({ label: '고유 능력', text: `${name ? `${name} — ` : ''}${fillEvoText(evoText(a.description, factionId), base)}` });
     for (const sp of Object.values(a.specials ?? {})) {
       const d = evoText(sp.description, factionId);
-      out.push({ label: '특수 블록', text: `「${evoText(sp.name, factionId)}」${d ? ` — ${fillEvoText(d, base)}` : ''}` });
+      const off = evoText(sp.offNote, factionId); // 꺼진 동안 안내 (C.508)
+      out.push({ label: '특수 블록', text: `「${evoText(sp.name, factionId)}」${d ? ` — ${fillEvoText(d, base)}` : ''}${off ? ` · ${fillEvoText(off, base)}` : ''}` });
     }
     if (a.releaseDescription) out.push({ label: releaseName, text: fillEvoText(evoText(a.releaseDescription, factionId), evoReleaseNums(n)) });
   }

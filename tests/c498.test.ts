@@ -138,7 +138,7 @@ describe('C.501 방 먹이 줄 종류 (GDD 4-4 v6.130)', () => {
     expect(dock).toContain('trayBtns.push(kindBtn);');
     expect(dock).toContain('enableDragScrollX(row);');
     expect(dock).toContain("if (was === 'food' && next !== 'food') saveFoodKind(foodKind);");
-    expect(dock).toContain("if (next === 'food' && was !== 'food' && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;");
+    expect(dock).toContain("if (next === 'food' && was !== 'food' && o.guideFoodActive?.() && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;"); // C.508: 안내가 첫 끼니를 짚는 동안만
     // 튜토리얼 안내가 짚는 칸 = 먹이 줄 안의 그 먹이 칸 (선택자 그대로)
     expect(read('src/data/help/tutorial.json')).toContain('@.bha-homedock__tray--food .bha-homedock__food[data-food=\\"{foodId}\\"]');
     expect(dock).not.toMatch(/=== '(hollow|shinigami)'/);

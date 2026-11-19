@@ -35,6 +35,8 @@ export interface TutorialScene {
   stages?: TutorialStage[];
   /** 카드가 가리면 안 되는 것 (단계가 없는 카드 — 예: 강공격 카드의 적 예고 게이지, GDD 157장 2) */
   avoid?: string[];
+  /** 절대 가리지 않는 것 (C.508 점검C 10): avoid(되도록)와 달리 눌러야 할 버튼처럼 다룬다 — 대상 옆이 다 막히면 모서리로. 예: 첫 포식 카드가 갈래 버튼·적 카드를 덮지 않게 */
+  keepClear?: string[];
 }
 
 export interface TutorialStage {

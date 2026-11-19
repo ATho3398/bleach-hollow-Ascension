@@ -434,3 +434,7 @@
   .bha-v2role--item.is-urge > .bha-icon, .bha-v2role--item.is-urge > .bha-v2role__name, .bha-v2role--item.is-urge > .bha-v2role__meta { animation: none; }
   .bha-v2role--item.is-urge { outline: 1px solid var(--bha-accent); outline-offset: 1px; }
 }
+
+/* 진화 [진화]/[미루기] 창 (GDD 8-5, C.508 점검C 10): 창 바탕은 늘 불투명 — 떠오르는 동안(투명도 연출)에도 방의 캐릭터·물건 이름이 본문 뒤로 비치지 않게. 움직임만 남긴다 */
+.bha-evolve-choice .bha-modal { background: var(--bha-bg-1); animation-name: bha-rise-solid; }
+@keyframes bha-rise-solid { from { transform: translateY(12px) scale(0.98); } }

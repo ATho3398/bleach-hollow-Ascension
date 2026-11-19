@@ -659,6 +659,14 @@ export function evoSpecialUsable(s: CombatState, b: Block | undefined): boolean 
   return true;
 }
 
+/** 특수 블록이 꺼진 이유 (C.508 점검C 8 — 화면 안내): line0 = 블록 처형선 0 · elite = 강적·보스 · above = 적 체력이 선 위. 켜져 있으면 null */
+export function evoSpecialOffReason(s: CombatState, b: Block | undefined): 'line0' | 'elite' | 'above' | null {
+  const d = evoSpecialOf(s.params, b?.traitId);
+  if (!d || evoSpecialUsable(s, b) || d.usable !== 'execBlock') return null;
+  if (evoExecLinesOf(s).block <= 0) return 'line0';
+  return isElite(s) ? 'elite' : 'above';
+}
+
 /** 특수 블록 놓기 (maxOnBar 를 넘으면 안 놓음). force = 바가 가득이면 맨 오른쪽 옛 블록(고정 칸 아님)을 밀어낸다 */
 function spawnSpecial(s: CombatState, id: string, force = false): boolean {
   const d = s.params.evo?.ability.specials?.[id];
@@ -702,28 +710,48 @@ export function evoProcsOf(s: CombatState): Record<string, number> {
   return out;
 }
 
-/** 화면 네모(스택 표시): 정의에 mark 가 있는 스택·버프·충전 */
-export function evoMarksOf(s: CombatState): { key: string; on: 'self' | 'foe'; icon: string; name: PerFaction<string> | string; value: number; seconds: number | null }[] {
+/** 화면 네모(스택 표시): 정의에 mark 가 있는 스택·버프·충전.
+ *  type·max·effects (C.508 점검C 7): 무엇인지(개수·%·회)·상한·그 스택/버프로 지금 붙은 효과(passives 의 per 가 이 칸인 것) — 네모 설명 창이 읽는다 */
+export interface EvoMarkInfo {
+  key: string;
+  on: 'self' | 'foe';
+  icon: string;
+  name: PerFaction<string> | string;
+  value: number;
+  seconds: number | null;
+  type: 'stack' | 'buff' | 'charge';
+  max: number | null;
+  effects: { stat: EvoStat; value: number }[];
+}
+
+export function evoMarksOf(s: CombatState): EvoMarkInfo[] {
   const ev = s.params.evo;
   const st = s.evo;
   if (!ev || !st) return [];
-  const out: ReturnType<typeof evoMarksOf> = [];
+  const out: EvoMarkInfo[] = [];
   const ts = s.params.tickSeconds;
+  const ctx = emptyCtx();
+  const effectsOf = (src: string) => (ev.ability.passives ?? [])
+    .filter((p) => (Array.isArray(p.per) ? p.per : [p.per]).includes(src as EvoSource) && whenOk(s, p.when) && needsOk(s, p.need, ctx))
+    .map((p) => ({ stat: p.stat, value: passiveValue(s, p, ctx) }))
+    .filter((e) => e.value !== 0);
   for (const [name, d] of Object.entries(ev.ability.stacks ?? {})) {
     const x = st.stacks[name];
     if (!d.mark || !x || x.n <= 0) continue;
     const left = x.exp && x.exp.length > 0 ? (x.exp[x.exp.length - 1]! - s.tick) * ts : null;
-    out.push({ key: `evo-s-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: Math.round(x.n * 10) / 10, seconds: left });
+    const max = d.max !== undefined ? evoNum(s, d.max, Infinity) : Infinity;
+    out.push({ key: `evo-s-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: Math.round(x.n * 10) / 10, seconds: left, type: 'stack', max: Number.isFinite(max) ? max : null, effects: effectsOf(`stack:${name}`) });
   }
   for (const [name, d] of Object.entries(ev.ability.buffs ?? {})) {
     const b = st.buffs[name];
     if (!d.mark || !b || b.until <= s.tick) continue;
-    out.push({ key: `evo-b-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: b.value, seconds: (b.until - s.tick) * ts });
+    out.push({ key: `evo-b-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: b.value, seconds: (b.until - s.tick) * ts, type: 'buff', max: null, effects: effectsOf(`buff:${name}`) });
   }
   for (const [name, d] of Object.entries(ev.ability.charges ?? {})) {
     const c = st.charges[name];
     if (!d.mark || !c || c.n <= 0) continue;
-    out.push({ key: `evo-c-${name}`, on: 'self', icon: d.mark.icon, name: d.mark.name, value: c.n, seconds: null });
+    const max = d.max !== undefined ? evoNum(s, d.max, Infinity) : Infinity;
+    out.push({ key: `evo-c-${name}`, on: 'self', icon: d.mark.icon, name: d.mark.name, value: c.n, seconds: null, type: 'charge', max: Number.isFinite(max) ? max : null, effects: effectsOf(`charge:${name}`) });
   }
   return out;
 }

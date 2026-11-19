@@ -69,6 +69,9 @@ export interface EvolutionState {
   /** 이 단계에서 진화를 미룬 수 (GDD 8-5 진화 미루기, C.497 — 형식 92): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 수. 상한 없음, 진화하면 0.
    *  허무형 판정(그 단계 0회, 8-8)이 읽는다. 단계별 기록은 런 로그 tiers.deferrals·진화 기록 deferrals */
   deferrals?: number;
+  /** 귀환 뒤 [진화] [미루기]를 묻는 중 (GDD 8-5, C.508 — 형식 94): 진화 기준에 닿아 돌아왔고 아직 고르지 않았다. 고르기 전에 껐다 켜도 방에서 그 창을 다시 띄운다(공짜 미루기 막음).
+   *  hunger·condition = 그 원정을 마친 몸 상태(진화 판정이 읽는다), runId = 그 원정. 진화하거나 미루면 지운다. 없으면 묻는 중 아님 */
+  choice?: { hunger: number; condition: number; runId: number };
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
   /** 마지막 모습으로 굳었다 (GDD 12-4 v6.028, C.429 — 초월자 트랙): 진화 판정·걸음 수·임박 알림 없음, 노력치 상한 = 마지막 단계 상한.
@@ -194,7 +197,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}), ...(e.choice ? { choice: { ...e.choice } } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -486,6 +489,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.bondCare;
   const deferrals = e.deferrals ?? 0;
   e.deferrals = 0;
+  delete e.choice; // 진화했으니 묻는 중 아님 (C.508)
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
   // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음

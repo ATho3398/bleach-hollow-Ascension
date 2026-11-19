@@ -59,6 +59,8 @@ export interface DockOpts {
   onCare: (action: NestAction, food?: FoodId) => void;
   /** 먹이 종류별 보유 개수 (GDD 23-1): 먹이 칸에 개수를 보이고 0개는 비활성 */
   foodCount: (food: FoodId) => number;
+  /** 튜토리얼 안내가 첫 끼니를 짚는 중 (C.508 점검C 6): 그동안만 먹이 줄을 첫 끼니 종류로 연다. 없거나 false 면 기억한 종류 그대로 */
+  guideFoodActive?: () => boolean;
   /** 지금 먹이면 실제로 움직이는 효과 (GDD 193장 16 · 211장, engine foodEffectsNow): 카드에 이것만 보인다. 없으면 효과 전부 */
   foodEffectsNow?: (food: FoodId) => FoodFx[];
   /** 먹이 한도 (GDD 109장 6): 지금 더 먹일 수 있는 개수와 한도. 먹이 버튼 옆에 작게 '2/3' */
@@ -173,7 +175,7 @@ export function createDock(o: DockOpts): Dock {
   root.append(tray, bar);
 
   let trayBtns: HTMLElement[] = [];
-  // 먹이 줄 종류 (GDD 4-4 v6.130, C.501): 열 때 = 기억한 종류(기기 저장), 닫을 때 기억. 튜토리얼 안내 먹이를 가졌으면 그 종류로 연다(안내가 그 칸을 짚는다)
+  // 먹이 줄 종류 (GDD 4-4 v6.130, C.501): 열 때 = 기억한 종류(기기 저장), 닫을 때 기억. 튜토리얼 안내가 첫 끼니를 짚는 동안만 그 종류로 연다(C.508 — 그 밖엔 첫 끼니가 남아 있어도 기억 그대로)
   let foodKind = loadFoodKind();
   const guideFood = BALANCE.provisional.tutorialRecover.food;
   function fillTray(): void {
@@ -292,7 +294,7 @@ export function createDock(o: DockOpts): Dock {
   function setPanel(next: DockPanel, opener: HTMLElement | null = null): void {
     const was = panel;
     if (was === 'food' && next !== 'food') saveFoodKind(foodKind); // 닫을 때 보던 종류 기억 (GDD 4-4)
-    if (next === 'food' && was !== 'food' && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;
+    if (next === 'food' && was !== 'food' && o.guideFoodActive?.() && o.foodCount(guideFood) > 0) foodKind = foodKindOfFood(guideFood)?.id ?? foodKind;
     panel = next;
     tray.hidden = panel === CLOSED;
     root.classList.toggle('is-open', panel !== CLOSED);

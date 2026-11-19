@@ -2861,7 +2861,8 @@ function liberate(s: CombatState): boolean {
   }
   const endlessLib = !!rr || !!p.kit?.riskDrain || !!p.kit?.stance;
   const relName = s.kit?.second ? p.kit!.mastery!.releaseName : stanceOf(s)?.releaseName;
-  emit(s, { kind: 'liberate', seconds: endlessLib ? 0 : p.liberationSeconds, unique: p.liberationUnique, ...(endlessLib ? { endless: true } : {}), ...(relName ? { name: relName } : {}) });
+  emit(s, { kind: 'liberate', seconds: endlessLib ? 0 : (p.liberationUnique ? evoReleaseSecondsOf(p) : null) ?? p.liberationSeconds, // 실제 지속 = 위 ticksLeft 와 같은 값 (C.508 점검B 4 — 주홍장 예외)
+    unique: p.liberationUnique, ...(endlessLib ? { endless: true } : {}), ...(relName ? { name: relName } : {}) });
   kitSwapTray(s, true);
   grantLiberationBlocks(s, LB.instantBlocks);
   // 진화체 레스렉시온/만해 시작 규칙 (GDD 8-7 1차, C.499)
