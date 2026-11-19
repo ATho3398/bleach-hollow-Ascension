@@ -4,6 +4,10 @@
 // 쓰는 법(다음 세션): docs/dev-log.md C.499 소절 '장치 목록'. 새 진화체 = forms 에 칸 하나 + balance forms 에 수치 하나.
 import { BALANCE } from '../../config/balance';
 import { pickFaction, type PerFaction } from '../schema';
+import { ELEMENT_IDS } from '../elements';
+import { FACTIONS } from '../factions';
+import { FAMILY_TIERS } from '../../engine/faction';
+import { FORM_TABLE } from './index';
 import raw from './uniques.json';
 
 /** 숫자 칸: 숫자 그대로 또는 balance 수치 키(해방 중이면 release 의 같은 키가 우선) */
@@ -252,6 +256,15 @@ export const EVO_TRAIT_EFFECTS = [
   'execute', // 처형: 적 체력 line 이하에서 평타 = 처형, 강적·보스는 그 아래에서 주는 피해 ×eliteMult. 이 특성을 대표로 주는 진화체가 아니면 weakLine·weakEliteMult
 ] as const;
 export type EvoTraitEffect = (typeof EVO_TRAIT_EFFECTS)[number];
+/** 특성 효과마다 balance evoUniques.traits[키] 에 꼭 있어야 하는 수치 (formAbilities 가 읽는 칸 — 없으면 효과 0 으로 조용히 꺼지므로 검사가 막는다) */
+export const EVO_TRAIT_NUM_KEYS: Readonly<Record<EvoTraitEffect, readonly string[]>> = {
+  attackSpeed: ['value'],
+  crit: ['value'],
+  blockCrit: ['value'],
+  chainPower: ['value'],
+  offenseMax: [],
+  execute: ['line', 'eliteMult', 'weakLine', 'weakEliteMult'],
+};
 
 export interface EvoTraitDef {
   effect: EvoTraitEffect;
@@ -280,7 +293,90 @@ interface EvoFile {
   forms: Record<string, PerFaction<EvoFormEntry>>;
 }
 
-const DATA = raw as unknown as EvoFile;
+/** JSON 모양 검사 (C.509, 점검B 3): 타입 단언(as) 전에 칸의 자료형을 본다 — 틀리면 어느 칸인지 적은 오류로 로드 때 멈춘다 */
+export function evoFileShapeErrors(r: unknown): string[] {
+  const errors: string[] = [];
+  const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+  const objOf = (v: unknown, at: string, each?: (x: Record<string, unknown>, at: string) => void): void => {
+    if (v === undefined) return;
+    if (!isObj(v)) return void errors.push(`${at}: 객체가 아니다`);
+    for (const [k, x] of Object.entries(v)) {
+      if (!isObj(x)) errors.push(`${at}.${k}: 객체가 아니다`);
+      else each?.(x, `${at}.${k}`);
+    }
+  };
+  const arr = (v: unknown, at: string, item: 'string' | 'number' | 'object' | 'num'): void => {
+    if (v === undefined) return;
+    if (!Array.isArray(v)) return void errors.push(`${at}: 배열이 아니다`);
+    v.forEach((x, i) => {
+      const ok = item === 'object' ? isObj(x) : item === 'num' ? typeof x === 'number' || typeof x === 'string' : typeof x === item;
+      if (!ok) errors.push(`${at}[${i}]: ${item === 'num' ? '숫자·수치 키' : item} 가 아니다`);
+    });
+  };
+  const str = (o: Record<string, unknown>, k: string, at: string, required = false): void => {
+    if (o[k] === undefined ? required : typeof o[k] !== 'string') errors.push(`${at}.${k}: 글자가 아니다${required ? '(필수 칸)' : ''}`);
+  };
+  const srcs = (v: unknown, at: string): void => {
+    if (v !== undefined && typeof v !== 'string') arr(v, at, 'string');
+  };
+  if (!isObj(r)) return ['uniques.json: 객체가 아니다'];
+  if (typeof r.provisional !== 'boolean') errors.push('provisional: 참·거짓이 아니다');
+  if (!isObj(r.traits)) errors.push('traits: 객체가 아니다');
+  objOf(r.traits, 'traits', (t, at) => str(t, 'effect', at, true));
+  if (!isObj(r.forms)) errors.push('forms: 객체가 아니다');
+  objOf(r.forms, 'forms', (byFac, at) => {
+    for (const [fac, e] of Object.entries(byFac)) {
+      const where = `${at}.${fac}`;
+      if (!isObj(e)) { errors.push(`${where}: 객체가 아니다`); continue; }
+      str(e, 'trait', where);
+      if (e.ability === undefined) continue;
+      if (!isObj(e.ability)) { errors.push(`${where}.ability: 객체가 아니다`); continue; }
+      const a = e.ability;
+      for (const k of ['stacks', 'buffs', 'charges', 'specials'] as const) objOf(a[k], `${where}.${k}`);
+      arr(a.chainMultipliers, `${where}.chainMultipliers`, 'num');
+      arr(a.rules, `${where}.rules`, 'object');
+      arr(a.passives, `${where}.passives`, 'object');
+      for (const [i, rule] of (Array.isArray(a.rules) ? a.rules : []).entries()) {
+        if (!isObj(rule)) continue;
+        const rat = `${where}.rules[${i}]`;
+        str(rule, 'on', rat, true);
+        for (const k of ['when', 'charge', 'special', 'timer', 'proc'] as const) str(rule, k, rat);
+        arr(rule.element, `${rat}.element`, 'string');
+        arr(rule.notElement, `${rat}.notElement`, 'string');
+        arr(rule.kind, `${rat}.kind`, 'string');
+        arr(rule.chain, `${rat}.chain`, 'number');
+        arr(rule.need, `${rat}.need`, 'object');
+        if (!Array.isArray(rule.do)) errors.push(`${rat}.do: 배열이 아니다`);
+        else arr(rule.do, `${rat}.do`, 'object');
+        for (const [j, x] of (Array.isArray(rule.do) ? rule.do : []).entries()) {
+          if (!isObj(x)) continue;
+          const xat = `${rat}.do[${j}]`;
+          str(x, 'act', xat, true);
+          for (const k of ['stack', 'buff', 'charge', 'timer', 'special', 'block', 'element', 'family', 'refresh', 'basis', 'of'] as const) str(x, k, xat);
+          for (const k of ['per', 'amountPer', 'secondsPer'] as const) srcs(x[k], `${xat}.${k}`);
+          if (x.grow !== undefined && !isObj(x.grow)) errors.push(`${xat}.grow: 객체가 아니다`);
+        }
+      }
+      for (const [i, pv] of (Array.isArray(a.passives) ? a.passives : []).entries()) {
+        if (!isObj(pv)) continue;
+        str(pv, 'stat', `${where}.passives[${i}]`, true);
+        str(pv, 'when', `${where}.passives[${i}]`);
+        srcs(pv.per, `${where}.passives[${i}].per`);
+        arr(pv.need, `${where}.passives[${i}].need`, 'object');
+      }
+    }
+  });
+  return errors;
+}
+
+/** 모양 검사를 통과한 JSON 만 EvoFile 로 받는다 */
+function parseEvoFile(r: unknown): EvoFile {
+  const errors = evoFileShapeErrors(r);
+  if (errors.length > 0) throw new Error(`진화체 고유 능력 데이터(uniques.json) 모양 오류:\n- ${errors.join('\n- ')}`);
+  return r as EvoFile;
+}
+
+const DATA = parseEvoFile(raw);
 
 /** 수치 표 한 칸: 키 → 값, release = 해방 중 값 */
 export type EvoNums = Record<string, number> & { release?: Record<string, number> };
@@ -375,17 +471,51 @@ function numKeysOfRule(r: EvoRule): EvoNum[] {
   return out;
 }
 
-/** 데이터 검사: 트리거·효과·능력치 종류가 엔진이 아는 것이고, 수치 키가 balance 에 있고, 참조한 스택·버프·충전·특수 블록이 정의돼 있다 */
-export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()): string[] {
+/** 규칙 거르기의 블록 종류 (EvoRule.kind) */
+export const EVO_BLOCK_KINDS = ['skill', 'void', 'combo', 'liberation', 'special'] as const;
+const EVO_WHEN = ['release', 'normal'];
+/** 블록 속성 거르기에 쓸 수 있는 값: 속성 id + void(공허 블록) */
+const VOID_ELEMENT = 'void';
+
+/** 검사가 대조할 '알려진 값' (테스트는 바꿔 넣어 볼 수 있다) */
+export interface EvoKnown {
+  factions: readonly string[];
+  forms: readonly string[];
+  elements: readonly string[];
+  /** 종족 → 블록 계열 id */
+  families: (factionId: string) => readonly string[];
+  maxChain: number;
+}
+export function evoKnown(): EvoKnown {
+  return {
+    factions: FACTIONS.map((f) => f.id),
+    forms: FORM_TABLE.map((f) => f.id),
+    elements: ELEMENT_IDS,
+    families: (fac) => FACTIONS.find((f) => f.id === fac)?.families.map((x) => x.id) ?? [],
+    maxChain: FAMILY_TIERS,
+  };
+}
+
+/** 데이터 검사: 트리거·효과·능력치 종류가 엔진이 아는 것이고, 수치 키가 balance 에 있고, 참조한 스택·버프·충전·특수 블록이 정의돼 있다.
+ *  C.509(점검B 3): when·kind·element·notElement·chain 값, 종족 키·진화체 id, 특성 수치, timer 짝, 버프·충전·스택 정의 안쪽도 본다 */
+export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB(), known: EvoKnown = evoKnown()): string[] {
   const errors: string[] = [];
+  const chainOk = (c: unknown) => Number.isInteger(c) && (c as number) >= 1 && (c as number) <= known.maxChain;
   for (const [key, t] of Object.entries(d.traits)) {
     if (!(EVO_TRAIT_EFFECTS as readonly string[]).includes(t.effect)) errors.push(`특성 ${key}: 모르는 효과 ${t.effect}`);
     if (!t.name || Object.keys(t.name).length === 0) errors.push(`특성 ${key}: 이름 없음`);
     if (t.effect === 'chainPower' && !t.chain) errors.push(`특성 ${key}: chainPower 는 chain`);
+    if (t.chain !== undefined && !chainOk(t.chain)) errors.push(`특성 ${key}: chain ${String(t.chain)} 은 1~${known.maxChain}`);
+    for (const fac of Object.keys(t.name ?? {})) if (fac !== '*' && !known.factions.includes(fac)) errors.push(`특성 ${key}: 이름의 모르는 종족 ${fac}`);
+    const tn = balance.traits[key];
+    if (!tn) errors.push(`특성 ${key}: balance evoUniques.traits 에 수치 칸이 없다`);
+    else for (const k of EVO_TRAIT_NUM_KEYS[t.effect] ?? []) if (typeof tn[k] !== 'number') errors.push(`특성 ${key}: balance 수치 ${k} 없음`);
   }
   for (const [formId, byFaction] of Object.entries(d.forms)) {
+    if (!known.forms.includes(formId)) errors.push(`${formId}: FORM_TABLE 에 없는 진화체`);
     for (const [fac, e] of Object.entries(byFaction)) {
       const where = `${formId}.${fac}`;
+      if (!known.factions.includes(fac)) errors.push(`${where}: 모르는 종족 ${fac}`);
       const nums = (balance.forms[formId]?.[fac] ?? {}) as EvoNums;
       const has = (v: EvoNum | undefined) => v === undefined || typeof v === 'number' || nums[v] !== undefined;
       if (e.trait && !d.traits[e.trait]) errors.push(`${where}: 모르는 특성 ${e.trait}`);
@@ -403,6 +533,31 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       const charges = a.charges ?? {};
       const specials = a.specials ?? {};
       for (const [n, sd] of Object.entries(stacks)) for (const v of [sd.max, sd.seconds]) if (!has(v)) errors.push(`${where}: 스택 ${n} 수치 키 없음`);
+      const side = (on: unknown) => on === undefined || on === 'self' || on === 'foe';
+      const mark = (m: EvoMark | undefined, what: string) => {
+        if (m && (!m.icon || !m.name)) errors.push(`${where}: ${what} 표시(mark)에 icon·name 이 없다`);
+      };
+      for (const [n, sd] of Object.entries(stacks)) {
+        if (!side(sd.on)) errors.push(`${where}: 스택 ${n} on 은 self·foe`);
+        if (sd.overflow !== undefined && sd.overflow !== 'cap' && sd.overflow !== 'reset') errors.push(`${where}: 스택 ${n} overflow 는 cap·reset`);
+        mark(sd.mark, `스택 ${n}`);
+      }
+      for (const [n, bd] of Object.entries(buffs)) {
+        if (!side(bd.on)) errors.push(`${where}: 버프 ${n} on 은 self·foe`);
+        mark(bd.mark, `버프 ${n}`);
+      }
+      for (const [n, cd] of Object.entries(charges)) {
+        if (!has(cd.max)) errors.push(`${where}: 충전 ${n} 수치 키 없음`);
+        mark(cd.mark, `충전 ${n}`);
+      }
+      for (const [n, sp] of Object.entries(specials)) if (sp.usable !== undefined && sp.usable !== 'always' && sp.usable !== 'execBlock') errors.push(`${where}: 특수 블록 ${n} usable 은 always·execBlock`);
+      if (a.spawnRule !== undefined && a.spawnRule !== 'voidOnly') errors.push(`${where}: spawnRule 은 voidOnly 만`);
+      const elementOk = (x: string) => x === VOID_ELEMENT || known.elements.includes(x);
+      const whenOk = (w: unknown, at: string) => {
+        if (w !== undefined && !EVO_WHEN.includes(w as string)) errors.push(`${at}: when 은 release·normal (${String(w)})`);
+      };
+      // on 'timer' 규칙은 같은 이름 시계를 맞추는(act 'timer') 효과가 있어야 돈다
+      const timersSet = new Set((a.rules ?? []).flatMap((r) => (r.do ?? []).filter((x) => x.act === 'timer' && x.timer).map((x) => x.timer!)));
       for (const [n, sp] of Object.entries(specials)) {
         if (!sp.name || !sp.short) errors.push(`${where}: 특수 블록 ${n} 이름·글자 없음`);
         for (const v of [sp.fixed, sp.maxOnBar]) if (!has(v)) errors.push(`${where}: 특수 블록 ${n} 수치 키 없음`);
@@ -430,6 +585,11 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
         if (r.on === 'every' && r.seconds === undefined) errors.push(`${at}: every 는 seconds`);
         if (r.on === 'special' && !(r.special && r.special in specials)) errors.push(`${at}: special 블록 없음`);
         if (r.on === 'timer' && !r.timer) errors.push(`${at}: timer 이름 없음`);
+        if (r.on === 'timer' && r.timer && !timersSet.has(r.timer)) errors.push(`${at}: 시계 ${r.timer} 를 맞추는 act 'timer' 가 없다`);
+        whenOk(r.when, at);
+        for (const k of r.kind ?? []) if (!(EVO_BLOCK_KINDS as readonly string[]).includes(k)) errors.push(`${at}: 모르는 블록 종류 ${k}`);
+        for (const x of [...(r.element ?? []), ...(r.notElement ?? [])]) if (!elementOk(x)) errors.push(`${at}: 모르는 속성 ${x}`);
+        for (const c of r.chain ?? []) if (!chainOk(c)) errors.push(`${at}: chain ${String(c)} 은 1~${known.maxChain}`);
         if (r.charge && !(r.charge in charges)) errors.push(`${at}: 충전 ${r.charge} 없음`);
         for (const v of numKeysOfRule(r)) if (!has(v)) errors.push(`${at}: 수치 키 ${String(v)} 없음`);
         need(r.need);
@@ -449,6 +609,11 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg', 'noDamage'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
           if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
           if (x.act === 'absorbBar' && !x.element) errors.push(`${at}: absorbBar 는 element`);
+          if (x.element !== undefined && x.element !== 'self' && !elementOk(x.element)) errors.push(`${at}: 모르는 속성 ${x.element}`);
+          if (x.family !== undefined && !known.families(fac).includes(x.family)) errors.push(`${at}: ${fac} 에 없는 블록 계열 ${x.family}`);
+          if (x.refresh !== undefined && !['replace', 'max', 'add'].includes(x.refresh)) errors.push(`${at}: refresh 는 replace·max·add`);
+          if (x.basis !== undefined && !['basic', 'block', 'last', 'raw', 'void'].includes(x.basis)) errors.push(`${at}: 모르는 basis ${x.basis}`);
+          if (x.of !== undefined && x.of !== 'damage' && x.of !== 'maxHp') errors.push(`${at}: of 는 damage·maxHp`);
           src(x.per);
           src(x.amountPer);
           if (x.grow) src(x.grow.per);
@@ -458,6 +623,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       for (const [i, p] of (a.passives ?? []).entries()) {
         if (!(EVO_STATS as readonly string[]).includes(p.stat)) errors.push(`${where} 효과 ${i}: 모르는 능력치 ${p.stat}`);
         for (const v of [p.value, p.max, p.step]) if (!has(v)) errors.push(`${where} 효과 ${i}: 수치 키 없음`);
+        whenOk(p.when, `${where} 효과 ${i}`);
         src(p.per);
         need(p.need);
       }

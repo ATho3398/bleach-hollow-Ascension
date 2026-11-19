@@ -32,7 +32,7 @@ import { NORMAL_FOODS } from '../engine/foodPref';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, carriedPetsOf, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, carriedPetsOf, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, lastLoadSaveError, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf,
@@ -1050,10 +1050,11 @@ export function startApp(host: HTMLElement): void {
       raw = null;
     }
     let loaded = loadSave(store, slotKey(n));
+    const loadError = lastLoadSaveError(); // 못 연 이유 한 줄 (C.509)
     // 손상된 세이브 (C.70): 백업이 읽히면 맞바꿔 연다(손상본은 백업 자리에 남는다). 백업도 안 되면 시작 화면에 알린다
     const recovered = !loaded && recoverFromBackup(store, n);
     if (recovered) loaded = loadSave(store, slotKey(n));
-    if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
+    if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.${loadError ? ` (${loadError})` : ''}`);
     if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: fixParticles(`슬롯 ${n}을(를) 백업에서 열었다`), meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;

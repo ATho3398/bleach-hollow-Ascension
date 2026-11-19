@@ -1,4 +1,5 @@
 // C.192 (GDD 118장): 홈 크기 원래대로 · 사신 권/참/귀 재정의 · 귀도 이름
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import type { CombatEvent } from '../src/engine/combat';
 import { parseFactionConfig } from '../src/engine/faction';

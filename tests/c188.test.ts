@@ -6,7 +6,8 @@ import { charArt } from '../src/data/art/manifest';
 import { ART_FILES } from '../src/data/art/files';
 import { getFaction } from '../src/data/factions';
 import { parseFactionConfig } from '../src/engine/faction';
-import { migrateSave, newSaveData, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION } from '../src/game';
+import { migrateSave, newSaveData, MIN_LOADABLE_SAVE_FORMAT, recordExpedition, SAVE_FORMAT_VERSION } from '../src/game';
+import { createExpedition } from '../src/engine/expedition';
 import { shownName } from '../src/ui/displayName';
 import { useLegacyMigrations } from './helpers/legacyGate';
 
@@ -97,7 +98,13 @@ describe('세이브 (114장 4, 61장: 마이그레이션 없음)', () => {
   });
   it('런 로그 원정 기록에 성별', () => {
     expect(read('src/engine/runLog.ts')).toContain('gender?: Gender;');
-    expect(read('src/game.ts')).toContain('log.runs.push({ ...buildRunRecord(exp), gender: save.gender,'); // C.326: 이름도
+    // C.509 (점검B 6): 소스 글자 대신 실제 원정 정산 기록을 본다
+    const s = newSaveData('shinigami', 1);
+    s.gender = 'female';
+    const exp = createExpedition({ factionId: s.factionId, seed: 7, hunger: 20, condition: 80, deck: [], build: s.build, evolution: s.evolution });
+    Object.assign(exp, { phase: 'ended', outcome: 'returned', endReason: 'returned', lapsCompleted: 1 });
+    recordExpedition(s, exp, 1000);
+    expect(s.runLog.runs.at(-1)!.gender).toBe('female');
   });
 });
 

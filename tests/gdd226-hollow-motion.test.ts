@@ -1,5 +1,6 @@
 // GDD 226장 (사용자 2026-11-10 "앞으로 호로 조=주먹으로 때리는 공격 중 하나로 통일하고, 교는 박치기로 통일"):
 // 조 = 주먹 묶음(주먹·스트레이트·오른손 치기·어퍼컷 중 하나), 교 = 박치기. 주먹이 없는 호로 몸(덩치·길리안)은 그 몸의 손 공격(공격1·2), 그것도 없으면 박치기
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { getFaction } from '../src/data/factions';
 import { HUMANOID, MOTIONS, MOTION_SETS, resolveMotions } from '../src/data/art/rig/pose';

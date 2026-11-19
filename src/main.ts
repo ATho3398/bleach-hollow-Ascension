@@ -49,6 +49,7 @@ import { applyDraft, draftHasEdits, loadDraft } from './ui/bha/layoutDraft';
 import { FACTIONS } from './data/factions';
 import { installNameGlitch } from './ui/bha/glitchName';
 import { installMosaic } from './ui/bha/glitchMosaic';
+import { loadRigMotions } from './data/art/rig/pose';
 
 captureInstallPrompt(); // 브라우저의 작은 설치 띠를 막고 요청을 잡아 둔다 (GDD 68장) — 이벤트가 앱 시작보다 먼저 올 수 있어 맨 앞에서
 mountSprite();
@@ -57,6 +58,8 @@ applyCalmMode();
 installNameGlitch(document.body); // 초월자 이름 글리치 (C.430, GDD 12-4 v6.027): 화면 어디에 찍혀도 — 알림 띠·확인 창·메뉴 포함
 installMosaic(document.body); // Unknown;03398 조각 모델 (C.431, GDD 12-4 v6.029): 몸 그림이 나오는 모든 곳
 const app = document.querySelector<HTMLDivElement>('#app');
+// 종이인형 동작 데이터(약 750KB)는 메인 번들에서 떼어 첫 화면 전에 같이 받는다 (C.509, 점검B 5). 못 받으면 경고만 남기고 시작한다(인형은 멈춘 자세)
+const rigMotions = loadRigMotions().catch((e: unknown) => console.warn('[종이인형] 동작 데이터를 못 받았다 — 멈춘 자세로 그린다', e));
 // UI 배치 도구 미리보기 (GDD 175장 4): 도구에서 [미리보기 켜기]면 같은 브라우저로 연 게임에 편집본을 먼저 적용한다(종족 설정·실행 중 그림만, 세이브 무관)
 if (!new URLSearchParams(location.search).has('layout')) {
   const draft = loadDraft();
@@ -71,14 +74,14 @@ if (!new URLSearchParams(location.search).has('layout')) {
 // C.139: 한 번에 한 창만 플레이 — 다른 창이 쥐고 있으면 세이브를 열지 않고 안내만
 // 개발 전용: v2 컴포넌트 갤러리 (`?v2gallery=<종족 theme 값>`). 배포 빌드에서는 이 분기가 통째로 빠진다
 if (app && import.meta.env.DEV && new URLSearchParams(location.search).has('v2gallery')) {
-  void import('./ui/bha/v2/gallery').then((m) => m.mountGallery(app, new URLSearchParams(location.search).get('v2gallery') ?? ''));
+  void rigMotions.then(() => import('./ui/bha/v2/gallery')).then((m) => m.mountGallery(app, new URLSearchParams(location.search).get('v2gallery') ?? ''));
 } else if (app && import.meta.env.DEV && new URLSearchParams(location.search).has('fxlab')) {
   // 개발 전용: pixelfx 이펙트 실험실 (`?fxlab`, C.249) — `npm run fx` 로 가져온 시트를 게임 그림 위에 재생해 본다
-  void import('./ui/bha/fxLab').then((m) => m.mountFxLab(app));
+  void rigMotions.then(() => import('./ui/bha/fxLab')).then((m) => m.mountFxLab(app));
 } else if (app && new URLSearchParams(location.search).has('layout')) {
   // 개발 전용: UI 배치 도구 (`?layout`, GDD 175장) — 배포 빌드에도 들어간다(사용자는 폰 크롬으로 쓴다). 게임 메뉴엔 없음. 세이브는 건드리지 않는다
-  void import('./ui/bha/layoutTool').then((m) => m.mountLayoutTool(app));
-} else if (app) void acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
+  void rigMotions.then(() => import('./ui/bha/layoutTool')).then((m) => m.mountLayoutTool(app));
+} else if (app) void Promise.all([acquirePlayLock(), rigMotions]).then(([ok]) => (ok ? startApp(app) : tabBlockedView(app, () => location.reload())));
 registerServiceWorker();
 scheduleSwWarm(); // 이펙트 그림은 켜고 한가할 때 천천히 (GDD 186장 1)
 if (!new URLSearchParams(location.search).has('layout')) {

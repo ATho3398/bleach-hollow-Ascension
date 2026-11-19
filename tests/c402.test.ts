@@ -1,4 +1,5 @@
 // C.402 (GDD 241-F 2, 115-A 119·120): 호로 모델 빈사·쓰러짐 채우기, 짐승 공격3, 거미 팔 관절, 가시형 가슴·배, 속도형 꼬리·팔.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { apply, boneMatrices, lookLayers, resolveMotions, rigPack, samplePose, validateRig } from '../src/data/art/rig/pose';

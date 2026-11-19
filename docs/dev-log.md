@@ -4460,3 +4460,20 @@ C.0 ~ C.120 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.59 2026-10-20, C.6
 - 손대지 않음: C2(패배 무르기 — 사용자 결정 대기), C4 소로(사용자 확정 수치), 밸런스.
 - 검증: typecheck · npm test 347파일 3935건 통과(새 tests/c508 21건, 형식 94 반영 다수·c420·c498 글자 확인 갱신) · balance:check 회귀 가드 통과(후반 경고 그대로) · build 통과.
 - 캡처 `docs/captures/c508/`(1배, PC 844×390 + 폰 796×384): 01 다시 켠 뒤 다시 뜬 미루기 창(pc·phone, [미루기] 뒤 deferrals 1·다시 켜도 안 뜸) · 02 봉화 칩 설명 · 03 공허 블록 '공'·꺼짐 알림(pc·phone) · 04 영왕 빈 자리 + 상태창(pc·phone, 겹침 없음) · 05 첫 포식 카드(갈래·적 카드 안 가림). 수치는 proof.json, 스크립트 scripts/c508-proof.cjs.
+
+## C.509 — 점검B 코드 개선: 종이인형 동작 분리 · 배치판 리스너 누수 · 고유 능력 데이터 검사 · 세이브 못 연 이유 · CSS 날 색 상한 (GDD v6.145 17-6, S-23, 코딩322)
+사용 모델: Opus 5.5. 세이브·밸런스 그대로(SAVE 94 — C.508, BALANCE 150). 기준 = `docs/drafts/audit-1119-B-code.md`. (C.508 은 병렬 코딩321 몫이라 C.509)
+- 사용자 원문(11-19): "지금 문제점 분석 함 싹 돌려봐. 게임 외적으로 기획서라던가, 코드라던가 이런거까지" → 점검B 결과 중 성능·코드 정리(GDD 19-4 추천안대로).
+- B1 타일 배치판(`src/ui/bha/road.ts`): window pointermove·up·cancel 을 배치판마다 걸고 안 풀던 것 → `gestureListeners` 로 **누르는 동안만** 걸고 떼면 abort. 폭주 연출로 화면을 잠시 떼었다 붙이는 원정 화면도 안전(화면 신호에 묶지 않음). 빌드 실측(CDP): 배치 화면 4번 열고 닫기 window 포인터 리스너 0 → 1·1·1·1·1(다른 1개, 안 늘어남), 누르는 동안만 +3.
+- B5 번들: 동작 JSON 7개를 `src/data/art/rig/motionsData.ts` 로 모아 동적 import(`loadRigMotions`). 뼈대 JSON(작음)은 그대로라 `rigPackOfLook` 등 동기 API 유지, 동작은 같은 객체에 채운다. `main.ts` = 잠금 확인과 함께 기다린 뒤 startApp(배치 도구·갤러리·fxLab 도 기다림), 못 받으면 경고만. 서비스 워커 미리 캐시에 `assets/motionsData-*.js` 포함 확인.
+  - 메인 `index-*.js` **1,969.65 kB(gzip 625.76) → 1,537.53 kB(gzip 541.51)**, 새 `motionsData-*.js` 438.76 kB(gzip 83.48) — C.507 기준. C.508 합친 뒤 메인 1,541.42 kB(gzip 542.99). 500 kB 경고는 남음.
+  - 테스트 모드 코드 분리는 **보류**: `src/ui/app.ts` 의 testMode 쪽(코딩321 영역, 동기 호출 다수)을 건드려야 함 → 다음 정리 후보.
+  - 이펙트 도구(`scripts/pixelfx/tool/fx-tool.ts`, IIFE 한 파일)는 `installRigMotions(RIG_MOTIONS_RAW)` 로 바로 채움. 테스트는 종이인형을 재는 17파일만 맨 앞 `import './helpers/rigMotions'`(공통 setupFiles 는 파일마다 0.5초 늘어 뺌).
+- B3 `validateEvoUniques` 보강: rule·passive `when`(release·normal), `kind`(EVO_BLOCK_KINDS), `element`·`notElement`(속성 id + void), action `element`(+ self)·`family`(그 종족 계열)·`refresh`·`basis`·`of`, `chain` 1~FAMILY_TIERS, forms 종족 키(FACTIONS)·진화체 id(FORM_TABLE), 특성 이름 종족 키, **특성 수치**(`EVO_TRAIT_NUM_KEYS` — balance traits 에 효과별 필수 키), on 'timer' ↔ act 'timer' 짝, 스택 on·overflow·버프 on·충전 max·mark·usable·spawnRule. JSON 은 `as unknown as` 대신 `evoFileShapeErrors` 모양 검사 뒤 받는다(틀리면 칸 경로를 적은 오류). 지금 데이터 통과.
+- B9 `loadSave`: 못 연 이유를 `lastLoadSaveError()`(깨진 JSON = '읽다가 오류: …', 형식 = `saveRejectReason` 새 버전·옛 형식·형식 번호 이상·필수 칸 없음) + `console.warn`. 슬롯 열기 실패 안내 = "슬롯 n의 세이브를 읽을 수 없다. (이유)"(app.ts enterSlot 한 줄, 진화·튜토리얼·dock·testMode 는 안 건드림).
+- B6 소스 글자 검사 → 동작 테스트 **4곳 줄임**: c141(road.ts window 리스너 글자 → c509 gestureListeners 동작), c326·c188(game.ts `log.runs.push(...)` 글자 → 실제 원정 정산 기록의 이름·성별), c66(game.ts 'playMs' 글자 → 새 세이브·불러오기 값). c139 main.ts 글자 검사는 새 시작 줄로 갱신(정책 검사라 유지).
+- B10 CSS 날 색: 고치지 않고 `tests/c509.test.ts` 가 파일별 지금 개수(battle-c281 289 · v2/bha 127 · components 45 … 13파일, 합 534, design-system/ 제외)를 상한으로 — 늘면 실패, 상한에 없는 파일은 0.
+- B7·B8(밸런스 경고·고유 능력 측정 구간)은 기록만(보정 없음).
+- 본 것(고치지 않음, 기준 빌드도 같음): 테스트 모드 이치고 **기본 모드** 전투에서 내 캐릭터 자리가 점선 상자로 보임(천년혈전 모드는 혈쇄 인형 정상) — 마스터 판단용.
+- 검증: typecheck · npm test 348파일 3949건 통과(C.508 합친 뒤) · balance:check 회귀 가드 통과(전 워커, 126초, 후반 경고 3건 그대로 — 수치 변경 없음) · build 통과. 새 `tests/c509.test.ts` 14건.
+- 캡처 `docs/captures/c509/`(1배 PC 844×390, 빌드 미리보기 `scripts/c509-proof.cjs`): 01 첫 화면(첫 로드에 index·motionsData 따로 받음, 오프라인 다시 열기 OK) · 02 튜토리얼 시작(홈 안내 1/3, 방 인형 그림 있음) · 03 전투(이치고 천년혈전 혈쇄 인형, 전투 끝까지 적 체력 0). proof.json 에 리스너 수.

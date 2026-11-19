@@ -3526,17 +3526,45 @@ export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id'
   return equipSkin(save, look) ? look : null;
 }
 
+/** 마지막 loadSave 가 세이브를 못 연 이유 (한 줄, 열었거나 비어 있으면 null) — 시작 화면 안내에 붙인다 (C.509, 점검B 9) */
+let lastLoadError: string | null = null;
+export function lastLoadSaveError(): string | null {
+  return lastLoadError;
+}
+
+/** migrateSave 가 null 을 돌려준 까닭 (같은 순서로 본다) */
+export function saveRejectReason(raw: unknown, min: number = saveFormatGate.min): string {
+  if (typeof raw !== 'object' || raw === null) return '세이브 내용이 객체가 아니다';
+  const r = raw as { meta?: { format?: unknown }; factionId?: unknown; runLog?: unknown };
+  if (typeof r.factionId !== 'string' || !r.runLog || typeof r.meta?.format !== 'number') return '세이브에 종족·런 로그·형식 번호가 없다';
+  const f = r.meta.format;
+  if (f > SAVE_FORMAT_VERSION) return `더 새 버전의 세이브(형식 ${f})다`;
+  if (!Number.isInteger(f) || f < 1) return `형식 번호가 이상하다(${String(f)})`;
+  if (f < min) return `옛 형식(${f})이라 이 버전에서 열지 않는다(형식 ${min}부터)`;
+  return '알 수 없는 이유';
+}
+
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {
+  lastLoadError = null;
   try {
     const text = storage.getItem(key);
-    const save = text ? migrateSave(parseSaveText(text, false, storage)) : null;
+    const parsed = text ? parseSaveText(text, false, storage) : null;
+    const save = text ? migrateSave(parsed) : null;
+    if (text && !save) {
+      lastLoadError = saveRejectReason(parsed);
+      console.warn(`[세이브] ${key} 를 열지 않았다: ${lastLoadError}`);
+    }
     if (save) {
       checkTitles(save, 'load');
       checkTrackOpen(save); // 이미 스토리를 전부 깬 옛 세이브는 여기서 붕옥이 등장하고 두 번째 트랙이 열린다 (GDD 243장 1)
       syncPetSlots(save);
     }
     return save;
-  } catch {
+  } catch (e) {
+    // 깨진 JSON·마이그레이션 중 예외: 이유를 남기고 null (백업 복구·시작 화면 안내는 부른 쪽이 한다)
+    const msg = e instanceof Error ? e.message : String(e);
+    lastLoadError = `읽다가 오류: ${msg.split('\n')[0]!.slice(0, 80)}`;
+    console.warn(`[세이브] ${key} 를 읽다가 오류`, e);
     return null;
   }
 }

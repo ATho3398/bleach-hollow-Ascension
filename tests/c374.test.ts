@@ -1,4 +1,5 @@
 // C.374 (GDD 228장): 짐승형 = 아쥬커스 '표범형' 외형 + 아쥬커스 등급 강적 3 (종이인형 뼈대 beast), 대기·홈 대기·이동은 재생 속도 예외
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { ART_MANIFEST, BEAST_ENEMIES, BEAST_SCALE, SERPENT_ENEMIES, charArt, enemyArt } from '../src/data/art/manifest';

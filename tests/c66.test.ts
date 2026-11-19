@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE_VERSION } from '../src/config/balance';
-import { SAVE_FORMAT_VERSION } from '../src/game';
+import { migrateSave, newSaveData, SAVE_FORMAT_VERSION } from '../src/game';
 import { BODY, edgeThickness, tamaLayout } from '../src/ui/bha/tamagoLogic';
 import { PATCH_LABEL, STAGE_LABEL } from '../src/version';
 
@@ -60,6 +60,10 @@ describe('뒷면 기록 판 삭제 (30장 7)', () => {
     expect(src('src/ui/bha/tamagoLogic.ts')).not.toMatch(/plateRows|serialNumber|playTimeText/);
   });
   it('세이브의 machine(만든 시각·논 시간)은 그대로 둔다', () => {
-    expect(src('src/game.ts')).toContain('playMs');
+    // C.509 (점검B 6): 소스 글자 대신 세이브 값 — 새 세이브에 있고 저장·불러오기 뒤에도 남는다
+    const s = newSaveData('hollow', 1234);
+    expect(s.machine).toEqual({ createdAt: 1234, playMs: 0 });
+    s.machine.playMs = 5000;
+    expect(migrateSave(JSON.parse(JSON.stringify(s)))!.machine.playMs).toBe(5000);
   });
 });

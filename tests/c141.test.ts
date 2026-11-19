@@ -46,7 +46,7 @@ describe('C.141', () => {
   it('85장 11: 손 타일은 카드, 끌어놓기는 눌러 고르기와 같은 규칙(onCell)으로 처리한다', () => {
     const src = read('src/ui/bha/road.ts');
     expect(src).toContain('bha-tilecard');
-    expect(src).toContain("window.addEventListener('pointermove'");
+    // 끌기는 누르는 동안만 window 리스너를 건다 (C.509 — 글자 검사 대신 동작: tests/c509.test.ts gestureListeners)
     expect(src).toContain('onCell(i)'); // 놓기 = 선택 흉내 + 칸 누름
     expect(src).not.toContain('bha-tilechip bha-tilechip--');
     // 놓은 칸을 손 영역에 끌어 놓으면 되돌리기 = 같은 칸을 다시 누른 것

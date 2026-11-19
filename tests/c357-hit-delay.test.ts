@@ -1,5 +1,6 @@
 // C.357 (GDD 214장): 공격 피해를 모션 타격 순간에 — 공격 주기(타이머·발동 시각)는 그대로, 피해 적용만 타격 지연(hitDelay)만큼 뒤 틱에.
 // 엔진(swing 사건·예약 피해·쓰러지면 버림·재현성)과 화면 순수 함수(엔진 지연 표 hitDelaysOf·계획 맞추기 alignPlan·재생기 hitInMs)를 본다.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
 import { HUMANOID, MOTIONS } from '../src/data/art/rig/pose';

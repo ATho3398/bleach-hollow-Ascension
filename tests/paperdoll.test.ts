@@ -1,4 +1,5 @@
 // 종이인형 뼈대 (GDD 96장): 데이터 점검, 자세 뽑기, 뼈 행렬(부모 따라가기), 동작 전환
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { HUMANOID, MOTIONS, MOTION_SETS, apply, bodyBones, boneMatrices, insideFrame, jointMoveShift, layerMatrix, slotsOf, lookLayers, orderLayers, partMatrix, samplePose, validateRig } from '../src/data/art/rig/pose';

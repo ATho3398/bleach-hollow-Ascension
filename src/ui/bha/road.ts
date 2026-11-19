@@ -404,14 +404,12 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
     if (t.dataset.drag === 'cell' && t.dataset.cell) return { kind: 'cell', cell: Number(t.dataset.cell) };
     return null;
   };
-  root.addEventListener('pointerdown', (e) => {
-    const t = (e.target as Element).closest<HTMLElement>('[data-drag]');
-    const src = t ? srcOf(t) : null;
-    if (!t || !src || pending || dragging) return;
-    const touch = e.pointerType !== 'mouse';
-    pending = { src, el: t, x: e.clientX, y: e.clientY, pointerId: e.pointerId, touch, timer: touch ? window.setTimeout(startDrag, DRAG_HOLD_MS) : 0 };
-  });
-  window.addEventListener('pointermove', (e) => {
+  // window 리스너는 누르고 있는 동안(끌기 대기·끌기 중)에만 건다 — 배치판을 만들 때마다 걸어 두면 화면을 닫아도 남아 쌓였다 (C.509, 점검B 1)
+  /** 누름이 끝났으면(대기도 끌기도 없음) window 리스너를 푼다 */
+  const settle = (): void => {
+    if (!pending && !dragging) gesture.unlisten();
+  };
+  const onWinMove = (e: PointerEvent): void => {
     if (pending && e.pointerId === pending.pointerId) {
       const dx = e.clientX - pending.x;
       const dy = e.clientY - pending.y;
@@ -423,7 +421,7 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
         else startDrag();
       }
     }
-    if (!dragging) return;
+    if (!dragging) return settle();
     dragging.ghost.style.left = `${e.clientX}px`;
     dragging.ghost.style.top = `${e.clientY}px`;
     const over = targetAt(e.clientX, e.clientY);
@@ -432,14 +430,25 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       over?.classList.add('is-drop');
       dragging.over = over;
     }
-  });
-  window.addEventListener('pointerup', (e) => {
+  };
+  const onWinUp = (e: PointerEvent): void => {
     if (dragging) endDrag(true, e.clientX, e.clientY);
     else if (pending) { window.clearTimeout(pending.timer); pending = null; }
-  });
-  window.addEventListener('pointercancel', () => {
+    settle();
+  };
+  const onWinCancel = (): void => {
     if (dragging) endDrag(false, 0, 0);
     else if (pending) { window.clearTimeout(pending.timer); pending = null; }
+    settle();
+  };
+  const gesture = gestureListeners(window, { move: onWinMove, up: onWinUp, cancel: onWinCancel });
+  root.addEventListener('pointerdown', (e) => {
+    const t = (e.target as Element).closest<HTMLElement>('[data-drag]');
+    const src = t ? srcOf(t) : null;
+    if (!t || !src || pending || dragging) return;
+    const touch = e.pointerType !== 'mouse';
+    pending = { src, el: t, x: e.clientX, y: e.clientY, pointerId: e.pointerId, touch, timer: touch ? window.setTimeout(startDrag, DRAG_HOLD_MS) : 0 };
+    gesture.listen();
   });
   // 터치로 끌기가 시작된 뒤에는 화면이 같이 스크롤되지 않게
   root.addEventListener('touchmove', (e) => { if (dragging && e.cancelable) e.preventDefault(); }, { passive: false });
@@ -469,6 +478,35 @@ export function roadPlanner(o: RoadPlannerOpts): RoadPlanner {
       refresh();
     },
     cancelSelection,
+  };
+}
+
+export interface GestureListeners {
+  listen(): void;
+  unlisten(): void;
+  readonly active: boolean;
+}
+
+/** 끌기 한 번 동안만 target(window)에 pointermove·pointerup·pointercancel 을 건다 (C.509, 점검B 1).
+ *  listen 을 여러 번 불러도 한 벌만 걸리고, unlisten 하면 모두 풀린다 — 배치판을 몇 번 만들고 닫아도 window 리스너가 쌓이지 않는다 */
+export function gestureListeners(target: EventTarget, on: { move(e: PointerEvent): void; up(e: PointerEvent): void; cancel(): void }): GestureListeners {
+  let ctl: AbortController | null = null;
+  return {
+    listen() {
+      if (ctl) return;
+      ctl = new AbortController();
+      const signal = ctl.signal;
+      target.addEventListener('pointermove', (e) => on.move(e as PointerEvent), { signal });
+      target.addEventListener('pointerup', (e) => on.up(e as PointerEvent), { signal });
+      target.addEventListener('pointercancel', () => on.cancel(), { signal });
+    },
+    unlisten() {
+      ctl?.abort();
+      ctl = null;
+    },
+    get active() {
+      return ctl !== null;
+    },
   };
 }
 

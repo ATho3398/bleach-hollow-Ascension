@@ -2,19 +2,12 @@
 // 여기는 DOM 없는 계산만 — 동작 키를 시간으로 뽑고(samplePose), 뼈마다 화면 변환 행렬을 만든다(boneMatrices).
 // 그리기(<img> 겹치기 + CSS transform)는 src/ui/bha/paperdoll.ts. 종족을 모른다: 어느 몸·머리카락을 쓸지는 looks 데이터.
 import rigRaw from './humanoid.json';
-import motionsRaw from './motions.json';
 import serpentRaw from './serpent.json';
-import serpentMotionsRaw from './serpent-motions.json';
 import beastRaw from './beast.json';
-import beastMotionsRaw from './beast-motions.json';
 import spiderRaw from './spider.json';
-import spiderMotionsRaw from './spider-motions.json';
 import wraithRaw from './wraith.json';
-import wraithMotionsRaw from './wraith-motions.json';
 import ichigoRaw from './ichigo.json';
-import ichigoMotionsRaw from './ichigo-motions.json';
 import mugetsuRaw from './mugetsu.json';
-import mugetsuMotionsRaw from './mugetsu-motions.json';
 
 export type Vec2 = [number, number];
 /** CSS matrix(a, b, c, d, e, f) 순서: x' = a·x + c·y + e, y' = b·x + d·y + f */
@@ -197,9 +190,9 @@ export function resolveMotions(rig: Rig, motions: Record<string, Motion>, sets: 
 }
 
 export const HUMANOID: Rig = rigRaw as unknown as Rig;
-const humanoidMotions = readMotions(motionsRaw);
-export const MOTIONS: Record<string, Motion> = humanoidMotions.motions;
-export const MOTION_SETS: MotionSets = humanoidMotions.sets;
+/** 사람형 기본 동작·동작 묶음. 동작 데이터는 따로 받는다(loadRigMotions) — 받기 전에는 비어 있다 */
+export const MOTIONS: Record<string, Motion> = {};
+export const MOTION_SETS: MotionSets = {};
 
 /** 게임이 쓰는 뼈대 하나 (GDD 115-A 100): id = 그림 폴더 이름(public/art/rig/<id>/), 뼈대·동작·동작 묶음 */
 export interface RigPack {
@@ -208,23 +201,45 @@ export interface RigPack {
   motions: Record<string, Motion>;
   sets: MotionSets;
 }
-const serpentMotions = readMotions(serpentMotionsRaw);
-const beastMotions = readMotions(beastMotionsRaw);
-const spiderMotions = readMotions(spiderMotionsRaw);
-const wraithMotions = readMotions(wraithMotionsRaw);
-const ichigoMotions = readMotions(ichigoMotionsRaw);
-const mugetsuMotions = readMotions(mugetsuMotionsRaw);
-/** 게임 뼈대 목록: 사람형(사신·아란칼·덩치·길리안 …) + 뱀형 + 짐승형(GDD 228장). 외형 id 는 뼈대끼리 겹치지 않는다(테스트가 막음) */
+/** 게임 뼈대 목록: 사람형(사신·아란칼·덩치·길리안 …) + 뱀형 + 짐승형(GDD 228장). 외형 id 는 뼈대끼리 겹치지 않는다(테스트가 막음).
+ *  뼈대(작은 JSON)는 바로 들고, 동작(큰 JSON)은 loadRigMotions 가 같은 객체에 채운다 (C.509, 점검B 5) */
 export const RIG_PACKS: readonly RigPack[] = [
   { id: 'humanoid', rig: HUMANOID, motions: MOTIONS, sets: MOTION_SETS },
-  { id: 'serpent', rig: serpentRaw as unknown as Rig, motions: serpentMotions.motions, sets: serpentMotions.sets },
-  { id: 'beast', rig: beastRaw as unknown as Rig, motions: beastMotions.motions, sets: beastMotions.sets },
-  { id: 'spider', rig: spiderRaw as unknown as Rig, motions: spiderMotions.motions, sets: spiderMotions.sets }, // 거미형(GDD 231장)
-  { id: 'wraith', rig: wraithRaw as unknown as Rig, motions: wraithMotions.motions, sets: wraithMotions.sets }, // 부유형(GDD 240장)
+  { id: 'serpent', rig: serpentRaw as unknown as Rig, motions: {}, sets: {} },
+  { id: 'beast', rig: beastRaw as unknown as Rig, motions: {}, sets: {} },
+  { id: 'spider', rig: spiderRaw as unknown as Rig, motions: {}, sets: {} }, // 거미형(GDD 231장)
+  { id: 'wraith', rig: wraithRaw as unknown as Rig, motions: {}, sets: {} }, // 부유형(GDD 240장)
   // 초월자 이치고 (C.465, 종이인형 작업본 그대로 — 사용자 2026-11-17 "종이인형 세션에서 최신화 된것들 가져와서 게임에 넣고"): 혈쇄(천년혈전 모드 모델, 대기만)·무월(두 번째 해방)
-  { id: 'ichigo', rig: ichigoRaw as unknown as Rig, motions: ichigoMotions.motions, sets: ichigoMotions.sets },
-  { id: 'mugetsu', rig: mugetsuRaw as unknown as Rig, motions: mugetsuMotions.motions, sets: mugetsuMotions.sets },
+  { id: 'ichigo', rig: ichigoRaw as unknown as Rig, motions: {}, sets: {} },
+  { id: 'mugetsu', rig: mugetsuRaw as unknown as Rig, motions: {}, sets: {} },
 ];
+
+let motionsReady = false;
+let motionsLoading: Promise<void> | null = null;
+/** 동작 데이터를 받았는가 (받기 전 종이인형은 그리지 않는다 — 앱은 첫 화면 전에 loadRigMotions 를 기다린다) */
+export function rigMotionsReady(): boolean {
+  return motionsReady;
+}
+/** 동작 JSON 원본(뼈대 id → JSON)을 RIG_PACKS 에 채운다. 뼈대 하나라도 동작이 없으면 분명한 오류 */
+export function installRigMotions(raws: Record<string, unknown>): void {
+  const missing = RIG_PACKS.filter((p) => raws[p.id] === undefined).map((p) => p.id);
+  if (missing.length) throw new Error(`종이인형 동작 데이터 없음: ${missing.join(', ')}`);
+  for (const p of RIG_PACKS) {
+    const m = readMotions(raws[p.id]);
+    Object.assign(p.motions, m.motions);
+    Object.assign(p.sets, m.sets);
+  }
+  motionsReady = true;
+}
+/** 동작 데이터를 따로 받는다 (C.509): 메인 번들에서 뗀 덩어리. 여러 번 불러도 한 번만 받는다 */
+export function loadRigMotions(): Promise<void> {
+  if (motionsReady) return Promise.resolve();
+  motionsLoading ??= import('./motionsData').then((m) => installRigMotions(m.RIG_MOTIONS_RAW)).catch((e: unknown) => {
+    motionsLoading = null; // 다음 호출 때 다시 시도
+    throw e;
+  });
+  return motionsLoading;
+}
 /** 외형 id → 그 외형이 있는 뼈대. 없으면 undefined */
 export function rigPackOfLook(look: string): RigPack | undefined {
   return RIG_PACKS.find((p) => p.rig.looks[look]);

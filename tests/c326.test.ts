@@ -2,7 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { checkName, nameMax, nameWidth, NAME_RULE, parseName } from '../src/engine/playerName';
-import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, needsIdentity, newSaveData, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, setIdentity } from '../src/game';
+import { migrateSave, MIN_LOADABLE_SAVE_FORMAT, needsIdentity, newSaveData, recordExpedition, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, setIdentity } from '../src/game';
+import { createExpedition } from '../src/engine/expedition';
 import { getFaction } from '../src/data/factions';
 import { FACTIONS } from '../src/data/factions';
 import { useLegacyMigrations } from './helpers/legacyGate';
@@ -92,7 +93,15 @@ describe('세이브 (199장 8)', () => {
   });
   it('런 로그 원정 기록에 이름 (9장)', () => {
     expect(read('src/engine/runLog.ts')).toContain('name?: string;');
-    expect(read('src/game.ts')).toContain("log.runs.push({ ...buildRunRecord(exp), gender: save.gender, ...(save.name ? { name: save.name } : {}) });");
+    // C.509 (점검B 6): 소스 글자 대신 실제 원정 정산 기록을 본다
+    const s = newSaveData('hollow', 1);
+    const exp = createExpedition({ factionId: s.factionId, seed: 7, hunger: 20, condition: 80, deck: [], build: s.build, evolution: s.evolution });
+    Object.assign(exp, { phase: 'ended', outcome: 'returned', endReason: 'returned', lapsCompleted: 1 });
+    recordExpedition(s, exp, 1000);
+    expect(s.runLog.runs.at(-1)!.name).toBeUndefined(); // 이름이 없으면 칸도 없다
+    expect(setIdentity(s, '권영', 'female', 'new', 2000)).toBe(true);
+    recordExpedition(s, { ...exp }, 3000);
+    expect([s.runLog.runs.at(-1)!.name, s.runLog.runs.at(-1)!.gender]).toEqual(['권영', 'female']);
   });
 });
 

@@ -1,4 +1,5 @@
 // C.191 (GDD 117장 2·3·4): 맞아도 공격 모션 안 끊김 · 블록 공격 즉발 · 공격/특수 모션 무작위
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import type { CombatEvent } from '../src/engine/combat';
 import { clipHitMs, resolveAnims } from '../src/data/art/anim';

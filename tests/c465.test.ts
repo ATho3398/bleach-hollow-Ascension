@@ -1,4 +1,5 @@
 // C.465 (GDD v6.094 12-4): 초월자 전투 방식 = 스킨 잠금 · 혈쇄 이치고(천년혈전 모드 모델) · 무월/혈쇄 종이인형 게임 뼈대 · 해방 몸 재생기 전환.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { BASE_MODEL, fitSkinToLock, modeModelIds, skinAllowedNow, skinLockOf, skinLockReason } from '../src/engine/skinLock';
 import { testGrantTranscendent } from '../src/engine/testMode';
