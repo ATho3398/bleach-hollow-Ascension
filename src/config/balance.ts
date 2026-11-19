@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
+export const BALANCE_VERSION = 150; // C.507 (사용자 2026-11-19 "2.5초에 5스텍 ㄱㄱ"): 호로 소로 여우불 지속 2초 → 2.5초(필요 5개 그대로). 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 148; // C.503 (GDD v6.137 8-7 1차 호로 10종, docs/drafts/evo-impl-1119.md 2·3절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 호로 마르티요·라나·소로·에스카라바호·콜리브리·에스칼레라·니에블라·루시에르나가·나다 수치(표 그대로). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 147; // C.499 (GDD v6.132 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION 146; // C.497 (GDD v6.129 8-8 허무형 조건 교체, 사용자 2026-11-18 "미루기 1번도 안한 상태로, 빈사상태로 진화로 ㄱㄱ"): evolution.hidden voidShare·voidRebirths 삭제 → voidMaxDeferrals 0(+ 진화 순간 빈사). 전투·적 수치 그대로.
@@ -600,7 +601,7 @@ export const BALANCE = {
         't4:fire:physical': {
           shinigami: { every: 3, perBeacon: 0.06, need: 5, pierce: 0.5, perFire: 0.1, release: { need: 4, perBeacon: 0.075 } },
           /** 호로 소로 (C.503): 평타마다 여우불 1(seconds 초), 여우불 need 개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +burn, 다시 걸면 시간 새로·% 큰 쪽). 레스렉시온 = 여우불 3초·화상 +15% */
-          hollow: { seconds: 2, need: 5, burn: 0.1, burnSeconds: 6, release: { seconds: 3, burn: 0.15 } },
+          hollow: { seconds: 2.5, need: 5, burn: 0.1, burnSeconds: 6, release: { seconds: 3, burn: 0.15 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍"
         },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
         't4:earth:physical': {
