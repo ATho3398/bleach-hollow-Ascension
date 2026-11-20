@@ -2362,6 +2362,7 @@ export function startApp(host: HTMLElement): void {
         newTraits: summarize(exp).keptTraits.length,
         evolvedTo: evo?.ok ? shownName(formDisplayName(save.evolution, faction.id)) : askEvolve ? EVOLVE_HINT : null,
         newTitles: save.titles.filter((t) => !had.has(t.titleId)).map((t) => titleLabel(t.titleId, faction.id)),
+        died: save.nest.dead === true, // 빈사 중 패배·탈진 사망 → 결과 문구 (C.511, GDD 3-6)
       };
       const s = save;
       /** 진화(또는 미루기)가 끝나 방으로 돌아온 뒤: 첫 진화 타일 안내(GDD 64장)를 풀고 미뤄 둔 알림을 띄운다 */

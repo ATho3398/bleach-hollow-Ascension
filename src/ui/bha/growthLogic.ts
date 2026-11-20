@@ -7,6 +7,8 @@ export interface GrowthInput {
   evolvedTo: string | null;
   /** 이번 원정에서 새로 해금된 칭호 이름 */
   newTitles: string[];
+  /** 이 귀환으로 사망했다(빈사 중 패배·탈진, GDD 3-6) — 결과 문구를 '빈사'가 아니라 사망으로 (C.511) */
+  died?: boolean;
 }
 
 /** 결과 화면 진화 안내 (GDD 176장 6): 진화체 이름은 둥지 진화 연출에서 처음 보이고, 결과에선 변화만 알린다 */
