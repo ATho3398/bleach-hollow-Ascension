@@ -10,6 +10,57 @@ C.0 ~ C.450 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.120 2026-10-20·10
 - 12-4 본문에는 규칙만 남겼다. 옛 12-4 절 전문(구현 줄 포함)은 `docs/dev-log-archive.md` 끝 'GDD 12-4 구현 메모 원문'. 옛 구현 줄의 값 중 뒤 패치로 바뀐 것: C.441 해방 이름 '붕옥 해방' → '붕옥 융합'(C.443), C.443 `voidScale 0.5` → 1(C.452) + 고정 몫 base(C.489), 반격 창 0.5 → 0.8초(C.476), C.429 더보기 '초월자 ○○' 칸 → [캐릭터 변경] 카드(C.498), 이름표 '초월자 · 진화체' → '○○ 초월자'(C.456), 그림 없으면 진화체 그림 빌림 → 빈 자리(C.505). **지금 값은 코드·기획서 12-4 가 기준.**
 - C.429 트랙 종류 설정 `src/data/trackKinds/`·이어받기·시간 감소 없음 / C.430 이름 글리치 `glitchName.ts`·태초 그림 / C.431·C.437·C.438 Unknown 조각 모델 `glitchMosaic.ts` / C.432 자기 방 `src/data/rooms/` / C.435 조합 `combo`·전투 기반 `basis` / C.436 초월 특성 `trait`·`transcendentTraits` / C.441 초월자 `kit`·아이젠 블록·초월 조각·전용 블록 강화 / C.443 붕옥 감응도·붕옥 융합·인간형 스킨 `humanSkins` / C.444 감응도 = 트랙 리스크(`riskFloor` 20) / C.454·C.455 이치고 기본 모드(`riskDrain`·`chargeShot`·`mastery`) / C.456 초월자 표시·무월 그림 / C.460 이치고 천년혈전(`stance`) / C.461~C.465 무월 불꽃·종이인형 몸·스킨 잠금 `skinLock.ts`·혈쇄 / C.473 최후의 월아천충 연출 `finisherCine` / C.489 붕옥 15%·경화수월 12% 고정 몫 `voidSlot.base` / C.494~C.496 이치고 방 배치·바닥 / C.505 그림 없는 초월자 = 빈 자리(`EMPTY_LOOK`). 세이브 형식 82~90 변환은 MIN_LOADABLE 87 이라 83~86 은 쓰이지 않음.
 
+### 기획서에서 옮긴 구현 메모 — GDD 6·7·8·12-1~12-3·14·15·16·17절 (v6.148, 2026-11-20 코딩325)
+- 본문에는 규칙만 남겼다. 바뀐 줄의 옛 원문은 `docs/dev-log-archive.md` 끝 'GDD 6·7·8·10·12·14·15·16·17·19절 구현 메모 원문', 뺀 사용자 원문 인용은 `docs/GDD-history.md` '본문에서 옮긴 사용자 원문 인용'. **지금 값은 코드·기획서가 기준.**
+- 8-1 '옛 세이브는 이어 쓰지 않는다'(능력치 7종 전환 때) — MIN_LOADABLE 87 이전이라 본문에서 뺌
+- C.446 능력치 7종: 키 `aspd`(옛 `spd`)·`bspd`, `tierTotals` ×7/6, `combat.speedExponent` 0.35·세계 기준 50, 상한 `attackSecondsMin` 0.3·`spawnSecondsMin` 1.0, 옵션 `attackSecondsCut`·`spawnSecondsCut`, 고유 특성 `abilities.int = { blockDamage 1.12 }` / C.447 `abilities.aspd = { attackSecondsCut 0.15 }`·`bspd = { spawnSecondsCut 0.54 }`, 흡수 패시브 `passive.secondsCut`, 성향 `temperament.bspd`, 아쥬커스 모델 표 호로 stag, 적 노력치 swift 8종
+- C.458 능력치 칸 실제 값·상세 보기, 원정 밖 승리 창 [계속]
+- 8-3 흡수 가능 판정 `canAbsorb`
+- 8-3 속성 카운트 `elementAbsorbs` · 흡수 수 `absorbs`
+- 8-3 흡수 미리보기 `previewAbsorb`
+- C.497 진화 미루기 / C.508 묻는 중 저장: 진화 상태 `choice`(그 원정 몸 상태·runId, 형식 94)·`deferrals`(그 단계, 진화하면 0), 런 로그 `tiers.deferrals`·진화 기록 `deferrals`(형식 92)
+- C.470 아쥬커스 외형 모델: 종족 설정 `tierLooks["3"].lookUnit`(이름 틀 `{model} {tier}`), `engine/evolution/lookDex`, 세이브 `lookDex`('<모델>@<진화체 id>', 형식 91), 런 로그 진화 기록 `look`, 옛 세이브 복원(formDex)
+- C.500 피해 없는 블록 = `blockPre` 효과 `noDamage`
+- C.499 공용 장치 `src/data/evolution/uniques.json`·`balance.ts provisional.evoUniques`·견본 백련·노도(코딩312) / C.503 호로 10종(코딩315) / C.506 사신 13종·추성 펫 칸(코딩314)
+- C.497 히든 타입 데이터 `src/data/evolution/factionCategories.json`
+- C.497 허무형 조건 `hidden.voidMaxDeferrals` 0 + 진화 순간 둥지 빈사
+- C.498 훈련 인형 바로 설정 창
+- C.471 훈련 인형 적 설정 창: app `arenaBattle` 공용, 창 `arenaDialog` + 출처 `practiceArenaSource`, 기본 인형 `src/data/enemies/practice.json` (C.457 테스트 전투 적 설정 창)
+- 8-9 수련 완료 칭호 키 `training-complete`
+- 8-10 레스렉시온 이름 키 `ascension.formNameKey`
+- C.498 캐릭터 카드 창 `src/ui/characterPicker.ts` / C.502 초월자 카드 = 진짜 그림만 / C.504 입은 혈쇄 모델 그림
+- C.421·C.422 방 물건 `hogyoku`·`prop-hogyoku.png`
+- 12-2 붕옥 등장 저장 `hogyoku.tabOpen`·`appearedAt`
+- C.421·C.423·C.425 붕옥 창 배치
+- C.439 합체 창 배치(초월 특성 이름 = `trait.name`)
+- C.423·C.424 붕옥 그림 6단계·배율 1.5(사용자 '1/3 줄여')
+- C.426 붕옥 재료 드롭·우라하라 묶음
+- 12-3 런 로그 `slotLog.hogyokuDev`·`slotLog.hogyokuMaterials`, 재료 세이브 키 옛 이름(soulCrystals = 윤활제, hogyokuShards = 여과기, resonanceEssence = 영압 결정), 보유·증감 `engine/hogyokuMaterials.ts`
+- C.446 속도 상한: 평타 `currentAttackSeconds`, 블록 `spawnIntervalOf`, 타이머 밖 `grantExtraBlocks(n)`·`extraBasicAttack`
+- C.448 모션 4규칙: `CombatParams.motion`, `fitMotion`, 사건 `block-motion`·`motion-hasten`
+- C.476 블록 모션 길이 통일: `combat.motion.blockLength { default [0.8, 1.0, 1.2], byTier {} }`, 엔진 `blockMotionOf`, 화면 `motionsOf`·`cue.pace`·재생기 `lengthMs`. 실측 = 전 몸 0.80/1.00/1.20초 ±3ms(옛 0.16~1.07초)
+- C.489 폭주 블록 표시(`BLOCK_WORDS.void`), 코드 id·키(`void`·`voidChance`·`voidSlot`·`voidChanceOf`)·세이브는 옛 이름 그대로
+- 7-10 혼합 적 배정 표 = dev-log C.417
+- C.471 스택 표시: 엔진 `statusMarksOf`(src/engine/combat/statusMarks.ts), 데이터 `src/data/statusMarks.json`, 자세 아이콘 = 초월자 데이터 `stances[].icon`(소도 i-fx-slash·대도 i-fx-impact)
+- C.474 피해 숫자 묶음
+- C.421 붕옥 그림 키
+- C.461 해방1 동작 게임 연결
+- C.467 사람형 축소 → C.468 되돌림
+- C.459 만해 오라 pixelfx `custom/bankai-aura`, 시트 `public/fx/custom-bankai-aura-<속성>.png` / C.461·C.473 연결 `src/ui/bha/bankaiAura.ts`·데이터 `src/data/art/bankaiAura.json`(해방 중 시트 키 `active` = null), 판정 `canLiberate`, 옛 해방 빛(drop-shadow)·옛 CSS 발밑 기운(C.353) 삭제, 시트 전투 시작 때 미리 받음, 확인 `/?fxlab`
+- C.416 진화 결과 그림(종이인형 `arrancar-base`·`-f`, `ascension.lookChange` false) / C.474·C.475 왼쪽 판 스크롤 없음
+- C.416 말풍선 자리·raptor 스킨 삭제
+- 14-1 리디자인 전 전투 모양 = C.281 기준, `battle-c281.css`
+- C.420 홈 [소모품] 버튼
+- C.427 특수던전: 슬롯 공유 `shared.special`, 런 로그 `runLog.specialRuns`, 재료 기록 `slotLog.hogyokuMaterials` source weekly·bossRush, 그림 키 `specialDungeon.weekly.<트랙>.art`·`bossArt.<칸 id>`, 탑의 주인 = forest-lord × 1.2
+- C.446 MIN_LOADABLE 87·옛 세이브 백업 키
+- C.457·C.458 테스트 전투 적 설정 창, 엔진 `enemyPassive`·`enemyImmortal`
+- C.457 테스트 칸 붕옥 재료(soul·shard·essence)
+- C.434 테스트 모드 보강: 아란칼 진화체별 그림 자리 `skin-arr*` 36칸 원인, `tierLooks`·`ascension.artTier`·`ascension.lookName`, 저장 `save.skin` = `tier:<n>[:m|f]`(형식 변경 없음), arrancar-base/-f, 초월자 외형 `transcendent:<id>`(transcendents.json art/model)
+- C.419 배치 도구 `floor.view { zoom, x, y }`
+- C.433 새 방 만들기: 키 room-<번호>, 배경 scene-*, 내보내기 `rooms` = `방 키 → { id, label, sceneArt, floor, layout, extras }`(+ base), 안 놓은 것 hidden
+- C.509 점검B: 동작 데이터 `assets/motionsData-*.js`(메인 번들 1,969.65 → 1,537.53 kB), `uniques.json` 검사, CSS 날 색 합 534 상한
+- C.472 종이인형 자세 계산 캐시
+
 ## C.451 — 배치 도구 반영: 시장 우라하라 크기 두 종족 ×0.7 (GDD v6.065 17절, S-23, UI 배치 도구 세션 Opus)
 사용 모델: Opus 5.5. 세이브·밸런스 변경 없음.
 - 사용자 원문: "호로에 시장 우라하라 맞춰놨으니까, 사신도 맞춰" — `bha-layout-20261114-0021.json`(호로 시장 wanderer scale 1.03 → 0.7 만 바뀜).
@@ -602,3 +653,14 @@ C.0 ~ C.450 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.120 2026-10-20·10
 - 테스트: 새 `tests/c510.test.ts` 7건 — 상점 특식 없음·특식 6종 드롭 표·팔기 값 그대로 · 패배 판정 직후 저장본 다시 열기 = 이어할 원정 없음·방·빈사·전투 재시작 0 · 빈사 중 패배 = 사망 그대로 · 승리 판정 직후 다시 열기 = 흡수 대기(같은 후보)·restartBattleOnResume false · 화면 연결(onDecided 가 결과 오버레이보다 먼저).
 - 검증: typecheck · npm test 349파일 3956건 통과 · balance:check 회귀 가드 통과(전 워커 139초, 후반 경고 3건 그대로 — 드롭 표 그대로라 수치 영향 없음) · build 통과.
 - 캡처 `docs/captures/c510/`(1배 PC 844×390, vite + `scripts/c510-proof.cjs`, facts.json): 01 상점 음식 탭(특식 없음 4종) · 02 패배 결과 화면([결과 보기] 전 — 세이브는 이미 빈사·runs 1) · 03 그 화면에서 새로고침 → 이어하기 = 방(빈사·피곤, 전투 안 함, runs·battleRestarts 그대로) · 04 새로고침 없이 [결과 보기] = 원정 결과 화면(기록 1번).
+
+## 문서 정리(코딩325) — 점검A ⑥⑦⑧⑨⑪ 반영 (GDD v6.148, S-23, 코드 변경 없음)
+사용 모델: Opus 5.5. PATCH_LABEL·밸런스·세이브 변경 없음.
+- 사용자 원문(2026-11-20): "맘대로 하고, 특식은 상점에서 안팔고 드랍으로 ㄱㄱ.7번은 예외로 ㄱㄱ 한줄특성은 일단 임시" — 점검A 결정은 추천안대로(19-3 '11-20 정함').
+- ⑦ GDD 8 → 12-1~12-3 → 7 → 15 → 14 → 6 → 17 → 16절 본문 규칙 줄에서 구현 메모(C 번호·코딩 번호·키·함수·세이브 변환·캡처) 65줄 정리. 요약은 이 파일 머리 '기획서에서 옮긴 구현 메모 — GDD 6·7·8·12-1~12-3·14·15·16·17절', 바뀐 줄 원문은 `docs/dev-log-archive.md` 끝, 뺀 사용자 원문 인용 8건은 `docs/GDD-history.md` '본문에서 옮긴 사용자 원문 인용'. 8-5·8-7·8-8(기획 세션 담당)은 구현 메모만 뺌. 규칙 뜻·수치는 그대로. 규칙 줄 안의 데이터 파일 위치(`src/data/...`)·런 로그 구조(16-2)·그림 키(15-1)는 규칙이라 남김.
+- 모순 정리(코드 값으로): 8-1 진화체 고유 특성 속도 = 옛 '공격 ×1.18·블록 ×1.2' 줄 → 지금 코드 '간격 −0.15초·−0.54초'(balance.ts abilities.aspd·bspd). 슬롯 제목 = 11-3·14-8·16-1 이 '칭호(우선)'로 적었으나 코드(startView `slotTitle`)는 칭호를 안 씀 → 16-1 한 곳(초월자 > 등급 > 단계 + '+환생 n회')만 두고 나머지는 참조(⑥).
+- ⑧ 10-5 옛 세이브 해금·12-3 형식 78~80 변환 → GDD-history('10-5 옛 세이브 보관'·'12-2·12-3 세이브 변환 보관'), 본문은 'MIN_LOADABLE 87 이전은 GDD-history' 한 줄(10-5·12-3·16-3).
+- ⑨ 19-1 표에 'S-23 기록 ①~⑧' 행(장비·월드맵 / 종이인형 / 진화 4단계 / 로그인 / 붕옥·특수던전 / 합체·초월자 / 능력치 7종·모션 / 진화체 능력 1차, 대표 C 번호), 새 시스템 규칙 = 기록 행으로 남김(본문 '로드맵에 올리기 전' 3곳도 '사용자가 시작하라고 하기 전'). STAGE_LABEL S-23 그대로.
+- 19-2 AP→AQ 인수 흔적 3줄 → GDD-history '19-2 보관'. 20절 30줄 유지(v6.120~v6.123 → '20절 보관').
+- ⑪ `docs/captures`: 최근 10패치(c499·c501~c506·c508~c510)만 남기고 428개(폴더 422·낱장 6) `git rm -r` — 533MB → 8.7MB, 꺼내는 법 `docs/captures/README.md`. 테스트가 읽던 c256·c474·c475 `proof.json`·c64 `test-art/` 는 `tests/fixtures/captures/` 로 옮기고 경로만 고침(c256·c474·c475·c64 테스트). `docs/drafts` 끝난 초안 20개(evo-v6-* 3, 진화체 능력 초안 3모델 md·xlsx·생성 py, evo-skill-draft-1110 md·py, 특수블록 xlsx, 1101~1106 검수·개선점 엑셀 5) → `docs/drafts/done/`, 참조 링크 고침(GDD 8-7, evo-picks, ui-review-1104-v2, 개선점-1106, redesign-brief-1104, art-guide).
+- GDD 391,220 B·1,536줄 → 383,942 B·1,541줄(표 기록 행 8 추가 포함). 검증: 경로를 바꾼 테스트 4개 + npm test.

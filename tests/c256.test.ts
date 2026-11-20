@@ -1,4 +1,4 @@
-// C.256 (GDD 173장): 버튼 자리 고정 — 내용(설명 길이·고른 항목·상태)이 바뀌어도 버튼·초점 대상이 움직이지 않는다. 실제 y 값은 docs/captures/c256/proof.json (Playwright)
+// C.256 (GDD 173장): 버튼 자리 고정 — 내용(설명 길이·고른 항목·상태)이 바뀌어도 버튼·초점 대상이 움직이지 않는다. 실제 y 값은 tests/fixtures/captures/c256/proof.json (Playwright)
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -13,7 +13,7 @@ describe('흡수 [흡수] 버튼 (173장 1)', () => {
     expect(a).toContain("const more = el('div', 'bha-pop__more', '▼ 더 있음');");
   });
   it('캡처 실측: 갈래 4개 모두 같은 y (사신·호로·연습)', () => {
-    const p = JSON.parse(read('docs/captures/c256/proof.json'));
+    const p = JSON.parse(read('tests/fixtures/captures/c256/proof.json'));
     const ys = Object.values(p.absorbGoY_after as Record<string, { go: number[] }>).map((v) => v.go[0]);
     expect(new Set(ys).size).toBe(1);
     expect(new Set(Object.values(p.tutorialGoY_after)).size).toBe(1);

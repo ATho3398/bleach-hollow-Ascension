@@ -99,8 +99,8 @@ describe('진화 결과 그림 (C.474)', () => {
     expect(css).toContain('.bha-evolve__fig--result { flex: none; height: 96px; }');
   });
 
-  it('실측(docs/captures/c474/proof.json): 길리안·아쥬커스 모델 7종·4단계 — 칠해진 그림 = 그림 칸 안, 그림 칸 = 판 안 (PC·폰)', () => {
-    const pf = 'docs/captures/c474/proof.json';
+  it('실측(tests/fixtures/captures/c474/proof.json): 길리안·아쥬커스 모델 7종·4단계 — 칠해진 그림 = 그림 칸 안, 그림 칸 = 판 안 (PC·폰)', () => {
+    const pf = 'tests/fixtures/captures/c474/proof.json';
     expect(existsSync(pf)).toBe(true);
     const facts = JSON.parse(read(pf)).facts as Record<string, { key: string; drawnInFig: boolean; figInPanel: boolean; scrollTop: number; newLine: string; elementRow: string }[]>;
     const pc = facts['evolve-pc']!;

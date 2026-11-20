@@ -172,7 +172,7 @@ describe('기기 옆면 그림 자리 (29장 3번)', () => {
   it('시험 그림은 배포 폴더(public/art)에 없고 test-art 에만 있다', () => {
     const pub = existsSync(new URL('../public/art', import.meta.url)) ? readdirSync(new URL('../public/art', import.meta.url)) : [];
     expect(pub.filter((f) => /^device-sample/.test(f))).toEqual([]);
-    expect(existsSync(new URL('../docs/captures/c64/test-art/device-sample-side.png', import.meta.url))).toBe(true);
+    expect(existsSync(new URL('./fixtures/captures/c64/test-art/device-sample-side.png', import.meta.url))).toBe(true);
   });
   it('화면 코드가 옆면 그림을 읽고 CSS 가 그 그림을 띠에 깐다', () => {
     expect(src('src/ui/bha/tamago.ts')).toContain('deviceSideArt');

@@ -14,8 +14,8 @@ describe('진화 결과 왼쪽 판 (C.475)', () => {
     expect(css).toContain('.bha-evolve__fig--result { flex: none; height: 96px; }'); // 다른 곳(이 판 밖)의 그림 칸 규칙은 그대로
   });
 
-  it('실측(docs/captures/c475/proof.json, 진짜 진화 판정): 새 진화체 상자 판 안 · 스크롤 없음 · 그림 칸 안 — 호로 길리안·아쥬커스 7·4단계, 사신 2·3·4단계, PC·폰', () => {
-    const pf = 'docs/captures/c475/proof.json';
+  it('실측(tests/fixtures/captures/c475/proof.json, 진짜 진화 판정): 새 진화체 상자 판 안 · 스크롤 없음 · 그림 칸 안 — 호로 길리안·아쥬커스 7·4단계, 사신 2·3·4단계, PC·폰', () => {
+    const pf = 'tests/fixtures/captures/c475/proof.json';
     expect(existsSync(pf)).toBe(true);
     type M = { key: string; newLine: string; drawnInFig: boolean; figInPanel: boolean; newInPanel: boolean; noScroll: boolean; fig: { top: number; bottom: number } };
     const facts = JSON.parse(read(pf)).facts as Record<string, M[]>;
