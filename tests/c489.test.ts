@@ -50,7 +50,7 @@ describe('① 아이젠 붕옥·경화수월 확률 (고정 기본 몫 + 폭주 
     expect(chance(p, 'kido')).toBeCloseTo(0.83 * 0.86, 9);
     expect(spawnTableOf(p, false, 20).entries.some((e) => e.kind === 'void')).toBe(false);
   });
-  it('폭주 블록 공식 가산(컨디션·환경 등)도 그대로 더해지고, 상한 1', () => {
+  it('폭주 블록 공식 가산(리스크 게이지·환경 등 — C.513 옛 컨디션)도 그대로 더해지고, 상한 1', () => {
     const p = { ...mk().params, voidChanceBonus: 0.2 };
     expect(chance(p, 'hogyoku')).toBeCloseTo(0.15 + voidChanceOf(p), 9);
     const huge = { ...mk().params, voidChance: 2, voidChanceMax: 5 };

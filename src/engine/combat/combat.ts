@@ -201,7 +201,7 @@ export interface CombatParams {
   blockPlayCrit: number;
   /** 환경(안개): 이 간격(초)마다 블록 바의 순서가 섞인다. 0 = 없음 */
   trayShuffleSeconds: number;
-  /** 컨디션·환경(폐가)·5바퀴 이후·폭주(호로화): 공허 블록 생성 확률 가산 */
+  /** 리스크 게이지 비율(C.513, 옛 컨디션)·환경(폐가)·5바퀴 이후·폭주(호로화): 공허 블록 생성 확률 가산 */
   voidChanceBonus: number;
   /** 적 공격 한 번을 통째로 피할 확률 (GDD 101장 4번 — 폭주 중 risk.frenzyEvadeChance). 0 = 없음 */
   evadeChance: number;
@@ -1616,7 +1616,7 @@ export function timeLeftSeconds(s: CombatState): number {
   return Math.max(0, s.params.timeLimitSeconds - elapsedSeconds(s));
 }
 
-/** 블록 하나가 공허 블록으로 바뀔 확률 (GDD 101장): 기본 몫 + 컨디션·환경·바퀴·돌파 가산 (상한 있음) */
+/** 블록 하나가 공허 블록으로 바뀔 확률 (GDD 101장): 기본 몫 + 리스크 게이지·환경·바퀴·돌파 가산 (상한 있음, C.513 컨디션 가산 폐기). 가산은 전투 시작 때 원정 리스크로 정한다(riskBonus) */
 export function voidChanceOf(p: CombatParams): number {
   return Math.min(p.voidChanceMax, p.voidChance + p.voidChanceBonus);
 }
