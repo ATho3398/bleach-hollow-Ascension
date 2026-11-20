@@ -186,7 +186,12 @@ export function variantModsText(m: VariantMods, factionId = ''): string[] {
 }
 
 /** 원정이 끝난 이유 문구 */
-export function endReasonText(reason: EndReason, f: FactionConfig): string {
+export function endReasonText(reason: EndReason, f: FactionConfig, died = false): string {
+  // 빈사 중에 지거나 쓰러져 사망했으면 (GDD 3-6 v6.149): '빈사로 돌아왔다' 대신 사망 안내 (C.511 점검C)
+  if (died && (reason === 'battle-lost' || reason === 'exhausted')) {
+    const head = reason === 'battle-lost' ? `전투에서 졌다(${f.defeatStateName}).` : fixParticles(`${f.fullnessName}이(가) 바닥나 쓰러졌다.`);
+    return `${head} 빈사 중이라 버티지 못하고 숨이 끊어졌다 — ${f.nestName}에서 [부활]해야 다시 움직인다. 마지막 바퀴에서 얻은 것을 잃었다.`;
+  }
   return {
     returned: `출발 칸에서 ${f.nestName}에 귀환했다. 얻은 것은 모두 지킨다.`,
     'forced-max-laps': '최대 바퀴를 채워 귀환했다. 얻은 것은 모두 지킨다.',

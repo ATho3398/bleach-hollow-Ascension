@@ -415,6 +415,8 @@ export function openChestAtGear(): void {
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void, onTilePlace?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
+  // 장비가 잠긴 동안(2단계 전, GDD 241-0)은 잠김 안내만 있는 장비 탭 대신 소모품 탭으로 연다 (C.511, GDD 5-2 v6.149)
+  if (chestUi.tab === 'gear' && !gateOpen(save, 'gear')) chestUi.tab = 'items';
 
   // 위쪽 탭 [장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료 · 159장 24 물건 → 소모품, 스킨은 위 탭으로).
   // 장비·타일·펫·기타에는 가진 수를 같이 보인다 (기타 = 재료 + 다시 뽑기권·수련권)

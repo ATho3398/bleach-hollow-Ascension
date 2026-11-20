@@ -119,7 +119,7 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(win ? 'i-return' : 'i-broken'));
   // 끝난 이유(한두 줄)는 왼쪽 판 결과 표시 아래 — 머리는 제목 + 무대 이름 한 줄
-  const reasonP = el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction));
+  const reasonP = el('p', 'bha-result__reason', endReasonText(exp.endReason!, faction, growth?.died === true));
   head.append(mark, el('h1', 'bha-result__title', win ? '귀환' : faction.defeatStateName), el('span', 'bha-label', stageTitle(exp, faction)));
 
   const home = expeditionEndVitals(exp);
@@ -167,7 +167,8 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const syncMore = (): void => { more.hidden = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2; };
   scroller.addEventListener('scroll', syncMore, { passive: true });
   // 도달 바퀴·치른 전투는 칸 머리 한 줄 (222장 4 — 줄 하나를 얻고 잃은 것에)
-  const runLine = el('span', 'bha-result__runline bha-num', `${s.laps}바퀴 (권장 ${BALANCE.expedition.defaultLaps}) · 전투 ${exp.battles.length}회 (승 ${wins})`);
+  // 첫 모험(튜토리얼)은 1바퀴로 끝나는 각본이라 권장 바퀴를 적지 않는다 (C.511 점검C)
+  const runLine = el('span', 'bha-result__runline bha-num', `${s.laps}바퀴${exp.tutorial ? '' : ` (권장 ${BALANCE.expedition.defaultLaps})`} · 전투 ${exp.battles.length}회 (승 ${wins})`);
   const sum = panel({ title: '모험 요약', aside: runLine }, scroller, more);
   sum.classList.add('bha-result__sum');
 

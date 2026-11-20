@@ -67,6 +67,7 @@ describe('엔진: 몸동작 줄·평타 멈춤·타격 틱이 기준 길이', ()
       const nat = p.motion.blockBy![`family-a:${c}`]!;
       expect(m.rate).toBeCloseTo(nat.total / LEN[c - 1]!, 9);
       expect(m.hit / m.total).toBeCloseTo(nat.hit / nat.total, 9); // 타격 비율 그대로
+      // 이펙트 몫(blockFxBy)이 없는 표 = 전부 몸 몫 → ÷ 배율 (C.512 사용자 11-20: 이펙트 몫이 있으면 그만큼은 1배 — tests/c512-fx-speed)
       expect(blockHitDelayOf(p, `family-a:${c}`, c)).toBeCloseTo(p.hitDelay.blockBy![`family-a:${c}`]! / m.rate, 9);
     }
   });

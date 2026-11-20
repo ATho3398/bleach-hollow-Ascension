@@ -1,0 +1,390 @@
+{
+  "rule": "GDD 7절 v6.150 — 모션 배율은 몸동작에만, 이펙트는 늘 1배",
+  "atMs": 260,
+  "errors": [],
+  "shots": [
+    "01-slow-body-x2-260ms.png",
+    "02-default-body-260ms.png",
+    "03-fast-body-260ms.png"
+  ],
+  "runs": [
+    {
+      "ok": true,
+      "damageTick": 0,
+      "key": "family-a:3",
+      "target": 2.4,
+      "bodyRate": 0.40625,
+      "engineMotionSeconds": 2.4,
+      "hitDelaySeconds": 0,
+      "blockFxBy": 0,
+      "blockBy": 0,
+      "useTick": 6,
+      "hp0": 22959.3,
+      "elapsedMs": 266,
+      "fx": [
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 792,
+          "progress": 0.189
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 892,
+          "progress": 0.28
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 1518,
+          "progress": null
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 2078,
+          "progress": 0.12
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 924,
+          "progress": 0.162
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1024,
+          "progress": 0.244
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 924,
+          "progress": null
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1484,
+          "progress": 0.168
+        }
+      ],
+      "shot": "01-slow-body-x2-260ms.png"
+    },
+    {
+      "ok": true,
+      "damageTick": 0,
+      "key": "family-a:3",
+      "target": "default",
+      "bodyRate": 0.8125,
+      "engineMotionSeconds": 1.2,
+      "hitDelaySeconds": 0,
+      "blockFxBy": 0,
+      "blockBy": 0,
+      "useTick": 45,
+      "hp0": 22830.2514893617,
+      "elapsedMs": 268,
+      "fx": [
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 792,
+          "progress": 0.19
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 892,
+          "progress": 0.28
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 1518,
+          "progress": null
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 2078,
+          "progress": 0.12
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 924,
+          "progress": 0.162
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1024,
+          "progress": 0.244
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 924,
+          "progress": null
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1484,
+          "progress": 0.169
+        }
+      ],
+      "shot": "02-default-body-260ms.png"
+    },
+    {
+      "ok": true,
+      "damageTick": 0,
+      "key": "family-a:3",
+      "target": 0.3,
+      "bodyRate": 3.25,
+      "engineMotionSeconds": 0.3,
+      "hitDelaySeconds": 0,
+      "blockFxBy": 0,
+      "blockBy": 0,
+      "useTick": 72,
+      "hp0": 22701.202978723402,
+      "elapsedMs": 267,
+      "fx": [
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 792,
+          "progress": 0.316
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 792,
+          "progress": 0.189
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 892,
+          "progress": 0.28
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 1518,
+          "progress": null
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 2078,
+          "progress": 0.12
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 924,
+          "progress": 0.271
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 100,
+          "duration": 924,
+          "progress": 0.162
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1024,
+          "progress": 0.244
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "sheet(프레임)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 560,
+          "duration": 924,
+          "progress": null
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "node": "wrap(길)",
+          "playbackRate": 1,
+          "currentTime": 250,
+          "delay": 0,
+          "duration": 1484,
+          "progress": 0.168
+        }
+      ],
+      "shot": "03-fast-body-260ms.png"
+    }
+  ],
+  "sameFxProgress": true,
+  "allFxRate1": true,
+  "sameDamageTick": true
+}

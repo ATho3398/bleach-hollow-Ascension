@@ -41,9 +41,11 @@ export function layerAtHit(L: PixelFxLayer, hi: number): PixelFxLayer {
 }
 
 /** 블록 계획. slot = 치는 쪽 몸동작 칸(남·여 종이인형 / 프레임 그림).
- *  pace = 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이 ÷ 기준 길이 — 이펙트·맞음 반응·몸동작 시간줄 전체를 같은 배율로(시전 속도에 곱한다). 기본 1 */
+ *  pace = 몸동작 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이 ÷ 기준 길이 — **몸동작 시간줄(body)에만** 곱한다.
+ *  이펙트(도트 이펙트·투사체)·타격·맞음 반응 시간줄은 늘 1배 = 도구의 시전 속도만 (GDD 7절 v6.150, 사용자 2026-11-20 "모션만 속도 따라가는거지, 이펙은 정상속도로", C.512). 기본 1 */
 export function pixelPlan(stage: PixelFxStage, slot: PixelBodySlot, pace = 1): PixelPlan {
-  const sp = (stage.speed > 0 ? stage.speed : 1) * (pace > 0 ? pace : 1);
+  const sp = stage.speed > 0 ? stage.speed : 1; // 이펙트 시간줄 = 시전 속도만 (1배)
+  const spBody = sp * (pace > 0 ? pace : 1); // 몸동작 = 시전 속도 × 몸 배율
   const hits = [0];
   for (let i = 1; i < stage.hits; i++) hits.push(hits[i - 1]! + (stage.gaps[i - 1] ?? 0) / sp);
   // 이 블록 첫 투사체: 타격마다 도착 시각
@@ -64,14 +66,14 @@ export function pixelPlan(stage: PixelFxStage, slot: PixelBodySlot, pace = 1): P
   });
   const b = stage.bodies[slot];
   const body = b && b.chain.length ? b : null;
-  const bodyAt = body ? body.bodyAt / sp : 0;
+  const bodyAt = body ? body.bodyAt / spBody : 0;
   const shift = Math.max(0, -Math.min(0, bodyAt, ...raw.map((r) => r.t)));
   return {
     shift,
     hitAt: hits.map((h) => h + shift),
     reactAt: hits.map((h, i) => (arrive(i) ?? h) + shift),
     insts: raw.map(({ t, ...r }) => ({ ...r, start: t + shift })),
-    body: body ? { ...body, at: bodyAt + shift, speed: sp } : null,
+    body: body ? { ...body, at: bodyAt + shift, speed: spBody } : null,
   };
 }
 
