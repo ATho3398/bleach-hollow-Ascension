@@ -348,16 +348,19 @@ describe('타일 배치', () => {
 });
 
 describe('컨디션과 둥지', () => {
-  it('컨디션이 나쁘면 전투의 공허 블록 생성 확률 가산이 붙는다', () => {
-    const grab = (condition: number) => {
-      const e = mk({ seed: 40, condition });
+  // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): 옛 기대값 '컨디션 0 → +conditionRiskBonusMax(15%p), 컨디션 100 → 0' 을
+  // 새 규칙으로 — 컨디션은 가산과 상관없고(0·20·80·100 모두 같음) 리스크 게이지 가득일 때 +riskGaugeVoidBonusMax(15%p)
+  it('컨디션은 전투의 폭주 블록 생성 확률 가산과 상관없고, 리스크 게이지가 찰수록 붙는다', () => {
+    const grab = (condition: number, risk = 0) => {
+      const e = mk({ seed: 40, condition, risk });
       e.wildCells = [1];
       advance(e);
       return startBattle(e).params.voidChanceBonus;
     };
     expect(grab(100)).toBe(0);
-    expect(grab(20)).toBeGreaterThan(grab(80));
-    expect(grab(0)).toBeCloseTo(BALANCE.provisional.expedition.conditionRiskBonusMax);
+    expect(grab(20)).toBe(grab(80));
+    expect(grab(0)).toBe(0);
+    expect(grab(0, BALANCE.provisional.risk.limit)).toBeCloseTo(BALANCE.provisional.expedition.riskGaugeVoidBonusMax);
   });
 
   it('행동 3개가 허기·컨디션을 바꾸고, 방치하면 허기가 오르되 상한이 있다', () => {

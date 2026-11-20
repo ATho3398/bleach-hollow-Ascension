@@ -20,7 +20,8 @@ describe('C.141', () => {
       const all = [t.riskTip, ...t.riskDoes, ...zoneLines(riskZones(f)), ...t.riskUp, ...t.riskDown].join('\n');
       for (const n of [RX.frenzyDamageDealt * 100 - 100, RX.frenzyDamageTaken * 100 - 100, RX.frenzyConditionLoss, RX.riskAfterBreakthrough, RX.perVoidBlock, RX.releaseRelief, BALANCE.provisional.tiles.spring.riskRelief]) expect(all).toContain(String(n)); // C.355: 휴식 칸 내림 삭제 → 샘 값
       expect(all).toContain(`+${Math.round(RX.breakthroughSpawnBonus * 100)}%`);
-      expect(t.riskDoes[0]).toContain('직접 손해가 없고');
+      // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고"): 옛 기대 '직접 손해가 없고' → 게이지가 찰수록 폭주 블록이 자주 나온다(가득 +15%p)
+      expect(t.riskDoes[0]).toContain(`+${Math.round(BALANCE.provisional.expedition.riskGaugeVoidBonusMax * 100)}%p`);
         expect(all).toContain(f.riskGaugeName);
     }
   });

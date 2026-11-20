@@ -703,11 +703,12 @@ export function winHealOf(lap: number): number {
   return t[Math.min(t.length - 1, Math.max(1, lap) - 1)] ?? 0;
 }
 
-/** 공허 블록 생성 확률 가산: 컨디션이 나쁠수록, 5바퀴 이후, 폭주(호로화) 뒤 (GDD 3-2, 2-1, 4-1) */
+/** 폭주 블록 몫 가산 (GDD v6.151 폭주 블록): 리스크 게이지(광기/호로화 — 이름은 종족 설정) 비율 × riskGaugeVoidBonusMax + 5바퀴 이후 + 폭주 뒤.
+ *  컨디션은 상관없다 (C.513 사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아" — 옛 컨디션 가산 폐기) */
 export function riskBonus(exp: ExpeditionState): number {
-  const cond = PX.conditionRiskBonusMax * (1 - exp.condition / PX.conditionMax);
+  const gauge = PX.riskGaugeVoidBonusMax * Math.min(1, Math.max(0, exp.risk / RX.limit));
   const late = Math.max(0, exp.lap - PX.lateLapStart + 1) * PX.lateLapRiskBonusPerLap;
-  return cond + late + breakthroughSpawnBonus(exp);
+  return gauge + late + breakthroughSpawnBonus(exp);
 }
 
 /** 바퀴 강화 × 사냥터 강도(24-2, C.75 부터 1.0) × 원정 난이도 ★ × 연속 클리어 (GDD 32-1 2·10번) */

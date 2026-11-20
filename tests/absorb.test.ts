@@ -547,7 +547,9 @@ describe('한계 돌파', () => {
       e.wildCells = [1];
       changeRisk(e, 0, 'void-block');
       advance(e);
-      return startBattle(e).params.voidChanceBonus;
+      // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고", GDD v6.151): 게이지 비율 가산(risk ÷ limit × riskGaugeVoidBonusMax)을 빼고 돌파 가산만 본다 — 옛 기대는 차이 = 돌파 가산 그대로(게이지 가산 없음)
+      const gauge = BALANCE.provisional.expedition.riskGaugeVoidBonusMax * Math.min(1, e.risk / RX.limit);
+      return startBattle(e).params.voidChanceBonus - gauge;
     };
     const normal = bonus(10);
     const broken = bonus(RX.limit);

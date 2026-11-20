@@ -5,13 +5,17 @@ import { BALANCE } from '../../config/balance';
 import { fixParticles } from '../../engine/josa';
 import type { FactionConfig } from '../../engine/faction';
 import { tileName } from '../tiles';
-import { MINUS, multPct, num, numLine, pct, signed, zoneLine, type Zone } from './textFormat';
+import { MINUS, multPct, num, numLine, pct, range, signed, zoneLine, type Zone } from './textFormat';
 
 const RX = BALANCE.provisional.risk;
 const LIB = BALANCE.provisional.liberation;
 const LAP = BALANCE.provisional.expedition.lateLapStart;
 const CP = BALANCE.provisional.nest.care;
 const CX = BALANCE.provisional.combat;
+/** 게이지 비율 × 이 값 = 폭주 블록 몫 가산 (C.513 GDD v6.151 — 옛 컨디션 가산 대체) */
+const GAUGE_VOID = BALANCE.provisional.expedition.riskGaugeVoidBonusMax;
+/** 게이지 값 → 폭주 블록 가산(%p, 소수 한 자리) */
+const gaugeVoidAt = (v: number) => round1(GAUGE_VOID * Math.min(1, Math.max(0, v / RX.limit)) * 100);
 /** 대표 값 (소수 한 자리): 적 체력[기본 공격 횟수] → 포식 상승, 바퀴 → 칸당 상승 */
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const absorbAt = (hpInAttacks: number) => round1(hpInAttacks * RX.absorbPerHpAttack);
@@ -62,7 +66,8 @@ export function riskText(f: Names): RiskText {
     frenzyLines: [numLine('그 모험 끝까지', ...frenzyFight()), numLine('귀환하면', ...frenzyReturn(f))],
     riskLead: fixParticles(`모험에서 힘을 쓸수록 쌓이고, ${RX.limit}이(가) 되면 ${f.frenzyName} 상태가 된다`),
     riskDoes: [
-      `${RX.limit} 미만은 직접 손해가 없고 게이지만 쌓인다`,
+      // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고"): 게이지가 찰수록 폭주 블록이 자주 나온다 — 컨디션 가산은 폐기
+      `찰수록 모험 전투에 폭주 블록이 자주 나온다(가득이면 +${pct(GAUGE_VOID)}p)`,
       fixParticles(`${RX.limit}이(가) 되면 그 모험 끝까지 ${f.frenzyName} 상태다(모험당 1번)`),
     ],
     riskUp: [
@@ -92,9 +97,9 @@ export function riskZones(f: Names): RiskZone[] {
   const g = f.riskGaugeName;
   const warn = BALANCE.provisional.training.riskWarn;
   return [
-    { from: 0, to: warn - 1, text: '직접 손해가 없다' },
-    { from: warn, to: RX.limit - 1, text: `직접 손해가 없다 · 수련장에 '${g} 높음' 경고` },
-    { from: RX.limit, to: RX.limit, text: [`${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)].join(' · ') },
+    { from: 0, to: warn - 1, text: `폭주 블록 확률 +${range(gaugeVoidAt(0), gaugeVoidAt(warn - 1))}%p` },
+    { from: warn, to: RX.limit - 1, text: `폭주 블록 확률 +${range(gaugeVoidAt(warn), gaugeVoidAt(RX.limit - 1))}%p · 수련장에 '${g} 높음' 경고` },
+    { from: RX.limit, to: RX.limit, text: [`폭주 블록 확률 +${gaugeVoidAt(RX.limit)}%p`, `${f.frenzyName}(모험당 1번)`, ...frenzyEffects(f)].join(' · ') },
   ];
 }
 

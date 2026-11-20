@@ -483,18 +483,16 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     const fullNow = Math.round(fillOver?.full ?? fullnessOf(exp.hunger, PX.hungerMax));
     const condNow = Math.round(fillOver?.cond ?? exp.condition);
     const hpFrac = fillOver?.hp ?? hpFractionOf(exp);
-    // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션(+ 공허 보너스) · 광기/호로화
+    // 바퀴 진행 (pos/12) · 이어 오는 체력(GDD 107장 4번, 30% 아래 위험 색) · 배부름 · 컨디션 · 광기/호로화(+ 폭주 블록 가산, C.513)
     // 왼쪽 위 판 (GDD 197장 3 = C.281 막대 줄 그대로, 체력만 발밑)
     meters.replaceChildren(
       meter({ kind: 'sp', label: '바퀴', icon: 'i-loop', value: exp.pos, max: EX.loopTiles, compact: true, valueText: `${exp.lap}바퀴` }),
       tagGauge(meter({ kind: 'hunger', label: faction.fullnessName, icon: 'i-hunger', value: fullNow, max: PX.hungerMax, compact: true, zoneLow: 0.2, danger: hungerDanger }), 'hunger'),
-      tagGauge(meter({
-        kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true,
-        valueText: `${condNow}${bonus > 0 ? ` · ${BLOCK_WORDS.void} 블록 +${Math.round(bonus * 100)}%` : ''}`,
-      }), 'cond'),
+      // 폭주 블록 +n% 는 리스크 게이지 막대에 (C.513 사용자 2026-11-20 "컨디션은 왜 폭주 달아놨냐" — 폭주 블록 몫은 게이지에서 온다, 컨디션과 상관없음)
+      tagGauge(meter({ kind: 'cond', label: '컨디션', icon: 'i-cond', value: condNow, max: PX.conditionMax, compact: true, valueText: `${condNow}` }), 'cond'),
       tagGauge(meter({
         kind: 'risk', label: faction.riskGaugeName, icon: 'i-risk', value: Math.round(exp.risk), max: RX.limit, compact: true, zone: 0.6, danger: Boolean(exp.breakthrough) || exp.risk >= 60,
-        valueText: exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`,
+        valueText: `${exp.breakthrough ? `${faction.frenzyName}! (${Math.round(exp.risk)})` : `${Math.round(exp.risk)} / ${RX.limit}`}${bonus > 0 ? ` · ${BLOCK_WORDS.void} 블록 +${Math.round(bonus * 100)}%` : ''}`,
       }), 'risk'),
     );
     const hpPct = Math.round(hpFrac * 100);

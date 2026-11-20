@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 151; // C.510 (사용자 2026-11-20 "특식은 상점에서 안팔고 드랍으로", GDD 4-5 v6.147): shop.goldPrices 에서 food-tonic(100)·food-feast(140) 삭제(특식은 상점에서 안 판다 — 드롭 표는 이미 특식 6종 전부 포함), 팔기 값은 그대로 두려고 sell.prices 에 food-tonic 50·food-feast 70(옛 산 값 절반) 추가. 그 밖 수치 그대로.
+export const BALANCE_VERSION = 152; // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): provisional.expedition.conditionRiskBonusMax 0.15(컨디션 0 이면 폭주 블록 +15%p) 삭제 → riskGaugeVoidBonusMax 0.15(리스크 게이지 비율 × 15%p, 가득이면 +15%p). 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 151; // C.510 (사용자 2026-11-20 "특식은 상점에서 안팔고 드랍으로", GDD 4-5 v6.147): shop.goldPrices 에서 food-tonic(100)·food-feast(140) 삭제(특식은 상점에서 안 판다 — 드롭 표는 이미 특식 6종 전부 포함), 팔기 값은 그대로 두려고 sell.prices 에 food-tonic 50·food-feast 70(옛 산 값 절반) 추가. 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 150; // C.507 (사용자 2026-11-19 "2.5초에 5스텍 ㄱㄱ"): 호로 소로 여우불 지속 2초 → 2.5초(필요 5개 그대로). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 148; // C.503 (GDD v6.137 8-7 1차 호로 10종, docs/drafts/evo-impl-1119.md 2·3절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 호로 마르티요·라나·소로·에스카라바호·콜리브리·에스칼레라·니에블라·루시에르나가·나다 수치(표 그대로). 그 밖 진화체·적 수치 그대로.
@@ -761,8 +762,9 @@ export const BALANCE = {
       /** 5바퀴째부터 공허 생성률 가산 (GDD 2-1 "공허 타일 생성률 ↑"): (바퀴-4)당 */
       lateLapStart: 5,
       lateLapRiskBonusPerLap: 0.04,
-      /** 컨디션 0 일 때 공허 생성률 가산(컨디션 비율만큼 선형 감소). 기존 생성률에 더한다 (GDD 3-2) */
-      conditionRiskBonusMax: 0.15,
+      /** 리스크 게이지(호로 '광기' / 사신 '호로화') 가득일 때 폭주 블록 몫 가산 — 게이지 비율(risk ÷ risk.limit)만큼 선형 (GDD v6.151 폭주 블록, provisional).
+       *  C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아"): 옛 conditionRiskBonusMax 0.15(컨디션 0 일 때 가산)를 대체 — 컨디션은 폭주 블록과 상관없다 */
+      riskGaugeVoidBonusMax: 0.15,
       /** 강적 소굴·조합으로 나온 강적을 이기면 추가 타일 1장 (바퀴 합계는 tilesPerLap.max 까지) */
       eliteBonusTiles: 1,
       /** 원정 체력 이어 가기 (GDD 107장·119장 1): 이기면 최대 체력 × winHeal(10%). 휴식 칸(웅덩이) 체력 회복은 C.355 (GDD 210장 1) 부터 restRecover(배부름·컨디션과 같은 비율, 옛 restHeal 35% 삭제).
@@ -1135,7 +1137,7 @@ export const BALANCE = {
       blockPlayDamage: 1.2, // C.174 (GDD 105장): 1.15 → 1.2 (막기 블록 피해가 없어져 불 블록형 일반 처치가 평타형(물공)보다 빠르지 않음 ×1.01 — 84장 3번 가드)
       blockPlayCrit: 0.04,
       /** 공허 블록 (GDD 101장, C.173 provisional): 따로 도는 공허 타이머 없음 — 블록이 하나 생길 때마다(기본·특성 블록 모두) 그 자리가 이 확률로 공허 블록으로 바뀐다.
-       *  확률 = voidChance(기본 몫) + 컨디션·환경·5바퀴 이후·폭주(호로화) 가산(voidChanceBonus), 상한 voidChanceMax. 사용 피해 = 기본 공격 N회 분량,
+       *  확률 = voidChance(기본 몫) + 리스크 게이지(C.513, 옛 컨디션)·환경·5바퀴 이후·폭주(호로화) 가산(voidChanceBonus), 상한 voidChanceMax. 사용 피해 = 기본 공격 N회 분량,
        *  히든 진화체(진화체 데이터 hidden) 몸이면 voidPowerHiddenInAttacks */
       voidChance: 0.02, // C.174: 3% → 2% (강공격 45%·연속 ×2.25 에서 canyon·탑 25층 가드; 공허 0% 면 canyon 31%로 가장 큰 몫). C.173: 옛 0.15/3초 별도 시계 → 출현표 안 몫 (101장 1번 기본 10% → balance 가드로 3%: 끝 광기·강적 승률·canyon 패배)
       voidChanceMax: 0.5, // C.173: 0.8 → 0.5 (101장 1번 상한)

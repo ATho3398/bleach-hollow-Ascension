@@ -74,19 +74,14 @@ function statusDoc(kind: StatusInfoKind, f: Names, value?: number): InfoDoc {
       );
     }
     case 'cond': {
-      // 공허 블록 가산 = 최대 × (1 − 컨디션 ÷ 상한): 네 구간 + 피곤 문턱으로 끊는다
-      const max = PX.conditionMax;
-      const voidAt = (v: number) => Math.round(PX.conditionRiskBonusMax * (1 - v / max) * 100);
-      const cuts = [...new Set([0, max * 0.25, max * 0.5, max * 0.75, CP.tiredCondition + 1, max + 1].map(Math.round))].sort((x, y) => x - y);
-      const zones: Zone[] = cuts.slice(0, -1).map((from, i) => {
-        const to = cuts[i + 1]! - 1;
-        const fx = [`폭주 블록 확률 +${range(voidAt(to), voidAt(from))}%p`];
-        if (to <= CP.tiredCondition) fx.push(CARE_NAMES.tired);
-        return { from, to, text: fx.join(' · ') };
-      });
+      // 컨디션은 폭주 블록과 상관없다 (C.513 사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아" — 폭주 블록 줄은 리스크 게이지 ⓘ 로): 피곤 문턱으로만 끊는다
+      const zones: Zone[] = [
+        { from: 0, to: CP.tiredCondition, text: CARE_NAMES.tired },
+        { from: CP.tiredCondition + 1, to: PX.conditionMax, text: '손해가 없다' },
+      ];
       return gaugeDoc(
-        `${a.sleep}(으)로 오르고, 낮을수록 전투에 폭주 블록이 자주 나온다`,
-        [`모험 전투의 폭주 블록 확률을 정한다(최대 +${pct(PX.conditionRiskBonusMax)}p)`],
+        `${a.sleep}(으)로 오르고, 낮으면 ${CARE_NAMES.tired}에 걸린다`,
+        [`${CP.tiredCondition} 이하면 ${CARE_NAMES.tired}에 걸린다`],
         zones, value,
         [
           numLine(a.sleep, signed(NX.sleepCondition)),
