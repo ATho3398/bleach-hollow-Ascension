@@ -30,7 +30,7 @@
       "shinigami": {
         "trait": "aspd10",
         "ability": {
-          "description": { "*": "허 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(허 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}" },
+          "description": { "*": "폭주 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(폭주 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}" },
           "releaseDescription": { "*": "일반 공격 {every}대마다 블록 1개" },
           "spawnRule": "voidOnly",
           "rules": [
@@ -275,12 +275,12 @@
       "shinigami": {
         "ability": {
           "description": { "*": "호로화 게이지 1당 주는 피해 +{perRisk%}" },
-          "releaseDescription": { "*": "만해 순간 특수 블록 「흑귀」가 생겨 바의 허 블록과 새 허 블록을 흡수(1개당 허 블록 피해 {perVoid%}), 누르면 쌓인 만큼 피해 — 만해가 끝날 때까지 안 쓰면 자동 사용" },
+          "releaseDescription": { "*": "만해 순간 특수 블록 「흑귀」가 생겨 바의 폭주 블록과 새 폭주 블록을 흡수(1개당 폭주 블록 피해 {perVoid%}), 누르면 쌓인 만큼 피해 — 만해가 끝날 때까지 안 쓰면 자동 사용" },
           "stacks": {
             "maw": { "mark": { "icon": "i-void", "name": { "*": "흑귀" } } }
           },
           "specials": {
-            "maw": { "name": { "*": "흑귀" }, "short": "흑", "description": { "*": "흡수한 허 블록만큼 피해" }, "maxOnBar": 1 }
+            "maw": { "name": { "*": "흑귀" }, "short": "흑", "description": { "*": "흡수한 폭주 블록만큼 피해" }, "maxOnBar": 1 }
           },
           "rules": [
             { "on": "releaseStart", "do": [{ "act": "absorbBar", "element": "void" }, { "act": "add", "stack": "maw", "value": 1, "per": "consumed" }, { "act": "spawn", "block": "maw", "force": true }] },

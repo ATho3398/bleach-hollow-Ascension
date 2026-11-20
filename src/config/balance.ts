@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 150; // C.507 (사용자 2026-11-19 "2.5초에 5스텍 ㄱㄱ"): 호로 소로 여우불 지속 2초 → 2.5초(필요 5개 그대로). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 151; // C.510 (사용자 2026-11-20 "특식은 상점에서 안팔고 드랍으로", GDD 4-5 v6.147): shop.goldPrices 에서 food-tonic(100)·food-feast(140) 삭제(특식은 상점에서 안 판다 — 드롭 표는 이미 특식 6종 전부 포함), 팔기 값은 그대로 두려고 sell.prices 에 food-tonic 50·food-feast 70(옛 산 값 절반) 추가. 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 150; // C.507 (사용자 2026-11-19 "2.5초에 5스텍 ㄱㄱ"): 호로 소로 여우불 지속 2초 → 2.5초(필요 5개 그대로). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 148; // C.503 (GDD v6.137 8-7 1차 호로 10종, docs/drafts/evo-impl-1119.md 2·3절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 호로 마르티요·라나·소로·에스카라바호·콜리브리·에스칼레라·니에블라·루시에르나가·나다 수치(표 그대로). 그 밖 진화체·적 수치 그대로.
 // 이전: BALANCE_VERSION = 147; // C.499 (GDD v6.132 8-7 1차, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): provisional.evoUniques 신설 — 4단계 한 줄 특성(aspd10 0.1·crit6 0.06·blockCrit6 0.06·chain3Power 0.1·offenseMax·obliteration 8%·×1.5 / 그 밖 5%·×1.3) + 견본 사신 백련(평타 4대 → 블록 1, 블록당 +3%, 만해 2대)·노도(수 블록 5초 치명 +4%p ×5, 평타 6회 → 노도 연격 평타 3회 +30%, 만해 8초·+6%p·치명 피해 +5%). 그 밖 진화체·적 수치 그대로.
@@ -66,7 +67,7 @@ export const BALANCE = {
   shop: {
     /** 골드 품목 가격 (품목 id → 골드). 덱 칸은 deckSlotPrices */
     goldPrices: {
-      'food-snack': 20, 'food-scrap': 12, 'food-basic': 35, 'food-hearty': 60, 'food-tonic': 100, 'food-feast': 140,
+      'food-snack': 20, 'food-scrap': 12, 'food-basic': 35, 'food-hearty': 60, // C.510: 특식(응축 tonic·대식 feast)은 상점에서 안 판다 (사용자 2026-11-20)
       calm: 80, wake: 60, 'training-ticket': 90, 'rare-tile': 60, reroll: 120,
     } as Record<string, number>,
     /** 타일 덱 칸 +1 의 n번째 가격 (최대 +2: 덱 8 → 9 → 10, 영구·슬롯 공유) */
@@ -368,7 +369,7 @@ export const BALANCE = {
      *  jadeToGold: 영옥으로 산 물건을 팔 때 영옥 1 = 골드 n (지금 영옥 물건은 전부 영구 해금이라 팔 수 없음 — 표만). confirmAt: 한 번에 이 골드 이상이면 확인 창 */
     sell: {
       shopRate: 0.5,
-      prices: { 'food-sushi': 15, 'food-roast': 15, 'food-fizz': 15, 'food-mushroom': 15, 'food-elixir': 200, 'food-relic': 600, 'food-tutorial': 1, 'food-flesh': 80, 'food-purify': 80 } as Record<string, number>,
+      prices: { 'food-sushi': 15, 'food-roast': 15, 'food-fizz': 15, 'food-mushroom': 15, 'food-elixir': 200, 'food-relic': 600, 'food-tutorial': 1, 'food-flesh': 80, 'food-purify': 80, 'food-tonic': 50, 'food-feast': 70 } as Record<string, number>,
       wandererGrade: { normal: 20, rare: 60, epic: 150, legendary: 300 } as Record<string, number>,
       jadeToGold: 10,
       confirmAt: 100,

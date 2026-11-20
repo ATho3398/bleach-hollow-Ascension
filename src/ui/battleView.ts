@@ -134,6 +134,8 @@ export interface BattleViewOptions {
   autoEnd?: boolean;
   /** true = 이기면 흡수 화면으로 간다(원정 전투만) — 승리 창 버튼 '포식하러 가기'. 없으면 '계속' (C.457: 수련장·탑·특수던전·등급전도 '포식하러 가기'가 떠서 눌러도 흡수가 없었다) */
   absorb?: boolean;
+  /** 승리·패배가 판정된 순간(결과 오버레이·[결과 보기]보다 먼저) 한 번 불린다 — 원정 전투는 여기서 결과를 저장한다 (GDD 6-11 v6.147, C.510) */
+  onDecided?: (s: CombatState) => void;
   /** 전투가 끝나고 결과 오버레이의 버튼을 누르면 한 번 불린다 */
   onEnd: (s: CombatState) => void;
 }
@@ -2122,6 +2124,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     syncScript();
     if (s.status !== 'playing') {
       stop();
+      opts.onDecided?.(s); // 결과 저장은 판정 순간 (C.510: [결과 보기] 전에 다시 켜서 패배를 무르는 구멍)
       scriptCard?.dismiss();
       scriptCard = null;
       if (scripted && s.status === 'won') {

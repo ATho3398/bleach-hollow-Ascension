@@ -35,14 +35,14 @@ const rich = (fid = 'hollow'): SaveData => {
 const row = (s: SaveData, id: string) => [...goldRows(s, getFaction(s.factionId)), ...jadeRows(s)].find((r) => r.id === id);
 
 describe('상점 데이터 (25-9 표)', () => {
-  it('골드 11종·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
-    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-scrap', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'sortie-courage', 'sortie-ironskin', 'sortie-luck', 'heal-patch', 'battle-potion', 'heal-salve', 'w-hp-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
+  it('골드 품목(C.510 특식 2종 빠짐)·영옥 꾸밈 8분류, 가격은 balance.ts', () => {
+    expect(GOLD_ITEMS.map((g) => g.id)).toEqual(['food-snack', 'food-scrap', 'food-basic', 'food-hearty', 'calm', 'wake', 'med-cure', 'med-iv', 'med-energy', 'sortie-courage', 'sortie-ironskin', 'sortie-luck', 'heal-patch', 'battle-potion', 'heal-salve', 'w-hp-potion', 'battle-haste', 'training-ticket', 'tile-draw', 'rare-tile', 'reroll', 'deck-slot', 'gear-weapon', 'gear-armor', 'gear-shoes', 'gear-accessory']); // C.510: food-tonic·food-feast 빠짐(특식은 상점에서 안 판다, 사용자 2026-11-20) · tile-draw = C.120 (GDD 64장), gear-* = C.150 (GDD 91장, 가격은 provisional.gear.shopPrice)
     expect(CATEGORIES.map((c) => c.id).slice(0, 8)).toEqual(['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate']); // 2차 분류는 c61
     const count = (c: string) => COSMETIC_ITEMS.filter((x) => x.category === c).length;
     expect([count('aura'), count('tint'), count('trail'), count('fx'), count('bar'), count('shell'), count('plate')]).toEqual([4, 4, 3, 3, 3, 3, 3]);
     expect(getCosmetic('skin-grandfisher')?.category).toBe('skin');
     expect(skinIdOfItem(skinItemId('grandfisher'))).toBe('grandfisher');
-    expect(Object.values(SX.goldPrices)).toEqual([20, 12, 35, 60, 100, 140, 80, 60, 90, 60, 120]);
+    expect(Object.values(SX.goldPrices)).toEqual([20, 12, 35, 60, 80, 60, 90, 60, 120]); // C.510: 특식 응축 100·대식 140 판매 삭제 — 특식은 상점에서 안 판다(사용자 2026-11-20, GDD 4-5)
     expect(SX.deckSlotPrices).toEqual([400, 800]);
     expect(SX.cosmeticPrices).toMatchObject({ aura: 8, tint: 6, trail: 5, fx: 6, bar: 5, shell: 6, plate: 3 }); // 2차 가격은 c61
     expect(SX.skinPrice).toBe(30);

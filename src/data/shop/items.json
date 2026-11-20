@@ -26,18 +26,6 @@
       "food": "hearty"
     },
     {
-      "id": "food-tonic",
-      "kind": "food",
-      "category": "food",
-      "food": "tonic"
-    },
-    {
-      "id": "food-feast",
-      "kind": "food",
-      "category": "food",
-      "food": "feast"
-    },
-    {
       "id": "calm",
       "kind": "calm",
       "category": "consumable",

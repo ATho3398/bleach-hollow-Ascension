@@ -2122,6 +2122,15 @@ export function startApp(host: HTMLElement): void {
     const p = exp.pending!;
     if (save && markBattleEntry(save, exp)) saveProgress(exp); // 222장 6: 전투 직전 소모품을 중간 저장에 (다시 켜면 이 값으로 되돌림)
     const s = startBattle(exp);
+    /** 이 전투 결과 정산 (한 번만): finishBattle → 승리면 원정 중간 저장(흡수 대기 상태째), 패배면 원정 끝 정산(recordExpedition·저장) */
+    let finds = -1;
+    const settle = (done: CombatState) => {
+      if (finds >= 0) return;
+      finds = exp.gearFinds?.length ?? 0;
+      finishBattle(exp, done);
+      if (exp.phase === 'ended') settleExpeditionEnd(faction, exp);
+      else saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
+    };
     const where = `${exp.lap}바퀴 · ${p.cell}번 칸${p.tileId ? ` · ${tileName(p.tileId, faction.id)}` : ''}${p.combo ? ' · 조합!' : ''}${p.synergy ? ` · ${synergyName(p.synergy, faction.id)}${p.second ? ' 2연전' : ''}` : ''}${p.trap ? ' · 함정' : ''}${exp.mutation ? ` · ${mutationName(exp.mutation, faction.id)}` : ''}`;
     // 보스전 (GDD 25-3): 음악 boss, 등장 이름 띠
     setBgm(p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'battle');
@@ -2145,12 +2154,13 @@ export function startApp(host: HTMLElement): void {
         abortExpedition(exp);
         endExpedition(faction, exp);
       } } : {}),
+      // 전투가 끝나는 순간 결과 저장 (GDD 6-11 v6.147, C.510 — 점검C 2번): 승리·패배 판정 때 바로 finishBattle + 저장. [결과 보기]를 누르기 전에 다시 켜도
+      // 그 결과로 이어진다 — 승리 = 흡수 화면(같은 후보·보상, 다시 굴리기 없음), 패배 = 원정 정산(빈사·빈사 중 패배면 사망). 전투를 처음부터 다시 하지 않는다
+      onDecided: (done) => settle(done),
       onEnd: (done) => {
-        const finds = exp.gearFinds?.length ?? 0;
-        finishBattle(exp, done);
+        settle(done);
         // 장비 드롭 알림 (GDD 91장 2번): 이 전투에서 나온 장비 — 보관함에는 귀환 때 들어간다. 161장: 알림 최소 등급(NOTIFY) 이상만
         for (const f of (exp.gearFinds?.slice(finds) ?? []).filter((f) => gearToastWanted(f.roll.grade))) showToast({ eyebrow: f.from === 'boss' ? '보스 드롭' : f.from === 'elite' ? '강적 드롭' : '장비 드롭', title: `장비 발견: ${gearDropText(f.roll, faction)}`, meta: `★${f.roll.star} · 귀환하면 가방 장비 탭으로` }, 0, 3600);
-        saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
         afterBattle(faction, exp);
       },
     });
@@ -2311,7 +2321,22 @@ export function startApp(host: HTMLElement): void {
     return true;
   }
 
+  /** 전투가 끝나는 순간 미리 정산한 원정 (GDD 6-11 v6.147, C.510): 패배 판정 때 recordExpedition·저장까지 해 두고, [결과 보기] 뒤 endExpedition 이 결과 화면만 띄운다 */
+  const settledEnds = new WeakMap<ExpeditionState, () => void>();
+
+  /** 원정 끝 정산만 지금 한다(결과 화면은 아직) — 패배 판정 순간. 결과 화면에서 다시 켜도 패배(빈사·사망)가 그대로 남아 전투를 다시 하지 않는다(패배 무르기 없음) */
+  function settleExpeditionEnd(faction: FactionConfig, exp: ExpeditionState): void {
+    if (!settledEnds.has(exp)) settledEnds.set(exp, prepareExpeditionEnd(faction, exp));
+  }
+
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
+    const show = settledEnds.get(exp) ?? prepareExpeditionEnd(faction, exp);
+    settledEnds.delete(exp);
+    show();
+  }
+
+  /** 원정 끝 정산(recordExpedition·저장·알림 준비)을 하고, 결과 화면을 띄우는 함수를 돌려준다 */
+  function prepareExpeditionEnd(faction: FactionConfig, exp: ExpeditionState): () => void {
     activeExp = null;
     let growth: GrowthInput | undefined;
     let afterResult: (() => void) | null = null;
@@ -2369,6 +2394,7 @@ export function startApp(host: HTMLElement): void {
       if (afterResult) afterEvolve = show;
       else show();
     };
+    return () => {
     // 원정 도중 [귀환하기] (GDD 81장): 결과 화면 대신 방 위에 짧은 결과 카드 1장 [확인] (C.170, GDD 100장 #32). 진화가 걸렸으면 그 연출은 그대로
     if (exp.endReason === 'abort') {
       if (afterResult) holdRoomGuides = true;
@@ -2387,6 +2413,7 @@ export function startApp(host: HTMLElement): void {
       storyTalk(faction, exp, ep.dialogue.end, '끝', showResult);
     }
     else showResult();
+    };
   }
 
   // ── 테스트 패널 (GDD 38-4): 테스트 모드에서만. 값은 테스트 칸에만 저장된다 ──

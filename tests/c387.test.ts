@@ -182,9 +182,10 @@ describe('235장: 먹이 3유형', () => {
     }
     for (const p of ['src/engine/foodPref.ts', 'src/engine/nest.ts', 'src/ui/roomView.ts']) expect(read(p)).not.toMatch(/=== '(hollow|shinigami)'/);
   });
-  it('상점: 지금 먹이 그대로 + 싸구려 2종 판매 (234장 4 예정 — 아직 안 뺌)', () => {
+  it('상점: 일반 먹이 + 싸구려 2종 판매, 특식은 안 판다 (C.510 사용자 2026-11-20 "특식은 상점에서 안팔고 드랍으로")', () => {
     const g = BALANCE.shop.goldPrices;
-    for (const k of ['food-snack', 'food-scrap', 'food-basic', 'food-hearty', 'food-tonic', 'food-feast']) expect(g[k]).toBeGreaterThan(0);
+    for (const k of ['food-snack', 'food-scrap', 'food-basic', 'food-hearty']) expect(g[k]).toBeGreaterThan(0);
+    for (const k of ['food-tonic', 'food-feast']) expect(g[k]).toBeUndefined();
   });
 });
 
