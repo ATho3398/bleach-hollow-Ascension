@@ -1,4 +1,5 @@
 // C.392 (GDD 240장): 아쥬커스 모델 7 = 능력치 1위(힘 가시형·지능 뱀형·체력 외팔형·정신력 거미형·속도 속도형·방어 짐승형) + 히든 부유형, 진화체 속성으로 색(노멀 보라·물 파랑·불 주황·흙 갈색·뇌 황토)
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { AJUCHAS_MODELS, ART_MANIFEST, SPEED_ENEMIES, SPIKY_ENEMIES, WRAITH_ENEMIES, charArt, enemyArt } from '../src/data/art/manifest';

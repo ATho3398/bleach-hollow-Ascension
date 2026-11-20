@@ -87,12 +87,13 @@ export function v2BlockEl(spec: V2BlockSpec): HTMLElement {
   return b;
 }
 
-/** 봉인(잠김) 표시: 글자를 '봉' 으로 바꾸고 회색으로 (보스 기믹 칸 봉인) — 풀리면 원래 글자 */
-export function setV2Locked(block: HTMLElement, locked: boolean): void {
+/** 봉인(잠김) 표시: 글자를 '봉' 으로 바꾸고 회색으로 (보스 기믹 칸 봉인) — 풀리면 원래 글자.
+ *  keepGlyph = 회색만, 글자는 제 것 그대로 (C.508 점검C 8: 진화체 특수 블록이 조건이 안 돼 꺼진 것 — 봉인이 아니다) */
+export function setV2Locked(block: HTMLElement, locked: boolean, keepGlyph = false): void {
   block.classList.toggle('is-locked', locked);
   const g = block.querySelector<HTMLElement>('.bha-block__glyph');
   if (!g) return;
-  if (locked) {
+  if (locked && !keepGlyph) {
     if (g.dataset.orig === undefined) g.dataset.orig = g.textContent ?? '';
     g.textContent = V2_GLYPH.seal;
   } else if (g.dataset.orig !== undefined) {

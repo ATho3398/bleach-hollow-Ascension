@@ -1,4 +1,5 @@
 // C.277 (GDD 181장): 블록 단계별 종이인형 동작 고정 — 사신 참 1단계 = 공격1, 호로 탄 2단계 = 특수1 · 3단계 = 특수2
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import type { CombatEvent } from '../src/engine/combat';
 import { parseFactionConfig } from '../src/engine/faction';

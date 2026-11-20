@@ -1,6 +1,7 @@
 // C.476 (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일' · 12-4 아이젠, 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안, provisional):
 // 블록 몸동작 총 길이 = 1체인 0.8초 / 2체인 1.0초 / 3체인 1.2초 (모든 단계·호로/사신 공통, 그림은 그대로 재생 배율로).
 // 엔진(몸동작 줄·평타 멈춤·타격 틱)과 화면(실제 종이인형 재생)을 같은 값으로 본다. 그림 없는 몸(아이젠)·noMotion(월아천충) = 0. 아이젠 프라고르 몫 0.6·반격 창 0.8초.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';

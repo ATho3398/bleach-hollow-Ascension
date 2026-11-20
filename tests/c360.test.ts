@@ -1,4 +1,5 @@
 // C.360 (GDD 219장): 길리안 = 호로 2단계 외형, 뱀형 = 아쥬커스 '뱀형' 외형 + 아쥬커스 등급 강적 2 — 종이인형 뼈대 여럿(사람형·뱀형)
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { ART_MANIFEST, GILLIAN_SCALE, SERPENT_ENEMIES, SERPENT_SCALE, charArt, enemyArt } from '../src/data/art/manifest';

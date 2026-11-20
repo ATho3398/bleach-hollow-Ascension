@@ -1,4 +1,5 @@
 // C.380 (GDD 231장): 역관절 삭제, 외팔이(물리)·거미형(특수·혼합) = 아쥬커스 외형 + 아쥬커스 등급 강적, 게임 종이인형 뼈대 넷째(spider)
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { ART_MANIFEST, BEAST_ENEMIES, GILLIAN_ENEMIES, ONEARM_ENEMIES, ONEARM_SCALE, SERPENT_ENEMIES, SPEED_ENEMIES, SPIDER_ENEMIES, SPIDER_SCALE, SPIKY_ENEMIES, WRAITH_ENEMIES, charArt, enemyArt } from '../src/data/art/manifest';

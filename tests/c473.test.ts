@@ -1,6 +1,7 @@
 // C.473 (GDD v6.102 12-4·15-6): 최후의 월아천충 연출(무적·적 정지·무월 인형 skill 동작·자막 2줄·피해 = 동작 타격 시각) ·
 // 해방 중 만해 오라 없음 · 패배 = 쓰러짐 한 번 → 쓰러짐 숨(downIdle) 반복 · 합성음(낮은 울림·베기음).
 // 엔진은 장치(kit.mastery.cine)만 본다 — 초월자 id 분기 없음.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { getEnemy } from '../src/data/enemies';
 import { TRANSCENDENTS } from '../src/data/transcendents';

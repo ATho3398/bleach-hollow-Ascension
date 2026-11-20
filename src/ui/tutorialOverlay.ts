@@ -424,7 +424,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
   /** 가리면 안 되는 것 (GDD 162장 1·169장 2): 블록 바·저장 필살기 버튼(눌러야 할 버튼)·열린 창 */
   const protectedRects = () =>
     // 각본 카드(첫 전투)는 해방을 쓰지 않는다 — 해방 대상(내 캐릭터 전체)을 피하느라 적 예고 게이지를 덮던 것 (C.235, GDD 157장 2)
-    ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
+    // 장면에 적힌 keepClear 도 (C.508): 그 장면이 설명하는 것을 덮지 않는다
+    ['battle.tray', ...(opts.script ? [] : ['battle.liberation']), ...OPEN_WINDOWS, ...(SCENES[state.index]?.keepClear ?? [])].map((id) => targetRect([id], host)).filter((r): r is Rect => r !== null);
   /** 되도록 피하는 것 (GDD 169장 2): 캐릭터·단계에 적힌 것(상태 칩·체력 막대·말풍선 등). 단계에 적힌 것은 3배 무게 */
   const softRects = () => {
     const sc = SCENES[state.index]!;

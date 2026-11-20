@@ -1,4 +1,5 @@
 // C.465 (GDD v6.094 12-4): 초월자 전투 방식 = 스킨 잠금 · 혈쇄 이치고(천년혈전 모드 모델) · 무월/혈쇄 종이인형 게임 뼈대 · 해방 몸 재생기 전환.
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { BASE_MODEL, fitSkinToLock, modeModelIds, skinAllowedNow, skinLockOf, skinLockReason } from '../src/engine/skinLock';
 import { testGrantTranscendent } from '../src/engine/testMode';
@@ -99,14 +100,14 @@ describe('C.465 초월자 전투 방식 = 스킨 잠금 (GDD 12-4 v6.093)', () =
   });
 
   it('세이브 형식 90: 89 → 90 마이그레이션 = 묶음 밖 스킨이면 첫 모델, 안이면 그대로, 키웠던 기반은 손대지 않음', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(93);
+    expect(SAVE_FORMAT_VERSION).toBe(94);
     const s = ichigoSave();
     switchKitMode(s, 'tybw');
     const raw = JSON.parse(JSON.stringify(s));
     raw.skin = null; // 옛 세이브: 천년혈전인데 기본 모델
     raw.meta.format = 89;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(93);
+    expect(m.meta.format).toBe(94);
     expect(m.skin).toBe(BLOOD);
     const r = riftSave();
     const raw2 = JSON.parse(JSON.stringify(r));

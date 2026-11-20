@@ -12,8 +12,10 @@ import { bindAnim, type AnimPlayer } from '../../../src/ui/bha/animPlayer';
 import { charArt, enemyArt, isFemaleRigLook, type ArtUrls } from '../../../src/data/art/manifest';
 import type { FamilyMotionKind } from '../../../src/engine/faction';
 import { CHARACTERS, HERO_BOX, type ToolChar } from './characters';
-import { HUMANOID, MOTIONS, MOTION_SETS, lookLayers, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
+import { HUMANOID, MOTIONS, MOTION_SETS, installRigMotions, lookLayers, resolveMotions, rigPackOfLook } from '../../../src/data/art/rig/pose';
+import { RIG_MOTIONS_RAW } from '../../../src/data/art/rig/motionsData';
 import { FAMILY_RIG_MOTIONS, rigMotionIds } from '../../../src/ui/bha/rigAnim';
+installRigMotions(RIG_MOTIONS_RAW); // 동작 데이터는 게임에선 따로 받지만(C.509) 도구 페이지는 한 파일이라 바로 채운다
 
 interface FxLayer {
   /** 불투명도 0~1 (없으면 1, GDD 227장 — 강적 강공격 빨간 세로 70%) */

@@ -22,9 +22,9 @@ import {
   stanceOf, kitStanceStackOf, canSwitchStance, stanceSwitchWaitOf, stanceHoldBonusOf, stanceBreakTakenOf, stanceLitCountOf, stanceCloneCountOf, stanceDrawPreviewOf,
   statusMarksOf,
   blockMotionTarget,
-  evoSpecialOf, evoSpecialUsable, evoExecLinesOf,
+  evoSpecialOf, evoSpecialUsable, evoExecLinesOf, evoSpecialOffReason,
 } from '../engine/combat';
-import { evoText } from '../data/evolution/uniques';
+import { evoText, fillEvoText } from '../data/evolution/uniques';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
 import { getGearSpecial } from '../data/gear';
 import { SCRIPT_SCENES } from '../data/help';
@@ -921,6 +921,15 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   };
   /** 각본 카드 자리표시자: {libName} = 지금 쓰는 해방 이름(영력 해방 / 레스렉시온 — 종족 설정) (GDD 241-B 1) */
   // {libFullName} = 진화 뒤 해방 이름(레스렉시온 / 만해 — 종족 설정 liberation.name). GDD 243장 9 보충: 공격 속도는 그때만 오른다
+  /** 꺼진 진화체 특수 블록 안내 한 줄 (C.508 점검C 8): 처형선 0 = 데이터 offNote(켜는 법), 강적·보스·선 위 = 공통 문구. 켜져 있으면 '' */
+  const evoOffNote = (b: Block): string => {
+    const why = evoSpecialOffReason(s, b);
+    if (!why) return '';
+    if (why === 'elite') return '강적·보스에게는 쓸 수 없다';
+    if (why === 'above') return `적 체력이 블록 처형선(${Math.round(evoExecLinesOf(s).block * 100)}%) 아래로 내려가면 켜진다`;
+    const note = evoText(evoSpecialOf(p, b.traitId)?.offNote, bf.id);
+    return note && p.evo ? fillEvoText(note, p.evo.nums) : '블록 처형선이 0%라 꺼져 있다';
+  };
   const scriptVars = { libName: labels.liberation.name, libFullName: bf.liberation.name };
   const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
   /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
@@ -1576,8 +1585,13 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       // 보스 기믹 칸 봉인 (GDD 25-3): 글자가 '봉'으로 바뀌고 회색, 누를 수 없다
       // 막기·공허 경직 중(공격 불가)에는 블록을 쓸 수 없다 (GDD 105장 1번): 같은 잠금 표시
       // 진화체 특수 블록이 지금 꺼져 있으면(처형 블록 = 블록 처형선 위·강적·보스, GDD 8-8) 잠긴 모습 (C.499)
-      const locked = (b.sealTicks ?? 0) > 0 || combatHalted(s) || (!!evoSpecialOf(p, b.traitId) && !evoSpecialUsable(s, b));
-      setV2Locked(node, locked);
+      const sealedNow = (b.sealTicks ?? 0) > 0 || combatHalted(s);
+      const evoOff = !!evoSpecialOf(p, b.traitId) && !evoSpecialUsable(s, b);
+      const locked = sealedNow || evoOff;
+      setV2Locked(node, locked, !sealedNow); // 꺼진 특수 블록은 제 글자 그대로 (C.508 — '봉'은 봉인만)
+      const offTip = evoOff && !sealedNow ? evoOffNote(b) : '';
+      if (offTip) node.title = offTip;
+      else node.removeAttribute('title');
       node.setAttribute('aria-disabled', String(locked));
       cell.toggleAttribute('data-dev-off', locked);
       node.classList.toggle('is-pressed', !!down && down.uid === b.uid);
@@ -1907,6 +1921,16 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     down = null;
     drawTray();
   };
+  /** 꺼진 진화체 특수 블록을 누르면 왜 꺼졌는지·켜는 법 한 줄 (C.508 점검C 8 — 공화 공허 블록, 블록 처형선 0) */
+  let offToldAt = 0;
+  const tellEvoOff = (uid: number) => {
+    const b = s.tray.find((x) => x.uid === uid);
+    if (!b || !evoSpecialOf(p, b.traitId) || evoSpecialUsable(s, b)) return;
+    const note = evoOffNote(b);
+    if (!note || Date.now() - offToldAt < 2500) return;
+    offToldAt = Date.now();
+    showToast({ eyebrow: `${blockName(b, labels, bf.id, p)} 꺼짐${evoSpecialOffReason(s, b) === 'line0' ? ' · 처형선 0%' : ''}`, title: note }, 0, 3200);
+  };
   // 발도 충전 (GDD 12-4 천년혈전 대도, C.460): 지금 자세 블록을 누르는 순간 충전 시작, 떼면(어디서든) 쓰인다 — 엔진이 평타 시각을 넘겼는지 판정
   let drawPtr: number | null = null;
   const isDrawBlock = (b: Block | undefined): boolean => {
@@ -1942,6 +1966,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       return;
     }
     if (!down || e.pointerId !== down.id) return;
+    tellEvoOff(down.uid);
     const input = releaseUse(down.uid, slotOf(e), s.tray);
     if (input && s.status === 'playing' && !halted()) queue.push(input);
     endPress();

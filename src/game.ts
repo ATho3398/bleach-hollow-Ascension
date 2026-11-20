@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
+export const SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
+// 이전: SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
 // 이전: SAVE_FORMAT_VERSION = 92; // C.497 (GDD 8-5 진화 미루기·8-8 허무형): 진화 상태 deferrals(그 단계에서 진화를 미룬 수)·런 로그 tiers.deferrals(미루기 기록)·진화 기록 deferrals·스냅샷 deferrals/collapsed(선택) — 91 → 92 변환 SAVE_MIGRATIONS[91](모든 트랙 미루기 0회, 빈 미루기 기록).
 // 이전: SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
 // 이전: SAVE_FORMAT_VERSION = 90; // C.465 (GDD v6.094 12-4 초월자 전투 방식 = 스킨 잠금): 필드 모양은 그대로, 값 규칙 — 초월자 트랙의 전투 기반이 '초월자'면 save.skin 은 그 초월자·그 전투 모드 모델 묶음 안. 89 → 90 변환 SAVE_MIGRATIONS[89](묶음 밖 스킨 → 묶음 첫 모델). 이후 게임 안에서는 입기·기반·모드 바꾸기가 지킨다(테스트 패널 모델 바꾸기는 자유).
@@ -705,6 +706,7 @@ export function performRevive(save: SaveData, nowMs: number = Date.now()): Reviv
   save.skin = save.skin && ((canWear(save.factionId, save.skin) && !getSkin(save.skin)?.tierLook) || validModelLook(save.factionId, save.skin)) ? save.skin : null;
   save.lastScreen = 'room';
   logVital(save, { at: nowMs, kind: 'revive', evLoss, tierIndex: prev.tierIndex, formId: prev.formId });
+  syncPetSlots(save, nowMs); // 퇴화로 펫 칸이 줄면 2번째 펫은 보유 목록으로 (C.508 점검B 2 — 진화·환생·트랙 바꾸기와 같이)
   return { ok: true, evLoss, prevTierIndex: prev.tierIndex, prevFormId: prev.formId };
 }
 
@@ -1443,7 +1445,11 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   checkTitles(save, 'expedition', nowMs);
   if (!canEvolve(save.evolution)) return null;
   // 진화 미루기 (GDD 8-5, C.497): 화면이 묻는다 — 여기서는 진화하지 않는다. 튜토리얼 중이면 묻지 않고 바로 진화
-  if (opts.holdEvolution && evolutionChoiceAllowed(save, exp)) return null;
+  // C.508: 묻는 중임을 세이브에 남긴다 — 고르기 전에 껐다 켜도 방에서 창을 다시 띄운다(공짜 미루기 막음)
+  if (opts.holdEvolution && evolutionChoiceAllowed(save, exp)) {
+    save.evolution.choice = { hunger: exp.hunger, condition: exp.condition, runId: exp.runId };
+    return null;
+  }
   return evolveAfterReturn(save, exp, nowMs);
 }
 
@@ -1457,6 +1463,17 @@ export function evolutionChoicePending(save: SaveData): boolean {
   return canEvolve(save.evolution);
 }
 
+/** 방에 들어올 때 다시 띄울 [진화] [미루기] 창 (GDD 8-5, C.508): 귀환 때 묻다가 고르기 전에 껐으면 그 원정의 몸 상태. 진화 기준에서 벗어났으면(옛 표시) 지우고 null */
+export function pendingEvolveChoice(save: SaveData): { hunger: number; condition: number; runId: number } | null {
+  const c = save.evolution.choice;
+  if (!c) return null;
+  if (!canEvolve(save.evolution)) {
+    delete save.evolution.choice;
+    return null;
+  }
+  return c;
+}
+
 /** 귀환 뒤 [진화] (GDD 8-5): 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것).
  *  허무형 빈사 판정은 둥지 상태(귀환 정산 뒤 — 패배면 빈사) */
 export function evolveAfterReturn(save: SaveData, exp: Pick<ExpeditionState, 'hunger' | 'condition'>, nowMs: number = Date.now()): EvolveResult {
@@ -1467,6 +1484,7 @@ export function evolveAfterReturn(save: SaveData, exp: Pick<ExpeditionState, 'hu
  *  진화 상태 deferrals +1 · 런 로그 tiers.deferrals 1건. 진화 기준에 안 닿았으면 아무것도 안 하고 null */
 export function deferEvolution(save: SaveData, nowMs: number = Date.now(), runId?: number): EvolutionDeferralRecord | null {
   if (!canEvolve(save.evolution)) return null;
+  delete save.evolution.choice; // 골랐다 — 묻는 중 아님 (C.508)
   const count = recordEvolutionDeferral(save.evolution);
   const rec: EvolutionDeferralRecord = { at: nowMs, tier: save.evolution.tierIndex, count, formId: save.evolution.formId, steps: save.evolution.steps, ...(runId !== undefined ? { runId } : {}) };
   (save.runLog.tiers.deferrals ??= []).push(rec);
@@ -2619,6 +2637,12 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
     const sh = save.shared as unknown;
     if (isRec(sh) && isRec(sh.pets)) sh.pets.active2 = null;
   },
+  // 93 → 94 (C.508, GDD 8-5): 진화 묻는 중 evolution.choice — 옛 세이브는 묻는 중 아님(필드 없음). 다음 귀환 때 묻는다
+  93: (save) => {
+    forEachTrack(save, (t) => {
+      if (isRec(t.evolution)) delete (t.evolution as EvolutionState).choice;
+    });
+  },
 };
 
 /** 형식 90 → 91 (C.470): lookDex 복원. ① 진화체로 정한 칸(히든 — 모델이 진화체로 정해짐)은 formDex 에 있으면 발견 ② 모델 칸은 트랙마다 지금 외형(evolution.look, 예 wyrmwater)과
@@ -3278,6 +3302,9 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
     else delete e[k];
   }
   e.deferrals = nonNegInt(e.deferrals); // C.497 진화 미루기 (형식 92): 없거나 이상하면 0
+  // C.508 진화 묻는 중 (형식 94): 숫자 셋이 다 맞을 때만 남긴다
+  const c = e.choice as unknown;
+  if (c !== undefined && !(isRec(c) && [c.hunger, c.condition, c.runId].every((v) => typeof v === 'number' && Number.isFinite(v)))) delete e.choice;
   if (e.ascended !== true) delete e.ascended;
   e.abilities = sanitizeLoadout(e.abilities, e.tierIndex, rebirths);
 }
@@ -3499,17 +3526,45 @@ export function applyStartLook(save: SaveData, faction: Pick<FactionConfig, 'id'
   return equipSkin(save, look) ? look : null;
 }
 
+/** 마지막 loadSave 가 세이브를 못 연 이유 (한 줄, 열었거나 비어 있으면 null) — 시작 화면 안내에 붙인다 (C.509, 점검B 9) */
+let lastLoadError: string | null = null;
+export function lastLoadSaveError(): string | null {
+  return lastLoadError;
+}
+
+/** migrateSave 가 null 을 돌려준 까닭 (같은 순서로 본다) */
+export function saveRejectReason(raw: unknown, min: number = saveFormatGate.min): string {
+  if (typeof raw !== 'object' || raw === null) return '세이브 내용이 객체가 아니다';
+  const r = raw as { meta?: { format?: unknown }; factionId?: unknown; runLog?: unknown };
+  if (typeof r.factionId !== 'string' || !r.runLog || typeof r.meta?.format !== 'number') return '세이브에 종족·런 로그·형식 번호가 없다';
+  const f = r.meta.format;
+  if (f > SAVE_FORMAT_VERSION) return `더 새 버전의 세이브(형식 ${f})다`;
+  if (!Number.isInteger(f) || f < 1) return `형식 번호가 이상하다(${String(f)})`;
+  if (f < min) return `옛 형식(${f})이라 이 버전에서 열지 않는다(형식 ${min}부터)`;
+  return '알 수 없는 이유';
+}
+
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {
+  lastLoadError = null;
   try {
     const text = storage.getItem(key);
-    const save = text ? migrateSave(parseSaveText(text, false, storage)) : null;
+    const parsed = text ? parseSaveText(text, false, storage) : null;
+    const save = text ? migrateSave(parsed) : null;
+    if (text && !save) {
+      lastLoadError = saveRejectReason(parsed);
+      console.warn(`[세이브] ${key} 를 열지 않았다: ${lastLoadError}`);
+    }
     if (save) {
       checkTitles(save, 'load');
       checkTrackOpen(save); // 이미 스토리를 전부 깬 옛 세이브는 여기서 붕옥이 등장하고 두 번째 트랙이 열린다 (GDD 243장 1)
       syncPetSlots(save);
     }
     return save;
-  } catch {
+  } catch (e) {
+    // 깨진 JSON·마이그레이션 중 예외: 이유를 남기고 null (백업 복구·시작 화면 안내는 부른 쪽이 한다)
+    const msg = e instanceof Error ? e.message : String(e);
+    lastLoadError = `읽다가 오류: ${msg.split('\n')[0]!.slice(0, 80)}`;
+    console.warn(`[세이브] ${key} 를 읽다가 오류`, e);
     return null;
   }
 }

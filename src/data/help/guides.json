@@ -54,6 +54,11 @@
         "targets": [
           "@.bha-absorb__go"
         ],
+        "keepClear": [
+          "@.bha-absorb__actions",
+          "@.bha-absorb__desc",
+          "@.bha-foecard"
+        ],
         "title": "첫 {absorbActionName}",
         "body": "갈래를 누르면 위 칸에 자세한 설명이 나온다.\n하나 골라 이 버튼을 눌러 {absorbActionName}해 보자."
       }

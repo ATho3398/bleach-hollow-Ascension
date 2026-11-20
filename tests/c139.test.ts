@@ -62,7 +62,7 @@ describe('1 한 번에 한 창만 플레이', () => {
   });
   it('main 은 잠금을 쥔 창에서만 앱을 시작하고, 못 쥐면 안내 화면', () => {
     const main = read('src/main.ts');
-    expect(main).toContain('acquirePlayLock().then((ok) => (ok ? startApp(app) : tabBlockedView(app');
+    expect(main).toContain('void Promise.all([acquirePlayLock(), rigMotions]).then(([ok]) => (ok ? startApp(app) : tabBlockedView(app'); // C.509: 종이인형 동작 데이터와 함께 기다린다
     expect(read('src/ui/tabBlockedView.ts')).toContain("title: '다른 창에서 실행 중'");
   });
   it('다른 창이 덩어리를 바꾸면(storage 이벤트) 확인해 둔 해시를 잊고 다음 저장이 덩어리를 다시 쓴다', () => {

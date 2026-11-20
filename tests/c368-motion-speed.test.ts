@@ -1,5 +1,6 @@
 // C.368 (GDD 225장): 종이인형 동작 재생 속도 1.5배 — 동작 키 시각은 그대로, 재생기가 시간을 1.5배로 흘린다.
 // 도트 연결 동작 빠르기(chain rate)는 fx 도구에서 이미 올려 둔 것을 ÷1.5(최소 1) — 실제 빠르기는 그대로
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { HUMANOID, MOTIONS, RIG_PACKS, boneMatrices, motionSpeedOf, samplePose, type Rig } from '../src/data/art/rig/pose';
 import { createRigPlayer } from '../src/ui/bha/rigAnim';

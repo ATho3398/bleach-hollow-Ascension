@@ -1,3 +1,4 @@
+import './helpers/rigMotions'; // 종이인형 동작 데이터 채우기 (C.509 — 게임에선 따로 받는 덩어리)
 import { describe, expect, it } from 'vitest';
 import { HUMANOID, MOTIONS, MOTION_SETS, apply, boneMatrices, layerMatrix, lookLayers, resolveMotions, samplePose } from '../src/data/art/rig/pose';
 import { createRigPlayer, FAMILY_RIG_MOTIONS, RIG_ACTIONS } from '../src/ui/bha/rigAnim';

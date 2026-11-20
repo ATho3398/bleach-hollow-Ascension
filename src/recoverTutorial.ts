@@ -83,9 +83,10 @@ export function recoverSpaSoak(save: SaveData, nowMs: number): boolean {
   return true;
 }
 
-/** ⑥ 먹이 카드가 뜰 때 먹이 1개 지급 (GDD 129-2 2: 먹이는 사용자가 독 [먹이]로 직접 준다) */
+/** ⑥ 먹이 카드가 뜰 때 먹이 1개 지급 (GDD 129-2 2: 먹이는 사용자가 독 [먹이]로 직접 준다).
+ *  이미 1개 이상 가졌으면 주지 않는다 (C.508 점검C 5: 카드에서 껐다 켜면 카드가 다시 떠 또 지급됐다 — 첫 끼니는 한 번만) */
 export function grantRecoverFood(save: SaveData): void {
-  grantFood(save, TR.food as FoodId, 1);
+  if ((save.shared.food[TR.food as FoodId] ?? 0) < 1) grantFood(save, TR.food as FoodId, 1);
   clearFoodStreak(save.nest, TR.food as FoodId); // 튜토리얼 예외 (GDD 234장 3): 같은 먹이 한도로 안내 먹이가 막히지 않게 그 종류 묶음만 비운다
 }
 

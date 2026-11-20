@@ -2,6 +2,7 @@
 //   문=원정 · 수련장=수련(진화 정보) · 책장=도감(진화체·칭호 탭) · 상자=덱·슬롯 · 장터=장터 화면(상점·온천·우라하라, C.201 GDD 127장) · 캐릭터=반응 · 캐릭터 머리 위 상태 칩=상태 화면(GDD 18-8). 아래 독(GDD 18-2·18-9)=돌보기 3개 + [더보기 ⋯] 하나(설정·도움말·사진·다마고치·트랙 전환·백업·처음 화면·닫기, GDD 100장).
 // 위 한 줄: 원정 이어하기만 (이름표는 상태 칩 위, C.170). 방 모양·물건 이름·위치·말풍선 문구는 종족 설정(room)에서 읽는다 (종족 id 분기 없음).
 import { fixParticles } from '../engine/josa';
+import { guidePending } from '../engine/tutorial';
 import { petBuddy } from './bha/pet';
 import { inventoryOf, petName, useInventoryItem } from '../inventory';
 import { consumableGroupOf } from '../shop';
@@ -386,17 +387,26 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
    */
   const liftForNote = () => {
     const src = charArtUrls.src;
-    if (!src || !scene.isConnected || scene.clientWidth === 0) return;
-    const ratio = artTopRatio(src);
-    if (ratio === undefined) {
-      void loadArtTopRatio(src).then(() => main.isConnected && place());
-      return;
+    // 그림 없는 초월자 (C.505) 빈 자리: 점선 칸 윗변을 머리 윗변으로 친다 — 상태창이 점선 위로 겹치지 않게 (C.508 점검C 9)
+    const emptyBox = char.querySelector<HTMLElement>('.bha-char__body.is-empty');
+    if ((!src && !emptyBox) || !scene.isConnected || scene.clientWidth === 0) return;
+    let drawnTop: number;
+    if (emptyBox) {
+      const er = emptyBox.getBoundingClientRect();
+      if (!er.height) return;
+      drawnTop = er.top;
+    } else {
+      const ratio = artTopRatio(src!);
+      if (ratio === undefined) {
+        void loadArtTopRatio(src!).then(() => main.isConnected && place());
+        return;
+      }
+      const art = char.querySelector<HTMLElement>('.bha-char__body canvas, .bha-char__body img');
+      const ar = art?.getBoundingClientRect();
+      if (ratio === null || !ar || !ar.height) return;
+      // 머리 윗변 = 정지 그림의 첫 안 투명한 줄 (GDD 3-2 v6.004): 움직이는 캔버스의 지금 프레임으로 재면 잴 때마다 몇 px 달라 박스가 들쭉날쭉했다(제자리 안 지킴)
+      drawnTop = ar.top + ratio * ar.height;
     }
-    const art = char.querySelector<HTMLElement>('.bha-char__body canvas, .bha-char__body img');
-    const ar = art?.getBoundingClientRect();
-    if (ratio === null || !ar || !ar.height) return;
-    // 머리 윗변 = 정지 그림의 첫 안 투명한 줄 (GDD 3-2 v6.004): 움직이는 캔버스의 지금 프레임으로 재면 잴 때마다 몇 px 달라 박스가 들쭉날쭉했다(제자리 안 지킴)
-    const drawnTop = ar.top + ratio * ar.height;
     const gap = parseFloat(getComputedStyle(scene).getPropertyValue('--bha-sp-1')) || 2;
     /** 지금 모양(tight)에서: 안 옮긴 박스 아래 끝 · 끝까지 올린 아래 끝(위 끝 하한)까지 거리 · 머리 위 자리까지 옮길 거리(+ 위, − 아래) */
     const measure = (tight: boolean) => {
@@ -513,6 +523,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   const dock = createDock({
     faction,
     foodCount: (food) => save.shared.food[food],
+    guideFoodActive: () => guidePending(save.help, 'recover'), // 회복 안내(첫 끼니 먹이기)를 마치기 전에만 첫 끼니 종류로 연다 (C.508)
     foodEffectsNow: (food) => foodEffectsNow(food, n, Date.now()), // 카드 = 지금 먹이면 실제로 움직이는 효과 전부 (GDD 211장)
     feedsLeft: () => ({ left: feedsLeft(n, Date.now()), max: BALANCE.provisional.nest.feedLimit.max }),
     onCare: (action, food) => {

@@ -32,12 +32,12 @@ import { NORMAL_FOODS } from '../engine/foodPref';
 import { playDialogue } from './dialogueView';
 import type { FactionConfig, WorldPlace } from '../engine/faction';
 import {
-  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, carriedPetsOf, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
+  absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, carriedPetsOf, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, lastLoadSaveError, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf,
   applyTrackRiskFloor,
-  evolutionChoicePending, evolveAfterReturn, deferEvolution,
+  evolutionChoicePending, evolveAfterReturn, deferEvolution, pendingEvolveChoice,
 } from '../game';
 import { evolveChoiceDialog } from './evolveChoice';
 import { identityScreen, type IdentityMode } from './identityView';
@@ -1050,10 +1050,11 @@ export function startApp(host: HTMLElement): void {
       raw = null;
     }
     let loaded = loadSave(store, slotKey(n));
+    const loadError = lastLoadSaveError(); // 못 연 이유 한 줄 (C.509)
     // 손상된 세이브 (C.70): 백업이 읽히면 맞바꿔 연다(손상본은 백업 자리에 남는다). 백업도 안 되면 시작 화면에 알린다
     const recovered = !loaded && recoverFromBackup(store, n);
     if (recovered) loaded = loadSave(store, slotKey(n));
-    if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.`);
+    if (!loaded) return titleScreen(`슬롯 ${n}의 세이브를 읽을 수 없다.${loadError ? ` (${loadError})` : ''}`);
     if (recovered) window.setTimeout(() => showToast({ eyebrow: '세이브 복구', title: fixParticles(`슬롯 ${n}을(를) 백업에서 열었다`), meta: '세이브가 손상되어 마지막 백업으로 이어한다.' }, 0, 5200), 600);
     else if (needsMigration(raw)) stashSlot(store, n, 'migration');
     save = loaded;
@@ -1082,6 +1083,7 @@ export function startApp(host: HTMLElement): void {
     if (active && active.reason !== 'none') resumeNote = abandonNote(active);
     persist();
     const toRoom = () => {
+      resumeEvolveChoice(); // C.508: 진화 [진화]/[미루기]를 묻다가 껐으면 방에서 다시 (방 안내는 고른 뒤)
       nestScreen();
       if (active && active.reason !== 'none') showAbandonCard(active, trackFaction(loaded));
     };
@@ -2267,6 +2269,48 @@ export function startApp(host: HTMLElement): void {
     notes.forEach((n, i) => window.setTimeout(() => showToast(n, i, 4200), 900 + i * 300));
   }
 
+  /** 진화 연출 (GDD 8-5): fromTier = 진화 전 단계. 연출이 끝나 방으로 돌아오면 onDone */
+  function playEvolveCut(faction: FactionConfig, s: SaveData, fromTier: number, r: Extract<EvolveResult, { ok: true }>, onDone: () => void): void {
+    const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+    open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
+      nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
+      onDone();
+    }, s.build.slots.length, extra), true);
+  }
+
+  /** 귀환 뒤 [진화] [미루기] 창 (GDD 8-5, C.497). 묻는 중 표시(evolution.choice, C.508)가 세이브에 있어 고르기 전에 껐다 켜도 방에서 다시 연다. 표시가 없으면 onDone 만 */
+  function askEvolveChoice(faction: FactionConfig, s: SaveData, onDone: () => void): void {
+    const pending = pendingEvolveChoice(s);
+    if (!pending) return onDone();
+    const fromTier = s.evolution.tierIndex;
+    evolveChoiceDialog({
+      onEvolve: () => {
+        const r = evolveAfterReturn(s, pending);
+        persist();
+        if (r.ok) playEvolveCut(faction, s, fromTier, r, onDone);
+        else onDone();
+      },
+      onDefer: () => {
+        deferEvolution(s, Date.now(), pending.runId); // 그 단계에 머문다 — 다음 귀환 때 다시 묻는다
+        persist();
+        if (nav.top?.id === 'room') renderRoom();
+        onDone();
+      },
+    });
+  }
+
+  /** 방에 들어올 때 묻다 만 진화 창이 있으면 다시 띄운다 (C.508): 결과 화면·창에서 껐다 켠 경우. 띄웠으면 true(방 안내는 고른 뒤) */
+  function resumeEvolveChoice(): boolean {
+    if (!save || !pendingEvolveChoice(save)) return false;
+    const s = save;
+    holdRoomGuides = true;
+    window.setTimeout(() => askEvolveChoice(trackFaction(s), s, () => {
+      holdRoomGuides = false;
+      if (nav.top?.id === 'room') renderRoom(); // 미뤄 둔 방 안내(회복·다음 할 일)를 이제
+    }), 60);
+    return true;
+  }
+
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
     activeExp = null;
     let growth: GrowthInput | undefined;
@@ -2302,30 +2346,8 @@ export function startApp(host: HTMLElement): void {
         afterEvolve = null;
         later?.();
       };
-      const playEvolve = (r: Extract<EvolveResult, { ok: true }>) => {
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
-        open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
-          nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
-          afterEvolveDone();
-        }, s.build.slots.length, extra), true);
-      };
-      if (evo?.ok) afterResult = () => playEvolve(evo);
-      else if (askEvolve) {
-        afterResult = () => evolveChoiceDialog({
-          onEvolve: () => {
-            const r = evolveAfterReturn(s, exp);
-            persist();
-            if (r.ok) playEvolve(r);
-            else afterEvolveDone();
-          },
-          onDefer: () => {
-            deferEvolution(s, Date.now(), exp.runId); // 그 단계에 머문다 — 다음 귀환 때 다시 묻는다
-            persist();
-            if (nav.top?.id === 'room') renderRoom();
-            afterEvolveDone();
-          },
-        });
-      }
+      if (evo?.ok) afterResult = () => playEvolveCut(faction, s, fromTier, evo, afterEvolveDone);
+      else if (askEvolve) afterResult = () => askEvolveChoice(faction, s, afterEvolveDone);
     }
     const showResult = () => {
       setBgm('expedition'); // 결과 화면은 원정 음악 (스토리 끝 대사의 story 음악에서 돌아온다)
