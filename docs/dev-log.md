@@ -653,6 +653,7 @@ C.0 ~ C.450 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.120 2026-10-20·10
 - 테스트: 새 `tests/c510.test.ts` 7건 — 상점 특식 없음·특식 6종 드롭 표·팔기 값 그대로 · 패배 판정 직후 저장본 다시 열기 = 이어할 원정 없음·방·빈사·전투 재시작 0 · 빈사 중 패배 = 사망 그대로 · 승리 판정 직후 다시 열기 = 흡수 대기(같은 후보)·restartBattleOnResume false · 화면 연결(onDecided 가 결과 오버레이보다 먼저).
 - 검증: typecheck · npm test 349파일 3956건 통과 · balance:check 회귀 가드 통과(전 워커 139초, 후반 경고 3건 그대로 — 드롭 표 그대로라 수치 영향 없음) · build 통과.
 - 캡처 `docs/captures/c510/`(1배 PC 844×390, vite + `scripts/c510-proof.cjs`, facts.json): 01 상점 음식 탭(특식 없음 4종) · 02 패배 결과 화면([결과 보기] 전 — 세이브는 이미 빈사·runs 1) · 03 그 화면에서 새로고침 → 이어하기 = 방(빈사·피곤, 전투 안 함, runs·battleRestarts 그대로) · 04 새로고침 없이 [결과 보기] = 원정 결과 화면(기록 1번).
+- CI typecheck 수정(첫 푸시 run 44692457053 실패): tests/c510 승리 다시 열기 검사가 absorbOffer.candidates(string[])를 객체로 읽던 줄 → 후보 배열 그대로 비교(뜻 같음). 로컬 typecheck 를 테스트 파일 작성 전에 돌려 놓친 것 — typecheck · npm test 349파일 3956건 다시 통과.
 
 ## 문서 정리(코딩325) — 점검A ⑥⑦⑧⑨⑪ 반영 (GDD v6.148, S-23, 코드 변경 없음)
 사용 모델: Opus 5.5. PATCH_LABEL·밸런스·세이브 변경 없음.

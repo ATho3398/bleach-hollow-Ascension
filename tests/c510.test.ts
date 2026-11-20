@@ -108,7 +108,7 @@ describe('전투가 끝나는 순간 결과 저장 — 패배 무르기 없음 (
     expect(r.exp.phase).toBe('absorb');
     expect(r.exp.pending).toBeNull();
     expect(r.exp.battles).toHaveLength(exp.battles.length);
-    expect(r.exp.absorbOffer?.candidates.map((c) => c.traitId)).toEqual(exp.absorbOffer?.candidates.map((c) => c.traitId));
+    expect(r.exp.absorbOffer?.candidates).toEqual(exp.absorbOffer?.candidates);
     expect(restartBattleOnResume(again, r.exp, T0 + 3000)).toBe(false);
     expect(again.runLog.battleRestarts).toEqual([]);
   });
