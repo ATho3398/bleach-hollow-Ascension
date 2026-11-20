@@ -59,8 +59,8 @@ export interface AttackCue {
   motionRate?: number;
   /** 블록 체인 수 (엔진 block 사건의 chain): 블록 모션 기준 길이를 고른다 (GDD 7절 v6.106, C.476) */
   chain?: number;
-  /** 블록 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이(blockBodyMs) ÷ 기준 길이. 몸동작·이펙트·맞음 반응을 모두 이 배율로 —
-   *  엔진 몸동작 표·타격 지연(blockMotionOf·blockHitDelayOf)도 같은 배율. 없으면 1 */
+  /** 블록 몸동작 재생 배율 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 실제 몸동작 길이(blockBodyMs) ÷ 기준 길이. **몸동작에만** —
+   *  이펙트(도트 이펙트·투사체)·맞음 반응은 늘 1배 (GDD 7절 v6.150, C.512). 엔진 몸동작 표는 같은 배율, 타격 지연(blockHitDelayOf)은 몸 몫만. 없으면 1 */
   pace?: number;
 }
 
@@ -170,14 +170,25 @@ export function bodyLastHitMs(body: PixelPlan['body'], anim: AnimTiming | null, 
 export const bodyLeadMs = (body: PixelPlan['body'], anim: AnimTiming | null): number => (body ? Math.max(0, bodySwingMs(body, anim) - body.at) : 0);
 
 export function cueHitMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion' | 'bodyWindup'>, anim: AnimTiming | null, slot: PixelBodySlot): number {
+  const r = cueHitParts(cue, anim, slot);
+  return r.bodyMs + r.fxMs;
+}
+
+/**
+ * cueHitMs 를 몸 몫과 이펙트 몫으로 (GDD 7절 v6.150, 사용자 2026-11-20 "모션만 속도 따라가는거지, 이펙은 정상속도로", C.512):
+ * bodyMs = 몸동작이 타격까지 걸리는 시간(동작 타격 시각·몸통박치기 휘두르기·각본 연결 동작 휘두르기 — 블록 모션 배율을 받는다),
+ * fxMs = 그 뒤 이펙트 시간줄의 첫 반응(도트 이펙트 reactAt[0]·발사 비행 — 늘 1배). 엔진은 블록 타격 지연 = bodyMs ÷ 배율 + fxMs
+ */
+export function cueHitParts(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion' | 'bodyWindup'>, anim: AnimTiming | null, slot: PixelBodySlot): { bodyMs: number; fxMs: number } {
   const act = anim ? animActionOf(cue, (a) => anim.has(a)) : null;
   const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, slot) ? pixelPlan(cue.pixel.stage, slot) : null;
   const chainBody = !!pplan?.body && !!anim;
   const level = ATTACK_FX[cue.tier];
   const motion = cue.fx ? familyMotion(cue.fx) : null;
   const clipHit = chainBody ? (cue.bodyWindup ? bodyLeadMs(pplan!.body, anim) : 0) : act && anim ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? null : null;
-  const base = clipHit !== null ? clipHit : motion?.move === 'cast' ? Math.max(60, level.backMs) + motion.travelMs : level.backMs + level.lungeMs;
-  return base + (pplan ? pplan.reactAt[0] ?? 0 : 0);
+  const cast = clipHit === null && motion?.move === 'cast';
+  const bodyMs = clipHit !== null ? clipHit : cast ? Math.max(60, level.backMs) : level.backMs + level.lungeMs;
+  return { bodyMs, fxMs: (cast ? motion!.travelMs : 0) + (pplan ? pplan.reactAt[0] ?? 0 : 0) };
 }
 
 /**
@@ -198,11 +209,17 @@ export function hitDelaysOf(o: {
 }): HitDelayParams {
   const sec = (ms: number) => Math.round(ms) / 1000;
   const blockBy: Record<string, number> = { ...(o.fallback.blockBy ?? {}) };
+  const blockFxBy: Record<string, number> = { ...(o.fallback.blockFxBy ?? {}) };
   for (const id of o.familyIds) {
     for (let stage = 1; stage <= FAMILY_STAGE_FX.length; stage++) {
       const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true, bodyWindup: o.bodyWindup };
       applyFamilySpec(cue, id, stage, o.familyFx?.(id, stage), null);
-      blockBy[blockHitKey(id, stage)!] = sec(cueHitMs(cue, o.player, o.slot));
+      const key = blockHitKey(id, stage)!;
+      const r = cueHitParts(cue, o.player, o.slot);
+      blockBy[key] = sec(r.bodyMs + r.fxMs);
+      // 이펙트 몫(1배 — 블록 모션 배율을 받지 않는다, C.512). 0 이면 적지 않는다(전부 몸 = 옛 식 그대로)
+      if (r.fxMs > 0) blockFxBy[key] = Math.min(blockBy[key]!, sec(r.fxMs));
+      else delete blockFxBy[key];
     }
   }
   blockBy.combo = sec(cueHitMs({ tier: 'special', ult: true }, o.player, o.slot));
@@ -211,6 +228,7 @@ export function hitDelaysOf(o: {
     basic: sec(cueHitMs({ tier: 'basic' }, o.player, o.slot)),
     block: sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot)),
     blockBy,
+    ...(Object.keys(blockFxBy).length ? { blockFxBy } : {}),
     enemy: sec(cueHitMs({ tier: 'basic' }, o.enemy, o.slot)),
     heavy: sec(cueHitMs(heavyCue(false, o.heavyPixel), o.enemy, o.enemy && 'pose' in o.enemy ? 'male' : 'frames')), // 적 칸 (GDD 227장 보충 4)
     counter: sec(cueHitMs({ tier: 'chain1' }, o.enemy, o.slot)),
@@ -987,7 +1005,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     // 몸동작 칸: 내 공격 = 내 칸(남·여·프레임), 적 공격 = 적 칸(종이인형이면 남, 아니면 프레임 — 강적 강공격 연결 동작, GDD 227장 보충 4)
     const slot = cue.side === 'player' ? opts.bodySlot?.() ?? 'male' : from.anim && 'pose' in from.anim ? 'male' : 'frames';
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
-    // 블록 모션 길이 통일 (GDD 7절 v6.106, C.476): 이펙트·맞음 반응·몸동작 시간줄 전체를 같은 배율(pace)로 — 엔진 타격 지연도 같은 배율
+    // 블록 모션 길이 통일 (GDD 7절 v6.106, C.476): 몸동작에만 배율(pace). 이펙트·맞음 반응 시간줄은 늘 1배 (GDD 7절 v6.150, 사용자 2026-11-20, C.512) — 엔진 타격 지연 = 몸 몫 ÷ 배율 + 이펙트 몫
     const pace = cue.pace && cue.pace > 0 ? cue.pace : 1;
     const pplan = px ? pixelPlan(px.stage, slot, pace) : null;
     const chainBody = pplan?.body && from.anim ? (cue.pace ? { ...pplan.body, fit: true } : pplan.body) : null;
@@ -1023,7 +1041,7 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     }
     const lv = paced(scaled(level, unit()), pace);
     const motion = cue.fx ? familyMotion(cue.fx) : null;
-    const travel = motion ? motion.travelMs / pace : 0; // 발사 비행 시간도 같은 배율 (C.476)
+    const travel = motion ? motion.travelMs : 0; // 발사 비행(투사체) = 이펙트 → 늘 1배 (GDD 7절 v6.150, C.512 — 옛 C.476 은 ÷ pace). 휘두르기(lv)만 배율
     const plan: LungePlan = chainBody || deferred
       ? { keyframes: [], durationMs: 1, hitAtMs: clipHitIn ?? 0, ghosts: 0 }
       : clipPlay

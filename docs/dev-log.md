@@ -676,3 +676,24 @@ C.0 ~ C.450 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.120 2026-10-20·10
 - 손대지 않음: 다시 켜면 홈 안내가 1/3부터(3장 안내라 해 없음 — 단계 기억은 세이브 형식 변경이 필요) · 가방 펫 [데리고 가기] 2번째 칸 = 이미 `choosePet` 이 1번 칸이 차면 2번 칸에 넣는다(보고서 오판).
 - 검증: typecheck · npm test 통과(새 `tests/c511.test.ts` 4건) · build 통과. 밸런스 수치 변경 없음.
 - 캡처 `docs/captures/c511/`(1배 PC 844×390, 빌드 미리보기): 01 빈사 중 패배 사망 결과 문구 · 02 길리안 가방 = 소모품 탭. 수치는 proof.json(기록 8→9·패배 창 순간 사망 확정 = C.510 정산도 같이 확인).
+
+## C.512 — 이펙트는 늘 1배, 모션 배율은 몸동작에만 (GDD v6.150 7절, S-23, 코딩326)
+사용 모델: Opus 5.5. 세이브 형식·BALANCE 그대로(balance.ts 수치 변경 없음). GDD 는 마스터가 v6.150 에 적은 규칙 그대로(이 세션은 안 고침).
+- 사용자 원문(2026-11-20): "이펙트에 슬로우 달려있다. 모션만 속도 따라가는거지, 이펙은 정상속도로 나와야지."
+- 원인 경로(이펙트 재생에 몸 배율이 곱해지던 곳):
+  1. `pixelPlan(stage, slot, pace)`(src/ui/pixelAttack.ts) — C.476 블록 모션 길이 통일 배율 `pace` 를 시전 속도에 곱해 **이펙트 조각 시트 재생 빠르기(inst.rate)·시작 늦춤·타격 간격·투사체 비행·맞음 반응 시각 전부**를 늘이고 줄였다(느린 몸 pace 0.4 → 이펙트 2.5배 느림). ← 주원인
+  2. `attackFx` run() 계열 발사 `travel = motion.travelMs / pace` — 투사체 비행도 배율.
+  3. 엔진 `blockHitDelayOf` — 타격 지연 전체 ÷ 배율(화면 이펙트가 같은 배율이라 맞춰 둔 것).
+  - 원래 몸에만 걸린 것(그대로): 연결 동작 `anim.setRate(rate × stepRate × boost)`·`hastenMotion`(빨리 감기)·`bodyStartPlan`·스킬 동작 `lengthMs`·종이인형 motionSpeed 1.5배(rigAnim·paperdoll 몸 시계). 도트 이펙트는 Web Animation(`track`)이라 이것들을 안 받는다.
+  - `track()` 의 `a.playbackRate = rate`·`setSpeed` 의 rate = 테스트 모드 화면 배속(`testSpeedMul`, 진짜 게임 1배 고정 7-15) — 예외로 그대로. 튜토리얼 처치 슬로우(battleView 0.3배)·일시정지도 그대로.
+  - 종이인형 뼈대 이펙트(`fxAt`, 몸 시계를 따름): 지금 모든 동작 데이터의 `fx` 가 비어 있어(motions.json 52개 전부 빈 배열) 영향 없음 — 안 고침(보고).
+- 바꾼 것:
+  - `pixelPlan`: 이펙트 시간줄 = 시전 속도만(1배), 몸동작(body.speed·body.at)만 × pace.
+  - run(): 발사 비행 1배(휘두르기 lv 만 `paced`).
+  - 엔진 타격 지연 = 몸 몫 ÷ 배율 + 이펙트 몫(1배): `HitDelayParams.blockFxBy`(키별 이펙트 몫, 초) 신설 — 화면 `hitDelaysOf` 가 `cueHitParts`(몸 몫 bodyMs / 이펙트 몫 fxMs = 도트 이펙트 첫 반응 + 발사 비행)로 채운다. 도트 연결 동작 블록은 몸 몫 0 → 타격 지연 = 1배 이펙트 첫 반응(배율 무관).
+  - 표가 없으면(봇·시뮬 기본값 0.3초 = 사람형 공격 동작 타격 = 몸) 옛 식 그대로 → **balance:check 가드 수치 변화 없음**(전후 같음).
+- 픽셀 이펙트 연결(어느 블록에 어떤 이펙트, 19-4)은 그대로. 각본(튜토리얼) 전투: c367 동기 테스트 통과 — 마무리 체인은 224장 2 규칙대로 몸 마지막 타격이 늦으면 그때 착탄(그대로).
+- 테스트: 새 `tests/c512-fx-speed.test.ts` 15건 — pace 0.5·0.8·1.6·2.5 에서 이펙트 rate·시작·비행·타격·맞음 반응 = 1배, 몸 speed = ×pace · 실제 종족 데이터 전 단계 · 엔진 지연 = 몸 ÷ 배율 + 이펙트 · hitDelaysOf blockFxBy. 바꾼 기대값 없음(옛 테스트에 '이펙트도 같은 배율' 고정이 없었다) — c476 지연 검사에 '이펙트 몫 없는 표 = 전부 몸' 주석만.
+- 검증: typecheck · npm test 351파일 3975건 통과(C.511 합친 뒤) · balance:check 회귀 가드 통과(전 워커 125초, 후반 경고 3건 그대로) · build 통과.
+- 캡처 `docs/captures/c512/`(1배 PC, vite + `scripts/c512-proof.cjs`, facts.json): 사신 평대원 참 3체인을 몸 배율 0.41(느린 몸)·0.81(기본)·3.25(빠른 몸)로 쓰고 260ms 에 멈춤 — 이펙트 12개 Animation 모두 playbackRate 1·길이·늦춤 같음·진행 같음(0.316/0.189/0.12…), 엔진 피해 틱 0 같음. 몸 자세만 다름(01·02·03). 옛 식이면 느린 몸에서 시트 792ms → 1950ms.
+- docs/captures 최근 10패치 유지: c499·c501 삭제. (같은 시각 다른 세션이 C.511 을 먼저 올려 이 패치는 C.512.)
