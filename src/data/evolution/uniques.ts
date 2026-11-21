@@ -15,7 +15,8 @@ export type EvoNum = number | string;
 
 /** 곱하는 값의 출처 (per): chain 체인 수 · consumed 이번 규칙에서 소모한 스택 수 · amount 사건 양(막은 피해·깨진 보호막 등) · damage 이번 공격 피해 ·
  *  bar 바의 블록 수(고정 특수 블록 제외) · bar:<속성> 그 속성 블록 수 · lostHpPct 잃은 체력 %(0~100) · shieldPct 보호막 %(최대 체력 대비 0~100) ·
- *  risk 리스크(호로화) 게이지 · stack:<이름> · buff:<이름>(버프 값) · charge:<이름>(남은 횟수) · chargeValue:<이름>(이번 평타가 쓴 충전 값) */
+ *  risk 리스크(호로화) 게이지 · stack:<이름> · buff:<이름>(버프 값) · charge:<이름>(남은 횟수) · chargeValue:<이름>(이번 평타가 쓴 충전 값) ·
+ *  maxHp 내 최대 체력 (C.515 — 추파카브라 저장 상한 '최대 체력 50%' = 스택 max × maxPer maxHp) */
 export type EvoSource = string;
 
 /** 언제 (규칙의 on) */
@@ -34,6 +35,8 @@ export const EVO_TRIGGERS = [
   'shieldBreak', // 보호막이 깨졌다 (amount = 그 보호막이 막은 합)
   'special', // 특수 블록을 썼다 (special = 블록 id)
   'kill', // 처형했다
+  'hurt', // 내 체력이 줄었다 (amount = 보호막 뒤 실제로 잃은 체력, heavy = 강공격) — C.515 추파카브라 '받은 피해 저장'
+  'shieldEnd', // 시간 보호막(shield seconds)이 시간이 다 돼 사라졌다 (amount = 그때 남아 있던 양) — C.515 무랄라 '남은 방어막 비례 피해'
 ] as const;
 export type EvoTrigger = (typeof EVO_TRIGGERS)[number];
 
@@ -67,6 +70,8 @@ export const EVO_ACTIONS = [
   'timerCut', // 시계 timer 를 seconds 만큼 당긴다 (돌고 있을 때만)
   'execute', // 지금 적을 처형 (강적·보스는 안 됨)
   'basicShot', // (basicPre) 이 평타를 특수 공격으로: 피해 ×value, element 속성, category 능력치(special = 지능 기준), fx = 화면 도트 이펙트(그 계열·단계의 이미 연결된 것 재사용) — 이름 = 규칙 proc (C.514 석양홍)
+  'basicCrit', // (basicPre) 이 평타 치명 확률 +value(×per) — 상한도 같이 (C.515 바라쿠다 '다음 평타 n회 치명 +25%p')
+  'forceNext', // 다음에 새로 생기는 블록 value 개를 element 속성 블록으로 (그 속성 생성원이 없으면 평소대로, 대기 상한 max — C.515 비보라)
 ] as const;
 export type EvoActionKind = (typeof EVO_ACTIONS)[number];
 
@@ -88,7 +93,12 @@ export interface EvoAction {
   amount?: EvoNum;
   amountPer?: EvoSource | EvoSource[];
   refresh?: 'replace' | 'max' | 'add';
-  basis?: 'basic' | 'block' | 'last' | 'raw' | 'void';
+  /** hit: foeMaxHp = 적 최대 체력 × value (치명·배율 없음 — C.515 토르멘타 자기장·비보라 독) */
+  basis?: 'basic' | 'block' | 'last' | 'raw' | 'void' | 'foeMaxHp';
+  /** hit: 지속 피해로 넣는다 (독 숫자처럼 dot 사건, 발동 글자 없음 — 발동 횟수만) */
+  dot?: boolean;
+  /** hit: 독 지속 피해 — 4단계 특성 '독 지속 피해 +' 를 받는다 (C.515 비보라) */
+  poison?: boolean;
   element?: string;
   /** spawn make: 블록 계열 id (없으면 평소 출현표에서 고른 계열) */
   family?: string;
@@ -98,11 +108,12 @@ export interface EvoAction {
   grow?: { value: EvoNum; per: EvoSource | EvoSource[] };
   ignoreDef?: EvoNum;
   bonus?: EvoNum;
-  of?: 'damage' | 'maxHp';
   /** basicShot: 평타 능력치 분류 (special = 지능 ÷ 정신력, physical = 공격력 ÷ 방어 — 없으면 평타 그대로) */
   category?: 'physical' | 'special';
   /** basicShot: 화면 도트 이펙트 = 그 종족 계열 family 의 stage 단계 이펙트(이미 연결된 것 재사용, 색 = element) */
   fx?: { family: string; stage: number };
+  /** heal: damage 이번 피해 · maxHp 최대 체력 · hit 이 규칙에서 방금 넣은 추가 피해(hit) — C.515 추파카브라 '그 피해만큼 회복' */
+  of?: 'damage' | 'maxHp' | 'hit';
 }
 
 /** 조건 하나 (규칙의 need[] — 모두 참이어야) */
@@ -119,6 +130,8 @@ export interface EvoNeed {
   shield?: boolean;
   /** 적이 강적·보스다 / 아니다 */
   elite?: boolean;
+  /** stack·buff·charge·special 이 0 이어야 (없어야) 참 (C.515 — 강화 자기장이 없을 때만 보통 자기장) */
+  none?: boolean;
 }
 
 /** 규칙 = 언제(on) + 거르기 + 무엇을(do) */
@@ -147,6 +160,10 @@ export interface EvoRule {
   echo?: boolean;
   /** block: 이 거르기를 통과한 사용이 count 번 연달아 이어지면 (사이에 거르기를 못 넘는 블록을 쓰면 끊김, withinSeconds 가 있으면 그 시간 안에서만 — 없으면 시간 제한 없음). 그 뒤 0 부터 */
   streak?: { count: EvoNum; withinSeconds?: EvoNum };
+  /** block·blockPre: 바로 앞에 쓴 블록이 이 거르기에 맞았다 (C.515 토르멘타 '2체인을 쓴 바로 다음에 3체인') */
+  after?: { chain?: number[]; kind?: ('skill' | 'void' | 'combo' | 'liberation' | 'special')[]; element?: string[] };
+  /** hurt·shieldHit: 강공격으로 받은 피해였다(true)/아니었다(false) (C.515 토르투가 '강공격은 반사 안 함') */
+  heavy?: boolean;
   /** basicPre·basic: 이번 평타가 이 충전을 썼다 */
   charge?: string;
   special?: string;
@@ -174,6 +191,9 @@ export const EVO_STATS = [
   'ignoreDef', // 평타 방어 무시 +
   'offenseBasic', // 평타 피해 능력치: value 1 = 공격력·지능 중 높은 쪽, 2 = 평균 (1 이상이면 켜짐)
   'offenseBlock', // 블록 피해 능력치: 같은 값
+  'foeAttackSlow', // 적 일반 공격 속도 −비율 (공격 시계가 (1 − 값) 빠르기로 돈다, 상한 0.95) — C.515 토르멘타 자기장
+  'foeMagicDefCut', // 적 마법방어(정신력 — 블록 피해 계산) −비율 — C.515 토르멘타 강화 자기장
+  'selfSpawn', // 이 진화체 자기 블록(ability.selfBlock) 생성 확률 +비율p (다른 블록 몫에서 옮겨 옴) — C.515 브라사
 ] as const;
 export type EvoStat = (typeof EVO_STATS)[number];
 
@@ -204,6 +224,8 @@ export interface EvoStackDef {
   overflow?: 'cap' | 'reset';
   /** 원정 동안 유지 (다음 전투 시작 값으로 넘긴다) */
   carry?: boolean;
+  /** max 에 곱하는 출처 (C.515 — maxHp 면 '최대 체력 × max') */
+  maxPer?: EvoSource;
   mark?: EvoMark;
 }
 export interface EvoBuffDef {
@@ -231,6 +253,10 @@ export interface EvoSpecialDef {
   offNote?: PerFaction<string> | string;
   /** 바에 한 번에 최대 몇 개 (기본 제한 없음) */
   maxOnBar?: EvoNum;
+  /** 블록 색(속성 각인)으로 보일 속성 (C.515 — 추파카브라 혈 블록·게파르도 낙뢰). 없으면 해방 각인 */
+  element?: string;
+  /** 이 조건이 다 참일 때만 켜짐 (C.515 — 추파카브라 '저장된 피해가 있을 때') */
+  need?: EvoNeed[];
 }
 
 export interface EvoAbilityDef {
@@ -258,6 +284,12 @@ export interface EvoAbilityDef {
   chainExtend?: { max: EvoNum; tiers: { mult: EvoNum; name: PerFaction<string> | string }[] };
   /** 굳음 (C.514 만리장): 바에서 chain 개로 모인 묶음(element 속성 블록만)이 seconds 초 그대로면 '굳음' — 규칙 거르기 hardened, stack = 굳은 묶음 수를 매 틱 적는 스택(표시 칩), name = 화면 글자 */
   harden?: { chain: number; seconds: EvoNum; element?: string[]; stack?: string; name: PerFaction<string> | string };
+  /** 이 진화체 자기 블록 = element('self' = 내 속성)·family 블록 (selfSpawn 이 확률을 올린다 — C.515 브라사 '브라사 자기 블록(불·교)') */
+  selfBlock?: { element: string; family: string };
+  /** 저절로 안 생기는 블록 속성 (출현표에서 뺀다 — 다른 블록 몫은 그대로, C.515 추파카브라 '혈 블록은 첫 칸 1개만') */
+  spawnExclude?: string[];
+  /** forceNext 대기 표시 (네모) */
+  forceNextMark?: EvoMark;
 }
 
 /** 4단계 한 줄 특성 효과 종류 (특성 칸 — 받으면 영구, 해방해도 그대로 GDD 8-6) */
@@ -270,6 +302,10 @@ export const EVO_TRAIT_EFFECTS = [
   'elementDamage', // element 속성 피해 +value (C.514 석양홍 '불 피해 +8%' — 속성 피해(GDD 48장) 칸에 더함)
   'offenseMax', // 피해 계산 능력치 = 공격력·지능 중 높은 쪽 (평타·블록 모두)
   'execute', // 처형: 적 체력 line 이하에서 평타 = 처형, 강적·보스는 그 아래에서 주는 피해 ×eliteMult. 이 특성을 대표로 주는 진화체가 아니면 weakLine·weakEliteMult
+  'critDmg', // 치명 피해 +value (평타·블록, C.515 바라쿠다)
+  'spawnCut', // 블록 생성 간격 −비율 (간격 × (1 − value), C.515 토르멘타)
+  'drain', // 흡혈 +value (내 공격 피해의 value 만큼 회복 — 혈 속성 흡혈과 같은 전투 상한, C.515 추파카브라)
+  'poisonDot', // 내가 거는 독 지속 피해 +value (C.515 비보라)
 ] as const;
 export type EvoTraitEffect = (typeof EVO_TRAIT_EFFECTS)[number];
 /** 특성 효과마다 balance evoUniques.traits[키] 에 꼭 있어야 하는 수치 (formAbilities 가 읽는 칸 — 없으면 효과 0 으로 조용히 꺼지므로 검사가 막는다) */
@@ -282,6 +318,10 @@ export const EVO_TRAIT_NUM_KEYS: Readonly<Record<EvoTraitEffect, readonly string
   elementDamage: ['value'],
   offenseMax: [],
   execute: ['line', 'eliteMult', 'weakLine', 'weakEliteMult'],
+  critDmg: ['value'],
+  spawnCut: ['value'],
+  drain: ['value'],
+  poisonDot: ['value'],
 };
 
 export interface EvoTraitDef {
@@ -353,6 +393,9 @@ export function evoFileShapeErrors(r: unknown): string[] {
       if (!isObj(e.ability)) { errors.push(`${where}.ability: 객체가 아니다`); continue; }
       const a = e.ability;
       for (const k of ['stacks', 'buffs', 'charges', 'specials'] as const) objOf(a[k], `${where}.${k}`);
+      for (const k of ['selfBlock', 'forceNextMark'] as const) if (a[k] !== undefined && !isObj(a[k])) errors.push(`${where}.${k}: 객체가 아니다`);
+      arr(a.spawnExclude, `${where}.spawnExclude`, 'string');
+      for (const [n, sp] of Object.entries(isObj(a.specials) ? a.specials : {})) if (isObj(sp)) arr(sp.need, `${where}.specials.${n}.need`, 'object');
       arr(a.chainMultipliers, `${where}.chainMultipliers`, 'num');
       if (a.chainExtend !== undefined) {
         if (!isObj(a.chainExtend)) errors.push(`${where}.chainExtend: 객체가 아니다`);
@@ -384,6 +427,8 @@ export function evoFileShapeErrors(r: unknown): string[] {
         arr(rule.kind, `${rat}.kind`, 'string');
         arr(rule.chain, `${rat}.chain`, 'number');
         arr(rule.need, `${rat}.need`, 'object');
+        if (rule.after !== undefined && !isObj(rule.after)) errors.push(`${rat}.after: 객체가 아니다`);
+        if (rule.heavy !== undefined && typeof rule.heavy !== 'boolean') errors.push(`${rat}.heavy: 참·거짓이 아니다`);
         if (!Array.isArray(rule.do)) errors.push(`${rat}.do: 배열이 아니다`);
         else arr(rule.do, `${rat}.do`, 'object');
         for (const [j, x] of (Array.isArray(rule.do) ? rule.do : []).entries()) {
@@ -394,6 +439,7 @@ export function evoFileShapeErrors(r: unknown): string[] {
           if (x.fx !== undefined && !(isObj(x.fx) && typeof x.fx.family === 'string' && typeof x.fx.stage === 'number')) errors.push(`${xat}.fx: { family 글자, stage 숫자 } 가 아니다`);
           for (const k of ['per', 'amountPer', 'secondsPer'] as const) srcs(x[k], `${xat}.${k}`);
           if (x.grow !== undefined && !isObj(x.grow)) errors.push(`${xat}.grow: 객체가 아니다`);
+          for (const k of ['dot', 'poison', 'force'] as const) if (x[k] !== undefined && typeof x[k] !== 'boolean') errors.push(`${xat}.${k}: 참·거짓이 아니다`);
         }
       }
       for (const [i, pv] of (Array.isArray(a.passives) ? a.passives : []).entries()) {
@@ -585,6 +631,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       const charges = a.charges ?? {};
       const specials = a.specials ?? {};
       for (const [n, sd] of Object.entries(stacks)) for (const v of [sd.max, sd.seconds]) if (!has(v)) errors.push(`${where}: 스택 ${n} 수치 키 없음`);
+      for (const [n, sd] of Object.entries(stacks)) if (sd.maxPer !== undefined && sd.max === undefined) errors.push(`${where}: 스택 ${n} maxPer 는 max 와 같이`);
       const side = (on: unknown) => on === undefined || on === 'self' || on === 'foe';
       const mark = (m: EvoMark | undefined, what: string) => {
         if (m && (!m.icon || !m.name)) errors.push(`${where}: ${what} 표시(mark)에 icon·name 이 없다`);
@@ -621,11 +668,21 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       for (const [n, sp] of Object.entries(specials)) {
         if (!sp.name || !sp.short) errors.push(`${where}: 특수 블록 ${n} 이름·글자 없음`);
         for (const v of [sp.fixed, sp.maxOnBar]) if (!has(v)) errors.push(`${where}: 특수 블록 ${n} 수치 키 없음`);
+        if (sp.element !== undefined && !known.elements.includes(sp.element)) errors.push(`${where}: 특수 블록 ${n} 모르는 속성 ${sp.element}`);
       }
+      // 자기 블록·출현 제외·다음 블록 강제 (C.515)
+      if (a.selfBlock) {
+        if (a.selfBlock.element !== 'self' && !known.elements.includes(a.selfBlock.element)) errors.push(`${where}: selfBlock 모르는 속성 ${a.selfBlock.element}`);
+        if (!known.families(fac).includes(a.selfBlock.family)) errors.push(`${where}: selfBlock ${fac} 에 없는 블록 계열 ${a.selfBlock.family}`);
+      }
+      if ((a.passives ?? []).some((p) => p.stat === 'selfSpawn') && !a.selfBlock) errors.push(`${where}: selfSpawn 은 selfBlock 이 있어야`);
+      for (const x of a.spawnExclude ?? []) if (!known.elements.includes(x)) errors.push(`${where}: spawnExclude 모르는 속성 ${x}`);
+      mark(a.forceNextMark, 'forceNext');
+      const shieldTimed = (a.rules ?? []).some((r) => (r.do ?? []).some((x) => x.act === 'shield' && x.seconds !== undefined));
       const src = (p: EvoSource | EvoSource[] | undefined) => {
         for (const x of p === undefined ? [] : Array.isArray(p) ? p : [p]) {
           const [kind, name] = x.split(':') as [string, string | undefined];
-          const ok = ['chain', 'consumed', 'amount', 'damage', 'bar', 'lostHpPct', 'shieldPct', 'risk', 'one'].includes(kind) && (name === undefined || kind === 'bar')
+          const ok = ['chain', 'consumed', 'amount', 'damage', 'bar', 'lostHpPct', 'shieldPct', 'risk', 'one', 'maxHp'].includes(kind) && (name === undefined || kind === 'bar')
             || (kind === 'stack' && !!name && name in stacks) || (kind === 'buff' && !!name && name in buffs)
             || ((kind === 'charge' || kind === 'chargeValue') && !!name && name in charges);
           if (!ok) errors.push(`${where}: 모르는 per ${x}`);
@@ -639,8 +696,18 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (n.special && !(n.special in specials)) errors.push(`${where}: need 특수 블록 ${n.special} 없음`);
         }
       };
+      for (const sd of Object.values(stacks)) src(sd.maxPer);
+      for (const sp of Object.values(specials)) need(sp.need);
       for (const [i, r] of (a.rules ?? []).entries()) {
         const at = `${where} 규칙 ${i}`;
+        if (r.on === 'shieldEnd' && !shieldTimed) errors.push(`${at}: shieldEnd 는 시간 보호막(shield seconds)이 있어야`);
+        if (r.heavy !== undefined && r.on !== 'hurt' && r.on !== 'shieldHit') errors.push(`${at}: heavy 는 hurt·shieldHit 에서만`);
+        if (r.after) {
+          if (r.on !== 'block' && r.on !== 'blockPre') errors.push(`${at}: after 는 block·blockPre 에서만`);
+          for (const c of r.after.chain ?? []) if (!chainOk(c)) errors.push(`${at}: after chain ${String(c)} 은 1~${known.maxChain}`);
+          for (const k of r.after.kind ?? []) if (!(EVO_BLOCK_KINDS as readonly string[]).includes(k)) errors.push(`${at}: after 모르는 블록 종류 ${k}`);
+          for (const x of r.after.element ?? []) if (!elementOk(x)) errors.push(`${at}: after 모르는 속성 ${x}`);
+        }
         if (!(EVO_TRIGGERS as readonly string[]).includes(r.on)) errors.push(`${at}: 모르는 트리거 ${r.on}`);
         if (r.on === 'every' && r.seconds === undefined) errors.push(`${at}: every 는 seconds`);
         if (r.on === 'special' && !(r.special && r.special in specials)) errors.push(`${at}: special 블록 없음`);
@@ -670,7 +737,9 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (x.act === 'shield' && x.cap === undefined) errors.push(`${at}: shield 는 cap`);
           if (x.act === 'hit' && !x.basis) errors.push(`${at}: hit 는 basis`);
           if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg', 'noDamage'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
-          if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
+          if (['basicMult', 'forceCrit', 'ignoreDef', 'basicCrit'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
+          if (x.act === 'forceNext' && !(x.element && known.elements.includes(x.element))) errors.push(`${at}: forceNext 는 속성(element)`);
+          if ((x.dot !== undefined || x.poison !== undefined) && x.act !== 'hit') errors.push(`${at}: dot·poison 은 hit 에서만`);
           if (x.act === 'absorbBar' && !x.element) errors.push(`${at}: absorbBar 는 element`);
           if (x.act === 'basicShot' && r.on !== 'basicPre') errors.push(`${at}: basicShot 는 basicPre 에서만`);
           if (x.category !== undefined && x.category !== 'physical' && x.category !== 'special') errors.push(`${at}: category 는 physical·special`);
@@ -678,8 +747,8 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (x.element !== undefined && x.element !== 'self' && !elementOk(x.element)) errors.push(`${at}: 모르는 속성 ${x.element}`);
           if (x.family !== undefined && !known.families(fac).includes(x.family)) errors.push(`${at}: ${fac} 에 없는 블록 계열 ${x.family}`);
           if (x.refresh !== undefined && !['replace', 'max', 'add'].includes(x.refresh)) errors.push(`${at}: refresh 는 replace·max·add`);
-          if (x.basis !== undefined && !['basic', 'block', 'last', 'raw', 'void'].includes(x.basis)) errors.push(`${at}: 모르는 basis ${x.basis}`);
-          if (x.of !== undefined && x.of !== 'damage' && x.of !== 'maxHp') errors.push(`${at}: of 는 damage·maxHp`);
+          if (x.basis !== undefined && !['basic', 'block', 'last', 'raw', 'void', 'foeMaxHp'].includes(x.basis)) errors.push(`${at}: 모르는 basis ${x.basis}`);
+          if (x.of !== undefined && !['damage', 'maxHp', 'hit'].includes(x.of)) errors.push(`${at}: of 는 damage·maxHp·hit`);
           src(x.per);
           src(x.amountPer);
           if (x.grow) src(x.grow.per);

@@ -325,6 +325,11 @@ export function abilityEffectsOf(fa: FormAbilities): { effects: AbilityEffects; 
       case 'blockPower': fx.blockPower = (fx.blockPower ?? 0) + (v.value ?? 0); break;
       case 'elementDamage': if (def.element) (fx.evoElementDamage ??= {})[def.element] = (fx.evoElementDamage?.[def.element] ?? 0) + (v.value ?? 0); break;
       case 'offenseMax': fx.offenseMax = true; break;
+      // 2차 (GDD 8-7 2차, C.515)
+      case 'critDmg': fx.evoCritDmg = (fx.evoCritDmg ?? 0) + (v.value ?? 0); break;
+      case 'spawnCut': fx.evoSpawnCut = (fx.evoSpawnCut ?? 0) + (v.value ?? 0); break;
+      case 'drain': fx.evoDrain = (fx.evoDrain ?? 0) + (v.value ?? 0); break;
+      case 'poisonDot': fx.evoPoisonDot = (fx.evoPoisonDot ?? 0) + (v.value ?? 0); break;
       case 'execute': {
         // 허무형(이 특성을 대표로 주는 진화체)이면 센 값, 다른 진화체가 가진 것(환생 뒤 영구)이면 약한 값 (GDD 8-8)
         const line = home ? v.line ?? 0 : v.weakLine ?? 0;
@@ -410,6 +415,10 @@ function effectSummary(fx: AbilityEffects, critChance: number): string {
   for (const c of fx.chainPower ?? []) parts.push(`${c.chain}체인 블록 위력 +${pct(c.bonus)}`);
   for (const [el, v] of Object.entries(fx.evoElementDamage ?? {})) parts.push(`${elementName(el, '*')} 피해 +${pct(v)}`);
   if (fx.offenseMax) parts.push('피해 계산 = 공격력·지능 중 높은 쪽');
+  if (fx.evoCritDmg) parts.push(`치명 피해 +${pct(fx.evoCritDmg)}`);
+  if (fx.evoSpawnCut) parts.push(`블록 생성 간격 −${pct(fx.evoSpawnCut)}`);
+  if (fx.evoDrain) parts.push(`흡혈 +${pct(fx.evoDrain)}`);
+  if (fx.evoPoisonDot) parts.push(`독 지속 피해 +${pct(fx.evoPoisonDot)}`);
   if (fx.execute) parts.push(`적 체력 ${pct(fx.execute.line)} 이하에서 일반 공격 = 처형 · 강적·보스는 그 아래에서 피해 ×${fx.execute.eliteMult}`);
   return parts.join(' · ');
 }

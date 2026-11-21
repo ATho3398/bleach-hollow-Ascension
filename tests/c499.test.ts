@@ -74,10 +74,10 @@ describe('데이터·장치 목록', () => {
     expect(errs.some((e) => e.includes('모르는 효과 zap'))).toBe(true);
     expect(errs.some((e) => e.includes('모르는 능력치 speed'))).toBe(true);
   });
-  it('데이터는 진화체 id × 종족 — 백련·노도는 사신, 부오(호로)는 아직 없음 (C.503: 마르티요는 호로 1차에 들어감)', () => {
+  it('데이터는 진화체 id × 종족 — 백련·노도는 사신, 바시오(호로)는 아직 없음 (C.503: 마르티요 · C.515: 부오는 호로 2차에 들어감, 바시오는 [미정])', () => {
     expect(evoFormEntry('t4:normal:physical', 'shinigami')?.ability).toBeTruthy();
-    expect(evoFormEntry('t4:normal:special', 'hollow')).toBeNull();
-    expect(evoParamsOf(getForm('t4:normal:special'), 'hollow')).toBeNull();
+    expect(evoFormEntry('t4:kyo:mixed', 'hollow')).toBeNull();
+    expect(evoParamsOf(getForm('t4:kyo:mixed'), 'hollow')).toBeNull();
     expect(evoParamsOf(getForm('t4:water:physical'), 'shinigami')?.ability.specials?.rush).toBeTruthy();
     expect(evoReleaseBlocked('t4:normal:physical', 'shinigami')).toBe(false);
   });

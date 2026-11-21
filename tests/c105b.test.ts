@@ -39,7 +39,8 @@ describe('C.105b 속성별 물공 생성원 간격', () => {
 
   it('혈 물공 블록이 흙보다 자주 나온다 (C.136: 출현표 몫 = 1 ÷ 간격), 600초 개수 ≈ 600 ÷ 1.8 (±12%)', () => {
     const countIn = (formId: string, sec: number): number => {
-      const s = createCombat(5, { enemy: getEnemy('test-a'), params: { ...bodyOf(formId), timeLimitSeconds: 1e9 } });
+      // C.515: 호로 추파카브라(t4:blood:physical) 고유 능력 '혈 블록은 첫 칸 1개만'(출현 제외)은 빼고 물공 간격만 잰다
+      const s = createCombat(5, { enemy: getEnemy('test-a'), params: { ...bodyOf(formId), evo: null, timeLimitSeconds: 1e9 } });
       s.player.hp = s.player.maxHp = 1e12; s.enemy.hp = s.enemy.maxHp = 1e12; s.params.voidChance = s.params.voidChanceBonus = 0;
       for (let i = 0; i < ticksOf(s.params, sec); i++) { step(s); s.tray = []; }
       return s.physSpawned ?? 0;

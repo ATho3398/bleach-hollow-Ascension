@@ -45,6 +45,7 @@ const EVO_STAT_TEXT: Record<EvoStat, [string, 'pct' | 'pctp' | 'sec' | 'flag']> 
   interval: ['일반 공격 간격 −', 'pct'], intervalCut: ['일반 공격 간격 −', 'sec'], crit: ['치명 확률', 'pctp'], critDmg: ['치명 피해', 'pct'],
   blockCrit: ['블록 치명 확률', 'pctp'], petPower: ['펫 피해', 'pct'], execLine: ['처형선', 'pctp'], execBlockLine: ['블록 처형선', 'pctp'],
   ignoreDef: ['방어 무시', 'pct'], offenseBasic: ['일반 공격 능력치', 'flag'], offenseBlock: ['블록 능력치', 'flag'],
+  foeAttackSlow: ['적 공격 속도 −', 'pct'], foeMagicDefCut: ['적 마법방어 −', 'pct'], selfSpawn: ['자기 블록 생성 확률', 'pctp'],
 };
 
 export function evoStatText(stat: EvoStat, value: number): string {
@@ -137,8 +138,8 @@ export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
   for (const m of evoMarksOf(s)) {
     const name = evoText(m.name, factionId);
     const v = Math.round(m.value * 100) / 100;
-    const ratio = m.type === 'buff' && v > 0 && v < 1;
-    const shown = ratio ? `${Math.round(v * 100)}` : String(v);
+    const ratio = m.type === 'buff' && m.value > 0 && m.value < 1;
+    const shown = ratio ? `${Math.round(m.value * 1000) / 10}` : String(v); // 비율 버프는 0.1% 단위 (C.515 비보라 맹독 1.5%)
     const amount = ratio ? `+${shown}%` : `${shown}${m.max !== null ? `/${m.max}` : ''}${m.type === 'charge' ? '회' : m.type === 'stack' ? '개' : ''}`;
     const fx = m.effects.map((e) => evoStatText(e.stat, e.value)).join(' · ');
     const left = m.seconds !== null ? ` (${Math.max(0, m.seconds).toFixed(1)}초)` : '';

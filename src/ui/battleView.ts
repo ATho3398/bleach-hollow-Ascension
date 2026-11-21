@@ -941,6 +941,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (why === 'elite') return '강적·보스에게는 쓸 수 없다';
     if (why === 'above') return `적 체력이 블록 처형선(${Math.round(evoExecLinesOf(s).block * 100)}%) 아래로 내려가면 켜진다`;
     const note = evoText(evoSpecialOf(p, b.traitId)?.offNote, bf.id);
+    if (why === 'need') return note && p.evo ? fillEvoText(note, p.evo.nums) : '아직 쓸 수 없다'; // C.515 데이터 조건(추파카브라 '저장돼야')
     return note && p.evo ? fillEvoText(note, p.evo.nums) : '블록 처형선이 0%라 꺼져 있다';
   };
   const scriptVars = { libName: labels.liberation.name, libFullName: bf.liberation.name };
@@ -1508,6 +1509,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (b.kind === 'combo') return v2BlockEl({ kind: 'combo', path: V2_PATH.combo, glyph: V2_GLYPH.combo, label, uid: b.uid, weak });
     // 진화체 특수 블록 (GDD 8-7 1차, C.499): 해방 각인 + 데이터의 한 글자 (처형 블록 = 허 각인)
     const es = evoSpecialOf(s.params, b.traitId);
+    // 속성이 적힌 특수 블록(C.515 추파카브라 혈 블록·게파르도 낙뢰) = 그 속성 색 + 해방 각인
+    if (es?.element) return v2BlockEl({ kind: v2AttackKind(es.element), path: V2_PATH.release, glyph: es.short, label, uid: b.uid, weak: false });
     if (es) return v2BlockEl({ kind: es.usable === 'execBlock' ? 'void' : 'release', path: es.usable === 'execBlock' ? V2_PATH.void : V2_PATH.release, glyph: es.short, label, uid: b.uid, weak: false });
     // 초월자 전용 블록 (GDD 12-4 v6.048): 반격·해방 블록(경화수월·프라고르) = 해방 각인, 그 밖(귀도) = 콤보 각인 + 데이터의 한 글자
     const kb = kitBlockOf(s.params, b.traitId);
