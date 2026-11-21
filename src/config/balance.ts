@@ -17,7 +17,7 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타 stormAt = 필드 누적 횟수(수치 3 그대로). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 154; // C.515 (GDD 8-7 2차 호로 9종, 사용자 2026-11-21 "일단 추가고 정해놓은거 구현 ㄱㄱ", docs/drafts/evo-impl-1121.md 2절 — 마스터 추천안 provisional): provisional.evoUniques 에 4단계 특성 6개(critDmg10·blockPower8·spawnCut6·aspd6·drain3·poisonDot12) + 호로 바라쿠다·브라사·무랄라·토르투가·토르멘타·게파르도·추파카브라·비보라 수치(표 그대로, 브라사 화상은 소로 값 빌림). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 153; // C.514 (GDD 8-7 2차, docs/drafts/evo-impl-1121.md 1절 — 마스터 추천안 provisional): provisional.evoUniques 에 사신 현음(체인 상한 4·4체인 ×1.4·블록 1, 만해 5·×1.8·블록 2)·석양홍(석양 ×2.0 충전 1, 만해 ×2.5 최대 3, 화상 8초 +8%)·만리장(굳음 2초·+40%·방어막 12%, 만해 1초·+70%·18%) 수치 + 특성 blockPower6 0.06·fireDmg8 0.08·earthDmg8 0.08. 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 152; // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): provisional.expedition.conditionRiskBonusMax 0.15(컨디션 0 이면 폭주 블록 +15%p) 삭제 → riskGaugeVoidBonusMax 0.15(리스크 게이지 비율 × 15%p, 가득이면 +15%p). 그 밖 수치 그대로.
@@ -661,7 +661,7 @@ export const BALANCE = {
           /** 호로 무랄라 (C.515): 블록 → 방어막 1·2·3체인 s1/s2/s3(shieldSeconds 초), 끝까지 남은 방어막 × endMult 피해 1번. 레스렉시온 = 3초·×3 */
           hollow: { s1: 0.03, s2: 0.06, s3: 0.1, shieldSeconds: 2, endMult: 2, shieldCap: 1, release: { shieldSeconds: 3, endMult: 3 } },
         },
-        /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 공허 블록, 3체인 within 초 안 streak 번 → 공허 +1(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
+        /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 허무 블록, 3체인 within 초 안 streak 번 → 허무 +1(C.517 표시 이름 공허 → 허무)(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
         'h4:void': {
           shinigami: { fixed: 2, streak: 2, within: 1, stackMax: 60, perTwo: 0.01, lineMax: 0.3 },
           /** 호로 나다 (C.503, 히든 허무형 — 해방 = 기본 강화만): 블록 → seconds 초 평타 피해 +체인 수×perChain(갱신). 바 bar 칸 가득인 동안 every 초마다 평타 처형선 +perLine(전투 동안, 최대 maxLine) */
@@ -700,8 +700,10 @@ export const BALANCE = {
           hollow: { streak: 2, maxOnBar: 1, seconds: 6, cut: 0.3, release: { seconds: 9, cut: 0.4 } },
         },
         /** 호로 부오 (C.515): 고유 능력 없음 — 특성 블록 위력 +8% 만 (수치는 traits.blockPower8) */
-        /** 호로 토르멘타 (C.515): 2체인 바로 뒤 3체인 → 자기장 필드 fieldSeconds 초(스택마다 따로) — dotEvery 초마다 적 최대 체력 × fieldDot · 적 공속 −slow. 필드를 stormAt 번 만들 때마다(누적 횟수, 끊김·초기화 없음, 켜지면 0 — C.517 마스터 11-21. 옛 C.515 = stormAt 개 동시) → 강화 stormSeconds 초(× stormDot · 마법방어 −magicCut · 공속 −slow). 레스렉시온 = 필드 3초·강화 5초·마법방어 −25% */
-        't4:thunder:special': { hollow: { fieldSeconds: 2, fieldDot: 0.01, slow: 0.2, stormAt: 3, stormSeconds: 3, stormDot: 0.02, magicCut: 0.15, dotEvery: 1, release: { fieldSeconds: 3, stormSeconds: 5, magicCut: 0.25 } } },
+        /** 호로 토르멘타 (C.515 → C.517 사용자 11-21 "필드 한 5초로 할까" / "아니 강화지 강화필드,,", provisional): 2체인 바로 뒤 3체인 → 자기장 필드 fieldSeconds 초(1개, 다시 채우면 시간만 새로) — dotEvery 초마다 적 최대 체력 × fieldDot · 적 공속 −slow.
+         *  2체인 streak 번 연달아(사이 다른 블록 없음) → 강화 stormSeconds 초(보통 필드를 대신, 다시 채우면 시간만 새로 — × stormDot · 마법방어 −magicCut · 공속 −slow). 레스렉시온 = 보통·강화 7초·마법방어 −25%.
+         *  옛 C.515 = 필드 2초(스택마다 따로)·필드 3개 동시 → 강화 3초(stormAt 3), 레스렉시온 3초·5초 */
+        't4:thunder:special': { hollow: { fieldSeconds: 5, fieldDot: 0.01, slow: 0.2, streak: 2, stormSeconds: 5, stormDot: 0.02, magicCut: 0.15, dotEvery: 1, release: { fieldSeconds: 7, stormSeconds: 7, magicCut: 0.25 } } },
         /** 호로 비보라 (C.515): 3체인 → 다음 블록 1개 독. 블록 → 체인 수만큼 독 스택, need 에 닿으면 적에게 독 venomSeconds 초(dotEvery 초마다 적 최대 체력 × venomDot, 다시 걸리면 시간 새로) 후 0. 레스렉시온 = 4스택·15초 */
         't4:poison:special': { hollow: { need: 6, venomSeconds: 10, venomDot: 0.015, dotEvery: 1, release: { need: 4, venomSeconds: 15 } } },
         /** 사신 흑귀(히든 폭주형): 호로화 게이지 1당 주는 피해 +perRisk. 만해 = 특수 블록 '흑귀'가 허 블록 흡수, 1개당 허 블록 피해 × perVoid */

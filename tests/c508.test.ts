@@ -210,10 +210,11 @@ describe('C8 공화 공허 블록: 글자 = 데이터(공) · 꺼진 이유 안�
     expect(b).toBeDefined();
     expect(evoSpecialOffReason(s, b)).toBe('line0');
     const lines = evoUniqueLines('h4:void', 'shinigami', '만해');
-    expect(lines.find((l) => l.label === '특수 블록')!.text).toMatch(/공허 2개부터 켜진다/);
+    // 옛 기대값 '공허 2개부터 켜진다' → 사용자 11-21 "용어는 허무로 가자" (C.517): 공화 스택 표시 이름 '허무'
+    expect(lines.find((l) => l.label === '특수 블록')!.text).toMatch(/허무 2개부터 켜진다/);
     expect(lines.find((l) => l.label === '특수 블록')!.text).not.toMatch(/\{/);
   });
-  it('공허 2개(블록 처형선 > 0) + 적 체력 선 위 → above, 강적 → elite', () => {
+  it('허무 2개(블록 처형선 > 0) + 적 체력 선 위 → above, 강적 → elite', () => {
     const s = fight('h4:void');
     s.evo!.stacks.hollow = { n: 2 } as never;
     const b = s.tray.find((x) => x.traitId?.startsWith('evo:'));

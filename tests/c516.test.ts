@@ -70,7 +70,8 @@ describe('② 허무 블록은 플레이어가 얻을 수 없다', () => {
     }
     expect(gainTrait(newBuild(), 't-blood-a').ok).toBe(true);
   });
-  it('보스 속성 바뀜 기믹의 허무도 후보에서 빠진다 (썬더우드: 천둥·물만, 허무 보스 특성 없음)', () => {
+  // C.517 마스터 11-21: 썬더우드 보스 특성 속성 허무 → 뇌(provisional) — '허무 보스 특성 없음' 은 '보스 특성(뇌)은 확정 후보' 로. 허무 블록 후보가 없다는 기대는 그대로
+  it('보스 속성 바뀜 기믹의 허무도 후보에서 빠진다 (썬더우드: 천둥·물만, 보스 특성은 뇌)', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
     for (let seed = 1; seed <= 30; seed++) {
       const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 2, getBoss('forest-lord').trait, 2, els);
@@ -165,13 +166,14 @@ describe('⑤ 세이브 형식 95 (94 → 95): 허무 블록 지우고 칸 비�
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
   it('dropEnemyOnlyTraits: 장착·보유·장착 순서에서 빼고, 강화 n → 노멀 +n', () => {
+    // C.517 마스터 11-21: 썬더우드 보스 특성 = 뇌 → 이제 플레이어 특성이라 남는다 (C.516 기대 = 3개 빠짐·칸 [null, 't-fire-a', null])
     const b = rawBuild(['t-kyo-a', 't-fire-a', 'boss-forest-lord']);
     b.owned.push('t-kyo-b');
     b.enhance = { kyo: 4, normal: 2, fire: 1 };
-    expect(dropEnemyOnlyTraits(b)).toBe(3);
-    expect(b.slots).toEqual([null, 't-fire-a', null]);
-    expect(b.owned).toEqual(['t-fire-a']);
-    expect(b.equipOrder).toEqual(['t-fire-a']);
+    expect(dropEnemyOnlyTraits(b)).toBe(2);
+    expect(b.slots).toEqual([null, 't-fire-a', 'boss-forest-lord']);
+    expect(b.owned).toEqual(['t-fire-a', 'boss-forest-lord']);
+    expect(b.equipOrder).toEqual(['t-fire-a', 'boss-forest-lord']);
     expect(b.enhance).toEqual({ normal: 6, fire: 1 });
   });
   it('옛 세이브(94): 허무 블록 장착한 바시오 몸 — 블록만 빠지고 몸·런 로그·쉬는 트랙·원정 중간 저장도 정리', () => {

@@ -302,9 +302,11 @@ describe('토르투가 (흙·교) — 방어막 반사, 강공격 제외', () =>
   });
 });
 
+// C.517 사용자 11-21("필드 한 5초로 할까" / "아니 강화지 강화필드,,") — 옛 C.515 기대값을 새 규칙으로 바꿈:
+//  보통 필드 2초(스택마다 따로) → 5초 1개(다시 채우면 시간만 새로) · 강화 = '필드 3개 동시'(C.517 초안 '누적 3번') → 2체인 2번 연달아 · 레스렉시온 3초·5초 → 7초·7초
 describe('토르멘타 (뇌·탄) — 자기장 필드', () => {
   const n = N('t4:thunder:special');
-  it('2체인 바로 다음 3체인 = 필드(2초, 초당 적 최대 체력 1%, 적 공속 −20%) · 3체인→3체인·2체인 사이 다른 블록은 없음', () => {
+  it('2체인 바로 다음 3체인 = 필드(5초, 초당 적 최대 체력 1%, 적 공속 −20%) · 3체인→3체인·2체인 사이 다른 블록은 없음', () => {
     const s = mk({ evo: evo('t4:thunder:special') });
     useChain(s, 3);
     expect(procOf(useChain(s, 3).evs, '자기장!')).toBe(false);
@@ -318,49 +320,58 @@ describe('토르멘타 (뇌·탄) — 자기장 필드', () => {
     expect(markOf(s, 'evo-s-field')?.on).toBe('foe');
     const evs = tick(s, ticksOf(s.params, n.fieldSeconds!) + 1);
     const d = dots(evs);
+    expect(n.fieldSeconds).toBe(5); // 옛 C.515 = 2초
     expect(d.length).toBe(n.fieldSeconds! / n.dotEvery!);
     expect(d[0]!.damage).toBeCloseTo(s.enemy.maxHp * n.fieldDot!, 4);
     expect(s.evo!.stacks.field!.n).toBe(0);
     expect(evoStat(s, 'foeAttackSlow')).toBe(0);
   });
-  it('필드가 여러 개여도 같은 세기 · 적 공격 시계가 (1 − 20%) 빠르기', () => {
+  it('필드 중 다시 2→3 = 시간만 새로(1개 그대로, 같은 세기) · 적 공격 시계가 (1 − 20%) 빠르기', () => {
+    // 옛 C.515 = 필드 여러 개(스택마다 따로)여도 같은 세기 → 새 규칙: 겹치지 않고 시간만 새로
     const s = mk({ evo: evo('t4:thunder:special') });
-    s.evo!.stacks.field = { n: 2, exp: [s.tick + 1e6, s.tick + 1e6] };
+    useChain(s, 2);
+    useChain(s, 3);
+    tick(s, ticksOf(s.params, 3));
+    useChain(s, 2);
+    useChain(s, 3);
+    expect(s.evo!.stacks.field!.n).toBe(1);
+    expect(s.evo!.stacks.field!.exp![0]! - s.tick).toBe(ticksOf(s.params, n.fieldSeconds!));
     expect(evoStat(s, 'foeAttackSlow')).toBeCloseTo(n.slow!, 6);
     let skips = 0;
     for (let i = 0; i < 100; i++) if (evoFoeSlowSkip(s)) skips++;
     expect(skips).toBe(Math.round(100 * n.slow!));
   });
-  // 옛 기대값(C.515): '필드 3개가 동시에 → 강화 필드' (field n=2 를 미리 넣고 2→3).
-  // 새 규칙(마스터 11-21, C.517): 필드를 만든 누적 횟수 3번마다 강화 — 누적 칸(fieldCount) 2 를 미리 넣고 2→3, 켜지면 누적 0.
-  it('필드 누적 3번째 → 강화 필드 3초(초당 2% · 마법방어 −15% · 공속 −20%) — 블록 피해가 오른다 (마스터 11-21 새 규칙)', () => {
+  it('2체인 2번 연달아 → 강화 필드 5초(초당 2% · 마법방어 −15% · 공속 −20%, 보통 필드를 대신) — 블록 피해가 오른다', () => {
+    // 옛 C.515 = 필드 3개 동시(field n=2 를 미리 넣고 2→3) → 새 규칙: 2체인 2번 연달아
     const s = mk({ evo: evo('t4:thunder:special') });
     const before = blockDmg(useChain(s, 1).evs);
-    s.evo!.stacks.fieldCount = { n: 2 };
     useChain(s, 2);
-    expect(procOf(useChain(s, 3).evs, '강화 자기장!')).toBe(true);
+    expect(procOf(useChain(s, 3).evs, '자기장!')).toBe(true);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(false);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(true);
     expect(s.evo!.stacks.field!.n).toBe(0);
-    expect(s.evo!.stacks.fieldCount!.n).toBe(0);
+    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.stormSeconds!));
     expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.magicCut!, 6);
     expect(evoStat(s, 'foeAttackSlow')).toBeCloseTo(n.slow!, 6);
     expect(blockDmg(useChain(s, 1).evs)).toBeGreaterThan(before);
     const d = dots(tick(s, ticksOf(s.params, n.stormSeconds!) + 1));
+    expect(n.stormSeconds).toBe(5); // 옛 C.515 = 3초
     expect(d.length).toBe(n.stormSeconds! / n.dotEvery!);
     expect(d[0]!.damage).toBeCloseTo(s.enemy.maxHp * n.stormDot!, 4);
     expect(evoStat(s, 'foeMagicDefCut')).toBe(0);
   });
-  it('레스렉시온: 필드 3초 · 강화 5초 · 마법방어 −25%', () => {
+  it('레스렉시온: 보통·강화 7초 · 마법방어 −25%', () => {
+    // 옛 C.515 = 필드 3초·강화 5초(필드 3개 동시)
     const s = mk({ evo: evo('t4:thunder:special'), liberationUnique: true, liberationSeconds: 300 });
     libNow(s);
     useChain(s, 2);
     useChain(s, 3);
     expect(dots(tick(s, ticksOf(s.params, n.release.fieldSeconds!) + 1)).length).toBe(n.release.fieldSeconds!);
-    // 옛(C.515): field n=2 동시 → 새 규칙(마스터 11-21): 누적 1(위 필드) + 1 = 2 → 이번이 3번째
-    s.evo!.stacks.fieldCount = { n: 2 };
     useChain(s, 2);
-    useChain(s, 3);
+    useChain(s, 2);
     expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.release.magicCut!, 6);
     expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.release.stormSeconds!));
+    expect([n.release.fieldSeconds, n.release.stormSeconds]).toEqual([7, 7]);
   });
 });
 

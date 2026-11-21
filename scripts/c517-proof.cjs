@@ -1,5 +1,5 @@
-// C.517 proof (마스터 11-21 — 토르멘타 강화 필드 = 필드 누적 3번마다): PC 844×390, 1배. 테스트 모드 세이브(토르멘타) → 바로 전투,
-// 바에 2체인·3체인을 놓고 실제로 눌러 써서 필드 3번(필드 사이 앞 필드 지움 = 겹치지 않음). 01 누적 칩 2(설명 2/3) · 02 3번째에 강화 자기장 켜진 순간(누적 0).
+// C.517 proof (사용자 11-21 토르멘타 최종 · 썬더우드 보스 특성 뇌): PC 844×390, 1배. 테스트 모드 세이브(토르멘타) → 바로 전투, 바에 블록을 놓고 실제로 눌러 사용.
+// 01 2체인 → 3체인 = 보통 자기장 필드 5초(적 쪽 칩) · 02 2체인 2번 연달아 = 강화 자기장 5초(보통 필드를 대신) · 03 호로 썬더우드 처치 흡수 화면(보스 특성 '썬더우드의 가면' 뇌 = 첫 확정 후보)
 // 실행: node scripts/c517-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
@@ -95,6 +95,42 @@ async function useUid(page, uid) {
   await wait(400);
 }
 
+const ABSORB = (pageUrl) => async (page) => {
+  await page.goto(pageUrl);
+  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(async () => {
+    const g = await import('/src/game.ts');
+    const tut = await import('/src/engine/tutorial.ts');
+    const x = await import('/src/engine/expedition/index.ts');
+    const ab = await import('/src/engine/absorb/index.ts');
+    const bo = await import('/src/data/bosses/index.ts');
+    const rng = await import('/src/engine/rng.ts');
+    const slots = await import('/src/saveSlots.ts');
+    const now = Date.now();
+    const s = g.newSaveData('hollow', now);
+    s.name = '호영'; s.gender = 'male'; s.help.tutorialSeen = true;
+    for (const id of tut.GUIDE_IDS) s.help.guides[id] = 'done';
+    s.nest.hunger = 30; s.nest.condition = 90;
+    const exp = x.createExpedition({ factionId: 'hollow', seed: 5, hunger: 30, condition: 90, risk: 20, deck: ['prey-nest-a', 'prey-nest-a', 'rest-a'], build: s.build, evolution: s.evolution });
+    const boss = bo.getBoss('forest-lord');
+    exp.absorbOffer = ab.buildOffer(rng.createRng(1), boss.enemy, exp.build, { status: 'won', finisher: null, chain3Count: 0, weakChain3Count: 0 }, 0, boss.trait, 1, x.offerElementsOf('forest-lord', boss.enemy.element));
+    exp.phase = 'absorb';
+    s.activeExpedition = x.serializeExpedition(exp, 1, now);
+    s.lastScreen = 'expedition';
+    slots.writeSlotSave(localStorage, s, 1);
+    slots.touchSlot(localStorage, 1, now);
+    window.__offer = exp.absorbOffer.candidates;
+  });
+  const cand = await page.evaluate(() => window.__offer);
+  await page.goto(pageUrl);
+  await wait(1500);
+  const cont = page.getByRole('button', { name: '이어하기' });
+  if (await cont.count()) await cont.click({ timeout: 5000 });
+  await page.waitForSelector('.bha-absorb__go', { timeout: 8000 }).catch(() => {});
+  await wait(800);
+  return cand;
+};
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = await startServer();
@@ -103,39 +139,41 @@ async function useUid(page, uid) {
   const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, `${name}.png`) }); proof.shots.push(`${name}.png`); };
   const page = await browser.newPage(PC);
   page.on('pageerror', (e) => proof.errors.push(e.message));
-  const st = () => page.evaluate(() => { const s = window.__bhaCombat; return { fieldCount: s.evo.stacks.fieldCount?.n ?? 0, field: s.evo.stacks.field?.n ?? 0, storm: (s.evo.buffs.storm?.until ?? 0) > s.tick ? s.evo.buffs.storm.value : 0, magicCut: s.evo.buffs.storm ? 1 : 0 }; });
-  /** 2체인(family-a) + 3체인(family-c)을 바에 놓고 차례로 눌러 쓴다 → 필드 1번 */
-  const field = async () => {
-    const uids = await page.evaluate(() => {
+  const st = () => page.evaluate(() => { const s = window.__bhaCombat; const ts = s.params.tickSeconds; return { field: s.evo.stacks.field?.n ?? 0, fieldLeft: s.evo.stacks.field?.exp?.[0] ? +((s.evo.stacks.field.exp[0] - s.tick) * ts).toFixed(2) : 0, storm: (s.evo.buffs.storm?.until ?? 0) > s.tick ? s.evo.buffs.storm.value : 0, stormLeft: s.evo.buffs.storm ? +((s.evo.buffs.storm.until - s.tick) * ts).toFixed(2) : 0 }; });
+  /** 바를 비우고 블록을 놓는다 → uid 목록 */
+  const put = async (fams) => {
+    const uids = await page.evaluate((fams) => {
       const s = window.__bhaCombat;
       s.tray = [];
-      const out = [];
-      for (const f of ['family-a', 'family-a', 'family-c', 'family-c', 'family-c']) { const uid = s.nextUid++; s.tray.push({ uid, kind: 'skill', traitId: 'basic-skill', family: f, element: null }); out.push(uid); }
-      return out;
-    });
+      return fams.map((f) => { const uid = s.nextUid++; s.tray.push({ uid, kind: 'skill', traitId: 'basic-skill', family: f, element: null }); return uid; });
+    }, fams);
     await wait(300);
-    await useUid(page, uids[0]);
-    await useUid(page, uids[2]);
+    return uids;
   };
   try {
     await seed(page, srv.url, 't4:thunder:special', 't3:thunder');
     await battle(page);
-    await field();
-    proof.checks.after1 = await st();
-    // 필드가 끝날 만큼 기다린 뒤(동시에 겹치지 않게) 2번째
-    await page.evaluate(() => { const s = window.__bhaCombat; s.evo.stacks.field = { n: 0, exp: [] }; });
-    await field();
-    proof.checks.after2 = await st();
-    await wait(250);
+    // ① 2체인 → 3체인 = 보통 필드
+    const u1 = await put(['family-a', 'family-a', 'family-c', 'family-c', 'family-c']);
+    await useUid(page, u1[0]);
+    await useUid(page, u1[2]);
+    proof.checks.normal = await st();
+    proof.checks.marks1 = await marks(page);
+    await shot(page, '01-tormenta-field-2to3');
+    // ② 2체인 2번 연달아 = 강화 필드 (보통 필드를 대신)
+    const u2 = await put(['family-a', 'family-a', 'family-c', 'family-c']);
+    await useUid(page, u2[0]);
+    await useUid(page, u2[2]);
+    proof.checks.storm = await st();
     proof.checks.marks2 = await marks(page);
-    proof.checks.title2 = await page.locator('.bha-mark').evaluateAll((els) => els.map((e) => e.getAttribute('title') || e.getAttribute('aria-label') || ''));
-    await shot(page, '01-tormenta-count-2of3');
-    await page.evaluate(() => { const s = window.__bhaCombat; s.evo.stacks.field = { n: 0, exp: [] }; });
-    await field();
-    proof.checks.after3 = await st();
-    await wait(250);
-    proof.checks.marks3 = await marks(page);
-    await shot(page, '02-tormenta-storm-on');
+    await shot(page, '02-tormenta-storm-2x2');
+    await page.close();
+    // ③ 썬더우드 처치 흡수 화면
+    const p3 = await browser.newPage(PC);
+    p3.on('pageerror', (e) => proof.errors.push(e.message));
+    proof.checks.forestLordOffer = await ABSORB(srv.url)(p3);
+    proof.checks.absorbCards = await p3.locator('.bha-absorb').first().evaluate((e) => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 300)).catch(() => null);
+    await shot(p3, '03-forest-lord-absorb-thunder');
   } catch (err) {
     proof.errors.push(String(err && err.stack || err));
   } finally {

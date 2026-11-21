@@ -401,7 +401,7 @@ describe('사신 추성 (h4:hunter, 히든 사냥꾼) — 전투', () => {
 describe('사신 공화 (h4:void, 히든 허무형)', () => {
   const n = N('h4:void');
   const EX = { abilityEffects: { execute: { line: 0.08, eliteMult: 1.5 } } };
-  it('바 맨 앞 2칸 공허 블록 · 3체인 1초 안 2번 = 공허 +1 · 2개당 블록 처형선 +1%(최대 30%) · 선 아래면 켜지고 누르면 처형 · 강적은 꺼짐 · 원정 유지', () => {
+  it('바 맨 앞 2칸 허무 블록 · 3체인 1초 안 2번 = 허무 +1(C.517 표시 이름 공허 → 허무) · 2개당 블록 처형선 +1%(최대 30%) · 선 아래면 켜지고 누르면 처형 · 강적은 꺼짐 · 원정 유지', () => {
     const s = mk({ ...EX, enemyImmortal: false, evo: evo('h4:void') });
     expect(s.tray.filter((b) => b.fixed && b.traitId === 'evo:nil').length).toBe(n.fixed);
     for (let k = 0; k < 2; k++) {

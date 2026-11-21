@@ -1,11 +1,14 @@
 // C.517 마스터 11-21 수정(docs/drafts/evo-impl-1121.md 2절, provisional):
-// 토르멘타 강화 필드 = 필드를 만든 누적 횟수 3번마다(끊김·초기화 없음, 켜지면 0 — 옛 C.515 '3개 동시') · 브라사 화상 = 공용 화상 값(석양홍과 같은 8초·+8%)
+// 토르멘타(사용자 11-21 "필드 한 5초로 할까" / "아니 강화지 강화필드,,"): 보통 필드 = 2→3체인 5초 · 강화 필드 = 2체인 2번 연달아 5초 · 켜진 동안 다시 = 시간만 새로 · 레스렉시온 7초·−25%
+// (초안 '필드 누적 3번마다'는 사용자 지시로 취소) · 브라사 화상 = 공용 화상 값(석양홍과 같은 8초·+8%) · 공화 스택 '공허' → '허무' · 썬더우드 보스 특성 = 뇌
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
 import { getForm } from '../src/data/evolution';
 import { evoFormEntry } from '../src/data/evolution/uniques';
+import { getTrait } from '../src/data/traits';
+import { getBoss } from '../src/data/bosses';
 import {
   BASIC_SKILL_ID, applyInput, createCombat, drainCombatEvents, evoStat, statusMarksOf, step, ticksOf,
   type Block, type CombatEvent, type CombatParams, type CombatSkill, type CombatState,
@@ -44,54 +47,81 @@ const libNow = (s: CombatState) => {
 const procOf = (evs: CombatEvent[], text: string) => evs.some((e) => e.kind === 'evo-proc' && e.text === text);
 const markOf = (s: CombatState, key: string) => statusMarksOf(s, 'hollow').find((m) => m.key === key);
 
-describe('토르멘타 — 강화 필드 = 필드 누적 3번마다 (마스터 11-21)', () => {
+describe('토르멘타 — 보통 필드 2→3체인 5초 · 강화 필드 2체인 2번 연달아 5초 (사용자 11-21)', () => {
   const n = N('t4:thunder:special');
-  /** 2→3 으로 필드 1번 만들고, 필드가 다 끝날 만큼(필드 초 + 1초) 기다린다 — 동시에 겹치지 않게 */
-  const makeField = (s: CombatState, fieldSeconds: number) => {
-    useChain(s, 2);
-    const evs = useChain(s, 3).evs;
-    tick(s, ticksOf(s.params, fieldSeconds + 1));
-    return evs;
-  };
-  it('필드 2번(시간 간격 넓게)이면 강화 없음 · 누적 칩 2/3 · 3번째에 강화 켜짐 · 누적 0', () => {
+  it('2체인 2번 연달아 → 강화 필드 · 사이에 다른 블록이면 없음 · 2체인 3번 = 강화 1번(4번째에 다시)', () => {
     const s = mk({ evo: evo('t4:thunder:special') });
-    expect(procOf(makeField(s, n.fieldSeconds!), '자기장!')).toBe(true);
-    expect(procOf(makeField(s, n.fieldSeconds!), '강화 자기장!')).toBe(false);
-    expect(s.evo!.stacks.field!.n).toBe(0); // 2번째 필드도 이미 끝남 — 동시에 있지 않다
-    expect(s.evo!.buffs.storm?.until ?? 0).toBeLessThanOrEqual(s.tick);
-    const chip = markOf(s, 'evo-s-fieldCount')!;
-    expect(chip.value).toBe('2'); // 칩 숫자 = 누적, 설명 = n/3 (스택 칩 공용 형식)
-    expect(chip.title).toContain(`2/${n.stormAt}`);
     useChain(s, 2);
-    expect(procOf(useChain(s, 3).evs, '강화 자기장!')).toBe(true);
-    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.stormSeconds!));
-    expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.magicCut!, 6);
-    expect(s.evo!.stacks.fieldCount!.n).toBe(0);
-    expect(markOf(s, 'evo-s-fieldCount')).toBeUndefined();
-    expect(markOf(s, 'evo-b-storm')?.on).toBe('foe');
-  });
-  it('끊김·초기화 없음: 2체인→3체인 사이에 다른 블록을 써도, 오래 기다려도 누적은 그대로', () => {
-    const s = mk({ evo: evo('t4:thunder:special') });
-    makeField(s, n.fieldSeconds!);
     useChain(s, 1);
-    useChain(s, 3);
-    tick(s, ticksOf(s.params, 30));
-    expect(s.evo!.stacks.fieldCount!.n).toBe(1);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(false);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(true);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(false);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(true);
   });
-  it('레스렉시온 중에도 같은 규칙 — 누적 3번째에 강화 5초 · 마법방어 −25%', () => {
+  it('강화가 켜지면 보통 필드를 대신(보통 필드 지움) · 강화 중 다시 채우면 시간만 새로(세기 그대로)', () => {
+    const s = mk({ evo: evo('t4:thunder:special') });
+    useChain(s, 2);
+    useChain(s, 3);
+    expect(s.evo!.stacks.field!.n).toBe(1);
+    useChain(s, 2);
+    useChain(s, 2);
+    expect(s.evo!.stacks.field!.n).toBe(0);
+    expect(markOf(s, 'evo-s-field')).toBeUndefined();
+    expect(markOf(s, 'evo-b-storm')?.on).toBe('foe');
+    tick(s, ticksOf(s.params, 3));
+    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.stormSeconds! - 3));
+    useChain(s, 2);
+    useChain(s, 2);
+    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.stormSeconds!));
+    expect(s.evo!.buffs.storm!.value).toBeCloseTo(n.stormDot!, 9);
+    expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.magicCut!, 6);
+  });
+  it('옛 초안(누적 3번)·옛 C.515(3개 동시)는 없음 — 시간 간격 넓게 필드 3번이어도 강화 안 켜짐', () => {
+    const s = mk({ evo: evo('t4:thunder:special') });
+    for (let k = 0; k < 3; k++) {
+      useChain(s, 2);
+      expect(procOf(useChain(s, 3).evs, '강화 자기장!')).toBe(false);
+      tick(s, ticksOf(s.params, n.fieldSeconds! + 1));
+    }
+    expect(n.stormAt).toBeUndefined();
+    expect(s.evo!.stacks.fieldCount).toBeUndefined();
+  });
+  it('레스렉시온 중에도 같은 규칙 — 보통 7초 · 강화 7초 · 마법방어 −25%', () => {
     const s = mk({ evo: evo('t4:thunder:special'), liberationUnique: true, liberationSeconds: 300 });
     libNow(s);
-    makeField(s, n.release.fieldSeconds!);
-    makeField(s, n.release.fieldSeconds!);
-    expect(s.evo!.stacks.fieldCount!.n).toBe(2);
     useChain(s, 2);
-    expect(procOf(useChain(s, 3).evs, '강화 자기장!')).toBe(true);
-    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, n.release.stormSeconds!));
-    expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.release.magicCut!, 6);
-    expect(s.evo!.stacks.fieldCount!.n).toBe(0);
+    useChain(s, 3);
+    expect(s.evo!.stacks.field!.exp![0]! - s.tick).toBe(ticksOf(s.params, 7));
+    useChain(s, 2);
+    expect(procOf(useChain(s, 2).evs, '강화 자기장!')).toBe(true);
+    expect(s.evo!.buffs.storm!.until - s.tick).toBe(ticksOf(s.params, 7));
+    expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(0.25, 6);
   });
-  it('설명 문구가 누적 규칙', () => {
-    expect(JSON.stringify(evoFormEntry('t4:thunder:special', 'hollow')?.ability?.description)).toContain('번 만들 때마다');
+  it('설명 문구가 새 규칙', () => {
+    const d = JSON.stringify(evoFormEntry('t4:thunder:special', 'hollow')?.ability?.description);
+    expect(d).toContain('2체인을 2번 연달아');
+    expect(d).toContain('시간만 새로');
+    expect(d).not.toContain('동시');
+  });
+});
+
+describe('사신 공화 — 스택 표시 이름 공허 → 허무 (사용자 11-21 "용어는 허무로 가자")', () => {
+  it('칩 이름·작은 글자·꺼짐 안내·설명이 허무 (키는 그대로 hollow)', () => {
+    const e = evoFormEntry('h4:void', 'shinigami')!.ability!;
+    const j = JSON.stringify(e);
+    expect(j).not.toContain('공허');
+    expect(JSON.stringify(e.stacks!.hollow!.mark!.name)).toContain('허무');
+    expect(j).toContain('"proc":"허무!"');
+    expect(j).toContain('허무 2개부터 켜진다');
+  });
+});
+
+describe('썬더우드 보스 특성 = 뇌 (마스터 11-21 provisional — C.516 허무 적 전용이라 얻을 길이 없던 것)', () => {
+  it('썬더우드의 가면·문지기의 사슬 = 뇌 속성 · 설명도 뇌', () => {
+    const t = getTrait('boss-forest-lord');
+    expect(t.element).toBe('thunder');
+    expect(JSON.stringify(t.description)).toContain('뇌 속성');
+    expect(getBoss('forest-lord').enemy.element).toBe('thunder');
   });
 });
 

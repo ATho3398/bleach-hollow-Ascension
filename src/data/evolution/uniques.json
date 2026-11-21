@@ -349,15 +349,15 @@
       "shinigami": {
         "trait": "obliteration",
         "ability": {
-          "description": { "*": "바 맨 앞 {fixed}칸 = 허무 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 공허 +1(모험 동안 유지), 공허 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 허무 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
+          "description": { "*": "바 맨 앞 {fixed}칸 = 허무 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 허무 +1(모험 동안 유지), 허무 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 허무 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
           "stacks": {
-            "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "공허" } } }
+            "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "허무" } } }
           },
           "specials": {
-            "nil": { "name": { "*": "허무 블록" }, "short": "허", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock", "offNote": { "*": "공허 2개부터 켜진다 (3체인 {within}초 안 {streak}번 = 공허 +1)" } }
+            "nil": { "name": { "*": "허무 블록" }, "short": "허", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock", "offNote": { "*": "허무 2개부터 켜진다 (3체인 {within}초 안 {streak}번 = 허무 +1)" } }
           },
           "rules": [
-            { "on": "block", "chain": [3], "streak": { "count": "streak", "withinSeconds": "within" }, "do": [{ "act": "add", "stack": "hollow", "value": 1 }], "proc": "공허!" },
+            { "on": "block", "chain": [3], "streak": { "count": "streak", "withinSeconds": "within" }, "do": [{ "act": "add", "stack": "hollow", "value": 1 }], "proc": "허무!" },
             { "on": "special", "special": "nil", "do": [{ "act": "execute" }] }
           ],
           "passives": [
@@ -548,18 +548,17 @@
       "hollow": {
         "trait": "spawnCut6",
         "ability": {
-          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}(필드가 여러 개여도 같은 세기). 필드를 {stormAt}번 만들 때마다(누적) 강화 자기장 {stormSeconds}초 — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}" },
+          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}. 2체인을 2번 연달아 쓰면 {stormSeconds}초 강화 자기장(보통 필드를 대신) — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}. 켜진 동안 다시 조건을 채우면 시간만 새로(겹치지 않음)" },
           "releaseDescription": { "*": "필드 {fieldSeconds}초 · 강화 {stormSeconds}초 · 마법방어 −{magicCut%}" },
           "stacks": {
-            "field": { "seconds": "fieldSeconds", "on": "foe", "mark": { "icon": "i-fx-beam", "name": { "*": "자기장" } } },
-            "fieldCount": { "max": "stormAt", "mark": { "icon": "i-special", "name": { "*": "자기장 누적" } } }
+            "field": { "seconds": "fieldSeconds", "max": 1, "on": "foe", "mark": { "icon": "i-fx-beam", "name": { "*": "자기장" } } }
           },
           "buffs": {
             "storm": { "on": "foe", "mark": { "icon": "i-special", "name": { "*": "강화 자기장" } } }
           },
           "rules": [
-            { "on": "block", "chain": [3], "after": { "chain": [2] }, "do": [{ "act": "add", "stack": "field", "value": 1 }, { "act": "add", "stack": "fieldCount", "value": 1 }], "proc": "자기장!" },
-            { "on": "block", "chain": [3], "after": { "chain": [2] }, "need": [{ "stack": "fieldCount", "atLeast": "stormAt" }], "do": [{ "act": "buff", "buff": "storm", "value": "stormDot", "seconds": "stormSeconds" }, { "act": "clear", "stack": "fieldCount" }, { "act": "clear", "stack": "field" }], "proc": "강화 자기장!" },
+            { "on": "block", "chain": [3], "after": { "chain": [2] }, "do": [{ "act": "add", "stack": "field", "value": 1 }], "proc": "자기장!" },
+            { "on": "block", "chain": [2], "streak": { "count": "streak" }, "do": [{ "act": "buff", "buff": "storm", "value": "stormDot", "seconds": "stormSeconds" }, { "act": "clear", "stack": "field" }], "proc": "강화 자기장!" },
             { "on": "every", "seconds": "dotEvery", "need": [{ "stack": "field" }, { "buff": "storm", "none": true }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "fieldDot", "dot": true }] },
             { "on": "every", "seconds": "dotEvery", "need": [{ "buff": "storm" }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "stormDot", "dot": true }] }
           ],

@@ -1,38 +1,34 @@
 {
   "shots": [
-    "01-tormenta-count-2of3.png",
-    "02-tormenta-storm-on.png"
+    "01-tormenta-field-2to3.png",
+    "02-tormenta-storm-2x2.png",
+    "03-forest-lord-absorb-thunder.png"
   ],
   "errors": [],
   "checks": {
-    "after1": {
-      "fieldCount": 1,
+    "normal": {
       "field": 1,
+      "fieldLeft": 4.2,
       "storm": 0,
-      "magicCut": 0
+      "stormLeft": 0
     },
-    "after2": {
-      "fieldCount": 2,
-      "field": 1,
-      "storm": 0,
-      "magicCut": 0
-    },
-    "marks2": [
-      "evo-s-fieldCount:2",
+    "marks1": [
       "evo-s-field:1"
     ],
-    "title2": [
-      "자기장 누적 2/3개",
-      "자기장 1개 (0.9초)"
-    ],
-    "after3": {
-      "fieldCount": 0,
+    "storm": {
       "field": 0,
+      "fieldLeft": 0,
       "storm": 0.02,
-      "magicCut": 1
+      "stormLeft": 4.2
     },
-    "marks3": [
+    "marks2": [
       "evo-b-storm:2"
-    ]
+    ],
+    "forestLordOffer": [
+      "boss-forest-lord",
+      "t-thunder-a",
+      "t-water-a"
+    ],
+    "absorbCards": null
   }
 }

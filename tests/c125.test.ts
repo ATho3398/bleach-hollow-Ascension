@@ -63,11 +63,13 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
   it('속성이 바뀌는 보스(썬더우드)는 그 속성들 안에서, 보스 특성은 확정 후보', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
     expect(els.sort()).toEqual(['kyo', 'thunder', 'water']);
-    // GDD 8-3 v6.154 (사용자 2026-11-21 "허무형은 적만 존재하고 블록흡수는 안되게"): 바뀌는 속성의 허무 블록은 후보에서 뺀다 — 썬더우드 보스 특성(허무)도 확정 후보가 아니다.
-    // 옛 기대 = 첫 후보가 보스 특성, 후보 속성 ⊂ {kyo, thunder, water}
+    // GDD 8-3 v6.154 (사용자 2026-11-21 "허무형은 적만 존재하고 블록흡수는 안되게"): 바뀌는 속성의 허무 블록은 후보에서 뺀다.
+    // C.516 기대 = 썬더우드 보스 특성(허무)도 확정 후보가 아님 → C.517 마스터 11-21(provisional): 보스 특성 속성 = 뇌 → 다시 첫 후보(확정), 허무 블록 후보는 없음.
+    // 옛 기대(C.125) = 첫 후보가 보스 특성, 후보 속성 ⊂ {kyo, thunder, water}
+    expect(getTrait(getBoss('forest-lord').trait!).element).toBe('thunder');
     for (let seed = 1; seed <= 20; seed++) {
       const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 0, getBoss('forest-lord').trait, 1, els);
-      expect(o.candidates).not.toContain(getBoss('forest-lord').trait);
+      expect(o.candidates[0]).toBe(getBoss('forest-lord').trait);
       expect(o.candidates.length).toBeGreaterThan(0);
       for (const id of o.candidates) expect(['thunder', 'water']).toContain(getTrait(id).element);
     }
