@@ -86,7 +86,13 @@ export function attackCueOf(e: CombatEvent, top: number, familyFx?: (familyId: s
       // 혈쇄참월 분신 한 대 (C.460): 내 몸 모션 없음 — 화면이 몸 그림 반투명 사본만 낸다
       if (e.kitClone) return null;
       // 마무리 평타 연출 (C.473, GDD 12-4 v6.102): 종이인형 몸은 데이터 동작(kitMotion — 무월 '특수1' 4.1초)을 제 속도로, 그림 없는 몸은 기존 공격 연출(타격 시각만 맞춤)
-      return e.damage > 0 ? { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}), ...(e.kitMotion ? { rigMotion: e.kitMotion } : {}) } : null;
+      if (e.damage <= 0) return null;
+      {
+        const cue: AttackCue = { side: 'player', tier: 'basic', guarded: false, ...(e.rate && e.rate !== 1 ? { motionRate: e.rate } : {}), ...(e.kitMotion ? { rigMotion: e.kitMotion } : {}) };
+        // 진화체 특수 평타 (C.514 석양홍 「석양」): 데이터가 고른 계열·단계의 이미 연결된 도트 이펙트를 그 속성 색으로 재사용 (새 이펙트 연결 아님)
+        if (e.evoShotFx) applyFamilySpec(cue, e.evoShotFx.family, e.evoShotFx.stage, familyFx?.(e.evoShotFx.family, e.evoShotFx.stage), e.evoShotElement ?? null);
+        return cue;
+      }
     case 'block': {
       if (e.damage <= 0 || e.block === 'void') return null;
       if (e.block === 'combo') return { side: 'player', tier: 'special', guarded: false, ult: true, instant: true, chain: e.chain };

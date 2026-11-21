@@ -4,7 +4,7 @@
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
-  blockDamage, blockEffect, canGuard, canLiberate, canUseGear, canUseItem, halted, maxChain, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
+  blockDamage, blockEffect, canGuard, chainCapOf, canLiberate, canUseGear, canUseItem, halted, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { evoSpecialOf, evoSpecialUsable } from './evoUnique';
@@ -44,7 +44,7 @@ function cells(s: CombatState): Cell[] {
 const roleOf = (s: CombatState, b: Block) => blockEffect(s, b)?.skill.role ?? null;
 
 /** 그 블록을 클릭하면 함께 발동할 블록 수 (체인 단계) */
-const groupSize = (s: CombatState, c: Cell) => chainGroup(s.tray, c.i, maxChain(s.params)).length;
+const groupSize = (s: CombatState, c: Cell) => chainGroup(s.tray, c.i, chainCapOf(s)).length;
 
 /** 바에서 가장 길게 붙은 같은 특성 덩어리 길이 (최대 체인으로 자른다) */
 function bestRun(t: Tray, top: number): number {
@@ -60,7 +60,7 @@ function bestRun(t: Tray, top: number): number {
 /** 그 칸을 클릭해 쓴 뒤의 바 (원본은 건드리지 않는다): 함께 발동하는 칸이 빠지고 뒤 블록이 당겨진다 */
 function trayAfterUse(s: CombatState, i: number): Tray {
   const b = s.tray[i]!;
-  const gone = new Set(b.kind === 'skill' ? chainGroup(s.tray, i, maxChain(s.params)) : [i]);
+  const gone = new Set(b.kind === 'skill' ? chainGroup(s.tray, i, chainCapOf(s)) : [i]);
   return s.tray.filter((_, k) => !gone.has(k));
 }
 
@@ -94,7 +94,7 @@ export function botInput(s: CombatState, opt: BotOptions = {}): CombatInput | nu
   const ofRole = (role: string) => skills.filter((c) => roleOf(s, c.b) === role).sort((a, b) => groupSize(s, b) - groupSize(s, a));
   const use = (c: Cell): CombatInput => ({ type: 'use', cell: c.i });
   const hasPattern = hasSpecialActions(s.enemy.def.pattern);
-  const top = maxChain(p);
+  const top = chainCapOf(s);
 
   // 0. 해방: 게이지가 차면 바로 (GDD 83장)
   if (opt.liberate !== false && canLiberate(s)) return { type: 'liberate' };

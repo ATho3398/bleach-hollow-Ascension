@@ -6,7 +6,7 @@
 import type { EvoAbilityDef, EvoAction, EvoNeed, EvoNum, EvoPassive, EvoRule, EvoSource, EvoSpecialDef, EvoStat, EvoTrigger } from '../../data/evolution/uniques';
 import type { PerFaction } from '../../data/schema';
 import type { CombatParams, CombatState } from './combat';
-import type { Block } from './tray';
+import { chainGroupsOf, type Block } from './tray';
 
 /** 전투에 싣는 고유 능력 (applyEvolutionToParams 가 채운다). nums = 평소 수치, relNums = 레스렉시온/만해 중 수치 */
 export interface EvoParams {
@@ -51,6 +51,18 @@ export interface EvoState {
   critDmgNow?: number;
   /** 처형한 수 */
   executes: number;
+  /** 굳음 (C.514): 바 묶음(블록 uid 를 이은 키) → 그 묶음이 처음 모인 틱 */
+  groups: Record<string, number>;
+  /** 바로 앞에 쓴 블록 (규칙 거르기 after — C.515) */
+  lastBlock?: { kind: EvoCtx['kind']; chain: number; element: string | null };
+  /** 시간 보호막 조각 (shield seconds — C.515): 남은 양·끝나는 틱. 막을 땐 먼저 끝나는 조각부터 깎인다 */
+  shields: { left: number; until: number }[];
+  /** 다음에 생기는 블록 속성 강제 대기 (forceNext — C.515) */
+  forceNext: { element: string; n: number } | null;
+  /** 이번 평타 치명 확률 + (basicPre basicCrit — 상한도 같이, C.515) */
+  basicCritNow: number;
+  /** 적 공격 시계 늦추기 누적 (foeAttackSlow — C.515) */
+  foeSlowAcc: number;
 }
 
 /** 규칙 실행 맥락 */
@@ -73,9 +85,28 @@ export interface EvoCtx {
   forceCrit: boolean;
   ignore: number;
   chargeValues: Record<string, number>;
+  /** hurt·shieldHit: 강공격 피해였다 (C.515) */
+  heavy: boolean;
+  /** 이 규칙에서 방금 넣은 추가 피해 (heal of 'hit' — C.515) */
+  hitDamage: number;
   block?: Block;
   special?: string;
   timer?: string;
+  /** 블록 계열 id (block·blockPre) */
+  family: string | null;
+  /** 굳은 묶음을 썼다 (block·blockPre, C.514) */
+  hardened: boolean;
+  /** basicShot (basicPre): 이 평타가 특수 공격 — 피해 ×mult · 속성 · 능력치 분류 · 화면 도트 이펙트 · 이름 (C.514) */
+  shot?: EvoShot;
+}
+
+/** 특수 평타 (C.514 석양홍) */
+export interface EvoShot {
+  mult: number;
+  element: string | null;
+  category: 'physical' | 'special' | null;
+  fx: { family: string; stage: number } | null;
+  name: string;
 }
 
 /** combat.ts 가 등록하는 엔진 안쪽 동작 */
@@ -92,6 +123,8 @@ export interface EvoApi {
   unitOf(s: CombatState, basis: 'basic' | 'block' | 'void', element: string | null, ignore: number): number;
   /** 추가 피해를 넣는다 (치명·특성 배율 포함, 화면 사건). exact = 이미 정해진 피해 그대로(치명·배율 다시 안 붙임 — raw·last) */
   strike(s: CombatState, damage: number, text: string, element: string | null, exact?: boolean): void;
+  /** 지속 피해로 넣는다 (dot 사건 — 독 숫자처럼, C.515) */
+  dot(s: CombatState, damage: number): void;
   /** 바의 index 블록이 지금 무슨 속성인가 (허 = void) */
   elementOf(s: CombatState, b: Block): string | null;
   /** 처형 (강적·보스 제외는 부르는 쪽이 본다) */
@@ -99,6 +132,8 @@ export interface EvoApi {
   /** 해방 게이지 + */
   addGauge(s: CombatState, v: number): void;
   ticksOf(p: CombatParams, seconds: number): number;
+  /** 지금 체인 상한 (진화체 chainExtend 포함 — 굳음 묶음 계산용) */
+  chainCap(s: CombatState): number;
 }
 
 let API: EvoApi | null = null;
@@ -121,7 +156,8 @@ export function newEvoState(p: CombatParams): EvoState | undefined {
   if (!ev && !p.abilityEffects.execute) return undefined;
   const st: EvoState = {
     stacks: {}, buffs: {}, charges: {}, counters: [], clocks: [], streaks: [], timers: {}, procs: {},
-    shieldAbsorbed: 0, extraBonus: 0, fromEvo: false, forceCrit: false, executes: 0,
+    shieldAbsorbed: 0, extraBonus: 0, fromEvo: false, forceCrit: false, executes: 0, groups: {},
+    shields: [], forceNext: null, basicCritNow: 0, foeSlowAcc: 0,
   };
   for (const [name, def] of Object.entries(ev?.ability.stacks ?? {})) {
     const start = def.carry ? Math.max(0, ev?.carry?.[name] ?? 0) : 0;
@@ -148,7 +184,7 @@ export function evoNum(s: Pick<CombatState, 'params' | 'liberation'>, v: EvoNum 
 const isElite = (s: CombatState): boolean => s.enemy.def.class === 'elite' || !!s.boss;
 
 function emptyCtx(): EvoCtx {
-  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, noDamage: false, forceCrit: false, ignore: 0, chargeValues: {} };
+  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, noDamage: false, forceCrit: false, ignore: 0, chargeValues: {}, family: null, hardened: false, heavy: false, hitDamage: 0 };
 }
 
 function specialIdOf(b: Block | undefined): string | null {
@@ -184,10 +220,11 @@ function sourceValue(s: CombatState, name: string, ctx: EvoCtx): number {
     case 'stack': return st?.stacks[key!]?.n ?? 0;
     case 'buff': {
       const b = st?.buffs[key!];
-      return b && b.until > s.tick ? b.value : 0;
+      return b && b.until >= s.tick ? b.value : 0; // 끝나는 틱까지 (그 틱 evoTick 이 every 규칙 뒤에 지운다 — C.515)
     }
     case 'charge': return st?.charges[key!]?.n ?? 0;
     case 'chargeValue': return ctx.chargeValues[key!] ?? 0;
+    case 'maxHp': return s.player.maxHp;
   }
   return 0;
 }
@@ -207,6 +244,10 @@ function needsOk(s: CombatState, list: EvoNeed[] | undefined, ctx: EvoCtx): bool
     else if (n.charge) v = sourceValue(s, `charge:${n.charge}`, ctx);
     else if (n.special) v = s.tray.filter((b) => specialIdOf(b) === n.special).length;
     if (v !== null) {
+      if (n.none) {
+        if (v > 0) return false;
+        continue;
+      }
       if (n.atLeast !== undefined && v < evoNum(s, n.atLeast)) return false;
       if (n.below !== undefined && !(v < evoNum(s, n.below))) return false;
       if (n.atLeast === undefined && n.below === undefined && v <= 0) return false;
@@ -229,10 +270,17 @@ function stackDef(s: CombatState, name: string) {
   return s.params.evo?.ability.stacks?.[name];
 }
 
+/** 스택 상한 (max × maxPer — C.515 '최대 체력 50%') */
+function stackMax(s: CombatState, name: string): number {
+  const def = stackDef(s, name);
+  if (def?.max === undefined) return Infinity;
+  return evoNum(s, def.max, Infinity) * (def.maxPer ? sourceValue(s, def.maxPer, emptyCtx()) : 1);
+}
+
 function addStack(s: CombatState, name: string, k: number): void {
   const st = s.evo!.stacks[name] ??= { n: 0 };
   const def = stackDef(s, name);
-  const max = def?.max !== undefined ? evoNum(s, def.max, Infinity) : Infinity;
+  const max = stackMax(s, name);
   if (k <= 0) return;
   if (def?.overflow === 'reset' && st.n >= max) {
     st.n = 0;
@@ -317,9 +365,12 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         const cur = s.player.shield ?? 0;
         if (cur <= 0) ev.shieldAbsorbed = 0;
         s.player.shield = Math.min(Math.max(cur, max * v(a.cap)), cur + max * val());
+        // 시간 보호막 (C.515 무랄라·토르투가): 이번에 더한 양이 seconds 뒤 사라진다(남은 양 = shieldEnd 의 amount)
+        const added = s.player.shield - cur;
+        if (a.seconds !== undefined && added > 0) ev.shields.push({ left: added, until: s.tick + Math.max(1, api().ticksOf(s.params, v(a.seconds))) });
         break;
       }
-      case 'shieldCut': s.player.shield = Math.max(0, (s.player.shield ?? 0) - s.player.maxHp * val()); break;
+      case 'shieldCut': s.player.shield = Math.max(0, (s.player.shield ?? 0) - s.player.maxHp * val()); fitShields(s); break;
       case 'blockMult': ctx.mult += val(); break;
       case 'blockFlat': ctx.flat += val(); break;
       case 'blockCrit': ctx.critBonus += val(); break;
@@ -327,11 +378,22 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
       case 'noDamage': ctx.noDamage = true; break;
       case 'basicMult': ctx.mult += val(); break;
       case 'forceCrit': ctx.forceCrit = true; break;
+      case 'basicCrit': ctx.critBonus += val(); break;
+      case 'forceNext': {
+        const cap = a.max !== undefined ? v(a.max, Infinity) : Infinity;
+        const cur = ev.forceNext && ev.forceNext.element === a.element ? ev.forceNext.n : 0;
+        ev.forceNext = { element: a.element!, n: Math.min(cap, cur + Math.max(1, Math.round(v(a.value, 1)))) };
+        break;
+      }
       case 'ignoreDef': ctx.ignore = Math.max(ctx.ignore, val()); break;
       case 'hit': {
         const basis = a.basis ?? 'basic';
-        const amount = basis === 'raw' ? val() : basis === 'last' ? ctx.damage * val() : api().unitOf(s, basis, a.element ?? null, v(a.ignoreDef)) * val();
-        if (amount > 0) api().strike(s, amount, rule.proc ?? '', a.element ?? null, basis === 'raw' || basis === 'last');
+        let amount = basis === 'raw' ? val() : basis === 'last' ? ctx.damage * val() : basis === 'foeMaxHp' ? s.enemy.maxHp * val() : api().unitOf(s, basis, a.element ?? null, v(a.ignoreDef)) * val();
+        if (a.poison) amount *= 1 + (s.params.abilityEffects.evoPoisonDot ?? 0); // 4단계 특성 '독 지속 피해 +' (C.515 비보라)
+        ctx.hitDamage = amount;
+        if (amount <= 0) break;
+        if (a.dot) api().dot(s, amount);
+        else api().strike(s, amount, rule.proc ?? '', a.element ?? null, basis === 'raw' || basis === 'last' || basis === 'foeMaxHp');
         break;
       }
       case 'basics': {
@@ -349,7 +411,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         break;
       }
       case 'heal': {
-        const base = a.of === 'damage' ? ctx.damage : s.player.maxHp;
+        const base = a.of === 'damage' ? ctx.damage : a.of === 'hit' ? ctx.hitDamage : s.player.maxHp;
         const heal = Math.min(s.player.maxHp - s.player.hp, base * val());
         if (heal > 0) {
           s.player.hp += heal;
@@ -398,6 +460,9 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
           api().execute(s);
         }
         break;
+      case 'basicShot':
+        ctx.shot = { mult: val(), element: a.element ?? null, category: a.category ?? null, fx: a.fx ?? null, name: rule.proc ?? '' };
+        break;
     }
   }
 }
@@ -417,7 +482,18 @@ function filtersOk(s: CombatState, r: EvoRule, ctx: EvoCtx): boolean {
     if (r.chain && !r.chain.includes(ctx.chain)) return false;
     if (r.crit !== undefined && ctx.crit !== r.crit) return false;
     if (r.echo !== undefined && ctx.echo !== r.echo) return false;
+    if (r.family && !(ctx.family && r.family.includes(ctx.family))) return false;
+    if (r.hardened !== undefined && ctx.hardened !== r.hardened) return false;
+    if (r.after) {
+      // 바로 앞에 쓴 블록 (C.515 토르멘타 '2체인 바로 다음 3체인')
+      const prev = s.evo?.lastBlock;
+      if (!prev) return false;
+      if (!(r.after.kind ?? ['skill']).includes(prev.kind as 'skill')) return false;
+      if (r.after.chain && !r.after.chain.includes(prev.chain)) return false;
+      if (r.after.element && !(prev.element && r.after.element.includes(prev.element))) return false;
+    }
   }
+  if (r.heavy !== undefined && ctx.heavy !== r.heavy) return false;
   return needsOk(s, r.need, ctx);
 }
 
@@ -477,12 +553,7 @@ export function evoTick(s: CombatState): void {
   const ev = s.params.evo;
   const st = s.evo;
   if (!ev || !st) return;
-  for (const x of Object.values(st.stacks)) {
-    if (!x.exp || x.exp.length === 0) continue;
-    while (x.exp.length > 0 && x.exp[0]! <= s.tick) x.exp.shift();
-    x.n = x.exp.length;
-  }
-  for (const [k, b] of Object.entries(st.buffs)) if (b.until <= s.tick) delete st.buffs[k];
+  // every 규칙이 먼저 (C.515): 끝나는 틱에도 그 스택·버프가 있는 것으로 센다 — 2초 필드 = 1초마다 2번
   const rules = ev.ability.rules ?? [];
   for (let i = 0; i < rules.length; i++) {
     const r = rules[i]!;
@@ -498,11 +569,101 @@ export function evoTick(s: CombatState): void {
     runActions(s, r, ctx);
     proc(s, r.proc, 0, !r.do.some((a) => a.act === 'hit'));
   }
+  for (const x of Object.values(st.stacks)) {
+    if (!x.exp || x.exp.length === 0) continue;
+    while (x.exp.length > 0 && x.exp[0]! <= s.tick) x.exp.shift();
+    x.n = x.exp.length;
+  }
+  for (const [k, b] of Object.entries(st.buffs)) if (b.until <= s.tick) delete st.buffs[k];
+  if (ev.ability.harden) updateHarden(s);
+  // 시간 보호막이 다 됨 (C.515): 남은 양을 보호막에서 빼고 shieldEnd (amount = 남은 양)
+  if (st.shields.length > 0) {
+    fitShields(s);
+    const due = st.shields.filter((x) => x.until <= s.tick);
+    if (due.length > 0) {
+      st.shields = st.shields.filter((x) => x.until > s.tick);
+      for (const x of due) {
+        const left = Math.min(x.left, s.player.shield ?? 0);
+        s.player.shield = Math.max(0, (s.player.shield ?? 0) - left);
+        if (left > 0 && s.status === 'playing') fire(s, 'shieldEnd', { ...emptyCtx(), amount: left });
+      }
+    }
+  }
   for (const [name, at] of Object.entries(st.timers)) {
     if (at > s.tick || s.status !== 'playing') continue;
     delete st.timers[name];
     fire(s, 'timer', { ...emptyCtx(), timer: name });
   }
+}
+
+// ── 굳음 (C.514 만리장) ──
+
+/** 바의 발동 묶음 중 굳음 대상(harden.chain 개 · element 블록만)의 키 → 칸 */
+function hardenCandidates(s: CombatState): { key: string; start: number; length: number }[] {
+  const h = s.params.evo?.ability.harden;
+  if (!h) return [];
+  const out: { key: string; start: number; length: number }[] = [];
+  for (const g of chainGroupsOf(s.tray, api().chainCap(s))) {
+    if (g.length !== h.chain) continue;
+    const blocks = s.tray.slice(g.start, g.start + g.length);
+    if (blocks.some((b) => b.kind !== 'skill' || b.fixed || specialIdOf(b))) continue;
+    if (h.element && !blocks.every((b) => h.element!.includes(api().elementOf(s, b) ?? ''))) continue;
+    out.push({ key: blocks.map((b) => b.uid).join(','), ...g });
+  }
+  return out;
+}
+
+/** 매 틱: 새로 모인 묶음은 지금 틱을 기억, 흩어진 묶음은 잊는다 · 굳은 묶음 수를 harden.stack 에 */
+function updateHarden(s: CombatState): void {
+  const st = s.evo!;
+  const h = s.params.evo!.ability.harden!;
+  const seen: Record<string, number> = {};
+  let hard = 0;
+  const need = api().ticksOf(s.params, evoNum(s, h.seconds));
+  for (const c of hardenCandidates(s)) {
+    seen[c.key] = st.groups[c.key] ?? s.tick;
+    if (s.tick - seen[c.key]! >= need) hard++;
+  }
+  st.groups = seen;
+  if (h.stack) setStack(s, h.stack, hard);
+}
+
+/** 이 블록 uid 묶음이 지금 굳었나 */
+export function evoGroupHardened(s: CombatState, uids: readonly number[]): boolean {
+  const h = s.params.evo?.ability.harden;
+  const st = s.evo;
+  if (!h || !st || uids.length !== h.chain) return false;
+  const at = st.groups[uids.join(',')];
+  return at !== undefined && s.tick - at >= api().ticksOf(s.params, evoNum(s, h.seconds));
+}
+
+/** 화면: 굳은 묶음의 시작 칸들 (0부터) */
+export function evoHardenedStarts(s: CombatState): number[] {
+  if (!s.params.evo?.ability.harden || !s.evo) return [];
+  return hardenCandidates(s).filter((c) => evoGroupHardened(s, s.tray.slice(c.start, c.start + c.length).map((b) => b.uid))).map((c) => c.start);
+}
+
+/** 굳음 화면 글자 (없으면 null) */
+export function evoHardenName(p: Pick<CombatParams, 'evo'>): PerFaction<string> | string | null {
+  return p.evo?.ability.harden?.name ?? null;
+}
+
+// ── 체인 상한 넘기기 (C.514 현음) ──
+
+/** 이 진화체의 지금 체인 상한 (base = 계열 단계 기준 상한). chainExtend 가 없으면 base */
+export function evoChainCapOf(s: Pick<CombatState, 'params' | 'liberation'>, base: number): number {
+  const x = s.params.evo?.ability.chainExtend;
+  if (!x) return base;
+  const top = s.params.chainMultipliers.length + x.tiers.length;
+  return Math.max(1, Math.min(top, Math.round(evoNum(s, x.max, base))));
+}
+
+/** chain 이 계열 단계 수(top)를 넘으면 그 단계: 맨 위 단계 기술 배율 × mult, 이름. 아니면 null */
+export function evoChainTierOf(s: Pick<CombatState, 'params' | 'liberation'>, chain: number): { mult: number; name: PerFaction<string> | string } | null {
+  const x = s.params.evo?.ability.chainExtend;
+  const k = chain - s.params.chainMultipliers.length - 1;
+  const t = x && k >= 0 ? x.tiers[k] : undefined;
+  return t ? { mult: evoNum(s, t.mult, 1), name: t.name } : null;
 }
 
 /** 평타 직전: 충전 1회씩 쓰고 basicPre 규칙 → 이번 평타 배율·치명 확정·방어 무시 */
@@ -519,6 +680,7 @@ export function evoBasicPre(s: CombatState): EvoCtx | null {
   ctx.mult += st.extraBonus;
   ctx.ignore = Math.max(ctx.ignore, evoStat(s, 'ignoreDef'));
   st.forceCrit = ctx.forceCrit;
+  st.basicCritNow = ctx.critBonus;
   return ctx;
 }
 
@@ -526,14 +688,15 @@ export function evoBasicPre(s: CombatState): EvoCtx | null {
 export function evoBasicPost(s: CombatState, ctx: EvoCtx | null, damage: number): void {
   if (!ctx || !s.evo) return;
   s.evo.forceCrit = false;
+  s.evo.basicCritNow = 0;
   ctx.damage = damage;
   fire(s, 'basic', ctx);
 }
 
 /** 블록 쓰기 직전 (blockPre 규칙 → 이 블록 피해 +·평타 n회분·치명 +) */
-export function evoBlockPre(s: CombatState, info: { kind: EvoCtx['kind']; element: string | null; chain: number; block?: Block; echo?: boolean; special?: string }): EvoCtx | null {
+export function evoBlockPre(s: CombatState, info: { kind: EvoCtx['kind']; element: string | null; chain: number; block?: Block; echo?: boolean; special?: string; family?: string | null; hardened?: boolean }): EvoCtx | null {
   if (!s.params.evo || !s.evo) return null;
-  const ctx = { ...emptyCtx(), ...info, echo: !!info.echo };
+  const ctx = { ...emptyCtx(), ...info, echo: !!info.echo, family: info.family ?? null, hardened: !!info.hardened };
   fire(s, 'blockPre', ctx);
   return ctx;
 }
@@ -544,6 +707,7 @@ export function evoBlockPost(s: CombatState, ctx: EvoCtx | null, crit: boolean, 
   ctx.crit = crit;
   ctx.damage = damage;
   fire(s, 'block', ctx);
+  if (s.evo) s.evo.lastBlock = { kind: ctx.kind, chain: ctx.chain, element: ctx.element };
 }
 
 /** 바에 블록이 생겼다 */
@@ -569,17 +733,79 @@ export function evoReleaseEnd(s: CombatState): void {
   fire(s, 'releaseEnd', emptyCtx());
 }
 
-/** 보호막이 피해를 막았다 (broke = 이번에 0 이 됐다) */
-export function evoOnShield(s: CombatState, absorbed: number, broke: boolean): void {
+/** 시간 보호막 조각 합이 지금 보호막보다 크면(다른 데서 깎임) 먼저 끝나는 조각부터 줄인다 */
+function fitShields(s: CombatState): void {
+  const st = s.evo;
+  if (!st || st.shields.length === 0) return;
+  let over = st.shields.reduce((a, x) => a + x.left, 0) - (s.player.shield ?? 0);
+  if (over <= 1e-9) return;
+  st.shields.sort((a, b) => a.until - b.until);
+  for (const x of st.shields) {
+    const cut = Math.min(x.left, over);
+    x.left -= cut;
+    over -= cut;
+    if (over <= 1e-9) break;
+  }
+  st.shields = st.shields.filter((x) => x.left > 1e-9);
+}
+
+/** 보호막이 피해를 막았다 (broke = 이번에 0 이 됐다, heavy = 강공격 — C.515 토르투가) */
+export function evoOnShield(s: CombatState, absorbed: number, broke: boolean, heavy = false): void {
   const st = s.evo;
   if (!s.params.evo || !st || absorbed <= 0) return;
   st.shieldAbsorbed += absorbed;
-  fire(s, 'shieldHit', { ...emptyCtx(), amount: absorbed });
+  fitShields(s);
+  fire(s, 'shieldHit', { ...emptyCtx(), amount: absorbed, heavy });
   if (broke) {
     const total = st.shieldAbsorbed;
     st.shieldAbsorbed = 0;
     fire(s, 'shieldBreak', { ...emptyCtx(), amount: total });
   }
+}
+
+/** 내 체력이 줄었다 (보호막 뒤 실제로 잃은 양 — C.515 추파카브라) */
+export function evoOnHurt(s: CombatState, lost: number, heavy = false): void {
+  if (!s.params.evo || !s.evo || lost <= 0 || s.status !== 'playing') return;
+  fire(s, 'hurt', { ...emptyCtx(), amount: lost, heavy });
+}
+
+/** 이번 평타 치명 확률 + (basicPre basicCrit — 상한도 같이 오른다, C.515) */
+export function evoBasicCritNow(s: CombatState): number {
+  return s.evo?.basicCritNow ?? 0;
+}
+
+/** 적 일반 공격 시계를 이번 틱 멈추나 (foeAttackSlow — 시계가 (1 − 값) 빠르기로, C.515 토르멘타) */
+export function evoFoeSlowSkip(s: CombatState): boolean {
+  const st = s.evo;
+  if (!s.params.evo || !st) return false;
+  const slow = Math.min(0.95, Math.max(0, evoStat(s, 'foeAttackSlow')));
+  if (slow <= 0) return false;
+  st.foeSlowAcc += slow;
+  if (st.foeSlowAcc < 1) return false;
+  st.foeSlowAcc -= 1;
+  return true;
+}
+
+/** 출현표 손질 (C.515): exclude = 저절로 안 생기는 속성 · self = 자기 블록(속성·계열)과 그 확률 +p · forced = 다음 블록 강제 속성 */
+export function evoSpawnRulesOf(s: CombatState): { exclude: readonly string[]; self: { element: string; family: string; bonus: number } | null; forced: string | null } {
+  const ev = s.params.evo;
+  if (!ev || !s.evo) return { exclude: [], self: null, forced: null };
+  const sb = ev.ability.selfBlock;
+  const bonus = sb ? evoStat(s, 'selfSpawn') : 0;
+  const element = sb ? (sb.element === 'self' ? s.params.playerElements[0] ?? null : sb.element) : null;
+  return {
+    exclude: ev.ability.spawnExclude ?? [],
+    self: sb && element && bonus > 0 ? { element, family: sb.family, bonus } : null,
+    forced: s.evo.forceNext && s.evo.forceNext.n > 0 ? s.evo.forceNext.element : null,
+  };
+}
+
+/** 강제 속성 블록 1개가 생겼다 (대기 −1) */
+export function evoForcedUsed(s: CombatState): void {
+  const f = s.evo?.forceNext;
+  if (!f) return;
+  f.n--;
+  if (f.n <= 0) s.evo!.forceNext = null;
 }
 
 /** 이 진화체의 체인 배율 덮어쓰기 (공격 블록, chain 1~): 없으면 null */
@@ -652,6 +878,7 @@ export function evoDamageAdjust(s: CombatState, amount: number, basic: boolean):
 export function evoSpecialUsable(s: CombatState, b: Block | undefined): boolean {
   const d = evoSpecialOf(s.params, b?.traitId);
   if (!d) return false;
+  if (d.need && !needsOk(s, d.need, emptyCtx())) return false; // C.515 추파카브라 '저장된 피해가 있을 때'
   if (d.usable === 'execBlock') {
     const line = evoExecLinesOf(s).block;
     return !isElite(s) && line > 0 && s.enemy.hp <= s.enemy.maxHp * line;
@@ -659,10 +886,12 @@ export function evoSpecialUsable(s: CombatState, b: Block | undefined): boolean 
   return true;
 }
 
-/** 특수 블록이 꺼진 이유 (C.508 점검C 8 — 화면 안내): line0 = 블록 처형선 0 · elite = 강적·보스 · above = 적 체력이 선 위. 켜져 있으면 null */
-export function evoSpecialOffReason(s: CombatState, b: Block | undefined): 'line0' | 'elite' | 'above' | null {
+/** 특수 블록이 꺼진 이유 (C.508 점검C 8 — 화면 안내): line0 = 블록 처형선 0 · elite = 강적·보스 · above = 적 체력이 선 위 · need = 데이터 조건(offNote, C.515). 켜져 있으면 null */
+export function evoSpecialOffReason(s: CombatState, b: Block | undefined): 'line0' | 'elite' | 'above' | 'need' | null {
   const d = evoSpecialOf(s.params, b?.traitId);
-  if (!d || evoSpecialUsable(s, b) || d.usable !== 'execBlock') return null;
+  if (!d || evoSpecialUsable(s, b)) return null;
+  if (d.need && !needsOk(s, d.need, emptyCtx())) return 'need';
+  if (d.usable !== 'execBlock') return null;
   if (evoExecLinesOf(s).block <= 0) return 'line0';
   return isElite(s) ? 'elite' : 'above';
 }
@@ -691,6 +920,7 @@ export function useEvoSpecial(s: CombatState, index: number, auto = false): bool
   if (!d.keep) s.tray.splice(index, 1);
   if (!auto) api().addGauge(s, s.params.liberationGaugePerBlock);
   fire(s, 'special', { ...emptyCtx(), kind: 'special', special: d.id, block: b });
+  if (s.evo) s.evo.lastBlock = { kind: 'special', chain: 1, element: d.element ?? null };
   return true;
 }
 
@@ -739,8 +969,9 @@ export function evoMarksOf(s: CombatState): EvoMarkInfo[] {
     const x = st.stacks[name];
     if (!d.mark || !x || x.n <= 0) continue;
     const left = x.exp && x.exp.length > 0 ? (x.exp[x.exp.length - 1]! - s.tick) * ts : null;
-    const max = d.max !== undefined ? evoNum(s, d.max, Infinity) : Infinity;
-    out.push({ key: `evo-s-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: Math.round(x.n * 10) / 10, seconds: left, type: 'stack', max: Number.isFinite(max) ? max : null, effects: effectsOf(`stack:${name}`) });
+    const max = stackMax(s, name);
+    const r = (n: number) => (d.maxPer ? Math.round(n) : n); // 체력 단위 저장(maxPer — C.515 추파카브라)은 정수로
+    out.push({ key: `evo-s-${name}`, on: d.on ?? 'self', icon: d.mark.icon, name: d.mark.name, value: d.maxPer ? Math.round(x.n) : Math.round(x.n * 10) / 10, seconds: left, type: 'stack', max: Number.isFinite(max) ? r(max) : null, effects: effectsOf(`stack:${name}`) });
   }
   for (const [name, d] of Object.entries(ev.ability.buffs ?? {})) {
     const b = st.buffs[name];
@@ -753,6 +984,9 @@ export function evoMarksOf(s: CombatState): EvoMarkInfo[] {
     const max = d.max !== undefined ? evoNum(s, d.max, Infinity) : Infinity;
     out.push({ key: `evo-c-${name}`, on: 'self', icon: d.mark.icon, name: d.mark.name, value: c.n, seconds: null, type: 'charge', max: Number.isFinite(max) ? max : null, effects: effectsOf(`charge:${name}`) });
   }
+  // 다음 블록 강제 대기 (C.515 비보라): 횟수 네모
+  const fm = ev.ability.forceNextMark;
+  if (fm && st.forceNext && st.forceNext.n > 0) out.push({ key: 'evo-f-next', on: 'self', icon: fm.icon, name: fm.name, value: st.forceNext.n, seconds: null, type: 'charge', max: null, effects: [] });
   return out;
 }
 

@@ -126,14 +126,16 @@ export function v2TrayEl(capacity: number): TrayParts {
 }
 
 /** 체인 묶음 틀 (`.bha-chain`): 붙은 칸들을 금색(체인2) / 주황(체인3) 테두리로 묶고 위에 탭. 칸 위에 겹쳐 놓는 격자 아이템(클릭은 통과) */
-export function v2ChainEl(spec: { start: number; len: number; level: number; max: boolean; over: boolean }, chainName: string): HTMLElement {
+export function v2ChainEl(spec: { start: number; len: number; level: number; max: boolean; over: boolean }, chainName: string, note?: string): HTMLElement {
   const c = document.createElement('div');
   c.className = `bha-chain${spec.max ? ' bha-chain--3' : ''} bha-v2chain`;
   c.style.gridColumn = `${spec.start} / span ${spec.len}`;
   c.style.gridRow = '1';
   const tab = document.createElement('span');
   tab.className = 'bha-chain__tab';
-  tab.textContent = `${chainName}${spec.level}${spec.over ? '+' : ''}`;
+  // note = 묶음 상태 글자 (C.514 만리장 '굳음')
+  tab.textContent = `${chainName}${spec.level}${spec.over ? '+' : ''}${note ? ` · ${note}` : ''}`;
+  if (note) c.dataset.note = note;
   c.append(tab);
   return c;
 }

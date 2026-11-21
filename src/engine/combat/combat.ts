@@ -12,8 +12,9 @@ import type { FinisherKind } from '../runLog';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { chainGroup, inTray, type Block, type Tray } from './tray';
 import {
-  EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoChainMultOf, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
+  EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoChainCapOf, evoChainMultOf, evoChainTierOf, evoGroupHardened, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
   evoSpecialOf, evoStart, evoStat, evoTick, evoVoidOnly, newEvoState, registerEvoApi, useEvoSpecial, type EvoParams, type EvoState,
+  evoBasicCritNow, evoFoeSlowSkip, evoForcedUsed, evoOnHurt, evoSpawnRulesOf,
 } from './evoUnique';
 
 const CX = BALANCE.provisional.combat;
@@ -639,6 +640,8 @@ export function elementDamageBonus(p: Pick<CombatParams, 'elementDamage'>, eleme
 export interface AbilityEffects {
   /** 모든 블록 위력 +비율 (노멀 '균형') */
   blockPower?: number;
+  /** 속성 피해 +비율 (4단계 한 줄 특성 elementDamage, C.514 석양홍 '불 피해 +8%') — evolution.ts 가 elementDamage(%) 칸에 더한다 */
+  evoElementDamage?: Record<string, number>;
   /** 내 공격(블록·평타·필살 등)이 적 방어·정신력을 이 비율만큼 무시 (불 '작열', GDD 45장 3번) */
   ignoreDefense?: number;
   /** 받은 피해를 쌓아 최대 체력 × threshold 에 닿으면 쌓인 양 × ret 를 적에게 (흙 '되갚기') */
@@ -687,6 +690,15 @@ export interface AbilityEffects {
   offenseMax?: boolean;
   /** 처형 '소멸선' (GDD 8-8): 적 체력 line 이하에서 평타 = 처형, 강적·보스는 그 아래에서 주는 모든 피해 ×eliteMult */
   execute?: { line: number; eliteMult: number };
+  // ── 4단계 한 줄 특성 2차 (GDD 8-7 2차, C.515) ──
+  /** 치명 피해 + (평타·블록) */
+  evoCritDmg?: number;
+  /** 블록 생성 간격 −비율 */
+  evoSpawnCut?: number;
+  /** 흡혈 + (내 공격 피해의 비율만큼 회복 — 혈 흡혈과 같은 전투 상한) */
+  evoDrain?: number;
+  /** 내가 거는 독 지속 피해 + */
+  evoPoisonDot?: number;
 }
 
 /** 화면 글자가 뜨는 특성·물공 블록 발동 (런 로그 abilityProcs 키) */
@@ -790,7 +802,7 @@ const shownCat = (c: AttackCategory): HitCategory | undefined => (c === 'mixed' 
 /** 화면 연출용 사건. 화면이 drainCombatEvents 로 비우며 그린다 */
 export type CombatEvent =
   /** rate = 간격이 모션보다 짧아 빨리 감은 배율 (GDD 7-2 '빠른 간격의 모션', C.448 — 없으면 1. 앞 자르기는 swing.atTick 이 정한 타격 시각으로 화면이 맞춘다) */
-  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number; kitShot?: string; kitFinisher?: boolean; kitClone?: boolean; kitMotion?: string }
+  | { kind: 'player-attack'; damage: number; matchup: Matchup; crit?: boolean; elem?: ElemHit; landed?: boolean; rate?: number; kitShot?: string; kitFinisher?: boolean; kitClone?: boolean; kitMotion?: string; evoShot?: string; evoShotElement?: string; evoShotFx?: { family: string; stage: number } }
   /** cat = 이번 공격 분류 (GDD 245장 11 — 혼합 적은 공격마다 굴림, 화면 피해 숫자·로그 물리/특수 표시) */
   | { kind: 'enemy-attack'; damage: number; guarded: boolean; matchup: Matchup; crit?: boolean; landed?: boolean; cat?: HitCategory }
   /** kitName·kitFx·kitCounter·kitFinisher = 초월자 전용 블록(GDD 12-4 v6.048): 기술 이름 · 연출 키 · 반격 성공 · 마무리 기술(흑관 등) */
@@ -1115,6 +1127,12 @@ export function maxChain(p: CombatParams): number {
   return Math.max(1, Math.min(top, Math.floor(p.maxChain ?? top)));
 }
 
+/** 지금 체인 상한 (C.514): 기본 maxChain, 진화체 고유 능력 chainExtend 가 있으면 그 값(해방 중 값 포함 — 현음 4·만해 5). 바 묶음·사용·봇·화면이 다 이것을 쓴다 */
+export function chainCapOf(s: Pick<CombatState, 'params' | 'liberation'>): number {
+  const base = maxChain(s.params);
+  return s.params.evo ? evoChainCapOf(s, base) : base;
+}
+
 /** 기본 블록 5종의 생성원 (GDD 44장): 공격(계열은 블록마다 풀이 정한다)·막기·회복. 막기·회복 세기 = 같은 역할 흡수 특성 기본값 × 비율 */
 export function basicSources(p: CombatParams): CombatSkill[] {
   const bp = p.blockPool;
@@ -1348,11 +1366,50 @@ function drawSpawn(s: CombatState, entries: readonly SpawnEntry[]): SpawnEntry |
   return entries[entries.length - 1] ?? null;
 }
 
+/** 출현표 항목의 블록 속성: 물공 = 내 속성, 생성원 = 그 속성(기본 블록은 내 속성) */
+function spawnEntryElement(p: CombatParams, e: SpawnEntry): string | null {
+  if (e.kind === 'void') return 'void';
+  if (e.phys || isBasicBlockId(e.source?.id)) return e.source?.element ?? p.playerElements[0] ?? NORMAL_ELEMENT;
+  return e.source?.element ?? null;
+}
+
+/**
+ * 진화체 고유 능력 출현표 손질 (GDD 8-7 2차, C.515) 뒤 뽑기 — 고유 능력이 없으면 그대로 drawSpawn.
+ * ① 다음 블록 강제(비보라 forceNext): 그 속성 항목만(공허 제외)으로 뽑고 대기 −1 (그 속성 생성원이 없으면 평소대로, 대기 그대로)
+ * ② 저절로 안 생기는 속성(추파카브라 spawnExclude): 그 항목을 빼고 남은 몫 그대로 — 그 몫이 뽑히면 이번엔 안 생김(다른 블록 몫은 평소대로)
+ * ③ 자기 블록 확률 +p(브라사 selfBlock·selfSpawn): 다른 스킬 블록 몫에서 bonus 만큼 자기 블록 몫으로 옮긴다(공허 몫 그대로)
+ */
+function drawSpawnEvo(s: CombatState, entries: readonly SpawnEntry[]): SpawnEntry | null {
+  if (!s.params.evo || !s.evo) return drawSpawn(s, entries);
+  const p = s.params;
+  const rule = evoSpawnRulesOf(s);
+  if (rule.forced) {
+    const only = entries.filter((e) => e.kind === 'skill' && spawnEntryElement(p, e) === rule.forced);
+    const sum = only.reduce((a, e) => a + e.chance, 0);
+    if (only.length > 0 && sum > 0) {
+      const e = drawSpawn(s, only.map((x) => ({ ...x, chance: x.chance / sum })));
+      if (e) evoForcedUsed(s);
+      return e;
+    }
+  }
+  let list = entries.map((e) => ({ ...e }));
+  if (rule.exclude.length > 0) list = list.map((e) => (e.kind === 'skill' && rule.exclude.includes(spawnEntryElement(p, e) ?? '') ? { ...e, kind: 'void' as const, source: null, chance: e.chance, excluded: true } : e));
+  if (rule.self) {
+    const isSelf = (e: SpawnEntry & { excluded?: boolean }) => e.kind === 'skill' && !e.excluded && e.family === rule.self!.family && spawnEntryElement(p, e) === rule.self!.element;
+    const mine = list.filter(isSelf).reduce((a, e) => a + e.chance, 0);
+    const other = list.filter((e) => e.kind === 'skill' && !(e as { excluded?: boolean }).excluded && !isSelf(e)).reduce((a, e) => a + e.chance, 0);
+    const move = Math.min(other, rule.self.bonus);
+    if (mine > 0 && move > 0) list = list.map((e) => (isSelf(e) ? { ...e, chance: e.chance * (mine + move) / mine } : e.kind === 'skill' && !(e as { excluded?: boolean }).excluded ? { ...e, chance: e.chance * (other - move) / other } : e));
+  }
+  const e = drawSpawn(s, list) as (SpawnEntry & { excluded?: boolean }) | null;
+  return e?.excluded ? null : e;
+}
+
 /** 지금 생성 타이머 간격(초): 해방 중이면 해방 생성 배율로, 각성(전투 소모품) 중이면 그 배율로 줄인다 */
 function spawnIntervalOf(s: CombatState): number {
   const it = s.params.battleItem;
   const haste = s.hasteTicks > 0 && it?.effect === 'haste' ? it.spawnMult : 1;
-  const curve = (spawnTableOf(s.params).seconds * blockSpeedFactorOf(s.params)) / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
+  const curve = (spawnTableOf(s.params).seconds * blockSpeedFactorOf(s.params) * evoSpawnFactorOf(s.params)) / (liberationActive(s) ? liberationSpawnSpeedOf(s.params) : 1) / haste;
   // 영창 스택 (GDD 12-4 v6.048 귀도): 스택만큼 주기를 줄인다(빼기) + 속도 옵션(빼기). 상한 (GDD v6.055 7절): 다 합쳐도 블록 1초에 1개보다 빨리 돌지 않는다 (옛 영창 하한 0.3초 대체)
   return speedSeconds(curve, kitSpawnCutOf(s) + (s.params.spawnSecondsCut ?? 0), CX.spawnSecondsMin);
 }
@@ -1374,7 +1431,12 @@ export function blockSpeedFactorOf(p: Pick<CombatParams, 'playerStats' | 'player
 
 /** 평소(해방·가속·스택 없음) 블록 생성 간격(초): 출현표 평균 간격 × 블록속도 배율 → 0.01초 반올림 − 옵션, 상한 적용 (상태 화면 블록속도 값) */
 export function baseSpawnSecondsOf(p: CombatParams): number {
-  return speedSeconds(spawnTableOf(p).seconds * blockSpeedFactorOf(p), p.spawnSecondsCut ?? 0, CX.spawnSecondsMin);
+  return speedSeconds(spawnTableOf(p).seconds * blockSpeedFactorOf(p) * evoSpawnFactorOf(p), p.spawnSecondsCut ?? 0, CX.spawnSecondsMin);
+}
+
+/** 4단계 한 줄 특성 '블록 생성 간격 −' (GDD 8-7 2차 토르멘타, C.515): 간격에 곱하는 배율 */
+function evoSpawnFactorOf(p: Pick<CombatParams, 'abilityEffects'>): number {
+  return Math.max(0.05, 1 - (p.abilityEffects?.evoSpawnCut ?? 0));
 }
 
 /** 지금 블록 생성 타이머 간격(초) — 상한 적용 뒤 (화면·테스트) */
@@ -1647,7 +1709,11 @@ function playerHitMultiplier(s: CombatState, elements: readonly string[], cat: A
   const p = s.params;
   const m = elements.length > 0 ? matchup(elements, enemyElements(s.enemy.def)) : 'neutral';
   const mm = m === 'weak' && p.abilityEffects.noWeak ? 1 : matchupMultiplier(p, m);
-  return { mult: statRatio(attackerStatsOf(s, cat), s.enemy.stats, cat, Math.max(ignore, p.abilityEffects.ignoreDefense ?? 0)) * mm * p.categoryPower[cat], matchup: m };
+  let ign = Math.max(ignore, p.abilityEffects.ignoreDefense ?? 0);
+  // 적 마법방어 − (GDD 8-7 2차 토르멘타 강화 자기장, C.515): 블록 피해(정신력) 쪽만, 다른 방어 무시와 곱으로 겹친다
+  const magicCut = cat === 'special' && p.evo ? Math.min(0.95, Math.max(0, evoStat(s, 'foeMagicDefCut'))) : 0;
+  if (magicCut > 0) ign = 1 - (1 - ign) * (1 - magicCut);
+  return { mult: statRatio(attackerStatsOf(s, cat), s.enemy.stats, cat, ign) * mm * p.categoryPower[cat], matchup: m };
 }
 
 /** 내 공격 능력치 (GDD 8-7 1차, C.499 천평환): 진화체 고유 능력 offenseBasic/offenseBlock(1 = 공격력·지능 중 높은 쪽, 2 = 평균)이 특성 offenseMax 보다 우선. 없으면 그대로 */
@@ -1663,6 +1729,7 @@ function attackerStatsOf(s: CombatState, cat: AttackCategory): Stats {
 
 /** 계열 단계 기술(위력 배율·추가 효과): 종족 설정에서 온 계열 표가 있으면 그것, 없으면 체인 배율 + 특성의 체인 추가 효과 (chain = 1~3) */
 export function tierEffect(p: CombatParams, skill: CombatSkill, chain: number): { multiplier: number; bonus: ChainBonus | null } {
+  chain = Math.min(chain, p.chainMultipliers.length); // 체인 상한 넘기기(C.514 현음 4·5체인)는 맨 위 단계 기술 위에 배율을 곱한다 — 단계 기술·추가 효과는 맨 위 단계
   const fam = skill.family ? p.families[skill.family]?.tiers[chain - 1] : undefined;
   if (fam) return { multiplier: fam.multiplier, bonus: fam.bonus ?? null };
   return { multiplier: p.chainMultipliers[chain - 1] ?? 1, bonus: chain >= p.chainBonusFromChain ? skill.chainBonus : null };
@@ -1679,7 +1746,10 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
   const hit = playerHitMultiplier(s, skill.element ? [skill.element] : [], PLAYER_BLOCK_CATEGORY);
   const stab = skill.element !== null && s.params.playerElements.includes(skill.element);
   // 진화체 체인 배율 덮어쓰기 (GDD 8-7 1차 니에블라, C.499): 공격 블록만
-  const chainMult = (s.params.evo && skill.role === 'attack' ? evoChainMultOf(s, chain) : null) ?? tierEffect(s.params, skill, chain).multiplier;
+  // 체인 상한 넘기기 (C.514 현음): 단계 수를 넘는 체인 = 맨 위 단계 기술 배율 × 그 단계 mult
+  const topTier = Math.min(chain, s.params.chainMultipliers.length);
+  const over = chain > topTier && s.params.evo ? evoChainTierOf(s, chain)?.mult ?? 1 : 1;
+  const chainMult = ((s.params.evo && skill.role === 'attack' ? evoChainMultOf(s, topTier) : null) ?? tierEffect(s.params, skill, topTier).multiplier) * over;
   const mult = skill.powerMultiplier * chainMult * hit.mult * (stab ? s.params.stabMultiplier : 1);
   return { skill, mult, weak: isEffective(s, skill), matchup: hit.matchup, stab };
 }
@@ -1768,7 +1838,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
     return true;
   }
   // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.499): 상한도 같이 오른다(치명 특성과 같은 규칙 — 45장 1번)
-  const evoUp = who === 'player' ? (block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') : 0)) : 0;
+  const evoUp = who === 'player' ? (block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') + evoBasicCritNow(s) : 0)) : 0;
   const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
     : block ? Math.min((p.blockCritChanceMax ?? p.critChanceMax) + evoUp, blockCritChanceOf(p) + bonus + evoUp) : Math.min(p.critChanceMax + evoUp, critChanceOf(p) + bonus + evoUp);
   if (chance <= 0) return false;
@@ -1782,7 +1852,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
 function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
   if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
-  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') + (block ? s.evo?.critDmgNow ?? 0 : 0) : 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.499)
+  const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') + (block ? s.evo?.critDmgNow ?? 0 : 0) : 0) + (s.params.abilityEffects.evoCritDmg ?? 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.499)
   return { damage: damage * (s.params.critMultiplier + extra), crit: true };
 }
 
@@ -1954,12 +2024,15 @@ function basicAttack(s: CombatState): void {
   const a = p.abilityEffects;
   // 진화체 고유 능력 평타 직전 (GDD 8-7 1차, C.499): 충전 쓰기·이번 평타 배율·치명 확정·방어 무시
   const evo = evoBasicPre(s);
+  // 특수 평타 (C.514 석양홍 basicShot): 속성·능력치 분류를 바꾸고 피해 ×mult — 없으면 평타 그대로
+  const evoShot = evo?.shot;
+  const basicEls = evoShot?.element ? [evoShot.element] : p.playerElements;
   // 평타 = 공격력 ÷ 적 방어, 내 캐릭터 속성 (GDD 20-3 v3.6, 141장 1)
-  const hit = playerHitMultiplier(s, p.playerElements, PLAYER_BASIC_CATEGORY, evo?.ignore ?? 0);
+  const hit = playerHitMultiplier(s, basicEls, evoShot?.category ?? PLAYER_BASIC_CATEGORY, evo?.ignore ?? 0);
   // 충전 평타·마무리 평타 (GDD 12-4 v6.069 이치고 월아천충·최후의 월아천충): 배율과 이름 — 게이지·스택 처리는 kitAfterBasic
   const shot = kitBasicShot(s) ?? stanceBasicShot(s);
   // 자세 평타 배율 (C.460): 대도 스택·유지 보너스·고정 간격 초과 공속 · 발도(shot) / 천쇄참월 기본 강화(shot)
-  const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s) * (shot?.power ?? 1) * stanceBasicPowerOf(s) * (1 + (evo?.mult ?? 0));
+  const base = unitDamage(p) * p.attackPowerMultiplier * hit.mult * basicPowerOf(s) * (shot?.power ?? 1) * stanceBasicPowerOf(s) * (1 + (evo?.mult ?? 0)) * (evoShot?.mult ?? 1);
   // 전광 (뇌 블록): 두 번 때림, 각 each. 타격마다 따로 치명 판정
   const flash = (s.flashHits ?? 0) > 0 && p.physBlock?.effect === 'flash' ? { n: 2, each: p.physBlock.each } : { n: 1, each: 1 };
   // 마무리 평타 연출 (C.473, GDD 12-4 v6.102 최후의 월아천충): 피해는 몸 동작의 타격 시각에, 그동안 무적·정지 (빨리 감기 없음)
@@ -1971,9 +2044,10 @@ function basicAttack(s: CombatState): void {
   }
   let last = 0;
   for (let k = 0; k < flash.n; k++) {
-    const { damage, crit, elem } = playerHit(s, base * flash.each, false, p.playerElements);
+    const { damage, crit, elem } = playerHit(s, base * flash.each, false, basicEls);
     last = damage;
-    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot?.name ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}), ...(cine ? { kitMotion: cine.motion } : {}) }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...p.playerElements], basic: true });
+    const shotFx = evoShot ? { evoShot: evoShot.name, ...(evoShot.element ? { evoShotElement: evoShot.element } : {}), ...(evoShot.fx ? { evoShotFx: evoShot.fx } : {}) } : {};
+    strike(s, bd.delay, { target: 'enemy', amount: damage, event: { kind: 'player-attack', damage, matchup: hit.matchup, crit, elem, ...(bd.rate !== 1 ? { rate: bd.rate } : {}), ...(shot?.name ? { kitShot: shot.name, ...(shot.final ? { kitFinisher: true } : {}) } : {}), ...(cine ? { kitMotion: cine.motion } : {}), ...shotFx }, finisher: { kind: 'basic-attack', traitId: null, element: null, matchup: hit.matchup }, elements: [...basicEls], basic: true });
     if (s.status !== 'playing') return;
   }
   if (s.evo) s.evo.forceCrit = false;
@@ -2072,7 +2146,7 @@ function landHit(s: CombatState, h: PendingHit): void {
 function hitPlayer(s: CombatState, h: Omit<PendingHit, 'atTick'>): void {
   const before = s.player.hp;
   if (h.reflected && h.reflected > 0) dealDamage(s, h.reflected, { kind: 'reflect', traitId: null, element: null });
-  takeDamage(s, h.amount);
+  takeDamage(s, h.amount, h.event.kind === 'heavy-hit');
   if (h.elements) onHit(s, 'player', h.elements, h.amount);
   const kb = s.params.kit?.blocks.find((b) => b.counter);
   const k = s.kit;
@@ -2238,13 +2312,16 @@ export function blockSealed(b: Block | undefined): boolean {
 function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly string[], damage: number, basic = false): void {
   const p = s.params;
   if (damage <= 0 || s.status !== 'playing') return;
-  if (hasEffect(elements, 'drain')) {
+  // 4단계 한 줄 특성 '흡혈 +' (GDD 8-7 2차 추파카브라, C.515): 내 공격은 속성과 상관없이 그 비율만큼 더 (혈이면 혈 흡혈에 더함)
+  const evoDrain = target === 'enemy' ? p.abilityEffects.evoDrain ?? 0 : 0;
+  const blood = hasEffect(elements, 'drain');
+  if (blood || evoDrain > 0) {
     const who = target === 'enemy' ? s.player : s.enemy;
     // 피 냄새 (GDD 49장): 넉백 중인 적에게 내 평타 흡혈 ×배율
     const scent = basic && target === 'enemy' && (s.knockbackTicks ?? 0) > 0 ? p.abilityEffects.bloodScent ?? 1 : 1;
     // 한 전투 흡혈 합계 상한 (C.53): 최대 체력 × drainCapFraction 까지만
     const room = Math.max(0, who.maxHp * p.drainCapFraction - (who.drained ?? 0));
-    const heal = Math.min(who.maxHp - who.hp, damage * p.drainFraction * scent, room);
+    const heal = Math.min(who.maxHp - who.hp, damage * ((blood ? p.drainFraction * scent : 0) + evoDrain), room);
     if (heal > 0) {
       who.hp += heal;
       who.drained = (who.drained ?? 0) + heal;
@@ -2255,11 +2332,12 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
     const victim = target === 'enemy' ? s.enemy : s.player;
     const ticks = ticksOf(p, p.poisonSeconds);
     const left = victim.dot ? victim.dot.ticks * victim.dot.perTick : 0;
-    victim.dot = { ticks, perTick: (left + damage * p.poisonFraction) / ticks };
+    const up = target === 'enemy' ? 1 + (p.abilityEffects.evoPoisonDot ?? 0) : 1; // 4단계 특성 '독 지속 피해 +' (C.515 비보라)
+    victim.dot = { ticks, perTick: (left + damage * p.poisonFraction * up) / ticks };
   }
 }
 
-function takeDamage(s: CombatState, amount: number): void {
+function takeDamage(s: CombatState, amount: number, heavy = false): void {
   if (s.status !== 'playing') return;
   if (kitCineOn(s)) return; // 마무리 평타 연출 중 무적 (C.473, GDD 12-4 v6.102)
   if (amount > 0) {
@@ -2288,10 +2366,11 @@ function takeDamage(s: CombatState, amount: number): void {
     amount -= absorbed;
     // 진화체 고유 능력 보호막 (GDD 8-7 1차, C.499): 막은 양·깨짐 규칙
     if (s.evo) {
-      evoOnShield(s, absorbed, s.player.shield <= 0);
+      evoOnShield(s, absorbed, s.player.shield <= 0, heavy);
       if (s.status !== 'playing') return;
     }
   }
+  const hpBefore = s.player.hp;
   // 각본 전투는 지지 않는다 (체력 1 아래로 안 내려감) · 진화체 해방 중 체력 하한 (GDD 8-7 1차 주홍장, C.499)
   const evoFloor = s.evo ? evoHpFloor(s) : 0;
   s.player.hp = Math.max(s.script ? Math.min(s.player.hp, 1) : evoFloor > 0 ? Math.min(s.player.hp, evoFloor) : 0, s.player.hp - amount);
@@ -2310,6 +2389,8 @@ function takeDamage(s: CombatState, amount: number): void {
     emit(s, { kind: 'kit-line', text: rv.line, tone: 'revive' });
   }
   if (s.player.hp > 0) applyThorns(s, amount);
+  // 진화체 고유 능력 '받은 피해' (GDD 8-7 2차 추파카브라, C.515): 실제로 잃은 체력
+  if (s.evo && s.player.hp > 0) evoOnHurt(s, hpBefore - s.player.hp, heavy);
   if (s.player.hp <= 0) {
     s.status = 'lost';
     s.lossReason = 'hp';
@@ -2373,7 +2454,7 @@ function spawnEvoDraw(s: CombatState): boolean {
   const entries = spawnTableOf(s.params, liberationActive(s), kitRiskOf(s), kitStanceBlockOf(s)).entries.filter((e) => e.kind !== 'void');
   const total = entries.reduce((a, y) => a + y.chance, 0);
   if (entries.length === 0 || total <= 0) return false;
-  const e = drawSpawn(s, entries.map((x) => ({ ...x, chance: x.chance / total })));
+  const e = drawSpawnEvo(s, entries.map((x) => ({ ...x, chance: x.chance / total })));
   if (!e) return false;
   if (e.phys) return spawn(s, 'skill', BASIC_SKILL_ID, drawPhysFamily(s));
   return !!e.source && spawn(s, 'skill', e.source.id, e.family);
@@ -2530,9 +2611,11 @@ function useBlock(s: CombatState, index: number): boolean {
   const kb = b.kind === 'skill' ? kitBlockOf(p, b.traitId) : undefined;
   if (kb) return useKitBlock(s, index, kb);
   // 스킬 블록: 함께 발동하는 칸들이 모두 소모된다. 체인 단계 = 함께 쓰인 블록 수
-  const group = chainGroup(s.tray, index, maxChain(p));
+  const group = chainGroup(s.tray, index, chainCapOf(s));
   const chain = group.length;
   const usedEcho = group.some((i) => s.tray[i]?.echo);
+  // 굳은 묶음 (C.514 만리장): 쓰기 전에 그 묶음이 굳었는지 본다
+  const hardened = s.evo ? evoGroupHardened(s, group.map((i) => s.tray[i]!.uid)) : false;
   s.tray.splice(group[0]!, chain);
   const eff = blockEffect(s, b, chain);
   if (!eff) return true; // 생성원에 없는 블록(있을 수 없음)은 그냥 사라진다
@@ -2541,16 +2624,18 @@ function useBlock(s: CombatState, index: number): boolean {
   // 기록: 특성별·skillsUsed 는 소모된 블록 수, 체인별은 발동 횟수 (한 번 눌러 체인N = blocksByChain[N-1] + 1)
   for (let k = 0; k < chain; k++) s.skillsUsed.push(id);
   s.blocksByTrait[id] = (s.blocksByTrait[id] ?? 0) + chain;
-  s.blocksByChain[chain - 1]!++;
+  // 체인별 기록은 계열 단계 칸(1~3)까지 — 상한을 넘긴 체인(C.514 현음 4·5)은 맨 위 칸에 (발동 횟수는 고유 능력 글자로 따로)
+  const chainSlot = Math.min(chain, s.blocksByChain.length);
+  s.blocksByChain[chainSlot - 1]!++;
   if (skill.family) {
     const rec = (s.chainsByFamily[skill.family] ??= [0, 0, 0]);
-    rec[chain - 1]!++;
+    rec[Math.min(chain, rec.length) - 1]!++;
   }
   if (chain >= p.chainMultipliers.length) {
     s.chain3Count++;
     if (weak) s.weakChain3Count++;
   }
-  addGauge(s, p.liberationGaugePerBlock * chain + (p.liberationChainBonus[chain - 1] ?? 0));
+  addGauge(s, p.liberationGaugePerBlock * chain + (p.liberationChainBonus[Math.min(chain, p.liberationChainBonus.length) - 1] ?? 0));
   if (liberationActive(s)) s.liberation.chains++;
   // 막기·회복 블록은 생기지 않는다 (GDD 105장): 옛 상태에 남은 막기 블록은 막기 버튼과 같은 막기, 회복 블록은 피해만
   const heal = 0;
@@ -2562,7 +2647,7 @@ function useBlock(s: CombatState, index: number): boolean {
   const bonus = tierEffect(p, skill, chain).bonus;
   if (bonus) applyChainBonus(s, bonus);
   // 진화체 고유 능력 블록 직전 (GDD 8-7 1차, C.499): 이 블록 피해 +·평타 n회분 더하기·치명 + / 4단계 특성 n체인 위력 +
-  const evo = evoBlockPre(s, { kind: 'skill', element: blockElementOf(p, b), chain, block: b, echo: usedEcho });
+  const evo = evoBlockPre(s, { kind: 'skill', element: blockElementOf(p, b), chain, block: b, echo: usedEcho, family: skill.family ?? null, hardened });
   const raw = blockDamage(s, b, chain) * evoBlockMultOf(s, chain, evo) + (evo?.flat ?? 0) * evoBasicUnitOf(s);
   if (s.evo) s.evo.critDmgNow = evo?.critDmg ?? 0;
   // 피해 없는 블록 (GDD v6.133 '강화만', C.499): 효과(규칙)만 — 치명 판정도 없음
@@ -3583,7 +3668,7 @@ function advanceTick(s: CombatState): void {
   // 해방 중(GDD 83장)에는 해방 표(장착 블록, 공허 없음)를 해방 생성 배율만큼 빠른 간격으로
   if (!s.script && s.sealTicks === 0 && !halted(s) && s.tray.length < p.trayCapacity && --s.spawnTimer <= 0) {
     s.spawnTimer = t(spawnIntervalOf(s));
-    const e = drawSpawn(s, spawnTableOf(p, liberationActive(s), kitRiskOf(s), kitStanceBlockOf(s)).entries);
+    const e = drawSpawnEvo(s, spawnTableOf(p, liberationActive(s), kitRiskOf(s), kitStanceBlockOf(s)).entries);
     if (e?.kind === 'void') spawn(s, 'void', null);
     else if (evoVoidOnly(p)) {
       // 진화체 '허 블록 말고는 저절로 안 생김' (GDD 8-7 1차 백련, C.499): 허가 아니면 이번 생성은 없다
@@ -3656,7 +3741,8 @@ function advanceTick(s: CombatState): void {
     } else heavyWindup(s);
   } else if (!s.script && !p.enemyPassive) {
     // 각본 전투는 적 일반 공격·특수 행동이 없다 (테스트 모드 '공격 안 함'도 같다, C.457) — 강공격은 각본이 시전시킨다 (GDD 123장 5)
-    if (--e.attackTimer <= 0) {
+    // 적 공격 속도 − (GDD 8-7 2차 토르멘타 자기장, C.515): 시계가 (1 − 값) 빠르기로 — 이번 틱은 안 감
+    if (!(s.evo && evoFoeSlowSkip(s)) && --e.attackTimer <= 0) {
       e.attackTimer = attackTicks;
       if (!evaded(s)) {
         const crit = rollCrit(s, 'enemy');
@@ -3734,6 +3820,11 @@ registerEvoApi({
     if (text) emit(s, { kind: 'evo-proc', text, damage });
     dealDamage(s, damage, { kind: 'special', traitId: null, element });
   },
+  dot(s, damage) {
+    // 진화체 지속 피해 (C.515 토르멘타 자기장·비보라 독): 독 숫자와 같은 dot 사건
+    emit(s, { kind: 'dot', target: 'enemy', damage });
+    dealDamage(s, damage, { kind: 'dot', traitId: null, element: null });
+  },
   elementOf(s, b) {
     if (b.kind === 'void') return 'void';
     return blockElementOf(s.params, b);
@@ -3745,4 +3836,5 @@ registerEvoApi({
   },
   addGauge,
   ticksOf,
+  chainCap: (s) => chainCapOf(s),
 });

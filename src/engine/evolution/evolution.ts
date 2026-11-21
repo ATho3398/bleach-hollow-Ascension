@@ -577,6 +577,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   params.physBlock = physBlockOf(fa);
   params.physBlockSpawnSeconds = physSpawnSecondsFor(params.physBlock?.element ?? null);
   params.elementDamage = elementDamageOf(e);
+  // 4단계 한 줄 특성 속성 피해 + (C.514): 속성 피해 칸(%)에 더한다
+  for (const [el, v] of Object.entries(effects.evoElementDamage ?? {})) params.elementDamage[el] = (params.elementDamage[el] ?? 0) + v * 100;
   // 실패형 줄기 (GDD 49-8 1번): 블록 관련 피해 배율
   params.blockDamageMultiplier = (params.blockDamageMultiplier ?? 1) * (isFailLine(e) ? EV.failLine.blockDamage : 1);
   // 공허 블록 피해 (GDD 101장 3번): 히든 진화체(진화체 데이터 hidden) 몸이면 큰 피해, 아니면 기본 공격 1회분
