@@ -109,7 +109,9 @@ describe('C.470 진화체 도감 (GDD 14 도감 v6.096)', () => {
     expect(dexEntriesOfTier(hollow, 3).map((e) => (e.kind === 'cell' ? e.cell.key : e.form.id))).toHaveLength(8);
     expect(dexEntriesOfTier(hollow, 3).every((e) => e.kind === 'cell')).toBe(true);
     expect(dexEntriesOfTier(shin, 3).map((e) => (e.kind === 'form' ? e.form.id : '')).sort()).toEqual(['h3:fail', 'h3:passage', 't3:earth', 't3:fire', 't3:normal', 't3:thunder', 't3:water']);
-    expect(dexEntriesOfTier(hollow, 4)).toHaveLength(28);
+    // C.516 (GDD 8-5 v6.154, 사용자 2026-11-21): 바시오(t4:kyo:mixed) 삭제 — 도감에서 숨김(이미 발견했으면 보인다). 옛 기대 = 28
+    expect(dexEntriesOfTier(hollow, 4)).toHaveLength(27);
+    expect(dexEntriesOfTier(hollow, 4, new Set(['t4:kyo:mixed']))).toHaveLength(28);
     expect(dexEntriesOfTier(hollow, 2)).toHaveLength(1);
   });
 
@@ -126,7 +128,7 @@ describe('C.470 진화체 도감 (GDD 14 도감 v6.096)', () => {
 
 describe('C.470 세이브 형식 91 — lookDex 마이그레이션', () => {
   it('형식 91, 90 → 91 변환이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(94);
+    expect(SAVE_FORMAT_VERSION).toBe(95);
     expect(typeof SAVE_MIGRATIONS[90]).toBe('function');
   });
 

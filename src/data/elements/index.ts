@@ -17,6 +17,7 @@ export function parseElements(r: unknown): ElementDef[] {
     if (e.effect !== undefined && !['drain', 'poison'].includes(e.effect)) errors.push(`${e.id}: effect 는 drain | poison (없으면 효과 없음)`);
     if (typeof e.color !== 'string' || !e.color.startsWith('--bha-')) errors.push(`${e.id}: color 는 디자인 토큰 이름(--bha-…)`);
     if (typeof e.name !== 'object' || typeof e.abbr !== 'object') errors.push(`${e.id}: name·abbr`);
+    if (e.enemyOnly !== undefined && (e.enemyOnly !== true || e.kind !== 'special')) errors.push(`${e.id}: enemyOnly 는 특수 속성에만 true`);
   }
   if (!list.some((e) => e.kind === 'normal')) errors.push('노멀 속성(kind normal)이 하나 있어야 한다 (1단계 기본 속성)');
   if (errors.length > 0) throw new Error(`속성 데이터 오류:\n- ${errors.join('\n- ')}`);
@@ -29,6 +30,15 @@ export const ELEMENT_IDS: readonly string[] = ELEMENTS.map((e) => e.id);
 export const NORMAL_ELEMENT: string = ELEMENTS.find((e) => e.kind === 'normal')!.id;
 export const ELEMENTAL_IDS: readonly string[] = ELEMENTS.filter((e) => e.kind === 'elemental').map((e) => e.id);
 export const SPECIAL_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((e) => e.kind === 'special').map((e) => e.id);
+/** 적 전용 속성 (GDD 8-2 v6.154 허무): 플레이어 블록·흡수 블록·일반 진화체가 없다 */
+export const ENEMY_ONLY_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((e) => e.enemyOnly === true).map((e) => e.id);
+/** 플레이어가 블록으로 가질 수 있는 속성 (적 전용 뺀 나머지) */
+export const PLAYER_ELEMENT_IDS: readonly string[] = ELEMENT_IDS.filter((id) => !ENEMY_ONLY_ELEMENT_IDS.includes(id));
+
+/** 적 전용 속성인가 (GDD 8-2 v6.154): 그 속성 블록은 플레이어가 얻지 못한다 */
+export function isEnemyOnlyElement(id: string): boolean {
+  return ENEMY_ONLY_ELEMENT_IDS.includes(id);
+}
 
 export function getElement(id: string): ElementDef {
   const e = ELEMENTS.find((x) => x.id === id);

@@ -211,7 +211,8 @@ export function passageCandidates(e: EvolutionState, ctx: JudgeContext): Evoluti
 }
 
 /** 4단계 일반 진화체 (GDD 126장 6·확정 5): 속성 = 3단계 속성(통로·망함이면 장착 최다), 타입 = 장착 최다 공격 분류.
- *  혈·독·허가 장착 최다(동률 포함)면 그 속성의 단 하나 타입 진화체가 우선. 망한 진화체에서 오면 실패형 */
+ *  혈·독이 장착 최다(동률 포함)면 그 속성의 단 하나 타입 진화체가 우선(일반 < 혈·독 < 히든). 망한 진화체에서 오면 실패형.
+ *  판정에서 빠진 진화체(retired — GDD 8-5 v6.154 옛 허 t4:kyo:mixed, 허무는 적 전용)는 후보가 아니다 */
 export function tier4Normal(e: EvolutionState, ctx: JudgeContext, table: readonly FormDef[] = FORM_TABLE): FormDef {
   const find = (id: string) => table.find((x) => x.id === id);
   const cur = e.formId ? find(e.formId) : undefined;
@@ -219,7 +220,7 @@ export function tier4Normal(e: EvolutionState, ctx: JudgeContext, table: readonl
   const counts = judgeElementCounts(ctx.build);
   const max = Math.max(0, ...Object.values(counts));
   if (max > 0) {
-    const special = SPECIAL_ELEMENT_IDS.filter((el) => counts[el] === max).map((el) => table.find((f) => f.tier === 4 && !f.hidden && f.label.elements[0] === el)).find((f) => f !== undefined);
+    const special = SPECIAL_ELEMENT_IDS.filter((el) => counts[el] === max).map((el) => table.find((f) => f.tier === 4 && !f.hidden && !f.retired && f.label.elements[0] === el)).find((f) => f !== undefined);
     if (special) return special;
   }
   const el = cur?.label.kind === 'element' && cur.elements?.[0] ? cur.elements[0] : tier3Element(ctx.build, table);
@@ -234,7 +235,7 @@ export function evolutionCandidates(e: EvolutionState, ctx: JudgeContext, table:
     if (!f) throw new Error(`진화체가 없다: ${id}`);
     return f;
   };
-  const ok = (c: EvolutionCandidate) => table.some((x) => x.id === c.formId);
+  const ok = (c: EvolutionCandidate) => table.some((x) => x.id === c.formId && !x.retired);
   if (tier <= 2) return { normal: find(`t${tier}:base`), hidden: [], forced: null, priority: false };
   if (tier === 3) {
     if (isCareFailure(ctx) || isScattered(e)) return { normal: find('h3:fail'), hidden: [], forced: find('h3:fail'), priority: false };

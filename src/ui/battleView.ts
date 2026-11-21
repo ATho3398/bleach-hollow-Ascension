@@ -1945,7 +1945,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     down = null;
     drawTray();
   };
-  /** 꺼진 진화체 특수 블록을 누르면 왜 꺼졌는지·켜는 법 한 줄 (C.508 점검C 8 — 공화 공허 블록, 블록 처형선 0) */
+  /** 꺼진 진화체 특수 블록을 누르면 왜 꺼졌는지·켜는 법 한 줄 (C.508 점검C 8 — 공화 허무 블록, 블록 처형선 0) */
   let offToldAt = 0;
   const tellEvoOff = (uid: number) => {
     const b = s.tray.find((x) => x.uid === uid);

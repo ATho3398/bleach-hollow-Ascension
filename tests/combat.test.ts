@@ -467,10 +467,9 @@ describe('약점·공허·시간 제한', () => {
     const hpBefore = poison.s.enemy.hp;
     wait(poison.s, EL.poisonSeconds + 0.5);
     expect(hpBefore - poison.s.enemy.hp).toBeCloseTo(base * EL.poisonFraction);
-    const kyo = hit('t-kyo-a');
-    // GDD 45장 5번 "허 방무 없애": 허 블록은 방어 무시·리스크 없이 보통 피해
-    expect(kyo.damage).toBeCloseTo(base);
-    expect(kyo.s.riskGained).toBe(0);
+    // GDD 8-2 v6.154 (사용자 2026-11-21 "허무=공허로 합치고, 허무형은 적만 존재하고 블록흡수는 안되게"): 옛 기대 = 허 블록 보통 피해·리스크 0.
+    // 허무 블록은 플레이어가 얻을 수 없다 — 빌드에 넣는 길 자체가 막힌다
+    expect(gainTrait(newBuild(), 't-kyo-a').ok).toBe(false);
   });
 
   it('적의 공격도 상성·능력치를 따른다: 내 방어가 두 배면 받는 피해가 절반, 적 속성이 나를 이기면 ×1.2', () => {

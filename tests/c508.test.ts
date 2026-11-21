@@ -87,13 +87,13 @@ describe('C1 진화 묻는 중 표시 (GDD 8-5)', () => {
     expect(reload(t).evolution.choice).toBeUndefined();
   });
   it('형식 94 · 93 → 94 변환(묻는 중 아님) · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(94);
+    expect(SAVE_FORMAT_VERSION).toBe(95);
     expect(typeof SAVE_MIGRATIONS[93]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     const s = grown();
     s.meta.format = 93;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(94);
+    expect(m.meta.format).toBe(95);
     expect(m.evolution.choice).toBeUndefined();
     expect(m.evolution.tierIndex).toBe(2);
   });
@@ -222,11 +222,12 @@ describe('C8 공화 공허 블록: 글자 = 데이터(공) · 꺼진 이유 안�
     e.evo!.stacks.hollow = { n: 2 } as never;
     expect(evoSpecialOffReason(e, e.tray.find((x) => x.traitId?.startsWith('evo:')))).toBe('elite');
   });
-  it('화면: 꺼진 특수 블록은 글자를 \'봉\'으로 바꾸지 않는다(봉인만) · 데이터 글자 = 공', () => {
+  it('화면: 꺼진 특수 블록은 글자를 \'봉\'으로 바꾸지 않는다(봉인만) · 데이터 글자 = 허(허무 블록, C.516)', () => {
     const v = readFileSync('src/ui/battleView.ts', 'utf8');
     expect(v).toContain('setV2Locked(node, locked, !sealedNow)');
     const j = readFileSync('src/data/evolution/uniques.json', 'utf8');
-    expect(j).toMatch(/"name": \{ "\*": "공허 블록" \}, "short": "공"/);
+    // GDD 8-8 v6.154 (사용자 2026-11-21 "용어는 허무로 가자"): 공화 특수 블록 = '허무 블록'·글자 '허' — 옛 기대 = '공허 블록'·'공'
+    expect(j).toMatch(/"name": \{ "\*": "허무 블록" \}, "short": "허"/);
   });
 });
 

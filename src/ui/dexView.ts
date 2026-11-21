@@ -96,10 +96,11 @@ function formDetail(faction: FactionConfig, f: FormDef, current: boolean): Node[
 type DexEntry = { kind: 'form'; form: FormDef } | { kind: 'cell'; cell: LookCell };
 
 /** 단계 하나의 칸들: 모델 단위 단계는 모델 칸(능력치 모델 → 히든), 아니면 진화체(히든은 맨 뒤) */
-export function dexEntriesOfTier(faction: FactionConfig, tier: number): DexEntry[] {
+export function dexEntriesOfTier(faction: FactionConfig, tier: number, unlocked: ReadonlySet<string> = new Set()): DexEntry[] {
   const cells = lookCells(faction, tier);
   if (cells.length > 0) return cells.map((cell) => ({ kind: 'cell', cell }));
-  return sortFormsForDex(formsOfTier(tier)).map((form) => ({ kind: 'form', form }));
+  // 판정에서 빠진 진화체(retired — GDD 8-5 v6.154 바시오·허곡)는 숨김. 이미 도감에 있으면(옛 세이브) 그대로 보인다
+  return sortFormsForDex(formsOfTier(tier).filter((f) => !f.retired || unlocked.has(f.id))).map((form) => ({ kind: 'form', form }));
 }
 
 /** 칸 대표 색 변형: 지금 그 칸이면 지금 진화체, 아니면 발견한 것 중 노멀(기본 보라) → 처음 발견한 것. 하나도 없으면 첫 변형(실루엣용) */
@@ -113,7 +114,7 @@ export function dexView(root: HTMLElement, faction: FactionConfig, save: SaveDat
   const unlocked = new Set(save.formDex);
   const lookDex = save.lookDex ?? [];
   const tiers = [2, 3, 4, 5];
-  const entries = tiers.flatMap((t) => dexEntriesOfTier(faction, t));
+  const entries = tiers.flatMap((t) => dexEntriesOfTier(faction, t, unlocked));
   const currentForm = noEvolutionLabel(save) || !save.evolution.formId ? null : tryGetForm(save.evolution.formId) ?? null; // 초월자는 '지금' 진화체 없음 (사용자 2026-11-15)
   const currentCell = currentForm ? lookCellOf(faction, currentForm, save.evolution.look) : null;
   const known = (e: DexEntry): boolean => (e.kind === 'form' ? unlocked.has(e.form.id) : foundVariants(e.cell, lookDex).length > 0);

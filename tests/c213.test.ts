@@ -53,7 +53,7 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     return raw;
   };
   it('단계 표에 55 가 있고 형식은 56', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(94); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(95); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.311 · C.227 · C.226 · C.225
     expect(typeof SAVE_MIGRATIONS[55]).toBe('function');
   });
   it('가진 희귀 특성 → 같은 속성 강화 1단계, 다른 값과 런 로그 옛 기록은 그대로', () => {
@@ -81,7 +81,8 @@ describe('136장 1: 형식 55 → 56 마이그레이션 (옛 세이브 이어 �
     raw.otherTracks = [{ factionId: 'shinigami', nest: o.nest, build: o.build, evolution: o.evolution, formDex: o.formDex, tiles: o.tiles, runLog: o.runLog, titles: o.titles, activeExpedition: null, rank: o.rank, training: o.training, skin: null, rebirth: o.rebirth, wear: o.wear, difficulty: o.difficulty, tower: o.tower, parkedAt: 1000 }];
     const m = migrateSave(raw)!;
     expect(m.otherTracks[0]!.build.owned).toEqual([]);
-    expect(m.otherTracks[0]!.build.enhance).toEqual({ kyo: 1 });
+    // C.516 (GDD 8-2 v6.154, 사용자 2026-11-21 허무 = 적 전용): 이어서 94 → 95 변환이 허무 강화를 노멀 강화로 합친다 — 옛 기대 = { kyo: 1 }
+    expect(m.otherTracks[0]!.build.enhance).toEqual({ normal: 1 });
   });
   it('진행 중 원정: 빌드·얻은 특성·제단 강화·흡수 후보에서 희귀 특성을 빼고 그대로 이어 간다', () => {
     const s = newSaveData('hollow', 1000);

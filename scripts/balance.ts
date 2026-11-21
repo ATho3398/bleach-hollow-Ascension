@@ -10,7 +10,7 @@ import { createExpedition, enemyScale, lapRewardMult, mutationMods, playExpediti
 import { referenceLoadout, type GearCarry } from '../src/engine/gear';
 import { addEnhance, buildCombatParams, canAbsorb, gainTrait, isBasicBlockTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
-import { ELEMENT_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
+import { ELEMENT_IDS, NORMAL_ELEMENT, PLAYER_ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, isFailLine, MAX_TIER_INDEX, newEvolution, TIER_COUNT, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
@@ -273,7 +273,7 @@ if (want('combat')) {
     if (nw / ng < TARGET.normal.win) failures.push(`분류·속성 ${label}: 일반 승률 ${((nw / ng) * 100).toFixed(0)}% < ${TARGET.normal.win * 100}%`);
   };
   for (const cat of ATTACK_CATEGORIES) rowOf(`분류 ${cat}`, `t-fire-${FAM_OF[cat]}`);
-  for (const el of ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`);
+  for (const el of PLAYER_ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`); // C.516: 허무 블록은 플레이어가 못 가진다 (GDD 8-2 v6.154)
   console.log(`  (혈 흡혈 ${BALANCE.provisional.elements.drainFraction * 100}% · 한 전투 상한 최대 체력 ${BALANCE.provisional.elements.drainCapFraction * 100}%, C.53)`);
 }
 
@@ -877,14 +877,14 @@ if (want('tree')) {
   const EVC = BALANCE.provisional.evolution;
   const t0 = Date.now();
   const rep = analyzeTree(FORM_TABLE, 'hollow', EVC.analysis.samples, EVC.analysis.seed);
-  const normalCount = FORM_TABLE.filter((f) => !f.hidden).length;
+  const normalCount = FORM_TABLE.filter((f) => !f.hidden && !f.retired).length; // C.516 (GDD 8-5 v6.154): 판정에서 빠진 바시오·허곡(t4:kyo:mixed)은 세지 않는다
   const hiddenCount = FORM_TABLE.filter((f) => f.hidden).length;
   console.log(`\n진화 트리 점검 (일반 ${normalCount}+1단계 + 히든 ${hiddenCount}, 단계당 무작위 상태 ${EVC.analysis.samples}개, ${((Date.now() - t0) / 1000).toFixed(1)}초)`);
   for (const [tier, r] of Object.entries(rep.hiddenRate)) console.log(`  ${tier}단계: 히든 ${((r.hidden / r.samples) * 100).toFixed(1)}%`);
   console.log(`  한 번도 안 뽑힌 진화체: ${rep.unreachable.length ? rep.unreachable.join(', ') : '없음'}`);
   if (rep.unreachable.length > 0) failures.push(`진화 트리: 뽑히지 않는 진화체 ${rep.unreachable.join(', ')}`);
-  // 기획(GDD 126장, C.220): 일반 = 2단계 1 + 3단계 5 + 4단계 18 = 24(+1단계), 히든 = 3단계 2 + 4단계 10 = 12
-  if (normalCount !== 24 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 24(+1단계) + 12)`);
+  // 기획(GDD 126장, C.220 → 8-5 v6.154 C.516): 일반 = 2단계 1 + 3단계 5 + 4단계 17 = 23(+1단계), 히든 = 3단계 2 + 4단계 10 = 12 (옛 4단계 18 — 허는 적 전용이 되며 삭제)
+  if (normalCount !== 23 || hiddenCount !== 12) failures.push(`진화 트리: 일반 진화체 ${normalCount}·히든 ${hiddenCount} (기획 23(+1단계) + 12)`);
 }
 
 // ── 권장 단계 등가 점검 (C.75, GDD 32-1 2번): n단계 몸(그 단계 기본 진화체, 노력치 0, skill 1개 빌드)이 ★n 적 풀과 1:1 로 싸우면 1단계 몸 ★1 과 같은 길이·승률이어야 한다 ──
@@ -933,7 +933,8 @@ if (want('equiv')) {
 if (want('abilities')) {
   const NA = 32;
   // C.220 (4단계 개편): 옛 4단계(속성) → 3단계, 옛 5단계(속성 혼합 + 행동 히든) → 4단계 (혈·독·허는 그 속성 하나뿐인 타입)
-  const t4 = [...ELEMENT_IDS.map((el) => FORM_TABLE.find((f) => f.id === `t4:${el}:mixed`) ?? FORM_TABLE.find((f) => f.tier === 4 && !f.hidden && f.label.elements[0] === el)!).map((f) => f.id), 'h4:frenzy', 'h4:restraint', 'h4:hunter', 'h4:awakened'];
+  // C.516 (GDD 8-5 v6.154): 허무(적 전용)는 4단계 일반 진화체가 없다 — 플레이어 속성만
+  const t4 = [...PLAYER_ELEMENT_IDS.map((el) => FORM_TABLE.find((f) => f.id === `t4:${el}:mixed`) ?? FORM_TABLE.find((f) => f.tier === 4 && !f.hidden && f.label.elements[0] === el)!).map((f) => f.id), 'h4:frenzy', 'h4:restraint', 'h4:hunter', 'h4:awakened'];
   const groups: [number, string[]][] = [[2, formsOfTier(3).filter((f) => !f.hidden).map((f) => f.id)], [3, t4]];
   console.log(`\n진화체 특성 (GDD 39장 7번, 사람형 봇, 진화체 몸 + skill 1개 vs 권장 ★ 적 풀, 종류마다 ${NA}판) — 특성 몫(켬 − 끔) 강적 승률 단계 평균 ±10%p · 일반 처치 시간 −15% 이내`);
   for (const [tier, ids] of groups) {

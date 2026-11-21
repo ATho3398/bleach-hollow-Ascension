@@ -27,7 +27,8 @@ describe('속성 표시 데이터 (C.47)', () => {
     const abbrs = ELEMENTS.map((e) => e.abbr['*']);
     expect(new Set(abbrs).size).toBe(ELEMENTS.length);
     for (const e of ELEMENTS) {
-      expect(Array.from(e.abbr['*']!)).toHaveLength(1);
+      // GDD 8-2 v6.154 (사용자 2026-11-21 "용어는 허무로 가자"): 허무만 두 글자 약어(알약 표시) — 옛 기대 = 모두 한 글자
+      expect(Array.from(e.abbr['*']!)).toHaveLength(e.id === 'kyo' ? 2 : 1);
       expect(getElement(e.id).color).toMatch(/^--bha-/);
     }
   });

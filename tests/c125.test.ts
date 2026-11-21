@@ -63,10 +63,13 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
   it('속성이 바뀌는 보스(썬더우드)는 그 속성들 안에서, 보스 특성은 확정 후보', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
     expect(els.sort()).toEqual(['kyo', 'thunder', 'water']);
+    // GDD 8-3 v6.154 (사용자 2026-11-21 "허무형은 적만 존재하고 블록흡수는 안되게"): 바뀌는 속성의 허무 블록은 후보에서 뺀다 — 썬더우드 보스 특성(허무)도 확정 후보가 아니다.
+    // 옛 기대 = 첫 후보가 보스 특성, 후보 속성 ⊂ {kyo, thunder, water}
     for (let seed = 1; seed <= 20; seed++) {
       const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 0, getBoss('forest-lord').trait, 1, els);
-      expect(o.candidates[0]).toBe(getBoss('forest-lord').trait);
-      for (const id of o.candidates) expect(els).toContain(getTrait(id).element);
+      expect(o.candidates).not.toContain(getBoss('forest-lord').trait);
+      expect(o.candidates.length).toBeGreaterThan(0);
+      for (const id of o.candidates) expect(['thunder', 'water']).toContain(getTrait(id).element);
     }
     // 그 속성이 아닌 보스 특성은 확정 후보로도 넣지 않는다
     const o = buildOffer(createRng(1), getEnemy('water-basic'), newBuild(), WON, 0, getBoss('canyon-king').trait);

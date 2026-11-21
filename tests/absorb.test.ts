@@ -72,7 +72,8 @@ function toAbsorb(exp: ExpeditionState, enemy?: Partial<EnemyDef>): void {
 describe('임시 데이터', () => {
   it('속성 8종, 속성마다 특성 6개(공격 3계열·패시브·파츠·희귀 — C.136 막기·회복 속성 특성 삭제, GDD 84장 7번), 전부 provisional (C.47)', () => {
     expect(ELEMENTS).toHaveLength(8);
-    expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허(虛)']);
+    // GDD 8-2 v6.154 (사용자 2026-11-21 "용어는 허무로 가자"): 옛 '허(虛)' → '허무'
+    expect(ELEMENTS.map((e) => e.name['*'])).toEqual(['노멀', '물', '불', '흙', '뇌', '혈', '독', '허무']);
     for (const e of ELEMENTS) {
       const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
       expect(ts, e.id).toHaveLength(5); // C.213 (GDD 136장 1): 희귀 특성 삭제 6 → 5
@@ -781,7 +782,8 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
   });
 
   it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다 (노멀은 기본 블록을 가진 것으로 봐 후보 없음, C.147)', () => {
-    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT)) {
+    // GDD 8-3 v6.154 (사용자 2026-11-21): 허무(적 전용) 적은 블록 후보 없음 — 아래 '허무 적 흡수' 테스트(c516)
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && !e.enemyOnly)) {
       for (let seed = 1; seed <= 30; seed++) {
         // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허)은 숨김이 열렸을 때로 본다
         const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null);
@@ -795,7 +797,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
   it('이미 장착한 계열만 있으면 다른 계열 공격 후보를 끼워 넣는다 (장착 계열이 보장 수에 차면 손대지 않는다)', () => {
     const b: BuildState = newBuild();
     gainTrait(b, 't-fire-a'); // 계열 a 장착
-    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire')) {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire' && !e.enemyOnly)) { // 허무 적 = 후보 없음 (GDD 8-3 v6.154)
       for (let seed = 1; seed <= 30; seed++) {
         const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null);
         expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);

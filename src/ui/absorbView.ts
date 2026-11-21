@@ -7,7 +7,7 @@ import { NORMAL_ELEMENT, elementName, statName, weaknessesOf } from '../data/ele
 import { MINUS, normalSlotNote, signed } from '../data/help/textFormat';
 import { STAT_IDS, pickFaction, type EnemyDef, type StatId } from '../data/schema';
 import { getTrait, traitDescription, traitName } from '../data/traits';
-import { absorbModeRule, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
+import { absorbModeRule, blocklessReason, enhanceLevel, isFull, ownsElement, ownsTraitBlock, type AbsorbMode, type AbsorbOffer } from '../engine/absorb';
 import { chooseAbsorb, chooseRelease, previewAbsorb, type ExpeditionState } from '../engine/expedition';
 import type { FactionConfig } from '../engine/faction';
 import { button, chip, el, icon, meter, mountApp, notice, tag } from './bha/dom';
@@ -89,6 +89,9 @@ export function releaseDelta(from: number, to: number): string {
 export function absorbDescLines(faction: FactionConfig, exp: ExpeditionState, m: AbsorbChoice): { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] {
   const p = previewAbsorb(exp, m);
   const out: { kind: 'what' | 'stat' | 'risk' | 'warn' | 'gain'; text: string }[] = [{ kind: 'what', text: absorbModeText(faction)[m].sub }];
+  // 허무 적 (GDD 8-3 v6.154): 갈래마다 이유 한 줄 — 둘 다·속성만은 흐리게(고를 수 없음)
+  const blockless = blocklessLine(faction, exp);
+  if (blockless) out.push({ kind: 'warn', text: blockless });
   const ev = evLine(p.ev, faction.id);
   if (ev) out.push({ kind: 'stat', text: `능력치: ${ev}` });
   else if (evCapped(exp, m)) out.push({ kind: 'warn', text: evFullText(m) }); // GDD 176장 11: 노력치 상한이면 능력치 0 을 말로 (202장 3: 갈래마다 이유 한 줄)
@@ -109,6 +112,12 @@ export function evFullText(m: AbsorbChoice): string {
   if (m === 'stat') return `${EV_FULL_TEXT} 지금 이 갈래로는 얻는 것이 없다.`;
   if (m === 'both') return `${EV_FULL_TEXT} 블록과 속성 강화는 그대로 얻는다.`;
   return EV_FULL_TEXT;
+}
+
+/** 허무 적 흡수 화면의 이유 한 줄 (GDD 8-3 v6.154 '허무는 블록으로 흡수할 수 없다' — 행위 이름은 종족 설정 absorbActionName). 허무 적이 아니면 null */
+export function blocklessLine(faction: Pick<FactionConfig, 'id' | 'absorbActionName'>, exp: Pick<ExpeditionState, 'absorbOffer'>): string | null {
+  const offer = exp.absorbOffer;
+  return offer?.blockless ? blocklessReason(offer.element, faction.id, faction.absorbActionName) : null;
 }
 
 /** 능력치를 주는 갈래인데 노력치가 이미 가득 차 아무것도 안 오르나 (GDD 176장 11) */
@@ -142,6 +151,7 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   const desc = el('div', 'bha-panel bha-panel--inset bha-absorb__desc');
   desc.setAttribute('aria-live', 'polite');
   let sel: AbsorbChoice = ABSORB_MODES[0];
+  const blocks = (m: AbsorbChoice): boolean => m === 'both' || m === 'trait';
   const btns = ABSORB_MODES.map((m) => {
     const frenzy = m !== 'none' && previewAbsorb(exp, m).frenzy;
     const b = button({ label: names[m].label, variant: frenzy ? 'danger' : undefined, size: 'small' });
@@ -151,8 +161,16 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
     if (frenzy) b.title = `${faction.frenzyName} 상태가 된다`;
     // 능력치만 얻는 갈래인데 노력치가 가득 = 흐리게 (GDD 176장 11 → 202장 3). 고를 수도 실행할 수도 있다(설명 칸에서 이유를 읽게) — 자리도 그대로. '둘 다'·'속성만'은 가득이어도 흐리지 않는다(블록·속성 강화 몫)
     if (m === 'stat' && evCapped(exp, m)) b.setAttribute('aria-disabled', 'true');
+    // 허무 적 (GDD 8-3 v6.154): 블록을 얻는 갈래(둘 다·속성만) = 흐리게, 고를 수 없음. 이유는 설명 칸 한 줄 + 버튼 툴팁
+    const lock = blocks(m) ? blocklessLine(faction, exp) : null;
+    if (lock) {
+      b.disabled = true;
+      b.setAttribute('aria-disabled', 'true');
+      b.dataset.blockless = '';
+      b.title = lock;
+    }
     // ▲▼ 하이라이트가 옮겨 오면 고르기 (기기가 보내는 'bha-select', lcdpage.masterDetail 과 같은 방식)
-    b.addEventListener('bha-select', () => select(m));
+    b.addEventListener('bha-select', () => { if (!b.disabled) select(m); });
     // 손가락·기기 ✓ 모두 고르기만 (GDD 172장 1: 같은 버튼을 다시 눌러도 실행하지 않는다)
     // 손가락 = 그 버튼에 기기 하이라이트도 옮긴다. 기기 ✓·키보드(click detail 0) = 고른 뒤 하이라이트를 [흡수] 버튼으로
     // (▼ 로 갈래를 지나 버튼까지 가면 마지막 갈래 '놓아주기'가 골라지므로, 고른 갈래 그대로 버튼에 가는 길)
@@ -201,10 +219,11 @@ export function absorbModePicker(faction: FactionConfig, exp: ExpeditionState, r
   }
   // 초월자 전용 블록 몸 (GDD 12-4 v6.048): 노력치 흡수·놓아주기만 — 다른 갈래 버튼은 만들지 않은 것처럼 빼고, 처음 고른 갈래 = 노력치
   const shown = exp.absorbOffer?.statOnly ? btns.filter((b) => b.dataset.mode === 'stat' || b.dataset.mode === 'none') : btns;
-  if (shown !== btns) sel = 'stat';
+  // 초월자(갈래 숨김)·허무 적(갈래 흐림, GDD 8-3 v6.154): 처음 고른 갈래 = 능력치만
+  if (shown !== btns || exp.absorbOffer?.blockless) sel = 'stat';
   actions.append(...shown);
   select(sel);
-  return { actions, desc, go, first: shown[0]! };
+  return { actions, desc, go, first: shown.find((b) => !b.disabled) ?? shown[0]! };
 }
 
 /** 쓰러뜨린 적 카드 (흡수 화면 왼쪽 판 · 첫 포식 오른쪽 빈 칸 GDD 243장 5) */

@@ -1,6 +1,6 @@
 // 원정 자동 플레이어: 밸런스 점검·테스트용. 손에 든 타일을 앞쪽 빈 슬롯에 놓고, 정해진 바퀴에서 귀환한다.
 import { getTrait } from '../../data/traits';
-import { elementCounts, type BuildState } from '../absorb';
+import { elementCounts, statAbsorbOnly, type BuildState } from '../absorb';
 import { playCombatBot } from '../combat';
 import {
   advance, chooseAbsorb, chooseContinue, chooseDraft, chooseRelease, chooseReturn, finishBattle, finishRest, goldAvailable, placeTile, resolveEvent, startBattle,
@@ -118,8 +118,12 @@ export function playExpedition(exp: ExpeditionState, opt: AutoOptions): Expediti
       finishBattle(exp, b);
     } else if (exp.phase === 'absorb') {
       if (opt.absorb === 'absorb' && (opt.absorbWanted?.(exp) ?? true)) {
-        const pick = botPickTrait(exp);
-        chooseAbsorb(exp, pick.traitId, pick.replaceSlot);
+        // 능력치만·놓아주기만 화면(초월자 전용 블록 몸·허무 적, GDD 8-3 v6.154)은 능력치 흡수
+        if (exp.absorbOffer && statAbsorbOnly(exp.absorbOffer)) chooseAbsorb(exp, null, undefined, 'stat');
+        else {
+          const pick = botPickTrait(exp);
+          chooseAbsorb(exp, pick.traitId, pick.replaceSlot);
+        }
       } else chooseRelease(exp);
     } else if (exp.phase === 'rest') finishRest(exp);
     else if (exp.phase === 'event') botEvent(exp);

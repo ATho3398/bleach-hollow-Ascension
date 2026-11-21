@@ -627,6 +627,7 @@
     "elements": [
       "kyo"
     ],
+    "retired": true,
     "stats": {
       "hp": 98,
       "atk": 107,
