@@ -23,6 +23,7 @@ import {
   statusMarksOf,
   blockMotionTarget,
   evoSpecialOf, evoSpecialUsable, evoExecLinesOf, evoSpecialOffReason,
+  chainCapOf, evoChainTierOf, evoHardenedStarts, evoHardenName,
 } from '../engine/combat';
 import { evoText, fillEvoText } from '../data/evolution/uniques';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
@@ -207,7 +208,9 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
         return { role: e.chain > 1 || e.kitCounter || e.kitFinisher ? 'chain' : 'attack', icon: e.kitFinisher || e.kitCounter ? 'i-special' : e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: kitText };
       }
       // 블록 이름은 `속성_계열`(GDD 20장 v5.4), 계열 공격은 단계 기술 이름(17-3)을 뒤에 붙인다
-      const skillName = e.block === 'skill' ? familySkillName(labels, e.family, e.chain) : null;
+      // 계열 단계를 넘긴 체인 (C.514 현음 '사현'·'칠성'): 진화체 고유 능력 이름
+      const over = e.block === 'skill' && e.role === 'attack' && e.chain > s.params.chainMultipliers.length ? evoChainTierOf(s, e.chain) : null;
+      const skillName = e.block === 'skill' ? (over ? evoText(over.name, factionId) : familySkillName(labels, e.family, e.chain)) : null;
       const name = e.block === 'skill'
         ? `${eventBlockLabel(e, s, labels, factionId)}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}${skillName ? ` 「${skillName}」` : ''}`
         : e.block === 'combo' ? comboBlockLabel(labels, comboOf(s.params, e.traitId)?.family) : e.block === 'liberation' ? liberationBlockLabel(factionId, e.element) : labels.voidBlock;
@@ -358,6 +361,14 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   const enemy = s.enemy.def;
   const enemyName = shownName(pickFaction(enemy.name, faction.id));
   const top = maxChain(p);
+  /** 지금 체인 상한 (C.514 현음: 진화체 chainExtend — 4, 만해 5). 바 묶음·체인 표시는 이것, 체인3 칩·연출 단계는 top(계열 단계) */
+  const capNow = () => chainCapOf(s);
+  /** 계열 단계를 넘긴 체인의 기술 이름 (C.514 현음 '사현'·'칠성') */
+  const overTierName = (chain: number): string | null => {
+    const t = chain > top ? evoChainTierOf(s, chain) : null;
+    return t ? evoText(t.name, bf.id) : null;
+  };
+  const hardName = evoText(evoHardenName(p) ?? undefined, bf.id);
   const cap = p.trayCapacity;
   /** 설정 화면 '전투 효과' (피해 숫자·진동·효과음·흔들림). 전투 시작 때 읽는다 */
   const fx = loadFxSettings(safeStorage());
@@ -1213,7 +1224,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       if (e.kind !== 'block' || e.damage <= 0) return null;
       if (e.block === 'combo') return { name: e.traitId ? comboName(e.traitId, bf.id) : '콤보', ult: true };
       if (e.block !== 'skill' || e.role !== 'attack') return null;
-      const name = familySkillName(labels, e.family, Math.min(e.chain, FAMILY_TIERS));
+      const name = overTierName(e.chain) ?? familySkillName(labels, e.family, Math.min(e.chain, FAMILY_TIERS));
       return name ? { name } : null;
     },
     shake,
@@ -1247,7 +1258,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     else if (e.matchup === 'weak') spawnFloat('dull', labels.matchupText.weak);
     if (e.chain > 1) {
       // 계열 공격은 단계 기술 이름을 공격 연출이 장면 위쪽에 크게 띄운다(GDD 19-2). 그 밖(막기·회복·기본 블록)은 체인 N. 초월자 전용 블록은 기술 이름(아래 react)
-      if (!familySkillName(labels, e.family, e.chain) && !e.kitName) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
+      if (!familySkillName(labels, e.family, e.chain) && !e.kitName && !(e.role === 'attack' && e.family && overTierName(e.chain))) spawnFloat('chain', `${labels.chain}${e.chain}!`, { chain3: e.chain >= top });
       flash(e.chain >= top ? 'is-chain3' : 'is-chain2');
     }
     if (e.block === 'combo') flash('is-special', 600);
@@ -1343,6 +1354,11 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
           if (!e.kitFinisher || e.kitMotion) spawnFloat('chain', `${e.kitShot}!`, { chain3: !!e.kitFinisher }); // 마무리 평타 이름은 대사 띠(kit-line)가 크게 — 연출(C.473)이 있으면 대사 띠는 자막이 쓰므로 이름은 여기서
           spawnFloat('attack', `−${n0(e.damage)}`, { size: damageTier(e.damage, myUnit, { chain: e.kitFinisher ? 3 : 1, ult: !!e.kitFinisher }), critical: !!e.crit });
           if (e.kitFinisher) { flash('is-special', 700); shake(); }
+          break;
+        }
+        // 진화체 특수 평타 (C.514 석양홍 「석양」): 이름은 고유 능력 작은 글자, 맞는 순간 숫자를 그 속성으로
+        if (e.evoShot) {
+          spawnFloat('attack', `−${n0(e.damage)}`, { critical: !!e.crit, element: e.evoShotElement ?? null });
           break;
         }
         // 기본 공격 숫자는 평소 띄우지 않는다(화면이 붐빈다). 치명타만 크게
@@ -1550,15 +1566,18 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       }
     }
     // 묶음 (GDD 19-2): 같은 계열 덩어리를 앞에서부터 최대 체인 개씩 나눈 발동 묶음 + 덩어리 안 묶음 경계 표시
-    const groups = chainGroupsOf(s.tray, top);
-    const specs = runSpecs(groups, (i) => s.tray[i]?.kind === 'skill', top);
+    const capTop = capNow();
+    const groups = chainGroupsOf(s.tray, capTop);
+    const specs = runSpecs(groups, (i) => s.tray[i]?.kind === 'skill', capTop);
     const cuts = groupCuts(runsOf(s.tray), groups).filter((i) => s.tray[i]?.kind === 'skill');
-    const sig = `${specs.map((r) => `${r.start}:${r.len}`).join('|')}/${cuts.join(',')}`;
+    // 굳은 묶음 (C.514 만리장): 그 묶음 체인 표시에 '굳음'
+    const hardStarts = hardName ? evoHardenedStarts(s) : [];
+    const sig = `${specs.map((r) => `${r.start}:${r.len}:${r.level}`).join('|')}/${cuts.join(',')}/${hardStarts.join(',')}`;
     if (sig !== runSig) {
       runSig = sig;
       for (const r of runEls) r.node.remove();
       for (const c of cutEls) c.remove();
-      runEls = specs.map((spec) => ({ spec, node: v2ChainEl(spec, labels.chain) }));
+      runEls = specs.map((spec) => ({ spec, node: v2ChainEl(spec, labels.chain, hardStarts.includes(spec.start - 1) ? hardName : undefined) }));
       cutEls = cuts.map(v2CutEl);
       for (const r of runEls) tray.grid.append(r.node);
       for (const c of cutEls) tray.grid.append(c);

@@ -1,0 +1,110 @@
+{
+  "shots": [
+    "01-hyeoneum-chain4-bar.png",
+    "02-hyeoneum-sahyeon.png",
+    "03-seokyanghong-sunset-shot.png",
+    "04-manrijang-hardened-chain3.png"
+  ],
+  "errors": [],
+  "checks": {
+    "hyeon": {
+      "cap": 4,
+      "groups": [
+        {
+          "start": 0,
+          "length": 4
+        },
+        {
+          "start": 4,
+          "length": 1
+        },
+        {
+          "start": 5,
+          "length": 1
+        }
+      ]
+    },
+    "hyeonTabs": [
+      "체인4"
+    ],
+    "hyeonUse": {
+      "ok": true,
+      "tray": 3,
+      "procs": {
+        "사현!": 1
+      },
+      "byChain": [
+        0,
+        0,
+        1
+      ]
+    },
+    "sunset": {
+      "charge": 1,
+      "burn": {
+        "value": 0.08,
+        "until": 89
+      },
+      "el": [
+        "fire"
+      ]
+    },
+    "sunsetMarks": [
+      "evo-b-burn:8"
+    ],
+    "sunsetFx": [
+      "arcane-arcane-missiles-fire"
+    ],
+    "sunsetAfter": {
+      "procs": {
+        "석양!": 1
+      },
+      "charge": 0
+    },
+    "wall": {
+      "el": [
+        "earth"
+      ],
+      "tick": 9
+    },
+    "wallDebug": {
+      "tick": 39,
+      "groups": {
+        "1,2,3": 10
+      },
+      "hard": {
+        "n": 1
+      },
+      "starts": [
+        0
+      ],
+      "harden": {
+        "chain": 3,
+        "seconds": "hardSeconds",
+        "element": [
+          "earth"
+        ],
+        "stack": "hard",
+        "name": {
+          "*": "굳음"
+        }
+      },
+      "els": [
+        "earth",
+        "earth",
+        "earth",
+        "earth",
+        "earth"
+      ],
+      "cap": 3,
+      "status": "playing"
+    },
+    "wallTabs": [
+      "체인3 · 굳음",
+      "체인2"
+    ],
+    "wallMarks": [
+      "evo-s-hard:1"
+    ]
+  }
+}

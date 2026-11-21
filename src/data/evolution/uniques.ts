@@ -66,6 +66,7 @@ export const EVO_ACTIONS = [
   'timer', // 시계 timer 를 seconds 로 맞춘다 → 다 되면 on 'timer'
   'timerCut', // 시계 timer 를 seconds 만큼 당긴다 (돌고 있을 때만)
   'execute', // 지금 적을 처형 (강적·보스는 안 됨)
+  'basicShot', // (basicPre) 이 평타를 특수 공격으로: 피해 ×value, element 속성, category 능력치(special = 지능 기준), fx = 화면 도트 이펙트(그 계열·단계의 이미 연결된 것 재사용) — 이름 = 규칙 proc (C.514 석양홍)
 ] as const;
 export type EvoActionKind = (typeof EVO_ACTIONS)[number];
 
@@ -98,6 +99,10 @@ export interface EvoAction {
   ignoreDef?: EvoNum;
   bonus?: EvoNum;
   of?: 'damage' | 'maxHp';
+  /** basicShot: 평타 능력치 분류 (special = 지능 ÷ 정신력, physical = 공격력 ÷ 방어 — 없으면 평타 그대로) */
+  category?: 'physical' | 'special';
+  /** basicShot: 화면 도트 이펙트 = 그 종족 계열 family 의 stage 단계 이펙트(이미 연결된 것 재사용, 색 = element) */
+  fx?: { family: string; stage: number };
 }
 
 /** 조건 하나 (규칙의 need[] — 모두 참이어야) */
@@ -130,6 +135,10 @@ export interface EvoRule {
   notElement?: string[];
   /** block·blockPre·spawn: 블록 종류 (없으면 skill — 흡수·기본·물공 블록) */
   kind?: ('skill' | 'void' | 'combo' | 'liberation' | 'special')[];
+  /** block·blockPre: 블록 계열 id (그 종족 계열 — '이 진화체 블록' 거르기, C.514 석양홍 귀 블록) */
+  family?: string[];
+  /** block·blockPre: 굳은 묶음이었다(true)/아니었다(false) — 능력 칸 harden (C.514 만리장) */
+  hardened?: boolean;
   minChain?: EvoNum;
   chain?: number[];
   /** block: 그 블록이 치명이었다 */
@@ -244,6 +253,11 @@ export interface EvoAbilityDef {
   releaseSeconds?: EvoNum;
   /** 레스렉시온/만해 중 체력이 이 값 아래로 안 떨어짐 */
   releaseHpFloor?: EvoNum;
+  /** 체인 상한 넘기기 (C.514 현음): 이 진화체만 체인 상한 max(수치 키 — 해방 중 값 가능, 계열 단계 수 + tiers 수까지).
+   *  tiers[k] = 계열 단계 수 + k + 1 체인: 피해 = 맨 위 단계 기술 × mult, 기술 이름 name (화면 큰 글자) */
+  chainExtend?: { max: EvoNum; tiers: { mult: EvoNum; name: PerFaction<string> | string }[] };
+  /** 굳음 (C.514 만리장): 바에서 chain 개로 모인 묶음(element 속성 블록만)이 seconds 초 그대로면 '굳음' — 규칙 거르기 hardened, stack = 굳은 묶음 수를 매 틱 적는 스택(표시 칩), name = 화면 글자 */
+  harden?: { chain: number; seconds: EvoNum; element?: string[]; stack?: string; name: PerFaction<string> | string };
 }
 
 /** 4단계 한 줄 특성 효과 종류 (특성 칸 — 받으면 영구, 해방해도 그대로 GDD 8-6) */
@@ -252,6 +266,8 @@ export const EVO_TRAIT_EFFECTS = [
   'crit', // 평타 치명 확률 +value(상한도)
   'blockCrit', // 블록 치명 확률 +value(상한도)
   'chainPower', // chain 체인 블록 위력 +value
+  'blockPower', // 모든 블록 위력 +value (C.514 현음 '블록 피해 +6%' — 노멀 '균형'과 같은 자리)
+  'elementDamage', // element 속성 피해 +value (C.514 석양홍 '불 피해 +8%' — 속성 피해(GDD 48장) 칸에 더함)
   'offenseMax', // 피해 계산 능력치 = 공격력·지능 중 높은 쪽 (평타·블록 모두)
   'execute', // 처형: 적 체력 line 이하에서 평타 = 처형, 강적·보스는 그 아래에서 주는 피해 ×eliteMult. 이 특성을 대표로 주는 진화체가 아니면 weakLine·weakEliteMult
 ] as const;
@@ -262,6 +278,8 @@ export const EVO_TRAIT_NUM_KEYS: Readonly<Record<EvoTraitEffect, readonly string
   crit: ['value'],
   blockCrit: ['value'],
   chainPower: ['value'],
+  blockPower: ['value'],
+  elementDamage: ['value'],
   offenseMax: [],
   execute: ['line', 'eliteMult', 'weakLine', 'weakEliteMult'],
 };
@@ -272,6 +290,8 @@ export interface EvoTraitDef {
   description: PerFaction<string>;
   /** chainPower 의 체인 수 */
   chain?: number;
+  /** elementDamage 의 속성 id */
+  element?: string;
 }
 
 /** 진화체 하나 × 종족 하나 */
@@ -334,6 +354,22 @@ export function evoFileShapeErrors(r: unknown): string[] {
       const a = e.ability;
       for (const k of ['stacks', 'buffs', 'charges', 'specials'] as const) objOf(a[k], `${where}.${k}`);
       arr(a.chainMultipliers, `${where}.chainMultipliers`, 'num');
+      if (a.chainExtend !== undefined) {
+        if (!isObj(a.chainExtend)) errors.push(`${where}.chainExtend: 객체가 아니다`);
+        else {
+          if (typeof a.chainExtend.max !== 'number' && typeof a.chainExtend.max !== 'string') errors.push(`${where}.chainExtend.max: 숫자·수치 키가 아니다`);
+          arr(a.chainExtend.tiers, `${where}.chainExtend.tiers`, 'object');
+          if (!Array.isArray(a.chainExtend.tiers)) errors.push(`${where}.chainExtend.tiers: 배열이 아니다`);
+        }
+      }
+      if (a.harden !== undefined) {
+        if (!isObj(a.harden)) errors.push(`${where}.harden: 객체가 아니다`);
+        else {
+          if (typeof a.harden.chain !== 'number') errors.push(`${where}.harden.chain: 숫자가 아니다`);
+          str(a.harden, 'stack', `${where}.harden`);
+          arr(a.harden.element, `${where}.harden.element`, 'string');
+        }
+      }
       arr(a.rules, `${where}.rules`, 'object');
       arr(a.passives, `${where}.passives`, 'object');
       for (const [i, rule] of (Array.isArray(a.rules) ? a.rules : []).entries()) {
@@ -341,6 +377,8 @@ export function evoFileShapeErrors(r: unknown): string[] {
         const rat = `${where}.rules[${i}]`;
         str(rule, 'on', rat, true);
         for (const k of ['when', 'charge', 'special', 'timer', 'proc'] as const) str(rule, k, rat);
+        if (rule.hardened !== undefined && typeof rule.hardened !== 'boolean') errors.push(`${rat}.hardened: 참·거짓이 아니다`);
+        arr(rule.family, `${rat}.family`, 'string');
         arr(rule.element, `${rat}.element`, 'string');
         arr(rule.notElement, `${rat}.notElement`, 'string');
         arr(rule.kind, `${rat}.kind`, 'string');
@@ -352,7 +390,8 @@ export function evoFileShapeErrors(r: unknown): string[] {
           if (!isObj(x)) continue;
           const xat = `${rat}.do[${j}]`;
           str(x, 'act', xat, true);
-          for (const k of ['stack', 'buff', 'charge', 'timer', 'special', 'block', 'element', 'family', 'refresh', 'basis', 'of'] as const) str(x, k, xat);
+          for (const k of ['stack', 'buff', 'charge', 'timer', 'special', 'block', 'element', 'family', 'refresh', 'basis', 'of', 'category'] as const) str(x, k, xat);
+          if (x.fx !== undefined && !(isObj(x.fx) && typeof x.fx.family === 'string' && typeof x.fx.stage === 'number')) errors.push(`${xat}.fx: { family 글자, stage 숫자 } 가 아니다`);
           for (const k of ['per', 'amountPer', 'secondsPer'] as const) srcs(x[k], `${xat}.${k}`);
           if (x.grow !== undefined && !isObj(x.grow)) errors.push(`${xat}.grow: 객체가 아니다`);
         }
@@ -506,6 +545,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
     if (!t.name || Object.keys(t.name).length === 0) errors.push(`특성 ${key}: 이름 없음`);
     if (t.effect === 'chainPower' && !t.chain) errors.push(`특성 ${key}: chainPower 는 chain`);
     if (t.chain !== undefined && !chainOk(t.chain)) errors.push(`특성 ${key}: chain ${String(t.chain)} 은 1~${known.maxChain}`);
+    if (t.effect === 'elementDamage' && !(t.element && known.elements.includes(t.element))) errors.push(`특성 ${key}: elementDamage 는 아는 속성 element (${String(t.element)})`);
     for (const fac of Object.keys(t.name ?? {})) if (fac !== '*' && !known.factions.includes(fac)) errors.push(`특성 ${key}: 이름의 모르는 종족 ${fac}`);
     const tn = balance.traits[key];
     if (!tn) errors.push(`특성 ${key}: balance evoUniques.traits 에 수치 칸이 없다`);
@@ -526,6 +566,18 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       const a = e.ability;
       if (!a) continue;
       if (!a.description) errors.push(`${where}: 설명 없음`);
+      // 체인 상한 넘기기 (C.514): 이 진화체 규칙의 chain 거르기는 계열 단계 수 + tiers 수까지
+      const formMaxChain = known.maxChain + (a.chainExtend?.tiers?.length ?? 0);
+      const formChainOk = (c: unknown) => Number.isInteger(c) && (c as number) >= 1 && (c as number) <= formMaxChain;
+      if (a.chainExtend) {
+        if (!has(a.chainExtend.max)) errors.push(`${where}: chainExtend.max 수치 키 없음`);
+        if (!a.chainExtend.tiers || a.chainExtend.tiers.length === 0) errors.push(`${where}: chainExtend.tiers 비었음`);
+        for (const [k, t] of (a.chainExtend.tiers ?? []).entries()) {
+          if (!has(t.mult)) errors.push(`${where}: chainExtend.tiers[${k}].mult 수치 키 없음`);
+          if (!t.name) errors.push(`${where}: chainExtend.tiers[${k}] 이름 없음`);
+        }
+        if (typeof a.chainExtend.max === 'number' && !(a.chainExtend.max >= 1 && a.chainExtend.max <= formMaxChain)) errors.push(`${where}: chainExtend.max 는 1~${formMaxChain}`);
+      }
       for (const k of ['releaseSeconds', 'releaseHpFloor'] as const) if (!has(a[k])) errors.push(`${where}: ${k} 수치 키 없음`);
       for (const v of a.chainMultipliers ?? []) if (!has(v)) errors.push(`${where}: chainMultipliers 수치 키 없음`);
       const stacks = a.stacks ?? {};
@@ -551,6 +603,14 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
         mark(cd.mark, `충전 ${n}`);
       }
       for (const [n, sp] of Object.entries(specials)) if (sp.usable !== undefined && sp.usable !== 'always' && sp.usable !== 'execBlock') errors.push(`${where}: 특수 블록 ${n} usable 은 always·execBlock`);
+      if (a.harden) {
+        const h = a.harden;
+        if (!chainOk(h.chain)) errors.push(`${where}: harden.chain ${String(h.chain)} 은 1~${known.maxChain}`);
+        if (h.seconds === undefined || !has(h.seconds)) errors.push(`${where}: harden.seconds 수치 키 없음`);
+        if (!h.name) errors.push(`${where}: harden 이름 없음`);
+        if (h.stack !== undefined && !(h.stack in stacks)) errors.push(`${where}: harden.stack 스택 ${h.stack} 없음`);
+        for (const x of h.element ?? []) if (!known.elements.includes(x)) errors.push(`${where}: harden 모르는 속성 ${x}`);
+      }
       if (a.spawnRule !== undefined && a.spawnRule !== 'voidOnly') errors.push(`${where}: spawnRule 은 voidOnly 만`);
       const elementOk = (x: string) => x === VOID_ELEMENT || known.elements.includes(x);
       const whenOk = (w: unknown, at: string) => {
@@ -589,7 +649,10 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
         whenOk(r.when, at);
         for (const k of r.kind ?? []) if (!(EVO_BLOCK_KINDS as readonly string[]).includes(k)) errors.push(`${at}: 모르는 블록 종류 ${k}`);
         for (const x of [...(r.element ?? []), ...(r.notElement ?? [])]) if (!elementOk(x)) errors.push(`${at}: 모르는 속성 ${x}`);
-        for (const c of r.chain ?? []) if (!chainOk(c)) errors.push(`${at}: chain ${String(c)} 은 1~${known.maxChain}`);
+        for (const c of r.chain ?? []) if (!formChainOk(c)) errors.push(`${at}: chain ${String(c)} 은 1~${formMaxChain}`);
+        for (const f of r.family ?? []) if (!known.families(fac).includes(f)) errors.push(`${at}: ${fac} 에 없는 블록 계열 ${f}`);
+        if (r.hardened !== undefined && !a.harden) errors.push(`${at}: hardened 거르기는 능력 칸 harden 이 있어야`);
+        if ((r.family || r.hardened !== undefined) && !['block', 'blockPre'].includes(r.on)) errors.push(`${at}: family·hardened 거르기는 block·blockPre 에서만`);
         if (r.charge && !(r.charge in charges)) errors.push(`${at}: 충전 ${r.charge} 없음`);
         for (const v of numKeysOfRule(r)) if (!has(v)) errors.push(`${at}: 수치 키 ${String(v)} 없음`);
         need(r.need);
@@ -609,6 +672,9 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (['blockMult', 'blockFlat', 'blockCrit', 'blockCritDmg', 'noDamage'].includes(x.act) && r.on !== 'blockPre') errors.push(`${at}: ${x.act} 는 blockPre 에서만`);
           if (['basicMult', 'forceCrit', 'ignoreDef'].includes(x.act) && r.on !== 'basicPre') errors.push(`${at}: ${x.act} 는 basicPre 에서만`);
           if (x.act === 'absorbBar' && !x.element) errors.push(`${at}: absorbBar 는 element`);
+          if (x.act === 'basicShot' && r.on !== 'basicPre') errors.push(`${at}: basicShot 는 basicPre 에서만`);
+          if (x.category !== undefined && x.category !== 'physical' && x.category !== 'special') errors.push(`${at}: category 는 physical·special`);
+          if (x.fx !== undefined && (!known.families(fac).includes(x.fx.family) || !chainOk(x.fx.stage))) errors.push(`${at}: fx 는 ${fac} 계열 id·단계 1~${known.maxChain}`);
           if (x.element !== undefined && x.element !== 'self' && !elementOk(x.element)) errors.push(`${at}: 모르는 속성 ${x.element}`);
           if (x.family !== undefined && !known.families(fac).includes(x.family)) errors.push(`${at}: ${fac} 에 없는 블록 계열 ${x.family}`);
           if (x.refresh !== undefined && !['replace', 'max', 'add'].includes(x.refresh)) errors.push(`${at}: refresh 는 replace·max·add`);

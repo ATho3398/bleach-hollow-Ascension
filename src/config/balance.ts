@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 152; // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): provisional.expedition.conditionRiskBonusMax 0.15(컨디션 0 이면 폭주 블록 +15%p) 삭제 → riskGaugeVoidBonusMax 0.15(리스크 게이지 비율 × 15%p, 가득이면 +15%p). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 153; // C.514 (GDD 8-7 2차, docs/drafts/evo-impl-1121.md 1절 — 마스터 추천안 provisional): provisional.evoUniques 에 사신 현음(체인 상한 4·4체인 ×1.4·블록 1, 만해 5·×1.8·블록 2)·석양홍(석양 ×2.0 충전 1, 만해 ×2.5 최대 3, 화상 8초 +8%)·만리장(굳음 2초·+40%·방어막 12%, 만해 1초·+70%·18%) 수치 + 특성 blockPower6 0.06·fireDmg8 0.08·earthDmg8 0.08. 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 152; // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): provisional.expedition.conditionRiskBonusMax 0.15(컨디션 0 이면 폭주 블록 +15%p) 삭제 → riskGaugeVoidBonusMax 0.15(리스크 게이지 비율 × 15%p, 가득이면 +15%p). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 151; // C.510 (사용자 2026-11-20 "특식은 상점에서 안팔고 드랍으로", GDD 4-5 v6.147): shop.goldPrices 에서 food-tonic(100)·food-feast(140) 삭제(특식은 상점에서 안 판다 — 드롭 표는 이미 특식 6종 전부 포함), 팔기 값은 그대로 두려고 sell.prices 에 food-tonic 50·food-feast 70(옛 산 값 절반) 추가. 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 150; // C.507 (사용자 2026-11-19 "2.5초에 5스텍 ㄱㄱ"): 호로 소로 여우불 지속 2초 → 2.5초(필요 5개 그대로). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 149; // C.506 (GDD 8-7 1차, docs/drafts/evo-impl-1119.md 1절 — 마스터 추천안 provisional): provisional.evoUniques.forms 에 사신 13종(봉수대·반석·주홍장·섬뢰각·천평환·연우·백랑파·천일야장도·태산압정·비전·흑귀·추성·공화) 수치 추가. 그 밖 진화체·적 수치 그대로.
@@ -585,6 +586,10 @@ export const BALANCE = {
         chain3Power: { value: 0.1 },
         offenseMax: {},
         obliteration: { line: 0.08, eliteMult: 1.5, weakLine: 0.05, weakEliteMult: 1.3 },
+        // C.514 (docs/drafts/evo-impl-1121.md 1절 — 마스터 추천안 provisional): 현음 블록 피해 +6% · 석양홍 불 피해 +8% · 만리장 흙 피해 +8%
+        blockPower6: { value: 0.06 },
+        fireDmg8: { value: 0.08 },
+        earthDmg8: { value: 0.08 },
       } as Record<string, Record<string, number>>,
       forms: {
         /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 2 */
@@ -630,7 +635,16 @@ export const BALANCE = {
           hollow: { crit2: 0.1, crit3: 0.2, release: { crit2: 0.2, crit3: 0.4 } },
         },
         /** 호로 루시에르나가 '꾀는 불빛' (C.503): 1체인 → 불빛 +1(최대 max, 영구), 3체인 → 불빛 전부 소모, 1개당 위력 +perGlow·화상 burnPerGlow 초(+burn). 레스렉시온 = 최대 5·2체인도 소모 */
-        't4:fire:special': { hollow: { max: 3, perGlow: 0.25, burnPerGlow: 3, burn: 0.12, release: { max: 5 } } },
+        't4:fire:special': {
+          hollow: { max: 3, perGlow: 0.25, burnPerGlow: 3, burn: 0.12, release: { max: 5 } },
+          /** 사신 석양홍 (C.514, 2차): 화상 걸린 적에게 귀 블록 → 다음 평타 1회 「석양」(지능 기준 ×shotMult, 불), 충전 최대 shotMax. 만해 = 체인 수만큼·최대 3·×2.5.
+           *  화상 = 불 블록이 건다(burnSeconds 초, 걸린 적을 때리면 +burnPct) — 표에 화상 거는 쪽이 없어 사신 천일야장도 만해 화상(8초 +8%) 값을 빌림(provisional, 마스터 확인) */
+          shinigami: { shotMult: 2.0, shotMax: 1, burnSeconds: 8, burnPct: 0.08, release: { shotMult: 2.5, shotMax: 3 } },
+        },
+        /** 사신 현음 (C.514, 2차): 체인 상한 chainMax(4), 4체인 = 3체인 기술 ×x4 + 블록 made 개 바로. 만해 = 상한 5 · 5체인 ×x5 · 4체인 이상 블록 2개 */
+        't4:normal:special': { shinigami: { chainMax: 4, x4: 1.4, x5: 1.8, made: 1, release: { chainMax: 5, made: 2 } } },
+        /** 사신 만리장 (C.514, 2차): 흙 3체인 묶음이 hardSeconds 초면 굳음 → 쓰면 피해 +hardBonus(×1.4) + 방어막 최대 체력 hardShield(합 상한도 같은 값). 만해 = 1초·×1.7·18% */
+        't4:earth:special': { shinigami: { hardSeconds: 2, hardBonus: 0.4, hardShield: 0.12, release: { hardSeconds: 1, hardBonus: 0.7, hardShield: 0.18 } } },
         /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 공허 블록, 3체인 within 초 안 streak 번 → 공허 +1(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
         'h4:void': {
           shinigami: { fixed: 2, streak: 2, within: 1, stackMax: 60, perTwo: 0.01, lineMax: 0.3 },

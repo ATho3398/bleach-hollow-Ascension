@@ -6,7 +6,7 @@
 import type { EvoAbilityDef, EvoAction, EvoNeed, EvoNum, EvoPassive, EvoRule, EvoSource, EvoSpecialDef, EvoStat, EvoTrigger } from '../../data/evolution/uniques';
 import type { PerFaction } from '../../data/schema';
 import type { CombatParams, CombatState } from './combat';
-import type { Block } from './tray';
+import { chainGroupsOf, type Block } from './tray';
 
 /** 전투에 싣는 고유 능력 (applyEvolutionToParams 가 채운다). nums = 평소 수치, relNums = 레스렉시온/만해 중 수치 */
 export interface EvoParams {
@@ -51,6 +51,8 @@ export interface EvoState {
   critDmgNow?: number;
   /** 처형한 수 */
   executes: number;
+  /** 굳음 (C.514): 바 묶음(블록 uid 를 이은 키) → 그 묶음이 처음 모인 틱 */
+  groups: Record<string, number>;
 }
 
 /** 규칙 실행 맥락 */
@@ -76,6 +78,21 @@ export interface EvoCtx {
   block?: Block;
   special?: string;
   timer?: string;
+  /** 블록 계열 id (block·blockPre) */
+  family: string | null;
+  /** 굳은 묶음을 썼다 (block·blockPre, C.514) */
+  hardened: boolean;
+  /** basicShot (basicPre): 이 평타가 특수 공격 — 피해 ×mult · 속성 · 능력치 분류 · 화면 도트 이펙트 · 이름 (C.514) */
+  shot?: EvoShot;
+}
+
+/** 특수 평타 (C.514 석양홍) */
+export interface EvoShot {
+  mult: number;
+  element: string | null;
+  category: 'physical' | 'special' | null;
+  fx: { family: string; stage: number } | null;
+  name: string;
 }
 
 /** combat.ts 가 등록하는 엔진 안쪽 동작 */
@@ -99,6 +116,8 @@ export interface EvoApi {
   /** 해방 게이지 + */
   addGauge(s: CombatState, v: number): void;
   ticksOf(p: CombatParams, seconds: number): number;
+  /** 지금 체인 상한 (진화체 chainExtend 포함 — 굳음 묶음 계산용) */
+  chainCap(s: CombatState): number;
 }
 
 let API: EvoApi | null = null;
@@ -121,7 +140,7 @@ export function newEvoState(p: CombatParams): EvoState | undefined {
   if (!ev && !p.abilityEffects.execute) return undefined;
   const st: EvoState = {
     stacks: {}, buffs: {}, charges: {}, counters: [], clocks: [], streaks: [], timers: {}, procs: {},
-    shieldAbsorbed: 0, extraBonus: 0, fromEvo: false, forceCrit: false, executes: 0,
+    shieldAbsorbed: 0, extraBonus: 0, fromEvo: false, forceCrit: false, executes: 0, groups: {},
   };
   for (const [name, def] of Object.entries(ev?.ability.stacks ?? {})) {
     const start = def.carry ? Math.max(0, ev?.carry?.[name] ?? 0) : 0;
@@ -148,7 +167,7 @@ export function evoNum(s: Pick<CombatState, 'params' | 'liberation'>, v: EvoNum 
 const isElite = (s: CombatState): boolean => s.enemy.def.class === 'elite' || !!s.boss;
 
 function emptyCtx(): EvoCtx {
-  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, noDamage: false, forceCrit: false, ignore: 0, chargeValues: {} };
+  return { chain: 0, consumed: 0, amount: 0, damage: 0, element: null, kind: null, crit: false, echo: false, mult: 0, flat: 0, critBonus: 0, critDmg: 0, noDamage: false, forceCrit: false, ignore: 0, chargeValues: {}, family: null, hardened: false };
 }
 
 function specialIdOf(b: Block | undefined): string | null {
@@ -398,6 +417,9 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
           api().execute(s);
         }
         break;
+      case 'basicShot':
+        ctx.shot = { mult: val(), element: a.element ?? null, category: a.category ?? null, fx: a.fx ?? null, name: rule.proc ?? '' };
+        break;
     }
   }
 }
@@ -417,6 +439,8 @@ function filtersOk(s: CombatState, r: EvoRule, ctx: EvoCtx): boolean {
     if (r.chain && !r.chain.includes(ctx.chain)) return false;
     if (r.crit !== undefined && ctx.crit !== r.crit) return false;
     if (r.echo !== undefined && ctx.echo !== r.echo) return false;
+    if (r.family && !(ctx.family && r.family.includes(ctx.family))) return false;
+    if (r.hardened !== undefined && ctx.hardened !== r.hardened) return false;
   }
   return needsOk(s, r.need, ctx);
 }
@@ -483,6 +507,7 @@ export function evoTick(s: CombatState): void {
     x.n = x.exp.length;
   }
   for (const [k, b] of Object.entries(st.buffs)) if (b.until <= s.tick) delete st.buffs[k];
+  if (ev.ability.harden) updateHarden(s);
   const rules = ev.ability.rules ?? [];
   for (let i = 0; i < rules.length; i++) {
     const r = rules[i]!;
@@ -503,6 +528,76 @@ export function evoTick(s: CombatState): void {
     delete st.timers[name];
     fire(s, 'timer', { ...emptyCtx(), timer: name });
   }
+}
+
+// ── 굳음 (C.514 만리장) ──
+
+/** 바의 발동 묶음 중 굳음 대상(harden.chain 개 · element 블록만)의 키 → 칸 */
+function hardenCandidates(s: CombatState): { key: string; start: number; length: number }[] {
+  const h = s.params.evo?.ability.harden;
+  if (!h) return [];
+  const out: { key: string; start: number; length: number }[] = [];
+  for (const g of chainGroupsOf(s.tray, api().chainCap(s))) {
+    if (g.length !== h.chain) continue;
+    const blocks = s.tray.slice(g.start, g.start + g.length);
+    if (blocks.some((b) => b.kind !== 'skill' || b.fixed || specialIdOf(b))) continue;
+    if (h.element && !blocks.every((b) => h.element!.includes(api().elementOf(s, b) ?? ''))) continue;
+    out.push({ key: blocks.map((b) => b.uid).join(','), ...g });
+  }
+  return out;
+}
+
+/** 매 틱: 새로 모인 묶음은 지금 틱을 기억, 흩어진 묶음은 잊는다 · 굳은 묶음 수를 harden.stack 에 */
+function updateHarden(s: CombatState): void {
+  const st = s.evo!;
+  const h = s.params.evo!.ability.harden!;
+  const seen: Record<string, number> = {};
+  let hard = 0;
+  const need = api().ticksOf(s.params, evoNum(s, h.seconds));
+  for (const c of hardenCandidates(s)) {
+    seen[c.key] = st.groups[c.key] ?? s.tick;
+    if (s.tick - seen[c.key]! >= need) hard++;
+  }
+  st.groups = seen;
+  if (h.stack) setStack(s, h.stack, hard);
+}
+
+/** 이 블록 uid 묶음이 지금 굳었나 */
+export function evoGroupHardened(s: CombatState, uids: readonly number[]): boolean {
+  const h = s.params.evo?.ability.harden;
+  const st = s.evo;
+  if (!h || !st || uids.length !== h.chain) return false;
+  const at = st.groups[uids.join(',')];
+  return at !== undefined && s.tick - at >= api().ticksOf(s.params, evoNum(s, h.seconds));
+}
+
+/** 화면: 굳은 묶음의 시작 칸들 (0부터) */
+export function evoHardenedStarts(s: CombatState): number[] {
+  if (!s.params.evo?.ability.harden || !s.evo) return [];
+  return hardenCandidates(s).filter((c) => evoGroupHardened(s, s.tray.slice(c.start, c.start + c.length).map((b) => b.uid))).map((c) => c.start);
+}
+
+/** 굳음 화면 글자 (없으면 null) */
+export function evoHardenName(p: Pick<CombatParams, 'evo'>): PerFaction<string> | string | null {
+  return p.evo?.ability.harden?.name ?? null;
+}
+
+// ── 체인 상한 넘기기 (C.514 현음) ──
+
+/** 이 진화체의 지금 체인 상한 (base = 계열 단계 기준 상한). chainExtend 가 없으면 base */
+export function evoChainCapOf(s: Pick<CombatState, 'params' | 'liberation'>, base: number): number {
+  const x = s.params.evo?.ability.chainExtend;
+  if (!x) return base;
+  const top = s.params.chainMultipliers.length + x.tiers.length;
+  return Math.max(1, Math.min(top, Math.round(evoNum(s, x.max, base))));
+}
+
+/** chain 이 계열 단계 수(top)를 넘으면 그 단계: 맨 위 단계 기술 배율 × mult, 이름. 아니면 null */
+export function evoChainTierOf(s: Pick<CombatState, 'params' | 'liberation'>, chain: number): { mult: number; name: PerFaction<string> | string } | null {
+  const x = s.params.evo?.ability.chainExtend;
+  const k = chain - s.params.chainMultipliers.length - 1;
+  const t = x && k >= 0 ? x.tiers[k] : undefined;
+  return t ? { mult: evoNum(s, t.mult, 1), name: t.name } : null;
 }
 
 /** 평타 직전: 충전 1회씩 쓰고 basicPre 규칙 → 이번 평타 배율·치명 확정·방어 무시 */
@@ -531,9 +626,9 @@ export function evoBasicPost(s: CombatState, ctx: EvoCtx | null, damage: number)
 }
 
 /** 블록 쓰기 직전 (blockPre 규칙 → 이 블록 피해 +·평타 n회분·치명 +) */
-export function evoBlockPre(s: CombatState, info: { kind: EvoCtx['kind']; element: string | null; chain: number; block?: Block; echo?: boolean; special?: string }): EvoCtx | null {
+export function evoBlockPre(s: CombatState, info: { kind: EvoCtx['kind']; element: string | null; chain: number; block?: Block; echo?: boolean; special?: string; family?: string | null; hardened?: boolean }): EvoCtx | null {
   if (!s.params.evo || !s.evo) return null;
-  const ctx = { ...emptyCtx(), ...info, echo: !!info.echo };
+  const ctx = { ...emptyCtx(), ...info, echo: !!info.echo, family: info.family ?? null, hardened: !!info.hardened };
   fire(s, 'blockPre', ctx);
   return ctx;
 }

@@ -7,7 +7,10 @@
     "blockCrit6": { "effect": "blockCrit", "name": { "*": "블록 치명 강화" }, "description": { "*": "블록 치명타 확률이 오른다." } },
     "chain3Power": { "effect": "chainPower", "chain": 3, "name": { "*": "3체인 강화" }, "description": { "*": "3체인 블록 위력이 오른다." } },
     "offenseMax": { "effect": "offenseMax", "name": { "*": "치우치지 않는 힘" }, "description": { "*": "피해를 공격력·지능 중 높은 쪽으로 계산한다." } },
-    "obliteration": { "effect": "execute", "name": { "*": "소멸선" }, "description": { "*": "적 체력이 처형선 아래면 일반 공격이 처형한다. 강적·보스는 처형 대신 그 아래에서 주는 피해가 커진다." } }
+    "obliteration": { "effect": "execute", "name": { "*": "소멸선" }, "description": { "*": "적 체력이 처형선 아래면 일반 공격이 처형한다. 강적·보스는 처형 대신 그 아래에서 주는 피해가 커진다." } },
+    "blockPower6": { "effect": "blockPower", "name": { "*": "블록 피해 강화" }, "description": { "*": "블록 피해가 오른다." } },
+    "fireDmg8": { "effect": "elementDamage", "element": "fire", "name": { "*": "불 피해 강화" }, "description": { "*": "불 속성 피해가 오른다." } },
+    "earthDmg8": { "effect": "elementDamage", "element": "earth", "name": { "*": "흙 피해 강화" }, "description": { "*": "흙 속성 피해가 오른다." } }
   },
   "forms": {
     "t4:normal:physical": {
@@ -268,6 +271,28 @@
             { "stat": "dealt", "value": 1, "per": "buff:burn" }
           ]
         }
+      },
+      "shinigami": {
+        "trait": "fireDmg8",
+        "ability": {
+          "description": { "*": "불 블록을 쓰면 적에게 화상({burnSeconds}초, 걸린 적을 때리면 피해 +{burnPct%}). 화상 걸린 적에게 귀 블록(불·귀)을 쓰면 다음 일반 공격 1회가 「석양」 — 지능 기준 일반 공격 ×{shotMult}, 불 속성(겹치지 않음, 충전 최대 {shotMax}회)" },
+          "releaseDescription": { "*": "귀 블록 체인 수만큼 충전(최대 {shotMax}회) · 「석양」 ×{shotMult}" },
+          "charges": {
+            "sunset": { "max": "shotMax", "mark": { "icon": "i-attack", "name": { "*": "석양" } } }
+          },
+          "buffs": {
+            "burn": { "on": "foe", "mark": { "icon": "i-weak", "name": { "*": "화상" } } }
+          },
+          "rules": [
+            { "on": "blockPre", "element": ["fire"], "family": ["family-c"], "when": "normal", "need": [{ "buff": "burn" }], "do": [{ "act": "charge", "charge": "sunset", "value": 1 }] },
+            { "on": "blockPre", "element": ["fire"], "family": ["family-c"], "when": "release", "need": [{ "buff": "burn" }], "do": [{ "act": "charge", "charge": "sunset", "value": 1, "per": "chain" }] },
+            { "on": "block", "element": ["fire"], "do": [{ "act": "buff", "buff": "burn", "seconds": "burnSeconds", "value": "burnPct", "refresh": "max" }] },
+            { "on": "basicPre", "charge": "sunset", "do": [{ "act": "basicShot", "value": "shotMult", "element": "fire", "category": "special", "fx": { "family": "family-c", "stage": 3 } }], "proc": "석양!" }
+          ],
+          "passives": [
+            { "stat": "dealt", "value": 1, "per": "buff:burn" }
+          ]
+        }
       }
     },
     "h4:frenzy": {
@@ -445,6 +470,37 @@
           "passives": [
             { "stat": "petPower", "value": "perMark", "per": "stack:mark" },
             { "stat": "critDmg", "value": "critPerMark", "per": "stack:mark", "when": "release" }
+          ]
+        }
+      }
+    },
+    "t4:normal:special": {
+      "shinigami": {
+        "trait": "blockPower6",
+        "ability": {
+          "description": { "*": "이 진화체만 체인 상한 {chainMax}. 4체인 = 3체인 기술 피해 ×{x4} 「사현」, 쓰면 블록 {made}개가 바로 생긴다" },
+          "releaseDescription": { "*": "체인 상한 {chainMax} · 5체인 = 3체인 기술 ×{x5} 「칠성」 · 4체인 이상이면 블록 {made}개 바로" },
+          "chainExtend": { "max": "chainMax", "tiers": [{ "mult": "x4", "name": { "*": "사현" } }, { "mult": "x5", "name": { "*": "칠성" } }] },
+          "rules": [
+            { "on": "block", "chain": [4], "do": [{ "act": "spawn", "block": "draw", "value": "made" }], "proc": "사현!" },
+            { "on": "block", "chain": [5], "do": [{ "act": "spawn", "block": "draw", "value": "made" }], "proc": "칠성!" }
+          ]
+        }
+      }
+    },
+    "t4:earth:special": {
+      "shinigami": {
+        "trait": "earthDmg8",
+        "ability": {
+          "description": { "*": "바에서 흙 블록 3개가 한 묶음(3체인)으로 모여 {hardSeconds}초 지나면 '굳음'. 굳은 3체인을 쓰면 피해 +{hardBonus%} + 방어막 최대 체력 {hardShield%}(굳지 않은 3체인은 방어막 없음)" },
+          "releaseDescription": { "*": "굳는 시간 {hardSeconds}초 · 굳은 3체인 피해 +{hardBonus%} · 방어막 {hardShield%}" },
+          "harden": { "chain": 3, "seconds": "hardSeconds", "element": ["earth"], "stack": "hard", "name": { "*": "굳음" } },
+          "stacks": {
+            "hard": { "mark": { "icon": "i-guard", "name": { "*": "굳은 묶음" } } }
+          },
+          "rules": [
+            { "on": "blockPre", "chain": [3], "hardened": true, "do": [{ "act": "blockMult", "value": "hardBonus" }] },
+            { "on": "block", "chain": [3], "hardened": true, "do": [{ "act": "shield", "value": "hardShield", "cap": "hardShield" }], "proc": "굳음!" }
           ]
         }
       }
