@@ -1,0 +1,128 @@
+{
+ "errors": [],
+ "absorbHollow": {
+  "modes": [
+   {
+    "mode": "both",
+    "disabled": true,
+    "blockless": true,
+    "on": false,
+    "title": "허무는 블록으로 포식할 수 없다"
+   },
+   {
+    "mode": "trait",
+    "disabled": true,
+    "blockless": true,
+    "on": false,
+    "title": "허무는 블록으로 포식할 수 없다"
+   },
+   {
+    "mode": "stat",
+    "disabled": false,
+    "blockless": false,
+    "on": true,
+    "title": ""
+   },
+   {
+    "mode": "none",
+    "disabled": false,
+    "blockless": false,
+    "on": false,
+    "title": ""
+   }
+  ],
+  "desc": [
+   "what:능력치만 2배로 얻는다. 블록은 얻지 않는다.",
+   "warn:허무는 블록으로 포식할 수 없다",
+   "stat:능력치 지능 +4",
+   "risk:광기 +1 (20 → 21)",
+   "gain:받는 것 타일 +1"
+  ],
+  "go": "능력치 포식하기",
+  "foeTags": [
+   "일반허무허무"
+  ],
+  "wide": 1
+ },
+ "absorbShinigami": {
+  "modes": [
+   {
+    "mode": "both",
+    "disabled": true,
+    "blockless": true,
+    "on": false,
+    "title": "허무는 블록으로 정화 흡수할 수 없다"
+   },
+   {
+    "mode": "trait",
+    "disabled": true,
+    "blockless": true,
+    "on": false,
+    "title": "허무는 블록으로 정화 흡수할 수 없다"
+   },
+   {
+    "mode": "stat",
+    "disabled": false,
+    "blockless": false,
+    "on": true,
+    "title": ""
+   },
+   {
+    "mode": "none",
+    "disabled": false,
+    "blockless": false,
+    "on": false,
+    "title": ""
+   }
+  ],
+  "desc": [
+   "what:능력치만 2배로 얻는다. 블록은 얻지 않는다.",
+   "warn:허무는 블록으로 정화 흡수할 수 없다",
+   "stat:능력치 체력 +4 · 정신력 +4",
+   "risk:호로화 +4 (20 → 24)",
+   "gain:받는 것 타일 +1"
+  ],
+  "go": "능력치 흡수하기",
+  "foeTags": [
+   "강적허무허무"
+  ],
+  "wide": 1
+ },
+ "gonghwa": {
+  "glyphs": [
+   "허",
+   "허"
+  ],
+  "titles": [
+   "공허 2개부터 켜진다 (3체인 1초 안 2번 = 공허 +1)",
+   "공허 2개부터 켜진다 (3체인 1초 안 2번 = 공허 +1)"
+  ],
+  "special": [
+   "evo:nil",
+   "evo:nil"
+  ]
+ },
+ "gonghwaToast": [
+  "허무 블록 꺼짐 · 처형선 0% 공허 2개부터 켜진다 (3체인 1초 안 2번 = 공허 +1)"
+ ],
+ "migrated": {
+  "key": "bleach-hollow-ascension.save",
+  "format": 95,
+  "slots": [
+   null,
+   "t-water-a",
+   null,
+   null
+  ],
+  "owned": [
+   "t-water-a"
+  ],
+  "enhance": {
+   "water": 1,
+   "normal": 3
+  }
+ },
+ "bag": [
+  "조1강물3"
+ ]
+}

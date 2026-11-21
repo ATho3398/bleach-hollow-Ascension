@@ -24,7 +24,7 @@ export const V2_PATH = {
 /** 역할 블록의 계열 글자 (README 5: 막기 방 · 회복 회 · 공허 허 · 콤보 콤 · 해방 해 · 봉인 봉) */
 export const V2_GLYPH = { guard: '방', heal: '회', void: '폭', combo: '콤', release: '해', seal: '봉' } as const;
 
-/** 블록 종류 (`bha-block--*`): 공격 = 속성 id, 나머지 = 고정 색. 핸드오프에 없는 속성(허)은 어댑터의 `--kyo` */
+/** 블록 종류 (`bha-block--*`): 공격 = 속성 id, 나머지 = 고정 색. 핸드오프에 없는 속성(허무)은 어댑터의 `--kyo` */
 export type V2BlockKind = 'normal' | 'fire' | 'thunder' | 'water' | 'earth' | 'poison' | 'blood' | 'kyo' | 'guard' | 'heal' | 'void' | 'combo' | 'release';
 const ATTR_KINDS: ReadonlySet<string> = new Set(['normal', 'fire', 'thunder', 'water', 'earth', 'poison', 'blood', 'kyo']);
 

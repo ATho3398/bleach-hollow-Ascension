@@ -120,10 +120,13 @@ export interface ElementDef {
   /** 특수만: 효과 종류 */
   effect?: ElementEffect;
   name: PerFaction<string>;
-  /** 칩에 쓰는 한 글자 */
+  /** 칩에 쓰는 약어 (보통 한 글자, 허무는 두 글자 — 동그라미 대신 알약) */
   abbr: PerFaction<string>;
   /** 표시 색: 기존 디자인 토큰 이름 (`--bha-…`). 새 색은 만들지 않는다 (CLAUDE.md 7번) */
   color: string;
+  /** 적 전용 속성 (GDD 8-2 v6.154 허무, 사용자 2026-11-21): 이 속성 블록(특성)은 플레이어가 얻지 못하고(흡수·보스 보상·상점·지급 전부),
+   *  이 속성 적의 흡수 = 능력치만·놓아주기만. 일반 진화체 판정에도 쓰지 않는다. 특수 속성만 */
+  enemyOnly?: boolean;
 }
 
 export const TRAIT_KINDS = ['skill', 'passive', 'part'] as const;
@@ -330,6 +333,9 @@ export interface FormDef {
   release?: PerFaction<FormRelease>;
   /** 종족마다 다른 공격 타입 (GDD 8-8 허무형 사신 특수·호로 물리, C.497 — factionCategories.json 에서 로더가 붙인다). 그 종족 키가 없으면 label.category */
   categoryByFaction?: PerFaction<AttackCategory>;
+  /** 더 이상 진화 판정에 나오지 않는 진화체 (GDD 8-5 v6.154 — 4단계 일반 허 t4:kyo:mixed 삭제). 옛 세이브의 몸·도감 기록을 읽으려고 데이터만 남긴다.
+   *  판정·진화 트리 점검·도감 목록에서 빠진다(이미 도감에 있으면 보인다) */
+  retired?: boolean;
   provisional?: boolean;
 }
 

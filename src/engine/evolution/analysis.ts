@@ -1,7 +1,7 @@
 // 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·리스크 게이지·교감·계보·미루기 수·빈사도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
 // 장착 특성·흡수 속성 분포·돌보기 상태·행동 기록을 무작위로 만들어 judgeEvolution 을 그대로 돌린다. 종족 무관, 데이터만 본다.
-import { ELEMENT_IDS } from '../../data/elements';
-import { TRAITS } from '../../data/traits';
+import { PLAYER_ELEMENT_IDS } from '../../data/elements';
+import { TRAITS, isPlayerTrait } from '../../data/traits';
 import type { FormDef } from '../../data/schema';
 import { newBuild, gainTrait, type BuildState } from '../absorb/build';
 import { createRng, nextFloat, nextInt, type Rng } from '../rng';
@@ -23,7 +23,7 @@ function randomBuild(rng: Rng, slots: number, focus: string | null): BuildState 
   while (b.slots.length < slots) b.slots.push(null);
   const n = nextInt(rng, slots + 1);
   for (let i = 0; i < n; i++) {
-    const pool = TRAITS.filter((t) => !t.boss && !b.owned.includes(t.id) && (focus === null || nextFloat(rng) < 0.3 || t.element === focus));
+    const pool = TRAITS.filter((t) => !t.boss && isPlayerTrait(t) && !b.owned.includes(t.id) && (focus === null || nextFloat(rng) < 0.3 || t.element === focus));
     if (pool.length === 0) break;
     gainTrait(b, pool[nextInt(rng, pool.length)]!.id);
   }
@@ -34,10 +34,10 @@ function randomBuild(rng: Rng, slots: number, focus: string | null): BuildState 
 function randomAbsorbs(rng: Rng): Record<string, number> {
   const total = 3 + nextInt(rng, 20);
   const focus = 1 + nextInt(rng, 4);
-  const picks = [...ELEMENT_IDS].sort(() => nextFloat(rng) - 0.5).slice(0, focus);
+  const picks = [...PLAYER_ELEMENT_IDS].sort(() => nextFloat(rng) - 0.5).slice(0, focus);
   const out: Record<string, number> = {};
   for (let i = 0; i < total; i++) {
-    const el = nextFloat(rng) < 0.8 ? picks[nextInt(rng, picks.length)]! : ELEMENT_IDS[nextInt(rng, ELEMENT_IDS.length)]!;
+    const el = nextFloat(rng) < 0.8 ? picks[nextInt(rng, picks.length)]! : PLAYER_ELEMENT_IDS[nextInt(rng, PLAYER_ELEMENT_IDS.length)]!;
     out[el] = (out[el] ?? 0) + 1;
   }
   return out;
@@ -76,7 +76,7 @@ export function analyzeTree(table: readonly FormDef[], factionId: string, sample
     for (let i = 0; i < samples; i++) {
       const prev = tierIndex === 0 ? [] : tierIndex === 1 ? ['t2:base'] : ['t2:base', t3[nextInt(rng, t3.length)]!.id];
       const e = randomState(rng, tierIndex, prev);
-      const focus = nextFloat(rng) < 0.6 ? ELEMENT_IDS[nextInt(rng, ELEMENT_IDS.length)]! : null;
+      const focus = nextFloat(rng) < 0.6 ? PLAYER_ELEMENT_IDS[nextInt(rng, PLAYER_ELEMENT_IDS.length)]! : null;
       const build = randomBuild(rng, 3 + tierIndex, focus);
       const good = nextFloat(rng) < 0.85;
       const ctx = {
@@ -90,5 +90,6 @@ export function analyzeTree(table: readonly FormDef[], factionId: string, sample
       if (form.hidden) rec.hidden++;
     }
   }
-  return { picked, unreachable: table.filter((f) => !picked[f.id]).map((f) => f.id), hiddenRate };
+  // 판정에서 빠진 진화체(retired, GDD 8-5 v6.154)는 도달 점검 대상이 아니다
+  return { picked, unreachable: table.filter((f) => !f.retired && !picked[f.id]).map((f) => f.id), hiddenRate };
 }

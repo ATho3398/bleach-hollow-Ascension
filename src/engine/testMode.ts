@@ -12,7 +12,7 @@ import { FORM_TABLE, tryGetForm } from '../data/evolution';
 import { FACTIONS, getFaction } from '../data/factions';
 import { STAT_IDS, type EnemyDef, type FormDef, type Stats, type StatId } from '../data/schema';
 import { STORY_CHAPTERS, chapterContent, episodeKey } from '../data/story';
-import { TRAITS } from '../data/traits';
+import { TRAITS, isPlayerTrait } from '../data/traits';
 import { SAVE_KEY, syncPetSlots, allTracks, characterTracks, fastForward, inheritTranscendentTrack, newSaveData, newTrack, performEvolution, storyProgressOf, switchTrack, trackIdOf, type SaveData, type StorageLike } from '../game';
 import { TRANSCENDENTS, tryGetTranscendent } from '../data/transcendents';
 import { COSMETIC_ITEMS, getCosmetic, WANDERER_ITEMS } from '../data/shop';
@@ -251,7 +251,8 @@ export function fillDefaultTraits(save: SaveData): number {
   const form = save.evolution.formId ? tryGetForm(save.evolution.formId) : null;
   const element = form?.elements?.[0] ?? TM.fallbackElement;
   // 노멀 skill 특성은 기본 블록이 그 역할이라 채우지 않는다 (GDD 111장 1) — 노멀 몸이면 비워 둔다
-  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.boss && t.element === el && t.role === role && !isBasicBlockTrait(t.id));
+  // 허무(적 전용 속성, GDD 8-2 v6.154) 블록은 지급하지 않는다 — 허무형 몸이면 기본 속성(노멀 = 기본 블록이라 빈칸)으로
+  const usable = (el: string, role: string) => TRAITS.filter((t) => t.kind === 'skill' && !t.boss && isPlayerTrait(t) && t.element === el && t.role === role && !isBasicBlockTrait(t.id));
   const picks: string[] = [];
   const take = (role: string): void => {
     const t = [...usable(element, role), ...usable(TM.fallbackElement, role)].find((x) => !picks.includes(x.id));
@@ -437,7 +438,7 @@ export function resetStats(save: SaveData): Stats {
 /** 흡수 특성 칸을 직접 채운다: 없는 특성·중복은 빈칸. 가진 목록·장착 순서도 맞춘다 */
 export function setTraitSlots(save: SaveData, ids: readonly (string | null)[]): (string | null)[] {
   const b = save.build;
-  const known = new Set(TRAITS.map((t) => t.id));
+  const known = new Set(TRAITS.filter(isPlayerTrait).map((t) => t.id)); // 허무(적 전용) 블록은 넣을 수 없다 (GDD 8-2 v6.154)
   const used = new Set<string>();
   b.slots = b.slots.map((_, i) => {
     const id = ids[i] ?? null;

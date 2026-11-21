@@ -13,7 +13,7 @@ import { createRng, nextFloat, nextInt, type Rng } from '../rng';
 import { rollTrainingTicket } from '../training/training';
 import { getTrait } from '../../data/traits';
 import {
-  absorbModeRule, absorbRisk, addEnhance, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
+  absorbModeRule, absorbRisk, addEnhance, blocklessReason, breakthroughSpawnBonus, buildCombatParams, buildOffer, changeRisk, isSpecialTrait, cloneBuild, gainTrait, ownsTraitBlock, lateLapRisk,
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
@@ -1184,6 +1184,7 @@ export function rerollAbsorb(exp: ExpeditionState): AbsorbResult {
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (offer.rerolled) return { ok: false, reason: '이 흡수에서는 이미 다시 뽑았다' };
   if (offer.statOnly) return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
+  if (offer.blockless) return { ok: false, reason: blocklessReason(offer.element) };
   if (offer.candidates.length === 0) return { ok: false, reason: '다시 뽑을 후보가 없다' };
   const rng = createRng((exp.seed ^ REROLL_SEED_SALT ^ Math.imul(exp.absorbRecords.length + 1, 2654435761)) >>> 0);
   const boss = isBossId(offer.enemyId) ? offer.enemyId : null;
@@ -1223,6 +1224,8 @@ export function chooseAbsorb(exp: ExpeditionState, traitId: string | null, repla
   if (exp.phase !== 'absorb' || !offer) return { ok: false, reason: '흡수를 고를 수 없는 때' };
   if (mode === 'stat' && traitId !== null) return { ok: false, reason: '스탯만 흡수할 때는 블록을 고를 수 없다' };
   if (offer.statOnly && mode !== 'stat') return { ok: false, reason: '초월자는 노력치 흡수·놓아주기만 할 수 있다' };
+  // 허무 적 (GDD 8-3 v6.154, 사용자 2026-11-21): 능력치만·놓아주기만 — 둘 다·속성만 갈래와 블록 지정은 거절 (봇·시뮬 포함)
+  if (offer.blockless && (mode !== 'stat' || traitId !== null)) return { ok: false, reason: blocklessReason(offer.element) };
   if (exp.tutorial) return tutorialAbsorb(exp);
   if (traitId !== null) {
     if (!offer.candidates.includes(traitId)) return { ok: false, reason: '후보에 없는 블록이다' };

@@ -2,8 +2,8 @@
 // 모두 임시 데이터(provisional)를 쓴다.
 
 import { BALANCE } from '../../config/balance';
-import { getTrait, retiredRareElement, TRAITS } from '../../data/traits';
-import { NORMAL_ELEMENT } from '../../data/elements';
+import { getTrait, isPlayerTrait, retiredRareElement, TRAITS } from '../../data/traits';
+import { NORMAL_ELEMENT, elementName, isEnemyOnlyElement } from '../../data/elements';
 import type { AttackCategory, PassiveStat } from '../../data/schema';
 import { getFaction } from '../../data/factions';
 import type { CombatParams, CombatSkill, FamilyCombat } from '../combat/combat';
@@ -35,6 +35,23 @@ export function addEnhance(b: BuildState, element: string): number {
   const m = (b.enhance ??= {});
   m[element] = (m[element] ?? 0) + 1;
   return m[element]!;
+}
+
+/** 적 전용 속성(허무) 블록·강화를 뺀다 (GDD 8-2 v6.154, 사용자 2026-11-21 — 세이브 마이그레이션): 보유·슬롯·장착 순서에서 빼고(슬롯 칸은 비운다),
+ *  그 속성 강화 n 은 노멀 강화에 +n 으로 합친다(provisional, 마스터 결정). 뺀 블록 수를 돌려준다 */
+export function dropEnemyOnlyTraits(b: BuildState): number {
+  const keep = (id: unknown): boolean => typeof id !== 'string' || !TRAITS.some((t) => t.id === id) || isPlayerTrait(getTrait(id));
+  const dropped = new Set([...b.owned, ...b.slots].filter((id): id is string => id !== null && !keep(id)));
+  b.owned = b.owned.filter(keep);
+  b.slots = b.slots.map((id) => (id !== null && !keep(id) ? null : id));
+  b.equipOrder = (b.equipOrder ?? []).filter(keep);
+  for (const el of Object.keys(b.enhance ?? {})) {
+    if (!isEnemyOnlyElement(el)) continue;
+    const n = b.enhance![el] ?? 0;
+    delete b.enhance![el];
+    if (n > 0) b.enhance![NORMAL_ELEMENT] = (b.enhance![NORMAL_ELEMENT] ?? 0) + n;
+  }
+  return dropped.size;
 }
 
 /** 삭제된 희귀 특성을 같은 속성 강화 1단계로 바꾼다 (C.213, GDD 136장 1 — 세이브 마이그레이션). 보유·슬롯·장착 순서에서 빼고(슬롯 칸은 비운다) 바꾼 수를 돌려준다 */
@@ -129,7 +146,9 @@ export type GainPlace = number | null | 'owned';
 /** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음).
  *  replaceSlot = 'owned' 면 슬롯은 건드리지 않고 보유 목록에만 넣는다 (GDD 193장 13 [보유에만 넣기] — 흡수 규칙·수치는 교체와 같다). (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
 export function gainTrait(b: BuildState, traitId: string, replaceSlot?: GainPlace): BuildResult {
-  getTrait(traitId);
+  // 허무(적 전용 속성) 블록은 어떤 길로도 얻지 못한다 (GDD 8-2 v6.154)
+  const t = getTrait(traitId);
+  if (!isPlayerTrait(t)) return { ok: false, reason: `${elementName(t.element, '*')} 블록은 얻을 수 없다` };
   if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 블록이다' };
   if (replaceSlot === 'owned') {
     b.owned.push(traitId);

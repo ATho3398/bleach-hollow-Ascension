@@ -3,7 +3,7 @@
 import { getDetachTrait } from './engine/traitShop';
 import { BALANCE_VERSION } from './config/balance';
 import { BALANCE } from './config/balance';
-import { convertRetiredRareTraits, dropBasicBlockTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
+import { convertRetiredRareTraits, dropBasicBlockTraits, dropEnemyOnlyTraits, gainTrait, newBuild, type BuildState } from './engine/absorb';
 import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
@@ -12,7 +12,7 @@ import { tryGetForm } from './data/evolution';
 import { evoExtraPetPower, evoExtraPetSlots, evoReleaseBlocked } from './data/evolution/uniques';
 import { kitModeDefOf, kitModesOf, kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { fitSkinToLock, skinAllowedNow, skinLockOf, type SkinLockSave } from './engine/skinLock';
-import { SPECIAL_ELEMENT_IDS } from './data/elements';
+import { SPECIAL_ELEMENT_IDS, isEnemyOnlyElement } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
 import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
 import { pickLook } from './engine/evolution/tierLook';
@@ -33,7 +33,7 @@ import { TITLES, titleForFaction } from './data/titles';
 import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import { STAT_IDS, formCategoryOf, type StatId, type Stats, type TitleDef } from './data/schema';
-import { retiredRareElement, TRAITS } from './data/traits';
+import { getTrait, isPlayerTrait, retiredRareElement, TRAITS } from './data/traits';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
+export const SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
+// 이전: SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
 // 이전: SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
 // 이전: SAVE_FORMAT_VERSION = 92; // C.497 (GDD 8-5 진화 미루기·8-8 허무형): 진화 상태 deferrals(그 단계에서 진화를 미룬 수)·런 로그 tiers.deferrals(미루기 기록)·진화 기록 deferrals·스냅샷 deferrals/collapsed(선택) — 91 → 92 변환 SAVE_MIGRATIONS[91](모든 트랙 미루기 0회, 빈 미루기 기록).
 // 이전: SAVE_FORMAT_VERSION = 91; // C.470 (GDD v6.097 8-5 아쥬커스 진화체 = 능력치별 모델): 슬롯 필드 lookDex(모델 단위 진화체 도감 발견 '<모델>@<진화체 id>')·런 로그 진화 기록 look(선택) — 90 → 91 변환 SAVE_MIGRATIONS[90](진화체로 정한 칸(히든)은 formDex 로, 모델 칸은 트랙의 지금 외형 + 진화체로 복원, 못 하면 formDex(속성)만 남고 모델은 미발견).
@@ -2643,7 +2644,32 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
       if (isRec(t.evolution)) delete (t.evolution as EvolutionState).choice;
     });
   },
+  // 94 → 95 (C.516, GDD 8-2 v6.154 허무 = 적 전용): 허무 블록(장착·보유)은 지우고 그 칸은 비운다, 허무 강화 n → 노멀 강화 +n (provisional).
+  // 이미 바시오·허곡(t4:kyo:mixed)인 몸은 이번 생 동안 그대로(다음 진화·환생부터 안 나온다). 런 로그는 지우지 않는다
+  94: (save) => migrateEnemyOnlyBlocks(save),
 };
+
+/** 형식 94 → 95 (C.516): 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·흡수 화면)에서 허무(적 전용 속성) 블록을 뺀다. 종족 분기 없음 — 속성 데이터 enemyOnly 만 본다 */
+export function migrateEnemyOnlyBlocks(save: SaveData): void {
+  const fix = (b: unknown): void => {
+    if (isRec(b) && Array.isArray(b.owned) && Array.isArray(b.slots)) dropEnemyOnlyTraits(b as unknown as BuildState);
+  };
+  forEachTrack(save, (t) => {
+    fix(t.build);
+    const basis = isRec(t.evolution) ? (t.evolution as EvolutionState).basis : undefined;
+    if (isRec(basis) && isRec(basis.builds)) for (const v of Object.values(basis.builds)) if (isRec(v)) fix(v.build);
+    const exp = isRec(t.activeExpedition) && isRec(t.activeExpedition.exp) ? t.activeExpedition.exp : null;
+    if (!exp) return;
+    fix(exp.build);
+    const offer = isRec(exp.absorbOffer) ? exp.absorbOffer : null;
+    if (offer && Array.isArray(offer.candidates)) {
+      if (typeof offer.element === 'string' && isEnemyOnlyElement(offer.element)) {
+        offer.candidates = [];
+        offer.blockless = true;
+      } else offer.candidates = offer.candidates.filter((id) => typeof id !== 'string' || !TRAITS.some((t) => t.id === id) || isPlayerTrait(getTrait(id)));
+    }
+  });
+}
 
 /** 형식 90 → 91 (C.470): lookDex 복원. ① 진화체로 정한 칸(히든 — 모델이 진화체로 정해짐)은 formDex 에 있으면 발견 ② 모델 칸은 트랙마다 지금 외형(evolution.look, 예 wyrmwater)과
  *  지금 진화체로 (모델, 색) 복원. 지난 진화의 외형은 남아 있지 않아(런 로그 진화 기록에 외형이 없었다) 복원 못 하면 formDex(속성)만 남고 모델은 미발견. 종족 분기 없음 — 종족 설정 tierLooks 만 본다 */

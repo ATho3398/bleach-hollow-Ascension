@@ -14,9 +14,10 @@ export function paintElement<T extends HTMLElement>(node: T, id: string | null |
   return node;
 }
 
-/** 속성 한 글자 동그라미 */
+/** 속성 한 글자 동그라미 (두 글자 약어 = 알약) */
 export function elementDot(id: string, factionId: string): HTMLElement {
-  const d = paintElement(el('i', 'bha-eldot', elementAbbr(id, factionId)), id);
+  const abbr = elementAbbr(id, factionId);
+  const d = paintElement(el('i', Array.from(abbr).length > 1 ? 'bha-eldot bha-eldot--wide' : 'bha-eldot', abbr), id);
   d.setAttribute('aria-hidden', 'true');
   return d;
 }

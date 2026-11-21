@@ -76,7 +76,11 @@ describe('C.127 75장: 혈·독·허 적 등장 숨김', () => {
 
   it('독 적을 포식하면 독 특성 후보가 늘 1개 이상 (특성 숨김 없음, 다시 뽑기도)', () => {
     for (let seed = 1; seed <= 60; seed++) {
-      for (const id of ['poison-basic', 'blood-basic', 'kyo-basic']) {
+      // GDD 8-3 v6.154 (사용자 2026-11-21): 허무 적은 블록 후보 없음(능력치만·놓아주기만) — 옛 목록의 kyo-basic 은 아래 줄에서 따로
+      const kyo = buildOffer(createRng(seed), getEnemy('kyo-basic'), newBuild(), WON);
+      expect(kyo.candidates).toEqual([]);
+      expect(kyo.blockless).toBe(true);
+      for (const id of ['poison-basic', 'blood-basic']) {
         const enemy = getEnemy(id);
         const o = buildOffer(createRng(seed), enemy, newBuild(), WON);
         expect(o.candidates.length, `${id} ${seed}`).toBeGreaterThanOrEqual(1);
@@ -97,6 +101,14 @@ describe('C.127 75장: 혈·독·허 적 등장 숨김', () => {
       finishBattle(exp, b);
       expect(exp.phase).toBe('absorb');
       const o = exp.absorbOffer!;
+      if (o.blockless) {
+        // 허무 적 (GDD 8-3 v6.154, 사용자 2026-11-21): 블록 후보 없음 — 능력치만 흡수, 나온 까닭은 그대로 남는다
+        expect(o.candidates).toEqual([]);
+        expect(chooseAbsorb(exp, null, undefined, 'stat').ok).toBe(true);
+        expect(exp.absorbRecords.at(-1)).toMatchObject({ element: o.element, absorbed: true, traitId: null, specialGates: ['difficulty'] });
+        checked++;
+        continue;
+      }
       expect(o.candidates.length).toBeGreaterThanOrEqual(1);
       for (const t of o.candidates) expect(getTrait(t).element).toBe(o.element);
       expect(o.specialGates).toEqual(['difficulty']);

@@ -1,8 +1,9 @@
 // 흡수 제안: 전투 승리 뒤 흡수 가능 여부와 특성 후보 (GDD 4장, 4-1). 시드 고정 가능(rng 를 받는다).
 
 import { BALANCE } from '../../config/balance';
-import { TRAITS, getTrait } from '../../data/traits';
-import { NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../../data/elements';
+import { TRAITS, getTrait, isPlayerTrait } from '../../data/traits';
+import { NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS, elementName, isEnemyOnlyElement } from '../../data/elements';
+import { fixParticles } from '../josa';
 import type { EnemyDef, StatId, TraitDef } from '../../data/schema';
 import type { CombatState } from '../combat/combat';
 import type { SpecialGate } from '../enemyPool';
@@ -50,6 +51,19 @@ export interface AbsorbOffer {
   specialGates?: SpecialGate[];
   /** 노력치 흡수·놓아주기만 (GDD 12-4 v6.048, C.441 — 초월자 전용 블록 몸): 특성 후보 없음, 흡수 갈래는 'stat' 만 */
   statOnly?: boolean;
+  /** 적 전용 속성(허무) 적 (GDD 8-3 v6.154, 사용자 2026-11-21): 블록으로 흡수할 수 없다 — 특성 후보 없음, 흡수 갈래는 'stat'(능력치만)·놓아주기만.
+   *  화면은 둘 다·속성만 갈래를 흐리게 + 이유 한 줄 (statOnly 는 갈래를 숨긴다) */
+  blockless?: boolean;
+}
+
+/** 허무 적 흡수 화면의 이유 한 줄 (GDD 8-3 v6.154): '허무는 블록으로 흡수할 수 없다'. 속성 이름은 속성 데이터, 행위 이름(포식·정화 흡수)은 종족 설정 absorbActionName — 엔진 거절 문구는 '흡수' */
+export function blocklessReason(element: string, factionId = '*', actionName = '흡수'): string {
+  return fixParticles(`${elementName(element, factionId)}은(는) 블록으로 ${actionName}할 수 없다`);
+}
+
+/** 이 흡수 화면에서 능력치만·놓아주기만 되는가 (초월자 전용 블록 몸 statOnly · 허무 적 blockless) */
+export function statAbsorbOnly(offer: Pick<AbsorbOffer, 'statOnly' | 'blockless'>): boolean {
+  return offer.statOnly === true || offer.blockless === true;
 }
 
 /** 특수 속성(혈·독·허) 특성인가 */
@@ -70,7 +84,8 @@ export function ownsElement(build: Pick<BuildState, 'owned'>, element: string): 
  *  고르면 새 블록 없이 그 속성 강화 +1 만(chooseAbsorb). 화면은 가진 것 = 'n강 → n+1강', 안 가진 것 = '새 블록' */
 function offerPool(elements: readonly string[]): TraitDef[] {
   // C.220 (GDD 126-1 수정 1 "특성은 블록으로 먹는거 아냐"): 흡수는 블록(skill)과 그 강화만 — 패시브·파츠는 후보에서 뺀다(이미 가진 것은 그대로)
-  return TRAITS.filter((t) => !t.boss && t.kind === 'skill' && elements.includes(t.element));
+  // GDD 8-3 v6.154: 적 전용 속성(허무) 특성은 후보에 넣지 않는다 (보스 속성 바뀜 기믹의 허무도)
+  return TRAITS.filter((t) => !t.boss && t.kind === 'skill' && elements.includes(t.element) && isPlayerTrait(t));
 }
 
 function pick<T>(rng: Rng, list: T[]): T {
@@ -102,9 +117,11 @@ export function equippedAttackFamilies(build: BuildState): Set<string> {
 export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat: AbsorbInput, extraCandidates = 0, bossTrait: string | null = null, candidateMult = 1, elements: readonly string[] = [enemy.element]): AbsorbOffer {
   const elite = enemy.class === 'elite';
   // 106장 1: 가진 속성이어도 그 속성 조·탄·교 등이 평소처럼 후보로 — 가진 특성은 고르면 강화만. 보스 특성은 보스 보상이라 그대로(아직 없을 때만)
-  const pool = offerPool(elements);
+  // 허무 적(GDD 8-3 v6.154): 블록 흡수 없음 — 후보 0, 능력치만·놓아주기만
+  const blockless = isEnemyOnlyElement(enemy.element);
+  const pool = blockless ? [] : offerPool(elements);
   const candidates: string[] = [];
-  const bossAdded = bossTrait !== null && !build.owned.includes(bossTrait) && elements.includes(getTrait(bossTrait).element);
+  const bossAdded = !blockless && bossTrait !== null && !build.owned.includes(bossTrait) && elements.includes(getTrait(bossTrait).element) && isPlayerTrait(getTrait(bossTrait));
   if (bossAdded) candidates.push(bossTrait);
   const own = pool.filter((t) => !candidates.includes(t.id));
   const want = (elite ? AX.candidatesElite : 1 + nextInt(rng, AX.candidatesNormalMax)) * candidateMult + extraCandidates + (bossAdded ? 1 : 0);
@@ -125,6 +142,7 @@ export function buildOffer(rng: Rng, enemy: EnemyDef, build: BuildState, combat:
     chain3Count: combat.chain3Count,
     weakChain3Count: combat.weakChain3Count,
     finisherElement: combat.finisher?.element ?? null,
+    ...(blockless ? { blockless: true } : {}),
   };
 }
 

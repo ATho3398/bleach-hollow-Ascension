@@ -27,6 +27,8 @@ export interface GenerateInput {
   template: FormTemplate;
   /** 실패형 줄기 종족값 오름분 비율 (GDD 49-8 1번, BALANCE.provisional.evolution.failLine.gainRatio) */
   failGainRatio: number;
+  /** 적 전용 특수 속성 (GDD 8-5 v6.154 허무): 그 속성 4단계 일반 진화체는 retired(옛 세이브 호환용 데이터만, 판정에서 빠짐) */
+  enemyOnly?: readonly string[];
 }
 
 /** 실패형 줄기 종족값 합계 (GDD 49-8 1번): startTier 단계에서 실패형이 된 뒤 tier 단계의 합계.
@@ -114,7 +116,7 @@ export function generateForms(input: GenerateInput): FormDef[] {
   );
   input.special.forEach((el, i) => {
     const cat = SPECIAL_ELEMENT_CATEGORY[i] ?? 'mixed';
-    out.push(form(`t4:${el}:${cat}`, 4, 'arrancar', distribute(total(4), addTendency(T.element[el], T.category[cat])), { elements: [el] }, [el], cat));
+    out.push(form(`t4:${el}:${cat}`, 4, 'arrancar', distribute(total(4), addTendency(T.element[el], T.category[cat])), { elements: [el], ...(input.enemyOnly?.includes(el) ? { retired: true } : {}) }, [el], cat));
   });
   // 4단계 히든 10종 (GDD 126장 7): 융합 2 + TIER4_HIDDEN. 속성이 없는 종류는 3단계 속성을 잇는다
   input.fusionPairs.forEach(([a, b]) =>

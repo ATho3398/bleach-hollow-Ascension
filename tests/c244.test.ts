@@ -119,7 +119,8 @@ describe('화면 (GDD 163장 1·3·4)', () => {
     expect(a).not.toContain('가득 · 타일 +1.');
   });
   it('갈래 버튼 = 고르기만, 기기 ▲▼ 하이라이트 = 고르기, 첫 갈래가 골라진 채 시작 (실행은 172장 [흡수] 버튼 — tests/c252)', () => {
-    expect(a).toContain("b.addEventListener('bha-select', () => select(m));");
+    // C.516 (GDD 8-3 v6.154, 사용자 2026-11-21): 허무 적의 흐린 갈래(둘 다·속성만)는 하이라이트가 와도 고르지 않는다 — 옛 기대 = "() => select(m));"
+    expect(a).toContain("b.addEventListener('bha-select', () => { if (!b.disabled) select(m); });");
     expect(a).toContain('let sel: AbsorbChoice = ABSORB_MODES[0];');
     expect(a).toContain('first = picker.first;');
   });

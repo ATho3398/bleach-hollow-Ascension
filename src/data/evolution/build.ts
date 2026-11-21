@@ -1,6 +1,6 @@
 // 지금 속성·BALANCE 템플릿으로 진화체 트리를 새로 만든다 (forms.json 갱신·점검·테스트용). forms.json 에 의존하지 않는다
 import { BALANCE } from '../../config/balance';
-import { ELEMENTAL_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS, beats } from '../elements';
+import { ELEMENTAL_IDS, ENEMY_ONLY_ELEMENT_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS, beats } from '../elements';
 import { ATTACK_CATEGORIES, type FormDef } from '../schema';
 import { generateForms, type FormTemplate } from './generate';
 import { withReleases } from './releases';
@@ -25,5 +25,6 @@ export function generateFormTable(): FormDef[] {
     fusionPairs: fusionPairs(),
     template: BALANCE.provisional.evolution.template as unknown as FormTemplate,
     failGainRatio: BALANCE.provisional.evolution.failLine.gainRatio,
+    enemyOnly: ENEMY_ONLY_ELEMENT_IDS,
   }));
 }

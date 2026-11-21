@@ -80,7 +80,8 @@ describe('111장 1: 노멀 skill 특성 = 기본 블록', () => {
     expect(fillDefaultTraits(save)).toBe(0);
     expect(setTraitSlots(save, ['t-normal-a', 't-water-a', 't-normal-b'])).toEqual([null, 't-water-a', null]);
     expect(save.build.owned.some(isBasicBlockTrait)).toBe(false);
-    expect(read('src/ui/testModePanel.ts')).toContain('TRAITS.filter((t) => !isBasicBlockTrait(t.id))');
+    // GDD 8-2 v6.154 (사용자 2026-11-21): 허무(적 전용) 블록도 목록에서 뺀다 — 옛 기대 = 'TRAITS.filter((t) => !isBasicBlockTrait(t.id))'
+    expect(read('src/ui/testModePanel.ts')).toContain('TRAITS.filter((t) => !isBasicBlockTrait(t.id) && isPlayerTrait(t))');
   });
 
   it('진화 판정: 노멀만 흡수해 슬롯이 비어도(노멀 강화 1↑) 실패형 강제가 아니다', () => {
@@ -136,7 +137,7 @@ describe('111장 후속 결정 ②: 바스트로데 속성 — 노멀 강화 1�
 
 describe('111장 2: 옛 노멀 특성 정리 (마이그레이션 없음)', () => {
   it('형식·문턱 51 같이 올림', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([94, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([95, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188
   });
   it('불러올 때 보유·슬롯·장착 순서의 노멀 skill 특성을 지운다(다른 특성·노멀 패시브·강화는 그대로)', () => {
     const s = newSaveData('hollow');

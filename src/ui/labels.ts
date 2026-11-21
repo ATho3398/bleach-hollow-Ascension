@@ -88,7 +88,7 @@ export function familyAbbr(labels: Pick<BattleLabels, 'families'>, familyId: str
   return familyId ? familyOf(labels, familyId)?.abbr : undefined;
 }
 
-/** 블록 이름에 쓰는 속성 이름: 괄호 한자 표기는 뺀다 (예 허(虛) → 허) */
+/** 블록 이름에 쓰는 속성 이름: 괄호 한자 표기는 뺀다 (예 옛 허(虛) → 허 — 지금 속성 이름에는 괄호가 없다) */
 export function blockElementName(elementId: string, factionId: string): string {
   return elementName(elementId, factionId).replace(/\s*\([^)]*\)/g, '').trim();
 }

@@ -1,6 +1,6 @@
 // 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개 → C.136 속성마다 6개: 막기·회복 속성 특성 삭제, GDD 84장 7번). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
 import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction, type TraitDef } from '../schema';
-import { elementAbbr, elementName, isElement } from '../elements';
+import { elementAbbr, elementName, isElement, isEnemyOnlyElement } from '../elements';
 import raw from './traits.json';
 
 /** 블록 약어 최대 글자 수: 2줄 × 4자 (공백 포함) */
@@ -62,9 +62,14 @@ export function getTrait(id: string): TraitDef {
   return t;
 }
 
+/** 플레이어가 가질 수 있는 특성인가 (GDD 8-2 v6.154): 적 전용 속성(허무)의 특성(블록)은 흡수·보스 보상·상점·지급 어디서도 얻지 못한다 */
+export function isPlayerTrait(t: Pick<TraitDef, 'element'>): boolean {
+  return !isEnemyOnlyElement(t.element);
+}
+
 /** 표시 이름 앞의 속성 글자('물 조' 의 '물 ')를 뺀다 — 속성은 아이콘·색이 이미 보여 준다 (C.176, GDD 104장 6). 데이터 이름·id 는 그대로 */
 function withoutElement(name: string, element: string, factionId: string): string {
-  // 속성 이름('허(虛)')이나 약어('허') 어느 쪽으로 시작해도 뺀다
+  // 속성 이름('허무')이나 약어 어느 쪽으로 시작해도 뺀다
   for (const p of [elementName(element, factionId), elementAbbr(element, factionId)]) {
     const prefix = `${p} `;
     if (name.startsWith(prefix) && name.length > prefix.length) return name.slice(prefix.length);
