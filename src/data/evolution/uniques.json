@@ -548,17 +548,18 @@
       "hollow": {
         "trait": "spawnCut6",
         "ability": {
-          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}(필드가 여러 개여도 같은 세기). 필드 {stormAt}개가 동시에 있으면 강화 자기장 {stormSeconds}초 — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}" },
+          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}(필드가 여러 개여도 같은 세기). 필드를 {stormAt}번 만들 때마다(누적) 강화 자기장 {stormSeconds}초 — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}" },
           "releaseDescription": { "*": "필드 {fieldSeconds}초 · 강화 {stormSeconds}초 · 마법방어 −{magicCut%}" },
           "stacks": {
-            "field": { "seconds": "fieldSeconds", "on": "foe", "mark": { "icon": "i-fx-beam", "name": { "*": "자기장" } } }
+            "field": { "seconds": "fieldSeconds", "on": "foe", "mark": { "icon": "i-fx-beam", "name": { "*": "자기장" } } },
+            "fieldCount": { "max": "stormAt", "mark": { "icon": "i-special", "name": { "*": "자기장 누적" } } }
           },
           "buffs": {
             "storm": { "on": "foe", "mark": { "icon": "i-special", "name": { "*": "강화 자기장" } } }
           },
           "rules": [
-            { "on": "block", "chain": [3], "after": { "chain": [2] }, "do": [{ "act": "add", "stack": "field", "value": 1 }], "proc": "자기장!" },
-            { "on": "block", "chain": [3], "after": { "chain": [2] }, "need": [{ "stack": "field", "atLeast": "stormAt" }], "do": [{ "act": "buff", "buff": "storm", "value": "stormDot", "seconds": "stormSeconds" }, { "act": "clear", "stack": "field" }], "proc": "강화 자기장!" },
+            { "on": "block", "chain": [3], "after": { "chain": [2] }, "do": [{ "act": "add", "stack": "field", "value": 1 }, { "act": "add", "stack": "fieldCount", "value": 1 }], "proc": "자기장!" },
+            { "on": "block", "chain": [3], "after": { "chain": [2] }, "need": [{ "stack": "fieldCount", "atLeast": "stormAt" }], "do": [{ "act": "buff", "buff": "storm", "value": "stormDot", "seconds": "stormSeconds" }, { "act": "clear", "stack": "fieldCount" }, { "act": "clear", "stack": "field" }], "proc": "강화 자기장!" },
             { "on": "every", "seconds": "dotEvery", "need": [{ "stack": "field" }, { "buff": "storm", "none": true }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "fieldDot", "dot": true }] },
             { "on": "every", "seconds": "dotEvery", "need": [{ "buff": "storm" }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "stormDot", "dot": true }] }
           ],

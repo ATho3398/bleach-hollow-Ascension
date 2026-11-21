@@ -185,7 +185,7 @@ describe('브라사 (불·교) — 화상마다 열기(자기 블록 확률·주
   const n = N('t4:fire:mixed');
   const fire = skill('t-fire-b', 'fire', 'family-b');
   const water = skill('t-water-a', 'water', 'family-a');
-  it('불 블록 → 화상(1차 정의) + 열기 1(3초, 스택마다 따로, 최대 5) · 1당 자기 블록 확률 +10%p·주는 피해 +8%', () => {
+  it('불 블록 → 화상(공용 값 — C.517) + 열기 1(3초, 스택마다 따로, 최대 5) · 1당 자기 블록 확률 +10%p·주는 피해 +8%', () => {
     const s = mk({ evo: evo('t4:fire:mixed'), skills: [fire, water] });
     const r = useChain(s, 1, 'family-b', fire.id);
     expect(procOf(r.evs, '화상!')).toBe(true);
@@ -331,13 +331,16 @@ describe('토르멘타 (뇌·탄) — 자기장 필드', () => {
     for (let i = 0; i < 100; i++) if (evoFoeSlowSkip(s)) skips++;
     expect(skips).toBe(Math.round(100 * n.slow!));
   });
-  it('필드 3개가 동시에 → 강화 필드 3초(초당 2% · 마법방어 −15% · 공속 −20%) — 블록 피해가 오른다', () => {
+  // 옛 기대값(C.515): '필드 3개가 동시에 → 강화 필드' (field n=2 를 미리 넣고 2→3).
+  // 새 규칙(마스터 11-21, C.517): 필드를 만든 누적 횟수 3번마다 강화 — 누적 칸(fieldCount) 2 를 미리 넣고 2→3, 켜지면 누적 0.
+  it('필드 누적 3번째 → 강화 필드 3초(초당 2% · 마법방어 −15% · 공속 −20%) — 블록 피해가 오른다 (마스터 11-21 새 규칙)', () => {
     const s = mk({ evo: evo('t4:thunder:special') });
     const before = blockDmg(useChain(s, 1).evs);
-    s.evo!.stacks.field = { n: 2, exp: [s.tick + 1e6, s.tick + 1e6] };
+    s.evo!.stacks.fieldCount = { n: 2 };
     useChain(s, 2);
     expect(procOf(useChain(s, 3).evs, '강화 자기장!')).toBe(true);
     expect(s.evo!.stacks.field!.n).toBe(0);
+    expect(s.evo!.stacks.fieldCount!.n).toBe(0);
     expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.magicCut!, 6);
     expect(evoStat(s, 'foeAttackSlow')).toBeCloseTo(n.slow!, 6);
     expect(blockDmg(useChain(s, 1).evs)).toBeGreaterThan(before);
@@ -352,7 +355,8 @@ describe('토르멘타 (뇌·탄) — 자기장 필드', () => {
     useChain(s, 2);
     useChain(s, 3);
     expect(dots(tick(s, ticksOf(s.params, n.release.fieldSeconds!) + 1)).length).toBe(n.release.fieldSeconds!);
-    s.evo!.stacks.field = { n: 2, exp: [s.tick + 1e6, s.tick + 1e6] };
+    // 옛(C.515): field n=2 동시 → 새 규칙(마스터 11-21): 누적 1(위 필드) + 1 = 2 → 이번이 3번째
+    s.evo!.stacks.fieldCount = { n: 2 };
     useChain(s, 2);
     useChain(s, 3);
     expect(evoStat(s, 'foeMagicDefCut')).toBeCloseTo(n.release.magicCut!, 6);

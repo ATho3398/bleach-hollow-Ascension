@@ -1,0 +1,38 @@
+{
+  "shots": [
+    "01-tormenta-count-2of3.png",
+    "02-tormenta-storm-on.png"
+  ],
+  "errors": [],
+  "checks": {
+    "after1": {
+      "fieldCount": 1,
+      "field": 1,
+      "storm": 0,
+      "magicCut": 0
+    },
+    "after2": {
+      "fieldCount": 2,
+      "field": 1,
+      "storm": 0,
+      "magicCut": 0
+    },
+    "marks2": [
+      "evo-s-fieldCount:2",
+      "evo-s-field:1"
+    ],
+    "title2": [
+      "자기장 누적 2/3개",
+      "자기장 1개 (0.9초)"
+    ],
+    "after3": {
+      "fieldCount": 0,
+      "field": 0,
+      "storm": 0.02,
+      "magicCut": 1
+    },
+    "marks3": [
+      "evo-b-storm:2"
+    ]
+  }
+}
