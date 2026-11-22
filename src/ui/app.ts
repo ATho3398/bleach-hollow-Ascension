@@ -1891,7 +1891,7 @@ export function startApp(host: HTMLElement): void {
 
   /** 전투 [소모품] (GDD 108장 3번·105장 수정 3): 장비 화면 소모품 칸에 든 것을 이 전투에 싣고, 쓰면 보관 개수 −1 후 저장. 칸이 비었거나 0개면 버튼 비활성 */
   function armBattleItem(sv: SaveData, st: CombatState): BattleViewOptions['battleItem'] {
-    const it = battleItemUnlocked(sv) ? battleItemEffectOf(sv) : null; // 전투 소모품 칸 = 3단계부터 (GDD 241-0)
+    const it = battleItemUnlocked(sv) ? battleItemEffectOf(sv) : null; // 전투 소모품 칸 = 2단계부터 (GDD 10-2, C.518)
     st.params.battleItem = it;
     if (!it) return undefined;
     return { count: sv.shared.items[it.id] ?? 0, onUse: () => { spendBattleItem(sv, it.id); persist(); } };

@@ -189,7 +189,7 @@
           "@.bha-prop--chest"
         ],
         "title": "{battleSlotName} 칸이 열렸다",
-        "body": "{tier3}이(가) 되어 {battleSlotName} 칸이 열렸다.\n{room.props.chest}의 [{gearTitle}] 탭에서 회복약 같은 소모품을 넣어 둔다."
+        "body": "{battleItemTier}이(가) 되어 {battleSlotName} 칸이 열렸다.\n{room.props.chest}의 [{gearTitle}] 탭에서 회복약 같은 소모품을 넣어 둔다."
       },
       {
         "id": "use",

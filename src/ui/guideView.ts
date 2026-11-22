@@ -97,7 +97,7 @@ const WOUND_DRAIN_MS = 1200;
 
 /**
  * 튜토리얼 원정 흡수 직후 치명상 장면 (GDD 134장 2, C.211): 캐릭터가 비틀거리고 체력 막대가 빈사 값까지 떨어지며 붉게 깜빡인다.
- * 그 위에 각본 카드 1~2장(종족 설정 tutorialWound, 132장 방식 — 덮개 없음·막대를 가리지 않음·기기 버튼). 마지막 카드 뒤 onDone(원정 끝 → 귀환)
+ * 그 위에 각본 카드(종족 설정 tutorialWound — 지금 1장, GDD 13-4 v6.158; 132장 방식 — 덮개 없음·막대를 가리지 않음·기기 버튼). 마지막 카드 뒤 onDone(원정 끝 → 귀환)
  */
 export function tutorialWoundView(root: HTMLElement, faction: FactionConfig, art: ArtUrls, hpFrom: number, hpTo: number, onDone: () => void): void {
   const pct = (x: number) => Math.round(Math.max(0, Math.min(1, x)) * 100);

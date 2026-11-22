@@ -23,9 +23,10 @@ const evolve = (s: ReturnType<typeof newSaveData>, at = 10) => {
 };
 
 describe('241-0 해금 표 (사용자 수정 v5.570, 수치 = BALANCE.provisional.unlocks)', () => {
-  it('2단계 타일 · 3단계 장비·전투 소모품 · 4단계 본능 수련·번호 쟁탈전 · 해방 클리어 장신구 · 첫 환생 펫·출정품', () => {
-    expect([...FEATURE_IDS]).toEqual(['tiles', 'gear', 'battleItem', 'instinct', 'rankBattle', 'accessory', 'pet', 'sortie']);
-    expect(BALANCE.provisional.unlocks).toEqual({ tiles: { tierIndex: 1 }, gear: { tierIndex: 2 }, battleItem: { tierIndex: 2 }, instinct: { tierIndex: 3 }, rankBattle: { tierIndex: 3 }, accessory: { ascended: true }, pet: { rebirths: 1 }, sortie: { rebirths: 1 } });
+  // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158): 전투 소모품 칸 3단계 → 2단계 — 표 순서도 타일 · 전투 소모품 · 장비로 바뀌어 아래 기대값을 고쳤다
+  it('2단계 타일·전투 소모품 · 3단계 장비 · 4단계 본능 수련·번호 쟁탈전 · 해방 클리어 장신구 · 첫 환생 펫·출정품', () => {
+    expect([...FEATURE_IDS]).toEqual(['tiles', 'battleItem', 'gear', 'instinct', 'rankBattle', 'accessory', 'pet', 'sortie']);
+    expect(BALANCE.provisional.unlocks).toEqual({ tiles: { tierIndex: 1 }, gear: { tierIndex: 2 }, battleItem: { tierIndex: 1 }, instinct: { tierIndex: 3 }, rankBattle: { tierIndex: 3 }, accessory: { ascended: true }, pet: { rebirths: 1 }, sortie: { rebirths: 1 } });
     // 이번 생에 할 수 있나를 보는 옛 수치와 같은 단계
     expect(unlockRule('instinct')).toEqual({ tierIndex: BALANCE.provisional.liberation.minTierIndex });
     expect(unlockRule('rankBattle')).toEqual({ tierIndex: BALANCE.rank.unlockTierIndex });
@@ -34,7 +35,7 @@ describe('241-0 해금 표 (사용자 수정 v5.570, 수치 = BALANCE.provisiona
     const st = {};
     const P = (maxTierIndex: number, ascended = false, rebirths = 0) => ({ maxTierIndex, ascended, rebirths });
     expect(applyUnlocks(st, P(0), 5)).toEqual([]);
-    expect(applyUnlocks(st, P(2), 7)).toEqual(['tiles', 'gear', 'battleItem']);
+    expect(applyUnlocks(st, P(2), 7)).toEqual(['tiles', 'battleItem', 'gear']); // C.518 표 순서
     expect(applyUnlocks(st, P(2), 9)).toEqual([]);
     expect(applyUnlocks(st, P(3, true), 11)).toEqual(['instinct', 'rankBattle', 'accessory']);
     expect(applyUnlocks(st, P(3, true, 1), 13)).toEqual(['pet', 'sortie']);
@@ -49,17 +50,17 @@ describe('241-0 해금 표 (사용자 수정 v5.570, 수치 = BALANCE.provisiona
     const open = () => FEATURE_IDS.filter((id) => featureUnlocked(s, id));
     expect(open()).toEqual([]);
     expect(gearUnlocked(s) || battleItemUnlocked(s) || petsUnlocked(s)).toBe(false);
-    evolve(s); // 2단계 = 타일 (시작 타일 3장 + 타일 안내)
-    expect(open()).toEqual(['tiles']);
+    evolve(s); // 2단계 = 타일 (시작 타일 3장 + 타일 안내) · 전투 소모품 (C.518 — 옛 3단계)
+    expect(open()).toEqual(['tiles', 'battleItem']);
+    expect(guidePending(s.help, 'unlock-battle-item')).toBe(true);
     expect(tilesUnlocked(s)).toBe(true);
     expect(Object.keys(s.tiles.collection)).toHaveLength(BALANCE.provisional.expedition.starterTiles.length);
     expect(guidePending(s.help, 'tile-intro')).toBe(true);
-    evolve(s, 20); // 3단계 = 장비 · 전투 소모품
-    expect(open()).toEqual(['tiles', 'gear', 'battleItem']);
+    evolve(s, 20); // 3단계 = 장비
+    expect(open()).toEqual(['tiles', 'battleItem', 'gear']);
     expect(guidePending(s.help, 'unlock-gear')).toBe(true);
-    expect(guidePending(s.help, 'unlock-battle-item')).toBe(true);
     evolve(s, 30); // 4단계 = 본능 수련 · 번호 쟁탈전
-    expect(open()).toEqual(['tiles', 'gear', 'battleItem', 'instinct', 'rankBattle']);
+    expect(open()).toEqual(['tiles', 'battleItem', 'gear', 'instinct', 'rankBattle']);
     expect(guidePending(s.help, 'unlock-instinct')).toBe(true);
     expect(guidePending(s.help, 'unlock-rank')).toBe(true);
     // 해방 클리어 = 장신구 3칸
@@ -67,7 +68,7 @@ describe('241-0 해금 표 (사용자 수정 v5.570, 수치 = BALANCE.provisiona
     expect(checkUnlocks(s, 35)).toEqual(['accessory']);
     expect(guidePending(s.help, 'unlock-accessory')).toBe(true);
     expect(petsUnlocked(s)).toBe(false);
-    expect(s.runLog.unlocks!.map((u) => [u.featureId, u.tierIndex])).toEqual([['tiles', 1], ['gear', 2], ['battleItem', 2], ['instinct', 3], ['rankBattle', 3], ['accessory', 3]]);
+    expect(s.runLog.unlocks!.map((u) => [u.featureId, u.tierIndex])).toEqual([['tiles', 1], ['battleItem', 1], ['gear', 2], ['instinct', 3], ['rankBattle', 3], ['accessory', 3]]);
     // 첫 환생 = 펫(선물 1마리) + 출정품
     s.rebirth.count = 1;
     expect(checkUnlocks(s, 40)).toEqual(['pet', 'sortie']);
@@ -171,7 +172,7 @@ describe('241-C 1 해금 안내 카드', () => {
     const S = getFaction('shinigami');
     expect(unlockHintText(H, 'tiles')).toBe('길리안이 되면 지형 타일이 열린다');
     expect(unlockHintText(H, 'gear')).toBe('아쥬커스가 되면 장비가 열린다');
-    expect(unlockHintText(H, 'battleItem')).toBe('아쥬커스가 되면 전투 소모품이 열린다');
+    expect(unlockHintText(H, 'battleItem')).toBe('길리안이 되면 전투 소모품이 열린다'); // C.518: 3단계 → 2단계
     expect(unlockHintText(H, 'instinct')).toBe('바스트로데가 되면 본능 수련이 열린다');
     expect(unlockHintText(H, 'rankBattle')).toBe('바스트로데가 되면 번호 쟁탈전이 열린다');
     expect(unlockHintText(H, 'accessory')).toBe('아란칼화 클리어 후 장신구 칸이 열린다');

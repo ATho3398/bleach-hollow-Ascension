@@ -18,7 +18,7 @@ import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { choosePet, choosePet2, HEAL_ROOM_LOCK, equipInventoryItem, setBattleItem, gearSlotName, inventoryOf, petAffinityText, unequipInventoryItem, useInventoryItem, type InventoryEntry } from '../inventory';
 import { slotsForKind } from '../data/gear';
 import { gearCarry } from '../engine/gear';
-import { battleSlotName, equipTab, equipTitle, gearArt, openGear } from './equipView';
+import { battleSlotButton, battleSlotName, equipTab, equipTitle, gearArt, openGear } from './equipView';
 import { screenSignal } from './bha/screenScope';
 import { petArtSrc, petIconId } from './bha/pet';
 import { fixParticles } from '../engine/josa';
@@ -415,7 +415,7 @@ export function openChestAtGear(): void {
  *  C.140 최소 화면 — 카드형 UI 는 C.141 */
 export function chestView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, onWear?: () => void, onTilePlace?: () => void): void {
   const tileCount = () => ownedTileList(save.tiles, faction.id).length;
-  // 장비가 잠긴 동안(2단계 전, GDD 241-0)은 잠김 안내만 있는 장비 탭 대신 소모품 탭으로 연다 (C.511, GDD 5-2 v6.149)
+  // 장비가 잠긴 동안(3단계 전, GDD 10-2)은 잠김 안내만 있는 장비 탭 대신 소모품 탭으로 연다 (C.511, GDD 5-2 v6.149). 2단계부터는 그 탭에 전투 소모품 칸이 있지만(C.518) 여는 탭은 그대로
   if (chestUi.tab === 'gear' && !gateOpen(save, 'gear')) chestUi.tab = 'items';
 
   // 위쪽 탭 [장비 · 슬롯 · 타일 · 소모품 · 스킨 · 펫 · 기타] (C.149, 94장 A-6 · 109장 4번 장비 = 첫 탭 · 154장 1 기타 = 재료 · 159장 24 물건 → 소모품, 스킨은 위 탭으로).
@@ -461,12 +461,19 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     page.app.classList.toggle('bha-equip-page', chestUi.tab === 'gear');
     page.app.querySelector(':scope > .bha-eqfoot')?.remove();
     if (chestUi.tab === 'gear' && !gateOpen(save, 'gear')) {
-      // 장비는 2단계에 열린다 (GDD 241-0): 잠김 안내 한 줄
+      // 장비는 3단계에 열린다 (GDD 10-2): 잠김 안내 한 줄
       const lock = panel({ title: equipTitle(faction), aside: h('span', 'bha-chip', '잠김') });
       lock.dataset.gearLocked = '';
       lock.querySelector('.bha-panel__title')?.prepend(icon('i-lock'));
       lock.append(h('p', 'bha-dim', gateHint(faction, 'gear')));
       page.left.replaceChildren(lock);
+      // 전투 소모품 칸은 2단계에 먼저 열린다 (GDD 10-2 v6.158, C.518): 장비가 잠긴 동안에도 장비 탭에 그 칸만 — 누르면 넣은 것 상세 / 고르기 창
+      if (gateOpen(save, 'battleItem')) {
+        const slot = panel({ title: battleSlotName(faction) });
+        slot.dataset.battleSlotOnly = '';
+        slot.append(battleSlotButton(faction, save, () => () => { persist(); fill(); }), h('p', 'bha-dim', '넣어 둔 소모품은 전투·모험 [소모품] 버튼으로 바퀴당 1번 쓴다.'));
+        page.left.append(slot);
+      }
       page.right.replaceChildren(h('div'));
       return;
     }
@@ -691,7 +698,7 @@ function itemsTab(faction: FactionConfig, save: SaveData, changed: () => void, m
     foot: actionChipOf(e), // 누르면 무엇을 하는지 (GDD 100장 #59)
     onClick: () => (e.sortie ? openSortie(save, e.id, changed) : openItem(faction, save, e, artOf(e), changed)),
   }));
-  // 잠긴 칸 (GDD 243장 2): 전투 소모품 = 3단계 · 출정품 = 첫 환생 — 빈 칸이면 '상점에서 사면…' 대신 잠김 한 줄(자물쇠)만
+  // 잠긴 칸 (GDD 243장 2): 전투 소모품 = 2단계(C.518) · 출정품 = 첫 환생 — 빈 칸이면 '상점에서 사면…' 대신 잠김 한 줄(자물쇠)만
   const gate = mode !== 'items' ? null : itemsUi.group === 'battle' ? 'battleItem' as const : itemsUi.group === 'sortie' ? 'sortie' as const : null;
   const lockedEmpty = gate !== null && !gateOpen(save, gate) && cards.length === 0;
   const empty = lockedEmpty ? gateHint(faction, gate!) : mode === 'skin' ? SKIN_SUB_EMPTY : mode === 'pet' ? '아직 펫이 없다. 첫 환생 선물·모험 바퀴 끝 보상·우라하라에게서 얻는다.' : '비어 있다. 상점에서 사면 여기에 들어온다.';

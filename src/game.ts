@@ -1922,7 +1922,7 @@ export function performEvolution(save: SaveData, nowMs: number = Date.now(), car
     const hpFrom = homeHpOf(save.nest);
     const hpTo = setHomeHp(save.nest, 1);
     if (hpTo > hpFrom + 1e-9) logHomeHeal(save, { at: nowMs, kind: 'evolution', hpFrom: Math.round(hpFrom * 100) / 100, hpTo: Math.round(hpTo * 100) / 100 });
-    // 진화마다 하나씩 열린다 (GDD 241-0): 2단계 타일(시작 타일 3장 + 타일 안내, 64장 1번) · 3단계 장비·전투 소모품 · 4단계 본능 수련·번호 쟁탈전
+    // 진화마다 하나씩 열린다 (GDD 241-0): 2단계 타일(시작 타일 3장 + 타일 안내, 64장 1번)·전투 소모품(C.518) · 3단계 장비 · 4단계 본능 수련·번호 쟁탈전
     checkUnlocks(save, nowMs);
     // n단계에 처음 닿으면 원정 난이도 ★n 이 열린다 (GDD 32-1 4번, 영구)
     unlockDifficultyFor(save);

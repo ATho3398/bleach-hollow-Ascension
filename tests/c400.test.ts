@@ -110,15 +110,16 @@ describe('241-D 7 가방 [타일 배치하러 가기]', () => {
 });
 
 describe('241-0 수정 전투 소모품 칸 게이트', () => {
-  it('3단계 전에는 잠김(이미 넣은 칸이 있으면 열림), 장비 탭 칸은 자물쇠', async () => {
+  // C.518 (사용자 2026-11-22, GDD v6.158): 전투 소모품 칸 3단계 → 2단계 — 단계 1 로, 잠김 한 줄을 2단계 이름으로 고쳤다
+  it('2단계 전에는 잠김(이미 넣은 칸이 있으면 열림), 장비 탭 칸은 자물쇠', async () => {
     const { gateOpen, gateHint } = await import('../src/unlockGate');
     const s = newSaveData('hollow', 0);
     s.shared.battleItem = null;
     expect(gateOpen(s, 'battleItem')).toBe(false);
-    s.evolution.tierIndex = 2;
+    s.evolution.tierIndex = 1;
     checkUnlocks(s, 1); // C.403: 해금은 진화 때 저장된다 (engine/unlocks)
     expect(gateOpen(s, 'battleItem')).toBe(true);
-    expect(gateHint(H, 'battleItem')).toBe('아쥬커스가 되면 전투 소모품이 열린다');
+    expect(gateHint(H, 'battleItem')).toBe('길리안이 되면 전투 소모품이 열린다');
     expect(read('src/ui/equipView.ts')).toContain("const battleOpen = gateOpen(save, 'battleItem');");
   });
 });
