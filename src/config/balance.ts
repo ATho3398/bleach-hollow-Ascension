@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 156; // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158 10-2): provisional.unlocks.battleItem tierIndex 2 → 1(전투 소모품 칸 해금 3단계 → 2단계). 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 154; // C.515 (GDD 8-7 2차 호로 9종, 사용자 2026-11-21 "일단 추가고 정해놓은거 구현 ㄱㄱ", docs/drafts/evo-impl-1121.md 2절 — 마스터 추천안 provisional): provisional.evoUniques 에 4단계 특성 6개(critDmg10·blockPower8·spawnCut6·aspd6·drain3·poisonDot12) + 호로 바라쿠다·브라사·무랄라·토르투가·토르멘타·게파르도·추파카브라·비보라 수치(표 그대로, 브라사 화상은 소로 값 빌림). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 153; // C.514 (GDD 8-7 2차, docs/drafts/evo-impl-1121.md 1절 — 마스터 추천안 provisional): provisional.evoUniques 에 사신 현음(체인 상한 4·4체인 ×1.4·블록 1, 만해 5·×1.8·블록 2)·석양홍(석양 ×2.0 충전 1, 만해 ×2.5 최대 3, 화상 8초 +8%)·만리장(굳음 2초·+40%·방어막 12%, 만해 1초·+70%·18%) 수치 + 특성 blockPower6 0.06·fireDmg8 0.08·earthDmg8 0.08. 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 152; // C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고, 컨디션은 다른거잖아", GDD v6.151): provisional.expedition.conditionRiskBonusMax 0.15(컨디션 0 이면 폭주 블록 +15%p) 삭제 → riskGaugeVoidBonusMax 0.15(리스크 게이지 비율 × 15%p, 가득이면 +15%p). 그 밖 수치 그대로.
@@ -866,10 +867,10 @@ export const BALANCE = {
     /** 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199, provisional): 빈사로 복귀 → 구급상자 → (체력 포션 단계·potionTo 는 C.223 삭제, GDD 144장 4) → 온천에서 spaTo 까지(그만큼 온천 시간을 바로 흘림, 배부름 줄어듦) → 먹이 food 1개 = 배부름·체력 가득 */
     tutorialRecover: { spaTo: 1, food: 'tutorial' as const, rewardEach: 3, cureReward: { 'med-cure': 3, 'med-iv': 3, 'med-energy': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 } as Record<string, number>, cureFood: { snack: 5 } as Record<string, number> }, // GDD v6.005: 시작 가방 물건 전부(소모품·싸구려 간식) = 빈사 치료 뒤 // GDD 241-B 5: 안내 먹이 = 전용 '첫 끼니'(배부름 가득), 먹인 뒤 보상 = 일반 먹이 6종 각 rewardEach 개 (GDD 245장 2: 1 → 3 — 새 게임 시작 일반 먹이 지급을 이리로 옮김). 온천 spaTo = 체력 가득까지(245장 7 — 옛 0.8)
     /** 해금 흐름 (GDD 241-0 사용자 수정 v5.570, C.399, provisional): 진화마다 하나씩 열린다. tierIndex = 어느 트랙이든 그 단계에 닿은 적이 있으면(0 = 1단계), ascended = 해방 클리어(아란칼화/참백도 구상화), rebirths = 환생 수. 한 번 열리면 영구(슬롯 공유).
-     *  tiles = 지형 타일(2단계 — 옛 '첫 진화' 그대로) · gear = 장비(무기·방어구·신발)·장비 상점 · battleItem = 전투 소모품 칸(3단계)
+     *  tiles = 지형 타일(2단계 — 옛 '첫 진화' 그대로) · gear = 장비(무기·방어구·신발)·장비 상점 · battleItem = 전투 소모품 칸(2단계 — C.518 사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", 옛 3단계)
      *  · instinct = 본능 수련·rankBattle = 번호 쟁탈전(4단계 — 이번 생에 할 수 있나는 liberation.minTierIndex·rank.unlockTierIndex 가 따로 본다, 같은 값으로 맞춘다) · accessory = 장신구 3칸(해방 클리어) · pet = 펫·sortie = 출정품 칸(첫 환생) */
     unlocks: {
-      tiles: { tierIndex: 1 }, gear: { tierIndex: 2 }, battleItem: { tierIndex: 2 }, instinct: { tierIndex: 3 }, rankBattle: { tierIndex: 3 }, accessory: { ascended: true }, pet: { rebirths: 1 }, sortie: { rebirths: 1 },
+      tiles: { tierIndex: 1 }, gear: { tierIndex: 2 }, battleItem: { tierIndex: 1 }, instinct: { tierIndex: 3 }, rankBattle: { tierIndex: 3 }, accessory: { ascended: true }, pet: { rebirths: 1 }, sortie: { rebirths: 1 },
     } as Record<'tiles' | 'gear' | 'battleItem' | 'instinct' | 'rankBattle' | 'accessory' | 'pet' | 'sortie', { tierIndex: number } | { ascended: true } | { rebirths: number }>,
     /** 새 세이브 가방 시작 소모품 (GDD 134장 1, C.211): 빈사 구급상자 3개. 튜토리얼 회복 안내 구급상자는 따로 1개(recoverTutorial) — 안내가 끝나면 이 수만큼 남는다. 진행 중 세이브엔 소급 안 함 */
     // C.223 (GDD 145장 3): + 체력 회복 물건 반창고 3·붕대 2·회복약 1 (원정·전투 중에 쓴다)

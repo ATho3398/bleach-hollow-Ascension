@@ -242,6 +242,37 @@ export function openPet(faction: FactionConfig, save: SaveData, id: string, chan
   });
 }
 
+/** 전투 소모품 칸 버튼 (장비 탭 오른쪽 아래 · 장비가 잠긴 2단계 장비 탭 — C.518): 잠기면 자물쇠, 누르면 넣은 것 상세 / 빈 칸 고르기 창.
+ *  changedAt(focus) = 바꾼 뒤 저장·다시 그리기(하이라이트를 그 칸에) */
+export function battleSlotButton(faction: FactionConfig, save: SaveData, changedAt: (focus: string) => () => void): HTMLButtonElement {
+  const slotName = battleSlotName(faction);
+  const bid = save.shared.battleItem;
+  const bn = bid ? save.shared.items[bid] ?? 0 : 0;
+  const battleBtn = h('button', `bha-eqslot bha-eqslot--battle${bid ? '' : ' is-empty'}${bid && bn === 0 ? ' is-dim' : ''}`);
+  battleBtn.type = 'button';
+  battleBtn.dataset.slot = 'battle';
+  battleBtn.dataset.drag = 'slot';
+  // 칸 글자는 짧게 '소모품'(GDD 189장 엑셀 15 — 60 폭 칸에서 '전투 소…' 말줄임). 창 머리·aria·안내는 종족 설정 이름 그대로
+  battleBtn.append(icon('i-heal'), h('span', 'bha-eqslot__name', bid ? shownName(consumableName(bid)) : '소모품'));
+  if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
+  battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
+  // 빈 칸을 누르면 고르기 창 (GDD 193장 6). 전투 소모품 카드는 가방 '소모품' 탭 한 곳에만 있다 (193장 9 — 이 탭의 '전투 소모품' 분류는 뺐다)
+  // 전투 소모품 칸은 2단계부터 (GDD 10-2, C.518 — 옛 3단계) — 잠기면 자물쇠, 누르면 언제 열리는지
+  const battleOpen = gateOpen(save, 'battleItem');
+  if (!battleOpen) {
+    battleBtn.classList.add('is-locked');
+    battleBtn.replaceChildren(icon('i-lock'), h('span', 'bha-eqslot__name', '소모품'));
+    battleBtn.setAttribute('aria-label', `${slotName}: 잠김`);
+    battleBtn.dataset.drag = '';
+  }
+  battleBtn.onclick = () => {
+    if (!battleOpen) return showToast({ eyebrow: slotName, title: '잠겨 있다', meta: gateHint(faction, 'battleItem') }, 0, 2400);
+    if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
+    pickBattleItem(faction, save, changedAt('slot:battle'));
+  };
+  return battleBtn;
+}
+
 export interface EquipTabHost {
   persist: () => void;
   /** 가방 화면을 다시 그린다 (장비 탭 그대로) */
@@ -301,30 +332,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
     };
     return b;
   };
-  const bid = save.shared.battleItem;
-  const bn = bid ? save.shared.items[bid] ?? 0 : 0;
-  const battleBtn = h('button', `bha-eqslot bha-eqslot--battle${bid ? '' : ' is-empty'}${bid && bn === 0 ? ' is-dim' : ''}`);
-  battleBtn.type = 'button';
-  battleBtn.dataset.slot = 'battle';
-  battleBtn.dataset.drag = 'slot';
-  // 칸 글자는 짧게 '소모품'(GDD 189장 엑셀 15 — 60 폭 칸에서 '전투 소…' 말줄임). 창 머리·aria·안내는 종족 설정 이름 그대로
-  battleBtn.append(icon('i-heal'), h('span', 'bha-eqslot__name', bid ? shownName(consumableName(bid)) : '소모품'));
-  if (bid) battleBtn.append(h('b', 'bha-eqslot__plus', `×${bn}`));
-  battleBtn.setAttribute('aria-label', `${slotName}: ${bid ? `${consumableName(bid)} ${bn}개` : '비어 있음'}`);
-  // 빈 칸을 누르면 고르기 창 (GDD 193장 6). 전투 소모품 카드는 가방 '소모품' 탭 한 곳에만 있다 (193장 9 — 이 탭의 '전투 소모품' 분류는 뺐다)
-  // 전투 소모품 칸은 3단계부터 (GDD 241-0 수정) — 잠기면 자물쇠, 누르면 언제 열리는지
-  const battleOpen = gateOpen(save, 'battleItem');
-  if (!battleOpen) {
-    battleBtn.classList.add('is-locked');
-    battleBtn.replaceChildren(icon('i-lock'), h('span', 'bha-eqslot__name', '소모품'));
-    battleBtn.setAttribute('aria-label', `${slotName}: 잠김`);
-    battleBtn.dataset.drag = '';
-  }
-  battleBtn.onclick = () => {
-    if (!battleOpen) return showToast({ eyebrow: slotName, title: '잠겨 있다', meta: gateHint(faction, 'battleItem') }, 0, 2400);
-    if (bid) return openBattleItem(faction, save, bid, changedAt('slot:battle'));
-    pickBattleItem(faction, save, changedAt('slot:battle'));
-  };
+  const battleBtn = battleSlotButton(faction, save, changedAt);
   // 펫 칸 (GDD 241-D 3): 데리고 다니는 펫. 첫 환생 전에는 잠김 — 누르면 언제 열리는지 (241-0)
   const petOpen = gateOpen(save, 'pet');
   const pid = save.shared.pets.active;
@@ -504,7 +512,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
       else if (src.kind === 'gear' && to && to !== 'battle' && to !== 'pet' && to !== 'pet2') {
         const it = findGear(g, src.id);
         if (it && GEAR_SLOT_KIND[to as GearSlot] === it.kind) ok = equipGearItem(save, src.id, to as GearSlot) !== null;
-      } else if (src.kind === 'battle' && to === 'battle' && battleOpen) ok = setBattleItem(save, src.id);
+      } else if (src.kind === 'battle' && to === 'battle' && gateOpen(save, 'battleItem')) ok = setBattleItem(save, src.id);
       else if (src.kind === 'slot' && target?.classList.contains('bha-eqright')) {
         if (src.id === 'battle') ok = setBattleItem(save, null);
         else if (src.id === 'pet') ok = choosePet(save, null);

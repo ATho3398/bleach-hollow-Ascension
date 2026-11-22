@@ -78,7 +78,7 @@ describe('243장 2 상점 해금 판정', () => {
     const s = newSaveData('hollow', 1);
     s.shared.tradeCoins = 99999;
     const row = (id: string) => goldRows(s, H).find((r) => r.id === id)!;
-    expect(row('battle-haste')).toMatchObject({ canBuy: false, lock: '아쥬커스가 되면 전투 소모품이 열린다' });
+    expect(row('battle-haste')).toMatchObject({ canBuy: false, lock: '길리안이 되면 전투 소모품이 열린다' }); // C.518: 전투 소모품 해금 3단계 → 2단계
     expect(row('deck-slot').canBuy).toBe(false);
     expect(row('heal-patch').canBuy).toBe(true);
     s.shared.unlocks.battleItem = 0;

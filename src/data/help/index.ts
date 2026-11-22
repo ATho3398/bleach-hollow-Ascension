@@ -14,6 +14,7 @@ import { statName } from '../elements';
 import { GOLD_ITEMS } from '../shop';
 import { STAT_IDS } from '../schema';
 import type { TextGuideId } from '../../engine/tutorial';
+import { unlockTierName } from '../../engine/unlocks';
 
 /** 튜토리얼 장면: targets = 전투 화면의 data-help 요소 id (비면 하이라이트 없이 가운데 카드) */
 export interface TutorialScene {
@@ -85,6 +86,8 @@ export function guideVars(f: FactionConfig): Record<string, string> {
     tutorialCell: String(BALANCE.provisional.tutorialRun.cell),
     deckSize: String(BALANCE.provisional.expedition.deckSize),
     // 해금 안내 (GDD 241-0, C.394): 2단계 이름·합성 장수·장비 화면 이름
+    // C.518: 전투 소모품 칸이 열리는 단계 이름 = 해금 표(BALANCE.provisional.unlocks.battleItem) 그대로 — 단계 숫자를 문구에 박지 않는다
+    battleItemTier: unlockTierName(f, 'battleItem'),
     tier2: f.tierNames[1] ?? '', battleSlotName: f.gearScreen?.battleSlot ?? '전투 소모품', synthCost: String(BALANCE.provisional.tileVariants.synthCost), gearTitle: f.gearScreen?.title ?? '장비',
   };
 }

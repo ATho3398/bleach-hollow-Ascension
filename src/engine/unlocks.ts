@@ -5,9 +5,9 @@
 import { BALANCE } from '../config/balance';
 import { fixParticles } from './josa';
 
-/** 해금되는 기능 (표 순서). tiles = 지형 타일(배치·합성·프리셋, 2단계) · gear = 장비(무기·방어구·신발) + 장비 상점 · battleItem = 전투 소모품 칸(3단계)
+/** 해금되는 기능 (표 순서). tiles = 지형 타일(배치·합성·프리셋, 2단계) · battleItem = 전투 소모품 칸(2단계, C.518 — 타일 안내 다음) · gear = 장비(무기·방어구·신발) + 장비 상점(3단계)
  *  · instinct = 본능 수련(수련장 드롭다운) · rankBattle = 번호 쟁탈전(월드맵, 4단계) · accessory = 장신구 3칸(해방 클리어 = 아란칼화/참백도 구상화) · pet = 펫 · sortie = 출정품 칸(첫 환생) */
-export const FEATURE_IDS = ['tiles', 'gear', 'battleItem', 'instinct', 'rankBattle', 'accessory', 'pet', 'sortie'] as const;
+export const FEATURE_IDS = ['tiles', 'battleItem', 'gear', 'instinct', 'rankBattle', 'accessory', 'pet', 'sortie'] as const;
 export type FeatureId = (typeof FEATURE_IDS)[number];
 
 /** 열린 기능 → 열린 시각(ms). 옛 세이브에서 이미 쓰던 것은 0 (언제 열렸는지 모름) */
@@ -85,6 +85,12 @@ export function featureName(f: UnlockNames, id: FeatureId): string {
     case 'pet': return '펫';
     case 'sortie': return '출정품';
   }
+}
+
+/** 단계로 열리는 기능의 그 단계 이름 (안내 카드 {battleItemTier} 등 — C.518). 단계 조건이 아니면 빈 문자열 */
+export function unlockTierName(f: Pick<UnlockNames, 'tierNames'>, id: FeatureId): string {
+  const rule = unlockRule(id);
+  return 'tierIndex' in rule ? (f.tierNames[rule.tierIndex] ?? `${rule.tierIndex + 1}단계`) : '';
 }
 
 /** 열리는 때 한 마디: "길리안이 되면" / "아란칼화 클리어 후" / "첫 환생 후" (문구는 '클리어 후'로 통일 — GDD 241-C 10) */

@@ -282,7 +282,7 @@ export function goldGate(it: Pick<GoldItemDef, 'id' | 'kind' | 'gearKind'>): Gat
 export function goldRows(save: SaveData, faction: FactionConfig, nowMs: number = Date.now()): ShopRow[] {
   return GOLD_ITEMS.filter((it) => it.kind !== 'trainingTicket' || trainingOpen(save)).map((it) => {
     const price = goldPrice(save, it);
-    // 해금 전 품목 (GDD 241-0 수정 · 243장 2): 타일 뽑기·희귀 타일·타일 배치 칸 = 2단계 · 장비·전투 소모품 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
+    // 해금 전 품목 (GDD 241-0 수정 · 243장 2): 타일 뽑기·희귀 타일·타일 배치 칸·전투 소모품 = 2단계(C.518) · 장비 = 3단계 · 장신구 = 해방 클리어 · 출정품 = 첫 환생 — 잠김 한 줄
     const gate = goldGate(it);
     const block = (gate && !gateOpen(save, gate) ? gateHint(faction, gate) : null) ?? goldBlock(save, it, nowMs) ?? (price !== null && wallet(save, 'gold') < price ? shortText('gold', price - wallet(save, 'gold')) : null);
     const effect = goldEffect(it, faction) + (it.kind === 'tileDraw' && save.tiles.unlocked ? ` · 뽑은 횟수 ${save.tiles.draws}` : '');
