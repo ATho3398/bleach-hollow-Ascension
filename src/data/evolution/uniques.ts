@@ -71,7 +71,7 @@ export const EVO_ACTIONS = [
   'timerCut', // 시계 timer 를 seconds 만큼 당긴다 (돌고 있을 때만)
   'execute', // 지금 적을 처형 (강적·보스는 안 됨)
   'basicShot', // (basicPre) 이 평타를 특수 공격으로: 피해 ×value, element 속성, category 능력치(special = 지능 기준), fx = 화면 도트 이펙트(그 계열·단계의 이미 연결된 것 재사용) — 이름 = 규칙 proc (C.514 석양홍)
-  'basicCrit', // (basicPre) 이 평타 치명 확률 +value(×per) — 상한도 같이 (C.515 바라쿠다 '다음 평타 n회 치명 +25%p')
+  'basicCrit', // (basicPre) 이 평타 치명 확률 +value(×per) — 상한 70% 안(critBreak 능력만 돌파, C.529) (C.515 바라쿠다 '다음 평타 n회 치명 +25%p')
   'forceNext', // 다음에 새로 생기는 블록 value 개를 element 속성 블록으로 (그 속성 생성원이 없으면 평소대로, 대기 상한 max — C.515 비보라)
 ] as const;
 export type EvoActionKind = (typeof EVO_ACTIONS)[number];
@@ -299,6 +299,10 @@ export interface EvoAbilityDef {
   spawnExclude?: string[];
   /** forceNext 대기 표시 (네모) */
   forceNextMark?: EvoMark;
+  /** 치명 상한 돌파 (GDD 7-4 v6.184, C.529): true = 이 고유 능력의 치명 확률 +(평타·블록)만 치명 상한(70%)을 넘을 수 있다(최대 evoAbilityCaps.critBreakMax = 100%).
+   *  객체 = 그 조건(need — 규칙 거르기와 같은 틀, when = 해방 중·평소)이 켜진 동안만 돌파(폭주형·사냥꾼 '상황에 따라 잠깐' 자리 — 조건 [미정], 지금 데이터 없음).
+   *  없으면 능력 치명 +도 상한 안에서 더한다. 켠 진화체 = 물 속성 6종(라나·니에블라·바라쿠다 / 노도·연우·백랑파, 사용자 "일단 수속") */
+  critBreak?: boolean | { need?: EvoNeed[]; when?: 'release' | 'normal' };
 }
 
 /** 4단계 한 줄 특성 효과 종류 (특성 칸 — 받으면 영구, 해방해도 그대로 GDD 8-6) */
@@ -404,6 +408,13 @@ export function evoFileShapeErrors(r: unknown): string[] {
       for (const k of ['stacks', 'buffs', 'charges', 'specials'] as const) objOf(a[k], `${where}.${k}`);
       for (const k of ['selfBlock', 'forceNextMark'] as const) if (a[k] !== undefined && !isObj(a[k])) errors.push(`${where}.${k}: 객체가 아니다`);
       arr(a.spawnExclude, `${where}.spawnExclude`, 'string');
+      if (a.critBreak !== undefined && typeof a.critBreak !== 'boolean') {
+        if (!isObj(a.critBreak)) errors.push(`${where}.critBreak: true/false·조건 객체가 아니다`);
+        else {
+          arr(a.critBreak.need, `${where}.critBreak.need`, 'object');
+          if (a.critBreak.when !== undefined && a.critBreak.when !== 'release' && a.critBreak.when !== 'normal') errors.push(`${where}.critBreak.when: release/normal 이 아니다`);
+        }
+      }
       for (const [n, sp] of Object.entries(isObj(a.specials) ? a.specials : {})) if (isObj(sp)) arr(sp.need, `${where}.specials.${n}.need`, 'object');
       arr(a.chainMultipliers, `${where}.chainMultipliers`, 'num');
       if (a.chainExtend !== undefined) {

@@ -153,9 +153,9 @@ describe('아란칼화 / 참백도 구상화 (GDD 126장 3, 142장 3 — 지금�
 });
 
 describe('치명 두 값 (GDD 126-1 확정 ②, 142장 7)', () => {
-  it('평타 치명 / 블록 치명 각 기본 5% · 상한 50%, 상태 화면 두 줄(블록형 몸은 블록 보정 +4%p)', () => {
+  it('평타 치명 / 블록 치명 각 기본 5% · 상한 70%(C.529 사용자, 옛 50%), 상태 화면 두 줄(블록형 몸은 블록 보정 +4%p)', () => {
     const CX = BALANCE.provisional.combat;
-    expect([CX.critChance, CX.blockCritChance, CX.critChanceMax, CX.blockCritChanceMax]).toEqual([0.05, 0.05, 0.5, 0.5]);
+    expect([CX.critChance, CX.blockCritChance, CX.critChanceMax, CX.blockCritChanceMax]).toEqual([0.05, 0.05, 0.7, 0.7]);
     const p = buildCombatParams(newBuild(), 'hollow');
     expect([p.critChance, p.blockCritChance]).toEqual([0.05, 0.05]);
     const s = newSaveData('hollow', 1);
