@@ -1,12 +1,14 @@
 // 진화체 목표 모양 = 성장 곡선 × 전투 성향 (GDD 8-7 '진화체 밸런스 표기', v6.171 · C.523)
-// 데이터 = balanceProfiles.json(진화체 id × 종족 → { curve, lean } 또는 null). 배정은 기획A 가 사용자와 정하고, 측정·가드는 scripts/lib/evoProfile.ts.
+// 데이터 = balanceProfiles.json(진화체 id × 종족 → { curve, lean } 또는 null). 배정·조정은 마스터(GDD v6.173), 측정·가드는 scripts/lib/evoProfile.ts.
+// **개발용 내부 표기 — 게임 화면·도감 등 플레이어에게 보이지 않는다**(사용자 2026-11-23): src/ui·화면 코드는 이 모듈을 import 하지 않는다(tests/c523 가 막음).
 // 종족 분기 없음 — 종족 키는 factions/*.json id 를 그대로 쓰고, 곡선·성향 id 는 이 json 과 balance provisional.evoProfile 이 같은 목록을 가진다.
 import { BALANCE } from '../../config/balance';
 import { FACTIONS } from '../factions';
 import { FORM_TABLE } from './index';
 import raw from './balanceProfiles.json';
 
-export interface BalanceProfile { curve: string; lean: string | null }
+/** curve = null 이면 성향만 정한 몸(강제 배정 등), lean = null 이면 성향 없음 */
+export interface BalanceProfile { curve: string | null; lean: string | null }
 export interface BalanceProfileFile {
   curves: { id: string; name: string }[];
   leans: { id: string; name: string }[];
@@ -47,7 +49,8 @@ export function validateBalanceProfiles(d: BalanceProfileFile = DATA, factionIds
       if (v === null) continue;
       const keys = Object.keys(v);
       if (keys.some((k) => k !== 'curve' && k !== 'lean')) errors.push(`${id}/${fid}: 모르는 칸 ${keys.join(',')}`);
-      if (!curveIds.includes(v.curve)) errors.push(`${id}/${fid}: 모르는 곡선 ${String(v.curve)}`);
+      if (v.curve !== null && !curveIds.includes(v.curve)) errors.push(`${id}/${fid}: 모르는 곡선 ${String(v.curve)}`);
+      if (v.curve === null && v.lean === null) errors.push(`${id}/${fid}: 곡선·성향이 둘 다 null 이면 칸 자체를 null 로`);
       if (v.lean !== null && !leanIds.includes(v.lean)) errors.push(`${id}/${fid}: 모르는 성향 ${String(v.lean)}`);
     }
   }

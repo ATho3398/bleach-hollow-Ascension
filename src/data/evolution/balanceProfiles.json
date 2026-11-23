@@ -1,5 +1,5 @@
 {
-  "_comment": "GDD 8-7 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향'(v6.171, C.523): 진화체 × 종족 목표 모양 balanceProfile = { curve, lean } 또는 null(아직 안 정함). 배정은 기획A 가 사용자와 정한다 — 값이 있는 몸만 npm run balance:check 의 '진화체 모양' 가드(목표 모양과 측정 모양 비교, 기준 = balance provisional.evoProfile), 비어 있으면 C.520 중앙값 가드. 종족 분기 없음: 종족 키는 factions/*.json id 그대로(3번째 종족은 키 하나 추가).",
+  "_comment": "GDD 8-7 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향'(v6.171, C.523): 진화체 × 종족 목표 모양 balanceProfile = { curve, lean } 또는 null(아직 안 정함). **개발용 내부 표기 — 게임 화면·도감에 절대 노출하지 않는다(src/ui·화면 코드는 이 파일을 읽지 않는다, 테스트 c523)**. 배정·조정은 마스터(GDD v6.173). 성향 6(지구전·체인 뺌). curve 가 null 이면 성향만 정한 몸 — 값이 있는 몸만 npm run balance:check 의 '진화체 모양' 가드(목표 모양과 측정 모양 비교, 기준 = balance provisional.evoProfile), 비어 있으면 C.520 중앙값 가드. 종족 분기 없음: 종족 키는 factions/*.json id 그대로(3번째 종족은 키 하나 추가).",
   "curves": [
     { "id": "flat", "name": "평탄 곡선" },
     { "id": "effort", "name": "노력 곡선" },
@@ -11,11 +11,9 @@
     { "id": "burst", "name": "한방 성향" },
     { "id": "elite", "name": "강적 성향" },
     { "id": "mob", "name": "잡몹 성향" },
-    { "id": "long", "name": "지구전 성향" },
     { "id": "opener", "name": "선공 성향" },
     { "id": "survive", "name": "생존 성향" },
-    { "id": "release", "name": "해방 성향" },
-    { "id": "chain", "name": "체인 성향" }
+    { "id": "release", "name": "해방 성향" }
   ],
   "forms": {
     "t4:normal:physical": { "hollow": null, "shinigami": null },

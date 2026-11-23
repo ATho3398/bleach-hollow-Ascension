@@ -1,6 +1,8 @@
-// C.523 진화체 모양 = 성장 곡선 × 전투 성향 (GDD 8-7 v6.171, 사용자 2026-11-23) — 측정 틀(투자 4칸 × 콘텐츠 3) · 자동 분류 규칙 · 목표 데이터 칸 검사 · 목표 비교 가드 · C.520 가드 넘김
+// C.523 진화체 모양 = 성장 곡선 × 전투 성향 (GDD 8-7 v6.171~v6.173, 사용자 2026-11-23) — 측정 틀(투자 4칸 × 콘텐츠 3) · 자동 분류 규칙(성향 6) · 12칸 점수표·넓이·바닥·천장 ·
+// 목표 데이터 칸 검사 · 목표 비교 가드 · C.520 가드 넘김 · 개발용 내부 표기(화면 코드가 읽지 않음)
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { BALANCE } from '../src/config/balance';
 import { FORM_TABLE } from '../src/data/evolution';
 import { balanceProfileOf, PROFILE_CURVES, PROFILE_LEANS, validateBalanceProfiles, type BalanceProfileFile } from '../src/data/evolution/balanceProfiles';
@@ -11,7 +13,7 @@ import { enemyAtDifficulty } from '../src/engine/difficulty';
 import { ENEMIES } from '../src/data/enemies';
 import { EVO_BAL_STANDARD_INVEST, evoBalParams, evoBalTargets, evoBodyParams, judgeEvoBal, type EvoBalBody } from '../scripts/lib/evoUniqueBalance';
 import {
-  classifyAll, classifyProfile, evoProfileInvest, evoProfileTargets, evProfileAllocation, judgeProfileGoal, leanScores, measureEvoProfile, profileDistribution, profileValue, tierMedians,
+  classifyAll, classifyProfile, scoreTable, evoProfileInvest, evoProfileTargets, evProfileAllocation, judgeProfileGoal, leanScores, measureEvoProfile, profileDistribution, profileValue, tierMedians,
   type InvestId, type ProfileInput, type ProfileTarget,
 } from '../scripts/lib/evoProfile';
 
@@ -84,8 +86,6 @@ describe('한 몸 측정 (판 수 줄임)', () => {
       expect(r.cells[i].b.games).toBe(0);
     }
     expect(r.cells.both.e.win).toBeGreaterThanOrEqual(r.cells.none.e.win);
-    expect(r.chain3).toBeGreaterThanOrEqual(0);
-    expect(r.chain3).toBeLessThanOrEqual(1);
     expect(r.timeline.front).toBeGreaterThan(0);
     expect(r.lib.in).not.toBeNull();
   });
@@ -95,13 +95,13 @@ describe('한 몸 측정 (판 수 줄임)', () => {
 type Vals = Record<InvestId, number>;
 const tgt = (id: string): ProfileTarget => ({ formId: id, factionId: 'hollow', tier: 4, category: 'special', element: 'fire', usesPet: false, exempt: null, hasAbility: true, goal: null });
 /** 칸 값 v = 승률 1 ÷ 초 → 초 = 1/v (세 콘텐츠 같은 값, contentMul 로 콘텐츠별 배율) */
-function mk(id: string, v: Vals, o: Partial<{ content: [number, number, number]; win: number; cv: number; late: number; lib: number | null; chain3: number }> = {}): ProfileInput {
+function mk(id: string, v: Vals, o: Partial<{ content: [number, number, number]; win: number; cv: number; late: number; lib: number | null }> = {}): ProfileInput {
   const [cn, ce, cb] = o.content ?? [1, 1, 1];
   const w = o.win ?? 1;
   const cell = (x: number, k: number, win = 1) => ({ win, secs: win / (x * k), games: 10 });
   const cells = {} as ProfileInput['cells'];
   for (const i of ['none', 'ev', 'blk', 'both'] as const) cells[i] = { n: cell(v[i], cn), e: cell(v[i], ce, w), b: cell(v[i], cb, w) };
-  return { target: tgt(id), cells, spread: { cv: o.cv ?? 0.3, p10: 0.6 }, timeline: { front: 10, back: 10 * (o.late ?? 2) }, lib: { in: o.lib === null ? null : 10 * (o.lib ?? 1), out: 10 }, chain3: o.chain3 ?? 0.2 };
+  return { target: tgt(id), cells, spread: { cv: o.cv ?? 0.3, p10: 0.6 }, timeline: { front: 10, back: 10 * (o.late ?? 2) }, lib: { in: o.lib === null ? null : 10 * (o.lib ?? 1), out: 10 } };
 }
 const BASE: Vals = { none: 1, ev: 1.5, blk: 1.5, both: 2.2 };
 const baseline = (): ProfileInput[] => ['a', 'b', 'c', 'd', 'e'].map((id) => mk(id, BASE, { win: 0.8 }));
@@ -124,16 +124,15 @@ describe('곡선 자동 추정 = 방향이 가장 가까운 원형', () => {
 
 describe('성향 자동 추정 = 점수(특징 ÷ 문턱) 가장 큰 것, 1 미만이면 없음', () => {
   const lean = (o: Parameters<typeof mk>[2], v: Vals = BASE) => classify(mk('x', v, { win: 0.8, ...o })).lean.id;
-  it('성향 8종', () => {
-    expect(PROFILE_LEANS.map((l) => l.id)).toEqual(['burst', 'elite', 'mob', 'long', 'opener', 'survive', 'release', 'chain']);
+  it('성향 6종 (GDD v6.173 — 지구전·체인 뺌)', () => {
+    expect(PROFILE_LEANS.map((l) => l.id)).toEqual(['burst', 'elite', 'mob', 'opener', 'survive', 'release']);
   });
-  it('강적 · 잡몹 · 지구전 · 선공 · 해방 · 체인 · 한방 · 생존 · 없음', () => {
+  it('강적 · 잡몹 · 선공 · 해방 · 한방 · 생존 · 없음 (뒤가 센 몸은 성향 없음 — 지구전 판정 없음)', () => {
     expect(lean({ content: [0.8, 1.2, 1.2] })).toBe('elite');
     expect(lean({ content: [1.2, 1, 0.8] })).toBe('mob');
-    expect(lean({ late: 3 })).toBe('long');
+    expect(lean({ late: 3 })).toBeNull();
     expect(lean({ late: 1.3 })).toBe('opener');
     expect(lean({ lib: 1.5 })).toBe('release');
-    expect(lean({ chain3: 0.5 })).toBe('chain');
     expect(lean({ cv: 0.5 })).toBe('burst');
     // 생존: 강적·보스 거의 안 짐(승률 1) + 처치는 느림(초 ×1.25 → 칸 값 같음)
     expect(lean({ win: 1 }, { none: 0.8, ev: 1.2, blk: 1.2, both: 1.76 })).toBe('survive');
@@ -146,7 +145,7 @@ describe('성향 자동 추정 = 점수(특징 ÷ 문턱) 가장 큰 것, 1 미�
   });
 });
 
-describe('가치 총량 (투자 4 × 콘텐츠 3 가중 합)', () => {
+describe('넓이 = 12칸 점수표 × 칸 무게 (투자 4 × 콘텐츠 3 가중 합)', () => {
   it('가중치 합 1 → 중앙값 몸 = 1, 모든 칸 ×1.3 = 1.3', () => {
     const W = EP.value;
     expect(Object.values(W.invest).reduce((a, b) => a + b, 0)).toBeCloseTo(1, 9);
@@ -179,17 +178,51 @@ describe('목표 비교 가드 (balanceProfile 이 있는 몸만)', () => {
     expect(judgeProfileGoal({ curve: 'joint', lean: null }, flat).join()).toMatch(/동반 곡선 조건/);
     expect(judgeProfileGoal({ curve: 'trait', lean: null }, flat).join()).toMatch(/특성 곡선 조건/);
   });
-  it('목표 성향 점수 < 1 이면 실패 · 가치 총량 ±band 밖이면 실패(특성 곡선은 총량 검사 밖)', () => {
-    expect(judgeProfileGoal({ curve: 'flat', lean: 'chain' }, flat).join()).toMatch(/성향 점수/);
+  it('목표 성향 점수 < 1 이면 실패 · 넓이 ±10% 밖이면 실패(특성 곡선은 −20%까지)', () => {
+    expect(judgeProfileGoal({ curve: 'flat', lean: 'elite' }, flat).join()).toMatch(/성향 점수/);
     const strong = classify(mk('x', { none: 2, ev: 2.46, blk: 2.46, both: 2.9 }, { win: 0.8 }));
     expect(strong.curve.id).toBe('flat');
-    expect(judgeProfileGoal({ curve: 'flat', lean: null }, strong).join()).toMatch(/가치 총량/);
-    const weak = classify(mk('x', { none: 0.5, ev: 0.75, blk: 0.75, both: 1.1 }, { win: 0.8 }));
+    expect(judgeProfileGoal({ curve: 'flat', lean: null }, strong).join()).toMatch(/넓이/);
+    const weak = classify(mk('x', { none: 0.85, ev: 1.275, blk: 1.275, both: 1.87 }, { win: 0.8 }));
+    expect(weak.valueDev).toBeCloseTo(-0.15, 6);
     expect(judgeProfileGoal({ curve: 'trait', lean: null }, weak)).toEqual([]);
+    expect(judgeProfileGoal({ curve: null, lean: null }, weak).join()).toMatch(/넓이/);
+    const weaker = classify(mk('x', { none: 0.7, ev: 1.05, blk: 1.05, both: 1.54 }, { win: 0.8 }));
+    expect(judgeProfileGoal({ curve: 'trait', lean: null }, weaker).join()).toMatch(/넓이/);
+  });
+  it('곡선 null = 성향만 정한 몸(강제 배정 등): 곡선 조건 없이 성향·넓이·바닥·천장', () => {
+    const elite = classify(mk('x', BASE, { win: 0.8, content: [0.85, 1.15, 1.1] }));
+    expect(elite.lean.id).toBe('elite');
+    expect(judgeProfileGoal({ curve: null, lean: 'elite' }, elite)).toEqual([]);
+    expect(judgeProfileGoal({ curve: null, lean: 'mob' }, elite).join()).toMatch(/성향 점수/);
+  });
+  it('바닥: 칸 승률이 콘텐츠별 최저선 아래면 미달 칸 · 가드 실패', () => {
+    const low = classify(mk('x', BASE, { win: 0.2 }));
+    expect(low.floor).toHaveLength(8); // 강적·보스 × 투자 4
+    expect(low.floor[0]).toMatch(/무투자 강적 20%/);
+    expect(judgeProfileGoal({ curve: null, lean: null }, low).join()).toMatch(/바닥/);
+    expect(classify(mk('x', BASE, { win: 0.8 })).floor).toEqual([]);
+  });
+  it('천장: 같은 단계에서 12칸 전부 1등이면 실패', () => {
+    const c = classifyAll([...baseline(), mk('top', { none: 1.3, ev: 1.95, blk: 1.95, both: 2.86 }, { win: 0.8 })]);
+    const top = c.verdicts.find((v) => v.key === 'top/hollow')!;
+    expect(top.topCells).toBe(12);
+    expect(judgeProfileGoal({ curve: null, lean: null }, top).join()).toMatch(/천장: 12칸/);
+    expect(c.verdicts.find((v) => v.key === 'a/hollow')!.topCells).toBe(0);
+  });
+  it('12칸 점수표 = 칸 값 ÷ 같은 단계 칸별 중앙값 × 100', () => {
+    const m = tierMedians(baseline());
+    const sc = scoreTable(mk('x', { none: 1.1, ev: 1.5, blk: 1.2, both: 2.2 }, { content: [1, 1, 0.5] }), m);
+    expect(sc.none.n).toBeCloseTo(110, 6);
+    expect(sc.blk.e).toBeCloseTo(80, 6);
+    expect(sc.both.b).toBeCloseTo(50, 6);
   });
   it('기준 수치는 balance provisional.evoProfile', () => {
     expect(EP.guard).toEqual({ flat: { loMin: 0.05, bothGainMax: 0 }, effort: { evMin: 0.15, overBlk: 0 }, block: { blkMin: 0.15, overEv: 0 }, joint: { synMin: 0.1, bothGainMin: 0.1 }, trait: { loMax: -0.05, hiMax: -0.05 } });
-    expect(EP.value.band).toBe(0.15);
+    expect(EP.value.band).toBe(0.1);
+    expect(EP.value.traitLow).toBe(-0.2);
+    expect(EP.floor).toEqual({ n: 0.9, e: 0.5, b: 0.25 });
+    expect(EP.ceiling.maxTopCells).toBe(11);
   });
 });
 
@@ -202,12 +235,18 @@ describe('목표 데이터 칸 (balanceProfiles.json, 종족 분기 없음)', ()
   });
   it('값이 있으면 곡선·성향 id 검사', () => {
     const ok = clone();
-    ok.forms['t4:fire:special']!.hollow = { curve: 'joint', lean: 'long' };
+    ok.forms['t4:fire:special']!.hollow = { curve: 'joint', lean: 'release' };
     expect(validateBalanceProfiles(ok)).toEqual([]);
-    expect(balanceProfileOf('t4:fire:special', 'hollow', ok)).toEqual({ curve: 'joint', lean: 'long' });
+    expect(balanceProfileOf('t4:fire:special', 'hollow', ok)).toEqual({ curve: 'joint', lean: 'release' });
     const bad = clone();
     bad.forms['t4:fire:special']!.hollow = { curve: 'wavy', lean: 'nap' };
     expect(validateBalanceProfiles(bad).join()).toMatch(/모르는 곡선 wavy.*모르는 성향 nap/);
+    const leanOnly = clone();
+    leanOnly.forms['h4:hunter']!.hollow = { curve: null, lean: 'elite' };
+    expect(validateBalanceProfiles(leanOnly)).toEqual([]);
+    const empty = clone();
+    empty.forms['h4:hunter']!.hollow = { curve: null, lean: null };
+    expect(validateBalanceProfiles(empty).join()).toMatch(/둘 다 null/);
     const noLean = clone();
     noLean.forms['t4:fire:special']!.hollow = { curve: 'flat' } as never;
     expect(validateBalanceProfiles(noLean).join()).toMatch(/모르는 성향 undefined/);
@@ -256,5 +295,22 @@ describe("balance.ts 'evoProfile' 구간", () => {
     expect(src).toContain('const targets = check ? all.filter((t) => goalTiers.has(t.tier)) : all;');
     expect(src).toMatch(/for \(const f of judgeProfileGoal\(r\.target\.goal, .+\)\) failures\.push\(f\);/);
     expect(src).toContain('--profile-md=');
+  });
+});
+
+describe('곡선·성향 = 개발용 내부 표기 (사용자 2026-11-23 "참고로 이건 우리만 알고있는거지, 유저가 보는건 아니다??")', () => {
+  const files: string[] = [];
+  const walk = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(ts|json|css|html)$/.test(f)) files.push(p); } };
+  walk('src');
+  // 자기 파일 + 밸런스 수치(src/config/balance.ts — 측정 기준 주석·키만, 화면에 안 나감)만 예외
+  const own = (p: string) => { const q = p.replace(/\\/g, '/'); return q.startsWith('src/data/evolution/balanceProfiles.') || q === 'src/config/balance.ts'; };
+  it('src 의 다른 파일(화면·엔진·데이터)은 balanceProfiles 를 읽지 않는다', () => {
+    const hits = files.filter((p) => !own(p) && /balanceProfiles/.test(readFileSync(p, 'utf8')));
+    expect(hits).toEqual([]);
+  });
+  it('곡선·성향 이름이 src 의 다른 파일(화면 문구)에 없다', () => {
+    const names = [...PROFILE_CURVES, ...PROFILE_LEANS].map((x) => x.name);
+    const hits = files.filter((p) => !own(p)).flatMap((p) => { const t = readFileSync(p, 'utf8'); return names.filter((n) => t.includes(n)).map((n) => `${p}: ${n}`); });
+    expect(hits).toEqual([]);
   });
 });

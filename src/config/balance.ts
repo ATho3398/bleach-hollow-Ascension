@@ -614,17 +614,21 @@ export const BALANCE = {
       },
       /** 전투 성향 자동 추정 = 점수(특징 ÷ 문턱)가 가장 큰 성향, 1 미만이면 성향 없음. 특징 = 같은 단계·같은 타입 중앙값 대비 log 비 (몸 타입 차는 가치 총량이 본다) */
       lean: {
-        thresholds: { burst: 0.25, elite: 0.15, mob: 0.15, long: 0.15, opener: 0.15, survive: 0.4, release: 0.2, chain: 0.3 } as Record<string, number>,
+        thresholds: { burst: 0.25, elite: 0.15, mob: 0.15, opener: 0.15, survive: 0.4, release: 0.2 } as Record<string, number>, // GDD v6.173: 성향 6(지구전·체인 뺌)
         confHigh: 2,
         confMid: 1.4,
       },
-      /** 가치 총량 = Σ 투자 가중 × 콘텐츠 가중 × (칸 값 ÷ 같은 단계 그 칸 중앙값). 같은 단계 중앙값 ±band 밖이면 '총량 차 큼' */
+      /** 넓이(총점, GDD v6.173 8-7 ①) = Σ 칸 무게(투자 가중 × 콘텐츠 가중) × 12칸 점수(칸 값 ÷ 같은 단계 그 칸 중앙값 × 100). 같은 단계 중앙값 ±band 밖이면 ◆, 특성 곡선은 traitLow 까지 */
       value: {
         invest: { none: 0.2, ev: 0.25, blk: 0.25, both: 0.3 } as Record<string, number>,
         content: { n: 0.5, e: 0.3, b: 0.2 } as Record<string, number>,
-        band: 0.15,
+        band: 0.1,
+        traitLow: -0.2,
       },
-      /** 목표 비교 가드 (balanceProfile 이 있는 몸만): 곡선별 조건(특징 log 비) · 성향 점수 ≥ 1 · 가치 총량 ±value.band */
+      /** 바닥(GDD v6.173 8-7 ③): 12칸 어느 칸이든 승률이 이 값 아래면 미달 (콘텐츠별) · 천장: 같은 단계에서 1등인 칸이 maxTopCells 를 넘으면(= 12칸 전부 1등) 실패 */
+      floor: { n: 0.9, e: 0.5, b: 0.25 } as Record<string, number>,
+      ceiling: { maxTopCells: 11 },
+      /** 목표 비교 가드 (balanceProfile 이 있는 몸만): 곡선별 조건(특징 log 비) · 성향 점수 ≥ 1 · 넓이 ±value.band(특성 traitLow) · 바닥 · 천장 */
       guard: {
         flat: { loMin: 0.05, bothGainMax: 0 },
         effort: { evMin: 0.15, overBlk: 0 },
