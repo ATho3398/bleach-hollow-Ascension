@@ -137,7 +137,7 @@ describe('바라쿠다 (물·교) — 다음 평타 n회 치명 +', () => {
   const n = N('t4:water:mixed');
   it('표 수치: 1·2·3체인 1/3/5회, +25%p, 최대 10 · 레스렉시온 +35%p·최대 15', () => {
     expect([n.hits1, n.hits2, n.hits3, n.crit, n.max]).toEqual([1, 3, 5, 0.2, 10]); // C.524: +25 → +20%p(노력치×블록 비례 — 다 키우면 +200%), 1·3·5회 = 사용자 확정 그대로
-    expect(n.release).toEqual({ crit: 0.35, max: 15 });
+    expect(n.release).toMatchObject({ crit: 0.35, max: 15 }); // C.527: release 에 해방 기울기(critGrow)도 있음
   });
   it('블록 체인 수만큼 충전(1·3·5), 남은 횟수에 더함·최대 10', () => {
     const s = mk({ evo: evo('t4:water:mixed') });

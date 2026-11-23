@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 161; // C.525 (GDD 8-7 v6.178 '시간 제한 능력 = 노력 곡선·고점 높게' · '블록 기본 피해 유지', 마스터AS — 전부 provisional): 측정 무투자·노력치만 칸에 속성 공격 블록 1개(evoProfile.invest.baseSkills) · guard.effort.timedHiMin · evoUniques 시간 제한 15칸 노력치 비례(grow per effort)·그 밖 미달 칸 수치(표 dev-log C.525)
+export const BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
+// 이전: BALANCE_VERSION = 161; // C.525 (GDD 8-7 v6.178 '시간 제한 능력 = 노력 곡선·고점 높게' · '블록 기본 피해 유지', 마스터AS — 전부 provisional): 측정 무투자·노력치만 칸에 속성 공격 블록 1개(evoProfile.invest.baseSkills) · guard.effort.timedHiMin · evoUniques 시간 제한 15칸 노력치 비례(grow per effort)·그 밖 미달 칸 수치(표 dev-log C.525)
 // 이전: BALANCE_VERSION = 160; // C.524 (GDD 8-7 1차 배정 마스터AS 11-23 '알아서 해라 ㅇㅇ', 전부 provisional): provisional.evoInvest 신설(모양 손잡이 출처 effort·blockLv) · evoUniques 진화체 능력 수치(투자 비례 grow·강적/선공 조건 — 표 dev-log C.524) · 추파카브라 혈 블록 사용 문턱 useMin 0.3(최대 체력 30%, 마스터 확정).
 // 이전: BALANCE_VERSION = 159; // C.523 (GDD 8-7 v6.171 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향', 마스터AR provisional): provisional.evoProfile 신설 — 진화체 모양 측정 틀(투자 4칸 · 판 수 · 곡선 원형 · 성향 문턱 · 가치 총량 가중 · 목표 비교 가드). 게임 수치 그대로(측정 도구만).
 // 이전: BALANCE_VERSION = 158; // C.521 (마스터AR 11-23, evo-impl-1121 29행 해석): 호로 추파카브라 고유 능력 출현 제외(uniques.json spawnExclude blood)를 없앰 — '더 생기지 않음' = 고정 저장 블록만, 혈 블록은 평소대로. 수치 그대로(저장 100%·×1.0 사용자 확정, storeMax·keep 시도 3회는 결과 못 맞춰 그대로).
@@ -644,6 +645,9 @@ export const BALANCE = {
     // ── C.524 (GDD 8-7 '모양 손잡이', 마스터AS provisional): 진화체 능력 규칙 값이 투자에 비례하는 출처 2개 — 엔진 공용(src/engine/combat/evoUnique.ts), 종족 분기 없음.
     //    effort = 그 몸 타입의 주 노력치 합 ÷ floor(그 단계 노력치 상한 합계 × mainShare) (0~1, 측정 '노력치만' = evoProfile.invest.evSplit 의 35%·17.5% 칸과 같은 능력치) ·
     //    blockLv = traitWeight × min(1, 그 진화체 속성 공격 블록 생성원 수 ÷ traits) + (1 − traitWeight) × min(1, 그 블록 강화 이득 ÷ (enhanceLevels × absorb.enhance.earlyPerLevel)) (0~1, 측정 '블록만' = 특성 2개 + 강화 10 = 1)
+    // ── C.527 (GDD 8-7 '진화체 능력 상한', 마스터AS provisional): 진화체 고유 능력 합산 상한 — 엔진 공용(combat.ts), 종족 분기 없음.
+    //    intervalFloor = 진화체 능력(간격 −%·공속 +·간격 −초)으로 줄어든 일반 공격 간격 ≥ 줄기 전 간격 × 이 값(최대 −60%, 옛 ×0.05) · critMax = 능력 치명 확률 + 합계 상한(100%p)
+    evoAbilityCaps: { intervalFloor: 0.4, critMax: 1 },
     evoInvest: {
       mainStats: {
         physical: ['atk', 'aspd'],
@@ -678,6 +682,8 @@ export const BALANCE = {
         drain3: { value: 0.03 },
         poisonDot12: { value: 0.12 },
       } as Record<string, Record<string, number>>,
+      /** C.527 해방 값 기울기 정리(마스터AS 11-23, provisional): 해방(레스렉시온/만해) = 평소 값의 강화판 — 다 키운 해방 값 ≤ 다 키운 평소 값의 약 1.5~2배.
+       *  release 에 grow 키(…Grow·…SecondsGrow)를 따로 두어 해방 쪽 기울기만 낮춘다(해방 기본값 그대로). 'a / b - 1' = 다 키운 해방 값 a ÷ 해방 기본값 b. 표 = dev-log C.527 */
       forms: {
         /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 1.
          *  C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고", 마스터AR 기준 — 강적 처치 시간 단축 중앙값 ±10%p·강적 승률 ±15%p): 옛 4대·+3%·만해 2대 = 기여 −46.5%·강적 64% → 2대·+6%·만해 1대 = +2.1%·83% */
@@ -688,7 +694,7 @@ export const BALANCE = {
         },
         /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
         't4:water:physical': {
-          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 2.5, hitsGrow: 1.5, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18 } },
+          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 2.5, hitsGrow: 1.5, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18, perStackGrow: 0.14 / 0.06 - 1 } },
           /** 호로 라나 (C.503): 블록 1번 = 물 스택 1(seconds 초, 스택마다 따로), 스택당 평타 치명 +perStack(최대 max). 레스렉시온 = 8초·최대 8 */
           hollow: { perStack: 0.02, seconds: 5, max: 6, perStackGrow: 20, release: { seconds: 8, max: 8 } },
         },
@@ -696,7 +702,7 @@ export const BALANCE = {
         't4:fire:physical': {
           shinigami: { every: 3, perBeacon: 0.016, need: 5, pierce: 0.5, perFire: 0.06, fireGrow: 5, release: { need: 4, perBeacon: 0.02 } },
           /** 호로 소로 (C.503): 평타마다 여우불 1(seconds 초), 여우불 need 개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +burn, 다시 걸면 시간 새로·% 큰 쪽). 레스렉시온 = 여우불 3초·화상 +15% */
-          hollow: { seconds: 2.5, need: 5, burn: 0.03, burnSeconds: 6, burnGrow: 20, release: { seconds: 3, burn: 0.12 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍"
+          hollow: { seconds: 2.5, need: 5, burn: 0.03, burnSeconds: 6, burnGrow: 20, release: { seconds: 3, burn: 0.12, burnGrow: 1.26 / 0.12 - 1 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍"
         },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
         't4:earth:physical': {
@@ -708,26 +714,26 @@ export const BALANCE = {
         't4:thunder:physical': {
           shinigami: { perChain: 1, release: { perChain: 5 } },
           /** 호로 콜리브리 (C.503): 평타마다 날갯짓 +1, 1당 평타 간격 −perStack(최대 −maxCut, 스택 상한 maxStacks), 블록 쓰면 절반. 레스렉시온 = 안 줄어듦·최대 −45% */
-          hollow: { perStack: 0.004, maxStacks: 15, maxCut: 0.8, perStackGrow: 28, release: { maxStacks: 23, maxCut: 0.8 } },
+          hollow: { perStack: 0.004, maxStacks: 15, maxCut: 0.6, perStackGrow: 28, release: { maxStacks: 23, maxCut: 0.6 } },
         },
         /** 사신 천평환: 특성 offenseMax(평타·블록 = 공격력·지능 중 높은 쪽) + 블록은 평균(blockAverage 2 = 평균). 만해 = 기본 해방 강화만 */
         't4:normal:mixed': {
           shinigami: { blockAverage: 2 },
           /** 호로 에스칼레라 (C.503, v6.133 블록 피해 증가 없음): 블록 → seconds 초 평타 피해 +체인 수×perChain(큰 쪽 갱신). 레스렉시온 = 6초·×12% */
-          hollow: { seconds: 2, perChain: 0.02, stepGrow: 20, stepSecondsGrow: 3, release: { seconds: 6, perChain: 0.07 } },
+          hollow: { seconds: 2, perChain: 0.02, stepGrow: 20, stepSecondsGrow: 3, release: { seconds: 6, perChain: 0.07, stepGrow: 0.84 / 0.07 - 1, stepSecondsGrow: 16 / 6 - 1 } },
         },
         /** 사신 연우: 2체인 streak 번 연달아 → 물·귀 블록 made 개 + 장마 +1(최대 max), 장마 ≥1 이면 3체인 치명 +crit·치명 피해 +critDmg, 3체인 → 장마 −1. 체인 배율 c1/c2/c3. 만해 = 3체인이 안 줄임·최대 5 */
         't4:water:special': {
           shinigami: { streak: 2, made: 3, max: 3, crit: 0.2, critDmg: 0.4, c1: 0.8, c2: 1.8, c3: 4.4, critGrow: 1, critDmgGrow: 2, release: { max: 5 } },
           /** 호로 니에블라 '물안개 잔상' (C.503): 체인 2 블록 치명 +crit2·체인 3 +crit3, 치명 블록 → 잔상(1체인) 바 끝. 레스렉시온 = 보너스 2배 */
-          hollow: { crit2: 0.05, crit3: 0.1, critGrow: 5, release: { crit2: 0.1, crit3: 0.3 } },
+          hollow: { crit2: 0.05, crit3: 0.1, critGrow: 5, release: { crit2: 0.1, crit3: 0.3, critGrow: 2 } },
         },
         /** 호로 루시에르나가 '꾀는 불빛' (C.503): 1체인 → 불빛 +1(최대 max, 영구), 3체인 → 불빛 전부 소모, 1개당 위력 +perGlow·화상 burnPerGlow 초(+burn). 레스렉시온 = 최대 5·2체인도 소모 */
         't4:fire:special': {
-          hollow: { max: 3, perGlow: 0.12, burnPerGlow: 3, burn: 0.12, glowGrow: 3, release: { max: 5, perGlow: 0.4 } },
+          hollow: { max: 3, perGlow: 0.12, burnPerGlow: 3, burn: 0.12, glowGrow: 3, release: { max: 5, perGlow: 0.4, glowGrow: 0.96 / 0.4 - 1 } },
           /** 사신 석양홍 (C.514, 2차): 화상 걸린 적에게 귀 블록 → 다음 평타 1회 「석양」(지능 기준 ×shotMult, 불), 충전 최대 shotMax. 만해 = 체인 수만큼·최대 3·×2.5.
            *  화상 = 불 블록이 건다(burnSeconds 초, 걸린 적을 때리면 +burnPct) — 표에 화상 거는 쪽이 없어 사신 천일야장도 만해 화상(8초 +8%) 값을 빌림(provisional, 마스터 확인) */
-          shinigami: { shotMult: 1, shotMax: 1, burnSeconds: SHARED_BURN.burnSeconds, burnPct: SHARED_BURN.burnPct, shotGrow: 6, release: { shotMult: 3, shotMax: 3 } },
+          shinigami: { shotMult: 1, shotMax: 1, burnSeconds: SHARED_BURN.burnSeconds, burnPct: SHARED_BURN.burnPct, shotGrow: 6, release: { shotMult: 3, shotMax: 3, shotGrow: 14 / 3 - 1 } },
         },
         /** 사신 현음 (C.514, 2차): 체인 상한 chainMax(4), 4체인 = 3체인 기술 ×x4 + 블록 made 개 바로. 만해 = 상한 5 · 5체인 ×x5 · 4체인 이상 블록 2개 */
         't4:normal:special': { shinigami: { chainMax: 4, x4: 1.4, x5: 1.8, made: 1, release: { chainMax: 5, made: 2 } } },
@@ -754,7 +760,7 @@ export const BALANCE = {
         't4:water:mixed': {
           shinigami: { hits: 2, release: { hits: 4 } },
           /** 호로 바라쿠다 (C.515, 11-19 사용자 수정): 블록 → 다음 평타 1·2·3체인 hits1/hits2/hits3 회 치명 +crit(평타만), 남은 횟수에 더함(최대 max). 레스렉시온 = +35%p·최대 15 */
-          hollow: { hits1: 1, hits2: 3, hits3: 5, crit: 0.2, max: 10, critGrow: 2, release: { crit: 0.35, max: 15 } },
+          hollow: { hits1: 1, hits2: 3, hits3: 5, crit: 0.2, max: 10, critGrow: 2, release: { crit: 0.35, max: 15, critGrow: 0.9 / 0.35 - 1 } },
         },
         /** 사신 천일야장도: 불 블록 → 다음 평타 체인 수×perChain 대 불칼(블록 1단계 피해 × bladePower 불), 최대 maxBlades. 만해 = 불칼 평타 화상(burnSeconds 초, 받는 피해 +burnPct)·최대 20 */
         't4:fire:mixed': {
@@ -767,13 +773,13 @@ export const BALANCE = {
         't4:earth:mixed': {
           shinigami: { perChain: 0.04, cap: 0.3, extra: 0.2, release: { perChain: 0.06, extra: 0.3 } },
           /** 호로 토르투가 (C.515): 블록 → 방어막 체인 수×perChain(shieldSeconds 초, 상한 shieldCap = 최대 체력), 방어막이 막은 피해 × reflect 반사(강공격 제외). 레스렉시온 = 반사 100% */
-          hollow: { perChain: 0.07, shieldSeconds: 5, reflect: 0.4, reflectGrow: 10, shieldCap: 1, release: { reflect: 2 } },
+          hollow: { perChain: 0.07, shieldSeconds: 5, reflect: 0.4, reflectGrow: 10, shieldCap: 1, release: { reflect: 2, reflectGrow: 8.8 / 2 - 1 } },
         },
         /** 사신 비전: 블록(원래 피해 그대로) → seconds 초 평타 간격 −cut 초(갱신). 만해 = 5초·−0.15초 */
         't4:thunder:mixed': {
-          shinigami: { seconds: 1.5, cut: 0.1, hasteGrow: 4, hasteSecondsGrow: 2, release: { seconds: 5, cut: 0.15 } },
+          shinigami: { seconds: 1.5, cut: 0.1, hasteGrow: 4, hasteSecondsGrow: 2, release: { seconds: 5, cut: 0.15, hasteSecondsGrow: 9 / 5 - 1 } },
           /** 호로 게파르도 (C.515): 2체인 streak 번 연달아 → 특수 블록 '낙뢰'(최대 maxOnBar) = 뇌 1체인 피해 + seconds 초 평타 간격 −cut(다시 쓰면 시간 새로). 레스렉시온 = 9초·−40% */
-          hollow: { streak: 2, maxOnBar: 1, seconds: 4, cut: 0.15, cutGrow: 2, boltSecondsGrow: 1, release: { seconds: 9, cut: 0.4 } },
+          hollow: { streak: 2, maxOnBar: 1, seconds: 4, cut: 0.15, cutGrow: 2, boltSecondsGrow: 1, release: { seconds: 9, cut: 0.4, cutGrow: 0.6 / 0.4 - 1, boltSecondsGrow: 16 / 9 - 1 } },
         },
         /** 호로 부오 (C.515): 고유 능력 없음 — 특성 블록 위력 +8% 만 (수치는 traits.blockPower8) */
         /** 호로 토르멘타 (C.515 → C.517 사용자 11-21 "필드 한 5초로 할까" / "아니 강화지 강화필드,,", provisional): 2체인 바로 뒤 3체인 → 자기장 필드 fieldSeconds 초(1개, 다시 채우면 시간만 새로) — dotEvery 초마다 적 최대 체력 × fieldDot · 적 공속 −slow.

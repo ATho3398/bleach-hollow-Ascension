@@ -97,7 +97,7 @@ describe('④ 목표 미달 목록 · 버전', () => {
     for (const [id, fac] of timed()) if (EVO_PROFILE_KNOWN[`${id}/${fac}`] && !(id === 'h4:void' && fac === 'shinigami')) expect(EVO_PROFILE_KNOWN[`${id}/${fac}`]).toMatch(/시간 제한/);
   });
   it('BALANCE 161 · 패치 C.525', () => {
-    expect(BALANCE_VERSION).toBe(161);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(161); // C.527: 162
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(525);
   });
 });

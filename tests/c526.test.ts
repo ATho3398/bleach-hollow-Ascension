@@ -25,11 +25,11 @@ describe('C.526 다 키우면 = 실제 값', () => {
   });
   it('에스칼레라: 시간·피해 둘 다 실제 값 (해방도)', () => {
     expect(text('t4:normal:mixed', 'hollow')).toContain('2초 동안 일반 공격 피해 +체인 수×2%(노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%)');
-    expect(text('t4:normal:mixed', 'hollow', '해방')).toBe('6초 동안 체인 수×7%(다 키우면 24초 동안 체인 수×147%)');
+    expect(text('t4:normal:mixed', 'hollow', '해방')).toBe('6초 동안 체인 수×7%(다 키우면 16초 동안 체인 수×84%)' /* C.527 해방 기울기: 다 키운 평소(8초·42%)의 2배 */);
   });
   it('비전: 간격 −0.1초, 1.5초 동안 → 다 키우면 4.5초 동안 −0.5초 (해방도)', () => {
     expect(text('t4:thunder:mixed', 'shinigami')).toContain('1.5초 동안 일반 공격 간격 −0.1초(노력치를 키울수록 커짐 — 다 키우면 4.5초 동안 −0.5초)');
-    expect(text('t4:thunder:mixed', 'shinigami', '해방')).toContain('다 키우면 15초 동안 −0.75초');
+    expect(text('t4:thunder:mixed', 'shinigami', '해방')).toContain('다 키우면 9초 동안 −0.75초' /* C.527 해방 기울기 */);
   });
   it('블록 비례 = 「블록을 키울수록」 · 둘 다 = 「노력치·이 속성 블록을 같이 키울수록」', () => {
     expect(text('t4:earth:physical', 'shinigami')).toContain('블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 +10.5%');
@@ -59,7 +59,7 @@ describe('C.526 다 키우면 = 실제 값', () => {
     }
   });
   it('패치 C.526 · 수치 그대로(BALANCE 161)', () => {
-    expect(PATCH_LABEL).toBe('C.526');
-    expect(BALANCE_VERSION).toBe(161);
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(526); // C.527: 패치·BALANCE 올라감
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(161);
   });
 });

@@ -1563,10 +1563,14 @@ function freeAttackSeconds(s: CombatState): number {
   // 소도 스택 (GDD 12-4 천년혈전 v6.086, C.460): 1스택 공격속도 +speedPerStack — 지금 자세 스택만
   const sp = 1 + stanceSpeedBonusOf(s);
   // 진화체 고유 능력 (GDD 8-7 1차, C.499): 공격 속도 +(÷) · 간격 −비율(×) · 간격 −초
-  const evoMul = s.params.evo ? Math.max(0.05, 1 - evoStat(s, 'interval')) / (1 + evoStat(s, 'attackSpeed')) : 1;
+  const evoMul = s.params.evo ? Math.max(0, 1 - evoStat(s, 'interval')) / (1 + evoStat(s, 'attackSpeed')) : 1;
   const evoCut = s.params.evo ? evoStat(s, 'intervalCut') : 0;
+  const plain = (attackCurveOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste / sp;
+  // 진화체 능력 간격 하한 (GDD 8-7, C.527 provisional): 능력(간격 −%·공속 +·간격 −초)을 다 합쳐도 줄기 전 간격 × intervalFloor(최대 −60%) 아래로 안 줄어든다 — 옛 ×0.05
+  const floor = BALANCE.provisional.evoAbilityCaps.intervalFloor;
+  if (s.params.evo && plain * evoMul - evoCut < plain * floor) return speedSeconds(plain * floor, s.params.attackSecondsCut ?? 0, CX.attackSecondsMin);
   // 상한 (GDD v6.055 7절): 공격속도·특성·장비·해방·가속을 다 합쳐도 평타 0.3초에 1번보다 빠르지 않다. 추가 평타(extraBasicAttack)는 무관
-  return speedSeconds((attackCurveOf(s.params) / (uniqueActive(s) ? s.params.liberationAttackSpeed : 1)) * haste * evoMul / sp, (s.params.attackSecondsCut ?? 0) + evoCut, CX.attackSecondsMin);
+  return speedSeconds(plain * evoMul, (s.params.attackSecondsCut ?? 0) + evoCut, CX.attackSecondsMin);
 }
 
 /** 지금 평타 타이머 간격(초) — 상한 적용 뒤 (화면·테스트) */
@@ -1828,6 +1832,13 @@ export function blockCritChanceOf(p: CombatParams): number {
   return Math.min(p.blockCritChanceMax ?? p.critChanceMax, Math.max(0, p.blockCritChance ?? p.critChance));
 }
 
+/** 진화체 특성·고유 능력 치명 확률 + (평타 / block = 블록) — 합계 상한 critMax(100%p, GDD 8-7 C.527 provisional) */
+export function evoCritUpOf(s: CombatState, block = false): number {
+  const p = s.params;
+  const up = block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') + evoBasicCritNow(s) : 0);
+  return Math.min(BALANCE.provisional.evoAbilityCaps.critMax, up);
+}
+
 /** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. block = 블록 공격(블록 치명), bonus = 블록 공격 치명 가산(GDD 84장 3번) */
 function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = false): boolean {
   if (s.script) return false; // 각본 전투는 난수 없이 (GDD 123장 5)
@@ -1839,7 +1850,7 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
     return true;
   }
   // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.499): 상한도 같이 오른다(치명 특성과 같은 규칙 — 45장 1번)
-  const evoUp = who === 'player' ? (block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') + evoBasicCritNow(s) : 0)) : 0;
+  const evoUp = who === 'player' ? evoCritUpOf(s, block) : 0;
   const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
     : block ? Math.min((p.blockCritChanceMax ?? p.critChanceMax) + evoUp, blockCritChanceOf(p) + bonus + evoUp) : Math.min(p.critChanceMax + evoUp, critChanceOf(p) + bonus + evoUp);
   if (chance <= 0) return false;

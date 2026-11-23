@@ -345,7 +345,7 @@ describe('사신 비전 (t4:thunder:mixed)', () => {
     expect(attackSecondsNow(s)).toBeCloseTo(t0 - 0.1, 5); // 겹치지 않음
     tick(s, ticksOf(s.params, 3.2));
     expect(attackSecondsNow(s)).toBeCloseTo(t0, 5);
-    expect(N('t4:thunder:mixed').release).toEqual({ seconds: 5, cut: 0.15 });
+    expect(N('t4:thunder:mixed').release).toMatchObject({ seconds: 5, cut: 0.15 }); // C.527: release 에 해방 기울기(hasteSecondsGrow)도 있음
   });
 });
 
