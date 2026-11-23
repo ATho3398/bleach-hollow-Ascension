@@ -75,9 +75,10 @@ export function critChances(build: SaveData['build'], evo?: SaveData['evolution'
   const fromForm = fa ? abilityEffectsOf(fa).critChance : 0;
   const bonus = critChanceBonus(build) + fromForm + gearCrit;
   const blockPlay = fa?.phys ? 0 : CX.blockPlayCrit;
-  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit + (evo ? transcendentTraitEffects(evo).totals.blockCrit : 0); // 탈착 특성 '집중' (GDD 150장 4)·초월 특성: 블록 치명만, 상한도 같이
+  const detach = detachTotals(detachedOf(evo?.abilities)).blockCrit + (evo ? transcendentTraitEffects(evo).totals.blockCrit : 0); // 탈착 특성 '집중' (GDD 150장 4)·초월 특성: 블록 치명만, 상한 70% 안 (C.529)
+  // 상한 70% (GDD 7-4 v6.182, C.529): 물 치명 특성(fromForm)만 상한을 같이 올린다
   const basicMax = CX.critChanceMax + fromForm;
-  const blockMax = CX.blockCritChanceMax + fromForm + detach;
+  const blockMax = CX.blockCritChanceMax + fromForm;
   return { basic: Math.min(basicMax, CX.critChance + bonus), block: Math.min(blockMax, CX.blockCritChance + bonus + blockPlay + detach), basicMax, blockMax, bonus, blockPlay };
 }
 

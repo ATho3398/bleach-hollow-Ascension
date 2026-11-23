@@ -1,5 +1,5 @@
 /** C.527 진화체 능력 상한·해방 값 기울기 (GDD 8-7, 마스터AS provisional):
- *  ① 진화체 능력으로 줄어드는 일반 공격 간격 합계 하한 = 줄기 전 × 0.4(최대 −60%, 옛 ×0.05) ② 능력 치명 확률 + 합계 ≤ 100%p
+ *  ① 진화체 능력으로 줄어드는 일반 공격 간격 합계 하한 = 줄기 전 × 0.4(최대 −60%, 옛 ×0.05) ② 능력 치명 확률 + 합계 ≤ 100%p → C.529(GDD 7-4 v6.182, 사용자)가 '상한 70% 안, critBreak 능력만 돌파'로 대체 (tests/c529.test.ts)
  *  ③ 해방(레스렉시온/만해) = 평소 값의 강화판 — 다 키운 해방 값 ≤ 다 키운 평소 값 × 2 (release 에 grow 키를 따로 둬 해방 쪽 기울기만 낮춤) */
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
@@ -9,7 +9,7 @@ import { getEnemy } from '../src/data/enemies';
 import { getForm } from '../src/data/evolution';
 import { evoNumsOf, validateEvoUniques } from '../src/data/evolution/uniques';
 import {
-  BASIC_SKILL_ID, applyInput, attackSecondsNow, createCombat, drainCombatEvents, evoCritUpOf, evoStat, step,
+  BASIC_SKILL_ID, applyInput, attackSecondsNow, createCombat, drainCombatEvents, evoStat, playerCritChanceOf, step,
   type Block, type CombatParams, type CombatState,
 } from '../src/engine/combat';
 import { evoParamsOf } from '../src/engine/evolution';
@@ -61,8 +61,8 @@ function growSites(): [string, string, string, string][] {
 }
 
 describe('C.527 진화체 능력 상한 (엔진 공용)', () => {
-  it('수치: 간격 하한 ×0.4 · 치명 +100%p (provisional)', () => {
-    expect(CAPS).toEqual({ intervalFloor: 0.4, critMax: 1 });
+  it('수치: 간격 하한 ×0.4 (provisional) · 치명 = critBreakMax 100%(돌파 능력만, C.529 가 옛 critMax 대체)', () => {
+    expect(CAPS).toEqual({ intervalFloor: 0.4, critBreakMax: 1 });
   });
   it('간격 하한: 사신 비전 만해 다 키우면 −0.75초라도 줄기 전 간격 × 0.4 아래로 안 줄어든다', () => {
     const s = mk({ evo: full('t4:thunder:mixed', 'shinigami'), liberationUnique: true, liberationSeconds: 300 });
@@ -86,14 +86,14 @@ describe('C.527 진화체 능력 상한 (엔진 공용)', () => {
     expect(n.release!.cut! * (1 + n.release!.cutGrow!)).toBeCloseTo(0.6, 6);
     expect(n.release!.seconds! * (1 + n.release!.boltSecondsGrow!)).toBeCloseTo(16, 6);
   });
-  it('치명 상한: 라나 다 키우면 스택 합이 100%p 를 넘어도 능력 치명 + = 100%p', () => {
+  it('치명 상한 (C.529 로 바뀜 — 옛 +100%p): 라나 다 키우면 스택 합이 100%p 를 넘어도 평타 치명 = 상한 70%', () => {
     const s = mk({ evo: full('t4:water:physical', 'hollow') });
     for (let k = 0; k < 10; k++) useOne(s, k % 2 ? 'family-a' : 'family-b');
     expect(evoStat(s, 'crit')).toBeGreaterThan(1);
-    expect(evoCritUpOf(s)).toBe(CAPS.critMax);
+    expect(playerCritChanceOf(s)).toBeCloseTo(BALANCE.provisional.combat.critChanceMax, 6);
     const z = mk({ evo: evoParamsOf(getForm('t4:water:physical'), 'hollow')! });
     useOne(z);
-    expect(evoCritUpOf(z)).toBeCloseTo(evoStat(z, 'crit'), 6); // 상한 아래면 그대로
+    expect(playerCritChanceOf(z)).toBeCloseTo(evoStat(z, 'crit'), 6); // 상한 아래면 그대로 (기본 0)
   });
 });
 
@@ -147,7 +147,7 @@ describe('C.527 설명 문구', () => {
     expect(rel('t4:earth:mixed')).toBe('반사 200%(다 키우면 880%)');
   });
   it('패치 C.527 · BALANCE 162', () => {
-    expect(BALANCE_VERSION).toBe(162);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(162); // C.529: 163 (정확한 값은 c529 가 지킨다)
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(527);
   });
 });

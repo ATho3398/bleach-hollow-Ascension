@@ -64,7 +64,7 @@ export interface EvoState {
   shields: { left: number; until: number }[];
   /** 다음에 생기는 블록 속성 강제 대기 (forceNext — C.515) */
   forceNext: { element: string; n: number } | null;
-  /** 이번 평타 치명 확률 + (basicPre basicCrit — 상한도 같이, C.515) */
+  /** 이번 평타 치명 확률 + (basicPre basicCrit — 상한 70% 안(C.529), C.515) */
   basicCritNow: number;
   /** 적 공격 시계 늦추기 누적 (foeAttackSlow — C.515) */
   foeSlowAcc: number;
@@ -792,7 +792,7 @@ export function evoOnHurt(s: CombatState, lost: number, heavy = false): void {
   fire(s, 'hurt', { ...emptyCtx(), amount: lost, heavy });
 }
 
-/** 이번 평타 치명 확률 + (basicPre basicCrit — 상한도 같이 오른다, C.515) */
+/** 이번 평타 치명 확률 + (basicPre basicCrit — 상한 70% 안, critBreak 능력만 돌파 C.529, C.515) */
 export function evoBasicCritNow(s: CombatState): number {
   return s.evo?.basicCritNow ?? 0;
 }

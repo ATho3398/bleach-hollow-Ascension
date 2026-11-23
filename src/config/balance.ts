@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
+export const BALANCE_VERSION = 163; // C.529 (GDD 7-4 v6.182 사용자 '치확 상한 70%, 특정 진화체·특성만 돌파'): combat.critChanceMax·blockCritChanceMax 0.5 → 0.7 · evoAbilityCaps.critMax(능력 치명 + ≤ 100%p 를 상한 위에) 삭제 → critBreakMax 1(uniques.json ability.critBreak 표시 능력만, 목록 [미정] — 지금 없음) · 탈착·초월 특성 블록 치명은 상한을 올리지 않음.
+// 이전: export const BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
 // 이전: BALANCE_VERSION = 161; // C.525 (GDD 8-7 v6.178 '시간 제한 능력 = 노력 곡선·고점 높게' · '블록 기본 피해 유지', 마스터AS — 전부 provisional): 측정 무투자·노력치만 칸에 속성 공격 블록 1개(evoProfile.invest.baseSkills) · guard.effort.timedHiMin · evoUniques 시간 제한 15칸 노력치 비례(grow per effort)·그 밖 미달 칸 수치(표 dev-log C.525)
 // 이전: BALANCE_VERSION = 160; // C.524 (GDD 8-7 1차 배정 마스터AS 11-23 '알아서 해라 ㅇㅇ', 전부 provisional): provisional.evoInvest 신설(모양 손잡이 출처 effort·blockLv) · evoUniques 진화체 능력 수치(투자 비례 grow·강적/선공 조건 — 표 dev-log C.524) · 추파카브라 혈 블록 사용 문턱 useMin 0.3(최대 체력 30%, 마스터 확정).
 // 이전: BALANCE_VERSION = 159; // C.523 (GDD 8-7 v6.171 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향', 마스터AR provisional): provisional.evoProfile 신설 — 진화체 모양 측정 틀(투자 4칸 · 판 수 · 곡선 원형 · 성향 문턱 · 가치 총량 가중 · 목표 비교 가드). 게임 수치 그대로(측정 도구만).
@@ -646,8 +647,9 @@ export const BALANCE = {
     //    effort = 그 몸 타입의 주 노력치 합 ÷ floor(그 단계 노력치 상한 합계 × mainShare) (0~1, 측정 '노력치만' = evoProfile.invest.evSplit 의 35%·17.5% 칸과 같은 능력치) ·
     //    blockLv = traitWeight × min(1, 그 진화체 속성 공격 블록 생성원 수 ÷ traits) + (1 − traitWeight) × min(1, 그 블록 강화 이득 ÷ (enhanceLevels × absorb.enhance.earlyPerLevel)) (0~1, 측정 '블록만' = 특성 2개 + 강화 10 = 1)
     // ── C.527 (GDD 8-7 '진화체 능력 상한', 마스터AS provisional): 진화체 고유 능력 합산 상한 — 엔진 공용(combat.ts), 종족 분기 없음.
-    //    intervalFloor = 진화체 능력(간격 −%·공속 +·간격 −초)으로 줄어든 일반 공격 간격 ≥ 줄기 전 간격 × 이 값(최대 −60%, 옛 ×0.05) · critMax = 능력 치명 확률 + 합계 상한(100%p)
-    evoAbilityCaps: { intervalFloor: 0.4, critMax: 1 },
+    //    intervalFloor = 진화체 능력(간격 −%·공속 +·간격 −초)으로 줄어든 일반 공격 간격 ≥ 줄기 전 간격 × 이 값(최대 −60%, 옛 ×0.05)
+    //    critBreakMax = 치명 상한 돌파 표시(uniques.json ability.critBreak, GDD 7-4 v6.182 — 목록 [미정]) 진화체의 능력 치명 확률 최대(100%). 표시 없는 능력 치명 +는 combat.critChanceMax(70%) 안 (C.529 — 옛 critMax: 능력 치명 + 합계 ≤ 100%p 를 상한 위에 얹던 C.527 규칙 삭제)
+    evoAbilityCaps: { intervalFloor: 0.4, critBreakMax: 1 },
     evoInvest: {
       mainStats: {
         physical: ['atk', 'aspd'],
@@ -1291,11 +1293,12 @@ export const BALANCE = {
       critChance: 0.05,
       critMultiplier: 1.5,
       enemyCritChance: 0.03,
-      critChanceMax: 0.5,
-      /** 치명 두 값 (GDD 126-1 확정 ②, C.220): 위 critChance·critChanceMax = 평타 치명, 아래 = 블록 치명(블록·체인·콤보·공허 제외·해방 블록). 각 기본 5%·상한 50%.
+      /** 치명 상한 70% (사용자 확정 2026-11-23, GDD 7-4 v6.182 — C.529, 옛 50%). 돌파 = 물 치명 특성(상한 + 그 특성 값)·지정 진화체 능력(evoAbilityCaps.critBreakMax)만 */
+      critChanceMax: 0.7,
+      /** 치명 두 값 (GDD 126-1 확정 ②, C.220): 위 critChance·critChanceMax = 평타 치명, 아래 = 블록 치명(블록·체인·콤보·공허 제외·해방 블록). 각 기본 5%·상한 70%(C.529).
        *  블록형 몸의 블록 보정 +4%p(blockPlayCrit)는 블록 치명에 더해진다(물공 몸 제외 — 지금과 같은 값). 특성·장비 치명 가산은 두 값에 함께 (진화체별 나눔은 2차) */
       blockCritChance: 0.05,
-      blockCritChanceMax: 0.5,
+      blockCritChanceMax: 0.7,
       /** 타격 지연(초, GDD 214장, C.357): 공격 주기(평타 타이머·블록 발동 시각)는 그대로, 피해만 그 공격 모션이 닿는 순간만큼 뒤 틱에 들어간다(초당 피해 동일).
        *  여기 값은 화면이 없을 때(봇·시뮬)의 기본값 = 사람형 종이인형 공격 동작 타격 시각(motions.json attack.hit 300ms). 화면은 실제 동작 데이터(hit 프레임 시각)로 바꿔 넣는다(attackFx hitDelaysOf). 0 = 바로 */
       // GDD 245장 3: heavy 는 피해를 미루지 않는다 — 강공격은 예고가 끝나는 틱에 바로 판정, 화면이 빔 모션을 이만큼 앞서 시작(heavy-windup)해 그 틱에 빔이 닿는다

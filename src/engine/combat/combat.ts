@@ -1832,15 +1832,29 @@ export function blockCritChanceOf(p: CombatParams): number {
   return Math.min(p.blockCritChanceMax ?? p.critChanceMax, Math.max(0, p.blockCritChance ?? p.critChance));
 }
 
-/** 진화체 특성·고유 능력 치명 확률 + (평타 / block = 블록) — 합계 상한 critMax(100%p, GDD 8-7 C.527 provisional) */
-export function evoCritUpOf(s: CombatState, block = false): number {
+/** 진화체 치명 확률 + (평타 / block = 블록): trait = 4단계 한 줄 특성(evoCrit·evoBlockCrit), ability = 고유 능력(능력치 crit·blockCrit·이번 평타 basicCrit).
+ *  둘 다 치명 상한(70%) 안에서 더한다 — 고유 능력에 critBreak 표시가 있을 때만 ability 몫이 상한을 넘는다(GDD 7-4 v6.182, C.529) */
+export function evoCritUpOf(s: CombatState, block = false): { trait: number; ability: number } {
   const p = s.params;
-  const up = block ? (p.abilityEffects.evoBlockCrit ?? 0) + (p.evo ? evoStat(s, 'blockCrit') : 0) : (p.abilityEffects.evoCrit ?? 0) + (p.evo ? evoStat(s, 'crit') + evoBasicCritNow(s) : 0);
-  return Math.min(BALANCE.provisional.evoAbilityCaps.critMax, up);
+  const trait = block ? p.abilityEffects.evoBlockCrit ?? 0 : p.abilityEffects.evoCrit ?? 0;
+  const ability = !p.evo ? 0 : block ? evoStat(s, 'blockCrit') : evoStat(s, 'crit') + evoBasicCritNow(s);
+  return { trait, ability };
 }
 
-/** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. block = 블록 공격(블록 치명), bonus = 블록 공격 치명 가산(GDD 84장 3번) */
-function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = false): boolean {
+/** 치명 확률 (GDD 7-4 v6.182, C.529): 기본 + 특성 + 가산(bonus) + 진화체 특성·능력(evoBonus = 이번 블록 능력 치명 +) 합, 0 ~ 상한(70%, 물 치명 특성만 상한 + 그 값).
+ *  고유 능력에 critBreak 표시가 있으면 능력 몫(ability + evoBonus)만 상한 위에 얹는다(최대 evoAbilityCaps.critBreakMax = 100%) */
+export function playerCritChanceOf(s: CombatState, bonus = 0, block = false, evoBonus = 0): number {
+  const p = s.params;
+  const cap = block ? p.blockCritChanceMax ?? p.critChanceMax : p.critChanceMax;
+  const base = (block ? blockCritChanceOf(p) : critChanceOf(p)) + bonus;
+  const up = evoCritUpOf(s, block);
+  const ability = up.ability + evoBonus;
+  if (p.evo?.ability.critBreak) return Math.max(0, Math.min(Math.max(cap, BALANCE.provisional.evoAbilityCaps.critBreakMax), Math.min(cap, base + up.trait) + ability));
+  return Math.max(0, Math.min(cap, base + up.trait + ability));
+}
+
+/** 치명타 판정 한 번: 맞으면 횟수를 세고 true. 확률 0 이면 난수를 쓰지 않는다. block = 블록 공격(블록 치명), bonus = 블록 공격 치명 가산(GDD 84장 3번), evoBonus = 진화체 고유 능력 이번 블록 치명 + */
+function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = false, evoBonus = 0): boolean {
   if (s.script) return false; // 각본 전투는 난수 없이 (GDD 123장 5)
   const p = s.params;
   if (who === 'player' && kitEvadeBuffOn(s)) bonus += p.kit!.evadeBuff!.critChance; // 회피 치명 버프 (GDD 12-4 v6.066)
@@ -1849,10 +1863,8 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
     s.crits = (s.crits ?? 0) + 1;
     return true;
   }
-  // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.499): 상한도 같이 오른다(치명 특성과 같은 규칙 — 45장 1번)
-  const evoUp = who === 'player' ? evoCritUpOf(s, block) : 0;
-  const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance))
-    : block ? Math.min((p.blockCritChanceMax ?? p.critChanceMax) + evoUp, blockCritChanceOf(p) + bonus + evoUp) : Math.min(p.critChanceMax + evoUp, critChanceOf(p) + bonus + evoUp);
+  // 진화체 특성·고유 능력 치명 + (GDD 8-7 1차, C.499): 상한 70% 안 — 돌파는 critBreak 능력만 (GDD 7-4 v6.182, C.529)
+  const chance = who === 'enemy' ? Math.min(p.critChanceMax, Math.max(0, p.enemyCritChance)) : playerCritChanceOf(s, bonus, block, evoBonus);
   if (chance <= 0) return false;
   s.critRng ??= createRng((s.seed ^ CRIT_SEED_SALT) >>> 0);
   if (nextFloat(s.critRng) >= chance) return false;
@@ -1862,8 +1874,8 @@ function rollCrit(s: CombatState, who: 'player' | 'enemy', bonus = 0, block = fa
 }
 
 /** 내 공격 피해에 치명타를 굴린다: 피해가 있을 때만 */
-function playerCrit(s: CombatState, damage: number, bonus = 0, block = false): { damage: number; crit: boolean } {
-  if (damage <= 0 || !rollCrit(s, 'player', bonus, block)) return { damage, crit: false };
+function playerCrit(s: CombatState, damage: number, bonus = 0, block = false, evoBonus = 0): { damage: number; crit: boolean } {
+  if (damage <= 0 || !rollCrit(s, 'player', bonus, block, evoBonus)) return { damage, crit: false };
   const extra = (kitEvadeBuffOn(s) ? s.params.kit!.evadeBuff!.critDamage : 0) + (s.params.evo ? evoStat(s, 'critDmg') + (block ? s.evo?.critDmgNow ?? 0 : 0) : 0) + (s.params.abilityEffects.evoCritDmg ?? 0); // 회피 치명 버프 치명 피해 +30% (GDD 12-4 v6.066) · 진화체 고유 능력 치명 피해 + (C.499)
   return { damage: damage * (s.params.critMultiplier + extra), crit: true };
 }
@@ -1898,7 +1910,7 @@ export function abilityPowerOf(s: CombatState, block: boolean): number {
 }
 
 /** 내 공격 피해: 특성 배율 → 블록 플레이 보정(GDD 84장 3번, 물공 몸 아님)·평타형 대가(물공 몸, C.142) → 속성 피해(GDD 48장, elements = 공격 속성, 비면 무속성) → 치명타(블록은 치명 가산). 반사·독·공허 블록은 이 길을 지나지 않는다 */
-function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[], extraCrit = 0): { damage: number; crit: boolean; elem?: ElemHit } {
+function playerHit(s: CombatState, damage: number, block: boolean, elements: readonly string[], extraCrit = 0, evoCrit = 0): { damage: number; crit: boolean; elem?: ElemHit } {
   const p = s.params;
   const elem = elementDamageBonus(p, elements);
   // 블록 플레이 보정은 블록형 몸만 (평타형 = 물공 몸은 블록이 평타를 돕는 몸이라 없음 — 84장 3번 "평타캐보다"), 물공 몸은 대신 평타형 대가(C.142)
@@ -1909,7 +1921,7 @@ function playerHit(s: CombatState, damage: number, block: boolean, elements: rea
   const masteryMult = p.kit?.mastery && kitMasteryOn(s) && !s.kit?.second ? p.kit.mastery.damageMult : 1;
   // 진화체 고유 능력 주는 피해 + (GDD 8-7 1차, C.499: 화상·호로화 게이지 비례 등)
   const evoDealt = p.evo ? 1 + evoStat(s, 'dealt') : 1;
-  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * masteryMult * evoDealt * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block);
+  const hit = playerCrit(s, damage * abilityPowerOf(s, block) * blockMult * physMult * masteryMult * evoDealt * (elem ? 1 + elem.pct / 100 : 1), (blockPlay ? (p.blockPlayCrit ?? 0) : 0) + extraCrit, block, evoCrit);
   return elem ? { ...hit, elem } : hit;
 }
 
@@ -2598,7 +2610,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.comboBlocksUsed++;
     addGauge(s, p.liberationGaugePerBlock);
     const evo = evoBlockPre(s, { kind: 'combo', element: null, chain: 1, block: b });
-    const { damage, crit, elem } = playerHit(s, blockDamage(s, b) * evoBlockMultOf(s, 1, evo), true, [], evo?.critBonus ?? 0);
+    const { damage, crit, elem } = playerHit(s, blockDamage(s, b) * evoBlockMultOf(s, 1, evo), true, [], 0, evo?.critBonus ?? 0);
     strike(s, blockHitDelayOf(p, 'combo'), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'combo', traitId: b.traitId, family: null, element: null, matchup: 'neutral', role: null, chain: 1, damage, weak: false, heal: 0, guardSeconds: 0, bonus: null, crit, elem }, finisher: { kind: 'combo', traitId: b.traitId, element: null } });
     evoBlockPost(s, evo, crit, damage);
     updateCombos(s, null, 0);
@@ -2609,7 +2621,7 @@ function useBlock(s: CombatState, index: number): boolean {
     s.tray.splice(index, 1);
     addGauge(s, p.liberationGaugePerBlock);
     const evo = evoBlockPre(s, { kind: 'liberation', element: p.playerElements[0] ?? null, chain: 1, block: b });
-    const { damage, crit, elem } = playerHit(s, blockDamage(s, b) * evoBlockMultOf(s, 1, evo), true, p.playerElements, evo?.critBonus ?? 0);
+    const { damage, crit, elem } = playerHit(s, blockDamage(s, b) * evoBlockMultOf(s, 1, evo), true, p.playerElements, 0, evo?.critBonus ?? 0);
     const hit = liberationHit(s);
     if (liberationActive(s)) s.liberation.chains++;
     strike(s, blockHitDelayOf(p, 'liberation'), { target: 'enemy', amount: damage, event: { kind: 'block', block: 'liberation', traitId: null, family: null, element: hit.element, matchup: hit.matchup, role: null, chain: 1, damage, weak: hit.weak, heal: 0, guardSeconds: 0, bonus: null, crit, elem }, finisher: { kind: 'liberation', traitId: null, element: hit.element, weak: hit.weak, matchup: hit.matchup }, elements: [...p.playerElements] });
@@ -2664,7 +2676,7 @@ function useBlock(s: CombatState, index: number): boolean {
   if (s.evo) s.evo.critDmgNow = evo?.critDmg ?? 0;
   // 피해 없는 블록 (GDD v6.133 '강화만', C.499): 효과(규칙)만 — 치명 판정도 없음
   const noDamage = !!evo?.noDamage;
-  const { damage, crit, elem } = noDamage ? { damage: 0, crit: false, elem: undefined } : playerHit(s, raw, true, skill.element ? [skill.element] : [], evo?.critBonus ?? 0);
+  const { damage, crit, elem } = noDamage ? { damage: 0, crit: false, elem: undefined } : playerHit(s, raw, true, skill.element ? [skill.element] : [], 0, evo?.critBonus ?? 0);
   if (s.evo) s.evo.critDmgNow = 0;
   const family = skill.family ?? null;
   // 피해는 모션이 닿는 순간에 (GDD 214장): 계열·단계별 타격 지연. 피해 0(막기 블록 등)은 바로
