@@ -151,7 +151,7 @@ export function median(xs: readonly number[]): number {
 /** 목표 미달로 남긴 진화체 × 종족 (C.520 보고, 조정 3회 규칙) — 벗어나도 경고만. 여기 없는 진화체(새로 짜는 진화체 포함)는 그대로 가드 */
 export const EVO_BAL_KNOWN: Readonly<Record<string, string>> = {
   't4:thunder:physical/hollow': '호로 콜리브리 — 강적 승률 80.0%(중앙값 95.5% −15.5%p)는 몸 차이(고유 능력 끔도 80%, 뇌 물리 몸). 날갯짓 수치를 1.5·2·2.5배로 올려도 80~81%(기여만 4→9%) → 목표 미달, 수치 그대로',
-  't4:blood:physical/hollow': '호로 추파카브라 — 몸 타입이 물리(t4:blood:physical)라 혈 블록 출현 제외가 물공(혈) 블록을 전부 지움(사용자 원안은 혈·교 혼합, 진화 id 종족별 분리 전). 저장 100%·피해 ×1.0 은 사용자 확정값("잃는 체력만큼"·"그만큼 데미지"), 저장 상한(storeMax)은 바꿔도 결과 같음 → 목표 미달',
+  't4:blood:physical/hollow': '호로 추파카브라 — C.521 출현 제외를 고정 블록만으로 좁혀 −167.9% → −20.5%(해방 전 −28.4 · 해방 −2.9). 남은 원인 = 봇이 저장이 조금만 쌓여도 고정 혈 블록을 바로 써서 블록 동작 시간(그동안 평타 없음)에 비해 피해가 작음. 저장 100%·피해 ×1.0 = 사용자 확정값, 저장 상한·남김(keep 0.5)·해방 남김 0 세 번 → −20.5~−89% → 목표 미달. 사용 문턱(저장 30~60 이상일 때만 켜짐)이면 −3.5~−2.6% 로 기준 안(새 조건이라 마스터 결정)',
 };
 
 export interface EvoBalVerdict { tier: number; medContrib: number; medWin: number; failures: string[]; known: string[] }

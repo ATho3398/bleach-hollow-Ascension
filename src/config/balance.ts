@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 157; // C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고, 다음 짤 애들은 이 밸런스에 맞춰서 진행하자", 마스터AR provisional 기준): provisional.evoUniques 사신 백련 every 4 → 2 · perBlock 0.03 → 0.06 · 만해 every 2 → 1 (고유 능력 기여가 4단계 중앙값보다 47%p 낮고 강적 승률 64% — 중앙값 ±10%p·±15%p 안으로). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 158; // C.521 (마스터AR 11-23, evo-impl-1121 29행 해석): 호로 추파카브라 고유 능력 출현 제외(uniques.json spawnExclude blood)를 없앰 — '더 생기지 않음' = 고정 저장 블록만, 혈 블록은 평소대로. 수치 그대로(저장 100%·×1.0 사용자 확정, storeMax·keep 시도 3회는 결과 못 맞춰 그대로).
+// 이전: BALANCE_VERSION = 157; // C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고, 다음 짤 애들은 이 밸런스에 맞춰서 진행하자", 마스터AR provisional 기준): provisional.evoUniques 사신 백련 every 4 → 2 · perBlock 0.03 → 0.06 · 만해 every 2 → 1 (고유 능력 기여가 4단계 중앙값보다 47%p 낮고 강적 승률 64% — 중앙값 ±10%p·±15%p 안으로). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 156; // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158 10-2): provisional.unlocks.battleItem tierIndex 2 → 1(전투 소모품 칸 해금 3단계 → 2단계). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 154; // C.515 (GDD 8-7 2차 호로 9종, 사용자 2026-11-21 "일단 추가고 정해놓은거 구현 ㄱㄱ", docs/drafts/evo-impl-1121.md 2절 — 마스터 추천안 provisional): provisional.evoUniques 에 4단계 특성 6개(critDmg10·blockPower8·spawnCut6·aspd6·drain3·poisonDot12) + 호로 바라쿠다·브라사·무랄라·토르투가·토르멘타·게파르도·추파카브라·비보라 수치(표 그대로, 브라사 화상은 소로 값 빌림). 그 밖 수치 그대로.

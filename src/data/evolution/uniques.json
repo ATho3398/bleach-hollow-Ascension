@@ -370,9 +370,8 @@
       "hollow": {
         "trait": "drain3",
         "ability": {
-          "description": { "*": "바 첫 칸에 혈 블록 1개가 고정된다(써도 사라지지 않음 — 다른 혈 블록은 저절로 생기지 않고, 다른 블록은 평소대로). 내가 받은 피해의 {store%}를 그 블록에 저장(최대 = 최대 체력 {storeMax%}). 쓰면 저장분 ×{useMult} 피해 + 그만큼 회복, 저장은 {keep%}만 남는다" },
+          "description": { "*": "바 첫 칸에 혈 블록 1개가 고정된다(써도 사라지지 않음 — 이 고정 블록은 더 생기지 않고, 다른 블록은 혈 블록도 평소대로). 내가 받은 피해의 {store%}를 그 블록에 저장(최대 = 최대 체력 {storeMax%}). 쓰면 저장분 ×{useMult} 피해 + 그만큼 회복, 저장은 {keep%}만 남는다" },
           "releaseDescription": { "*": "써도 저장 {keep%} 남음 · 최대 = 최대 체력 {storeMax%}" },
-          "spawnExclude": ["blood"],
           "stacks": {
             "stored": { "max": "storeMax", "maxPer": "maxHp", "mark": { "icon": "i-stored", "name": { "*": "저장" } } }
           },

@@ -112,7 +112,7 @@ describe('판정 (마스터AR provisional: 기여 중앙값 ±10%p · 강적 승
     expect(v.failures).toEqual([]);
     expect(v.known).toHaveLength(1);
   });
-  it('지금 목표 미달 = 호로 콜리브리(몸 차이)·추파카브라(물리 몸 + 사용자 확정값) 2칸 — 사유가 적혀 있다', () => {
+  it('지금 목표 미달 = 호로 콜리브리(몸 차이)·추파카브라(봇 즉시 사용 + 사용자 확정값, C.521) 2칸 — 사유가 적혀 있다', () => {
     expect(Object.keys(EVO_BAL_KNOWN).sort()).toEqual(['t4:blood:physical/hollow', 't4:thunder:physical/hollow']);
     for (const why of Object.values(EVO_BAL_KNOWN)) expect(why).toContain('목표 미달');
   });
