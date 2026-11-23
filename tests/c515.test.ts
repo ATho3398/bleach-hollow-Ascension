@@ -14,6 +14,7 @@ import {
   type Block, type CombatEvent, type CombatParams, type CombatSkill, type CombatState,
 } from '../src/engine/combat';
 import { evoParamsOf, representativeAbility } from '../src/engine/evolution';
+import { evoBlockLvOf } from '../src/engine/combat/evoUnique';
 import { abilityEffectsOf, abilityLines } from '../src/engine/evolution/formAbilities';
 useImmediateHits();
 
@@ -135,7 +136,7 @@ describe('호로 2차 9종 데이터', () => {
 describe('바라쿠다 (물·교) — 다음 평타 n회 치명 +', () => {
   const n = N('t4:water:mixed');
   it('표 수치: 1·2·3체인 1/3/5회, +25%p, 최대 10 · 레스렉시온 +35%p·최대 15', () => {
-    expect([n.hits1, n.hits2, n.hits3, n.crit, n.max]).toEqual([1, 3, 5, 0.25, 10]);
+    expect([n.hits1, n.hits2, n.hits3, n.crit, n.max]).toEqual([1, 3, 5, 0.2, 10]); // C.524: +25 → +20%p(노력치×블록 비례 — 다 키우면 +200%), 1·3·5회 = 사용자 확정 그대로
     expect(n.release).toEqual({ crit: 0.35, max: 15 });
   });
   it('블록 체인 수만큼 충전(1·3·5), 남은 횟수에 더함·최대 10', () => {
@@ -185,12 +186,14 @@ describe('브라사 (불·교) — 화상마다 열기(자기 블록 확률·주
   const n = N('t4:fire:mixed');
   const fire = skill('t-fire-b', 'fire', 'family-b');
   const water = skill('t-water-a', 'water', 'family-a');
-  it('불 블록 → 화상(공용 값 — C.517) + 열기 1(3초, 스택마다 따로, 최대 5) · 1당 자기 블록 확률 +10%p·주는 피해 +8%', () => {
+  it('불 블록 → 화상(공용 값 — C.517) + 열기 1(3초, 스택마다 따로, 최대 5) · 1당 자기 블록 확률 +10%p·주는 피해 +(블록 투자 비례)', () => {
     const s = mk({ evo: evo('t4:fire:mixed'), skills: [fire, water] });
     const r = useChain(s, 1, 'family-b', fire.id);
     expect(procOf(r.evs, '화상!')).toBe(true);
     expect(s.evo!.stacks.heat!.n).toBe(1);
-    expect(evoStat(s, 'dealt')).toBeCloseTo(n.burn! + n.dealtPer!, 6);
+    // C.524: 열기당 주는 피해 = dealtPer × (1 + dealtGrow × blockLv) — 불 공격 블록 1개(특성 몫 1/2)·강화 0 → blockLv 0.25
+    expect(evoBlockLvOf(s.params)).toBeCloseTo(0.25, 9);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(n.burn! + n.dealtPer! * (1 + n.dealtGrow! * 0.25), 6);
     expect(evoStat(s, 'selfSpawn')).toBeCloseTo(n.spawnPer!, 6);
     for (let k = 0; k < 7; k++) useChain(s, 1, 'family-b', fire.id);
     expect(s.evo!.stacks.heat!.n).toBe(n.max);
@@ -436,6 +439,10 @@ describe('추파카브라 (혈) — 첫 칸 고정 혈 블록, 받은 피해 저
     for (let i = 0; i < 3000 && s.player.hp >= hp0; i++) tick(s);
     const lost = hp0 - s.player.hp;
     expect(s.evo!.stacks.stored!.n).toBeCloseTo(lost * n.store!, 4);
+    // C.524 (마스터 확정 추천안): 사용 문턱 = 저장 ≥ 최대 체력 useMin(30%) — 그 아래면 꺼져 있다
+    expect(n.useMin).toBe(0.3);
+    if (s.evo!.stacks.stored!.n < s.player.maxHp * n.useMin!) expect(evoSpecialUsable(s, s.tray[0])).toBe(false);
+    for (let i = 0; i < 40000 && s.status === 'playing' && s.evo!.stacks.stored!.n < s.player.maxHp * n.useMin!; i++) tick(s);
     expect(evoSpecialUsable(s, s.tray[0])).toBe(true);
     const stored = s.evo!.stacks.stored!.n;
     const hpBefore = s.player.hp;

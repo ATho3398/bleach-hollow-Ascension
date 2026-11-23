@@ -7,6 +7,7 @@ import type { EvoAbilityDef, EvoAction, EvoNeed, EvoNum, EvoPassive, EvoRule, Ev
 import type { PerFaction } from '../../data/schema';
 import type { CombatParams, CombatState } from './combat';
 import { chainGroupsOf, type Block } from './tray';
+import { BALANCE } from '../../config/balance';
 
 /** 전투에 싣는 고유 능력 (applyEvolutionToParams 가 채운다). nums = 평소 수치, relNums = 레스렉시온/만해 중 수치 */
 export interface EvoParams {
@@ -17,6 +18,10 @@ export interface EvoParams {
   relNums: Record<string, number>;
   /** 원정 동안 이어 가는 스택(carry)의 이번 전투 시작 값 */
   carry?: Record<string, number>;
+  /** 출처 effort (C.524 모양 손잡이): 그 몸 타입의 주 노력치 투자율 0~1 — applyEvolutionToParams 가 채운다(evoEffortOf). 없으면 0 */
+  effort?: number;
+  /** 진화체 속성 (출처 blockLv 의 '그 속성' — C.524). null·없음 = 속성 없는 몸(노멀·허무 등): 모든 속성 공격 블록을 센다 */
+  element?: string | null;
 }
 
 /** 특수 블록의 traitId 머리 */
@@ -225,8 +230,24 @@ function sourceValue(s: CombatState, name: string, ctx: EvoCtx): number {
     case 'charge': return st?.charges[key!]?.n ?? 0;
     case 'chargeValue': return ctx.chargeValues[key!] ?? 0;
     case 'maxHp': return s.player.maxHp;
+    case 'effort': return Math.min(1, Math.max(0, s.params.evo?.effort ?? 0));
+    case 'blockLv': return evoBlockLvOf(s.params);
   }
   return 0;
+}
+
+/** 출처 blockLv (C.524 모양 손잡이, GDD 8-7): 그 진화체 속성 블록 투자율 0~1 = 특성 몫 × 무게 + 강화 몫 × (1 − 무게).
+ *  특성 몫 = min(1, 그 속성 공격 블록 생성원 수 ÷ traits), 강화 몫 = min(1, (그 블록들의 가장 큰 위력 배율 − 1) ÷ (enhanceLevels × 강화 1단계 이득)).
+ *  속성 없는 몸(element null)은 모든 속성 공격 블록을 센다. 종족·진화체 분기 없음 — params.skills 만 본다 */
+export function evoBlockLvOf(p: Pick<CombatParams, 'skills' | 'evo'>): number {
+  const I = BALANCE.provisional.evoInvest;
+  const el = p.evo?.element ?? null;
+  const atk = (p.skills ?? []).filter((sk) => sk.role === 'attack' && sk.element !== null && (el === null || sk.element === el));
+  if (atk.length === 0) return 0;
+  const traitPart = Math.min(1, atk.length / I.traits);
+  const gain = Math.max(...atk.map((sk) => sk.powerMultiplier)) - 1;
+  const enhPart = Math.min(1, Math.max(0, gain / (I.enhanceLevels * BALANCE.provisional.absorb.enhance.earlyPerLevel)));
+  return I.traitWeight * traitPart + (1 - I.traitWeight) * enhPart;
 }
 
 function perValue(s: CombatState, per: EvoSource | EvoSource[] | undefined, ctx: EvoCtx): number {
@@ -248,13 +269,15 @@ function needsOk(s: CombatState, list: EvoNeed[] | undefined, ctx: EvoCtx): bool
         if (v > 0) return false;
         continue;
       }
-      if (n.atLeast !== undefined && v < evoNum(s, n.atLeast)) return false;
+      if (n.atLeast !== undefined && v < evoNum(s, n.atLeast) * perValue(s, n.atLeastPer, ctx)) return false;
       if (n.below !== undefined && !(v < evoNum(s, n.below))) return false;
       if (n.atLeast === undefined && n.below === undefined && v <= 0) return false;
     }
     if (n.barFull !== undefined && (s.tray.length >= s.params.trayCapacity) !== n.barFull) return false;
     if (n.shield !== undefined && ((s.player.shield ?? 0) > 0) !== n.shield) return false;
     if (n.elite !== undefined && isElite(s) !== n.elite) return false;
+    // 전투 시작 n초 안 (C.524 모양 손잡이 — 켜지는 상황)
+    if (n.elapsedBelow !== undefined && !(s.tick * s.params.tickSeconds < evoNum(s, n.elapsedBelow))) return false;
   }
   return true;
 }
@@ -336,7 +359,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         break;
       }
       case 'buff': {
-        const until = s.tick + api().ticksOf(s.params, v(a.seconds) * perValue(s, a.secondsPer, ctx));
+        const until = s.tick + api().ticksOf(s.params, v(a.seconds) * perValue(s, a.secondsPer, ctx) * (a.secondsGrow ? 1 + v(a.secondsGrow.value) * perValue(s, a.secondsGrow.per, ctx) : 1));
         const cur = ev.buffs[a.buff!];
         const live = cur && cur.until > s.tick ? cur.value : 0;
         const nv = a.refresh === 'max' ? Math.max(live, val()) : a.refresh === 'add' ? live + val() : val();
@@ -397,7 +420,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         break;
       }
       case 'basics': {
-        const n = Math.max(0, Math.round(v(a.value, 1)));
+        const n = Math.max(0, Math.round(val())); // C.524: per·grow 도 받는다 (없으면 value 그대로)
         for (let k = 0; k < n && s.status === 'playing'; k++) {
           ev.extraBonus = v(a.bonus);
           ev.fromEvo = true;
@@ -841,7 +864,8 @@ export function evoStat(s: CombatState, stat: EvoStat): number {
 function passiveValue(s: CombatState, p: EvoPassive, ctx: EvoCtx): number {
   const step = p.step !== undefined ? evoNum(s, p.step, 1) : 0;
   const per = perValue(s, p.per, ctx);
-  const raw = evoNum(s, p.value) * (step > 0 ? Math.floor(per / step + 1e-9) : per);
+  const grow = p.grow ? 1 + evoNum(s, p.grow.value) * perValue(s, p.grow.per, ctx) : 1;
+  const raw = evoNum(s, p.value) * (step > 0 ? Math.floor(per / step + 1e-9) : per) * grow;
   return p.max !== undefined ? Math.min(evoNum(s, p.max), raw) : raw;
 }
 

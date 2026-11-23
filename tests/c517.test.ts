@@ -2,6 +2,7 @@
 // 토르멘타(사용자 11-21 "필드 한 5초로 할까" / "아니 강화지 강화필드,,"): 보통 필드 = 2→3체인 5초 · 강화 필드 = 2체인 2번 연달아 5초 · 켜진 동안 다시 = 시간만 새로 · 레스렉시온 7초·−25%
 // (초안 '필드 누적 3번마다'는 사용자 지시로 취소) · 브라사 화상 = 공용 화상 값(석양홍과 같은 8초·+8%) · 공화 스택 '공허' → '허무' · 썬더우드 보스 특성 = 뇌
 import { describe, expect, it } from 'vitest';
+import { evoBlockLvOf } from '../src/engine/combat/evoUnique';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
 import { getEnemy } from '../src/data/enemies';
@@ -141,6 +142,7 @@ describe('브라사 — 화상 = 공용 화상 값 (석양홍과 같음, 마스�
     const b = s.evo!.buffs.burn!;
     expect(b.value).toBeCloseTo(0.08, 9);
     expect(b.until - s.tick).toBe(ticksOf(s.params, 8));
-    expect(evoStat(s, 'dealt')).toBeCloseTo(0.08 + N('t4:fire:mixed').dealtPer!, 6);
+    const nb = N('t4:fire:mixed');
+    expect(evoStat(s, 'dealt')).toBeCloseTo(0.08 + nb.dealtPer! * (1 + nb.dealtGrow! * evoBlockLvOf(s.params)), 6); // C.524: 열기당 주는 피해 = 블록 투자 비례
   });
 });

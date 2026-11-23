@@ -135,10 +135,11 @@ describe('밸런스 도구 연결 (scripts/balance.ts)', () => {
 });
 
 describe('보정 수치 (balance provisional.evoUniques)', () => {
-  it('사신 백련 = 평타 2대마다 · 바 블록당 +6% · 만해 1대 (C.520, 옛 4대·+3%·2대)', () => {
+  it('사신 백련 = 평타 2대마다 · 바 블록당 +2.8%(노력치 비례 — 다 키우면 ×3.5) · 만해 1대 (C.520 +6% → C.524 노력 곡선)', () => {
     const n = (BALANCE.provisional.evoUniques.forms['t4:normal:physical'] as Record<string, Record<string, unknown>>).shinigami as Record<string, unknown>;
     expect(n.every).toBe(2);
-    expect(n.perBlock).toBe(0.06);
+    expect(n.perBlock).toBe(0.028);
+    expect(n.perBlockGrow).toBe(2.5);
     expect(n.release).toEqual({ every: 1 });
   });
   it('사용자 확정값은 그대로: 소로 여우불 2.5초·5개, 공용 화상 8초 +8%, 토르멘타 필드 5초, 추파카브라 저장 100%·피해 ×1.0', () => {

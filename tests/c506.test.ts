@@ -132,7 +132,7 @@ describe('사신 봉수대 (t4:fire:physical)', () => {
     const plain = attacks(basics(t, 1))[0]!.damage;
     expect(d0 / plain).toBeGreaterThan(1 + n.perBeacon! * n.need!);
   });
-  it('만해: 필요 봉화 4 · 봉화당 +7.5% (최대 합 30% 유지)', () => {
+  it('만해: 필요 봉화 4 · 봉화당 +3% (최대 합 12% 유지 — C.524 봉화당 6 → 2.4%·만해 7.5 → 3%, 노력치×블록 비례 불 블록당 피해)', () => {
     expect(n.release!.need! * n.release!.perBeacon!).toBeCloseTo(n.need! * n.perBeacon!, 9);
     const s = mk({ evo: evo('t4:fire:physical'), liberationUnique: true, liberationSeconds: 600 });
     libNow(s);
@@ -350,9 +350,9 @@ describe('사신 비전 (t4:thunder:mixed)', () => {
 });
 
 describe('사신 흑귀 (h4:frenzy, 히든 폭주형)', () => {
-  it('호로화 게이지 1당 주는 피해 +0.3%', () => {
+  it('호로화 게이지 1당 주는 피해 +0.27% (C.524: 0.3 → 0.27%, 넓이 맞춤)', () => {
     const s = mk({ evo: evo('h4:frenzy'), riskStart: 100 });
-    expect(evoStat(s, 'dealt')).toBeCloseTo(0.3, 6);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(0.27, 6);
   });
   it('만해: 특수 블록 「흑귀」가 바의 허 블록 + 새 허 블록을 흡수 → 끝날 때 자동 사용(쌓인 만큼 피해) · 바가 가득이어도 생긴다', () => {
     const s = mk({ evo: evo('h4:frenzy'), liberationUnique: true, liberationSeconds: 5, voidChance: 1, voidChanceMax: 1 });

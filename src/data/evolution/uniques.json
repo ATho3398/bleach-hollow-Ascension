@@ -22,7 +22,7 @@
     "t4:normal:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격 {every}대마다 적에게 찢김 +1(최대 {max}), 찢김 1당 그 적이 받는 일반 공격 피해 +{perStack%}. 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 {flatPer}회분 피해를 더한다" },
+          "description": { "*": "일반 공격 {every}대마다 적에게 찢김 +1(최대 {max}), 찢김 1당 그 적이 받는 일반 공격 피해 +{perStack%}(노력치를 키운 만큼 커진다 — 다 키우면 +{perStackGrow%}). 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 {flatPer}회분 피해를 더한다" },
           "releaseDescription": { "*": "일반 공격 {every}대마다 찢김 +1(최대 {max})" },
           "stacks": {
             "rend": { "max": "max", "on": "foe", "mark": { "icon": "i-fx-claw", "name": { "*": "찢김" } } }
@@ -32,22 +32,22 @@
             { "on": "blockPre", "need": [{ "stack": "rend" }], "do": [{ "act": "consume", "stack": "rend", "value": 1, "per": "chain" }, { "act": "blockFlat", "value": "flatPer", "per": "consumed" }], "proc": "찢어발기기!" }
           ],
           "passives": [
-            { "stat": "basicPower", "value": "perStack", "per": "stack:rend" }
+            { "stat": "basicPower", "value": "perStack", "per": "stack:rend", "grow": { "value": "perStackGrow", "per": "effort" } }
           ]
         }
       },
       "shinigami": {
         "trait": "aspd10",
         "ability": {
-          "description": { "*": "폭주 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(폭주 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}" },
+          "description": { "*": "폭주 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(폭주 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}(노력치를 키운 만큼 커진다 — 다 키우면 +{perBlockGrow%})" },
           "releaseDescription": { "*": "일반 공격 {every}대마다 블록 1개" },
           "spawnRule": "voidOnly",
           "rules": [
             { "on": "basic", "every": "every", "do": [{ "act": "spawn", "block": "draw" }], "proc": "백련!" }
           ],
           "passives": [
-            { "stat": "attackSpeed", "value": "perBlock", "per": "bar" },
-            { "stat": "basicPower", "value": "perBlock", "per": "bar" }
+            { "stat": "attackSpeed", "value": "perBlock", "per": "bar", "grow": { "value": "perBlockGrow", "per": "effort" } },
+            { "stat": "basicPower", "value": "perBlock", "per": "bar", "grow": { "value": "perBlockGrow", "per": "effort" } }
           ]
         }
       }
@@ -71,21 +71,21 @@
       "shinigami": {
         "trait": "crit6",
         "ability": {
-          "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
+          "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(노력치를 키운 만큼 커진다 — 다 키우면 +{perStackGrow%})·치명 피해 +{critDmgPerStack%}(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
           "releaseDescription": { "*": "스택 지속 {seconds}초 · 스택당 치명 확률 +{perStack%}p · 치명 피해 +{critDmgPerStack%}" },
           "stacks": {
             "surge": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-rare", "name": { "*": "노도" } } }
           },
           "specials": {
-            "rush": { "name": { "*": "노도 연격" }, "short": "연", "description": { "*": "누르면 일반 공격 {hits}회가 바로 나간다(각 +{bonus%})" } }
+            "rush": { "name": { "*": "노도 연격" }, "short": "연", "description": { "*": "누르면 일반 공격 {hits}회가 바로 나간다(각 +{bonus%}, 횟수는 노력치를 키운 만큼 늘어난다 — 다 키우면 +{hitsGrow%})" } }
           },
           "rules": [
             { "on": "block", "element": ["water"], "do": [{ "act": "add", "stack": "surge", "value": 1 }], "proc": "노도!" },
             { "on": "basic", "every": "every", "do": [{ "act": "spawn", "block": "rush" }] },
-            { "on": "special", "special": "rush", "do": [{ "act": "basics", "value": "hits", "bonus": "bonus" }], "proc": "노도 연격!" }
+            { "on": "special", "special": "rush", "do": [{ "act": "basics", "value": "hits", "bonus": "bonus", "grow": { "value": "hitsGrow", "per": "effort" } }], "proc": "노도 연격!" }
           ],
           "passives": [
-            { "stat": "crit", "value": "perStack", "per": "stack:surge" },
+            { "stat": "crit", "value": "perStack", "per": "stack:surge", "grow": { "value": "perStackGrow", "per": "effort" } },
             { "stat": "critDmg", "value": "critDmgPerStack", "per": "stack:surge" }
           ]
         }
@@ -94,7 +94,7 @@
     "t4:fire:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%})" },
+          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%}, 노력치를 키운 만큼 커진다 — 다 키우면 +{burnGrow%})" },
           "releaseDescription": { "*": "여우불 {seconds}초 · 화상 피해 +{burn%}" },
           "stacks": {
             "fox": { "seconds": "seconds", "mark": { "icon": "i-cast", "name": { "*": "여우불" } } }
@@ -104,7 +104,7 @@
           },
           "rules": [
             { "on": "basic", "do": [{ "act": "add", "stack": "fox", "value": 1 }] },
-            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnSeconds", "refresh": "max" }], "proc": "화상!" }
+            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnSeconds", "refresh": "max", "grow": { "value": "burnGrow", "per": "effort" } }], "proc": "화상!" }
           ],
           "passives": [
             { "stat": "dealt", "value": 1, "per": "buff:burn" }
@@ -113,13 +113,13 @@
       },
       "shinigami": {
         "ability": {
-          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}, 그 뒤 봉화 0" },
+          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}(노력치와 이 속성 블록을 같이 키운 만큼 커진다 — 다 키우면 +{fireGrow%}), 그 뒤 봉화 0" },
           "releaseDescription": { "*": "폭렬에 필요한 봉화 {need}개 · 봉화당 +{perBeacon%}" },
           "stacks": {
             "beacon": { "max": "need", "mark": { "icon": "i-attack", "name": { "*": "봉화" } } }
           },
           "rules": [
-            { "on": "basicPre", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "ignoreDef", "value": "pierce" }, { "act": "basicMult", "value": "perFire", "per": "bar:fire" }] },
+            { "on": "basicPre", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "ignoreDef", "value": "pierce" }, { "act": "basicMult", "value": "perFire", "per": "bar:fire", "grow": { "value": "fireGrow", "per": ["effort", "blockLv"] } }] },
             { "on": "basic", "need": [{ "stack": "beacon", "atLeast": "need" }], "do": [{ "act": "clear", "stack": "beacon" }], "proc": "봉수 폭렬!" },
             { "on": "basic", "every": "every", "do": [{ "act": "add", "stack": "beacon", "value": 1 }] }
           ],
@@ -132,7 +132,7 @@
     "t4:earth:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "전투를 시작할 때 갑각 보호막(최대 체력 {shield%}). 갑각이 남아 있는 동안 일반 공격 피해 +{basicBonus%}. 깨지면 {regrow}초 뒤 다시 돋고, 일반 공격 1대마다 그 시간이 {cut}초 줄어든다" },
+          "description": { "*": "전투를 시작할 때 갑각 보호막(최대 체력 {shield%}). 갑각이 남아 있는 동안 일반 공격 피해 +{basicBonus%}(노력치를 키운 만큼 줄어든다 — 다 키우면 {bonusGrow%}). 깨지면 {regrow}초 뒤 다시 돋고, 일반 공격 1대마다 그 시간이 {cut}초 줄어든다" },
           "releaseDescription": { "*": "갑각 {shield%} · 깨질 때 깨진 양만큼 적에게 되돌린다" },
           "rules": [
             { "on": "start", "do": [{ "act": "shield", "value": "shield", "cap": "shield" }] },
@@ -143,13 +143,13 @@
             { "on": "timer", "timer": "regrow", "do": [{ "act": "shield", "value": "shield", "cap": "shield" }], "proc": "갑각!" }
           ],
           "passives": [
-            { "stat": "basicPower", "value": "basicBonus", "need": [{ "shield": true }] }
+            { "stat": "basicPower", "value": "basicBonus", "need": [{ "shield": true }], "grow": { "value": "bonusGrow", "per": "effort" } }
           ]
         }
       },
       "shinigami": {
         "ability": {
-          "description": { "*": "일반 공격 간격 ×{slow}. 흙 블록이 생길 때마다 방어막 +최대 체력 {perSpawn%}(최대 {cap%}). 방어막 1%당 일반 공격 피해 +{perShield%}. 흙 블록을 쓰면 방어막 체인 수×{cutPerChain%}p 삭제" },
+          "description": { "*": "일반 공격 간격 ×{slow}. 흙 블록이 생길 때마다 방어막 +최대 체력 {perSpawn%}(최대 {cap%}). 방어막 1%당 일반 공격 피해 +{perShield%}(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{perShieldGrow%}). 흙 블록을 쓰면 방어막 체인 수×{cutPerChain%}p 삭제" },
           "releaseDescription": { "*": "방어막이 막은 피해를 모아 만해가 끝날 때 그만큼({storedMult%}) 피해" },
           "stacks": {
             "stored": { "mark": { "icon": "i-guard", "name": { "*": "반석" } } }
@@ -162,7 +162,7 @@
           ],
           "passives": [
             { "stat": "interval", "value": "slowCut" },
-            { "stat": "basicPower", "value": "perShield", "per": "shieldPct" }
+            { "stat": "basicPower", "value": "perShield", "per": "shieldPct", "grow": { "value": "perShieldGrow", "per": "blockLv" } }
           ]
         }
       }
@@ -170,7 +170,7 @@
     "t4:thunder:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격마다 날갯짓 +1 — 1개당 일반 공격 간격 −{perStack%}(최대 −{maxCut%}). 블록을 쓰면 날갯짓이 절반으로" },
+          "description": { "*": "일반 공격마다 날갯짓 +1 — 1개당 일반 공격 간격 −{perStack%}(노력치를 키운 만큼 커진다 — 다 키우면 +{perStackGrow%}, 최대 −{maxCut%}). 블록을 쓰면 날갯짓이 절반으로" },
           "releaseDescription": { "*": "블록을 써도 안 줄어듦 · 최대 −{maxCut%}" },
           "stacks": {
             "wing": { "max": "maxStacks", "mark": { "icon": "i-speed", "name": { "*": "날갯짓" } } }
@@ -180,7 +180,7 @@
             { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "when": "normal", "do": [{ "act": "mul", "stack": "wing", "value": 0.5 }] }
           ],
           "passives": [
-            { "stat": "interval", "value": "perStack", "per": "stack:wing", "max": "maxCut" }
+            { "stat": "interval", "value": "perStack", "per": "stack:wing", "max": "maxCut", "grow": { "value": "perStackGrow", "per": "effort" } }
           ]
         }
       },
@@ -201,13 +201,13 @@
     "t4:normal:mixed": {
       "hollow": {
         "ability": {
-          "description": { "*": "블록은 원래 피해 그대로, 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(다시 쓰면 큰 쪽으로 갱신)" },
+          "description": { "*": "블록은 원래 피해 그대로, 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(노력치와 이 속성 블록을 같이 키운 만큼 피해는 다 키우면 +{stepGrow%}·시간은 +{stepSecondsGrow%})(다시 쓰면 큰 쪽으로 갱신)" },
           "releaseDescription": { "*": "{seconds}초 동안 체인 수×{perChain%}" },
           "buffs": {
             "step": { "mark": { "icon": "i-basic", "name": { "*": "계단" } } }
           },
           "rules": [
-            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "buff", "buff": "step", "value": "perChain", "per": "chain", "seconds": "seconds", "refresh": "max" }], "proc": "계단!" }
+            { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "buff", "buff": "step", "value": "perChain", "per": "chain", "seconds": "seconds", "refresh": "max", "grow": { "value": "stepGrow", "per": ["effort", "blockLv"] }, "secondsGrow": { "value": "stepSecondsGrow", "per": ["effort", "blockLv"] } }], "proc": "계단!" }
           ],
           "passives": [
             { "stat": "basicPower", "value": 1, "per": "buff:step" }
@@ -228,11 +228,11 @@
       "hollow": {
         "trait": "blockCrit6",
         "ability": {
-          "description": { "*": "체인 2 블록 치명 확률 +{crit2%}p · 체인 3 +{crit3%}p. 치명이 난 블록은 잔상 1개(같은 블록 1체인)를 바 끝에 남긴다(잔상은 잔상을 남기지 않음)" },
+          "description": { "*": "체인 2 블록 치명 확률 +{crit2%}p · 체인 3 +{crit3%}p(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{critGrow%}). 치명이 난 블록은 잔상 1개(같은 블록 1체인)를 바 끝에 남긴다(잔상은 잔상을 남기지 않음)" },
           "releaseDescription": { "*": "체인 치명 보너스 2배(+{crit2%}p · +{crit3%}p)" },
           "rules": [
-            { "on": "blockPre", "chain": [2], "do": [{ "act": "blockCrit", "value": "crit2" }] },
-            { "on": "blockPre", "chain": [3], "do": [{ "act": "blockCrit", "value": "crit3" }] },
+            { "on": "blockPre", "chain": [2], "do": [{ "act": "blockCrit", "value": "crit2", "grow": { "value": "critGrow", "per": "blockLv" } }] },
+            { "on": "blockPre", "chain": [3], "do": [{ "act": "blockCrit", "value": "crit3", "grow": { "value": "critGrow", "per": "blockLv" } }] },
             { "on": "block", "crit": true, "echo": false, "do": [{ "act": "echo" }], "proc": "잔상!" }
           ]
         }
@@ -240,7 +240,7 @@
       "shinigami": {
         "trait": "blockCrit6",
         "ability": {
-          "description": { "*": "2체인을 {streak}번 연달아 쓰면 바 끝 빈 칸에 물·귀 블록 {made}개가 생기고 장마 +1(최대 {max}). 장마가 있으면 3체인만 치명 확률 +{crit%}p·치명 피해 +{critDmg%}, 3체인을 쓰면 장마 −1. 체인 배율 ×{c1}/×{c2}/×{c3}" },
+          "description": { "*": "2체인을 {streak}번 연달아 쓰면 바 끝 빈 칸에 물·귀 블록 {made}개가 생기고 장마 +1(최대 {max}). 장마가 있으면 3체인만 치명 확률 +{crit%}p·치명 피해 +{critDmg%}(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 확률 +{critGrow%}·피해 +{critDmgGrow%}), 3체인을 쓰면 장마 −1. 체인 배율 ×{c1}/×{c2}/×{c3}" },
           "releaseDescription": { "*": "3체인이 장마를 줄이지 않음 · 장마 최대 {max}" },
           "chainMultipliers": ["c1", "c2", "c3"],
           "stacks": {
@@ -248,7 +248,7 @@
           },
           "rules": [
             { "on": "block", "chain": [2], "streak": { "count": "streak" }, "do": [{ "act": "spawn", "block": "make", "element": "water", "family": "family-c", "value": "made" }, { "act": "add", "stack": "rain", "value": 1 }], "proc": "장마!" },
-            { "on": "blockPre", "chain": [3], "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "blockCrit", "value": "crit" }, { "act": "blockCritDmg", "value": "critDmg" }] },
+            { "on": "blockPre", "chain": [3], "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "blockCrit", "value": "crit", "grow": { "value": "critGrow", "per": "blockLv" } }, { "act": "blockCritDmg", "value": "critDmg", "grow": { "value": "critDmgGrow", "per": "blockLv" } }] },
             { "on": "block", "chain": [3], "when": "normal", "need": [{ "stack": "rain", "atLeast": 1 }], "do": [{ "act": "consume", "stack": "rain", "value": 1 }] }
           ]
         }
@@ -258,7 +258,7 @@
       "hollow": {
         "trait": "chain3Power",
         "ability": {
-          "description": { "*": "1체인 블록을 쓰면 불빛 +1(최대 {max}, 안 사라짐). 3체인을 쓰면 불빛을 모두 써서 1개당 위력 +{perGlow%}·화상 +{burnPerGlow}초(걸린 적을 때리면 피해 +{burn%})" },
+          "description": { "*": "1체인 블록을 쓰면 불빛 +1(최대 {max}, 안 사라짐). 3체인을 쓰면 불빛을 모두 써서 1개당 위력 +{perGlow%}(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{glowGrow%})·화상 +{burnPerGlow}초(걸린 적을 때리면 피해 +{burn%})" },
           "releaseDescription": { "*": "불빛 최대 {max} · 2체인도 불빛을 쓴다" },
           "stacks": {
             "glow": { "max": "max", "mark": { "icon": "i-sp", "name": { "*": "불빛" } } },
@@ -269,8 +269,8 @@
           },
           "rules": [
             { "on": "block", "chain": [1], "do": [{ "act": "add", "stack": "glow", "value": 1 }] },
-            { "on": "blockPre", "chain": [3], "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed" }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
-            { "on": "blockPre", "chain": [2], "when": "release", "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed" }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
+            { "on": "blockPre", "chain": [3], "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed", "grow": { "value": "glowGrow", "per": "blockLv" } }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
+            { "on": "blockPre", "chain": [2], "when": "release", "need": [{ "stack": "glow" }], "do": [{ "act": "consume", "stack": "glow" }, { "act": "blockMult", "value": "perGlow", "per": "consumed", "grow": { "value": "glowGrow", "per": "blockLv" } }, { "act": "add", "stack": "lit", "value": 1, "per": "consumed" }], "proc": "꾀는 불빛!" },
             { "on": "block", "need": [{ "stack": "lit" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnPerGlow", "secondsPer": "stack:lit", "refresh": "max" }, { "act": "clear", "stack": "lit" }] }
           ],
           "passives": [
@@ -281,7 +281,7 @@
       "shinigami": {
         "trait": "fireDmg8",
         "ability": {
-          "description": { "*": "불 블록을 쓰면 적에게 화상({burnSeconds}초, 걸린 적을 때리면 피해 +{burnPct%}). 화상 걸린 적에게 귀 블록(불·귀)을 쓰면 다음 일반 공격 1회가 「석양」 — 지능 기준 일반 공격 ×{shotMult}, 불 속성(겹치지 않음, 충전 최대 {shotMax}회)" },
+          "description": { "*": "불 블록을 쓰면 적에게 화상({burnSeconds}초, 걸린 적을 때리면 피해 +{burnPct%}). 화상 걸린 적에게 귀 블록(불·귀)을 쓰면 다음 일반 공격 1회가 「석양」 — 지능 기준 일반 공격 ×{shotMult}(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{shotGrow%}), 불 속성(겹치지 않음, 충전 최대 {shotMax}회)" },
           "releaseDescription": { "*": "귀 블록 체인 수만큼 충전(최대 {shotMax}회) · 「석양」 ×{shotMult}" },
           "charges": {
             "sunset": { "max": "shotMax", "mark": { "icon": "i-attack", "name": { "*": "석양" } } }
@@ -293,7 +293,7 @@
             { "on": "blockPre", "element": ["fire"], "family": ["family-c"], "when": "normal", "need": [{ "buff": "burn" }], "do": [{ "act": "charge", "charge": "sunset", "value": 1 }] },
             { "on": "blockPre", "element": ["fire"], "family": ["family-c"], "when": "release", "need": [{ "buff": "burn" }], "do": [{ "act": "charge", "charge": "sunset", "value": 1, "per": "chain" }] },
             { "on": "block", "element": ["fire"], "do": [{ "act": "buff", "buff": "burn", "seconds": "burnSeconds", "value": "burnPct", "refresh": "max" }] },
-            { "on": "basicPre", "charge": "sunset", "do": [{ "act": "basicShot", "value": "shotMult", "element": "fire", "category": "special", "fx": { "family": "family-c", "stage": 3 } }], "proc": "석양!" }
+            { "on": "basicPre", "charge": "sunset", "do": [{ "act": "basicShot", "value": "shotMult", "element": "fire", "category": "special", "fx": { "family": "family-c", "stage": 3 }, "grow": { "value": "shotGrow", "per": "blockLv" } }], "proc": "석양!" }
           ],
           "passives": [
             { "stat": "dealt", "value": 1, "per": "buff:burn" }
@@ -370,13 +370,13 @@
       "hollow": {
         "trait": "drain3",
         "ability": {
-          "description": { "*": "바 첫 칸에 혈 블록 1개가 고정된다(써도 사라지지 않음 — 이 고정 블록은 더 생기지 않고, 다른 블록은 혈 블록도 평소대로). 내가 받은 피해의 {store%}를 그 블록에 저장(최대 = 최대 체력 {storeMax%}). 쓰면 저장분 ×{useMult} 피해 + 그만큼 회복, 저장은 {keep%}만 남는다" },
+          "description": { "*": "바 첫 칸에 혈 블록 1개가 고정된다(써도 사라지지 않음 — 이 고정 블록은 더 생기지 않고, 다른 블록은 혈 블록도 평소대로). 내가 받은 피해의 {store%}를 그 블록에 저장(최대 = 최대 체력 {storeMax%}). 저장이 최대 체력 {useMin%} 이상일 때 쓰면 저장분 ×{useMult} 피해 + 그만큼 회복, 저장은 {keep%}만 남는다" },
           "releaseDescription": { "*": "써도 저장 {keep%} 남음 · 최대 = 최대 체력 {storeMax%}" },
           "stacks": {
             "stored": { "max": "storeMax", "maxPer": "maxHp", "mark": { "icon": "i-stored", "name": { "*": "저장" } } }
           },
           "specials": {
-            "vessel": { "name": { "*": "혈 블록" }, "short": "혈", "element": "blood", "fixed": "fixed", "keep": true, "need": [{ "stack": "stored" }], "description": { "*": "저장된 피해 ×{useMult} 피해 + 그만큼 회복" }, "offNote": { "*": "받은 피해가 저장돼야 켜진다" } }
+            "vessel": { "name": { "*": "혈 블록" }, "short": "혈", "element": "blood", "fixed": "fixed", "keep": true, "need": [{ "stack": "stored", "atLeast": "useMin", "atLeastPer": "maxHp" }], "description": { "*": "저장된 피해 ×{useMult} 피해 + 그만큼 회복" }, "offNote": { "*": "저장이 최대 체력 {useMin%} 이상이어야 켜진다" } }
           },
           "rules": [
             { "on": "hurt", "do": [{ "act": "add", "stack": "stored", "value": "store", "per": "amount" }] },
@@ -415,7 +415,7 @@
       "hollow": {
         "trait": "critDmg10",
         "ability": {
-          "description": { "*": "블록을 쓰면(원래 피해 그대로) 다음 일반 공격 — 1체인 {hits1}회·2체인 {hits2}회·3체인 {hits3}회 — 치명 확률 +{crit%}p(블록 치명은 그대로). 다시 쓰면 남은 횟수에 더한다(최대 {max}회)" },
+          "description": { "*": "블록을 쓰면(원래 피해 그대로) 다음 일반 공격 — 1체인 {hits1}회·2체인 {hits2}회·3체인 {hits3}회 — 치명 확률 +{crit%}p(노력치와 이 속성 블록을 같이 키운 만큼 커진다 — 다 키우면 +{critGrow%}, 블록 치명은 그대로). 다시 쓰면 남은 횟수에 더한다(최대 {max}회)" },
           "releaseDescription": { "*": "치명 확률 +{crit%}p · 최대 {max}회" },
           "charges": {
             "fang": { "max": "max", "mark": { "icon": "i-fx-bite", "name": { "*": "이빨" } } }
@@ -424,7 +424,7 @@
             { "on": "block", "chain": [1], "do": [{ "act": "charge", "charge": "fang", "value": "hits1" }], "proc": "이빨!" },
             { "on": "block", "chain": [2], "do": [{ "act": "charge", "charge": "fang", "value": "hits2" }], "proc": "이빨!" },
             { "on": "block", "chain": [3], "do": [{ "act": "charge", "charge": "fang", "value": "hits3" }], "proc": "이빨!" },
-            { "on": "basicPre", "charge": "fang", "do": [{ "act": "basicCrit", "value": "crit" }] }
+            { "on": "basicPre", "charge": "fang", "do": [{ "act": "basicCrit", "value": "crit", "grow": { "value": "critGrow", "per": ["effort", "blockLv"] } }] }
           ]
         }
       },
@@ -445,7 +445,7 @@
     "t4:fire:mixed": {
       "hollow": {
         "ability": {
-          "description": { "*": "불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%}). 화상을 1번 걸 때마다 {seconds}초 동안 자기 블록(불·교) 생성 확률 +{spawnPer%}p · 주는 피해 +{dealtPer%}(스택마다 따로, 최대 {max})" },
+          "description": { "*": "불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%}). 화상을 1번 걸 때마다 {seconds}초 동안 자기 블록(불·교) 생성 확률 +{spawnPer%}p · 주는 피해 +{dealtPer%}(이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{dealtGrow%})(스택마다 따로, 최대 {max})" },
           "selfBlock": { "element": "fire", "family": "family-b" },
           "stacks": {
             "heat": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-fx-impact", "name": { "*": "열기" } } }
@@ -458,7 +458,7 @@
           ],
           "passives": [
             { "stat": "selfSpawn", "value": "spawnPer", "per": "stack:heat" },
-            { "stat": "dealt", "value": "dealtPer", "per": "stack:heat" },
+            { "stat": "dealt", "value": "dealtPer", "per": "stack:heat", "grow": { "value": "dealtGrow", "per": "blockLv" } },
             { "stat": "dealt", "value": 1, "per": "buff:burn" }
           ]
         }
@@ -547,7 +547,7 @@
       "hollow": {
         "trait": "spawnCut6",
         "ability": {
-          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}. 2체인을 2번 연달아 쓰면 {stormSeconds}초 강화 자기장(보통 필드를 대신) — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}. 켜진 동안 다시 조건을 채우면 시간만 새로(겹치지 않음)" },
+          "description": { "*": "2체인을 쓴 바로 다음에 3체인을 쓰면 {fieldSeconds}초 자기장 필드 — 초당 적 최대 체력 {fieldDot%} 피해 · 적 공격 속도 −{slow%}(지속 피해는 이 속성 블록(흡수 특성·강화)을 키운 만큼 커진다 — 다 키우면 +{dotGrow%}). 2체인을 2번 연달아 쓰면 {stormSeconds}초 강화 자기장(보통 필드를 대신) — 초당 {stormDot%} · 적 마법방어 −{magicCut%} · 공격 속도 −{slow%}. 켜진 동안 다시 조건을 채우면 시간만 새로(겹치지 않음)" },
           "releaseDescription": { "*": "필드 {fieldSeconds}초 · 강화 {stormSeconds}초 · 마법방어 −{magicCut%}" },
           "stacks": {
             "field": { "seconds": "fieldSeconds", "max": 1, "on": "foe", "mark": { "icon": "i-fx-beam", "name": { "*": "자기장" } } }
@@ -558,8 +558,8 @@
           "rules": [
             { "on": "block", "chain": [3], "after": { "chain": [2] }, "do": [{ "act": "add", "stack": "field", "value": 1 }], "proc": "자기장!" },
             { "on": "block", "chain": [2], "streak": { "count": "streak" }, "do": [{ "act": "buff", "buff": "storm", "value": "stormDot", "seconds": "stormSeconds" }, { "act": "clear", "stack": "field" }], "proc": "강화 자기장!" },
-            { "on": "every", "seconds": "dotEvery", "need": [{ "stack": "field" }, { "buff": "storm", "none": true }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "fieldDot", "dot": true }] },
-            { "on": "every", "seconds": "dotEvery", "need": [{ "buff": "storm" }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "stormDot", "dot": true }] }
+            { "on": "every", "seconds": "dotEvery", "need": [{ "stack": "field" }, { "buff": "storm", "none": true }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "fieldDot", "dot": true, "grow": { "value": "dotGrow", "per": "blockLv" } }] },
+            { "on": "every", "seconds": "dotEvery", "need": [{ "buff": "storm" }], "do": [{ "act": "hit", "basis": "foeMaxHp", "value": "stormDot", "dot": true, "grow": { "value": "dotGrow", "per": "blockLv" } }] }
           ],
           "passives": [
             { "stat": "foeAttackSlow", "value": "slow", "need": [{ "stack": "field" }, { "buff": "storm", "none": true }] },

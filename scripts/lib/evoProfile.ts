@@ -307,7 +307,9 @@ export function classifyAll(rs: readonly ProfileInput[]): { medians: Map<number,
   for (const tier of new Set(rs.map((r) => r.target.tier))) medians.set(tier, tierMedians(rs.filter((r) => r.target.tier === tier)));
   const shapeMedians = new Map<string, TierMedians>();
   for (const g of new Set(rs.map((r) => shapeGroupOf(r.target)))) shapeMedians.set(g, tierMedians(rs.filter((r) => shapeGroupOf(r.target) === g)));
-  const verdicts = rs.map((r) => classifyProfile(r, shapeMedians.get(shapeGroupOf(r.target))!, medians.get(r.target.tier)!));
+  // 넓이(총점)도 같은 단계·같은 타입 중앙값 대비 (C.524): 칸마다 단계 전체 중앙값으로 나누면 특수 몸의 큰 블록 투자 이득이 '둘 다' 칸 중앙값을 끌어올려
+  //  물리 몸이 '둘 다 < 노력치만'처럼 보였다(절대값은 마르티요 강적 초당 처치 노력치만 4.33 → 둘 다 5.40). 타입 차 자체는 typeGap 으로 따로 적는다(후반 보류 19-3)
+  const verdicts = rs.map((r) => { const m = shapeMedians.get(shapeGroupOf(r.target))!; return classifyProfile(r, m, m); });
   // 천장: 같은 단계에서 칸마다 칸 값 1등(같은 값이면 모두 1등)을 센다
   for (const tier of medians.keys()) {
     const idx = rs.map((r, k) => (r.target.tier === tier ? k : -1)).filter((k) => k >= 0);
@@ -340,6 +342,73 @@ export function judgeProfileGoal(goal: BalanceProfile, v: ProfileVerdict): strin
   return fails;
 }
 
+/** 목표 미달로 남긴 몸 (C.524 조정 3회 규칙, docs/automation.md 4장) — 목표 모양 가드에서 벗어나도 경고만. 키 = 진화체 id/종족 */
+export const EVO_PROFILE_KNOWN: Readonly<Record<string, string>> = {
+  't4:normal:mixed/hollow':
+    '호로 에스칼레라(동반) — 상승 4.3%·둘 다 1.5%. 평타 버프가 혼합 몸 피해의 평타 몫(둘 다 칸 21%)에만 붙어 체인당 +6%×(1+3×노력치×블록)·지속 ×(1+투자)로도 작음(×10 까지 3회). 다른 곡선도 조건 밖(같은 타입 중앙값 근처)',
+  't4:water:special/hollow':
+    '호로 니에블라(블록·한방) — 블록 9.6%·한방 0.20. 2·3체인 치명 +를 블록 투자 비례(×3→×8)로 올려도 블록 이득 9~12%, 강적 시간 흔들림이 거의 안 늚. 다른 곡선도 조건 밖',
+  't4:fire:physical/hollow':
+    '호로 소로(노력, 사용자 예) — 노력치 6.8%(둘 다 +18%). 화상은 불 블록이 켜는데 측정 「노력치만」 칸엔 불 블록(흡수 특성)이 없어 노력치 이득이 안 남 — 측정 칸 구조. 여우불 2.5초·5개(사용자 확정) 그대로, 화상 +5%×(1+6×노력치)',
+  't4:fire:mixed/hollow':
+    '호로 브라사(블록) — 블록 2.7%. 열기(화상 3초) 발동이 판당 4~5번이라 열기당 피해를 블록 투자 비례 ×35 해야 블록 +13%(넓이 +14%) → ×10 남김. 3초·10%p(사용자 확정) 그대로. 다른 곡선도 조건 밖',
+  't4:thunder:mixed/hollow':
+    '호로 게파르도(동반 → 평탄, v6.176 배정 바꿈) — 평탄 조건 통과, 넓이 +10.4% = 몸(뇌 혼합 + 공속 특성). 낙뢰 간격 −30 → −15% 로 줄여도 +10.1% 라 원래 값으로',
+  't4:poison:special/hollow':
+    '호로 비보라(특성·강적) — 저점 4.1%·고점 1.7%·강적 0.22. 저점·고점 = 몸(무투자 칸엔 독 블록 없음). 독을 강적·보스 전용으로 바꿔도 강적 0.16 → 되돌림. 다른 곡선도 조건 밖',
+  't4:water:special/shinigami':
+    '사신 연우(블록·한방) — 블록 6.9%·한방 0.11. 장마 3체인 치명 피해를 블록 투자 ×15 비례까지 올려도 블록 11% → ×2 로 낮춤. 다른 곡선도 조건 밖',
+  't4:earth:special/shinigami':
+    '사신 만리장(특성) — 저점 −3.2%. 무투자 칸엔 흙 블록이 없어 굳음이 안 켜짐(저점 = 몸) → 되돌림',
+  't4:thunder:physical/shinigami':
+    '사신 섬뢰각(특성) — 저점 −1.6%. 무투자 칸엔 뇌 블록이 없어 분신이 안 켜짐(저점 = 몸) → 되돌림. 맞는 곡선 없음(한방 점수 1.2 는 남)',
+  'h4:void/shinigami':
+    '사신 공화(특성·잡몹) — 허무 스택은 원정 동안 쌓여(carry) 한 전투 측정에선 2개에 거의 못 닿아 능력이 0 — 측정 밖',
+  't4:water:mixed/hollow':
+    '호로 바라쿠다(동반) — 상승 0.9%. 다음 평타 치명 +(1·3·5회 사용자 확정)가 혼합 몸 평타 몫에만 붙어 ×10 비례도 효과 0 → ×2. 다른 곡선도 조건 밖',
+  't4:fire:special/hollow':
+    '호로 루시에르나가(블록·해방) — 블록 4.2%·해방 −0.47. 불빛 소모(3체인)가 판당 몇 번이라 ×15 비례도 블록 7% → ×3. 해방 불빛 +40%·+100% 로도 해방 중÷밖 비가 특수 몸 중앙값보다 낮음',
+  't4:earth:mixed/hollow':
+    '호로 토르투가(평탄·생존) — 생존 통과(1.7), 저점 4.5%(문턱 5%). 방어막 체인당 4 → 7%·반사 0.6 → 1.0 → 1.8 → 1.5',
+  't4:blood:physical/hollow':
+    '호로 추파카브라(평탄·생존) — 곡선·생존 통과, 넓이 +25.9% = 몸(혈 물리·흡혈) 차. 저장 상한·해방 남김을 낮춰도 그대로라 되돌림. 사용 문턱(저장 ≥ 최대 체력 30%, 마스터 확정)은 넣음',
+  't4:normal:special/shinigami':
+    '사신 현음(블록) — 블록 2.8%. 4·5체인 피해 +블록 투자 비례(+40% → +400%)를 붙여도 4체인 이상이 드물어 블록 9%까지 → 새 동작이라 되돌림(v6.176 능력 동작 그대로). 다른 곡선도 조건 밖',
+  't4:water:mixed/shinigami':
+    '사신 백랑파(동반·한방) — 상승 −3.2%. 블록 치명 +·확정 횟수 노력치×블록 비례를 붙여도 혼합 몸 평타 몫이 작아 효과가 안 보임 → 되돌림(v6.176). 다른 곡선도 조건 밖',
+  't4:fire:special/shinigami':
+    '사신 석양홍(블록·해방) — 블록 3.7%·해방 −0.26. 석양 배율 블록 투자 ×10 비례까지도 블록 6% → ×1, 만해 ×3. 다른 곡선도 조건 밖',
+  't4:earth:mixed/shinigami':
+    '사신 태산압정(평탄·선공) — 저점 3.0%·선공 0.08. 전투 시작 8초 안 흙 추가 피해 +100% 를 붙여도 선공 0.22 → 되돌림(v6.176). 다른 곡선도 조건 밖',
+  't4:blood:physical/shinigami':
+    '사신 주홍장(평탄·생존) — 곡선·생존 통과, 넓이 +26.1% = 몸(혈 물리) 차. 잃은 체력 비례 수치를 0.006 → 0.0015 로 줄여도 +25% → 되돌림',
+  'h4:hunter/shinigami':
+    '사신 추성(노력 → 평탄, 강적 = 사용자 강제) — 평탄 통과, 강적 0.29. 펫 공격(3초마다 20%)이 피해에서 작아 표식당 펫 공격력을 강적 전용·노력치 ×8 비례로 해도 그대로 → 되돌림(펫 70%·표식 10 = 사용자 확정). 2차 능력 때',
+};
+
+/** 목표 모양 가드를 경고로만 보는 까닭 (null = 실패로): 측정 제외(능력치 기반 — 균일 기준 몸에서 0) · 고유 능력 없는 몸(강제 성향만 — 2차 능력 때 맞춤) · 목표 미달 목록 */
+export function profileGoalHeld(t: Pick<ProfileTarget, 'formId' | 'factionId' | 'exempt' | 'hasAbility'>, known: Readonly<Record<string, string>> = EVO_PROFILE_KNOWN): string | null {
+  if (t.exempt) return `측정 제외 — ${t.exempt}`;
+  if (!t.hasAbility) return '고유 능력 없음 — 2차 능력 때 맞춤';
+  return known[evoBalKey(t)] ?? null;
+}
+
+/** 타입 차 (C.524 — 실제 규칙, 후반 보류 GDD 19-3): 같은 단계·같은 타입 중앙값 몸의 투자 칸 값(콘텐츠 가중) ÷ 같은 단계 중앙값. 특수 몸은 블록 투자 이득이 커서 '둘 다'가 높다 */
+export function typeGap(cls: Pick<ReturnType<typeof classifyAll>, 'medians' | 'shapeMedians'>): { group: string; tier: number; category: string; invest: Record<InvestId, number>; value: number }[] {
+  const W = P().value.content;
+  const out: { group: string; tier: number; category: string; invest: Record<InvestId, number>; value: number }[] = [];
+  for (const [group, sm] of cls.shapeMedians) {
+    const [tierS, category] = group.split('/') as [string, string];
+    const tm = cls.medians.get(Number(tierS));
+    if (!tm) continue;
+    const invest = {} as Record<InvestId, number>;
+    for (const i of INVESTS) invest[i] = CONTENTS.reduce((a, c) => a + (W[c] ?? 0) * (tm.cell[i][c] > 0 ? sm.cell[i][c] / tm.cell[i][c] : 0), 0);
+    const IW = P().value.invest;
+    out.push({ group, tier: Number(tierS), category, invest, value: INVESTS.reduce((a, i) => a + (IW[i] ?? 0) * invest[i], 0) });
+  }
+  return out.sort((a, b) => a.group.localeCompare(b.group));
+}
+
 // ── 출력 (npm run balance 표 · docs/drafts 문서) ──
 
 export const profileName = (t: Pick<EvoBalTarget, 'formId' | 'factionId'>): string => {
@@ -370,19 +439,19 @@ export function profileMarkdown(rows: readonly ProfileMeasure[], cls: ReturnType
   const L: string[] = [];
   const vOf = (r: ProfileMeasure) => cls.verdicts.find((v) => v.key === evoBalKey(r.target))!;
   const nameOf = (key: string) => profileName(rows.find((x) => evoBalKey(x.target) === key)!.target);
-  L.push(`# 진화체 모양 실측 (C.523, ${date}, BALANCE ${balanceVersion}, GDD v6.173 8-7)`, '');
+  L.push(`# 진화체 모양 실측 (C.524, ${date}, BALANCE ${balanceVersion}, GDD 8-7)`, '');
   L.push('> **개발용 내부 표기** — 곡선·성향은 게임 화면·도감 등 플레이어에게 보이지 않는다(사용자 2026-11-23). 배정·조정 = 마스터.', '');
   L.push('- 사용자 원문(11-23): "노력치 작, 블록 작 안해도 강하지만, 작 해도 리턴이 낮은 경우(저점 높고 고점 낮음) / 노력치작 안하면 개약한데, 노력치작 하면 개쎄짐 / 블록작 안하면 개약한데 블록작 하면 개쎄짐 / 노력, 블록작 같이 해야 점점 강해짐 / 저점도 낮고 고점도 낮지만, 특성이 매력적이라서 가져가야함. / 클리어 확률 자체는 조금 낮지만, 운만 좋으면 훨씬 빠르게 클리어 가능 / 일반 모험은 잘 못하는데, 보스전, 강적 등에는 강함" · "지구전도 없애자. 생존성향이랑 겹치니까. 체인성향도 없애" · "ㅇㅇ 그렇게 하고"(맞추는 방식).');
-  L.push('- 표기(GDD 8-7 v6.173) = 성장 곡선 5(평탄·노력·블록·동반·특성) × 전투 성향 6(한방·강적·잡몹·선공·생존·해방). 이 표는 **지금 몸의 측정된 모양**(자동 추정) — 목표는 `src/data/evolution/balanceProfiles.json`(지금 전부 null).');
+  L.push('- 표기(GDD 8-7 v6.173) = 성장 곡선 5(평탄·노력·블록·동반·특성) × 전투 성향 6(한방·강적·잡몹·선공·생존·해방). 이 표는 **지금 몸의 측정된 모양**(자동 추정) — 목표는 `src/data/evolution/balanceProfiles.json`(1차 배정 마스터AS 11-23, `docs/drafts/evo-assign-1123.md`), 목표 대비 = 7절.');
   L.push('- 다시 뽑기: `npm run balance -- --only=evoProfile --profile-md=docs/drafts/evo-profile-1123.md` (약 75초). 측정 코드 `scripts/lib/evoProfile.ts`, 기준·문턱 `BALANCE.provisional.evoProfile`(전부 마스터AR provisional).', '');
   L.push('## 1. 재는 법');
   L.push(`- 몸: 4단계 진화체 ${rows.length}칸(진화체 ${new Set(rows.map((r) => r.target.formId)).size}종 × 종족 2, 고유 능력 있음 ${rows.filter((r) => r.target.hasAbility).length}칸). 기준 몸 = C.520 과 같음(4단계 기준 능력치 균일 97.5 · 리스크 50 · 해방 전 몸 + 레스렉시온/만해 몸 같은 판 수 · 고유 능력 켬).`);
   L.push(`- 투자 4칸: **무투자**(노력치 0 · 흡수 특성/블록 강화 없음 = 기본 블록만) / **노력치만**(4단계 노력치 상한 합계 ${evCaps(3).total}을 타입별로 — 물리 공격·공속 35%씩, 특수 지능·블록속도 35%씩, 혼합 넷에 17.5%씩, 나머지 체력·방어·정신 10%씩) / **블록만**(그 속성 공격 특성 2개 + 그 속성 강화 ${E.invest.enhance}단계 = 블록 위력 +50%) / **둘 다**.`);
   L.push(`- 콘텐츠 3: 권장 ★(★4) 일반 24종 × ${E.seeds.n}판 · 강적 24종 × ${E.seeds.e}판 · ★4 보스 2종 × ${E.seeds.b}판, 몸 2개(해방 전/해방) — 투자 칸마다 같은 시드(짝 비교). 사람형 봇.`);
-  L.push('- 칸 값 = 승률 ÷ 처치 초(초당 기대 처치 수). **12칸 점수 = 같은 단계 54칸의 그 칸 중앙값(= 같은 단계 기준 몸) 대비 ×100**.');
+  L.push('- 칸 값 = 승률 ÷ 처치 초(초당 기대 처치 수). **12칸 점수 = 같은 단계·같은 타입(물리·특수·혼합) 몸들의 그 칸 중앙값 대비 ×100** (C.524 — 단계 전체 중앙값이면 특수 몸의 큰 블록 투자 이득이 물리 몸 \'둘 다\'를 낮게 보이게 함. 타입 차 = 8절).');
   L.push('- 성향 지표: 한방 = 강적 처치 초 변동계수(투자 칸마다 낸 뒤 평균)·하위 10% 시간 ÷ 평균 · 선공 = 전투 앞 1/3 초당 피해 ÷ 뒤 1/3 · 해방 = 해방 중 초당 피해 ÷ 밖 · 생존 = 강적·보스 패배율 · 강적/잡몹 = 콘텐츠별 점수 비. (지구전·체인은 v6.173 에서 뺌)', '');
   L.push('## 2. 맞추는 방식 · 자동 분류 규칙 (provisional)');
-  L.push(`- ① **넓이(총점)** = Σ 칸 무게 × 12칸 점수, 칸 무게 = 투자(무투자 ${E.value.invest.none}·노력치 ${E.value.invest.ev}·블록 ${E.value.invest.blk}·둘 다 ${E.value.invest.both}) × 콘텐츠(일반 ${E.value.content.n}·강적 ${E.value.content.e}·보스 ${E.value.content.b}). 같은 단계 중앙값 ±${E.value.band * 100}%(특성 곡선 ${E.value.traitLow * 100}%까지) — 밖 = ◆.`);
+  L.push(`- ① **넓이(총점)** = Σ 칸 무게 × 12칸 점수, 칸 무게 = 투자(무투자 ${E.value.invest.none}·노력치 ${E.value.invest.ev}·블록 ${E.value.invest.blk}·둘 다 ${E.value.invest.both}) × 콘텐츠(일반 ${E.value.content.n}·강적 ${E.value.content.e}·보스 ${E.value.content.b}). 같은 단계·같은 타입 중앙값 ±${E.value.band * 100}%(특성 곡선 ${E.value.traitLow * 100}%까지) — 밖 = ◆.`);
   L.push('- ② **모양**: 같은 단계·**같은 타입**(물리·특수·혼합) 중앙값 대비 — 몸 타입 차(물리 몸 = 전투 앞쪽이 셈, 특수 몸 = 블록이 쌓이는 뒤쪽이 셈)가 모양을 덮지 않게. 곡선 특징(log 비, 콘텐츠 가중): 저점 lo = 무투자, 고점 hi = 둘 다, 노력치 이득 ev = 노력치만 − 무투자, 블록 이득 blk = 블록만 − 무투자, 같이 키움 상승 syn = (둘 다 − 무투자) − ev − blk.');
   L.push(`- 곡선 = 특징 ÷ d(${E.curve.d})와 **방향(코사인 유사도)이 가장 가까운** 원형: ${PROFILE_CURVES.map((c) => { const p = E.curve.prototypes[c.id]!; return `${c.name}(lo ${p.lo}·hi ${p.hi}·ev ${p.ev}·blk ${p.blk}·syn ${p.syn})`; }).join(' · ')}. 확신도 높음 = 유사도 ≥ ${E.curve.confHigh.cos} 이고 중앙에서 ${E.curve.confHigh.norm}d 이상, 중간 = ${E.curve.confMid.cos}·${E.curve.confMid.norm}d, 나머지 낮음(같은 타입 중앙값 근처 — 곡선이 뚜렷하지 않음).`);
   L.push(`- 성향 = 점수(특징 ÷ 문턱)가 가장 큰 것, 1 미만이면 성향 없음. 문턱: ${PROFILE_LEANS.map((l) => `${l.name} ${E.lean.thresholds[l.id]}`).join(' · ')} (log 비). 한방은 강적 승률이 중앙값보다 높으면 ×0.5, 생존은 처치 속도가 중앙값 +5% 넘으면 ×0.5. 확신도 높음 ≥ ${E.lean.confHigh} · 중간 ≥ ${E.lean.confMid}.`);
@@ -401,12 +470,12 @@ export function profileMarkdown(rows: readonly ProfileMeasure[], cls: ReturnType
   const clear = all.filter((v) => v.curve.conf !== '낮음' || (v.lean.conf !== null && v.lean.conf !== '낮음'));
   L.push(`- 모양이 뚜렷한 몸(곡선 확신 중간 이상 또는 성향 확신 중간 이상, ${clear.length}칸): ${clear.map((v) => `${nameOf(v.key)} ${curveName(v.curve.id).replace(' 곡선', '')}(${v.curve.conf})${v.lean.id ? `·${leanName(v.lean.id).replace(' 성향', '')}(${v.lean.conf})` : ''}`).join(' / ')}`);
   L.push(`- 바닥 미달 ${all.filter((v) => v.floor.length).length}칸 · 천장(12칸 전부 1등) ${all.filter((v) => v.topCells > E.ceiling.maxTopCells).length}칸 · 넓이 ◆ ${all.filter((v) => v.valueDev > E.value.band || v.valueDev < -E.value.band).length}칸.`, '');
-  L.push('## 4. 12칸 점수표 (같은 단계 기준 몸 = 100) · 넓이 · 바닥/천장');
+  L.push('## 4. 12칸 점수표 (같은 단계·같은 타입 중앙값 = 100) · 넓이 · 바닥/천장');
   L.push('| 진화체(종족) | id | 타입 | 고유 능력 | 무투자 일/강/보 | 노력치만 | 블록만 | 둘 다 | 넓이(총점) | 추정 곡선(확신) | 추정 성향(확신) | 바닥 미달 | 1등 칸 |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|');
   const sorted = [...rows].sort((a, b) => a.target.factionId.localeCompare(b.target.factionId) || a.target.formId.localeCompare(b.target.formId));
   for (const r of sorted) {
     const v = vOf(r);
-    const sc = scoreTable(r, cls.medians.get(r.target.tier)!);
+    const sc = scoreTable(r, cls.shapeMedians.get(shapeGroupOf(r.target))!);
     const cells = INVESTS.map((i) => CONTENTS.map((c) => sc[i][c].toFixed(0)).join('/'));
     const off = v.valueDev > E.value.band || v.valueDev < -E.value.band;
     L.push(`| ${profileName(r.target)} | ${r.target.formId} | ${CAT_NAMES[r.target.category] ?? r.target.category} | ${r.target.hasAbility ? (r.target.exempt ? '있음(측정 제외)' : '있음') : '없음'} | ${cells.join(' | ')} | ${(v.value * 100).toFixed(0)} (${sg(v.valueDev)})${off ? ' ◆' : ''} | ${curveName(v.curve.id)}(${v.curve.conf}) | ${leanName(v.lean.id)}${v.lean.conf ? `(${v.lean.conf})` : ''} | ${v.floor.length ? v.floor.join(', ') : '-'} | ${v.topCells} |`);
@@ -423,8 +492,26 @@ export function profileMarkdown(rows: readonly ProfileMeasure[], cls: ReturnType
   }
   L.push('');
   const flagged = [...all].filter((v) => v.valueDev > E.value.band || v.valueDev < -E.value.band).sort((a, b) => Math.abs(b.valueDev) - Math.abs(a.valueDev));
-  L.push(`## 6. 넓이 차가 큰 몸 (같은 단계 중앙값 ±${E.value.band * 100}% 밖, ${flagged.length}칸 — 특성 곡선 목표면 ${E.value.traitLow * 100}%까지 허용)`);
+  L.push(`## 6. 넓이 차가 큰 몸 (같은 단계·같은 타입 중앙값 ±${E.value.band * 100}% 밖, ${flagged.length}칸 — 특성 곡선 목표면 ${E.value.traitLow * 100}%까지 허용)`);
   for (const v of flagged) L.push(`- ${nameOf(v.key)} \`${v.key}\` ${sg(v.valueDev)} — ${curveName(v.curve.id)}·${leanName(v.lean.id)}`);
+  L.push('');
+  // 7. 목표 대비 (balanceProfiles.json 이 있는 몸)
+  const goals = sorted.filter((r) => r.target.goal);
+  const judged = goals.map((r) => ({ r, fails: judgeProfileGoal(r.target.goal!, vOf(r)), held: profileGoalHeld(r.target) }));
+  L.push(`## 7. 목표 대비 (목표가 있는 ${goals.length}칸 — 통과 ${judged.filter((j) => j.fails.length === 0).length} · 미달 ${judged.filter((j) => j.fails.length > 0).length}, 그중 경고로 둔 칸 ${judged.filter((j) => j.fails.length > 0 && j.held).length})`);
+  L.push('| 진화체(종족) | 목표 | 추정 | 곡선 특징 lo/hi/ev/blk/syn/both | 목표 성향 점수 | 넓이 | 결과 |', '|---|---|---|---|---|---|---|');
+  for (const { r, fails, held } of judged) {
+    const v = vOf(r);
+    const g = r.target.goal!;
+    const f = v.feat;
+    const why = fails.map((x) => x.replace(/^진화체 모양: \S+ 목표 \S+ — /, '')).join(' / ');
+    L.push(`| ${profileName(r.target)} | ${g.curve ? curveName(g.curve) : '곡선 없음'}${g.lean ? `·${leanName(g.lean)}` : ''} | ${curveName(v.curve.id)}·${leanName(v.lean.id)} | ${[f.lo, f.hi, f.ev, f.blk, f.syn, f.both].map((x) => x.toFixed(2)).join('/')} | ${g.lean ? (v.lean.scores[g.lean] ?? 0).toFixed(2) : '-'} | ${sg(v.valueDev)} | ${fails.length === 0 ? '통과' : `미달${held ? `(경고 — ${held.split(' — ')[0]})` : ''}: ${why}`} |`);
+  }
+  L.push('');
+  L.push('## 8. 타입 차 (실제 규칙 — 후반 보류 GDD 19-3, 고치지 않음)');
+  L.push('- 같은 단계·같은 타입 중앙값 몸의 투자 칸 값(콘텐츠 가중) ÷ 같은 단계 중앙값 ×100. 특수 몸은 블록이 피해 대부분이라 블록 투자(특성·강화)와 지능 노력치가 곱으로 붙고, 물리 몸은 평타가 대부분이라 블록 투자 이득이 작다.');
+  L.push('| 단계/타입 | 무투자 | 노력치만 | 블록만 | 둘 다 | 넓이 |', '|---|---|---|---|---|---|');
+  for (const g of typeGap(cls)) L.push(`| ${g.tier}단계 ${CAT_NAMES[g.category] ?? g.category} | ${(g.invest.none * 100).toFixed(0)} | ${(g.invest.ev * 100).toFixed(0)} | ${(g.invest.blk * 100).toFixed(0)} | ${(g.invest.both * 100).toFixed(0)} | ${(g.value * 100).toFixed(0)} |`);
   L.push('');
   return L.join('\n');
 }
