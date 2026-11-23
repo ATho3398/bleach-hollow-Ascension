@@ -25,7 +25,8 @@ describe('241-B 1: 각본 전투 해방 안내 카드', () => {
     // GDD 243장 9 보충(C.411): 영력 해방은 블록만 빨라진다 — 공격 속도는 진화 뒤 해방({libFullName})부터
     expect(ex.body).toContain('{libName}하면 블록이 빨리 나온다.');
     expect(ex.body).not.toContain('공격 속도도 빨라진다');
-    expect(ex.body).toContain('{libFullName}이(가) 되면 공격 속도와 진화체만의 효과도 붙는다');
+    // C.522 점검D TOP 8: 옛 기대 '진화가 끝나 {libFullName}이(가) 되면' → 4단계 뒤 승급({ascName})을 마쳐야 레스렉시온/만해
+    expect(ex.body).toContain('4단계 뒤 {ascName}까지 마쳐 {libFullName}이(가) 되면 공격 속도와 진화체만의 효과도 붙는다');
     expect(read('src/ui/battleView.ts')).toContain("libName: labels.liberation.name, libFullName: bf.liberation.name");
   });
 });

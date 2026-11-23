@@ -21,6 +21,14 @@ export type InfoBody = string | string[] | InfoGroup[] | InfoDoc;
 
 let openPop: { close: () => void } | null = null;
 
+/** 열린 설명 창을 닫는다 (점검D TOP 2 — 튜토리얼 카드가 뜰 때 상태 설명창이 카드를 덮지 않게) */
+export function closeInfoTips(): void {
+  openPop?.close();
+}
+
+/** 열린 창 내용 다시 보기 간격 (점검D TOP 2): 값이 바뀌면 창도 지금 값으로, ⓘ 가 화면에서 빠지면(방을 다시 그림) 창을 닫는다 */
+export const INFO_TIP_SYNC_MS = 250;
+
 function bodyNodes(body: InfoBody): HTMLElement[] {
   if (typeof body === 'string') return [el('p', 'bha-pop__text', body)];
   if (!Array.isArray(body)) return [el('p', 'bha-pop__text', body.lead), ...bodyNodes(body.groups)];
@@ -49,6 +57,8 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
   let pinned = false;
   let unreg = (): void => undefined;
   let leaveTimer = 0;
+  let syncTimer = 0;
+  let shownText = '';
   const onDown = (e: PointerEvent) => {
     const t = e.target as Node | null;
     if (pop && t && (pop.contains(t) || b.contains(t))) return;
@@ -58,6 +68,7 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
   };
   function close(): void {
     if (!pop) return;
+    window.clearInterval(syncTimer);
     pop.remove();
     pop = null;
     pinned = false;
@@ -85,7 +96,9 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     pop.addEventListener('pointerleave', (e) => {
       if (e.pointerType === 'mouse' && !pinned) close();
     });
-    pop.append(el('b', 'bha-pop__title', label), ...bodyNodes(typeof body === 'function' ? body() : body));
+    const content = bodyNodes(typeof body === 'function' ? body() : body);
+    shownText = content.map((n) => n.textContent ?? '').join('\n');
+    pop.append(el('b', 'bha-pop__title', label), ...content);
     host.append(pop);
     // 자리: 아이콘 아래(넘치면 위), 가로는 아이콘 가운데 · 오버레이 자리 안으로 묶는다. 기기가 확대돼 있으면 화면 px → 자리 px
     // C.183 UI 검수: 기기 안 좌표로 잰다 — 화면 좌표 그대로면 세로 회전 출력(기기 90°)에서 창이 LCD 밖으로 나가 잘렸다
@@ -133,9 +146,30 @@ export function infoTip(label: string, body: InfoBody | (() => InfoBody)): HTMLB
     pinned = pin;
     if (pin) unreg = registerLayer(pop, close);
     document.addEventListener('pointerdown', onDown, true);
+    // 열린 동안 (점검D TOP 2): ⓘ 가 화면에서 빠지면(방·온천을 다시 그림) 닫고, 내용이 함수면 지금 값으로 바뀐 것만 다시 쓴다
+    syncTimer = window.setInterval(() => syncOpen(), INFO_TIP_SYNC_MS);
     b.setAttribute('aria-expanded', 'true');
     b.classList.add('is-open');
     openPop = { close };
+  }
+  function syncOpen(): void {
+    if (!pop) return;
+    if (!b.isConnected) {
+      close();
+      return;
+    }
+    if (typeof body !== 'function') return;
+    const content = bodyNodes(body());
+    const text = content.map((n) => n.textContent ?? '').join('\n');
+    if (text === shownText) return;
+    shownText = text;
+    const p = pop;
+    const top = p.scrollTop;
+    // 제목(첫 칸)과 '▼ 더 있음'(끝 칸)은 그대로, 가운데 내용만 바꾼다
+    const title = p.firstElementChild;
+    const more = p.lastElementChild;
+    p.replaceChildren(...(title ? [title] : []), ...content, ...(more && more !== title ? [more] : []));
+    p.scrollTop = top;
   }
   // 부모가 버튼(방 상태 칩)이어도 그쪽 누름으로 번지지 않게
   b.addEventListener('click', (e) => {

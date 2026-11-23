@@ -349,12 +349,12 @@
       "shinigami": {
         "trait": "obliteration",
         "ability": {
-          "description": { "*": "바 맨 앞 {fixed}칸 = 허무 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 허무 +1(모험 동안 유지), 허무 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 허무 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
+          "description": { "*": "바 맨 앞 {fixed}칸 = 낙화 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 허무 +1(모험 동안 유지), 허무 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 낙화 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
           "stacks": {
             "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "허무" } } }
           },
           "specials": {
-            "nil": { "name": { "*": "허무 블록" }, "short": "허", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock", "offNote": { "*": "허무 2개부터 켜진다 (3체인 {within}초 안 {streak}번 = 허무 +1)" } }
+            "nil": { "name": { "*": "낙화 블록" }, "short": "낙", "description": { "*": "적 체력이 블록 처형선 아래면 누르면 처형 (강적·보스는 못 씀, 써도 칸은 그대로)" }, "fixed": "fixed", "keep": true, "usable": "execBlock", "offNote": { "*": "허무 2개부터 켜진다 (3체인 {within}초 안 {streak}번 = 허무 +1)" } }
           },
           "rules": [
             { "on": "block", "chain": [3], "streak": { "count": "streak", "withinSeconds": "within" }, "do": [{ "act": "add", "stack": "hollow", "value": 1 }], "proc": "허무!" },

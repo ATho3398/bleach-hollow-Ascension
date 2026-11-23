@@ -50,7 +50,8 @@ describe('① 허 속성 표시 = 허무 (데이터 키 kyo 그대로)', () => {
   });
   it('공화 특수 블록 = 허무 블록 · 폭주 블록(옛 허 블록)·공허의 밤은 그대로', () => {
     const j = readFileSync('src/data/evolution/uniques.json', 'utf8');
-    expect(j).toContain('"name": { "*": "허무 블록" }');
+    // C.522 GDD v6.168: 공화 특수 블록 표시 이름 = '낙화 블록'(허무 블록 ≠ 공화 전용 블록) — 옛 기대 = '허무 블록'
+    expect(j).toContain('"name": { "*": "낙화 블록" }');
     expect(readFileSync('src/data/tiles/mutations.json', 'utf8')).toContain('공허의 밤');
   });
   it('두 글자 약어는 동그라미 대신 알약 (기존 토큰만)', () => {

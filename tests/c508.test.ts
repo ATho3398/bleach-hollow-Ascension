@@ -228,7 +228,8 @@ describe('C8 공화 공허 블록: 글자 = 데이터(공) · 꺼진 이유 안�
     expect(v).toContain('setV2Locked(node, locked, !sealedNow)');
     const j = readFileSync('src/data/evolution/uniques.json', 'utf8');
     // GDD 8-8 v6.154 (사용자 2026-11-21 "용어는 허무로 가자"): 공화 특수 블록 = '허무 블록'·글자 '허' — 옛 기대 = '공허 블록'·'공'
-    expect(j).toMatch(/"name": \{ "\*": "허무 블록" \}, "short": "허"/);
+    // C.522 GDD v6.168 (사용자 2026-11-23 "아직도 허무=폭주로 돼있는거 같은거 싹 다 수정"): 공화 특수 블록 = '낙화 블록'·글자 '낙' — 옛 기대 = '허무 블록'·'허'
+    expect(j).toMatch(/"name": \{ "\*": "낙화 블록" \}, "short": "낙"/);
   });
 });
 

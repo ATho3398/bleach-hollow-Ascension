@@ -288,6 +288,27 @@ export function createDock(o: DockOpts): Dock {
     }
     // 펼친 줄은 장면 위에 떠 있으니 기기 버튼 선택에서 먼저 (보이는 위치 순서 안에서도 맨 앞 묶음, GDD 63장)
     for (const b of trayBtns) b.setAttribute('data-dev-order', '-1');
+    requestAnimationFrame(syncTagsUnderTray);
+  }
+
+  /**
+   * 펼친 줄에 가려지는 방 물건 이름표 숨기기 (C.522 점검D TOP 4): 먹이·소모품 줄을 펼치면 문 '월드맵'·가방 이름표가 줄 뒤로 반쯤 가려
+   * 윗부분만 삐져나와 보였다 — 펼친 동안 줄과 겹치는 이름표만 숨기고(.is-under-tray), 닫으면 되돌린다
+   */
+  function syncTagsUnderTray(): void {
+    const scope = root.closest('.bha-app') ?? root.parentElement;
+    if (!scope) return;
+    const tags = [...scope.querySelectorAll<HTMLElement>('.bha-prop__tag')];
+    const open = panel !== CLOSED && root.isConnected && !tray.hidden;
+    const t = open ? tray.getBoundingClientRect() : null;
+    for (const tag of tags) {
+      let under = false;
+      if (t && t.width > 0 && t.height > 0) {
+        const r = tag.getBoundingClientRect();
+        under = r.right > t.left && r.left < t.right && r.bottom > t.top && r.top < t.bottom;
+      }
+      tag.classList.toggle('is-under-tray', under);
+    }
   }
 
   /** opener = 이 펼침을 바꾼 버튼. 줄이 닫히면 거기에 기기 초점을 둔다(열리면 펼친 줄 첫 칸) */

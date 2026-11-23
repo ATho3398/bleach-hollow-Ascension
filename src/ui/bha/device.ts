@@ -93,6 +93,8 @@ const markOf = (els: readonly HTMLElement[], at: number): FocusMark | null => {
 const isMark = (m: unknown): m is FocusMark => !!m && typeof (m as FocusMark).sig === 'string' && typeof (m as FocusMark).nth === 'number';
 
 // [data-dev-press] = 버튼이 아닌 누를 대상(전투 블록 칸): ✓ 는 click 대신 'bha-press' 이벤트를 보낸다 (C.197)
+/** 진입 보호 중 ✓ 를 누르면 지금부터 이만큼 다시 늘린다 (C.522 — 튜토리얼 카드 TUT_CONFIRM_HOLD_MS 와 같은 값) */
+export const DEV_CONFIRM_HOLD_EXTEND_MS = 300;
 const AUTO_SELECTOR = 'button, a[href], input, select, summary, [role="tab"], [data-dev-press]';
 
 /** 지금 누를 수 없는 대상 (▲▼ 가 건너뛴다, GDD 122장 3): 흐린 버튼(is-disabled·aria-disabled), 빈·잠긴 블록 칸(data-dev-off). 전투에서만 본다 */
@@ -519,6 +521,15 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   function confirm(): void {
     const cur = items[index];
     if (!cur) return;
+    // 진입 보호 (C.522): data-dev-hold-until(performance.now 기준 ms) 전의 ✓ 는 받지 않고 그만큼 다시 늘린다 — 막 뜬 튜토리얼 카드를 연타로 넘기지 않게
+    const hold = Number(cur.el.dataset.devHoldUntil ?? 0);
+    if (hold > 0) {
+      const now = performance.now();
+      if (now < hold) {
+        cur.el.dataset.devHoldUntil = String(now + DEV_CONFIRM_HOLD_EXTEND_MS);
+        return;
+      }
+    }
     if (cur.activate) cur.activate();
     else if (cur.el.hasAttribute('data-dev-press')) cur.el.dispatchEvent(new CustomEvent('bha-press'));
     else cur.el.click();

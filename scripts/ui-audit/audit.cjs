@@ -11,7 +11,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { snapshotInPage, staticInPage, cardsInPage, boxGlowInPage } = require('./checks.cjs');
-const { SCREENS } = require('./screens.cjs');
+const { SCREENS, passIdentity } = require('./screens.cjs');
 const { phoneInPage } = require('./phone-checks.cjs');
 
 const ROOT = path.resolve(__dirname, '../..');
@@ -440,9 +440,10 @@ async function newGame(page, url, factionIndex) {
   await page.waitForTimeout(300);
   await page.locator('.bha-species__card').nth(factionIndex).click();
   await page.waitForTimeout(300);
-  await page.getByRole('button', { name: '시작', exact: true }).click();
+  await passIdentity(page);
   await page.waitForTimeout(1400);
 }
+
 
 (async () => {
   const server = await startServer();

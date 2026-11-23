@@ -77,10 +77,10 @@ export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
     }
     // 충전 평타 (v6.069 월아천충) · 마무리 스택 (두 번째 해방 중 — 최후의 월아천충)
     const chargeName = kit.blocks.find((b) => b.chargeShot)?.chargeShot?.name;
-    if (chargeName && k.charges > 0) out.push(mark('charge', String(k.charges), `다음 평타 ${chargeName} ${k.charges}회`, { name: chargeName, full: true }));
+    if (chargeName && k.charges > 0) out.push(mark('charge', String(k.charges), `다음 일반 공격 ${chargeName} ${k.charges}회`, { name: chargeName, full: true }));
     const ms = kit.mastery;
     if (ms && kitSecondOn(s)) {
-      out.push(mark('final', String(k.finalStack), `${ms.finisherName} ${k.finalStack}/${ms.stacks} — ${ms.releaseName} 중 평타 1대마다 +1, ${ms.stacks}이면 다음 평타가 ${ms.finisherName}`, { name: ms.finisherName, full: k.finalStack >= ms.stacks }));
+      out.push(mark('final', String(k.finalStack), `${ms.finisherName} ${k.finalStack}/${ms.stacks} — ${ms.releaseName} 중 일반 공격 1대마다 +1, ${ms.stacks}이면 다음 일반 공격이 ${ms.finisherName}`, { name: ms.finisherName, full: k.finalStack >= ms.stacks }));
     }
     // 자세 모드 (천년혈전, C.460): 자세마다 스택 · 발도 충전 · 자세 무너짐 · 유지 보너스
     const sk = kit.stance;
@@ -101,7 +101,7 @@ export function statusMarksOf(s: CombatState, factionId = '*'): StatusMark[] {
         out.push(mark('broken', String(Math.ceil(left)), `${STATUS_MARK_DEFS.broken.name} — 받는 피해 +${pct(broken)}% (${left.toFixed(1)}초)`));
       }
       const hold = stanceHoldBonusOf(s);
-      if (hold > 0) out.push(mark('hold', `+${pct(hold)}`, `${cur?.name ?? ''} 유지 — 평타 피해 +${pct(hold)}%`, { name: `${cur?.name ?? ''} 유지` }));
+      if (hold > 0) out.push(mark('hold', `+${pct(hold)}`, `${cur?.name ?? ''} 유지 — 일반 공격 피해 +${pct(hold)}%`, { name: `${cur?.name ?? ''} 유지` }));
     }
     // 회피 치명 버프 (v6.066)
     const eb = kit.evadeBuff;

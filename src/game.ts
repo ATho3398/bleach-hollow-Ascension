@@ -2829,6 +2829,9 @@ function runSaveMigrations(save: SaveData): boolean {
   return true;
 }
 
+/** 마지막 migrateSave 가 형식 문턱 뒤(변환 단계·값 검사)에서 null 을 돌려준 까닭 (saveRejectReason 이 읽는다, C.522 점검D TOP 7) */
+let migrateRejectDetail: string | null = null;
+
 /** 이전 형식 세이브를 현재 형식으로 올린다. 알 수 없는 데이터는 null */
 export function migrateSave(raw: unknown, min: number = saveFormatGate.min): SaveData | null {
   if (typeof raw !== 'object' || raw === null) return null;
@@ -3116,8 +3119,14 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   // 테스트가 옛 마이그레이션 코드를 시험하려고 문턱을 내렸을 때만 끝까지 올라간 옛 세이브를 54 로 찍는다(그사이 새 필드는 아래 보정의 기본값)
   if (min < LEGACY_MIGRATION_FLOOR && save.meta.format < LEGACY_MIGRATION_FLOOR) save.meta.format = LEGACY_MIGRATION_FLOOR;
   // 형식 54 부터는 한 단계씩 (GDD 123장 6, C.198)
-  if (!runSaveMigrations(save)) return null;
-  if (!repairCore(save)) return null;
+  if (!runSaveMigrations(save)) {
+    migrateRejectDetail = `형식 ${save.meta.format} → ${save.meta.format + 1} 변환 단계가 없다`;
+    return null;
+  }
+  if (!repairCore(save)) {
+    migrateRejectDetail = `값 검사 실패: ${trackShapeProblem(save) ?? '트랙 구조'}`;
+    return null;
+  }
   // 트랙 = 캐릭터 최대 twoTrack.maxTracks + 초월자 최대 초월자 종 수 (GDD 12-4 v6.028). 모르는 초월자 id 는 캐릭터 트랙으로 읽힌다(겹치면 버림)
   save.transcendentId = sanitizeTranscendentId(save.transcendentId);
   const activeId = trackIdOf(save);
@@ -3428,7 +3437,7 @@ function sanitizeCombatBasis(t: Pick<SaveData, TrackKey>): void {
     const formId = typeof v.formId === 'string' && tryGetForm(v.formId) ? v.formId : null;
     const hist = Array.isArray(v.formHistory) ? v.formHistory.filter((x): x is string => typeof x === 'string' && tryGetForm(x) !== undefined) : [];
     const b = v.build;
-    if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots) || !coreValuesValid(v.factionId, { ev: zeroStats(), tierIndex: 0 }, b)) continue;
+    if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots) || coreValuesProblem(v.factionId, { ev: zeroStats(), tierIndex: 0 }, b) !== null) continue;
     builds[k] = { factionId: v.factionId, formId, formHistory: formId && !hist.includes(formId) ? [...hist, formId] : hist, ...(v.ascended === true ? { ascended: true } : {}), build: v.build as BuildState, abilities: sanitizeLoadout(v.abilities, e.tierIndex, t.rebirth?.count) };
   }
   if (!builds[TRANSCENDENT_BASIS]) builds[TRANSCENDENT_BASIS] = { factionId: t.factionId, formId: e.formId, formHistory: [...e.formHistory], ...(e.ascended ? { ascended: true } : {}), build: cloneBuildOf(t.build), abilities: e.abilities ? cloneLoadout(e.abilities) : newAbilityLoadout() };
@@ -3445,25 +3454,39 @@ function sanitizeTranscendentId(v: unknown): string | null {
 
 /** 쉬는 트랙의 뼈대 검사: 화면·엔진이 바로 읽는 구조가 있어야 쓴다 (없으면 그 트랙은 버린다) */
 function isTrackShape(t: unknown): boolean {
-  if (!isRec(t) || typeof t.factionId !== 'string' || !FACTIONS.some((f) => f.id === t.factionId)) return false;
+  return trackShapeProblem(t) === null;
+}
+
+/** 트랙 뼈대·값 검사에서 처음 걸린 까닭 (한 줄, 문제없으면 null) — isTrackShape 와 같은 순서 (C.522 점검D TOP 7: 거절 이유를 구체적으로) */
+function trackShapeProblem(t: unknown): string | null {
+  if (!isRec(t)) return '트랙 내용이 객체가 아니다';
+  if (typeof t.factionId !== 'string' || !FACTIONS.some((f) => f.id === t.factionId)) return `모르는 종족 id(${String(t.factionId)})`;
   const evo = t.evolution, b = t.build, log = t.runLog;
-  return isRec(t.nest) && isRec(b) && Array.isArray(b.owned) && Array.isArray(b.slots) && isRec(evo) && typeof evo.tierIndex === 'number' && isRec(evo.ev) && isRec(evo.elementAbsorbs) && Array.isArray(evo.formHistory)
-    && isRec(log) && Array.isArray(log.battles) && Array.isArray(log.runs) && Array.isArray(log.absorbs) && isRec(log.tiers) && Array.isArray((log.tiers as Record<string, unknown>).evolutions) && isRec(log.risk)
-    && coreValuesValid(t.factionId, evo, b);
+  if (!isRec(t.nest)) return '둥지(nest) 값이 없다';
+  if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots)) return '블록 보유·슬롯 목록이 없다';
+  if (!isRec(evo) || typeof evo.tierIndex !== 'number' || !isRec(evo.ev) || !isRec(evo.elementAbsorbs) || !Array.isArray(evo.formHistory)) return '진화 상태(단계·능력치·속성 흡수·진화 기록)가 없다';
+  if (!isRec(log) || !Array.isArray(log.battles) || !Array.isArray(log.runs) || !Array.isArray(log.absorbs) || !isRec(log.tiers) || !Array.isArray((log.tiers as Record<string, unknown>).evolutions) || !isRec(log.risk)) return '런 로그 구조가 없다';
+  return coreValuesProblem(t.factionId, evo, b);
 }
 
 /** 세이브 내부 값 최소 검증 (C.139, GDD 88장 3): 능력치 6키 유한수·단계 정수 범위·보유/장착 특성 id 존재·슬롯 길이(최소 칸 수).
- *  틀리면 그 트랙은 못 쓴다(지금 트랙이면 로드 실패 → 백업 복구). 손으로 고친 세이브가 화면·전투에서 NaN·예외로 터지는 걸 막는다 */
-function coreValuesValid(factionId: string, evo: Record<string, unknown>, b: Record<string, unknown>): boolean {
+ *  틀리면 그 트랙은 못 쓴다(지금 트랙이면 로드 실패 → 백업 복구). 손으로 고친 세이브가 화면·전투에서 NaN·예외로 터지는 걸 막는다.
+ *  돌려주는 값 = 처음 걸린 까닭(문제없으면 null) */
+function coreValuesProblem(factionId: string, evo: Record<string, unknown>, b: Record<string, unknown>): string | null {
   const ev = evo.ev as Record<string, unknown>;
-  if (!STAT_IDS.every((k) => typeof ev[k] === 'number' && Number.isFinite(ev[k]))) return false;
+  const badStat = STAT_IDS.find((k) => typeof ev[k] !== 'number' || !Number.isFinite(ev[k]));
+  if (badStat) return `능력치 ${badStat} 값이 숫자가 아니다(${String(ev[badStat])})`;
   const tier = evo.tierIndex as number;
-  if (!Number.isInteger(tier) || tier < 0 || tier >= getFaction(factionId).tierNames.length) return false;
+  if (!Number.isInteger(tier) || tier < 0 || tier >= getFaction(factionId).tierNames.length) return `단계 번호가 범위 밖이다(${String(tier)})`;
   const owned = b.owned as unknown[];
-  if (!owned.every((id) => typeof id === 'string' && TRAITS.some((x) => x.id === id))) return false;
+  const badOwned = owned.find((id) => typeof id !== 'string' || !TRAITS.some((x) => x.id === id));
+  if (badOwned !== undefined) return `보유 블록에 모르는 블록 id(${String(badOwned)})`;
   const slots = b.slots as unknown[];
   // 슬롯은 최소 slotCount 칸(옛 형식의 남는 칸은 허용 — 옛 세이브 마이그레이션 테스트가 4칸)
-  return slots.length >= BALANCE.absorb.slotCount && slots.every((id) => id === null || (typeof id === 'string' && owned.includes(id)));
+  if (slots.length < BALANCE.absorb.slotCount) return `블록 슬롯 칸 수가 모자란다(${slots.length}/${BALANCE.absorb.slotCount})`;
+  const badSlot = slots.find((id) => !(id === null || (typeof id === 'string' && owned.includes(id))));
+  if (badSlot !== undefined) return `슬롯에 보유하지 않은(모르는) 블록 id(${String(badSlot)})`;
+  return null;
 }
 
 export function sanitizeHogyoku(raw: unknown): HogyokuState {
@@ -3567,7 +3590,16 @@ export function saveRejectReason(raw: unknown, min: number = saveFormatGate.min)
   if (f > SAVE_FORMAT_VERSION) return `더 새 버전의 세이브(형식 ${f})다`;
   if (!Number.isInteger(f) || f < 1) return `형식 번호가 이상하다(${String(f)})`;
   if (f < min) return `옛 형식(${f})이라 이 버전에서 열지 않는다(형식 ${min}부터)`;
-  return '알 수 없는 이유';
+  // 형식 문턱은 지났다 → 변환 단계·값 검사(모르는 블록 id 등)에서 걸린 것. 사본으로 한 번 더 돌려 처음 걸린 까닭을 읽는다 (C.522 점검D TOP 7)
+  let copy: unknown;
+  try {
+    copy = JSON.parse(JSON.stringify(raw));
+  } catch {
+    return '알 수 없는 이유';
+  }
+  migrateRejectDetail = null;
+  if (migrateSave(copy, min)) return '알 수 없는 이유';
+  return migrateRejectDetail ?? '알 수 없는 이유';
 }
 
 export function loadSave(storage: StorageLike, key: string = SAVE_KEY): SaveData | null {

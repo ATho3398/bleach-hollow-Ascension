@@ -87,8 +87,8 @@ export function arenaDialog(src: ArenaSource, prev: TestArenaChoice, note: strin
   const r1 = (x: number) => Math.round(x * 10) / 10;
   const r2 = (x: number) => Math.round(x * 100) / 100;
   const def0 = src.defaults(foeSel.value, Number(starSel.value));
-  const hp = dec(r1(prev.hpAttacks ?? def0?.hpAttacks ?? 10), '체력 (내 기본 공격 n회)', '0.1', TEST_ARENA_ATTACKS_MAX);
-  const atk = dec(r2(prev.attackAttacks ?? def0?.attackAttacks ?? 1), '공격력 (내 기본 공격 n회 분량)', '0.01', TEST_ARENA_ATTACKS_MAX);
+  const hp = dec(r1(prev.hpAttacks ?? def0?.hpAttacks ?? 10), '체력 (일반 공격 n회)', '0.1', TEST_ARENA_ATTACKS_MAX);
+  const atk = dec(r2(prev.attackAttacks ?? def0?.attackAttacks ?? 1), '공격력 (일반 공격 n회분)', '0.01', TEST_ARENA_ATTACKS_MAX);
   const sec = dec(r2(prev.attackSeconds ?? def0?.attackSeconds ?? 1.5), '공격 간격 (초)', '0.1', TEST_ARENA_SECONDS_RANGE[1]);
   /** 적·★를 바꾸면 그 적의 기본 수치로 다시 채운다 */
   const refill = (): void => {
@@ -109,8 +109,8 @@ export function arenaDialog(src: ArenaSource, prev: TestArenaChoice, note: strin
   const cell = (label: string, node: Node) => grid.append(el('span', 'bha-test__label', label), node);
   cell('적 종류', foeSel.el);
   cell('★', starSel.el);
-  cell('체력 (평타 n회)', hp);
-  cell('공격력 (평타 n회분)', atk);
+  cell('체력 (일반 공격 n회)', hp);
+  cell('공격력 (일반 공격 n회분)', atk);
   cell('공격 간격 (초)', sec);
   cell('공격', atkSeg);
   cell('죽음', immSeg);

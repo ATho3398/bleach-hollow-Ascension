@@ -31,7 +31,7 @@ export function practiceEntryView(root: HTMLElement, faction: FactionConfig, rec
   const rules = el('ul', 'bha-practice__rules');
   for (const t of [
     '상대 = 기본 훈련 인형 + 적 도감에서 만난 적',
-    '★ = 연 난이도까지 · 체력·공격력 = 내 기본 공격 n회 분량',
+    '★ = 연 난이도까지 · 체력·공격력 = 내 일반 공격 n회 분량',
     '쓰러뜨리면 결과 창 없이 다시 설정 창이 뜬다',
     '보상·사망 없음 · 펫도 같이 싸운다',
   ]) rules.append(el('li', '', t));
