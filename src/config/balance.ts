@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 156; // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158 10-2): provisional.unlocks.battleItem tierIndex 2 → 1(전투 소모품 칸 해금 3단계 → 2단계). 그 밖 수치 그대로.
+export const BALANCE_VERSION = 157; // C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고, 다음 짤 애들은 이 밸런스에 맞춰서 진행하자", 마스터AR provisional 기준): provisional.evoUniques 사신 백련 every 4 → 2 · perBlock 0.03 → 0.06 · 만해 every 2 → 1 (고유 능력 기여가 4단계 중앙값보다 47%p 낮고 강적 승률 64% — 중앙값 ±10%p·±15%p 안으로). 그 밖 수치 그대로.
+// 이전: BALANCE_VERSION = 156; // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158 10-2): provisional.unlocks.battleItem tierIndex 2 → 1(전투 소모품 칸 해금 3단계 → 2단계). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 154; // C.515 (GDD 8-7 2차 호로 9종, 사용자 2026-11-21 "일단 추가고 정해놓은거 구현 ㄱㄱ", docs/drafts/evo-impl-1121.md 2절 — 마스터 추천안 provisional): provisional.evoUniques 에 4단계 특성 6개(critDmg10·blockPower8·spawnCut6·aspd6·drain3·poisonDot12) + 호로 바라쿠다·브라사·무랄라·토르투가·토르멘타·게파르도·추파카브라·비보라 수치(표 그대로, 브라사 화상은 소로 값 빌림). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 153; // C.514 (GDD 8-7 2차, docs/drafts/evo-impl-1121.md 1절 — 마스터 추천안 provisional): provisional.evoUniques 에 사신 현음(체인 상한 4·4체인 ×1.4·블록 1, 만해 5·×1.8·블록 2)·석양홍(석양 ×2.0 충전 1, 만해 ×2.5 최대 3, 화상 8초 +8%)·만리장(굳음 2초·+40%·방어막 12%, 만해 1초·+70%·18%) 수치 + 특성 blockPower6 0.06·fireDmg8 0.08·earthDmg8 0.08. 그 밖 수치 그대로.
@@ -605,9 +606,10 @@ export const BALANCE = {
         poisonDot12: { value: 0.12 },
       } as Record<string, Record<string, number>>,
       forms: {
-        /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 2 */
+        /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 1.
+         *  C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고", 마스터AR 기준 — 강적 처치 시간 단축 중앙값 ±10%p·강적 승률 ±15%p): 옛 4대·+3%·만해 2대 = 기여 −46.5%·강적 64% → 2대·+6%·만해 1대 = +2.1%·83% */
         't4:normal:physical': {
-          shinigami: { every: 4, perBlock: 0.03, release: { every: 2 } },
+          shinigami: { every: 2, perBlock: 0.06, release: { every: 1 } },
           /** 호로 마르티요 (C.503): 평타 every 대마다 적 찢김 +1(최대 max), 1당 평타 피해 +perStack. 블록 → 체인 수만큼 소모, 1당 그 블록 + 평타 flatPer 회분. 레스렉시온 = 2대마다·최대 8 */
           hollow: { every: 3, max: 5, perStack: 0.04, flatPer: 0.3, release: { every: 2, max: 8 } },
         },

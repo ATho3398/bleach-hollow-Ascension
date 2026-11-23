@@ -26,6 +26,7 @@ import { TRANSCENDENTS } from '../src/data/transcendents';
 import { trackCostSum } from '../src/engine/transcend';
 const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
+import { EVO_BAL_KNOWN, EVO_BAL_NOTE, EVO_BAL_RULE, EVO_BAL_SEEDS, evoBalKey, evoBalTargets, evoContribution, judgeEvoBal, measureEvoBal, type EvoBalRow } from './lib/evoUniqueBalance';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 import { spawn } from 'node:child_process';
@@ -45,7 +46,7 @@ const HUMAN_CONTINUE_HP = 0.5;
 //    진화 봇 세이브(campaign)가 필요한 구간은 자식마다 캠페인을 다시 만든다(약 60초, 중복 허용). seconds = 로컬 직렬 측정(배분용 추정치) ──
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
-  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 },
+  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 },
   { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
 ];
 const CAMPAIGN_SECONDS = 63;
@@ -977,6 +978,33 @@ if (want('abilities')) {
   }
 }
 
+// ── 진화체 고유 능력 (C.520, GDD 8-7 · 19-4 사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고, 다음 짤 애들은 이 밸런스에 맞춰서 진행하자") ──
+// 구현된 4단계 진화체 × 종족(uniques.json 에 고유 능력이 있는 칸 전부 — 새 진화체가 들어오면 저절로 같은 기준)을 같은 기준 몸(scripts/lib/evoUniqueBalance.ts)에 고유 능력 켬/끔으로 권장 ★ 일반·강적·보스.
+// 기준(마스터AR provisional): 고유 능력 기여 = 강적 처치 시간 단축률(1 − 켬 ÷ 끔, 해방 전 몸·레스렉시온/만해 몸 평균 = 해방 구간 포함 전체 전투). 같은 단계 중앙값 ±10%p, 강적 승률(켬) 중앙값 ±15%p.
+// 진화체 고유 능력은 4단계지만 사용자 지시로 지금 맞추므로 후반 보류(LATE_HOLD) 밖 — 바로 가드. 목표 미달로 남긴 칸(EVO_BAL_KNOWN)만 경고
+if (want('evoUnique')) {
+  const targets = evoBalTargets();
+  console.log(`\n진화체 고유 능력 (C.520, 사람형 봇, ${targets.length}칸 × 권장 ★ 일반 종류마다 ${EVO_BAL_SEEDS.n}·강적 ${EVO_BAL_SEEDS.e}·보스 ${EVO_BAL_SEEDS.b}판 × 해방 전/레스렉시온·만해 몸 × 켬/끔) — 기여(강적 처치 시간 단축) 단계 중앙값 ±${EVO_BAL_RULE.contribBand * 100}%p · 강적 승률 중앙값 ±${EVO_BAL_RULE.winBand * 100}%p`);
+  console.log(`  ${EVO_BAL_NOTE}`);
+  const rows: EvoBalRow[] = targets.map((t) => measureEvoBal(t));
+  const p0 = (x: number) => `${(x * 100).toFixed(0).padStart(3)}%`;
+  console.log('  진화체(종족)            id                   타입      기여   (해방 전 · 해방)   강적 승률 켬/끔   강적 초 켬/끔   일반 초 켬/끔   보스 승률 켬/끔   받은 피해(강적) 켬/끔');
+  for (const r of rows) {
+    const t = r.target;
+    const nm = `${formName(FORM_TABLE.find((f) => f.id === t.formId)!, t.factionId)}(${getFaction(t.factionId).name ?? t.factionId})`;
+    console.log(`  ${nm.padEnd(18)} ${t.formId.padEnd(20)} ${t.category.padEnd(8)} ${(evoContribution(r) * 100).toFixed(1).padStart(6)}% (${(evoContribution(r.pre) * 100).toFixed(1).padStart(5)} · ${(evoContribution(r.rel) * 100).toFixed(1).padStart(5)})   ${p0(r.on.e.win)}/${p0(r.off.e.win)}      ${r.on.e.secs.toFixed(1).padStart(5)}/${r.off.e.secs.toFixed(1).padStart(5)}    ${r.on.n.secs.toFixed(1).padStart(5)}/${r.off.n.secs.toFixed(1).padStart(5)}    ${p0(r.on.b.win)}/${p0(r.off.b.win)}      ${p0(r.on.e.taken)}/${p0(r.off.e.taken)}${t.exempt ? `  [측정 제외: ${t.exempt}]` : ''}`);
+  }
+  for (const v of judgeEvoBal(rows)) {
+    const ok = rows.filter((r) => r.target.tier === v.tier && !r.target.exempt);
+    const contribs = ok.map(evoContribution).sort((a, b) => a - b);
+    console.log(`  → ${v.tier}단계 ${ok.length}칸: 기여 중앙값 ${(v.medContrib * 100).toFixed(1)}% (허용 ${((v.medContrib - EVO_BAL_RULE.contribBand) * 100).toFixed(1)}~${((v.medContrib + EVO_BAL_RULE.contribBand) * 100).toFixed(1)}%, 사분위 ${(contribs[Math.floor(contribs.length / 4)]! * 100).toFixed(1)}~${(contribs[Math.floor((contribs.length * 3) / 4)]! * 100).toFixed(1)}%) · 강적 승률 중앙값 ${(v.medWin * 100).toFixed(1)}% (허용 ${((v.medWin - EVO_BAL_RULE.winBand) * 100).toFixed(1)}~${Math.min(100, (v.medWin + EVO_BAL_RULE.winBand) * 100).toFixed(1)}%)`);
+    for (const f of v.failures) failures.push(f);
+    for (const f of v.known) console.log(`  △ 목표 미달(경고): ${f}`);
+  }
+  for (const [k, why] of Object.entries(EVO_BAL_KNOWN)) console.log(`  · 목표 미달 사유 ${k}: ${why}`);
+  for (const r of rows.filter((x) => x.target.exempt)) console.log(`  · 측정 제외 ${evoBalKey(r.target)}: ${r.target.exempt}`);
+}
+
 // ── 물공 6속성 (C.103 → C.105, GDD 49-1 5번 · 49-9 · 49-11): 5단계에 갓 닿은 몸(위 진화 봇 세이브 30명)의 진화체만 t5:<속성>:physical 로 바꿔 사람형 봇이 ★5 적 풀(일반·강적) · forest-lord 보스 · 탑 41/45/50층.
 // 물공 생성원 간격은 속성별(physBlocks.spawnSecondsByElement, 없으면 spawnSeconds — C.105b 혈만 짧게).
 // '전' = 같은 몸에서 물공 블록·물공 특성만 뗀 옛 규칙, 특수(탄)·혼합(교)은 옛 규칙 그대로(비교표). 받은 피해 = 판당 최대 체력 대비 %, 버티는 초 = 판 시간 ÷ 받은 피해(체력 전부를 잃기까지).
@@ -995,6 +1023,8 @@ if (want('phys')) {
       const params = buildCombatParams(body.build, 'hollow');
       // C.220: 진화체만 바꿔 재는 비교라 특성은 칸 대신 그 진화체 특성 전부(옛 규칙 = abilities 없음)
       applyEvolutionToParams(params, { ...body.evolution, formId, abilities: undefined }, 'hollow');
+      // C.520 (점검D 1): 물공 블록·속성 비교라 4단계 진화체 고유 능력은 뺀다(테스트 c105b 와 같이 evo = null) — 호로 혈 물리(추파카브라)는 혈 블록 출현 제외가 물공 블록을 지워 측정이 섞였다. 고유 능력 몫은 'evoUnique' 구간
+      params.evo = null;
       if (!physOn) {
         params.physBlock = null;
         const fx = { ...params.abilityEffects } as Record<string, unknown>;
@@ -1074,7 +1104,8 @@ if (want('phys')) {
         const bestOther = Math.max(...others(TANK).map((o) => o.on.survive));
         const lowestLoss = Math.min(...others(TANK).map((o) => 1 - o.on.eWin));
         if (r.on.survive < bestOther * 1.2) failAt(MAX_TIER_INDEX, `물공 6속성: 흙 버티는 초 ${r.on.survive.toFixed(0)} 가 다른 속성 최대 ${bestOther.toFixed(0)} 의 1.2배 미만 (GDD 49-9 흙 버티기)`);
-        if (1 - r.on.eWin > lowestLoss) failAt(MAX_TIER_INDEX, `물공 6속성: 흙 ★${MAX_DIFFICULTY} 강적 패배율 ${pct(1 - r.on.eWin)} 이 다른 속성 최저 ${pct(lowestLoss)} 보다 높다 (GDD 49-9 흙 버티기)`);
+        // C.520 (점검D 2): 표시(정수 %)가 같으면 높다고 하지 않는다 — '0% 이 최저 0% 보다 높다' 반올림 오경고
+        if (Math.round((1 - r.on.eWin) * 100) > Math.round(lowestLoss * 100)) failAt(MAX_TIER_INDEX, `물공 6속성: 흙 ★${MAX_DIFFICULTY} 강적 패배율 ${pct(1 - r.on.eWin)} 이 다른 속성 최저 ${pct(lowestLoss)} 보다 높다 (GDD 49-9 흙 버티기)`);
       } else if (r.el === FAST) {
         const fastestN = Math.min(...others(FAST).map((o) => o.on.nSecs));
         const fastestE = Math.min(...others(FAST).map((o) => o.on.eSecs));
