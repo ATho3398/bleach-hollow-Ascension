@@ -1081,5 +1081,5 @@ C.0 ~ C.450 은 `docs/dev-log-archive.md` 로 옮겼다(C.0~C.120 2026-10-20·10
 | 4단계 강적 승률 중앙값(35칸) · 보스전 canyon·forest | 95.4% · 54%·49% | 같음 |
 
 - 테스트: 새 `tests/c529.test.ts` 13건(상한 0.7 · 기본·가산 잘림 · 표시 없는 능력 70% · 블록 능력 70% · critBreak 돌파 최대 100% · 물 특성 돌파 78%·80% · 물 6종만 켬 · 라나·노도·니에블라·연우 실제 데이터 돌파 · 주홍장 70% · 조건부 돌파(강적일 때만·해방 중만) · 탈착 블록 치명 상한 그대로 · 상태창 70% · 버전). 기대값 바꾼 옛 테스트(지키던 결정 → 바뀐 결정): c63·c220 상한 50% → 70% · c97 물 몸 58% → 78%(물 특성 돌파 규칙은 그대로 지킴) · c227 '집중' 블록 치명 상한 +5%p → 상한 그대로 · c527 라나 '능력 + ≤ 100%p' → 물 돌파 최대 100%, `evoCritUpOf` → `playerCritChanceOf`, BALANCE ≥ 162.
-- 검증: typecheck · npm test(367파일 4269건) · balance:check(병렬 216초, 회귀 가드 통과) · build.
+- 검증(C.528 병합 뒤): typecheck · npm test(368파일 4283건) · balance:check(병렬 230초, 회귀 가드 통과) · build.
 - 캡처 `docs/captures/c529/01-rana-status-crit-max-pc.png`(상태창 능력치 ⓘ '최대 70%', PC 844×390 1배, `scripts/c529-proof.cjs`). docs/captures 최근 10패치: c515 삭제.
