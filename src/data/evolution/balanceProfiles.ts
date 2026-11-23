@@ -7,8 +7,9 @@ import { FACTIONS } from '../factions';
 import { FORM_TABLE } from './index';
 import raw from './balanceProfiles.json';
 
-/** curve = null 이면 성향만 정한 몸(강제 배정 등), lean = null 이면 성향 없음 */
-export interface BalanceProfile { curve: string | null; lean: string | null }
+/** curve = null 이면 성향만 정한 몸(강제 배정 등), lean = null 이면 성향 없음.
+ *  timed = 시간 제한 능력(GDD v6.178 — n초 스택·버프·'n초 안' 조건·재생 시간)의 한 줄 설명: 노력 곡선만, 가드가 고점(둘 다)도 본다 (C.525) */
+export interface BalanceProfile { curve: string | null; lean: string | null; timed?: string }
 export interface BalanceProfileFile {
   curves: { id: string; name: string }[];
   leans: { id: string; name: string }[];
@@ -48,7 +49,8 @@ export function validateBalanceProfiles(d: BalanceProfileFile = DATA, factionIds
       if (!factionIds.includes(fid)) errors.push(`${id}: 모르는 종족 ${fid}`);
       if (v === null) continue;
       const keys = Object.keys(v);
-      if (keys.some((k) => k !== 'curve' && k !== 'lean')) errors.push(`${id}/${fid}: 모르는 칸 ${keys.join(',')}`);
+      if (keys.some((k) => k !== 'curve' && k !== 'lean' && k !== 'timed')) errors.push(`${id}/${fid}: 모르는 칸 ${keys.join(',')}`);
+      if (v.timed !== undefined && (typeof v.timed !== 'string' || v.timed === '' || v.curve !== 'effort')) errors.push(`${id}/${fid}: timed(시간 제한 능력)는 빈칸 아닌 글자 · 노력 곡선만 (GDD v6.178)`);
       if (v.curve !== null && !curveIds.includes(v.curve)) errors.push(`${id}/${fid}: 모르는 곡선 ${String(v.curve)}`);
       if (v.curve === null && v.lean === null) errors.push(`${id}/${fid}: 곡선·성향이 둘 다 null 이면 칸 자체를 null 로`);
       if (v.lean !== null && !leanIds.includes(v.lean)) errors.push(`${id}/${fid}: 모르는 성향 ${String(v.lean)}`);

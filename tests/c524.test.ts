@@ -78,11 +78,12 @@ describe('출처 blockLv — 그 진화체 속성 블록 투자율 (evoBlockLvOf
     expect(evoBlockLvOf({ skills: [skill('a', 'water', 1.5), skill('b', 'thunder', 1.5)], evo: neutral })).toBe(1);
     expect(evoBlockLvOf({ skills: [{ ...skill('g', 'earth', 1.5), role: 'guard' }], evo: neutral })).toBe(0);
   });
-  it('측정 기준 몸: 블록만 = 1 · 무투자 = 0', () => {
+  // C.525: 무투자 칸에도 그 속성 공격 블록 1개(강화 0) → blockLv = 특성 몫 0.5 × 1/2 = 0.25 (옛 기대 0 — 블록이 없어 블록으로 켜지는 능력이 안 켜짐)
+  it('측정 기준 몸: 블록만 = 1 · 무투자 = 0.25(속성 블록 1개)', () => {
     for (const key of ['t4:fire:mixed/hollow', 't4:normal:physical/hollow']) {
       const t = evoProfileTargets().find((x) => `${x.formId}/${x.factionId}` === key)!;
       expect(evoBlockLvOf(evoBodyParams(t, true, false, 4, evoProfileInvest(t, 'blk')) as CombatParams)).toBe(1);
-      expect(evoBlockLvOf(evoBodyParams(t, true, false, 4, evoProfileInvest(t, 'none')) as CombatParams)).toBe(0);
+      expect(evoBlockLvOf(evoBodyParams(t, true, false, 4, evoProfileInvest(t, 'none')) as CombatParams)).toBeCloseTo(0.25, 9);
     }
   });
 });
@@ -106,7 +107,8 @@ describe('모양 손잡이 — 엔진 (종족·진화체 분기 없음)', () => 
     tick(s, ticksOf(s.params, 2.05));
     expect(evoStat(s, 'dealt')).toBe(0);
   });
-  it('buff grow·secondsGrow: 호로 에스칼레라 평타 버프 세기·지속이 노력치×블록 비례(둘 다 키워야 — 한쪽만이면 그대로)', () => {
+  // C.525 (GDD v6.178 시간 제한 능력 = 노력 곡선): 에스칼레라 동반 → 노력 — 세기·지속이 노력치만 비례(옛 기대 = 노력치×블록, 한쪽만이면 그대로)
+  it('buff grow·secondsGrow: 호로 에스칼레라 평타 버프 세기·지속이 노력치 비례(블록 투자와 무관)', () => {
     const n = F['t4:normal:mixed']!.hollow!;
     const two = [skill('a', 'water', 1.5), skill('b', 'thunder', 1.5)]; // 노멀 몸 = 모든 속성 공격 블록 → blockLv 1
     const run = (effort: number, skills: CombatSkill[]) => {
@@ -120,8 +122,8 @@ describe('모양 손잡이 — 엔진 (종족·진화체 분기 없음)', () => 
       return { power, secs };
     };
     expect(run(0, two).power).toBeCloseTo(n.perChain!, 9);
-    expect(run(1, []).secs).toBeCloseTo(n.seconds!, 1);
-    const full = run(1, two);
+    expect(run(0, two).secs).toBeCloseTo(n.seconds!, 1);
+    const full = run(1, []);
     expect(full.power).toBeCloseTo(n.perChain! * (1 + n.stepGrow!), 9);
     expect(full.secs).toBeCloseTo(n.seconds! * (1 + n.stepSecondsGrow!), 1);
   });
@@ -184,8 +186,8 @@ describe('측정 (scripts/lib/evoProfile.ts)', () => {
 
 describe('데이터·버전', () => {
   it('BALANCE 160 · 패치 C.524 · evoInvest provisional 수치', () => {
-    expect(BALANCE_VERSION).toBe(160);
-    expect(PATCH_LABEL).toBe('C.524');
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(160); // C.525 에서 161 (정확한 값은 c525 가 지킨다)
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(524);
     expect(BALANCE.provisional.evoInvest).toMatchObject({ mainShare: 0.7, traits: 2, traitWeight: 0.5, enhanceLevels: 10 });
   });
   it('사용자 확정값 그대로: 소로 2.5초·5개 · 비전 −0.1초 · 바라쿠다 1·3·5회 · 브라사 3초·10%p · 무랄라 2초 · 토르멘타 필드 5초 · 추성 펫 70%·표식 10 · 추파카브라 100%·×1', () => {
@@ -209,8 +211,11 @@ describe('데이터·버전', () => {
       for (const t of texts) expect(t, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_]+%?\}/);
     }
     const d = (id: string, fac: string) => fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
-    expect(d('t4:thunder:special', 'hollow')).toContain('이 속성 블록(흡수 특성·강화)을 키운 만큼');
-    expect(d('t4:normal:mixed', 'hollow')).toContain('노력치와 이 속성 블록을 같이 키운 만큼');
+    // C.525 (시간 제한 능력 = 노력 곡선): 토르멘타·에스칼레라 문구는 '노력치를 키운 만큼'으로 (옛 기대 = 블록·동반 문구) — 블록·동반 문구는 반석·봉수대가 지킨다
+    expect(d('t4:thunder:special', 'hollow')).toContain('지속 피해는 노력치를 키운 만큼');
+    expect(d('t4:normal:mixed', 'hollow')).toContain('노력치를 키운 만큼 피해는');
+    expect(d('t4:earth:physical', 'shinigami')).toContain('이 속성 블록(흡수 특성·강화)을 키운 만큼');
+    expect(d('t4:fire:physical', 'shinigami')).toContain('노력치와 이 속성 블록을 같이 키운 만큼');
     expect(d('t4:normal:physical', 'hollow')).toContain('노력치를 키운 만큼');
     expect(d('t4:blood:physical', 'hollow')).toContain('최대 체력 30% 이상');
   });

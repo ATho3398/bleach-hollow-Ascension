@@ -191,9 +191,9 @@ describe('브라사 (불·교) — 화상마다 열기(자기 블록 확률·주
     const r = useChain(s, 1, 'family-b', fire.id);
     expect(procOf(r.evs, '화상!')).toBe(true);
     expect(s.evo!.stacks.heat!.n).toBe(1);
-    // C.524: 열기당 주는 피해 = dealtPer × (1 + dealtGrow × blockLv) — 불 공격 블록 1개(특성 몫 1/2)·강화 0 → blockLv 0.25
+    // C.524: 열기당 주는 피해 = dealtPer × (1 + dealtGrow × blockLv) → C.525(GDD v6.178 시간 제한 능력 = 노력 곡선): × (1 + dealtGrow × effort) — 블록 투자(blockLv 0.25)와 무관, 노력치 0 이면 dealtPer 그대로
     expect(evoBlockLvOf(s.params)).toBeCloseTo(0.25, 9);
-    expect(evoStat(s, 'dealt')).toBeCloseTo(n.burn! + n.dealtPer! * (1 + n.dealtGrow! * 0.25), 6);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(n.burn! + n.dealtPer!, 6);
     expect(evoStat(s, 'selfSpawn')).toBeCloseTo(n.spawnPer!, 6);
     for (let k = 0; k < 7; k++) useChain(s, 1, 'family-b', fire.id);
     expect(s.evo!.stacks.heat!.n).toBe(n.max);
@@ -522,7 +522,7 @@ describe('비보라 (독·조) — 3체인 뒤 다음 블록 독 · 독 스택 6
     }
     expect(forcedPoison).toBe(12);
   });
-  it('블록 = 원래 피해 + 체인 수만큼 스택, 6 → 적에게 독(10초, 초당 최대 체력 1.5%, 다시 걸리면 시간 새로) 후 0', () => {
+  it('블록 = 원래 피해 + 체인 수만큼 스택, 6 → 적에게 독(10초, 초당 최대 체력 venomDot — C.525 1.5 → 0.5% ×(1+노력치 비례), 다시 걸리면 시간 새로) 후 0', () => {
     const plain = blockDmg(useChain(mk({}), 2).evs);
     const s = mk({ evo: evo('t4:poison:special') });
     expect(blockDmg(useChain(s, 2).evs)).toBeCloseTo(plain, 6);
@@ -531,7 +531,7 @@ describe('비보라 (독·조) — 3체인 뒤 다음 블록 독 · 독 스택 6
     expect(s.evo!.stacks.toxin!.n).toBe(3);
     expect(procOf(useChain(s, 3).evs, '맹독!')).toBe(true);
     expect(s.evo!.stacks.toxin!.n).toBe(0);
-    expect(markOf(s, 'evo-b-venom')?.value).toBe('1.5');
+    expect(markOf(s, 'evo-b-venom')?.value).toBe(String(+(n.venomDot! * 100).toFixed(1))); // C.525: 1.5 → 0.5 (노력치 0)
     const d = dots(tick(s, ticksOf(s.params, 3) + 1));
     expect(d.length).toBe(3);
     expect(d[0]!.damage).toBeCloseTo(s.enemy.maxHp * n.venomDot!, 4);

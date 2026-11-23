@@ -37,18 +37,22 @@ describe('측정 대상 = 4단계 진화체 × 종족 전부 (고유 능력 없�
     expect(forced).toEqual(['h4:hunter/hollow=elite', 'h4:stable/hollow=mob', 'h4:stable/shinigami=mob']);
     const cnt = (f: (t: (typeof goals)[number]) => unknown) => goals.reduce<Record<string, number>>((a, t) => { const k = String(f(t)); a[k] = (a[k] ?? 0) + 1; return a; }, {});
     // C.524 조정 중 v6.176(배정 기준 = 능력 설계)으로 바꾼 9칸: 라나 동반→특성 · 게파르도·천일야장도 동반→평탄 · 비전 노력·선공→평탄 · 추성 노력→평탄(강적 강제 그대로) · 나다 특성·잡몹→평탄·해방 · 토르멘타·봉수대 강적·노도 한방 → 성향 없음
-    expect(cnt((t) => t.goal!.curve)).toEqual({ effort: 5, block: 8, joint: 4, flat: 13, trait: 5, null: 3 });
+    // C.525 (GDD v6.178 '시간 제한 능력 = 노력 곡선'): 시간 제한 능력 15칸(timed)을 노력 곡선으로 — 라나·소로(그대로)·노도(그대로)·에스카라바호·에스칼레라·브라사·토르투가·게파르도·토르멘타·비보라·무랄라·나다 / 비전·석양홍·공화. 성향은 그대로
+    expect(cnt((t) => t.goal!.curve)).toEqual({ effort: 18, block: 5, joint: 3, flat: 7, trait: 2, null: 3 });
+    expect(goals.filter((t) => t.goal!.timed !== undefined)).toHaveLength(15);
     expect(cnt((t) => t.goal!.lean)).toEqual({ null: 19, burst: 3, elite: 3, mob: 3, opener: 2, survive: 4, release: 4 });
   });
 });
 
 describe('투자 4칸', () => {
   const t = evoProfileTargets().find((x) => x.formId === 't4:fire:physical' && x.factionId === 'shinigami')!;
-  it('무투자 = 특성·강화·노력치 없음 / 노력치만 / 블록만 = 특성 2개 + 강화 표준 / 둘 다', () => {
-    expect(evoProfileInvest(t, 'none')).toEqual({ skills: false, enhance: 0, ev: null });
-    expect(evoProfileInvest(t, 'ev')).toEqual({ skills: false, enhance: 0, ev: evProfileAllocation(t) });
-    expect(evoProfileInvest(t, 'blk')).toEqual({ skills: true, enhance: EP.invest.enhance, ev: null });
-    expect(evoProfileInvest(t, 'both')).toEqual({ skills: true, enhance: EP.invest.enhance, ev: evProfileAllocation(t) });
+  // C.525 (마스터AS 결정): 무투자·노력치만 칸에도 그 진화체 속성 공격 블록 1개(강화 0) — 옛 기대 = 특성 0개(블록으로 켜지는 능력이 안 켜져 소로 노력 곡선이 안 나옴)
+  it('무투자 = 노력치 없음·그 속성 공격 블록 1개(강화 0) / 노력치만 / 블록만 = 특성 2개 + 강화 표준 / 둘 다', () => {
+    expect(EP.invest.baseSkills).toBe(1);
+    expect(evoProfileInvest(t, 'none')).toEqual({ skills: 1, enhance: 0, ev: null });
+    expect(evoProfileInvest(t, 'ev')).toEqual({ skills: 1, enhance: 0, ev: evProfileAllocation(t) });
+    expect(evoProfileInvest(t, 'blk')).toEqual({ skills: 2, enhance: EP.invest.enhance, ev: null });
+    expect(evoProfileInvest(t, 'both')).toEqual({ skills: 2, enhance: EP.invest.enhance, ev: evProfileAllocation(t) });
   });
   it('노력치 = 그 단계 상한 합계 안, 능력치 하나 상한 안, 타입별 주 능력치(물리 = 공격·공속)', () => {
     for (const cat of ['physical', 'special', 'mixed']) {
@@ -229,7 +233,7 @@ describe('목표 비교 가드 (balanceProfile 이 있는 몸만)', () => {
     expect(sc.both.b).toBeCloseTo(50, 6);
   });
   it('기준 수치는 balance provisional.evoProfile', () => {
-    expect(EP.guard).toEqual({ flat: { loMin: 0.05, bothGainMax: 0 }, effort: { evMin: 0.15, overBlk: 0 }, block: { blkMin: 0.15, overEv: 0 }, joint: { synMin: 0.1, bothGainMin: 0.1 }, trait: { loMax: -0.05, hiMax: -0.05 } });
+    expect(EP.guard).toEqual({ flat: { loMin: 0.05, bothGainMax: 0 }, effort: { evMin: 0.15, overBlk: 0, timedHiMin: 0.1 }, block: { blkMin: 0.15, overEv: 0 }, joint: { synMin: 0.1, bothGainMin: 0.1 }, trait: { loMax: -0.05, hiMax: -0.05 } });
     expect(EP.value.band).toBe(0.1);
     expect(EP.value.traitLow).toBe(-0.2);
     expect(EP.floor).toEqual({ n: 0.9, e: 0.5, b: 0.25 });
@@ -245,7 +249,7 @@ describe('목표 데이터 칸 (balanceProfiles.json, 종족 분기 없음)', ()
     let n = 0;
     for (const f of FORM_TABLE.filter((x) => x.tier === 4 && !x.retired)) for (const fid of ['hollow', 'shinigami']) if (balanceProfileOf(f.id, fid) !== null) n++;
     expect(n).toBe(38);
-    expect(balanceProfileOf('t4:fire:physical', 'hollow')).toEqual({ curve: 'effort', lean: null }); // 소로 = 대표 노력 곡선(사용자 예)
+    expect(balanceProfileOf('t4:fire:physical', 'hollow')).toEqual({ curve: 'effort', lean: null, timed: '여우불 2.5초 안 5개' }); // 소로 = 대표 노력 곡선(사용자 예) · C.525 시간 제한 능력 표시(timed)
   });
   it('값이 있으면 곡선·성향 id 검사', () => {
     const ok = clone();

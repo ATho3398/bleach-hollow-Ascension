@@ -143,6 +143,6 @@ describe('브라사 — 화상 = 공용 화상 값 (석양홍과 같음, 마스�
     expect(b.value).toBeCloseTo(0.08, 9);
     expect(b.until - s.tick).toBe(ticksOf(s.params, 8));
     const nb = N('t4:fire:mixed');
-    expect(evoStat(s, 'dealt')).toBeCloseTo(0.08 + nb.dealtPer! * (1 + nb.dealtGrow! * evoBlockLvOf(s.params)), 6); // C.524: 열기당 주는 피해 = 블록 투자 비례
+    expect(evoStat(s, 'dealt')).toBeCloseTo(0.08 + nb.dealtPer! * (1 + nb.dealtGrow! * (s.params.evo?.effort ?? 0)), 6); // C.524: 열기당 주는 피해 = 블록 투자 비례 → C.525: 노력치 비례(시간 제한 능력)
   });
 });

@@ -15,6 +15,7 @@ import { enemyAtDifficulty, recommendedDifficulty } from '../../src/engine/diffi
 import { bossSetupOf, enemyScale } from '../../src/engine/expedition';
 import { ENEMIES, scaleEnemy } from '../../src/data/enemies';
 import { BOSSES } from '../../src/data/bosses';
+import { PATCH_LABEL } from '../../src/version';
 import { buildElementOf, evoBalExemptReason, evoBalKey, evoBodyParams, median, type EvoBalTarget, type EvoBodyInvest } from './evoUniqueBalance';
 
 const P = (): typeof BALANCE.provisional.evoProfile => BALANCE.provisional.evoProfile;
@@ -55,11 +56,11 @@ export function evProfileAllocation(t: Pick<EvoBalTarget, 'tier' | 'category'>):
   return out;
 }
 
-/** 투자 칸 → 기준 몸에 얹을 것. 무투자 = 노력치 0·흡수 특성/블록 강화 없음, 블록만 = 그 속성 공격 특성 2개 + 강화 표준, 둘 다 = 둘 다 */
+/** 투자 칸 → 기준 몸에 얹을 것. 무투자 = 노력치 0·그 진화체 속성 공격 블록 baseSkills(1)개(강화 0 — C.525 마스터 결정: 블록으로 켜지는 능력도 켜지게), 블록만 = 그 속성 공격 특성 2개 + 강화 표준, 둘 다 = 둘 다 */
 export function evoProfileInvest(t: EvoBalTarget, inv: InvestId): EvoBodyInvest {
   const blk = inv === 'blk' || inv === 'both';
   const ev = inv === 'ev' || inv === 'both';
-  return { skills: blk, enhance: blk ? P().invest.enhance : 0, ev: ev ? evProfileAllocation(t) : null };
+  return { skills: blk ? 2 : P().invest.baseSkills, enhance: blk ? P().invest.enhance : 0, ev: ev ? evProfileAllocation(t) : null };
 }
 
 export interface CellStat { win: number; secs: number; games: number }
@@ -330,6 +331,7 @@ export function judgeProfileGoal(goal: BalanceProfile, v: ProfileVerdict): strin
   const head = `진화체 모양: ${v.key} 목표 ${goal.curve ?? '곡선 미정'}${goal.lean ? `·${goal.lean}` : ''}`;
   if (goal.curve === 'flat' && !(f.lo >= G.flat.loMin && f.both <= G.flat.bothGainMax)) fails.push(`${head} — 평탄 곡선 조건(저점 ≥ +${pct(G.flat.loMin)} · 둘 다 이득 ≤ 중앙값) 밖: 저점 ${pct(f.lo)} · 둘 다 이득 ${pct(f.both)}`);
   if (goal.curve === 'effort' && !(f.ev >= G.effort.evMin && f.ev - f.blk >= G.effort.overBlk)) fails.push(`${head} — 노력 곡선 조건(노력치 이득 ≥ +${pct(G.effort.evMin)} · 블록 이득보다 큼) 밖: 노력치 ${pct(f.ev)} · 블록 ${pct(f.blk)}`);
+  if (goal.timed !== undefined && !(f.hi >= G.effort.timedHiMin)) fails.push(`${head} — 시간 제한 능력 고점(둘 다 ≥ +${pct(G.effort.timedHiMin)}) 밖: 고점 ${pct(f.hi)}`);
   if (goal.curve === 'block' && !(f.blk >= G.block.blkMin && f.blk - f.ev >= G.block.overEv)) fails.push(`${head} — 블록 곡선 조건(블록 이득 ≥ +${pct(G.block.blkMin)} · 노력치 이득보다 큼) 밖: 블록 ${pct(f.blk)} · 노력치 ${pct(f.ev)}`);
   if (goal.curve === 'joint' && !(f.syn >= G.joint.synMin && f.both >= G.joint.bothGainMin)) fails.push(`${head} — 동반 곡선 조건(같이 키움 상승 ≥ +${pct(G.joint.synMin)} · 둘 다 이득 ≥ +${pct(G.joint.bothGainMin)}) 밖: 상승 ${pct(f.syn)} · 둘 다 ${pct(f.both)}`);
   if (goal.curve === 'trait' && !(f.lo <= G.trait.loMax && f.hi <= G.trait.hiMax)) fails.push(`${head} — 특성 곡선 조건(저점·고점 ≤ ${pct(G.trait.loMax)}) 밖: 저점 ${pct(f.lo)} · 고점 ${pct(f.hi)}`);
@@ -342,48 +344,59 @@ export function judgeProfileGoal(goal: BalanceProfile, v: ProfileVerdict): strin
   return fails;
 }
 
-/** 목표 미달로 남긴 몸 (C.524 조정 3회 규칙, docs/automation.md 4장) — 목표 모양 가드에서 벗어나도 경고만. 키 = 진화체 id/종족 */
+/** 목표 미달로 남긴 몸 (C.524 → C.525 재조정 3회 규칙, docs/automation.md 4장) — 목표 모양 가드에서 벗어나도 경고만. 키 = 진화체 id/종족.
+ *  C.525: 무투자·노력치만 칸에도 그 속성 공격 블록 1개(측정 고침) · 시간 제한 능력 = 노력 곡선·고점 ≥ +10%(GDD v6.178, balanceProfiles.json timed) */
 export const EVO_PROFILE_KNOWN: Readonly<Record<string, string>> = {
   't4:normal:mixed/hollow':
-    '호로 에스칼레라(동반) — 상승 4.3%·둘 다 1.5%. 평타 버프가 혼합 몸 피해의 평타 몫(둘 다 칸 21%)에만 붙어 체인당 +6%×(1+3×노력치×블록)·지속 ×(1+투자)로도 작음(×10 까지 3회). 다른 곡선도 조건 밖(같은 타입 중앙값 근처)',
-  't4:water:special/hollow':
-    '호로 니에블라(블록·한방) — 블록 9.6%·한방 0.20. 2·3체인 치명 +를 블록 투자 비례(×3→×8)로 올려도 블록 이득 9~12%, 강적 시간 흔들림이 거의 안 늚. 다른 곡선도 조건 밖',
+    '호로 에스칼레라(노력·시간 제한, 동반 → 노력 v6.178) — 노력치 12.4%·블록 10.3%·고점 1%. 계단 버프가 혼합 몸 피해의 평타 몫에만 붙어 체인당 2%×(1+20×노력치)·2초×(1+3×노력치)까지 올려도 블록 이득과 비슷 — 3회',
+  't4:water:physical/hollow':
+    '호로 라나(노력·시간 제한, 특성 → 노력 v6.178) — 노력치 −6.6%·넓이 −13%. 물 스택이 블록 사용으로만 쌓여(물리 노력치 = 공격·공속은 블록 생성과 무관) 치명 +2%p×(1+20×노력치)·지속 4~8초로도 노력치 이득이 같은 타입 중앙값 아래 — 3회',
   't4:fire:physical/hollow':
-    '호로 소로(노력, 사용자 예) — 노력치 6.8%(둘 다 +18%). 화상은 불 블록이 켜는데 측정 「노력치만」 칸엔 불 블록(흡수 특성)이 없어 노력치 이득이 안 남 — 측정 칸 구조. 여우불 2.5초·5개(사용자 확정) 그대로, 화상 +5%×(1+6×노력치)',
+    '호로 소로(노력·시간 제한, 사용자 예) — 노력치 2.1%(고점 +11%). 여우불 5개를 2.5초 안(평타 간격 ≤ 0.5초)에 모아야 화상이 걸리는데 측정 「노력치만」(공속 35%)으로는 거의 못 닿음 — 화상 +3%×(1+80×노력치)도 2~6%, 문턱 5 → 3(진단)이면 10%. 2.5초·5개 = 사용자 확정 — 3회',
   't4:fire:mixed/hollow':
-    '호로 브라사(블록) — 블록 2.7%. 열기(화상 3초) 발동이 판당 4~5번이라 열기당 피해를 블록 투자 비례 ×35 해야 블록 +13%(넓이 +14%) → ×10 남김. 3초·10%p(사용자 확정) 그대로. 다른 곡선도 조건 밖',
-  't4:thunder:mixed/hollow':
-    '호로 게파르도(동반 → 평탄, v6.176 배정 바꿈) — 평탄 조건 통과, 넓이 +10.4% = 몸(뇌 혼합 + 공속 특성). 낙뢰 간격 −30 → −15% 로 줄여도 +10.1% 라 원래 값으로',
-  't4:poison:special/hollow':
-    '호로 비보라(특성·강적) — 저점 4.1%·고점 1.7%·강적 0.22. 저점·고점 = 몸(무투자 칸엔 독 블록 없음). 독을 강적·보스 전용으로 바꿔도 강적 0.16 → 되돌림. 다른 곡선도 조건 밖',
-  't4:water:special/shinigami':
-    '사신 연우(블록·한방) — 블록 6.9%·한방 0.11. 장마 3체인 치명 피해를 블록 투자 ×15 비례까지 올려도 블록 11% → ×2 로 낮춤. 다른 곡선도 조건 밖',
-  't4:earth:special/shinigami':
-    '사신 만리장(특성) — 저점 −3.2%. 무투자 칸엔 흙 블록이 없어 굳음이 안 켜짐(저점 = 몸) → 되돌림',
-  't4:thunder:physical/shinigami':
-    '사신 섬뢰각(특성) — 저점 −1.6%. 무투자 칸엔 뇌 블록이 없어 분신이 안 켜짐(저점 = 몸) → 되돌림. 맞는 곡선 없음(한방 점수 1.2 는 남)',
-  'h4:void/shinigami':
-    '사신 공화(특성·잡몹) — 허무 스택은 원정 동안 쌓여(carry) 한 전투 측정에선 2개에 거의 못 닿아 능력이 0 — 측정 밖',
-  't4:water:mixed/hollow':
-    '호로 바라쿠다(동반) — 상승 0.9%. 다음 평타 치명 +(1·3·5회 사용자 확정)가 혼합 몸 평타 몫에만 붙어 ×10 비례도 효과 0 → ×2. 다른 곡선도 조건 밖',
-  't4:fire:special/hollow':
-    '호로 루시에르나가(블록·해방) — 블록 4.2%·해방 −0.47. 불빛 소모(3체인)가 판당 몇 번이라 ×15 비례도 블록 7% → ×3. 해방 불빛 +40%·+100% 로도 해방 중÷밖 비가 특수 몸 중앙값보다 낮음',
+    '호로 브라사(노력·시간 제한, 블록 → 노력 v6.178) — 노력치 6.6%·블록 5.3%. 열기(화상 3초)가 판당 몇 번이라 열기당 피해 ×(1+80×노력치)도 7% 안팎. 3초·10%p(사용자 확정) 그대로 — 3회',
   't4:earth:mixed/hollow':
-    '호로 토르투가(평탄·생존) — 생존 통과(1.7), 저점 4.5%(문턱 5%). 방어막 체인당 4 → 7%·반사 0.6 → 1.0 → 1.8 → 1.5',
-  't4:blood:physical/hollow':
-    '호로 추파카브라(평탄·생존) — 곡선·생존 통과, 넓이 +25.9% = 몸(혈 물리·흡혈) 차. 저장 상한·해방 남김을 낮춰도 그대로라 되돌림. 사용 문턱(저장 ≥ 최대 체력 30%, 마스터 확정)은 넣음',
-  't4:normal:special/shinigami':
-    '사신 현음(블록) — 블록 2.8%. 4·5체인 피해 +블록 투자 비례(+40% → +400%)를 붙여도 4체인 이상이 드물어 블록 9%까지 → 새 동작이라 되돌림(v6.176 능력 동작 그대로). 다른 곡선도 조건 밖',
-  't4:water:mixed/shinigami':
-    '사신 백랑파(동반·한방) — 상승 −3.2%. 블록 치명 +·확정 횟수 노력치×블록 비례를 붙여도 혼합 몸 평타 몫이 작아 효과가 안 보임 → 되돌림(v6.176). 다른 곡선도 조건 밖',
+    '호로 토르투가(노력·생존·시간 제한, 평탄 → 노력 v6.178) — 노력치 8%·블록 14%(생존 1.97 통과). 방어막이 블록 사용으로 생겨 블록 투자가 더 크게 늘림 — 반사 40%×(1+10~25×노력치)·방어막 2~3초로도 그대로라 방어막 5초는 되돌림 — 3회',
+  't4:thunder:mixed/hollow':
+    '호로 게파르도(노력·시간 제한, 평탄 → 노력 v6.178) — 노력치 7.9%·블록 10.8%. 낙뢰(2체인 2번 연달아)가 판당 드물어 간격 −% ×(1+12×노력치)·지속 비례로도 그대로 — 3회',
+  't4:thunder:mixed/shinigami':
+    '사신 비전(노력·시간 제한, C.524 평탄 → 노력으로 되돌림) — 노력치 8.9%·넓이 +14%(저점 +13% = 뇌 혼합 몸). 간격 −0.1초가 거의 늘 켜져 있어 지속 1~2.6초·시간/간격 노력치 비례(×4·×8)로도 노력치 이득 9% — 3회',
+  't4:thunder:special/hollow':
+    '호로 토르멘타(노력·시간 제한, 블록 → 노력 v6.178) — 노력치 3.8%. 자기장(2체인 바로 뒤 3체인)이 그 속성 블록 체인으로 켜져 「노력치만」 칸(속성 블록 1개)엔 거의 안 켜짐 — 지속 피해 ×(1+60×노력치)도 그대로. 필드 5초(사용자) 그대로 — 3회',
+  't4:poison:special/hollow':
+    '호로 비보라(노력·강적·시간 제한, 특성 → 노력 v6.178) — 노력치 0.5%·강적 0.11. 독 스택이 블록 체인 수로 쌓여 「노력치만」 칸엔 맹독이 드묾 — 맹독 ×(1+40×노력치)도 2% — 3회',
+  'h4:void/hollow':
+    '호로 나다(노력·해방·시간 제한, 평탄 → 노력 v6.178) — 노력치 −9.2%(해방 1.40 통과). 저점 +12% = 몸(소멸선 처형). 허무 버프를 체인당 6%×(1+20×노력치)·8초까지 올리면 노력치 +7% 이지만 넓이 +14% → 넓이 안 값으로. 처형선 1%(사용자) 그대로 — 3회',
+  'h4:void/shinigami':
+    '사신 공화(노력·잡몹·시간 제한, 특성 → 노력 v6.178) — 허무 스택은 원정 동안 쌓여(carry) 한 전투 측정에선 2개에 거의 못 닿아 능력이 0 — 측정 밖',
   't4:fire:special/shinigami':
-    '사신 석양홍(블록·해방) — 블록 3.7%·해방 −0.26. 석양 배율 블록 투자 ×10 비례까지도 블록 6% → ×1, 만해 ×3. 다른 곡선도 조건 밖',
+    '사신 석양홍(노력·해방·시간 제한, 블록 → 노력 v6.178) — 노력치 1.3%·해방 −0.11. 석양 충전(화상 걸린 적에게 귀 블록)이 불·귀 블록으로 켜져 「노력치만」 칸엔 드묾 — 석양 ×(1+20×노력치)도 2% — 3회',
+  't4:water:special/hollow':
+    '호로 니에블라(블록·한방) — 블록 7.5%·한방 0.52. 2·3체인 치명 + 블록 투자 비례(×5 → ×30)로도 블록 이득 9~10%, 강적 시간 흔들림이 거의 안 늚 → C.524 값 — 3회',
+  't4:water:special/shinigami':
+    '사신 연우(블록·한방) — 블록 −0.4%·한방 0.13. 장마 3체인 치명 피해 블록 투자 비례를 ×15 까지 올려도 그대로 → C.524 값 — 3회',
+  't4:water:mixed/hollow':
+    '호로 바라쿠다(동반) — 상승 −4.5%. 다음 평타 치명 +(1·3·5회 사용자 확정)가 혼합 몸 평타 몫에만 붙어 ×20 비례도 그대로 → C.524 값 — 3회',
+  't4:water:mixed/shinigami':
+    '사신 백랑파(동반·한방) — 상승 −3.1%. 확정 횟수 2 → 3 도 그대로, 블록 치명 +·비례는 새 동작이라 안 씀 → C.524 값 — 3회',
+  't4:fire:special/hollow':
+    '호로 루시에르나가(블록·해방) — 블록 1.4%·해방 −0.31. 불빛 소모(3체인)가 판당 몇 번이라 위력 +×(1+40×블록)·화상 +6%p 도 블록 3% → C.524 값 — 3회',
+  't4:fire:physical/shinigami':
+    '사신 봉수대(동반) — 상승 5.1%·둘 다 7.5%. 무투자 칸에 불 블록이 생겨 폭렬 피해가 저점에도 붙음 — 봉화당 1~1.6%·불 블록당 ×(1+5~10×노력치×블록)도 상승 8%·넓이 +11~12% → 넓이 안 값(1.6%·×5) — 3회',
+  't4:normal:special/shinigami':
+    '사신 현음(블록) — 블록 1.6%. 4체인 이상이 드물어 사현 배율 ×1.4 → ×1.7 도 그대로(4·5체인 피해 블록 비례는 C.524 에서 새 동작이라 되돌림) → C.524 값 — 3회',
+  't4:earth:special/shinigami':
+    '사신 만리장(특성) — 저점 −2.2%. 무투자 칸에 흙 블록 1개가 생겨도 굳음 +피해·방어막을 줄여 봐도(×1.4 → ×1.05) 저점 그대로(저점 = 몸) → C.524 값 — 3회',
   't4:earth:mixed/shinigami':
-    '사신 태산압정(평탄·선공) — 저점 3.0%·선공 0.08. 전투 시작 8초 안 흙 추가 피해 +100% 를 붙여도 선공 0.22 → 되돌림(v6.176). 다른 곡선도 조건 밖',
+    '사신 태산압정(평탄·선공) — 저점 4.9%·선공 −0.20. 방어막이 블록으로만 생겨 흙 추가 피해·방어막을 올려도 선공이 안 생김(전투 시작 n초 규칙은 새 동작이라 C.524 에서 되돌림) → C.524 값 — 3회',
+  't4:blood:physical/hollow':
+    '호로 추파카브라(평탄·생존) — 곡선·생존 통과, 넓이 +11% = 몸(혈 물리·흡혈) 차. 저장 ×1 → ×0.3·상한 50 → 30% 로도 +12%·생존 미달 → C.524 값. 사용 문턱 30%(마스터 확정) 그대로 — 3회',
   't4:blood:physical/shinigami':
-    '사신 주홍장(평탄·생존) — 곡선·생존 통과, 넓이 +26.1% = 몸(혈 물리) 차. 잃은 체력 비례 수치를 0.006 → 0.0015 로 줄여도 +25% → 되돌림',
+    '사신 주홍장(평탄·생존) — 곡선·생존 통과, 넓이 +10.6% = 몸(혈 물리) 차. 잃은 체력 비례 0.006 → 0.001 로도 +13% → C.524 값 — 3회',
+  'h4:frenzy/shinigami':
+    '사신 흑귀(평탄·해방) — 해방 통과, 저점 4.7%(문턱 5%). 게이지당 0.27 → 0.33% 면 저점 4.9%·둘 다 이득 +2.6%(블록 이득 +12% = 몸) → C.524 값 — 3회',
   'h4:hunter/shinigami':
-    '사신 추성(노력 → 평탄, 강적 = 사용자 강제) — 평탄 통과, 강적 0.29. 펫 공격(3초마다 20%)이 피해에서 작아 표식당 펫 공격력을 강적 전용·노력치 ×8 비례로 해도 그대로 → 되돌림(펫 70%·표식 10 = 사용자 확정). 2차 능력 때',
+    '사신 추성(평탄·강적 = 사용자 강제) — 저점 −1.0%·강적 0.36, 블록 이득 +14% = 몸(펫 블록). 시간 제한 능력 아님(표식 = 평타 횟수)이라 곡선 그대로, 펫 70%·표식 10 = 사용자 확정 — 2차 능력 때',
 };
 
 /** 목표 모양 가드를 경고로만 보는 까닭 (null = 실패로): 측정 제외(능력치 기반 — 균일 기준 몸에서 0) · 고유 능력 없는 몸(강제 성향만 — 2차 능력 때 맞춤) · 목표 미달 목록 */
@@ -439,14 +452,14 @@ export function profileMarkdown(rows: readonly ProfileMeasure[], cls: ReturnType
   const L: string[] = [];
   const vOf = (r: ProfileMeasure) => cls.verdicts.find((v) => v.key === evoBalKey(r.target))!;
   const nameOf = (key: string) => profileName(rows.find((x) => evoBalKey(x.target) === key)!.target);
-  L.push(`# 진화체 모양 실측 (C.524, ${date}, BALANCE ${balanceVersion}, GDD 8-7)`, '');
+  L.push(`# 진화체 모양 실측 (${PATCH_LABEL}, ${date}, BALANCE ${balanceVersion}, GDD 8-7)`, '');
   L.push('> **개발용 내부 표기** — 곡선·성향은 게임 화면·도감 등 플레이어에게 보이지 않는다(사용자 2026-11-23). 배정·조정 = 마스터.', '');
   L.push('- 사용자 원문(11-23): "노력치 작, 블록 작 안해도 강하지만, 작 해도 리턴이 낮은 경우(저점 높고 고점 낮음) / 노력치작 안하면 개약한데, 노력치작 하면 개쎄짐 / 블록작 안하면 개약한데 블록작 하면 개쎄짐 / 노력, 블록작 같이 해야 점점 강해짐 / 저점도 낮고 고점도 낮지만, 특성이 매력적이라서 가져가야함. / 클리어 확률 자체는 조금 낮지만, 운만 좋으면 훨씬 빠르게 클리어 가능 / 일반 모험은 잘 못하는데, 보스전, 강적 등에는 강함" · "지구전도 없애자. 생존성향이랑 겹치니까. 체인성향도 없애" · "ㅇㅇ 그렇게 하고"(맞추는 방식).');
   L.push('- 표기(GDD 8-7 v6.173) = 성장 곡선 5(평탄·노력·블록·동반·특성) × 전투 성향 6(한방·강적·잡몹·선공·생존·해방). 이 표는 **지금 몸의 측정된 모양**(자동 추정) — 목표는 `src/data/evolution/balanceProfiles.json`(1차 배정 마스터AS 11-23, `docs/drafts/evo-assign-1123.md`), 목표 대비 = 7절.');
   L.push('- 다시 뽑기: `npm run balance -- --only=evoProfile --profile-md=docs/drafts/evo-profile-1123.md` (약 75초). 측정 코드 `scripts/lib/evoProfile.ts`, 기준·문턱 `BALANCE.provisional.evoProfile`(전부 마스터AR provisional).', '');
   L.push('## 1. 재는 법');
   L.push(`- 몸: 4단계 진화체 ${rows.length}칸(진화체 ${new Set(rows.map((r) => r.target.formId)).size}종 × 종족 2, 고유 능력 있음 ${rows.filter((r) => r.target.hasAbility).length}칸). 기준 몸 = C.520 과 같음(4단계 기준 능력치 균일 97.5 · 리스크 50 · 해방 전 몸 + 레스렉시온/만해 몸 같은 판 수 · 고유 능력 켬).`);
-  L.push(`- 투자 4칸: **무투자**(노력치 0 · 흡수 특성/블록 강화 없음 = 기본 블록만) / **노력치만**(4단계 노력치 상한 합계 ${evCaps(3).total}을 타입별로 — 물리 공격·공속 35%씩, 특수 지능·블록속도 35%씩, 혼합 넷에 17.5%씩, 나머지 체력·방어·정신 10%씩) / **블록만**(그 속성 공격 특성 2개 + 그 속성 강화 ${E.invest.enhance}단계 = 블록 위력 +50%) / **둘 다**.`);
+  L.push(`- 투자 4칸: **무투자**(노력치 0 · 그 진화체 속성 공격 블록 ${E.invest.baseSkills}개(강화 0) — C.525, 블록으로 켜지는 능력도 켜지게) / **노력치만**(무투자 + 4단계 노력치 상한 합계 ${evCaps(3).total}을 타입별로 — 물리 공격·공속 35%씩, 특수 지능·블록속도 35%씩, 혼합 넷에 17.5%씩, 나머지 체력·방어·정신 10%씩) / **블록만**(그 속성 공격 특성 2개 + 그 속성 강화 ${E.invest.enhance}단계 = 블록 위력 +50%) / **둘 다**.`);
   L.push(`- 콘텐츠 3: 권장 ★(★4) 일반 24종 × ${E.seeds.n}판 · 강적 24종 × ${E.seeds.e}판 · ★4 보스 2종 × ${E.seeds.b}판, 몸 2개(해방 전/해방) — 투자 칸마다 같은 시드(짝 비교). 사람형 봇.`);
   L.push('- 칸 값 = 승률 ÷ 처치 초(초당 기대 처치 수). **12칸 점수 = 같은 단계·같은 타입(물리·특수·혼합) 몸들의 그 칸 중앙값 대비 ×100** (C.524 — 단계 전체 중앙값이면 특수 몸의 큰 블록 투자 이득이 물리 몸 \'둘 다\'를 낮게 보이게 함. 타입 차 = 8절).');
   L.push('- 성향 지표: 한방 = 강적 처치 초 변동계수(투자 칸마다 낸 뒤 평균)·하위 10% 시간 ÷ 평균 · 선공 = 전투 앞 1/3 초당 피해 ÷ 뒤 1/3 · 해방 = 해방 중 초당 피해 ÷ 밖 · 생존 = 강적·보스 패배율 · 강적/잡몹 = 콘텐츠별 점수 비. (지구전·체인은 v6.173 에서 뺌)', '');
@@ -456,7 +469,7 @@ export function profileMarkdown(rows: readonly ProfileMeasure[], cls: ReturnType
   L.push(`- 곡선 = 특징 ÷ d(${E.curve.d})와 **방향(코사인 유사도)이 가장 가까운** 원형: ${PROFILE_CURVES.map((c) => { const p = E.curve.prototypes[c.id]!; return `${c.name}(lo ${p.lo}·hi ${p.hi}·ev ${p.ev}·blk ${p.blk}·syn ${p.syn})`; }).join(' · ')}. 확신도 높음 = 유사도 ≥ ${E.curve.confHigh.cos} 이고 중앙에서 ${E.curve.confHigh.norm}d 이상, 중간 = ${E.curve.confMid.cos}·${E.curve.confMid.norm}d, 나머지 낮음(같은 타입 중앙값 근처 — 곡선이 뚜렷하지 않음).`);
   L.push(`- 성향 = 점수(특징 ÷ 문턱)가 가장 큰 것, 1 미만이면 성향 없음. 문턱: ${PROFILE_LEANS.map((l) => `${l.name} ${E.lean.thresholds[l.id]}`).join(' · ')} (log 비). 한방은 강적 승률이 중앙값보다 높으면 ×0.5, 생존은 처치 속도가 중앙값 +5% 넘으면 ×0.5. 확신도 높음 ≥ ${E.lean.confHigh} · 중간 ≥ ${E.lean.confMid}.`);
   L.push(`- ③ **바닥** = 칸마다 승률 최저선(일반 ${pc(E.floor.n!)}% · 강적 ${pc(E.floor.e!)}% · 보스 ${pc(E.floor.b!)}%) · **천장** = 같은 단계에서 12칸 전부 1등 금지(1등 칸 ≤ ${E.ceiling.maxTopCells}).`);
-  L.push(`- 목표 비교 가드(balanceProfile 이 있는 몸만, balance:check — 목표가 든 단계만 잼): 곡선 조건(평탄 = 저점 ≥ +${E.guard.flat.loMin * 100}% · 둘 다 이득 ≤ 중앙값 / 노력 = 노력치 이득 ≥ +${E.guard.effort.evMin * 100}% · 블록 이득 이상 / 블록 = 대칭 / 동반 = 상승 ≥ +${E.guard.joint.synMin * 100}% · 둘 다 이득 ≥ +${E.guard.joint.bothGainMin * 100}% / 특성 = 저점·고점 ≤ ${E.guard.trait.loMax * 100}%) · 목표 성향 점수 ≥ 1 · 넓이 · 바닥 · 천장. 곡선 null = 성향만 정한 몸. 목표가 비어 있는 몸은 C.520 중앙값 ±10%p 가드 그대로.`, '');
+  L.push(`- 목표 비교 가드(balanceProfile 이 있는 몸만, balance:check — 목표가 든 단계만 잼): 곡선 조건(평탄 = 저점 ≥ +${E.guard.flat.loMin * 100}% · 둘 다 이득 ≤ 중앙값 / 노력 = 노력치 이득 ≥ +${E.guard.effort.evMin * 100}% · 블록 이득 이상, 시간 제한 능력(timed, GDD v6.178)이면 고점 ≥ +${E.guard.effort.timedHiMin * 100}%도 / 블록 = 대칭 / 동반 = 상승 ≥ +${E.guard.joint.synMin * 100}% · 둘 다 이득 ≥ +${E.guard.joint.bothGainMin * 100}% / 특성 = 저점·고점 ≤ ${E.guard.trait.loMax * 100}%) · 목표 성향 점수 ≥ 1 · 넓이 · 바닥 · 천장. 곡선 null = 성향만 정한 몸. 목표가 비어 있는 몸은 C.520 중앙값 ±10%p 가드 그대로.`, '');
   const all = cls.verdicts;
   const d = profileDistribution(all);
   const ab = profileDistribution(all.filter((v) => rows.find((r) => evoBalKey(r.target) === v.key)!.target.hasAbility));

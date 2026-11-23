@@ -71,9 +71,9 @@ export function evoBalSkills(t: Pick<EvoBalTarget, 'factionId' | 'category' | 'e
   return [own, next].map((fid, i) => `t-${els[i]}-${fid.replace('family-', '')}`);
 }
 
-/** 기준 몸에 얹는 투자 (C.523 진화체 모양): skills = 표준 공격 특성 2개, enhance = 그 특성 속성 강화 단계, ev = 능력치마다 더할 노력치. C.520 기준 몸 = 특성 2개·강화 0·노력치 0 */
-export interface EvoBodyInvest { skills: boolean; enhance: number; ev: Partial<Record<StatId, number>> | null }
-export const EVO_BAL_STANDARD_INVEST: EvoBodyInvest = { skills: true, enhance: 0, ev: null };
+/** 기준 몸에 얹는 투자 (C.523 진화체 모양): skills = 표준 공격 특성 앞에서 n개(0~2 — C.525 무투자·노력치만 = 1개), enhance = 그 특성 속성 강화 단계, ev = 능력치마다 더할 노력치. C.520 기준 몸 = 특성 2개·강화 0·노력치 0 */
+export interface EvoBodyInvest { skills: number; enhance: number; ev: Partial<Record<StatId, number>> | null }
+export const EVO_BAL_STANDARD_INVEST: EvoBodyInvest = { skills: 2, enhance: 0, ev: null };
 
 /** 기준 몸 전투 재료. on = 고유 능력 켬, ascended = 아란칼화/구상화를 깬 몸(레스렉시온/만해 가능) */
 export function evoBalParams(t: EvoBalTarget, on: boolean, ascended: boolean, star = recommendedDifficulty(t.tier - 1)): Partial<CombatParams> {
@@ -83,8 +83,8 @@ export function evoBalParams(t: EvoBalTarget, on: boolean, ascended: boolean, st
 /** 기준 몸 + 투자(특성·강화·노력치) 전투 재료 — evoBalParams 와 진화체 모양 측정(scripts/lib/evoProfile.ts)이 같이 쓴다 */
 export function evoBodyParams(t: EvoBalTarget, on: boolean, ascended: boolean, star: number, invest: EvoBodyInvest): Partial<CombatParams> {
   const b = newBuild();
-  if (invest.skills) for (const id of evoBalSkills(t)) if (!gainTrait(b, id).ok && isBasicBlockTrait(id)) addEnhance(b, 'normal');
-  if (invest.skills && invest.enhance > 0) for (const el of new Set(t.element === 'normal' ? EVO_BAL_NEUTRAL_ELEMENTS : [t.element])) for (let i = 0; i < invest.enhance; i++) addEnhance(b, el);
+  for (const id of evoBalSkills(t).slice(0, invest.skills)) if (!gainTrait(b, id).ok && isBasicBlockTrait(id)) addEnhance(b, 'normal');
+  if (invest.skills > 0 && invest.enhance > 0) for (const el of new Set(t.element === 'normal' ? EVO_BAL_NEUTRAL_ELEMENTS : [t.element])) for (let i = 0; i < invest.enhance; i++) addEnhance(b, el);
   const params = buildCombatParams(b, t.factionId);
   const form = FORM_TABLE.find((f) => f.id === t.formId)!;
   const prev = FORM_TABLE.some((f) => f.id === `t3:${t.element}`) ? `t3:${t.element}` : 't3:normal';
