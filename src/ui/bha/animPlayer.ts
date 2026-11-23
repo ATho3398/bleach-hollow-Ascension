@@ -25,7 +25,8 @@ export interface PlayOptions {
   motion?: FamilyMotionKind;
   /** 종이인형 동작 고정 (GDD 181장, 종족 설정 tiers[].rigMotion): 그 동작이 있으면 그것만(motion 묶음·action 대신). 프레임 그림은 무시 */
   rigMotion?: string;
-  /** 이 길이(ms, 1배)로 늘이거나 줄여 재생 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 고른 동작(변형 포함)의 전체 길이가 이 값이 되게 재생 빠르기만 바꾼다 — 그림·타격 비율 그대로.
+  /** 이 길이(ms, 1배)를 넘지 않게 줄여 재생 (GDD 7절 v6.106 '블록 모션 길이 통일', C.476): 고른 동작(변형 포함)이 이보다 길면 재생 빠르기만 올려 이 길이로 — 그림·타격 비율 그대로.
+   *  **늘이지는 않는다**(배율 하한 1배, GDD 7절 v6.167, C.519): 더 짧은 동작은 원래 속도로 끝까지 재생하고 쉬는 동작(idle)으로 돌아간다.
    *  hitInMs·돌려주는 길이·타격 시각도 이 맞춘 시간 기준. 없으면 동작 길이 그대로 */
   lengthMs?: number;
 }
@@ -49,6 +50,13 @@ export interface AnimPlayer {
   readonly playing: AnimAction | null;
   /** 시간을 흘려야 하는 중인가 (반복·재생 중). 멈춰 있으면 루프가 쉰다 */
   readonly active: boolean;
+  /** 지금 동작의 실제 재생 배율(1 = 원래 속도, 배속·길이 맞춤 포함) — 확인용 (GDD 7절 v6.167 '몸동작은 느리게 재생하지 않는다', C.519) */
+  readonly playbackRate?: number;
+}
+
+/** 길이 맞춤 빠르기 (lengthMs, C.476): 길이 ÷ 맞출 길이 — 하한 1배 = 느리게 하지 않는다 (GDD 7절 v6.167 '몸동작은 느리게 재생하지 않는다', C.519) */
+export function fitRate(durationMs: number, lengthMs: number | undefined): number {
+  return lengthMs && lengthMs > 0 && durationMs > 0 ? Math.max(1, durationMs / lengthMs) : 1;
 }
 
 export function createAnimPlayer(anims: AnimSet, still: string | null, host: AnimHost, wake: () => void = () => {}): AnimPlayer {
@@ -104,7 +112,7 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       curOpts = o;
       const hitAt = clipHitMs(c);
       const dur = clipDurationMs(c);
-      fit = o.lengthMs && o.lengthMs > 0 && dur > 0 ? dur / o.lengthMs : 1;
+      fit = fitRate(dur, o.lengthMs);
       // 시작 위치 (GDD 214장): hitInMs 가 있으면 타격이 그때 오게(음수 = 기다림), fromHit 은 타격부터
       const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) * fit : o.fromHit ? hitAt : 0;
       elapsed = start;
@@ -118,7 +126,7 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
       const c = anims[action];
       if (!c) return null;
       const dur = clipDurationMs(c);
-      const f = o.lengthMs && o.lengthMs > 0 && dur > 0 ? dur / o.lengthMs : 1;
+      const f = fitRate(dur, o.lengthMs);
       return { durationMs: dur / f, hitAtMs: clipHitMs(c) / f };
     },
     stop() {
@@ -153,6 +161,9 @@ export function createAnimPlayer(anims: AnimSet, still: string | null, host: Ani
     },
     get playing() {
       return cur ? cur.action : null;
+    },
+    get playbackRate() {
+      return rate * (phase === 'once' ? fit : 1);
     },
     get active() {
       return !paused && !!cur && phase !== 'held';
@@ -250,5 +261,6 @@ export function switchAnim(base: AnimPlayer | null, alt: AnimPlayer, useAlt: () 
     advance: (dt) => cur()?.advance(dt),
     get playing() { return cur()?.playing ?? null; },
     get active() { return (base?.active ?? false) || alt.active; },
+    get playbackRate() { return cur()?.playbackRate ?? 1; },
   };
 }

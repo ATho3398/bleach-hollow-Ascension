@@ -452,7 +452,9 @@ describe('추파카브라 (혈) — 첫 칸 고정 혈 블록, 받은 피해 저
     expect(s.evo!.stacks.stored!.n).toBeCloseTo(s.player.maxHp * n.storeMax!, 4);
     expect(markOf(s, 'evo-s-stored')?.value).toBe(String(Math.round(s.player.maxHp * n.storeMax!)));
   });
-  it('다른 블록은 평소대로 생기고, 혈 블록은 저절로 안 생김', () => {
+  // C.521 (마스터AR 11-23 — evo-impl-1121 29행 '더 생기지 않음' = 고정 저장 블록이 또 생기지 않는다는 뜻): 출현 제외(spawnExclude blood)를 없앰 — 혈 블록도 평소대로, 고정 블록은 첫 칸 1개 그대로.
+  // 옛 기대: 혈·기본 혈 블록 0개 → 지금은 나온다(1개 이상)
+  it('다른 블록은 혈 블록도 평소대로 생기고, 고정 혈 블록(저장)은 첫 칸 1개만', () => {
     const blood = skill('t-blood-b', 'blood', 'family-b');
     const water = skill('t-water-a', 'water', 'family-a');
     const s = mk({ evo: evo('t4:blood:physical'), skills: [blood, water], playerElements: ['blood'], trayCapacity: 8 }, 3);
@@ -466,8 +468,10 @@ describe('추파카브라 (혈) — 첫 칸 고정 혈 블록, 받은 피해 저
       }
     }
     expect(seen.filter((x) => x === 'water').length).toBeGreaterThan(10);
-    expect(seen.filter((x) => x === 'blood' || x === 'basic-blood').length).toBe(0);
+    expect(seen.filter((x) => x === 'blood' || x === 'basic-blood').length).toBeGreaterThan(5); // 옛: toBe(0)
+    expect(seen.filter((x) => x === 'evo:vessel').length).toBe(0); // 고정 블록은 또 생기지 않는다
     expect(s.tray[0]?.traitId).toBe('evo:vessel');
+    expect(s.tray.filter((b) => b.traitId === 'evo:vessel').length).toBe(1);
     // 같은 표에서 고유 능력이 없으면 혈 블록도 나온다 (비교)
     const p = mk({ skills: [blood, water], playerElements: ['blood'], trayCapacity: 8 }, 3);
     const seen2: string[] = [];

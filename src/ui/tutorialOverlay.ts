@@ -7,6 +7,7 @@ import type { FactionConfig } from '../engine/faction';
 import { isTutorialActive, startTutorial, tutorialNext, tutorialPrev, tutorialSkip, type TutorialState, type TutorialStatus } from '../engine/tutorial';
 import { button, dots, el, icon } from './bha/dom';
 import { linesBody } from './bha/lines';
+import { closeInfoTips } from './bha/infoTip';
 import { DEVICE_BUTTON_SELECTOR, getOverlayHost, onTutorialCover, registerLayer, tutorialsCovered } from './bha/overlayHost';
 import { elementLocalRect } from './bha/viewport';
 import { placeCard, placeCardFit, unionRect, type BoxSide, type Rect } from './helpLayout';
@@ -235,6 +236,8 @@ function pushGuard(g: Omit<TutorialGuard, 'release'>): () => void {
     if (guards.length === 0) for (const type of GUARDED_EVENTS) window.removeEventListener(type, onGuardedEvent, { capture: true });
   });
 }
+/** 카드 [다음]의 기기 ✓ 진입 보호 시간 (C.522): 카드가 뜬 뒤·마지막 ✓ 뒤 이만큼 조용해야 ✓ 를 받는다 — device.ts confirm 이 data-dev-hold-until 을 본다 */
+export const TUT_CONFIRM_HOLD_MS = 300;
 /** 깜빡임 길이 (토큰 --bha-dur-5 와 같은 값 — 끝나면 클래스를 뗀다) */
 const NUDGE_MS = 900;
 /** 대상을 잠깐 깜빡인다 (GDD 180장 1): 대상 자신의 밝기만 — 네모 상자 빛 없음 (178장 3) */
@@ -542,6 +545,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
 
   function render(): void {
     if (covered) return; // 덮는 창이 닫히면 applyCover 가 다시 그린다 (GDD 194장 1)
+    closeInfoTips(); // 카드가 뜨면 열린 ⓘ 설명창(방 상태 등)은 닫는다 — 카드를 덮지 않게 (점검D TOP 2)
     const scene = SCENES[state.index]!;
     const last = state.index === state.count - 1;
     const sc = opts.script;
@@ -574,6 +578,9 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     const acting = !!sc?.act && !actDone;
     if (acting) next.disabled = true; // 실제 조작 카드: 하기 전에는 [다음] 잠김 (GDD 129-2 2)
     nextBtn = next;
+    // 진입 보호 (C.522 점검D 확인 필요 — 회복 안내 ④): 카드가 뜬 직후 기기 ✓ 는 TUT_CONFIRM_HOLD_MS 동안 받지 않고, 그 사이 누르면 다시 늘린다(연타가 멈춘 뒤부터 받음).
+    // 온천에서 나오는 동안 ✓ 를 연타하면 막 뜬 배부름 카드가 0.6초 만에 넘어갔다. 화면 터치·마우스 누름은 그대로
+    next.dataset.devHoldUntil = String(performance.now() + TUT_CONFIRM_HOLD_MS);
     setPractice(!!scene.practice || !!sc?.waitFor || acting);
     const stage = stageOf(scene);
     if (sc?.waitFor) layer.dataset.devOnly = sc.waitFor;

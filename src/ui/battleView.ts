@@ -201,7 +201,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       // 초월자 전용 블록 (GDD 12-4 v6.048): 기술 이름(체인 단계·마무리 기술) + 반격 성공
       if (e.kitName && e.kitCharge !== undefined) {
         // 충전 블록 (GDD 12-4 v6.069 월아천충): 피해 없이 다음 평타 충전
-        return { role: e.chain > 1 ? 'chain' : 'attack', icon: e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''} — 다음 평타 ${e.kitName} ${e.kitCharge}번` };
+        return { role: e.chain > 1 ? 'chain' : 'attack', icon: e.chain > 1 ? `i-chain-${Math.min(3, e.chain)}` : LOG_ICON.attack, text: `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''} — 다음 일반 공격 ${e.kitName} ${e.kitCharge}번` };
       }
       if (e.kitName) {
         const kitText = `${e.kitName}${e.chain > 1 ? ` ${labels.chain}${e.chain}` : ''}! ${n(e.damage)} 피해${e.crit ? ' (치명!)' : ''}${e.kitCounter ? ' · 반격' : ''}${e.heal > 0 ? ` · 회복 +${n(e.heal)}` : ''}${e.kitFinisher ? ' · 적 공격 불능' : ''}`;
@@ -274,7 +274,7 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return e.ok ? { role: 'guard', icon: 'i-guard', text: `${stanceOf(s)?.parry?.name ?? labels.role.guard} 성공! 적 자세가 무너졌다` } : { role: 'guard', icon: 'i-guard', text: `${stanceOf(s)?.parry?.name ?? labels.role.guard} 빗나감` };
     case 'kit-break': {
       const bt = s.params.kit?.stance?.stances.find((x) => x.draw)?.draw?.breakTaken ?? 0;
-      return { role: 'void', icon: 'i-warn', text: `자세 무너짐! 평타 취소 · ${e.seconds}초 동안 받는 피해 +${Math.round(bt * 100)}%` };
+      return { role: 'void', icon: 'i-warn', text: `자세 무너짐! 일반 공격 취소 · ${e.seconds}초 동안 받는 피해 +${Math.round(bt * 100)}%` };
     }
     case 'kit-stack':
       return { role: 'chain', icon: 'i-special', text: `${s.params.kit?.stackName ?? '스택'} ${e.stack}/${e.full}` };
@@ -944,7 +944,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     if (why === 'need') return note && p.evo ? fillEvoText(note, p.evo.nums) : '아직 쓸 수 없다'; // C.515 데이터 조건(추파카브라 '저장돼야')
     return note && p.evo ? fillEvoText(note, p.evo.nums) : '블록 처형선이 0%라 꺼져 있다';
   };
-  const scriptVars = { libName: labels.liberation.name, libFullName: bf.liberation.name };
+  // {ascName} = 레스렉시온/만해를 여는 승급 이름(아란칼화 / 참백도 구상화 — 종족 설정 ascension.name, C.522 점검D TOP 8)
+  const scriptVars = { libName: labels.liberation.name, libFullName: bf.liberation.name, ascName: bf.ascension.name };
   const scriptStepOf = (stage: string): string => `튜토리얼 ${SCRIPT_CARDS.indexOf(stage) + 1} / ${SCRIPT_CARDS.length}`;
   /** 앞(-1)·뒤(+1) 설명 카드(ack) — 막기·블록을 기다리는 카드는 건너뛴다 (GDD 229장 1) */
   const scriptAckNear = (stage: string, dir: -1 | 1): string | null => {

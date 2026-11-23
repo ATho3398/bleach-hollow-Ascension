@@ -152,6 +152,8 @@
   width: max(32px, round(nearest, calc(76px * var(--ps)), 32px)); height: max(32px, round(nearest, calc(76px * var(--ps)), 32px)); /* 상자 높이에 가장 가까운 32 배수 */
 }
 .bha-prop__tag { position: relative; z-index: 1; }
+/* 펼친 먹이·소모품·더보기 줄과 겹치는 이름표는 펼친 동안 숨긴다 (C.522 점검D TOP 4 — dock.ts syncTagsUnderTray) */
+.bha-prop__tag.is-under-tray { visibility: hidden; }
 /* 이름표 = v2 .bha-plate (어두운 판, 그림 아래) */
 .bha-prop__tag {
   display: inline-flex; align-items: center; gap: var(--bha-sp-2); height: 22px; box-sizing: border-box;

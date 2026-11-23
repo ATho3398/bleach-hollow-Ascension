@@ -251,8 +251,8 @@ const SCREENS = [
       await h.back();
       if (!(await h.has('.bha-lcd [data-dev-layer]'))) h.report({ kind: '홈 뒤로', key: '처음 화면 확인', detail: '홈에서 뒤로를 눌러도 처음 화면 확인 창이 안 뜬다' }, n);
       else {
-        await h.btn('아니오', { within: '.bha-lcd [data-dev-layer]' });
-        if (!(await h.has('.bha-room'))) h.report({ kind: '홈 뒤로', key: '아니오', detail: '[아니오] 뒤 방이 아니다' }, n);
+        await h.btn('아니요', { within: '.bha-lcd [data-dev-layer]', exact: true }); // C.522: 확인 창 글자 = '아니요'(옛 스크립트 '아니오' 로 시간 초과)
+        if (!(await h.has('.bha-room'))) h.report({ kind: '홈 뒤로', key: '아니요', detail: '[아니요] 뒤 방이 아니다' }, n);
       }
       await h.stable(n, '재우기', () => h.click('.bha-homedock__carebtn--sleep'));
       await h.stable(n, '교감', () => h.click('.bha-homedock__carebtn--pet'));
@@ -311,10 +311,9 @@ const SCREENS = [
   {
     name: '수련장',
     async run(h, n) {
-      // C.236 (GDD 158장 1): 수련장 = 월드맵 장소
-      await h.click('.bha-prop--outside', { ms: 700 });
-      await h.click('.bha-worldmap [data-place="training"]', { ms: 2000 });
-      await h.explore(n, { pick: '.bha-lcd .bha-train__card', views: true });
+      // C.394 (GDD 241-C 3): 수련장 = 방 물건(책장 아래) — 누르면 바로 훈련 인형 적 설정 창(GDD 8-9, C.471). 옛 월드맵 장소 [data-place="training"] 는 없다 (C.522)
+      await h.click('.bha-prop--altar', { ms: 2000 });
+      await h.explore(n, { tabs: false });
     },
   },
   {
@@ -328,17 +327,18 @@ const SCREENS = [
     name: '원정 출발',
     async run(h, n) {
       await toAdventure(h);
-      await h.explore(n, { pick: '.bha-lcd .bha-road__cell', views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' } } });
+      // C.522: 준비 화면 = 위 탭 [준비]/[타일 배치](role=tab, GDD 241-D) — 길 칸·가진 타일·프리셋은 [타일 배치] 탭에만 보인다
+      await h.explore(n, { views: true, viewOpts: { 스토리: { pick: '.bha-lcd .bha-mdrow, .bha-lcd .bha-story__ep' } } });
       await h.stable(n, '난이도 ★1', () => h.btn('★1', { exact: true }));
       await h.stable(n, '지역 바꾸기', () => h.click('.bha-lcd .bha-btn--small >> nth=1'));
+      await h.stable(n, '타일 배치 탭', () => h.btn('타일 배치', { within: '.bha-plan__sidetabs', role: 'tab' }));
+      await h.explore(`${n}/타일 배치`, { pick: '.bha-lcd .bha-road__cell', tabs: false });
       // 타일 놓기: 카드 고르고 칸 누르기
       await h.stable(n, '타일 카드 고르기', () => h.click('.bha-lcd .bha-tilecard >> nth=0'), null, h.page.locator('.bha-lcd .bha-tilecard').first());
       await h.stable(n, '칸에 놓기', () => h.click('.bha-lcd .bha-road__cell >> nth=2'));
       await h.check(`${n}/놓은 뒤`);
-      await h.stable(n, '타일 배치 탭(프리셋)', () => h.btn('타일 배치', { within: '.bha-plan__sidetabs' }));
-      await h.check(`${n}/프리셋`);
-      await h.stable(n, '준비 탭으로', () => h.btn('준비', { within: '.bha-plan__sidetabs' }));
-      await h.check(`${n}/손패`);
+      await h.stable(n, '준비 탭으로', () => h.btn('준비', { within: '.bha-plan__sidetabs', role: 'tab' }));
+      await h.check(`${n}/준비`);
     },
   },
   {
@@ -398,8 +398,8 @@ const SCREENS = [
       await h.click('.bha-lcd .bha-viewtitle__btn');
       await h.btn('불러오기', { within: '.bha-viewtitle__list', role: 'option' });
       await h.explore(n, { tabs: false, views: false, infos: false }); // 정보 표(dl.bha-info)는 눌러도 창이 안 열려 뒤로가 패널을 닫는다
-      for (const [name, i] of [['지금 부르기', 0], ['물건 다시 뽑기', 0], ['지금 부르기', 1], ['지금 부르기', 2], ['다음 원정에 부르기', 0], ['보내기', 0], ['걷기', 0], ['비우기', 0], ['예약 취소', 0]]) {
-        if (name === '다음 원정에 부르기') { // 고른 게 있어야 [예약 취소]가 켜진다 (C.190: 게임 안 고르기 목록)
+      for (const [name, i] of [['지금 부르기', 0], ['물건 다시 뽑기', 0], ['지금 부르기', 1], ['지금 부르기', 2], ['다음 모험에 부르기', 0], ['보내기', 0], ['걷기', 0], ['비우기', 0], ['예약 취소', 0]]) {
+        if (name === '다음 모험에 부르기') { // C.522: 옛 글자 '다음 원정에 부르기' // 고른 게 있어야 [예약 취소]가 켜진다 (C.190: 게임 안 고르기 목록)
           await h.click('.bha-lcd button[aria-label="이벤트 타일"]');
           await h.click('.bha-lcd .bha-pick__list .bha-viewtitle__item >> nth=1');
         }
@@ -532,6 +532,9 @@ const SCREENS = [
       await h.closeLayers();
       if (!(await h.has('.bha-room'))) await h.back(); // 시간 앞당기기는 방으로 간다 — 방에서 뒤로는 처음 화면 확인(GDD 124장 1)
       await h.explore(`${n}/48시간 뒤`, { tabs: false });
+      // C.522: 오래 비운 뒤 복귀 창('48시간 만에 돌아왔다' — GDD 대기 보상 복귀 창)이 방을 덮는다 — 창을 본 뒤 [확인]으로 닫고 먹이를 누른다
+      for (let i = 0; i < 6 && !(await h.has('.bha-lcd .bha-confirm[data-dev-layer]')); i++) await h.wait(250);
+      if (await h.has('.bha-lcd .bha-confirm[data-dev-layer]')) await h.btn('확인', { within: '.bha-lcd [data-dev-layer]', exact: true });
       await h.stable(`${n}/48시간 뒤`, '먹이 누르기', () => h.click('.bha-homedock__carebtn--feed'), /homedock__tray/);
     },
   },
@@ -562,10 +565,20 @@ const SCREENS = [
         await h.check(`${n}/내 상태`, { keys: false });
         await h.closeLayers();
       }
-      await h.stable(`${n}/포식`, '첫 선택(둘 다)', () => h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 }));
-      await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-cand' });
-      // 2단계 뒤로 = 1단계로 → 다시 2단계
-      if ((await h.backReacts(`${n}/포식 2`)) === 'screen') await h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 });
+      if (await h.has('.bha-lcd .bha-absorbv2')) {
+        // C.522: v2 흡수 화면(C.300 — .bha-absorbv2): 갈래 고르기 → 2단계 탐색 → 마지막 갈래(놓아주기) + 아래 줄 [○○하기]로 끝낸다 (옛 .bha-absorbpage 틀은 첫 흡수 연습만)
+        await h.stable(`${n}/포식`, '첫 갈래 고르기', () => h.click('.bha-lcd .bha-absorb__actions--modes > button >> nth=0', { ms: 800 }));
+        await h.explore(`${n}/포식 2`, { tabs: false });
+        await h.page.locator('.bha-lcd .bha-absorb__actions--modes > button').last().click({ timeout: 3000 }).catch(() => {});
+        await h.wait(300);
+        await h.page.locator('.bha-lcd .bha-absorb__go').click({ timeout: 3000 }).catch(() => {});
+        await h.wait(700);
+      } else {
+        await h.stable(`${n}/포식`, '첫 선택(둘 다)', () => h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 }));
+        await h.explore(`${n}/포식 2`, { tabs: false, pick: '.bha-lcd .bha-cand' });
+        // 2단계 뒤로 = 1단계로 → 다시 2단계
+        if ((await h.backReacts(`${n}/포식 2`)) === 'screen') await h.click('.bha-lcd .bha-absorbpage button.bha-btn--primary', { ms: 800 });
+      }
       // 끝까지 넘기기: 후보 → (슬롯) → 확인 성격의 버튼. 포식 화면이 닫힐 때까지 몇 번
       for (let i = 0; i < 8 && (await h.has('.bha-absorbpage')); i++) {
         const cand = h.page.locator('.bha-lcd .bha-cand').filter({ visible: true });
@@ -707,9 +720,9 @@ const SCREENS = [
     async run(h, n) {
       await toAdventure(h);
       await h.btn('★1', { exact: true });
+      await h.btn('타일 배치', { within: '.bha-plan__sidetabs', role: 'tab' }); // C.522: 타일·프리셋은 [타일 배치] 탭(role=tab)에
       await h.click('.bha-lcd .bha-tilecard >> nth=0');
       await h.click('.bha-lcd .bha-road__cell >> nth=2');
-      await h.btn('타일 배치', { within: '.bha-plan__sidetabs' });
       const LONG = ['가나다라마바사아자차카타', 'WWWWWWWWWWWW', '웨코문도외곽최강배치세트', 'ＭＭＭＭＭＭＭＭＭＭＭＭ', '레스렉시온연습용긴이름이'];
       for (let i = 0; i < LONG.length; i++) {
         const empty = h.page.locator('.bha-lcd .bha-presets__chip.is-empty');
@@ -737,10 +750,11 @@ const SCREENS = [
       await h.click('.bha-slot >> nth=1');
       await h.btn('확인');
       await h.click('.bha-species__card >> nth=0');
-      await h.btn('시작', { exact: true, ms: 1400 });
+      await passIdentity(h.page); // C.522: 종족 확인 [네] → 이름·성별 → [시작]
+      await h.wait(1400);
       await h.btn('더보기');
       await h.btn('처음 화면', { within: '.bha-homedock__tray' });
-      await h.btn('예').catch(() => h.btn('처음 화면', { within: '.bha-lcd [data-dev-layer]' }));
+      await h.btn('네', { within: '.bha-lcd [data-dev-layer]', exact: true }).catch(() => h.btn('처음 화면', { within: '.bha-lcd [data-dev-layer]' })); // C.522: 확인 창 = [네]/[아니요]
       await h.wait(800);
       await h.btn('불러오기');
       await h.check(`${n}/불러오기`);
@@ -748,11 +762,32 @@ const SCREENS = [
       await h.stable(n, '슬롯 지우기', async () => {
         await h.btn('삭제');
         await h.check(`${n}/지우기 확인 창`);
-        await h.btn('지우기', { within: '.bha-lcd [data-dev-layer]' });
+        // C.522 (GDD 241-A 4): 확인 창 입력칸에 '삭제' 를 쳐야 [확인]이 켜진다(옛 [지우기] 버튼 없음)
+        await h.page.locator('.bha-lcd [data-dev-layer] .bha-modal__input').fill('삭제');
+        await h.btn('확인', { within: '.bha-lcd [data-dev-layer]', exact: true });
       });
       await h.check(`${n}/지운 뒤`);
     },
   },
 ];
 
-module.exports = { SCREENS };
+/**
+ * 종족 고른 뒤 ~ 방 (C.522 점검D 8): 종족 확인 창 '…로 시작하시겠습니까? [네]' → 이름·성별 화면(이름 + 성별을 골라야 [시작]이 켜진다).
+ * 옛 스크립트는 종족 카드 뒤 바로 [시작]을 눌러 30초 시간 초과로 모든 화면이 '검수 스크립트 실패'였다(온천·원정 결과 완주 등)
+ */
+async function passIdentity(page) {
+  const yes = page.locator('.bha-lcd').getByRole('button', { name: '네', exact: true });
+  if (await yes.count()) {
+    await yes.first().click();
+    await page.waitForTimeout(500);
+  }
+  const name = page.locator('.bha-lcd [data-ident="name"]');
+  if (await name.count()) {
+    await name.fill('검수');
+    await page.locator('.bha-lcd .bha-ident__gender').first().click();
+    await page.waitForTimeout(150);
+  }
+  await page.getByRole('button', { name: '시작', exact: true }).click();
+}
+
+module.exports = { SCREENS, passIdentity };

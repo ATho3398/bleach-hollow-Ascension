@@ -314,7 +314,9 @@ export function showCloudConflict(c: CloudConflict): () => void {
 
 export const GATE_TEXT = {
   title: '로그인',
-  body: '로그인하면 세이브가 클라우드에 저장되고 다른 기기에서 이어 할 수 있다. 게스트로 시작해도 나중에 설정에서 계정을 연동할 수 있다.',
+  body: '로그인하면 세이브가 클라우드에 저장되고 다른 기기에서 이어 할 수 있다. 게스트도 나중에 설정에서 계정을 연동할 수 있다.',
+  /** 게스트 vs 로그인 없이 차이 한 줄 (C.522 점검D TOP 6, GDD 16-4: 게스트 = 익명 로그인·클라우드에도 저장 / 로그인 없이 = 기기에만) */
+  choices: '게스트로 시작 = 계정 없이 클라우드에도 저장 · 로그인 없이 하기 = 이 기기에만 저장',
   google: 'Google 로그인',
   email: '이메일 로그인',
   guest: '게스트로 시작',
@@ -341,7 +343,7 @@ export function loginGateDialog(ui: CloudUi, onDone: (how: GateOutcome, why?: st
     onDone(how, why);
   };
   const m = modalLayer('bha-cloud-gate', GATE_TEXT.title, 'dialog', () => finish('skipped'));
-  m.modal.append(el('p', 'bha-modal__body', GATE_TEXT.body));
+  m.modal.append(el('p', 'bha-modal__body', GATE_TEXT.body), el('p', 'bha-modal__body', GATE_TEXT.choices));
   const status = el('div', 'bha-cloud-email__status');
   m.modal.append(status);
   const say = (text: string) => status.replaceChildren(notice('warn', text));

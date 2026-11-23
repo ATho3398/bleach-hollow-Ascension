@@ -193,11 +193,14 @@ describe('처형 장치 (GDD 8-8)', () => {
 describe('견본: 사신 백련 (t4:normal:physical)', () => {
   const N = EU.forms['t4:normal:physical']!.shinigami as Record<string, number> & { release: Record<string, number> };
   const evo = () => evoParamsOf(getForm('t4:normal:physical'), 'shinigami')!;
-  it('허 블록 말고는 저절로 안 생김 → 평타 4대마다 블록 1개', () => {
+  // C.520 (사용자 11-23 진화체 밸런스, 마스터AR 기준): 백련 평타 4대 → 2대·만해 2대 → 1대 — 기대값은 수치 키(N.every)로, 옛 '3초 동안 0개'는 그 사이 평타 몫만큼으로 바꿈
+  it('허 블록 말고는 저절로 안 생김 → 평타 every 대마다 블록 1개', () => {
     const s = mk({ evo: evo() });
     tick(s, ticksOf(s.params, 3)); // 생성 타이머가 돌아도
     const before = s.tray.length;
-    expect(before).toBe(0);
+    expect(before).toBe(Math.floor((s.basicCount ?? 0) / N.every!)); // 옛: toBe(0) (every 4 라 3초 안에 평타 몫이 없었다)
+    s.tray.length = 0;
+    s.basicCount = 0;
     const evs = basics(s, N.every!);
     expect(s.tray.length).toBe(1);
     expect(evs.some((e) => e.kind === 'evo-proc' && e.text === '백련!')).toBe(true);
@@ -208,7 +211,7 @@ describe('견본: 사신 백련 (t4:normal:physical)', () => {
     expect(s.tray.some((b) => b.kind === 'void')).toBe(true);
     expect(s.tray.filter((b) => b.kind === 'skill').length).toBeLessThanOrEqual(Math.ceil(s.tick * s.params.tickSeconds)); // 평타 몫만
   });
-  it('바에 쌓인 블록 1개당 공속·평타 +3%', () => {
+  it('바에 쌓인 블록 1개당 공속·평타 +perBlock(C.520: 3% → 6%)', () => {
     const s = mk({ evo: evo() });
     const p0 = basicPowerOf(s);
     const t0 = attackSecondsNow(s);
@@ -217,18 +220,20 @@ describe('견본: 사신 백련 (t4:normal:physical)', () => {
     expect(attackSecondsNow(s)).toBeLessThan(t0);
     expect(statusMarksOf(s, 'shinigami').some((m) => m.key === 'evo-passive')).toBe(true);
   });
-  it('만해 중 평타 2대마다', () => {
+  it('만해 중 평타 release.every 대마다(C.520: 2 → 1)', () => {
     const s = mk({ evo: evo(), liberationUnique: true });
     expect(libNow(s)).toBe(true);
     expect(s.tray.length).toBe(0); // 해방 순간 지급도 없음(저절로 안 생김)
     basics(s, N.release.every!);
     expect(s.tray.length).toBe(1);
   });
-  it('기본 해방(만해 아님) 때는 4대 그대로', () => {
+  it('기본 해방(만해 아님) 때는 every 대 그대로', () => {
     const s = mk({ evo: evo(), liberationUnique: false });
     expect(libNow(s)).toBe(true);
-    basics(s, 2);
-    expect(s.tray.length).toBe(0);
+    basics(s, N.release.every!); // 만해 값(C.520: 1대 — 옛 2대)만큼 쳐도
+    expect(s.tray.length).toBe(0); // 기본 해방이라 every(2대) 전엔 없음
+    basics(s, N.every! - N.release.every!);
+    expect(s.tray.length).toBe(1);
   });
 });
 

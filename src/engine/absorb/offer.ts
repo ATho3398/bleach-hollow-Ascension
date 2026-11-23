@@ -66,7 +66,7 @@ export function statAbsorbOnly(offer: Pick<AbsorbOffer, 'statOnly' | 'blockless'
   return offer.statOnly === true || offer.blockless === true;
 }
 
-/** 특수 속성(혈·독·허) 특성인가 */
+/** 특수 속성(혈·독·허무) 특성인가 */
 export function isSpecialTrait(t: Pick<TraitDef, 'element'>): boolean {
   return SPECIAL_ELEMENT_IDS.includes(t.element);
 }

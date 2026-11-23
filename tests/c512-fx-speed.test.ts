@@ -67,7 +67,8 @@ describe('엔진: 블록 타격 지연 = 몸 몫 ÷ 배율 + 이펙트 몫(1배)
       const p = params(total, 0.5, 0.3);
       const m = blockMotionOf(p, 'family-a:1', 1)!;
       expect(m.rate).toBeCloseTo(total / 0.8, 9);
-      expect(blockHitDelayOf(p, 'family-a:1', 1)).toBeCloseTo(0.2 / m.rate + 0.3, 9);
+      // C.519 (GDD 7절 v6.167): 옛 기대값 '몸 몫 ÷ 배율(느린 몸 0.5 → 몸 몫 2배)' → 몸 몫 ÷ max(1, 배율) — 느린 몸은 1배
+      expect(blockHitDelayOf(p, 'family-a:1', 1)).toBeCloseTo(0.2 / Math.max(1, m.rate) + 0.3, 9);
     }
   });
   it('몸 몫이 0(도트 연결 동작 — 이펙트가 바로 시작)이면 타격 지연 = 1배 이펙트 첫 반응', () => {
@@ -75,7 +76,8 @@ describe('엔진: 블록 타격 지연 = 몸 몫 ÷ 배율 + 이펙트 몫(1배)
   });
   it('이펙트 몫이 없으면 옛 식(전부 몸 = ÷ 배율), 이펙트 몫이 지연보다 크면 지연까지만', () => {
     const p = params(0.4, 0.3);
-    expect(blockHitDelayOf(p, 'family-a:1', 1)).toBeCloseTo(0.3 / 0.5, 9);
+    expect(blockHitDelayOf(p, 'family-a:1', 1)).toBeCloseTo(0.3, 9); // C.519: 옛 기대값 0.3 ÷ 0.5(느린 몸 늘림) → 하한 1배 = 0.3
+    expect(blockHitDelayOf(params(1.6, 0.3), 'family-a:1', 1)).toBeCloseTo(0.3 / 2, 9); // 빠른 몸은 그대로 ÷ 배율
     expect(blockHitDelayOf(params(0.4, 0.3, 9), 'family-a:1', 1)).toBeCloseTo(0.3, 9);
   });
 });

@@ -66,9 +66,13 @@ describe('엔진: 몸동작 줄·평타 멈춤·타격 틱이 기준 길이', ()
       expect(m.total).toBeCloseTo(LEN[c - 1]!, 9);
       const nat = p.motion.blockBy![`family-a:${c}`]!;
       expect(m.rate).toBeCloseTo(nat.total / LEN[c - 1]!, 9);
-      expect(m.hit / m.total).toBeCloseTo(nat.hit / nat.total, 9); // 타격 비율 그대로
-      // 이펙트 몫(blockFxBy)이 없는 표 = 전부 몸 몫 → ÷ 배율 (C.512 사용자 11-20: 이펙트 몫이 있으면 그만큼은 1배 — tests/c512-fx-speed)
-      expect(blockHitDelayOf(p, `family-a:${c}`, c)).toBeCloseTo(p.hitDelay.blockBy![`family-a:${c}`]! / m.rate, 9);
+      // C.519 (GDD 7절 v6.167, 사용자 11-22 "모션 슬로우걸리는거 왜 아직도 남아있음?"): 배율 하한 1배 — 옛 기대값 'hit/total = 원래 비율(느린 몸도 늘림)'·'지연 ÷ 배율' →
+      // 빠른 몸(배율 > 1)만 비율 그대로 줄이고, 느린 몸(1체인 0.4초·3체인 0.6초)은 타격 = 원래 시각(1배)·지연 ÷ 1
+      const play = Math.max(1, m.rate);
+      expect(m.hit).toBeCloseTo(nat.hit / play, 9);
+      if (m.rate >= 1) expect(m.hit / m.total).toBeCloseTo(nat.hit / nat.total, 9); // 타격 비율 그대로
+      // 이펙트 몫(blockFxBy)이 없는 표 = 전부 몸 몫 → ÷ max(1, 배율) (C.512 사용자 11-20: 이펙트 몫이 있으면 그만큼은 1배 — tests/c512-fx-speed)
+      expect(blockHitDelayOf(p, `family-a:${c}`, c)).toBeCloseTo(p.hitDelay.blockBy![`family-a:${c}`]! / play, 9);
     }
   });
   it('1/2/3체인을 쓰면 그만큼(8/10/12틱) 평타 타이머가 멈춘다 — 화면 없는 기본값(1.4초 동작)도 기준 길이로', () => {
@@ -121,10 +125,17 @@ describe('화면: 실제 종이인형 재생 길이 (진짜 재생기로 측정)
     ['아란칼 해방(여)', 'arrancar-base-f-released', 'hollow', 'family-c'],
   ];
   for (const [name, look, fac, fam] of cases) {
-    it(`${name}: 1/2/3체인 = 0.8/1.0/1.2초 (변형이 달라도), 옛 길이는 몸마다 다름`, () => {
+    it(`${name}: 1/2/3체인 몸동작 ≤ 0.8/1.0/1.2초 (변형이 달라도), 옛 길이는 몸마다 다름`, () => {
+      // C.519 (GDD 7절 v6.167): 옛 기대값 '잰 길이 = 기준 길이(느린 몸은 늘림)' → 몸동작은 기준 길이를 넘지 않고(긴 동작은 줄임), 짧은 동작은 1배 그대로(남는 시간 = 대기 동작, tests/c519)
       for (const rng of [() => 0, () => 0.99]) {
-        const b = bodyRig(look, fac, rng);
-        for (const c of [1, 2, 3]) expect(Math.abs(measureBlockMs(b, fam, c, true).ms - LEN[c - 1]! * 1000)).toBeLessThanOrEqual(3);
+        for (const c of [1, 2, 3]) {
+          const r = measureBlockMs(bodyRig(look, fac, rng), fam, c, true);
+          const nat = measureBlockMs(bodyRig(look, fac, rng), fam, c, false).ms;
+          expect(r.ms).toBeLessThanOrEqual(LEN[c - 1]! * 1000 + 3);
+          // 1배 그대로(배율 ≤ 1) / 긴 동작은 빨라진다: 연결 동작·몸통박치기 = ÷ 배율, 동작 하나 = 고른 변형이 기준보다 길 때만 기준 길이로
+          const want = r.kind === 'clip' ? Math.min(nat, LEN[c - 1]! * 1000) : nat / r.play;
+          expect(Math.abs(r.ms - want)).toBeLessThanOrEqual(4);
+        }
       }
       // 엔진 몸동작 표도 같은 몸 데이터로 같은 길이
       const b = bodyRig(look, fac);
@@ -138,23 +149,27 @@ describe('화면: 실제 종이인형 재생 길이 (진짜 재생기로 측정)
     expect(old[0]).toBeLessThan(300);
     expect(old[1]).toBeGreaterThan(1000);
   });
-  it('프레임 그림 재생기도 lengthMs 로 길이를 맞춘다 (타격 비율 그대로)', () => {
+  it('프레임 그림 재생기도 lengthMs 로 길이를 맞춘다 (긴 동작만 줄임, 타격 비율 그대로)', () => {
+    // C.519 (GDD 7절 v6.167): 옛 기대값 'lengthMs 800 → 400ms 동작을 800ms 로 늘림' → 늘이지 않음(400ms 1배), 줄이기(200ms)만
     const shown: string[] = [];
     const clip = { action: 'skill', frames: ['a', 'b', 'c', 'd'], frameMs: [100, 100, 100, 100], hitFrame: 2, mode: 'once' } as never;
     const p = createAnimPlayer({ skill: clip }, 'still', { show: (u: string) => shown.push(u) } as never);
     const nat = p.peek('skill')!;
     expect(nat.durationMs).toBe(400);
-    expect(p.peek('skill', { lengthMs: 800 })).toEqual({ durationMs: 800, hitAtMs: nat.hitAtMs * 2 });
-    let done = false;
-    let hitAt = -1;
-    let t = 0;
-    p.play('skill', { lengthMs: 800, onEnd: () => { done = true; }, onHit: () => { hitAt = t; } });
-    while (!done && t < 5000) {
-      p.advance(1);
-      t++;
+    expect(p.peek('skill', { lengthMs: 800 })).toEqual(nat);
+    expect(p.peek('skill', { lengthMs: 200 })).toEqual({ durationMs: 200, hitAtMs: nat.hitAtMs / 2 });
+    for (const [len, want] of [[800, 400], [200, 200]] as const) {
+      let done = false;
+      let hitAt = -1;
+      let t = 0;
+      p.play('skill', { lengthMs: len, onEnd: () => { done = true; }, onHit: () => { hitAt = t; } });
+      while (!done && t < 5000) {
+        p.advance(1);
+        t++;
+      }
+      expect(t).toBe(want);
+      expect(Math.abs(hitAt - (nat.hitAtMs * want) / 400)).toBeLessThanOrEqual(1);
     }
-    expect(t).toBe(800);
-    expect(Math.abs(hitAt - nat.hitAtMs * 2)).toBeLessThanOrEqual(1);
   });
 });
 
