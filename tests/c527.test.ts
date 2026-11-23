@@ -121,7 +121,7 @@ describe('C.527 해방 값 기울기 (데이터 검사)', () => {
     };
     expect(v('t4:earth:mixed', 'hollow', 'reflect', 'reflectGrow')).toBeCloseTo(8.8, 6);
     expect(v('t4:fire:special', 'shinigami', 'shotMult', 'shotGrow')).toBeCloseTo(14, 6);
-    expect(v('t4:fire:physical', 'hollow', 'burn', 'burnGrow')).toBeCloseTo(1.26, 6);
+    expect(v('t4:fire:physical', 'hollow', 'burn', 'burnGrow')).toBeCloseTo(2.2, 6); // C.528: 평소 기울기 ×20 → ×48(다 키우면 +147%) → 해방 다 키우면 1.26 → 2.2(평소 ×1.5, 2배 안)
     expect(v('t4:water:mixed', 'hollow', 'crit', 'critGrow')).toBeCloseTo(0.9, 6);
   });
   it('해방 기본값(투자 0)은 그대로 — 기울기만 낮춤', () => {
@@ -147,7 +147,7 @@ describe('C.527 설명 문구', () => {
     expect(rel('t4:earth:mixed')).toBe('반사 200%(다 키우면 880%)');
   });
   it('패치 C.527 · BALANCE 162', () => {
-    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(162); // C.529: 163 (정확한 값은 c529 가 지킨다)
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(162); // C.528: 163 · C.529: 164 (정확한 값은 c529 가 지킨다)
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(527);
   });
 });

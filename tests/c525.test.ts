@@ -92,8 +92,8 @@ describe('③ 블록 기본 피해 유지', () => {
 
 describe('④ 목표 미달 목록 · 버전', () => {
   it('목표 미달 25칸(섬뢰각은 통과로 빠짐) — 시간 제한 몸은 사유에 「시간 제한」', () => {
-    expect(Object.keys(EVO_PROFILE_KNOWN)).toHaveLength(25);
-    expect(EVO_PROFILE_KNOWN['t4:thunder:physical/shinigami']).toBeUndefined();
+    expect(Object.keys(EVO_PROFILE_KNOWN)).toHaveLength(29); // C.528: 요구 스탯 몰기 측정으로 새로 미달 4(무랄라·콜리브리·반석·섬뢰각) — 옛 기대 25
+    expect(EVO_PROFILE_KNOWN['t4:thunder:physical/shinigami']).toMatch(/C\.528/); // C.528: 섬뢰각 블록속도 몰기로 넓이 −20.7% → 다시 미달(옛 기대 = 없음)
     for (const [id, fac] of timed()) if (EVO_PROFILE_KNOWN[`${id}/${fac}`] && !(id === 'h4:void' && fac === 'shinigami')) expect(EVO_PROFILE_KNOWN[`${id}/${fac}`]).toMatch(/시간 제한/);
   });
   it('BALANCE 161 · 패치 C.525', () => {

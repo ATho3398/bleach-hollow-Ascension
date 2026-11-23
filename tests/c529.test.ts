@@ -127,8 +127,8 @@ describe('C.529 치명 상한 70%', () => {
     expect(p.blockCritChance).toBeCloseTo(CX.blockCritChance + 0.05, 6);
     expect(p.blockCritChanceMax).toBeUndefined();
   });
-  it('패치 C.529 · BALANCE 163', () => {
-    expect(BALANCE_VERSION).toBe(163);
+  it('패치 C.529 · BALANCE 164', () => {
+    expect(BALANCE_VERSION).toBe(164);
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(529);
   });
 });
