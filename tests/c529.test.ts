@@ -83,8 +83,10 @@ describe('C.529 치명 상한 70%', () => {
   it('critBreak 를 켠 진화체 = 물 속성 6종뿐 (라나·니에블라·바라쿠다 / 노도·연우·백랑파)', () => {
     const forms = (raw as { forms: Record<string, Record<string, { ability?: { critBreak?: unknown } }>> }).forms;
     const on = Object.entries(forms).flatMap(([id, by]) => Object.entries(by).filter(([, e]) => e.ability?.critBreak).map(([f]) => `${id}/${f}`));
-    expect(on.sort()).toEqual([...WATER6].sort());
+    // C.530: + 사신 주홍장 만해 중만(조건 객체 — GDD 7절 v6.187, 사용자 11-12 지정 '상한 뚫음') — 옛 기대 = 물 6종뿐
+    expect(on.sort()).toEqual([...WATER6, 't4:blood:physical/shinigami'].sort());
     for (const k of WATER6) { const [id, f] = k.split('/') as [string, string]; expect(forms[id]?.[f]?.ability?.critBreak).toBe(true); }
+    expect(forms['t4:blood:physical']?.shinigami?.ability?.critBreak).toEqual({ when: 'release' });
     expect(forms['h4:fusion:water+earth']).toBeUndefined(); // 물+흙 융합(판타노·이소)은 고유 능력 없음
     expect(validateEvoUniques()).toEqual([]);
   });
@@ -99,11 +101,11 @@ describe('C.529 치명 상한 70%', () => {
       expect(playerCritChanceOf(s, 0, true, 0.2)).toBeCloseTo(0.9, 6);
     }
   });
-  it('물 아닌 진화체(사신 주홍장 만해 혈 블록 치명 +)는 70%에서 잘린다', () => {
+  it('사신 주홍장 평소(만해 밖)는 70%에서 잘린다 — C.530: 만해 중에만 돌파(GDD v6.187, 옛 기대 = 늘 잘림·critBreak 없음)', () => {
     const s = mk({ evo: full('t4:blood:physical', 'shinigami'), critChance: 0.69 });
     s.params = { ...s.params, abilityEffects: { ...s.params.abilityEffects, evoCrit: 0.5 } }; // 특성 몫으로 상한까지
     expect(playerCritChanceOf(s)).toBeCloseTo(0.7, 6);
-    expect(s.params.evo!.ability.critBreak).toBeUndefined();
+    expect(s.params.evo!.ability.critBreak).toEqual({ when: 'release' }); // C.530 (옛 기대 = undefined)
   });
   it('조건부 돌파 틀: critBreak = { need } 면 조건이 참인 동안만 넘는다 (폭주형·사냥꾼 자리 — 데이터 없음)', () => {
     const base = unbroken(full('t4:water:physical', 'hollow'));

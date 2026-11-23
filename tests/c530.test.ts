@@ -13,6 +13,10 @@ import {
 } from '../src/engine/evolution';
 import { EVO_PROFILE_KNOWN, evProfileAllocation } from '../scripts/lib/evoProfile';
 import { PATCH_LABEL } from '../src/version';
+import { createCombat, evoStat, playerCritChanceOf, type EvoParams } from '../src/engine/combat';
+import { getEnemy } from '../src/data/enemies';
+import { getForm } from '../src/data/evolution';
+import { evoParamsOf } from '../src/engine/evolution';
 
 const PROFILES = profilesRaw as unknown as BalanceProfileFile;
 const UNIQUES = uniquesRaw as unknown as EvoFile;
@@ -137,5 +141,26 @@ describe('기울기 재보정 (3회) · 사용자 확정 값 그대로', () => {
   it('BALANCE 165 · 패치 C.530', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(165);
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(530);
+  });
+});
+
+describe('사신 주홍장 만해 = 혈 블록 치명 + 상한 돌파 (GDD 7절 v6.187, 사용자 11-12 "상한 뚫음" — critBreak { when: release })', () => {
+  const body = (releasing: boolean) => {
+    const evo = { ...evoParamsOf(getForm('t4:blood:physical'), 'shinigami')!, effort: 1, blockLv: 1 } as EvoParams;
+    const s = createCombat(7, { enemy: getEnemy('test-a'), params: { enemyPassive: true, enemyImmortal: true, trayCapacity: 0, evo, critChance: 0.7, liberationUnique: true } });
+    s.evo!.stacks.blood = { n: 6 }; // 만해 중 생긴 혈 블록 6개
+    s.liberation.ticksLeft = releasing ? 100 : 0;
+    return s;
+  };
+  it('데이터 = 만해 중에만 돌파', () => {
+    expect(UNIQUES.forms['t4:blood:physical']!.shinigami!.ability!.critBreak).toEqual({ when: 'release' });
+  });
+  it('만해 중: 평타 치명 70% 위로(70% + 혈 블록 6 × 5%p = 100%) · 평소: 70%', () => {
+    const r = body(true);
+    expect(evoStat(r, 'crit')).toBeCloseTo(0.3, 6);
+    expect(playerCritChanceOf(r)).toBeCloseTo(1, 6);
+    expect(playerCritChanceOf(r)).toBeGreaterThan(0.7);
+    const n = body(false);
+    expect(playerCritChanceOf(n)).toBeCloseTo(0.7, 6);
   });
 });

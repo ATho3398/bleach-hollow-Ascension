@@ -401,6 +401,7 @@
       },
       "shinigami": {
         "ability": {
+          "critBreak": { "when": "release" },
           "description": { "*": "잃은 체력 1%당 일반 공격 피해 +{perLostPower%} · 일반 공격 간격 −{perLostInterval%}. 혈 블록을 쓰면 다음 일반 공격 피해의 체인 수×{healPerChain%} 회복" },
           "releaseDescription": { "*": "만해 {releaseSeconds}초 · 체력이 {hpFloor} 아래로 안 떨어짐 · 만해 중 생긴 혈 블록 1개당 치명 확률 +{critPerBlood%}p·치명 피해 +{critDmgPerBlood%}(상한 무시)" },
           "releaseSeconds": "releaseSeconds",

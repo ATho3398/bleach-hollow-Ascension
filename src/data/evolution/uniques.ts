@@ -304,7 +304,7 @@ export interface EvoAbilityDef {
   effortBasis?: 'attackInterval';
   /** 치명 상한 돌파 (GDD 7-4 v6.184, C.529): true = 이 고유 능력의 치명 확률 +(평타·블록)만 치명 상한(70%)을 넘을 수 있다(최대 evoAbilityCaps.critBreakMax = 100%).
    *  객체 = 그 조건(need — 규칙 거르기와 같은 틀, when = 해방 중·평소)이 켜진 동안만 돌파(폭주형·사냥꾼 '상황에 따라 잠깐' 자리 — 조건 [미정], 지금 데이터 없음).
-   *  없으면 능력 치명 +도 상한 안에서 더한다. 켠 진화체 = 물 속성 6종(라나·니에블라·바라쿠다 / 노도·연우·백랑파, 사용자 "일단 수속") */
+   *  없으면 능력 치명 +도 상한 안에서 더한다. 켠 진화체 = 물 속성 6종(라나·니에블라·바라쿠다 / 노도·연우·백랑파, 사용자 "일단 수속") + 사신 주홍장 { when: release }(만해 중 혈 블록 치명 +, GDD 7절 v6.187 — C.530) */
   critBreak?: boolean | { need?: EvoNeed[]; when?: 'release' | 'normal' };
 }
 
