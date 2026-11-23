@@ -22,7 +22,8 @@
     "t4:normal:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격 {every}대마다 적에게 찢김 +1(최대 {max}), 찢김 1당 그 적이 받는 일반 공격 피해 +{perStack%}(노력치를 키울수록 커짐 — 다 키우면 +{perStack@perStackGrow%}). 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 {flatPer}회분 피해를 더한다" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "일반 공격 {every}대마다 적에게 찢김 +1(최대 {max}), 찢김 1당 그 적이 받는 일반 공격 피해 +{perStack%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perStack@perStackGrow%}). 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 {flatPer}회분 피해를 더한다" },
           "releaseDescription": { "*": "일반 공격 {every}대마다 찢김 +1(최대 {max})" },
           "stacks": {
             "rend": { "max": "max", "on": "foe", "mark": { "icon": "i-fx-claw", "name": { "*": "찢김" } } }
@@ -39,7 +40,8 @@
       "shinigami": {
         "trait": "aspd10",
         "ability": {
-          "description": { "*": "폭주 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(폭주 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}(노력치를 키울수록 커짐 — 다 키우면 +{perBlock@perBlockGrow%})" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "폭주 블록 말고는 블록이 저절로 생기지 않는다. 일반 공격 {every}대마다 블록 1개(폭주 제외 무작위). 바에 쌓인 블록 1개당 공격 속도·일반 공격 피해 +{perBlock%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perBlock@perBlockGrow%})" },
           "releaseDescription": { "*": "일반 공격 {every}대마다 블록 1개" },
           "spawnRule": "voidOnly",
           "rules": [
@@ -55,7 +57,8 @@
     "t4:water:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "블록을 쓸 때마다(체인·개수 무관) 물 스택 1({seconds}초, 스택마다 따로), 스택당 일반 공격 치명 확률 +{perStack%}p(노력치를 키울수록 커짐 — 다 키우면 +{perStack@perStackGrow%}p, 최대 {max}스택)" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "블록을 쓸 때마다(체인·개수 무관) 물 스택 1({seconds}초, 스택마다 따로), 스택당 일반 공격 치명 확률 +{perStack%}p(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perStack@perStackGrow%}p, 최대 {max}스택)" },
           "releaseDescription": { "*": "스택 지속 {seconds}초 · 최대 {max}스택" },
           "stacks": {
             "wet": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-rare", "name": { "*": "물" } } }
@@ -71,7 +74,8 @@
       "shinigami": {
         "trait": "crit6",
         "ability": {
-          "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(노력치를 키울수록 커짐 — 다 키우면 +{perStack@perStackGrow%}p)·치명 피해 +{critDmgPerStack%}(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perStack@perStackGrow%}p)·치명 피해 +{critDmgPerStack%}(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
           "releaseDescription": { "*": "스택 지속 {seconds}초 · 스택당 치명 확률 +{perStack%}p(다 키우면 +{perStack@perStackGrow%}p) · 치명 피해 +{critDmgPerStack%}" },
           "stacks": {
             "surge": { "max": "max", "seconds": "seconds", "mark": { "icon": "i-rare", "name": { "*": "노도" } } }
@@ -94,7 +98,8 @@
     "t4:fire:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%}, 노력치를 키울수록 커짐 — 다 키우면 +{burn@burnGrow%})" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn%}, 공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{burn@burnGrow%})" },
           "releaseDescription": { "*": "여우불 {seconds}초 · 화상 피해 +{burn%}(다 키우면 +{burn@burnGrow%})" },
           "stacks": {
             "fox": { "seconds": "seconds", "mark": { "icon": "i-cast", "name": { "*": "여우불" } } }
@@ -113,7 +118,8 @@
       },
       "shinigami": {
         "ability": {
-          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}(노력치·이 속성 블록을 같이 키울수록 커짐 — 다 키우면 +{perFire@fireGrow%}), 그 뒤 봉화 0" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "일반 공격 {every}대마다 봉화 1(봉화당 일반 공격 피해 +{perBeacon%}). 봉화 {need}개면 다음 일반 공격이 「봉수 폭렬」 — 적 방어 {pierce%} 무시, 바의 불 블록 1개당 피해 +{perFire%}(공격 속도·이 속성 블록을 같이 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perFire@fireGrow%}), 그 뒤 봉화 0" },
           "releaseDescription": { "*": "폭렬에 필요한 봉화 {need}개 · 봉화당 +{perBeacon%}" },
           "stacks": {
             "beacon": { "max": "need", "mark": { "icon": "i-attack", "name": { "*": "봉화" } } }
@@ -132,7 +138,8 @@
     "t4:earth:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "전투를 시작할 때 갑각 보호막(최대 체력 {shield%}). 갑각이 남아 있는 동안 일반 공격 피해 +{basicBonus%}(노력치를 키울수록 커짐 — 다 키우면 +{basicBonus@bonusGrow%}). 깨지면 {regrow}초 뒤 다시 돋고, 일반 공격 1대마다 그 시간이 {cut}초 줄어든다" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "전투를 시작할 때 갑각 보호막(최대 체력 {shield%}). 갑각이 남아 있는 동안 일반 공격 피해 +{basicBonus%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{basicBonus@bonusGrow%}). 깨지면 {regrow}초 뒤 다시 돋고, 일반 공격 1대마다 그 시간이 {cut}초 줄어든다" },
           "releaseDescription": { "*": "갑각 {shield%} · 깨질 때 깨진 양만큼 적에게 되돌린다" },
           "rules": [
             { "on": "start", "do": [{ "act": "shield", "value": "shield", "cap": "shield" }] },
@@ -149,6 +156,7 @@
       },
       "shinigami": {
         "ability": {
+          "effortBasis": "attackInterval",
           "description": { "*": "일반 공격 간격 ×{slow}. 흙 블록이 생길 때마다 방어막 +최대 체력 {perSpawn%}(최대 {cap%}). 방어막 1%당 일반 공격 피해 +{perShield%}(이 속성 블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 +{perShield@perShieldGrow%}). 흙 블록을 쓰면 방어막 체인 수×{cutPerChain%}p 삭제" },
           "releaseDescription": { "*": "방어막이 막은 피해를 모아 만해가 끝날 때 그만큼({storedMult%}) 피해" },
           "stacks": {
@@ -170,7 +178,8 @@
     "t4:thunder:physical": {
       "hollow": {
         "ability": {
-          "description": { "*": "일반 공격마다 날갯짓 +1 — 1개당 일반 공격 간격 −{perStack%}(노력치를 키울수록 커짐 — 다 키우면 −{perStack@perStackGrow%}, 최대 −{maxCut%}). 블록을 쓰면 날갯짓이 절반으로" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "일반 공격마다 날갯짓 +1 — 1개당 일반 공격 간격 −{perStack%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 −{perStack@perStackGrow%}, 최대 −{maxCut%}). 블록을 쓰면 날갯짓이 절반으로" },
           "releaseDescription": { "*": "블록을 써도 안 줄어듦 · 최대 −{maxCut%}" },
           "stacks": {
             "wing": { "max": "maxStacks", "mark": { "icon": "i-speed", "name": { "*": "날갯짓" } } }
@@ -186,6 +195,7 @@
       },
       "shinigami": {
         "ability": {
+          "effortBasis": "attackInterval",
           "description": { "*": "뇌 블록을 쓰면 다음 일반 공격 체인 수×{perChain}대 동안 분신이 1번 더 친다(같은 피해, 남은 것에 더함)" },
           "releaseDescription": { "*": "체인 수×{perChain}대" },
           "charges": {
@@ -329,7 +339,8 @@
       "hollow": {
         "trait": "obliteration",
         "ability": {
-          "description": { "*": "블록을 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(노력치를 키울수록 커짐 — 다 키우면 {seconds@hollowSecondsGrow}초 동안 체인 수×{perChain@hollowGrow%})(새로 쓰면 갱신). 바 {bar}칸이 가득 찬 동안 {every}초마다 일반 공격 처형선 +{perLine%}p(전투 동안 유지, 최대 +{maxLine%}p)" },
+          "effortBasis": "attackInterval",
+          "description": { "*": "블록을 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 {seconds@hollowSecondsGrow}초 동안 체인 수×{perChain@hollowGrow%})(새로 쓰면 갱신). 바 {bar}칸이 가득 찬 동안 {every}초마다 일반 공격 처형선 +{perLine%}p(전투 동안 유지, 최대 +{maxLine%}p)" },
           "buffs": {
             "hollow": { "mark": { "icon": "i-basic", "name": { "*": "허무" } } }
           },
@@ -596,6 +607,7 @@
         "extraPetSlots": "petSlots",
         "extraPetPower": "pet2Power",
         "ability": {
+          "effortBasis": "attackInterval",
           "description": { "*": "펫 칸 +{petSlots}(2번째 펫 피해 {pet2Power%}). 일반 공격마다 표식 +1(최대 {maxMarks}, 다 차면 다음 공격에 0), 표식당 펫 공격력 +{perMark%}" },
           "releaseDescription": { "*": "표식당 내 치명 피해 +{critPerMark%} · 최대 {maxMarks}" },
           "stacks": {

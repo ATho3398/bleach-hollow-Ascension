@@ -10,7 +10,7 @@ import { distribute, failLineTotal } from '../../data/evolution/generate';
 import { NORMAL_ELEMENT, PLAYER_ELEMENT_IDS } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { formCategoryOf, STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
-import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
+import { ELEMENT_DAMAGE_IDS, speedFactorOf, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { EvoParams } from '../combat/evoUnique';
 import { evoFormEntry, evoNumsOf, evoReleaseBlocked, evoReleaseNums } from '../../data/evolution/uniques';
 import { cloneBuild, familyCategory, familyTable, type BuildState } from '../absorb/build';
@@ -596,7 +596,12 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   // 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.499): 진화체 × 종족(전투 기반) 데이터. 해방 없음 진화체는 해방 자체를 막는다
   params.evo = evoParamsOf(form, factionId);
   // 모양 손잡이 출처 effort (C.524): 능력치 트랙(stat)의 노력치 — 그 몸 타입의 주 노력치 투자율
-  if (params.evo && form) params.evo.effort = evoEffortOf(stat.ev, capTierOf(stat), formCategoryOf(form, factionId));
+  if (params.evo && form) {
+    // C.530 (GDD 8-7 v6.185): 능력 데이터 effortBasis = 'attackInterval' 이면 노력치 투자율 대신 일반 공격 간격 기준(몸 기본 공속 → 지금 공속)
+    params.evo.effort = params.evo.ability.effortBasis === 'attackInterval'
+      ? evoIntervalEffortOf(baseStatsOf(stat, statFaction).aspd, currentStats(stat, statFaction, statBonus).aspd)
+      : evoEffortOf(stat.ev, capTierOf(stat), formCategoryOf(form, factionId));
+  }
   if (evoReleaseBlocked(form?.id, factionId)) {
     params.liberationEnabled = false;
     params.liberationUnique = false;
@@ -646,6 +651,27 @@ export function evoEffortOf(ev: Partial<Record<StatId, number>>, capTier: number
   const denom = Math.floor(evCaps(capTier).total * I.mainShare);
   if (denom <= 0) return 0;
   return Math.min(1, Math.max(0, main.reduce((a, k) => a + (ev[k] ?? 0), 0) / denom));
+}
+
+/** 공속 능력치 하나로 낸 일반 공격 간격(초, 반올림·배율·옵션·상한 전) — 속도 곡선(GDD 7절)과 같은 식 */
+export function statAttackSecondsOf(aspd: number): number {
+  return BALANCE.provisional.combat.playerAttackSeconds * speedFactorOf(worldRefStat(), aspd);
+}
+
+/** 출처 effort — 공격 간격 기준 (C.530, GDD 8-7 v6.185 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움'): 진화체 능력 데이터 effortBasis = 'attackInterval' 인 몸.
+ *  그 몸 기본 간격(노력치·장비 0 공속) → 지금 간격(노력치·장비 포함 공속)이 evoInvest.intervalFull(0.6초)까지 줄어든 비율 0~1. 그보다 빠른 몫은 1 고정(장비 덤).
+ *  기본 간격이 이미 intervalFull 이하면 1. 종족·진화체 분기 없음 — 능력치만 본다(특성 배율·간격 −초·해방은 세지 않는다) */
+export function evoIntervalEffortOf(baseAspd: number, aspd: number): number {
+  const full = BALANCE.provisional.evoInvest.intervalFull;
+  const i0 = statAttackSecondsOf(baseAspd);
+  if (i0 <= full) return 1;
+  return Math.min(1, Math.max(0, (i0 - statAttackSecondsOf(aspd)) / (i0 - full)));
+}
+
+/** 간격 intervalFull 에 닿는 공속 능력치(올림) — 측정·설명용 */
+export function evoIntervalFullAspd(): number {
+  const C = BALANCE.provisional.combat;
+  return Math.ceil(worldRefStat() * Math.pow(C.playerAttackSeconds / BALANCE.provisional.evoInvest.intervalFull, 1 / C.speedExponent));
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */

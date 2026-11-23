@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 163; // C.528 (GDD 8-7 v6.181 '측정 노력치 칸 = 요구 스탯 몰기', 마스터AS — 전부 provisional): evoUniques 노력치 기울기 — 사신 노도 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 · 호로 소로 burnGrow 20 → 48(해방 1.26 → 2.2 = 다 키운 평소 ×1.5, 여우불 2.5초·5개 그대로) · 호로 에스카라바호 bonusGrow 5.5 → 9 · 호로 무랄라 shieldGrow 6 → 14. 측정(evoProfile.ts)만 바뀐 것 = 노력치 칸 investFocus.
+export const BALANCE_VERSION = 164; // C.530 (GDD 8-7 v6.185 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 마스터AS — 전부 provisional): evoInvest.intervalFull 0.6 신설(능력 데이터 effortBasis 'attackInterval' 몸의 effort = 몸 기본 공속 간격 → 0.6초 비율) · evoUniques 노력치 기울기 — 사신 노도 perStackGrow 4 → 3.2·hitsGrow 2.5 → 2 · 사신 백련 perBlockGrow 2.5 → 4 · 호로 마르티요 perStackGrow 80 → 88 · 호로 에스카라바호 bonusGrow 9 → 6.5 · 호로 콜리브리 perStackGrow 28 → 36 (소로 burnGrow 48 그대로)
+// 이전: BALANCE_VERSION = 163; // C.528 (GDD 8-7 v6.181 '측정 노력치 칸 = 요구 스탯 몰기', 마스터AS — 전부 provisional): evoUniques 노력치 기울기 — 사신 노도 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 · 호로 소로 burnGrow 20 → 48(해방 1.26 → 2.2 = 다 키운 평소 ×1.5, 여우불 2.5초·5개 그대로) · 호로 에스카라바호 bonusGrow 5.5 → 9 · 호로 무랄라 shieldGrow 6 → 14. 측정(evoProfile.ts)만 바뀐 것 = 노력치 칸 investFocus.
 // 이전: BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
 // 이전: BALANCE_VERSION = 161; // C.525 (GDD 8-7 v6.178 '시간 제한 능력 = 노력 곡선·고점 높게' · '블록 기본 피해 유지', 마스터AS — 전부 provisional): 측정 무투자·노력치만 칸에 속성 공격 블록 1개(evoProfile.invest.baseSkills) · guard.effort.timedHiMin · evoUniques 시간 제한 15칸 노력치 비례(grow per effort)·그 밖 미달 칸 수치(표 dev-log C.525)
 // 이전: BALANCE_VERSION = 160; // C.524 (GDD 8-7 1차 배정 마스터AS 11-23 '알아서 해라 ㅇㅇ', 전부 provisional): provisional.evoInvest 신설(모양 손잡이 출처 effort·blockLv) · evoUniques 진화체 능력 수치(투자 비례 grow·강적/선공 조건 — 표 dev-log C.524) · 추파카브라 혈 블록 사용 문턱 useMin 0.3(최대 체력 30%, 마스터 확정).
@@ -659,6 +660,9 @@ export const BALANCE = {
       traits: 2,
       traitWeight: 0.5,
       enhanceLevels: 10,
+      /** C.530 (GDD 8-7 v6.185 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 사용자 "공속애들은 템도 있으니까 0.6까지만 올리면 맥스라고 생각하고 짜" — provisional):
+       *  능력 데이터 effortBasis = 'attackInterval' 인 몸의 effort = 몸 기본 공속 간격 → 지금 공속 간격이 이 초까지 줄어든 비율(0~1, 더 빠른 몫은 장비 덤) */
+      intervalFull: 0.6,
     },
     // ── C.499 (GDD 8-7 1차 구현, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성.
     //    장치·규칙은 src/data/evolution/uniques.json(진화체 id × 종족), 수치는 여기. forms[진화체 id][종족] = { 수치 키: 값, release: { 키: 레스렉시온/만해 중 값 } } ──
@@ -689,13 +693,13 @@ export const BALANCE = {
         /** 사신 백련: 평타 every 대마다 블록 1개(허 제외), 바의 블록 1개당 공속·평타 +perBlock. 만해 = every 1.
          *  C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고", 마스터AR 기준 — 강적 처치 시간 단축 중앙값 ±10%p·강적 승률 ±15%p): 옛 4대·+3%·만해 2대 = 기여 −46.5%·강적 64% → 2대·+6%·만해 1대 = +2.1%·83% */
         't4:normal:physical': {
-          shinigami: { every: 2, perBlock: 0.028, perBlockGrow: 2.5, release: { every: 1 } },
+          shinigami: { every: 2, perBlock: 0.028, perBlockGrow: 4, release: { every: 1 } }, // C.530 perBlockGrow 2.5 → 4 (간격 0.6초 기준 — 고점 유지)
           /** 호로 마르티요 (C.503): 평타 every 대마다 적 찢김 +1(최대 max), 1당 평타 피해 +perStack. 블록 → 체인 수만큼 소모, 1당 그 블록 + 평타 flatPer 회분. 레스렉시온 = 2대마다·최대 8 */
-          hollow: { every: 3, max: 5, perStack: 0.01, flatPer: 0.3, perStackGrow: 80, release: { every: 2, max: 8 } },
+          hollow: { every: 3, max: 5, perStack: 0.01, flatPer: 0.3, perStackGrow: 88, release: { every: 2, max: 8 } }, // C.530 perStackGrow 80 → 88 (간격 0.6초 기준)
         },
         /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
         't4:water:physical': {
-          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 4, hitsGrow: 2.5, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18, perStackGrow: 0.14 / 0.06 - 1 } }, // C.528 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 (요구 스탯 공속 몰기 측정 — 노력 곡선·고점)
+          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 3.2, hitsGrow: 2, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18, perStackGrow: 0.14 / 0.06 - 1 } }, // C.528 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 (요구 스탯 공속 몰기 측정 — 노력 곡선·고점) · C.530 → 3.2·2 (간격 0.6초 기준 — 넓이 +14% → +8%)
           /** 호로 라나 (C.503): 블록 1번 = 물 스택 1(seconds 초, 스택마다 따로), 스택당 평타 치명 +perStack(최대 max). 레스렉시온 = 8초·최대 8 */
           hollow: { perStack: 0.02, seconds: 5, max: 6, perStackGrow: 20, release: { seconds: 8, max: 8 } },
         },
@@ -709,13 +713,13 @@ export const BALANCE = {
         't4:earth:physical': {
           shinigami: { slow: 1.15, slowCut: -0.15, perSpawn: 0.04, cap: 0.3, perShield: 0.015, cutPerChain: 0.05, storedMult: 1, perShieldGrow: 6 },
           /** 호로 에스카라바호 (C.503, evo-picks 그대로): 전투 시작 보호막 최대 체력 shield, 있는 동안 평타 +basicBonus, 깨지면 regrow 초 뒤 다시(평타마다 cut 초 당김). 레스렉시온 = 보호막 20%(시작 때 남아 있으면 20% 로 채움)·깨질 때 깨진 양만큼 적에게 */
-          hollow: { shield: 0.2, basicBonus: 0.15, regrow: 12, cut: 0.5, bonusGrow: 9, release: { shield: 0.28 } }, // C.528 bonusGrow 5.5 → 9 (고점)
+          hollow: { shield: 0.2, basicBonus: 0.15, regrow: 12, cut: 0.5, bonusGrow: 6.5, release: { shield: 0.28 } }, // C.528 bonusGrow 5.5 → 9 (고점) · C.530 → 6.5 (간격 0.6초 기준 — 넓이 +20% → +9%)
         },
         /** 사신 섬뢰각: 뇌 블록 → 다음 평타 체인 수×perChain 대 분신(같은 피해). 만해 = ×5 */
         't4:thunder:physical': {
           shinigami: { perChain: 1, release: { perChain: 5 } },
           /** 호로 콜리브리 (C.503): 평타마다 날갯짓 +1, 1당 평타 간격 −perStack(최대 −maxCut, 스택 상한 maxStacks), 블록 쓰면 절반. 레스렉시온 = 안 줄어듦·최대 −45% */
-          hollow: { perStack: 0.004, maxStacks: 15, maxCut: 0.6, perStackGrow: 28, release: { maxStacks: 23, maxCut: 0.6 } },
+          hollow: { perStack: 0.004, maxStacks: 15, maxCut: 0.6, perStackGrow: 36, release: { maxStacks: 23, maxCut: 0.6 } }, // C.530 perStackGrow 28 → 36 (간격 0.6초 기준 — 노력치 이득 15% 문턱)
         },
         /** 사신 천평환: 특성 offenseMax(평타·블록 = 공격력·지능 중 높은 쪽) + 블록은 평균(blockAverage 2 = 평균). 만해 = 기본 해방 강화만 */
         't4:normal:mixed': {

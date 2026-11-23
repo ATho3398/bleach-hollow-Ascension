@@ -10,7 +10,7 @@ import { evoExtraPetSlots, evoFormEntry } from '../../src/data/evolution/uniques
 import { balanceProfileOf, curveName, leanName, PROFILE_CURVES, PROFILE_LEANS, type BalanceProfile } from '../../src/data/evolution/balanceProfiles';
 import { formCategoryOf, STAT_IDS, type StatId } from '../../src/data/schema';
 import { createCombat, elapsedSeconds, liberationActive, playCombatHuman, type CombatState } from '../../src/engine/combat';
-import { evCaps } from '../../src/engine/evolution';
+import { evCaps, evoIntervalFullAspd, refStatOf } from '../../src/engine/evolution';
 import { enemyAtDifficulty, recommendedDifficulty } from '../../src/engine/difficulty';
 import { bossSetupOf, enemyScale } from '../../src/engine/expedition';
 import { ENEMIES, scaleEnemy } from '../../src/data/enemies';
@@ -62,8 +62,9 @@ export function evProfileAllocation(t: Pick<EvoBalTarget, 'tier' | 'category'> &
     for (const s of STAT_IDS) if (split[s]) out[s] = Math.min(cap.perStat, Math.floor(cap.total * split[s]!));
     return out;
   }
-  out[focus] = cap.perStat;
-  const rest = cap.total - cap.perStat;
+  // C.530 (GDD 8-7 v6.185 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움'): 공속은 간격 intervalFull(0.6초)에 닿는 만큼만(기준 몸 공속 = 그 단계 기준 능력치, 못 닿으면 상한까지) — 장비는 넣지 않는다
+  out[focus] = focus === 'aspd' ? Math.min(cap.perStat, Math.max(0, Math.ceil(evoIntervalFullAspd() - refStatOf(t.tier - 1)))) : cap.perStat;
+  const rest = cap.total - out[focus]!;
   const w = STAT_IDS.reduce((a, s) => a + (s === focus ? 0 : split[s] ?? 0), 0);
   for (const s of STAT_IDS) if (s !== focus && split[s] && w > 0) out[s] = Math.min(cap.perStat, Math.floor(rest * split[s]! / w));
   return out;
@@ -359,14 +360,15 @@ export function judgeProfileGoal(goal: BalanceProfile, v: ProfileVerdict): strin
 
 /** 목표 미달로 남긴 몸 (C.524 → C.525 재조정 3회 규칙, docs/automation.md 4장) — 목표 모양 가드에서 벗어나도 경고만. 키 = 진화체 id/종족.
  *  C.525: 무투자·노력치만 칸에도 그 속성 공격 블록 1개(측정 고침) · 시간 제한 능력 = 노력 곡선·고점 ≥ +10%(GDD v6.178, balanceProfiles.json timed).
- *  C.528: 노력치 칸 = 요구 스탯 몰기(investFocus, GDD v6.181) — 시간 제한 몸 사유는 C.528 수치, 그 밖은 C.525 수치(사유 그대로) + 새로 미달 4(무랄라·콜리브리·반석·섬뢰각) */
+ *  C.528: 노력치 칸 = 요구 스탯 몰기(investFocus, GDD v6.181) — 시간 제한 몸 사유는 C.528 수치, 그 밖은 C.525 수치(사유 그대로) + 새로 미달 4(무랄라·콜리브리·반석·섬뢰각).
+ *  C.530: 공속 몸 = 간격 0.6초까지(GDD v6.185) — 콜리브리·반석·섬뢰각 통과로 뺌(29 → 26), 라나·소로·나다 사유 C.530 수치 */
 export const EVO_PROFILE_KNOWN: Readonly<Record<string, string>> = {
   't4:normal:mixed/hollow':
     '호로 에스칼레라(노력·시간 제한, 동반 → 노력 v6.178) — C.528 요구 스탯 블록속도 몰기: 노력치 4.2%·블록 10.3%·고점 −8%. 체인당 2%×(1+20 → 32 → 50 → 60×노력치)·지속 ×(1+3 → 4×노력치)로 노력치 이득 16%까지 올렸지만 고점(둘 다)이 −2%(버프가 혼합 몸 평타 몫에만 붙음) → C.527 값 — 3회',
   't4:water:physical/hollow':
-    '호로 라나(노력·시간 제한, 특성 → 노력 v6.178) — C.528 요구 스탯 공속 몰기: 노력치 −18%·넓이 −16%. 다 키우면 스택당 치명 +42%p × 6스택이 이미 치명 상한 100%p(C.527)에 닿아 기울기 ×20 → ×35 도 그대로 — 기울기로 못 올림 → C.527 값 — 1회(같은 사유)',
+    '호로 라나(노력·시간 제한, 특성 → 노력 v6.178) — C.530 공속 = 간격 0.6초까지(노력치 119): 노력치 −13%·넓이 −14%(C.528 −18%·−16%). 다 키우면 스택당 치명 +42%p × 6스택이 이미 치명 상한 100%p(C.527)에 닿아 기울기 ×20 → ×35 도 그대로 — 기울기로 못 올림 → C.527 값 — 1회(같은 사유)',
   't4:fire:physical/hollow':
-    '호로 소로(노력·시간 제한, 사용자 예) — C.528 요구 스탯 공속 몰기(4단계 상한 330 → 평타 간격 0.47초, 여우불 2.5초·5개 = 사용자 확정 그대로)로 화상이 켜짐: 곡선·고점 통과(노력치 +16% · 고점 +23%), 넓이 +12.4%(±10% 밖 — 저점 +9% = 몸, 무투자 칸은 간격 0.79초라 여우불 5개가 안 모여 능력과 무관). 화상 기울기 ×20 → ×35 → ×55 → ×48(다 키우면 +147%) — 3회',
+    '호로 소로(노력·시간 제한, 사용자 예) — C.530 공속 = 간격 0.6초까지(GDD v6.185): 노력치 +3%·고점 +10%(C.528 0.47초 = +16%·+23%), 넓이 +7%. 0.6초면 2.5초 안 평타 4~5번이라 여우불 5개(사용자 확정)가 거의 안 모임(5개 = 간격 0.5초 이하 — 장비·특성 몫) → 화상 기울기 ×48 → ×72 도 고점 그대로 → C.528 값 ×48 — 3회(마스터 확인 거리)',
   't4:fire:mixed/hollow':
     '호로 브라사(노력·시간 제한, 블록 → 노력 v6.178) — C.528 블록속도 몰기: 노력치 2.3%·블록 5.3%. 열기(화상 3초)가 판당 몇 번이라 열기당 피해 ×(1+30 → 45×노력치)도 +1%p → C.527 값. 3초·10%p(사용자 확정) 그대로 — 1회(반응 없음)',
   't4:earth:mixed/hollow':
@@ -380,7 +382,7 @@ export const EVO_PROFILE_KNOWN: Readonly<Record<string, string>> = {
   't4:poison:special/hollow':
     '호로 비보라(노력·강적·시간 제한, 특성 → 노력 v6.178) — C.528 블록속도 몰기: 노력치 −4.1%. 독 스택이 블록 체인 수로 쌓여 「노력치만」 칸엔 맹독이 드묾 — 기울기 ×10 → ×16 에도 +1.4%p → C.527 값 — 1회(반응 거의 없음)',
   'h4:void/hollow':
-    '호로 나다(노력·해방·시간 제한, 평탄 → 노력 v6.178) — C.528 공속 몰기: 노력치 −13%(해방 통과). 저점 +12% = 몸(소멸선 처형), 같은 물리 몸 중앙값도 공속 몰기로 함께 오름. 허무 버프 기울기 ×10 → ×16·지속 ×2 → ×3 = 노력치 −5%(목표 +15% 까지 멂) → C.527 값 — 1회',
+    '호로 나다(노력·해방·시간 제한, 평탄 → 노력 v6.178) — C.530 공속 = 간격 0.6초까지: 노력치 −10%(해방 통과, C.528 −13%). 저점 +12% = 몸(소멸선 처형). 허무 버프 기울기 ×10 → ×16·지속 ×2 → ×3 = 노력치 −5%(목표 +15% 까지 멂) → C.527 값 — 1회',
   'h4:void/shinigami':
     '사신 공화(노력·잡몹·시간 제한, 특성 → 노력 v6.178) — 허무 스택은 원정 동안 쌓여(carry) 한 전투 측정에선 2개에 거의 못 닿아 능력이 0 — 측정 밖',
   't4:fire:special/shinigami':
@@ -413,12 +415,6 @@ export const EVO_PROFILE_KNOWN: Readonly<Record<string, string>> = {
     '사신 추성(평탄·강적 = 사용자 강제) — 저점 −1.0%·강적 0.36, 블록 이득 +14% = 몸(펫 블록). 시간 제한 능력 아님(표식 = 평타 횟수)이라 곡선 그대로, 펫 70%·표식 10 = 사용자 확정 — 2차 능력 때',
   't4:earth:special/hollow':
     '호로 무랄라(노력·시간 제한) — C.528 블록속도 몰기: 곡선 통과(노력치 +30%), 고점 0.3%(C.527) → 방어막 기울기 ×6 → ×10 → ×14 로 고점 +14% 통과, 넓이 +13.4%(±10% 밖). 기본 방어막 절반·다 키운 값 유지(3회째)로도 저점이 그대로(+1%, 무투자 칸 방어막 이득이 작음) → ×14 — 3회',
-  't4:thunder:physical/hollow':
-    '호로 콜리브리(노력) — C.528 공속 몰기: 노력치 −1.5%(C.527 통과). 공속 4단계 상한이면 평타 간격 0.47초 → 날갯짓 −60%(C.527 하한)가 전체 상한 0.3초(GDD 7절)에 먼저 막혀 능력 몫이 줄어듦 — 측정 고침의 결과(능력·상한 그대로), 시간 제한 아님 → C.527 값',
-  't4:earth:physical/shinigami':
-    '사신 반석(블록·생존) — C.528 블록속도 몰기(흙 블록 생성마다 방어막): 곡선·생존 통과, 넓이 −18.8%(C.527 통과). 물리 몸이 블록속도에 몰면 공격·공속 몫이 줄어 노력치 칸이 낮아짐 — 측정 고침의 결과 → C.527 값(마스터 확인: 물리 몸 요구 스탯)',
-  't4:thunder:physical/shinigami':
-    '사신 섬뢰각(특성) — C.528 블록속도 몰기(뇌 블록 → 분신): 곡선 통과, 넓이 −20.7%(특성 곡선 하한 −20% 바로 밖, C.527 통과). 물리 몸이 블록속도에 몰면 공격·공속 몫이 줄어듦 — 측정 고침의 결과 → C.527 값(마스터 확인: 물리 몸 요구 스탯)',
 };
 
 /** 목표 모양 가드를 경고로만 보는 까닭 (null = 실패로): 측정 제외(능력치 기반 — 균일 기준 몸에서 0) · 고유 능력 없는 몸(강제 성향만 — 2차 능력 때 맞춤) · 목표 미달 목록 */

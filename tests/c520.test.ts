@@ -139,7 +139,7 @@ describe('보정 수치 (balance provisional.evoUniques)', () => {
     const n = (BALANCE.provisional.evoUniques.forms['t4:normal:physical'] as Record<string, Record<string, unknown>>).shinigami as Record<string, unknown>;
     expect(n.every).toBe(2);
     expect(n.perBlock).toBe(0.028);
-    expect(n.perBlockGrow).toBe(2.5);
+    expect(n.perBlockGrow).toBe(4); // C.530: 공속 = 간격 0.6초까지 측정 → 고점 맞춤 2.5 → 4 (옛 기대 2.5)
     expect(n.release).toEqual({ every: 1 });
   });
   it('사용자 확정값은 그대로: 소로 여우불 2.5초·5개, 공용 화상 8초 +8%, 토르멘타 필드 5초, 추파카브라 저장 100%·피해 ×1.0', () => {

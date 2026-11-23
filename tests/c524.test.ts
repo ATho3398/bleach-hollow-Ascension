@@ -50,7 +50,8 @@ describe('출처 effort — 그 몸 타입의 주 노력치 투자율 (evoEffort
   });
   it('applyEvolutionToParams 가 능력치 트랙 노력치로 채운다 · 진화체 속성(노멀 몸 = null)', () => {
     const p = buildCombatParams(newBuild(), 'hollow');
-    const e = { ...newEvolution(), tierIndex: 3, formId: 't4:normal:physical', formHistory: ['t2:base', 't3:normal', 't4:normal:physical'] };
+    // C.530: 마르티요(t4:normal:physical)는 간격 기준(effortBasis) → 노력치 투자율은 노멀 혼합 몸(에스칼레라)으로 (옛 기대 = 마르티요)
+    const e = { ...newEvolution(), tierIndex: 3, formId: 't4:normal:mixed', formHistory: ['t2:base', 't3:normal', 't4:normal:mixed'] };
     e.ev = { ...e.ev, atk: full / 2, aspd: full / 4 };
     applyEvolutionToParams(p, e, 'hollow');
     expect(p.evo?.effort).toBeCloseTo(0.75, 9);
@@ -215,8 +216,8 @@ describe('데이터·버전', () => {
     expect(d('t4:thunder:special', 'hollow')).toContain('지속 피해는 노력치를 키울수록 커짐');
     expect(d('t4:normal:mixed', 'hollow')).toContain('노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%');
     expect(d('t4:earth:physical', 'shinigami')).toContain('이 속성 블록(흡수 특성·강화)을 키울수록 커짐');
-    expect(d('t4:fire:physical', 'shinigami')).toContain('노력치·이 속성 블록을 같이 키울수록 커짐');
-    expect(d('t4:normal:physical', 'hollow')).toContain('노력치를 키울수록 커짐');
+    expect(d('t4:fire:physical', 'shinigami')).toContain('공격 속도·이 속성 블록을 같이 키울수록 커짐'); // C.530: 공속 몸 = 간격 기준 (옛 기대 '노력치·이 속성 블록을')
+    expect(d('t4:normal:physical', 'hollow')).toContain('공격 속도를 키울수록 커짐'); // C.530 (옛 기대 '노력치를 키울수록')
     expect(d('t4:blood:physical', 'hollow')).toContain('최대 체력 30% 이상');
   });
   it('목표 모양은 4단계 진화체만 (곡선·성향 표기는 개발용 — 설명 문구엔 곡선·성향 이름이 없다)', () => {

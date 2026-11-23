@@ -299,6 +299,9 @@ export interface EvoAbilityDef {
   spawnExclude?: string[];
   /** forceNext 대기 표시 (네모) */
   forceNextMark?: EvoMark;
+  /** 출처 effort 기준 (C.530, GDD 8-7 v6.185): 'attackInterval' = 노력치 투자율 대신 일반 공격 간격 기준(몸 기본 공속 간격 → 0.6초 = 1, balance evoInvest.intervalFull).
+   *  없으면 노력치 투자율(C.524). 공속 몸(능력이 일반 공격 횟수·창으로 켜지는 몸)만 — 측정 investFocus = aspd 와 같은 칸(tests/c530) */
+  effortBasis?: 'attackInterval';
 }
 
 /** 4단계 한 줄 특성 효과 종류 (특성 칸 — 받으면 영구, 해방해도 그대로 GDD 8-6) */
@@ -356,7 +359,7 @@ export interface EvoFormEntry {
   extraPetPower?: EvoNum;
 }
 
-interface EvoFile {
+export interface EvoFile {
   provisional: boolean;
   traits: Record<string, EvoTraitDef>;
   forms: Record<string, PerFaction<EvoFormEntry>>;
@@ -538,11 +541,16 @@ export function evoText(v: PerFaction<string> | string | undefined, factionId: s
 
 const pctText = (x: number) => `${Math.round(x * 1000) / 10}`;
 
+/** 모든 진화체 설명 틀에 쓰는 공용 수치 (진화체 수치 키가 먼저): {intervalFull} = 공속 몸이 '다 키움'이 되는 일반 공격 간격(초, C.530 GDD v6.185) */
+export function evoTextGlobals(): Record<string, number> {
+  return { intervalFull: BALANCE.provisional.evoInvest.intervalFull };
+}
+
 /** 설명 틀 채우기: {키} = 수치, {키%} = 백분율(0.03 → 3%).
  *  {키@기울기} = 다 키웠을 때의 실제 값 = 키 × (1 + 기울기) — grow·secondsGrow 의 per(effort·blockLv 투자율 0~1)가 1일 때와 같다 (C.526, '+8000%' 배율 대신 실제 값) */
 export function fillEvoText(text: string, nums: Record<string, number>): string {
   return text.replace(/\{([A-Za-z0-9_]+)(?:@([A-Za-z0-9_]+))?(%?)\}/g, (m, k: string, g: string | undefined, p: string) => {
-    const base = nums[k];
+    const base = nums[k] ?? evoTextGlobals()[k];
     const slope = g === undefined ? 0 : nums[g];
     if (base === undefined || slope === undefined) return m;
     const v = base * (1 + slope);
@@ -627,6 +635,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       const a = e.ability;
       if (!a) continue;
       if (!a.description) errors.push(`${where}: 설명 없음`);
+      if (a.effortBasis !== undefined && a.effortBasis !== 'attackInterval') errors.push(`${where}: effortBasis 는 'attackInterval' 만 (${String(a.effortBasis)})`);
       // 체인 상한 넘기기 (C.514): 이 진화체 규칙의 chain 거르기는 계열 단계 수 + tiers 수까지
       const formMaxChain = known.maxChain + (a.chainExtend?.tiers?.length ?? 0);
       const formChainOk = (c: unknown) => Number.isInteger(c) && (c as number) >= 1 && (c as number) <= formMaxChain;

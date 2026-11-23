@@ -21,7 +21,7 @@ describe('C.526 다 키우면 = 실제 값', () => {
   });
   it('마르티요: 찢김 1당 +1%(… 다 키우면 +81%)', () => {
     const t = text('t4:normal:physical', 'hollow');
-    expect(t).toContain('찢김 1당 그 적이 받는 일반 공격 피해 +1%(노력치를 키울수록 커짐 — 다 키우면 +81%)');
+    expect(t).toContain('찢김 1당 그 적이 받는 일반 공격 피해 +1%(공격 속도를 키울수록 커짐, 일반 공격 간격 0.6초에 최대 — 다 키우면 +89%)' /* C.530: 간격 기준·기울기 80 → 88 (옛 기대 '노력치를 … +81%') */);
   });
   it('에스칼레라: 시간·피해 둘 다 실제 값 (해방도)', () => {
     expect(text('t4:normal:mixed', 'hollow')).toContain('2초 동안 일반 공격 피해 +체인 수×2%(노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%)');
@@ -33,8 +33,8 @@ describe('C.526 다 키우면 = 실제 값', () => {
   });
   it('블록 비례 = 「블록을 키울수록」 · 둘 다 = 「노력치·이 속성 블록을 같이 키울수록」', () => {
     expect(text('t4:earth:physical', 'shinigami')).toContain('블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 +10.5%');
-    expect(text('t4:fire:physical', 'shinigami')).toContain('노력치·이 속성 블록을 같이 키울수록 커짐 — 다 키우면 +36%');
-    expect(lines('t4:water:physical', 'shinigami').find((l) => l.label === '특수 블록')!.text).toContain('다 키우면 7회'); // C.528: hitsGrow 1.5 → 2.5 (옛 기대 5회)
+    expect(text('t4:fire:physical', 'shinigami')).toContain('공격 속도·이 속성 블록을 같이 키울수록 커짐, 일반 공격 간격 0.6초에 최대 — 다 키우면 +36%'); // C.530 (옛 기대 '노력치·이 속성 블록을')
+    expect(lines('t4:water:physical', 'shinigami').find((l) => l.label === '특수 블록')!.text).toContain('다 키우면 6회'); // C.530: hitsGrow 2.5 → 2 (C.528 7회·옛 기대 5회)
   });
   it('모든 진화체 × 종족: {키} 다 채움 · 배율 표기(기울기 키 직접 노출) 없음 · 옛 문구·「평타」 없음', () => {
     for (const [id, fac] of all()) {

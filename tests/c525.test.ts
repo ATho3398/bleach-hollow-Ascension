@@ -61,7 +61,7 @@ describe('② 시간 제한 능력 = 노력 곡선 (GDD v6.178)', () => {
     for (const [id, fac] of timed()) {
       if (id === 'h4:void' && fac === 'shinigami') continue;
       const txt = fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
-      expect(txt, `${id}/${fac}`).toMatch(/노력치를 키울수록/);
+      expect(txt, `${id}/${fac}`).toMatch(/노력치를 키울수록|공격 속도를 키울수록/); // C.530: 공속 몸(간격 기준)은 「공격 속도를」
       expect(txt, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_@]+%?\}/);
     }
   });
@@ -92,8 +92,8 @@ describe('③ 블록 기본 피해 유지', () => {
 
 describe('④ 목표 미달 목록 · 버전', () => {
   it('목표 미달 25칸(섬뢰각은 통과로 빠짐) — 시간 제한 몸은 사유에 「시간 제한」', () => {
-    expect(Object.keys(EVO_PROFILE_KNOWN)).toHaveLength(29); // C.528: 요구 스탯 몰기 측정으로 새로 미달 4(무랄라·콜리브리·반석·섬뢰각) — 옛 기대 25
-    expect(EVO_PROFILE_KNOWN['t4:thunder:physical/shinigami']).toMatch(/C\.528/); // C.528: 섬뢰각 블록속도 몰기로 넓이 −20.7% → 다시 미달(옛 기대 = 없음)
+    expect(Object.keys(EVO_PROFILE_KNOWN)).toHaveLength(26); // C.530: 공속 = 간격 0.6초까지 측정으로 콜리브리·반석·섬뢰각 통과 — 옛 기대 29(C.528)·25
+    expect(EVO_PROFILE_KNOWN['t4:thunder:physical/shinigami']).toBeUndefined(); // C.530: 섬뢰각 공속 몰기로 넓이 −12% 통과(옛 기대 = C.528 미달)
     for (const [id, fac] of timed()) if (EVO_PROFILE_KNOWN[`${id}/${fac}`] && !(id === 'h4:void' && fac === 'shinigami')) expect(EVO_PROFILE_KNOWN[`${id}/${fac}`]).toMatch(/시간 제한/);
   });
   it('BALANCE 161 · 패치 C.525', () => {

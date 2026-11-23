@@ -4,7 +4,7 @@ import { BALANCE, BALANCE_VERSION } from '../src/config/balance';
 import raw from '../src/data/evolution/balanceProfiles.json';
 import { validateBalanceProfiles, type BalanceProfileFile } from '../src/data/evolution/balanceProfiles';
 import { STAT_IDS } from '../src/data/schema';
-import { evCaps, evoEffortOf } from '../src/engine/evolution';
+import { evCaps, evoEffortOf, evoIntervalEffortOf, evoIntervalFullAspd, refStatOf } from '../src/engine/evolution';
 import { attackSecondsNow, createCombat } from '../src/engine/combat';
 import { enemyAtDifficulty } from '../src/engine/difficulty';
 import { ENEMIES } from '../src/data/enemies';
@@ -38,12 +38,15 @@ describe('요구 스탯 데이터 (balanceProfiles.json investFocus)', () => {
 describe('측정 노력치 배분 (scripts/lib/evoProfile.ts)', () => {
   const cap = evCaps(3);
   it('요구 스탯 = 능력치 하나 상한까지, 남은 합계는 지금 비율(요구 스탯 몫 뺌)대로 · 합계 ≤ 상한 합계', () => {
+    // C.530: 공속은 간격 0.6초에 닿는 만큼만(기준 몸 4단계 기준 능력치 → 0.6초, 옛 기대 = 상한 330) — 다른 요구 스탯은 상한까지(아래 지능)
     const a = evProfileAllocation({ tier: 4, category: 'physical', goal: { investFocus: 'aspd' } });
-    expect(a.aspd).toBe(cap.perStat);
+    const need = Math.ceil(evoIntervalFullAspd() - refStatOf(3));
+    expect(a.aspd).toBe(need);
+    expect(evProfileAllocation({ tier: 4, category: 'special', goal: { investFocus: 'int' } }).int).toBe(cap.perStat);
     const sum = Object.values(a).reduce((x, y) => x + y, 0);
     expect(sum).toBeLessThanOrEqual(cap.total);
     expect(sum).toBeGreaterThan(cap.total - 5);
-    expect(a.atk).toBe(Math.floor((cap.total - cap.perStat) * 0.35 / 0.65));
+    expect(a.atk).toBe(Math.floor((cap.total - need) * 0.35 / 0.65));
     expect(a.int ?? 0).toBe(0);
     for (const v of Object.values(a)) expect(v).toBeLessThanOrEqual(cap.perStat);
   });
@@ -54,12 +57,13 @@ describe('측정 노력치 배분 (scripts/lib/evoProfile.ts)', () => {
   it('노력치만·둘 다 칸이 요구 스탯 배분을 쓴다 · 무투자·블록만 칸은 노력치 없음', () => {
     const t = soro();
     expect(evoProfileInvest(t, 'ev').ev).toEqual(evProfileAllocation(t));
-    expect(evoProfileInvest(t, 'both').ev!.aspd).toBe(cap.perStat);
+    expect(evoProfileInvest(t, 'both').ev!.aspd).toBe(Math.ceil(evoIntervalFullAspd() - refStatOf(3))); // C.530 (옛 기대 = 상한)
     expect(evoProfileInvest(t, 'none').ev).toBeNull();
     expect(evoProfileInvest(t, 'blk').ev).toBeNull();
   });
-  it('게임 규칙 그대로: 물리 몸 공속 몰기여도 엔진 노력치 투자율(공격+공속) = 1', () => {
-    expect(evoEffortOf(evProfileAllocation({ tier: 4, category: 'physical', goal: { investFocus: 'aspd' } }), 3, 'physical')).toBe(1);
+  it('공속 몸(간격 기준, C.530): 측정 노력치 칸 effort = 1 · 노력치 투자율 식은 그대로', () => {
+    const a = evProfileAllocation({ tier: 4, category: 'physical', goal: { investFocus: 'aspd' } });
+    expect(evoIntervalEffortOf(refStatOf(3), refStatOf(3) + a.aspd!)).toBe(1); // 옛 기대 = evoEffortOf(공격+공속 몰기) = 1
     expect(BALANCE.provisional.evoInvest.mainStats.physical).toEqual(['atk', 'aspd']);
   });
 });
@@ -68,12 +72,12 @@ describe('소로 여우불 2.5초·5개 그대로 — 공속 몰기면 일반 �
   it('여우불 2.5초·5개(사용자 확정) 그대로', () => {
     expect(F['t4:fire:physical']!.hollow).toMatchObject({ seconds: 2.5, need: 5 });
   });
-  it('측정 몸: 무투자 0.79초(5개 못 모음) · 노력치만 0.47초(2.5초 안 5개) · 옛 35% 배분이면 0.56초', () => {
+  it('측정 몸: 무투자 0.79초 · 노력치만 0.6초(C.530 — 다 키움, 0.5초 이하 = 2.5초 안 5개는 장비·특성 몫) · 옛 35% 배분이면 0.56초', () => {
     const t = soro();
     const enemy = enemyAtDifficulty(ENEMIES.find((e) => e.class === 'normal')!, 4);
     const iv = (inv: 'none' | 'ev', tt = t) => attackSecondsNow(createCombat(1, { enemy, params: { ...evoBodyParams(tt, true, false, 4, evoProfileInvest(tt, inv)) } }));
     expect(iv('none')).toBeGreaterThan(0.5);
-    expect(iv('ev')).toBeLessThanOrEqual(0.5);
+    expect(iv('ev')).toBeCloseTo(0.6, 2); // C.530: 공속은 간격 0.6초까지 (옛 기대 ≤ 0.5 = 상한 330 → 0.47초)
     expect(iv('ev', { ...t, goal: { ...t.goal!, investFocus: undefined } })).toBeGreaterThan(0.5);
   });
 });
@@ -84,10 +88,10 @@ describe('노력치 기울기 보정 (시간 제한 몸, 3회)', () => {
     const r = (rel ? f.release : {}) as Record<string, number>;
     return (r[k] ?? (f[k] as number)) * (1 + (r[g] ?? (f[g] as number)));
   };
-  it('노도 ×2.5 → ×4·연격 ×1.5 → ×2.5 · 소로 ×20 → ×48 · 에스카라바호 ×5.5 → ×9 · 무랄라 ×6 → ×14', () => {
-    expect(F['t4:water:physical']!.shinigami).toMatchObject({ perStackGrow: 4, hitsGrow: 2.5 });
+  it('노도 ×2.5 → ×4·연격 ×1.5 → ×2.5 · 소로 ×20 → ×48 · 에스카라바호 ×5.5 → ×9 · 무랄라 ×6 → ×14 (C.530: 노도 ×3.2·×2 · 에스카라바호 ×6.5)', () => {
+    expect(F['t4:water:physical']!.shinigami).toMatchObject({ perStackGrow: 3.2, hitsGrow: 2 }); // C.530 (옛 기대 4·2.5)
     expect(F['t4:fire:physical']!.hollow).toMatchObject({ burn: 0.03, burnGrow: 48 });
-    expect(F['t4:earth:physical']!.hollow).toMatchObject({ bonusGrow: 9, regrow: 12 });
+    expect(F['t4:earth:physical']!.hollow).toMatchObject({ bonusGrow: 6.5, regrow: 12 }); // C.530 (옛 기대 9)
     expect(F['t4:earth:special']!.hollow).toMatchObject({ shieldGrow: 14, s1: 0.03, s2: 0.06, s3: 0.1 });
   });
   it('소로 해방: 다 키운 해방 = 다 키운 평소 ×1.5 (2배 안 · 평소보다 큼, C.527 원칙)', () => {
@@ -110,7 +114,10 @@ describe('노력치 기울기 보정 (시간 제한 몸, 3회)', () => {
     expect(F['t4:fire:special']!.shinigami).toMatchObject({ shotGrow: 6 });
   });
   it('목표 미달 사유: 시간 제한 몸은 C.528 수치 · 새로 미달 4칸(무랄라·콜리브리·반석·섬뢰각) · 통과한 노도·에스카라바호는 없음', () => {
-    for (const k of ['t4:earth:special/hollow', 't4:thunder:physical/hollow', 't4:earth:physical/shinigami', 't4:thunder:physical/shinigami', 't4:fire:physical/hollow']) expect(EVO_PROFILE_KNOWN[k]).toMatch(/C\.528/);
+    expect(EVO_PROFILE_KNOWN['t4:earth:special/hollow']).toMatch(/C\.528/);
+    // C.530: 콜리브리·반석·섬뢰각 통과로 빠짐 · 소로 사유 = C.530 (옛 기대 = 5칸 모두 C.528)
+    for (const k of ['t4:thunder:physical/hollow', 't4:earth:physical/shinigami', 't4:thunder:physical/shinigami']) expect(EVO_PROFILE_KNOWN[k]).toBeUndefined();
+    expect(EVO_PROFILE_KNOWN['t4:fire:physical/hollow']).toMatch(/C\.530/);
     expect(EVO_PROFILE_KNOWN['t4:water:physical/shinigami']).toBeUndefined();
     expect(EVO_PROFILE_KNOWN['t4:earth:physical/hollow']).toBeUndefined();
   });
