@@ -13,7 +13,7 @@ import { enemyAtDifficulty } from '../src/engine/difficulty';
 import { ENEMIES } from '../src/data/enemies';
 import { EVO_BAL_STANDARD_INVEST, evoBalParams, evoBalTargets, evoBodyParams, judgeEvoBal, type EvoBalBody } from '../scripts/lib/evoUniqueBalance';
 import {
-  classifyAll, classifyProfile, scoreTable, evoProfileInvest, evoProfileTargets, evProfileAllocation, judgeProfileGoal, leanScores, measureEvoProfile, profileDistribution, profileValue, tierMedians,
+  classifyAll, classifyProfile, scoreTable, evoProfileInvest, evoProfileTargets, evProfileAllocation, judgeProfileGoal, leanScores, measureEvoProfile, profileDistribution, profileValue, tierMedians, typeGap,
   type InvestId, type ProfileInput, type ProfileTarget,
 } from '../scripts/lib/evoProfile';
 
@@ -27,8 +27,18 @@ describe('측정 대상 = 4단계 진화체 × 종족 전부 (고유 능력 없�
     expect(ts.filter((t) => t.hasAbility).map((t) => `${t.formId}/${t.factionId}`).sort()).toEqual(evoBalTargets().map((t) => `${t.formId}/${t.factionId}`).sort());
     expect(ts.filter((t) => t.hasAbility)).toHaveLength(35);
   });
-  it('목표 모양은 지금 전부 비어 있다(null) — 배정은 기획A·사용자', () => {
-    expect(ts.every((t) => t.goal === null)).toBe(true);
+  // C.524: 1차 배정(마스터AS 11-23, docs/drafts/evo-assign-1123.md 1장) — 옛 기대 '전부 null'
+  it('목표 모양 = 고유 능력 있는 35칸 + 강제 3칸(곡선 null — 카사도르 강적 · 칼마·정심 잡몹), 능력 없는 그 밖 몸은 null', () => {
+    const goals = ts.filter((t) => t.goal !== null);
+    expect(goals).toHaveLength(38);
+    expect(goals.filter((t) => t.hasAbility)).toHaveLength(35);
+    expect(ts.filter((t) => t.hasAbility).every((t) => t.goal?.curve)).toBe(true);
+    const forced = goals.filter((t) => !t.hasAbility).map((t) => `${t.formId}/${t.factionId}=${t.goal!.lean}`).sort();
+    expect(forced).toEqual(['h4:hunter/hollow=elite', 'h4:stable/hollow=mob', 'h4:stable/shinigami=mob']);
+    const cnt = (f: (t: (typeof goals)[number]) => unknown) => goals.reduce<Record<string, number>>((a, t) => { const k = String(f(t)); a[k] = (a[k] ?? 0) + 1; return a; }, {});
+    // C.524 조정 중 v6.176(배정 기준 = 능력 설계)으로 바꾼 9칸: 라나 동반→특성 · 게파르도·천일야장도 동반→평탄 · 비전 노력·선공→평탄 · 추성 노력→평탄(강적 강제 그대로) · 나다 특성·잡몹→평탄·해방 · 토르멘타·봉수대 강적·노도 한방 → 성향 없음
+    expect(cnt((t) => t.goal!.curve)).toEqual({ effort: 5, block: 8, joint: 4, flat: 13, trait: 5, null: 3 });
+    expect(cnt((t) => t.goal!.lean)).toEqual({ null: 19, burst: 3, elite: 3, mob: 3, opener: 2, survive: 4, release: 4 });
   });
 });
 
@@ -162,7 +172,8 @@ describe('넓이 = 12칸 점수표 × 칸 무게 (투자 4 × 콘텐츠 3 가중
     expect([...c.shapeMedians.keys()].sort()).toEqual(['4/physical', '4/special']);
     const v = c.verdicts.find((x) => x.key === 'p/hollow')!;
     expect(Math.abs(v.feat.lo)).toBeLessThan(1e-9); // 같은 타입 안에선 혼자라 중앙
-    expect(v.valueDev).toBeCloseTo(-0.5, 6); // 단계 전체 중앙값 대비 절반
+    expect(v.valueDev).toBeCloseTo(0, 6); // C.524: 넓이도 같은 단계·같은 타입 중앙값 대비(혼자라 0) — 옛 기대 단계 전체 대비 −50%
+    expect(typeGap(c).find((g) => g.category === 'physical')!.value).toBeCloseTo(0.5, 6); // 타입 차는 따로(단계 중앙값 대비 절반)
     const d = profileDistribution(c.verdicts);
     expect(d.curves.reduce((a, x) => a + x.n, 0)).toBe(all.length);
     expect(d.leans.reduce((a, x) => a + x.n, 0)).toBe(all.length);
@@ -229,9 +240,12 @@ describe('목표 비교 가드 (balanceProfile 이 있는 몸만)', () => {
 describe('목표 데이터 칸 (balanceProfiles.json, 종족 분기 없음)', () => {
   const D = raw as unknown as BalanceProfileFile;
   const clone = (): BalanceProfileFile => JSON.parse(JSON.stringify(D)) as BalanceProfileFile;
-  it('지금 데이터는 검사 통과, 4단계 진화체마다 종족 칸 · 전부 null', () => {
+  it('지금 데이터는 검사 통과, 4단계 진화체마다 종족 칸 · 1차 배정 38칸 (C.524 — 옛 기대 전부 null)', () => {
     expect(validateBalanceProfiles()).toEqual([]);
-    for (const f of FORM_TABLE.filter((x) => x.tier === 4 && !x.retired)) for (const fid of ['hollow', 'shinigami']) expect(balanceProfileOf(f.id, fid)).toBeNull();
+    let n = 0;
+    for (const f of FORM_TABLE.filter((x) => x.tier === 4 && !x.retired)) for (const fid of ['hollow', 'shinigami']) if (balanceProfileOf(f.id, fid) !== null) n++;
+    expect(n).toBe(38);
+    expect(balanceProfileOf('t4:fire:physical', 'hollow')).toEqual({ curve: 'effort', lean: null }); // 소로 = 대표 노력 곡선(사용자 예)
   });
   it('값이 있으면 곡선·성향 id 검사', () => {
     const ok = clone();
@@ -290,10 +304,11 @@ describe('C.520 중앙값 가드는 목표가 비어 있는 몸에만', () => {
 describe("balance.ts 'evoProfile' 구간", () => {
   const src = readFileSync('scripts/balance.ts', 'utf8');
   it('SECTIONS 에 있고, --check 에선 목표가 있는 단계만 재며 실패는 failures 로', () => {
-    expect(src).toMatch(/\{ name: 'evoProfile', seconds: check \? 1 : \d+ \}/);
+    expect(src).toMatch(/\{ name: 'evoProfile', seconds: \d+ \}/); // C.524: 목표가 생겨 --check 도 54칸을 잰다
     expect(src).toContain("if (want('evoProfile'))");
     expect(src).toContain('const targets = check ? all.filter((t) => goalTiers.has(t.tier)) : all;');
-    expect(src).toMatch(/for \(const f of judgeProfileGoal\(r\.target\.goal, .+\)\) failures\.push\(f\);/);
+    expect(src).toMatch(/for \(const f of judgeProfileGoal\(r\.target\.goal, .+\)\) \{/);
+    expect(src).toContain('else failures.push(f);'); // 목표 미달·측정 제외·능력 없는 몸(profileGoalHeld)만 경고
     expect(src).toContain('--profile-md=');
   });
 });

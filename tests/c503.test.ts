@@ -196,7 +196,11 @@ describe('콜리브리 (뇌·조) — 날갯짓', () => {
     expect(evoStat(s, 'interval')).toBeCloseTo(5 * n.perStack!, 5);
     expect(attackSecondsNow(s)).toBeLessThan(t0);
     basics(s, 30);
-    expect(evoStat(s, 'interval')).toBeCloseTo(n.maxCut!, 5);
+    // C.524: 1당 간격 감소가 노력치 비례(perStackGrow) — 노력치 0 이면 스택 상한까지만(1.2% × 15 = 18%), 다 키우면 상한 maxCut
+    expect(evoStat(s, 'interval')).toBeCloseTo(Math.min(n.maxCut!, n.maxStacks! * n.perStack!), 5);
+    const full = mk({ evo: { ...evo('t4:thunder:physical'), effort: 1 } });
+    basics(full, 30);
+    expect(evoStat(full, 'interval')).toBeCloseTo(n.maxCut!, 5);
     useChain(s, 1);
     expect(s.evo!.stacks.wing!.n).toBe(n.maxStacks! / 2);
   });
@@ -204,7 +208,7 @@ describe('콜리브리 (뇌·조) — 날갯짓', () => {
     const s = mk({ evo: evo('t4:thunder:physical'), liberationUnique: true, liberationSeconds: 300 });
     libNow(s);
     basics(s, 40);
-    expect(evoStat(s, 'interval')).toBeCloseTo(n.release.maxCut!, 5);
+    expect(evoStat(s, 'interval')).toBeCloseTo(Math.min(n.release.maxCut!, n.release.maxStacks! * n.perStack!), 5); // C.524: 노력치 0 이면 스택 상한까지만
     const before = s.evo!.stacks.wing!.n;
     useChain(s, 2);
     expect(s.evo!.stacks.wing!.n).toBe(before);
@@ -251,7 +255,8 @@ describe('니에블라 (물·탄) — 물안개 잔상', () => {
     const count = (chain: number, lib: boolean) => {
       let crits = 0;
       for (let seed = 1; seed <= 30; seed++) {
-        const s = mk({ evo: evo('t4:water:special'), blockCritChance: 0.8, blockCritChanceMax: 1, liberationUnique: true, liberationSeconds: 120 }, seed);
+        // C.524: 체인 2 +5%p · 체인 3 +10%p(블록 투자 비례 — 다 키우면 ×6), 레스렉시온 +10%p·+30%p → 치명 확률 90% 에서 3체인·해방 2체인이 늘 치명
+        const s = mk({ evo: evo('t4:water:special'), blockCritChance: 0.9, blockCritChanceMax: 1, liberationUnique: true, liberationSeconds: 120 }, seed);
         if (lib) libNow(s);
         s.tray.length = 0;
         const r = useChain(s, chain);
@@ -261,7 +266,7 @@ describe('니에블라 (물·탄) — 물안개 잔상', () => {
     };
     expect(count(3, false)).toBe(30);
     expect(count(1, false)).toBeLessThan(30);
-    expect(count(2, true)).toBe(30); // +20%p
+    expect(count(2, true)).toBe(30); // 해방 +10%p
   });
 });
 

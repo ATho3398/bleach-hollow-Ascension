@@ -588,7 +588,7 @@ describe('세이브·화면·봇', () => {
     const { evoUniqueLines } = await import('../src/ui/evolutionPanel');
     const lines = evoUniqueLines('t4:water:physical', 'shinigami', '만해');
     expect(lines.map((l) => l.label)).toEqual(['고유 능력', '특수 블록', '만해']);
-    expect(lines[0]!.text).toContain('+4%p');
+    expect(lines[0]!.text).toContain('+2%p'); // C.524: 노도 스택당 치명 4 → 2%p(노력치 비례 손잡이 — 다 키우면 +200%)
     expect(lines[1]!.text).toContain('「노도 연격」');
     expect(lines[2]!.text).toContain('8초');
     expect(evoUniqueLines('t4:normal:special', 'hollow', '레스렉시온')).toEqual([]); // C.503: 마르티요 → 아직 없는 부오

@@ -16,7 +16,8 @@ export type EvoNum = number | string;
 /** 곱하는 값의 출처 (per): chain 체인 수 · consumed 이번 규칙에서 소모한 스택 수 · amount 사건 양(막은 피해·깨진 보호막 등) · damage 이번 공격 피해 ·
  *  bar 바의 블록 수(고정 특수 블록 제외) · bar:<속성> 그 속성 블록 수 · lostHpPct 잃은 체력 %(0~100) · shieldPct 보호막 %(최대 체력 대비 0~100) ·
  *  risk 리스크(호로화) 게이지 · stack:<이름> · buff:<이름>(버프 값) · charge:<이름>(남은 횟수) · chargeValue:<이름>(이번 평타가 쓴 충전 값) ·
- *  maxHp 내 최대 체력 (C.515 — 추파카브라 저장 상한 '최대 체력 50%' = 스택 max × maxPer maxHp) */
+ *  maxHp 내 최대 체력 (C.515 — 추파카브라 저장 상한 '최대 체력 50%' = 스택 max × maxPer maxHp) ·
+ *  effort 그 몸 타입의 주 노력치 투자율 0~1 · blockLv 그 진화체 속성 블록 투자율 0~1 (C.524 모양 손잡이 — grow 와 같이 써서 '값 × (1 + 기울기 × 투자율)') */
 export type EvoSource = string;
 
 /** 언제 (규칙의 on) */
@@ -88,6 +89,8 @@ export interface EvoAction {
   seconds?: EvoNum;
   /** buff·timer: 시간(초)에 곱하는 출처 (C.503 — 루시에르나가 '불빛 1개당 화상 +3초' = secondsPer consumed 처럼) */
   secondsPer?: EvoSource | EvoSource[];
+  /** buff: 시간(초)에 (1 + value × per) 를 곱한다 (C.524 모양 손잡이 — 사용자 확정 값은 그대로 두고 지속만 투자 비례) */
+  secondsGrow?: { value: EvoNum; per: EvoSource | EvoSource[] };
   max?: EvoNum;
   cap?: EvoNum;
   amount?: EvoNum;
@@ -123,6 +126,8 @@ export interface EvoNeed {
   charge?: string;
   special?: string;
   atLeast?: EvoNum;
+  /** atLeast 에 곱하는 출처 (C.524 — 추파카브라 '저장 ≥ 최대 체력 30%' = atLeast 0.3 × maxHp) */
+  atLeastPer?: EvoSource | EvoSource[];
   below?: EvoNum;
   /** 바가 가득 (고정 특수 블록 포함 trayCapacity) */
   barFull?: boolean;
@@ -132,6 +137,8 @@ export interface EvoNeed {
   elite?: boolean;
   /** stack·buff·charge·special 이 0 이어야 (없어야) 참 (C.515 — 강화 자기장이 없을 때만 보통 자기장) */
   none?: boolean;
+  /** 전투 시작 n초 안이어야 참 (C.524 모양 손잡이 — 켜지는 상황) */
+  elapsedBelow?: EvoNum;
 }
 
 /** 규칙 = 언제(on) + 거르기 + 무엇을(do) */
@@ -204,6 +211,8 @@ export interface EvoPassive {
   max?: EvoNum;
   /** per 를 step 단위로 내림해 센다 (2 = 2스택당 한 번, C.506 공화 '2스택당 +1%') */
   step?: EvoNum;
+  /** 값에 (1 + grow.value × grow.per) 를 곱한다 — 상한 max 전에 (C.524 모양 손잡이: per effort·blockLv) */
+  grow?: { value: EvoNum; per: EvoSource | EvoSource[] };
   when?: 'release' | 'normal';
   need?: EvoNeed[];
 }
@@ -439,6 +448,7 @@ export function evoFileShapeErrors(r: unknown): string[] {
           if (x.fx !== undefined && !(isObj(x.fx) && typeof x.fx.family === 'string' && typeof x.fx.stage === 'number')) errors.push(`${xat}.fx: { family 글자, stage 숫자 } 가 아니다`);
           for (const k of ['per', 'amountPer', 'secondsPer'] as const) srcs(x[k], `${xat}.${k}`);
           if (x.grow !== undefined && !isObj(x.grow)) errors.push(`${xat}.grow: 객체가 아니다`);
+          if (x.secondsGrow !== undefined && !isObj(x.secondsGrow)) errors.push(`${xat}.secondsGrow: 객체가 아니다`);
           for (const k of ['dot', 'poison', 'force'] as const) if (x[k] !== undefined && typeof x[k] !== 'boolean') errors.push(`${xat}.${k}: 참·거짓이 아니다`);
         }
       }
@@ -447,6 +457,7 @@ export function evoFileShapeErrors(r: unknown): string[] {
         str(pv, 'stat', `${where}.passives[${i}]`, true);
         str(pv, 'when', `${where}.passives[${i}]`);
         srcs(pv.per, `${where}.passives[${i}].per`);
+        if (pv.grow !== undefined && !isObj(pv.grow)) errors.push(`${where}.passives[${i}].grow: 객체가 아니다`);
         arr(pv.need, `${where}.passives[${i}].need`, 'object');
       }
     }
@@ -548,10 +559,11 @@ function numKeysOfRule(r: EvoRule): EvoNum[] {
   const out: EvoNum[] = [];
   for (const k of ['every', 'seconds', 'minChain'] as const) if (r[k] !== undefined) out.push(r[k]!);
   if (r.streak) out.push(r.streak.count, ...(r.streak.withinSeconds !== undefined ? [r.streak.withinSeconds] : []));
-  for (const n of r.need ?? []) for (const k of ['atLeast', 'below'] as const) if (n[k] !== undefined) out.push(n[k]!);
+  for (const n of r.need ?? []) for (const k of ['atLeast', 'below', 'elapsedBelow'] as const) if (n[k] !== undefined) out.push(n[k]!);
   for (const a of r.do) {
     for (const k of ['value', 'seconds', 'max', 'cap', 'amount', 'ignoreDef', 'bonus'] as const) if (a[k] !== undefined) out.push(a[k]!);
     if (a.grow) out.push(a.grow.value);
+    if (a.secondsGrow) out.push(a.secondsGrow.value);
   }
   return out;
 }
@@ -682,7 +694,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       const src = (p: EvoSource | EvoSource[] | undefined) => {
         for (const x of p === undefined ? [] : Array.isArray(p) ? p : [p]) {
           const [kind, name] = x.split(':') as [string, string | undefined];
-          const ok = ['chain', 'consumed', 'amount', 'damage', 'bar', 'lostHpPct', 'shieldPct', 'risk', 'one', 'maxHp'].includes(kind) && (name === undefined || kind === 'bar')
+          const ok = ['chain', 'consumed', 'amount', 'damage', 'bar', 'lostHpPct', 'shieldPct', 'risk', 'one', 'maxHp', 'effort', 'blockLv'].includes(kind) && (name === undefined || kind === 'bar')
             || (kind === 'stack' && !!name && name in stacks) || (kind === 'buff' && !!name && name in buffs)
             || ((kind === 'charge' || kind === 'chargeValue') && !!name && name in charges);
           if (!ok) errors.push(`${where}: 모르는 per ${x}`);
@@ -694,6 +706,7 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           if (n.buff && !(n.buff in buffs)) errors.push(`${where}: need 버프 ${n.buff} 없음`);
           if (n.charge && !(n.charge in charges)) errors.push(`${where}: need 충전 ${n.charge} 없음`);
           if (n.special && !(n.special in specials)) errors.push(`${where}: need 특수 블록 ${n.special} 없음`);
+          src(n.atLeastPer);
         }
       };
       for (const sd of Object.values(stacks)) src(sd.maxPer);
@@ -752,14 +765,18 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
           src(x.per);
           src(x.amountPer);
           if (x.grow) src(x.grow.per);
+          if (x.secondsGrow) src(x.secondsGrow.per);
+          if (x.secondsGrow && x.act !== 'buff') errors.push(`${at}: secondsGrow 는 buff 에서만`);
           src(x.secondsPer);
         }
       }
       for (const [i, p] of (a.passives ?? []).entries()) {
         if (!(EVO_STATS as readonly string[]).includes(p.stat)) errors.push(`${where} 효과 ${i}: 모르는 능력치 ${p.stat}`);
-        for (const v of [p.value, p.max, p.step]) if (!has(v)) errors.push(`${where} 효과 ${i}: 수치 키 없음`);
+        for (const v of [p.value, p.max, p.step, p.grow?.value]) if (!has(v)) errors.push(`${where} 효과 ${i}: 수치 키 없음`);
+        for (const n of p.need ?? []) if (!has(n.elapsedBelow) || !has(n.atLeast) || !has(n.below)) errors.push(`${where} 효과 ${i}: need 수치 키 없음`);
         whenOk(p.when, `${where} 효과 ${i}`);
         src(p.per);
+        if (p.grow) src(p.grow.per);
         need(p.need);
       }
     }

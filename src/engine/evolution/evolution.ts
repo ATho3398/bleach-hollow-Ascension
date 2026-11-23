@@ -7,9 +7,9 @@ import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formHasUniqueRelease, formName, formRelease, getForm, tryGetForm } from '../../data/evolution';
 import { distribute, failLineTotal } from '../../data/evolution/generate';
-import { NORMAL_ELEMENT } from '../../data/elements';
+import { NORMAL_ELEMENT, PLAYER_ELEMENT_IDS } from '../../data/elements';
 import { getFaction } from '../../data/factions';
-import { STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
+import { formCategoryOf, STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
 import type { EvoParams } from '../combat/evoUnique';
 import { evoFormEntry, evoNumsOf, evoReleaseBlocked, evoReleaseNums } from '../../data/evolution/uniques';
@@ -595,6 +595,8 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   }
   // 4단계 진화체 고유 능력·특수 블록·해방 변형 (GDD 8-7 1차, C.499): 진화체 × 종족(전투 기반) 데이터. 해방 없음 진화체는 해방 자체를 막는다
   params.evo = evoParamsOf(form, factionId);
+  // 모양 손잡이 출처 effort (C.524): 능력치 트랙(stat)의 노력치 — 그 몸 타입의 주 노력치 투자율
+  if (params.evo && form) params.evo.effort = evoEffortOf(stat.ev, capTierOf(stat), formCategoryOf(form, factionId));
   if (evoReleaseBlocked(form?.id, factionId)) {
     params.liberationEnabled = false;
     params.liberationUnique = false;
@@ -627,7 +629,23 @@ export function evoParamsOf(form: FormDef | undefined | null, factionId: string)
   if (!ability) return null;
   const n = evoNumsOf(form.id, factionId);
   const { release: _r, ...base } = n;
-  return { formId: form.id, ability, nums: base as Record<string, number>, relNums: evoReleaseNums(n) };
+  return { formId: form.id, ability, nums: base as Record<string, number>, relNums: evoReleaseNums(n), effort: 0, element: evoElementOf(form) };
+}
+
+/** 진화체 속성 (출처 blockLv 의 '그 속성', C.524): 플레이어가 가질 수 있는 속성이면 그 속성, 노멀·속성 없음·허무 등이면 null(모든 속성 공격 블록을 센다) */
+export function evoElementOf(form: FormDef): string | null {
+  const el = form.elements?.[0] ?? form.label.elements[0];
+  return el && el !== NORMAL_ELEMENT && (PLAYER_ELEMENT_IDS as readonly string[]).includes(el) ? el : null;
+}
+
+/** 출처 effort (C.524 모양 손잡이, GDD 8-7): 그 몸 타입(category)의 주 노력치(balance evoInvest.mainStats) 합 ÷ floor(그 단계 노력치 상한 합계 × mainShare), 0~1.
+ *  종족·진화체 분기 없음 — 타입은 진화체 데이터(formCategoryOf)가 정한다 */
+export function evoEffortOf(ev: Partial<Record<StatId, number>>, capTier: number, category: string | null | undefined): number {
+  const I = BALANCE.provisional.evoInvest;
+  const main = I.mainStats[category ?? 'mixed'] ?? I.mainStats.mixed!;
+  const denom = Math.floor(evCaps(capTier).total * I.mainShare);
+  if (denom <= 0) return 0;
+  return Math.min(1, Math.max(0, main.reduce((a, k) => a + (ev[k] ?? 0), 0) / denom));
 }
 
 /** 칸에 끼운 탈착 특성 (GDD 150장 3·4, C.227): 주는 피해·받는 피해(변이의 기운과 같은 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */

@@ -33,7 +33,7 @@ import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { writeFileSync } from 'node:fs';
-import { classifyAll, evoProfileTargets, judgeProfileGoal, measureEvoProfile, profileDistribution, profileLine, profileMarkdown } from './lib/evoProfile';
+import { classifyAll, evoProfileTargets, judgeProfileGoal, measureEvoProfile, profileDistribution, profileGoalHeld, profileLine, profileMarkdown, shapeGroupOf, typeGap } from './lib/evoProfile';
 
 /** 봇의 보상 타일 목록 (C.140: 게임은 덱이 없어졌다 — GDD 85장 11번. 점검 기준을 바꾸지 않으려고 봇만 옛 '덱' 규칙(8장, 뽑은 타일 추가)을 들고 다닌다) */
 const botDecks = new WeakMap<object, string[]>();
@@ -48,7 +48,7 @@ const HUMAN_CONTINUE_HP = 0.5;
 //    진화 봇 세이브(campaign)가 필요한 구간은 자식마다 캠페인을 다시 만든다(약 60초, 중복 허용). seconds = 로컬 직렬 측정(배분용 추정치) ──
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
-  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 }, { name: 'evoProfile', seconds: check ? 1 : 110 },
+  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 }, { name: 'evoProfile', seconds: 140 },
   { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
 ];
 const CAMPAIGN_SECONDS = 63;
@@ -1011,7 +1011,7 @@ if (want('evoUnique')) {
 // ── 진화체 모양 = 성장 곡선 × 전투 성향 (C.523, GDD 8-7 v6.171, 사용자 2026-11-23 "노력치 작, 블록 작 안해도 강하지만, 작 해도 리턴이 낮은 경우(저점 높고 고점 낮음) / … / 일반 모험은 잘 못하는데, 보스전, 강적 등에는 강함") ──
 // 4단계 진화체 × 종족 전부(고유 능력 없는 몸 포함)를 C.520 기준 몸 + 투자 4칸(무투자·노력치만·블록만·둘 다) × 권장 ★ 일반·강적·보스로 재고(scripts/lib/evoProfile.ts),
 // 같은 단계 중앙값 대비 모양을 자동 분류(가장 가까운 곡선 · 점수가 가장 큰 성향, 규칙 = BALANCE.provisional.evoProfile). 목표 모양(src/data/evolution/balanceProfiles.json)이 있는 몸만 가드
-// (곡선 조건 · 목표 성향 점수 · 가치 총량 ±band). --check 에선 목표가 있는 몸이 든 단계만 잰다(지금 전부 null → 측정 생략). --profile-md=경로 = 문서로 쓰기
+// (곡선 조건 · 목표 성향 점수 · 가치 총량 ±band). --check 에선 목표가 있는 몸이 든 단계만 잰다(C.524 1차 배정 38칸 → 4단계 54칸 전부 잼, 목표 미달 EVO_PROFILE_KNOWN·측정 제외·능력 없는 몸은 경고). --profile-md=경로 = 문서로 쓰기
 if (want('evoProfile')) {
   const all = evoProfileTargets();
   const goalTiers = new Set(all.filter((t) => t.goal).map((t) => t.tier));
@@ -1022,14 +1022,19 @@ if (want('evoProfile')) {
   else {
     const rows = targets.map((t) => measureEvoProfile(t));
     const cls = classifyAll(rows);
-    console.log('  진화체(종족)      id                     타입 능  무투자 일/강/보   노력치만      블록만        둘 다   (100 = 단계 중앙값)   추정 곡선 · 성향   가치 총량');
-    for (const r of rows) console.log(profileLine(r, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!, cls.medians.get(r.target.tier)!));
+    console.log('  진화체(종족)      id                     타입 능  무투자 일/강/보   노력치만      블록만        둘 다   (100 = 단계·타입 중앙값)   추정 곡선 · 성향   가치 총량');
+    for (const r of rows) console.log(profileLine(r, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!, cls.shapeMedians.get(shapeGroupOf(r.target))!));
+    for (const g of typeGap(cls)) console.log(`  · 타입 차 ${g.group}: 타입 중앙값 ÷ 단계 중앙값 = 무투자 ${(g.invest.none * 100).toFixed(0)} · 노력치만 ${(g.invest.ev * 100).toFixed(0)} · 블록만 ${(g.invest.blk * 100).toFixed(0)} · 둘 다 ${(g.invest.both * 100).toFixed(0)} (넓이 ${(g.value * 100).toFixed(0)}) — 후반 보류(19-3), 넓이·모양은 같은 타입 기준`);
     const dist = profileDistribution(cls.verdicts);
     console.log(`  → 곡선: ${dist.curves.map((c) => `${c.name} ${c.n}(총량 ${(c.value * 100).toFixed(0)}%)`).join(' · ')}`);
     console.log(`  → 성향: ${dist.leans.map((l) => `${l.name} ${l.n}`).join(' · ')}`);
     for (const r of rows) {
       if (!r.target.goal) continue;
-      for (const f of judgeProfileGoal(r.target.goal, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!)) failures.push(f);
+      const held = profileGoalHeld(r.target);
+      for (const f of judgeProfileGoal(r.target.goal, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!)) {
+        if (held) console.log(`  △ 목표 미달(경고): ${f} — ${held}`);
+        else failures.push(f);
+      }
     }
     const mdArg = process.argv.find((a) => a.startsWith('--profile-md='));
     if (mdArg && !check) {

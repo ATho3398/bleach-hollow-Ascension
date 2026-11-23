@@ -95,7 +95,7 @@ describe('데이터 (사신 현음·석양홍·만리장)', () => {
   });
   it('수치표 그대로 (provisional)', () => {
     expect(N(HYEON)).toMatchObject({ chainMax: 4, x4: 1.4, x5: 1.8, made: 1, release: { chainMax: 5, made: 2 } });
-    expect(N(SUNSET)).toMatchObject({ shotMult: 2.0, shotMax: 1, release: { shotMult: 2.5, shotMax: 3 } });
+    expect(N(SUNSET)).toMatchObject({ shotMult: 1.5, shotMax: 1, shotGrow: 1, release: { shotMult: 3, shotMax: 3 } }); // C.524: ×2 → ×1.5(블록 투자 비례 — 다 키우면 ×3)·만해 ×2.5 → ×3
     expect(N(WALL)).toMatchObject({ hardSeconds: 2, hardBonus: 0.4, hardShield: 0.12, release: { hardSeconds: 1, hardBonus: 0.7, hardShield: 0.18 } });
   });
 });
@@ -258,7 +258,7 @@ describe('사신 석양홍 (t4:fire:special)', () => {
     expect(c.shot).toBeGreaterThan(a.shot);
     expect(c.plain).toBeCloseTo(a.plain, 6);
   });
-  it('만해: 귀 블록 체인 수만큼 충전(최대 3) · ×2.5 · 해방 시작/끝에 충전 수 그대로', () => {
+  it('만해: 귀 블록 체인 수만큼 충전(최대 3) · ×3 · 해방 시작/끝에 충전 수 그대로', () => {
     const s = mk({ playerElements: ['fire'], evo: evo(SUNSET), liberationUnique: true, liberationSeconds: 600 });
     noSpawn(s);
     s.tray.length = 0;
@@ -273,7 +273,7 @@ describe('사신 석양홍 (t4:fire:special)', () => {
     s.tray.push(gwi(), gwi(), gwi());
     use(s, 0);
     expect(s.evo!.charges.sunset!.n).toBe(n.release!.shotMax);
-    expect(s.params.evo!.relNums.shotMult).toBe(2.5);
+    expect(s.params.evo!.relNums.shotMult).toBe(3); // C.524 (옛 2.5)
     libEnd(s);
     expect(s.evo!.charges.sunset!.n).toBe(n.release!.shotMax);
   });

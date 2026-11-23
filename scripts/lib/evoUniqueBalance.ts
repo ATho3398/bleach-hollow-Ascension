@@ -14,7 +14,7 @@ import { PETS } from '../../src/data/pets';
 import { getFaction } from '../../src/data/factions';
 import { addEnhance, buildCombatParams, gainTrait, isBasicBlockTrait, newBuild } from '../../src/engine/absorb';
 import { createCombat, elapsedSeconds, liberationStartGaugeOf, playCombatHuman, uniformStats, type CombatParams } from '../../src/engine/combat';
-import { abilityFor, applyEvolutionToParams, newEvolution, refStatOf, STAT_MAX, zeroStats, type EvolutionState } from '../../src/engine/evolution';
+import { abilityFor, applyEvolutionToParams, evoEffortOf, newEvolution, refStatOf, STAT_MAX, zeroStats, type EvolutionState } from '../../src/engine/evolution';
 import type { StatId } from '../../src/data/schema';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../../src/engine/difficulty';
 import { petAttackOf } from '../../src/engine/pet';
@@ -90,6 +90,8 @@ export function evoBodyParams(t: EvoBalTarget, on: boolean, ascended: boolean, s
   const prev = FORM_TABLE.some((f) => f.id === `t3:${t.element}`) ? `t3:${t.element}` : 't3:normal';
   const evo: EvolutionState = { ...newEvolution(), tierIndex: t.tier - 1, formId: t.formId, formHistory: ['t2:base', prev, t.formId], ability: abilityFor(zeroStats(), form), ascended };
   applyEvolutionToParams(params, evo, t.factionId);
+  // 모양 손잡이 출처 effort (C.524): 노력치는 아래에서 능력치에 바로 얹으므로(능력 순위가 바뀌지 않게 트랙 ev 는 0) 투자율만 같은 식으로
+  if (params.evo) params.evo.effort = evoEffortOf(invest.ev ?? {}, t.tier - 1, t.category);
   params.playerStats = uniformStats(refStatOf(t.tier - 1));
   if (invest.ev) for (const [k, v] of Object.entries(invest.ev) as [StatId, number][]) params.playerStats[k] = Math.min(STAT_MAX, params.playerStats[k] + v);
   params.liberationStartGauge = liberationStartGaugeOf();
