@@ -1,4 +1,4 @@
-/** C.530 공속 진화체 = 일반 공격 간격 0.6초가 '다 키움' (GDD 8-7 v6.185, 사용자 "공속애들은 템도 있으니까 0.6까지만 올리면 맥스라고 생각하고 짜").
+/** C.530 공속 진화체 = 일반 공격 간격 0.6초가 '다 키움' (GDD 8-7 v6.186, 사용자 "공속애들은 템도 있으니까 0.6까지만 올리면 맥스라고 생각하고 짜").
  *  능력 데이터 effortBasis 'attackInterval' 몸의 출처 effort = 몸 기본 공속 간격 → 지금 공속 간격이 0.6초까지 줄어든 비율(더 빠른 몫 = 장비 덤) ·
  *  측정 노력치 칸 = 공속은 0.6초에 닿는 만큼, 남은 노력치는 옛 비율 · 반석·섬뢰각 요구 스탯 블록속도 → 공속 · 기울기 재보정 */
 import { describe, expect, it } from 'vitest';
@@ -134,8 +134,8 @@ describe('기울기 재보정 (3회) · 사용자 확정 값 그대로', () => {
     for (const k of ['t4:thunder:physical/hollow', 't4:earth:physical/shinigami', 't4:thunder:physical/shinigami']) expect(EVO_PROFILE_KNOWN[k]).toBeUndefined();
     for (const k of ['t4:fire:physical/hollow', 't4:water:physical/hollow', 'h4:void/hollow']) expect(EVO_PROFILE_KNOWN[k]).toMatch(/C\.530/);
   });
-  it('BALANCE 164 · 패치 C.530', () => {
-    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(164);
+  it('BALANCE 165 · 패치 C.530', () => {
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(165);
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(530);
   });
 });

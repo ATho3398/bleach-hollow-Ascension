@@ -47,10 +47,10 @@ describe('버전 (S-18)', () => {
 });
 
 describe('치명타 (GDD 28장 5번, provisional)', () => {
-  it('기본 수치: 내 5%·×1.5, 적 3%, 상한 50% — 물리·마법 합친 하나', () => {
+  it('기본 수치: 내 5%·×1.5, 적 3%, 상한 70%(C.529 사용자, 옛 50%) — 물리·마법 합친 하나', () => {
     const p = defaultCombatParams();
-    expect([p.critChance, p.critMultiplier, p.enemyCritChance, p.critChanceMax]).toEqual([0.05, 1.5, 0.03, 0.5]);
-    expect(critChanceOf({ ...p, critChance: 0.9 })).toBe(0.5);
+    expect([p.critChance, p.critMultiplier, p.enemyCritChance, p.critChanceMax]).toEqual([0.05, 1.5, 0.03, 0.7]);
+    expect(critChanceOf({ ...p, critChance: 0.9 })).toBe(0.7);
     expect(critChanceOf({ ...p, critChance: -1 })).toBe(0);
   });
   it('확률 100% 면 기본 공격이 모두 ×1.5, 0% 면 치명 없음 (같은 시드, 다른 난수 순서는 그대로)', () => {

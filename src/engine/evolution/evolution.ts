@@ -587,7 +587,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   params.voidStunSeconds = form?.hidden ? 0 : CB.voidStunSeconds; // 101장 추가 결정 2번: 히든 진화체는 경직 없음
   if (critChance > 0) {
     params.critChance = (params.critChance ?? BALANCE.provisional.combat.critChance) + critChance;
-    // 치명 상한 돌파 (GDD 45장 1번): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한 + 그 특성 값
+    // 치명 상한 돌파 (GDD 45장 1번 · 7-4 v6.182): 치명 특성(물 '날카로운 물결')이 있는 몸만 상한 = 기본 상한(70%) + 그 특성 값
     params.critChanceMax = (params.critChanceMax ?? BALANCE.provisional.combat.critChanceMax) + critChance;
     // 치명 두 값 (C.220): 특성 치명은 블록 치명에도 같이 (진화체별 나눔은 2차)
     params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + critChance;
@@ -597,7 +597,7 @@ export function applyEvolutionToParams(params: Partial<CombatParams>, stat: Evol
   params.evo = evoParamsOf(form, factionId);
   // 모양 손잡이 출처 effort (C.524): 능력치 트랙(stat)의 노력치 — 그 몸 타입의 주 노력치 투자율
   if (params.evo && form) {
-    // C.530 (GDD 8-7 v6.185): 능력 데이터 effortBasis = 'attackInterval' 이면 노력치 투자율 대신 일반 공격 간격 기준(몸 기본 공속 → 지금 공속)
+    // C.530 (GDD 8-7 v6.186): 능력 데이터 effortBasis = 'attackInterval' 이면 노력치 투자율 대신 일반 공격 간격 기준(몸 기본 공속 → 지금 공속)
     params.evo.effort = params.evo.ability.effortBasis === 'attackInterval'
       ? evoIntervalEffortOf(baseStatsOf(stat, statFaction).aspd, currentStats(stat, statFaction, statBonus).aspd)
       : evoEffortOf(stat.ev, capTierOf(stat), formCategoryOf(form, factionId));
@@ -658,7 +658,7 @@ export function statAttackSecondsOf(aspd: number): number {
   return BALANCE.provisional.combat.playerAttackSeconds * speedFactorOf(worldRefStat(), aspd);
 }
 
-/** 출처 effort — 공격 간격 기준 (C.530, GDD 8-7 v6.185 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움'): 진화체 능력 데이터 effortBasis = 'attackInterval' 인 몸.
+/** 출처 effort — 공격 간격 기준 (C.530, GDD 8-7 v6.186 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움'): 진화체 능력 데이터 effortBasis = 'attackInterval' 인 몸.
  *  그 몸 기본 간격(노력치·장비 0 공속) → 지금 간격(노력치·장비 포함 공속)이 evoInvest.intervalFull(0.6초)까지 줄어든 비율 0~1. 그보다 빠른 몫은 1 고정(장비 덤).
  *  기본 간격이 이미 intervalFull 이하면 1. 종족·진화체 분기 없음 — 능력치만 본다(특성 배율·간격 −초·해방은 세지 않는다) */
 export function evoIntervalEffortOf(baseAspd: number, aspd: number): number {
@@ -680,7 +680,7 @@ export function applyDetachedTraits(params: Partial<CombatParams>, ids: readonly
   applyTraitTotals(params, detachTotals(ids));
 }
 
-/** 탈착 특성 모양 수치를 전투 파라미터에 (탈착 특성·초월 특성 공용): 주는/받는 피해(변이의 기운 자리에 더함) · 최대 체력 · 블록 치명(상한도 같이) */
+/** 탈착 특성 모양 수치를 전투 파라미터에 (탈착 특성·초월 특성 공용): 주는/받는 피해(변이의 기운 자리에 더함) · 최대 체력 · 블록 치명(상한 70% 안 — 돌파는 물 치명 특성·지정 진화체만, GDD 7-4 v6.182 C.529) */
 export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: number; taken: number; maxHp: number; blockCrit: number }): void {
   if (t.dealt || t.taken) {
     const fx = { ...(params.abilityEffects ?? {}) };
@@ -690,7 +690,6 @@ export function applyTraitTotals(params: Partial<CombatParams>, t: { dealt: numb
   if (t.maxHp) params.playerMaxHp = (params.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp) * (1 + t.maxHp);
   if (t.blockCrit) {
     params.blockCritChance = (params.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + t.blockCrit;
-    params.blockCritChanceMax = (params.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + t.blockCrit;
   }
 }
 

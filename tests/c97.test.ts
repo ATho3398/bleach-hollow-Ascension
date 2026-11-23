@@ -21,24 +21,24 @@ const paramsFor = (formId: string, tier: number): Partial<CombatParams> => {
 };
 
 describe('치명 상한 (GDD 45장 1번)', () => {
-  it('물 3단계 몸(C.220, 옛 4단계)은 상한 50% + 물 특성 8%p = 58%, 다른 속성은 50%', () => {
+  it('물 3단계 몸(C.220, 옛 4단계)은 상한 70%(C.529, 옛 50%) + 물 특성 8%p = 78%, 다른 속성은 70%', () => {
     const water = formOf(3, ['water'])!;
     const fire = formOf(3, ['fire'])!;
     expect(paramsFor(water.id, 2).critChanceMax).toBeCloseTo(CX.critChanceMax + WATER);
-    expect(paramsFor(water.id, 2).critChanceMax).toBeCloseTo(0.58);
+    expect(paramsFor(water.id, 2).critChanceMax).toBeCloseTo(0.78);
     expect(paramsFor(fire.id, 2).critChanceMax ?? CX.critChanceMax).toBeCloseTo(CX.critChanceMax);
   });
 
-  it('상태 화면 치명 표시도 같은 상한: 물 4단계 몸이 확률을 넘치게 가져도 58%', () => {
+  it('상태 화면 치명 표시도 같은 상한: 물 4단계 몸이 확률을 넘치게 가져도 78%(C.529, 옛 58%)', () => {
     const water = formOf(3, ['water'])!;
     const build = { ...newBuild(), slots: [] as (string | null)[] };
     expect(critPercentText(build, evoOf(water.id, 2))).toBe(`${Math.round((CX.critChance + WATER) * 100)}%`);
-    // 특성 치명 확률이 넘치는 몸: 표시 상한 = 50% + 물 값
+    // 특성 치명 확률이 넘치는 몸: 표시 상한 = 70% + 물 값
     const many = { ...newBuild(), slots: Array(20).fill('t-thunder-part') as (string | null)[] };
     const shown = Number(critPercentText(many, evoOf(water.id, 2)).replace('%', ''));
-    expect(shown).toBeLessThanOrEqual(58);
+    expect(shown).toBeLessThanOrEqual(78);
     const fire = formOf(3, ['fire'])!;
-    expect(Number(critPercentText(many, evoOf(fire.id, 2)).replace('%', ''))).toBeLessThanOrEqual(50);
+    expect(Number(critPercentText(many, evoOf(fire.id, 2)).replace('%', ''))).toBeLessThanOrEqual(70);
   });
 });
 

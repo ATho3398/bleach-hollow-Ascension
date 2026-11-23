@@ -167,7 +167,8 @@ describe('150장 4 전투에 실림', () => {
     const hp0 = base.playerMaxHp ?? BALANCE.provisional.combat.playerMaxHp;
     expect(p.playerMaxHp).toBeCloseTo(hp0 * 1.08);
     expect(p.blockCritChance).toBeCloseTo((base.blockCritChance ?? BALANCE.provisional.combat.blockCritChance) + 0.05);
-    expect(p.blockCritChanceMax).toBeCloseTo((base.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax) + 0.05);
+    // C.529 (GDD 7-4 v6.184): 집중 블록 치명은 상한을 올리지 않는다 — 상한 돌파는 물 치명 특성·물 속성 진화체 능력만 (옛: 상한도 +5%p)
+    expect(p.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax).toBeCloseTo(base.blockCritChanceMax ?? BALANCE.provisional.combat.blockCritChanceMax);
   });
 });
 

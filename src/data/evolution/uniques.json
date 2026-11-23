@@ -58,6 +58,7 @@
       "hollow": {
         "ability": {
           "effortBasis": "attackInterval",
+          "critBreak": true,
           "description": { "*": "블록을 쓸 때마다(체인·개수 무관) 물 스택 1({seconds}초, 스택마다 따로), 스택당 일반 공격 치명 확률 +{perStack%}p(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perStack@perStackGrow%}p, 최대 {max}스택)" },
           "releaseDescription": { "*": "스택 지속 {seconds}초 · 최대 {max}스택" },
           "stacks": {
@@ -75,6 +76,7 @@
         "trait": "crit6",
         "ability": {
           "effortBasis": "attackInterval",
+          "critBreak": true,
           "description": { "*": "수 블록을 쓸 때마다 {seconds}초 동안 일반 공격 치명 확률 +{perStack%}p(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 +{perStack@perStackGrow%}p)·치명 피해 +{critDmgPerStack%}(최대 {max}스택, 스택마다 따로). 일반 공격 {every}회마다 특수 블록 「노도 연격」" },
           "releaseDescription": { "*": "스택 지속 {seconds}초 · 스택당 치명 확률 +{perStack%}p(다 키우면 +{perStack@perStackGrow%}p) · 치명 피해 +{critDmgPerStack%}" },
           "stacks": {
@@ -238,6 +240,7 @@
       "hollow": {
         "trait": "blockCrit6",
         "ability": {
+          "critBreak": true,
           "description": { "*": "체인 2 블록 치명 확률 +{crit2%}p · 체인 3 +{crit3%}p(이 속성 블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 +{crit2@critGrow%}p · +{crit3@critGrow%}p). 치명이 난 블록은 잔상 1개(같은 블록 1체인)를 바 끝에 남긴다(잔상은 잔상을 남기지 않음)" },
           "releaseDescription": { "*": "체인 치명 보너스 2배(+{crit2%}p · +{crit3%}p — 다 키우면 +{crit2@critGrow%}p · +{crit3@critGrow%}p)" },
           "rules": [
@@ -250,6 +253,7 @@
       "shinigami": {
         "trait": "blockCrit6",
         "ability": {
+          "critBreak": true,
           "description": { "*": "2체인을 {streak}번 연달아 쓰면 바 끝 빈 칸에 물·귀 블록 {made}개가 생기고 장마 +1(최대 {max}). 장마가 있으면 3체인만 치명 확률 +{crit%}p·치명 피해 +{critDmg%}(이 속성 블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 확률 +{crit@critGrow%}p·피해 +{critDmg@critDmgGrow%}), 3체인을 쓰면 장마 −1. 체인 배율 ×{c1}/×{c2}/×{c3}" },
           "releaseDescription": { "*": "3체인이 장마를 줄이지 않음 · 장마 최대 {max}" },
           "chainMultipliers": ["c1", "c2", "c3"],
@@ -426,6 +430,7 @@
       "hollow": {
         "trait": "critDmg10",
         "ability": {
+          "critBreak": true,
           "description": { "*": "블록을 쓰면(원래 피해 그대로) 다음 일반 공격 — 1체인 {hits1}회·2체인 {hits2}회·3체인 {hits3}회 — 치명 확률 +{crit%}p(노력치·이 속성 블록을 같이 키울수록 커짐 — 다 키우면 +{crit@critGrow%}p, 블록 치명은 그대로). 다시 쓰면 남은 횟수에 더한다(최대 {max}회)" },
           "releaseDescription": { "*": "치명 확률 +{crit%}p(다 키우면 +{crit@critGrow%}p) · 최대 {max}회" },
           "charges": {
@@ -441,6 +446,7 @@
       },
       "shinigami": {
         "ability": {
+          "critBreak": true,
           "description": { "*": "블록이 치명으로 맞으면 다음 일반 공격 {hits}회 치명 확정" },
           "releaseDescription": { "*": "{hits}회" },
           "charges": {
