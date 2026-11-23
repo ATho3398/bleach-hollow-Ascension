@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 158; // C.521 (마스터AR 11-23, evo-impl-1121 29행 해석): 호로 추파카브라 고유 능력 출현 제외(uniques.json spawnExclude blood)를 없앰 — '더 생기지 않음' = 고정 저장 블록만, 혈 블록은 평소대로. 수치 그대로(저장 100%·×1.0 사용자 확정, storeMax·keep 시도 3회는 결과 못 맞춰 그대로).
+export const BALANCE_VERSION = 159; // C.523 (GDD 8-7 v6.171 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향', 마스터AR provisional): provisional.evoProfile 신설 — 진화체 모양 측정 틀(투자 4칸 · 판 수 · 곡선 원형 · 성향 문턱 · 가치 총량 가중 · 목표 비교 가드). 게임 수치 그대로(측정 도구만).
+// 이전: BALANCE_VERSION = 158; // C.521 (마스터AR 11-23, evo-impl-1121 29행 해석): 호로 추파카브라 고유 능력 출현 제외(uniques.json spawnExclude blood)를 없앰 — '더 생기지 않음' = 고정 저장 블록만, 혈 블록은 평소대로. 수치 그대로(저장 100%·×1.0 사용자 확정, storeMax·keep 시도 3회는 결과 못 맞춰 그대로).
 // 이전: BALANCE_VERSION = 157; // C.520 (사용자 2026-11-23 "진화체는 지금 구현한 애들 밸런스 맞춰놓고, 다음 짤 애들은 이 밸런스에 맞춰서 진행하자", 마스터AR provisional 기준): provisional.evoUniques 사신 백련 every 4 → 2 · perBlock 0.03 → 0.06 · 만해 every 2 → 1 (고유 능력 기여가 4단계 중앙값보다 47%p 낮고 강적 승률 64% — 중앙값 ±10%p·±15%p 안으로). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 156; // C.518 (사용자 2026-11-22 "전투소모품은 2단겨 ㄱㄱ", GDD v6.158 10-2): provisional.unlocks.battleItem tierIndex 2 → 1(전투 소모품 칸 해금 3단계 → 2단계). 그 밖 수치 그대로.
 // 이전: BALANCE_VERSION = 155; // C.517 (마스터 11-21 evo-impl-1121 수정, provisional): 호로 브라사 화상 = 공용 화상 값(SHARED_BURN 8초·받는 피해 +8%, 석양홍과 같은 값 — 옛 소로 값 6초·+10%). 토르멘타(사용자 11-21) 보통 필드 = 2→3체인 5초(1개, 시간만 새로) · 강화 = 2체인 2번 연달아 5초(streak 2, stormAt 삭제) · 레스렉시온 보통·강화 7초(옛 2초·3초 / 3초·5초). 그 밖 수치 그대로.
@@ -582,6 +583,55 @@ export const BALANCE = {
       charge: { every: 10 },
       /** 노멀 특성 '단련': 블록(스킬 블록) 1개를 쓸 때마다 이번 전투 평타 피해 +per (최대 +max) */
       tempering: { per: 0.08, max: 0.8 },
+    },
+    // ── C.523 (GDD 8-7 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향', 마스터AR 2026-11-23 provisional): 진화체 모양 측정 틀(scripts/lib/evoProfile.ts) — 게임 수치 아님.
+    //    투자 4칸 × 콘텐츠 3(★ 일반·강적·보스)의 칸 값 = 승률 ÷ 처치 초, 같은 단계 중앙값 대비 비. 목표(src/data/evolution/balanceProfiles.json)가 있는 몸만 guard 로 판정
+    evoProfile: {
+      /** 투자: 노력치만 = 그 단계 노력치 상한 합계를 타입별 비율로(능력치 하나 상한·STAT_MAX 안), 블록만 = 그 속성 공격 특성 2개 + 그 속성 강화 enhance 단계 */
+      invest: {
+        enhance: 10,
+        evSplit: {
+          physical: { atk: 0.35, aspd: 0.35, hp: 0.1, def: 0.1, spr: 0.1 },
+          special: { int: 0.35, bspd: 0.35, hp: 0.1, def: 0.1, spr: 0.1 },
+          mixed: { atk: 0.175, int: 0.175, aspd: 0.175, bspd: 0.175, hp: 0.1, def: 0.1, spr: 0.1 },
+        } as Record<string, Partial<Record<'hp' | 'atk' | 'int' | 'def' | 'spr' | 'aspd' | 'bspd', number>>>,
+      },
+      /** 판 수: 일반 적 종류마다 n · 강적 종류마다 e · 그 ★ 보스마다 b (투자 4칸 × 해방 전/레스렉시온·만해 몸 2) */
+      seeds: { n: 4, e: 8, b: 16 },
+      /** 성장 곡선 자동 추정 = 방향이 가장 가까운 원형(코사인 유사도, 특징 = 같은 단계·같은 타입 중앙값 대비 log 비: 저점·고점·노력치 이득·블록 이득·같이 키움 상승). d = 원형 한 칸 크기 */
+      curve: {
+        d: 0.15,
+        prototypes: {
+          flat: { lo: 1, hi: -1, ev: -1, blk: -1, syn: 0 },
+          effort: { lo: -1, hi: 1, ev: 2, blk: 0, syn: 0 },
+          block: { lo: -1, hi: 1, ev: 0, blk: 2, syn: 0 },
+          joint: { lo: -1, hi: 1, ev: 0, blk: 0, syn: 2 },
+          trait: { lo: -1, hi: -1, ev: 0, blk: 0, syn: 0 },
+        } as Record<string, { lo: number; hi: number; ev: number; blk: number; syn: number }>,
+        /** 확신도: 가장 가까운 원형과의 코사인 유사도 · 중앙에서 떨어진 정도(특징 길이 ÷ d) 둘 다 넘어야 */
+        confHigh: { cos: 0.8, norm: 1.5 },
+        confMid: { cos: 0.6, norm: 0.75 },
+      },
+      /** 전투 성향 자동 추정 = 점수(특징 ÷ 문턱)가 가장 큰 성향, 1 미만이면 성향 없음. 특징 = 같은 단계·같은 타입 중앙값 대비 log 비 (몸 타입 차는 가치 총량이 본다) */
+      lean: {
+        thresholds: { burst: 0.25, elite: 0.15, mob: 0.15, long: 0.15, opener: 0.15, survive: 0.4, release: 0.2, chain: 0.3 } as Record<string, number>,
+        confHigh: 2,
+        confMid: 1.4,
+      },
+      /** 가치 총량 = Σ 투자 가중 × 콘텐츠 가중 × (칸 값 ÷ 같은 단계 그 칸 중앙값). 같은 단계 중앙값 ±band 밖이면 '총량 차 큼' */
+      value: {
+        invest: { none: 0.2, ev: 0.25, blk: 0.25, both: 0.3 } as Record<string, number>,
+        content: { n: 0.5, e: 0.3, b: 0.2 } as Record<string, number>,
+        band: 0.15,
+      },
+      /** 목표 비교 가드 (balanceProfile 이 있는 몸만): 곡선별 조건(특징 log 비) · 성향 점수 ≥ 1 · 가치 총량 ±value.band */
+      guard: {
+        flat: { loMin: 0.05, bothGainMax: 0 },
+        effort: { evMin: 0.15, overBlk: 0 },
+        block: { blkMin: 0.15, overEv: 0 },
+        joint: { synMin: 0.1, bothGainMin: 0.1 },
+        trait: { loMax: -0.05, hiMax: -0.05 },
+      },
     },
     // ── C.499 (GDD 8-7 1차 구현, docs/drafts/evo-impl-1119.md — 마스터 추천안 provisional): 4단계 진화체 고유 능력·특수 블록·해방 변형·4단계 한 줄 특성.
     //    장치·규칙은 src/data/evolution/uniques.json(진화체 id × 종족), 수치는 여기. forms[진화체 id][종족] = { 수치 키: 값, release: { 키: 레스렉시온/만해 중 값 } } ──

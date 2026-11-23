@@ -32,6 +32,8 @@ import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recom
 import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { writeFileSync } from 'node:fs';
+import { classifyAll, evoProfileTargets, judgeProfileGoal, measureEvoProfile, profileDistribution, profileLine, profileMarkdown } from './lib/evoProfile';
 
 /** 봇의 보상 타일 목록 (C.140: 게임은 덱이 없어졌다 — GDD 85장 11번. 점검 기준을 바꾸지 않으려고 봇만 옛 '덱' 규칙(8장, 뽑은 타일 추가)을 들고 다닌다) */
 const botDecks = new WeakMap<object, string[]>();
@@ -46,7 +48,7 @@ const HUMAN_CONTINUE_HP = 0.5;
 //    진화 봇 세이브(campaign)가 필요한 구간은 자식마다 캠페인을 다시 만든다(약 60초, 중복 허용). seconds = 로컬 직렬 측정(배분용 추정치) ──
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
-  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 },
+  { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 }, { name: 'evoProfile', seconds: check ? 1 : 110 },
   { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
 ];
 const CAMPAIGN_SECONDS = 63;
@@ -1001,8 +1003,41 @@ if (want('evoUnique')) {
     for (const f of v.failures) failures.push(f);
     for (const f of v.known) console.log(`  △ 목표 미달(경고): ${f}`);
   }
+  for (const v of judgeEvoBal(rows)) if (v.profiled.length) console.log(`  · ${v.tier}단계 목표 모양이 있어 '진화체 모양' 가드로 넘긴 칸: ${v.profiled.join(', ')}`);
   for (const [k, why] of Object.entries(EVO_BAL_KNOWN)) console.log(`  · 목표 미달 사유 ${k}: ${why}`);
   for (const r of rows.filter((x) => x.target.exempt)) console.log(`  · 측정 제외 ${evoBalKey(r.target)}: ${r.target.exempt}`);
+}
+
+// ── 진화체 모양 = 성장 곡선 × 전투 성향 (C.523, GDD 8-7 v6.171, 사용자 2026-11-23 "노력치 작, 블록 작 안해도 강하지만, 작 해도 리턴이 낮은 경우(저점 높고 고점 낮음) / … / 일반 모험은 잘 못하는데, 보스전, 강적 등에는 강함") ──
+// 4단계 진화체 × 종족 전부(고유 능력 없는 몸 포함)를 C.520 기준 몸 + 투자 4칸(무투자·노력치만·블록만·둘 다) × 권장 ★ 일반·강적·보스로 재고(scripts/lib/evoProfile.ts),
+// 같은 단계 중앙값 대비 모양을 자동 분류(가장 가까운 곡선 · 점수가 가장 큰 성향, 규칙 = BALANCE.provisional.evoProfile). 목표 모양(src/data/evolution/balanceProfiles.json)이 있는 몸만 가드
+// (곡선 조건 · 목표 성향 점수 · 가치 총량 ±band). --check 에선 목표가 있는 몸이 든 단계만 잰다(지금 전부 null → 측정 생략). --profile-md=경로 = 문서로 쓰기
+if (want('evoProfile')) {
+  const all = evoProfileTargets();
+  const goalTiers = new Set(all.filter((t) => t.goal).map((t) => t.tier));
+  const targets = check ? all.filter((t) => goalTiers.has(t.tier)) : all;
+  const S = BALANCE.provisional.evoProfile.seeds;
+  console.log(`\n진화체 모양 (C.523, 성장 곡선 × 전투 성향, 사람형 봇, ${targets.length}/${all.length}칸 × 투자 4칸 × 권장 ★ 일반 종류마다 ${S.n}·강적 ${S.e}·보스 ${S.b}판 × 해방 전/레스렉시온·만해 몸) — 목표 모양 ${all.filter((t) => t.goal).length}칸`);
+  if (targets.length === 0) console.log('  목표 모양(balanceProfiles.json)이 정해진 몸이 없어 --check 측정 생략 — 표는 npm run balance -- --only=evoProfile');
+  else {
+    const rows = targets.map((t) => measureEvoProfile(t));
+    const cls = classifyAll(rows);
+    console.log('  진화체(종족)      id                     타입 능  무투자 일/강/보   노력치만      블록만        둘 다   (100 = 단계 중앙값)   추정 곡선 · 성향   가치 총량');
+    for (const r of rows) console.log(profileLine(r, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!, cls.medians.get(r.target.tier)!));
+    const dist = profileDistribution(cls.verdicts);
+    console.log(`  → 곡선: ${dist.curves.map((c) => `${c.name} ${c.n}(총량 ${(c.value * 100).toFixed(0)}%)`).join(' · ')}`);
+    console.log(`  → 성향: ${dist.leans.map((l) => `${l.name} ${l.n}`).join(' · ')}`);
+    for (const r of rows) {
+      if (!r.target.goal) continue;
+      for (const f of judgeProfileGoal(r.target.goal, cls.verdicts.find((v) => v.key === evoBalKey(r.target))!)) failures.push(f);
+    }
+    const mdArg = process.argv.find((a) => a.startsWith('--profile-md='));
+    if (mdArg && !check) {
+      const out = mdArg.slice('--profile-md='.length);
+      writeFileSync(out, profileMarkdown(rows, cls, new Date().toISOString().slice(0, 10), BALANCE_VERSION));
+      console.log(`  문서 → ${out}`);
+    }
+  }
 }
 
 // ── 물공 6속성 (C.103 → C.105, GDD 49-1 5번 · 49-9 · 49-11): 5단계에 갓 닿은 몸(위 진화 봇 세이브 30명)의 진화체만 t5:<속성>:physical 로 바꿔 사람형 봇이 ★5 적 풀(일반·강적) · forest-lord 보스 · 탑 41/45/50층.
