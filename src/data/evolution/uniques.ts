@@ -538,11 +538,14 @@ export function evoText(v: PerFaction<string> | string | undefined, factionId: s
 
 const pctText = (x: number) => `${Math.round(x * 1000) / 10}`;
 
-/** 설명 틀 채우기: {키} = 수치, {키%} = 백분율(0.03 → 3%) */
+/** 설명 틀 채우기: {키} = 수치, {키%} = 백분율(0.03 → 3%).
+ *  {키@기울기} = 다 키웠을 때의 실제 값 = 키 × (1 + 기울기) — grow·secondsGrow 의 per(effort·blockLv 투자율 0~1)가 1일 때와 같다 (C.526, '+8000%' 배율 대신 실제 값) */
 export function fillEvoText(text: string, nums: Record<string, number>): string {
-  return text.replace(/\{([A-Za-z0-9_]+)(%?)\}/g, (_m, k: string, p: string) => {
-    const v = nums[k];
-    if (v === undefined) return `{${k}}`;
+  return text.replace(/\{([A-Za-z0-9_]+)(?:@([A-Za-z0-9_]+))?(%?)\}/g, (m, k: string, g: string | undefined, p: string) => {
+    const base = nums[k];
+    const slope = g === undefined ? 0 : nums[g];
+    if (base === undefined || slope === undefined) return m;
+    const v = base * (1 + slope);
     return p ? `${pctText(v)}%` : String(Math.round(v * 100) / 100);
   });
 }

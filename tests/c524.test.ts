@@ -208,15 +208,15 @@ describe('데이터·버전', () => {
       const base = Object.fromEntries(Object.entries(n).filter(([k]) => k !== 'release')) as Record<string, number>;
       const texts = [fillEvoText(evoText(a.description, fac), base), ...(a.releaseDescription ? [fillEvoText(evoText(a.releaseDescription, fac), evoReleaseNums(n))] : []),
         ...Object.values(a.specials ?? {}).flatMap((sp) => [fillEvoText(evoText(sp.description, fac), base), fillEvoText(evoText(sp.offNote, fac), base)])];
-      for (const t of texts) expect(t, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_]+%?\}/);
+      for (const t of texts) expect(t, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_@]+%?\}/);
     }
     const d = (id: string, fac: string) => fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
-    // C.525 (시간 제한 능력 = 노력 곡선): 토르멘타·에스칼레라 문구는 '노력치를 키운 만큼'으로 (옛 기대 = 블록·동반 문구) — 블록·동반 문구는 반석·봉수대가 지킨다
-    expect(d('t4:thunder:special', 'hollow')).toContain('지속 피해는 노력치를 키운 만큼');
-    expect(d('t4:normal:mixed', 'hollow')).toContain('노력치를 키운 만큼 피해는');
-    expect(d('t4:earth:physical', 'shinigami')).toContain('이 속성 블록(흡수 특성·강화)을 키운 만큼');
-    expect(d('t4:fire:physical', 'shinigami')).toContain('노력치와 이 속성 블록을 같이 키운 만큼');
-    expect(d('t4:normal:physical', 'hollow')).toContain('노력치를 키운 만큼');
+    // C.525 (시간 제한 능력 = 노력 곡선): 토르멘타·에스칼레라 문구는 노력치 문구로 (옛 기대 = 블록·동반 문구) — 블록·동반 문구는 반석·봉수대가 지킨다. C.526: '키운 만큼' → '키울수록 커짐 — 다 키우면 <실제 값>'
+    expect(d('t4:thunder:special', 'hollow')).toContain('지속 피해는 노력치를 키울수록 커짐');
+    expect(d('t4:normal:mixed', 'hollow')).toContain('노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%');
+    expect(d('t4:earth:physical', 'shinigami')).toContain('이 속성 블록(흡수 특성·강화)을 키울수록 커짐');
+    expect(d('t4:fire:physical', 'shinigami')).toContain('노력치·이 속성 블록을 같이 키울수록 커짐');
+    expect(d('t4:normal:physical', 'hollow')).toContain('노력치를 키울수록 커짐');
     expect(d('t4:blood:physical', 'hollow')).toContain('최대 체력 30% 이상');
   });
   it('목표 모양은 4단계 진화체만 (곡선·성향 표기는 개발용 — 설명 문구엔 곡선·성향 이름이 없다)', () => {

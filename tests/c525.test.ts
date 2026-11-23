@@ -57,12 +57,12 @@ describe('② 시간 제한 능력 = 노력 곡선 (GDD v6.178)', () => {
       expect(json, `${id}/${fac}`).toMatch(/"per":"effort"/);
     }
   });
-  it('설명 문구: 시간 제한 몸은 「노력치를 키운 만큼」 · {키} 다 채움', () => {
+  it('설명 문구: 시간 제한 몸은 「노력치를 키울수록」 · {키} 다 채움 (C.526 문구)', () => {
     for (const [id, fac] of timed()) {
       if (id === 'h4:void' && fac === 'shinigami') continue;
       const txt = fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
-      expect(txt, `${id}/${fac}`).toMatch(/노력치를 키운 만큼/);
-      expect(txt, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_]+%?\}/);
+      expect(txt, `${id}/${fac}`).toMatch(/노력치를 키울수록/);
+      expect(txt, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_@]+%?\}/);
     }
   });
   it('가드: 시간 제한 몸은 고점(둘 다) ≥ +10% 도 본다', () => {
@@ -98,6 +98,6 @@ describe('④ 목표 미달 목록 · 버전', () => {
   });
   it('BALANCE 161 · 패치 C.525', () => {
     expect(BALANCE_VERSION).toBe(161);
-    expect(PATCH_LABEL).toBe('C.525');
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(525);
   });
 });
