@@ -128,7 +128,7 @@ describe('C.529 치명 상한 70%', () => {
     expect(p.blockCritChanceMax).toBeUndefined();
   });
   it('패치 C.529 · BALANCE 164', () => {
-    expect(BALANCE_VERSION).toBe(164);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(164); // C.530: 165 (옛 기대 = 164 고정)
     expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(529);
   });
 });
