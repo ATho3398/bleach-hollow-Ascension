@@ -34,7 +34,7 @@ describe('C.526 다 키우면 = 실제 값', () => {
   it('블록 비례 = 「블록을 키울수록」 · 둘 다 = 「노력치·이 속성 블록을 같이 키울수록」', () => {
     expect(text('t4:earth:physical', 'shinigami')).toContain('블록(흡수 특성·강화)을 키울수록 커짐 — 다 키우면 +10.5%');
     expect(text('t4:fire:physical', 'shinigami')).toContain('노력치·이 속성 블록을 같이 키울수록 커짐 — 다 키우면 +36%');
-    expect(lines('t4:water:physical', 'shinigami').find((l) => l.label === '특수 블록')!.text).toContain('다 키우면 5회');
+    expect(lines('t4:water:physical', 'shinigami').find((l) => l.label === '특수 블록')!.text).toContain('다 키우면 7회'); // C.528: hitsGrow 1.5 → 2.5 (옛 기대 5회)
   });
   it('모든 진화체 × 종족: {키} 다 채움 · 배율 표기(기울기 키 직접 노출) 없음 · 옛 문구·「평타」 없음', () => {
     for (const [id, fac] of all()) {
