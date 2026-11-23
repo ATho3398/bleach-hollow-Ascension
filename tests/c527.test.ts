@@ -86,11 +86,11 @@ describe('C.527 진화체 능력 상한 (엔진 공용)', () => {
     expect(n.release!.cut! * (1 + n.release!.cutGrow!)).toBeCloseTo(0.6, 6);
     expect(n.release!.seconds! * (1 + n.release!.boltSecondsGrow!)).toBeCloseTo(16, 6);
   });
-  it('치명 상한 (C.529 로 바뀜 — 옛 +100%p): 라나 다 키우면 스택 합이 100%p 를 넘어도 평타 치명 = 상한 70%', () => {
+  it('치명 상한 (C.529 로 바뀜 — 옛 +100%p): 라나 = 물 속성 돌파 진화체(GDD 7-4 v6.183) — 스택 합이 100%p 를 넘어도 평타 치명 최대 100%', () => {
     const s = mk({ evo: full('t4:water:physical', 'hollow') });
     for (let k = 0; k < 10; k++) useOne(s, k % 2 ? 'family-a' : 'family-b');
     expect(evoStat(s, 'crit')).toBeGreaterThan(1);
-    expect(playerCritChanceOf(s)).toBeCloseTo(BALANCE.provisional.combat.critChanceMax, 6);
+    expect(playerCritChanceOf(s)).toBeCloseTo(CAPS.critBreakMax, 6);
     const z = mk({ evo: evoParamsOf(getForm('t4:water:physical'), 'hollow')! });
     useOne(z);
     expect(playerCritChanceOf(z)).toBeCloseTo(evoStat(z, 'crit'), 6); // 상한 아래면 그대로 (기본 0)

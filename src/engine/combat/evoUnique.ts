@@ -282,6 +282,14 @@ function needsOk(s: CombatState, list: EvoNeed[] | undefined, ctx: EvoCtx): bool
   return true;
 }
 
+/** 치명 상한 돌파가 지금 켜져 있나 (GDD 7-4 v6.184, C.529): 고유 능력 critBreak — true 면 늘, 조건 객체면 그 조건(need·when)이 참인 동안만 */
+export function evoCritBreakOn(s: CombatState): boolean {
+  const cb = s.params.evo?.ability.critBreak;
+  if (!cb) return false;
+  if (cb === true) return true;
+  return whenOk(s, cb.when) && needsOk(s, cb.need, emptyCtx());
+}
+
 function whenOk(s: CombatState, when: 'release' | 'normal' | undefined): boolean {
   if (!when) return true;
   return when === 'release' ? evoReleasing(s) : !evoReleasing(s);

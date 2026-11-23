@@ -14,7 +14,7 @@ import { chainGroup, inTray, type Block, type Tray } from './tray';
 import {
   EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoChainCapOf, evoChainMultOf, evoChainTierOf, evoGroupHardened, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
   evoSpecialOf, evoStart, evoStat, evoTick, evoVoidOnly, newEvoState, registerEvoApi, useEvoSpecial, type EvoParams, type EvoState,
-  evoBasicCritNow, evoFoeSlowSkip, evoForcedUsed, evoOnHurt, evoSpawnRulesOf,
+  evoBasicCritNow, evoCritBreakOn, evoFoeSlowSkip, evoForcedUsed, evoOnHurt, evoSpawnRulesOf,
 } from './evoUnique';
 
 const CX = BALANCE.provisional.combat;
@@ -1842,14 +1842,14 @@ export function evoCritUpOf(s: CombatState, block = false): { trait: number; abi
 }
 
 /** 치명 확률 (GDD 7-4 v6.182, C.529): 기본 + 특성 + 가산(bonus) + 진화체 특성·능력(evoBonus = 이번 블록 능력 치명 +) 합, 0 ~ 상한(70%, 물 치명 특성만 상한 + 그 값).
- *  고유 능력에 critBreak 표시가 있으면 능력 몫(ability + evoBonus)만 상한 위에 얹는다(최대 evoAbilityCaps.critBreakMax = 100%) */
+ *  고유 능력 critBreak 가 켜져 있으면(늘 / 조건이 참인 동안) 능력 몫(ability + evoBonus)만 상한 위에 얹는다(최대 evoAbilityCaps.critBreakMax = 100%) */
 export function playerCritChanceOf(s: CombatState, bonus = 0, block = false, evoBonus = 0): number {
   const p = s.params;
   const cap = block ? p.blockCritChanceMax ?? p.critChanceMax : p.critChanceMax;
   const base = (block ? blockCritChanceOf(p) : critChanceOf(p)) + bonus;
   const up = evoCritUpOf(s, block);
   const ability = up.ability + evoBonus;
-  if (p.evo?.ability.critBreak) return Math.max(0, Math.min(Math.max(cap, BALANCE.provisional.evoAbilityCaps.critBreakMax), Math.min(cap, base + up.trait) + ability));
+  if (evoCritBreakOn(s)) return Math.max(0, Math.min(Math.max(cap, BALANCE.provisional.evoAbilityCaps.critBreakMax), Math.min(cap, base + up.trait) + ability));
   return Math.max(0, Math.min(cap, base + up.trait + ability));
 }
 
