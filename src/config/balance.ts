@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
+export const BALANCE_VERSION = 163; // C.528 (GDD 8-7 v6.181 '측정 노력치 칸 = 요구 스탯 몰기', 마스터AS — 전부 provisional): evoUniques 노력치 기울기 — 사신 노도 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 · 호로 소로 burnGrow 20 → 48(해방 1.26 → 2.2 = 다 키운 평소 ×1.5, 여우불 2.5초·5개 그대로) · 호로 에스카라바호 bonusGrow 5.5 → 9 · 호로 무랄라 shieldGrow 6 → 14. 측정(evoProfile.ts)만 바뀐 것 = 노력치 칸 investFocus.
+// 이전: BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
 // 이전: BALANCE_VERSION = 161; // C.525 (GDD 8-7 v6.178 '시간 제한 능력 = 노력 곡선·고점 높게' · '블록 기본 피해 유지', 마스터AS — 전부 provisional): 측정 무투자·노력치만 칸에 속성 공격 블록 1개(evoProfile.invest.baseSkills) · guard.effort.timedHiMin · evoUniques 시간 제한 15칸 노력치 비례(grow per effort)·그 밖 미달 칸 수치(표 dev-log C.525)
 // 이전: BALANCE_VERSION = 160; // C.524 (GDD 8-7 1차 배정 마스터AS 11-23 '알아서 해라 ㅇㅇ', 전부 provisional): provisional.evoInvest 신설(모양 손잡이 출처 effort·blockLv) · evoUniques 진화체 능력 수치(투자 비례 grow·강적/선공 조건 — 표 dev-log C.524) · 추파카브라 혈 블록 사용 문턱 useMin 0.3(최대 체력 30%, 마스터 확정).
 // 이전: BALANCE_VERSION = 159; // C.523 (GDD 8-7 v6.171 '진화체 밸런스 표기 = 성장 곡선 × 전투 성향', 마스터AR provisional): provisional.evoProfile 신설 — 진화체 모양 측정 틀(투자 4칸 · 판 수 · 곡선 원형 · 성향 문턱 · 가치 총량 가중 · 목표 비교 가드). 게임 수치 그대로(측정 도구만).
@@ -694,7 +695,7 @@ export const BALANCE = {
         },
         /** 사신 노도: 수 블록마다 seconds 초 평타 치명 +perStack(최대 max, 스택마다 따로), 평타 every 회마다 특수 블록 '노도 연격'(평타 hits 회 즉시, 각 +bonus). 만해 = 8초·+6%p·스택당 치명 피해 +5% */
         't4:water:physical': {
-          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 2.5, hitsGrow: 1.5, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18, perStackGrow: 0.14 / 0.06 - 1 } },
+          shinigami: { perStack: 0.02, seconds: 5, max: 5, every: 6, hits: 2, bonus: 0.3, critDmgPerStack: 0.25, perStackGrow: 4, hitsGrow: 2.5, release: { seconds: 8, perStack: 0.06, critDmgPerStack: 0.18, perStackGrow: 0.14 / 0.06 - 1 } }, // C.528 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 (요구 스탯 공속 몰기 측정 — 노력 곡선·고점)
           /** 호로 라나 (C.503): 블록 1번 = 물 스택 1(seconds 초, 스택마다 따로), 스택당 평타 치명 +perStack(최대 max). 레스렉시온 = 8초·최대 8 */
           hollow: { perStack: 0.02, seconds: 5, max: 6, perStackGrow: 20, release: { seconds: 8, max: 8 } },
         },
@@ -702,13 +703,13 @@ export const BALANCE = {
         't4:fire:physical': {
           shinigami: { every: 3, perBeacon: 0.016, need: 5, pierce: 0.5, perFire: 0.06, fireGrow: 5, release: { need: 4, perBeacon: 0.02 } },
           /** 호로 소로 (C.503): 평타마다 여우불 1(seconds 초), 여우불 need 개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +burn, 다시 걸면 시간 새로·% 큰 쪽). 레스렉시온 = 여우불 3초·화상 +15% */
-          hollow: { seconds: 2.5, need: 5, burn: 0.03, burnSeconds: 6, burnGrow: 20, release: { seconds: 3, burn: 0.12, burnGrow: 1.26 / 0.12 - 1 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍"
+          hollow: { seconds: 2.5, need: 5, burn: 0.03, burnSeconds: 6, burnGrow: 48, release: { seconds: 3, burn: 0.12, burnGrow: 2.2 / 0.12 - 1 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍" · 5개 = 사용자 11-23 "여우불은 5개로 하라고 건들지말고" · C.528 burnGrow 20 → 48(다 키우면 +147%)·해방 다 키우면 1.26 → 2.2(×1.5)
         },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
         't4:earth:physical': {
           shinigami: { slow: 1.15, slowCut: -0.15, perSpawn: 0.04, cap: 0.3, perShield: 0.015, cutPerChain: 0.05, storedMult: 1, perShieldGrow: 6 },
           /** 호로 에스카라바호 (C.503, evo-picks 그대로): 전투 시작 보호막 최대 체력 shield, 있는 동안 평타 +basicBonus, 깨지면 regrow 초 뒤 다시(평타마다 cut 초 당김). 레스렉시온 = 보호막 20%(시작 때 남아 있으면 20% 로 채움)·깨질 때 깨진 양만큼 적에게 */
-          hollow: { shield: 0.2, basicBonus: 0.15, regrow: 12, cut: 0.5, bonusGrow: 5.5, release: { shield: 0.28 } },
+          hollow: { shield: 0.2, basicBonus: 0.15, regrow: 12, cut: 0.5, bonusGrow: 9, release: { shield: 0.28 } }, // C.528 bonusGrow 5.5 → 9 (고점)
         },
         /** 사신 섬뢰각: 뇌 블록 → 다음 평타 체인 수×perChain 대 분신(같은 피해). 만해 = ×5 */
         't4:thunder:physical': {
@@ -741,7 +742,7 @@ export const BALANCE = {
         't4:earth:special': {
           shinigami: { hardSeconds: 2, hardBonus: 0.4, hardShield: 0.12, release: { hardSeconds: 1, hardBonus: 0.7, hardShield: 0.18 } },
           /** 호로 무랄라 (C.515): 블록 → 방어막 1·2·3체인 s1/s2/s3(shieldSeconds 초), 끝까지 남은 방어막 × endMult 피해 1번. 레스렉시온 = 3초·×3 */
-          hollow: { s1: 0.03, s2: 0.06, s3: 0.1, shieldSeconds: 2, endMult: 4, shieldGrow: 6, shieldCap: 1, release: { shieldSeconds: 3, endMult: 6 } },
+          hollow: { s1: 0.03, s2: 0.06, s3: 0.1, shieldSeconds: 2, endMult: 4, shieldGrow: 14, shieldCap: 1, release: { shieldSeconds: 3, endMult: 6 } }, // C.528 shieldGrow 6 → 14 (고점)
         },
         /** 사신 공화(히든 허무형): 바 맨 앞 fixed 칸 허무 블록, 3체인 within 초 안 streak 번 → 허무 +1(C.517 표시 이름 공허 → 허무)(원정 유지, 최대 stackMax), 2개당 블록 처형선 +perTwo(최대 lineMax). 만해 = 기본 해방 강화만 */
         'h4:void': {
