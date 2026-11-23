@@ -192,6 +192,8 @@ export interface HumanBotOptions extends BotOptions {
   joinChance?: number;
   /** 전투마다 한 번 굴려, 방어 자세의 의미(블록 피해 감소·반격)를 알아채고 블록을 아끼는 확률. 못 알아채면 평소대로 쓴다 */
   stanceAware?: number;
+  /** 틱마다 step 직후 부르는 관찰자 (C.523 밸런스 측정 — 진화체 모양: 시간대별·해방 중 피해, 체인). 그 틱 사건(s.events)이 남아 있다. 전투·봇 판단에는 영향 없음 */
+  onStep?: (s: CombatState) => void;
 }
 
 /** 막기가 버티는 틱: 착탄이 이보다 가까우면 막는다 (막기 틱은 착탄 틱 앞에 줄어들어 같으면 착탄 때 이미 풀린다 — 그래서 < ) */
@@ -238,6 +240,7 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
     }
     s.events.length = 0;
     step(s, input);
+    opt.onStep?.(s);
   }
   return s;
 }

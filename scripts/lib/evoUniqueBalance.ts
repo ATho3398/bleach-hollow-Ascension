@@ -7,13 +7,15 @@
 import { BALANCE } from '../../src/config/balance';
 import { evoExtraPetPower, evoExtraPetSlots, evoFormEntry, evoFormIds, type EvoAbilityDef } from '../../src/data/evolution/uniques';
 import { FORM_TABLE } from '../../src/data/evolution';
+import { balanceProfileOf } from '../../src/data/evolution/balanceProfiles';
 import { formCategoryOf, type FormDef } from '../../src/data/schema';
 import { PLAYER_ELEMENT_IDS } from '../../src/data/elements';
 import { PETS } from '../../src/data/pets';
 import { getFaction } from '../../src/data/factions';
 import { addEnhance, buildCombatParams, gainTrait, isBasicBlockTrait, newBuild } from '../../src/engine/absorb';
 import { createCombat, elapsedSeconds, liberationStartGaugeOf, playCombatHuman, uniformStats, type CombatParams } from '../../src/engine/combat';
-import { abilityFor, applyEvolutionToParams, newEvolution, refStatOf, zeroStats, type EvolutionState } from '../../src/engine/evolution';
+import { abilityFor, applyEvolutionToParams, newEvolution, refStatOf, STAT_MAX, zeroStats, type EvolutionState } from '../../src/engine/evolution';
+import type { StatId } from '../../src/data/schema';
 import { applyDifficultyToParams, enemyAtDifficulty, recommendedDifficulty } from '../../src/engine/difficulty';
 import { petAttackOf } from '../../src/engine/pet';
 import { bossSetupOf, enemyScale } from '../../src/engine/expedition';
@@ -55,7 +57,7 @@ function categoryOf(form: FormDef, factionId: string): string {
 
 /** 표준 빌드 속성: 진화체 속성(플레이어가 가질 수 있는 원소·혈·독) 2개. 노멀·속성 없음·허무 진화체는 노멀 특성이 기본 블록이라(공격 블록 0) 밸런스 도구 표준 'skill 2개(다른 계열)'의 뇌·불 */
 export const EVO_BAL_NEUTRAL_ELEMENTS = ['thunder', 'fire'] as const;
-function buildElementOf(form: FormDef): string {
+export function buildElementOf(form: FormDef): string {
   const el = form.elements?.[0] ?? form.label.elements[0];
   return el && el !== 'normal' && (PLAYER_ELEMENT_IDS as readonly string[]).includes(el) ? el : 'normal';
 }
@@ -69,16 +71,27 @@ export function evoBalSkills(t: Pick<EvoBalTarget, 'factionId' | 'category' | 'e
   return [own, next].map((fid, i) => `t-${els[i]}-${fid.replace('family-', '')}`);
 }
 
+/** 기준 몸에 얹는 투자 (C.523 진화체 모양): skills = 표준 공격 특성 2개, enhance = 그 특성 속성 강화 단계, ev = 능력치마다 더할 노력치. C.520 기준 몸 = 특성 2개·강화 0·노력치 0 */
+export interface EvoBodyInvest { skills: boolean; enhance: number; ev: Partial<Record<StatId, number>> | null }
+export const EVO_BAL_STANDARD_INVEST: EvoBodyInvest = { skills: true, enhance: 0, ev: null };
+
 /** 기준 몸 전투 재료. on = 고유 능력 켬, ascended = 아란칼화/구상화를 깬 몸(레스렉시온/만해 가능) */
 export function evoBalParams(t: EvoBalTarget, on: boolean, ascended: boolean, star = recommendedDifficulty(t.tier - 1)): Partial<CombatParams> {
+  return evoBodyParams(t, on, ascended, star, EVO_BAL_STANDARD_INVEST);
+}
+
+/** 기준 몸 + 투자(특성·강화·노력치) 전투 재료 — evoBalParams 와 진화체 모양 측정(scripts/lib/evoProfile.ts)이 같이 쓴다 */
+export function evoBodyParams(t: EvoBalTarget, on: boolean, ascended: boolean, star: number, invest: EvoBodyInvest): Partial<CombatParams> {
   const b = newBuild();
-  for (const id of evoBalSkills(t)) if (!gainTrait(b, id).ok && isBasicBlockTrait(id)) addEnhance(b, 'normal');
+  if (invest.skills) for (const id of evoBalSkills(t)) if (!gainTrait(b, id).ok && isBasicBlockTrait(id)) addEnhance(b, 'normal');
+  if (invest.skills && invest.enhance > 0) for (const el of new Set(t.element === 'normal' ? EVO_BAL_NEUTRAL_ELEMENTS : [t.element])) for (let i = 0; i < invest.enhance; i++) addEnhance(b, el);
   const params = buildCombatParams(b, t.factionId);
   const form = FORM_TABLE.find((f) => f.id === t.formId)!;
   const prev = FORM_TABLE.some((f) => f.id === `t3:${t.element}`) ? `t3:${t.element}` : 't3:normal';
   const evo: EvolutionState = { ...newEvolution(), tierIndex: t.tier - 1, formId: t.formId, formHistory: ['t2:base', prev, t.formId], ability: abilityFor(zeroStats(), form), ascended };
   applyEvolutionToParams(params, evo, t.factionId);
   params.playerStats = uniformStats(refStatOf(t.tier - 1));
+  if (invest.ev) for (const [k, v] of Object.entries(invest.ev) as [StatId, number][]) params.playerStats[k] = Math.min(STAT_MAX, params.playerStats[k] + v);
   params.liberationStartGauge = liberationStartGaugeOf();
   params.riskStart = EVO_BAL_RISK;
   if (t.usesPet && PETS[0]) {
@@ -154,11 +167,14 @@ export const EVO_BAL_KNOWN: Readonly<Record<string, string>> = {
   't4:blood:physical/hollow': '호로 추파카브라 — C.521 출현 제외를 고정 블록만으로 좁혀 −167.9% → −20.5%(해방 전 −28.4 · 해방 −2.9). 남은 원인 = 봇이 저장이 조금만 쌓여도 고정 혈 블록을 바로 써서 블록 동작 시간(그동안 평타 없음)에 비해 피해가 작음. 저장 100%·피해 ×1.0 = 사용자 확정값, 저장 상한·남김(keep 0.5)·해방 남김 0 세 번 → −20.5~−89% → 목표 미달. 사용 문턱(저장 30~60 이상일 때만 켜짐)이면 −3.5~−2.6% 로 기준 안(새 조건이라 마스터 결정)',
 };
 
-export interface EvoBalVerdict { tier: number; medContrib: number; medWin: number; failures: string[]; known: string[] }
+/** profiled = 목표 모양(balanceProfiles.json)이 있어 이 가드 대신 '진화체 모양' 가드(scripts/lib/evoProfile.ts)로 보는 칸 (C.523) */
+export interface EvoBalVerdict { tier: number; medContrib: number; medWin: number; failures: string[]; known: string[]; profiled: string[] }
 export const evoBalKey = (t: Pick<EvoBalTarget, 'formId' | 'factionId'>): string => `${t.formId}/${t.factionId}`;
 
-/** 판정: 같은 단계(측정 제외 칸 빼고)의 기여 중앙값 ±contribBand · 강적 승률(켬) 중앙값 ±winBand 밖이면 실패 한 줄. 목표 미달 목록(EVO_BAL_KNOWN)은 known 으로(중앙값 계산에는 넣는다) */
-export function judgeEvoBal(rows: readonly Pick<EvoBalRow, 'target' | 'on' | 'off'>[], rule = EVO_BAL_RULE, known: Readonly<Record<string, string>> = EVO_BAL_KNOWN): EvoBalVerdict[] {
+/** 판정: 같은 단계(측정 제외 칸 빼고)의 기여 중앙값 ±contribBand · 강적 승률(켬) 중앙값 ±winBand 밖이면 실패 한 줄. 목표 미달 목록(EVO_BAL_KNOWN)은 known 으로(중앙값 계산에는 넣는다).
+ *  C.523: 목표 모양(balanceProfile)이 있는 칸은 이 가드를 건너뛰고(profiled, 중앙값 계산에는 넣는다) '진화체 모양' 가드로 — 목표가 비어 있는 몸만 중앙값 ±10%p */
+export function judgeEvoBal(rows: readonly Pick<EvoBalRow, 'target' | 'on' | 'off'>[], rule = EVO_BAL_RULE, known: Readonly<Record<string, string>> = EVO_BAL_KNOWN,
+  hasGoal: (t: EvoBalTarget) => boolean = (t) => balanceProfileOf(t.formId, t.factionId) !== null): EvoBalVerdict[] {
   const out: EvoBalVerdict[] = [];
   for (const tier of [...new Set(rows.map((r) => r.target.tier))].sort()) {
     const rs = rows.filter((r) => r.target.tier === tier && !r.target.exempt);
@@ -166,14 +182,16 @@ export function judgeEvoBal(rows: readonly Pick<EvoBalRow, 'target' | 'on' | 'of
     const medWin = median(rs.map((r) => r.on.e.win));
     const failures: string[] = [];
     const held: string[] = [];
+    const profiled: string[] = [];
     for (const r of rs) {
       const c = evoContribution(r);
       const name = evoBalKey(r.target);
+      if (hasGoal(r.target)) { profiled.push(name); continue; }
       const to = known[name] ? held : failures;
       if (Math.abs(c - medContrib) > rule.contribBand + 1e-9) to.push(`진화체 고유 능력: ${name} 기여(강적 처치 시간 단축) ${(c * 100).toFixed(1)}% 가 ${tier}단계 중앙값 ${(medContrib * 100).toFixed(1)}% ±${rule.contribBand * 100}%p 밖`);
       if (Math.abs(r.on.e.win - medWin) > rule.winBand + 1e-9) to.push(`진화체 고유 능력: ${name} 강적 승률 ${(r.on.e.win * 100).toFixed(1)}% 가 ${tier}단계 중앙값 ${(medWin * 100).toFixed(1)}% ±${rule.winBand * 100}%p 밖`);
     }
-    out.push({ tier, medContrib, medWin, failures, known: held });
+    out.push({ tier, medContrib, medWin, failures, known: held, profiled });
   }
   return out;
 }
