@@ -1012,7 +1012,8 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const slot = cue.side === 'player' ? opts.bodySlot?.() ?? 'male' : from.anim && 'pose' in from.anim ? 'male' : 'frames';
     const px = cue.pixel && layer && mode !== 'flash' && hasPixelStage(cue.pixel.stage, slot) ? cue.pixel : null;
     // 블록 모션 길이 통일 (GDD 7절 v6.106, C.476): 몸동작에만 배율(pace). 이펙트·맞음 반응 시간줄은 늘 1배 (GDD 7절 v6.150, 사용자 2026-11-20, C.512) — 엔진 타격 지연 = 몸 몫 ÷ 배율 + 이펙트 몫
-    const pace = cue.pace && cue.pace > 0 ? cue.pace : 1;
+    // 몸동작은 느리게 재생하지 않는다 (배율 하한 1배, GDD 7절 v6.167, 사용자 2026-11-22·23, C.519): 기준보다 짧은 동작은 1배로 끝까지 → 남는 시간은 재생기가 기본 대기(idle)로 돌아가 채운다
+    const pace = bodyPace(cue.pace);
     const pplan = px ? pixelPlan(px.stage, slot, pace) : null;
     const chainBody = pplan?.body && from.anim ? (cue.pace ? { ...pplan.body, fit: true } : pplan.body) : null;
     // 연결 동작을 처음부터 (GDD 224장 2): 첫 동작 휘두르기 길이만큼 이펙트·맞음 반응을 뒤로 — 몸의 타격 프레임 = 첫 맞음 반응
@@ -1265,6 +1266,11 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
 /** 길이 값(px)에 화면 배율을 곱한 단계 값 */
 export function scaled(level: AttackFxLevel, unit: number): AttackFxLevel {
   return unit === 1 ? level : { ...level, backPx: level.backPx * unit, knockPx: level.knockPx * unit };
+}
+
+/** 몸동작 실제 재생 배율 (GDD 7절 v6.167, C.519): cue.pace(실제 길이 ÷ 기준 길이)의 하한 1배 — 긴 동작만 빠르게 줄이고 짧은 동작은 1배(남는 시간 = 기본 대기 동작). 엔진 blockHitDelayOf 의 몸 몫 ÷ max(1, 배율)과 같은 규칙 */
+export function bodyPace(pace: number | undefined): number {
+  return pace && pace > 0 ? Math.max(1, pace) : 1;
 }
 
 /** 몸통박치기·발사 움직임 시간을 재생 배율로 (블록 모션 길이 통일, GDD 7절 v6.106, C.476): 물러남·돌진·머묾·복귀 ÷ pace. 맞음 반응(hitMs)은 그대로 */

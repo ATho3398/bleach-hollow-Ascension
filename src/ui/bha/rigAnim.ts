@@ -102,7 +102,7 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
   const recent: Record<string, number[]> = {};
   let loopAction: AnimAction | null = null;
   /** loop = 끝 자세 뒤 이어 붙인 반복 동작(RIG_HOLD_THEN) — 끝나지 않고 돈다 */
-  /** speed = 길이 맞춤 빠르기 (lengthMs — 동작 시각 ÷ 맞출 길이, C.476). 없으면 동작 재생 속도(speedOf) */
+  /** speed = 길이 맞춤 빠르기 (lengthMs — 동작 시각 ÷ 맞출 길이, 하한 = 동작 재생 속도, C.476·C.519). 없으면 동작 재생 속도(speedOf) */
   let once: { action: AnimAction; id: string; opts: PlayOptions; hitFired: boolean; loop?: boolean; speed?: number } | null = null;
   /** 동작 재생 속도 (GDD 225장): t 는 동작 시각(ms), 밖으로 알려 주는 길이·타격 시각은 실제 ms = 동작 시각 ÷ speed */
   const speedOf = (id?: string | null) => motionSpeedOf(rig, id);
@@ -143,8 +143,8 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const id = list[k]!;
       const m = motions[id]!;
       const hitAt = m.hit ?? m.duration / 2;
-      // 길이 맞춤 (GDD 7절 v6.106, C.476): 고른 변형의 전체 길이가 lengthMs 가 되게 — 동작 재생 속도(speedOf) 대신
-      const speed = o.lengthMs && o.lengthMs > 0 && m.duration > 0 ? m.duration / o.lengthMs : speedOf(id);
+      // 길이 맞춤 (GDD 7절 v6.106, C.476): 고른 변형이 lengthMs 보다 길면 그 길이로 줄인다 — 더 짧으면 동작 재생 속도(speedOf) 그대로(늘이지 않음, 하한 1배 — v6.167, C.519)
+      const speed = o.lengthMs && o.lengthMs > 0 && m.duration > 0 ? Math.max(speedOf(id), m.duration / o.lengthMs) : speedOf(id);
       // 시작 위치 (GDD 214장, C.357): hitInMs 가 있으면 타격이 그때 오게 — 더 늦은 타격은 앞을 건너뛰고, 더 이른 타격은 기다렸다(음수 t, 첫 자세) 시작.
       // 타격부터 (GDD 117장 3, 옛 블록 즉발 = hitInMs 0): 휘두른 끝 자세에서 시작해 되돌아온다. 타격 콜백은 바로
       const start = o.hitInMs !== undefined ? hitAt - Math.max(0, o.hitInMs) * speed : o.fromHit && m.hit !== undefined ? hitAt : 0;
@@ -160,9 +160,9 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
       const fam = fixed.length ? fixed : byMotion(o.motion);
       const list = fam.length ? fam : ids(a);
       if (!list.length) return null;
-      // 길이 맞춤이면 길이 = lengthMs, 타격 = 변형마다 타격 비율 × lengthMs 중 가장 늦은 것 (C.476)
+      // 길이 맞춤이면 길이 = min(원래 길이, lengthMs), 타격 = 변형마다 같은 빠르기로 잰 것 중 가장 늦은 것 (C.476 · 하한 1배 C.519)
       const L = o.lengthMs && o.lengthMs > 0 ? o.lengthMs : 0;
-      const sp = (id: string) => (L && motions[id]!.duration > 0 ? motions[id]!.duration / L : speedOf(id));
+      const sp = (id: string) => (L && motions[id]!.duration > 0 ? Math.max(speedOf(id), motions[id]!.duration / L) : speedOf(id));
       return {
         durationMs: Math.max(...list.map((id) => motions[id]!.duration / sp(id))),
         hitAtMs: Math.max(...list.map((id) => (motions[id]!.hit ?? motions[id]!.duration / 2) / sp(id))),
@@ -219,6 +219,10 @@ export function createRigPlayer(rig: Rig, motions: Record<string, Motion>, wake:
     },
     get playing() {
       return once?.action ?? loopAction;
+    },
+    get playbackRate() {
+      const id = curId();
+      return rate * ((once?.speed ?? speedOf(id)) / speedOf(id));
     },
     get active() {
       return !paused && (!!once || !!loopAction);

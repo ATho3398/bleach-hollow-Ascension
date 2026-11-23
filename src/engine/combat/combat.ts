@@ -526,7 +526,8 @@ function chainOfKey(key: string | null): number {
   return Number.isFinite(n) && n >= 1 ? n : 1;
 }
 
-/** 기준 길이에 맞춘 블록 몸동작 (GDD 7절 v6.106, C.476): total = 기준 길이, hit = 실제 타격 시각 × 같은 배율, rate = 실제 길이 ÷ 기준 길이(화면 재생 배율).
+/** 기준 길이에 맞춘 블록 몸동작 (GDD 7절 v6.106, C.476): total = 기준 길이, rate = 실제 길이 ÷ 기준 길이(배율), hit = 실제 타격 시각 ÷ max(1, 배율).
+ *  몸동작은 느리게 재생하지 않는다(배율 하한 1배, GDD 7절 v6.167, C.519): 기준보다 짧은 동작은 1배 그대로(타격 = 원래 시각), 남는 시간은 화면이 기본 대기 동작으로 채운다 — 줄 길이는 그대로 기준 길이.
  *  몸동작이 없으면(실제 길이 0 — 그림 없는 몸) null = 줄에 안 섬. 기준 길이 표가 없으면 실제 길이 그대로(rate 1) */
 export function blockMotionOf(p: Pick<CombatParams, 'motion'>, key: string | null, chain = chainOfKey(key)): (MotionSpec & { rate: number }) | null {
   const n = motionSpecOf(p, key);
@@ -534,7 +535,7 @@ export function blockMotionOf(p: Pick<CombatParams, 'motion'>, key: string | nul
   const target = blockMotionTarget(p.motion, chain);
   if (target === null) return { total: n.total, hit: n.hit, rate: 1 };
   const k = n.total / target;
-  return { total: target, hit: Math.min(target, Math.max(0, n.hit) / k), rate: k };
+  return { total: target, hit: Math.min(target, Math.max(0, n.hit) / Math.max(1, k)), rate: k };
 }
 
 /** 간격에 맞춘 몸동작 (GDD 7-2 '빠른 간격의 모션'): rate 재생 배율 · trim 앞에서 자른 길이(1배 초) · length 실제 재생 길이(초) · hitIn 시작부터 타격까지(초) */
@@ -579,7 +580,7 @@ export function blockHitDelayOf(p: Pick<CombatParams, 'hitDelay' | 'motion'>, ke
   const m = blockMotionOf(p, key, chain);
   if (!m || !(m.rate > 0)) return d;
   const fx = Math.min(d, Math.max(0, (key ? p.hitDelay.blockFxBy?.[key] : undefined) ?? 0));
-  return (d - fx) / m.rate + fx;
+  return (d - fx) / Math.max(1, m.rate) + fx; // 몸 몫 ÷ max(1, 배율) — 느린 몸도 1배(GDD 7절 v6.167, C.519)
 }
 
 /** 블록 공격 타격 지연 키: 계열 공격 = `계열:단계(1~3)`, 콤보 'combo', 해방 블록 'liberation', 그 밖(계열 없는 기본 블록) null */
