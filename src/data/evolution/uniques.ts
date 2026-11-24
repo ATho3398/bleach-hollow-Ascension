@@ -573,16 +573,41 @@ export function evoTextGlobals(): Record<string, number> {
   return { intervalFull: BALANCE.provisional.evoInvest.intervalFull };
 }
 
-/** 설명 틀 채우기: {키} = 수치, {키%} = 백분율(0.03 → 3%).
- *  {키@기울기} = 다 키웠을 때의 실제 값 = 키 × (1 + 기울기) — grow·secondsGrow 의 per(effort·blockLv 투자율 0~1)가 1일 때와 같다 (C.526, '+8000%' 배율 대신 실제 값) */
-export function fillEvoText(text: string, nums: Record<string, number>): string {
-  return text.replace(/\{([A-Za-z0-9_]+)(?:@([A-Za-z0-9_]+))?(%?)\}/g, (m, k: string, g: string | undefined, p: string) => {
+/** 설명 틀 채우기: {키} = 수치, {키%} = 백분율(0.03 → 3%), {키#} = 정수(반올림 — 엔진이 반올림하는 횟수).
+ *  {키@기울기} = 지금 값 하나 = 키 × (1 + 기울기 × 투자율) — invest(기울기 키) = grow·secondsGrow 의 per(effort·blockLv 투자율 0~1) 곱.
+ *  invest 가 없으면(도감처럼 내 몸이 아닌 곳) 투자율 0 = 기본값 (C.535, GDD 8-7 v6.195 '숫자는 지금 내 값 하나만' — 옛 C.526 '다 키우면 실제 값'은 폐기) */
+export function fillEvoText(text: string, nums: Record<string, number>, invest?: (slopeKey: string) => number): string {
+  return text.replace(/\{([A-Za-z0-9_]+)(?:@([A-Za-z0-9_]+))?(%|#)?\}/g, (m, k: string, g: string | undefined, p: string | undefined) => {
     const base = nums[k] ?? evoTextGlobals()[k];
     const slope = g === undefined ? 0 : nums[g];
     if (base === undefined || slope === undefined) return m;
-    const v = base * (1 + slope);
-    return p ? `${pctText(v)}%` : String(Math.round(v * 100) / 100);
+    const per = g === undefined || !invest ? 0 : Math.min(1, Math.max(0, invest(g)));
+    const v = base * (1 + slope * per);
+    if (p === '%') return `${pctText(v)}%`;
+    if (p === '#') return String(Math.round(v));
+    return String(Math.round(v * 100) / 100);
   });
+}
+
+/** 기울기 키 → 그 기울기를 쓰는 grow·secondsGrow 의 per 출처 목록 (설명 틀의 {키@기울기} 지금 값용, C.535). 같은 기울기가 여러 곳이면 처음 것 */
+export function evoGrowSourcesOf(ability: EvoAbilityDef | undefined): Record<string, EvoSource[]> {
+  const out: Record<string, EvoSource[]> = {};
+  const add = (gr: { value: EvoNum; per: EvoSource | EvoSource[] } | undefined): void => {
+    if (gr && typeof gr.value === 'string' && !(gr.value in out)) out[gr.value] = Array.isArray(gr.per) ? gr.per : [gr.per];
+  };
+  for (const r of ability?.rules ?? []) for (const a of r.do) { add(a.grow); add(a.secondsGrow); }
+  for (const pv of ability?.passives ?? []) add(pv.grow);
+  return out;
+}
+
+/** 내 몸의 투자율 출처 값 (상태 화면 설명의 지금 값): effort·blockLv 만 — 전투 중에만 정해지는 출처(체인·스택 등)는 0 */
+export function evoInvestOf(ability: EvoAbilityDef | undefined, src: { effort: number; blockLv: number }): (slopeKey: string) => number {
+  const map = evoGrowSourcesOf(ability);
+  return (g) => {
+    const list = map[g];
+    if (!list) return 0;
+    return list.reduce((m, x) => m * (x === 'effort' ? src.effort : x === 'blockLv' ? src.blockLv : 0), 1);
+  };
 }
 
 /** 해방 중 수치 = 기본 위에 release 덮어쓰기 */

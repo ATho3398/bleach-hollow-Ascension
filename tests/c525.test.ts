@@ -61,7 +61,7 @@ describe('② 시간 제한 능력 = 노력 곡선 (GDD v6.178)', () => {
     for (const [id, fac] of timed()) {
       if (id === 'h4:void' && fac === 'shinigami') continue;
       const txt = fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
-      expect(txt, `${id}/${fac}`).toMatch(/노력치를 키울수록|공격 속도를 키울수록/); // C.530: 공속 몸(간격 기준)은 「공격 속도를」
+      expect(txt, `${id}/${fac}`).not.toMatch(/키울수록|다 키우면/); // C.535: 투자 안내 괄호 폐기 (옛 기대 /노력치를 키울수록|공격 속도를 키울수록/ — C.530 공속 몸 「공격 속도를」)
       expect(txt, `${id}/${fac}`).not.toMatch(/\{[A-Za-z0-9_@]+%?\}/);
     }
   });

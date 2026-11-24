@@ -213,11 +213,12 @@ describe('데이터·버전', () => {
     }
     const d = (id: string, fac: string) => fillEvoText(evoText(evoFormEntry(id, fac)!.ability!.description, fac), evoNumsOf(id, fac) as Record<string, number>);
     // C.525 (시간 제한 능력 = 노력 곡선): 토르멘타·에스칼레라 문구는 노력치 문구로 (옛 기대 = 블록·동반 문구) — 블록·동반 문구는 반석·봉수대가 지킨다. C.526: '키운 만큼' → '키울수록 커짐 — 다 키우면 <실제 값>'
-    expect(d('t4:thunder:special', 'hollow')).toContain('지속 피해는 노력치를 키울수록 커짐');
-    expect(d('t4:normal:mixed', 'hollow')).toContain('노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%');
-    expect(d('t4:earth:physical', 'shinigami')).toContain('이 속성 블록(흡수 특성·강화)을 키울수록 커짐');
-    expect(d('t4:fire:physical', 'shinigami')).toContain('공격 속도·이 속성 블록을 같이 키울수록 커짐'); // C.530: 공속 몸 = 간격 기준 (옛 기대 '노력치·이 속성 블록을')
-    expect(d('t4:normal:physical', 'hollow')).toContain('공격 속도를 키울수록 커짐'); // C.530 (옛 기대 '노력치를 키울수록')
+    // C.535 (GDD 8-7 v6.195): 능력치 투자 안내 괄호 폐기 — 옛 기대 '지속 피해는 노력치를 키울수록 커짐' · '노력치를 키울수록 커짐 — 다 키우면 8초 동안 체인 수×42%' ·
+    //   '이 속성 블록(흡수 특성·강화)을 키울수록 커짐' · '공격 속도·이 속성 블록을 같이 키울수록 커짐' · '공격 속도를 키울수록 커짐'. 비례 동작은 그대로(투자율 1 → 다 키운 값, c526·c535)
+    for (const [id, fac] of [['t4:thunder:special', 'hollow'], ['t4:normal:mixed', 'hollow'], ['t4:earth:physical', 'shinigami'], ['t4:fire:physical', 'shinigami'], ['t4:normal:physical', 'hollow']] as const) {
+      expect(d(id, fac), `${id}/${fac}`).not.toMatch(/키울수록|다 키우면/);
+    }
+    expect(d('t4:thunder:special', 'hollow')).toContain('초당 적 최대 체력 0.4% 피해');
     expect(d('t4:blood:physical', 'hollow')).toContain('최대 체력 30% 이상');
   });
   it('목표 모양은 4단계 진화체만 (곡선·성향 표기는 개발용 — 설명 문구엔 곡선·성향 이름이 없다)', () => {

@@ -143,8 +143,12 @@ describe('C.527 설명 문구', () => {
   });
   it('게파르도·토르투가 해방 문구 = 새 다 키운 값', () => {
     const rel = (id: string) => evoUniqueLines(id, 'hollow', '해방').find((l) => l.label === '해방')?.text ?? '';
-    expect(rel('t4:thunder:mixed')).toBe('9초 · 간격 −40%(다 키우면 16초 · −60%)');
-    expect(rel('t4:earth:mixed')).toBe('반사 200%(다 키우면 880%)');
+    // C.535: '다 키우면' 괄호 폐기 — 기본값 하나, 다 키운 몸은 그 값 (옛 기대 '9초 · 간격 −40%(다 키우면 16초 · −60%)' · '반사 200%(다 키우면 880%)')
+    const relFull = (id: string) => evoUniqueLines(id, 'hollow', '해방', { effort: 1, blockLv: 1 }).find((l) => l.label === '해방')?.text ?? '';
+    expect(rel('t4:thunder:mixed')).toBe('9초 · 간격 −40%');
+    expect(relFull('t4:thunder:mixed')).toBe('16초 · 간격 −60%');
+    expect(rel('t4:earth:mixed')).toBe('반사 200%');
+    expect(relFull('t4:earth:mixed')).toBe('반사 880%');
   });
   it('패치 C.527 · BALANCE 162', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(162); // C.528: 163 · C.529: 164 (정확한 값은 c529 가 지킨다)

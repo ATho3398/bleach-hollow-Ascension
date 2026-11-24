@@ -1,0 +1,40 @@
+{
+  "shots": [
+    "01-pc-hollow-martillo-evo-info.png",
+    "02-phone-hollow-martillo-evo-info.png",
+    "03-pc-shinigami-nodo-evo-info.png",
+    "04-phone-shinigami-nodo-evo-info.png",
+    "05-pc-dex-t4-detail.png"
+  ],
+  "errors": [],
+  "checks": {
+    "01-pc-hollow-martillo-evo-info": {
+      "count": 1,
+      "insideEvoPanel": true,
+      "afterFormLine": true,
+      "text": "고유 능력 일반 공격 3대마다 적에게 찢김 +1(최대 5), 찢김 1당 그 적이 받는 일반 공격 피해 +57.1%. 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 0.3회분 피해를 더한다\n레스렉시온 일반 공격 2대마다 찢김 +1(최대 8)"
+    },
+    "02-phone-hollow-martillo-evo-info": {
+      "count": 1,
+      "insideEvoPanel": true,
+      "afterFormLine": true,
+      "text": "고유 능력 일반 공격 3대마다 적에게 찢김 +1(최대 5), 찢김 1당 그 적이 받는 일반 공격 피해 +57.1%. 블록을 쓰면 체인 수만큼 찢김을 소모해 1개당 그 블록에 일반 공격 0.3회분 피해를 더한다\n레스렉시온 일반 공격 2대마다 찢김 +1(최대 8)"
+    },
+    "03-pc-shinigami-nodo-evo-info": {
+      "count": 1,
+      "insideEvoPanel": true,
+      "afterFormLine": true,
+      "text": "고유 능력 수 블록을 쓸 때마다 5초 동안 일반 공격 치명 확률 +5.9%p·치명 피해 +25%(최대 5스택, 스택마다 따로). 일반 공격 6회마다 특수 블록 「노도 연격」\n특수 블록 「노도 연격」 — 누르면 일반 공격 4회가 바로 나간다(각 +30%)\n만해 스택 지속 8초 · 스택당 치명 확률 +10.9%p · 치명 피해 +18%"
+    },
+    "04-phone-shinigami-nodo-evo-info": {
+      "count": 1,
+      "insideEvoPanel": true,
+      "afterFormLine": true,
+      "text": "고유 능력 수 블록을 쓸 때마다 5초 동안 일반 공격 치명 확률 +5.9%p·치명 피해 +25%(최대 5스택, 스택마다 따로). 일반 공격 6회마다 특수 블록 「노도 연격」\n특수 블록 「노도 연격」 — 누르면 일반 공격 4회가 바로 나간다(각 +30%)\n만해 스택 지속 8초 · 스택당 치명 확률 +10.9%p · 치명 피해 +18%"
+    },
+    "dex": {
+      "name": "마르티요",
+      "text": "바스트로데\n마르티요\n노\n지금\n임시\n\n노멀 3단계에서 조 계열 공격 블록을 가장 많이 장착하고 진화\n종족값 체력 98 · 힘 117 · 지능 98 · 방어 88 · 정신력 88 · 공격속도 97 · 블록속도 97\n본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)\n레스렉시온: 내리찍어라, 마르티요!\n\n성향 특성 노력치 최고 능력치 — 진화하는 순간 정해진다\n속성 특성 균형 — 블록 위력 +9%\n일반 공격 특성 단련 — 블록 1개 쓸 때마다 일반 공격 +8% (최대 +80%) · 블록 「기합」 블록 피해 ×0.8, 쓰는 순간 일반 공격 1회가 바로 나간다\n\n더 있음\n닫기"
+    }
+  }
+}

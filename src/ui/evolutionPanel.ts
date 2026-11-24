@@ -11,7 +11,7 @@ import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { getDetachTrait } from '../engine/traitShop';
 import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
-import { evoFormEntry, evoNumsOf, evoReleaseNums, evoText, fillEvoText } from '../data/evolution/uniques';
+import { evoFormEntry, evoInvestOf, evoNumsOf, evoReleaseNums, evoText, fillEvoText } from '../data/evolution/uniques';
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
 import { toward } from './bha/nestLogic';
@@ -47,8 +47,15 @@ export function evolutionAbilityLines(stat: EvolutionState, factionId: string): 
   return abilityLines(evo.abilities ? equippedAbilitiesOf(form ?? null, evo.abilities) : formAbilitiesOf(form ?? null, evo.ev, evo.ability), factionId);
 }
 
-/** 4단계 진화체 고유 능력 줄 (GDD 8-7 1차, C.499): 고유 능력 · 특수 블록(있으면) · 해방(레스렉시온/만해) 변형 · 해방 없음. 데이터가 없는 진화체면 빈 목록 */
-export function evoUniqueLines(formId: string | null | undefined, factionId: string, releaseName: string): { label: string; text: string }[] {
+/** 내 몸의 투자율 (상태 화면 설명의 지금 값, C.535): effort = 그 몸 타입 노력치 투자율(공속 몸은 간격 기준), blockLv = 그 속성 블록 투자율 — 전투와 같은 값 */
+export interface EvoInvestNow {
+  effort: number;
+  blockLv: number;
+}
+
+/** 4단계 진화체 고유 능력 줄 (GDD 8-7 1차, C.499): 고유 능력 · 특수 블록(있으면) · 해방(레스렉시온/만해) 변형 · 해방 없음. 데이터가 없는 진화체면 빈 목록.
+ *  숫자는 하나만 (GDD 8-7 v6.195, C.535): invest(내 몸 투자율)가 있으면 지금 내 값, 없으면(도감 등) 기본값 — 능력치 투자 안내 괄호는 쓰지 않는다 */
+export function evoUniqueLines(formId: string | null | undefined, factionId: string, releaseName: string, invest?: EvoInvestNow): { label: string; text: string }[] {
   const entry = evoFormEntry(formId, factionId);
   if (!entry || !formId) return [];
   const out: { label: string; text: string }[] = [];
@@ -56,23 +63,25 @@ export function evoUniqueLines(formId: string | null | undefined, factionId: str
   const base = Object.fromEntries(Object.entries(n).filter(([k]) => k !== 'release')) as Record<string, number>;
   const a = entry.ability;
   if (a) {
+    const per = invest ? evoInvestOf(a, invest) : undefined;
+    const fill = (t: string, nums: Record<string, number>): string => fillEvoText(t, nums, per);
     const name = evoText(a.name, factionId);
-    out.push({ label: '고유 능력', text: `${name ? `${name} — ` : ''}${fillEvoText(evoText(a.description, factionId), base)}` });
+    out.push({ label: '고유 능력', text: `${name ? `${name} — ` : ''}${fill(evoText(a.description, factionId), base)}` });
     for (const sp of Object.values(a.specials ?? {})) {
       const d = evoText(sp.description, factionId);
       const off = evoText(sp.offNote, factionId); // 꺼진 동안 안내 (C.508)
-      out.push({ label: '특수 블록', text: `「${evoText(sp.name, factionId)}」${d ? ` — ${fillEvoText(d, base)}` : ''}${off ? ` · ${fillEvoText(off, base)}` : ''}` });
+      out.push({ label: '특수 블록', text: `「${evoText(sp.name, factionId)}」${d ? ` — ${fill(d, base)}` : ''}${off ? ` · ${fill(off, base)}` : ''}` });
     }
-    if (a.releaseDescription) out.push({ label: releaseName, text: fillEvoText(evoText(a.releaseDescription, factionId), evoReleaseNums(n)) });
+    if (a.releaseDescription) out.push({ label: releaseName, text: fill(evoText(a.releaseDescription, factionId), evoReleaseNums(n)) });
   }
   if (entry.release === 'none') out.push({ label: releaseName, text: '없음 — 해방하지 않는다' });
   return out;
 }
 
-/** 상태 화면 고유 능력 문단 (C.499): 줄마다 "고유 능력 — 설명". 없으면 null */
-export function evoUniqueParagraph(stat: EvolutionState, faction: FactionConfig, cls = 'bha-faint'): HTMLElement | null {
+/** 상태 화면 고유 능력 문단 (C.499): 줄마다 "고유 능력 — 설명". 없으면 null. 진화 정보 칸(진화체 이름·단계·속성 줄 아래)에 붙는다 (C.535, GDD 8-7 v6.195) */
+export function evoUniqueParagraph(stat: EvolutionState, faction: FactionConfig, cls = 'bha-faint', invest?: EvoInvestNow): HTMLElement | null {
   const evo = combatEvolutionOf(stat);
-  const lines = evoUniqueLines(evo.formId, faction.id, faction.liberation.name);
+  const lines = evoUniqueLines(evo.formId, faction.id, faction.liberation.name, invest);
   if (lines.length === 0) return null;
   const p = h('p', cls);
   p.dataset.evoUnique = String(lines.length);

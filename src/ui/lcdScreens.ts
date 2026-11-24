@@ -39,14 +39,14 @@ import { isTestMode } from './testMode';
 import { shownName } from './displayName';
 import { charArt } from '../data/art/manifest';
 import { traitsTab, type TraitsTabState } from './buildPanel';
-import { abilityParagraph, evoUniqueParagraph, evolutionAbilityLines, evolutionColumns, transcendentTraitBlock } from './evolutionPanel';
+import { abilityParagraph, evoUniqueParagraph, evolutionAbilityLines, evolutionColumns, transcendentTraitBlock, type EvoInvestNow } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { kitActive, combatEvolutionOf, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { applyEvolutionToParams, kitActive, combatEvolutionOf, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
@@ -57,7 +57,8 @@ import { statName } from '../data/elements';
 import { canRebirth } from '../engine/rebirth';
 import { carryLine, rebirthMark } from './rebirthView';
 import { elementDamageRows, elementsMark } from './bha/element';
-import { ELEMENT_DAMAGE_IDS } from '../engine/combat';
+import { ELEMENT_DAMAGE_IDS, evoBlockLvOf } from '../engine/combat';
+import { buildCombatParams } from '../engine/absorb';
 import { countText, toward } from './bha/nestLogic';
 import { tileHint, variantModsText } from './labels';
 import { logoMark } from './bha/logo';
@@ -97,6 +98,13 @@ export interface CareHandlers {
   onRebirth: () => void;
   /** 가방 장비 탭 바로가기 (GDD 108장 1번 · 109장 4번): 장착 칸 대신 바로가기 한 줄 */
   onGear: () => void;
+}
+
+/** 상태 화면 고유 능력 설명의 지금 값 (C.535): 전투와 같은 재료(buildCombatParams + applyEvolutionToParams)로 effort·blockLv */
+function evoInvestNowOf(save: SaveData, factionId: string): EvoInvestNow {
+  const params = buildCombatParams(save.build, factionId);
+  applyEvolutionToParams(params, save.evolution, factionId, statBonusOf(save).total, save.training.completed);
+  return { effort: params.evo?.effort ?? 0, blockLv: params.evo ? evoBlockLvOf({ skills: params.skills ?? [], evo: params.evo }) : 0 };
 }
 
 export function careView(dev: Device, faction: FactionConfig, save: SaveData, title: string, persist: () => void, hd: CareHandlers): void {
@@ -213,9 +221,6 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const abil = evo.abilities ? null : statusAbilityLines(evo, faction.id);
   if (abil) stats.append(abilityParagraph(abil, 'bha-faint'));
   if (evo.abilities) stats.append(abilitySlotsBlock(faction, save, () => { persist(); careView(dev, faction, save, title, persist, hd); }));
-  // 4단계 진화체 고유 능력·특수 블록·해방 변형 한 줄씩 (GDD 8-7 1차, C.499)
-  const uniq = evoUniqueParagraph(evo, faction);
-  if (uniq) stats.append(uniq);
   // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 기반 특성 칸 아래 따로 — 기반을 바꿔도 그대로
   const tt = transcendentTraitBlock(evo);
   if (tt) stats.append(tt);
@@ -233,7 +238,11 @@ export function careView(dev: Device, faction: FactionConfig, save: SaveData, ti
   const formEl = cols.left[0];
   const formTag = formEl?.querySelector('.bha-evo__formname > .bha-tag');
   if (formTag) formEl?.querySelector('.bha-evo__formname + .bha-dim')?.prepend(formTag, ' ');
-  evoPanel.append(...cols.left.slice(0, 1), ...cols.right);
+  evoPanel.append(...cols.left.slice(0, 1));
+  // 4단계 진화체 고유 능력·특수 블록·해방 변형 한 줄씩 (GDD 8-7 1차, C.499) — 진화 정보 칸의 진화체 이름·단계·속성 줄 아래, 숫자 = 지금 내 값 하나 (C.535, GDD 8-7 v6.195)
+  const uniq = evoUniqueParagraph(evo, faction, 'bha-faint', evoInvestNowOf(save, faction.id));
+  if (uniq) evoPanel.append(uniq);
+  evoPanel.append(...cols.right);
   const rebirthOk = canRebirth(evo) && trackRulesOf(save).rebirth; // 환생 없는 트랙 (초월자, GDD 12-4 v6.028)
   if (rebirthOk) evoPanel.append(h('p', 'bha-faint', `${faction.rebirth.name}하면 1단계로 돌아가 다시 키운다. 도감·칭호와 노력치 일부, 받은 특성, 블록 1개는 남는다.`));
   // 아래 고정 버튼 줄 (183장 S15): [진화체 도감][도움말][환생] — 환생을 못 할 때도 흐리게 자리 유지 (PROMPT 5절 1)
