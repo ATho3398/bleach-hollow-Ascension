@@ -134,9 +134,10 @@ describe('소로 (불·조) — 여우불·화상', () => {
     const s = mk({ ...F, evo: evo('t4:fire:physical') });
     basics(s, 6);
     expect(s.evo!.stacks.fox!.n).toBeGreaterThanOrEqual(n.need!);
+    const k = s.evo!.stacks.fox!.n;
     const r = useChain(s, 1);
     expect(procOf(r.evs, '화상!')).toBe(true);
-    expect(evoStat(s, 'dealt')).toBeCloseTo(n.burn!, 5);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(k * n.burn!, 5); // C.536 재설계: 여우불 개수 × 1개당 (옛 기대 n.burn 한 값)
     expect(statusMarksOf(s, 'hollow').find((m) => m.key === 'evo-b-burn')?.on).toBe('foe');
     tick(s, ticksOf(s.params, n.burnSeconds! + 0.1));
     expect(evoStat(s, 'dealt')).toBe(0);
@@ -145,14 +146,18 @@ describe('소로 (불·조) — 여우불·화상', () => {
     const s = mk({ playerElements: ['fire'], evo: evo('t4:fire:physical') }); // 평타 1초 간격 → 2~3개
     basics(s, 4);
     expect(s.evo!.stacks.fox!.n).toBeLessThan(n.need!);
-    expect(procOf(useChain(s, 1).evs, '화상!')).toBe(false);
+    const k = s.evo!.stacks.fox!.n;
+    // C.536 재설계: 5개 문턱 폐기 — 1개 이상이면 화상(개수 × 1개당) (옛 기대 = 화상 없음)
+    expect(procOf(useChain(s, 1).evs, '화상!')).toBe(k > 0);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(k * n.burn!, 5);
   });
   it('레스렉시온: 여우불 3초 · 화상 +15%', () => {
     const s = mk({ ...F, evo: evo('t4:fire:physical'), liberationUnique: true, liberationSeconds: 120 });
     libNow(s);
     basics(s, 6);
+    const k = s.evo!.stacks.fox!.n;
     useChain(s, 1);
-    expect(evoStat(s, 'dealt')).toBeCloseTo(n.release.burn!, 5);
+    expect(evoStat(s, 'dealt')).toBeCloseTo(k * n.release.burn!, 5); // C.536 재설계: 개수 × 해방 1개당 (옛 기대 n.release.burn 한 값)
   });
 });
 

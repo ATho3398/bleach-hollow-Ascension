@@ -249,7 +249,7 @@ describe('목표 데이터 칸 (balanceProfiles.json, 종족 분기 없음)', ()
     let n = 0;
     for (const f of FORM_TABLE.filter((x) => x.tier === 4 && !x.retired)) for (const fid of ['hollow', 'shinigami']) if (balanceProfileOf(f.id, fid) !== null) n++;
     expect(n).toBe(38);
-    expect(balanceProfileOf('t4:fire:physical', 'hollow')).toEqual({ curve: 'effort', lean: null, timed: '여우불 2.5초 안 5개', investFocus: 'aspd' }); // C.528: 요구 스탯 공속(investFocus) · 소로 = 대표 노력 곡선(사용자 예) · C.525 시간 제한 능력 표시(timed)
+    expect(balanceProfileOf('t4:fire:physical', 'hollow')).toEqual({ curve: 'effort', lean: null, timed: '여우불 2.5초(개수 비례 화상) · 5개 + 화상 = 센 화상', investFocus: 'aspd' }); // C.536 소로 재설계 (옛 기대 timed '여우불 2.5초 안 5개') // C.528: 요구 스탯 공속(investFocus) · 소로 = 대표 노력 곡선(사용자 예) · C.525 시간 제한 능력 표시(timed)
   });
   it('값이 있으면 곡선·성향 id 검사', () => {
     const ok = clone();

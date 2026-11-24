@@ -130,13 +130,14 @@ describe('기울기 재보정 (3회) · 사용자 확정 값 그대로', () => {
     expect(F['t4:thunder:physical']!.hollow).toMatchObject({ perStackGrow: 36, maxCut: 0.6 });
   });
   it('소로 여우불 2.5초·5개·화상 기울기 ×48(C.528 값 — 0.6초면 5개가 거의 안 모여 올려도 고점 그대로) · 갑각 12초', () => {
-    expect(F['t4:fire:physical']!.hollow).toMatchObject({ seconds: 2.5, need: 5, burnGrow: 48 });
+    expect(F['t4:fire:physical']!.hollow).toMatchObject({ seconds: 2.5, need: 5, burnGrow: 18 }); // C.536 재설계 — 2.5초·5개(센 화상 문턱) 그대로 (옛 기대 burnGrow 48)
     expect(F['t4:earth:physical']!.hollow).toMatchObject({ regrow: 12 });
   });
   it('목표 미달 목록 26칸 — 콜리브리·반석·섬뢰각 통과로 빠짐, 소로·라나·나다 사유 = C.530', () => {
     expect(Object.keys(EVO_PROFILE_KNOWN)).toHaveLength(26);
     for (const k of ['t4:thunder:physical/hollow', 't4:earth:physical/shinigami', 't4:thunder:physical/shinigami']) expect(EVO_PROFILE_KNOWN[k]).toBeUndefined();
-    for (const k of ['t4:fire:physical/hollow', 't4:water:physical/hollow', 'h4:void/hollow']) expect(EVO_PROFILE_KNOWN[k]).toMatch(/C\.530/);
+    for (const k of ['t4:water:physical/hollow', 'h4:void/hollow']) expect(EVO_PROFILE_KNOWN[k]).toMatch(/C\.530/);
+    expect(EVO_PROFILE_KNOWN['t4:fire:physical/hollow']).toMatch(/C\.536/); // 소로 재설계 (옛 기대 /C\.530/)
   });
   it('BALANCE 165 · 패치 C.530', () => {
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(165);

@@ -22,7 +22,7 @@
     "t4:water:physical": { "hollow": { "curve": "effort", "lean": null, "timed": "물 스택 n초(스택마다 따로)", "investFocus": "aspd" }, "shinigami": { "curve": "effort", "lean": null, "timed": "노도 스택 n초(스택마다 따로)", "investFocus": "aspd" } },
     "t4:water:special": { "hollow": { "curve": "block", "lean": "burst", "investFocus": "int" }, "shinigami": { "curve": "block", "lean": "burst", "investFocus": "int" } },
     "t4:water:mixed": { "hollow": { "curve": "joint", "lean": null, "investFocus": "bspd" }, "shinigami": { "curve": "joint", "lean": "burst", "investFocus": "bspd" } },
-    "t4:fire:physical": { "hollow": { "curve": "effort", "lean": null, "timed": "여우불 2.5초 안 5개", "investFocus": "aspd" }, "shinigami": { "curve": "joint", "lean": null, "investFocus": "aspd" } },
+    "t4:fire:physical": { "hollow": { "curve": "effort", "lean": null, "timed": "여우불 2.5초(개수 비례 화상) · 5개 + 화상 = 센 화상", "investFocus": "aspd" }, "shinigami": { "curve": "joint", "lean": null, "investFocus": "aspd" } },
     "t4:fire:special": { "hollow": { "curve": "block", "lean": "release", "investFocus": "int" }, "shinigami": { "curve": "effort", "lean": "release", "timed": "화상 n초 안 귀 블록", "investFocus": "bspd" } },
     "t4:fire:mixed": { "hollow": { "curve": "effort", "lean": null, "timed": "열기 3초(스택마다 따로)", "investFocus": "bspd" }, "shinigami": { "curve": "flat", "lean": null, "investFocus": "bspd" } },
     "t4:earth:physical": { "hollow": { "curve": "effort", "lean": "opener", "timed": "갑각 재생 12초(일반 공격마다 당김)", "investFocus": "aspd" }, "shinigami": { "curve": "block", "lean": "survive", "investFocus": "aspd" } },

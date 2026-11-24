@@ -121,14 +121,16 @@ describe('C.527 해방 값 기울기 (데이터 검사)', () => {
     };
     expect(v('t4:earth:mixed', 'hollow', 'reflect', 'reflectGrow')).toBeCloseTo(8.8, 6);
     expect(v('t4:fire:special', 'shinigami', 'shotMult', 'shotGrow')).toBeCloseTo(14, 6);
-    expect(v('t4:fire:physical', 'hollow', 'burn', 'burnGrow')).toBeCloseTo(2.2, 6); // C.528: 평소 기울기 ×20 → ×48(다 키우면 +147%) → 해방 다 키우면 1.26 → 2.2(평소 ×1.5, 2배 안)
+    // C.536 소로 재설계: 해방 기울기 덮어쓰기 없음(평소 ×18 그대로) — 다 키운 해방 1개당 0.0075×19 = 0.1425 (평소 0.095 의 ×1.5). 옛 기대 = 해방 다 키우면 2.2 (C.528: 평소 기울기 ×20 → ×48(다 키우면 +147%) → 해방 1.26 → 2.2)
+    const so = evoNumsOf('t4:fire:physical', 'hollow');
+    expect(so.release!.burn! * (1 + so.burnGrow!)).toBeCloseTo(0.1425, 6);
     expect(v('t4:water:mixed', 'hollow', 'crit', 'critGrow')).toBeCloseTo(0.9, 6);
   });
   it('해방 기본값(투자 0)은 그대로 — 기울기만 낮춤', () => {
     expect(evoNumsOf('t4:thunder:mixed', 'hollow').release).toMatchObject({ seconds: 9, cut: 0.4 });
     expect(evoNumsOf('t4:earth:mixed', 'hollow').release).toMatchObject({ reflect: 2 });
     expect(evoNumsOf('t4:fire:special', 'shinigami').release).toMatchObject({ shotMult: 3, shotMax: 3 });
-    expect(evoNumsOf('t4:fire:physical', 'hollow').release).toMatchObject({ seconds: 3, burn: 0.12 });
+    expect(evoNumsOf('t4:fire:physical', 'hollow').release).toMatchObject({ seconds: 3, burn: 0.0075 }); // C.536 재설계: 여우불 1개당 (옛 기대 burn 0.12 — 5개 문턱 한 값)
   });
 });
 

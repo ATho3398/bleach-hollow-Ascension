@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 168; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종 — 수치 표는 그대로, 특성 데이터만): 혈·독 조·탄·교(계열 단계 기술) → 혈 블록·독 블록 1종(같은 블록끼리 체인, 단계 배율 = 공용 체인 배율, 위력 4.2회분 그대로)
+export const BALANCE_VERSION = 169; // C.536 (GDD 8-7 v6.196 소로 여우불 재설계, 사용자 2026-11-24 — provisional): evoUniques t4:fire:physical hollow — 화상 문턱(여우불 5개 이상) 폐기 → 여우불 1개 이상 + 불 블록 = 화상(여우불 개수 × burn 0.03 → 0.005, 노력치 기울기 burnGrow 48 → 18), 5개 이상 + 이미 화상 = 센 화상 burnBoost(= burn × 2) 신설, 레스렉시온 burn 0.12 → 0.0075·burnBoost 0.015(옛 해방 burnGrow 덮어쓰기 삭제 — 평소 기울기 그대로, 다 키운 해방 = 다 키운 평소 ×1.5 C.527 원칙)
+// 이전: BALANCE_VERSION = 168; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종 — 수치 표는 그대로, 특성 데이터만): 혈·독 조·탄·교(계열 단계 기술) → 혈 블록·독 블록 1종(같은 블록끼리 체인, 단계 배율 = 공용 체인 배율, 위력 4.2회분 그대로)
 // 이전: BALANCE_VERSION = 167; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23 — provisional): evolution.specialPaths 신설(혈 = 그 단계 혈 블록 10개 흡수 + 빈사로 귀환 1회 / 독 = 그 단계 독 블록 10개 흡수 + 독 지속 피해로 적 처치 3회). 옛 '혈·독 장착 최다(동률 포함)면 혈·독 진화체' 규칙은 없어짐 — 조건을 못 채우면 3단계 속성을 잇는다
 // 이전: BALANCE_VERSION = 166; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — 전부 provisional): combat.foeHpBands 신설(허무 블록 적 체력 구간 배율 100~80% ×0.6 · 80~60 ×0.75 · 60~40 ×0.9 · 40~20 ×1.2 · 20~0 ×1.6) · foeExecute 신설(허무 적 처형: 내 체력 일반 3%·강적 5%·보스 7% 이하, 6초마다, 원 1.2초·판정 ±0.15초, 막으면 그 적 일반 공격 30% 피해(체력 1 하한)·적 1초 스턴·스턴 중 받는 피해 ×1.2) · specialEnemies.base 0.1 신설(★1~2 일반 칸 0 → 0.1) · evolution.hidden voidMaxDeferrals 삭제 → void { element kyo · absorbs 10 · deferrals 3 } · evoUniques h4:void hollow silenceSeconds 8·silenceLine 0.03(적막 블록). 적 체력·공격 수치 그대로.
 // 이전: BALANCE_VERSION = 165; // C.530 (GDD 8-7 v6.186 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 마스터AS — 전부 provisional): evoInvest.intervalFull 0.6 신설(능력 데이터 effortBasis 'attackInterval' 몸의 effort = 몸 기본 공속 간격 → 0.6초 비율) · evoUniques 노력치 기울기 — 사신 노도 perStackGrow 4 → 3.2·hitsGrow 2.5 → 2 · 사신 백련 perBlockGrow 2.5 → 4 · 호로 마르티요 perStackGrow 80 → 88 · 호로 에스카라바호 bonusGrow 9 → 6.5 · 호로 콜리브리 perStackGrow 28 → 36 (소로 burnGrow 48 그대로)
@@ -724,8 +725,10 @@ export const BALANCE = {
         /** 사신 봉수대: 평타 every 대마다 봉화 1(봉화당 평타 추가 피해 +perBeacon), 봉화 need 개 → 다음 평타 '봉수 폭렬' = 적 방어 pierce 무시(막기 반격과 같은 50% — 100% 면 나눗셈이 0) + 바의 불 블록 1개당 +perFire, 그 뒤 봉화 0. 만해 = 필요 4·봉화당 +7.5% */
         't4:fire:physical': {
           shinigami: { every: 3, perBeacon: 0.016, need: 5, pierce: 0.5, perFire: 0.06, fireGrow: 5, release: { need: 4, perBeacon: 0.02 } },
-          /** 호로 소로 (C.503): 평타마다 여우불 1(seconds 초), 여우불 need 개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +burn, 다시 걸면 시간 새로·% 큰 쪽). 레스렉시온 = 여우불 3초·화상 +15% */
-          hollow: { seconds: 2.5, need: 5, burn: 0.03, burnSeconds: 6, burnGrow: 48, release: { seconds: 3, burn: 0.12, burnGrow: 2.2 / 0.12 - 1 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍" · 5개 = 사용자 11-23 "여우불은 5개로 하라고 건들지말고" · C.528 burnGrow 20 → 48(다 키우면 +147%)·해방 다 키우면 1.26 → 2.2(×1.5)
+          /** 호로 소로 (C.503 → C.536 재설계, GDD 8-7 v6.196 사용자 "여우불일 때 블록쓰면 화상 … 여우불 1개당 효과 … 5개이상+화상이면 더 더 쎄지는거로" — provisional):
+           *  평타마다 여우불 1(seconds 초, 하나씩 따로). 여우불 1개 이상일 때 불 블록 → 적 화상(burnSeconds 초, 걸린 적이 받는 피해 +여우불 개수 × burn, 다시 걸면 시간 새로·% 큰 쪽).
+           *  여우불 need 개 이상 + 적이 이미 화상 → 센 화상(여우불 개수 × burnBoost = burn × 강화 배율). 레스렉시온 = 여우불 3초 · 1개당 값 위 */
+          hollow: { seconds: 2.5, need: 5, burn: 0.005, burnBoost: 0.005 * 2, burnSeconds: 6, burnGrow: 18, release: { seconds: 3, burn: 0.0075, burnBoost: 0.0075 * 2 } }, // 여우불 2.5초 = C.507 사용자 "2.5초에 5스텍" · 5개 = 사용자 11-23 "여우불은 5개로 하라고 건들지말고"(강화 문턱) · C.536: 옛 burnGrow 48(노력치 기울기)·문턱 5개 → 여우불 개수 비례(공속이 빠를수록 많이 쌓임)
         },
         /** 사신 반석: 평타 간격 ×slow(slowCut = 1 − slow, 둘이 같아야), 흙 블록 생길 때 방어막 +perSpawn(상한 cap), 방어막 1%당 평타 +perShield, 흙 블록 → 방어막 체인 수×cutPerChain 삭제. 만해 = 막은 피해 × storedMult 를 끝날 때 */
         't4:earth:physical': {

@@ -101,8 +101,8 @@
       "hollow": {
         "ability": {
           "effortBasis": "attackInterval",
-          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 {need}개 이상일 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +{burn@burnGrow%})" },
-          "releaseDescription": { "*": "여우불 {seconds}초 · 화상 피해 +{burn@burnGrow%}" },
+          "description": { "*": "일반 공격마다 여우불 1({seconds}초, 하나씩 따로). 여우불이 있을 때 불 블록을 쓰면 적에게 화상({burnSeconds}초 — 걸린 적을 때리면 피해 +여우불 개수×{burn@burnGrow%}). 여우불이 {need}개 이상일 때 이미 화상인 적에게 불 블록을 쓰면 더 센 화상(피해 +여우불 개수×{burnBoost@burnGrow%})로 덮어쓴다" },
+          "releaseDescription": { "*": "여우불 {seconds}초 · 화상 여우불 개수×{burn@burnGrow%} · 센 화상 개수×{burnBoost@burnGrow%}" },
           "stacks": {
             "fox": { "seconds": "seconds", "mark": { "icon": "i-cast", "name": { "*": "여우불" } } }
           },
@@ -111,7 +111,9 @@
           },
           "rules": [
             { "on": "basic", "do": [{ "act": "add", "stack": "fox", "value": 1 }] },
-            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "seconds": "burnSeconds", "refresh": "max", "grow": { "value": "burnGrow", "per": "effort" } }], "proc": "화상!" }
+            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": 1, "below": "need" }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "per": "stack:fox", "seconds": "burnSeconds", "refresh": "max", "grow": { "value": "burnGrow", "per": "effort" } }], "proc": "화상!" },
+            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }, { "buff": "burn" }], "do": [{ "act": "buff", "buff": "burn", "value": "burnBoost", "per": "stack:fox", "seconds": "burnSeconds", "refresh": "max", "grow": { "value": "burnGrow", "per": "effort" } }], "proc": "센 화상!" },
+            { "on": "block", "element": ["fire"], "need": [{ "stack": "fox", "atLeast": "need" }, { "buff": "burn", "none": true }], "do": [{ "act": "buff", "buff": "burn", "value": "burn", "per": "stack:fox", "seconds": "burnSeconds", "refresh": "max", "grow": { "value": "burnGrow", "per": "effort" } }], "proc": "화상!" }
           ],
           "passives": [
             { "stat": "dealt", "value": 1, "per": "buff:burn" }

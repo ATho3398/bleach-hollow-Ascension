@@ -90,15 +90,15 @@ describe('노력치 기울기 보정 (시간 제한 몸, 3회)', () => {
   };
   it('노도 ×2.5 → ×4·연격 ×1.5 → ×2.5 · 소로 ×20 → ×48 · 에스카라바호 ×5.5 → ×9 · 무랄라 ×6 → ×14 (C.530: 노도 ×3.2·×2 · 에스카라바호 ×6.5)', () => {
     expect(F['t4:water:physical']!.shinigami).toMatchObject({ perStackGrow: 3.2, hitsGrow: 2 }); // C.530 (옛 기대 4·2.5)
-    expect(F['t4:fire:physical']!.hollow).toMatchObject({ burn: 0.03, burnGrow: 48 });
+    expect(F['t4:fire:physical']!.hollow).toMatchObject({ burn: 0.005, burnGrow: 18 }); // C.536 재설계: 여우불 1개당 (옛 기대 burn 0.03·burnGrow 48)
     expect(F['t4:earth:physical']!.hollow).toMatchObject({ bonusGrow: 6.5, regrow: 12 }); // C.530 (옛 기대 9)
     expect(F['t4:earth:special']!.hollow).toMatchObject({ shieldGrow: 14, s1: 0.03, s2: 0.06, s3: 0.1 });
   });
   it('소로 해방: 다 키운 해방 = 다 키운 평소 ×1.5 (2배 안 · 평소보다 큼, C.527 원칙)', () => {
     const n = full('t4:fire:physical', 'hollow', 'burn', 'burnGrow');
     const r = full('t4:fire:physical', 'hollow', 'burn', 'burnGrow', true);
-    expect(n).toBeCloseTo(1.47, 6);
-    expect(r).toBeCloseTo(2.2, 6);
+    expect(n).toBeCloseTo(0.095, 6); // C.536 재설계: 여우불 1개당 (옛 기대 1.47 — 5개 문턱 한 값)
+    expect(r).toBeCloseTo(0.1425, 6); // C.536 (옛 기대 2.2)
     expect(r / n).toBeLessThanOrEqual(2);
     expect(r).toBeGreaterThan(n);
   });
