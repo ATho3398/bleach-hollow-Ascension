@@ -27,7 +27,7 @@ export interface GenerateInput {
   template: FormTemplate;
   /** 실패형 줄기 종족값 오름분 비율 (GDD 49-8 1번, BALANCE.provisional.evolution.failLine.gainRatio) */
   failGainRatio: number;
-  /** 적 전용 특수 속성 (GDD 8-5 v6.154 허무): 그 속성 4단계 일반 진화체는 retired(옛 세이브 호환용 데이터만, 판정에서 빠짐) */
+  /** 4단계 일반 진화체가 없는 특수 속성 (GDD 8-5 허무 = 히든만 — 속성 데이터 hiddenFormOnly·enemyOnly): 그 속성 4단계 일반 진화체는 retired(옛 세이브 호환용 데이터만, 판정에서 빠짐) */
   enemyOnly?: readonly string[];
 }
 

@@ -71,7 +71,8 @@ describe('C.125 70장: 포식 특성 후보 = 그 적의 속성 안에서만', (
       const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 0, getBoss('forest-lord').trait, 1, els);
       expect(o.candidates[0]).toBe(getBoss('forest-lord').trait);
       expect(o.candidates.length).toBeGreaterThan(0);
-      for (const id of o.candidates) expect(['thunder', 'water']).toContain(getTrait(id).element);
+      // C.531 (GDD 8-8 v6.160, 사용자 2026-11-23 "허무도 흡수 가능해" — v6.154 번복): 바뀌는 속성의 허무 블록도 다시 후보 = 옛 기대(C.125) 후보 속성 ⊂ {kyo, thunder, water}
+      for (const id of o.candidates) expect(['kyo', 'thunder', 'water']).toContain(getTrait(id).element);
     }
     // 그 속성이 아닌 보스 특성은 확정 후보로도 넣지 않는다
     const o = buildOffer(createRng(1), getEnemy('water-basic'), newBuild(), WON, 0, getBoss('canyon-king').trait);

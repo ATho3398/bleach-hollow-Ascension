@@ -4,7 +4,7 @@
   { "id": "fire", "kind": "elemental", "beats": "earth", "name": { "*": "불" }, "abbr": { "*": "불" }, "color": "--bha-el-fire" },
   { "id": "earth", "kind": "elemental", "beats": "thunder", "name": { "*": "흙" }, "abbr": { "*": "흙" }, "color": "--bha-el-earth" },
   { "id": "thunder", "kind": "elemental", "beats": "water", "name": { "*": "뇌" }, "abbr": { "*": "뇌" }, "color": "--bha-el-thunder" },
-  { "id": "blood", "kind": "special", "effect": "drain", "name": { "*": "혈" }, "abbr": { "*": "혈" }, "color": "--bha-el-blood" },
-  { "id": "poison", "kind": "special", "effect": "poison", "name": { "*": "독" }, "abbr": { "*": "독" }, "color": "--bha-el-poison" },
-  { "id": "kyo", "kind": "special", "enemyOnly": true, "name": { "*": "허무" }, "abbr": { "*": "허무" }, "color": "--bha-el-kyo" }
+  { "id": "blood", "kind": "special", "effect": "drain", "blockTrait": null, "name": { "*": "혈" }, "abbr": { "*": "혈" }, "color": "--bha-el-blood" },
+  { "id": "poison", "kind": "special", "effect": "poison", "blockTrait": null, "name": { "*": "독" }, "abbr": { "*": "독" }, "color": "--bha-el-poison" },
+  { "id": "kyo", "kind": "special", "foeExecute": true, "hiddenFormOnly": true, "blockTrait": null, "name": { "*": "허무" }, "abbr": { "*": "허무" }, "color": "--bha-el-kyo" }
 ]

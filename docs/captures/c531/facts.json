@@ -1,0 +1,88 @@
+{
+ "errors": [],
+ "foe": {
+  "id": "kyo-basic",
+  "element": "kyo"
+ },
+ "pcBar": {
+  "glyphs": [
+   "허",
+   "조",
+   "허",
+   "허",
+   "허"
+  ],
+  "kinds": [
+   "bha-block--kyo",
+   "bha-block--water",
+   "bha-block--kyo",
+   "bha-block--kyo",
+   "bha-block--kyo"
+  ],
+  "tray": [
+   "t-kyo",
+   "t-kyo",
+   "t-kyo",
+   "t-water-a",
+   "t-kyo"
+  ]
+ },
+ "pcRing": {
+  "hidden": false,
+  "label": "막기",
+  "w": 88,
+  "h": 88,
+  "x": 378,
+  "y": 91,
+  "border": "rgb(154, 149, 255)",
+  "scale": "1.699"
+ },
+ "guard": {
+  "status": "playing",
+  "blocked": 1,
+  "attempts": 1,
+  "hp": 9.84,
+  "hidden": true
+ },
+ "pcDex": {
+  "name": "나다",
+  "body": "허무 블록을 10개 포식하고, 진화를 3번 미룬 뒤 진화\n종족값 체력 98 · 힘 98 · 지능 98 · 방어 98 · 정신력 97 · 공격속도 97 · 블록속도 97\n본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)\n레스렉시온: 적멸위락, 나다!"
+ },
+ "phoneBar": {
+  "glyphs": [
+   "허",
+   "조",
+   "허",
+   "허",
+   "허"
+  ],
+  "kinds": [
+   "bha-block--kyo",
+   "bha-block--water",
+   "bha-block--kyo",
+   "bha-block--kyo",
+   "bha-block--kyo"
+  ],
+  "tray": [
+   "t-kyo",
+   "t-kyo",
+   "t-kyo",
+   "t-water-a",
+   "t-kyo"
+  ]
+ },
+ "phoneRing": {
+  "hidden": false,
+  "label": "막기",
+  "w": 82,
+  "h": 82,
+  "x": 357,
+  "y": 95,
+  "border": "rgb(154, 149, 255)",
+  "scale": "1.699"
+ },
+ "phoneDex": {
+  "name": "나다",
+  "body": "허무 블록을 10개 포식하고, 진화를 3번 미룬 뒤 진화\n종족값 체력 98 · 힘 98 · 지능 98 · 방어 98 · 정신력 97 · 공격속도 97 · 블록속도 97\n본체의 파츠가 변한다 (뿔·꼬리·가면 무늬)\n레스렉시온: 적멸위락, 나다!"
+ }
+}

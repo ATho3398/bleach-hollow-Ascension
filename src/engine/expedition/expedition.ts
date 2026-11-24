@@ -176,7 +176,7 @@ export interface BossBattleResult {
   phase: number;
   /** 기믹으로 봉인된 블록 수 */
   seals: number;
-  lossReason: 'hp' | 'timeout' | null;
+  lossReason: 'hp' | 'timeout' | 'executed' | null;
 }
 
 /** 스토리 화 진행 (GDD 25-4·25-7, 원정 형식 6): 어느 장·화, 목표 진행도, 쓰러뜨린 적 수(중간 대사), 보여 줄 대사(cue) */
@@ -1158,8 +1158,8 @@ export function offerElementsOf(bossId: string | null, element: string): string[
 }
 
 /** 특수 속성(혈·독·허) 적 등장 숨김의 출현 배율·까닭 (GDD 75장, C.127): 강적·보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★ */
-function specialGateOf(exp: Pick<ExpeditionState, 'difficulty' | 'mutation'>, elite: boolean, boss = false): ReturnType<typeof specialEnemyGate> {
-  return specialEnemyGate({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialEnemyChance });
+function specialGateOf(exp: Pick<ExpeditionState, 'difficulty' | 'mutation' | 'tutorial'>, elite: boolean, boss = false): ReturnType<typeof specialEnemyGate> {
+  return specialEnemyGate({ elite, boss, difficulty: exp.difficulty, mutationChance: mutationMods(exp.mutation).specialEnemyChance, noBase: !!exp.tutorial });
 }
 
 /** 특수 속성 적의 흡수 화면이면 그 적이 나온 까닭을 붙인다 (런 로그 specialGates, GDD 9장 — 히든 조건 대비) */

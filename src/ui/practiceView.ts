@@ -71,7 +71,7 @@ export function practiceResultView(root: HTMLElement, faction: FactionConfig, en
     mark,
     el('span', 'bha-label', `연습 결과 · ${name}`),
     el('h1', 'bha-result__title', won ? '승리' : labels.defeatState),
-    el('p', 'bha-result__reason', won ? `${name}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '시간 제한을 넘겼다.' : '체력이 다했다.'),
+    el('p', 'bha-result__reason', won ? `${name}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '시간 제한을 넘겼다.' : s.lossReason === 'executed' ? '처형을 막지 못했다.' : '체력이 다했다.'),
   );
 
   const rows: IconInfoRow[] = [

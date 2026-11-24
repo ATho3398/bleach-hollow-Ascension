@@ -48,7 +48,11 @@ describe('계열 데이터 (GDD 17-3)', () => {
 
   it('공격 특성은 계열이 있고(종족 설정에 존재), 막기·회복·패시브·파츠는 계열이 없다', () => {
     for (const t of TRAITS) {
-      if (t.kind === 'skill' && t.role === 'attack') {
+      if (t.kind === 'skill' && t.role === 'attack' && t.id === 't-kyo') {
+        // C.531 (GDD 8-2 v6.161, 사용자 2026-11-23): 허무 블록 = 계열 없는 1종 — 같은 블록끼리 체인, 단계 배율 = 공용 체인 배율
+        expect(t.family, t.id).toBeUndefined();
+        expect(t.chainBonus, t.id).toBeUndefined();
+      } else if (t.kind === 'skill' && t.role === 'attack') {
         expect(t.family, t.id).toBeTruthy();
         for (const f of FACTIONS) expect(f.families.some((x) => x.id === t.family), `${f.id}/${t.id}`).toBe(true);
         expect(t.chainBonus, t.id).toBeUndefined();
@@ -60,7 +64,7 @@ describe('계열 데이터 (GDD 17-3)', () => {
 
   it('속성마다 세 계열(물리·특수·혼합) 공격 특성이 모두 있다 (C.47: 블록 = 계열 글자 + 속성 색)', () => {
     const famIds0 = FACTIONS[0]!.families.map((f) => f.id);
-    for (const l of ELEMENTS) {
+    for (const l of ELEMENTS.filter((e) => e.id !== 'kyo')) { // 허무 = 계열 없는 1종 (C.531, GDD 8-2 v6.161)
       const attacks = TRAITS.filter((x) => x.element === l.id && x.kind === 'skill' && x.role === 'attack' && !x.boss);
       for (const fam of famIds0) expect(attacks.some((t) => t.family === fam), `${l.id}/${fam}`).toBe(true);
     }

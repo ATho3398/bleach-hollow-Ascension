@@ -18,6 +18,8 @@ export function parseElements(r: unknown): ElementDef[] {
     if (typeof e.color !== 'string' || !e.color.startsWith('--bha-')) errors.push(`${e.id}: color 는 디자인 토큰 이름(--bha-…)`);
     if (typeof e.name !== 'object' || typeof e.abbr !== 'object') errors.push(`${e.id}: name·abbr`);
     if (e.enemyOnly !== undefined && (e.enemyOnly !== true || e.kind !== 'special')) errors.push(`${e.id}: enemyOnly 는 특수 속성에만 true`);
+    for (const k of ['hiddenFormOnly', 'foeExecute'] as const) if (e[k] !== undefined && (e[k] !== true || e.kind !== 'special')) errors.push(`${e.id}: ${k} 는 특수 속성에만 true`);
+    if (e.blockTrait !== undefined && (e.blockTrait !== null || e.kind !== 'special')) errors.push(`${e.id}: blockTrait 는 특수 속성에만, 지금은 null([미정] 자리)`);
   }
   if (!list.some((e) => e.kind === 'normal')) errors.push('노멀 속성(kind normal)이 하나 있어야 한다 (1단계 기본 속성)');
   if (errors.length > 0) throw new Error(`속성 데이터 오류:\n- ${errors.join('\n- ')}`);
@@ -30,14 +32,23 @@ export const ELEMENT_IDS: readonly string[] = ELEMENTS.map((e) => e.id);
 export const NORMAL_ELEMENT: string = ELEMENTS.find((e) => e.kind === 'normal')!.id;
 export const ELEMENTAL_IDS: readonly string[] = ELEMENTS.filter((e) => e.kind === 'elemental').map((e) => e.id);
 export const SPECIAL_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((e) => e.kind === 'special').map((e) => e.id);
-/** 적 전용 속성 (GDD 8-2 v6.154 허무): 플레이어 블록·흡수 블록·일반 진화체가 없다 */
+/** 적 전용 속성 (C.516 장치 — 지금 켠 속성 없음: 허무는 GDD 8-8 v6.160 으로 되돌림, C.531): 플레이어 블록·흡수 블록이 없다 */
 export const ENEMY_ONLY_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((e) => e.enemyOnly === true).map((e) => e.id);
 /** 플레이어가 블록으로 가질 수 있는 속성 (적 전용 뺀 나머지) */
 export const PLAYER_ELEMENT_IDS: readonly string[] = ELEMENT_IDS.filter((id) => !ENEMY_ONLY_ELEMENT_IDS.includes(id));
+/** 4단계 일반 진화체가 없는 속성 — 히든만 (GDD 8-5 허무, C.531) */
+export const HIDDEN_FORM_ONLY_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((e) => e.hiddenFormOnly === true).map((e) => e.id);
+/** 일반 진화체(3·4단계)가 있는 속성 — 진화체 고유 능력의 '그 속성 블록'(blockLv) 기준 */
+export const NORMAL_FORM_ELEMENT_IDS: readonly string[] = PLAYER_ELEMENT_IDS.filter((id) => !HIDDEN_FORM_ONLY_ELEMENT_IDS.includes(id));
 
-/** 적 전용 속성인가 (GDD 8-2 v6.154): 그 속성 블록은 플레이어가 얻지 못한다 */
+/** 적 전용 속성인가: 그 속성 블록은 플레이어가 얻지 못한다 */
 export function isEnemyOnlyElement(id: string): boolean {
   return ENEMY_ONLY_ELEMENT_IDS.includes(id);
+}
+
+/** 이 속성(들) 적은 나를 처형할 수 있는가 (GDD 8-8 v6.160 ④ 허무 적) */
+export function canFoeExecute(elements: readonly string[]): boolean {
+  return ELEMENTS.some((e) => e.foeExecute === true && elements.includes(e.id));
 }
 
 export function getElement(id: string): ElementDef {

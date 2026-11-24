@@ -56,7 +56,8 @@ describe('123장 1 초반 긴장감: ★1 적 공격', () => {
   it("balance:check 의 '초반 긴장감' 가드는 C.212 '바퀴 곡선' 가드로 바뀜 (GDD 134장 5: 1단계 ★1 2바퀴 25~75%(C.355 210장 3: 70 → 75)·3바퀴 15% 이하)", () => {
     const b = readFileSync('scripts/balance.ts', 'utf8');
     expect(b).not.toContain('R.defeat < 0.25 || R.defeat > 0.55');
-    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.75) && '2바퀴 25~75% 밖'");
+    // C.531 (GDD 6-7 v6.161 사용자 2026-11-23 등장 제한 완화 — ★1~2 일반 칸 특수 속성 적 0.1): 1단계 ★1 2바퀴 72 → 77% 로 상한만 75 → 80% (C.355 와 같은 처리, dev-log C.531). 옛 기대값 '0.75 · 25~75% 밖'
+    expect(b).toContain("(c[1]! < 0.25 || c[1]! > 0.8) && '2바퀴 25~80% 밖'");
   });
   it("화면 문구 '기본 4바퀴' → '권장 n바퀴' (C.212: 권장 2바퀴)", () => {
     expect(BALANCE.expedition.defaultLaps).toBe(2);
@@ -348,7 +349,7 @@ describe('123장 6 세이브 유지: 형식 54 → 55 마이그레이션', () =>
     return raw;
   };
   it('형식 57(C.223)·문턱 54 고정, 단계 표에 54 가 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(95); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
+    expect(SAVE_FORMAT_VERSION).toBe(96); // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.227 · C.226 · C.225
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[54]).toBe('function');
     for (let f = MIN_LOADABLE_SAVE_FORMAT; f < SAVE_FORMAT_VERSION; f++) expect(SAVE_MIGRATIONS[f], `형식 ${f} → ${f + 1}`).toBeDefined();

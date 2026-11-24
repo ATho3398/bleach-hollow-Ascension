@@ -5,7 +5,7 @@
 
 import { BALANCE } from '../../config/balance';
 import { hasSpecialActions } from '../../data/enemies';
-import { ELEMENTAL_IDS, getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
+import { canFoeExecute, ELEMENTAL_IDS, getElement, matchup, NORMAL_ELEMENT, weaknessesOf, type Matchup } from '../../data/elements';
 import { STAT_IDS, type AttackCategory, type ChainBonus, type ChainBonusKind, type EnemyDef, type EnemyPattern, type SkillRole, type StatId, type Stats } from '../../data/schema';
 import type { PhysAbilityEffect, PhysBlockEffect } from '../../data/evolution/physBlocks';
 import type { FinisherKind } from '../runLog';
@@ -14,7 +14,7 @@ import { chainGroup, inTray, type Block, type Tray } from './tray';
 import {
   EVO_TRAIT_PREFIX, EXECUTE_TEXT, evoBasicPost, evoChainCapOf, evoChainMultOf, evoChainTierOf, evoGroupHardened, evoBasicPre, evoBlockPost, evoBlockPre, evoDamageAdjust, evoHpFloor, evoOnShield, evoOnSpawn, evoReleaseEnd, evoReleaseSecondsOf, evoReleaseStart,
   evoSpecialOf, evoStart, evoStat, evoTick, evoVoidOnly, newEvoState, registerEvoApi, useEvoSpecial, type EvoParams, type EvoState,
-  evoBasicCritNow, evoCritBreakOn, evoFoeSlowSkip, evoForcedUsed, evoOnHurt, evoSpawnRulesOf,
+  evoBasicCritNow, evoCritBreakOn, evoFoeSlowSkip, evoForcedUsed, evoOnHurt, evoSpawnRulesOf, evoOriginalFor, evoSpawnOriginal,
 } from './evoUnique';
 
 const CX = BALANCE.provisional.combat;
@@ -74,6 +74,25 @@ export interface CombatSkill {
   chainBonus: ChainBonus;
   /** 위력 배율(속성 보너스 등). 피해·막기 지속·회복량에 모두 곱한다. 1 = 없음 */
   powerMultiplier: number;
+  /** 적 체력 구간 강화 (GDD 8-8 v6.162 진화 전 허무 블록, C.531): 적 체력 비율이 above 초과인 첫 구간의 mult 를 위력에 곱한다(위에서부터). 없으면 배율 없음 */
+  foeHpBands?: readonly { above: number; mult: number }[];
+}
+
+/** 적 체력 구간 배율 (GDD 8-8 v6.162): 비율(0~1)이 above 초과인 첫 구간. 구간이 없거나 못 찾으면 마지막 구간(없으면 1) */
+export function foeHpBandMult(bands: readonly { above: number; mult: number }[] | undefined, hpFraction: number): number {
+  if (!bands || bands.length === 0) return 1;
+  return (bands.find((b) => hpFraction > b.above) ?? bands[bands.length - 1]!).mult;
+}
+
+/** 허무 적의 처형 수치 (GDD 8-8 v6.160 ④, balance provisional.foeExecute) */
+export interface FoeExecuteParams {
+  hpLine: { normal: number; elite: number; boss: number };
+  everySeconds: number;
+  ringSeconds: number;
+  windowSeconds: number;
+  blockedDamage: number;
+  stunSeconds: number;
+  stunTakenMult: number;
 }
 
 /** 계열 한 개의 단계별 효과 (GDD 17-3, 종족 설정 families 에서 옮긴다). tiers[k] = (k+1)단계 */
@@ -253,6 +272,8 @@ export interface CombatParams {
   motion?: MotionParams;
   /** 초월자 전용 블록 (GDD 12-4 v6.048, C.441): 있으면 일반 블록(기본·흡수·물공) 대신 이 블록만 나온다. 없으면(null) 보통 블록 */
   kit?: CombatKit | null;
+  /** 허무 적의 처형 수치 (GDD 8-8 v6.160 ④, C.531 — balance provisional.foeExecute). 없으면 처형 없음(옛 상태·테스트) */
+  foeExecute?: FoeExecuteParams;
   /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): true = 적이 일반 공격·특수 행동·졸개 공격을 하지 않는다. 진짜 게임은 늘 없음 */
   enemyPassive?: boolean;
   /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 적 일반 공격 간격(초)을 이 값으로 고정 (패턴·배율 무시). 진짜 게임은 늘 없음 */
@@ -761,6 +782,7 @@ export function defaultCombatParams(): CombatParams {
     physBlock: null,
     physBlockSpawnSeconds: BALANCE.provisional.physBlocks.spawnSeconds,
     kit: null,
+    foeExecute: BALANCE.provisional.foeExecute,
   };
 }
 
@@ -779,9 +801,13 @@ export type CombatInput =
   | { type: 'stance' }
   /** 발도 충전 (C.460 — draw 자세): 바의 cell 번째 지금 자세 블록을 누르기 시작 · 떼기(그 블록이 쓰이며 다음 평타 강화) */
   | { type: 'draw'; cell: number }
-  | { type: 'draw-release' };
+  | { type: 'draw-release' }
+  /** 처형 막기 (GDD 8-8 v6.160 ④, C.531): 허무 적의 처형 시도 중 원형 표식을 누름 — 줄어드는 원이 표식 테두리에 닿는 순간 ± 판정 안이면 막기, 밖이면 처형당함 */
+  | { type: 'execute-guard' };
 
 export type CombatStatus = 'playing' | 'won' | 'lost';
+/** 패배 까닭: 체력 0 · 시간 제한 · 허무 적에게 처형당함 (GDD 8-8 v6.160 ④, C.531) */
+export type LossReason = 'hp' | 'timeout' | 'executed';
 
 export interface Finisher {
   kind: FinisherKind;
@@ -876,6 +902,10 @@ export type CombatEvent =
   | { kind: 'boss-element'; element: string }
   /** 각본 전투 마무리 체인의 피해가 지금 들어갔다 (GDD 146장): 블록 사건(block)은 쓸 때, 피해 숫자·체력 감소는 이 사건에 */
   | { kind: 'script-impact'; damage: number }
+  /** 허무 적의 처형 시도 (GDD 8-8 v6.160 ④, C.531): 원 테두리가 seconds 동안 줄어 atTick 에 표식 테두리에 닿는다 — 그 순간 ± windowSeconds 안에 눌러야 막는다 */
+  | { kind: 'foe-execute'; seconds: number; atTick: number; windowSeconds: number }
+  /** 처형 시도가 끝났다: ok = 막았다(damage = 막고도 받은 피해, stunSeconds = 적 스턴) / 못 막았다(처형 — 곧 end lost) */
+  | { kind: 'foe-execute-end'; ok: boolean; damage: number; stunSeconds: number }
   | { kind: 'end'; status: CombatStatus };
 
 /** 타격 지연이 있는 공격 사건: 발동 때 swing 안에, 맞는 순간 landed: true 로 다시 */
@@ -934,7 +964,7 @@ export interface CombatState {
   /** 지난 틱 수 (전투 시간 = tick × tickSeconds) */
   tick: number;
   status: CombatStatus;
-  lossReason: 'hp' | 'timeout' | null;
+  lossReason: LossReason | null;
   enemy: {
     def: EnemyDef;
     hp: number;
@@ -956,7 +986,11 @@ export interface CombatState {
     stance: { ticks: number } | null;
     /** 이 전투에서 흡혈로 되찾은 체력 합계 (상한 drainCapFraction, C.53) */
     drained?: number;
+    /** 처형을 막혀 스턴 (GDD 8-8 v6.160 ④, C.531): 남은 틱 동안 공격·시전·특수 행동이 멈추고 받는 피해 × stunTakenMult */
+    stunTicks?: number;
   };
+  /** 허무 적의 처형 (GDD 8-8 v6.160 ④, C.531) — 처형하는 적일 때만 생긴다. ring = 지금 시도(원이 hitTick 에 닿는다), nextTick = 다음 시도가 되는 틱, attempts·blocked = 시도·막은 수(전투 기록) */
+  execution?: { ring: { startTick: number; hitTick: number } | null; nextTick: number; attempts: number; blocked: number };
   /** 초월자 전용 블록 상태 (GDD 12-4 v6.048, C.441) — params.kit 이 있을 때만 */
   kit?: KitCombatState;
   /** 진화체 고유 능력 상태 (GDD 8-7 1차, C.499) — params.evo 또는 처형 특성이 있을 때만. 저장하지 않는다 */
@@ -1394,6 +1428,15 @@ function drawSpawnEvo(s: CombatState, entries: readonly SpawnEntry[]): SpawnEntr
     }
   }
   let list = entries.map((e) => ({ ...e }));
+  // ④ 오리지널 블록으로 바뀐 속성(공화 낙화 블록 originalBlock fixed, C.531): 그 흡수 블록 항목을 빼고 그 몫을 남은 스킬 블록에 비율대로 — 남은 스킬 블록이 없으면 그 몫은 이번엔 안 생김
+  if (rule.drop) {
+    const isDrop = (e: SpawnEntry) => e.kind === 'skill' && !e.phys && !isBasicBlockId(e.source?.id) && spawnEntryElement(p, e) === rule.drop;
+    const gone = list.filter(isDrop).reduce((a, e) => a + e.chance, 0);
+    const rest = list.filter((e) => e.kind === 'skill' && !isDrop(e)).reduce((a, e) => a + e.chance, 0);
+    if (gone > 0) list = rest > 0
+      ? list.filter((e) => !isDrop(e)).map((e) => (e.kind === 'skill' ? { ...e, chance: e.chance * (rest + gone) / rest } : e))
+      : list.map((e) => (isDrop(e) ? { ...e, kind: 'void' as const, source: null, excluded: true } : e));
+  }
   if (rule.exclude.length > 0) list = list.map((e) => (e.kind === 'skill' && rule.exclude.includes(spawnEntryElement(p, e) ?? '') ? { ...e, kind: 'void' as const, source: null, chance: e.chance, excluded: true } : e));
   if (rule.self) {
     const isSelf = (e: SpawnEntry & { excluded?: boolean }) => e.kind === 'skill' && !e.excluded && e.family === rule.self!.family && spawnEntryElement(p, e) === rule.self!.element;
@@ -1755,7 +1798,9 @@ export function blockEffect(s: CombatState, b: Block, chain = 1): { skill: Comba
   const topTier = Math.min(chain, s.params.chainMultipliers.length);
   const over = chain > topTier && s.params.evo ? evoChainTierOf(s, chain)?.mult ?? 1 : 1;
   const chainMult = ((s.params.evo && skill.role === 'attack' ? evoChainMultOf(s, topTier) : null) ?? tierEffect(s.params, skill, topTier).multiplier) * over;
-  const mult = skill.powerMultiplier * chainMult * hit.mult * (stab ? s.params.stabMultiplier : 1);
+  // 적 체력 구간 강화 (GDD 8-8 v6.162 진화 전 허무 블록, C.531): 적 체력이 낮을수록 세다
+  const band = skill.foeHpBands && s.enemy.maxHp > 0 ? foeHpBandMult(skill.foeHpBands, s.enemy.hp / s.enemy.maxHp) : 1;
+  const mult = skill.powerMultiplier * chainMult * hit.mult * (stab ? s.params.stabMultiplier : 1) * band;
   return { skill, mult, weak: isEffective(s, skill), matchup: hit.matchup, stab };
 }
 
@@ -2231,6 +2276,8 @@ function dealDamage(s: CombatState, amount: number, finisher: Finisher): void {
     s.script.held = { amount: (h?.amount ?? 0) + amount, finisher };
     return;
   }
+  // 처형을 막혀 스턴인 적 (GDD 8-8 v6.160 ④, C.531): 스턴 동안 받는 피해 ×배율
+  if ((s.enemy.stunTicks ?? 0) > 0 && s.params.foeExecute) amount *= s.params.foeExecute.stunTakenMult;
   // 처형 '소멸선' (GDD 8-8, C.499): 처형선 아래 평타 = 처형, 강적·보스는 그 아래에서 모든 피해 ×배율
   if (s.params.abilityEffects.execute) amount = evoDamageAdjust(s, amount, finisher.kind === 'basic-attack');
   // 해방 게이지 (95장 B2): 실제로 깎은 체력(졸개 몫 포함, 넘친 피해 제외) ÷ 적 최대 체력
@@ -2449,6 +2496,9 @@ function spawn(s: CombatState, kind: Block['kind'], traitId: string | null, fami
   }
   // 블록의 속성 (C.118, GDD 66장): 체인은 같은 계열 + 같은 속성끼리만. skill 블록은 그 특성(기본 블록은 물공 속성)의 속성, 나머지는 없음
   const element = kind === 'skill' ? (sourceOf(s.params, traitId)?.element ?? null) : null;
+  // 오리지널 블록 (GDD 8-8 v6.160 ③, C.531): 이 진화체에서 그 속성 흡수 블록(허무 블록)은 진화체 특수 블록으로 바뀐다 — spawn = 대신 그 특수 블록, fixed = 고정 칸으로 이미 있어 안 생김
+  const ob = kind === 'skill' && s.evo && !isBasicBlockId(traitId) ? evoOriginalFor(s.params, element) : null;
+  if (ob) return ob.mode === 'spawn' ? evoSpawnOriginal(s, ob.special) : false;
   s.tray.push({ uid: s.nextUid++, kind, traitId, family, element });
   emit(s, { kind: 'spawn', index: s.tray.length - 1, block: kind });
   // 진화체 고유 능력 블록 생김 규칙 (GDD 8-7 1차, C.499)
@@ -2913,6 +2963,8 @@ export function applyInput(s: CombatState, input: CombatInput): boolean {
     ok = startDraw(s, input.cell);
   } else if (input.type === 'draw-release') {
     ok = releaseDraw(s);
+  } else if (input.type === 'execute-guard') {
+    ok = guardExecution(s);
   }
   if (ok) s.inputs.push({ tick: s.tick, input });
   return ok;
@@ -3622,6 +3674,77 @@ function counterIfStance(s: CombatState): void {
   strike(s, s.params.hitDelay.counter, { target: 'player', amount: damage, event: { kind: 'counter', damage, guarded, matchup: enemyMatchup(s), crit, cat: shownCat(cat) }, elements: enemyElements(s.enemy.def) });
 }
 
+// ── 허무 적의 처형 (GDD 8-8 v6.160 ④, C.531) ──
+
+/** 처형 막기 판정 폭(틱): 원이 닿는 틱 ± 이 값. 0.1초 틱에서 ±0.15초 = ±1틱(입력이 틱 경계로 올림돼 실제 폭 약 0.3초) */
+function executeWindowTicks(p: CombatParams): number {
+  return Math.max(0, Math.floor((p.foeExecute?.windowSeconds ?? 0) / p.tickSeconds + 1e-9));
+}
+
+/** 지금 적이 나를 처형할 수 있는 선 (내 최대 체력 비율): 처형하는 속성 적(속성 데이터 foeExecute)만, 적 등급별. 아니면 0 */
+export function foeExecuteLineOf(s: Pick<CombatState, 'params' | 'enemy' | 'boss' | 'script'>): number {
+  const fx = s.params.foeExecute;
+  if (!fx || s.script || s.params.enemyPassive || !canFoeExecute(enemyElements(s.enemy.def))) return 0;
+  return fx.hpLine[s.boss ? 'boss' : s.enemy.def.class] ?? 0;
+}
+
+/** 지금 처형 시도 중인가 — 화면·봇용: 원이 닿는 틱과 판정 폭(틱) */
+export function foeExecuteRingOf(s: Pick<CombatState, 'execution' | 'params'>): { startTick: number; hitTick: number; windowTicks: number } | null {
+  const r = s.execution?.ring;
+  return r ? { ...r, windowTicks: executeWindowTicks(s.params) } : null;
+}
+
+/** 매 틱(적 차례): 처형 시도 중이면 놓쳤는지 보고(true = 적은 이번 틱 다른 행동 없음), 아니면 내 체력이 선 이하이고 주기가 됐을 때 새 시도를 연다.
+ *  강공격 시전 중에는 열지 않는다(그 시전이 끝난 뒤) */
+function foeExecuteTick(s: CombatState): boolean {
+  const fx = s.params.foeExecute;
+  if (!fx) return false;
+  const x = s.execution;
+  if (x?.ring) {
+    if (s.tick > x.ring.hitTick + executeWindowTicks(s.params)) failExecution(s);
+    return true;
+  }
+  const line = foeExecuteLineOf(s);
+  if (line <= 0 || s.enemy.cast || s.player.hp > s.player.maxHp * line) return false;
+  if (x && s.tick < x.nextTick) return false;
+  const hitTick = s.tick + ticksOf(s.params, fx.ringSeconds);
+  s.execution = { ring: { startTick: s.tick, hitTick }, nextTick: s.tick + ticksOf(s.params, fx.everySeconds), attempts: (x?.attempts ?? 0) + 1, blocked: x?.blocked ?? 0 };
+  emit(s, { kind: 'foe-execute', seconds: fx.ringSeconds, atTick: hitTick, windowSeconds: fx.windowSeconds });
+  return true;
+}
+
+/** 처형당했다 (못 맞춤·안 누름): 패배 — 사망 없음 원칙대로 패배 귀환 (되살아남·체력 하한도 처형은 못 막는다) */
+function failExecution(s: CombatState): void {
+  if (s.execution) s.execution.ring = null;
+  emit(s, { kind: 'foe-execute-end', ok: false, damage: 0, stunSeconds: 0 });
+  s.player.hp = 0;
+  s.status = 'lost';
+  s.lossReason = 'executed';
+  emit(s, { kind: 'end', status: 'lost' });
+}
+
+/** 처형 막기 입력: 판정 안이면 막는다 — 그 적 일반 공격 1번 × blockedDamage 만큼만 받고(체력 1 하한), 적은 stunSeconds 스턴. 판정 밖이면 처형당한다. 시도 중이 아니면 거절 */
+function guardExecution(s: CombatState): boolean {
+  const fx = s.params.foeExecute;
+  const x = s.execution;
+  if (!fx || !x?.ring) return false;
+  const now = s.tick + inputTickLead;
+  if (Math.abs(now - x.ring.hitTick) > executeWindowTicks(s.params)) {
+    failExecution(s);
+    return true;
+  }
+  x.ring = null;
+  x.blocked++;
+  const e = s.enemy;
+  const raw = enemyDamage(s, e.def.attackInAttacks, enemyAttackCat(s)) * (s.params.attackScale[e.def.class] ?? 1) * fx.blockedDamage;
+  const damage = Math.max(0, Math.min(raw, s.player.hp - 1));
+  s.player.hp -= damage;
+  s.damageTaken = (s.damageTaken ?? 0) + damage;
+  e.stunTicks = ticksOf(s.params, fx.stunSeconds);
+  emit(s, { kind: 'foe-execute-end', ok: true, damage, stunSeconds: fx.stunSeconds });
+  return true;
+}
+
 /** 한 틱 진행: 버프 → 안개 섞기 → 블록 생성 → 내 기본 공격 → 적 행동 → 시간 제한 */
 function advanceTick(s: CombatState): void {
   const p = s.params;
@@ -3744,6 +3867,12 @@ function advanceTick(s: CombatState): void {
   // 빔이 이미 나가는 중(heavy-windup 뒤)이면 넉백도 강공격 판정을 늦추지 않는다 — 빔이 닿는 순간 = 판정 (GDD 245장 3)
   if (cineHold) {
     // 마무리 평타 연출 (C.473): 적의 모든 타이머가 멈춘다 (무적이라 결과는 같고, 연출 뒤 적이 몰아치지 않게)
+  } else if ((e.stunTicks ?? 0) > 0) {
+    // 처형을 막혀 스턴 (GDD 8-8 v6.160 ④, C.531): 공격·시전·특수 행동 타이머가 모두 멈춘다
+    e.stunTicks!--;
+  } else if (foeExecuteTick(s)) {
+    // 처형 시도 중 (C.531): 원이 줄어드는 동안 적은 처형만 노린다 — 다른 공격·행동 타이머 멈춤
+    if (s.status !== 'playing') return;
   } else if ((s.knockbackTicks ?? 0) > 0 && !e.cast?.windup) {
     s.knockbackTicks!--;
   } else if (e.cast) {

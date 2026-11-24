@@ -272,3 +272,12 @@
   .bha-root .bha-block.bha-kitglow { animation: none; }
   .bha-kitline.is-on { animation: bha-libready-still var(--bha-kitline-ms, 2200ms) steps(1, end) both; }
 }
+
+/* 허무 적 처형 막기 (GDD 8-8 v6.160 ④, C.531): 전투 화면 가운데 원형 표식 + 바깥에서 줄어드는 원 테두리 — 테두리가 표식에 닿는 순간 누른다.
+   색·크기는 기존 토큰만: 허무(--bha-el-kyo) 표식 · 위험(--bha-danger) 테두리 · 판정 안이면 막기(--bha-guard). 크기 = 터치 크기 × 2 */
+.bha-root .bha-execring { position: absolute; left: 50%; top: 50%; width: calc(var(--bha-touch) * 2); height: calc(var(--bha-touch) * 2); margin: calc(var(--bha-touch) * -1) 0 0 calc(var(--bha-touch) * -1); padding: 0; display: grid; place-items: center; border: var(--bha-sp-2) solid var(--bha-el-kyo); border-radius: 50%; background: var(--bha-plate-bg); color: var(--bha-text-1); font-family: var(--bha-font-display); font-size: var(--bha-fs-xl); font-weight: var(--bha-fw-heavy); box-shadow: var(--bha-shadow-3); pointer-events: auto; touch-action: manipulation; cursor: pointer; z-index: 6; }
+.bha-root .bha-execring[hidden] { display: none; }
+.bha-root .bha-execring__ring { position: absolute; inset: calc(var(--bha-sp-2) * -1); border: var(--bha-sp-2) solid var(--bha-danger); border-radius: 50%; transform: scale(var(--bha-execring-scale, 2.4)); pointer-events: none; }
+.bha-root .bha-execring__label { position: relative; pointer-events: none; }
+.bha-root .bha-execring.is-now { border-color: var(--bha-guard); }
+.bha-root .bha-execring.is-now .bha-execring__ring { border-color: var(--bha-guard); }

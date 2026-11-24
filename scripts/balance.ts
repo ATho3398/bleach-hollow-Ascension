@@ -10,7 +10,7 @@ import { createExpedition, enemyScale, lapRewardMult, mutationMods, playExpediti
 import { referenceLoadout, type GearCarry } from '../src/engine/gear';
 import { addEnhance, buildCombatParams, canAbsorb, gainTrait, isBasicBlockTrait, newBuild } from '../src/engine/absorb';
 import { FORM_TABLE, formName, formsOfTier, PHYS_ABILITY_EFFECTS, PHYS_ELEMENT_IDS } from '../src/data/evolution';
-import { ELEMENT_IDS, NORMAL_ELEMENT, PLAYER_ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
+import { ELEMENT_IDS, NORMAL_ELEMENT, NORMAL_FORM_ELEMENT_IDS as PLAYER_ELEMENT_IDS, SPECIAL_ELEMENT_IDS } from '../src/data/elements';
 import { ATTACK_CATEGORIES } from '../src/data/schema';
 import { abilityEffectsOf, abilityFor, analyzeTree, applyEvolutionToParams, comboRulesOf, currentStats, formAbilitiesOf, isFailLine, MAX_TIER_INDEX, newEvolution, TIER_COUNT, worldRefStat, zeroStats } from '../src/engine/evolution';
 import { newSaveData, nextRunId, performRebirth, recordExpedition, sanitizeDeck, referenceTileStock, type SaveData } from '../src/game';
@@ -276,7 +276,7 @@ if (want('combat')) {
     if (nw / ng < TARGET.normal.win) failures.push(`분류·속성 ${label}: 일반 승률 ${((nw / ng) * 100).toFixed(0)}% < ${TARGET.normal.win * 100}%`);
   };
   for (const cat of ATTACK_CATEGORIES) rowOf(`분류 ${cat}`, `t-fire-${FAM_OF[cat]}`);
-  for (const el of PLAYER_ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`); // C.516: 허무 블록은 플레이어가 못 가진다 (GDD 8-2 v6.154)
+  for (const el of PLAYER_ELEMENT_IDS) rowOf(`속성 ${el}`, `t-${el}-a`); // 일반 진화체가 있는 속성만 (허무 블록 = 계열 없는 1종 t-kyo, C.531)
   console.log(`  (혈 흡혈 ${BALANCE.provisional.elements.drainFraction * 100}% · 한 전투 상한 최대 체력 ${BALANCE.provisional.elements.drainCapFraction * 100}%, C.53)`);
 }
 
@@ -402,7 +402,9 @@ if (want('expedition')) {
     if (isSpecial(l)) continue;
     if ((seenWeak[l] ?? 0) / seen < WEAK_MIN) failures.push(`원정에서 만난 적: ${l} 속성 적 비율 ${(((seenWeak[l] ?? 0) / seen) * 100).toFixed(0)}% < ${WEAK_MIN * 100}%`);
   }
-  if (sp.offRule > 0) failures.push(`원정에서 만난 적: ★1~2 일반 칸에 혈·독·허 적 ${sp.offRule}마리 (${[...sp.offRuleIds].join(', ')}) — GDD 75장 위반`);
+  // C.531 (GDD 6-7 v6.161, 사용자 2026-11-23 등장 제한 완화 — ★1~2 일반 칸 0 → 기본 0.1): 옛 가드 '규칙 밖 0마리' → '드물게'(0 초과 10% 이하). 전 0마리(1% = 피의 달 혈) → 후 289마리(5%)
+  const offRate = sp.normal[0] ? sp.offRule / sp.normal[0] : 0;
+  if (offRate <= 0 || offRate > 0.1) failures.push(`원정에서 만난 적: ★1 일반 칸의 혈·독·허무 적 ${sp.offRule}마리 = ${(offRate * 100).toFixed(1)}% (${[...sp.offRuleIds].join(', ')}) — 가드 0 초과 10% 이하 밖 (GDD 6-7 기본 0.1)`);
   const spMin = (label: string, a: Tally, min: number) => {
     if (!a[0] || a[1] / a[0] < min) failures.push(`원정에서 만난 적: ${label} 혈·독·허 비율 ${pct(a)}%(${a[0]}마리 중) < ${min * 100}% — GDD 75장 강적·★3·공허의 밤에서는 나와야 한다`);
   };
@@ -1362,7 +1364,7 @@ if (want('laps')) {
         console.log(`  ${tier + 1}단계 ${String(bodies.length).padStart(2)}명 ★${star}${star === recommendedDifficulty(tier) ? '권장' : '    '} ${cells} · 일반 ${avg(r.nSecs).toFixed(1)}초`);
       }
     }
-    // 가드 (134장 5, 표본 오차 포함): 1단계 ★1 — 1바퀴 ≥ 90%·2바퀴 25~75%·3바퀴 ≤ 15%·4바퀴 ≤ 5%.
+    // 가드 (134장 5, 표본 오차 포함): 1단계 ★1 — 1바퀴 ≥ 90%·2바퀴 25~80%(C.531, 옛 25~75%)·3바퀴 ≤ 15%·4바퀴 ≤ 5%.
     //   C.355 (GDD 210장 3 — 휴식 약화·바퀴 임시 타일 70%, 다른 손잡이로 보정 금지): 1단계 ★1 2바퀴 67 → 71% 로 옛 상한 70% 을 넘어 상한만 75% 로(2~5단계와 같은 값).
     //   2~5단계 권장 ★ — 1바퀴 ≥ 90%·2바퀴 15~75%·3바퀴 ≤ 35% (비슷한 곡선). 진화 한 단계 = 같은 ★ 에서 버티는 바퀴(완주율 합) +0.7 이상
     //   C.513 (사용자 2026-11-20 "폭주블록은 광기에 나오는거고" — 폭주 블록 가산이 컨디션 → 리스크 게이지 비율로, 밸런스 보정 금지): 2단계 권장 ★2 2바퀴 33 → 18% 로 옛 하한 25% 밑이라 2~5단계 하한만 15% 로(1단계 ★1 은 25% 그대로)
@@ -1372,7 +1374,8 @@ if (want('laps')) {
       const c = curves[`${tier}/${rec}`];
       if (!c) continue;
       const bad = tier === 0
-        ? [c[0]! < 0.9 && '1바퀴 < 90%', (c[1]! < 0.25 || c[1]! > 0.75) && '2바퀴 25~75% 밖', c[2]! > 0.15 && '3바퀴 > 15%', c[3]! > 0.05 && '4바퀴 > 5%']
+        // C.531 (GDD 6-7 v6.161 사용자 2026-11-23 등장 제한 완화 — ★1~2 일반 칸에 혈·독·허무 적 기본 0.1, 다른 손잡이로 보정하지 않음): 1단계 ★1 2바퀴 72 → 77% 로 옛 상한 75% 를 넘어 상한만 80% 로 (C.355 와 같은 처리, 전후 기록 dev-log C.531)
+        ? [c[0]! < 0.9 && '1바퀴 < 90%', (c[1]! < 0.25 || c[1]! > 0.8) && '2바퀴 25~80% 밖', c[2]! > 0.15 && '3바퀴 > 15%', c[3]! > 0.05 && '4바퀴 > 5%']
         : [c[0]! < 0.9 && '1바퀴 < 90%', (c[1]! < 0.15 || c[1]! > 0.75) && '2바퀴 15~75% 밖', c[2]! > 0.35 && '3바퀴 > 35%'];
       if (bad.some(Boolean)) failAt(tier, `바퀴 곡선(${fid}): ${tier + 1}단계 권장 ★${rec} ${c.map((x) => pct(x).trim()).join('/')} — ${bad.filter(Boolean).join(', ')} (GDD 134장 5)`);
       const up = curves[`${tier + 1}/${rec}`];

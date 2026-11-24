@@ -9,7 +9,7 @@ import { evoExtraPetPower, evoExtraPetSlots, evoFormEntry, evoFormIds, type EvoA
 import { FORM_TABLE } from '../../src/data/evolution';
 import { balanceProfileOf } from '../../src/data/evolution/balanceProfiles';
 import { formCategoryOf, type FormDef } from '../../src/data/schema';
-import { PLAYER_ELEMENT_IDS } from '../../src/data/elements';
+import { NORMAL_FORM_ELEMENT_IDS } from '../../src/data/elements';
 import { PETS } from '../../src/data/pets';
 import { getFaction } from '../../src/data/factions';
 import { addEnhance, buildCombatParams, gainTrait, isBasicBlockTrait, newBuild } from '../../src/engine/absorb';
@@ -59,7 +59,7 @@ function categoryOf(form: FormDef, factionId: string): string {
 export const EVO_BAL_NEUTRAL_ELEMENTS = ['thunder', 'fire'] as const;
 export function buildElementOf(form: FormDef): string {
   const el = form.elements?.[0] ?? form.label.elements[0];
-  return el && el !== 'normal' && (PLAYER_ELEMENT_IDS as readonly string[]).includes(el) ? el : 'normal';
+  return el && el !== 'normal' && (NORMAL_FORM_ELEMENT_IDS as readonly string[]).includes(el) ? el : 'normal';
 }
 
 /** 표준 빌드 공격 특성 2개: 그 진화체 타입의 계열 + 다음 계열 (같은 속성, 노멀 몸이면 뇌·불) */

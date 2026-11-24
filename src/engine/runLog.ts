@@ -90,8 +90,10 @@ export interface BattleRecord {
   riskGained: number;
   /** 매치3 흡수 타일 매칭 누적. 전투 v2(C.6) 이후는 0 (흡수 조건이 바뀜) */
   absorbGained: number;
-  /** 패배 사유: hp = 체력 0, timeout = 시간 제한(C.6 부터 초). 승리면 null */
-  lossReason: 'hp' | 'timeout' | null;
+  /** 패배 사유: hp = 체력 0, timeout = 시간 제한(C.6 부터 초), executed = 허무 적에게 처형당함(C.531, GDD 8-8 v6.160 ④). 승리면 null */
+  lossReason: 'hp' | 'timeout' | 'executed' | null;
+  /** 허무 적의 처형 시도 (C.531, 형식 96 — GDD 8-8 v6.160 ④): 시도 수·막은 수. 처형하는 적이 아니었거나 시도가 없었으면 없음 */
+  foeExecutes?: { attempts: number; blocked: number };
   /** C.6 에서 더한 필드 (세이브 형식 5, 전투 v2) */
   /** 전투 시간(초) */
   durationSeconds: number;
@@ -382,7 +384,7 @@ export interface BossBattleRecord {
   /** 닿은 페이즈(1부터)·기믹으로 봉인된 블록 수·패배 사유 */
   phase: number;
   seals: number;
-  lossReason: 'hp' | 'timeout' | null;
+  lossReason: 'hp' | 'timeout' | 'executed' | null;
   tierIndex: number;
   /** 스토리 화 키 ("ch1/ep4"). 자유 원정 등장이면 null */
   episode: string | null;

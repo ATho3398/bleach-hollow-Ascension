@@ -817,10 +817,22 @@ export function evoFoeSlowSkip(s: CombatState): boolean {
   return true;
 }
 
-/** 출현표 손질 (C.515): exclude = 저절로 안 생기는 속성 · self = 자기 블록(속성·계열)과 그 확률 +p · forced = 다음 블록 강제 속성 */
-export function evoSpawnRulesOf(s: CombatState): { exclude: readonly string[]; self: { element: string; family: string; bonus: number } | null; forced: string | null } {
+/** 오리지널 블록 (GDD 8-8 v6.160 ③, C.531): 이 속성 흡수 블록이 이 진화체에서 바뀌는 특수 블록 — 없으면 null */
+export function evoOriginalFor(p: Pick<CombatParams, 'evo'>, element: string | null | undefined): { special: string; mode: 'spawn' | 'fixed' } | null {
+  const ob = p.evo?.ability.originalBlock;
+  return ob && element && ob.element === element ? { special: ob.special, mode: ob.mode } : null;
+}
+
+/** 오리지널 블록 1개를 바 끝에 (그 속성 블록이 생길 차례 — mode spawn). 놓았으면 true */
+export function evoSpawnOriginal(s: CombatState, special: string): boolean {
+  return spawnSpecial(s, special);
+}
+
+/** 출현표 손질 (C.515): exclude = 저절로 안 생기는 속성 · self = 자기 블록(속성·계열)과 그 확률 +p · forced = 다음 블록 강제 속성 ·
+ *  drop = 오리지널 블록(고정 칸)으로 바뀌어 더 안 생기는 속성 — 그 몫은 다른 스킬 블록으로 옮긴다 (C.531) */
+export function evoSpawnRulesOf(s: CombatState): { exclude: readonly string[]; self: { element: string; family: string; bonus: number } | null; forced: string | null; drop: string | null } {
   const ev = s.params.evo;
-  if (!ev || !s.evo) return { exclude: [], self: null, forced: null };
+  if (!ev || !s.evo) return { exclude: [], self: null, forced: null, drop: null };
   const sb = ev.ability.selfBlock;
   const bonus = sb ? evoStat(s, 'selfSpawn') : 0;
   const element = sb ? (sb.element === 'self' ? s.params.playerElements[0] ?? null : sb.element) : null;
@@ -828,6 +840,7 @@ export function evoSpawnRulesOf(s: CombatState): { exclude: readonly string[]; s
     exclude: ev.ability.spawnExclude ?? [],
     self: sb && element && bonus > 0 ? { element, family: sb.family, bonus } : null,
     forced: s.evo.forceNext && s.evo.forceNext.n > 0 ? s.evo.forceNext.element : null,
+    drop: ev.ability.originalBlock?.mode === 'fixed' ? ev.ability.originalBlock.element : null,
   };
 }
 

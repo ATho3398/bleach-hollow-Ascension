@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 165; // C.530 (GDD 8-7 v6.186 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 마스터AS — 전부 provisional): evoInvest.intervalFull 0.6 신설(능력 데이터 effortBasis 'attackInterval' 몸의 effort = 몸 기본 공속 간격 → 0.6초 비율) · evoUniques 노력치 기울기 — 사신 노도 perStackGrow 4 → 3.2·hitsGrow 2.5 → 2 · 사신 백련 perBlockGrow 2.5 → 4 · 호로 마르티요 perStackGrow 80 → 88 · 호로 에스카라바호 bonusGrow 9 → 6.5 · 호로 콜리브리 perStackGrow 28 → 36 (소로 burnGrow 48 그대로)
+export const BALANCE_VERSION = 166; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — 전부 provisional): combat.foeHpBands 신설(허무 블록 적 체력 구간 배율 100~80% ×0.6 · 80~60 ×0.75 · 60~40 ×0.9 · 40~20 ×1.2 · 20~0 ×1.6) · foeExecute 신설(허무 적 처형: 내 체력 일반 3%·강적 5%·보스 7% 이하, 6초마다, 원 1.2초·판정 ±0.15초, 막으면 그 적 일반 공격 30% 피해(체력 1 하한)·적 1초 스턴·스턴 중 받는 피해 ×1.2) · specialEnemies.base 0.1 신설(★1~2 일반 칸 0 → 0.1) · evolution.hidden voidMaxDeferrals 삭제 → void { element kyo · absorbs 10 · deferrals 3 } · evoUniques h4:void hollow silenceSeconds 8·silenceLine 0.03(적막 블록). 적 체력·공격 수치 그대로.
+// 이전: BALANCE_VERSION = 165; // C.530 (GDD 8-7 v6.186 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 마스터AS — 전부 provisional): evoInvest.intervalFull 0.6 신설(능력 데이터 effortBasis 'attackInterval' 몸의 effort = 몸 기본 공속 간격 → 0.6초 비율) · evoUniques 노력치 기울기 — 사신 노도 perStackGrow 4 → 3.2·hitsGrow 2.5 → 2 · 사신 백련 perBlockGrow 2.5 → 4 · 호로 마르티요 perStackGrow 80 → 88 · 호로 에스카라바호 bonusGrow 9 → 6.5 · 호로 콜리브리 perStackGrow 28 → 36 (소로 burnGrow 48 그대로)
 // 이전: BALANCE_VERSION = 164; // C.529 (GDD 7-4 v6.182 사용자 '치확 상한 70%, 특정 진화체·특성만 돌파'): combat.critChanceMax·blockCritChanceMax 0.5 → 0.7 · evoAbilityCaps.critMax(능력 치명 + ≤ 100%p 를 상한 위에) 삭제 → critBreakMax 1(uniques.json ability.critBreak 표시 능력만 — 물 속성 6종 라나·니에블라·바라쿠다/노도·연우·백랑파, GDD 7-4 v6.183. 조건부 돌파 틀만, 폭주형·사냥꾼 조건 [미정]) · 탈착·초월 특성 블록 치명은 상한을 올리지 않음.
 // 이전: export const BALANCE_VERSION = 163; // C.528 (GDD 8-7 v6.181 '측정 노력치 칸 = 요구 스탯 몰기', 마스터AS — 전부 provisional): evoUniques 노력치 기울기 — 사신 노도 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 · 호로 소로 burnGrow 20 → 48(해방 1.26 → 2.2 = 다 키운 평소 ×1.5, 여우불 2.5초·5개 그대로) · 호로 에스카라바호 bonusGrow 5.5 → 9 · 호로 무랄라 shieldGrow 6 → 14. 측정(evoProfile.ts)만 바뀐 것 = 노력치 칸 investFocus.
 // 이전: BALANCE_VERSION = 162; // C.527 (마스터AS 11-23, provisional): provisional.evoAbilityCaps 신설(진화체 능력 간격 하한 ×0.4·치명 +100%p 상한) · evoUniques 해방 값 기울기(release 에 grow 키 — 다 키운 해방 ≤ 다 키운 평소 ×2: 노도·소로·에스칼레라·니에블라·루시에르나가·석양홍·바라쿠다·토르투가·게파르도·비전) · 콜리브리 maxCut 0.8 → 0.6(하한과 맞춤).
@@ -138,7 +139,20 @@ export const BALANCE = {
     /** 특수 속성(혈·독·허) 적 등장 숨김 (GDD 75장, C.127, provisional — 옛 49-7 ① 특성 숨김 absorb.specialTraits 를 옮김): 원정 출현 풀에서 혈·독·허 적의 가중치 × 이 값(여럿이면 가장 큰 값).
      *  강적 elite / 바퀴 변이 효과 specialEnemyChance(공허의 밤) / 원정 난이도 ★minDifficulty 이상 difficulty. 그 밖(★1~2 일반 적 칸·먹잇감 둥지 등)은 0 = 안 나오고 다른 속성 적으로.
      *  보스는 보스 데이터의 고정 적이라 늘 그대로(옛 boss 1). 나온 혈·독·허 적을 잡으면 그 속성 특성이 늘 후보(70장) */
-    specialEnemies: { elite: 0.5, minDifficulty: 3, difficulty: 0.3 },
+    /* C.531 (GDD 6-7 v6.161, 사용자 2026-11-23 등장 제한 완화): 그 밖(★1~2 일반 칸·먹잇감 둥지 등) base 0.1 (옛 0 = 안 나옴) */
+    specialEnemies: { base: 0.1, elite: 0.5, minDifficulty: 3, difficulty: 0.3 },
+    /** 허무 적의 처형 (GDD 8-8 v6.160 ④, C.531 provisional — 사용자 2026-11-23 "허무 적도 나를 처형 가능. 일반적은 내 피 3% 이하, 강적은 5%, 보스는 7%이하면 나 처형하게 만들어 … 타이밍 맞춰서 그거 누르면 처형 막기 … 처형 막으면 적 1초간 스턴(스턴동안 받는 데미지 1.2배)"):
+     *  속성 데이터 foeExecute 적 — 내 체력이 hpLine[적 등급] 이하인 동안 everySeconds 마다 처형 시도(처음 닿으면 바로 1번). 시도 = 원 테두리가 ringSeconds 동안 줄어 표식 테두리에 닿는 순간 ± windowSeconds 안에 누르면 막기.
+     *  막으면 피해 = 그 적 일반 공격 1번 × blockedDamage(체력 1 하한) · 적 stunSeconds 스턴 · 스턴 중 적이 받는 피해 × stunTakenMult. 못 맞추면(판정 밖에서 누름·안 누름) 처형 = 패배 귀환(사망 없음) */
+    foeExecute: {
+      hpLine: { normal: 0.03, elite: 0.05, boss: 0.07 },
+      everySeconds: 6,
+      ringSeconds: 1.2,
+      windowSeconds: 0.15,
+      blockedDamage: 0.3,
+      stunSeconds: 1,
+      stunTakenMult: 1.2,
+    },
     risk: {
       /** 한계값: 이상이 되면 돌파 (GDD 4-1) */
       limit: 100,
@@ -754,7 +768,8 @@ export const BALANCE = {
         'h4:void': {
           shinigami: { fixed: 2, streak: 2, within: 1, stackMax: 60, perTwo: 0.01, lineMax: 0.3 },
           /** 호로 나다 (C.503, 히든 허무형 — 해방 = 기본 강화만): 블록 → seconds 초 평타 피해 +체인 수×perChain(갱신). 바 bar 칸 가득인 동안 every 초마다 평타 처형선 +perLine(전투 동안, 최대 maxLine) */
-          hollow: { seconds: 2, perChain: 0.04, hollowGrow: 10, hollowSecondsGrow: 2, bar: 8, every: 3, perLine: 0.01, maxLine: 0.25, maxStacks: 25 },
+          /* C.531 (GDD 8-8 v6.160 ③): 오리지널 블록 '적막 블록' — 쓰면 silenceSeconds 초 동안 평타 처형선 +silenceLine (피해 없음) */
+          hollow: { seconds: 2, perChain: 0.04, hollowGrow: 10, hollowSecondsGrow: 2, bar: 8, every: 3, perLine: 0.01, maxLine: 0.25, maxStacks: 25, silenceSeconds: 8, silenceLine: 0.03 },
         },
         // ── C.506 사신 13종 (evo-impl-1119 1절 표 수치 그대로, 마스터 추천안 provisional) ──
         /** 사신 주홍장: 잃은 체력 1%당 평타 +perLostPower·간격 −perLostInterval, 혈 블록 → 다음 평타 피해의 체인 수×healPerChain 회복. 만해 = 지속 releaseSeconds 초·체력 하한 hpFloor·만해 중 혈 블록 1개당 치명 +critPerBlood·치명 피해 +critDmgPerBlood */
@@ -832,9 +847,9 @@ export const BALANCE = {
         hunterLap: 5,
         hunterElites: 2,
         hunterRuns: 3,
-        /** 허무형 (GDD 8-8 v6.120 [초안], C.497): 그 단계 진화 미루기 이 횟수 이하(0 = 한 번도 안 함) + 빈사 상태로 귀환해 진화. 리스크·흡수 무관.
-         *  옛 '혈·독·허 각 voidShare(0.2) 이상 + 환생 voidRebirths(1) 이상' 폐기 */
-        voidMaxDeferrals: 0,
+        /** 허무형 (GDD 8-8 v6.166 [초안], C.531 — 사용자 2026-11-23 "그냥 허무 흡수10번에 미루기 3번하면 허무 ㄱㄱ"): 그 단계(3단계)에서 element 속성 블록을 absorbs 개 이상 흡수(블록 갈래 흡수 = 둘 다·속성만, 진화 상태 elementAbsorbs)
+         *  + 진화 미루기 deferrals 회 이상. 리스크·빈사·환생 무관. 옛 C.497 '미루기 0회(voidMaxDeferrals) + 빈사 귀환' 폐기 */
+        void: { element: 'kyo', absorbs: 10, deferrals: 3 },
         /** 각성형: 실패형을 거친 계보 + 환생 1회↑ + 이번 생 훈련(훈련 인형) 누적 이상 + 노력치 고르게(최저 ≥ 최고 × 비율) + 능력치 합계 ≥ 4단계 종족값 합계 */
         awakenedRebirths: 1,
         awakenedPractices: 20,
@@ -1268,6 +1283,9 @@ export const BALANCE = {
       /** 기본 공격 블록 (GDD 44장: 기본 블록 5종 중 공격 3종 — 종족 계열 표의 계열마다 하나): 기본 공격 N회 분량 */
       basicBlockPowerInAttacks: 3,
       basicBlockChainBonus: { kind: 'stagger', value: 1.5 },
+      /** 적 체력 구간 강화 (GDD 8-8 v6.162 진화 전 허무 블록, C.531 provisional — 사용자 2026-11-23 "상대 피 20% 단위로 나눠서 점점 쎄지게 해. 대신 40%보다 높을 땐 다른 블록보다 약하게"):
+       *  특성 데이터 foeHpBands 블록의 위력 배율 = 적 체력 비율이 above 초과인 첫 구간의 mult (위에서부터). 처형 없음 */
+      foeHpBands: [{ above: 0.8, mult: 0.6 }, { above: 0.6, mult: 0.75 }, { above: 0.4, mult: 0.9 }, { above: 0.2, mult: 1.2 }, { above: 0, mult: 1.6 }],
       /** 막기 (GDD 105장 수정 v5.233, C.177 provisional — 옛 체인별 지속·경감·충전 3칸 대체): 게이지가 guardGaugeSeconds 에 걸쳐 0 → 100% (성향 def·강화 = 속도),
        *  다 차야 누르고, 누르면 guardSeconds 동안 강공격 완전 막기(일반 공격 경감 없음, 막기 동안 공격 멈춤) */
       guardGaugeSeconds: 8, // C.177: 105장 추천 약 6초 → 8 (강공격 간격 8~11초 + 예고 2초 — 6·14초 모두 강적 승률 차이 1~2%p 라 추천에 가깝게)

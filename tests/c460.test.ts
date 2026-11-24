@@ -100,14 +100,14 @@ describe('데이터·수치·세이브', () => {
   });
 
   it('세이브 형식 89: 88 → 89 마이그레이션 = 모드 있는 초월자 kit 에 기본 · 모르는 모드는 기본으로 · 모험 중엔 못 바꿈', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(95);
+    expect(SAVE_FORMAT_VERSION).toBe(96);
     const s = newSaveData('shinigami', 1000);
     testGrantTranscendent(s, 'ichigo', 2000);
     const raw = JSON.parse(JSON.stringify(s));
     delete raw.evolution.kit.mode;
     raw.meta.format = 88;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(95);
+    expect(m.meta.format).toBe(96);
     expect(m.evolution.kit?.mode).toBe('basic');
     const bad = JSON.parse(JSON.stringify(s));
     bad.evolution.kit.mode = 'nope';
