@@ -2495,11 +2495,16 @@ export function startApp(host: HTMLElement): void {
     /** 한 판이 끝날 때 (전투 기록 다음, 저장 전) — 수련장 = 이번 생 훈련 인형 전투 수 */
     onRoundEnd: (s0: SaveData, done: CombatState) => void;
     tutorial?: boolean;
+    /** 수련장 훈련 인형 (GDD 8-9 v6.194, C.534 사용자 2026-11-24 "그만두기하면 훈련 설정으로 돌아가고 거기서 뒤로가면 홈으로가게 해"):
+     *  [그만두기] = 훈련 설정 창(빈 적 자리 + 창)으로, 설정 창·빈 적 자리에서 뒤로 = 방. 없으면(테스트 모드) 그만두기 = 나가기, 뒤로 = 창 닫기·일시정지 그대로 */
+    practice?: boolean;
   }): void {
     let pick = run.pick;
     let hpFrac = 1;
     let kills = 0;
     let note = '적을 정하고 [확인]을 누르면 나온다. 쓰러뜨리면 이 창이 다시 뜬다.';
+    /** 수련장 뒤로 = 방 (C.534): 밑에 깐 수련장 화면을 그리지 않고 홈까지 뺀다 */
+    const leaveHome = (): void => { if (!nav.popToHome()) nav.pop(); };
     /** 빈 적 자리(창) 또는 고른 적과의 전투 한 판을 그린다 */
     const round = (foe: TestArenaChoice | null): void => {
       const e = { id: run.navId, locked: true, render: () => { arenaRound(foe); root.scrollTop = 0; } };
@@ -2530,6 +2535,7 @@ export function startApp(host: HTMLElement): void {
           onPick: (ch) => { pick = ch; run.onPicked(ch); round(ch); },
           onClose: () => { closeDialog = null; },
           onExit: () => nav.pop(),
+          ...(run.practice ? { onBack: leaveHome } : {}),
         });
       };
       setBgm(enemyPick.enemy.class === 'elite' ? 'elite' : 'battle');
@@ -2540,11 +2546,11 @@ export function startApp(host: HTMLElement): void {
         ...battleBasis(s0),
         skinId: artSkinOf(s0),
         notice: foe ? `★${enemyPick.star}${foe.attacks ? '' : ' · 공격 안 함'}${foe.immortal ? ' · 무적' : ''} · 처치 ${kills}` : `적 설정 · 처치 ${kills}`,
-        ...(foe ? {} : { emptyFoe: { slot: testArenaSlot(openDialog) } }),
+        ...(foe ? {} : { emptyFoe: { slot: testArenaSlot(openDialog), ...(run.practice ? { back: leaveHome } : {}) } }),
         ...(tutorial ? { tutorial } : {}),
         hold,
         autoEnd: true,
-        onQuit: () => { closeDialog?.(); nav.pop(); },
+        onQuit: () => { closeDialog?.(); if (run.practice) round(null); else nav.pop(); },
         onEnd: (done) => {
           recordBattle(s0, buildBattleRecord(done, { factionId: faction.id, tierIndex: s0.evolution.tierIndex }));
           run.onRoundEnd(s0, done);
@@ -2586,6 +2592,7 @@ export function startApp(host: HTMLElement): void {
       onPicked: (pick) => { lastPractice = pick; },
       onRoundEnd: (sv) => recordEvolutionPractice(sv.evolution), // 각성형 조건 (GDD 126장 협의 답, C.220): 이번 생 훈련 인형 전투 수 = 한 판(적 하나와 싸움)마다 1
       tutorial: true,
+      practice: true, // 그만두기 = 설정 창, 설정 창·빈 자리 뒤로 = 방 (GDD 8-9 v6.194, C.534)
     });
   }
 

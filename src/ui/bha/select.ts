@@ -89,6 +89,14 @@ export class ScreenStack {
     return true;
   }
 
+  /** 홈(맨 아래 home 화면)까지 위 화면을 모두 빼고 홈을 다시 연다 — 중간 화면은 그리지 않는다. 맨 아래가 홈이 아니거나 이미 홈뿐이면 false (수련장 뒤로 = 방, C.534) */
+  popToHome(): boolean {
+    if (this.entries.length <= 1 || this.entries[0]?.home !== true) return false;
+    this.entries.length = 1;
+    this.reopen();
+    return true;
+  }
+
   /** 뒤로 갈 수 있는가: 홈 위에 쌓인 화면이 있고 맨 위가 locked 가 아니다 */
   get canBack(): boolean {
     const t = this.top;

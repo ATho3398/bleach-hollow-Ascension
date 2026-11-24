@@ -1,0 +1,45 @@
+{
+  "errors": [],
+  "shots": [
+    "03-dialog-back-room-pc.png",
+    "02-quit-dialog-pc.png",
+    "01-entry-back-room-pc.png",
+    "03-dialog-back-room-phone.png",
+    "02-quit-dialog-phone.png",
+    "01-entry-back-room-phone.png"
+  ],
+  "flows": {
+    "pc": {
+      "enter": "dialog",
+      "dialogBack": "room",
+      "dialogBackRest": [],
+      "fight": "fight",
+      "quit": "dialog",
+      "pausedByBack": "paused",
+      "quitFromPause": "dialog",
+      "exit": "entry",
+      "entryBack": "room",
+      "entryBackLater": "room",
+      "entryBackRest": [],
+      "historyBackDialog": "room",
+      "closed": "slot",
+      "slotBack": "room"
+    },
+    "phone": {
+      "enter": "dialog",
+      "dialogBack": "room",
+      "dialogBackRest": [],
+      "fight": "fight",
+      "quit": "dialog",
+      "pausedByBack": "paused",
+      "quitFromPause": "dialog",
+      "exit": "entry",
+      "entryBack": "room",
+      "entryBackLater": "room",
+      "entryBackRest": [],
+      "historyBackDialog": "room",
+      "closed": "slot",
+      "slotBack": "room"
+    }
+  }
+}

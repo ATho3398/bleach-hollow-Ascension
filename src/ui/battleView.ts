@@ -128,8 +128,9 @@ export interface BattleViewOptions {
   pickBattleItem?: { options: () => { id: string; label: string }[]; pick: (id: string) => BattleViewOptions['battleItem'] };
   /** 모험 전투 (GDD 212장 1·2): 소모품은 칸에 끼운 1개를 바퀴당 1번(걷기에서 썼어도). spentId = 이번 바퀴에 이미 쓴 끼운 소모품 id(버튼 흐림 '씀'), 문구는 '바퀴당 1번'. 없으면 전투당 1번(탑·등급전 등) */
   lapItem?: { spentId: string | null };
-  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 적 자리를 비워 둔다(적 그림·체력 숨김, 시간 정지). slot = 빈 적 자리에 놓을 버튼([적 설정]). 쓴 쪽이 hold 로 멈춤을 쥔다 */
-  emptyFoe?: { slot?: HTMLElement };
+  /** 테스트 모드 적 설정 (GDD 17-4 v6.083, C.457): 적 자리를 비워 둔다(적 그림·체력 숨김, 시간 정지). slot = 빈 적 자리에 놓을 버튼([적 설정]). 쓴 쪽이 hold 로 멈춤을 쥔다.
+   *  back = 빈 자리에서 뒤로(◀·Esc·폰 뒤로)가 일시정지 대신 할 일 — 전투를 멈추고 부른다 (수련장 훈련 인형 = 방, GDD 8-9 v6.194 C.534) */
+  emptyFoe?: { slot?: HTMLElement; back?: () => void };
   /** 바깥이 시간을 멈춘다 (on 인 동안 엔진·입력 정지 — 테스트 모드 적 설정 창) */
   hold?: { on: boolean };
   /** true = 끝나면 결과 창 없이 바로 onEnd (테스트 모드 연속 전투, C.457) */
@@ -1107,6 +1108,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     stop,
     busy: () => paused || overlayOpen || s.status !== 'playing',
     pause: () => setPaused(true),
+    ...(opts.emptyFoe?.back ? { leave: opts.emptyFoe.back } : {}), // 수련장 빈 적 자리 뒤로 = 방 (C.534)
   }), { button: true });
   // 처음 화면 복귀 확인창(Q-3)이 열리면 전투를 멈추고, 아니요로 닫히면 우리가 멈춘 것만 풀어 준다
   let heldByApp = false;

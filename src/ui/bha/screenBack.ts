@@ -25,10 +25,16 @@ export function asBack<T extends HTMLElement>(b: T): T {
  * 화면이 바뀌어 전투가 떠났으면(connected false — stop 없이 바꿔 끼운 훈련 인형 빈 적 자리 등) 전투를 멈추고 등록을 지운다:
  * 옛 코드는 떠난 전투가 '진행 중'이면 뒤로를 계속 삼켜(보이지 않는 일시정지) 수련장 입구에서 다시 못 나갔다 (사용자 2026-11-18 "훈련장 한번 누르면 다시 못나감")
  */
-export function battleBackHook(o: { connected: () => boolean; stopped: () => boolean; stop: () => void; busy: () => boolean; pause: () => void }): (top: Element | null) => boolean | 'gone' {
+export function battleBackHook(o: { connected: () => boolean; stopped: () => boolean; stop: () => void; busy: () => boolean; pause: () => void; leave?: () => void }): (top: Element | null) => boolean | 'gone' {
   return (top) => {
     if (!o.connected()) o.stop();
     if (o.stopped()) return 'gone';
+    // leave = 일시정지 대신 전투를 멈추고 떠난다 (수련장 훈련 인형 빈 적 자리 뒤로 = 방, GDD 8-9 v6.194 C.534)
+    if (o.leave && !top && !o.busy()) {
+      o.stop();
+      o.leave();
+      return true;
+    }
     if (top || o.busy()) return false;
     o.pause();
     return true;

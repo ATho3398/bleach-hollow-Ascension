@@ -26,6 +26,8 @@ export interface ConfirmOptions {
   cls?: string;
   /** 기기 취소·Esc 로 닫히지 않는다 — 버튼 하나를 꼭 골라야 하는 창 (C.497 진화 미루기: 취소가 '미루기'로 세지 않게) */
   noCancel?: boolean;
+  /** 기기 취소·Esc(뒤로)가 '아니요' 대신 할 일 — 창은 닫고 이것만 부른다 ([아니요] 버튼은 그대로 onNo). 수련장 훈련 설정 창 뒤로 = 방 (C.534) */
+  onCancel?: () => void;
   onYes: () => void;
   onNo?: () => void;
 }
@@ -107,6 +109,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   // trapModalFocus 가 첫 항목(입력 칸)에 준 초점을 '아니요'로 옮긴다(위험한 확인의 기본 선택)
   if (typed) (noBtn ?? yesBtn).focus({ preventScroll: true });
   else if (!o.danger && !o.focusNo && !yesBtn.disabled) yesBtn.focus({ preventScroll: true });
-  unregister = registerLayer(layer, o.noCancel ? () => {} : no);
+  const cancel = o.onCancel;
+  unregister = registerLayer(layer, o.noCancel ? () => {} : cancel ? () => { close(); cancel(); } : no);
   return close;
 }

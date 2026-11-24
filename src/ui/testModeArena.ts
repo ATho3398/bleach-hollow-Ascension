@@ -52,6 +52,8 @@ export interface TestArenaDialogHandlers {
   onClose: () => void;
   /** [나가기]: 전투를 그만두고 테스트 패널로 */
   onExit: () => void;
+  /** 뒤로(◀·Esc·폰 뒤로): 있으면 창 닫기 대신 이것 — 수련장 훈련 인형 = 방으로 (GDD 8-9 v6.194, C.534). 없으면(테스트 모드) 창 닫기 그대로 */
+  onBack?: () => void;
 }
 
 function numInput(value: number, min: number, max: number, aria: string): HTMLInputElement {
@@ -125,7 +127,7 @@ export function arenaDialog(src: ArenaSource, prev: TestArenaChoice, note: strin
     cls: 'bha-testarena',
     content,
     yes: '확인',
-    no: '창 닫기', // 뒤로·Esc = 창만 닫기 (빈 자리 [적 설정]으로 다시)
+    no: '창 닫기', // 뒤로·Esc = 창만 닫기 (빈 자리 [적 설정]으로 다시) — onBack 이 있으면(수련장) 뒤로 = 그것
     alt: { label: '나가기', onClick: h.onExit },
     onYes: () => h.onPick({
       foeId: foeSel.value,
@@ -139,6 +141,7 @@ export function arenaDialog(src: ArenaSource, prev: TestArenaChoice, note: strin
       immortal,
     }),
     onNo: h.onClose,
+    ...(h.onBack ? { onCancel: h.onBack } : {}),
   });
   return closeFn;
 }

@@ -134,7 +134,7 @@ describe('C.471 훈련 인형 = 전투 안 설정 창 (GDD 8-9)', () => {
     expect(test).toContain('arenaBattle(faction, {');
     const arena = app.slice(app.indexOf('function arenaBattle('), app.indexOf('// ── 수련장 훈련 인형'));
     expect(arena).toContain('autoEnd: true');
-    expect(arena).toContain('emptyFoe: { slot: testArenaSlot(openDialog) }');
+    expect(arena).toContain('emptyFoe: { slot: testArenaSlot(openDialog), ...(run.practice ? { back: leaveHome } : {}) }'); // C.534: 수련장만 빈 자리 뒤로 = 방
     expect(arena).toContain('onExit: () => nav.pop()');
     expect(arena).not.toContain('practiceResult');
     expect(read('src/ui/practiceView.ts')).toContain("label: '전투 들어가기'");
