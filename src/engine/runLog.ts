@@ -94,6 +94,8 @@ export interface BattleRecord {
   lossReason: 'hp' | 'timeout' | 'executed' | null;
   /** 허무 적의 처형 시도 (C.531, 형식 96 — GDD 8-8 v6.160 ④): 시도 수·막은 수. 처형하는 적이 아니었거나 시도가 없었으면 없음 */
   foeExecutes?: { attempts: number; blocked: number };
+  /** C.532 (GDD 8-5 v6.164 독 진화 조건, 형식 97): 지속 피해로 적을 쓰러뜨렸으면 그 지속 피해의 속성(독 지속 피해 = 독 속성 id). 그 밖 마무리·옛 기록엔 없음 */
+  dotKill?: string;
   /** C.6 에서 더한 필드 (세이브 형식 5, 전투 v2) */
   /** 전투 시간(초) */
   durationSeconds: number;
@@ -337,6 +339,8 @@ export interface RunRecord {
   streak?: number;
   /** C.120 (세이브 형식 37, GDD 67장): 첫 원정 튜토리얼이면 true. 없으면 일반 원정 */
   tutorial?: boolean;
+  /** C.532 (GDD 8-5 v6.164 혈 진화 조건, 형식 97): 빈사로 귀환한 원정이면 true (정산 뒤 둥지가 빈사 — 져서 빈사가 됐거나 빈사로 떠나 빈사로 돌아옴, 튜토리얼 빈사·사망은 아님). 옛 기록엔 없음 */
+  collapsedReturn?: boolean;
   /** C.188 (세이브 형식 52, GDD 114장 4): 떠날 때 슬롯 성별. 형식 52 이전 기록에는 없다 */
   gender?: Gender;
   /** C.326 (세이브 형식 63, GDD 199장 8): 떠날 때 캐릭터 이름. 정하지 않았거나 형식 63 이전 기록에는 없다 */

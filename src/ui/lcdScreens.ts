@@ -46,7 +46,7 @@ import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
-import { kitActive, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
+import { kitActive, combatEvolutionOf, abilityEffectsOf, abilityIdLine, combatAbilitiesOf, currentStats, transcendentTraitEffects, elementDamageOf, capTierOf, evCaps, evCounted, evTotal, playerElementsOf, refStatOf, zeroStats, type AbilityLine, type EvolutionState } from '../engine/evolution';
 import { confirmDialog } from './confirmDialog';
 import { tryGetForm } from '../data/evolution';
 import { ATTACK_CATEGORY_WORDS } from '../data/hogyoku';
@@ -493,7 +493,7 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
       const [slotsPanel, ownedPanel] = traitsTab(blockFaction, save.build, chestUi.traits, () => {
         persist();
         fill();
-      }, save.evolution.tierIndex);
+      }, save.evolution.tierIndex, combatEvolutionOf(save.evolution).formId); // 지금 몸의 오리지널 블록 이름 (C.532)
       // 초월 특성 칸 (GDD 12-4 v6.039, C.436): 빌드 탭에도 — 기반과 상관없이 늘 붙는다
       const tt = transcendentTraitBlock(save.evolution);
       if (tt) slotsPanel!.append(tt);

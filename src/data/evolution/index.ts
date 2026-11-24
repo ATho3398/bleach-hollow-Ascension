@@ -152,6 +152,21 @@ function categoryFamilies(cat: FormDef['label']['category'], factionId: string):
 /** 허무형 조건 수치 (GDD 8-8 v6.166 — 도감 힌트가 읽는다) */
 const H_VOID = BALANCE.provisional.evolution.hidden.void;
 
+/** 혈·독 일반 진화 길 수치 (GDD 8-5 v6.164 — 도감 힌트가 읽는다) */
+const SPECIAL_PATHS = BALANCE.provisional.evolution.specialPaths;
+
+/** 혈·독 일반 진화 길의 도감 힌트 (C.532): '혈 블록을 10개 포식하고, 빈사로 귀환한 뒤 진화' · '독 블록을 10개 포식하고, 독 지속 피해로 적을 3번 쓰러뜨린 뒤 진화'. 길이 없는 속성이면 null */
+export function specialPathHint(element: string | undefined, factionId: string): string | null {
+  const path = SPECIAL_PATHS.find((p) => p.element === element);
+  if (!path) return null;
+  const el = elementName(path.element, factionId);
+  const extra = [
+    ...(path.collapsedReturns !== undefined ? [path.collapsedReturns > 1 ? `빈사로 ${path.collapsedReturns}번 귀환한` : '빈사로 귀환한'] : []),
+    ...(path.dotKills !== undefined ? [`${el} 지속 피해로 적을 ${path.dotKills}번 쓰러뜨린`] : []),
+  ];
+  return `${el} 블록을 ${path.absorbs}개 ${getFaction(factionId).absorbActionName}하고${extra.length > 0 ? `, ${extra.join(' · ')}` : ''} 뒤 진화`;
+}
+
 /** 도감 힌트 (해금된 진화체에만 보인다) */
 export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
@@ -159,7 +174,8 @@ export function formHint(form: FormDef, factionId: string): string {
     base: '정해진 걸음을 걸으면 진화',
     element: `${els[0]} 블록을 가장 많이 장착하고 진화${form.label.elements[0] === NORMAL_ELEMENT ? ` (${normalSlotNote(getFaction(factionId).slotName)})` : ''}`,
     // 공격 분류(물리·특수·혼합)는 화면에 안 보인다 (GDD 137장 1): 그 분류에 드는 블록 계열 이름으로 말한다
-    arrancar: `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(formCategoryOf(form, factionId), factionId)} 공격 블록을 가장 많이 장착하고 진화`,
+    // 혈·독 4단계 (C.532, GDD 8-5 v6.164): 장착 최다가 아니라 그 속성 블록 흡수 + 추가 조건
+    arrancar: specialPathHint(form.label.elements[0], factionId) ?? `${els[0]} ${FORM_MAX_TIER - 1}단계에서 ${categoryFamilies(formCategoryOf(form, factionId), factionId)} 공격 블록을 가장 많이 장착하고 진화`,
     fusion: `${els.join('·')} 적을 고루 많이 ${getFaction(factionId).absorbActionName}`,
     complete: '네 원소의 적을 모두 고루',
     fail: '블록 없이, 돌보지 못한 채, 또는 이것저것 흩어지게 먹고 진화',

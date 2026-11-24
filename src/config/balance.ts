@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 166; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — 전부 provisional): combat.foeHpBands 신설(허무 블록 적 체력 구간 배율 100~80% ×0.6 · 80~60 ×0.75 · 60~40 ×0.9 · 40~20 ×1.2 · 20~0 ×1.6) · foeExecute 신설(허무 적 처형: 내 체력 일반 3%·강적 5%·보스 7% 이하, 6초마다, 원 1.2초·판정 ±0.15초, 막으면 그 적 일반 공격 30% 피해(체력 1 하한)·적 1초 스턴·스턴 중 받는 피해 ×1.2) · specialEnemies.base 0.1 신설(★1~2 일반 칸 0 → 0.1) · evolution.hidden voidMaxDeferrals 삭제 → void { element kyo · absorbs 10 · deferrals 3 } · evoUniques h4:void hollow silenceSeconds 8·silenceLine 0.03(적막 블록). 적 체력·공격 수치 그대로.
+export const BALANCE_VERSION = 167; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23 — provisional): evolution.specialPaths 신설(혈 = 그 단계 혈 블록 10개 흡수 + 빈사로 귀환 1회 / 독 = 그 단계 독 블록 10개 흡수 + 독 지속 피해로 적 처치 3회). 옛 '혈·독 장착 최다(동률 포함)면 혈·독 진화체' 규칙은 없어짐 — 조건을 못 채우면 3단계 속성을 잇는다
+// 이전: BALANCE_VERSION = 166; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — 전부 provisional): combat.foeHpBands 신설(허무 블록 적 체력 구간 배율 100~80% ×0.6 · 80~60 ×0.75 · 60~40 ×0.9 · 40~20 ×1.2 · 20~0 ×1.6) · foeExecute 신설(허무 적 처형: 내 체력 일반 3%·강적 5%·보스 7% 이하, 6초마다, 원 1.2초·판정 ±0.15초, 막으면 그 적 일반 공격 30% 피해(체력 1 하한)·적 1초 스턴·스턴 중 받는 피해 ×1.2) · specialEnemies.base 0.1 신설(★1~2 일반 칸 0 → 0.1) · evolution.hidden voidMaxDeferrals 삭제 → void { element kyo · absorbs 10 · deferrals 3 } · evoUniques h4:void hollow silenceSeconds 8·silenceLine 0.03(적막 블록). 적 체력·공격 수치 그대로.
 // 이전: BALANCE_VERSION = 165; // C.530 (GDD 8-7 v6.186 '공속 진화체 = 일반 공격 간격 0.6초가 다 키움', 마스터AS — 전부 provisional): evoInvest.intervalFull 0.6 신설(능력 데이터 effortBasis 'attackInterval' 몸의 effort = 몸 기본 공속 간격 → 0.6초 비율) · evoUniques 노력치 기울기 — 사신 노도 perStackGrow 4 → 3.2·hitsGrow 2.5 → 2 · 사신 백련 perBlockGrow 2.5 → 4 · 호로 마르티요 perStackGrow 80 → 88 · 호로 에스카라바호 bonusGrow 9 → 6.5 · 호로 콜리브리 perStackGrow 28 → 36 (소로 burnGrow 48 그대로)
 // 이전: BALANCE_VERSION = 164; // C.529 (GDD 7-4 v6.182 사용자 '치확 상한 70%, 특정 진화체·특성만 돌파'): combat.critChanceMax·blockCritChanceMax 0.5 → 0.7 · evoAbilityCaps.critMax(능력 치명 + ≤ 100%p 를 상한 위에) 삭제 → critBreakMax 1(uniques.json ability.critBreak 표시 능력만 — 물 속성 6종 라나·니에블라·바라쿠다/노도·연우·백랑파, GDD 7-4 v6.183. 조건부 돌파 틀만, 폭주형·사냥꾼 조건 [미정]) · 탈착·초월 특성 블록 치명은 상한을 올리지 않음.
 // 이전: export const BALANCE_VERSION = 163; // C.528 (GDD 8-7 v6.181 '측정 노력치 칸 = 요구 스탯 몰기', 마스터AS — 전부 provisional): evoUniques 노력치 기울기 — 사신 노도 perStackGrow 2.5 → 4·hitsGrow 1.5 → 2.5 · 호로 소로 burnGrow 20 → 48(해방 1.26 → 2.2 = 다 키운 평소 ×1.5, 여우불 2.5초·5개 그대로) · 호로 에스카라바호 bonusGrow 5.5 → 9 · 호로 무랄라 shieldGrow 6 → 14. 측정(evoProfile.ts)만 바뀐 것 = 노력치 칸 investFocus.
@@ -824,6 +825,14 @@ export const BALANCE = {
       alertsAt: [0.2, 0.1],
       /** 진화마다 슬롯 +1 (GDD 4장) */
       slotsPerEvolution: 1,
+      /** 혈·독 일반 진화 길 (GDD 8-5 v6.164·v6.165, C.532 — 사용자 2026-11-23 "혈·독으로 가는 진화는 장착 최다가 아니라 그 속성 블록 10개 흡수 + 추가 조건", provisional):
+       *  그 단계(3단계) 합계로 element 속성 블록을 absorbs 개 이상 흡수(블록 갈래 = 둘 다·속성만, 진화 상태 elementAbsorbs) + 추가 조건을 채우면 그 속성 4단계 일반 진화체로 간다(일반 < 혈·독 < 히든).
+       *  collapsedReturns = 빈사로 귀환한 원정 수(진화 상태 collapsedReturns) · dotKills = 그 속성 지속 피해로 적을 쓰러뜨린 수(진화 상태 dotKills[element]). 없는 칸은 조건 아님.
+       *  못 채우면 3단계 속성을 잇는다(그 속성으로 가는 길만 막힘). 둘 다 채우면 그 속성 흡수 수가 많은 쪽, 같으면 이 표의 앞쪽 */
+      specialPaths: [
+        { element: 'blood', absorbs: 10, collapsedReturns: 1 },
+        { element: 'poison', absorbs: 10, dotKills: 3 },
+      ] as readonly { element: string; absorbs: number; collapsedReturns?: number; dotKills?: number }[],
       /** 히든 조건 (GDD 126장 7·협의 답, C.220 provisional): 비율은 그 단계 흡수의 속성 분포, 횟수는 그 단계 기록 */
       hidden: {
         /** 물+흙 / 불+뇌: 두 속성 각각 이 비율 이상 */

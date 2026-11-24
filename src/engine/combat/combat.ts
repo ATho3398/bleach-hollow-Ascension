@@ -820,6 +820,8 @@ export interface Finisher {
   weak?: boolean;
   /** 마무리 일격의 상성 */
   matchup?: Matchup;
+  /** 지속 피해(kind dot) 마무리: 그 지속 피해의 속성 (C.532, GDD 8-5 v6.164 독 진화 조건 — 독 지속 피해 = 독 속성). 속성 없는 지속 피해(진화체 자기장 등)는 없음 */
+  dotElement?: string;
 }
 
 /** 적 공격 한 번의 분류 (GDD 245장 11): 물리·특수. 혼합(옛 평균)은 굴린 뒤라 없음 — 각본 전투 등 분류를 안 쓰는 피해는 표시 없음 */
@@ -1105,6 +1107,8 @@ export interface LiberationState {
 export interface Dot {
   ticks: number;
   perTick: number;
+  /** 이 지속 피해를 건 속성 (C.532 — 특수 효과 poison 속성). 옛 중간 저장엔 없음 */
+  element?: string;
 }
 
 export interface CombatSetup {
@@ -2404,7 +2408,8 @@ function onHit(s: CombatState, target: 'enemy' | 'player', elements: readonly st
     const ticks = ticksOf(p, p.poisonSeconds);
     const left = victim.dot ? victim.dot.ticks * victim.dot.perTick : 0;
     const up = target === 'enemy' ? 1 + (p.abilityEffects.evoPoisonDot ?? 0) : 1; // 4단계 특성 '독 지속 피해 +' (C.515 비보라)
-    victim.dot = { ticks, perTick: (left + damage * p.poisonFraction * up) / ticks };
+    const dotElement = elements.find((e) => getElement(e).effect === 'poison');
+    victim.dot = { ticks, perTick: (left + damage * p.poisonFraction * up) / ticks, ...(dotElement ? { element: dotElement } : {}) };
   }
 }
 
@@ -3797,7 +3802,7 @@ function advanceTick(s: CombatState): void {
     const d = s.enemy.dot;
     emit(s, { kind: 'dot', target: 'enemy', damage: d.perTick });
     if (--d.ticks <= 0) s.enemy.dot = null;
-    dealDamage(s, d.perTick, { kind: 'dot', traitId: null, element: null });
+    dealDamage(s, d.perTick, { kind: 'dot', traitId: null, element: null, ...(d.element ? { dotElement: d.element } : {}) });
     if (s.status !== 'playing') return;
   }
   if (s.player.dot) {
@@ -3973,10 +3978,10 @@ registerEvoApi({
     if (text) emit(s, { kind: 'evo-proc', text, damage });
     dealDamage(s, damage, { kind: 'special', traitId: null, element });
   },
-  dot(s, damage) {
-    // 진화체 지속 피해 (C.515 토르멘타 자기장·비보라 독): 독 숫자와 같은 dot 사건
+  dot(s, damage, element) {
+    // 진화체 지속 피해 (C.515 토르멘타 자기장·비보라 독): 독 숫자와 같은 dot 사건. element = 그 지속 피해의 속성(독이면 독 속성 — 런 로그 dotKill, C.532)
     emit(s, { kind: 'dot', target: 'enemy', damage });
-    dealDamage(s, damage, { kind: 'dot', traitId: null, element: null });
+    dealDamage(s, damage, { kind: 'dot', traitId: null, element: null, ...(element ? { dotElement: element } : {}) });
   },
   elementOf(s, b) {
     if (b.kind === 'void') return 'void';

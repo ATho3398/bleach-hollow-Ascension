@@ -17,7 +17,7 @@ import {
   newBuild, releaseEffect, rerollCandidates, type AbsorbMode, type AbsorbOffer, type BuildState, type EngineEvent, type GainPlace, type RiskState,
 } from '../absorb';
 import {
-  addEv, addEvFree, applyEvolutionToParams, kitActive, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
+  addEv, addEvFree, applyEvolutionToParams, kitActive, cloneEvolution, newEvolution, recordEvolutionAbsorb, recordEvolutionDotKill, recordEvolutionElite, recordEvolutionRelease, recordEvolutionStep,
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
@@ -1077,6 +1077,8 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   // 승리 보상: 바퀴 첫 승리 1장, 강적(소굴·조합)이면 추가 1장. 바퀴 합계는 tilesPerLap.max 까지 — 임시 타일 (GDD 121장 4 ②)
   if (exp.victoriesThisLap === 0) drawTile(exp, 0, 'win');
   if (pending.enemy.class === 'elite') recordEvolutionElite(exp.evolution);
+  // 지속 피해로 처치 (GDD 8-5 v6.164 독 진화 조건, C.532): 그 단계 기록 dotKills[속성] +1
+  if (record.dotKill) recordEvolutionDotKill(exp.evolution, record.dotKill);
   if (pending.elite) for (let i = 0; i < PX.eliteBonusTiles; i++) drawTile(exp, 0, 'elite');
   const mods = pending.mods ?? NO_MODS;
   const elite = pending.enemy.class === 'elite';

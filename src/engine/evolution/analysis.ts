@@ -1,5 +1,6 @@
-// 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·리스크 게이지·교감·계보·미루기 수·빈사도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
+// 진화 트리 점검 (GDD 126장 C.220, npm run balance): ① 모든 진화체(일반 24 + 히든 12, 환생 횟수·리스크 게이지·교감·계보·미루기 수·빈사·빈사 귀환 수·지속 피해 처치 수도 무작위)가 어떤 상태에서 실제로 뽑힐 수 있는가 ② 무작위 상태에서 히든이 나오는 비율 ③ 가중 랜덤 곡선.
 // 장착 특성·흡수 속성 분포·돌보기 상태·행동 기록을 무작위로 만들어 judgeEvolution 을 그대로 돌린다. 종족 무관, 데이터만 본다.
+import { BALANCE } from '../../config/balance';
 import { PLAYER_ELEMENT_IDS } from '../../data/elements';
 import { TRAITS, isPlayerTrait } from '../../data/traits';
 import type { FormDef } from '../../data/schema';
@@ -63,6 +64,11 @@ export function randomState(rng: Rng, tierIndex: number, prevForms: readonly str
   const evBase = nextInt(rng, 12);
   const even = nextFloat(rng) < 0.3;
   for (const k of Object.keys(e.ev) as (keyof typeof e.ev)[]) e.ev[k] = even ? evBase + 4 : nextInt(rng, 16);
+  // C.532 혈·독 일반 진화 길 (GDD 8-5 v6.164): 빈사 귀환 수 · 길마다 그 속성 지속 피해 처치 수(조건의 0~2배)
+  e.collapsedReturns = nextFloat(rng) < 0.4 ? 1 + nextInt(rng, 2) : 0;
+  for (const path of BALANCE.provisional.evolution.specialPaths) {
+    if (path.dotKills !== undefined && nextFloat(rng) < 0.5) (e.dotKills ??= {})[path.element] = nextInt(rng, path.dotKills * 2 + 1);
+  }
   return e;
 }
 

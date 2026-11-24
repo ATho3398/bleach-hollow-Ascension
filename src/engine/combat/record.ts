@@ -55,6 +55,7 @@ export function buildBattleRecord(s: CombatState, ctx: BattleContext): BattleRec
     startHp: Math.round(Math.min(1, Math.max(0, s.params.playerStartHpFraction)) * 1000) / 1000,
     itemUsed: s.itemUsed,
     gearUses: s.inputs.filter((x) => x.input.type === 'gear').length,
+    ...(s.status === 'won' && s.finisher?.kind === 'dot' && s.finisher.dotElement ? { dotKill: s.finisher.dotElement } : {}), // 지속 피해로 처치 (GDD 8-5 v6.164 독 진화 조건, C.532)
     ...(s.execution && s.execution.attempts > 0 ? { foeExecutes: { attempts: s.execution.attempts, blocked: s.execution.blocked } } : {}),
     ...(s.kit && s.params.kit ? { kit: { id: s.params.kit.id, counters: s.kit.counters, finishers: s.kit.finishers, revives: s.kit.revives, ...(s.params.kit.riskRelease || s.params.kit.riskDrain ? { modeEnters: s.kit.modeEnters, modeExits: s.kit.modeExits, riskSpent: s.kit.riskSpent } : {}), ...(s.params.kit.mastery ? { secondEnters: s.kit.secondEnters, finals: s.kit.finals } : {}),
       ...(s.params.kit.mode ? { mode: s.params.kit.mode } : {}),

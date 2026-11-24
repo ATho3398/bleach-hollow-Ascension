@@ -8,6 +8,7 @@ import type { PerFaction } from '../../data/schema';
 import type { CombatParams, CombatState } from './combat';
 import { chainGroupsOf, type Block } from './tray';
 import { BALANCE } from '../../config/balance';
+import { POISON_DOT_ELEMENT } from '../../data/elements';
 
 /** 전투에 싣는 고유 능력 (applyEvolutionToParams 가 채운다). nums = 평소 수치, relNums = 레스렉시온/만해 중 수치 */
 export interface EvoParams {
@@ -129,7 +130,7 @@ export interface EvoApi {
   /** 추가 피해를 넣는다 (치명·특성 배율 포함, 화면 사건). exact = 이미 정해진 피해 그대로(치명·배율 다시 안 붙임 — raw·last) */
   strike(s: CombatState, damage: number, text: string, element: string | null, exact?: boolean): void;
   /** 지속 피해로 넣는다 (dot 사건 — 독 숫자처럼, C.515) */
-  dot(s: CombatState, damage: number): void;
+  dot(s: CombatState, damage: number, element?: string | null): void;
   /** 바의 index 블록이 지금 무슨 속성인가 (허 = void) */
   elementOf(s: CombatState, b: Block): string | null;
   /** 처형 (강적·보스 제외는 부르는 쪽이 본다) */
@@ -423,7 +424,7 @@ function runActions(s: CombatState, rule: EvoRule, ctx: EvoCtx): void {
         if (a.poison) amount *= 1 + (s.params.abilityEffects.evoPoisonDot ?? 0); // 4단계 특성 '독 지속 피해 +' (C.515 비보라)
         ctx.hitDamage = amount;
         if (amount <= 0) break;
-        if (a.dot) api().dot(s, amount);
+        if (a.dot) api().dot(s, amount, a.poison ? POISON_DOT_ELEMENT : null); // 독 지속 피해(a.poison)면 독 속성으로 남긴다 (C.532)
         else api().strike(s, amount, rule.proc ?? '', a.element ?? null, basis === 'raw' || basis === 'last' || basis === 'foeMaxHp');
         break;
       }

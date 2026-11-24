@@ -41,6 +41,9 @@ export const HIDDEN_FORM_ONLY_ELEMENT_IDS: readonly string[] = ELEMENTS.filter((
 /** 일반 진화체(3·4단계)가 있는 속성 — 진화체 고유 능력의 '그 속성 블록'(blockLv) 기준 */
 export const NORMAL_FORM_ELEMENT_IDS: readonly string[] = PLAYER_ELEMENT_IDS.filter((id) => !HIDDEN_FORM_ONLY_ELEMENT_IDS.includes(id));
 
+/** 특수 효과 poison(지속 피해)을 가진 속성 id — 진화체 독 지속 피해의 기록 속성 (C.532, 런 로그 dotKill). 그런 속성이 없으면 null */
+export const POISON_DOT_ELEMENT: string | null = ELEMENTS.find((e) => e.effect === 'poison')?.id ?? null;
+
 /** 적 전용 속성인가: 그 속성 블록은 플레이어가 얻지 못한다 */
 export function isEnemyOnlyElement(id: string): boolean {
   return ENEMY_ONLY_ELEMENT_IDS.includes(id);

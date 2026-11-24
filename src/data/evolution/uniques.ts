@@ -505,6 +505,18 @@ export function evoFormEntry(formId: string | null | undefined, factionId: strin
   return DATA.forms[formId]?.[factionId] ?? null;
 }
 
+/** 오리지널 블록의 이름·설명 (GDD 8-8 v6.160 ③, C.532 — 가방·블록 목록): 이 진화체가 element 속성 흡수 블록을 자기 특수 블록으로 바꿨으면(ability.originalBlock)
+ *  그 특수 블록의 이름과 설명({키} 수치를 채운 것, 없으면 빈 문자열). 그런 진화체가 아니거나 다른 속성이면 null */
+export function originalBlockOf(formId: string | null | undefined, factionId: string, element: string): { name: string; description: string } | null {
+  const a = evoFormEntry(formId, factionId)?.ability;
+  const ob = a?.originalBlock;
+  const sp = ob && ob.element === element ? a?.specials?.[ob.special] : undefined;
+  if (!sp || !formId) return null;
+  const n = evoNumsOf(formId, factionId);
+  const base = Object.fromEntries(Object.entries(n).filter(([k]) => k !== 'release')) as Record<string, number>;
+  return { name: evoText(sp.name, factionId), description: fillEvoText(evoText(sp.description, factionId), base) };
+}
+
 /** 진화체 × 종족 수치 (balance) — 없으면 빈 표 */
 export function evoNumsOf(formId: string, factionId: string): EvoNums {
   return (EB().forms[formId]?.[factionId] ?? {}) as EvoNums;

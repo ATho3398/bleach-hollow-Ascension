@@ -367,7 +367,7 @@ describe('⑥ 6-7 특수 속성 적 ★1~2 일반 칸 0 → 0.1 · 허무 일반
 
 describe('⑦ 세이브 형식 96 (95 → 96) — 옛 세이브를 이어 쓴다', () => {
   it('형식 96 · 95 → 96 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(96);
+    expect(SAVE_FORMAT_VERSION).toBe(97);
     expect(typeof SAVE_MIGRATIONS[95]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -378,7 +378,7 @@ describe('⑦ 세이브 형식 96 (95 → 96) — 옛 세이브를 이어 쓴다
     s.meta.format = 95;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(96);
+    expect(m.meta.format).toBe(97);
     expect(m.build.owned).toEqual(['t-water-a']);
     expect(m.build.slots[0]).toBe('t-water-a');
     expect(m.build.enhance).toEqual({ normal: 5, water: 2 });

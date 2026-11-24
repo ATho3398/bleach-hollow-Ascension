@@ -7,12 +7,12 @@ import { convertRetiredRareTraits, dropBasicBlockTraits, dropEnemyOnlyTraits, ga
 import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionDeferral, recordEvolutionBreakthrough, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionDeferral, recordEvolutionBreakthrough, recordEvolutionCollapsedReturn, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { evoExtraPetPower, evoExtraPetSlots, evoReleaseBlocked } from './data/evolution/uniques';
 import { kitModeDefOf, kitModesOf, kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
 import { fitSkinToLock, skinAllowedNow, skinLockOf, type SkinLockSave } from './engine/skinLock';
-import { SPECIAL_ELEMENT_IDS, isEnemyOnlyElement } from './data/elements';
+import { SPECIAL_ELEMENT_IDS, isElement, isEnemyOnlyElement } from './data/elements';
 import { abilitySlotCount, cloneLoadout, newAbilityLoadout, setAbilitySlots, type AbilityLoadout } from './engine/evolution';
 import { migrateAbilities148, migrateAbilities149, migrateEvolutionTo4, remapOldFormId } from './saveTier4';
 import { pickLook } from './engine/evolution/tierLook';
@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
+export const SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
+// 이전: SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
 // 이전: SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
 // 이전: SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
 // 이전: SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
@@ -1427,6 +1428,13 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   if (end.collapsed) logVital(save, { at: nowMs, kind: 'collapse', cause: 'defeat', runId: exp.runId });
   if (end.died) logVital(save, { at: nowMs, kind: 'death', ...(summarize(exp).outcome === 'defeated' ? { cause: 'defeat' as const } : {}), runId: exp.runId });
   for (const st of end.recovered) logVital(save, { at: nowMs, kind: 'recover', status: st, runId: exp.runId });
+  // 빈사로 귀환 (GDD 8-5 v6.164 혈 진화 조건, C.532): 정산 뒤 둥지가 빈사(져서 빈사가 됐거나 빈사로 떠나 빈사로 돌아옴) — 그 단계 기록 +1 · 런 기록 collapsedReturn.
+  // 튜토리얼 빈사(아래)·사망은 세지 않는다
+  if (save.nest.collapsed && !save.nest.dead && !exp.tutorial) {
+    recordEvolutionCollapsedReturn(save.evolution);
+    const run = log.runs[log.runs.length - 1];
+    if (run && run.runId === exp.runId) run.collapsedReturn = true;
+  }
   // 튜토리얼 회복 안내 (GDD 123장 5 수정 v5.280, C.199): 첫 원정을 마치면 빈사로 복귀 → 방에서 회복 안내(recover). '다음 할 일'은 그 안내를 마친 뒤 (recoverTutorial.recoverFeed)
   if (exp.tutorial && !save.nest.dead) {
     if (collapseNest(save.nest, nowMs)) logVital(save, { at: nowMs, kind: 'collapse', cause: 'tutorial', runId: exp.runId });
@@ -2651,7 +2659,30 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 95 → 96 (C.531, GDD 8-8 v6.160 허무 재설계 — C.516 되돌림): 허무 블록 = 계열 없는 1종. 옛 허무 조·탄·교(형식 94 이하 세이브에 남은 것 — 위 94 → 95 는 이제 허무를 지우지 않는다)를
   // 허무 블록 하나로 합치고(강화 횟수 그대로), 원정 중간 저장의 허무 적 흡수 화면은 허무 블록 후보를 돌려준다. 형식 95 세이브(이미 지워짐)는 허무 블록 없이 그대로 시작
   95: (save) => migrateMergedBlocks(save),
+  // 96 → 97 (C.532, GDD 8-5 v6.164 혈·독 일반 진화 조건): 진화 상태에 그 단계 빈사 귀환 수·지속 피해 처치 수
+  96: (save) => migrateSpecialPathCounters(save),
 };
+
+/** 형식 96 → 97 (C.532): 진화 상태 collapsedReturns 를 채운다(트랙 + 원정 중간 저장의 진화 사본 — 귀환 정산이 사본으로 덮어쓰므로 같이). 0 이면 칸을 만들지 않는다(없음 = 0).
+ *  빈사 귀환 수 = 지금 단계에 들어선 진화(런 로그 마지막 진화 기록의 toTier = 지금 단계) 뒤의 패배 빈사 기록(vitals collapse·defeat) 수 — 그 진화 기록이 없으면(1단계·환생 직후·옛 기록) 0.
+ *  빈사로 떠나 빈사로 돌아온 원정은 옛 기록에 남지 않아 못 센다. 지속 피해 처치 dotKills 는 만들지 않는다(= 0 — 옛 전투 기록의 dot 마무리는 독인지 알 수 없다) */
+export function migrateSpecialPathCounters(save: SaveData): void {
+  forEachTrack(save, (t) => {
+    if (!isRec(t.evolution)) return;
+    const evo = t.evolution as unknown as EvolutionState;
+    const log = isRec(t.runLog) ? t.runLog : null;
+    const evolutions = log && isRec(log.tiers) && Array.isArray(log.tiers.evolutions) ? (log.tiers.evolutions as unknown[]) : [];
+    const last = evolutions[evolutions.length - 1];
+    const since = isRec(last) && last.toTier === evo.tierIndex && typeof last.at === 'number' ? last.at : null;
+    const vitals = log && Array.isArray(log.vitals) ? (log.vitals as unknown[]) : [];
+    const returns = since === null ? 0 : vitals.filter((v) => isRec(v) && v.kind === 'collapse' && v.cause === 'defeat' && typeof v.at === 'number' && v.at >= since).length;
+    const set = (e: unknown): void => {
+      if (isRec(e) && returns > 0 && typeof e.collapsedReturns !== 'number') e.collapsedReturns = returns;
+    };
+    set(evo);
+    if (isRec(t.activeExpedition) && isRec(t.activeExpedition.exp)) set(t.activeExpedition.exp.evolution);
+  });
+}
 
 /** 형식 95 → 96 (C.531): 계열 없는 1종으로 합친 블록의 옛 id(mergedTraitId — 허무 조·탄·교 → 허무 블록)를 지금 id 로. 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·얻은 블록·흡수 후보).
  *  같은 블록이 여럿이 되면 하나만 남긴다(슬롯은 앞 칸, 뒤 칸은 비움). 흡수 화면이 '블록 없음'(blockless, C.516)인데 그 속성이 이제 적 전용이 아니면 그 속성 블록 후보를 돌려준다. 종족·속성 분기 없음 */
@@ -3368,13 +3399,19 @@ function sanitizeTrackFields(t: Pick<SaveData, TrackKey>, owned: readonly string
 
 /** 진화 상태의 C.220 칸 보정 (GDD 126장): 단계 기록 횟수 0 이상 정수, 아란칼화 여부, 특성 보유·장착(모르는 특성 id·넘친 칸 정리) */
 function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
-  for (const k of ['faints', 'longAbsences', 'hunterRuns', 'practices'] as const) {
+  for (const k of ['faints', 'longAbsences', 'hunterRuns', 'practices', 'collapsedReturns'] as const) { // collapsedReturns = C.532 (형식 97)
     if (e[k] === undefined) continue;
     const v = nonNegInt(e[k]);
     if (v > 0) e[k] = v;
     else delete e[k];
   }
   e.deferrals = nonNegInt(e.deferrals); // C.497 진화 미루기 (형식 92): 없거나 이상하면 0
+  // C.532 지속 피해 처치 수 (형식 97): 속성 → 1 이상 정수만 남기고, 남는 칸이 없으면 지운다
+  if (e.dotKills !== undefined) {
+    const kills = Object.fromEntries(Object.entries(isRec(e.dotKills) ? e.dotKills : {}).filter(([el, v]) => isElement(el) && Number.isInteger(v) && (v as number) > 0)) as Record<string, number>;
+    if (Object.keys(kills).length > 0) e.dotKills = kills;
+    else delete e.dotKills;
+  }
   // C.508 진화 묻는 중 (형식 94): 숫자 셋이 다 맞을 때만 남긴다
   const c = e.choice as unknown;
   if (c !== undefined && !(isRec(c) && [c.hunger, c.condition, c.runId].every((v) => typeof v === 'number' && Number.isFinite(v)))) delete e.choice;

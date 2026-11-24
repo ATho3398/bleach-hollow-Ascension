@@ -69,6 +69,11 @@ export interface EvolutionState {
   /** 이 단계에서 진화를 미룬 수 (GDD 8-5 진화 미루기, C.497 — 형식 92): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 수. 상한 없음, 진화하면 0.
    *  허무형 판정(그 단계 0회, 8-8)이 읽는다. 단계별 기록은 런 로그 tiers.deferrals·진화 기록 deferrals */
   deferrals?: number;
+  /** 이 단계 기록 (GDD 8-5 v6.164 혈·독 일반 진화 조건, C.532 — 형식 97, 진화하면 0, 옛 세이브엔 없음 = 0):
+   *  collapsedReturns = 빈사로 귀환한 원정 수(원정 정산 뒤 둥지가 빈사 — 져서 빈사가 됐거나 빈사로 떠나 빈사로 돌아옴, 튜토리얼 빈사는 안 셈) ·
+   *  dotKills = 원정 전투에서 지속 피해로 적을 쓰러뜨린 수(그 지속 피해의 속성 → 수, 독 = 독 속성) */
+  collapsedReturns?: number;
+  dotKills?: Record<string, number>;
   /** 귀환 뒤 [진화] [미루기]를 묻는 중 (GDD 8-5, C.508 — 형식 94): 진화 기준에 닿아 돌아왔고 아직 고르지 않았다. 고르기 전에 껐다 켜도 방에서 그 창을 다시 띄운다(공짜 미루기 막음).
    *  hunger·condition = 그 원정을 마친 몸 상태(진화 판정이 읽는다), runId = 그 원정. 진화하거나 미루면 지운다. 없으면 묻는 중 아님 */
   choice?: { hunger: number; condition: number; runId: number };
@@ -197,7 +202,7 @@ export function newEvolution(stageSeed = 0): EvolutionState {
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}), ...(e.choice ? { choice: { ...e.choice } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.dotKills ? { dotKills: { ...e.dotKills } } : {}), ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}), ...(e.choice ? { choice: { ...e.choice } } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -287,6 +292,16 @@ export function recordEvolutionElite(e: EvolutionState): void {
 /** 빈사가 됐다 (안정형 조건) */
 export function recordEvolutionFaint(e: EvolutionState): void {
   e.faints = (e.faints ?? 0) + 1;
+}
+
+/** 빈사로 귀환했다 (GDD 8-5 v6.164 혈 진화 조건, C.532): 원정을 마치고 둥지가 빈사 상태 */
+export function recordEvolutionCollapsedReturn(e: EvolutionState): void {
+  e.collapsedReturns = (e.collapsedReturns ?? 0) + 1;
+}
+
+/** 지속 피해로 적을 쓰러뜨렸다 (GDD 8-5 v6.164 독 진화 조건, C.532): element = 그 지속 피해의 속성 */
+export function recordEvolutionDotKill(e: EvolutionState, element: string): void {
+  (e.dotKills ??= {})[element] = (e.dotKills[element] ?? 0) + 1;
 }
 
 /** 24시간 넘게 꺼 뒀다 돌아왔다 (안정형 조건) */
@@ -487,6 +502,8 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.longAbsences;
   delete e.hunterRuns;
   delete e.bondCare;
+  delete e.collapsedReturns;
+  delete e.dotKills;
   const deferrals = e.deferrals ?? 0;
   e.deferrals = 0;
   delete e.choice; // 진화했으니 묻는 중 아님 (C.508)

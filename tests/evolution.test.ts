@@ -196,14 +196,19 @@ describe('트리 판정 (GDD 126장, C.220)', () => {
     expect(ids(absorbs(atTier(2), { water: 2, earth: 2 }))).toEqual([]); // 흡수가 적으면 분포 히든을 보지 않는다
   });
 
-  it('4단계 일반 = 3단계 속성 × 장착 최다 공격 분류 (공격 특성이 없으면 혼합), 혈·독·허가 장착 최다면 그 속성 하나뿐인 타입', () => {
+  // C.532 (GDD 8-5 v6.164, 사용자 2026-11-23): 옛 '혈·독이 장착 최다면 그 속성 타입' → 장착과 무관하게 그 단계 합계 조건(그 속성 블록 10개 흡수 + 빈사로 귀환 / 독 지속 피해 처치 3회)
+  it('4단계 일반 = 3단계 속성 × 장착 최다 공격 분류 (공격 특성이 없으면 혼합), 혈·독 = 그 속성 블록 10개 흡수 + 추가 조건(장착 최다만으로는 안 간다)', () => {
     const e = atTier(2, 't3:thunder');
     expect(judgeEvolution(e, ctxOf(buildWith('t-fire-a', 't-water-a', 't-fire-c'))).form.id).toBe('t4:thunder:physical');
     expect(judgeEvolution(e, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t4:thunder:special');
     expect(judgeEvolution(e, ctxOf(buildWith('t-fire-passive'))).form.id).toBe('t4:thunder:mixed');
     expect(dominantCategory(buildWith('t-fire-b'), 'hollow')).toBe('mixed');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-blood-a', 't-blood-b', 't-fire-c'))).form.id).toBe('t4:blood:physical');
-    expect(judgeEvolution(e, ctxOf(buildWith('t-poison-a', 't-poison-b'))).form.id).toBe('t4:poison:special');
+    // 혈·독을 가장 많이 장착해도 조건을 못 채우면 3단계 속성(뇌)을 잇는다
+    expect(judgeEvolution(e, ctxOf(buildWith('t-blood-a', 't-blood-b', 't-fire-c'))).form.id).toBe('t4:thunder:special'); // 타입 동률 = 최근 장착(탄)
+    expect(judgeEvolution(e, ctxOf(buildWith('t-poison-a', 't-poison-b'))).form.id).toBe('t4:thunder:mixed'); // 타입 동률 = 최근 장착(교)
+    // 조건을 채우면 장착이 무엇이든 그 속성 하나뿐인 타입
+    expect(judgeEvolution({ ...e, elementAbsorbs: { blood: 10 }, collapsedReturns: 1 }, ctxOf(buildWith('t-fire-c'))).form.id).toBe('t4:blood:physical');
+    expect(judgeEvolution({ ...e, elementAbsorbs: { poison: 10 }, dotKills: { poison: 3 } }, ctxOf(buildWith('t-fire-a'))).form.id).toBe('t4:poison:special');
     expect(judgeEvolution(atTier(2, 'h3:fail'), ctxOf(buildWith('t-fire-a'))).form.id).toBe('h4:fail');
   });
 

@@ -172,8 +172,11 @@ describe('④ 진화: 4단계 일반 17종 (허 삭제), 혈·독 우선, 3단�
     const e = { ...newSaveData('hollow', 1).evolution, tierIndex: 2, formId: 't3:fire', formHistory: ['t2:base', 't3:fire'] };
     const ctx = (build: BuildState) => ({ factionId: 'hollow', build, hunger: 10, condition: 90 });
     expect(tier4Normal(e, ctx(rawBuild(['t-kyo-a', 't-kyo-b', 't-fire-a']))).id).not.toBe('t4:kyo:mixed');
-    expect(tier4Normal(e, ctx(rawBuild(['t-kyo-a', 't-blood-a', 't-fire-a']))).id).toBe('t4:blood:physical');
-    expect(tier4Normal(e, ctx(rawBuild(['t-poison-a', 't-poison-b', 't-fire-a']))).id).toBe('t4:poison:special');
+    // C.532 (GDD 8-5 v6.164, 사용자 2026-11-23): 혈·독은 장착 최다가 아니라 그 단계 합계 조건(그 속성 블록 10개 흡수 + 빈사로 귀환 / 독 지속 피해 처치 3회) — 옛 기대값 '장착 최다면 혈·독'
+    expect(tier4Normal(e, ctx(rawBuild(['t-kyo-a', 't-blood-a', 't-fire-a']))).id).toBe('t4:fire:physical');
+    expect(tier4Normal(e, ctx(rawBuild(['t-poison-a', 't-poison-b', 't-fire-a']))).id).toBe('t4:fire:physical');
+    expect(tier4Normal({ ...e, elementAbsorbs: { blood: 10 }, collapsedReturns: 1 }, ctx(rawBuild(['t-kyo-a', 't-kyo-b', 't-fire-a']))).id).toBe('t4:blood:physical');
+    expect(tier4Normal({ ...e, elementAbsorbs: { poison: 10 }, dotKills: { poison: 3 } }, ctx(rawBuild(['t-kyo-a', 't-kyo-b', 't-fire-a']))).id).toBe('t4:poison:special');
     expect(evolutionCandidates(e, ctx(rawBuild(['t-kyo-a', 't-kyo-b', null]))).normal.id).not.toBe('t4:kyo:mixed');
   });
   it('3단계: 혈·독만 장착이면 노멀', () => {
@@ -188,7 +191,7 @@ describe('④ 진화: 4단계 일반 17종 (허 삭제), 혈·독 우선, 3단�
 
 describe('⑤ 세이브 — C.531 번복: 94 → 95 는 허무를 지우지 않고, 95 → 96 이 옛 허무 조·탄·교를 허무 블록 하나로 합친다 (옛 "허무 블록 지우고 칸 비움, 허무 강화 → 노멀")', () => {
   it('형식 96 · 94·95 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(96);
+    expect(SAVE_FORMAT_VERSION).toBe(97);
     expect(typeof SAVE_MIGRATIONS[94]).toBe('function');
     expect(typeof SAVE_MIGRATIONS[95]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
@@ -224,7 +227,7 @@ describe('⑤ 세이브 — C.531 번복: 94 → 95 는 허무를 지우지 않�
     s.meta.format = 94;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(96);
+    expect(m.meta.format).toBe(97);
     // 옛 기대값(C.516): 칸 [null, 't-water-a', null] · 보유 ['t-water-a'] · 강화 { normal: 3, water: 1 }
     expect(m.build.slots).toEqual(['t-kyo', 't-water-a', null]);
     expect(m.build.owned).toEqual(['t-kyo', 't-water-a']);

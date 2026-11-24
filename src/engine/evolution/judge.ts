@@ -1,9 +1,9 @@
 // 진화 판정 (GDD 126장 4단계 개편, C.220). 종족 무관 순수 함수: 진화 상태 + 장착 특성 + 돌보기 상태 → 진화체.
 // 2단계 = base. 3단계 = 장착 최다 속성(노멀·원소) · 망한 진화체(강제) · 히든 통로(가중 랜덤). 4단계 = 속성 × 장착 최다 공격 타입,
-// 우선순위 일반 < 혈·독·허 < 히든(조건을 채운 히든이 있으면 그중 가중 랜덤). 난수는 그 단계 진입 때 정한 시드(stageSeed)로 고정.
+// 혈·독 = 그 속성 블록 흡수 + 추가 조건(balance specialPaths, GDD 8-5 v6.164 — C.532). 우선순위 일반 < 혈·독 < 히든(조건을 채운 히든이 있으면 그중 가중 랜덤). 난수는 그 단계 진입 때 정한 시드(stageSeed)로 고정.
 
 import { BALANCE } from '../../config/balance';
-import { ELEMENTAL_IDS, NORMAL_ELEMENT, SPECIAL_ELEMENT_IDS } from '../../data/elements';
+import { ELEMENTAL_IDS, NORMAL_ELEMENT } from '../../data/elements';
 import { FORM_TABLE } from '../../data/evolution';
 import { fusionPairs } from '../../data/evolution/build';
 import { topStat } from '../../data/evolution/generate';
@@ -15,6 +15,8 @@ import type { EvolutionState } from './evolution';
 
 const H = BALANCE.provisional.evolution.hidden;
 const W = BALANCE.provisional.evolution.weight;
+const SPECIAL_PATHS = BALANCE.provisional.evolution.specialPaths;
+export type SpecialPath = (typeof SPECIAL_PATHS)[number];
 
 export interface JudgeContext {
   factionId: string;
@@ -32,7 +34,7 @@ export interface JudgeContext {
   failLineage?: boolean;
   /** 진화 순간 능력치 합계 (각성형 — 4단계 종족값 합계와 비교). 없으면 0 */
   statTotal?: number;
-  /** 진화 순간 빈사 (둥지 빈사 상태로 귀환, C.497). 없으면 false — 허무형 조건에서는 빠졌다(GDD 8-8 v6.166, C.531), 기록(snapshot)과 혈 진화 조건(8-5 v6.164 [미구현]) 자리 */
+  /** 진화 순간 빈사 (둥지 빈사 상태로 귀환, C.497). 없으면 false — 허무형 조건에서는 빠졌다(GDD 8-8 v6.166, C.531), 기록(snapshot)용. 혈 진화 조건(8-5 v6.164, C.532)은 진화 순간이 아니라 그 단계 합계(진화 상태 collapsedReturns)를 읽는다 */
   collapsed?: boolean;
 }
 
@@ -67,6 +69,9 @@ export interface EvolutionSnapshot {
   /** C.497 (GDD 8-5 진화 미루기): 그 단계에서 미룬 횟수 · 진화 순간 빈사. 옛 기록엔 없음 */
   deferrals?: number;
   collapsed?: boolean;
+  /** C.532 (GDD 8-5 v6.164 혈·독 일반 진화 조건): 그 단계에서 빈사로 귀환한 원정 수 · 지속 피해로 적을 쓰러뜨린 수(속성 → 수). 옛 기록엔 없음 */
+  collapsedReturns?: number;
+  dotKills?: Record<string, number>;
 }
 
 /** 진화 판정용 장착 속성 개수 (GDD 111장 후속 결정 ②, C.184 후속): 장착 특성 개수 + 노멀 강화 1↑이면 빈 본체 칸 하나를 노멀 1개로 센다
@@ -160,6 +165,30 @@ export const voidBlockAbsorbsOf = (e: Pick<EvolutionState, 'elementAbsorbs'>): n
 /** 이 단계에서 진화를 미룬 수 (C.497, GDD 8-5 — 옛 세이브엔 없음 = 0) */
 export const deferralsOf = (e: Pick<EvolutionState, 'deferrals'>): number => e.deferrals ?? 0;
 
+/** 이 단계에서 빈사로 귀환한 원정 수 · 그 속성 지속 피해로 적을 쓰러뜨린 수 (C.532, GDD 8-5 v6.164 — 옛 세이브엔 없음 = 0) */
+export const collapsedReturnsOf = (e: Pick<EvolutionState, 'collapsedReturns'>): number => e.collapsedReturns ?? 0;
+export const dotKillsOf = (e: Pick<EvolutionState, 'dotKills'>, element: string): number => e.dotKills?.[element] ?? 0;
+
+/** 혈·독 일반 진화 길의 조건을 채웠는가 (GDD 8-5 v6.164·v6.165, C.532): 그 단계 합계로 그 속성 블록 absorbs 개 이상 흡수 + 추가 조건(빈사로 귀환 / 그 속성 지속 피해 처치). 없는 칸은 조건 아님 */
+export function specialPathMet(e: Pick<EvolutionState, 'elementAbsorbs' | 'collapsedReturns' | 'dotKills'>, path: SpecialPath): boolean {
+  return (e.elementAbsorbs[path.element] ?? 0) >= path.absorbs
+    && (path.collapsedReturns === undefined || collapsedReturnsOf(e) >= path.collapsedReturns)
+    && (path.dotKills === undefined || dotKillsOf(e, path.element) >= path.dotKills);
+}
+
+/** 조건을 채운 혈·독 길의 4단계 일반 진화체 (없으면 null). 둘 다 채웠으면 그 속성 흡수 수가 많은 쪽, 같으면 balance 표의 앞쪽.
+ *  판정에서 빠진 진화체(retired)·히든은 길이 아니다 */
+export function specialPathForm(e: Pick<EvolutionState, 'elementAbsorbs' | 'collapsedReturns' | 'dotKills'>, table: readonly FormDef[] = FORM_TABLE): FormDef | null {
+  let best: { form: FormDef; absorbs: number } | null = null;
+  for (const path of SPECIAL_PATHS) {
+    if (!specialPathMet(e, path)) continue;
+    const form = table.find((f) => f.tier === 4 && !f.hidden && !f.retired && f.label.elements[0] === path.element);
+    const absorbs = e.elementAbsorbs[path.element] ?? 0;
+    if (form && (!best || absorbs > best.absorbs)) best = { form, absorbs };
+  }
+  return best?.form ?? null;
+}
+
 /** 노력치가 고른가 (각성형 ③): 가장 낮은 값 ≥ 가장 높은 값 × awakenedEvBalance. 노력치가 전부 0 이면 아니다 */
 export function evBalanced(e: Pick<EvolutionState, 'ev'>): boolean {
   const vals = STAT_IDS.map((s) => e.ev[s]);
@@ -213,19 +242,16 @@ export function passageCandidates(e: EvolutionState, ctx: JudgeContext): Evoluti
   return excess.length > 0 ? [hidden('h3:passage', Math.max(...excess))] : [];
 }
 
-/** 4단계 일반 진화체 (GDD 126장 6·확정 5): 속성 = 3단계 속성(통로·망함이면 장착 최다), 타입 = 장착 최다 공격 분류.
- *  혈·독이 장착 최다(동률 포함)면 그 속성의 단 하나 타입 진화체가 우선(일반 < 혈·독 < 히든). 망한 진화체에서 오면 실패형.
+/** 4단계 일반 진화체 (GDD 8-5): 속성 = 3단계 속성(통로·망함이면 장착 최다 — 원소·노멀만), 타입 = 장착 최다 공격 분류.
+ *  혈·독 = 장착과 무관하게 그 단계 합계 조건(그 속성 블록 10개 흡수 + 빈사로 귀환 / 독 지속 피해 처치 3회, balance specialPaths — v6.164, C.532)을 채우면
+ *  그 속성의 단 하나 타입 진화체가 우선(일반 < 혈·독 < 히든). 못 채우면 혈·독을 아무리 장착해도 3단계 속성을 잇는다. 망한 진화체에서 오면 실패형.
  *  판정에서 빠진 진화체(retired — GDD 8-5 옛 허 t4:kyo:mixed, 허무 일반 진화체는 없다 — 속성 데이터 hiddenFormOnly)는 후보가 아니다 */
 export function tier4Normal(e: EvolutionState, ctx: JudgeContext, table: readonly FormDef[] = FORM_TABLE): FormDef {
   const find = (id: string) => table.find((x) => x.id === id);
   const cur = e.formId ? find(e.formId) : undefined;
   if (cur?.label.kind === 'fail') return find('h4:fail')!;
-  const counts = judgeElementCounts(ctx.build);
-  const max = Math.max(0, ...Object.values(counts));
-  if (max > 0) {
-    const special = SPECIAL_ELEMENT_IDS.filter((el) => counts[el] === max).map((el) => table.find((f) => f.tier === 4 && !f.hidden && !f.retired && f.label.elements[0] === el)).find((f) => f !== undefined);
-    if (special) return special;
-  }
+  const special = specialPathForm(e, table);
+  if (special) return special;
   const el = cur?.label.kind === 'element' && cur.elements?.[0] ? cur.elements[0] : tier3Element(ctx.build, table);
   return find(`t4:${el}:${dominantCategory(ctx.build, ctx.factionId)}`) ?? find(`t4:${NORMAL_ELEMENT}:mixed`)!;
 }
@@ -295,6 +321,8 @@ export function judgeEvolution(e: EvolutionState, ctx: JudgeContext, table: read
       ability: abilityFor(e.ev, form),
       deferrals: deferralsOf(e),
       collapsed: ctx.collapsed === true,
+      ...(collapsedReturnsOf(e) > 0 ? { collapsedReturns: collapsedReturnsOf(e) } : {}),
+      ...(e.dotKills && Object.keys(e.dotKills).length > 0 ? { dotKills: { ...e.dotKills } } : {}),
     },
   };
 }

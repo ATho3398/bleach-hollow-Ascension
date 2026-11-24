@@ -2,6 +2,7 @@
 // 배치 = ① 카드·칸을 끌어다 놓기 ② 카드(✓)를 열어 [칸 고르기] → 칸을 눌러(✓) 놓기. 칸·카드를 누르면 상세 창. 문구는 종족 설정(slotName 등)에서 읽는다.
 import { BALANCE } from '../config/balance';
 import { elementName } from '../data/elements';
+import { originalBlockOf } from '../data/evolution/uniques';
 import { getTrait, traitDescription, traitName } from '../data/traits';
 import { basicAttackMultiplier, emptySlot, enhanceAttackBonus, enhanceLevel, isBasicBlockTrait, setSlot, type BuildResult, type BuildState } from '../engine/absorb';
 import { NORMAL_ELEMENT } from '../data/elements';
@@ -57,9 +58,12 @@ export function traitIconId(faction: FactionConfig, id: string): string {
   return fx ? `i-fx-${fx}` : 'i-attack';
 }
 
-/** 블록 이름 (84장 4번): 조·탄·교 / 막기·회복. 블록이 아닌 특성은 특성 이름 */
-export function traitBlockName(faction: FactionConfig, id: string, tierIndex = 0): string {
+/** 블록 이름 (84장 4번): 조·탄·교 / 막기·회복. 블록이 아닌 특성은 특성 이름.
+ *  formId = 지금 몸(전투 기반)의 진화체 — 그 몸이 이 속성 블록을 오리지널 블록으로 바꿨으면 그 이름(GDD 8-8 v6.160 ③ 호로 허무형 '적막 블록'·사신 허무형 '낙화 블록', C.532) */
+export function traitBlockName(faction: FactionConfig, id: string, tierIndex = 0, formId: string | null = null): string {
   const t = getTrait(id);
+  const original = t.kind === 'skill' ? originalBlockOf(formId, faction.id, t.element) : null;
+  if (original) return original.name;
   return (t.kind === 'skill' ? skillBlockLabel(battleLabels(faction, tierIndex), t.family, t.role ?? null) : null) ?? traitName(id, faction.id);
 }
 
@@ -67,8 +71,11 @@ export function traitBlockName(faction: FactionConfig, id: string, tierIndex = 0
 const plainDesc = plainText;
 
 /** 카드의 짧은 효과 줄: 블록 = 계열·위력, 그 밖 = 설명 */
-export function traitBrief(faction: FactionConfig, id: string): string {
+export function traitBrief(faction: FactionConfig, id: string, formId: string | null = null): string {
   const t = getTrait(id);
+  // 오리지널 블록으로 바뀐 블록(C.532): 그 특수 블록 설명
+  const original = t.kind === 'skill' ? originalBlockOf(formId, faction.id, t.element) : null;
+  if (original?.description) return original.description;
   // C.185 (GDD 111장 후속): 노멀 skill 특성 = 기본 블록 — 위력 대신 '고르면 노멀 강화 +1'
   if (isBasicBlockTrait(id)) return `고르면 ${elementName(t.element, faction.id)} 강화 +1`;
   if (t.kind !== 'skill' || t.powerInAttacks === undefined) return plainDesc(traitDescription(id, faction.id));
@@ -101,9 +108,9 @@ export function traitNumberLines(faction: FactionConfig, build: Pick<BuildState,
 }
 
 /** 상세 창 (아이템 탭 상세 창과 같은 컴포넌트): 이름 · 계열 · 속성 · 효과 · 속성 강화 n강(/100 작게, C.176 GDD 106장 1) · [장착]/[칸 고르기]/[빼기] */
-function openTraitDetail(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, id: string, from: SlotCell | null, onChange: () => void): void {
+function openTraitDetail(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, id: string, from: SlotCell | null, onChange: () => void, formId: string | null = null): void {
   const t = getTrait(id);
-  const name = traitBlockName(faction, id, tierIndex);
+  const name = traitBlockName(faction, id, tierIndex, formId);
   const lv = enhanceLevel(build, t.element);
   const kind = t.role ? (t.role === 'attack' ? `${faction.families.find((f) => f.id === t.family)?.name ?? '공격'}` : t.role === 'guard' ? '막기' : '회복') : faction.traitKindNames[t.kind];
   const actions: Parameters<typeof itemDialog>[0]['actions'] = [];
@@ -135,7 +142,7 @@ function openTraitDetail(faction: FactionConfig, build: BuildState, state: Trait
 }
 
 /** 장착 칸 한 칸 */
-function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, cell: SlotCell, onChange: () => void): HTMLElement {
+function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabState, tierIndex: number, cell: SlotCell, onChange: () => void, formId: string | null = null): HTMLElement {
   const id = idAt(build, cell);
   const num = h('span', 'bha-sgcell__num', `${cell.index + 1}`);
   const b = h('button', 'bha-sgcell');
@@ -157,8 +164,8 @@ function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabS
     paintElement(b, getTrait(id).element);
     b.classList.add('bha-sgcell--filled');
     b.dataset.drag = 'cell';
-    b.setAttribute('aria-label', `${areaName} ${cell.index + 1}번 칸 ${traitBlockName(faction, id, tierIndex)}`);
-    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex)), h('small', 'bha-sgcell__enh', `${enhanceLevel(build, getTrait(id).element)}강`), elementDot(getTrait(id).element, faction.id));
+    b.setAttribute('aria-label', `${areaName} ${cell.index + 1}번 칸 ${traitBlockName(faction, id, tierIndex, formId)}`);
+    b.append(num, icon(traitIconId(faction, id)), h('span', 'bha-sgcell__name', traitBlockName(faction, id, tierIndex, formId)), h('small', 'bha-sgcell__enh', `${enhanceLevel(build, getTrait(id).element)}강`), elementDot(getTrait(id).element, faction.id));
   }
   b.onclick = () => {
     if (held) {
@@ -167,13 +174,13 @@ function cellButton(faction: FactionConfig, build: BuildState, state: TraitsTabS
       state.held = null;
       return onChange();
     }
-    if (id) openTraitDetail(faction, build, state, tierIndex, id, cell, onChange);
+    if (id) openTraitDetail(faction, build, state, tierIndex, id, cell, onChange, formId);
   };
   return b;
 }
 
 /** 보관함 '슬롯' 화면: [왼쪽 장착 칸, 오른쪽 가진 특성 카드] */
-export function traitsTab(faction: FactionConfig, build: BuildState, state: TraitsTabState, onChange: () => void, tierIndex = 0): HTMLElement[] {
+export function traitsTab(faction: FactionConfig, build: BuildState, state: TraitsTabState, onChange: () => void, tierIndex = 0, formId: string | null = null): HTMLElement[] {
   if (state.held && (!build.owned.includes(state.held.id) || (state.held.from && idAt(build, state.held.from) !== state.held.id))) state.held = null;
   const filled = build.slots.filter(Boolean).length;
   const left = panel({ title: '장착', aside: h('span', '', `${faction.slotName} ${filled} / ${build.slots.length}`) });
@@ -181,12 +188,12 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   if (devText()) left.querySelector('.bha-panel__title')?.append(' ', provisionalTag());
   if (state.held) {
     const bar = h('div', 'bha-sgbar');
-    bar.append(h('span', '', `‘${traitBlockName(faction, state.held.id, tierIndex)}’을(를) 놓을 칸을 누른다`), button({ label: '취소', size: 'small', onClick: () => { state.held = null; onChange(); } }));
+    bar.append(h('span', '', `‘${traitBlockName(faction, state.held.id, tierIndex, formId)}’을(를) 놓을 칸을 누른다`), button({ label: '취소', size: 'small', onClick: () => { state.held = null; onChange(); } }));
     left.append(bar);
   }
   const body = h('div', 'bha-sgrow');
   body.dataset.area = 'body';
-  build.slots.forEach((_, i) => body.append(cellButton(faction, build, state, tierIndex, { area: 'body', index: i }, onChange)));
+  build.slots.forEach((_, i) => body.append(cellButton(faction, build, state, tierIndex, { area: 'body', index: i }, onChange, formId)));
   left.append(h('h3', 'bha-sgrow__title', `${faction.slotName}`), body);
   if (!state.held) left.append(h('p', 'bha-faint', '카드를 ✓로 열어 칸에 넣고, 칸을 ✓로 열어 뺀다.')); // 버튼 조작 기준 (GDD 159장 26)
 
@@ -201,9 +208,9 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   for (const id of spare) {
     const t = getTrait(id);
     const card = itemCard({
-      id, name: traitBlockName(faction, id, tierIndex), detail: traitBrief(faction, id), art: traitArt(faction, id),
+      id, name: traitBlockName(faction, id, tierIndex, formId), detail: traitBrief(faction, id, formId), art: traitArt(faction, id),
       foot: `${enhanceLevel(build, t.element)}강`, state: heldId === id ? 'worn' : undefined,
-      onClick: () => openTraitDetail(faction, build, state, tierIndex, id, null, onChange),
+      onClick: () => openTraitDetail(faction, build, state, tierIndex, id, null, onChange, formId),
     });
     paintElement(card, t.element);
     card.dataset.drag = 'card';
@@ -214,7 +221,7 @@ export function traitsTab(faction: FactionConfig, build: BuildState, state: Trai
   // 남는 특성이 없으면 빈 칸 대신 장착한 특성 설명 (GDD 100장 #55)
   if (spare.length === 0 && filled > 0) {
     const worn = h('div', 'bha-stack bha-stack--tight');
-    for (const id of build.slots) if (id) worn.append(h('p', 'bha-small', `${traitBlockName(faction, id, tierIndex)} — ${traitBrief(faction, id)}`));
+    for (const id of build.slots) if (id) worn.append(h('p', 'bha-small', `${traitBlockName(faction, id, tierIndex, formId)} — ${traitBrief(faction, id, formId)}`));
     right.append(worn);
   }
   // 개발 메모('임시 데이터다(기획 11-3, 11-4 미정)') 줄은 GDD 168장 4 에서 테스트 모드에서도 삭제
