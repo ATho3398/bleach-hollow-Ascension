@@ -35,7 +35,7 @@ import {
   absenceOf, battleCareOf, markBattleEntry, restartBattleOnResume, careBlock, departCareOf, departHpOf, performRevive, applyStartLook, artSkinOf, firstRunPending, tilesUnlocked, petsUnlocked, carriedPetsOf, gearUnlocked, battleItemUnlocked, claimDexRewards, claimTutorialGoals, liberationAccess, loadSave, lastLoadSaveError, newSaveData, nextRunId, rankChallenge, readActiveExpedition, recordBattle, recordExpedition, recordRankBattle, resumeTarget, resumeWindowMs, accrueIdle, claimIdle, idleClaimable, idlePendingYield, tickIdle, type IdleAccrual,
   performRebirth, recordTraining, recordTowerBattle, enterSpecial, recordSpecialBattle, settleSpecialRun, specialState, towerTicketDrop, settleLiberationRisk, ascensionAccess, recordAscension, artTierIndexOf, type SaveData,
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
-  combatFactionIdOf,
+  combatFactionIdOf, finishGuide,
   applyTrackRiskFloor,
   evolutionChoicePending, evolveAfterReturn, deferEvolution, pendingEvolveChoice,
 } from '../game';
@@ -679,7 +679,7 @@ export function startApp(host: HTMLElement): void {
     guideOpen = true;
     showGuide(faction, id, { ...o, onDone: () => {
       guideOpen = false;
-      markGuideDone(save!.help, id);
+      finishGuide(save!, id); // 튜토리얼 끝(first-run-room)이면 그 직전까지 멈춘 시계로 정산한 뒤 끝낸다 (GDD 13-5 v6.200)
       persist();
       o.onDone?.();
     } });

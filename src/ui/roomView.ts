@@ -9,7 +9,7 @@ import { consumableGroupOf } from '../shop';
 import { gateOpen } from '../unlockGate';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { roomKeyOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, type SaveData, artTierIndexOf } from '../game';
+import { roomKeyOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, careClockOf, type SaveData, artTierIndexOf } from '../game';
 import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -331,7 +331,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   scene.style.setProperty('--head-y', `${charTopOffset(charArtUrls)}px`); // 장면에 둬서 상태 칩과 말풍선이 같이 읽는다 (C.160)
   statusBtn.onclick = hd.onStatus;
   /** 지금 상태창 값 한 벌 (GDD 201장: 방을 다시 열 때 오른 값을 차오르게 비교) */
-  const shownNow = (): GaugeShown => nestShown(n, previewHomeHp(n, Date.now()).fraction);
+  const shownNow = (): GaugeShown => nestShown(n, previewHomeHp(n, Date.now(), careClockOf(save).idleHeal).fraction);
   /** over = 연출 중 칩 값 덮어쓰기 (GDD 132장 3 · 201장: 돌보기·회복 뒤 막대가 0.8초 동안 차오르고 숫자도 따라 오름). 덮어쓰기가 없으면 보여 준 값을 기억 */
   let stateCount = -1; // 상태이상 줄 수 — 바뀌면(구급상자 등) 박스 자리를 다시 잰다 (GDD 3-2 v6.004)
   let placeReady: (() => void) | null = null;
@@ -444,7 +444,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   let fxOn = false;
   // C.281 모양 그대로 (GDD 192장 2): 기존 체력 막대(meter player) 하나, 숫자 '현재 / 최대' 는 막대 안 가운데, 30% 아래 위험 구간·위험 색
   const paintHp = (fraction?: number) => {
-    const f = fraction ?? previewHomeHp(n, Date.now()).fraction;
+    const f = fraction ?? previewHomeHp(n, Date.now(), careClockOf(save).idleHeal).fraction;
     hpBox.replaceChildren(homeHpMeter(f, maxHp));
     applyBlink(scene);
   };
@@ -529,7 +529,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
     onCare: (action, food) => {
       const before = { hunger: n.hunger, condition: n.condition, risk: n.risk };
       let reaction: FoodReaction = null;
-      const hpBefore = previewHomeHp(n, Date.now()).fraction;
+      const hpBefore = previewHomeHp(n, Date.now(), careClockOf(save).idleHeal).fraction;
       // 먹이는 개수제 (GDD 23-1): 그 먹이가 있어야 먹고 하나 쓴다
       if (n.dead) return say(pickLine(room.talk, 'collapsed')); // 사망: 돌보기 안 됨 (GDD 102-3)
       if (action === 'feed') {

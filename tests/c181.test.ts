@@ -150,6 +150,7 @@ describe('109장 7 테스트 모드', () => {
   it('시간 앞당기기: +10분이면 먹이 한도가 다시 열리고, +1일이면 배부름이 하루치 준다', () => {
     const now = 100 * H;
     const s = newSaveData('hollow', now);
+    s.help.guides = {}; // C.537 (GDD 13-5 v6.200): 새 세이브는 첫 튜토리얼 중이라 시간이 멈춘다 — 튜토리얼을 끝낸 세이브로 본다
     s.lastSeenAt = now;
     s.nest.lastTickMs = now;
     s.nest.hunger = 60; // 가득(0)이면 안 먹는다 (GDD 243장 6)

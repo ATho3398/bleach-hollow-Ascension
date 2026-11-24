@@ -47,6 +47,8 @@ export interface TutorialStage {
   body?: string;
   /** 카드가 가리면 안 되는 열린 창 (예: 아이템 상세 창·먹이 목록) */
   avoid?: string[];
+  /** 실제 조작 단계에서 안내 창 없이 강조 테두리만 (GDD 13-5 v6.200 — 구급상자 상세 창이 열리면 '사용해 보자' 창을 없앤다) */
+  noCard?: boolean;
 }
 
 export interface GlossaryTerm {

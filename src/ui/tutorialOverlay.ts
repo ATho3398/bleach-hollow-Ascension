@@ -370,6 +370,8 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     return { top: r.top - o.top, left: r.left - o.left, width: r.width, height: r.height };
   };
   let hiddenForMove = false;
+  /** 지금 단계가 안내 창 없이 강조 테두리만인가 (단계 noCard — GDD 13-5 v6.200 구급상자 상세 창) */
+  let cardless = false;
   /** 마지막으로 놓은 대상 자리 — 대상이 크게 옮겨 갈 때만 다시 놓는다(제자리에서 흔들리는 대상을 따라 창이 움직이지 않게) */
   let placedFor: Rect | null = null;
   /** 강조 테두리를 마지막으로 맞춘 대상 자리 (GDD 245장 1) */
@@ -614,6 +616,10 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (holdWhileMoving()) return; // 연출이 끝나면 다시 그린다
     layout();
     showCard(true);
+    // 안내 창 없는 단계 (GDD 13-5 v6.200, C.537): 열린 창(구급상자 상세)을 가리지 않게 창은 숨기고 강조 테두리·기기 초점만 대상에 남긴다
+    cardless = acting && !!stage?.noCard;
+    if (cardless) card.style.visibility = 'hidden';
+    card.dataset.cardless = cardless ? '1' : '0';
     if (!sc?.waitFor && !acting) next.focus({ preventScroll: true });
   }
 
@@ -641,7 +647,7 @@ export function tutorialOverlay(faction: FactionConfig, opts: TutorialOverlayOpt
     if (!layer.isConnected) return window.clearInterval(coverTimer);
     // 덮던 창이 닫기 알림 없이 문서에서 빠졌으면(화면 이동 등) 여기서 다시 띄운다
     if (covered) return void (tutorialsCovered() || applyCover(false));
-    if (hiddenForMove || card.style.visibility === 'hidden') return;
+    if (hiddenForMove || (card.style.visibility === 'hidden' && !cardless)) return; // 창 없는 단계는 테두리가 대상을 계속 따라간다
     const sc = SCENES[state.index]!;
     const r = targetRect(stageOf(sc)?.targets ?? sc.targets, host);
     if (movedFar(r, placedFor, 24)) return layout();

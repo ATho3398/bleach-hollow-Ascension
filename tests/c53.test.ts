@@ -76,6 +76,8 @@ describe('24-1 꺼 둔 동안 허기', () => {
 
   it('기기 시계를 되돌려도 음수로 가지 않고, 같은 시간을 두 번 세지 않는다', () => {
     const save = newSaveData('hollow', 10 * H);
+    // C.537 (GDD 13-5 v6.200): 새 세이브는 첫 튜토리얼 중이라 시간·미접속으로 돌봄 수치가 안 변한다 — 튜토리얼을 끝낸 세이브로 본다
+    save.help.guides = {};
     save.nest.hunger = 30;
     expect(applyAbsence(save, 4 * H)).toBe(0); // 되돌린 시계
     expect(save.nest.hunger).toBe(30);

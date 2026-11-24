@@ -1,0 +1,50 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-room-after-10h.png",
+    "02-pc-cure-detail-nocard.png",
+    "03-phone-cure-detail-nocard.png"
+  ],
+  "flows": {
+    "pc": {
+      "cardShown": true,
+      "room": {
+        "status": "권영호로빈사60600"
+      },
+      "listStage": true,
+      "listCardVisible": true,
+      "dialog": true,
+      "detail": {
+        "cardVisible": false,
+        "cardless": [
+          "1"
+        ],
+        "holeOnUse": true,
+        "holeVisible": true
+      },
+      "afterUse": [
+        "회복 안내 2 / 5다음구급상자빈사가 풀렸다!"
+      ]
+    },
+    "phone": {
+      "cardShown": true,
+      "room": {
+        "status": "권영호로빈사60600"
+      },
+      "listStage": true,
+      "listCardVisible": true,
+      "dialog": true,
+      "detail": {
+        "cardVisible": false,
+        "cardless": [
+          "1"
+        ],
+        "holeOnUse": true,
+        "holeVisible": true
+      },
+      "afterUse": [
+        "회복 안내 2 / 5다음구급상자빈사가 풀렸다!"
+      ]
+    }
+  }
+}

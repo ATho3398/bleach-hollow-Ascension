@@ -286,22 +286,22 @@ export function soakSpa(nest: NestState, minutes: number, nowMs: number): { hp: 
 
 /** 지금 홈 체력 미리 보기 (방 체력 막대·온천 화면): 마지막으로 셈한 시각(lastTickMs)부터 지금까지 흘렀다고 치고 계산만 한다(세이브는 그대로).
  *  spaEnded = 그사이 온천에서 저절로 나왔을 결과 — 화면은 이걸 보고 tickIdle 로 실제 반영한 뒤 방으로 */
-export function previewHomeHp(nest: NestState, nowMs: number): { fraction: number; fullness: number; condition: number; spaEnded: SpaEnd | null } {
+export function previewHomeHp(nest: NestState, nowMs: number, idleHeal = true): { fraction: number; fullness: number; condition: number; spaEnded: SpaEnd | null } {
   const c: NestState = { ...nest, spa: nest.spa ? { ...nest.spa } : null };
-  const r = Number.isFinite(c.lastTickMs) && nowMs > c.lastTickMs ? passHomeHp(c, (nowMs - c.lastTickMs) / HOUR, nowMs) : { spaEnded: null };
+  const r = Number.isFinite(c.lastTickMs) && nowMs > c.lastTickMs ? passHomeHp(c, (nowMs - c.lastTickMs) / HOUR, nowMs, idleHeal) : { spaEnded: null };
   return { fraction: homeHpOf(c), fullness: fullnessOfNest(c), condition: c.condition, spaEnded: r.spaEnded };
 }
 
 /** 홈 체력 시간 흐름 (GDD 123장 4): 온천이면 온천 토막(spaStep) 뒤 남은 시간은 대기 회복. 대기 회복 = 1분에 +idlePerMinute, 빈사면 없음(온천은 빈사 상한까지).
- *  endMs = 이 구간이 끝나는 시각 */
-export function passHomeHp(nest: NestState, hours: number, endMs: number): { hp: number; spaEnded: SpaEnd | null; spaMinutes: number } {
+ *  endMs = 이 구간이 끝나는 시각. idleHeal false = 대기 회복 없음(튜토리얼 중 — 온천만 흐른다, GDD 13-5 v6.200) */
+export function passHomeHp(nest: NestState, hours: number, endMs: number, idleHeal = true): { hp: number; spaEnded: SpaEnd | null; spaMinutes: number } {
   if (nest.dead) return { hp: 0, spaEnded: null, spaMinutes: 0 };
   const before = homeHpOf(nest);
   nest.hpFraction = before;
   let minutes = Number.isFinite(hours) ? Math.max(0, hours) * 60 : 0;
   const spa = spaStep(nest, minutes, endMs - minutes * 60_000);
   minutes -= spa.used;
-  if (!nest.spa && !nest.collapsed && minutes > 0) nest.hpFraction = Math.min(homeHpCap(nest), nest.hpFraction + minutes * HH.idlePerMinute);
+  if (idleHeal && !nest.spa && !nest.collapsed && minutes > 0) nest.hpFraction = Math.min(homeHpCap(nest), nest.hpFraction + minutes * HH.idlePerMinute);
   return { hp: nest.hpFraction - before, spaEnded: spa.ended, spaMinutes: spa.used };
 }
 
@@ -328,10 +328,11 @@ export function passNestTime(nest: NestState, hours: number, offline: boolean, e
 }
 
 /** 시간이 흘러도 수치가 안 닳는 트랙 (GDD 12-4 v6.028, C.429 — 트랙 종류 설정 timeDecay: false, 초월자): 배부름·컨디션·교감이 그대로이고
- *  쇠약 시계(마지막 끼니)·빈사 시계는 그 시간만큼 뒤로 밀려 멈춘다. 홈 체력 자연 회복·온천(원할 때만 들어감)만 흐른다 */
-export function passNestFrozen(nest: NestState, hours: number, endMs: number = Date.now()): TimeFlow {
+ *  쇠약 시계(마지막 끼니)·빈사 시계는 그 시간만큼 뒤로 밀려 멈춘다. 홈 체력 자연 회복·온천(원할 때만 들어감)만 흐른다.
+ *  튜토리얼 중(GDD 13-5 v6.200, C.537)도 이 길 — idleHeal false 로 홈 체력 자연 회복까지 멈추고 온천(플레이어 행동)만 흐른다 */
+export function passNestFrozen(nest: NestState, hours: number, endMs: number = Date.now(), idleHeal = true): TimeFlow {
   const h = Number.isFinite(hours) ? Math.max(0, hours) : 0;
-  const home = passHomeHp(nest, h, endMs);
+  const home = passHomeHp(nest, h, endMs, idleHeal);
   const ms = h * HOUR;
   if ((nest.lastMealAt ?? 0) > 0) nest.lastMealAt = Math.min(endMs, nest.lastMealAt + ms);
   if (nest.collapsed && !nest.dead && nest.collapsedAt > 0) nest.collapsedAt = Math.min(endMs, nest.collapsedAt + ms);
@@ -465,13 +466,13 @@ export interface AbsenceReport {
 /** 꺼 둔 동안 (GDD 24-1 → 102-1·102-3): 마지막 접속 시각부터 시간 흐름(offline), 교감 decayHours 마다 −1, 그리고
  *  collapseHours 이상 비웠으면 빈사(그 시각부터, 교감 −collapseLoss) · 빈사 시간(실제 시간, deathHoursOf)이 지났으면 사망(교감 절반).
  *  paused(원정 중간 저장이 있음)·사망 상태면 아무것도 안 바뀐다. 기기 시계를 되돌렸으면(지금이 마지막 접속보다 앞) 0. 접속 시각 갱신은 부르는 쪽이 한다 */
-export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false, decay = true): AbsenceReport {
+export function applyAbsenceTime(nest: NestState, lastSeenAt: number, nowMs: number, paused = false, decay = true, idleHeal = true): AbsenceReport {
   const none: AbsenceReport = { hours: 0, flow: { hunger: 0, condition: 0, hp: 0, spaEnded: null }, bond: 0, collapsed: false, died: false };
   if (paused || nest.dead || !Number.isFinite(lastSeenAt) || nowMs <= lastSeenAt) return none;
   const hours = (nowMs - lastSeenAt) / HOUR;
   // 수치가 안 닳는 트랙 (GDD 12-4 v6.028): 교감 감소·48시간 빈사·사망 없음
   if (!decay) {
-    const flow = passNestFrozen(nest, hours, nowMs);
+    const flow = passNestFrozen(nest, hours, nowMs, idleHeal);
     nest.lastTickMs = nowMs;
     return { ...none, hours, flow };
   }
@@ -491,12 +492,12 @@ export function applyAbsenceHunger(nest: NestState, lastSeenAt: number, nowMs: n
 
 /** 켜 둔 동안 시간 흐름 (GDD 102-1): 마지막으로 셈한 시각(lastTickMs)부터 지금까지. 48시간 미접속 빈사는 없다(접속이 곧 '왔다').
  *  빈사 시간은 켜 있어도 흐른다(v5.228) — 다 되면 사망. paused(원정 중 — 원정은 자기 허기·컨디션을 쓴다, 빈사 사망은 귀환 때 본다)·사망이면 시각만 옮긴다. 시계를 되돌렸으면 그대로 */
-export function tickNestOnline(nest: NestState, nowMs: number, paused = false, decay = true): TimeFlow | null {
+export function tickNestOnline(nest: NestState, nowMs: number, paused = false, decay = true, idleHeal = true): TimeFlow | null {
   if (!Number.isFinite(nest.lastTickMs) || nowMs <= nest.lastTickMs) return null;
   const hours = (nowMs - nest.lastTickMs) / HOUR;
   nest.lastTickMs = nowMs;
   if (paused || nest.dead) return null;
-  if (!decay) return passNestFrozen(nest, hours, nowMs); // 수치가 안 닳는 트랙 (GDD 12-4 v6.028)
+  if (!decay) return passNestFrozen(nest, hours, nowMs, idleHeal); // 수치가 안 닳는 트랙 (GDD 12-4 v6.028)·튜토리얼 중 (13-5 v6.200)
   const flow = passNestTime(nest, hours, false, nowMs);
   checkDying(nest, nowMs);
   return flow;

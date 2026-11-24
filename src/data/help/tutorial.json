@@ -142,7 +142,8 @@
           "targets": [
             "@.bha-itemdialog[data-item-dialog=\"med-cure\"] [data-act=\"use\"]"
           ],
-          "body": "구급상자를 사용해 보자."
+          "body": "구급상자를 사용해 보자.",
+          "noCard": true
         }
       ],
       "done": "빈사가 풀렸다!"

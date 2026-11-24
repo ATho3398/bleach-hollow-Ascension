@@ -27,6 +27,8 @@ function played(): SaveData {
   exp.endReason = 'returned';
   exp.lapsCompleted = 1;
   recordExpedition(s, exp, 0);
+  // C.537 (GDD 13-5 v6.200): 새 세이브는 첫 튜토리얼 중이라 시간·미접속으로 돌봄 수치가 안 변한다 — 튜토리얼을 끝낸 세이브로 본다
+  s.help.guides = {};
   s.lastSeenAt = 1_000_000;
   s.nest.hunger = 0;
   s.nest.weakened = false;

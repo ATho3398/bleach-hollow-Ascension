@@ -113,6 +113,8 @@ describe('102-2 쇠약·피곤', () => {
 describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', () => {
   it('48시간 미접속 = 빈사(그 시각부터, 교감 −5), 빈사 시간이 다 되면 사망(교감 절반), 런 로그', () => {
     const s = newSaveData('hollow', 0);
+    // C.537 (GDD 13-5 v6.200): 새 세이브는 첫 튜토리얼 중이라 시간·미접속으로 돌봄 수치가 안 변한다 — 튜토리얼을 끝낸 세이브로 본다
+    s.help.guides = {};
     s.nest.bond = 20;
     s.lastSeenAt = 0;
     const r = absenceOf(s, 48 * H);
@@ -122,6 +124,7 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
     expect(s.nest.bond).toBe(20 - 4 - NX.bond.collapseLoss); // 12시간마다 −1 × 4
     expect(careBlock(s)).toBeNull(); // 빈사는 모험할 수 있다(출발 확인 창)
     const t = newSaveData('shinigami', 0);
+    t.help.guides = {}; // C.537: 튜토리얼을 끝낸 세이브
     t.lastSeenAt = 0;
     const d = absenceOf(t, 72 * H);
     expect(d.died).toBe(true);
@@ -176,6 +179,8 @@ describe('102-3 빈사(옛 쓰러짐)·사망·부활 (102장 수정 v5.228)', (
   });
   it('접속 시간 빨리 감기 (테스트 모드)', () => {
     const s = newSaveData('hollow', 0);
+    // C.537 (GDD 13-5 v6.200): 새 세이브는 첫 튜토리얼 중이라 시간·미접속으로 돌봄 수치가 안 변한다 — 튜토리얼을 끝낸 세이브로 본다
+    s.help.guides = {};
     const r = fastForward(s, 12, 100 * H);
     expect(r.hours).toBeCloseTo(12);
     expect(absenceText(r, getFaction('hollow'))).toMatch(/^12시간 동안 비웠다 — 배부름 −\d+/);

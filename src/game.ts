@@ -30,7 +30,7 @@ import { allTranscendentsOwned, decideTranscendent, transcendentForPair, HOGYOKU
 import { buildBattleRecord, elapsedSeconds, type CombatState } from './engine/combat';
 import { deckTilesFor, getTile, upgradeIdOf } from './data/tiles';
 import { TITLES, titleForFaction } from './data/titles';
-import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
+import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type GuideId, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import { STAT_IDS, formCategoryOf, type StatId, type Stats, type TitleDef } from './data/schema';
 import { getTrait, isPlayerTrait, mergedTraitId, retiredRareElement, TRAITS } from './data/traits';
@@ -561,6 +561,19 @@ export function tutorialInProgress(save: Pick<SaveData, 'help'>): boolean {
 }
 const TUTORIAL_FLOW_GUIDES = ['home-intro', 'first-run', 'recover', 'first-run-room'] as const;
 
+/** 돌봄 수치 시계 (GDD 13-5 v6.200, C.537): 첫 튜토리얼(tutorialInProgress)이 끝나기 전에는 시간·미접속으로 배부름·컨디션·교감·쇠약/빈사 시계·홈 체력 자연 회복이 변하지 않는다
+ *  (수치가 안 닳는 트랙과 같은 passNestFrozen 길 + 대기 회복도 멈춤). 온천·먹이·구급상자 등 플레이어 행동은 그대로. 정산 시각(lastTickMs·lastSeenAt)은 평소처럼 지금으로 옮겨 — 끝난 뒤 튜토리얼 시간을 몰아 빼지 않는다 */
+export function careClockOf(save: SaveData): { decay: boolean; idleHeal: boolean } {
+  if (tutorialInProgress(save)) return { decay: false, idleHeal: false };
+  return { decay: trackRulesOf(save).timeDecay, idleHeal: true };
+}
+
+/** 튜토리얼 흐름 안내를 마칠 때 (GDD 13-5 v6.200): 끝나기 직전까지 흐른 시간을 멈춘 시계로 먼저 정산한 뒤 끝낸다 — 1분 시계 사이 몫이 끝난 뒤 평소대로 빠지지 않게 */
+export function finishGuide(save: SaveData, id: GuideId, nowMs: number = Date.now()): void {
+  if (tutorialInProgress(save)) tickIdle(save, nowMs);
+  markGuideDone(save.help, id);
+}
+
 /** 돌봄 요청 시계 (GDD 82장): 방을 열 때·방에 있는 동안 부른다. 놓친 요청은 런 로그 care.missed 에 센다. 새 요청이 막 생겼으면 true */
 export function tickCare(save: SaveData, nowMs: number = Date.now(), rand: () => number = Math.random): boolean {
   // 돌봄 요청이 없는 트랙 (트랙 종류 careRequests: false — 초월자, GDD 12-4 v6.028): 배지를 만들지 않는다
@@ -610,7 +623,8 @@ function holdTutorialDying(save: SaveData, nowMs: number): void {
  *  쓰러짐·사망은 런 로그 vitals 에 남긴다(9장). 결과를 돌려주고 접속 시각을 지금으로(되돌린 시계면 그대로) */
 export function absenceOf(save: SaveData, nowMs: number = Date.now()): AbsenceReport {
   holdTutorialDying(save, nowMs);
-  const r = applyAbsenceTime(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null, trackRulesOf(save).timeDecay);
+  const clock = careClockOf(save); // 튜토리얼 중엔 멈춘 시계 (GDD 13-5 v6.200)
+  const r = applyAbsenceTime(save.nest, save.lastSeenAt, nowMs, save.activeExpedition != null, clock.decay, clock.idleHeal);
   const at = (h: number) => Math.round(save.lastSeenAt + h * 3_600_000);
   if (r.collapsed) logVital(save, { at: at(BALANCE.provisional.nest.care.collapseHours), kind: 'collapse', cause: 'absence', hours: r2(r.hours) });
   // 안정형 조건 (GDD 126장 7, C.220): 24시간 넘게 꺼 둔 수 — 원정 중간 저장이 있어도 실제로 꺼 둔 시간으로 센다
@@ -1641,7 +1655,8 @@ export function tickIdle(save: SaveData, nowMs: number = Date.now()): boolean {
   // 켜 둔 동안 시간 흐름 (GDD 102-1): 허기·컨디션 — 원정 중이면 원정이 자기 수치를 쓴다
   const alive = !save.nest.dead;
   holdTutorialDying(save, nowMs);
-  logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null, trackRulesOf(save).timeDecay)?.spaEnded);
+  const clock = careClockOf(save); // 튜토리얼 중엔 멈춘 시계 (GDD 13-5 v6.200)
+  logSpaEnd(save, tickNestOnline(save.nest, nowMs, save.activeExpedition != null, clock.decay, clock.idleHeal)?.spaEnded);
   if (alive && save.nest.dead) logVital(save, { at: nowMs, kind: 'death' }); // 빈사 시간이 켜 둔 동안 다 됐다 (GDD 102장 수정)
   const r = accrueIdle(save, nowMs, true);
   markSeen(save, nowMs);
