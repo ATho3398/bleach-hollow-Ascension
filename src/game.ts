@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
+export const SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
+// 이전: SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
 // 이전: SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
 // 이전: SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
 // 이전: SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
@@ -2661,6 +2662,8 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   95: (save) => migrateMergedBlocks(save),
   // 96 → 97 (C.532, GDD 8-5 v6.164 혈·독 일반 진화 조건): 진화 상태에 그 단계 빈사 귀환 수·지속 피해 처치 수
   96: (save) => migrateSpecialPathCounters(save),
+  // 97 → 98 (C.533, GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종): 옛 혈·독 조·탄·교를 혈 블록·독 블록 하나로 합친다(강화 횟수 그대로) — 95 → 96 허무와 같은 변환(속성 분기 없음, mergedTraitId 가 가리키는 것 전부)
+  97: (save) => migrateMergedBlocks(save),
 };
 
 /** 형식 96 → 97 (C.532): 진화 상태 collapsedReturns 를 채운다(트랙 + 원정 중간 저장의 진화 사본 — 귀환 정산이 사본으로 덮어쓰므로 같이). 0 이면 칸을 만들지 않는다(없음 = 0).
@@ -2684,7 +2687,7 @@ export function migrateSpecialPathCounters(save: SaveData): void {
   });
 }
 
-/** 형식 95 → 96 (C.531): 계열 없는 1종으로 합친 블록의 옛 id(mergedTraitId — 허무 조·탄·교 → 허무 블록)를 지금 id 로. 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·얻은 블록·흡수 후보).
+/** 형식 95 → 96 (C.531 허무) · 97 → 98 (C.533 혈·독): 계열 없는 1종으로 합친 블록의 옛 id(mergedTraitId — 허무·혈·독 조·탄·교 → 허무·혈·독 블록)를 지금 id 로. 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·얻은 블록·흡수 후보).
  *  같은 블록이 여럿이 되면 하나만 남긴다(슬롯은 앞 칸, 뒤 칸은 비움). 흡수 화면이 '블록 없음'(blockless, C.516)인데 그 속성이 이제 적 전용이 아니면 그 속성 블록 후보를 돌려준다. 종족·속성 분기 없음 */
 export function migrateMergedBlocks(save: SaveData): void {
   const now = (id: unknown): unknown => (typeof id === 'string' ? mergedTraitId(id) ?? id : id);

@@ -437,7 +437,7 @@ describe('추성 2번째 펫 칸 — 세이브 형식 93', () => {
     return s;
   };
   it('형식 93 · 92 → 93 변환(빈 2번째 칸) · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(97);
+    expect(SAVE_FORMAT_VERSION).toBe(98);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[92]).toBe('function');
     const s = newSaveData('shinigami', 1);
@@ -445,7 +445,7 @@ describe('추성 2번째 펫 칸 — 세이브 형식 93', () => {
     delete old.shared.pets.active2;
     old.meta.format = 92;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(97);
+    expect(m.meta.format).toBe(98);
     expect(m.shared.pets.active2).toBeNull();
   });
   it('펫 칸: 추성(사신) 2칸 · 다른 진화체 1칸 · 정리(안 가진 펫·1번째와 같은 펫은 버림)', () => {

@@ -52,7 +52,8 @@ describe('104장 5·6: 포식 설명·이름', () => {
     // C.531 (GDD 8-2 v6.161): 허무 블록 = 계열 없는 1종 — 속성 이름이 곧 블록 이름이라 떼지 않는다. 옛 id(허무 교 t-kyo-b)는 지금 블록으로 읽힌다 (옛 기대값 '교')
     expect(traitName('t-kyo', 'hollow')).toBe('허무 블록');
     expect(traitName('t-kyo-b', 'hollow')).toBe('허무 블록');
-    expect(traitName('t-blood-b', 'hollow')).toBe('교');
+    expect(traitName('t-blood-b', 'hollow')).toBe('혈 블록'); // C.533 (GDD 8-2 v6.161): 혈·독도 계열 없는 1종 — 옛 id(혈 교)는 혈 블록으로 읽힌다 (옛 기대값 '교')
+    expect(traitName('t-poison', 'shinigami')).toBe('독 블록');
     expect(traitAbbr('t-water-a', 'hollow')).toBe('조');
     expect(getTrait('t-water-a').name).toEqual({ hollow: '물 조', shinigami: '물 참' });
     expect(traitName('boss-sand-maw', 'hollow')).toBe('아레나 보라스의 턱'); // GDD 198장 보스 이름 // 속성 글자로 시작하지 않으면 그대로

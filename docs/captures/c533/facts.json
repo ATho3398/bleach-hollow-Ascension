@@ -1,0 +1,59 @@
+{
+ "errors": [],
+ "foe": {
+  "id": "kyo-basic",
+  "element": "kyo"
+ },
+ "pcBar": {
+  "glyphs": [
+   "독",
+   "독",
+   "조",
+   "혈",
+   "혈",
+   "혈"
+  ],
+  "tray": [
+   "t-blood",
+   "t-blood",
+   "t-blood",
+   "t-water-a",
+   "t-poison",
+   "t-poison"
+  ]
+ },
+ "pcBag": {
+  "cells": [
+   "혈 블록",
+   "독 블록",
+   "조",
+   "비어 있음"
+  ]
+ },
+ "phoneBar": {
+  "glyphs": [
+   "독",
+   "독",
+   "참",
+   "혈",
+   "혈",
+   "혈"
+  ],
+  "tray": [
+   "t-blood",
+   "t-blood",
+   "t-blood",
+   "t-water-a",
+   "t-poison",
+   "t-poison"
+  ]
+ },
+ "phoneBag": {
+  "cells": [
+   "혈 블록",
+   "독 블록",
+   "참",
+   "비어 있음"
+  ]
+ }
+}

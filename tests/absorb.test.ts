@@ -77,9 +77,9 @@ describe('임시 데이터', () => {
     for (const e of ELEMENTS) {
       const ts = TRAITS.filter((t) => t.element === e.id && !t.boss); // 보스 특성(C.58)은 따로
       // C.531 (GDD 8-2 v6.161, 사용자 2026-11-23 "혈, 독, 허 기본 블록(이건 참권귀로 안나누고 블록 특성은 1개만)"): 허무 블록 = 계열 없는 1종 → 허무만 3개(블록 1·패시브·파츠).
-      // 옛 기대값 '속성마다 5개·공격 3계열'은 허무 밖 속성에 그대로 (혈·독 1종화는 다음 패치)
+      // 옛 기대값 '속성마다 5개·공격 3계열'은 특수 속성 밖(노멀·원소)에 그대로. C.533: 혈·독도 계열 없는 1종(같은 GDD 줄 — C.531 때 '다음 패치'로 미룬 것)
       const familyless = ts.some((t) => t.role === 'attack' && t.family === undefined);
-      expect(familyless, e.id).toBe(e.id === 'kyo');
+      expect(familyless, e.id).toBe(e.kind === 'special');
       expect(ts, e.id).toHaveLength(familyless ? 3 : 5); // C.213 (GDD 136장 1): 희귀 특성 삭제 6 → 5
       expect(new Set(ts.map((t) => t.kind))).toEqual(new Set(['skill', 'passive', 'part']));
       expect(new Set(ts.filter((t) => t.role === 'attack').map((t) => t.family))).toEqual(familyless ? new Set([undefined]) : new Set(['family-a', 'family-b', 'family-c']));
@@ -780,7 +780,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
 
   it('모든 속성이 서로 다른 계열의 일반 공격 특성을 2개 이상 가진다', () => {
     // C.531 (GDD 8-2 v6.161): 허무 블록은 계열 없는 1종 — 계열 섞임 대상이 아니다
-    for (const l of ELEMENTS.filter((e) => e.id !== 'kyo')) {
+    for (const l of ELEMENTS.filter((e) => e.kind !== 'special')) { // C.533: 혈·독도 계열 없는 1종
       const set = new Set(fams(TRAITS.filter((t) => t.element === l.id && !t.boss).map((t) => t.id)));
       expect(set.size, l.id).toBeGreaterThanOrEqual(2);
     }
@@ -788,7 +788,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
 
   it('첫 흡수(장착 없음)는 어느 속성이든 서로 다른 계열의 공격 후보 2개를 낸다 (노멀은 기본 블록을 가진 것으로 봐 후보 없음, C.147)', () => {
     // C.531 (GDD 8-8 v6.160, 사용자 2026-11-23 "허무도 흡수 가능해"): 허무 적 = 허무 블록(계열 없는 1종) 후보 1개 — 계열 섞임 대상 아님(tests/c531)
-    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'kyo')) {
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.kind !== 'special')) { // C.533: 혈·독 적도 계열 없는 블록 1종 후보(tests/c533)
       for (let seed = 1; seed <= 30; seed++) {
         // C.125 (70장): 후보는 그 적 속성 안에서만 — 특수 속성(혈·독·허)은 숨김이 열렸을 때로 본다
         const offer = buildOffer(createRng(seed), normal(l.id), newBuild(), NO, 0, null);
@@ -802,7 +802,7 @@ describe('공격 계열 섞임 (GDD 18-8 ③, C.41)', () => {
   it('이미 장착한 계열만 있으면 다른 계열 공격 후보를 끼워 넣는다 (장착 계열이 보장 수에 차면 손대지 않는다)', () => {
     const b: BuildState = newBuild();
     gainTrait(b, 't-fire-a'); // 계열 a 장착
-    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire' && e.id !== 'kyo')) { // 허무 적 = 계열 없는 허무 블록 1종 (C.531, GDD 8-2 v6.161)
+    for (const l of ELEMENTS.filter((e) => e.id !== NORMAL_ELEMENT && e.id !== 'fire' && e.kind !== 'special')) { // C.533: 혈·독도 // 허무 적 = 계열 없는 허무 블록 1종 (C.531, GDD 8-2 v6.161)
       for (let seed = 1; seed <= 30; seed++) {
         const offer = buildOffer(createRng(seed), normal(l.id), b, NO, 0, null);
         expect(fams(offer.candidates).some((f) => !equippedAttackFamilies(b).has(f)), `${l.id}/${seed}`).toBe(true);

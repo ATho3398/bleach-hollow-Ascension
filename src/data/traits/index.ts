@@ -59,8 +59,8 @@ export function retiredRareElement(id: string): string | null {
   return m && isElement(m[1]) && !TRAITS.some((t) => t.id === id) ? m[1]! : null;
 }
 
-/** 계열 없는 1종으로 합친 블록의 옛 id (GDD 8-2 v6.161, C.531 — 허무 조·탄·교 't-kyo-a·c·b' → 허무 블록 't-kyo'): 옛 id → 지금 id, 아니면 null.
- *  세이브는 지금 id 로 바꾸고(SAVE_MIGRATIONS[95]), 런 로그 옛 기록은 옛 id 를 그대로 남겨 getTrait 이 지금 블록으로 읽는다. 속성 분기 없음 — 't-<속성>' 블록이 데이터에 있고 옛 id 가 없을 때만 */
+/** 계열 없는 1종으로 합친 블록의 옛 id (GDD 8-2 v6.161, C.531 — 허무 조·탄·교 't-kyo-a·c·b' → 허무 블록 't-kyo' · C.533 — 혈·독도 't-blood'·'t-poison'): 옛 id → 지금 id, 아니면 null.
+ *  세이브는 지금 id 로 바꾸고(SAVE_MIGRATIONS[95]·[97]), 런 로그 옛 기록은 옛 id 를 그대로 남겨 getTrait 이 지금 블록으로 읽는다. 속성 분기 없음 — 't-<속성>' 블록이 데이터에 있고 옛 id 가 없을 때만 */
 export function mergedTraitId(id: string): string | null {
   const m = /^(t-[a-z]+)-[abc]$/.exec(id);
   if (!m || TRAITS.some((t) => t.id === id)) return null;

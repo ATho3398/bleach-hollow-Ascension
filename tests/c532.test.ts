@@ -60,8 +60,8 @@ describe('② 판정 (GDD 8-5): 그 속성 블록 흡수 + 추가 조건', () =>
   });
   it('혈·독을 가장 많이 장착해도 조건을 못 채우면 혈·독으로 가지 않는다 (옛 장착 최다 규칙 없음) — 두 종족 같다', () => {
     for (const f of ['hollow', 'shinigami']) {
-      expect(tier4Normal(tier3(), ctxOf(buildOf('t-blood-a', 't-blood-b', 't-blood-c'), f)).id.startsWith('t4:fire:')).toBe(true);
-      expect(tier4Normal(tier3(), ctxOf(buildOf('t-poison-a', 't-poison-b', 't-poison-c'), f)).id.startsWith('t4:fire:')).toBe(true);
+      expect(tier4Normal(tier3(), ctxOf(buildOf('t-blood'), f)).id.startsWith('t4:fire:')).toBe(true);
+      expect(tier4Normal(tier3(), ctxOf(buildOf('t-poison'), f)).id.startsWith('t4:fire:')).toBe(true);
       expect(tier4Normal(tier3({ elementAbsorbs: { blood: 10 }, collapsedReturns: 1 }), ctxOf(buildOf('t-fire-a'), f)).id).toBe('t4:blood:physical');
     }
   });
@@ -90,7 +90,7 @@ describe('② 판정 (GDD 8-5): 그 속성 블록 흡수 + 추가 조건', () =>
   });
   it('3단계 진화에는 영향 없음: 혈·독만 장착 = 노멀, 조건을 채워도 3단계는 원소·노멀', () => {
     const e2 = { ...newEvolution(5), tierIndex: 1, formId: 't2:base', formHistory: ['t2:base'], elementAbsorbs: { blood: 12 }, absorbs: 12, collapsedReturns: 2 };
-    expect(judgeEvolution(e2, ctxOf(buildOf('t-blood-a'))).form.id).toBe('t3:normal');
+    expect(judgeEvolution(e2, ctxOf(buildOf('t-blood'))).form.id).toBe('t3:normal');
   });
   it('진화 스냅샷(런 로그)에 그 단계 합계가 남는다 — 0 이면 칸 없음', () => {
     const snap = judgeEvolution(tier3({ elementAbsorbs: { poison: 11 }, collapsedReturns: 2, dotKills: { poison: 4 } }), ctxOf(buildOf('t-fire-a'))).snapshot;
@@ -123,7 +123,7 @@ describe('③ 전투 · 런 로그: 독 지속 피해로 처치 = dotKill', () =
     expect(POISON_DOT_ELEMENT).toBe('poison');
   });
   it('독 블록의 지속 피해가 마무리하면 finisher dot + dotElement 독 → 전투 기록 dotKill', () => {
-    const s = fight('t-poison-a');
+    const s = fight('t-poison');
     applyInput(s, { type: 'use', cell: 0 });
     expect(s.enemy.dot?.element).toBe('poison');
     s.enemy.hp = s.enemy.dot!.perTick * 0.5; // 다음 독 틱에 쓰러진다
@@ -135,7 +135,7 @@ describe('③ 전투 · 런 로그: 독 지속 피해로 처치 = dotKill', () =
     expect(rec.dotKill).toBe('poison');
   });
   it('독을 걸었어도 블록 직격으로 마무리하면 dotKill 이 아니다 · 독이 없는 전투도', () => {
-    const s = fight('t-poison-a');
+    const s = fight('t-poison');
     s.enemy.hp = 0.01;
     applyInput(s, { type: 'use', cell: 0 });
     run(s, 1);
@@ -268,7 +268,7 @@ describe('⑤ 도감 힌트 (허무형 조건 표시와 같은 모양)', () => {
 
 describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다', () => {
   it('형식 97 · 96 → 97 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(97);
+    expect(SAVE_FORMAT_VERSION).toBe(98);
     expect(typeof SAVE_MIGRATIONS[96]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -282,7 +282,7 @@ describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다
     s.meta.format = 96;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(97);
+    expect(m.meta.format).toBe(98);
     expect(m.evolution.collapsedReturns).toBe(2); // 진화(5000) 뒤의 패배 빈사 2건 — 진화 전(4000)·미접속 빈사는 안 셈
     expect(m.evolution.dotKills).toBeUndefined();
     expect(m.evolution.elementAbsorbs).toEqual({ blood: 7 });
@@ -296,7 +296,7 @@ describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다
     s.runLog.vitals.push({ at: 2_000, factionId: 'hollow', kind: 'collapse', cause: 'defeat', bond: 0 });
     s.meta.format = 96;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(97);
+    expect(m.meta.format).toBe(98);
     expect(m.evolution.collapsedReturns).toBeUndefined();
     expect(collapsedReturnsOf(m.evolution)).toBe(0);
   });
