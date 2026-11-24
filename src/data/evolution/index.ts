@@ -1,5 +1,6 @@
 // 진화체 트리 (GDD 126장 4단계 개편, C.220): 2단계 1 → 3단계 속성 5 + 히든 2(망한 진화체·통로) → 4단계 속성 × 타입 18 + 히든 10. 데이터는 forms.json (생성기 결과를 커밋한 것 — 손으로 고칠 수 있다).
 // 생성기: generate.ts / `npm run gen:forms`. 이름은 자리 표시이며, 정식 이름은 진화체의 name 에 종족별로 넣으면 그것이 우선한다.
+import { BALANCE } from '../../config/balance';
 import { NORMAL_ELEMENT, categoryName, elementName, isElement } from '../elements';
 import { normalSlotNote } from '../help/textFormat';
 import { getFaction } from '../factions';
@@ -148,6 +149,9 @@ function categoryFamilies(cat: FormDef['label']['category'], factionId: string):
   return fams.length > 0 ? `${fams.join('·')} 계열` : '';
 }
 
+/** 허무형 조건 수치 (GDD 8-8 v6.166 — 도감 힌트가 읽는다) */
+const H_VOID = BALANCE.provisional.evolution.hidden.void;
+
 /** 도감 힌트 (해금된 진화체에만 보인다) */
 export function formHint(form: FormDef, factionId: string): string {
   const els = form.label.elements.map((e) => elementName(e, factionId));
@@ -165,7 +169,7 @@ export function formHint(form: FormDef, factionId: string): string {
     restraint: '놓아준 수가 더 많고, 배를 채우지 않은 채 진화',
     stable: '깊이 교감하며 한 번도 무너지지 않은 채 진화',
     hunter: '먼 바퀴에서 강적을 여러 번 쓰러뜨린 채 진화',
-    void: '한 번도 진화를 미루지 않고, 빈사 상태로 돌아와 진화', // C.497 (GDD 8-8 v6.120)
+    void: `${elementName(H_VOID.element, factionId)} 블록을 ${H_VOID.absorbs}개 ${getFaction(factionId).absorbActionName}하고, 진화를 ${H_VOID.deferrals}번 미룬 뒤 진화`, // C.531 (GDD 8-8 v6.166 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기)
   };
   return byKind[form.label.kind];
 }

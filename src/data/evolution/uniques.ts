@@ -299,6 +299,10 @@ export interface EvoAbilityDef {
   spawnExclude?: string[];
   /** forceNext 대기 표시 (네모) */
   forceNextMark?: EvoMark;
+  /** 오리지널 블록 (GDD 8-8 v6.160 ③, C.531 — 히든 허무형): 이 진화체가 되면 element 속성 흡수 블록(허무 블록)이 이 진화체 특수 블록 special 로 바뀐다.
+   *  mode spawn = 그 속성 블록이 생길 차례에 특수 블록이 대신 생긴다(호로 나다 '적막 블록') · fixed = 특수 블록이 고정 칸으로 이미 있어 그 속성 블록은 더 생기지 않고 그 몫은 다른 블록으로(사신 공화 '낙화 블록').
+   *  화면의 그 블록 이름도 특수 블록 이름으로 보인다 (originalBlockName) */
+  originalBlock?: { element: string; special: string; mode: 'spawn' | 'fixed' };
   /** 출처 effort 기준 (C.530, GDD 8-7 v6.186): 'attackInterval' = 노력치 투자율 대신 일반 공격 간격 기준(몸 기본 공속 간격 → 0.6초 = 1, balance evoInvest.intervalFull).
    *  없으면 노력치 투자율(C.524). 공속 몸(능력이 일반 공격 횟수·창으로 켜지는 몸)만 — 측정 investFocus = aspd 와 같은 칸(tests/c530) */
   effortBasis?: 'attackInterval';
@@ -409,7 +413,7 @@ export function evoFileShapeErrors(r: unknown): string[] {
       if (!isObj(e.ability)) { errors.push(`${where}.ability: 객체가 아니다`); continue; }
       const a = e.ability;
       for (const k of ['stacks', 'buffs', 'charges', 'specials'] as const) objOf(a[k], `${where}.${k}`);
-      for (const k of ['selfBlock', 'forceNextMark'] as const) if (a[k] !== undefined && !isObj(a[k])) errors.push(`${where}.${k}: 객체가 아니다`);
+      for (const k of ['selfBlock', 'forceNextMark', 'originalBlock'] as const) if (a[k] !== undefined && !isObj(a[k])) errors.push(`${where}.${k}: 객체가 아니다`);
       arr(a.spawnExclude, `${where}.spawnExclude`, 'string');
       if (a.critBreak !== undefined && typeof a.critBreak !== 'boolean') {
         if (!isObj(a.critBreak)) errors.push(`${where}.critBreak: true/false·조건 객체가 아니다`);
@@ -712,6 +716,14 @@ export function validateEvoUniques(d: EvoFile = DATA, balance: EvoBalance = EB()
       }
       if ((a.passives ?? []).some((p) => p.stat === 'selfSpawn') && !a.selfBlock) errors.push(`${where}: selfSpawn 은 selfBlock 이 있어야`);
       for (const x of a.spawnExclude ?? []) if (!known.elements.includes(x)) errors.push(`${where}: spawnExclude 모르는 속성 ${x}`);
+      // 오리지널 블록 (C.531): 아는 속성 · 있는 특수 블록 · fixed 면 그 특수 블록이 고정 칸이어야
+      if (a.originalBlock) {
+        const ob = a.originalBlock;
+        if (!known.elements.includes(ob.element)) errors.push(`${where}: originalBlock 모르는 속성 ${ob.element}`);
+        if (!(ob.special in specials)) errors.push(`${where}: originalBlock 특수 블록 ${ob.special} 없음`);
+        if (ob.mode !== 'spawn' && ob.mode !== 'fixed') errors.push(`${where}: originalBlock mode 는 spawn·fixed`);
+        if (ob.mode === 'fixed' && specials[ob.special]?.fixed === undefined) errors.push(`${where}: originalBlock fixed 는 고정 칸 특수 블록이어야`);
+      }
       mark(a.forceNextMark, 'forceNext');
       const shieldTimed = (a.rules ?? []).some((r) => (r.do ?? []).some((x) => x.act === 'shield' && x.seconds !== undefined));
       const src = (p: EvoSource | EvoSource[] | undefined) => {

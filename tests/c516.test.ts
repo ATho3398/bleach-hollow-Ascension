@@ -1,6 +1,10 @@
 // C.516 (GDD v6.154 허무 합침, 사용자 2026-11-21 "허무=공허로 합치고, 허무형은 적만 존재하고 블록흡수는 안되게 변경해. 능력치 흡수랑 풀어주기만 가능하고. 컨셉은 처형으로 유지하되, 용어는 허무로 가자."):
 // ① 허(kyo) 속성 표시 = '허무' ② 허무 블록은 플레이어가 얻을 수 없다 ③ 허무 적 흡수 = 능력치만·놓아주기만 ④ 4단계 일반 허(t4:kyo:mixed) 판정에서 삭제 — 17종
 // ⑤ 세이브 형식 95: 허무 블록 지우고 칸 비움, 허무 강화 → 노멀 강화(provisional), 바시오·허곡 몸·런 로그는 그대로
+//
+// C.531 (GDD 8-8 v6.160~v6.168, 사용자 2026-11-23 "잘들어. 허무도 흡수 가능해. 허무기본블록 나오고…" · 2026-11-24 "재설계는 지금 해."): ②·③·⑤ 는 사용자가 번복했다.
+// 이 파일의 ②·③·⑤ 기대값을 번복된 규칙으로 바꿨다(지우지 않음 — 줄마다 옛 기대값을 적는다). ①(표기 '허무')·④(허무 일반 진화체 없음)는 그대로.
+// '적 전용 속성' 장치(enemyOnly·blockless)는 코드에 남아 있고(지금 켠 속성 없음) 손으로 만든 흡수 화면으로 계속 지킨다. 새 규칙 전체는 tests/c531.test.ts
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ELEMENTS, ENEMY_ONLY_ELEMENT_IDS, PLAYER_ELEMENT_IDS, elementAbbr, elementName, isEnemyOnlyElement } from '../src/data/elements';
@@ -39,13 +43,15 @@ function rawBuild(slots: (string | null)[]): BuildState {
 }
 
 describe('① 허 속성 표시 = 허무 (데이터 키 kyo 그대로)', () => {
-  it('속성 데이터: 이름·약어 허무, 적 전용 표시는 kyo 하나', () => {
+  it('속성 데이터: 이름·약어 허무 (C.531: 적 전용 표시는 없다 — 옛 kyo 하나)', () => {
     expect(elementName('kyo', 'hollow')).toBe('허무');
     expect(elementName('kyo', 'shinigami')).toBe('허무');
     expect(elementAbbr('kyo', 'hollow')).toBe('허무');
-    expect(ENEMY_ONLY_ELEMENT_IDS).toEqual(['kyo']);
-    expect(PLAYER_ELEMENT_IDS).not.toContain('kyo');
-    expect(PLAYER_ELEMENT_IDS).toHaveLength(ELEMENTS.length - 1);
+    // C.531: 허무는 더 이상 적 전용이 아니다 — 옛 기대값 ENEMY_ONLY = ['kyo'], PLAYER 에 kyo 없음(길이 −1)
+    expect(ENEMY_ONLY_ELEMENT_IDS).toEqual([]);
+    expect(PLAYER_ELEMENT_IDS).toContain('kyo');
+    expect(PLAYER_ELEMENT_IDS).toHaveLength(ELEMENTS.length);
+    expect(isEnemyOnlyElement('kyo')).toBe(false);
     expect(isEnemyOnlyElement('blood')).toBe(false);
   });
   it('공화 특수 블록 = 허무 블록 · 폭주 블록(옛 허 블록)·공허의 밤은 그대로', () => {
@@ -60,68 +66,88 @@ describe('① 허 속성 표시 = 허무 (데이터 키 kyo 그대로)', () => {
   });
 });
 
-describe('② 허무 블록은 플레이어가 얻을 수 없다', () => {
-  it('허무 특성 = 플레이어 특성 아님, gainTrait 가 거절', () => {
+describe('② 허무 블록 — C.531 번복: 다시 얻을 수 있다 (옛 "플레이어가 얻을 수 없다")', () => {
+  it('허무 특성 = 플레이어 특성, gainTrait 가 받는다 (옛 기대값: isPlayerTrait false·gainTrait 거절)', () => {
     const kyo = TRAITS.filter((t) => t.element === 'kyo');
     expect(kyo.length).toBeGreaterThan(0);
     for (const t of kyo) {
-      expect(isPlayerTrait(t)).toBe(false);
-      const r = gainTrait(newBuild(), t.id);
-      expect(r.ok).toBe(false);
+      expect(isPlayerTrait(t)).toBe(true);
+      expect(gainTrait(newBuild(), t.id).ok).toBe(true);
     }
     expect(gainTrait(newBuild(), 't-blood-a').ok).toBe(true);
   });
-  // C.517 마스터 11-21: 썬더우드 보스 특성 속성 허무 → 뇌(provisional) — '허무 보스 특성 없음' 은 '보스 특성(뇌)은 확정 후보' 로. 허무 블록 후보가 없다는 기대는 그대로
-  it('보스 속성 바뀜 기믹의 허무도 후보에서 빠진다 (썬더우드: 천둥·물만, 보스 특성은 뇌)', () => {
+  // C.517 마스터 11-21: 썬더우드 보스 특성 속성 허무 → 뇌(provisional) — 보스 특성(뇌)은 확정 후보 그대로
+  it('보스 속성 바뀜 기믹의 허무 블록도 다시 후보에 든다 (썬더우드: 뇌·허무·물 — 옛 기대값: 허무는 빠짐)', () => {
     const els = offerElementsOf('forest-lord', getBoss('forest-lord').enemy.element);
+    let kyoSeen = 0;
     for (let seed = 1; seed <= 30; seed++) {
       const o = buildOffer(createRng(seed), getBoss('forest-lord').enemy, newBuild(), WON, 2, getBoss('forest-lord').trait, 2, els);
-      for (const id of o.candidates) expect(getTrait(id).element).not.toBe('kyo');
+      for (const id of o.candidates) expect(['thunder', 'kyo', 'water']).toContain(getTrait(id).element);
+      if (o.candidates.includes('t-kyo')) kyoSeen++;
       expect(o.blockless).toBeUndefined();
     }
+    expect(kyoSeen).toBeGreaterThan(0);
   });
-  it('테스트 지급: 칸 직접 채우기·기본 특성 채우기 모두 허무를 넣지 않는다 (허무형 몸 포함)', () => {
+  it('테스트 지급: 칸 직접 채우기·기본 특성 채우기에 허무 블록을 넣을 수 있다 (옛 기대값: 허무를 넣지 않는다) · 옛 id 는 모르는 특성 = 빈칸', () => {
     const save = newTestSave('shinigami', 1);
-    expect(setTraitSlots(save, ['t-kyo-a', 't-water-a', null])).toEqual([null, 't-water-a', null]);
+    expect(setTraitSlots(save, ['t-kyo', 't-water-a', null])).toEqual(['t-kyo', 't-water-a', null]);
+    expect(setTraitSlots(newTestSave('shinigami', 3), ['t-kyo-a', 't-water-a', null])).toEqual([null, 't-water-a', null]);
     const v = newTestSave('shinigami', 2);
     setForm(v, 'h4:void');
-    fillDefaultTraits(v); // 허무형 몸: 허무 블록 대신 기본 속성(노멀 = 기본 블록)이라 칸은 비어 있을 수 있다
-    for (const id of v.build.slots) if (id) expect(getTrait(id).element).not.toBe('kyo');
+    fillDefaultTraits(v); // 허무형 몸: 허무 블록(전투에서는 그 진화체 오리지널 블록으로 바뀐다)
+    expect(v.build.slots.filter((id) => id !== null).every((id) => TRAITS.some((t) => t.id === id))).toBe(true);
   });
 });
 
-describe('③ 허무 적 흡수 = 능력치만·놓아주기만', () => {
-  it('흡수 화면: 후보 0, blockless (일반·강적 모두)', () => {
+describe('③ 허무 적 흡수 — C.531 번복: 다른 속성과 같다 (옛 "능력치만·놓아주기만") · 적 전용 장치(blockless)는 그대로 동작', () => {
+  it('흡수 화면: 허무 블록 후보 1개, blockless 아님 (일반·강적 모두 — 옛 기대값: 후보 0·blockless)', () => {
     for (const id of ['kyo-basic', 'kyo-swift', 'kyo-heavy-seal', 'kyo-stance']) {
       for (let seed = 1; seed <= 10; seed++) {
         const o = buildOffer(createRng(seed), getEnemy(id), newBuild(), WON, 2);
-        expect(o.candidates, id).toEqual([]);
-        expect(o.blockless).toBe(true);
-        expect(statAbsorbOnly(o)).toBe(true);
+        expect(o.candidates, id).toEqual(['t-kyo']);
+        expect(o.blockless).toBeUndefined();
+        expect(statAbsorbOnly(o)).toBe(false);
       }
     }
     expect(buildOffer(createRng(1), getEnemy('blood-basic'), newBuild(), WON).blockless).toBeUndefined();
   });
-  it('엔진: 둘 다·속성만·블록 지정·다시 뽑기 거절(이유 = 허무는 블록으로 흡수할 수 없다), 능력치만·놓아주기는 된다', () => {
+  it('엔진: 허무 적을 둘 다·속성만으로 흡수해 허무 블록·허무 강화를 얻는다 (옛 기대값: 거절) · 능력치만은 블록·속성 카운트 없음', () => {
     const exp = kyoAbsorb();
+    expect(chooseAbsorb(exp, 't-kyo', undefined, 'both').ok).toBe(true);
+    expect(exp.phase).toBe('moving');
+    expect(exp.build.owned).toContain('t-kyo');
+    expect(exp.build.enhance?.kyo).toBe(1);
+    expect(exp.evolution.elementAbsorbs.kyo).toBe(1); // 허무형 조건 '허무 블록 흡수 수'
+    expect(exp.absorbRecords.at(-1)).toMatchObject({ element: 'kyo', absorbed: true, traitId: 't-kyo' });
+    const st = kyoAbsorb(3);
+    const before = st.evolution.elementAbsorbs.kyo ?? 0;
+    expect(chooseAbsorb(st, null, undefined, 'stat').ok).toBe(true);
+    expect(st.evolution.elementAbsorbs.kyo ?? 0).toBe(before); // 능력치만 = 속성 카운트 없음
+    expect(st.build.enhance?.kyo).toBeUndefined();
+    const rr = kyoAbsorb(4);
+    expect(rerollAbsorb(rr).ok).toBe(true); // 다시 뽑기도 된다 (후보는 허무 블록 1종 그대로)
+    expect(rr.absorbOffer!.candidates).toEqual(['t-kyo']);
+    const rel = kyoAbsorb(2);
+    expect(chooseRelease(rel).ok).toBe(true);
+  });
+  it('적 전용 장치(지금 켠 속성 없음): blockless 흡수 화면이면 둘 다·속성만·블록 지정·다시 뽑기 거절, 능력치만은 된다', () => {
+    const exp = kyoAbsorb();
+    exp.absorbOffer!.blockless = true;
+    exp.absorbOffer!.candidates = [];
     const reason = '허무는 블록으로 흡수할 수 없다';
     expect(blocklessReason('kyo')).toBe(reason);
     expect(chooseAbsorb(exp, null, undefined, 'both')).toEqual({ ok: false, reason });
     expect(chooseAbsorb(exp, null, undefined, 'trait')).toEqual({ ok: false, reason });
-    expect(chooseAbsorb(exp, 't-kyo-a', 0, 'both').ok).toBe(false);
+    expect(chooseAbsorb(exp, 't-kyo', 0, 'both').ok).toBe(false);
     expect(rerollAbsorb(exp)).toEqual({ ok: false, reason });
     expect(exp.phase).toBe('absorb');
-    const before = exp.evolution.elementAbsorbs.kyo ?? 0;
     expect(chooseAbsorb(exp, null, undefined, 'stat').ok).toBe(true);
-    expect(exp.phase).toBe('moving');
-    expect(exp.evolution.elementAbsorbs.kyo ?? 0).toBe(before); // 능력치만 = 속성 카운트 없음
-    expect(exp.build.enhance?.kyo).toBeUndefined();
     expect(exp.absorbRecords.at(-1)).toMatchObject({ element: 'kyo', absorbed: true, traitId: null, mode: 'stat' });
-    const rel = kyoAbsorb(2);
-    expect(chooseRelease(rel).ok).toBe(true);
   });
-  it('화면 이유 한 줄 = 종족 설정의 행위 이름 (포식 / 정화 흡수)', () => {
+  it('화면 이유 한 줄 = 종족 설정의 행위 이름 (포식 / 정화 흡수) — blockless 화면에만 (허무 적 흡수 화면에는 없다, C.531)', () => {
     const exp = kyoAbsorb();
+    expect(blocklessLine(getFaction('hollow'), exp)).toBeNull(); // 옛 기대값: '허무는 블록으로 포식할 수 없다'
+    exp.absorbOffer!.blockless = true;
     expect(blocklessLine(getFaction('hollow'), exp)).toBe('허무는 블록으로 포식할 수 없다');
     expect(blocklessLine(getFaction('shinigami'), exp)).toBe('허무는 블록으로 정화 흡수할 수 없다');
     exp.absorbOffer!.blockless = undefined;
@@ -130,7 +156,7 @@ describe('③ 허무 적 흡수 = 능력치만·놓아주기만', () => {
     expect(src).toContain("b.dataset.blockless = '';");
     expect(src).toContain('b.disabled = true;');
   });
-  it('봇(자동 원정)은 능력치만 흡수를 고른다', () => {
+  it('봇(자동 원정)은 능력치만·놓아주기만 화면이면 능력치만 흡수를 고른다', () => {
     expect(readFileSync('src/engine/expedition/bot.ts', 'utf8')).toContain("statAbsorbOnly(exp.absorbOffer)) chooseAbsorb(exp, null, undefined, 'stat')");
   });
 });
@@ -160,24 +186,22 @@ describe('④ 진화: 4단계 일반 17종 (허 삭제), 혈·독 우선, 3단�
   });
 });
 
-describe('⑤ 세이브 형식 95 (94 → 95): 허무 블록 지우고 칸 비움, 허무 강화 → 노멀', () => {
-  it('형식 95 · 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(95);
+describe('⑤ 세이브 — C.531 번복: 94 → 95 는 허무를 지우지 않고, 95 → 96 이 옛 허무 조·탄·교를 허무 블록 하나로 합친다 (옛 "허무 블록 지우고 칸 비움, 허무 강화 → 노멀")', () => {
+  it('형식 96 · 94·95 변환 있음 · 문턱 87 그대로', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(96);
     expect(typeof SAVE_MIGRATIONS[94]).toBe('function');
+    expect(typeof SAVE_MIGRATIONS[95]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
-  it('dropEnemyOnlyTraits: 장착·보유·장착 순서에서 빼고, 강화 n → 노멀 +n', () => {
-    // C.517 마스터 11-21: 썬더우드 보스 특성 = 뇌 → 이제 플레이어 특성이라 남는다 (C.516 기대 = 3개 빠짐·칸 [null, 't-fire-a', null])
-    const b = rawBuild(['t-kyo-a', 't-fire-a', 'boss-forest-lord']);
-    b.owned.push('t-kyo-b');
+  it('dropEnemyOnlyTraits: 지금은 적 전용 속성이 없어 아무것도 빼지 않는다 (옛 기대값: 허무 2개 빠짐·강화 kyo 4 → 노멀 +4)', () => {
+    const b = rawBuild(['t-kyo', 't-fire-a', 'boss-forest-lord']);
     b.enhance = { kyo: 4, normal: 2, fire: 1 };
-    expect(dropEnemyOnlyTraits(b)).toBe(2);
-    expect(b.slots).toEqual([null, 't-fire-a', 'boss-forest-lord']);
-    expect(b.owned).toEqual(['t-fire-a', 'boss-forest-lord']);
-    expect(b.equipOrder).toEqual(['t-fire-a', 'boss-forest-lord']);
-    expect(b.enhance).toEqual({ normal: 6, fire: 1 });
+    expect(dropEnemyOnlyTraits(b)).toBe(0);
+    expect(b.slots).toEqual(['t-kyo', 't-fire-a', 'boss-forest-lord']);
+    expect(b.owned).toEqual(['t-kyo', 't-fire-a', 'boss-forest-lord']);
+    expect(b.enhance).toEqual({ kyo: 4, normal: 2, fire: 1 });
   });
-  it('옛 세이브(94): 허무 블록 장착한 바시오 몸 — 블록만 빠지고 몸·런 로그·쉬는 트랙·원정 중간 저장도 정리', () => {
+  it('옛 세이브(94): 허무 조·탄 장착한 바시오 몸 — 허무 블록 하나로 합쳐 이어 쓴다 · 몸·런 로그·쉬는 트랙·원정 중간 저장도', () => {
     const s = newSaveData('hollow', 1000);
     s.build = rawBuild(['t-kyo-a', 't-water-a', null]);
     s.build.owned.push('t-kyo-c');
@@ -200,18 +224,20 @@ describe('⑤ 세이브 형식 95 (94 → 95): 허무 블록 지우고 칸 비�
     s.meta.format = 94;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(95);
-    expect(m.build.slots).toEqual([null, 't-water-a', null]);
-    expect(m.build.owned).toEqual(['t-water-a']);
-    expect(m.build.enhance).toEqual({ normal: 3, water: 1 });
-    expect(m.evolution.formId).toBe('t4:kyo:mixed'); // 이번 생 동안 몸은 그대로
+    expect(m.meta.format).toBe(96);
+    // 옛 기대값(C.516): 칸 [null, 't-water-a', null] · 보유 ['t-water-a'] · 강화 { normal: 3, water: 1 }
+    expect(m.build.slots).toEqual(['t-kyo', 't-water-a', null]);
+    expect(m.build.owned).toEqual(['t-kyo', 't-water-a']);
+    expect(m.build.enhance).toEqual({ kyo: 3, water: 1 });
+    expect(m.evolution.formId).toBe('t4:kyo:mixed'); // 이번 생 동안 몸은 그대로 (허무 일반 진화체는 여전히 없다 — 다음 진화·환생부터 안 나온다)
     expect(m.formDex).toContain('t4:kyo:mixed');
-    expect(m.runLog.absorbs.at(-1)).toMatchObject({ element: 'kyo', traitId: 't-kyo-a' }); // 런 로그는 지우지 않는다
-    expect(m.otherTracks[0]!.build.slots).toEqual([null, null, null]);
-    expect(m.otherTracks[0]!.build.enhance).toEqual({ normal: 2 });
+    expect(m.runLog.absorbs.at(-1)).toMatchObject({ element: 'kyo', traitId: 't-kyo-a' }); // 런 로그는 옛 id 그대로 (getTrait 이 지금 블록으로 읽는다)
+    expect(getTrait('t-kyo-a').id).toBe('t-kyo');
+    expect(m.otherTracks[0]!.build.slots).toEqual(['t-kyo', null, null]);
+    expect(m.otherTracks[0]!.build.enhance).toEqual({ kyo: 2 });
     const ex = m.activeExpedition!.exp;
-    expect(ex.build.slots).toEqual([null, 't-water-a', null]);
-    expect(ex.absorbOffer!.candidates).toEqual([]);
-    expect(ex.absorbOffer!.blockless).toBe(true);
+    expect(ex.build.slots).toEqual(['t-kyo', 't-water-a', null]);
+    expect(ex.absorbOffer!.candidates).toEqual(['t-kyo']); // 옛 기대값: 후보 [] · blockless
+    expect(ex.absorbOffer!.blockless).toBeUndefined();
   });
 });

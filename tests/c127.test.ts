@@ -34,9 +34,11 @@ function specialCount(difficulty: number, opt: Parameters<typeof meet>[2] = {}, 
 }
 
 describe('C.127 75장: 혈·독·허 적 등장 숨김', () => {
-  it('출현 배율: 강적 / 공허의 밤 / ★3 이상만, 여럿이면 최대 (provisional)', () => {
-    expect(specialEnemyGate({ elite: false, difficulty: 1 })).toEqual({ chance: 0, gates: [] });
-    expect(specialEnemyGate({ elite: false, difficulty: S.minDifficulty - 1 }).chance).toBe(0);
+  it('출현 배율: 강적 / 공허의 밤 / ★3 이상, 그 밖 = 기본 0.1, 여럿이면 최대 (provisional)', () => {
+    // C.531 (GDD 6-7 v6.161, 사용자 2026-11-23 등장 제한 완화): 그 밖(★1~2 일반 칸 등) 0 → base 0.1 (옛 기대값 chance 0·gates [])
+    expect(S.base).toBe(0.1);
+    expect(specialEnemyGate({ elite: false, difficulty: 1 })).toEqual({ chance: S.base, gates: ['base'] });
+    expect(specialEnemyGate({ elite: false, difficulty: S.minDifficulty - 1 }).chance).toBe(S.base);
     expect(specialEnemyGate({ elite: true, difficulty: 1 })).toEqual({ chance: S.elite, gates: ['elite'] });
     expect(specialEnemyGate({ elite: false, difficulty: S.minDifficulty })).toEqual({ chance: S.difficulty, gates: ['difficulty'] });
     expect(specialEnemyGate({ elite: false, boss: true, difficulty: 1 }).chance).toBe(1);
@@ -60,11 +62,13 @@ describe('C.127 75장: 혈·독·허 적 등장 숨김', () => {
     expect(bloodMoon.some((e) => e.enemy.element === 'poison' || e.enemy.element === 'kyo')).toBe(false);
   });
 
-  it('★1~2 일반 길(야생 일반 적·먹잇감 둥지)에는 혈·독·허 적이 0 — 혈·허가 주 속성인 숲에서도', () => {
+  it('★1~2 일반 길(야생 일반 적·먹잇감 둥지)에는 혈·독·허무 적이 드물게만 (기본 0.1) — ★3 이상보다 적다', () => {
+    // C.531 (GDD 6-7 v6.161, 사용자 2026-11-23 등장 제한 완화): 옛 기대값 0(안 나옴) → 가중치 ×0.1 로 드물게. ★3(×0.3)보다는 적게 나온다
     for (const d of [1, 2]) {
-      expect(specialCount(d)).toBe(0);
-      expect(specialCount(d, { tile: 'prey-nest-a' })).toBe(0);
-      expect(specialCount(d, { tile: 'prey-nest-b', groundId: 'canyon' })).toBe(0);
+      const n = specialCount(d);
+      expect(n).toBeGreaterThan(0);
+      expect(n).toBeLessThan(specialCount(3));
+      expect(specialCount(d, { tile: 'prey-nest-a' })).toBeLessThan(specialCount(3, { tile: 'prey-nest-a' }));
     }
   });
 
@@ -76,11 +80,11 @@ describe('C.127 75장: 혈·독·허 적 등장 숨김', () => {
 
   it('독 적을 포식하면 독 특성 후보가 늘 1개 이상 (특성 숨김 없음, 다시 뽑기도)', () => {
     for (let seed = 1; seed <= 60; seed++) {
-      // GDD 8-3 v6.154 (사용자 2026-11-21): 허무 적은 블록 후보 없음(능력치만·놓아주기만) — 옛 목록의 kyo-basic 은 아래 줄에서 따로
+      // C.531 (GDD 8-8 v6.160, 사용자 2026-11-23 "허무도 흡수 가능해" — v6.154 '후보 0·blockless' 번복): 허무 적 = 허무 블록 후보 1개(계열 없는 1종)
       const kyo = buildOffer(createRng(seed), getEnemy('kyo-basic'), newBuild(), WON);
-      expect(kyo.candidates).toEqual([]);
-      expect(kyo.blockless).toBe(true);
-      for (const id of ['poison-basic', 'blood-basic']) {
+      expect(kyo.candidates).toEqual(['t-kyo']);
+      expect(kyo.blockless).toBeUndefined();
+      for (const id of ['poison-basic', 'blood-basic', 'kyo-basic']) {
         const enemy = getEnemy(id);
         const o = buildOffer(createRng(seed), enemy, newBuild(), WON);
         expect(o.candidates.length, `${id} ${seed}`).toBeGreaterThanOrEqual(1);

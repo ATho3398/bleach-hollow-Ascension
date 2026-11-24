@@ -1,6 +1,6 @@
 // 흡수 특성 테이블 (GDD 4장, C.47 속성 8종 × 8개 → C.136 속성마다 6개: 막기·회복 속성 특성 삭제, GDD 84장 7번). 11-3 이 미정이라 전부 임시("불 조" 자리 표시). 표현 텍스트만 종족별.
 import { CHAIN_BONUS_KINDS, PASSIVE_STATS, SKILL_ROLES, TRAIT_KINDS, pickFaction, type TraitDef } from '../schema';
-import { elementAbbr, elementName, isElement, isEnemyOnlyElement } from '../elements';
+import { SPECIAL_ELEMENT_IDS, elementAbbr, elementName, isElement, isEnemyOnlyElement } from '../elements';
 import raw from './traits.json';
 
 /** 블록 약어 최대 글자 수: 2줄 × 4자 (공백 포함) */
@@ -23,8 +23,10 @@ export function parseTrait(r: unknown): TraitDef {
     if (!(SKILL_ROLES as readonly unknown[]).includes(t.role)) errors.push('role: attack | guard | heal');
     if (!(typeof t.powerInAttacks === 'number' && t.powerInAttacks > 0)) errors.push('powerInAttacks: 양수');
     if (t.role === 'attack') {
-      // 공격 블록은 계열 체인 (GDD 17-3): 계열이 필수, 추가 효과는 종족 설정의 계열 단계 기술이 정하므로 특성에는 없다
-      if (typeof t.family !== 'string' || !t.family) errors.push('family: 공격 특성은 계열 id 필요');
+      // 공격 블록은 계열 체인 (GDD 17-3): 계열이 필수, 추가 효과는 종족 설정의 계열 단계 기술이 정하므로 특성에는 없다.
+      // 특수 속성(혈·독·허무) 블록만 계열 없는 1종일 수 있다 (GDD 8-2 v6.161, C.531 허무 블록 — 같은 블록끼리 체인)
+      const familyless = t.family === undefined && SPECIAL_ELEMENT_IDS.includes(t.element as string);
+      if (!familyless && (typeof t.family !== 'string' || !t.family)) errors.push('family: 공격 특성은 계열 id 필요 (특수 속성 블록만 계열 없이)');
       if (t.chainBonus !== undefined) errors.push('chainBonus: 공격 특성에는 없다 (계열 단계 기술이 정한다)');
     } else {
       // 막기·회복은 계열이 없고 같은 특성 단독 체인 (GDD 17-3)
@@ -43,6 +45,7 @@ export function parseTrait(r: unknown): TraitDef {
     else if (!speed && !(typeof p.multiplier === 'number' && p.multiplier > 0)) errors.push('passive: { multiplier: 양수 }');
   }
   if (t.critChance !== undefined && !(typeof t.critChance === 'number' && t.critChance > 0 && t.critChance <= 1)) errors.push('critChance: 0 초과 1 이하');
+  if (t.foeHpBands !== undefined && !(t.foeHpBands === true && t.kind === 'skill' && t.role === 'attack')) errors.push('foeHpBands: 공격 skill 에만 true');
   if (errors.length > 0) throw new Error(`특성 데이터 오류 (${String(t.id ?? '?')}): ${errors.join(', ')}`);
   return r as TraitDef;
 }
@@ -56,13 +59,22 @@ export function retiredRareElement(id: string): string | null {
   return m && isElement(m[1]) && !TRAITS.some((t) => t.id === id) ? m[1]! : null;
 }
 
+/** 계열 없는 1종으로 합친 블록의 옛 id (GDD 8-2 v6.161, C.531 — 허무 조·탄·교 't-kyo-a·c·b' → 허무 블록 't-kyo'): 옛 id → 지금 id, 아니면 null.
+ *  세이브는 지금 id 로 바꾸고(SAVE_MIGRATIONS[95]), 런 로그 옛 기록은 옛 id 를 그대로 남겨 getTrait 이 지금 블록으로 읽는다. 속성 분기 없음 — 't-<속성>' 블록이 데이터에 있고 옛 id 가 없을 때만 */
+export function mergedTraitId(id: string): string | null {
+  const m = /^(t-[a-z]+)-[abc]$/.exec(id);
+  if (!m || TRAITS.some((t) => t.id === id)) return null;
+  const now = TRAITS.find((t) => t.id === m[1] && t.kind === 'skill' && t.family === undefined);
+  return now ? now.id : null;
+}
+
 export function getTrait(id: string): TraitDef {
-  const t = TRAITS.find((x) => x.id === id);
+  const t = TRAITS.find((x) => x.id === id) ?? TRAITS.find((x) => x.id === mergedTraitId(id));
   if (!t) throw new Error(`알 수 없는 특성: ${id}`);
   return t;
 }
 
-/** 플레이어가 가질 수 있는 특성인가 (GDD 8-2 v6.154): 적 전용 속성(허무)의 특성(블록)은 흡수·보스 보상·상점·지급 어디서도 얻지 못한다 */
+/** 플레이어가 가질 수 있는 특성인가 (C.516 장치): 적 전용 속성의 특성(블록)은 흡수·보스 보상·상점·지급 어디서도 얻지 못한다 — 지금 적 전용 속성 없음(허무는 C.531 에 되돌림) */
 export function isPlayerTrait(t: Pick<TraitDef, 'element'>): boolean {
   return !isEnemyOnlyElement(t.element);
 }
@@ -81,6 +93,8 @@ export function traitName(id: string, factionId: string): string {
   const retired = retiredRareElement(id);
   if (retired) return `${elementName(retired, factionId)} 강화(옛 기록)`;
   const t = getTrait(id);
+  // 계열 없는 1종 블록(허무 블록, C.531)은 속성 이름이 곧 블록 이름이라 떼지 않는다 ('허무 블록' — '블록'만 남지 않게)
+  if (t.kind === 'skill' && t.role === 'attack' && t.family === undefined) return pickFaction(t.name, factionId);
   return withoutElement(pickFaction(t.name, factionId), t.element, factionId);
 }
 

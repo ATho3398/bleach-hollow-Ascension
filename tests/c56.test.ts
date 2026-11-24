@@ -176,37 +176,49 @@ describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 
     for (const el of ['blood', 'poison', 'kyo', 'blood', 'poison', 'kyo']) { e.absorbs++; e.elementAbsorbs[el] = (e.elementAbsorbs[el] ?? 0) + 1; }
     return e;
   };
+  /** C.531 (GDD 8-8 v6.166): 허무형 조건을 채운 3단계 — 그 단계 허무 블록 10개 흡수 + 미루기 3회 */
+  const t3void = (): EvolutionState => {
+    const e = t3();
+    e.elementAbsorbs.kyo = 10;
+    e.absorbs += 8;
+    e.deferrals = 3;
+    return e;
+  };
   it('데이터: 4단계 히든 각성형(혼합)·허무형 하나씩', () => {
     const f = getForm('h4:awakened');
     expect([f.tier, f.hidden, f.label.kind, f.elements, f.label.category]).toEqual([4, true, 'awakened', undefined, 'mixed']);
     expect(formName(f, 'hollow', ['fire'])).toBe('아르바'); // 220장 3: 레스렉시온 이름
     expect(formName(getForm('h4:void'), 'shinigami')).toBe('공화'); // 참백도 이름
   });
-  // C.497 (GDD 8-8 v6.120): 허무형 = 그 단계 미루기 0회 + 빈사로 귀환 (옛 '혈·독·허 각 20% + 환생 1회' 폐기 — 환생 무관)
-  it('허무형은 빈사로 귀환했을 때만 후보 — 환생 횟수와 무관', () => {
+  // C.531 (GDD 8-8 v6.166, 사용자 2026-11-23 "허무 흡수10번에 미루기 3번하면 허무"): 허무형 = 그 단계 허무 블록 10개 흡수 + 미루기 3회 이상.
+  // 옛 기대값: C.497 '미루기 0회 + 빈사로 귀환했을 때만 후보'(사용자 11-18) → 폐기. 환생 횟수와 무관한 것은 그대로
+  it('허무형은 허무 블록 10개 흡수 + 미루기 3회일 때만 후보 — 빈사·환생 횟수와 무관', () => {
     expect(evolutionCandidates(t3(), ctxOf(1)).hidden.map((c) => c.formId)).not.toContain('h4:void');
-    expect(evolutionCandidates(t3(), { ...ctxOf(0), collapsed: true }).hidden.map((c) => c.formId)).toContain('h4:void');
+    expect(evolutionCandidates(t3(), { ...ctxOf(0), collapsed: true }).hidden.map((c) => c.formId)).not.toContain('h4:void'); // 옛 조건만으로는 아니다
+    expect(evolutionCandidates(t3void(), ctxOf(0)).hidden.map((c) => c.formId)).toContain('h4:void');
+    expect(evolutionCandidates(t3void(), ctxOf(5)).hidden.map((c) => c.formId)).toContain('h4:void');
     // 3단계 진화에는 나오지 않는다 (통로 없이 직접)
-    const e2 = t3();
+    const e2 = t3void();
     e2.tierIndex = 1;
-    expect(evolutionCandidates(e2, { ...ctxOf(9), collapsed: true }).hidden.map((c) => c.formId)).not.toContain('h4:void');
+    expect(evolutionCandidates(e2, ctxOf(9)).hidden.map((c) => c.formId)).not.toContain('h4:void');
   });
   it('조건을 채운 히든이 있으면 일반보다 우선 — 실제로 진화한다', () => {
-    const e = t3();
-    const r = evolve(e, ctxOf(0).build, { ...ctxOf(0), collapsed: true }, 0);
+    const e = t3void();
+    const r = evolve(e, ctxOf(0).build, ctxOf(0), 0);
     expect(r.ok && r.form.id).toBe('h4:void');
   });
   it('performEvolution 이 둥지 빈사를 판정에 넘긴다', async () => {
     const { performEvolution } = await import('../src/game');
     const s = newSaveData('hollow', 3);
-    s.evolution = t3();
+    s.evolution = t3void();
     s.build = ctxOf(0).build;
     s.nest.hunger = 20;
     s.nest.condition = 80;
     s.nest.collapsed = true;
     const r = performEvolution(s, 0);
     expect(r.ok && r.record.snapshot!.candidates.map((c) => c.formId)).toContain('h4:void');
-    expect(r.ok && r.record.snapshot!.collapsed).toBe(true);
+    expect(r.ok && r.record.snapshot!.collapsed).toBe(true); // 빈사는 기록으로 그대로 넘긴다(허무형 조건은 아님, C.531)
+    expect(r.ok && r.record.snapshot!.deferrals).toBe(3);
   });
 });
 

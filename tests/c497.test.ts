@@ -1,4 +1,4 @@
-// C.497 (GDD 8-5 진화 미루기 · 8-8 허무형 조건 교체 · 허무형 종족별 타입): 귀환 때 [진화] [미루기] · 미루기 횟수(진화 상태·런 로그) · 허무형 = 미루기 0회 + 빈사 귀환 · 형식 92
+// C.497 (GDD 8-5 진화 미루기 · 8-8 허무형 조건 교체 · 허무형 종족별 타입): 귀환 때 [진화] [미루기] · 미루기 횟수(진화 상태·런 로그) · 허무형 = (C.531 부터) 허무 블록 10개 흡수 + 미루기 3회 · 형식 92
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FORM_TABLE, formHint, getForm, validateFormTable } from '../src/data/evolution';
@@ -101,51 +101,89 @@ describe('진화 미루기 (GDD 8-5)', () => {
   });
 });
 
-describe('허무형 조건 교체 (GDD 8-8 v6.120)', () => {
-  it('빈사로 귀환(패배) + 그 단계 미루기 0회 → 허무형 · 옛 혈·독·허 + 환생 조건 폐기', () => {
-    expect(H.voidMaxDeferrals).toBe(0);
+// C.531 (GDD 8-8 v6.166, 사용자 2026-11-23 "그냥 허무 흡수10번에 미루기 3번하면 허무 ㄱㄱ"): 허무형 조건 = 그 단계 허무 블록 10개 흡수 + 미루기 3회 이상.
+// 옛 C.497 기대값('미루기 0회 + 빈사 귀환' — 사용자 2026-11-18)은 사용자가 11-23 에 폐기 — 아래 네 테스트를 새 조건으로 바꿨다(지우지 않음)
+describe('허무형 조건 교체 (GDD 8-8 v6.166 — 허무 블록 10개 흡수 + 미루기 3회, 옛 v6.120 미루기 0회 + 빈사 귀환 폐기)', () => {
+  /** 그 단계에서 허무 적을 블록 갈래로 n번 흡수한 기록 */
+  const absorbKyo = (e: EvolutionState, n: number): void => {
+    e.elementAbsorbs.kyo = (e.elementAbsorbs.kyo ?? 0) + n;
+    e.absorbs += n;
+  };
+  it('허무 블록 10개 흡수 + 그 단계 미루기 3회 → 허무형 · 옛 미루기 0회·빈사·혈·독·허 + 환생 조건 폐기', () => {
+    expect(H.void).toEqual({ element: 'kyo', absorbs: 10, deferrals: 3 });
+    expect('voidMaxDeferrals' in H).toBe(false);
     expect('voidShare' in H).toBe(false);
     expect('voidRebirths' in H).toBe(false);
     const s = grown();
     atTier3(s);
-    recordExpedition(s, ended(s, 'defeated'), 2_000, { holdEvolution: true });
-    expect(s.nest.collapsed).toBe(true); // 패배 = 빈사
+    absorbKyo(s.evolution, 10);
+    for (let i = 1; i <= 3; i++) {
+      recordExpedition(s, ended(s, 'returned'), 2_000 + i, { holdEvolution: true });
+      deferEvolution(s, 2_100 + i);
+    }
+    recordExpedition(s, ended(s, 'returned'), 2_900, { holdEvolution: true });
+    expect(s.nest.collapsed).toBe(false); // 빈사가 아니어도 된다
     const r = evolveAfterReturn(s, { hunger: 20, condition: 80 }, 3_000);
     expect(r.ok && r.form.id).toBe('h4:void'); // 히든은 일반보다 우선, 다른 히든 조건 없음
-    expect(r.ok && r.record.snapshot!.collapsed).toBe(true);
+    expect(r.ok && r.record.snapshot!.deferrals).toBe(3);
+    expect(r.ok && r.record.snapshot!.elementAbsorbs.kyo).toBe(10);
   });
 
-  it('한 번이라도 미뤘으면 빈사로 와도 허무형이 아니다 · 빈사가 아니면 아니다', () => {
+  it('미루기가 3회 미만이거나 허무 블록이 10개 미만이면 허무형이 아니다 · 빈사 귀환만으로는 아니다', () => {
+    // 옛 조건(미루기 0회 + 빈사 귀환)만 채운 몸
     const s = grown();
     atTier3(s);
-    recordExpedition(s, ended(s, 'returned'), 2_000, { holdEvolution: true });
-    deferEvolution(s, 2_100);
     recordExpedition(s, ended(s, 'defeated'), 3_000, { holdEvolution: true });
+    expect(s.nest.collapsed).toBe(true);
     const r = evolveAfterReturn(s, { hunger: 20, condition: 80 }, 3_100);
     expect(r.ok && r.form.id).not.toBe('h4:void');
+    // 허무 블록 10개 + 미루기 2회
     const t = grown();
     atTier3(t);
-    recordExpedition(t, ended(t, 'returned'), 2_000, { holdEvolution: true });
-    expect(t.nest.collapsed).toBe(false);
-    const r2 = evolveAfterReturn(t, { hunger: 20, condition: 80 }, 2_100);
+    absorbKyo(t.evolution, 10);
+    for (let i = 1; i <= 2; i++) {
+      recordExpedition(t, ended(t, 'returned'), 2_000 + i, { holdEvolution: true });
+      deferEvolution(t, 2_100 + i);
+    }
+    const r2 = evolveAfterReturn(t, { hunger: 20, condition: 80 }, 2_900);
     expect(r2.ok && r2.form.id).not.toBe('h4:void');
+    // 허무 블록 9개 + 미루기 3회
+    const u = grown();
+    atTier3(u);
+    absorbKyo(u.evolution, 9);
+    for (let i = 1; i <= 3; i++) {
+      recordExpedition(u, ended(u, 'returned'), 2_000 + i, { holdEvolution: true });
+      deferEvolution(u, 2_100 + i);
+    }
+    const r3 = evolveAfterReturn(u, { hunger: 20, condition: 80 }, 2_900);
+    expect(r3.ok && r3.form.id).not.toBe('h4:void');
   });
 
-  it('미루기 판정은 그 단계 것만 (전 단계에서 미룬 수는 진화하면 0)', () => {
-    const e = { ...newSaveData('hollow', 1).evolution } as EvolutionState;
+  it('미루기·허무 흡수 판정은 그 단계 것만 (전 단계 기록은 진화하면 0) · 미루기는 3회 이상이면 된다', () => {
+    const e = { ...newSaveData('hollow', 1).evolution, elementAbsorbs: {} } as EvolutionState;
     e.tierIndex = 2;
     e.formHistory = ['t2:base', 't3:water'];
     e.formId = 't3:water';
-    const ctx = { factionId: 'hollow', build: grown().build, hunger: 20, condition: 80, collapsed: true };
-    expect(evolutionCandidates(e, ctx).hidden.map((c) => c.formId)).toContain('h4:void');
-    e.deferrals = 1;
-    expect(evolutionCandidates(e, ctx).hidden.map((c) => c.formId)).not.toContain('h4:void');
+    const ctx = { factionId: 'hollow', build: grown().build, hunger: 20, condition: 80 };
+    const has = (): boolean => evolutionCandidates(e, ctx).hidden.map((c) => c.formId).includes('h4:void');
+    expect(has()).toBe(false);
+    absorbKyo(e, 10);
+    e.deferrals = 2;
+    expect(has()).toBe(false);
+    e.deferrals = 3;
+    expect(has()).toBe(true);
+    e.deferrals = 7;
+    expect(has()).toBe(true);
+    // 능력치만 흡수는 블록을 얻지 않아 세지 않는다 (단계 기록 elementAbsorbs 에 안 쌓인다)
+    const f = { ...e, elementAbsorbs: { kyo: 9 }, absorbs: 20 } as EvolutionState;
+    expect(evolutionCandidates(f, ctx).hidden.map((c) => c.formId)).not.toContain('h4:void');
   });
 
-  it('진화 트리 점검: 허무형도 무작위 상태에서 뽑힌다 · 도감 힌트 문구', () => {
+  it('진화 트리 점검: 허무형도 무작위 상태에서 뽑힌다 · 도감 힌트 문구 (종족 행위 이름)', () => {
     const rep = analyzeTree(FORM_TABLE, 'hollow', 4000, 7);
     expect(rep.unreachable).not.toContain('h4:void');
-    expect(formHint(getForm('h4:void'), 'hollow')).toBe('한 번도 진화를 미루지 않고, 빈사 상태로 돌아와 진화');
+    expect(formHint(getForm('h4:void'), 'hollow')).toBe('허무 블록을 10개 포식하고, 진화를 3번 미룬 뒤 진화');
+    expect(formHint(getForm('h4:void'), 'shinigami')).toBe('허무 블록을 10개 정화 흡수하고, 진화를 3번 미룬 뒤 진화');
   });
 });
 
@@ -171,7 +209,7 @@ describe('허무형 종족별 타입 (GDD 8-8 첫 줄: 사신 특수·호로 물
 
 describe('세이브 형식 92 (진화 미루기)', () => {
   it('형식 92 · 91 → 92 변환 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(95);
+    expect(SAVE_FORMAT_VERSION).toBe(96);
     expect(typeof SAVE_MIGRATIONS[91]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -182,7 +220,7 @@ describe('세이브 형식 92 (진화 미루기)', () => {
     delete (s.runLog.tiers as Partial<typeof s.runLog.tiers>).deferrals;
     s.meta.format = 91;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(95);
+    expect(m.meta.format).toBe(96);
     expect(m.evolution.deferrals).toBe(0);
     expect(m.runLog.tiers.deferrals).toEqual([]);
     expect(m.evolution.tierIndex).toBe(2);

@@ -24,6 +24,7 @@ import {
   blockMotionTarget,
   evoSpecialOf, evoSpecialUsable, evoExecLinesOf, evoSpecialOffReason,
   chainCapOf, evoChainTierOf, evoHardenedStarts, evoHardenName,
+  foeExecuteRingOf,
 } from '../engine/combat';
 import { evoText, fillEvoText } from '../data/evolution/uniques';
 import { statusMarkRow, statusMarkRows } from './bha/statusMarks';
@@ -52,7 +53,7 @@ import {
   type BlockSpec, type BlockVisual, damageTier, BATTLE_LOG_MAX, hpNumbers, type FloatKind, type FloatOpts, type LogRole, type RunSpec,
 } from './bha/battle';
 import { elementColor, elementDamageAbbr, elementDamagePct, elementDot, elementMark } from './bha/element';
-import { categoryName, ELEMENT_IDS, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
+import { categoryName, ELEMENT_IDS, elementAbbr, elementName, NORMAL_ELEMENT, weaknessesOf } from '../data/elements';
 import { fxSheetName, loadPixelFx, readyPixelFx } from './bha/pixelFx';
 import { isFemaleRigLook, layeredArt } from '../data/art/manifest';
 import { tryGetTranscendent } from '../data/transcendents';
@@ -249,6 +250,13 @@ function eventLine(e: CombatEvent, s: CombatState, labels: BattleLabels, faction
       return { role: 'chain', icon: 'i-special', text: `${labels.liberation.name} 준비 — 캐릭터를 눌러라` }; // GDD 139장 3
     case 'heavy-cast':
       return { role: 'cast', icon: 'i-cast', text: `강공격 예고! ${e.seconds}초 안에 ${labels.role.guard} 버튼으로 막아라` };
+    // 허무 적의 처형 (GDD 8-8 v6.160 ④, C.531)
+    case 'foe-execute':
+      return { role: 'cast', icon: 'i-warn', text: '처형 시도! 줄어드는 원이 표식에 닿는 순간 눌러 막아라' };
+    case 'foe-execute-end':
+      return e.ok
+        ? { role: 'guard', icon: 'i-guard', text: `처형을 막았다! ${n(e.damage)} 피해 · 적 ${e.stunSeconds}초 스턴(받는 피해 ×${s.params.foeExecute?.stunTakenMult ?? 1})` }
+        : { role: 'cast', icon: 'i-broken', text: '처형당했다…' };
     case 'heavy-hit':
       return e.guarded
         ? { role: 'guard', icon: 'i-guard', text: `강공격을 막았다! ${n(e.damage)} ${catWord(e.cat, factionId)}피해${e.reflected > 0 ? ` · ${n(e.reflected)} 반사` : ''}` }
@@ -517,9 +525,19 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     u.append(headsEl, figBox, hpBox);
     return u;
   };
+  /** 처형 원이 틱 사이를 매끄럽게 줄어들게 — 실시간 루프의 쌓인 시간(ms). 루프가 정해지면 바꿔 끼운다 */
+  let execAcc: () => number = () => 0;
   const units = el('div', 'bha-v2units');
   const foeUnit = unit('bha-unit--foe', foeHeads, foe, enemyHp.root, foeMarks);
   units.append(unit('bha-unit--me', meHeads, hero.root, playerHp.root, meMarks), foeUnit);
+  // 허무 적 처형 막기 (GDD 8-8 v6.160 ④, C.531): 전투 화면 가운데 원형 표식 + 바깥에서 줄어드는 원 테두리 — 테두리가 표식에 닿는 순간 누른다
+  const execRing = el('button', 'bha-execring');
+  execRing.type = 'button';
+  execRing.hidden = true;
+  execRing.setAttribute('aria-label', '처형 막기');
+  execRing.dataset.sc = 'execute-guard';
+  execRing.append(el('span', 'bha-execring__ring'), el('span', 'bha-execring__label', '막기'));
+  units.append(execRing);
   // 테스트 모드 적 설정 (C.457): 적 자리를 비우고 그 자리에 [적 설정] 버튼
   if (opts.emptyFoe) {
     foeUnit.classList.add('is-empty');
@@ -1462,6 +1480,20 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       case 'heavy-cast':
         flash('is-cast', 600);
         break;
+      // 허무 적의 처형 (GDD 8-8 v6.160 ④, C.531): 기존 번쩍임·떠오르는 글자만
+      case 'foe-execute':
+        flash('is-cast', 600);
+        break;
+      case 'foe-execute-end':
+        if (e.ok) {
+          spawnFloat('guard', '처형 막기!', { iconId: 'i-guard' });
+          if (e.damage > 0) spawnFloat('hurt', `−${n0(e.damage)}`);
+          flash('is-guard', 600);
+        } else {
+          spawnFloat('void', '처형');
+          shake();
+        }
+        break;
       case 'evade':
         spawnFloat('guard', '회피');
         break;
@@ -1525,7 +1557,8 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     return v2BlockEl({
       kind: v2AttackKind(elId),
       path: v2FamilyPath(bf.families.find((f) => f.id === b.family)?.fx),
-      glyph: familyAbbr(labels, b.family) ?? V2_GLYPH.combo,
+      // 계열 없는 1종 블록(허무 블록, C.531 — GDD 8-2 v6.161): 계열 글자 자리에 속성 약어 첫 글자('허')
+      glyph: familyAbbr(labels, b.family) ?? (!isBasic && !b.family && elId ? Array.from(elementAbbr(elId, bf.id))[0] : undefined) ?? V2_GLYPH.combo,
       label, uid: b.uid, weak,
     });
   };
@@ -1946,6 +1979,30 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     down = null;
     drawTray();
   };
+  // 처형 막기 (GDD 8-8 v6.160 ④, C.531): 누르는 순간(pointerdown) 입력 — 판정은 엔진(원이 닿는 틱 ± 판정). 기기 ✓·키보드는 click(detail 0)
+  const pressExecRing = (): void => {
+    if (!app.isConnected || stopped || s.status !== 'playing' || halted() || !foeExecuteRingOf(s)) return;
+    if (!queue.some((q) => q.type === 'execute-guard')) queue.push({ type: 'execute-guard' });
+  };
+  execRing.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    pressExecRing();
+  });
+  execRing.addEventListener('click', (e) => {
+    if (e.detail === 0) pressExecRing();
+  });
+  /** 처형 원 그리기: 원 테두리 배율 = 1(표식 테두리) + 남은 시간 비율 × (시작 배율 − 1). 판정 안이면 is-now(막기 색) */
+  const EXEC_RING_START = 2.4;
+  const drawExecRing = (): void => {
+    const ring = s.status === 'playing' ? foeExecuteRingOf(s) : null;
+    execRing.hidden = !ring;
+    if (!ring) return;
+    const total = Math.max(1, ring.hitTick - ring.startTick);
+    const left = ring.hitTick - (s.tick + Math.min(1, execAcc() / (s.params.tickSeconds * 1000)));
+    const k = Math.max(-0.15, Math.min(1, left / total));
+    execRing.style.setProperty('--bha-execring-scale', (1 + k * (EXEC_RING_START - 1)).toFixed(3));
+    execRing.classList.toggle('is-now', Math.abs(s.tick + 1 - ring.hitTick) <= ring.windowTicks);
+  };
   /** 꺼진 진화체 특수 블록을 누르면 왜 꺼졌는지·켜는 법 한 줄 (C.508 점검C 8 — 공화 허무 블록, 블록 처형선 0) */
   let offToldAt = 0;
   const tellEvoOff = (uid: number) => {
@@ -2070,10 +2127,10 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
       const go = button({ label: '결과 보기', size: 'lg', onClick: finish });
       go.append(icon('i-chevron-right'));
       actions.append(go);
-      const sub = el('p', 'bha-battle-ov__sub', timeout ? `남은 시간 안에 쓰러뜨리지 못했다. 적 체력 ${hpNumbers(s.enemy.hp, s.enemy.maxHp).now} / ${hpNumbers(s.enemy.hp, s.enemy.maxHp).max}` : '체력이 0이 되었다.');
+      const sub = el('p', 'bha-battle-ov__sub', timeout ? `남은 시간 안에 쓰러뜨리지 못했다. 적 체력 ${hpNumbers(s.enemy.hp, s.enemy.maxHp).now} / ${hpNumbers(s.enemy.hp, s.enemy.maxHp).max}` : s.lossReason === 'executed' ? '처형을 막지 못했다.' : '체력이 0이 되었다.'); // 처형 = 허무 적 (GDD 8-8 v6.160 ④, C.531)
       inner.append(
         ovMark(timeout ? 'i-timer' : 'i-broken', timeout ? 'var(--bha-warn)' : 'var(--bha-danger)'),
-        el('span', 'bha-battle-ov__eyebrow', timeout ? '시간 초과 패배' : '패배'),
+        el('span', 'bha-battle-ov__eyebrow', timeout ? '시간 초과 패배' : s.lossReason === 'executed' ? '처형 패배' : '패배'),
         el('h2', 'bha-battle-ov__title', timeout ? '시간이 다 됐다' : labels.defeatState),
         sub,
         actions,
@@ -2089,6 +2146,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 테스트 모드(?test=1)에서만: 캡처 proof 스크립트가 상태(봉인·해방 게이지)를 만들 수 있게 전투 상태를 건넨다 (C.261). 평소에는 아무것도 없다
   if (isTestMode()) (window as unknown as { __bhaCombat?: unknown }).__bhaCombat = s;
   let acc = 0;
+  execAcc = () => acc;
   let fxHalted = false;
   let last = performance.now();
   const frame = (now: number) => {
@@ -2144,6 +2202,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
     }
     drawHud();
     drawTray();
+    drawExecRing();
     syncScript();
     if (s.status !== 'playing') {
       stop();
@@ -2163,7 +2222,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
         window.setTimeout(() => opts.onEnd(s), slow * 1000 + 200);
         return;
       }
-      if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : `${labels.defeatState}…` });
+      if (s.status === 'lost') say({ role: 'cast', icon: 'i-broken', text: s.lossReason === 'timeout' ? '시간 제한을 넘겼다…' : s.lossReason === 'executed' ? '처형당했다…' : `${labels.defeatState}…` });
       endPress();
       if (opts.autoEnd) {
         // 테스트 모드 연속 전투 (C.457): 결과 창 없이 — 적이 사라진 뒤 바로 다음(적 설정 창)

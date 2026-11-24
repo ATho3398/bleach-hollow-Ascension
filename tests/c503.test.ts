@@ -359,12 +359,14 @@ describe('블록 종류 · 상태 화면', () => {
     applyInput(m, { type: 'use', cell: 0 });
     expect(m.evo!.stacks.rend!.n).toBe(2); // 찢김은 스킬 블록 체인만 소모
   });
-  it('상태 화면 줄: 고유 능력 + 레스렉시온, 프레네시 = 레스렉시온 없음, 나다 = 고유 능력만(기본 해방 강화)', async () => {
+  it('상태 화면 줄: 고유 능력 + 레스렉시온, 프레네시 = 레스렉시온 없음, 나다 = 고유 능력 + 특수 블록(적막 블록, 기본 해방 강화)', async () => {
     const { evoUniqueLines } = await import('../src/ui/evolutionPanel');
     expect(evoUniqueLines('t4:normal:physical', 'hollow', '레스렉시온').map((l) => l.label)).toEqual(['고유 능력', '레스렉시온']);
     expect(evoUniqueLines('t4:normal:physical', 'hollow', '레스렉시온')[0]!.text).toContain('3대마다');
     expect(evoUniqueLines('h4:frenzy', 'hollow', '레스렉시온')).toEqual([{ label: '레스렉시온', text: '없음 — 해방하지 않는다' }]);
-    expect(evoUniqueLines('h4:void', 'hollow', '레스렉시온').map((l) => l.label)).toEqual(['고유 능력']);
+    // C.531 (GDD 8-8 v6.160 ③, 사용자 2026-11-23 "진화하면, 허무 블록이 진화체에 맞는 오리지널 블록으로 바뀔거임"): 나다 오리지널 블록 '적막 블록' 줄이 생겼다 — 옛 기대값 ['고유 능력'](나다 = 특수 블록 없음, 11-18). 레스렉시온 줄은 여전히 없다(기본 해방 강화)
+    expect(evoUniqueLines('h4:void', 'hollow', '레스렉시온').map((l) => l.label)).toEqual(['고유 능력', '특수 블록']);
+    expect(evoUniqueLines('h4:void', 'hollow', '레스렉시온')[1]!.text).toContain('적막 블록');
     for (const id of HOLLOW10) for (const l of evoUniqueLines(id, 'hollow', '레스렉시온')) expect(l.text, id).not.toMatch(/\{/);
   });
 });

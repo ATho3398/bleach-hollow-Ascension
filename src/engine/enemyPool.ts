@@ -35,18 +35,24 @@ export function pickFromPool(rng: Rng, pool: readonly PoolEntry[]): EnemyDef {
   return pool[pool.length - 1]!.enemy;
 }
 
-/** 특수 속성(혈·독·허) 적 등장 숨김이 풀리는 까닭 (GDD 75장, C.127 — 옛 49-7 ① 특성 숨김에서 옮김): 강적 / 보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★minDifficulty 이상 */
-export type SpecialGate = 'elite' | 'boss' | 'mutation' | 'difficulty';
+/** 특수 속성(혈·독·허무) 적 등장 숨김이 풀리는 까닭 (GDD 75장, C.127 — 옛 49-7 ① 특성 숨김에서 옮김): 강적 / 보스 / 바퀴 변이(공허의 밤) / 원정 난이도 ★minDifficulty 이상 /
+ *  base = 그 밖 어디서나의 낮은 기본 확률(GDD 6-7 v6.161 등장 제한 완화, C.531 — ★1~2 일반 칸·먹잇감 둥지 등) */
+export type SpecialGate = 'base' | 'elite' | 'boss' | 'mutation' | 'difficulty';
 
 /** 특수 속성 적의 출현 배율(여럿이면 가장 큰 값)과 까닭. 0 이면 안 나온다. mutationChance = 지금 바퀴 변이의 specialEnemyChance (보스는 보스 데이터의 고정 적이라 풀을 거치지 않는다) */
-export function specialEnemyGate(o: { elite: boolean; boss?: boolean; difficulty: number; mutationChance?: number }): { chance: number; gates: SpecialGate[] } {
+/** noBase = 기본 확률 없음 (첫 원정 튜토리얼 — 처음 배우는 원정에는 처형하는 허무 적 등 특수 속성 적을 섞지 않는다, C.531 provisional) */
+export function specialEnemyGate(o: { elite: boolean; boss?: boolean; difficulty: number; mutationChance?: number; noBase?: boolean }): { chance: number; gates: SpecialGate[] } {
   const S = BALANCE.provisional.specialEnemies;
   const rows: [SpecialGate, number][] = [];
+  if (S.base > 0 && !o.noBase) rows.push(['base', S.base]);
   if (o.elite) rows.push(['elite', S.elite]);
   if (o.boss) rows.push(['boss', 1]);
   if ((o.mutationChance ?? 0) > 0) rows.push(['mutation', o.mutationChance!]);
   if (o.difficulty >= S.minDifficulty) rows.push(['difficulty', S.difficulty]);
-  return { chance: Math.max(0, ...rows.map((r) => r[1])), gates: rows.map((r) => r[0]) };
+  const chance = Math.max(0, ...rows.map((r) => r[1]));
+  // 까닭(런 로그): 기본 확률만으로 나왔을 때만 'base' — 다른 까닭이 있으면 옛 기록처럼 그것만
+  const gates = rows.map((r) => r[0]).filter((g, _i, all) => g !== 'base' || all.length === 1);
+  return { chance, gates };
 }
 
 /** 특수 속성 적의 가중치 × chance (0 이면 풀에서 뺀다 — 그 자리는 다른 속성 적). 난수를 더 쓰지 않는다.

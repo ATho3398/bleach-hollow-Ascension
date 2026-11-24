@@ -344,27 +344,35 @@
         "trait": "obliteration",
         "ability": {
           "effortBasis": "attackInterval",
-          "description": { "*": "블록을 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 {seconds@hollowSecondsGrow}초 동안 체인 수×{perChain@hollowGrow%})(새로 쓰면 갱신). 바 {bar}칸이 가득 찬 동안 {every}초마다 일반 공격 처형선 +{perLine%}p(전투 동안 유지, 최대 +{maxLine%}p)" },
+          "description": { "*": "블록을 쓰면 {seconds}초 동안 일반 공격 피해 +체인 수×{perChain%}(공격 속도를 키울수록 커짐, 일반 공격 간격 {intervalFull}초에 최대 — 다 키우면 {seconds@hollowSecondsGrow}초 동안 체인 수×{perChain@hollowGrow%})(새로 쓰면 갱신). 바 {bar}칸이 가득 찬 동안 {every}초마다 일반 공격 처형선 +{perLine%}p(전투 동안 유지, 최대 +{maxLine%}p). 허무 블록은 적막 블록으로 바뀐다 — 쓰면 {silenceSeconds}초 동안 일반 공격 처형선 +{silenceLine%}p(피해 없음)" },
+          "originalBlock": { "element": "kyo", "special": "silence", "mode": "spawn" },
           "buffs": {
-            "hollow": { "mark": { "icon": "i-basic", "name": { "*": "허무" } } }
+            "hollow": { "mark": { "icon": "i-basic", "name": { "*": "허무" } } },
+            "silence": { "mark": { "icon": "i-target", "name": { "*": "적막" } } }
+          },
+          "specials": {
+            "silence": { "name": { "*": "적막 블록" }, "short": "적", "element": "kyo", "description": { "*": "쓰면 {silenceSeconds}초 동안 일반 공격 처형선 +{silenceLine%}p (피해 없음, 새로 쓰면 갱신)" } }
           },
           "stacks": {
             "edge": { "max": "maxStacks", "mark": { "icon": "i-target", "name": { "*": "처형선" } } }
           },
           "rules": [
             { "on": "block", "kind": ["skill", "void", "combo", "liberation"], "do": [{ "act": "buff", "buff": "hollow", "value": "perChain", "per": "chain", "seconds": "seconds", "grow": { "value": "hollowGrow", "per": "effort" }, "secondsGrow": { "value": "hollowSecondsGrow", "per": "effort" } }] },
-            { "on": "every", "seconds": "every", "need": [{ "barFull": true }], "do": [{ "act": "add", "stack": "edge", "value": 1 }], "proc": "소멸선 +" }
+            { "on": "every", "seconds": "every", "need": [{ "barFull": true }], "do": [{ "act": "add", "stack": "edge", "value": 1 }], "proc": "소멸선 +" },
+            { "on": "special", "special": "silence", "do": [{ "act": "buff", "buff": "silence", "value": "silenceLine", "seconds": "silenceSeconds" }], "proc": "적막" }
           ],
           "passives": [
             { "stat": "basicPower", "value": 1, "per": "buff:hollow" },
-            { "stat": "execLine", "value": "perLine", "per": "stack:edge", "max": "maxLine" }
+            { "stat": "execLine", "value": "perLine", "per": "stack:edge", "max": "maxLine" },
+            { "stat": "execLine", "value": 1, "per": "buff:silence" }
           ]
         }
       },
       "shinigami": {
         "trait": "obliteration",
         "ability": {
-          "description": { "*": "바 맨 앞 {fixed}칸 = 낙화 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 허무 +1(모험 동안 유지), 허무 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 낙화 블록이 켜지고 누르면 처형(강적·보스는 못 씀)" },
+          "description": { "*": "바 맨 앞 {fixed}칸 = 낙화 블록 고정. 3체인을 {within}초 안에 {streak}번 연달아 쓰면 허무 +1(모험 동안 유지), 허무 2개당 블록 처형선 +{perTwo%}(최대 {lineMax%}). 적 체력이 블록 처형선 아래면 낙화 블록이 켜지고 누르면 처형(강적·보스는 못 씀). 허무 블록은 낙화 블록으로 바뀐다(따로 생기지 않음)" },
+          "originalBlock": { "element": "kyo", "special": "nil", "mode": "fixed" },
           "stacks": {
             "hollow": { "max": "stackMax", "carry": true, "mark": { "icon": "i-void", "name": { "*": "허무" } } }
           },

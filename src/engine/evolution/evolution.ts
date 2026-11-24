@@ -7,7 +7,7 @@ import { detachedOf, detachTotals } from '../traitShop';
 import { BALANCE } from '../../config/balance';
 import { combosAtTier, FORM_TABLE, formHasUniqueRelease, formName, formRelease, getForm, tryGetForm } from '../../data/evolution';
 import { distribute, failLineTotal } from '../../data/evolution/generate';
-import { NORMAL_ELEMENT, PLAYER_ELEMENT_IDS } from '../../data/elements';
+import { NORMAL_ELEMENT, NORMAL_FORM_ELEMENT_IDS } from '../../data/elements';
 import { getFaction } from '../../data/factions';
 import { formCategoryOf, STAT_IDS, type FormDef, type StatId, type Stats } from '../../data/schema';
 import { ELEMENT_DAMAGE_IDS, speedFactorOf, zeroElementDamage, type ComboRule, type CombatParams } from '../combat/combat';
@@ -637,10 +637,10 @@ export function evoParamsOf(form: FormDef | undefined | null, factionId: string)
   return { formId: form.id, ability, nums: base as Record<string, number>, relNums: evoReleaseNums(n), effort: 0, element: evoElementOf(form) };
 }
 
-/** 진화체 속성 (출처 blockLv 의 '그 속성', C.524): 플레이어가 가질 수 있는 속성이면 그 속성, 노멀·속성 없음·허무 등이면 null(모든 속성 공격 블록을 센다) */
+/** 진화체 속성 (출처 blockLv 의 '그 속성', C.524): 일반 진화체가 있는 속성(원소·혈·독)이면 그 속성, 노멀·속성 없음·허무(히든만 — 허무 블록은 오리지널 블록으로 바뀜, C.531) 등이면 null(모든 속성 공격 블록을 센다) */
 export function evoElementOf(form: FormDef): string | null {
   const el = form.elements?.[0] ?? form.label.elements[0];
-  return el && el !== NORMAL_ELEMENT && (PLAYER_ELEMENT_IDS as readonly string[]).includes(el) ? el : null;
+  return el && el !== NORMAL_ELEMENT && (NORMAL_FORM_ELEMENT_IDS as readonly string[]).includes(el) ? el : null;
 }
 
 /** 출처 effort (C.524 모양 손잡이, GDD 8-7): 그 몸 타입(category)의 주 노력치(balance evoInvest.mainStats) 합 ÷ floor(그 단계 노력치 상한 합계 × mainShare), 0~1.

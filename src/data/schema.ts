@@ -124,9 +124,15 @@ export interface ElementDef {
   abbr: PerFaction<string>;
   /** 표시 색: 기존 디자인 토큰 이름 (`--bha-…`). 새 색은 만들지 않는다 (CLAUDE.md 7번) */
   color: string;
-  /** 적 전용 속성 (GDD 8-2 v6.154 허무, 사용자 2026-11-21): 이 속성 블록(특성)은 플레이어가 얻지 못하고(흡수·보스 보상·상점·지급 전부),
-   *  이 속성 적의 흡수 = 능력치만·놓아주기만. 일반 진화체 판정에도 쓰지 않는다. 특수 속성만 */
+  /** 적 전용 속성 장치 (C.516 GDD v6.154 — 옛 허무): 이 속성 블록(특성)은 플레이어가 얻지 못하고(흡수·보스 보상·상점·지급 전부),
+   *  이 속성 적의 흡수 = 능력치만·놓아주기만. 특수 속성만. **지금 켠 속성 없음** — 허무는 GDD 8-8 v6.160(사용자 2026-11-23 "허무도 흡수 가능해")로 되돌림(C.531) */
   enemyOnly?: boolean;
+  /** 이 속성 4단계 일반 진화체는 없다 — 히든만 (GDD 8-5·8-7 '허무 일반 진화체는 없다', C.531): 생성기가 그 속성 4단계 일반을 retired 로 만든다(옛 세이브 호환용 데이터). 특수 속성만 */
+  hiddenFormOnly?: boolean;
+  /** 이 속성 적은 나를 처형할 수 있다 (GDD 8-8 v6.160 ④, C.531): 내 체력이 적 등급별 선 이하인 동안 주기마다 처형 시도 — 수치는 balance provisional.foeExecute. 특수 속성만 */
+  foeExecute?: boolean;
+  /** 혈·독·허무 블록의 '블록 특성' 1개 자리 (GDD 8-2 — 내용 **[미정]**, C.531): 지금은 null 만(효과 없음, 화면에 안 보임). 정해지면 이 칸에 효과 데이터를 넣는다 */
+  blockTrait?: null;
 }
 
 export const TRAIT_KINDS = ['skill', 'passive', 'part'] as const;
@@ -164,7 +170,8 @@ export interface TraitDef {
   role?: SkillRole;
   /** skill: 블록 위력 = 플레이어 기본 공격 N회 분량의 피해 (guard·heal 도 작은 피해를 준다) */
   powerInAttacks?: number;
-  /** skill 공격 블록: 계열 id (GDD 17-3). 같은 계열 공격 블록이 바에서 연속이면 체인이 된다. 계열 목록·단계별 기술은 종족 설정(families)이 정한다. 막기·회복은 계열 없음 */
+  /** skill 공격 블록: 계열 id (GDD 17-3). 같은 계열 공격 블록이 바에서 연속이면 체인이 된다. 계열 목록·단계별 기술은 종족 설정(families)이 정한다. 막기·회복은 계열 없음.
+   *  특수 속성(혈·독·허무) 블록은 계열 없는 1종일 수 있다 (GDD 8-2 v6.161, C.531 허무 블록) — 같은 블록끼리 체인, 단계 배율 = 공용 체인 배율 */
   family?: string;
   /** skill 막기·회복: 체인3(chainBonusFromChain) 이상으로 쓰면 붙는 추가 효과 1개. 공격은 계열 단계 기술(종족 설정)이 정하므로 없다 */
   chainBonus?: ChainBonus;
@@ -173,6 +180,8 @@ export interface TraitDef {
   passive?: { stat: PassiveStat; multiplier?: number; secondsCut?: number };
   /** 치명타 확률 가산 (C.63 `critChance` 효과 키, 0~1): 슬롯에 장착하면 내 치명타 확률에 더한다(종류 무관, 여럿이면 합) */
   critChance?: number;
+  /** skill 공격 블록: 적 체력 구간 강화 (GDD 8-8 v6.162 진화 전 허무 블록, C.531) — 적 체력이 낮을수록 세다. 구간·배율은 balance provisional.combat.foeHpBands */
+  foeHpBands?: boolean;
   provisional?: boolean;
 }
 

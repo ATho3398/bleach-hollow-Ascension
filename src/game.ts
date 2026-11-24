@@ -33,7 +33,7 @@ import { TITLES, titleForFaction } from './data/titles';
 import { guidePending, markGuideDone, newHelpState, queueGuide, sanitizeHelpState, type HelpState } from './engine/tutorial';
 import { unlockTitles, type TitleTrigger, type UnlockedTitle } from './engine/titles';
 import { STAT_IDS, formCategoryOf, type StatId, type Stats, type TitleDef } from './data/schema';
-import { getTrait, isPlayerTrait, retiredRareElement, TRAITS } from './data/traits';
+import { getTrait, isPlayerTrait, mergedTraitId, retiredRareElement, TRAITS } from './data/traits';
 import { PATCH_LABEL } from './version';
 import { encodeSave, parseSaveText } from './saveCodec';
 import { addFood, newFoodStock, sanitizeFoodStock, settleFood, takeFood, type FoodSettlement, type FoodStock } from './engine/food';
@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
+export const SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
+// 이전: SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
 // 이전: SAVE_FORMAT_VERSION = 94; // C.508 (GDD 8-5 진화 미루기): 진화 상태 choice(귀환 뒤 [진화] [미루기]를 묻는 중 — 그 원정 몸 상태·runId, 고르기 전에 껐다 켜도 방에서 창을 다시 띄움) — 93 → 94 변환 SAVE_MIGRATIONS[93](묻는 중 아님).
 // 이전: SAVE_FORMAT_VERSION = 93; // C.506 (GDD 8-7 1차 추성 '펫 칸 +1'): 슬롯 공유 펫 상태 shared.pets.active2(2번째 펫 칸, 진화체 펫 칸 +1 일 때만) — 92 → 93 변환 SAVE_MIGRATIONS[92](빈 칸 null).
 // 이전: SAVE_FORMAT_VERSION = 92; // C.497 (GDD 8-5 진화 미루기·8-8 허무형): 진화 상태 deferrals(그 단계에서 진화를 미룬 수)·런 로그 tiers.deferrals(미루기 기록)·진화 기록 deferrals·스냅샷 deferrals/collapsed(선택) — 91 → 92 변환 SAVE_MIGRATIONS[91](모든 트랙 미루기 0회, 빈 미루기 기록).
@@ -2647,9 +2648,46 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 94 → 95 (C.516, GDD 8-2 v6.154 허무 = 적 전용): 허무 블록(장착·보유)은 지우고 그 칸은 비운다, 허무 강화 n → 노멀 강화 +n (provisional).
   // 이미 바시오·허곡(t4:kyo:mixed)인 몸은 이번 생 동안 그대로(다음 진화·환생부터 안 나온다). 런 로그는 지우지 않는다
   94: (save) => migrateEnemyOnlyBlocks(save),
+  // 95 → 96 (C.531, GDD 8-8 v6.160 허무 재설계 — C.516 되돌림): 허무 블록 = 계열 없는 1종. 옛 허무 조·탄·교(형식 94 이하 세이브에 남은 것 — 위 94 → 95 는 이제 허무를 지우지 않는다)를
+  // 허무 블록 하나로 합치고(강화 횟수 그대로), 원정 중간 저장의 허무 적 흡수 화면은 허무 블록 후보를 돌려준다. 형식 95 세이브(이미 지워짐)는 허무 블록 없이 그대로 시작
+  95: (save) => migrateMergedBlocks(save),
 };
 
-/** 형식 94 → 95 (C.516): 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·흡수 화면)에서 허무(적 전용 속성) 블록을 뺀다. 종족 분기 없음 — 속성 데이터 enemyOnly 만 본다 */
+/** 형식 95 → 96 (C.531): 계열 없는 1종으로 합친 블록의 옛 id(mergedTraitId — 허무 조·탄·교 → 허무 블록)를 지금 id 로. 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·얻은 블록·흡수 후보).
+ *  같은 블록이 여럿이 되면 하나만 남긴다(슬롯은 앞 칸, 뒤 칸은 비움). 흡수 화면이 '블록 없음'(blockless, C.516)인데 그 속성이 이제 적 전용이 아니면 그 속성 블록 후보를 돌려준다. 종족·속성 분기 없음 */
+export function migrateMergedBlocks(save: SaveData): void {
+  const now = (id: unknown): unknown => (typeof id === 'string' ? mergedTraitId(id) ?? id : id);
+  const uniq = <T,>(list: T[]): T[] => list.filter((x, i) => x === null || list.indexOf(x) === i);
+  const fix = (b: unknown): void => {
+    if (!isRec(b) || !Array.isArray(b.owned) || !Array.isArray(b.slots)) return;
+    b.owned = uniq(b.owned.map(now));
+    const slots = b.slots.map(now);
+    b.slots = slots.map((id, i) => (id !== null && slots.indexOf(id) !== i ? null : id));
+    if (Array.isArray(b.equipOrder)) {
+      const order = b.equipOrder.map(now);
+      b.equipOrder = order.filter((id, i) => order.lastIndexOf(id) === i); // 가장 최근 장착 순번을 남긴다
+    }
+  };
+  forEachTrack(save, (t) => {
+    fix(t.build);
+    const basis = isRec(t.evolution) ? (t.evolution as EvolutionState).basis : undefined;
+    if (isRec(basis) && isRec(basis.builds)) for (const v of Object.values(basis.builds)) if (isRec(v)) fix(v.build);
+    const exp = isRec(t.activeExpedition) && isRec(t.activeExpedition.exp) ? t.activeExpedition.exp : null;
+    if (!exp) return;
+    fix(exp.build);
+    if (Array.isArray(exp.acquiredTraits)) for (const a of exp.acquiredTraits as unknown[]) if (isRec(a)) a.traitId = now(a.traitId);
+    const offer = isRec(exp.absorbOffer) ? exp.absorbOffer : null;
+    if (!offer || !Array.isArray(offer.candidates)) return;
+    offer.candidates = uniq((offer.candidates as unknown[]).map(now)) as typeof offer.candidates;
+    if (offer.blockless === true && typeof offer.element === 'string' && !isEnemyOnlyElement(offer.element)) {
+      delete offer.blockless;
+      offer.candidates = TRAITS.filter((x) => !x.boss && x.kind === 'skill' && x.element === offer.element).map((x) => x.id);
+    }
+  });
+}
+
+/** 형식 94 → 95 (C.516): 트랙 빌드·전투 기반별 빌드·원정 중간 저장(빌드·흡수 화면)에서 적 전용 속성 블록을 뺀다. 종족 분기 없음 — 속성 데이터 enemyOnly 만 본다.
+ *  C.531 (GDD 8-8 v6.160): 허무가 적 전용이 아니게 돼 지금은 아무것도 빼지 않는다 — 옛 허무 블록은 다음 단계(95 → 96 migrateMergedBlocks)가 허무 블록 하나로 합친다 */
 export function migrateEnemyOnlyBlocks(save: SaveData): void {
   const fix = (b: unknown): void => {
     if (isRec(b) && Array.isArray(b.owned) && Array.isArray(b.slots)) dropEnemyOnlyTraits(b as unknown as BuildState);

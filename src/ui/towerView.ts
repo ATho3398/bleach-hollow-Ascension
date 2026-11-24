@@ -141,7 +141,7 @@ export function towerResultView(root: HTMLElement, faction: FactionConfig, f: To
     mark,
     el('span', 'bha-label', `${L.name} · ${towerFloorText(faction, f.floor)} · ${name}`),
     el('h1', 'bha-result__title', won ? (f.final ? `${L.name} 정상` : '돌파') : labels.defeatState),
-    el('p', 'bha-result__reason', won ? `${name}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '시간 제한을 넘겼다. 그 층에서 다시 도전할 수 있다.' : '체력이 다했다. 그 층에서 다시 도전할 수 있다.'),
+    el('p', 'bha-result__reason', won ? `${name}을(를) 쓰러뜨렸다.` : s.lossReason === 'timeout' ? '시간 제한을 넘겼다. 그 층에서 다시 도전할 수 있다.' : s.lossReason === 'executed' ? '처형을 막지 못했다. 그 층에서 다시 도전할 수 있다.' : '체력이 다했다. 그 층에서 다시 도전할 수 있다.'),
   );
   const rows: IconInfoRow[] = [
     { label: '층', icon: 'i-flag-win', value: `${towerFloorText(faction, f.floor)} · ${TOWER_KIND_LABEL[f.kind]} · ${difficultyText(faction, f.star)}` },

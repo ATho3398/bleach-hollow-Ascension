@@ -13,7 +13,7 @@ import { createRng, nextFloat } from '../src/engine/rng';
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 /** 원정을 끝까지 돌며(전투는 바로 이김) 75장 규칙 밖 혈·독·허 조우를 모은다 */
-function leaksOf(exp: ExpeditionState, laps: number, tiles: string[] | null, seed: number): string[] {
+function leaksOf(exp: ExpeditionState, laps: number, tiles: string[] | null, seed: number, count?: { battles: number }): string[] {
   const rng = createRng(seed);
   const out: string[] = [];
   for (let g = 0; exp.phase !== 'ended' && g < 5000; g++) {
@@ -22,6 +22,7 @@ function leaksOf(exp: ExpeditionState, laps: number, tiles: string[] | null, see
       advance(exp);
     } else if (exp.phase === 'battle') {
       const p = exp.pending!;
+      if (count) count.battles++;
       const open = p.elite || !!p.boss || exp.difficulty >= 3 || exp.mutation === 'void-night' || (exp.mutation === 'blood-moon' && p.enemy.element === 'blood');
       if (SPECIAL_ELEMENT_IDS.includes(p.enemy.element) && !open) out.push(`${p.enemy.id} tile=${p.tileId} mut=${exp.mutation} ★${exp.difficulty}`);
       const b = startBattle(exp);
@@ -41,25 +42,30 @@ function leaksOf(exp: ExpeditionState, laps: number, tiles: string[] | null, see
   return out;
 }
 
-describe('C.130 엔진 전수: ★1~2 일반 칸에 혈·독·허 0 (75장)', () => {
+// C.531 (GDD 6-7 v6.161, 사용자 2026-11-23 등장 제한 완화): ★1~2 일반 칸 0 → 기본 0.1 — 옛 기대값 '전부 0'은 첫 원정 튜토리얼에만 남고(기본 확률 없음, provisional), 그 밖은 '드물게'(전투의 15% 미만)
+describe('C.130 엔진 전수: ★1~2 일반 칸의 혈·독·허무 = 드물게 (6-7 v6.161 기본 0.1), 첫 원정 튜토리얼은 0', () => {
   it('첫 원정 튜토리얼 · 자유 ★1·★2(사냥터 전부·타일 변수·아무 타일 조합·메아리·조합·변이) · 스토리 화 전부', () => {
     const leaks: string[] = [];
+    const tutorialLeaks: string[] = [];
+    const count = { battles: 0 };
     let stories = 0;
     for (const f of ['hollow', 'shinigami']) {
       const tiles = tilesFor(f).map((t) => t.id);
-      for (let s = 1; s <= 40; s++) leaks.push(...leaksOf(createExpedition({ factionId: f, seed: s, hunger: 0, condition: 100, deck: [], tutorial: true }), 1, null, s));
+      for (let s = 1; s <= 40; s++) tutorialLeaks.push(...leaksOf(createExpedition({ factionId: f, seed: s, hunger: 0, condition: 100, deck: [], tutorial: true }), 1, null, s));
       for (const d of [1, 2]) for (const groundId of ['outskirts', 'canyon', 'forest']) for (const tilesLocked of [false, true]) for (let s = 1; s <= 12; s++) {
         const exp = createExpedition({ factionId: f, seed: s * 31 + d, hunger: 0, condition: 100, deck: tiles.slice(0, 6), difficulty: d, groundId, tileVariants: true, tilesLocked, maxLaps: 6 });
-        leaks.push(...leaksOf(exp, 5, tiles, s));
+        leaks.push(...leaksOf(exp, 5, tiles, s, count));
       }
       for (const ch of STORY_CONTENT.filter((c) => c.factionId === f)) for (const ep of ch.episodes) for (let s = 1; s <= 3; s++) {
         const exp = createExpedition({ factionId: f, seed: s, hunger: 0, condition: 100, deck: tiles.slice(0, 6), tileVariants: true, story: { chapterId: ch.chapterId, episodeId: ep.id } });
-        leaks.push(...leaksOf(exp, 9, null, s));
+        leaks.push(...leaksOf(exp, 9, null, s, count));
         stories++;
       }
     }
     expect(stories).toBeGreaterThan(10);
-    expect(leaks).toEqual([]);
+    expect(tutorialLeaks).toEqual([]);
+    expect(leaks.length).toBeGreaterThan(0);
+    expect(leaks.length / count.battles).toBeLessThan(0.15);
   });
 });
 

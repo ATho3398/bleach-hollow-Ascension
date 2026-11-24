@@ -467,9 +467,14 @@ describe('약점·공허·시간 제한', () => {
     const hpBefore = poison.s.enemy.hp;
     wait(poison.s, EL.poisonSeconds + 0.5);
     expect(hpBefore - poison.s.enemy.hp).toBeCloseTo(base * EL.poisonFraction);
-    // GDD 8-2 v6.154 (사용자 2026-11-21 "허무=공허로 합치고, 허무형은 적만 존재하고 블록흡수는 안되게"): 옛 기대 = 허 블록 보통 피해·리스크 0.
-    // 허무 블록은 플레이어가 얻을 수 없다 — 빌드에 넣는 길 자체가 막힌다
-    expect(gainTrait(newBuild(), 't-kyo-a').ok).toBe(false);
+    // C.531 (GDD 8-8 v6.160~v6.162, 사용자 2026-11-23 "허무도 흡수 가능해" · "상대 피 20% 단위로 나눠서 점점 쎄지게 해. 대신 40%보다 높을 땐 다른 블록보다 약하게" — C.516 'gainTrait 거절' 번복):
+    // 허무 블록(계열 없는 1종)은 다시 얻을 수 있고, 피해 = 보통 × 적 체력 구간 배율(적 체력 100% = ×0.6), 처형 없음·리스크 0
+    expect(gainTrait(newBuild(), 't-kyo').ok).toBe(true);
+    const kyo = hit('t-kyo');
+    expect(kyo.damage).toBeCloseTo(base * CX.foeHpBands[0]!.mult);
+    expect(CX.foeHpBands[0]!.mult).toBeLessThan(1);
+    expect(kyo.s.riskGained).toBe(0);
+    expect(kyo.s.status).toBe('playing');
   });
 
   it('적의 공격도 상성·능력치를 따른다: 내 방어가 두 배면 받는 피해가 절반, 적 속성이 나를 이기면 ×1.2', () => {

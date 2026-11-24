@@ -216,7 +216,7 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
   mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
   const reason = won ? (run.mode === 'weekly' ? `${run.total}판을 모두 이겼다.` : `${run.name}을(를) 쓰러뜨렸다.`)
     : run.battles.length < run.total && last?.status === 'won' ? '도중에 나왔다. 입장 횟수는 돌려받지 못한다.'
-    : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장 횟수는 돌려받지 못한다.' : '체력이 다했다. 입장 횟수는 돌려받지 못한다.';
+    : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장 횟수는 돌려받지 못한다.' : last?.lossReason === 'executed' ? '처형을 막지 못했다. 입장 횟수는 돌려받지 못한다.' : '체력이 다했다. 입장 횟수는 돌려받지 못한다.';
   head.append(
     mark,
     el('span', 'bha-label', `${L.name} · ${run.mode === 'weekly' ? L.tabs.weekly : L.tabs.boss} · ${run.name} · ${difficultyText(faction, run.star)}`),

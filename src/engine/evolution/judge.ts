@@ -32,7 +32,7 @@ export interface JudgeContext {
   failLineage?: boolean;
   /** 진화 순간 능력치 합계 (각성형 — 4단계 종족값 합계와 비교). 없으면 0 */
   statTotal?: number;
-  /** 진화 순간 빈사 (GDD 8-8 허무형, C.497 — 둥지 빈사 상태로 귀환). 없으면 false */
+  /** 진화 순간 빈사 (둥지 빈사 상태로 귀환, C.497). 없으면 false — 허무형 조건에서는 빠졌다(GDD 8-8 v6.166, C.531), 기록(snapshot)과 혈 진화 조건(8-5 v6.164 [미구현]) 자리 */
   collapsed?: boolean;
 }
 
@@ -154,6 +154,9 @@ export function isCareFailure(ctx: JudgeContext): boolean {
 const faintsOf = (e: EvolutionState): number => e.faints ?? 0;
 const longAbsencesOf = (e: EvolutionState): number => e.longAbsences ?? 0;
 const hunterRunsOf = (e: EvolutionState): number => e.hunterRuns ?? 0;
+/** 이 단계에서 흡수한 허무형 조건 속성(balance hidden.void.element = 허무) 블록 수 (GDD 8-8 v6.166, C.531): 블록 갈래(둘 다·속성만)로 그 속성 적을 흡수한 수 = 단계 기록 elementAbsorbs.
+ *  능력치만 흡수는 블록을 얻지 않아 세지 않는다(recordEvolutionAbsorb countElement) */
+export const voidBlockAbsorbsOf = (e: Pick<EvolutionState, 'elementAbsorbs'>): number => e.elementAbsorbs[H.void.element] ?? 0;
 /** 이 단계에서 진화를 미룬 수 (C.497, GDD 8-5 — 옛 세이브엔 없음 = 0) */
 export const deferralsOf = (e: Pick<EvolutionState, 'deferrals'>): number => e.deferrals ?? 0;
 
@@ -181,8 +184,8 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
   if (e.releases > e.absorbs && 100 - ctx.hunger <= H.restraintFullnessMax) out.push(hidden('h4:restraint', e.releases / Math.max(1, e.absorbs) - 1));
   if ((ctx.bond ?? 0) >= H.stableBond && faintsOf(e) === 0 && e.breakthroughs === 0 && longAbsencesOf(e) === 0) out.push(hidden('h4:stable', 0));
   if (hunterRunsOf(e) >= H.hunterRuns) out.push(hidden('h4:hunter', hunterRunsOf(e) / H.hunterRuns - 1));
-  // 허무형 (GDD 8-8 v6.120, C.497): 그 단계(3단계) 진화 미루기 voidMaxDeferrals 회 이하(= 한 번도 안 함) + 빈사 상태로 귀환해 진화. 리스크·흡수 무관
-  if (deferralsOf(e) <= H.voidMaxDeferrals && ctx.collapsed === true) out.push(hidden('h4:void', 0));
+  // 허무형 (GDD 8-8 v6.166, C.531 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기): 그 단계(3단계)에서 허무 블록 absorbs 개 이상 흡수 + 진화 미루기 deferrals 회 이상. 리스크·빈사 무관
+  if (voidBlockAbsorbsOf(e) >= H.void.absorbs && deferralsOf(e) >= H.void.deferrals) out.push(hidden('h4:void', 0));
   const tier4Total = BALANCE.provisional.stats.tierTotals[3] ?? Infinity;
   if (ctx.failLineage && rebirths >= H.awakenedRebirths && (e.practices ?? 0) >= H.awakenedPractices && evBalanced(e) && (ctx.statTotal ?? 0) >= tier4Total) {
     out.push(hidden('h4:awakened', (e.practices ?? 0) / H.awakenedPractices - 1));
@@ -191,7 +194,7 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
 }
 
 /** 3단계 히든 통로 후보 (협의 답 — 2단계 동안 4단계 조건의 약 60%): 문턱 하나라도 넘으면 h3:passage 하나, 초과량은 가장 크게 넘은 것.
- *  실패형·각성형·허무형(미루기 0회 + 빈사 귀환, C.497)은 통로 없이 4단계에서 직접 */
+ *  실패형·각성형·허무형(허무 블록 10개 흡수 + 미루기 3회, C.531)은 통로 없이 4단계에서 직접 */
 export function passageCandidates(e: EvolutionState, ctx: JudgeContext): EvolutionCandidate[] {
   const P = H.passage;
   const excess: number[] = [];
@@ -212,7 +215,7 @@ export function passageCandidates(e: EvolutionState, ctx: JudgeContext): Evoluti
 
 /** 4단계 일반 진화체 (GDD 126장 6·확정 5): 속성 = 3단계 속성(통로·망함이면 장착 최다), 타입 = 장착 최다 공격 분류.
  *  혈·독이 장착 최다(동률 포함)면 그 속성의 단 하나 타입 진화체가 우선(일반 < 혈·독 < 히든). 망한 진화체에서 오면 실패형.
- *  판정에서 빠진 진화체(retired — GDD 8-5 v6.154 옛 허 t4:kyo:mixed, 허무는 적 전용)는 후보가 아니다 */
+ *  판정에서 빠진 진화체(retired — GDD 8-5 옛 허 t4:kyo:mixed, 허무 일반 진화체는 없다 — 속성 데이터 hiddenFormOnly)는 후보가 아니다 */
 export function tier4Normal(e: EvolutionState, ctx: JudgeContext, table: readonly FormDef[] = FORM_TABLE): FormDef {
   const find = (id: string) => table.find((x) => x.id === id);
   const cur = e.formId ? find(e.formId) : undefined;

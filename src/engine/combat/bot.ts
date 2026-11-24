@@ -4,7 +4,7 @@
 // 클릭 시간 규칙(누른 뒤 0.3초 이내)은 화면 몫이라 봇은 흉내 내지 않는다.
 import { hasSpecialActions } from '../../data/enemies';
 import {
-  blockDamage, blockEffect, canGuard, chainCapOf, canLiberate, canUseGear, canUseItem, halted, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
+  blockDamage, blockEffect, canGuard, chainCapOf, canLiberate, canUseGear, canUseItem, foeExecuteRingOf, halted, step, ticksOf, type CombatInput, type CombatState, type ComboRule,
 } from './combat';
 import { createRng, nextFloat } from '../rng';
 import { evoSpecialOf, evoSpecialUsable } from './evoUnique';
@@ -176,10 +176,18 @@ export function playCombatBot(s: CombatState, opt: BotOptions = {}): CombatState
   while (s.status === 'playing') {
     // 막기 창 (GDD 105장 수정: 0.5초)은 입력 간격과 같아 간격 틱에만 보면 늘 놓친다 — 착탄이 막기 지속 안에 들어온 틱에는 바로 본다
     const urgent = opt.allowGuard !== false && s.enemy.cast !== null && s.enemy.cast.ticks < guardWindowTicks(s) && canGuard(s);
-    step(s, s.tick % every === 0 || urgent ? botInput(s, opt) : null);
+    step(s, withExecuteGuard(s, s.tick % every === 0 || urgent ? botInput(s, opt) : null));
     s.events.length = 0;
   }
   return s;
+}
+
+/** 처형 막기 (GDD 8-8 v6.160 ④, C.531): 허무 적의 처형 시도는 원이 닿는 틱에 누른다 — 봇은 늘 맞춘다(밸런스 측정 기준, provisional). 다른 입력과 같은 틱에 같이 넣는다 */
+function withExecuteGuard(s: CombatState, input: CombatInput | null): CombatInput | CombatInput[] | null {
+  const ring = foeExecuteRingOf(s);
+  if (!ring || s.tick + 1 !== ring.hitTick) return input;
+  const guard: CombatInput = { type: 'execute-guard' };
+  return input ? [input, guard] : guard;
 }
 
 /** 사람형 봇 설정 (GDD 14-4, 모두 임시). 같은 시드면 같은 플레이 */
@@ -239,7 +247,7 @@ export function playCombatHuman(s: CombatState, opt: HumanBotOptions = {}): Comb
       nextAct = s.tick + delay();
     }
     s.events.length = 0;
-    step(s, input);
+    step(s, withExecuteGuard(s, input));
     opt.onStep?.(s);
   }
   return s;

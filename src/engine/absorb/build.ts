@@ -37,8 +37,8 @@ export function addEnhance(b: BuildState, element: string): number {
   return m[element]!;
 }
 
-/** 적 전용 속성(허무) 블록·강화를 뺀다 (GDD 8-2 v6.154, 사용자 2026-11-21 — 세이브 마이그레이션): 보유·슬롯·장착 순서에서 빼고(슬롯 칸은 비운다),
- *  그 속성 강화 n 은 노멀 강화에 +n 으로 합친다(provisional, 마스터 결정). 뺀 블록 수를 돌려준다 */
+/** 적 전용 속성 블록·강화를 뺀다 (C.516 장치 — 세이브 마이그레이션): 보유·슬롯·장착 순서에서 빼고(슬롯 칸은 비운다),
+ *  그 속성 강화 n 은 노멀 강화에 +n 으로 합친다. 뺀 블록 수를 돌려준다. 지금 적 전용 속성이 없어 아무것도 빼지 않는다 — 허무는 C.531(GDD 8-8 v6.160)에 되돌림 */
 export function dropEnemyOnlyTraits(b: BuildState): number {
   const keep = (id: unknown): boolean => typeof id !== 'string' || !TRAITS.some((t) => t.id === id) || isPlayerTrait(getTrait(id));
   const dropped = new Set([...b.owned, ...b.slots].filter((id): id is string => id !== null && !keep(id)));
@@ -146,7 +146,7 @@ export type GainPlace = number | null | 'owned';
 /** 새 특성을 얻는다: 보유 목록에 더하고, 빈 슬롯이 있으면 장착, 가득 차 있으면 replaceSlot 의 특성과 교체(옛 특성은 보유에 남음). 교체 슬롯이 없으면 포기(얻지 않음).
  *  replaceSlot = 'owned' 면 슬롯은 건드리지 않고 보유 목록에만 넣는다 (GDD 193장 13 [보유에만 넣기] — 흡수 규칙·수치는 교체와 같다). (해방 블록 슬롯은 C.167 에 폐지 — GDD 98장 B) */
 export function gainTrait(b: BuildState, traitId: string, replaceSlot?: GainPlace): BuildResult {
-  // 허무(적 전용 속성) 블록은 어떤 길로도 얻지 못한다 (GDD 8-2 v6.154)
+  // 적 전용 속성 블록은 어떤 길로도 얻지 못한다 (C.516 장치 — 지금 적 전용 속성 없음, 허무 블록은 C.531 부터 흡수로 얻는다)
   const t = getTrait(traitId);
   if (!isPlayerTrait(t)) return { ok: false, reason: `${elementName(t.element, '*')} 블록은 얻을 수 없다` };
   if (ownsTraitBlock(b, traitId)) return { ok: false, reason: isBasicBlockTrait(traitId) ? '기본 블록이 그 역할이다' : '이미 가진 블록이다' };
@@ -236,6 +236,8 @@ function skillsOf(b: BuildState, ids: readonly (string | null)[], factionId?: st
       chainBonus: { ...chainBonus },
       // 속성 강화 (GDD 84장 8번 — 공격 특성만, 막기·회복 특성은 C.136 에 삭제). 같은 속성 3개 보너스는 C.150 에 삭제 (GDD 94장 B 후속)
       powerMultiplier: t.role === 'attack' ? enhanceAttackMultiplier(b, t.element) : 1,
+      // 적 체력 구간 강화 (GDD 8-8 v6.162 진화 전 허무 블록, C.531 — 특성 데이터 foeHpBands)
+      ...(t.foeHpBands ? { foeHpBands: BALANCE.provisional.combat.foeHpBands } : {}),
     });
   }
   return out;

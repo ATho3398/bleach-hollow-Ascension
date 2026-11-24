@@ -59,7 +59,7 @@ export function randomState(rng: Rng, tierIndex: number, prevForms: readonly str
   e.longAbsences = nextFloat(rng) < 0.2 ? 1 : 0;
   e.hunterRuns = nextFloat(rng) < 0.25 ? nextInt(rng, 5) : 0;
   e.practices = nextInt(rng, 40);
-  e.deferrals = nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 3) : 0; // C.497 진화 미루기 (허무형 = 0회 + 빈사)
+  e.deferrals = nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0; // 진화 미루기 1~4회 (허무형 = 허무 블록 10개 흡수 + 미루기 3회↑, C.531 — 옛 C.497 '0회 + 빈사')
   const evBase = nextInt(rng, 12);
   const even = nextFloat(rng) < 0.3;
   for (const k of Object.keys(e.ev) as (keyof typeof e.ev)[]) e.ev[k] = even ? evBase + 4 : nextInt(rng, 16);
@@ -82,7 +82,7 @@ export function analyzeTree(table: readonly FormDef[], factionId: string, sample
       const ctx = {
         factionId, build, hunger: good ? nextInt(rng, 60) : 60 + nextInt(rng, 41), condition: good ? 40 + nextInt(rng, 61) : nextInt(rng, 60), rebirths: nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0,
         risk: nextInt(rng, 101), bond: nextFloat(rng) < 0.3 ? 100 : nextInt(rng, 100), failLineage: nextFloat(rng) < 0.3, statTotal: 400 + nextInt(rng, 400),
-        collapsed: nextFloat(rng) < 0.15, // C.497 허무형: 빈사로 귀환
+        collapsed: nextFloat(rng) < 0.15, // 빈사로 귀환 (C.497 — 허무형 조건에서는 빠짐 C.531, 기록용)
       };
       const { form } = judgeEvolution(e, ctx, table);
       picked[form.id] = (picked[form.id] ?? 0) + 1;
