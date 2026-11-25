@@ -1,6 +1,7 @@
 // 호로 탄생 (블리치 할로우 어센션 커스텀, 첫 시작 탄생 연출을 픽셀 이펙트로): 처음부터 떠 있는 영혼과 인과의 사슬 → 사슬이 찰랑이다가 끝 고리부터
 // 타올라 불티로 부서짐 → 다 타면 영혼이 붉게, 검게 물들며 떨다가 '펑' — 검붉은 불꽃이 사방으로 터지며 걷힘(캐릭터 등장). 원점 = 영혼 자리.
 // 사용자 2026-11-23 "그 캐릭첨 시작할 때, 사신 호로 애니메이션 있잖아. 그거 픽셀fx 기반으로 다시 만들어줄래?"
+// 사용자 2026-11-25 "호로는 쇠사슬이 영혼 안에서 시작되게 하고"
 // 사용자 2026-11-25 피드백 "영혼이랑 사슬이 주르륵 생기지 말고, 기본적으로 영혼이랑 사슬은 떠있고, 사슬은 조금씩 찰랑거리면서 끝부터 타오름.
 //   다타면 영혼이 빨,검으로 물들면서 펑-하고 시작"
 // 불꽃 혀·불티 그리기는 pixelfx fire/_lib.js (MIT — Sprite Fusion fire 레시피, THIRD_PARTY_NOTICES.md).
@@ -9,7 +10,7 @@ import { flameTongue, flameBlade, noiseFor, ember } from "../fire/_lib.js";
 
 // 단계 시각(초): 떠 있음 0~0.3 · 끝부터 타오름 0.3~2.0 · 물듦·떨림 2.0~2.6 · 펑 2.6 · 걷힘 ~3.4
 const BURN0 = 0.3, BURN1 = 2.0, POP = 2.6, END = 3.4;
-const LINKS = 7, LINK_H = 9, CHAIN_Y = 12; // 사슬 고리 수·고리 높이·영혼에서 사슬이 시작하는 자리
+const LINKS = 7, LINK_H = 9, CHAIN_Y = 1; // 사슬 고리 수·고리 높이·사슬 첫 고리 자리 — 영혼 한가운데에서 시작(첫 고리는 영혼 속, 사용자 11-25 "쇠사슬이 영혼 안에서 시작")
 // 검붉은 불꽃 겹: 붉은 테 → 검붉음 → 거의 검정 → 검은 심지 [폭 비율, 높이 비율, 색 번호(black 팔레트)]
 const BLACK_LAYERS = [[1, 1, 7], [0.86, 0.93, 5], [0.66, 0.8, 3], [0.44, 0.62, 1], [0.24, 0.42, 0]];
 
@@ -36,7 +37,7 @@ export const meta = {
 /** 고리 i 가 타기 시작하는 때 — 맨 끝(아래) 고리부터 위로 */
 const burnAt = (i) => BURN0 + ((LINKS - 1 - i) * (BURN1 - BURN0 - 0.25)) / (LINKS - 1);
 /** 사슬 찰랑임: 아래 고리일수록 크게 흔들린다 (위 끝은 영혼에 붙어 있음) */
-const swayX = (t, i) => (1.2 + 2.6 * ((i + 1) / LINKS) ** 1.3) * Math.sin(t * 3.4 - i * 0.45) + 0.6 * Math.sin(t * 7.9 + i);
+const swayX = (t, i) => (0.2 + 3.6 * (i / (LINKS - 1)) ** 1.3) * Math.sin(t * 3.4 - i * 0.45) + 0.6 * (i / (LINKS - 1)) * Math.sin(t * 7.9 + i);
 
 /** 영혼 불빛. stain = 붉게 물듦(0..1), black = 검게 물듦(0..1), shake = 떨림 세기 */
 function soul(p, t, S, B, stain, black, shake, n) {
@@ -67,7 +68,7 @@ export function draw(p, t, o) {
   // ── 1. 사슬: 처음부터 걸려 찰랑임 → 끝 고리부터 달궈져(쇠 → 붉음 → 흰빛) 불꽃이 핥다가 불티로 부서짐
   for (let i = 0; i < LINKS; i++) {
     const tb = burnAt(i), h = seg(t, tb, tb + 0.28), tDie = tb + 0.28;
-    const x = swayX(t, i), y = CHAIN_Y + i * (LINK_H - 1);
+    const x = swayX(t, i), y = CHAIN_Y + i * (LINK_H - 1) + Math.sin(t * 4) * 1.5; // 영혼과 함께 출렁
     if (t < tDie) {
       const heatIdx = Math.round((1 - h) * 6);
       const c0 = h <= 0 ? I[1] : HT[clamp(heatIdx, 0, 6)], c1 = h <= 0 ? I[3] : HT[clamp(heatIdx - 2, 0, 6)];

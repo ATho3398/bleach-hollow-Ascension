@@ -1,9 +1,10 @@
-// 사신 탄생 (블리치 할로우 어센션 커스텀, 첫 시작 탄생 연출을 픽셀 이펙트로): 빈 바탕 곳곳의 영자 알갱이가 점점 빠르게 가운데로 와르르 모여들고 →
+// 사신 탄생 (블리치 할로우 어센션 커스텀, 첫 시작 탄생 연출을 픽셀 이펙트로): 빈 바탕 곳곳에서 영자 알갱이가 계속 생겨나 가운데로 와르르 모여들고 →
 // 한 점으로 뭉쳐 '반짝' → 그 자리에 영혼 불빛이 피어남 → 걷힘(캐릭터 등장). 원점 = 영혼 자리.
 // 사용자 2026-11-23 "그 캐릭첨 시작할 때, 사신 호로 애니메이션 있잖아. 그거 픽셀fx 기반으로 다시 만들어줄래?"
+// 사용자 2026-11-25 "사신은 영자들이 저렇게 미리 떠있는게 아니라, 시간을 두고 지속적으로 생기는 식. 그게 싹 다 모여서 영혼화하고,"
 // 사용자 2026-11-25 피드백 "영혼이 뜨지 말고, 바탕에서 영혼 입자들이(지금의 점들)이 가운데로 와바바박 모이다가. 반짝하고 영혼나옴."
 // 영혼 꼬리 불꽃은 pixelfx fire/_lib.js (MIT — Sprite Fusion fire 레시피, THIRD_PARTY_NOTICES.md).
-import { fit, rng, seg, ease, WHITE, TAU } from "../../core/index.js";
+import { fit, rng, seg, ease, WHITE } from "../../core/index.js";
 import { flameTongue, noiseFor } from "../fire/_lib.js";
 
 // 단계 시각(초): 바탕에 알갱이 0~0.3 · 모여듦 0.2~1.9(점점 빠르고 많이) · 뭉침 1.9~2.05 · 반짝 2.05 · 영혼 2.1~2.6 · 걷힘 ~3.0
@@ -28,24 +29,27 @@ export function draw(p, t, o) {
   if (t >= END) return;
   const C = fit(o.palette, 7), N = noiseFor(0), n = (rate, seed, off) => N(t, rate, seed, off);
 
-  // ── 1. 영자 알갱이: 처음엔 바탕에 흩어져 반짝이며 떠 있다가, 차례로 출발해 휘감기며 가운데로 빨려 듦 (뒤로 갈수록 몰려서 와르르)
+  // ── 1. 영자 알갱이: 미리 떠 있지 않고, 시간을 두고 화면 곳곳에서 계속 생겨남(뒤로 갈수록 자주) → 생기자마자 잠깐 반짝이다 휘감기며 가운데로 빨려 듦
   const r = rng(o.seed, 3);
   let arrived = 0;
   for (let k = 0; k < MOTES; k++) {
-    const x0 = r.range(-104, 104), y0 = r.range(-34, 60), tw = r.next() * TAU;
-    // 출발 시각: 뒤쪽에 몰리게(제곱) — 처음엔 하나둘, 끝엔 우르르
-    const go = GATHER0 + (GATHER1 - GATHER0 - 0.25) * Math.sqrt(r.next()), fly = r.range(0.22, 0.4), spin = r.range(0.5, 1.4) * (k % 2 ? 1 : -1);
-    const appear = seg(t, 0, 0.3 + r.range(0, 0.25));
+    const x0 = r.range(-104, 104), y0 = r.range(-34, 60);
+    // 생기는 때: 뒤로 갈수록 몰리게(제곱근) — 처음엔 하나둘, 끝엔 우르르. 다 모이는 시각(GATHER1) 안에 도착하게
+    const born = 0.05 + (GATHER1 - 0.6) * Math.sqrt(r.next()), hover = r.range(0.08, 0.22), fly = r.range(0.2, 0.33);
+    const go = born + hover, spin = r.range(0.5, 1.4) * (k % 2 ? 1 : -1);
+    if (t < born) continue;
     const u = seg(t, go, go + fly);
     if (u >= 1) { arrived++; continue; }
-    const e = ease.inCubic(u), R = Math.hypot(x0, y0) * (1 - e), a0 = Math.atan2(y0, x0), a = a0 + spin * e;
-    const x = Math.cos(a) * R, y = Math.sin(a) * R;
     if (u <= 0) {
-      // 떠 있는 동안: 살짝 반짝임 (어둡게 ↔ 밝게)
-      const tw2 = 0.5 + 0.5 * Math.sin(t * 6 + tw);
-      if (appear > 0.5) p.px(x0, y0 + Math.sin(t * 2 + tw) * 0.8, tw2 > 0.6 ? C[4] : C[3]);
+      // 막 생김: 작은 반짝 (+ 모양이 점으로 오그라듦)
+      const a = seg(t, born, go), c = a < 0.5 ? C[6] : C[4];
+      p.px(x0, y0, c);
+      if (a < 0.5) p.px(x0 - 1, y0, C[4]), p.px(x0 + 1, y0, C[4]), p.px(x0, y0 - 1, C[4]), p.px(x0, y0 + 1, C[4]);
+      p.glow(x0, y0, 3, C[4], 0.35 * (1 - a));
       continue;
     }
+    const e = ease.inCubic(u), R = Math.hypot(x0, y0) * (1 - e), a0 = Math.atan2(y0, x0), a = a0 + spin * e;
+    const x = Math.cos(a) * R, y = Math.sin(a) * R;
     // 날아드는 동안: 빠를수록 꼬리가 길어짐
     const c = u > 0.6 ? C[6] : C[5];
     p.px(x, y, c);
