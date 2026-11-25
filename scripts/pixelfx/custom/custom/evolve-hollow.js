@@ -7,7 +7,9 @@ import { flameTongue, noiseFor, ember, firePuff } from "../fire/_lib.js";
 import { blackBurst, HOT, DARK } from "./_hollowfx.js";
 
 // 단계 시각(초) — 지금 진화 연출 길이(3.6초)에 맞춤: 쩌적 0.35·0.45 · 쩍 1.15 · 잔금 1.25·1.7 · 벌어짐 2.4~2.9 · 펑 2.9
-const POP = 2.9, END = 3.6, CLEAR = 22; // CLEAR = 진화체 둘레 비워 두는 반지름(금은 이 밖에서 시작)
+/** 다음 진화체로 바뀌는 순간(초) = 펑 임팩트 (사용자 11-25 "임팩트 나오는 타이밍 맞춰서 다음 진화체 모델이 나오게") */
+export const SWAP = 2.9;
+const POP = SWAP, END = 3.6, CLEAR = 22; // CLEAR = 진화체 둘레 비워 두는 반지름(금은 이 밖에서 시작, 위아래는 1.9배 — 몸을 가로지르지 않게)
 /** 금: [생기는 때, 방향(라디안), 굵기 배율] — 화면 가장자리까지 */
 const CRACKS = [[0.35, -2.55, 1], [0.45, 0.35, 1], [1.15, -0.55, 1], [1.25, 2.45, 0.8], [1.7, 1.6, 0.6], [1.75, -1.5, 0.6]];
 const SNAP = 0.09; // 금 하나가 끝까지 뻗는 데 걸리는 시간 (쩍!)
@@ -33,7 +35,7 @@ export const meta = {
 /** 금 길(점 목록) — 시드가 같으면 늘 같은 모양 */
 function crackPath(i, seed) {
   const [, ang, ] = CRACKS[i], r = rng(seed, 100 + i);
-  const x0 = Math.cos(ang) * CLEAR, y0 = Math.sin(ang) * CLEAR * 0.9, x1 = Math.cos(ang) * 150, y1 = Math.sin(ang) * 95;
+  const x0 = Math.cos(ang) * CLEAR, y0 = Math.sin(ang) * CLEAR * 1.9, x1 = Math.cos(ang) * 150, y1 = Math.sin(ang) * 95;
   const main = bolt(r, x0, y0, x1, y1, { jag: 0.2, depth: 5 });
   return { main, twigs: forks(r, main, { count: 3, len: 22, jag: 0.35, spread: 0.8 }) };
 }
@@ -107,7 +109,7 @@ export function draw(p, t, o) {
   });
 
   // 진화체 둘레: 거세질수록 붉은 빛이 감돎 (진화체를 가리지 않게 테두리만)
-  if (swell > 0 && t < POP) p.glowRing(0, 0, CLEAR + 2, 6, B[6], 0.35 * swell);
+  if (swell > 0 && t < POP) p.glow(0, 0, CLEAR * 1.6, B[6], 0.3 * swell);
 
   // 펑 — 탄생 때와 같은 검붉은 폭발, 진화라 더 크게 + 섬광
   blackBurst(p, t - POP, 0, 0, 1.5, o.seed);

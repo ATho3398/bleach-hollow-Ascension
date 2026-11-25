@@ -1,21 +1,21 @@
 // 호로 탄생 (블리치 할로우 어센션 커스텀, 첫 시작 탄생 연출을 픽셀 이펙트로): 처음부터 떠 있는 영혼과 인과의 사슬 → 사슬이 찰랑이다가 끝 고리부터
 // 타올라 불티로 부서짐 → 다 타면 영혼이 붉게, 검게 물들며 떨다가 '펑' — 검붉은 불꽃이 사방으로 터지며 걷힘(캐릭터 등장). 원점 = 영혼 자리.
 // 사용자 2026-11-23 "그 캐릭첨 시작할 때, 사신 호로 애니메이션 있잖아. 그거 픽셀fx 기반으로 다시 만들어줄래?"
+// 사용자 2026-11-25 "호로 생성의 펑은, 영혼 빨갛게 변하고 영혼만 터지는게 아니라, 화면 자체가 마스크로 촥 사라지면서 뒤에 게임화면이 나오는걸 원한거임."
 // 사용자 2026-11-25 "호로는 쇠사슬이 영혼 안에서 시작되게 하고"
 // 사용자 2026-11-25 피드백 "영혼이랑 사슬이 주르륵 생기지 말고, 기본적으로 영혼이랑 사슬은 떠있고, 사슬은 조금씩 찰랑거리면서 끝부터 타오름.
 //   다타면 영혼이 빨,검으로 물들면서 펑-하고 시작"
 // 불꽃 혀·불티 그리기는 pixelfx fire/_lib.js (MIT — Sprite Fusion fire 레시피, THIRD_PARTY_NOTICES.md).
 import { fit, rng, hex, clamp, seg, ease, mix, WHITE, TAU } from "../../core/index.js";
 import { flameTongue, noiseFor, ember } from "../fire/_lib.js";
-import { blackBurst } from "./_hollowfx.js";
 
 // 단계 시각(초): 떠 있음 0~0.3 · 끝부터 타오름 0.3~2.0 · 물듦·떨림 2.0~2.6 · 펑 2.6 · 걷힘 ~3.4
-const BURN0 = 0.3, BURN1 = 2.0, POP = 2.6, END = 3.4;
+const BURN0 = 0.3, BURN1 = 2.0, POP = 2.6, WIPE = 0.38, END = 3.3; // WIPE = 화면이 걷히는 데 걸리는 시간 (촥)
 const LINKS = 7, LINK_H = 9, CHAIN_Y = 1; // 사슬 고리 수·고리 높이·사슬 첫 고리 자리 — 영혼 한가운데에서 시작(첫 고리는 영혼 속, 사용자 11-25 "쇠사슬이 영혼 안에서 시작")
 
 export const meta = {
   name: "호로 탄생",
-  desc: "Hollow birth (custom): a floating soul's swaying chain of fate burns up from its end; the soul stains red and black, trembles and bursts in a black-red puff cloud.",
+  desc: "Hollow birth (custom): a floating soul's swaying chain burns up from its end; the soul stains red and black, flares, and a burning hole tears the screen away.",
   tags: ["custom", "birth", "soul", "chain", "black-fire", "one-shot", "fullscreen"],
   size: [212, 98],
   origin: [106, 36],
@@ -29,6 +29,7 @@ export const meta = {
     iron: ["#2a2630", "#55505e", "#8d8794", "#c9c3cf"],
     heat: ["#ffffff", "#fff1b0", "#ffc05a", "#f2702a", "#c9361f", "#7a1d18", "#3a1210"],
     black: ["#06040a", "#0e080c", "#1a0c10", "#2a1014", "#4a1418", "#6e1c20", "#a03c3d", "#c8504c", "#d6766e"],
+    screen: "#1a1412", // 연출 화면 바탕 = 호로 테마 bg-0. 이 이펙트가 직접 칠하고, 펑 때 구멍을 내 걷어 낸다(게임 연출 층은 투명하게)
     seed: 4,
   },
 };
@@ -63,6 +64,17 @@ export function draw(p, t, o) {
   const S = fit(o.soul, 6), I = fit(o.iron, 4), HT = fit(o.heat, 7), B = fit(o.black, 9), N = noiseFor(0);
   const n = (rate, seed, off) => N(t, rate, seed, off);
   const appear = seg(t, 0, 0.12); // 첫 장이 툭 켜지지 않게만 아주 짧게
+
+  // ── 0. 화면 바탕을 이 이펙트가 직접 칠한다 → 펑 순간 영혼 자리에서 불탄 구멍이 '촥' 번져 화면을 걷어 내고, 뒤의 게임 화면이 드러난다
+  //    (사용자 11-25 "영혼만 터지는게 아니라, 화면 자체가 마스크로 촥 사라지면서 뒤에 게임화면이 나오는걸 원한거임")
+  const BG = hex(o.screen), wipe = ease.outQuart(seg(t, POP, POP + WIPE)), Rh = wipe * 150;
+  const rim = (a) => 1 + 0.13 * Math.sin(5 * a + 1.3) + 0.08 * Math.sin(11 * a + 0.4 + t * 3) + 0.05 * Math.sin(19 * a + 2.1); // 불탄 가장자리 들쭉날쭉
+  p.shade(-106, -36, 106, 62, (x, y) => {
+    if (Rh <= 0) return BG;
+    const d = Math.hypot(x, y * 1.15), e = Rh * rim(Math.atan2(y, x));
+    if (d < e) return 0; // 구멍: 아무것도 안 그림 → 게임 화면
+    return d < e + 1.5 ? B[8] : d < e + 3.5 ? B[6] : d < e + 6 ? B[4] : d < e + 8 ? B[2] : BG; // 타들어 가는 테
+  });
 
   // ── 1. 사슬: 처음부터 걸려 찰랑임 → 끝 고리부터 달궈져(쇠 → 붉음 → 흰빛) 불꽃이 핥다가 불티로 부서짐
   for (let i = 0; i < LINKS; i++) {
@@ -106,9 +118,20 @@ export function draw(p, t, o) {
     soul(p, t, S, B, stain, black, shake, n);
   }
 
-  // ── 3. 펑: 검은 거품이 부풀었다 터지며 검붉은 불덩이 구름이 사방으로 퍼짐 (공용 blackBurst — 진화 끝 펑과 같은 모양)
-  blackBurst(p, t - POP, 0, 0, 1, o.seed);
-  // 펑 순간 섬광 (아주 짧게)
-  const fl = seg(t, POP, POP + 0.03) * (1 - seg(t, POP + 0.03, POP + 0.22));
-  if (fl > 0) p.rect(-106, -36, 212, 98, WHITE, 0.8 * fl);
+  // ── 3. 펑: 영혼이 번쩍 터지는 순간 구멍이 시작되고, 타는 가장자리에서 불티가 바깥으로 튐
+  const fl = 1 - seg(t, POP, POP + 0.1);
+  if (t >= POP && fl > 0) {
+    p.glow(0, 0, 26, B[7], 0.7 * fl);
+    p.circle(0, 0, 4 + 10 * (1 - fl), WHITE, fl);
+  }
+  if (t >= POP) {
+    const r = rng(o.seed, 17);
+    for (let k = 0; k < 46; k++) {
+      const a = r.next() * TAU, born = POP + r.range(0, WIPE * 0.8), life = r.range(0.3, 0.6), sp = r.range(30, 80), sz = r.range(1, 2.4), ph = r.next(); // 난수는 건너뛰기 전에
+      const ag = t - born;
+      if (ag < 0 || ag > life) continue;
+      const R0 = ease.outQuart(seg(born, POP, POP + WIPE)) * 150 * rim(a);
+      ember(p, Math.cos(a) * (R0 + sp * ag), (Math.sin(a) * (R0 + sp * ag)) / 1.15, 1 - ag / life, sz, [HT[1], B[8], B[7], B[6]], ph * TAU);
+    }
+  }
 }

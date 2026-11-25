@@ -9,6 +9,8 @@ import { flameTongue, noiseFor } from "../fire/_lib.js";
 
 // 단계 시각(초): 바탕에 알갱이 0~0.3 · 모여듦 0.2~1.9(점점 빠르고 많이) · 뭉침 1.9~2.05 · 반짝 2.05 · 영혼 2.1~2.6 · 걷힘 ~3.0
 const GATHER0 = 0.2, GATHER1 = 1.9, SPARK = 2.05, END = 3.0;
+/** 화면 전체가 사라지는 시간(초) — 이펙트 밖(게임 연출 층)에서 END 직전 이만큼 페이드아웃 */
+export const FADE_OUT = 0.5;
 const MOTES = 120;
 
 export const meta = {
@@ -84,7 +86,9 @@ export function draw(p, t, o) {
   }
 
   // ── 3. 영혼 불빛: 반짝 자리에서 피어나 떠 있다가(살짝 출렁) → 걷힐 때 위로 스며들며 사라짐
-  const bloom = ease.outBack(seg(t, SPARK + 0.03, SPARK + 0.35)), fade = seg(t, END - 0.45, END);
+  // 영혼은 끝까지 그대로 — 사라짐은 영혼만이 아니라 연출 화면 전체가 페이드아웃(게임 연출 층 opacity, 마지막 FADE_OUT 초)
+  // (사용자 11-25 "사신 생성 때, 마지막에 영혼 스르륵 사라지는 연출은 하지마. 화면 전체가 페이드아웃으로 사라지던가")
+  const bloom = ease.outBack(seg(t, SPARK + 0.03, SPARK + 0.35)), fade = 0;
   if (bloom > 0 && fade < 1) {
     const k = bloom * (1 - fade), Y = Math.sin(t * 4) * 1.5 - 6 * fade, R = 9 * Math.max(0.2, bloom) * (1 - 0.4 * fade);
     p.glow(0, Y, 30, C[3], 0.45 * k);
