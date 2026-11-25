@@ -6,17 +6,16 @@
 //   다타면 영혼이 빨,검으로 물들면서 펑-하고 시작"
 // 불꽃 혀·불티 그리기는 pixelfx fire/_lib.js (MIT — Sprite Fusion fire 레시피, THIRD_PARTY_NOTICES.md).
 import { fit, rng, hex, clamp, seg, ease, mix, WHITE, TAU } from "../../core/index.js";
-import { flameTongue, flameBlade, noiseFor, ember } from "../fire/_lib.js";
+import { flameTongue, noiseFor, ember } from "../fire/_lib.js";
+import { blackBurst } from "./_hollowfx.js";
 
 // 단계 시각(초): 떠 있음 0~0.3 · 끝부터 타오름 0.3~2.0 · 물듦·떨림 2.0~2.6 · 펑 2.6 · 걷힘 ~3.4
 const BURN0 = 0.3, BURN1 = 2.0, POP = 2.6, END = 3.4;
 const LINKS = 7, LINK_H = 9, CHAIN_Y = 1; // 사슬 고리 수·고리 높이·사슬 첫 고리 자리 — 영혼 한가운데에서 시작(첫 고리는 영혼 속, 사용자 11-25 "쇠사슬이 영혼 안에서 시작")
-// 검붉은 불꽃 겹: 붉은 테 → 검붉음 → 거의 검정 → 검은 심지 [폭 비율, 높이 비율, 색 번호(black 팔레트)]
-const BLACK_LAYERS = [[1, 1, 7], [0.86, 0.93, 5], [0.66, 0.8, 3], [0.44, 0.62, 1], [0.24, 0.42, 0]];
 
 export const meta = {
   name: "호로 탄생",
-  desc: "Hollow birth (custom): a floating soul's swaying chain of fate burns up from its end; the soul stains red and black, trembles and bursts in black-red flame.",
+  desc: "Hollow birth (custom): a floating soul's swaying chain of fate burns up from its end; the soul stains red and black, trembles and bursts in a black-red puff cloud.",
   tags: ["custom", "birth", "soul", "chain", "black-fire", "one-shot", "fullscreen"],
   size: [212, 98],
   origin: [106, 36],
@@ -92,9 +91,9 @@ export function draw(p, t, o) {
       const r = rng(o.seed, 40 + i), y0 = y + LINK_H / 2;
       for (let k = 0; k < 12; k++) {
         const life = r.range(0.45, 0.85), age = t - tDie - r.range(0, 0.06);
-        const vx = r.range(-16, 16), vy = r.range(-36, -14), ph = r.next();
+        const vx = r.range(-16, 16), vy = r.range(-36, -14), ph = r.next(), sz = r.range(0.8, 2.2); // 난수는 건너뛰기 전에
         if (age < 0 || age > life) continue;
-        ember(p, x + vx * age + Math.sin(age * 9 + ph * 6) * 2, y0 + vy * age + 10 * age * age, 1 - age / life, r.range(0.8, 2.2), [HT[1], HT[2], HT[3], HT[4]], ph * TAU);
+        ember(p, x + vx * age + Math.sin(age * 9 + ph * 6) * 2, y0 + vy * age + 10 * age * age, 1 - age / life, sz, [HT[1], HT[2], HT[3], HT[4]], ph * TAU);
       }
     }
   }
@@ -107,34 +106,9 @@ export function draw(p, t, o) {
     soul(p, t, S, B, stain, black, shake, n);
   }
 
-  // ── 3. 펑: 영혼 자리에서 검붉은 불꽃이 사방으로 터지고 충격 고리가 퍼짐 → 사그라짐
-  if (t >= POP - 0.02) {
-    const grow = ease.outCubic(seg(t, POP, POP + 0.35)), die = seg(t, POP + 0.3, END);
-    const r = rng(o.seed, 11);
-    for (let k = 0; k < 14; k++) {
-      const a = (k / 14) * TAU + r.range(-0.18, 0.18), len = (34 + r.range(0, 46)) * grow * (1 - die * 0.85);
-      flameBlade(p, 0, 0, Math.cos(a), Math.sin(a) * 0.8, len, r.range(6, 10) * (1 - die * 0.6), n(2, k, 0) * 6, n, 90 + k, B, BLACK_LAYERS, 0.8, 1.6);
-    }
-    // 가운데 검은 핵 + 붉은 테
-    const core = 12 * grow * (1 - die);
-    if (core > 0.6) {
-      p.circle(0, 0, core + 2, B[6]);
-      p.circle(0, 0, core, B[0]);
-    }
-    // 충격 고리 둘
-    for (const [d, w, c] of [[0, 3, B[7]], [0.1, 2, B[5]]]) {
-      const ru = seg(t, POP + d, POP + d + 0.55);
-      if (ru > 0 && ru < 1) p.ring(0, 0, 6 + 130 * ease.outCubic(ru), w * (1 - ru) + 1, c);
-    }
-    // 불티 흩뿌림
-    const re = rng(o.seed, 13);
-    for (let k = 0; k < 40; k++) {
-      const a = re.next() * TAU, v = re.range(60, 160), life = re.range(0.35, 0.75), age = t - POP - re.range(0, 0.05);
-      if (age < 0 || age > life) continue;
-      ember(p, Math.cos(a) * v * age, Math.sin(a) * v * age * 0.75 + 20 * age * age, 1 - age / life, re.range(1, 2.4), [HT[1], B[8], B[7], B[6]], k);
-    }
-    // 펑 순간 섬광 (아주 짧게)
-    const fl = seg(t, POP, POP + 0.03) * (1 - seg(t, POP + 0.03, POP + 0.22));
-    if (fl > 0) p.rect(-106, -36, 212, 98, WHITE, 0.8 * fl);
-  }
+  // ── 3. 펑: 검은 거품이 부풀었다 터지며 검붉은 불덩이 구름이 사방으로 퍼짐 (공용 blackBurst — 진화 끝 펑과 같은 모양)
+  blackBurst(p, t - POP, 0, 0, 1, o.seed);
+  // 펑 순간 섬광 (아주 짧게)
+  const fl = seg(t, POP, POP + 0.03) * (1 - seg(t, POP + 0.03, POP + 0.22));
+  if (fl > 0) p.rect(-106, -36, 212, 98, WHITE, 0.8 * fl);
 }
