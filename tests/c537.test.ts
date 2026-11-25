@@ -148,6 +148,7 @@ describe('C.537 회복 안내 ② 구급상자 상세 창이 열리면 안내 �
     expect(src).toContain('layer.dataset.devOnly = stage ? selectorOf(stage.targets)');
   });
   it('패치 번호', () => {
-    expect(PATCH_LABEL).toBe('C.537');
+    // C.538: 패치 번호가 올라가 비교를 '이상'으로 — 옛 기대값 expect(PATCH_LABEL).toBe('C.537');
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(537);
   });
 });

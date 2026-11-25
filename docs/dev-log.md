@@ -1268,3 +1268,13 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
   - **바꾼 기대값(지우지 않음)**: `c53`·`c147`·`c175`(2건)·`c181` — 새 세이브로 시간 흐름을 보던 테스트에 `help.guides = {}`(튜토리얼을 끝낸 세이브) 한 줄, 기대값 그대로.
 - 캡처 `docs/captures/c537/`(1배 3장, `scripts/c537-proof.cjs`, proof.json): 01 PC 회복 안내 ① 빈사 세이브를 10시간 전 저장으로 두고 다시 엶 — 배부름 60·컨디션 60·체력 11/108 그대로 · 02 PC·03 폰 구급상자 상세 창 — 안내 창 없음(`cardVisible false`), 강조 테두리가 [사용]을 감쌈 · [사용] 뒤 '빈사가 풀렸다!' 카드.
 - 검증: typecheck · 관련 테스트 · 새 테스트 · typecheck · npm test 4405 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.538 — 튜토리얼 '다음 할 일' 카드에서 수련 해금 문장 삭제 (GDD 13절 v6.202 → v6.203, S-23, 코딩350)
+세이브 형식·BALANCE 그대로(문구 데이터만). GDD v6.203(20절 구현 표시 한 줄).
+- **사용자 원문**(2026-11-24): "튜토리얼에 본능수련은 바스트로데가 되면 열린다. 이거 필요 없잖아"
+- **고침**: `src/data/help/guides.json` `first-run-room` 카드 본문에서 둘째 문장 '{training.title}은(는) {tier4}이(가) 되면 열린다.' 삭제. 첫 문장('{먹이}을(를) 챙기고 {수련장}의 훈련 인형으로 손을 풀며 다시 모험을 떠나자.')은 그대로. 종족 변수라 데이터 한 곳 = 호로·사신 둘 다.
+- **같은 카드 확인**: 자동 표시(`runGuide('first-run-room')`)와 도움말 [안내 다시 보기] → '첫 모험 안내'(`chain(['first-run', 'first-absorb', 'first-run-room'])`) 모두 `GUIDES['first-run-room']` 하나를 쓴다 → 다시 보기도 같은 문구.
+- **그대로 둔 것**: 수련장 화면 안 본능 수련 자물쇠·'~이(가) 되면 … 열린다' 알림(`trainingLockedText`, trainingView/app) — 튜토리얼 카드가 아님.
+- **테스트**: 새 `tests/c538.test.ts` 3건(호로·사신 카드 본문에 '되면 열린다'·수련 이름 없음 + 첫 문장 한 줄 / 다시 보기 같은 카드 · 자물쇠 알림 그대로). **바꾼 기대값(지우지 않음, 옛 값 주석)**: `c364`(222장 5 — `toContain` → `not.toContain`), `c537` 패치 번호(`toBe('C.537')` → 537 이상).
+- 캡처 `docs/captures/c538/`(1배 2장, `scripts/c538-proof.cjs`, proof.json): 01 PC 호로 · 02 폰 사신 — '다음 할 일' 카드 본문 = 첫 문장만.
+- 검증: typecheck · 관련 테스트(c364·c537·c538) · 새 테스트 · typecheck · npm test 4408 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.

@@ -88,7 +88,8 @@ describe('222장 5 수련장 잠김 안내', () => {
     const g = read('src/data/help/guides.json');
     expect(g).not.toContain('수련장에서 단련');
     expect(g).toContain('{room.props.altar}의 훈련 인형으로 손을 풀며');
-    expect(g).toContain('{training.title}은(는) {tier4}이(가) 되면 열린다.');
+    // C.538(GDD 13절 v6.202): 다음 할 일 카드에서 수련 해금 문장 삭제 — 옛 기대값 expect(g).toContain('{training.title}은(는) {tier4}이(가) 되면 열린다.');
+    expect(g).not.toContain('{training.title}은(는) {tier4}이(가) 되면 열린다.');
   });
   it('수련장 (C.394, GDD 241-C 2): 잠금 표시 없이 들어가고, 4단계 전이면 제목 목록의 본능 수련에 자물쇠 + 고르면 여는 조건 알림', () => {
     const app = read('src/ui/app.ts');
