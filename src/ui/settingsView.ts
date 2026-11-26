@@ -13,6 +13,7 @@ import { LEGACY_POINTER_SETTINGS_KEY } from './pointer';
 import { applyCalmMode, defaultFxSettings, loadCommonFxSettings, prefersReducedMotion, saveFxSettings, type SettingsStorage } from './fxSettings';
 import { emitFeedback, hookAudioUnlock } from './fx';
 import { KEY_HINTS_EVENT, loadCommonKeyHints, saveKeyHints } from './keyHints';
+import { loadTrayFlip, saveTrayFlip, TRAY_FLIP_EVENT } from './trayFlip';
 import { bgm, bgmBarOf, defaultBgmSettings, loadBgmSettings, saveBgmSettings, withBgmBar, withSlotBgm } from './bgm';
 import { loadTamagoPrefs, saveTamagoPrefs, TAMAGO_EVENT } from './bha/tamagoLogic';
 import { setTiltPref } from './bha/tamago';
@@ -52,6 +53,8 @@ export interface CommonValues {
   tilt: boolean;
   viewScale: ViewScalePref;
   fsStart: boolean;
+  /** [블록 생성 위치 반전] (GDD 7절 v6.205, C.540): 켜면 칸 1 이 맨 왼쪽 — 기기 공통 */
+  trayFlip: boolean;
 }
 type BoolKey = { [K in keyof CommonValues]: CommonValues[K] extends boolean ? K : never }[keyof CommonValues];
 type VolumeKey = 'sfxVolume' | 'bgmVolume';
@@ -72,6 +75,7 @@ export function readCommonValues(storage: SettingsStorage | null): CommonValues 
     damageNumbers: fx.damageNumbers, vibration: fx.vibration, shake: fx.shake, sfxVolume: fx.sfxVolume,
     bgmVolume: bgmBarOf(m), keyHints: loadCommonKeyHints(storage), repeat: m.repeat, excluded: [...m.excluded],
     tamago: t.on, tilt: t.tilt, viewScale: loadViewScale(storage), fsStart: loadFullscreenStart(storage),
+    trayFlip: loadTrayFlip(storage),
   };
 }
 
@@ -121,6 +125,10 @@ function writeCommon(storage: SettingsStorage | null, before: CommonValues, afte
     window.dispatchEvent(new CustomEvent(VIEW_SCALE_EVENT));
   }
   if (before.fsStart !== after.fsStart) saveFullscreenStart(storage, after.fsStart);
+  if (before.trayFlip !== after.trayFlip) {
+    saveTrayFlip(storage, after.trayFlip);
+    window.dispatchEvent(new CustomEvent(TRAY_FLIP_EVENT)); // 전투 중 일시정지 → 설정에서 바꿔도 블록 바가 바로 따라간다
+  }
 }
 
 /** 켬/끔 줄 (C.170, GDD 100장 #76): 왼쪽 이름 + (슬롯 표시) + 오른쪽 작은 스위치(켬 = 초록, 끔 = 회색). 선택 표시는 줄 테두리(.bha-sel)만 */
@@ -532,7 +540,9 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     boolRow('vibration', '진동', (on) => { if (on) emitFeedback('chain2', { vibration: true, sound: false }); }), hintLine('블록·체인·막기·피격에 짧게 울린다. 지원하지 않는 기기(아이폰 등)는 저절로 안 울린다.'),
     boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때, 해방할 때, 체인 3 블록을 쓸 때만 짧게 흔들린다.'),
   );
-  const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'));
+  const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'),
+    // [블록 생성 위치 반전] (GDD 7절 v6.205, C.540): 기본 끔 = 칸 1 이 맨 오른쪽(오른쪽부터 채워짐)
+    boolRow('trayFlip', '블록 생성 위치 반전'), hintLine('켜면 블록이 왼쪽부터 채워진다.'));
 
   // ── 기타 탭 ──
   // 버전 줄은 한 번만 (C.324): 이 글 줄 자체가 7번 누르면 테스트 모드 — 같은 글을 단추로 또 그리지 않는다
