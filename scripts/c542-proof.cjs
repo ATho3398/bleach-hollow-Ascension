@@ -1,12 +1,12 @@
-// C.540 proof (GDD 8-9 v6.204, 사용자 2026-11-26 "그 훈련인형도 특수던전마냥, 왼쪽에 리스트로 훈련인형, 무슨훈련? 그거 리스트로 띄우고, 오른쪽에 그림이랑 설면 넣고 시작 누르게 바꿔라"):
+// C.542 proof (GDD 8-9 v6.204, 사용자 2026-11-26 "그 훈련인형도 특수던전마냥, 왼쪽에 리스트로 훈련인형, 무슨훈련? 그거 리스트로 띄우고, 오른쪽에 그림이랑 설면 넣고 시작 누르게 바꿔라"):
 // 방 수련장 → 목록 화면(훈련 인형 골라짐) → 수련 항목(4단계 전 잠김) → 훈련 인형 [시작] 뒤 적 설정 창.
-// PC 844×390(호로) + 폰 796×384 터치(사신), 1배. 실행: node scripts/c540-proof.cjs [저장 폴더]
+// PC 844×390(호로) + 폰 796×384 터치(사신), 1배. 실행: node scripts/c542-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
 
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c540'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c542'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 const PH = { viewport: { width: 796, height: 384 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

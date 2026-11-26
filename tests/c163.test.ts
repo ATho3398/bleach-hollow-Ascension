@@ -20,7 +20,7 @@ describe('C.163 2 수련장 세 화면 제목 토글', () => {
   it('훈련 인형·번호 쟁탈전 화면도 같은 trainingTitle, 서로 바꿔 끼운다', () => {
     const app = read('src/ui/app.ts');
     // 옛 값(C.163): app 에 "title: trainingHead(faction, 'practice')"·'function switchTraining(', trainingView 에 "title: trainingTitle(faction, title, 'train', hd.onSwitch)",
-    // practiceView 에 'title: h.title ??' — 수련장 두 화면을 머리 제목 토글로 바꿔 끼웠다. C.540(GDD 8-9 v6.205): 토글 대신 수련장 목록 화면(왼쪽 훈련 인형·수련)
+    // practiceView 에 'title: h.title ??' — 수련장 두 화면을 머리 제목 토글로 바꿔 끼웠다. C.542(GDD 8-9 v6.205): 토글 대신 수련장 목록 화면(왼쪽 훈련 인형·수련)
     expect(app).not.toContain("trainingHead(faction, 'rank')"); // C.257 (GDD 174장 1): 진급 시험은 토글에서 빠졌다
     expect(app).not.toContain('function switchTraining(');
     expect(app).toContain('trainingHallView(root, faction, {');

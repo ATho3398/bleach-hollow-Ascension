@@ -96,7 +96,7 @@ describe('C.498 화면 연결', () => {
   it('훈련 인형(방 수련장 물건)을 누르면 수련장 화면을 밑에 깔고 곧장 적 설정 창 전투', () => {
     // 옛 값(C.498, GDD 8-9 v6.129 '누르면 바로 설정 창'): "askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); })" +
     // "practiceEntryView(root, faction, ... title: trainingHead(faction, 'practice') })" — 지키던 결정 = 방 물건 → [전투 들어가기] 중간 화면 없이 곧장 설정 창.
-    // C.540(GDD 8-9 v6.205, 사용자 2026-11-26): 방 물건 → 특수던전식 목록(훈련 인형 골라짐) → [시작] = 같은 설정 창 전투. 중간 [전투 들어가기] 화면은 여전히 없음
+    // C.542(GDD 8-9 v6.205, 사용자 2026-11-26): 방 물건 → 특수던전식 목록(훈련 인형 골라짐) → [시작] = 같은 설정 창 전투. 중간 [전투 들어가기] 화면은 여전히 없음
     expect(app).toContain("askDying(s, () => { resetTrainingHallPick(); open('practice', () => practiceScreen(faction)); })");
     expect(app).toContain('onPractice: () => practiceArena(faction),');
     expect(app).not.toContain('practiceEntryView(');

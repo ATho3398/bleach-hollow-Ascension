@@ -95,7 +95,7 @@ describe('222장 5 수련장 잠김 안내', () => {
     const app = read('src/ui/app.ts');
     expect(app).not.toContain('partLocks:');
     // 옛 값(C.394): app 에 "if (id === 'train' && trainLocked(s)) return void showToast(... trainingLockedText(faction) ...)", trainingView 에 "{ id: 'train', label: faction.training.title, locked: trainLocked },"
-    // — 제목 목록의 자물쇠 + 고르면 알림. C.540(GDD 8-9 v6.205): 왼쪽 목록의 수련 항목에 자물쇠, 고르면 오른쪽에 여는 조건 + [시작] 흐리게
+    // — 제목 목록의 자물쇠 + 고르면 알림. C.542(GDD 8-9 v6.205): 왼쪽 목록의 수련 항목에 자물쇠, 고르면 오른쪽에 여는 조건 + [시작] 흐리게
     const hall = read('src/ui/trainingHallView.ts');
     expect(hall).toContain('open: !st.trainLocked, lockText: trainingLockedText(faction)');
     expect(app).toContain('trainLocked: trainLocked(s),');

@@ -138,7 +138,7 @@ describe('C.471 훈련 인형 = 전투 안 설정 창 (GDD 8-9)', () => {
     expect(arena).toContain('onExit: () => nav.pop()');
     expect(arena).not.toContain('practiceResult');
     // 옛 값(C.471): expect(read('src/ui/practiceView.ts')).toContain("label: '전투 들어가기'") — 수련장 입구 [전투 들어가기].
-    // C.540(GDD 8-9 v6.205): 입구 = 수련장 목록 화면의 훈련 인형 [시작] → 같은 practiceArena
+    // C.542(GDD 8-9 v6.205): 입구 = 수련장 목록 화면의 훈련 인형 [시작] → 같은 practiceArena
     expect(read('src/ui/trainingHallView.ts')).toContain("label: '시작'");
     expect(app).toContain('onPractice: () => practiceArena(faction),');
     // 집계 단위 = 전투 한 판(적 하나와 싸움)마다 1 — 옛 흐름(한 판 = 1)과 같은 뜻
