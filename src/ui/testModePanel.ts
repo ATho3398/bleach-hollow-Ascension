@@ -2,6 +2,7 @@
 // C.181 (GDD 109장 7): 진화(다음 진화 바로 + 연출)·아이템 생성·스킨 끼워보기 탭, 시간 앞당기기 +10분·+1시간·+1일.
 // C.186 (GDD 112장): '불러오기' 탭(우라하라·돌봄 요청·대기 보상·원정 이벤트 타일·바퀴 변이), 아이템 생성 = 장비 종류 × 특수 효과 전부·우라하라 물건, 오른쪽 [테스트 모드 끄기](확인 창).
 // 목록(종족·진화체·특성·적·보스·★·탑 층)은 모두 데이터에서 읽는다. 값을 바꾸면 persist 로 테스트 칸에만 저장된다.
+import type { ArtUrls } from '../data/art/manifest';
 import { FACTIONS } from '../data/factions';
 import { formName, FORM_TABLE, abilityName } from '../data/evolution';
 import { statName } from '../data/elements';
@@ -69,7 +70,9 @@ export interface TestPanelHandlers {
   /** 시간 앞당기기 (GDD 102-7·109장 7): 그 시간(분)만큼 지난 것처럼 — 패널이 셈한 뒤(advanceTestTime) 부른다. 방으로 가서 복귀 알림 */
   onTimeAdvanced?: (report: ReturnType<typeof advanceTestTime>) => void;
   /** 진화를 했다 (GDD 109장 7): 진화 연출을 띄운다 (fromTier = 진화 전 단계) */
-  onEvolved?: (fromTier: number, r: EvolveResult & { ok: true }) => void;
+  onEvolved?: (fromTier: number, r: EvolveResult & { ok: true }, fromArt?: ArtUrls) => void;
+  /** 지금 모습 그림 (진화 전 그림 — 도트 진화 연출이 이 모습으로 시작) */
+  artNow?: () => ArtUrls;
   /** 종족을 바꿔 테스트 칸을 새로 (전체 해금으로) */
   onNewFaction: (factionId: string) => void;
   /** [테스트 칸 초기화] */
@@ -339,10 +342,11 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const t = save.evolution.tierIndex;
     const last = t >= faction.tierNames.length - 1;
     const go = button({ label: '다음 진화', icon: 'i-evolve', variant: 'primary', disabled: last, onClick: () => {
+      const fromArt = hd.artNow?.();
       const r = testEvolveNext(save);
       if (!r.ok) return showToast({ eyebrow: '테스트', title: '진화 못 함', meta: r.reason }, 0, 1600);
       hd.persist();
-      hd.onEvolved?.(t, r);
+      hd.onEvolved?.(t, r, fromArt);
     } });
     return [panel({ title: '진화', aside: `${t + 1}단계 → ${last ? '끝' : `${t + 2}단계`}` },
       info([

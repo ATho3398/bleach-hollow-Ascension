@@ -35,6 +35,9 @@
   clip-path: polygon(50% 0%, 63% 20%, 80% 42%, 93% 70%, 100% 100%, 0% 100%, 7% 70%, 20% 42%, 37% 20%);
   background: var(--birth-flame); box-shadow: inset 0 14px 0 var(--birth-flameEdge); /* v2: 그라데이션 대신 끝만 다른 색 */
 }
+/* 도트 탄생 연출 (사용자 2026-11-23·25): 시트가 화면을 덮는다. self = 시트가 바탕을 직접 칠하고 구멍을 내 걷으므로 층 바탕은 투명 */
+.bha-birth--self { background: transparent; }
+.bha-birth__pixel { z-index: 0; }
 .bha-birth__hint {
   position: absolute; left: 0; right: 0; bottom: var(--bha-sp-5); text-align: center;
   font-size: var(--bha-fs-sm); color: var(--bha-text-3); pointer-events: none;
