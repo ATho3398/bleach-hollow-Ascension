@@ -1,129 +1,39 @@
 {
-  "errors": [],
   "shots": [
-    "01-pc-hall-dummy.png",
-    "02-pc-hall-train-locked.png",
-    "03-pc-practice-dialog.png",
-    "04-phone-hall-dummy.png",
-    "05-phone-hall-train-locked.png",
-    "06-phone-practice-dialog.png"
+    "birth-hollow-1500.png",
+    "birth-hollow-2850.png",
+    "birth-shinigami-1700.png",
+    "birth-shinigami-2700.png",
+    "evolve-hollow-1800.png",
+    "evolve-hollow-3150.png",
+    "evolve-shinigami-2300.png",
+    "evolve-shinigami-2950.png"
   ],
-  "steps": {
-    "pc": [
-      {
-        "step": "enter",
-        "screen": "training-hall",
-        "items": [
-          {
-            "id": "practice",
-            "text": "훈련 인형이번 생 0판",
-            "selected": true,
-            "locked": false
-          },
-          {
-            "id": "train",
-            "text": "본능 수련잠김",
-            "selected": false,
-            "locked": true
-          }
-        ],
-        "lock": null,
-        "desc": "훈련 인형이나 도감에서 만난 적을 불러 마음껏 싸워 본다. 져도 잃는 것이 없다.",
-        "goDisabled": false,
-        "art": "/art/prop-altar.webp",
-        "dialog": false
-      },
-      {
-        "step": "train",
-        "screen": "training-hall",
-        "items": [
-          {
-            "id": "practice",
-            "text": "훈련 인형이번 생 0판",
-            "selected": false,
-            "locked": false
-          },
-          {
-            "id": "train",
-            "text": "본능 수련잠김",
-            "selected": true,
-            "locked": true
-          }
-        ],
-        "lock": "바스트로데가 되면 본능 수련이 열린다.",
-        "desc": "내 안의 본능과 맞붙어 레스렉시온의 힘을 길들인다.",
-        "goDisabled": true,
-        "art": "/art/prop-altar.webp",
-        "dialog": false
-      },
-      {
-        "step": "start",
-        "screen": null,
-        "items": [],
-        "lock": null,
-        "desc": null,
-        "goDisabled": null,
-        "art": null,
-        "dialog": false
-      }
-    ],
-    "phone": [
-      {
-        "step": "enter",
-        "screen": "training-hall",
-        "items": [
-          {
-            "id": "practice",
-            "text": "훈련 인형이번 생 0판",
-            "selected": true,
-            "locked": false
-          },
-          {
-            "id": "train",
-            "text": "참백도 수련잠김",
-            "selected": false,
-            "locked": true
-          }
-        ],
-        "lock": null,
-        "desc": "훈련 인형이나 도감에서 만난 적을 불러 마음껏 겨뤄 본다. 져도 잃는 것이 없다.",
-        "goDisabled": false,
-        "art": "/art/prop-altar.webp",
-        "dialog": false
-      },
-      {
-        "step": "train",
-        "screen": "training-hall",
-        "items": [
-          {
-            "id": "practice",
-            "text": "훈련 인형이번 생 0판",
-            "selected": false,
-            "locked": false
-          },
-          {
-            "id": "train",
-            "text": "참백도 수련잠김",
-            "selected": true,
-            "locked": true
-          }
-        ],
-        "lock": "수석 대원이 되면 참백도 수련이 열린다.",
-        "desc": "참백도의 정령과 겨뤄 만해의 힘을 길들인다.",
-        "goDisabled": true,
-        "art": "/art/prop-altar.webp",
-        "dialog": false
-      },
-      {
-        "step": "start",
-        "screen": null,
-        "items": [],
-        "lock": null,
-        "desc": null,
-        "goDisabled": null,
-        "art": null,
-        "dialog": false
-      }
-    ]
+  "errors": [],
+  "checks": {
+    "hollowBirthPixel": "birth-hollow",
+    "hollowBirthSelf": true,
+    "hollowBirthGone": true,
+    "shinigamiBirthPixel": "birth-shinigami",
+    "shinigamiBirthSelf": false,
+    "shinigamiBirthGone": true,
+    "hollowEvolvePixel": "evolve-hollow",
+    "hollowEvolveCenter": {
+      "figCx": 254,
+      "figCy": 167,
+      "fxCx": 254,
+      "fxCy": 167
+    },
+    "hollowFromSrc": "255:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "hollowToSrc": "255:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "shinigamiEvolvePixel": "evolve-shinigami",
+    "shinigamiEvolveCenter": {
+      "figCx": 199,
+      "figCy": 167,
+      "fxCx": 199,
+      "fxCy": 167
+    },
+    "shinigamiFromSrc": "256:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "shinigamiToSrc": "256:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden"
   }
 }

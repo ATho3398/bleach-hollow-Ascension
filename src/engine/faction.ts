@@ -447,6 +447,24 @@ export interface BirthFxStep {
 export interface BirthFx {
   steps: BirthFxStep[];
   colors: Partial<Record<BirthFxColor, string>>;
+  /** 도트 탄생 연출 (사용자 2026-11-23 "픽셀fx 기반으로 다시 만들어줄래?"): 있으면 public/fx/<fx> 시트 한 장을 화면 가득 재생하고,
+   *  시트를 못 받았거나 움직임 줄이기면 위 steps(CSS)로. revealMs = 캐릭터가 드러나기 시작하는 때.
+   *  screen 'self' = 시트가 연출 화면 바탕을 직접 칠하고 구멍을 내 걷는다(연출 층 바탕 투명), 'layer' = 연출 층 바탕 위에 재생. fadeOutMs = 끝에 연출 층 전체를 이만큼 페이드아웃 */
+  pixel?: BirthPixelFx;
+}
+export interface BirthPixelFx {
+  fx: string;
+  revealMs: number;
+  screen: 'self' | 'layer';
+  fadeOutMs?: number;
+}
+/** 도트 진화 연출 (사용자 2026-11-25 "진화 연출은 기존 진화체였다가 이펙트 나오고 임팩트 나오는 타이밍 맞춰서 다음 진화체 모델이 나오게"):
+ *  public/fx/<fx> 시트를 진화체 몸 가운데(무기 빼고)에 맞춰 재생. swapMs 에 지금 진화체 → 다음 진화체로 바뀐다.
+ *  whiten = [하얘지기 시작, 다 하얘짐, 바뀐 뒤 원래 색으로 돌아오는 시간] ms (사신: 몸이 점점 하얘지다 다음 진화체로) */
+export interface EvolvePixelFx {
+  fx: string;
+  swapMs: number;
+  whiten?: [number, number, number];
 }
 
 export interface FactionConfig {
@@ -461,6 +479,8 @@ export interface FactionConfig {
   logo?: string;
   /** 첫 시작 탄생 연출 (GDD 74장, C.126): 단계 목록 + 색 토큰. 없으면 연출 없음 */
   birthFx?: BirthFx;
+  /** 도트 진화 연출 (EvolvePixelFx). 없으면 옛 진화 연출(빛 속에서 드러남)만 */
+  evolveFx?: EvolvePixelFx;
   /** 새 세이브 시작 외형 후보 (GDD 51): 스킨 id 목록. 기본 외형과 함께 균등 추첨한다. 없거나 비면 기본 외형만 */
   startLooks?: string[];
   /** 단계 외형 표 (GDD 53): 단계 번호(문자열) → 진화 순간 노력치 순위로 고르는 스킨 id. stat = 1위 능력치별, pairs = 1·2위 쌍(순서 무관, 먼저 판정). 없으면 기존 단계 그림 */
@@ -772,7 +792,14 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       if (total > 5000) errors.push('birthFx: 전체 5000ms 이하');
       const cols = b.colors;
       if (!isRec(cols) || !Object.entries(cols).every(([k, v]) => (BIRTH_FX_COLORS as readonly string[]).includes(k) && isString(v) && /^--bha-[a-z0-9-]+$/.test(v))) errors.push('birthFx.colors: 색 역할 → --bha-… 토큰 이름');
+      const px = b.pixel;
+      if (px !== undefined && !(isRec(px) && isString(px.fx) && typeof px.revealMs === 'number' && px.revealMs >= 0 && px.revealMs <= 6000 && (px.screen === 'self' || px.screen === 'layer') && (px.fadeOutMs === undefined || (typeof px.fadeOutMs === 'number' && px.fadeOutMs >= 0 && px.fadeOutMs <= 2000)))) errors.push('birthFx.pixel: { fx, revealMs 0~6000, screen self|layer, fadeOutMs? 0~2000 }');
     }
+  }
+  if (r.evolveFx !== undefined) {
+    const v = r.evolveFx, w = isRec(v) ? v.whiten : undefined;
+    const okW = w === undefined || (Array.isArray(w) && w.length === 3 && w.every((n) => typeof n === 'number' && n >= 0 && n <= 6000));
+    if (!(isRec(v) && isString(v.fx) && typeof v.swapMs === 'number' && v.swapMs >= 0 && v.swapMs <= 6000 && okW)) errors.push('evolveFx: { fx, swapMs 0~6000, whiten?: [시작, 다 하얘짐, 돌아옴] ms }');
   }
   if (r.genderLookFromTier !== undefined && !(typeof r.genderLookFromTier === 'number' && Number.isInteger(r.genderLookFromTier) && r.genderLookFromTier >= 1)) errors.push('genderLookFromTier: 1 이상 정수(단계 번호)');
   if (r.startLooks !== undefined && !(Array.isArray(r.startLooks) && r.startLooks.every((x) => isString(x)))) errors.push('startLooks: 스킨 id 문자열 목록');
