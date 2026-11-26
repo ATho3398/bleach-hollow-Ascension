@@ -4,6 +4,7 @@ import type { BirthFx, FactionConfig } from '../engine/faction';
 import { el } from './bha/dom';
 import { getOverlayHost, registerLayer } from './bha/overlayHost';
 import { flickerKeyframeOffsets, planBirth, seeded, stagger } from './birthPlan';
+import { loadPixelFx, playPixelFx, sheetDurationMs, type PixelFxPlay, type PixelFxSheet } from './bha/pixelFx';
 import { prefersReducedMotion } from './fxSettings';
 
 export interface BirthOptions {
@@ -61,9 +62,11 @@ export function playBirth(faction: Pick<FactionConfig, 'birthFx'>, o: BirthOptio
     revealed = true;
     o.onReveal?.();
   };
+  let pix: PixelFxPlay | null = null;
   const finish = () => {
     if (done) return;
     done = true;
+    pix?.stop();
     for (const t of timers) window.clearTimeout(t);
     for (const a of anims) a.cancel();
     unregister();
@@ -170,7 +173,30 @@ export function playBirth(faction: Pick<FactionConfig, 'birthFx'>, o: BirthOptio
     },
   };
 
-  for (const st of plan.steps) after(st.at, () => effects[st.fx]?.(st.ms, st.count));
-  after(plan.total + 40, finish);
+  const runSteps = (): void => {
+    for (const st of plan.steps) after(st.at, () => effects[st.fx]?.(st.ms, st.count));
+    after(plan.total + 40, finish);
+  };
+  // 도트 탄생 연출 (사용자 2026-11-23·25): 시트 한 장을 화면 가득(덮기) — 시트 가운데 = 화면 가운데. 못 받았거나 움직임 줄이기면 CSS 단계 그대로
+  const runPixel = (px: NonNullable<BirthFx['pixel']>, sheet: PixelFxSheet): void => {
+    const w = layer.clientWidth, h = layer.clientHeight;
+    const scale = Math.max(w / sheet.frame[0], h / sheet.frame[1]);
+    const x = w / 2 + (sheet.pivot[0] - sheet.frame[0] / 2) * scale, y = h / 2 + (sheet.pivot[1] - sheet.frame[1] / 2) * scale;
+    if (px.screen === 'self') layer.classList.add('bha-birth--self'); // 시트가 연출 화면 바탕을 직접 칠하고 구멍을 내 걷는다 → 층 바탕은 투명
+    pix = playPixelFx(layer, sheet, { x, y, scale, onEnd: finish });
+    pix.el.classList.add('bha-birth__pixel');
+    layer.insertBefore(pix.el, hint);
+    const total = sheetDurationMs(sheet);
+    after(px.revealMs, reveal);
+    if (px.fadeOutMs) after(Math.max(0, total - px.fadeOutMs), () => run(layer, [{ opacity: 1 }, { opacity: 0 }], px.fadeOutMs!, { easing: 'ease-in' }));
+  };
+  const px = fx.pixel;
+  if (px && !prefersReducedMotion()) {
+    void loadPixelFx(px.fx).then((sheet) => {
+      if (done || skipping) return;
+      if (sheet) runPixel(px, sheet);
+      else runSteps();
+    });
+  } else runSteps();
   return { skip };
 }

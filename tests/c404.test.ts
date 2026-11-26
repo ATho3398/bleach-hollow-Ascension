@@ -48,9 +48,11 @@ describe('241-B 2·3·6·7: 화면 (CSS·DOM 연결)', () => {
   });
   it('진화 연출·결과: 새 진화체 그림(heroArtOf — 종이인형·스프라이트 그대로)을 넘긴다', () => {
     const app = read('src/ui/app.ts');
-    expect(app.match(/art: evolvedArtOf\(roomOf\(faction\), s\) \}; \/\/ 새 진화체 그림/g)).toHaveLength(2); // GDD 246장 1: 바뀐 뒤 모습(evolvedArtOf)
+    // C.539: 진화 전 그림(fromArt)도 같이 넘긴다 — 옛 기대 /art: evolvedArtOf\(roomOf\(faction\), s\) \}; \/\/ 새 진화체 그림/
+    expect(app.match(/art: evolvedArtOf\(roomOf\(faction\), s\), fromArt \}; \/\/ 새 진화체 그림/g)).toHaveLength(2); // GDD 246장 1: 바뀐 뒤 모습(evolvedArtOf)
     const ev = read('src/ui/evolutionPanel.ts');
-    expect(ev).toContain("figOf('bha-evolve__fig--reveal')");
+    // C.539: 도트 진화 연출이면 --px(지금 진화체로 시작), 아니면 옛 --reveal — 옛 기대 "figOf('bha-evolve__fig--reveal')"
+    expect(ev).toContain("figOf(pxCfg ? 'bha-evolve__fig--px' : 'bha-evolve__fig--reveal'");
     expect(ev).toContain("figOf('bha-evolve__fig--result')");
   });
 });

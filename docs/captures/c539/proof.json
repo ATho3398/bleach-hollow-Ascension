@@ -1,0 +1,39 @@
+{
+  "shots": [
+    "birth-hollow-1500.png",
+    "birth-hollow-2850.png",
+    "birth-shinigami-1700.png",
+    "birth-shinigami-2700.png",
+    "evolve-hollow-1800.png",
+    "evolve-hollow-3150.png",
+    "evolve-shinigami-2300.png",
+    "evolve-shinigami-2950.png"
+  ],
+  "errors": [],
+  "checks": {
+    "hollowBirthPixel": "birth-hollow",
+    "hollowBirthSelf": true,
+    "hollowBirthGone": true,
+    "shinigamiBirthPixel": "birth-shinigami",
+    "shinigamiBirthSelf": false,
+    "shinigamiBirthGone": true,
+    "hollowEvolvePixel": "evolve-hollow",
+    "hollowEvolveCenter": {
+      "figCx": 254,
+      "figCy": 167,
+      "fxCx": 254,
+      "fxCy": 167
+    },
+    "hollowFromSrc": "255:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "hollowToSrc": "255:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "shinigamiEvolvePixel": "evolve-shinigami",
+    "shinigamiEvolveCenter": {
+      "figCx": 199,
+      "figCy": 167,
+      "fxCx": 199,
+      "fxCy": 167
+    },
+    "shinigamiFromSrc": "256:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden",
+    "shinigamiToSrc": "256:<canvas width=\"608\" height=\"608\" class=\"bha-hero__img bha-rigcanvas\" aria-hidden"
+  }
+}

@@ -108,6 +108,7 @@ import { warningKind } from './warningLogic';
 import { showGuide, tutorialAbsorbView, tutorialWoundView } from './guideView';
 import { heroArtOf } from './bha/battle';
 import { evolvedArtOf } from './evolvedArt';
+import type { ArtUrls } from '../data/art/manifest';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { gearToastWanted } from '../config/notify';
@@ -2280,8 +2281,8 @@ export function startApp(host: HTMLElement): void {
   }
 
   /** 진화 연출 (GDD 8-5): fromTier = 진화 전 단계. 연출이 끝나 방으로 돌아오면 onDone */
-  function playEvolveCut(faction: FactionConfig, s: SaveData, fromTier: number, r: Extract<EvolveResult, { ok: true }>, onDone: () => void): void {
-    const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+  function playEvolveCut(faction: FactionConfig, s: SaveData, fromTier: number, r: Extract<EvolveResult, { ok: true }>, onDone: () => void, fromArt?: ArtUrls): void {
+    const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s), fromArt }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습) · 진화 전 그림(도트 진화 연출이 이 모습으로 시작)
     open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
       nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
       onDone();
@@ -2295,9 +2296,10 @@ export function startApp(host: HTMLElement): void {
     const fromTier = s.evolution.tierIndex;
     evolveChoiceDialog({
       onEvolve: () => {
+        const fromArt = evolvedArtOf(roomOf(faction), s); // 바뀌기 전 모습 (도트 진화 연출)
         const r = evolveAfterReturn(s, pending);
         persist();
-        if (r.ok) playEvolveCut(faction, s, fromTier, r, onDone);
+        if (r.ok) playEvolveCut(faction, s, fromTier, r, onDone, fromArt);
         else onDone();
       },
       onDefer: () => {
@@ -2345,6 +2347,7 @@ export function startApp(host: HTMLElement): void {
     if (save) {
       const had = new Set(save.titles.map((t) => t.titleId));
       const fromTier = save.evolution.tierIndex;
+      const fromArt = evolvedArtOf(roomOf(faction), save); // 바뀌기 전 모습 (도트 진화 연출)
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
       const petLog0 = save.runLog.pets.length;
       const gearLog0 = save.runLog.gear.length;
@@ -2372,7 +2375,7 @@ export function startApp(host: HTMLElement): void {
         afterEvolve = null;
         later?.();
       };
-      if (evo?.ok) afterResult = () => playEvolveCut(faction, s, fromTier, evo, afterEvolveDone);
+      if (evo?.ok) afterResult = () => playEvolveCut(faction, s, fromTier, evo, afterEvolveDone, fromArt);
       else if (askEvolve) afterResult = () => askEvolveChoice(faction, s, afterEvolveDone);
     }
     const showResult = () => {
@@ -2457,10 +2460,12 @@ export function startApp(host: HTMLElement): void {
         persist();
         nestScreen();
       },
+      // 진화 전 그림 (도트 진화 연출이 이 모습으로 시작)
+      artNow: () => evolvedArtOf(roomOf(faction), s),
       // 다음 진화 (GDD 109장 7): 원정 귀환 때와 같은 진화 연출 → 끝나면 테스트 패널로
-      onEvolved: (fromTier, r) => {
+      onEvolved: (fromTier, r, fromArt) => {
         dress(s.wear);
-        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s) }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습)
+        const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s), fromArt }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습) · 진화 전 그림
         open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
           nav.pop();
         }, s.build.slots.length, extra), true);

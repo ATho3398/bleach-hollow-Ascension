@@ -62,7 +62,8 @@ describe('진화 결과 그림 = 바뀐 뒤 모습 (GDD 246장 1)', () => {
   });
   it('화면: 진화 2곳·아란칼화 결과가 evolvedArtOf 를 넘기고, 결과 창이 진화 결과와 같은 그림 칸을 쓴다', () => {
     const app = read('src/ui/app.ts');
-    expect(app.match(/evolvedArtOf\(roomOf\(faction\), s0?\)/g)).toHaveLength(3);
+    // C.539: 진화 전 그림(fromArt)을 잡는 곳 2곳(진화 미루기 창·테스트 패널 artNow)이 늘었다 — 옛 기대 3
+    expect(app.match(/evolvedArtOf\(roomOf\(faction\), s0?\)/g)).toHaveLength(5);
     expect(read('src/ui/rankView.ts')).toContain("'bha-evolve__fig bha-evolve__fig--result'");
   });
 });
