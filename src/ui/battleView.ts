@@ -1041,7 +1041,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   tray.cells.forEach((c, i) => (c.dataset.sc = `block.${i + 1}`));
   // 기기 버튼 커서 (C.197, GDD 122장 3): 순서 = 머리 버튼 → 막기·소모품·장비·해방 → 블록 칸 왼쪽부터. 시작 = 첫 블록 칸(칸 1), ✓ = 'bha-press'
   // C.216 (GDD 138장 2): 칸 1 이 맨 오른쪽이라 DOM 순서를 뒤집어 ▲▼ 도 화면 왼쪽 → 오른쪽으로 (칸 자리는 grid-column 이 정한다)
-  // C.540 (GDD 7절 v6.205 [블록 생성 위치 반전]): 켜면 칸 1 이 맨 왼쪽(격자 ltr) — DOM 도 칸 1 부터. 전투 중 설정에서 바꿔도 바로 따라간다
+  // C.541 (GDD 7절 v6.206 [블록 생성 위치 반전]): 켜면 칸 1 이 맨 왼쪽(격자 ltr) — DOM 도 칸 1 부터. 전투 중 설정에서 바꿔도 바로 따라간다
   let trayFlip = loadTrayFlip(safeStorage());
   const applyTrayFlip = () => {
     tray.grid.classList.toggle(TRAY_FLIP_CLASS, trayFlip);
@@ -1937,7 +1937,7 @@ export function battleView(root: HTMLElement, faction: FactionConfig, s: CombatS
   // 칸 찾기는 기기 안 좌표(가로 방향)로: 세로 폰에서는 기기를 돌려 놓았으므로 화면 좌표를 바꿔 쓴다 (GDD 16-6)
   const slotOf = (e: { clientX: number; clientY: number }) => {
     const r = elementLocalRect(tray.grid);
-    return trayIndexAtScreen(slotAt(pointerLocal(e).x, r.left, r.width, cap), cap, trayFlip); // 칸 1 = 맨 오른쪽 (C.216, GDD 138장 2 — 블록 바 rtl) · 반전 설정이면 맨 왼쪽 (C.540)
+    return trayIndexAtScreen(slotAt(pointerLocal(e).x, r.left, r.width, cap), cap, trayFlip); // 칸 1 = 맨 오른쪽 (C.216, GDD 138장 2 — 블록 바 rtl) · 반전 설정이면 맨 왼쪽 (C.541)
   };
   // 해방 버튼: 블록과 같은 판정 (버튼 위에서 누르고 버튼 위에서 떼면 사용 — 옛 저장 필살기 버튼 판정)
   let libDown: number | null = null;

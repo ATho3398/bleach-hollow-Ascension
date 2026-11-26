@@ -220,7 +220,7 @@ export interface RebirthConfig {
 
 /** 해방 수련 (GDD 22-4·22-5): 화면 제목·상대 이름·완료 문구·종목별 이름과 설명 (사신판 먹이사슬 = 영자 모으기·대허 피하기) */
 export interface TrainingConfig {
-  /** 수련장 목록 화면 설명 1~2줄 (GDD 8-9 v6.205, C.541): 훈련 인형 · 수련. 없으면 화면 기본 문구 */
+  /** 수련장 목록 화면 설명 1~2줄 (GDD 8-9 v6.205, C.540): 훈련 인형 · 수련. 없으면 화면 기본 문구 */
   hall?: { practiceDesc: string; trainDesc: string };
   title: string;
   /** 본능(정령) 대결의 상대 */

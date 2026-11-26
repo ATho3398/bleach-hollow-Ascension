@@ -53,7 +53,7 @@ export interface CommonValues {
   tilt: boolean;
   viewScale: ViewScalePref;
   fsStart: boolean;
-  /** [블록 생성 위치 반전] (GDD 7절 v6.205, C.540): 켜면 칸 1 이 맨 왼쪽 — 기기 공통 */
+  /** [블록 생성 위치 반전] (GDD 7절 v6.206, C.541): 켜면 칸 1 이 맨 왼쪽 — 기기 공통 */
   trayFlip: boolean;
 }
 type BoolKey = { [K in keyof CommonValues]: CommonValues[K] extends boolean ? K : never }[keyof CommonValues];
@@ -541,7 +541,7 @@ export function settingsView(root: HTMLElement, o: SettingsViewOpts = {}): Setti
     boolRow('shake', '화면 흔들림'), hintLine('강공격에 맞을 때, 해방할 때, 체인 3 블록을 쓸 때만 짧게 흔들린다.'),
   );
   const ctlPanel = panel('조작', hintLine('블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.'),
-    // [블록 생성 위치 반전] (GDD 7절 v6.205, C.540): 기본 끔 = 칸 1 이 맨 오른쪽(오른쪽부터 채워짐)
+    // [블록 생성 위치 반전] (GDD 7절 v6.206, C.541): 기본 끔 = 칸 1 이 맨 오른쪽(오른쪽부터 채워짐)
     boolRow('trayFlip', '블록 생성 위치 반전'), hintLine('켜면 블록이 왼쪽부터 채워진다.'));
 
   // ── 기타 탭 ──
