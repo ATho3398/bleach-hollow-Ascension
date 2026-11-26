@@ -1,4 +1,4 @@
-/** C.540 설정 [블록 생성 위치 반전] (GDD 7절 '블록 바 표시' v6.205,
+/** C.541 설정 [블록 생성 위치 반전] (GDD 7절 '블록 바 표시' v6.206,
  *  사용자 2026-11-26 "그리고 설정에 블록 생성위치 반전 추가해서 그거 켜면 블록 왼쪽에서 나오게해")
  *  기본 끔 = 칸 1 이 맨 오른쪽(C.216). 켬 = 표시만 좌우 반전(칸 1 맨 왼쪽, 새 블록 오른쪽). 엔진 순서·숫자키 N = 칸 N·시작 커서 = 칸 1 은 그대로.
  *  기기 공통 localStorage(bha-tray-flip) — 세이브 구조 무관. */
@@ -15,7 +15,7 @@ const memStorage = () => {
 const CAP = 8;
 const cells = Array.from({ length: CAP }, (_, i) => `칸${i + 1}`);
 
-describe('C.540 블록 생성 위치 반전', () => {
+describe('C.541 블록 생성 위치 반전', () => {
   it('기본 끔 = 지금 배치: 칸 1 이 맨 오른쪽, 새 블록(칸 2·3…)은 왼쪽으로 붙는다', () => {
     expect(loadTrayFlip(memStorage())).toBe(false);
     expect(loadTrayFlip(null)).toBe(false);
@@ -87,6 +87,6 @@ describe('C.540 블록 생성 위치 반전', () => {
     expect(css).toContain('.bha-root .bha-v2tray__grid{direction:rtl}');
     expect(css).toContain('.bha-root .bha-v2tray__grid.is-fill-left{direction:ltr}');
     expect(css).toContain('.bha-root .bha-v2tray__grid.is-fill-left .bha-v2cut::before{left:-3px;right:auto}');
-    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(540);
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(541);
   });
 });

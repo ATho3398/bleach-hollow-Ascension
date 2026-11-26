@@ -1,12 +1,12 @@
-// C.540 proof ([블록 생성 위치 반전] 설정, GDD 7절 v6.205): 1배, 6장.
+// C.541 proof ([블록 생성 위치 반전] 설정, GDD 7절 v6.206): 1배, 6장.
 // 01 PC · 04 폰 설정 전투 탭 [조작] 토글 켬 / 02 PC · 05 폰 전투 블록 바 끔(칸 1 맨 오른쪽) / 03 PC · 06 폰 켬(칸 1 맨 왼쪽) — 체인3·체인2 묶음 보이게
-// 실행: node scripts/c540-proof.cjs [저장 폴더]
+// 실행: node scripts/c541-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
 
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c540'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c541'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 const PHONE = { viewport: { width: 796, height: 384 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -67,7 +67,7 @@ async function setTray(page) {
     s.spawnTimer = 1e9; s.enemy.attackTimer = 1e9; s.enemy.actionTimer = 1e9; s.params.timeLimitSeconds = 1e6; s.player.attackTimer = 1e9;
     const b = (traitId, family) => ({ uid: s.nextUid++, kind: 'skill', traitId, family, element: 'fire' });
     s.tray = [b('t-fire-a', 'family-a'), b('t-fire-a', 'family-a'), b('t-fire-a', 'family-a'), b('t-fire-c', 'family-c'), b('t-fire-c', 'family-c'), b('t-fire-b', 'family-b')];
-    window.__c540uids = s.tray.map((x) => x.uid);
+    window.__c541uids = s.tray.map((x) => x.uid);
   });
   await wait(500);
 }

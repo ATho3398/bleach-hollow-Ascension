@@ -498,7 +498,7 @@
 .bha-root .bha-v2tray__grid{direction:rtl}
 .bha-root .bha-v2tray__grid>*{direction:ltr}
 .bha-root .bha-v2cut::before{left:auto;right:-3px}
-/* ②-1 [블록 생성 위치 반전] 설정 (C.540, GDD 7절 v6.205): 켜면 칸 배치만 ltr — 칸 1 이 맨 왼쪽, 새 블록은 오른쪽에 붙는다. 묶음 경계 선은 칸의 왼쪽 끝(ltr 의 시작) 바깥 틈에 */
+/* ②-1 [블록 생성 위치 반전] 설정 (C.541, GDD 7절 v6.206): 켜면 칸 배치만 ltr — 칸 1 이 맨 왼쪽, 새 블록은 오른쪽에 붙는다. 묶음 경계 선은 칸의 왼쪽 끝(ltr 의 시작) 바깥 틈에 */
 .bha-root .bha-v2tray__grid.is-fill-left{direction:ltr}
 .bha-root .bha-v2tray__grid.is-fill-left .bha-v2cut::before{left:-3px;right:auto}
 /* ③ 해방 = 캐릭터 누르기 (C.216, GDD 139장 3): 해방 카드·게이지 막대 대신 내 캐릭터 그림 칸 전체가 투명 버튼.
