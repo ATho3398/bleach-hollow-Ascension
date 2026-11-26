@@ -1,0 +1,246 @@
+{
+ "errors": [],
+ "pcSettings": {
+  "checked": "true",
+  "text": "조작블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.블록 생성 위치 반전켜면 블록이 왼쪽부터 채워진다.",
+  "stored": "1"
+ },
+ "pcOff": {
+  "flipClass": false,
+  "domCellX": [
+   113,
+   192,
+   271,
+   350,
+   428,
+   507,
+   586,
+   665
+  ],
+  "domOrderUids": [
+   -1,
+   -1,
+   6,
+   5,
+   4,
+   3,
+   2,
+   1
+  ],
+  "engineTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "slot1X": 665,
+  "devStartIsSlot1": true,
+  "chains": [
+   {
+    "text": "체인3",
+    "left": 504,
+    "right": 734
+   },
+   {
+    "text": "체인2",
+    "left": 347,
+    "right": 497
+   }
+  ],
+  "key1Used": [
+   1,
+   2,
+   3
+  ],
+  "key1ExpectSlot1": 1,
+  "leftClickUsed": [],
+  "leftClickTray": [
+   4,
+   5,
+   6
+  ]
+ },
+ "pcOn": {
+  "flipClass": true,
+  "domCellX": [
+   113,
+   192,
+   271,
+   350,
+   428,
+   507,
+   586,
+   665
+  ],
+  "domOrderUids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   -1,
+   -1
+  ],
+  "engineTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "slot1X": 113,
+  "devStartIsSlot1": true,
+  "chains": [
+   {
+    "text": "체인3",
+    "left": 110,
+    "right": 340
+   },
+   {
+    "text": "체인2",
+    "left": 347,
+    "right": 497
+   }
+  ],
+  "key1Used": [
+   1,
+   2,
+   3
+  ],
+  "key1ExpectSlot1": 1,
+  "leftClickUsed": [
+   4,
+   5
+  ],
+  "leftClickTray": [
+   4,
+   5,
+   6
+  ]
+ },
+ "phSettings": {
+  "checked": "true",
+  "text": "조작블록은 누르면 바로 쓴다. 블록 순서는 바꿀 수 없고, 나온 순서대로 쓴다.블록 생성 위치 반전켜면 블록이 왼쪽부터 채워진다.",
+  "stored": "1"
+ },
+ "phOff": {
+  "flipClass": false,
+  "domCellX": [
+   112,
+   185,
+   258,
+   331,
+   404,
+   477,
+   550,
+   622
+  ],
+  "domOrderUids": [
+   -1,
+   -1,
+   6,
+   5,
+   4,
+   3,
+   2,
+   1
+  ],
+  "engineTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "slot1X": 622,
+  "devStartIsSlot1": true,
+  "chains": [
+   {
+    "text": "체인3",
+    "left": 474,
+    "right": 687
+   },
+   {
+    "text": "체인2",
+    "left": 328,
+    "right": 468
+   }
+  ],
+  "key1Used": [],
+  "key1ExpectSlot1": 1,
+  "leftClickUsed": [],
+  "leftClickTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ]
+ },
+ "phOn": {
+  "flipClass": true,
+  "domCellX": [
+   112,
+   185,
+   258,
+   331,
+   404,
+   477,
+   550,
+   622
+  ],
+  "domOrderUids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   -1,
+   -1
+  ],
+  "engineTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "slot1X": 112,
+  "devStartIsSlot1": true,
+  "chains": [
+   {
+    "text": "체인3",
+    "left": 109,
+    "right": 322
+   },
+   {
+    "text": "체인2",
+    "left": 328,
+    "right": 468
+   }
+  ],
+  "key1Used": [],
+  "key1ExpectSlot1": 1,
+  "leftClickUsed": [
+   1,
+   2,
+   3
+  ],
+  "leftClickTray": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ]
+ }
+}

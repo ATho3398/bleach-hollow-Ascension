@@ -1,115 +1,92 @@
-// C.540 (GDD 8-9 v6.205, 사용자 2026-11-26 "그 훈련인형도 특수던전마냥, 왼쪽에 리스트로 훈련인형, 무슨훈련? 그거 리스트로 띄우고, 오른쪽에 그림이랑 설면 넣고 시작 누르게 바꿔라"):
-// 방 수련장 → 특수던전식 목록 화면(왼쪽 훈련 인형·수련, 오른쪽 그림·이름·설명·[시작]). 훈련 인형 [시작] = 전투 + 적 설정 창, 수련 [시작] = 수련 화면.
-// 뒤로·그만두기(v6.194 C.534)는 그대로, 설정 창 [나가기] = 목록, 목록 뒤로 = 방.
+/** C.540 설정 [블록 생성 위치 반전] (GDD 7절 '블록 바 표시' v6.205,
+ *  사용자 2026-11-26 "그리고 설정에 블록 생성위치 반전 추가해서 그거 켜면 블록 왼쪽에서 나오게해")
+ *  기본 끔 = 칸 1 이 맨 오른쪽(C.216). 켬 = 표시만 좌우 반전(칸 1 맨 왼쪽, 새 블록 오른쪽). 엔진 순서·숫자키 N = 칸 N·시작 커서 = 칸 1 은 그대로.
+ *  기기 공통 localStorage(bha-tray-flip) — 세이브 구조 무관. */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getFaction } from '../src/data/factions';
-import { ScreenStack } from '../src/ui/bha/select';
-import { hallArt, resetTrainingHallPick, trainingHallItems } from '../src/ui/trainingHallView';
-import { trainingLockedText } from '../src/ui/trainingView';
+import { slotAt } from '../src/ui/pointer';
+import { cellsInScreenOrder, loadTrayFlip, saveTrayFlip, TRAY_FLIP_CLASS, TRAY_FLIP_KEY, trayIndexAtScreen } from '../src/ui/trayFlip';
+import { PATCH_LABEL } from '../src/version';
 
-const read = (p: string) => readFileSync(p, 'utf8');
-const app = read('src/ui/app.ts');
-const hall = read('src/ui/trainingHallView.ts');
-const st = (trainLocked: boolean) => ({ altarName: '수련장', trainLocked, points: 12, pointsMax: 60, practiceCount: 3 });
-const noop = { onPractice: () => undefined, onTrain: () => undefined };
+const memStorage = () => {
+  const m = new Map<string, string>();
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), m };
+};
+const CAP = 8;
+const cells = Array.from({ length: CAP }, (_, i) => `칸${i + 1}`);
 
-describe('수련장 진입 = 목록 화면 (훈련 인형 골라짐)', () => {
-  it('방 수련장 물건 → 목록 화면(곧장 전투로 가지 않음), 들어올 때 고른 항목 = 훈련 인형', () => {
-    expect(app).toContain("onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { resetTrainingHallPick(); open('practice', () => practiceScreen(faction)); }); },");
-    const body = app.slice(app.indexOf('function practiceScreen('), app.indexOf('function practiceArena('));
-    expect(body).toContain('trainingHallView(root, faction, {');
-    expect(body).not.toContain('practiceArena(faction); }'); // 들어오자마자 전투를 열지 않는다
-    expect(hall).toContain("const pick: { id: TrainingScreenId } = { id: 'practice' };");
-    resetTrainingHallPick();
-    expect(hall).toContain("app.dataset.screen = 'training-hall';");
+describe('C.540 블록 생성 위치 반전', () => {
+  it('기본 끔 = 지금 배치: 칸 1 이 맨 오른쪽, 새 블록(칸 2·3…)은 왼쪽으로 붙는다', () => {
+    expect(loadTrayFlip(memStorage())).toBe(false);
+    expect(loadTrayFlip(null)).toBe(false);
+    expect(cellsInScreenOrder(cells, false)).toEqual(['칸8', '칸7', '칸6', '칸5', '칸4', '칸3', '칸2', '칸1']);
+    expect(trayIndexAtScreen(CAP - 1, CAP, false)).toBe(0); // 맨 오른쪽 = 칸 1
+    expect(trayIndexAtScreen(0, CAP, false)).toBe(CAP - 1);
+    // 옛 판정(cap - 1 - slotAt)과 같다
+    for (let s = 0; s < CAP; s++) expect(trayIndexAtScreen(s, CAP, false)).toBe(CAP - 1 - s);
   });
-  it('목록 = 훈련 인형 → 수련 순, 이름은 데이터(적 테이블 훈련 인형 · 종족 설정 training.title)', () => {
-    for (const fid of ['hollow', 'shinigami']) {
-      const f = getFaction(fid);
-      const items = trainingHallItems(f, st(false), noop);
-      expect(items.map((x) => x.id)).toEqual(['practice', 'train']);
-      expect(items[0]!.name).toBe('훈련 인형');
-      expect(items[1]!.name).toBe(f.training.title);
-      expect(items[0]!.desc).toBe(f.training.hall!.practiceDesc);
-      expect(items[1]!.desc).toBe(f.training.hall!.trainDesc);
-      expect(items[1]!.sub).toBe('수련치 12/60');
+
+  it('켬 = 칸 1 이 맨 왼쪽, 새 블록은 오른쪽에 붙는다', () => {
+    expect(cellsInScreenOrder(cells, true)).toEqual(cells);
+    expect(trayIndexAtScreen(0, CAP, true)).toBe(0); // 맨 왼쪽 = 칸 1
+    expect(trayIndexAtScreen(1, CAP, true)).toBe(1); // 그 오른쪽 = 칸 2 (새 블록 쪽)
+    expect(trayIndexAtScreen(CAP - 1, CAP, true)).toBe(CAP - 1);
+  });
+
+  it('누른 화면 자리 → 칸 번호: 반전 뒤에도 그 칸의 블록을 가리킨다 (화면 왼쪽 끝 누름)', () => {
+    const left = 0, width = 400; // 격자 400px, 칸 50px
+    const x = 10; // 맨 왼쪽 칸
+    expect(trayIndexAtScreen(slotAt(x, left, width, CAP), CAP, false)).toBe(7); // 끔: 맨 왼쪽 = 칸 8
+    expect(trayIndexAtScreen(slotAt(x, left, width, CAP), CAP, true)).toBe(0); // 켬: 맨 왼쪽 = 칸 1
+    // 화면 자리 ↔ 칸 번호가 DOM(기기 커서) 순서와 일치: 화면 왼쪽에서 s번째 DOM 칸 = trayIndexAtScreen(s)
+    for (const flip of [false, true]) {
+      const order = cellsInScreenOrder(cells, flip);
+      for (let s = 0; s < CAP; s++) expect(order[s]).toBe(cells[trayIndexAtScreen(s, CAP, flip)]);
     }
-    expect(getFaction('hollow').training.title).toBe('본능 수련');
-    expect(getFaction('shinigami').training.title).toBe('참백도 수련');
   });
-  it('설명 1~2줄·개발자 말 없음, 그림 없는 항목 = 방 수련장 물건 그림', () => {
-    for (const fid of ['hollow', 'shinigami']) {
-      const H = getFaction(fid).training.hall!;
-      for (const d of [H.practiceDesc, H.trainDesc]) {
-        expect(d.length).toBeLessThan(60);
-        expect(d).not.toMatch(/provisional|임시|C\.\d|GDD/);
-      }
-    }
-    expect(hallArt('practice')).toMatch(/prop-altar\.webp$/);
-    expect(hallArt('train')).toMatch(/prop-altar\.webp$/);
-  });
-  it('특수던전 화면 틀(bha-sdg)·컴포넌트 재사용, 종족 분기 없음', () => {
-    for (const c of ['bha-sdg__list', 'bha-sdg__item', 'bha-sdg__stage', 'bha-sdg__art', 'bha-sdg__lock', 'bha-sdg__go', 'enableDragScrollY(list)']) expect(hall).toContain(c);
-    expect(hall).not.toMatch(/'hollow'|'shinigami'/);
-    const css = read('src/ui/bha/story.css');
-    const mine = css.slice(css.indexOf('.bha-thall__img'));
-    expect(mine).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(/i); // 새 색 없음
-  });
-});
 
-describe('4단계 전 수련 잠김', () => {
-  it('잠긴 수련 = 자물쇠·흐린 글자, 고르면 오른쪽에 여는 조건 + [시작] 흐리게', () => {
-    const f = getFaction('hollow');
-    const [dummy, train] = trainingHallItems(f, st(true), noop);
-    expect(dummy!.open).toBe(true);
-    expect(train!.open).toBe(false);
-    expect(train!.sub).toBe('잠김');
-    expect(train!.lockText).toBe(trainingLockedText(f));
-    expect(train!.lockText).toBe('바스트로데가 되면 본능 수련이 열린다.');
-    expect(hall).toContain("`bha-sdg__item${c.open ? '' : ' is-locked'}`"); // 흐린 글자(점선 테두리) = 특수던전 잠김과 같은 CSS
-    expect(hall).toContain("icon(c.open ? c.icon : 'i-lock')");
-    expect(hall).toContain("disabled: !c.open,");
-    expect(app).toContain('onTrain: () => { if (!trainLocked(s) && !careBlocked(s)) open(\'training\', () => renderTraining(faction, s)); },');
+  it('숫자키 N = 칸 N · 시작 커서 = 칸 1 은 반전과 무관 (엔진 인덱스 그대로)', () => {
+    const bv = readFileSync('src/ui/battleView.ts', 'utf8');
+    // 시작 커서는 칸 배열의 0번(칸 1)에 — DOM 순서를 바꿔도 같은 요소
+    expect(bv).toContain("if (i === 0) c.dataset.devStart = '';");
+    // 화면 좌표 판정만 설정을 탄다
+    expect(bv).toContain('trayIndexAtScreen(slotAt(pointerLocal(e).x, r.left, r.width, cap), cap, trayFlip)');
+    expect(bv).not.toContain('return cap - 1 - slotAt(');
+    // 전투 중 설정을 바꿔도 따라가고, 전투가 끝나면 구독을 푼다
+    expect(bv).toContain('window.addEventListener(TRAY_FLIP_EVENT, onTrayFlip)');
+    expect(bv).toContain('unflip();');
+    expect(bv).not.toMatch(/faction(?:Id)? === '(?:hollow|shinigami)'/);
   });
-  it('기기 ✓: 고른 행을 한 번 더 = 하이라이트를 [시작]으로 (잠긴 항목은 그대로)', () => {
-    expect(hall).toContain("if (go && !go.disabled) go.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));");
-  });
-});
 
-describe('훈련 인형 [시작] = 설정 창, 뒤로·나가기', () => {
-  it('훈련 인형 [시작] = 기존 적 설정 창 전투(practiceArena), 그만두기·뒤로 규칙(C.534) 그대로', () => {
-    expect(app).toContain('onPractice: () => practiceArena(faction),');
-    const arena = app.slice(app.indexOf('function arenaBattle('), app.indexOf('function practiceScreen('));
-    expect(arena).toContain('onExit: () => nav.pop()'); // 설정 창 [나가기] = 밑의 목록 화면
-    expect(arena).toContain('...(run.practice ? { onBack: leaveHome } : {})'); // 설정 창 뒤로 = 방
-    expect(arena).toContain('if (run.practice) round(null); else nav.pop();'); // [그만두기] = 설정 창
+  it('설정 저장·불러오기: 기기 공통 키, 깨진 값은 끔', () => {
+    const st = memStorage();
+    expect(saveTrayFlip(st, true)).toBe(true);
+    expect(st.m.get(TRAY_FLIP_KEY)).toBe('1');
+    expect(loadTrayFlip(st)).toBe(true);
+    saveTrayFlip(st, false);
+    expect(loadTrayFlip(st)).toBe(false);
+    st.setItem(TRAY_FLIP_KEY, 'garbage');
+    expect(loadTrayFlip(st)).toBe(false);
+    const broken = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
+    expect(loadTrayFlip(broken)).toBe(false);
+    expect(saveTrayFlip(broken, true)).toBe(true); // 이번 실행에서만
   });
-  it('화면 스택: 방 → 목록 → [시작] 전투 → [나가기] = 목록, 목록 뒤로 = 방, 설정 창 뒤로 = 방', () => {
-    const drawn: string[] = [];
-    const nav = new ScreenStack();
-    const screen = (id: string, locked = false, home = false) => ({ id, locked, home, render: () => { drawn.push(id); } });
-    nav.reset(screen('room', false, true));
-    nav.push(screen('practice')); // 수련장 목록
-    expect(drawn.at(-1)).toBe('practice');
-    nav.push(screen('practice-battle', true)); // 훈련 인형 [시작]
-    nav.pop(); // 설정 창 [나가기]
-    expect(drawn.at(-1)).toBe('practice');
-    nav.cancel(); // 목록 뒤로
-    expect(drawn.at(-1)).toBe('room');
-    nav.push(screen('practice'));
-    nav.push(screen('practice-battle', true));
-    expect(nav.popToHome()).toBe(true); // 설정 창 뒤로 = leaveHome
-    expect(drawn.at(-1)).toBe('room');
+
+  it('설정 화면: 전투 탭 [조작] 판에 토글 + 한 줄 설명, 공통 값으로 읽고 쓴다(슬롯 설정 아님)', () => {
+    const sv = readFileSync('src/ui/settingsView.ts', 'utf8');
+    expect(sv).toContain("boolRow('trayFlip', '블록 생성 위치 반전'), hintLine('켜면 블록이 왼쪽부터 채워진다.')");
+    expect(sv).toContain('trayFlip: loadTrayFlip(storage)');
+    expect(sv).toContain('saveTrayFlip(storage, after.trayFlip)');
+    const scope = readFileSync('src/ui/settingsScope.ts', 'utf8');
+    expect(scope).not.toContain('trayFlip');
   });
-  it('수련 [시작] = 수련 화면(위에 쌓임 — 뒤로 = 목록), 수련 화면 머리 = 수련 이름(토글 없음)', () => {
-    expect(read('src/ui/trainingView.ts')).toContain('title: faction.training.title,');
-    expect(read('src/ui/trainingView.ts')).not.toContain('viewTitle(');
-    expect(app).not.toContain('switchTraining(');
-  });
-  it('테스트 모드 전투(testModeArena)·다른 화면 토글은 안 바뀜', () => {
-    expect(read('src/ui/bookView.ts')).toContain('viewTitle(');
-    const arena = app.slice(app.indexOf('function arenaBattle('), app.indexOf('function practiceScreen('));
-    expect(arena).toContain('onQuit: () => { closeDialog?.(); if (run.practice) round(null); else nav.pop(); }');
+
+  it('CSS: 켬 클래스 = 격자 ltr, 묶음 경계 선은 칸 왼쪽 틈', () => {
+    const css = readFileSync('src/ui/bha/v2/bha.css', 'utf8');
+    expect(TRAY_FLIP_CLASS).toBe('is-fill-left');
+    expect(css).toContain('.bha-root .bha-v2tray__grid{direction:rtl}');
+    expect(css).toContain('.bha-root .bha-v2tray__grid.is-fill-left{direction:ltr}');
+    expect(css).toContain('.bha-root .bha-v2tray__grid.is-fill-left .bha-v2cut::before{left:-3px;right:auto}');
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(540);
   });
 });

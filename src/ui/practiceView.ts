@@ -1,4 +1,4 @@
-// 전투 연습 (U-4): 연습 결과 화면. 연습 전투 화면 자체는 battleView, 수련장 입구는 trainingHallView (GDD 8-9 v6.205, C.540).
+// 전투 연습 (U-4): 연습 결과 화면. 연습 전투 화면 자체는 battleView, 수련장 입구는 trainingHallView (GDD 8-9 v6.205, C.541).
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
 import { comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
@@ -14,7 +14,7 @@ import { asBack } from './bha/screenBack';
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
   basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격',
 };
-// 옛 수련장 훈련 인형 입구 practiceEntryView([전투 들어가기] 하나 + 규칙 4줄, C.471)는 수련장 목록 화면(trainingHallView, GDD 8-9 v6.205 C.540)으로 대체 —
+// 옛 수련장 훈련 인형 입구 practiceEntryView([전투 들어가기] 하나 + 규칙 4줄, C.471)는 수련장 목록 화면(trainingHallView, GDD 8-9 v6.205 C.541)으로 대체 —
 // 방 물건 → 목록 화면 → 훈련 인형 [시작] = 전투 + 적 설정 창 (창 안내 글은 testModeArena 의 note)
 
 export interface PracticeResultHandlers {

@@ -29,7 +29,7 @@ describe('C.137', () => {
   it('85장 3: 훈련 인형은 방 물건이 아니고 수련장 안에 훈련 인형·번호 쟁탈전 입구가 있다', () => {
     expect((ROOM_PROPS as readonly string[]).includes('dummy')).toBe(false);
     const tv = read('src/ui/trainingView.ts');
-    // 옛 값(C.163): expect(tv).toContain("id: 'practice'") — 입구는 머리 제목 토글(trainingTitle). C.540(GDD 8-9 v6.205): 입구 = 수련장 목록 화면의 훈련 인형 항목
+    // 옛 값(C.163): expect(tv).toContain("id: 'practice'") — 입구는 머리 제목 토글(trainingTitle). C.541(GDD 8-9 v6.205): 입구 = 수련장 목록 화면의 훈련 인형 항목
     expect(read('src/ui/trainingHallView.ts')).toContain("id: 'practice'");
     expect(tv).not.toContain('rankBattleName'); // C.257 (GDD 174장 1): 진급 시험은 수련장 토글에서 빠져 방 책장 아래 물건으로
     expect(read('src/ui/roomView.ts')).toContain('altar: hd.onTraining'); // C.394 (GDD 241-C 3): 방 = 수련장, 번호 쟁탈전·진급 시험은 월드맵
