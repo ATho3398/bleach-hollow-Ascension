@@ -18,8 +18,7 @@ import { statName } from '../data/elements';
 import { button, chip, el, icon, meter, mountApp, notice, panel, provisionalTag, tag } from './bha/dom';
 import { iconArt, itemDialog } from './bha/itemUi';
 import type { Device } from './bha/device';
-import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
-import { viewTitle } from './bha/viewtitle';
+import { lcdHead, lcdPage } from './bha/lcdpage';
 import { asBack } from './bha/screenBack';
 import { evText } from './bha/nest';
 import { ascensionUnlockText } from './labels';
@@ -62,8 +61,7 @@ export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullness
 
 export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
-  /** 머리 제목 토글로 훈련 인형(전투 연습)으로 (C.137 → GDD 98장 A1·99장 2). 진급 시험은 방 책장 아래로 옮겼다 (GDD 174장 1, C.257) */
-  onSwitch: (id: TrainingScreenId) => void;
+  // 옛 onSwitch(머리 제목 토글로 훈련 인형, C.137·C.163)는 수련장 목록 화면(GDD 8-9 v6.204, C.539)으로 대체 — 뒤로 = 목록
   /** 아란칼화 / 참백도 구상화 도전 (GDD 126장 3, C.220 — 지금은 보스전 임시) */
   onAscend?: () => void;
 }
@@ -71,17 +69,11 @@ export interface TrainingHandlers {
 /** 수련권 얻는 법 한 줄 (GDD 216장 1·2): 강적·보스 처치 때 무작위, 개수 제한 없음 */
 const TICKET_HOW = '모험·탑에서 강적·보스를 쓰러뜨리면 가끔 얻는다 (수련 한 번에 1장)';
 
-/** 수련장 묶음의 두 화면: 수련(본능 수련) · 훈련 인형. 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
+/** 수련장 목록 화면의 두 항목: 훈련 인형 · 수련(본능 수련). 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
 export type TrainingScreenId = 'train' | 'practice';
 
-/** 수련장 두 화면이 같이 쓰는 머리 제목 토글 (GDD 99장 2, C.163 · 174장 1): 수련 ↔ 훈련 인형. altarName = 수련장 이름.
- *  GDD 241-C 2 (C.394): 기본 = 훈련 인형(먼저), 본능 수련은 4단계 전이면 목록에 자물쇠 — 누르면 부르는 쪽이 '<4단계 이름>이 되면 열린다' 알림 */
-export function trainingTitle(faction: FactionConfig, altarName: string, current: TrainingScreenId, onSwitch: (id: TrainingScreenId) => void, trainLocked = false): HTMLElement {
-  return selectLast(viewTitle([
-    { id: 'practice', label: `${altarName} · 훈련 인형` },
-    { id: 'train', label: faction.training.title, locked: trainLocked },
-  ], current, (id) => onSwitch(id as TrainingScreenId)));
-}
+// 옛 trainingTitle(머리 제목 토글 '수련장 · 훈련 인형' ↔ 수련, C.163·C.394)은 수련장 목록 화면(trainingHallView, GDD 8-9 v6.204 C.539)으로 대체.
+// 훈련 인형이 먼저, 수련은 4단계 전이면 자물쇠 — 목록 화면이 그대로 지킨다. 다른 화면(책장·상점)의 viewTitle 토글은 그대로
 
 /** 제단 = 수련 화면: 왼쪽 수련치·수련권·안내, 오른쪽 4종목 카드 */
 export function trainingView(dev: Device, faction: FactionConfig, save: SaveData, title: string, hd: TrainingHandlers): void {
@@ -90,8 +82,9 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   const gate = trainingGate(t, save.evolution.tierIndex, n.condition);
   const head = lcdHead({
     // 진화 정보는 상태 화면 능력치 아래로 옮겼다 (C.137, GDD 85장 7)
-    // 책장처럼 머리 제목이 토글: 누르면 훈련 인형(전투 연습)이 열린다 (GDD 98장 A1 · 174장 1 진급 시험은 방으로). 수련권·컨디션 게이트와 무관
-    title: trainingTitle(faction, title, 'train', hd.onSwitch),
+    // (옛: 책장처럼 머리 제목이 토글 — 누르면 훈련 인형, GDD 98장 A1. C.539 에서 수련장 목록 화면으로 대체)
+    // 머리 제목 = 수련 이름 글자 (옛 토글 trainingTitle 은 수련장 목록 화면으로 대체, C.539)
+    title: faction.training.title,
     sub: (() => {
       const s = el('span');
       s.append(provisionalTag(), ' 수련을 마치면 전투의 ', el('b', '', faction.liberation.name), ' 고유 효과(능력치 상승)가 강해진다');

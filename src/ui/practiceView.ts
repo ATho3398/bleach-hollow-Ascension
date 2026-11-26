@@ -1,11 +1,10 @@
-// 전투 연습 (U-4): 수련장 훈련 인형 입구(C.471 — [전투 들어가기], 상대는 전투 안 적 설정 창) + 연습 결과 화면. 연습 전투 화면 자체는 battleView.
+// 전투 연습 (U-4): 연습 결과 화면. 연습 전투 화면 자체는 battleView, 수련장 입구는 trainingHallView (GDD 8-9 v6.204, C.539).
 import { pickFaction, type EnemyDef, type EnemyPatternKind } from '../data/schema';
 import { traitName } from '../data/traits';
 import { comboOf, isBasicBlockId, elapsedSeconds, sourceOf, type CombatState } from '../engine/combat';
 import type { FactionConfig } from '../engine/faction';
 import { button, el, icon, panel } from './bha/dom';
 import { splitApp } from './bha/split';
-import { lcdHead, lcdPage } from './bha/lcdpage';
 import { iconInfo, val, type IconInfoRow } from './bha/expedition';
 import { battleLabels, comboBlockLabel, liberationBlockLabel, skillBlockLabel } from './labels';
 import { devText, shownName } from './displayName';
@@ -15,33 +14,8 @@ import { asBack } from './bha/screenBack';
 export const PATTERN_LABEL: Record<EnemyPatternKind, string> = {
   basic: '기본형', swift: '속공형', sturdy: '단단형', 'heavy-seal': '강공격·봉인', 'heavy-chain': '연속 강공격', stance: '방어 자세·반격',
 };
-export interface PracticeEntryHandlers {
-  /** [전투 들어가기]: 빈 적 자리 + 적 설정 창 전투로 (GDD 8-9, C.471) */
-  onEnter: () => void;
-  /** 머리 제목 (수련장 토글, GDD 99장 2). 없으면 글자 제목 */
-  title?: Node;
-}
-
-/** 수련장 훈련 인형 입구 (GDD 8-9, C.471 사용자 2026-11-17 "전투 들어간 뒤에 훈련장 설정 있고 그 창에서 설정해서 나오는 식"):
- *  상대 목록 대신 [전투 들어가기] 하나 — 들어가면 빈 적 자리 + 적 설정 창(테스트 전투와 같은 창, 적 = 훈련 인형 + 도감에서 본 적) */
-export function practiceEntryView(root: HTMLElement, faction: FactionConfig, recordCount: number, h: PracticeEntryHandlers): void {
-  const labels = battleLabels(faction);
-  const sub = el('span');
-  sub.append('들어가서 창에서 상대를 정한다 · 기록 ', el('b', '', String(recordCount)), '판');
-  const rules = el('ul', 'bha-practice__rules');
-  for (const t of [
-    '상대 = 기본 훈련 인형 + 적 도감에서 만난 적',
-    '★ = 연 난이도까지 · 체력·공격력 = 내 일반 공격 n회 분량',
-    '쓰러뜨리면 결과 창 없이 다시 설정 창이 뜬다',
-    '보상·사망 없음 · 펫도 같이 싸운다',
-  ]) rules.append(el('li', '', t));
-  const enter = button({ label: '전투 들어가기', icon: 'i-attack', variant: 'primary', size: 'lg', onClick: h.onEnter });
-  enter.dataset.sc = 'practice-enter';
-  const right = el('div', 'bha-practice__enter');
-  right.append(enter);
-  // 가로 LCD (T-3): 머리 = 제목(수련장 토글), 왼쪽 = 규칙, 오른쪽 = [전투 들어가기]. 돌아가기는 취소 버튼
-  lcdPage(root, { cls: 'bha-practicepage', cols: 'minmax(0, 1.2fr) minmax(0, 0.8fr)' }, lcdHead({ title: h.title ?? `${labels.factionName} · 전투 연습`, sub }), [rules], [right]);
-}
+// 옛 수련장 훈련 인형 입구 practiceEntryView([전투 들어가기] 하나 + 규칙 4줄, C.471)는 수련장 목록 화면(trainingHallView, GDD 8-9 v6.204 C.539)으로 대체 —
+// 방 물건 → 목록 화면 → 훈련 인형 [시작] = 전투 + 적 설정 창 (창 안내 글은 testModeArena 의 note)
 
 export interface PracticeResultHandlers {
   onAgain: () => void;

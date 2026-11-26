@@ -94,8 +94,11 @@ describe('222장 5 수련장 잠김 안내', () => {
   it('수련장 (C.394, GDD 241-C 2): 잠금 표시 없이 들어가고, 4단계 전이면 제목 목록의 본능 수련에 자물쇠 + 고르면 여는 조건 알림', () => {
     const app = read('src/ui/app.ts');
     expect(app).not.toContain('partLocks:');
-    expect(app).toContain("if (id === 'train' && trainLocked(s)) return void showToast({ eyebrow: roomOf(faction).props.altar, title: trainingLockedText(faction), meta: '' }, 0, 2200);");
-    expect(read('src/ui/trainingView.ts')).toContain("{ id: 'train', label: faction.training.title, locked: trainLocked },");
+    // 옛 값(C.394): app 에 "if (id === 'train' && trainLocked(s)) return void showToast(... trainingLockedText(faction) ...)", trainingView 에 "{ id: 'train', label: faction.training.title, locked: trainLocked },"
+    // — 제목 목록의 자물쇠 + 고르면 알림. C.539(GDD 8-9 v6.204): 왼쪽 목록의 수련 항목에 자물쇠, 고르면 오른쪽에 여는 조건 + [시작] 흐리게
+    const hall = read('src/ui/trainingHallView.ts');
+    expect(hall).toContain('open: !st.trainLocked, lockText: trainingLockedText(faction)');
+    expect(app).toContain('trainLocked: trainLocked(s),');
     const wm = read('src/ui/worldMapView.ts');
     expect(wm).toContain('if (part !== undefined) hd.onPartLocked?.(p);');
     expect(trainingLockedText(getFaction('hollow'))).toBe('바스트로데가 되면 본능 수련이 열린다.');

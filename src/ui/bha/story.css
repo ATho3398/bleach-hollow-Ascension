@@ -117,3 +117,7 @@
 .bha-sdg__go { display: flex; align-items: center; gap: var(--bha-sp-2); }
 .bha-sdg__stars { flex: 1 1 auto; min-width: 0; }
 .bha-sdg__go > .bha-btn { flex: none; min-width: 120px; }
+/* 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.204, C.539): 틀은 위 bha-sdg 그대로, 오른쪽 그림 = 방 수련장 물건 그림(가운데·픽셀 그대로) */
+.bha-thall__img { position: absolute; inset: 0; margin: auto; max-width: 70%; max-height: 72%; object-fit: contain; image-rendering: pixelated; }
+.bha-thall__icon { position: absolute; inset: 0; margin: auto; width: 48px; height: 48px; color: var(--bha-text-3); }
+.bha-thall__go { justify-content: flex-end; }

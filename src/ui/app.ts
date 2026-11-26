@@ -45,7 +45,8 @@ import { registerCancelHook } from './bha/shortcuts';
 import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, fusionView, gainedText, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
-import { trainingPlayView, trainingResultView, trainingLockedText, trainingTitle, trainingView, type TrainingScreenId } from './trainingView';
+import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
+import { resetTrainingHallPick, trainingHallView } from './trainingHallView';
 import type { RankHolderDef } from '../data/ranks';
 import { ascensionResultView, rankLabel, rankLockedText, rankResultView, rankView } from './rankView';
 import { rankUnlocked } from '../engine/rank';
@@ -79,7 +80,6 @@ import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
 import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
-import { practiceEntryView } from './practiceView';
 import { abortSummaryLine, resultView } from './resultView';
 import { evChipRow, evGains } from './bha/evChips';
 import { expeditionView, setSpeed } from './expeditionView';
@@ -1456,9 +1456,10 @@ export function startApp(host: HTMLElement): void {
       },
       onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
-      // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리). 잠금 표시 없이 기본 = 훈련 인형, 본능 수련은 머리 제목 목록에서(4단계 전이면 자물쇠)
-      // 훈련 인형을 누르면 바로 설정 창 (GDD 8-9 v6.129, C.498): 수련장 화면을 밑에 깔고 곧장 전투 + 적 설정 창 — 나가기 = 수련장(머리 제목 목록 그대로)
-      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { open('practice', () => practiceScreen(faction)); practiceArena(faction); }); },
+      // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리)
+      // 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.204, C.539): 왼쪽 훈련 인형·수련, 오른쪽 그림·설명·[시작]. 처음 = 훈련 인형 골라짐
+      // (옛 C.498 '누르면 바로 전투 + 설정 창'·머리 제목 토글을 대체 — 훈련 인형 [시작] 뒤 흐름은 그대로)
+      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { resetTrainingHallPick(); open('practice', () => practiceScreen(faction)); }); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? switchTo : null,
       // 더보기 [캐릭터 변경] → 캐릭터 카드 창 (GDD 12-1 v6.129, C.498): 카드를 누르면 아래 전환 흐름 그대로
@@ -1532,20 +1533,11 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onSwitch: (id) => switchTraining(faction, s, id),
       onAscend: () => !careBlocked(s) && open('ascension-battle', () => runAscensionBattle(faction), true),
     });
   }
 
-  /** 수련장 두 화면(수련 · 훈련 인형)은 머리 제목 토글로 서로 바꿔 끼운다 — 뒤로는 늘 연 곳(월드맵, GDD 158장 1·165장 1)으로 (GDD 99장 2, C.163). 진급 시험은 방 물건 (174장 1) */
-  function switchTraining(faction: FactionConfig, s: SaveData, id: TrainingScreenId): void {
-    // 본능 수련은 4단계부터 (GDD 241-C 2): 그 전에 고르면 화면은 그대로 두고 여는 때를 알린다
-    if (id === 'train' && trainLocked(s)) return void showToast({ eyebrow: roomOf(faction).props.altar, title: trainingLockedText(faction), meta: '' }, 0, 2200);
-    const render = id === 'practice' ? () => practiceScreen(faction) : () => renderTraining(faction, s);
-    nav.replace({ id: id === 'train' ? 'training' : id, locked: false, render: () => { setBgm('nest'); render(); root.scrollTop = 0; } });
-  }
-  const trainingHead = (faction: FactionConfig, id: TrainingScreenId): HTMLElement | undefined =>
-    save ? trainingTitle(faction, roomOf(faction).props.altar, id, (to) => switchTraining(faction, save!, to), trainLocked(save)) : undefined;
+  // 옛 머리 제목 토글(switchTraining·trainingHead, C.163·C.394)은 수련장 목록 화면(C.539)으로 대체 — 수련 화면 뒤로 = 목록
   /** 본능 수련이 이번 생에 아직 잠겼나 (4단계 전, GDD 241-0) */
   const trainLocked = (s: SaveData): boolean => s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex;
 
@@ -2572,10 +2564,18 @@ export function startApp(host: HTMLElement): void {
     round(null);
   }
 
-  // ── 수련장 훈련 인형 (GDD 8-9, C.471): [전투 들어가기] → 적 설정 창 전투(테스트 전투와 같은 흐름). 둥지 빌드 그대로, 보상·사망·수련권 없음.
-  //    방 물건(훈련 인형)으로 들어오면 이 화면은 밑에만 깔리고 곧장 전투 + 창 (C.498) — 이 화면은 나가기·본능 수련 제목 토글로 올 때 보인다 ──
+  // ── 수련장 화면 (GDD 8-9 v6.204, C.539): 특수던전식 목록 — 훈련 인형 [시작] = 적 설정 창 전투(테스트 전투와 같은 흐름, C.471), 수련 [시작] = 수련 화면.
+  //    설정 창 [나가기] = 이 화면(nav.pop), 이 화면 뒤로 = 방. 설정 창·빈 적 자리 뒤로 = 방, [그만두기] = 설정 창 (v6.194 C.534 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
-    practiceEntryView(root, faction, save?.runLog.battles.length ?? 0, { onEnter: () => practiceArena(faction), title: trainingHead(faction, 'practice') });
+    if (!save) return;
+    const s = save;
+    trainingHallView(root, faction, {
+      altarName: roomOf(faction).props.altar, trainLocked: trainLocked(s),
+      points: s.training.points, pointsMax: BALANCE.provisional.training.pointsToComplete, practiceCount: s.evolution.practices ?? 0,
+    }, {
+      onPractice: () => practiceArena(faction),
+      onTrain: () => { if (!trainLocked(s) && !careBlocked(s)) open('training', () => renderTraining(faction, s)); },
+    });
   }
 
   /** 훈련 인형 적 설정 창 전투: 적 = 기본 훈련 인형 + 적 도감에서 본 적, ★ = 연 난이도까지(처음 = 권장 ★). 한 판 끝날 때마다 이번 생 훈련 인형 전투 수 +1 (각성형 조건) */
