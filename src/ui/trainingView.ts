@@ -61,7 +61,7 @@ export function gameRuleLines(f: Pick<FactionConfig, 'riskGaugeName' | 'fullness
 
 export interface TrainingHandlers {
   onPlay: (game: TrainingGameId) => void;
-  // 옛 onSwitch(머리 제목 토글로 훈련 인형, C.137·C.163)는 수련장 목록 화면(GDD 8-9 v6.204, C.539)으로 대체 — 뒤로 = 목록
+  // 옛 onSwitch(머리 제목 토글로 훈련 인형, C.137·C.163)는 수련장 목록 화면(GDD 8-9 v6.205, C.540)으로 대체 — 뒤로 = 목록
   /** 아란칼화 / 참백도 구상화 도전 (GDD 126장 3, C.220 — 지금은 보스전 임시) */
   onAscend?: () => void;
 }
@@ -72,7 +72,7 @@ const TICKET_HOW = '모험·탑에서 강적·보스를 쓰러뜨리면 가끔 �
 /** 수련장 목록 화면의 두 항목: 훈련 인형 · 수련(본능 수련). 진급 시험은 방 책장 아래 물건 (GDD 174장 1, C.257) */
 export type TrainingScreenId = 'train' | 'practice';
 
-// 옛 trainingTitle(머리 제목 토글 '수련장 · 훈련 인형' ↔ 수련, C.163·C.394)은 수련장 목록 화면(trainingHallView, GDD 8-9 v6.204 C.539)으로 대체.
+// 옛 trainingTitle(머리 제목 토글 '수련장 · 훈련 인형' ↔ 수련, C.163·C.394)은 수련장 목록 화면(trainingHallView, GDD 8-9 v6.205 C.540)으로 대체.
 // 훈련 인형이 먼저, 수련은 4단계 전이면 자물쇠 — 목록 화면이 그대로 지킨다. 다른 화면(책장·상점)의 viewTitle 토글은 그대로
 
 /** 제단 = 수련 화면: 왼쪽 수련치·수련권·안내, 오른쪽 4종목 카드 */
@@ -82,8 +82,8 @@ export function trainingView(dev: Device, faction: FactionConfig, save: SaveData
   const gate = trainingGate(t, save.evolution.tierIndex, n.condition);
   const head = lcdHead({
     // 진화 정보는 상태 화면 능력치 아래로 옮겼다 (C.137, GDD 85장 7)
-    // (옛: 책장처럼 머리 제목이 토글 — 누르면 훈련 인형, GDD 98장 A1. C.539 에서 수련장 목록 화면으로 대체)
-    // 머리 제목 = 수련 이름 글자 (옛 토글 trainingTitle 은 수련장 목록 화면으로 대체, C.539)
+    // (옛: 책장처럼 머리 제목이 토글 — 누르면 훈련 인형, GDD 98장 A1. C.540 에서 수련장 목록 화면으로 대체)
+    // 머리 제목 = 수련 이름 글자 (옛 토글 trainingTitle 은 수련장 목록 화면으로 대체, C.540)
     title: faction.training.title,
     sub: (() => {
       const s = el('span');

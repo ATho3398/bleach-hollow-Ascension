@@ -93,7 +93,7 @@ describe('C.153 A3 스킨 하위 탭', () => {
 describe('C.153 A2 → C.159 A1 수련장 머리 제목 토글', () => {
   it('훈련 인형·번호쟁탈전은 책장과 같은 머리 제목 토글 안에 있다', () => {
     const t = read('src/ui/trainingView.ts');
-    // 옛 값: expect(t).toContain('viewTitle(') — 수련장 머리 제목 토글. C.539(GDD 8-9 v6.204): 수련장은 특수던전식 목록 화면으로 대체, 책장 토글은 그대로
+    // 옛 값: expect(t).toContain('viewTitle(') — 수련장 머리 제목 토글. C.540(GDD 8-9 v6.205): 수련장은 특수던전식 목록 화면으로 대체, 책장 토글은 그대로
     expect(t).not.toContain('viewTitle(');
     expect(read('src/ui/bookView.ts')).toContain('viewTitle(');
     expect(t).not.toContain('dropdown');

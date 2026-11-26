@@ -46,7 +46,7 @@ describe('TOP 3 화면 글자에 금지 용어 없음 (GDD 14절 "일반 공격"
     expect(arena).toContain("cell('체력 (일반 공격 n회)', hp);");
     expect(arena).toContain("cell('공격력 (일반 공격 n회분)', atk);");
     expect(arena).toContain("'체력 (일반 공격 n회)', '0.1'"); // 글자와 읽기 이름이 같다
-    // 옛 값: expect(read('src/ui/practiceView.ts')).toContain('체력·공격력 = 내 일반 공격 n회 분량') — 옛 입구 규칙 줄. C.539: 입구 화면이 수련장 목록으로 바뀌어 그 줄이 없다
+    // 옛 값: expect(read('src/ui/practiceView.ts')).toContain('체력·공격력 = 내 일반 공격 n회 분량') — 옛 입구 규칙 줄. C.540: 입구 화면이 수련장 목록으로 바뀌어 그 줄이 없다
     expect(read('src/ui/practiceView.ts')).not.toContain('일반 공격 n회 분량');
     expect(read('src/ui/battleView.ts')).toContain('자세 무너짐! 일반 공격 취소');
     expect(STATUS_MARK_DEFS.basicBuff.name).toBe('일반 공격 강화');

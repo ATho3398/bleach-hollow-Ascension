@@ -1,4 +1,4 @@
-// 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.204, C.539 — 사용자 2026-11-26 "그 훈련인형도 특수던전마냥, 왼쪽에 리스트로 훈련인형, 무슨훈련? 그거 리스트로 띄우고,
+// 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.205, C.540 — 사용자 2026-11-26 "그 훈련인형도 특수던전마냥, 왼쪽에 리스트로 훈련인형, 무슨훈련? 그거 리스트로 띄우고,
 // 오른쪽에 그림이랑 설면 넣고 시작 누르게 바꿔라"): 방 수련장 물건 → 이 화면. 틀·CSS 는 주간던전·보스전 화면(specialDungeonView, bha-sdg)을 그대로 쓴다.
 //  - 왼쪽 = 위아래로 끌어 넘기는 버튼 목록: 훈련 인형 · 수련(이름 = 종족 설정 training.title). 4단계 전에는 수련에 자물쇠·흐린 글자
 //  - 오른쪽 큰 칸 = 고른 항목 그림(그림 키 training.hall.<항목>, 없으면 방 수련장 물건 그림 prop.altar) + 이름 + 설명(종족 설정 training.hall) + [시작]
@@ -55,7 +55,7 @@ interface HallItem {
   go: () => void;
 }
 
-/** 항목 그림: 제 그림(training.hall.<항목>)이 없으면 방 수련장 물건 그림 (GDD 8-9 v6.204) */
+/** 항목 그림: 제 그림(training.hall.<항목>)이 없으면 방 수련장 물건 그림 (GDD 8-9 v6.205) */
 export function hallArt(id: TrainingScreenId): string | null {
   return artUrls(`training.hall.${id}`, ART_BASE).src ?? artUrls('prop.altar', ART_BASE).src;
 }
