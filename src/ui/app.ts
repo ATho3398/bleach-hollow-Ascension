@@ -1458,7 +1458,7 @@ export function startApp(host: HTMLElement): void {
       onBook: () => open('dex', () => bookView(root, faction, s, 'dex', persist)),
       onChest: openChest,
       // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리)
-      // 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.205, C.540): 왼쪽 훈련 인형·수련, 오른쪽 그림·설명·[시작]. 처음 = 훈련 인형 골라짐
+      // 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.205, C.542): 왼쪽 훈련 인형·수련, 오른쪽 그림·설명·[시작]. 처음 = 훈련 인형 골라짐
       // (옛 C.498 '누르면 바로 전투 + 설정 창'·머리 제목 토글을 대체 — 훈련 인형 [시작] 뒤 흐름은 그대로)
       onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { resetTrainingHallPick(); open('practice', () => practiceScreen(faction)); }); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
@@ -1538,7 +1538,7 @@ export function startApp(host: HTMLElement): void {
     });
   }
 
-  // 옛 머리 제목 토글(switchTraining·trainingHead, C.163·C.394)은 수련장 목록 화면(C.540)으로 대체 — 수련 화면 뒤로 = 목록
+  // 옛 머리 제목 토글(switchTraining·trainingHead, C.163·C.394)은 수련장 목록 화면(C.542)으로 대체 — 수련 화면 뒤로 = 목록
   /** 본능 수련이 이번 생에 아직 잠겼나 (4단계 전, GDD 241-0) */
   const trainLocked = (s: SaveData): boolean => s.evolution.tierIndex < BALANCE.provisional.liberation.minTierIndex;
 
@@ -2569,7 +2569,7 @@ export function startApp(host: HTMLElement): void {
     round(null);
   }
 
-  // ── 수련장 화면 (GDD 8-9 v6.205, C.540): 특수던전식 목록 — 훈련 인형 [시작] = 적 설정 창 전투(테스트 전투와 같은 흐름, C.471), 수련 [시작] = 수련 화면.
+  // ── 수련장 화면 (GDD 8-9 v6.205, C.542): 특수던전식 목록 — 훈련 인형 [시작] = 적 설정 창 전투(테스트 전투와 같은 흐름, C.471), 수련 [시작] = 수련 화면.
   //    설정 창 [나가기] = 이 화면(nav.pop), 이 화면 뒤로 = 방. 설정 창·빈 적 자리 뒤로 = 방, [그만두기] = 설정 창 (v6.194 C.534 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
     if (!save) return;

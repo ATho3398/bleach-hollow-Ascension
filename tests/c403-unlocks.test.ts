@@ -218,7 +218,7 @@ describe('241-C 2·3 수련장 = 홈, 번호 쟁탈전 = 월드맵', () => {
     expect(JSON.stringify(getFaction('shinigami').worldmap)).not.toContain('"training"');
   });
   it('수련장 = 잠금 표시 없이 훈련 인형부터, 본능 수련은 목록에서 자물쇠', () => {
-    // 옛 값: trainingView 의 머리 제목 토글에서 "{ id: 'practice'" 이 "{ id: 'train'" 보다 앞. C.540(GDD 8-9 v6.205): 수련장 목록 화면에서 같은 순서
+    // 옛 값: trainingView 의 머리 제목 토글에서 "{ id: 'practice'" 이 "{ id: 'train'" 보다 앞. C.542(GDD 8-9 v6.205): 수련장 목록 화면에서 같은 순서
     const tv = read('src/ui/trainingHallView.ts');
     expect(tv.indexOf("id: 'practice'")).toBeGreaterThan(-1);
     expect(tv.indexOf("id: 'practice'")).toBeLessThan(tv.indexOf("id: 'train'"));
