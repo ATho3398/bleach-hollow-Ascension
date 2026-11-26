@@ -1,4 +1,4 @@
-/** C.542 도움말 '콤보 블록' 방향 문구 (GDD 7절 v6.209, 마스터AT — [블록 생성 위치 반전](C.541)과 상관없이 맞는 말)
+/** C.543 도움말 '콤보 블록' 방향 문구 (GDD 7절 v6.209, 마스터AT — [블록 생성 위치 반전](C.541)과 상관없이 맞는 말)
  *  "블록 바 맨 왼쪽에" → "블록 바에서 새 블록이 들어오는 쪽 끝에". 엔진·표시 동작은 그대로. */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -6,7 +6,7 @@ import { GLOSSARY, helpVars, renderHelpText } from '../src/data/help';
 import { FACTIONS } from '../src/data/factions';
 import { PATCH_LABEL } from '../src/version';
 
-describe('C.542 콤보 블록 도움말 문구', () => {
+describe('C.543 콤보 블록 도움말 문구', () => {
   it.each(FACTIONS.map((f) => [f.id, f] as const))('%s: 방향(맨 왼쪽·맨 오른쪽) 없이 새 블록이 들어오는 쪽 끝', (_id, f) => {
     const term = GLOSSARY.find((t) => t.id === 'combo');
     expect(term).toBeDefined();
@@ -23,6 +23,6 @@ describe('C.542 콤보 블록 도움말 문구', () => {
     const comboLine = readFileSync('docs/GDD.md', 'utf8').split('\n').find((l) => l.startsWith('- 콤보 블록(임시·provisional)'));
     expect(comboLine).toContain('바 끝(새 블록이 들어오는 쪽 끝)에 콤보 블록이 생긴다');
     expect(comboLine).not.toContain('화면 맨 왼쪽');
-    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(542);
+    expect(Number(PATCH_LABEL.slice(2))).toBeGreaterThanOrEqual(543);
   });
 });

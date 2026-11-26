@@ -1,12 +1,12 @@
-// C.542 proof (도움말 '콤보 블록' 방향 문구, GDD 7절 v6.209): 1배 1장.
+// C.543 proof (도움말 '콤보 블록' 방향 문구, GDD 7절 v6.209): 1배 1장.
 // 01 PC 도움말 → 용어 사전 '콤보 블록' — "블록 바에서 새 블록이 들어오는 쪽 끝에 …"
-// 실행: node scripts/c542-proof.cjs [저장 폴더]
+// 실행: node scripts/c543-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const { startServer } = require('./c276-proof.cjs');
 
-const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c542'));
+const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs/captures/c543'));
 const PC = { viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
