@@ -21,6 +21,8 @@ import { asBack } from './bha/screenBack';
 import { v2Icon } from './bha/iconMap';
 import { heroEl } from './bha/battle';
 import type { ArtUrls } from '../data/art/manifest';
+import { loadPixelFx, playPixelFx, type PixelFxPlay } from './bha/pixelFx';
+import { prefersReducedMotion } from './fxSettings';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -190,6 +192,8 @@ export interface EvolutionExtra {
   abilitySlots?: number;
   /** 새 진화체 그림 (GDD 241-B 7): 진화 뒤 캐릭터 그림(종이인형·스프라이트 그대로 — 전투 heroArtOf 와 같은 것). 없으면 옛 아이콘만 */
   art?: ArtUrls;
+  /** 진화 전 그림 — 도트 진화 연출(종족 evolveFx)은 이 모습으로 시작해 임팩트 순간 art 로 바뀐다. 없으면 옛 연출(빛 속에서 드러남) */
+  fromArt?: ArtUrls;
 }
 
 /** 진화 결과 화면에 넘길 특성 결과 (받은 뒤 세기는 보유 목록에서) */
@@ -266,16 +270,20 @@ export function evolutionView(
   const crack = h('div', 'bha-evolve__crack');
   crack.append(v2Icon('spark', 'xl')); // 리디자인 v2: 깨진 가면(해골) 대신 두 종족 공통 '변화' 도트 아이콘 (GDD 183장 화면 D)
   // 새 진화체 그림 (GDD 241-B 7): 연출 동안 빛 속에서 모습이 드러나고(.bha-evolve__fig--reveal), 결과 왼쪽 판 맨 위에도. 그림이 없으면 옛 아이콘만
-  const figOf = (cls: string): HTMLElement | null => {
-    if (!extra?.art || (!extra.art.src && !extra.art.frames?.length && !extra.art.rig)) return null;
+  const hasArt = (a?: ArtUrls): a is ArtUrls => !!a && !!(a.src || a.frames?.length || a.rig);
+  const figOf = (cls: string, art = extra?.art): HTMLElement | null => {
+    if (!hasArt(art)) return null;
     const fig = h('div', `bha-evolve__fig ${cls}`);
     fig.dataset.evolveFig = '';
-    fig.append(heroEl(extra.art).root);
+    fig.append(heroEl(art).root);
     return fig;
   };
-  const cutFig = figOf('bha-evolve__fig--reveal');
+  // 도트 진화 연출 (사용자 2026-11-25): 종족 evolveFx 시트를 진화체 몸 가운데에 맞춰 재생 — 지금 진화체로 시작해 swapMs 임팩트 순간 다음 진화체로
+  const pxCfg = faction.evolveFx && hasArt(extra?.fromArt) && hasArt(extra?.art) && !prefersReducedMotion() ? faction.evolveFx : null;
+  const cutFig = figOf(pxCfg ? 'bha-evolve__fig--px' : 'bha-evolve__fig--reveal', pxCfg ? extra!.fromArt : extra?.art);
   if (cutFig) {
     crack.classList.add('has-fig');
+    if (pxCfg) crack.classList.add('is-pixel');
     crack.append(cutFig);
   }
   const lines = h('div', 'bha-evolve__lines');
@@ -293,8 +301,15 @@ export function evolutionView(
   const resultSide = h('div', 'bha-evolve__resside');
   resultSection.hidden = true;
 
+  let pxPlay: PixelFxPlay | null = null;
+  const pxTimers: ReturnType<typeof setTimeout>[] = [];
+  const stopPx = () => {
+    pxPlay?.stop();
+    for (const t of pxTimers.splice(0)) clearTimeout(t);
+  };
   const showResult = () => {
     if (timer !== undefined) clearTimeout(timer);
+    stopPx();
     linesSection.hidden = true;
     resultSection.hidden = false;
   };
@@ -336,6 +351,7 @@ export function evolutionView(
 
   const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', onClick: () => {
     if (timer !== undefined) clearTimeout(timer);
+    stopPx();
     onDone();
   } }));
   home.classList.add('bha-evolve__go');
@@ -354,4 +370,54 @@ export function evolutionView(
   const app = mountApp(root, { cls: 'bha-evolve bha-v2 bha-evolvev2' }, burst, linesSection, resultSection);
   playCosmeticFx('evo', app); // 진화 연출 꾸밈 (GDD 25-11): 변하는 순간(연출 줄 동안). 결과·문구는 그대로
   timer = setTimeout(showResult, 3600);
+  if (pxCfg && cutFig) playEvolvePixel(app, cutFig, pxCfg, extra!.fromArt!, extra!.art!, pxTimers, (p) => { pxPlay = p; }, () => {
+    // 시트를 못 받았다 → 옛 연출처럼 새 진화체가 빛 속에서 드러남
+    cutFig.replaceChildren(heroEl(extra!.art!).root);
+    cutFig.classList.replace('bha-evolve__fig--px', 'bha-evolve__fig--reveal');
+    crack.classList.remove('is-pixel');
+  });
+}
+
+/**
+ * 도트 진화 연출 (사용자 2026-11-25 "사신 진화는 모델한테 영혼 모이면서, 점점 하얘지다가 다음 진화체로" · "임팩트 나오는 타이밍 맞춰서 다음 진화체 모델이 나오게" ·
+ * "칼은 모델이 아니라 생각하고 몸만 기준으로 중앙배치"): 시트 기준점(= 진화체 몸 가운데)을 그림 상자 가운데에 놓는다 — 종이인형 그림 상자는 몸 가운데가
+ * 상자 가운데라(무기는 몸 밖으로 뻗는다) 무기를 빼고 몸 기준이 된다. 하얘짐 = 같은 그림 한 겹을 흰 실루엣으로 덮어 투명도만 움직인다.
+ */
+function playEvolvePixel(
+  app: HTMLElement, fig: HTMLElement, cfg: NonNullable<FactionConfig['evolveFx']>, fromArt: ArtUrls, toArt: ArtUrls,
+  timers: ReturnType<typeof setTimeout>[], onPlay: (p: PixelFxPlay) => void, onFail: () => void,
+): void {
+  // 흰 겹 = 같은 그림을 한 장 더(종이인형은 동작을 따로 돌리므로 복사 대신 새로) — CSS 가 흰 실루엣으로 칠한다
+  const whiteOf = (art: ArtUrls): HTMLElement => {
+    const w = h('div', 'bha-evolve__fig-white');
+    w.append(heroEl(art).root);
+    return w;
+  };
+  const white = whiteOf(fromArt);
+  if (cfg.whiten) fig.append(white);
+  void loadPixelFx(cfg.fx).then((sheet) => {
+    if (!fig.isConnected) return;
+    if (!sheet) {
+      white.remove();
+      return onFail();
+    }
+    // 그림 상자(fig, 진화체 칸을 꽉 채움) 안에 붙인다 — 글줄이 떠오르며 칸이 움직여도 몸 가운데를 따라간다. 크기는 화면을 덮게(시트 = 화면 한 장)
+    const a = app.getBoundingClientRect(), host = fig.parentElement ?? fig;
+    const scale = Math.max(a.width / sheet.frame[0], a.height / sheet.frame[1]);
+    const play = playPixelFx(host, sheet, { x: host.clientWidth / 2, y: host.clientHeight / 2, scale });
+    play.el.classList.add('bha-evolve__px');
+    onPlay(play);
+    const w = cfg.whiten;
+    if (w && typeof white.animate === 'function') white.animate([{ opacity: 0 }, { opacity: 1 }], { delay: w[0], duration: Math.max(1, w[1] - w[0]), easing: 'ease-in', fill: 'forwards' });
+    timers.push(setTimeout(() => {
+      // 임팩트 순간: 다음 진화체로 (하얘졌다면 흰 채로 바뀌고 whiten[2] 동안 원래 색으로)
+      const next = heroEl(toArt).root;
+      fig.replaceChildren(next);
+      if (!w) return;
+      const wh = whiteOf(toArt);
+      fig.append(wh);
+      if (typeof wh.animate === 'function') wh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: Math.max(1, w[2]), easing: 'ease-out', fill: 'forwards' });
+      else wh.remove();
+    }, cfg.swapMs));
+  });
 }

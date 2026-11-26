@@ -125,6 +125,14 @@
    }
   },
   {
+   "name": "birth-hollow",
+   "id": "custom/birth-hollow"
+  },
+  {
+   "name": "birth-shinigami",
+   "id": "custom/birth-shinigami"
+  },
+  {
    "name": "custom-bankai-aura-blood",
    "id": "custom/bankai-aura",
    "options": {
@@ -1093,6 +1101,14 @@
      "#ffffff"
     ]
    }
+  },
+  {
+   "name": "evolve-hollow",
+   "id": "custom/evolve-hollow"
+  },
+  {
+   "name": "evolve-shinigami",
+   "id": "custom/evolve-shinigami"
   },
   {
    "name": "hit-spark",
