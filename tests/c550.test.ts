@@ -185,7 +185,7 @@ describe('C.550 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225)', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8') + readFileSync('src/engine/food.ts', 'utf8');
     expect(src).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
     const gdd = readFileSync('docs/GDD.md', 'utf8');
-    expect(gdd).toMatch(/모험 먹이 = 바퀴당 0~1개/);
-    expect(gdd).toMatch(/foodPerLap/);
+    // 기획서 4-5 는 v6.232 에서 '확률로 바퀴당 평균 약 0.5개'로 다시 씀(C.555 가 이 상한 구현을 대체) — 옛 기대값: /모험 먹이 = 바퀴당 0~1개/·/foodPerLap/
+    expect(gdd).toMatch(/모험 먹이 = 바퀴당/);
   });
 });
