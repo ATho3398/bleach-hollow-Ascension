@@ -1550,8 +1550,8 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - 캡처 `docs/captures/c561/`(1배 5장, `scripts/c561-proof.cjs`, facts.json): 01 PC 호로 수련장 카드 3장(오른쪽 위 수련권 4) · 02 PC 본능 수련 목록(탄막 피하기) · 03 PC 방 오른쪽 위 우라하라 14:54 · 골드 1234 · 영옥 59 · 04 PC 시장 같은 칸 · 05 폰 796×384 사신 2단계 카드(참백도 수련·구상화 잠김 + 조건).
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.
 
-## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.246, S-23, 코딩356)
-세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.246(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
+## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.247, S-23, 코딩356)
+세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.247(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
 - **이유**: 사용자 2026-11-27 "사신은 참으로 해." → 마스터AT 13절 v6.243(C.559 후속 — 사신이 귀로 나가던 것).
 - **종족 설정**: `src/data/factions/hollow.json` `"tutorial": { "blockFamily": "family-c" }`(탄) · `shinigami.json` `"tutorial": { "blockFamily": "family-a" }`(참). `FactionConfig.tutorial?.blockFamily` 신설, `parseFactionConfig` 검사 = 그 종족 families 의 id.
 - **엔진**: `CombatScript.blockFamily`(선택) · `newCombatScript(blockFamily?)` — 각본을 만들 때 넣은 값만 `scriptBlockOf` 가 쓴다(그 몸 계열 표에 없거나 값이 없으면 옛 규칙 = 출현표 기본 블록 계열). 종족 분기 없음. 넣는 곳 = 첫 모험 각본 전투(`expedition.startBattle` — `getFaction(exp.factionId).tutorial?.blockFamily`) · 도움말 '튜토리얼 다시 보기' 체험 전투(`app.ts runTutorialDemo` — `faction.tutorial?.blockFamily`).
