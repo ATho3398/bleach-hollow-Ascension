@@ -102,7 +102,7 @@ function withBodyName(def: EnemyDef): EnemyDef {
   const body = normalEnemyBody(def);
   const bodyName = body ? ENEMY_BODIES.names[body] : undefined;
   if (bodyName === undefined) throw new Error(`적 데이터 오류 (${def.id}): 몸 표(bodies.json)에 몸 이름 없음`);
-  // 몸 이름이 빈 글자(덩치 = 기본 모델, 6-7 v6.214)면 앞말 없이 적 테이블 이름 그대로
+  // 몸 이름이 빈 글자(덩치 = 기본 모델, 6-7 v6.215 확정)면 앞말 없이 적 테이블 이름 그대로
   const name = Object.fromEntries(Object.entries(def.name).map(([k, v]) => [k, bodyName ? ENEMY_BODIES.normal.nameFormat.replace('{body}', bodyName).replace('{name}', String(v)) : String(v)]));
   return { ...def, name: name as EnemyDef['name'] };
 }

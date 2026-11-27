@@ -1,4 +1,4 @@
-// C.545 일반 적 이름 = 그림 모델(몸) 이름 + 호로(덩치 = 그냥 호로), 도감에서만 '<이름>(속성 속성)' (GDD 6-7 v6.212·v6.214 → v6.215,
+// C.545 일반 적 이름 = 그림 모델(몸) 이름 + 호로(덩치 = 그냥 호로), 도감에서만 '<이름>(속성 속성)' (GDD 6-7 v6.212·v6.214·v6.215 → v6.217,
 // 사용자 2026-11-27 "속공, 기본 이런건 빼;; 그 모델에 따라서, 거미형 호로, 부유형 호로 이런식으로 이름붙여. 적들.")
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -54,7 +54,7 @@ describe('일반 적 24종 이름 = 몸 이름 + 호로 (그림과 같은 출처
     expect(getEnemy('water-swift').name['*']).toBe('날쌘형 호로');
     expect(ENEMY_BODIES.names).toMatchObject({ brute: '', onearm: '괴력형', speed: '속공형', spiky: '강습형', serpent: '뱀형', beast: '짐승형', spider: '거미형', wraith: '부유형' });
     for (const n of Object.values(ENEMY_BODIES.names)) expect(n).toMatch(/^$|형$/);
-    expect(ENEMY_BODIES.provisional).toEqual(['brute', 'lean']);
+    expect(ENEMY_BODIES.provisional).toEqual(['lean']);
   });
 
   it('강적·보스·훈련 인형·테스트 적 이름은 그대로', () => {
