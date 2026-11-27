@@ -1,4 +1,4 @@
-// C.545 일반 적 이름 = 그림 모델(몸) 이름 + 호로, 도감에서만 '<몸>형 호로(속성 속성)' (GDD 6-7 v6.212 → v6.213,
+// C.545 일반 적 이름 = 그림 모델(몸) 이름 + 호로(덩치 = 그냥 호로), 도감에서만 '<이름>(속성 속성)' (GDD 6-7 v6.212·v6.214 → v6.215,
 // 사용자 2026-11-27 "속공, 기본 이런건 빼;; 그 모델에 따라서, 거미형 호로, 부유형 호로 이런식으로 이름붙여. 적들.")
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +15,8 @@ const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'u
 const normals = ENEMIES.filter((e) => e.class === 'normal' && !e.testOnly);
 const PATTERN_WORDS = /기본|속공|단단/;
 const bodyName = (id: string) => ENEMY_BODIES.names[normalEnemyBody(getEnemy(id)) ?? ''];
+/** 기대 이름: 몸 이름 + 호로, 몸 이름이 비면(덩치) 그냥 호로 */
+const expectName = (id: string) => (bodyName(id) ? `${bodyName(id)} 호로` : '호로');
 
 /** 그림 쪽에서 본 몸: 종이인형 외형 id 앞머리(brute-blue → brute), 종이인형이 아니면 한 장 그림 = lean */
 function artBody(id: string): string | null {
@@ -24,13 +26,13 @@ function artBody(id: string): string | null {
 }
 
 describe('일반 적 24종 이름 = 몸 이름 + 호로 (그림과 같은 출처)', () => {
-  it('24종(속성 8 × 패턴 3), 모든 종족에서 이름 = \'<몸>형 호로\', 패턴 글자 없음', () => {
+  it('24종(속성 8 × 패턴 3), 모든 종족에서 이름 = 몸 이름 + 호로(덩치 = 호로), 패턴 글자 없음', () => {
     expect(normals).toHaveLength(24);
     for (const el of ELEMENT_IDS) for (const p of ['basic', 'swift', 'sturdy']) expect(normals.some((e) => e.id === `${el}-${p}`), `${el}-${p}`).toBe(true);
     for (const f of FACTIONS) for (const e of normals) {
       const n = pickFaction(e.name, f.id);
-      expect(n, `${f.id} ${e.id}`).toBe(`${bodyName(e.id)} 호로`);
-      expect(n).toMatch(/^\S+형 호로$/);
+      expect(n, `${f.id} ${e.id}`).toBe(expectName(e.id));
+      expect(n).toMatch(/^(\S+형 )?호로$/);
       expect(n).not.toMatch(PATTERN_WORDS);
     }
   });
@@ -46,11 +48,13 @@ describe('일반 적 24종 이름 = 몸 이름 + 호로 (그림과 같은 출처
     expect(read('src/data/art/manifest.ts')).toMatch(/import enemyBodies from '\.\.\/enemies\/bodies\.json'/);
   });
 
-  it('지금 표: 기본·단단 = 덩치형 호로, 속공 = 날쌘형 호로 · 몸 이름은 모두 \'~형\'', () => {
-    expect(getEnemy('water-basic').name['*']).toBe('덩치형 호로');
-    expect(getEnemy('water-sturdy').name['*']).toBe('덩치형 호로');
+  it('지금 표(6-7 v6.214): 기본·단단 = 덩치 → 호로, 속공 = 날쌘형 호로 · 몸 이름 = 6-7 표 · 앞말은 빈 글자이거나 \'~형\'', () => {
+    expect(getEnemy('water-basic').name['*']).toBe('호로');
+    expect(getEnemy('water-sturdy').name['*']).toBe('호로');
     expect(getEnemy('water-swift').name['*']).toBe('날쌘형 호로');
-    for (const n of Object.values(ENEMY_BODIES.names)) expect(n).toMatch(/형$/);
+    expect(ENEMY_BODIES.names).toMatchObject({ brute: '', onearm: '괴력형', speed: '속공형', spiky: '강습형', serpent: '뱀형', beast: '짐승형', spider: '거미형', wraith: '부유형' });
+    for (const n of Object.values(ENEMY_BODIES.names)) expect(n).toMatch(/^$|형$/);
+    expect(ENEMY_BODIES.provisional).toEqual(['brute', 'lean']);
   });
 
   it('강적·보스·훈련 인형·테스트 적 이름은 그대로', () => {
@@ -61,20 +65,20 @@ describe('일반 적 24종 이름 = 몸 이름 + 호로 (그림과 같은 출처
   });
 });
 
-describe('도감 표기 = <몸>형 호로(속성 속성)', () => {
+describe('도감 표기 = <이름>(속성 속성)', () => {
   it('규칙 데이터에 패턴 자리 없음', () => {
     expect(ENEMY_DEX_NAMES.normal.format).toBe('{name}({element} 속성)');
     expect(read('src/data/enemies/dexNames.json')).not.toMatch(/patterns|\{pattern\}/);
   });
 
-  it('24종 모두 \'<몸>형 호로(<속성 표시 이름> 속성)\', 패턴 글자 없음 — 쿄는 허무', () => {
+  it('24종 모두 \'<이름>(<속성 표시 이름> 속성)\', 패턴 글자 없음 — 쿄는 허무', () => {
     for (const f of FACTIONS) for (const e of normals) {
       const d = enemyDexName(e, f.id);
-      expect(d, e.id).toBe(`${bodyName(e.id)} 호로(${elementName(e.element, f.id)} 속성)`);
+      expect(d, e.id).toBe(`${expectName(e.id)}(${elementName(e.element, f.id)} 속성)`);
       expect(d).not.toMatch(PATTERN_WORDS);
     }
     expect(enemyDexName(getEnemy('water-swift'), 'hollow')).toBe('날쌘형 호로(물 속성)');
-    expect(enemyDexName(getEnemy('kyo-basic'), 'shinigami')).toBe(`덩치형 호로(${elementName('kyo', 'shinigami')} 속성)`);
+    expect(enemyDexName(getEnemy('kyo-basic'), 'shinigami')).toBe(`호로(${elementName('kyo', 'shinigami')} 속성)`);
   });
 
   it('강적·보스 도감 이름 = 이름 그대로', () => {
@@ -84,7 +88,7 @@ describe('도감 표기 = <몸>형 호로(속성 속성)', () => {
   it('적 고르기 목록(수련장·테스트 모드) = 도감 표기, 훈련 인형·강적은 그대로', () => {
     const f = FACTIONS[0]!;
     const dex = { 'water-basic': { seen: 1, kills: 1, absorbs: { both: 0, trait: 0, stat: 0, none: 0 }, where: null, firstAt: 1 }, 'water-swift': { seen: 1, kills: 0, absorbs: { both: 0, trait: 0, stat: 0, none: 0 }, where: null, firstAt: 1 } };
-    expect(practiceArenaSource(f, dex, 3, false).foes.map((x) => x.label)).toEqual(['훈련 인형', '덩치형 호로(물 속성)', '날쌘형 호로(물 속성)']);
+    expect(practiceArenaSource(f, dex, 3, false).foes.map((x) => x.label)).toEqual(['훈련 인형', '호로(물 속성)', '날쌘형 호로(물 속성)']);
     const labels = testArenaSource(f, { foeId: '', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false }).foes.map((x) => x.label);
     expect(labels).toContain('날쌘형 호로(불 속성)');
     expect(labels).toContain('만 명을 먹은 자');
