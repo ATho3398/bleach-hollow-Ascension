@@ -90,7 +90,7 @@ describe('PC 고정 모드 좌표', () => {
     }
   });
   it('기존 맞춤(터치 폰)은 변하지 않는다', () => {
-    expect(computeFit(844, 390)).toEqual({ rotated: false, scale: 1, w: 844, h: 390, vw: 844, vh: 390 });
+    expect(computeFit(844, 390)).toEqual({ rotated: false, scale: 1, w: 844, h: 390, vw: 844, vh: 390, ox: 0, oy: 0 });
     expect(toLocal(computeFit(390, 844), 390, 0)).toEqual({ x: 0, y: 0 });
   });
 });

@@ -10,7 +10,7 @@ import { BASE_H, BASE_W, currentViewState, isPcMode, loadViewScale, resolveViewS
 import { actionFor, isNavAction } from '../shortcutMap';
 import { KEY_HINTS_EVENT, loadKeyHints } from '../keyHints';
 import { badgePlan, detectCtx, isTypingTarget, runAction, runCancelHooks, syncBadges } from './shortcuts';
-import { computeFit, computePcFit, deviceInsets, fitTransform, pickViewport, pinScroll, setFit, type Fit } from './viewport';
+import { computeFit, computePcFit, fitTransform, pickViewport, pinScroll, setFit, type Fit } from './viewport';
 import { skinLcdAt, type DeviceSkin } from './tamagoLogic';
 
 export interface SelectItem {
@@ -205,9 +205,10 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   // 틀·LCD 는 overflow: hidden 으로 자를 뿐 스크롤하지 않는다. 선택 항목 scrollIntoView 가 이 상자까지 밀어 그림 틀이 통째로 어긋났다 (C.93 QA)
   for (const box of [dev, bezel, lcd]) pinScroll(box);
 
-  // ── 화면 맞춤: 가로면 그대로, 세로면 기기 전체를 돌려 채운다 (GDD 16-6). 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다 ──
+  // ── 화면 맞춤 (GDD 14-2, C.554): 어느 기기든 기기 틀 전체(844×390)를 한 배율로만 키우거나 줄여 화면 가운데에 둔다 — LCD 화면비·버튼 상대 위치가 늘 같다.
+  // 세로면 기기 전체를 돌린 뒤 같은 계산. 방향이 바뀌어도 화면은 다시 만들지 않고 틀만 다시 계산한다.
   // 뷰포트 크기는 고정 위치 프로브로 잰다: iOS Safari 의 주소창이 접히고 펴져 보이는 높이가 바뀌어도(100dvh 와 같은 값) 따라간다.
-  // 프로브 padding 에 안전 영역(env)을 넣어 같이 읽어, 돌린·줄인 기기 안 여백으로 바꿔 쓴다 (viewport-fit=cover 를 켰을 때만 0 이 아니다)
+  // 프로브 padding 에 안전 영역(env)을 넣어 같이 읽어, 배율 계산에서 빼고 그 안에 맞춘다 (viewport-fit=cover 를 켰을 때만 0 이 아니다)
   const matchesMedia = (q: string): boolean => {
     try {
       return typeof matchMedia === 'function' && matchMedia(q).matches;
@@ -239,13 +240,15 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
   const fitDevice = () => {
     const r = probe.getBoundingClientRect();
     const vp = pickViewport(r, window);
-    // PC(마우스·넓은 창)는 기기를 기준 크기로 고정해 가운데에 두고, 배율은 CSS 변수 --bha-scale 로 키운다 (GDD 17-5). 터치 폰·태블릿은 아래 기존 맞춤
+    // PC(마우스·넓은 창)는 기기를 기준 크기로 고정해 가운데에 두고, 배율은 CSS 변수 --bha-scale 로 키운다 (GDD 17-5, 설정 1배/2배). 터치 폰·태블릿은 화면에 맞춘 한 배율
     const pc = isPcMode(matchesMedia('(hover: hover)'), matchesMedia('(pointer: fine)'), vp.w, vp.h);
     const pref = loadViewScale(safeStorage());
     const view = resolveViewScale(pref, vp.w, vp.h);
     setViewState({ pc, pref, view });
     const crop = skin?.crop ?? null;
-    const f = pc ? computePcFit(vp.w, vp.h, view.scale, BASE_W, BASE_H, crop) : computeFit(vp.w, vp.h, crop);
+    const cs = getComputedStyle(probe);
+    const safe = { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 };
+    const f = pc ? computePcFit(vp.w, vp.h, view.scale, BASE_W, BASE_H, crop) : computeFit(vp.w, vp.h, crop, safe);
     setFit(f);
     document.documentElement.classList.toggle('bha-pc', pc);
     dev.classList.toggle('is-pc', pc);
@@ -256,7 +259,6 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       lastRotated = f.rotated;
       if (!first) opts.onRotate?.(f.rotated);
     }
-    dev.classList.toggle('is-narrow', !skin && f.scale < 1); // 긴 쪽이 740px 미만인 좁은 폰: 블록 바를 아래 전폭으로 (lcd.css). 그림 기기 LCD 는 늘 844 폭
     dev.style.width = `${f.w}px`;
     dev.style.height = `${f.h}px`;
     // 그림 기기: LCD 를 틀 상자 가운데 자리(구멍)에 고정 크기로
@@ -282,12 +284,6 @@ export function createDevice(root: HTMLElement, opts: DeviceOpts): Device {
       dev.style.top = '';
     }
     dev.style.setProperty('--dev-scale', pc ? '1' : String(f.scale));
-    const cs = getComputedStyle(probe);
-    const ins = deviceInsets(f, { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 });
-    dev.style.setProperty('--dev-inset-top', `${ins.top}px`);
-    dev.style.setProperty('--dev-inset-right', `${ins.right}px`);
-    dev.style.setProperty('--dev-inset-bottom', `${ins.bottom}px`);
-    dev.style.setProperty('--dev-inset-left', `${ins.left}px`);
   };
   root.append(probe);
   fitDevice();
