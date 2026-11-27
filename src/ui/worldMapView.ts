@@ -7,7 +7,7 @@
 import { artUrls } from '../data/art/manifest';
 import { bakeArtOutline } from './bha/artOutline';
 import { roomOf, worldMapOf, WORLD_PLACES, type FactionConfig, type WorldPlace } from '../engine/faction';
-import { artSkinOf, type SaveData, artTierIndexOf } from '../game';
+import { artSkinOf, type SaveData, artTierIndexOf, wandererHere } from '../game';
 import { beginSceneMove } from './bha/actionFx';
 import { el, icon, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
@@ -82,7 +82,7 @@ function fadeVeil(view: HTMLElement): HTMLElement {
 
 export function worldMapView(dev: Device, faction: FactionConfig, save: SaveData, hd: WorldMapHandlers): void {
   const wm = worldMapOf(faction);
-  const here = save.shared.wanderer.visit !== null;
+  const here = wandererHere(save);
 
   // 왼쪽 위 [둥지로]/[대원실로] 버튼은 없앴다 (GDD 197장 5): 지도 위 둥지/대원실 장소를 누르면 돌아간다. 기기 ◀ 뒤로 = 걷기 취소 또는 방(app.ts interceptBack) 그대로
 

@@ -355,6 +355,8 @@ export interface RunRecord {
   kills?: Record<string, number>;
   /** C.356 (세이브 형식 66, GDD 212장 5·9장): 바퀴별 쓴 모험 소모품(소모품 칸에 끼운 것, 바퀴당 1번) — 바퀴·품목·쓴 곳(걷기/전투). 안 썼으면 없다. 형식 66 이전 기록에는 없다 */
   lapItems?: { lap: number; itemId: string; where: 'walk' | 'battle' }[];
+  /** 우라하라 마주침 (GDD 5-5, C.549 — 세이브 형식 99): 이 원정에서 마주친 바퀴·칸·실제 시각. 없으면 안 마주침 */
+  wandererMeets?: { lap: number; cell: number; at: number }[];
   /** 출발 때 쓴 출정품 id (GDD 241-D 5, 형식 74) · 이 원정에서 나온 출정품 id. 옛 기록엔 없다 */
   sortie?: string[];
   sortieFinds?: string[];
@@ -609,7 +611,8 @@ export interface HomeHealRecord {
   tutorial?: boolean;
 }
 
-/** 우라하라 1건 (GDD 85장 5번·9장): arrive = 원정 귀환 때 옴(waited = 기다린 바퀴 수), buy = 품목 구매, leave = 다음 원정 귀환 때 떠남(unsold = 안 팔린 칸 수) */
+/** 우라하라 1건 (GDD 5-5·16-2): arrive = 모험 중 마주침(C.549 — lap·cell = 마주친 바퀴·칸, 옛 C.140 기록은 원정 귀환 때 옴·waited = 기다린 바퀴 수), buy = 품목 구매,
+ *  leave = 머무는 15분이 끝나 떠남(at = 떠난 시각, unsold = 안 팔린 칸 수 — 옛 기록은 다음 원정 귀환 때 떠남) */
 export interface WandererRecord {
   at: number;
   factionId: string;
@@ -617,7 +620,11 @@ export interface WandererRecord {
   /** 숨은 티어 1~4 */
   tier: number;
   runId?: number;
+  /** 옛 기록(C.140~C.548)만: 기다린 바퀴 수 */
   waited?: number;
+  /** 마주친 바퀴·칸 (C.549~, 테스트 패널로 부르면 없음) */
+  lap?: number;
+  cell?: number;
   itemId?: string;
   price?: number;
   unsold?: number;

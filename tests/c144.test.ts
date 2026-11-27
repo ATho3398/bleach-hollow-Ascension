@@ -6,7 +6,7 @@ import { PET_IDS, PET_POOL_IDS, PETS, getPet } from '../src/data/pets';
 import { ITEM_CATEGORIES, getWandererItem } from '../src/data/shop';
 import { advance, chooseRelease, createExpedition, finishBattle, finishRest, playExpedition, startBattle, type ExpeditionState, type StepEvent } from '../src/engine/expedition';
 import { addPetLaps, affinityMult, affinityOf, carriedPet, grantPet, newPetState, nextAffinityLaps, petBonus, pickNewPet, sanitizePets, setActivePet } from '../src/engine/pet';
-import { advanceWanderer, newWandererState } from '../src/engine/wanderer';
+import { wandererMeetChance } from '../src/engine/wanderer';
 import { checkUnlocks, migrateSave, newSaveData, performEvolution, recordExpedition, settleIdle, SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT, type SaveData } from '../src/game';
 import { buyWandererItem, wandererRows } from '../src/shop';
 import { choosePet, inventoryOf, petEffectText, petNoticeOf } from '../src/inventory';
@@ -130,14 +130,9 @@ describe('90장 효과 (원정)', () => {
     expect(shieldOf({ id: 'pet-guard', level: 5 })).toBeCloseTo(0.08);
   });
 
-  it('pet-seek: 우라하라 바퀴 확률 ×1.25, 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
-    const roll = (mult: number) => {
-      const w = newWandererState();
-      w.lapsSince = 99;
-      return advanceWanderer(w, 1, { at: 1, runId: 1 }, () => 0.1249, mult);
-    };
-    expect(roll(1)).toBeNull(); // 확률 0.1 (k=100)
-    expect(roll(1.25)).not.toBeNull(); // 0.125
+  it('pet-seek: 우라하라 마주칠 확률 ×1.25 (C.549 칸마다), 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
+    expect(wandererMeetChance(1, 1.25)).toBeCloseTo(0.0125);
+    expect(wandererMeetChance(3, 1.25)).toBeCloseTo(0.0375);
     let extra = 0;
     for (let seed = 1; seed <= 400; seed++) {
       const ev = toLapEnd(exp0(seed, { id: 'pet-seek', level: 1 }, { deck: ['prey-nest-a'] }));
@@ -235,7 +230,7 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([98, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([99, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
     grantPet(s.shared.pets, 'pet-guard', 1);
     choosePet(s, 'pet-guard', 1);

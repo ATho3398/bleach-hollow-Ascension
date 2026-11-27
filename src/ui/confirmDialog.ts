@@ -28,8 +28,15 @@ export interface ConfirmOptions {
   noCancel?: boolean;
   /** 기기 취소·Esc(뒤로)가 '아니요' 대신 할 일 — 창은 닫고 이것만 부른다 ([아니요] 버튼은 그대로 onNo). 수련장 훈련 설정 창 뒤로 = 방 (C.534) */
   onCancel?: () => void;
+  /** n 초 뒤 저절로 [예] (GDD 5-5 우라하라 마주침 창, C.549): 예 버튼 글 뒤에 남은 초 '(n)' — 1초마다 줄어든다. 닫히면 멈춘다 */
+  autoYesSeconds?: number;
   onYes: () => void;
   onNo?: () => void;
+}
+
+/** 자동 확인 버튼 글: '확인 (5)' */
+export function autoYesLabel(label: string, left: number): string {
+  return `${label} (${Math.max(0, Math.ceil(left))})`;
 }
 
 /** 확인창을 연다. 돌려주는 함수는 선택 없이 닫는다 */
@@ -60,9 +67,11 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   let unregister: () => void = () => {};
   let untrap: () => void = () => {};
   let uncover: () => void = () => {};
+  let autoTimer: ReturnType<typeof setInterval> | null = null;
   const close = () => {
     if (closed) return;
     closed = true;
+    if (autoTimer !== null) clearInterval(autoTimer);
     unregister();
     layer.remove();
     uncover();
@@ -86,6 +95,18 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   }
   const yesBtn = button({ label: o.yes ?? '네', variant: o.danger ? 'danger' : 'primary', disabled: o.yesDisabled || !matched(), onClick: yes });
   actions.append(yesBtn);
+  if (o.autoYesSeconds !== undefined && o.autoYesSeconds > 0) {
+    const base = o.yes ?? '네';
+    let left = Math.ceil(o.autoYesSeconds);
+    yesBtn.textContent = autoYesLabel(base, left);
+    yesBtn.dataset.autoYes = String(left);
+    autoTimer = setInterval(() => {
+      left--;
+      if (left <= 0) return yes();
+      yesBtn.textContent = autoYesLabel(base, left);
+      yesBtn.dataset.autoYes = String(left);
+    }, 1000);
+  }
   if (typed) {
     const t = typed;
     t.addEventListener('input', () => { yesBtn.disabled = !!o.yesDisabled || !matched(); });

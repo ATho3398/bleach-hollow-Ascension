@@ -32,6 +32,7 @@ import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data
 import type { BossSetup } from '../combat';
 import { SORTIE_IDS, sortieMods } from '../sortie';
 import { petAttackOf, petBonus, rollAnyPet, type PetCarry } from '../pet';
+import { rollWandererMeet, wandererLeaveAt } from '../wanderer';
 import { applyGearToParams, rollGear, rollGrade, type GearCarry, type GearRoll } from '../gear';
 import { kitRiskDrainOf, kitRiskFloorOf } from '../transcendKit';
 
@@ -370,6 +371,28 @@ export interface ExpeditionState extends RiskState {
   /** 전투 들어가기 직전 소모품 (GDD 222장 6, 세이브 형식 69): 전투 중간 상태는 저장하지 않으므로, 전투 도중 다시 켜면 이 값으로 소모품 칸·보관 개수를 되돌리고
    *  그 전투를 처음부터(같은 시드 · 들어갈 때 체력 · 새 블록 바) 다시 한다. seed = 그 전투(pending.seed). 전투가 끝나거나 원정이 끝나면 지운다. 옛 중간 저장에는 없다 */
   battleEntry?: BattleEntry;
+  /** 우라하라 마주침 (GDD 5-5, C.549): 이 원정에서 마주친 바퀴·칸·실제 시각. 런 로그 원정 기록 wandererMeets 로 간다. 옛 중간 저장엔 없음(= 없음) */
+  wandererMeets?: WandererMeet[];
+}
+
+/** 우라하라 마주침 1건 (GDD 5-5) */
+export interface WandererMeet {
+  lap: number;
+  cell: number;
+  at: number;
+}
+
+/** advance 에 넘기는 우라하라 굴림 재료 (GDD 5-5): at = 지금 실제 시각(ms), here = 우라하라가 이미 와 있나. 안 넘기면(점검 봇·테스트) 굴리지 않는다 */
+export interface WandererMeetCtx {
+  at: number;
+  here: boolean;
+}
+
+/** 이 칸에서 우라하라를 굴리나 (GDD 5-5): 자유 모험만 — 튜토리얼·스토리는 안 굴린다. 이 원정에서 마주친 뒤 머무는 동안도 안 굴린다(화면이 here 를 늦게 알려도) */
+export function wandererRollable(exp: Pick<ExpeditionState, 'tutorial' | 'story' | 'wandererMeets'>, meet: WandererMeetCtx | undefined): meet is WandererMeetCtx {
+  if (!meet || meet.here || exp.tutorial || exp.story) return false;
+  const last = exp.wandererMeets?.at(-1);
+  return !last || meet.at >= wandererLeaveAt(last);
 }
 
 /** 전투 들어가기 직전 소모품 (GDD 222장 6): itemId = 그때 끼운 소모품(없으면 null), itemCount = 그 보관 개수 */
@@ -750,8 +773,8 @@ export type StepEvent =
   | { kind: 'lap-complete'; lap: number; rewardTile: string | null; petTile?: string | null; petFound?: string | null }
   | { kind: 'ended'; outcome: 'returned' | 'defeated'; reason: EndReason };
 
-/** 한 칸 이동. phase 가 moving 일 때만 */
-export function advance(exp: ExpeditionState): StepEvent | null {
+/** 한 칸 이동. phase 가 moving 일 때만. meet = 우라하라 굴림 재료 (GDD 5-5 — 게임 화면만 넘긴다) */
+export function advance(exp: ExpeditionState, meet?: WandererMeetCtx): StepEvent | null {
   if (exp.phase !== 'moving') return null;
   // 사냥 무리 2연전 (GDD 25-5 ②): 같은 칸에서 바로 한 번 더 (이동·시간 없음)
   if (exp.queuedBattle) {
@@ -791,6 +814,12 @@ export function advance(exp: ExpeditionState): StepEvent | null {
     return { kind: 'lap-complete', lap: exp.lap, rewardTile: reward, ...petLap };
   }
   const cell = exp.pos;
+  // 우라하라 마주침 (GDD 5-5, C.549): 칸에 들어설 때마다 원정 시드로 굴린다(재현 가능). 마주치면 이벤트만 남기고 칸은 그대로 처리한다 — 화면이 확인 창 뒤에 이어 간다
+  if (wandererRollable(exp, meet) && rollWandererMeet(exp.seed, exp.lap, cell, 1 + petBonus(exp.pet, 'seekWanderer'))) {
+    const m = { lap: exp.lap, cell, at: meet.at };
+    (exp.wandererMeets ??= []).push(m);
+    exp.events.push({ kind: 'wanderer-meet', ...m });
+  }
   // 스토리 보스 화 (GDD 25-7): 정해진 칸에 보스 (1바퀴, 이기기 전까지)
   const bossAt = storyEpisodeOf(exp)?.boss;
   if (bossAt && bossAt.cell === cell && exp.lap === 1 && !exp.story!.bossResult?.won) {
@@ -1868,6 +1897,7 @@ export function buildRunRecord(exp: ExpeditionState): RunRecord {
     ...(exp.lapItems?.length ? { lapItems: exp.lapItems.map((u) => ({ ...u })) } : {}), // 바퀴별 쓴 소모품 (GDD 212장 5)
     ...(exp.sortie?.length ? { sortie: [...exp.sortie] } : {}), // 출발 때 쓴 출정품 (GDD 241-D 5)
     ...(exp.sortieFinds?.length ? { sortieFinds: exp.sortieFinds.map((f) => f.id) } : {}),
+    ...(exp.wandererMeets?.length ? { wandererMeets: exp.wandererMeets.map((m) => ({ ...m })) } : {}), // 우라하라 마주침 (GDD 5-5, C.549)
   };
 }
 

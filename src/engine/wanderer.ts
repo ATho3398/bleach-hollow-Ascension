@@ -1,7 +1,8 @@
-// 우라하라 (GDD 85장 5번, C.140): 원정 바퀴를 마칠 때마다 등장 확률이 쌓이는 드문 방문 상인. 종족 무관 —
-// 확률·티어·등급표·가격은 balance.ts provisional.wanderer, 품목(이름·등급·효과 종류)은 src/data/shop/wanderer.json.
+// 우라하라 (GDD 5-5, C.549): 자유 모험에서 길 한 칸에 들어설 때마다 낮은 확률로 마주치는 방문 상인 — 마주친 순간부터 15분(실제 시간) 시장에 와 있다. 종족 무관 —
+// 확률·머무는 시간·티어·등급표·가격은 balance.ts provisional.wanderer, 품목(이름·등급·효과 종류)은 src/data/shop/wanderer.json.
 // 티어는 화면에 보이지 않는다(파는 품목 등급만 달라진다). 여기는 판정만 — 세이브·런 로그 기록은 game.ts·shop.ts 가 한다.
 import { BALANCE } from '../config/balance';
+import { createRng, nextFloat } from './rng';
 import { WANDERER_GRADES, WANDERER_ITEMS, type WandererGrade } from '../data/shop';
 
 const WX = BALANCE.provisional.wanderer;
@@ -14,42 +15,69 @@ export interface WandererStockItem {
   sold: boolean;
 }
 
-/** 지금 둥지에 와 있는 상인 */
+/** 지금 시장에 와 있는 상인 */
 export interface WandererVisit {
-  /** 온 시각 (ms) */
+  /** 마주친(온) 실제 시각 (ms) — 떠나는 시각 = at + stayMinutes 분 (wandererLeaveAt) */
   at: number;
-  /** 온 원정의 runId (그 원정의 바퀴에서 왔다) */
+  /** 마주친 원정의 runId (테스트 패널로 부르면 0) */
   runId: number;
   /** 숨은 티어 1~4 (화면에 안 보임) */
   tier: number;
   stock: WandererStockItem[];
 }
 
-/** 슬롯 공유 상인 상태 (세이브 shared.wanderer, 형식 41) */
+/** 슬롯 공유 상인 상태 (세이브 shared.wanderer, 형식 99 — 옛 lapsSince 는 C.549 에 삭제) */
 export interface WandererState {
-  /** 지난 방문 뒤 마친 바퀴 수 (다음 바퀴 확률 = perLap × (이 값 + 1)) */
-  lapsSince: number;
   visit: WandererVisit | null;
 }
 
 export function newWandererState(): WandererState {
-  return { lapsSince: 0, visit: null };
+  return { visit: null };
 }
 
-/** 지난 방문 뒤 k번째 바퀴를 마쳤을 때 그 바퀴에 상인이 올 확률 (선형 가중, 최대 1) */
-export function wandererChance(k: number): number {
-  return Math.max(0, Math.min(1, WX.perLap * k));
+/** 머무는 시간 (ms) */
+export function wandererStayMs(): number {
+  return WX.stayMinutes * 60_000;
 }
 
-/** 처음 올 때까지 바퀴 수의 기댓값 (점검·테스트용): Σ_{n≥0} Π_{k≤n}(1 − p_k) */
-export function expectedLapsToVisit(): number {
-  let surv = 1;
-  let sum = 0;
-  for (let k = 1; surv > 1e-9 && k < 100_000; k++) {
-    sum += surv;
-    surv *= 1 - wandererChance(k);
-  }
-  return sum;
+/** 떠나는 시각 (ms) */
+export function wandererLeaveAt(visit: Pick<WandererVisit, 'at'>): number {
+  return visit.at + wandererStayMs();
+}
+
+/** 지금 와 있나: 방문이 있고 떠날 시각 전 */
+export function wandererHereAt(state: WandererState, nowMs: number): boolean {
+  return state.visit !== null && nowMs < wandererLeaveAt(state.visit);
+}
+
+/** 남은 시간 (ms, 와 있지 않으면 0) */
+export function wandererRemainingMs(state: WandererState, nowMs: number): number {
+  return state.visit ? Math.max(0, wandererLeaveAt(state.visit) - nowMs) : 0;
+}
+
+/** 남은 시간 'mm:ss' (초 올림 — 15:00 에서 시작해 00:01 다음 사라짐) */
+export function wandererClock(ms: number): string {
+  const sec = Math.max(0, Math.ceil(ms / 1000));
+  return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+}
+
+/** 이 바퀴에서 칸 하나에 들어설 때 마주칠 확률: 1~2바퀴 meetChance, meetFromLap 바퀴부터 meetChanceFromLap3. chanceMult = 펫 seekWanderer 배율(없으면 1), 최대 1 */
+export function wandererMeetChance(lap: number, chanceMult = 1): number {
+  const base = lap >= WX.meetFromLap ? WX.meetChanceFromLap3 : WX.meetChance;
+  return Math.max(0, Math.min(1, base * chanceMult));
+}
+
+/** 원정 전용 난수 (재현 가능): 원정 시드·바퀴·칸 → 그 칸의 굴림 난수. salt 로 마주침 판정(0)과 품목 뽑기(1)를 나눈다 */
+export function wandererCellRng(seed: number, lap: number, cell: number, salt = 0): () => number {
+  const mix = (seed ^ 0x5eed77a1 ^ Math.imul(lap + 1, 0x9e3779b1) ^ Math.imul(cell + 1, 0x85ebca6b) ^ Math.imul(salt + 1, 0xc2b2ae35)) >>> 0;
+  const rng = createRng(mix);
+  nextFloat(rng); // 첫 값은 버린다 (가까운 시드끼리 첫 값이 닮지 않게)
+  return () => nextFloat(rng);
+}
+
+/** 이 칸에서 마주치나 (원정 시드로 재현 가능) */
+export function rollWandererMeet(seed: number, lap: number, cell: number, chanceMult = 1): boolean {
+  return wandererCellRng(seed, lap, cell)() < wandererMeetChance(lap, chanceMult);
 }
 
 function weighted<T>(entries: readonly (readonly [T, number])[], rand: () => number): T {
@@ -103,23 +131,6 @@ export function rollWandererStock(tier: number, rand: () => number, skip?: (item
   return out;
 }
 
-/** 원정에서 laps 바퀴를 마쳤다: 바퀴마다 가중 확률로 굴린다. 이미 와 있으면 굴리지 않고 바퀴만 센다.
- *  chanceMult = 펫 pet-seek 배율(GDD 90장, 없으면 1). 오면 visit 을 채우고 '기다린 바퀴 수'를 돌려준다(안 오면 null) */
-export function advanceWanderer(state: WandererState, laps: number, o: { at: number; runId: number }, rand: () => number, chanceMult = 1, skip?: (itemId: string) => boolean): { waited: number } | null {
-  let arrived: { waited: number } | null = null;
-  for (let i = 0; i < Math.max(0, Math.floor(laps)); i++) {
-    state.lapsSince++;
-    if (state.visit) continue;
-    if (rand() < Math.min(1, wandererChance(state.lapsSince) * chanceMult)) {
-      const tier = rollWandererTier(rand);
-      state.visit = { at: o.at, runId: o.runId, tier, stock: rollWandererStock(tier, rand, skip) };
-      arrived = { waited: state.lapsSince };
-      state.lapsSince = 0;
-    }
-  }
-  return arrived;
-}
-
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const finiteNonNeg = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
 
@@ -134,5 +145,5 @@ export function sanitizeWanderer(raw: unknown): WandererState {
     const tier = finiteNonNeg(v.tier);
     if (stock.length > 0) visit = { at: finiteNonNeg(v.at), runId: finiteNonNeg(v.runId), tier: Math.max(1, Math.min(WX.tierWeights.length, tier || 1)), stock };
   }
-  return { lapsSince: finiteNonNeg(r.lapsSince), visit };
+  return { visit };
 }

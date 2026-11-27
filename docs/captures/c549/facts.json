@@ -1,0 +1,106 @@
+{
+ "errors": [],
+ "meet": {
+  "title": "우라하라와 마주쳤습니다!",
+  "button": "확인 (5)"
+ },
+ "meetAfter": {
+  "closed": true,
+  "chip": {
+   "tag": "SPAN",
+   "text": "14:54",
+   "label": "우라하라 남은 시간 14:54",
+   "face": true,
+   "box": [
+    580,
+    32,
+    70,
+    24
+   ]
+  },
+  "visit": true
+ },
+ "battle": {
+  "chip": {
+   "tag": "SPAN",
+   "text": "14:46",
+   "label": "우라하라 남은 시간 14:46",
+   "face": true,
+   "box": [
+    340,
+    29,
+    72,
+    24
+   ]
+  },
+  "bar": [
+   340,
+   23,
+   396,
+   36
+  ]
+ },
+ "room": {
+  "tag": "BUTTON",
+  "text": "14:47",
+  "label": "우라하라 남은 시간 14:47",
+  "face": true,
+  "box": [
+   663,
+   24,
+   71,
+   24
+  ]
+ },
+ "worldmap": {
+  "tag": "BUTTON",
+  "text": "14:46",
+  "label": "우라하라 남은 시간 14:46",
+  "face": true,
+  "box": [
+   663,
+   24,
+   71,
+   24
+  ]
+ },
+ "market": {
+  "tag": "BUTTON",
+  "text": "14:42",
+  "label": "우라하라 남은 시간 14:42",
+  "face": true,
+  "box": [
+   663,
+   24,
+   71,
+   24
+  ]
+ },
+ "shop": {
+  "chip": {
+   "tag": "SPAN",
+   "text": "14:41",
+   "label": "우라하라 남은 시간 14:41",
+   "face": true,
+   "box": [
+    484,
+    34,
+    68,
+    24
+   ]
+  },
+  "title": "우라하라"
+ },
+ "phoneRoom": {
+  "tag": "BUTTON",
+  "text": "14:47",
+  "label": "우라하라 남은 시간 14:47",
+  "face": true,
+  "box": [
+   615,
+   24,
+   71,
+   24
+  ]
+ }
+}

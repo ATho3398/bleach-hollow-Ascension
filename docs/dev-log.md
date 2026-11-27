@@ -1386,3 +1386,18 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **시험 고침**: `tests/c340`·`c341`(swift 한 장 그림 → 덩치, public/art 적 그림 48 → 40장) · `c345`(덩치 적 수 23 → 31) · `tests/c545`(날쌘형 → 호로). 새 `tests/c548.test.ts` 5건(8종 덩치·basic 과 같은 외형 / 덩치 동작 / 그림 삭제·참조 없음 / 이름 호로·lean 없음 / 도감 겹침 3종).
 - 캡처 `docs/captures/c548/`(1배 3장, `scripts/c548-proof.cjs`, facts.json): 01 PC 전투 물 속공 적(water-swift) = 파란 덩치 '호로'(종이인형 캔버스) · 02 PC 적 도감 속성마다 덩치 3장 · 03 폰 적 도감.
 - 검증: typecheck · 관련 테스트(c340·c341·c545·c546·enemies·c348-size) · 새 테스트 · npm test 4460 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.549 — 우라하라 = 모험 중 마주침 · 15분 머묾 · 남은 시간 칩 (GDD 5-5 v6.223 → v6.224, S-23, 코딩355)
+세이브 형식 98 → 99 · BALANCE_VERSION 169 → 170. GDD v6.224(5-5 구현 표시 + 20절 한 줄).
+- **이유**: 사용자 2026-11-27 "모험하다가 한 스테이지당 1%? 확률로 우라하라 만나게 하고 … 우라하라와 마주쳤습니다! 하고 확인창 … 5초뒤에 자동으로 확인 … 우라하라 얼굴 아이콘이랑, 15분 남았다고 작게 … 모험 3바퀴째부턴 확률 높이고" → 마스터AT 5-5 v6.223.
+- **등장(엔진)**: `advance(exp, meet?)` — 자유 모험에서 길 칸(1~11번)에 들어설 때마다 `rollWandererMeet(시드, 바퀴, 칸)`(원정 전용 난수 — 원정 rng 는 안 건드림, 재현 가능). 확률 `provisional.wanderer.meetChance` 0.01 · 3바퀴(`meetFromLap`)부터 `meetChanceFromLap3` 0.03, 펫 찾기(seekWanderer) 배율 곱함. 안 굴림 = 굴림 재료 없음(점검 봇·테스트) · 이미 와 있음 · 튜토리얼 · 스토리 · 이 원정에서 마주친 뒤 15분 안(`wandererRollable`). 탑·특수던전은 원정 걷기가 아니라 원래 없음. 마주치면 엔진 이벤트 `wanderer-meet` + 원정 기록 `wandererMeets`(바퀴·칸·시각), 칸 처리는 그대로.
+- **확인 창(화면)**: 걷기 화면이 이벤트를 받으면 `onMeet` → `game.meetWanderer`(품목·티어는 기존 규칙 그대로 그 순간 뽑음 — 원정 시드·바퀴·칸 난수, 펫 해금 전 펫 알 빼기)·바로 저장, 걷기 멈춤 → 공용 확인 창 '우라하라와 마주쳤습니다!' [확인 (5)] — `confirmDialog` 새 선택 `autoYesSeconds`(1초마다 줄고 0 이면 자동 확인, 기기 ✓·뒤로도 확인) → 그 칸을 그대로 이어 감. 문구는 데이터 `src/data/shop/wanderer.json` text(이름 = 종족 설정 market.props.wanderer). 실제 시각은 app.ts 가 잰다(걷기 화면은 단조 시계 규칙 그대로).
+- **15분**: `visit.at` = 마주친 실제 시각, 떠나는 시각 = at + `stayMinutes` 15. `expireWanderer` 가 런 로그 leave(at = 떠난 시각). 원정 귀환은 이제 떠나보내기 판정만(옛 '귀환 때 떠남'·바퀴 굴림 등장 삭제). 시장·월드맵·방의 '와 있음' 판정 = `wandererHere`(시각 기준, 껐다 켜도).
+- **칩**: `src/ui/bha/wandererChip.ts` + `market.css`(토큰만, 황동 테) — 얼굴 도트(`public/art/icon-wanderer-face.png`, prop-wanderer.png 머리 부분을 원래 도트 칸으로 잘라 47×47) + 'mm:ss'. app.ts 1초 시계 + 화면 바뀜 감지로 붙임: 방·월드맵·시장·모험 준비 = 머리 줄 오른쪽, 누르면 시장 우라하라 창 / 우라하라 창 = 재화 줄 앞 · 걷기 = 오른쪽 위 버튼 줄 앞 · 전투 = 위 오른쪽 시간·버튼 줄 앞(표시만). 15분이 지나면 칩이 사라지고 열려 있던 우라하라 창은 시장으로, 방·월드맵·시장은 다시 그림.
+- **정리(겹침)**: 방의 노란 도착 알림 '우라하라가 시장에 왔다 … 다음 모험에서 돌아오면 떠난다'는 없앰(확인 창 + 칩이 대신). 월드맵 시장 '상인' 배지·시장 '왔다' 배지는 자리 표시라 그대로. 옛 문구 '다음 모험에서 돌아오면 떠난다'(시장 툴팁·우라하라 창 안내·테스트 패널) → '마주친 뒤 15분이 지나면 떠난다'.
+- **지운 옛 코드**: `advanceWanderer`·`wandererChance`·`expectedLapsToVisit`·`WandererState.lapsSince`·balance `perLap` 0.001, game.ts 귀환 때 바퀴 굴림·떠남, app.ts `wandererAnnounced`·`wandererToast`.
+- **세이브 99**: shared.wanderer.lapsSince 삭제 · visit.at 뜻 = 마주친 시각 · 원정 중간 저장/런 로그 원정 기록 `wandererMeets` · 우라하라 기록 lap·cell(선택). `SAVE_MIGRATIONS[98]` = `migrateWandererStay`(lapsSince 지움, 와 있던 방문 at = 변환 시각 → 지금부터 15분). 중간 저장 검사에 wandererMeets.
+- **시험**: 새 `tests/c549.test.ts` 16건(칸 확률 1%·3%·통계·재현·걷기 이벤트·봇 안 굴림·원정 난수 그대로·3바퀴 이후 잦음·이미 와 있음·튜토리얼/스토리·15분 안 안 굴림·15분 떠남·귀환은 안 떠나보냄·칩 mm:ss·자동 확인 글·칩 자리·종족 분기 없음·형식 99 마이그레이션·중간 저장). 고침 = `c140`(옛 바퀴 확률 시험 → 마주침·15분), `c144`(펫 찾기 = 칸 확률 ×1.25), `c201`(시간 지나면 시장에서 빠짐·노란 알림 삭제), `economy`·`absorb`·형식 98 → 99 단언들.
+- 캡처 `docs/captures/c549/`(1배 5장, `scripts/c549-proof.cjs`, facts.json): 01 PC 걷기 중 확인 창 [확인 (5)] · 02 PC 방 칩 14:47 · 03 PC 시장 우라하라 + 칩 · 04 PC 칩 누름 → 우라하라 창(칩은 재화 줄 앞) · 05 폰 방 칩. (전투 화면 칩 = 시간·버튼 줄 앞, 겹침 없음 확인 — 캡처는 안 남김)
+- 마주칠 확률(안 와 있을 때): 한 바퀴 11칸 → 1~2바퀴 10.5%/바퀴 · 3바퀴부터 28.5%/바퀴 → 3바퀴 원정 42.7% · 5바퀴 70.7% · 10바퀴 94.5%.
+- 검증: typecheck · 관련 테스트 · 새 테스트 · npm test 4491 · balance:check 회귀 가드 통과(전투 수치 안 바뀜) · build.

@@ -25,7 +25,8 @@ describe('127장 2 장터 → 130장 시장 (C.215: 방 장터 물건 폐기, 13
     const s = newSaveData('hollow');
     expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith']); // 온천은 월드맵 (GDD 153장 1)
     s.shared.wanderer.visit = { at: 1, runId: 1, tier: 1, stock: [] };
-    expect(marketSpots(s)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'wanderer']);
+    expect(marketSpots(s, 2)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith', 'wanderer']);
+    expect(marketSpots(s, 1 + 15 * 60_000)).toEqual(['shop', 'gearShop', 'skinShop', 'traitShop', 'smith']); // C.549: 15분 뒤 떠남
   });
   it('종족 설정 검사: 시장 자리 이름·위치가 틀리면 오류, 옛 room.props.shop·market 은 알 수 없는 물건', () => {
     const base = JSON.parse(readFileSync('src/data/factions/hollow.json', 'utf8'));
@@ -49,9 +50,9 @@ describe('127장 2·3 화면 연결 (app.ts)', () => {
     expect(app).toContain("open('market', () => marketView(");
     expect(app).toContain("mode: 'wanderer'");
   });
-  it('우라하라 도착 알림은 방에서만, 장터에 먼저 들어가면 본 것으로', () => {
-    expect(app).toContain("if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;");
-    expect(app).toMatch(/function openMarket[\s\S]*?if \(visit\) wandererAnnounced = visit\.at;/);
+  it('C.549 (GDD 5-5): 우라하라 도착 노란 알림은 없앴다 — 마주침 확인 창 + 머리 줄 남은 시간 칩', () => {
+    expect(app).not.toContain('wandererAnnounced');
+    expect(app).toContain('tickWandererChip');
   });
   it('온천이 저절로 끝나면 방으로, 월드맵에서 들어갔으면 월드맵으로 (GDD 241-E 1)', () => {
     expect(app).toContain("if (!backLabel) return nestScreen();");

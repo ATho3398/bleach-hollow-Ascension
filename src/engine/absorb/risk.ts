@@ -25,7 +25,9 @@ export type EngineEvent =
   /** 진화 임박 알림 (GDD 20-5 v4.1): level 1 = 남은 걸음 20%, 2 = 10%. 수치는 화면에 보이지 않는다 */
   | { kind: 'evolution-near'; level: number }
   /** 뼈 표식/수련 말뚝 승리 노력치 (C.124, GDD 65장): amount 0 = 상한이라 못 올림 */
-  | { kind: 'tile-ev'; stat: StatId; amount: number };
+  | { kind: 'tile-ev'; stat: StatId; amount: number }
+  /** 우라하라와 마주침 (GDD 5-5, C.549): 자유 모험에서 이 칸에 들어설 때. at = 마주친 실제 시각(ms) — 화면이 확인 창을 띄우고 game.ts 가 방문을 세운다 */
+  | { kind: 'wanderer-meet'; lap: number; cell: number; at: number };
 
 /** 리스크를 들고 있는 상태(원정 상태가 이를 확장한다) */
 export interface RiskState {

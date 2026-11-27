@@ -779,14 +779,13 @@ function grantWandererTest(save: SaveData, itemId: string, nowMs: number, rand: 
 /** 우라하라 단계 수 (숨은 티어 1~n) */
 export const TEST_WANDERER_TIERS = BALANCE.provisional.wanderer.tierWeights.length;
 
-/** 우라하라를 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다. 런 로그 wanderer 에 arrive */
+/** 우라하라를 지금 부른다 (와 있으면 바꿔 세운다): 그 단계 물건을 새로 뽑는다, 지금부터 15분 머문다 (GDD 5-5). 런 로그 wanderer 에 arrive */
 export function testCallWanderer(save: SaveData, tier: number, nowMs: number = Date.now(), rand: () => number = Math.random): WandererVisit {
   const w = save.shared.wanderer;
   const t = Math.max(1, Math.min(TEST_WANDERER_TIERS, Math.floor(tier) || 1));
   if (w.visit) save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'leave', tier: w.visit.tier, unsold: w.visit.stock.filter((x) => !x.sold).length });
   w.visit = { at: nowMs, runId: 0, tier: t, stock: rollWandererStock(t, rand) };
-  w.lapsSince = 0;
-  save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: t, runId: 0, waited: 0 });
+  save.runLog.wanderer.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: t, runId: 0 });
   return w.visit;
 }
 

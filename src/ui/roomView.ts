@@ -9,7 +9,7 @@ import { consumableGroupOf } from '../shop';
 import { gateOpen } from '../unlockGate';
 import { BALANCE } from '../config/balance';
 import { roomOf, ROOM_PROPS, type FactionConfig, type RoomProp, type RoomTalk } from '../engine/faction';
-import { roomKeyOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, careClockOf, type SaveData, artTierIndexOf } from '../game';
+import { roomKeyOf, artSkinOf, careNest, touchCharacter, feedNest, foodReactionFor, tickCare, careClockOf, type SaveData, artTierIndexOf, wandererHere } from '../game';
 import type { FoodReaction } from '../engine/foodPref';
 import { ownedTileList, placementLimitOf } from '../tilePresets';
 import { artUrls } from '../data/art/manifest';
@@ -647,7 +647,7 @@ export function roomView(dev: Device, faction: FactionConfig, save: SaveData, hd
   main.dataset.devLayout = 'visual'; // 기기 버튼 선택 순서 = 화면에 보이는 위치 순서 (GDD 63장)
   if (hd.forceOutside) main.classList.add('is-force-out'); // 첫 모험 강제 (GDD 131장 2): 월드맵 물건 말고는 흐린 잠김 (room.css)
   main.dataset.tiles = `${tileCount}/${placementLimitOf(save)}`;
-  if (save.shared.wanderer.visit) main.dataset.wanderer = ''; // 우라하라가 와 있다 (GDD 85장 5번·127장 3) — 배지는 월드맵 시장에 (130장 2)
+  if (wandererHere(save)) main.dataset.wanderer = ''; // 우라하라가 와 있다 (GDD 85장 5번·127장 3) — 배지는 월드맵 시장에 (130장 2)
 
   // 선택 항목: 이어하기 → 물건 → 캐릭터 → 독(펼친 줄이 있으면 그것 먼저)
   function registerItems(focus: HTMLElement | null = null): void {

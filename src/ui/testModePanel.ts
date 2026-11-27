@@ -587,13 +587,13 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const callW = button({ label: '지금 부르기', icon: 'i-check', variant: 'primary', onClick: () => {
       lastCall = { ...lastCall, tier: Number(tierSel.value) };
       testCallWanderer(save, lastCall.tier);
-      done('우라하라를 불렀다', '밖으로 → 시장 → [우라하라]에서 산다. 다음 모험에서 돌아오면 떠난다.');
+      done('우라하라를 불렀다', '밖으로 → 시장 → [우라하라]에서 산다. 15분 뒤 떠난다.');
     } });
     const rerollW = button({ label: '물건 다시 뽑기', icon: 'i-loop', disabled: !visit, onClick: () => {
       if (testRerollWanderer(save)) done('물건을 다시 뽑았다', '팔린 칸도 새로 채운다.');
     } });
     const sendW = button({ label: '보내기', icon: 'i-quit', disabled: !visit, onClick: () => {
-      if (testSendWanderer(save)) done('우라하라를 보냈다', '다음 모험 바퀴부터 다시 확률이 쌓인다.');
+      if (testSendWanderer(save)) done('우라하라를 보냈다', '다음 모험에서 다시 마주칠 수 있다.');
     } });
     // 돌봄 요청 (GDD 82장)
     const care = save.nest.careRequest;

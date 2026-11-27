@@ -87,13 +87,13 @@ describe('C1 진화 묻는 중 표시 (GDD 8-5)', () => {
     expect(reload(t).evolution.choice).toBeUndefined();
   });
   it('형식 94 · 93 → 94 변환(묻는 중 아님) · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(98);
+    expect(SAVE_FORMAT_VERSION).toBe(99);
     expect(typeof SAVE_MIGRATIONS[93]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     const s = grown();
     s.meta.format = 93;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(98);
+    expect(m.meta.format).toBe(99);
     expect(m.evolution.choice).toBeUndefined();
     expect(m.evolution.tierIndex).toBe(2);
   });

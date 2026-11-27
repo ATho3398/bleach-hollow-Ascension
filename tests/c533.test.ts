@@ -145,7 +145,7 @@ describe('④ 진화: 타입 판정에 안 섞임 · 혈·독 진화체 쪽은 �
 
 describe('⑤ 세이브 형식 98 (97 → 98) — 옛 세이브를 이어 쓴다', () => {
   it('형식 98 · 97 → 98 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(98);
+    expect(SAVE_FORMAT_VERSION).toBe(99);
     expect(typeof SAVE_MIGRATIONS[97]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -158,7 +158,7 @@ describe('⑤ 세이브 형식 98 (97 → 98) — 옛 세이브를 이어 쓴다
     s.meta.format = 97;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(98);
+    expect(m.meta.format).toBe(99);
     expect(m.build.owned).toEqual(['t-blood', 't-fire-a', 't-poison']);
     expect(m.build.slots.slice(0, 4)).toEqual(['t-blood', 't-fire-a', null, 't-poison']);
     expect(m.build.equipOrder).toEqual(['t-fire-a', 't-blood', 't-poison']);
@@ -173,7 +173,7 @@ describe('⑤ 세이브 형식 98 (97 → 98) — 옛 세이브를 이어 쓴다
     s.build.equipOrder = ['t-poison-c'];
     s.meta.format = 96;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(98);
+    expect(m.meta.format).toBe(99);
     expect(m.build.owned).toEqual(['t-poison']);
     expect(m.build.slots[0]).toBe('t-poison');
   });

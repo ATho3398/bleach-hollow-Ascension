@@ -164,6 +164,8 @@ function validShape(e: unknown): e is ExpeditionState {
   if (e.kitMastery !== undefined && !(isNum(e.kitMastery) && (e.kitMastery as number) >= 0)) return false;
   // 진화체 고유 능력 원정 스택 (GDD 8-7 1차, C.499): 없으면 0
   if (e.evoCarry !== undefined && !(isObj(e.evoCarry) && Object.values(e.evoCarry).every((v) => isNum(v) && (v as number) >= 0))) return false;
+  // 우라하라 마주침 (GDD 5-5, C.549): 없으면 안 마주침
+  if (e.wandererMeets !== undefined && !(Array.isArray(e.wandererMeets) && e.wandererMeets.every((m) => isObj(m) && isInt(m.lap, 1) && isInt(m.cell, 1) && (m.cell as number) < L && isNum(m.at)))) return false;
   if (e.sortieFinds !== undefined && !(Array.isArray(e.sortieFinds) && e.sortieFinds.every((f) => isObj(f) && typeof f.id === 'string' && isInt(f.lap, 1)))) return false;
   if (!Array.isArray(e.wildCells) || !e.wildCells.every((c) => isInt(c, 1) && (c as number) < L)) return false;
   if (!Array.isArray(e.battlesByLap) || e.battlesByLap.length < (e.lap as number) || !e.battlesByLap.every((n) => isInt(n))) return false;

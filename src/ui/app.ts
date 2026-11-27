@@ -38,6 +38,7 @@ import {
   combatFactionIdOf, finishGuide,
   applyTrackRiskFloor,
   evolutionChoicePending, evolveAfterReturn, deferEvolution, pendingEvolveChoice,
+  expireWanderer, meetWanderer, wandererHere,
 } from '../game';
 import { evolveChoiceDialog } from './evolveChoice';
 import { identityScreen, type IdentityMode } from './identityView';
@@ -111,6 +112,8 @@ import { evolvedArtOf } from './evolvedArt';
 import type { ArtUrls } from '../data/art/manifest';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
+import { wandererChip, type WandererChip } from './bha/wandererChip';
+import { wandererRemainingMs } from '../engine/wanderer';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
 import { FEATURE_IDS, featureName, featureUnlocked, UNLOCK_GUIDES, unlockHintText } from '../engine/unlocks';
@@ -255,6 +258,50 @@ export function startApp(host: HTMLElement): void {
   /** 화면 하나를 스택에 쌓고 그린다 (그릴 때마다 창 스크롤을 맨 위로). 배경 음악(GDD 24-4): 둥지 메뉴 화면은 nest, 잠긴 흐름(전투·원정·연출)은 그 화면이 정한다(null) */
   const open = (id: string, render: () => void, locked = false, track: BgmTrack | null = locked ? null : 'nest') =>
     nav.push({ id, locked, render: () => { if (track) setBgm(track); render(); root.scrollTop = 0; } });
+
+  // ── 우라하라 남은 시간 칩 (GDD 5-5, C.549): 와 있는 동안 방·월드맵·시장·모험 준비 화면 머리 줄 오른쪽(누르면 시장 우라하라 창), 우라하라 창·모험 걷기·전투는 표시만.
+  //    1초마다 남은 시간을 고치고, 15분이 지나면 떠나보낸다(런 로그 leave) — 앱을 껐다 켜도 실제 시각 기준. 화면이 바뀌면 바로 다시 붙인다 ──
+  const WCHIP_TAP = new Set(['room', 'worldmap', 'market', 'expedition-plan']);
+  const WCHIP_SHOW = new Set([...WCHIP_TAP, 'wanderer', 'expedition']);
+  let wchip: WandererChip | null = null;
+  let wchipTap = false;
+  const tickWandererChip = (): void => {
+    const s = save;
+    const now = Date.now();
+    if (s && slot !== 0 && expireWanderer(s, now)) {
+      persist();
+      const top = nav.top?.id;
+      if (top === 'wanderer') nav.back(); // 열려 있던 우라하라 창 → 시장(우라하라 없이 다시 그림)
+      else if (top === 'room' || top === 'worldmap' || top === 'market') nav.top!.render();
+    }
+    // 자리: 걷기 = 오른쪽 위 버튼 줄 앞, 전투 = 위 오른쪽 시간·버튼 줄 앞, 우라하라 창 = 재화 줄 앞 (겹치지 않게 그 줄 안에), 그 밖 = 화면 머리 줄 오른쪽
+    const inline = root.querySelector<HTMLElement>('.bha-exp__cornerrow, .bha-v2bar, .bha-shop__wallet');
+    const host = inline ?? root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
+    const id = nav.top?.id ?? '';
+    if (!s || slot === 0 || !host || !WCHIP_SHOW.has(id) || !wandererHere(s, now)) {
+      wchip?.el.remove();
+      wchip = null;
+      return;
+    }
+    const tap = WCHIP_TAP.has(id);
+    if (!wchip || wchip.el.parentElement !== host || tap !== wchipTap) {
+      wchip?.el.remove();
+      const faction = trackFaction(s);
+      wchip = wandererChip(marketOf(faction).props.wanderer, wandererRemainingMs(s.shared.wanderer, now), tap ? () => goWanderer(faction, s) : undefined);
+      wchipTap = tap;
+      if (inline) host.prepend(wchip.el);
+      else host.append(wchip.el);
+    }
+    wchip.set(wandererRemainingMs(s.shared.wanderer, now));
+  };
+  /** 칩을 누름: 시장의 우라하라 창으로 (시장에 있으면 창만 연다) */
+  const goWanderer = (faction: FactionConfig, s: SaveData): void => {
+    if (!wandererHere(s)) return;
+    if (nav.top?.id !== 'market') openMarket(faction, s);
+    open('wanderer', () => shopView(dev, faction, s, { persist, mode: 'wanderer' }));
+  };
+  window.setInterval(tickWandererChip, 1000);
+  new MutationObserver(() => tickWandererChip()).observe(root, { childList: true });
 
   // 클라우드 세이브 (GDD 196장, C.323): 로그인은 선택. Firebase 층(cloudFirebase.ts + SDK)은 로그인 버튼을 누르거나 이미 로그인된 기기에서만 동적 import.
   // 테스트 모드(가짜 저장소)에서는 아예 없다. 저장할 때마다 schedule(묶어서 올림), 연결되면 onOnline, 앱이 숨겨지면 flush
@@ -427,10 +474,6 @@ export function startApp(host: HTMLElement): void {
   let lastArena: TestArenaChoice = { foeId: '', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false };
   /** 대기 모드 결과 (GDD 85장 6번): 다시 열 때 정산한 요약 — 방을 그린 뒤 한 번 보여 주고 비운다 */
   let idleReport: IdleAccrual | null = null;
-  /** 우라하라 도착을 알린 방문 시각 (GDD 85장 5번): 같은 방문은 한 번만 알린다 */
-  let wandererAnnounced = -1;
-  /** 방에 띄운 우라하라 도착 알림 — 장터에 들어가면 걷는다 (GDD 127장 3: 장터 안에서는 안 뜨게) */
-  let wandererToast: HTMLElement | null = null;
   /** 방 안내(GDD 64·67장)를 잠시 미룬다: 귀환 결과 다음에 진화 연출이 뜰 차례면 연출이 끝나고 방으로 돌아올 때 띄운다 */
   let holdRoomGuides = false;
   /** 안내 오버레이가 떠 있다 (방을 다시 그려도 겹쳐 띄우지 않는다) */
@@ -1277,10 +1320,6 @@ export function startApp(host: HTMLElement): void {
 
   /** 장터 (GDD 127장 2, C.201): 상점·온천·우라하라가 있는 따로 된 공간. 뒤로 = 방 */
   function openMarket(faction: FactionConfig, s: SaveData): void {
-    const visit = s.shared.wanderer.visit;
-    if (visit) wandererAnnounced = visit.at; // 장터에서 이미 봤다 — 방 알림을 다시 띄우지 않는다
-    if (wandererToast?.isConnected) wandererToast.classList.replace('is-in', 'is-out'); // 방에서 뜬 알림이 장터까지 남지 않게 (사라지는 연출 뒤 지워진다)
-    wandererToast = null;
     open('market', () => marketView(dev, faction, s, {
       // 장비 상점 = 장비가 열린 뒤 (GDD 241-0: 2단계) — 그 전에는 자물쇠 + 여는 때 알림
       lockReasons: gearUnlocked(s) ? undefined : { gearShop: unlockHintText(faction, 'gear') },
@@ -1388,17 +1427,7 @@ export function startApp(host: HTMLElement): void {
       if (!appearCut) notes.push({ eyebrow: '붕옥', title: '붕옥이 나타났다', meta: '방의 붕옥을 누르면 붕옥 화면이 열린다.' });
       s.hogyoku.tabNotice = false;
     }
-    // 우라하라 (GDD 85장 5번·127장 3): 이번 방문을 처음 보는 방이면 한 번 알린다 — 방에서만(장터 안에서는 안 뜬다). 먼저 장터에 들어갔으면 본 것으로 친다
-    const visit = s.shared.wanderer.visit;
-    if (visit && visit.at !== wandererAnnounced) {
-      const mk = marketOf(faction);
-      window.setTimeout(() => {
-        if (nav.top?.id !== 'room' || wandererAnnounced === visit.at) return;
-        wandererAnnounced = visit.at;
-        const path = `${roomOf(faction).props.outside} → ${mk.name}`; // 월드맵 → 시장 (GDD 130장 2·158장 2)
-        wandererToast = showToast({ eyebrow: mk.props.wanderer, title: fixParticles(`${mk.props.wanderer}이(가) ${mk.name}에 왔다`), meta: `${path} → [${mk.props.wanderer}]. 다음 모험에서 돌아오면 떠난다.` }, notes.length, 5200);
-      }, 2600);
-    }
+    // 우라하라 도착 노란 알림(옛 GDD 85장 5번·127장 3)은 C.549 에 없앴다 — 모험 중 마주침 확인 창 + 머리 줄 남은 시간 칩(GDD 5-5)이 대신한다
     if (notes.length > 0) {
       persist();
       // 방 알림 띠는 방에서만 (C.430: 상태 화면 등 다른 창을 열면 숨긴다 — 내용을 가리지 않게). 그 사이 방을 떠났으면 띄우지 않는다
@@ -2225,6 +2254,12 @@ export function startApp(host: HTMLElement): void {
       } } : {}),
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
+      // 우라하라 마주침 (GDD 5-5, C.549): 걷기 화면이 칸마다 굴릴 재료(와 있나)를 묻고, 마주치면 방문을 세우고 바로 저장
+      wanderer: save ? {
+        name: marketOf(faction).props.wanderer,
+        ctx: () => ({ at: Date.now(), here: !!save && wandererHere(save) }),
+        onMeet: (m) => { if (save) { meetWanderer(save, exp, m); saveProgress(exp); } },
+      } : undefined,
       openHelp: (onClose) => openHelp('expedition', false, onClose),
       // 걷기 중 가방 (GDD 144장 3 + 212장 1·2): 회복 물건은 다 보이지만 쓰는 것은 소모품 칸에 끼운 1개만, 바퀴당 1번(전투에서 썼어도) — 쓰면 원정 체력이 차고 바로 저장
       openBag: (onClose) => {

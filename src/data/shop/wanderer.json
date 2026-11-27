@@ -1,5 +1,10 @@
 {
   "provisional": true,
+  "text": {
+    "meet": "{name}과(와) 마주쳤습니다!",
+    "meetOk": "확인",
+    "chipLabel": "{name} 남은 시간 {time}"
+  },
   "items": [
     { "id": "w-snack-crate", "name": "작은 먹이 상자", "grade": "normal", "kind": "food", "food": "snack", "category": "food" },
     { "id": "w-reroll-pair", "name": "다시 뽑기권 묶음", "grade": "normal", "kind": "reroll", "category": "consumable" },

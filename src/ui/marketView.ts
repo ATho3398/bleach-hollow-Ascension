@@ -5,7 +5,7 @@
 import { artUrls } from '../data/art/manifest';
 import { fixParticles } from '../engine/josa';
 import { marketOf, roomOf, MARKET_SPOTS, type FactionConfig, type MarketSpot } from '../engine/faction';
-import { artSkinOf, artTierIndexOf, type SaveData } from '../game';
+import { artSkinOf, artTierIndexOf, wandererHere, type SaveData } from '../game';
 import type { ShopKind } from '../data/shop';
 import { el, mountApp } from './bha/dom';
 import type { Device, SelectItem } from './bha/device';
@@ -29,20 +29,21 @@ export interface MarketHandlers {
 export const MARKET_CHAR_DX = 13;
 
 /** 지금 장터에 서 있는 자리: 우라하라는 와 있을 때만 (GDD 127장 2). 온천은 월드맵 장소로 옮겨 장터에 없다 (GDD 153장 1 — 이름 market.props.spa 만 남김) */
-export function marketSpots(save: Pick<SaveData, 'shared'>): MarketSpot[] {
-  return MARKET_SPOTS.filter((p) => p !== 'spa' && (p !== 'wanderer' || save.shared.wanderer.visit !== null));
+export function marketSpots(save: Pick<SaveData, 'shared'>, nowMs: number = Date.now()): MarketSpot[] {
+  const here = wandererHere(save, nowMs);
+  return MARKET_SPOTS.filter((p) => p !== 'spa' && (p !== 'wanderer' || here));
 }
 
 export function marketView(dev: Device, faction: FactionConfig, save: SaveData, hd: MarketHandlers): void {
   const mk = marketOf(faction);
   const room = roomOf(faction);
-  const here = save.shared.wanderer.visit !== null;
+  const here = wandererHere(save);
 
   // ── 위: 왼쪽 위 작은 이름 판만 (v2 S03 — 제목·설명 문단 띠 없음, 장면이 화면 전체). 우라하라 소식은 와 있으면 그 이름표 안 '왔다' 배지, 문장은 판 툴팁
   //    (나가기는 장면 안 월드맵 물건 — GDD 158장 3) ──
   const hud = el('header', 'bha-room__hud bha-market__hud');
   const title = el('h1', 'bha-plate bha-market__title', mk.name);
-  title.title = fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 다음 모험에서 돌아오면 떠난다.` : `${mk.props.wanderer}은(는) 모험을 돌다 보면 가끔 들른다.`);
+  title.title = fixParticles(here ? `${mk.props.wanderer}이(가) 와 있다. 마주친 뒤 15분이 지나면 떠난다.` : `${mk.props.wanderer}은(는) 모험을 돌다 보면 가끔 마주친다.`);
   hud.append(title);
 
   // ── 장면: 방과 같은 물건 단추·바닥 배치 ──

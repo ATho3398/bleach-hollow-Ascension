@@ -11,8 +11,9 @@ import { TRADE_CURRENCY_NAME } from '../data/economy';
 import { getTrait, traitName } from '../data/traits';
 import {
   abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
-  type PendingBattle, type StepEvent,
+  type PendingBattle, type StepEvent, type WandererMeet, type WandererMeetCtx,
 } from '../engine/expedition';
+import { WANDERER_TEXT } from '../data/shop';
 import { BLOCK_WORDS, eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
@@ -65,6 +66,9 @@ export interface ExpeditionViewHandlers {
   openBag?: (onClose: () => void) => void;
   /** 바퀴 끝 창 소모품 칸 (GDD 212장 3): 머리 줄 버튼 글(short)·상태 한 줄(title) — change 는 고르기 창을 열고, 바꾸면 after 를 부른다(창 다시 그림). 없으면 줄 없음 */
   lapItem?: { line: () => string; short: () => string; filled: () => boolean; canChange: () => boolean; change: (after: () => void) => void };
+  /** 우라하라 마주침 (GDD 5-5, C.549): name = 종족 설정 이름, ctx = 칸마다 굴리기 전에 묻는 재료(실제 시각·이미 와 있나 — 시각은 부른 쪽이 잰다, 이 화면 시계는 단조 시계),
+   *  onMeet = 마주쳤다(방문 세우기·저장). 없으면 굴리지 않는다 */
+  wanderer?: { name: string; ctx: () => WandererMeetCtx; onMeet: (m: WandererMeet) => void };
 }
 
 const EX = BALANCE.expedition;
@@ -188,29 +192,54 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
   let nearMsg: string | null = null;
 
   function tick(): void {
-    const ev = advance(exp);
+    const w = h.wanderer;
+    const ev = advance(exp, w?.ctx());
     if (!ev) return resumeClock();
     const events = drainEvents(exp);
+    let met: WandererMeet | null = null;
     for (const e of events) {
+      if (e.kind === 'wanderer-meet') met = { lap: e.lap, cell: e.cell, at: e.at };
       if (e.kind === 'evolution-near') nearMsg = faction.evolutionNearText[e.level - 1] ?? faction.evolutionNearText[0];
       // 뼈 표식/수련 말뚝 승리 노력치 (C.124): 다음 걷는 칸 말풍선
       else if (e.kind === 'tile-ev') nearMsg = e.amount > 0 ? `${statName(e.stat, faction.id)} 노력치 +${e.amount}` : `${statName(e.stat, faction.id)} 노력치가 상한이다`;
     }
-    if (events.some((e) => e.kind === 'breakthrough')) {
-      // 폭주(호로화) 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
+    const go = (): void => {
+      if (events.some((e) => e.kind === 'breakthrough')) {
+        // 폭주(호로화) 연출이 화면을 덮는다. [계속]을 누르면 이 원정 화면을 다시 붙이고 이어간다
+        away = true;
+        clock.cancel();
+        const stage = main.parentElement!;
+        h.onBreakthrough(() => {
+          if (dead) return;
+          root.replaceChildren(stage);
+          away = false;
+          lastWatch = monoNow();
+          handle(ev);
+        });
+        return;
+      }
+      handle(ev);
+    };
+    if (met && w) {
+      // 우라하라 마주침 (GDD 5-5, C.549): 방문을 세우고(15분) 걷기를 멈춘 채 확인 창 — [확인] 또는 5초 뒤 자동 확인(기기 ✓·뒤로도 확인), 그 뒤 이 칸을 그대로 이어 간다
+      w.onMeet(met);
       away = true;
       clock.cancel();
-      const stage = main.parentElement!;
-      h.onBreakthrough(() => {
-        if (dead) return;
-        root.replaceChildren(stage);
+      let done = false;
+      const resume = (): void => {
+        if (done || dead) return;
+        done = true;
         away = false;
         lastWatch = monoNow();
-        handle(ev);
+        go();
+      };
+      confirmDialog({
+        title: fixParticles(WANDERER_TEXT.meet.replace('{name}', w.name)), single: true, yes: WANDERER_TEXT.meetOk, cls: 'bha-wmeet',
+        autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds, onYes: resume, onCancel: resume,
       });
       return;
     }
-    handle(ev);
+    go();
   }
 
   function handle(ev: StepEvent): void {

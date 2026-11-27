@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 169; // C.536 (GDD 8-7 v6.196 소로 여우불 재설계, 사용자 2026-11-24 — provisional): evoUniques t4:fire:physical hollow — 화상 문턱(여우불 5개 이상) 폐기 → 여우불 1개 이상 + 불 블록 = 화상(여우불 개수 × burn 0.03 → 0.005, 노력치 기울기 burnGrow 48 → 18), 5개 이상 + 이미 화상 = 센 화상 burnBoost(= burn × 2) 신설, 레스렉시온 burn 0.12 → 0.0075·burnBoost 0.015(옛 해방 burnGrow 덮어쓰기 삭제 — 평소 기울기 그대로, 다 키운 해방 = 다 키운 평소 ×1.5 C.527 원칙)
+export const BALANCE_VERSION = 170; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27 — provisional): provisional.wanderer.perLap 0.001 삭제 → meetChance 0.01(칸마다)·meetChanceFromLap3 0.03·meetFromLap 3·stayMinutes 15·confirmSeconds 5. 전투 수치 그대로
+// 이전: BALANCE_VERSION = 169; // C.536 (GDD 8-7 v6.196 소로 여우불 재설계, 사용자 2026-11-24 — provisional): evoUniques t4:fire:physical hollow — 화상 문턱(여우불 5개 이상) 폐기 → 여우불 1개 이상 + 불 블록 = 화상(여우불 개수 × burn 0.03 → 0.005, 노력치 기울기 burnGrow 48 → 18), 5개 이상 + 이미 화상 = 센 화상 burnBoost(= burn × 2) 신설, 레스렉시온 burn 0.12 → 0.0075·burnBoost 0.015(옛 해방 burnGrow 덮어쓰기 삭제 — 평소 기울기 그대로, 다 키운 해방 = 다 키운 평소 ×1.5 C.527 원칙)
 // 이전: BALANCE_VERSION = 168; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종 — 수치 표는 그대로, 특성 데이터만): 혈·독 조·탄·교(계열 단계 기술) → 혈 블록·독 블록 1종(같은 블록끼리 체인, 단계 배율 = 공용 체인 배율, 위력 4.2회분 그대로)
 // 이전: BALANCE_VERSION = 167; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23 — provisional): evolution.specialPaths 신설(혈 = 그 단계 혈 블록 10개 흡수 + 빈사로 귀환 1회 / 독 = 그 단계 독 블록 10개 흡수 + 독 지속 피해로 적 처치 3회). 옛 '혈·독 장착 최다(동률 포함)면 혈·독 진화체' 규칙은 없어짐 — 조건을 못 채우면 3단계 속성을 잇는다
 // 이전: BALANCE_VERSION = 166; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — 전부 provisional): combat.foeHpBands 신설(허무 블록 적 체력 구간 배율 100~80% ×0.6 · 80~60 ×0.75 · 60~40 ×0.9 · 40~20 ×1.2 · 20~0 ×1.6) · foeExecute 신설(허무 적 처형: 내 체력 일반 3%·강적 5%·보스 7% 이하, 6초마다, 원 1.2초·판정 ±0.15초, 막으면 그 적 일반 공격 30% 피해(체력 1 하한)·적 1초 스턴·스턴 중 받는 피해 ×1.2) · specialEnemies.base 0.1 신설(★1~2 일반 칸 0 → 0.1) · evolution.hidden voidMaxDeferrals 삭제 → void { element kyo · absorbs 10 · deferrals 3 } · evoUniques h4:void hollow silenceSeconds 8·silenceLine 0.03(적막 블록). 적 체력·공격 수치 그대로.
@@ -1347,12 +1348,18 @@ export const BALANCE = {
        *  그림은 그대로 재생 배율만 바꾸고(실제 동작 길이 ÷ 기준 길이), 타격 시각도 같은 배율 — 엔진(평타 멈춤·타격 틱)과 화면(동작·이펙트 재생)이 같은 값. 몸 그림이 없는 몸·noMotion 블록은 0 그대로 */
       motion: { fastMax: 1.5, basic: { total: 0.6, hit: 0.3 }, block: { total: 1.4, hit: 0.8 }, blockLength: { default: [0.8, 1.0, 1.2], byTier: {} } } as { fastMax: number; basic: { total: number; hit: number }; block: { total: number; hit: number }; blockBy?: Record<string, { total: number; hit: number }>; blockLength?: { default: readonly number[]; byTier?: Record<string, readonly number[]> }; tier?: number },
     },
-    /** 우라하라 (GDD 85장 5번, C.140 provisional — 사용자 "1바퀴 돌 떄마다 우라하라 뜰 확률 가중 … 한 3~50바퀴 돌아야 뜨게", 수치는 코드 판단).
-     *  원정 바퀴를 마칠 때마다 '지난 방문 뒤 바퀴 수 k' 가 1 오르고 그 바퀴에 올 확률 = min(1, perLap × k) (선형 가중 — 앞 바퀴는 거의 0).
-     *  perLap 0.001 → 평균 39.3바퀴(30바퀴 안 37%·50바퀴 안 73%, tests/c140). 오면 원정에서 돌아온 방에 머물고 다음 원정 귀환 때 떠난다.
+    /** 우라하라 (GDD 5-5, C.549 provisional — 사용자 2026-11-27 "모험하다가 한 스테이지당 1%? 확률로 우라하라 만나게 하고 … 모험 3바퀴째부턴 스테이지당 우라하라 만날 확률 높이고", 3% 값은 마스터 정함).
+     *  자유 모험에서 길 한 칸에 들어설 때마다 meetChance(3바퀴째부터 meetChanceFromLap3)로 마주친다(펫 seekWanderer 배율을 곱함, 최대 1). 이미 와 있는 동안·튜토리얼·스토리는 안 굴린다.
+     *  마주친 순간(실제 시각)부터 stayMinutes 분 동안 시장에 와 있고 그 뒤 떠난다(옛 C.140 '바퀴마다 perLap × k · 다음 원정 귀환 때 떠남'은 폐기).
+     *  마주침 확인 창은 confirmSeconds 초 뒤 자동 확인.
      *  티어(화면에 안 보임) = tierWeights 로 뽑고, 품목 stockSize 개를 그 티어의 등급표(gradeWeights)로 뽑는다(같은 품목 중복 없음) */
     wanderer: {
-      perLap: 0.001,
+      meetChance: 0.01,
+      meetChanceFromLap3: 0.03,
+      /** meetChanceFromLap3 를 쓰기 시작하는 바퀴 */
+      meetFromLap: 3,
+      stayMinutes: 15,
+      confirmSeconds: 5,
       stockSize: 4,
       tierWeights: [55, 30, 12, 3] as number[],
       /** 티어(1~4)별 품목 등급 확률(%): normal · rare · epic · legendary */
@@ -1406,7 +1413,7 @@ export const BALANCE = {
     tilePresets: { max: 5, nameMax: 12 },
     /** 펫 (GDD 90장, C.144 마스터 초안 provisional — 이름·수치 모두 가칭). 1마리만 데리고 다닌다.
      *  효과 = 1단계 값 × (1 + affinityStep × (친밀도 − 1)) → 5단계 2배. 친밀도 = 데리고 다닌 원정 바퀴(대기 모드 바퀴 포함) 누계가 affinityLaps 에 닿을 때마다 +1.
-     *  gold = 원정 전투·보스 골드 +8% · belly = 원정 허기 오름 −15% · guard = 전투 시작 보호막(최대 체력 4%) · seekWanderer = 우라하라 바퀴 확률 +25% · seekTile = 바퀴 끝 타일 보상 +1장 확률 10%.
+     *  gold = 원정 전투·보스 골드 +8% · belly = 원정 허기 오름 −15% · guard = 전투 시작 보호막(최대 체력 4%) · seekWanderer = 우라하라 마주칠 확률 +25%(칸마다 확률 × 1.25) · seekTile = 바퀴 끝 타일 보상 +1장 확률 10%.
      *  얻기: 원정 바퀴 끝 lapDropChance(2%, 이미 가진 펫이면 dupGold 골드) · 우라하라 전설 품목(w-pet-egg) · 첫 진화 때 무작위 1마리 선물 */
     pets: {
       effects: { gold: 0.08, belly: 0.15, guard: 0.04, seekWanderer: 0.25, seekTile: 0.1 },

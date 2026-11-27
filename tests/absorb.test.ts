@@ -716,7 +716,7 @@ describe('저장 구조', () => {
     expect('stability' in s.nest).toBe(false);
     expect(s.runLog.absorbs[0]).toMatchObject({ traitId: null, lap: 0, element: null, lineageId: 'lineage-a' });
     expect(s.runLog.runs[0]).toMatchObject({ gainedTraits: [], lostTraits: [], riskPeak: 0, breakthrough: false });
-    expect(migrateSave({ ...old, meta: { format: 99 } })).toBeNull();
+    expect(migrateSave({ ...old, meta: { format: SAVE_FORMAT_VERSION + 1 } })).toBeNull();
   });
 });
 

@@ -24,3 +24,8 @@
 .bha-shoppick__list { grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-3); } /* = 공용 창 버튼 줄 간격 (C.296 전에는 화면 G 규칙이 sp-2 를 덮었다) */
 /* 사용자 2026-11-03 캡처 점검: 캐릭터는 물건 그림 앞 (시안 S03 의 '지도 뒤'보다 사용자 말이 먼저) */
 .bha-market__char { z-index: 2; }
+/* 우라하라 남은 시간 칩 (GDD 5-5, C.549): 와 있는 동안 화면 머리 줄 오른쪽 — 얼굴 도트 + 'mm:ss'. 공용 칩 모양에 황동 테만 (새 색 없음) */
+.bha-app > .bha-wchip { position: absolute; top: var(--bha-sp-4); right: max(var(--bha-gutter), env(safe-area-inset-right, 0px)); z-index: var(--bha-z-sticky); gap: var(--bha-sp-2); padding-left: var(--bha-sp-2); border-color: var(--bha-tint-brass); color: var(--bha-text-1); font-variant-numeric: tabular-nums; }
+button.bha-wchip { cursor: pointer; font: inherit; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
+.bha-wchip.is-static { pointer-events: none; }
+.bha-wchip__face { width: 18px; height: 18px; image-rendering: pixelated; flex: none; }

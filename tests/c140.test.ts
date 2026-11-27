@@ -5,10 +5,10 @@ import { getFaction } from '../src/data/factions';
 import { TITLES, titleName } from '../src/data/titles';
 import { ITEM_CATEGORIES, itemCategoryOf, WANDERER_ITEMS } from '../src/data/shop';
 import { createExpedition, beginPlanning, placeTile } from '../src/engine/expedition';
-import { advanceWanderer, expectedLapsToVisit, newWandererState, rollWandererStock, sanitizeWanderer, wandererChance, wandererGradeOdds } from '../src/engine/wanderer';
+import { newWandererState, rollWandererStock, sanitizeWanderer, wandererGradeOdds, wandererStayMs } from '../src/engine/wanderer';
 import { idleActiveHours, idleYield, offlineHours } from '../src/engine/idle';
 import { createRng, nextFloat } from '../src/engine/rng';
-import { migrateSave, newSaveData, recordExpedition, settleIdle, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
+import { meetWanderer, migrateSave, newSaveData, recordExpedition, settleIdle, MIN_LOADABLE_SAVE_FORMAT, SAVE_FORMAT_VERSION, type SaveData } from '../src/game';
 import { buyShopItem, buyWandererItem, wandererRows } from '../src/shop';
 import { equipInventoryItem, inventoryOf, unequipInventoryItem, useInventoryItem } from '../src/inventory';
 import { applyTilePreset, cellsOfPlan, deleteTilePreset, ownedTileList, placementLimitOf, sanitizeTilePresets, saveTilePreset, tilePresetsFor } from '../src/tilePresets';
@@ -46,31 +46,6 @@ describe('85장 4번 칭호 도감 에스파다 No.1~10', () => {
 });
 
 describe('85장 5번 우라하라', () => {
-  it('바퀴마다 가중: 앞 바퀴는 거의 0, 평균 30~50바퀴, 30바퀴 안에 올 확률은 절반 미만', () => {
-    expect(wandererChance(1)).toBeLessThan(0.002);
-    expect(wandererChance(10)).toBeCloseTo(WX.perLap * 10);
-    const mean = expectedLapsToVisit();
-    expect(mean).toBeGreaterThanOrEqual(30);
-    expect(mean).toBeLessThanOrEqual(50);
-    let surv = 1;
-    for (let k = 1; k <= 30; k++) surv *= 1 - wandererChance(k);
-    expect(1 - surv).toBeLessThan(0.5);
-    // 몬테카를로로도 평균 30~50
-    const rng = createRng(42);
-    let sum = 0;
-    const N = 3000;
-    for (let i = 0; i < N; i++) {
-      const st = newWandererState();
-      let laps = 0;
-      while (!st.visit) {
-        advanceWanderer(st, 1, { at: 0, runId: 0 }, () => nextFloat(rng));
-        laps++;
-      }
-      sum += laps;
-    }
-    expect(sum / N).toBeGreaterThan(30);
-    expect(sum / N).toBeLessThan(50);
-  });
   it('숨은 티어마다 등급표가 다르다: 티어 1 은 전설 없음, 티어 4 는 보통 없음. 품목 4칸·중복 없음·상인 전용', () => {
     expect(wandererGradeOdds(1).legendary).toBe(0);
     expect(wandererGradeOdds(4).normal).toBe(0);
@@ -88,15 +63,13 @@ describe('85장 5번 우라하라', () => {
     // 상인 품목은 골드 상점 목록에 없다
     expect(WANDERER_ITEMS.every((w) => buyShopItem(newSaveData('hollow', 1), H, w.id).ok === false)).toBe(true);
   });
-  it('원정 귀환 때 바퀴를 굴려 오면 런 로그 arrive, 사면 효과·buy, 다음 귀환 때 leave', () => {
+  it('C.549: 모험 중 마주치면 arrive(바퀴·칸), 사면 효과·buy, 15분이 지난 뒤 귀환하면 leave (옛 바퀴 굴림 등장은 폐기)', () => {
     const s = newSaveData('hollow', 1);
-    s.shared.wanderer.lapsSince = 2000; // 다음 바퀴 확률 1
     recordExpedition(s, ended(s, 3), 100);
-    const v = s.shared.wanderer.visit!;
-    expect(v).not.toBeNull();
+    expect(s.shared.wanderer.visit).toBeNull(); // 귀환으로는 오지 않는다
+    const v = meetWanderer(s, { seed: 7, runId: 0 }, { lap: 2, cell: 4, at: 100 })!;
     expect(v.stock).toHaveLength(WX.stockSize);
-    expect(s.runLog.wanderer).toEqual([{ at: 100, factionId: 'hollow', kind: 'arrive', tier: v.tier, runId: 0, waited: 2001 }]);
-    expect(s.shared.wanderer.lapsSince).toBe(2); // 온 뒤 남은 바퀴는 다음 방문 쪽으로 센다
+    expect(s.runLog.wanderer).toEqual([{ at: 100, factionId: 'hollow', kind: 'arrive', tier: v.tier, runId: 0, lap: 2, cell: 4 }]);
     s.shared.tradeCoins = 10_000;
     s.tiles.unlocked = true;
     const rows = wandererRows(s, H);
@@ -107,16 +80,17 @@ describe('85장 5번 우라하라', () => {
     expect(s.shared.tradeCoins).toBe(10_000 - first.price!);
     expect(buyWandererItem(s, H, first.id, 201)).toEqual({ ok: false, reason: '이미 팔렸다' });
     expect(s.runLog.wanderer.at(-1)).toEqual({ at: 200, factionId: 'hollow', kind: 'buy', tier: v.tier, itemId: first.id, price: first.price });
-    s.shared.wanderer.lapsSince = 0;
-    recordExpedition(s, ended(s, 1), 300);
-    expect(s.runLog.wanderer.find((x) => x.kind === 'leave')).toMatchObject({ at: 300, unsold: WX.stockSize - 1 });
+    recordExpedition(s, ended(s, 1), 300); // 15분 안 — 그대로
+    expect(s.shared.wanderer.visit).not.toBeNull();
+    recordExpedition(s, ended(s, 1), 100 + wandererStayMs());
+    expect(s.shared.wanderer.visit).toBeNull();
+    expect(s.runLog.wanderer.find((x) => x.kind === 'leave')).toMatchObject({ at: 100 + wandererStayMs(), unsold: WX.stockSize - 1 });
   });
-  it('같은 원정 시드 = 같은 결과 (테스트가 흔들리지 않게 원정 시드로 굴린다)', () => {
+  it('같은 원정 시드·바퀴·칸 = 같은 품목 (원정 전용 난수로 굴린다)', () => {
     const a = newSaveData('hollow', 1);
     const b = newSaveData('hollow', 1);
-    a.shared.wanderer.lapsSince = b.shared.wanderer.lapsSince = 300;
-    recordExpedition(a, ended(a, 5, 99), 1);
-    recordExpedition(b, ended(b, 5, 99), 1);
+    meetWanderer(a, { seed: 99, runId: 1 }, { lap: 3, cell: 5, at: 1 });
+    meetWanderer(b, { seed: 99, runId: 1 }, { lap: 3, cell: 5, at: 1 });
     expect(a.shared.wanderer).toEqual(b.shared.wanderer);
   });
   it('상인 소모품은 보관함으로, 영혼 정수 = 광기 −100·컨디션 가득·쇠약 해소', () => {
@@ -134,8 +108,8 @@ describe('85장 5번 우라하라', () => {
   });
   it('상인 상태 저장 정리: 모르는 품목은 버리고, 칸이 없으면 방문 없음', () => {
     expect(sanitizeWanderer({ lapsSince: -3, visit: { at: 5, runId: 2, tier: 9, stock: [{ itemId: 'x' }, { itemId: 'w-calm-deep', price: 140, sold: true }] } }))
-      .toEqual({ lapsSince: 0, visit: { at: 5, runId: 2, tier: 4, stock: [{ itemId: 'w-calm-deep', price: 140, sold: true }] } });
-    expect(sanitizeWanderer({ lapsSince: 4, visit: { stock: [{ itemId: 'nope' }] } })).toEqual({ lapsSince: 4, visit: null });
+      .toEqual({ visit: { at: 5, runId: 2, tier: 4, stock: [{ itemId: 'w-calm-deep', price: 140, sold: true }] } });
+    expect(sanitizeWanderer({ lapsSince: 4, visit: { stock: [{ itemId: 'nope' }] } })).toEqual({ visit: null });
     expect(sanitizeWanderer(null)).toEqual(newWandererState());
   });
 });
@@ -308,12 +282,12 @@ describe('86장 보관함', () => {
 
 describe('세이브 형식 41→42 (61장: 마이그레이션 없음)', () => {
   it('형식·문턱 44(C.150 장비로 올림), 프리셋·보관함 소모품·상인·런 로그 wanderer/idle 이 저장·불러오기로 남고 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([98, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([99, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181: 먹이 한도로 49. C.167: 해방 칸 폐지로 45
     const s = newSaveData('hollow', 1);
     s.tiles.collection = { 'rest-a': 1 };
     saveTilePreset(s, 'p', [null, 'rest-a', ...Array(10).fill(null)]);
     s.shared.items = { calm: 3 };
-    s.shared.wanderer = { lapsSince: 7, visit: { at: 1, runId: 2, tier: 3, stock: [{ itemId: 'w-calm-deep', price: 140, sold: false }] } };
+    s.shared.wanderer = { visit: { at: 1, runId: 2, tier: 3, stock: [{ itemId: 'w-calm-deep', price: 140, sold: false }] } };
     s.runLog.idle.push({ at: 1, factionId: 'hollow', from: 0, hours: 1, activeHours: 1, share: 0.1, laps: 4, steps: 48, gold: 88, ev: 1, tiles: [], food: 0, gear: 0 });
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.tiles.presets).toEqual(s.tiles.presets);

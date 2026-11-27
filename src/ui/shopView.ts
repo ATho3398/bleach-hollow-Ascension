@@ -388,7 +388,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     const grid = sellParts ? sellParts[2]! : itemGrid(devices ?? shown.map(cardOf), empty);
     const note = shopUi.tab === 'wanderer'
       ? [(() => {
-        const p = h('p', 'bha-shop__note', '특별한 물건은 우라하라만 판다. 다음 모험에서 돌아오면 떠난다.');
+        const p = h('p', 'bha-shop__note', '특별한 물건은 우라하라만 판다. 마주친 뒤 15분이 지나면 떠난다.');
         if (WANDERER_PROVISIONAL) p.append(' ', provisionalTag('임시 품목'));
         return p;
       })()]

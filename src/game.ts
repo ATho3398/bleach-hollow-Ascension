@@ -56,7 +56,7 @@ import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
 import { bossKey, bossRushReward, newSpecialState, rollWeek, sanitizeSpecial, spendEntry, weeklyKey, weeklyReward, type SpecialDungeonState } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
-import { advanceWanderer, newWandererState, sanitizeWanderer, type WandererState } from './engine/wanderer';
+import { newWandererState, rollWandererStock, rollWandererTier, sanitizeWanderer, wandererCellRng, wandererHereAt, wandererLeaveAt, type WandererState, type WandererVisit } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
 import { createRng, nextFloat } from './engine/rng';
 import { gainHogyokuMaterial, materialHave, spendMaterial } from './engine/hogyokuMaterials';
@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
+export const SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
+// 이전: SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
 // 이전: SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
 // 이전: SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
 // 이전: SAVE_FORMAT_VERSION = 95; // C.516 (GDD 8-2 v6.154 허무 = 적 전용, 사용자 2026-11-21): 필드 모양은 그대로, 값 규칙 — 빌드(트랙·전투 기반별·원정 중간 저장)에 허무(kyo) 블록이 없고 허무 강화도 없다. 94 → 95 변환 SAVE_MIGRATIONS[94](허무 블록 지우고 칸은 비움, 허무 강화 n → 노멀 강화 +n — provisional 마스터 결정. 바시오·허곡 몸·런 로그는 그대로).
@@ -1437,7 +1438,7 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   settlePets(save, exp, nowMs);
   settleGear(save, exp, nowMs);
   settleSortieFinds(save, exp);
-  settleWanderer(save, exp, nowMs);
+  settleWanderer(save, nowMs);
   const end = applyExpeditionEnd(save.nest, exp, nowMs);
   // 돌봄 상태 (GDD 102장·9장): 패배 = 쓰러짐, 귀환으로 풀린 쇠약·피곤
   if (end.collapsed) logVital(save, { at: nowMs, kind: 'collapse', cause: 'defeat', runId: exp.runId });
@@ -1524,22 +1525,39 @@ function settleTrainingTickets(save: SaveData, exp: ExpeditionState, nowMs: numb
   }
 }
 
-/** 우라하라 (GDD 85장 5번): 원정 귀환 때 — 와 있던 상인은 떠나고(런 로그 leave), 이번 원정에서 마친 바퀴마다 가중 확률로 굴린다(오면 arrive).
- *  굴림은 원정 시드로(같은 원정 = 같은 결과). 첫 원정 튜토리얼은 세지 않는다 */
-function settleWanderer(save: SaveData, exp: ExpeditionState, nowMs: number): void {
-  const w = save.shared.wanderer;
-  const log = save.runLog.wanderer;
-  if (w.visit) {
-    log.push({ at: nowMs, factionId: save.factionId, kind: 'leave', tier: w.visit.tier, unsold: w.visit.stock.filter((x) => !x.sold).length });
-    w.visit = null;
-  }
-  if (exp.tutorial) return;
-  const rng = createRng((exp.seed ^ 0x5eed77a1) >>> 0);
-  const got = advanceWanderer(w, exp.lapsCompleted, { at: nowMs, runId: exp.runId }, () => nextFloat(rng), 1 + petBonus(exp.pet, 'seekWanderer'),
-    // 펫이 열리기 전(첫 환생 전)에는 펫 품목이 목록에 안 나온다 (GDD 241-0, C.408)
-    petsUnlocked(save) ? undefined : (id) => getWandererItem(id)?.kind === 'pet');
-  const visit = save.shared.wanderer.visit;
-  if (got && visit) log.push({ at: nowMs, factionId: save.factionId, kind: 'arrive', tier: visit.tier, runId: exp.runId, waited: got.waited });
+/** 우라하라 (GDD 5-5, C.549): 원정 귀환 때는 머무는 시간이 끝났으면 떠나보내기만 한다 (등장은 모험 중 마주침 — meetWanderer) */
+function settleWanderer(save: SaveData, nowMs: number): void {
+  expireWanderer(save, nowMs);
+}
+
+/** 우라하라가 지금 와 있나 (GDD 5-5): 방문이 있고 마주친 뒤 15분 전 */
+export function wandererHere(save: Pick<SaveData, 'shared'>, nowMs: number = Date.now()): boolean {
+  return wandererHereAt(save.shared.wanderer, nowMs);
+}
+
+/** 머무는 시간이 끝났으면 떠나보낸다 (GDD 5-5): 런 로그 leave(at = 떠난 시각). 떠났으면 true — 부른 쪽이 저장·화면 갱신 */
+export function expireWanderer(save: SaveData, nowMs: number = Date.now()): boolean {
+  const v = save.shared.wanderer.visit;
+  if (!v || nowMs < wandererLeaveAt(v)) return false;
+  save.runLog.wanderer.push({ at: wandererLeaveAt(v), factionId: save.factionId, kind: 'leave', tier: v.tier, unsold: v.stock.filter((x) => !x.sold).length });
+  save.shared.wanderer.visit = null;
+  return true;
+}
+
+/** 모험 중 우라하라와 마주쳤다 (GDD 5-5, C.549 — 엔진 이벤트 wanderer-meet 를 받은 화면이 부른다): 이 순간부터 15분 시장에 와 있다.
+ *  품목은 기존 규칙 그대로 오는 순간 뽑는다(원정 시드·바퀴·칸으로 재현 가능, 펫 해금 전 펫 알 빼기). 런 로그 wanderer arrive(lap·cell).
+ *  이미 와 있으면 아무것도 안 하고 null (엔진이 이미 막지만 한 번 더) */
+export function meetWanderer(save: SaveData, exp: Pick<ExpeditionState, 'seed' | 'runId'>, m: { lap: number; cell: number; at: number }): WandererVisit | null {
+  expireWanderer(save, m.at);
+  if (save.shared.wanderer.visit) return null;
+  const rand = wandererCellRng(exp.seed, m.lap, m.cell, 1);
+  const tier = rollWandererTier(rand);
+  // 펫이 열리기 전(첫 환생 전)에는 펫 품목이 목록에 안 나온다 (GDD 241-0, C.408)
+  const stock = rollWandererStock(tier, rand, petsUnlocked(save) ? undefined : (id) => getWandererItem(id)?.kind === 'pet');
+  const visit: WandererVisit = { at: m.at, runId: exp.runId, tier, stock };
+  save.shared.wanderer.visit = visit;
+  save.runLog.wanderer.push({ at: m.at, factionId: save.factionId, kind: 'arrive', tier, runId: exp.runId, lap: m.lap, cell: m.cell });
+  return visit;
 }
 
 /** 펫 정산 (GDD 90장): 바퀴 끝 보상 펫을 보관함에(이미 가졌으면 골드), 데리고 간 펫에 마친 바퀴를 친밀도로. 런 로그 pets */
@@ -2679,7 +2697,17 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   96: (save) => migrateSpecialPathCounters(save),
   // 97 → 98 (C.533, GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종): 옛 혈·독 조·탄·교를 혈 블록·독 블록 하나로 합친다(강화 횟수 그대로) — 95 → 96 허무와 같은 변환(속성 분기 없음, mergedTraitId 가 가리키는 것 전부)
   97: (save) => migrateMergedBlocks(save),
+  // 98 → 99 (C.549, GDD 5-5 우라하라 = 모험 중 마주침): 바퀴 수 lapsSince 를 지우고, 와 있던 방문은 지금부터 15분 머문다(at = 변환 시각 — 옛 '다음 원정 귀환 때 떠남' 대신)
+  98: (save) => migrateWandererStay(save, Date.now()),
 };
+
+/** 형식 98 → 99 (C.549): shared.wanderer.lapsSince 삭제, 와 있던 방문의 at = nowMs (떠나는 시각 = nowMs + 15분). 슬롯 공유라 트랙과 상관없이 한 번 */
+export function migrateWandererStay(save: SaveData, nowMs: number): void {
+  const sh = (save as unknown as { shared?: unknown }).shared;
+  if (!isRec(sh) || !isRec(sh.wanderer)) return;
+  delete sh.wanderer.lapsSince;
+  if (isRec(sh.wanderer.visit)) sh.wanderer.visit.at = nowMs;
+}
 
 /** 형식 96 → 97 (C.532): 진화 상태 collapsedReturns 를 채운다(트랙 + 원정 중간 저장의 진화 사본 — 귀환 정산이 사본으로 덮어쓰므로 같이). 0 이면 칸을 만들지 않는다(없음 = 0).
  *  빈사 귀환 수 = 지금 단계에 들어선 진화(런 로그 마지막 진화 기록의 toTier = 지금 단계) 뒤의 패배 빈사 기록(vitals collapse·defeat) 수 — 그 진화 기록이 없으면(1단계·환생 직후·옛 기록) 0.
