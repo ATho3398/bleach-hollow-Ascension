@@ -3,7 +3,6 @@
   "text": {
     "meet": "{name}과(와) 마주쳤습니다!",
     "meetOk": "확인",
-    "meetStay": "{minutes}분 동안 시장에 머문다",
     "chipLabel": "{name} 남은 시간 {time}"
   },
   "items": [

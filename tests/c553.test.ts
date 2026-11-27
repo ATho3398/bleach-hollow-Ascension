@@ -1,12 +1,11 @@
 // C.553 (GDD 5-5 v6.227 마주침 창 꾸밈, 사용자 2026-11-27 "우라하라 조우 ui 우라하라도 좀 띄우고 이쁘게해봐"):
-// 모험 중 우라하라 마주침 확인 창 = 왼쪽 우라하라 도트(prop-wanderer, 픽셀 그대로·등장 때 살짝 튀어 오름, 움직임 줄이기면 없음) + 오른쪽 제목·작은 한 줄('15분 동안 시장에 머문다')·[확인 (5)].
+// 모험 중 우라하라 마주침 확인 창 = 왼쪽 우라하라 도트(prop-wanderer, 픽셀 그대로·등장 때 살짝 튀어 오름, 움직임 줄이기면 없음) + 오른쪽 제목·[확인 (5)].
+// 머묾 안내 문구는 없음(v6.228 사용자 "시장에 머문다 문구 없애").
 // 자동 확인 5초·기기 ✓·뒤로 = 확인 규칙 그대로. bha 토큰만(새 색 없음), 종족 분기 없음
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { BALANCE } from '../src/config/balance';
 import { artUrls } from '../src/data/art/manifest';
 import { WANDERER_TEXT } from '../src/data/shop';
-import { wandererMeetStay } from '../src/ui/bha/wandererChip';
 
 const read = (p: string): string => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const view = read('src/ui/expeditionView.ts');
@@ -17,10 +16,11 @@ const wmeetCss = market.slice(market.indexOf('/* 우라하라 마주침 창 꾸�
 const figCss = comps.slice(comps.indexOf('/* 그림 창 (C.553'), comps.indexOf('.bha-modal__main > :not('));
 
 describe('C.553 우라하라 마주침 창 꾸밈', () => {
-  it('작은 한 줄 = 데이터 문구 + balance 머무는 분 (두 종족 같은 문구)', () => {
-    expect(WANDERER_TEXT.meetStay).toBe('{minutes}분 동안 시장에 머문다');
-    expect(wandererMeetStay(BALANCE.provisional.wanderer.stayMinutes)).toBe('15분 동안 시장에 머문다');
-    expect(wandererMeetStay(20)).toBe('20분 동안 시장에 머문다');
+  it('머묾 안내 문구 없음 (v6.228): 데이터·창 호출 어디에도 \'시장에 머문다\'가 없다', () => {
+    expect(Object.keys(WANDERER_TEXT).sort()).toEqual(['chipLabel', 'meet', 'meetOk']);
+    expect(JSON.stringify(WANDERER_TEXT)).not.toContain('머문다');
+    expect(view).not.toContain('머문다');
+    expect(read('src/ui/bha/wandererChip.ts')).not.toContain('머문다');
   });
 
   it('우라하라 도트 그림이 있다 (prop.wanderer → prop-wanderer.png)', () => {
@@ -29,10 +29,10 @@ describe('C.553 우라하라 마주침 창 꾸밈', () => {
     expect(existsSync(new URL('../public/art/prop-wanderer.png', import.meta.url))).toBe(true);
   });
 
-  it('마주침 창: 그림·작은 한 줄을 넘기고 자동 확인·뒤로 = 확인은 그대로', () => {
+  it('마주침 창: 그림을 넘기고(본문 없음) 자동 확인·뒤로 = 확인은 그대로', () => {
     const call = view.slice(view.indexOf("cls: 'bha-wmeet'") - 200, view.indexOf("cls: 'bha-wmeet'") + 500);
     expect(call).toContain('figure: wandererMeetFigure()');
-    expect(call).toContain('body: wandererMeetStay(BALANCE.provisional.wanderer.stayMinutes)');
+    expect(call).not.toContain('body:');
     expect(call).toContain('autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds');
     expect(call).toContain('onYes: resume, onCancel: resume');
     expect(call).toContain('single: true');

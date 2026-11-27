@@ -1402,12 +1402,12 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - 마주칠 확률(안 와 있을 때): 한 바퀴 11칸 → 1~2바퀴 10.5%/바퀴 · 3바퀴부터 28.5%/바퀴 → 3바퀴 원정 42.7% · 5바퀴 70.7% · 10바퀴 94.5%.
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test 4491 · balance:check 회귀 가드 통과(전투 수치 안 바뀜) · build.
 
-## C.553 — 우라하라 마주침 창 꾸밈: 왼쪽 도트 + 작은 한 줄 (GDD 5-5 v6.227 → v6.228, S-23, 코딩357)
-- **이유**: 사용자 2026-11-27 "우라하라 조우 ui 우라하라도 좀 띄우고 이쁘게해봐" → 마스터AT 5-5 '마주침 창 꾸밈' 줄(v6.227).
-- **창**: C.549 모험 중 확인 창 '우라하라와 마주쳤습니다!' [확인 (5)]를 두 칸 창으로 — 왼쪽 = 우라하라 도트(`prop.wanderer` → `public/art/prop-wanderer.png`, 한 도트 2px = 폭 112px, `image-rendering: pixelated`)가 한 단 어두운 바닥(`--bha-bg-0` + 오른쪽 경계선)에 서고 발이 창 아래 가장자리에 닿는다. 오른쪽 = 제목(머리 띠 없이) + 작은 한 줄 '15분 동안 시장에 머문다'(`--bha-text-3`) + [확인 (5)].
+## C.553 — 우라하라 마주침 창 꾸밈: 왼쪽 도트 (GDD 5-5 v6.228 → v6.229, S-23, 코딩357)
+- **이유**: 사용자 2026-11-27 "우라하라 조우 ui 우라하라도 좀 띄우고 이쁘게해봐" → 마스터AT 5-5 '마주침 창 꾸밈' 줄(v6.227) · 정정 "시장에 머문다 문구 없애"(v6.228 — 처음 넣었던 작은 한 줄 '15분 동안 시장에 머문다'를 데이터째 뺌).
+- **창**: C.549 모험 중 확인 창 '우라하라와 마주쳤습니다!' [확인 (5)]를 두 칸 창으로 — 왼쪽 = 우라하라 도트(`prop.wanderer` → `public/art/prop-wanderer.png`, 한 도트 2px = 폭 112px, `image-rendering: pixelated`)가 한 단 어두운 바닥(`--bha-bg-0` + 오른쪽 경계선)에 서고 발이 창 아래 가장자리에 닿는다. 오른쪽 = 제목(머리 띠 없이, 세로 가운데) + [확인 (5)]. 머묾 안내 문구 없음.
 - **등장 연출**: 도트가 아래에서 올라와 살짝(8px) 넘었다 내려앉음 — `--bha-dur-4`(0.28초), `--bha-dur-1` 뒤 시작. `prefers-reduced-motion` 이면 없음.
 - **공용 창**: `confirmDialog` 새 선택 `figure?: HTMLElement` — 있으면 창 = `.bha-modal--figure`(가로 두 칸: `.bha-modal__figure` | `.bha-modal__main` 제목·본문·내용·버튼), 없으면 옛 창 그대로. 그림 칸은 `aria-hidden`. 규칙(`components.css` 8절)은 토큰만.
-- **문구·데이터**: `src/data/shop/wanderer.json` text.meetStay = '{minutes}분 동안 시장에 머문다'(분 = balance `provisional.wanderer.stayMinutes`). 헬퍼 `wandererMeetFigure()`·`wandererMeetStay()` = `src/ui/bha/wandererChip.ts`. 이름은 그대로 종족 설정 market.props.wanderer, 종족 분기 없음. 자동 확인 5초·기기 ✓·뒤로 = 확인 그대로.
+- **그림 헬퍼**: `wandererMeetFigure()` = `src/ui/bha/wandererChip.ts`(그림 파일이 없으면 글만 있는 옛 창). 문구 데이터는 그대로(meet·meetOk·chipLabel). 이름은 그대로 종족 설정 market.props.wanderer, 종족 분기 없음. 자동 확인 5초·기기 ✓·뒤로 = 확인 그대로.
 - **CSS**: `market.css` 끝 `.bha-wmeet*`(새 색·간격 없음 — 토큰만). 부족한 토큰 없음.
-- **시험**: 새 `tests/c553.test.ts` 6건(문구·분, 그림 있음, 창 호출 선택·자동 확인 그대로, figure 두 칸 구조, 픽셀·연출·움직임 줄이기, 토큰만).
+- **시험**: 새 `tests/c553.test.ts` 6건(머묾 문구 없음, 그림 있음, 창 호출 선택·자동 확인 그대로, figure 두 칸 구조, 픽셀·연출·움직임 줄이기, 토큰만).
 - 캡처 `docs/captures/c553/`(1배 3장, `scripts/c553-proof.cjs`, facts.json): 01 PC 창 · 02 폰(667×375) 창 — 글·그림 안 잘림(창 안·LCD 안 확인) · 03 등장 연출 중간(도트 −8px 떠 있음).

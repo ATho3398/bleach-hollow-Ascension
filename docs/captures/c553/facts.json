@@ -2,7 +2,6 @@
  "errors": [],
  "pc": {
   "title": "우라하라와 마주쳤습니다!",
-  "body": "15분 동안 시장에 머문다",
   "button": "확인 (5)",
   "fig": {
    "loaded": true,
@@ -43,7 +42,6 @@
  },
  "phone": {
   "title": "우라하라와 마주쳤습니다!",
-  "body": "15분 동안 시장에 머문다",
   "button": "확인 (5)",
   "fig": {
    "loaded": true,

@@ -1,5 +1,5 @@
 // C.553 proof (우라하라 마주침 창 꾸밈, GDD 5-5 v6.227): 1배 3장.
-// 01 PC 마주침 창(왼쪽 우라하라 도트 + 제목 + '15분 동안 시장에 머문다' + [확인 (n)]) / 02 폰(작은 가로 667×375) 같은 창 / 03 등장 연출(튀어 오름) 중간
+// 01 PC 마주침 창(왼쪽 우라하라 도트 + 제목 + [확인 (n)], 머묾 문구 없음) / 02 폰(작은 가로 667×375) 같은 창 / 03 등장 연출(튀어 오름) 중간
 // 실행: node scripts/c553-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
@@ -86,8 +86,11 @@ async function shot(browser, url, ctx, name, F, key, mid) {
     });
     await wait(100);
   } else {
-    await wait(900);
+    await page.waitForSelector('.bha-wmeet__fig', { timeout: 3000 });
+    await wait(600);
+    await page.screenshot({ path: path.join(OUT, name) });
     F[key] = await facts(page);
+    return page.context().close();
   }
   await page.screenshot({ path: path.join(OUT, name) });
   await page.context().close();

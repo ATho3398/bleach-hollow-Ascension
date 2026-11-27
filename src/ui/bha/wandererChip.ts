@@ -56,8 +56,3 @@ export function wandererMeetFigure(): HTMLElement | undefined {
   img.draggable = false;
   return img;
 }
-
-/** 마주침 창 제목 아래 작은 한 줄: '15분 동안 시장에 머문다' (분 = balance stayMinutes) */
-export function wandererMeetStay(stayMinutes: number): string {
-  return WANDERER_TEXT.meetStay.replace('{minutes}', String(stayMinutes));
-}
