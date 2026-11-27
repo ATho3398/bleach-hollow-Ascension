@@ -81,7 +81,7 @@ import type { BgmTrack } from '../data/audio/bgm';
 import { BALANCE } from '../config/balance';
 import { idleCounts } from '../engine/idle';
 import { breakthroughView } from './breakthroughView';
-import { abortSummaryLine, resultView } from './resultView';
+import { abortSummaryLine, resultView, type ResultWanderer } from './resultView';
 import { evChipRow, evGains } from './bha/evChips';
 import { expeditionView, setSpeed } from './expeditionView';
 import { lowDepartHp, planView } from './planView';
@@ -112,7 +112,7 @@ import { evolvedArtOf } from './evolvedArt';
 import type { ArtUrls } from '../data/art/manifest';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
-import { wandererChip, type WandererChip } from './bha/wandererChip';
+import { wandererChip, wandererResultLine, type WandererChip } from './bha/wandererChip';
 import { wandererRemainingMs } from '../engine/wanderer';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
@@ -278,7 +278,9 @@ export function startApp(host: HTMLElement): void {
     const inline = root.querySelector<HTMLElement>('.bha-exp__cornerrow, .bha-v2bar, .bha-shop__wallet');
     const host = inline ?? root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
     const id = nav.top?.id ?? '';
-    if (!s || slot === 0 || !host || !WCHIP_SHOW.has(id) || !wandererHere(s, now)) {
+    // 모험 결산 화면은 제 한 줄(C.558 wandererResultLine)이 남은 시간을 보이니 칩은 뺀다 (같은 시계 두 개 방지)
+    const resultLine = !!root.querySelector('[data-wanderer-result]');
+    if (!s || slot === 0 || !host || !WCHIP_SHOW.has(id) || !wandererHere(s, now) || resultLine) {
       wchip?.el.remove();
       wchip = null;
       return;
@@ -2371,6 +2373,11 @@ export function startApp(host: HTMLElement): void {
     let afterResult: (() => void) | null = null;
     /** 진화 연출이 끝난 뒤 띄울 알림 (GDD 193장 18: 칭호·펫·장비 알림이 연출 위에 겹쳤다) */
     let afterEvolve: (() => void) | null = null;
+    // 우라하라 결산 한 줄 (GDD 5-5 v6.239, C.558): 이번 모험에서 마주쳤거나 지금 와 있으면 — 남은 시간은 화면이 1초마다 실제 시각으로 다시 잰다
+    const ws = save;
+    const resultWanderer: ResultWanderer | undefined = ws && ((exp.wandererMeets?.length ?? 0) > 0 || wandererHere(ws))
+      ? { name: marketOf(faction).props.wanderer, remainingMs: () => wandererRemainingMs(ws.shared.wanderer, Date.now()) }
+      : undefined;
     if (save) {
       const had = new Set(save.titles.map((t) => t.titleId));
       const fromTier = save.evolution.tierIndex;
@@ -2413,7 +2420,7 @@ export function startApp(host: HTMLElement): void {
         const next = afterResult;
         afterResult = null;
         next?.();
-      }, growth);
+      }, growth, resultWanderer);
       notices();
     };
     /** 칭호·펫·장비 알림: 진화가 걸렸으면 연출이 끝난 뒤 (GDD 193장 18), 아니면 바로 */
@@ -2432,7 +2439,14 @@ export function startApp(host: HTMLElement): void {
       nestScreen();
       // 오른 노력치 칩 (GDD 217장 3) — 결과 화면 대신인 짧은 카드에도 같은 칩
       const evRow = evChipRow(faction.id, evGains(exp.evStart, exp.evolution.ev, exp.evBlocked));
-      if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), ...(evRow ? { content: evRow } : {}), yes: '확인', single: true, onYes: () => {} });
+      // 우라하라 한 줄 (C.558): 짧은 결과 카드에도 노력치 칩 아래
+      const wline = resultWanderer ? wandererResultLine(resultWanderer.name, resultWanderer.remainingMs) : null;
+      let content: HTMLElement | null = evRow ?? wline;
+      if (evRow && wline) {
+        content = el('div', 'bha-stack bha-stack--tight');
+        content.append(evRow, wline);
+      }
+      if (!afterResult) confirmDialog({ title: '귀환했다', body: abortSummaryLine(exp, faction), ...(content ? { content } : {}), yes: '확인', single: true, onYes: () => {} });
       notices();
       afterResult?.();
       return;

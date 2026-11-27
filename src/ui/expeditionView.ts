@@ -13,8 +13,7 @@ import {
   abortExpedition, advance, canAbort, chooseContinue, chooseDraft, chooseReturn, drainEvents, finishRest, goldAvailable, hpFractionOf, inFrenzy, mutationMods, pendingFreeBoss, resolveEvent, riskBonus, type ExpeditionState,
   type PendingBattle, type StepEvent, type WandererMeet, type WandererMeetCtx,
 } from '../engine/expedition';
-import { WANDERER_TEXT } from '../data/shop';
-import { wandererMeetFigure } from './bha/wandererChip';
+import { passWanderer } from './bha/wandererPass';
 import { BLOCK_WORDS, eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
@@ -78,6 +77,9 @@ const RX = BALANCE.provisional.risk;
 
 /** 원정 걷기 속도 배율. 배속 버튼(1x·2x·4x)은 C.118 에 삭제 — 1배 고정 (GDD 62장). 세이브의 옛 배속 값은 무시한다. 테스트 모드(GDD 38-4)만 setSpeed 로 바꾼다 */
 let speed = 1;
+
+/** 우라하라를 마주쳤는데 아직 인사 연출을 못 한 원정 (C.558): 마주친 칸이 걷는 칸이 아니면(전투 등) 다음 걷는 칸에서 — 전투 뒤 화면을 다시 만들어도 남게 모듈에 둔다 */
+const GREET_DUE = new WeakSet<ExpeditionState>();
 
 /** 테스트 모드 전용 (GDD 38-4). 일반 플레이는 늘 1 */
 export function setSpeed(v: number): void {
@@ -222,25 +224,10 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       handle(ev);
     };
     if (met && w) {
-      // 우라하라 마주침 (GDD 5-5, C.549): 방문을 세우고(15분) 걷기를 멈춘 채 확인 창 — [확인] 또는 5초 뒤 자동 확인(기기 ✓·뒤로도 확인), 그 뒤 이 칸을 그대로 이어 간다
+      // 우라하라 마주침 (GDD 5-5 v6.239 '마주침 연출', C.558 — 옛 C.549 확인 창·C.553 꾸밈 폐기): 방문을 세우고(15분·저장) 걷기는 멈추지 않는다.
+      // 인사 연출은 걷는 칸에서 — 이 칸이 전투·휴식·이벤트·바퀴 끝이면 다음에 걷는 칸에서(전투 뒤 이 화면을 다시 불러도 이어진다)
       w.onMeet(met);
-      away = true;
-      clock.cancel();
-      let done = false;
-      const resume = (): void => {
-        if (done || dead) return;
-        done = true;
-        away = false;
-        lastWatch = monoNow();
-        go();
-      };
-      confirmDialog({
-        title: fixParticles(WANDERER_TEXT.meet.replace('{name}', w.name)), single: true, yes: WANDERER_TEXT.meetOk, cls: 'bha-wmeet',
-        // 마주침 창 꾸밈 (GDD 5-5 v6.228, C.553): 왼쪽 우라하라 도트 + 오른쪽 제목·[확인 (5)] — 머묾 안내 문구는 넣지 않는다(v6.228)
-        figure: wandererMeetFigure(),
-        autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds, onYes: resume, onCancel: resume,
-      });
-      return;
+      GREET_DUE.add(exp);
     }
     go();
   }
@@ -250,6 +237,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       case 'move':
         msg = nearMsg ?? '';
         nearMsg = null;
+        if (GREET_DUE.delete(exp)) passWanderer(walk.el, walk.walker, speed); // 우라하라가 배경 쪽에서 흘러와 인사 (C.558)
         break;
       case 'battle':
         msg = `${tn_enemy(ev.battle)} 조우!`;
@@ -293,6 +281,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
         h.onSave();
         break;
       case 'ended':
+        GREET_DUE.delete(exp);
         dispose();
         h.onEnded();
         return;

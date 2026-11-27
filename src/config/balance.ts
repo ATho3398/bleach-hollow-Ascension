@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 173; // C.555 (GDD 4-5 v6.232 모험 먹이 = 확률로 바퀴당 평균 약 0.5개, 사용자 2026-11-27 정정 — provisional): C.550 expedition.foodPerLap 0.5(바퀴당 1개 상한) 삭제 → expedition.foodRate 0.15(출처별 먹이 확률 전체 배율 — 일반 적·강적 확정+30%·보물 먹이 몫·휴식 간식). 보스 확정 먹이 밖. 전투 수치 그대로
+export const BALANCE_VERSION = 174; // C.558 (GDD 5-5 v6.239 우라하라 마주침 연출, 사용자 2026-11-27 "우라하라 알림창 없애고 …"): 마주침 확인 창 폐기 → provisional.wanderer.confirmSeconds 5 삭제. 다른 수치 그대로
+// 이전: BALANCE_VERSION = 173; // C.555 (GDD 4-5 v6.232 모험 먹이 = 확률로 바퀴당 평균 약 0.5개, 사용자 2026-11-27 정정 — provisional): C.550 expedition.foodPerLap 0.5(바퀴당 1개 상한) 삭제 → expedition.foodRate 0.15(출처별 먹이 확률 전체 배율 — 일반 적·강적 확정+30%·보물 먹이 몫·휴식 간식). 보스 확정 먹이 밖. 전투 수치 그대로
 // 이전: BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
 // 이전: BALANCE_VERSION = 171; // C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개, 사용자 2026-11-27 — provisional): provisional.expedition.foodPerLap 0.5 신설 — 한 바퀴의 모험 출처(전투·보물·휴식 타일·보스) 먹이 최대 1개, 바퀴 굴림 1회(원정 시드·바퀴) < 0.5 × 배율. food.normalDropChance·eliteExtraChance 는 원정에서 안 씀(사냥터 표 검사용으로 남김). 전투 수치 그대로
 // 이전: BALANCE_VERSION = 170; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27 — provisional): provisional.wanderer.perLap 0.001 삭제 → meetChance 0.01(칸마다)·meetChanceFromLap3 0.03·meetFromLap 3·stayMinutes 15·confirmSeconds 5. 전투 수치 그대로
@@ -1359,7 +1360,7 @@ export const BALANCE = {
     /** 우라하라 (GDD 5-5, C.549 provisional — 사용자 2026-11-27 "모험하다가 한 스테이지당 1%? 확률로 우라하라 만나게 하고 … 모험 3바퀴째부턴 스테이지당 우라하라 만날 확률 높이고", 3% 값은 마스터 정함).
      *  자유 모험에서 길 한 칸에 들어설 때마다 meetChance(3바퀴째부터 meetChanceFromLap3)로 마주친다(펫 seekWanderer 배율을 곱함, 최대 1). 이미 와 있는 동안·튜토리얼·스토리는 안 굴린다.
      *  마주친 순간(실제 시각)부터 stayMinutes 분 동안 시장에 와 있고 그 뒤 떠난다(옛 C.140 '바퀴마다 perLap × k · 다음 원정 귀환 때 떠남'은 폐기).
-     *  마주침 확인 창은 confirmSeconds 초 뒤 자동 확인.
+     *  마주침 확인 창은 없다(C.558 — 걷기 화면 배경에서 인사 연출만, 옛 confirmSeconds 삭제).
      *  티어(화면에 안 보임) = tierWeights 로 뽑고, 품목 stockSize 개를 그 티어의 등급표(gradeWeights)로 뽑는다(같은 품목 중복 없음) */
     wanderer: {
       meetChance: 0.01,
@@ -1367,7 +1368,6 @@ export const BALANCE = {
       /** meetChanceFromLap3 를 쓰기 시작하는 바퀴 */
       meetFromLap: 3,
       stayMinutes: 15,
-      confirmSeconds: 5,
       stockSize: 4,
       tierWeights: [55, 30, 12, 3] as number[],
       /** 티어(1~4)별 품목 등급 확률(%): normal · rare · epic · legendary */

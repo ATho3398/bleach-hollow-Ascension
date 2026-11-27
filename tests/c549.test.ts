@@ -8,7 +8,6 @@ import { advance, chooseContinue, chooseRelease, createExpedition, drainEvents, 
 import { restoreExpedition, serializeExpedition } from '../src/engine/expedition/snapshot';
 import { rollWandererMeet, wandererClock, wandererHereAt, wandererLeaveAt, wandererMeetChance, wandererRemainingMs, wandererStayMs } from '../src/engine/wanderer';
 import { expireWanderer, meetWanderer, migrateSave, migrateWandererStay, newSaveData, recordExpedition, SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, wandererHere } from '../src/game';
-import { autoYesLabel } from '../src/ui/confirmDialog';
 
 const WX = BALANCE.provisional.wanderer;
 const MIN = 60_000;
@@ -49,7 +48,7 @@ function meetingSeed(lap = 1): { seed: number; cell: number } {
 
 describe('칸마다 확률 (GDD 5-5)', () => {
   it('1~2바퀴 1%, 3바퀴째부터 3% (provisional), 펫 seek 배율을 곱하고 최대 1', () => {
-    expect([WX.meetChance, WX.meetChanceFromLap3, WX.meetFromLap, WX.stayMinutes, WX.confirmSeconds]).toEqual([0.01, 0.03, 3, 15, 5]);
+    expect([WX.meetChance, WX.meetChanceFromLap3, WX.meetFromLap, WX.stayMinutes]).toEqual([0.01, 0.03, 3, 15]); // confirmSeconds 는 C.558 에서 삭제(확인 창 폐기)
     expect([1, 2, 3, 4, 10].map((l) => wandererMeetChance(l))).toEqual([0.01, 0.01, 0.03, 0.03, 0.03]);
     expect(wandererMeetChance(1, 1.25)).toBeCloseTo(0.0125);
     expect(wandererMeetChance(3, 1000)).toBe(1);
@@ -171,16 +170,12 @@ describe('15분 머묾 (GDD 5-5)', () => {
   });
 });
 
-describe('확인 창·칩 화면 (GDD 5-5)', () => {
-  it('확인 창 문구 = 데이터, 버튼 [확인 (5)] → 1초마다 줄고 0 이면 자동 확인', () => {
-    expect(WANDERER_TEXT.meet).toBe('{name}과(와) 마주쳤습니다!');
-    expect(autoYesLabel(WANDERER_TEXT.meetOk, WX.confirmSeconds)).toBe('확인 (5)');
-    expect(autoYesLabel('확인', 1)).toBe('확인 (1)');
-    const dlg = readFileSync('src/ui/confirmDialog.ts', 'utf8');
-    expect(dlg).toContain('if (left <= 0) return yes();');
+describe('마주침·칩 화면 (GDD 5-5)', () => {
+  it('마주치면 방문을 세운다(onMeet) — 확인 창은 C.558 에서 폐기(걷기 화면 인사 연출, tests/c558)', () => {
     const view = readFileSync('src/ui/expeditionView.ts', 'utf8');
-    expect(view).toContain('autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds, onYes: resume, onCancel: resume');
-    expect(view).toContain("WANDERER_TEXT.meet.replace('{name}', w.name)");
+    expect(view).toContain('w.onMeet(met);');
+    expect(view).not.toContain('autoYesSeconds');
+    expect(Object.keys(WANDERER_TEXT)).not.toContain('meet');
   });
   it('칩: 방·월드맵·시장·모험 준비는 누르면 시장 우라하라 창, 우라하라 창·모험(걷기·전투)은 표시만. 얼굴 = prop-wanderer 를 잘라 만든 그림', () => {
     const app = readFileSync('src/ui/app.ts', 'utf8');

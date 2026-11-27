@@ -1,8 +1,9 @@
 {
   "provisional": true,
   "text": {
-    "meet": "{name}과(와) 마주쳤습니다!",
-    "meetOk": "확인",
+    "greet": "어이~",
+    "resultHere": "{name}이(가) 시장에 왔다",
+    "resultGone": "{name}이(가) 떠났다",
     "chipLabel": "{name} 남은 시간 {time}"
   },
   "items": [

@@ -3,6 +3,7 @@
 import { artUrls } from '../../data/art/manifest';
 import { WANDERER_TEXT } from '../../data/shop';
 import { wandererClock } from '../../engine/wanderer';
+import { fixParticles } from '../../engine/josa';
 import { el } from './dom';
 
 const ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
@@ -44,15 +45,41 @@ export function wandererChip(name: string, remainingMs: number, onClick?: () => 
   return { el: root, set };
 }
 
-/** 마주침 창 꾸밈 (GDD 5-5 v6.227, C.553): 창 왼쪽에 세울 우라하라 도트(prop.wanderer, 픽셀 그대로·등장 때 살짝 튀어 오름 — CSS .bha-wmeet__fig).
- *  그림 파일이 없으면 undefined(글만 있는 옛 창) */
-export function wandererMeetFigure(): HTMLElement | undefined {
-  const src = artUrls('prop.wanderer', ART_BASE).src;
-  if (!src) return undefined;
-  const img = el('img', 'bha-wmeet__fig');
-  img.src = src;
-  img.alt = '';
-  img.decoding = 'async';
-  img.draggable = false;
-  return img;
+/** 모험 결산 한 줄 글 (순수, GDD 5-5 v6.239 '마주침 연출', C.558): 남아 있으면 '우라하라가 시장에 왔다' + 'mm:ss', 다 됐으면 '우라하라가 떠났다'(시간 없음) */
+export function wandererResultText(name: string, remainingMs: number): { text: string; time: string | null } {
+  if (remainingMs > 0) return { text: fixParticles(WANDERER_TEXT.resultHere.replace('{name}', name)), time: wandererClock(remainingMs) };
+  return { text: fixParticles(WANDERER_TEXT.resultGone.replace('{name}', name)), time: null };
+}
+
+/** 모험 결산 화면 한 줄 (C.558): 얼굴 도트 + '우라하라가 시장에 왔다' + 남은 시간(1초마다 줄어듦). 0 이 되면 같은 자리에서 '우라하라가 떠났다'로 바뀐다(줄 높이 그대로).
+ *  remainingMs = 지금 남은 시간(마주친 순간 + 15분 기준, 부른 쪽이 실제 시각으로 잰다). 화면에서 떨어지면 시계를 멈춘다 */
+export function wandererResultLine(name: string, remainingMs: () => number): HTMLElement {
+  const root = el('p', 'bha-wresult');
+  root.dataset.wandererResult = '';
+  const face = artUrls('icon.wanderer.face', ART_BASE).src;
+  if (face) {
+    const img = el('img', 'bha-wresult__face');
+    img.src = face;
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    root.append(img);
+  }
+  const text = el('span', 'bha-wresult__text');
+  const time = el('span', 'bha-wresult__time bha-num');
+  root.append(text, time);
+  const set = (): void => {
+    const r = wandererResultText(name, remainingMs());
+    if (text.textContent !== r.text) text.textContent = r.text;
+    time.textContent = r.time ?? '';
+    time.hidden = r.time === null;
+    root.classList.toggle('is-gone', r.time === null);
+  };
+  set();
+  let seen = false;
+  const timer = window.setInterval(() => {
+    if (root.isConnected) seen = true;
+    else if (seen) return window.clearInterval(timer);
+    set();
+  }, 1000);
+  return root;
 }
