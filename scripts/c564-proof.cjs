@@ -1,4 +1,4 @@
-// C.564 proof (GDD 6-16 v6.246, 코딩361): 특수던전 요일던전 — 월요일 목록(세공만 열림·정제·주입 자물쇠) · 일요일 목록(셋 다) · 새 던전(장비 던전 / 장신구 자물쇠). 1배
+// C.564 proof (GDD 6-16 v6.246·v6.248, 코딩361): 특수던전 요일던전 — 월요일 목록(세공·골드·장비만 열림, 나머지 자물쇠+요일) · 닫힌 던전 · 새 던전(장비 던전) · 일요일 목록(전부, 폰). 오른쪽 위 = 요일던전 입장권 칩, [연습] 버튼. 1배
 // 실행: node scripts/c564-proof.cjs [저장 폴더]
 const fs = require('node:fs');
 const path = require('node:path');
@@ -46,6 +46,8 @@ const listFacts = (page) => page.evaluate(() => ({
   tabs: [...document.querySelectorAll('[data-sdg-tabs] button')].map((b) => b.textContent.trim()),
   items: [...document.querySelectorAll('.bha-sdg__item')].map((b) => `${b.classList.contains('is-locked') ? '🔒' : ''}${b.textContent.replace(/\s+/g, ' ').trim()}`),
   stage: document.querySelector('.bha-sdg__stage')?.textContent.replace(/\s+/g, ' ').trim().slice(0, 300),
+  corner: document.querySelector('.bha-corner')?.textContent.replace(/\s+/g, ' ').trim(),
+  practice: [...document.querySelectorAll('[data-practice]')].map((b) => b.textContent.trim() + (b.disabled ? ' [disabled]' : '')),
 }));
 
 (async () => {

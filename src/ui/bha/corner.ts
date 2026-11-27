@@ -2,11 +2,19 @@
 // 뭐 수련장 가면 그때만 수련권으로 바꾸는 식으로 해"): 모험(걷기·전투·바퀴 끝) 밖의 모든 화면 머리 줄 오른쪽 위에 골드·영옥 칩(상점 재화 칩과 같은 부품),
 // 수련장 화면들에서는 그 자리를 수련권(지금 트랙 장수) 칩으로. 우라하라 남은 시간 칩(C.549)은 이 칸 안 재화 칩 왼쪽.
 // 머리 줄(bha-lcdpage__head · bha-exp__head)이 있으면 그 줄 끝에, 없는 화면(방·월드맵·시장)은 LCD 오른쪽 위 같은 자리에 띄운다. 붙이기·갱신은 app.ts 가 한다.
+// 특수던전 요일던전·보스전 탭(C.564, GDD 6-16 v6.248): 그 자리를 지금 탭의 입장권 장수(지금 트랙) 칩으로.
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../../data/economy';
 import type { SaveData } from '../../game';
+import { ticketsLeft, type TicketKind } from '../../engine/specialDungeon';
 import { el, icon } from './dom';
 
-export type CornerKind = 'money' | 'tickets';
+export type CornerKind = 'money' | 'tickets' | `special-${TicketKind}`;
+type ChipKind = 'trade' | 'jade' | 'ticket' | 'special';
+
+/** 특수던전 탭 화면(app dataset.screen 'special-daily' 등) → 입장권 칩. 탑 탭('special-tower' 없음 = 'tower')은 골드·영옥 */
+export function specialCornerKind(screen: string | undefined | null): CornerKind | null {
+  return screen === 'special-daily' || screen === 'special-boss' || screen === 'special-raid' ? screen : null;
+}
 
 /** 수련장 화면들 = 수련권 칩 (GDD 8-9 v6.242): 카드 화면 · 본능 수련 목록 · 한 판 결과 */
 export const TICKET_SCREENS: ReadonlySet<string> = new Set(['practice', 'training', 'training-result']);
@@ -26,8 +34,8 @@ export function cornerKindOf(screenId: string | undefined | null): CornerKind | 
 }
 
 /** 재화 칩 하나 (상점·가방 머리와 같은 부품: bha-chip + 아이콘 + 고정 폭 숫자) */
-export function currencyChip(kind: 'trade' | 'jade' | 'ticket', value: number): HTMLElement {
-  const spec = { trade: ['bha-chip--gold', 'v2-coin', TRADE_CURRENCY_NAME], jade: ['bha-chip--jade', 'v2-gem', JADE_NAME], ticket: ['bha-chip--ticket', 'i-practice', '수련권'] }[kind];
+export function currencyChip(kind: ChipKind, value: number, label?: string): HTMLElement {
+  const spec = { trade: ['bha-chip--gold', 'v2-coin', TRADE_CURRENCY_NAME], jade: ['bha-chip--jade', 'v2-gem', JADE_NAME], ticket: ['bha-chip--ticket', 'i-practice', '수련권'], special: ['bha-chip--ticket', 'i-title', label ?? '입장권'] }[kind];
   const c = el('span', `bha-chip ${spec[0]}`);
   c.setAttribute('aria-label', `${spec[2]} ${value}`);
   c.title = spec[2]!;
@@ -36,15 +44,15 @@ export function currencyChip(kind: 'trade' | 'jade' | 'ticket', value: number): 
   return c;
 }
 
-/** 칩 값 (순수): 골드·영옥 = 공유 재화, 수련권 = 지금 트랙 장수 */
-export function cornerValues(kind: CornerKind, save: Pick<SaveData, 'shared' | 'training'>): { kind: 'trade' | 'jade' | 'ticket'; value: number }[] {
-  return kind === 'tickets'
-    ? [{ kind: 'ticket', value: save.training.tickets }]
-    : [{ kind: 'trade', value: save.shared.tradeCoins }, { kind: 'jade', value: save.shared.jade }];
+/** 칩 값 (순수): 골드·영옥 = 공유 재화, 수련권 = 지금 트랙 장수, 특수던전 입장권 = 지금 트랙 그 종류 장수(날·주가 바뀌었으면 채운 값) */
+export function cornerValues(kind: CornerKind, save: Pick<SaveData, 'shared' | 'training'> & Partial<Pick<SaveData, 'tower'>>, nowMs: number = Date.now()): { kind: ChipKind; value: number }[] {
+  if (kind === 'tickets') return [{ kind: 'ticket', value: save.training.tickets }];
+  if (kind.startsWith('special-')) return [{ kind: 'special', value: save.tower ? ticketsLeft(save.tower.tickets, kind.slice('special-'.length) as TicketKind, nowMs) : 0 }];
+  return [{ kind: 'trade', value: save.shared.tradeCoins }, { kind: 'jade', value: save.shared.jade }];
 }
 
 /** 오른쪽 위 칸을 화면에 붙이거나 값을 고친다 (같은 값이면 그대로 — 1초 시계가 불러도 깜빡이지 않게). 칸 = .bha-corner (안에 우라하라 칩 → 재화 칩) */
-export function placeCorner(app: HTMLElement, kind: CornerKind, save: Pick<SaveData, 'shared' | 'training'>): HTMLElement {
+export function placeCorner(app: HTMLElement, kind: CornerKind, save: Pick<SaveData, 'shared' | 'training'> & Partial<Pick<SaveData, 'tower'>>, ticketName?: string): HTMLElement {
   const head = app.querySelector<HTMLElement>(':scope > header.bha-lcdpage__head, :scope > header.bha-exp__head');
   const host = head ?? app;
   let box = app.querySelector<HTMLElement>(':scope > .bha-corner, :scope > header > .bha-corner');
@@ -61,7 +69,7 @@ export function placeCorner(app: HTMLElement, kind: CornerKind, save: Pick<SaveD
     box.dataset.corner = key;
     box.dataset.kind = kind;
     box.querySelectorAll(':scope > [data-currency]').forEach((n) => n.remove());
-    box.append(...vals.map((v) => currencyChip(v.kind, v.value)));
+    box.append(...vals.map((v) => currencyChip(v.kind, v.value, ticketName)));
   }
   return box;
 }

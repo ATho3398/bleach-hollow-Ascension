@@ -17,7 +17,7 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 177; // C.564 (GDD 6-16 v6.246 요일던전, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회) → daily(던전마다 하루 2회 · 붕옥 재료 던전 요일 hogyokuDays 월목/화금/수토 + 일요일 셋 다 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
+export const BALANCE_VERSION = 177; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회)·boss.entries(주 1회) → tickets(입장권 3종 요일 2장/매일 · 보스 3장/주 · 토벌 2장/주 채움, 상점 100·300·500골드, GDD 6-16 v6.248) + daily(요일표 days — 일요일 전부, 월~토 3개씩 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
 // 이전: BALANCE_VERSION = 176; // C.562 (GDD 13절 v6.243 튜토리얼 블록 = 호로 탄 / 사신 참, 사용자 2026-11-27 "사신은 참으로 해"): provisional.tutorialScript.blockFamily 삭제 → 종족 설정 tutorial.blockFamily. 수치 그대로
 // 이전: BALANCE_VERSION = 175; // C.559 (GDD 13절 v6.240 튜토리얼 각본 전투의 블록 = 탄 계열, 사용자 2026-11-27): provisional.tutorialScript.blockFamily 'family-c' 신설(호로 탄·사신 귀). 수치 그대로
 // 이전: BALANCE_VERSION = 174; // C.558 (GDD 5-5 v6.239 우라하라 마주침 연출, 사용자 2026-11-27 "우라하라 알림창 없애고 …"): 마주침 확인 창 폐기 → provisional.wanderer.confirmSeconds 5 삭제. 다른 수치 그대로
@@ -518,13 +518,26 @@ export const BALANCE = {
     specialDungeon: {
       resetWeekday: 1,
       resetHourKst: 5,
-      // 이전(C.427): weekly { entries 3(주), battles, enemyScale 1, material [3,5,8,12], goldPerStar 30 } — C.564 에 daily 로 바뀜
+      // 이전(C.427): weekly { entries 3(주), battles, enemyScale 1, material [3,5,8,12], goldPerStar 30 } — C.564 에 daily 로 바뀜. 던전·보스마다 세던 하루·주 횟수(daily.entries·boss.entries)는 입장권 tickets 로 대체(GDD 6-16 v6.248)
+      /** 입장권 3종 (GDD 6-16 v6.248, 트랙마다): 요일던전권 = 매일 refill 장까지 채움 · 보스전권·토벌전권 = 매주 월요일 refill 장까지 채움(쌓이지 않음) + 상점 기타 탭 price 골드(산 것은 상한 없이 쌓임) */
+      tickets: {
+        daily: { refill: 2, price: 100 },
+        boss: { refill: 3, price: 300 },
+        raid: { refill: 2, price: 500 },
+      },
       daily: {
-        entries: 2,
         battles: ['normal', 'normal', 'elite'] as readonly ('normal' | 'elite')[],
         enemyScale: 1,
-        hogyokuDays: { soul: [1, 4], shard: [2, 5], essence: [3, 6] } as Readonly<Record<string, readonly number[]>>,
-        allOpenDay: 0,
+        /** 요일표 (GDD 6-16 v6.248, 0 = 일요일): 일요일 = 전부, 월~토 3개씩 */
+        days: {
+          0: ['soul', 'shard', 'essence', 'gold', 'gear', 'accessory', 'gearMat'],
+          1: ['soul', 'gold', 'gear'],
+          2: ['shard', 'accessory', 'gearMat'],
+          3: ['essence', 'gold', 'gear'],
+          4: ['soul', 'accessory', 'gearMat'],
+          5: ['shard', 'gold', 'gear'],
+          6: ['essence', 'accessory', 'gearMat'],
+        } as Readonly<Record<number, readonly string[]>>,
         material: [3, 5, 8, 12] as readonly number[],
         goldPerStar: 30,
         gold: { goldPerStar: 150 },
@@ -533,7 +546,6 @@ export const BALANCE = {
         gearMat: { count: [2, 3, 5, 7] as readonly number[] },
       },
       boss: {
-        entries: 1,
         enemyScale: 1,
         ownerBoss: 'forest-lord',
         ownerScale: 1.2,

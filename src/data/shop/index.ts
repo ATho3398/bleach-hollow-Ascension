@@ -13,7 +13,7 @@ import blurbsRaw from './blurbs.json';
 import { fixParticles } from '../../engine/josa';
 import { HOGYOKU_TRACK_IDS, type HogyokuTrackId } from '../../engine/transcend';
 
-export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'battle', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear', 'sortie'] as const;
+export const GOLD_KINDS = ['food', 'calm', 'wake', 'medicine', 'battle', 'trainingTicket', 'tileDraw', 'rareTile', 'reroll', 'deckSlot', 'gear', 'sortie', 'specialTicket'] as const;
 export type GoldKind = (typeof GOLD_KINDS)[number];
 
 export const COSMETIC_CATEGORIES = ['skin', 'aura', 'tint', 'trail', 'fx', 'bar', 'shell', 'plate', 'enter', 'evo', 'absorb', 'cut', 'win', 'talk', 'room', 'frame', 'keyring', 'device'] as const;
@@ -84,6 +84,8 @@ export interface GoldItemDef {
   cures?: MedicineCure;
   /** 전투용 소모품 (GDD 108장 3번): 장비 화면 소모품 칸에 넣을 수 있고, 넣은 것을 전투 [소모품 사용]이 쓴다 */
   battle?: true;
+  /** kind 'specialTicket' 의 입장권 종류 (C.564, GDD 6-16 v6.248): daily 요일던전 · boss 보스전 · raid 토벌전 */
+  ticket?: 'daily' | 'boss' | 'raid';
 }
 
 /** 약이 푸는 상태 (GDD 102-4) */
@@ -154,8 +156,9 @@ function parseGold(r: unknown): GoldItemDef {
   if (g.kind === 'medicine' && !(MEDICINE_CURES as readonly unknown[]).includes(g.cures)) errors.push(`cures: ${MEDICINE_CURES.join(' | ')}`);
   if (g.kind !== 'food' && g.kind !== 'gear' && (typeof g.name !== 'string' || !g.name)) errors.push('name');
   if (!(ITEM_CATEGORIES as readonly unknown[]).includes(g.category)) errors.push(`category: ${ITEM_CATEGORIES.join(' | ')}`);
+  if (g.kind === 'specialTicket' && !['daily', 'boss', 'raid'].includes(g.ticket as string)) errors.push('ticket: daily | boss | raid');
   if (errors.length) throw new Error(`상점 골드 품목 데이터 오류 (${String(g.id ?? '?')}): ${errors.join(', ')}`);
-  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}), ...(g.kind === 'medicine' ? { cures: g.cures as MedicineCure } : {}), ...(g.battle === true ? { battle: true as const } : {}) };
+  return { id: g.id as string, kind: g.kind as GoldKind, category: g.category as ItemCategory, ...(g.food ? { food: g.food as FoodId } : {}), ...(g.name ? { name: g.name as string } : {}), ...(g.kind === 'gear' ? { gearKind: g.gearKind as GearKind } : {}), ...(g.kind === 'medicine' ? { cures: g.cures as MedicineCure } : {}), ...(g.battle === true ? { battle: true as const } : {}), ...(g.kind === 'specialTicket' ? { ticket: g.ticket as 'daily' | 'boss' | 'raid' } : {}) };
 }
 
 function parseCosmetic(r: unknown): CosmeticItemDef {

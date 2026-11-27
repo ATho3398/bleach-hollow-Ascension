@@ -136,6 +136,20 @@
       "name": "다시 뽑기권"
     },
     {
+      "id": "ticket-daily",
+      "kind": "specialTicket",
+      "category": "etc",
+      "ticket": "daily",
+      "name": "요일던전 입장권"
+    },
+    {
+      "id": "ticket-boss",
+      "kind": "specialTicket",
+      "category": "etc",
+      "ticket": "boss",
+      "name": "보스전 입장권"
+    },
+    {
       "id": "deck-slot",
       "kind": "deckSlot",
       "category": "etc",

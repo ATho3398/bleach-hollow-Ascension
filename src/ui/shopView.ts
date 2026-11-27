@@ -42,7 +42,7 @@ const CUR_ICON: Record<ShopRow['currency'], string> = { gold: 'v2-coin', jade: '
 /** 상점 탭 아이콘 (PROMPT 4절·S04 시안: 음식 food · 약 potion · 전투 소모품 sword · 타일 tile · 기타 box …) */
 const TAB_ICON: Partial<Record<ShopTabId, string>> = { food: 'v2-food', medicine: 'v2-potion', consumable: 'v2-sword', tile: 'v2-tile', etc: 'v2-box', equipment: 'v2-equip', skin: 'v2-shirt', trait: 'v2-spark' };
 /** 쌓아 사는 골드 품목 (수량 고르기): 나머지는 한 번에 하나 */
-const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket', 'sortie']);
+const STACKABLE = new Set(['food', 'calm', 'wake', 'medicine', 'battle', 'reroll', 'trainingTicket', 'sortie', 'specialTicket']);
 /** 한 번에 살 수 있는 최대 수량 (화면 상한) */
 const QTY_CAP = 99;
 /** 약 아이콘 (GDD 102-4, 있는 아이콘 재사용): 구급상자 = 회복 · 링거 = 배부름 · 에너지 드링크 = 컨디션 */
@@ -190,7 +190,7 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
     if (gold?.kind === 'gear') return gradeArt(iconArt(GEAR_KIND_ICONS[gold.gearKind!]), 'normal');
     const wi = getWandererItem(row.id);
     if (wi?.kind === 'gear') return gradeArt(iconArt('i-unknown'), wi.grade);
-    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'medicine' ? MEDICINE_ICONS[gold.cures!] : healDaily(gold.id) !== null ? 'i-heal' : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : 'i-practice';
+    const ic = !gold ? 'i-rare' : gold.kind === 'food' ? 'i-hunger' : gold.kind === 'calm' ? 'i-risk' : gold.kind === 'wake' ? 'i-cond' : gold.kind === 'medicine' ? MEDICINE_ICONS[gold.cures!] : healDaily(gold.id) !== null ? 'i-heal' : gold.kind === 'tileDraw' || gold.kind === 'rareTile' ? 'i-tile-combo' : gold.kind === 'deckSlot' ? 'i-deck' : gold.kind === 'reroll' ? 'i-swap' : gold.kind === 'specialTicket' ? 'i-title' : 'i-practice';
     void big;
     return iconArt(ic);
   };

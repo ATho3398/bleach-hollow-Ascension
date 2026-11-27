@@ -445,6 +445,8 @@ export interface SpecialRunRecord {
   won: boolean;
   /** 전투 중 [나가기]로 끝냄 */
   quit: boolean;
+  /** 연습 모드 (C.564, 선택): 입장권 없이 — 보상·판 기록 없음(이 표시만 남긴다) */
+  practice?: boolean;
   battles: { enemyId: string; won: boolean; durationSeconds: number; startHp: number }[];
   gold: number;
   /** 받은 붕옥 재료 (트랙 id → 개수) */

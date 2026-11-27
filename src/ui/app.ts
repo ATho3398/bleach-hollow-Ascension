@@ -22,7 +22,7 @@ import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
 import { bossRushName, dailyName, specialDungeonView, specialHead, specialResultView } from './specialDungeonView';
-import { bossRushEnemy, createSpecialCombat, dailyEnemies, hpFractionAfter, type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab } from '../engine/specialDungeon';
+import { bossRushEnemy, createSpecialCombat, dailyEnemies, dayStartOf, hpFractionAfter, type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab } from '../engine/specialDungeon';
 import type { HogyokuTrackId } from '../engine/transcend';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, specialDungeonLabels, towerFloorText, towerLabels } from '../engine/faction';
@@ -113,7 +113,7 @@ import type { ArtUrls } from '../data/art/manifest';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { wandererChip, wandererResultLine, type WandererChip } from './bha/wandererChip';
-import { cornerKindOf, placeCorner } from './bha/corner';
+import { cornerKindOf, placeCorner, specialCornerKind } from './bha/corner';
 import { wandererRemainingMs } from '../engine/wanderer';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
@@ -302,9 +302,12 @@ export function startApp(host: HTMLElement): void {
   // ── 오른쪽 위 재화 칩 (GDD 14-4 v6.242, C.561): 모험 밖 모든 화면 = 골드·영옥, 수련장 화면들 = 수련권(지금 트랙). 화면이 바뀔 때·1초마다·저장할 때 고친다 ──
   const tickCorner = (): void => {
     const app = root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
-    const kind = save && slot !== 0 ? cornerKindOf(nav.top?.id) : null;
+    const base = save && slot !== 0 ? cornerKindOf(nav.top?.id) : null;
+    // 특수던전 요일던전·보스전 탭 = 그 탭 입장권 장수 (C.564, GDD 6-16 v6.248 — 화면 id 는 'tower' 하나라 app 의 data-screen 으로 가른다)
+    const sp = base && app ? specialCornerKind(app.dataset.screen) : null;
+    const kind = sp ?? base;
     if (!app || !kind) return void root.querySelector('.bha-corner')?.remove();
-    placeCorner(app, kind, save!);
+    placeCorner(app, kind, save!, sp ? specialDungeonLabels(getFaction(save!.factionId)).tickets[sp.slice('special-'.length) as 'daily' | 'boss' | 'raid'] : undefined);
   };
   /** 칩을 누름: 시장의 우라하라 창으로 (시장에 있으면 창만 연다) */
   const goWanderer = (faction: FactionConfig, s: SaveData): void => {
@@ -1834,8 +1837,8 @@ export function startApp(host: HTMLElement): void {
         if (testOn) testRefillSpecial(save!); // 테스트 칸: 이미 다 쓴 옛 테스트 칸도 다시 열린다 (C.457)
         specialDungeonView(root, faction, save!, specialTab, {
           ...hd,
-          onDaily: (id, star) => startSpecialRun(faction, { mode: 'daily', target: id, star }),
-          onBoss: (e, star) => startSpecialRun(faction, { mode: 'boss', target: e.id, star, entry: e }),
+          onDaily: (id, star, practice) => startSpecialRun(faction, { mode: 'daily', target: id, star, practice }),
+          onBoss: (e, star, practice) => startSpecialRun(faction, { mode: 'boss', target: e.id, star, entry: e, practice }),
         });
       }
       root.scrollTop = 0;
@@ -1843,17 +1846,20 @@ export function startApp(host: HTMLElement): void {
     nav.push({ id: 'tower', locked: false, render });
   }
 
-  /** 특수던전 요일던전·보스전 한 입장: 횟수 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과 */
-  function startSpecialRun(faction: FactionConfig, run: { mode: SpecialMode; target: string; star: number; entry?: BossRushEntry }): void {
+  /** 특수던전 요일던전·보스전 한 입장: 입장권 1장 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과.
+   *  연습(C.564, GDD 6-16 v6.248) = 입장권 없이 같은 적·같은 ★, 판 기록·도감·보상·빈사 사망 없음(런 로그에 연습 표시만) */
+  function startSpecialRun(faction: FactionConfig, run: { mode: SpecialMode; target: string; star: number; entry?: BossRushEntry; practice?: boolean }): void {
     if (!save || careBlocked(save)) return;
     const s0 = save;
-    if (!enterSpecial(s0, run.mode, run.target)) {
-      showToast({ eyebrow: specialDungeonLabels(faction).name, title: run.mode === 'daily' ? '오늘 횟수를 다 썼다' : '이번 주 횟수를 다 썼다', meta: run.mode === 'daily' ? '매일 05:00 에 초기화' : '월요일 05:00 에 초기화' }, 0, 1800);
+    const practice = !!run.practice;
+    if (!practice && !enterSpecial(s0, run.mode, run.target)) {
+      const L = specialDungeonLabels(faction);
+      showToast({ eyebrow: L.name, title: fixParticles(`${L.tickets[run.mode]}이(가) 없다`), meta: run.mode === 'daily' ? '매일 05:00 에 채움 · 상점 기타 탭' : '월요일 05:00 에 채움 · 상점 기타 탭' }, 0, 1800);
       return;
     }
-    if (testOn) testRefillSpecial(s0); // 테스트 칸은 횟수를 쓰지 않는다 (C.457: 깨고 나오면 [이번 주 끝]으로 잠겨 진행이 막혔다)
+    if (testOn) testRefillSpecial(s0); // 테스트 칸은 입장권을 쓰지 않는다 (C.457: 깨고 나오면 [이번 주 끝]으로 잠겨 진행이 막혔다)
     persist();
-    const enemies = run.mode === 'daily' ? dailyEnemies(run.target as DailyDungeonId, run.star, s0.shared.special.dayStart) : [bossRushEnemy(run.entry!, run.star)];
+    const enemies = run.mode === 'daily' ? dailyEnemies(run.target as DailyDungeonId, run.star, dayStartOf(Date.now())) : [bossRushEnemy(run.entry!, run.star)];
     const bossId = run.mode === 'boss' ? run.entry!.bossId : undefined;
     const name = run.mode === 'daily' ? dailyName(faction, run.target as DailyDungeonId) : bossRushName(faction, run.entry!);
     const done: CombatState[] = [];
@@ -1861,7 +1867,7 @@ export function startApp(host: HTMLElement): void {
     const settle = (quit: boolean) => {
       if (settled) return null;
       settled = true;
-      const res = settleSpecialRun(s0, { mode: run.mode, target: run.target, bossId, star: run.star, battles: done, total: enemies.length, quit });
+      const res = settleSpecialRun(s0, { mode: run.mode, target: run.target, bossId, star: run.star, battles: done, total: enemies.length, quit, practice });
       persist();
       return res;
     };
@@ -1875,16 +1881,16 @@ export function startApp(host: HTMLElement): void {
           setBgm(bossId ? 'boss' : enemy.class === 'elite' ? 'elite' : 'battle');
           const bgKey = run.mode === 'daily' ? specialDungeonLabels(faction).daily[run.target]?.art : specialDungeonLabels(faction).bossArt[run.target];
           battleView(root, faction, s, {
-            ...battleItemOpts(s0, s),
+            ...(practice ? {} : battleItemOpts(s0, s)), // 연습은 소모품을 쓰지 않는다 (끝나면 원래 상태 그대로)
             tierIndex: artTierIndexOf(s0),
             ...battleBasis(s0),
             skinId: artSkinOf(s0),
-            banner: `${specialDungeonLabels(faction).name} · ${name} · ${difficultyText(faction, run.star)}${enemies.length > 1 ? ` · ${i + 1}/${enemies.length}판` : ''}`,
+            banner: `${specialDungeonLabels(faction).name}${practice ? ' 연습' : ''} · ${name} · ${difficultyText(faction, run.star)}${enemies.length > 1 ? ` · ${i + 1}/${enemies.length}판` : ''}`,
             ...(bossId ? { boss: { eyebrow: '보스' }, enter: true } : {}),
             bg: specialSceneBg(bgKey ?? faction.arenaBg),
             onQuit: () => { settle(true); nav.pop(); },
             onEnd: (st) => {
-              recordSpecialBattle(s0, st);
+              if (!practice) recordSpecialBattle(s0, st); // 연습은 판 기록·적 도감 없음
               done.push(st);
               if (st.status === 'won' && i < enemies.length - 1) {
                 persist();
@@ -1895,7 +1901,7 @@ export function startApp(host: HTMLElement): void {
               nav.replace({
                 id: 'special-result', locked: true,
                 render: () => {
-                  specialResultView(root, faction, s0, { mode: run.mode, target: run.target, name, star: run.star, total: enemies.length, battles: done }, res, {
+                  specialResultView(root, faction, s0, { mode: run.mode, practice, target: run.target, name, star: run.star, total: enemies.length, battles: done }, res, {
                     onBack: () => nav.pop(),
                   });
                   root.scrollTop = 0;

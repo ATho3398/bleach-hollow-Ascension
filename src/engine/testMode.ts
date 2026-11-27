@@ -589,8 +589,12 @@ export function applyTestArenaParams(params: Partial<CombatParams>, c: Pick<Test
 
 /** 이번 주 쓴 입장 수를 비운다 (테스트 칸에서 입장할 때마다 — 깨고 나와도 [입장]이 잠기지 않게) */
 export function testRefillSpecial(save: SaveData): void {
-  save.shared.special.used = {};
-  save.shared.special.daily = {}; // C.564 요일던전 하루 횟수
+  // C.564: 입장권 3종을 채움 장수까지 (옛 주간 횟수 칸 used 비우기 대체)
+  const T = BALANCE.provisional.specialDungeon.tickets;
+  const t = save.tower.tickets;
+  t.daily = Math.max(t.daily, T.daily.refill);
+  t.boss = Math.max(t.boss, T.boss.refill);
+  t.raid = Math.max(t.raid, T.raid.refill);
 }
 
 // ── 붕옥 재료 (C.457 사용자 2026-11-15 '붕옥 재료들 없어서 강화를 못 해봄') ──

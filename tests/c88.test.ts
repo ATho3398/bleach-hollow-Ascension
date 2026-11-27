@@ -133,7 +133,7 @@ describe('전체 해금 (38-3)', () => {
 
   it('탑 자리(tower.best)가 있으면 마지막 층 바로 아래까지 연다', () => {
     const s = newSaveData(fid) as ReturnType<typeof newSaveData> & { tower?: { best: number } };
-    s.tower = { best: 0 };
+    s.tower = { ...s.tower, best: 0 }; // C.564: 탑 칸에 입장권 tickets 가 붙음
     fillAllUnlocked(s);
     expect(s.tower.best).toBe(49);
   });

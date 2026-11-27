@@ -1,8 +1,8 @@
-// 특수던전 요일던전·보스전 (GDD 6-16 v6.017 → v6.246, C.427·C.564): 종족 무관 엔진. 이름·그림 키는 종족 설정 specialDungeon, 수치는 BALANCE.provisional.specialDungeon(전부 provisional).
-//  - 주 초기화: 매주 월요일 05:00 KST(resetWeekday·resetHourKst) — 보스전 횟수. 세이브 shared.special.weekStart 가 이번 주 시작과 다르면 used 를 0 으로
-//  - 날 바뀜: 매일 05:00 KST(같은 기준 시계) — 요일던전 횟수. shared.special.dayStart 가 오늘 시작과 다르면 daily 를 0 으로 (C.564)
-//  - 요일던전(C.564, 옛 주간던전): 던전 7개(붕옥 재료 3개는 요일에만 열림 + 골드·장비·장신구·장비 재료 매일), 던전마다 하루 n회, 한 입장 = 전투 3판 연속(일반·일반·강적, 체력 이어감)
-//  - 보스전: 보스마다 주 1회
+// 특수던전 요일던전·보스전 (GDD 6-16 v6.017 → v6.248, C.427·C.564): 종족 무관 엔진. 이름·그림 키는 종족 설정 specialDungeon, 수치는 BALANCE.provisional.specialDungeon(전부 provisional).
+//  - 입장권 3종(C.564, GDD 6-16 v6.248 — 던전·보스마다 세던 하루·주 횟수 대체, 트랙마다 tower.tickets): 요일던전권 = 매일 05:00 KST 에 n장까지 채움, 보스전권·토벌전권 = 매주 월요일 05:00 KST 에 n장까지 채움.
+//    채움은 '그 수까지'(쌓이지 않음), 상점에서 산 것은 상한 없이 쌓인다. 입장 1번 = 그 종류 1장(지거나 그만둬도 돌려주지 않음)
+//  - 요일던전(C.564, 옛 주간던전): 던전 7개(붕옥 재료 3 + 골드·장비·장신구·장비 재료), 요일표(일요일 = 전부, 월~토 3개씩), 한 입장 = 전투 3판 연속(일반·일반·강적, 체력 이어감)
+//  - 연습 모드(C.564): 입장권 없이 같은 적·같은 ★ — 보상·도감·열림 진행·기록 없음(런 로그에 연습 표시만)
 //  - 적 세기: 탑처럼 ★ 배율(difficultyEnemyScale) × enemyScale — 적은 '★n 권장 단계 플레이어 일반 공격 N회분'(hpInAttacks)
 import { BALANCE } from '../config/balance';
 import { scaleEnemy } from '../data/enemies';
@@ -29,24 +29,16 @@ export type SpecialMode = 'daily' | 'boss';
 /** 탑의 주인 보스 칸 id (보스 테이블 id 와 겹치지 않게) */
 export const OWNER_BOSS_ID = 'tower-owner';
 
-/** 세이브 shared.special (형식 81 → 100): 이번 주·오늘 시작 시각·던전/보스마다 쓴 입장 수·이긴 최고 ★ */
+/** 세이브 shared.special (형식 81 → 100, 슬롯 공유): 던전/보스마다 이긴 최고 ★·이긴 수. C.564 에 옛 주·하루 횟수 칸(weekStart·used)은 입장권으로 대체되어 없어짐 */
 export interface SpecialDungeonState {
-  /** 이번 주 시작 시각(ms) — 이 값이 이번 주와 다르면 used 를 비운다 */
-  weekStart: number;
-  /** 이번 주에 쓴 입장 수 (주 단위 칸): 'boss:<보스 id>' → 회 */
-  used: Record<string, number>;
-  /** 오늘 시작 시각(ms, C.564) — 이 값이 오늘과 다르면 daily 를 비운다 */
-  dayStart: number;
-  /** 오늘 쓴 입장 수 (하루 단위 칸, C.564): 'daily:<던전 id>' → 회 */
-  daily: Record<string, number>;
-  /** 이긴 최고 ★ (같은 키, 기록용·영구) */
+  /** 이긴 최고 ★ ('daily:<던전 id>' · 'boss:<보스 칸 id>', 기록용·영구) */
   best: Record<string, number>;
   /** 이긴 횟수 (같은 키, 영구) */
   clears: Record<string, number>;
 }
 
-export function newSpecialState(nowMs = 0): SpecialDungeonState {
-  return { weekStart: nowMs > 0 ? weekStartOf(nowMs) : 0, used: {}, dayStart: nowMs > 0 ? dayStartOf(nowMs) : 0, daily: {}, best: {}, clears: {} };
+export function newSpecialState(): SpecialDungeonState {
+  return { best: {}, clears: {} };
 }
 
 const posIntMap = (raw: unknown): Record<string, number> => {
@@ -55,12 +47,14 @@ const posIntMap = (raw: unknown): Record<string, number> => {
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (typeof v === 'number' && Number.isFinite(v) && v > 0) out[k] = Math.floor(v);
   return out;
 };
-const nonNegTime = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+const nonNegNum = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
 
 export function sanitizeSpecial(raw: unknown): SpecialDungeonState {
   const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-  return { weekStart: nonNegTime(r.weekStart), used: posIntMap(r.used), dayStart: nonNegTime(r.dayStart), daily: posIntMap(r.daily), best: posIntMap(r.best), clears: posIntMap(r.clears) };
+  return { best: posIntMap(r.best), clears: posIntMap(r.clears) };
 }
+
+// ── 시계: 날 바뀜 = 매일 05:00 KST, 주 바뀜 = 월요일 05:00 KST ──
 
 /** '초기화 시각'을 그날 0시로 옮기는 값 (KST − 05시) */
 const SHIFT = KST - SX.resetHourKst * 3_600_000;
@@ -79,9 +73,8 @@ export function gameWeekday(nowMs: number): number {
 
 /** 이 시각이 든 주의 시작 = 직전(또는 같은) 월요일 05:00 KST 의 ms */
 export function weekStartOf(nowMs: number): number {
-  const day = gameDay(nowMs);
   const back = (((gameWeekday(nowMs) - SX.resetWeekday) % 7) + 7) % 7;
-  return (day - back) * DAY - SHIFT;
+  return (gameDay(nowMs) - back) * DAY - SHIFT;
 }
 
 /** 다음 주 초기화 시각 */
@@ -94,50 +87,74 @@ export function nextDayAt(nowMs: number): number {
   return dayStartOf(nowMs) + DAY;
 }
 
-/** 주가 바뀌었으면 주 단위 횟수를, 날이 바뀌었으면 하루 단위 횟수를 비운다 (어느 하나라도 바뀌었으면 true) */
-export function rollWeek(st: SpecialDungeonState, nowMs: number): boolean {
+// ── 입장권 (C.564, GDD 6-16 v6.248) ──
+
+export const TICKET_KINDS = ['daily', 'boss', 'raid'] as const;
+export type TicketKind = (typeof TICKET_KINDS)[number];
+/** 하루마다 채우는 입장권인가 (요일던전권) — 나머지는 주마다 */
+export const isDailyTicket = (k: TicketKind): boolean => k === 'daily';
+
+/** 트랙 칸 tower.tickets (형식 100): 종류별 장수 + 마지막으로 채운 날·주 시작 */
+export interface SpecialTickets {
+  daily: number;
+  boss: number;
+  raid: number;
+  /** 요일던전권을 채운 날의 시작(ms) — 오늘과 다르면 채운다 */
+  dayStart: number;
+  /** 보스전권·토벌전권을 채운 주의 시작(ms) */
+  weekStart: number;
+}
+
+/** 새 칸: 채운 날·주가 0 이라 처음 볼 때 가득 채운다 */
+export function newTickets(): SpecialTickets {
+  return { daily: 0, boss: 0, raid: 0, dayStart: 0, weekStart: 0 };
+}
+
+export function sanitizeTickets(raw: unknown): SpecialTickets {
+  const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  const n = (v: unknown) => Math.floor(nonNegNum(v));
+  return { daily: n(r.daily), boss: n(r.boss), raid: n(r.raid), dayStart: nonNegNum(r.dayStart), weekStart: nonNegNum(r.weekStart) };
+}
+
+/** 날·주가 바뀌었으면 그 종류를 채움 장수'까지' 채운다(산 것으로 이미 넘으면 그대로). 바뀌었으면 true */
+export function refillTickets(t: SpecialTickets, nowMs: number): boolean {
   let changed = false;
-  const ws = weekStartOf(nowMs);
-  if (st.weekStart !== ws) {
-    st.weekStart = ws;
-    st.used = {};
+  const ds = dayStartOf(nowMs);
+  if (t.dayStart !== ds) {
+    t.dayStart = ds;
+    t.daily = Math.max(t.daily, SX.tickets.daily.refill);
     changed = true;
   }
-  const ds = dayStartOf(nowMs);
-  if (st.dayStart !== ds) {
-    st.dayStart = ds;
-    st.daily = {};
+  const ws = weekStartOf(nowMs);
+  if (t.weekStart !== ws) {
+    t.weekStart = ws;
+    t.boss = Math.max(t.boss, SX.tickets.boss.refill);
+    t.raid = Math.max(t.raid, SX.tickets.raid.refill);
     changed = true;
   }
   return changed;
 }
 
-export const dailyKey = (id: DailyDungeonId): string => `daily:${id}`;
-export const bossKey = (bossId: string): string => `boss:${bossId}`;
-/** 하루 단위 칸인가 (요일던전) */
-export const isDailyKey = (key: string): boolean => key.startsWith('daily:');
-
-/** 한도 (요일던전 = 하루, 그 밖 = 주) */
-export function entryLimit(key: string): number {
-  return isDailyKey(key) ? SX.daily.entries : SX.boss.entries;
+/** 지금 장수 (날·주가 바뀌었으면 채운 뒤 값 — 상태는 바꾸지 않음) */
+export function ticketsLeft(t: SpecialTickets, kind: TicketKind, nowMs: number): number {
+  const c = { ...t };
+  refillTickets(c, nowMs);
+  return c[kind];
 }
 
-/** 남은 횟수 (주·날이 바뀌었으면 가득) */
-export function entriesLeft(st: SpecialDungeonState, key: string, nowMs: number): number {
-  const used = isDailyKey(key)
-    ? (st.dayStart === dayStartOf(nowMs) ? st.daily[key] ?? 0 : 0)
-    : (st.weekStart === weekStartOf(nowMs) ? st.used[key] ?? 0 : 0);
-  return Math.max(0, entryLimit(key) - used);
-}
-
-/** 입장 1회 차감 (남은 게 없으면 false). 실패해도 돌려주지 않는다 */
-export function spendEntry(st: SpecialDungeonState, key: string, nowMs: number): boolean {
-  rollWeek(st, nowMs);
-  if (entriesLeft(st, key, nowMs) <= 0) return false;
-  const m = isDailyKey(key) ? st.daily : st.used;
-  m[key] = (m[key] ?? 0) + 1;
+/** 입장권 1장 쓰기 (없으면 false). 지거나 그만둬도 돌려주지 않는다 */
+export function spendTicket(t: SpecialTickets, kind: TicketKind, nowMs: number): boolean {
+  refillTickets(t, nowMs);
+  if (t[kind] <= 0) return false;
+  t[kind] -= 1;
   return true;
 }
+
+/** 입장 종류 → 입장권 종류 */
+export const ticketOf = (mode: SpecialMode): TicketKind => mode;
+
+export const dailyKey = (id: DailyDungeonId): string => `daily:${id}`;
+export const bossKey = (bossId: string): string => `boss:${bossId}`;
 
 // ── 요일던전 (C.564) ──
 
@@ -148,10 +165,9 @@ export const isDailyDungeon = (id: string): id is DailyDungeonId => (DAILY_DUNGE
 /** 붕옥 재료 던전인가 (요일에만 열림) */
 export const isHogyokuDungeon = (id: string): id is HogyokuTrackId => (HOGYOKU_TRACK_IDS as readonly string[]).includes(id);
 
-/** 이 던전이 열리는 요일 (0 = 일요일). 붕옥 재료 던전 = hogyokuDays + 일요일, 그 밖 = 매일 */
+/** 이 던전이 열리는 요일 (0 = 일요일) — 요일표 SX.daily.days (일요일 = 전부, 월~토 3개씩) */
 export function dailyOpenDays(id: DailyDungeonId): number[] {
-  if (!isHogyokuDungeon(id)) return [0, 1, 2, 3, 4, 5, 6];
-  return [...new Set([...(SX.daily.hogyokuDays[id] ?? []), SX.daily.allOpenDay])].sort((a, b) => a - b);
+  return [0, 1, 2, 3, 4, 5, 6].filter((d) => (SX.daily.days[d] ?? []).includes(id));
 }
 
 /** 오늘(05:00 KST 기준) 열렸나 */
@@ -159,10 +175,15 @@ export function dailyOpenToday(id: DailyDungeonId, nowMs: number): boolean {
   return dailyOpenDays(id).includes(gameWeekday(nowMs));
 }
 
+/** 오늘 열린 던전 (목록 순서) */
+export function dailyOpenList(nowMs: number): DailyDungeonId[] {
+  return DAILY_DUNGEONS.filter((id) => dailyOpenToday(id, nowMs));
+}
+
 const WEEKDAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'] as const;
 /** 닫힌 날 한 줄: "월·목에 열린다" (일요일은 다 열려 따로 적지 않는다) */
 export function dailyOpenText(id: DailyDungeonId): string {
-  const days = (isHogyokuDungeon(id) ? [...(SX.daily.hogyokuDays[id] ?? [])] : dailyOpenDays(id)).filter((d) => d !== SX.daily.allOpenDay || !isHogyokuDungeon(id));
+  const days = dailyOpenDays(id).filter((d) => d !== 0);
   return `${days.map((d) => WEEKDAY_NAMES[d]).join('·')}에 열린다`;
 }
 

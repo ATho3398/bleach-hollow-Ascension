@@ -205,7 +205,7 @@ describe('36장 9번: 세이브 (형식 30)', () => {
   it('트랙마다 tower { best }, 새 세이브는 0', () => {
     expect(SAVE_FORMAT_VERSION).toBeGreaterThanOrEqual(30);
     expect(TRACK_KEYS).toContain('tower');
-    expect(newSaveData('hollow', 1).tower).toEqual({ best: 0 });
+    expect(newSaveData('hollow', 1).tower).toMatchObject({ best: 0 }) // C.564: 입장권 tickets 가 붙음;
     expect(newSaveData('hollow', 1).runLog.towerBattles).toEqual([]);
   });
   it('옛 세이브(형식 29)는 best 0·빈 towerBattles 로 열린다 (쉬는 트랙도)', () => {
@@ -221,15 +221,15 @@ describe('36장 9번: 세이브 (형식 30)', () => {
     s.otherTracks = [otherTrack];
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m.meta.format).toBe(SAVE_FORMAT_VERSION);
-    expect(m.tower).toEqual({ best: 0 });
+    expect(m.tower).toMatchObject({ best: 0 }) // C.564: 입장권 tickets 가 붙음;
     expect(m.runLog.towerBattles).toEqual([]);
-    expect(m.otherTracks[0]?.tower).toEqual({ best: 0 });
+    expect(m.otherTracks[0]?.tower).toMatchObject({ best: 0 }) // C.564: 입장권 tickets 가 붙음;
   });
   it('깨진 값 보정 0~50, 환생해도 유지', () => {
-    expect(sanitizeTower({ best: 99 })).toEqual({ best: 50 });
-    expect(sanitizeTower({ best: -3 })).toEqual({ best: 0 });
-    expect(sanitizeTower(null)).toEqual({ best: 0 });
-    expect(sanitizeTower({ best: 12.7 })).toEqual({ best: 12 });
+    expect(sanitizeTower({ best: 99 })).toMatchObject({ best: 50 }) // C.564: 입장권 tickets 가 붙음;
+    expect(sanitizeTower({ best: -3 })).toMatchObject({ best: 0 }) // C.564: 입장권 tickets 가 붙음;
+    expect(sanitizeTower(null)).toMatchObject({ best: 0 }) // C.564: 입장권 tickets 가 붙음;
+    expect(sanitizeTower({ best: 12.7 })).toMatchObject({ best: 12 }) // C.564: 입장권 tickets 가 붙음;
     const save: SaveData = newSaveData('hollow', 1);
     save.evolution.tierIndex = 4;
     save.tower.best = 23;

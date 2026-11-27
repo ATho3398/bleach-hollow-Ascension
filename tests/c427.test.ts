@@ -1,11 +1,11 @@
-// C.564: 옛 주간던전(주 3회) → 요일던전(하루 2회) — 기대값을 바꾼 곳은 '옛 값' 주석. C.427 (GDD 6-16 v6.017, 코딩280): 특수던전 — 월드맵 탑 자리 이름 '특수던전', 위 탭 [탑][주간던전][보스전], 주간던전·보스전(주 초기화·횟수·3판 연속·보상), 드래그 목록
+// C.564: 옛 주간던전(주 3회)·보스 주 1회 → 요일던전 + 입장권 3종(GDD 6-16 v6.248) — 기대값을 바꾼 곳은 '옛 값' 주석. C.427 (GDD 6-16 v6.017, 코딩280): 특수던전 — 월드맵 탑 자리 이름 '특수던전', 위 탭 [탑][주간던전][보스전], 주간던전·보스전(주 초기화·횟수·3판 연속·보상), 드래그 목록
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
 import { specialDungeonLabels, worldMapOf } from '../src/engine/faction';
 import {
-  bossKey, bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, dailyEnemies as weeklyEnemies, dailyKey as weeklyKey, entriesLeft, hpFractionAfter, newSpecialState, nextResetAt, OWNER_BOSS_ID, rollWeek, spendEntry, weekStartOf,
+  bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, dailyEnemies as weeklyEnemies, dailyKey as weeklyKey, hpFractionAfter, newTickets, nextResetAt, OWNER_BOSS_ID, refillTickets, spendTicket, ticketsLeft, weekStartOf,
 } from '../src/engine/specialDungeon';
 import { playCombatBot } from '../src/engine/combat/bot';
 import { enterSpecial, migrateSave, newSaveData, SAVE_FORMAT_VERSION, settleSpecialRun, specialState } from '../src/game';
@@ -33,32 +33,32 @@ describe('C.427 주간 초기화 (월요일 05:00 KST)', () => {
     expect(nextResetAt(kst(2026, 11, 12, 18))).toBe(kst(2026, 11, 16, 5));
   });
 
-  it('주가 바뀌면 쓴 횟수가 비워진다 (최고 기록은 남음)', () => {
-    const st = newSpecialState(kst(2026, 11, 12, 12));
-    const k = bossKey('sand-maw'); // C.564: 주 단위 칸 = 보스전 (옛 주간던전 soul)
-    st.best[k] = 2;
-    for (let i = 0; i < SX.boss.entries; i++) expect(spendEntry(st, k, kst(2026, 11, 12, 12))).toBe(true);
-    expect(spendEntry(st, k, kst(2026, 11, 15, 23))).toBe(false); // 일요일 = 같은 주
-    expect(entriesLeft(st, k, kst(2026, 11, 16, 6))).toBe(SX.boss.entries); // 월요일 06시 = 새 주로 보임
-    expect(rollWeek(st, kst(2026, 11, 16, 6))).toBe(true);
-    expect(st.used).toEqual({});
-    expect(st.best[k]).toBe(2);
+  it('주가 바뀌면 보스전 입장권을 채운다 (C.564: 옛 쓴 횟수 비우기 → 입장권 3장까지 채움)', () => {
+    const t = newTickets();
+    refillTickets(t, kst(2026, 11, 12, 12));
+    for (let i = 0; i < SX.tickets.boss.refill; i++) expect(spendTicket(t, 'boss', kst(2026, 11, 12, 12))).toBe(true);
+    expect(spendTicket(t, 'boss', kst(2026, 11, 15, 23))).toBe(false); // 일요일 = 같은 주
+    expect(ticketsLeft(t, 'boss', kst(2026, 11, 16, 6))).toBe(SX.tickets.boss.refill); // 월요일 06시 = 새 주로 보임
+    expect(refillTickets(t, kst(2026, 11, 16, 6))).toBe(true);
+    expect(t.boss).toBe(SX.tickets.boss.refill);
   });
 });
 
-describe('C.427 입장 횟수 차감', () => {
-  it('요일던전 던전마다 하루 2회(옛 주 3회)·보스 보스마다 주 1회, 실패해도 차감', () => {
+describe('C.427 입장 차감 (C.564: 입장권)', () => {
+  it('요일던전권 하루 2장·보스전권 주 3장(옛 던전마다 주 3회·보스마다 주 1회), 실패해도 차감', () => {
     const s = newSaveData('hollow', 1);
-    const now = kst(2026, 11, 15, 19); // C.564: 일요일 = 붕옥 재료 던전 셋 다 열림 (옛 11-12 목)
-    expect(SX.daily.entries).toBe(2); // 옛 SX.weekly.entries 3
-    expect(SX.boss.entries).toBe(1);
+    const now = kst(2026, 11, 15, 19); // C.564: 일요일 = 요일던전 전부 열림 (옛 11-12 목)
+    expect(SX.tickets.daily.refill).toBe(2); // 옛 SX.weekly.entries 3
+    expect(SX.tickets.boss.refill).toBe(3); // 옛 SX.boss.entries 1
     for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'daily', 'shard', now)).toBe(true);
     expect(enterSpecial(s, 'daily', 'shard', now)).toBe(false);
-    expect(enterSpecial(s, 'daily', 'soul', now)).toBe(true); // 다른 던전은 따로
-    expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true);
+    expect(enterSpecial(s, 'daily', 'soul', now)).toBe(false); // 입장권은 던전 공통 (옛: 다른 던전은 따로)
+    for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true);
     settleSpecialRun(s, { mode: 'boss', target: 'sand-maw', bossId: 'sand-maw', star: 1, battles: [fake(false)], total: 1, quit: false }, now);
-    expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(false); // 졌어도 이번 주 끝
-    expect(entriesLeft(specialState(s, now), bossKey('canyon-king'), now)).toBe(1);
+    expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true); // 3장째
+    expect(enterSpecial(s, 'boss', 'canyon-king', now)).toBe(false); // 졌어도 차감 — 이번 주 끝
+    specialState(s, now);
+    expect(ticketsLeft(s.tower.tickets, 'boss', now)).toBe(0);
   });
 });
 
@@ -202,7 +202,7 @@ describe('C.427 이름·탭·세이브', () => {
     delete raw.runLog.specialRuns;
     const m = migrateSave(raw)!;
     expect(m.meta.format).toBe(100);
-    expect(m.shared.special.used).toEqual({});
+    expect(m.shared.special.best).toEqual({}); // C.564: 옛 used 칸 없음
     expect(m.runLog.specialRuns).toEqual([]);
   });
 });

@@ -7,7 +7,7 @@ import { getEnemy } from '../src/data/enemies';
 import { BOSSES } from '../src/data/bosses';
 import { createCombat, enemyAttackSecondsOf, step, type CombatParams } from '../src/engine/combat';
 import { materialHave } from '../src/engine/hogyokuMaterials';
-import { entriesLeft } from '../src/engine/specialDungeon';
+import { ticketsLeft } from '../src/engine/specialDungeon';
 import {
   applyTestArenaParams, createTestItem, newTestSave, testAddHogyokuMaterials, testArenaDefaults, testArenaEnemy, testRefillSpecial,
   TEST_ARENA_SECONDS, TEST_CURRENCIES, TEST_HOGYOKU_MATERIAL_STEP, TEST_WEALTH, type TestArenaChoice,
@@ -20,14 +20,14 @@ useImmediateHits();
 const NOW = Date.UTC(2026, 10, 15, 3);
 
 describe('C.457 ① 특수던전 횟수 (레이드 클리어 뒤 진행 막힘 회귀)', () => {
-  it('보스전은 주 1회 — 진짜 게임은 두 번째 입장이 막힌다(재현), 테스트 칸은 비워서 계속 들어간다', () => {
+  it('입장권이 떨어지면 진짜 게임은 입장이 막힌다(재현), 테스트 칸은 채워서 계속 들어간다 (C.564: 보스 주 1회 → 보스전 입장권 주 3장)', () => {
     const s = newTestSave('hollow', NOW);
     const boss = BOSSES[0]!.id;
-    expect(enterSpecial(s, 'boss', boss, NOW)).toBe(true);
-    expect(entriesLeft(s.shared.special, `boss:${boss}`, NOW)).toBe(0); // 깨고 나오면 [이번 주 끝] — 이게 막힌 원인
-    expect(enterSpecial(s, 'boss', boss, NOW + 1)).toBe(false);
+    for (let i = 0; i < 3; i++) expect(enterSpecial(s, 'boss', boss, NOW + i)).toBe(true);
+    expect(ticketsLeft(s.tower.tickets, 'boss', NOW)).toBe(0); // 입장권이 바닥 — 옛 [이번 주 끝]
+    expect(enterSpecial(s, 'boss', boss, NOW + 5)).toBe(false);
     testRefillSpecial(s);
-    expect(entriesLeft(s.shared.special, `boss:${boss}`, NOW)).toBeGreaterThan(0);
+    expect(ticketsLeft(s.tower.tickets, 'boss', NOW)).toBeGreaterThan(0);
     for (let i = 0; i < 5; i++) {
       expect(enterSpecial(s, 'boss', boss, NOW + 10 + i)).toBe(true);
       testRefillSpecial(s);

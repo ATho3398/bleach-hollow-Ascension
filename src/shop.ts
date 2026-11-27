@@ -3,6 +3,7 @@
 // C.140 (GDD 86장 4번): 산 것은 보관함으로 — 먹이 = 먹이 개수 +1, 정화제·각성제 = 보관함 소모품 +1(보관함에서 씀, inventory.ts), 수련권 = 지금 트랙 +1, 타일 = 보관함 +1,
 // 꾸밈·스킨 = 보유만(끼기는 보관함). 우라하라(GDD 85장 5번) 품목·구매도 여기(wandererRows·buyWandererItem).
 import { BALANCE } from './config/balance';
+import { refillTickets, ticketsLeft } from './engine/specialDungeon';
 import { sortieEffectText, sortiePrice } from './engine/sortie';
 import { gateHint, gateOpen, type GateId } from './unlockGate';
 import { GOLD_ITEMS, COSMETIC_ITEMS, cosmeticName, deviceArt, getCosmetic, getGoldItem, getWandererItem, shopVisible, skinIdOfItem, WANDERER_GRADE_NAMES, type CosmeticCategory, type CosmeticItemDef, type GoldItemDef, type MedicineCure, type WandererGrade, type WearCategory } from './data/shop';
@@ -202,6 +203,7 @@ function goldEffect(item: GoldItemDef, faction: FactionConfig): string {
     case 'deckSlot': return `모험 길에 놓을 수 있는 타일 칸 +1 (영구, 최대 +${SX.deckSlotPrices.length})`; // GDD 159장 32: '트랙' 말 삭제
     case 'gear': return `${GEAR_STAT_HINT[item.gearKind!]} · 노멀 · ★ = 지금 단계 권장 · 능력치 무작위 → 가방 장비 탭에서 착용`;
     case 'sortie': return `${sortieEffectText(item.id)} · 가방 소모품 '출정품' 칸에 끼우면 모험 출발 때 1개씩 쓴다`;
+    case 'specialTicket': return `특수던전 ${item.ticket === 'daily' ? '요일던전' : item.ticket === 'boss' ? '보스전' : '토벌전'} 입장 1번 · 지금 트랙 입장권 +1 (산 것은 상한 없이 쌓인다)`;
   }
 }
 
@@ -212,13 +214,14 @@ function goldPrice(save: SaveData, item: GoldItemDef): number | null {
   if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
   if (item.kind === 'battle') return BALANCE.provisional.battleItems[item.id]?.price ?? null;
   if (item.kind === 'sortie') return sortiePrice(item.id);
+  if (item.kind === 'specialTicket') return BALANCE.provisional.specialDungeon.tickets[item.ticket!].price;
   return SX.goldPrices[item.id] ?? null;
 }
 
 /** 상점에서 파는 골드 물건의 산 값 (팔기 GDD 236장 2): 세이브와 상관없는 품목만 — 덱 칸·타일 뽑기·장비(판매가 따로)는 null */
 export function shopBuyPrice(id: string): number | null {
   const item = getGoldItem(id);
-  if (!item || item.kind === 'deckSlot' || item.kind === 'tileDraw' || item.kind === 'gear') return null;
+  if (!item || item.kind === 'deckSlot' || item.kind === 'tileDraw' || item.kind === 'gear' || item.kind === 'specialTicket') return null;
   if (item.kind === 'medicine') return BALANCE.provisional.nest.medicinePrices[item.id] ?? null;
   if (item.kind === 'battle') return BALANCE.provisional.battleItems[item.id]?.price ?? null;
   if (item.kind === 'sortie') return sortiePrice(item.id);
@@ -242,6 +245,7 @@ function goldBlock(save: SaveData, item: GoldItemDef, nowMs: number = Date.now()
     case 'deckSlot': return save.shared.deckSlots >= SX.deckSlotPrices.length ? '가득' : null; // GDD 159장 32·34: 효과 줄 '최대 +n' 되풀이 대신 다른 칸과 같은 '가득'
     case 'gear': return gearFullText(save);
     case 'sortie': return canStoreConsumable(save, item.id) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
+    case 'specialTicket': return null; // 산 입장권은 상한 없음 (GDD 6-16 v6.248)
   }
 }
 
@@ -262,6 +266,7 @@ function goldHave(save: SaveData, item: GoldItemDef): string | null {
     case 'rareTile': return null;
     case 'gear': return `보유 ${save.shared.gear.items.length}/${BALANCE.provisional.gear.cap}`;
     case 'sortie': return `보유 ${save.shared.items[item.id] ?? 0}/${CONSUMABLE_CAP}`;
+    case 'specialTicket': return `보유 ${ticketsLeft(save.tower.tickets, item.ticket!, Date.now())}`;
   }
 }
 
@@ -372,6 +377,13 @@ export function buyShopItem(save: SaveData, faction: FactionConfig, id: string, 
       case 'gear':
         detail = giveGear(save, faction, rollGear({ kind: gold.gearKind!, grade: 'normal', star: gearStarOf(save) }, rand), 'shop', nowMs);
         break;
+      case 'specialTicket': {
+        // 먼저 날·주 채움을 끝낸 뒤 +1 (채움 = '그 수까지'라 나중에 채우면 산 장이 묻힌다)
+        refillTickets(save.tower.tickets, nowMs);
+        save.tower.tickets[gold.ticket!] += 1;
+        detail = `${gold.name} ${save.tower.tickets[gold.ticket!]}장`;
+        break;
+      }
     }
     save.shared.tradeCoins -= price;
     record(save, id, 'gold', price, nowMs, tile);

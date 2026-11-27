@@ -10,10 +10,11 @@ import { bossName } from '../data/bosses';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from '../data/hogyoku';
 import { difficultyLabels, difficultyText, specialDungeonLabels, towerLabels, type FactionConfig } from '../engine/faction';
 import {
-  bossKey, bossRushEntries, bossRushOpen, bossRushReward, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, entriesLeft, entryLimit, isDailyKey, isHogyokuDungeon,
-  nextDayAt, nextResetAt, selectableStars,
-  type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab,
+  bossKey, bossRushEntries, bossRushOpen, bossRushReward, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, isDailyTicket, isHogyokuDungeon,
+  nextDayAt, nextResetAt, selectableStars, ticketOf, ticketsLeft,
+  type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab, type TicketKind,
 } from '../engine/specialDungeon';
+import { BALANCE } from '../config/balance';
 import { featureUnlocked, unlockWhenText } from '../engine/unlocks';
 import { getMaterial } from '../data/materials';
 import { GEAR_GRADE_NAMES, type GearGrade, type GearKind } from '../data/gear';
@@ -42,8 +43,9 @@ const ART_BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL 
 export interface SpecialDungeonHandlers {
   onTab: (tab: SpecialTab) => void;
   onHelp: () => void;
-  onDaily: (id: DailyDungeonId, star: number) => void;
-  onBoss: (e: BossRushEntry, star: number) => void;
+  /** practice = 연습(입장권 없이, 보상·기록 없음 — C.564) */
+  onDaily: (id: DailyDungeonId, star: number, practice: boolean) => void;
+  onBoss: (e: BossRushEntry, star: number, practice: boolean) => void;
 }
 
 /** 화면 안에서 고른 것 (탭을 오가도 유지 — 앱이 다시 그릴 때 그대로) */
@@ -112,12 +114,20 @@ interface Card {
   lockText: string;
   reward: string;
   rule: string;
-  enter: (star: number) => void;
+  enter: (star: number, practice: boolean) => void;
+}
+
+/** 입장권 채움 한 줄: "매일 05:00 에 2장까지 채움 · 17시간 뒤" */
+export function ticketRefillText(kind: TicketKind, nowMs: number): string {
+  const n = BALANCE.provisional.specialDungeon.tickets[kind].refill;
+  return isDailyTicket(kind) ? `매일 05:00 에 ${n}장까지 채움 · ${resetInText(nowMs, true)} 뒤` : `월요일 05:00 에 ${n}장까지 채움 · ${resetInText(nowMs)} 뒤`;
 }
 
 export function specialDungeonView(root: HTMLElement, faction: FactionConfig, save: SaveData, tab: Exclude<SpecialTab, 'tower'>, h: SpecialDungeonHandlers, nowMs: number = Date.now()): void {
   const L = specialDungeonLabels(faction);
   const st = save.shared.special;
+  const tk: TicketKind = ticketOf(tab);
+  const tickets = ticketsLeft(save.tower.tickets, tk, nowMs);
   const cards: Card[] = tab === 'daily'
     ? DAILY_DUNGEONS.map((id) => {
       const feat = dailyFeature(id);
@@ -128,7 +138,7 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
         open: featOpen && today,
         lockText: !featOpen && feat ? fixParticles(`${unlockWhenText(faction, feat)} 열린다`) : dailyOpenText(id),
         reward: '', rule: '전투 3판 연속(일반 · 일반 · 강적) · 체력은 이어 간다 · 지면 실패',
-        enter: (star) => h.onDaily(id, star),
+        enter: (star, practice) => h.onDaily(id, star, practice),
       };
     })
     : bossRushEntries().map((e) => ({
@@ -136,7 +146,7 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
       open: bossRushOpen(e, save.bossDex, save.tower.best, TOWER_FLOORS),
       lockText: e.owner ? `${towerLabels(faction).name} ${TOWER_FLOORS}층을 깨면 열린다` : '스토리에서 이 보스를 이기면 열린다',
       reward: '', rule: '보스 한 판 · 제한 시간 안에 쓰러뜨려야 한다 · 첫 처치 보상·칭호·보스 특성은 스토리에서만',
-      enter: (star) => h.onBoss(e, star),
+      enter: (star, practice) => h.onBoss(e, star, practice),
     }));
   const sel = Math.min(cards.length - 1, Math.max(0, pick[tab]));
   const stars = selectableStars(save.difficulty.unlocked);
@@ -153,10 +163,11 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
     b.type = 'button';
     b.setAttribute('role', 'option');
     b.dataset.key = c.key;
-    const left = entriesLeft(st, c.key, nowMs);
+    const best = st.best[c.key] ?? 0;
     const name = el('span', 'bha-sdg__itemname');
     name.append(el('b', '', c.name), el('small', 'bha-faint', c.open ? c.sub : c.lockText));
-    b.append(icon(c.open ? c.icon : 'i-lock'), name, el('span', `bha-sdg__count bha-num${left <= 0 ? ' is-empty' : ''}`, `${left}/${entryLimit(c.key)}`));
+    // 오른쪽 작은 칸 = 이긴 최고 ★ (C.564: 던전마다 세던 남은 횟수 → 입장권으로 대체)
+    b.append(icon(c.open ? c.icon : 'i-lock'), name, el('span', `bha-sdg__count bha-num${best <= 0 ? ' is-empty' : ''}`, best > 0 ? difficultyText(faction, best) : '—'));
     b.onclick = () => show(i);
     list.append(b);
     return b;
@@ -174,7 +185,6 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
       b.setAttribute('aria-selected', String(j === i));
     });
     const star = Math.min(stars.length, pick.star[c.key] ?? rec);
-    const left = entriesLeft(st, c.key, nowMs);
     const art = el('div', 'bha-sdg__art');
     art.dataset.art = c.art ?? '';
     const bg = sceneBg(c.art, ART_BASE);
@@ -195,14 +205,15 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
     const reward = el('p', 'bha-sdg__reward');
     reward.append(icon('i-rare'), `승리 보상 · ${rewardText}`);
     const count = el('p', 'bha-sdg__left bha-faint');
-    const daily = isDailyKey(c.key);
-    count.append(icon('i-timer'), daily
-      ? `오늘 남은 횟수 ${left}/${entryLimit(c.key)} · ${resetInText(nowMs, true)} 뒤 초기화(매일 05:00)`
-      : `이번 주 남은 횟수 ${left}/${entryLimit(c.key)} · ${resetInText(nowMs)} 뒤 초기화(월요일 05:00)`);
-    const go = button({ label: !c.open ? '잠김' : left > 0 ? '입장' : daily ? '오늘 끝' : '이번 주 끝', icon: 'i-play', variant: 'primary', size: 'lg', disabled: !c.open || left <= 0, onClick: () => c.enter(star) });
+    count.append(icon('i-timer'), `${L.tickets[tk]} ${tickets}장 · 입장 1번 = 1장 · ${ticketRefillText(tk, nowMs)}`);
+    const go = button({ label: !c.open ? '잠김' : tickets > 0 ? '입장' : '입장권 없음', icon: 'i-play', variant: 'primary', size: 'lg', disabled: !c.open || tickets <= 0, onClick: () => c.enter(star, false) });
     go.dataset.go = tab;
+    // 연습 (C.564, GDD 6-16 v6.248): 입장권 없이 같은 적·같은 ★ — 보상·도감·열림 진행·기록 없음. 잠긴 던전은 연습도 잠김
+    const practice = button({ label: '연습', icon: 'i-practice', variant: 'ghost', size: 'lg', disabled: !c.open, onClick: () => c.enter(star, true) });
+    practice.dataset.practice = tab;
+    practice.title = '입장권을 쓰지 않는다 · 보상·기록 없음';
     const row = el('div', 'bha-sdg__go');
-    row.append(starSeg, go);
+    row.append(starSeg, practice, go);
     info.append(el('p', 'bha-sdg__rule bha-faint', c.rule), reward, count, row);
     stage.replaceChildren(art, info);
   }
@@ -227,6 +238,8 @@ export function resetSpecialPick(): void {
 
 export interface SpecialRunView {
   mode: SpecialMode;
+  /** 연습 (C.564): 보상 없음 */
+  practice?: boolean;
   target: string;
   name: string;
   star: number;
@@ -252,11 +265,12 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
   const reason = won ? (run.total > 1 ? `${run.total}판을 모두 이겼다.` : `${run.name}을(를) 쓰러뜨렸다.`)
-    : run.battles.length < run.total && last?.status === 'won' ? '도중에 나왔다. 입장 횟수는 돌려받지 못한다.'
-    : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장 횟수는 돌려받지 못한다.' : last?.lossReason === 'executed' ? '처형을 막지 못했다. 입장 횟수는 돌려받지 못한다.' : '체력이 다했다. 입장 횟수는 돌려받지 못한다.';
+    : run.practice ? '연습이 끝났다. 잃은 것은 없다.'
+    : run.battles.length < run.total && last?.status === 'won' ? '도중에 나왔다. 입장권은 돌려받지 못한다.'
+    : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장권은 돌려받지 못한다.' : last?.lossReason === 'executed' ? '처형을 막지 못했다. 입장권은 돌려받지 못한다.' : '체력이 다했다. 입장권은 돌려받지 못한다.';
   head.append(
     mark,
-    el('span', 'bha-label', `${L.name} · ${run.mode === 'daily' ? L.tabs.daily : L.tabs.boss} · ${run.name} · ${difficultyText(faction, run.star)}`),
+    el('span', 'bha-label', `${L.name} · ${run.mode === 'daily' ? L.tabs.daily : L.tabs.boss}${run.practice ? ' 연습' : ''} · ${run.name} · ${difficultyText(faction, run.star)}`),
     el('h1', 'bha-result__title', won ? '클리어' : battleLabels(faction).defeatState),
     el('p', 'bha-result__reason', reason),
   );
@@ -264,9 +278,9 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
     label: run.total > 1 ? `${i + 1}판` : '전투', icon: b.status === 'won' ? 'i-check' : 'i-broken', mod: b.status === 'won' ? 'good' : undefined,
     value: `${b.status === 'won' ? '승리' : '패배'} · ${elapsedSeconds(b).toFixed(1)}초 · 시작 체력 ${Math.round(b.params.playerStartHpFraction * 100)}%`,
   }));
-  rows.push({ label: '보상', icon: 'i-rare', mod: won ? 'good' : undefined, value: won ? specialRewardText(res, faction) : '없음 (다 이겨야 받는다)' });
-  const key = run.mode === 'daily' ? dailyKey(run.target as DailyDungeonId) : bossKey(run.target);
-  rows.push({ label: isDailyKey(key) ? '오늘' : '이번 주', icon: 'i-timer', value: `남은 횟수 ${entriesLeft(save.shared.special, key, nowMs)}/${entryLimit(key)}` });
+  rows.push({ label: '보상', icon: 'i-rare', mod: won && !run.practice ? 'good' : undefined, value: run.practice ? '없음 (연습)' : won ? specialRewardText(res, faction) : '없음 (다 이겨야 받는다)' });
+  const tk = ticketOf(run.mode);
+  rows.push({ label: '입장권', icon: 'i-timer', value: `${L.tickets[tk]} ${ticketsLeft(save.tower.tickets, tk, nowMs)}장` });
   const dock = el('div', 'bha-dock');
   dock.append(asBack(button({ label: L.name, icon: 'i-return', size: 'lg', variant: 'primary', onClick: h.onBack })));
   const app = splitApp(root, { cls: 'bha-resultpage', sticky: true }, null, [head, dock], [panel({}, iconInfo(rows))]);

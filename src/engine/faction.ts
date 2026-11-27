@@ -554,7 +554,7 @@ export interface FactionConfig {
   /** 도전의 탑 문구 (GDD 36장, C.85): 이름·층 표시({n})·꼭대기 보스 이름·잠김 문구·한 줄 설명. 없으면 기본 문구 (towerLabels) */
   tower?: Partial<TowerLabels> & { starGrounds?: Record<string, string> };
   /** 특수던전 (GDD 6-16 v6.017 → v6.246, C.427·C.564): 월드맵 장소 이름·한 줄 설명·탭 이름·요일던전(던전 id → 이름·그림 장면 id)·보스전 그림(보스 칸 id → 장면 id). 없으면 기본 (specialDungeonLabels) */
-  specialDungeon?: Partial<Omit<SpecialDungeonLabels, 'tabs' | 'daily' | 'bossArt'>> & { tabs?: Partial<SpecialDungeonLabels['tabs']>; daily?: Record<string, { name?: string; art?: string }>; bossArt?: Record<string, string> };
+  specialDungeon?: Partial<Omit<SpecialDungeonLabels, 'tabs' | 'daily' | 'bossArt' | 'tickets'>> & { tabs?: Partial<SpecialDungeonLabels['tabs']>; daily?: Record<string, { name?: string; art?: string }>; bossArt?: Record<string, string>; tickets?: Partial<SpecialDungeonLabels['tickets']> };
   /** 원정 걷기 애니메이션 이름 슬롯 (GDD 17-1): 화면이 bha-walker--<이름> 클래스를 붙이고 CSS 가 모양을 정한다. 비우면 'plain' */
   walkAnim?: string;
   /** 공격 계열 목록과 단계별 기술 (GDD 17-3). 특성 family 가 가리키는 계열은 모두 여기 있어야 한다 */
@@ -709,6 +709,7 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
       for (const k of ['name', 'desc']) if (t[k] !== undefined && !isString(t[k])) errors.push(`specialDungeon.${k}: 비어 있지 않은 문자열`);
       const isMap = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
       if (t.tabs !== undefined && (!isMap(t.tabs) || Object.values(t.tabs).some((v) => !isString(v)))) errors.push('specialDungeon.tabs: { tower?, daily?, boss? } 문자열');
+      if (t.tickets !== undefined && (!isMap(t.tickets) || Object.values(t.tickets).some((v) => !isString(v)))) errors.push('specialDungeon.tickets: { daily?, boss?, raid? } 문자열');
       if (t.bossArt !== undefined && (!isMap(t.bossArt) || Object.values(t.bossArt).some((v) => !isString(v)))) errors.push('specialDungeon.bossArt: { 보스 칸 id: 장면 id }');
       if (t.daily !== undefined && (!isMap(t.daily) || Object.values(t.daily).some((v) => !isMap(v) || (v.name !== undefined && !isString(v.name)) || (v.art !== undefined && !isString(v.art))))) errors.push('specialDungeon.daily: { 던전 id: { name?, art? } }');
     }
@@ -974,6 +975,8 @@ export interface SpecialDungeonLabels {
   daily: Record<string, { name: string; art?: string }>;
   /** 보스전 그림: 보스 칸 id → 장면 id (없으면 arenaBg) */
   bossArt: Record<string, string>;
+  /** 입장권 이름 (C.564, GDD 6-16 v6.248): 요일던전권·보스전권·토벌전권 */
+  tickets: { daily: string; boss: string; raid: string };
 }
 
 /** 특수던전 문구: 종족 설정 specialDungeon, 빈 곳은 기본 (요일던전 이름 기본은 화면이 채운다) */
@@ -985,6 +988,7 @@ export function specialDungeonLabels(f: Pick<FactionConfig, 'specialDungeon'>): 
     name: t.name ?? '특수던전', desc: t.desc ?? '탑을 오르고, 요일마다 열리는 던전과 보스에 도전한다.',
     tabs: { tower: t.tabs?.tower ?? '탑', daily: t.tabs?.daily ?? '요일던전', boss: t.tabs?.boss ?? '보스전' },
     daily, bossArt: { ...(t.bossArt ?? {}) },
+    tickets: { daily: t.tickets?.daily ?? '요일던전 입장권', boss: t.tickets?.boss ?? '보스전 입장권', raid: t.tickets?.raid ?? '토벌전 입장권' },
   };
 }
 

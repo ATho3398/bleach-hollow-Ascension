@@ -54,7 +54,7 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
-import { bossKey, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, rollWeek, sanitizeSpecial, spendEntry, type DailyDungeonId, type SpecialDungeonState, type SpecialMode } from './engine/specialDungeon';
+import { bossKey, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, newTickets, refillTickets, sanitizeSpecial, sanitizeTickets, spendTicket, ticketOf, type DailyDungeonId, type SpecialDungeonState, type SpecialMode, type SpecialTickets } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { newWandererState, rollWandererStock, rollWandererTier, sanitizeWanderer, wandererCellRng, wandererHereAt, wandererLeaveAt, type WandererState, type WandererVisit } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
@@ -72,7 +72,7 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246 요일던전, 사용자 2026-11-27): shared.special 하루 단위 칸 dayStart·daily(요일던전 던전마다 하루 2회 — 옛 주간던전 주 3회 대체), 칸 키 weekly:<트랙> → daily:<던전 id>, 런 로그 specialRuns mode 'daily'·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](옛 주간던전 최고 ★·이긴 수 → 요일던전 키, 이번 주 쓴 횟수 지움)
+export const SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권 3종, 사용자 2026-11-27): 트랙 칸 tower.tickets(요일던전권·보스전권·토벌전권 + 채운 날·주 — 옛 shared.special.weekStart·used 주 횟수 대체), shared.special = 최고 ★·이긴 수만(키 weekly:<트랙> → daily:<던전 id>), 런 로그 specialRuns mode 'daily'·practice·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](트랙마다 새 입장권 칸 = 처음 열 때 가득, 옛 주간던전 기록 → 요일던전 키)
 // 이전: SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
 // 이전: SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
 // 이전: SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
@@ -212,13 +212,15 @@ export interface DifficultyState {
 export interface TowerState {
   /** 깬 최고 층 (0 = 아직 없음, 1~TOWER_FLOORS) */
   best: number;
+  /** 특수던전 입장권 (C.564, GDD 6-16 v6.248 — 트랙마다, 환생해도 유지): 요일던전권·보스전권·토벌전권 + 채운 날·주 */
+  tickets: SpecialTickets;
 }
 
 /** 탑 상태 보정: best 는 0~꼭대기 정수 */
 export function sanitizeTower(raw: unknown): TowerState {
   const r = (isRec(raw) ? raw : {}) as Partial<Record<keyof TowerState, unknown>>;
   const b = typeof r.best === 'number' && Number.isFinite(r.best) ? Math.floor(r.best) : 0;
-  return { best: Math.min(TOWER_FLOORS, Math.max(0, b)) };
+  return { best: Math.min(TOWER_FLOORS, Math.max(0, b)), tickets: sanitizeTickets(r.tickets) };
 }
 
 export interface MachineRecord {
@@ -903,7 +905,7 @@ export const battleItemUnlocked = (save: Pick<SaveData, 'shared'>): boolean => f
 export function newTrack(factionId: string, nowMs: number = Date.now(), seedSalt = 0): Omit<TrackData, 'parkedAt'> {
   return {
     factionId, transcendentId: null, nest: newNest(nowMs), build: newBuild(), evolution: { ...newEvolution(nextStageSeed((Math.floor(nowMs) + seedSalt) >>> 0, 0)), abilities: newAbilityLoadout() }, runLog: emptyRunLog(), activeExpedition: null,
-    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } }, tower: { best: 0 },
+    lastScreen: 'room', rank: newRankState(), training: newTrainingState(), skin: null, rebirth: newRebirthState(), wear: defaultWear(), difficulty: { unlocked: 1, last: 1, streak: { star: 1, count: 0 } }, tower: { best: 0, tickets: newTickets() },
   };
 }
 
@@ -1319,7 +1321,7 @@ export function inheritTranscendentTrack(chars: readonly Pick<SaveData, TrackKey
     factionId: base.factionId, transcendentId: def.id, nest, build, evolution, runLog, activeExpedition: null, lastScreen: 'room',
     rank: newRankState(), training: jsonClone(base.training), skin, rebirth, wear: { ...base.wear },
     difficulty: { unlocked, last: Math.min(unlocked, tierStar), streak: { star: Math.min(unlocked, tierStar), count: 0 } },
-    tower: { best: Math.max(...chars.map((t) => t.tower.best)) },
+    tower: { best: Math.max(...chars.map((t) => t.tower.best)), tickets: newTickets() },
   };
 }
 
@@ -2206,14 +2208,15 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
 
 // ── 특수던전 요일던전·보스전 (GDD 6-16 v6.017 → v6.246, C.427·C.564) ──
 
-/** 특수던전 상태 (주·날이 바뀌었으면 여기서 비운다) */
+/** 특수던전 상태 (슬롯 공유 최고 ★·이긴 수) + 지금 트랙 입장권을 날·주에 맞춰 채운다 */
 export function specialState(save: SaveData, nowMs: number = Date.now()): SpecialDungeonState {
-  save.shared.special ??= newSpecialState(nowMs);
-  rollWeek(save.shared.special, nowMs);
+  save.shared.special ??= newSpecialState();
+  save.tower.tickets ??= newTickets();
+  refillTickets(save.tower.tickets, nowMs);
   return save.shared.special;
 }
 
-/** 입장 칸 키: 요일던전 = 하루 단위, 보스전 = 주 단위 */
+/** 기록 칸 키: 'daily:<던전 id>' · 'boss:<보스 칸 id>' */
 export function specialKeyOf(mode: SpecialMode, target: string): string {
   return mode === 'daily' ? dailyKey(target as DailyDungeonId) : bossKey(target);
 }
@@ -2225,10 +2228,11 @@ export function dailyAvailable(save: SaveData, id: string, nowMs: number = Date.
   return !f || featureUnlocked(save, f);
 }
 
-/** 입장: 횟수 1 차감 (남은 게 없거나 오늘 닫힌 요일던전이면 false). 실패·중간 나가기도 돌려주지 않는다 */
+/** 입장: 그 종류 입장권 1장 차감 (없거나 오늘 닫힌 요일던전이면 false). 실패·중간 나가기도 돌려주지 않는다. 연습은 이 함수를 부르지 않는다 */
 export function enterSpecial(save: SaveData, mode: SpecialMode, target: string, nowMs: number = Date.now()): boolean {
   if (mode === 'daily' && !dailyAvailable(save, target, nowMs)) return false;
-  return spendEntry(specialState(save, nowMs), specialKeyOf(mode, target), nowMs);
+  specialState(save, nowMs);
+  return spendTicket(save.tower.tickets, ticketOf(mode), nowMs);
 }
 
 /** 특수던전 전투 한 판을 런 로그·적 도감에 남긴다 (리스크·배부름·컨디션은 그대로 — 탑과 같다) */
@@ -2267,16 +2271,21 @@ function grantSpecialGear(save: SaveData, kinds: readonly GearKind[], grades: st
   return { kind: roll.kind, grade: roll.grade, star: roll.star, sold: gold };
 }
 
-/** 한 입장을 끝낸다: 다 이기면 보상(요일던전 = 던전마다 — 붕옥 재료 + 골드 / 골드 / 장비 / 장신구 / 장비 재료, 보스전 = 재료 세 종 + 골드)·최고 ★·이긴 수, 보스전은 보스 도감 처치 +1(첫 처치 보상·칭호·특성 없음).
+/** 한 입장을 끝낸다 (연습이면 결과만 — 아무것도 주지 않는다): 다 이기면 보상(요일던전 = 던전마다 — 붕옥 재료 + 골드 / 골드 / 장비 / 장신구 / 장비 재료, 보스전 = 재료 세 종 + 골드)·최고 ★·이긴 수, 보스전은 보스 도감 처치 +1(첫 처치 보상·칭호·특성 없음).
  *  런 로그 specialRuns 에 입장·판마다 결과·보상. 빈사로 지면 탑처럼 사망 규칙. 빈사면 골드 절반 */
 export function settleSpecialRun(
   save: SaveData,
-  run: { mode: SpecialMode; target: string; bossId?: string; star: number; battles: CombatState[]; total: number; quit: boolean },
+  run: { mode: SpecialMode; target: string; bossId?: string; star: number; battles: CombatState[]; total: number; quit: boolean; practice?: boolean },
   nowMs: number = Date.now(),
 ): SpecialOutcome {
   const st = specialState(save, nowMs);
   const won = !run.quit && run.battles.length >= run.total && run.battles.every((b) => b.status === 'won');
   const out: SpecialOutcome = { won, gold: 0, materials: {}, gear: [], items: {} };
+  if (run.practice) {
+    // 연습 (C.564, GDD 6-16 v6.248): 보상·도감·열림 진행·기록 없음 — 런 로그에는 연습 표시만, 빈사 사망 규칙도 없음
+    save.runLog.specialRuns.push({ at: nowMs, factionId: save.factionId, mode: run.mode, target: run.target, star: run.star, won, quit: run.quit, practice: true, battles: [], gold: 0, materials: {}, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId });
+    return out;
+  }
   const half = save.nest.collapsed ? BALANCE.provisional.nest.care.dying.rewardMult : 1; // 빈사 골드 절반 (탑과 같다)
   if (won) {
     const key = specialKeyOf(run.mode, run.target);
@@ -2743,27 +2752,31 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   97: (save) => migrateMergedBlocks(save),
   // 98 → 99 (C.549, GDD 5-5 우라하라 = 모험 중 마주침): 바퀴 수 lapsSince 를 지우고, 와 있던 방문은 지금부터 15분 머문다(at = 변환 시각 — 옛 '다음 원정 귀환 때 떠남' 대신)
   98: (save) => migrateWandererStay(save, Date.now()),
-  // 99 → 100 (C.564, GDD 6-16 v6.246 요일던전): shared.special 에 하루 단위 칸 dayStart·daily, 옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로 옮기고 이번 주 쓴 횟수는 지운다
+  // 99 → 100 (C.564, GDD 6-16 v6.248 요일던전·입장권): 주 횟수 칸(weekStart·used)을 지우고 트랙마다 입장권 tower.tickets, 옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로
   99: (save) => migrateDailyDungeon(save),
 };
 
-/** 형식 99 → 100 (C.564): 옛 주간던전(주 3회) → 요일던전(하루 2회). 슬롯 공유라 한 번 */
+/** 형식 99 → 100 (C.564, GDD 6-16 v6.248): 옛 주간던전·보스전 주 횟수(shared.special.weekStart·used) → 트랙마다 입장권 tower.tickets(채운 날·주 0 = 처음 열 때 가득).
+ *  옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로 옮긴다 */
 export function migrateDailyDungeon(save: SaveData): void {
   const sh = (save as unknown as { shared?: unknown }).shared;
-  if (!isRec(sh) || !isRec(sh.special)) return;
-  const sp = sh.special;
-  sp.dayStart = 0;
-  sp.daily = {};
-  for (const k of ['used', 'best', 'clears'] as const) {
-    const m = sp[k];
-    if (!isRec(m)) continue;
-    for (const key of Object.keys(m)) {
-      if (!key.startsWith('weekly:')) continue;
-      const v = m[key];
-      delete m[key];
-      if (k !== 'used') m[`daily:${key.slice('weekly:'.length)}`] = v;
+  if (isRec(sh) && isRec(sh.special)) {
+    const sp = sh.special;
+    delete sp.weekStart;
+    delete sp.used;
+    for (const k of ['best', 'clears'] as const) {
+      const m = sp[k];
+      if (!isRec(m)) continue;
+      for (const key of Object.keys(m)) {
+        if (!key.startsWith('weekly:')) continue;
+        const v = m[key];
+        delete m[key];
+        m[`daily:${key.slice('weekly:'.length)}`] = v;
+      }
     }
   }
+  const tracks: unknown[] = [save, ...(Array.isArray((save as unknown as { otherTracks?: unknown }).otherTracks) ? save.otherTracks : [])];
+  for (const t of tracks) if (isRec(t) && isRec(t.tower)) t.tower.tickets = newTickets();
 }
 
 /** 형식 98 → 99 (C.549): shared.wanderer.lapsSince 삭제, 와 있던 방문의 at = nowMs (떠나는 시각 = nowMs + 15분). 슬롯 공유라 트랙과 상관없이 한 번 */
@@ -3260,7 +3273,7 @@ export function migrateSave(raw: unknown, min: number = saveFormatGate.min): Sav
   }
   if (save.meta.format < 30) {
     // 형식 29 → 30 (C.85, GDD 36장 9번 도전의 탑): 트랙마다 tower { best: 0 }, 런 로그 towerBattles 빈 목록(repairRunLog 가 채운다)
-    forEachTrack(save, (t) => { t.tower = { best: 0 }; });
+    forEachTrack(save, (t) => { t.tower = { best: 0, tickets: newTickets() }; });
     save.meta.format = 30;
   }
   if (save.meta.format < 31) {
