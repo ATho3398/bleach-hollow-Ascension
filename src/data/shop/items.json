@@ -150,6 +150,13 @@
       "name": "보스전 입장권"
     },
     {
+      "id": "ticket-raid",
+      "kind": "specialTicket",
+      "category": "etc",
+      "ticket": "raid",
+      "name": "토벌전 입장권"
+    },
+    {
       "id": "deck-slot",
       "kind": "deckSlot",
       "category": "etc",

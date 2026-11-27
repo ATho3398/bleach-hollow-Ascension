@@ -11,9 +11,9 @@ import { foeEl } from './bha/battle';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from '../data/hogyoku';
 import { difficultyLabels, difficultyText, specialDungeonLabels, towerLabels, type FactionConfig } from '../engine/faction';
 import {
-  bossKey, bossRushEntries, bossRushOpen, bossRushReward, bossRushStars, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, isDailyTicket, isHogyokuDungeon,
+  bossKey, bossRushEntries, bossRushOpen, bossRushReward, bossRushStars, raidEntries, raidKey, raidOpen, raidReward, raidStars, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, isDailyTicket, isHogyokuDungeon,
   nextDayAt, nextResetAt, selectableStars, ticketOf, ticketsLeft,
-  type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab, type TicketKind,
+  type BossRushEntry, type RaidEntry, type DailyDungeonId, type SpecialMode, type SpecialTab, type TicketKind,
 } from '../engine/specialDungeon';
 import { BALANCE } from '../config/balance';
 import { featureUnlocked, unlockWhenText } from '../engine/unlocks';
@@ -47,10 +47,12 @@ export interface SpecialDungeonHandlers {
   /** practice = 연습(입장권 없이, 보상·기록 없음 — C.564) */
   onDaily: (id: DailyDungeonId, star: number, practice: boolean) => void;
   onBoss: (e: BossRushEntry, star: number, practice: boolean) => void;
+  /** 토벌전 작전 (C.566) */
+  onRaid: (e: RaidEntry, star: number, practice: boolean) => void;
 }
 
 /** 화면 안에서 고른 것 (탭을 오가도 유지 — 앱이 다시 그릴 때 그대로) */
-const pick: { daily: number; boss: number; star: Record<string, number> } = { daily: 0, boss: 0, star: {} };
+const pick: { daily: number; boss: number; raid: number; star: Record<string, number> } = { daily: 0, boss: 0, raid: 0, star: {} };
 
 /** 특수던전 머리: 이름 + 위 탭 + 도움말. 탑 탭도 이 머리를 쓴다 */
 export function specialHead(faction: FactionConfig, tab: SpecialTab, h: Pick<SpecialDungeonHandlers, 'onTab' | 'onHelp'>): HTMLElement {
@@ -60,6 +62,7 @@ export function specialHead(faction: FactionConfig, tab: SpecialTab, h: Pick<Spe
     { id: 'tower', label: L.tabs.tower },
     { id: 'daily', label: L.tabs.daily },
     { id: 'boss', label: L.tabs.boss },
+    { id: 'raid', label: L.tabs.raid },
   ], tab, (id) => h.onTab(id as SpecialTab), { small: true });
   tabs.classList.add('bha-sdg__tabs');
   tabs.dataset.sdgTabs = '';
@@ -90,6 +93,11 @@ export function dailyRewardText(faction: FactionConfig, id: DailyDungeonId, star
   if (r.gearMats > 0) parts.push(`장비 재료 ${r.gearMats}개(무작위)`);
   if (r.gold > 0) parts.push(`골드 ${r.gold}`);
   return parts.join(' · ');
+}
+
+/** 토벌전 작전 이름 (C.566): 종족 설정 specialDungeon.raids, 없으면 id */
+export function raidName(faction: FactionConfig, e: Pick<RaidEntry, 'id'>): string {
+  return specialDungeonLabels(faction).raids[e.id]?.name ?? e.id;
 }
 
 /** 보스전 칸 이름 (C.565): 데이터 이름(두 종족 같은 이름) */
@@ -146,6 +154,15 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
         enter: (star, practice) => h.onDaily(id, star, practice),
       };
     })
+    : tab === 'raid' ? raidEntries().map((e) => ({
+      key: raidKey(e.id), name: raidName(faction, e), sub: `끝 보스 ${bossRushName(faction, e.boss)}`, icon: 'i-flag-win', art: L.raids[e.id]?.art ?? faction.arenaBg,
+      open: raidOpen(e, st.clears),
+      lockText: fixParticles(`보스전에서 ${bossRushName(faction, e.boss)}을(를) 이기면 열린다`),
+      reward: '', rule: `${L.raids[e.id]?.desc ? `${L.raids[e.id]!.desc} · ` : ''}모험 한 바퀴(12칸) · 일반·강적 칸이 정해져 있고 마지막 칸 = 보스 · 체력은 이어 간다 · 지면 실패`,
+      enter: (star, practice) => h.onRaid(e, star, practice),
+      stars: raidStars(e, save.difficulty.unlocked),
+      silhouette: true,
+    }))
     : bossRushEntries().map((e) => {
       const prev = e.index > 0 ? bossRushEntries()[e.index - 1] : undefined;
       return {
@@ -165,7 +182,7 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
   // 왼쪽: 위아래로 끌어 넘기는 버튼 목록
   const list = el('div', 'bha-sdg__list');
   list.setAttribute('role', 'listbox');
-  list.setAttribute('aria-label', tab === 'daily' ? L.tabs.daily : L.tabs.boss);
+  list.setAttribute('aria-label', L.tabs[tab]);
   list.dataset.sdgList = tab;
   enableDragScrollY(list);
   const items = cards.map((c, i) => {
@@ -217,8 +234,8 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
     const info = el('div', 'bha-sdg__info');
     const starSeg = seg(cStars.map((n) => ({ id: String(n), label: `${difficultyText(faction, n)}${n === (c.stars ? cStars.length : cRec) ? ` ${difficultyLabels(faction).recommended}` : ''}` })), String(star), (id) => { pick.star[c.key] = Number(id); show(i); }, { small: true });
     starSeg.classList.add('bha-sdg__stars');
-    const br = tab === 'boss' ? bossRushReward(star) : null;
-    const rewardText = tab === 'daily' ? dailyRewardText(faction, DAILY_DUNGEONS[i]!, star) : `${HOGYOKU_TRACK_IDS.map((t) => `${HOGYOKU_MATERIAL_NAMES[t]} ${br!.each}`).join(' · ')} · 골드 ${br!.gold}`;
+    const br = tab === 'boss' ? bossRushReward(star) : tab === 'raid' ? raidReward(star) : null;
+    const rewardText = tab === 'daily' ? dailyRewardText(faction, DAILY_DUNGEONS[i]!, star) : `${HOGYOKU_TRACK_IDS.map((t) => `${HOGYOKU_MATERIAL_NAMES[t]} ${br!.each}`).join(' · ')} · 골드 ${br!.gold}${tab === 'raid' ? ' · 장비 1개(등급 무작위)' : ''}`;
     const reward = el('p', 'bha-sdg__reward');
     reward.append(icon('i-rare'), `승리 보상 · ${rewardText}`);
     const count = el('p', 'bha-sdg__left bha-faint');
@@ -250,6 +267,7 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
 export function resetSpecialPick(): void {
   pick.daily = 0;
   pick.boss = 0;
+  pick.raid = 0;
   pick.star = {};
 }
 
@@ -287,7 +305,7 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
     : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장권은 돌려받지 못한다.' : last?.lossReason === 'executed' ? '처형을 막지 못했다. 입장권은 돌려받지 못한다.' : '체력이 다했다. 입장권은 돌려받지 못한다.';
   head.append(
     mark,
-    el('span', 'bha-label', `${L.name} · ${run.mode === 'daily' ? L.tabs.daily : L.tabs.boss}${run.practice ? ' 연습' : ''} · ${run.name} · ${difficultyText(faction, run.star)}`),
+    el('span', 'bha-label', `${L.name} · ${L.tabs[run.mode]}${run.practice ? ' 연습' : ''} · ${run.name} · ${difficultyText(faction, run.star)}`),
     el('h1', 'bha-result__title', won ? '클리어' : battleLabels(faction).defeatState),
     el('p', 'bha-result__reason', reason),
   );

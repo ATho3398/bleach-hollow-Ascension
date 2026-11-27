@@ -54,7 +54,7 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
-import { bossKey, bossRushEntry, bossRushOpen, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, newTickets, refillTickets, sanitizeSpecial, sanitizeTickets, spendTicket, ticketOf, type DailyDungeonId, type SpecialDungeonState, type SpecialMode, type SpecialTickets } from './engine/specialDungeon';
+import { bossKey, bossRushEntry, bossRushOpen, bossRushReward, raidEntry, raidKey, raidOpen, raidReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, newTickets, refillTickets, sanitizeSpecial, sanitizeTickets, spendTicket, ticketOf, type DailyDungeonId, type SpecialDungeonState, type SpecialMode, type SpecialTickets } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { newWandererState, rollWandererStock, rollWandererTier, sanitizeWanderer, wandererCellRng, wandererHereAt, wandererLeaveAt, type WandererState, type WandererVisit } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
@@ -2219,7 +2219,7 @@ export function specialState(save: SaveData, nowMs: number = Date.now()): Specia
 
 /** 기록 칸 키: 'daily:<던전 id>' · 'boss:<보스 칸 id>' */
 export function specialKeyOf(mode: SpecialMode, target: string): string {
-  return mode === 'daily' ? dailyKey(target as DailyDungeonId) : bossKey(target);
+  return mode === 'daily' ? dailyKey(target as DailyDungeonId) : mode === 'raid' ? raidKey(target) : bossKey(target);
 }
 
 /** 요일던전이 지금 열렸나 (C.564): 오늘 요일(05:00 KST 기준)에 열리는 던전 + 그 기능 해금(장비 던전 = 장비, 장신구 던전 = 장신구 칸) */
@@ -2236,6 +2236,10 @@ export function enterSpecial(save: SaveData, mode: SpecialMode, target: string, 
   if (mode === 'boss') { // C.565: 보스전 보스(앞 보스를 이긴 뒤 열림)만
     const e = bossRushEntry(target);
     if (!e || !bossRushOpen(e, save.shared.special.clears)) return false;
+  }
+  if (mode === 'raid') { // C.566: 끝 보스를 보스전에서 이긴 작전만
+    const e = raidEntry(target);
+    if (!e || !raidOpen(e, save.shared.special.clears)) return false;
   }
   return spendTicket(save.tower.tickets, ticketOf(mode), nowMs);
 }
@@ -2308,6 +2312,17 @@ export function settleSpecialRun(
         out.items[id] = (out.items[id] ?? 0) + 1;
       }
       for (const [id, n] of Object.entries(out.items)) save.shared.items[id] = (save.shared.items[id] ?? 0) + n;
+    } else if (run.mode === 'raid') {
+      // 토벌전 (C.566): 보스전 보상 × 1.5 + 장비 1개, 끝 보스 도감 처치 +1
+      const r = raidReward(run.star);
+      out.gold = Math.floor(r.gold * half);
+      for (const t of HOGYOKU_TRACK_IDS) out.materials[t] = gainHogyokuMaterial(save, t, r.each, 'raid', nowMs);
+      const rng = createRng(((nowMs >>> 0) ^ 0x6c8e9cf5) >>> 0);
+      out.gear.push(grantSpecialGear(save, ['weapon', 'armor', 'shoes', 'accessory'], r.gear.grades, run.star, () => nextFloat(rng), nowMs));
+      if (run.bossId) {
+        const dex = save.bossDex[run.bossId];
+        save.bossDex[run.bossId] = { kills: (dex?.kills ?? 0) + 1, firstAt: dex?.firstAt ?? nowMs };
+      }
     } else if (run.mode === 'boss') {
       const r = bossRushReward(run.star);
       out.gold = Math.floor(r.gold * half);

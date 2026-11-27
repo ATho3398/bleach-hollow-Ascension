@@ -68,7 +68,7 @@ describe('C.564 입장권 3종 (트랙마다)', () => {
     const f = getFaction('hollow');
     s.shared.tradeCoins = 10_000;
     const rows = goldRows(s, f, MON).filter((r) => r.id.startsWith('ticket-'));
-    expect(rows.map((r) => [r.id, r.price])).toEqual([['ticket-daily', 100], ['ticket-boss', 300]]);
+    expect(rows.map((r) => [r.id, r.price])).toEqual([['ticket-daily', 100], ['ticket-boss', 300], ['ticket-raid', 500]]); // C.566: 토벌전 입장권
     for (let i = 0; i < 3; i++) expect(buyShopItem(s, f, 'ticket-daily', MON).ok).toBe(true);
     expect(s.tower.tickets.daily).toBe(5); // 처음 채움 2 + 산 3
     expect(s.shared.tradeCoins).toBe(10_000 - 300);

@@ -314,7 +314,7 @@ export interface RunRecord {
   gained: string[];
   lost: string[];
   /** P2 에서 더한 필드 (세이브 형식 3): 끝난 이유, 시드, 종족 */
-  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned';
+  endReason: 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned' | 'raid-clear';
   seed: number;
   factionId: string;
   /** P3 에서 더한 필드 (세이브 형식 4): 얻은/잃은 새 특성, 이 원정의 리스크 최고치, 폭주(호로화) 여부 */
@@ -438,7 +438,7 @@ export interface SpecialRunRecord {
   at: number;
   factionId: string;
   /** 'daily' = 요일던전(C.564), 'boss' = 보스전, 'weekly' = 옛 주간던전(C.427~C.563 기록) */
-  mode: 'daily' | 'weekly' | 'boss';
+  mode: 'daily' | 'weekly' | 'boss' | 'raid'; // 'raid' = 토벌전 (C.566)
   /** 요일던전 = 던전 id(붕옥 트랙 id·gold·gear·accessory·gearMat), 주간던전 = 붕옥 트랙 id, 보스전 = 보스 칸 id */
   target: string;
   star: number;
@@ -775,7 +775,7 @@ export interface HogyokuMaterialRecord {
   kind: 'soul' | 'shard' | 'essence';
   amount: number;
   /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 우라하라 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
-  source: 'hunt' | 'wanderer' | 'weekly' | 'daily' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  source: 'hunt' | 'wanderer' | 'weekly' | 'daily' | 'bossRush' | 'raid' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
   factionId: string;
 }
 

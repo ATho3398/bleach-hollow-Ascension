@@ -1,6 +1,7 @@
 // 원정 화면 (GDD 1장, 2-1, 6장, 17-1): 캐릭터가 왼쪽을 향해 걷는 화면 + 위에 얹는 상태 줄·조우 알림, 둥지 칸에서 귀환 선택·타일 배치 팝업. (U-4 → R-1)
 // 시간(칸당 5초, 1x/2x/4x)은 여기서 돌리고, 규칙은 engine/expedition 이 정한다. 12칸 길·칸 번호·바퀴는 엔진 안에만 있고 걷는 화면에는 보이지 않는다.
 // 화면 DOM 은 한 번 만들고 상태가 바뀔 때마다 제자리에서 고친다.
+import { anyBossName } from '../data/bossRush';
 import { petBuddy } from './bha/pet';
 import { petName } from '../inventory';
 import { fullnessOf } from './bha/fullness';
@@ -290,7 +291,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     nextStep();
   }
 
-  const tn_enemy = (p: PendingBattle) => p.boss ? `보스 ${bossName(p.boss, faction.id)}` : `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
+  const tn_enemy = (p: PendingBattle) => p.boss ? `보스 ${anyBossName(p.boss, faction.id)}` : `${p.elite ? '강적 ' : ''}${p.tileId ? `(${tn(p.tileId)}) ` : ''}`;
 
   // ── 고정 DOM (한 번만 만든다) ──
   // 걷는 화면 (GDD 18-7): 캐릭터가 장면 가득 걷고, 정보는 배경 위에 떠 있는 작은 칩(왼쪽 위), 캐릭터 머리 위 말풍선(조우·획득·안내),
@@ -550,7 +551,7 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
     banner.classList.toggle('bha-exp__banner--boss', omen !== null);
     const bannerKids: HTMLElement[] = [];
     if (omen) {
-      const c = chip(`보스 기척 · ${bossName(omen.bossId, faction.id)}`, 'danger');
+      const c = chip(`보스 기척 · ${anyBossName(omen.bossId, faction.id)}`, 'danger');
       c.prepend(icon('i-warn', 'sm'));
       const den = exp.slots[omen.cell];
       bannerKids.push(c, el('span', 'bha-exp__bannersub', bossOmenSub(omen.cell, exp.pos, den ? tn(den) : null)));

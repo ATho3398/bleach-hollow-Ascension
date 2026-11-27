@@ -122,6 +122,6 @@ describe('전투가 끝나는 순간 결과 저장 — 패배 무르기 없음 (
     expect(app).toMatch(/onDecided: \(done\) => settle\(done\)/);
     expect(app).toMatch(/if \(exp\.phase === 'ended'\) settleExpeditionEnd\(faction, exp\);\n\s+else saveProgress\(exp\);/);
     // 미리 정산한 원정은 [결과 보기] 뒤 다시 기록하지 않는다(결과 화면만)
-    expect(app).toMatch(/const show = settledEnds\.get\(exp\) \?\? prepareExpeditionEnd\(faction, exp\);/);
+    expect(app).toMatch(/const show = settledEnds\.get\(exp\) \?\? \(raidRuns\.has\(exp\) \? prepareRaidEnd\(faction, exp\) : prepareExpeditionEnd\(faction, exp\)\);/); // C.566: 토벌전은 특수던전 정산
   });
 });

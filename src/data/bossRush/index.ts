@@ -3,7 +3,7 @@
 // 체력·공격 = 권장 단계 플레이어 기본 공격 N회분(규칙 3), 실제 세기 = 고른 ★ 배율 × scale(유하바하 1.3). 전부 provisional
 import { parseEnemy } from '../enemies';
 import { isElement } from '../elements';
-import { BOSS_GIMMICKS, type BossGimmick, type BossPhase } from '../bosses';
+import { BOSS_GIMMICKS, bossName, type BossGimmick, type BossPhase } from '../bosses';
 import { pickFaction, type EnemyDef, type PerFaction } from '../schema';
 import raw from './bossRush.json';
 
@@ -51,4 +51,9 @@ export function getBossRush(id: string): BossRushDef | undefined {
 export function bossRushDisplayName(id: string, factionId: string): string {
   const b = getBossRush(id);
   return b ? pickFaction(b.name, factionId) : id;
+}
+
+/** 보스 이름 — 보스전 보스(br-…)든 스토리 보스든 (C.566 토벌전 걷기 화면·전투 띠) */
+export function anyBossName(id: string, factionId: string): string {
+  return getBossRush(id) ? bossRushDisplayName(id, factionId) : bossName(id, factionId);
 }

@@ -21,8 +21,8 @@ import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonRe
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
-import { bossRushName, dailyName, specialDungeonView, specialHead, specialResultView } from './specialDungeonView';
-import { bossRushEnemy, createSpecialCombat, dailyEnemies, dayStartOf, hpFractionAfter, type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab } from '../engine/specialDungeon';
+import { bossRushName, dailyName, raidName, specialDungeonView, specialHead, specialResultView } from './specialDungeonView';
+import { bossRushEnemy, createSpecialCombat, dailyEnemies, dayStartOf, hpFractionAfter, type BossRushEntry, type DailyDungeonId, type RaidEntry, type SpecialMode, type SpecialTab } from '../engine/specialDungeon';
 import type { HogyokuTrackId } from '../engine/transcend';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, specialDungeonLabels, towerFloorText, towerLabels } from '../engine/faction';
@@ -839,6 +839,7 @@ export function startApp(host: HTMLElement): void {
   /** 원정 중간 저장 (GDD 14-1). 끝난 원정은 저장하지 않는다 (recordExpedition 이 영역을 비운다) */
   const saveProgress = (exp: ExpeditionState) => {
     if (!save || exp.phase === 'ended') return;
+    if (exp.raid) return; // 토벌전 (C.566): 중간 저장 없음 — 원정 이어하기로 정산되면 안 된다(정산은 특수던전)
     save.activeExpedition = serializeExpedition(exp, 1); // 배속은 C.118 에 삭제 — 늘 1 (GDD 62장, 세이브 형식은 그대로)
     persist();
   };
@@ -1839,11 +1840,81 @@ export function startApp(host: HTMLElement): void {
           ...hd,
           onDaily: (id, star, practice) => startSpecialRun(faction, { mode: 'daily', target: id, star, practice }),
           onBoss: (e, star, practice) => startSpecialRun(faction, { mode: 'boss', target: e.id, star, entry: e, practice }),
+          onRaid: (e, star, practice) => startRaid(faction, e, star, practice),
         });
       }
       root.scrollTop = 0;
     };
     nav.push({ id: 'tower', locked: false, render });
+  }
+
+  // ── 토벌전 (C.566, GDD 6-16 v6.246 '보스전의 모험판'): 모험 엔진 고정 길 1바퀴(expedition raid 옵션) — 걷기·전투 화면은 모험 그대로, 정산은 특수던전 ──
+  const raidRuns = new WeakMap<ExpeditionState, { entry: RaidEntry; star: number; practice: boolean; battles: CombatState[] }>();
+  const raidCaption = (faction: FactionConfig, exp: ExpeditionState): string => {
+    const rr = raidRuns.get(exp)!;
+    return `${specialDungeonLabels(faction).tabs.raid}${rr.practice ? ' 연습' : ''} · ${raidName(faction, rr.entry)} · ${difficultyText(faction, rr.star)}`;
+  };
+
+  /** 토벌전 한 입장: 토벌전 입장권 1장(연습은 없이) → 고정 길 걷기·전투(체력 이어감, 흡수·전리품·타일 없음) → 보스를 이기면 끝 → 특수던전 정산·결과 */
+  function startRaid(faction: FactionConfig, e: RaidEntry, star: number, practice: boolean): void {
+    if (!save || careBlocked(save)) return;
+    const s0 = save;
+    if (!practice && !enterSpecial(s0, 'raid', e.id)) {
+      const L = specialDungeonLabels(faction);
+      showToast({ eyebrow: L.name, title: fixParticles(`${L.tickets.raid}이(가) 없다`), meta: '월요일 05:00 에 채움 · 상점 기타 탭' }, 0, 1800);
+      return;
+    }
+    if (testOn) testRefillSpecial(s0);
+    persist();
+    const exp = createExpedition({
+      factionId: faction.id,
+      seed: Math.floor(Math.random() * 2 ** 32),
+      hunger: s0.nest.hunger,
+      condition: s0.nest.condition,
+      deck: [],
+      risk: s0.nest.risk,
+      build: s0.build,
+      evolution: s0.evolution,
+      liberationTrained: liberationAccess(s0).trained,
+      statBonus: statBonusOf(s0).total,
+      groundId: e.def.ground,
+      difficulty: star,
+      gear: gearCarry(s0.shared.gear),
+      pet: petsUnlocked(s0) ? carriedPet(s0.shared.pets) : null,
+      pet2: carriedPetsOf(s0).pet2,
+      hpFraction: 1, // 특수던전 = 체력 가득으로 시작 (판끼리는 이어 간다)
+      raid: { road: e.def.road, bossId: e.boss.id },
+    });
+    raidRuns.set(exp, { entry: e, star, practice, battles: [] });
+    activeExp = exp;
+    nav.push({
+      id: 'expedition', locked: true,
+      render: () => {
+        armEnterFx();
+        showExpedition(faction, exp, `${raidName(faction, e)} 개시!`);
+        root.scrollTop = 0;
+      },
+    });
+  }
+
+  /** 토벌전 끝 정산 (recordExpedition 대신 특수던전 정산 — 모험 보상·흡수·걸음·배부름은 남기지 않는다) → 결과 화면 함수 */
+  function prepareRaidEnd(faction: FactionConfig, exp: ExpeditionState): () => void {
+    activeExp = null;
+    const rr = raidRuns.get(exp)!;
+    const s0 = save!;
+    const total = Object.keys(rr.entry.def.road).length + 1;
+    const res = settleSpecialRun(s0, { mode: 'raid', target: rr.entry.id, bossId: rr.entry.boss.id, star: rr.star, battles: rr.battles, total, quit: exp.endReason === 'abort', practice: rr.practice });
+    persist();
+    return () => {
+      nav.replace({
+        id: 'special-result', locked: true,
+        render: () => {
+          specialResultView(root, faction, s0, { mode: 'raid', practice: rr.practice, target: rr.entry.id, name: raidName(faction, rr.entry), star: rr.star, total, battles: rr.battles }, res, { onBack: () => nav.pop() });
+          root.scrollTop = 0;
+        },
+      });
+      if (!rr.practice) showTitleToasts(s0, faction, persist);
+    };
   }
 
   /** 특수던전 요일던전·보스전 한 입장: 입장권 1장 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과.
@@ -2168,6 +2239,11 @@ export function startApp(host: HTMLElement): void {
     const settle = (done: CombatState) => {
       if (finds >= 0) return;
       finds = exp.gearFinds?.length ?? 0;
+      const rr = raidRuns.get(exp);
+      if (rr) { // 토벌전 (C.566): 판마다 결과를 모은다 — 연습이 아니면 판 기록·적 도감
+        rr.battles.push(done);
+        if (!rr.practice && save) recordSpecialBattle(save, done);
+      }
       finishBattle(exp, done);
       if (exp.phase === 'ended') settleExpeditionEnd(faction, exp);
       else saveProgress(exp); // 전투가 끝날 때마다 저장 (흡수 대기 중이면 그 상태째)
@@ -2180,13 +2256,13 @@ export function startApp(host: HTMLElement): void {
       tierIndex: save ? artTierIndexOf(save) : undefined,
       ...(save ? battleBasis(save) : {}),
       skinId: save ? artSkinOf(save) : undefined,
-      banner: p.boss && exp.story ? storyCaption(exp, faction) : where,
-      ...(p.boss ? { boss: { eyebrow: exp.story ? '보스' : '보스 · 자유 모험' } } : {}),
+      banner: raidRuns.has(exp) ? raidCaption(faction, exp) : p.boss && exp.story ? storyCaption(exp, faction) : where,
+      ...(p.boss ? { boss: { eyebrow: exp.story || exp.raid ? '보스' : '보스 · 자유 모험' } } : {}),
       // 배경 (GDD 34-1): 보스전은 무대(없으면 사냥터), 그 밖은 사냥터
       bg: (p.boss ? arenaSceneBg(faction) : null) ?? groundSceneBg(faction, exp.groundId),
       frenzy: inFrenzy(exp) ? faction.frenzyName : undefined,
       risk: exp.risk,
-      absorb: true, // 이기면 흡수 화면 (원정 전투만, C.457)
+      absorb: !exp.raid, // 이기면 흡수 화면 (원정 전투만, C.457 — 토벌전은 흡수 없음 C.566)
       tutorial: tutorialFor(),
       // 수련권 드롭 (GDD 216장 1): 이 전투를 이기면 나올지 시드로 미리 안다 → 승리 창 보상 칸
       ...(ticketDropOf(exp) ? { winRewards: ['수련권 +1'] } : {}),
@@ -2274,7 +2350,7 @@ export function startApp(host: HTMLElement): void {
       onEnded: () => endExpedition(faction, exp),
       onBreakthrough: (resume) => breakthroughScreen(faction, exp, resume),
       // 우라하라 마주침 (GDD 5-5, C.549): 걷기 화면이 칸마다 굴릴 재료(와 있나)를 묻고, 마주치면 방문을 세우고 바로 저장
-      wanderer: save ? {
+      wanderer: save && !exp.raid ? { // 토벌전은 우라하라를 만나지 않는다 (C.566)
         name: marketOf(faction).props.wanderer,
         ctx: () => ({ at: Date.now(), here: !!save && wandererHere(save) }),
         onMeet: (m) => { if (save) { meetWanderer(save, exp, m); saveProgress(exp); } },
@@ -2374,11 +2450,11 @@ export function startApp(host: HTMLElement): void {
 
   /** 원정 끝 정산만 지금 한다(결과 화면은 아직) — 패배 판정 순간. 결과 화면에서 다시 켜도 패배(빈사·사망)가 그대로 남아 전투를 다시 하지 않는다(패배 무르기 없음) */
   function settleExpeditionEnd(faction: FactionConfig, exp: ExpeditionState): void {
-    if (!settledEnds.has(exp)) settledEnds.set(exp, prepareExpeditionEnd(faction, exp));
+    if (!settledEnds.has(exp)) settledEnds.set(exp, raidRuns.has(exp) ? prepareRaidEnd(faction, exp) : prepareExpeditionEnd(faction, exp));
   }
 
   function endExpedition(faction: FactionConfig, exp: ExpeditionState): void {
-    const show = settledEnds.get(exp) ?? prepareExpeditionEnd(faction, exp);
+    const show = settledEnds.get(exp) ?? (raidRuns.has(exp) ? prepareRaidEnd(faction, exp) : prepareExpeditionEnd(faction, exp));
     settledEnds.delete(exp);
     show();
   }

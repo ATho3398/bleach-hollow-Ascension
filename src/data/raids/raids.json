@@ -1,0 +1,11 @@
+{
+  "_comment": "토벌전 작전 5개 (GDD 6-16 v6.246, C.566 — 사용자 2026-11-27 '토벌전 … 보스던전 모험 버전'). 이름·문구는 종족 설정 specialDungeon.raids, 여기는 엔진이 읽는 것만: 끝 보스(보스전 보스 id)·사냥터(적 출현 풀)·고정 길(칸 1~10 의 일반·강적, 칸 11 = 보스). 전부 임시·provisional",
+  "provisional": true,
+  "raids": [
+    { "id": "raid-seireitei", "boss": "br-byakuya", "ground": "outskirts", "road": { "2": "normal", "4": "normal", "6": "elite", "8": "normal" } },
+    { "id": "raid-hueco", "boss": "br-ulquiorra", "ground": "canyon", "road": { "2": "normal", "4": "normal", "6": "elite", "8": "normal" } },
+    { "id": "raid-karakura", "boss": "br-ginjo", "ground": "outskirts", "road": { "2": "normal", "4": "normal", "6": "elite", "8": "normal" } },
+    { "id": "raid-oken", "boss": "br-aizen", "ground": "forest", "road": { "2": "normal", "4": "elite", "7": "normal", "9": "normal" } },
+    { "id": "raid-tybw", "boss": "br-yhwach", "ground": "forest", "road": { "2": "normal", "4": "elite", "6": "normal", "8": "elite" } }
+  ]
+}

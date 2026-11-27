@@ -28,6 +28,7 @@ import {
 } from './variants';
 import type { FoodId } from '../faction';
 import { getBoss, isBossId } from '../../data/bosses';
+import { getBossRush } from '../../data/bossRush';
 import { killsByEnemy } from '../enemyDex';
 import { getChapter, getEpisode, groundBossId, type StoryLine } from '../../data/story';
 import type { BossSetup } from '../combat';
@@ -79,7 +80,14 @@ export type ExpeditionPhase = 'moving' | 'battle' | 'absorb' | 'rest' | 'nest-ch
 /** story-clear = 스토리 화 목표를 이뤄 바로 귀환 (GDD 25-4, C.58) */
 /** abort = 원정 도중 [귀환하기] (GDD 81장, C.132): 모은 것은 지키고 이번 바퀴 완주 보상·연속 클리어는 없다.
  *  abandoned = 이어 하지 못한 원정 (GDD 192장 1, C.311): 나간 뒤 시한을 넘겼거나(stale) 새 패치(version)면 패배 규칙 그대로 정산 — 이유는 ExpeditionState.abandoned·RunRecord.abandoned */
-export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned';
+/** 토벌전 고정 길 (C.566): road[칸] = 일반·강적 (없는 칸 = 그냥 지나감), bossCell 에 보스(보스전 보스 id) */
+export interface RaidRun {
+  road: Readonly<Record<number, 'normal' | 'elite'>>;
+  bossId: string;
+  bossCell: number;
+}
+
+export type EndReason = 'returned' | 'forced-max-laps' | 'battle-lost' | 'exhausted' | 'story-clear' | 'tutorial-clear' | 'abort' | 'abandoned' | 'raid-clear';
 /** 이어 하지 못한 이유 (C.311): stale = 나간 뒤 시한 초과, version = 밸런스 버전 다름(새 패치), corrupt = 중간 저장 손상(상태 없이 기록만) */
 export type AbandonReason = 'stale' | 'version' | 'corrupt';
 
@@ -330,6 +338,9 @@ export interface ExpeditionState extends RiskState {
   story: StoryRun | null;
   /** 자유 원정 보스 등장 (GDD 37장). 스토리 화는 null */
   freeBoss: FreeBossRun | null;
+  /** 토벌전 고정 길 (C.566, GDD 6-16 v6.246 — 특수던전): 1바퀴, 타일·드래프트·흡수·바퀴 끝 창·전리품 없음, 정해진 칸에 일반·강적, 마지막 칸 = 보스.
+   *  정산은 원정 기록(recordExpedition)이 아니라 특수던전(settleSpecialRun)이 한다 — 중간 저장도 하지 않는다 */
+  raid?: RaidRun;
   /** 첫 원정 튜토리얼 (GDD 67장, C.120): 고정 짧은 길 → 약한 적 1마리 → 흡수 화면(시스템상 흡수 아님) → 끝. 없으면 일반 원정 */
   tutorial?: boolean;
   /** 타일 잠금 (GDD 64장, 첫 진화 전): 드래프트(이벤트 타일 포함)가 나오지 않는다. 덱은 비어 있다 */
@@ -467,6 +478,8 @@ export interface ExpeditionSetup {
   gold?: number;
   /** 스토리 화 (GDD 25-4): 그 화의 고정 길·사냥터·최대 바퀴를 쓴다 (groundId·maxLaps 는 무시) */
   story?: { chapterId: string; episodeId: string };
+  /** 토벌전 고정 길 (C.566): 1바퀴·타일 없음·흡수 없음. 스토리·튜토리얼과 같이 쓰지 않는다. bossCell 없으면 마지막 칸 */
+  raid?: { road: Readonly<Record<number, 'normal' | 'elite'>>; bossId: string; bossCell?: number };
   /** 붕옥 해방·초월자 보유 패시브 (GDD 22-3, 0.05 = 전 능력치 +5%). 없으면 0 */
   statBonus?: number;
   /** 스토리에서 한 번 이긴 보스 id (GDD 37장, 세이브 보스 도감). 자유 원정에서 그 사냥터 장 보스가 4바퀴째부터 나올 수 있다. 스토리 화는 무시 */
@@ -493,6 +506,8 @@ export interface ExpeditionSetup {
 
 export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
   if (setup.tutorial) setup = { ...setup, story: undefined, groundId: DEFAULT_GROUND_ID, difficulty: 1, streak: 0, maxLaps: 1, tileVariants: false, bossesBeaten: [], tilesLocked: true };
+  // 토벌전 (C.566): 1바퀴·연속 클리어 없음·타일 변수 없음·타일 잠금·자유 원정 보스 없음·드롭 없음
+  if (setup.raid) setup = { ...setup, story: undefined, tutorial: false, streak: 0, maxLaps: 1, tileVariants: false, bossesBeaten: [], tilesLocked: true, deck: [], petDrops: false, gearDrops: false };
   const rng = createRng(setup.seed);
   const episode = setup.story ? getEpisode(setup.factionId, setup.story.chapterId, setup.story.episodeId) : null;
   const exp: ExpeditionState = {
@@ -561,7 +576,8 @@ export function createExpedition(setup: ExpeditionSetup): ExpeditionState {
     bonusSoul: 0,
     variantLog: { synergies: [], mutations: [], events: [], drafts: [] },
     story: setup.story ? { chapterId: setup.story.chapterId, episodeId: setup.story.episodeId, progress: 0, cleared: false, kills: 0, midShown: false, cue: null, bossResult: null } : null,
-    freeBoss: setup.story || setup.tutorial ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
+    freeBoss: setup.story || setup.tutorial || setup.raid ? null : { beaten: [...(setup.bossesBeaten ?? [])], appear: null, result: null },
+    ...(setup.raid ? { raid: { road: { ...setup.raid.road }, bossId: setup.raid.bossId, bossCell: setup.raid.bossCell ?? EX.loopTiles - 1 } } : {}),
     ...(setup.tutorial ? { tutorial: true, tutorialReward: null } : {}),
     ...(setup.tilesLocked ? { tilesLocked: true } : {}),
     ...(setup.pet && !setup.tutorial ? { pet: { id: setup.pet.id, level: setup.pet.level } } : {}),
@@ -593,6 +609,18 @@ export function takeStoryCue(exp: ExpeditionState): StoryLine[] | null {
 /** 보스 데이터 + BALANCE → 전투 엔진의 보스 재료 */
 export function bossSetupOf(bossId: string): BossSetup {
   return bossSetupFrom(getBoss(bossId));
+}
+
+/** 스토리 보스·보스전 보스(br-…, C.565) 어느 쪽이든 전투 보스 재료 (토벌전 끝 보스 — C.566) */
+export function anyBossSetup(bossId: string): BossSetup {
+  const r = getBossRush(bossId);
+  return r ? bossSetupFrom(r) : bossSetupOf(bossId);
+}
+
+/** 보스 적 정의: 보스전 보스는 보스 scale(유하바하 1.3)까지 입힌 것 (C.566), 스토리 보스는 보스 테이블 그대로 */
+function bossEnemyOf(bossId: string): EnemyDef {
+  const r = getBossRush(bossId);
+  return r ? (r.scale !== 1 ? scaleEnemy(r.enemy, { hp: r.scale, attack: r.scale }) : r.enemy) : getBoss(bossId).enemy;
 }
 
 /** 보스 데이터(페이즈·기믹) → 전투 보스 재료. 스토리 보스·보스전 보스(C.565, data/bossRush) 공통 */
@@ -649,7 +677,7 @@ function planLap(exp: ExpeditionState): void {
     const j = nextInt(exp.rng, i + 1);
     [free[i], free[j]] = [free[j]!, free[i]!];
   }
-  exp.wildCells = free.slice(0, Math.max(0, plannedBattles(exp.lap) - tileBattles));
+  exp.wildCells = exp.raid ? [] : free.slice(0, Math.max(0, plannedBattles(exp.lap) - tileBattles)); // 토벌전 = 정해진 칸만 (C.566)
   // 첫 원정 튜토리얼 (GDD 67장 1번): 정해진 칸 하나에서만 싸운다 (고정 길)
   if (exp.tutorial) exp.wildCells = [TUT.cell];
   exp.elitesThisLap = 0;
@@ -825,6 +853,17 @@ export function advance(exp: ExpeditionState, meet?: WandererMeetCtx): StepEvent
     (exp.wandererMeets ??= []).push(m);
     exp.events.push({ kind: 'wanderer-meet', ...m });
   }
+  // 토벌전 고정 길 (C.566): 보스 칸 = 보스, 정해진 칸 = 일반·강적(강적 바퀴 상한 밖), 그 밖은 지나감
+  if (exp.raid) {
+    if (cell === exp.raid.bossCell) {
+      exp.elitesThisLap++;
+      return startBattleAt(exp, cell, 'elite', false, null, null, false, exp.raid.bossId);
+    }
+    const rc = exp.raid.road[cell];
+    if (!rc) return { kind: 'move', cell, lap: exp.lap };
+    if (rc === 'elite') exp.elitesThisLap++;
+    return startBattleAt(exp, cell, rc, false, null, null, false);
+  }
   // 스토리 보스 화 (GDD 25-7): 정해진 칸에 보스 (1바퀴, 이기기 전까지)
   const bossAt = storyEpisodeOf(exp)?.boss;
   if (bossAt && bossAt.cell === cell && exp.lap === 1 && !exp.story!.bossResult?.won) {
@@ -953,7 +992,7 @@ function startBattleAt(
   // 장비 (GDD 91장 4번): 능력치·치명·계열 블록 피해·치명 피해·시작 보호막, 강적·보스면 강적 피해
   applyGearToParams(params, exp.gear, cls === 'elite' || bossId !== null);
   // 보스는 보스 데이터의 적 (원정 ★·연속 클리어·사냥터 강도만 입힌다 — 바퀴 강화 없음, GDD 37장 3번), 아니면 출현 풀에서
-  let enemy = bossId ? scaleEnemy(getBoss(bossId).enemy, enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
+  let enemy = bossId ? scaleEnemy(bossEnemyOf(bossId), enemyScale(1, exp.groundId, exp.difficulty, exp.streak, 'normal')) : pickEnemy(exp, cls, combo ? 'combo' : tile ? tile.kind : 'wild', m.elementBias);
   const hpK = (m.enemyHpMult ?? 1) * (cls === 'elite' ? m.eliteHpMult ?? 1 : 1) * (exp.tutorial ? TUT.enemyHpMult : 1);
   // 원정 체력 이어 가기 보정 (GDD 119장 1): 원정 안 적 공격 × ★별 배율. 첫 원정 튜토리얼은 자기 배율(tutorialRun)만, 보스는 보스 조정값 그대로(C.195 — 배율을 곱하면 자유 원정 보스가 너무 쉬워짐)
   const atkK = (m.enemyAttackMult ?? 1) * (exp.tutorial ? TUT.enemyAttackMult : bossId ? 1 : carryAttackMult(exp.difficulty));
@@ -1048,7 +1087,7 @@ export function startBattle(exp: ExpeditionState): CombatState {
   // 이어 온 체력 (GDD 107장 1번): 함정의 시작 체력 감소는 이어 온 체력에 곱한다
   const params = { ...exp.pending.params, playerStartHpFraction: (exp.pending.params.playerStartHpFraction ?? 1) * hpFractionOf(exp) };
   // 첫 원정 튜토리얼의 전투 = 각본 전투 (GDD 123장 5, C.199)
-  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}), ...(exp.tutorial ? { script: newCombatScript(getFaction(exp.factionId).tutorial?.blockFamily) } : {}) }); // 각본 블록 계열 = 종족 설정 (GDD 13절 v6.243, C.562)
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: anyBossSetup(boss) } : {}), ...(exp.tutorial ? { script: newCombatScript(getFaction(exp.factionId).tutorial?.blockFamily) } : {}) }); // 각본 블록 계열 = 종족 설정 (GDD 13절 v6.243, C.562)
 }
 
 /** 지금 이어 온 체력 비율 (GDD 107장): 옛 중간 저장에 없으면 1 */
@@ -1102,6 +1141,13 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   }
   // 이어 가는 체력 (GDD 107장 1·3번): 끝난 체력(해방이 풀린 뒤) 비율 + 승리 회복
   exp.hpFraction = battle.player.maxHp > 0 ? Math.min(1, battle.player.hp / battle.player.maxHp) : 1;
+  // 토벌전 (C.566): 사냥 힐·드롭·전리품·흡수 없음 — 체력만 이어 간다. 보스를 이기면 바로 작전 끝
+  if (exp.raid) {
+    exp.victoriesThisLap++;
+    if (pending.boss) endExpedition(exp, 'returned', 'raid-clear');
+    else exp.phase = 'moving';
+    return record;
+  }
   healCarry(exp, winHealOf(exp.lap)); // 사냥 힐 (GDD 121장 6): 바퀴가 갈수록 줄고 4바퀴부터 0
   // 장비 드롭 (GDD 91장 2번): 강적·보스 높게, 일반 낮게. 따로 만든 난수라 다른 굴림을 밀지 않는다
   rollGearDrop(exp, pending.boss ? 'boss' : pending.enemy.class === 'elite' ? 'elite' : 'normal');
@@ -1539,7 +1585,7 @@ function rollGearDrop(exp: ExpeditionState, from: 'normal' | 'elite' | 'boss'): 
 /** 이 원정의 battleIndex 번째 전투(0부터)를 이기면 수련권이 나오나 (GDD 216장 1). 지금 상대(pending) 등급으로 본다 — 강적·보스만, 튜토리얼은 없음.
  *  전투 화면이 승리 창에 '수련권 +1' 을 미리 띄울 때 exp.battles.length 로, finishBattle 은 기록을 넣은 뒤 length − 1 로 부른다(같은 값) */
 export function ticketDropOf(exp: ExpeditionState, battleIndex: number = exp.battles.length, p: PendingBattle | null = exp.pending): boolean {
-  if (!p || exp.tutorial) return false;
+  if (!p || exp.tutorial || exp.raid) return false; // 토벌전은 드롭 없음 (C.566)
   const from = p.boss ? 'boss' : p.enemy.class === 'elite' ? 'elite' : 'normal';
   if (from === 'normal') return false;
   const rng = createRng((exp.seed ^ TICKET_SEED_SALT ^ Math.imul(battleIndex + 1, 2246822519)) >>> 0);

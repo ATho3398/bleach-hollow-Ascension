@@ -3,11 +3,13 @@
 //    채움은 '그 수까지'(쌓이지 않음), 상점에서 산 것은 상한 없이 쌓인다. 입장 1번 = 그 종류 1장(지거나 그만둬도 돌려주지 않음)
 //  - 요일던전(C.564, 옛 주간던전): 던전 7개(붕옥 재료 3 + 골드·장비·장신구·장비 재료), 요일표(일요일 = 전부, 월~토 3개씩), 한 입장 = 전투 3판 연속(일반·일반·강적, 체력 이어감)
 //  - 보스전(C.565): 블리치 캐릭터 6명(data/bossRush) — 앞 보스를 이기면 다음이 열림, ★ = 권장 이하
+//  - 토벌전(C.566): 작전 5개(data/raids) — 모험 엔진 고정 길 1바퀴(expedition raid 옵션), 열림 = 보스전에서 끝 보스를 이긴 뒤, 보상 = 보스전 × 1.5 + 장비 1개
 //  - 연습 모드(C.564): 입장권 없이 같은 적·같은 ★ — 보상·도감·열림 진행·기록 없음(런 로그에 연습 표시만)
 //  - 적 세기: 탑처럼 ★ 배율(difficultyEnemyScale) × enemyScale — 적은 '★n 권장 단계 플레이어 일반 공격 N회분'(hpInAttacks)
 import { BALANCE } from '../config/balance';
 import { scaleEnemy } from '../data/enemies';
 import { BOSS_RUSH, getBossRush, type BossRushDef } from '../data/bossRush';
+import { RAIDS, type RaidDef } from '../data/raids';
 import type { EnemyDef } from '../data/schema';
 import { createCombat, type CombatParams, type CombatState } from './combat';
 import { applyDifficultyToParams, clampDifficulty, difficultyEnemyScale, MAX_DIFFICULTY } from './difficulty';
@@ -21,11 +23,11 @@ const SX = BALANCE.provisional.specialDungeon;
 const DAY = 86_400_000;
 const KST = 9 * 3_600_000;
 
-/** 특수던전 탭 (C.564: 옛 'weekly' 주간던전 → 'daily' 요일던전) */
-export const SPECIAL_TABS = ['tower', 'daily', 'boss'] as const;
+/** 특수던전 탭 (C.564: 옛 'weekly' 주간던전 → 'daily' 요일던전 · C.566: 'raid' 토벌전) */
+export const SPECIAL_TABS = ['tower', 'daily', 'boss', 'raid'] as const;
 export type SpecialTab = (typeof SPECIAL_TABS)[number];
 /** 입장 종류 (런 로그 mode — 옛 기록의 'weekly' 는 주간던전) */
-export type SpecialMode = 'daily' | 'boss';
+export type SpecialMode = 'daily' | 'boss' | 'raid';
 
 /** 세이브 shared.special (형식 81 → 100, 슬롯 공유): 던전/보스마다 이긴 최고 ★·이긴 수. C.564 에 옛 주·하루 횟수 칸(weekStart·used)은 입장권으로 대체되어 없어짐 */
 export interface SpecialDungeonState {
@@ -152,6 +154,7 @@ export function spendTicket(t: SpecialTickets, kind: TicketKind, nowMs: number):
 export const ticketOf = (mode: SpecialMode): TicketKind => mode;
 
 export const dailyKey = (id: DailyDungeonId): string => `daily:${id}`;
+export const raidKey = (id: string): string => `raid:${id}`;
 export const bossKey = (bossId: string): string => `boss:${bossId}`;
 
 // ── 요일던전 (C.564) ──
@@ -277,6 +280,47 @@ export function bossRushOpen(e: Pick<BossRushEntry, 'index'>, clears: Record<str
 /** 보스전에서 고를 수 있는 ★ = 1 ~ min(권장 ★, 연 난이도) — 권장 이하만 */
 export function bossRushStars(e: Pick<BossRushEntry, 'def'>, unlocked: number): number[] {
   return selectableStars(Math.min(e.def.star, Math.max(1, Math.floor(unlocked))));
+}
+
+// ── 토벌전 (C.566, GDD 6-16 v6.246) ──
+
+export interface RaidEntry {
+  id: string;
+  def: RaidDef;
+  /** 끝 보스 (보스전 보스) */
+  boss: BossRushDef;
+  index: number;
+}
+
+/** 토벌전 작전 목록 = data/raids 순서 */
+export function raidEntries(): RaidEntry[] {
+  return RAIDS.map((def, index) => ({ id: def.id, def, boss: getBossRush(def.boss)!, index }));
+}
+
+export function raidEntry(id: string): RaidEntry | undefined {
+  return raidEntries().find((e) => e.id === id);
+}
+
+/** 열림 = 보스전에서 그 작전 끝 보스를 한 번 이긴 뒤 (연습은 세지 않음) */
+export function raidOpen(e: Pick<RaidEntry, 'boss'>, clears: Record<string, number>): boolean {
+  return (clears[bossKey(e.boss.id)] ?? 0) > 0;
+}
+
+/** 고를 수 있는 ★ = 1 ~ min(끝 보스 권장 ★, 연 난이도) — 보스전과 같다 */
+export function raidStars(e: Pick<RaidEntry, 'boss'>, unlocked: number): number[] {
+  return selectableStars(Math.min(e.boss.star, Math.max(1, Math.floor(unlocked))));
+}
+
+/** 토벌전 보상 (임시): 보스전 보상 × raid.rewardMult(재료 각·골드 반올림) + 장비 1개(등급표 raid.gearGrades) */
+export function raidReward(star: number): BossRushReward & { gear: { grades: string } } {
+  const b = bossRushReward(star);
+  const m = SX.raid.rewardMult;
+  return { each: Math.round(b.each * m), gold: Math.round(b.gold * m), gear: { grades: SX.raid.gearGrades } };
+}
+
+/** 작전 한 바퀴의 전투 수 (일반·강적 칸 + 보스) — 다 이겨야 보상 */
+export function raidBattleCount(e: Pick<RaidEntry, 'def'>): number {
+  return Object.keys(e.def.road).length + 1;
 }
 
 // ── 공통 ──

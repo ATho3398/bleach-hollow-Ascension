@@ -15,9 +15,9 @@ describe('C.458 수련장 보스·강적 처치 → 흡수 없이 수련장 (사
   it('승리 창 [포식하러 가기]는 absorb 를 켠 전투만 — 원인: 모든 승리에 떠서 수련장에서 눌러도 결과 화면만 나왔다', () => {
     expect(bv).toContain('const canAbsorb = opts.absorb === true && absorbReasons(s).length > 0;');
     // absorb: true 는 원정 전투(beginBattle) 한 곳만 — 수련장(runPractice)·탑·특수던전·등급전·테스트 전투는 '계속'
-    expect(app.match(/absorb: true/g)?.length).toBe(1);
+    expect(app.match(/absorb: true|absorb: !exp\.raid/g)?.length).toBe(1); // C.566: 원정 전투 중 토벌전만 흡수 없음 (옛 'absorb: true')
     const begin = app.slice(app.indexOf('function beginBattle'), app.indexOf('function beginBattle') + 4000);
-    expect(begin).toContain('absorb: true');
+    expect(begin).toContain('absorb: !exp.raid');
     // C.471 (GDD 8-9): 수련장 훈련 인형 = 적 설정 창 전투(arenaBattle) — 결과 창 없이 다시 창, 흡수 없음
     const practice = app.slice(app.indexOf('function arenaBattle'), app.indexOf('// ── 등급전 (GDD 21장'));
     expect(practice).not.toContain('absorb');

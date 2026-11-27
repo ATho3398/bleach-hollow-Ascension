@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 178; // C.565 (GDD 6-16 v6.246 보스전 = 블리치 캐릭터 6명, 사용자 2026-11-27 — provisional): provisional.specialDungeon.boss.ownerBoss·ownerScale 삭제(탑의 주인 다시 싸우기·스토리 보스는 보스전 목록에서 빠짐). 새 보스 6명 수치 = src/data/bossRush/bossRush.json(권장 ★ 1·2·3·4·4·4, 유하바하 scale 1.3). 보상 표 그대로
+export const BALANCE_VERSION = 179; // C.566 (GDD 6-16 v6.246 토벌전, 사용자 2026-11-27 — provisional): provisional.specialDungeon.raid { rewardMult 1.5 · gearGrades 'boss' } 신설. 작전 길·끝 보스 = src/data/raids/raids.json
+// 이전: BALANCE_VERSION = 178; // C.565 (GDD 6-16 v6.246 보스전 = 블리치 캐릭터 6명, 사용자 2026-11-27 — provisional): provisional.specialDungeon.boss.ownerBoss·ownerScale 삭제(탑의 주인 다시 싸우기·스토리 보스는 보스전 목록에서 빠짐). 새 보스 6명 수치 = src/data/bossRush/bossRush.json(권장 ★ 1·2·3·4·4·4, 유하바하 scale 1.3). 보상 표 그대로
 // 이전: BALANCE_VERSION = 177; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회)·boss.entries(주 1회) → tickets(입장권 3종 요일 2장/매일 · 보스 3장/주 · 토벌 2장/주 채움, 상점 100·300·500골드, GDD 6-16 v6.248) + daily(요일표 days — 일요일 전부, 월~토 3개씩 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
 // 이전: BALANCE_VERSION = 176; // C.562 (GDD 13절 v6.243 튜토리얼 블록 = 호로 탄 / 사신 참, 사용자 2026-11-27 "사신은 참으로 해"): provisional.tutorialScript.blockFamily 삭제 → 종족 설정 tutorial.blockFamily. 수치 그대로
 // 이전: BALANCE_VERSION = 175; // C.559 (GDD 13절 v6.240 튜토리얼 각본 전투의 블록 = 탄 계열, 사용자 2026-11-27): provisional.tutorialScript.blockFamily 'family-c' 신설(호로 탄·사신 귀). 수치 그대로
@@ -546,6 +547,8 @@ export const BALANCE = {
         accessory: { grades: 'elite' },
         gearMat: { count: [2, 3, 5, 7] as readonly number[] },
       },
+      /** 토벌전 (C.566, GDD 6-16 v6.246 — provisional): 보상 = 보스전 보상 × rewardMult + 장비 1개(등급표 = gear.dropGrades[gearGrades], ★ = 고른 ★) */
+      raid: { rewardMult: 1.5, gearGrades: 'boss' },
       boss: {
         enemyScale: 1,
         // 이전(C.427): ownerBoss 'forest-lord' · ownerScale 1.2 (탑의 주인 다시 싸우기) — C.565 에 보스전 목록에서 빠짐. 보스마다 추가 배율은 data/bossRush scale
