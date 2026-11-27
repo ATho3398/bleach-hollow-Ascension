@@ -28,6 +28,7 @@ const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
 import { EVO_BAL_KNOWN, EVO_BAL_NOTE, EVO_BAL_RULE, EVO_BAL_SEEDS, evoBalKey, evoBalTargets, evoContribution, judgeEvoBal, measureEvoBal, type EvoBalRow } from './lib/evoUniqueBalance';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
+import { createSpecialCombat, DAILY_DUNGEONS, dailyEnemies, dayStartOf, hpFractionAfter } from '../src/engine/specialDungeon';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 import { spawn } from 'node:child_process';
 import os from 'node:os';
@@ -49,10 +50,10 @@ const HUMAN_CONTINUE_HP = 0.5;
 const SECTIONS: { name: string; seconds: number }[] = [
   { name: 'combat', seconds: 230 }, { name: 'expedition', seconds: 5 }, { name: 'absorb', seconds: 25 }, { name: 'variants', seconds: 105 }, { name: 'boss1', seconds: 31 },
   { name: 'boss23', seconds: 107 }, { name: 'rebirth', seconds: 40 }, { name: 'policy', seconds: 211 }, { name: 'tree', seconds: 1 }, { name: 'equiv', seconds: 15 }, { name: 'abilities', seconds: 145 }, { name: 'evoUnique', seconds: 70 }, { name: 'evoProfile', seconds: 140 },
-  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 },
+  { name: 'phys', seconds: 77 }, { name: 'difficulty', seconds: 44 }, { name: 'laps', seconds: 120 }, { name: 'grounds', seconds: 101 }, { name: 'liberation', seconds: 2 }, { name: 'bosses', seconds: 2 }, { name: 'rank', seconds: 3 }, { name: 'tower', seconds: 6 }, { name: 'hogyoku', seconds: 1 }, { name: 'special', seconds: 6 },
 ];
 const CAMPAIGN_SECONDS = 63;
-const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower', 'hogyoku'];
+const CAMPAIGN_USERS = ['boss23', 'rebirth', 'phys', 'difficulty', 'laps', 'grounds', 'liberation', 'bosses', 'rank', 'tower', 'hogyoku', 'special'];
 const onlyArg = process.argv.find((a) => a.startsWith('--only='));
 const ONLY: Set<string> | null = onlyArg ? new Set(onlyArg.slice('--only='.length).split(',').filter(Boolean)) : null;
 if (ONLY) for (const s of ONLY) if (!SECTIONS.some((x) => x.name === s) && s !== 'campaign') throw new Error(`모르는 구간 ${s} (${SECTIONS.map((x) => x.name).join(', ')})`);
@@ -1645,6 +1646,48 @@ if (want('tower')) {
   console.log(`  ${TT.floors}층 (${towerFloor(TT.floors).bossId} 강화판): 키운 5단계 몸 ${grown.length}명 ${pct(top.rate)} ${top.secs.toFixed(1)}초 · 갓 5단계 몸 ${pct(top5.rate)} (참고)`);
   if (grown.length < CAMPAIGNS * 0.8) lateFail(`탑 ${TT.floors}층: 5단계 세이브 ${grown.length}/${CAMPAIGNS}`);
   if (top.rate < 0.15 || top.rate > 0.75) lateFail(`탑 ${TT.floors}층: 승률 ${pct(top.rate)} (가드 15~75% 밖)`);
+}
+
+// ── 특수던전 요일던전 (C.564, GDD 6-16 v6.246, 참고 지표 — 가드 없음): 탑처럼 ★n = n단계 몸(★1 = 특수던전이 열리는 2단계 몸)으로 사람형 봇이
+//    던전 7개의 한 입장(전투 3판 연속 일반·일반·강적, 체력 이어감)을 돈다. 적 = 2026-11-30(월) 날 시드. 수치 전부 provisional ──
+if (want('special')) {
+  const SR = 2;
+  const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+  const paramsOf = (body: SaveData) => {
+    const params = buildCombatParams(body.build, 'hollow');
+    applyEvolutionToParams(params, body.evolution, 'hollow');
+    params.liberationStartGauge = liberationStartGaugeOf();
+    return params;
+  };
+  const dayStart = dayStartOf(Date.UTC(2026, 10, 30, 3));
+  console.log(`\n특수던전 요일던전 (사람형 봇, ★n = n단계 몸(★1 = 2단계) × ${SR}판, 던전 7개 × 3판 연속·체력 이어감, 참고 — 가드 없음)`);
+  for (let star = 1; star <= MAX_DIFFICULTY; star++) {
+    const bodies = star === 1 ? guardBodies(1) : guardBodies(star - 1);
+    let wins = 0;
+    let games = 0;
+    let secs = 0;
+    let hpLeft = 0;
+    for (const id of DAILY_DUNGEONS) {
+      const enemies = dailyEnemies(id, star, dayStart);
+      bodies.forEach((body, bi) => {
+        for (let k = 0; k < SR; k++) {
+          let hp = 1;
+          let t = 0;
+          let ok = true;
+          enemies.forEach((e, ei) => {
+            if (!ok) return;
+            const end = playCombatHuman(createSpecialCombat(e, star, paramsOf(body), 71000 + star * 7919 + DAILY_DUNGEONS.indexOf(id) * 1009 + bi * 131 + k * 17 + ei * 3));
+            t += elapsedSeconds(end);
+            if (end.status !== 'won') ok = false;
+            else hp = hpFractionAfter(end);
+          });
+          games++;
+          if (ok) { wins++; secs += t; hpLeft += hp; }
+        }
+      });
+    }
+    console.log(`  ★${star} (${star === 1 ? 2 : star}단계 몸 ${bodies.length}명): 한 입장 승률 ${pct(games ? wins / games : 0)} · 이긴 입장 3판 합 ${(wins ? secs / wins : 0).toFixed(1)}초 · 끝 체력 ${pct(wins ? hpLeft / wins : 0)}`);
+  }
 }
 
 // ── 붕옥 재료 공급 · 6번 합체 시간 (C.414 → C.425 → C.426, GDD 12-3 v6.016, 참고 지표 — 가드 없음) ──

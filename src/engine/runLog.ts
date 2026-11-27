@@ -437,8 +437,9 @@ export interface TowerBattleRecord {
 export interface SpecialRunRecord {
   at: number;
   factionId: string;
-  mode: 'weekly' | 'boss';
-  /** 주간던전 = 붕옥 트랙 id, 보스전 = 보스 칸 id (스토리 보스 id 또는 'tower-owner') */
+  /** 'daily' = 요일던전(C.564), 'boss' = 보스전, 'weekly' = 옛 주간던전(C.427~C.563 기록) */
+  mode: 'daily' | 'weekly' | 'boss';
+  /** 요일던전 = 던전 id(붕옥 트랙 id·gold·gear·accessory·gearMat), 주간던전 = 붕옥 트랙 id, 보스전 = 보스 칸 id */
   target: string;
   star: number;
   won: boolean;
@@ -448,6 +449,10 @@ export interface SpecialRunRecord {
   gold: number;
   /** 받은 붕옥 재료 (트랙 id → 개수) */
   materials: Record<string, number>;
+  /** 받은 장비 (C.564 장비·장신구 던전, 선택): 종류·등급·★·가득이라 바로 판 골드 */
+  gear?: { kind: string; grade: string; star: number; sold: number }[];
+  /** 받은 보관함 물건 (C.564 장비 재료 던전, 선택): id → 개수 */
+  items?: Record<string, number>;
   tierIndex: number;
   formId: string | null;
 }
@@ -662,7 +667,7 @@ export interface GearRecord {
   gearKind: string;
   grade: string;
   star?: number;
-  source?: 'drop' | 'shop' | 'wanderer' | 'idle' | 'unlock';
+  source?: 'drop' | 'shop' | 'wanderer' | 'idle' | 'unlock' | 'special';
   from?: 'normal' | 'elite' | 'boss';
   slot?: string;
   plus?: number;
@@ -768,7 +773,7 @@ export interface HogyokuMaterialRecord {
   kind: 'soul' | 'shard' | 'essence';
   amount: number;
   /** 얻은 곳 (GDD 12-3 v6.015): hunt 사냥 드롭 · wanderer 우라하라 · weekly 특수던전 주간던전 · bossRush 특수던전 보스전(C.427). 옛 기록(C.425 전): episode 화 첫 클리어 · chapter 장 보스 · tower 탑 층 · evolution 진화 · ascension 승급 · resonance 공명 */
-  source: 'hunt' | 'wanderer' | 'weekly' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
+  source: 'hunt' | 'wanderer' | 'weekly' | 'daily' | 'bossRush' | 'episode' | 'chapter' | 'tower' | 'evolution' | 'ascension' | 'resonance';
   factionId: string;
 }
 

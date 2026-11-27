@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 175; // C.559 (GDD 13절 v6.240 튜토리얼 각본 전투의 블록 = 탄 계열, 사용자 2026-11-27): provisional.tutorialScript.blockFamily 'family-c' 신설(호로 탄·사신 귀). 수치 그대로
+export const BALANCE_VERSION = 176; // C.564 (GDD 6-16 v6.246 요일던전, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회) → daily(던전마다 하루 2회 · 붕옥 재료 던전 요일 hogyokuDays 월목/화금/수토 + 일요일 셋 다 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
+// 이전: BALANCE_VERSION = 175; // C.559 (GDD 13절 v6.240 튜토리얼 각본 전투의 블록 = 탄 계열, 사용자 2026-11-27): provisional.tutorialScript.blockFamily 'family-c' 신설(호로 탄·사신 귀). 수치 그대로
 // 이전: BALANCE_VERSION = 174; // C.558 (GDD 5-5 v6.239 우라하라 마주침 연출, 사용자 2026-11-27 "우라하라 알림창 없애고 …"): 마주침 확인 창 폐기 → provisional.wanderer.confirmSeconds 5 삭제. 다른 수치 그대로
 // 이전: BALANCE_VERSION = 173; // C.555 (GDD 4-5 v6.232 모험 먹이 = 확률로 바퀴당 평균 약 0.5개, 사용자 2026-11-27 정정 — provisional): C.550 expedition.foodPerLap 0.5(바퀴당 1개 상한) 삭제 → expedition.foodRate 0.15(출처별 먹이 확률 전체 배율 — 일반 적·강적 확정+30%·보물 먹이 몫·휴식 간식). 보스 확정 먹이 밖. 전투 수치 그대로
 // 이전: BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
@@ -507,19 +508,28 @@ export const BALANCE = {
       fallbackBoss: 'sand-maw',
       reward: { goldPerStar: 10, eliteFood: 'hearty', bossJade: 3, finalJade: 10 },
     },
-    /** 특수던전 주간던전·보스전 (GDD 6-16 v6.017, C.427 — 마스터 추천안, 전부 provisional). 초기화 = 매주 resetWeekday(1 = 월요일) resetHourKst 시(KST).
-     *  주간던전 = 붕옥 트랙 테마(세공·정제·주입) 던전마다 주 weekly.entries 회, 한 입장 = battles 순서 전투(체력 이어감), 보상 = 그 테마 재료 material[★−1] + 골드 goldPerStar × ★.
-     *  보스전 = 스토리 보스 + 탑의 주인(ownerBoss × ownerScale) 보스마다 주 boss.entries 회, 보상 = 재료 세 종 각 materialEach[★−1] + 골드. 입장 때 횟수 차감(실패도 차감).
+    /** 특수던전 요일던전·보스전 (GDD 6-16 v6.017 → v6.246 구색 개편, C.427·C.564 — 마스터 추천안, 전부 provisional). 주 초기화 = 매주 resetWeekday(1 = 월요일) resetHourKst 시(KST), 날 바뀜 = 매일 resetHourKst 시(KST).
+     *  요일던전(C.564, 옛 주간던전) = 던전 7개, 던전마다 하루 daily.entries 회(옛 주 3회 대체), 한 입장 = battles 순서 전투(체력 이어감).
+     *   붕옥 재료 던전 3개(세공·정제·주입 = 트랙 id)는 hogyokuDays 요일(0 = 일요일)에만 + allOpenDay(일요일)는 셋 다 — 보상 = 그 재료 material[★−1] + 골드 goldPerStar × ★.
+     *   골드 던전 = 골드 gold.goldPerStar × ★ · 장비 던전 = gear.kinds 중 1개(등급표 gear.grades = provisional.gear.dropGrades 의 키) · 장신구 던전 = 장신구 1개(accessory.grades) · 장비 재료 던전 = 재료 22종 중 gearMat.count[★−1] 개(쓰임은 GDD 5절 U-21 [미정]).
+     *  보스전 = 보스마다 주 boss.entries 회, 보상 = 재료 세 종 각 materialEach[★−1] + 골드. 입장 때 횟수 차감(실패도 차감).
      *  적 세기 = 탑처럼 ★ 배율(difficultyEnemyScale) × enemyScale — 기준 = 그 ★ 권장 단계(hpInAttacks 규칙) */
     specialDungeon: {
       resetWeekday: 1,
       resetHourKst: 5,
-      weekly: {
-        entries: 3,
+      // 이전(C.427): weekly { entries 3(주), battles, enemyScale 1, material [3,5,8,12], goldPerStar 30 } — C.564 에 daily 로 바뀜
+      daily: {
+        entries: 2,
         battles: ['normal', 'normal', 'elite'] as readonly ('normal' | 'elite')[],
         enemyScale: 1,
+        hogyokuDays: { soul: [1, 4], shard: [2, 5], essence: [3, 6] } as Readonly<Record<string, readonly number[]>>,
+        allOpenDay: 0,
         material: [3, 5, 8, 12] as readonly number[],
         goldPerStar: 30,
+        gold: { goldPerStar: 150 },
+        gear: { kinds: ['weapon', 'armor', 'shoes'] as readonly ('weapon' | 'armor' | 'shoes')[], grades: 'elite' },
+        accessory: { grades: 'elite' },
+        gearMat: { count: [2, 3, 5, 7] as readonly number[] },
       },
       boss: {
         entries: 1,

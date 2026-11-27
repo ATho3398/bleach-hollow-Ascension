@@ -21,8 +21,8 @@ import { abortExpedition, markExpeditionBack, markExpeditionLeft, type AbandonRe
 import { getEpisode, type StoryLine } from '../data/story';
 import { chapterLabel, storyView, type DepartTab } from './storyView';
 import { towerResultView, towerView } from './towerView';
-import { bossRushName, specialDungeonView, specialHead, specialResultView, weeklyName } from './specialDungeonView';
-import { bossRushEnemy, createSpecialCombat, hpFractionAfter, weeklyEnemies, type BossRushEntry, type SpecialTab } from '../engine/specialDungeon';
+import { bossRushName, dailyName, specialDungeonView, specialHead, specialResultView } from './specialDungeonView';
+import { bossRushEnemy, createSpecialCombat, dailyEnemies, hpFractionAfter, type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab } from '../engine/specialDungeon';
 import type { HogyokuTrackId } from '../engine/transcend';
 import { createTowerCombat, towerFloor, towerOpen, type TowerFloor } from '../engine/tower';
 import { difficultyText, specialDungeonLabels, towerFloorText, towerLabels } from '../engine/faction';
@@ -1818,8 +1818,8 @@ export function startApp(host: HTMLElement): void {
     else storyScreen(faction);
   }
 
-  // ── 특수던전 (GDD 6-16 v6.017, C.427 — 옛 도전의 탑 36장 → 139장 1): 월드맵 장소. 위 탭 [탑][주간던전][보스전], 처음 = 탑. 뒤로 = 월드맵.
-  //    탑 = 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로). 주간던전·보스전도 같은 전투 엔진·같은 규칙(리스크·배부름 변화 없음) ──
+  // ── 특수던전 (GDD 6-16 v6.017 → v6.246, C.427·C.564 — 옛 도전의 탑 36장 → 139장 1): 월드맵 장소. 위 탭 [탑][요일던전][보스전], 처음 = 탑. 뒤로 = 월드맵.
+  //    탑 = 한 층 = 전투 한 판(체력 가득, 흡수 없음, 리스크·허기·컨디션 그대로). 요일던전·보스전도 같은 전투 엔진·같은 규칙(리스크·배부름 변화 없음) ──
   let specialTab: SpecialTab = 'tower';
   function towerScreen(faction: FactionConfig): void {
     if (!save) return;
@@ -1830,11 +1830,11 @@ export function startApp(host: HTMLElement): void {
       if (specialTab === 'tower') {
         towerView(root, faction, save!, { onChallenge: (f) => towerBattle(faction, f), onHelp: hd.onHelp }, specialHead(faction, 'tower', hd));
       } else {
-        specialState(save!); // 주가 바뀌었으면 횟수 비움
+        specialState(save!); // 주·날이 바뀌었으면 횟수 비움
         if (testOn) testRefillSpecial(save!); // 테스트 칸: 이미 다 쓴 옛 테스트 칸도 다시 열린다 (C.457)
         specialDungeonView(root, faction, save!, specialTab, {
           ...hd,
-          onWeekly: (track, star) => startSpecialRun(faction, { mode: 'weekly', target: track, star }),
+          onDaily: (id, star) => startSpecialRun(faction, { mode: 'daily', target: id, star }),
           onBoss: (e, star) => startSpecialRun(faction, { mode: 'boss', target: e.id, star, entry: e }),
         });
       }
@@ -1843,19 +1843,19 @@ export function startApp(host: HTMLElement): void {
     nav.push({ id: 'tower', locked: false, render });
   }
 
-  /** 특수던전 주간던전·보스전 한 입장: 횟수 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과 */
-  function startSpecialRun(faction: FactionConfig, run: { mode: 'weekly' | 'boss'; target: string; star: number; entry?: BossRushEntry }): void {
+  /** 특수던전 요일던전·보스전 한 입장: 횟수 차감(실패·나가기도 차감) → 전투 n판(체력 이어감) → 정산 → 결과 */
+  function startSpecialRun(faction: FactionConfig, run: { mode: SpecialMode; target: string; star: number; entry?: BossRushEntry }): void {
     if (!save || careBlocked(save)) return;
     const s0 = save;
     if (!enterSpecial(s0, run.mode, run.target)) {
-      showToast({ eyebrow: specialDungeonLabels(faction).name, title: '이번 주 횟수를 다 썼다', meta: '월요일 05:00 에 초기화' }, 0, 1800);
+      showToast({ eyebrow: specialDungeonLabels(faction).name, title: run.mode === 'daily' ? '오늘 횟수를 다 썼다' : '이번 주 횟수를 다 썼다', meta: run.mode === 'daily' ? '매일 05:00 에 초기화' : '월요일 05:00 에 초기화' }, 0, 1800);
       return;
     }
-    if (testOn) testRefillSpecial(s0); // 테스트 칸은 주간 횟수를 쓰지 않는다 (C.457: 깨고 나오면 [이번 주 끝]으로 잠겨 진행이 막혔다)
+    if (testOn) testRefillSpecial(s0); // 테스트 칸은 횟수를 쓰지 않는다 (C.457: 깨고 나오면 [이번 주 끝]으로 잠겨 진행이 막혔다)
     persist();
-    const enemies = run.mode === 'weekly' ? weeklyEnemies(run.target as HogyokuTrackId, run.star, s0.shared.special.weekStart) : [bossRushEnemy(run.entry!, run.star)];
+    const enemies = run.mode === 'daily' ? dailyEnemies(run.target as DailyDungeonId, run.star, s0.shared.special.dayStart) : [bossRushEnemy(run.entry!, run.star)];
     const bossId = run.mode === 'boss' ? run.entry!.bossId : undefined;
-    const name = run.mode === 'weekly' ? weeklyName(faction, run.target as HogyokuTrackId) : bossRushName(faction, run.entry!);
+    const name = run.mode === 'daily' ? dailyName(faction, run.target as DailyDungeonId) : bossRushName(faction, run.entry!);
     const done: CombatState[] = [];
     let settled = false;
     const settle = (quit: boolean) => {
@@ -1873,7 +1873,7 @@ export function startApp(host: HTMLElement): void {
           const enemy = run.mode === 'boss' && run.entry?.owner ? { ...enemies[i]!, name: { '*': towerLabels(faction).finalBossName } } : enemies[i]!;
           const s = createSpecialCombat(enemy, run.star, params, Math.floor(Math.random() * 2 ** 32), hp, bossId);
           setBgm(bossId ? 'boss' : enemy.class === 'elite' ? 'elite' : 'battle');
-          const bgKey = run.mode === 'weekly' ? specialDungeonLabels(faction).weekly[run.target]?.art : specialDungeonLabels(faction).bossArt[run.target];
+          const bgKey = run.mode === 'daily' ? specialDungeonLabels(faction).daily[run.target]?.art : specialDungeonLabels(faction).bossArt[run.target];
           battleView(root, faction, s, {
             ...battleItemOpts(s0, s),
             tierIndex: artTierIndexOf(s0),

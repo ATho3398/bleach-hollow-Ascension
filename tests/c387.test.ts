@@ -201,7 +201,7 @@ describe('세이브 형식 70', () => {
     expect([s.nest.foodStreak, s.nest.dislikeRun]).toEqual([{}, 0]);
     s.meta.format = 69;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(99);
+    expect(m.meta.format).toBe(100);
     expect(m.shared.food).toMatchObject({ snack: 4, basic: 2, hearty: 1, tonic: 3, feast: 1, sushi: 0, elixir: 0, relic: 0, scrap: 0 });
     expect(m.nest.foodStreak).toEqual({});
   });

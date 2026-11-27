@@ -1,11 +1,11 @@
-// C.427 (GDD 6-16 v6.017, 코딩280): 특수던전 — 월드맵 탑 자리 이름 '특수던전', 위 탭 [탑][주간던전][보스전], 주간던전·보스전(주 초기화·횟수·3판 연속·보상), 드래그 목록
+// C.564: 옛 주간던전(주 3회) → 요일던전(하루 2회) — 기대값을 바꾼 곳은 '옛 값' 주석. C.427 (GDD 6-16 v6.017, 코딩280): 특수던전 — 월드맵 탑 자리 이름 '특수던전', 위 탭 [탑][주간던전][보스전], 주간던전·보스전(주 초기화·횟수·3판 연속·보상), 드래그 목록
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
 import { specialDungeonLabels, worldMapOf } from '../src/engine/faction';
 import {
-  bossKey, bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, entriesLeft, hpFractionAfter, newSpecialState, nextResetAt, OWNER_BOSS_ID, rollWeek, spendEntry, weeklyEnemies, weeklyKey, weekStartOf,
+  bossKey, bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, dailyEnemies as weeklyEnemies, dailyKey as weeklyKey, entriesLeft, hpFractionAfter, newSpecialState, nextResetAt, OWNER_BOSS_ID, rollWeek, spendEntry, weekStartOf,
 } from '../src/engine/specialDungeon';
 import { playCombatBot } from '../src/engine/combat/bot';
 import { enterSpecial, migrateSave, newSaveData, SAVE_FORMAT_VERSION, settleSpecialRun, specialState } from '../src/game';
@@ -35,11 +35,11 @@ describe('C.427 주간 초기화 (월요일 05:00 KST)', () => {
 
   it('주가 바뀌면 쓴 횟수가 비워진다 (최고 기록은 남음)', () => {
     const st = newSpecialState(kst(2026, 11, 12, 12));
-    const k = weeklyKey('soul');
+    const k = bossKey('sand-maw'); // C.564: 주 단위 칸 = 보스전 (옛 주간던전 soul)
     st.best[k] = 2;
-    for (let i = 0; i < SX.weekly.entries; i++) expect(spendEntry(st, k, kst(2026, 11, 12, 12))).toBe(true);
+    for (let i = 0; i < SX.boss.entries; i++) expect(spendEntry(st, k, kst(2026, 11, 12, 12))).toBe(true);
     expect(spendEntry(st, k, kst(2026, 11, 15, 23))).toBe(false); // 일요일 = 같은 주
-    expect(entriesLeft(st, k, kst(2026, 11, 16, 6))).toBe(SX.weekly.entries); // 월요일 06시 = 새 주로 보임
+    expect(entriesLeft(st, k, kst(2026, 11, 16, 6))).toBe(SX.boss.entries); // 월요일 06시 = 새 주로 보임
     expect(rollWeek(st, kst(2026, 11, 16, 6))).toBe(true);
     expect(st.used).toEqual({});
     expect(st.best[k]).toBe(2);
@@ -47,14 +47,14 @@ describe('C.427 주간 초기화 (월요일 05:00 KST)', () => {
 });
 
 describe('C.427 입장 횟수 차감', () => {
-  it('주간던전 던전마다 주 3회·보스 보스마다 주 1회, 실패해도 차감', () => {
+  it('요일던전 던전마다 하루 2회(옛 주 3회)·보스 보스마다 주 1회, 실패해도 차감', () => {
     const s = newSaveData('hollow', 1);
-    const now = kst(2026, 11, 12, 19);
-    expect(SX.weekly.entries).toBe(3);
+    const now = kst(2026, 11, 15, 19); // C.564: 일요일 = 붕옥 재료 던전 셋 다 열림 (옛 11-12 목)
+    expect(SX.daily.entries).toBe(2); // 옛 SX.weekly.entries 3
     expect(SX.boss.entries).toBe(1);
-    for (let i = 0; i < 3; i++) expect(enterSpecial(s, 'weekly', 'shard', now)).toBe(true);
-    expect(enterSpecial(s, 'weekly', 'shard', now)).toBe(false);
-    expect(enterSpecial(s, 'weekly', 'soul', now)).toBe(true); // 다른 던전은 따로
+    for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'daily', 'shard', now)).toBe(true);
+    expect(enterSpecial(s, 'daily', 'shard', now)).toBe(false);
+    expect(enterSpecial(s, 'daily', 'soul', now)).toBe(true); // 다른 던전은 따로
     expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true);
     settleSpecialRun(s, { mode: 'boss', target: 'sand-maw', bossId: 'sand-maw', star: 1, battles: [fake(false)], total: 1, quit: false }, now);
     expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(false); // 졌어도 이번 주 끝
@@ -99,15 +99,15 @@ describe('C.427 보상 지급', () => {
     const s = newSaveData('hollow', 1);
     const now = kst(2026, 11, 12, 19);
     s.shared.hogyokuShards = 0; s.shared.tradeCoins = 0;
-    const lose = settleSpecialRun(s, { mode: 'weekly', target: 'shard', star: 3, battles: [fake(true), fake(false)], total: 3, quit: false }, now);
+    const lose = settleSpecialRun(s, { mode: 'daily', target: 'shard', star: 3, battles: [fake(true), fake(false)], total: 3, quit: false }, now);
     expect(lose.won).toBe(false);
     expect(s.shared.hogyokuShards).toBe(0);
-    const win = settleSpecialRun(s, { mode: 'weekly', target: 'shard', star: 3, battles: [fake(true), fake(true), fake(true)], total: 3, quit: false }, now);
+    const win = settleSpecialRun(s, { mode: 'daily', target: 'shard', star: 3, battles: [fake(true), fake(true), fake(true)], total: 3, quit: false }, now);
     expect(win.won).toBe(true);
-    expect(s.shared.hogyokuShards).toBe(SX.weekly.material[2]);
-    expect(s.shared.tradeCoins).toBe(SX.weekly.goldPerStar * 3);
-    expect(SX.weekly.material[3]!).toBeGreaterThan(SX.weekly.material[0]!);
-    expect(s.slotLog.hogyokuMaterials.at(-1)).toMatchObject({ kind: 'shard', source: 'weekly', amount: SX.weekly.material[2] });
+    expect(s.shared.hogyokuShards).toBe(SX.daily.material[2]);
+    expect(s.shared.tradeCoins).toBe(SX.daily.goldPerStar * 3);
+    expect(SX.daily.material[3]!).toBeGreaterThan(SX.daily.material[0]!);
+    expect(s.slotLog.hogyokuMaterials.at(-1)).toMatchObject({ kind: 'shard', source: 'daily', amount: SX.daily.material[2] }); // 옛 source 'weekly'
     expect(s.runLog.specialRuns.map((r) => r.won)).toEqual([false, true]);
     expect(s.runLog.specialRuns[1]!.battles).toHaveLength(3);
     expect(s.shared.special.best[weeklyKey('shard')]).toBe(3);
@@ -182,12 +182,12 @@ describe('C.427 드래그 목록 선택', () => {
 });
 
 describe('C.427 이름·탭·세이브', () => {
-  it('월드맵 탑 자리 이름 = 특수던전 (두 종족, 종족 설정), 탭 탑·주간던전·보스전, 그림 키 = 데이터', () => {
+  it('월드맵 탑 자리 이름 = 특수던전 (두 종족, 종족 설정), 탭 탑·요일던전(옛 주간던전)·보스전, 그림 키 = 데이터', () => {
     for (const f of FACTIONS) {
       expect(worldMapOf(f).places.tower).toBe('특수던전');
       const L = specialDungeonLabels(f);
-      expect(L.tabs).toEqual({ tower: '탑', weekly: '주간던전', boss: '보스전' });
-      for (const t of ['soul', 'shard', 'essence']) expect(L.weekly[t]?.art).toBeTruthy();
+      expect(L.tabs).toMatchObject({ tower: '탑', daily: '요일던전', boss: '보스전' });
+      for (const t of ['soul', 'shard', 'essence']) expect(L.daily[t]?.art).toBeTruthy();
       for (const e of bossRushEntries()) expect(L.bossArt[e.id]).toBeTruthy();
     }
     const app = read('src/ui/app.ts');
@@ -195,13 +195,13 @@ describe('C.427 이름·탭·세이브', () => {
   });
 
   it('세이브 형식 80 → 81: shared.special 새로·런 로그 specialRuns', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(99);
+    expect(SAVE_FORMAT_VERSION).toBe(100);
     const raw = JSON.parse(JSON.stringify(newSaveData('hollow', 1))) as Record<string, unknown> & { meta: { format: number }; shared: Record<string, unknown>; runLog: Record<string, unknown> };
     raw.meta.format = 80;
     delete raw.shared.special;
     delete raw.runLog.specialRuns;
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(99);
+    expect(m.meta.format).toBe(100);
     expect(m.shared.special.used).toEqual({});
     expect(m.runLog.specialRuns).toEqual([]);
   });

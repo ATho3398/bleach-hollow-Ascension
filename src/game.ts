@@ -54,7 +54,7 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
-import { bossKey, bossRushReward, newSpecialState, rollWeek, sanitizeSpecial, spendEntry, weeklyKey, weeklyReward, type SpecialDungeonState } from './engine/specialDungeon';
+import { bossKey, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, rollWeek, sanitizeSpecial, spendEntry, type DailyDungeonId, type SpecialDungeonState, type SpecialMode } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { newWandererState, rollWandererStock, rollWandererTier, sanitizeWanderer, wandererCellRng, wandererHereAt, wandererLeaveAt, type WandererState, type WandererVisit } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
@@ -63,7 +63,7 @@ import { gainHogyokuMaterial, materialHave, spendMaterial } from './engine/hogyo
 export { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
 import { newSortieSlots, sanitizeSortie, SORTIE_IDS } from './engine/sortie';
 import { grantGear, newGearState, rollGear, rollGrade, sanitizeGear, sellGold, type GearState } from './engine/gear';
-import { STARTER_GEAR } from './data/gear';
+import { STARTER_GEAR, type GearKind } from './data/gear';
 import { applyUnlocks, featureUnlocked, newUnlockState, sanitizeUnlocks, UNLOCK_GUIDES, type FeatureId, type UnlockProgress, type UnlockState } from './engine/unlocks';
 import { addPetLaps, carriedPet, carriedPet2, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetCarry, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
@@ -72,7 +72,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
+export const SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246 요일던전, 사용자 2026-11-27): shared.special 하루 단위 칸 dayStart·daily(요일던전 던전마다 하루 2회 — 옛 주간던전 주 3회 대체), 칸 키 weekly:<트랙> → daily:<던전 id>, 런 로그 specialRuns mode 'daily'·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](옛 주간던전 최고 ★·이긴 수 → 요일던전 키, 이번 주 쓴 횟수 지움)
+// 이전: SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
 // 이전: SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
 // 이전: SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
 // 이전: SAVE_FORMAT_VERSION = 96; // C.531 (GDD 8-8 v6.160~v6.166 허무 재설계, 사용자 2026-11-24 "재설계는 지금 해." — C.516 되돌림): 값 규칙 — 허무 블록을 다시 가질 수 있다(계열 없는 1종 t-kyo, 옛 허무 조·탄·교 t-kyo-a·c·b 는 없다)·허무 강화 가능 + 런 로그 전투 기록 foeExecutes(허무 적 처형 시도·막은 수, 선택)·lossReason 'executed'·흡수 기록 specialGates 'base'. 95 → 96 변환 SAVE_MIGRATIONS[95](옛 허무 조·탄·교 → 허무 블록 하나로 합침, 원정 중간 저장의 허무 적 흡수 화면에 허무 블록 후보를 돌려줌). 94 → 95 는 이제 허무를 지우지 않는다(형식 95 세이브는 이미 지워져 허무 블록 없이 시작).
@@ -2203,19 +2204,31 @@ export function recordTowerBattle(save: SaveData, f: TowerFloor, s: CombatState,
   return out;
 }
 
-// ── 특수던전 주간던전·보스전 (GDD 6-16 v6.017, C.427) ──
+// ── 특수던전 요일던전·보스전 (GDD 6-16 v6.017 → v6.246, C.427·C.564) ──
 
-/** 특수던전 상태 (주가 바뀌었으면 여기서 비운다) */
+/** 특수던전 상태 (주·날이 바뀌었으면 여기서 비운다) */
 export function specialState(save: SaveData, nowMs: number = Date.now()): SpecialDungeonState {
   save.shared.special ??= newSpecialState(nowMs);
   rollWeek(save.shared.special, nowMs);
   return save.shared.special;
 }
 
-/** 입장: 이번 주 횟수 1 차감 (남은 게 없으면 false). 실패·중간 나가기도 돌려주지 않는다 */
-export function enterSpecial(save: SaveData, mode: 'weekly' | 'boss', target: string, nowMs: number = Date.now()): boolean {
-  const key = mode === 'weekly' ? weeklyKey(target as HogyokuTrackId) : bossKey(target);
-  return spendEntry(specialState(save, nowMs), key, nowMs);
+/** 입장 칸 키: 요일던전 = 하루 단위, 보스전 = 주 단위 */
+export function specialKeyOf(mode: SpecialMode, target: string): string {
+  return mode === 'daily' ? dailyKey(target as DailyDungeonId) : bossKey(target);
+}
+
+/** 요일던전이 지금 열렸나 (C.564): 오늘 요일(05:00 KST 기준)에 열리는 던전 + 그 기능 해금(장비 던전 = 장비, 장신구 던전 = 장신구 칸) */
+export function dailyAvailable(save: SaveData, id: string, nowMs: number = Date.now()): boolean {
+  if (!isDailyDungeon(id) || !dailyOpenToday(id, nowMs)) return false;
+  const f = dailyFeature(id);
+  return !f || featureUnlocked(save, f);
+}
+
+/** 입장: 횟수 1 차감 (남은 게 없거나 오늘 닫힌 요일던전이면 false). 실패·중간 나가기도 돌려주지 않는다 */
+export function enterSpecial(save: SaveData, mode: SpecialMode, target: string, nowMs: number = Date.now()): boolean {
+  if (mode === 'daily' && !dailyAvailable(save, target, nowMs)) return false;
+  return spendEntry(specialState(save, nowMs), specialKeyOf(mode, target), nowMs);
 }
 
 /** 특수던전 전투 한 판을 런 로그·적 도감에 남긴다 (리스크·배부름·컨디션은 그대로 — 탑과 같다) */
@@ -2229,30 +2242,59 @@ export function recordSpecialBattle(save: SaveData, s: CombatState, nowMs: numbe
 export interface SpecialOutcome {
   won: boolean;
   gold: number;
-  /** 받은 재료 (트랙 id → 개수) */
+  /** 받은 붕옥 재료 (트랙 id → 개수) */
   materials: Partial<Record<HogyokuTrackId, number>>;
+  /** 받은 장비 (C.564 장비·장신구 던전). 보관함이 가득이면 sold = 바로 판 골드 */
+  gear: { kind: string; grade: string; star: number; sold: number }[];
+  /** 받은 보관함 물건 (C.564 장비 재료 던전: 재료 id → 개수) */
+  items: Record<string, number>;
 }
 
-/** 한 입장을 끝낸다: 다 이기면 보상(주간던전 = 테마 재료 + 골드, 보스전 = 재료 세 종 + 골드)·최고 ★·이긴 수, 보스전은 보스 도감 처치 +1(첫 처치 보상·칭호·특성 없음).
- *  런 로그 specialRuns 에 입장·판마다 결과·보상. 빈사로 지면 탑처럼 사망 규칙 */
+/** 요일던전 장비 1개 지급 (등급 = gear.dropGrades[grades] 표, ★ = 고른 ★). 가득이면 바로 판 골드 — 런 로그 gear source 'special' */
+function grantSpecialGear(save: SaveData, kinds: readonly GearKind[], grades: string, star: number, rand: () => number, nowMs: number): SpecialOutcome['gear'][number] {
+  const GX = BALANCE.provisional.gear;
+  const kind = kinds[Math.min(kinds.length - 1, Math.floor(rand() * kinds.length))]!;
+  const roll = rollGear({ kind, grade: rollGrade(GX.dropGrades[grades] ?? GX.dropGrades.elite!, rand), star }, rand);
+  const base = { at: nowMs, factionId: save.factionId, gearKind: roll.kind, grade: roll.grade, star: roll.star, source: 'special' as const };
+  const it = grantGear(save.shared.gear, roll, nowMs);
+  if (it) {
+    save.runLog.gear.push({ ...base, kind: 'get', uid: it.uid });
+    return { kind: roll.kind, grade: roll.grade, star: roll.star, sold: 0 };
+  }
+  const gold = sellGold(roll);
+  save.shared.tradeCoins += gold;
+  save.runLog.gear.push({ ...base, kind: 'autoSell', gold });
+  return { kind: roll.kind, grade: roll.grade, star: roll.star, sold: gold };
+}
+
+/** 한 입장을 끝낸다: 다 이기면 보상(요일던전 = 던전마다 — 붕옥 재료 + 골드 / 골드 / 장비 / 장신구 / 장비 재료, 보스전 = 재료 세 종 + 골드)·최고 ★·이긴 수, 보스전은 보스 도감 처치 +1(첫 처치 보상·칭호·특성 없음).
+ *  런 로그 specialRuns 에 입장·판마다 결과·보상. 빈사로 지면 탑처럼 사망 규칙. 빈사면 골드 절반 */
 export function settleSpecialRun(
   save: SaveData,
-  run: { mode: 'weekly' | 'boss'; target: string; bossId?: string; star: number; battles: CombatState[]; total: number; quit: boolean },
+  run: { mode: SpecialMode; target: string; bossId?: string; star: number; battles: CombatState[]; total: number; quit: boolean },
   nowMs: number = Date.now(),
 ): SpecialOutcome {
   const st = specialState(save, nowMs);
   const won = !run.quit && run.battles.length >= run.total && run.battles.every((b) => b.status === 'won');
-  const out: SpecialOutcome = { won, gold: 0, materials: {} };
+  const out: SpecialOutcome = { won, gold: 0, materials: {}, gear: [], items: {} };
   const half = save.nest.collapsed ? BALANCE.provisional.nest.care.dying.rewardMult : 1; // 빈사 골드 절반 (탑과 같다)
   if (won) {
-    const key = run.mode === 'weekly' ? weeklyKey(run.target as HogyokuTrackId) : bossKey(run.target);
+    const key = specialKeyOf(run.mode, run.target);
     st.best[key] = Math.max(st.best[key] ?? 0, run.star);
     st.clears[key] = (st.clears[key] ?? 0) + 1;
-    if (run.mode === 'weekly') {
-      const r = weeklyReward(run.target as HogyokuTrackId, run.star);
+    if (run.mode === 'daily' && isDailyDungeon(run.target)) {
+      const r = dailyReward(run.target, run.star);
+      const rng = createRng(((nowMs >>> 0) ^ 0x2545f491) >>> 0);
+      const rand = () => nextFloat(rng);
       out.gold = Math.floor(r.gold * half);
-      out.materials[r.track] = gainHogyokuMaterial(save, r.track, r.material, 'weekly', nowMs);
-    } else {
+      if (r.hogyoku) out.materials[r.hogyoku.track] = gainHogyokuMaterial(save, r.hogyoku.track, r.hogyoku.amount, 'daily', nowMs);
+      if (r.gear) out.gear.push(grantSpecialGear(save, r.gear.kinds, r.gear.grades, run.star, rand, nowMs));
+      for (let i = 0; i < r.gearMats; i++) {
+        const id = MATERIAL_IDS[Math.min(MATERIAL_IDS.length - 1, Math.floor(rand() * MATERIAL_IDS.length))]!;
+        out.items[id] = (out.items[id] ?? 0) + 1;
+      }
+      for (const [id, n] of Object.entries(out.items)) save.shared.items[id] = (save.shared.items[id] ?? 0) + n;
+    } else if (run.mode === 'boss') {
       const r = bossRushReward(run.star);
       out.gold = Math.floor(r.gold * half);
       for (const t of HOGYOKU_TRACK_IDS) out.materials[t] = gainHogyokuMaterial(save, t, r.each, 'bossRush', nowMs);
@@ -2267,6 +2309,8 @@ export function settleSpecialRun(
     at: nowMs, factionId: save.factionId, mode: run.mode, target: run.target, star: run.star, won, quit: run.quit,
     battles: run.battles.map((b) => ({ enemyId: b.boss?.setup.id ?? b.enemy.def.id, won: b.status === 'won', durationSeconds: Math.round(elapsedSeconds(b) * 10) / 10, startHp: Math.round(b.params.playerStartHpFraction * 1000) / 1000 })),
     gold: out.gold, materials: { ...out.materials } as Record<string, number>, tierIndex: save.evolution.tierIndex, formId: save.evolution.formId,
+    ...(out.gear.length > 0 ? { gear: out.gear.map((g) => ({ ...g })) } : {}),
+    ...(Object.keys(out.items).length > 0 ? { items: { ...out.items } } : {}),
   });
   if (!won && !run.quit) dieIfDyingLost(save, false, nowMs, 'tower');
   return out;
@@ -2699,7 +2743,28 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   97: (save) => migrateMergedBlocks(save),
   // 98 → 99 (C.549, GDD 5-5 우라하라 = 모험 중 마주침): 바퀴 수 lapsSince 를 지우고, 와 있던 방문은 지금부터 15분 머문다(at = 변환 시각 — 옛 '다음 원정 귀환 때 떠남' 대신)
   98: (save) => migrateWandererStay(save, Date.now()),
+  // 99 → 100 (C.564, GDD 6-16 v6.246 요일던전): shared.special 에 하루 단위 칸 dayStart·daily, 옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로 옮기고 이번 주 쓴 횟수는 지운다
+  99: (save) => migrateDailyDungeon(save),
 };
+
+/** 형식 99 → 100 (C.564): 옛 주간던전(주 3회) → 요일던전(하루 2회). 슬롯 공유라 한 번 */
+export function migrateDailyDungeon(save: SaveData): void {
+  const sh = (save as unknown as { shared?: unknown }).shared;
+  if (!isRec(sh) || !isRec(sh.special)) return;
+  const sp = sh.special;
+  sp.dayStart = 0;
+  sp.daily = {};
+  for (const k of ['used', 'best', 'clears'] as const) {
+    const m = sp[k];
+    if (!isRec(m)) continue;
+    for (const key of Object.keys(m)) {
+      if (!key.startsWith('weekly:')) continue;
+      const v = m[key];
+      delete m[key];
+      if (k !== 'used') m[`daily:${key.slice('weekly:'.length)}`] = v;
+    }
+  }
+}
 
 /** 형식 98 → 99 (C.549): shared.wanderer.lapsSince 삭제, 와 있던 방문의 at = nowMs (떠나는 시각 = nowMs + 15분). 슬롯 공유라 트랙과 상관없이 한 번 */
 export function migrateWandererStay(save: SaveData, nowMs: number): void {
