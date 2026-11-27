@@ -14,7 +14,7 @@ describe('206장 1: 가짜 도트 그림 삭제', () => {
     for (const f of ['char-hollow.png', 'char-hollow-2.png', 'char-hollow-2', 'skin-grandfisher']) expect(existsSync(`public/art/${f}`), f).toBe(false);
     expect(readdirSync('public/art').filter((f) => f.startsWith('skin-'))).toEqual([]);
     for (const f of ['char-shinigami.png', 'char-hollow-5.png', 'char-hollow/move-1.png', 'logo-hollow.png']) expect(existsSync(`public/art/${f}`), f).toBe(true);
-    expect(readdirSync('public/art').filter((f) => f.startsWith('enemy-')).length).toBe(48);
+    expect(readdirSync('public/art').filter((f) => f.startsWith('enemy-')).length).toBe(40); // C.548: 마른 몸 swift 8장 삭제
   });
   it('그림 없는 외형(사마귀)은 기본 덩치(C.345), 같은 이름 파일을 넣으면 코드 수정 없이 붙는다', () => {
     const fb = getFaction('hollow').room?.characterArt ?? '';
@@ -40,8 +40,8 @@ describe('206장 2: 덩치 몸 적 전부 종이인형', () => {
     }
     expect(n).toBe(32 - Object.keys(SPIKY_ENEMIES).length - Object.keys(SPEED_ENEMIES).length - Object.keys(WRAITH_ENEMIES).length - Object.keys(ONEARM_ENEMIES).length - Object.keys(SPIDER_ENEMIES).length - Object.keys(BEAST_ENEMIES).length - Object.keys(SERPENT_ENEMIES).length - Object.keys(GILLIAN_ENEMIES).length);
   });
-  it('swift 는 한 장 그림 그대로', () => {
-    for (const id of IDS.filter((id) => id.endsWith('-swift'))) expect(enemyArt(id, '/')?.rig, id).toBeUndefined();
+  it('swift 도 덩치 종이인형 (C.548, GDD 15-5 v6.218 — 옛 마른 몸 한 장 그림 폐기)', () => {
+    for (const id of IDS.filter((id) => id.endsWith('-swift'))) expect(HUMANOID.looks[enemyArt(id, '/')!.rig!.look]!.body, id).toBe('hb');
   });
 });
 

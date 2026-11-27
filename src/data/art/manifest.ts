@@ -112,7 +112,7 @@ export const BRUTE_FOE_SCALE = HOLLOW_BRUTE_SCALE;
 /** 덩치 몸 적의 속성 색 (GDD 205장 3, 지금 적 그림 색 그대로) */
 export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'brute-base', blood: 'brute-red', normal: 'brute-gray', earth: 'brute-brown', fire: 'brute-orange', poison: 'brute-green', thunder: 'brute-yellow', water: 'brute-blue' };
 /** 덩치 몸 적 종류 (GDD 206장 2 → 6-7 v6.212): 일반 적은 몸 표(enemies/bodies.json — 적 이름도 같은 표에서 '<몸>형 호로')에서 몸 brute 인 패턴, 강적 3 패턴은 덩치가 바탕(모델 강적 표가 덮음).
- *  몸 lean(날쌘형, 지금 swift)은 한 장 그림(enemy-<적id>.png)이라 여기서 빠진다 */
+ *  지금 일반 적 basic·swift·sturdy 모두 brute(15-5 v6.218 — 옛 마른 몸 한 장 그림 폐기) */
 export const BRUTE_ENEMY_KINDS: readonly string[] = [
   ...Object.entries(enemyBodies.normal.byPattern).filter(([, body]) => body === 'brute').map(([kind]) => kind),
   'heavy-chain', 'heavy-seal', 'stance',
@@ -199,7 +199,7 @@ export const ART_MANIFEST: Readonly<Record<string, ArtEntry>> = {
   // 여성이면 arrancar-base-f (genderLookFromTier 5). 크기·위치는 사신 종이인형과 같은 칸(view)이라 같은 값
   'char.hollow.5': { rig: 'arrancar-base', scale: 1.78, fieldScale: 1.33, offsetY: 0 },
   // 적 덩치 (GDD 115-A 85 · 206장 2): 덩치 몸 적 = <속성>-basic·sturdy·heavy-chain·heavy-seal·stance (8 × 5 = 40) 전부 종이인형 덩치(몸 hb, 동작 묶음 brute 하나 — 모션 통일)를
-  // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. 날쌘형 swift(마른 몸)는 한 장 그림 그대로. 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
+  // 그 속성 색 외형으로. 장식(쇠사슬·뼈 갑옷) 없음. swift 도 덩치(C.548, 15-5 v6.218 — 옛 마른 몸 한 장 그림 enemy-<속성>-swift.png 삭제). 배율 1.78 = 정지 그림 키(칸의 0.38)를 basic 적 그림 키(0.68)에 맞춤
   ...BRUTE_ENEMIES,
   // 뱀형 강적 (GDD 219장 2): 롯팽·마레하다 = 종이인형 뱀 색 외형 (덩치 적 줄을 덮음)
   ...Object.fromEntries(Object.entries(SERPENT_ENEMIES).map(([id, look]) => [`enemy.${id}`, { rig: look, scale: SERPENT_SCALE }])),

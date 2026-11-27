@@ -78,8 +78,6 @@ export function parseEnemy(r: unknown): EnemyDef {
 /** 일반 적 몸(모델) 표 (GDD 6-7 v6.212): 몸 id → 이름 앞말(6-7 표, 빈 글자 = 앞말 없음), 일반 적 패턴 → 몸. 그림 목록(art/manifest.ts)도 이 표를 읽는다 — 이름과 그림이 한 곳에서 나온다 */
 export interface EnemyBodyTable {
   names: Record<string, string>;
-  /** 임시 이름인 몸 id (6-7 임시) */
-  provisional?: string[];
   normal: { nameFormat: string; byPattern: Partial<Record<EnemyPatternKind, string>> };
 }
 export const ENEMY_BODIES = bodiesRaw as EnemyBodyTable;
@@ -96,7 +94,7 @@ export function normalEnemyBody(def: Pick<EnemyDef, 'id' | 'class' | 'testOnly' 
   return ENEMY_BODIES.normal.byPattern[def.pattern?.kind ?? 'basic'] ?? null;
 }
 
-/** 일반 적 이름 = 몸 이름 + 적 테이블 이름(호로) — '날쌘형 호로', 덩치는 앞말 없이 '호로'. 전투·결과·로그·흡수·도감 모두 이 이름 */
+/** 일반 적 이름 = 몸 이름 + 적 테이블 이름(호로) — '거미형 호로' 식, 덩치는 앞말 없이 '호로'(지금 일반 적 24종 모두 덩치). 전투·결과·로그·흡수·도감 모두 이 이름 */
 function withBodyName(def: EnemyDef): EnemyDef {
   if (!followsBodyTable(def)) return def;
   const body = normalEnemyBody(def);
@@ -121,8 +119,8 @@ export function getEnemy(id: string): EnemyDef {
 /** 적 도감 표기 규칙 (GDD 6-7 v6.212): 일반 적만 '이름(속성 속성)' — 데이터 dexNames.json */
 export const ENEMY_DEX_NAMES = dexNamesRaw as { normal: { format: string } };
 
-/** 도감에 쓰는 이름 (GDD 6-7 v6.212): 일반 적 = '날쌘형 호로(물 속성)'·'호로(물 속성)' 처럼 속성을 붙이고(패턴 이름은 안 씀), 강적·보스·테스트 적·훈련 인형은 이름 그대로.
- *  도감 밖(전투·결과·로그·흡수)은 이 함수를 쓰지 않고 이름 그대로('날쌘형 호로'·'호로') — 적을 고르는 목록(수련장·테스트 모드 적 설정 창)은 도감 표기 */
+/** 도감에 쓰는 이름 (GDD 6-7 v6.212): 일반 적 = '호로(물 속성)' 처럼 속성을 붙이고(패턴 이름은 안 씀), 강적·보스·테스트 적·훈련 인형은 이름 그대로.
+ *  도감 밖(전투·결과·로그·흡수)은 이 함수를 쓰지 않고 이름 그대로('호로') — 적을 고르는 목록(수련장·테스트 모드 적 설정 창)은 도감 표기 */
 export function enemyDexName(def: Pick<EnemyDef, 'id' | 'name' | 'element' | 'class' | 'testOnly'>, factionId: string): string {
   const name = pickFaction(def.name, factionId);
   if (!followsBodyTable(def)) return name;

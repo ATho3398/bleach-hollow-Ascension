@@ -1360,3 +1360,13 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **테스트**: 새 `tests/c546.test.ts` 12건(표 = hd 눈동자 / 그 색이 길리안 머리에만 / 길리안 몸 적 1종 / enemyArt tint = 속성 토큰 / 8속성 모두 다른 토큰(몸 단위) / 다른 몸·없는 적 tint 없음 / 내 캐릭터 안 바뀜 / 새 색 없음 / replaceColors / parseCssColor / 화면 연결·종족 분기 없음).
 - 캡처 `docs/captures/c546/`(1배 3장, `scripts/c546-proof.cjs`, facts.json): 01 PC 전투 스티치마우스(노멀 눈, 캔버스에 옛 빨강 0픽셀) · 02 PC 같은 길리안 몸에 8속성 tint 나란히(머리 확대) · 03 폰 전투.
 - 검증: typecheck · 관련 테스트(c545·rig·anim 관련 15개) · 새 테스트 · npm test 4455 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.548 — 마른 몸 폐기: 속공 일반 적도 덩치 종이인형·이름 호로 (GDD 15-5 v6.218 → v6.221, S-23, 코딩353)
+세이브 형식·BALANCE 그대로(그림·이름만, 적 id·능력치·패턴 그대로). GDD v6.221(첫 줄 + 20절 한 줄). C.547 은 코딩354(모험 준비 화면).
+- **이유**: 사용자 2026-11-27 "마른 몸은 종이인형으로 움직임 구현이 안돼서 아예 드랍. 게임에서도 다 빼버려." → 마스터AT 15절 v6.218.
+- **몸 표**: `enemies/bodies.json` 패턴 → 몸 swift = brute(basic·swift·sturdy 모두 덩치), 몸 lean·이름 '날쌘형'·provisional 삭제. 그림 목록 `BRUTE_ENEMY_KINDS` 가 같은 표에서 swift 를 받아 속공 8종 = 그 속성 색 덩치 외형(같은 속성 basic 과 같은 외형). 덩치 동작(대기·걷기·공격1·2·맞음·쓰러짐) 그대로 붙음(시험·캡처 확인). 이름 = '호로'.
+- **삭제**: `public/art/enemy-<속성>-swift.png` 8장(마른 몸 한 장 그림). 쓰던 곳 = 그림 자동 인식(파일 규칙)뿐 + 개발 도구 `src/ui/bha/fxLab.ts`(이펙트 실험실 적 자리 그림) → `enemy-normal-basic.png` 로. 옛 캡처 스크립트(c330·c332·c363-proof)는 적 id 만 써서 그대로.
+- **도감 이름 겹침(지시대로 그대로 둠, 사용자 고민 중)**: 속성마다 basic·swift·sturdy 3종이 모두 '호로(<속성> 속성)' — 노멀·물·불·흙·뇌·혈·독·허무 8속성 × 3 = 24종(일반 적 전부).
+- **시험 고침**: `tests/c340`·`c341`(swift 한 장 그림 → 덩치, public/art 적 그림 48 → 40장) · `c345`(덩치 적 수 23 → 31) · `tests/c545`(날쌘형 → 호로). 새 `tests/c548.test.ts` 5건(8종 덩치·basic 과 같은 외형 / 덩치 동작 / 그림 삭제·참조 없음 / 이름 호로·lean 없음 / 도감 겹침 3종).
+- 캡처 `docs/captures/c548/`(1배 3장, `scripts/c548-proof.cjs`, facts.json): 01 PC 전투 물 속공 적(water-swift) = 파란 덩치 '호로'(종이인형 캔버스) · 02 PC 적 도감 속성마다 덩치 3장 · 03 폰 적 도감.
+- 검증: typecheck · 관련 테스트(c340·c341·c545·c546·enemies·c348-size) · 새 테스트 · npm test 4460 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.

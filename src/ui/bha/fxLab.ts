@@ -48,7 +48,7 @@ function card(s: PixelFxSheet): HTMLElement {
   me.src = 'art/char-shinigami.png';
   me.style.cssText = 'position:absolute;left:70px;bottom:30px;width:150px;image-rendering:pixelated';
   const foe = el('img');
-  foe.src = 'art/enemy-normal-swift.png'; // C.341: 가짜 도트 char-hollow.png 삭제 (GDD 206장 1)
+  foe.src = 'art/enemy-normal-basic.png'; // C.341: 가짜 도트 char-hollow.png 삭제 (GDD 206장 1) · C.548: 마른 몸 swift 그림 삭제 → 덩치 한 장
   foe.style.cssText = 'position:absolute;left:270px;bottom:30px;width:150px;image-rendering:pixelated;transform:scaleX(-1)';
   stage.append(ground, me, foe);
 

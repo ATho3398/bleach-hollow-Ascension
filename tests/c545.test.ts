@@ -48,13 +48,12 @@ describe('일반 적 24종 이름 = 몸 이름 + 호로 (그림과 같은 출처
     expect(read('src/data/art/manifest.ts')).toMatch(/import enemyBodies from '\.\.\/enemies\/bodies\.json'/);
   });
 
-  it('지금 표(6-7 v6.214): 기본·단단 = 덩치 → 호로, 속공 = 날쌘형 호로 · 몸 이름 = 6-7 표 · 앞말은 빈 글자이거나 \'~형\'', () => {
+  it('지금 표(6-7 v6.214 · 15-5 v6.218): 기본·속공·단단 = 덩치 → 호로 · 몸 이름 = 6-7 표 · 앞말은 빈 글자이거나 \'~형\'', () => {
     expect(getEnemy('water-basic').name['*']).toBe('호로');
     expect(getEnemy('water-sturdy').name['*']).toBe('호로');
-    expect(getEnemy('water-swift').name['*']).toBe('날쌘형 호로');
+    expect(getEnemy('water-swift').name['*']).toBe('호로'); // C.548: 마른 몸·날쌘형 폐기
     expect(ENEMY_BODIES.names).toMatchObject({ brute: '', onearm: '괴력형', speed: '속공형', spiky: '강습형', serpent: '뱀형', beast: '짐승형', spider: '거미형', wraith: '부유형' });
     for (const n of Object.values(ENEMY_BODIES.names)) expect(n).toMatch(/^$|형$/);
-    expect(ENEMY_BODIES.provisional).toEqual(['lean']);
   });
 
   it('강적·보스·훈련 인형·테스트 적 이름은 그대로', () => {
@@ -77,7 +76,7 @@ describe('도감 표기 = <이름>(속성 속성)', () => {
       expect(d, e.id).toBe(`${expectName(e.id)}(${elementName(e.element, f.id)} 속성)`);
       expect(d).not.toMatch(PATTERN_WORDS);
     }
-    expect(enemyDexName(getEnemy('water-swift'), 'hollow')).toBe('날쌘형 호로(물 속성)');
+    expect(enemyDexName(getEnemy('water-swift'), 'hollow')).toBe('호로(물 속성)');
     expect(enemyDexName(getEnemy('kyo-basic'), 'shinigami')).toBe(`호로(${elementName('kyo', 'shinigami')} 속성)`);
   });
 
@@ -88,9 +87,9 @@ describe('도감 표기 = <이름>(속성 속성)', () => {
   it('적 고르기 목록(수련장·테스트 모드) = 도감 표기, 훈련 인형·강적은 그대로', () => {
     const f = FACTIONS[0]!;
     const dex = { 'water-basic': { seen: 1, kills: 1, absorbs: { both: 0, trait: 0, stat: 0, none: 0 }, where: null, firstAt: 1 }, 'water-swift': { seen: 1, kills: 0, absorbs: { both: 0, trait: 0, stat: 0, none: 0 }, where: null, firstAt: 1 } };
-    expect(practiceArenaSource(f, dex, 3, false).foes.map((x) => x.label)).toEqual(['훈련 인형', '호로(물 속성)', '날쌘형 호로(물 속성)']);
+    expect(practiceArenaSource(f, dex, 3, false).foes.map((x) => x.label)).toEqual(['훈련 인형', '호로(물 속성)', '호로(물 속성)']);
     const labels = testArenaSource(f, { foeId: '', star: 1, streak: 0, floor: null, hpAttacks: null, attackAttacks: null, attackSeconds: null, attacks: true, immortal: false }).foes.map((x) => x.label);
-    expect(labels).toContain('날쌘형 호로(불 속성)');
+    expect(labels).toContain('호로(불 속성)');
     expect(labels).toContain('만 명을 먹은 자');
   });
 
