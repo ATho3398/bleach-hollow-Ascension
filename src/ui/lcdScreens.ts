@@ -42,7 +42,6 @@ import { traitsTab, type TraitsTabState } from './buildPanel';
 import { abilityParagraph, evoUniqueParagraph, evolutionAbilityLines, evolutionColumns, transcendentTraitBlock, type EvoInvestNow } from './evolutionPanel';
 import { button, h, icon, notice, panel, provisionalTag, seg } from './bha/dom';
 import { FOOD_IDS, type FactionConfig } from '../engine/faction';
-import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
 import type { Device } from './bha/device';
 import { evText, showToast, statRow, statsBlock, statusBlock, tileKindOf } from './bha/nest';
@@ -390,20 +389,7 @@ function cellTip(row: HTMLElement, label: string, body: () => InfoBody): void {
 }
 
 
-/** 가방 머리 재화 칩 (GDD 241-D 6): 골드·영옥 — 상점 머리와 같은 칩 */
-export function bagWallet(save: Pick<SaveData, 'shared'>): HTMLElement {
-  const wallet = h('div', 'bha-shop__wallet bha-bagwallet');
-  const chip = (cls: string, ic: string, name: string, v: number): HTMLElement => {
-    const c = h('span', `bha-chip ${cls}`);
-    c.setAttribute('aria-label', `${name} ${v}`);
-    c.title = name;
-    c.dataset.currency = cls === 'bha-chip--gold' ? 'trade' : 'jade';
-    c.append(icon(ic), h('b', 'bha-num', String(v)));
-    return c;
-  };
-  wallet.append(chip('bha-chip--gold', 'v2-coin', TRADE_CURRENCY_NAME, save.shared.tradeCoins), chip('bha-chip--jade', 'v2-gem', JADE_NAME, save.shared.jade));
-  return wallet;
-}
+// 옛 가방 머리 재화 칩 bagWallet(GDD 241-D 6)은 화면 공용 오른쪽 위 재화 칩(bha/corner.ts, GDD 14-4 v6.242 C.561)으로 합쳤다
 
 // 상태 화면의 '가진 것' 칸(먹이·영혼 결정·골드·영옥)은 뺐다 (GDD 241-C 9, C.406) — 재화는 가방·상점 머리에서 본다
 
@@ -438,8 +424,8 @@ export function chestView(dev: Device, faction: FactionConfig, save: SaveData, t
     chestUi.tab = id as ChestTab;
     fill();
   }, `${title} 보기`));
-  // 머리 = 재화(골드·영옥 — 가방을 열면 늘 보인다, GDD 241-D 6) + 탭
-  const head = (): HTMLElement[] => [bagWallet(save), headTabs()];
+  // 머리 = 탭. 재화(골드·영옥)는 머리 줄 오른쪽 끝 공용 칩 (GDD 14-4 v6.242, C.561 — 옛 가방 전용 bagWallet, GDD 241-D 6)
+  const head = (): HTMLElement[] => [headTabs()];
   const page = lcdPage(dev.view, { cls: 'bha-chest-page', cols: '1fr 1fr' }, lcdHead({ title, aside: head() }), [], []);
   const signal = screenSignal(dev.view);
   /** 탭 그림마다 새로 받는 신호 (장비 탭 좌우 키 리스너가 다시 그릴 때마다 쌓이지 않게) */

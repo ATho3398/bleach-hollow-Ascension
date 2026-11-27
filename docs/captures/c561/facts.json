@@ -1,0 +1,161 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-hall-cards.png",
+    "02-pc-train-list.png",
+    "03-pc-room-corner.png",
+    "04-pc-market.png",
+    "05-phone-hall-locked.png"
+  ],
+  "steps": [
+    {
+      "step": "pc-hall",
+      "screen": "training-hall",
+      "corner": {
+        "kind": "tickets",
+        "float": false,
+        "inHead": true,
+        "chips": [
+          "수련권 4"
+        ]
+      },
+      "cards": [
+        {
+          "id": "train",
+          "name": "본능 수련",
+          "locked": false,
+          "lock": null,
+          "sub": "수련치 18/60"
+        },
+        {
+          "id": "ascend",
+          "name": "아란칼화",
+          "locked": false,
+          "lock": null,
+          "sub": "상대: 가면 속의 짐승"
+        },
+        {
+          "id": "practice",
+          "name": "훈련 인형",
+          "locked": false,
+          "lock": null,
+          "sub": "이번 생 0판"
+        }
+      ],
+      "games": [],
+      "stage": null,
+      "actfx": false
+    },
+    {
+      "step": "pc-train-list",
+      "screen": "training-list",
+      "corner": {
+        "kind": "tickets",
+        "float": false,
+        "inHead": true,
+        "chips": [
+          "수련권 4"
+        ]
+      },
+      "cards": [],
+      "games": [
+        {
+          "id": "duel",
+          "text": "본능 대결수련치 18/60",
+          "selected": false
+        },
+        {
+          "id": "dodge",
+          "text": "탄막 피하기수련치 18/60",
+          "selected": true
+        },
+        {
+          "id": "clash",
+          "text": "칼날 맞대기수련치 18/60",
+          "selected": false
+        },
+        {
+          "id": "chain",
+          "text": "먹이사슬수련치 18/60",
+          "selected": false
+        }
+      ],
+      "stage": "오른쪽에서 날아오는 세로를 위·아래 칸을 오가며 30초 버틴다.\n\n승리\n수련치 +3 · 공격속도 노력치 +5\n\n비용\n컨디션 −15\n· 패배해도 수련치 +1\n\n1단계\n수련치 18/60\n\n시작",
+      "actfx": false
+    },
+    {
+      "step": "pc-room",
+      "screen": null,
+      "corner": {
+        "kind": "money",
+        "float": true,
+        "inHead": false,
+        "chips": [
+          "우라하라 남은 시간 14:54",
+          "골드 1234",
+          "영옥 59"
+        ]
+      },
+      "cards": [],
+      "games": [],
+      "stage": null,
+      "actfx": false
+    },
+    {
+      "step": "pc-market",
+      "screen": null,
+      "corner": {
+        "kind": "money",
+        "float": true,
+        "inHead": false,
+        "chips": [
+          "우라하라 남은 시간 14:51",
+          "골드 1234",
+          "영옥 59"
+        ]
+      },
+      "cards": [],
+      "games": [],
+      "stage": null,
+      "actfx": false
+    },
+    {
+      "step": "phone-hall-locked",
+      "screen": "training-hall",
+      "corner": {
+        "kind": "tickets",
+        "float": false,
+        "inHead": true,
+        "chips": [
+          "수련권 4"
+        ]
+      },
+      "cards": [
+        {
+          "id": "train",
+          "name": "참백도 수련",
+          "locked": true,
+          "lock": "수석 대원이 되면 참백도 수련이 열린다.",
+          "sub": "수련치 18/60"
+        },
+        {
+          "id": "ascend",
+          "name": "참백도 구상화",
+          "locked": true,
+          "lock": "수석 대원이 되면 참백도 구상화가 열린다.",
+          "sub": "상대: 참백도의 정령"
+        },
+        {
+          "id": "practice",
+          "name": "훈련 인형",
+          "locked": false,
+          "lock": null,
+          "sub": "이번 생 0판"
+        }
+      ],
+      "games": [],
+      "stage": null,
+      "actfx": false
+    }
+  ]
+}

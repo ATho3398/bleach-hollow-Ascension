@@ -341,19 +341,9 @@ export function shopView(dev: Device, faction: FactionConfig, save: SaveData, hd
   function render(): void {
     const prev = root.querySelector<HTMLElement>('.bha-shop .bha-itemgrid');
     if (prev) lastScroll = prev.scrollTop;
-    // 머리 오른쪽 = 골드·영옥 칩 (고정 폭 숫자, PROMPT 6절 S04)
+    // 머리 오른쪽 = '임시 가격' 표시만. 골드·영옥 칩은 화면 공용 오른쪽 위 재화 칩(bha/corner.ts, GDD 14-4 v6.242 C.561 — 옛 상점 전용 coinChip, PROMPT 6절 S04)
     const wallet = h('div', 'bha-shop__wallet');
-    const coinChip = (cls: string, ic: string, name: string, v: number): HTMLElement => {
-      const c = h('span', `bha-chip ${cls}`);
-      c.setAttribute('aria-label', `${name} ${v}`);
-      c.title = name;
-      c.append(icon(ic), h('b', 'bha-num', String(v)));
-      return c;
-    };
     if (SHOP_PROVISIONAL) wallet.append(provisionalTag('임시 가격'));
-    wallet.append(coinChip('bha-chip--gold', CUR_ICON.gold, TRADE_CURRENCY_NAME, save.shared.tradeCoins), coinChip('bha-chip--jade', CUR_ICON.jade, JADE_NAME, save.shared.jade));
-    wallet.dataset.gold = String(save.shared.tradeCoins);
-    wallet.dataset.jade = String(save.shared.jade);
     const rows: (ShopRow & { grade?: string })[] = shopUi.tab === 'sell' ? [] : shopUi.tab === 'wanderer'
       ? wandererRows(save, faction)
       : shopUi.tab === 'trait'

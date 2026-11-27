@@ -121,7 +121,8 @@ describe('개수 제한 없음 (216장 2)', () => {
   it('수련 화면은 "수련권 n" (/3 없음), 없을 때 안내 = 강적·보스', () => {
     const v = read('src/ui/trainingView.ts');
     expect(v).not.toMatch(/ticketsMax|최대 3장|돌아오면 1장/);
-    expect(v).toMatch(/`수련권 \$\{t\.tickets\}`/);
+    // 옛 값(C.354): 수련 화면 왼쪽 칸 `수련권 ${t.tickets}` — C.561(GDD 14-4 v6.242): 오른쪽 위 수련권 칩(지금 트랙 장수)
+    expect(read('src/ui/bha/corner.ts')).toContain("[{ kind: 'ticket', value: save.training.tickets }]");
     expect(v).toMatch(/강적·보스를 쓰러뜨리면 가끔 얻는다/); // C.407 문구 검수 (GDD 241-C 10)
   });
 });
