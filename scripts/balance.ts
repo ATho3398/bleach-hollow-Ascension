@@ -1386,7 +1386,9 @@ if (want('laps')) {
 }
 
 // ── 사냥터 (C.53, GDD 24-2 → C.75 32-1 6번): 강도는 난이도로 일원화(모두 ×1). 새로 열린 사냥터는 먹이가 기본 사냥터보다 좋은지만 본다 ──
-// C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개): 개수는 모든 사냥터가 같은 바퀴 규칙이라 '개수 > 기본' 가드(옛 C.53)는 빼고, 사냥터 표의 강적 특식 몫 > 기본 사냥터로 본다(개수·특식 수는 참고 출력)
+// C.555 (GDD 4-5 v6.232 모험 먹이 = 확률 × foodRate, 상한 없음): 출처별 독립 굴림이 돌아와 사냥터마다 개수가 다시 다르지만 배율 0.15 로 원정당 1~2개라
+// 실측 개수 비교(옛 C.53 '개수 > 기본')는 표본 잡음이 커서, 사냥터 표의 기대 먹이(일반 적 확률·강적 1 + 추가 확률) > 기본 과 강적 특식 몫 > 기본(C.550)으로 본다(개수·특식 수는 참고 출력)
+const tableFood = (t: { normalDropChance: number; eliteExtraChance: number }): number => t.normalDropChance + (1 + t.eliteExtraChance);
 const eliteSpecialShare = (t: { normalTable: Record<string, number>; eliteTable: Record<string, number> }): number => {
   const all = Object.values(t.eliteTable).reduce((a, w) => a + w, 0);
   const sp = Object.entries(t.eliteTable).filter(([id]) => !(id in BALANCE.provisional.food.normalTable)).reduce((a, [, w]) => a + w, 0);
@@ -1428,7 +1430,8 @@ if (want('grounds')) {
       if (g.strength.hp !== 1 || g.strength.attack !== 1) failAt(tier, `사냥터 ${g.id}: 강도 ×${g.strength.hp}·×${g.strength.attack} — C.75 부터 난이도로 일원화(×1)`);
       // C.212 (GDD 134장 5): 권장 ★ 2바퀴가 고비라 기본 사냥터도 체력 ${HUMAN_CONTINUE_HP * 100}% 봇 패배가 약 60% — 절대 45% 대신 기본 사냥터 + 10%p 와 비교
       if (r.defeat > base.defeat + 0.1) failAt(tier, `사냥터 ${g.id}: ${tier + 1}단계 몸 원정 패배 ${(r.defeat * 100).toFixed(0)}% > 기본 사냥터 ${(base.defeat * 100).toFixed(0)}% + 10%p (너무 어렵다)`);
-      // 옛 C.53 가드: if (r.food <= base.food) failAt(…'먹이 n개 ≤ 기본 사냥터') — C.550 바퀴당 0~1개로 개수는 같은 규칙
+      // 옛 C.53 가드: if (r.food <= base.food) failAt(…'먹이 n개 ≤ 기본 사냥터') — C.555 배율 0.15 로 실측 개수가 작아 표 기대값으로
+      if (tableFood(g.food) <= tableFood(GROUNDS[0]!.food)) failAt(tier, `사냥터 ${g.id}: 표 기대 먹이 ${tableFood(g.food).toFixed(2)} ≤ 기본 사냥터 ${tableFood(GROUNDS[0]!.food).toFixed(2)}`);
       if (eliteSpecialShare(g.food) <= eliteSpecialShare(GROUNDS[0]!.food)) failAt(tier, `사냥터 ${g.id}: 강적 특식 몫 ${(eliteSpecialShare(g.food) * 100).toFixed(1)}% ≤ 기본 사냥터 ${(eliteSpecialShare(GROUNDS[0]!.food) * 100).toFixed(1)}%`);
     }
   }
