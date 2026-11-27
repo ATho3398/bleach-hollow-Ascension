@@ -299,8 +299,8 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
   const head = el('header', `bha-result bha-result--${won ? 'win' : 'lose'}`);
   const mark = el('span', 'bha-result__mark');
   mark.append(icon(won ? 'i-flag-win' : 'i-broken'));
-  const reason = won ? (run.total > 1 ? `${run.total}판을 모두 이겼다.` : `${run.name}을(를) 쓰러뜨렸다.`)
-    : run.practice ? '연습이 끝났다. 잃은 것은 없다.'
+  const reason = run.practice ? `연습 — 보상 없음. ${won ? '다 이겼다' : '졌다'} · 잃은 것도 없다(입장권·체력·기록 그대로).` // C.567
+    : won ? (run.total > 1 ? `${run.total}판을 모두 이겼다.` : `${run.name}을(를) 쓰러뜨렸다.`)
     : run.battles.length < run.total && last?.status === 'won' ? '도중에 나왔다. 입장권은 돌려받지 못한다.'
     : last?.lossReason === 'timeout' ? '시간 제한을 넘겼다. 입장권은 돌려받지 못한다.' : last?.lossReason === 'executed' ? '처형을 막지 못했다. 입장권은 돌려받지 못한다.' : '체력이 다했다. 입장권은 돌려받지 못한다.';
   head.append(
@@ -313,7 +313,7 @@ export function specialResultView(root: HTMLElement, faction: FactionConfig, sav
     label: run.total > 1 ? `${i + 1}판` : '전투', icon: b.status === 'won' ? 'i-check' : 'i-broken', mod: b.status === 'won' ? 'good' : undefined,
     value: `${b.status === 'won' ? '승리' : '패배'} · ${elapsedSeconds(b).toFixed(1)}초 · 시작 체력 ${Math.round(b.params.playerStartHpFraction * 100)}%`,
   }));
-  rows.push({ label: '보상', icon: 'i-rare', mod: won && !run.practice ? 'good' : undefined, value: run.practice ? '없음 (연습)' : won ? specialRewardText(res, faction) : '없음 (다 이겨야 받는다)' });
+  rows.push({ label: '보상', icon: 'i-rare', mod: won && !run.practice ? 'good' : undefined, value: run.practice ? '연습 — 보상 없음' : won ? specialRewardText(res, faction) : '없음 (다 이겨야 받는다)' });
   const tk = ticketOf(run.mode);
   rows.push({ label: '입장권', icon: 'i-timer', value: `${L.tickets[tk]} ${ticketsLeft(save.tower.tickets, tk, nowMs)}장` });
   const dock = el('div', 'bha-dock');
