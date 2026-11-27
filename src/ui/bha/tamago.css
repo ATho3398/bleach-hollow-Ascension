@@ -4,7 +4,6 @@
 /* 줌아웃하면 기기 바깥이 보인다: 기기 틀 바탕(무늬)을 페이지 쪽으로 옮긴다 */
 html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop); }
 .bha-dev.is-tama { background: transparent; }
-.bha-dev.is-tama { box-shadow: none; }
 .bha-dev.is-tama-anim { transition: transform var(--tama-dur, var(--bha-dur-4)) var(--tama-ease, var(--bha-ease-out)); }
 
 .bha-tama { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; }  /* z-index 없음: 몸체(-1)는 버튼·LCD 밑, 뒷면·키링·조작 줄은 위 */
@@ -162,8 +161,11 @@ html.bha-tama-on, html.bha-tama-on body, html.bha-tama-on .bha-dev, html.bha-tam
 .bha-dev.is-tama-flipping .bha-tama__lite:not([hidden]) { display: block; }
 .bha-dev.is-tama-flipping .bha-tama__art:has(+ .bha-tama__lite:not([hidden])) { display: none; }
 
-/* 그림 기기의 평소 화면 (GDD 31장 4): 다마고치 모드가 아니면 몸체 층에서 앞면 그림과 그림 위 버튼만 남긴다 */
-.bha-dev:not(.is-tama) .bha-tama > :not(.bha-tama__art):not(.bha-tama__hit) { display: none; }
+/* 평소 화면 (GDD 31장 4, 14-2 C.557): 다마고치 모드가 아니면 몸체 층에서 앞면 그림·그림 위 버튼·몸체만 남긴다.
+   기기 틀(844×390 × 배율) 바깥 남는 곳은 다마고치 모드와 같은 배율·자리의 몸체가 채우고, 몸체가 끝나는 바깥만 어두운 배경 (device.css).
+   기본형 몸체는 기기 틀과 이어지게 평소 몸체 색(--bha-shell-*), 누르지 않는다 */
+.bha-dev:not(.is-tama) .bha-tama > :not(.bha-tama__art):not(.bha-tama__hit):not(.bha-tama__body) { display: none; }
+.bha-dev:not(.is-tama) .bha-tama__body { pointer-events: none; background: var(--bha-shell-body); border-color: var(--bha-shell-line); }
 
 /* [디자인] 고르기 큰 창 (GDD 47장 2번): 기기 바깥, 브라우저 화면 전체 위. 창 = 화면의 약 90%, 카드마다 기기 앞면 큰 그림 */
 .bha-designs { padding: 5dvh 5vw; }

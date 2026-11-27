@@ -176,8 +176,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
 
   // ── 요소 ──
   const root = el('div', 'bha-tama');
-  root.setAttribute('aria-hidden', 'true');
-  root.hidden = true;
+  root.setAttribute('aria-hidden', 'true'); // 늘 보인다: 평소 화면에서도 남는 여백을 몸체가 채운다 (C.557, syncRoot)
   const body = el('div', 'bha-tama__body');
   const bodyArt = el('img', 'bha-tama__art') as HTMLImageElement;
   bodyArt.alt = '';
@@ -368,9 +367,10 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
     return { x, y, w: l.offsetWidth, h: l.offsetHeight };
   };
 
-  /** 몸체 층(.bha-tama): 다마고치 모드이거나 그림 기기를 입었으면 보인다 (평소 화면에서는 CSS 가 그림·버튼만 남김) */
+  /** 몸체 층(.bha-tama): 늘 보인다 — 평소 화면에서도 기기 틀 바깥 남는 곳을 몸체(그림 기기 = 앞면 그림, 기본형 = 몸체 둘레)로 채운다
+   *  (GDD 14-2 v6.233, C.557). 평소 화면에서는 CSS 가 그림·그림 위 버튼·기본형 몸체만 남긴다 */
   function syncRoot(): void {
-    root.hidden = !(on || frame.classList.contains('has-tama-art'));
+    root.hidden = false;
   }
 
   // ── 배치 ──
@@ -860,6 +860,7 @@ export function initTamago(dev: Device, hooks: TamagoHooks = {}): Tamago {
   }, { button: true, last: true });
 
   if (prefs.on) toggle(true);
+  else relayout(); // 평소 화면 몸체(남는 여백 채움, C.557)도 처음부터 놓는다 — 기본형은 디자인 바뀜(paintDevice)이 없어 맞춤 계산이 안 돌았다
 
   return {
     setContext(f, s) {

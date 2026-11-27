@@ -101,7 +101,7 @@ describe('4. 평소 화면도 입은 기기 디자인 (31장 4)', () => {
     const t = src('src/ui/bha/tamago.ts');
     expect(t).toContain('hb.hidden = !artBox || back;');
     expect(t).toContain('dev.setSkin(deviceSkin(artNat, c.device!))');
-    expect(src('src/ui/bha/tamago.css')).toContain('.bha-dev:not(.is-tama) .bha-tama > :not(.bha-tama__art):not(.bha-tama__hit) { display: none; }');
+    expect(src('src/ui/bha/tamago.css')).toContain('.bha-dev:not(.is-tama) .bha-tama > :not(.bha-tama__art):not(.bha-tama__hit):not(.bha-tama__body) { display: none; }'); // C.557: 평소 화면 몸체도 남김(여백 채움)
   });
 });
 

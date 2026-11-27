@@ -125,10 +125,10 @@ describe('4. 게임: 평소 화면 = UI 묶음이 기본 UI 와 같은 크기·�
     expect(lb.box.w * lb.zoom).toBeLessThanOrEqual(844 + 0.01);
     expect(lb.box.h * lb.zoom).toBeLessThanOrEqual(390 + 0.01);
   });
-  it('코드: v2 는 틀 상자·놓는 자리를 v2 전용 함수로, 평소 화면은 바깥을 자름, v1 은 그대로', () => {
+  it('코드: v2 는 틀 상자·놓는 자리를 v2 전용 함수로, 평소 화면도 그림이 틀 밖까지(C.557), v1 은 그대로', () => {
     const t = src('src/ui/bha/tamago.ts');
     expect(t).toContain("artSpec.frame === 'v2' && artSpec.hole ? deviceArtPlacementV2");
     expect(t).toContain("if (c.device!.frame === 'v2') dev.setSkin(deviceSkinV2())");
-    expect(src('src/ui/bha/device.css')).toContain('.bha-dev.is-frame-v2:not(.is-tama) { overflow: hidden; }');
+    expect(src('src/ui/bha/device.css')).not.toContain('.bha-dev.is-frame-v2:not(.is-tama) { overflow: hidden; }'); // C.557 (GDD 14-2 v6.233): 평소 화면도 그림이 틀 밖 여백까지 이어진다
   });
 });

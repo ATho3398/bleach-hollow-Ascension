@@ -1,0 +1,117 @@
+[
+  {
+    "name": "01-basic-tablet-1024x768.png",
+    "cls": "bha-dev",
+    "device": [
+      0,
+      147,
+      1024,
+      473
+    ],
+    "lcd": [
+      120,
+      166,
+      784,
+      437
+    ],
+    "body": [
+      -32,
+      116,
+      1087,
+      536
+    ],
+    "art": null
+  },
+  {
+    "name": "02-basic-phone-915x412.png",
+    "cls": "bha-dev",
+    "device": [
+      12,
+      0,
+      892,
+      412
+    ],
+    "lcd": [
+      116,
+      16,
+      682,
+      380
+    ],
+    "body": [
+      -16,
+      -27,
+      947,
+      467
+    ],
+    "art": null
+  },
+  {
+    "name": "03-basic-pc-1366x768.png",
+    "cls": "bha-dev is-pc",
+    "device": [
+      261,
+      189,
+      844,
+      390
+    ],
+    "lcd": [
+      360,
+      204,
+      646,
+      360
+    ],
+    "body": [
+      235,
+      163,
+      896,
+      442
+    ],
+    "art": null
+  },
+  {
+    "name": "04-badge-tablet-1024x768.png",
+    "cls": "bha-dev has-tama-art is-frame-v2 is-skin",
+    "device": [
+      0,
+      147,
+      1024,
+      473
+    ],
+    "lcd": [
+      120,
+      166,
+      784,
+      437
+    ],
+    "body": null,
+    "art": [
+      -95,
+      -87,
+      1213,
+      1014
+    ]
+  },
+  {
+    "name": "05-zaraki-tablet-1024x768.png",
+    "cls": "bha-dev has-tama-art is-frame-v2 is-skin",
+    "device": [
+      0,
+      147,
+      1024,
+      473
+    ],
+    "lcd": [
+      120,
+      166,
+      784,
+      437
+    ],
+    "body": null,
+    "art": [
+      -46,
+      -96,
+      1113,
+      869
+    ]
+  }
+]
