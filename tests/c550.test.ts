@@ -185,7 +185,7 @@ describe('C.550 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225)', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8') + readFileSync('src/engine/food.ts', 'utf8');
     expect(src).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
     const gdd = readFileSync('docs/GDD.md', 'utf8');
-    expect(gdd).toMatch(/모험 먹이 = 바퀴당 0~1개/);
-    expect(gdd).toMatch(/foodPerLap/);
+    expect(gdd).toMatch(/모험 먹이 = 바퀴당 (평균 )?0~1개/); // v6.232 정정 문구(평균·상한 아님)도 받는다 — 규칙 재작업은 별도 패치
+    expect(gdd).toMatch(/C\.550/); // v6.232 에서 foodPerLap 이름이 기획서에서 빠짐 — 구현 표시(C.550)만 확인
   });
 });
