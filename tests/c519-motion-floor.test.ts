@@ -13,7 +13,7 @@ import { ATTACK_FX } from '../src/ui/attackFxConfig';
 import { pixelPlan } from '../src/ui/pixelAttack';
 import { blockEvent, bodyRig, measureBlockMs } from './helpers/blockMotionLength';
 
-const LEN = [0.8, 1.0, 1.2];
+const LEN = [1.2, 1.2, 1.2]; // C.552 (GDD 7절 v6.226): 기본(1·2단계) = 체인 무관 1.2초 — 옛 [0.8, 1.0, 1.2]
 const ALL_LOOKS = RIG_PACKS.flatMap((p) => Object.keys(p.rig.looks));
 const FACS = ['hollow', 'shinigami'] as const;
 
@@ -140,15 +140,17 @@ describe('남는 시간 = 기본 대기(idle) 동작 (끝 자세 정지 아님)'
       expect(b.player.pose().t).toBeGreaterThan(t0); // 대기 동작 시계가 흐른다(정지 아님)
     });
   }
-  it('긴 동작(길리안 탄 1체인, 배율 1.33)은 빨라져 기준 길이 안에 끝난다', () => {
-    const g = bodyRig('gillian-base', 'hollow');
+  it('긴 동작(사신 길리안 몸 참 3체인, 배율 1.45)은 빨라져 기준 길이 안에 끝난다', () => {
+    // C.552 (GDD 7절 v6.226): 기준 1.2초(체인 무관)라 옛 예시(호로 길리안 탄 1체인, 기준 0.8초에서 배율 1.33)는 이제 1배 — 1.2초보다 긴 동작으로 바꿈
+    const g = bodyRig('gillian-base', 'shinigami');
     const rates = watchRates(g.player);
-    const r = measureBlockMs(g, 'family-c', 1, true);
-    expect(Math.min(...rates)).toBeCloseTo(r.play, 6); // 빨라진 몸 = 배율 그대로
-    const nat = blockBodyMs(attackCueOf(blockEvent('family-c', 1), 3, bodyRig('gillian-base', 'hollow').familyFx) as AttackCue, bodyRig('gillian-base', 'hollow').player, 'male')!;
+    const r = measureBlockMs(g, 'family-a', 3, true);
+    expect(r.kind).toBe('chain');
+    expect(Math.min(...rates)).toBeGreaterThanOrEqual(r.play - 1e-6); // 연결 동작 재생 빠르기 = 시전 속도 × 배율 ≥ 배율 (옛 예시는 동작 하나라 = 배율)
+    const nat = blockBodyMs(attackCueOf(blockEvent('family-a', 3), 3, bodyRig('gillian-base', 'shinigami').familyFx) as AttackCue, bodyRig('gillian-base', 'shinigami').player, 'male')!;
     expect(r.pace).toBeGreaterThan(1);
     expect(r.play).toBeCloseTo(r.pace, 9);
-    expect(nat.totalMs).toBeGreaterThan(800);
-    expect(Math.abs(r.ms - 800)).toBeLessThanOrEqual(3);
+    expect(nat.totalMs).toBeGreaterThan(1200);
+    expect(Math.abs(r.ms - 1200)).toBeLessThanOrEqual(3);
   });
 });

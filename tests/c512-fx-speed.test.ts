@@ -63,16 +63,17 @@ describe('엔진: 블록 타격 지연 = 몸 몫 ÷ max(1, 배율)만 (C.551 —
     p.hitDelay = { ...p.hitDelay, blockBy: { 'family-a:1': delay } };
     return p;
   };
-  it('느린 몸(실제 0.4초 → 기준 0.8초, 배율 0.5) = 1배 그대로 · 빠른 몸(1.6초, 배율 2) = ÷ 2', () => {
-    for (const total of [0.4, 1.6]) {
+  it('느린 몸(실제 0.4초 → 기준 1.2초, 배율 1/3) = 1배 그대로 · 빠른 몸(2.4초, 배율 2) = ÷ 2', () => {
+    // C.552 (GDD 7절 v6.226): 기본 기준 길이 1.2초(체인 무관) — 옛 0.8초 기준이라 빠른 몸 1.6초였음
+    for (const total of [0.4, 2.4]) {
       const p = params(total, 0.5);
       const m = blockMotionOf(p, 'family-a:1', 1)!;
-      expect(m.rate).toBeCloseTo(total / 0.8, 9);
+      expect(m.rate).toBeCloseTo(total / 1.2, 9);
       // 옛 C.512 기대값: 0.2 ÷ max(1, 배율) + 0.3(이펙트 몫 blockFxBy)
       expect(blockHitDelayOf(p, 'family-a:1', 1)).toBeCloseTo(0.5 / Math.max(1, m.rate), 9);
     }
     expect(blockHitDelayOf(params(0.4, 0.3), 'family-a:1', 1)).toBeCloseTo(0.3, 9); // C.519 하한 1배
-    expect(blockHitDelayOf(params(1.6, 0.3), 'family-a:1', 1)).toBeCloseTo(0.3 / 2, 9);
+    expect(blockHitDelayOf(params(2.4, 0.3), 'family-a:1', 1)).toBeCloseTo(0.3 / 2, 9);
   });
   it('엔진 타격 지연 표에 이펙트 몫 칸이 없다', () => {
     expect('blockFxBy' in defaultCombatParams().hitDelay).toBe(false);

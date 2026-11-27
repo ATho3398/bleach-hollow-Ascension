@@ -522,18 +522,21 @@ export interface MotionParams {
   basic: MotionSpec;
   block: MotionSpec;
   blockBy?: Record<string, MotionSpec>;
-  /** 블록 모션 기준 길이 (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일', C.476): default = [1체인, 2체인, 3체인] 초, byTier = 진화 단계(tierIndex) 키별로 따로 둘 때.
+  /** 블록 모션 기준 길이 (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일', C.476 → v6.226 진화 단계별, C.552): 줄 = [1체인, 2체인, 3체인] 초(값이 하나면 체인 무관).
+   *  ascended(아란칼화/참백도 구상화를 깬 몸) → byTier[진화 단계(tierIndex)] → default 순으로 고른다.
    *  있으면 블록 몸동작(위 표의 실제 동작 길이)을 이 길이로 늘이거나 줄인다 — 타격 시각은 같은 배율. 없으면 실제 동작 길이 그대로(옛 동작) */
-  blockLength?: { default: readonly number[]; byTier?: Readonly<Record<string, readonly number[]>> };
+  blockLength?: { default: readonly number[]; byTier?: Readonly<Record<string, readonly number[]>>; ascended?: readonly number[] };
   /** 이 몸의 진화 단계 (blockLength.byTier 키 — applyEvolutionToParams 가 넣는다) */
   tier?: number;
+  /** 이 몸이 아란칼화/참백도 구상화를 깼다 (blockLength.ascended — applyEvolutionToParams 가 넣는다, C.552) */
+  ascended?: boolean;
 }
 
-/** 블록 모션 기준 길이(초) (GDD 7절 v6.106, C.476): 진화 단계 키 → default, 체인 1~3(넘으면 마지막 값). 표가 없으면 null */
-export function blockMotionTarget(m: Pick<MotionParams, 'blockLength' | 'tier'> | undefined, chain: number): number | null {
+/** 블록 모션 기준 길이(초) (GDD 7절 v6.226, C.552): 아란칼화/구상화 뒤 → 진화 단계 키 → default, 체인 1~3(넘으면 마지막 값 — 값 하나면 체인 무관). 표가 없으면 null */
+export function blockMotionTarget(m: Pick<MotionParams, 'blockLength' | 'tier' | 'ascended'> | undefined, chain: number): number | null {
   const t = m?.blockLength;
   if (!t) return null;
-  const row = (m!.tier !== undefined ? t.byTier?.[String(m!.tier)] : undefined) ?? t.default;
+  const row = (m!.ascended ? t.ascended : undefined) ?? (m!.tier !== undefined ? t.byTier?.[String(m!.tier)] : undefined) ?? t.default;
   if (!row.length) return null;
   const v = row[Math.max(1, Math.min(row.length, Math.floor(chain) || 1)) - 1]!;
   return v > 0 ? v : null;

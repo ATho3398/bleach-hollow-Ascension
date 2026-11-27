@@ -6,6 +6,7 @@ import { baseTilesFor, eventTilesFor, getTile, matchesTile, MUTATIONS, SYNERGIES
 import type { CombatParams } from '../combat';
 import type { BuildState } from '../absorb';
 import type { FoodId } from '../faction';
+import { foodRate } from '../food';
 import { nextFloat, nextInt, type Rng } from '../rng';
 import type { TileEvent } from '../../data/schema';
 
@@ -179,7 +180,8 @@ export function makeEvent(rng: Rng, tileId: string, cell: number, o: { factionId
     p.offers = offers;
   } else if (event === 'treasure') {
     const [lo, hi] = E.treasure.gold;
-    p.treasure = nextFloat(rng) < E.treasure.foodChance ? { food: pickWeighted<FoodId>(rng, E.treasure.foodTable) } : { gold: lo + nextInt(rng, hi - lo + 1) };
+    p.treasure = nextFloat(rng) < E.treasure.foodChance * foodRate() ? { // 모험 먹이 배율 (GDD 4-5 v6.232, C.555): 먹이 보물 몫만 줄고 나머지는 골드 보물
+      food: pickWeighted<FoodId>(rng, E.treasure.foodTable) } : { gold: lo + nextInt(rng, hi - lo + 1) };
   } else if (event === 'altar') {
     p.traits = o.build.slots.filter((s): s is string => s !== null);
   }

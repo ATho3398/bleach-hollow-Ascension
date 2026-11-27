@@ -18,7 +18,7 @@ import { motionsOf } from '../src/ui/attackFx';
 import { bodyRig, measureBlockMs } from './helpers/blockMotionLength';
 
 const M = BALANCE.provisional.combat.motion;
-const LEN = [0.8, 1.0, 1.2];
+const LEN = [1.2, 1.2, 1.2]; // C.552 (GDD 7절 v6.226): 기본(1·2단계) = 체인 무관 1.2초 — 옛 [0.8, 1.0, 1.2](1/2/3체인)
 const normal = getEnemy('test-a');
 let uid = 7000;
 const blk = (family: string): Block => ({ uid: uid++, kind: 'skill', traitId: BASIC_SKILL_ID, family });
@@ -35,12 +35,12 @@ const quiet = (params: Partial<CombatParams> = {}): CombatState => {
 };
 
 describe('수치 (provisional)', () => {
-  it('기준 길이 = 모든 단계 [0.8, 1.0, 1.2]초 · 단계 키 구조(byTier) · 아이젠 프라고르 몫 0.6 · 반격 창 0.8초', () => {
-    expect(M.blockLength).toEqual({ default: LEN, byTier: {} });
+  it('기준 길이(C.552 진화 단계별 — 옛 모든 단계 [0.8, 1.0, 1.2]초) · 단계 키 구조(byTier) · 아이젠 프라고르 몫 0.6 · 반격 창 0.8초', () => {
+    expect(M.blockLength).toEqual({ default: [1.2], byTier: { '2': [1.0], '3': [0.9] }, ascended: [0.8] }); // 옛: { default: [0.8, 1.0, 1.2], byTier: {} }
     for (const c of [1, 2, 3]) expect(blockMotionTarget(M, c)).toBe(LEN[c - 1]);
     expect(blockMotionTarget(M, 5)).toBe(1.2); // 3체인 넘으면 마지막 값
     // 단계별로 나중에 다르게: byTier[단계] 가 있으면 그것, 없으면 default
-    const t: Pick<MotionParams, 'blockLength' | 'tier'> = { blockLength: { default: LEN, byTier: { '2': [0.6, 0.7, 0.9] } }, tier: 2 };
+    const t: Pick<MotionParams, 'blockLength' | 'tier'> = { blockLength: { default: [0.8, 1.0, 1.2], byTier: { '2': [0.6, 0.7, 0.9] } }, tier: 2 };
     expect([1, 2, 3].map((c) => blockMotionTarget(t, c))).toEqual([0.6, 0.7, 0.9]);
     expect(blockMotionTarget({ ...t, tier: 1 }, 3)).toBe(1.2);
     const K = BALANCE.provisional.transcendentKits.aizen!;
@@ -95,14 +95,14 @@ describe('엔진: 몸동작 줄·평타 멈춤·타격 틱이 기준 길이', ()
   it('블록 연속 사용 절충안은 기준 길이 위에서 그대로: 재생 중 다음 블록 → 남은 부분 1.5배속, 다음 블록은 간격에 맞춰 빨리 감기', () => {
     const s = quiet();
     s.tray = [blk('family-a'), blk('family-a'), blk('family-a'), blk('family-b')];
-    applyInput(s, { type: 'use', cell: 3 }); // family-b 1체인 (0.8초)
+    applyInput(s, { type: 'use', cell: 3 }); // family-b 1체인 (1.2초 — C.552, 옛 0.8초)
     drainCombatEvents(s);
     step(s);
     step(s);
     applyInput(s, { type: 'use', cell: 0 }); // family-a 3체인을 0.2초 뒤에
     const ev = drainCombatEvents(s);
     expect(ev.find((e) => e.kind === 'motion-hasten')).toMatchObject({ rate: M.fastMax });
-    // 앞 모션 남은 0.6초 ÷ 1.5 = 0.4초 뒤 다음 모션 시작(1배 — 뒤에 기다리는 블록 없음)
+    // 앞 모션 남은 1.0초 ÷ 1.5 = 0.67초(7틱) 뒤 다음 모션 시작(1배 — 뒤에 기다리는 블록 없음). 옛 C.476: 남은 0.6초 ÷ 1.5 = 4틱
     let n = 0;
     let started: { rate: number } | undefined;
     while (!started && n < 30) {
@@ -110,7 +110,7 @@ describe('엔진: 몸동작 줄·평타 멈춤·타격 틱이 기준 길이', ()
       n++;
       started = drainCombatEvents(s).find((e) => e.kind === 'block-motion') as { rate: number } | undefined;
     }
-    expect(n).toBe(4);
+    expect(n).toBe(7);
     expect(started!.rate).toBe(1);
   });
 });

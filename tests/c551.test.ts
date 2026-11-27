@@ -16,9 +16,9 @@ const FACS = ['hollow', 'shinigami'] as const;
 describe('C.551 블록 피해 = 몸동작 타격 순간 (GDD 7절 v6.225)', () => {
   it('엔진: 타격 지연 = 몸 몫 ÷ max(1, 배율)만, 이펙트 몫 칸(blockFxBy) 없음', () => {
     const p = defaultCombatParams();
-    p.motion = { ...p.motion!, blockBy: { 'f:1': { total: 1.6, hit: 0.6 }, 'f:2': { total: 0.4, hit: 0.2 } } };
+    p.motion = { ...p.motion!, blockBy: { 'f:1': { total: 2.4, hit: 0.6 }, 'f:2': { total: 0.4, hit: 0.2 } } }; // C.552: 기준 1.2초 → 2.4초 몸 = 배율 2
     p.hitDelay = { ...p.hitDelay, blockBy: { 'f:1': 0.6, 'f:2': 0.2 } };
-    expect(blockHitDelayOf(p, 'f:1', 1)).toBeCloseTo(0.6 / 2, 9); // 1.6초 몸 → 기준 0.8초, 배율 2
+    expect(blockHitDelayOf(p, 'f:1', 1)).toBeCloseTo(0.6 / 2, 9); // 2.4초 몸 → 기준 1.2초, 배율 2
     expect(blockHitDelayOf(p, 'f:2', 2)).toBeCloseTo(0.2, 9); // 짧은 몸 → 1배 그대로(느리게 재생 안 함)
     expect(blockHitDelayOf(p, 'f:1', 1)).toBeCloseTo(blockMotionOf(p, 'f:1', 1)!.hit, 9); // = 몸동작 표 타격(기준 길이 위)
     const src = readFileSync('src/engine/combat/combat.ts', 'utf8');
@@ -74,7 +74,7 @@ describe('C.551 블록 피해 = 몸동작 타격 순간 (GDD 7절 v6.225)', () =
     s.enemy.hp = s.enemy.maxHp = 1e12;
     s.enemy.attackTimer = s.enemy.actionTimer = s.spawnTimer = s.player.attackTimer = 1e9;
     s.params.timeLimitSeconds = 1e9;
-    s.params.motion = { ...s.params.motion!, blockBy: { 'family-a:1': { total: 1.6, hit: 0.5 } } }; // 1.6초 몸 → 기준 0.8초, 배율 2 → 타격 0.25초
+    s.params.motion = { ...s.params.motion!, blockBy: { 'family-a:1': { total: 2.4, hit: 0.5 } } }; // 2.4초 몸 → 기준 1.2초(C.552), 배율 2 → 타격 0.25초
     s.params.hitDelay = { ...s.params.hitDelay, blockBy: { 'family-a:1': 0.5 } };
     s.tray = [{ uid: 9001, kind: 'skill', traitId: BASIC_SKILL_ID, family: 'family-a' }];
     const t0 = s.tick;

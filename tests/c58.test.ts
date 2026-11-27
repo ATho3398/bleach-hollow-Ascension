@@ -281,12 +281,10 @@ describe('스토리 원정', () => {
     b.enemy.hp = 1e-9;
     for (let i = 0; i < 50 && b.status === 'playing'; i++) step(b);
     const goldBefore = e.goldLoot.reduce((a, x) => a + x.amount, 0);
-    const foodBefore = e.foodLoot.length; // C.550 (GDD 4-5 v6.225): 보스 먹이는 확정이지만 바퀴당 1개 상한 안 — 이 바퀴에 이미 먹이가 나왔으면 없다
     const rec = finishBattle(e, b);
     expect(rec.enemyClass).toBe('boss');
     expect(e.goldLoot.reduce((a, x) => a + x.amount, 0) - goldBefore).toBe(BX.reward.gold);
-    if (foodBefore === 0) expect(e.foodLoot.at(-1)!.food).toBe(BX.reward.food); // 옛: 늘 보스 먹이
-    else expect(e.foodLoot.length).toBe(foodBefore);
+    expect(e.foodLoot.at(-1)!.food).toBe(BX.reward.food);
     expect(e.phase).toBe('absorb');
     expect(e.absorbOffer!.candidates[0]).toBe('boss-sand-maw');
     expect(e.story!.bossResult).toMatchObject({ bossId: 'sand-maw', won: true });

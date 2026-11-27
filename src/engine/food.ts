@@ -3,7 +3,7 @@
 
 import { BALANCE } from '../config/balance';
 import { FOOD_IDS, type FoodId } from './faction';
-import { createRng, nextFloat, type Rng } from './rng';
+import { nextFloat, type Rng } from './rng';
 
 const FX = BALANCE.provisional.food;
 
@@ -69,41 +69,40 @@ export interface FoodDropTable {
   eliteTable: Record<string, number>;
 }
 
-/** 전투 승리 전리품 (GDD 23-1): 일반 적 50% 확률로 1개(간식·보통·든든), 강적 확정 1개 + 30% 확률로 1개 더(든든·보양식·잔치). 확률·표는 사냥터 표 */
-export function rollBattleFood(rng: Rng, elite: boolean, table: FoodDropTable = FX): FoodId[] {
+/** 모험 먹이 확률 배율 (GDD 4-5 v6.232 '바퀴당 평균 약 0.5개가 되게 확률로', C.555 — provisional expedition.foodRate): 출처별 먹이 확률 전체에 곱한다 */
+export function foodRate(): number {
+  return Math.max(0, BALANCE.provisional.expedition.foodRate);
+}
+
+/** chance 확률로 참 (1 이상이면 난수를 쓰지 않고 참 — 배율 1 의 옛 난수 흐름 그대로) */
+function rollChance(rng: Rng, chance: number): boolean {
+  return chance >= 1 || (chance > 0 && nextFloat(rng) < chance);
+}
+
+/** 개수 n(소수 = 그 확률로 하나 더)을 굴린다 */
+export function rollCount(rng: Rng, n: number): number {
+  const whole = Math.floor(Math.max(0, n));
+  return whole + (n - whole > 0 && nextFloat(rng) < n - whole ? 1 : 0);
+}
+
+/** 전투 승리 전리품 (GDD 23-1): 일반 적 50% 확률로 1개(간식·보통·든든), 강적 확정 1개 + 30% 확률로 1개 더(든든·보양식·잔치). 확률·표는 사냥터 표.
+ *  rate = 모험 먹이 배율(GDD 4-5 v6.232, C.555) — 모든 확률에 곱한다(강적 '확정'도 rate 확률로). 기본 1 = 옛 그대로 */
+export function rollBattleFood(rng: Rng, elite: boolean, table: FoodDropTable = FX, rate = 1): FoodId[] {
   if (elite) {
-    const out = [pickWeighted(rng, table.eliteTable)];
-    if (nextFloat(rng) < table.eliteExtraChance) out.push(pickWeighted(rng, table.eliteTable));
+    const out = rollChance(rng, rate) ? [pickWeighted(rng, table.eliteTable)] : [];
+    if (nextFloat(rng) < table.eliteExtraChance * rate) out.push(pickWeighted(rng, table.eliteTable));
     return out;
   }
-  return nextFloat(rng) < table.normalDropChance ? [pickWeighted(rng, table.normalTable)] : [];
-}
-
-/** 출처 표에서 먹이 하나 (GDD 4-5 v6.225 '나온다면 무엇이' 표): 일반 적 = normalTable · 강적 = eliteTable. 확률 굴림 없이 품목만 */
-export function pickBattleFood(rng: Rng, elite: boolean, table: FoodDropTable = FX): FoodId {
-  return pickWeighted(rng, elite ? table.eliteTable : table.normalTable);
-}
-
-/** 모험 먹이 바퀴 굴림 (GDD 4-5 v6.225 '모험 먹이 = 바퀴당 0~1개'): 원정 시드·바퀴 → 0~1 값 하나.
- *  그 바퀴의 모든 모험 출처(전투·보물·휴식 타일)가 같은 값을 자기 확률과 비교한다 — 원정 난수를 건드리지 않고 재현 가능 */
-export function lapFoodRoll(seed: number, lap: number): number {
-  const rng = createRng((seed ^ 0x6f0d1a55 ^ Math.imul(lap + 1, 0x9e3779b1)) >>> 0);
-  nextFloat(rng); // 첫 값은 버린다 (가까운 시드끼리 첫 값이 닮지 않게)
-  return nextFloat(rng);
-}
-
-/** 그 출처에서 바퀴 먹이가 나올 확률 (provisional expedition.foodPerLap × 배율 + 더하기, 0~1). 배율 = 난이도·이어하기·빈사·타일·출정품 — 확률에만 곱한다 */
-export function lapFoodChance(mult = 1, bonus = 0): number {
-  return Math.max(0, Math.min(1, BALANCE.provisional.expedition.foodPerLap * mult + bonus));
+  return nextFloat(rng) < table.normalDropChance * rate ? [pickWeighted(rng, table.normalTable)] : [];
 }
 
 /** 먹이 드롭 배율 (GDD 25-5 시너지·변이·상위 타일·함정): 드롭 굴림을 mult 번(소수 부분은 그 확률로 한 번 더) 하고, 일반 적 드롭 확률에 chanceBonus 를 더한다. mult 1·bonus 0 이면 rollBattleFood 와 같은 난수 사용 */
-export function rollBattleFoodMult(rng: Rng, elite: boolean, table: FoodDropTable = FX, mult = 1, chanceBonus = 0): FoodId[] {
+export function rollBattleFoodMult(rng: Rng, elite: boolean, table: FoodDropTable = FX, mult = 1, chanceBonus = 0, rate = 1): FoodId[] {
   const t: FoodDropTable = chanceBonus > 0 ? { ...table, normalDropChance: Math.min(1, table.normalDropChance + chanceBonus) } : table;
   const whole = Math.floor(mult);
   const rolls = whole + (mult - whole > 0 && nextFloat(rng) < mult - whole ? 1 : 0);
   const out: FoodId[] = [];
-  for (let i = 0; i < rolls; i++) out.push(...rollBattleFood(rng, elite, t));
+  for (let i = 0; i < rolls; i++) out.push(...rollBattleFood(rng, elite, t, rate));
   return out;
 }
 
