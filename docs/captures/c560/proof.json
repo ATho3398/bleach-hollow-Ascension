@@ -1,0 +1,25 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-hogyoku.png",
+    "02-pc-develop-dialog.png",
+    "03-pc-fusion.png",
+    "04-phone-hogyoku.png"
+  ],
+  "facts": {
+    "pc-detail": "세공 — 고순도 윤활제33 / 50강33강 · 전 능력치 +3.3%얻는 곳모험 · 우라하라 상점 · 특수던전",
+    "pc-foot": "강화하기",
+    "pc-stageChips": 0,
+    "pc-selBeforeOpen": "hogyoku-develop|강화하기",
+    "pc-dialog": "붕옥 강화세공 — 고순도 윤활제강화33강 → 34강재료 (보유 / 필요)고순도 윤활제 99438 / 34오르는 효과전 능력치 +0.1%더 있음닫기일괄 강화강화",
+    "pc-dialogSel": "develop|강화",
+    "pc-dialogAfter": "붕옥 강화세공 — 고순도 윤활제강화34강 → 35강재료 (보유 / 필요)고순도 윤활제 99404 / 35오르는 효과전 능력치 +0.1%더 있음닫기일괄 강화강화",
+    "pc-dialogSelAfter": "develop|강화",
+    "pc-levelAfter": "34",
+    "pc-fusionResult": "???",
+    "pc-fusionWhy": "붕옥 개발 100% 필요 — 지금 56% (세공 34 · 정제 30 · 주입 20강 / 각 50강).",
+    "phone-detail": "세공 — 고순도 윤활제33 / 50강33강 · 전 능력치 +3.3%얻는 곳모험 · 우라하라 상점 · 특수던전",
+    "phone-foot": "강화하기",
+    "phone-stageChips": 0
+  }
+}

@@ -399,7 +399,7 @@ describe('초월자 6종 결정 규칙', () => {
     const cat = tryGetForm(hidden5[0]!)!.label.category;
     expect(pv.def!.combo).toEqual(TRANSCENDENTS.find((t) => t.combo[0] === cat && t.combo[1] === cat)!.combo);
     expect(pv.owned).toBe(false);
-    expect(fusionFinalText(pv.def!).body).toContain(pv.def!.name);
+    expect(fusionFinalText(pv.def!).body).not.toContain(pv.def!.name); // C.560 (GDD 12-4 v6.242): 결과 이름은 연출에서 처음 드러난다
     expect(fusionLists().keeps.join(' ')).toContain('초월자 도감');
   });
 

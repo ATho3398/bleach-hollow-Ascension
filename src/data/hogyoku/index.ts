@@ -9,8 +9,10 @@ import type { HogyokuTrackId } from '../../engine/transcend';
 export const HOGYOKU_MATERIAL_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '고순도 윤활제', shard: '혼백 여과기', essence: '영압 결정' };
 /** 강화 트랙 이름 (사용자 2026-11-12): 세공 · 정제 · 주입 */
 export const HOGYOKU_TRACK_NAMES: Readonly<Record<HogyokuTrackId, string>> = { soul: '세공', shard: '정제', essence: '주입' };
-/** 얻는 곳 한 줄 (GDD 12-3 v6.015: 사냥 + 우라하라뿐) */
-export const HOGYOKU_MATERIAL_SOURCE = '사냥(모험 전투 승리 드롭 — 강적·보스는 확정) · 우라하라 · 특수던전(주간던전·보스전)';
+/** 얻는 곳 한 줄 (GDD 12-2 v6.242 붕옥 창 간소화 — 사용자 "모험, 우라하라 상점, 특수 던전 이렇게만"): 곳 이름만, 괄호 설명 없음 */
+export const HOGYOKU_MATERIAL_SOURCE = '모험 · 우라하라 상점 · 특수던전';
+/** 특정 사냥터·스테이지에서만 나오는 재료면 그 이름 (GDD 12-2 v6.242 "특정 모험 스테이지에서 뜨는거면 그 스테이지") — 지금은 세 재료 모두 어느 모험에서나 나와 비어 있다 */
+export const HOGYOKU_MATERIAL_ONLY_AT: Readonly<Partial<Record<HogyokuTrackId, string>>> = {};
 
 /** 개발 단계 이름 (i = 개발 % (i+1)×10% 구간). provisional */
 export const HOGYOKU_STEP_NAMES: readonly string[] = [

@@ -89,7 +89,7 @@ describe('C.425 붕옥 재료별 강화 트랙 (GDD v6.014 12-3·12-4)', () => {
 describe('C.425 붕옥 창 재배치', () => {
   it('지금 얻는 총 효과 = 붕옥 개발 보너스 + 초월자 보너스', () => {
     const s = newSaveData('hollow', 0);
-    expect(totalEffectText(s).main).toBe('두 캐릭터 전 능력치 +0%');
+    expect(totalEffectText(s).main).toBe('전 능력치 +0%'); // C.560: '두 캐릭터' 군말 삭제
     s.hogyoku.developed = 30;
     s.transcendentDex.push({ id: 'x', at: 0, fusionIndex: 1 });
     const t = totalEffectText(s);
@@ -110,7 +110,7 @@ describe('C.425 붕옥 창 재배치', () => {
   it('화면: 세로 목록·개발 단계 삭제, 탭 2개 = 별도 창, [강화]는 오른쪽 아래 고정', () => {
     const v = read('src/ui/hogyokuView.ts');
     for (const gone of ["'bha-hglist'", 'HOGYOKU_LIST', 'stepList', "'개발 단계'"]) expect(v).not.toContain(gone);
-    for (const k of ["dataset.sc = 'hogyoku-fusion'", "dataset.sc = 'hogyoku-dex'", "'bha-hgfoot'", "art.onclick = () => pick('orb')", "dataset.sc = 'hogyoku-develop-all'", '지금 두 캐릭터라면 → ', "'상세 보기'", 'dexGrid(', 'dexCard(']) expect(v).toContain(k);
+    for (const k of ["dataset.sc = 'hogyoku-fusion'", "dataset.sc = 'hogyoku-dex'", "'bha-hgfoot'", "art.onclick = () => pick('orb')", "key: 'develop-all'", "'상세 보기'", 'dexGrid(', 'dexCard(']) expect(v).toContain(k);
     expect(v).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
     const app = read('src/ui/app.ts');
     for (const k of ["open('hogyoku-fusion'", "open('hogyoku-dex'", "open('fusion-confirm'", "stashSlot(store, slot, 'fusion')"]) expect(app).toContain(k);

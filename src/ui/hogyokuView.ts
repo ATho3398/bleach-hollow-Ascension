@@ -4,8 +4,8 @@ import { BALANCE } from '../config/balance';
 import { FACTIONS, getFaction } from '../data/factions';
 import { formName, tryGetForm } from '../data/evolution';
 import { JADE_NAME, TRADE_CURRENCY_NAME } from '../data/economy';
-import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_MATERIAL_SOURCE, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, HOGYOKU_TRACK_NAMES, ATTACK_CATEGORY_WORDS, transcendentComboText } from '../data/hogyoku';
-import { HOGYOKU_TRACK_IDS, slotStatBonus, trackStepCost, type HogyokuCost, type HogyokuTrackId } from '../engine/transcend';
+import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_MATERIAL_ONLY_AT, HOGYOKU_MATERIAL_SOURCE, HOGYOKU_STAGE_NAMES, HOGYOKU_STEP_NAMES, HOGYOKU_TRACK_NAMES, ATTACK_CATEGORY_WORDS, transcendentComboText } from '../data/hogyoku';
+import { HOGYOKU_TRACK_IDS, type HogyokuCost, type HogyokuTrackId } from '../engine/transcend';
 import { TRANSCENDENTS, tryGetTranscendent, type TranscendentDef } from '../data/transcendents';
 import { roomOf, type FactionConfig } from '../engine/faction';
 import { currentStats, formDisplayName, refStatOf } from '../engine/evolution';
@@ -15,7 +15,7 @@ import { characterTracks, artSkinOf, artTierIndexOf, developAll, developGate, ho
 import { rankOf } from '../engine/rank';
 import { button, chip, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { dexCard, dexGrid } from './bha/dexGrid';
-import { imageArt, itemDialog } from './bha/itemUi';
+import { iconArt, imageArt, itemDialog } from './bha/itemUi';
 import { heroArtOf } from './bha/battle';
 import { bindAnim } from './bha/animPlayer';
 import { MOSAIC_LOOK_PREFIX, MOSAIC_MARK } from '../data/art/manifest';
@@ -74,7 +74,7 @@ export function developBlockText(b: DevelopBlock, track: HogyokuTrackId): string
   switch (b) {
     case 'tab': return '붕옥이 아직 나타나지 않았다.';
     case 'max': return `${m.track} ${HX.trackMax}강 — 더 올릴 강이 없다.`;
-    case 'resonance': return `반각성 한계 ${HX.trackHalf}강 — ${HX.trackHalf + 1}강부터는 공명이 필요하다(다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다).`;
+    case 'resonance': return `공명 전 ${HX.trackHalf}강 한계 — 다른 종족의 스토리도 모두 끝내면 붕옥이 공명한다.`;
     case 'short': return `${m.name}${subjectParticle(m.name)} 모자라다 — ${m.from()}에서 얻는다.`;
   }
 }
@@ -99,7 +99,7 @@ export function hogyokuStage(save: SaveData): keyof typeof HOGYOKU_STAGE_NAMES {
  *  이름은 data/hogyoku 한 곳. 재료 그림이 없어 지금 스프라이트(보석·별·영압 방울)를 새 이름에 맞춰 대신 (마스터 추천안) */
 const MAT_ICONS: Record<HogyokuTrackId, string> = { soul: 'i-rare', shard: 'i-special', essence: 'i-sp' };
 export const HOGYOKU_MATERIALS: readonly { id: HogyokuTrackId; icon: string; name: string; track: string; from: () => string }[] = HOGYOKU_TRACK_IDS.map((id) => ({
-  id, icon: MAT_ICONS[id] ?? 'i-rare', name: HOGYOKU_MATERIAL_NAMES[id], track: HOGYOKU_TRACK_NAMES[id], from: () => HOGYOKU_MATERIAL_SOURCE,
+  id, icon: MAT_ICONS[id] ?? 'i-rare', name: HOGYOKU_MATERIAL_NAMES[id], track: HOGYOKU_TRACK_NAMES[id], from: () => HOGYOKU_MATERIAL_ONLY_AT[id] ?? HOGYOKU_MATERIAL_SOURCE,
 }));
 
 type Material = (typeof HOGYOKU_MATERIALS)[number];
@@ -115,7 +115,7 @@ export function stepNameOf(percent: number): string {
 export function totalEffectText(save: Pick<SaveData, 'hogyoku' | 'transcendentDex'>): { main: string; parts: string } {
   const b = statBonusOf(save);
   const parts = [`붕옥 강화 ${save.hogyoku.developed}강 +${pct(b.liberation)}`, `초월자 ${save.transcendentDex.length}종 +${pct(b.transcendents)}`].join(' · ');
-  return { main: `두 캐릭터 전 능력치 +${pct(b.total)}`, parts };
+  return { main: `전 능력치 +${pct(b.total)}`, parts };
 }
 
 /** 붕옥 창 선택 (GDD 12-2 v6.014): 강화 트랙(재료 칸) 하나 또는 붕옥 그림(개발 % 요약). 처음 열면 첫 트랙 */
@@ -223,21 +223,6 @@ function orbBoard(save: SaveData, pick: (sel: HogyokuSel) => void): HTMLElement 
   return board;
 }
 
-/** 상태 띠: 반각성 / 공명 / 합체 가능 */
-function stageChips(stage: ReturnType<typeof hogyokuStage>): HTMLElement {
-  const stages = h('div', 'bha-hogyoku__stages');
-  stages.setAttribute('aria-label', '붕옥 상태');
-  stages.dataset.stage = stage;
-  for (const k of ['half', 'resonance', 'ready'] as const) {
-    const on = k === stage;
-    const c = chip(HOGYOKU_STAGE_NAMES[k], on ? 'rare' : undefined);
-    if (!on) c.classList.add('is-off');
-    c.dataset.stage = k;
-    stages.append(c);
-  }
-  return stages;
-}
-
 /** 상세 칸 줄 하나: 이름표(왼쪽, 줄바꿈 없음) · 값(남는 폭에서 줄바꿈) — 이름표가 폭 0 으로 눌려 한 글자씩 세로로 깨지지 않게 (C.425) */
 function hgRow(label: string, value: string | Node, mod?: 'good' | 'bad' | 'em'): HTMLElement {
   const r = h('div', `bha-hgrow${mod ? ` bha-hgrow--${mod}` : ''}`);
@@ -247,39 +232,64 @@ function hgRow(label: string, value: string | Node, mod?: 'good' | 'bad' | 'em')
   return r;
 }
 
-/** 상세: 트랙 하나 강화 — 지금 몇 강 · 다음 강 재료 수·보유 · 이 트랙으로 얻는 것(지금 누적 + 다음 1강) · 막힌 이유 · 얻는 곳 · 강당 비용 */
+/** 트랙 하나 지금 효과 한 줄: '33강 · 전 능력치 +3.3%' (GDD 12-2 v6.242) */
+export function trackNowText(lv: number): string {
+  return `${lv}강 · 전 능력치 +${pct(lv * HX.perStepBonus)}`;
+}
+
+/** 상세: 트랙 하나 (GDD 12-2 v6.242 붕옥 창 간소화 — 사용자 "현재 강화수치랑 효과만"): 지금 강(n/50)·효과 한 줄 + 얻는 곳 한 줄.
+ *  다음 강·필요 재료·강당 재료·막힌 이유는 [강화하기] 별도 창(developDialog)에서만 */
 function trackDetail(save: SaveData, m: Material): HTMLElement {
   const lv = save.hogyoku.tracks[m.id] ?? 0;
-  const g = developGate(save, m.id);
-  const p = panel({ title: `${m.track} — ${m.name}`, aside: `${lv}강 / ${HX.trackMax}` });
+  const p = panel({ title: `${m.track} — ${m.name}`, aside: `${lv} / ${HX.trackMax}강` });
   p.setAttribute('aria-label', `${m.track} 상세`);
   p.dataset.material = m.id;
   p.dataset.level = String(lv);
   const top = h('div', 'bha-hgitem');
-  top.append(icon(m.icon, 'lg'), h('b', '', `보유 ${g.have}`), stageChips(hogyokuStage(save)));
+  top.append(icon(m.icon, 'lg'), h('b', 'bha-hgitem__now', trackNowText(lv)));
   const rows = h('div', 'bha-hgrows');
-  rows.append(hgRow('지금', `${lv}강 — 전 능력치 +${pct(lv * HX.perStepBonus)} (이 트랙 몫)`));
-  if (g.cost === null) rows.append(hgRow('다음 강', `없음 — ${HX.trackMax}강 완료`, 'good'));
-  else {
-    const b = statBonusOf(save);
-    const after = slotStatBonus(save.hogyoku.developed + 1, save.transcendentDex.length);
-    rows.append(
-      hgRow('다음 강', `${g.next}강`, 'em'),
-      hgRow('필요 재료 (보유 / 필요)', `${m.name} ${g.have} / ${g.cost}`, g.have >= g.cost ? 'good' : 'bad'),
-      hgRow('다음 1강으로 얻는 것', `두 캐릭터 전 능력치 +${pct(HX.perStepBonus)} (영구)`),
-      hgRow('강화 뒤 전체', `+${pct(b.total)} → +${pct(after.total)}`, 'good'),
-    );
-  }
-  rows.append(hgRow('강당 재료', `n강 = ${m.name} ${HX.costPerLevel === 1 ? 'n' : `n×${HX.costPerLevel}`}개 (1강 ${trackStepCost(m.id, 1)}개 ~ ${HX.trackMax}강 ${trackStepCost(m.id, HX.trackMax)}개)`), hgRow('얻는 곳', m.from()));
+  rows.append(hgRow('얻는 곳', m.from()));
   p.append(top, rows);
-  const blocks = g.missing.filter((x) => x !== 'tab' && x !== 'max');
-  if (blocks.length) {
-    const why = h('div', 'bha-hgwhy');
-    why.setAttribute('aria-label', '강화가 막힌 이유');
-    for (const x of blocks) why.append(h('p', 'bha-small', `· ${developBlockText(x, m.id)}`));
-    p.append(why);
-  }
   return p;
+}
+
+/** 강화 창 내용 (GDD 12-2 v6.242): 'n강 → n+1강' · 재료(보유/필요) · 오르는 효과 + 막힌 이유 한 줄(없으면 null). 50강이면 완료 한 줄 */
+export function developDialogInfo(save: SaveData, track: HogyokuTrackId): { step: string; cost: string | null; costOk: boolean; gain: string | null; lock: string | null; ok: boolean } {
+  const m = HOGYOKU_MATERIALS.find((x) => x.id === track)!;
+  const lv = save.hogyoku.tracks[track] ?? 0;
+  const g = developGate(save, track);
+  if (g.cost === null) return { step: `${lv}강 — 완료`, cost: null, costOk: true, gain: null, lock: developBlockText('max', track), ok: false };
+  const first = g.missing[0] ?? null;
+  return {
+    step: `${lv}강 → ${g.next}강`,
+    cost: `${m.name} ${g.have} / ${g.cost}`,
+    costOk: g.have >= g.cost,
+    gain: `전 능력치 +${pct(HX.perStepBonus)}`,
+    lock: first ? developBlockText(first, track) : null,
+    ok: g.ok,
+  };
+}
+
+/** [강화하기] 별도 창 (GDD 12-2 v6.242): 공용 상세 창 틀 — 위 내용 + 아래 [강화](모자람·막힘이면 흐림 + 이유 한 줄) · [일괄 강화].
+ *  [강화]를 누르면 1강 올리고 같은 창을 새 강으로 다시 연다. 기기 ✓ 시작 자리 = [강화] */
+export function developDialog(save: SaveData, m: Material, hd: Pick<HogyokuHandlers, 'onDevelop' | 'onDevelopAll'>): () => void {
+  const info = developDialogInfo(save, m.id);
+  const rows = h('div', 'bha-hgrows');
+  rows.dataset.material = m.id;
+  rows.append(hgRow('강화', info.step, 'em'));
+  if (info.cost) rows.append(hgRow('재료 (보유 / 필요)', info.cost, info.costOk ? 'good' : 'bad'));
+  if (info.gain) rows.append(hgRow('오르는 효과', info.gain, 'good'));
+  const anyOk = HOGYOKU_TRACK_IDS.some((id) => developGate(save, id).ok);
+  let close: () => void = () => {};
+  close = itemDialog({
+    heading: '붕옥 강화', id: `hogyoku-${m.id}`, name: `${m.track} — ${m.name}`, desc: '', art: iconArt(m.icon), content: [rows], lock: info.lock, cls: 'bha-hgdevmodal',
+    actions: [
+      { label: () => '일괄 강화', variant: 'ghost', key: 'develop-all', disabled: !anyOk, note: '가진 재료로 올릴 수 있는 강화가 없다', onClick: () => { close(); hd.onDevelopAll(); } },
+      { label: () => '강화', variant: 'primary', key: 'develop', disabled: !info.ok, note: info.lock ?? undefined, onClick: () => { close(); hd.onDevelop(m.id); developDialog(save, m, hd); } },
+    ],
+  });
+  document.querySelector<HTMLElement>(`[data-item-dialog="hogyoku-${m.id}"] [data-act="develop"]`)?.setAttribute('data-dev-start', '');
+  return close;
 }
 
 /** 상세: 붕옥 그림 = 개발 % 요약 — 세 트랙 강 수 · 평균 · 단계 이름 · 반각성/공명 안내 */
@@ -296,14 +306,14 @@ function orbDetail(save: SaveData): HTMLElement {
   }
   const avg = HOGYOKU_MATERIALS.reduce((a, m) => a + (hg.tracks[m.id] ?? 0), 0) / HOGYOKU_MATERIALS.length;
   rows.append(hgRow('평균', `${Math.round(avg * 10) / 10}강 → 개발 ${per}% · ${stepNameOf(per)}`, 'em'));
-  p.append(stageChips(hogyokuStage(save)), rows, h('p', 'bha-faint', `개발 % = ${HOGYOKU_MATERIALS.map((x) => x.track).join('·')} 평균 ÷ ${HX.trackMax}. 강마다 두 캐릭터 전 능력치 +${pct(HX.perStepBonus)}(영구). 1~${HX.trackHalf}강 = ${HOGYOKU_STAGE_NAMES.half}, ${HX.trackHalf + 1}강부터 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%(세 강화 모두 ${HX.trackMax}강)면 합체할 수 있다. 합체하면 세 강화가 ${HX.afterFusionLevel}강(개발 ${Math.round((HX.afterFusionLevel / HX.trackMax) * 100)}%)으로 돌아가지만 오른 능력치는 남는다.`));
+  p.append(rows, h('p', 'bha-faint', `개발 % = ${HOGYOKU_MATERIALS.map((x) => x.track).join('·')} 평균 ÷ ${HX.trackMax}. 강마다 전 능력치 +${pct(HX.perStepBonus)}(영구). 1~${HX.trackHalf}강 = ${HOGYOKU_STAGE_NAMES.half}, ${HX.trackHalf + 1}강부터 = ${HOGYOKU_STAGE_NAMES.resonance} 필요. 100%(세 강화 모두 ${HX.trackMax}강)면 합체할 수 있다. 합체하면 세 강화가 ${HX.afterFusionLevel}강(개발 ${Math.round((HX.afterFusionLevel / HX.trackMax) * 100)}%)으로 돌아가지만 오른 능력치는 남는다.`));
   return p;
 }
 
 export interface HogyokuHandlers {
-  /** [강화] = 고른 트랙 1강 */
+  /** 강화 창 [강화] = 그 트랙 1강 */
   onDevelop: (track: HogyokuTrackId) => void;
-  /** [일괄 강화] = 가진 재료로 세 트랙 모두 갈 수 있는 데까지 (확인 1번) */
+  /** 강화 창 [일괄 강화] = 가진 재료로 세 트랙 모두 갈 수 있는 데까지 (확인 1번) */
   onDevelopAll: () => void;
   /** 오른쪽 위 탭 [합체] — 붕옥이 안 보이는 별도 창 */
   onFusion: () => void;
@@ -325,13 +335,14 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
 
   const detail = h('div', 'bha-hgdetail');
   detail.setAttribute('aria-live', 'polite');
-  const one = button({ label: '강화', icon: 'i-plus', variant: 'primary', block: true, onClick: () => { if (hogyokuSel !== 'orb') hd.onDevelop(hogyokuSel); } });
+  // 오른쪽 아래 = [강화하기] 하나 (GDD 12-2 v6.242): 누르면 별도 강화 창. [일괄 강화]는 그 창 안으로
+  const one = button({ label: '강화하기', icon: 'i-plus', variant: 'primary', block: true, onClick: () => {
+    const m = HOGYOKU_MATERIALS.find((x) => x.id === hogyokuSel);
+    if (m) developDialog(save, m, hd);
+  } });
   one.dataset.sc = 'hogyoku-develop';
-  const anyOk = HOGYOKU_TRACK_IDS.some((id) => developGate(save, id).ok);
-  const all = button({ label: '일괄 강화', icon: 'i-chain-3', block: true, disabled: !anyOk, onClick: hd.onDevelopAll });
-  all.dataset.sc = 'hogyoku-develop-all';
   const foot = h('div', 'bha-hgfoot');
-  foot.append(one, all);
+  foot.append(one);
   let board: HTMLElement;
   const pick = (sel: HogyokuSel) => {
     hogyokuSel = sel;
@@ -343,11 +354,10 @@ export function hogyokuView(dev: Device, save: SaveData, hd: HogyokuHandlers): v
     detail.replaceChildren(m ? trackDetail(save, m) : orbDetail(save));
     detail.dataset.sel = sel;
     detail.scrollTop = 0;
-    // [강화] = 고른 트랙 1강. 붕옥 요약을 보는 중이면 흐림 (재료 칸을 골라야 강화)
-    const g = m ? developGate(save, m.id) : null;
-    one.disabled = !g?.ok;
-    one.setAttribute('aria-label', m ? `${m.track} 강화` : '강화');
-    one.replaceChildren(icon('i-plus'), m ? (g!.cost === null ? `${HX.trackMax}강 완료` : `강화 → ${g!.next}강`) : '재료 칸을 골라 강화');
+    // 붕옥 요약을 보는 중이면 흐림 (재료 칸을 골라야 강화)
+    one.disabled = !m;
+    one.setAttribute('aria-label', m ? `${m.track} 강화하기` : '강화하기');
+    one.replaceChildren(icon('i-plus'), m ? '강화하기' : '재료 칸을 골라 강화');
   };
   board = orbBoard(save, pick);
   pick(hogyokuSel);
@@ -414,7 +424,6 @@ export interface FusionCond { key: FusionBlock; short: string; ok: boolean; deta
 /** 합체 조건 칩 5개 (순서 = 붕옥 100% · 공명 · 둘 다 1위 · 모험 없음 · 조합 미보유 — 화면 문구는 '원정' 대신 '모험', 159장) + 두 캐릭터가 없으면 맨 앞에 '두 캐릭터'. 막힌 이유 첫 번째 = 이 순서의 첫 ✗ */
 export function fusionConds(save: SaveData): FusionCond[] {
   const missing = new Set(fusionGate(save).missing);
-  const pv = fusionPreview(save);
   const out: FusionCond[] = [];
   const add = (key: FusionBlock, short: string, ok: string, ng: string) => out.push({ key, short, ok: !missing.has(key), detail: missing.has(key) ? ng : ok });
   if (missing.has('tab')) add('tab', '붕옥', '', fusionBlockText('tab'));
@@ -425,8 +434,8 @@ export function fusionConds(save: SaveData): FusionCond[] {
   const notTop = tracksInFactionOrder(save).filter((t) => !trackIsTopRank(t)).map((t) => `${getFaction(t.factionId).name} ${rankLabel(getFaction(t.factionId), rankOf(t.rank))}`);
   add('rank', '둘 다 1위', '두 캐릭터 모두 등급 1위 — 완료.', `두 캐릭터 모두 등급 1위여야 한다 — 지금 ${notTop.join(' · ')}.`);
   add('expedition', '모험 없음', '진행 중인 모험 없음 — 완료.', fusionBlockText('expedition'));
-  const combo = pv.def ? `${pv.inputs.map((x) => ATTACK_CATEGORY_WORDS[x.category]).join(' + ')} → ${pv.def.name}` : '';
-  add('owned', '조합 미보유', `${combo} — 아직 없는 초월자.`, `${combo} — ${fusionBlockText('owned')}`);
+  // 결과 초월자는 숨긴다 (GDD 12-4 v6.242 "합체 결과는 숨긴다") — 조합·이름 없이 가졌는지만
+  add('owned', '조합 미보유', '아직 없는 조합 — 완료.', fusionBlockText('owned'));
   return out;
 }
 
@@ -463,28 +472,23 @@ function fusionLink(side: 'left' | 'right'): HTMLElement {
   return link;
 }
 
-/** 가운데 결과 카드: 나올 초월자 그림(그림·조각 모델 있으면 그것, 없으면 실루엣) · 이름(글리치 유지) · 조합 칩 · 이미 있음 도장 · 얻는 것 요약 */
-function fusionResultCard(save: SaveData, cats: readonly AttackCategory[]): HTMLElement {
-  const pv = fusionPreview(save);
-  const def = pv.def;
+/** 가운데 결과 카드 (GDD 12-4 v6.242 "합체 결과는 숨긴다" — 사용자 "조건 다 채워도 그냥 검정 실루엣에 이름 ???로만"):
+ *  조건과 상관없이 늘 검은 실루엣 + 이름 '???'. 실루엣 = 두 부모 그림을 겹쳐 검게(결과 초월자 그림은 쓰지 않는다 — 모양으로도 드러나지 않게).
+ *  이미 가진 조합이면 막힘 이유 한 줄만 (조합 칩·얻는 것·머리 글 없음) */
+function fusionResultCard(save: SaveData, tracks: readonly Pick<SaveData, TrackKey>[]): HTMLElement {
+  const owned = fusionPreview(save).owned;
   const card = h('section', 'bha-fuse__result');
   card.setAttribute('aria-label', '합체 결과');
-  card.dataset.preview = def?.id ?? '';
-  card.dataset.owned = String(pv.owned);
+  card.dataset.owned = String(owned);
   const artBox = h('div', 'bha-fuse__resart');
-  artBox.append(def && (def.art || def.model) ? transcendentArt(true, def) : transcendentArt(false));
-  if (pv.owned) artBox.append(h('span', 'bha-fuse__stamp', '이미 있음'));
-  const name = def ? hx('b', 'bha-fuse__resname', '「', transcendentNameNode(def), '」') : h('b', 'bha-fuse__resname', '???');
-  const combo = h('div', 'bha-fuse__chips');
-  if (cats.length) combo.append(chip(cats.map((c) => ATTACK_CATEGORY_WORDS[c]).join(' + '), 'rare'));
-  const gains = h('ul', 'bha-fuse__gains');
-  gains.setAttribute('aria-label', '얻는 것');
-  const trait = def?.trait?.name;
-  gains.append(
-    h('li', '', `초월자 보너스 전 능력치 +${pct(HX.perTranscendentBonus)}`),
-    h('li', '', trait ? (trait.startsWith('초월 특성') ? trait : `초월 특성 ${trait}`) : '초월 특성 (자리)'),
-  );
-  card.append(h('span', 'bha-fuse__cap', '지금 두 캐릭터라면 → '), artBox, name, combo, gains);
+  if (tracks.length) {
+    const ghost = h('div', 'bha-fuse__ghost');
+    ghost.setAttribute('aria-hidden', 'true');
+    for (const t of tracks) ghost.append(trackArt(t));
+    artBox.append(ghost);
+  } else artBox.append(transcendentArt(false));
+  card.append(artBox, h('b', 'bha-fuse__resname', '???'));
+  if (owned) card.append(h('p', 'bha-fuse__resnote', fusionBlockText('owned')));
   return card;
 }
 
@@ -500,7 +504,7 @@ export function fusionPickView(dev: Device, save: SaveData, hd: { onPreview: () 
   const stage = h('div', `bha-fuse${fg.ok ? ' is-ready' : ''}`);
   stage.setAttribute('aria-label', '합체할 두 캐릭터와 결과');
   const parents = tracks.map((t, i) => fusionParentCard(save, t, i));
-  const result = fusionResultCard(save, tracks.map((t) => fusionInputOf(t).category));
+  const result = fusionResultCard(save, tracks);
   stage.append(parents[0] ?? h('section', 'bha-fuse__parent is-empty'), fusionLink('left'), result, fusionLink('right'), parents[1] ?? h('section', 'bha-fuse__parent is-empty'));
   // 아래 띠: 조건 칩 한 줄 + 이유 한 줄(기본 = 첫 번째 막힌 이유, 칩을 누르면 그 조건의 자세한 이유) + 오른쪽 [합체]
   const conds = fusionConds(save);
@@ -561,7 +565,7 @@ export function transcendentArt(known: boolean, def?: Pick<TranscendentDef, 'id'
 }
 
 /** 초월자 도감 창 (C.425, GDD 12-2 "기존 도감 화면 형식"): 진화체 도감과 같은 바둑판 카드(dexGrid·dexCard) — 누르면 공용 상세 창.
- *  모은 것 = 이름·컨셉·몇 번째 합체, 못 모은 것 = ??? + 조건 공개. 붕옥은 안 보인다 */
+ *  모은 것 = 이름·컨셉·몇 번째 합체, 못 모은 것 = ??? (조합도 숨김 — GDD 12-4 v6.242 합체 결과는 숨긴다). 붕옥은 안 보인다 */
 export function transcendentDexView(dev: Device, save: SaveData): void {
   const owned = new Map(save.transcendentDex.map((e) => [e.id, e]));
   const grid = dexGrid('초월자');
@@ -576,7 +580,7 @@ export function transcendentDexView(dev: Device, save: SaveData): void {
       })
       : dexCard({
         name: '???', unknown: true, art: transcendentArt(false), marks: null,
-        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: '미발견', desc: `얻는 조합: ${transcendentComboText(d.combo)}`, art: transcendentArt(false), hero: true, cls: 'bha-dexmodal', actions: [] }),
+        onOpen: () => itemDialog({ heading: `초월자 ${d.order}`, name: '미발견', desc: '아직 만나지 못한 초월자. 합체해야 정체를 알 수 있다.', art: transcendentArt(false), hero: true, cls: 'bha-dexmodal', actions: [] }),
       });
     card.dataset.transcendent = d.id;
     card.dataset.owned = String(!!got);
@@ -629,11 +633,10 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
   const left: HTMLElement[] = characterTracks(save).map(charCard);
   const right: HTMLElement[] = [];
   if (pv.def) {
-    const p = panel({ title: '이 조합이면', mod: 'accent', aside: provisionalTag('임시 조건') });
+    // 결과는 합체 연출에서 처음 드러난다 (GDD 12-4 v6.242 합체 결과는 숨긴다): 실루엣 + '???'
+    const p = panel({ title: '합체 결과', mod: 'accent', aside: provisionalTag('임시 조건') });
     p.setAttribute('aria-label', '합체 미리보기');
-    p.dataset.preview = pv.def.id;
-    p.append(hx('p', 'bha-lcdpage__title', '「', transcendentNameNode(pv.def), `」${subjectParticle(pv.def.name)} 된다`), h('p', 'bha-small', pv.def.concept));
-    p.append(h('p', 'bha-faint', `${transcendentComboText(pv.def.combo)} — 조합 하나에 초월자 하나.`));
+    p.append(transcendentArt(false), h('p', 'bha-lcdpage__title', '「???」'), h('p', 'bha-faint', '조합 하나에 초월자 하나 — 합체하면 정체가 드러난다.'));
     if (save.transcendentDex.length === 0) p.append(h('p', 'bha-small', `첫 초월자 보상: ${JADE_NAME} +${HX.firstTranscendentJade}`));
     right.push(p);
   }
@@ -652,7 +655,8 @@ export function fusionConfirmView(dev: Device, save: SaveData, hd: { onNext: (de
 
 /** 최종 확인(확인 2) 문구 */
 export function fusionFinalText(def: TranscendentDef): { title: string; body: string } {
-  return { title: '합체 최종 확인', body: `되돌릴 수 없다. 두 캐릭터는 「${def.name}」${subjectParticle(def.name)} 되어 이어서 키우고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)` };
+  void def; // 이름은 연출에서 처음 드러난다 (GDD 12-4 v6.242)
+  return { title: '합체 최종 확인', body: '되돌릴 수 없다. 두 캐릭터는 초월자 하나가 되어 이어서 키우고, 새 두 캐릭터가 1단계부터 시작한다. (직전 상태는 자동 백업된다)' };
 }
 
 /**
