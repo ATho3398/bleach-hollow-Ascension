@@ -67,7 +67,9 @@ describe('193장 12·19 타일 배치 탭', () => {
   it('프리셋 판은 [타일 배치] 탭에서만 보이고, 준비 탭 줄은 전체 폭', () => {
     expect(src('src/ui/planView.ts')).toContain("presetEl.hidden = k !== 'place'");
     const css = src('src/ui/bha/expedition.css');
-    expect(css).toMatch(/\.bha-plan > \.bha-plan__desc \{ position: absolute; left: 10px; right: 10px;/);
+    // C.547 (GDD 6-2 v6.216): 준비 탭 = 특수던전식 틀 — 설명 칸은 오른쪽 그림 칸 안(고정 높이). 옛 값: '.bha-plan > .bha-plan__desc { position: absolute; left: 10px; right: 10px;'
+    expect(css).toMatch(/\.bha-lcd \.bha-plan > \.bha-plan__prep \{ position: absolute; left: var\(--bha-gutter\); right: var\(--bha-gutter\);/);
+    expect(css).toMatch(/\.bha-plan__info > \.bha-plan__desc \{ position: relative; flex: none; height: 64px;/);
     expect(css).toMatch(/\.bha-plan__side \{ position: absolute; right: 10px; width: 200px; top: 128px;/);
   });
   it('놓을 수 있는 수를 다 놓으면 남은 빈 칸 is-full(흐리게), 두 탭 같은 말 "놓은 타일"', () => {

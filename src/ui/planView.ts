@@ -2,13 +2,15 @@
 // 엔진 상태는 이 화면이 닫힐 때까지 저장하지 않는다 — 취소하면 이어하던 원정은 그대로 남는다.
 import { beginPlanning, chooseDifficulty, chooseGround, finishPlanning, type ExpeditionState } from '../engine/expedition';
 import { unlockHintText } from '../engine/unlocks';
-import { difficultyLabels, difficultyText, groundName, type FactionConfig } from '../engine/faction';
+import { difficultyLabels, difficultyText, groundBgId, groundName, type FactionConfig } from '../engine/faction';
 import { clampStreak, difficultyGoldMultiplier, difficultyRewardMultiplier, MAX_DIFFICULTY, recommendedDifficulty, streakEnemyFactor } from '../engine/difficulty';
 import { GROUNDS, type GroundDef } from '../data/grounds';
 import { elementName } from '../data/elements';
 import { getTile, synergyName, tileName } from '../data/tiles';
 import { tileCss } from './bha/expedition';
 import { button, el, icon, mountApp } from './bha/dom';
+import { enableDragScrollY } from './bha/dragScroll';
+import { groundSceneBg, sceneBgEl } from './bha/sceneBg';
 import { applyTilePreset, cellsOfPlan, type PresetResult, type TilePreset } from '../tilePresets';
 import { roadPlanner } from './bha/road';
 import { presetPanel } from './bha/tilePresets';
@@ -88,10 +90,14 @@ function groundStrengthWords(g: GroundDef): string {
 
 /** 사냥터 한 줄 설명: 종족 설정 설명 + 자주 나오는 속성 + 적 강도(말로, 숫자는 ⓘ) (데이터에서 조합, GDD 24-2 · 193장 11) */
 export function groundInfo(faction: FactionConfig, g: GroundDef): string {
-  const els = g.elements.map((id) => elementName(id, faction.id)).join('·');
   const desc = faction.huntingGrounds?.[g.id]?.desc;
   const st = groundStrengthWords(g);
-  return `${desc ? `${desc} ` : ''}자주 나오는 속성 ${els}${st ? ` · ${st}` : ''}`;
+  return `${desc ? `${desc} ` : ''}${groundElementsText(faction, g)}${st ? ` · ${st}` : ''}`;
+}
+
+/** 사냥터 목록 작은 글자 (GDD 6-2 v6.216): "자주 나오는 속성 물·불" — 속성 이름은 종족 표시 이름 */
+export function groundElementsText(faction: Pick<FactionConfig, 'id'>, g: GroundDef): string {
+  return `자주 나오는 속성 ${g.elements.map((id) => elementName(id, faction.id)).join('·')}`;
 }
 
 /** 사냥터 ⓘ (GDD 193장 11): 적 체력·공격 % */
@@ -116,38 +122,69 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
 
   // 리디자인 v2 (GDD 183장, S06·S07): 머리 44 = [자유 모험|스토리] · 빈 칸 · [준비|타일 배치] · 도움말 / 왼쪽 = 사냥터 줄 · 난이도 줄 · 설명(고정 높이, 안에서 스크롤 + '▼ 더 있음') · 길 미리보기 /
   // 오른쪽 = 배치 프리셋 판 / 아래 = [출발] 띠(.bha-dock). 타일 배치 탭 = 길(전체 폭 한 줄) + 가진 타일(4열, [출발] 위만 스크롤 + 더 있음)
-  // 사냥터 고르기 (GDD 24-2): 열린 곳만 고를 수 있고, 잠긴 곳은 열리는 단계를 보인다
-  const grounds = el('div', 'bha-plan__grounds bha-plan__row');
-  grounds.setAttribute('role', 'group');
+  // 모험 준비 [준비] 탭 = 특수던전식 목록 (GDD 6-2 v6.216, C.547 — 사용자 2026-11-27 "모험도 그 특수던전처럼 ui바꿔야된다니까"):
+  // 틀·CSS 는 주간던전·보스전·수련장 화면(bha-sdg)을 그대로 쓴다. 왼쪽 = 사냥터 3곳 목록(이름 + 작은 글자 자주 나오는 속성, 잠긴 곳 자물쇠·흐림),
+  // 오른쪽 = 사냥터 무대 배경 그림 + 이름 + 설명 + 난이도 ★ + 길 미리보기 + [출발] 줄. 잠긴 곳을 고르면 그림 위 'n단계에 열린다' + [출발] 흐림 (GDD 24-2).
+  // 고른 행을 한 번 더 누르면(기기 ✓) 하이라이트가 [출발]로 — 수련장(trainingHallView)과 같은 규칙. 이름·설명은 종족 설정 huntingGrounds
+  const groundOpen = (g: GroundDef): boolean => tierIndex >= g.unlockTierIndex;
+  const groundLockText = (g: GroundDef): string => `${g.unlockTierIndex + 1}단계(${faction.tierNames[g.unlockTierIndex] ?? ''})에 열린다`;
+  const grounds = el('div', 'bha-sdg__list bha-plan__grounds');
+  grounds.setAttribute('role', 'listbox');
   grounds.setAttribute('aria-label', '사냥터');
+  enableDragScrollY(grounds);
+  const gArt = el('div', 'bha-sdg__art bha-plan__art');
   const gInfo = el('p', 'bha-plan__sub');
+  let goBtn: HTMLButtonElement | null = null; // [출발] (아래에서 만든다)
   const gBtns = GROUNDS.map((g, i) => {
-    const open = tierIndex >= g.unlockTierIndex;
-    const b = button({ label: groundName(faction, g.id, i), icon: open ? undefined : 'i-lock', size: 'small', disabled: !open, onClick: () => pick(g) });
-    if (!open) b.title = `${g.unlockTierIndex + 1}단계(${faction.tierNames[g.unlockTierIndex] ?? ''})에 열린다`;
+    const open = groundOpen(g);
+    const b = el('button', `bha-sdg__item${open ? '' : ' is-locked'}`);
+    b.type = 'button';
+    b.setAttribute('role', 'option');
     b.dataset.ground = g.id;
+    const name = el('span', 'bha-sdg__itemname');
+    name.append(el('b', '', groundName(faction, g.id, i)), el('small', 'bha-faint', groundElementsText(faction, g)));
+    b.append(icon(open ? 'i-loop' : 'i-lock'), name);
+    if (!open) b.title = groundLockText(g);
+    b.onclick = () => {
+      if (g !== curGround) return pick(g);
+      if (goBtn && !goBtn.disabled) goBtn.dispatchEvent(new CustomEvent('bha-goto', { bubbles: true }));
+    };
+    grounds.append(b);
     return b;
   });
   let curGround: GroundDef = GROUNDS[0]!;
   let curStar = 1;
   const pick = (g: GroundDef) => {
     curGround = g;
-    chooseGround(exp, g.id);
+    const open = groundOpen(g);
+    if (open) chooseGround(exp, g.id); // 잠긴 곳은 보기만 — 원정 사냥터는 마지막에 고른 열린 곳 그대로
     gBtns.forEach((b, i) => {
       const on = GROUNDS[i]!.id === g.id;
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', String(on));
+      b.classList.toggle('is-selected', on);
+      b.setAttribute('aria-selected', String(on));
     });
-    gInfo.textContent = `${groundName(faction, g.id, GROUNDS.indexOf(g))}: ${groundInfo(faction, g)}`;
+    // 그림 칸: 그 사냥터 무대 배경(걷기·전투와 같은 그림) + 이름. 잠기면 자물쇠 + 'n단계에 열린다'
+    gArt.dataset.art = groundBgId(faction, g.id) ?? '';
+    const bg = groundSceneBg(faction, g.id);
+    const cap = el('div', 'bha-sdg__cap');
+    cap.append(el('span', 'bha-label', '사냥터'), el('b', 'bha-sdg__title', groundName(faction, g.id, GROUNDS.indexOf(g))));
+    gArt.replaceChildren(...(bg ? [sceneBgEl(bg, false)] : []), cap);
+    if (!open) {
+      const lock = el('div', 'bha-sdg__lock');
+      lock.dataset.groundLock = '';
+      lock.append(icon('i-lock'), el('span', '', groundLockText(g)));
+      gArt.append(lock);
+    }
+    if (goBtn) goBtn.disabled = !open;
+    gInfo.textContent = groundInfo(faction, g);
     syncDescMore();
   };
-  grounds.append(el('span', 'bha-plan__label', '사냥터'), ...gBtns);
 
   // 난이도 ★ 고르기 (GDD 32-1 4번): 열린 ★ 만 고를 수 있고(n단계에 처음 닿으면 ★n), 기본 = 내 단계(권장 표시), 잠긴 ★ 는 열리는 단계를 보인다
   const L = difficultyLabels(faction);
   const unlocked = Math.max(1, Math.min(MAX_DIFFICULTY, h.unlockedDifficulty ?? 1));
   const rec = recommendedDifficulty(tierIndex);
-  const diff = el('div', 'bha-plan__grounds bha-plan__difficulty bha-plan__row');
+  const diff = el('div', 'bha-plan__difficulty bha-plan__row');
   diff.setAttribute('role', 'group');
   diff.setAttribute('aria-label', L.name);
   const dInfo = el('p', 'bha-plan__sub');
@@ -195,8 +232,6 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
   descInfo.classList.add('bha-plan__descinfo');
   desc.append(descScroll, descMore, descInfo);
 
-  pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!);
-  pickStar(Math.min(unlocked, exp.difficulty));
   const help = button({ label: '도움말', icon: 'i-help', iconOnly: true, variant: 'ghost', size: 'small', onClick: h.onHelp });
   const head = el('div', `bha-head bha-exp__head${h.onTab ? ' bha-depart-head' : ''}`);
   // [자유 원정]/[스토리] 탭이 있으면 제목 자리를 대신한다 (머리 한 줄 높이를 지킨다)
@@ -218,6 +253,7 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     },
   });
   start.dataset.sc = 'go';
+  goBtn = start;
   // [출발] = 화면 아래 고정 띠 (GDD 100장 #3·#22, v2 .bha-dock 56): 스크롤하지 않아도 늘 보인다. 왼쪽 = 출발 체력 n% (GDD 193장 2)
   const go = el('div', 'bha-dock bha-plan__go');
   if (h.hpFraction !== undefined) {
@@ -233,6 +269,9 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     close.dataset.sc = 'go';
     go.replaceChildren(el('span', 'bha-plan__sub', '프리셋으로 저장해 두면 모험 출발 때 불러온다'), close);
   } else go.append(start);
+  // 처음 고른 곳 = 마지막에 간 사냥터(열린 곳만, GDD 6-2) · 내 단계 ★
+  pick(GROUNDS.find((g) => g.id === exp.groundId && groundOpen(g)) ?? GROUNDS.find(groundOpen) ?? GROUNDS[0]!);
+  pickStar(Math.min(unlocked, exp.difficulty));
   // 한 줄 안내 (GDD 100장 #25): 배치 요령 긴 문단은 ? 도움말(툴팁)로, 화면엔 "타일 고르기 → 빈 칸 누르기 · 놓은 타일 n/최대"
   // 준비 탭은 길 미리보기 오른쪽에 'n/최대' 만, 타일 배치 탭은 한 줄 전부
   const sub = el('p', 'bha-plan__sub bha-plan__line');
@@ -302,6 +341,8 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     });
     setMode = (k) => {
       paintCount();
+      placeGo(k);
+      if (k === 'place' && !groundOpen(curGround)) pick(GROUNDS.find((g) => g.id === exp.groundId) ?? GROUNDS[0]!); // 잠긴 곳을 보던 중이면 원정 사냥터로 — 아래 띠 [출발]이 흐린 채 남지 않게
       hand.hidden = k !== 'place';
       presetEl.hidden = k !== 'place';
       toggle.closest('.bha-app')?.classList.toggle('is-place', k === 'place');
@@ -316,7 +357,23 @@ export function planView(root: HTMLElement, faction: FactionConfig, exp: Expedit
     // 프리셋 칸은 배치판(planner.el) 안에 둔다: 끌어 놓기·선택 풀기가 배치판 범위를 본다
     planner.el.append(presetEl);
   }
-  const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, grounds, diff, desc, ...(planner ? [miniRow] : []), sub, ...(planner ? [planner.el] : []), ...(presetEl && !planner ? [presetEl] : []), go);
+  // [준비] 탭 = 왼쪽 사냥터 목록 · 오른쪽 그림 칸(bha-sdg__stage: 그림 · 설명 · ★ · 길 미리보기 · [출발] 줄) (GDD 6-2 v6.216).
+  // 첫 진화 전(타일 잠김)은 길 미리보기 자리에 잠김 안내 한 줄 (GDD 6-2 · 64장 1번)
+  const info = el('div', 'bha-sdg__info bha-plan__info');
+  info.append(desc, diff, planner ? miniRow : sub);
+  const stage = el('div', 'bha-sdg__stage bha-plan__stage');
+  stage.append(gArt, info);
+  const prep = el('div', 'bha-plan__prep');
+  prep.dataset.planPrep = '';
+  prep.append(grounds, stage);
+  // [출발] 띠: [준비] 탭에서는 오른쪽 그림 칸 맨 아래 줄(특수던전 [입장]·수련장 [시작] 자리), [타일 배치] 탭에서는 화면 아래 고정 띠 그대로
+  const placeGo = (k: 'prep' | 'place'): void => {
+    go.classList.toggle('bha-sdg__go', k === 'prep');
+    if (k === 'prep') info.append(go);
+    else main.append(go);
+  };
+  const main = mountApp(root, { fixed: true, cls: `bha-plan bha-v2${h.tilesLocked ? ' is-locked' : ''}` }, head, prep, ...(planner ? [sub, planner.el] : []), ...(presetEl && !planner ? [presetEl] : []));
+  if (!setMode) placeGo(h.placeOnly ? 'place' : 'prep');
   main.dataset.screen = 'expedition-plan';
   setMode?.(h.placeOnly ? 'place' : h.startMode ?? 'prep');
   if (h.placeOnly) {

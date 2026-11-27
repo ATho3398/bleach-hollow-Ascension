@@ -1,0 +1,193 @@
+{
+  "errors": [],
+  "shots": [
+    "01-pc-hollow-prep.png",
+    "02-pc-locked-ground.png",
+    "05-pc-place-tab.png",
+    "04-pc-story.png",
+    "03-phone-shinigami-prep.png"
+  ],
+  "steps": {
+    "pc": [
+      {
+        "step": "enter",
+        "screen": "expedition-plan",
+        "items": [
+          {
+            "id": "outskirts",
+            "text": "웨코문도 외곽자주 나오는 속성 노멀·흙·물",
+            "selected": true,
+            "locked": false
+          },
+          {
+            "id": "canyon",
+            "text": "모래 협곡자주 나오는 속성 불·뇌·독",
+            "selected": false,
+            "locked": true
+          },
+          {
+            "id": "forest",
+            "text": "허무의 숲자주 나오는 속성 혈·허무",
+            "selected": false,
+            "locked": true
+          }
+        ],
+        "title": "웨코문도 외곽",
+        "art": "desert",
+        "scene": true,
+        "lock": null,
+        "stars": [
+          "★1",
+          "★2 권장",
+          "★3",
+          "★4"
+        ],
+        "mini": 12,
+        "miniText": "놓은 타일 0/8",
+        "hp": "체력 100%",
+        "goInStage": true,
+        "goDisabled": false,
+        "sel": "자유 모험"
+      },
+      {
+        "step": "device-on-first",
+        "sel": "outskirts"
+      },
+      {
+        "step": "device-confirm-again",
+        "sel": "go"
+      },
+      {
+        "step": "locked",
+        "screen": "expedition-plan",
+        "items": [
+          {
+            "id": "outskirts",
+            "text": "웨코문도 외곽자주 나오는 속성 노멀·흙·물",
+            "selected": false,
+            "locked": false
+          },
+          {
+            "id": "canyon",
+            "text": "모래 협곡자주 나오는 속성 불·뇌·독",
+            "selected": true,
+            "locked": true
+          },
+          {
+            "id": "forest",
+            "text": "허무의 숲자주 나오는 속성 혈·허무",
+            "selected": false,
+            "locked": true
+          }
+        ],
+        "title": "모래 협곡",
+        "art": "desert",
+        "scene": true,
+        "lock": "3단계(아쥬커스)에 열린다",
+        "stars": [
+          "★1",
+          "★2 권장",
+          "★3",
+          "★4"
+        ],
+        "mini": 12,
+        "miniText": "놓은 타일 0/8",
+        "hp": "체력 100%",
+        "goInStage": true,
+        "goDisabled": true,
+        "sel": "canyon"
+      },
+      {
+        "step": "place-tab",
+        "goDisabled": false,
+        "goInDock": true
+      },
+      {
+        "step": "back-prep",
+        "screen": "expedition-plan",
+        "items": [
+          {
+            "id": "outskirts",
+            "text": "웨코문도 외곽자주 나오는 속성 노멀·흙·물",
+            "selected": true,
+            "locked": false
+          },
+          {
+            "id": "canyon",
+            "text": "모래 협곡자주 나오는 속성 불·뇌·독",
+            "selected": false,
+            "locked": true
+          },
+          {
+            "id": "forest",
+            "text": "허무의 숲자주 나오는 속성 혈·허무",
+            "selected": false,
+            "locked": true
+          }
+        ],
+        "title": "웨코문도 외곽",
+        "art": "desert",
+        "scene": true,
+        "lock": null,
+        "stars": [
+          "★1",
+          "★2 권장",
+          "★3",
+          "★4"
+        ],
+        "mini": 12,
+        "miniText": "놓은 타일 0/8",
+        "hp": "체력 100%",
+        "goInStage": true,
+        "goDisabled": false,
+        "sel": "준비"
+      },
+      {
+        "step": "story",
+        "screen": "story"
+      }
+    ],
+    "phone": [
+      {
+        "step": "enter",
+        "screen": "expedition-plan",
+        "items": [
+          {
+            "id": "outskirts",
+            "text": "루콘가 외곽자주 나오는 속성 노멀·흙·물",
+            "selected": true,
+            "locked": false
+          },
+          {
+            "id": "canyon",
+            "text": "카라쿠라 마을자주 나오는 속성 불·뇌·독",
+            "selected": false,
+            "locked": true
+          },
+          {
+            "id": "forest",
+            "text": "웨코문도자주 나오는 속성 혈·허무",
+            "selected": false,
+            "locked": true
+          }
+        ],
+        "title": "루콘가 외곽",
+        "art": "forest",
+        "scene": true,
+        "lock": null,
+        "stars": [
+          "★1",
+          "★2 권장",
+          "★3",
+          "★4"
+        ],
+        "mini": 12,
+        "miniText": "놓은 타일 0/8",
+        "hp": "체력 100%",
+        "goInStage": true,
+        "goDisabled": false,
+        "sel": "자유 모험"
+      }
+    ]
+  }
+}
