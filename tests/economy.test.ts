@@ -97,7 +97,9 @@ describe('먹이 = 전리품 (GDD 23-1)', () => {
     advance(r);
     expect(r.phase).toBe('rest');
     finishRest(r);
-    expect(r.foodLoot).toEqual([{ food: 'snack', lap: 1 }]);
+    // C.555 (GDD 4-5 v6.232): 간식 +1 × 모험 먹이 배율(foodRate) — 소수 부분은 그 확률. 옛 기대값: 늘 [{ food: 'snack', lap: 1 }]
+    expect(r.foodLoot.length).toBeLessThanOrEqual(Math.ceil(BALANCE.provisional.food.restSnack * BALANCE.provisional.expedition.foodRate));
+    expect(r.foodLoot.every((a) => a.food === 'snack' && a.lap === 1)).toBe(true);
   });
 
   it('귀환하면 지킨 먹이가 보유에 들어가고(상한까지), 패배하면 마지막 바퀴 먹이는 잃는다', () => {

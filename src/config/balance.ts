@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
+export const BALANCE_VERSION = 173; // C.555 (GDD 4-5 v6.232 모험 먹이 = 확률로 바퀴당 평균 약 0.5개, 사용자 2026-11-27 정정 — provisional): C.550 expedition.foodPerLap 0.5(바퀴당 1개 상한) 삭제 → expedition.foodRate 0.15(출처별 먹이 확률 전체 배율 — 일반 적·강적 확정+30%·보물 먹이 몫·휴식 간식). 보스 확정 먹이 밖. 전투 수치 그대로
+// 이전: BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
 // 이전: BALANCE_VERSION = 171; // C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개, 사용자 2026-11-27 — provisional): provisional.expedition.foodPerLap 0.5 신설 — 한 바퀴의 모험 출처(전투·보물·휴식 타일·보스) 먹이 최대 1개, 바퀴 굴림 1회(원정 시드·바퀴) < 0.5 × 배율. food.normalDropChance·eliteExtraChance 는 원정에서 안 씀(사냥터 표 검사용으로 남김). 전투 수치 그대로
 // 이전: BALANCE_VERSION = 170; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27 — provisional): provisional.wanderer.perLap 0.001 삭제 → meetChance 0.01(칸마다)·meetChanceFromLap3 0.03·meetFromLap 3·stayMinutes 15·confirmSeconds 5. 전투 수치 그대로
 // 이전: BALANCE_VERSION = 169; // C.536 (GDD 8-7 v6.196 소로 여우불 재설계, 사용자 2026-11-24 — provisional): evoUniques t4:fire:physical hollow — 화상 문턱(여우불 5개 이상) 폐기 → 여우불 1개 이상 + 불 블록 = 화상(여우불 개수 × burn 0.03 → 0.005, 노력치 기울기 burnGrow 48 → 18), 5개 이상 + 이미 화상 = 센 화상 burnBoost(= burn × 2) 신설, 레스렉시온 burn 0.12 → 0.0075·burnBoost 0.015(옛 해방 burnGrow 덮어쓰기 삭제 — 평소 기울기 그대로, 다 키운 해방 = 다 키운 평소 ×1.5 C.527 원칙)
@@ -923,9 +924,10 @@ export const BALANCE = {
       /** 이어 하기 시한 (GDD 192장 1, C.311 provisional): 원정 중 게임을 나간 뒤(마지막 중간 저장·백그라운드 진입 시각) 이만큼(분) 넘게 지나 돌아오면 이어 하지 않고
        *  모험 실패(패배)로 정산한다(readActiveExpedition). 그 사이 밸런스 버전이 바뀐 것(새 패치)·손상도 같은 정산. 시한 안 + 같은 버전이면 그대로 이어 한다 */
       resumeWindowMinutes: 30,
-      /** 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225, 사용자 2026-11-27 "모험 1바퀴에 음식0~1개정도 뜨게하고" — C.550 provisional): 한 바퀴의 모든 모험 출처(전투·보물·휴식 타일·보스)를 합쳐 먹이 최대 1개,
-       *  바퀴에 먹이가 나올 확률 ≈ 이 값. 난이도·이어하기·빈사·타일·출정품 배율은 확률에만 곱한다(1개 상한 그대로). 원정 상인·우라하라·상점·대기 보상·막힘 방지 간식은 규칙 밖 */
-      foodPerLap: 0.5,
+      /** 모험 먹이 확률 배율 (GDD 4-5 v6.232 '바퀴당 평균 약 0.5개가 되게 확률로', 사용자 2026-11-27 "상한이 아니라, 확률을 그정도로 맞추란거엿어" — C.555 provisional):
+       *  출처별 먹이 확률(일반 적 normalDropChance · 강적 확정 1 + eliteExtraChance · 보물 foodChance · 휴식 간식 restSnack) 전체에 곱한다. 바퀴당 개수 상한 없음.
+       *  권장 ★·2바퀴 기준 바퀴당 평균 약 0.5개로 맞춘 값. 보스 확정 희귀 먹이·원정 상인·우라하라·상점·대기 보상·막힘 방지 간식은 밖. 옛 C.550 foodPerLap 0.5(바퀴당 1개 상한) 대체 */
+      foodRate: 0.15,
       /** 허기 100이면 탈진 → 패배 처리(마지막 바퀴 획득물 상실). 강제 귀환 유도 (GDD 2-1) */
       hungerMax: 100,
       hungerPerTile: 0.4,
