@@ -145,7 +145,9 @@ describe('보관함·상점 (#54~65)', () => {
 
 describe('훈련장·책장·상태 (#67~75·83·84)', () => {
   it('수련 카드 보상·비용은 칩, 테두리는 선택 전용 (#67·68), 테스트 적은 테스트 모드만 (#70)', () => {
-    expect(read('src/ui/trainingView.ts')).toContain("chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));"); // C.239 (GDD 159장 44): 대표 효과 칩 하나
+    // 옛 값(C.239, GDD 159장 44): 수련 카드에 대표 효과 칩 하나 "chips.append(chip(rewards.find((x) => x.includes('노력치')) ?? rewards[0]!, 'guard'));"
+    // C.561(GDD 8-9 v6.242): 종목 카드 대신 왼쪽 목록 + 오른쪽 보상·비용 줄 (증감은 한 줄 글)
+    expect(read('src/ui/trainingView.ts')).toContain("reward.append(el('b', '', '승리 '), lines.reward);");
     expect(read('src/ui/bha/training.css')).not.toContain(':hover, .bha-train__card.bha-sel');
     // C.471: 훈련 인형 적 목록 = 기본 훈련 인형 + 도감 본 적, 테스트 적은 테스트 모드(devText)만
     expect(read('src/engine/practiceArena.ts')).toContain('e.testOnly ? includeTest');

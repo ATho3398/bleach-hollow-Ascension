@@ -1531,10 +1531,27 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **이렇게 정했다**(같은 '결과 숨김' 취지로 같이): 합체 확인 1/2 '이 조합이면 「이름」이 된다' → '합체 결과 「???」' + 실루엣, 최종 확인 글에서 이름 삭제('초월자 하나가 되어'), 못 모은 초월자 도감 칸 '얻는 조합: …' → '아직 만나지 못한 초월자. 합체해야 정체를 알 수 있다.' 이름은 합체 연출에서 처음 공개. 이미 얻은 초월자 도감은 그대로.
 - **시험**: 새 `tests/c560.test.ts` 12건(효과 한 줄·얻는 곳·지운 줄·군말 / 강화 창 충분·모자람·공명 한계·50강·창 안 일괄 강화·✓ 시작 자리 / 결과 카드 실루엣 ???·조건 줄·최종 확인에 이름 없음·도감 조합 숨김·종족 분기 없음). c414·c425·c59 의 옛 기대값(상태 띠·'지금 두 캐릭터라면'·최종 확인 이름·'두 캐릭터 전 능력치')을 새 규칙으로 바꿈.
 - 캡처 `docs/captures/c560/`(1배 4장, `scripts/c560-proof.cjs`, proof.json): 01 PC 붕옥 창 · 02 PC 강화 창(기기 ▼ 로 [강화하기] → ✓ 로 열림, 선택 = 창 안 [강화]; 한 번 더 ✓ → 34강, 창이 34 → 35강으로 다시 열림) · 03 PC 합체 창(실루엣 ???) · 04 폰 796×384 붕옥 창.
+
+## C.561 — 수련장 = 카드 3장 → 본능 수련 목록 · 수련 결과 상태 창 삭제 · 오른쪽 위 재화 칩 (GDD 8-9 · 14-4 v6.242 → v6.245, S-23, 코딩360)
+세이브 형식·BALANCE 그대로(화면·종족 설정 문구 `training.hall.ascendDesc` 만). GDD v6.245(8-9·14-4 구현 표시 + 20절 한 줄).
+- **사용자 원문**(2026-11-27, 캡처 `docs/user-reports/1127/training-status-overlay.png`): "하...상태 창이 버튼이랑 ui 가리는게 맞아? 저거 없애고. 수련장 들어오면, 카드형식으로 본능 수련, 아란칼화 수련, 훈련인형 띄우고, 본능수련 누르면 그 때 좌측에 본능수련 리스트, 우측에 해당 수련 이미지랑 정보, 각 수련치 이런거 적으면 되잖니. 수련권은 상점에서 재화 오른쪽 위에 띄우는거처럼 무조건 오른쪽 위에 띄우고. 수련장 외에도 오른쪽 위에 골드랑 영옥 갯수 항상(모험때 뺴고) 띄워놓고, 뭐 수련장 가면 그때만 수련권으로 바꾸는 식으로 해." → 마스터AT 8-9·14-4 v6.242.
+- **수련장 카드 화면** `src/ui/trainingHallView.ts`(다시 씀, `data-screen="training-hall"`): 방 수련장 → 카드 3장 본능 수련(사신 참백도 수련) · 아란칼화(사신 참백도 구상화) · 훈련 인형. 카드 = 그림 칸(`training.hall.<카드>`, 없으면 `prop.altar`) + 이름 + 한 줄(종족 설정 `training.hall` trainDesc·**ascendDesc(새)**·practiceDesc) + 작은 상태 글(수련치 n/60 · 상대: … · 이번 생 n판 · 완료).
+  - 잠긴 카드 = 점선·흐린 그림 + 그림 아래 자물쇠 + 조건 한 줄('바스트로데가 되면 본능 수련이 열린다.'), 버튼 disabled(기기 ▲▼ 가 건너뜀). 아란칼화: 4단계 전 잠김, 완료 = '완료'·눌리지 않음, 해방 없음 진화체(프레네시) = 카드 없음(옛 수련 화면 칸 규칙 그대로).
+  - 누르면: 본능 수련 = 종목 목록 화면(`open('training')`), 아란칼화 = **확인 창**(설명 + 상대 + 져도 잃는 것 없음, [도전]/[그만둔다] — `askAscension`) → 보스전(8-5 임시), 훈련 인형 = 적 설정 창 전투(`practiceArena` 그대로). 뒤로 = 방.
+- **본능 수련 목록** `trainingView`(다시 씀, `data-screen="training-list"`): 특수던전 틀(bha-sdg) — 왼쪽 종목 4개(이름 + 작은 글자 '수련치 n/60'), 오른쪽 그림(`training.game.<종목>`, 없으면 `prop.altar`) + 수련 이름·종목 이름 + 설명 + '승리 …' + '비용 … · 패배해도 수련치 +1' + 'n단계 수련치 n/60'(완료면 '수련 완료' 태그) + 광기 경고(있을 때) + [시작]. 시작할 수 없으면 그림 위 자물쇠 + 까닭(4단계 전 · 수련권 없음 + 얻는 법 · 컨디션). 기기 ✓ 두 번 = [시작](C.542 규칙). 고른 종목은 한 판 뒤에도 그대로. 뒤로 = 카드 화면.
+  - **지운 것**: 옛 왼쪽 '수련' 칸(수련치 막대·수련권 칸·`TICKET_HOW`·안내 알림), 4종목 카드 + 상세 창(itemDialog), 오른쪽 아란칼화·구상화 칸(`ascensionPanel`) — 카드 화면으로 옮김, `TrainingHandlers.onAscend`, `resetTrainingHallPick`·`trainingHallItems`(옛 목록), 옛 `.bha-thall__go` 외 목록용 CSS 는 카드 CSS 로 교체.
+- **상태 창 삭제**: 수련 결과 화면(`trainingResultView`)이 띄우던 상태창 차오름 `statusFillFx`(이름·배부름·컨디션·리스크·체력 막대 카드 — 사용자 캡처의 그 창)를 없앰. 바뀐 값은 결과 글(비용 줄)에 그대로. 결과 '남은 수련권 n' 줄도 오른쪽 위 칩으로.
+  - **같은 부품을 쓰는 다른 곳(지우지 않음, 보고)**: 방 가방에서 소모품 쓰기(`lcdScreens.ts` useItem → `statusFillFx` + 바뀐 값 칩) — 화면 위 가운데에 약 1.5초 떠서 가방 카드·버튼 위를 덮는다.
+- **오른쪽 위 재화 칩** 새 `src/ui/bha/corner.ts` + `market.css .bha-corner`: 화면 id → 종류(`cornerKindOf`) — 모험 밖 = 골드·영옥, 수련장 화면들(practice·training·training-result) = 수련권(지금 트랙 `training.tickets`). 칩 없는 화면 = 처음·슬롯·이름·연출(진화·합체·환생)·'expedition' 한 덩어리(걷기·전투·바퀴 끝·결산)·모든 …-battle 과 그 …-result(수련 결과 빼고)·수련 미니게임 한 판·시험.
+  - 자리(`placeCorner`): 머리 줄(`bha-lcdpage__head`·`bha-exp__head`) 끝(margin-left:auto), 없으면 LCD 오른쪽 위에 띄움(`is-float` — 방·월드맵·시장, 옛 우라하라 칩 자리). 칩 = 상점·가방 머리와 같은 부품(bha-chip--gold/jade + v2-coin/v2-gem, 수련권 = bha-chip--ticket + i-practice). app.ts `tickCorner` = 화면이 바뀔 때(뿌리 MutationObserver)·1초 시계·저장(persist) 때.
+  - **우라하라 칩(C.549)**: 걷기·전투는 그대로 그 줄 안, 그 밖은 이 칸 안 재화 칩 왼쪽(옛 '우라하라 창 = 상점 재화 줄 앞'도 이 칸).
+  - **합친 재화 표시**: 가방 머리 `bagWallet`(삭제) · 상점 머리 `coinChip` 골드·영옥(삭제, '임시 가격' 표시는 머리에 그대로) · 수련 화면 수련권 칸 · 수련 결과 '남은 수련권' 줄. (장비 강화 창의 '골드 n · 장비 n/상한' 은 창 안 비용 맥락이라 그대로.)
+- **시험**: 새 `tests/c561.test.ts` 13건(카드 순서·이름·한 줄 데이터·분기 없음 / 누르면 세 흐름·확인 창 / 잠김·완료·카드 없음 / 카드 CSS 토큰만 / 목록 왼쪽·오른쪽 내용 / 시작 못 하는 까닭 / 옛 조각 없음 / 상태 창 삭제·다른 곳 그대로 / 칩 종류 표 / 칩 값 / 자리·우라하라 칸 / 합친 표시 / 기획서). 고친 기대값(옛 값 주석): `c542`(목록 → 카드·종목 목록) · `c163`·`c171`·`c238`·`c344-status-blink`·`c354-training-ticket`·`c364`·`c397`(bagWallet) · `c403-unlocks`(카드 순서) · `c471`·`c498` · `recover-fill`.
+- 캡처 `docs/captures/c561/`(1배 5장, `scripts/c561-proof.cjs`, facts.json): 01 PC 호로 수련장 카드 3장(오른쪽 위 수련권 4) · 02 PC 본능 수련 목록(탄막 피하기) · 03 PC 방 오른쪽 위 우라하라 14:54 · 골드 1234 · 영옥 59 · 04 PC 시장 같은 칸 · 05 폰 796×384 사신 2단계 카드(참백도 수련·구상화 잠김 + 조건).
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.
 
-## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.244, S-23, 코딩356)
-세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.244(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
+## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.246, S-23, 코딩356)
+세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.246(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
 - **이유**: 사용자 2026-11-27 "사신은 참으로 해." → 마스터AT 13절 v6.243(C.559 후속 — 사신이 귀로 나가던 것).
 - **종족 설정**: `src/data/factions/hollow.json` `"tutorial": { "blockFamily": "family-c" }`(탄) · `shinigami.json` `"tutorial": { "blockFamily": "family-a" }`(참). `FactionConfig.tutorial?.blockFamily` 신설, `parseFactionConfig` 검사 = 그 종족 families 의 id.
 - **엔진**: `CombatScript.blockFamily`(선택) · `newCombatScript(blockFamily?)` — 각본을 만들 때 넣은 값만 `scriptBlockOf` 가 쓴다(그 몸 계열 표에 없거나 값이 없으면 옛 규칙 = 출현표 기본 블록 계열). 종족 분기 없음. 넣는 곳 = 첫 모험 각본 전투(`expedition.startBattle` — `getFaction(exp.factionId).tutorial?.blockFamily`) · 도움말 '튜토리얼 다시 보기' 체험 전투(`app.ts runTutorialDemo` — `faction.tutorial?.blockFamily`).

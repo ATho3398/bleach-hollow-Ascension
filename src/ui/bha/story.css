@@ -117,7 +117,19 @@
 .bha-sdg__go { display: flex; align-items: center; gap: var(--bha-sp-2); }
 .bha-sdg__stars { flex: 1 1 auto; min-width: 0; }
 .bha-sdg__go > .bha-btn { flex: none; min-width: 120px; }
-/* 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.205, C.542): 틀은 위 bha-sdg 그대로, 오른쪽 그림 = 방 수련장 물건 그림(가운데·픽셀 그대로) */
-.bha-thall__img { position: absolute; inset: 0; margin: auto; max-width: 70%; max-height: 72%; object-fit: contain; image-rendering: pixelated; }
+/* 수련장 화면 = 카드 3장 (GDD 8-9 v6.242, C.561 — 옛 C.542 특수던전식 목록 대체): 그림 칸 + 이름 + 한 줄 + 작은 상태 글. 잠긴 카드 = 점선·흐린 그림 + 자물쇠·조건 한 줄 */
+.bha-thall__cards { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--bha-sp-3); }
+.bha-thall__card { display: flex; flex-direction: column; gap: var(--bha-sp-1); min-width: 0; min-height: 0; padding: var(--bha-sp-2); border: 1px solid var(--bha-line-2); border-radius: var(--bha-r-md); background: var(--bha-bg-2); color: var(--bha-text-1); font: inherit; text-align: left; cursor: pointer; }
+.bha-thall__card:hover:not(:disabled), .bha-thall__card.bha-sel { border-color: var(--bha-accent); box-shadow: inset 0 -3px 0 var(--bha-accent); }
+.bha-thall__card.is-locked { border-style: dashed; background: var(--bha-bg-0); color: var(--bha-text-3); cursor: default; }
+.bha-thall__card.is-done { border-color: var(--bha-primary-line); }
+.bha-thall__art { position: relative; flex: 1 1 auto; min-height: 64px; overflow: hidden; border: 1px solid var(--bha-line-1); border-radius: var(--bha-r-sm); background: var(--bha-bg-0); }
+.bha-thall__img { position: absolute; inset: 0; margin: auto; max-width: 70%; max-height: 80%; object-fit: contain; image-rendering: pixelated; }
 .bha-thall__icon { position: absolute; inset: 0; margin: auto; width: 48px; height: 48px; color: var(--bha-text-3); }
-.bha-thall__go { justify-content: flex-end; }
+.bha-thall__card.is-locked .bha-thall__img { opacity: 0.35; }
+.bha-thall__lock { position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-1); padding: var(--bha-sp-1) var(--bha-sp-2); background: var(--bha-plate-bg-soft); color: var(--bha-text-2); font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); text-align: center; }
+.bha-thall__lock .bha-icon { flex: none; width: 14px; height: 14px; }
+.bha-thall__name { font-size: var(--bha-fs-md); font-weight: var(--bha-fw-heavy); color: var(--bha-accent-hi); }
+.bha-thall__card.is-locked .bha-thall__name { color: var(--bha-text-3); }
+.bha-thall__line { font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); color: var(--bha-text-2); }
+.bha-thall__sub { font-size: var(--bha-fs-xs); }

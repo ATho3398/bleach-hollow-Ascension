@@ -71,7 +71,8 @@ describe('201장 회복 수치 글자 없앰', () => {
     expect(exp).toContain('fillOver = t >= 1 ? null');
     expect(read('src/ui/bha/healBag.ts')).not.toContain('itemUseFx');
     expect(read('src/ui/lcdScreens.ts')).toContain('statusFillFx(');
-    expect(read('src/ui/trainingView.ts')).toContain('statusFillFx(');
+    // 옛 값: 수련 결과도 statusFillFx( — C.561(GDD 8-9 v6.242): 화면 위 상태 창이 버튼을 가려 수련 결과에서는 없앰
+    expect(read('src/ui/trainingView.ts')).not.toContain('statusFillFx(');
     expect(read('src/ui/bha/actionFx.ts')).not.toContain('itemUseFx');
   });
   it('방에 들어올 때 오른 값 차오름 · 온천도 보여 준 값 기억', () => {

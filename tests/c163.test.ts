@@ -24,7 +24,8 @@ describe('C.163 2 수련장 세 화면 제목 토글', () => {
     expect(app).not.toContain("trainingHead(faction, 'rank')"); // C.257 (GDD 174장 1): 진급 시험은 토글에서 빠졌다
     expect(app).not.toContain('function switchTraining(');
     expect(app).toContain('trainingHallView(root, faction, {');
-    expect(read('src/ui/trainingView.ts')).toContain('title: faction.training.title,');
+    // 옛 값(C.542): trainingView 에 'title: faction.training.title,'(lcdHead). C.561(GDD 8-9 v6.242): 본능 수련 목록 화면 머리 = h2 수련 이름 글자
+    expect(read('src/ui/trainingView.ts')).toContain("head.append(el('h2', 'bha-plan__title', faction.training.title), provisionalTag());");
     expect(read('src/ui/rankView.ts')).toContain('title: h.title ??');
   });
   it('목록이 열리면 머리 줄이 본문 위 층 (훈련 인형 필터가 목록을 덮지 않게)', () => {

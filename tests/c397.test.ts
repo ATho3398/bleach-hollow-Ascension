@@ -116,7 +116,9 @@ describe('241-D 3·6·8 화면', () => {
   });
   it('가방 머리 재화(골드·영옥) · \'장착한 장비\' 문구', () => {
     const lcd = read('src/ui/lcdScreens.ts');
-    expect(lcd).toContain('const head = (): HTMLElement[] => [bagWallet(save), headTabs()];');
+    // 옛 값(C.397): 'const head = (): HTMLElement[] => [bagWallet(save), headTabs()];' — C.561(GDD 14-4 v6.242): 재화는 화면 공용 오른쪽 위 칩
+    expect(lcd).toContain('const head = (): HTMLElement[] => [headTabs()];');
+    expect(lcd).not.toContain('export function bagWallet(');
     expect(lcd).toContain("'장착한 장비가 없다.'");
     expect(read('src/ui/equipView.ts')).not.toMatch(/[`'"][^`'"\n]*낀 [^`'"\n]*[`'"]/);
   });
