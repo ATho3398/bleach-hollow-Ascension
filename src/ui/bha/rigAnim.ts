@@ -243,6 +243,21 @@ const MIN_FRAME_MS = 33;
  */
 /** sets = 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
 /** tint = 적 속성 색 바꾸기(C.546, GDD 15-5 — 길리안 몸 눈동자): 부위 그림을 다 불러온 뒤 한 번, 그 색 픽셀만 바꾼 캔버스로 그린다 */
+/**
+ * 기본 정지 모습(대기 idle 동작의 첫 자세, 이펙트 없음) 스냅숏 (C.563, GDD 9-4 '펫 자리 = 기본 정지 모습 기준 고정'):
+ * 종이인형 원본 img 와 바꿔 낀 캔버스 둘 다 같은 스냅숏을 가리킨다. 부위 그림이 다 오기 전이면 null.
+ * 펫 옆 거리(pet.ts fitPetToBody)는 지금 그려진 동작 프레임이 아니라 이것으로 재서, 대기·걷기 동작 중에 펫이 따라 움직이지 않는다
+ */
+const restOf = new WeakMap<object, () => HTMLCanvasElement | null>();
+/** 종이인형 몸 그림이면 그 기본 정지 모습 스냅숏 함수, 종이인형이 아니면 undefined */
+export function rigRestSnapshot(art: object): (() => HTMLCanvasElement | null) | undefined {
+  return restOf.get(art);
+}
+/** 몸 그림(원본 img·바꿔 낀 캔버스)에 기본 정지 모습 스냅숏 함수를 단다 (bindRigAnim, 시험) */
+export function setRigRestSnapshot(art: object, fn: () => HTMLCanvasElement | null): void {
+  restOf.set(art, fn);
+}
+
 export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets, tint?: ArtTint): RigPlayer {
   const [vx, vy, vw, vh] = rig.view?.rect ?? [0, 0, rig.canvas[0], rig.canvas[1]];
   const clipH = rig.view?.clipY !== undefined ? Math.min(vh, rig.view.clipY - vy) : vh; // 바닥 밑(clipY 아래)은 땅에 가려진 것처럼 안 그린다
@@ -360,6 +375,36 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     if (r && last && typeof performance !== 'undefined') last = performance.now();
     return r;
   };
+  // 기본 정지 모습 스냅숏 (C.563): 대기 동작 첫 자세(t = 0)를 따로 한 번만 그린다. 부위 그림이 다 와야 그린다
+  let rest: HTMLCanvasElement | null = null;
+  const restSnap = (): HTMLCanvasElement | null => {
+    if (rest) return rest;
+    if (typeof document === 'undefined' || layers.some((l) => !l.im.complete || !l.im.naturalWidth)) return null;
+    const c = document.createElement('canvas');
+    c.width = canvas.width;
+    c.height = canvas.height;
+    const rc = c.getContext('2d');
+    if (!rc) return null;
+    applyTint();
+    const idleId = rigMotionIds('idle', motions)[0] ?? RIG_ACTION_FALLBACK.idle?.find((id) => motions[id]);
+    const motion = idleId ? motions[idleId] : undefined;
+    const mats = boneMatrices(rig, motion ? samplePose(rig, motion, 0, 0) : {}, body);
+    rc.save();
+    rc.beginPath();
+    rc.rect(0, 0, c.width, clipH * K);
+    rc.clip();
+    rc.imageSmoothingEnabled = false;
+    for (const l of orderLayers(layers.map((x) => ({ ...x, slot: x.layer.slot })), motion)) {
+      const m = layerMatrix(rig, mats, l.layer, motion);
+      rc.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
+      rc.drawImage(l.src, 0, 0);
+    }
+    rc.restore();
+    rest = c;
+    return rest;
+  };
+  setRigRestSnapshot(img, restSnap);
+  setRigRestSnapshot(canvas, restSnap);
   // 부위 그림이 다 오면 한 번 그린다(그 전엔 정지 그림 src 그대로)
   for (const { im } of layers) im.addEventListener('load', () => { if (!raf) draw(); if (fx && !fxStill) wake(); }, { once: true });
   return player;
