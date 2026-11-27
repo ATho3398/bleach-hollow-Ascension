@@ -1,0 +1,160 @@
+{
+  "rule": "GDD 7절 v6.225 — 블록 피해 = 몸동작 타격 순간에 바로 (이펙트 도착 안 기다림)",
+  "errors": [],
+  "shots": [
+    "01-chain1-hit-frame.png",
+    "02-chain3-hit-frame.png"
+  ],
+  "runs": [
+    {
+      "n": 1,
+      "ok": true,
+      "key": "family-a:1",
+      "bodyRate": 0.25,
+      "motionHitSeconds": 0,
+      "hitDelaySeconds": 0,
+      "blockBy": 0,
+      "hasBlockFxBy": false,
+      "damageTick": 0,
+      "damageMs": 33,
+      "enemyHp": [
+        22959,
+        22923
+      ],
+      "enemyBarWidth": null,
+      "marks": [
+        {
+          "type": "event",
+          "side": null,
+          "landed": false,
+          "ms": 15,
+          "tick": 0
+        },
+        {
+          "type": "hit-frame",
+          "side": "enemy",
+          "landed": null,
+          "ms": 24,
+          "tick": 0
+        },
+        {
+          "type": "swing-frame",
+          "side": "player",
+          "landed": null,
+          "ms": 29,
+          "tick": 0
+        }
+      ],
+      "fx": [
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": 0
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        }
+      ],
+      "shot": "01-chain1-hit-frame.png"
+    },
+    {
+      "n": 3,
+      "ok": true,
+      "key": "family-a:3",
+      "bodyRate": 0.8125,
+      "motionHitSeconds": 0,
+      "hitDelaySeconds": 0,
+      "blockBy": 0,
+      "hasBlockFxBy": false,
+      "damageTick": 0,
+      "damageMs": 36,
+      "enemyHp": [
+        22923,
+        22730
+      ],
+      "enemyBarWidth": null,
+      "marks": [
+        {
+          "type": "event",
+          "side": null,
+          "landed": false,
+          "ms": 14,
+          "tick": 0
+        },
+        {
+          "type": "hit-frame",
+          "side": "enemy",
+          "landed": null,
+          "ms": 27,
+          "tick": 0
+        },
+        {
+          "type": "swing-frame",
+          "side": "player",
+          "landed": null,
+          "ms": 30,
+          "tick": 0
+        }
+      ],
+      "fx": [
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": 0
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": 0
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": null
+        },
+        {
+          "fx": "melee-sword-slash-normal",
+          "progress": 0
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "progress": null
+        },
+        {
+          "fx": "melee-spear-sweep-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": null
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": null
+        },
+        {
+          "fx": "impacts-crit-hit-normal",
+          "progress": 0
+        }
+      ],
+      "shot": "02-chain3-hit-frame.png"
+    }
+  ]
+}
