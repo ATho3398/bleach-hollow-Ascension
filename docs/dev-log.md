@@ -1452,8 +1452,17 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **시험**: 새 `tests/c553.test.ts` 6건(머묾 문구 없음, 그림 있음, 창 호출 선택·자동 확인 그대로, figure 두 칸 구조, 픽셀·연출·움직임 줄이기, 토큰만).
 - 캡처 `docs/captures/c553/`(1배 3장, `scripts/c553-proof.cjs`, facts.json): 01 PC 창 · 02 폰(667×375) 창 — 글·그림 안 잘림(창 안·LCD 안 확인) · 03 등장 연출 중간(도트 −8px 떠 있음).
 
-## C.552 — 블록 모션 기준 길이 = 진화 단계별, 체인 무관 (GDD 7절 v6.226 → v6.235, S-23, 코딩356)
-세이브 형식 그대로 · BALANCE_VERSION 171 → 172. GDD v6.235(7절 '같은 진화 단계 = 블록 모션 길이 통일' 줄에 구현 표시 + 20절 한 줄). PATCH_LABEL = C.554(main 최대값 — 내려가지 않게, 마스터AT 규칙).
+## C.556 — 펫 위치: 화면 배율·세로 회전에서도 몸 옆 같은 자리 (GDD 9-4 v6.235, S-23, 코딩358)
+세이브 형식·밸런스 그대로. GDD v6.235(9-4 펫 줄 구현 표시 + 20절 한 줄).
+- **이유**: 사용자 2026-11-27(C.554 배포 직후) "펫 위치가 이상해 봐줘" → 마스터AT C.556.
+- **원인**: `fitPetToBody`(pet.ts, C.487 몸 너비에 맞춰 옆으로)가 몸 그림 오른쪽 끝과 펫 왼쪽의 **화면 px 차이**(getBoundingClientRect)를 그대로 펫 `translate`(host 안 CSS px)에 넣었다. 기기가 배율 1·회전 없음일 때만 맞고, 세로 폰(기기 90° 회전 — 가로 차이 자리에 화면 세로 차이가 들어감)·PC 2배(zoom)·C.554 한 배율 맞춤(폰 20:9·태블릿 등 배율 ≠ 1)에서 따로 놀았다. 실측(방, pet-gold, translate 가로): 844×390 = 32px(기준) · 915×412 = 34 · 태블릿 1024×768 = 37 · **세로 폰 390×844 = 195**(펫이 수련장 쪽까지 감 — C.554 전에도 있던 어긋남) · PC 1배 = 32 · PC 2배 = 55(C.554 전부터). 같은 함수를 쓰는 걷기(원정 동행)·전투 펫·2번째 펫 칸(C.506)도 같은 문제.
+- **고침**: 새 `hostAxisX(host, hostRect, rotated)` = host 안 px ÷ 화면 px 비율 k + 기기 가로축이 화면의 어느 축인지(돌렸으면 top·height). 몸 오른쪽 끝·펫 왼쪽·1번째 펫 오른쪽 끝을 그 축으로 재고 × k 해서 host 안 px 로 넣는다 → 기기 배율·PC zoom·회전·다마고치 줌 모두 같은 식. 펫 자리 값(dx·dy, place.json)·틈 4px·CSS 기본 자리는 그대로(844×390·PC 1배에서 보이던 자리가 의도된 자리).
+- **확인(후)**: 방 6개 크기 모두 translate 32px · 걷기 844×390·1024×768·390×844 모두 13px · 다마고치 모드 1024×768·390×844 모두 32px. 전투는 같은 함수(petBuddy → fitPetToBody)라 같이 고쳐짐.
+- **시험**: 새 `tests/c556.test.ts` 10건(7개 맞춤(폰·20:9·태블릿·세로·작은 폰·PC 1배·2배)에서 계산한 이동 값이 기준과 같음, hostAxisX 축·비율, 옛 화면 px 계산 없음).
+- 캡처 `docs/captures/c556/`(1배 4장 + facts-before/after.json, `scripts/c556-proof.cjs [폴더] before|after`): before/after-room-390x844(세로 폰 — 전: 펫이 수련장 옆, 후: 몸 옆 책장 앞) · before/after-room-1024x768(태블릿 — 5px 차이).
+
+## C.552 — 블록 모션 기준 길이 = 진화 단계별, 체인 무관 (GDD 7절 v6.226 → v6.236, S-23, 코딩356)
+세이브 형식 그대로 · BALANCE_VERSION 171 → 172. GDD v6.236(7절 '같은 진화 단계 = 블록 모션 길이 통일' 줄에 구현 표시 + 20절 한 줄). PATCH_LABEL = C.556(main 최대값 — 내려가지 않게, 마스터AT 규칙).
 - **이유**: 사용자 2026-11-27 "아비례안해? 그럼 모션은 체인상관없이 1.2초 고정시켜 일단. 아쥬커스 달면 1초 바스트로데 0.9 아란칼 0.8초로 ㄱㄱ" → 마스터AT 7절 v6.226.
 - **balance** `combat.motion.blockLength`: 옛 `{ default: [0.8, 1.0, 1.2](1/2/3체인), byTier: {} }` → `{ default: [1.2], byTier: { '2': [1.0], '3': [0.9] }, ascended: [0.8] }` — 값 하나 = 체인 무관. 1·2단계(tierIndex 0·1) 1.2초 · 3단계 1.0 · 4단계 0.9 · 아란칼화/참백도 구상화 뒤 0.8. 두 종족 공통.
 - **엔진**: `MotionParams.blockLength.ascended`·`MotionParams.ascended` 신설, `blockMotionTarget` = ascended → byTier[단계] → default 순. `applyEvolutionToParams` 가 `tier: tierIndex, ascended: e.ascended === true` 를 싣는다. 종족·몸 이름 분기 없음. 화면(battleView `blockLength: (chain) => blockMotionTarget(s.params.motion, chain)`)은 같은 함수라 그대로 따라감.
