@@ -469,6 +469,8 @@ export interface EvolvePixelFx {
 
 export interface FactionConfig {
   id: string;
+  /** 튜토리얼 각본 전투 (GDD 13절 v6.243 '튜토리얼 각본 전투의 블록 = 호로 탄 / 사신 참', C.562): blockFamily = ④ 위기 블록·⑧ 체인 블록의 계열 id(families 안). 없으면 엔진 옛 규칙(출현표 기본 블록 계열) */
+  tutorial?: { blockFamily?: string };
   /** 화면 표시 이름 */
   name: string;
   /** UI 테마 이름: 루트 data-bha-theme 값 (src/ui/bha/design-system/theme-<이름>.css 가 정의). 종족 id 로 분기하지 않고 이 값을 쓴다 */
@@ -905,6 +907,12 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   for (const k of ['prey', 'predator']) if (!isString(((tg.chain ?? {}) as Record<string, unknown>)[k])) errors.push(`training.games.chain.${k}: 비어 있지 않은 문자열이어야 한다`);
   if (r.slotLocation !== 'body' && r.slotLocation !== 'zanpakuto') errors.push('slotLocation: body | zanpakuto');
   if (typeof r.appearanceChange !== 'boolean') errors.push('appearanceChange: boolean');
+  const tut = r.tutorial as Record<string, unknown> | undefined;
+  if (tut !== undefined) {
+    const famIds = Array.isArray(r.families) ? (r.families as { id?: unknown }[]).map((f) => f.id) : [];
+    if (typeof tut !== 'object' || tut === null) errors.push('tutorial: 객체');
+    else if (tut.blockFamily !== undefined && !(isString(tut.blockFamily) && famIds.includes(tut.blockFamily))) errors.push('tutorial.blockFamily: families 의 계열 id');
+  }
   if (errors.length > 0) throw new Error(`종족 설정 오류 (${String(r.id ?? '?')}):\n- ${errors.join('\n- ')}`);
   return raw as FactionConfig;
 }

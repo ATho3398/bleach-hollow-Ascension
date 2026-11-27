@@ -1549,3 +1549,23 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **시험**: 새 `tests/c561.test.ts` 13건(카드 순서·이름·한 줄 데이터·분기 없음 / 누르면 세 흐름·확인 창 / 잠김·완료·카드 없음 / 카드 CSS 토큰만 / 목록 왼쪽·오른쪽 내용 / 시작 못 하는 까닭 / 옛 조각 없음 / 상태 창 삭제·다른 곳 그대로 / 칩 종류 표 / 칩 값 / 자리·우라하라 칸 / 합친 표시 / 기획서). 고친 기대값(옛 값 주석): `c542`(목록 → 카드·종목 목록) · `c163`·`c171`·`c238`·`c344-status-blink`·`c354-training-ticket`·`c364`·`c397`(bagWallet) · `c403-unlocks`(카드 순서) · `c471`·`c498` · `recover-fill`.
 - 캡처 `docs/captures/c561/`(1배 5장, `scripts/c561-proof.cjs`, facts.json): 01 PC 호로 수련장 카드 3장(오른쪽 위 수련권 4) · 02 PC 본능 수련 목록(탄막 피하기) · 03 PC 방 오른쪽 위 우라하라 14:54 · 골드 1234 · 영옥 59 · 04 PC 시장 같은 칸 · 05 폰 796×384 사신 2단계 카드(참백도 수련·구상화 잠김 + 조건).
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.
+
+## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.247, S-23, 코딩356)
+세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.247(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
+- **이유**: 사용자 2026-11-27 "사신은 참으로 해." → 마스터AT 13절 v6.243(C.559 후속 — 사신이 귀로 나가던 것).
+- **종족 설정**: `src/data/factions/hollow.json` `"tutorial": { "blockFamily": "family-c" }`(탄) · `shinigami.json` `"tutorial": { "blockFamily": "family-a" }`(참). `FactionConfig.tutorial?.blockFamily` 신설, `parseFactionConfig` 검사 = 그 종족 families 의 id.
+- **엔진**: `CombatScript.blockFamily`(선택) · `newCombatScript(blockFamily?)` — 각본을 만들 때 넣은 값만 `scriptBlockOf` 가 쓴다(그 몸 계열 표에 없거나 값이 없으면 옛 규칙 = 출현표 기본 블록 계열). 종족 분기 없음. 넣는 곳 = 첫 모험 각본 전투(`expedition.startBattle` — `getFaction(exp.factionId).tutorial?.blockFamily`) · 도움말 '튜토리얼 다시 보기' 체험 전투(`app.ts runTutorialDemo` — `faction.tutorial?.blockFamily`).
+- **balance**: C.559 의 공통 키 `provisional.tutorialScript.blockFamily 'family-c'` 삭제.
+- **타이밍**: 각본 단계·사건 순서·처치 그대로, 두 종족 단계별 첫 멈춤 틱이 같음(계열과 무관 — c562), 각본 시험(c199·c222·c357·c367·c559) 통과. 실측(캡처): 사신 ④ 누름 → 적 체력 감소 0.73초 · ⑧ 3체인 누름 → 마지막 타격 피해 1.33초, 처치 → 승리.
+- **시험**: 새 `tests/c562.test.ts` 8건(설정 값 탄·참 / balance 키 삭제·버전 / 설정 검사 / newCombatScript 값 / 두 종족 첫 모험 각본 끝까지 [설정 계열 1체인, 3체인]·단계 순서·처치 / 두 종족 단계 틱 같음 / 체험 전투·expedition 이 설정 값을 넣음·종족 분기 없음·GDD). 고침 = `c559`(공통 키 → 종족 설정, 사신 기대 계열 family-c → family-a, 옛 기대값 주석).
+- 캡처 `docs/captures/c562/`(1배 2장, `scripts/c562-proof.cjs` — c559-proof 기반, facts.json, 도움말 체험 전투, 적 체력이 준 프레임에 정지): 01 사신 ④ 참 1체인 '발도' · 02 사신 ⑧ 참 3체인 '질풍참'(마지막 타격, 적 체력 0).
+- 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check 회귀 가드 · build.
+
+## C.563 — 펫 자리 = 기본 정지 모습 기준 고정 (GDD 9-4 v6.243 → v6.249, S-23, 코딩358)
+세이브 형식·밸런스 그대로. GDD v6.249(9-4 구현 표시 + 20절 한 줄).
+- **이유**: 사용자 2026-11-27 "그리고 펫 끼면 호로 움직임 맞춰서 프레임이 한 2~3번 왼쪽으로 움직임. 설마 종이인형 움직임 맞춰서 땡겨지게 해놧니?? 기본 아이들 정지 모델 기준으로 펫 위치를 잡고, 그 뒤에 종이인형이 아이들 모션으로 움직여도 펫은 그대로 있어야지" → 마스터AT 9-4 v6.243.
+- **원인**: `petBuddy` 가 펫을 붙인 뒤 0·150·500·1200·2500ms 에 `fitPetToBody` 를 다시 불렀고(C.487 — 그림이 늦게 뜨는 것 대비), 그때마다 **지금 그려진 종이인형 동작 프레임**의 불투명한 몸 끝을 재서 펫을 옮겼다 → 대기 동작으로 팔이 움직이는 만큼 펫이 2~3번 당겨짐. 실측(방 844×390, pet-gold, translate 가로): 호로 38 → 35 → 32px · 길리안 22 → 19 · 아쥬커스 41 → 38 → 35 · 사신 −27(그대로).
+- **고침**: ① `rigAnim.ts` `bindRigAnim` 이 원본 img·바꿔 낀 캔버스 둘 다에 **기본 정지 모습 스냅숏**(`rigRestSnapshot`) — 대기(idle) 동작 t = 0 자세를 따로 한 번 그린 캔버스(이펙트 없음, 바닥 자름 같음, 부위 그림이 다 와야 그림). ② `pet.ts` `fitPetToBody` = 종이인형이면 스냅숏으로 몸 끝을 재고, 스냅숏이 아직 없거나 아직 캔버스로 안 바뀐 정지 그림 img 면 재지 않음(상자 크기가 달라 — 다음 다시 맞추기에서). 한 번 맞추면 펫마다 (그 몸 = 스냅숏 함수·그림, 몸 상자 너비)를 기억해 **같은 몸이면 다시 재지 않음** → 몸이 바뀔 때(진화·외형·스킨 = 새 그림/스냅숏, 상자 너비 바뀜)만 새로. 2번째 펫 칸(C.506)은 1번째 펫이 자리 잡은 뒤 한 번. 다시 맞추기 타이머에 5000ms 하나 더(부위 그림이 늦을 때). C.556 기기 안 좌표 변환은 그대로.
+- **확인(후)**: 같은 방에서 0.1초 간격 3초 + 6초 지점 — 호로 38 · 길리안 22 · 아쥬커스 41 · 사신 −29px 한 값만(호로 3종 = 옛 첫 값, 사신은 전에 잰 프레임과 정지 모습이 달라 −27 → −29). 걷기 844×390 42px · 다마고치 모드 1024×768 38px 도 3초 동안 한 값. 전투 펫·2번째 칸도 같은 함수.
+- **시험**: 새 `tests/c563.test.ts` 6건(가짜 DOM: 동작 프레임 몸 끝이 5번 바뀌며 다시 불려도 translate 그대로·정지 모습 기준 값 / 몸이 바뀌면 새로 / 스냅숏 없음·정지 그림 img 는 안 잼 / 종이인형 아닌 그림 / 스냅숏 코드 / 기획서).
+- 캡처 `docs/captures/c563/`(1배 4장 + facts-before/after.json, `scripts/c563-proof.cjs [폴더] before|after`): before/after-idle-frame-a·b = 같은 방(호로) 대기 동작 서로 다른 두 프레임(0.35초 차이) — 후: 몸 자세는 달라도 펫 translate 38px 같음.

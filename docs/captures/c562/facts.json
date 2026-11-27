@@ -1,0 +1,42 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "tag": "shinigami",
+   "from": "hurt",
+   "file": "01-shinigami-crisis-cham-chain1.png",
+   "tray": [
+    "family-a"
+   ],
+   "ms": 732,
+   "hp": [
+    265,
+    233
+   ],
+   "stage": "skill-hold",
+   "status": "playing"
+  },
+  {
+   "tag": "shinigami",
+   "from": "chain-use",
+   "file": "02-shinigami-chain-cham-chain3.png",
+   "tray": [
+    "family-a",
+    "family-a",
+    "family-a"
+   ],
+   "ms": 1330,
+   "hp": [
+    38,
+    0
+   ],
+   "stage": "chain-hit",
+   "status": "won"
+  }
+ ],
+ "end": {
+  "shinigami": {
+   "status": "won"
+  }
+ }
+}

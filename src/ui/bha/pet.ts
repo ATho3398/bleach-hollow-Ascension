@@ -7,6 +7,7 @@ import type { FactionConfig } from '../../engine/faction';
 export type PetArtFaction = Pick<FactionConfig, 'petArt'>;
 import { el, icon } from './dom';
 import { currentFit } from './viewport';
+import { rigRestSnapshot } from './rigAnim';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 /** 그림이 없을 때 원 안 아이콘 (효과 종류별) */
@@ -62,7 +63,7 @@ export function petBuddy(petId: string | null, label: string, faction?: PetArtFa
     const img = b.querySelector('img');
     const again = () => fitPetToBody(b);
     img?.addEventListener('load', again);
-    if (typeof window !== 'undefined') for (const ms of [0, 150, 500, 1200, 2500]) window.setTimeout(again, ms);
+    if (typeof window !== 'undefined') for (const ms of [0, 150, 500, 1200, 2500, 5000]) window.setTimeout(again, ms);
   }
   b.setAttribute('aria-label', `펫: ${label}`);
   b.title = label;
@@ -108,6 +109,12 @@ export function hostAxisX(host: { offsetWidth: number }, hostRect: { width: numb
 
 /** 그림 펫을 지금 몸 그림 너비에 맞춰 옆으로 옮긴다 (C.487, 사용자 "스킨 모델에 따라서 거리 자동으로 … 호로처럼 크면 좀 더 옆으로, 인간형같으면 좀 붙어있는 식으로"):
  *  펫 상자 왼쪽 끝 = 몸 그림의 불투명한 오른쪽 끝 + PET_BODY_GAP, 거기에 자리 값(dx·dy)을 더한다. 몸 그림을 못 읽으면 CSS 기본 자리 그대로 */
+/**
+ * 한 번 맞춘 펫 → 그때 잰 몸(종이인형이면 그 기본 정지 모습 스냅숏 함수, 아니면 그림 요소)과 몸 상자 크기 (C.563).
+ * 같은 몸이면 다시 재지 않는다 — 대기·걷기·공격 동작 중 다시 불려도 펫 자리는 그대로. 몸이 바뀌면(진화·외형·스킨) 새로 잰다
+ */
+const fittedTo = new WeakMap<HTMLElement, { key: object; w: number }>();
+
 export function fitPetToBody(buddy: HTMLElement): boolean {
   const host = buddy.parentElement;
   if (!host || !buddy.isConnected) return false;
@@ -116,15 +123,28 @@ export function fitPetToBody(buddy: HTMLElement): boolean {
   // 2번째 칸 펫 (C.506 추성): 1번째 펫 바로 오른쪽
   const lead = buddy.classList.contains('bha-pet--second') ? host.querySelector<HTMLElement>('.bha-pet:not(.bha-pet--second)') : null;
   if (lead) {
+    const lf = fittedTo.get(lead);
+    if (!lf) return false; // 1번째 펫이 자리를 잡은 뒤에 (그 자리 기준)
+    const done = fittedTo.get(buddy);
+    if (done && done.key === lf.key && done.w === lf.w) return true;
     buddy.style.translate = 'none';
     const lr = lead.getBoundingClientRect();
     const shift = (ax.lo(lr) + ax.len(lr) - ax.lo(buddy.getBoundingClientRect())) * ax.k + PET_BODY_GAP;
     buddy.style.translate = `${Math.round(shift)}px ${dy}px`;
+    fittedTo.set(buddy, lf);
     return true;
   }
   const art = [...host.querySelectorAll<HTMLCanvasElement | HTMLImageElement>('canvas.bha-rigcanvas, img')].find((e) => !e.closest('.bha-pet'));
-  const span = art ? opaqueSpanX(art) : null;
-  if (!art || !span) return false;
+  if (!art) return false;
+  // 종이인형은 지금 그려진 동작 프레임이 아니라 기본 정지 모습(대기 첫 자세)으로 잰다 (C.563, GDD 9-4) — 부위 그림이 오기 전이면 나중에
+  const restFn = rigRestSnapshot(art);
+  if (restFn && art.tagName === 'IMG') return false; // 종이인형 정지 그림 img 는 곧 캔버스로 바뀐다 — 상자 크기가 달라 캔버스가 붙은 뒤에 잰다
+  const key: object = restFn ?? art;
+  const done = fittedTo.get(buddy);
+  if (done && done.key === key && done.w === art.offsetWidth) return true;
+  const still = restFn ? restFn() : art;
+  const span = still ? opaqueSpanX(still) : null;
+  if (!span) return false;
   const ar = art.getBoundingClientRect();
   if (!ax.len(ar)) return false;
   const mirrored = new DOMMatrixReadOnly(getComputedStyle(art).transform).a < 0;
@@ -132,5 +152,6 @@ export function fitPetToBody(buddy: HTMLElement): boolean {
   buddy.style.translate = 'none';
   const shift = (bodyRight - ax.lo(buddy.getBoundingClientRect())) * ax.k + PET_BODY_GAP;
   buddy.style.translate = `${Math.round(shift + dx)}px ${dy}px`;
+  fittedTo.set(buddy, { key, w: art.offsetWidth });
   return true;
 }

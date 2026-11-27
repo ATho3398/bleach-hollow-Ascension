@@ -7,7 +7,7 @@ describe('C.487 펫이 몸 너비에 맞춰 옆에', () => {
   it('틈 = 4px, petBuddy 가 붙인 뒤 여러 번 맞춘다', () => {
     expect(PET_BODY_GAP).toBe(4);
     const src = readFileSync('src/ui/bha/pet.ts', 'utf8');
-    expect(src).toContain('for (const ms of [0, 150, 500, 1200, 2500]) window.setTimeout(again, ms)');
+    expect(src).toContain('for (const ms of [0, 150, 500, 1200, 2500, 5000]) window.setTimeout(again, ms)'); // C.563: 5초 하나 더 (같은 몸이면 다시 재지 않음)
     expect(src).toContain("'canvas.bha-rigcanvas, img'");
   });
   it('붙어 있지 않은 펫은 건드리지 않는다', () => {

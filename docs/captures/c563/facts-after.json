@@ -1,0 +1,45 @@
+[
+  {
+    "body": "hollow-t1",
+    "distinct": [
+      "38px -42px"
+    ],
+    "changesAfterFirstFit": 0,
+    "late": "38px -42px",
+    "shotAt": [
+      "38px -42px",
+      "38px -42px"
+    ],
+    "errors": []
+  },
+  {
+    "body": "hollow-gillian",
+    "distinct": [
+      "22px -42px"
+    ],
+    "changesAfterFirstFit": 0,
+    "late": "22px -42px",
+    "shotAt": [],
+    "errors": []
+  },
+  {
+    "body": "hollow-adjuchas",
+    "distinct": [
+      "41px -42px"
+    ],
+    "changesAfterFirstFit": 0,
+    "late": "41px -42px",
+    "shotAt": [],
+    "errors": []
+  },
+  {
+    "body": "shinigami-t1",
+    "distinct": [
+      "-29px -50px"
+    ],
+    "changesAfterFirstFit": 0,
+    "late": "-29px -50px",
+    "shotAt": [],
+    "errors": []
+  }
+]

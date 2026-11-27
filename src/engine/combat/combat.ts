@@ -1083,6 +1083,8 @@ export interface CombatScript {
   /** 마무리 체인 (GDD 146장): holdHit 동안 준 피해는 바로 들어가지 않고 held 에 맡겨 둔다 → 연출이 닿는 순간 scriptLandHit 이 넣는다 */
   holdHit?: boolean;
   held?: { amount: number; finisher: Finisher } | null;
+  /** ④·⑧ 각본 블록의 계열 id (GDD 13절 v6.243, C.562 — 종족 설정 tutorial.blockFamily 를 만들 때 넣는다). 없으면 출현표 기본 블록 계열 */
+  blockFamily?: string;
 }
 
 export interface LiberationState {
