@@ -21,7 +21,7 @@ import {
   type EvolutionState,
 } from '../evolution';
 import type { AbsorbRecord, BattleRecord, RunRecord } from '../runLog';
-import { rollBattleFoodMult, type FoodSettlement } from '../food';
+import { lapFoodChance, lapFoodRoll, pickBattleFood, type FoodSettlement } from '../food';
 import {
   applyTraitBoosts, combineMods, drawDraft, makeEvent, mutationMods, rollMutation, synergyAt, synergyMods, upgradeMods, type EventPending, type VariantMods,
 } from './variants';
@@ -852,6 +852,9 @@ export function advance(exp: ExpeditionState, meet?: WandererMeetCtx): StepEvent
   // 이벤트 타일 (GDD 25-5 ③): 내용을 미리 굴려 두고 고르기를 기다린다
   if (tile?.effect.type === 'event') {
     exp.eventPending = makeEvent(exp.varRng, id!, cell, exp);
+    // 보물 먹이도 바퀴 먹이 (GDD 4-5 v6.225): 이 바퀴에 이미 나왔거나 바퀴 굴림을 못 넘으면 그 자리는 골드 보물 (창에 미리 보이는 내용이라 지금 정한다)
+    const tr = exp.eventPending.treasure;
+    if (tr?.food && !lapFoodOpen(exp, lapFoodBaseMult(exp))) exp.eventPending.treasure = { gold: treasureGold(exp.varRng) };
     exp.phase = 'event';
     return { kind: 'event', cell, event: tile.effect.event };
   }
@@ -1024,6 +1027,31 @@ function dyingReward(exp: Pick<ExpeditionState, 'care'>): number {
   return exp.care?.dying ? BALANCE.provisional.nest.care.dying.rewardMult : 1;
 }
 
+/** 이 바퀴에 모험 출처에서 먹이가 이미 나왔나 (GDD 4-5 v6.225 '모험 먹이 = 바퀴당 0~1개', C.550): 이 바퀴 먹이 전리품 수 − 원정 상인에서 산 먹이 수 > 0.
+ *  상태를 따로 두지 않는다(원정 중간 저장 형식 그대로) — 산 먹이는 이벤트 기록(buy:food:)으로 뺀다 */
+export function lapFoodTaken(exp: Pick<ExpeditionState, 'lap' | 'foodLoot' | 'variantLog'>): boolean {
+  const got = exp.foodLoot.filter((a) => a.lap === exp.lap).length;
+  if (got === 0) return false;
+  const bought = (exp.variantLog?.events ?? []).filter((e) => e.lap === exp.lap && e.event === 'merchant' && e.choice.startsWith('buy:food:')).length;
+  return got > bought;
+}
+
+/** 바퀴 먹이 기본 배율 (전투 밖 출처 — 보물·휴식 타일): 난이도·연속 × 빈사 × 이어하기. 전투는 타일·함정까지 든 mods.rewardMult */
+function lapFoodBaseMult(exp: ExpeditionState): number {
+  return difficultyRewardMultiplier(exp.difficulty, exp.streak) * dyingReward(exp) * lapRewardMult(exp.lap);
+}
+
+/** 이 출처에서 바퀴 먹이가 나오나 (GDD 4-5 v6.225): 이 바퀴에 아직 안 나왔고 바퀴 굴림(원정 시드·바퀴 — 그 바퀴 모든 출처가 같은 값) < 출처 확률 */
+function lapFoodOpen(exp: ExpeditionState, mult: number, bonus = 0): boolean {
+  return !lapFoodTaken(exp) && lapFoodRoll(exp.seed, exp.lap) < lapFoodChance(mult, bonus);
+}
+
+/** 골드 보물 금액 (먹이 대신일 때) */
+function treasureGold(rng: Rng): number {
+  const [lo, hi] = TV.events.treasure.gold;
+  return lo + nextInt(rng, hi - lo + 1);
+}
+
 /** 폭주 중인가: 이번 원정에서 폭주(호로화)가 일어났다 (원정당 1회) */
 export function inFrenzy(exp: Pick<ExpeditionState, 'breakthrough'>): boolean {
   return exp.breakthrough !== null;
@@ -1127,7 +1155,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     // 보스 보상 (GDD 25-3): 골드·희귀 먹이 (일반 전리품 대신), 흡수 화면은 늘 열리고 보스 특성이 확정 후보. 자유 원정은 골드 × 원정 골드 배율 (GDD 37장 4번)
     const bossGold = Math.round((exp.story ? BX.reward.gold : Math.round(BX.reward.gold * difficultyGoldMultiplier(exp.difficulty, exp.streak))) * petGoldMult(exp) * lapRewardMult(exp.lap));
     exp.goldLoot.push({ amount: bossGold, lap: exp.lap });
-    exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap });
+    if (!lapFoodTaken(exp)) exp.foodLoot.push({ food: BX.reward.food as FoodId, lap: exp.lap }); // 보스 먹이 = 확정 보상이지만 바퀴당 1개 상한 안 (GDD 4-5 v6.225)
     exp.victoriesThisLap++;
     exp.absorbOffer = buildOffer(exp.rng, pending.enemy, exp.build, battle, mods.absorbBonus, getBoss(pending.boss).trait, 1, offerElementsOf(pending.boss, pending.enemy.element));
     markSpecialGates(exp, exp.absorbOffer, elite, true);
@@ -1135,8 +1163,9 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
     exp.phase = 'absorb';
     return record;
   }
-  // 먹이 전리품 (GDD 23-1): 일반 50% 1개, 강적 확정 1개 + 30% 1개 더. 시너지·변이·상위 타일·함정 배율은 굴림 횟수로 (GDD 25-5)
-  for (const food of rollBattleFoodMult(exp.lootRng, elite, getGround(exp.groundId).food, mods.rewardMult * mods.foodMult * (1 + sortieMods(exp.sortie).drop), mods.foodChanceBonus)) exp.foodLoot.push({ food, lap: exp.lap }); // 출정품 드롭 (241-D 5)
+  // 먹이 전리품 = 바퀴당 0~1개 (GDD 4-5 v6.225, C.550 — 옛 '일반 50% 1개·강적 확정 1개 + 30%'·배율 = 굴림 횟수 대체): 이 바퀴에 아직 안 나왔고 바퀴 굴림 < 확률이면 1개.
+  // 확률 = foodPerLap × (난이도·이어하기·빈사·타일·함정 = mods.rewardMult) × 시너지·변이 foodMult × 출정품 드롭 (241-D 5) + 시너지 확률 더하기. 품목 = 사냥터 표(일반 적·강적)
+  if (lapFoodOpen(exp, mods.rewardMult * mods.foodMult * (1 + sortieMods(exp.sortie).drop), mods.foodChanceBonus)) exp.foodLoot.push({ food: pickBattleFood(exp.lootRng, elite, getGround(exp.groundId).food), lap: exp.lap });
   // 골드 (C.57): 일반·강적 바탕값 × 보상·골드 배율
   const gold = Math.round((elite ? GX.elite : GX.normal) * mods.rewardMult * mods.goldMult * petGoldMult(exp));
   if (gold > 0) (exp.goldLoot ??= []).push({ amount: gold, lap: exp.lap });
@@ -1359,8 +1388,8 @@ export function finishRest(exp: ExpeditionState): void {
   exp.restMult = 1;
   exp.restSpring = false;
   exp.elapsedSeconds += PX.restTimeTiles * EX.restSecondsPerTile;
-  // 휴식 타일을 지나면 간식 +1 (GDD 23-1)
-  for (let i = 0; i < FX.restSnack; i++) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
+  // 휴식 타일을 지나면 간식 (GDD 23-1) — 바퀴 먹이 (GDD 4-5 v6.225): 이 바퀴에 아직 안 나왔고 바퀴 굴림을 넘으면 1개
+  if (FX.restSnack > 0 && lapFoodOpen(exp, lapFoodBaseMult(exp))) exp.foodLoot.push({ food: 'snack', lap: exp.lap });
   exp.phase = 'moving';
 }
 
@@ -1475,12 +1504,14 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
     }
   } else if (ev.event === 'treasure') {
     const t = ev.treasure ?? {};
-    if (t.food) {
+    if (t.food && !lapFoodTaken(exp)) {
       exp.foodLoot.push({ food: t.food, lap: exp.lap });
       log = `food:${t.food}`;
     } else {
-      exp.goldLoot.push({ amount: t.gold ?? 0, lap: exp.lap });
-      log = `gold:${t.gold ?? 0}`;
+      // 먹이 보물인데 이 바퀴에 이미 먹이가 나왔으면(옛 중간 저장 등) 골드로 (GDD 4-5 v6.225)
+      const gold = t.food ? treasureGold(exp.lootRng) : t.gold ?? 0;
+      exp.goldLoot.push({ amount: gold, lap: exp.lap });
+      log = `gold:${gold}`;
     }
     text = '보물을 챙겼다';
   } else if (ev.event === 'trap') {
