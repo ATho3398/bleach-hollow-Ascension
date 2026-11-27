@@ -75,6 +75,7 @@ describe('C.559 튜토리얼 각본 블록 = 탄 계열 (GDD 13절 v6.240)', () 
     const src = readFileSync('src/engine/combat/script.ts', 'utf8');
     expect(src).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
     expect(src).toMatch(/TS\.blockFamily/);
-    expect(readFileSync('docs/GDD.md', 'utf8')).toMatch(/튜토리얼 각본 전투의 블록 = 탄 계열/);
+    // 옛 값: /튜토리얼 각본 전투의 블록 = 탄 계열/ — 마스터 GDD v6.244(13절 '호로 탄 / 사신 참')로 문구가 바뀌어 둘 다 받는다 (C.561 합치며, 코딩360)
+    expect(readFileSync('docs/GDD.md', 'utf8')).toMatch(/튜토리얼 각본 전투의 블록 = (탄 계열|호로 탄)/);
   });
 });
