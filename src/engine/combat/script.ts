@@ -22,8 +22,9 @@ const WAIT: Partial<Record<ScriptStage, ScriptWait>> = {
   'auto-intro': 'ack', 'guard-now': 'guard', 'guard-ok': 'ack', hurt: 'use', nice: 'ack', 'lib-now': 'liberate', 'lib-explain': 'ack', 'chain-use': 'use',
 };
 
-export function newCombatScript(): CombatScript {
-  return { stage: 'auto-intro', hits: 0, ticks: 0, spawned: 0, allow: [], leaveHpFraction: TS.leaveHpFraction, heavyHits: 0, lethal: false };
+/** blockFamily = 종족 설정 tutorial.blockFamily (GDD 13절 v6.243, C.562 — 호로 탄·사신 참). 엔진은 종족을 모르고 이 값만 쓴다 */
+export function newCombatScript(blockFamily?: string | null): CombatScript {
+  return { stage: 'auto-intro', hits: 0, ticks: 0, spawned: 0, allow: [], leaveHpFraction: TS.leaveHpFraction, heavyHits: 0, lethal: false, ...(blockFamily ? { blockFamily } : {}) };
 }
 
 /** 단계가 무엇을 기다리는가 (흐르는 단계면 null). 화면이 카드 [이전]의 앞 장을 고를 때 쓴다 (GDD 229장 1 — 기다리는 카드는 건너뜀) */
@@ -52,12 +53,12 @@ function enter(s: CombatState, stage: ScriptStage): void {
   if (stage === 'done') s.script = undefined; // 끝: 혹시 처치하지 못했으면 보통 전투로 이어진다
 }
 
-/** 각본 블록: 출현표의 기본 공격 블록(없으면 첫 공격 블록). 계열 = tutorialScript.blockFamily(GDD 13절 v6.240 — 탄 계열 키, C.559)가 그 몸의 계열 표에 있으면 그것,
- *  없으면 그 블록의 계열 → 종족 계열 표의 첫 계열 (난수 없이) */
+/** 각본 블록: 출현표의 기본 공격 블록(없으면 첫 공격 블록). 계열 = 각본의 blockFamily(종족 설정 tutorial.blockFamily — GDD 13절 v6.243, C.562)가 그 몸의 계열 표에 있으면 그것,
+ *  없으면 그 블록의 계열 → 종족 계열 표의 첫 계열 (난수 없이). 옛 C.559 balance 공통 키(tutorialScript.blockFamily)는 삭제 */
 export function scriptBlockOf(s: CombatState): { traitId: string; family: string | null } {
   const entries = spawnTableOf(s.params).entries.filter((e) => e.kind === 'skill' && e.source?.role === 'attack');
   const e = entries.find((x) => x.source!.id === BASIC_SKILL_ID) ?? entries[0];
-  const want = TS.blockFamily;
+  const want = s.script?.blockFamily;
   const family = (want && want in s.params.families ? want : null) ?? e?.family ?? Object.keys(s.params.families)[0] ?? null;
   return { traitId: e?.source?.id ?? BASIC_SKILL_ID, family };
 }

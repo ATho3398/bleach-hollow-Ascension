@@ -1,6 +1,7 @@
 // 원정 엔진 (GDD 1장, 2-1, 6장). 종족 무관 순수 로직. 화면은 상태만 읽고, 시간(칸당 5초·배속)은 화면이 돌린다.
 // 상태는 평범한 객체(rng 포함)라 structuredClone 으로 복제할 수 있고, 같은 시드 = 같은 원정.
 
+import { getFaction } from '../../data/factions';
 import { BALANCE } from '../../config/balance';
 import { scaleEnemy } from '../../data/enemies';
 import { applyDifficultyToParams, clampDifficulty, clampStreak, difficultyEnemyScale, difficultyGoldMultiplier, difficultyRewardMultiplier, recommendedDifficulty, scaleEv, streakEnemyFactor } from '../difficulty';
@@ -1043,7 +1044,7 @@ export function startBattle(exp: ExpeditionState): CombatState {
   // 이어 온 체력 (GDD 107장 1번): 함정의 시작 체력 감소는 이어 온 체력에 곱한다
   const params = { ...exp.pending.params, playerStartHpFraction: (exp.pending.params.playerStartHpFraction ?? 1) * hpFractionOf(exp) };
   // 첫 원정 튜토리얼의 전투 = 각본 전투 (GDD 123장 5, C.199)
-  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}), ...(exp.tutorial ? { script: newCombatScript() } : {}) });
+  return createCombat(exp.pending.seed, { enemy: exp.pending.enemy, params, ...(boss ? { boss: bossSetupOf(boss) } : {}), ...(exp.tutorial ? { script: newCombatScript(getFaction(exp.factionId).tutorial?.blockFamily) } : {}) }); // 각본 블록 계열 = 종족 설정 (GDD 13절 v6.243, C.562)
 }
 
 /** 지금 이어 온 체력 비율 (GDD 107장): 옛 중간 저장에 없으면 1 */
