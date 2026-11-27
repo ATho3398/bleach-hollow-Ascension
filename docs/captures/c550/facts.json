@@ -1,0 +1,21 @@
+{
+ "errors": [],
+ "low": {
+  "seed": 4,
+  "roll": 0.0034369330387562513,
+  "phase": "nest-choice",
+  "wins": 2,
+  "food": [
+   "roast@1"
+  ],
+  "gain": "이번 바퀴: 승리 2 · 먹이 1 · 골드 +16"
+ },
+ "high": {
+  "seed": 18,
+  "roll": 0.9841040053870529,
+  "phase": "nest-choice",
+  "wins": 2,
+  "food": [],
+  "gain": "이번 바퀴: 승리 2 · 골드 +16"
+ }
+}
