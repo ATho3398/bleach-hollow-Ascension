@@ -1350,8 +1350,8 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - 캡처 `docs/captures/c545/`(1배 3장, `scripts/c545-proof.cjs`, facts.json): 01 PC 전투 '날쌘형 호로'(물 속공) · 02 PC 적 도감 호로·날쌘형 호로(노멀/물/불/허무 속성) · 03 폰 적 도감.
 - 검증: typecheck · 관련 테스트(enemies·c348-size·c330·c332·c363) · 새 테스트 · npm test 4444 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
 
-## C.546 — 적 길리안 눈동자 = 그 적 속성 색 (GDD 15-5 v6.215 → v6.219, S-23, 코딩353)
-세이브 형식·BALANCE 그대로(그림 표시만). GDD v6.219(첫 줄 + 20절 한 줄).
+## C.546 — 적 길리안 눈동자 = 그 적 속성 색 (GDD 15-5 v6.215 → v6.220, S-23, 코딩353)
+세이브 형식·BALANCE 그대로(그림 표시만). GDD v6.220(첫 줄 + 20절 한 줄).
 - **이유**: 사용자 2026-11-27 "그리고 길리안 있지. 적 길리안도 속성에 따라서 눈동자색 바꿔." → 마스터AT 15절 v6.215.
 - **몸 단위 표**: 새 `src/data/art/enemyTint.json` = 몸 → 그 적 속성 색으로 바꿀 도트 색. 지금 `hd`(길리안 몸 — gillian-base·gillian-cyclops 모두) = 눈동자 `#e21014`(부위 그림 hd/head.png 2픽셀·hd-cyclops/head.png 4픽셀, 다른 부위엔 없음). 속성 색 = 그 적 속성의 `elements.json` color 토큰(`--bha-el-*`, 새 색 없음).
 - **그림 목록**: `art/manifest.ts` `enemyTintOf(적 id, 외형)` — 외형의 몸이 표에 있고 적 테이블의 적이면 `ArtUrls.tint = {from, token}`. `enemyArt` 만 붙인다 → 내 캐릭터 2단계 길리안(char.hollow.2·skin.gillian*)은 안 바뀜. 몸 단위라 길리안 몸 적이 늘어도 자동.
