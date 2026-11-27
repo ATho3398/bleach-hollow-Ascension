@@ -47,7 +47,7 @@ import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, 
 import { rebirthConfirmView, rebirthFinalText, rebirthView } from './rebirthView';
 import { beginTraining, trainingGate, trainingLevel, type TrainingGameId } from '../engine/training';
 import { trainingPlayView, trainingResultView, trainingView } from './trainingView';
-import { resetTrainingHallPick, trainingHallView } from './trainingHallView';
+import { trainingHallView } from './trainingHallView';
 import type { RankHolderDef } from '../data/ranks';
 import { ascensionResultView, rankLabel, rankLockedText, rankResultView, rankView } from './rankView';
 import { rankUnlocked } from '../engine/rank';
@@ -113,6 +113,7 @@ import type { ArtUrls } from '../data/art/manifest';
 import { showDexToasts, showTutorialToasts, tutorialGoalsView } from './tutorialGoalsView';
 import { showToast } from './bha/nest';
 import { wandererChip, wandererResultLine, type WandererChip } from './bha/wandererChip';
+import { cornerKindOf, placeCorner } from './bha/corner';
 import { wandererRemainingMs } from '../engine/wanderer';
 import { gearToastWanted } from '../config/notify';
 import { isGearGrade } from '../data/gear';
@@ -274,8 +275,10 @@ export function startApp(host: HTMLElement): void {
       if (top === 'wanderer') nav.back(); // 열려 있던 우라하라 창 → 시장(우라하라 없이 다시 그림)
       else if (top === 'room' || top === 'worldmap' || top === 'market') nav.top!.render();
     }
-    // 자리: 걷기 = 오른쪽 위 버튼 줄 앞, 전투 = 위 오른쪽 시간·버튼 줄 앞, 우라하라 창 = 재화 줄 앞 (겹치지 않게 그 줄 안에), 그 밖 = 화면 머리 줄 오른쪽
-    const inline = root.querySelector<HTMLElement>('.bha-exp__cornerrow, .bha-v2bar, .bha-shop__wallet');
+    tickCorner();
+    // 자리: 걷기 = 오른쪽 위 버튼 줄 앞, 전투 = 위 오른쪽 시간·버튼 줄 앞 (겹치지 않게 그 줄 안에), 그 밖 = 오른쪽 위 재화 칸 안 왼쪽 (GDD 14-4 v6.242, C.561 — 옛 '우라하라 창 = 재화 줄 앞'도 이 칸)
+    const corner = root.querySelector<HTMLElement>('.bha-corner');
+    const inline = root.querySelector<HTMLElement>('.bha-exp__cornerrow, .bha-v2bar') ?? corner;
     const host = inline ?? root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
     const id = nav.top?.id ?? '';
     // 모험 결산 화면은 제 한 줄(C.558 wandererResultLine)이 남은 시간을 보이니 칩은 뺀다 (같은 시계 두 개 방지)
@@ -295,6 +298,13 @@ export function startApp(host: HTMLElement): void {
       else host.append(wchip.el);
     }
     wchip.set(wandererRemainingMs(s.shared.wanderer, now));
+  };
+  // ── 오른쪽 위 재화 칩 (GDD 14-4 v6.242, C.561): 모험 밖 모든 화면 = 골드·영옥, 수련장 화면들 = 수련권(지금 트랙). 화면이 바뀔 때·1초마다·저장할 때 고친다 ──
+  const tickCorner = (): void => {
+    const app = root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
+    const kind = save && slot !== 0 ? cornerKindOf(nav.top?.id) : null;
+    if (!app || !kind) return void root.querySelector('.bha-corner')?.remove();
+    placeCorner(app, kind, save!);
   };
   /** 칩을 누름: 시장의 우라하라 창으로 (시장에 있으면 창만 연다) */
   const goWanderer = (faction: FactionConfig, s: SaveData): void => {
@@ -443,6 +453,7 @@ export function startApp(host: HTMLElement): void {
     }
     touchSlot(store, slot);
     cloud?.schedule(); // 로그인 중이면 클라우드에도 (묶어서, GDD 196장 3)
+    tickCorner(); // 오른쪽 위 재화 칩 값 (GDD 14-4 v6.242, C.561)
   };
   const storageWarned = new Set<string>();
   // 새 버전 (GDD 184장 3, C.283): 처음 화면(게임 시작 전 — 슬롯·종족 고르기)이면 자동 다시 시작. 다시 시작 직전 저장은
@@ -1491,7 +1502,7 @@ export function startApp(host: HTMLElement): void {
       // 수련장 물건 (GDD 241-C 2·3, C.394): 책장 아래(옛 진급 시험 자리)
       // 수련장 화면 = 특수던전식 목록 (GDD 8-9 v6.205, C.542): 왼쪽 훈련 인형·수련, 오른쪽 그림·설명·[시작]. 처음 = 훈련 인형 골라짐
       // (옛 C.498 '누르면 바로 전투 + 설정 창'·머리 제목 토글을 대체 — 훈련 인형 [시작] 뒤 흐름은 그대로)
-      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => { resetTrainingHallPick(); open('practice', () => practiceScreen(faction)); }); },
+      onTraining: () => { if (careBlocked(s)) return; askDying(s, () => open('practice', () => practiceScreen(faction))); },
       onStatus: () => open('care', () => careView(dev, faction, s, '상태', persist, { onDex: () => open('dex', () => bookView(root, faction, s, 'dex', persist)), onHelp: () => openHelp('evolution', true), onRebirth: () => open('rebirth', () => renderRebirth(faction, s)), onGear: openEquip })),
       onSwitchTrack: canSwitchFaction(s) ? switchTo : null,
       // 더보기 [캐릭터 변경] → 캐릭터 카드 창 (GDD 12-1 v6.129, C.498): 카드를 누르면 아래 전환 흐름 그대로
@@ -1565,7 +1576,7 @@ export function startApp(host: HTMLElement): void {
   function renderTraining(faction: FactionConfig, s: SaveData): void {
     trainingView(dev, faction, s, roomOf(faction).props.altar, {
       onPlay: (game) => playTraining(faction, s, game, false),
-      onAscend: () => !careBlocked(s) && open('ascension-battle', () => runAscensionBattle(faction), true),
+      // 옛 onAscend(이 화면 아란칼화 칸)는 수련장 카드 화면 아란칼화 카드 → askAscension (GDD 8-9 v6.242, C.561)
     });
   }
 
@@ -2618,17 +2629,31 @@ export function startApp(host: HTMLElement): void {
     round(null);
   }
 
-  // ── 수련장 화면 (GDD 8-9 v6.205, C.542): 특수던전식 목록 — 훈련 인형 [시작] = 적 설정 창 전투(테스트 전투와 같은 흐름, C.471), 수련 [시작] = 수련 화면.
-  //    설정 창 [나가기] = 이 화면(nav.pop), 이 화면 뒤로 = 방. 설정 창·빈 적 자리 뒤로 = 방, [그만두기] = 설정 창 (v6.194 C.534 그대로) ──
+  // ── 수련장 화면 (GDD 8-9 v6.242, C.561 — 옛 C.542 특수던전식 목록 대체): 카드 3장 — 본능 수련 = 종목 목록 화면, 아란칼화 = 도전 확인 창 → 보스전(임시),
+  //    훈련 인형 = 적 설정 창 전투(테스트 전투와 같은 흐름, C.471). 설정 창 [나가기] = 이 화면(nav.pop), 이 화면 뒤로 = 방.
+  //    설정 창·빈 적 자리 뒤로 = 방, [그만두기] = 설정 창 (v6.194 C.534 그대로) ──
   function practiceScreen(faction: FactionConfig): void {
     if (!save) return;
     const s = save;
+    const access = ascensionAccess(s);
     trainingHallView(root, faction, {
       altarName: roomOf(faction).props.altar, trainLocked: trainLocked(s),
       points: s.training.points, pointsMax: BALANCE.provisional.training.pointsToComplete, practiceCount: s.evolution.practices ?? 0,
+      ascend: access.ok ? 'open' : access.reason,
     }, {
-      onPractice: () => practiceArena(faction),
       onTrain: () => { if (!trainLocked(s) && !careBlocked(s)) open('training', () => renderTraining(faction, s)); },
+      onAscend: () => askAscension(faction, s),
+      onPractice: () => practiceArena(faction),
+    });
+  }
+
+  /** 아란칼화(구상화) 도전 확인 창 (GDD 8-9 v6.242 '아란칼화 카드 → 도전 확인 흐름', 지금 내용은 8-5 임시 보스전): 설명 + 상대·져도 잃는 것 없음 → [도전] */
+  function askAscension(faction: FactionConfig, s: SaveData): void {
+    if (careBlocked(s) || !ascensionAccess(s).ok) return;
+    const A = faction.ascension;
+    confirmDialog({
+      title: `${A.name}에 도전`, body: `${A.desc} 상대: ${A.foe} · 져도 잃는 것이 없다.`, yes: '도전', no: '그만둔다',
+      onYes: () => { if (!careBlocked(s)) open('ascension-battle', () => runAscensionBattle(faction), true); },
     });
   }
 

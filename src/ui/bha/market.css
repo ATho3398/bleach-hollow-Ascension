@@ -25,7 +25,8 @@
 /* 사용자 2026-11-03 캡처 점검: 캐릭터는 물건 그림 앞 (시안 S03 의 '지도 뒤'보다 사용자 말이 먼저) */
 .bha-market__char { z-index: 2; }
 /* 우라하라 남은 시간 칩 (GDD 5-5, C.549): 와 있는 동안 화면 머리 줄 오른쪽 — 얼굴 도트 + 'mm:ss'. 공용 칩 모양에 황동 테만 (새 색 없음) */
-.bha-app > .bha-wchip { position: absolute; top: var(--bha-sp-4); right: max(var(--bha-gutter), env(safe-area-inset-right, 0px)); z-index: var(--bha-z-sticky); gap: var(--bha-sp-2); padding-left: var(--bha-sp-2); border-color: var(--bha-tint-brass); color: var(--bha-text-1); font-variant-numeric: tabular-nums; }
+.bha-app > .bha-wchip { position: absolute; top: var(--bha-sp-4); right: max(var(--bha-gutter), env(safe-area-inset-right, 0px)); z-index: var(--bha-z-sticky); }
+.bha-app > .bha-wchip, .bha-corner > .bha-wchip { gap: var(--bha-sp-2); padding-left: var(--bha-sp-2); border-color: var(--bha-tint-brass); color: var(--bha-text-1); font-variant-numeric: tabular-nums; }
 button.bha-wchip { cursor: pointer; font: inherit; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 .bha-wchip.is-static { pointer-events: none; }
 .bha-wchip__face { width: 18px; height: 18px; image-rendering: pixelated; flex: none; }
@@ -41,3 +42,13 @@ button.bha-wchip { cursor: pointer; font: inherit; font-size: var(--bha-fs-xs); 
 .bha-wresult__time { flex: none; font-variant-numeric: tabular-nums; }
 .bha-wresult.is-gone { border-color: var(--bha-line-1); color: var(--bha-text-3); }
 .bha-wresult.is-gone .bha-wresult__face { opacity: 0.55; }
+
+/* 오른쪽 위 재화 칩 (GDD 14-4 v6.242, C.561): 모험 밖 모든 화면 머리 줄 오른쪽 끝 = 골드·영옥(수련장 화면들 = 수련권). 우라하라 칩은 이 칸 안 왼쪽.
+   머리 줄이 없는 화면(방·월드맵·시장)은 LCD 오른쪽 위 같은 자리에 띄운다(is-float). 칩 = 상점·가방 머리와 같은 부품 (새 색 없음) */
+.bha-corner { flex: none; display: flex; align-items: center; gap: var(--bha-sp-2); margin-left: auto; }
+.bha-corner.is-float { position: absolute; top: var(--bha-sp-4); right: max(var(--bha-gutter), env(safe-area-inset-right, 0px)); z-index: var(--bha-z-sticky); }
+.bha-corner .bha-chip .bha-icon { width: 16px; height: 16px; }
+.bha-corner .bha-chip--gold .bha-icon { color: var(--bha-sp); }
+.bha-corner .bha-chip--jade .bha-icon { color: var(--bha-tint-violet); }
+.bha-corner .bha-chip--ticket .bha-icon { color: var(--bha-accent); }
+.bha-corner .bha-num { color: var(--bha-text-1); }

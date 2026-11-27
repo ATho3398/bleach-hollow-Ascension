@@ -221,7 +221,8 @@ describe('241-C 2·3 수련장 = 홈, 번호 쟁탈전 = 월드맵', () => {
     // 옛 값: trainingView 의 머리 제목 토글에서 "{ id: 'practice'" 이 "{ id: 'train'" 보다 앞. C.542(GDD 8-9 v6.205): 수련장 목록 화면에서 같은 순서
     const tv = read('src/ui/trainingHallView.ts');
     expect(tv.indexOf("id: 'practice'")).toBeGreaterThan(-1);
-    expect(tv.indexOf("id: 'practice'")).toBeLessThan(tv.indexOf("id: 'train'"));
+    // 옛 값(C.542): 목록에서 훈련 인형이 수련보다 앞 — C.561(GDD 8-9 v6.242): 카드 순서 = 본능 수련 · 아란칼화 · 훈련 인형 (잠긴 카드는 건너뛰어 4단계 전엔 훈련 인형이 첫 하이라이트)
+    expect(tv.indexOf("id: 'practice'")).toBeGreaterThan(tv.indexOf("id: 'train'"));
     expect(read('src/ui/bha/viewtitle.ts')).toContain("it.classList.add('is-locked');"); // 다른 화면 토글의 자물쇠는 그대로
     expect(read('src/ui/roomView.ts')).not.toContain('rankLock');
   });

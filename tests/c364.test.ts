@@ -97,7 +97,8 @@ describe('222장 5 수련장 잠김 안내', () => {
     // 옛 값(C.394): app 에 "if (id === 'train' && trainLocked(s)) return void showToast(... trainingLockedText(faction) ...)", trainingView 에 "{ id: 'train', label: faction.training.title, locked: trainLocked },"
     // — 제목 목록의 자물쇠 + 고르면 알림. C.542(GDD 8-9 v6.205): 왼쪽 목록의 수련 항목에 자물쇠, 고르면 오른쪽에 여는 조건 + [시작] 흐리게
     const hall = read('src/ui/trainingHallView.ts');
-    expect(hall).toContain('open: !st.trainLocked, lockText: trainingLockedText(faction)');
+    // 옛 값(C.542): "open: !st.trainLocked, lockText: trainingLockedText(faction)" — C.561(GDD 8-9 v6.242): 카드 화면, 잠긴 본능 수련 카드 = 자물쇠 + 조건 한 줄
+    expect(hall).toContain("open: !st.trainLocked, lockText: st.trainLocked ? trainingLockedText(faction) : ''");
     expect(app).toContain('trainLocked: trainLocked(s),');
     const wm = read('src/ui/worldMapView.ts');
     expect(wm).toContain('if (part !== undefined) hd.onPartLocked?.(p);');

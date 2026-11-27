@@ -120,7 +120,8 @@ describe('208장 0·1·2 값이 바뀔 때 상태창은 숨기지 않고 말풍�
     expect(read('src/ui/bha/statusBox.ts')).toContain('row.dataset.gauge = c.kind');
     expect(read('src/ui/bha/statusBox.ts')).toContain("blinkGauges(box, o.blink ?? changedKeys(o.from, o.to));");
     expect(read('src/ui/lcdScreens.ts')).toContain('const blink = changedKeys(before, to);');
-    expect(read('src/ui/trainingView.ts')).toMatch(/statusFillFx\(\{[^}]*blink \}\)/);
+    // 옛 값(C.344): 수련 결과도 상태창 차오름 statusFillFx({ ... blink }) — C.561(GDD 8-9 v6.242): 화면 위에 떠서 버튼을 가려 없앰(사용자 2026-11-27)
+    expect(read('src/ui/trainingView.ts')).not.toMatch(/statusFillFx\(\{/);
     expect(read('src/ui/spaView.ts')).toContain('blinkGauges(scene,');
     const exp = read('src/ui/expeditionView.ts');
     expect(exp).toContain('blinkGauges(meters, blink);');
