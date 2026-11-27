@@ -89,7 +89,7 @@ describe('224장 2: 튜토리얼 전투 피해 = 모션 타격 순간', () => {
     scriptStep(s, { type: 'use', cell: 0 });
     const sw = drainCombatEvents(s).find((e) => e.kind === 'swing');
     // C.476 (GDD 7절 v6.106): 블록 타격 지연도 블록 모션 기준 길이 배율 — 0.3초 × (기준 0.8 ÷ 실제 1.4) (각본 전투 포함)
-    expect(blockHitDelayOf(s.params, null, 1)).toBeCloseTo(0.3 * (0.8 / 1.4), 9);
+    expect(blockHitDelayOf(s.params, null, 1)).toBeCloseTo(0.3 * (1.2 / 1.4), 9); // C.552: 기준 1.2초(1·2단계, 체인 무관) — 옛 0.3 × (0.8 ÷ 1.4)
     expect(sw && sw.kind === 'swing' ? [sw.hit.kind, sw.atTick] : null).toEqual(['block', t + hitDelayTicks(s.params, blockHitDelayOf(s.params, null, 1))]);
     expect(s.enemy.hp).toBe(hp);
     log.length = 0;

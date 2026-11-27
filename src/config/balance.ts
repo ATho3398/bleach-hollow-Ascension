@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 171; // C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개, 사용자 2026-11-27 — provisional): provisional.expedition.foodPerLap 0.5 신설 — 한 바퀴의 모험 출처(전투·보물·휴식 타일·보스) 먹이 최대 1개, 바퀴 굴림 1회(원정 시드·바퀴) < 0.5 × 배율. food.normalDropChance·eliteExtraChance 는 원정에서 안 씀(사냥터 표 검사용으로 남김). 전투 수치 그대로
+export const BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
+// 이전: BALANCE_VERSION = 171; // C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개, 사용자 2026-11-27 — provisional): provisional.expedition.foodPerLap 0.5 신설 — 한 바퀴의 모험 출처(전투·보물·휴식 타일·보스) 먹이 최대 1개, 바퀴 굴림 1회(원정 시드·바퀴) < 0.5 × 배율. food.normalDropChance·eliteExtraChance 는 원정에서 안 씀(사냥터 표 검사용으로 남김). 전투 수치 그대로
 // 이전: BALANCE_VERSION = 170; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27 — provisional): provisional.wanderer.perLap 0.001 삭제 → meetChance 0.01(칸마다)·meetChanceFromLap3 0.03·meetFromLap 3·stayMinutes 15·confirmSeconds 5. 전투 수치 그대로
 // 이전: BALANCE_VERSION = 169; // C.536 (GDD 8-7 v6.196 소로 여우불 재설계, 사용자 2026-11-24 — provisional): evoUniques t4:fire:physical hollow — 화상 문턱(여우불 5개 이상) 폐기 → 여우불 1개 이상 + 불 블록 = 화상(여우불 개수 × burn 0.03 → 0.005, 노력치 기울기 burnGrow 48 → 18), 5개 이상 + 이미 화상 = 센 화상 burnBoost(= burn × 2) 신설, 레스렉시온 burn 0.12 → 0.0075·burnBoost 0.015(옛 해방 burnGrow 덮어쓰기 삭제 — 평소 기울기 그대로, 다 키운 해방 = 다 키운 평소 ×1.5 C.527 원칙)
 // 이전: BALANCE_VERSION = 168; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종 — 수치 표는 그대로, 특성 데이터만): 혈·독 조·탄·교(계열 단계 기술) → 혈 블록·독 블록 1종(같은 블록끼리 체인, 단계 배율 = 공용 체인 배율, 위력 4.2회분 그대로)
@@ -1347,10 +1348,11 @@ export const BALANCE = {
       /** 몸동작 길이(1배 초, GDD 7-2 '빠른 간격의 모션'·'모션 중엔 평타 없음'·'블록 연속 사용 = 절충안', C.448): 몸동작만(이펙트 제외), hit = 첫 타격(앞 자르기 한도).
        *  fastMax 1.5 = 최대 빨리 감기(사용자 2026-11-13). basic·block 은 화면이 없을 때(봇·시뮬)의 기본값 = 사람형 종이인형 attack 600/300ms · skill 1400/800ms(motions.json).
        *  화면은 실제 동작 데이터로 바꿔 넣는다(attackFx motionsOf). 블록 모션이 재생 중이거나 줄을 서 있으면 평타 타이머가 멈춘다 */
-      /** blockLength (GDD 7절 v6.106 '같은 진화 단계 = 블록 모션 길이 통일', 사용자 2026-11-17 "ㅇㅇ 해" — 마스터 추천안, provisional, C.476):
-       *  블록 몸동작 총 길이(1배 초) = [1체인, 2체인, 3체인]. 모든 진화 단계·호로/사신 공통 default, 단계(tierIndex)별로 따로 둘 때 byTier['n'].
+      /** blockLength (GDD 7절 v6.226 '같은 진화 단계 = 블록 모션 길이 통일', 사용자 2026-11-27 "모션은 체인상관없이 1.2초 고정시켜 일단. 아쥬커스 달면 1초 바스트로데 0.9 아란칼 0.8초로" — provisional, C.552):
+       *  블록 몸동작 총 길이(1배 초), 체인 무관(줄에 값 하나). 1·2단계 = default 1.2 · 3단계(tierIndex 2) 1.0 · 4단계(tierIndex 3) 0.9 · 아란칼화/참백도 구상화 뒤 ascended 0.8. 두 종족 공통.
+       *  옛 C.476: default [0.8, 1.0, 1.2](1/2/3체인) · byTier {}.
        *  그림은 그대로 재생 배율만 바꾸고(실제 동작 길이 ÷ 기준 길이), 타격 시각도 같은 배율 — 엔진(평타 멈춤·타격 틱)과 화면(동작·이펙트 재생)이 같은 값. 몸 그림이 없는 몸·noMotion 블록은 0 그대로 */
-      motion: { fastMax: 1.5, basic: { total: 0.6, hit: 0.3 }, block: { total: 1.4, hit: 0.8 }, blockLength: { default: [0.8, 1.0, 1.2], byTier: {} } } as { fastMax: number; basic: { total: number; hit: number }; block: { total: number; hit: number }; blockBy?: Record<string, { total: number; hit: number }>; blockLength?: { default: readonly number[]; byTier?: Record<string, readonly number[]> }; tier?: number },
+      motion: { fastMax: 1.5, basic: { total: 0.6, hit: 0.3 }, block: { total: 1.4, hit: 0.8 }, blockLength: { default: [1.2], byTier: { '2': [1.0], '3': [0.9] }, ascended: [0.8] } } as { fastMax: number; basic: { total: number; hit: number }; block: { total: number; hit: number }; blockBy?: Record<string, { total: number; hit: number }>; blockLength?: { default: readonly number[]; byTier?: Record<string, readonly number[]>; ascended?: readonly number[] }; tier?: number },
     },
     /** 우라하라 (GDD 5-5, C.549 provisional — 사용자 2026-11-27 "모험하다가 한 스테이지당 1%? 확률로 우라하라 만나게 하고 … 모험 3바퀴째부턴 스테이지당 우라하라 만날 확률 높이고", 3% 값은 마스터 정함).
      *  자유 모험에서 길 한 칸에 들어설 때마다 meetChance(3바퀴째부터 meetChanceFromLap3)로 마주친다(펫 seekWanderer 배율을 곱함, 최대 1). 이미 와 있는 동안·튜토리얼·스토리는 안 굴린다.

@@ -51,9 +51,9 @@ function survey(n: number, extra: Partial<Parameters<typeof createExpedition>[0]
 }
 
 describe('C.550 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225)', () => {
-  it('balance: provisional expedition.foodPerLap = 0.5, BALANCE_VERSION 171', () => {
+  it('balance: provisional expedition.foodPerLap = 0.5, BALANCE_VERSION 171 이상', () => {
     expect(PX.foodPerLap).toBe(0.5);
-    expect(BALANCE_VERSION).toBe(171);
+    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(171); // C.552: 172 로 올라가 '이상'으로
     const src = readFileSync('src/config/balance.ts', 'utf8');
     expect(src).toMatch(/foodPerLap: 0\.5/);
   });
