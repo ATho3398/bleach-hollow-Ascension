@@ -1532,3 +1532,14 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **시험**: 새 `tests/c560.test.ts` 12건(효과 한 줄·얻는 곳·지운 줄·군말 / 강화 창 충분·모자람·공명 한계·50강·창 안 일괄 강화·✓ 시작 자리 / 결과 카드 실루엣 ???·조건 줄·최종 확인에 이름 없음·도감 조합 숨김·종족 분기 없음). c414·c425·c59 의 옛 기대값(상태 띠·'지금 두 캐릭터라면'·최종 확인 이름·'두 캐릭터 전 능력치')을 새 규칙으로 바꿈.
 - 캡처 `docs/captures/c560/`(1배 4장, `scripts/c560-proof.cjs`, proof.json): 01 PC 붕옥 창 · 02 PC 강화 창(기기 ▼ 로 [강화하기] → ✓ 로 열림, 선택 = 창 안 [강화]; 한 번 더 ✓ → 34강, 창이 34 → 35강으로 다시 열림) · 03 PC 합체 창(실루엣 ???) · 04 폰 796×384 붕옥 창.
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.
+
+## C.562 — 튜토리얼 각본 블록 = 호로 탄 / 사신 참 (종족 설정) (GDD 13절 v6.243 → v6.244, S-23, 코딩356)
+세이브 형식 그대로 · BALANCE_VERSION 175 → 176. GDD v6.244(13절 줄 구현 표시 + 20절 한 줄). PATCH_LABEL = C.562.
+- **이유**: 사용자 2026-11-27 "사신은 참으로 해." → 마스터AT 13절 v6.243(C.559 후속 — 사신이 귀로 나가던 것).
+- **종족 설정**: `src/data/factions/hollow.json` `"tutorial": { "blockFamily": "family-c" }`(탄) · `shinigami.json` `"tutorial": { "blockFamily": "family-a" }`(참). `FactionConfig.tutorial?.blockFamily` 신설, `parseFactionConfig` 검사 = 그 종족 families 의 id.
+- **엔진**: `CombatScript.blockFamily`(선택) · `newCombatScript(blockFamily?)` — 각본을 만들 때 넣은 값만 `scriptBlockOf` 가 쓴다(그 몸 계열 표에 없거나 값이 없으면 옛 규칙 = 출현표 기본 블록 계열). 종족 분기 없음. 넣는 곳 = 첫 모험 각본 전투(`expedition.startBattle` — `getFaction(exp.factionId).tutorial?.blockFamily`) · 도움말 '튜토리얼 다시 보기' 체험 전투(`app.ts runTutorialDemo` — `faction.tutorial?.blockFamily`).
+- **balance**: C.559 의 공통 키 `provisional.tutorialScript.blockFamily 'family-c'` 삭제.
+- **타이밍**: 각본 단계·사건 순서·처치 그대로, 두 종족 단계별 첫 멈춤 틱이 같음(계열과 무관 — c562), 각본 시험(c199·c222·c357·c367·c559) 통과. 실측(캡처): 사신 ④ 누름 → 적 체력 감소 0.73초 · ⑧ 3체인 누름 → 마지막 타격 피해 1.33초, 처치 → 승리.
+- **시험**: 새 `tests/c562.test.ts` 8건(설정 값 탄·참 / balance 키 삭제·버전 / 설정 검사 / newCombatScript 값 / 두 종족 첫 모험 각본 끝까지 [설정 계열 1체인, 3체인]·단계 순서·처치 / 두 종족 단계 틱 같음 / 체험 전투·expedition 이 설정 값을 넣음·종족 분기 없음·GDD). 고침 = `c559`(공통 키 → 종족 설정, 사신 기대 계열 family-c → family-a, 옛 기대값 주석).
+- 캡처 `docs/captures/c562/`(1배 2장, `scripts/c562-proof.cjs` — c559-proof 기반, facts.json, 도움말 체험 전투, 적 체력이 준 프레임에 정지): 01 사신 ④ 참 1체인 '발도' · 02 사신 ⑧ 참 3체인 '질풍참'(마지막 타격, 적 체력 0).
+- 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check 회귀 가드 · build.
