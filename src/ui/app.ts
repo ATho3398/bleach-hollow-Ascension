@@ -888,7 +888,7 @@ export function startApp(host: HTMLElement): void {
       params.liberationStartGauge = liberationStartGaugeOf();
     }
     // 다시 보기도 첫 원정 첫 전투와 같은 각본 전투 (GDD 123장 5, C.199 — 옛 '직접 해 보기' 대체)
-    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript() });
+    const s = createCombat(Math.floor(Math.random() * 2 ** 32), { enemy, params, script: newCombatScript(faction.tutorial?.blockFamily) }); // 각본 블록 계열 = 종족 설정 (GDD 13절 v6.243, C.562)
     setBgm('battle');
     battleView(root, faction, s, {
       tierIndex: save ? artTierIndexOf(save) : undefined,

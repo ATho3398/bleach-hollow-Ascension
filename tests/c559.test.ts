@@ -39,8 +39,9 @@ const run = (s: CombatState) => {
 };
 
 describe('C.559 튜토리얼 각본 블록 = 탄 계열 (GDD 13절 v6.240)', () => {
-  it('balance: tutorialScript.blockFamily = family-c, BALANCE_VERSION 174 이상', () => {
-    expect(TS.blockFamily).toBe('family-c');
+  it('C.562: balance 공통 키는 지움 → 종족 설정 tutorial.blockFamily (옛 기대값: TS.blockFamily = family-c), BALANCE_VERSION 174 이상', () => {
+    expect('blockFamily' in TS).toBe(false);
+    expect(getFaction('hollow').tutorial?.blockFamily).toBe('family-c');
     expect(BALANCE_VERSION).toBeGreaterThanOrEqual(174);
   });
 
@@ -52,12 +53,13 @@ describe('C.559 튜토리얼 각본 블록 = 탄 계열 (GDD 13절 v6.240)', () 
   for (const fid of ['hollow', 'shinigami']) {
     it(`${fid}: ④ 위기 블록 1개·⑧ 체인 블록 ${TS.chainLength}개 모두 family-c, 각본 끝까지 그대로 처치(3체인 마무리)`, () => {
       const s = tutorialBattle(fid);
-      expect(scriptBlockOf(s).family).toBe('family-c');
+      const want = getFaction(fid).tutorial!.blockFamily!; // C.562: 호로 family-c(탄) · 사신 family-a(참) — 옛 기대값: 두 종족 family-c
+      expect(scriptBlockOf(s).family).toBe(want);
       const { blocks, trayFamilies } = run(s);
       expect(s.status).toBe('won');
-      expect(blocks.map((b) => [b.family, b.chain])).toEqual([['family-c', 1], ['family-c', TS.chainLength]]);
+      expect(blocks.map((b) => [b.family, b.chain])).toEqual([[want, 1], [want, TS.chainLength]]);
       expect(trayFamilies.length).toBe(1 + TS.chainLength);
-      expect(trayFamilies.every((f) => f === 'family-c')).toBe(true);
+      expect(trayFamilies.every((f) => f === want)).toBe(true);
       expect(s.finisher?.kind).toBe('skill');
       expect(s.chain3Count).toBe(1);
     });
@@ -74,7 +76,7 @@ describe('C.559 튜토리얼 각본 블록 = 탄 계열 (GDD 13절 v6.240)', () 
   it('엔진에 종족 분기 없음, 기획서 13절 줄', () => {
     const src = readFileSync('src/engine/combat/script.ts', 'utf8');
     expect(src).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
-    expect(src).toMatch(/TS\.blockFamily/);
-    expect(readFileSync('docs/GDD.md', 'utf8')).toMatch(/튜토리얼 각본 전투의 블록 = 탄 계열/);
+    expect(src).toMatch(/s\.script\?\.blockFamily/); // C.562 (옛: TS.blockFamily)
+    expect(readFileSync('docs/GDD.md', 'utf8')).toMatch(/튜토리얼 각본 전투의 블록 = 호로 탄/); // v6.243 문구 (옛: '= 탄 계열')
   });
 });
