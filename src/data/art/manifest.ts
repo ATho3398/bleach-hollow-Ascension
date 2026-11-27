@@ -17,6 +17,7 @@ import { FACTIONS } from '../factions';
 import { tryGetTranscendent } from '../transcendents';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
 import { rigPackOfLook } from './rig/pose';
+import enemyBodies from '../enemies/bodies.json';
 
 /** 종이인형 여성 외형 id 꼬리 (humanoid.json looks: shinigami-base → shinigami-base-f) */
 export const RIG_FEMALE_SUFFIX = '-f';
@@ -87,8 +88,12 @@ export const HOLLOW_BRUTE_SCALE = 2.1;
 export const BRUTE_FOE_SCALE = HOLLOW_BRUTE_SCALE;
 /** 덩치 몸 적의 속성 색 (GDD 205장 3, 지금 적 그림 색 그대로) */
 export const BRUTE_ELEMENT_LOOKS: Readonly<Record<string, string>> = { kyo: 'brute-base', blood: 'brute-red', normal: 'brute-gray', earth: 'brute-brown', fire: 'brute-orange', poison: 'brute-green', thunder: 'brute-yellow', water: 'brute-blue' };
-/** 덩치 몸 적 종류 (GDD 206장 2) — swift 는 마른 몸이라 빠짐 */
-export const BRUTE_ENEMY_KINDS = ['basic', 'sturdy', 'heavy-chain', 'heavy-seal', 'stance'] as const;
+/** 덩치 몸 적 종류 (GDD 206장 2 → 6-7 v6.212): 일반 적은 몸 표(enemies/bodies.json — 적 이름도 같은 표에서 '<몸>형 호로')에서 몸 brute 인 패턴, 강적 3 패턴은 덩치가 바탕(모델 강적 표가 덮음).
+ *  몸 lean(날쌘형, 지금 swift)은 한 장 그림(enemy-<적id>.png)이라 여기서 빠진다 */
+export const BRUTE_ENEMY_KINDS: readonly string[] = [
+  ...Object.entries(enemyBodies.normal.byPattern).filter(([, body]) => body === 'brute').map(([kind]) => kind),
+  'heavy-chain', 'heavy-seal', 'stance',
+];
 const BRUTE_ENEMIES: Record<string, ArtEntry> = Object.fromEntries(Object.entries(BRUTE_ELEMENT_LOOKS).flatMap(([el, look]) => BRUTE_ENEMY_KINDS.map((k) => [`enemy.${el}-${k}`, { rig: look, scale: BRUTE_FOE_SCALE }])));
 /** 길리안(2단계 외형, 몸 hd) 배율 (GDD 219장 1): 정지 그림 키(칸의 0.37) × 2.3 ≈ 0.85 — 1단계 덩치(0.8)보다 조금 크게 */
 export const GILLIAN_SCALE = 2.3;

@@ -1,0 +1,19 @@
+{
+  "about": "일반 적 몸(모델) 표 (GDD 6-7 v6.212, 사용자 2026-11-27 \"그 모델에 따라서, 거미형 호로, 부유형 호로 이런식으로 이름붙여\"): 이름과 그림이 같이 읽는 한 곳. names = 몸 id → 표시 이름(15절 '~형'), normal.byPattern = 일반 적 패턴 → 몸 id, normal.nameFormat = 일반 적 이름({body} = 몸 이름, {name} = 적 테이블 이름 '호로'). 그림 목록(src/data/art/manifest.ts)은 몸 brute = 덩치 종이인형(속성 색), lean = 한 장 그림(enemy-<적id>.png)으로 읽는다. 두 종족 공유.",
+  "names": {
+    "brute": "덩치형",
+    "lean": "날쌘형",
+    "serpent": "뱀형",
+    "beast": "짐승형",
+    "onearm": "외팔형",
+    "spider": "거미형",
+    "spiky": "가시형",
+    "speed": "속도형",
+    "wraith": "부유형",
+    "gillian": "길리안형"
+  },
+  "normal": {
+    "nameFormat": "{body} {name}",
+    "byPattern": { "basic": "brute", "swift": "lean", "sturdy": "brute" }
+  }
+}

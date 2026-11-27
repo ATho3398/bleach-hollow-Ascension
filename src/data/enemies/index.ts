@@ -6,6 +6,7 @@ import poolRaw from './pools.json';
 import gradesRaw from './grades.json';
 import practiceRaw from './practice.json';
 import dexNamesRaw from './dexNames.json';
+import bodiesRaw from './bodies.json';
 
 /** 적 등급 표 (GDD 198장): 강적·보스 고정 등급, 도감 전용 표시 */
 export const ENEMY_GRADES = gradesRaw as { order: string[]; names: Record<string, string>; menos: string[]; menosName: string };
@@ -74,7 +75,36 @@ export function parseEnemy(r: unknown): EnemyDef {
   return r as EnemyDef;
 }
 
-export const ENEMIES: readonly EnemyDef[] = (raw as unknown[]).map(parseEnemy);
+/** 일반 적 몸(모델) 표 (GDD 6-7 v6.212): 몸 id → 표시 이름('~형'), 일반 적 패턴 → 몸. 그림 목록(art/manifest.ts)도 이 표를 읽는다 — 이름과 그림이 한 곳에서 나온다 */
+export interface EnemyBodyTable {
+  names: Record<string, string>;
+  normal: { nameFormat: string; byPattern: Partial<Record<EnemyPatternKind, string>> };
+}
+export const ENEMY_BODIES = bodiesRaw as EnemyBodyTable;
+
+/** 적 테이블(enemies.json)에 있는 id — 훈련 인형(practice.json)은 여기 없다 */
+const TABLE_IDS: ReadonlySet<string> = new Set((raw as { id?: unknown }[]).map((r) => String(r.id)));
+
+/** 몸 표를 따르는 적인가 = 적 테이블의 일반 적(테스트 적·훈련 인형 제외) */
+const followsBodyTable = (def: Pick<EnemyDef, 'id' | 'class' | 'testOnly'>): boolean => def.class === 'normal' && !def.testOnly && TABLE_IDS.has(def.id);
+
+/** 일반 적의 몸 id (패턴 → 몸). 몸 표를 따르지 않는 적(강적·보스·테스트 적·훈련 인형)은 null */
+export function normalEnemyBody(def: Pick<EnemyDef, 'id' | 'class' | 'testOnly' | 'pattern'>): string | null {
+  if (!followsBodyTable(def)) return null;
+  return ENEMY_BODIES.normal.byPattern[def.pattern?.kind ?? 'basic'] ?? null;
+}
+
+/** 일반 적 이름 = 몸 이름 + 적 테이블 이름(호로) — '덩치형 호로'. 전투·결과·로그·흡수·도감 모두 이 이름 */
+function withBodyName(def: EnemyDef): EnemyDef {
+  if (!followsBodyTable(def)) return def;
+  const body = normalEnemyBody(def);
+  const bodyName = body ? ENEMY_BODIES.names[body] : undefined;
+  if (!bodyName) throw new Error(`적 데이터 오류 (${def.id}): 몸 표(bodies.json)에 몸 이름 없음`);
+  const name = Object.fromEntries(Object.entries(def.name).map(([k, v]) => [k, ENEMY_BODIES.normal.nameFormat.replace('{body}', bodyName).replace('{name}', String(v))]));
+  return { ...def, name: name as EnemyDef['name'] };
+}
+
+export const ENEMIES: readonly EnemyDef[] = (raw as unknown[]).map(parseEnemy).map(withBodyName);
 
 /** 기본 훈련 인형 (GDD 8-9, C.471): 수련장 적 설정 창 전용 — ENEMIES·출현표·도감에 들어가지 않는다 */
 export const PRACTICE_DUMMY: EnemyDef = parseEnemy(practiceRaw.dummy);
@@ -85,20 +115,15 @@ export function getEnemy(id: string): EnemyDef {
   return e;
 }
 
-/** 적 도감 표기 규칙 (GDD 6-7 v6.210): 일반 적만 '이름(속성 속성·패턴)' — 데이터 dexNames.json */
-export const ENEMY_DEX_NAMES = dexNamesRaw as { normal: { format: string; patterns: Partial<Record<EnemyPatternKind, string>> } };
+/** 적 도감 표기 규칙 (GDD 6-7 v6.212): 일반 적만 '이름(속성 속성)' — 데이터 dexNames.json */
+export const ENEMY_DEX_NAMES = dexNamesRaw as { normal: { format: string } };
 
-/** 도감 표기를 붙이는 적 = 적 테이블의 일반 적(테스트 적·훈련 인형 제외) */
-const DEX_NAMED_IDS: ReadonlySet<string> = new Set(ENEMIES.filter((e) => e.class === 'normal' && !e.testOnly).map((e) => e.id));
-
-/** 도감에 쓰는 이름 (GDD 6-7 v6.210): 일반 적 = '호로(물 속성·기본)' 처럼 속성·패턴을 붙이고, 강적·보스·테스트 적·훈련 인형은 이름 그대로.
- *  도감 밖(전투·결과·로그·흡수)은 이 함수를 쓰지 않고 이름 그대로 보인다 — 예외는 적을 고르는 목록(수련장·테스트 모드 적 설정 창, 같은 이름 24개를 가르려고) */
-export function enemyDexName(def: Pick<EnemyDef, 'id' | 'name' | 'element' | 'pattern'>, factionId: string): string {
+/** 도감에 쓰는 이름 (GDD 6-7 v6.212): 일반 적 = '덩치형 호로(물 속성)' 처럼 속성을 붙이고(패턴 이름은 안 씀), 강적·보스·테스트 적·훈련 인형은 이름 그대로.
+ *  도감 밖(전투·결과·로그·흡수)은 이 함수를 쓰지 않고 이름 그대로('덩치형 호로') — 적을 고르는 목록(수련장·테스트 모드 적 설정 창)은 도감 표기 */
+export function enemyDexName(def: Pick<EnemyDef, 'id' | 'name' | 'element' | 'class' | 'testOnly'>, factionId: string): string {
   const name = pickFaction(def.name, factionId);
-  const rule = ENEMY_DEX_NAMES.normal;
-  const pattern = DEX_NAMED_IDS.has(def.id) ? rule.patterns[def.pattern?.kind ?? 'basic'] : undefined;
-  if (!pattern) return name;
-  return rule.format.replace('{name}', name).replace('{element}', elementName(def.element, factionId)).replace('{pattern}', pattern);
+  if (!followsBodyTable(def)) return name;
+  return ENEMY_DEX_NAMES.normal.format.replace('{name}', name).replace('{element}', elementName(def.element, factionId));
 }
 
 /** 이 적의 패턴 종류. 패턴이 없으면 기본형 */
