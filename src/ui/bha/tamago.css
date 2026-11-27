@@ -4,7 +4,7 @@
 /* 줌아웃하면 기기 바깥이 보인다: 기기 틀 바탕(무늬)을 페이지 쪽으로 옮긴다 */
 html.bha-tama-on body { background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop); }
 .bha-dev.is-tama { background: transparent; }
-.bha-dev.is-tama.is-pc { box-shadow: none; }
+.bha-dev.is-tama { box-shadow: none; }
 .bha-dev.is-tama-anim { transition: transform var(--tama-dur, var(--bha-dur-4)) var(--tama-ease, var(--bha-ease-out)); }
 
 .bha-tama { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; }  /* z-index 없음: 몸체(-1)는 버튼·LCD 밑, 뒷면·키링·조작 줄은 위 */

@@ -1,24 +1,25 @@
-// 기기 틀을 화면에 맞추는 계산 (GDD 16-6, v1.6): 폰이 가로면 그대로, 세로면 기기 전체를 90도 돌려 세로 화면을 가득 채운다.
-// 기기의 "논리 크기"(레이아웃이 보는 크기)는 항상 가로 기준이다: 가로 폰 = 뷰포트 그대로, 세로 폰 = (높이 × 너비).
-// 긴 쪽이 MIN_LOGICAL_W 보다 짧으면 논리 크기를 MIN_LOGICAL_W 기준으로 키우고 비례 축소(scale)한다.
+// 기기 틀을 화면에 맞추는 계산 (GDD 14-2 '모든 기기 같은 화면비·같은 버튼 자리', C.554): 폰·태블릿·PC 모두 기기 틀 전체를 기준 크기 844×390 비율 그대로
+// 한 배율로만 키우거나 줄여(배율 = min(화면 가로 ÷ 844, 화면 세로 ÷ 390)) 화면 가운데에 둔다. 남는 위·아래 또는 좌·우는 바깥 어두운 배경(device.css).
+// 세로로 쥔 폰은 기기 전체를 90도 돌린 뒤 같은 계산. 노치·홈 바 안전 영역은 배율 계산에서 빼고 그 안에 맞춘다.
 // 회전·축소된 화면에서는 포인터 좌표(clientX/Y)와 getBoundingClientRect 가 화면(회전된) 좌표이므로, 가로 방향 판정(블록 칸 찾기 등)은
-// toLocal / localRect 로 기기 안 좌표로 바꿔 쓴다. 순수 함수라 단위 테스트한다 (tests/viewport.test.ts).
-
-/** 이 폭(논리 px)보다 좁게는 레이아웃을 줄이지 않는다. 740 = 블록 칸 44px 기준 (dev-log C.26) */
-export const MIN_LOGICAL_W = 740;
+// toLocal / localRect 로 기기 안 좌표로 바꿔 쓴다. 순수 함수라 단위 테스트한다 (tests/viewport.test.ts, tests/c554.test.ts).
+import { BASE_H, BASE_W } from '../viewScale';
 
 export interface Fit {
   /** 세로 화면이라 기기를 90도(시계 방향) 돌려 놓았는가: 기기의 위쪽이 화면 오른쪽 */
   rotated: boolean;
-  /** 비례 축소 배율 (1 이하) */
+  /** 기기 배율 (논리 px → 화면 px) */
   scale: number;
-  /** 기기 논리 크기 (CSS px, scale 적용 전) */
+  /** 기기 논리 크기 (CSS px, scale 적용 전) — 늘 기준 크기 844×390 (그림 기기의 틀 상자가 더 크면 같은 비율로 늘린 값) */
   w: number;
   h: number;
   /** 뷰포트 크기 */
   vw: number;
   vh: number;
-  /** PC 고정 모드(GDD 17-5): 기기 왼쪽 위가 화면의 (ox, oy) 에 있고, 크기는 CSS 변수/zoom(scale)으로 키웠다. 없으면 0 */
+  /**
+   * 기기 왼쪽 위의 화면 자리(여백). 가로 = 화면 (ox, oy). 돌려 놓은 기기 = 기기 기준 방향으로 잰 여백: ox = 화면 위에서 아래로, oy = 화면 오른쪽에서 왼쪽으로.
+   * PC 고정 모드(GDD 17-5)는 크기를 zoom(scale)으로 키운다. 없으면 0
+   */
   ox?: number;
   oy?: number;
 }
@@ -30,13 +31,11 @@ export interface Insets {
   left: number;
 }
 
-/**
- * 화면의 안전 영역(노치·홈 막대, 화면 기준 px) → 기기 안 여백(논리 px).
- * 돌려 놓은 기기에서는 화면 위·오른쪽·아래·왼쪽이 기기의 오른쪽·아래·왼쪽·위가 되고, 축소했으면 그만큼 논리 px 로 키운다.
- */
-export function deviceInsets(f: Fit, s: Insets): Insets {
-  const m = f.rotated ? { top: s.right, right: s.bottom, bottom: s.left, left: s.top } : s;
-  return { top: m.top / f.scale, right: m.right / f.scale, bottom: m.bottom / f.scale, left: m.left / f.scale };
+const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
+
+/** 화면의 안전 영역(화면 기준) → 기기 기준 방향. 돌려 놓은 기기에서는 화면 위·오른쪽·아래·왼쪽이 기기의 왼쪽·위·오른쪽·아래가 된다 */
+export function rotateInsets(rotated: boolean, s: Insets): Insets {
+  return rotated ? { top: s.right, right: s.bottom, bottom: s.left, left: s.top } : s;
 }
 
 /** 뷰포트 크기를 고른다: 고정 위치 프로브(inset 0)가 재는 "지금 보이는 영역"이 있으면 그것(주소창이 접히고 펴져도 맞음), 없으면 window 크기 */
@@ -47,38 +46,48 @@ export function pickViewport(probe: { width: number; height: number } | null, wi
 
 export const IDENTITY_FIT: Fit = { rotated: false, scale: 1, w: 0, h: 0, vw: 0, vh: 0 };
 
+/** 그림 기기의 틀 상자(GDD 31장 4)가 기준 크기 안에 들어가게 하는 논리 크기 배율 (기본형·frame-v2 = 1) */
+function frameK(w: number, h: number, frame?: { w: number; h: number } | null): number {
+  return frame ? Math.min(w / frame.w, h / frame.h) : 1;
+}
+
 /**
- * frame = 그림 기기를 입었을 때 화면에 꼭 들어와야 하는 상자(논리 px, GDD 31장 4 — 화면 구멍 + 버튼 4개). 있으면 그 상자가 가로·세로 모두 들어가게 줄이고
- * 논리 크기는 뷰포트 비율 그대로 늘린다(남는 곳은 기기 그림이 채운다). 없으면(기본형) 지금처럼 MIN_LOGICAL_W 기준
+ * 터치 폰·태블릿(과 기준 크기보다 작은 창) 맞춤: 기기 전체(기준 844×390)를 한 배율로 키우거나 줄여 안전 영역 안 가운데에 둔다.
+ * frame = 그림 기기를 입었을 때 화면에 꼭 들어와야 하는 상자(논리 px, GDD 31장 4 — 화면 구멍 + 버튼 4개). 있으면 그 상자가 기준 크기 안에 들어가게
+ * 논리 크기를 같은 비율로 늘리고 그만큼 배율을 줄인다(화면에 차지하는 크기·비율은 기본형과 같다).
+ * safe = 화면 기준 안전 영역(px, 노치·홈 바)
  */
-export function computeFit(vw: number, vh: number, frame?: { w: number; h: number } | null): Fit {
+export function computeFit(vw: number, vh: number, frame?: { w: number; h: number } | null, safe?: Insets | null): Fit {
   const rotated = vh > vw;
+  const d = rotateInsets(rotated, safe ?? NO_INSETS);
   const long = rotated ? vh : vw;
   const short = rotated ? vw : vh;
-  const scale = frame ? Math.min(long / frame.w, short / frame.h) : long < MIN_LOGICAL_W ? long / MIN_LOGICAL_W : 1;
-  return { rotated, scale, w: long / scale, h: short / scale, vw, vh };
+  const aw = Math.max(1, long - d.left - d.right);
+  const ah = Math.max(1, short - d.top - d.bottom);
+  const base = Math.min(aw / BASE_W, ah / BASE_H);
+  const k = frameK(BASE_W, BASE_H, frame);
+  return { rotated, scale: base * k, w: BASE_W / k, h: BASE_H / k, vw, vh, ox: d.left + (aw - BASE_W * base) / 2, oy: d.top + (ah - BASE_H * base) / 2 };
 }
 
-/** PC 고정 모드: 기준 크기 w×h 를 scale 배로 키워 뷰포트 가운데에 둔다 (회전 없음) */
+/** PC 고정 모드: 기준 크기 w×h 를 scale 배(설정 1배/2배, 창이 작으면 자동 축소)로 키워 뷰포트 가운데에 둔다 (회전 없음) */
 export function computePcFit(vw: number, vh: number, scale: number, w: number, h: number, frame?: { w: number; h: number } | null): Fit {
   // 그림 기기(GDD 31장 4): 기준 크기 안에 틀 상자가 들어가게 논리 크기를 늘리고 그만큼 배율을 줄인다 (화면에 차지하는 크기는 같다)
-  if (frame) {
-    const k = Math.min(w / frame.w, h / frame.h);
-    return { rotated: false, scale: scale * k, w: w / k, h: h / k, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
-  }
-  return { rotated: false, scale, w, h, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
+  const k = frameK(w, h, frame);
+  return { rotated: false, scale: scale * k, w: w / k, h: h / k, vw, vh, ox: (vw - w * scale) / 2, oy: (vh - h * scale) / 2 };
 }
 
-/** 기기에 줄 CSS transform. 기기 원점은 왼쪽 위 (transform-origin: 0 0) */
+/** 기기에 줄 CSS transform (터치 맞춤). 기기 원점은 왼쪽 위 (transform-origin: 0 0) */
 export function fitTransform(f: Fit): string {
-  // 순서(오른쪽부터 적용): 축소 → 시계 방향 90도 → 오른쪽 끝으로 이동
-  return f.rotated ? `translate(${f.vw}px, 0) rotate(90deg) scale(${f.scale})` : `scale(${f.scale})`;
+  const ox = f.ox ?? 0, oy = f.oy ?? 0;
+  // 순서(오른쪽부터 적용): 축소 → 시계 방향 90도 → 여백 자리로 이동
+  return f.rotated ? `translate(${f.vw - oy}px, ${ox}px) rotate(90deg) scale(${f.scale})` : `translate(${ox}px, ${oy}px) scale(${f.scale})`;
 }
 
 /** 화면 좌표(clientX/Y) → 기기 안 좌표(논리 px). 기기 왼쪽 위가 (0,0) */
 export function toLocal(f: Fit, x: number, y: number): { x: number; y: number } {
-  const sx = f.rotated ? y : x - (f.ox ?? 0);
-  const sy = f.rotated ? f.vw - x : y - (f.oy ?? 0);
+  const ox = f.ox ?? 0, oy = f.oy ?? 0;
+  const sx = f.rotated ? y - ox : x - ox;
+  const sy = f.rotated ? f.vw - x - oy : y - oy;
   return { x: sx / f.scale, y: sy / f.scale };
 }
 

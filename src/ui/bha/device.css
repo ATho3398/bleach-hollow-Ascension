@@ -7,13 +7,15 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .bha-dev {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0;  /* 크기·회전·축소는 device.ts 가 정한다 (viewport.ts) */
   display: flex; align-items: stretch; gap: var(--bha-sp-4);
-  padding: max(var(--bha-sp-4), var(--dev-inset-top, 0px)) max(var(--bha-sp-4), var(--dev-inset-right, 0px)) max(var(--bha-sp-4), var(--dev-inset-bottom, 0px)) max(var(--bha-sp-4), var(--dev-inset-left, 0px));  /* 안전 영역은 device.ts 가 돌림·축소를 반영해 넣는다 */
+  padding: var(--bha-sp-4);  /* 안전 영역은 기기 바깥 여백으로 뺀다 (device.ts·viewport.ts, C.554) */
   background: var(--bha-shell-body); /* v2 (C.282): 기기 몸체 = --bha-shell-body (꾸미기 없을 때 기본값, 꾸미기를 끼면 cosmetics.css 가 덮음) */
 }
 .bha-dev.is-skin { background: var(--bha-pattern) center / var(--bha-pattern-size), var(--bha-backdrop); } /* frame-v2·그림 틀: 그림이 껍데기를 대신 */
-/* PC 고정 모드 (GDD 17-5): 기준 크기 844×390 을 창 가운데에 두고 --bha-scale 배로 키운다(zoom: 글자·터치 영역도 같이 커짐, transform: scale 아님). 바깥은 어두운 배경 */
-html.bha-pc, html.bha-pc body { background: var(--bha-bg-0); }
-.bha-dev.is-pc { zoom: var(--bha-scale, 1); box-shadow: 0 0 0 1px var(--bha-line-1), 0 0 40px rgb(0 0 0 / 0.7); }
+/* 모든 기기 같은 화면비 (GDD 14-2, C.554): 기기 틀(844×390)을 한 배율로 화면 가운데에 두고, 남는 위·아래 또는 좌·우는 어두운 바깥 배경 */
+html, body { background: var(--bha-bg-0); }
+.bha-dev { box-shadow: 0 0 0 1px var(--bha-line-1), 0 0 40px rgb(0 0 0 / 0.7); }
+/* PC 고정 모드 (GDD 17-5): 기준 크기 844×390 을 창 가운데에 두고 --bha-scale 배로 키운다(zoom: 글자·터치 영역도 같이 커짐, transform: scale 아님) */
+.bha-dev.is-pc { zoom: var(--bha-scale, 1); }
 /* 뷰포트·안전 영역 측정용 보이지 않는 틀 (device.ts): inset 0 인 고정 요소 = 지금 보이는 영역 */
 .bha-dev__probe {
   position: fixed; inset: 0; visibility: hidden; pointer-events: none;
