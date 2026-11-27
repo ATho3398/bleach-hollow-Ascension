@@ -52,11 +52,13 @@ function enter(s: CombatState, stage: ScriptStage): void {
   if (stage === 'done') s.script = undefined; // 끝: 혹시 처치하지 못했으면 보통 전투로 이어진다
 }
 
-/** 각본 블록: 출현표의 기본 공격 블록(없으면 첫 공격 블록). 계열이 없으면 종족 계열 표의 첫 계열 (난수 없이) */
+/** 각본 블록: 출현표의 기본 공격 블록(없으면 첫 공격 블록). 계열 = tutorialScript.blockFamily(GDD 13절 v6.240 — 탄 계열 키, C.559)가 그 몸의 계열 표에 있으면 그것,
+ *  없으면 그 블록의 계열 → 종족 계열 표의 첫 계열 (난수 없이) */
 export function scriptBlockOf(s: CombatState): { traitId: string; family: string | null } {
   const entries = spawnTableOf(s.params).entries.filter((e) => e.kind === 'skill' && e.source?.role === 'attack');
   const e = entries.find((x) => x.source!.id === BASIC_SKILL_ID) ?? entries[0];
-  const family = e?.family ?? Object.keys(s.params.families)[0] ?? null;
+  const want = TS.blockFamily;
+  const family = (want && want in s.params.families ? want : null) ?? e?.family ?? Object.keys(s.params.families)[0] ?? null;
   return { traitId: e?.source?.id ?? BASIC_SKILL_ID, family };
 }
 
