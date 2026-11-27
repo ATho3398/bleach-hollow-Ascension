@@ -30,6 +30,8 @@ export interface ConfirmOptions {
   onCancel?: () => void;
   /** n 초 뒤 저절로 [예] (GDD 5-5 우라하라 마주침 창, C.549): 예 버튼 글 뒤에 남은 초 '(n)' — 1초마다 줄어든다. 닫히면 멈춘다 */
   autoYesSeconds?: number;
+  /** 창 왼쪽에 세울 그림 (GDD 5-5 마주침 창 꾸밈, C.553 — 우라하라 도트): 있으면 [그림 | 제목·본문·버튼] 두 칸 창 */
+  figure?: HTMLElement;
   onYes: () => void;
   onNo?: () => void;
 }
@@ -45,14 +47,22 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   layer.setAttribute('role', 'alertdialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', o.title);
-  const modal = el('div', 'bha-modal');
-  modal.append(el('h2', 'bha-modal__title', o.title));
-  if (o.body) modal.append(el('p', 'bha-modal__body', o.body));
-  if (o.content) modal.append(o.content);
+  const modal = el('div', o.figure ? 'bha-modal bha-modal--figure' : 'bha-modal');
+  // 그림 창(C.553): 왼쪽 칸 = 그림, 오른쪽 칸(main) = 제목·본문·버튼. 그림이 없으면 main = 창 그대로
+  const main = o.figure ? el('div', 'bha-modal__main') : modal;
+  if (o.figure) {
+    const fig = el('div', 'bha-modal__figure');
+    fig.setAttribute('aria-hidden', 'true');
+    fig.append(o.figure);
+    modal.append(fig, main);
+  }
+  main.append(el('h2', 'bha-modal__title', o.title));
+  if (o.body) main.append(el('p', 'bha-modal__body', o.body));
+  if (o.content) main.append(o.content);
   let typed: HTMLInputElement | null = null;
   if (o.typeToConfirm) {
     const ttc = o.typeToConfirm;
-    modal.append(el('p', 'bha-modal__body', ttc.hint));
+    main.append(el('p', 'bha-modal__body', ttc.hint));
     typed = el('input', 'bha-modal__input');
     typed.type = 'text';
     typed.autocomplete = 'off';
@@ -60,7 +70,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     typed.placeholder = ttc.word;
     typed.setAttribute('aria-label', ttc.hint);
     typed.dataset.confirmInput = '';
-    modal.append(typed);
+    main.append(typed);
   }
   const matched = (): boolean => !typed || typed.value.trim() === o.typeToConfirm?.word;
   let closed = false;
@@ -118,7 +128,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
       yes();
     });
   }
-  modal.append(actions);
+  main.append(actions);
   layer.append(modal);
   getOverlayHost().append(layer);
   // 공용 창은 열린 동안 튜토리얼 카드·입력 막기를 비켜 간다 (GDD 222장 1) — 카드와 겹쳐도 창 버튼이 눌린다

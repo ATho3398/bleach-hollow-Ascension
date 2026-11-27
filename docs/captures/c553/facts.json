@@ -1,0 +1,92 @@
+{
+ "errors": [],
+ "pc": {
+  "title": "우라하라와 마주쳤습니다!",
+  "body": "15분 동안 시장에 머문다",
+  "button": "확인 (5)",
+  "fig": {
+   "loaded": true,
+   "natural": [
+    168,
+    342
+   ],
+   "box": [
+    234,
+    87,
+    112,
+    228
+   ],
+   "render": "pixelated",
+   "anim": "bha-wmeet-hop"
+  },
+  "modal": [
+   222,
+   75,
+   400,
+   240
+  ],
+  "lcd": [
+   99,
+   15,
+   646,
+   360
+  ],
+  "modalInLcd": true,
+  "figInModal": true,
+  "titleInModal": true,
+  "btnInModal": true,
+  "textClipped": [
+   false,
+   false,
+   false
+  ]
+ },
+ "phone": {
+  "title": "우라하라와 마주쳤습니다!",
+  "body": "15분 동안 시장에 머문다",
+  "button": "확인 (5)",
+  "fig": {
+   "loaded": true,
+   "natural": [
+    168,
+    342
+   ],
+   "box": [
+    164,
+    90,
+    101,
+    206
+   ],
+   "render": "pixelated",
+   "anim": "bha-wmeet-hop"
+  },
+  "modal": [
+   153,
+   79,
+   361,
+   216
+  ],
+  "lcd": [
+   89,
+   14,
+   489,
+   348
+  ],
+  "modalInLcd": true,
+  "figInModal": true,
+  "titleInModal": true,
+  "btnInModal": true,
+  "textClipped": [
+   false,
+   false,
+   false
+  ]
+ },
+ "hop": [
+  {
+   "name": "bha-wmeet-hop",
+   "at": 206,
+   "transform": "matrix(1, 0, 0, 1, 0, -7.89712)"
+  }
+ ]
+}

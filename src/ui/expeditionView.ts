@@ -14,6 +14,7 @@ import {
   type PendingBattle, type StepEvent, type WandererMeet, type WandererMeetCtx,
 } from '../engine/expedition';
 import { WANDERER_TEXT } from '../data/shop';
+import { wandererMeetFigure, wandererMeetStay } from './bha/wandererChip';
 import { BLOCK_WORDS, eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
@@ -235,6 +236,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       };
       confirmDialog({
         title: fixParticles(WANDERER_TEXT.meet.replace('{name}', w.name)), single: true, yes: WANDERER_TEXT.meetOk, cls: 'bha-wmeet',
+        // 마주침 창 꾸밈 (GDD 5-5 v6.227, C.553): 왼쪽 우라하라 도트 + 제목 아래 '15분 동안 시장에 머문다'
+        figure: wandererMeetFigure(), body: wandererMeetStay(BALANCE.provisional.wanderer.stayMinutes),
         autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds, onYes: resume, onCancel: resume,
       });
       return;

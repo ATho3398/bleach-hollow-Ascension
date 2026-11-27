@@ -317,8 +317,9 @@ function parseWanderer(r: unknown): WandererItemDef {
 }
 
 export const WANDERER_PROVISIONAL: boolean = wandererRaw.provisional;
-/** 우라하라 화면 문구 (GDD 5-5, C.549 — 두 종족 같은 문구, {name} = 종족 설정 market.props.wanderer): 마주침 확인 창 제목·버튼, 남은 시간 칩 읽기 글 */
-export const WANDERER_TEXT: { meet: string; meetOk: string; chipLabel: string } = wandererRaw.text;
+/** 우라하라 화면 문구 (GDD 5-5, C.549 — 두 종족 같은 문구, {name} = 종족 설정 market.props.wanderer): 마주침 확인 창 제목·버튼, 남은 시간 칩 읽기 글.
+ *  meetStay = 마주침 창 제목 아래 작은 한 줄 ({minutes} = balance provisional.wanderer.stayMinutes, C.553) */
+export const WANDERER_TEXT: { meet: string; meetOk: string; meetStay: string; chipLabel: string } = wandererRaw.text;
 export const WANDERER_ITEMS: readonly WandererItemDef[] = wandererRaw.items.map(parseWanderer);
 
 export function getWandererItem(id: string): WandererItemDef | undefined {

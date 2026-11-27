@@ -43,3 +43,21 @@ export function wandererChip(name: string, remainingMs: number, onClick?: () => 
   set(remainingMs);
   return { el: root, set };
 }
+
+/** 마주침 창 꾸밈 (GDD 5-5 v6.227, C.553): 창 왼쪽에 세울 우라하라 도트(prop.wanderer, 픽셀 그대로·등장 때 살짝 튀어 오름 — CSS .bha-wmeet__fig).
+ *  그림 파일이 없으면 undefined(글만 있는 옛 창) */
+export function wandererMeetFigure(): HTMLElement | undefined {
+  const src = artUrls('prop.wanderer', ART_BASE).src;
+  if (!src) return undefined;
+  const img = el('img', 'bha-wmeet__fig');
+  img.src = src;
+  img.alt = '';
+  img.decoding = 'async';
+  img.draggable = false;
+  return img;
+}
+
+/** 마주침 창 제목 아래 작은 한 줄: '15분 동안 시장에 머문다' (분 = balance stayMinutes) */
+export function wandererMeetStay(stayMinutes: number): string {
+  return WANDERER_TEXT.meetStay.replace('{minutes}', String(stayMinutes));
+}
