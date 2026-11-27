@@ -60,7 +60,7 @@ describe('이름 글리치 (GDD 12-4 v6.027)', () => {
     const hv = read('src/ui/hogyokuView.ts');
     expect(hv).not.toMatch(/h\('(b|h1|p)', '[^']*', `[^`]*\$\{(pv\.)?def\.name\}/);
     expect(hv).not.toContain("h('h1', 'bha-evolve__title', def.name)");
-    expect(hv.match(/transcendentNameNode\(/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(hv.match(/transcendentNameNode\(/g)?.length).toBeGreaterThanOrEqual(2); // C.560: 합체 결과·확인 1 은 이름을 숨겨(???) 연출 두 곳만
     expect(read('src/ui/bha/statusBox.ts')).toContain('transcendentNameNode(def)');
     const g = read('src/ui/bha/glitchName.ts');
     expect(g).toContain("setAttribute('aria-label', name)"); // 읽기 이름 = 원래 이름

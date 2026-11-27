@@ -47,7 +47,7 @@ describe('C.439 합체 조건 칩 (GDD 12-2 v6.046)', () => {
     s.transcendentDex.push({ id: def.id, at: 1, fusionIndex: 1 });
     const owned = fusionConds(s).find((x) => x.key === 'owned')!;
     expect(owned.ok).toBe(false);
-    expect(owned.detail).toContain(`물리 + 물리 → ${def.name}`);
+    expect(owned.detail).not.toContain(def.name); // C.560 (GDD 12-4 v6.242): 조합·이름 없이 막힘 이유 한 줄만
     expect(owned.detail).toContain('이 조합의 초월자는 이미 있다 — 다른 분류로 키워라.');
   });
 });
