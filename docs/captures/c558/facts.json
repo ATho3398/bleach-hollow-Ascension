@@ -1,0 +1,59 @@
+{
+ "errors": [],
+ "noDialog": true,
+ "walk": {
+  "vars": {
+   "passMs": 5018,
+   "bowAt": 1835,
+   "sayAt": 1585
+  },
+  "passer": [
+   310,
+   165,
+   75,
+   152
+  ],
+  "walker": [
+   443,
+   148,
+   190,
+   190
+  ],
+  "scene": [
+   100,
+   16,
+   644,
+   358
+  ],
+  "say": {
+   "text": "어이~",
+   "opacity": "1"
+  },
+  "figTransform": "matrix(-0.992546, -0.121869, -0.121869, 0.992546, -0.369988, 3.01331)",
+  "behindWalker": true
+ },
+ "pc": {
+  "text": "우라하라가 시장에 왔다10:36",
+  "box": [
+   290,
+   78,
+   444,
+   28
+  ],
+  "inRight": true,
+  "clipped": false
+ },
+ "pcLater": "10:35",
+ "phone": {
+  "text": "우라하라가 시장에 왔다10:36",
+  "box": [
+   229,
+   95,
+   351,
+   22
+  ],
+  "inRight": true,
+  "clipped": false
+ },
+ "phoneLater": "10:35"
+}

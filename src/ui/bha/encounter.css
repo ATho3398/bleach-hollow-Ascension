@@ -46,7 +46,33 @@
 .bha-ahead__mark { position: absolute; left: 50%; bottom: 34%; transform: translateX(-50%); color: var(--bha-heal); }
 .bha-ahead__mark .bha-icon { width: 28px; height: 28px; }
 
+/* 우라하라 마주침 연출 (GDD 5-5 v6.239, C.558 — wandererPass.ts): 캐릭터 뒤 먼 줄(바닥선보다 조금 위, 캐릭터 칸의 0.8배 키)에서 왼쪽 밖 → 오른쪽 밖으로
+   배경과 함께 흐른다. 캐릭터 바로 앞에서 몸 살짝 숙였다 펴기 2번 + 머리 위 말풍선(.bha-exp__msg). 도트는 왼쪽을 보는 그림이라 뒤집어 캐릭터 쪽을 본다.
+   길이·자리(px·ms)는 스크립트가 변수로 넣는다. 걷기가 멈추면(전투 조우·휴식·일시정지) 같이 멈춘다. 새 색·간격 없음 */
+.bha-passer {
+  position: absolute; left: 0; bottom: 16%; z-index: 0; width: var(--passer-w); height: var(--passer-h); pointer-events: none;
+  transform: translateX(var(--passer-from)); will-change: transform;
+  animation: bha-passer-go var(--passer-ms) linear both;
+}
+.bha-passer.is-still { transform: translateX(var(--passer-x)); animation: none; will-change: auto; }
+.bha-passer__fig {
+  display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; transform-origin: 50% 100%; transform: scaleX(-1);
+  animation: bha-passer-bow var(--passer-bow-ms) var(--bha-ease-out) var(--passer-bow-at) 1 both;
+}
+.bha-passer.is-still .bha-passer__fig { animation: none; }
+.bha-exp .bha-passer__say { opacity: 0; animation: bha-passer-say var(--passer-say-ms) linear var(--passer-say-at) 1 both; }
+.bha-exp .bha-passer.is-still .bha-passer__say { opacity: 1; animation: none; } /* 움직임 줄이기: 말풍선만 그대로 (전역 1ms 애니메이션 규칙에 지워지지 않게) */
+.bha-walk:not(.is-walking) .bha-passer:not(.is-still), .bha-walk:not(.is-walking) .bha-passer:not(.is-still) > *,
+.bha-exp.is-paused .bha-passer, .bha-exp.is-paused .bha-passer > * { animation-play-state: paused; }
+@keyframes bha-passer-go { from { transform: translateX(var(--passer-from)); } to { transform: translateX(var(--passer-to)); } }
+@keyframes bha-passer-bow {
+  0%, 50%, 100% { transform: scaleX(-1); }
+  25%, 75% { transform: scaleX(-1) rotate(-7deg) translateY(2%); }
+}
+@keyframes bha-passer-say { 0% { opacity: 0; } 12%, 85% { opacity: 1; } 100% { opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .bha-passer__fig { animation: none; }
   .bha-ahead, .bha-ahead.is-leaving { animation: none; }
   .bha-ahead__glow { animation: none; }
 }

@@ -24,6 +24,7 @@ import { difficultyGoldMultiplier } from '../engine/difficulty';
 import { asBack } from './bha/screenBack';
 import { devText } from './displayName';
 import { evChipRow, evGains } from './bha/evChips';
+import { wandererResultLine } from './bha/wandererChip';
 
 /** 스토리 화 결과 줄 (GDD 25-4·25-7): 클리어/실패, 화 보상(골드·먹이), 첫 클리어·장 클리어·보스 첫 처치 영옥 */
 export function storyResultLines(exp: ExpeditionState, faction: FactionConfig): string[] {
@@ -58,7 +59,14 @@ export function stageTitle(exp: Pick<ExpeditionState, 'story' | 'factionId' | 'g
   return groundName(faction, exp.groundId, Math.max(0, GROUNDS.findIndex((g) => g.id === exp.groundId)));
 }
 
-export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onHome: () => void, growth?: GrowthInput): void {
+/** 모험 결산의 우라하라 한 줄 (GDD 5-5 v6.239, C.558): 이번 모험에서 마주쳤거나 지금 와 있으면 부른 쪽이 넘긴다 (줄 = wandererResultLine) */
+export interface ResultWanderer {
+  name: string;
+  /** 지금 남은 시간 (실제 시각 기준, 0 = 떠남) */
+  remainingMs: () => number;
+}
+
+export function resultView(root: HTMLElement, faction: FactionConfig, exp: ExpeditionState, onHome: () => void, growth?: GrowthInput, wanderer?: ResultWanderer): void {
   const s = summarize(exp);
   const win = endTone(exp.endReason!) === 'win';
   const wins = exp.battles.filter((b) => b.won).length;
@@ -203,7 +211,9 @@ export function resultView(root: HTMLElement, faction: FactionConfig, exp: Exped
   const evRow = evChipRow(faction.id, evGains(exp.evStart, exp.evolution.ev, exp.evBlocked));
   left.append(big, reasonP, ...(growthBox ? [growthBox] : []), ...(evRow ? [evRow] : []), ...(evolveNote ? [evolveNote] : []), side);
   const right = el('section', 'bha-result__right');
-  right.append(...(storyBox ? [storyBox] : []), sum);
+  // 우라하라 한 줄 (C.558): 얼굴 + '우라하라가 시장에 왔다' + 남은 시간 — 모험 요약 위
+  const wline = wanderer ? wandererResultLine(wanderer.name, wanderer.remainingMs) : null;
+  right.append(...(storyBox ? [storyBox] : []), ...(wline ? [wline] : []), sum);
   const app = mountApp(root, { cls: `bha-v2 bha-resultv2 bha-resultv2--${win ? 'win' : 'lose'}` }, band, head, left, right, dock);
   requestAnimationFrame(syncMore);
   if (win) playCosmeticFx('win', app); // 승리 연출 꾸밈 (GDD 25-11)

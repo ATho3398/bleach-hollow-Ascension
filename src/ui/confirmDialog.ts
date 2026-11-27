@@ -28,17 +28,8 @@ export interface ConfirmOptions {
   noCancel?: boolean;
   /** 기기 취소·Esc(뒤로)가 '아니요' 대신 할 일 — 창은 닫고 이것만 부른다 ([아니요] 버튼은 그대로 onNo). 수련장 훈련 설정 창 뒤로 = 방 (C.534) */
   onCancel?: () => void;
-  /** n 초 뒤 저절로 [예] (GDD 5-5 우라하라 마주침 창, C.549): 예 버튼 글 뒤에 남은 초 '(n)' — 1초마다 줄어든다. 닫히면 멈춘다 */
-  autoYesSeconds?: number;
-  /** 창 왼쪽에 세울 그림 (GDD 5-5 마주침 창 꾸밈, C.553 — 우라하라 도트): 있으면 [그림 | 제목·본문·버튼] 두 칸 창 */
-  figure?: HTMLElement;
   onYes: () => void;
   onNo?: () => void;
-}
-
-/** 자동 확인 버튼 글: '확인 (5)' */
-export function autoYesLabel(label: string, left: number): string {
-  return `${label} (${Math.max(0, Math.ceil(left))})`;
 }
 
 /** 확인창을 연다. 돌려주는 함수는 선택 없이 닫는다 */
@@ -47,22 +38,14 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   layer.setAttribute('role', 'alertdialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', o.title);
-  const modal = el('div', o.figure ? 'bha-modal bha-modal--figure' : 'bha-modal');
-  // 그림 창(C.553): 왼쪽 칸 = 그림, 오른쪽 칸(main) = 제목·본문·버튼. 그림이 없으면 main = 창 그대로
-  const main = o.figure ? el('div', 'bha-modal__main') : modal;
-  if (o.figure) {
-    const fig = el('div', 'bha-modal__figure');
-    fig.setAttribute('aria-hidden', 'true');
-    fig.append(o.figure);
-    modal.append(fig, main);
-  }
-  main.append(el('h2', 'bha-modal__title', o.title));
-  if (o.body) main.append(el('p', 'bha-modal__body', o.body));
-  if (o.content) main.append(o.content);
+  const modal = el('div', 'bha-modal');
+  modal.append(el('h2', 'bha-modal__title', o.title));
+  if (o.body) modal.append(el('p', 'bha-modal__body', o.body));
+  if (o.content) modal.append(o.content);
   let typed: HTMLInputElement | null = null;
   if (o.typeToConfirm) {
     const ttc = o.typeToConfirm;
-    main.append(el('p', 'bha-modal__body', ttc.hint));
+    modal.append(el('p', 'bha-modal__body', ttc.hint));
     typed = el('input', 'bha-modal__input');
     typed.type = 'text';
     typed.autocomplete = 'off';
@@ -70,18 +53,16 @@ export function confirmDialog(o: ConfirmOptions): () => void {
     typed.placeholder = ttc.word;
     typed.setAttribute('aria-label', ttc.hint);
     typed.dataset.confirmInput = '';
-    main.append(typed);
+    modal.append(typed);
   }
   const matched = (): boolean => !typed || typed.value.trim() === o.typeToConfirm?.word;
   let closed = false;
   let unregister: () => void = () => {};
   let untrap: () => void = () => {};
   let uncover: () => void = () => {};
-  let autoTimer: ReturnType<typeof setInterval> | null = null;
   const close = () => {
     if (closed) return;
     closed = true;
-    if (autoTimer !== null) clearInterval(autoTimer);
     unregister();
     layer.remove();
     uncover();
@@ -105,18 +86,6 @@ export function confirmDialog(o: ConfirmOptions): () => void {
   }
   const yesBtn = button({ label: o.yes ?? '네', variant: o.danger ? 'danger' : 'primary', disabled: o.yesDisabled || !matched(), onClick: yes });
   actions.append(yesBtn);
-  if (o.autoYesSeconds !== undefined && o.autoYesSeconds > 0) {
-    const base = o.yes ?? '네';
-    let left = Math.ceil(o.autoYesSeconds);
-    yesBtn.textContent = autoYesLabel(base, left);
-    yesBtn.dataset.autoYes = String(left);
-    autoTimer = setInterval(() => {
-      left--;
-      if (left <= 0) return yes();
-      yesBtn.textContent = autoYesLabel(base, left);
-      yesBtn.dataset.autoYes = String(left);
-    }, 1000);
-  }
   if (typed) {
     const t = typed;
     t.addEventListener('input', () => { yesBtn.disabled = !!o.yesDisabled || !matched(); });
@@ -128,7 +97,7 @@ export function confirmDialog(o: ConfirmOptions): () => void {
       yes();
     });
   }
-  main.append(actions);
+  modal.append(actions);
   layer.append(modal);
   getOverlayHost().append(layer);
   // 공용 창은 열린 동안 튜토리얼 카드·입력 막기를 비켜 간다 (GDD 222장 1) — 카드와 겹쳐도 창 버튼이 눌린다

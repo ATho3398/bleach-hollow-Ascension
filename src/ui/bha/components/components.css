@@ -316,11 +316,6 @@
 .bha-modal__input::placeholder { color: var(--bha-text-3); }
 .bha-modal__actions:where(:not(.bha-root *)) { flex: none; display: flex; gap: var(--bha-sp-3); margin-top: auto; padding: var(--bha-sp-4); }
 .bha-modal__actions:where(:not(.bha-root *)) > .bha-btn { flex: 1 1 0; min-width: 0; }
-/* 그림 창 (C.553, GDD 5-5 마주침 창 꾸밈 — confirmDialog figure): [왼쪽 그림 칸 | 오른쪽 제목·본문·버튼]. 그림 칸 = 한 단 어두운 바닥 + 오른쪽 경계선 */
-.bha-modal.bha-modal--figure { flex-direction: row; width: auto; max-width: 100%; }
-.bha-modal.bha-modal--figure > .bha-modal__figure { flex: none; margin: 0; display: flex; align-items: flex-end; justify-content: center; padding: var(--bha-sp-5) var(--bha-sp-5) 0; background: var(--bha-bg-0); box-shadow: inset -1px 0 0 var(--bha-line-1), inset 0 -2px 0 var(--bha-lo); overflow: hidden; }
-.bha-modal.bha-modal--figure > .bha-modal__main { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; flex-direction: column; }
-.bha-modal__main > :not(.bha-modal__title):not(.bha-modal__actions) { flex: none; margin: var(--bha-sp-4) var(--bha-sp-5) 0; }
 
 /* =========================================================
    9. 정보 표  .bha-infotable (dl — 옛 이름 .bha-info 는 v2 ⓘ 버튼과 겹쳐 C.296 에 바꿈)   (현재 table / td)
