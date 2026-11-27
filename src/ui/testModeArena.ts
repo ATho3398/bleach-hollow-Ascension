@@ -3,7 +3,7 @@
 // [창 닫기] = 빈 적 자리에 [적 설정] 버튼만 남김, [나가기] = 나온 곳으로. 목록은 데이터에서 — 종족 분기 없음.
 // C.471 (GDD 8-9): 수련장 훈련 인형도 같은 창 — 적 목록·★ 범위·기본값만 '창 출처'(ArenaSource)로 바꾼다(테스트 = testFoes·모든 ★, 수련장 = 훈련 인형 + 도감 본 적·연 ★).
 import { bossName } from '../data/bosses';
-import { pickFaction } from '../data/schema';
+import { enemyDexName } from '../data/enemies';
 import { MAX_DIFFICULTY } from '../engine/difficulty';
 import type { EnemyDex } from '../engine/enemyDex';
 import type { FactionConfig } from '../engine/faction';
@@ -27,7 +27,7 @@ export function testArenaSource(faction: FactionConfig, prev: TestArenaChoice): 
   return {
     foes: testFoes().map((f) => ({
       value: f.id,
-      label: f.kind === 'boss' ? bossName(f.id, fid) : pickFaction(f.def.name, fid),
+      label: f.kind === 'boss' ? bossName(f.id, fid) : enemyDexName(f.def, fid), // 고르는 목록은 도감 표기 (일반 적 24종 이름이 모두 '호로', GDD 6-7 v6.210)
       group: f.kind === 'boss' ? '보스' : f.def.class === 'elite' ? '강적' : '일반',
     })),
     maxStar: MAX_DIFFICULTY,
@@ -39,7 +39,7 @@ export function testArenaSource(faction: FactionConfig, prev: TestArenaChoice): 
 export function practiceArenaSource(faction: FactionConfig, dex: Readonly<EnemyDex> | null | undefined, maxStar: number, includeTest: boolean): ArenaSource {
   const foes = practiceFoes(dex, includeTest);
   return {
-    foes: foes.map((f, i) => ({ value: f.id, label: pickFaction(f.name, faction.id), group: i === 0 ? '기본' : f.class === 'elite' ? '강적' : '일반' })),
+    foes: foes.map((f, i) => ({ value: f.id, label: enemyDexName(f, faction.id), group: i === 0 ? '기본' : f.class === 'elite' ? '강적' : '일반' })),
     maxStar: practiceStar(maxStar, maxStar),
     defaults: (foeId, star) => practiceArenaDefaults(foes, foeId, star, maxStar),
   };

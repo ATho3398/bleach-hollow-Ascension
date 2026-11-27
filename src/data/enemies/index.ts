@@ -1,10 +1,11 @@
 // 적 테이블 (양쪽 종족 공유, GDD 6장·14-5). 검증을 거쳐 EnemyDef 로 내보낸다.
-import { ATTACK_CATEGORIES, ENEMY_PATTERN_KINDS, STAT_IDS, type EnemyDef, type EnemyPattern, type EnemyPatternKind } from '../schema';
-import { isElement } from '../elements';
+import { ATTACK_CATEGORIES, ENEMY_PATTERN_KINDS, STAT_IDS, pickFaction, type EnemyDef, type EnemyPattern, type EnemyPatternKind } from '../schema';
+import { elementName, isElement } from '../elements';
 import raw from './enemies.json';
 import poolRaw from './pools.json';
 import gradesRaw from './grades.json';
 import practiceRaw from './practice.json';
+import dexNamesRaw from './dexNames.json';
 
 /** 적 등급 표 (GDD 198장): 강적·보스 고정 등급, 도감 전용 표시 */
 export const ENEMY_GRADES = gradesRaw as { order: string[]; names: Record<string, string>; menos: string[]; menosName: string };
@@ -82,6 +83,22 @@ export function getEnemy(id: string): EnemyDef {
   const e = ENEMIES.find((x) => x.id === id);
   if (!e) throw new Error(`알 수 없는 적: ${id}`);
   return e;
+}
+
+/** 적 도감 표기 규칙 (GDD 6-7 v6.210): 일반 적만 '이름(속성 속성·패턴)' — 데이터 dexNames.json */
+export const ENEMY_DEX_NAMES = dexNamesRaw as { normal: { format: string; patterns: Partial<Record<EnemyPatternKind, string>> } };
+
+/** 도감 표기를 붙이는 적 = 적 테이블의 일반 적(테스트 적·훈련 인형 제외) */
+const DEX_NAMED_IDS: ReadonlySet<string> = new Set(ENEMIES.filter((e) => e.class === 'normal' && !e.testOnly).map((e) => e.id));
+
+/** 도감에 쓰는 이름 (GDD 6-7 v6.210): 일반 적 = '호로(물 속성·기본)' 처럼 속성·패턴을 붙이고, 강적·보스·테스트 적·훈련 인형은 이름 그대로.
+ *  도감 밖(전투·결과·로그·흡수)은 이 함수를 쓰지 않고 이름 그대로 보인다 — 예외는 적을 고르는 목록(수련장·테스트 모드 적 설정 창, 같은 이름 24개를 가르려고) */
+export function enemyDexName(def: Pick<EnemyDef, 'id' | 'name' | 'element' | 'pattern'>, factionId: string): string {
+  const name = pickFaction(def.name, factionId);
+  const rule = ENEMY_DEX_NAMES.normal;
+  const pattern = DEX_NAMED_IDS.has(def.id) ? rule.patterns[def.pattern?.kind ?? 'basic'] : undefined;
+  if (!pattern) return name;
+  return rule.format.replace('{name}', name).replace('{element}', elementName(def.element, factionId)).replace('{pattern}', pattern);
 }
 
 /** 이 적의 패턴 종류. 패턴이 없으면 기본형 */

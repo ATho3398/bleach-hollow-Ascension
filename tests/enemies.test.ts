@@ -60,11 +60,10 @@ describe('적 데이터 (속성 8종 × 일반 3종 · 강적 3종, C.47)', () =
     expect(new Set(ENEMIES.map((e) => e.id)).size).toBe(ENEMIES.length);
   });
 
-  it('이름 (GDD 198장): 일반 = 패턴마다 하나(속성 무관 — 짐승형·부유형·갑각형 호로), 강적 = 24종 모두 고유 + 고정 등급, 모든 종족에서 읽힌다', () => {
-    const NORMAL: Record<string, string> = { basic: '짐승형 호로', swift: '부유형 호로', sturdy: '갑각형 호로' };
+  it('이름 (GDD 198장 → 6-7 v6.210): 일반 = 모두 \'호로\'(도감 표기는 c544), 강적 = 24종 모두 고유 + 고정 등급, 모든 종족에서 읽힌다', () => {
     for (const e of pool) expect(typeof e.name['*'], e.id).toBe('string');
     for (const e of pool.filter((x) => x.class === 'normal')) {
-      expect(e.name['*'], e.id).toBe(NORMAL[e.pattern?.kind ?? 'basic']);
+      expect(e.name['*'], e.id).toBe('호로');
       expect(e.grade, e.id).toBeUndefined();
     }
     const elites = pool.filter((x) => x.class === 'elite');

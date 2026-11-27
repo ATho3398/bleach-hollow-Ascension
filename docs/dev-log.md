@@ -1326,3 +1326,14 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **테스트**: 새 `tests/c543.test.ts` 3건(호로·사신 본문에 '맨 왼쪽/맨 오른쪽' 없음·새 문장 / 도움말 데이터 4개 파일에 '블록 바 맨 왼·오른쪽' 없음 + GDD 콤보 줄).
 - 캡처 `docs/captures/c543/`(1배 1장, `scripts/c543-proof.cjs`, facts.json): 01 PC 도움말 → 용어 사전 '콤보 블록' 새 문구.
 - 검증: typecheck · 관련 테스트(c541) · 새 테스트 · typecheck · npm test 4434 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.544 — 일반 적 이름 = 호로, 도감에서만 '호로(속성 속성·패턴)' (GDD 6-7 v6.210 → v6.211, S-23, 코딩353)
+세이브 형식·BALANCE 그대로(적 이름 문자열은 세이브에 없다 — 도감·런 로그는 적 id 만 저장, 표시 때 데이터에서 읽음). GDD v6.211(첫 줄 + 20절 한 줄).
+- **이유**: 사용자 2026-11-27 "적 짐승형 호로. 이름 잘못됨. 보이는건 그냥 호로로 하고, 도감에 호로(수 속성) 뭐 이런식으로 표기" → 마스터AT 6-7 v6.210.
+- **데이터**: `src/data/enemies/enemies.json` 일반 적 24종(`<속성>-basic|swift|sturdy`) 이름 짐승형·부유형·갑각형 호로 → 모두 '호로'. 새 `src/data/enemies/dexNames.json` = 도감 표기 규칙(형식 `{name}({element} 속성·{pattern})`, 패턴 글자 basic 기본·swift 속공·sturdy 단단). 두 종족 공유, 종족 분기 없음.
+- **엔진**: `src/data/enemies/index.ts` `enemyDexName(def, factionId)` — 적 테이블의 일반 적(테스트 적·훈련 인형 제외)만 형식 적용, 속성 글자 = `elements.json` name(쿄 = 허무). 강적·보스는 이름 그대로.
+- **화면**: 적 도감(`enemyDexView.ts`) 카드·상세 창 이름·이름순 정렬 = `enemyDexName`. 전투·결과·로그·흡수 화면은 이름 그대로(호로). 예외(이렇게 정함): 적을 **고르는** 목록 — 수련장 적 설정 창(도감에서 본 적)·테스트 모드 적 고르기(`testModeArena.ts`·`testModePanel.ts`) — 은 같은 '호로' 24개를 가를 수 없어 도감 표기를 쓴다(고른 뒤 전투 화면은 '호로').
+- **정리한 문구**: 화면에 보이는 '짐승형/부유형/갑각형 호로'는 적 데이터 24곳뿐(도움말·튜토리얼·각본 데이터에 없음). 코드 주석 `enemyDexView.ts` 머리 1줄 · 시험 `tests/enemies.test.ts` 이름 기대값. 그대로 둔 것: 아쥬커스 외형 이름 짐승형·부유형(`skins/index.ts`, 내 캐릭터 모델) · 뼈대·동작 주석(beast·wraith rig, manifest, rigAnim, bankaiAura, lookDex) — 15절 그림 쪽 용어.
+- **테스트**: 새 `tests/c544.test.ts` 8건(24종 이름 = 호로 모든 종족 / 옛 이름 없음 / 규칙 데이터 / 물 3종·허무 예시 / 24종 모두 형식·서로 다름 / 강적·보스 그대로 / 도감만 사용·종족 분기 없음 / 수련장 목록 = 도감 표기·훈련 인형 그대로). `tests/enemies.test.ts` 이름 기대값 '호로'로.
+- 캡처 `docs/captures/c544/`(1배 3장, `scripts/c544-proof.cjs`, facts.json): 01 PC 전투(물 속성·기본 적) 이름 '호로' · 02 PC 적 도감 호로(노멀/물/불/허무 속성·기본/속공/단단) · 03 폰 적 도감.
+- 검증: typecheck · 관련 테스트(enemies·c330·c332·c363 등) · 새 테스트 · typecheck · npm test 4442 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.

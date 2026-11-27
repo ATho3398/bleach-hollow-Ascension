@@ -1,12 +1,11 @@
 // 적 도감 화면 (GDD 200장, C.330 → 220장 1·2): 책장 묶음(진화체 도감·칭호 도감 ▾)의 세 번째 도감. 틀은 진화체 도감과 같다 — 바둑판 카드(그림·이름·속성) + 누르면 상세 창, 위 '발견 n / 전체'·정렬 버튼.
-// 카드 = 일반(속성 8 × 짐승형·부유형·갑각형) · 강적 24 · 보스 3(탑 층 보스도 같은 보스라 같은 칸). 만나기 전 = 그림 실루엣 + '???'(속성·등급 숨김),
+// 카드 = 일반(속성 8 × 기본·속공·단단 — 이름은 모두 '호로', 도감에서만 enemyDexName 으로 '호로(물 속성·기본)', GDD 6-7 v6.210) · 강적 24 · 보스 3(탑 층 보스도 같은 보스라 같은 칸). 만나기 전 = 그림 실루엣 + '???'(속성·등급 숨김),
 // 만난 뒤 = 그림 · 이름 · 속성 · 강적·보스 등급(198장 grade — 여기서만 보인다) · 잡은 수 'n마리' · 흡수 종류별 횟수(200장 9, 0도 자리 고정) · 처음 만난 곳 한 줄. 처음 만난 카드는 '새' 점 하나(알림 없음), 상세를 보면 지운다.
 // 종족 분기 없음: 이름·속성 이름·사냥터/탑 이름은 종족 설정·데이터에서 읽는다. 기기 ▲▼ = 카드 이동, ✓ = 상세 창, ◀ = 창 닫기(공용 창 레이어).
 import { ELEMENT_IDS } from '../data/elements';
-import { enemyGradeName } from '../data/enemies';
+import { enemyDexName, enemyGradeName } from '../data/enemies';
 import { ENEMY_DEX_SORTS, newDexSortState, nextDexSort, sortDex, type DexSortFacts } from '../engine/dexSort';
 import { GROUNDS } from '../data/grounds';
-import { pickFaction } from '../data/schema';
 import { groundName, towerLabels, type FactionConfig } from '../engine/faction';
 import { ABSORB_KINDS, emptyAbsorbs, ENEMY_CARD_KINDS, ENEMY_CARDS, enemyDexCounts, enemyKnown, markEnemyCardSeen, parseWhere, type EnemyCard, type EnemyCardKind, type EnemyDex, type EnemyDexEntry } from '../engine/enemyDex';
 import type { SaveData } from '../game';
@@ -103,7 +102,7 @@ function cardOf(faction: FactionConfig, card: EnemyCard, dex: EnemyDex, persist:
       onOpen: () => itemDialog({ heading: kindName, name: '미발견', desc: '만난 적만 보인다.', art: enemyArtBox(card.id, false, 'bha-edex__art--hero'), hero: true, cls: 'bha-dexmodal', actions: [] }),
     });
   }
-  const name = shownName(pickFaction(card.def.name, faction.id));
+  const name = shownName(enemyDexName(card.def, faction.id));
   const newDot = entry.fresh ? h('i', 'bha-edex__new bha-dexcard__new') : null;
   if (newDot) newDot.setAttribute('aria-label', '새');
   return dexCard({
@@ -128,7 +127,7 @@ export function enemyDexView(root: HTMLElement, faction: FactionConfig, save: Sa
   const sortState = (save.dexSort ??= newDexSortState());
   const cards = ENEMY_CARD_KINDS.flatMap((kind) => ENEMY_CARDS.filter((c) => c.kind === kind));
   const facts = (c: EnemyCard): DexSortFacts => ({
-    known: enemyKnown(dex, c.id), name: pickFaction(c.def.name, faction.id), element: ELEMENT_IDS.indexOf(c.def.element),
+    known: enemyKnown(dex, c.id), name: enemyDexName(c.def, faction.id), element: ELEMENT_IDS.indexOf(c.def.element),
     kind: ENEMY_CARD_KINDS.indexOf(c.kind), kills: dex[c.id]?.kills ?? 0, group: ENEMY_CARD_KINDS.indexOf(c.kind),
   });
   const grid = dexGrid('적');

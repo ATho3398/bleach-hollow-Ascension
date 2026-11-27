@@ -6,7 +6,8 @@ import type { ArtUrls } from '../data/art/manifest';
 import { FACTIONS } from '../data/factions';
 import { formName, FORM_TABLE, abilityName } from '../data/evolution';
 import { statName } from '../data/elements';
-import { pickFaction, STAT_IDS, type StatId } from '../data/schema';
+import { STAT_IDS, type StatId } from '../data/schema';
+import { enemyDexName } from '../data/enemies';
 import { TRAITS, isPlayerTrait, traitName } from '../data/traits';
 import { isBasicBlockTrait } from '../engine/absorb';
 import { bossName } from '../data/bosses';
@@ -315,7 +316,7 @@ export function testPanelView(root: HTMLElement, faction: FactionConfig, save: S
     const prev = lastBattle;
     const foeSel = select(foes.map((f) => ({
       value: f.id,
-      label: f.kind === 'boss' ? bossName(f.id, fid) : pickFaction(f.def.name, fid),
+      label: f.kind === 'boss' ? bossName(f.id, fid) : enemyDexName(f.def, fid), // 도감 표기 (GDD 6-7 v6.210)
       group: f.kind === 'boss' ? '보스' : f.def.class === 'elite' ? '강적' : '일반',
     })), prev?.foeId ?? foes[0]?.id ?? '', '상대');
     const starSel = select(Array.from({ length: MAX_DIFFICULTY }, (_, i) => ({ value: String(i + 1), label: `★${i + 1}` })), String(prev?.star ?? recommendedDifficulty(save.evolution.tierIndex)), '난이도');

@@ -98,7 +98,7 @@
   {
     "id": "normal-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -117,7 +117,7 @@
   {
     "id": "normal-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -141,7 +141,7 @@
   {
     "id": "normal-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -260,7 +260,7 @@
   {
     "id": "water-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -279,7 +279,7 @@
   {
     "id": "water-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -306,7 +306,7 @@
   {
     "id": "water-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -430,7 +430,7 @@
   {
     "id": "fire-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -451,7 +451,7 @@
   {
     "id": "fire-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -475,7 +475,7 @@
   {
     "id": "fire-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -597,7 +597,7 @@
   {
     "id": "earth-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -616,7 +616,7 @@
   {
     "id": "earth-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -640,7 +640,7 @@
   {
     "id": "earth-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -760,7 +760,7 @@
   {
     "id": "thunder-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -779,7 +779,7 @@
   {
     "id": "thunder-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -805,7 +805,7 @@
   {
     "id": "thunder-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -929,7 +929,7 @@
   {
     "id": "blood-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -951,7 +951,7 @@
   {
     "id": "blood-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -975,7 +975,7 @@
   {
     "id": "blood-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -1096,7 +1096,7 @@
   {
     "id": "poison-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -1115,7 +1115,7 @@
   {
     "id": "poison-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -1139,7 +1139,7 @@
   {
     "id": "poison-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
@@ -1259,7 +1259,7 @@
   {
     "id": "kyo-basic",
     "name": {
-      "*": "짐승형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 30,
@@ -1278,7 +1278,7 @@
   {
     "id": "kyo-swift",
     "name": {
-      "*": "부유형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 28,
@@ -1304,7 +1304,7 @@
   {
     "id": "kyo-sturdy",
     "name": {
-      "*": "갑각형 호로"
+      "*": "호로"
     },
     "class": "normal",
     "hpInAttacks": 40,
