@@ -1,0 +1,50 @@
+[
+  {
+    "size": "844x390",
+    "translate": "32px -42px",
+    "k": 1,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  },
+  {
+    "size": "915x412",
+    "translate": "32px -42px",
+    "k": 0.947,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  },
+  {
+    "size": "1024x768",
+    "translate": "32px -42px",
+    "k": 0.824,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  },
+  {
+    "size": "390x844",
+    "translate": "32px -42px",
+    "k": 1,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  },
+  {
+    "size": "pc1366",
+    "translate": "32px -42px",
+    "k": 1,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  },
+  {
+    "size": "pc2x",
+    "translate": "32px -42px",
+    "k": 0.5,
+    "artRightLocal": 205.5,
+    "petLeftLocal": 138.4,
+    "hostW": 138
+  }
+]

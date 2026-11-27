@@ -6,6 +6,7 @@ import type { FactionConfig } from '../../engine/faction';
 /** 종족 설정에서 펫 그림 키만 읽는다 (GDD 9-4, C.477) */
 export type PetArtFaction = Pick<FactionConfig, 'petArt'>;
 import { el, icon } from './dom';
+import { currentFit } from './viewport';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 /** 그림이 없을 때 원 안 아이콘 (효과 종류별) */
@@ -94,17 +95,30 @@ export function opaqueSpanX(art: HTMLCanvasElement | HTMLImageElement): { left: 
   }
 }
 
+/**
+ * 화면 사각형(getBoundingClientRect) → host 안 가로 좌표(CSS px) 계산기 (C.556). 기기 배율(C.554 한 배율 맞춤)·PC 2배(zoom)·세로 폰 90° 회전·
+ * 다마고치 줌이 걸려도 펫 이동(translate)은 host 안 px 이라, 화면 px 차이를 그대로 넣으면 배율만큼 어긋나고 돌린 화면에서는 세로 차이가 들어갔다.
+ * rotated = 기기를 돌려 놓았나(기기 가로 = 화면 세로), k = host 안 px ÷ 화면 px
+ */
+export function hostAxisX(host: { offsetWidth: number }, hostRect: { width: number; height: number }, rotated: boolean): { k: number; lo: (r: { left: number; top: number }) => number; len: (r: { width: number; height: number }) => number } {
+  const screenLen = rotated ? hostRect.height : hostRect.width;
+  const k = host.offsetWidth > 0 && screenLen > 0 ? host.offsetWidth / screenLen : 1;
+  return { k, lo: (r) => (rotated ? r.top : r.left), len: (r) => (rotated ? r.height : r.width) };
+}
+
 /** 그림 펫을 지금 몸 그림 너비에 맞춰 옆으로 옮긴다 (C.487, 사용자 "스킨 모델에 따라서 거리 자동으로 … 호로처럼 크면 좀 더 옆으로, 인간형같으면 좀 붙어있는 식으로"):
  *  펫 상자 왼쪽 끝 = 몸 그림의 불투명한 오른쪽 끝 + PET_BODY_GAP, 거기에 자리 값(dx·dy)을 더한다. 몸 그림을 못 읽으면 CSS 기본 자리 그대로 */
 export function fitPetToBody(buddy: HTMLElement): boolean {
   const host = buddy.parentElement;
   if (!host || !buddy.isConnected) return false;
   const dx = Number(buddy.dataset.dx ?? 0), dy = Number(buddy.dataset.dy ?? 0);
+  const ax = hostAxisX(host, host.getBoundingClientRect(), currentFit().rotated);
   // 2번째 칸 펫 (C.506 추성): 1번째 펫 바로 오른쪽
   const lead = buddy.classList.contains('bha-pet--second') ? host.querySelector<HTMLElement>('.bha-pet:not(.bha-pet--second)') : null;
   if (lead) {
     buddy.style.translate = 'none';
-    const shift = lead.getBoundingClientRect().right + PET_BODY_GAP - buddy.getBoundingClientRect().left;
+    const lr = lead.getBoundingClientRect();
+    const shift = (ax.lo(lr) + ax.len(lr) - ax.lo(buddy.getBoundingClientRect())) * ax.k + PET_BODY_GAP;
     buddy.style.translate = `${Math.round(shift)}px ${dy}px`;
     return true;
   }
@@ -112,11 +126,11 @@ export function fitPetToBody(buddy: HTMLElement): boolean {
   const span = art ? opaqueSpanX(art) : null;
   if (!art || !span) return false;
   const ar = art.getBoundingClientRect();
-  if (!ar.width) return false;
+  if (!ax.len(ar)) return false;
   const mirrored = new DOMMatrixReadOnly(getComputedStyle(art).transform).a < 0;
-  const bodyRight = mirrored ? ar.right - span.left * ar.width : ar.left + span.right * ar.width;
+  const bodyRight = mirrored ? ax.lo(ar) + ax.len(ar) - span.left * ax.len(ar) : ax.lo(ar) + span.right * ax.len(ar);
   buddy.style.translate = 'none';
-  const shift = bodyRight + PET_BODY_GAP - buddy.getBoundingClientRect().left;
+  const shift = (bodyRight - ax.lo(buddy.getBoundingClientRect())) * ax.k + PET_BODY_GAP;
   buddy.style.translate = `${Math.round(shift + dx)}px ${dy}px`;
   return true;
 }
