@@ -1,5 +1,5 @@
 // 적 도감 화면 (GDD 200장, C.330 → 220장 1·2): 책장 묶음(진화체 도감·칭호 도감 ▾)의 세 번째 도감. 틀은 진화체 도감과 같다 — 바둑판 카드(그림·이름·속성) + 누르면 상세 창, 위 '발견 n / 전체'·정렬 버튼.
-// 카드 = 일반(속성 8 × 기본·속공·단단 — 이름은 모두 '호로', 도감에서만 enemyDexName 으로 '호로(물 속성·기본)', GDD 6-7 v6.210) · 강적 24 · 보스 3(탑 층 보스도 같은 보스라 같은 칸). 만나기 전 = 그림 실루엣 + '???'(속성·등급 숨김),
+// 카드 = 일반(속성 8 × 패턴 3 — 이름은 그림 몸 이름 + 호로(enemies/bodies.json), 도감에서만 enemyDexName 으로 '호로(물 속성)'·'날쌘형 호로(물 속성)', GDD 6-7 v6.212·v6.214) · 강적 24 · 보스 3(탑 층 보스도 같은 보스라 같은 칸). 만나기 전 = 그림 실루엣 + '???'(속성·등급 숨김),
 // 만난 뒤 = 그림 · 이름 · 속성 · 강적·보스 등급(198장 grade — 여기서만 보인다) · 잡은 수 'n마리' · 흡수 종류별 횟수(200장 9, 0도 자리 고정) · 처음 만난 곳 한 줄. 처음 만난 카드는 '새' 점 하나(알림 없음), 상세를 보면 지운다.
 // 종족 분기 없음: 이름·속성 이름·사냥터/탑 이름은 종족 설정·데이터에서 읽는다. 기기 ▲▼ = 카드 이동, ✓ = 상세 창, ◀ = 창 닫기(공용 창 레이어).
 import { ELEMENT_IDS } from '../data/elements';
@@ -10,6 +10,7 @@ import { groundName, towerLabels, type FactionConfig } from '../engine/faction';
 import { ABSORB_KINDS, emptyAbsorbs, ENEMY_CARD_KINDS, ENEMY_CARDS, enemyDexCounts, enemyKnown, markEnemyCardSeen, parseWhere, type EnemyCard, type EnemyCardKind, type EnemyDex, type EnemyDexEntry } from '../engine/enemyDex';
 import type { SaveData } from '../game';
 import { foeArtOf } from './bha/battle';
+import { tintStillImg } from './bha/artTint';
 import { h, icon } from './bha/dom';
 import { elementMark, paintElement } from './bha/element';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -62,7 +63,8 @@ function enemyArtBox(enemyId: string, known: boolean, cls: string): HTMLElement 
     img.src = art.src;
     img.alt = '';
     img.draggable = false;
-    if (art.scale !== 1) img.style.setProperty('--art-scale', String(art.scale)); // 종이인형 정지 그림(칸이 넓음)은 배율로 지금 적 그림 크기에 맞춤 (GDD 115-A 85)
+    if (art.scale !== 1) img.style.setProperty('--art-scale', String(art.scale));
+    if (known) tintStillImg(img, art.tint); // 적 속성 색 (C.546, GDD 15-5 — 길리안 몸 눈동자). 실루엣은 그대로 // 종이인형 정지 그림(칸이 넓음)은 배율로 지금 적 그림 크기에 맞춤 (GDD 115-A 85)
     box.append(img);
   } else box.append(icon(known ? 'i-tile-elite' : 'i-unknown'));
   return box;

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { useImmediateHits } from './helpers/hitDelay';
 import { BALANCE } from '../src/config/balance';
-import { ENEMIES, enemyGradeName, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
+import { ENEMIES, ENEMY_BODIES, enemyGradeName, normalEnemyBody, enemyPatternKind, getEnemy, hasSpecialActions, parseEnemy, POOL_CONFIG, scaleEnemy } from '../src/data/enemies';
 import { ELEMENTS } from '../src/data/elements';
 const LINEAGES = ELEMENTS; // C.47: 계통 A~E → 속성 8종
 import { ENEMY_PATTERN_KINDS, type EnemyDef, type EnemyPatternKind } from '../src/data/schema';
@@ -60,10 +60,10 @@ describe('적 데이터 (속성 8종 × 일반 3종 · 강적 3종, C.47)', () =
     expect(new Set(ENEMIES.map((e) => e.id)).size).toBe(ENEMIES.length);
   });
 
-  it('이름 (GDD 198장 → 6-7 v6.210): 일반 = 모두 \'호로\'(도감 표기는 c544), 강적 = 24종 모두 고유 + 고정 등급, 모든 종족에서 읽힌다', () => {
+  it('이름 (GDD 198장 → 6-7 v6.212): 일반 = \'<몸>형 호로\'(몸 표 bodies.json, 6-7 v6.214, 덩치 = 호로 — c545), 강적 = 24종 모두 고유 + 고정 등급, 모든 종족에서 읽힌다', () => {
     for (const e of pool) expect(typeof e.name['*'], e.id).toBe('string');
     for (const e of pool.filter((x) => x.class === 'normal')) {
-      expect(e.name['*'], e.id).toBe('호로');
+      expect(e.name['*'], e.id).toBe(ENEMY_BODIES.names[normalEnemyBody(e) ?? ''] ? `${ENEMY_BODIES.names[normalEnemyBody(e) ?? '']} 호로` : '호로');
       expect(e.grade, e.id).toBeUndefined();
     }
     const elites = pool.filter((x) => x.class === 'elite');

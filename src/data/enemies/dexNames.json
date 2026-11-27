@@ -1,7 +1,6 @@
 {
-  "about": "적 도감 표기 (GDD 6-7 v6.210, 사용자 2026-11-27 \"보이는건 그냥 호로로 하고, 도감에 호로(수 속성) 뭐 이런식으로\"): 일반 적은 어디서나 이름 그대로(호로)이고 도감에서만 format 으로 구분한다. {name} = 적 이름, {element} = 속성 표시 이름(elements.json name), {pattern} = 아래 patterns. 두 종족 공유(적 테이블처럼).",
+  "about": "적 도감 표기 (GDD 6-7 v6.212): 일반 적은 어디서나 '<몸>형 호로'(bodies.json)이고 도감에서만 format 으로 속성을 붙여 구분한다. {name} = 적 이름, {element} = 속성 표시 이름(elements.json name). 패턴 이름(기본·속공·단단)은 쓰지 않는다. 두 종족 공유.",
   "normal": {
-    "format": "{name}({element} 속성·{pattern})",
-    "patterns": { "basic": "기본", "swift": "속공", "sturdy": "단단" }
+    "format": "{name}({element} 속성)"
   }
 }

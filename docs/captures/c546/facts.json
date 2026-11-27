@@ -1,0 +1,57 @@
+{
+ "errors": [],
+ "pcBattle": {
+  "foeId": "normal-heavy-seal",
+  "canvas": true,
+  "oldRedPixels": 0,
+  "normalToken": "#c6baa9"
+ },
+ "grid": [
+  {
+   "el": "normal",
+   "token": "--bha-el-normal",
+   "value": "#8c8478"
+  },
+  {
+   "el": "water",
+   "token": "--bha-el-water",
+   "value": "#4c7ea8"
+  },
+  {
+   "el": "fire",
+   "token": "--bha-el-fire",
+   "value": "#c0643a"
+  },
+  {
+   "el": "earth",
+   "token": "--bha-el-earth",
+   "value": "#9a7c48"
+  },
+  {
+   "el": "thunder",
+   "token": "--bha-el-thunder",
+   "value": "#a8963e"
+  },
+  {
+   "el": "blood",
+   "token": "--bha-el-blood",
+   "value": "#84343a"
+  },
+  {
+   "el": "poison",
+   "token": "--bha-el-poison",
+   "value": "#74803e"
+  },
+  {
+   "el": "kyo",
+   "token": "--bha-el-kyo",
+   "value": "#7a6496"
+  }
+ ],
+ "phoneBattle": {
+  "foeId": "normal-heavy-seal",
+  "canvas": true,
+  "oldRedPixels": 0,
+  "normalToken": "#c6baa9"
+ }
+}

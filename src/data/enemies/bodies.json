@@ -1,0 +1,19 @@
+{
+  "about": "일반 적 몸(모델) 표 (GDD 6-7 v6.212·v6.214, 사용자 2026-11-27 \"그 모델에 따라서, 거미형 호로, 부유형 호로 이런식으로 이름붙여\" · \"도마뱀->속공형, 외팔이->괴력형, 가시->강습형으로 이름 바꾸삼\"): 이름과 그림이 같이 읽는 한 곳. names = 몸 id → 이름 앞말(빈 글자 = 앞말 없이 '호로'), normal.byPattern = 일반 적 패턴 → 몸 id, normal.nameFormat = 일반 적 이름({body} = 몸 이름, {name} = 적 테이블 이름 '호로'; 몸 이름이 비면 {name} 만). brute 덩치 = 호로 기본 모델이라 앞말 없음(6-7 v6.215 확정). provisional = 임시 이름(lean: 6-7 표에 없는 한 장 그림 몸이라 15-5 용어 '날쌘형'). 그림 목록(src/data/art/manifest.ts)은 몸 brute = 덩치 종이인형(속성 색), lean = 한 장 그림(enemy-<적id>.png)으로 읽는다. 두 종족 공유.",
+  "names": {
+    "brute": "",
+    "lean": "날쌘형",
+    "onearm": "괴력형",
+    "speed": "속공형",
+    "spiky": "강습형",
+    "serpent": "뱀형",
+    "beast": "짐승형",
+    "spider": "거미형",
+    "wraith": "부유형"
+  },
+  "provisional": ["lean"],
+  "normal": {
+    "nameFormat": "{body} {name}",
+    "byPattern": { "basic": "brute", "swift": "lean", "sturdy": "brute" }
+  }
+}

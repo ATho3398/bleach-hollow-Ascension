@@ -1338,8 +1338,31 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - 캡처 `docs/captures/c544/`(1배 3장, `scripts/c544-proof.cjs`, facts.json): 01 PC 전투(물 속성·기본 적) 이름 '호로' · 02 PC 적 도감 호로(노멀/물/불/허무 속성·기본/속공/단단) · 03 폰 적 도감.
 - 검증: typecheck · 관련 테스트(enemies·c330·c332·c363 등) · 새 테스트 · typecheck · npm test 4442 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
 
-## C.547 — 모험 준비 [준비] 탭 = 특수던전식 목록 (GDD 6-2 v6.216 → v6.217, S-23, 코딩354)
-세이브 형식·BALANCE 그대로(화면만). GDD v6.217(6-2 줄 끝에 구현 표시, 20절 한 줄).
+## C.545 — 일반 적 이름 = 그림 몸 이름 + 호로(덩치 = 호로), 도감 '<이름>(속성 속성)' (GDD 6-7 v6.212·v6.214·v6.215 → v6.217, S-23, 코딩353)
+세이브 형식·BALANCE 그대로(세이브엔 적 id 만). GDD v6.217(첫 줄 + 20절 한 줄). C.544('호로' + 도감 패턴 글자)를 고침.
+- **이유**: 사용자 2026-11-27(C.544 본 뒤) "속공, 기본 이런건 빼;; 그 모델에 따라서, 거미형 호로, 부유형 호로 이런식으로 이름붙여. 적들." · "도마뱀->속공형, 외팔이->괴력형, 가시->강습형으로 이름 바꾸삼" → 마스터AT 6-7 v6.212·v6.214·v6.215(덩치 = 호로 확정).
+- **몸 표 한 곳**: 새 `src/data/enemies/bodies.json` = 몸 id → 이름 앞말(6-7 표: brute 덩치 = 빈 글자(그냥 '호로', v6.215 확정) · onearm 괴력형 · speed 속공형 · spiky 강습형 · serpent 뱀형 · beast 짐승형 · spider 거미형 · wraith 부유형 · lean 날쌘형(임시)) + 일반 적 패턴 → 몸(basic·sturdy = brute, swift = lean) + 형식 `{body} {name}`. `enemies/index.ts` 가 읽을 때 일반 적 24종 이름을 만든다(enemies.json 이름은 '호로' 그대로) → 전투·결과·로그·흡수·도감 모두 같은 이름.
+- **그림과 같은 출처**: `art/manifest.ts` `BRUTE_ENEMY_KINDS`(덩치 종이인형을 입는 적 종류)를 몸 표에서 몸 brute 인 일반 패턴 + 강적 3 으로 만든다. 표의 몸을 바꾸면 이름과 그림이 같이 바뀐다(brute ↔ lean). 시험이 24종 모두 '표의 몸 = 실제 그림(종이인형 외형 앞머리 / 한 장 그림 파일)'을 막는다.
+- **도감**: `dexNames.json` 형식 `{name}({element} 속성)` — 패턴 글자 없음. 적 고르기 목록(수련장·테스트 모드)도 도감 표기.
+- **겹치는 도감 이름(지시대로 그대로 둠)**: 속성마다 basic·sturdy 가 둘 다 덩치 → '호로(노멀/물/불/흙/뇌/혈/독/허무 속성)' 8쌍(16종). 날쌘형은 겹침 없음.
+- **이렇게 정함(임시)**: 속공 적(swift)은 덩치·속도형 종이인형이 아니라 한 장 그림(마른 몸, `enemy-<속성>-swift.png`)이고 6-7 표에 없어서, 15-5 기존 용어 '날쌘형'을 임시 이름으로(bodies.json provisional). 지금 일반 적 24종 중 6-7 표의 괴력형·속공형·강습형·뱀형·짐승형·거미형·부유형 몸을 입은 적은 없다(강적만 — 강적 이름은 고유 이름 그대로).
+- **테스트**: 새 `tests/c545.test.ts` 10건(24종 이름 = 몸 이름 + 호로·패턴 글자 없음 / 표의 몸 = 그림 / 덩치 종류 = 표 / 지금 표 = 6-7 / 강적·인형·테스트 적 그대로 / 도감 형식 데이터 / 24종 도감 형식 / 강적·보스 그대로 / 고르기 목록 / 도감만·종족 분기 없음). `tests/c544.test.ts` 는 규칙이 바뀌어 지움(c545 가 대신). `tests/enemies.test.ts` 기대값 = 몸 표.
+- 캡처 `docs/captures/c545/`(1배 3장, `scripts/c545-proof.cjs`, facts.json): 01 PC 전투 '날쌘형 호로'(물 속공) · 02 PC 적 도감 호로·날쌘형 호로(노멀/물/불/허무 속성) · 03 폰 적 도감.
+- 검증: typecheck · 관련 테스트(enemies·c348-size·c330·c332·c363) · 새 테스트 · npm test 4444 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.546 — 적 길리안 눈동자 = 그 적 속성 색 (GDD 15-5 v6.215 → v6.220, S-23, 코딩353)
+세이브 형식·BALANCE 그대로(그림 표시만). GDD v6.220(첫 줄 + 20절 한 줄).
+- **이유**: 사용자 2026-11-27 "그리고 길리안 있지. 적 길리안도 속성에 따라서 눈동자색 바꿔." → 마스터AT 15절 v6.215.
+- **몸 단위 표**: 새 `src/data/art/enemyTint.json` = 몸 → 그 적 속성 색으로 바꿀 도트 색. 지금 `hd`(길리안 몸 — gillian-base·gillian-cyclops 모두) = 눈동자 `#e21014`(부위 그림 hd/head.png 2픽셀·hd-cyclops/head.png 4픽셀, 다른 부위엔 없음). 속성 색 = 그 적 속성의 `elements.json` color 토큰(`--bha-el-*`, 새 색 없음).
+- **그림 목록**: `art/manifest.ts` `enemyTintOf(적 id, 외형)` — 외형의 몸이 표에 있고 적 테이블의 적이면 `ArtUrls.tint = {from, token}`. `enemyArt` 만 붙인다 → 내 캐릭터 2단계 길리안(char.hollow.2·skin.gillian*)은 안 바뀜. 몸 단위라 길리안 몸 적이 늘어도 자동.
+- **화면**: 새 `src/ui/bha/artTint.ts`(색 읽기·픽셀 바꾸기). 종이인형(`rigAnim.bindRigAnim` tint 인자 — 부위 그림을 다 불러온 뒤 한 번 바꾼 캔버스로 그림, `animPlayer.bindAnim` 이 넘김) · 정지 그림(`battle.ts artImg` — 전투·걷기, 적 도감 `enemyArtBox` — 실루엣은 그대로)이 같은 tint 를 쓴다. 토큰 값은 화면에서 읽어 테마를 따른다(전투 루트는 battle-c281 값).
+- **지금 길리안 몸 적**: `normal-heavy-seal` 스티치마우스(외눈 길리안, 노멀) 1종 → 눈동자 = 노멀 색.
+- **테스트**: 새 `tests/c546.test.ts` 12건(표 = hd 눈동자 / 그 색이 길리안 머리에만 / 길리안 몸 적 1종 / enemyArt tint = 속성 토큰 / 8속성 모두 다른 토큰(몸 단위) / 다른 몸·없는 적 tint 없음 / 내 캐릭터 안 바뀜 / 새 색 없음 / replaceColors / parseCssColor / 화면 연결·종족 분기 없음).
+- 캡처 `docs/captures/c546/`(1배 3장, `scripts/c546-proof.cjs`, facts.json): 01 PC 전투 스티치마우스(노멀 눈, 캔버스에 옛 빨강 0픽셀) · 02 PC 같은 길리안 몸에 8속성 tint 나란히(머리 확대) · 03 폰 전투.
+- 검증: typecheck · 관련 테스트(c545·rig·anim 관련 15개) · 새 테스트 · npm test 4455 · balance:check 회귀 가드 통과(수치 안 바뀜) · build.
+
+## C.547 — 모험 준비 [준비] 탭 = 특수던전식 목록 (GDD 6-2 v6.216 → v6.221, S-23, 코딩354)
+세이브 형식·BALANCE 그대로(화면만). GDD v6.221(6-2 줄 끝에 구현 표시, 20절 한 줄).
 - **사용자 원문**(2026-11-27): "모험도 그 특수던전처럼 ui바꿔야된다니까." → 마스터AT 6-2 v6.216.
 - **화면** `src/ui/planView.ts`: [준비] 탭 안을 주간던전·보스전·수련장 틀(`bha-sdg__list/item/stage/art/cap/lock/info/go`, `enableDragScrollY`) 그대로 — 새 묶음 `.bha-plan__prep`(왼쪽 1 : 오른쪽 2.2).
   - 왼쪽 = 사냥터 3곳(이름 = 종족 설정 `huntingGrounds`, 작은 글자 `groundElementsText` = '자주 나오는 속성 노멀·흙·물'). 잠긴 곳 = 자물쇠 + `is-locked`(점선·흐림).
