@@ -178,16 +178,29 @@
 .bha-lcd .bha-plan .bha-tab .bha-icon { width: 16px; height: 16px; }
 .bha-plan__sub { margin: 0; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
 .bha-plan__label { flex: none; width: 44px; color: var(--bha-text-2); font-size: var(--bha-fs-xs); font-weight: 700; }
-/* 사냥터 줄 · 난이도 줄 (GDD 24-2 · 32-1): 이름표 44 + 작은 버튼(36). 고른 것 = 한 단 밝은 면 + 아랫면 강조색 */
-.bha-lcd .bha-plan > .bha-plan__row { position: absolute; left: 10px; right: 10px; height: 36px; display: flex; align-items: center; gap: 6px; }
-.bha-lcd .bha-plan > .bha-plan__grounds:not(.bha-plan__difficulty) { top: 50px; }
-.bha-lcd .bha-plan > .bha-plan__difficulty { top: 92px; }
 .bha-lcd .bha-plan .bha-plan__row > .bha-btn { flex: 0 1 auto; min-width: 0; padding: 0 10px; gap: 4px; font-size: var(--bha-fs-sm); white-space: nowrap; }
 .bha-lcd .bha-plan .bha-plan__row > .bha-btn .bha-icon { width: 14px; height: 14px; }
 .bha-lcd .bha-plan .bha-plan__row > .bha-btn.is-on { background: var(--bha-bg-3); box-shadow: 0 0 0 1px var(--bha-line-2), inset 0 -2px 0 var(--bha-accent); color: var(--bha-text-1); }
+/* 모험 준비 [준비] 탭 = 특수던전식 목록 (GDD 6-2 v6.216, C.547): 틀은 주간던전·보스전·수련장(story.css bha-sdg) 그대로 — 머리 아래 전체를
+   왼쪽 사냥터 목록(.bha-sdg__list) · 오른쪽 그림 칸(.bha-sdg__stage = 무대 배경 그림 · 설명 · 난이도 ★ · 길 미리보기 · [출발] 줄)으로. [타일 배치] 탭에서는 숨김 */
+.bha-lcd .bha-plan > .bha-plan__prep { position: absolute; left: var(--bha-gutter); right: var(--bha-gutter); top: calc(var(--bha-head-h) + var(--bha-sp-3)); bottom: var(--bha-gutter); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr); gap: var(--bha-sp-4); }
+.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__prep { display: none; }
+.bha-plan__info { gap: var(--bha-sp-2); }
+/* 설명 칸: 고정 높이 움푹한 면, 안에서 스크롤 + 바닥 '▼ 더 있음' + ⓘ (PROMPT 5절 2) — 글 길이가 달라도 아래 ★·길·[출발]이 안 움직인다 */
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__desc { position: relative; flex: none; height: 64px; box-sizing: border-box; overflow: hidden; }
+.bha-lcd .bha-plan .bha-plan__info .bha-plan__descscroll { padding: var(--bha-sp-1) 36px var(--bha-sp-4) var(--bha-sp-2); }
+.bha-lcd .bha-plan .bha-plan__info .bha-plan__descscroll > .bha-plan__sub { min-height: 0; font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); }
+/* 난이도 줄 (GDD 32-1): 이름표 44 + 작은 버튼. 고른 것 = 한 단 밝은 면 + 아랫면 강조색 */
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__row { flex: none; display: flex; align-items: center; gap: var(--bha-sp-1); }
+/* 길 미리보기 (GDD 189장): 작은 네모 12개 + '놓은 타일 n/최대' */
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__minirow { flex: none; display: flex; align-items: center; gap: var(--bha-sp-3); }
+/* 첫 진화 전(타일 잠김, GDD 64장 1번): 탭·길·프리셋 없음 — 안내 한 줄이 길 미리보기 자리에 */
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__line { flex: none; font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); }
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__line .bha-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; }
+/* [출발] 줄: [준비] 탭에서는 그림 칸 맨 아래(특수던전 [입장] 자리) — 아래 고정 띠(.bha-dock) 모양을 풀고 왼쪽 '체력 n%' + [출발] */
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__go { position: static; height: auto; padding: 0; background: none; box-shadow: none; }
+.bha-lcd .bha-plan .bha-plan__info > .bha-plan__go > .bha-btn { flex: 1 1 auto; }
 .bha-plan__rec { height: 18px; background: var(--bha-tint-teal); color: var(--bha-bg-0); }
-/* 설명 칸: 고정 높이 움푹한 면, 안에서 스크롤 + 바닥 '▼ 더 있음' (PROMPT 5절 2) */
-.bha-lcd .bha-plan > .bha-plan__desc { position: absolute; left: 10px; right: 10px; top: 134px; height: 122px; box-sizing: border-box; overflow: hidden; }
 /* 설명 칸 ⓘ (GDD 193장 11): 숫자(적 체력·공격 %, 난이도 가산 %)는 여기서 — 칸 오른쪽 위 고정 */
 .bha-lcd .bha-plan .bha-plan__desc > .bha-plan__descinfo { position: absolute; top: 6px; right: 6px; margin: 0; }
 .bha-lcd .bha-plan .bha-plan__descscroll { padding-right: 36px; }
@@ -196,8 +209,6 @@
 .bha-plan__descscroll > .bha-plan__sub { font-size: var(--bha-fs-sm); line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
 .bha-plan__descscroll > .bha-plan__sub:first-child { color: var(--bha-text-1); }
 .bha-plan__more { background: var(--bha-bg-0); }
-/* 준비 탭 한 줄 안내(.bha-plan__line)는 첫 진화 전(.is-locked) 잠김 안내만 — 길 요약은 아래 .bha-plan__minirow (C.298) */
-.bha-lcd .bha-app.bha-plan:not(.is-place) > .bha-plan__line { position: absolute; left: 374px; top: 252px; width: 40px; line-height: 40px; text-align: left; white-space: nowrap; }
 .bha-lcd .bha-app.bha-plan:not(.is-place) .bha-plan__how { display: none; }
 .bha-plan__line .bha-num { font-size: var(--bha-fs-xs); font-weight: 400; color: var(--bha-text-1); }
 /* 배치 프리셋 판 = 타일 배치 탭 오른쪽 (GDD 193장 12) */
@@ -219,14 +230,9 @@
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__acts > .bha-btn { font-size: var(--bha-fs-xs); min-height: 30px; }
 /* 고른 프리셋 미리보기 줄은 길 줄이 바로 위에 보여서 이 판에서는 뺀다(좁은 판 높이를 칩 목록에) — 이름 입력 칸일 때만 보인다 */
 .bha-lcd .bha-plan .bha-plan__side .bha-presets__view:not(:has(.bha-presets__input)) { display: none; }
-/* 첫 진화 전(타일 잠김, GDD 64장 1번): 탭·길·프리셋 없음 — 안내 한 줄이 길 줄 자리에 */
-.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line { left: 10px; right: 10px; width: auto; top: 262px; line-height: 1.4; white-space: normal; }
-.bha-lcd .bha-app.bha-plan.is-locked > .bha-plan__line .bha-icon { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; }
 /* [출발] 띠 (GDD 100장 #3·#22): 아래 56 고정, 버튼 48 */
 /* 준비 탭 길 요약 (GDD 189장, C.298): 출발 포함 12칸 = 작은 네모 6개씩 2줄, 타일 종류 색만(글자·아이콘 없음, 누를 수 없음) + '놓은 타일 n/최대'.
    길 줄(.bha-road)·'길' 이름표·한 줄 안내는 준비 탭에서 숨긴다 — 칸 전부는 [타일 배치] 탭에서만 */
-.bha-lcd .bha-plan > .bha-plan__minirow { position: absolute; left: 10px; right: 10px; top: 262px; height: 28px; display: flex; align-items: center; gap: 10px; }
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__minirow { display: none; }
 .bha-plan__mini { flex: none; display: grid; grid-template-columns: repeat(6, 10px); grid-auto-rows: 10px; gap: 3px; pointer-events: none; }
 .bha-plan__minicell { display: block; border-radius: 2px; background: var(--bha-bg-0); box-shadow: inset 0 0 0 1px var(--bha-line-1); }
 .bha-plan__minicell.is-nest { background: var(--bha-text-3); box-shadow: none; }
@@ -248,8 +254,6 @@
 .bha-plan__hp.is-low .bha-num, .bha-plan__hp.is-low .bha-icon { color: var(--bha-danger); }
 
 /* 타일 배치 탭 (.is-place, GDD 179장 3): 사냥터·난이도·설명·프리셋·길 이름표 숨김 */
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__row,
-.bha-lcd .bha-app.bha-plan.is-place > .bha-plan__desc { display: none; }
 .bha-lcd .bha-app.bha-plan.is-place > .bha-plan__line { position: absolute; left: 10px; width: 58%; top: 44px; height: 18px; line-height: 18px; font-size: var(--bha-fs-sm); } /* C.298: 길 위 시너지 이름표(칸 위 10px)와 안 겹치게 4px 위로 */
 /* 길 = 가로 한 줄 전체 폭(시작 + 11자리 = 12칸, 48×52) — 위 8px 은 칸 사이 시너지 이름표 자리 */
 .bha-lcd .bha-app.bha-plan.is-place .bha-road { position: absolute; left: 10px; right: 10px; top: 72px; height: 52px; padding-top: 0; }
