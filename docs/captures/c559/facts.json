@@ -1,0 +1,62 @@
+{
+ "errors": [],
+ "shots": [
+  {
+   "tag": "hollow",
+   "from": "hurt",
+   "file": "01-hollow-crisis-tan-chain1.png",
+   "tray": [
+    "family-c"
+   ],
+   "ms": 1129,
+   "hp": [
+    265,
+    233
+   ],
+   "stage": "skill-hold",
+   "status": "playing"
+  },
+  {
+   "tag": "hollow",
+   "from": "chain-use",
+   "file": "02-hollow-chain-tan-chain3.png",
+   "tray": [
+    "family-c",
+    "family-c",
+    "family-c"
+   ],
+   "ms": 1249,
+   "hp": [
+    38,
+    0
+   ],
+   "stage": "chain-hit",
+   "status": "won"
+  },
+  {
+   "tag": "shinigami",
+   "from": "chain-use",
+   "file": "03-shinigami-chain-familyc-chain3.png",
+   "tray": [
+    "family-c",
+    "family-c",
+    "family-c"
+   ],
+   "ms": 1089,
+   "hp": [
+    38,
+    0
+   ],
+   "stage": "chain-hit",
+   "status": "won"
+  }
+ ],
+ "end": {
+  "hollow": {
+   "status": "won"
+  },
+  "shinigami": {
+   "status": "won"
+  }
+ }
+}

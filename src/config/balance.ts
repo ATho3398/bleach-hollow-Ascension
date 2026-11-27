@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 174; // C.558 (GDD 5-5 v6.239 우라하라 마주침 연출, 사용자 2026-11-27 "우라하라 알림창 없애고 …"): 마주침 확인 창 폐기 → provisional.wanderer.confirmSeconds 5 삭제. 다른 수치 그대로
+export const BALANCE_VERSION = 175; // C.559 (GDD 13절 v6.240 튜토리얼 각본 전투의 블록 = 탄 계열, 사용자 2026-11-27): provisional.tutorialScript.blockFamily 'family-c' 신설(호로 탄·사신 귀). 수치 그대로
+// 이전: BALANCE_VERSION = 174; // C.558 (GDD 5-5 v6.239 우라하라 마주침 연출, 사용자 2026-11-27 "우라하라 알림창 없애고 …"): 마주침 확인 창 폐기 → provisional.wanderer.confirmSeconds 5 삭제. 다른 수치 그대로
 // 이전: BALANCE_VERSION = 173; // C.555 (GDD 4-5 v6.232 모험 먹이 = 확률로 바퀴당 평균 약 0.5개, 사용자 2026-11-27 정정 — provisional): C.550 expedition.foodPerLap 0.5(바퀴당 1개 상한) 삭제 → expedition.foodRate 0.15(출처별 먹이 확률 전체 배율 — 일반 적·강적 확정+30%·보물 먹이 몫·휴식 간식). 보스 확정 먹이 밖. 전투 수치 그대로
 // 이전: BALANCE_VERSION = 172; // C.552 (GDD 7절 v6.226 블록 모션 길이 = 진화 단계별, 사용자 2026-11-27 — provisional): combat.motion.blockLength default [0.8, 1.0, 1.2](체인별) → [1.2](체인 무관, 1·2단계) · byTier {'2': [1.0], '3': [0.9]} · ascended [0.8](아란칼화/참백도 구상화 뒤) 신설. 그 밖 수치 그대로
 // 이전: BALANCE_VERSION = 171; // C.550 (GDD 4-5 v6.225 모험 먹이 = 바퀴당 0~1개, 사용자 2026-11-27 — provisional): provisional.expedition.foodPerLap 0.5 신설 — 한 바퀴의 모험 출처(전투·보물·휴식 타일·보스) 먹이 최대 1개, 바퀴 굴림 1회(원정 시드·바퀴) < 0.5 × 배율. food.normalDropChance·eliteExtraChance 는 원정에서 안 씀(사냥터 표 검사용으로 남김). 전투 수치 그대로
@@ -988,7 +989,9 @@ export const BALANCE = {
     /** 첫 원정 튜토리얼 (GDD 67장, C.120, provisional): 고정 길 cell 번 칸에서 약한 적 1마리(체력·공격 배율), 첫 흡수 대신 모든 능력치 노력치 +statEv (1단계 상한 합 24·능력치당 12 안) */
     tutorialRun: { cell: 3, enemyHpMult: 0.6, enemyAttackMult: 0.5, statEv: 3 },
     /** 첫 원정 첫 전투 각본 (GDD 123장 5, C.199, provisional): 자동 공격 autoHits 대 → 강공격(막기) → autoHits2 대 → 못 막는 강공격(체력 leaveHpFraction 남김) → hurtHoldSeconds 동안 맞은 모습을 보여 준 뒤 설명 → 블록 1개 → afterSkillSeconds(누름·공격·적 피해 흐름) 뒤 같은 블록 chainLength 개(spawnGapSeconds 간격) → 쌓인 모습 stackHoldSeconds 뒤 → 체인으로 처치 → killSlowSeconds 슬로우·적 사라짐 뒤 흡수 화면(GDD 129장 3). 강공격 예고 castSeconds 초. 마무리 체인 피해는 동작·스킬 연출이 닿는 순간 들어가고, 화면이 알리지 않으면(헤드리스·연출 끔) chainHitMaxSeconds 뒤(GDD 146장 — 가장 긴 동작의 마지막 타격보다 길게) */
-    tutorialScript: { autoHits: 3, autoHits2: 2, castSeconds: 1.5, leaveHpFraction: 0.12, afterSkillSeconds: 2, spawnGapSeconds: 0.35, chainLength: 3, hurtHoldSeconds: 1, stackHoldSeconds: 1, killSlowSeconds: 1.6, chainHitMaxSeconds: 1.6, libReadySeconds: 0.8, libHoldSeconds: 1.2 },
+    tutorialScript: { autoHits: 3, autoHits2: 2, castSeconds: 1.5, leaveHpFraction: 0.12, afterSkillSeconds: 2, spawnGapSeconds: 0.35, chainLength: 3, hurtHoldSeconds: 1, stackHoldSeconds: 1, killSlowSeconds: 1.6, chainHitMaxSeconds: 1.6, libReadySeconds: 0.8, libHoldSeconds: 1.2, blockFamily: 'family-c' as string },
+    // ↑ blockFamily (GDD 13절 v6.240 '튜토리얼 각본 전투의 블록 = 탄 계열', 사용자 2026-11-27 "튜토에서 쓰는 블록은 탄으로 하자. 1체인이랑 3체인 이펙트 차이 제일 잘보이니까" — C.559):
+    //   ④ 위기 블록 1개·⑧ 체인 블록 3개의 계열 키. 두 종족 공통 키(호로 family-c = 탄, 사신 family-c = 귀 — 표시명은 종족 설정). 그 몸에 없는 계열이면 옛 규칙(출현표 기본 블록의 계열)
     /** 튜토리얼 원정 뒤 회복 안내 (GDD 123장 5 수정 v5.280, C.199, provisional): 빈사로 복귀 → 구급상자 → (체력 포션 단계·potionTo 는 C.223 삭제, GDD 144장 4) → 온천에서 spaTo 까지(그만큼 온천 시간을 바로 흘림, 배부름 줄어듦) → 먹이 food 1개 = 배부름·체력 가득 */
     tutorialRecover: { spaTo: 1, food: 'tutorial' as const, rewardEach: 3, cureReward: { 'med-cure': 3, 'med-iv': 3, 'med-energy': 3, 'heal-patch': 3, 'battle-potion': 2, 'heal-salve': 1 } as Record<string, number>, cureFood: { snack: 5 } as Record<string, number> }, // GDD v6.005: 시작 가방 물건 전부(소모품·싸구려 간식) = 빈사 치료 뒤 // GDD 241-B 5: 안내 먹이 = 전용 '첫 끼니'(배부름 가득), 먹인 뒤 보상 = 일반 먹이 6종 각 rewardEach 개 (GDD 245장 2: 1 → 3 — 새 게임 시작 일반 먹이 지급을 이리로 옮김). 온천 spaTo = 체력 가득까지(245장 7 — 옛 0.8)
     /** 해금 흐름 (GDD 241-0 사용자 수정 v5.570, C.399, provisional): 진화마다 하나씩 열린다. tierIndex = 어느 트랙이든 그 단계에 닿은 적이 있으면(0 = 1단계), ascended = 해방 클리어(아란칼화/참백도 구상화), rebirths = 환생 수. 한 번 열리면 영구(슬롯 공유).

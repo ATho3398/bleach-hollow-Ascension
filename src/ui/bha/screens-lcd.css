@@ -588,10 +588,6 @@ button.bha-slot { cursor: pointer; }
 .bha-ident__gender.is-on .bha-ident__tick { visibility: visible; }
 .bha-ident__foot { justify-content: flex-start; }
 
-/* ═════ 붕옥 상태 띠 (GDD 244장 2 안 B: 반각성 · 공명 · 합체 가능, C.414) — 토큰만 ═════ */
-.bha-hogyoku__stages { display: flex; flex-wrap: wrap; gap: var(--bha-sp-1); }
-.bha-hogyoku__stages .bha-chip.is-off { opacity: 0.5; }
-
 /* ═════ 붕옥 창 배치 (C.421 → C.423 → C.425 사용자 재지시 "오른쪽 탭 다 지워"): 왼쪽 판 = 붕옥 그림(버튼) + 둘레 재료 3칸(선으로 이어짐) + 총 효과 · 오른쪽 판 = 고른 것의 상세 + 아래 고정 [강화] ═════
    그림은 112×116 칸 하나(상자 그림 크기)에 같은 정수 배율 --hg-s 로 겹친다: 상자 112×116 · 붕옥 64 (칸 안 24·25 = 상자 속 붕옥 자리) · 불꽃 96 (칸 안 8·1 = 불꽃 프레임 안 붕옥 자리 16·24 — 사용자가 도트로 맞춘 자리, 프레임 구멍 중심 47·55 = 붕옥 중심 31·31 + 16·24).
    배율 1.5 (사용자 '1/3 줄여' — 2/3 ≈ 85px 에 가장 가까운 깔끔한 배율, 붕옥 96px · 고해상 폰(2배 화면)에서는 도트 하나 = 3화소로 고르게)
@@ -641,7 +637,7 @@ button.bha-slot { cursor: pointer; }
 /* 오른쪽 판 (C.425 "오른쪽 탭 다 지워"): 상세 하나(넘치면 이 칸만 스크롤) + 아래 고정 버튼 줄 */
 .bha-hgright { display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; min-height: 0; height: 100%; }
 .bha-hgdetail { flex: 1 1 0; display: flex; flex-direction: column; gap: var(--bha-sp-2); min-width: 0; min-height: 0; overflow-y: auto; }
-.bha-hgfoot { flex: none; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--bha-sp-2); }
+.bha-hgfoot { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--bha-sp-2); }
 /* 붕옥 그림 = 버튼 (누르면 강화 상세). 고른 것 강조 = 강조색 테두리 */
 .bha-hgorb__art { border: 0; padding: 0; background: none; border-radius: var(--bha-r-md); cursor: pointer; touch-action: manipulation; }
 .bha-hgorb__art.is-on { box-shadow: 0 0 0 2px var(--bha-accent); }
@@ -678,7 +674,6 @@ button.bha-slot { cursor: pointer; }
 .bha-fuse__chips .bha-chip { min-height: 20px; padding: 0 var(--bha-sp-2); font-size: var(--bha-fs-xs); white-space: nowrap; }
 /* 결과 카드: 테두리 = 희귀색, 그림 크게 */
 .bha-fuse__result { box-shadow: inset 0 0 0 1px var(--bha-rare), var(--bha-shadow-1); }
-.bha-fuse__cap { flex: none; font-size: var(--bha-fs-xs); color: var(--bha-rare); letter-spacing: var(--bha-tracking-label); line-height: 1; }
 .bha-fuse__resname { font-size: var(--bha-fs-md); color: var(--bha-rare); }
 .bha-fuse__resart { position: relative; flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; }
 .bha-fuse__resart > .bha-dexart { flex: 1 1 0; min-height: 0; width: 100%; }
@@ -686,11 +681,14 @@ button.bha-slot { cursor: pointer; }
 .bha-fuse .bha-dexart { position: relative; }
 .bha-fuse .bha-dexart > .bha-itemart--img { position: absolute; inset: 0; }
 .bha-fuse__resart > .bha-dexart > .bha-icon { width: var(--bha-icon-xl); height: var(--bha-icon-xl); }
-.bha-fuse__stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: var(--bha-sp-1) var(--bha-sp-3); border: 2px solid var(--bha-danger); border-radius: var(--bha-r-sm); background: var(--bha-scrim); color: var(--bha-danger); font-size: var(--bha-fs-sm); font-weight: var(--bha-fw-heavy); white-space: nowrap; pointer-events: none; }
 .bha-fuse__result[data-owned="true"] .bha-dexart { opacity: 0.55; }
-.bha-fuse__gains { flex: none; margin: 0; padding: 0; list-style: none; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-text-2); }
-.bha-fuse__gains li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bha-fuse__gains li::before { content: '＋ '; color: var(--bha-good); }
+/* 결과는 늘 실루엣 + ??? (GDD 12-4 v6.242): 두 부모 그림을 가운데로 겹쳐 검게. 이미 가진 조합이면 막힘 이유 한 줄 */
+.bha-fuse__ghost { position: relative; flex: 1 1 0; min-height: 0; width: 100%; overflow: hidden; }
+.bha-fuse__ghost > .bha-dexart { position: absolute; inset: 0; width: 100%; height: 100%; filter: brightness(0); opacity: 0.85; }
+.bha-fuse__ghost > .bha-dexart:first-child { transform: translateX(-14%) scale(0.85); }
+.bha-fuse__ghost > .bha-dexart:last-child { transform: translateX(14%) scale(0.85); }
+.bha-fuse__ghost > .bha-dexart:only-child { transform: none; }
+.bha-fuse__resnote { flex: none; margin: 0; font-size: var(--bha-fs-xs); line-height: 1.3; color: var(--bha-danger); }
 /* 부모 → 결과 잇는 선: 가는 선 + 가운데 ＋ 표 + 결과 쪽 화살촉. 합체 가능이면 선 위로 은은한 빛이 결과 쪽으로 흐른다 */
 .bha-fuse__link { position: relative; align-self: center; height: 24px; display: grid; place-items: center; }
 .bha-fuse__link::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); background: var(--bha-line-2); }
@@ -730,7 +728,7 @@ button.bha-slot { cursor: pointer; }
 .bha-hgcost__item.is-ok b { color: var(--bha-good); }
 .bha-hgcost__item.is-short b { color: var(--bha-danger); }
 .bha-hgitem { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bha-sp-2); }
-.bha-hgitem .bha-hogyoku__stages { margin-left: auto; }
+.bha-hgitem__now { font-size: var(--bha-fs-md); color: var(--bha-text-1); }
 .bha-hgitem .bha-icon { color: var(--bha-rare); }
 /* 그림 아이콘 (artIcon): 아이콘 칸 크기 그대로, 픽셀 그대로 */
 .bha-articon { image-rendering: pixelated; object-fit: contain; }
