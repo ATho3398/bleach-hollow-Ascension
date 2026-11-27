@@ -1,0 +1,200 @@
+{
+  "shots": [
+    {
+      "name": "01-phone-19_5x9-844x390.png",
+      "vw": 844,
+      "vh": 390,
+      "rotated": false,
+      "pc": false,
+      "device": [
+        0,
+        0,
+        844,
+        390
+      ],
+      "deviceRatio": 2.1641,
+      "margins": {
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "bottom": 0
+      },
+      "lcdRatio": 1.7647,
+      "buttons": {
+        "up": [
+          0.0545,
+          0.4128
+        ],
+        "down": [
+          0.0545,
+          0.5872
+        ],
+        "ok": [
+          0.9455,
+          0.4231
+        ],
+        "back": [
+          0.9455,
+          0.6026
+        ]
+      }
+    },
+    {
+      "name": "02-phone-20x9-915x412.png",
+      "vw": 915,
+      "vh": 412,
+      "rotated": false,
+      "pc": false,
+      "device": [
+        11.7,
+        0,
+        891.6,
+        412
+      ],
+      "deviceRatio": 2.1641,
+      "margins": {
+        "left": 12,
+        "right": 12,
+        "top": 0,
+        "bottom": 0
+      },
+      "lcdRatio": 1.7647,
+      "buttons": {
+        "up": [
+          0.0545,
+          0.4128
+        ],
+        "down": [
+          0.0545,
+          0.5872
+        ],
+        "ok": [
+          0.9455,
+          0.4231
+        ],
+        "back": [
+          0.9455,
+          0.6026
+        ]
+      }
+    },
+    {
+      "name": "03-tablet-4x3-1024x768.png",
+      "vw": 1024,
+      "vh": 768,
+      "rotated": false,
+      "pc": false,
+      "device": [
+        0,
+        147.4,
+        1024,
+        473.2
+      ],
+      "deviceRatio": 2.1641,
+      "margins": {
+        "left": 0,
+        "right": 0,
+        "top": 147,
+        "bottom": 147
+      },
+      "lcdRatio": 1.7647,
+      "buttons": {
+        "up": [
+          0.0545,
+          0.4128
+        ],
+        "down": [
+          0.0545,
+          0.5872
+        ],
+        "ok": [
+          0.9455,
+          0.4231
+        ],
+        "back": [
+          0.9455,
+          0.6026
+        ]
+      }
+    },
+    {
+      "name": "04-phone-portrait-390x844.png",
+      "vw": 390,
+      "vh": 844,
+      "rotated": true,
+      "pc": false,
+      "device": [
+        0,
+        0,
+        390,
+        844
+      ],
+      "deviceRatio": 2.1641,
+      "margins": {
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "bottom": 0
+      },
+      "lcdRatio": 1.7647,
+      "buttons": {
+        "up": [
+          0.0545,
+          0.4128
+        ],
+        "down": [
+          0.0545,
+          0.5872
+        ],
+        "ok": [
+          0.9455,
+          0.4231
+        ],
+        "back": [
+          0.9455,
+          0.6026
+        ]
+      }
+    },
+    {
+      "name": "05-pc-1366x768.png",
+      "vw": 1366,
+      "vh": 768,
+      "rotated": false,
+      "pc": true,
+      "device": [
+        261,
+        189,
+        844,
+        390
+      ],
+      "deviceRatio": 2.1641,
+      "margins": {
+        "left": 261,
+        "right": 261,
+        "top": 189,
+        "bottom": 189
+      },
+      "lcdRatio": 1.7647,
+      "buttons": {
+        "up": [
+          0.0545,
+          0.4128
+        ],
+        "down": [
+          0.0545,
+          0.5872
+        ],
+        "ok": [
+          0.9455,
+          0.4231
+        ],
+        "back": [
+          0.9455,
+          0.6026
+        ]
+      }
+    }
+  ],
+  "errors": []
+}
