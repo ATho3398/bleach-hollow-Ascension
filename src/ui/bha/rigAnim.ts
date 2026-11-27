@@ -11,6 +11,8 @@ import { boneMatrices, fxAt, layerMatrix, lookLayers, motionSpeedOf, orderLayers
 import { drawFxCanvas } from './rigFx';
 import { rigFxOf, type FxLayer } from './rigEffects';
 import type { AnimPlayer, PlayOptions } from './animPlayer';
+import type { ArtTint } from '../../data/art/manifest';
+import { tintColor, tintedCanvas } from './artTint';
 
 /** 게임 동작 → 종이인형 동작(여럿이면 무작위, pickVariant) */
 export const RIG_ACTIONS: Partial<Record<AnimAction, readonly string[]>> = {
@@ -240,7 +242,8 @@ const MIN_FRAME_MS = 33;
  * <img> 를 종이인형으로 움직인다. partBase = 부위 그림 폴더 주소(…/art/rig/<rig id>/). 등록(animOf·has-anim 클래스)은 bindAnim 이 한다.
  */
 /** sets = 동작 묶음(몸이 묶음을 쓰면 그 몸 동작으로 덮는다, GDD 96장 40) */
-export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets): RigPlayer {
+/** tint = 적 속성 색 바꾸기(C.546, GDD 15-5 — 길리안 몸 눈동자): 부위 그림을 다 불러온 뒤 한 번, 그 색 픽셀만 바꾼 캔버스로 그린다 */
+export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record<string, Motion>, lookId: string, partBase: string, sets?: MotionSets, tint?: ArtTint): RigPlayer {
   const [vx, vy, vw, vh] = rig.view?.rect ?? [0, 0, rig.canvas[0], rig.canvas[1]];
   const clipH = rig.view?.clipY !== undefined ? Math.min(vh, rig.view.clipY - vy) : vh; // 바닥 밑(clipY 아래)은 땅에 가려진 것처럼 안 그린다
   const canvas = document.createElement('canvas');
@@ -252,8 +255,17 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
   const layers = lookLayers(rig, lookId).map((l) => {
     const im = new Image();
     im.src = `${partBase}${l.art}.png`;
-    return { layer: l, im };
+    return { layer: l, im, src: im as CanvasImageSource };
   });
+  let tinted = !tint;
+  /** 속성 색 바꾸기: 모든 부위를 불러온 뒤 한 번 (토큰 색을 못 읽으면 다음 그리기에서 다시) */
+  const applyTint = (): void => {
+    if (tinted || !tint) return;
+    const to = tintColor(tint, img.isConnected ? img : canvas);
+    if (!to) return;
+    for (const l of layers) l.src = tintedCanvas(l.im, tint, to) ?? l.im;
+    tinted = true;
+  };
   let raf = 0;
   let last = 0;
   let lastDraw = -Infinity;
@@ -270,6 +282,7 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
   };
   const draw = () => {
     if (!ctx || layers.some((l) => !l.im.complete || !l.im.naturalWidth)) return false;
+    applyTint();
     const { pose, motion, t } = player.pose();
     const mats = boneMatrices(rig, pose, body);
     const shown = orderLayers(layers.map((l) => ({ ...l, slot: l.layer.slot })), motion).map((l) => ({ ...l, m: layerMatrix(rig, mats, l.layer, motion) }));
@@ -288,9 +301,9 @@ export function bindRigAnim(img: HTMLImageElement, rig: Rig, baseMotions: Record
     ctx.clip();
     ctx.imageSmoothingEnabled = false;
     if (fx) drawFxLayer(fx.back);
-    for (const { im, m, slot } of shown) {
+    for (const { src, m, slot } of shown) {
       ctx.setTransform(m[0] * K, m[1] * K, m[2] * K, m[3] * K, (m[4] - vx) * K, (m[5] - vy) * K);
-      ctx.drawImage(im, 0, 0);
+      ctx.drawImage(src, 0, 0);
       for (const [at, c] of mids) if (at === slot) drawFxLayer(c);
     }
     if (fx) {

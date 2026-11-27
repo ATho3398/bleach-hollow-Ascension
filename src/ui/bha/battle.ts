@@ -5,6 +5,7 @@ import { charArt, enemyArt, type ArtUrls } from '../../data/art/manifest';
 import type { RoomConfig } from '../../engine/faction';
 import type { EnemyPatternKind } from '../../data/schema';
 import { bindAnim, type AnimPlayer } from './animPlayer';
+import { tintStillImg } from './artTint';
 import { el, emptyArtMark, icon } from './dom';
 import { elementColor } from './element';
 
@@ -218,6 +219,7 @@ export function artImg(art: ArtUrls, url: string, cls: string): HTMLImageElement
   img.draggable = false;
   img.style.setProperty('--art-scale', String(art.scale));
   img.style.setProperty('--art-dy', `${art.offsetY}%`);
+  if (url === art.src) tintStillImg(img, art.tint); // 적 속성 색(C.546 — 길리안 몸 눈동자), 종이인형이 움직이기 전 정지 그림
   return img;
 }
 

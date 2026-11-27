@@ -209,7 +209,7 @@ export function bindAnim(owner: HTMLElement, img: HTMLImageElement, art: ArtUrls
   // 종이인형 그림(GDD 96장 30): 뼈대 동작으로 움직인다
   if (art?.rig && typeof document !== 'undefined') {
     const pack = rigPack(art.rig.rigId); // 뼈대(사람형·뱀형, GDD 115-A 100)
-    const player = bindRigAnim(img, pack.rig, pack.motions, art.rig.look, art.rig.partBase, pack.sets);
+    const player = bindRigAnim(img, pack.rig, pack.motions, art.rig.look, art.rig.partBase, pack.sets, art.tint); // tint = 적 속성 색(C.546)
     registry.set(owner, player);
     owner.classList.add('has-anim');
     for (const a of Object.keys(RIG_ACTIONS)) owner.classList.add(`has-anim-${a}`);

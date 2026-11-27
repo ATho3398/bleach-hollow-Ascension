@@ -10,6 +10,7 @@ import { groundName, towerLabels, type FactionConfig } from '../engine/faction';
 import { ABSORB_KINDS, emptyAbsorbs, ENEMY_CARD_KINDS, ENEMY_CARDS, enemyDexCounts, enemyKnown, markEnemyCardSeen, parseWhere, type EnemyCard, type EnemyCardKind, type EnemyDex, type EnemyDexEntry } from '../engine/enemyDex';
 import type { SaveData } from '../game';
 import { foeArtOf } from './bha/battle';
+import { tintStillImg } from './bha/artTint';
 import { h, icon } from './bha/dom';
 import { elementMark, paintElement } from './bha/element';
 import { lcdHead, lcdPage, selectLast } from './bha/lcdpage';
@@ -62,7 +63,8 @@ function enemyArtBox(enemyId: string, known: boolean, cls: string): HTMLElement 
     img.src = art.src;
     img.alt = '';
     img.draggable = false;
-    if (art.scale !== 1) img.style.setProperty('--art-scale', String(art.scale)); // 종이인형 정지 그림(칸이 넓음)은 배율로 지금 적 그림 크기에 맞춤 (GDD 115-A 85)
+    if (art.scale !== 1) img.style.setProperty('--art-scale', String(art.scale));
+    if (known) tintStillImg(img, art.tint); // 적 속성 색 (C.546, GDD 15-5 — 길리안 몸 눈동자). 실루엣은 그대로 // 종이인형 정지 그림(칸이 넓음)은 배율로 지금 적 그림 크기에 맞춤 (GDD 115-A 85)
     box.append(img);
   } else box.append(icon(known ? 'i-tile-elite' : 'i-unknown'));
   return box;

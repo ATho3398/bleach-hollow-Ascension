@@ -18,6 +18,9 @@ import { tryGetTranscendent } from '../transcendents';
 import { activeGender, FEMALE_KEY_SUFFIX, usesFemaleLook, type Gender } from '../../engine/gender';
 import { rigPackOfLook } from './rig/pose';
 import enemyBodies from '../enemies/bodies.json';
+import enemyTintRaw from './enemyTint.json';
+import { ENEMIES } from '../enemies';
+import { getElement } from '../elements';
 
 /** 종이인형 여성 외형 id 꼬리 (humanoid.json looks: shinigami-base → shinigami-base-f) */
 export const RIG_FEMALE_SUFFIX = '-f';
@@ -80,6 +83,26 @@ export interface ArtUrls {
   layers?: { back: string[]; front: string[]; ms: number; live?: string };
   /** 빈 자리 (EMPTY_LOOK, C.505): 그림 없는 초월자 — 화면은 카드 창과 같은 자리 표시(아이콘 칸)를 그린다 */
   empty?: true;
+  /** 속성 색 바꾸기 (C.546, GDD 15-5): 적 그림만 — 이 도트 색들을 token(속성 색 디자인 토큰)으로 바꿔 그린다(길리안 몸 눈동자) */
+  tint?: ArtTint;
+}
+
+/** 그림 도트 색 바꾸기: from = 바꿀 색('#rrggbb'), token = 바꿀 색이 담긴 디자인 토큰 이름 */
+export interface ArtTint {
+  from: readonly string[];
+  token: string;
+}
+
+/** 적 그림 속성 색 표 (enemyTint.json): 몸 → 바꿀 도트 색 */
+export const ENEMY_TINT_BODIES = (enemyTintRaw as { bodies: Record<string, { part: string; from: string[] }> }).bodies;
+
+/** 이 적·외형의 속성 색 바꾸기 (GDD 15-5 v6.215): 외형의 몸이 표에 있으면 그 적 속성 색 토큰으로. 적 테이블에 없는 적(보스 등)·표에 없는 몸은 없음 */
+export function enemyTintOf(enemyId: string, look: string): ArtTint | undefined {
+  const body = rigPackOfLook(look)?.rig.looks[look]?.body;
+  const spec = body ? ENEMY_TINT_BODIES[body] : undefined;
+  const enemy = spec ? ENEMIES.find((e) => e.id === enemyId) : undefined;
+  if (!spec || !enemy) return undefined;
+  return { from: spec.from, token: getElement(enemy.element).color };
 }
 
 /** 내 덩치(호로 기본·덩치 스킨) 배율: 정지 그림 키(칸의 0.38) × 2.1 ≈ 지운 그림 키 0.8 (C.343) */
@@ -309,7 +332,11 @@ export function enemyArt(enemyId: string, base = '/', manifest: Readonly<Record<
   const key = `enemy.${enemyId}`;
   // 종이인형 적 (GDD 115-A 85): 목록에 rig 가 있으면 그 외형이 움직인다(정지 그림 = 쉬는 자세 한 장)
   const rig = manifest[key]?.rig;
-  if (rig && rigPackOfLook(rig)) return rigArt(rig, manifest[key]!, base);
+  if (rig && rigPackOfLook(rig)) {
+    // 속성 색 바꾸기 (C.546, GDD 15-5): 몸이 표(enemyTint.json)에 있으면 — 길리안 몸 눈동자 = 그 적 속성 색
+    const tint = enemyTintOf(enemyId, rig);
+    return tint ? { ...rigArt(rig, manifest[key]!, base), tint } : rigArt(rig, manifest[key]!, base);
+  }
   const a = artUrls(key, base, manifest, files);
   const anims = resolveAnims([key], base, files, overrides);
   // 한 장짜리 파일이 없고 idle 애니만 있으면 idle-1 을 정지 그림으로도 쓴다 (GDD 26-2)
