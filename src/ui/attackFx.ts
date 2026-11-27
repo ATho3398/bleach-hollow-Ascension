@@ -183,9 +183,12 @@ export function cueHitMs(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 
 /**
  * cueHitMs 를 몸 몫과 이펙트 몫으로 (GDD 7절 v6.150, 사용자 2026-11-20 "모션만 속도 따라가는거지, 이펙은 정상속도로", C.512):
  * bodyMs = 몸동작이 타격까지 걸리는 시간(동작 타격 시각·몸통박치기 휘두르기·각본 연결 동작 휘두르기 — 블록 모션 배율을 받는다),
- * fxMs = 그 뒤 이펙트 시간줄의 첫 반응(도트 이펙트 reactAt[0]·발사 비행 — 늘 1배). 엔진은 블록 타격 지연 = bodyMs ÷ 배율 + fxMs
+ * fxMs = 그 뒤 이펙트 시간줄의 첫 반응(도트 이펙트 reactAt[0]·발사 비행 — 늘 1배).
+ * hitMs = 몸동작 타격 프레임 시각(1배, 블록을 쓴 순간부터) — 블록 피해·맞음 반응 시각 (GDD 7절 v6.225 '블록 피해 = 몸동작 타격 순간에 바로', C.551):
+ * 도트 연결 동작 = 휘두르기 넘침 + 몸 시간줄 첫 타격(body.at + 첫 동작 타격), 스킬·공격 동작 = 그 타격, 동작 그림이 없으면 대신 동작(몸통박치기·발사 움직임) 타격.
+ * 이펙트(도트 이펙트 reactAt)는 기다리지 않는다. 엔진 블록 타격 지연 = hitMs ÷ 배율
  */
-export function cueHitParts(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion' | 'bodyWindup'>, anim: AnimTiming | null, slot: PixelBodySlot): { bodyMs: number; fxMs: number } {
+export function cueHitParts(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel' | 'motion' | 'rigMotion' | 'bodyWindup'>, anim: AnimTiming | null, slot: PixelBodySlot): { bodyMs: number; fxMs: number; hitMs: number } {
   const act = anim ? animActionOf(cue, (a) => anim.has(a)) : null;
   const pplan = cue.pixel && hasPixelStage(cue.pixel.stage, slot) ? pixelPlan(cue.pixel.stage, slot) : null;
   const chainBody = !!pplan?.body && !!anim;
@@ -194,7 +197,23 @@ export function cueHitParts(cue: Pick<AttackCue, 'tier' | 'fx' | 'ult' | 'pixel'
   const clipHit = chainBody ? (cue.bodyWindup ? bodyLeadMs(pplan!.body, anim) : 0) : act && anim ? anim.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? null : null;
   const cast = clipHit === null && motion?.move === 'cast';
   const bodyMs = clipHit !== null ? clipHit : cast ? Math.max(60, level.backMs) : level.backMs + level.lungeMs;
-  return { bodyMs, fxMs: (cast ? motion!.travelMs : 0) + (pplan ? pplan.reactAt[0] ?? 0 : 0) };
+  const travel = cast ? motion!.travelMs : 0;
+  const chainHit = chainBody ? blockBodyMs(cue, anim, slot)?.hitMs ?? 0 : 0; // 엔진 몸동작 표(motionsOf)와 같은 재기 — 연결 동작을 못 재면 스킬 동작 타격
+  return { bodyMs, fxMs: travel + (pplan ? pplan.reactAt[0] ?? 0 : 0), hitMs: bodyMs + travel + chainHit };
+}
+
+/** 맞음 반응 시각들(ms, 이펙트 시간줄 0 기준) (GDD 7절 v6.225, C.551): bodyHitIn = 몸 타격 시각이면 첫 반응 = 몸 타격, 나머지는 이펙트 반응 간격 그대로.
+ *  null 이면 옛 식 = 이펙트 반응(투사체 도착) 시각 그대로 (적 공격·각본 마무리 체인) */
+export function blockReactTimes(reactAt: readonly number[], bodyHitIn: number | null): number[] {
+  if (bodyHitIn === null || reactAt.length === 0) return [...reactAt];
+  const first = reactAt[0]!;
+  return reactAt.map((r) => bodyHitIn + r - first);
+}
+
+/** 도트 연결 동작의 첫 타격 시각(ms, 이펙트 시간줄 0 기준 = body.at + 첫 동작 타격, 첫 동작이 '타격 프레임부터'면 body.at) — 동작 길이를 모르면 fallbackMs (C.551) */
+export function chainBodyHitMs(body: PixelPlan['body'], anim: AnimTiming, fallbackMs = 0): number {
+  if (!body) return 0;
+  return bodyMotionSpec(body, body.chain.map((st) => peekStep(anim, st.id)))?.hitMs ?? fallbackMs;
 }
 
 /**
@@ -215,26 +234,21 @@ export function hitDelaysOf(o: {
 }): HitDelayParams {
   const sec = (ms: number) => Math.round(ms) / 1000;
   const blockBy: Record<string, number> = { ...(o.fallback.blockBy ?? {}) };
-  const blockFxBy: Record<string, number> = { ...(o.fallback.blockFxBy ?? {}) };
   for (const id of o.familyIds) {
     for (let stage = 1; stage <= FAMILY_STAGE_FX.length; stage++) {
       const cue: AttackCue = { side: 'player', tier: chainTier(stage, FAMILY_STAGE_FX.length), guarded: false, instant: true, bodyWindup: o.bodyWindup };
       applyFamilySpec(cue, id, stage, o.familyFx?.(id, stage), null);
-      const key = blockHitKey(id, stage)!;
-      const r = cueHitParts(cue, o.player, o.slot);
-      blockBy[key] = sec(r.bodyMs + r.fxMs);
-      // 이펙트 몫(1배 — 블록 모션 배율을 받지 않는다, C.512). 0 이면 적지 않는다(전부 몸 = 옛 식 그대로)
-      if (r.fxMs > 0) blockFxBy[key] = Math.min(blockBy[key]!, sec(r.fxMs));
-      else delete blockFxBy[key];
+      // 블록 피해 = 몸동작 타격 순간 (GDD 7절 v6.225, C.551 — 옛 C.512 '몸 몫 + 1배 이펙트 몫(blockFxBy)' 폐기)
+      blockBy[blockHitKey(id, stage)!] = sec(cueHitParts(cue, o.player, o.slot).hitMs);
     }
   }
-  blockBy.combo = sec(cueHitMs({ tier: 'special', ult: true }, o.player, o.slot));
-  blockBy.liberation = sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot));
+  const blockHit = (cue: Pick<AttackCue, 'tier' | 'ult'>) => sec(cueHitParts(cue, o.player, o.slot).hitMs);
+  blockBy.combo = blockHit({ tier: 'special', ult: true });
+  blockBy.liberation = blockHit({ tier: 'chain1' });
   return {
     basic: sec(cueHitMs({ tier: 'basic' }, o.player, o.slot)),
-    block: sec(cueHitMs({ tier: 'chain1' }, o.player, o.slot)),
+    block: blockHit({ tier: 'chain1' }),
     blockBy,
-    ...(Object.keys(blockFxBy).length ? { blockFxBy } : {}),
     enemy: sec(cueHitMs({ tier: 'basic' }, o.enemy, o.slot)),
     heavy: sec(cueHitMs(heavyCue(false, o.heavyPixel), o.enemy, o.enemy && 'pose' in o.enemy ? 'male' : 'frames')), // 적 칸 (GDD 227장 보충 4)
     counter: sec(cueHitMs({ tier: 'chain1' }, o.enemy, o.slot)),
@@ -1024,7 +1038,11 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
     const want = cue.hitInMs;
     const quick = want === undefined && !!cue.instant && !cue.windup; // 옛 즉발(엔진 지연 정보가 없을 때만): 타격 순간부터 / 각본 마무리 체인: 동작 처음부터
     const firstReact = pplan ? pplan.reactAt[0] ?? 0 : 0;
-    const clipHitIn = want !== undefined ? Math.max(bodyLead, want - firstReact) : quick ? 0 : chainBody ? bodyLead : undefined;
+    // 블록 피해 = 몸동작 타격 순간 (GDD 7절 v6.225, C.551): 내 공격의 엔진 착탄(want)은 몸동작 타격 프레임 — 이펙트 시간줄 시작(clipHitIn)은 그 몸 타격이 want 에 오게,
+    // 맞음 반응은 want 부터(여러 타격이면 이펙트 반응 간격 그대로). 이펙트 조각은 1배 시간줄대로 보이기만. 적 공격(강적 강공격 빔 등)·각본 마무리 체인(windup)은 옛 식(첫 이펙트 반응 = 착탄)
+    const bodyTimed = cue.side === 'player' && !cue.windup;
+    const bodyHitIn = bodyTimed && chainBody ? chainBodyHitMs(chainBody, from.anim!, act ? (from.anim!.peek(act, { motion: cue.motion, rigMotion: cue.rigMotion })?.hitAtMs ?? 0) / pace : chainBody.at) : 0;
+    const clipHitIn = want !== undefined ? Math.max(bodyLead, want - (bodyTimed ? bodyHitIn : firstReact)) : quick ? 0 : chainBody ? bodyLead : undefined;
     // 빠른 간격의 모션 (GDD 7-2, C.448): 엔진이 빨리 감은 배율(motionRate)로 재생 — 타격까지 남은 실제 시간(clipHitIn) = 1배 시간 ÷ 배율, 넘친 앞부분은 hitInMs 가 건너뛴다
     const mr = cue.motionRate && cue.motionRate > 0 ? cue.motionRate : 1;
     // 모션과 이펙트는 따로 (GDD 7-2, C.448): 엔진 줄 번호가 있는 블록은 동작(연결 동작·스킬 동작)을 엔진 block-motion 때 — 이펙트는 지금
@@ -1089,8 +1107,10 @@ export function attackFx(opts: AttackFxOptions): AttackFxDriver {
       for (const inst of pplan.insts) fxEnd = Math.max(fxEnd, pixelInst(layer, px.element, inst, from, to, hitAt));
       // 연결 동작을 처음부터 보이면(GDD 224장 2) 첫 맞음 반응은 몸의 첫 타격 자세가 실제로 올라온 순간(재생기 onHit) — 타이머와 재생기 시계가 1~2 프레임 어긋난다(C.367 실측)
       const firstFromBody = !!chainBody && bodySwing > 0;
-      for (const [i, ms] of pplan.reactAt.entries()) if (!(firstFromBody && i === 0)) hit(to, level, cue.guardedAt ?? cue.guarded, hitAt + ms);
-      const lastReact = hitAt + Math.max(...pplan.reactAt);
+      // 맞음 반응 시각 (C.551): 몸 타격 기준이면 첫 반응 = 몸 타격(hitAt + bodyHitIn), 나머지는 이펙트 반응 간격 그대로 / 옛 식이면 이펙트 반응(투사체 도착) 시각
+      const reacts = blockReactTimes(pplan.reactAt, bodyTimed ? bodyHitIn : null);
+      for (const [i, ms] of reacts.entries()) if (!(firstFromBody && i === 0)) hit(to, level, cue.guardedAt ?? cue.guarded, hitAt + ms);
+      const lastReact = hitAt + Math.max(...reacts);
       let landAtFinal = lastReact;
       if (chainBody && from.anim) {
         const anim = from.anim;

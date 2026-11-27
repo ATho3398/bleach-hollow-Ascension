@@ -504,8 +504,6 @@ export interface HitDelayParams {
   basic: number;
   block: number;
   blockBy?: Record<string, number>;
-  /** blockBy 중 이펙트 몫(초) — 도트 이펙트·투사체가 타격(도착)까지 걸리는 시간. 블록 모션 배율을 받지 않는다(늘 1배, GDD 7절 v6.150, C.512). 없으면 0(전부 몸 몫) */
-  blockFxBy?: Record<string, number>;
   enemy: number;
   heavy: number;
   counter: number;
@@ -594,14 +592,14 @@ export function hitDelayTicks(p: Pick<CombatParams, 'tickSeconds'>, seconds: num
   return Math.max(0, Math.ceil((seconds > 0 ? seconds : 0) / p.tickSeconds - 1e-6));
 }
 
-/** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값. 블록 모션 기준 길이(GDD 7절 v6.106, C.476)가 있으면 **몸 몫만** 그 배율로 —
- *  이펙트 몫(blockFxBy, 도트 이펙트·투사체가 타격까지 걸리는 시간)은 늘 1배 (GDD 7절 v6.150, 사용자 2026-11-20 "이펙은 정상속도로", C.512). 화면도 몸동작만 배율, 이펙트는 1배 */
+/** 블록 공격의 타격 지연(초): 계열·단계 키 → 기본값(= 몸동작 타격 프레임 시각, 1배). 블록 모션 기준 길이(GDD 7절 v6.106, C.476)가 있으면 그 배율로.
+ *  블록 피해 = 몸동작 타격 순간에 바로 (GDD 7절 v6.225, 사용자 2026-11-27 "스킬은 쓰면 그냥 모션에 맞춰서 딜 들어가게 하자", C.551):
+ *  지연 = 몸 몫 ÷ max(1, 배율)만 — 이펙트·투사체 도착 시각을 기다리지 않는다(옛 C.512 '+ 1배 이펙트 몫' 폐기). 이펙트는 화면에서 1배로 보이기만 */
 export function blockHitDelayOf(p: Pick<CombatParams, 'hitDelay' | 'motion'>, key: string | null, chain = chainOfKey(key)): number {
   const d = (key ? p.hitDelay.blockBy?.[key] : undefined) ?? p.hitDelay.block;
   const m = blockMotionOf(p, key, chain);
   if (!m || !(m.rate > 0)) return d;
-  const fx = Math.min(d, Math.max(0, (key ? p.hitDelay.blockFxBy?.[key] : undefined) ?? 0));
-  return (d - fx) / Math.max(1, m.rate) + fx; // 몸 몫 ÷ max(1, 배율) — 느린 몸도 1배(GDD 7절 v6.167, C.519)
+  return d / Math.max(1, m.rate); // 몸 몫 ÷ max(1, 배율) — 느린 몸도 1배(GDD 7절 v6.167, C.519)
 }
 
 /** 블록 공격 타격 지연 키: 계열 공격 = `계열:단계(1~3)`, 콤보 'combo', 해방 블록 'liberation', 그 밖(계열 없는 기본 블록) null */

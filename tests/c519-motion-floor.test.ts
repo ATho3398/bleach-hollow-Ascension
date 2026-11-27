@@ -88,10 +88,12 @@ describe('실제 종족 데이터 전 외형(종이인형 65종 × 호로·사�
             expect(m.total).toBeCloseTo(LEN[c - 1]!, 9);
             expect(m.hit).toBeCloseTo(Math.min(m.total, n.hit / Math.max(1, m.rate)), 9);
             expect(Math.abs(m.rate - r.pace)).toBeLessThan(0.01); // 화면 배율(cue.pace)과 엔진 배율이 같은 몸 데이터
-            // 타격 지연 = 몸 몫 ÷ max(1, 배율) + 이펙트 몫(1배) — 화면 cueHitParts 와 같은 값
+            // C.551 (GDD 7절 v6.225): 타격 지연 = 몸동작 타격 프레임 ÷ max(1, 배율)만 — 화면 cueHitParts.hitMs 와 같은 값, 엔진 몸동작 표 타격(기준 길이 위)과 같은 순간.
+            // 옛 C.512 기대값: bodyMs ÷ max(1, 배율) + fxMs(1배 이펙트 몫)
             const cue = attackCueOf(blockEvent(fam, c), 3, b.familyFx) as AttackCue;
             const parts = cueHitParts(cue, b.player, b.slot);
-            expect(Math.abs(blockHitDelayOf(p, key, c) - (parts.bodyMs / 1000 / Math.max(1, m.rate) + parts.fxMs / 1000))).toBeLessThanOrEqual(0.003);
+            expect(Math.abs(blockHitDelayOf(p, key, c) - parts.hitMs / 1000 / Math.max(1, m.rate))).toBeLessThanOrEqual(0.003);
+            expect(Math.abs(blockHitDelayOf(p, key, c) - m.hit)).toBeLessThanOrEqual(0.003);
           }
         }
       }
