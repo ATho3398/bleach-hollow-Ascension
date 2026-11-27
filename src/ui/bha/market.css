@@ -29,3 +29,17 @@
 button.bha-wchip { cursor: pointer; font: inherit; font-size: var(--bha-fs-xs); font-weight: var(--bha-fw-bold); }
 .bha-wchip.is-static { pointer-events: none; }
 .bha-wchip__face { width: 18px; height: 18px; image-rendering: pixelated; flex: none; }
+
+/* 우라하라 마주침 창 꾸밈 (GDD 5-5 v6.228, C.553): 왼쪽 도트(52×112 그림, 파일 ×3)를 한 도트 = 2px 로 세우고 등장 때 한 번 살짝 튀어 오른다.
+   오른쪽 = 제목 + [확인 (5)] (머묾 문구 없음). 새 색·간격 없음(토큰만) */
+.bha-wmeet .bha-modal { width: min(400px, 100%); }
+.bha-wmeet .bha-modal__main { justify-content: center; }
+.bha-wmeet .bha-modal__title { min-height: 0; padding: var(--bha-sp-5) var(--bha-sp-5) var(--bha-sp-4); background: none; box-shadow: none; }
+.bha-wmeet .bha-modal__actions { margin-top: var(--bha-sp-5); }
+.bha-wmeet__fig { display: block; width: 112px; height: auto; aspect-ratio: 168 / 342; image-rendering: pixelated; animation: bha-wmeet-hop var(--bha-dur-4) var(--bha-ease-out) var(--bha-dur-1) both; }
+@keyframes bha-wmeet-hop {
+  0% { transform: translateY(var(--bha-sp-6)); opacity: 0; }
+  55% { transform: translateY(calc(-1 * var(--bha-sp-4))); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .bha-wmeet__fig { animation: none; } }

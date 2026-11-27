@@ -14,6 +14,7 @@ import {
   type PendingBattle, type StepEvent, type WandererMeet, type WandererMeetCtx,
 } from '../engine/expedition';
 import { WANDERER_TEXT } from '../data/shop';
+import { wandererMeetFigure } from './bha/wandererChip';
 import { BLOCK_WORDS, eventHint, tileHint, variantModsText } from './labels';
 import { tileCss, tileIconId } from './bha/expedition';
 import { groundName, roomOf, type FactionConfig } from '../engine/faction';
@@ -235,6 +236,8 @@ export function expeditionView(root: HTMLElement, faction: FactionConfig, exp: E
       };
       confirmDialog({
         title: fixParticles(WANDERER_TEXT.meet.replace('{name}', w.name)), single: true, yes: WANDERER_TEXT.meetOk, cls: 'bha-wmeet',
+        // 마주침 창 꾸밈 (GDD 5-5 v6.228, C.553): 왼쪽 우라하라 도트 + 오른쪽 제목·[확인 (5)] — 머묾 안내 문구는 넣지 않는다(v6.228)
+        figure: wandererMeetFigure(),
         autoYesSeconds: BALANCE.provisional.wanderer.confirmSeconds, onYes: resume, onCancel: resume,
       });
       return;
