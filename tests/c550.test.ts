@@ -51,9 +51,9 @@ function survey(n: number, extra: Partial<Parameters<typeof createExpedition>[0]
 }
 
 describe('C.550 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225)', () => {
-  it('balance: provisional expedition.foodPerLap = 0.5, BALANCE_VERSION 171 이상', () => {
+  it('balance: provisional expedition.foodPerLap = 0.5, BALANCE_VERSION 171', () => {
     expect(PX.foodPerLap).toBe(0.5);
-    expect(BALANCE_VERSION).toBeGreaterThanOrEqual(171); // C.552: 172 로 올라가 '이상'으로
+    expect(BALANCE_VERSION).toBe(171);
     const src = readFileSync('src/config/balance.ts', 'utf8');
     expect(src).toMatch(/foodPerLap: 0\.5/);
   });
@@ -185,7 +185,7 @@ describe('C.550 모험 먹이 = 바퀴당 0~1개 (GDD 4-5 v6.225)', () => {
     const src = readFileSync('src/engine/expedition/expedition.ts', 'utf8') + readFileSync('src/engine/food.ts', 'utf8');
     expect(src).not.toMatch(/faction(Id)? === '(hollow|shinigami)'/);
     const gdd = readFileSync('docs/GDD.md', 'utf8');
-    // 기획서 4-5 는 v6.232 에서 '확률로 바퀴당 평균 약 0.5개'로 다시 씀(C.555 가 이 상한 구현을 대체) — 옛 기대값: /모험 먹이 = 바퀴당 0~1개/·/foodPerLap/
-    expect(gdd).toMatch(/모험 먹이 = 바퀴당/);
+    expect(gdd).toMatch(/모험 먹이 = 바퀴당 (평균 )?0~1개/); // v6.232 정정 문구(평균·상한 아님)도 받는다 — 규칙 재작업은 별도 패치
+    expect(gdd).toMatch(/C\.550/); // v6.232 에서 foodPerLap 이름이 기획서에서 빠짐 — 구현 표시(C.550)만 확인
   });
 });

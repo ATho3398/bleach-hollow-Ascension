@@ -1448,6 +1448,7 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **공용 창**: `confirmDialog` 새 선택 `figure?: HTMLElement` — 있으면 창 = `.bha-modal--figure`(가로 두 칸: `.bha-modal__figure` | `.bha-modal__main` 제목·본문·내용·버튼), 없으면 옛 창 그대로. 그림 칸은 `aria-hidden`. 규칙(`components.css` 8절)은 토큰만.
 - **그림 헬퍼**: `wandererMeetFigure()` = `src/ui/bha/wandererChip.ts`(그림 파일이 없으면 글만 있는 옛 창). 문구 데이터는 그대로(meet·meetOk·chipLabel). 이름은 그대로 종족 설정 market.props.wanderer, 종족 분기 없음. 자동 확인 5초·기기 ✓·뒤로 = 확인 그대로.
 - **CSS**: `market.css` 끝 `.bha-wmeet*`(새 색·간격 없음 — 토큰만). 부족한 토큰 없음.
+- **PATCH_LABEL**: C.554 그대로(내려가지 않게 — C.554 가 먼저 배포됨, 마스터 규칙). 소절 번호는 C.553.
 - **시험**: 새 `tests/c553.test.ts` 6건(머묾 문구 없음, 그림 있음, 창 호출 선택·자동 확인 그대로, figure 두 칸 구조, 픽셀·연출·움직임 줄이기, 토큰만).
 - 캡처 `docs/captures/c553/`(1배 3장, `scripts/c553-proof.cjs`, facts.json): 01 PC 창 · 02 폰(667×375) 창 — 글·그림 안 잘림(창 안·LCD 안 확인) · 03 등장 연출 중간(도트 −8px 떠 있음).
 

@@ -3,7 +3,7 @@
 import { BALANCE_VERSION } from './config/balance';
 
 /** 패치 이름 = docs/dev-log.md 의 최신 소절 번호. 패치마다 갱신한다 (CLAUDE.md) */
-export const PATCH_LABEL = 'C.554';
+export const PATCH_LABEL = 'C.554'; // 내려가지 않게: main·dev-log 최대 번호(C.553 은 C.554 뒤에 배포)
 /** 단계 번호 = 기획서(docs/GDD.md) 13장 로드맵 표의 단계. PATCH_LABEL 과 같이 패치마다 갱신한다 */
 export const STAGE_LABEL = 'S-23';
 
