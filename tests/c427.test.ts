@@ -5,7 +5,7 @@ import { BALANCE } from '../src/config/balance';
 import { FACTIONS } from '../src/data/factions';
 import { specialDungeonLabels, worldMapOf } from '../src/engine/faction';
 import {
-  bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, dailyEnemies as weeklyEnemies, dailyKey as weeklyKey, hpFractionAfter, newTickets, nextResetAt, OWNER_BOSS_ID, refillTickets, spendTicket, ticketsLeft, weekStartOf,
+  bossRushEnemy, bossRushEntries, bossRushOpen, createSpecialCombat, dailyEnemies as weeklyEnemies, dailyKey as weeklyKey, hpFractionAfter, newTickets, nextResetAt, refillTickets, spendTicket, ticketsLeft, weekStartOf,
 } from '../src/engine/specialDungeon';
 import { playCombatBot } from '../src/engine/combat/bot';
 import { enterSpecial, migrateSave, newSaveData, SAVE_FORMAT_VERSION, settleSpecialRun, specialState } from '../src/game';
@@ -53,10 +53,10 @@ describe('C.427 입장 차감 (C.564: 입장권)', () => {
     for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'daily', 'shard', now)).toBe(true);
     expect(enterSpecial(s, 'daily', 'shard', now)).toBe(false);
     expect(enterSpecial(s, 'daily', 'soul', now)).toBe(false); // 입장권은 던전 공통 (옛: 다른 던전은 따로)
-    for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true);
-    settleSpecialRun(s, { mode: 'boss', target: 'sand-maw', bossId: 'sand-maw', star: 1, battles: [fake(false)], total: 1, quit: false }, now);
-    expect(enterSpecial(s, 'boss', 'sand-maw', now)).toBe(true); // 3장째
-    expect(enterSpecial(s, 'boss', 'canyon-king', now)).toBe(false); // 졌어도 차감 — 이번 주 끝
+    for (let i = 0; i < 2; i++) expect(enterSpecial(s, 'boss', 'br-grand-fisher', now)).toBe(true);
+    settleSpecialRun(s, { mode: 'boss', target: 'br-grand-fisher', bossId: 'br-grand-fisher', star: 1, battles: [fake(false)], total: 1, quit: false }, now);
+    expect(enterSpecial(s, 'boss', 'br-grand-fisher', now)).toBe(true); // 3장째
+    expect(enterSpecial(s, 'boss', 'br-byakuya', now)).toBe(false); // 졌어도 차감 — 이번 주 끝
     specialState(s, now);
     expect(ticketsLeft(s.tower.tickets, 'boss', now)).toBe(0);
   });
@@ -82,15 +82,12 @@ describe('C.427 한 입장 = 전투 3판 연속 (일반·일반·강적, 체력 
     expect(s2.player.hp / s2.player.maxHp).toBeCloseTo(Math.max(0.01, hp), 6);
   });
 
-  it('보스전 = 스토리 보스 3 + 탑의 주인(× ownerScale), 열림 = 이긴 보스·탑 꼭대기', () => {
+  it('보스전 = 블리치 캐릭터 6명(C.565 — 옛 스토리 보스 3 + 탑의 주인), 열림 = 앞 보스를 이긴 뒤', () => {
     const list = bossRushEntries();
-    expect(list.map((e) => e.id)).toEqual(['sand-maw', 'canyon-king', 'forest-lord', OWNER_BOSS_ID]);
-    const owner = list[3]!;
-    expect(bossRushEnemy(owner, 4).hpInAttacks).toBeCloseTo(bossRushEnemy(list.find((e) => e.id === SX.boss.ownerBoss)!, 4).hpInAttacks * SX.boss.ownerScale, 6);
-    expect(bossRushOpen(list[0]!, {}, 0, 50)).toBe(false);
-    expect(bossRushOpen(list[0]!, { 'sand-maw': { kills: 1 } }, 0, 50)).toBe(true);
-    expect(bossRushOpen(owner, {}, 49, 50)).toBe(false);
-    expect(bossRushOpen(owner, {}, 50, 50)).toBe(true);
+    expect(list.map((e) => e.id)).toEqual(['br-grand-fisher', 'br-byakuya', 'br-ulquiorra', 'br-aizen', 'br-ginjo', 'br-yhwach']); // 옛 ['sand-maw', 'br-byakuya', 'forest-lord', 'tower-owner']
+    expect(bossRushOpen(list[0]!, {})).toBe(true);
+    expect(bossRushOpen(list[1]!, {})).toBe(false);
+    expect(bossRushOpen(list[1]!, { 'boss:br-grand-fisher': 1 })).toBe(true);
   });
 });
 
@@ -117,13 +114,13 @@ describe('C.427 보상 지급', () => {
     const s = newSaveData('hollow', 1);
     const now = kst(2026, 11, 12, 19);
     s.shared.soulCrystals = 0; s.shared.hogyokuShards = 0; s.shared.resonanceEssence = 0;
-    const quit = settleSpecialRun(s, { mode: 'boss', target: 'canyon-king', bossId: 'canyon-king', star: 2, battles: [], total: 1, quit: true }, now);
+    const quit = settleSpecialRun(s, { mode: 'boss', target: 'br-byakuya', bossId: 'br-byakuya', star: 2, battles: [], total: 1, quit: true }, now);
     expect(quit.won).toBe(false);
-    settleSpecialRun(s, { mode: 'boss', target: 'canyon-king', bossId: 'canyon-king', star: 2, battles: [fake(true)], total: 1, quit: false }, now);
+    settleSpecialRun(s, { mode: 'boss', target: 'br-byakuya', bossId: 'br-byakuya', star: 2, battles: [fake(true)], total: 1, quit: false }, now);
     const each = SX.boss.materialEach[1]!;
     expect([s.shared.soulCrystals, s.shared.hogyokuShards, s.shared.resonanceEssence]).toEqual([each, each, each]);
-    expect(s.bossDex['canyon-king']?.kills).toBe(1);
-    expect(s.runLog.specialRuns.at(-1)).toMatchObject({ mode: 'boss', target: 'canyon-king', won: true, gold: SX.boss.goldPerStar * 2 });
+    expect(s.bossDex['br-byakuya']?.kills).toBe(1);
+    expect(s.runLog.specialRuns.at(-1)).toMatchObject({ mode: 'boss', target: 'br-byakuya', won: true, gold: SX.boss.goldPerStar * 2 });
   });
 });
 

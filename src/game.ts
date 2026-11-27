@@ -54,7 +54,7 @@ import { enemyDexFromLogs, noteEnemyAbsorb, noteEnemyBattle, sanitizeEnemyDex, W
 import { chapterClearJade, chapterContent, episodeKey, STORY_CHAPTERS } from './data/story';
 import { isBossId } from './data/bosses';
 import { nextTowerFloor, TOWER_FLOORS, type TowerFloor } from './engine/tower';
-import { bossKey, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, newTickets, refillTickets, sanitizeSpecial, sanitizeTickets, spendTicket, ticketOf, type DailyDungeonId, type SpecialDungeonState, type SpecialMode, type SpecialTickets } from './engine/specialDungeon';
+import { bossKey, bossRushEntry, bossRushOpen, bossRushReward, dailyFeature, dailyKey, dailyOpenToday, dailyReward, isDailyDungeon, newSpecialState, newTickets, refillTickets, sanitizeSpecial, sanitizeTickets, spendTicket, ticketOf, type DailyDungeonId, type SpecialDungeonState, type SpecialMode, type SpecialTickets } from './engine/specialDungeon';
 import { FREE_COSMETICS, getCosmetic, getGoldItem, getWandererItem, skinItemId, WEAR_CATEGORIES, type WearCategory } from './data/shop';
 import { newWandererState, rollWandererStock, rollWandererTier, sanitizeWanderer, wandererCellRng, wandererHereAt, wandererLeaveAt, type WandererState, type WandererVisit } from './engine/wanderer';
 import { idleActiveHours, idleBondMult, idleCounts, idleYield, offlineHours, type IdleYield } from './engine/idle';
@@ -1797,7 +1797,8 @@ export function settleStory(save: SaveData, exp: ExpeditionState, nowMs: number 
 
 /** 스토리에서 한 번 이긴 보스 id (GDD 37장 1번): 보스 도감에 처치가 있는 보스. 자유 원정 출발 때 createExpedition 의 bossesBeaten 으로 넘긴다 */
 export function bossesBeaten(save: Pick<SaveData, 'bossDex'>): string[] {
-  return Object.entries(save.bossDex ?? {}).filter(([, d]) => (d?.kills ?? 0) > 0).map(([id]) => id);
+  // 스토리 보스 테이블에 있는 것만 (C.565: 보스전 보스 br-… 도 보스 도감에 처치가 남지만 자유 원정 보스 후보가 아니다)
+  return Object.entries(save.bossDex ?? {}).filter(([id, d]) => (d?.kills ?? 0) > 0 && isBossId(id)).map(([id]) => id);
 }
 
 /** 자유 원정 보스전 정산 (GDD 37장 4·6번): 이기면 보스 도감 처치 수 +1, 런 로그 bossBattles 에 source "free"·원정 ★. 첫 처치 영옥·칭호는 스토리에서 이미 받았으므로 없다 */
@@ -2232,6 +2233,10 @@ export function dailyAvailable(save: SaveData, id: string, nowMs: number = Date.
 export function enterSpecial(save: SaveData, mode: SpecialMode, target: string, nowMs: number = Date.now()): boolean {
   if (mode === 'daily' && !dailyAvailable(save, target, nowMs)) return false;
   specialState(save, nowMs);
+  if (mode === 'boss') { // C.565: 보스전 보스(앞 보스를 이긴 뒤 열림)만
+    const e = bossRushEntry(target);
+    if (!e || !bossRushOpen(e, save.shared.special.clears)) return false;
+  }
   return spendTicket(save.tower.tickets, ticketOf(mode), nowMs);
 }
 

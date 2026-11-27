@@ -22,7 +22,7 @@ const NOW = Date.UTC(2026, 10, 15, 3);
 describe('C.457 ① 특수던전 횟수 (레이드 클리어 뒤 진행 막힘 회귀)', () => {
   it('입장권이 떨어지면 진짜 게임은 입장이 막힌다(재현), 테스트 칸은 채워서 계속 들어간다 (C.564: 보스 주 1회 → 보스전 입장권 주 3장)', () => {
     const s = newTestSave('hollow', NOW);
-    const boss = BOSSES[0]!.id;
+    const boss = 'br-grand-fisher'; // C.565: 보스전 = 블리치 캐릭터 (옛 BOSSES[0])
     for (let i = 0; i < 3; i++) expect(enterSpecial(s, 'boss', boss, NOW + i)).toBe(true);
     expect(ticketsLeft(s.tower.tickets, 'boss', NOW)).toBe(0); // 입장권이 바닥 — 옛 [이번 주 끝]
     expect(enterSpecial(s, 'boss', boss, NOW + 5)).toBe(false);

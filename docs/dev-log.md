@@ -1581,3 +1581,14 @@ BALANCE 168 → **169**(소로 수치, 전부 provisional). 세이브 형식 그
 - **시험**: 새 `tests/c564.test.ts` 18건. 고친 기대값(옛 값 주석): `c427`(주 횟수 → 입장권·요일던전) · `c457`(보스 주 1회 → 보스전권 3장) · `c60`(골드 품목 목록 + 입장권 2) · `c85`·`c88`(탑 칸에 tickets) · `economy`(shared.special) · 형식 99 → 100 기대값 여러 파일.
 - 캡처 `docs/captures/c564/`(1배 4장, `scripts/c564-proof.cjs`, proof.json): 01 PC 월요일 목록(세공·골드·장비만 열림, 오른쪽 위 요일던전 입장권 2) · 02 닫힌 정제의 숲('화·금에 열린다', [연습]·[잠김] 흐림) · 03 장비 던전 · 04 폰 일요일 목록(전부, 장신구만 해방 전 자물쇠) + 골드 던전.
 - 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.
+
+## C.565 — 보스전 = 블리치 캐릭터 6명 (GDD 6-16 v6.246 → v6.251, S-23, 코딩361)
+- **사용자 2026-11-27**: "보스던전 맵 이름 이상한 썬더우드 이딴거 빼고. 블리치에 있는 캐릭으로 … 그랜드 피셔 / 뱌쿠야 / 우르키오라 / 아이젠 / 긴죠 / 유하바하". 수치·패턴 전부 provisional.
+- **데이터** `src/data/bossRush/bossRush.json` + `index.ts`(`BOSS_RUSH`·`getBossRush`·`bossRushDisplayName`): 스토리 보스 테이블(`data/bosses`)과 따로 — 보스 특성·첫 처치 보상·스토리·탑과 섞이지 않는다. 두 종족 같은 이름. 권장 ★ 1·2·3·4·4·4, 유하바하 scale 1.3. 패턴·기믹(기존 것 중 하나씩): 그랜드 피셔 swift·summon · 뱌쿠야 heavy-chain·seal · 우르키오라 stance·element(뇌→허) · 아이젠 heavy-seal·seal · 긴죠 heavy-chain·summon · 유하바하 stance·element(화→허). 체력 = 기본 공격 130/150/150/125/125/125회분, 공격 0.34/0.34/0.5/0.5/0.5/0.5회분(권장 단계 기준, 실제 = 고른 ★ 배율 × scale).
+- **엔진** `specialDungeon.ts`: `bossRushEntries()` = 데이터 순서(옛 스토리 보스 3 + 탑의 주인 `OWNER_BOSS_ID` 삭제), `bossRushOpen(e, clears)` = 첫 보스 처음부터·그 뒤는 앞 보스 보스전 이긴 수(연습 안 셈), `bossRushStars` = 1 ~ min(권장 ★, 연 난이도), `bossRushEnemy` = ★ 배율 × enemyScale × scale. 전투 보스 재료 `bossSetupFrom`(expedition — 스토리 보스·보스전 공통, `bossSetupOf` 는 이것을 부름). `enterSpecial('boss')` 은 열린 보스전 보스만. balance `specialDungeon.boss.ownerBoss`·`ownerScale` 삭제, BALANCE_VERSION 178.
+- **기록**: 승리 = 보스 도감 `bossDex` 처치 +1(보상 표 그대로 — 재료 세 종 2·3·5·7 + 골드 60 × ★), 적 도감 보스 칸에 6명 추가(스토리 보스 뒤). `bossesBeaten` 은 스토리 보스 테이블 id 만(자유 원정 보스 후보에 br-… 안 섞임).
+- **화면**: 목록 작은 글씨 = '권장 ★n(유하바하 강화)', 잠김 = '<앞 보스>을(를) 이기면 열린다', 그림 칸 = 장면 배경(종족 설정 `bossArt`, 6명 키) + 전투와 같은 실루엣(`foeEl('foe-b')`, `.bha-sdg__foe`), ★ 칸 = 권장 이하만. 전투 이름 덮어쓰기(탑의 주인) 삭제.
+- 밸런스 참고(`npm run balance -- --only=special`, 권장 ★ · 그 ★ 갓 닿은 몸 · 사람형 봇): 그랜드 피셔 ★1 98% 25초 · 뱌쿠야 ★2 59% 35초 · 우르키오라 ★3 47% 29초 · 아이젠 ★4 37% 28초 · 긴죠 ★4 32% 26초 · 유하바하 ★4 ×1.3 13% 30초.
+- **시험**: 새 `tests/c565.test.ts` 9건. 고친 기대값: `c427`(보스전 목록·열림 → 6명·앞 보스) · `c457`(보스 id).
+- 캡처 `docs/captures/c565/`(1배 3장, `scripts/c565-proof.cjs`, proof.json): 01 PC 보스전 목록(그랜드 피셔만 열림·실루엣·보스전 입장권 3) · 02 PC 앞 두 명 이긴 뒤 우르키오라 상세(★1~3) · 03 폰 유하바하 잠김.
+- 검증: typecheck · 관련 테스트 · 새 테스트 · npm test · balance:check · build.

@@ -592,7 +592,11 @@ export function takeStoryCue(exp: ExpeditionState): StoryLine[] | null {
 
 /** 보스 데이터 + BALANCE → 전투 엔진의 보스 재료 */
 export function bossSetupOf(bossId: string): BossSetup {
-  const b = getBoss(bossId);
+  return bossSetupFrom(getBoss(bossId));
+}
+
+/** 보스 데이터(페이즈·기믹) → 전투 보스 재료. 스토리 보스·보스전 보스(C.565, data/bossRush) 공통 */
+export function bossSetupFrom(b: { id: string; phases: readonly { belowHpFraction: number; attackSecondsMult: number }[]; gimmick: BossSetup['gimmick']; elementShifts?: readonly string[] }): BossSetup {
   return {
     id: b.id, phases: b.phases.map((x) => ({ ...x })), gimmick: b.gimmick,
     sealEverySeconds: BX.seal.everySeconds, sealSeconds: BX.seal.seconds, sealCells: BX.seal.cells, timeLimitSeconds: BX.timeLimitSeconds,

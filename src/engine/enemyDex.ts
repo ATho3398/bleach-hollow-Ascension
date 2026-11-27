@@ -3,6 +3,7 @@
 // 훈련 인형 연습·테스트 전투·등급전(상대 = 다른 보유자)·아란칼화 도전(다른 이름으로 나오는 보스)은 세지 않는다.
 // 카드 = 적 테이블의 일반·강적(testOnly 제외) + 보스 테이블. 탑 층 보스는 모두 보스 테이블의 보스라 같은 칸(200장 2). 종족 분기 없음 — 이름·지역 이름·흡수 갈래 이름은 화면이 종족 설정으로 읽는다.
 // 흡수 종류별 횟수(200장 9): 흡수 기록(AbsorbRecord)의 갈래 both·trait·stat + 놓아주기(none) — 전투 승리 뒤 흡수 화면에서 고른 것만(첫 원정 연습 흡수는 시스템상 흡수가 아니라 안 센다, 67장).
+import { BOSS_RUSH } from '../data/bossRush';
 import { BOSSES } from '../data/bosses';
 import { ELEMENT_IDS } from '../data/elements';
 import { ENEMIES, enemyPatternKind } from '../data/enemies';
@@ -71,6 +72,8 @@ function buildCards(): EnemyCard[] {
     ...normal.map((def): EnemyCard => ({ id: def.id, kind: 'normal', def })),
     ...elite.map((def): EnemyCard => ({ id: def.id, kind: 'elite', def })),
     ...bosses.map((b): EnemyCard => ({ id: b.id, kind: 'boss', def: b.enemy })),
+    // 보스전 보스 6명 (C.565, GDD 6-16 v6.246 '보스 도감·이름은 데이터'): 스토리 보스 뒤, 보스전 순서
+    ...BOSS_RUSH.map((b): EnemyCard => ({ id: b.id, kind: 'boss', def: b.enemy })),
   ];
 }
 

@@ -6,11 +6,12 @@
 //    그림은 아직 없어 사냥터 배경·무대 장면으로 대신 — 장면 키는 종족 설정 specialDungeon.daily[던전].art · bossArt[칸 id](파일만 바꾸면 된다)
 // 문구는 종족 설정, 화면은 종족 id 로 분기하지 않는다.
 import { sceneBg } from '../data/art/backgrounds';
-import { bossName } from '../data/bosses';
+import { bossRushDisplayName } from '../data/bossRush';
+import { foeEl } from './bha/battle';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from '../data/hogyoku';
 import { difficultyLabels, difficultyText, specialDungeonLabels, towerLabels, type FactionConfig } from '../engine/faction';
 import {
-  bossKey, bossRushEntries, bossRushOpen, bossRushReward, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, isDailyTicket, isHogyokuDungeon,
+  bossKey, bossRushEntries, bossRushOpen, bossRushReward, bossRushStars, DAILY_DUNGEONS, dailyFeature, dailyKey, dailyOpenText, dailyOpenToday, dailyReward, isDailyTicket, isHogyokuDungeon,
   nextDayAt, nextResetAt, selectableStars, ticketOf, ticketsLeft,
   type BossRushEntry, type DailyDungeonId, type SpecialMode, type SpecialTab, type TicketKind,
 } from '../engine/specialDungeon';
@@ -91,9 +92,9 @@ export function dailyRewardText(faction: FactionConfig, id: DailyDungeonId, star
   return parts.join(' · ');
 }
 
-/** 보스전 칸 이름: 탑의 주인 = 종족 설정 tower.finalBossName */
-export function bossRushName(faction: FactionConfig, e: BossRushEntry): string {
-  return shownName(e.owner ? towerLabels(faction).finalBossName : bossName(e.bossId, faction.id));
+/** 보스전 칸 이름 (C.565): 데이터 이름(두 종족 같은 이름) */
+export function bossRushName(faction: FactionConfig, e: Pick<BossRushEntry, 'id'>): string {
+  return shownName(bossRushDisplayName(e.id, faction.id));
 }
 
 /** 다음 초기화까지 "3일 4시간" (daily = 다음 날 바뀜까지) */
@@ -115,6 +116,10 @@ interface Card {
   reward: string;
   rule: string;
   enter: (star: number, practice: boolean) => void;
+  /** 고를 수 있는 ★ (없으면 1 ~ 연 난이도) — 보스전 = 권장 이하 (C.565) */
+  stars?: number[];
+  /** 그림 칸에 실루엣 (그림 없는 보스, C.565) */
+  silhouette?: boolean;
 }
 
 /** 입장권 채움 한 줄: "매일 05:00 에 2장까지 채움 · 17시간 뒤" */
@@ -141,13 +146,18 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
         enter: (star, practice) => h.onDaily(id, star, practice),
       };
     })
-    : bossRushEntries().map((e) => ({
-      key: bossKey(e.id), name: bossRushName(faction, e), sub: e.owner ? `${towerLabels(faction).name} 꼭대기` : '스토리 보스', icon: 'i-attack', art: L.bossArt[e.id] ?? faction.arenaBg,
-      open: bossRushOpen(e, save.bossDex, save.tower.best, TOWER_FLOORS),
-      lockText: e.owner ? `${towerLabels(faction).name} ${TOWER_FLOORS}층을 깨면 열린다` : '스토리에서 이 보스를 이기면 열린다',
-      reward: '', rule: '보스 한 판 · 제한 시간 안에 쓰러뜨려야 한다 · 첫 처치 보상·칭호·보스 특성은 스토리에서만',
-      enter: (star, practice) => h.onBoss(e, star, practice),
-    }));
+    : bossRushEntries().map((e) => {
+      const prev = e.index > 0 ? bossRushEntries()[e.index - 1] : undefined;
+      return {
+        key: bossKey(e.id), name: bossRushName(faction, e), sub: `권장 ${difficultyText(faction, e.def.star)}${e.def.scale > 1 ? ' 강화' : ''}`, icon: 'i-attack', art: L.bossArt[e.id] ?? faction.arenaBg,
+        open: bossRushOpen(e, st.clears),
+        lockText: prev ? fixParticles(`${bossRushName(faction, prev)}을(를) 이기면 열린다`) : '',
+        reward: '', rule: '보스 한 판 · 제한 시간 안에 쓰러뜨려야 한다 · 고를 수 있는 ★ = 권장 이하',
+        enter: (star, practice) => h.onBoss(e, star, practice),
+        stars: bossRushStars(e, save.difficulty.unlocked),
+        silhouette: true,
+      };
+    });
   const sel = Math.min(cards.length - 1, Math.max(0, pick[tab]));
   const stars = selectableStars(save.difficulty.unlocked);
   const rec = Math.min(stars.length, recommendedDifficulty(save.evolution.tierIndex));
@@ -184,11 +194,18 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
       b.classList.toggle('is-selected', j === i);
       b.setAttribute('aria-selected', String(j === i));
     });
-    const star = Math.min(stars.length, pick.star[c.key] ?? rec);
+    const cStars = c.stars ?? stars;
+    const cRec = Math.min(cStars.length, rec);
+    const star = Math.min(cStars.length, pick.star[c.key] ?? (c.stars ? cStars.length : rec));
     const art = el('div', 'bha-sdg__art');
     art.dataset.art = c.art ?? '';
     const bg = sceneBg(c.art, ART_BASE);
     if (bg) art.append(sceneBgEl(bg, false));
+    if (c.silhouette) {
+      const foe = el('div', 'bha-sdg__foe');
+      foe.append(foeEl('foe-b', null));
+      art.append(foe);
+    }
     const cap = el('div', 'bha-sdg__cap');
     cap.append(el('span', 'bha-label', c.sub), el('b', 'bha-sdg__title', c.name));
     art.append(cap);
@@ -198,7 +215,7 @@ export function specialDungeonView(root: HTMLElement, faction: FactionConfig, sa
       art.append(lock);
     }
     const info = el('div', 'bha-sdg__info');
-    const starSeg = seg(stars.map((n) => ({ id: String(n), label: `${difficultyText(faction, n)}${n === rec ? ` ${difficultyLabels(faction).recommended}` : ''}` })), String(star), (id) => { pick.star[c.key] = Number(id); show(i); }, { small: true });
+    const starSeg = seg(cStars.map((n) => ({ id: String(n), label: `${difficultyText(faction, n)}${n === (c.stars ? cStars.length : cRec) ? ` ${difficultyLabels(faction).recommended}` : ''}` })), String(star), (id) => { pick.star[c.key] = Number(id); show(i); }, { small: true });
     starSeg.classList.add('bha-sdg__stars');
     const br = tab === 'boss' ? bossRushReward(star) : null;
     const rewardText = tab === 'daily' ? dailyRewardText(faction, DAILY_DUNGEONS[i]!, star) : `${HOGYOKU_TRACK_IDS.map((t) => `${HOGYOKU_MATERIAL_NAMES[t]} ${br!.each}`).join(' · ')} · 골드 ${br!.gold}`;

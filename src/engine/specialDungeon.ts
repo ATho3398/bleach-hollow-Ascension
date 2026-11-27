@@ -2,16 +2,17 @@
 //  - 입장권 3종(C.564, GDD 6-16 v6.248 — 던전·보스마다 세던 하루·주 횟수 대체, 트랙마다 tower.tickets): 요일던전권 = 매일 05:00 KST 에 n장까지 채움, 보스전권·토벌전권 = 매주 월요일 05:00 KST 에 n장까지 채움.
 //    채움은 '그 수까지'(쌓이지 않음), 상점에서 산 것은 상한 없이 쌓인다. 입장 1번 = 그 종류 1장(지거나 그만둬도 돌려주지 않음)
 //  - 요일던전(C.564, 옛 주간던전): 던전 7개(붕옥 재료 3 + 골드·장비·장신구·장비 재료), 요일표(일요일 = 전부, 월~토 3개씩), 한 입장 = 전투 3판 연속(일반·일반·강적, 체력 이어감)
+//  - 보스전(C.565): 블리치 캐릭터 6명(data/bossRush) — 앞 보스를 이기면 다음이 열림, ★ = 권장 이하
 //  - 연습 모드(C.564): 입장권 없이 같은 적·같은 ★ — 보상·도감·열림 진행·기록 없음(런 로그에 연습 표시만)
 //  - 적 세기: 탑처럼 ★ 배율(difficultyEnemyScale) × enemyScale — 적은 '★n 권장 단계 플레이어 일반 공격 N회분'(hpInAttacks)
 import { BALANCE } from '../config/balance';
 import { scaleEnemy } from '../data/enemies';
-import { BOSSES, getBoss, isBossId } from '../data/bosses';
+import { BOSS_RUSH, getBossRush, type BossRushDef } from '../data/bossRush';
 import type { EnemyDef } from '../data/schema';
 import { createCombat, type CombatParams, type CombatState } from './combat';
 import { applyDifficultyToParams, clampDifficulty, difficultyEnemyScale, MAX_DIFFICULTY } from './difficulty';
 import { enemyPool, pickFromPool } from './enemyPool';
-import { bossSetupOf } from './expedition';
+import { bossSetupFrom, bossSetupOf } from './expedition';
 import { createRng } from './rng';
 import { HOGYOKU_TRACK_IDS, type HogyokuTrackId } from './transcend';
 import type { FeatureId } from './unlocks';
@@ -26,12 +27,9 @@ export type SpecialTab = (typeof SPECIAL_TABS)[number];
 /** 입장 종류 (런 로그 mode — 옛 기록의 'weekly' 는 주간던전) */
 export type SpecialMode = 'daily' | 'boss';
 
-/** 탑의 주인 보스 칸 id (보스 테이블 id 와 겹치지 않게) */
-export const OWNER_BOSS_ID = 'tower-owner';
-
 /** 세이브 shared.special (형식 81 → 100, 슬롯 공유): 던전/보스마다 이긴 최고 ★·이긴 수. C.564 에 옛 주·하루 횟수 칸(weekStart·used)은 입장권으로 대체되어 없어짐 */
 export interface SpecialDungeonState {
-  /** 이긴 최고 ★ ('daily:<던전 id>' · 'boss:<보스 칸 id>', 기록용·영구) */
+  /** 이긴 최고 ★ ('daily:<던전 id>' · 'boss:<보스전 보스 id>', 기록용·영구) */
   best: Record<string, number>;
   /** 이긴 횟수 (같은 키, 영구) */
   clears: Record<string, number>;
@@ -230,20 +228,21 @@ export function dailyEnemies(id: DailyDungeonId, star: number, dayStart: number)
   });
 }
 
-// ── 보스전 ──
+// ── 보스전 (C.565, GDD 6-16 v6.246: 블리치 캐릭터 6명 — 옛 스토리 보스 3종·탑의 주인 다시 싸우기는 목록에서 뺌, 스토리·탑에는 그대로) ──
 
 export interface BossRushEntry {
-  /** 칸 id: 보스 테이블 id 또는 OWNER_BOSS_ID */
+  /** 칸 id = 보스전 보스 id (br-…) */
   id: string;
-  /** 실제 싸울 보스 테이블 id (기믹·페이즈) */
+  /** 싸울 보스 id (= id, 보스 도감·런 로그) */
   bossId: string;
-  owner: boolean;
+  def: BossRushDef;
+  /** 목록 순서 (0 = 그랜드 피셔) */
+  index: number;
 }
 
-/** 보스전 목록 = 스토리 보스(보스 테이블 순서) + 탑의 주인 */
+/** 보스전 목록 = data/bossRush 순서 */
 export function bossRushEntries(): BossRushEntry[] {
-  const owner = isBossId(SX.boss.ownerBoss) ? SX.boss.ownerBoss : BOSSES[0]?.id;
-  return [...BOSSES.map((b) => ({ id: b.id, bossId: b.id, owner: false })), ...(owner ? [{ id: OWNER_BOSS_ID, bossId: owner, owner: true }] : [])];
+  return BOSS_RUSH.map((def, index) => ({ id: def.id, bossId: def.id, def, index }));
 }
 
 export function bossRushEntry(id: string): BossRushEntry | undefined {
@@ -261,17 +260,23 @@ export function bossRushReward(star: number): BossRushReward {
   return { each: SX.boss.materialEach[s - 1] ?? SX.boss.materialEach[SX.boss.materialEach.length - 1] ?? 0, gold: SX.boss.goldPerStar * s };
 }
 
-/** 보스전 적 (★ 배율 × enemyScale, 탑의 주인은 × ownerScale). 보스는 강적 입문 보정 없음(탑 보스 층과 같다) */
-export function bossRushEnemy(e: BossRushEntry, star: number): EnemyDef {
+/** 보스전 적 (★ 배율 × enemyScale × 보스 scale — 유하바하 1.3). 보스는 강적 입문 보정 없음(탑 보스 층과 같다) */
+export function bossRushEnemy(e: Pick<BossRushEntry, 'def'>, star: number): EnemyDef {
   const k = difficultyEnemyScale(clampDifficulty(star), 'normal');
-  const m = SX.boss.enemyScale * (e.owner ? SX.boss.ownerScale : 1);
-  return scaleEnemy(getBoss(e.bossId).enemy, { hp: k.hp * m, attack: k.attack * m });
+  const m = SX.boss.enemyScale * e.def.scale;
+  return scaleEnemy(e.def.enemy, { hp: k.hp * m, attack: k.attack * m });
 }
 
-/** 보스전이 열렸나 (추천안): 스토리 보스 = 이 슬롯에서 한 번이라도 이긴 보스(보스 도감 처치 1 이상), 탑의 주인 = 탑 꼭대기를 깼을 때 */
-export function bossRushOpen(e: BossRushEntry, bossDex: Record<string, { kills: number } | undefined>, towerBest: number, towerTop: number): boolean {
-  if (e.owner) return towerBest >= towerTop;
-  return (bossDex[e.bossId]?.kills ?? 0) > 0;
+/** 보스전이 열렸나: 첫 보스(그랜드 피셔)는 처음부터, 그 뒤는 앞 보스를 보스전에서 한 번 이긴 뒤(이긴 수 clears — 연습은 세지 않음) */
+export function bossRushOpen(e: Pick<BossRushEntry, 'index'>, clears: Record<string, number>): boolean {
+  if (e.index <= 0) return true;
+  const prev = BOSS_RUSH[e.index - 1];
+  return !!prev && (clears[bossKey(prev.id)] ?? 0) > 0;
+}
+
+/** 보스전에서 고를 수 있는 ★ = 1 ~ min(권장 ★, 연 난이도) — 권장 이하만 */
+export function bossRushStars(e: Pick<BossRushEntry, 'def'>, unlocked: number): number[] {
+  return selectableStars(Math.min(e.def.star, Math.max(1, Math.floor(unlocked))));
 }
 
 // ── 공통 ──
@@ -282,11 +287,12 @@ export function selectableStars(unlocked: number): number[] {
   return Array.from({ length: n }, (_, i) => i + 1);
 }
 
-/** 특수던전 전투 하나: ★ 기준 능력치 + 시작 체력 비율 + (보스면) 보스 재료 */
+/** 특수던전 전투 하나: ★ 기준 능력치 + 시작 체력 비율 + (보스면) 보스 재료 — 보스전 보스(br-…)는 data/bossRush, 그 밖은 스토리 보스 테이블 */
 export function createSpecialCombat(enemy: EnemyDef, star: number, params: Partial<CombatParams>, seed: number, startHp = 1, bossId?: string): CombatState {
   applyDifficultyToParams(params, clampDifficulty(star));
   params.playerStartHpFraction = Math.min(1, Math.max(0.01, startHp));
-  return createCombat(seed, { enemy, params, ...(bossId ? { boss: bossSetupOf(bossId) } : {}) });
+  const rush = bossId ? getBossRush(bossId) : undefined;
+  return createCombat(seed, { enemy, params, ...(bossId ? { boss: rush ? bossSetupFrom(rush) : bossSetupOf(bossId) } : {}) });
 }
 
 /** 전투가 끝난 뒤 체력 비율 (다음 판으로 이어 간다) */

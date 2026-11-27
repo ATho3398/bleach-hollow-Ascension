@@ -1,0 +1,221 @@
+{
+  "_comment": "보스전 보스 6명 (GDD 6-16 v6.246, 사용자 2026-11-27 '블리치에 있는 캐릭으로', C.565). 두 종족 같은 이름. 체력·공격 = 권장 단계 플레이어 일반 공격 N회분(CLAUDE.md 규칙 3), 실제 세기 = 고른 ★ 배율 × scale. 패턴 = 기존 pattern.kind 중 하나씩, 기믹 = 기존 보스 기믹. 전부 임시·provisional — 그림 없음(실루엣)",
+  "provisional": true,
+  "bosses": [
+    {
+      "id": "br-grand-fisher",
+      "name": {
+        "*": "그랜드 피셔"
+      },
+      "star": 1,
+      "scale": 1,
+      "grade": "adjuchas",
+      "hpInAttacks": 130,
+      "attackInAttacks": 0.34,
+      "element": "kyo",
+      "category": "physical",
+      "ev": {
+        "hp": 3,
+        "atk": 2
+      },
+      "pattern": {
+        "kind": "swift",
+        "attackSeconds": 0.9,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.8
+        }
+      ],
+      "gimmick": "summon"
+    },
+    {
+      "id": "br-byakuya",
+      "name": {
+        "*": "뱌쿠야"
+      },
+      "star": 2,
+      "scale": 1,
+      "grade": "vasto-lorde",
+      "hpInAttacks": 150,
+      "attackInAttacks": 0.34,
+      "element": "normal",
+      "category": "special",
+      "ev": {
+        "int": 3,
+        "spr": 2
+      },
+      "pattern": {
+        "kind": "heavy-chain",
+        "everySeconds": 11,
+        "castSeconds": 2,
+        "heavyInAttacks": 0.7,
+        "hits": 3,
+        "followCastSeconds": 1.2,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.75
+        }
+      ],
+      "gimmick": "seal"
+    },
+    {
+      "id": "br-ulquiorra",
+      "name": {
+        "*": "우르키오라"
+      },
+      "star": 3,
+      "scale": 1,
+      "grade": "vasto-lorde",
+      "hpInAttacks": 150,
+      "attackInAttacks": 0.5,
+      "element": "kyo",
+      "category": "special",
+      "statBias": {
+        "def": 1.15
+      },
+      "ev": {
+        "def": 3,
+        "int": 2
+      },
+      "pattern": {
+        "kind": "stance",
+        "everySeconds": 9,
+        "stanceSeconds": 5,
+        "blockDamageMultiplier": 0.4,
+        "counterInAttacks": 0.3,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.66,
+          "attackSecondsMult": 0.9
+        },
+        {
+          "belowHpFraction": 0.33,
+          "attackSecondsMult": 0.8
+        }
+      ],
+      "gimmick": "element",
+      "elementShifts": [
+        "thunder",
+        "kyo"
+      ]
+    },
+    {
+      "id": "br-aizen",
+      "name": {
+        "*": "아이젠"
+      },
+      "star": 4,
+      "scale": 1,
+      "grade": "vasto-lorde",
+      "hpInAttacks": 125,
+      "attackInAttacks": 0.5,
+      "element": "kyo",
+      "category": "special",
+      "ev": {
+        "int": 3,
+        "spr": 3
+      },
+      "pattern": {
+        "kind": "heavy-seal",
+        "everySeconds": 8,
+        "sequence": [
+          "heavy",
+          "seal"
+        ],
+        "castSeconds": 2,
+        "heavyInAttacks": 1.4,
+        "sealSeconds": 4,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.8
+        }
+      ],
+      "gimmick": "seal"
+    },
+    {
+      "id": "br-ginjo",
+      "name": {
+        "*": "긴죠"
+      },
+      "star": 4,
+      "scale": 1,
+      "grade": "vasto-lorde",
+      "hpInAttacks": 125,
+      "attackInAttacks": 0.5,
+      "element": "normal",
+      "category": "physical",
+      "ev": {
+        "atk": 3,
+        "aspd": 2
+      },
+      "pattern": {
+        "kind": "heavy-chain",
+        "everySeconds": 12,
+        "castSeconds": 2,
+        "heavyInAttacks": 0.8,
+        "hits": 2,
+        "followCastSeconds": 1.2,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.5,
+          "attackSecondsMult": 0.8
+        }
+      ],
+      "gimmick": "summon"
+    },
+    {
+      "id": "br-yhwach",
+      "name": {
+        "*": "유하바하"
+      },
+      "star": 4,
+      "scale": 1.3,
+      "grade": "vasto-lorde",
+      "hpInAttacks": 125,
+      "attackInAttacks": 0.5,
+      "element": "thunder",
+      "category": "special",
+      "ev": {
+        "hp": 2,
+        "int": 2,
+        "spr": 2
+      },
+      "pattern": {
+        "kind": "stance",
+        "everySeconds": 9,
+        "stanceSeconds": 5,
+        "blockDamageMultiplier": 0.4,
+        "counterInAttacks": 0.35,
+        "provisional": true
+      },
+      "phases": [
+        {
+          "belowHpFraction": 0.66,
+          "attackSecondsMult": 0.9
+        },
+        {
+          "belowHpFraction": 0.33,
+          "attackSecondsMult": 0.78
+        }
+      ],
+      "gimmick": "element",
+      "elementShifts": [
+        "fire",
+        "kyo"
+      ]
+    }
+  ]
+}

@@ -1876,7 +1876,7 @@ export function startApp(host: HTMLElement): void {
         id: 'special-battle', locked: true,
         render: () => {
           const params = sideBattleParams(s0, !!bossId || enemies[i]!.class === 'elite');
-          const enemy = run.mode === 'boss' && run.entry?.owner ? { ...enemies[i]!, name: { '*': towerLabels(faction).finalBossName } } : enemies[i]!;
+          const enemy = enemies[i]!; // C.565: 탑의 주인 다시 싸우기 삭제 — 보스 이름 = 보스전 데이터
           const s = createSpecialCombat(enemy, run.star, params, Math.floor(Math.random() * 2 ** 32), hp, bossId);
           setBgm(bossId ? 'boss' : enemy.class === 'elite' ? 'elite' : 'battle');
           const bgKey = run.mode === 'daily' ? specialDungeonLabels(faction).daily[run.target]?.art : specialDungeonLabels(faction).bossArt[run.target];

@@ -106,6 +106,8 @@
 .bha-sdg__art > .bha-scenebg { position: absolute; inset: 0; }
 .bha-sdg__cap { position: absolute; left: var(--bha-sp-3); bottom: var(--bha-sp-2); display: flex; flex-direction: column; gap: 2px; text-shadow: 0 1px 2px var(--bha-bg-0); }
 .bha-sdg__title { font-size: var(--bha-fs-lg); font-weight: var(--bha-fw-heavy); color: var(--bha-accent-hi); }
+.bha-sdg__foe { position: absolute; right: var(--bha-sp-3); bottom: var(--bha-sp-2); top: var(--bha-sp-3); display: flex; align-items: flex-end; } /* C.565 보스전 그림 없는 보스 = 전투와 같은 실루엣(.bha-foe) */
+.bha-sdg__foe .bha-foe { height: 100%; }
 .bha-sdg__lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: var(--bha-sp-2); background: var(--bha-plate-bg-soft); color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
 .bha-sdg__lock .bha-icon { width: 18px; height: 18px; }
 .bha-sdg__info { flex: none; display: flex; flex-direction: column; gap: var(--bha-sp-1); }

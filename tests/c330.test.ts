@@ -26,9 +26,9 @@ describe('카드 목록 (200장 2)', () => {
     const kinds = ENEMY_CARDS.map((c) => c.kind);
     expect(kinds.filter((k) => k === 'normal')).toHaveLength(24);
     expect(kinds.filter((k) => k === 'elite')).toHaveLength(24);
-    expect(kinds.filter((k) => k === 'boss')).toHaveLength(BOSSES.length);
+    expect(kinds.filter((k) => k === 'boss')).toHaveLength(BOSSES.length + 6); // C.565: 보스전 보스 6명이 스토리 보스 뒤에 (옛 BOSSES.length)
     expect(BOSSES.length).toBe(3);
-    expect(kinds.join(',')).toBe([...Array(24).fill('normal'), ...Array(24).fill('elite'), ...Array(3).fill('boss')].join(','));
+    expect(kinds.join(',')).toBe([...Array(24).fill('normal'), ...Array(24).fill('elite'), ...Array(9).fill('boss')].join(','));
     expect(ENEMY_CARDS.some((c) => c.id.startsWith('test-'))).toBe(false);
     expect(ENEMIES.filter((e) => e.testOnly).length).toBeGreaterThan(0);
     // 일반 첫 8칸 = 속성 순(노멀 → … → 허)의 짐승형, 강적 첫 칸 = 노멀 강공격형
@@ -57,7 +57,7 @@ describe('집계 (200장 3·4)', () => {
     expect(dex['normal-basic']!.fresh).toBeUndefined();
     expect(markEnemyCardSeen(dex, 'normal-basic')).toBe(false);
     const c = enemyDexCounts(dex);
-    expect([c.found, c.total, c.byKind.normal.found, c.byKind.elite.total, c.byKind.boss.total]).toEqual([1, 51, 1, 24, 3]);
+    expect([c.found, c.total, c.byKind.normal.found, c.byKind.elite.total, c.byKind.boss.total]).toEqual([1, 57, 1, 24, 9]); // C.565: 보스전 보스 6명 (옛 51·3)
   });
   it('흡수 종류별 횟수 (200장 9): 갈래 both·trait·stat + 놓아주기, 전투 기록 없이 흡수 기록만 있으면 이긴 전투 하나로, 글자는 종족 설정 이름 그대로 0 포함 자리 고정', () => {
     const dex: EnemyDex = {};

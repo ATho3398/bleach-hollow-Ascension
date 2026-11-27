@@ -28,7 +28,7 @@ const TRANSCENDENTS_COUNT = TRANSCENDENTS.length;
 import { bossSetupOf } from '../src/engine/expedition';
 import { EVO_BAL_KNOWN, EVO_BAL_NOTE, EVO_BAL_RULE, EVO_BAL_SEEDS, evoBalKey, evoBalTargets, evoContribution, judgeEvoBal, measureEvoBal, type EvoBalRow } from './lib/evoUniqueBalance';
 import { createTowerCombat, towerFloor } from '../src/engine/tower';
-import { createSpecialCombat, DAILY_DUNGEONS, dailyEnemies, dayStartOf, hpFractionAfter } from '../src/engine/specialDungeon';
+import { bossRushEnemy, bossRushEntries, createSpecialCombat, DAILY_DUNGEONS, dailyEnemies, dayStartOf, hpFractionAfter } from '../src/engine/specialDungeon';
 import { applyDifficultyToParams, difficultyEnemyScale, enemyAtDifficulty, recommendedDifficulty, MAX_DIFFICULTY } from '../src/engine/difficulty';
 import { spawn } from 'node:child_process';
 import os from 'node:os';
@@ -1687,6 +1687,23 @@ if (want('special')) {
       });
     }
     console.log(`  ★${star} (${star === 1 ? 2 : star}단계 몸 ${bodies.length}명): 한 입장 승률 ${pct(games ? wins / games : 0)} · 이긴 입장 3판 합 ${(wins ? secs / wins : 0).toFixed(1)}초 · 끝 체력 ${pct(wins ? hpLeft / wins : 0)}`);
+  }
+  // 보스전 (C.565): 보스마다 권장 ★ 에서 그 ★ 몸(★1 = 2단계 몸)으로 한 판
+  console.log(`  보스전 (권장 ★, ★n = n단계 몸(★1 = 2단계) × ${SR * 2}판)`);
+  for (const e of bossRushEntries()) {
+    const star = e.def.star;
+    const bodies = star === 1 ? guardBodies(1) : guardBodies(star - 1);
+    let wins = 0;
+    let games = 0;
+    let secs = 0;
+    bodies.forEach((body, bi) => {
+      for (let k = 0; k < SR * 2; k++) {
+        const end = playCombatHuman(createSpecialCombat(bossRushEnemy(e, star), star, paramsOf(body), 73000 + e.index * 7919 + bi * 131 + k * 17, 1, e.id));
+        games++;
+        if (end.status === 'won') { wins++; secs += elapsedSeconds(end); }
+      }
+    });
+    console.log(`    ${e.def.name['*'] ?? e.id} ★${star}${e.def.scale > 1 ? ` ×${e.def.scale}` : ''} (${star === 1 ? 2 : star}단계 몸 ${bodies.length}명): 승률 ${pct(games ? wins / games : 0)} · 이긴 판 ${(wins ? secs / wins : 0).toFixed(1)}초`);
   }
 }
 
