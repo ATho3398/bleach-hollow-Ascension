@@ -748,3 +748,21 @@ button.bha-slot { cursor: pointer; }
 .bha-charpick__card.is-locked .bha-dexart .bha-icon { width: 32px; height: 32px; }
 .bha-charpick__sub { font-size: var(--bha-fs-xs); line-height: var(--bha-lh-tight); color: var(--bha-text-2); text-align: center; word-break: keep-all; }
 .bha-charpick__note { flex: none; margin: 0; font-size: var(--bha-fs-xs); color: var(--bha-text-2); }
+
+/* ═════ 책장 일러스트·애니메이션 탭 (.bha-gallery, GDD 14-8 v6.256, C.570): 도감 바둑판 틀 그대로 + 그림 칸. 새 색·간격 토큰 없음 ═════
+   못 연 칸(.is-silhouette)은 적 도감과 같이 그림을 검게. 크게 보기(.bha-illustview) = 창 가득 그림 + 아래 제목 줄 + ◀ ▶ · × */
+.bha-gallery__art { overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+.bha-gallery__art > .bha-hero { height: 100%; aspect-ratio: 1; max-width: 100%; }
+.bha-gallery__img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.bha-gallery__art.is-silhouette .bha-gallery__img, .bha-gallery__art.is-silhouette .bha-hero { filter: brightness(0); opacity: 0.55; }
+.bha-gallery__art.is-silhouette .bha-icon { color: var(--bha-text-3); }
+.bha-gallery__empty { grid-column: 1 / -1; margin: 0; padding: var(--bha-sp-6) var(--bha-sp-4); text-align: center; }
+.bha-gallery__pick { max-height: 100%; }
+.bha-gallery__pick .bha-btn { justify-content: flex-start; }
+.bha-illustview { inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-items: center; padding: var(--bha-sp-4) var(--bha-sp-9); background: var(--bha-bg-0); }
+.bha-illustview__img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
+.bha-illustview__cap { margin: var(--bha-sp-2) 0 0; color: var(--bha-text-2); font-size: var(--bha-fs-sm); }
+.bha-illustview__prev, .bha-illustview__next { position: absolute; top: 50%; transform: translateY(-50%); }
+.bha-illustview__prev { left: var(--bha-sp-2); }
+.bha-illustview__next { right: var(--bha-sp-2); }
+.bha-illustview__close { position: absolute; top: var(--bha-sp-2); right: var(--bha-sp-2); }

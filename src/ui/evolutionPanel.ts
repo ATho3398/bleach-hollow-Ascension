@@ -254,6 +254,8 @@ export function evolutionEffectRows(
 export interface EvolveCutHooks {
   onCommit?: () => void;
   onCancel?: () => void;
+  /** 도감 다시 보기 (GDD 14-8 v6.256, C.570): 결과 화면 버튼 = [닫기](둥지로 대신). 연출만 — 진화하지 않는다 */
+  replay?: boolean;
 }
 
 export const EVOLVE_CANCEL_TITLE = '진화를 취소할까?';
@@ -402,7 +404,7 @@ export function evolutionView(
   }
   effects.append(dl);
 
-  const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', onClick: () => {
+  const home = asBack(button({ label: hooks.replay ? '닫기' : toward(faction.nestName), icon: hooks.replay ? 'i-close' : 'i-nest', variant: 'primary', onClick: () => {
     stopPx();
     onDone();
   } }));

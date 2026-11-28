@@ -1,0 +1,5 @@
+{
+  "provisional": true,
+  "_note": "도감 일러스트 탭 (GDD 14-8 v6.256, C.570): 사용자가 주는 일러스트를 여기에 더한다. id = 'illust-…', art = 그림 키(public/art 매니페스트 키), title = 제목, unlock = 열리는 조건 { kind: 'always' } | { kind: 'tier', tierIndex } (어느 트랙이든 그 단계에 닿음) | { kind: 'form', formId } (진화체 도감에서 발견) | { kind: 'rebirth', count } (환생 n번) — 조건 문구는 임시·provisional",
+  "illustrations": []
+}

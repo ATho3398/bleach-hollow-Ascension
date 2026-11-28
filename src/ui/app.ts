@@ -301,7 +301,8 @@ export function startApp(host: HTMLElement): void {
   // ── 오른쪽 위 재화 칩 (GDD 14-4 v6.242, C.561): 모험 밖 모든 화면 = 골드·영옥, 수련장 화면들 = 수련권(지금 트랙). 화면이 바뀔 때·1초마다·저장할 때 고친다 ──
   const tickCorner = (): void => {
     const app = root.querySelector<HTMLElement>(':scope > .bha-stage > .bha-app');
-    const base = save && slot !== 0 ? cornerKindOf(nav.top?.id) : null;
+    // 도감 다시 보기(C.570, data-screen 'replay') = 연출 화면이라 칩 없음
+    const base = save && slot !== 0 && app?.dataset.screen !== 'replay' ? cornerKindOf(nav.top?.id) : null;
     // 특수던전 요일던전·보스전 탭 = 그 탭 입장권 장수 (C.564, GDD 6-16 v6.248 — 화면 id 는 'tower' 하나라 app 의 data-screen 으로 가른다)
     const sp = base && app ? specialCornerKind(app.dataset.screen) : null;
     const kind = sp ?? base;

@@ -1,0 +1,35 @@
+{
+  "shots": [
+    "01-illust-tab-empty.png",
+    "02-hollow-anim-tab.png",
+    "03-evolve-replay-playing.png",
+    "04-shinigami-test-mode-anim-all.png"
+  ],
+  "errors": [],
+  "checks": {
+    "illust": [
+      "아직 일러스트가 없다 — 그림이 들어오면 여기에 모인다."
+    ],
+    "animHollow": [
+      "호로 · 본 연출 3/6",
+      "호로 탄생",
+      "1→2단계 길리안",
+      "2→3단계 아쥬커스 물",
+      "3→4단계 ???",
+      "???",
+      "???",
+      "사신 · 본 연출 0/3",
+      "???",
+      "???",
+      "???"
+    ],
+    "replayUi": {
+      "cut": true,
+      "buttons": 0,
+      "text": ""
+    },
+    "afterTapBackToAnimTab": true,
+    "saveUntouched": true,
+    "animTestShinigami": 30
+  }
+}
