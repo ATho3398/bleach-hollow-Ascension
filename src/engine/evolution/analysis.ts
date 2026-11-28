@@ -60,7 +60,7 @@ export function randomState(rng: Rng, tierIndex: number, prevForms: readonly str
   e.longAbsences = nextFloat(rng) < 0.2 ? 1 : 0;
   e.hunterRuns = nextFloat(rng) < 0.25 ? nextInt(rng, 5) : 0;
   e.practices = nextInt(rng, 40);
-  e.deferrals = nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0; // 진화 미루기 1~4회 (허무형 = 허무 블록 10개 흡수 + 미루기 3회↑, C.531 — 옛 C.497 '0회 + 빈사')
+  e.cancels = nextFloat(rng) < 0.3 ? 1 + nextInt(rng, 4) : 0; // 진화 취소 1~4회 (허무형 = 허무 블록 10개 흡수 + 취소 3회↑, C.531·C.568 — 옛 '미루기' 자리)
   const evBase = nextInt(rng, 12);
   const even = nextFloat(rng) < 0.3;
   for (const k of Object.keys(e.ev) as (keyof typeof e.ev)[]) e.ev[k] = even ? evBase + 4 : nextInt(rng, 16);

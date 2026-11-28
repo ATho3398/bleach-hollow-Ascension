@@ -1,4 +1,5 @@
 // C.508 (점검 1119 게임 버그): ① 진화 [진화]/[미루기]를 묻는 중 표시를 세이브에 (형식 94) — 고르기 전에 껐다 켜도 방에서 다시 묻는다(공짜 미루기 막음)
+// C.568 (GDD 8-5 v6.254): 창 폐지 — 묻는 중 표시 choice → 진화 연출 차례 pending(형식 101). 연출 도중 껐다 켜도 방에서 연출을 다시 튼다(공짜 취소 막음)
 import { describe, expect, it } from 'vitest';
 import { newBuild, gainTrait } from '../src/engine/absorb/build';
 import { stepsNeeded } from '../src/engine/evolution';
@@ -15,7 +16,7 @@ import { evoUniqueLines } from '../src/ui/evolutionPanel';
 import { choosePet } from '../src/inventory';
 import {
   performRevive,
-  deferEvolution, evolveAfterReturn, loadSave, migrateSave, newSaveData, pendingEvolveChoice, recordExpedition,
+  cancelEvolution, evolveAfterReturn, loadSave, migrateSave, newSaveData, pendingEvolution, recordExpedition,
   SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, MIN_LOADABLE_SAVE_FORMAT, type SaveData,
 } from '../src/game';
 
@@ -47,59 +48,59 @@ function reload(s: SaveData): SaveData {
   return loadSave(store as never, 'k')!;
 }
 
-describe('C1 진화 묻는 중 표시 (GDD 8-5)', () => {
-  it('귀환 정산이 묻는 중 표시를 남기고, 껐다 켜도 남아 있다 (그 원정 몸 상태·runId)', () => {
+describe('C1 진화 연출 차례 표시 (GDD 8-5 — C.568 choice → pending)', () => {
+  it('귀환 정산이 연출 차례를 남기고, 껐다 켜도 남아 있다 (그 원정 몸 상태·runId)', () => {
     const s = grown();
     expect(recordExpedition(s, ended(s), 2_000, { holdEvolution: true })).toBeNull();
-    expect(s.evolution.choice).toEqual({ hunger: 33, condition: 71, runId: 42 });
+    expect(s.evolution.pending).toEqual({ hunger: 33, condition: 71, runId: 42 });
     const r = reload(s);
-    expect(pendingEvolveChoice(r)).toEqual({ hunger: 33, condition: 71, runId: 42 });
-    expect(r.evolution.deferrals).toBe(0);
+    expect(pendingEvolution(r)).toEqual({ hunger: 33, condition: 71, runId: 42 });
+    expect(r.evolution.cancels).toBe(0);
   });
-  it('[미루기] = 표시 지움 · 미루기 1회(그 원정 runId) → 다시 켜도 묻지 않는다', () => {
+  it('취소 = 차례 지움 · 취소 1회(그 원정 runId) → 다시 켜도 연출 없음', () => {
     const s = reload((() => { const x = grown(); recordExpedition(x, ended(x), 2_000, { holdEvolution: true }); return x; })());
-    const rec = deferEvolution(s, 3_000, pendingEvolveChoice(s)!.runId);
+    const rec = cancelEvolution(s, 3_000);
     expect(rec?.runId).toBe(42);
-    expect(s.evolution.deferrals).toBe(1);
-    expect(pendingEvolveChoice(reload(s))).toBeNull();
+    expect(s.evolution.cancels).toBe(1);
+    expect(pendingEvolution(reload(s))).toBeNull();
   });
-  it('[진화] = 표시 지움 · 진화', () => {
+  it('연출 끝 = 차례 지움 · 진화', () => {
     const s = reload((() => { const x = grown(); recordExpedition(x, ended(x), 2_000, { holdEvolution: true }); return x; })());
-    const r = evolveAfterReturn(s, pendingEvolveChoice(s)!);
+    const r = evolveAfterReturn(s, pendingEvolution(s)!);
     expect(r.ok).toBe(true);
     expect(s.evolution.tierIndex).toBe(3);
-    expect(s.evolution.choice).toBeUndefined();
-    expect(pendingEvolveChoice(reload(s))).toBeNull();
+    expect(s.evolution.pending).toBeUndefined();
+    expect(pendingEvolution(reload(s))).toBeNull();
   });
-  it('튜토리얼(창 없이 바로 진화)·바로 진화(holdEvolution 없음)는 표시를 남기지 않는다', () => {
+  it('바로 진화(holdEvolution 없음)는 차례를 남기지 않는다', () => {
     const s = grown();
     recordExpedition(s, ended(s), 2_000);
-    expect(s.evolution.choice).toBeUndefined();
+    expect(s.evolution.pending).toBeUndefined();
   });
-  it('진화 기준에서 벗어난 옛 표시·이상한 값은 지운다', () => {
+  it('진화 기준에서 벗어난 옛 차례·이상한 값은 지운다', () => {
     const s = grown();
-    s.evolution.choice = { hunger: 1, condition: 2, runId: 3 };
+    s.evolution.pending = { hunger: 1, condition: 2, runId: 3 };
     s.evolution.steps = 0;
-    expect(pendingEvolveChoice(s)).toBeNull();
-    expect(s.evolution.choice).toBeUndefined();
+    expect(pendingEvolution(s)).toBeNull();
+    expect(s.evolution.pending).toBeUndefined();
     const t = grown();
-    (t.evolution as unknown as Record<string, unknown>).choice = { hunger: 'x' };
-    expect(reload(t).evolution.choice).toBeUndefined();
+    (t.evolution as unknown as Record<string, unknown>).pending = { hunger: 'x' };
+    expect(reload(t).evolution.pending).toBeUndefined();
   });
-  it('형식 94 · 93 → 94 변환(묻는 중 아님) · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(100);
+  it('93 → 94 변환이 남아 있다 · 끝까지 올리면 형식 101 · 문턱 87 그대로', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(101);
     expect(typeof SAVE_MIGRATIONS[93]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     const s = grown();
     s.meta.format = 93;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(100);
-    expect(m.evolution.choice).toBeUndefined();
+    expect(m.meta.format).toBe(101);
+    expect(m.evolution.pending).toBeUndefined();
     expect(m.evolution.tierIndex).toBe(2);
   });
-  it('화면: 방에 들어올 때 묻다 만 창을 다시 띄운다 (app.ts toRoom → resumeEvolveChoice)', async () => {
+  it('화면: 방에 들어올 때 연출 차례가 남았으면 연출을 다시 튼다 (app.ts toRoom → resumePendingEvolution)', async () => {
     const src = (await import('node:fs')).readFileSync('src/ui/app.ts', 'utf8');
-    expect(src).toMatch(/const toRoom = \(\) => \{\s*resumeEvolveChoice\(\);/);
+    expect(src).toMatch(/const toRoom = \(\) => \{\s*resumePendingEvolution\(\);/);
   });
 });
 
@@ -245,9 +246,9 @@ describe('C9 그림 없는 초월자 빈 자리 · C10 첫 포식 카드 자리 
     expect(sc.keepClear).toEqual(['@.bha-absorb__actions', '@.bha-absorb__desc', '@.bha-foecard']);
     expect(readFileSync('src/ui/tutorialOverlay.ts', 'utf8')).toContain('...(SCENES[state.index]?.keepClear ?? [])');
   });
-  it('진화 [진화]/[미루기] 창 바탕은 떠오르는 동안에도 불투명(토큰 bg-1, 투명도 연출 없음)', () => {
+  it('진화 취소 확인 창(C.568 — 옛 [진화]/[미루기] 창 자리) 바탕은 떠오르는 동안에도 불투명(토큰 bg-1, 투명도 연출 없음)', () => {
     const css = readFileSync('src/ui/bha/room.css', 'utf8');
-    expect(css).toContain('.bha-evolve-choice .bha-modal { background: var(--bha-bg-1); animation-name: bha-rise-solid; }');
+    expect(css).toContain('.bha-evolve-cancel .bha-modal { background: var(--bha-bg-1); animation-name: bha-rise-solid; }');
     expect(css).toMatch(/@keyframes bha-rise-solid \{ from \{ transform: [^}]*\} \}/);
     expect(css.match(/@keyframes bha-rise-solid[^\n]*/)![0]).not.toContain('opacity');
   });

@@ -18,7 +18,7 @@ import { resolveMaxChain } from '../faction';
 import { tryGetTranscendent } from '../../data/transcendents';
 import type { EvolutionRecord } from '../runLog';
 import { abilityEffectsOf, equippedAbilitiesOf, type FormAbilities, evGainMultOf, formAbilitiesOf, gainEvolutionAbility, newAbilityLoadout, physBlockOf, physSpawnSecondsFor, type AbilityGain, type AbilityLoadout } from './formAbilities';
-import { judgeEvolution, type JudgeContext } from './judge';
+import { judgeCandidates, judgeEvolution, type JudgeContext } from './judge';
 import { pickLook } from './tierLook';
 import { lookUnitName } from './lookDex';
 
@@ -28,6 +28,14 @@ const SX = BALANCE.provisional.stats;
 /** 육성 단계 수 (GDD 126장 확정 1, C.220: 5 → 4). index 0~3 */
 export const TIER_COUNT = 4;
 export const MAX_TIER_INDEX = TIER_COUNT - 1;
+
+/** 진화 연출 차례 (GDD 8-5 v6.254, C.568): 그 원정을 마친 몸 상태 · 원정 id · 강제 진화(취소 뒤 원정 7번 — 터치 취소 없음) */
+export interface EvolutionPending {
+  hunger: number;
+  condition: number;
+  runId: number;
+  forced?: boolean;
+}
 
 /** 저장 구조(SaveData.evolution)이자 원정 중 사본 (C.47, 세이브 형식 14) */
 export interface EvolutionState {
@@ -66,17 +74,23 @@ export interface EvolutionState {
   hunterRuns?: number;
   /** 이 단계 동안 교감한 수 (GDD 241-C 4, C.406 — 숨은 모습 조건): 쓰다듬기 요청에 응답 + 눌러서 말 걸기(좋아함). 진화하면 0, 옛 세이브엔 없음 = 0 */
   bondCare?: number;
-  /** 이 단계에서 진화를 미룬 수 (GDD 8-5 진화 미루기, C.497 — 형식 92): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 수. 상한 없음, 진화하면 0.
-   *  허무형 판정(그 단계 0회, 8-8)이 읽는다. 단계별 기록은 런 로그 tiers.deferrals·진화 기록 deferrals */
-  deferrals?: number;
+  /** 이 단계에서 진화를 취소한 수 (GDD 8-5 v6.254 진화 연출 3번 터치 취소, C.568 — 형식 101, 옛 진화 미루기 수 deferrals 자리): 상한 없음, 진화하면 0.
+   *  허무형 판정(취소 3회↑, 8-8)이 읽는다. 단계별 기록은 런 로그 tiers.cancels·진화 기록 cancels */
+  cancels?: number;
+  /** 진화 배제 목록 (GDD 8-5 v6.254, C.568 — 형식 101): 진화 연출을 취소한 순간 후보였던 진화체 id(누적). 판정은 이것을 뺀 후보로 — 다 빠지면 진화 연출 없음. 진화하면 비움 */
+  excluded?: string[];
+  /** 마지막 취소 뒤 둥지로 돌아온 원정 수 (GDD 8-5 v6.254, C.568 — 패배 포함, 튜토리얼·특수던전 제외). balance evolution.cancel.forceAfterRuns 번째 귀환에도
+   *  진화하지 못하면 배제를 풀고 강제 진화. 취소·진화하면 0 */
+  cancelRuns?: number;
   /** 이 단계 기록 (GDD 8-5 v6.164 혈·독 일반 진화 조건, C.532 — 형식 97, 진화하면 0, 옛 세이브엔 없음 = 0):
    *  collapsedReturns = 빈사로 귀환한 원정 수(원정 정산 뒤 둥지가 빈사 — 져서 빈사가 됐거나 빈사로 떠나 빈사로 돌아옴, 튜토리얼 빈사는 안 셈) ·
    *  dotKills = 원정 전투에서 지속 피해로 적을 쓰러뜨린 수(그 지속 피해의 속성 → 수, 독 = 독 속성) */
   collapsedReturns?: number;
   dotKills?: Record<string, number>;
-  /** 귀환 뒤 [진화] [미루기]를 묻는 중 (GDD 8-5, C.508 — 형식 94): 진화 기준에 닿아 돌아왔고 아직 고르지 않았다. 고르기 전에 껐다 켜도 방에서 그 창을 다시 띄운다(공짜 미루기 막음).
-   *  hunger·condition = 그 원정을 마친 몸 상태(진화 판정이 읽는다), runId = 그 원정. 진화하거나 미루면 지운다. 없으면 묻는 중 아님 */
-  choice?: { hunger: number; condition: number; runId: number };
+  /** 진화 연출을 보여 줄 차례 (GDD 8-5 v6.254, C.568 — 형식 101, 옛 C.508 묻는 중 choice 자리): 진화 기준에 닿아 돌아왔고 연출이 아직 끝나지 않았다.
+   *  연출 도중 껐다 켜도 방에서 연출을 다시 튼다(공짜 취소 막음). hunger·condition = 그 원정을 마친 몸 상태(진화 판정이 읽는다), runId = 그 원정,
+   *  forced = 취소 뒤 원정 7번 강제 진화(터치 취소 없음). 진화하거나 취소하면 지운다. 없으면 연출 차례 아님 */
+  pending?: EvolutionPending;
   /** 이번 생 훈련 인형 전투 수 (C.220, 각성형 ②) — 진화해도 유지, 환생하면 0 */
   practices?: number;
   /** 마지막 모습으로 굳었다 (GDD 12-4 v6.028, C.429 — 초월자 트랙): 진화 판정·걸음 수·임박 알림 없음, 노력치 상한 = 마지막 단계 상한.
@@ -197,12 +211,12 @@ export function zeroStats(): Stats {
 export function newEvolution(stageSeed = 0): EvolutionState {
   return {
     tierIndex: 0, formId: null, formHistory: [], steps: 0, alerts: 0, stageSeed: stageSeed >>> 0,
-    absorbs: 0, releases: 0, elementAbsorbs: {}, breakthroughs: 0, elitesDefeated: 0, ev: zeroStats(), ability: null, deferrals: 0,
+    absorbs: 0, releases: 0, elementAbsorbs: {}, breakthroughs: 0, elitesDefeated: 0, ev: zeroStats(), ability: null, cancels: 0,
   };
 }
 
 export function cloneEvolution(e: EvolutionState): EvolutionState {
-  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.dotKills ? { dotKills: { ...e.dotKills } } : {}), ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}), ...(e.choice ? { choice: { ...e.choice } } : {}) };
+  return { ...e, formHistory: [...e.formHistory], elementAbsorbs: { ...e.elementAbsorbs }, ev: { ...e.ev }, ...(e.dotKills ? { dotKills: { ...e.dotKills } } : {}), ...(e.evFree ? { evFree: { ...e.evFree } } : {}), ...(e.abilities ? { abilities: cloneLoadout(e.abilities) } : {}), ...(e.carry ? { carry: { ...e.carry } } : {}), ...(e.testElementDamage ? { testElementDamage: { ...e.testElementDamage } } : {}), ...(e.basis ? { basis: cloneBasis(e.basis) } : {}), ...(e.transcendentTraits ? { transcendentTraits: [...e.transcendentTraits] } : {}), ...(e.kit ? { kit: { id: e.kit.id, levels: { ...e.kit.levels } } } : {}), ...(e.pending ? { pending: { ...e.pending } } : {}), ...(e.excluded ? { excluded: [...e.excluded] } : {}) };
 }
 
 export function cloneLoadout(l: AbilityLoadout): AbilityLoadout {
@@ -324,10 +338,16 @@ export function recordEvolutionPractice(e: EvolutionState): void {
   e.practices = (e.practices ?? 0) + 1;
 }
 
-/** 진화를 미뤘다 (GDD 8-5, C.497): 그 단계에 머물고 다음 귀환 때 다시 묻는다. 걸음·흡수·노력치는 그대로 쌓인다. 이 단계 미룬 수를 돌려준다 */
-export function recordEvolutionDeferral(e: EvolutionState): number {
-  e.deferrals = (e.deferrals ?? 0) + 1;
-  return e.deferrals;
+/** 진화 연출을 취소했다 (GDD 8-5 v6.254, C.568): 그 순간 후보 진화체를 배제 목록에 더하고(중복 없이) 취소 수 +1, 마지막 취소 뒤 원정 수 0.
+ *  그 단계에 머문다 — 걸음·흡수·노력치는 그대로 쌓인다. 이 단계 취소 수를 돌려준다 */
+export function recordEvolutionCancel(e: EvolutionState, candidateIds: readonly string[]): number {
+  const ex = new Set(e.excluded ?? []);
+  for (const id of candidateIds) ex.add(id);
+  e.excluded = [...ex];
+  e.cancelRuns = 0;
+  e.cancels = (e.cancels ?? 0) + 1;
+  delete e.pending;
+  return e.cancels;
 }
 
 /** 다음 진화까지 필요한 걸음 수 (마지막 단계면 null). 화면에는 보이지 않는다 */
@@ -481,6 +501,7 @@ export function nextStageSeed(seed: number, tierIndex: number): number {
 export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeContext, 'build'>, nowMs: number, table: readonly FormDef[] = FORM_TABLE): EvolveResult {
   if (isMaxTier(e)) return { ok: false, reason: '이미 마지막 단계다' };
   if (!canEvolve(e)) return { ok: false, reason: '아직 진화할 때가 아니다' };
+  if (judgeCandidates(e, { ...ctx, build }, table).length === 0) return { ok: false, reason: '취소해 배제한 진화체뿐이다' }; // GDD 8-5 v6.254 (C.568)
   const fromTier = e.tierIndex;
   const fromFormId = e.formId;
   const statTotal = ctx.statTotal ?? STAT_IDS.reduce((a, k) => a + currentStats(e, ctx.factionId)[k], 0);
@@ -504,9 +525,11 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   delete e.bondCare;
   delete e.collapsedReturns;
   delete e.dotKills;
-  const deferrals = e.deferrals ?? 0;
-  e.deferrals = 0;
-  delete e.choice; // 진화했으니 묻는 중 아님 (C.508)
+  const cancels = e.cancels ?? 0;
+  e.cancels = 0;
+  delete e.excluded; // 진화하면 배제 목록·원정 수는 0 (GDD 8-5 v6.254, C.568)
+  delete e.cancelRuns;
+  delete e.pending; // 진화했으니 연출 차례 아님
   e.stageSeed = nextStageSeed(e.stageSeed, e.tierIndex);
   for (let i = 0; i < EV.slotsPerEvolution; i++) build.slots.push(null);
   // 특성은 3·4단계 진화 때만 1개 (GDD 148·149·151장): 4단계에서는 특성 칸 +1(처음) · 3단계 특성 → 4단계 특성, 가진 것은 다시 안 받음, 칸이 꽉 차면 못 받음
@@ -516,7 +539,7 @@ export function evolve(e: EvolutionState, build: BuildState, ctx: Omit<JudgeCont
   return {
     ok: true,
     form,
-    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, deferrals, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
+    record: { fromTier, toTier: fromTier + 1, fromFormId, toFormId: form.id, formId: form.id, snapshot, at: nowMs, cancels, ...(abilityGain.kind !== 'none' ? { abilityGain } : {}) },
     slotsAdded: EV.slotsPerEvolution,
     abilityGain,
     abilitySlotsAdded: loadout.slots - abilitySlotsBefore,

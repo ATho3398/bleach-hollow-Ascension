@@ -1,4 +1,5 @@
 // C.497 (GDD 8-5 진화 미루기 · 8-8 허무형 조건 교체 · 허무형 종족별 타입): 귀환 때 [진화] [미루기] · 미루기 횟수(진화 상태·런 로그) · 허무형 = (C.531 부터) 허무 블록 10개 흡수 + 미루기 3회 · 형식 92
+// C.568 (GDD 8-5 v6.254): [진화] [미루기] 창 폐지 → 묻지 않고 바로 진화 연출 + 3번 터치 취소. 미루기 테스트는 취소(cancelEvolution)로 바꿨다 — 자세한 것은 tests/c568.test.ts
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { FORM_TABLE, formHint, getForm, validateFormTable } from '../src/data/evolution';
@@ -7,7 +8,7 @@ import { newBuild, gainTrait } from '../src/engine/absorb/build';
 import { analyzeTree, canEvolve, evolutionCandidates, stepsNeeded, type EvolutionState } from '../src/engine/evolution';
 import { createExpedition, type ExpeditionState } from '../src/engine/expedition';
 import {
-  deferEvolution, evolutionChoiceAllowed, evolutionChoicePending, evolveAfterReturn, fusionInputOf, migrateSave, newSaveData, recordExpedition,
+  cancelEvolution, evolutionCancelAllowed, evolveAfterReturn, pendingEvolution, fusionInputOf, migrateSave, newSaveData, recordExpedition,
   SAVE_FORMAT_VERSION, SAVE_MIGRATIONS, MIN_LOADABLE_SAVE_FORMAT, type SaveData,
 } from '../src/game';
 
@@ -40,13 +41,13 @@ function ended(s: SaveData, outcome: 'returned' | 'defeated' = 'returned', extra
   return exp;
 }
 
-describe('진화 미루기 (GDD 8-5)', () => {
-  it('holdEvolution: 진화 기준에 닿아도 귀환 정산에서 진화하지 않고 물을 차례가 된다 · 기본(봇·옛 호출)은 예전처럼 바로 진화', () => {
+describe('귀환 뒤 진화 (GDD 8-5 — C.568 에 [진화] [미루기] 창 폐지, 연출 차례 pending)', () => {
+  it('holdEvolution: 진화 기준에 닿아도 귀환 정산에서 진화하지 않고 연출 차례가 된다 · 기본(봇·옛 호출)은 예전처럼 바로 진화', () => {
     const s = grown();
     atTier3(s);
     expect(recordExpedition(s, ended(s), 2_000, { holdEvolution: true })).toBeNull();
     expect(s.evolution.tierIndex).toBe(2);
-    expect(evolutionChoicePending(s)).toBe(true);
+    expect(pendingEvolution(s)).not.toBeNull();
     const t = grown();
     atTier3(t);
     const r = recordExpedition(t, ended(t), 2_000);
@@ -54,50 +55,28 @@ describe('진화 미루기 (GDD 8-5)', () => {
     expect(t.evolution.tierIndex).toBe(3);
   });
 
-  it('튜토리얼 원정·튜토리얼 안내 중이면 창 없이 바로 진화 (흐름이 막히지 않게)', () => {
+  it('튜토리얼 원정·튜토리얼 안내 중이면 차례 없이 바로 진화 (터치 취소 없음)', () => {
     const s = grown();
     atTier3(s);
-    expect(evolutionChoiceAllowed(s, { tutorial: true })).toBe(false);
     const r = recordExpedition(s, ended(s, 'returned', { tutorial: true }), 2_000, { holdEvolution: true });
     expect(r?.ok).toBe(true);
     const fresh = newSaveData('hollow', 1); // 새 세이브 = 튜토리얼 안내가 남았다
-    expect(evolutionChoiceAllowed(fresh)).toBe(false);
+    expect(evolutionCancelAllowed(fresh, null)).toBe(false);
   });
 
-  it('[미루기]: 그 단계에 머문다 · 미루기 수 +1(상한 없음) · 런 로그 1건 · 다음 귀환 때 다시 묻는다 · 걸음은 그대로 쌓인다', () => {
-    const s = grown();
-    atTier3(s);
-    for (let i = 1; i <= 3; i++) {
-      expect(recordExpedition(s, ended(s), 2_000 + i, { holdEvolution: true })).toBeNull();
-      const rec = deferEvolution(s, 3_000 + i, 40 + i)!;
-      expect(rec).toEqual({ at: 3_000 + i, tier: 2, count: i, formId: 't3:water', steps: s.evolution.steps, runId: 40 + i });
-      expect(s.evolution.tierIndex).toBe(2);
-      expect(s.evolution.deferrals).toBe(i);
-      expect(evolutionChoicePending(s)).toBe(true); // 다음 귀환 때 다시 묻는다
-      s.evolution.steps += 5; // 미루는 동안 걸음은 정상으로 쌓인다
-    }
-    expect(s.runLog.tiers.deferrals.map((d) => d.count)).toEqual([1, 2, 3]);
-    // [진화]: 진화 기록에 그 단계 미룬 수, 진화하면 새 단계의 미룬 수 0
-    const r = evolveAfterReturn(s, { hunger: 20, condition: 80 }, 9_000);
-    expect(r.ok && r.record.deferrals).toBe(3);
-    expect(r.ok && r.record.snapshot!.deferrals).toBe(3);
-    expect(s.evolution.tierIndex).toBe(3);
-    expect(s.evolution.deferrals).toBe(0);
-  });
-
-  it('진화 기준에 안 닿았으면 미루기는 아무것도 안 한다', () => {
+  it('진화 기준에 안 닿았으면 취소는 아무것도 안 한다', () => {
     const s = grown();
     expect(canEvolve(s.evolution)).toBe(false);
-    expect(deferEvolution(s, 1)).toBeNull();
-    expect(s.runLog.tiers.deferrals).toEqual([]);
-    expect(s.evolution.deferrals).toBe(0);
+    expect(cancelEvolution(s, 1)).toBeNull();
+    expect(s.runLog.tiers.cancels).toEqual([]);
+    expect(s.evolution.cancels).toBe(0);
   });
 
-  it('원정 실패 정산(이어 하지 못한 원정)도 그 자리에서 진화하지 않고 다음 귀환 때 묻는다', () => {
+  it('원정 실패 정산(이어 하지 못한 원정)도 그 자리에서 진화하지 않고 연출 차례만 남긴다', () => {
     const s = grown();
     atTier3(s);
     expect(recordExpedition(s, ended(s, 'defeated'), 2_000, { holdEvolution: true })).toBeNull();
-    expect(evolutionChoicePending(s)).toBe(true);
+    expect(pendingEvolution(s)).not.toBeNull();
   });
 });
 
@@ -109,23 +88,20 @@ describe('허무형 조건 교체 (GDD 8-8 v6.166 — 허무 블록 10개 흡수
     e.elementAbsorbs.kyo = (e.elementAbsorbs.kyo ?? 0) + n;
     e.absorbs += n;
   };
-  it('허무 블록 10개 흡수 + 그 단계 미루기 3회 → 허무형 · 옛 미루기 0회·빈사·혈·독·허 + 환생 조건 폐기', () => {
-    expect(H.void).toEqual({ element: 'kyo', absorbs: 10, deferrals: 3 });
+  it('허무 블록 10개 흡수 + 그 단계 취소 3회(C.568 — 옛 미루기 자리) → 허무형 · 옛 미루기 0회·빈사·혈·독·허 + 환생 조건 폐기', () => {
+    expect(H.void).toEqual({ element: 'kyo', absorbs: 10, cancels: 3 });
     expect('voidMaxDeferrals' in H).toBe(false);
     expect('voidShare' in H).toBe(false);
     expect('voidRebirths' in H).toBe(false);
     const s = grown();
     atTier3(s);
     absorbKyo(s.evolution, 10);
-    for (let i = 1; i <= 3; i++) {
-      recordExpedition(s, ended(s, 'returned'), 2_000 + i, { holdEvolution: true });
-      deferEvolution(s, 2_100 + i);
-    }
+    s.evolution.cancels = 3; // 취소 3번 (배제 목록 없이 — 배제·취소 흐름은 c568)
     recordExpedition(s, ended(s, 'returned'), 2_900, { holdEvolution: true });
     expect(s.nest.collapsed).toBe(false); // 빈사가 아니어도 된다
     const r = evolveAfterReturn(s, { hunger: 20, condition: 80 }, 3_000);
     expect(r.ok && r.form.id).toBe('h4:void'); // 히든은 일반보다 우선, 다른 히든 조건 없음
-    expect(r.ok && r.record.snapshot!.deferrals).toBe(3);
+    expect(r.ok && r.record.snapshot!.cancels).toBe(3);
     expect(r.ok && r.record.snapshot!.elementAbsorbs.kyo).toBe(10);
   });
 
@@ -141,20 +117,14 @@ describe('허무형 조건 교체 (GDD 8-8 v6.166 — 허무 블록 10개 흡수
     const t = grown();
     atTier3(t);
     absorbKyo(t.evolution, 10);
-    for (let i = 1; i <= 2; i++) {
-      recordExpedition(t, ended(t, 'returned'), 2_000 + i, { holdEvolution: true });
-      deferEvolution(t, 2_100 + i);
-    }
+    t.evolution.cancels = 2;
     const r2 = evolveAfterReturn(t, { hunger: 20, condition: 80 }, 2_900);
     expect(r2.ok && r2.form.id).not.toBe('h4:void');
     // 허무 블록 9개 + 미루기 3회
     const u = grown();
     atTier3(u);
     absorbKyo(u.evolution, 9);
-    for (let i = 1; i <= 3; i++) {
-      recordExpedition(u, ended(u, 'returned'), 2_000 + i, { holdEvolution: true });
-      deferEvolution(u, 2_100 + i);
-    }
+    u.evolution.cancels = 3;
     const r3 = evolveAfterReturn(u, { hunger: 20, condition: 80 }, 2_900);
     expect(r3.ok && r3.form.id).not.toBe('h4:void');
   });
@@ -168,11 +138,11 @@ describe('허무형 조건 교체 (GDD 8-8 v6.166 — 허무 블록 10개 흡수
     const has = (): boolean => evolutionCandidates(e, ctx).hidden.map((c) => c.formId).includes('h4:void');
     expect(has()).toBe(false);
     absorbKyo(e, 10);
-    e.deferrals = 2;
+    e.cancels = 2;
     expect(has()).toBe(false);
-    e.deferrals = 3;
+    e.cancels = 3;
     expect(has()).toBe(true);
-    e.deferrals = 7;
+    e.cancels = 7;
     expect(has()).toBe(true);
     // 능력치만 흡수는 블록을 얻지 않아 세지 않는다 (단계 기록 elementAbsorbs 에 안 쌓인다)
     const f = { ...e, elementAbsorbs: { kyo: 9 }, absorbs: 20 } as EvolutionState;
@@ -182,8 +152,8 @@ describe('허무형 조건 교체 (GDD 8-8 v6.166 — 허무 블록 10개 흡수
   it('진화 트리 점검: 허무형도 무작위 상태에서 뽑힌다 · 도감 힌트 문구 (종족 행위 이름)', () => {
     const rep = analyzeTree(FORM_TABLE, 'hollow', 4000, 7);
     expect(rep.unreachable).not.toContain('h4:void');
-    expect(formHint(getForm('h4:void'), 'hollow')).toBe('허무 블록을 10개 포식하고, 진화를 3번 미룬 뒤 진화');
-    expect(formHint(getForm('h4:void'), 'shinigami')).toBe('허무 블록을 10개 정화 흡수하고, 진화를 3번 미룬 뒤 진화');
+    expect(formHint(getForm('h4:void'), 'hollow')).toBe('허무 블록을 10개 포식하고, 진화를 3번 취소한 뒤 진화');
+    expect(formHint(getForm('h4:void'), 'shinigami')).toBe('허무 블록을 10개 정화 흡수하고, 진화를 3번 취소한 뒤 진화');
   });
 });
 
@@ -207,28 +177,31 @@ describe('허무형 종족별 타입 (GDD 8-8 첫 줄: 사신 특수·호로 물
   });
 });
 
-describe('세이브 형식 92 (진화 미루기)', () => {
-  it('형식 92 · 91 → 92 변환 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(100);
+describe('세이브 형식 92 (진화 미루기 — C.568 형식 101 에서 취소 수로 옮김)', () => {
+  it('91 → 92 변환이 남아 있다 · 문턱 87 그대로', () => {
+    expect(SAVE_FORMAT_VERSION).toBe(101);
     expect(typeof SAVE_MIGRATIONS[91]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
-  it('옛 세이브(91): 모든 트랙 미루기 0회, 런 로그 빈 미루기 기록 — 이어 쓴다', () => {
+  it('옛 세이브(91): 끝까지 올리면 취소 0회, 런 로그 빈 미루기·취소 기록 — 이어 쓴다', () => {
     const s = newSaveData('hollow', 1);
     atTier3(s);
-    delete s.evolution.deferrals;
+    delete s.evolution.cancels;
     delete (s.runLog.tiers as Partial<typeof s.runLog.tiers>).deferrals;
+    delete (s.runLog.tiers as Partial<typeof s.runLog.tiers>).cancels;
     s.meta.format = 91;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(100);
-    expect(m.evolution.deferrals).toBe(0);
+    expect(m.meta.format).toBe(101);
+    expect(m.evolution.cancels).toBe(0);
+    expect('deferrals' in m.evolution).toBe(false);
     expect(m.runLog.tiers.deferrals).toEqual([]);
+    expect(m.runLog.tiers.cancels).toEqual([]);
     expect(m.evolution.tierIndex).toBe(2);
-    expect(canEvolve(m.evolution)).toBe(true); // 기준에 닿은 채 저장됐으면 다음 귀환 때 묻는다
+    expect(canEvolve(m.evolution)).toBe(true); // 기준에 닿은 채 저장됐으면 다음 귀환 때 연출
   });
-  it('새 세이브는 미루기 0회 · 빈 기록', () => {
+  it('새 세이브는 취소 0회 · 빈 기록', () => {
     const s = newSaveData('shinigami', 1);
-    expect(s.evolution.deferrals).toBe(0);
-    expect(s.runLog.tiers.deferrals).toEqual([]);
+    expect(s.evolution.cancels).toBe(0);
+    expect(s.runLog.tiers.cancels).toEqual([]);
   });
 });

@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 179; // C.566 (GDD 6-16 v6.246 토벌전, 사용자 2026-11-27 — provisional): provisional.specialDungeon.raid { rewardMult 1.5 · gearGrades 'boss' } 신설. 작전 길·끝 보스 = src/data/raids/raids.json
+export const BALANCE_VERSION = 180; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28 — provisional): provisional.evolution.cancel { taps 3 · tapGapMs 600 · forceAfterRuns 7 } 신설, 허무형 hidden.void.deferrals → cancels(진화 취소 3회↑, 임시)
+// 이전: BALANCE_VERSION = 179; // C.566 (GDD 6-16 v6.246 토벌전, 사용자 2026-11-27 — provisional): provisional.specialDungeon.raid { rewardMult 1.5 · gearGrades 'boss' } 신설. 작전 길·끝 보스 = src/data/raids/raids.json
 // 이전: BALANCE_VERSION = 178; // C.565 (GDD 6-16 v6.246 보스전 = 블리치 캐릭터 6명, 사용자 2026-11-27 — provisional): provisional.specialDungeon.boss.ownerBoss·ownerScale 삭제(탑의 주인 다시 싸우기·스토리 보스는 보스전 목록에서 빠짐). 새 보스 6명 수치 = src/data/bossRush/bossRush.json(권장 ★ 1·2·3·4·4·4, 유하바하 scale 1.3). 보상 표 그대로
 // 이전: BALANCE_VERSION = 177; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회)·boss.entries(주 1회) → tickets(입장권 3종 요일 2장/매일 · 보스 3장/주 · 토벌 2장/주 채움, 상점 100·300·500골드, GDD 6-16 v6.248) + daily(요일표 days — 일요일 전부, 월~토 3개씩 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
 // 이전: BALANCE_VERSION = 176; // C.562 (GDD 13절 v6.243 튜토리얼 블록 = 호로 탄 / 사신 참, 사용자 2026-11-27 "사신은 참으로 해"): provisional.tutorialScript.blockFamily 삭제 → 종족 설정 tutorial.blockFamily. 수치 그대로
@@ -861,6 +862,9 @@ export const BALANCE = {
       alertsAt: [0.2, 0.1],
       /** 진화마다 슬롯 +1 (GDD 4장) */
       slotsPerEvolution: 1,
+      /** 진화 연출 터치 취소 (GDD 8-5 v6.254, C.568 — 사용자 2026-11-28, provisional): 연출 중 화면을 taps 번 연달아(터치 간격 tapGapMs 안) 누르면 취소 확인 창.
+       *  취소하면 그 순간 후보 진화체를 배제 — 마지막 취소 뒤 원정 forceAfterRuns 번 귀환(패배 포함, 튜토리얼·특수던전 제외)에도 진화 못 하면 배제를 풀고 강제 진화(터치 취소 없음) */
+      cancel: { taps: 3, tapGapMs: 600, forceAfterRuns: 7 },
       /** 혈·독 일반 진화 길 (GDD 8-5 v6.164·v6.165, C.532 — 사용자 2026-11-23 "혈·독으로 가는 진화는 장착 최다가 아니라 그 속성 블록 10개 흡수 + 추가 조건", provisional):
        *  그 단계(3단계) 합계로 element 속성 블록을 absorbs 개 이상 흡수(블록 갈래 = 둘 다·속성만, 진화 상태 elementAbsorbs) + 추가 조건을 채우면 그 속성 4단계 일반 진화체로 간다(일반 < 혈·독 < 히든).
        *  collapsedReturns = 빈사로 귀환한 원정 수(진화 상태 collapsedReturns) · dotKills = 그 속성 지속 피해로 적을 쓰러뜨린 수(진화 상태 dotKills[element]). 없는 칸은 조건 아님.
@@ -893,8 +897,8 @@ export const BALANCE = {
         hunterElites: 2,
         hunterRuns: 3,
         /** 허무형 (GDD 8-8 v6.166 [초안], C.531 — 사용자 2026-11-23 "그냥 허무 흡수10번에 미루기 3번하면 허무 ㄱㄱ"): 그 단계(3단계)에서 element 속성 블록을 absorbs 개 이상 흡수(블록 갈래 흡수 = 둘 다·속성만, 진화 상태 elementAbsorbs)
-         *  + 진화 미루기 deferrals 회 이상. 리스크·빈사·환생 무관. 옛 C.497 '미루기 0회(voidMaxDeferrals) + 빈사 귀환' 폐기 */
-        void: { element: 'kyo', absorbs: 10, deferrals: 3 },
+         *  + 진화 취소 cancels 회 이상(v6.254 — 옛 '진화 미루기'가 폐지돼 취소로 읽는다, C.568 임시·provisional). 리스크·빈사·환생 무관. 옛 C.497 '미루기 0회(voidMaxDeferrals) + 빈사 귀환' 폐기 */
+        void: { element: 'kyo', absorbs: 10, cancels: 3 },
         /** 각성형: 실패형을 거친 계보 + 환생 1회↑ + 이번 생 훈련(훈련 인형) 누적 이상 + 노력치 고르게(최저 ≥ 최고 × 비율) + 능력치 합계 ≥ 4단계 종족값 합계 */
         awakenedRebirths: 1,
         awakenedPractices: 20,

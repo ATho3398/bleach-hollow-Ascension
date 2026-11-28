@@ -181,7 +181,7 @@ describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 
     const e = t3();
     e.elementAbsorbs.kyo = 10;
     e.absorbs += 8;
-    e.deferrals = 3;
+    e.cancels = 3;
     return e;
   };
   it('데이터: 4단계 히든 각성형(혼합)·허무형 하나씩', () => {
@@ -218,7 +218,7 @@ describe('환생 조건형 히든 (GDD 126장 7 허무형·각성형, C.220 — 
     const r = performEvolution(s, 0);
     expect(r.ok && r.record.snapshot!.candidates.map((c) => c.formId)).toContain('h4:void');
     expect(r.ok && r.record.snapshot!.collapsed).toBe(true); // 빈사는 기록으로 그대로 넘긴다(허무형 조건은 아님, C.531)
-    expect(r.ok && r.record.snapshot!.deferrals).toBe(3);
+    expect(r.ok && r.record.snapshot!.cancels).toBe(3);
   });
 });
 

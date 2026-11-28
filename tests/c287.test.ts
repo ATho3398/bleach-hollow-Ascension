@@ -41,8 +41,8 @@ describe('결과 S13 · 진화 연출', () => {
     expect(read('src/ui/bha/design-system/tokens.css')).toContain('--bha-dock-btn-w: 200px;');
     expect(r).toContain("info.className = 'bha-result__info';"); // v2 루트 안 .bha-info = ⓘ 버튼이라 이름을 바꿈
   });
-  it('진화: [건너뛰기]·[둥지로] 같은 자리, 흐린 빛(burst) 끔, blur 없는 등장', () => {
-    expect(e).toContain("skip.classList.add('bha-evolve__go');");
+  it('진화: [둥지로] 아래 줄 오른쪽, 흐린 빛(burst) 끔, blur 없는 등장 (C.568 GDD 8-5 v6.254 — 연출 중 [건너뛰기] 등 다른 UI 없음)', () => {
+    expect(e).not.toContain("label: '건너뛰기'");
     expect(e).toContain("home.classList.add('bha-evolve__go');");
     expect(v2css).toContain('.bha-evolvev2 .bha-evolve__burst { display: none; }');
     expect(v2css).toMatch(/@keyframes bha-evo2-line \{ from \{ opacity: 0; transform: translateY\(8px\); \}/);

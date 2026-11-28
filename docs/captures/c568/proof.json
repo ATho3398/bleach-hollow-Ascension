@@ -1,0 +1,51 @@
+{
+  "shots": [
+    "01-hollow-cutscene-no-ui.png",
+    "02-hollow-three-tap-cancel.png",
+    "03-shinigami-cutscene-no-ui.png",
+    "04-shinigami-result-after-continue.png"
+  ],
+  "errors": [],
+  "checks": {
+    "hollowCutUi": {
+      "buttons": [],
+      "text": "",
+      "chips": 0
+    },
+    "hollowDialog": {
+      "title": "진화를 취소할까?",
+      "buttons": [
+        "취소한다",
+        "계속"
+      ]
+    },
+    "hollowAfterCancel": {
+      "save": {
+        "tierIndex": 0,
+        "formId": null,
+        "cancels": 1,
+        "excluded": [
+          "t2:base"
+        ],
+        "pending": null
+      },
+      "cutGone": true
+    },
+    "shinigamiCutUi": {
+      "buttons": [],
+      "text": "",
+      "chips": 0
+    },
+    "shinigamiPausedNoResult": true,
+    "shinigamiResult": {
+      "title": "영술원 학생!",
+      "save": {
+        "tierIndex": 1,
+        "formId": "t2:base",
+        "cancels": 0,
+        "excluded": null,
+        "pending": null
+      }
+    }
+  }
+}

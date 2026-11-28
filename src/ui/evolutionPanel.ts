@@ -10,7 +10,6 @@ import type { FactionConfig } from '../engine/faction';
 import { BALANCE } from '../config/balance';
 import { fixParticles } from '../engine/josa';
 import { getDetachTrait } from '../engine/traitShop';
-import { CUTSCENE_PROVISIONAL, cutsceneLines } from '../data/evolution/cutscene';
 import { evoFormEntry, evoInvestOf, evoNumsOf, evoReleaseNums, evoText, fillEvoText } from '../data/evolution/uniques';
 import { button, h, icon, mountApp, notice, panel, provisionalTag } from './bha/dom';
 import { elementDot, elementsMark } from './bha/element';
@@ -23,6 +22,7 @@ import { heroEl } from './bha/battle';
 import type { ArtUrls } from '../data/art/manifest';
 import { loadPixelFx, playPixelFx, type PixelFxPlay } from './bha/pixelFx';
 import { prefersReducedMotion } from './fxSettings';
+import { confirmDialog } from './confirmDialog';
 
 const EV = BALANCE.provisional.evolution;
 
@@ -249,9 +249,72 @@ export function evolutionEffectRows(
   return rows;
 }
 
+/** 진화 연출 갈고리 (GDD 8-5 v6.254, C.568): onCommit = 애니가 끝나 결과로 넘어가는 순간(진짜 진화를 여기서) ·
+ *  onCancel = 3번 연달아 터치 → "진화를 취소할까?" [취소한다] — 없으면 터치 취소 없음(강제 진화·튜토리얼·테스트 패널) */
+export interface EvolveCutHooks {
+  onCommit?: () => void;
+  onCancel?: () => void;
+}
+
+export const EVOLVE_CANCEL_TITLE = '진화를 취소할까?';
+
+/** 연달아 터치 세기 (GDD 8-5 v6.254, C.568): 앞 터치와 간격이 gapMs 안이면 이어 세고 아니면 1부터. taps 번째면 true 를 돌려주고 0으로 */
+export function tapCounter(taps: number, gapMs: number): (nowMs: number) => boolean {
+  let n = 0;
+  let last = -Infinity;
+  return (nowMs) => {
+    n = nowMs - last <= gapMs ? n + 1 : 1;
+    last = nowMs;
+    if (n < taps) return false;
+    n = 0;
+    last = -Infinity;
+    return true;
+  };
+}
+
+/** 멈출 수 있는 타이머 묶음 (C.568 연출 취소 창이 떠 있는 동안 애니·바뀌는 때·결과 넘김을 멈춘다) */
+function pausableTimers() {
+  type T = { fn: () => void; left: number; start: number; id: ReturnType<typeof setTimeout> | undefined };
+  const list: T[] = [];
+  let paused = false;
+  const arm = (t: T) => {
+    t.start = Date.now();
+    t.id = setTimeout(() => {
+      const i = list.indexOf(t);
+      if (i >= 0) list.splice(i, 1);
+      t.fn();
+    }, t.left);
+  };
+  return {
+    add(fn: () => void, ms: number): void {
+      const t: T = { fn, left: ms, start: 0, id: undefined };
+      list.push(t);
+      if (!paused) arm(t);
+    },
+    pause(): void {
+      if (paused) return;
+      paused = true;
+      for (const t of list) {
+        if (t.id !== undefined) clearTimeout(t.id);
+        t.id = undefined;
+        t.left = Math.max(0, t.left - (Date.now() - t.start));
+      }
+    },
+    resume(): void {
+      if (!paused) return;
+      paused = false;
+      for (const t of list) arm(t);
+    },
+    clear(): void {
+      for (const t of list.splice(0)) if (t.id !== undefined) clearTimeout(t.id);
+    },
+  };
+}
+
 /**
- * 진화 연출 → 결과 (evolve.html). 연출 줄은 0.9초 간격으로 떠오르고(--k, CSS 지연) 3.6초 뒤 결과로 바뀐다.
- * [건너뛰기]로 바로 결과를 볼 수 있다. 연출 문구는 src/data/evolution/cutscene.json (종족 설정 값을 끼워 쓴다).
+ * 진화 연출 → 결과 (evolve.html). 연출 = 화면 전체에 애니만(글줄·버튼·칩 등 다른 UI 없음 — GDD 8-5 v6.254, C.568), 3.6초 뒤 결과로 바뀐다.
+ * hooks.onCancel 이 있으면 연출 중 화면을 3번 연달아(간격 balance evolution.cancel.tapGapMs 안) 누르면 연출이 멈추고 "진화를 취소할까?" [취소한다] [계속].
+ * [계속](·기기 취소) = 멈춘 곳부터 이어서, [취소한다] = hooks.onCancel(진화하지 않음 — 화면을 닫는 것은 부른 쪽).
  */
 export function evolutionView(
   root: HTMLElement,
@@ -262,8 +325,9 @@ export function evolutionView(
   onDone: () => void,
   slotsAfter?: number,
   extra?: EvolutionExtra,
+  hooks: EvolveCutHooks = {},
 ): void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timers = pausableTimers();
   const burst = h('span', 'bha-evolve__burst');
 
   const linesSection = h('section');
@@ -286,41 +350,30 @@ export function evolutionView(
     if (pxCfg) crack.classList.add('is-pixel');
     crack.append(cutFig);
   }
-  const lines = h('div', 'bha-evolve__lines');
-  lines.setAttribute('aria-live', 'polite');
-  // 진화 이유 (GDD 134장 3, C.211): 그 단계가 된 이유 1~2줄(종족 설정)이 있으면 연출 마지막 줄을 대신하고 결과 화면에도 남는다. 실패 진화는 공통 줄 그대로
+  // 진화 이유 (GDD 134장 3, C.211): 그 단계가 된 이유 1~2줄(종족 설정) — 결과 화면에만(연출 중 글줄 없음, v6.254). 실패 진화는 없음
   const reasons = extra?.failLine ? [] : (faction.evolutionReasons[to] ?? []);
-  const base = cutsceneLines(faction.id, { nest: faction.nestName, absorb: faction.absorbActionName, from: faction.tierNames[from]! });
-  (reasons.length > 0 ? [...base.slice(0, -1), ...reasons] : base).forEach((t, i) => {
-    const line = h('p', 'bha-evolve__line', t);
-    line.style.setProperty('--k', String(i));
-    lines.append(line);
-  });
   const resultSection = h('section', 'bha-evolve__result');
   const resultMain = h('div', 'bha-evolve__resmain');
   const resultSide = h('div', 'bha-evolve__resside');
   resultSection.hidden = true;
 
   let pxPlay: PixelFxPlay | null = null;
-  const pxTimers: ReturnType<typeof setTimeout>[] = [];
   const stopPx = () => {
     pxPlay?.stop();
-    for (const t of pxTimers.splice(0)) clearTimeout(t);
+    timers.clear();
   };
+  let cutDone = false;
   const showResult = () => {
-    if (timer !== undefined) clearTimeout(timer);
+    if (cutDone) return;
+    cutDone = true;
     stopPx();
+    hooks.onCommit?.(); // 애니가 끝났다 — 여기서 진짜 진화 (C.568)
     linesSection.hidden = true;
     resultSection.hidden = false;
   };
-  const skip = asBack(button({ label: '건너뛰기', variant: 'ghost', onClick: showResult }));
-  skip.classList.add('bha-evolve__go');
-  // 리디자인 v2 (GDD 183장 화면 D): [건너뛰기] 와 결과의 [둥지로] 는 같은 아래 줄 오른쪽 자리 (173장 2 버튼 자리 고정)
-  const skipDock = h('footer', 'bha-dock bha-evolve__dock');
-  skipDock.append(skip);
-  linesSection.append(crack, lines, skipDock);
-  if (CUTSCENE_PROVISIONAL && devText()) linesSection.append(h('p', 'bha-faint', ''));
-  if (CUTSCENE_PROVISIONAL && devText()) linesSection.lastElementChild!.append('연출 문구는 ', provisionalTag('제안 문구'));
+  // 연출 = 애니만 (GDD 8-5 v6.254 — 옛 연출 글줄·[건너뛰기]·제안 문구 표시 없음)
+  linesSection.dataset.evolveCut = '';
+  linesSection.append(crack);
 
   const path = h('p', 'bha-evolve__path');
   const failLine = extra?.failLine === true;
@@ -350,7 +403,6 @@ export function evolutionView(
   effects.append(dl);
 
   const home = asBack(button({ label: toward(faction.nestName), icon: 'i-nest', variant: 'primary', onClick: () => {
-    if (timer !== undefined) clearTimeout(timer);
     stopPx();
     onDone();
   } }));
@@ -368,9 +420,45 @@ export function evolutionView(
   resultSection.append(resHead, resultMain, resultSide, resDock);
 
   const app = mountApp(root, { cls: 'bha-evolve bha-v2 bha-evolvev2' }, burst, linesSection, resultSection);
-  playCosmeticFx('evo', app); // 진화 연출 꾸밈 (GDD 25-11): 변하는 순간(연출 줄 동안). 결과·문구는 그대로
-  timer = setTimeout(showResult, 3600);
-  if (pxCfg && cutFig) playEvolvePixel(app, cutFig, pxCfg, extra!.fromArt!, extra!.art!, pxTimers, (p) => { pxPlay = p; }, () => {
+  playCosmeticFx('evo', app); // 진화 연출 꾸밈 (GDD 25-11): 변하는 순간(연출 동안). 결과는 그대로
+  timers.add(showResult, 3600);
+  // 3번 연달아 터치 → 취소 확인 (GDD 8-5 v6.254, C.568): 연출이 멈추고(시트·바뀌는 때·결과 넘김·CSS/WAAPI 애니) 창. 결과 화면에서는 세지 않는다
+  if (hooks.onCancel) {
+    const C = BALANCE.provisional.evolution.cancel;
+    const tap = tapCounter(C.taps, C.tapGapMs);
+    const anims = (): Animation[] => (typeof app.getAnimations === 'function' ? app.getAnimations({ subtree: true }) : []);
+    let asking = false;
+    const pause = () => {
+      timers.pause();
+      pxPlay?.pause();
+      for (const a of anims()) a.pause();
+    };
+    const resume = () => {
+      asking = false;
+      for (const a of anims()) a.play();
+      pxPlay?.resume();
+      timers.resume();
+    };
+    app.addEventListener('pointerdown', () => {
+      if (cutDone || asking || !tap(performance.now())) return;
+      asking = true;
+      pause();
+      confirmDialog({
+        title: EVOLVE_CANCEL_TITLE,
+        yes: '계속',
+        no: '취소한다',
+        cls: 'bha-evolve-cancel',
+        onYes: resume,
+        onCancel: resume, // 기기 취소·Esc = 계속 (실수로 취소되지 않게)
+        onNo: () => {
+          cutDone = true;
+          stopPx();
+          hooks.onCancel!();
+        },
+      });
+    });
+  }
+  if (pxCfg && cutFig) playEvolvePixel(app, cutFig, pxCfg, extra!.fromArt!, extra!.art!, timers.add, (p) => { pxPlay = p; }, () => {
     // 시트를 못 받았다 → 옛 연출처럼 새 진화체가 빛 속에서 드러남
     cutFig.replaceChildren(heroEl(extra!.art!).root);
     cutFig.classList.replace('bha-evolve__fig--px', 'bha-evolve__fig--reveal');
@@ -385,7 +473,7 @@ export function evolutionView(
  */
 function playEvolvePixel(
   app: HTMLElement, fig: HTMLElement, cfg: NonNullable<FactionConfig['evolveFx']>, fromArt: ArtUrls, toArt: ArtUrls,
-  timers: ReturnType<typeof setTimeout>[], onPlay: (p: PixelFxPlay) => void, onFail: () => void,
+  later: (fn: () => void, ms: number) => void, onPlay: (p: PixelFxPlay) => void, onFail: () => void,
 ): void {
   // 흰 겹 = 같은 그림을 한 장 더(종이인형은 동작을 따로 돌리므로 복사 대신 새로) — CSS 가 흰 실루엣으로 칠한다
   const whiteOf = (art: ArtUrls): HTMLElement => {
@@ -409,7 +497,7 @@ function playEvolvePixel(
     onPlay(play);
     const w = cfg.whiten;
     if (w && typeof white.animate === 'function') white.animate([{ opacity: 0 }, { opacity: 1 }], { delay: w[0], duration: Math.max(1, w[1] - w[0]), easing: 'ease-in', fill: 'forwards' });
-    timers.push(setTimeout(() => {
+    later(() => {
       // 임팩트 순간: 다음 진화체로 (하얘졌다면 흰 채로 바뀌고 whiten[2] 동안 원래 색으로)
       const next = heroEl(toArt).root;
       fig.replaceChildren(next);
@@ -418,6 +506,6 @@ function playEvolvePixel(
       fig.append(wh);
       if (typeof wh.animate === 'function') wh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: Math.max(1, w[2]), easing: 'ease-out', fill: 'forwards' });
       else wh.remove();
-    }, cfg.swapMs));
+    }, cfg.swapMs);
   });
 }

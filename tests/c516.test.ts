@@ -191,7 +191,7 @@ describe('④ 진화: 4단계 일반 17종 (허 삭제), 혈·독 우선, 3단�
 
 describe('⑤ 세이브 — C.531 번복: 94 → 95 는 허무를 지우지 않고, 95 → 96 이 옛 허무 조·탄·교를 허무 블록 하나로 합친다 (옛 "허무 블록 지우고 칸 비움, 허무 강화 → 노멀")', () => {
   it('형식 96 · 94·95 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(100);
+    expect(SAVE_FORMAT_VERSION).toBe(101);
     expect(typeof SAVE_MIGRATIONS[94]).toBe('function');
     expect(typeof SAVE_MIGRATIONS[95]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
@@ -227,7 +227,7 @@ describe('⑤ 세이브 — C.531 번복: 94 → 95 는 허무를 지우지 않�
     s.meta.format = 94;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(100);
+    expect(m.meta.format).toBe(101);
     // 옛 기대값(C.516): 칸 [null, 't-water-a', null] · 보유 ['t-water-a'] · 강화 { normal: 3, water: 1 }
     expect(m.build.slots).toEqual(['t-kyo', 't-water-a', null]);
     expect(m.build.owned).toEqual(['t-kyo', 't-water-a']);

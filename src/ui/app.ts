@@ -37,10 +37,9 @@ import {
   canSwitchFaction, allTracks, trackIdOf, trackNameOf, trackRulesOf, developAll, developHogyoku, hogyokuPercent, performFusion, statBonusOf, switchTrack, defaultDifficulty, streakFor, bossesBeaten, setIdentity, needsIdentity,
   combatFactionIdOf, finishGuide,
   applyTrackRiskFloor,
-  evolutionChoicePending, evolveAfterReturn, deferEvolution, pendingEvolveChoice,
+  evolveAfterReturn, cancelEvolution, pendingEvolution, evolutionCancelAllowed,
   expireWanderer, meetWanderer, wandererHere,
 } from '../game';
-import { evolveChoiceDialog } from './evolveChoice';
 import { identityScreen, type IdentityMode } from './identityView';
 import { registerCancelHook } from './bha/shortcuts';
 import { developAllPreview, fusionConfirmView, fusionFinalText, fusionPickView, fusionView, gainedText, hogyokuView, resetHogyokuSel, transcendentDexView } from './hogyokuView';
@@ -88,7 +87,7 @@ import { lowDepartHp, planView } from './planView';
 import { bookView } from './bookView';
 import { showTitleToasts } from './titleDexView';
 import { formName } from '../data/evolution';
-import { evolutionView, gainExtra } from './evolutionPanel';
+import { evolutionView, gainExtra, type EvolveCutHooks } from './evolutionPanel';
 import { roomView } from './roomView';
 import { careView, chestView, openChestAtConsumables, openChestAtGear } from './lcdScreens';
 import { createDevice } from './bha/device';
@@ -1144,7 +1143,7 @@ export function startApp(host: HTMLElement): void {
     if (active && active.reason !== 'none') resumeNote = abandonNote(active);
     persist();
     const toRoom = () => {
-      resumeEvolveChoice(); // C.508: 진화 [진화]/[미루기]를 묻다가 껐으면 방에서 다시 (방 안내는 고른 뒤)
+      resumePendingEvolution(); // C.568: 진화 연출 도중 껐으면 방에서 연출을 다시 (방 안내는 연출 뒤)
       nestScreen();
       if (active && active.reason !== 'none') showAbandonCard(active, trackFaction(loaded));
     };
@@ -2402,43 +2401,56 @@ export function startApp(host: HTMLElement): void {
     notes.forEach((n, i) => window.setTimeout(() => showToast(n, i, 4200), 900 + i * 300));
   }
 
-  /** 진화 연출 (GDD 8-5): fromTier = 진화 전 단계. 연출이 끝나 방으로 돌아오면 onDone */
-  function playEvolveCut(faction: FactionConfig, s: SaveData, fromTier: number, r: Extract<EvolveResult, { ok: true }>, onDone: () => void, fromArt?: ArtUrls): void {
+  /** 진화 연출 (GDD 8-5): fromTier = 진화 전 단계. 연출이 끝나 방으로 돌아오면 onDone.
+   *  hooks (C.568, GDD 8-5 v6.254): commit = 연출(애니)이 끝나 결과로 넘어가는 순간(진짜 진화) · cancel = 3번 터치 → [취소한다](없으면 터치 취소 없음) */
+  function playEvolveCut(faction: FactionConfig, s: SaveData, fromTier: number, r: Extract<EvolveResult, { ok: true }>, onDone: () => void, fromArt?: ArtUrls, hooks: EvolveCutHooks = {}): void {
     const extra = { elements: playerElementsOf(s.evolution), ability: s.evolution.ability, ev: { ...s.evolution.ev }, failLine: isFailLine(s.evolution), look: s.evolution.look ?? null, stats: baseStatsOf(s.evolution, faction.id), ...gainExtra(s.evolution, r.abilityGain, r.abilitySlotsAdded), art: evolvedArtOf(roomOf(faction), s), fromArt }; // 새 진화체 그림 (GDD 241-B 7·246장 1: 바뀐 뒤 모습) · 진화 전 그림(도트 진화 연출이 이 모습으로 시작)
     open('evolve-cutscene', () => evolutionView(root, faction, fromTier, s.evolution.tierIndex, r.form, () => {
       nav.pop(); // 연출이 끝나 방으로 돌아오면 첫 진화 타일 안내 (GDD 64장)
       onDone();
-    }, s.build.slots.length, extra), true);
-  }
-
-  /** 귀환 뒤 [진화] [미루기] 창 (GDD 8-5, C.497). 묻는 중 표시(evolution.choice, C.508)가 세이브에 있어 고르기 전에 껐다 켜도 방에서 다시 연다. 표시가 없으면 onDone 만 */
-  function askEvolveChoice(faction: FactionConfig, s: SaveData, onDone: () => void): void {
-    const pending = pendingEvolveChoice(s);
-    if (!pending) return onDone();
-    const fromTier = s.evolution.tierIndex;
-    evolveChoiceDialog({
-      onEvolve: () => {
-        const fromArt = evolvedArtOf(roomOf(faction), s); // 바뀌기 전 모습 (도트 진화 연출)
-        const r = evolveAfterReturn(s, pending);
-        persist();
-        if (r.ok) playEvolveCut(faction, s, fromTier, r, onDone, fromArt);
-        else onDone();
-      },
-      onDefer: () => {
-        deferEvolution(s, Date.now(), pending.runId); // 그 단계에 머문다 — 다음 귀환 때 다시 묻는다
-        persist();
+    }, s.build.slots.length, extra, {
+      onCommit: hooks.onCommit,
+      onCancel: hooks.onCancel && (() => {
+        hooks.onCancel!();
+        nav.pop(); // 진화하지 않고 방으로 — 그 단계에 머문다
         if (nav.top?.id === 'room') renderRoom();
         onDone();
-      },
-    });
+      }),
+    }), true);
   }
 
-  /** 방에 들어올 때 묻다 만 진화 창이 있으면 다시 띄운다 (C.508): 결과 화면·창에서 껐다 켠 경우. 띄웠으면 true(방 안내는 고른 뒤) */
-  function resumeEvolveChoice(): boolean {
-    if (!save || !pendingEvolveChoice(save)) return false;
+  /** 귀환 뒤 진화 연출 (GDD 8-5 v6.254, C.568 — 옛 [진화] [미루기] 창 폐지): 묻지 않고 곧바로 연출. 연출 차례(evolution.pending)가 세이브에 있어 연출 도중 껐다 켜도
+   *  방에서 다시 튼다. 결과는 세이브 사본으로 미리 판정해 연출·결과 화면을 그리고(같은 시드라 같은 결과), 애니가 끝나는 순간 진짜 세이브를 진화시킨다.
+   *  3번 터치 → [취소한다] 면 진화하지 않고 그 순간 후보를 배제(cancelEvolution). 강제 진화(취소 뒤 원정 7번)·튜토리얼 중엔 터치 취소 없음. 차례가 없으면 onDone 만 */
+  function playPendingEvolution(faction: FactionConfig, s: SaveData, onDone: () => void): void {
+    const pending = pendingEvolution(s);
+    if (!pending) return onDone();
+    const fromTier = s.evolution.tierIndex;
+    const fromArt = evolvedArtOf(roomOf(faction), s); // 바뀌기 전 모습 (도트 진화 연출)
+    const preview = structuredClone(s);
+    const pr = evolveAfterReturn(preview, pending);
+    if (!pr.ok) return onDone();
+    let committed = false;
+    const commit = () => {
+      if (committed) return;
+      committed = true;
+      evolveAfterReturn(s, pending);
+      persist();
+    };
+    const cancel = evolutionCancelAllowed(s, pending) ? () => {
+      cancelEvolution(s);
+      persist();
+    } : undefined;
+    // 연출 끝 = 방으로 돌아올 때 혹시 commit 이 안 됐으면(애니 단계 없이 끝남) 여기서
+    playEvolveCut(faction, preview, fromTier, pr, () => { commit(); onDone(); }, fromArt, { onCommit: commit, onCancel: cancel });
+  }
+
+  /** 방에 들어올 때 연출 차례가 남아 있으면 진화 연출을 다시 튼다 (C.568 — 옛 C.508 묻다 만 창 자리): 결과 화면·연출 도중 껐다 켠 경우. 틀었으면 true(방 안내는 연출 뒤) */
+  function resumePendingEvolution(): boolean {
+    if (!save || !pendingEvolution(save)) return false;
     const s = save;
     holdRoomGuides = true;
-    window.setTimeout(() => askEvolveChoice(trackFaction(s), s, () => {
+    window.setTimeout(() => playPendingEvolution(trackFaction(s), s, () => {
       holdRoomGuides = false;
       if (nav.top?.id === 'room') renderRoom(); // 미뤄 둔 방 안내(회복·다음 할 일)를 이제
     }), 60);
@@ -2478,9 +2490,9 @@ export function startApp(host: HTMLElement): void {
       // 걸음 수가 진화 타이밍에 닿았으면 귀환한 그 순간 자동 진화 (GDD 20-5 v4.1). 결과 화면 다음에 진화 연출을 보여 준다
       const petLog0 = save.runLog.pets.length;
       const gearLog0 = save.runLog.gear.length;
-      // 진화 미루기 (GDD 8-5, C.497): 진화 기준에 닿았으면 결과 화면 뒤 진화 연출 전에 [진화] [미루기]를 묻는다 — 튜토리얼 중이면 묻지 않고 바로 진화(evo)
+      // 진화 연출 (GDD 8-5 v6.254, C.568): 진화 기준에 닿았으면 결과 화면 뒤 묻지 않고 곧바로 연출(3번 터치 취소) — 튜토리얼 중이면 바로 진화(evo, 터치 취소 없음)
       const evo = recordExpedition(save, exp, Date.now(), { holdEvolution: true });
-      const askEvolve = evo === null && evolutionChoicePending(save);
+      const askEvolve = evo === null && pendingEvolution(save) !== null;
       persist();
       // 펫 알림 (GDD 90장): 이번 귀환에서 얻은 펫·친밀도 오름·골드로 바뀐 펫 (첫 진화 선물 포함)
       petNotes = save.runLog.pets.slice(petLog0).map((r) => petNoticeOf(r, faction)).filter((n): n is NonNullable<typeof n> => n !== null);
@@ -2495,7 +2507,7 @@ export function startApp(host: HTMLElement): void {
         died: save.nest.dead === true, // 빈사 중 패배·탈진 사망 → 결과 문구 (C.511, GDD 3-6)
       };
       const s = save;
-      /** 진화(또는 미루기)가 끝나 방으로 돌아온 뒤: 첫 진화 타일 안내(GDD 64장)를 풀고 미뤄 둔 알림을 띄운다 */
+      /** 진화(또는 취소)가 끝나 방으로 돌아온 뒤: 첫 진화 타일 안내(GDD 64장)를 풀고 미뤄 둔 알림을 띄운다 */
       const afterEvolveDone = () => {
         holdRoomGuides = false;
         const later = afterEvolve;
@@ -2503,7 +2515,7 @@ export function startApp(host: HTMLElement): void {
         later?.();
       };
       if (evo?.ok) afterResult = () => playEvolveCut(faction, s, fromTier, evo, afterEvolveDone, fromArt);
-      else if (askEvolve) afterResult = () => askEvolveChoice(faction, s, afterEvolveDone);
+      else if (askEvolve) afterResult = () => playPendingEvolution(faction, s, afterEvolveDone);
     }
     const showResult = () => {
       setBgm('expedition'); // 결과 화면은 원정 음악 (스토리 끝 대사의 story 음악에서 돌아온다)

@@ -7,7 +7,7 @@ import { convertRetiredRareTraits, dropBasicBlockTraits, dropEnemyOnlyTraits, ga
 import { applyAbsenceTime, applyExpeditionEnd, passNestFrozen, CARE_ACTIONS, collapseNest, cureStatus, departCare, dieNest, doNestAction, feedFood, touchNest, newNest, passNestTime, respondCare, reviveEvLossOf, tickCareRequest, tickNestOnline, homeHpOf, homeHpCap, leaveSpa, setHomeHp, type SpaEnd, type TouchOutcome, type AbsenceReport, type CareAction, type CareOutcome, type CareStatus, type NestState } from './engine/nest';
 import { buildRunRecord, expeditionLeftAt, failExpedition, restoreExpedition, summarize, type AbandonReason, type ExpeditionSnapshot, type ExpeditionState, type RestoreResult, type StorySettlement } from './engine/expedition';
 export type { StorySettlement } from './engine/expedition';
-import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionDeferral, recordEvolutionBreakthrough, recordEvolutionCollapsedReturn, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
+import { addEv, canEvolve, capTierOf, evCaps, cloneEvolution, currentStats, evTotal, evolve, newEvolution, nextStageSeed, playerElementsOf, addEvFree, recordEvolutionBondCare, recordEvolutionCancel, type EvolutionPending, recordEvolutionBreakthrough, recordEvolutionCollapsedReturn, recordEvolutionFaint, recordEvolutionHunterRun, recordEvolutionLongAbsence, stepsNeeded, zeroStats, cloneBasisBuild, TRANSCENDENT_BASIS, type CombatBasis, type CombatBasisBuild, type EvolutionState, type EvolveResult } from './engine/evolution';
 import { tryGetForm } from './data/evolution';
 import { evoExtraPetPower, evoExtraPetSlots, evoReleaseBlocked } from './data/evolution/uniques';
 import { kitModeDefOf, kitModesOf, kitRiskFloorOf, transcendShardsOfBattles, upgradableBlocks, upgradeKitBlock, type KitUpgradeResult } from './engine/transcendKit';
@@ -19,7 +19,8 @@ import { pickLook } from './engine/evolution/tierLook';
 import { pickFormLook, pickTierLook } from './engine/evolution/tierLook';
 import { lookCellOfSkin, lookCells, lookDexKey, lookSkinOf, lookUnitTable, recordLookDex } from './engine/evolution/lookDex';
 import { migrateBuild, migrateEvolution } from './saveLegacy';
-import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionDeferralRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
+import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionCancelRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
+import { judgeCandidates, type JudgeContext } from './engine/evolution/judge';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -72,7 +73,8 @@ import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권 3종, 사용자 2026-11-27): 트랙 칸 tower.tickets(요일던전권·보스전권·토벌전권 + 채운 날·주 — 옛 shared.special.weekStart·used 주 횟수 대체), shared.special = 최고 ★·이긴 수만(키 weekly:<트랙> → daily:<던전 id>), 런 로그 specialRuns mode 'daily'·practice·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](트랙마다 새 입장권 칸 = 처음 열 때 가득, 옛 주간던전 기록 → 요일던전 키)
+export const SAVE_FORMAT_VERSION = 101; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28): 진화 상태 deferrals → cancels(취소 수 — 옛 미루기 수를 옮김)·excluded(배제 목록)·cancelRuns(마지막 취소 뒤 원정 수), choice → pending(연출 차례, forced = 강제 진화)·런 로그 tiers.cancels·진화 기록 cancels — 100 → 101 변환 SAVE_MIGRATIONS[100]
+// 이전: SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권 3종, 사용자 2026-11-27): 트랙 칸 tower.tickets(요일던전권·보스전권·토벌전권 + 채운 날·주 — 옛 shared.special.weekStart·used 주 횟수 대체), shared.special = 최고 ★·이긴 수만(키 weekly:<트랙> → daily:<던전 id>), 런 로그 specialRuns mode 'daily'·practice·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](트랙마다 새 입장권 칸 = 처음 열 때 가득, 옛 주간던전 기록 → 요일던전 키)
 // 이전: SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
 // 이전: SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
 // 이전: SAVE_FORMAT_VERSION = 97; // C.532 (GDD 8-5 v6.164·v6.165 혈·독 일반 진화 조건, 사용자 2026-11-23): 진화 상태 collapsedReturns(그 단계에서 빈사로 귀환한 원정 수)·dotKills(그 단계에서 지속 피해로 적을 쓰러뜨린 수, 속성 → 수) + 런 로그 전투 기록 dotKill(지속 피해 처치의 속성, 선택)·런 기록 collapsedReturn(선택)·진화 스냅샷 collapsedReturns·dotKills(선택). 96 → 97 변환 SAVE_MIGRATIONS[96](빈사 귀환 수 = 지금 단계에 들어선 뒤 런 로그의 패배 빈사 기록 수, 지속 피해 처치 = 0 — 옛 전투 기록엔 지속 피해의 속성이 없다)
@@ -1379,8 +1381,8 @@ export function switchCombatBasis(save: SaveData, key: string, nowMs: number = D
   return { ok: true, changed: true };
 }
 
-/** 귀환 정산 선택 (C.497): holdEvolution = 진화 기준에 닿았어도 여기서 진화하지 않는다 — 화면이 [진화] [미루기]를 물은 뒤 evolveAfterReturn / deferEvolution 을 부른다
- *  (GDD 8-5 진화 미루기). 튜토리얼 중(evolutionChoiceAllowed 가 false)이면 묻지 않고 예전처럼 바로 진화한다 */
+/** 귀환 정산 선택: holdEvolution = 진화 기준에 닿았어도 여기서 진화하지 않고 연출 차례(evolution.pending)만 남긴다 — 화면이 진화 연출을 틀고
+ *  끝나면 evolveAfterReturn, 3번 터치 취소면 cancelEvolution 을 부른다 (GDD 8-5 v6.254, C.568). 튜토리얼 중이면 차례 없이 바로 진화(연출은 터치 취소 없음) */
 export interface RecordExpeditionOptions {
   holdEvolution?: boolean;
 }
@@ -1473,50 +1475,74 @@ export function recordExpedition(save: SaveData, exp: ExpeditionState, nowMs: nu
   settleFreeBoss(save, exp, nowMs);
   checkTitles(save, 'expedition', nowMs);
   if (!canEvolve(save.evolution)) return null;
-  // 진화 미루기 (GDD 8-5, C.497): 화면이 묻는다 — 여기서는 진화하지 않는다. 튜토리얼 중이면 묻지 않고 바로 진화
-  // C.508: 묻는 중임을 세이브에 남긴다 — 고르기 전에 껐다 켜도 방에서 창을 다시 띄운다(공짜 미루기 막음)
-  if (opts.holdEvolution && evolutionChoiceAllowed(save, exp)) {
-    save.evolution.choice = { hunger: exp.hunger, condition: exp.condition, runId: exp.runId };
+  // 진화 연출 취소·배제 (GDD 8-5 v6.254, C.568): 마지막 취소 뒤 둥지로 돌아온 원정 수(패배 포함, 튜토리얼 제외 — 특수던전은 이 정산을 거치지 않는다).
+  // 배제를 뺀 후보가 없는데 forceAfterRuns 번째 귀환이면 배제를 풀고 그 순간 판정으로 강제 진화(터치 취소 없음)
+  const ev = save.evolution;
+  let forced = false;
+  if ((ev.excluded?.length ?? 0) > 0) {
+    if (!exp.tutorial) ev.cancelRuns = (ev.cancelRuns ?? 0) + 1;
+    if (!evolutionReady(save, exp) && (ev.cancelRuns ?? 0) >= BALANCE.provisional.evolution.cancel.forceAfterRuns) {
+      delete ev.excluded;
+      delete ev.cancelRuns;
+      forced = true;
+    }
+  }
+  if (!evolutionReady(save, exp)) return null; // 배제된 진화체뿐 — 다른 진화체 조건을 채울 때까지 연출 없음
+  // 화면이 연출을 튼다 — 여기서는 진화하지 않고 차례만 세이브에 남긴다(연출 도중 껐다 켜도 방에서 다시 튼다, 공짜 취소 막음). 튜토리얼 중이면 바로 진화
+  if (opts.holdEvolution && !exp.tutorial && !tutorialInProgress(save)) {
+    ev.pending = { hunger: exp.hunger, condition: exp.condition, runId: exp.runId, ...(forced ? { forced: true } : {}) };
     return null;
   }
   return evolveAfterReturn(save, exp, nowMs);
 }
 
-/** 진화 미루기 창을 띄워도 되는가 (GDD 8-5, C.497): 튜토리얼 원정·튜토리얼 안내 중이 아니면. 튜토리얼 흐름은 창 없이 바로 진화(추천안) */
-export function evolutionChoiceAllowed(save: SaveData, exp?: Pick<ExpeditionState, 'tutorial'>): boolean {
-  return !exp?.tutorial && !tutorialInProgress(save);
+/** 진화 판정 문맥 (진화 순간 돌봄·리스크·교감·계보·능력치 합계) — performEvolution 과 후보 확인이 같은 값을 쓴다 */
+function judgeContextOf(save: SaveData, care: { hunger: number; condition: number }): JudgeContext {
+  return {
+    factionId: save.factionId, build: save.build, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count,
+    risk: save.nest.risk, bond: save.nest.bond, failLineage: failLineageOf(save), collapsed: save.nest.collapsed === true, // 허무형 (GDD 8-8, C.497): 빈사로 귀환
+    statTotal: STAT_IDS.reduce((a, k) => a + currentStats(save.evolution, save.factionId, statBonusOf(save).total)[k], 0),
+  };
 }
 
-/** 진화를 물어야 하는 상태 (GDD 8-5): 진화 기준(걸음 수)에 닿았는데 아직 진화하지 않았다 — 귀환 때 [진화] [미루기] 창 */
-export function evolutionChoicePending(save: SaveData): boolean {
-  return canEvolve(save.evolution);
+/** 지금 진화할 수 있나 (GDD 8-5 v6.254, C.568): 진화 기준(걸음 수)에 닿았고, 배제 목록을 뺀 판정 후보가 하나라도 있다 */
+export function evolutionReady(save: SaveData, care: { hunger: number; condition: number } = save.nest): boolean {
+  return canEvolve(save.evolution) && judgeCandidates(save.evolution, judgeContextOf(save, care)).length > 0;
 }
 
-/** 방에 들어올 때 다시 띄울 [진화] [미루기] 창 (GDD 8-5, C.508): 귀환 때 묻다가 고르기 전에 껐으면 그 원정의 몸 상태. 진화 기준에서 벗어났으면(옛 표시) 지우고 null */
-export function pendingEvolveChoice(save: SaveData): { hunger: number; condition: number; runId: number } | null {
-  const c = save.evolution.choice;
-  if (!c) return null;
-  if (!canEvolve(save.evolution)) {
-    delete save.evolution.choice;
+/** 진화 연출을 3번 터치로 취소할 수 있나 (GDD 8-5 v6.254, C.568): 강제 진화(취소 뒤 원정 7번)·튜토리얼 원정·튜토리얼 안내 중이면 못 한다 */
+export function evolutionCancelAllowed(save: SaveData, pending: Pick<EvolutionPending, 'forced'> | null = save.evolution.pending ?? null): boolean {
+  return pending?.forced !== true && !tutorialInProgress(save);
+}
+
+/** 방에 들어올 때·결과 화면 뒤에 틀 진화 연출 차례 (GDD 8-5 v6.254, C.568): 그 원정의 몸 상태. 이제 진화할 수 없으면(옛 표시·배제) 지우고 null */
+export function pendingEvolution(save: SaveData): EvolutionPending | null {
+  const p = save.evolution.pending;
+  if (!p) return null;
+  if (!evolutionReady(save, p)) {
+    delete save.evolution.pending;
     return null;
   }
-  return c;
+  return p;
 }
 
-/** 귀환 뒤 [진화] (GDD 8-5): 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것).
+/** 귀환 뒤 진화 (GDD 8-5 — 연출이 끝났을 때): 돌보기 판정은 원정을 마친 몸 상태로 (패배 페널티 쇠약은 넣지 않는다: 지고 돌아왔다고 실패형이 되지는 않는다, C.47 정한 것).
  *  허무형 빈사 판정은 둥지 상태(귀환 정산 뒤 — 패배면 빈사) */
 export function evolveAfterReturn(save: SaveData, exp: Pick<ExpeditionState, 'hunger' | 'condition'>, nowMs: number = Date.now()): EvolveResult {
   return performEvolution(save, nowMs, { hunger: exp.hunger, condition: exp.condition });
 }
 
-/** 귀환 뒤 [미루기] (GDD 8-5, C.497): 그 단계에 머문다(걸음·흡수·노력치는 그대로 쌓임, 다음 귀환 때 다시 묻는다). 상한 없음.
- *  진화 상태 deferrals +1 · 런 로그 tiers.deferrals 1건. 진화 기준에 안 닿았으면 아무것도 안 하고 null */
-export function deferEvolution(save: SaveData, nowMs: number = Date.now(), runId?: number): EvolutionDeferralRecord | null {
-  if (!canEvolve(save.evolution)) return null;
-  delete save.evolution.choice; // 골랐다 — 묻는 중 아님 (C.508)
-  const count = recordEvolutionDeferral(save.evolution);
-  const rec: EvolutionDeferralRecord = { at: nowMs, tier: save.evolution.tierIndex, count, formId: save.evolution.formId, steps: save.evolution.steps, ...(runId !== undefined ? { runId } : {}) };
-  (save.runLog.tiers.deferrals ??= []).push(rec);
+/** 진화 연출을 취소했다 (GDD 8-5 v6.254, C.568 — 3번 터치 → [취소한다]): 그 단계에 머문다(걸음·흡수·노력치는 그대로 쌓임). 그 순간 판정 후보 진화체 전부를
+ *  배제 목록에 더하고 취소 수 +1 · 마지막 취소 뒤 원정 수 0 · 연출 차례 지움 · 런 로그 tiers.cancels 1건. 진화할 수 없는 때(기준 미달·후보 없음)·강제 진화면 아무것도 안 하고 null */
+export function cancelEvolution(save: SaveData, nowMs: number = Date.now()): EvolutionCancelRecord | null {
+  const p = save.evolution.pending;
+  const care = p ?? save.nest;
+  if (p?.forced || !canEvolve(save.evolution)) return null;
+  const candidates = judgeCandidates(save.evolution, judgeContextOf(save, care)).map((c) => c.formId);
+  if (candidates.length === 0) return null;
+  const count = recordEvolutionCancel(save.evolution, candidates);
+  const rec: EvolutionCancelRecord = { at: nowMs, tier: save.evolution.tierIndex, count, formId: save.evolution.formId, steps: save.evolution.steps, excluded: candidates, ...(p ? { runId: p.runId } : {}) };
+  (save.runLog.tiers.cancels ??= []).push(rec);
   return rec;
 }
 
@@ -1904,7 +1930,7 @@ export function readActiveExpedition(save: SaveData, nowMs: number = Date.now())
     return { ok: false, reason: why, settled: false, exp: null };
   }
   failExpedition(r.exp, why);
-  // activeExpedition 을 비우고 lastScreen 을 방으로. 진화 기준에 닿았어도 여기선 연출·선택 창이 없어 진화하지 않는다 — 다음 귀환 때 [진화] [미루기]를 묻는다 (GDD 8-5, C.497)
+  // activeExpedition 을 비우고 lastScreen 을 방으로. 진화 기준에 닿았어도 여기선 연출이 없어 진화하지 않는다 — 연출 차례(evolution.pending)를 남겨 방에 들어오면 연출 (GDD 8-5 v6.254, C.568)
   recordExpedition(save, r.exp, nowMs, { holdEvolution: true });
   return { ok: false, reason: why, settled: true, exp: r.exp };
 }
@@ -1957,11 +1983,8 @@ function applySpecialLook(save: SaveData, record: EvolutionRecord, bondCare: num
  *  슬롯 +1, 단계 기록 리셋(노력치 유지), 도감 해금, 런 로그에 기록. 리스크는 그대로 */
 export function performEvolution(save: SaveData, nowMs: number = Date.now(), care: { hunger: number; condition: number } = save.nest): EvolveResult {
   const bondCare = save.evolution.bondCare ?? 0; // 이 단계 동안 교감한 수 — 진화하면 지워지므로 먼저 읽는다 (GDD 241-C 4)
-  const r = evolve(save.evolution, save.build, {
-    factionId: save.factionId, hunger: care.hunger, condition: care.condition, rebirths: save.rebirth.count,
-    risk: save.nest.risk, bond: save.nest.bond, failLineage: failLineageOf(save), collapsed: save.nest.collapsed === true, // 허무형 (GDD 8-8, C.497): 빈사로 귀환
-    statTotal: STAT_IDS.reduce((a, k) => a + currentStats(save.evolution, save.factionId, statBonusOf(save).total)[k], 0),
-  }, nowMs);
+  const { build: _build, ...ctx } = judgeContextOf(save, care);
+  const r = evolve(save.evolution, save.build, ctx, nowMs);
   if (r.ok) {
     applySpecialLook(save, r.record, bondCare);
     save.runLog.tiers.evolutions.push(r.record);
@@ -2745,7 +2768,7 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 91 → 92 (C.497, GDD 8-5 진화 미루기): 모든 트랙의 진화 상태에 미루기 0회, 런 로그에 빈 미루기 기록
   91: (save) => {
     forEachTrack(save, (t) => {
-      if (isRec(t.evolution)) (t.evolution as EvolutionState).deferrals = 0;
+      if (isRec(t.evolution)) (t.evolution as { deferrals?: number }).deferrals = 0;
       if (isRec(t.runLog) && isRec(t.runLog.tiers) && !Array.isArray(t.runLog.tiers.deferrals)) t.runLog.tiers.deferrals = [];
     });
   },
@@ -2757,7 +2780,7 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   // 93 → 94 (C.508, GDD 8-5): 진화 묻는 중 evolution.choice — 옛 세이브는 묻는 중 아님(필드 없음). 다음 귀환 때 묻는다
   93: (save) => {
     forEachTrack(save, (t) => {
-      if (isRec(t.evolution)) delete (t.evolution as EvolutionState).choice;
+      if (isRec(t.evolution)) delete (t.evolution as { choice?: unknown }).choice;
     });
   },
   // 94 → 95 (C.516, GDD 8-2 v6.154 허무 = 적 전용): 허무 블록(장착·보유)은 지우고 그 칸은 비운다, 허무 강화 n → 노멀 강화 +n (provisional).
@@ -2774,7 +2797,25 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   98: (save) => migrateWandererStay(save, Date.now()),
   // 99 → 100 (C.564, GDD 6-16 v6.248 요일던전·입장권): 주 횟수 칸(weekStart·used)을 지우고 트랙마다 입장권 tower.tickets, 옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로
   99: (save) => migrateDailyDungeon(save),
+  // 100 → 101 (C.568, GDD 8-5 v6.254 진화 연출 3번 터치 취소): 옛 미루기 수 → 취소 수(허무형 '취소 3회'가 이어 읽는다), 묻는 중 표시 choice → 연출 차례 pending(방에 들어오면 연출), 런 로그 빈 취소 기록
+  100: (save) => migrateEvolutionCancel(save),
 };
+
+/** 형식 100 → 101 (C.568, GDD 8-5 v6.254): 트랙마다 진화 상태 deferrals → cancels(지움), choice(숫자 셋이 맞으면) → pending(터치 취소 가능한 보통 연출), 런 로그 tiers.cancels = [].
+ *  옛 미루기 기록 tiers.deferrals 는 기록으로 남긴다 */
+export function migrateEvolutionCancel(save: SaveData): void {
+  forEachTrack(save, (t) => {
+    if (isRec(t.evolution)) {
+      const e = t.evolution as EvolutionState & { deferrals?: unknown; choice?: unknown };
+      e.cancels = nonNegInt(e.cancels) + nonNegInt(e.deferrals);
+      delete e.deferrals;
+      const c = e.choice;
+      if (isRec(c) && [c.hunger, c.condition, c.runId].every((v) => typeof v === 'number' && Number.isFinite(v))) e.pending = { hunger: c.hunger as number, condition: c.condition as number, runId: c.runId as number };
+      delete e.choice;
+    }
+    if (isRec(t.runLog) && isRec(t.runLog.tiers) && !Array.isArray(t.runLog.tiers.cancels)) t.runLog.tiers.cancels = [];
+  });
+}
 
 /** 형식 99 → 100 (C.564, GDD 6-16 v6.248): 옛 주간던전·보스전 주 횟수(shared.special.weekStart·used) → 트랙마다 입장권 tower.tickets(채운 날·주 0 = 처음 열 때 가득).
  *  옛 주간던전 키(weekly:<트랙>)의 최고 ★·이긴 수는 요일던전 키(daily:<트랙>)로 옮긴다 */
@@ -3431,6 +3472,7 @@ function repairRunLog(log: RunLog): void {
   }
   if (!Array.isArray(log.tiers.evolutions)) log.tiers.evolutions = [];
   if (!Array.isArray(log.tiers.deferrals)) log.tiers.deferrals = []; // C.497 (형식 92)
+  if (!Array.isArray(log.tiers.cancels)) log.tiers.cancels = []; // C.568 (형식 101)
 }
 
 /** 지금 트랙의 핵심 구조 보정 (C.70). 둥지·빌드·타일·도감 같은 빠진 영역은 처음 값으로 채우고, 진화 상태가 없으면 고칠 수 없으므로 false(→ 백업 복구).
@@ -3549,16 +3591,32 @@ function sanitizeEvolutionExtras(e: EvolutionState, rebirths: unknown): void {
     if (v > 0) e[k] = v;
     else delete e[k];
   }
-  e.deferrals = nonNegInt(e.deferrals); // C.497 진화 미루기 (형식 92): 없거나 이상하면 0
+  e.cancels = nonNegInt(e.cancels); // C.568 진화 연출 취소 (형식 101): 없거나 이상하면 0
+  delete (e as { deferrals?: unknown }).deferrals; // 옛 미루기 수(형식 92~100)는 변환에서 cancels 로 옮겼다
+  // C.568 배제 목록·마지막 취소 뒤 원정 수: 문자열 id 만(중복 없이), 비면 지운다 / 1 이상 정수만
+  if (e.excluded !== undefined) {
+    const ex = [...new Set((Array.isArray(e.excluded) ? e.excluded : []).filter((x): x is string => typeof x === 'string' && x.length > 0))];
+    if (ex.length > 0) e.excluded = ex;
+    else delete e.excluded;
+  }
+  if (e.cancelRuns !== undefined) {
+    const v = nonNegInt(e.cancelRuns);
+    if (v > 0 && e.excluded) e.cancelRuns = v;
+    else delete e.cancelRuns;
+  }
   // C.532 지속 피해 처치 수 (형식 97): 속성 → 1 이상 정수만 남기고, 남는 칸이 없으면 지운다
   if (e.dotKills !== undefined) {
     const kills = Object.fromEntries(Object.entries(isRec(e.dotKills) ? e.dotKills : {}).filter(([el, v]) => isElement(el) && Number.isInteger(v) && (v as number) > 0)) as Record<string, number>;
     if (Object.keys(kills).length > 0) e.dotKills = kills;
     else delete e.dotKills;
   }
-  // C.508 진화 묻는 중 (형식 94): 숫자 셋이 다 맞을 때만 남긴다
-  const c = e.choice as unknown;
-  if (c !== undefined && !(isRec(c) && [c.hunger, c.condition, c.runId].every((v) => typeof v === 'number' && Number.isFinite(v)))) delete e.choice;
+  // C.568 진화 연출 차례 (형식 101, 옛 C.508 choice 자리): 숫자 셋이 다 맞을 때만 남긴다, forced 는 true 일 때만
+  delete (e as { choice?: unknown }).choice;
+  const c = e.pending as unknown;
+  if (c !== undefined) {
+    if (!(isRec(c) && [c.hunger, c.condition, c.runId].every((v) => typeof v === 'number' && Number.isFinite(v)))) delete e.pending;
+    else if (c.forced !== true) delete (c as { forced?: unknown }).forced;
+  }
   if (e.ascended !== true) delete e.ascended;
   e.abilities = sanitizeLoadout(e.abilities, e.tierIndex, rebirths);
 }

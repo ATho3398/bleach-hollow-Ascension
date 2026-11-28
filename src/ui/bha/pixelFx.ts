@@ -119,6 +119,9 @@ export interface PixelFxPlay {
   el: HTMLElement;
   /** 지금 멈추고 지운다 (반복 이펙트는 이걸로 끝낸다) */
   stop(): void;
+  /** 멈춤·이어서 (C.568 진화 연출 취소 창이 떠 있는 동안) — 멈춘 시간만큼 뒤로 민다 */
+  pause(): void;
+  resume(): void;
   readonly done: boolean;
 }
 
@@ -157,7 +160,8 @@ export function playPixelFx(host: HTMLElement, s: PixelFxSheet, o: PixelFxOption
   let done = false;
   let raf = 0;
   let shown = -2;
-  const t0 = performance.now();
+  let t0 = performance.now();
+  let pausedAt: number | null = null;
   const finish = (ended: boolean): void => {
     if (done) return;
     done = true;
@@ -180,6 +184,17 @@ export function playPixelFx(host: HTMLElement, s: PixelFxSheet, o: PixelFxOption
   return {
     el,
     stop: () => finish(false),
+    pause: () => {
+      if (done || pausedAt !== null) return;
+      pausedAt = performance.now();
+      cancelAnimationFrame(raf);
+    },
+    resume: () => {
+      if (done || pausedAt === null) return;
+      t0 += performance.now() - pausedAt;
+      pausedAt = null;
+      raf = requestAnimationFrame(step);
+    },
     get done() {
       return done;
     },

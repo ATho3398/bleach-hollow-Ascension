@@ -185,7 +185,7 @@ export function formHint(form: FormDef, factionId: string): string {
     restraint: '놓아준 수가 더 많고, 배를 채우지 않은 채 진화',
     stable: '깊이 교감하며 한 번도 무너지지 않은 채 진화',
     hunter: '먼 바퀴에서 강적을 여러 번 쓰러뜨린 채 진화',
-    void: `${elementName(H_VOID.element, factionId)} 블록을 ${H_VOID.absorbs}개 ${getFaction(factionId).absorbActionName}하고, 진화를 ${H_VOID.deferrals}번 미룬 뒤 진화`, // C.531 (GDD 8-8 v6.166 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기)
+    void: `${elementName(H_VOID.element, factionId)} 블록을 ${H_VOID.absorbs}개 ${getFaction(factionId).absorbActionName}하고, 진화를 ${H_VOID.cancels}번 취소한 뒤 진화`, // C.531 (GDD 8-8 v6.166 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기)
   };
   return byKind[form.label.kind];
 }

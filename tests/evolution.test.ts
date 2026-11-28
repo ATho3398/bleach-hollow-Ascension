@@ -162,10 +162,10 @@ describe('트리 판정 (GDD 126장, C.220)', () => {
     expect(ids(absorbs(atTier(2), { blood: 2, poison: 2, kyo: 2 }), { rebirths: 1 })).toEqual([]);
     expect(ids(atTier(2), { collapsed: true })).toEqual([]);
     const voidReady = absorbs(atTier(2), { kyo: H.void.absorbs });
-    voidReady.deferrals = H.void.deferrals;
+    voidReady.cancels = H.void.cancels;
     expect(ids(voidReady)).toEqual(['h4:void']);
     const deferred = absorbs(atTier(2), { kyo: H.void.absorbs });
-    deferred.deferrals = H.void.deferrals - 1;
+    deferred.cancels = H.void.cancels - 1;
     expect(ids(deferred, { collapsed: true })).toEqual([]);
     const fr = atTier(2);
     fr.breakthroughs = H.breakthroughs;

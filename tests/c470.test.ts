@@ -128,7 +128,7 @@ describe('C.470 진화체 도감 (GDD 14 도감 v6.096)', () => {
 
 describe('C.470 세이브 형식 91 — lookDex 마이그레이션', () => {
   it('형식 91, 90 → 91 변환이 있다', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(100);
+    expect(SAVE_FORMAT_VERSION).toBe(101);
     expect(typeof SAVE_MIGRATIONS[90]).toBe('function');
   });
 

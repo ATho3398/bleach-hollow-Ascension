@@ -66,8 +66,12 @@ export interface EvolutionSnapshot {
   roll: number;
   /** 정해진 고유 특성 방향 */
   ability: StatId;
-  /** C.497 (GDD 8-5 진화 미루기): 그 단계에서 미룬 횟수 · 진화 순간 빈사. 옛 기록엔 없음 */
+  /** C.497 (옛 GDD 8-5 진화 미루기 — C.568 에 폐지): 그 단계에서 미룬 횟수. 옛 기록에만 있다 */
   deferrals?: number;
+  /** C.568 (GDD 8-5 v6.254 진화 연출 취소): 그 단계에서 취소한 횟수 · 진화 순간 배제 목록(없으면 빈 목록 — 강제 진화는 배제를 푼 뒤라 비어 있다). 옛 기록엔 없음 */
+  cancels?: number;
+  excluded?: string[];
+  /** C.497: 진화 순간 빈사. 옛 기록엔 없음 */
   collapsed?: boolean;
   /** C.532 (GDD 8-5 v6.164 혈·독 일반 진화 조건): 그 단계에서 빈사로 귀환한 원정 수 · 지속 피해로 적을 쓰러뜨린 수(속성 → 수). 옛 기록엔 없음 */
   collapsedReturns?: number;
@@ -163,7 +167,7 @@ const hunterRunsOf = (e: EvolutionState): number => e.hunterRuns ?? 0;
  *  능력치만 흡수는 블록을 얻지 않아 세지 않는다(recordEvolutionAbsorb countElement) */
 export const voidBlockAbsorbsOf = (e: Pick<EvolutionState, 'elementAbsorbs'>): number => e.elementAbsorbs[H.void.element] ?? 0;
 /** 이 단계에서 진화를 미룬 수 (C.497, GDD 8-5 — 옛 세이브엔 없음 = 0) */
-export const deferralsOf = (e: Pick<EvolutionState, 'deferrals'>): number => e.deferrals ?? 0;
+export const cancelsOf = (e: Pick<EvolutionState, 'cancels'>): number => e.cancels ?? 0;
 
 /** 이 단계에서 빈사로 귀환한 원정 수 · 그 속성 지속 피해로 적을 쓰러뜨린 수 (C.532, GDD 8-5 v6.164 — 옛 세이브엔 없음 = 0) */
 export const collapsedReturnsOf = (e: Pick<EvolutionState, 'collapsedReturns'>): number => e.collapsedReturns ?? 0;
@@ -213,8 +217,8 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
   if (e.releases > e.absorbs && 100 - ctx.hunger <= H.restraintFullnessMax) out.push(hidden('h4:restraint', e.releases / Math.max(1, e.absorbs) - 1));
   if ((ctx.bond ?? 0) >= H.stableBond && faintsOf(e) === 0 && e.breakthroughs === 0 && longAbsencesOf(e) === 0) out.push(hidden('h4:stable', 0));
   if (hunterRunsOf(e) >= H.hunterRuns) out.push(hidden('h4:hunter', hunterRunsOf(e) / H.hunterRuns - 1));
-  // 허무형 (GDD 8-8 v6.166, C.531 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기): 그 단계(3단계)에서 허무 블록 absorbs 개 이상 흡수 + 진화 미루기 deferrals 회 이상. 리스크·빈사 무관
-  if (voidBlockAbsorbsOf(e) >= H.void.absorbs && deferralsOf(e) >= H.void.deferrals) out.push(hidden('h4:void', 0));
+  // 허무형 (GDD 8-8 v6.166, C.531 — 옛 C.497 '미루기 0회 + 빈사 귀환' 폐기): 그 단계(3단계)에서 허무 블록 absorbs 개 이상 흡수 + 진화 취소 cancels 회 이상(v6.254 — 옛 미루기 자리, C.568). 리스크·빈사 무관
+  if (voidBlockAbsorbsOf(e) >= H.void.absorbs && cancelsOf(e) >= H.void.cancels) out.push(hidden('h4:void', 0));
   const tier4Total = BALANCE.provisional.stats.tierTotals[3] ?? Infinity;
   if (ctx.failLineage && rebirths >= H.awakenedRebirths && (e.practices ?? 0) >= H.awakenedPractices && evBalanced(e) && (ctx.statTotal ?? 0) >= tier4Total) {
     out.push(hidden('h4:awakened', (e.practices ?? 0) / H.awakenedPractices - 1));
@@ -223,7 +227,7 @@ export function tier4HiddenCandidates(e: EvolutionState, ctx: JudgeContext): Evo
 }
 
 /** 3단계 히든 통로 후보 (협의 답 — 2단계 동안 4단계 조건의 약 60%): 문턱 하나라도 넘으면 h3:passage 하나, 초과량은 가장 크게 넘은 것.
- *  실패형·각성형·허무형(허무 블록 10개 흡수 + 미루기 3회, C.531)은 통로 없이 4단계에서 직접 */
+ *  실패형·각성형·허무형(허무 블록 10개 흡수 + 진화 취소 3회, C.531·C.568)은 통로 없이 4단계에서 직접 */
 export function passageCandidates(e: EvolutionState, ctx: JudgeContext): EvolutionCandidate[] {
   const P = H.passage;
   const excess: number[] = [];
@@ -284,11 +288,25 @@ export function abilityFor(ev: Record<StatId, number>, form: FormDef): StatId {
   return tied.reduce((best, s) => (form.stats[s] > form.stats[best] ? s : best), tied[0]!);
 }
 
-/** 진화 판정: 후보(일반 1 + 히든) 가중 랜덤, 실패형은 강제 */
+/** 판정 후보 (가중치 포함): 실패형은 강제 하나, 4단계는 히든이 있으면 히든끼리, 아니면 일반 + 히든.
+ *  진화 배제 목록(GDD 8-5 v6.254, C.568 — 진화 연출을 취소한 순간 후보였던 진화체)은 뺀다: 강제 실패형이 배제됐으면 후보 없음(돌봄이 나아질 때까지),
+ *  4단계 히든이 모두 배제됐으면 일반 하나(배제 안 됐을 때). 빈 목록 = 지금은 진화 연출이 나오지 않는다 */
+export function judgeCandidates(e: EvolutionState, ctx: JudgeContext, table: readonly FormDef[] = FORM_TABLE): EvolutionCandidate[] {
+  const { normal, hidden: hiddenAll, forced, priority } = evolutionCandidates(e, ctx, table);
+  const ex = new Set(e.excluded ?? []);
+  if (forced) return ex.has(forced.id) ? [] : [{ formId: forced.id, weight: 1, excess: 0 }];
+  const hiddenList = hiddenAll.filter((c) => !ex.has(c.formId));
+  const normalOk = !ex.has(normal.id);
+  if (hiddenList.length === 0) return normalOk ? [{ formId: normal.id, weight: 1, excess: 0 }] : [];
+  if (priority || !normalOk) return hiddenList;
+  return [{ formId: normal.id, weight: W.normal, excess: 0 }, ...hiddenList];
+}
+
+/** 진화 판정: 후보(일반 1 + 히든) 가중 랜덤, 실패형은 강제. 배제 목록을 뺀 후보가 없으면 던진다 — 부르는 쪽(evolve)이 먼저 judgeCandidates 로 확인 */
 export function judgeEvolution(e: EvolutionState, ctx: JudgeContext, table: readonly FormDef[] = FORM_TABLE): { form: FormDef; snapshot: EvolutionSnapshot } {
-  const { normal, hidden: hiddenList, forced, priority } = evolutionCandidates(e, ctx, table);
-  const candidates: EvolutionCandidate[] = forced || hiddenList.length === 0 ? [{ formId: normal.id, weight: 1, excess: 0 }]
-    : priority ? hiddenList : [{ formId: normal.id, weight: W.normal, excess: 0 }, ...hiddenList];
+  const { forced } = evolutionCandidates(e, ctx, table);
+  const candidates = judgeCandidates(e, ctx, table);
+  if (candidates.length === 0) throw new Error('진화 후보가 없다 (모두 배제됨)');
   const rng = createRng(e.stageSeed ^ Math.imul(e.tierIndex + 7, 0x2545f491));
   const roll = nextFloat(rng);
   const totalW = candidates.reduce((a, c) => a + c.weight, 0);
@@ -319,7 +337,8 @@ export function judgeEvolution(e: EvolutionState, ctx: JudgeContext, table: read
       forced: forced !== null,
       roll,
       ability: abilityFor(e.ev, form),
-      deferrals: deferralsOf(e),
+      cancels: cancelsOf(e),
+      excluded: [...(e.excluded ?? [])],
       collapsed: ctx.collapsed === true,
       ...(collapsedReturnsOf(e) > 0 ? { collapsedReturns: collapsedReturnsOf(e) } : {}),
       ...(e.dotKills && Object.keys(e.dotKills).length > 0 ? { dotKills: { ...e.dotKills } } : {}),

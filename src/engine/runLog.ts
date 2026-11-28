@@ -235,8 +235,10 @@ export interface EvolutionRecord {
   abilityGain?: { kind: 'new' | 'replaced' | 'enhanced' | 'owned' | 'full'; id: string; from?: string; /** C.227 (GDD 150장 3): 진화 특성 칸을 비우려고 보유 목록으로 뺀 탈착 특성 */ bumped?: string };
   /** C.406 (GDD 241-C 4): 숨은 모습으로 진화했으면 그 id(종족 설정 specialLooks) · 그 단계 동안 교감한 수 · 보너스를 이번에 받았나(세이브에서 처음 1번만) */
   specialLook?: { id: string; bondCare: number; bonus: boolean };
-  /** C.497 (GDD 8-5 진화 미루기, 형식 92): 이 진화 전에 그 단계에서 미룬 횟수. 옛 기록엔 없음(= 0) */
+  /** C.497 (옛 GDD 8-5 진화 미루기, 형식 92 — C.568 에 폐지): 이 진화 전에 그 단계에서 미룬 횟수. 옛 기록에만 있다(= 0) */
   deferrals?: number;
+  /** C.568 (GDD 8-5 v6.254 진화 연출 취소, 형식 101): 이 진화 전에 그 단계에서 취소한 횟수. 옛 기록엔 없음(= 0) */
+  cancels?: number;
   /** C.470 (GDD 8-5 v6.096, 형식 91): 진화 뒤 외형 id (evolution.look — 모델 단위 진화체는 모델 + 색, 예 wyrmwater). 없으면 null. 옛 기록엔 없음 */
   look?: string | null;
   /** C.9 필드(조합 키): 의미가 사라져 새 기록에서는 비운다. C.9 기록에만 있다. 같이 있던 옛 안정 수치 stability 는 C.391 (형식 72) 에서 지운다 */
@@ -250,8 +252,22 @@ export interface TierRecord {
   evolutions: EvolutionRecord[];
   /** 특정 단계에 머문 채 격파한 적 등급 기록: 단계 index → 적 등급 목록 */
   defeatedWhileAtTier: Record<number, string[]>;
-  /** C.497 (GDD 8-5 진화 미루기, 형식 92): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 기록 (히든 조건이 읽는다) */
+  /** C.497 (옛 GDD 8-5 진화 미루기, 형식 92 — C.568 에 폐지, 새 기록 없음): 진화 기준에 닿아 귀환했을 때 [미루기]를 고른 기록 */
   deferrals: EvolutionDeferralRecord[];
+  /** C.568 (GDD 8-5 v6.254, 형식 101): 진화 연출을 3번 터치로 취소한 기록 (히든 조건이 읽는다) */
+  cancels: EvolutionCancelRecord[];
+}
+
+/** 진화 연출 취소 1회 (GDD 8-5 v6.254, C.568): tier = 머문 단계(tierIndex 0~), count = 그 단계에서 취소한 누적 수(이번 포함), formId = 머문 진화체,
+ *  steps = 그때 걸음 수, excluded = 이번에 배제 목록에 넣은 진화체(그 순간 판정 후보 전부), runId = 그 원정 */
+export interface EvolutionCancelRecord {
+  at: number;
+  tier: number;
+  count: number;
+  formId: string | null;
+  steps: number;
+  excluded: string[];
+  runId?: number;
 }
 
 /** 진화 미루기 1회 (GDD 8-5, C.497): tier = 머문 단계(tierIndex 0~), count = 그 단계에서 미룬 누적 수(이번 포함), formId = 머문 진화체, steps = 그때 걸음 수 */
@@ -821,7 +837,7 @@ export function emptyRunLog(): RunLog {
     lineages: [],
     risk: { peak: 0, breakthroughs: 0, survivedBreakthroughs: 0 },
     battles: [],
-    tiers: { skipped: false, evolutions: [], defeatedWhileAtTier: {}, deferrals: [] },
+    tiers: { skipped: false, evolutions: [], defeatedWhileAtTier: {}, deferrals: [], cancels: [] },
     rankChanges: [],
     rankBattles: [],
     runs: [],

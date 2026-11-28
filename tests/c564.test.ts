@@ -228,13 +228,13 @@ describe('C.564 이름·화면·세이브', () => {
   });
 
   it('세이브 형식 99 → 100: 주 횟수 칸 삭제 → 트랙마다 입장권 칸, 옛 주간던전 키 → 요일던전 키', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(100);
+    expect(SAVE_FORMAT_VERSION).toBe(101);
     const raw = JSON.parse(JSON.stringify(newSaveData('hollow', 1))) as Record<string, unknown> & { meta: { format: number }; shared: { special: Record<string, unknown> }; tower: Record<string, unknown> };
     raw.meta.format = 99;
     raw.shared.special = { weekStart: 5, used: { 'weekly:soul': 2, 'boss:sand-maw': 1 }, best: { 'weekly:soul': 3, 'boss:sand-maw': 2 }, clears: { 'weekly:shard': 4 } };
     raw.tower = { best: 12 };
     const m = migrateSave(raw)!;
-    expect(m.meta.format).toBe(100);
+    expect(m.meta.format).toBe(101);
     expect(m.shared.special).toEqual({ best: { 'daily:soul': 3, 'boss:sand-maw': 2 }, clears: { 'daily:shard': 4 } });
     expect(m.tower.best).toBe(12);
     expect(m.tower.tickets).toEqual({ daily: 0, boss: 0, raid: 0, dayStart: 0, weekStart: 0 });
