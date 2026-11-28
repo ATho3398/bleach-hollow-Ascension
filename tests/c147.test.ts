@@ -106,14 +106,14 @@ describe('92장 대기 모드 받을 보상', () => {
 
   it('펫 친밀도는 받을 때 반영 (쌓을 때는 아님)', () => {
     const s = played();
-    grantPet(s.shared.pets, 'pet-guard', 1);
-    choosePet(s, 'pet-guard', 1);
-    addPetLaps(s.shared.pets, 'pet-guard', 0);
-    const laps0 = s.shared.pets.owned['pet-guard']!.laps;
+    grantPet(s.shared.pets, 'pet-soul', 1);
+    choosePet(s, 'pet-soul', 1);
+    addPetLaps(s.shared.pets, 'pet-soul', 0);
+    const laps0 = s.shared.pets.owned['pet-soul']!.laps;
     accrueIdle(s, s.lastSeenAt + 24 * HOUR);
-    expect(s.shared.pets.owned['pet-guard']!.laps).toBe(laps0);
+    expect(s.shared.pets.owned['pet-soul']!.laps).toBe(laps0);
     const r = claimIdle(s, s.lastSeenAt + 24 * HOUR, () => 0)!;
-    expect(s.shared.pets.owned['pet-guard']!.laps).toBe(laps0 + r.laps);
+    expect(s.shared.pets.owned['pet-soul']!.laps).toBe(laps0 + r.laps);
   });
 
   it('세이브: 받을 보상이 저장·불러오기로 남고, 깨진 값은 버리고 24시간에서 자른다', () => {

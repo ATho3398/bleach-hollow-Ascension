@@ -433,11 +433,11 @@ describe('추성 2번째 펫 칸 — 세이브 형식 93', () => {
     s.evolution.formId = 'h4:hunter';
     s.evolution.tierIndex = 3;
     s.shared.unlocks.pet = 0;
-    s.shared.pets.owned = { 'pet-gold': { laps: 0, gotAt: 1 }, 'pet-belly': { laps: 0, gotAt: 1 } } as SaveData['shared']['pets']['owned'];
+    s.shared.pets.owned = { 'pet-gold': { laps: 0, gotAt: 1 }, 'pet-soul': { laps: 0, gotAt: 1 } } as SaveData['shared']['pets']['owned'];
     return s;
   };
   it('형식 93 · 92 → 93 변환(빈 2번째 칸) · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     expect(typeof SAVE_MIGRATIONS[92]).toBe('function');
     const s = newSaveData('shinigami', 1);
@@ -445,7 +445,7 @@ describe('추성 2번째 펫 칸 — 세이브 형식 93', () => {
     delete old.shared.pets.active2;
     old.meta.format = 92;
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.shared.pets.active2).toBeNull();
   });
   it('펫 칸: 추성(사신) 2칸 · 다른 진화체 1칸 · 정리(안 가진 펫·1번째와 같은 펫은 버림)', () => {
@@ -458,22 +458,22 @@ describe('추성 2번째 펫 칸 — 세이브 형식 93', () => {
   it('데리고 가기: 1번째 칸이 차 있으면 빈 2번째 칸 · 원정·전투에 두 마리(2번째 = 70%) · 칸이 줄면 2번째 펫은 보유 목록으로', () => {
     const s = hunter();
     expect(choosePet(s, 'pet-gold', 1)).toBe(true);
-    expect(choosePet(s, 'pet-belly', 1)).toBe(true);
+    expect(choosePet(s, 'pet-soul', 1)).toBe(true);
     expect(s.shared.pets.active).toBe('pet-gold');
-    expect(s.shared.pets.active2).toBe('pet-belly');
-    expect(petSlotOf(s, 'pet-belly')).toBe(2);
+    expect(s.shared.pets.active2).toBe('pet-soul');
+    expect(petSlotOf(s, 'pet-soul')).toBe(2);
     const c = carriedPetsOf(s);
     expect(c.pet?.id).toBe('pet-gold');
-    expect(c.pet2).toMatchObject({ id: 'pet-belly', power: 0.7 });
+    expect(c.pet2).toMatchObject({ id: 'pet-soul', power: 0.7 });
     expect(choosePet2(s, null, 1)).toBe(true);
     expect(s.shared.pets.active2).toBeNull();
-    choosePet2(s, 'pet-belly', 1);
+    choosePet2(s, 'pet-soul', 1);
     s.evolution.formId = 't4:fire:physical';
     expect(carriedPetsOf(s).pet2).toBeNull(); // 칸이 없으면 안 데려감
     expect(syncPetSlots(s, 2)).toBe(true);
     expect(s.shared.pets.active2).toBeNull();
-    expect(s.shared.pets.owned['pet-belly']).toBeTruthy();
-    expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'leave', petId: 'pet-belly' });
-    expect(choosePet2(s, 'pet-belly', 1)).toBe(false); // 칸 없음
+    expect(s.shared.pets.owned['pet-soul']).toBeTruthy();
+    expect(s.runLog.pets.at(-1)).toMatchObject({ kind: 'leave', petId: 'pet-soul' });
+    expect(choosePet2(s, 'pet-soul', 1)).toBe(false); // 칸 없음
   });
 });

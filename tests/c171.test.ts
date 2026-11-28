@@ -61,7 +61,7 @@ describe("용어 '포식'·'배부름' (#46·58·81)", () => {
     const food = inventoryOf(save, H).find((e) => e.id === 'food-snack')!;
     expect(food.detail).toMatch(/^배부름 \+\d+/);
     expect(goldRows(save, H).find((r) => r.id.includes('snack'))?.effect ?? '배부름').toMatch(/^배부름 \+\d+/);
-    expect(petEffectText('pet-belly', 0)).toContain('배부름');
+    // 펫 효과 '배부름' 줄(pet-belly)은 C.569 에 펫과 같이 삭제
     expect(read('src/data/help/screens.json')).not.toContain('허기·컨디션');
   });
   it('포식 갈래 문구는 한 곳(absorbModeText)에서 화면·첫 포식 안내가 같이 읽는다 (#47)', () => {

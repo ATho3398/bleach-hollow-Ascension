@@ -24,6 +24,7 @@ import { gainHogyokuMaterial, materialHave } from './engine/hogyokuMaterials';
 import { HOGYOKU_MATERIAL_NAMES, HOGYOKU_TRACK_NAMES } from './data/hogyoku';
 import { DETACH_TRAITS, detachedOf, detachEffectText, equipDetach, getDetachTrait, unequipDetach, detachLock } from './engine/traitShop';
 import { skinAllowedNow } from './engine/skinLock';
+import { getFaction } from './data/factions';
 
 const SX = BALANCE.shop;
 /** 보관함 소모품 종류별 상한 (GDD 86장 4번) */
@@ -474,7 +475,7 @@ function wandererBlock(save: SaveData, itemId: string): string | null {
     case 'reroll': return save.shared.rerollTickets >= SX.rerollMax ? `보유 가득 (${SX.rerollMax}/${SX.rerollMax})` : null;
     case 'trainingTicket': return null; // 수련권 개수 제한 없음 (GDD 216장 2)
     case 'rareTile': return save.tiles.unlocked && tileDrawGroup('rare', save.factionId).length > 0 ? null : TILES_LOCKED_TEXT;
-    case 'pet': return pickNewPet(save.shared.pets, () => 0) === null ? '펫을 다 가졌다' : null;
+    case 'pet': return pickNewPet(save.shared.pets, () => 0, getFaction(save.factionId).pets) === null ? '펫을 다 가졌다' : null;
     case 'gear': return gearFullText(save);
     case 'hogyokuMat': return null; // 붕옥 재료 상한 없음
     default: return canStoreConsumable(save, itemId) ? null : `보관 가득 (${CONSUMABLE_CAP}/${CONSUMABLE_CAP})`;
@@ -528,7 +529,7 @@ export function buyWandererItem(save: SaveData, faction: FactionConfig, itemId: 
       break;
     }
     case 'pet': {
-      const id = pickNewPet(save.shared.pets, rand)!;
+      const id = pickNewPet(save.shared.pets, rand, getFaction(save.factionId).pets)!;
       grantPet(save.shared.pets, id, nowMs);
       save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'wanderer' });
       detail = `${faction.petNames[id] ?? id} → 가방 장비 탭 펫`;

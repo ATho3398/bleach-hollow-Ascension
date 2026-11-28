@@ -585,7 +585,9 @@ export interface FactionConfig {
   pickNote?: string;
   /** 먹이 종류 이름 (GDD 18-2, 임시) */
   foodNames: Record<FoodId, string>;
-  /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 */
+  /** 이 종족이 쓰는 펫 id 목록 (GDD 9-4 v6.256, C.569 — 모델 없는 펫 삭제: 사신은 pet-seek 없음). 얻는 길·보유 목록·데리고 가기는 이 안에서만 */
+  pets: string[];
+  /** 펫 이름 (GDD 90장, 가칭): 펫 id → 이름 (pets 의 펫마다) */
   petNames: Record<string, string>;
   /** 펫 그림 키 바꿔치기 (GDD 9-4, C.477): 펫 id → 그림 키. 없으면 펫 데이터의 art. 같은 펫이 종족마다 다른 동물이라 그림도 종족 설정에서 정한다 */
   petArt?: Record<string, string>;
@@ -682,10 +684,12 @@ export function parseFactionConfig(raw: unknown): FactionConfig {
   if (r.petArt !== undefined) {
     const pa = r.petArt as Record<string, unknown>;
     if (typeof pa !== 'object' || pa === null || Array.isArray(pa)) errors.push('petArt: { 펫 id: 그림 키 }');
-    else for (const [id, k] of Object.entries(pa)) if (!PET_IDS.includes(id) || !isString(k)) errors.push(`petArt.${id}: 있는 펫 id → 비어 있지 않은 그림 키`);
+    else for (const [id, k] of Object.entries(pa)) if (!PET_IDS.includes(id) || !(Array.isArray(r.pets) && (r.pets as unknown[]).includes(id)) || !isString(k)) errors.push(`petArt.${id}: 이 종족 펫(pets) id → 비어 있지 않은 그림 키`);
   }
+  const fp = Array.isArray(r.pets) ? (r.pets as unknown[]) : null;
+  if (!fp || fp.length === 0 || fp.some((id) => typeof id !== 'string' || !PET_IDS.includes(id)) || new Set(fp).size !== fp.length) errors.push('pets: 있는 펫 id 목록(중복 없이, 1개 이상)');
   const pn = (r.petNames ?? {}) as Record<string, unknown>;
-  for (const id of PET_IDS) {
+  for (const id of (fp ?? []).filter((x): x is string => typeof x === 'string')) {
     if (!isString(pn[id])) errors.push(`petNames.${id}: 비어 있지 않은 문자열이어야 한다`);
   }
   if (r.difficulty !== undefined) {

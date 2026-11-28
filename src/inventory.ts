@@ -162,8 +162,8 @@ export function inventoryOf(save: SaveData, faction: FactionConfig, files?: read
       action: slot ? 'unequip' : 'equip', lock: save.activeExpedition != null ? '모험 중에는 바꿀 수 없다' : null, gear: { grade: it.grade, kind: it.kind, slot },
     });
   }
-  // 펫 (GDD 90장): 가진 펫, 1마리만 데리고 다닌다
-  for (const id of PET_IDS) {
+  // 펫 (GDD 90장): 가진 펫, 1마리만 데리고 다닌다 — 이 종족 펫 목록(종족 설정 pets, C.569) 안에서만
+  for (const id of PET_IDS.filter((x) => faction.pets.includes(x))) {
     const o = save.shared.pets.owned[id];
     if (!o) continue;
     const on = save.shared.pets.active === id || save.shared.pets.active2 === id; // 2번째 칸 (C.506)
@@ -359,8 +359,6 @@ export function petEffectText(id: string, level: number): string {
   const carry = { id, level };
   switch (getPet(id)?.effect) {
     case 'gold': return `모험 골드 +${pct(petBonus(carry, 'gold'))}`;
-    case 'belly': return `모험 배부름 줄어듦 −${pct(petBonus(carry, 'belly'))}`;
-    case 'guard': return `전투 시작 보호막 (최대 체력 ${pct(petBonus(carry, 'guard'))})`;
     case 'none': return '효과 준비 중';
     case 'seek': return `우라하라 확률 +${pct(petBonus(carry, 'seekWanderer'))} · 바퀴 끝 타일 +1장 ${pct(petBonus(carry, 'seekTile'))}`;
     default: return '';

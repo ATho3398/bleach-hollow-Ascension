@@ -216,11 +216,9 @@
     "acc3": "장신구"
   },
   "gearScreen": { "title": "장비", "battleSlot": "전투 소모품" },
+  "pets": ["pet-gold", "pet-soul", "pet-solita", "pet-kukkapuro", "pet-yoruichi", "pet-chappy", "pet-kon", "pet-wakame"],
   "petNames": {
     "pet-gold": "지옥나비",
-    "pet-belly": "꼬마 쥐",
-    "pet-guard": "수호 거북",
-    "pet-seek": "길잡이 까마귀",
     "pet-soul": "길 잃은 혼백",
     "pet-solita": "솔리타 바스타",
     "pet-kukkapuro": "쿠카푸로",

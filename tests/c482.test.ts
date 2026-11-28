@@ -13,7 +13,7 @@ const NEW = ['pet-soul', 'pet-solita', 'pet-kukkapuro', 'pet-yoruichi', 'pet-cha
 
 describe('C.482 새 펫 7종 (효과 미정)', () => {
   it('데이터: 뒤에 7종, 효과 none · 얻는 길에 없음 · 양쪽 종족 같은 이름 · 그림 파일 있음(움직이는 webp)', () => {
-    expect(PET_IDS.slice(4)).toEqual(NEW);
+    expect(PET_IDS.slice(2)).toEqual(NEW); // C.569: 앞 4종 → 2종(pet-belly·pet-guard 삭제)
     for (const id of NEW) {
       const p = getPet(id)!;
       expect([p.effect, p.pool]).toEqual(['none', false]);
@@ -34,12 +34,14 @@ describe('C.482 새 펫 7종 (효과 미정)', () => {
       expect(petAttackOf({ id, level: 1 })).not.toBeNull();
     }
   });
-  it('얻는 길(굴림·펫 알·선물)은 그대로 4종만', () => {
+  it('얻는 길(굴림·펫 알·선물)은 그 종족 펫 목록 안의 얻는 길 펫만 (C.569 — 호로 2종·사신 1종)', () => {
     expect(PETS.filter((p) => p.pool).map((p) => p.id)).toEqual(PET_POOL_IDS);
     const st = newPetState();
-    for (let i = 0; i < 200; i++) expect(PET_POOL_IDS).toContain(rollAnyPet(() => i / 200));
+    const H = getFaction('hollow').pets, S = getFaction('shinigami').pets;
+    for (let i = 0; i < 200; i++) expect(PET_POOL_IDS).toContain(rollAnyPet(() => i / 200, H));
+    for (let i = 0; i < 200; i++) expect(rollAnyPet(() => i / 200, S)).toBe('pet-gold');
     for (const id of PET_POOL_IDS) grantPet(st, id, 1);
-    expect(pickNewPet(st, () => 0.5)).toBeNull(); // 4종을 다 가지면 '다 가졌다' — 새 펫은 안 나온다
+    expect(pickNewPet(st, () => 0.5, H)).toBeNull(); // 다 가지면 '다 가졌다' — 새 펫은 안 나온다
   });
   it('테스트 모드: 새 테스트 칸 = 모든 펫, 옛 테스트 칸도 열 때 채운다. 일반 새 게임은 0마리', () => {
     expect(Object.keys(newTestSave('hollow', 1).shared.pets.owned).sort()).toEqual([...PET_IDS].sort());
@@ -48,7 +50,7 @@ describe('C.482 새 펫 7종 (효과 미정)', () => {
     grantPet(old.shared.pets, 'pet-gold', 5);
     old.shared.pets.owned['pet-gold']!.laps = 33;
     openTestHogyoku(old, 9);
-    expect(Object.keys(old.shared.pets.owned).sort()).toEqual([...PET_IDS].sort());
+    expect(Object.keys(old.shared.pets.owned).sort()).toEqual([...getFaction('shinigami').pets].sort()); // 이 종족 펫 목록 (C.569 — 사신은 pet-seek 없음)
     expect(old.shared.pets.owned['pet-gold']).toEqual({ laps: 33, gotAt: 5 }); // 가진 펫은 그대로
     expect(fillAllPets(old, 10)).toBe(0);
   });

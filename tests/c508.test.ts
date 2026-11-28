@@ -88,13 +88,13 @@ describe('C1 진화 연출 차례 표시 (GDD 8-5 — C.568 choice → pending)'
     expect(reload(t).evolution.pending).toBeUndefined();
   });
   it('93 → 94 변환이 남아 있다 · 끝까지 올리면 형식 101 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(typeof SAVE_MIGRATIONS[93]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
     const s = grown();
     s.meta.format = 93;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.evolution.pending).toBeUndefined();
     expect(m.evolution.tierIndex).toBe(2);
   });

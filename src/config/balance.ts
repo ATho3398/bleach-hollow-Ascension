@@ -17,7 +17,8 @@ export interface TybwModeNumbers {
 }
 
 /** 수치를 바꾸면 올린다. 새 게임 시작 시 세이브에 기록된다. */
-export const BALANCE_VERSION = 180; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28 — provisional): provisional.evolution.cancel { taps 3 · tapGapMs 600 · forceAfterRuns 7 } 신설, 허무형 hidden.void.deferrals → cancels(진화 취소 3회↑, 임시)
+export const BALANCE_VERSION = 181; // C.569 (GDD 9-4 v6.256 모델 없는 펫 삭제, 사용자 2026-11-28): provisional.pets.effects 의 belly(허기 −15%)·guard(시작 보호막 4%) 삭제 — 그 펫(pet-belly·pet-guard)과 같이
+// 이전: BALANCE_VERSION = 180; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28 — provisional): provisional.evolution.cancel { taps 3 · tapGapMs 600 · forceAfterRuns 7 } 신설, 허무형 hidden.void.deferrals → cancels(진화 취소 3회↑, 임시)
 // 이전: BALANCE_VERSION = 179; // C.566 (GDD 6-16 v6.246 토벌전, 사용자 2026-11-27 — provisional): provisional.specialDungeon.raid { rewardMult 1.5 · gearGrades 'boss' } 신설. 작전 길·끝 보스 = src/data/raids/raids.json
 // 이전: BALANCE_VERSION = 178; // C.565 (GDD 6-16 v6.246 보스전 = 블리치 캐릭터 6명, 사용자 2026-11-27 — provisional): provisional.specialDungeon.boss.ownerBoss·ownerScale 삭제(탑의 주인 다시 싸우기·스토리 보스는 보스전 목록에서 빠짐). 새 보스 6명 수치 = src/data/bossRush/bossRush.json(권장 ★ 1·2·3·4·4·4, 유하바하 scale 1.3). 보상 표 그대로
 // 이전: BALANCE_VERSION = 177; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권, 사용자 2026-11-27 — 전부 provisional): provisional.specialDungeon.weekly(주 3회)·boss.entries(주 1회) → tickets(입장권 3종 요일 2장/매일 · 보스 3장/주 · 토벌 2장/주 채움, 상점 100·300·500골드, GDD 6-16 v6.248) + daily(요일표 days — 일요일 전부, 월~토 3개씩 · 골드 던전 150 × ★ · 장비 던전 강적 등급표 무기·방어구·신발 1개 · 장신구 던전 강적 등급표 1개 · 장비 재료 던전 재료 2·3·5·7개). 재료·골드 수치(3·5·8·12 + 30 × ★) 그대로
@@ -1456,7 +1457,7 @@ export const BALANCE = {
      *  gold = 원정 전투·보스 골드 +8% · belly = 원정 허기 오름 −15% · guard = 전투 시작 보호막(최대 체력 4%) · seekWanderer = 우라하라 마주칠 확률 +25%(칸마다 확률 × 1.25) · seekTile = 바퀴 끝 타일 보상 +1장 확률 10%.
      *  얻기: 원정 바퀴 끝 lapDropChance(2%, 이미 가진 펫이면 dupGold 골드) · 우라하라 전설 품목(w-pet-egg) · 첫 진화 때 무작위 1마리 선물 */
     pets: {
-      effects: { gold: 0.08, belly: 0.15, guard: 0.04, seekWanderer: 0.25, seekTile: 0.1 },
+      effects: { gold: 0.08, seekWanderer: 0.25, seekTile: 0.1 }, // C.569 (GDD 9-4 v6.256 모델 없는 펫 삭제): pet-belly 허기 −15%·pet-guard 시작 보호막 4% 삭제
       affinityLaps: [10, 30, 60, 100] as number[],
       affinityStep: 0.25,
       lapDropChance: 0.02,

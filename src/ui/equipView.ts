@@ -391,7 +391,7 @@ export function equipTab(dev: Device, faction: FactionConfig, save: SaveData, hd
   const kindTabs: EquipTab[] = ['all', ...GEAR_KINDS, 'pet'];
   if (!kindTabs.includes(ui.tab)) ui.tab = 'all';
   const tabName = (t: EquipTab) => (t === 'all' ? '전체' : t === 'pet' ? '펫' : gearKindName(t, faction));
-  const petIds = Object.keys(save.shared.pets.owned);
+  const petIds = Object.keys(save.shared.pets.owned).filter((id) => faction.pets.includes(id)); // 이 종족 펫 목록 안에서만 (C.569)
   const countOf = (t: EquipTab) => (t === 'all' ? g.items.length : t === 'pet' ? petIds.length : g.items.filter((i) => i.kind === t).length);
   const tabs = categoryTabs(kindTabs.map((t) => ({ id: t, label: tabName(t), count: countOf(t) })), ui.tab, (id) => {
     ui.tab = id as EquipTab;

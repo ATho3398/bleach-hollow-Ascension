@@ -52,12 +52,15 @@ function ended(save: SaveData, laps: number, extra: Partial<ExpeditionState> = {
 describe('90장 펫 데이터 (가칭)', () => {
   it('4종 · 효과 하나씩 · 그림 키 · 종족마다 이름만 다름(faction json)', () => {
     // C.482: 효과 미정 펫 7종이 뒤에 붙었다(pool false) — 얻는 길에 든 펫은 그대로 4종
-    expect(PET_POOL_IDS).toEqual(['pet-gold', 'pet-belly', 'pet-guard', 'pet-seek']);
-    expect(PET_IDS.slice(0, 4)).toEqual(PET_POOL_IDS);
-    expect(PETS.filter((p) => p.pool).map((p) => p.effect)).toEqual(['gold', 'belly', 'guard', 'seek']);
+    // C.569 (GDD 9-4 v6.256 모델 없는 펫 삭제): pet-belly·pet-guard 삭제, 사신은 pet-seek 도 없다(종족 설정 pets)
+    expect(PET_POOL_IDS).toEqual(['pet-gold', 'pet-seek']);
+    expect(PET_IDS.slice(0, 2)).toEqual(PET_POOL_IDS);
+    expect(PETS.filter((p) => p.pool).map((p) => p.effect)).toEqual(['gold', 'seek']);
     expect(getPet('pet-gold')!.art).toBe('pet.pet-gold');
-    expect(PET_POOL_IDS.map((id) => H.petNames[id])).toEqual(['뼈 까마귀', '모래 벌레', '껍질 게', '그림자 박쥐']);
-    expect(PET_POOL_IDS.map((id) => S.petNames[id])).toEqual(['지옥나비', '꼬마 쥐', '수호 거북', '길잡이 까마귀']);
+    expect(PET_POOL_IDS.map((id) => H.petNames[id])).toEqual(['뼈 까마귀', '그림자 박쥐']);
+    expect(S.petNames['pet-gold']).toBe('지옥나비');
+    expect(S.pets).not.toContain('pet-seek');
+    expect(H.pets).toContain('pet-seek');
     expect(ITEM_CATEGORIES).toContain('pet');
   });
 
@@ -68,12 +71,12 @@ describe('90장 펫 데이터 (가칭)', () => {
     expect(nextAffinityLaps(100)).toBeNull();
     expect(petBonus({ id: 'pet-gold', level: 1 }, 'gold')).toBeCloseTo(0.08);
     expect(petBonus({ id: 'pet-gold', level: 5 }, 'gold')).toBeCloseTo(0.16);
-    expect(petBonus({ id: 'pet-gold', level: 5 }, 'belly')).toBe(0);
+    expect(petBonus({ id: 'pet-gold', level: 5 }, 'seekTile')).toBe(0);
     expect(petBonus({ id: 'pet-seek', level: 1 }, 'seekWanderer')).toBeCloseTo(0.25);
     expect(petBonus({ id: 'pet-seek', level: 1 }, 'seekTile')).toBeCloseTo(0.1);
     expect(petBonus(null, 'gold')).toBe(0);
-    expect(petEffectText('pet-guard', 1)).toBe('전투 시작 보호막 (최대 체력 4%)');
-    expect(petEffectText('pet-belly', 3)).toBe('모험 배부름 줄어듦 −22.5%');
+    expect(petEffectText('pet-guard', 1)).toBe(''); // C.569 삭제된 펫
+    expect(petEffectText('pet-seek', 3)).toBe('우라하라 확률 +37.5% · 바퀴 끝 타일 +1장 15%');
   });
 
   it('상태: 여러 마리 보유 · 1마리만 데리고 다님 · 바퀴 누계로 친밀도 오름 · 정리', () => {
@@ -82,13 +85,14 @@ describe('90장 펫 데이터 (가칭)', () => {
     expect(grantPet(st, 'pet-gold', 6)).toBe(false);
     expect(grantPet(st, 'pet-nope', 6)).toBe(false);
     grantPet(st, 'pet-seek', 7);
-    expect(setActivePet(st, 'pet-belly')).toBe(false); // 안 가진 펫
+    expect(setActivePet(st, 'pet-soul')).toBe(false); // 안 가진 펫
     expect(setActivePet(st, 'pet-gold')).toBe(true);
     expect(carriedPet(st)).toEqual({ id: 'pet-gold', level: 1 });
     expect(addPetLaps(st, 'pet-gold', 9)).toBeNull();
     expect(addPetLaps(st, 'pet-gold', 25)).toEqual({ from: 1, to: 3 });
     expect(carriedPet(st)).toEqual({ id: 'pet-gold', level: 3 });
-    expect(pickNewPet(st, () => 0)).toBe('pet-belly');
+    expect(pickNewPet(st, () => 0, H.pets)).toBeNull(); // 호로 얻는 길 = 뼈 까마귀·그림자 박쥐 — 둘 다 가졌다
+    expect(pickNewPet(newPetState(), () => 0.99, S.pets)).toBe('pet-gold'); // 사신은 지옥나비뿐
     expect(sanitizePets({ owned: { 'pet-gold': { laps: -3, gotAt: 'x' }, bad: { laps: 1 } }, active: 'pet-seek', gifted: 1 })).toEqual({ owned: { 'pet-gold': { laps: 0, gotAt: 0 } }, active: null, active2: null, gifted: false });
   });
 });
@@ -114,20 +118,21 @@ describe('90장 효과 (원정)', () => {
     const base = run(null);
     expect(run({ id: 'pet-gold', level: 1 }).gold).toBe(Math.round(base.gold * 1.08));
     expect(run({ id: 'pet-gold', level: 5 }).gold).toBe(Math.round(base.gold * 1.16));
+    // C.569 (GDD 9-4 v6.256): pet-belly 삭제 — 옛 펫을 실어도 허기는 그대로(효과 없음)
     const belly = run({ id: 'pet-belly', level: 1 });
-    expect(belly.hunger).toBeCloseTo(base.hunger * 0.85, 6);
-    expect(belly.walk).toBeCloseTo(base.walk * 0.85, 6);
+    expect(belly.hunger).toBeCloseTo(base.hunger, 6);
+    expect(belly.walk).toBeCloseTo(base.walk, 6);
   });
 
-  it('pet-guard: 전투 시작 보호막 = 최대 체력 4% (친밀도 배)', () => {
+  it('pet-guard 삭제 (C.569): 옛 펫을 실어도 전투 시작 보호막 없음', () => {
     const shieldOf = (pet: { id: string; level: number } | null) => {
       const e = exp0(23, pet);
       for (let i = 0; i < 200 && e.phase !== 'battle'; i++) advance(e);
       return e.pending!.params.startShieldFraction ?? 0;
     };
     expect(shieldOf(null)).toBe(0);
-    expect(shieldOf({ id: 'pet-guard', level: 1 })).toBeCloseTo(0.04);
-    expect(shieldOf({ id: 'pet-guard', level: 5 })).toBeCloseTo(0.08);
+    expect(shieldOf({ id: 'pet-guard', level: 1 })).toBe(0);
+    expect(shieldOf({ id: 'pet-guard', level: 5 })).toBe(0);
   });
 
   it('pet-seek: 우라하라 마주칠 확률 ×1.25 (C.549 칸마다), 바퀴 끝 타일 +1장 10% (따로 만든 난수 — 원정 난수 그대로)', () => {
@@ -162,26 +167,26 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
     grantPet(s.shared.pets, 'pet-gold', 1);
     expect(choosePet(s, 'pet-gold', 2)).toBe(true);
     const gold0 = s.shared.tradeCoins;
-    recordExpedition(s, ended(s, 12, { pet: carriedPet(s.shared.pets), petDrops: true, petFinds: [{ petId: 'pet-guard', lap: 3 }, { petId: 'pet-gold', lap: 7 }] }), 100);
-    expect(Object.keys(s.shared.pets.owned).sort()).toEqual(['pet-gold', 'pet-guard']);
+    recordExpedition(s, ended(s, 12, { pet: carriedPet(s.shared.pets), petDrops: true, petFinds: [{ petId: 'pet-seek', lap: 3 }, { petId: 'pet-gold', lap: 7 }] }), 100);
+    expect(Object.keys(s.shared.pets.owned).sort()).toEqual(['pet-gold', 'pet-seek']);
     expect(s.shared.pets.owned['pet-gold']!.laps).toBe(12);
     expect(s.shared.tradeCoins - gold0).toBeGreaterThanOrEqual(PX.dupGold);
     expect(s.runLog.pets.map((r) => [r.kind, r.petId, r.source ?? r.level ?? r.gold ?? null])).toEqual([
-      ['take', 'pet-gold', null], ['get', 'pet-guard', 'lap'], ['dupGold', 'pet-gold', PX.dupGold], ['level', 'pet-gold', 2],
+      ['take', 'pet-gold', null], ['get', 'pet-seek', 'lap'], ['dupGold', 'pet-gold', PX.dupGold], ['level', 'pet-gold', 2],
     ]);
-    expect(petNoticeOf(s.runLog.pets[1]!, H)!.title).toBe('새 펫: 껍질 게');
+    expect(petNoticeOf(s.runLog.pets[1]!, H)!.title).toBe('새 펫: 그림자 박쥐');
     expect(petNoticeOf(s.runLog.pets[0]!, H)).toBeNull();
   });
 
   it('대기 모드 바퀴도 친밀도에 센다 (바퀴는 이미 × share)', () => {
     const s = newSaveData('hollow', 1_000_000);
     recordExpedition(s, ended(s, 1), 1_000_000);
-    grantPet(s.shared.pets, 'pet-belly', 1);
-    choosePet(s, 'pet-belly', 1);
+    grantPet(s.shared.pets, 'pet-seek', 1);
+    choosePet(s, 'pet-seek', 1);
     s.lastSeenAt = 1_000_000;
     const r = settleIdle(s, s.lastSeenAt + 24 * HOUR, () => 0)!;
     expect(r.laps).toBeGreaterThan(0);
-    expect(s.shared.pets.owned['pet-belly']!.laps).toBe(r.laps);
+    expect(s.shared.pets.owned['pet-seek']!.laps).toBe(r.laps);
   });
 
   it('펫 해금 선물 (C.403, GDD 241-0 — 옛 첫 진화 선물): 첫 환생 때 안 가진 펫 1마리 (한 번만), 첫 진화에는 없음', () => {
@@ -230,14 +235,14 @@ describe('90장 얻는 법 · 정산 · 런 로그', () => {
   });
 
   it('세이브 형식 42(C.147 에 43, C.150 에 44): 펫이 저장·불러오기로 남고(공용), 깨진 값은 정리', () => {
-    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([101, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
+    expect([SAVE_FORMAT_VERSION, MIN_LOADABLE_SAVE_FORMAT]).toEqual([102, 87]); // C.506 펫 2번째 칸 // C.406 쇠약 시계·터치·숨은 모습 // C.363 도감 정렬 // C.361 노력치 상한 밖 몫 // C.354 수련권 기록 // C.330 적 도감 // C.326 // C.226 · C.225 · C.220 · C.223 · C.213 · C.198: 문턱 54 고정(123장 6) // C.195 // C.188 // C.184 // C.181 // C.175: 돌봄 패널티로 46
     const s = newSaveData('hollow', 1);
-    grantPet(s.shared.pets, 'pet-guard', 1);
-    choosePet(s, 'pet-guard', 1);
-    addPetLaps(s.shared.pets, 'pet-guard', 31);
+    grantPet(s.shared.pets, 'pet-seek', 1);
+    choosePet(s, 'pet-seek', 1);
+    addPetLaps(s.shared.pets, 'pet-seek', 31);
     const raw = JSON.parse(JSON.stringify(s));
     const m = migrateSave(raw)!;
-    expect(m.shared.pets).toEqual({ owned: { 'pet-guard': { laps: 31, gotAt: 1 } }, active: 'pet-guard', active2: null, gifted: false });
+    expect(m.shared.pets).toEqual({ owned: { 'pet-seek': { laps: 31, gotAt: 1 } }, active: 'pet-seek', active2: null, gifted: false });
     expect(m.runLog.pets).toHaveLength(1);
     raw.shared.pets = { owned: { 'pet-x': {} }, active: 'pet-x' };
     expect(migrateSave(JSON.parse(JSON.stringify(raw)))!.shared.pets).toEqual(newPetState());

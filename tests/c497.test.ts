@@ -179,7 +179,7 @@ describe('허무형 종족별 타입 (GDD 8-8 첫 줄: 사신 특수·호로 물
 
 describe('세이브 형식 92 (진화 미루기 — C.568 형식 101 에서 취소 수로 옮김)', () => {
   it('91 → 92 변환이 남아 있다 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(typeof SAVE_MIGRATIONS[91]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -191,7 +191,7 @@ describe('세이브 형식 92 (진화 미루기 — C.568 형식 101 에서 취�
     delete (s.runLog.tiers as Partial<typeof s.runLog.tiers>).cancels;
     s.meta.format = 91;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.evolution.cancels).toBe(0);
     expect('deferrals' in m.evolution).toBe(false);
     expect(m.runLog.tiers.deferrals).toEqual([]);

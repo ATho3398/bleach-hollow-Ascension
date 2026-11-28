@@ -1,10 +1,11 @@
-// 펫 (GDD 90장, C.144 가칭·provisional): 하나 데리고 다니는 작은 보조. 종류 4종(효과 하나씩).
+// 펫 (GDD 90장, C.144 가칭·provisional): 하나 데리고 다니는 작은 보조. 종류 4종(효과 하나씩) → C.569 (GDD 9-4 v6.256 모델 없는 펫 삭제): pet-belly·pet-guard 삭제,
+// 종족마다 쓰는 펫 목록은 종족 설정 pets(사신은 pet-seek 없음).
 // 이름은 종족 설정(faction json petNames), 효과 수치는 balance.ts provisional.pets, 그림 키(art)는 여기 — 그림 파일이 없으면 화면은 임시 아이콘 원.
 import petsRaw from './pets.json';
 import placeRaw from './place.json';
 
 /** 'none' = 효과 미정(기획 [미정], GDD 9-4 v6.112) — 따라다니고 같이 공격만 한다 */
-export const PET_EFFECTS = ['gold', 'belly', 'guard', 'seek', 'none'] as const;
+export const PET_EFFECTS = ['gold', 'seek', 'none'] as const; // C.569: belly·guard 효과는 그 펫과 같이 삭제
 export type PetEffect = (typeof PET_EFFECTS)[number];
 
 export interface PetDef {
@@ -39,6 +40,14 @@ export function getPet(id: string): PetDef | undefined {
 
 export function isPetId(id: unknown): id is string {
   return typeof id === 'string' && PET_IDS.includes(id);
+}
+
+/** 삭제된 펫 (GDD 9-4 v6.256 모델 없는 펫 삭제, C.569): 옛 세이브·원정 저장에서 없앤다. 종족별 삭제(사신 pet-seek)는 종족 설정 pets 가 정한다 */
+export const REMOVED_PET_IDS: readonly string[] = ['pet-belly', 'pet-guard'];
+
+/** 이 종족 펫 목록(종족 설정 pets) 가운데 얻는 길에 드는 것 (바퀴 끝·펫 알·첫 선물) */
+export function petPoolOf(factionPets: readonly string[]): string[] {
+  return PET_POOL_IDS.filter((id) => factionPets.includes(id));
 }
 
 /** 그림 펫 자리 (C.485): 그림 키 → 기본 자리에서 옮긴 칸(CSS px, dx 오른쪽 +, dy 아래 +). 없으면 0,0 */

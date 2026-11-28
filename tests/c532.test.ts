@@ -268,7 +268,7 @@ describe('⑤ 도감 힌트 (허무형 조건 표시와 같은 모양)', () => {
 
 describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다', () => {
   it('형식 97 · 96 → 97 변환 있음 · 문턱 87 그대로', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(typeof SAVE_MIGRATIONS[96]).toBe('function');
     expect(MIN_LOADABLE_SAVE_FORMAT).toBe(87);
   });
@@ -282,7 +282,7 @@ describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다
     s.meta.format = 96;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
     expect(m).not.toBeNull();
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.evolution.collapsedReturns).toBe(2); // 진화(5000) 뒤의 패배 빈사 2건 — 진화 전(4000)·미접속 빈사는 안 셈
     expect(m.evolution.dotKills).toBeUndefined();
     expect(m.evolution.elementAbsorbs).toEqual({ blood: 7 });
@@ -296,7 +296,7 @@ describe('⑥ 세이브 형식 97 (96 → 97) — 옛 세이브를 이어 쓴다
     s.runLog.vitals.push({ at: 2_000, factionId: 'hollow', kind: 'collapse', cause: 'defeat', bond: 0 });
     s.meta.format = 96;
     const m = migrateSave(JSON.parse(JSON.stringify(s)))!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.evolution.collapsedReturns).toBeUndefined();
     expect(collapsedReturnsOf(m.evolution)).toBe(0);
   });

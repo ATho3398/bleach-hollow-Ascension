@@ -195,14 +195,14 @@ describe('마주침·칩 화면 (GDD 5-5)', () => {
 
 describe('세이브 형식 99 (C.549)', () => {
   it('98 → 99: lapsSince 지우고, 와 있던 방문은 지금부터 15분', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(SAVE_MIGRATIONS[98]).toBeTypeOf('function');
     const old = JSON.parse(JSON.stringify(newSaveData('hollow', 1)));
     old.meta.format = 98;
     old.shared.wanderer = { lapsSince: 12, visit: { at: 5, runId: 2, tier: 2, stock: [{ itemId: 'w-calm-deep', price: 140, sold: false }] } };
     const before = Date.now();
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect('lapsSince' in m.shared.wanderer).toBe(false);
     expect(m.shared.wanderer.visit!.at).toBeGreaterThanOrEqual(before);
     expect(wandererHere(m, before + 14 * MIN)).toBe(true);

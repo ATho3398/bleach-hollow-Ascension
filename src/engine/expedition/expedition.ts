@@ -824,7 +824,7 @@ export function advance(exp: ExpeditionState, meet?: WandererMeetCtx): StepEvent
   // 진화 타이밍 = 걸음 수 (GDD 20-5 v4.1). 남은 걸음 20%·10% 순간 임박 알림
   const near = recordEvolutionStep(exp.evolution);
   if (near !== null) exp.events.push({ kind: 'evolution-near', level: near });
-  exp.hunger += (exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile) * (mutationMods(exp.mutation).hungerMult ?? 1) * petHungerMult(exp);
+  exp.hunger += (exp.lap >= PX.hungerSpikeLap ? PX.hungerPerTileSpike : PX.hungerPerTile) * (mutationMods(exp.mutation).hungerMult ?? 1);
   const late = lateLapRisk(exp.lap, PX.lateLapStart);
   if (late > 0) changeRisk(exp, late, 'late-lap');
   if (exp.hunger >= PX.hungerMax) {
@@ -979,9 +979,7 @@ function startBattleAt(
     params.startShieldFraction = exp.nextShield;
     exp.nextShield = 0;
   }
-  // 펫 보호막 (GDD 90장): 전투 시작 보호막(최대 체력 비율)에 더한다
-  const petShield = petBonus(exp.pet, 'guard');
-  if (petShield > 0) params.startShieldFraction = (params.startShieldFraction ?? 0) + petShield;
+  // 펫 보호막(pet-guard)·허기 감소(pet-belly)는 그 펫과 같이 삭제 (GDD 9-4 v6.256, C.569)
   // 출정품 (GDD 241-D 5): 공격 피해 +·받는 피해 − (그 원정 동안)
   const so = sortieMods(exp.sortie);
   if (so.power > 0) params.playerPowerMultiplier = (params.playerPowerMultiplier ?? 1) * (1 + so.power);
@@ -1117,7 +1115,7 @@ export function finishBattle(exp: ExpeditionState, battle: CombatState): BattleR
   exp.battlesByLap[exp.lap - 1] = (exp.battlesByLap[exp.lap - 1] ?? 0) + 1;
   exp.pending = null;
   delete exp.battleEntry; // 222장 6: 끝난 전투는 되돌리지 않는다
-  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1) * petHungerMult(exp));
+  exp.hunger = Math.min(PX.hungerMax, exp.hunger + PX.hungerPerBattle * (mutationMods(exp.mutation).hungerMult ?? 1));
   exp.condition = Math.max(conditionFloor(exp), exp.condition - PX.conditionPerBattle);
   // 공허 블록 사용 → 리스크 게이지 상승 (GDD 3-5)
   if (battle.riskGained > 0) changeRisk(exp, battle.riskGained, 'void-block');
@@ -1561,11 +1559,6 @@ export function resolveEvent(exp: ExpeditionState, choice: number | null): Event
   return { ok: true, text };
 }
 
-/** 펫 허기 배율 (GDD 90장 pet-belly): 1 − 감소율. 펫이 없으면 1 */
-function petHungerMult(exp: Pick<ExpeditionState, 'pet'>): number {
-  return 1 - petBonus(exp.pet, 'belly');
-}
-
 /** 펫 골드 배율 (GDD 90장 pet-gold): 1 + 증가율. 펫이 없으면 1 */
 function petGoldMult(exp: Pick<ExpeditionState, 'pet'>): number {
   return 1 + petBonus(exp.pet, 'gold');
@@ -1599,7 +1592,7 @@ function lapPetRolls(exp: ExpeditionState): { petTile?: string | null; petFound?
   const out: { petTile?: string | null; petFound?: string | null } = {};
   if (exp.petDrops) {
     const hit = nextFloat(rng) < BALANCE.provisional.pets.lapDropChance;
-    const id = rollAnyPet(() => nextFloat(rng));
+    const id = rollAnyPet(() => nextFloat(rng), getFaction(exp.factionId).pets); // 이 종족 펫 목록 안에서 (C.569)
     if (hit) {
       (exp.petFinds ??= []).push({ petId: id, lap: exp.lap });
       out.petFound = id;

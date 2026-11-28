@@ -21,6 +21,7 @@ import { lookCellOfSkin, lookCells, lookDexKey, lookSkinOf, lookUnitTable, recor
 import { migrateBuild, migrateEvolution } from './saveLegacy';
 import { absorbModeOf, emptyLegacyMatches, emptyRunLog, emptySlotLog, type BattleRecord, type EvolutionCancelRecord, type EvolutionRecord, type FusionCharacterSummary, type FusionRecord, type HogyokuDevRecord, type HogyokuMaterialRecord, type RankBattleRecord, type IdleRecord, type RebirthRecord, type RunLog, type SlotLog, type VitalRecord, type HomeHealRecord, type IdentityRecord } from './engine/runLog';
 import { judgeCandidates, type JudgeContext } from './engine/evolution/judge';
+import { REMOVED_PET_IDS } from './data/pets';
 import { applyChallenge, canChallenge, newRankState, rankOf, resetRankKeepHistory, sanitizeRankState, type ChallengeResult, type RankState } from './engine/rank';
 import { RANK_HOLDERS } from './data/ranks';
 import { FACTIONS, getFaction } from './data/factions';
@@ -66,14 +67,15 @@ import { newSortieSlots, sanitizeSortie, SORTIE_IDS } from './engine/sortie';
 import { grantGear, newGearState, rollGear, rollGrade, sanitizeGear, sellGold, type GearState } from './engine/gear';
 import { STARTER_GEAR, type GearKind } from './data/gear';
 import { applyUnlocks, featureUnlocked, newUnlockState, sanitizeUnlocks, UNLOCK_GUIDES, type FeatureId, type UnlockProgress, type UnlockState } from './engine/unlocks';
-import { addPetLaps, carriedPet, carriedPet2, grantPet, newPetState, pickNewPet, petBonus, sanitizePets, type PetCarry, type PetState } from './engine/pet';
+import { addPetLaps, carriedPet, carriedPet2, grantPet, newPetState, pickNewPet, petAllowed, petBonus, sanitizePets, type PetCarry, type PetState } from './engine/pet';
 import { placementLimitOf, sanitizeTilePresets, type TilePreset } from './tilePresets';
 import { BATTLE_ITEM_IDS, CONSUMABLE_IDS } from './inventory';
 import { MATERIAL_IDS } from './data/materials';
 import { rollTileDraw, storeConsumable } from './shop';
 
 /** 세이브 구조를 바꾸면 올린다. 올릴 때는 바로 아래 형식에서 이 형식으로 바꾸는 한 단계(SAVE_MIGRATIONS)를 같이 만들고 테스트한다 (GDD 123장 6, C.198 — 61장 폐기) */
-export const SAVE_FORMAT_VERSION = 101; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28): 진화 상태 deferrals → cancels(취소 수 — 옛 미루기 수를 옮김)·excluded(배제 목록)·cancelRuns(마지막 취소 뒤 원정 수), choice → pending(연출 차례, forced = 강제 진화)·런 로그 tiers.cancels·진화 기록 cancels — 100 → 101 변환 SAVE_MIGRATIONS[100]
+export const SAVE_FORMAT_VERSION = 102; // C.569 (GDD 9-4 v6.256 모델 없는 펫 삭제, 사용자 2026-11-28): 필드 모양은 그대로, 값 규칙 — 슬롯 공유 펫 shared.pets 에서 pet-belly·pet-guard 를 지우고, pet-seek 는 슬롯의 어느 트랙 종족 설정 pets 에도 없으면(사신만) 지운다. 데리고 가던 칸·원정 중간 저장의 펫 칸은 빈 칸(보상 없음) — 101 → 102 변환 SAVE_MIGRATIONS[101]
+// 이전: SAVE_FORMAT_VERSION = 101; // C.568 (GDD 8-5 v6.254 진화 연출 = 묻지 않고 바로 진화 + 3번 터치 취소, 사용자 2026-11-28): 진화 상태 deferrals → cancels(취소 수 — 옛 미루기 수를 옮김)·excluded(배제 목록)·cancelRuns(마지막 취소 뒤 원정 수), choice → pending(연출 차례, forced = 강제 진화)·런 로그 tiers.cancels·진화 기록 cancels — 100 → 101 변환 SAVE_MIGRATIONS[100]
 // 이전: SAVE_FORMAT_VERSION = 100; // C.564 (GDD 6-16 v6.246·v6.248 요일던전·입장권 3종, 사용자 2026-11-27): 트랙 칸 tower.tickets(요일던전권·보스전권·토벌전권 + 채운 날·주 — 옛 shared.special.weekStart·used 주 횟수 대체), shared.special = 최고 ★·이긴 수만(키 weekly:<트랙> → daily:<던전 id>), 런 로그 specialRuns mode 'daily'·practice·gear·items(선택)·장비 기록 source 'special'·붕옥 재료 기록 source 'daily'. 99 → 100 변환 SAVE_MIGRATIONS[99](트랙마다 새 입장권 칸 = 처음 열 때 가득, 옛 주간던전 기록 → 요일던전 키)
 // 이전: SAVE_FORMAT_VERSION = 99; // C.549 (GDD 5-5 v6.224 우라하라 = 모험 중 마주침, 사용자 2026-11-27): shared.wanderer.lapsSince 삭제, visit.at = 마주친 실제 시각(떠나는 시각 = at + 15분)·원정 중간 저장 wandererMeets·런 로그 원정 기록 wandererMeets·우라하라 기록 lap·cell(선택). 98 → 99 변환 SAVE_MIGRATIONS[98](lapsSince 지움, 옛 '와 있음' 방문은 지금부터 15분 — at = 변환 시각)
 // 이전: SAVE_FORMAT_VERSION = 98; // C.533 (GDD 8-2 v6.161 혈·독 블록 = 계열 없는 1종, 마스터AT 2026-11-24 — C.531 허무 블록과 같은 처리): 값 규칙 — 혈·독 블록은 계열 없는 1종(t-blood·t-poison, 옛 혈·독 조·탄·교 t-blood-a·c·b·t-poison-a·c·b 는 없다). 97 → 98 변환 SAVE_MIGRATIONS[97](migrateMergedBlocks — 옛 3종 → 1종 합침, 강화 횟수 그대로, 원정 중간 저장의 빌드·얻은 블록·흡수 후보도). 형식 97 이 이미 배포돼 그 마이그레이션에 얹지 않고 한 단계를 더 올렸다
@@ -872,7 +874,7 @@ function giftFirstPet(save: SaveData, nowMs: number): void {
   if (ps.gifted) return;
   ps.gifted = true;
   const rng = createRng((nowMs ^ 0x3c6ef372) >>> 0);
-  const id = pickNewPet(ps, () => nextFloat(rng));
+  const id = pickNewPet(ps, () => nextFloat(rng), getFaction(save.factionId).pets); // 이 종족 펫 목록 안에서 (C.569)
   if (id && grantPet(ps, id, nowMs)) save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'get', petId: id, source: 'rebirth' });
 }
 
@@ -888,14 +890,27 @@ export function petSlotsOf(save: Pick<SaveData, 'factionId' | 'evolution'>): num
 export function carriedPetsOf(save: Pick<SaveData, 'shared' | 'factionId' | 'evolution'>): { pet: PetCarry | null; pet2: PetCarry | null } {
   if (!petsUnlocked(save)) return { pet: null, pet2: null };
   const ps = save.shared.pets;
+  const allowed = getFaction(save.factionId).pets; // 이 종족이 못 쓰는 펫(사신 pet-seek 등, C.569)은 데려가지 않는다
   const pet2 = petSlotsOf(save) >= 2 && save.factionId ? carriedPet2(ps, evoExtraPetPower(save.evolution.formId, save.factionId)) : null;
-  return { pet: carriedPet(ps), pet2 };
+  const pet = carriedPet(ps);
+  return { pet: pet && petAllowed(pet.id, allowed) ? pet : null, pet2: pet2 && petAllowed(pet2.id, allowed) ? pet2 : null };
 }
 
 /** 진화체가 바뀌어 펫 칸이 줄면 2번째 칸 펫은 보유 목록으로 (C.506). 런 로그 pets leave. 내렸으면 true */
 export function syncPetSlots(save: SaveData, nowMs: number = Date.now()): boolean {
   const ps = save.shared.pets;
-  if (!ps.active2 || petSlotsOf(save) >= 2) return false;
+  // 이 종족이 못 쓰는 펫(종족 설정 pets — 사신 pet-seek, C.569)을 데리고 있으면 보유 목록으로 (펫은 슬롯 공유라 트랙을 바꿀 때 생길 수 있다)
+  const allowed = getFaction(save.factionId).pets;
+  let dropped = false;
+  for (const k of ['active', 'active2'] as const) {
+    const id = ps[k];
+    if (id && !petAllowed(id, allowed)) {
+      ps[k] = null;
+      save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: id });
+      dropped = true;
+    }
+  }
+  if (!ps.active2 || petSlotsOf(save) >= 2) return dropped;
   const id = ps.active2;
   ps.active2 = null;
   save.runLog.pets.push({ at: nowMs, factionId: save.factionId, kind: 'leave', petId: id });
@@ -2799,7 +2814,38 @@ export const SAVE_MIGRATIONS: Readonly<Record<number, (save: SaveData) => void>>
   99: (save) => migrateDailyDungeon(save),
   // 100 → 101 (C.568, GDD 8-5 v6.254 진화 연출 3번 터치 취소): 옛 미루기 수 → 취소 수(허무형 '취소 3회'가 이어 읽는다), 묻는 중 표시 choice → 연출 차례 pending(방에 들어오면 연출), 런 로그 빈 취소 기록
   100: (save) => migrateEvolutionCancel(save),
+  // 101 → 102 (C.569, GDD 9-4 v6.256 모델 없는 펫 삭제): 삭제 펫을 보유·데리고 가기·원정 중간 저장에서 뺀다(보상 없음)
+  101: (save) => migrateRemovedPets(save),
 };
+
+/** 형식 101 → 102 (C.569, GDD 9-4 v6.256): 삭제 펫(REMOVED_PET_IDS)과, 슬롯의 어느 트랙 종족 설정 pets 에도 없는 펫(사신만 있는 슬롯의 pet-seek)을
+ *  shared.pets 보유에서 지우고 데리고 가던 칸은 빈 칸. 원정 중간 저장(트랙마다 activeExpedition)의 펫 칸도 그 트랙 종족이 못 쓰는 펫이면 빈 칸. 보상·런 로그 없음(옛 기록은 그대로) */
+export function migrateRemovedPets(save: SaveData): void {
+  const factions: string[] = [];
+  forEachTrack(save, (t) => {
+    const f = (t as { factionId?: unknown }).factionId;
+    if (typeof f === 'string' && FACTIONS.some((x) => x.id === f)) factions.push(f);
+  });
+  const usable = new Set(factions.flatMap((f) => getFaction(f).pets));
+  const keep = (id: unknown): boolean => typeof id === 'string' && !REMOVED_PET_IDS.includes(id) && (usable.size === 0 || usable.has(id));
+  const sh = save.shared as unknown;
+  if (isRec(sh) && isRec(sh.pets)) {
+    const ps = sh.pets;
+    if (isRec(ps.owned)) for (const id of Object.keys(ps.owned)) if (!keep(id)) delete ps.owned[id];
+    for (const k of ['active', 'active2'] as const) if (ps[k] !== null && ps[k] !== undefined && !keep(ps[k])) ps[k] = null;
+  }
+  forEachTrack(save, (t) => {
+    const f = (t as { factionId?: unknown }).factionId;
+    const allowed = typeof f === 'string' && FACTIONS.some((x) => x.id === f) ? getFaction(f).pets : null;
+    const ae = (t as { activeExpedition?: unknown }).activeExpedition;
+    const exp = isRec(ae) && isRec(ae.exp) ? ae.exp : isRec(ae) ? ae : null;
+    if (!exp) return;
+    for (const k of ['pet', 'pet2'] as const) {
+      const c = exp[k];
+      if (isRec(c) && (typeof c.id !== 'string' || REMOVED_PET_IDS.includes(c.id) || (allowed && !allowed.includes(c.id)))) exp[k] = null;
+    }
+  });
+}
 
 /** 형식 100 → 101 (C.568, GDD 8-5 v6.254): 트랙마다 진화 상태 deferrals → cancels(지움), choice(숫자 셋이 맞으면) → pending(터치 취소 가능한 보통 연출), 런 로그 tiers.cancels = [].
  *  옛 미루기 기록 tiers.deferrals 는 기록으로 남긴다 */

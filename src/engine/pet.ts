@@ -2,7 +2,7 @@
 // 친밀도 1~5 = 데리고 다닌 원정 바퀴(대기 모드 바퀴 포함) 누계로 오른다. 효과 = 1단계 값 × (1 + affinityStep × (친밀도 − 1)).
 // 여기는 상태·판정만 — 세이브(shared.pets)·런 로그 기록은 game.ts·inventory.ts 가 한다.
 import { BALANCE } from '../config/balance';
-import { getPet, isPetId, PET_POOL_IDS, type PetEffect } from '../data/pets';
+import { getPet, isPetId, petPoolOf, type PetEffect } from '../data/pets';
 
 const PX = BALANCE.provisional.pets;
 export const PET_MAX_LEVEL = PX.affinityLaps.length + 1;
@@ -67,7 +67,7 @@ export function affinityMult(level: number): number {
 }
 
 export type PetBonusKey = keyof typeof PX.effects;
-const KEYS_OF: Record<PetEffect, PetBonusKey[]> = { gold: ['gold'], belly: ['belly'], guard: ['guard'], seek: ['seekWanderer', 'seekTile'], none: [] };
+const KEYS_OF: Record<PetEffect, PetBonusKey[]> = { gold: ['gold'], seek: ['seekWanderer', 'seekTile'], none: [] };
 
 /** 이 펫 종류의 효과 키 */
 export function petBonusKeys(id: string): PetBonusKey[] {
@@ -137,13 +137,19 @@ export function addPetLaps(state: PetState, id: string, laps: number): { from: n
   return to > from ? { from, to } : null;
 }
 
-/** 아직 안 가진 펫 하나 무작위 — 얻는 길에 든 펫만 (다 가졌으면 null) */
-export function pickNewPet(state: PetState, rand: () => number): string | null {
-  const pool = PET_POOL_IDS.filter((id) => !state.owned[id]);
+/** 아직 안 가진 펫 하나 무작위 — 이 종족 펫 목록(종족 설정 pets, C.569) 가운데 얻는 길에 든 펫만 (다 가졌으면 null) */
+export function pickNewPet(state: PetState, rand: () => number, factionPets: readonly string[]): string | null {
+  const pool = petPoolOf(factionPets).filter((id) => !state.owned[id]);
   return pool.length > 0 ? pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]! : null;
 }
 
-/** 얻는 길에 든 펫 중 무작위 하나 (바퀴 끝 보상: 가진 펫이면 골드로 바뀐다) */
-export function rollAnyPet(rand: () => number): string {
-  return PET_POOL_IDS[Math.min(PET_POOL_IDS.length - 1, Math.floor(rand() * PET_POOL_IDS.length))]!;
+/** 이 종족 펫 목록 가운데 얻는 길에 든 펫 중 무작위 하나 (바퀴 끝 보상: 가진 펫이면 골드로 바뀐다) */
+export function rollAnyPet(rand: () => number, factionPets: readonly string[]): string {
+  const pool = petPoolOf(factionPets);
+  return pool[Math.min(pool.length - 1, Math.floor(rand() * pool.length))]!;
+}
+
+/** 이 종족이 쓸 수 있는 펫인가 (종족 설정 pets — GDD 9-4 v6.256, C.569) */
+export function petAllowed(id: string | null | undefined, factionPets: readonly string[]): boolean {
+  return typeof id === 'string' && isPetId(id) && factionPets.includes(id);
 }

@@ -238,7 +238,8 @@ export function fillAllUnlocked(save: SaveData, nowMs: number = Date.now()): Sav
 /** 모든 펫 해금 (GDD 17-4 v6.112, C.482 — 사용자 "테스트 모드에서 모든 펫 해금돼 있게"): 얻는 길에 없는 펫(효과 미정)까지 전부. 이미 가진 펫은 그대로. 더한 수 */
 export function fillAllPets(save: SaveData, nowMs: number = Date.now()): number {
   let n = 0;
-  for (const id of PET_IDS) if (grantPet(save.shared.pets, id, nowMs)) n++;
+  const allowed = getFaction(save.factionId).pets; // 이 종족 펫 목록 안에서 (C.569 — 사신은 pet-seek 없음)
+  for (const id of PET_IDS) if (allowed.includes(id) && grantPet(save.shared.pets, id, nowMs)) n++;
   return n;
 }
 

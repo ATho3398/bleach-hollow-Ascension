@@ -11,7 +11,7 @@ import { rigRestSnapshot } from './rigAnim';
 
 const BASE = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 /** 그림이 없을 때 원 안 아이콘 (효과 종류별) */
-const PET_ICON: Record<PetEffect, string> = { gold: 'i-rare', belly: 'i-hunger', guard: 'i-guard', seek: 'i-target', none: 'i-care-pet' };
+const PET_ICON: Record<PetEffect, string> = { gold: 'i-rare', seek: 'i-target', none: 'i-care-pet' };
 
 /** 펫 그림 주소 (파일이 없으면 null). 종족 설정 petArt 에 그 펫의 그림 키가 있으면 그쪽이 먼저 */
 export function petArtSrc(petId: string, faction?: PetArtFaction): string | null {

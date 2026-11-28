@@ -183,7 +183,7 @@ describe('귀환 = 묻지 않고 연출 차례 · 취소 · 배제 (GDD 8-5 v6.2
 
 describe('세이브 형식 101 (옛 미루기 → 취소)', () => {
   it('형식 101 · 100 → 101 변환', () => {
-    expect(SAVE_FORMAT_VERSION).toBe(101);
+    expect(SAVE_FORMAT_VERSION).toBe(102);
     expect(typeof SAVE_MIGRATIONS[100]).toBe('function');
   });
   it('옛 세이브(100): 미루기 수 → 취소 수, 묻는 중 표시 → 연출 차례(터치 취소 가능), 런 로그 빈 취소 기록(옛 미루기 기록은 남김)', () => {
@@ -196,7 +196,7 @@ describe('세이브 형식 101 (옛 미루기 → 취소)', () => {
     delete old.runLog.tiers.cancels;
     old.runLog.tiers.deferrals = [{ at: 1, tier: 2, count: 1, formId: 't3:water', steps: 65 }, { at: 2, tier: 2, count: 2, formId: 't3:water', steps: 70 }];
     const m = migrateSave(old)!;
-    expect(m.meta.format).toBe(101);
+    expect(m.meta.format).toBe(102);
     expect(m.evolution.cancels).toBe(2);
     expect('deferrals' in m.evolution).toBe(false);
     expect('choice' in m.evolution).toBe(false);
